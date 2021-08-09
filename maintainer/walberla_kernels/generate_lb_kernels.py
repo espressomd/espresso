@@ -34,6 +34,7 @@ import relaxation_rates
 from lbmpy.fieldaccess import CollideOnlyInplaceAccessor
 from lbmpy.stencils import get_stencil
 from lbmpy.updatekernels import create_lbm_kernel, create_stream_pull_only_kernel
+from lbmpy.macroscopic_value_kernels import macroscopic_values_setter
 # for collide-push from lbmpy.fieldaccess import StreamPushTwoFieldsAccessor
 
 
@@ -175,6 +176,30 @@ def generate_stream_sweep(ctx, lb_method, class_name, params):
         ctx, class_name, stream_ast, field_swaps=[(src_field, dst_field)])
 
 
+def generate_setters(lb_method):
+    dtype = "float64"
+    field_layout = "fzyx"
+    dim = len(lb_method.stencil[0])
+
+    vel_field = ps.Field.create_generic(
+        'velocity',
+        dim,
+        dtype,
+        index_dimensions=1,
+        layout=field_layout,
+        index_shape=(dim,)
+    )
+
+    pdfs = generate_fields(lb_method)[0]
+
+    initial_rho = sp.Symbol('rho_0')
+    pdfs_setter = macroscopic_values_setter(lb_method,
+                                            initial_rho,
+                                            vel_field.center_vector,
+                                            pdfs.center_vector)
+    return pdfs_setter
+
+
 adapt_pystencils()
 
 with CodeGeneration() as ctx:
@@ -201,6 +226,15 @@ with CodeGeneration() as ctx:
     )
     generate_stream_sweep(ctx, method, "StreamSweep", params)
     generate_stream_sweep(ctx, method, "StreamSweepAVX", params_vec)
+
+    # generate initial densities
+    pdfs_setter = generate_setters(method)
+    codegen.generate_sweep(ctx, "InitialPDFsSetter", pdfs_setter, params)
+    codegen.generate_sweep(
+        ctx,
+        "InitialPDFsSetterAVX",
+        pdfs_setter,
+        params_vec)
 
     # generate unthermalized collision rule
     collision_rule_unthermalized = create_lb_collision_rule(
