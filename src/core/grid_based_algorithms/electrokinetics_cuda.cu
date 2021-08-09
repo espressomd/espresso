@@ -48,6 +48,7 @@
 #include <cstddef>
 #include <fstream>
 #include <iostream>
+#include <limits>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -2345,16 +2346,20 @@ int ek_init() {
 
     ek_initialized = true;
   } else {
-    if (lbpar_gpu.agrid != ek_parameters.agrid ||
-        lbpar_gpu.viscosity != ek_parameters.viscosity *
-                                   ek_parameters.time_step /
-                                   Utils::sqr(ek_parameters.agrid) ||
-        lbpar_gpu.bulk_viscosity != ek_parameters.bulk_viscosity *
-                                        ek_parameters.time_step /
-                                        Utils::sqr(ek_parameters.agrid) ||
-        lb_lbcoupling_get_gamma() != ek_parameters.friction ||
-        lbpar_gpu.rho !=
-            ek_parameters.lb_density * Utils::int_pow<3>(ek_parameters.agrid)) {
+    auto const not_close = [](float a, float b) {
+      return std::abs(a - b) > std::numeric_limits<float>::epsilon();
+    };
+    if (not_close(lbpar_gpu.agrid, ek_parameters.agrid) ||
+        not_close(lbpar_gpu.viscosity, ek_parameters.viscosity *
+                                           ek_parameters.time_step /
+                                           Utils::sqr(ek_parameters.agrid)) ||
+        not_close(lbpar_gpu.bulk_viscosity,
+                  ek_parameters.bulk_viscosity * ek_parameters.time_step /
+                      Utils::sqr(ek_parameters.agrid)) ||
+        not_close(static_cast<float>(lb_lbcoupling_get_gamma()),
+                  ek_parameters.friction) ||
+        not_close(lbpar_gpu.rho, ek_parameters.lb_density *
+                                     Utils::int_pow<3>(ek_parameters.agrid))) {
       fprintf(stderr,
               "ERROR: The LB parameters on the GPU cannot be reinitialized.\n");
 
