@@ -108,6 +108,7 @@ public:
     double omega_shear_;
     uint32_t seed_;
     uint32_t time_step_;
+    std::function<void(IBlock *, uint32_t&, uint32_t&, uint32_t&)> block_offset_generator = [](IBlock * const, uint32_t&, uint32_t&, uint32_t&) { };
 
 };
 

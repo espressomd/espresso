@@ -1590,14 +1590,15 @@ void CollideSweepThermalizedAVX::run(IBlock *block) {
   auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
 
+  auto block_offset_0 = this->block_offset_0_;
+  auto block_offset_1 = this->block_offset_1_;
+  auto block_offset_2 = this->block_offset_2_;
+  block_offset_generator(block, block_offset_0, block_offset_1, block_offset_2);
   auto &omega_bulk = this->omega_bulk_;
-  auto &block_offset_0 = this->block_offset_0_;
   auto &seed = this->seed_;
   auto &omega_odd = this->omega_odd_;
   auto &kT = this->kT_;
-  auto &block_offset_2 = this->block_offset_2_;
   auto &time_step = this->time_step_;
-  auto &block_offset_1 = this->block_offset_1_;
   auto &omega_even = this->omega_even_;
   auto &omega_shear = this->omega_shear_;
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(force->nrOfGhostLayers()));
@@ -1636,6 +1637,7 @@ void CollideSweepThermalizedAVX::run(IBlock *block) {
           _stride_pdfs_2, _stride_pdfs_3, block_offset_0, block_offset_1,
           block_offset_2, kT, omega_bulk, omega_even, omega_odd, omega_shear,
           seed, time_step);
+  time_step_++;
 }
 
 void CollideSweepThermalizedAVX::runOnCellInterval(
@@ -1653,14 +1655,15 @@ void CollideSweepThermalizedAVX::runOnCellInterval(
   auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
 
+  auto block_offset_0 = this->block_offset_0_;
+  auto block_offset_1 = this->block_offset_1_;
+  auto block_offset_2 = this->block_offset_2_;
+  block_offset_generator(block, block_offset_0, block_offset_1, block_offset_2);
   auto &omega_bulk = this->omega_bulk_;
-  auto &block_offset_0 = this->block_offset_0_;
   auto &seed = this->seed_;
   auto &omega_odd = this->omega_odd_;
   auto &kT = this->kT_;
-  auto &block_offset_2 = this->block_offset_2_;
   auto &time_step = this->time_step_;
-  auto &block_offset_1 = this->block_offset_1_;
   auto &omega_even = this->omega_even_;
   auto &omega_shear = this->omega_shear_;
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(force->nrOfGhostLayers()));
@@ -1705,6 +1708,7 @@ void CollideSweepThermalizedAVX::runOnCellInterval(
           _stride_pdfs_2, _stride_pdfs_3, block_offset_0, block_offset_1,
           block_offset_2, kT, omega_bulk, omega_even, omega_odd, omega_shear,
           seed, time_step);
+  time_step_++;
 }
 
 } // namespace pystencils
