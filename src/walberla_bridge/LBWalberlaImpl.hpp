@@ -274,7 +274,6 @@ public:
     const real_t omega = shear_mode_relaxation_rate(get_viscosity());
     const real_t omega_odd = odd_mode_relaxation_rate(omega);
     auto const kT = get_kT();
-    auto block = m_blocks->begin();
     auto collide =
         CollisionModel(m_last_applied_force_field_id, m_pdf_field_id, 0, 0, 0,
                        kT, omega, omega, omega_odd, omega, seed, time_step);
