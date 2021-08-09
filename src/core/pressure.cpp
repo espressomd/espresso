@@ -34,7 +34,6 @@
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "pressure_inline.hpp"
-#include "reduce_observable_stat.hpp"
 #include "virtual_sites.hpp"
 
 #include "short_range_loop.hpp"
@@ -114,11 +113,7 @@ void pressure_calc() {
 
   obs_pressure.rescale(volume);
 
-  /* gather data */
-  auto obs_pressure_res = reduce(comm_cart, obs_pressure);
-  if (obs_pressure_res) {
-    std::swap(obs_pressure, *obs_pressure_res);
-  }
+  obs_pressure.mpi_reduce();
 }
 
 void update_pressure_local(int, int) { pressure_calc(); }

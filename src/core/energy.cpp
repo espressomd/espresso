@@ -33,7 +33,6 @@
 #include "forces.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "reduce_observable_stat.hpp"
 
 #include "short_range_loop.hpp"
 
@@ -107,11 +106,7 @@ void energy_calc(const double time) {
     obs_energy.dipolar[1] += energy_host.dipolar;
 #endif
 
-  /* gather data */
-  auto obs_energy_res = reduce(comm_cart, obs_energy);
-  if (obs_energy_res) {
-    std::swap(obs_energy, *obs_energy_res);
-  }
+  obs_energy.mpi_reduce();
 }
 
 void update_energy_local(int, int) { energy_calc(get_sim_time()); }
