@@ -47,14 +47,15 @@ using namespace std;
 namespace walberla {
 namespace pystencils {
 
-namespace internal_streamsweepavx_streamsweepavx {
-static FUNC_PREFIX void streamsweepavx_streamsweepavx(
-    double *RESTRICT const _data_pdfs, double *RESTRICT _data_pdfs_tmp,
-    int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
-    int64_t const _size_pdfs_2, int64_t const _stride_pdfs_1,
-    int64_t const _stride_pdfs_2, int64_t const _stride_pdfs_3,
-    int64_t const _stride_pdfs_tmp_1, int64_t const _stride_pdfs_tmp_2,
-    int64_t const _stride_pdfs_tmp_3) {
+namespace internal_streamsweepavx {
+static FUNC_PREFIX void
+streamsweepavx(double *RESTRICT const _data_pdfs,
+               double *RESTRICT _data_pdfs_tmp, int64_t const _size_pdfs_0,
+               int64_t const _size_pdfs_1, int64_t const _size_pdfs_2,
+               int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
+               int64_t const _stride_pdfs_3, int64_t const _stride_pdfs_tmp_1,
+               int64_t const _stride_pdfs_tmp_2,
+               int64_t const _stride_pdfs_tmp_3) {
   for (int64_t ctr_2 = 1; ctr_2 < _size_pdfs_2 - 1; ctr_2 += 1) {
     double *RESTRICT _data_pdfs_20_30 = _data_pdfs + _stride_pdfs_2 * ctr_2;
     double *RESTRICT _data_pdfs_20_31 =
@@ -270,9 +271,9 @@ static FUNC_PREFIX void streamsweepavx_streamsweepavx(
     }
   }
 }
-} // namespace internal_streamsweepavx_streamsweepavx
+} // namespace internal_streamsweepavx
 
-void StreamSweepAVX::run(IBlock *block) {
+void StreamSweepAVX::operator()(IBlock *block) {
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
   field::GhostLayerField<double, 19> *pdfs_tmp;
   {
@@ -289,33 +290,28 @@ void StreamSweepAVX::run(IBlock *block) {
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(pdfs->nrOfGhostLayers()));
   double *RESTRICT const _data_pdfs = pdfs->dataAt(-1, -1, -1, 0);
   WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
-  WALBERLA_ASSERT_EQUAL((uintptr_t)pdfs->dataAt(0, 0, 0, 0) % 32, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(pdfs_tmp->nrOfGhostLayers()));
   double *RESTRICT _data_pdfs_tmp = pdfs_tmp->dataAt(-1, -1, -1, 0);
   WALBERLA_ASSERT_EQUAL(pdfs_tmp->layout(), field::fzyx);
-  WALBERLA_ASSERT_EQUAL((uintptr_t)pdfs_tmp->dataAt(0, 0, 0, 0) % 32, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                 int64_t(cell_idx_c(pdfs->xSize()) + 2));
   const int64_t _size_pdfs_0 = int64_t(cell_idx_c(pdfs->xSize()) + 2);
   WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
-  WALBERLA_ASSERT_EQUAL((uintptr_t)pdfs->dataAt(0, 0, 0, 0) % 32, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                 int64_t(cell_idx_c(pdfs->ySize()) + 2));
   const int64_t _size_pdfs_1 = int64_t(cell_idx_c(pdfs->ySize()) + 2);
   WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
-  WALBERLA_ASSERT_EQUAL((uintptr_t)pdfs->dataAt(0, 0, 0, 0) % 32, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                 int64_t(cell_idx_c(pdfs->zSize()) + 2));
   const int64_t _size_pdfs_2 = int64_t(cell_idx_c(pdfs->zSize()) + 2);
   WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
-  WALBERLA_ASSERT_EQUAL((uintptr_t)pdfs->dataAt(0, 0, 0, 0) % 32, 0);
   const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
   const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
   const int64_t _stride_pdfs_3 = int64_t(1 * int64_t(pdfs->fStride()));
   const int64_t _stride_pdfs_tmp_1 = int64_t(pdfs_tmp->yStride());
   const int64_t _stride_pdfs_tmp_2 = int64_t(pdfs_tmp->zStride());
   const int64_t _stride_pdfs_tmp_3 = int64_t(1 * int64_t(pdfs_tmp->fStride()));
-  internal_streamsweepavx_streamsweepavx::streamsweepavx_streamsweepavx(
+  internal_streamsweepavx::streamsweepavx(
       _data_pdfs, _data_pdfs_tmp, _size_pdfs_0, _size_pdfs_1, _size_pdfs_2,
       _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_1,
       _stride_pdfs_tmp_2, _stride_pdfs_tmp_3);
@@ -353,7 +349,6 @@ void StreamSweepAVX::runOnCellInterval(
   double *RESTRICT const _data_pdfs =
       pdfs->dataAt(ci.xMin() - 1, ci.yMin() - 1, ci.zMin() - 1, 0);
   WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
-  WALBERLA_ASSERT_EQUAL((uintptr_t)pdfs->dataAt(0, 0, 0, 0) % 32, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1,
                                 -int_c(pdfs_tmp->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1,
@@ -363,29 +358,25 @@ void StreamSweepAVX::runOnCellInterval(
   double *RESTRICT _data_pdfs_tmp =
       pdfs_tmp->dataAt(ci.xMin() - 1, ci.yMin() - 1, ci.zMin() - 1, 0);
   WALBERLA_ASSERT_EQUAL(pdfs_tmp->layout(), field::fzyx);
-  WALBERLA_ASSERT_EQUAL((uintptr_t)pdfs_tmp->dataAt(0, 0, 0, 0) % 32, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                 int64_t(cell_idx_c(ci.xSize()) + 2));
   const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 2);
   WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
-  WALBERLA_ASSERT_EQUAL((uintptr_t)pdfs->dataAt(0, 0, 0, 0) % 32, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                 int64_t(cell_idx_c(ci.ySize()) + 2));
   const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 2);
   WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
-  WALBERLA_ASSERT_EQUAL((uintptr_t)pdfs->dataAt(0, 0, 0, 0) % 32, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                 int64_t(cell_idx_c(ci.zSize()) + 2));
   const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 2);
   WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
-  WALBERLA_ASSERT_EQUAL((uintptr_t)pdfs->dataAt(0, 0, 0, 0) % 32, 0);
   const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
   const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
   const int64_t _stride_pdfs_3 = int64_t(1 * int64_t(pdfs->fStride()));
   const int64_t _stride_pdfs_tmp_1 = int64_t(pdfs_tmp->yStride());
   const int64_t _stride_pdfs_tmp_2 = int64_t(pdfs_tmp->zStride());
   const int64_t _stride_pdfs_tmp_3 = int64_t(1 * int64_t(pdfs_tmp->fStride()));
-  internal_streamsweepavx_streamsweepavx::streamsweepavx_streamsweepavx(
+  internal_streamsweepavx::streamsweepavx(
       _data_pdfs, _data_pdfs_tmp, _size_pdfs_0, _size_pdfs_1, _size_pdfs_2,
       _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_1,
       _stride_pdfs_tmp_2, _stride_pdfs_tmp_3);

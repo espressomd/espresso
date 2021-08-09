@@ -45,15 +45,15 @@ using namespace std;
 namespace walberla {
 namespace pystencils {
 
-namespace internal_streamsweep_streamsweep {
-static FUNC_PREFIX void streamsweep_streamsweep(
-    double *RESTRICT const _data_pdfs, double *RESTRICT _data_pdfs_tmp,
-    int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
-    int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
-    int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
-    int64_t const _stride_pdfs_3, int64_t const _stride_pdfs_tmp_0,
-    int64_t const _stride_pdfs_tmp_1, int64_t const _stride_pdfs_tmp_2,
-    int64_t const _stride_pdfs_tmp_3) {
+namespace internal_streamsweep {
+static FUNC_PREFIX void
+streamsweep(double *RESTRICT const _data_pdfs, double *RESTRICT _data_pdfs_tmp,
+            int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
+            int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
+            int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
+            int64_t const _stride_pdfs_3, int64_t const _stride_pdfs_tmp_0,
+            int64_t const _stride_pdfs_tmp_1, int64_t const _stride_pdfs_tmp_2,
+            int64_t const _stride_pdfs_tmp_3) {
   for (int64_t ctr_2 = 1; ctr_2 < _size_pdfs_2 - 1; ctr_2 += 1) {
     double *RESTRICT _data_pdfs_20_30 = _data_pdfs + _stride_pdfs_2 * ctr_2;
     double *RESTRICT _data_pdfs_20_31 =
@@ -263,9 +263,9 @@ static FUNC_PREFIX void streamsweep_streamsweep(
     }
   }
 }
-} // namespace internal_streamsweep_streamsweep
+} // namespace internal_streamsweep
 
-void StreamSweep::run(IBlock *block) {
+void StreamSweep::operator()(IBlock *block) {
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
   field::GhostLayerField<double, 19> *pdfs_tmp;
   {
@@ -305,7 +305,7 @@ void StreamSweep::run(IBlock *block) {
   const int64_t _stride_pdfs_tmp_1 = int64_t(pdfs_tmp->yStride());
   const int64_t _stride_pdfs_tmp_2 = int64_t(pdfs_tmp->zStride());
   const int64_t _stride_pdfs_tmp_3 = int64_t(1 * int64_t(pdfs_tmp->fStride()));
-  internal_streamsweep_streamsweep::streamsweep_streamsweep(
+  internal_streamsweep::streamsweep(
       _data_pdfs, _data_pdfs_tmp, _size_pdfs_0, _size_pdfs_1, _size_pdfs_2,
       _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3,
       _stride_pdfs_tmp_0, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2,
@@ -373,7 +373,7 @@ void StreamSweep::runOnCellInterval(
   const int64_t _stride_pdfs_tmp_1 = int64_t(pdfs_tmp->yStride());
   const int64_t _stride_pdfs_tmp_2 = int64_t(pdfs_tmp->zStride());
   const int64_t _stride_pdfs_tmp_3 = int64_t(1 * int64_t(pdfs_tmp->fStride()));
-  internal_streamsweep_streamsweep::streamsweep_streamsweep(
+  internal_streamsweep::streamsweep(
       _data_pdfs, _data_pdfs_tmp, _size_pdfs_0, _size_pdfs_1, _size_pdfs_2,
       _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3,
       _stride_pdfs_tmp_0, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2,
