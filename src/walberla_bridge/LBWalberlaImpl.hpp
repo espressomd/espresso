@@ -65,7 +65,6 @@
 
 #include "LBWalberlaBase.hpp"
 #include "ResetForce.hpp"
-#include "generated_kernels/CollideSweep.h"
 #include "generated_kernels/StreamSweep.h"
 #include "relaxation_rates.hpp"
 #include "walberla_utils.hpp"
@@ -335,8 +334,6 @@ public:
     // Synchronize ghost layers
     (*m_full_communication)();
   };
-
-  std::shared_ptr<LatticeModel> get_lattice_model() { return m_lattice_model; };
 
   void integrate() override {
     m_time_loop->singleStep();
