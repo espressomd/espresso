@@ -25,7 +25,6 @@
 #include "domain_decomposition/BlockDataID.h"
 #include "domain_decomposition/IBlock.h"
 #include "domain_decomposition/StructuredBlockStorage.h"
-#include <functional>
 #include <set>
 
 
@@ -51,18 +50,7 @@ namespace pystencils {
 class CollideSweep
 {
 public:
-    CollideSweep( BlockDataID forceID_,
-                  BlockDataID pdfsID_,
-                  uint32_t /*block_offset_0*/,
-                  uint32_t /*block_offset_1*/,
-                  uint32_t /*block_offset_2*/,
-                  double /*kT*/,
-                  double omega_bulk,
-                  double omega_even,
-                  double omega_odd,
-                  double omega_shear,
-                  uint32_t /*seed*/,
-                  uint32_t /*time_step*/ )
+    CollideSweep( BlockDataID forceID_, BlockDataID pdfsID_, double omega_bulk, double omega_even, double omega_odd, double omega_shear )
         : forceID(forceID_), pdfsID(pdfsID_), omega_bulk_(omega_bulk), omega_even_(omega_even), omega_odd_(omega_odd), omega_shear_(omega_shear)
     {};
 
@@ -114,7 +102,6 @@ public:
     double omega_even_;
     double omega_odd_;
     double omega_shear_;
-    std::function<void(IBlock *, uint32_t&, uint32_t&, uint32_t&)> block_offset_generator = [](IBlock * const, uint32_t&, uint32_t&, uint32_t&) { };
 
 };
 

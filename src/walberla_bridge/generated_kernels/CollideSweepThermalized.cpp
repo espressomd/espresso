@@ -699,6 +699,7 @@ void CollideSweepThermalized::runOnCellInterval(
           _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3,
           block_offset_0, block_offset_1, block_offset_2, kT, omega_bulk,
           omega_even, omega_odd, omega_shear, seed, time_step);
+  time_step_++;
 }
 
 } // namespace pystencils
