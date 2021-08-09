@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import os
 import sympy as sp
 import pystencils as ps
 from pystencils.field import Field
@@ -33,6 +34,30 @@ from lbmpy.fieldaccess import CollideOnlyInplaceAccessor
 from lbmpy.stencils import get_stencil
 from lbmpy.updatekernels import create_lbm_kernel, create_stream_pull_only_kernel
 # for collide-push from lbmpy.fieldaccess import StreamPushTwoFieldsAccessor
+
+
+def earmark_generated_kernels():
+    '''
+    Add an earmark at the beginning of generated kernels to document the
+    pystencils/lbmpy toolchain that was used to create them.
+    '''
+    import lbmpy
+    import lbmpy_walberla
+    walberla_root = lbmpy_walberla.__file__.split('/python/lbmpy_walberla/')[0]
+    with open(os.path.join(walberla_root, '.git/HEAD')) as f:
+        walberla_commit = f.read()
+    token = '// kernel generated with'
+    earmark = (
+        f'{token} pystencils v{ps.__version__}, lbmpy v{lbmpy.__version__}, '
+        f'lbmpy_walberla/pystencils_walberla from commit {walberla_commit}\n'
+    )
+    for filename in os.listdir('.'):
+        if filename.endswith(('.h', '.cpp')):
+            with open(filename, 'r+') as f:
+                content = f.read()
+                if not content.startswith(token):
+                    f.seek(0)
+                    f.write(earmark + content)
 
 
 def generate_collision_sweep(
@@ -197,3 +222,5 @@ with CodeGeneration() as ctx:
 
     # Info header containing correct template definitions for stencil and field
     #ctx.write_file("InfoHeader.h", info_header)
+
+earmark_generated_kernels()
