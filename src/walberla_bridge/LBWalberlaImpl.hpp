@@ -97,7 +97,7 @@ const FlagUID UBB_flag("velocity bounce back");
 
 /** Class that runs and controls the LB on WaLBerla
  */
-template <typename LatticeModel, typename CollisionModel, typename CollisionModelFactoryName,
+template <typename LatticeModel, typename CollisionModel,
           typename FloatType = double>
 class LBWalberlaImpl : public LBWalberlaBase {
 protected:
@@ -275,9 +275,11 @@ public:
     const real_t omega_odd = odd_mode_relaxation_rate(omega);
     auto const kT = get_kT();
     auto block = m_blocks->begin();
-    auto collide_factory = CollisionModelFactoryName(
-        m_blocks,
+    auto collide = std::make_shared<CollisionModel>(
         m_last_applied_force_field_id, m_pdf_field_id,
+        uint32_c(m_blocks->getBlockCellBB(*block).xMin()),
+        uint32_c(m_blocks->getBlockCellBB(*block).yMin()),
+        uint32_c(m_blocks->getBlockCellBB(*block).zMin()),
         kT, omega, omega, omega_odd, omega, seed, time_step);
 
     // Add steps to the integration loop
@@ -286,7 +288,7 @@ public:
 
     m_time_loop->add() << timeloop::Sweep(makeSharedSweep(m_reset_force),
                                           "Reset force fields");
-    m_time_loop->add() << timeloop::SweepOnBlock<CollisionModel>(collide_factory, "LB collide")
+    m_time_loop->add() << timeloop::Sweep(*collide, "LB collide")
                        << timeloop::AfterFunction(
                               *m_pdf_streaming_communication, "communication");
     m_time_loop->add() << timeloop::Sweep(

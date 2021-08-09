@@ -20,13 +20,11 @@
 #pragma once
 #include "core/DataTypes.h"
 
-#include "blockforest/StructuredBlockForest.h"
 #include "field/GhostLayerField.h"
 #include "field/SwapableCompare.h"
 #include "domain_decomposition/BlockDataID.h"
 #include "domain_decomposition/IBlock.h"
 #include "domain_decomposition/StructuredBlockStorage.h"
-#include <memory>
 #include <set>
 
 
@@ -52,8 +50,8 @@ namespace pystencils {
 class CollideSweep
 {
 public:
-    CollideSweep( IBlock * const block, BlockDataID forceID_, BlockDataID pdfsID_, double omega_bulk, double omega_even, double omega_odd, double omega_shear)
-        : block_(block), forceID(forceID_), pdfsID(pdfsID_), omega_bulk_(omega_bulk), omega_even_(omega_even), omega_odd_(omega_odd), omega_shear_(omega_shear)
+    CollideSweep( BlockDataID forceID_, BlockDataID pdfsID_, uint32_t /*block_offset_0*/, uint32_t /*block_offset_1*/, uint32_t /*block_offset_2*/, double /*kT*/, double omega_bulk, double omega_even, double omega_odd, double omega_shear, uint32_t seed, uint32_t time_step )
+        : forceID(forceID_), pdfsID(pdfsID_), omega_bulk_(omega_bulk), omega_even_(omega_even), omega_odd_(omega_odd), omega_shear_(omega_shear), seed_(seed), time_step_(time_step)
     {};
 
     
@@ -63,9 +61,9 @@ public:
     void runOnCellInterval(const shared_ptr<StructuredBlockStorage> & blocks, const CellInterval & globalCellInterval, cell_idx_t ghostLayers, IBlock * block);
 
     
-    void operator() ()
+    void operator() (IBlock * block)
     {
-        run(block_);
+        run(block);
     }
     
 
@@ -98,33 +96,17 @@ public:
     }
 
 
-    IBlock * block_;
     BlockDataID forceID;
     BlockDataID pdfsID;
     double omega_bulk_;
     double omega_even_;
     double omega_odd_;
     double omega_shear_;
+    uint32_t seed_;
+    uint32_t time_step_;
 
 };
 
-struct CollideSweepFactory {
-   CollideSweepFactory( std::shared_ptr<blockforest::StructuredBlockForest>, BlockDataID forceID, BlockDataID pdfsID, double, double omega_bulk, double omega_even, double omega_odd, double omega_shear, uint32_t, uint32_t )
-        : m_forceID(forceID), m_pdfsID(pdfsID), m_omega_bulk(omega_bulk), m_omega_even(omega_even), m_omega_odd(omega_odd), m_omega_shear(omega_shear) {}
-
-   CollideSweep * operator() ( IBlock * const block ) {
-      return new CollideSweep( block, m_forceID, m_pdfsID,
-        m_omega_bulk, m_omega_even, m_omega_odd, m_omega_shear);
-   }
-
-   private:
-    BlockDataID m_forceID;
-    BlockDataID m_pdfsID;
-    double m_omega_bulk;
-    double m_omega_even;
-    double m_omega_odd;
-    double m_omega_shear;
-};
 
 } // namespace pystencils
 } // namespace walberla

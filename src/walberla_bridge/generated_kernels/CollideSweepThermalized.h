@@ -20,13 +20,11 @@
 #pragma once
 #include "core/DataTypes.h"
 
-#include "blockforest/StructuredBlockForest.h"
 #include "field/GhostLayerField.h"
 #include "field/SwapableCompare.h"
 #include "domain_decomposition/BlockDataID.h"
 #include "domain_decomposition/IBlock.h"
 #include "domain_decomposition/StructuredBlockStorage.h"
-#include <memory>
 #include <set>
 
 
@@ -52,8 +50,8 @@ namespace pystencils {
 class CollideSweepThermalized
 {
 public:
-    CollideSweepThermalized( IBlock * const block, BlockDataID forceID_, BlockDataID pdfsID_, uint32_t block_offset_0, uint32_t block_offset_1, uint32_t block_offset_2, double kT, double omega_bulk, double omega_even, double omega_odd, double omega_shear, uint32_t seed, uint32_t time_step )
-        : block_(block), forceID(forceID_), pdfsID(pdfsID_), block_offset_0_(block_offset_0), block_offset_1_(block_offset_1), block_offset_2_(block_offset_2), kT_(kT), omega_bulk_(omega_bulk), omega_even_(omega_even), omega_odd_(omega_odd), omega_shear_(omega_shear), seed_(seed), time_step_(time_step)
+    CollideSweepThermalized( BlockDataID forceID_, BlockDataID pdfsID_, uint32_t block_offset_0, uint32_t block_offset_1, uint32_t block_offset_2, double kT, double omega_bulk, double omega_even, double omega_odd, double omega_shear, uint32_t seed, uint32_t time_step )
+        : forceID(forceID_), pdfsID(pdfsID_), block_offset_0_(block_offset_0), block_offset_1_(block_offset_1), block_offset_2_(block_offset_2), kT_(kT), omega_bulk_(omega_bulk), omega_even_(omega_even), omega_odd_(omega_odd), omega_shear_(omega_shear), seed_(seed), time_step_(time_step)
     {};
 
     
@@ -63,9 +61,9 @@ public:
     void runOnCellInterval(const shared_ptr<StructuredBlockStorage> & blocks, const CellInterval & globalCellInterval, cell_idx_t ghostLayers, IBlock * block);
 
     
-    void operator() ()
+    void operator() (IBlock * block)
     {
-        run(block_);
+        run(block);
     }
     
 
@@ -98,7 +96,6 @@ public:
     }
 
 
-    IBlock * block_;
     BlockDataID forceID;
     BlockDataID pdfsID;
     uint32_t block_offset_0_;
@@ -114,30 +111,6 @@ public:
 
 };
 
-struct CollideSweepThermalizedFactory {
-   CollideSweepThermalizedFactory( std::shared_ptr<blockforest::StructuredBlockForest> blockforest, BlockDataID forceID, BlockDataID pdfsID, double kT, double omega_bulk, double omega_even, double omega_odd, double omega_shear, uint32_t seed, uint32_t time_step )
-        : m_blockforest(blockforest), m_forceID(forceID), m_pdfsID(pdfsID), m_kT(kT), m_omega_bulk(omega_bulk), m_omega_even(omega_even), m_omega_odd(omega_odd), m_omega_shear(omega_shear), m_seed(seed), m_time_step(time_step) {}
-
-   CollideSweepThermalized * operator() ( IBlock * const block ) {
-      return new CollideSweepThermalized( block, m_forceID, m_pdfsID,
-        uint32_c(m_blockforest->getBlockCellBB(*block).xMin()),
-        uint32_c(m_blockforest->getBlockCellBB(*block).yMin()),
-        uint32_c(m_blockforest->getBlockCellBB(*block).zMin()),
-        m_kT, m_omega_bulk, m_omega_even, m_omega_odd, m_omega_shear, m_seed, m_time_step );
-   }
-
-   private:
-    std::shared_ptr<blockforest::StructuredBlockForest> m_blockforest;
-    BlockDataID m_forceID;
-    BlockDataID m_pdfsID;
-    double m_kT;
-    double m_omega_bulk;
-    double m_omega_even;
-    double m_omega_odd;
-    double m_omega_shear;
-    uint32_t m_seed;
-    uint32_t m_time_step;
-};
 
 } // namespace pystencils
 } // namespace walberla
