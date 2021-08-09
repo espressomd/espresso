@@ -276,11 +276,15 @@ public:
     auto const kT = get_kT();
     auto block = m_blocks->begin();
     auto collide = std::make_shared<CollisionModel>(
-        m_last_applied_force_field_id, m_pdf_field_id,
-        uint32_c(m_blocks->getBlockCellBB(*block).xMin()),
-        uint32_c(m_blocks->getBlockCellBB(*block).yMin()),
-        uint32_c(m_blocks->getBlockCellBB(*block).zMin()),
-        kT, omega, omega, omega_odd, omega, seed, time_step);
+        m_last_applied_force_field_id, m_pdf_field_id, 0, 0, 0, kT, omega, omega,
+        omega_odd, omega, seed, time_step);
+    collide->block_offset_generator =
+        [this](IBlock *const block, uint32_t &block_offset_0,
+               uint32_t &block_offset_1, uint32_t &block_offset_2) {
+          block_offset_0 = m_blocks->getBlockCellBB(*block).xMin();
+          block_offset_1 = m_blocks->getBlockCellBB(*block).yMin();
+          block_offset_2 = m_blocks->getBlockCellBB(*block).zMin();
+        };
 
     // Add steps to the integration loop
     m_time_loop = std::make_shared<timeloop::SweepTimeloop>(
