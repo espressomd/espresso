@@ -113,8 +113,7 @@ def earmark_generated_kernels():
                     f.write(earmark + content)
 
 
-def generate_collision_sweep(
-        ctx, lb_method, collision_rule, class_name, params):
+def generate_fields(lb_method):
     dtype = "float64" 
     field_layout = "fzyx"
     q = len(lb_method.stencil)
@@ -137,6 +136,15 @@ def generate_collision_sweep(
         layout=field_layout,
         index_shape=(q,)
     )
+
+    return src_field, dst_field
+
+
+def generate_collision_sweep(
+        ctx, lb_method, collision_rule, class_name, params):
+
+    # Symbols for PDF (twice, due to double buffering)
+    src_field, dst_field = generate_fields(lb_method)
 
     # Generate collision kernel
     collide_update_rule = create_lbm_kernel(
@@ -151,28 +159,11 @@ def generate_collision_sweep(
 
 
 def generate_stream_sweep(ctx, lb_method, class_name, params):
-    dtype = "float64" 
+    dtype = "float64"
     field_layout = "fzyx"
-    q = len(lb_method.stencil)
-    dim = len(lb_method.stencil[0])
 
     # Symbols for PDF (twice, due to double buffering)
-    src_field = ps.Field.create_generic(
-        'pdfs',
-        dim,
-        dtype,
-        index_dimensions=1,
-        layout=field_layout,
-        index_shape=(q,)
-    )
-    dst_field = ps.Field.create_generic(
-        'pdfs_tmp',
-        dim,
-        dtype,
-        index_dimensions=1,
-        layout=field_layout,
-        index_shape=(q,)
-    )
+    src_field, dst_field = generate_fields(lb_method)
 
     # Generate stream kernel
     stream_update_rule = create_stream_pull_only_kernel(
