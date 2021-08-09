@@ -275,10 +275,10 @@ public:
     const real_t omega_odd = odd_mode_relaxation_rate(omega);
     auto const kT = get_kT();
     auto block = m_blocks->begin();
-    auto collide = std::make_shared<CollisionModel>(
-        m_last_applied_force_field_id, m_pdf_field_id, 0, 0, 0, kT, omega, omega,
-        omega_odd, omega, seed, time_step);
-    collide->block_offset_generator =
+    auto collide =
+        CollisionModel(m_last_applied_force_field_id, m_pdf_field_id, 0, 0, 0,
+                       kT, omega, omega, omega_odd, omega, seed, time_step);
+    collide.block_offset_generator =
         [this](IBlock *const block, uint32_t &block_offset_0,
                uint32_t &block_offset_1, uint32_t &block_offset_2) {
           block_offset_0 = m_blocks->getBlockCellBB(*block).xMin();
@@ -292,7 +292,7 @@ public:
 
     m_time_loop->add() << timeloop::Sweep(makeSharedSweep(m_reset_force),
                                           "Reset force fields");
-    m_time_loop->add() << timeloop::Sweep(*collide, "LB collide")
+    m_time_loop->add() << timeloop::Sweep(collide, "LB collide")
                        << timeloop::AfterFunction(
                               *m_pdf_streaming_communication, "communication");
     m_time_loop->add() << timeloop::Sweep(
