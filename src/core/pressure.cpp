@@ -49,19 +49,17 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <memory>
 #include <utility>
 
-/** Pressure tensor of the system */
-Observable_stat obs_pressure{9};
+static std::shared_ptr<Observable_stat> calculate_pressure_local() {
 
-Observable_stat const &get_obs_pressure() { return obs_pressure; }
-
-void pressure_calc() {
+  auto obs_pressure_ptr = std::make_shared<Observable_stat>(9);
 
   if (!interactions_sanity_checks())
-    return;
+    return obs_pressure_ptr;
 
-  obs_pressure = Observable_stat{9};
+  auto &obs_pressure = *obs_pressure_ptr;
 
   on_observable_calc();
 
@@ -73,7 +71,8 @@ void pressure_calc() {
   }
 
   short_range_loop(
-      [](Particle const &p1, int bond_id, Utils::Span<Particle *> partners) {
+      [&obs_pressure](Particle const &p1, int bond_id,
+                      Utils::Span<Particle *> partners) {
         auto const &iaparams = bonded_ia_params[bond_id];
         auto const result = calc_bonded_pressure_tensor(iaparams, p1, partners);
         if (result) {
@@ -88,7 +87,8 @@ void pressure_calc() {
         }
         return true;
       },
-      [](Particle const &p1, Particle const &p2, Distance const &d) {
+      [&obs_pressure](Particle const &p1, Particle const &p2,
+                      Distance const &d) {
         add_non_bonded_pair_virials(p1, p2, d.vec21, sqrt(d.dist2),
                                     obs_pressure);
       },
@@ -114,19 +114,20 @@ void pressure_calc() {
   obs_pressure.rescale(volume);
 
   obs_pressure.mpi_reduce();
+  return obs_pressure_ptr;
 }
 
-void update_pressure_local(int, int) { pressure_calc(); }
+REGISTER_CALLBACK_MASTER_RANK(calculate_pressure_local)
 
-REGISTER_CALLBACK(update_pressure_local)
-
-void update_pressure() { mpi_call_all(update_pressure_local, -1, -1); }
+std::shared_ptr<Observable_stat> calculate_pressure() {
+  return mpi_call(Communication::Result::master_rank, calculate_pressure_local);
+}
 
 Utils::Vector9d observable_compute_pressure_tensor() {
-  update_pressure();
+  auto const obs_pressure = calculate_pressure();
   Utils::Vector9d pressure_tensor{};
   for (std::size_t j = 0; j < 9; j++) {
-    pressure_tensor[j] = obs_pressure.accumulate(0, j);
+    pressure_tensor[j] = obs_pressure->accumulate(0, j);
   }
   return pressure_tensor;
 }

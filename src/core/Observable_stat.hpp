@@ -44,7 +44,7 @@ class Observable_stat {
 public:
   explicit Observable_stat(std::size_t chunk_size);
 
-  auto chunk_size() const { return m_chunk_size; }
+  auto get_chunk_size() const { return m_chunk_size; }
 
   /** Accumulate values.
    *  @param acc    Initial value for the accumulator.
@@ -78,7 +78,7 @@ public:
   Utils::Span<double> coulomb;
   /** Contribution(s) from dipolar interactions. */
   Utils::Span<double> dipolar;
-  /** Contribution(s) from virtual sites (accumulated). */
+  /** Contribution from virtual sites (accumulated). */
   Utils::Span<double> virtual_sites;
   /** Contribution from external fields (accumulated). */
   Utils::Span<double> external_fields;
