@@ -96,7 +96,7 @@ cdef extern from "energy.hpp":
 cdef extern from "dpd.hpp":
     Vector9d dpd_stress()
 
-cdef inline get_obs_contribs(Span[double] contributions, int size,
+cdef inline get_obs_contribs(Span[double] contributions,
                              cbool calc_scalar_pressure):
     """
     Convert an Observable_stat range of contributions into a correctly
@@ -115,7 +115,7 @@ cdef inline get_obs_contribs(Span[double] contributions, int size,
     """
     cdef np.ndarray value
     value = create_nparray_from_double_span(contributions)
-    if size == 9:
+    if contributions.size() == 9:
         if calc_scalar_pressure:
             return np.einsum('...ii', value.reshape((-1, 3, 3))) / 3
         else:
@@ -123,7 +123,7 @@ cdef inline get_obs_contribs(Span[double] contributions, int size,
     else:
         return value
 
-cdef inline get_obs_contrib(Span[double] contribution, int size,
+cdef inline get_obs_contrib(Span[double] contribution,
                             cbool calc_scalar_pressure):
     """
     Convert an Observable_stat contribution into a correctly
@@ -133,15 +133,13 @@ cdef inline get_obs_contrib(Span[double] contribution, int size,
     ----------
     contributions : (N,) array_like of :obj:`float`
         Flattened array of energy/pressure contributions from an observable.
-    size : :obj:`int`, \{1, 9\}
-        Dimensionality of the data.
     calc_scalar_pressure : :obj:`bool`
         Whether to calculate a scalar pressure (only relevant when
         ``contributions`` is a pressure tensor).
 
     """
     cdef np.ndarray value
-    value = get_obs_contribs(contribution, size, calc_scalar_pressure)
+    value = get_obs_contribs(contribution, calc_scalar_pressure)
     if value.shape[0] == 1:
         return value[0]
     return value
@@ -185,55 +183,48 @@ cdef inline Observable_stat_to_dict(Observable_stat * obs, cbool calc_sp):
 
     """
 
-    cdef int i
-    cdef int j
-
-    size = obs.get_chunk_size()
+    cdef size_t i
+    cdef size_t j
+    cdef size_t obs_dim = obs.get_chunk_size()
+    cdef size_t n_bonded = bonded_ia_params_size()
+    cdef size_t n_nonbonded = <size_t > max_seen_particle_type
+    cdef double[9] total
 
     # Dict to store the results
     p = {}
 
     # Total contribution
-    if size == 1:
-        p["total"] = obs.accumulate()
-    else:
-        total = np.zeros((9,), dtype=float)
-        for i in range(9):
-            total[i] = obs.accumulate(0.0, i)
-        total = total.reshape((3, 3))
-        if calc_sp:
-            p["total"] = np.einsum('ii', total) / 3
-        else:
-            p["total"] = total
+
+    for i in range(obs_dim):
+        total[i] = obs.accumulate(0.0, i)
+    p["total"] = get_obs_contrib(Span[double](total, obs_dim), calc_sp)
 
     # Kinetic
-    p["kinetic"] = get_obs_contrib(obs.kinetic, size, calc_sp)
+    p["kinetic"] = get_obs_contrib(obs.kinetic, calc_sp)
 
     # External
-    p["external_fields"] = get_obs_contrib(obs.external_fields, size, calc_sp)
+    p["external_fields"] = get_obs_contrib(obs.external_fields, calc_sp)
 
     # Bonded
-    total_bonded = observable_stat_matrix(size, calc_sp)
-    for i in range(bonded_ia_params_size()):
+    total_bonded = observable_stat_matrix(obs_dim, calc_sp)
+    for i in range(n_bonded):
         if not bonded_ia_params_is_type[CoreNoneBond](i):
-            val = get_obs_contrib(obs.bonded_contribution(i), size, calc_sp)
+            val = get_obs_contrib(obs.bonded_contribution(i), calc_sp)
             p["bonded", i] = val
             total_bonded += val
     p["bonded"] = total_bonded
 
     # Non-Bonded interactions, total as well as intra and inter molecular
-    total_intra = observable_stat_matrix(size, calc_sp)
-    total_inter = observable_stat_matrix(size, calc_sp)
-    for i in range(max_seen_particle_type):
-        for j in range(i, max_seen_particle_type):
+    total_intra = observable_stat_matrix(obs_dim, calc_sp)
+    total_inter = observable_stat_matrix(obs_dim, calc_sp)
+    for i in range(n_nonbonded):
+        for j in range(i, n_nonbonded):
             intra = get_obs_contrib(
-                obs.non_bonded_intra_contribution(
-                    i, j), size, calc_sp)
+                obs.non_bonded_intra_contribution(i, j), calc_sp)
             total_intra += intra
             p["non_bonded_intra", i, j] = intra
             inter = get_obs_contrib(
-                obs.non_bonded_inter_contribution(
-                    i, j), size, calc_sp)
+                obs.non_bonded_inter_contribution(i, j), calc_sp)
             total_inter += inter
             p["non_bonded_inter", i, j] = inter
             p["non_bonded", i, j] = intra + inter
@@ -245,7 +236,7 @@ cdef inline Observable_stat_to_dict(Observable_stat * obs, cbool calc_sp):
     # Electrostatics
     IF ELECTROSTATICS == 1:
         cdef np.ndarray coulomb
-        coulomb = get_obs_contribs(obs.coulomb, size, calc_sp)
+        coulomb = get_obs_contribs(obs.coulomb, calc_sp)
         for i in range(coulomb.shape[0]):
             p["coulomb", i] = coulomb[i]
         p["coulomb"] = np.sum(coulomb, axis=0)
@@ -253,7 +244,7 @@ cdef inline Observable_stat_to_dict(Observable_stat * obs, cbool calc_sp):
     # Dipoles
     IF DIPOLES == 1:
         cdef np.ndarray dipolar
-        dipolar = get_obs_contribs(obs.dipolar, size, calc_sp)
+        dipolar = get_obs_contribs(obs.dipolar, calc_sp)
         for i in range(dipolar.shape[0]):
             p["dipolar", i] = dipolar[i]
         p["dipolar"] = np.sum(dipolar, axis=0)
@@ -261,7 +252,7 @@ cdef inline Observable_stat_to_dict(Observable_stat * obs, cbool calc_sp):
     # virtual sites
     IF VIRTUAL_SITES == 1:
         cdef np.ndarray virtual_sites
-        virtual_sites = get_obs_contribs(obs.virtual_sites, size, calc_sp)
+        virtual_sites = get_obs_contribs(obs.virtual_sites, calc_sp)
         for i in range(virtual_sites.shape[0]):
             p["virtual_sites", i] = virtual_sites[i]
         p["virtual_sites"] = np.sum(virtual_sites, axis=0)
