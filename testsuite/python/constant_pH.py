@@ -55,6 +55,9 @@ class ConstantpHTest(ut.TestCase):
             default_charges={type_HA: 0, type_A: -1, type_H: +1})
         RE.constant_pH = pH
 
+        # Set the hidden particle type to the lowest possible number to speed up the simulation
+        RE.set_non_interacting_type(3)
+
         # equilibration
         RE.reaction(800)
 

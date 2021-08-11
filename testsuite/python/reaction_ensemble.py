@@ -90,6 +90,9 @@ class ReactionEnsembleTest(ut.TestCase):
         RE = ReactionEnsembleTest.RE
         target_alpha = ReactionEnsembleTest.target_alpha
 
+        # Set the hidden particle type to the lowest possible number to speed up the simulation
+        RE.set_non_interacting_type(3)
+
         # chemical warmup - get close to chemical equilibrium before we start
         # sampling
         RE.reaction(5 * N0)
