@@ -416,6 +416,26 @@ cdef class System:
 
         return make_array_locked(mi_vec)
 
+    def velocity_difference(self, p1, p2):
+        """Return the velocity difference between two particles,
+        considering Lees-Edwards boundary conditions, if active
+
+        Parameters
+        ----------
+        p1 : :class:`~espressomd.particle_data.ParticleHandle`
+        p2 : :class:`~espressomd.particle_data.ParticleHandle`
+
+        """
+
+        cdef Vector3d pos1 = make_Vector3d(p1.pos_folded)
+        cdef Vector3d pos2 = make_Vector3d(p2.pos_folded)
+
+        cdef Vector3d v1 = make_Vector3d(p1.v)
+        cdef Vector3d v2 = make_Vector3d(p2.v)
+        cdef Vector3d vd = box_geo.velocity_difference(pos2, pos1, v2, v1)
+
+        return make_array_locked(vd)
+
     def rotate_system(self, **kwargs):
         """Rotate the particles in the system about the center of mass.
 

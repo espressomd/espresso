@@ -155,6 +155,46 @@ class LeesEdwards(ut.TestCase):
                 np.testing.assert_almost_equal(p.pos, expected_pos)
                 np.testing.assert_almost_equal(p.v, -vel - expected_delta_vel)
 
+    def test_distance_vel_diff(self):
+        """check distance and velocity difference calculation across LE boundary
+        """
+        \
+        system = self.system
+        system.time = 0.0
+        system.part.clear()
+        system.lees_edwards.protocol = lin_protocol
+        epsilon = 0.01
+#
+        dir = [0, 1, 2]
+#
+        for sheardir in dir:
+            for shear_plane_normal in dir:
+                if sheardir != shear_plane_normal:
+                    #
+                    system.lees_edwards.shear_direction = sheardir
+                    system.lees_edwards.shear_plane_normal = shear_plane_normal
+                    shear_axis = axis(sheardir)
+
+                    system.lees_edwards.protocol = lin_protocol
+                    p1 = system.part.add(
+                        pos=[epsilon] * 3, v=np.random.random(3), fix=[1] * 3)
+                    p2 = system.part.add(
+                        pos=system.box_l - epsilon, v=np.random.random(3), fix=[1] * 3)
+                    r_euclid = -2 * np.array([epsilon] * 3)
+
+#
+                    # check distance 
+                    np.testing.assert_allclose(
+                        system.distance_vec(p1, p2), r_euclid + system.lees_edwards.pos_offset * shear_axis)
+                    np.testing.assert_allclose(
+                        np.copy(system.distance_vec(p1, p2)),
+                        -np.copy(system.distance_vec(p2, p1)))
+
+                    # Ceck velocity difference
+                    np.testing.assert_allclose(
+                        system.velocity_difference(p1, p2),
+                        p2.v - p1.v - system.lees_edwards.shear_velocity * shear_axis)
+
     def test_interactions(self):
         """We place two particles crossing a boundary and connect them with an unbonded
            and bonded interaction. We test with the resulting stress tensor if the offset

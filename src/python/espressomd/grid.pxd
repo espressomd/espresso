@@ -27,6 +27,7 @@ cdef extern from "grid.hpp":
         const Vector3d & length()
         void set_length(Vector3d)
         Vector3d get_mi_vector(Vector3d, Vector3d)
+        Vector3d velocity_difference(Vector3d, Vector3d, Vector3d, Vector3d)
 
     BoxGeometry box_geo
 

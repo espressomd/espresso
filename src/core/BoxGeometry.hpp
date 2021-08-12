@@ -20,6 +20,7 @@
 #define CORE_BOX_GEOMETRY_HPP
 
 #include "algorithm/periodic_fold.hpp"
+#include "utils/math/sgn.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -182,6 +183,23 @@ public:
   LeesEdwardsBC &lees_edwards_bc() { return m_lees_edwards_bc; };
   const LeesEdwardsBC &clees_edwards_bc() const { return m_lees_edwards_bc; };
   void set_lees_edwards_bc(LeesEdwardsBC bc) { m_lees_edwards_bc = bc; }
+  /** Calculate the velocity difference including the Lees Edwards velocity*/
+  Utils::Vector3d velocity_difference(Utils::Vector3d const &x,
+                                      Utils::Vector3d const &y,
+                                      Utils::Vector3d const &u,
+                                      Utils::Vector3d const &v) const {
+
+    auto ret = u - v;
+
+    if (type() == BoxType::LEES_EDWARDS) {
+      auto const &le = m_lees_edwards_bc;
+      auto const dy = x[le.shear_plane_normal] - y[le.shear_plane_normal];
+      if (fabs(dy) > 0.5 * length_half()[le.shear_plane_normal]) {
+        ret[le.shear_direction] -= Utils::sgn(dy) * le.shear_velocity;
+      }
+    }
+    return ret;
+  }
 };
 
 /** @brief Fold a coordinate to primary simulation box.
