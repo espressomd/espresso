@@ -155,6 +155,23 @@ class LeesEdwards(ut.TestCase):
                 np.testing.assert_almost_equal(p.pos, expected_pos)
                 np.testing.assert_almost_equal(p.v, -vel - expected_delta_vel)
 
+    def test_trajectory_reconstruction(self):
+        system = self.system
+        system.part.clear()
+
+        system.lees_edwards.protocol = lin_protocol
+
+        pos = system.box_l - 0.01
+        vel = np.array([0, 1, 0])
+        p = system.part.add(pos=pos, v=vel)
+
+        system.time = 0.0
+        system.integrator.run(1)
+        print(p.pos)
+        print(p.lees_edwards_offset)
+        print(p.lees_edwards_flag)
+
+
     def test_distance_vel_diff(self):
         """check distance and velocity difference calculation across LE boundary
         """
