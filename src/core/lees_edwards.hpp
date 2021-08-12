@@ -58,12 +58,16 @@ extern double pos_offset_at_last_resort;
 
 inline void update_pos_offset(const ActiveProtocol &protocol, BoxGeometry &box,
                               double time) {
-  box.lees_edwards_bc().pos_offset = get_pos_offset(time, protocol);
+  if (box.type() == BoxType::LEES_EDWARDS) {
+    box.lees_edwards_bc().pos_offset = get_pos_offset(time, protocol);
+  };
 }
 
 inline void update_shear_velocity(const ActiveProtocol &protocol,
                                   BoxGeometry &box, double time) {
-  box.lees_edwards_bc().shear_velocity = get_shear_velocity(time, protocol);
+  if (box.type() == BoxType::LEES_EDWARDS) {
+    box.lees_edwards_bc().shear_velocity = get_shear_velocity(time, protocol);
+  }
 }
 
 inline void on_resort(const BoxGeometry &box) {
