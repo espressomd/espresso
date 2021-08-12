@@ -7,6 +7,8 @@ import espressomd.lees_edwards as lees_edwards
 import unittest as ut
 import numpy as np
 
+import matplotlib.pyplot as plt
+
 params_lin = {'shear_velocity': 1.2, 'initial_pos_offset': 0.1, 'time_0': 0.1}
 lin_protocol = lees_edwards.LinearShear(**params_lin)
 params_osc = {'amplitude': 2.3, 'omega': 2.51, 'time_0': -2.1}
@@ -159,7 +161,10 @@ class LeesEdwards(ut.TestCase):
         system = self.system
         system.part.clear()
 
-        system.lees_edwards.protocol = lin_protocol
+        system.lees_edwards.protocol = lees_edwards.LinearShear(
+            shear_velocity = 1., initial_pos_offset = 0.0, time_0 = 0.0)
+        system.lees_edwards.shear_direction = 0
+        system.lees_edwards.shear_plane_normal = 1
 
         pos = system.box_l - 0.01
         vel = np.array([0, 1, 0])
@@ -167,10 +172,29 @@ class LeesEdwards(ut.TestCase):
 
         system.time = 0.0
         system.integrator.run(1)
+        print(pos)
         print(p.pos)
         print(p.lees_edwards_offset)
         print(p.lees_edwards_flag)
 
+        x1 = pos[0]
+        y1 = pos[1]
+
+        x2 = p.pos[0]
+        y2 = p.pos[1]
+
+        x3 = pos[0] + p.lees_edwards_flag * p.lees_edwards_offset
+        y3 = system.box_l[1]
+        print(x3)
+
+        slope1 = (y2-y1)/(x2-x1)
+        print("Slope:", slope1)
+
+        slope2 = (y3-y1)/(x3-x1)
+        print("Slope:", slope2)
+
+        plt.plot([x1,x2,x3],[y1,y2,y3], 's')
+        plt.show()
 
     def test_distance_vel_diff(self):
         """check distance and velocity difference calculation across LE boundary
