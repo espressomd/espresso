@@ -36,6 +36,9 @@
 #include "mpiio/initialize.hpp"
 #include "observables/initialize.hpp"
 #include "virtual_sites/initialize.hpp"
+#ifdef EK_WALBERLA
+#include "walberla/initialize.hpp"
+#endif
 
 namespace ScriptInterface {
 void initialize(Utils::Factory<ObjectHandle> *f) {
@@ -53,6 +56,9 @@ void initialize(Utils::Factory<ObjectHandle> *f) {
   VirtualSites::initialize(f);
   MPIIO::initialize(f);
   CollisionDetection::initialize(f);
+#ifdef EK_WALBERLA
+  walberla::initialize(f);
+#endif
 
   f->register_new<ComFixed>("ComFixed");
   f->register_new<CylindricalTransformationParameters>(
