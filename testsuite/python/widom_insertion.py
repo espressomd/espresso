@@ -75,7 +75,8 @@ class WidomInsertionTest(ut.TestCase):
     Widom = espressomd.reaction_ensemble.WidomInsertion(
         kT=TEMPERATURE, seed=1)
 
-    # Set the hidden particle type to the lowest possible number to speed up the simulation
+    # Set the hidden particle type to the lowest possible number to speed
+    # up the simulation
     Widom.set_non_interacting_type(1)
 
     def setUp(self):
