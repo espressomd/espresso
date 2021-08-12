@@ -82,8 +82,11 @@ if args.mode == "reaction_ensemble":
         kT=1,
         exclusion_radius=1,
         seed=77)
-    RE.add_reaction(gamma=K_diss, reactant_types=[types["HA"]], reactant_coefficients=[1],
-                    product_types=[types["A-"], types["H+"]], product_coefficients=[1, 1],
+    RE.add_reaction(gamma=K_diss,
+                    reactant_types=[types["HA"]],
+                    reactant_coefficients=[1],
+                    product_types=[types["A-"], types["H+"]],
+                    product_coefficients=[1, 1],
                     default_charges=charge_dict)
 elif args.mode == "constant_pH_ensemble":
     RE = espressomd.reaction_ensemble.ConstantpHEnsemble(
