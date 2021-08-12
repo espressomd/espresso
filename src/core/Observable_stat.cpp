@@ -24,32 +24,42 @@
 #include "config.hpp"
 
 #include "bonded_interactions/bonded_interaction_data.hpp"
+#include "communication.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include <utils/Span.hpp>
+#include <utils/index.hpp>
+
+#include <boost/mpi/collectives/reduce.hpp>
 
 #include <cassert>
 #include <cstddef>
+#include <functional>
 #include <vector>
+
+inline std::size_t max_non_bonded_pairs() {
+  auto const n = static_cast<std::size_t>(max_seen_particle_type);
+  return (n * (n + 1)) / 2;
+}
 
 Observable_stat::Observable_stat(std::size_t chunk_size)
     : m_chunk_size(chunk_size) {
   // number of chunks for different interaction types
-  auto constexpr n_coulomb = 2;
-  auto constexpr n_dipolar = 2;
+  constexpr std::size_t n_coulomb = 2;
+  constexpr std::size_t n_dipolar = 2;
 #ifdef VIRTUAL_SITES
-  auto constexpr n_vs = 1;
+  constexpr std::size_t n_vs = 1;
 #else
-  auto constexpr n_vs = 0;
+  constexpr std::size_t n_vs = 0;
 #endif
   auto const n_bonded = bonded_ia_params.size();
   auto const n_non_bonded = max_non_bonded_pairs();
   constexpr std::size_t n_ext_fields = 1; // reduction over all fields
   constexpr std::size_t n_kinetic = 1; // linear+angular kinetic contributions
 
-  // resize vector
-  auto const total = n_kinetic + n_bonded + 2 * n_non_bonded + n_coulomb +
-                     n_dipolar + n_vs + n_ext_fields;
-  m_data = std::vector<double>(m_chunk_size * total);
+  auto const n_elements = n_kinetic + n_bonded + 2 * n_non_bonded + n_coulomb +
+                          n_dipolar + n_vs + n_ext_fields;
+  m_data = std::vector<double>(m_chunk_size * n_elements);
 
   // spans for the different contributions
   kinetic = Utils::Span<double>(m_data.data(), m_chunk_size);
@@ -64,4 +74,21 @@ Observable_stat::Observable_stat(std::size_t chunk_size)
   non_bonded_inter =
       Utils::Span<double>(non_bonded_intra.end(), n_non_bonded * m_chunk_size);
   assert(non_bonded_inter.end() == (m_data.data() + m_data.size()));
+}
+
+Utils::Span<double>
+Observable_stat::non_bonded_contribution(Utils::Span<double> base_pointer,
+                                         int type1, int type2) const {
+  auto const offset = static_cast<std::size_t>(Utils::upper_triangular(
+      std::min(type1, type2), std::max(type1, type2), max_seen_particle_type));
+  return {base_pointer.begin() + offset * m_chunk_size, m_chunk_size};
+}
+
+void Observable_stat::mpi_reduce() {
+  if (comm_cart.rank() == 0) {
+    std::vector<double> temp(m_data);
+    boost::mpi::reduce(comm_cart, temp, m_data, std::plus<>{}, 0);
+  } else {
+    boost::mpi::reduce(comm_cart, m_data, std::plus<>{}, 0);
+  }
 }
