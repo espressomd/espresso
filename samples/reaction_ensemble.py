@@ -57,9 +57,16 @@ system.cell_system.skin = 0.4
 
 # Particle setup
 #############################################################
-# type 0 = HA
-# type 1 = A-
-# type 2 = H+
+types = {
+        "HA": 0,
+        "A-": 1,
+        "H+": 2,
+        }
+charge_dict = {
+        0: 0,
+        1: -1,
+        2: +1,
+        }
 
 N0 = 50  # number of titratable units
 K_diss = 0.0088
@@ -75,32 +82,33 @@ if args.mode == "reaction_ensemble":
         kT=1,
         exclusion_radius=1,
         seed=77)
-    RE.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[1],
-                    product_types=[1, 2], product_coefficients=[1, 1],
-                    default_charges={0: 0, 1: -1, 2: +1})
+    RE.add_reaction(gamma=K_diss, reactant_types=[types["HA"]], reactant_coefficients=[1],
+                    product_types=[types["A-"], types["H+"]], product_coefficients=[1, 1],
+                    default_charges=charge_dict)
 elif args.mode == "constant_pH_ensemble":
     RE = espressomd.reaction_ensemble.ConstantpHEnsemble(
         kT=1, exclusion_radius=1, seed=77)
     RE.constant_pH = 2
-    RE.add_reaction(gamma=K_diss, reactant_types=[0],
-                    product_types=[1, 2],
-                    default_charges={0: 0, 1: -1, 2: +1})
+    RE.add_reaction(gamma=K_diss, reactant_types=[types["HA"]],
+                    product_types=[types["A-"], types["H+"]],
+                    default_charges=charge_dict)
 else:
     raise RuntimeError(
         "Please provide either --reaction_ensemble or --constant_pH_ensemble as argument ")
 
 print(RE.get_status())
-system.setup_type_map([0, 1, 2])
+system.setup_type_map(list(types.values()))
 
 
-# Set the hidden particle type to the lowest possible number to speed up the simulation
-RE.set_non_interacting_type(3)
+# Set the hidden particle type to the lowest possible number_of_particles
+# to speed up the simulation
+RE.set_non_interacting_type(max(types.values())+1)
 
 for i in range(10000):
     RE.reaction()
     if i % 100 == 0:
-        print("HA", system.number_of_particles(type=0), "A-",
-              system.number_of_particles(type=1), "H+", system.number_of_particles(type=2))
+        print("HA", system.number_of_particles(type=types["HA"]), "A-",
+              system.number_of_particles(type=types["A-"]), "H+", system.number_of_particles(type=types["H+"]))
 
 print("reaction 0 has acceptance rate: ", RE.get_acceptance_rate_reaction(0))
 print("reaction 1 has acceptance rate: ", RE.get_acceptance_rate_reaction(1))

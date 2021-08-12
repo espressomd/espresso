@@ -97,8 +97,9 @@ RE.add_reaction(
 print(RE.get_status())
 system.setup_type_map([0, 1, 2])
 
-# Set the hidden particle type to the lowest possible number to speed up the simulation
-RE.set_non_interacting_type(len(types))
+# Set the hidden particle type to the lowest possible number to speed
+# up the simulation
+RE.set_non_interacting_type(max(types)+1)
 
 RE.reaction(10000)
 
