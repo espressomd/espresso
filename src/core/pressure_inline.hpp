@@ -138,7 +138,8 @@ calc_bonded_three_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
 }
 
 inline boost::optional<Utils::Matrix<double, 3, 3>>
-calc_bonded_pressure_tensor(Bonded_IA_Parameters const &iaparams, Particle &p1,
+calc_bonded_pressure_tensor(Bonded_IA_Parameters const &iaparams,
+                            Particle const &p1,
                             Utils::Span<Particle *> partners) {
   switch (number_of_partners(iaparams)) {
   case 1:
