@@ -343,25 +343,16 @@ IF ELECTROKINETICS:
                 raise Exception("'es_coupling' is not active.")
 
         def save_checkpoint(self, path):
-            tmp_path = path + ".__tmp__"
-            tmpfile_ek = tempfile.NamedTemporaryFile(mode='w+b')
-            tmpfile_lb = tempfile.NamedTemporaryFile(mode='w+b')
-            ek_save_checkpoint(utils.to_char_pointer(tmpfile_ek.name),
-                               utils.to_char_pointer(tmpfile_lb.name))
-            ek_path = tmp_path + ".ek"
-            lb_path = tmp_path + ".lb"
-            shutil.copy(tmpfile_ek.name, path + ".ek")
-            shutil.copy(tmpfile_lb.name, path + ".lb")
+            raise RuntimeError("EK does not support checkpointing")
 
         def load_checkpoint(self, path):
-            self._activate_method()
-            ek_load_checkpoint(utils.to_char_pointer(path))
+            raise RuntimeError("EK does not support checkpointing")
 
         def add_reaction(self, shape):
-            raise Exception("This method is not implemented yet.")
+            raise NotImplementedError("This method is not implemented yet.")
 
         def add_boundary(self, shape):
-            raise Exception("This method is not implemented yet.")
+            raise NotImplementedError("This method is not implemented yet.")
 
     cdef class ElectrokineticsRoutines(LBFluidRoutines):
 
@@ -387,16 +378,10 @@ IF ELECTROKINETICS:
 
         # __getstate__ and __setstate__ define the pickle interaction
         def __getstate__(self):
-            odict = {}
-            odict["id"] = self.id
-            odict.update(self._params.copy())
-            return odict
+            raise RuntimeError("EK does not support checkpointing")
 
         def __setstate__(self, params):
-            self.id = params["id"]
-            params.pop("id")
-            self._params = params
-            self._set_params_in_es_core()
+            raise RuntimeError("EK does not support checkpointing")
 
         def __str__(self):
             return f"{self.__class__.__name__}({self.get_params()})"

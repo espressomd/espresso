@@ -163,6 +163,12 @@ class ek_charged_plate(ut.TestCase):
                 positive_ions[i, j, 10].density = 0.0
                 negative_ions[i, j, 30].density = 0.0
 
+        # Test error when trying to change ekin parameters after initialisation
+        ek._params.update({'agrid': 3,
+                           'T': 0.01})
+        with self.assertRaises(RuntimeError):
+            ek._set_params_in_es_core()
+
 
 if __name__ == "__main__":
     ut.main()
