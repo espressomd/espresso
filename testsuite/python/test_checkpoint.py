@@ -35,9 +35,6 @@ modes = {x for mode in set("@TEST_COMBINATION@".upper().split('-'))
 
 LB = ('LB.CPU' in modes or 'LB.GPU' in modes and espressomd.gpu_available())
 
-EK = ('EK.GPU' in modes and espressomd.gpu_available()
-      and espressomd.has_features('ELECTROKINETICS'))
-
 
 class CheckpointTest(ut.TestCase):
 
@@ -103,45 +100,6 @@ class CheckpointTest(ut.TestCase):
         for key in reference:
             self.assertIn(key, state)
             self.assertAlmostEqual(reference[key], state[key], delta=1E-7)
-
-    @utx.skipIfMissingFeatures('ELECTROKINETICS')
-    @ut.skipIf(not EK, "Skipping test due to missing mode.")
-    def test_EK(self):
-        ek = system.actors[0]
-        ek_species = ek.get_params()['species'][0]
-        cpt_path = self.checkpoint.checkpoint_dir + "/ek"
-        ek.load_checkpoint(cpt_path)
-        precision = 5
-        m = np.pi / 12
-        nx = int(np.round(system.box_l[0] / ek.get_params()["agrid"]))
-        ny = int(np.round(system.box_l[1] / ek.get_params()["agrid"]))
-        nz = int(np.round(system.box_l[2] / ek.get_params()["agrid"]))
-        grid_3D = np.fromfunction(
-            lambda i, j, k: np.cos(i * m) * np.cos(j * m) * np.cos(k * m),
-            (nx, ny, nz), dtype=float)
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
-                    np.testing.assert_almost_equal(
-                        np.copy(ek_species[i, j, k].density),
-                        grid_3D[i, j, k],
-                        decimal=precision)
-        state = ek.get_params()
-        reference = {'agrid': 0.5, 'lb_density': 26.15,
-                     'viscosity': 1.7, 'friction': 0.0,
-                     'T': 1.1, 'prefactor': 0.88, 'stencil': "linkcentered"}
-        for key in reference:
-            self.assertIn(key, state)
-            self.assertAlmostEqual(reference[key], state[key], delta=1E-5)
-        state_species = ek_species.get_params()
-        reference_species = {'density': 0.4, 'D': 0.02, 'valency': 0.3,
-                             'ext_force_density': [0.01, -0.08, 0.06]}
-        for key in reference_species:
-            self.assertIn(key, state_species)
-            np.testing.assert_allclose(
-                reference_species[key],
-                state_species[key],
-                atol=1E-5)
 
     def test_system_variables(self):
         cell_system_params = system.cell_system.get_state()
@@ -484,8 +442,8 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(list(system.part[1].exclusions), [2])
         self.assertEqual(list(system.part[2].exclusions), [0, 1])
 
-    @ut.skipIf(not LB or EK or not (espressomd.has_features("LB_BOUNDARIES")
-                                    or espressomd.has_features("LB_BOUNDARIES_GPU")), "Missing features")
+    @ut.skipIf(not LB or not (espressomd.has_features("LB_BOUNDARIES")
+                              or espressomd.has_features("LB_BOUNDARIES_GPU")), "Missing features")
     @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
     def test_lb_boundaries(self):
         # check boundaries agree on all MPI nodes
