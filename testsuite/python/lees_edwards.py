@@ -177,24 +177,35 @@ class LeesEdwards(ut.TestCase):
         print(p.lees_edwards_offset)
         print(p.lees_edwards_flag)
 
-        x1 = pos[0]
-        y1 = pos[1]
+        np.testing.assert_almost_equal(p.lees_edwards_flag * 1.0 * system.time_step * 0.5, p.lees_edwards_offset)
+        np.testing.assert_almost_equal(-1 , p.lees_edwards_flag)
 
-        x2 = p.pos[0]
-        y2 = p.pos[1]
+        offset1 = p.lees_edwards_flag * 1.0 * system.time_step * 0.5
 
-        x3 = pos[0] + p.lees_edwards_flag * p.lees_edwards_offset
-        y3 = system.box_l[1]
-        print(x3)
+        system.integrator.run(1)
 
-        slope1 = (y2-y1)/(x2-x1)
-        print("Slope:", slope1)
+        np.testing.assert_almost_equal(offset1 - 1.0 * 0.5, p.lees_edwards_offset)
+        np.testing.assert_almost_equal(0 , p.lees_edwards_flag)
 
-        slope2 = (y3-y1)/(x3-x1)
-        print("Slope:", slope2)
 
-        plt.plot([x1,x2,x3],[y1,y2,y3], 's')
-        plt.show()
+#        x1 = pos[0]
+#        y1 = pos[1]
+#
+#        x2 = p.pos[0]
+#        y2 = p.pos[1]
+#
+#        x3 = pos[0] + p.lees_edwards_flag * p.lees_edwards_offset
+#        y3 = system.box_l[1]
+#        print(x3)
+#
+#        slope1 = (y2-y1)/(x2-x1)
+#        print("Slope:", slope1)
+#
+#        slope2 = (y3-y1)/(x3-x1)
+#        print("Slope:", slope2)
+#
+#        plt.plot([x1,x2,x3],[y1,y2,y3], 's')
+#        plt.show()
 
     def test_distance_vel_diff(self):
         """check distance and velocity difference calculation across LE boundary
