@@ -30,6 +30,10 @@ public:
                      [this]() { return m_ekinstance->get_kT(); }}});
   }
 
+  [[nodiscard]] std::shared_ptr<EKinWalberlaBase<double>> get_ekinstance() {
+    return m_ekinstance;
+  }
+
 private:
   /* The actual constraint */
   std::shared_ptr<EKinWalberlaBase<double>> m_ekinstance;

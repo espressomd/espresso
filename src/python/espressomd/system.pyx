@@ -44,6 +44,8 @@ if LB_BOUNDARIES:
     from .lbboundaries import LBBoundaries
 if EK_BOUNDARIES:
     from .ekboundaries import EKBoundaries
+IF EK_WALBERLA:
+    from .EKSpecies import EKContainer
 from .comfixed import ComFixed
 from .utils cimport check_type_or_throw_except
 from .utils import handle_errors, array_locked
@@ -158,6 +160,8 @@ cdef class System:
         """:class:`espressomd.lbboundaries.LBBoundaries`"""
         ekboundaries
         """:class:`espressomd.ekboundaries.EKBoundaries`"""
+        ekcontainer
+        """:class:`espressomd.EKSpecies.EKContainer`"""
         collision_detection
         """:class:`espressomd.collision_detection.CollisionDetection`"""
         cuda_init_handle
@@ -198,6 +202,8 @@ cdef class System:
                 self.lbboundaries = LBBoundaries()
             if EK_BOUNDARIES:
                 self.ekboundaries = EKBoundaries()
+            IF EK_WALBERLA:
+                self.ekcontainer = EKContainer()
             self.non_bonded_inter = interactions.NonBondedInteractions()
             self.part = particle_data.ParticleList()
             self.thermostat = Thermostat()
@@ -239,6 +245,9 @@ cdef class System:
         IF EK_BOUNDARIES:
             odict['ekboundaries'] = System.__getattribute__(
                 self, "ekboundaries")
+        IF EK_WALBERLA:
+            odict['ekcontainer'] = System.__getattribute__(
+                self, "ekcontainer")
         odict['integrator'] = System.__getattribute__(self, "integrator")
         odict['thermostat'] = System.__getattribute__(self, "thermostat")
         IF LB_WALBERLA:
