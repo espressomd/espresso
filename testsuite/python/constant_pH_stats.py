@@ -30,15 +30,15 @@ class ReactionEnsembleTest(ut.TestCase):
     N0 = 40
     c0 = 0.00028
     types = {
-            "HA": 0,
-            "A-": 1,
-            "H+": 5,
-            }
+        "HA": 0,
+        "A-": 1,
+        "H+": 5,
+    }
     charges_dict = {
-            0: 0,
-            1: -1,
-            5: +1,
-            }
+        0: 0,
+        1: -1,
+        5: +1,
+    }
     temperature = 1.0
     # choose target alpha not too far from 0.5 to get good statistics in a
     # small number of steps
@@ -79,7 +79,7 @@ class ReactionEnsembleTest(ut.TestCase):
 
         # Set the hidden particle type to the lowest possible number to speed
         # up the simulation
-        RE.set_non_interacting_type(max(types.values())+1)
+        RE.set_non_interacting_type(max(types.values()) + 1)
 
         # chemical warmup - get close to chemical equilibrium before we start
         # sampling

@@ -58,15 +58,15 @@ system.cell_system.skin = 0.4
 # Particle setup
 #############################################################
 types = {
-        "HA": 0,
-        "A-": 1,
-        "H+": 2,
-        }
+    "HA": 0,
+    "A-": 1,
+    "H+": 2,
+}
 charge_dict = {
-        0: 0,
-        1: -1,
-        2: +1,
-        }
+    0: 0,
+    1: -1,
+    2: +1,
+}
 
 N0 = 50  # number of titratable units
 K_diss = 0.0088
@@ -102,7 +102,7 @@ system.setup_type_map(list(types.values()))
 
 # Set the hidden particle type to the lowest possible number_of_particles
 # to speed up the simulation
-RE.set_non_interacting_type(max(types.values())+1)
+RE.set_non_interacting_type(max(types.values()) + 1)
 
 for i in range(10000):
     RE.reaction()

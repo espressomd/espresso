@@ -37,15 +37,15 @@ class ReactionEnsembleTest(ut.TestCase):
     N0 = 40
     c0 = 0.00028
     types = {
-            "HA": 0,
-            "A-": 1,
-            "H+": 2,
-            }
+        "HA": 0,
+        "A-": 1,
+        "H+": 2,
+    }
     charge_dict = {
-            0: 0,
-            1: -1,
-            2: +1,
-            }
+        0: 0,
+        1: -1,
+        2: +1,
+    }
     target_alpha = 0.6
     # We get best statistics at alpha=0.5 Then the test is less sensitive to
     # the exact sequence of random numbers and does not require hard-coded
@@ -88,7 +88,7 @@ class ReactionEnsembleTest(ut.TestCase):
 
     def test_ideal_titration_curve(self):
         N0 = ReactionEnsembleTest.N0
-        types =  ReactionEnsembleTest.types
+        types = ReactionEnsembleTest.types
         system = ReactionEnsembleTest.system
         gamma = ReactionEnsembleTest.gamma
 
@@ -97,7 +97,7 @@ class ReactionEnsembleTest(ut.TestCase):
 
         # Set the hidden particle type to the lowest possible number to speed
         # up the simulation
-        RE.set_non_interacting_type(max(types.values())+1)
+        RE.set_non_interacting_type(max(types.values()) + 1)
 
         # chemical warmup - get close to chemical equilibrium before we start
         # sampling

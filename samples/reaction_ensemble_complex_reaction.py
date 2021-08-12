@@ -97,7 +97,7 @@ numbers = {type_A: [], type_B: [], type_C: [], type_D: [], type_E: []}
 
 # Set the hidden particle type to the lowest possible number to speed 
 # up the simulation
-RE.set_non_interacting_type(max(types)+1)
+RE.set_non_interacting_type(max(types) + 1)
 
 # warmup
 RE.reaction(200)

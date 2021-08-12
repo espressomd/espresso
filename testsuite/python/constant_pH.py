@@ -33,15 +33,15 @@ class ConstantpHTest(ut.TestCase):
         N0 = 40
         c0 = 0.00028
         types = {
-                "HA": 0,
-                "A-": 1,
-                "H+": 5,
-                }
+            "HA": 0,
+            "A-": 1,
+            "H+": 5,
+        }
         charges_dict = {
-                0: 0,
-                1: -1,
-                5: +1,
-                }
+            0: 0,
+            1: -1,
+            5: +1,
+        }
         pH = 2.0
         pKa = 2.5
         box_l = (N0 / c0)**(1.0 / 3.0)
@@ -64,7 +64,7 @@ class ConstantpHTest(ut.TestCase):
 
         # Set the hidden particle type to the lowest possible number to speed
         # up the simulation
-        RE.set_non_interacting_type(max(types.values())+1)
+        RE.set_non_interacting_type(max(types.values()) + 1)
 
         # equilibration
         RE.reaction(800)
