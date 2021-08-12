@@ -20,16 +20,11 @@
 include "myconfig.pxi"
 from . cimport analyze
 from libcpp.vector cimport vector  # import std::vector as vector
-from libcpp cimport bool as cbool
-from .interactions cimport bonded_ia_params_is_type
-from .interactions cimport bonded_ia_params_size
-from .interactions cimport CoreNoneBond
 import numpy as np
 cimport numpy as np
 import scipy.signal
 from .grid cimport box_geo
 
-from collections import OrderedDict
 from .system import System
 from .utils import array_locked, is_valid_type, handle_errors
 from .utils cimport Vector3i, Vector3d, Vector9d
@@ -91,129 +86,6 @@ def autocorrelation(time_series):
     else:
         raise ValueError(f"Only 1-dimensional and 2-dimensional time series "
                          f"are supported, got shape {time_series.shape}")
-
-
-cdef _Observable_stat_to_dict(Observable_stat obs, cbool calc_sp):
-    """Transform an Observable_stat struct to a python dict.
-
-    Parameters
-    ----------
-    obs :
-        Core observable.
-    calc_sp : :obj:`bool`
-        Whether to calculate a scalar pressure (only relevant when
-        ``obs`` is a pressure tensor observable).
-
-    Returns
-    -------
-    :obj:`dict`
-        A dictionary with the following keys:
-
-        * ``"total"``: total contribution
-        * ``"kinetic"``: kinetic contribution
-        * ``"bonded"``: total bonded contribution
-        * ``"bonded", <bond_type>``: bonded contribution which arises from the given bond_type
-        * ``"nonbonded"``: total nonbonded contribution
-        * ``"nonbonded", <type_i>, <type_j>``: nonbonded contribution which arises from the interactions between type_i and type_j
-        * ``"nonbonded_intra", <type_i>, <type_j>``: nonbonded contribution between short ranged forces between type i and j and with the same mol_id
-        * ``"nonbonded_inter", <type_i>, <type_j>``: nonbonded contribution between short ranged forces between type i and j and different mol_ids
-        * ``"coulomb"``: Coulomb contribution, how it is calculated depends on the method
-        * ``"coulomb", <i>``: Coulomb contribution from particle pairs (``i=0``), electrostatics solvers (``i=1``)
-        * ``"dipolar"``: dipolar contribution, how it is calculated depends on the method
-        * ``"dipolar", <i>``: dipolar contribution from particle pairs and magnetic field constraints (``i=0``), magnetostatics solvers (``i=1``)
-        * ``"virtual_sites"``: virtual sites contribution
-        * ``"virtual_sites", <i>``: contribution from virtual site i
-
-    """
-
-    size = obs.chunk_size()
-
-    def set_initial():
-        if size == 9 and not calc_sp:
-            return np.zeros((3, 3), dtype=float)
-        else:
-            return 0.0
-
-    cdef int i
-    cdef int j
-
-    # Dict to store the results
-    p = OrderedDict()
-
-    # Total contribution
-    if size == 1:
-        p["total"] = obs.accumulate()
-    else:
-        total = np.zeros((9,), dtype=float)
-        for i in range(9):
-            total[i] = obs.accumulate(0.0, i)
-        total = total.reshape((3, 3))
-        if calc_sp:
-            p["total"] = np.einsum('ii', total) / 3
-        else:
-            p["total"] = total
-
-    # Kinetic
-    p["kinetic"] = get_obs_contrib(obs.kinetic, size, calc_sp)
-
-    # External
-    p["external_fields"] = get_obs_contrib(obs.external_fields, size, calc_sp)
-
-    # Bonded
-    total_bonded = set_initial()
-    for i in range(bonded_ia_params_size()):
-        if not bonded_ia_params_is_type[CoreNoneBond](i):
-            val = get_obs_contrib(obs.bonded_contribution(i), size, calc_sp)
-            p["bonded", i] = val
-            total_bonded += val
-    p["bonded"] = total_bonded
-
-    # Non-Bonded interactions, total as well as intra and inter molecular
-    total_intra = set_initial()
-    total_inter = set_initial()
-    for i in range(analyze.max_seen_particle_type):
-        for j in range(i, analyze.max_seen_particle_type):
-            intra = get_obs_contrib(
-                obs.non_bonded_intra_contribution(
-                    i, j), size, calc_sp)
-            total_intra += intra
-            p["non_bonded_intra", i, j] = intra
-            inter = get_obs_contrib(
-                obs.non_bonded_inter_contribution(
-                    i, j), size, calc_sp)
-            total_inter += inter
-            p["non_bonded_inter", i, j] = inter
-            p["non_bonded", i, j] = intra + inter
-
-    p["non_bonded_intra"] = total_intra
-    p["non_bonded_inter"] = total_inter
-    p["non_bonded"] = total_intra + total_inter
-
-    # Electrostatics
-    IF ELECTROSTATICS == 1:
-        cdef np.ndarray coulomb
-        coulomb = get_obs_contribs(obs.coulomb, size, calc_sp)
-        for i in range(coulomb.shape[0]):
-            p["coulomb", i] = coulomb[i]
-        p["coulomb"] = np.sum(coulomb, axis=0)
-
-    # Dipoles
-    IF DIPOLES == 1:
-        cdef np.ndarray dipolar
-        dipolar = get_obs_contribs(obs.dipolar, size, calc_sp)
-        for i in range(dipolar.shape[0]):
-            p["dipolar", i] = dipolar[i]
-        p["dipolar"] = np.sum(dipolar, axis=0)
-
-    # virtual sites
-    IF VIRTUAL_SITES == 1:
-        cdef np.ndarray virtual_sites
-        virtual_sites = get_obs_contribs(obs.virtual_sites, size, calc_sp)
-        for i in range(virtual_sites.shape[0]):
-            p["virtual_sites", i] = virtual_sites[i]
-        p["virtual_sites"] = np.sum(virtual_sites, axis=0)
-
-    return p
 
 
 class Analysis:
@@ -385,10 +257,9 @@ class Analysis:
 
         """
 
-        # Update in ESPResSo core
-        analyze.update_pressure()
-
-        return _Observable_stat_to_dict(analyze.get_obs_pressure(), True)
+        obs = analyze.get_scalar_pressure()
+        handle_errors("calculate_pressure() failed")
+        return obs
 
     def pressure_tensor(self):
         """Calculate the instantaneous pressure_tensor (in parallel). This is
@@ -419,10 +290,9 @@ class Analysis:
 
         """
 
-        # Update in ESPResSo core
-        analyze.update_pressure()
-
-        return _Observable_stat_to_dict(analyze.get_obs_pressure(), False)
+        obs = analyze.get_pressure_tensor()
+        handle_errors("calculate_pressure() failed")
+        return obs
 
     IF DPD == 1:
         def dpd_stress(self):
@@ -470,10 +340,9 @@ class Analysis:
 
         """
 
-        analyze.update_energy()
-        handle_errors("calc_long_range_energies failed")
-
-        return _Observable_stat_to_dict(analyze.get_obs_energy(), False)
+        obs = analyze.get_energy()
+        handle_errors("calculate_energy() failed")
+        return obs
 
     def calc_re(self, chain_start=None, number_of_chains=None,
                 chain_length=None):
