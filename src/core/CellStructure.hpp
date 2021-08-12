@@ -536,6 +536,11 @@ private:
           [&kernel, df = detail::MinimalImageDistance{*maybe_box}](
               Particle &p1, Particle &p2) { kernel(p1, p2, df(p1, p2)); });
     } else {
+      if (decomposition().box().type() != BoxType::CUBOID) {
+        throw std::runtime_error("Non-cuboid box type is not compatible with a "
+                                 "particle decomposition that relies on "
+                                 "EuclideanDistance for distance calculation.");
+      }
       Algorithm::link_cell(
           first, last,
           [&kernel, df = detail::EuclidianDistance{}](

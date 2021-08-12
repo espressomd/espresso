@@ -24,6 +24,7 @@
 
 #include <exception>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <typeindex>
 #include <unordered_map>

@@ -8,8 +8,8 @@
 struct LeesEdwardsBC {
   double pos_offset = 0.;
   double shear_velocity = 0.;
-  short int shear_direction = 0;
-  short int shear_plane_normal = 0;
+  int shear_direction = 0;
+  int shear_plane_normal = 0;
   Utils::Vector3d distance(const Utils::Vector3d &d, const Utils::Vector3d &l,
                            const Utils::Vector3d &hal_l,
                            const Utils::Vector3d &l_inv,

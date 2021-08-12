@@ -36,8 +36,9 @@ inline void push(Particle &p, const BoxGeometry &box, double time_step) {
   p.m.v[le.shear_direction] += p.l.lees_edwards_flag * le.shear_velocity;
   p.r.p[le.shear_direction] += p.l.lees_edwards_flag * le.pos_offset;
   p.l.lees_edwards_offset -= p.l.lees_edwards_flag * le.pos_offset;
-  p.r.p[le.shear_direction] = Algorithm::periodic_fold(
-      p.r.p[le.shear_direction], box.length()[le.shear_direction]);
+  // TODO: clarify whether the fold is needed
+  //  p.r.p[le.shear_direction] = Algorithm::periodic_fold(
+  //      p.r.p[le.shear_direction], box.length()[le.shear_direction]);
   update_offset(p, box, time_step);
 }
 

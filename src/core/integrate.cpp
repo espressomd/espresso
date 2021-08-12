@@ -252,14 +252,16 @@ int integrate(int n_steps, int reuse_forces) {
     if (n_rigidbonds)
       save_old_position(particles, cell_structure.ghost_particles());
 #endif
-
+    LeesEdwards::update_pos_offset(*LeesEdwards::active_protocol, box_geo,
+                                   get_sim_time());
+    LeesEdwards::update_shear_velocity(*LeesEdwards::active_protocol, box_geo,
+                                       get_sim_time());
     bool early_exit = integrator_step_1(particles);
     if (early_exit)
       break;
     if (box_geo.type() == BoxType::LEES_EDWARDS) {
-      std::for_each(particles.begin(), particles.end(), [](auto &p) {
-        LeesEdwards::update_offset(p, box_geo, time_step);
-      });
+      std::for_each(particles.begin(), particles.end(),
+                    [](auto &p) { LeesEdwards::push(p, box_geo, time_step); });
     }
 
     Utils::Vector3d offset{};
@@ -300,8 +302,9 @@ int integrate(int n_steps, int reuse_forces) {
 #endif
     integrator_step_2(particles, temperature);
     if (box_geo.type() == BoxType::LEES_EDWARDS) {
-      std::for_each(particles.begin(), particles.end(),
-                    [](auto &p) { LeesEdwards::push(p, box_geo, time_step); });
+      std::for_each(particles.begin(), particles.end(), [](auto &p) {
+        LeesEdwards::update_offset(p, box_geo, time_step);
+      });
     }
 #ifdef BOND_CONSTRAINT
     // SHAKE velocity updates
@@ -345,6 +348,10 @@ int integrate(int n_steps, int reuse_forces) {
     }
 
   } // for-loop over integration steps
+  LeesEdwards::update_pos_offset(*LeesEdwards::active_protocol, box_geo,
+                                 get_sim_time());
+  LeesEdwards::update_shear_velocity(*LeesEdwards::active_protocol, box_geo,
+                                     get_sim_time());
   ESPRESSO_PROFILER_CXX_MARK_LOOP_END(integration_loop);
 
 #ifdef VALGRIND_INSTRUMENTATION

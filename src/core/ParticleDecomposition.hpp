@@ -129,6 +129,8 @@ public:
    */
   virtual boost::optional<BoxGeometry> minimum_image_distance() const = 0;
 
+  virtual BoxGeometry box() const = 0;
+
   virtual ~ParticleDecomposition() = default;
 };
 
