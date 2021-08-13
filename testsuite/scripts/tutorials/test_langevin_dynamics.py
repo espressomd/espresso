@@ -28,9 +28,11 @@ class Tutorial(ut.TestCase):
     system = tutorial.system
 
     def test_diffusion_coefficient(self):
-        D_val = tutorial.diffusion_results
+        D_gk = tutorial.diffusion_gk
+        D_msd = tutorial.diffusion_msd
         D_ref = tutorial.KT / np.array(tutorial.gammas)
-        np.testing.assert_allclose(D_val, D_ref, rtol=0, atol=0.1)
+        np.testing.assert_allclose(D_msd, D_ref, rtol=0, atol=0.02)
+        np.testing.assert_allclose(D_gk, D_ref, rtol=0, atol=0.02)
 
 
 if __name__ == "__main__":
