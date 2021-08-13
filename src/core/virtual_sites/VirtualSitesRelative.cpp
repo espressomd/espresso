@@ -34,6 +34,7 @@
 #include <utils/math/tensor_product.hpp>
 #include <utils/quaternion.hpp>
 
+#include <iostream>
 #include <stdexcept>
 
 namespace {
@@ -163,7 +164,11 @@ void VirtualSitesRelative::update() const {
     /* The shift has to respect periodic boundaries: if the reference
      * particles is not in the same image box, we potentially avoid to shift
      * to the other side of the box. */
-    p.r.p += box_geo.get_mi_vector(new_pos, p.r.p);
+    auto shift = box_geo.get_mi_vector(new_pos, p.r.p);
+    p.r.p += shift;
+    Utils::Vector3i image_shift{};
+    fold_position(shift, image_shift, box_geo);
+    p.l.i = p_ref->l.i - image_shift;
 
     p.m.v = velocity(p_ref, p.p.vs_relative);
 
