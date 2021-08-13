@@ -59,7 +59,7 @@ struct dp3m_data_struct : public p3m_data_struct_base {
   dp3m_data_struct();
 
   /** local mesh. */
-  p3m_local_mesh local_mesh;
+  P3MLocalMesh local_mesh;
   /** real space mesh (local) for CA/FFT. */
   fft_vector<double> rs_mesh;
   /** real space mesh (local) for CA/FFT of the dipolar field. */
@@ -155,10 +155,11 @@ void dp3m_deactivate();
  *  written by M. Deserno.
  *
  *  @param verbose printf output
+ *  @param timings Number of test force calculations
  *  @retval ES_OK
  *  @retval ES_ERROR
  */
-int dp3m_adaptive_tune(bool verbose);
+int dp3m_adaptive_tune(int timings, bool verbose);
 
 /** Compute the k-space part of forces and energies for the magnetic
  *  dipole-dipole interaction

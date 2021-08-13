@@ -234,7 +234,7 @@ class CorrelatorTest(ut.TestCase):
                 corr = accumulators[compression].result().flatten()
                 corr_ref = np.repeat(compressed_ref[compression], corr.shape)
                 corr_ref[:tau_lin + 1] = uncompressed[:tau_lin + 1]
-                np.testing.assert_array_equal(corr, corr_ref)
+                np.testing.assert_allclose(corr, corr_ref, rtol=0., atol=1e-14)
             self.system.auto_update_accumulators.clear()
 
     def test_correlator_interface(self):

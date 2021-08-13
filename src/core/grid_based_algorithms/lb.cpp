@@ -54,6 +54,7 @@
 #include <profiler/profiler.hpp>
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <cinttypes>
 #include <cmath>
@@ -64,6 +65,7 @@
 #include <iostream>
 #include <memory>
 #include <stdexcept>
+#include <vector>
 
 using Utils::get_linear_index;
 
@@ -874,12 +876,12 @@ std::array<T, 19> lb_apply_forces(const std::array<T, 19> &modes,
  */
 auto lb_next_offsets(const Lattice &lb_lattice,
                      std::array<Utils::Vector3i, 19> const &c) {
-  const Utils::Vector3<ptrdiff_t> strides = {
+  const Utils::Vector3<std::ptrdiff_t> strides = {
       {1, lb_lattice.halo_grid[0],
-       static_cast<ptrdiff_t>(lb_lattice.halo_grid[0]) *
-           static_cast<ptrdiff_t>(lb_lattice.halo_grid[1])}};
+       static_cast<std::ptrdiff_t>(lb_lattice.halo_grid[0]) *
+           static_cast<std::ptrdiff_t>(lb_lattice.halo_grid[1])}};
 
-  std::array<ptrdiff_t, 19> offsets;
+  std::array<std::ptrdiff_t, 19> offsets;
   boost::transform(c, offsets.begin(),
                    [&strides](auto const &ci) { return strides * ci; });
 
@@ -888,7 +890,8 @@ auto lb_next_offsets(const Lattice &lb_lattice,
 
 template <typename T>
 void lb_stream(LB_Fluid &lb_fluid, const std::array<T, 19> &populations,
-               size_t index, std::array<ptrdiff_t, 19> const &offsets) {
+               std::size_t index,
+               std::array<std::ptrdiff_t, 19> const &offsets) {
   for (int i = 0; i < populations.size(); i++) {
     lb_fluid[i][index + offsets[i]] = populations[i];
   }

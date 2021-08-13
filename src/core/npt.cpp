@@ -36,19 +36,19 @@
 #include <cmath>
 #include <stdexcept>
 
-nptiso_struct nptiso = {0.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        {0.0, 0.0, 0.0},
-                        {0.0, 0.0, 0.0},
-                        0,
-                        {NPTGEOM_XDIR, NPTGEOM_YDIR, NPTGEOM_ZDIR},
-                        0,
-                        false,
-                        0};
+NptIsoParameters nptiso = {0.0,
+                           0.0,
+                           0.0,
+                           0.0,
+                           0.0,
+                           0.0,
+                           {0.0, 0.0, 0.0},
+                           {0.0, 0.0, 0.0},
+                           0,
+                           {NPTGEOM_XDIR, NPTGEOM_YDIR, NPTGEOM_ZDIR},
+                           0,
+                           false,
+                           0};
 
 void synchronize_npt_state() {
   boost::mpi::broadcast(comm_cart, nptiso.p_inst, 0);
@@ -73,7 +73,8 @@ void mpi_bcast_nptiso_geom_barostat() {
   mpi_call_all(mpi_bcast_nptiso_geom_barostat_worker);
 }
 
-void integrator_npt_coulomb_dipole_sanity_checks(nptiso_struct const &params) {
+void integrator_npt_coulomb_dipole_sanity_checks(
+    NptIsoParameters const &params) {
 #ifdef ELECTROSTATICS
   if (params.dimension < 3 && !params.cubic_box && coulomb.prefactor > 0) {
     throw std::runtime_error("If electrostatics is being used you must "
@@ -105,19 +106,19 @@ void nptiso_init(double ext_pressure, double piston, bool xdir_rescale,
     throw std::runtime_error("The piston mass must be positive.");
   }
 
-  nptiso_struct new_nptiso = {piston,
-                              nptiso.inv_piston,
-                              nptiso.volume,
-                              ext_pressure,
-                              nptiso.p_inst,
-                              nptiso.p_diff,
-                              nptiso.p_vir,
-                              nptiso.p_vel,
-                              0,
-                              nptiso.nptgeom_dir,
-                              0,
-                              cubic_box,
-                              -1};
+  NptIsoParameters new_nptiso = {piston,
+                                 nptiso.inv_piston,
+                                 nptiso.volume,
+                                 ext_pressure,
+                                 nptiso.p_inst,
+                                 nptiso.p_diff,
+                                 nptiso.p_vir,
+                                 nptiso.p_vel,
+                                 0,
+                                 nptiso.nptgeom_dir,
+                                 0,
+                                 cubic_box,
+                                 -1};
 
   /* set the NpT geometry */
   if (xdir_rescale) {

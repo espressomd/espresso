@@ -74,7 +74,7 @@ public:
     }
     DipolarDirectSum_kernel_wrapper_energy(
         k, static_cast<int>(s.npart_gpu()), s.rGpuBegin(), s.dipGpuBegin(), box,
-        per, (&(((CUDA_energy *)s.eGpu())->dipolar)));
+        per, &(reinterpret_cast<CUDA_energy *>(s.eGpu())->dipolar));
   };
 
 private:

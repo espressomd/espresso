@@ -39,20 +39,11 @@
 /** Switch determining which integrator to use. */
 extern int integ_switch;
 
-/** Time step for the integration. */
-extern double time_step;
-
-/** Actual simulation time (only on MASTER NODE). */
-extern double sim_time;
 /** Verlet list skin. */
 extern double skin;
-/** True iff the user has changed the skin setting. */
-extern bool skin_set;
 
 /** If true, the forces will be recalculated before the next integration. */
 extern bool recalc_forces;
-/** Average number of integration steps the Verlet list has been re-using. */
-extern double verlet_reuse;
 
 /** Communicate signal handling to the Python interpreter */
 extern bool set_py_interrupt;
@@ -162,6 +153,9 @@ void integrate_set_npt_isotropic(double ext_pressure, double piston,
                                  bool xdir_rescale, bool ydir_rescale,
                                  bool zdir_rescale, bool cubic_box);
 #endif
+
+/** Get @c verlet_reuse */
+double get_verlet_reuse();
 
 /** Get time step */
 double get_time_step();

@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(ConstantpHEnsemble_test) {
   constexpr double tol = 100 * std::numeric_limits<double>::epsilon();
 
   ConstantpHEnsembleTest r_algo(42);
-  r_algo.temperature = 20.;
+  r_algo.kT = 20.;
   r_algo.m_constant_pH = 1.;
 
   // exception if no reaction was added
@@ -76,11 +76,11 @@ BOOST_AUTO_TEST_CASE(ConstantpHEnsemble_test) {
         // acceptance = f_expr * exp(- E / T + nu_bar * log(10) * (pH - nu_bar *
         // pKa))
         auto const acceptance_ref =
-            f_expr * std::exp(energy / r_algo.temperature +
+            f_expr * std::exp(energy / r_algo.kT +
                               std::log(10.) * (r_algo.m_constant_pH +
                                                std::log10(reaction.gamma)));
         auto const acceptance = r_algo.calculate_acceptance_probability(
-            reaction, energy, 0., p_numbers, -1, -1, false);
+            reaction, energy, 0., p_numbers);
         BOOST_CHECK_CLOSE(acceptance, acceptance_ref, 5 * tol);
       }
     }

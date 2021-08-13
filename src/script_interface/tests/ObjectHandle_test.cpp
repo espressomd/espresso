@@ -29,6 +29,11 @@
 
 #include "script_interface/ScriptInterface.hpp"
 
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
 using namespace ScriptInterface;
 
 namespace Testing {

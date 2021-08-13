@@ -23,6 +23,7 @@
 
 #ifdef CUDA
 
+#include <cstddef>
 #include <vector>
 
 /** Struct to hold information relevant to ESPResSo
@@ -43,7 +44,7 @@ struct EspressoGpuDevice {
   /** Compute capability (minor) */
   int compute_capability_minor;
   /** Total Memory */
-  size_t total_memory;
+  std::size_t total_memory;
   /** Number of cores */
   int n_cores;
 };

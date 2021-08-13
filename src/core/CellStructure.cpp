@@ -26,7 +26,13 @@
 
 #include <utils/contains.hpp>
 
+#include <algorithm>
+#include <iterator>
+#include <memory>
 #include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
 
 void CellStructure::check_particle_index() {
   auto const max_id = get_max_local_particle_id();
@@ -161,6 +167,10 @@ static unsigned map_data_parts(unsigned data_parts) {
   /* clang-format on */
 }
 
+void CellStructure::ghosts_count() {
+  ghost_communicator(decomposition().exchange_ghosts_comm(),
+                     GHOSTTRANS_PARTNUM);
+}
 void CellStructure::ghosts_update(unsigned data_parts) {
   ghost_communicator(decomposition().exchange_ghosts_comm(),
                      map_data_parts(data_parts));
@@ -217,10 +227,6 @@ void CellStructure::resort_particles(int global_flag) {
   diff.clear();
 
   m_decomposition->resort(global_flag, diff);
-
-  /* Communication step: number of ghosts and ghost information */
-  ghost_communicator(m_decomposition->exchange_ghosts_comm(),
-                     GHOSTTRANS_PARTNUM);
 
   for (auto d : diff) {
     boost::apply_visitor(UpdateParticleIndexVisitor{this}, d);

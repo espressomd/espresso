@@ -35,10 +35,8 @@ namespace ReactionMethods {
  */
 double ConstantpHEnsemble::calculate_acceptance_probability(
     SingleReaction const &current_reaction, double E_pot_old, double E_pot_new,
-    std::map<int, int> const &old_particle_numbers, int dummy_old_state_index,
-    int dummy_new_state_index,
-    bool dummy_only_make_configuration_changing_move) const {
-  auto const beta = 1.0 / temperature;
+    std::map<int, int> const &old_particle_numbers) const {
+  auto const beta = 1.0 / kT;
   auto const pKa = -current_reaction.nu_bar * log10(current_reaction.gamma);
   auto const ln_bf = (E_pot_new - E_pot_old) - current_reaction.nu_bar / beta *
                                                    log(10) *

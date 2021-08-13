@@ -22,9 +22,11 @@
 #include <boost/test/unit_test.hpp>
 
 #include "script_interface/Variant.hpp"
-using namespace ScriptInterface;
-
 #include "script_interface/get_value.hpp"
+
+#include <string>
+
+using namespace ScriptInterface;
 
 BOOST_AUTO_TEST_CASE(is_a) {
   BOOST_CHECK(is_type<None>(Variant(None{})));

@@ -23,12 +23,12 @@ Testmodule for MPI-IO.
 
 import espressomd
 import espressomd.io
-from espressomd.interactions import AngleHarmonic
+import espressomd.interactions
 import numpy as np
 import unittest as ut
 import random
 import os
-from argparse import Namespace
+import argparse
 
 # Number of particles
 npart = 10
@@ -58,7 +58,7 @@ def random_particles():
     """Returns a list of random particle descriptions."""
     parts = []
     for i in range(npart):
-        p = Namespace()
+        p = argparse.Namespace()
         p.id = i
         p.type = random.randint(0, 100)
         p.pos = np.random.rand(3)
@@ -85,10 +85,11 @@ class MPIIOTest(ut.TestCase):
     again and then checks the input against the initially created random
     particles.
     """
-    s = espressomd.system.System(box_l=[1, 1, 1])
+    system = espressomd.system.System(box_l=[1, 1, 1])
     # Just a bunch of random interactions such that add_bond does not throw
     for i in range(nbonds):
-        s.bonded_inter[i] = AngleHarmonic(bend=i, phi0=i)
+        system.bonded_inter[i] = espressomd.interactions.AngleHarmonic(
+            bend=i, phi0=i)
     test_particles = random_particles()
 
     def setUp(self):
@@ -96,9 +97,9 @@ class MPIIOTest(ut.TestCase):
         for the tests."""
         clean_files()  # Prior call might not have completed successfully
         for p in self.test_particles:
-            self.s.part.add(id=p.id, type=p.type, pos=p.pos, v=p.v)
+            self.system.part.add(id=p.id, type=p.type, pos=p.pos, v=p.v)
             for b in p.bonds:
-                self.s.part[p.id].add_bond(b)
+                self.system.part[p.id].add_bond(b)
 
     def tearDown(self):
         clean_files()
@@ -111,7 +112,7 @@ class MPIIOTest(ut.TestCase):
     def check_sample_system(self):
         """Checks the particles in the ESPResSo system "self.s" against the
         true values in "self.test_particles"."""
-        for p, q in zip(self.s.part, self.test_particles):
+        for p, q in zip(self.system.part, self.test_particles):
             self.assertEqual(p.id, q.id)
             self.assertEqual(p.type, q.type)
             np.testing.assert_array_equal(np.copy(p.pos), q.pos)
@@ -130,7 +131,7 @@ class MPIIOTest(ut.TestCase):
 
         self.check_files_exist()
 
-        self.s.part.clear()  # Clear to be on the safe side
+        self.system.part.clear()  # Clear to be on the safe side
         espressomd.io.mpiio.mpiio.read(
             filename, types=True, positions=True, velocities=True, bonds=True)
 

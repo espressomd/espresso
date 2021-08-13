@@ -39,6 +39,8 @@
 #include <boost/serialization/optional.hpp>
 
 #include <array>
+#include <cstddef>
+#include <type_traits>
 
 struct NonTrivial {
   boost::optional<Utils::Vector3d> ov;

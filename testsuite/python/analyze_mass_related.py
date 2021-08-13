@@ -17,7 +17,7 @@
 import unittest as ut
 import numpy as np
 import espressomd
-from espressomd.galilei import GalileiTransform
+import espressomd.galilei
 
 
 class AnalyzeMassRelated(ut.TestCase):
@@ -93,7 +93,7 @@ class AnalyzeMassRelated(ut.TestCase):
             self.system.analysis.center_of_mass(p_type=0))
 
     def test_galilei_transform(self):
-        g = GalileiTransform()
+        g = espressomd.galilei.GalileiTransform()
         no_virtual = self.system.part.select(virtual=False)
 
         # Center of mass

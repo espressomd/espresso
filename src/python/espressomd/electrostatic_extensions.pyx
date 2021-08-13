@@ -22,8 +22,8 @@ include "myconfig.pxi"
 from . cimport actors
 from . import actors
 import numpy as np
-from .utils import handle_errors, array_locked
-from .utils cimport check_type_or_throw_except, check_range_or_except, Vector3d, make_Vector3d, make_array_locked, make_array_locked_vector
+from .utils import array_locked
+from .utils cimport check_type_or_throw_except, Vector3d, make_Vector3d, make_array_locked, make_array_locked_vector
 from libcpp.vector cimport vector
 
 IF ELECTROSTATICS:
@@ -94,7 +94,7 @@ IF ELECTROSTATICS:
             self._params["normals"] = np.array(self._params["normals"])
             if self._params["normals"].size != n_icc * 3:
                 raise ValueError(
-                    "Expecting normal list with " + str(n_icc * 3) + " entries.")
+                    f"Expecting normal list with {n_icc * 3} entries.")
             check_type_or_throw_except(self._params["normals"], n_icc,
                                        np.ndarray, "Error in normal list.")
 

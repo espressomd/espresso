@@ -113,7 +113,7 @@ double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao) {
   return res;
 }
 
-void p3m_calc_local_ca_mesh(p3m_local_mesh &local_mesh,
+void p3m_calc_local_ca_mesh(P3MLocalMesh &local_mesh,
                             const P3MParameters &params,
                             const LocalBox<double> &local_geo, double skin,
                             double space_layer) {
@@ -190,8 +190,7 @@ void p3m_calc_local_ca_mesh(p3m_local_mesh &local_mesh,
   local_mesh.q_21_off = local_mesh.dim[2] * (local_mesh.dim[1] - params.cao);
 }
 
-void p3m_calc_lm_ld_pos(p3m_local_mesh &local_mesh,
-                        const P3MParameters &params) {
+void p3m_calc_lm_ld_pos(P3MLocalMesh &local_mesh, const P3MParameters &params) {
   /* spatial position of left down mesh point */
   for (int i = 0; i < 3; i++) {
     local_mesh.ld_pos[i] =

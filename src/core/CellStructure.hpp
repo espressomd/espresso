@@ -40,6 +40,10 @@
 #include <boost/range/algorithm/find_if.hpp>
 #include <boost/range/algorithm/transform.hpp>
 
+#include <algorithm>
+#include <cassert>
+#include <memory>
+#include <utility>
 #include <vector>
 
 /** Cell Structure */
@@ -356,6 +360,11 @@ public:
    * @brief Set the resort level to sorted.
    */
   void clear_resort_particles() { m_resort_particles = Cells::RESORT_NONE; }
+
+  /**
+   * @brief Synchronize number of ghosts.
+   */
+  void ghosts_count();
 
   /**
    * @brief Update ghost particles.

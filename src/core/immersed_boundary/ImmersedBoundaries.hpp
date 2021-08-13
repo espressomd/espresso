@@ -23,15 +23,29 @@
 
 #include "CellStructure.hpp"
 
+#include <cassert>
+#include <cstddef>
 #include <vector>
 
 class ImmersedBoundaries {
 public:
   ImmersedBoundaries() : VolumeInitDone(false), BoundariesFound(false) {
-    VolumesCurrent.resize(IBM_MAX_NUM);
+    VolumesCurrent.resize(10);
   }
   void init_volume_conservation(CellStructure &cs);
   void volume_conservation(CellStructure &cs);
+  void register_softID(int softID) {
+    assert(softID >= 0);
+    auto const new_size = static_cast<std::size_t>(softID) + 1;
+    if (new_size > VolumesCurrent.size()) {
+      VolumesCurrent.resize(new_size);
+    }
+  }
+  double get_current_volume(int softID) const {
+    assert(softID >= 0);
+    assert(softID < VolumesCurrent.size());
+    return VolumesCurrent[softID];
+  }
 
 private:
   void calc_volumes(CellStructure &cs);

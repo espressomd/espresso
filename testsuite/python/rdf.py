@@ -24,13 +24,10 @@ import numpy as np
 
 
 class RdfTest(ut.TestCase):
-    s = espressomd.System(box_l=[1.0, 1.0, 1.0])
-
-    def setUp(self):
-        self.s.box_l = 3 * [10]
+    system = espressomd.System(box_l=3 * [10.])
 
     def tearDown(self):
-        self.s.part.clear()
+        self.system.part.clear()
 
     def bin_volumes(self, midpoints):
         bin_size = midpoints[1] - midpoints[0]
@@ -42,24 +39,24 @@ class RdfTest(ut.TestCase):
                              bin_size**2 + bin_size**3 / 3.)
 
     def test_single_type(self):
-        s = self.s
+        system = self.system
 
         n_part = 99
-        dx = self.s.box_l[0] / float(n_part + 1)
+        dx = system.box_l[0] / float(n_part + 1)
 
         for i in range(n_part):
-            s.part.add(
-                pos=[i * dx, 0.5 * s.box_l[1], 0.5 * s.box_l[2]], type=0)
+            system.part.add(
+                pos=[i * dx, 0.5 * system.box_l[1], 0.5 * system.box_l[2]], type=0)
 
         r_bins = 50
         r_min = 0.5 * dx
         r_max = r_bins * dx
-        obs = espressomd.observables.RDF(ids1=s.part[:].id, min_r=r_min,
+        obs = espressomd.observables.RDF(ids1=system.part[:].id, min_r=r_min,
                                          max_r=r_max, n_r_bins=r_bins)
         rdf = obs.calculate()
         r = obs.bin_centers()
         rv = self.bin_volumes(r)
-        rho = n_part / (s.box_l[0]**3)
+        rho = n_part / system.volume()
 
         parts_in_bin = rdf * rv * rho
 
@@ -67,27 +64,27 @@ class RdfTest(ut.TestCase):
         np.testing.assert_allclose(parts_in_bin[:-1], 2.0, rtol=1e-1)
 
     def test_mixed(self):
-        s = self.s
+        system = self.system
 
         n_part = 99
-        dx = self.s.box_l[0] / float(n_part + 1)
+        dx = system.box_l[0] / float(n_part + 1)
 
         for i in range(n_part):
-            s.part.add(
-                pos=[i * dx, 0.5 * s.box_l[1], 0.5 * s.box_l[2]], type=(i % 2))
+            system.part.add(
+                pos=[i * dx, 0.5 * system.box_l[1], 0.5 * system.box_l[2]], type=(i % 2))
 
         r_bins = 50
         r_min = 0.5 * dx
         r_max = r_bins * dx
-        obs = espressomd.observables.RDF(ids1=s.part[:].id[0::2],
-                                         ids2=s.part[:].id[1::2],
+        obs = espressomd.observables.RDF(ids1=system.part[:].id[0::2],
+                                         ids2=system.part[:].id[1::2],
                                          min_r=r_min, max_r=r_max,
                                          n_r_bins=r_bins)
         rdf01 = obs.calculate()
 
         r = obs.bin_centers()
         rv = self.bin_volumes(r)
-        rho = 0.5 * n_part / (s.box_l[0]**3)
+        rho = 0.5 * n_part / system.volume()
         parts_in_bin = rdf01 * rv * rho
 
         # Every even bin should contain two parts
@@ -96,8 +93,8 @@ class RdfTest(ut.TestCase):
         np.testing.assert_allclose(parts_in_bin[1::2], 0.0)
 
         # Check symmetry
-        obs = espressomd.observables.RDF(ids1=s.part[:].id[1::2],
-                                         ids2=s.part[:].id[0::2],
+        obs = espressomd.observables.RDF(ids1=system.part[:].id[1::2],
+                                         ids2=system.part[:].id[0::2],
                                          min_r=r_min, max_r=r_max,
                                          n_r_bins=r_bins)
         rdf10 = obs.calculate()
@@ -106,10 +103,10 @@ class RdfTest(ut.TestCase):
 
     def test_rdf_interface(self):
         # test setters and getters
-        s = self.s
-        s.part.add(pos=4 * [(0, 0, 0)], type=[0, 1, 0, 1])
-        pids1 = s.part[:].id[0::2]
-        pids2 = s.part[:].id[1::2]
+        system = self.system
+        system.part.add(pos=4 * [(0, 0, 0)], type=[0, 1, 0, 1])
+        pids1 = system.part[:].id[0::2]
+        pids2 = system.part[:].id[1::2]
         params = {
             'ids1': pids1,
             'ids2': pids2,
@@ -120,8 +117,8 @@ class RdfTest(ut.TestCase):
         # check pids
         np.testing.assert_array_equal(np.copy(observable.ids1), pids1)
         np.testing.assert_array_equal(np.copy(observable.ids2), pids2)
-        new_pids1 = [s.part[:].id[0]]
-        new_pids2 = [s.part[:].id[1]]
+        new_pids1 = [system.part[:].id[0]]
+        new_pids2 = [system.part[:].id[1]]
         observable = espressomd.observables.RDF(
             **{**params, 'ids1': new_pids1, 'ids2': new_pids2})
         np.testing.assert_array_equal(np.copy(observable.ids1), new_pids1)

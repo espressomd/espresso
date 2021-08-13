@@ -45,6 +45,7 @@
 #include <boost/range/algorithm.hpp>
 
 #include <algorithm>
+#include <cassert>
 #include <cstddef>
 #include <iterator>
 #include <memory>
@@ -59,12 +60,16 @@ std::vector<std::shared_ptr<LBBoundary>> lbboundaries;
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 
 void add(const std::shared_ptr<LBBoundary> &b) {
+  assert(std::find(lbboundaries.begin(), lbboundaries.end(), b) ==
+         lbboundaries.end());
   lbboundaries.emplace_back(b);
 
   on_lbboundary_change();
 }
 
 void remove(const std::shared_ptr<LBBoundary> &b) {
+  assert(std::find(lbboundaries.begin(), lbboundaries.end(), b) !=
+         lbboundaries.end());
   lbboundaries.erase(std::remove(lbboundaries.begin(), lbboundaries.end(), b),
                      lbboundaries.end());
 
@@ -164,7 +169,7 @@ void lb_init_boundaries() {
     unsigned number_of_boundnodes = 0;
     std::vector<int> host_boundary_node_list;
     std::vector<int> host_boundary_index_list;
-    size_t size_of_index;
+    std::size_t size_of_index;
 
     for (int z = 0; z < int(lbpar_gpu.dim[2]); z++) {
       for (int y = 0; y < int(lbpar_gpu.dim[1]); y++) {

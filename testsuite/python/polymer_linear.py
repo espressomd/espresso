@@ -18,7 +18,7 @@ import unittest as ut
 import numpy as np
 import random
 import espressomd
-from espressomd import polymer
+import espressomd.polymer
 import espressomd.shapes
 
 
@@ -94,7 +94,7 @@ class LinearPolymerPositions(ut.TestCase):
         num_poly = 10
         num_mono = 25
         for bond_length in bond_lengths:
-            positions = polymer.linear_polymer_positions(
+            positions = espressomd.polymer.linear_polymer_positions(
                 n_polymers=num_poly, beads_per_chain=num_mono,
                 bond_length=bond_length, seed=self.seed)
 
@@ -111,7 +111,7 @@ class LinearPolymerPositions(ut.TestCase):
         num_mono = 25
         bond_length = 1.34
         for bond_angle in bond_angles:
-            positions = polymer.linear_polymer_positions(
+            positions = espressomd.polymer.linear_polymer_positions(
                 n_polymers=num_poly, beads_per_chain=num_mono,
                 bond_angle=bond_angle, bond_length=bond_length,
                 seed=self.seed)
@@ -132,13 +132,13 @@ class LinearPolymerPositions(ut.TestCase):
 
         # make sure that incorrect size leads to error
         with self.assertRaises(ValueError):
-            positions = polymer.linear_polymer_positions(
+            positions = espressomd.polymer.linear_polymer_positions(
                 n_polymers=num_poly + 1, beads_per_chain=num_mono,
                 start_positions=start_positions, bond_length=bond_length,
                 seed=self.seed)
 
         # check that start positions are actually used
-        positions = polymer.linear_polymer_positions(
+        positions = espressomd.polymer.linear_polymer_positions(
             n_polymers=num_poly, beads_per_chain=num_mono,
             start_positions=start_positions, bond_length=bond_length,
             seed=self.seed)
@@ -156,7 +156,7 @@ class LinearPolymerPositions(ut.TestCase):
         num_mono = 150
         bond_length = 0.945
 
-        positions = polymer.linear_polymer_positions(
+        positions = espressomd.polymer.linear_polymer_positions(
             n_polymers=num_poly, beads_per_chain=num_mono,
             bond_length=bond_length, min_distance=bond_length,
             seed=self.seed)
@@ -177,7 +177,7 @@ class LinearPolymerPositions(ut.TestCase):
         wall_constraint = espressomd.constraints.ShapeBasedConstraint(shape=w)
         self.system.constraints.add(wall_constraint)
 
-        positions = polymer.linear_polymer_positions(
+        positions = espressomd.polymer.linear_polymer_positions(
             n_polymers=num_poly, beads_per_chain=num_mono,
             bond_length=bond_length, respect_constraints=True, seed=self.seed)
 
@@ -190,7 +190,7 @@ class LinearPolymerPositions(ut.TestCase):
         # assert that illegal start position raises error
         with self.assertRaisesRegex(Exception, 'Invalid start positions.'):
             illegal_start = np.array([[1., 1., 0.2 * self.box_l]])
-            positions = polymer.linear_polymer_positions(
+            positions = espressomd.polymer.linear_polymer_positions(
                 n_polymers=1,
                 beads_per_chain=10,
                 start_positions=illegal_start,
@@ -204,7 +204,7 @@ class LinearPolymerPositions(ut.TestCase):
 
         """
         with self.assertRaisesRegex(Exception, 'Failed to create polymer positions.'):
-            polymer.linear_polymer_positions(
+            espressomd.polymer.linear_polymer_positions(
                 n_polymers=1, beads_per_chain=10,
                 start_positions=np.array([[0, 0, 0]]),
                 bond_length=self.box_l / 2, min_distance=self.box_l / 2.1,

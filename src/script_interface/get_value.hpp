@@ -87,7 +87,7 @@ template <typename T, typename = void> struct get_value_helper {
   }
 };
 
-template <class T, size_t N>
+template <class T, std::size_t N>
 struct vector_conversion_visitor : boost::static_visitor<Utils::Vector<T, N>> {
   Utils::Vector<T, N> operator()(Utils::Vector<T, N> const &v) const {
     return v;
@@ -121,7 +121,8 @@ struct vector_conversion_visitor : boost::static_visitor<Utils::Vector<T, N>> {
 };
 
 /* Utils::Vector<T, N> case */
-template <typename T, size_t N> struct get_value_helper<Utils::Vector<T, N>> {
+template <typename T, std::size_t N>
+struct get_value_helper<Utils::Vector<T, N>> {
   Utils::Vector<T, N> operator()(Variant const &v) const {
     return boost::apply_visitor(detail::vector_conversion_visitor<T, N>{}, v);
   }
@@ -181,18 +182,9 @@ template <> struct get_value_helper<std::unordered_map<int, Variant>, void> {
 };
 
 /* This allows direct retrieval of a shared_ptr to the object from
-   an ObjectId variant. If the type is a derived type, the type is
-   also checked.
-
-   We do a couple of checks: First we check if the id is actually the
-   empty id, which means None and is a valid value, represented by
-   an empty ptr.
-   If the id is not empty, we try to retrieve an instance for that id.
-   If it does not exist we throw, this means the caller supplied an id
-   with no corresponding instance.
-   If we can find an instance, we check if it has the right
-   type, and if so, we return it, otherwise we throw.
-*/
+ * an ObjectRef variant. If the type is a derived type, the type is
+ * also checked.
+ */
 template <typename T>
 struct get_value_helper<
     std::shared_ptr<T>,

@@ -54,14 +54,14 @@ public:
 
     auto hist_tmp = histogram.get_histogram();
     auto tot_count = histogram.get_tot_count();
-    for (size_t ind = 0; ind < hist_tmp.size(); ++ind) {
+    for (std::size_t ind = 0; ind < hist_tmp.size(); ++ind) {
       if (tot_count[ind] > 0) {
         hist_tmp[ind] /= static_cast<double>(tot_count[ind]);
       }
     }
     return hist_tmp;
   }
-  std::vector<size_t> shape() const override {
+  std::vector<std::size_t> shape() const override {
     auto const b = n_bins();
     return {b[0], b[1], b[2], 3};
   }

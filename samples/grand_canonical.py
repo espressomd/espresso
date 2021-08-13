@@ -35,8 +35,8 @@ import numpy as np
 import argparse
 
 import espressomd
-from espressomd import reaction_ensemble
-from espressomd import electrostatics
+import espressomd.reaction_ensemble
+import espressomd.electrostatics
 
 required_features = ["P3M", "EXTERNAL_FORCES", "WCA"]
 espressomd.assert_features(required_features)
@@ -88,8 +88,8 @@ for type_1 in types:
         system.non_bonded_inter[type_1, type_2].wca.set_params(
             epsilon=wca_eps, sigma=wca_sig)
 
-RE = reaction_ensemble.ReactionEnsemble(
-    temperature=temperature, exclusion_radius=wca_sig, seed=3)
+RE = espressomd.reaction_ensemble.ReactionEnsemble(
+    kT=temperature, exclusion_radius=wca_sig, seed=3)
 RE.add_reaction(
     gamma=cs_bulk**2 * np.exp(excess_chemical_potential_pair / temperature),
     reactant_types=[], reactant_coefficients=[], product_types=[1, 2],
@@ -97,10 +97,13 @@ RE.add_reaction(
 print(RE.get_status())
 system.setup_type_map([0, 1, 2])
 
+# Set the hidden particle type to the lowest possible number to speed
+# up the simulation
+RE.set_non_interacting_type(max(types) + 1)
 
 RE.reaction(10000)
 
-p3m = electrostatics.P3M(prefactor=2.0, accuracy=1e-3)
+p3m = espressomd.electrostatics.P3M(prefactor=2.0, accuracy=1e-3)
 system.actors.add(p3m)
 p3m_params = p3m.get_params()
 for key, value in p3m_params.items():

@@ -66,7 +66,7 @@ static constexpr unsigned int threads_per_block = 64;
 
 __global__ void
 ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const particle_input,
-                       size_t number_of_particles,
+                       std::size_t number_of_particles,
                        LB_node_force_density_gpu node_f,
                        const LB_parameters_gpu *const paraP) {
   const unsigned int particleIndex = blockIdx.y * gridDim.x * blockDim.x +
@@ -148,7 +148,7 @@ ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const particle_input,
 __global__ void ParticleVelocitiesFromLB_Kernel(
     LB_nodes_gpu n_curr,
     const IBM_CUDA_ParticleDataInput *const particles_input,
-    size_t number_of_particles,
+    std::size_t number_of_particles,
     IBM_CUDA_ParticleDataOutput *const particles_output,
     LB_node_force_density_gpu node_f, const float *const lb_boundary_velocity,
     const LB_parameters_gpu *const paraP) {
@@ -264,8 +264,8 @@ __global__ void ParticleVelocitiesFromLB_Kernel(
 __global__ void ResetLBForces_Kernel(LB_node_force_density_gpu node_f,
                                      const LB_parameters_gpu *const paraP) {
 
-  const size_t index = blockIdx.y * gridDim.x * blockDim.x +
-                       blockDim.x * blockIdx.x + threadIdx.x;
+  const std::size_t index = blockIdx.y * gridDim.x * blockDim.x +
+                            blockDim.x * blockIdx.x + threadIdx.x;
   const LB_parameters_gpu &para = *paraP;
 
   if (index < para.number_of_nodes) {

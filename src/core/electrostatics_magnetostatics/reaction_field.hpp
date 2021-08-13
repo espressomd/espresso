@@ -35,7 +35,7 @@
 #include <utils/math/int_pow.hpp>
 
 /** Reaction Field parameters. */
-struct Reaction_field_params {
+struct ReactionFieldParameters {
   /** Ionic strength. */
   double kappa;
   /** Continuum dielectric constant inside the cavity. */
@@ -51,7 +51,7 @@ struct Reaction_field_params {
 };
 
 /** Global state of the Reaction Field method. */
-extern Reaction_field_params rf_params;
+extern ReactionFieldParameters rf_params;
 
 void rf_set_params(double kappa, double epsilon1, double epsilon2,
                    double r_cut);

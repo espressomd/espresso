@@ -19,18 +19,15 @@ from libcpp.vector cimport vector
 from libcpp.memory cimport unique_ptr
 from cython.operator cimport dereference as deref
 import numpy as np
-
-
-class WangLandauHasConverged(Exception):
-    pass
+import warnings
 
 
 cdef class ReactionAlgorithm:
     """
 
-    This class provides the base class for Reaction Algorithms like the Reaction
-    Ensemble algorithm, the Wang-Landau Reaction Ensemble algorithm and the
-    constant pH method. Initialize the reaction algorithm by setting the
+    This class provides the base class for Reaction Algorithms like
+    the Reaction Ensemble algorithm and the constant pH method.
+    Initialize the reaction algorithm by setting the
     standard pressure, temperature, and the exclusion radius.
 
     Note: When creating particles the velocities of the new particles are set
@@ -40,8 +37,8 @@ cdef class ReactionAlgorithm:
 
     Parameters
     ----------
-    temperature : :obj:`float`
-        The temperature at which the reaction is performed.
+    kT : :obj:`float`
+        Thermal energy of the system in simulation units
     exclusion_radius : :obj:`float`
         Minimal distance from any particle, within which new particle will not
         be inserted. This is useful to avoid integrator failures if particles
@@ -57,13 +54,13 @@ cdef class ReactionAlgorithm:
     cdef CReactionAlgorithm * RE
 
     def _valid_keys(self):
-        return "temperature", "exclusion_radius", "seed"
+        return "kT", "exclusion_radius", "seed"
 
     def _required_keys(self):
-        return "temperature", "exclusion_radius", "seed"
+        return "kT", "exclusion_radius", "seed"
 
     def _set_params_in_es_core(self):
-        deref(self.RE).temperature = self._params["temperature"]
+        deref(self.RE).kT = self._params["kT"]
         # setting a volume is a side effect, sets the default volume of the
         # reaction ensemble as the volume of the cuboid simulation box. this
         # volume can be altered by the command "reaction ensemble volume
@@ -73,6 +70,14 @@ cdef class ReactionAlgorithm:
         if deref(self.RE).volume < 0:
             deref(self.RE).set_cuboid_reaction_ensemble_volume()
         deref(self.RE).exclusion_radius = self._params["exclusion_radius"]
+
+    def remove_constraint(self):
+        """
+        Remove any previously defined constraint.
+        Requires setting the volume using :meth:`set_volume`.
+
+        """
+        deref(self.RE).remove_constraint()
 
     def set_cylindrical_constraint_in_z_direction(self, center_x, center_y,
                                                   radius_of_cylinder):
@@ -91,10 +96,8 @@ cdef class ReactionAlgorithm:
             radius of the cylinder
 
         """
-        deref(self.RE).cyl_x = center_x
-        deref(self.RE).cyl_y = center_y
-        deref(self.RE).cyl_radius = radius_of_cylinder
-        deref(self.RE).box_is_cylindric_around_z_axis = True
+        deref(self.RE).set_cyl_constraint(
+            center_x, center_y, radius_of_cylinder)
 
     def set_wall_constraints_in_z_direction(self, slab_start_z, slab_end_z):
         """
@@ -102,16 +105,15 @@ cdef class ReactionAlgorithm:
         the volume using :meth:`set_volume`.
 
         """
-        deref(self.RE).slab_start_z = slab_start_z
-        deref(self.RE).slab_end_z = slab_end_z
-        deref(self.RE).box_has_wall_constraints = True
+        deref(self.RE).set_slab_constraint(slab_start_z, slab_end_z)
 
     def get_wall_constraints_in_z_direction(self):
         """
         Returns the restrictions of the sampling area in z-direction.
 
         """
-        return deref(self.RE).slab_start_z, deref(self.RE).slab_end_z
+        v = deref(self.RE).get_slab_constraint_parameters()
+        return [v[0], v[1]]
 
     def set_volume(self, volume):
         """
@@ -195,8 +197,9 @@ cdef class ReactionAlgorithm:
         self._params["check_for_electroneutrality"] = True
         for k in self._required_keys_add():
             if k not in kwargs:
-                raise ValueError("At least the following keys have to be given as keyword arguments: " +
-                                 self._required_keys_add().__str__() + " got " + kwargs.__str__())
+                raise ValueError(
+                    f"At least the following keys have to be given as keyword "
+                    f"arguments: {self._required_keys()}, got {kwargs}")
             self._params[k] = kwargs[k]
 
         for k in self._valid_keys_add():
@@ -207,7 +210,9 @@ cdef class ReactionAlgorithm:
         self._set_params_in_es_core_add()
 
     def _valid_keys_add(self):
-        return "gamma", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients", "default_charges", "check_for_electroneutrality"
+        return ("gamma", "reactant_types", "reactant_coefficients",
+                "product_types", "product_coefficients", "default_charges",
+                "check_for_electroneutrality")
 
     def _required_keys_add(self):
         return ["gamma", "reactant_types", "reactant_coefficients",
@@ -299,14 +304,13 @@ cdef class ReactionAlgorithm:
 
         """
 
-        use_wang_landau = False
         deref(self.RE).do_global_mc_move_for_particles_of_type(
-            type_mc, particle_number_to_be_changed, use_wang_landau)
+            type_mc, particle_number_to_be_changed)
 
     def get_status(self):
         """
         Returns the status of the reaction ensemble in a dictionary containing
-        the used reactions, the used temperature and the used exclusion radius.
+        the used reactions, the used kT and the used exclusion radius.
 
         """
         deref(self.RE).check_reaction_method()
@@ -341,8 +345,8 @@ cdef class ReactionAlgorithm:
                         "gamma": deref(self.RE).reactions[single_reaction_i].gamma}
             reactions.append(reaction)
 
-        return {"reactions": reactions, "temperature": deref(
-            self.RE).temperature, "exclusion_radius": deref(self.RE).exclusion_radius}
+        return {"reactions": reactions, "kT": deref(
+            self.RE).kT, "exclusion_radius": deref(self.RE).exclusion_radius}
 
     def delete_particle(self, p_id):
         """
@@ -411,12 +415,13 @@ cdef class ReactionEnsemble(ReactionAlgorithm):
     cdef unique_ptr[CReactionEnsemble] REptr
 
     def __init__(self, *args, **kwargs):
-        self._params = {"temperature": 1,
+        self._params = {"kT": 1,
                         "exclusion_radius": 0}
         for k in self._required_keys():
             if k not in kwargs:
                 raise ValueError(
-                    "At least the following keys have to be given as keyword arguments: " + self._required_keys().__str__() + " got " + kwargs.__str__())
+                    f"At least the following keys have to be given as keyword "
+                    f"arguments: {self._required_keys()}, got {kwargs}")
             self._params[k] = kwargs[k]
 
         self.REptr.reset(new CReactionEnsemble(int(self._params["seed"])))
@@ -442,12 +447,12 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
     cdef unique_ptr[CConstantpHEnsemble] constpHptr
 
     def __init__(self, *args, **kwargs):
-        self._params = {"temperature": 1,
-                        "exclusion_radius": 0}
+        self._params = {"kT": 1, "exclusion_radius": 0}
         for k in self._required_keys():
             if k not in kwargs:
                 raise ValueError(
-                    "At least the following keys have to be given as keyword arguments: " + self._required_keys().__str__() + " got " + kwargs.__str__())
+                    f"At least the following keys have to be given as keyword "
+                    f"arguments: {self._required_keys()}, got {kwargs}")
             self._params[k] = kwargs[k]
 
         self.constpHptr.reset(new CConstantpHEnsemble(int(self._params["seed"])))
@@ -462,12 +467,39 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
         self._set_params_in_es_core()
 
     def add_reaction(self, *args, **kwargs):
+        warn_msg = (
+            "arguments 'reactant_coefficients' and 'product_coefficients' "
+            "are deprecated and are no longer necessary for the constant pH "
+            "ensemble. They are kept for backward compatibility but might "
+            "be deleted in future versions.")
+        err_msg = ("All product and reactant coefficients must equal one in "
+                   "the constant pH method as implemented in ESPResSo.")
+        warn_user = False
+
+        if "reactant_coefficients" in kwargs:
+            if kwargs["reactant_coefficients"][0] != 1:
+                raise ValueError(err_msg)
+            else:
+                warn_user = True
+        else:
+            kwargs["reactant_coefficients"] = [1]
+
+        if "product_coefficients" in kwargs:
+            if kwargs["product_coefficients"][0] != 1 or kwargs["product_coefficients"][1] != 1:
+                raise ValueError(err_msg)
+            else:
+                warn_user = True
+        else:
+            kwargs["product_coefficients"] = [1, 1]
+
+        if warn_user:
+            warnings.warn(warn_msg, FutureWarning)
+
         if(len(kwargs["product_types"]) != 2 or len(kwargs["reactant_types"]) != 1):
             raise ValueError(
-                "The constant pH method is only implemented for reactions with two product types and one adduct type.")
-        if(kwargs["reactant_coefficients"][0] != 1 or kwargs["product_coefficients"][0] != 1 or kwargs["product_coefficients"][1] != 1):
-            raise ValueError(
-                "All product and reactant coefficients must equal one in the constant pH method as implemented in ESPResSo.")
+                "The constant pH method is only implemented for reactions "
+                "with two product types and one adduct type.")
+
         super().add_reaction(*args, **kwargs)
 
     property constant_pH:
@@ -484,249 +516,6 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
 
             deref(self.constpHptr).m_constant_pH = pH
 
-cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
-    """
-    This Class implements the Wang-Landau Reaction Ensemble.
-    """
-
-    cdef unique_ptr[CWangLandauReactionEnsemble] WLRptr
-
-    def __init__(self, *args, **kwargs):
-        self._params = {"temperature": 1,
-                        "exclusion_radius": 0}
-        for k in self._required_keys():
-            if k not in kwargs:
-                raise ValueError(
-                    "At least the following keys have to be given as keyword arguments: " + self._required_keys().__str__() + " got " + kwargs.__str__())
-            self._params[k] = kwargs[k]
-        for k in kwargs:
-            if k in self._valid_keys():
-                self._params[k] = kwargs[k]
-            else:
-                raise KeyError(f"{k} is not a valid key")
-
-        self.WLRptr.reset(new CWangLandauReactionEnsemble(int(self._params["seed"])))
-        self.RE = <CReactionAlgorithm * > self.WLRptr.get()
-
-        self._set_params_in_es_core()
-
-    def reaction(self, reaction_steps=1):
-        """
-        Performs reaction_steps reactions. Sets the number of reaction steps
-        which are performed at once. Do not use too many reaction steps
-        consecutively without having conformation-changing steps in-between
-        (especially important for the Wang-Landau reaction ensemble). Providing
-        a number for the parameter reaction steps reduces the need for the
-        interpreter to be called between consecutive reactions.
-
-        """
-        status_wang_landau = deref(
-            self.WLRptr).do_reaction(int(reaction_steps))
-        if status_wang_landau < 0:
-            raise WangLandauHasConverged(
-                "The Wang-Landau algorithm has converged.")
-
-    def add_collective_variable_degree_of_association(self, *args, **kwargs):
-        """
-        Adds the degree of association as a collective variable (reaction coordinate) for the Wang-Landau Reaction Ensemble.
-        Several collective variables can be set simultaneously.
-
-        Parameters
-        ----------
-        associated_type : :obj:`int`
-            Particle type of the associated state of the reacting species.
-        min : :obj:`float`
-            Minimum value of the collective variable.
-        max : :obj:`float`
-            Maximum value of the collective variable.
-        corresponding_acid_types : list of :obj:`int`
-            List of the types of the version of the species.
-
-        """
-        for k in kwargs:
-            if k in self._valid_keys_add_collective_variable_degree_of_association():
-                self._params[k] = kwargs[k]
-            else:
-                raise KeyError(f"{k} is not a valid key")
-
-        for k in self._required_keys_add_collective_variable_degree_of_association():
-            if k not in kwargs:
-                raise ValueError(
-                    "At least the following keys have to be given as keyword arguments: " + self._required_keys_add_collective_variable_degree_of_association().__str__() + " got " + kwargs.__str__())
-            self._params[k] = kwargs[k]
-
-        cdef vector[int] _corresponding_acid_types
-        for i in range(len(self._params["corresponding_acid_types"])):
-            _corresponding_acid_types.push_back(
-                self._params["corresponding_acid_types"][i])
-        deref(self.WLRptr).add_new_CV_degree_of_association(
-            self._params["associated_type"], self._params["min"], self._params["max"], _corresponding_acid_types)
-
-    def _valid_keys_add_collective_variable_degree_of_association(self):
-        return "associated_type", "min", "max", "corresponding_acid_types"
-
-    def _required_keys_add_collective_variable_degree_of_association(self):
-        return "associated_type", "min", "max", "corresponding_acid_types"
-
-    def add_collective_variable_potential_energy(self, *args, **kwargs):
-        """
-        Adds the potential energy as a collective variable (reaction coordinate) for the Wang-Landau Reaction Ensemble.
-        Several collective variables can be set simultaneously.
-
-        Parameters
-        ----------
-        filename : :obj:`str`
-            Filename of the energy boundary file which provides the
-            potential energy boundaries (min E_pot, max E_pot) tabulated
-            for all degrees of association. Make sure to only list the
-            degrees of association which are used by the degree of
-            association collective variable within this file. The energy
-            boundary file can be created in a preliminary energy run. By
-            the help of the functions
-            :meth:`update_maximum_and_minimum_energies_at_current_state`
-            and :meth:`write_out_preliminary_energy_run_results`. This
-            file has to be obtained before being able to run a
-            simulation with the energy as collective variable.
-        delta : :obj:`float`
-            Provides the discretization of the potential energy range. Only
-            for small enough delta the results of the energy reweighted
-            averages are correct. If delta is chosen too big there are
-            discretization errors in the numerical integration which occurs
-            during the energy reweighting process.
-
-        """
-        for k in kwargs:
-            if k in self._valid_keys_add_collective_variable_potential_energy():
-                self._params[k] = kwargs[k]
-            else:
-                raise KeyError(f"{k} is not a valid key")
-
-            for k in self._required_keys_add_collective_variable_potential_energy():
-                if k not in kwargs:
-                    raise ValueError(
-                        "At least the following keys have to be given as keyword arguments: " + self._required_keys_add_collective_variable_degree_of_association().__str__() + " got " + kwargs.__str__())
-                self._params[k] = kwargs[k]
-        filname_potential_energy_boundaries_file = self._params[
-            "filename"].encode("utf-8")
-        deref(self.WLRptr).add_new_CV_potential_energy(
-            filname_potential_energy_boundaries_file, self._params["delta"])
-
-    def _valid_keys_add_collective_variable_potential_energy(self):
-        return "filename", "delta"
-
-    def _required_keys_add_collective_variable_potential_energy(self):
-        return "filename", "delta"
-
-    def set_wang_landau_parameters(self, *args, **kwargs):
-        """
-        Sets the final Wang-Landau parameter.
-
-        Parameters
-        ----------
-        final_wang_landau_parameter : :obj:`float`
-            Sets the final Wang-Landau parameter, which is the Wang-Landau
-            parameter after which the simulation should stop.
-        full_path_to_output_filename : :obj:`str`
-            Sets the path to the output file of the Wang-Landau algorithm which
-            contains the Wang-Landau potential
-        do_not_sample_reaction_partition_function : :obj:`bool`
-            Avoids sampling the Reaction ensemble partition function in the
-            Wang-Landau algorithm. Therefore this option makes all degrees of
-            association equally probable. This option may be used in the
-            sweeping mode of the reaction ensemble, since the reaction ensemble
-            partition function can be later added analytically.
-
-        """
-        for k in kwargs:
-            if k in self._valid_keys_set_wang_landau_parameters():
-                self._params[k] = kwargs[k]
-            else:
-                raise KeyError(f"{k} is not a valid key")
-
-        deref(self.WLRptr).final_wang_landau_parameter = self._params[
-            "final_wang_landau_parameter"]
-        deref(self.WLRptr).output_filename = self._params[
-            "full_path_to_output_filename"].encode("utf-8")
-        deref(self.WLRptr).do_not_sample_reaction_partition_function = self._params[
-            "do_not_sample_reaction_partition_function"]
-
-    def _valid_keys_set_wang_landau_parameters(self):
-        return "final_wang_landau_parameter", "full_path_to_output_filename", "do_not_sample_reaction_partition_function"
-
-    def load_wang_landau_checkpoint(self):
-        """
-        Loads the dumped Wang-Landau potential file.
-
-        """
-        checkpoint_name = "checkpoint".encode("utf-8")
-        deref(self.WLRptr).load_wang_landau_checkpoint(checkpoint_name)
-
-    def write_wang_landau_checkpoint(self):
-        """
-        Dumps the Wang-Landau potential to a checkpoint file. Can be used to
-        checkpoint the Wang-Landau histogram, potential, parameter and the
-        number of executed trial moves.
-
-        """
-        checkpoint_name = "checkpoint".encode("utf-8")
-        deref(self.WLRptr).write_wang_landau_checkpoint(checkpoint_name)
-
-    def update_maximum_and_minimum_energies_at_current_state(self):
-        """
-        Records the minimum and maximum potential energy as a function of the
-        degree of association in a preliminary Wang-Landau reaction ensemble
-        simulation where the acceptance probability includes the factor
-        :math:`\\exp(-\\beta \\Delta E_{pot})`. The minimal and maximal
-        potential energies which occur in the system are needed for the energy
-        reweighting simulations where the factor :math:`\\exp(-\\beta \\Delta E_{pot})`
-        is not included in the acceptance probability in
-        order to avoid choosing the wrong potential energy boundaries.
-
-        """
-        self.WLRptr.get(
-        ).update_maximum_and_minimum_energies_at_current_state()
-
-    def write_out_preliminary_energy_run_results(self):
-        """
-        This writes out the minimum and maximum potential energy as a function
-        of the degree of association to a file. It requires that previously
-        :meth:`update_maximum_and_minimum_energies_at_current_state` was used.
-
-        """
-        filename = "preliminary_energy_run_results".encode("utf-8")
-        deref(self.WLRptr).write_out_preliminary_energy_run_results(filename)
-
-    def write_wang_landau_results_to_file(self, filename):
-        """
-        This writes out the Wang-Landau potential as a function of the used
-        collective variables.
-
-        """
-        deref(self.WLRptr).write_wang_landau_results_to_file(
-            filename.encode("utf-8"))
-
-    def displacement_mc_move_for_particles_of_type(self, type_mc,
-                                                   particle_number_to_be_changed=1):
-        """
-        Performs an MC (Monte Carlo) move for ``particle_number_to_be_changed``
-        particle of type ``type_mc``. Positions for the particles are drawn
-        uniformly and randomly within the box. The command takes into account
-        the Wang-Landau terms in the acceptance probability.
-        If there are multiple types, that need to be moved, make sure to move
-        them in a random order to avoid artefacts. For the Wang-Landau algorithm
-        in the case of energy reweighting you would also need to move the
-        monomers of the polymer with special moves for the MC part. Those
-        polymer configuration-changing moves need to be implemented in the
-        case of using Wang-Landau with energy reweighting and a polymer in the
-        system. Polymer configuration-changing moves had been implemented
-        before but were removed from ESPResSo.
-
-        """
-        use_wang_landau = True
-        deref(self.WLRptr).do_global_mc_move_for_particles_of_type(
-            type_mc, particle_number_to_be_changed, use_wang_landau)
-
-
 cdef class WidomInsertion(ReactionAlgorithm):
     """
     This class implements the Widom insertion method in the canonical ensemble
@@ -738,29 +527,30 @@ cdef class WidomInsertion(ReactionAlgorithm):
     cdef unique_ptr[CWidomInsertion] WidomInsertionPtr
 
     def _required_keys(self):
-        return "temperature", "seed"
+        return ("kT", "seed")
 
     def _valid_keys(self):
-        return "temperature", "seed"
+        return ("kT", "seed")
 
     def _valid_keys_add(self):
-        return "reactant_types", "reactant_coefficients", "product_types", "product_coefficients", "default_charges", "check_for_electroneutrality"
+        return ("reactant_types", "reactant_coefficients", "product_types",
+                "product_coefficients", "default_charges",
+                "check_for_electroneutrality")
 
     def _required_keys_add(self):
-        return ["reactant_types", "reactant_coefficients",
-                "product_types", "product_coefficients", "default_charges"]
+        return ("reactant_types", "reactant_coefficients",
+                "product_types", "product_coefficients", "default_charges")
 
     def __init__(self, *args, **kwargs):
-        self._params = {"temperature": 1}
+        self._params = {"kT": 1}
         for k in self._required_keys():
             if k not in kwargs:
                 raise ValueError(
-                    "At least the following keys have to be given as keyword arguments: " + self._required_keys().__str__() + " got " + kwargs.__str__())
+                    f"At least the following keys have to be given as keyword "
+                    f"arguments: {self._required_keys()}, got {kwargs}")
             self._params[k] = kwargs[k]
-        self._params[
-            "exclusion_radius"] = 0.0  # this is not used by the widom insertion method
-        self._params[
-            "gamma"] = 1.0  # this is not used by the widom insertion method
+        self._params["exclusion_radius"] = 0.0  # not used by this method
+        self._params["gamma"] = 1.0  # not used by this method
 
         self.WidomInsertionPtr.reset(new CWidomInsertion(int(self._params["seed"])))
         self.RE = <CReactionAlgorithm * > self.WidomInsertionPtr.get()
@@ -783,7 +573,9 @@ cdef class WidomInsertion(ReactionAlgorithm):
         your samples are uncorrelated.
 
         """
-        if(reaction_id < 0 or reaction_id > (deref(self.WidomInsertionPtr).reactions.size() + 1) / 2):  # make inverse widom scheme (deletion of particles) inaccessible
+        # make inverse widom scheme (deletion of particles) inaccessible.
+        # The deletion reactions are the odd reaction_ids
+        if(reaction_id < 0 or reaction_id > (deref(self.WidomInsertionPtr).reactions.size() + 1) / 2):
             raise ValueError("This reaction is not present")
         return deref(self.WidomInsertionPtr).measure_excess_chemical_potential(
-            int(2 * reaction_id))  # make inverse widom scheme (deletion of particles) inaccessible. The deletion reactions are the odd reaction_ids
+            deref(self.WidomInsertionPtr).reactions[int(2 * reaction_id)])

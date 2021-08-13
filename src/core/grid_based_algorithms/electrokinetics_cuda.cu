@@ -48,7 +48,9 @@
 #include <cstddef>
 #include <fstream>
 #include <iostream>
+#include <limits>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -73,7 +75,7 @@ void LBBoundaries::lb_init_boundaries();
 
 static constexpr unsigned int threads_per_block = 64;
 
-EK_parameters ek_parameters = {
+EKParameters ek_parameters = {
     // agrid
     -1.0,
     // time_step
@@ -174,7 +176,7 @@ EK_parameters ek_parameters = {
     nullptr,
 };
 
-__device__ __constant__ EK_parameters ek_parameters_gpu[1];
+__device__ __constant__ EKParameters ek_parameters_gpu[1];
 float *charge_gpu;
 LB_parameters_gpu *ek_lbparameters_gpu;
 CUDA_particle_data *particle_data_gpu;
@@ -189,7 +191,7 @@ FdElectrostatics *electrostatics = nullptr;
 extern LB_parameters_gpu lbpar_gpu;
 extern LB_node_force_density_gpu node_f, node_f_buf;
 extern LB_nodes_gpu *current_nodes;
-extern EK_parameters *lb_ek_parameters;
+extern EKParameters *lb_ek_parameters;
 
 LB_rho_v_gpu *ek_lb_device_values;
 
@@ -1792,7 +1794,7 @@ __global__ void ek_gather_species_charge_density() {
 
 __global__ void
 ek_gather_particle_charge_density(CUDA_particle_data *particle_data,
-                                  size_t number_of_particles,
+                                  std::size_t number_of_particles,
                                   LB_parameters_gpu *ek_lbparameters_gpu) {
   unsigned int index = ek_getThreadIndex();
   unsigned int lowernode[3];
@@ -1876,10 +1878,9 @@ ek_gather_particle_charge_density(CUDA_particle_data *particle_data,
   }
 }
 
-__global__ void
-ek_spread_particle_force(CUDA_particle_data *particle_data,
-                         size_t number_of_particles, float *particle_forces,
-                         LB_parameters_gpu *ek_lbparameters_gpu) {
+__global__ void ek_spread_particle_force(
+    CUDA_particle_data *particle_data, std::size_t number_of_particles,
+    float *particle_forces, LB_parameters_gpu *ek_lbparameters_gpu) {
 
   unsigned int index = ek_getThreadIndex();
   unsigned int lowernode[3];
@@ -2282,7 +2283,7 @@ int ek_init() {
 #endif
 
     cuda_safe_mem(cudaMemcpyToSymbol(ek_parameters_gpu, &ek_parameters,
-                                     sizeof(EK_parameters)));
+                                     sizeof(EKParameters)));
 
     lb_get_para_pointer(&ek_lbparameters_gpu);
 
@@ -2336,7 +2337,7 @@ int ek_init() {
 
     ek_parameters.charge_potential = electrostatics->getGrid().grid;
     cuda_safe_mem(cudaMemcpyToSymbol(ek_parameters_gpu, &ek_parameters,
-                                     sizeof(EK_parameters)));
+                                     sizeof(EKParameters)));
 
     // clear initial LB force and finish up
     dim3 dim_grid = calculate_dim_grid(
@@ -2346,23 +2347,27 @@ int ek_init() {
 
     ek_initialized = true;
   } else {
-    if (lbpar_gpu.agrid != ek_parameters.agrid ||
-        lbpar_gpu.viscosity != ek_parameters.viscosity *
-                                   ek_parameters.time_step /
-                                   Utils::sqr(ek_parameters.agrid) ||
-        lbpar_gpu.bulk_viscosity != ek_parameters.bulk_viscosity *
-                                        ek_parameters.time_step /
-                                        Utils::sqr(ek_parameters.agrid) ||
-        lb_lbcoupling_get_gamma() != ek_parameters.friction ||
-        lbpar_gpu.rho !=
-            ek_parameters.lb_density * Utils::int_pow<3>(ek_parameters.agrid)) {
+    auto const not_close = [](float a, float b) {
+      return std::abs(a - b) > std::numeric_limits<float>::epsilon();
+    };
+    if (not_close(lbpar_gpu.agrid, ek_parameters.agrid) ||
+        not_close(lbpar_gpu.viscosity, ek_parameters.viscosity *
+                                           ek_parameters.time_step /
+                                           Utils::sqr(ek_parameters.agrid)) ||
+        not_close(lbpar_gpu.bulk_viscosity,
+                  ek_parameters.bulk_viscosity * ek_parameters.time_step /
+                      Utils::sqr(ek_parameters.agrid)) ||
+        not_close(static_cast<float>(lb_lbcoupling_get_gamma()),
+                  ek_parameters.friction) ||
+        not_close(lbpar_gpu.rho, ek_parameters.lb_density *
+                                     Utils::int_pow<3>(ek_parameters.agrid))) {
       fprintf(stderr,
               "ERROR: The LB parameters on the GPU cannot be reinitialized.\n");
 
       return 1;
     }
     cuda_safe_mem(cudaMemcpyToSymbol(ek_parameters_gpu, &ek_parameters,
-                                     sizeof(EK_parameters)));
+                                     sizeof(EKParameters)));
 
     dim3 dim_grid =
         calculate_dim_grid(ek_parameters.number_of_nodes, 4, threads_per_block);
@@ -2375,7 +2380,7 @@ int ek_init() {
     lb_get_boundary_force_pointer(&ek_lb_boundary_force);
 
     cuda_safe_mem(cudaMemcpyToSymbol(ek_parameters_gpu, &ek_parameters,
-                                     sizeof(EK_parameters)));
+                                     sizeof(EKParameters)));
 #endif
 
     ek_integrate_electrostatics();
@@ -3636,149 +3641,130 @@ void ek_print_lbpar() {
   printf("}\n");
 }
 
-int ek_set_agrid(float agrid) {
+inline void ek_setter_throw_if_initialized() {
+  if (ek_initialized)
+    throw std::runtime_error(
+        "Electrokinetics parameters cannot be set after initialisation");
+};
 
+void ek_set_agrid(float agrid) {
+  ek_setter_throw_if_initialized();
   ek_parameters.agrid = agrid;
-  return 0;
 }
 
-int ek_set_lb_density(float lb_density) {
-
+void ek_set_lb_density(float lb_density) {
+  ek_setter_throw_if_initialized();
   ek_parameters.lb_density = lb_density;
-  return 0;
 }
 
-int ek_set_prefactor(float prefactor) {
-
+void ek_set_prefactor(float prefactor) {
+  ek_setter_throw_if_initialized();
   ek_parameters.prefactor = prefactor;
-  return 0;
 }
 
-int ek_set_electrostatics_coupling(bool electrostatics_coupling) {
+void ek_set_electrostatics_coupling(bool electrostatics_coupling) {
+  ek_setter_throw_if_initialized();
   ek_parameters.es_coupling = electrostatics_coupling;
-  return 0;
 }
 
-int ek_set_viscosity(float viscosity) {
-
+void ek_set_viscosity(float viscosity) {
+  ek_setter_throw_if_initialized();
   ek_parameters.viscosity = viscosity;
-  return 0;
 }
 
-int ek_set_lb_ext_force_density(float lb_ext_force_dens_x,
-                                float lb_ext_force_dens_y,
-                                float lb_ext_force_dens_z) {
+void ek_set_lb_ext_force_density(float lb_ext_force_dens_x,
+                                 float lb_ext_force_dens_y,
+                                 float lb_ext_force_dens_z) {
+  ek_setter_throw_if_initialized();
   ek_parameters.lb_ext_force_density[0] = lb_ext_force_dens_x;
   ek_parameters.lb_ext_force_density[1] = lb_ext_force_dens_y;
   ek_parameters.lb_ext_force_density[2] = lb_ext_force_dens_z;
-  return 0;
 }
 
-int ek_set_friction(float friction) {
-
+void ek_set_friction(float friction) {
+  ek_setter_throw_if_initialized();
   ek_parameters.friction = friction;
-  return 0;
 }
 
-int ek_set_bulk_viscosity(float bulk_viscosity) {
-
+void ek_set_bulk_viscosity(float bulk_viscosity) {
+  ek_setter_throw_if_initialized();
   ek_parameters.bulk_viscosity = bulk_viscosity;
-  return 0;
 }
 
-int ek_set_gamma_odd(float gamma_odd) {
-
+void ek_set_gamma_odd(float gamma_odd) {
+  ek_setter_throw_if_initialized();
   ek_parameters.gamma_odd = gamma_odd;
-  return 0;
 }
 
-int ek_set_gamma_even(float gamma_even) {
+void ek_set_gamma_even(float gamma_even) {
 
+  ek_setter_throw_if_initialized();
   ek_parameters.gamma_even = gamma_even;
-  return 0;
 }
 
-int ek_set_stencil(int stencil) {
+void ek_set_stencil(int stencil) {
+  ek_setter_throw_if_initialized();
   if (!ek_parameters.fluidcoupling_ideal_contribution)
-    return 1; // combination not implemented
-
+    throw std::runtime_error(
+        "Combination of stencil and fluid coupling not implmented.");
   ek_parameters.stencil = stencil;
-  return 0;
 }
 
-int ek_set_advection(bool advection) {
+void ek_set_advection(bool advection) {
+  ek_setter_throw_if_initialized();
   ek_parameters.advection = advection;
-  return 0;
 }
 
-int ek_set_fluctuations(bool fluctuations) {
+void ek_set_fluctuations(bool fluctuations) {
+  ek_setter_throw_if_initialized();
   ek_parameters.fluctuations = fluctuations;
-  return 0;
 }
 
-int ek_set_fluctuation_amplitude(float fluctuation_amplitude) {
+void ek_set_fluctuation_amplitude(float fluctuation_amplitude) {
+  ek_setter_throw_if_initialized();
   ek_parameters.fluctuation_amplitude = fluctuation_amplitude;
-  return 0;
 }
 
-int ek_set_fluidcoupling(bool ideal_contribution) {
+void ek_set_fluidcoupling(bool ideal_contribution) {
+  ek_setter_throw_if_initialized();
   if (ek_parameters.stencil != 0)
-    return 1; // combination not implemented
-
+    throw std::runtime_error(
+        "Combination of stencil and fluid coupling not implemented.");
   ek_parameters.fluidcoupling_ideal_contribution = ideal_contribution;
-  return 0;
 }
 
-int ek_set_density(int species, float density) {
+void ek_set_T(float T) {
+  ek_setter_throw_if_initialized();
+  ek_parameters.T = T;
+}
 
+void ek_set_density(int species, float density) {
   ek_init_species(species);
-
   ek_parameters.density[ek_parameters.species_index[species]] = density;
-
-  return 0;
 }
 
-int ek_set_D(int species, float D) {
-
+void ek_set_D(int species, float D) {
   ek_init_species(species);
-
   ek_parameters.D[ek_parameters.species_index[species]] = D;
   ek_parameters.d[ek_parameters.species_index[species]] =
       D / (1.0f + 2.0f * sqrt(2.0f));
-
-  return 0;
 }
 
-int ek_set_T(float T) {
-
-  ek_parameters.T = T;
-
-  return 0;
-}
-
-int ek_set_valency(int species, float valency) {
-
+void ek_set_valency(int species, float valency) {
   ek_init_species(species);
-
   ek_parameters.valency[ek_parameters.species_index[species]] = valency;
-
-  return 0;
 }
 
-int ek_set_ext_force_density(int species, float ext_force_density_x,
-                             float ext_force_density_y,
-                             float ext_force_density_z) {
-
+void ek_set_ext_force_density(int species, float ext_force_density_x,
+                              float ext_force_density_y,
+                              float ext_force_density_z) {
   ek_init_species(species);
-
   ek_parameters.ext_force_density[0][ek_parameters.species_index[species]] =
       ext_force_density_x;
   ek_parameters.ext_force_density[1][ek_parameters.species_index[species]] =
       ext_force_density_y;
   ek_parameters.ext_force_density[2][ek_parameters.species_index[species]] =
       ext_force_density_z;
-
-  return 0;
 }
 
 struct ek_charge_of_particle {
@@ -3858,57 +3844,6 @@ int ek_neutralize_system(int species) {
     return 3;
 
   ek_parameters.density[species_index] = compensating_species_density;
-
-  return 0;
-}
-
-int ek_save_checkpoint(char *filename, char *lb_filename) {
-  std::ofstream fout(filename, std::ofstream::binary);
-  std::vector<float> densities(ek_parameters.number_of_nodes);
-  auto const nchars =
-      static_cast<std::streamsize>(densities.size() * sizeof(float));
-
-  for (unsigned i = 0; i < ek_parameters.number_of_species; i++) {
-    cuda_safe_mem(cudaMemcpy(densities.data(), ek_parameters.rho[i],
-                             densities.size() * sizeof(float),
-                             cudaMemcpyDeviceToHost));
-
-    if (!fout.write(reinterpret_cast<char *>(densities.data()), nchars)) {
-      fout.close();
-      return 1;
-    }
-  }
-
-  fout.close();
-
-  lb_lbfluid_save_checkpoint(lb_filename, true);
-  return 0;
-}
-
-int ek_load_checkpoint(char *filename) {
-  std::string fname(filename);
-  std::ifstream fin((const char *)(fname + ".ek").c_str(),
-                    std::ifstream::binary);
-  std::vector<float> densities(ek_parameters.number_of_nodes);
-  auto const nchars =
-      static_cast<std::streamsize>(densities.size() * sizeof(float));
-
-  for (unsigned i = 0; i < ek_parameters.number_of_species; i++) {
-    if (!fin.read(reinterpret_cast<char *>(densities.data()), nchars)) {
-      fin.close();
-      return 1;
-    }
-
-    cuda_safe_mem(cudaMemcpy(ek_parameters.rho[i], densities.data(),
-                             densities.size() * sizeof(float),
-                             cudaMemcpyHostToDevice));
-  }
-
-  fin.close();
-
-  lb_lbfluid_load_checkpoint((char *)(fname + ".lb").c_str(), true);
-
-  ek_integrate_electrostatics();
 
   return 0;
 }

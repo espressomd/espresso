@@ -60,7 +60,7 @@ struct p3m_data_struct : public p3m_data_struct_base {
   p3m_data_struct();
 
   /** local mesh. */
-  p3m_local_mesh local_mesh;
+  P3MLocalMesh local_mesh;
   /** real space mesh (local) for CA/FFT. */
   fft_vector<double> rs_mesh;
   /** mesh (local) for the electric field. */
@@ -118,11 +118,12 @@ extern p3m_data_struct p3m;
  *  The function is based on routines of the program HE_Q.cpp written by M.
  *  Deserno.
  *
+ *  @param timings Number of test force calculations
  *  @param verbose printf output
  *  @retval ES_OK
  *  @retval ES_ERROR
  */
-int p3m_adaptive_tune(bool verbose);
+int p3m_adaptive_tune(int timings, bool verbose);
 
 /** Initialize all structures, parameters and arrays needed for the
  *  P3M algorithm for charge-charge interactions.

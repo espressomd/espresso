@@ -25,7 +25,7 @@
 
 #ifdef DIPOLAR_BARNES_HUT
 
-typedef struct {
+struct BHData {
   /// CUDA blocks
   int blocks;
   /// each node corresponds to a split of the cubic box in 3D space to equal
@@ -57,7 +57,7 @@ typedef struct {
   int *start;
   /// trace the max loops for a threads' sync
   int *max_lps;
-} BHData;
+};
 
 /// @name Barnes-Hut thread count for different kernels.
 /// @{
