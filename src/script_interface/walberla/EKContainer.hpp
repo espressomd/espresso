@@ -20,13 +20,10 @@ class EKContainer : public ObjectList<EKSpecies> {
   Variant do_call_method(std::string const &method,
                          VariantMap const &parameters) override {
     if (method == "set_tau") {
-      std::cout << "set_tau: "
-                << std::to_string(get_value<double>(parameters, "tau"));
       EK::ek_container.set_tau(get_value<double>(parameters, "tau"));
       return none;
     }
     if (method == "get_tau") {
-      std::cout << "get_tau: " << std::to_string(EK::ek_container.get_tau());
       return EK::ek_container.get_tau();
     }
 
