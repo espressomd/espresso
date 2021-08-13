@@ -16,6 +16,7 @@ public:
 
 private:
   container_type m_ekcontainer;
+  double m_tau;
 
 public:
   void add(std::shared_ptr<EKSpecies> const &c) {
@@ -38,6 +39,7 @@ public:
   iterator end() { return m_ekcontainer.end(); }
   const_iterator begin() const { return m_ekcontainer.begin(); }
   const_iterator end() const { return m_ekcontainer.end(); }
+  [[nodiscard]] bool empty() const { return m_ekcontainer.empty(); }
 
   void on_boxl_change() const {
     if (not this->empty()) {
@@ -45,6 +47,9 @@ public:
                                "are active EKs.");
     }
   }
+
+  [[nodiscard]] double get_tau() const { return m_tau; }
+  void set_tau(double tau) { m_tau = tau; }
 };
 
 #endif // ESPRESSO_EKCONTAINER_HPP
