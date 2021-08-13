@@ -43,6 +43,7 @@
 #include <cstdlib>
 #include <limits>
 #include <stdexcept>
+#include <vector>
 
 /****************************************************************************************
  *                                 basic observables calculation

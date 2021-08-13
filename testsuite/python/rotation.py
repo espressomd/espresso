@@ -17,18 +17,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import numpy as np
+import scipy.spatial.transform
 import unittest as ut
 
-try:
-    import scipy.spatial.transform as sst
-except ImportError:
-    pass
-
 import espressomd.rotation
-import unittest_decorators as utx
 
 
-@utx.skipIfUnmetModuleVersionRequirement('scipy', '>=1.4.0')
 class TestRotation(ut.TestCase):
     """
     Tests for the rotation utility functions.
@@ -39,7 +33,7 @@ class TestRotation(ut.TestCase):
         angle = 2.0 * np.pi * np.random.random()
         quat = [np.sin(angle / 2.0), np.sin(angle / 2.0),
                 np.sin(angle / 2.0), np.cos(angle / 2.0)]
-        self.rotation = sst.Rotation.from_quat(quat)
+        self.rotation = scipy.spatial.transform.Rotation.from_quat(quat)
 
     def test_quat_from_matrix(self):
         """
@@ -50,7 +44,7 @@ class TestRotation(ut.TestCase):
         rotated_vector_ref = self.rotation.apply(v_x)
         quat_from_matrix = espressomd.rotation.matrix_to_quat(
             self.rotation.as_matrix())
-        rotated_vector_matrix = sst.Rotation.from_quat(
+        rotated_vector_matrix = scipy.spatial.transform.Rotation.from_quat(
             np.roll(quat_from_matrix, shift=-1)).apply(v_x)
         self.assertAlmostEqual(
             np.dot(rotated_vector_ref, rotated_vector_matrix), 1.0)
@@ -162,7 +156,6 @@ class TestInertiaTensor(ut.TestCase):
             np.testing.assert_allclose(
                 np.cross(ev[0], ev[1]), ev[2], atol=1e-7)
 
-    @utx.skipIfUnmetModuleVersionRequirement('scipy', '>1.2.0')
     def test_inertia_tensor_rotated_cuboid(self):
         """
         Rotate the samples and check that the principal axes return by the
@@ -172,7 +165,7 @@ class TestInertiaTensor(ut.TestCase):
         angle = 2.0 * np.pi * np.random.random()
         quat = [np.sin(angle / 2.0), np.sin(angle / 2.0),
                 np.sin(angle / 2.0), np.cos(angle / 2.0)]
-        rotation = sst.Rotation.from_quat(quat)
+        rotation = scipy.spatial.transform.Rotation.from_quat(quat)
         rotated_samples = rotation.apply(self.samples)
         _, eigenvectors = espressomd.rotation.diagonalized_inertia_tensor(
             rotated_samples, self.masses)

@@ -23,6 +23,10 @@
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 
+#include <memory>
+#include <string>
+#include <vector>
+
 namespace ScriptInterface {
 namespace Accumulators {
 

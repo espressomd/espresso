@@ -22,6 +22,8 @@
 #include "cuda_utils.cuh"
 #include "errorhandling.hpp"
 
+#include <cstddef>
+
 #include <cuda.h>
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
@@ -33,8 +35,8 @@
 
 // Position and charge
 __global__ void split_kernel_rq(CUDA_particle_data *particles, float *r,
-                                float *q, int n) {
-  auto idx = static_cast<int>(blockDim.x * blockIdx.x + threadIdx.x);
+                                float *q, unsigned int n) {
+  auto const idx = blockDim.x * blockIdx.x + threadIdx.x;
   if (idx >= n)
     return;
 
@@ -49,8 +51,9 @@ __global__ void split_kernel_rq(CUDA_particle_data *particles, float *r,
 }
 
 // Charge only
-__global__ void split_kernel_q(CUDA_particle_data *particles, float *q, int n) {
-  auto idx = static_cast<int>(blockDim.x * blockIdx.x + threadIdx.x);
+__global__ void split_kernel_q(CUDA_particle_data *particles, float *q,
+                               unsigned int n) {
+  auto const idx = blockDim.x * blockIdx.x + threadIdx.x;
   if (idx >= n)
     return;
 
@@ -62,8 +65,9 @@ __global__ void split_kernel_q(CUDA_particle_data *particles, float *q, int n) {
 }
 
 // Position only
-__global__ void split_kernel_r(CUDA_particle_data *particles, float *r, int n) {
-  auto idx = static_cast<int>(blockDim.x * blockIdx.x + threadIdx.x);
+__global__ void split_kernel_r(CUDA_particle_data *particles, float *r,
+                               unsigned int n) {
+  auto idx = blockDim.x * blockIdx.x + threadIdx.x;
   if (idx >= n)
     return;
 
@@ -78,8 +82,9 @@ __global__ void split_kernel_r(CUDA_particle_data *particles, float *r, int n) {
 
 #ifdef CUDA
 // Velocity
-__global__ void split_kernel_v(CUDA_particle_data *particles, float *v, int n) {
-  auto idx = static_cast<int>(blockDim.x * blockIdx.x + threadIdx.x);
+__global__ void split_kernel_v(CUDA_particle_data *particles, float *v,
+                               unsigned int n) {
+  auto idx = blockDim.x * blockIdx.x + threadIdx.x;
   if (idx >= n)
     return;
 
@@ -96,8 +101,8 @@ __global__ void split_kernel_v(CUDA_particle_data *particles, float *v, int n) {
 #ifdef DIPOLES
 // Dipole moment
 __global__ void split_kernel_dip(CUDA_particle_data *particles, float *dip,
-                                 int n) {
-  auto idx = static_cast<int>(blockDim.x * blockIdx.x + threadIdx.x);
+                                 unsigned int n) {
+  auto idx = blockDim.x * blockIdx.x + threadIdx.x;
   if (idx >= n)
     return;
 
@@ -112,9 +117,9 @@ __global__ void split_kernel_dip(CUDA_particle_data *particles, float *dip,
 #endif
 
 __global__ void split_kernel_director(CUDA_particle_data *particles,
-                                      float *director, int n) {
+                                      float *director, unsigned int n) {
 #ifdef ROTATION
-  auto idx = static_cast<int>(blockDim.x * blockIdx.x + threadIdx.x);
+  auto idx = blockDim.x * blockIdx.x + threadIdx.x;
   if (idx >= n)
     return;
 
@@ -128,7 +133,7 @@ __global__ void split_kernel_director(CUDA_particle_data *particles,
 #endif
 }
 
-void EspressoSystemInterface::reallocDeviceMemory(int n) {
+void EspressoSystemInterface::reallocDeviceMemory(std::size_t n) {
   if (m_needsRGpu && ((n != m_gpu_npart) || (m_r_gpu_begin == nullptr))) {
     if (m_r_gpu_begin != nullptr)
       cuda_safe_mem(cudaFree(m_r_gpu_begin));
@@ -169,8 +174,8 @@ void EspressoSystemInterface::reallocDeviceMemory(int n) {
 }
 
 void EspressoSystemInterface::split_particle_struct() {
-  auto device_particles = gpu_get_particle_pointer();
-  int n = device_particles.size();
+  auto const device_particles = gpu_get_particle_pointer();
+  auto const n = static_cast<unsigned int>(device_particles.size());
   if (n == 0)
     return;
 

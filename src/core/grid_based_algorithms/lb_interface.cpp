@@ -44,6 +44,7 @@ using Utils::get_linear_index;
 #include <limits>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 ActiveLB lattice_switch = ActiveLB::NONE;
 

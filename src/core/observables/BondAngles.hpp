@@ -53,7 +53,7 @@ public:
     auto v1 = box_geo.get_mi_vector(traits.position(particles[1]),
                                     traits.position(particles[0]));
     auto n1 = v1.norm();
-    for (size_t i = 0, end = n_values(); i < end; i++) {
+    for (std::size_t i = 0, end = n_values(); i < end; i++) {
       auto v2 = box_geo.get_mi_vector(traits.position(particles[i + 2]),
                                       traits.position(particles[i + 1]));
       auto n2 = v2.norm();
@@ -74,7 +74,7 @@ public:
     }
     return res;
   }
-  std::vector<size_t> shape() const override {
+  std::vector<std::size_t> shape() const override {
     assert(ids().size() >= 2);
     return {ids().size() - 2};
   }

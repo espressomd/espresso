@@ -32,7 +32,7 @@
 
 /* Data structure holding parameters and memory pointers for the link flux
  * system. */
-typedef struct {
+struct EKParameters {
   float agrid;
   float time_step; // MD time step
   float lb_density;
@@ -83,7 +83,7 @@ typedef struct {
   float valency[MAX_NUMBER_OF_SPECIES];
   float ext_force_density[3][MAX_NUMBER_OF_SPECIES];
   char *node_is_catalyst;
-} EK_parameters;
+};
 
 #endif
 
@@ -129,7 +129,7 @@ typedef struct {
 #define EK_LINK_DUD 24
 #define EK_LINK_DUU 25
 
-extern EK_parameters ek_parameters;
+extern EKParameters ek_parameters;
 extern bool ek_initialized;
 
 void ek_integrate();
@@ -147,31 +147,31 @@ int ek_print_vtk_lbforce_density(char *filename);
 int ek_lb_print_vtk_density(char *filename);
 int ek_lb_print_vtk_velocity(char *filename);
 int ek_init();
-int ek_set_agrid(float agrid);
-int ek_set_lb_density(float lb_density);
-int ek_set_viscosity(float viscosity);
-int ek_set_lb_ext_force_density(float lb_ext_force_dens_x,
-                                float lb_ext_force_dens_y,
-                                float lb_ext_force_dens_z);
-int ek_set_friction(float friction);
-int ek_set_T(float T);
-int ek_set_prefactor(float prefactor);
-int ek_set_electrostatics_coupling(bool electrostatics_coupling);
+void ek_set_agrid(float agrid);
+void ek_set_lb_density(float lb_density);
+void ek_set_viscosity(float viscosity);
+void ek_set_lb_ext_force_density(float lb_ext_force_dens_x,
+                                 float lb_ext_force_dens_y,
+                                 float lb_ext_force_dens_z);
+void ek_set_friction(float friction);
+void ek_set_T(float T);
+void ek_set_prefactor(float prefactor);
+void ek_set_electrostatics_coupling(bool electrostatics_coupling);
 void ek_calculate_electrostatic_coupling();
-int ek_set_bulk_viscosity(float bulk_viscosity);
-int ek_set_gamma_odd(float gamma_odd);
-int ek_set_gamma_even(float gamma_even);
-int ek_set_density(int species, float density);
-int ek_set_D(int species, float D);
-int ek_set_valency(int species, float valency);
-int ek_set_ext_force_density(int species, float ext_force_density_x,
-                             float ext_force_density_y,
-                             float ext_force_density_z);
-int ek_set_stencil(int stencil);
-int ek_set_advection(bool advection);
-int ek_set_fluidcoupling(bool ideal_contribution);
-int ek_set_fluctuations(bool fluctuations);
-int ek_set_fluctuation_amplitude(float fluctuation_amplitude);
+void ek_set_bulk_viscosity(float bulk_viscosity);
+void ek_set_gamma_odd(float gamma_odd);
+void ek_set_gamma_even(float gamma_even);
+void ek_set_density(int species, float density);
+void ek_set_D(int species, float D);
+void ek_set_valency(int species, float valency);
+void ek_set_ext_force_density(int species, float ext_force_density_x,
+                              float ext_force_density_y,
+                              float ext_force_density_z);
+void ek_set_stencil(int stencil);
+void ek_set_advection(bool advection);
+void ek_set_fluidcoupling(bool ideal_contribution);
+void ek_set_fluctuations(bool fluctuations);
+void ek_set_fluctuation_amplitude(float fluctuation_amplitude);
 void ek_set_rng_state(uint64_t counter);
 int ek_node_get_density(int species, int x, int y, int z, double *density);
 int ek_node_get_flux(int species, int x, int y, int z, double *flux);
@@ -179,8 +179,6 @@ int ek_node_get_potential(int x, int y, int z, double *potential);
 int ek_node_set_density(int species, int x, int y, int z, double density);
 float ek_calculate_net_charge();
 int ek_neutralize_system(int species);
-int ek_save_checkpoint(char *filename, char *lb_filename);
-int ek_load_checkpoint(char *filename);
 
 #ifdef EK_BOUNDARIES
 void ek_gather_wallcharge_species_density(float *wallcharge_species_density,

@@ -37,7 +37,7 @@
 #ifdef ELECTROSTATICS
 
 /** @brief Parameters for the MMM1D electrostatic interaction */
-typedef struct {
+struct MMM1DParameters {
   /** square of the switching radius */
   double far_switch_radius_2;
   /** Maximal allowed pairwise error for the potential and force.
@@ -46,8 +46,8 @@ typedef struct {
   double maxPWerror;
   /** cutoff of the Bessel sum. Only used by the GPU implementation */
   int bessel_cutoff;
-} MMM1D_struct;
-extern MMM1D_struct mmm1d_params;
+};
+extern MMM1DParameters mmm1d_params;
 
 /** Set parameters for MMM1D.
  *  Most of the parameters can also be tuned automatically. Unlike P3M, this
@@ -55,7 +55,7 @@ extern MMM1D_struct mmm1d_params;
  *  immediately if you set these parameters.
  *  @param switch_rad at which xy-distance the calculation switches from the far
  *      to the near formula. If -1, this parameter will be tuned automatically.
- *  @param maxPWerror @copydoc MMM1D_struct::maxPWerror
+ *  @param maxPWerror @copydoc MMM1DParameters::maxPWerror
  */
 void MMM1D_set_params(double switch_rad, double maxPWerror);
 
@@ -72,8 +72,8 @@ double mmm1d_coulomb_pair_energy(double q1q2, Utils::Vector3d const &d,
                                  double r2, double r);
 
 /** Tuning of the parameters which are not set by the user. Tune either the
- *  @ref MMM1D_struct::far_switch_radius_2 "switching radius" or the
- *  @ref MMM1D_struct::bessel_cutoff "Bessel cutoff". Call this only
+ *  @ref MMM1DParameters::far_switch_radius_2 "switching radius" or the
+ *  @ref MMM1DParameters::bessel_cutoff "Bessel cutoff". Call this only
  *  on the master node.
  *
  *  @param verbose output information about the tuning (tried values and errors)

@@ -19,6 +19,8 @@
 #include "RuntimeErrorStream.hpp"
 
 #include "RuntimeErrorCollector.hpp"
+
+#include <string>
 #include <utility>
 
 namespace ErrorHandling {

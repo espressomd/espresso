@@ -26,7 +26,9 @@
 #include <functional>
 #include <iostream>
 #include <sstream>
+#include <string>
 #include <utility>
+#include <vector>
 
 using boost::mpi::all_reduce;
 using boost::mpi::communicator;

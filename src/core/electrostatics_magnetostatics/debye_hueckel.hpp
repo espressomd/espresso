@@ -33,7 +33,7 @@
 #include <cmath>
 
 /** Debye-Hückel parameters. */
-struct Debye_hueckel_params {
+struct DebyeHueckelParameters {
   /** Interaction cutoff. */
   double r_cut;
   /** Ionic strength. */
@@ -41,7 +41,7 @@ struct Debye_hueckel_params {
 };
 
 /** Global state of the Debye-Hückel method. */
-extern Debye_hueckel_params dh_params;
+extern DebyeHueckelParameters dh_params;
 
 void dh_set_params(double kappa, double r_cut);
 

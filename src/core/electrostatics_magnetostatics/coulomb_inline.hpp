@@ -35,6 +35,8 @@
 #include <utils/math/tensor_product.hpp>
 #include <utils/matrix.hpp>
 
+#include <tuple>
+
 namespace Coulomb {
 inline Utils::Vector3d central_force(double const q1q2,
                                      Utils::Vector3d const &d, double dist) {

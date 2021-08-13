@@ -40,6 +40,7 @@
 #include <functional>
 #include <iterator>
 #include <utility>
+#include <vector>
 
 /** Returns pointer to the cell which corresponds to the position if the
  *  position is in the nodes spatial domain otherwise a nullptr pointer.
@@ -210,7 +211,7 @@ void DomainDecomposition::resort(bool global,
       exchange_neighbors(displaced_parts, diff);
 
       auto left_over = boost::mpi::all_reduce(m_comm, displaced_parts.size(),
-                                              std::plus<size_t>());
+                                              std::plus<std::size_t>());
 
       if (left_over == 0) {
         break;
@@ -474,7 +475,7 @@ GhostCommunicator DomainDecomposition::prepare_comm() {
   auto const node_neighbors = Utils::Mpi::cart_neighbors<3>(m_comm);
 
   /* calculate number of communications */
-  size_t num = 0;
+  std::size_t num = 0;
   for (dir = 0; dir < 3; dir++) {
     for (lr = 0; lr < 2; lr++) {
       /* No communication for border of non periodic direction */

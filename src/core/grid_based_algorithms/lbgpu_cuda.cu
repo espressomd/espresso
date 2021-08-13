@@ -643,7 +643,7 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr,
   int c[3];
   float shift, weight, pop_to_bounce_back;
   float boundary_force[3] = {0.0f, 0.0f, 0.0f};
-  size_t to_index, to_index_x, to_index_y, to_index_z;
+  std::size_t to_index, to_index_x, to_index_y, to_index_z;
   unsigned population, inverse;
 
   if (boundaries.index[index] != 0) {
@@ -1823,8 +1823,8 @@ __global__ void init_boundaries(int const *boundary_node_list,
 
 /** Reset the boundary flag of every node */
 __global__ void reset_boundaries(LB_boundaries_gpu boundaries) {
-  size_t index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x +
-                 threadIdx.x;
+  std::size_t index = blockIdx.y * gridDim.x * blockDim.x +
+                      blockDim.x * blockIdx.x + threadIdx.x;
   if (index < para->number_of_nodes) {
     boundaries.index[index] = 0;
   }

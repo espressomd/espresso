@@ -39,7 +39,7 @@
 #include <utils/Vector.hpp>
 
 /** @brief Parameters for the ELC method */
-struct ELC_struct {
+struct ELCParameters {
   /** Maximal allowed pairwise error for the potential and force.
    *  Used at least by the near formula, since this does the error control at
    *  runtime.
@@ -92,24 +92,24 @@ struct ELC_struct {
   /** Up to where particles can be found. */
   double h;
 };
-extern ELC_struct elc_params;
+extern ELCParameters elc_params;
 
 /** Set parameters for ELC.
- *  @param maxPWerror    @copybrief ELC_struct::maxPWerror
+ *  @param maxPWerror    @copybrief ELCParameters::maxPWerror
  *                       Note that this counts for the plain 1/r contribution
  *                       alone, without the prefactor and the charge prefactor.
- *  @param min_dist      @copybrief ELC_struct::minimal_dist
- *  @param far_cut       @copybrief ELC_struct::far_cut
+ *  @param min_dist      @copybrief ELCParameters::minimal_dist
+ *  @param far_cut       @copybrief ELCParameters::far_cut
  *                       If -1, the cutoff is automatically calculated using
  *                       the error formulas.
  *  @param neutralize    whether to add a neutralizing background.
  *                       WARNING: This background exerts forces, which are
  *                       dependent on the simulation box; especially the gap
  *                       size enters into the value of the forces.
- *  @param delta_mid_top @copybrief ELC_struct::delta_mid_top
- *  @param delta_mid_bot @copybrief ELC_struct::delta_mid_bot
- *  @param const_pot     @copybrief ELC_struct::const_pot
- *  @param pot_diff      @copybrief ELC_struct::pot_diff
+ *  @param delta_mid_top @copybrief ELCParameters::delta_mid_top
+ *  @param delta_mid_bot @copybrief ELCParameters::delta_mid_bot
+ *  @param const_pot     @copybrief ELCParameters::const_pot
+ *  @param pot_diff      @copybrief ELCParameters::pot_diff
  */
 void ELC_set_params(double maxPWerror, double min_dist, double far_cut,
                     bool neutralize, double delta_mid_top, double delta_mid_bot,
@@ -122,7 +122,7 @@ void ELC_add_force(const ParticleRange &particles);
 double ELC_energy(const ParticleRange &particles);
 
 /// check the ELC parameters
-void ELC_sanity_checks(ELC_struct const &params);
+void ELC_sanity_checks(ELCParameters const &params);
 
 /// initialize the ELC constants
 void ELC_init();

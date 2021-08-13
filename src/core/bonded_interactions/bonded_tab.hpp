@@ -40,6 +40,7 @@
 #include <boost/optional.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 
+#include <cassert>
 #include <cmath>
 #include <memory>
 #include <tuple>

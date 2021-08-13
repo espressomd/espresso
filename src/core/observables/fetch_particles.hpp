@@ -40,7 +40,7 @@ inline std::vector<Particle> fetch_particles(std::vector<int> const &ids) {
   particles.reserve(ids.size());
 
   auto const chunk_size = fetch_cache_max_size();
-  for (size_t offset = 0; offset < ids.size();) {
+  for (std::size_t offset = 0; offset < ids.size();) {
     auto const this_size =
         boost::algorithm::clamp(chunk_size, 0, ids.size() - offset);
     auto const chunk_ids =
