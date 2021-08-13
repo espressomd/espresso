@@ -7,7 +7,6 @@ from espressomd.virtual_sites import VirtualSitesRelative, VirtualSitesOff
 import unittest as ut
 import numpy as np
 
-import matplotlib.pyplot as plt
 
 params_lin = {'shear_velocity': 1.2, 'initial_pos_offset': 0.1, 'time_0': 0.1}
 lin_protocol = lees_edwards.LinearShear(**params_lin)
@@ -162,7 +161,7 @@ class LeesEdwards(ut.TestCase):
         system.part.clear()
 
         system.lees_edwards.protocol = lees_edwards.LinearShear(
-            shear_velocity = 1., initial_pos_offset = 0.0, time_0 = 0.0)
+            shear_velocity=1., initial_pos_offset=0.0, time_0=0.0)
         system.lees_edwards.shear_direction = 0
         system.lees_edwards.shear_plane_normal = 1
 
@@ -177,15 +176,18 @@ class LeesEdwards(ut.TestCase):
         print(p.lees_edwards_offset)
         print(p.lees_edwards_flag)
 
-        np.testing.assert_almost_equal(p.lees_edwards_flag * 1.0 * system.time_step * 0.5, p.lees_edwards_offset)
-        np.testing.assert_almost_equal(-1 , p.lees_edwards_flag)
+        np.testing.assert_almost_equal(
+            p.lees_edwards_flag * 1.0 * system.time_step * 0.5,
+            p.lees_edwards_offset)
+        np.testing.assert_almost_equal(-1, p.lees_edwards_flag)
 
         offset1 = p.lees_edwards_flag * 1.0 * system.time_step * 0.5
 
         system.integrator.run(1)
 
-        np.testing.assert_almost_equal(offset1 - 1.0 * 0.5, p.lees_edwards_offset)
-        np.testing.assert_almost_equal(0 , p.lees_edwards_flag)
+        np.testing.assert_almost_equal(
+            offset1 - 1.0 * 0.5, p.lees_edwards_offset)
+        np.testing.assert_almost_equal(0, p.lees_edwards_flag)
 
 
 #        x1 = pos[0]
@@ -322,11 +324,9 @@ class LeesEdwards(ut.TestCase):
                         a=0, n=-2, cutoff=r_cut)
                     system.part.clear()
 
-    def test_virt_sites_rotation(self):
-        """A particle with virtual sites is plces on the boudary. We check if
-           the forces yield the correct torque and if a rotation frequency is
-           transmitted backl to the virtual sites."""
-
+    def test_virt_sites(self):
+        """Tests placement and force transfer for virtual sites across Le 
+        boundaries. """
         system = self.system
         system.part.clear()
         system.min_global_cut = 2.5
@@ -335,24 +335,54 @@ class LeesEdwards(ut.TestCase):
         # Construct pair of VS across normal boudnary
         system.lees_edwards.protocol = None
         p1 = system.part.add(
-            id=0, pos=[2.5, 5.0, 2.5], rotation=(0, 0, 0))
+            id=0, pos=[2.5, 0.0, 2.5], rotation=(0, 0, 0))
 
         p2 = system.part.add(
             pos=(
-                2.5, 6.0, 2.5))
+                2.5, 1.0, 2.5))
         p2.vs_auto_relate_to(p1)
         p3 = system.part.add(pos=(2.5, 4.0, 2.5))
-        p3.vs_auto_relate_to(0)
-        # Distance to central particle should be equal
-        np.testing.assert_almost_equal(p2.vs_relative[1], p3.vs_relative[1])
+        p3.vs_auto_relate_to(p1)
+        system.integrator.run(1)
 
-        # Check that the distance stays correct with LE
         system.lees_edwards.protocol = lin_protocol
-        system.integrator.run(0)
+        system.integrator.run(1)
 #        system.time = system.time - system.time_step 
-        print(p2.pos, p3.pos, system.lees_edwards.pos_offset, p2.f, p3.f)
+        print(
+            p2.pos,
+            p3.pos,
+            system.lees_edwards.pos_offset,
+            p2.image_box,
+            p3.image_box)
         np.testing.assert_almost_equal(
             system.distance_vec(p3, p2), [0, 2, 0])
+        system.integrator.run(0)
+        np.testing.assert_almost_equal(
+            system.distance_vec(p3, p2), [0, 2, 0])
+        print(
+            p2.pos,
+            p3.pos,
+            system.lees_edwards.pos_offset,
+            p2.image_box,
+            p3.image_box)
+        system.integrator.run(1)
+        system.cell_system.resort()
+        print(
+            p2.pos,
+            p3.pos,
+            system.lees_edwards.pos_offset,
+            p2.image_box,
+            p3.image_box)
+        np.testing.assert_almost_equal(
+            system.distance_vec(p3, p2), [0, 2, 0])
+#        system.time = system.time - system.time_step 
+
+        p2.f = [1, 0, 0]
+        p3.f = -p2.f
+        system.integrator.run(1)
+
+        system.part.clear()
+        system.lees_edwards.protocol = None
 
     def disable_test_virt_sites_interaction(self):
         """A virtual site interacts with a real particle via a DPD interaction to get
