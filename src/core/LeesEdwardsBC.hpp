@@ -17,14 +17,20 @@ struct LeesEdwardsBC {
     assert(shear_plane_normal != shear_direction);
     assert(shear_direction >= 0 and shear_direction <= 2);
     assert(shear_plane_normal >= 0 and shear_plane_normal <= 2);
+
     Utils::Vector3d n_jumps;
-    Utils::Vector3d res{};
+    Utils::Vector3d res = d;
+
+    double n_le_crossings =
+        std::round(res[shear_plane_normal] * l_inv[shear_plane_normal]);
+    res[shear_direction] += n_le_crossings * pos_offset;
+
     for (int i : {0, 1, 2}) {
       if (periodic[i])
-        n_jumps[i] = std::round(d[i] * l_inv[i]);
-      res[i] = d[i] - n_jumps[i] * l[i];
+        n_jumps[i] = std::round(res[i] * l_inv[i]);
+      res[i] -= n_jumps[i] * l[i];
     }
-    res[shear_direction] += n_jumps[shear_plane_normal] * pos_offset;
+
     return res;
   };
 };
