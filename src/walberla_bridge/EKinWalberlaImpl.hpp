@@ -217,6 +217,10 @@ public:
     return m_blockforest;
   };
 
+  [[nodiscard]] walberla::BlockDataID get_density_id() const override {
+    return m_density_field_id;
+  }
+
   // Density
   bool set_node_density(const Utils::Vector3i &node,
                         FloatType density) override {
