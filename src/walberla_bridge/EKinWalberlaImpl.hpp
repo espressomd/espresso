@@ -19,6 +19,8 @@
 #include "generated_kernels/DiffusiveFluxKernel.h"
 #include "generated_kernels/NoFlux.h"
 
+#include <memory>
+
 namespace walberla {
 
 // Flags marking fluid and boundaries
@@ -52,7 +54,7 @@ protected:
   /** Block forest */
   const WalberlaBlockForest *m_blockforest;
 
-  pystencils::NoFlux *m_noflux;
+  std::unique_ptr<pystencils::NoFlux> m_noflux;
   bool m_noflux_dirty = false;
 
   std::shared_ptr<timeloop::SweepTimeloop> m_time_loop;
@@ -116,8 +118,8 @@ public:
             get_blockforest()->get_blocks(), m_flux_field_id,
             "flattened flux field");
 
-    m_noflux = new pystencils::NoFlux(get_blockforest()->get_blocks(),
-                                      m_flux_field_flattened_id);
+    m_noflux = std::make_unique<pystencils::NoFlux>(
+        get_blockforest()->get_blocks(), m_flux_field_flattened_id);
 
     // Init and register flag field (domain/boundary)
     m_flag_field_id = field::addFlagFieldToStorage<FlagField>(
@@ -244,7 +246,7 @@ public:
   };
 
   void boundary_noflux_update() {
-    m_noflux->template fillFromFlagField<FlagField>(
+    m_noflux.get()->template fillFromFlagField<FlagField>(
         get_blockforest()->get_blocks(), m_flag_field_id, noflux_flag,
         domain_flag);
   }
