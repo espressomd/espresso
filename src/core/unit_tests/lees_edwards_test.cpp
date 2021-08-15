@@ -92,8 +92,7 @@ BOOST_AUTO_TEST_CASE(test_push) {
 
   push(p, box, dt);
 
-  auto tmp = old_pos - shear_direction(box) * le.pos_offset;
-  auto expected_pos = Vector3d{tmp[0], tmp[1], fmod(tmp[2], box.length()[2])};
+  auto expected_pos = old_pos - shear_direction(box) * le.pos_offset;
   BOOST_CHECK_SMALL((p.r.p - expected_pos).norm2(),
                     std::numeric_limits<double>::epsilon());
 
