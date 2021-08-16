@@ -127,4 +127,20 @@ Cell *find_current_cell(const Particle &p);
  */
 const DomainDecomposition *get_domain_decomposition();
 
+class PairInfo {
+public:
+  PairInfo(){};
+  PairInfo(int _id1, int _id2, Utils::Vector3d _pos1, Utils::Vector3d _pos2,
+           Utils::Vector3d _vec21)
+      : id1(_id1), id2(_id2), pos1(_pos1), pos2(_pos2), vec21(_vec21){};
+  int id1;
+  int id2;
+  Utils::Vector3d pos1;
+  Utils::Vector3d pos2;
+  Utils::Vector3d vec21;
+};
+/** @brief Returns pairs of particle ids, positions and distance as seen by the
+ * non bonded loop */
+std::vector<PairInfo> mpi_non_bonded_loop_trace();
+
 #endif
