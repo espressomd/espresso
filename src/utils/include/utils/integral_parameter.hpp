@@ -27,10 +27,10 @@
 
 namespace Utils {
 namespace detail {
-template <template <size_t> class F, size_t I, size_t N>
+template <template <std::size_t> class F, std::size_t I, std::size_t N>
 struct integral_parameter_impl {
   template <class... Args>
-  static decltype(auto) eval(size_t i, Args &&... args) {
+  static decltype(auto) eval(std::size_t i, Args &&... args) {
     if (i == I)
       return F<I>{}(std::forward<Args>(args)...);
 
@@ -39,10 +39,10 @@ struct integral_parameter_impl {
   }
 };
 
-template <template <size_t> class F, size_t N>
+template <template <std::size_t> class F, std::size_t N>
 struct integral_parameter_impl<F, N, N> {
   template <class... Args>
-  static decltype(auto) eval(size_t i, Args &&... args) {
+  static decltype(auto) eval(std::size_t i, Args &&... args) {
     if (i == N)
       return F<N>{}(std::forward<Args>(args)...);
 
@@ -54,8 +54,9 @@ struct integral_parameter_impl<F, N, N> {
 /**
  * @brief Generate a call table for a integral non-type template parameter.
  */
-template <template <size_t> class F, size_t min, size_t max, class... Args>
-decltype(auto) integral_parameter(size_t i, Args &&... args) {
+template <template <std::size_t> class F, std::size_t min, std::size_t max,
+          class... Args>
+decltype(auto) integral_parameter(std::size_t i, Args &&... args) {
   return detail::integral_parameter_impl<F, min, max>::eval(
       i, std::forward<Args>(args)...);
 }

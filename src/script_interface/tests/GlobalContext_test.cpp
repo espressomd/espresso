@@ -26,6 +26,10 @@
 
 #include "script_interface/GlobalContext.hpp"
 
+#include <algorithm>
+#include <memory>
+#include <string>
+
 namespace si = ScriptInterface;
 
 struct Dummy : si::ObjectHandle {

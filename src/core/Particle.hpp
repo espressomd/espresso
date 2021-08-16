@@ -30,6 +30,8 @@
 #include <boost/serialization/vector.hpp>
 
 #include <cstdint>
+#include <stdexcept>
+#include <vector>
 
 enum : uint8_t {
   ROTATION_FIXED = 0u,

@@ -96,7 +96,7 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles,
   /* finalize derivation of p_inst */
   velocity_verlet_npt_finalize_p_inst(time_step);
 
-  /* adjust \ref nptiso_struct::nptiso.volume; prepare pos- and
+  /* adjust \ref NptIsoParameters::nptiso.volume; prepare pos- and
    * vel-rescaling
    */
   if (this_node == 0) {

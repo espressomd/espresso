@@ -17,9 +17,6 @@
 
 import unittest as ut
 import importlib_wrapper
-import numpy as np
-import scipy
-import setuptools
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/active_matter/active_matter.py", 
@@ -54,19 +51,6 @@ class TestActMat(ut.TestCase):
         self.assertLess(
             tutorial.system.analysis.linear_momentum(
                 include_particles=False)[2], 0)
-
-    @ut.skipIf(not setuptools.version.pkg_resources.packaging.specifiers.SpecifierSet('>=1.4.0').contains(
-        scipy.__version__), "Skipping test: scipy version requirement (>=1.4.0) not met")
-    def test_quaternion(self):
-        """ Check the quaternion function is correctly implemented
-        """
-        import scipy.spatial.transform as sst
-        for theta in np.linspace(0, 2 * np.pi, 10):
-            for phi in np.linspace(0, np.pi, 10):
-                q_ref = sst.Rotation.from_euler('yz', [theta, phi]).as_quat()
-                q_tut = tutorial.a2quat(theta, phi)
-                q_tut = q_tut[1:] + [q_tut[0]]
-                np.testing.assert_allclose(q_tut, q_ref, rtol=0., atol=1e-10)
 
 
 if __name__ == "__main__":

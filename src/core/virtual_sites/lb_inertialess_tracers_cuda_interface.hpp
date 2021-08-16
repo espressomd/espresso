@@ -41,15 +41,15 @@ void IBM_cuda_mpi_get_particles(ParticleRange const &particles);
 void ParticleVelocitiesFromLB_GPU(ParticleRange const &particles);
 
 // ******** data types for CUDA and MPI communication ******
-typedef struct {
+struct IBM_CUDA_ParticleDataInput {
   float pos[3];
   float f[3];
   bool is_virtual;
-} IBM_CUDA_ParticleDataInput;
+};
 
-typedef struct {
+struct IBM_CUDA_ParticleDataOutput {
   float v[3];
-} IBM_CUDA_ParticleDataOutput;
+};
 
 // ******** global variables for CUDA and MPI communication ******
 extern std::vector<IBM_CUDA_ParticleDataInput> IBM_ParticleDataInput_host;

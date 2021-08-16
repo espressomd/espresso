@@ -41,6 +41,10 @@
 #include <boost/range/algorithm/find_if.hpp>
 #include <boost/range/algorithm/transform.hpp>
 
+#include <algorithm>
+#include <cassert>
+#include <memory>
+#include <utility>
 #include <vector>
 
 /** Cell Structure */

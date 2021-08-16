@@ -29,7 +29,7 @@ namespace Observables {
 
 class DPDStress : public Observable {
 public:
-  std::vector<size_t> shape() const override { return {3, 3}; }
+  std::vector<std::size_t> shape() const override { return {3, 3}; }
   std::vector<double> operator()() const override { return dpd_stress(); }
 };
 

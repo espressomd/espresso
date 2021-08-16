@@ -42,7 +42,6 @@ set(EspressoCore_SRC
     CellStructure.cpp
     PartCfg.cpp
     AtomDecomposition.cpp
-    reduce_observable_stat.cpp
     EspressoSystemStandAlone.cpp
     DomainDecomposition.cpp)
 

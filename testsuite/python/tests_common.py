@@ -633,3 +633,41 @@ def random_dipoles(n_particles):
                     sin_theta * np.sin(phi),
                     cos_theta]).T
     return dip
+
+
+def check_non_bonded_loop_trace(system):
+    """Validates that the distances used by the non-bonded loop 
+    match with the minimum image distance accessible by Python,
+    checks that no pairs are lost or double-counted.
+    """
+
+    cs_pairs = system.cell_system.non_bonded_loop_trace()
+
+    distance_vec = system.distance_vec
+    cutoff = system.cell_system.max_cut_nonbonded
+
+    # Distance for all pairs of particles obtained by Python
+    py_distances = {}
+    for p1, p2 in system.part.pairs():
+        py_distances[p1.id, p2.id] = np.copy(distance_vec(p1, p2))
+
+    # Go through pairs found by the non-bonded loop and check distance
+    for p in cs_pairs:
+        # p is a tuple with (id1,id2,pos1,pos2,vec21)
+        # Note that system.distance_vec uses the opposite sign convention
+        # as the minimum image distance in the core
+
+        if (p[0], p[1]) in py_distances:
+            np.testing.assert_allclose(
+                np.copy(p[4]), -py_distances[p[0], p[1]])
+            del py_distances[p[0], p[1]]
+        elif (p[1], p[0]) in py_distances:
+            np.testing.assert_allclose(
+                np.copy(p[4]), py_distances[p[1], p[0]])
+            del py_distances[p[1], p[0]]
+        else:
+            raise Exception("Extra pair from core", p)
+
+    for ids, dist in py_distances.items():
+        if np.linalg.norm(dist) < cutoff:
+            raise Exception("Pair not found by the core", ids)

@@ -28,7 +28,13 @@
 
 #include <utils/contains.hpp>
 
+#include <algorithm>
+#include <iterator>
+#include <memory>
 #include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
 
 void CellStructure::check_particle_index() {
   auto const max_id = get_max_local_particle_id();

@@ -37,6 +37,8 @@
 #include <limits>
 #include <type_traits>
 
+constexpr auto eps = 10 * std::numeric_limits<double>::epsilon();
+
 using namespace FieldCoupling::Fields;
 
 BOOST_AUTO_TEST_CASE(jacobian_type_test) {
@@ -280,8 +282,7 @@ BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
 
     auto const field_value = field(p);
 
-    BOOST_CHECK(std::abs(interpolated_value - field_value) <
-                std::numeric_limits<double>::epsilon());
+    BOOST_CHECK_SMALL(std::abs(interpolated_value - field_value), eps);
   }
 
   /* jacobian value */
@@ -309,8 +310,7 @@ BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
         p, [&data](const std::array<int, 3> &ind) { return data(ind); },
         grid_spacing, origin, Utils::Vector3d{});
 
-    BOOST_CHECK((interpolated_value - field_value).norm() <
-                2 * std::numeric_limits<double>::epsilon());
+    BOOST_CHECK_SMALL((interpolated_value - field_value).norm(), eps);
   }
 }
 
@@ -358,8 +358,7 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
         p, [&data](const std::array<int, 3> &ind) { return data(ind); },
         grid_spacing, origin, Utils::Vector2d{});
 
-    BOOST_CHECK_SMALL((interpolated_value - field_value).norm(),
-                      std::numeric_limits<double>::epsilon());
+    BOOST_CHECK_SMALL((interpolated_value - field_value).norm(), eps);
   }
 
   /* jacobian value */
@@ -396,10 +395,8 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
         grid_spacing, origin, Field::jacobian_type{});
 
     BOOST_CHECK_SMALL(
-        (interpolated_value.row<0>() - field_value.row<0>()).norm(),
-        3 * std::numeric_limits<double>::epsilon());
+        (interpolated_value.row<0>() - field_value.row<0>()).norm(), eps);
     BOOST_CHECK_SMALL(
-        (interpolated_value.row<1>() - field_value.row<1>()).norm(),
-        3 * std::numeric_limits<double>::epsilon());
+        (interpolated_value.row<1>() - field_value.row<1>()).norm(), eps);
   }
 }

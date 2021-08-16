@@ -12,6 +12,11 @@ physical systems.
 * **Simulate a simple Lennard-Jones liquid**  
   Modelling of a single-component and a two-component Lennard-Jones liquid.  
   [Guide](lennard_jones/lennard_jones.ipynb)
+* **Error analysis**  
+  Statistical analysis of simulation results  
+  Guide
+  [Part 1](error_analysis/error_analysis_part1.ipynb) |
+  [Part 2](error_analysis/error_analysis_part2.ipynb)
 * **Visualization**  
   Using the online visualizers of ESPResSo.  
   [Guide](visualization/visualization.ipynb)
@@ -21,6 +26,9 @@ physical systems.
 * **Charged systems**  
   Modelling of ion condensation around a charged rod.  
   [Guide](charged_system/charged_system.ipynb)
+* **Langevin dynamics**  
+  Modelling of Brownian motion and measurement of diffusion coefficients.  
+  [Guide](langevin_dynamics/langevin_dynamics.ipynb)
 * **Ferrofluid**  
   Modelling of a monolayer ferrofluid system.  
   Guide
@@ -30,10 +38,11 @@ physical systems.
 * **Lattice-Boltzmann**  
   Simulations including hydrodynamic interactions using the Lattice-Boltzmann method.  
   Guide
-  [Part 1](lattice_boltzmann/lattice_boltzmann_part1.ipynb) |
-  [Part 2](lattice_boltzmann/lattice_boltzmann_part2.ipynb) |
-  [Part 3](lattice_boltzmann/lattice_boltzmann_part3.ipynb) |
-  [Part 4](lattice_boltzmann/lattice_boltzmann_part4.ipynb)
+  [Part 1](lattice_boltzmann/lattice_boltzmann_theory.ipynb) |
+  [Part 2](lattice_boltzmann/lattice_boltzmann_poiseuille_flow.ipynb)
+* **Polymers**  
+  Modelling polymers with hydrodynamic interactions.  
+  [Guide](polymers/polymers.ipynb)
 * **Raspberry electrophoresis**  
   Extended objects in a Lattice-Boltzmann fluid, raspberry particles.  
   [Guide](raspberry_electrophoresis/raspberry_electrophoresis.ipynb)

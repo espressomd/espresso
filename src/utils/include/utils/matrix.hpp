@@ -23,7 +23,12 @@
 #include "utils/Vector.hpp"
 #include "utils/flatten.hpp"
 
+#include <algorithm>
 #include <array>
+#include <cassert>
+#include <cstddef>
+#include <type_traits>
+#include <utility>
 
 // These includes need to come first due to ADL reasons.
 // clang-format off

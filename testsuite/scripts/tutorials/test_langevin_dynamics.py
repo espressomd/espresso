@@ -19,21 +19,20 @@ import unittest as ut
 import importlib_wrapper
 import numpy as np
 
-
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@TUTORIALS_DIR@/lattice_boltzmann/lattice_boltzmann_part4.py",
-    gpu=True)
+    "@TUTORIALS_DIR@/langevin_dynamics/langevin_dynamics.py")
 
 
 @skipIfMissingFeatures
 class Tutorial(ut.TestCase):
     system = tutorial.system
 
-    def test_flow_profile(self):
-        analytical = tutorial.y_values
-        simulation = tutorial.fluid_velocities
-        rmsd = np.sqrt(np.mean(np.square(analytical - simulation)))
-        self.assertLess(rmsd, 2e-5 * tutorial.AGRID / tutorial.lbf.tau)
+    def test_diffusion_coefficient(self):
+        D_gk = tutorial.diffusion_gk
+        D_msd = tutorial.diffusion_msd
+        D_ref = tutorial.KT / np.array(tutorial.gammas)
+        np.testing.assert_allclose(D_msd, D_ref, rtol=0, atol=0.02)
+        np.testing.assert_allclose(D_gk, D_ref, rtol=0, atol=0.02)
 
 
 if __name__ == "__main__":

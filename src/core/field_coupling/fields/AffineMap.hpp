@@ -32,7 +32,7 @@ namespace Fields {
  *
  * Returns A * x + b, where * is matrix multiplication.
  */
-template <typename T, size_t codim> class AffineMap {
+template <typename T, std::size_t codim> class AffineMap {
 public:
   using value_type =
       typename Utils::decay_to_scalar<Utils::Vector<T, codim>>::type;

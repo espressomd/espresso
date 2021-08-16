@@ -37,7 +37,7 @@ namespace Mpi {
  *
  * @tparam dim Number of dimensions
  */
-template <size_t dim> Vector<int, dim> dims_create(int nodes) {
+template <std::size_t dim> Vector<int, dim> dims_create(int nodes) {
   Vector<int, dim> dims{};
   BOOST_MPI_CHECK_RESULT(MPI_Dims_create,
                          (nodes, static_cast<int>(dim), dims.data()))
@@ -50,7 +50,7 @@ template <size_t dim> Vector<int, dim> dims_create(int nodes) {
  *
  * @tparam dim Number of dimensions
  */
-template <size_t dim>
+template <std::size_t dim>
 boost::mpi::communicator cart_create(
     boost::mpi::communicator const &comm, Vector<int, dim> const &dims,
     bool reorder = true,
@@ -68,7 +68,7 @@ boost::mpi::communicator cart_create(
  *
  * @tparam dims Number of dimensions
  */
-template <size_t dims>
+template <std::size_t dims>
 Vector3i cart_coords(boost::mpi::communicator const &comm, int rank) {
   Vector3i pos;
   BOOST_MPI_CHECK_RESULT(MPI_Cart_coords, (comm, rank, dims, pos.data()))
@@ -80,7 +80,7 @@ Vector3i cart_coords(boost::mpi::communicator const &comm, int rank) {
  *
  * @tparam dims Number of dimensions
  */
-template <size_t dims>
+template <std::size_t dims>
 int cart_rank(boost::mpi::communicator const &comm,
               const Vector<int, dims> &pos) {
   int rank;
@@ -110,14 +110,14 @@ inline std::pair<int, int> cart_shift(boost::mpi::communicator const &comm,
  *
  * @return Ranks of 2*dim neighbors
  */
-template <size_t dim>
+template <std::size_t dim>
 Utils::Vector<int, 2 * dim>
 cart_neighbors(const boost::mpi::communicator &comm) {
   using std::get;
 
   Vector<int, 2 * dim> ret;
 
-  for (size_t i = 0; i < dim; i++) {
+  for (std::size_t i = 0; i < dim; i++) {
     ret[2 * i + 0] = get<1>(cart_shift(comm, i, -1));
     ret[2 * i + 1] = get<1>(cart_shift(comm, i, +1));
   }
@@ -133,7 +133,7 @@ cart_neighbors(const boost::mpi::communicator &comm) {
  *
  * @tparam dim Number of dimensions.
  */
-template <size_t dim> struct CartInfo {
+template <std::size_t dim> struct CartInfo {
   Utils::Vector<int, dim> dims;
   Utils::Vector<int, dim> periods;
   Utils::Vector<int, dim> coords;
@@ -147,7 +147,7 @@ template <size_t dim> struct CartInfo {
  *
  * @return Struct with information about the communicator.
  */
-template <size_t dim>
+template <std::size_t dim>
 CartInfo<dim> cart_get(const boost::mpi::communicator &comm) {
   CartInfo<dim> ret{};
 

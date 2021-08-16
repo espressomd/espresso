@@ -29,7 +29,7 @@ namespace Observables {
 
 class Energy : public Observable {
 public:
-  std::vector<size_t> shape() const override { return {1}; }
+  std::vector<std::size_t> shape() const override { return {1}; }
   std::vector<double> operator()() const override {
     std::vector<double> res{1};
     res[0] = observable_compute_energy();

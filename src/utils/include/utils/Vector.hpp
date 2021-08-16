@@ -146,7 +146,7 @@ public:
 
 template <class T> using Vector3 = Vector<T, 3>;
 
-template <size_t N> using VectorXd = Vector<double, N>;
+template <std::size_t N> using VectorXd = Vector<double, N>;
 using Vector2d = VectorXd<2>;
 using Vector3d = VectorXd<3>;
 using Vector4d = VectorXd<4>;
@@ -154,14 +154,14 @@ using Vector6d = VectorXd<6>;
 using Vector9d = VectorXd<9>;
 using Vector19d = VectorXd<19>;
 
-template <size_t N> using VectorXf = Vector<float, N>;
+template <std::size_t N> using VectorXf = Vector<float, N>;
 using Vector3f = VectorXf<3>;
 
-template <size_t N> using VectorXi = Vector<int, N>;
+template <std::size_t N> using VectorXi = Vector<int, N>;
 using Vector3i = VectorXi<3>;
 
 namespace detail {
-template <size_t N, typename T, typename U, typename Op>
+template <std::size_t N, typename T, typename U, typename Op>
 auto binary_op(Vector<T, N> const &a, Vector<U, N> const &b, Op op) {
   using std::declval;
 
@@ -174,13 +174,13 @@ auto binary_op(Vector<T, N> const &a, Vector<U, N> const &b, Op op) {
   return ret;
 }
 
-template <size_t N, typename T, typename Op>
+template <std::size_t N, typename T, typename Op>
 Vector<T, N> &binary_op_assign(Vector<T, N> &a, Vector<T, N> const &b, Op op) {
   std::transform(std::begin(a), std::end(a), std::begin(b), std::begin(a), op);
   return a;
 }
 
-template <size_t N, typename T, typename Op>
+template <std::size_t N, typename T, typename Op>
 constexpr bool all_of(Vector<T, N> const &a, Vector<T, N> const &b, Op op) {
   for (int i = 0; i < a.size(); i++) {
     /* Short circuit */
@@ -193,52 +193,53 @@ constexpr bool all_of(Vector<T, N> const &a, Vector<T, N> const &b, Op op) {
 }
 } // namespace detail
 
-template <size_t N, typename T>
+template <std::size_t N, typename T>
 constexpr bool operator<(Vector<T, N> const &a, Vector<T, N> const &b) {
   return detail::all_of(a, b, std::less<T>());
 }
 
-template <size_t N, typename T>
+template <std::size_t N, typename T>
 constexpr bool operator>(Vector<T, N> const &a, Vector<T, N> const &b) {
   return detail::all_of(a, b, std::greater<T>());
 }
 
-template <size_t N, typename T>
+template <std::size_t N, typename T>
 constexpr bool operator<=(Vector<T, N> const &a, Vector<T, N> const &b) {
   return detail::all_of(a, b, std::less_equal<T>());
 }
 
-template <size_t N, typename T>
+template <std::size_t N, typename T>
 constexpr bool operator>=(Vector<T, N> const &a, Vector<T, N> const &b) {
   return detail::all_of(a, b, std::greater_equal<T>());
 }
 
-template <size_t N, typename T>
+template <std::size_t N, typename T>
 constexpr bool operator==(Vector<T, N> const &a, Vector<T, N> const &b) {
   return detail::all_of(a, b, std::equal_to<T>());
 }
 
-template <size_t N, typename T>
+template <std::size_t N, typename T>
 constexpr bool operator!=(Vector<T, N> const &a, Vector<T, N> const &b) {
   return not(a == b);
 }
 
-template <size_t N, typename T, typename U>
+template <std::size_t N, typename T, typename U>
 auto operator+(Vector<T, N> const &a, Vector<U, N> const &b) {
   return detail::binary_op(a, b, std::plus<>());
 }
 
-template <size_t N, typename T>
+template <std::size_t N, typename T>
 Vector<T, N> &operator+=(Vector<T, N> &a, Vector<T, N> const &b) {
   return detail::binary_op_assign(a, b, std::plus<T>());
 }
 
-template <size_t N, typename T, typename U>
+template <std::size_t N, typename T, typename U>
 auto operator-(Vector<T, N> const &a, Vector<U, N> const &b) {
   return detail::binary_op(a, b, std::minus<>());
 }
 
-template <size_t N, typename T> Vector<T, N> operator-(Vector<T, N> const &a) {
+template <std::size_t N, typename T>
+Vector<T, N> operator-(Vector<T, N> const &a) {
   Vector<T, N> ret;
 
   std::transform(std::begin(a), std::end(a), std::begin(ret),
@@ -247,13 +248,13 @@ template <size_t N, typename T> Vector<T, N> operator-(Vector<T, N> const &a) {
   return ret;
 }
 
-template <size_t N, typename T>
+template <std::size_t N, typename T>
 Vector<T, N> &operator-=(Vector<T, N> &a, Vector<T, N> const &b) {
   return detail::binary_op_assign(a, b, std::minus<T>());
 }
 
 /* Scalar multiplication */
-template <size_t N, typename T, class U,
+template <std::size_t N, typename T, class U,
           std::enable_if_t<std::is_arithmetic<U>::value, bool> = true>
 auto operator*(U const &a, Vector<T, N> const &b) {
   using R = decltype(a * std::declval<T>());
@@ -265,7 +266,7 @@ auto operator*(U const &a, Vector<T, N> const &b) {
   return ret;
 }
 
-template <size_t N, typename T, class U,
+template <std::size_t N, typename T, class U,
           std::enable_if_t<std::is_arithmetic<U>::value, bool> = true>
 auto operator*(Vector<T, N> const &b, U const &a) {
   using R = decltype(std::declval<T>() * a);
@@ -277,7 +278,7 @@ auto operator*(Vector<T, N> const &b, U const &a) {
   return ret;
 }
 
-template <size_t N, typename T>
+template <std::size_t N, typename T>
 Vector<T, N> &operator*=(Vector<T, N> &b, T const &a) {
   std::transform(std::begin(b), std::end(b), std::begin(b),
                  [a](T const &val) { return a * val; });
@@ -285,7 +286,7 @@ Vector<T, N> &operator*=(Vector<T, N> &b, T const &a) {
 }
 
 /* Scalar division */
-template <size_t N, typename T>
+template <std::size_t N, typename T>
 Vector<T, N> operator/(Vector<T, N> const &a, T const &b) {
   Vector<T, N> ret;
 
@@ -294,7 +295,7 @@ Vector<T, N> operator/(Vector<T, N> const &a, T const &b) {
   return ret;
 }
 
-template <size_t N, typename T>
+template <std::size_t N, typename T>
 Vector<T, N> &operator/=(Vector<T, N> &a, T const &b) {
   std::transform(std::begin(a), std::end(a), std::begin(a),
                  [b](T const &val) { return val / b; });
@@ -303,11 +304,12 @@ Vector<T, N> &operator/=(Vector<T, N> &a, T const &b) {
 
 namespace detail {
 template <class T> struct is_vector : std::false_type {};
-template <class T, size_t N> struct is_vector<Vector<T, N>> : std::true_type {};
+template <class T, std::size_t N>
+struct is_vector<Vector<T, N>> : std::true_type {};
 } // namespace detail
 
 /* Scalar product */
-template <size_t N, typename T, class U,
+template <std::size_t N, typename T, class U,
           class = std::enable_if_t<not(detail::is_vector<T>::value or
                                        detail::is_vector<U>::value)>>
 auto operator*(Vector<T, N> const &a, Vector<U, N> const &b) {
@@ -317,7 +319,7 @@ auto operator*(Vector<T, N> const &a, Vector<U, N> const &b) {
   return std::inner_product(std::begin(a), std::end(a), std::begin(b), R{});
 }
 
-template <size_t N, typename T, class U,
+template <std::size_t N, typename T, class U,
           class = std::enable_if_t<std::is_integral<T>::value &&
                                    std::is_integral<U>::value>>
 auto operator%(Vector<T, N> const &a, Vector<U, N> const &b) {
@@ -332,7 +334,7 @@ auto operator%(Vector<T, N> const &a, Vector<U, N> const &b) {
 }
 
 /* Componentwise square root */
-template <size_t N, typename T> Vector<T, N> sqrt(Vector<T, N> const &a) {
+template <std::size_t N, typename T> Vector<T, N> sqrt(Vector<T, N> const &a) {
   using std::sqrt;
   Vector<T, N> ret;
 
@@ -348,7 +350,7 @@ Vector<T, 3> vector_product(Vector<T, 3> const &a, Vector<T, 3> const &b) {
           a[0] * b[1] - a[1] * b[0]};
 }
 
-template <class T, class U, size_t N>
+template <class T, class U, std::size_t N>
 auto hadamard_product(Vector<T, N> const &a, Vector<U, N> const &b) {
   using std::declval;
   using R = decltype(declval<T>() * declval<U>());
@@ -362,7 +364,7 @@ auto hadamard_product(Vector<T, N> const &a, Vector<U, N> const &b) {
 
 // specializations for when one or both operands is a scalar depending on
 // compile time features (e.g. when PARTICLE_ANISOTROPY is not enabled)
-template <class T, class U, size_t N,
+template <class T, class U, std::size_t N,
           class = std::enable_if_t<not(detail::is_vector<T>::value)>>
 auto hadamard_product(T const &a, Vector<U, N> const &b) {
   using std::declval;
@@ -373,7 +375,7 @@ auto hadamard_product(T const &a, Vector<U, N> const &b) {
   return ret;
 }
 
-template <class T, class U, size_t N,
+template <class T, class U, std::size_t N,
           class = std::enable_if_t<not(detail::is_vector<U>::value)>>
 auto hadamard_product(Vector<T, N> const &a, U const &b) {
   using std::declval;
@@ -391,7 +393,7 @@ auto hadamard_product(T const &a, U const &b) {
   return a * b;
 }
 
-template <class T, class U, size_t N>
+template <class T, class U, std::size_t N>
 auto hadamard_division(Vector<T, N> const &a, Vector<U, N> const &b) {
   using std::declval;
   using R = decltype(declval<T>() * declval<U>());
@@ -405,7 +407,7 @@ auto hadamard_division(Vector<T, N> const &a, Vector<U, N> const &b) {
 
 // specializations for when one or both operands is a scalar depending on
 // compile time features (e.g. when PARTICLE_ANISOTROPY is not enabled)
-template <class T, class U, size_t N,
+template <class T, class U, std::size_t N,
           class = std::enable_if_t<not(detail::is_vector<U>::value)>>
 auto hadamard_division(Vector<T, N> const &a, U const &b) {
   using std::declval;
@@ -416,7 +418,7 @@ auto hadamard_division(Vector<T, N> const &a, U const &b) {
   return ret;
 }
 
-template <class T, class U, size_t N,
+template <class T, class U, std::size_t N,
           class = std::enable_if_t<not(detail::is_vector<T>::value)>>
 auto hadamard_division(T const &a, Vector<U, N> const &b) {
   using std::declval;
@@ -447,7 +449,7 @@ Vector<T,3> unit_vector(int i) {
  * @brief Meta function to turns a Vector<1, T> into T.
  */
 template <typename T> struct decay_to_scalar {};
-template <typename T, size_t N> struct decay_to_scalar<Vector<T, N>> {
+template <typename T, std::size_t N> struct decay_to_scalar<Vector<T, N>> {
   using type = Vector<T, N>;
 };
 

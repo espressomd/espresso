@@ -28,6 +28,8 @@
 #include <bitset>
 #include <cassert>
 #include <cmath>
+#include <limits>
+#include <utility>
 
 namespace detail {
 /**

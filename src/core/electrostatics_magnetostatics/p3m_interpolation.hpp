@@ -53,7 +53,7 @@ template <int cao> struct InterpolationWeights {
  * type InterpolationWeights.
  */
 class p3m_interpolation_cache {
-  size_t m_cao = 0;
+  std::size_t m_cao = 0;
   /** Charge fractions for mesh assignment. */
   std::vector<double> ca_frac;
   /** index of first mesh point for charge assignment. */
@@ -100,7 +100,7 @@ public:
    * @param i Index of the entry to load.
    * @return i-it interpolation weights.
    */
-  template <int cao> InterpolationWeights<cao> load(size_t i) const {
+  template <int cao> InterpolationWeights<cao> load(std::size_t i) const {
     assert(cao == m_cao);
 
     using Utils::make_const_span;
@@ -139,7 +139,7 @@ template <int cao>
 InterpolationWeights<cao>
 p3m_calculate_interpolation_weights(const Utils::Vector3d &position,
                                     const Utils::Vector3d &ai,
-                                    p3m_local_mesh const &local_mesh) {
+                                    P3MLocalMesh const &local_mesh) {
   /** position shift for calc. of first assignment mesh point. */
   static auto const pos_shift = std::floor((cao - 1) / 2.0) - (cao % 2) / 2.0;
 
@@ -189,7 +189,7 @@ p3m_calculate_interpolation_weights(const Utils::Vector3d &position,
  * @param kernel The kernel to run.
  */
 template <int cao, class Kernel>
-void p3m_interpolate(p3m_local_mesh const &local_mesh,
+void p3m_interpolate(P3MLocalMesh const &local_mesh,
                      InterpolationWeights<cao> const &weights, Kernel kernel) {
   auto q_ind = weights.ind;
   for (int i0 = 0; i0 < cao; i0++) {

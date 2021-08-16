@@ -22,6 +22,7 @@
 #ifndef UTILS_FACTORY_HPP
 #define UTILS_FACTORY_HPP
 
+#include <cassert>
 #include <exception>
 #include <memory>
 #include <stdexcept>

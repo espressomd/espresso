@@ -50,12 +50,14 @@
 #include <boost/optional.hpp>
 #include <boost/range/algorithm/remove_if.hpp>
 
+#include <cassert>
 #include <functional>
 #include <initializer_list>
 #include <memory>
 #include <tuple>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 namespace Communication {
 

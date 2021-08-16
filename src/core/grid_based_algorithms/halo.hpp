@@ -84,7 +84,7 @@ struct FieldType {
 };
 
 /** Structure describing a Halo region */
-typedef struct {
+struct HaloInfo {
 
   int type; /**< type of halo communication */
 
@@ -97,8 +97,7 @@ typedef struct {
   std::shared_ptr<FieldType>
       fieldtype;         /**< type layout of the data being exchanged */
   MPI_Datatype datatype; /**< MPI datatype of data being communicated */
-
-} HaloInfo;
+};
 
 /** Structure holding a set of \ref HaloInfo which comprise a certain
  *  parallelization scheme */

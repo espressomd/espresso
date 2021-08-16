@@ -47,8 +47,11 @@
 #include "specfunc.hpp"
 
 #include <utils/constants.hpp>
+#include <utils/math/sqr.hpp>
 
 #include <cmath>
+#include <tuple>
+#include <utility>
 
 /************************************************
  * chebychev expansions
@@ -209,8 +212,9 @@ static double const hzeta_c[15] = {
     -8.9535174270375468504026113181e-23};
 
 double hzeta(double s, double q) {
-  double max_bits = 54.0;
-  int const jmax = 12, kmax = 10;
+  constexpr auto max_bits = 54.0;
+  constexpr auto jmax = 12;
+  constexpr auto kmax = 10;
 
   if ((s > max_bits && q < 1.0) || (s > 0.5 * max_bits && q < 0.25))
     return pow(q, -s);
@@ -223,19 +227,20 @@ double hzeta(double s, double q) {
   /** Euler-Maclaurin summation formula from @cite moshier89a p. 400, with
    *  several typo corrections.
    */
-  auto const pmax = pow(kmax + q, -s);
+  auto const kmax_q = static_cast<double>(kmax) + q;
+  auto const pmax = pow(kmax_q, -s);
   auto scp = s;
-  auto pcp = pmax / (kmax + q);
-  auto ans = pmax * ((kmax + q) / (s - 1.0) + 0.5);
+  auto pcp = pmax / kmax_q;
+  auto ans = pmax * (kmax_q / (s - 1.0) + 0.5);
 
   for (int k = 0; k < kmax; k++)
-    ans += pow(k + q, -s);
+    ans += pow(static_cast<double>(k) + q, -s);
 
   for (int j = 0; j <= jmax; j++) {
     auto const delta = hzeta_c[j + 1] * scp * pcp;
     ans += delta;
     scp *= (s + 2 * j + 1) * (s + 2 * j + 2);
-    pcp /= (kmax + q) * (kmax + q);
+    pcp /= Utils::sqr(static_cast<double>(kmax) + q);
   }
 
   return ans;
@@ -289,9 +294,8 @@ double LPK0(double x) {
     return tmp * (xx * ak0_cs[1] + 0.5 * ak0_cs[0]);
   }
   if (x > 2) {
-    int j = ak01_orders[((int)x) - 2];
+    int j = ak01_orders[static_cast<int>(x) - 2];
     double x2;
-    double dd0, d0;
     double *s0;
     if (x <= 8) {
       s0 = ak0_cs;
@@ -300,8 +304,8 @@ double LPK0(double x) {
       s0 = ak02_cs;
       x2 = (2. * 16.) / x - 2.;
     }
-    dd0 = s0[j];
-    d0 = x2 * dd0 + s0[j - 1];
+    auto dd0 = s0[j];
+    auto d0 = x2 * dd0 + s0[j - 1];
     for (j -= 2; j >= 1; j--) {
       auto const tmp0 = d0;
       d0 = x2 * d0 - dd0 + s0[j];
@@ -314,17 +318,16 @@ double LPK0(double x) {
   {
     /* I0/1 series */
     int j = 10;
-    double ret, x2 = (2. / 4.5) * x * x - 2.;
-    double dd0, d0;
-    dd0 = bi0_cs[j];
-    d0 = x2 * dd0 + bi0_cs[j - 1];
+    auto x2 = (2. / 4.5) * x * x - 2.;
+    auto dd0 = bi0_cs[j];
+    auto d0 = x2 * dd0 + bi0_cs[j - 1];
     for (j -= 2; j >= 1; j--) {
-      double tmp0 = d0;
+      auto const tmp0 = d0;
       d0 = x2 * d0 - dd0 + bi0_cs[j];
       dd0 = tmp0;
     }
     auto const tmp = log(x) - Utils::ln_2();
-    ret = -tmp * (0.5 * (bi0_cs[0] + x2 * d0) - dd0);
+    auto const ret = -tmp * (0.5 * (bi0_cs[0] + x2 * d0) - dd0);
 
     /* K0/K1 correction */
     j = 9;
@@ -352,7 +355,6 @@ double LPK1(double x) {
   if (x > 2) {
     int j = ak01_orders[((int)x) - 2];
     double x2;
-    double dd1, d1;
     double *s1;
     if (x <= 8) {
       s1 = ak1_cs;
@@ -361,8 +363,8 @@ double LPK1(double x) {
       s1 = ak12_cs;
       x2 = (2. * 16.) / x - 2.;
     }
-    dd1 = s1[j];
-    d1 = x2 * dd1 + s1[j - 1];
+    auto dd1 = s1[j];
+    auto d1 = x2 * dd1 + s1[j - 1];
     for (j -= 2; j >= 1; j--) {
       auto const tmp1 = d1;
       d1 = x2 * d1 - dd1 + s1[j];
@@ -375,17 +377,16 @@ double LPK1(double x) {
   {
     /* I0/1 series */
     int j = 10;
-    double ret, x2 = (2. / 4.5) * x * x - 2.;
-    double dd1, d1;
-    dd1 = bi1_cs[j];
-    d1 = x2 * dd1 + bi1_cs[j - 1];
+    auto x2 = (2. / 4.5) * x * x - 2.;
+    auto dd1 = bi1_cs[j];
+    auto d1 = x2 * dd1 + bi1_cs[j - 1];
     for (j -= 2; j >= 1; j--) {
       auto const tmp1 = d1;
       d1 = x2 * d1 - dd1 + bi1_cs[j];
       dd1 = tmp1;
     }
     auto const tmp = log(x) - Utils::ln_2();
-    ret = x * tmp * (0.5 * (bi1_cs[0] + x2 * d1) - dd1);
+    auto const ret = x * tmp * (0.5 * (bi1_cs[0] + x2 * d1) - dd1);
 
     /* K0/K1 correction */
     j = 9;
@@ -401,7 +402,7 @@ double LPK1(double x) {
   }
 }
 
-std::tuple<double, double> LPK01(double x) {
+std::pair<double, double> LPK01(double x) {
   if (x >= 27.) {
     auto const tmp = .5 * exp(-x) / sqrt(x);
     auto const K0 = tmp * ak0_cs[0];
@@ -417,7 +418,6 @@ std::tuple<double, double> LPK01(double x) {
   if (x > 2) {
     int j = ak01_orders[((int)x) - 2];
     double x2;
-    double dd0, dd1, d0, d1;
     double *s0, *s1;
     if (x <= 8) {
       s0 = ak0_cs;
@@ -428,10 +428,10 @@ std::tuple<double, double> LPK01(double x) {
       s1 = ak12_cs;
       x2 = (2. * 16.) / x - 2.;
     }
-    dd0 = s0[j];
-    dd1 = s1[j];
-    d0 = x2 * dd0 + s0[j - 1];
-    d1 = x2 * dd1 + s1[j - 1];
+    auto dd0 = s0[j];
+    auto dd1 = s1[j];
+    auto d0 = x2 * dd0 + s0[j - 1];
+    auto d1 = x2 * dd1 + s1[j - 1];
     for (j -= 2; j >= 1; j--) {
       auto const tmp0 = d0, tmp1 = d1;
       d0 = x2 * d0 - dd0 + s0[j];
@@ -448,12 +448,11 @@ std::tuple<double, double> LPK01(double x) {
   {
     /* I0/1 series */
     int j = 10;
-    double x2 = (2. / 4.5) * x * x - 2.;
-    double dd0, dd1, d0, d1;
-    dd0 = bi0_cs[j];
-    dd1 = bi1_cs[j];
-    d0 = x2 * dd0 + bi0_cs[j - 1];
-    d1 = x2 * dd1 + bi1_cs[j - 1];
+    auto x2 = (2. / 4.5) * x * x - 2.;
+    auto dd0 = bi0_cs[j];
+    auto dd1 = bi1_cs[j];
+    auto d0 = x2 * dd0 + bi0_cs[j - 1];
+    auto d1 = x2 * dd1 + bi1_cs[j - 1];
     for (j -= 2; j >= 1; j--) {
       auto const tmp0 = d0, tmp1 = d1;
       d0 = x2 * d0 - dd0 + bi0_cs[j];
