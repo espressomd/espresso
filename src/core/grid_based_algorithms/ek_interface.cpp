@@ -94,10 +94,10 @@ void set_kT(uint id, double kT) {
   }
 }
 
-double get_tau(uint id) {
+double get_tau_old() {
 #ifdef EK_WALBERLA
   if (EK::get_lattice_switch() == EK::ActiveEK::WALBERLA) {
-    return walberla::ek_get_tau(id);
+    return walberla::ek_get_tau();
   }
 #endif // EK_WALBERLA
   throw NoEKActive();
@@ -151,13 +151,13 @@ void switch_vtk(uint id, std::string const &vtk_uid, int status) {
 
 EK::ActiveEK get_lattice_switch() { return EK::lattice_switch; }
 
-void propagate() {
-#ifdef EK_WALBERLA
-  if (EK::get_lattice_switch() == EK::ActiveEK::WALBERLA) {
-    walberla::ek_propagate();
-  }
-#endif
-}
+// void propagate() {
+//#ifdef EK_WALBERLA
+//  if (EK::get_lattice_switch() == EK::ActiveEK::WALBERLA) {
+//    walberla::ek_propagate();
+//  }
+//#endif
+//}
 
 } // namespace EK
 

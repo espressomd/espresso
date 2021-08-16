@@ -1,6 +1,9 @@
 #ifndef ESPRESSO_EKCONTAINER_HPP
 #define ESPRESSO_EKCONTAINER_HPP
 
+#include "ekin_walberla_init.hpp"
+#include "walberla_blockforest.hpp"
+
 #include <algorithm>
 #include <cassert>
 #include <memory>
@@ -18,12 +21,20 @@ private:
   container_type m_ekcontainer;
   double m_tau;
 
+  std::unique_ptr<walberla::EKWalberlaCharge<double>> m_ekcharge;
+
 public:
   void add(std::shared_ptr<EKSpecies> const &c) {
     assert(std::find(m_ekcontainer.begin(), m_ekcontainer.end(), c) ==
            m_ekcontainer.end());
 
     m_ekcontainer.emplace_back(c);
+
+    // check that ekcharge exists
+    if (!m_ekcharge) {
+      m_ekcharge = walberla::new_ek_charge(get_walberla_blockforest());
+    }
+
     // TODO: callback on_ek_change?
   }
   void remove(std::shared_ptr<EKSpecies> const &c) {
@@ -46,6 +57,10 @@ public:
       throw std::runtime_error("The box size can not be changed because there "
                                "are active EKs.");
     }
+  }
+
+  [[nodiscard]] walberla::EKWalberlaCharge<double> *get_charge() const {
+    return m_ekcharge.get();
   }
 
   [[nodiscard]] double get_tau() const { return m_tau; }

@@ -38,7 +38,8 @@ public:
   void do_construct(VariantMap const &args) override {
     m_ekinstance = ::walberla::new_ek_walberla(
         get_walberla_blockforest(), get_value<double>(args, "diffusion"),
-        get_value<double>(args, "kT"), get_value<double>(args, "density"));
+        get_value<double>(args, "kT"), get_value<double>(args, "valency"),
+        get_value<double>(args, "density"));
 
     add_parameters(
         {{"diffusion",
@@ -51,6 +52,11 @@ public:
             m_ekinstance->set_kT(get_value<double>(v));
           },
           [this]() { return m_ekinstance->get_kT(); }},
+         {"valency",
+          [this](Variant const &v) {
+            m_ekinstance->set_valency(get_value<double>(v));
+          },
+          [this]() { return m_ekinstance->get_valency(); }},
          {"shape", AutoParameter::read_only, [this]() {
             return m_ekinstance->get_blockforest()->get_grid_dimensions();
           }}});
@@ -70,6 +76,7 @@ public:
       m_ekinstance->set_node_density(
           get_value<Utils::Vector3i>(parameters, "position"),
           get_value<double>(parameters, "value"));
+      m_ekinstance->ghost_communication();
       return none;
     }
     if (method == "is_boundary") {

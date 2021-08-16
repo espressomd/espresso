@@ -3,12 +3,11 @@ import unittest_decorators as utx
 import espressomd
 import numpy as np
 import espressomd.walberla
-import espressomd.ekin_walberla
 import espressomd.ekboundaries
 import espressomd.shapes
 
 
-@utx.skipIfMissingFeatures(["LB_WALBERLA"])
+@utx.skipIfMissingFeatures(["EK_WALBERLA"])
 class EKNoFlux(ut.TestCase):
     BOX_L = 15.
     AGRID = 1.0
@@ -29,15 +28,14 @@ class EKNoFlux(ut.TestCase):
         espressomd.walberla.WalberlaBlockForest(
             box_size=self.system.box_l, ghost_layers=1, agrid=self.AGRID)
 
-        ekin_walberla = espressomd.ekin_walberla.EKinWalberla(diffusion=self.DIFFUSION_COEFFICIENT,
-                                                              kT=0.0,
-                                                              dens=0.0,
-                                                              tau=1.0)
-        self.system.actors.add(ekin_walberla)
+        ekspecies = espressomd.EKSpecies.EKSpecies(
+            density=0.0, kT=0.0, diffusion=self.DIFFUSION_COEFFICIENT, valency=0.0)
+
+        self.system.ekcontainer.add(ekspecies, tau=1.0)
 
         center = np.asarray(self.system.box_l / 2, dtype=np.int)
 
-        ekin_walberla[center[0], center[1], center[2]].density = self.DENSITY
+        ekspecies[center[0], center[1], center[2]].density = self.DENSITY
 
         sphere = espressomd.ekboundaries.EKBoundary(
             shape=espressomd.shapes.Sphere(
@@ -55,7 +53,7 @@ class EKNoFlux(ut.TestCase):
 
         self.system.integrator.run(self.TIME)
 
-        simulated_density = np.copy(ekin_walberla[:, :, :].density)
+        simulated_density = np.copy(ekspecies[:, :, :].density)
 
         # check that the density is conserved
         np.testing.assert_almost_equal(

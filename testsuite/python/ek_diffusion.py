@@ -3,11 +3,10 @@ import unittest_decorators as utx
 import espressomd
 import numpy as np
 import espressomd.walberla
-import espressomd.ekin_walberla
 import scipy.optimize
 
 
-@utx.skipIfMissingFeatures(["LB_WALBERLA"])
+@utx.skipIfMissingFeatures(["EK_WALBERLA"])
 class EKDiffusion(ut.TestCase):
     BOX_L = 31.
     AGRID = 1.0
@@ -31,19 +30,18 @@ class EKDiffusion(ut.TestCase):
         espressomd.walberla.WalberlaBlockForest(
             box_size=self.system.box_l, ghost_layers=1, agrid=self.AGRID)
 
-        ekin_walberla = espressomd.ekin_walberla.EKinWalberla(diffusion=self.DIFFUSION_COEFFICIENT,
-                                                              kT=0.0,
-                                                              dens=0.0,
-                                                              tau=1.0)
-        self.system.actors.add(ekin_walberla)
+        ekspecies = espressomd.EKSpecies.EKSpecies(
+            density=0.0, kT=0.0, diffusion=self.DIFFUSION_COEFFICIENT, valency=0.0)
+
+        self.system.ekcontainer.add(ekspecies, tau=1.0)
 
         center = np.asarray(self.system.box_l / 2, dtype=np.int)
 
-        ekin_walberla[center].density = self.DENSITY
+        ekspecies[center].density = self.DENSITY
 
         # check that the density in the domain is what is expected
         np.testing.assert_almost_equal(
-            np.sum(ekin_walberla[:, :, :].density), self.DENSITY, 10)
+            np.sum(ekspecies[:, :, :].density), self.DENSITY, 10)
 
         # TODO: replace that when the blockforest is able to return the
         # dimensions
@@ -54,7 +52,7 @@ class EKDiffusion(ut.TestCase):
 
         self.system.integrator.run(self.TIME)
 
-        simulated_density = np.copy(ekin_walberla[:, :, :].density)
+        simulated_density = np.copy(ekspecies[:, :, :].density)
 
         # check that the density is conserved
         np.testing.assert_almost_equal(

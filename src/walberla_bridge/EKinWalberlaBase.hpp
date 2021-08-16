@@ -16,10 +16,11 @@ template <typename FloatType = double> class EKinWalberlaBase {
 private:
   FloatType m_diffusion;
   FloatType m_kT;
+  FloatType m_valency;
 
 protected:
-  EKinWalberlaBase(FloatType diffusion, FloatType kT)
-      : m_diffusion{diffusion}, m_kT{kT} {}
+  EKinWalberlaBase(FloatType diffusion, FloatType kT, FloatType valency)
+      : m_diffusion{diffusion}, m_kT{kT}, m_valency{valency} {}
 
 public:
   /** @brief Integrate EKin for one time step */
@@ -47,10 +48,12 @@ public:
   virtual void clear_boundaries() = 0;
 
   // Global parameters
-  void set_diffusion(double diffusion) { m_diffusion = diffusion; }
+  void set_diffusion(FloatType diffusion) { m_diffusion = diffusion; }
   [[nodiscard]] FloatType get_diffusion() const { return m_diffusion; }
-  void set_kT(double kT) { m_kT = kT; }
+  void set_kT(FloatType kT) { m_kT = kT; }
   [[nodiscard]] FloatType get_kT() const { return m_kT; }
+  void set_valency(FloatType valency) { m_valency = valency; }
+  [[nodiscard]] FloatType get_valency() const { return m_valency; }
 
   //* @brief Fet the rng counter for thermalized LBs */
   virtual uint64_t get_rng_state() const = 0;

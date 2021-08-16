@@ -28,8 +28,6 @@
 #include "grid_based_algorithms/lb_boundaries.hpp"
 
 #include "communication.hpp"
-#include "ekin_walberla_instance.hpp"
-#include "ekin_walberla_interface.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
 #include "grid.hpp"

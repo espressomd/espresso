@@ -101,8 +101,9 @@ protected:
 
 public:
   EKinWalberlaImpl(const WalberlaBlockForest *blockforest, FloatType diffusion,
-                   FloatType kT, FloatType density)
-      : EKinWalberlaBase<FloatType>(diffusion, kT), m_blockforest{blockforest} {
+                   FloatType kT, FloatType valency, FloatType density)
+      : EKinWalberlaBase<FloatType>(diffusion, kT, valency), m_blockforest{
+                                                                 blockforest} {
     m_density_field_id = field::addToStorage<DensityField>(
         get_blockforest()->get_blocks(), "density field", density, field::fzyx,
         get_blockforest()->get_ghost_layers());
@@ -240,6 +241,7 @@ public:
   get_node_density(const Utils::Vector3i &node) const override {
     auto bc = get_block_and_cell(node, false, get_blockforest()->get_blocks(),
                                  get_blockforest()->get_ghost_layers());
+
     if (!bc)
       return {boost::none};
 

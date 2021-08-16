@@ -21,7 +21,7 @@ void ek_set_diffusion(uint id, double diffusion);
 double ek_get_kT(uint id);
 void ek_set_kT(uint id, double kT);
 
-double ek_get_tau(uint id);
+double ek_get_tau();
 
 Utils::Vector3i ek_get_shape(uint id);
 
