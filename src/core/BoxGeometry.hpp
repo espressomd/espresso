@@ -72,6 +72,23 @@ template <typename T> T get_mi_coord(T a, T b, T box_length, bool periodic) {
 
 enum class BoxType { CUBOID = 0, LEES_EDWARDS = 1 };
 class BoxGeometry {
+public:
+  BoxGeometry() {
+    set_length(Utils::Vector3d{1, 1, 1});
+    set_periodic(0, true);
+    set_periodic(1, true);
+    set_periodic(2, true);
+    set_type(BoxType::CUBOID);
+  };
+  BoxGeometry(const BoxGeometry &rhs) {
+    m_type = rhs.type();
+    set_length(rhs.length());
+    set_periodic(0, rhs.periodic(0));
+    set_periodic(1, rhs.periodic(1));
+    set_periodic(2, rhs.periodic(2));
+    m_lees_edwards_bc = rhs.m_lees_edwards_bc;
+  }
+
 private:
   BoxType m_type = BoxType::CUBOID;
   /** Flags for all three dimensions whether pbc are applied (default). */

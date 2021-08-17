@@ -47,6 +47,8 @@
 #include <utility>
 #include <vector>
 
+extern BoxGeometry box_geo;
+
 /** Cell Structure */
 enum CellStructureType : int {
   /** cell structure domain decomposition */
@@ -537,7 +539,7 @@ private:
     if (maybe_box) {
       Algorithm::link_cell(
           first, last,
-          [&kernel, df = detail::MinimalImageDistance{*maybe_box}](
+          [&kernel, df = detail::MinimalImageDistance{box_geo}](
               Particle &p1, Particle &p2) { kernel(p1, p2, df(p1, p2)); });
     } else {
       if (decomposition().box().type() != BoxType::CUBOID) {
@@ -578,7 +580,7 @@ private:
       auto const maybe_box = decomposition().minimum_image_distance();
       /* In this case the pair kernel is just run over the verlet list. */
       if (maybe_box) {
-        auto const distance_function = detail::MinimalImageDistance{*maybe_box};
+        auto const distance_function = detail::MinimalImageDistance{box_geo};
         for (auto &pair : m_verlet_list) {
           pair_kernel(*pair.first, *pair.second,
                       distance_function(*pair.first, *pair.second));
