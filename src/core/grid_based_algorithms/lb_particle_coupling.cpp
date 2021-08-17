@@ -241,6 +241,26 @@ void add_swimmer_force(Particle const &p, double time_step) {
 }
 #endif
 
+std::vector<Utils::Vector3d> shifted_positions(Utils::Vector3d pos,
+                                               const BoxGeometry &box) {
+  std::vector<Utils::Vector3d> res;
+  for (int i : {-1, 0, 1}) {
+    for (int j : {-1, 0, 1}) {
+      for (int k : {-1, 0, 1}) {
+        if (i == 0 and j == 0 and k == 0)
+          continue;
+        Utils::Vector3d shift{{double(i), double(j), double(k)}};
+        Utils::Vector3d pos_shifted =
+            pos + Utils::hadamard_product(box.length(), shift);
+        if (in_local_halo(pos_shifted)) {
+          res.push_back(pos_shifted);
+        }
+      }
+    }
+  }
+  return res;
+}
+
 } // namespace
 
 void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
@@ -265,6 +285,14 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
 #endif
   } else if (lattice_switch == ActiveLB::CPU) {
     if (lb_particle_coupling.couple_to_md) {
+      bool has_ghosts = (local_geo.cell_structure_type() ==
+                         CellStructureType::CELL_STRUCTURE_REGULAR);
+      if (not has_ghosts) {
+        if (n_nodes > 1) {
+          throw std::runtime_error("LB only works with regular decomposition, "
+                                   "if using more than one MPI node");
+        }
+      }
       switch (lb_lbinterpolation_get_interpolation_order()) {
       case (InterpolationOrder::quadratic):
         throw std::runtime_error("The non-linear interpolation scheme is not "
@@ -289,13 +317,13 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
           return {};
         };
 
-        auto couple_particle = [&](Particle &p) -> void {
+        auto couple_particle = [&](Particle &p, bool has_ghosts) -> void {
           if (p.is_virtual() and !couple_virtual)
             return;
 
           /* Particle is in our LB volume, so this node
            * is responsible to adding its force */
-          if (in_local_domain(p.pos())) {
+          if (in_local_domain(p.pos()) or (not has_ghosts)) {
             auto const force = lb_viscous_coupling(
                 p, noise_amplitude * f_random(p.identity()), time_step);
             /* add force to the particle */
@@ -303,6 +331,15 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
             /* Particle is not in our domain, but adds to the force
              * density in our domain, only calculate contribution to
              * the LB force density. */
+
+            if (not has_ghosts) {
+              // couple positions shifted by one box length to add
+              // forces to ghost layers
+              for (auto pos : shifted_positions(p.pos(), box_geo)) {
+                add_md_force(pos, force, time_step);
+              }
+            }
+
           } else if (in_local_halo(p.pos())) {
             lb_viscous_coupling(p, noise_amplitude * f_random(p.identity()),
                                 time_step);
@@ -315,11 +352,11 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
 
         /* Couple particles ranges */
         for (auto &p : particles) {
-          couple_particle(p);
+          couple_particle(p, has_ghosts);
         }
 
         for (auto &p : more_particles) {
-          couple_particle(p);
+          couple_particle(p, has_ghosts);
         }
 
         break;
