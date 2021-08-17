@@ -1,45 +1,28 @@
-# Part 1: Lattice-Boltzmann
+# Part 1: The Lattice-Boltzmann method
 
-## Physical learning goals
+## Physics learning goals
 
-* Learning basic concepts of the LBM
+After the tutorial, students should be able to:
 
-## Espresso learning goals
+* Explain the basic idea of the Lattice-Boltzmann method
 
-* Learning the LB interface in ESPResSo
+## ESPResSo learning goals
 
-# Part 2: Brownian motion of a sphere in a fluid
+In the course of this tutorial, students should learn to:
 
-## Physical learning goals
+* Set up a Lattice-Boltzmann fluid
 
-* Getting a short introduction to the Flory theory of polymers
-* Learning the basics of Brownian motion
-* Modeling the Brownian motion of a spherical object
-* Calculating the diffusion coefficient of a spherical object
+# Part 2: Planar Poiseuille flow
 
-# Part 3: Brownian motion of a polymer in a fluid
+## Physics learning goals
 
-## Physical learning goals
+After the tutorial, students should be able to:
 
-* Modeling the Brownian motion of a polymer
-* Learning about the hydrodynamic radius, radius of gyration, end-to-end distance
-* Reproducing theoretical results of the Flory theory of polymers
-* Using the Green-Kubo relation to calculate the diffusion coefficient of a polymer
-* Estimating the correlation-corrected standard error of the mean of a time series
-* Observing the effect of implicit hydrodynamics vs. LB hydrodynamics on polymer diffusion
+* Describe the geometry and expected flow field of a Poiseuille flow
 
-## Espresso learning goals
+## ESPResSo learning goals
 
-* Creating linear polymers with ESPResSo functions
-* Using tools from the analysis module not based on the Observable framework
-* Setting up correlators for various operations, with compression
+In the course of this tutorial, students should learn to:
 
-# Part 4: Planar Poiseuille flow
-
-## Physical learning goals
-
-* Modeling a laminar fluid flow between two walls
-
-## Espresso learning goals
-
-* Setting up an LB fluid and LB boundaries
+* Set up an LB fluid with LB boundaries
+* Retrieve data from the LB grid

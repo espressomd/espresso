@@ -23,7 +23,6 @@
 #include <boost/range/numeric.hpp>
 
 #include <utils/Span.hpp>
-#include <utils/index.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -38,32 +37,14 @@ class Observable_stat {
   /** Number of doubles per data item */
   std::size_t m_chunk_size;
 
-  /** Calculate the maximal number of non-bonded interaction pairs in the
-   *  system.
-   */
-  static std::size_t max_non_bonded_pairs() {
-    extern int max_seen_particle_type;
-    return static_cast<std::size_t>(
-        (max_seen_particle_type * (max_seen_particle_type + 1)) / 2);
-  }
-
   /** Get contribution from a non-bonded interaction */
   Utils::Span<double> non_bonded_contribution(Utils::Span<double> base_pointer,
-                                              int type1, int type2) const {
-    extern int max_seen_particle_type;
-    int offset = Utils::upper_triangular(
-        std::min(type1, type2), std::max(type1, type2), max_seen_particle_type);
-    return {base_pointer.begin() + offset * m_chunk_size, m_chunk_size};
-  }
+                                              int type1, int type2) const;
 
 public:
   explicit Observable_stat(std::size_t chunk_size);
 
-  auto chunk_size() const { return m_chunk_size; }
-  Utils::Span<double> data_() { return {m_data.data(), m_data.size()}; }
-  Utils::Span<const double> data_() const {
-    return {m_data.data(), m_data.size()};
-  }
+  auto get_chunk_size() const { return m_chunk_size; }
 
   /** Accumulate values.
    *  @param acc    Initial value for the accumulator.
@@ -97,7 +78,7 @@ public:
   Utils::Span<double> coulomb;
   /** Contribution(s) from dipolar interactions. */
   Utils::Span<double> dipolar;
-  /** Contribution(s) from virtual sites (accumulated). */
+  /** Contribution from virtual sites (accumulated). */
   Utils::Span<double> virtual_sites;
   /** Contribution from external fields (accumulated). */
   Utils::Span<double> external_fields;
@@ -107,17 +88,16 @@ public:
   Utils::Span<double> non_bonded_inter;
 
   /** Get contribution from a bonded interaction */
-  Utils::Span<double> bonded_contribution(int bond_id) {
-    return Utils::Span<double>(bonded.data() + m_chunk_size * bond_id,
-                               m_chunk_size);
+  Utils::Span<double> bonded_contribution(int bond_id) const {
+    auto const offset = m_chunk_size * static_cast<std::size_t>(bond_id);
+    return Utils::Span<double>(bonded.data() + offset, m_chunk_size);
   }
 
   void add_non_bonded_contribution(int type1, int type2,
                                    Utils::Span<const double> data) {
-    auto const dest =
-        (type1 == type2)
-            ? non_bonded_contribution(non_bonded_intra, type1, type2)
-            : non_bonded_contribution(non_bonded_inter, type1, type2);
+    assert(data.size() == m_chunk_size);
+    auto const source = (type1 == type2) ? non_bonded_intra : non_bonded_inter;
+    auto const dest = non_bonded_contribution(source, type1, type2);
 
     boost::transform(dest, data, dest.begin(), std::plus<>{});
   }
@@ -137,6 +117,9 @@ public:
                                                     int type2) const {
     return non_bonded_contribution(non_bonded_inter, type1, type2);
   }
+
+  /** MPI reduction. */
+  void mpi_reduce();
 };
 
 #endif // ESPRESSO_OBSERVABLE_STAT_HPP

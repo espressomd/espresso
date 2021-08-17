@@ -32,9 +32,16 @@ class ConstantpHTest(ut.TestCase):
     def test_ideal_alpha(self):
         N0 = 40
         c0 = 0.00028
-        type_HA = 0
-        type_A = 1
-        type_H = 5
+        types = {
+            "HA": 0,
+            "A-": 1,
+            "H+": 5,
+        }
+        charges_dict = {
+            0: 0,
+            1: -1,
+            5: +1,
+        }
         pH = 2.0
         pKa = 2.5
         box_l = (N0 / c0)**(1.0 / 3.0)
@@ -42,7 +49,7 @@ class ConstantpHTest(ut.TestCase):
         system.cell_system.skin = 0.4
         system.time_step = 0.01
         system.part.add(pos=np.random.random((2 * N0, 3)) * system.box_l,
-                        type=N0 * [type_A, type_H])
+                        type=N0 * [types["A-"], types["H+"]])
 
         RE = espressomd.reaction_ensemble.ConstantpHEnsemble(
             kT=1.0,
@@ -50,10 +57,14 @@ class ConstantpHTest(ut.TestCase):
             seed=44)
         RE.add_reaction(
             gamma=10**(-pKa),
-            reactant_types=[type_HA],
-            product_types=[type_A, type_H],
-            default_charges={type_HA: 0, type_A: -1, type_H: +1})
+            reactant_types=[types["HA"]],
+            product_types=[types["A-"], types["H+"]],
+            default_charges=charges_dict)
         RE.constant_pH = pH
+
+        # Set the hidden particle type to the lowest possible number to speed
+        # up the simulation
+        RE.set_non_interacting_type(max(types.values()) + 1)
 
         # equilibration
         RE.reaction(800)
@@ -62,9 +73,9 @@ class ConstantpHTest(ut.TestCase):
         alphas = []
         for _ in range(80):
             RE.reaction(15)
-            num_H = system.number_of_particles(type=type_H)
-            num_HA = system.number_of_particles(type=type_HA)
-            num_A = system.number_of_particles(type=type_A)
+            num_H = system.number_of_particles(type=types["H+"])
+            num_HA = system.number_of_particles(type=types["HA"])
+            num_A = system.number_of_particles(type=types["A-"])
             self.assertEqual(num_H, num_A)
             self.assertEqual(num_A + num_HA, N0)
             alphas.append(num_A / N0)

@@ -18,29 +18,21 @@
 import unittest as ut
 import importlib_wrapper
 import numpy as np
-import scipy.optimize
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@TUTORIALS_DIR@/lattice_boltzmann/lattice_boltzmann_part2.py")
+    "@TUTORIALS_DIR@/langevin_dynamics/langevin_dynamics.py")
 
 
 @skipIfMissingFeatures
 class Tutorial(ut.TestCase):
     system = tutorial.system
 
-    def test_ballistic_regime(self):
-        for (tau_p, tau, msd) in zip(tutorial.tau_p_values,
-                                     tutorial.tau_results,
-                                     tutorial.msd_results):
-            popt, _ = scipy.optimize.curve_fit(
-                tutorial.quadratic, tau[:tau_p], msd[:tau_p])
-            residuals = msd[:tau_p] - tutorial.quadratic(tau[:tau_p], *popt)
-            np.testing.assert_allclose(residuals, 0, rtol=0, atol=1e-3)
-
     def test_diffusion_coefficient(self):
-        D_val = tutorial.diffusion_results
+        D_gk = tutorial.diffusion_gk
+        D_msd = tutorial.diffusion_msd
         D_ref = tutorial.KT / np.array(tutorial.gammas)
-        np.testing.assert_allclose(D_val, D_ref, rtol=0, atol=0.1)
+        np.testing.assert_allclose(D_msd, D_ref, rtol=0, atol=0.02)
+        np.testing.assert_allclose(D_gk, D_ref, rtol=0, atol=0.02)
 
 
 if __name__ == "__main__":
