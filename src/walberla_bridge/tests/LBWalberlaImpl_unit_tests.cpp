@@ -35,10 +35,6 @@
 
 #include <mpi.h>
 
-#include <cmath>
-#include <functional>
-#include <iostream>
-#include <memory>
 #include <vector>
 
 #include "tests_common.hpp"

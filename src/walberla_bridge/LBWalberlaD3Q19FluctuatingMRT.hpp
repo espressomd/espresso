@@ -2,15 +2,20 @@
 #include "relaxation_rates.hpp"
 
 #ifdef __AVX__
+#include "generated_kernels/CollideSweepThermalizedAVX.h"
+#define CollisionModelName walberla::pystencils::CollideSweepThermalizedAVX
 #include "generated_kernels/FluctuatingMRTLatticeModelAvx.h"
 #define LatticeModelName lbm::FluctuatingMRTLatticeModelAvx
 #else
+#include "generated_kernels/CollideSweepThermalized.h"
+#define CollisionModelName walberla::pystencils::CollideSweepThermalized
 #include "generated_kernels/FluctuatingMRTLatticeModel.h"
 #define LatticeModelName lbm::FluctuatingMRTLatticeModel
 #endif
 
 namespace walberla {
-class LBWalberlaD3Q19FluctuatingMRT : public LBWalberlaImpl<LatticeModelName> {
+class LBWalberlaD3Q19FluctuatingMRT
+    : public LBWalberlaImpl<LatticeModelName, CollisionModelName> {
 
   using LatticeModel = LatticeModelName;
 
@@ -24,7 +29,9 @@ public:
                      omega,     // even
                      omega_odd, // odd
                      omega,     // shear
-                     1, seed));
+                     seed,      // RNG seed
+                     0          // time_step
+                     ));
   };
   void set_viscosity(double viscosity) override {
     auto *lm = dynamic_cast<LatticeModel *>(m_lattice_model.get());
@@ -48,7 +55,7 @@ public:
       : LBWalberlaImpl(viscosity, grid_dimensions, node_grid, n_ghost_layers) {
     m_kT = kT;
     construct_lattice_model(viscosity, kT, seed);
-    setup_with_valid_lattice_model(density);
+    setup_with_valid_lattice_model(density, seed, 0u);
   };
   void integrate() override {
     m_time_loop->singleStep();
@@ -75,3 +82,4 @@ private:
 
 } // namespace walberla
 #undef LatticeModelName
+#undef CollisionModelName

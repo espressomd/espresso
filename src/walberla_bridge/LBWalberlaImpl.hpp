@@ -65,6 +65,8 @@
 
 #include "LBWalberlaBase.hpp"
 #include "ResetForce.hpp"
+#include "generated_kernels/StreamSweep.h"
+#include "relaxation_rates.hpp"
 #include "walberla_utils.hpp"
 
 #include <utils/Vector.hpp>
@@ -83,6 +85,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -94,8 +97,48 @@ const FlagUID UBB_flag("velocity bounce back");
 
 /** Class that runs and controls the LB on WaLBerla
  */
-template <typename LatticeModel, typename FloatType = double>
+template <typename LatticeModel, typename CollisionModel,
+          typename FloatType = double>
 class LBWalberlaImpl : public LBWalberlaBase {
+private:
+  template <typename Sweep, typename = void>
+  struct is_thermalized : std::false_type {};
+
+  template <typename Sweep>
+  struct is_thermalized<Sweep, decltype((void)Sweep::time_step_, void())>
+      : std::true_type {};
+
+  auto generate_collide_sweep_impl(unsigned int, unsigned int,
+                                   std::false_type) {
+    real_t const omega = shear_mode_relaxation_rate(get_viscosity());
+    real_t const omega_odd = odd_mode_relaxation_rate(omega);
+    return CollisionModel(m_last_applied_force_field_id, m_pdf_field_id, omega,
+                          omega, omega_odd, omega);
+  }
+
+  auto generate_collide_sweep_impl(unsigned int seed, unsigned int time_step,
+                                   std::true_type) {
+    real_t const omega = shear_mode_relaxation_rate(get_viscosity());
+    real_t const omega_odd = odd_mode_relaxation_rate(omega);
+    real_t const kT = get_kT();
+    auto collide =
+        CollisionModel(m_last_applied_force_field_id, m_pdf_field_id, 0, 0, 0,
+                       kT, omega, omega, omega_odd, omega, seed, time_step);
+    collide.block_offset_generator =
+        [this](IBlock *const block, uint32_t &block_offset_0,
+               uint32_t &block_offset_1, uint32_t &block_offset_2) {
+          block_offset_0 = m_blocks->getBlockCellBB(*block).xMin();
+          block_offset_1 = m_blocks->getBlockCellBB(*block).yMin();
+          block_offset_2 = m_blocks->getBlockCellBB(*block).zMin();
+        };
+    return collide;
+  }
+
+  auto generate_collide_sweep(unsigned int seed, unsigned int time_step) {
+    return generate_collide_sweep_impl(seed, time_step,
+                                       is_thermalized<CollisionModel>{});
+  }
+
 protected:
   // Type definitions
   using VectorField = GhostLayerField<FloatType, 3>;
@@ -225,7 +268,8 @@ public:
         m_blocks, "flag field", m_n_ghost_layers);
   };
 
-  void setup_with_valid_lattice_model(double density) {
+  void setup_with_valid_lattice_model(double density, unsigned int seed,
+                                      unsigned int time_step) {
     // Init and register pdf field
     m_pdf_field_id = lbm::addPdfFieldToStorage(
         m_blocks, "pdf field", *(m_lattice_model.get()),
@@ -265,21 +309,8 @@ public:
     // Note: For now combined collide-stream sweeps cannot be used,
     // because the collide-push variant is not supported by lbmpy.
     // The following functors are individual in-place collide and stream steps
-    // derived from the lbmpy-provide combined sweep class.
-    auto combined_sweep_stream =
-        std::make_shared<typename LatticeModel::Sweep>(m_pdf_field_id);
-    auto stream = [combined_sweep_stream](
-                      IBlock *const block,
-                      const uint_t numberOfGhostLayersToInclude = uint_t(0)) {
-      combined_sweep_stream->stream(block, numberOfGhostLayersToInclude);
-    };
-    auto combined_sweep_collide =
-        std::make_shared<typename LatticeModel::Sweep>(m_pdf_field_id);
-    auto collide = [combined_sweep_collide](
-                       IBlock *const block,
-                       const uint_t numberOfGhostLayersToInclude = uint_t(0)) {
-      combined_sweep_collide->collide(block, numberOfGhostLayersToInclude);
-    };
+    auto stream = pystencils::StreamSweep(m_pdf_field_id);
+    auto collide = generate_collide_sweep(seed, time_step);
 
     // Add steps to the integration loop
     m_time_loop = std::make_shared<timeloop::SweepTimeloop>(
@@ -303,8 +334,6 @@ public:
     // Synchronize ghost layers
     (*m_full_communication)();
   };
-
-  std::shared_ptr<LatticeModel> get_lattice_model() { return m_lattice_model; };
 
   void integrate() override {
     m_time_loop->singleStep();
