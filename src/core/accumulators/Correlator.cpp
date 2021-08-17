@@ -41,6 +41,8 @@
 #include <numeric>
 #include <sstream>
 #include <stdexcept>
+#include <string>
+#include <vector>
 
 namespace {
 int min(int i, unsigned int j) { return std::min(i, static_cast<int>(j)); }
@@ -149,7 +151,7 @@ std::vector<double> fcs_acf(std::vector<double> const &A,
 
   std::vector<double> C(C_size, 0);
 
-  for (size_t i = 0; i < C_size; i++) {
+  for (std::size_t i = 0; i < C_size; i++) {
     for (int j = 0; j < 3; j++) {
       auto const &a = A[3 * i + j];
       auto const &b = B[3 * i + j];
@@ -281,19 +283,19 @@ void Correlator::initialize() {
   B_accumulated_average = std::vector<double>(dim_B, 0);
 
   auto const n_result = n_values();
-  n_sweeps = std::vector<size_t>(n_result, 0);
+  n_sweeps = std::vector<std::size_t>(n_result, 0);
   n_vals = std::vector<unsigned int>(m_hierarchy_depth, 0);
 
-  result.resize(std::array<size_t, 2>{{n_result, m_dim_corr}});
+  result.resize(std::array<std::size_t, 2>{{n_result, m_dim_corr}});
 
-  for (size_t i = 0; i < n_result; i++) {
-    for (size_t j = 0; j < m_dim_corr; j++) {
+  for (std::size_t i = 0; i < n_result; i++) {
+    for (std::size_t j = 0; j < m_dim_corr; j++) {
       // and initialize the values
       result[i][j] = 0;
     }
   }
 
-  newest = std::vector<size_t>(m_hierarchy_depth, m_tau_lin);
+  newest = std::vector<std::size_t>(m_hierarchy_depth, m_tau_lin);
 
   tau.resize(n_result);
   for (int i = 0; i < m_tau_lin + 1; i++) {
@@ -363,11 +365,11 @@ void Correlator::update() {
 
   // Now we update the cumulated averages and variances of A and B
   n_data++;
-  for (size_t k = 0; k < dim_A; k++) {
+  for (std::size_t k = 0; k < dim_A; k++) {
     A_accumulated_average[k] += A[0][newest[0]][k];
   }
 
-  for (size_t k = 0; k < dim_B; k++) {
+  for (std::size_t k = 0; k < dim_B; k++) {
     B_accumulated_average[k] += B[0][newest[0]][k];
   }
 
@@ -380,7 +382,7 @@ void Correlator::update() {
     assert(temp.size() == m_dim_corr);
 
     n_sweeps[j]++;
-    for (size_t k = 0; k < m_dim_corr; k++) {
+    for (std::size_t k = 0; k < m_dim_corr; k++) {
       result[j][k] += temp[k];
     }
   }
@@ -397,7 +399,7 @@ void Correlator::update() {
       assert(temp.size() == m_dim_corr);
 
       n_sweeps[index_res]++;
-      for (size_t k = 0; k < m_dim_corr; k++) {
+      for (std::size_t k = 0; k < m_dim_corr; k++) {
         result[index_res][k] += temp[k];
       }
     }
@@ -478,7 +480,7 @@ int Correlator::finalize() {
           assert(temp.size() == m_dim_corr);
 
           n_sweeps[index_res]++;
-          for (size_t k = 0; k < m_dim_corr; k++) {
+          for (std::size_t k = 0; k < m_dim_corr; k++) {
             result[index_res][k] += temp[k];
           }
         }
@@ -492,9 +494,9 @@ std::vector<double> Correlator::get_correlation() {
   auto const n_result = n_values();
   std::vector<double> res(n_result * m_dim_corr);
 
-  for (size_t i = 0; i < n_result; i++) {
+  for (std::size_t i = 0; i < n_result; i++) {
     auto const index = m_dim_corr * i;
-    for (size_t k = 0; k < m_dim_corr; k++) {
+    for (std::size_t k = 0; k < m_dim_corr; k++) {
       if (n_sweeps[i]) {
         res[index + k] = result[i][k] / static_cast<double>(n_sweeps[i]);
       }

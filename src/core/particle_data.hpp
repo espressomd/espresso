@@ -44,7 +44,7 @@
 #include <utils/quaternion.hpp>
 
 #include <cstddef>
-#include <memory>
+#include <vector>
 
 /************************************************
  * defines
@@ -97,7 +97,7 @@ void invalidate_fetch_cache();
 /** @brief Return the maximal number of particles that are
  *         kept in the fetch cache.
  */
-size_t fetch_cache_max_size();
+std::size_t fetch_cache_max_size();
 
 /** Call only on the master node.
  *  Move a particle to a new position.
@@ -348,7 +348,7 @@ void auto_exclusions(int distance);
 
 void init_type_map(int type);
 
-/* find a particle of given type and return its id */
+/** Find a particle of given type and return its id */
 int get_random_p_id(int type, int random_index_in_type_map);
 int number_of_particles_with_type(int type);
 

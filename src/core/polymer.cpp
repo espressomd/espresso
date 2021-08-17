@@ -142,7 +142,7 @@ draw_polymer_positions(PartCfg &partCfg, int const n_polymers,
                              respect_constraints);
   };
 
-  for (size_t p = 0; p < start_positions.size(); p++) {
+  for (std::size_t p = 0; p < start_positions.size(); p++) {
     if (is_valid_pos(start_positions[p])) {
       positions[p].push_back(start_positions[p]);
     } else {

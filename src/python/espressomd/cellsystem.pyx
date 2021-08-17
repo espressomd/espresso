@@ -19,14 +19,15 @@
 import numpy as np
 from libcpp.cast cimport dynamic_cast
 from .grid cimport node_grid
+from .grid cimport box_geo
 from . cimport integrate
-from .globals cimport verlet_reuse, skin
-from .globals cimport mpi_set_skin, mpi_set_node_grid
 from libcpp.vector cimport vector
 from .cellsystem cimport cell_structure
+from .cellsystem cimport get_verlet_reuse
+from .cellsystem cimport mpi_set_skin, skin
 from .utils import handle_errors
-from .utils cimport Vector3i, check_type_or_throw_except
-
+from .utils cimport Vector3i
+from .utils cimport check_type_or_throw_except
 
 cdef class CellSystem:
     def set_domain_decomposition(self, use_verlet_lists=True):
@@ -63,23 +64,17 @@ cdef class CellSystem:
         return True
 
     def get_state(self):
-        s = {"use_verlet_list": cell_structure.use_verlet_list}
+        s = self.__getstate__()
 
         if cell_structure.decomposition_type() == CELL_STRUCTURE_DOMDEC:
             dd = get_domain_decomposition()
-            s["type"] = "domain_decomposition"
             s["cell_grid"] = np.array(
                 [dd.cell_grid[0], dd.cell_grid[1], dd.cell_grid[2]])
             s["cell_size"] = np.array(
                 [dd.cell_size[0], dd.cell_size[1], dd.cell_size[2]])
 
-        if cell_structure.decomposition_type() == CELL_STRUCTURE_NSQUARE:
-            s["type"] = "nsquare"
-
-        s["skin"] = skin
-        s["verlet_reuse"] = verlet_reuse
+        s["verlet_reuse"] = get_verlet_reuse()
         s["n_nodes"] = n_nodes
-        s["node_grid"] = np.array([node_grid[0], node_grid[1], node_grid[2]])
 
         return s
 
@@ -96,18 +91,14 @@ cdef class CellSystem:
         return s
 
     def __setstate__(self, d):
-        use_verlet_lists = None
-        for key in d:
-            if key == "use_verlet_list":
-                use_verlet_lists = d[key]
-            elif key == "type":
-                if d[key] == "domain_decomposition":
-                    self.set_domain_decomposition(
-                        use_verlet_lists=use_verlet_lists)
-                elif d[key] == "nsquare":
-                    self.set_n_square(use_verlet_lists=use_verlet_lists)
         self.skin = d['skin']
         self.node_grid = d['node_grid']
+        if 'type' in d:
+            if d['type'] == "domain_decomposition":
+                self.set_domain_decomposition(
+                    use_verlet_lists=d['use_verlet_list'])
+            elif d['type'] == "nsquare":
+                self.set_n_square(use_verlet_lists=d['use_verlet_list'])
 
     def get_pairs(self, distance, types='all'):
         """
@@ -174,7 +165,6 @@ cdef class CellSystem:
 
         return mpi_resort_particles(int(global_flag))
 
-    # setter deprecated
     property node_grid:
         """
         Node grid.
@@ -194,6 +184,14 @@ cdef class CellSystem:
         def __get__(self):
             return np.array([node_grid[0], node_grid[1], node_grid[2]])
 
+    property max_cut_nonbonded:
+        def __get__(self):
+            return maximal_cutoff_nonbonded()
+
+    property max_cut_bonded:
+        def __get__(self):
+            return maximal_cutoff_bonded()
+
     property skin:
         """
         Value of the skin layer expects a floating point number.
@@ -206,7 +204,6 @@ cdef class CellSystem:
             if _skin < 0:
                 raise ValueError("Skin must be >= 0")
             mpi_set_skin(_skin)
-            integrate.skin_set = True
 
         def __get__(self):
             return skin

@@ -26,6 +26,7 @@
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 BOOST_AUTO_TEST_CASE(default_case) {
   using ScriptInterface::get_value;

@@ -22,7 +22,7 @@
 import unittest as ut
 import numpy as np
 import espressomd
-from espressomd import reaction_ensemble
+import espressomd.reaction_ensemble
 
 
 class ReactionEnsembleTest(ut.TestCase):
@@ -36,9 +36,16 @@ class ReactionEnsembleTest(ut.TestCase):
     # ensembles are equivalent only in the thermodynamic limit N \to \infty)
     N0 = 40
     c0 = 0.00028
-    type_HA = 0
-    type_A = 1
-    type_H = 2
+    types = {
+        "HA": 0,
+        "A-": 1,
+        "H+": 2,
+    }
+    charge_dict = {
+        0: 0,
+        1: -1,
+        2: +1,
+    }
     target_alpha = 0.6
     # We get best statistics at alpha=0.5 Then the test is less sensitive to
     # the exact sequence of random numbers and does not require hard-coded
@@ -46,9 +53,9 @@ class ReactionEnsembleTest(ut.TestCase):
     temperature = 1.0
     exclusion_radius = 1.0
     # could be in this test for example anywhere in the range 0.000001 ... 9,
-    reactant_types = [type_HA]
+    reactant_types = [types["HA"]]
     reactant_coefficients = [1]
-    product_types = [type_A, type_H]
+    product_types = [types["A-"], types["H+"]]
     product_coefficients = [1, 1]
     nubar = 1
     system = espressomd.System(box_l=np.ones(3) * (N0 / c0)**(1.0 / 3.0))
@@ -60,15 +67,15 @@ class ReactionEnsembleTest(ut.TestCase):
     # gamma = prod_i (N_i / V) = alpha^2 N0 / (1-alpha)*V**(-nubar)
     # degree of dissociation alpha = N_A / N_HA = N_H / N_0
     gamma = target_alpha**2 / (1. - target_alpha) * N0 / (volume**nubar)
-    RE = reaction_ensemble.ReactionEnsemble(
-        temperature=temperature,
+    RE = espressomd.reaction_ensemble.ReactionEnsemble(
+        kT=temperature,
         exclusion_radius=exclusion_radius, seed=12)
 
     @classmethod
     def setUpClass(cls):
         cls.system.part.add(
             pos=np.random.random((2 * cls.N0, 3)) * cls.system.box_l,
-            type=cls.N0 * [cls.type_A, cls.type_H])
+            type=cls.N0 * [cls.types["A-"], cls.types["H+"]])
 
         cls.RE.add_reaction(
             gamma=cls.gamma,
@@ -76,19 +83,21 @@ class ReactionEnsembleTest(ut.TestCase):
             reactant_coefficients=cls.reactant_coefficients,
             product_types=cls.product_types,
             product_coefficients=cls.product_coefficients,
-            default_charges={cls.type_HA: 0, cls.type_A: -1, cls.type_H: +1},
+            default_charges=cls.charge_dict,
             check_for_electroneutrality=True)
 
     def test_ideal_titration_curve(self):
         N0 = ReactionEnsembleTest.N0
-        type_A = ReactionEnsembleTest.type_A
-        type_H = ReactionEnsembleTest.type_H
-        type_HA = ReactionEnsembleTest.type_HA
+        types = ReactionEnsembleTest.types
         system = ReactionEnsembleTest.system
         gamma = ReactionEnsembleTest.gamma
 
         RE = ReactionEnsembleTest.RE
         target_alpha = ReactionEnsembleTest.target_alpha
+
+        # Set the hidden particle type to the lowest possible number to speed
+        # up the simulation
+        RE.set_non_interacting_type(max(types.values()) + 1)
 
         # chemical warmup - get close to chemical equilibrium before we start
         # sampling
@@ -100,9 +109,9 @@ class ReactionEnsembleTest(ut.TestCase):
         num_samples = 300
         for _ in range(num_samples):
             RE.reaction(10)
-            average_NH += system.number_of_particles(type=type_H)
-            average_NHA += system.number_of_particles(type=type_HA)
-            average_NA += system.number_of_particles(type=type_A)
+            average_NH += system.number_of_particles(type=types["H+"])
+            average_NHA += system.number_of_particles(type=types["HA"])
+            average_NA += system.number_of_particles(type=types["A-"])
         average_NH /= num_samples
         average_NA /= num_samples
         average_NHA /= num_samples
@@ -151,9 +160,9 @@ class ReactionEnsembleTest(ut.TestCase):
 
         self.assertAlmostEqual(
             ReactionEnsembleTest.temperature,
-            RE_status["temperature"],
+            RE_status["kT"],
             places=9,
-            msg="reaction ensemble temperature not set correctly.")
+            msg="reaction ensemble kT not set correctly.")
         self.assertAlmostEqual(
             ReactionEnsembleTest.exclusion_radius,
             RE_status["exclusion_radius"],

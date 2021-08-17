@@ -12,17 +12,14 @@ online-visualization:
    Additional requirements:
    python module *mayavi*, VTK and wxWidgets GUI Toolkit (packages
    *python3-vtk* and *python3-wxgtk*, for Debian/Ubuntu).
-   Note that only VTK from version 7.0.0 and higher has Python 3
-   support.
+   Note that only VTK from version 7.0.0 and higher has Python 3 support.
 
 #. A direct rendering engine based on *pyopengl*. As it is developed for |es|,
-   it supports the visualization of several specific features like
-   constraints, particle properties, the cell system, lattice-Boltzmann and
-   more. It can be adjusted with a large number of parameters to set colors,
-   materials, camera and interactive features like assigning callbacks to user
-   input.
-   Additional requirements:
-   python module *PyOpenGL*.
+   it supports the visualization of several specific features like constraints,
+   particle properties, the cell system, lattice-Boltzmann and more. It can be
+   adjusted with a large number of parameters to set colors, materials,
+   camera and interactive features like assigning callbacks to user input.
+   Additional requirements: python module *PyOpenGL*.
 
 Both are not meant to produce high quality renderings, but rather to
 debug your setup and equilibration process.
@@ -40,26 +37,25 @@ the renderer with your system. Finally start the blocking visualization
 window with ``start()``. See the following minimal code example::
 
     import espressomd
-    from espressomd import visualization
-    from threading import Thread
+    import espressomd.visualization
+    import threading
 
-    system = espressomd.System(box_l=[1, 1, 1])
+    system = espressomd.System(box_l=[10, 10, 10])
     system.cell_system.skin = 0.4
-    system.time_step = 0.01
-    system.box_l = [10, 10, 10]
+    system.time_step = 0.00001
 
-    system.part.add(pos=[1, 1, 1])
-    system.part.add(pos=[9, 9, 9])
+    system.part.add(pos=[1, 1, 1], v=[1, 0, 0])
+    system.part.add(pos=[9, 9, 9], v=[0, 1, 0])
 
-    #visualizer = visualization.mayaviLive(system)
-    visualizer = visualization.openGLLive(system)
+    #visualizer = espressomd.visualization.mayaviLive(system)
+    visualizer = espressomd.visualization.openGLLive(system)
 
     def main_thread():
         while True:
             system.integrator.run(1)
             visualizer.update()
 
-    t = Thread(target=main_thread)
+    t = threading.Thread(target=main_thread)
     t.daemon = True
     t.start()
     visualizer.start()
@@ -141,16 +137,16 @@ an integration loop with ``n`` integration steps in a separate thread once the
 visualizer is initialized::
 
     import espressomd
-    from espressomd import visualization
+    import espressomd.visualization
 
     system = espressomd.System(box_l=[10, 10, 10])
     system.cell_system.skin = 0.4
-    system.time_step = 0.00001
+    system.time_step = 0.0001
 
     system.part.add(pos=[1, 1, 1], v=[1, 0, 0])
     system.part.add(pos=[9, 9, 9], v=[0, 1, 0])
 
-    visualizer = visualization.openGLLive(system, background_color=[1, 1, 1])
+    visualizer = espressomd.visualization.openGLLive(system, background_color=[1, 1, 1])
     visualizer.run(1)
 
 
@@ -170,7 +166,7 @@ argument ``window_size`` of the visualizer. This method can be used to create
 screenshots without blocking the simulation script::
 
     import espressomd
-    from espressomd import visualization
+    import espressomd.visualization
 
     system = espressomd.System(box_l=[10, 10, 10])
     system.cell_system.skin = 1.0
@@ -181,11 +177,11 @@ screenshots without blocking the simulation script::
 
     system.thermostat.set_langevin(kT=1, gamma=1, seed=42)
 
-    visualizer = visualization.openGLLive(system, window_size=[500, 500])
+    visualizer = espressomd.visualization.openGLLive(system, window_size=[500, 500])
 
     for i in range(100):
         system.integrator.run(1)
-        visualizer.screenshot('screenshot_{:0>5}.png'.format(i))
+        visualizer.screenshot(f'screenshot_{i:0>5}.png')
 
     # You may consider creating a video with ffmpeg:
     # ffmpeg -f image2 -framerate 30 -i 'screenshot_%05d.png' output.mp4
@@ -205,17 +201,17 @@ components. To distinguish particle groups, arrays of RGBA or ADSSO entries are
 used, which are indexed circularly by the numerical particle type::
 
     # Particle type 0 is red, type 1 is blue (type 2 is red etc)..
-    visualizer = visualization.openGLLive(system,
-                                          particle_coloring='type',
-                                          particle_type_colors=[[1, 0, 0], [0, 0, 1]])
+    visualizer = espressomd.visualization.openGLLive(system,
+                                                     particle_coloring='type',
+                                                     particle_type_colors=[[1, 0, 0], [0, 0, 1]])
 
 ``particle_type_materials`` lists the materials by type::
 
     # Particle type 0 is gold, type 1 is blue (type 2 is gold again etc).
-    visualizer = visualization.openGLLive(system,
-                                          particle_coloring='type',
-                                          particle_type_colors=[[1, 1, 1], [0, 0, 1]],
-                                          particle_type_materials=["steel", "bright"])
+    visualizer = espressomd.visualization.openGLLive(system,
+                                                     particle_coloring='type',
+                                                     particle_type_colors=[[1, 1, 1], [0, 0, 1]],
+                                                     particle_type_materials=["steel", "bright"])
 
 Materials are stored in :attr:`espressomd.visualization_opengl.openGLLive.materials`.
 
@@ -238,9 +234,9 @@ following code snippet demonstrates the visualization of the director property
 and individual settings for two particle types (requires the ``ROTATION``
 feature)::
 
-    import numpy
-    from espressomd import *
-    from espressomd.visualization_opengl import *
+    import numpy as np
+    import espressomd
+    from espressomd.visualization_opengl import openGLLive, KeyboardButtonEvent, KeyboardFireEvent
 
     box_l = 10
     system = espressomd.System(box_l=[box_l, box_l, box_l])
@@ -255,13 +251,12 @@ feature)::
                             director_arrows_type_colors=[[1.0, 0, 0], [0, 1.0, 0]])
 
     for i in range(10):
-        system.part.add(pos=numpy.random.random(3) * box_l,
+        system.part.add(pos=np.random.random(3) * box_l,
                         rotation=[1, 1, 1],
                         ext_torque=[5, 0, 0],
                         v=[10, 0, 0],
                         type=0)
-
-        system.part.add(pos=numpy.random.random(3) * box_l,
+        system.part.add(pos=np.random.random(3) * box_l,
                         rotation=[1, 1, 1],
                         ext_torque=[0, 5, 0],
                         v=[-10, 0, 0],
@@ -305,29 +300,31 @@ by a timer or keyboard input::
 
     # Callbacks to control temperature
     temperature = 1.0
+    system.thermostat.set_langevin(kT=temperature, seed=42, gamma=1.0)
     def increaseTemp():
         global temperature
-        temperature += 0.1
+        temperature += 0.5
         system.thermostat.set_langevin(kT=temperature, gamma=1.0)
-        print("T =", system.thermostat.get_state()[0]['kT'])
+        print(f"T = {system.thermostat.get_state()[0]['kT']:.1f}")
 
     def decreaseTemp():
         global temperature
-        temperature -= 0.1
-
+        temperature -= 0.5
         if temperature > 0:
             system.thermostat.set_langevin(kT=temperature, gamma=1.0)
-            print("T =", system.thermostat.get_state()[0]['kT'])
+            print(f"T = {system.thermostat.get_state()[0]['kT']:.1f}")
         else:
             temperature = 0
             system.thermostat.turn_off()
             print("T = 0")
 
-    # Registers input-based calls
-    visualizer.keyboard_manager.register_button(KeyboardButtonEvent('t', KeyboardFireEvent.Hold, increaseTemp))
-    visualizer.keyboard_manager.register_button(KeyboardButtonEvent('g', KeyboardFireEvent.Hold, decreaseTemp))
+    # Registers input-based calls with keys Y and H
+    visualizer.keyboard_manager.register_button(KeyboardButtonEvent('y', KeyboardFireEvent.Hold, increaseTemp))
+    visualizer.keyboard_manager.register_button(KeyboardButtonEvent('h', KeyboardFireEvent.Hold, decreaseTemp))
 
-Further examples can be found in :file:`samples/billiard.py` or :file:`samples/visualization_interactive.py`.
+    visualizer.run(1)
+
+Further examples can be found in :file:`/samples/billiard.py` or :file:`/samples/visualization_interactive.py`.
 
 .. _Dragging particles:
 

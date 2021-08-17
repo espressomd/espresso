@@ -46,7 +46,7 @@ public:
      via the interface. */
   std::string get_internal_state() const;
   void set_internal_state(std::string const &);
-  std::vector<size_t> shape() const override { return m_obs->shape(); }
+  std::vector<std::size_t> shape() const override { return m_obs->shape(); }
 
 private:
   std::shared_ptr<Observables::Observable> m_obs;

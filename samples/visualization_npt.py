@@ -23,7 +23,7 @@ import numpy as np
 from threading import Thread
 
 import espressomd
-from espressomd.interactions import HarmonicBond
+import espressomd.interactions
 import espressomd.visualization_opengl
 
 required_features = ["NPT", "LENNARD_JONES"]
@@ -41,7 +41,7 @@ system.cell_system.skin = 0.1
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=2, sigma=1, cutoff=3, shift="auto")
 
-system.bonded_inter[0] = HarmonicBond(k=5.0, r_0=1.0)
+system.bonded_inter[0] = espressomd.interactions.HarmonicBond(k=5.0, r_0=1.0)
 
 n_part = 200
 for i in range(0, n_part - 1, 2):

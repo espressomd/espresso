@@ -23,6 +23,10 @@
 
 #include "script_interface/LocalContext.hpp"
 
+#include <algorithm>
+#include <memory>
+#include <string>
+
 namespace si = ScriptInterface;
 
 struct Dummy : si::ObjectHandle {

@@ -49,22 +49,13 @@ namespace utf = boost::unit_test;
 #include <boost/mpi.hpp>
 #include <boost/range/numeric.hpp>
 
+#include <cassert>
 #include <cmath>
 #include <cstdlib>
 #include <limits>
 #include <memory>
 #include <unordered_map>
 #include <vector>
-
-/* Guard against a bug in Boost versions < 1.68 where fixtures used to skip
- * test are not propagated correctly to the testsuite, causing skipped tests
- * to trigger a failure of the complete testsuite without any error message.
- * More details in ticket https://svn.boost.org/trac10/ticket/12095
- */
-#include <boost/serialization/version.hpp>
-#if BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 < 68
-int main(int argc, char **argv) {}
-#else
 
 namespace espresso {
 // ESPResSo system instance
@@ -88,7 +79,6 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
   auto const box_l = 8.;
   auto const box_center = box_l / 2.;
   espresso::system->set_box_l(Utils::Vector3d::broadcast(box_l));
-  auto const &obs_energy = get_obs_energy();
 
   // particle properties
   auto const pid1 = 9;
@@ -157,8 +147,8 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
       set_particle_v(pid2, {static_cast<double>(i), 0., 0.});
       auto const &p = get_particle_data(pid2);
       auto const kinetic_energy = 0.5 * p.p.mass * p.m.v.norm2();
-      update_energy();
-      BOOST_CHECK_CLOSE(obs_energy.kinetic[0], kinetic_energy, tol);
+      auto const obs_energy = calculate_energy();
+      BOOST_CHECK_CLOSE(obs_energy->kinetic[0], kinetic_energy, tol);
       BOOST_CHECK_CLOSE(observable_compute_energy(), kinetic_energy, tol);
     }
   }
@@ -188,12 +178,12 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
     auto const lj_energy = 4.0 * eps * (Utils::sqr(frac6) - frac6 + shift);
 
     // measure energies
-    update_energy();
+    auto const obs_energy = calculate_energy();
     for (int i = 0; i < n_pairs; ++i) {
       auto const ref_inter = (i == lj_pair_ab) ? lj_energy : 0.;
       auto const ref_intra = (i == lj_pair_bb) ? lj_energy : 0.;
-      BOOST_CHECK_CLOSE(obs_energy.non_bonded_inter[i], ref_inter, 500. * tol);
-      BOOST_CHECK_CLOSE(obs_energy.non_bonded_intra[i], ref_intra, 500. * tol);
+      BOOST_CHECK_CLOSE(obs_energy->non_bonded_inter[i], ref_inter, 500. * tol);
+      BOOST_CHECK_CLOSE(obs_energy->non_bonded_intra[i], ref_intra, 500. * tol);
     }
   }
 #endif // LENNARD_JONES
@@ -216,7 +206,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
     add_particle_bond(pid2, std::vector<int>{fene_bond_id, pid3});
 
     // measure energies
-    update_energy();
+    auto const obs_energy = calculate_energy();
     auto const &p1 = get_particle_data(pid1);
     auto const &p2 = get_particle_data(pid2);
     auto const &p3 = get_particle_data(pid3);
@@ -225,9 +215,9 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
     auto const fene_energy =
         -0.5 * fene_bond.k * Utils::sqr(fene_bond.drmax) *
         std::log(1.0 - Utils::sqr((dist - fene_bond.r0) / fene_bond.drmax));
-    BOOST_CHECK_CLOSE(obs_energy.bonded[none_bond_id], none_energy, 0.0);
-    BOOST_CHECK_CLOSE(obs_energy.bonded[harm_bond_id], harm_energy, 40. * tol);
-    BOOST_CHECK_CLOSE(obs_energy.bonded[fene_bond_id], fene_energy, 40. * tol);
+    BOOST_CHECK_CLOSE(obs_energy->bonded[none_bond_id], none_energy, 0.0);
+    BOOST_CHECK_CLOSE(obs_energy->bonded[harm_bond_id], harm_energy, 40. * tol);
+    BOOST_CHECK_CLOSE(obs_energy->bonded[fene_bond_id], fene_energy, 40. * tol);
   }
 
   // check electrostatics
@@ -255,11 +245,11 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
       place_particle(pid2, pos2);
       auto const r = (pos2 - pos1).norm();
       // check P3M energy
-      update_energy();
+      auto const obs_energy = calculate_energy();
       // at very short distances, the real-space contribution to
       // the energy is much larger than the k-space contribution
       auto const energy_ref = -prefactor / r;
-      auto const energy_p3m = obs_energy.coulomb[0] + obs_energy.coulomb[1];
+      auto const energy_p3m = obs_energy->coulomb[0] + obs_energy->coulomb[1];
       BOOST_CHECK_CLOSE(energy_p3m, energy_ref, 0.01);
     }
   }
@@ -329,4 +319,3 @@ int main(int argc, char **argv) {
 
   return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }
-#endif // Boost version >= 1.68

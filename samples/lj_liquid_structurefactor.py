@@ -103,22 +103,21 @@ for i in range(n_part):
     else:
         system.part.add(type=1, pos=np.random.random(3) * system.box_l)
 
-print("Simulate {} particles in a cubic box {} at density {}."
-      .format(n_part, box_l, density).strip())
+print(
+    f"Simulate {n_part} particles in a cubic box {box_l} at density {density}.")
 print("Interactions:\n")
 act_min_dist = system.analysis.min_dist()
-print("Start with minimal distance {}".format(act_min_dist))
+print(f"Start with minimal distance {act_min_dist}")
 
 
 #############################################################
 #  Warmup Integration                                       #
 #############################################################
 
-print("""
+print(f"""\
 Start warmup integration:
-At maximum {} times {} steps
-Stop if minimal distance is larger than {}
-""".strip().format(warm_n_times, warm_steps, min_dist))
+At maximum {warm_n_times} times {warm_steps} steps
+Stop if minimal distance is larger than {min_dist}""")
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
 # minimize energy using min_dist as the convergence criterion
@@ -126,11 +125,11 @@ system.integrator.set_steepest_descent(f_max=0, gamma=1e-3,
                                        max_displacement=lj_sig / 100)
 i = 0
 while i < warm_n_times and system.analysis.min_dist() < min_dist:
-    print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+    print(f"minimization: {system.analysis.energy()['total']:+.2e}")
     system.integrator.run(warm_steps)
     i += 1
 
-print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+print(f"minimization: {system.analysis.energy()['total']:+.2e}")
 print()
 system.integrator.set_vv()
 
@@ -146,11 +145,10 @@ pprint.pprint(system.__getstate__())
 #############################################################
 #      Integration                                          #
 #############################################################
-print("\nStart integration: run {} times {} steps"
-      .format(int_n_times, int_steps))
+print(f"\nStart integration: run {int_n_times} times {int_steps} steps")
 
 for i in range(int_n_times):
-    print("run {} at time={:.2f}".format(i, system.time))
+    print(f"run {i} at time={system.time:.2f}")
 
     system.integrator.run(int_steps)
 

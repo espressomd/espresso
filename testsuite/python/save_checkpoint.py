@@ -26,13 +26,10 @@ import espressomd.interactions
 import espressomd.virtual_sites
 import espressomd.accumulators
 import espressomd.observables
-from espressomd import has_features
-if any(has_features(i) for i in ["LB_BOUNDARIES", "LB_BOUNDARIES_GPU"]):
-    from espressomd.lbboundaries import LBBoundary
 import espressomd.lb
-import espressomd.electrokinetics
-from espressomd.shapes import Wall, Sphere
-from espressomd import constraints
+import espressomd.lbboundaries
+import espressomd.shapes
+import espressomd.constraints
 
 modes = {x for mode in set("@TEST_COMBINATION@".upper().split('-'))
          for x in [mode, mode.split('.')[0]]}
@@ -43,7 +40,10 @@ if 'DP3M' in modes:
     system.box_l = 3 * [np.max(system.box_l)]
 system.cell_system.skin = 0.1
 system.time_step = 0.01
+system.time = 1.5
+system.force_cap = 1e8
 system.min_global_cut = 2.0
+system.max_oif_objects = 5
 
 # create checkpoint folder
 idx = "mycheckpoint_@TEST_COMBINATION@_@TEST_BINARY@".replace(".", "__")
@@ -56,6 +56,8 @@ if checkpoint.has_checkpoints():
         if filepath.endswith((".checkpoint", ".cpt")):
             os.remove(os.path.join(checkpoint.checkpoint_dir, filepath))
 
+n_nodes = system.cell_system.get_state()["n_nodes"]
+
 LB_implementation = None
 if 'LB.CPU' in modes:
     LB_implementation = espressomd.lb.LBFluid
@@ -67,33 +69,16 @@ if LB_implementation:
     system.actors.add(lbf)
     if 'THERM.LB' in modes:
         system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)
-    if any(has_features(i) for i in ["LB_BOUNDARIES", "LB_BOUNDARIES_GPU"]):
+    if any(espressomd.has_features(i)
+           for i in ["LB_BOUNDARIES", "LB_BOUNDARIES_GPU"]) and n_nodes == 1:
         if 'EK.GPU' not in modes:
             system.lbboundaries.add(
-                LBBoundary(shape=Wall(normal=(0, 0, 1), dist=0.5), velocity=(1e-4, 1e-4, 0)))
+                espressomd.lbboundaries.LBBoundary(shape=espressomd.shapes.Wall(normal=(1, 0, 0), dist=0.5), velocity=(1e-4, 1e-4, 0)))
+            system.lbboundaries.add(
+                espressomd.lbboundaries.LBBoundary(shape=espressomd.shapes.Wall(normal=(-1, 0, 0), dist=-(system.box_l[0] - 0.5)), velocity=(0, 0, 0)))
 
-EK_implementation = None
-if 'EK.GPU' in modes and espressomd.gpu_available(
-) and espressomd.has_features('ELECTROKINETICS'):
-    EK_implementation = espressomd.electrokinetics
-    ek = EK_implementation.Electrokinetics(
-        agrid=0.5,
-        lb_density=26.15,
-        viscosity=1.7,
-        friction=0.0,
-        T=1.1,
-        prefactor=0.88,
-        stencil="linkcentered")
-    ek_species = EK_implementation.Species(
-        density=0.4,
-        D=0.02,
-        valency=0.3,
-        ext_force_density=[0.01, -0.08, 0.06])
-    ek.add_species(ek_species)
-    system.actors.add(ek)
-
-p1 = system.part.add(pos=[1.0] * 3)
-p2 = system.part.add(pos=[1.0, 1.0, 2.0])
+p1 = system.part.add(id=0, pos=[1.0] * 3)
+p2 = system.part.add(id=1, pos=[1.0, 1.0, 2.0])
 
 if espressomd.has_features('ELECTROSTATICS'):
     p1.q = 1
@@ -104,7 +89,11 @@ if espressomd.has_features('DIPOLES'):
     p2.dip = (7.3, 6.1, -4)
 
 if espressomd.has_features('EXCLUSIONS'):
-    system.part.add(pos=[2.0] * 3, exclusions=[0, 1])
+    system.part.add(id=2, pos=[2.0] * 3, exclusions=[0, 1])
+
+# place particles at the interface between 2 MPI nodes
+p3 = system.part.add(id=3, pos=system.box_l / 2.0 - 1.0, type=1)
+p4 = system.part.add(id=4, pos=system.box_l / 2.0 + 1.0, type=1)
 
 if espressomd.has_features('P3M') and 'P3M' in modes:
     p3m = espressomd.electrostatics.P3M(
@@ -114,6 +103,7 @@ if espressomd.has_features('P3M') and 'P3M' in modes:
         cao=1,
         alpha=1.0,
         r_cut=1.0,
+        timings=15,
         tune=False)
     if 'P3M.CPU' in modes:
         system.actors.add(p3m)
@@ -126,6 +116,7 @@ if espressomd.has_features('P3M') and 'P3M' in modes:
             delta_mid_bot=0.1)
         system.actors.add(elc)
 
+# accumulators
 obs = espressomd.observables.ParticlePositions(ids=[0, 1])
 acc_mean_variance = espressomd.accumulators.MeanVarianceCalculator(obs=obs)
 acc_time_series = espressomd.accumulators.TimeSeries(obs=obs)
@@ -140,32 +131,37 @@ acc_mean_variance.update()
 acc_time_series.update()
 acc_correlator.update()
 
-system.auto_update_accumulators.add(acc_mean_variance)
-system.auto_update_accumulators.add(acc_time_series)
-system.auto_update_accumulators.add(acc_correlator)
+if n_nodes == 1:
+    system.auto_update_accumulators.add(acc_mean_variance)
+    system.auto_update_accumulators.add(acc_time_series)
+    system.auto_update_accumulators.add(acc_correlator)
 
 # constraints
-system.constraints.add(shape=Sphere(center=system.box_l / 2, radius=0.1),
-                       particle_type=17)
-system.constraints.add(shape=Wall(normal=[1. / np.sqrt(3)] * 3, dist=0.5))
-system.constraints.add(constraints.Gravity(g=[1., 2., 3.]))
-system.constraints.add(constraints.HomogeneousMagneticField(H=[1., 2., 3.]))
-system.constraints.add(
-    constraints.HomogeneousFlowField(u=[1., 2., 3.], gamma=2.3))
-pot_field_data = constraints.ElectricPotential.field_from_fn(
-    system.box_l, np.ones(3), lambda x: np.linalg.norm(10 * np.ones(3) - x))
-checkpoint.register("pot_field_data")
-system.constraints.add(constraints.PotentialField(
-    field=pot_field_data, grid_spacing=np.ones(3), default_scale=1.6,
-    particle_scales={5: 6.0}))
-vec_field_data = constraints.ForceField.field_from_fn(
-    system.box_l, np.ones(3), lambda x: 10 * np.ones(3) - x)
-checkpoint.register("vec_field_data")
-system.constraints.add(constraints.ForceField(
-    field=vec_field_data, grid_spacing=np.ones(3), default_scale=1.4))
-if espressomd.has_features("ELECTROSTATICS"):
-    system.constraints.add(constraints.ElectricPlaneWave(
-        E0=[1., -2., 3.], k=[-.1, .2, .3], omega=5., phi=1.4))
+if n_nodes == 1:
+    system.constraints.add(shape=espressomd.shapes.Sphere(center=system.box_l / 2, radius=0.1),
+                           particle_type=17)
+    system.constraints.add(
+        shape=espressomd.shapes.Wall(
+            normal=[1. / np.sqrt(3)] * 3, dist=0.5))
+    system.constraints.add(espressomd.constraints.Gravity(g=[1., 2., 3.]))
+    system.constraints.add(
+        espressomd.constraints.HomogeneousMagneticField(H=[1., 2., 3.]))
+    system.constraints.add(
+        espressomd.constraints.HomogeneousFlowField(u=[1., 2., 3.], gamma=2.3))
+    pot_field_data = espressomd.constraints.ElectricPotential.field_from_fn(
+        system.box_l, np.ones(3), lambda x: np.linalg.norm(10 * np.ones(3) - x))
+    checkpoint.register("pot_field_data")
+    system.constraints.add(espressomd.constraints.PotentialField(
+        field=pot_field_data, grid_spacing=np.ones(3), default_scale=1.6,
+        particle_scales={5: 6.0}))
+    vec_field_data = espressomd.constraints.ForceField.field_from_fn(
+        system.box_l, np.ones(3), lambda x: 10 * np.ones(3) - x)
+    checkpoint.register("vec_field_data")
+    system.constraints.add(espressomd.constraints.ForceField(
+        field=vec_field_data, grid_spacing=np.ones(3), default_scale=1.4))
+    if espressomd.has_features("ELECTROSTATICS"):
+        system.constraints.add(espressomd.constraints.ElectricPlaneWave(
+            E0=[1., -2., 3.], k=[-.1, .2, .3], omega=5., phi=1.4))
 
 if 'LB.OFF' in modes:
     # set thermostat
@@ -173,15 +169,15 @@ if 'LB.OFF' in modes:
         system.thermostat.set_langevin(kT=1.0, gamma=2.0, seed=42)
     elif 'THERM.BD' in modes:
         system.thermostat.set_brownian(kT=1.0, gamma=2.0, seed=42)
-    elif 'THERM.NPT' in modes and has_features('NPT'):
+    elif 'THERM.NPT' in modes and espressomd.has_features('NPT'):
         system.thermostat.set_npt(kT=1.0, gamma0=2.0, gammav=0.1, seed=42)
-    elif 'THERM.DPD' in modes and has_features('DPD'):
+    elif 'THERM.DPD' in modes and espressomd.has_features('DPD'):
         system.thermostat.set_dpd(kT=1.0, seed=42)
-    elif 'THERM.SDM' in modes and has_features('STOKESIAN_DYNAMICS'):
+    elif 'THERM.SDM' in modes and espressomd.has_features('STOKESIAN_DYNAMICS'):
         system.periodicity = [0, 0, 0]
         system.thermostat.set_stokesian(kT=1.0, seed=42)
     # set integrator
-    if 'INT.NPT' in modes and has_features('NPT'):
+    if 'INT.NPT' in modes and espressomd.has_features('NPT'):
         system.integrator.set_isotropic_npt(ext_pressure=2.0, piston=0.01,
                                             direction=[1, 0, 0])
     elif 'INT.SD' in modes:
@@ -191,7 +187,7 @@ if 'LB.OFF' in modes:
         system.integrator.set_nvt()
     elif 'INT.BD' in modes:
         system.integrator.set_brownian_dynamics()
-    elif 'INT.SDM' in modes and has_features('STOKESIAN_DYNAMICS'):
+    elif 'INT.SDM' in modes and espressomd.has_features('STOKESIAN_DYNAMICS'):
         system.periodicity = [0, 0, 0]
         system.integrator.set_stokesian_dynamics(
             approximation_method='ft', viscosity=0.5, radii={0: 1.5},
@@ -207,6 +203,8 @@ if espressomd.has_features(['LENNARD_JONES']) and 'LJ' in modes:
         epsilon=1.2, sigma=1.3, cutoff=2.0, shift=0.1)
     system.non_bonded_inter[3, 0].lennard_jones.set_params(
         epsilon=1.2, sigma=1.7, cutoff=2.0, shift=0.1)
+    system.non_bonded_inter[1, 17].lennard_jones.set_params(
+        epsilon=1.2e5, sigma=1.7, cutoff=2.0, shift=0.1)
 
 harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0.0, k=1.0)
 system.bonded_inter.add(harmonic_bond)
@@ -217,6 +215,9 @@ if 'THERM.LB' not in modes:
         r_cut=2, seed=51)
     system.bonded_inter.add(thermalized_bond)
     p2.add_bond((thermalized_bond, p1))
+strong_harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0.0, k=5e5)
+system.bonded_inter.add(strong_harmonic_bond)
+p4.add_bond((strong_harmonic_bond, p3))
 checkpoint.register("system")
 checkpoint.register("acc_mean_variance")
 checkpoint.register("acc_time_series")
@@ -241,6 +242,7 @@ if espressomd.has_features('DP3M') and 'DP3M' in modes:
         mesh=[8, 8, 8],
         alpha=12,
         accuracy=0.01,
+        timings=15,
         tune=False)
     system.actors.add(dp3m)
 
@@ -288,23 +290,6 @@ if LB_implementation:
     # save LB checkpoint file
     lbf_cpt_path = checkpoint.checkpoint_dir + "/lb.cpt"
     lbf.save_checkpoint(lbf_cpt_path, cpt_mode)
-
-if EK_implementation:
-    m = np.pi / 12
-    nx = int(np.round(system.box_l[0] / ek.get_params()["agrid"]))
-    ny = int(np.round(system.box_l[1] / ek.get_params()["agrid"]))
-    nz = int(np.round(system.box_l[2] / ek.get_params()["agrid"]))
-    # Create a 3D grid with deterministic values to fill the LB fluid lattice
-    grid_3D = np.fromfunction(
-        lambda i, j, k: np.cos(i * m) * np.cos(j * m) * np.cos(k * m),
-        (nx, ny, nz), dtype=float)
-    for i in range(nx):
-        for j in range(ny):
-            for k in range(nz):
-                ek_species[i, j, k].density = grid_3D[i, j, k]
-    # save LB checkpoint file
-    ek_cpt_path = checkpoint.checkpoint_dir + "/ek"
-    ek.save_checkpoint(ek_cpt_path)
 
 # save checkpoint file
 checkpoint.save(0)

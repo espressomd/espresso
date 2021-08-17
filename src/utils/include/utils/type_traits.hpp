@@ -52,7 +52,8 @@ struct conjunction<B1, Bn...>
  * On posix platforms this is 8 * sizeof(T).
  */
 template <class T>
-struct size_in_bits : std::integral_constant<size_t, CHAR_BIT * sizeof(T)> {};
+struct size_in_bits
+    : std::integral_constant<std::size_t, CHAR_BIT * sizeof(T)> {};
 } // namespace Utils
 
 #endif

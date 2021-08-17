@@ -96,6 +96,10 @@ class ScafacosInterface(ut.TestCase):
                          {'p3m_cao': '7', 'p3m_r_cut': '1.0',
                           'p3m_grid': '32', 'p3m_alpha': '2.799269'})
 
+        # check MD cell reset event
+        system.box_l = system.box_l
+        system.periodicity = system.periodicity
+
     @ut.skipIf(not espressomd.has_features('SCAFACOS_DIPOLES') or
                'p2nfft' not in espressomd.scafacos.available_methods(),
                'Skipping test: missing ScaFaCoS p2nfft method')
@@ -121,6 +125,10 @@ class ScafacosInterface(ut.TestCase):
         self.assertEqual(params["prefactor"], 1.2)
         self.assertEqual(params["method_name"], "p2nfft")
         self.assertEqual(params["method_params"], method_params)
+
+        # check MD cell reset event
+        system.box_l = system.box_l
+        system.periodicity = system.periodicity
 
     def p3m_data(self):
         system = self.system

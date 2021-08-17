@@ -20,7 +20,10 @@
 #define CORE_PARTICLE_ITERATOR_HPP
 
 #include <boost/iterator/iterator_facade.hpp>
+
+#include <cassert>
 #include <iterator>
+#include <utility>
 
 namespace detail {
 /* Detect the particle iterator type for a given cell iterator type. */

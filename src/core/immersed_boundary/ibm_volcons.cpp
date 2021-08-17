@@ -18,25 +18,31 @@
  */
 
 #include "ibm_volcons.hpp"
-#include "errorhandling.hpp"
+
+#include "communication.hpp"
+#include "immersed_boundaries.hpp"
+
+#include <cassert>
+#include <stdexcept>
+
+void mpi_set_n_ibm_volcons_bonds_local(int softID) {
+  immersed_boundaries.register_softID(softID);
+}
+
+REGISTER_CALLBACK(mpi_set_n_ibm_volcons_bonds_local)
+
+void mpi_set_n_ibm_volcons_bonds(int softID) {
+  mpi_call_all(mpi_set_n_ibm_volcons_bonds_local, softID);
+}
 
 /** Set parameters of volume conservation */
 IBMVolCons::IBMVolCons(const int softID, const double kappaV) {
-  // Specific stuff
-  if (softID > IBM_MAX_NUM) {
-    runtimeErrorMsg() << "Error: softID (" << softID
-                      << ") is larger than IBM_MAX_NUM (" << IBM_MAX_NUM << ")";
-  }
-  if (softID < 0) {
-    runtimeErrorMsg() << "Error: softID (" << softID
-                      << ") must be non-negative";
-  }
-
   this->softID = softID;
   this->kappaV = kappaV;
-  volRef = 0;
   // NOTE: We cannot compute the reference volume here because not all
   // interactions are setup and thus we do not know which triangles belong to
-  // this softID. Calculate it later in the init function of \ref
-  // ImmersedBoundaries
+  // this softID. Calculate it later in the init function of
+  // \ref ImmersedBoundaries::init_volume_conservation()
+  volRef = 0.;
+  mpi_set_n_ibm_volcons_bonds(softID);
 }

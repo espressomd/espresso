@@ -127,7 +127,7 @@ cdef class Actor:
             self._set_params_in_es_core()
 
     def __str__(self):
-        return self.__class__.__name__ + "(" + str(self.get_params()) + ")"
+        return f"{self.__class__.__name__}({self.get_params()})"
 
     def _get_interaction_type(self):
         bases = self.class_lookup(self.__class__)

@@ -164,10 +164,10 @@ if(WITH_CUDA)
   endif()
 endif(WITH_CUDA)
 
-find_package(PythonInterp 3.6 REQUIRED)
+find_package(PythonInterp 3.7 REQUIRED)
 
 if(WITH_PYTHON)
-  find_package(Cython 0.29 REQUIRED)
+  find_package(Cython 0.29.14 REQUIRED)
   find_package(PythonHeaders REQUIRED)
   find_package(NumPy REQUIRED)
   find_program(IPYTHON_EXECUTABLE NAMES jupyter ipython3 ipython)
@@ -245,7 +245,7 @@ if(WITH_STOKESIAN_DYNAMICS)
   FetchContent_Declare(
     stokesian_dynamics
     GIT_REPOSITORY https://github.com/hmenke/espresso-stokesian-dynamics.git
-    GIT_TAG c14e57655e929)
+    GIT_TAG 862a7537a366f0c32f0c25e46bd107bea590faea)
   FetchContent_GetProperties(stokesian_dynamics)
   set(STOKESIAN_DYNAMICS 1)
   if(NOT stokesian_dynamics_POPULATED)
@@ -281,15 +281,7 @@ if(WITH_TESTS)
   list(APPEND BOOST_COMPONENTS unit_test_framework)
 endif()
 
-set(BOOST_MINIMUM_VERSION "1.66.0")
-
-# old Boost.MPI versions contain a use-after-free bug that seems to only cause
-# crashes on 32-bit architectures
-if(CMAKE_SIZEOF_VOID_P EQUAL 4)
-  set(BOOST_MINIMUM_VERSION "1.67.0")
-endif()
-
-find_package(Boost ${BOOST_MINIMUM_VERSION} REQUIRED ${BOOST_COMPONENTS})
+find_package(Boost 1.69.0 REQUIRED ${BOOST_COMPONENTS})
 
 #
 # Paths
@@ -355,6 +347,10 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
                          INTERFACE -Wno-gnu-zero-variadic-macro-arguments)
   if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "8.0.0")
     target_compile_options(cxx_interface INTERFACE -Wimplicit-float-conversion)
+  endif()
+  if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang"
+     AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "11.0.0")
+    target_compile_options(cxx_interface INTERFACE -Wnon-c-typedef-for-linkage)
   endif()
 endif()
 

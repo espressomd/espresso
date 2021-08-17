@@ -35,7 +35,9 @@
 #include <cstddef>
 #include <fstream>
 #include <functional>
+#include <iterator>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 namespace Writer {
@@ -261,7 +263,7 @@ void File::close() {
 
 namespace detail {
 
-template <size_t rank> struct slice_info {};
+template <std::size_t rank> struct slice_info {};
 
 template <> struct slice_info<3> {
   static auto extent(hsize_t n_part_diff) {
@@ -282,7 +284,7 @@ template <> struct slice_info<2> {
 };
 
 } // namespace detail
-template <size_t dim, typename Op>
+template <std::size_t dim, typename Op>
 void write_td_particle_property(hsize_t prefix, hsize_t n_part_global,
                                 ParticleRange const &particles,
                                 h5xx::dataset &dataset, Op op) {

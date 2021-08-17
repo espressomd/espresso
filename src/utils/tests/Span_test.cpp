@@ -114,12 +114,12 @@ BOOST_AUTO_TEST_CASE(make_span_) {
   using std::declval;
   using Utils::make_span;
 
-  static_assert(
-      std::is_same<decltype(make_span(declval<int *>(), declval<size_t>())),
-                   Span<int>>::value,
-      "");
+  static_assert(std::is_same<decltype(make_span(declval<int *>(),
+                                                declval<std::size_t>())),
+                             Span<int>>::value,
+                "");
   static_assert(std::is_same<decltype(make_span(declval<const int *>(),
-                                                declval<size_t>())),
+                                                declval<std::size_t>())),
                              Span<const int>>::value,
                 "");
 
@@ -145,11 +145,11 @@ BOOST_AUTO_TEST_CASE(make_const_span_) {
   using Utils::make_const_span;
 
   static_assert(std::is_same<decltype(make_const_span(declval<int *>(),
-                                                      declval<size_t>())),
+                                                      declval<std::size_t>())),
                              Span<const int>>::value,
                 "");
   static_assert(std::is_same<decltype(make_const_span(declval<const int *>(),
-                                                      declval<size_t>())),
+                                                      declval<std::size_t>())),
                              Span<const int>>::value,
                 "");
 

@@ -23,29 +23,34 @@
 
 #include <cmath>
 #include <stdexcept>
+#include <tuple>
 #include <utility>
 #include <vector>
 
 namespace ReactionMethods {
 
-std::pair<double, double>
-WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
-  if (!all_reactant_particles_exist(reaction_id))
+std::pair<double, double> WidomInsertion::measure_excess_chemical_potential(
+    SingleReaction &current_reaction) {
+
+  if (!all_reactant_particles_exist(current_reaction))
     throw std::runtime_error("Trying to remove some non-existing particles "
                              "from the system via the inverse Widom scheme.");
 
-  SingleReaction &current_reaction = reactions[reaction_id];
   const double E_pot_old = calculate_current_potential_energy_of_system();
 
   // make reaction attempt
   std::vector<int> p_ids_created_particles;
   std::vector<StoredParticleProperty> hidden_particles_properties;
   std::vector<StoredParticleProperty> changed_particles_properties;
-  const int number_of_saved_properties =
-      3; // save p_id, charge and type of the reactant particle, only thing we
-         // need to hide the particle and recover it
-  make_reaction_attempt(current_reaction, changed_particles_properties,
-                        p_ids_created_particles, hidden_particles_properties);
+
+  // save p_id, charge and type of the reactant particle, only thing we
+  // need to hide the particle and recover it
+  const int number_of_saved_properties = 3;
+
+  std::tie(changed_particles_properties, p_ids_created_particles,
+           hidden_particles_properties) =
+      make_reaction_attempt(current_reaction);
+
   const double E_pot_new = calculate_current_potential_energy_of_system();
   // reverse reaction attempt
   // reverse reaction
@@ -57,17 +62,15 @@ WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
   restore_properties(hidden_particles_properties, number_of_saved_properties);
   // 3) restore previously changed reactant particles
   restore_properties(changed_particles_properties, number_of_saved_properties);
-  std::vector<double> exponential = {
-      exp(-1.0 / temperature * (E_pot_new - E_pot_old))};
-  current_reaction.accumulator_exponentials(exponential);
+  std::vector<double> exponential = {exp(-1.0 / kT * (E_pot_new - E_pot_old))};
+  current_reaction.accumulator_potential_energy_difference_exponential(
+      exponential);
 
   // calculate mean excess chemical potential and standard error of the mean
-  std::pair<double, double> result = std::make_pair(
-      -temperature * log(current_reaction.accumulator_exponentials.mean()[0]),
-      std::abs(-temperature /
-               current_reaction.accumulator_exponentials.mean()[0] *
-               current_reaction.accumulator_exponentials.std_error()[0]));
-  return result;
+  auto const &accumulator =
+      current_reaction.accumulator_potential_energy_difference_exponential;
+  return {-kT * log(accumulator.mean()[0]),
+          std::abs(-kT / accumulator.mean()[0] * accumulator.std_error()[0])};
 }
 
 } // namespace ReactionMethods

@@ -22,6 +22,8 @@
 #include "h5md_specification.hpp"
 #include "hdf5.h"
 
+#include <array>
+
 namespace Writer {
 namespace H5md {
 

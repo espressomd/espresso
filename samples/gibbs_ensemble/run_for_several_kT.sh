@@ -1,4 +1,6 @@
-# Copyright (C) 2019 The ESPResSo project
+#!/bin/sh
+#
+# Copyright (C) 2021 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,28 +16,28 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 
-import unittest as ut
-import importlib_wrapper
+python=$(which python3)
+pypresso=../../build/pypresso
 
+if [ ! -e "${pypresso}" ]
+then
+    echo "Invalid path to pypresso script: ${pypresso}" 1>&2
+    exit 1
+fi
 
-def shorten_loop(code):
-    # stop reaction before the exception is raised
-    breakpoint = "while True:"
-    assert breakpoint in code
-    code = code.replace(breakpoint, "for _ in range(6):", 1)
-    return code
+# Run the simulations for the temperatures given as parameters
+for kT in $*
+do
+    for seed in 1 2 3 4 5
+    do
 
+        test -s "temp_${kT}_seed_${seed}.dat.gz" ||
+            "${pypresso}" run_sim.py ${kT} --log --steps 1000000 --seed ${seed} > "temp_${kT}_seed_${seed}.out" 2>&1 &
+    done
+done
+wait
 
-sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@SAMPLES_DIR@/wang_landau_reaction_ensemble.py",
-    substitutions=shorten_loop)
-
-
-@skipIfMissingFeatures
-class Sample(ut.TestCase):
-    system = sample.system
-
-
-if __name__ == "__main__":
-    ut.main()
+# Plot the results, create fits
+"${python}" create_fits.py temp_*.dat.gz

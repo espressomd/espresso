@@ -57,8 +57,13 @@ endfunction(PYTHON_TEST)
 # Separate features with hyphens, use a period to add an optional flag.
 foreach(
   TEST_COMBINATION
-  lb.cpu-p3m.cpu-lj-therm.lb;lb.gpu-p3m.elc-lj-therm.lb;ek.gpu;lb.off-therm.npt-int.npt;lb.off-int.sd;lb.off-dp3m.cpu-therm.langevin-int.nvt;lb.off-therm.dpd-int.nvt;lb.off-scafacos-therm.bd-int.bd;lb.off-therm.sdm-int.sdm
+  lb.cpu-p3m.cpu-lj-therm.lb;lb.gpu-p3m.elc-lj-therm.lb;lb.off-therm.npt-int.npt;lb.off-int.sd;lb.off-dp3m.cpu-therm.langevin-int.nvt;lb.off-therm.dpd-int.nvt;lb.off-scafacos-therm.bd-int.bd;lb.off-therm.sdm-int.sdm;lb.cpu-p3m.cpu-lj-therm.lb-mpi.1.core
 )
+  if(${TEST_COMBINATION} MATCHES "mpi\\.1\\.core")
+    set(TEST_NPROCS 1)
+  else()
+    set(TEST_NPROCS 4)
+  endif()
   if(${TEST_COMBINATION} MATCHES "\\.gpu")
     set(TEST_LABELS "gpu")
   else()
@@ -70,11 +75,11 @@ foreach(
     set(TEST_BINARY_LIST "1;0")
   endif()
   foreach(TEST_BINARY ${TEST_BINARY_LIST})
-    python_test(FILE save_checkpoint.py MAX_NUM_PROC 4 LABELS ${TEST_LABELS}
-                SUFFIX ${TEST_COMBINATION}_${TEST_BINARY})
+    python_test(FILE save_checkpoint.py MAX_NUM_PROC ${TEST_NPROCS} LABELS
+                ${TEST_LABELS} SUFFIX ${TEST_COMBINATION}_${TEST_BINARY})
     python_test(
-      FILE test_checkpoint.py MAX_NUM_PROC 4 LABELS ${TEST_LABELS} SUFFIX
-      ${TEST_COMBINATION}_${TEST_BINARY} DEPENDS
+      FILE test_checkpoint.py MAX_NUM_PROC ${TEST_NPROCS} LABELS ${TEST_LABELS}
+      SUFFIX ${TEST_COMBINATION}_${TEST_BINARY} DEPENDS
       save_checkpoint_${TEST_COMBINATION}_${TEST_BINARY})
   endforeach(TEST_BINARY)
 endforeach(TEST_COMBINATION)
@@ -142,6 +147,7 @@ python_test(FILE domain_decomposition.py MAX_NUM_PROC 4)
 python_test(FILE integrator_npt.py MAX_NUM_PROC 4)
 python_test(FILE integrator_npt_stats.py MAX_NUM_PROC 4 LABELS long)
 python_test(FILE integrator_steepest_descent.py MAX_NUM_PROC 4)
+python_test(FILE ibm.py MAX_NUM_PROC 2)
 python_test(FILE dipolar_mdlc_p3m_scafacos_p2nfft.py MAX_NUM_PROC 1)
 python_test(FILE dipolar_direct_summation.py MAX_NUM_PROC 1 LABELS gpu)
 python_test(FILE dipolar_p3m.py MAX_NUM_PROC 2)
@@ -174,8 +180,6 @@ python_test(FILE analyze_distance.py MAX_NUM_PROC 1)
 python_test(FILE analyze_acf.py MAX_NUM_PROC 1)
 python_test(FILE comfixed.py MAX_NUM_PROC 2)
 python_test(FILE rescale.py MAX_NUM_PROC 2)
-python_test(FILE wang_landau.py MAX_NUM_PROC 1)
-python_test(FILE wang_landau_stats.py MAX_NUM_PROC 1 LABELS long)
 python_test(FILE array_properties.py MAX_NUM_PROC 4)
 python_test(FILE analyze_distribution.py MAX_NUM_PROC 1)
 python_test(FILE observable_profile.py MAX_NUM_PROC 4)
@@ -214,6 +218,7 @@ python_test(FILE observable_chain.py MAX_NUM_PROC 4)
 python_test(FILE mpiio.py MAX_NUM_PROC 4)
 python_test(FILE gpu_availability.py MAX_NUM_PROC 2 LABELS gpu)
 python_test(FILE features.py MAX_NUM_PROC 1)
+python_test(FILE decorators.py MAX_NUM_PROC 1)
 python_test(FILE galilei.py MAX_NUM_PROC 32)
 python_test(FILE linear_momentum.py MAX_NUM_PROC 4)
 python_test(FILE linear_momentum_lb.py MAX_NUM_PROC 2 LABELS gpu)

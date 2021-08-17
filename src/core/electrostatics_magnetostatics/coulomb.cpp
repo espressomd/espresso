@@ -404,7 +404,7 @@ void bcast_coulomb_params() {
     break;
 #ifdef P3M
   case COULOMB_ELC_P3M:
-    MPI_Bcast(&elc_params, sizeof(ELC_struct), MPI_BYTE, 0, comm_cart);
+    MPI_Bcast(&elc_params, sizeof(ELCParameters), MPI_BYTE, 0, comm_cart);
     // fall through
   case COULOMB_P3M_GPU:
   case COULOMB_P3M:
@@ -412,14 +412,15 @@ void bcast_coulomb_params() {
     break;
 #endif
   case COULOMB_DH:
-    MPI_Bcast(&dh_params, sizeof(Debye_hueckel_params), MPI_BYTE, 0, comm_cart);
+    MPI_Bcast(&dh_params, sizeof(DebyeHueckelParameters), MPI_BYTE, 0,
+              comm_cart);
     break;
   case COULOMB_MMM1D:
   case COULOMB_MMM1D_GPU:
-    MPI_Bcast(&mmm1d_params, sizeof(MMM1D_struct), MPI_BYTE, 0, comm_cart);
+    MPI_Bcast(&mmm1d_params, sizeof(MMM1DParameters), MPI_BYTE, 0, comm_cart);
     break;
   case COULOMB_RF:
-    MPI_Bcast(&rf_params, sizeof(Reaction_field_params), MPI_BYTE, 0,
+    MPI_Bcast(&rf_params, sizeof(ReactionFieldParameters), MPI_BYTE, 0,
               comm_cart);
     break;
   default:

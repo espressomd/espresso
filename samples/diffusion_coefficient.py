@@ -22,8 +22,8 @@ Observables/Correlators framework.
 """
 
 import espressomd
-from espressomd.accumulators import Correlator
-from espressomd.observables import ParticlePositions, ParticleVelocities
+import espressomd.accumulators
+import espressomd.observables
 import numpy as np
 
 gamma = 2.4
@@ -39,14 +39,15 @@ system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=42)
 system.cell_system.skin = 0.4
 system.integrator.run(1000)
 
-pos_obs = ParticlePositions(ids=(p.id,))
-vel_obs = ParticleVelocities(ids=(p.id,))
+pos_obs = espressomd.observables.ParticlePositions(ids=(p.id,))
+vel_obs = espressomd.observables.ParticleVelocities(ids=(p.id,))
 
-c_pos = Correlator(obs1=pos_obs, tau_lin=16, tau_max=100., delta_N=10,
-                   corr_operation="square_distance_componentwise",
-                   compress1="discard1")
-c_vel = Correlator(obs1=vel_obs, tau_lin=16, tau_max=20., delta_N=1,
-                   corr_operation="scalar_product", compress1="discard1")
+c_pos = espressomd.accumulators.Correlator(
+    obs1=pos_obs, tau_lin=16, tau_max=100., delta_N=10, compress1="discard1",
+    corr_operation="square_distance_componentwise")
+c_vel = espressomd.accumulators.Correlator(
+    obs1=vel_obs, tau_lin=16, tau_max=20., delta_N=1, compress1="discard1",
+    corr_operation="scalar_product")
 system.auto_update_accumulators.add(c_pos)
 system.auto_update_accumulators.add(c_vel)
 

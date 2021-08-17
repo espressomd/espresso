@@ -18,8 +18,8 @@
 #
 
 include "myconfig.pxi"
-from .utils import is_valid_type, to_str
 from libcpp cimport bool
+from .analyze cimport PartCfg, partCfg
 
 cdef extern from "SystemInterface.hpp":
     cdef cppclass SystemInterface:
@@ -71,7 +71,7 @@ IF ELECTROSTATICS:
             void p3m_set_tune_params(double r_cut, int mesh[3], int cao, double accuracy)
             void p3m_set_mesh_offset(double x, double y, double z) except +
             void p3m_set_eps(double eps)
-            int p3m_adaptive_tune(bool verbose)
+            int p3m_adaptive_tune(int timings, bool verbose)
 
             ctypedef struct p3m_data_struct:
                 P3MParameters params
@@ -84,7 +84,7 @@ IF ELECTROSTATICS:
                 void p3m_gpu_init(int cao, int * mesh, double alpha) except +
 
         cdef extern from "electrostatics_magnetostatics/elc.hpp":
-            ctypedef struct ELC_struct:
+            ctypedef struct ELCParameters:
                 double maxPWerror
                 double gap_size
                 double far_cut
@@ -99,41 +99,41 @@ IF ELECTROSTATICS:
                                 double delta_mid_bot, bool const_pot, double pot_diff) except +
 
             # links intern C-struct with python object
-            ELC_struct elc_params
+            ELCParameters elc_params
 
     cdef extern from "electrostatics_magnetostatics/debye_hueckel.hpp":
-        ctypedef struct Debye_hueckel_params:
+        ctypedef struct DebyeHueckelParameters:
             double r_cut
             double kappa
 
-        cdef extern Debye_hueckel_params dh_params
+        cdef extern DebyeHueckelParameters dh_params
 
         void dh_set_params(double kappa, double r_cut) except +
 
     cdef extern from "electrostatics_magnetostatics/reaction_field.hpp":
-        ctypedef struct Reaction_field_params:
+        ctypedef struct ReactionFieldParameters:
             double kappa
             double epsilon1
             double epsilon2
             double r_cut
 
-        cdef extern Reaction_field_params rf_params
+        cdef extern ReactionFieldParameters rf_params
 
         void rf_set_params(double kappa, double epsilon1, double epsilon2,
                            double r_cut) except +
 
 IF ELECTROSTATICS:
     cdef extern from "electrostatics_magnetostatics/mmm1d.hpp":
-        ctypedef struct MMM1D_struct:
+        ctypedef struct MMM1DParameters:
             double far_switch_radius_2
             double maxPWerror
             int    bessel_cutoff
 
-        cdef extern MMM1D_struct mmm1d_params
+        cdef extern MMM1DParameters mmm1d_params
 
         void MMM1D_set_params(double switch_rad, double maxPWerror)
         int MMM1D_init()
-        int mmm1d_tune(bool verbose)
+        int mmm1d_tune(int timings, bool verbose)
 
 IF ELECTROSTATICS and MMM1D_GPU:
 
@@ -151,7 +151,7 @@ IF ELECTROSTATICS and MMM1D_GPU:
             unsigned int numBlocks(SystemInterface & s)
 
             float host_boxz
-            int host_npart
+            unsigned int host_npart
             bool need_tune
 
             int pairs
@@ -165,3 +165,6 @@ IF ELECTROSTATICS and MMM1D_GPU:
 
             void activate()
             void deactivate()
+
+cdef extern from "utils/checks/charge_neutrality.hpp" namespace "Utils":
+    bool check_charge_neutrality[ParticleRange](ParticleRange & partCfg)

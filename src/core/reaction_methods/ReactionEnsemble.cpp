@@ -32,13 +32,11 @@ namespace ReactionMethods {
  */
 double ReactionEnsemble::calculate_acceptance_probability(
     SingleReaction const &current_reaction, double E_pot_old, double E_pot_new,
-    std::map<int, int> const &old_particle_numbers, int dummy_old_state_index,
-    int dummy_new_state_index,
-    bool dummy_only_make_configuration_changing_move) const {
+    std::map<int, int> const &old_particle_numbers) const {
   const double factorial_expr =
       calculate_factorial_expression(current_reaction, old_particle_numbers);
 
-  const double beta = 1.0 / temperature;
+  const double beta = 1.0 / kT;
   // calculate Boltzmann factor
   return std::pow(volume, current_reaction.nu_bar) * current_reaction.gamma *
          factorial_expr * exp(-beta * (E_pot_new - E_pot_old));

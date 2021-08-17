@@ -21,6 +21,8 @@
 
 #include <boost/core/demangle.hpp>
 
+#include <string>
+
 namespace Utils {
 /**
  * @brief Get a human-readable name for a type.

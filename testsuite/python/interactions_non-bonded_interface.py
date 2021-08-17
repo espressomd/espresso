@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import unittest as ut
-from tests_common import assert_params_match
+import tests_common
 
 import espressomd
 import espressomd.interactions
@@ -32,7 +32,7 @@ class Non_bonded_interactionsTests(ut.TestCase):
         ``inParams``.
         """
         self.assertIsInstance(outInter, inType)
-        assert_params_match(self, inParams, outParams, msg_long)
+        tests_common.assert_params_match(self, inParams, outParams, msg_long)
 
     def parameterKeys(self, interObject):
         """

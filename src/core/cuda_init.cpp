@@ -35,6 +35,7 @@
 #include <cstring>
 #include <iterator>
 #include <set>
+#include <vector>
 
 /** Helper class for device sets.
  */
