@@ -19,6 +19,7 @@
 #include "lb_particle_coupling.hpp"
 #include "LocalBox.hpp"
 #include "Particle.hpp"
+#include "cells.hpp"
 #include "communication.hpp"
 #include "config.hpp"
 #include "errorhandling.hpp"
@@ -38,6 +39,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <iostream>
 #include <stdexcept>
 #include <utility>
 
@@ -222,6 +224,26 @@ void add_swimmer_force(Particle const &p, double time_step) {
 }
 #endif
 
+std::vector<Utils::Vector3d> shifted_positions(Utils::Vector3d pos,
+                                               const BoxGeometry &box) {
+  std::vector<Utils::Vector3d> res;
+  for (int i : {-1, 0, 1}) {
+    for (int j : {-1, 0, 1}) {
+      for (int k : {-1, 0, 1}) {
+        if (i == 0 and j == 0 and k == 0)
+          continue;
+        Utils::Vector3d shift{{double(i), double(j), double(k)}};
+        Utils::Vector3d pos_shifted =
+            pos + Utils::hadamard_product(box.length(), shift);
+        if (in_local_halo(pos_shifted)) {
+          res.push_back(pos_shifted);
+        }
+      }
+    }
+  }
+  return res;
+};
+
 Utils::Vector3d lb_particle_coupling_noise(bool enabled, int part_id,
                                            const OptionalCounter &rng_counter) {
   if (enabled) {
@@ -236,11 +258,13 @@ Utils::Vector3d lb_particle_coupling_noise(bool enabled, int part_id,
 }
 
 void couple_particle(Particle &p, bool couple_virtual, double noise_amplitude,
-                     const OptionalCounter &rng_counter, double time_step) {
+                     const OptionalCounter &rng_counter, double time_step,
+                     bool has_ghosts) {
 
   if (p.p.is_virtual and not couple_virtual)
     return;
 
+  //  std::cout << "Coupling "<<p.r.p<<std::endl;
   /* Particles within one agrid of the outermost lattice point
    * of the lb domain can contribute forces to the local lb due to
    * interpolation on neighboring LB nodes. If the particle
@@ -254,10 +278,18 @@ void couple_particle(Particle &p, bool couple_virtual, double noise_amplitude,
                                                      p.identity(), rng_counter);
     auto const coupling_force = drag_force + random_force;
     add_md_force(p.r.p, coupling_force, time_step);
-    if (in_local_domain(p.r.p, local_geo)) {
+    if (in_local_domain(p.r.p, local_geo) or (not has_ghosts)) {
       /* Particle is in our LB volume, so this node
        * is responsible to adding its force */
       p.f.f += coupling_force;
+    }
+
+    if (not has_ghosts) {
+      // couple positions shifted by one box length to add forces to ghost
+      // layers
+      for (auto pos : shifted_positions(p.r.p, box_geo)) {
+        add_md_force(pos, coupling_force, time_step);
+      }
     }
   }
 }
@@ -269,6 +301,14 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
   if (lattice_switch == ActiveLB::WALBERLA) {
     if (lb_particle_coupling.couple_to_md) {
+      bool has_ghosts =
+          (cell_structure.decomposition_type() == CELL_STRUCTURE_DOMDEC);
+      if (not has_ghosts) {
+        if (n_nodes > 1) {
+          throw std::runtime_error("LB only works with domain decomposition, "
+                                   "if using more than one MPI node");
+        }
+      }
       using Utils::sqr;
       auto const kT = lb_lbfluid_get_kT() * sqr(lb_lbfluid_get_agrid()) /
                       sqr(lb_lbfluid_get_tau());
@@ -285,7 +325,8 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
       /* Couple particles ranges */
       for (auto &p : particles) {
         couple_particle(p, couple_virtual, noise_amplitude,
-                        lb_particle_coupling.rng_counter_coupling, time_step);
+                        lb_particle_coupling.rng_counter_coupling, time_step,
+                        has_ghosts);
 #ifdef ENGINE
         add_swimmer_force(p, time_step);
 #endif
@@ -293,7 +334,8 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
 
       for (auto &p : more_particles) {
         couple_particle(p, couple_virtual, noise_amplitude,
-                        lb_particle_coupling.rng_counter_coupling, time_step);
+                        lb_particle_coupling.rng_counter_coupling, time_step,
+                        has_ghosts);
 #ifdef ENGINE
         add_swimmer_force(p, time_step);
 #endif

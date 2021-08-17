@@ -51,7 +51,7 @@ class Momentum(object):
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.01
 
-    def test(self):
+    def check(self):
         self.system.actors.clear()
         self.system.part.clear()
         self.system.actors.add(self.lbf)
@@ -97,6 +97,18 @@ class LBWalberlaMomentum(ut.TestCase, Momentum):
 
     def setUp(self):
         self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMS)
+
+    def tearDown(self):
+        self.system.actors.clear()
+
+    def test_dom_dec(self):
+        self.system.cell_system.set_domain_decomposition()
+        self.check()
+
+    def test_n_square(self):
+        if all(self.system.cell_system.node_grid != [1, 1, 1]): return
+        self.system.cell_system.set_n_square()
+        self.check()
 
 
 if __name__ == "__main__":
