@@ -57,7 +57,7 @@ endfunction(PYTHON_TEST)
 # Separate features with hyphens, use a period to add an optional flag.
 foreach(
   TEST_COMBINATION
-  lb.walberla-p3m.cpu-lj-therm.lb;lb.walberla-p3m.elc-lj-therm.lb;lb.off-therm.npt-int.npt;lb.off-int.sd;lb.off-dp3m.cpu-therm.langevin-int.nvt;lb.off-therm.dpd-int.nvt;lb.off-scafacos-therm.bd-int.bd;lb.off-therm.sdm-int.sdm;lb.cpu-p3m.cpu-lj-therm.lb-mpi.1.core
+  lb.walberla-p3m.cpu-lj-therm.lb;lb.walberla-p3m.elc-lj-therm.lb;lb.off-therm.npt-int.npt;lb.off-int.sd;lb.off-dp3m.cpu-therm.langevin-int.nvt;lb.off-therm.dpd-int.nvt;lb.off-scafacos-therm.bd-int.bd;lb.off-therm.sdm-int.sdm;lb.walberla-p3m.cpu-lj-therm.lb-mpi.1.core
 )
   if(${TEST_COMBINATION} MATCHES "mpi\\.1\\.core")
     set(TEST_NPROCS 1)
