@@ -35,8 +35,8 @@ import espressomd.lb
 modes = {x for mode in set("@TEST_COMBINATION@".upper().split('-'))
          for x in [mode, mode.split('.')[0]]}
 
-LB = (espressomd.has_features('LB_WALBERLA') and 'LB.WALBERLA' in modes or
-      espressomd.gpu_available() and 'LB.GPU' in modes)
+LB = (espressomd.has_features('LB_WALBERLA') and 'LB.ACTIVE.WALBERLA' in modes
+      or espressomd.gpu_available() and 'LB.GPU' in modes)
 
 
 class CheckpointTest(ut.TestCase):
@@ -82,7 +82,7 @@ class CheckpointTest(ut.TestCase):
         with self.assertRaisesRegex(RuntimeError, 'grid dimensions mismatch'):
             lbf.load_checkpoint(cpt_path.format("-wrong-boxdim"), cpt_mode)
         lbf.load_checkpoint(cpt_path.format(""), cpt_mode)
-        precision = 9 if "LB.WALBERLA" in modes else 5
+        precision = 9 if "LB.ACTIVE.WALBERLA" in modes else 5
         m = np.pi / 12
         nx = lbf.shape[0]
         ny = lbf.shape[1]
@@ -108,7 +108,7 @@ class CheckpointTest(ut.TestCase):
             self.assertAlmostEqual(reference[key], state[key], delta=1E-7)
 
     @utx.skipIfMissingFeatures('LB_WALBERLA')
-    @ut.skipIf('LB.WALBERLA' not in modes, 'waLBerla LBM not in modes')
+    @ut.skipIf('LB.ACTIVE.WALBERLA' not in modes, 'waLBerla LBM not in modes')
     def test_VTK(self):
         vtk_suffix = '@TEST_COMBINATION@_@TEST_BINARY@'
         for vtk_registry in (system._vtk_registry,

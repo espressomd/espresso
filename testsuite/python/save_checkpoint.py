@@ -214,7 +214,7 @@ if espressomd.has_features("COLLISION_DETECTION"):
         mode="bind_centers", distance=0.11, bond_centers=harmonic_bond)
 
 LB_implementation = None
-if espressomd.has_features('LB_WALBERLA') and 'LB.WALBERLA' in modes:
+if espressomd.has_features('LB_WALBERLA') and 'LB.ACTIVE.WALBERLA' in modes:
     LB_implementation = espressomd.lb.LBFluidWalberla
 if LB_implementation:
     lbf = LB_implementation(agrid=0.5, visc=1.3, dens=1.5, tau=0.01)
