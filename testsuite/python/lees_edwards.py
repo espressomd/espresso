@@ -2,7 +2,7 @@ import espressomd
 from espressomd.interactions import HarmonicBond
 import espressomd.lees_edwards as lees_edwards
 from espressomd.virtual_sites import VirtualSitesRelative, VirtualSitesOff
-from tests_common import verify_lj_forces
+from tests_common import verify_lj_forces, check_non_bonded_loop_trace
 
 import unittest as ut
 import numpy as np
@@ -208,7 +208,6 @@ class LeesEdwards(ut.TestCase):
 #
 #        plt.plot([x1,x2,x3],[y1,y2,y3], 's')
 #        plt.show()
-
 
     def test_distance_vel_diff(self):
         """check distance and velocity difference calculation across LE boundary
@@ -652,29 +651,27 @@ class LeesEdwards(ut.TestCase):
 # #
 # 
 
+
     def setup_lj_liquid(self):
         system = self.system
         system.cell_system.set_n_square(use_verlet_lists=False)
         # Parameters
-        n = 300 
-        phi = 0.55
+        n = 100 
+        phi = 0.4
         sigma = 1.
         eps = 1
-        cut = sigma * 2**(1. / 6.)
+        cut = sigma * 2**(1 / 6)
 
         # box
         l = (n / 6. * np.pi * sigma**3 / phi)**(1. / 3.)
 
         # Setup
         system.box_l = l, l, l
+        system.lees_edwards.protocol = None
         system.part.clear()
 #
         system.time_step = 0.01
         system.thermostat.turn_off()
-
-        system.lees_edwards.protocol = lees_edwards.Off() 
-        system.lees_edwards.pos_offset = 0
-        system.lees_edwards.shear_velocity = 0
 
         system.part.add(pos=np.random.random((n, 3)) * l)
 # #
@@ -684,17 +681,10 @@ class LeesEdwards(ut.TestCase):
         # Remove overlap
         system.integrator.set_steepest_descent(
             f_max=0, gamma=0.05, max_displacement=0.05)
-        while system.analysis.energy()["total"] > 8 * n:
-            system.integrator.run(20)
-            print(system.analysis.energy()["total"])
+        while system.analysis.energy()["total"] > 0.5 * n:
+            system.integrator.run(5)
 
         system.integrator.set_vv()
-        system.part[:].v = np.random.random((n, 3))
-        for _ in range(5):
-            e_kin = 0.5 * np.sum(system.part[:].v**2)
-            system.part[:].v = system.part[:].v / np.sqrt(e_kin)
-            system.integrator.run(40)
-        verify_lj_forces(system, 1E-10)
 
 #     def disable_test_z4_lj_fluid_constant_offset(self):
 #         """Simulates a static LJ liquid with a constant offset  and verifies forces.
@@ -745,22 +735,19 @@ class LeesEdwards(ut.TestCase):
         self.setup_lj_liquid()
         system.time = 0
         system.lees_edwards.protocol = lees_edwards.LinearShear(
-            shear_velocity=0, initial_pos_offset=1)
+            shear_velocity=0.3, initial_pos_offset=0.01)
         system.lees_edwards.shear_direction = 2
         system.lees_edwards.shear_plane_normal = 0
         system.integrator.run(1, recalc_forces=True)
-        for pair in system.part.pairs():
-            print(system.distance_vec(pair[0], pair[1]))
-        verify_lj_forces(system, 1E-10)
+        check_non_bonded_loop_trace(system)
 
-        system.part[:].v = np.random.random((len(system.part), 3))
-        # Integrate
-        for _ in range(40):
-            e_kin = 0.5 * np.sum(system.part[:].v**2)
-            system.part[:].v = system.part[:].v / np.sqrt(e_kin)
-            system.integrator.run(20)
-            system.time = system.time - system.time_step
-            verify_lj_forces(system, 1E-10)
+        # Rwind the clock to get back the EL offset applied during force calc
+        system.time = system.time - system.time_step
+        verify_lj_forces(system, 1E-7)
+
+        system.thermostat.set_langevin(kT=.1, gamma=5, seed=2)
+        system.integrator.run(50)
+        check_non_bonded_loop_trace(system)
 
 
 if __name__ == "__main__":
