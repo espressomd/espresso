@@ -400,14 +400,14 @@ cdef class System:
 
         cdef Vector3d pos1
         if isinstance(p1, particle_data.ParticleHandle):
-            pos1 = make_Vector3d(p1.pos)
+            pos1 = make_Vector3d(p1.pos_folded)
         else:
             check_type_or_throw_except(
                 p1, 3, float, "p1 must be a particle or 3 floats")
             pos1 = make_Vector3d(p1)
         cdef Vector3d pos2
         if isinstance(p2, particle_data.ParticleHandle):
-            pos2 = make_Vector3d(p2.pos)
+            pos2 = make_Vector3d(p2.pos_folded)
         else:
             check_type_or_throw_except(
                 p2, 3, float, "p2 must be a particle or 3 floats")
