@@ -1,22 +1,28 @@
 # Part 1: The Lattice-Boltzmann method
-In the course of this tutorial, students should be enabled to:
 
-## Physical learning goals
+## Physics learning goals
 
-* explain the basic idea of the Lattice-Boltzmann method,
+After the tutorial, students should be able to:
 
-## Espresso learning goals
+* Explain the basic idea of the Lattice-Boltzmann method
 
-* set up a Lattice-Boltzmann fluid in Espresso.
+## ESPResSo learning goals
+
+In the course of this tutorial, students should learn to:
+
+* Set up a Lattice-Boltzmann fluid
 
 # Part 2: Planar Poiseuille flow
-In the course of this tutorial, students should be enabled to:
 
-## Physical learning goals
+## Physics learning goals
 
-* describe the geomtry and expected flow field of a Poiseuille flow,
+After the tutorial, students should be able to:
 
-## Espresso learning goals
+* Describe the geometry and expected flow field of a Poiseuille flow
 
-* set up an LB fluid with LB boundaries,
-* retrieve data from the LB grid.
+## ESPResSo learning goals
+
+In the course of this tutorial, students should learn to:
+
+* Set up an LB fluid with LB boundaries
+* Retrieve data from the LB grid
