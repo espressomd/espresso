@@ -33,7 +33,7 @@ from lbmpy_walberla.additional_data_handler import UBBAdditionalDataHandler
 import relaxation_rates
 from lbmpy.fieldaccess import CollideOnlyInplaceAccessor
 from lbmpy.stencils import get_stencil
-from lbmpy.updatekernels import create_lbm_kernel, create_stream_pull_only_kernel
+from lbmpy.updatekernels import create_lbm_kernel, create_stream_pull_with_output_kernel
 from lbmpy.macroscopic_value_kernels import macroscopic_values_setter
 # for collide-push from lbmpy.fieldaccess import StreamPushTwoFieldsAccessor
 
@@ -137,15 +137,16 @@ def generate_fields(lb_method):
         layout=field_layout,
         index_shape=(q,)
     )
+    velocity_field = ps.fields("velocity(3): [3D]", layout='fzyx')
 
-    return src_field, dst_field
+    return src_field, dst_field, velocity_field
 
 
 def generate_collision_sweep(
         ctx, lb_method, collision_rule, class_name, params):
 
     # Symbols for PDF (twice, due to double buffering)
-    src_field, dst_field = generate_fields(lb_method)
+    src_field, dst_field, _ = generate_fields(lb_method)
 
     # Generate collision kernel
     collide_update_rule = create_lbm_kernel(
@@ -160,15 +161,17 @@ def generate_collision_sweep(
 
 
 def generate_stream_sweep(ctx, lb_method, class_name, params):
-    dtype = "float64"
-    field_layout = "fzyx"
+    #dtype = "float64"
+    #field_layout = "fzyx"
 
     # Symbols for PDF (twice, due to double buffering)
-    src_field, dst_field = generate_fields(lb_method)
+    src_field, dst_field, velocity_field = generate_fields(lb_method)
 
     # Generate stream kernel
-    stream_update_rule = create_stream_pull_only_kernel(
-        lb_method.stencil, None, 'pdfs', 'pdfs_tmp', field_layout, dtype)
+    stream_update_rule = create_stream_pull_with_output_kernel(lb_method, src_field, dst_field,
+                                                               output={'velocity': velocity_field})
+    # stream_update_rule = create_stream_pull_only_kernel(
+    #    lb_method.stencil, None, 'pdfs', 'pdfs_tmp', field_layout, dtype)
     stream_ast = ps.create_kernel(stream_update_rule, **params)
     stream_ast.function_name = 'kernel_stream'
     stream_ast.assumed_inner_stride_one = True

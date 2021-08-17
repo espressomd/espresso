@@ -1,6 +1,6 @@
 // kernel generated with pystencils v0.3.3+39.g587a822, lbmpy
-// v0.3.3+33.g036fe13, lbmpy_walberla/pystencils_walberla from commit
-// b17ca5caf00db7d19f86c5f85c6f67fec6c16aff
+// v0.3.3+33.g036fe13, lbmpy_walberla/pystencils_walberla from commit ref:
+// refs/heads/LeesEdwards
 
 //======================================================================================================================
 //
@@ -49,16 +49,21 @@ using namespace std;
 namespace walberla {
 namespace pystencils {
 
-namespace internal_streamsweep {
-static FUNC_PREFIX void
-streamsweep(double *RESTRICT const _data_pdfs, double *RESTRICT _data_pdfs_tmp,
-            int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
-            int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
-            int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
-            int64_t const _stride_pdfs_3, int64_t const _stride_pdfs_tmp_0,
-            int64_t const _stride_pdfs_tmp_1, int64_t const _stride_pdfs_tmp_2,
-            int64_t const _stride_pdfs_tmp_3) {
-  for (int64_t ctr_2 = 1; ctr_2 < _size_pdfs_2 - 1; ctr_2 += 1) {
+namespace internal_streamsweep_streamsweep {
+static FUNC_PREFIX void streamsweep_streamsweep(
+    double *RESTRICT const _data_force, double *RESTRICT const _data_pdfs,
+    double *RESTRICT _data_pdfs_tmp, double *RESTRICT _data_velocity,
+    int64_t const _size_force_0, int64_t const _size_force_1,
+    int64_t const _size_force_2, int64_t const _stride_force_0,
+    int64_t const _stride_force_1, int64_t const _stride_force_2,
+    int64_t const _stride_force_3, int64_t const _stride_pdfs_0,
+    int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
+    int64_t const _stride_pdfs_3, int64_t const _stride_pdfs_tmp_0,
+    int64_t const _stride_pdfs_tmp_1, int64_t const _stride_pdfs_tmp_2,
+    int64_t const _stride_pdfs_tmp_3, int64_t const _stride_velocity_0,
+    int64_t const _stride_velocity_1, int64_t const _stride_velocity_2,
+    int64_t const _stride_velocity_3) {
+  for (int64_t ctr_2 = 1; ctr_2 < _size_force_2 - 1; ctr_2 += 1) {
     double *RESTRICT _data_pdfs_20_30 = _data_pdfs + _stride_pdfs_2 * ctr_2;
     double *RESTRICT _data_pdfs_20_31 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + _stride_pdfs_3;
@@ -96,6 +101,17 @@ streamsweep(double *RESTRICT const _data_pdfs, double *RESTRICT _data_pdfs_tmp,
                                          _stride_pdfs_2 + 17 * _stride_pdfs_3;
     double *RESTRICT _data_pdfs_21_318 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
                                          _stride_pdfs_2 + 18 * _stride_pdfs_3;
+    double *RESTRICT _data_force_20_30 = _data_force + _stride_force_2 * ctr_2;
+    double *RESTRICT _data_force_20_31 =
+        _data_force + _stride_force_2 * ctr_2 + _stride_force_3;
+    double *RESTRICT _data_force_20_32 =
+        _data_force + _stride_force_2 * ctr_2 + 2 * _stride_force_3;
+    double *RESTRICT _data_velocity_20_30 =
+        _data_velocity + _stride_velocity_2 * ctr_2;
+    double *RESTRICT _data_velocity_20_31 =
+        _data_velocity + _stride_velocity_2 * ctr_2 + _stride_velocity_3;
+    double *RESTRICT _data_velocity_20_32 =
+        _data_velocity + _stride_velocity_2 * ctr_2 + 2 * _stride_velocity_3;
     double *RESTRICT _data_pdfs_tmp_20_30 =
         _data_pdfs_tmp + _stride_pdfs_tmp_2 * ctr_2;
     double *RESTRICT _data_pdfs_tmp_20_31 =
@@ -134,7 +150,7 @@ streamsweep(double *RESTRICT const _data_pdfs, double *RESTRICT _data_pdfs_tmp,
         _data_pdfs_tmp + _stride_pdfs_tmp_2 * ctr_2 + 17 * _stride_pdfs_tmp_3;
     double *RESTRICT _data_pdfs_tmp_20_318 =
         _data_pdfs_tmp + _stride_pdfs_tmp_2 * ctr_2 + 18 * _stride_pdfs_tmp_3;
-    for (int64_t ctr_1 = 1; ctr_1 < _size_pdfs_1 - 1; ctr_1 += 1) {
+    for (int64_t ctr_1 = 1; ctr_1 < _size_force_1 - 1; ctr_1 += 1) {
       double *RESTRICT _data_pdfs_20_30_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_20_30;
       double *RESTRICT _data_pdfs_20_31_1m1 =
@@ -173,6 +189,18 @@ streamsweep(double *RESTRICT const _data_pdfs, double *RESTRICT _data_pdfs_tmp,
           _stride_pdfs_1 * ctr_1 + _data_pdfs_21_317;
       double *RESTRICT _data_pdfs_21_318_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_21_318;
+      double *RESTRICT _data_force_20_30_10 =
+          _stride_force_1 * ctr_1 + _data_force_20_30;
+      double *RESTRICT _data_force_20_31_10 =
+          _stride_force_1 * ctr_1 + _data_force_20_31;
+      double *RESTRICT _data_force_20_32_10 =
+          _stride_force_1 * ctr_1 + _data_force_20_32;
+      double *RESTRICT _data_velocity_20_30_10 =
+          _stride_velocity_1 * ctr_1 + _data_velocity_20_30;
+      double *RESTRICT _data_velocity_20_31_10 =
+          _stride_velocity_1 * ctr_1 + _data_velocity_20_31;
+      double *RESTRICT _data_velocity_20_32_10 =
+          _stride_velocity_1 * ctr_1 + _data_velocity_20_32;
       double *RESTRICT _data_pdfs_tmp_20_30_10 =
           _stride_pdfs_tmp_1 * ctr_1 + _data_pdfs_tmp_20_30;
       double *RESTRICT _data_pdfs_tmp_20_31_10 =
@@ -211,7 +239,7 @@ streamsweep(double *RESTRICT const _data_pdfs, double *RESTRICT _data_pdfs_tmp,
           _stride_pdfs_tmp_1 * ctr_1 + _data_pdfs_tmp_20_317;
       double *RESTRICT _data_pdfs_tmp_20_318_10 =
           _stride_pdfs_tmp_1 * ctr_1 + _data_pdfs_tmp_20_318;
-      for (int64_t ctr_0 = 1; ctr_0 < _size_pdfs_0 - 1; ctr_0 += 1) {
+      for (int64_t ctr_0 = 1; ctr_0 < _size_force_0 - 1; ctr_0 += 1) {
         const double streamed_0 = _data_pdfs_20_30_10[_stride_pdfs_0 * ctr_0];
         const double streamed_1 = _data_pdfs_20_31_1m1[_stride_pdfs_0 * ctr_0];
         const double streamed_2 = _data_pdfs_20_32_11[_stride_pdfs_0 * ctr_0];
@@ -244,6 +272,32 @@ streamsweep(double *RESTRICT const _data_pdfs, double *RESTRICT _data_pdfs_tmp,
             _data_pdfs_21_317_10[_stride_pdfs_0 * ctr_0 + _stride_pdfs_0];
         const double streamed_18 =
             _data_pdfs_21_318_10[_stride_pdfs_0 * ctr_0 - _stride_pdfs_0];
+        const double vel0Term =
+            streamed_10 + streamed_14 + streamed_18 + streamed_4 + streamed_8;
+        const double vel1Term =
+            streamed_1 + streamed_11 + streamed_15 + streamed_7;
+        const double vel2Term = streamed_12 + streamed_13 + streamed_5;
+        const double rho = streamed_0 + streamed_16 + streamed_17 + streamed_2 +
+                           streamed_3 + streamed_6 + streamed_9 + vel0Term +
+                           vel1Term + vel2Term;
+        const double u_0 =
+            (-streamed_13 - streamed_17 - streamed_3 - streamed_7 - streamed_9 +
+             vel0Term) /
+                rho +
+            0.5 * _data_force_20_30_10[_stride_force_0 * ctr_0] / rho;
+        const double u_1 =
+            (-streamed_10 - streamed_12 - streamed_16 - streamed_2 +
+             streamed_8 - streamed_9 + vel1Term) /
+                rho +
+            0.5 * _data_force_20_31_10[_stride_force_0 * ctr_0] / rho;
+        const double u_2 =
+            (streamed_11 + streamed_14 - streamed_15 - streamed_16 -
+             streamed_17 - streamed_18 - streamed_6 + vel2Term) /
+                rho +
+            0.5 * _data_force_20_32_10[_stride_force_0 * ctr_0] / rho;
+        _data_velocity_20_30_10[_stride_velocity_0 * ctr_0] = u_0;
+        _data_velocity_20_31_10[_stride_velocity_0 * ctr_0] = u_1;
+        _data_velocity_20_32_10[_stride_velocity_0 * ctr_0] = u_2;
         _data_pdfs_tmp_20_30_10[_stride_pdfs_tmp_0 * ctr_0] = streamed_0;
         _data_pdfs_tmp_20_31_10[_stride_pdfs_tmp_0 * ctr_0] = streamed_1;
         _data_pdfs_tmp_20_32_10[_stride_pdfs_tmp_0 * ctr_0] = streamed_2;
@@ -267,10 +321,12 @@ streamsweep(double *RESTRICT const _data_pdfs, double *RESTRICT _data_pdfs_tmp,
     }
   }
 }
-} // namespace internal_streamsweep
+} // namespace internal_streamsweep_streamsweep
 
-void StreamSweep::operator()(IBlock *block) {
+void StreamSweep::run(IBlock *block) {
+  auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
+  auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
   field::GhostLayerField<double, 19> *pdfs_tmp;
   {
     // Getting temporary field pdfs_tmp
@@ -283,24 +339,34 @@ void StreamSweep::operator()(IBlock *block) {
     }
   }
 
+  WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(force->nrOfGhostLayers()));
+  double *RESTRICT const _data_force = force->dataAt(-1, -1, -1, 0);
+  WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx);
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(pdfs->nrOfGhostLayers()));
   double *RESTRICT const _data_pdfs = pdfs->dataAt(-1, -1, -1, 0);
   WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(pdfs_tmp->nrOfGhostLayers()));
   double *RESTRICT _data_pdfs_tmp = pdfs_tmp->dataAt(-1, -1, -1, 0);
   WALBERLA_ASSERT_EQUAL(pdfs_tmp->layout(), field::fzyx);
-  WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
-                                int64_t(cell_idx_c(pdfs->xSize()) + 2));
-  const int64_t _size_pdfs_0 = int64_t(cell_idx_c(pdfs->xSize()) + 2);
-  WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
-  WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
-                                int64_t(cell_idx_c(pdfs->ySize()) + 2));
-  const int64_t _size_pdfs_1 = int64_t(cell_idx_c(pdfs->ySize()) + 2);
-  WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
-  WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
-                                int64_t(cell_idx_c(pdfs->zSize()) + 2));
-  const int64_t _size_pdfs_2 = int64_t(cell_idx_c(pdfs->zSize()) + 2);
-  WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
+  WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(velocity->nrOfGhostLayers()));
+  double *RESTRICT _data_velocity = velocity->dataAt(-1, -1, -1, 0);
+  WALBERLA_ASSERT_EQUAL(velocity->layout(), field::fzyx);
+  WALBERLA_ASSERT_GREATER_EQUAL(force->xSizeWithGhostLayer(),
+                                int64_t(cell_idx_c(force->xSize()) + 2));
+  const int64_t _size_force_0 = int64_t(cell_idx_c(force->xSize()) + 2);
+  WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx);
+  WALBERLA_ASSERT_GREATER_EQUAL(force->ySizeWithGhostLayer(),
+                                int64_t(cell_idx_c(force->ySize()) + 2));
+  const int64_t _size_force_1 = int64_t(cell_idx_c(force->ySize()) + 2);
+  WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx);
+  WALBERLA_ASSERT_GREATER_EQUAL(force->zSizeWithGhostLayer(),
+                                int64_t(cell_idx_c(force->zSize()) + 2));
+  const int64_t _size_force_2 = int64_t(cell_idx_c(force->zSize()) + 2);
+  WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx);
+  const int64_t _stride_force_0 = int64_t(force->xStride());
+  const int64_t _stride_force_1 = int64_t(force->yStride());
+  const int64_t _stride_force_2 = int64_t(force->zStride());
+  const int64_t _stride_force_3 = int64_t(1 * int64_t(force->fStride()));
   const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
   const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
   const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -309,11 +375,17 @@ void StreamSweep::operator()(IBlock *block) {
   const int64_t _stride_pdfs_tmp_1 = int64_t(pdfs_tmp->yStride());
   const int64_t _stride_pdfs_tmp_2 = int64_t(pdfs_tmp->zStride());
   const int64_t _stride_pdfs_tmp_3 = int64_t(1 * int64_t(pdfs_tmp->fStride()));
-  internal_streamsweep::streamsweep(
-      _data_pdfs, _data_pdfs_tmp, _size_pdfs_0, _size_pdfs_1, _size_pdfs_2,
-      _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3,
-      _stride_pdfs_tmp_0, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2,
-      _stride_pdfs_tmp_3);
+  const int64_t _stride_velocity_0 = int64_t(velocity->xStride());
+  const int64_t _stride_velocity_1 = int64_t(velocity->yStride());
+  const int64_t _stride_velocity_2 = int64_t(velocity->zStride());
+  const int64_t _stride_velocity_3 = int64_t(1 * int64_t(velocity->fStride()));
+  internal_streamsweep_streamsweep::streamsweep_streamsweep(
+      _data_force, _data_pdfs, _data_pdfs_tmp, _data_velocity, _size_force_0,
+      _size_force_1, _size_force_2, _stride_force_0, _stride_force_1,
+      _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1,
+      _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_0, _stride_pdfs_tmp_1,
+      _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, _stride_velocity_0,
+      _stride_velocity_1, _stride_velocity_2, _stride_velocity_3);
   pdfs->swapDataPointers(pdfs_tmp);
 }
 
@@ -329,7 +401,9 @@ void StreamSweep::runOnCellInterval(
   if (ci.empty())
     return;
 
+  auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
+  auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
   field::GhostLayerField<double, 19> *pdfs_tmp;
   {
     // Getting temporary field pdfs_tmp
@@ -342,6 +416,15 @@ void StreamSweep::runOnCellInterval(
     }
   }
 
+  WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1,
+                                -int_c(force->nrOfGhostLayers()));
+  WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1,
+                                -int_c(force->nrOfGhostLayers()));
+  WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin() - 1,
+                                -int_c(force->nrOfGhostLayers()));
+  double *RESTRICT const _data_force =
+      force->dataAt(ci.xMin() - 1, ci.yMin() - 1, ci.zMin() - 1, 0);
+  WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx);
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1, -int_c(pdfs->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1, -int_c(pdfs->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin() - 1, -int_c(pdfs->nrOfGhostLayers()));
@@ -357,18 +440,31 @@ void StreamSweep::runOnCellInterval(
   double *RESTRICT _data_pdfs_tmp =
       pdfs_tmp->dataAt(ci.xMin() - 1, ci.yMin() - 1, ci.zMin() - 1, 0);
   WALBERLA_ASSERT_EQUAL(pdfs_tmp->layout(), field::fzyx);
-  WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
+  WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1,
+                                -int_c(velocity->nrOfGhostLayers()));
+  WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1,
+                                -int_c(velocity->nrOfGhostLayers()));
+  WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin() - 1,
+                                -int_c(velocity->nrOfGhostLayers()));
+  double *RESTRICT _data_velocity =
+      velocity->dataAt(ci.xMin() - 1, ci.yMin() - 1, ci.zMin() - 1, 0);
+  WALBERLA_ASSERT_EQUAL(velocity->layout(), field::fzyx);
+  WALBERLA_ASSERT_GREATER_EQUAL(force->xSizeWithGhostLayer(),
                                 int64_t(cell_idx_c(ci.xSize()) + 2));
-  const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 2);
-  WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
-  WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
+  const int64_t _size_force_0 = int64_t(cell_idx_c(ci.xSize()) + 2);
+  WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx);
+  WALBERLA_ASSERT_GREATER_EQUAL(force->ySizeWithGhostLayer(),
                                 int64_t(cell_idx_c(ci.ySize()) + 2));
-  const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 2);
-  WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
-  WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
+  const int64_t _size_force_1 = int64_t(cell_idx_c(ci.ySize()) + 2);
+  WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx);
+  WALBERLA_ASSERT_GREATER_EQUAL(force->zSizeWithGhostLayer(),
                                 int64_t(cell_idx_c(ci.zSize()) + 2));
-  const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 2);
-  WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
+  const int64_t _size_force_2 = int64_t(cell_idx_c(ci.zSize()) + 2);
+  WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx);
+  const int64_t _stride_force_0 = int64_t(force->xStride());
+  const int64_t _stride_force_1 = int64_t(force->yStride());
+  const int64_t _stride_force_2 = int64_t(force->zStride());
+  const int64_t _stride_force_3 = int64_t(1 * int64_t(force->fStride()));
   const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
   const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
   const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -377,11 +473,17 @@ void StreamSweep::runOnCellInterval(
   const int64_t _stride_pdfs_tmp_1 = int64_t(pdfs_tmp->yStride());
   const int64_t _stride_pdfs_tmp_2 = int64_t(pdfs_tmp->zStride());
   const int64_t _stride_pdfs_tmp_3 = int64_t(1 * int64_t(pdfs_tmp->fStride()));
-  internal_streamsweep::streamsweep(
-      _data_pdfs, _data_pdfs_tmp, _size_pdfs_0, _size_pdfs_1, _size_pdfs_2,
-      _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3,
-      _stride_pdfs_tmp_0, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2,
-      _stride_pdfs_tmp_3);
+  const int64_t _stride_velocity_0 = int64_t(velocity->xStride());
+  const int64_t _stride_velocity_1 = int64_t(velocity->yStride());
+  const int64_t _stride_velocity_2 = int64_t(velocity->zStride());
+  const int64_t _stride_velocity_3 = int64_t(1 * int64_t(velocity->fStride()));
+  internal_streamsweep_streamsweep::streamsweep_streamsweep(
+      _data_force, _data_pdfs, _data_pdfs_tmp, _data_velocity, _size_force_0,
+      _size_force_1, _size_force_2, _stride_force_0, _stride_force_1,
+      _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1,
+      _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_0, _stride_pdfs_tmp_1,
+      _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, _stride_velocity_0,
+      _stride_velocity_1, _stride_velocity_2, _stride_velocity_3);
   pdfs->swapDataPointers(pdfs_tmp);
 }
 

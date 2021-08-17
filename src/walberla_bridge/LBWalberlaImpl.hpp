@@ -171,6 +171,7 @@ protected:
   BlockDataID m_last_applied_force_field_id;
   BlockDataID m_force_to_be_applied_id;
 
+  BlockDataID m_velocity_field_id;
   BlockDataID m_velocity_adaptor_id;
 
   BlockDataID m_boundary_handling_id;
@@ -262,6 +263,9 @@ public:
         m_blocks, "force field", FloatType{0}, field::fzyx, m_n_ghost_layers);
     m_force_to_be_applied_id = field::addToStorage<VectorField>(
         m_blocks, "force field", FloatType{0}, field::fzyx, m_n_ghost_layers);
+    m_velocity_field_id = field::addToStorage<VectorField>(
+        m_blocks, "velocity field", FloatType{0}, field::fzyx,
+        m_n_ghost_layers);
 
     // Init and register flag field (fluid/boundary)
     m_flag_field_id = field::addFlagFieldToStorage<FlagField>(
@@ -298,6 +302,9 @@ public:
     m_full_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<VectorField>>(
             m_last_applied_force_field_id));
+    m_full_communication->addPackInfo(
+        std::make_shared<field::communication::PackInfo<VectorField>>(
+            m_velocity_field_id));
 
     // Instance the sweep responsible for force double buffering and
     // external forces
@@ -309,7 +316,8 @@ public:
     // Note: For now combined collide-stream sweeps cannot be used,
     // because the collide-push variant is not supported by lbmpy.
     // The following functors are individual in-place collide and stream steps
-    auto stream = pystencils::StreamSweep(m_pdf_field_id);
+    auto stream = pystencils::StreamSweep(m_last_applied_force_field_id,
+                                          m_pdf_field_id, m_velocity_field_id);
     auto collide = generate_collide_sweep(seed, time_step);
 
     // Add steps to the integration loop
@@ -360,21 +368,32 @@ public:
         get_block_and_cell(node, consider_ghosts, m_blocks, n_ghost_layers());
     if (!bc)
       return {};
-    auto const &vel_adaptor =
-        (*bc).block->template getData<VelocityAdaptor>(m_velocity_adaptor_id);
-    return {to_vector3d(vel_adaptor->get((*bc).cell))};
+    // auto const &vel_adaptor =
+    //    (*bc).block->template getData<VelocityAdaptor>(m_velocity_adaptor_id);
+    auto const &vel_field =
+        (*bc).block->template getData<VectorField>(m_velocity_field_id);
+    return Utils::Vector3d{double_c(vel_field->get((*bc).cell, uint_t(0u))),
+                           double_c(vel_field->get((*bc).cell, uint_t(1u))),
+                           double_c(vel_field->get((*bc).cell, uint_t(2u)))};
   };
   bool set_node_velocity(const Utils::Vector3i &node,
                          const Utils::Vector3d &v) override {
     auto bc = get_block_and_cell(node, false, m_blocks, n_ghost_layers());
     if (!bc)
       return false;
+    // We hve to set both, the pdf and the stored velocity field
     auto pdf_field = (*bc).block->template getData<PdfField>(m_pdf_field_id);
     const FloatType density = pdf_field->getDensity((*bc).cell);
     pdf_field->setDensityAndVelocity(
         (*bc).cell,
         Vector3<FloatType>{FloatType(v[0]), FloatType(v[1]), FloatType(v[2])},
         density);
+    auto vel_field =
+        (*bc).block->template getData<VectorField>(m_velocity_field_id);
+    for (uint_t f = 0u; f < 3u; ++f) {
+      vel_field->get((*bc).cell, f) = FloatType(v[f]);
+    }
+
     return true;
   };
 
