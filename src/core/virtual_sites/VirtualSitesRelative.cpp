@@ -160,7 +160,7 @@ void VirtualSitesRelative::update() const {
 
     const Particle *p_ref = get_reference_particle(p.p.vs_relative);
 
-    auto const new_pos = position(p_ref, p.p.vs_relative);
+    auto new_pos = position(p_ref, p.p.vs_relative);
     /* The shift has to respect periodic boundaries: if the reference
      * particles is not in the same image box, we potentially avoid to shift
      * to the other side of the box. */
@@ -171,6 +171,15 @@ void VirtualSitesRelative::update() const {
     p.l.i = p_ref->l.i - image_shift;
 
     p.m.v = velocity(p_ref, p.p.vs_relative);
+
+    if (box_geo.type() == BoxType::LEES_EDWARDS) {
+      const auto &shear_dir = box_geo.clees_edwards_bc().shear_direction;
+      const auto &shear_normal = box_geo.clees_edwards_bc().shear_plane_normal;
+      const auto &le_vel = box_geo.lees_edwards_bc().shear_velocity;
+      Utils::Vector3i n_shifts;
+      fold_position(new_pos, n_shifts, box_geo);
+      p.m.v[shear_dir] -= n_shifts[shear_normal] * le_vel;
+    }
 
     if (get_have_quaternion())
       p.r.quat = orientation(p_ref, p.p.vs_relative);
