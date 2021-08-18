@@ -1,19 +1,28 @@
 # Part 1: The Lattice-Boltzmann method
 
-## Physical learning goals
+## Physics learning goals
 
-* Learning basic concepts of the LBM
+After the tutorial, students should be able to:
 
-## Espresso learning goals
+* Explain the basic idea of the Lattice-Boltzmann method
 
-* Learning the LB interface in ESPResSo
+## ESPResSo learning goals
+
+In the course of this tutorial, students should learn to:
+
+* Set up a Lattice-Boltzmann fluid
 
 # Part 2: Planar Poiseuille flow
 
-## Physical learning goals
+## Physics learning goals
 
-* Modeling a laminar fluid flow between two walls
+After the tutorial, students should be able to:
 
-## Espresso learning goals
+* Describe the geometry and expected flow field of a Poiseuille flow
 
-* Setting up an LB fluid and LB boundaries
+## ESPResSo learning goals
+
+In the course of this tutorial, students should learn to:
+
+* Set up an LB fluid with LB boundaries
+* Retrieve data from the LB grid

@@ -1,4 +1,4 @@
-image: docker.pkg.github.com/espressomd/docker/ubuntu-20.04:08d67d67a4d3c3279cacee975b68c02ec89b2a21
+image: docker.pkg.github.com/espressomd/docker/ubuntu-20.04:738c3dfe015626632d16bcd816ad4aa670955c21
 
 stages:
   - prepare
@@ -127,7 +127,7 @@ no_rotation:
 ubuntu:wo-dependencies:
   <<: *global_job_definition
   stage: build
-  image: docker.pkg.github.com/espressomd/docker/ubuntu-wo-dependencies:08d67d67a4d3c3279cacee975b68c02ec89b2a21
+  image: docker.pkg.github.com/espressomd/docker/ubuntu-wo-dependencies:738c3dfe015626632d16bcd816ad4aa670955c21
   variables:
      myconfig: 'maxset'
      with_cuda: 'false'
@@ -216,7 +216,7 @@ clang-sanitizer:
 fast_math:
   <<: *global_job_definition
   stage: build
-  image: docker.pkg.github.com/espressomd/docker/cuda:08d67d67a4d3c3279cacee975b68c02ec89b2a21
+  image: docker.pkg.github.com/espressomd/docker/cuda:738c3dfe015626632d16bcd816ad4aa670955c21
   variables:
      CC: 'gcc-9'
      CXX: 'g++-9'
@@ -237,7 +237,7 @@ fast_math:
 cuda11-maxset:
   <<: *global_job_definition
   stage: build
-  image: docker.pkg.github.com/espressomd/docker/cuda:08d67d67a4d3c3279cacee975b68c02ec89b2a21
+  image: docker.pkg.github.com/espressomd/docker/cuda:738c3dfe015626632d16bcd816ad4aa670955c21
   variables:
      CC: 'gcc-9'
      CXX: 'g++-9'
