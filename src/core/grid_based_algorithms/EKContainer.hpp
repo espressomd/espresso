@@ -4,6 +4,9 @@
 #include "ekin_walberla_init.hpp"
 #include "walberla_blockforest.hpp"
 
+#include "PoissonSolver/FFT.hpp"
+#include "PoissonSolver/PoissonSolver.hpp"
+
 #include <algorithm>
 #include <cassert>
 #include <memory>
@@ -22,6 +25,8 @@ private:
   double m_tau{};
 
   std::unique_ptr<walberla::EKWalberlaCharge<double>> m_ekcharge;
+  // TODO: this could be moved to the Scriptinterface
+  std::unique_ptr<walberla::PoissonSolver<double>> m_poissonsolver;
 
 public:
   void add(std::shared_ptr<EKSpecies> const &c) {
@@ -30,9 +35,16 @@ public:
 
     m_ekcontainer.emplace_back(c);
 
+    // check that poissonsolver exists
+    if (!m_poissonsolver) {
+      m_poissonsolver =
+          std::make_unique<walberla::FFT<double>>(get_walberla_blockforest());
+    }
+
     // check that ekcharge exists
     if (!m_ekcharge) {
-      m_ekcharge = walberla::new_ek_charge(get_walberla_blockforest());
+      m_ekcharge = walberla::new_ek_charge(get_walberla_blockforest(),
+                                           m_poissonsolver.get());
     }
 
     // TODO: callback on_ek_change?

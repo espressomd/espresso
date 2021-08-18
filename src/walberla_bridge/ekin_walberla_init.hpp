@@ -16,7 +16,8 @@ new_ek_walberla(const walberla::WalberlaBlockForest *blockforest,
                 double diffusion, double kT, double valency, double density);
 
 std::unique_ptr<EKWalberlaCharge<double>>
-new_ek_charge(const walberla::WalberlaBlockForest *blockforest);
+new_ek_charge(const walberla::WalberlaBlockForest *blockforest,
+              const walberla::PoissonSolver<double> *poissonsolver);
 } // namespace walberla
 
 #endif // ESPRESSO_EKIN_WALBERLA_INIT_HPP
