@@ -19,7 +19,7 @@ public:
 
 private:
   container_type m_ekcontainer;
-  double m_tau;
+  double m_tau{};
 
   std::unique_ptr<walberla::EKWalberlaCharge<double>> m_ekcharge;
 
