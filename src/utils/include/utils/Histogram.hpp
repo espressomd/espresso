@@ -39,8 +39,9 @@ namespace Utils {
  * \brief Histogram in Cartesian coordinates.
  * \tparam Dims  Histogram dimensionality.
  * \tparam T     Histogram data type.
+ * \tparam U     Coordinates data type.
  */
-template <typename T, std::size_t Dims> class Histogram {
+template <typename T, std::size_t Dims, typename U = double> class Histogram {
 public:
   /**
    * \brief Histogram constructor.
@@ -52,9 +53,9 @@ public:
    */
   explicit Histogram(std::array<std::size_t, Dims> n_bins,
                      std::size_t n_dims_data,
-                     std::array<std::pair<T, T>, Dims> limits)
+                     std::array<std::pair<U, U>, Dims> limits)
       : m_n_bins(n_bins), m_limits(limits), m_n_dims_data(n_dims_data),
-        m_ones(n_dims_data, T{1.}) {
+        m_ones(n_dims_data, T{1}) {
     if (n_bins.size() != limits.size()) {
       throw std::invalid_argument("Argument for number of bins and limits do "
                                   "not have same number of dimensions!");
@@ -77,54 +78,51 @@ public:
   std::vector<std::size_t> get_tot_count() const { return m_tot_count; }
 
   /** \brief Get the ranges (min, max) for each dimension. */
-  std::array<std::pair<T, T>, Dims> get_limits() const { return m_limits; }
+  std::array<std::pair<U, U>, Dims> get_limits() const { return m_limits; }
 
   /** \brief Get the bin sizes. */
-  std::array<T, Dims> get_bin_sizes() const { return m_bin_sizes; }
+  std::array<U, Dims> get_bin_sizes() const { return m_bin_sizes; }
 
   /**
    * \brief Add data to the histogram.
-   * \param data  vector of single data value with type T.
-   *              The size of the given vector has to match the number
-   *              of dimensions of the histogram.
+   * \param pos  Position to increment.
    */
-  void update(Span<const T> data) {
-    if (check_limits(data, m_limits)) {
-      update(data, m_ones);
+  void update(Span<const U> pos) {
+    if (check_limits(pos, m_limits)) {
+      update(pos, m_ones);
     }
   }
 
   /**
    * \brief Add data to the histogram.
-   * \param data  vector of single data value with type T.
-   *              The size of the given vector has to match the number
-   *              of dimensions of the histogram.
-   * \param weights  m_n_dims_data dimensional weights.
+   * \param pos    Position to update.
+   * \param value  Value to add.
    */
-  void update(Span<const T> data, Span<const T> weights) {
-    if (check_limits(data, m_limits)) {
+  void update(Span<const U> pos, Span<const T> value) {
+    if (check_limits(pos, m_limits)) {
       Array<std::size_t, Dims> index;
       for (std::size_t dim = 0; dim < m_n_bins.size(); ++dim) {
         index[dim] =
-            calc_bin_index(data[dim], m_limits[dim].first, m_bin_sizes[dim]);
+            calc_bin_index(pos[dim], m_limits[dim].first, m_bin_sizes[dim]);
       }
       auto const flat_index =
           m_n_dims_data * ::Utils::ravel_index(index, m_n_bins);
-      if (weights.size() != m_n_dims_data)
-        throw std::invalid_argument("Wrong dimensions of given weights!");
+      if (value.size() != m_n_dims_data)
+        throw std::invalid_argument("Wrong dimensions for the given value!");
       for (std::size_t ind = 0; ind < m_n_dims_data; ++ind) {
-        m_hist[flat_index + ind] += weights[ind];
-        m_tot_count[flat_index + ind] += 1;
+        m_hist[flat_index + ind] += value[ind];
+        m_tot_count[flat_index + ind]++;
       }
     }
   }
 
   /** \brief Histogram normalization. */
   virtual void normalize() {
-    T bin_volume = std::accumulate(m_bin_sizes.begin(), m_bin_sizes.end(),
-                                   static_cast<T>(1.0), std::multiplies<T>());
-    std::transform(m_hist.begin(), m_hist.end(), m_hist.begin(),
-                   [bin_volume](T v) { return v / bin_volume; });
+    auto const bin_volume = std::accumulate(
+        m_bin_sizes.begin(), m_bin_sizes.end(), U{1}, std::multiplies<U>());
+    std::transform(
+        m_hist.begin(), m_hist.end(), m_hist.begin(),
+        [bin_volume](T v) { return static_cast<T>(v / bin_volume); });
   }
 
 private:
@@ -144,29 +142,30 @@ private:
    * \param n_bins  number of bins for each dimension.
    * \return The bin sizes for each dimension.
    */
-  std::array<T, Dims>
-  calc_bin_sizes(std::array<std::pair<T, T>, Dims> const &limits,
+  std::array<U, Dims>
+  calc_bin_sizes(std::array<std::pair<U, U>, Dims> const &limits,
                  std::array<std::size_t, Dims> const &n_bins) const {
-    std::array<T, Dims> tmp;
+    std::array<U, Dims> tmp;
     for (std::size_t ind = 0; ind < Dims; ++ind) {
-      tmp[ind] = (limits[ind].second - limits[ind].first) / T(n_bins[ind]);
+      tmp[ind] = static_cast<U>((limits[ind].second - limits[ind].first) /
+                                n_bins[ind]);
     }
     return tmp;
   }
 
   /**
    * \brief Check if data is within limits.
-   * \param data  data value to check.
+   * \param pos     Position to check.
    * \param limits  the min/max values.
    */
-  bool check_limits(Span<const T> data,
-                    std::array<std::pair<T, T>, Dims> limits) const {
-    if (data.size() != limits.size()) {
-      throw std::invalid_argument("Dimension of data and limits not the same!");
+  bool check_limits(Span<const U> pos,
+                    std::array<std::pair<U, U>, Dims> limits) const {
+    if (pos.size() != limits.size()) {
+      throw std::invalid_argument("Dimension of pos and limits not the same!");
     }
     bool within_range = true;
-    for (std::size_t i = 0; i < data.size(); ++i) {
-      if (data[i] < limits[i].first or data[i] >= limits[i].second)
+    for (std::size_t i = 0; i < pos.size(); ++i) {
+      if (pos[i] < limits[i].first or pos[i] >= limits[i].second)
         within_range = false;
     }
     return within_range;
@@ -176,9 +175,9 @@ private:
   /// Number of bins for each dimension.
   std::array<std::size_t, Dims> m_n_bins;
   /// Min and max values for each dimension.
-  std::array<std::pair<T, T>, Dims> m_limits;
+  std::array<std::pair<U, U>, Dims> m_limits;
   /// Bin sizes for each dimension.
-  std::array<T, Dims> m_bin_sizes;
+  std::array<U, Dims> m_bin_sizes;
 
 protected:
   /// Flat histogram data.
@@ -194,21 +193,20 @@ protected:
  * \brief Histogram in cylindrical coordinates.
  * \tparam Dims  Histogram dimensionality.
  * \tparam T     Histogram data type.
+ * \tparam U     Coordinates data type.
  */
-template <typename T, std::size_t Dims>
-class CylindricalHistogram : public Histogram<T, Dims> {
+template <typename T, std::size_t Dims, typename U = double>
+class CylindricalHistogram : public Histogram<T, Dims, U> {
 public:
-  using Histogram<T, Dims>::Histogram;
-  using Histogram<T, Dims>::get_n_bins;
-  using Histogram<T, Dims>::get_limits;
-  using Histogram<T, Dims>::get_bin_sizes;
-  using Histogram<T, Dims>::m_hist;
-  using Histogram<T, Dims>::m_n_dims_data;
+  using Histogram<T, Dims, U>::Histogram;
+  using Histogram<T, Dims, U>::get_n_bins;
+  using Histogram<T, Dims, U>::get_limits;
+  using Histogram<T, Dims, U>::get_bin_sizes;
+  using Histogram<T, Dims, U>::m_hist;
+  using Histogram<T, Dims, U>::m_n_dims_data;
 
   void normalize() override {
     std::array<std::size_t, 4> unravelled_index;
-    int r_bin;
-    double min_r, r_bin_size, phi_bin_size, z_bin_size, bin_volume;
     auto const dims = get_n_bins();
     std::array<std::size_t, 4> extended_dims;
     std::copy(dims.begin(), dims.end(), extended_dims.begin());
@@ -217,17 +215,17 @@ public:
       // Get the unraveled indices and calculate the bin volume.
       ::Utils::unravel_index(extended_dims.begin(), extended_dims.end(),
                              unravelled_index.begin(), ind);
-      r_bin = unravelled_index[0];
-      min_r = get_limits()[0].first;
-      r_bin_size = get_bin_sizes()[0];
-      phi_bin_size = get_bin_sizes()[1];
-      z_bin_size = get_bin_sizes()[2];
-      bin_volume =
-          Utils::pi() *
+      auto const r_bin = static_cast<U>(unravelled_index[0]);
+      auto const min_r = get_limits()[0].first;
+      auto const r_bin_size = get_bin_sizes()[0];
+      auto const phi_bin_size = get_bin_sizes()[1];
+      auto const z_bin_size = get_bin_sizes()[2];
+      auto const bin_volume =
+          Utils::pi<U>() *
           ((min_r + (r_bin + 1) * r_bin_size) *
                (min_r + (r_bin + 1) * r_bin_size) -
            (min_r + r_bin * r_bin_size) * (min_r + r_bin * r_bin_size)) *
-          z_bin_size * phi_bin_size / (2 * Utils::pi());
+          z_bin_size * phi_bin_size / (2 * Utils::pi<U>());
       for (std::size_t dim = 0; dim < m_n_dims_data; ++dim) {
         m_hist[ind + dim] /= bin_volume;
       }
