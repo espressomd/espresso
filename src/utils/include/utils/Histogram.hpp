@@ -35,204 +35,166 @@
 
 namespace Utils {
 
-inline std::size_t calculate_bin_index(double value, double bin_size,
-                                       double offset) {
-  return static_cast<std::size_t>(std::floor((value - offset) / bin_size));
-}
-
 /**
- * \brief Calculate the bin sizes.
- * \param limits  contains min/max values for each dimension.
- * \param n_bins  number of bins for each dimension.
- * \return The bin sizes for each dimension.
+ * \brief Histogram in Cartesian coordinates.
+ * \tparam Dims  Histogram dimensionality.
+ * \tparam T     Histogram data type.
  */
-template <typename T, std::size_t Dims>
-std::array<T, Dims>
-calc_bin_sizes(std::array<std::pair<T, T>, Dims> const &limits,
-               std::array<std::size_t, Dims> const &n_bins) {
-  std::array<T, Dims> tmp;
-  for (std::size_t ind = 0; ind < Dims; ++ind) {
-    tmp[ind] = (limits[ind].second - limits[ind].first) / T(n_bins[ind]);
-  }
-  return tmp;
-}
-
-/*
- * \brief Check if data is within limits.
- * \param data  data value to check.
- * \param limits  the min/max values.
- */
-template <typename T, std::size_t Dims>
-inline bool check_limits(Span<const T> data,
-                         std::array<std::pair<T, T>, Dims> limits) {
-  if (data.size() != limits.size()) {
-    throw std::invalid_argument("Dimension of data and limits not the same!");
-  }
-  bool within_range = true;
-  for (std::size_t i = 0; i < data.size(); ++i) {
-    if (data[i] < limits[i].first or data[i] >= limits[i].second)
-      within_range = false;
-  }
-  return within_range;
-}
-
 template <typename T, std::size_t Dims> class Histogram {
 public:
+  /**
+   * \brief Histogram constructor.
+   * \param n_bins  the number of bins in each histogram dimension.
+   * \param n_dims_data  the number of dimensions the data has (e.g. 3 for
+   *        vector field).
+   * \param limits  the minimum/maximum data values to consider for the
+   *        histogram.
+   */
   explicit Histogram(std::array<std::size_t, Dims> n_bins,
                      std::size_t n_dims_data,
-                     std::array<std::pair<T, T>, Dims> limits);
-  std::array<std::size_t, Dims> get_n_bins() const;
-  std::vector<T> get_histogram() const;
-  std::vector<std::size_t> get_tot_count() const;
-  std::array<std::pair<T, T>, Dims> get_limits() const;
-  std::array<T, Dims> get_bin_sizes() const;
-  void update(Span<const T> data);
-  void update(Span<const T> data, Span<const T> weights);
-  void normalize();
+                     std::array<std::pair<T, T>, Dims> limits)
+      : m_n_bins(n_bins), m_limits(limits), m_n_dims_data(n_dims_data),
+        m_ones(n_dims_data, T{1.}) {
+    if (n_bins.size() != limits.size()) {
+      throw std::invalid_argument("Argument for number of bins and limits do "
+                                  "not have same number of dimensions!");
+    }
+    m_bin_sizes = calc_bin_sizes(limits, n_bins);
+    std::size_t n_bins_total =
+        m_n_dims_data * std::accumulate(std::begin(n_bins), std::end(n_bins), 1,
+                                        std::multiplies<std::size_t>());
+    m_hist = std::vector<T>(n_bins_total);
+    m_tot_count = std::vector<std::size_t>(n_bins_total);
+  }
+
+  /** \brief Get the number of bins for each dimension. */
+  std::array<std::size_t, Dims> get_n_bins() const { return m_n_bins; }
+
+  /** \brief Get the histogram data. */
+  std::vector<T> get_histogram() const { return m_hist; }
+
+  /** \brief Get the histogram count data. */
+  std::vector<std::size_t> get_tot_count() const { return m_tot_count; }
+
+  /** \brief Get the ranges (min, max) for each dimension. */
+  std::array<std::pair<T, T>, Dims> get_limits() const { return m_limits; }
+
+  /** \brief Get the bin sizes. */
+  std::array<T, Dims> get_bin_sizes() const { return m_bin_sizes; }
+
+  /**
+   * \brief Add data to the histogram.
+   * \param data  vector of single data value with type T.
+   *              The size of the given vector has to match the number
+   *              of dimensions of the histogram.
+   */
+  void update(Span<const T> data) {
+    if (check_limits(data, m_limits)) {
+      update(data, m_ones);
+    }
+  }
+
+  /**
+   * \brief Add data to the histogram.
+   * \param data  vector of single data value with type T.
+   *              The size of the given vector has to match the number
+   *              of dimensions of the histogram.
+   * \param weights  m_n_dims_data dimensional weights.
+   */
+  void update(Span<const T> data, Span<const T> weights) {
+    if (check_limits(data, m_limits)) {
+      Array<std::size_t, Dims> index;
+      for (std::size_t dim = 0; dim < m_n_bins.size(); ++dim) {
+        index[dim] =
+            calc_bin_index(data[dim], m_limits[dim].first, m_bin_sizes[dim]);
+      }
+      auto const flat_index =
+          m_n_dims_data * ::Utils::ravel_index(index, m_n_bins);
+      if (weights.size() != m_n_dims_data)
+        throw std::invalid_argument("Wrong dimensions of given weights!");
+      for (std::size_t ind = 0; ind < m_n_dims_data; ++ind) {
+        m_hist[flat_index + ind] += weights[ind];
+        m_tot_count[flat_index + ind] += 1;
+      }
+    }
+  }
+
+  /** \brief Histogram normalization. */
+  virtual void normalize() {
+    T bin_volume = std::accumulate(m_bin_sizes.begin(), m_bin_sizes.end(),
+                                   static_cast<T>(1.0), std::multiplies<T>());
+    std::transform(m_hist.begin(), m_hist.end(), m_hist.begin(),
+                   [bin_volume](T v) { return v / bin_volume; });
+  }
 
 private:
-  // Number of bins for each dimension.
+  /**
+   * \brief Calculate the bin index.
+   * \param value  Position on that dimension.
+   * \param offset Bin offset on that dimension.
+   * \param size   Bin size on that dimension.
+   */
+  std::size_t calc_bin_index(double value, double offset, double size) const {
+    return static_cast<std::size_t>(std::floor((value - offset) / size));
+  }
+
+  /**
+   * \brief Calculate the bin sizes.
+   * \param limits  contains min/max values for each dimension.
+   * \param n_bins  number of bins for each dimension.
+   * \return The bin sizes for each dimension.
+   */
+  std::array<T, Dims>
+  calc_bin_sizes(std::array<std::pair<T, T>, Dims> const &limits,
+                 std::array<std::size_t, Dims> const &n_bins) const {
+    std::array<T, Dims> tmp;
+    for (std::size_t ind = 0; ind < Dims; ++ind) {
+      tmp[ind] = (limits[ind].second - limits[ind].first) / T(n_bins[ind]);
+    }
+    return tmp;
+  }
+
+  /**
+   * \brief Check if data is within limits.
+   * \param data  data value to check.
+   * \param limits  the min/max values.
+   */
+  bool check_limits(Span<const T> data,
+                    std::array<std::pair<T, T>, Dims> limits) const {
+    if (data.size() != limits.size()) {
+      throw std::invalid_argument("Dimension of data and limits not the same!");
+    }
+    bool within_range = true;
+    for (std::size_t i = 0; i < data.size(); ++i) {
+      if (data[i] < limits[i].first or data[i] >= limits[i].second)
+        within_range = false;
+    }
+    return within_range;
+  }
+
+private:
+  /// Number of bins for each dimension.
   std::array<std::size_t, Dims> m_n_bins;
-  // Min and max values for each dimension.
+  /// Min and max values for each dimension.
   std::array<std::pair<T, T>, Dims> m_limits;
-  // Bin sizes for each dimension.
+  /// Bin sizes for each dimension.
   std::array<T, Dims> m_bin_sizes;
-  virtual void do_normalize();
 
 protected:
-  // Flat histogram data.
+  /// Flat histogram data.
   std::vector<T> m_hist;
-  // Number of dimensions for a single data point.
+  /// Number of dimensions for a single data point.
   std::size_t m_n_dims_data;
-  // Track the number of total hits per bin entry.
+  /// Track the number of total hits per bin entry.
   std::vector<std::size_t> m_tot_count;
   std::vector<T> m_ones;
 };
 
 /**
- * \brief Histogram constructor.
- * \param n_bins  the number of bins in each histogram dimension.
- * \param n_dims_data  the number of dimensions the data has (e.g. 3 for
- *        vector field).
- * \param limits  the minimum/maximum data values to consider for the
- *        histogram.
+ * \brief Histogram in cylindrical coordinates.
+ * \tparam Dims  Histogram dimensionality.
+ * \tparam T     Histogram data type.
  */
-template <typename T, std::size_t Dims>
-Histogram<T, Dims>::Histogram(std::array<std::size_t, Dims> n_bins,
-                              std::size_t n_dims_data,
-                              std::array<std::pair<T, T>, Dims> limits)
-    : m_n_bins(n_bins), m_limits(limits), m_n_dims_data(n_dims_data),
-      m_ones(n_dims_data, T{1.}) {
-  if (n_bins.size() != limits.size()) {
-    throw std::invalid_argument("Argument for number of bins and limits do "
-                                "not have same number of dimensions!");
-  }
-  m_bin_sizes = calc_bin_sizes(limits, n_bins);
-  std::size_t n_bins_total =
-      m_n_dims_data * std::accumulate(std::begin(n_bins), std::end(n_bins), 1,
-                                      std::multiplies<std::size_t>());
-  m_hist = std::vector<T>(n_bins_total);
-  m_tot_count = std::vector<std::size_t>(n_bins_total);
-}
-
-/**
- * \brief Add data to the histogram.
- * \param data  vector of single data value with type T.
- *              The size of the given vector has to match the number
- *              of dimensions of the histogram.
- */
-template <typename T, std::size_t Dims>
-void Histogram<T, Dims>::update(Span<const T> data) {
-  if (check_limits(data, m_limits)) {
-    update(data, m_ones);
-  }
-}
-
-/**
- * \brief Add data to the histogram.
- * \param data  vector of single data value with type T.
- *              The size of the given vector has to match the number
- *              of dimensions of the histogram.
- * \param weights  m_n_dims_data dimensional weights.
- */
-template <typename T, std::size_t Dims>
-void Histogram<T, Dims>::update(Span<const T> data, Span<const T> weights) {
-  if (check_limits(data, m_limits)) {
-    Array<std::size_t, Dims> index;
-    for (std::size_t dim = 0; dim < m_n_bins.size(); ++dim) {
-      index[dim] =
-          calculate_bin_index(data[dim], m_bin_sizes[dim], m_limits[dim].first);
-    }
-    auto const flat_index =
-        m_n_dims_data * ::Utils::ravel_index(index, m_n_bins);
-    if (weights.size() != m_n_dims_data)
-      throw std::invalid_argument("Wrong dimensions of given weights!");
-    for (std::size_t ind = 0; ind < m_n_dims_data; ++ind) {
-      m_hist[flat_index + ind] += weights[ind];
-      m_tot_count[flat_index + ind] += 1;
-    }
-  }
-}
-
-/**
- * \brief Get the bin sizes.
- */
-template <typename T, std::size_t Dims>
-std::array<T, Dims> Histogram<T, Dims>::get_bin_sizes() const {
-  return m_bin_sizes;
-}
-
-/**
- * \brief Get the number of bins for each dimension.
- */
-template <typename T, std::size_t Dims>
-std::array<std::size_t, Dims> Histogram<T, Dims>::get_n_bins() const {
-  return m_n_bins;
-}
-
-/**
- * \brief Get the ranges (min, max) for each dimension.
- */
-template <typename T, std::size_t Dims>
-std::array<std::pair<T, T>, Dims> Histogram<T, Dims>::get_limits() const {
-  return m_limits;
-}
-
-/**
- * \brief Get the histogram data.
- */
-template <typename T, std::size_t Dims>
-std::vector<T> Histogram<T, Dims>::get_histogram() const {
-  return m_hist;
-}
-
-/**
- * \brief Get the histogram count data.
- */
-template <typename T, std::size_t Dims>
-std::vector<std::size_t> Histogram<T, Dims>::get_tot_count() const {
-  return m_tot_count;
-}
-/**
- * \brief Histogram normalization. (private member function can be overridden by
- * subclasses).
- */
-template <typename T, std::size_t Dims> void Histogram<T, Dims>::normalize() {
-  do_normalize();
-}
-
-/**
- * \brief Histogram normalization.
- *        Divide by the bin volume.
- */
-template <typename T, std::size_t Dims>
-void Histogram<T, Dims>::do_normalize() {
-  T bin_volume = std::accumulate(m_bin_sizes.begin(), m_bin_sizes.end(),
-                                 static_cast<T>(1.0), std::multiplies<T>());
-  std::transform(m_hist.begin(), m_hist.end(), m_hist.begin(),
-                 [bin_volume](T v) { return v / bin_volume; });
-}
-
 template <typename T, std::size_t Dims>
 class CylindricalHistogram : public Histogram<T, Dims> {
 public:
@@ -243,8 +205,7 @@ public:
   using Histogram<T, Dims>::m_hist;
   using Histogram<T, Dims>::m_n_dims_data;
 
-private:
-  void do_normalize() override {
+  void normalize() override {
     std::array<std::size_t, 4> unravelled_index;
     int r_bin;
     double min_r, r_bin_size, phi_bin_size, z_bin_size, bin_volume;
