@@ -270,7 +270,7 @@ public:
     // Init and register flag field (fluid/boundary)
     m_flag_field_id = field::addFlagFieldToStorage<FlagField>(
         m_blocks, "flag field", m_n_ghost_layers);
-  };
+  }
 
   void setup_with_valid_lattice_model(double density, unsigned int seed,
                                       unsigned int time_step) {
@@ -341,7 +341,7 @@ public:
 
     // Synchronize ghost layers
     (*m_full_communication)();
-  };
+  }
 
   void integrate() override {
     m_time_loop->singleStep();
@@ -351,7 +351,7 @@ public:
       if (it->second.second)
         vtk::writeFiles(it->second.first)();
     }
-  };
+  }
 
   void ghost_communication() override { (*m_full_communication)(); }
 
@@ -375,13 +375,14 @@ public:
     return Utils::Vector3d{double_c(vel_field->get((*bc).cell, uint_t(0u))),
                            double_c(vel_field->get((*bc).cell, uint_t(1u))),
                            double_c(vel_field->get((*bc).cell, uint_t(2u)))};
-  };
+  }
+
   bool set_node_velocity(const Utils::Vector3i &node,
                          const Utils::Vector3d &v) override {
     auto bc = get_block_and_cell(node, false, m_blocks, n_ghost_layers());
     if (!bc)
       return false;
-    // We hve to set both, the pdf and the stored velocity field
+    // We have to set both, the pdf and the stored velocity field
     auto pdf_field = (*bc).block->template getData<PdfField>(m_pdf_field_id);
     const FloatType density = pdf_field->getDensity((*bc).cell);
     pdf_field->setDensityAndVelocity(
@@ -395,7 +396,7 @@ public:
     }
 
     return true;
-  };
+  }
 
   boost::optional<Utils::Vector3d>
   get_velocity_at_pos(const Utils::Vector3d &pos,
@@ -421,7 +422,7 @@ public:
           }
         });
     return {v};
-  };
+  }
 
   boost::optional<double> get_interpolated_density_at_pos(
       const Utils::Vector3d &pos,
@@ -447,7 +448,7 @@ public:
           }
         });
     return {dens};
-  };
+  }
 
   // Local force
   bool add_force_at_pos(const Utils::Vector3d &pos,
@@ -467,7 +468,7 @@ public:
     };
     interpolate_bspline_at_pos(pos, force_at_node);
     return true;
-  };
+  }
 
   boost::optional<Utils::Vector3d>
   get_node_force_to_be_applied(const Utils::Vector3i &node) const override {
@@ -480,7 +481,7 @@ public:
     return Utils::Vector3d{double_c(force_field->get((*bc).cell, uint_t(0u))),
                            double_c(force_field->get((*bc).cell, uint_t(1u))),
                            double_c(force_field->get((*bc).cell, uint_t(2u)))};
-  };
+  }
 
   bool set_node_last_applied_force(Utils::Vector3i const &node,
                                    Utils::Vector3d const &force) override {
@@ -495,7 +496,7 @@ public:
     }
 
     return true;
-  };
+  }
 
   boost::optional<Utils::Vector3d>
   get_node_last_applied_force(const Utils::Vector3i &node,
@@ -510,8 +511,7 @@ public:
     return Utils::Vector3d{double_c(force_field->get((*bc).cell, uint_t(0u))),
                            double_c(force_field->get((*bc).cell, uint_t(1u))),
                            double_c(force_field->get((*bc).cell, uint_t(2u)))};
-    ;
-  };
+  }
 
   // Population
   bool set_node_pop(const Utils::Vector3i &node,
@@ -560,7 +560,7 @@ public:
     pdf_field->setDensityAndVelocity((*bc).cell, v, FloatType(density));
 
     return true;
-  };
+  }
 
   boost::optional<double>
   get_node_density(const Utils::Vector3i &node) const override {
@@ -571,7 +571,7 @@ public:
     auto pdf_field = (*bc).block->template getData<PdfField>(m_pdf_field_id);
 
     return {double_c(pdf_field->getDensity((*bc).cell))};
-  };
+  }
 
   // Boundary related
   boost::optional<Utils::Vector3d>
@@ -589,7 +589,8 @@ public:
     return {to_vector3d(
         boundary_handling->template getBoundaryCondition<UBB>(uid).getValue(
             (*bc).cell[0], (*bc).cell[1], (*bc).cell[2]))};
-  };
+  }
+
   bool set_node_velocity_at_boundary(const Utils::Vector3i &node,
                                      const Utils::Vector3d &v) override {
     auto bc = get_block_and_cell(node, true, m_blocks, n_ghost_layers());
@@ -604,7 +605,8 @@ public:
     boundary_handling->forceBoundary(UBB_flag, bc->cell[0], bc->cell[1],
                                      bc->cell[2], velocity);
     return true;
-  };
+  }
+
   boost::optional<Utils::Vector3d>
   get_node_boundary_force(const Utils::Vector3i &node) const override {
     auto bc = get_block_and_cell(node, true, m_blocks,
@@ -626,7 +628,8 @@ public:
     auto const &ubb = bh->template getBoundaryCondition<UBB>(uid);
     return {to_vector3d(
         ubb.getForce((*bc).cell.x(), (*bc).cell.y(), (*bc).cell.z()))};
-  };
+  }
+
   bool remove_node_from_boundary(const Utils::Vector3i &node) override {
     auto bc = get_block_and_cell(node, true, m_blocks, n_ghost_layers());
     if (!bc)
@@ -636,7 +639,8 @@ public:
     boundary_handling->removeBoundary((*bc).cell[0], (*bc).cell[1],
                                       (*bc).cell[2]);
     return true;
-  };
+  }
+
   boost::optional<bool>
   get_node_is_boundary(const Utils::Vector3i &node,
                        bool consider_ghosts = false) const override {
@@ -648,7 +652,8 @@ public:
     auto *boundary_handling =
         (*bc).block->template getData<Boundaries>(m_boundary_handling_id);
     return {boundary_handling->isBoundary((*bc).cell)};
-  };
+  }
+
   void clear_boundaries() override {
     const CellInterval &domain_bb_in_global_cell_coordinates =
         m_blocks->getCellBBFromAABB(m_blocks->begin()->getAABB().getExtended(
@@ -663,7 +668,7 @@ public:
 
       boundary_handling->fillWithDomain(domain_bb);
     }
-  };
+  }
 
   // Pressure tensor
   boost::optional<Utils::Vector6d>
@@ -673,7 +678,7 @@ public:
       return {boost::none};
     auto pdf_field = (*bc).block->template getData<PdfField>(m_pdf_field_id);
     return to_vector6d(pdf_field->getPressureTensor((*bc).cell));
-  };
+  }
 
   // Global momentum
   Utils::Vector3d get_momentum() const override {
@@ -689,26 +694,26 @@ public:
       });
     }
     return to_vector3d(mom);
-  };
+  }
   // Global external force
   void set_external_force(const Utils::Vector3d &ext_force) override {
     m_reset_force->set_ext_force(ext_force);
-  };
+  }
   Utils::Vector3d get_external_force() const override {
     return m_reset_force->get_ext_force();
-  };
+  }
 
-  double get_kT() const override { return 0.; };
+  double get_kT() const override { return 0.; }
 
   uint64_t get_rng_state() const override {
     throw std::runtime_error("The LB does not use a random number generator");
-  };
+  }
   void set_rng_state(uint64_t counter) override {
     throw std::runtime_error("The LB does not use a random number generator");
-  };
+  }
 
   // Grid, domain, halo
-  int n_ghost_layers() const override { return m_n_ghost_layers; };
+  int n_ghost_layers() const override { return m_n_ghost_layers; }
   Utils::Vector3i get_grid_dimensions() const override {
     return m_grid_dimensions;
   }
@@ -719,23 +724,23 @@ public:
 
     auto const ab = m_blocks->begin()->getAABB();
     return {to_vector3d(ab.min()), to_vector3d(ab.max())};
-  };
+  }
 
   bool node_in_local_domain(const Utils::Vector3i &node) const override {
     // Note: Lattice constant =1, cell centers offset by .5
     return get_block_and_cell(node, false, m_blocks, n_ghost_layers()) !=
            boost::none;
-  };
+  }
   bool node_in_local_halo(const Utils::Vector3i &node) const override {
     return get_block_and_cell(node, true, m_blocks, n_ghost_layers()) !=
            boost::none;
-  };
+  }
   bool pos_in_local_domain(const Utils::Vector3d &pos) const override {
     return get_block(pos, false, m_blocks, n_ghost_layers()) != nullptr;
-  };
+  }
   bool pos_in_local_halo(const Utils::Vector3d &pos) const override {
     return get_block(pos, true, m_blocks, n_ghost_layers()) != nullptr;
-  };
+  }
 
   std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>>
   node_indices_positions(bool include_ghosts = false) const override {
@@ -770,7 +775,7 @@ public:
       }
     }
     return res;
-  };
+  }
 
   void create_vtk(unsigned delta_N, unsigned initial_count,
                   unsigned flag_observables, std::string const &identifier,
