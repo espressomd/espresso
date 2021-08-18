@@ -91,7 +91,9 @@ class LBInterpolation:
         np.testing.assert_allclose(
             np.copy(self.lbf.get_interpolated_velocity(
                 [self.system.box_l[0] - AGRID, 0, 0])),
-            0.5 * (np.array([0, 0, V_BOUNDARY]) + node_next_to_boundary.velocity))
+            0.5 * (np.array([0, 0, V_BOUNDARY]) +
+                   node_next_to_boundary.velocity),
+            rtol=2e-7)
 
         # Bulk
         for pos in itertools.product(

@@ -60,7 +60,7 @@ struct p3m_data_struct : public p3m_data_struct_base {
   p3m_data_struct();
 
   /** local mesh. */
-  p3m_local_mesh local_mesh;
+  P3MLocalMesh local_mesh;
   /** real space mesh (local) for CA/FFT. */
   fft_vector<double> rs_mesh;
   /** mesh (local) for the electric field. */

@@ -89,7 +89,7 @@ for type_1 in types:
             epsilon=wca_eps, sigma=wca_sig)
 
 RE = espressomd.reaction_ensemble.ReactionEnsemble(
-    temperature=temperature, exclusion_radius=wca_sig, seed=3)
+    kT=temperature, exclusion_radius=wca_sig, seed=3)
 RE.add_reaction(
     gamma=cs_bulk**2 * np.exp(excess_chemical_potential_pair / temperature),
     reactant_types=[], reactant_coefficients=[], product_types=[1, 2],
@@ -97,6 +97,9 @@ RE.add_reaction(
 print(RE.get_status())
 system.setup_type_map([0, 1, 2])
 
+# Set the hidden particle type to the lowest possible number to speed
+# up the simulation
+RE.set_non_interacting_type(max(types) + 1)
 
 RE.reaction(10000)
 

@@ -47,7 +47,7 @@ public:
   virtual void ghost_communication() = 0;
 
   /** @brief Number of discretized velocities in the PDF */
-  virtual size_t stencil_size() const = 0;
+  virtual std::size_t stencil_size() const = 0;
 
   virtual boost::optional<Utils::Vector3d>
   get_node_velocity(const Utils::Vector3i &node,

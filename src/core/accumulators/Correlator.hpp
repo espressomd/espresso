@@ -186,11 +186,11 @@ public:
 
   /** Return correlation result */
   std::vector<double> get_correlation();
-  size_t n_values() const {
+  std::size_t n_values() const {
     return m_tau_lin + 1 + (m_tau_lin + 1) / 2 * (m_hierarchy_depth - 1);
   }
-  std::vector<size_t> shape() const override {
-    std::vector<size_t> shape = m_shape;
+  std::vector<std::size_t> shape() const override {
+    std::vector<std::size_t> shape = m_shape;
     shape.insert(shape.begin(), n_values());
     return shape;
   }
@@ -227,12 +227,12 @@ private:
                                       ///< correlation may need (currently
                                       ///< only used by fcs_acf)
 
-  int m_hierarchy_depth; ///< maximum level of data compression
-  int m_tau_lin;         ///< number of frames in the linear correlation
-  size_t m_dim_corr;     ///< number of columns for the correlation
-  double m_dt;           ///< time interval at which samples arrive
-  double m_tau_max;      ///< maximum time for which the correlation should be
-                         ///< calculated
+  int m_hierarchy_depth;  ///< maximum level of data compression
+  int m_tau_lin;          ///< number of frames in the linear correlation
+  std::size_t m_dim_corr; ///< number of columns for the correlation
+  double m_dt;            ///< time interval at which samples arrive
+  double m_tau_max;       ///< maximum time for which the correlation should be
+                          ///< calculated
 
   std::string compressA_name;
   std::string compressB_name;
@@ -248,19 +248,19 @@ private:
   boost::multi_array<double, 2> result; ///< output quantity
 
   /// number of correlation sweeps at a particular value of tau
-  std::vector<size_t> n_sweeps;
+  std::vector<std::size_t> n_sweeps;
   /// number of data values already present at a particular value of tau
   std::vector<unsigned> n_vals;
   /// index of the newest entry in each hierarchy level
-  std::vector<size_t> newest;
+  std::vector<std::size_t> newest;
 
   std::vector<double> A_accumulated_average; ///< all A values are added up here
   std::vector<double> B_accumulated_average; ///< all B values are added up here
-  size_t n_data; ///< a counter for calculated averages and variances
+  std::size_t n_data; ///< a counter for calculated averages and variances
 
-  size_t dim_A;                ///< dimensionality of A
-  size_t dim_B;                ///< dimensionality of B
-  std::vector<size_t> m_shape; ///< dimensionality of the correlation
+  std::size_t dim_A;                ///< dimensionality of A
+  std::size_t dim_B;                ///< dimensionality of B
+  std::vector<std::size_t> m_shape; ///< dimensionality of the correlation
 
   using correlation_operation_type = std::vector<double> (*)(
       std::vector<double> const &, std::vector<double> const &,

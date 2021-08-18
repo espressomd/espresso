@@ -37,7 +37,7 @@ namespace Fields {
  *
  * See https://en.wikipedia.org/wiki/Plane_wave
  */
-template <typename T, size_t codim> class PlaneWave {
+template <typename T, std::size_t codim> class PlaneWave {
 public:
   using value_type =
       typename Utils::decay_to_scalar<Utils::Vector<T, codim>>::type;

@@ -38,6 +38,8 @@
 #include <limits>
 #include <memory>
 #include <stdexcept>
+#include <utility>
+#include <vector>
 
 namespace espresso {
 // ESPResSo system instance
@@ -51,6 +53,7 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
   public:
     using ReactionAlgorithm::calculate_acceptance_probability;
     using ReactionAlgorithm::generate_new_particle_positions;
+    using ReactionAlgorithm::get_random_position_in_box;
     using ReactionAlgorithm::ReactionAlgorithm;
   };
   constexpr double tol = 100 * std::numeric_limits<double>::epsilon();
@@ -107,11 +110,11 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
     BOOST_CHECK_EQUAL(probability, -10.);
   }
 
-  // exception if temperature is negative
+  // exception if kT is negative
   BOOST_CHECK_THROW(r_algo.check_reaction_method(), std::runtime_error);
 
-  // set temperature
-  r_algo.temperature = 1.;
+  // set kT
+  r_algo.kT = 1.;
 
 #ifdef ELECTROSTATICS
   // exception if reactant types have no charge information
@@ -225,6 +228,58 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
     // cleanup
     remove_particle(0);
     remove_particle(1);
+  }
+
+  // check random positions generator
+  {
+    // setup box
+    auto const box_l = Utils::Vector3d{0.5, 0.4, 0.7};
+    auto const origin = Utils::Vector3d::broadcast(0.);
+    espresso::system->set_box_l(box_l);
+    // cubic case
+    r_algo.remove_constraint();
+    for (int i = 0; i < 100; ++i) {
+      auto const pos = r_algo.get_random_position_in_box();
+      BOOST_TEST(pos <= box_l, boost::test_tools::per_element());
+      BOOST_TEST(pos >= origin, boost::test_tools::per_element());
+    }
+    // slab case
+    auto const start_z{0.2}, end_z{0.6};
+    auto const slab_lower = Utils::Vector3d{0., 0., start_z};
+    auto const slab_upper = Utils::Vector3d{box_l[0], box_l[1], end_z};
+    r_algo.set_slab_constraint(start_z, end_z);
+    for (int i = 0; i < 100; ++i) {
+      auto const pos = r_algo.get_random_position_in_box();
+      BOOST_TEST(pos <= slab_upper, boost::test_tools::per_element());
+      BOOST_TEST(pos >= slab_lower, boost::test_tools::per_element());
+    }
+    auto const slab_params = r_algo.get_slab_constraint_parameters();
+    BOOST_CHECK_CLOSE(slab_params[0], start_z, tol);
+    BOOST_CHECK_CLOSE(slab_params[1], end_z, tol);
+    // cylindrical case
+    auto const cyl_x{0.2}, cyl_y{0.1}, radius{0.2};
+    r_algo.set_cyl_constraint(cyl_x, cyl_y, radius);
+    for (int i = 0; i < 400; ++i) {
+      auto const pos = r_algo.get_random_position_in_box();
+      auto const z = pos[2];
+      auto const r = Utils::Vector2d{pos[0] - cyl_x, pos[1] - cyl_y}.norm();
+      BOOST_REQUIRE_LE(r, radius);
+      BOOST_REQUIRE_LE(z, box_l[2]);
+      BOOST_REQUIRE_GE(z, 0.);
+    }
+    // restore box geometry
+    espresso::system->set_box_l(Utils::Vector3d::broadcast(1.));
+    // check exception mechanism
+    using exception = std::domain_error;
+    BOOST_CHECK_THROW(r_algo.set_slab_constraint(-1., 0.5), exception);
+    BOOST_CHECK_THROW(r_algo.set_slab_constraint(0.5, 1.5), exception);
+    BOOST_CHECK_THROW(r_algo.set_slab_constraint(0.5, 0.2), exception);
+    BOOST_CHECK_THROW(r_algo.set_cyl_constraint(-1., 0.5, 0.5), exception);
+    BOOST_CHECK_THROW(r_algo.set_cyl_constraint(1.5, 0.5, 0.5), exception);
+    BOOST_CHECK_THROW(r_algo.set_cyl_constraint(0.5, -1., 0.5), exception);
+    BOOST_CHECK_THROW(r_algo.set_cyl_constraint(0.5, 1.5, 0.5), exception);
+    BOOST_CHECK_THROW(r_algo.set_cyl_constraint(0.5, 0.5, -1.0), exception);
+    r_algo.remove_constraint();
   }
 }
 

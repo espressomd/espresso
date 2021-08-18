@@ -28,22 +28,14 @@
 #define _ENERGY_H
 
 #include "Observable_stat.hpp"
-#include "ParticleRange.hpp"
 #include "actor/ActorList.hpp"
+
+#include <memory>
 
 extern ActorList energyActors;
 
 /** Parallel energy calculation. */
-void energy_calc(double time);
-
-/** Run @ref energy_calc in parallel. */
-void update_energy();
-
-/** Return the energy observable. */
-Observable_stat const &get_obs_energy();
-
-/** Calculate long-range energies (P3M, ...). */
-void calc_long_range_energies(const ParticleRange &particles);
+std::shared_ptr<Observable_stat> calculate_energy();
 
 /** Calculate the total energy of the system. */
 double calculate_current_potential_energy_of_system();

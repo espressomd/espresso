@@ -19,10 +19,12 @@
 #ifndef OBSERVABLES_CYLINDRICALPIDPROFILEOBSERVABLE_HPP
 #define OBSERVABLES_CYLINDRICALPIDPROFILEOBSERVABLE_HPP
 
-#include <utility>
-
 #include "CylindricalProfileObservable.hpp"
 #include "PidObservable.hpp"
+
+#include <memory>
+#include <utility>
+#include <vector>
 
 namespace Observables {
 

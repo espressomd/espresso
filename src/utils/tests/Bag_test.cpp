@@ -184,7 +184,7 @@ BOOST_AUTO_TEST_CASE(reserve_) {
   auto bag = Utils::Bag<int>();
 
   /* Memory can be reserved */
-  const size_t size = 11;
+  const std::size_t size = 11;
   bag.reserve(size);
   /* and the capacity of the bag is at least
    * the reserved size */
@@ -201,7 +201,7 @@ BOOST_AUTO_TEST_CASE(resize_) {
   }
 
   /* It can be resized */
-  const size_t size = 11;
+  const std::size_t size = 11;
   bag.resize(size);
   /* The size matches */
   BOOST_CHECK_EQUAL(bag.size(), size);

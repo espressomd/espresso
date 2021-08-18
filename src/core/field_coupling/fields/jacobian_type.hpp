@@ -27,7 +27,7 @@
 namespace FieldCoupling {
 namespace Fields {
 namespace detail {
-template <class T, size_t codim> struct jacobian_type_impl {
+template <class T, std::size_t codim> struct jacobian_type_impl {
   using type = Utils::Matrix<double, codim, 3>;
 };
 
@@ -42,7 +42,7 @@ template <class T> struct jacobian_type_impl<T, 1> {
  * and Utils::Vector<codim, Utils::Vector<3, T>> otherwise to avoid
  * using Vectors of size one, where scalars would do.
  */
-template <class T, size_t codim>
+template <class T, std::size_t codim>
 using jacobian_type = typename jacobian_type_impl<T, codim>::type;
 } // namespace detail
 } // namespace Fields

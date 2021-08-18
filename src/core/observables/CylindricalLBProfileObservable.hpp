@@ -27,6 +27,11 @@
 #include <utils/math/vec_rotate.hpp>
 #include <utils/sampling.hpp>
 
+#include <limits>
+#include <memory>
+#include <utility>
+#include <vector>
+
 namespace Observables {
 
 class CylindricalLBProfileObservable : public CylindricalProfileObservable {

@@ -39,7 +39,7 @@ private:
   /** Range of the profile edges. */
   std::array<std::pair<double, double>, 3> m_limits;
   /** Number of bins for each coordinate. */
-  std::array<size_t, 3> m_n_bins;
+  std::array<std::size_t, 3> m_n_bins;
 
 public:
   ProfileObservable(int n_x_bins, int n_y_bins, int n_z_bins, double min_x,
@@ -47,8 +47,9 @@ public:
                     double max_z)
       : m_limits{{std::make_pair(min_x, max_x), std::make_pair(min_y, max_y),
                   std::make_pair(min_z, max_z)}},
-        m_n_bins{{static_cast<size_t>(n_x_bins), static_cast<size_t>(n_y_bins),
-                  static_cast<size_t>(n_z_bins)}} {
+        m_n_bins{{static_cast<std::size_t>(n_x_bins),
+                  static_cast<std::size_t>(n_y_bins),
+                  static_cast<std::size_t>(n_z_bins)}} {
     if (max_x <= min_x)
       throw std::runtime_error("max_x has to be > min_x");
     if (max_y <= min_y)
@@ -63,7 +64,7 @@ public:
       throw std::domain_error("n_z_bins has to be >= 1");
   }
 
-  std::vector<size_t> shape() const override {
+  std::vector<std::size_t> shape() const override {
     return {m_n_bins[0], m_n_bins[1], m_n_bins[2]};
   }
 

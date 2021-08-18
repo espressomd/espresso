@@ -27,7 +27,7 @@ except ImportError:
 else:
     tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
         "@TUTORIALS_DIR@/constant_pH/constant_pH.py", script_suffix="interactions",
-        USE_WCA=True, USE_ELECTROSTATICS=True, NUM_PHS=3, NUM_SAMPLES=2, PROB_REACTION=1.0)
+        USE_WCA=True, USE_ELECTROSTATICS=True, NUM_PHS=8, NUM_SAMPLES=10)
 
 
 @skipIfMissingFeatures

@@ -342,7 +342,7 @@ BOOST_DATA_TEST_CASE(forces_book_keeping, bdata::make(all_lbs()),
 BOOST_DATA_TEST_CASE(force_in_corner, bdata::make(all_lbs()), lb_generator) {
   auto lb = lb_generator(mpi_shape, params);
 
-  // Add forces in all box corners. If domain boundaries are treated correclty
+  // Add forces in all box corners. If domain boundaries are treated correctly
   // each corner node should get 1/8 of the force.
 
   auto const l = params.box_dimensions;

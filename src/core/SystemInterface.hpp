@@ -20,7 +20,10 @@
 #define SYSTEMINTERFACE_H
 
 #include "config.hpp"
+
 #include <utils/Vector.hpp>
+
+#include <cstddef>
 
 /** @todo: Turn needsXY in getter/setter **/
 
@@ -93,7 +96,7 @@ public:
     return m_needsDirectorGpu;
   }
 
-  virtual unsigned int npart_gpu() { return 0; };
+  virtual std::size_t npart_gpu() const { return 0; };
   virtual Vector3 box() const = 0;
 
   virtual bool needsRGpu() { return m_needsRGpu; };

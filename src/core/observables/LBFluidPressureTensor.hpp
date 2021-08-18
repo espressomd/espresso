@@ -28,7 +28,7 @@
 namespace Observables {
 class LBFluidPressureTensor : public Observable {
 public:
-  std::vector<size_t> shape() const override { return {3, 3}; }
+  std::vector<std::size_t> shape() const override { return {3, 3}; }
   std::vector<double> operator()() const override {
 
     auto const unit_conversion =

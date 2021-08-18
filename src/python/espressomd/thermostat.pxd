@@ -117,9 +117,9 @@ cdef extern from "stokesian_dynamics/sd_interface.hpp":
 
 IF NPT:
     cdef extern from "npt.hpp":
-        ctypedef struct nptiso_struct:
+        ctypedef struct NptIsoParameters:
             double p_ext
             double p_inst
             double p_diff
             double piston
-        extern nptiso_struct nptiso
+        extern NptIsoParameters nptiso

@@ -34,8 +34,8 @@ BOOST_AUTO_TEST_CASE(calc_meshift_false) {
 
   auto const val = detail::calc_meshift({1, 4, 7}, false);
 
-  for (size_t i = 0; i < 3; ++i) {
-    for (size_t j = 0; j < ref[i].size(); ++j) {
+  for (std::size_t i = 0; i < 3; ++i) {
+    for (std::size_t j = 0; j < ref[i].size(); ++j) {
       BOOST_CHECK_EQUAL(val[i][j], ref[i][j]);
     }
   }
@@ -48,8 +48,8 @@ BOOST_AUTO_TEST_CASE(calc_meshift_true) {
 
   auto const val = detail::calc_meshift({1, 4, 7}, true);
 
-  for (size_t i = 0; i < 3; ++i) {
-    for (size_t j = 0; j < ref[i].size(); ++j) {
+  for (std::size_t i = 0; i < 3; ++i) {
+    for (std::size_t j = 0; j < ref[i].size(); ++j) {
       BOOST_CHECK_EQUAL(val[i][j], ref[i][j]);
     }
   }

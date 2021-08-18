@@ -24,7 +24,9 @@
 #include "statistics.hpp"
 
 #include <algorithm>
+#include <cassert>
 #include <memory>
+#include <stdexcept>
 #include <vector>
 
 void on_constraint_change();

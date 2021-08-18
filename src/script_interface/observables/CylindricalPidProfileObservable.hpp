@@ -31,10 +31,11 @@
 #include <utils/constants.hpp>
 
 #include <boost/range/algorithm.hpp>
+
 #include <cstddef>
 #include <iterator>
 #include <memory>
-
+#include <string>
 #include <type_traits>
 #include <vector>
 

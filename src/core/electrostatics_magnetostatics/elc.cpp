@@ -50,8 +50,8 @@
 #include <cstddef>
 #include <vector>
 
-ELC_struct elc_params = {1e100, 10,    1, 0, true, true, false, 1,
-                         1,     false, 0, 0, 0,    0,    0.0};
+ELCParameters elc_params = {1e100, 10,    1, 0, true, true, false, 1,
+                            1,     false, 0, 0, 0,    0,    0.0};
 
 /** \name Product decomposition data organization
  *  For the cell blocks it is assumed that the lower blocks part is in the
@@ -82,9 +82,9 @@ static std::vector<double> partblk;
 static double gblcblk[8];
 
 /** structure for caching sin and cos values */
-typedef struct {
+struct SCCache {
   double s, c;
-} SCCache;
+};
 
 /** Cached sin/cos values along the x-axis and y-axis */
 /**@{*/
@@ -112,7 +112,7 @@ static void add_z_force(const ParticleRange &particles);
  * @param u Inverse box length
  * @return Calculated values.
  */
-template <size_t dir>
+template <std::size_t dir>
 static std::vector<SCCache> calc_sc_cache(const ParticleRange &particles,
                                           std::size_t n_freq, double u) {
   constexpr double c_2pi = 2 * Utils::pi();
@@ -122,7 +122,7 @@ static std::vector<SCCache> calc_sc_cache(const ParticleRange &particles,
   for (std::size_t freq = 1; freq <= n_freq; freq++) {
     auto const pref = c_2pi * u * static_cast<double>(freq);
 
-    size_t o = (freq - 1) * n_part;
+    std::size_t o = (freq - 1) * n_part;
     for (auto const &part : particles) {
       auto const arg = pref * part.r.p[dir];
       ret[o++] = {sin(arg), cos(arg)};
@@ -962,7 +962,7 @@ double ELC_energy(const ParticleRange &particles) {
   return 0.5 * energy;
 }
 
-double ELC_tune_far_cut(ELC_struct const &params) {
+double ELC_tune_far_cut(ELCParameters const &params) {
   // Largest reasonable cutoff for far formula
   constexpr auto maximal_far_cut = 50.;
   double const h = params.h;
@@ -1006,7 +1006,7 @@ double ELC_tune_far_cut(ELC_struct const &params) {
  * COMMON PARTS
  ****************************************/
 
-void ELC_sanity_checks(ELC_struct const &params) {
+void ELC_sanity_checks(ELCParameters const &params) {
   if (!box_geo.periodic(0) || !box_geo.periodic(1) || !box_geo.periodic(2)) {
     throw std::runtime_error("ELC requires periodicity 1 1 1");
   }
@@ -1091,7 +1091,7 @@ void ELC_set_params(double maxPWerror, double gap_size, double far_cut,
     throw std::domain_error("gap size too large");
   }
 
-  ELC_struct new_elc_params;
+  ELCParameters new_elc_params;
   if (delta_top != 0.0 || delta_bot != 0.0) {
     // setup with dielectric contrast (neutralize is automatic)
 
@@ -1100,27 +1100,27 @@ void ELC_set_params(double maxPWerror, double gap_size, double far_cut,
     auto const space_layer = gap_size / 3.;
     auto const space_box = gap_size - 2. * space_layer;
 
-    new_elc_params = ELC_struct{maxPWerror,
-                                far_cut,
-                                0.,
-                                gap_size,
-                                far_cut == -1.,
-                                false,
-                                true,
-                                delta_top,
-                                delta_bot,
-                                const_pot,
-                                (const_pot) ? pot_diff : 0.,
-                                std::min(space_box, space_layer),
-                                space_layer,
-                                space_box,
-                                h};
+    new_elc_params = ELCParameters{maxPWerror,
+                                   far_cut,
+                                   0.,
+                                   gap_size,
+                                   far_cut == -1.,
+                                   false,
+                                   true,
+                                   delta_top,
+                                   delta_bot,
+                                   const_pot,
+                                   (const_pot) ? pot_diff : 0.,
+                                   std::min(space_box, space_layer),
+                                   space_layer,
+                                   space_box,
+                                   h};
   } else {
     // setup without dielectric contrast
     new_elc_params =
-        ELC_struct{maxPWerror, far_cut,  0., gap_size, far_cut == -1.,
-                   neutralize, false,    0., 0.,       false,
-                   0.,         gap_size, 0., gap_size, h};
+        ELCParameters{maxPWerror, far_cut,  0., gap_size, far_cut == -1.,
+                      neutralize, false,    0., 0.,       false,
+                      0.,         gap_size, 0., gap_size, h};
   }
 
   ELC_sanity_checks(new_elc_params);

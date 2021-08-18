@@ -34,7 +34,7 @@
 #include <cstddef>
 
 void p3m_send_mesh::resize(const boost::mpi::communicator &comm,
-                           const p3m_local_mesh &local_mesh) {
+                           const P3MLocalMesh &local_mesh) {
   int done[3] = {0, 0, 0};
   /* send grids */
   for (int i = 0; i < 3; i++) {
@@ -121,7 +121,7 @@ void p3m_send_mesh::gather_grid(Utils::Span<double *> meshes,
 
     /* pack send block */
     if (s_size[s_dir] > 0)
-      for (size_t i = 0; i < meshes.size(); i++) {
+      for (std::size_t i = 0; i < meshes.size(); i++) {
         fft_pack_block(meshes[i], send_grid.data() + i * s_size[s_dir],
                        s_ld[s_dir], s_dim[s_dir], dim.data(), 1);
       }
@@ -138,7 +138,7 @@ void p3m_send_mesh::gather_grid(Utils::Span<double *> meshes,
     }
     /* add recv block */
     if (r_size[r_dir] > 0) {
-      for (size_t i = 0; i < meshes.size(); i++) {
+      for (std::size_t i = 0; i < meshes.size(); i++) {
         p3m_add_block(recv_grid.data() + i * r_size[r_dir], meshes[i],
                       r_ld[r_dir], r_dim[r_dir], dim.data());
       }
@@ -159,7 +159,7 @@ void p3m_send_mesh::spread_grid(Utils::Span<double *> meshes,
 
     /* pack send block */
     if (r_size[r_dir] > 0)
-      for (size_t i = 0; i < meshes.size(); i++) {
+      for (std::size_t i = 0; i < meshes.size(); i++) {
         fft_pack_block(meshes[i], send_grid.data() + i * r_size[r_dir],
                        r_ld[r_dir], r_dim[r_dir], dim.data(), 1);
       }
@@ -175,7 +175,7 @@ void p3m_send_mesh::spread_grid(Utils::Span<double *> meshes,
     }
     /* un pack recv block */
     if (s_size[s_dir] > 0) {
-      for (size_t i = 0; i < meshes.size(); i++) {
+      for (std::size_t i = 0; i < meshes.size(); i++) {
         fft_unpack_block(recv_grid.data() + i * s_size[s_dir], meshes[i],
                          s_ld[s_dir], s_dim[s_dir], dim.data(), 1);
       }

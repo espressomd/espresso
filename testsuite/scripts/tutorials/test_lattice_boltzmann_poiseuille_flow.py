@@ -17,19 +17,22 @@
 
 import unittest as ut
 import importlib_wrapper
-import os
+import numpy as np
+
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@TUTORIALS_DIR@/active_matter/solutions/rectification_geometry.py")
+    "@TUTORIALS_DIR@/lattice_boltzmann/lattice_boltzmann_poiseuille_flow.py")
 
 
 @skipIfMissingFeatures
 class Tutorial(ut.TestCase):
     system = tutorial.system
 
-    def test_file_generation(self):
-        filepath = "vtk_out/shape/simulation_step_0.vtu"
-        self.assertTrue(os.path.isfile(filepath), filepath + " not created")
+    def test_flow_profile(self):
+        analytical = tutorial.y_values
+        simulation = tutorial.fluid_velocities
+        rmsd = np.sqrt(np.mean(np.square(analytical - simulation)))
+        self.assertLess(rmsd, 2e-5 * tutorial.AGRID / tutorial.lbf.tau)
 
 
 if __name__ == "__main__":

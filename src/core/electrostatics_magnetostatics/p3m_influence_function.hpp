@@ -32,6 +32,9 @@
 
 #include <cmath>
 #include <cstddef>
+#include <functional>
+#include <utility>
+#include <vector>
 
 namespace detail {
 template <typename T> T g_ewald(T alpha, T k2) {
@@ -41,8 +44,8 @@ template <typename T> T g_ewald(T alpha, T k2) {
                             : 0.0;
 }
 
-template <size_t S, size_t m>
-std::pair<double, double> aliasing_sums_ik(size_t cao, double alpha,
+template <std::size_t S, std::size_t m>
+std::pair<double, double> aliasing_sums_ik(std::size_t cao, double alpha,
                                            const Utils::Vector3d &k,
                                            const Utils::Vector3d &h) {
   using namespace detail::FFT_indexing;
@@ -91,8 +94,8 @@ std::pair<double, double> aliasing_sums_ik(size_t cao, double alpha,
  * @param k k Vector to evaluate the function for.
  * @param h Grid spacing.
  */
-template <size_t S, size_t m, class T>
-double G_opt(size_t cao, T alpha, const Utils::Vector3<T> &k,
+template <std::size_t S, std::size_t m, class T>
+double G_opt(std::size_t cao, T alpha, const Utils::Vector3<T> &k,
              const Utils::Vector3<T> &h) {
   using Utils::int_pow;
   using Utils::sqr;
@@ -122,7 +125,7 @@ double G_opt(size_t cao, T alpha, const Utils::Vector3<T> &k,
  * @param box_l Box size
  * @return Values of G_opt at regular grid points.
  */
-template <size_t S, size_t m = 0>
+template <std::size_t S, std::size_t m = 0>
 std::vector<double> grid_influence_function(const P3MParameters &params,
                                             const Utils::Vector3i &n_start,
                                             const Utils::Vector3i &n_end,

@@ -45,6 +45,7 @@
 #include <boost/range/algorithm/min_element.hpp>
 #include <functional>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 /** Type of cell structure in use */
