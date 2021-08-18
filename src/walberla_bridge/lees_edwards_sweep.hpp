@@ -1,3 +1,5 @@
+using namespace walberla;
+
 class LeesEdwardsUpdate
 {
  public:

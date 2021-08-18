@@ -68,7 +68,7 @@
 #include "generated_kernels/StreamSweep.h"
 #include "relaxation_rates.hpp"
 #include "walberla_utils.hpp"
-#include "lees_edwards_sweeps.hpp"
+#include "lees_edwards_sweep.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/interpolation/bspline_3d.hpp>
@@ -164,6 +164,7 @@ protected:
   // Member variables
   Utils::Vector3i m_grid_dimensions;
   int m_n_ghost_layers;
+  bool m_lees_edwards_boundaries;
 
   // Block data access handles
   BlockDataID m_pdf_field_id;
@@ -230,10 +231,12 @@ protected:
 
 public:
   LBWalberlaImpl(double viscosity, const Utils::Vector3i &grid_dimensions,
-                 const Utils::Vector3i &node_grid, int n_ghost_layers, bool lees_edwards_boundaries = True) {
+                 const Utils::Vector3i &node_grid, int n_ghost_layers,
+                 bool lees_edwards_boundaries = true, float offset = 0.0) {
     m_grid_dimensions = grid_dimensions;
     m_n_ghost_layers = n_ghost_layers;
     m_lees_edwards_boundaries = lees_edwards_boundaries;
+    m_offset = offset;
 
     if (m_n_ghost_layers <= 0)
       throw std::runtime_error("At least one ghost layer must be used");
@@ -324,9 +327,9 @@ public:
                        << timeloop::AfterFunction(
                               *m_pdf_streaming_communication, "communication");
 
-    if (m_lees_edwards_bundaries == True) {
+    if (m_lees_edwards_boundaries == true) {
         m_time_loop-> add() << timeloop::LeesEdwardsUpdate(
-                              blocks, pdfFieldID, offset), "Lees Edwards");
+                              m_blocks, m_pdf_field_id, m_offset, "Lees Edwards");
 
     m_time_loop->add() << timeloop::Sweep(
         Boundaries::getBlockSweep(m_boundary_handling_id), "boundary handling");
