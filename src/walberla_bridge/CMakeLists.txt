@@ -16,8 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-set(WalberlaBridge_SRC WalberlaBlockForest.hpp
-                       generated_kernels/StreamSweep.cpp generated_kernels/CollideSweep.cpp generated_kernels/CollideSweepThermalized.cpp
+set(WalberlaBridge_SRC generated_kernels/StreamSweep.cpp generated_kernels/CollideSweep.cpp generated_kernels/CollideSweepThermalized.cpp
                        generated_kernels/InitialPDFsSetter.cpp generated_kernels/Dynamic_UBB.cpp
                        lb_walberla_init.cpp
                        generated_kernels/DiffusiveFluxKernel.cpp generated_kernels/ContinuityKernel.cpp generated_kernels/NoFlux.cpp
