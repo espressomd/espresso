@@ -37,7 +37,6 @@
 #include "lbm/lattice_model/CollisionModel.h"
 #include "lbm/lattice_model/D3Q19.h"
 #include "lbm/vtk/all.h"
-#include "timeloop/SweepTimeloop.h"
 
 #include "core/mpi/Environment.h"
 #include "core/mpi/MPIManager.h"
@@ -60,8 +59,6 @@
 #include "lbm/sweeps/CellwiseSweep.h"
 
 #include "stencil/D3Q27.h"
-
-#include "timeloop/SweepTimeloop.h"
 
 #include "LBWalberlaBase.hpp"
 #include "ResetForce.hpp"
@@ -112,8 +109,9 @@ private:
                                    std::false_type) {
     real_t const omega = shear_mode_relaxation_rate(get_viscosity());
     real_t const omega_odd = odd_mode_relaxation_rate(omega);
-    return CollisionModel(m_last_applied_force_field_id, m_pdf_field_id, omega,
-                          omega, omega_odd, omega);
+    return std::make_shared<CollisionModel>(m_last_applied_force_field_id,
+                                            m_pdf_field_id, omega, omega,
+                                            omega_odd, omega);
   }
 
   auto generate_collide_sweep_impl(unsigned int seed, unsigned int time_step,
@@ -121,10 +119,10 @@ private:
     real_t const omega = shear_mode_relaxation_rate(get_viscosity());
     real_t const omega_odd = odd_mode_relaxation_rate(omega);
     real_t const kT = get_kT();
-    auto collide =
-        CollisionModel(m_last_applied_force_field_id, m_pdf_field_id, 0, 0, 0,
-                       kT, omega, omega, omega_odd, omega, seed, time_step);
-    collide.block_offset_generator =
+    auto collide = std::make_shared<CollisionModel>(
+        m_last_applied_force_field_id, m_pdf_field_id, 0, 0, 0, kT, omega,
+        omega, omega_odd, omega, seed, time_step);
+    collide->block_offset_generator =
         [this](IBlock *const block, uint32_t &block_offset_0,
                uint32_t &block_offset_1, uint32_t &block_offset_2) {
           block_offset_0 = m_blocks->getBlockCellBB(*block).xMin();
@@ -187,8 +185,6 @@ protected:
   /** Block forest */
   std::shared_ptr<blockforest::StructuredBlockForest> m_blocks;
 
-  std::shared_ptr<timeloop::SweepTimeloop> m_time_loop;
-
   // MPI
   std::shared_ptr<mpi::Environment> m_env;
 
@@ -197,6 +193,12 @@ protected:
 
   // ResetForce sweep + external force handling
   std::shared_ptr<ResetForce<PdfField, VectorField>> m_reset_force;
+
+  // Stream sweep
+  std::shared_ptr<pystencils::StreamSweep> m_stream;
+
+  // Collision sweep
+  std::shared_ptr<CollisionModel> m_collision_model;
 
   std::size_t stencil_size() const override {
     return static_cast<std::size_t>(LatticeModel::Stencil::Size);
@@ -316,24 +318,9 @@ public:
     // Note: For now combined collide-stream sweeps cannot be used,
     // because the collide-push variant is not supported by lbmpy.
     // The following functors are individual in-place collide and stream steps
-    auto stream = pystencils::StreamSweep(m_last_applied_force_field_id,
-                                          m_pdf_field_id, m_velocity_field_id);
-    auto collide = generate_collide_sweep(seed, time_step);
-
-    // Add steps to the integration loop
-    m_time_loop = std::make_shared<timeloop::SweepTimeloop>(
-        m_blocks->getBlockStorage(), 1);
-
-    m_time_loop->add() << timeloop::Sweep(makeSharedSweep(m_reset_force),
-                                          "Reset force fields");
-    m_time_loop->add() << timeloop::Sweep(collide, "LB collide")
-                       << timeloop::AfterFunction(
-                              *m_pdf_streaming_communication, "communication");
-    m_time_loop->add() << timeloop::Sweep(
-        Boundaries::getBlockSweep(m_boundary_handling_id), "boundary handling");
-    m_time_loop->add() << timeloop::Sweep(stream, "LB stream")
-                       << timeloop::AfterFunction(*m_full_communication,
-                                                  "communication");
+    m_stream = std::make_shared<pystencils::StreamSweep>(
+        m_last_applied_force_field_id, m_pdf_field_id, m_velocity_field_id);
+    m_collision_model = generate_collide_sweep(seed, time_step);
 
     // Register velocity access adapter (proxy)
     m_velocity_adaptor_id = field::addFieldAdaptor<VelocityAdaptor>(
@@ -344,7 +331,20 @@ public:
   }
 
   void integrate() override {
-    m_time_loop->singleStep();
+    // Reset force fields
+    for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
+      (*m_reset_force)(&*b);
+    // LB collide
+    for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
+      (*m_collision_model)(&*b);
+    (*m_pdf_streaming_communication)();
+    // Handle boundaries
+    for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
+      Boundaries::getBlockSweep(m_boundary_handling_id)(&*b);
+    // LB stream
+    for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
+      (*m_stream)(&*b);
+    (*m_full_communication)();
 
     // Handle VTK writers
     for (auto it = m_vtk_auto.begin(); it != m_vtk_auto.end(); ++it) {
