@@ -38,7 +38,7 @@ public:
   std::vector<double>
   evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles,
            const ParticleObservables::traits<Particle> &traits) const override {
-    Utils::Histogram<double, 3> histogram(n_bins(), 1, limits());
+    Utils::Histogram<double, 1> histogram(n_bins(), limits());
 
     for (auto p : particles) {
       histogram.update(folded_position(traits.position(p), box_geo));
