@@ -470,10 +470,12 @@ if(WITH_WALBERLA)
   set(WALBERLA_LIBS
       walberla::core walberla::domain_decomposition walberla::blockforest
       walberla::boundary walberla::core walberla::domain_decomposition
-      walberla::field walberla::lbm walberla::timeloop walberla::vtk)
+      walberla::field walberla::lbm walberla::timeloop walberla::vtk walberla::fft)
   # TODO WALBERLA: remove -lmpi_cxx -lmpi (required to find symbol MPI::Datatype::Free() in VTK code) and -lstdc++fs
+  # TODO WALBERLA: remove -lpfft (required to find pfft_free in FFT-code)
+  # TODO WALBERLA: remove -lfftw3_mpi (required to find fftw_mpi_execute_r2r in FFT-code)
   if(NOT CMAKE_CXX_COMPILER_ID MATCHES "AppleClang")
-    set(WALBERLA_LIBS ${WALBERLA_LIBS} stdc++fs -lmpi_cxx -lmpi)
+    set(WALBERLA_LIBS ${WALBERLA_LIBS} stdc++fs -lmpi_cxx -lmpi -lpfft -lfftw3_mpi)
   endif()
 endif(WITH_WALBERLA)
 

@@ -12,11 +12,16 @@ void propagate() {
   // with a public interface to diffusive and advective-flux this should also
   // allow the back-coupling to the LB with a field-id
 
-  ek_container.get_charge()->reset_charge_field();
+  if (ek_container.empty()) {
+    return;
+  }
+
+  ek_container.reset_charge();
   std::for_each(ek_container.begin(), ek_container.end(), [](auto const &ek) {
-    ek_container.get_charge()->add_charge_to_field(ek->get_density_id(),
-                                                   ek->get_valency());
+    ek_container.add_charge(ek->get_density_id(), ek->get_valency());
   });
+
+  ek_container.solve_poisson();
 
   std::for_each(ek_container.begin(), ek_container.end(),
                 [](auto const &ek) { ek->integrate(); });

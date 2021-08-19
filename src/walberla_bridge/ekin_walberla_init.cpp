@@ -20,10 +20,4 @@ new_ek_walberla(const walberla::WalberlaBlockForest *blockforest,
   return std::make_shared<EKinWalberlaImpl<13, double>>(blockforest, diffusion,
                                                         kT, valency, density);
 }
-
-std::unique_ptr<EKWalberlaCharge<double>>
-new_ek_charge(const walberla::WalberlaBlockForest *blockforest,
-              const walberla::PoissonSolver<double> *poissonsolver) {
-  return std::make_unique<EKWalberlaCharge<double>>(blockforest, poissonsolver);
-}
 } // namespace walberla

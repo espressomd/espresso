@@ -5,10 +5,16 @@ import functools
 
 
 @script_interface_register
+class EKFFT(ScriptObjectRegistry):
+    _so_name = "walberla::EKFFT"
+    _so_creation_policy = "GLOBAL"
+
+
+@script_interface_register
 class EKContainer(ScriptObjectRegistry):
     _so_name = "walberla::EKContainer"
 
-    def add(self, ekspecies, tau=None):
+    def add(self, ekspecies, tau=None, solver=None):
         if not isinstance(ekspecies, EKSpecies):
             raise TypeError("EKSpecies object is not of correct type.")
 
@@ -18,6 +24,9 @@ class EKContainer(ScriptObjectRegistry):
             # check that tau is already non-zero
             raise RuntimeError(
                 "EK timestep is not already set. Please provide a tau.")
+
+        if solver is not None:
+            self.call_method("set_poissonsolver", object=solver)
 
         self.call_method("add", object=ekspecies)
 

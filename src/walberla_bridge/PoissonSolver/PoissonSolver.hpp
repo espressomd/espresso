@@ -19,8 +19,8 @@ protected:
   BlockDataID m_potential_field_flattened_id;
 
   using PotentialField = GhostLayerField<FloatType, 1>;
+  using ChargeField = GhostLayerField<FloatType, 1>;
 
-private:
   using FullCommunicator = blockforest::communication::UniformBufferedScheme<
       typename stencil::D3Q27>;
   std::shared_ptr<FullCommunicator> m_full_communication;
@@ -42,6 +42,11 @@ public:
         std::make_shared<field::communication::PackInfo<PotentialField>>(
             m_potential_field_id));
   }
+
+  virtual void reset_charge_field() = 0;
+  virtual void add_charge_to_field(const BlockDataID &id,
+                                   FloatType valency) = 0;
+  virtual BlockDataID get_potential_field_id() = 0;
 
   [[nodiscard]] const WalberlaBlockForest *get_blockforest() const {
     return m_blockforest;

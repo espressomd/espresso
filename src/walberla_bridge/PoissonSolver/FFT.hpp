@@ -9,28 +9,29 @@
 #include "field/AddToStorage.h"
 #include "field/GhostLayerField.h"
 
+#include "blockforest/StructuredBlockForest.h"
 #include "fft/Fft.h"
 
 namespace walberla {
 template <typename FloatType = double>
 class FFT : public PoissonSolver<FloatType> {
 private:
-  BlockDataID m_greens_field;
-  BlockDataID m_fourier_field;
-
   using PS = PoissonSolver<FloatType>;
   using PotentialField = typename PS::PotentialField;
 
   std::unique_ptr<fft::FourierTransform<PotentialField>> m_ft;
 
-public:
-  explicit FFT(const WalberlaBlockForest *blockforest)
-      : PoissonSolver<FloatType>(blockforest) {
-    auto &blocks = PS::get_blockforest()->get_blocks();
+  // TODO: figure out how to pass this to the fourier-transformation without
+  //       taking partial-ownership of the BlockForest...
+  std::shared_ptr<blockforest::StructuredBlockForest> m_blocks;
 
-    Vector3<uint_t> dim(blocks->getNumberOfXCells(),
-                        blocks->getNumberOfYCells(),
-                        blocks->getNumberOfZCells());
+public:
+  explicit FFT(const WalberlaBlockForest *blockforest) : PS(blockforest) {
+    m_blocks = PS::get_blockforest()->get_blocks();
+
+    Vector3<uint_t> dim(m_blocks->getNumberOfXCells(),
+                        m_blocks->getNumberOfYCells(),
+                        m_blocks->getNumberOfZCells());
     const auto greens = [dim](uint_t x, uint_t y, uint_t z) -> real_t {
       if (x == 0 && y == 0 && z == 0)
         return 0;
@@ -42,7 +43,32 @@ public:
     };
 
     m_ft = std::make_unique<fft::FourierTransform<PotentialField>>(
-        blocks, PS::m_potential_field_id, greens);
+        m_blocks, PS::m_potential_field_id, greens);
+  }
+
+  void reset_charge_field() override {
+    // the FFT-solver re-uses the potential field for the charge
+    for (auto &block : *PS::get_blockforest()->get_blocks()) {
+      auto field =
+          block.template getData<PotentialField>(PS::m_potential_field_id);
+      WALBERLA_FOR_ALL_CELLS_XYZ(field, field->get(x, y, z) = 0.;)
+    }
+  }
+
+  void add_charge_to_field(const BlockDataID &id, FloatType valency) override {
+    // the FFT-solver re-uses the potential field for the charge
+    for (auto &block : *PS::get_blockforest()->get_blocks()) {
+      auto charge_field =
+          block.template getData<PotentialField>(PS::m_potential_field_id);
+      auto density_field = block.template getData<typename PS::ChargeField>(id);
+      WALBERLA_FOR_ALL_CELLS_XYZ(charge_field,
+                                 charge_field->get(x, y, z) +=
+                                 valency * density_field->get(x, y, z);)
+    }
+  }
+
+  [[nodiscard]] BlockDataID get_potential_field_id() override {
+    return PS::m_potential_field_id;
   }
 
   void solve() override {

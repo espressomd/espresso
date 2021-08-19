@@ -24,9 +24,8 @@ private:
   container_type m_ekcontainer;
   double m_tau{};
 
-  std::unique_ptr<walberla::EKWalberlaCharge<double>> m_ekcharge;
   // TODO: this could be moved to the Scriptinterface
-  std::unique_ptr<walberla::PoissonSolver<double>> m_poissonsolver;
+  std::shared_ptr<walberla::PoissonSolver<double>> m_poissonsolver;
 
 public:
   void add(std::shared_ptr<EKSpecies> const &c) {
@@ -34,18 +33,6 @@ public:
            m_ekcontainer.end());
 
     m_ekcontainer.emplace_back(c);
-
-    // check that poissonsolver exists
-    if (!m_poissonsolver) {
-      m_poissonsolver =
-          std::make_unique<walberla::FFT<double>>(get_walberla_blockforest());
-    }
-
-    // check that ekcharge exists
-    if (!m_ekcharge) {
-      m_ekcharge = walberla::new_ek_charge(get_walberla_blockforest(),
-                                           m_poissonsolver.get());
-    }
 
     // TODO: callback on_ek_change?
   }
@@ -71,12 +58,20 @@ public:
     }
   }
 
-  [[nodiscard]] walberla::EKWalberlaCharge<double> *get_charge() const {
-    return m_ekcharge.get();
+  void set_poissonsolver(
+      std::shared_ptr<walberla::PoissonSolver<double>> const &solver) {
+    m_poissonsolver = solver;
   }
 
   [[nodiscard]] double get_tau() const { return m_tau; }
   void set_tau(double tau) { m_tau = tau; }
+
+  void reset_charge() const { m_poissonsolver->reset_charge_field(); }
+  void add_charge(const walberla::BlockDataID &id, double valency) const {
+    m_poissonsolver->add_charge_to_field(id, valency);
+  }
+
+  void solve_poisson() const { m_poissonsolver->solve(); }
 };
 
 #endif // ESPRESSO_EKCONTAINER_HPP
