@@ -65,17 +65,6 @@ public:
   };
   double get_kT() const override { return m_kT; };
 
-  uint64_t get_rng_state() const override {
-    auto *lm = dynamic_cast<LatticeModel *>(m_lattice_model.get());
-    return lm->time_step_;
-  }
-
-  void set_rng_state(uint64_t counter) override {
-    auto *lm = dynamic_cast<LatticeModel *>(m_lattice_model.get());
-    lm->time_step_ = counter;
-    on_lattice_model_change();
-  }
-
 private:
   double m_kT;
 };

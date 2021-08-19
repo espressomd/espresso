@@ -48,18 +48,9 @@ def adapt_pystencils():
     def new_add_pystencils_filters_to_jinja_env(jinja_env):
         # save original pystencils to adapt
         old_add_pystencils_filters_to_jinja_env(jinja_env)
-        old_generate_call = jinja_env.filters['generate_call']
         old_generate_members = jinja_env.filters['generate_members']
         old_generate_refs_for_kernel_parameters = jinja_env.filters[
             'generate_refs_for_kernel_parameters']
-
-        @jinja2.contextfilter
-        def new_generate_call(*args, **kwargs):
-            output = old_generate_call(*args, **kwargs)
-            function_call = output.split('\n')[-1]
-            if 'block_offset_0' in function_call:
-                output += '\nthis->time_step_++;'
-            return output
 
         @jinja2.contextfilter
         def new_generate_members(*args, **kwargs):
@@ -83,7 +74,6 @@ def adapt_pystencils():
             return output
 
         # replace pystencils
-        jinja_env.filters['generate_call'] = new_generate_call
         jinja_env.filters['generate_members'] = new_generate_members
         jinja_env.filters['generate_refs_for_kernel_parameters'] = new_generate_refs_for_kernel_parameters
 

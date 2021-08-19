@@ -137,6 +137,44 @@ private:
                                        is_thermalized<CollisionModel>{});
   }
 
+  void set_rng_seed_impl(uint32_t, std::false_type) {
+    throw std::runtime_error("The LB does not use a random number generator");
+  }
+
+  void set_rng_seed_impl(uint32_t seed, std::true_type) {
+    m_collision_model->seed_ = seed;
+  }
+
+  uint32_t get_rng_seed_impl(std::false_type) const {
+    throw std::runtime_error("The LB does not use a random number generator");
+  }
+
+  uint32_t get_rng_seed_impl(std::true_type) const {
+    return m_collision_model->seed_;
+  }
+
+  void set_time_step_impl(uint32_t, std::false_type) {
+    throw std::runtime_error("The LB does not use a random number generator");
+  }
+
+  void set_time_step_impl(uint32_t time_step, std::true_type) {
+    m_collision_model->time_step_ = time_step;
+  }
+
+  uint32_t get_time_step_impl(std::false_type) const {
+    throw std::runtime_error("The LB does not use a random number generator");
+  }
+
+  uint32_t get_time_step_impl(std::true_type) const {
+    return m_collision_model->time_step_;
+  }
+
+  void increment_time_step_impl(std::false_type) {}
+
+  void increment_time_step_impl(std::true_type) {
+    m_collision_model->time_step_++;
+  }
+
 protected:
   // Type definitions
   using VectorField = GhostLayerField<FloatType, 3>;
@@ -351,6 +389,8 @@ public:
       if (it->second.second)
         vtk::writeFiles(it->second.first)();
     }
+
+    increment_time_step_impl(is_thermalized<CollisionModel>{});
   }
 
   void ghost_communication() override { (*m_full_communication)(); }
@@ -706,10 +746,10 @@ public:
   double get_kT() const override { return 0.; }
 
   uint64_t get_rng_state() const override {
-    throw std::runtime_error("The LB does not use a random number generator");
+    return get_time_step_impl(is_thermalized<CollisionModel>{});
   }
   void set_rng_state(uint64_t counter) override {
-    throw std::runtime_error("The LB does not use a random number generator");
+    set_time_step_impl(counter, is_thermalized<CollisionModel>{});
   }
 
   // Grid, domain, halo
