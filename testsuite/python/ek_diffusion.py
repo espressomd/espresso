@@ -33,7 +33,9 @@ class EKDiffusion(ut.TestCase):
         ekspecies = espressomd.EKSpecies.EKSpecies(
             density=0.0, kT=0.0, diffusion=self.DIFFUSION_COEFFICIENT, valency=0.0)
 
-        self.system.ekcontainer.add(ekspecies, tau=1.0)
+        ekfft = espressomd.EKSpecies.EKFFT()
+
+        self.system.ekcontainer.add(ekspecies, tau=1.0, solver=ekfft)
 
         center = np.asarray(self.system.box_l / 2, dtype=np.int)
 
