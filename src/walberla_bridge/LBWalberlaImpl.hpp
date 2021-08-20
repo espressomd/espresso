@@ -62,6 +62,7 @@
 
 #include "LBWalberlaBase.hpp"
 #include "ResetForce.hpp"
+#include "generated_kernels/Dynamic_UBB.h"
 #include "generated_kernels/InitialPDFsSetter.h"
 #include "generated_kernels/StreamSweep.h"
 #include "walberla_utils.hpp"
