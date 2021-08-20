@@ -44,8 +44,10 @@ public:
   };
   LBWalberlaD3Q19MRT(double viscosity, double density,
                      const Utils::Vector3i &grid_dimensions,
-                     const Utils::Vector3i &node_grid, int n_ghost_layers)
-      : LBWalberlaImpl(viscosity, grid_dimensions, node_grid, n_ghost_layers) {
+                     const Utils::Vector3i &node_grid, int n_ghost_layers,
+                     double kT, unsigned int seed)
+      : LBWalberlaImpl(viscosity, grid_dimensions, node_grid, n_ghost_layers,
+                       kT, seed) {
     construct_lattice_model(viscosity);
     setup_with_valid_lattice_model(density, 0u, 0u);
   };

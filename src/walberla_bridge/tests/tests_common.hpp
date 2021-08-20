@@ -51,11 +51,12 @@ using LbGeneratorVector =
 LbGeneratorVector unthermalized_lbs() {
   LbGeneratorVector lbs;
   // Unthermalized D3Q19 MRT
-  lbs.push_back([](const Utils::Vector3i mpi_shape,
-                   const LBTestParameters &params) {
-    return std::make_shared<walberla::LBWalberlaD3Q19MRT>(
-        params.viscosity, params.density, params.grid_dimensions, mpi_shape, 1);
-  });
+  lbs.push_back(
+      [](const Utils::Vector3i mpi_shape, const LBTestParameters &params) {
+        return std::make_shared<walberla::LBWalberlaD3Q19MRT>(
+            params.viscosity, params.density, params.grid_dimensions, mpi_shape,
+            1, 0.0, 0u);
+      });
 
   // Thermalized D3Q19 MRT with kT set to 0
   lbs.push_back([](Utils::Vector3i mpi_shape, const LBTestParameters &params) {

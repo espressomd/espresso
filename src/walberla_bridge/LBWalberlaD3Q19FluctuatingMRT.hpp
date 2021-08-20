@@ -52,15 +52,11 @@ public:
                                 const Utils::Vector3i &node_grid,
                                 int n_ghost_layers, double kT,
                                 unsigned int seed)
-      : LBWalberlaImpl(viscosity, grid_dimensions, node_grid, n_ghost_layers) {
-    m_kT = kT;
+      : LBWalberlaImpl(viscosity, grid_dimensions, node_grid, n_ghost_layers,
+                       kT, seed) {
     construct_lattice_model(viscosity, kT, seed);
     setup_with_valid_lattice_model(density, seed, 0u);
   };
-  double get_kT() const override { return m_kT; };
-
-private:
-  double m_kT;
 };
 
 } // namespace walberla

@@ -199,6 +199,8 @@ protected:
   // Member variables
   Utils::Vector3i m_grid_dimensions;
   int m_n_ghost_layers;
+  double m_kT;
+  double m_seed;
 
   // Block data access handles
   BlockDataID m_pdf_field_id;
@@ -270,9 +272,10 @@ protected:
 
 public:
   LBWalberlaImpl(double viscosity, const Utils::Vector3i &grid_dimensions,
-                 const Utils::Vector3i &node_grid, int n_ghost_layers) {
-    m_grid_dimensions = grid_dimensions;
-    m_n_ghost_layers = n_ghost_layers;
+                 const Utils::Vector3i &node_grid, int n_ghost_layers,
+                 double kT, unsigned int seed)
+      : m_grid_dimensions(grid_dimensions), m_n_ghost_layers(n_ghost_layers),
+        m_kT(kT), m_seed(seed) {
 
     if (m_n_ghost_layers <= 0)
       throw std::runtime_error("At least one ghost layer must be used");
@@ -743,7 +746,7 @@ public:
     return m_reset_force->get_ext_force();
   }
 
-  double get_kT() const override { return 0.; }
+  double get_kT() const override { return m_kT; }
 
   uint64_t get_rng_state() const override {
     return get_time_step_impl(is_thermalized<CollisionModel>{});
