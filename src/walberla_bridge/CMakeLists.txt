@@ -18,6 +18,7 @@
 #
 set(WalberlaBridge_SRC generated_kernels/FluctuatingMRTLatticeModel.cpp generated_kernels/MRTLatticeModel.cpp
                        generated_kernels/StreamSweep.cpp generated_kernels/CollideSweep.cpp generated_kernels/CollideSweepThermalized.cpp
+                       generated_kernels/InitialPDFsSetter.cpp
                        lb_walberla_init.cpp)
 if (WALBERLA_USE_AVX)
   list(APPEND WalberlaBridge_SRC generated_kernels/FluctuatingMRTLatticeModelAvx.cpp generated_kernels/MRTLatticeModelAvx.cpp generated_kernels/CollideSweepAVX.cpp generated_kernels/CollideSweepThermalizedAVX.cpp)

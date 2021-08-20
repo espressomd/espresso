@@ -62,6 +62,7 @@
 
 #include "LBWalberlaBase.hpp"
 #include "ResetForce.hpp"
+#include "generated_kernels/InitialPDFsSetter.h"
 #include "generated_kernels/StreamSweep.h"
 #include "relaxation_rates.hpp"
 #include "walberla_utils.hpp"
@@ -318,11 +319,18 @@ public:
 
   void setup_with_valid_lattice_model(double density, unsigned int seed,
                                       unsigned int time_step) {
+
     // Init and register pdf field
     m_pdf_field_id = lbm::addPdfFieldToStorage(
         m_blocks, "pdf field", *(m_lattice_model.get()),
         to_vector3(Utils::Vector3d{}), FloatType(density), m_n_ghost_layers,
         field::fzyx);
+    auto pdf_setter = pystencils::InitialPDFsSetter(
+        m_force_to_be_applied_id, m_pdf_field_id, m_velocity_field_id,
+        static_cast<FloatType>(density));
+    for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b) {
+      pdf_setter(&(*b));
+    }
 
     // Register boundary handling
     m_boundary_handling_id = m_blocks->addBlockData<Boundaries>(
