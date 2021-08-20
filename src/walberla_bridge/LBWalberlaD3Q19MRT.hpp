@@ -29,6 +29,8 @@ public:
                      omega));   // shear
   };
   void set_viscosity(double viscosity) override {
+    LBWalberlaImpl<LatticeModelName, CollisionModelName>::set_viscosity(
+        viscosity);
     auto *lm = dynamic_cast<LatticeModel *>(m_lattice_model.get());
     const real_t omega = shear_mode_relaxation_rate(viscosity);
     const real_t omega_odd = odd_mode_relaxation_rate(omega);
@@ -37,10 +39,6 @@ public:
     lm->omega_even_ = omega;
     lm->omega_bulk_ = omega;
     on_lattice_model_change();
-  };
-  double get_viscosity() const override {
-    auto *lm = dynamic_cast<LatticeModel *>(m_lattice_model.get());
-    return viscosity_from_shear_relaxation_rate(lm->omega_shear_);
   };
   LBWalberlaD3Q19MRT(double viscosity, double density,
                      const Utils::Vector3i &grid_dimensions,

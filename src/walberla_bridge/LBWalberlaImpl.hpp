@@ -199,6 +199,7 @@ protected:
   // Member variables
   Utils::Vector3i m_grid_dimensions;
   int m_n_ghost_layers;
+  double m_viscosity;
   double m_kT;
   double m_seed;
 
@@ -275,7 +276,7 @@ public:
                  const Utils::Vector3i &node_grid, int n_ghost_layers,
                  double kT, unsigned int seed)
       : m_grid_dimensions(grid_dimensions), m_n_ghost_layers(n_ghost_layers),
-        m_kT(kT), m_seed(seed) {
+        m_viscosity(viscosity), m_kT(kT), m_seed(seed) {
 
     if (m_n_ghost_layers <= 0)
       throw std::runtime_error("At least one ghost layer must be used");
@@ -397,6 +398,10 @@ public:
   }
 
   void ghost_communication() override { (*m_full_communication)(); }
+
+  void set_viscosity(double viscosity) override { m_viscosity = viscosity; }
+
+  double get_viscosity() const override { return m_viscosity; }
 
   // Velocity
   boost::optional<Utils::Vector3d>
