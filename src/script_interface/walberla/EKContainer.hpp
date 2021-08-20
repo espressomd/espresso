@@ -7,7 +7,7 @@
 #include "script_interface/ObjectList.hpp"
 #include "script_interface/ScriptInterface.hpp"
 
-#include "EKFFT.hpp"
+#include "EKPoissonSolver.hpp"
 
 namespace ScriptInterface::walberla {
 
@@ -29,9 +29,13 @@ class EKContainer : public ObjectList<EKSpecies> {
       return EK::ek_container.get_tau();
     }
     if (method == "set_poissonsolver") {
-      auto obj_ptr = get_value<std::shared_ptr<EKFFT>>(parameters.at("object"));
-      EK::ek_container.set_poissonsolver(obj_ptr->get_fftinstance());
+      auto obj_ptr =
+          get_value<std::shared_ptr<EKPoissonSolver>>(parameters.at("object"));
+      EK::ek_container.set_poissonsolver(obj_ptr->get_instance());
       return none;
+    }
+    if (method == "is_poissonsolver_set") {
+      return EK::ek_container.is_poissonsolver_set();
     }
 
     return ObjectList<EKSpecies>::do_call_method(method, parameters);

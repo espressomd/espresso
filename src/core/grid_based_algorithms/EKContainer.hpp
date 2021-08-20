@@ -63,6 +63,10 @@ public:
     m_poissonsolver = solver;
   }
 
+  [[nodiscard]] bool is_poissonsolver_set() {
+    return m_poissonsolver != nullptr;
+  }
+
   [[nodiscard]] double get_tau() const { return m_tau; }
   void set_tau(double tau) { m_tau = tau; }
 

@@ -3,6 +3,7 @@
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameter.hpp"
+#include "script_interface/walberla/EKPoissonSolver.hpp"
 
 #include "grid_based_algorithms/walberla_blockforest.hpp"
 #include "walberla_bridge/PoissonSolver/FFT.hpp"
@@ -11,11 +12,16 @@
 
 namespace ScriptInterface::walberla {
 
-class EKFFT : public AutoParameters<::walberla::FFT<double>> {
+class EKFFT : public EKPoissonSolver {
 public:
   void do_construct(VariantMap const &args) override {
     m_fftinstance =
         std::make_shared<::walberla::FFT<double>>(get_walberla_blockforest());
+  }
+
+  [[nodiscard]] std::shared_ptr<::walberla::PoissonSolver<double>>
+  get_instance() override {
+    return m_fftinstance;
   }
 
   [[nodiscard]] std::shared_ptr<::walberla::FFT<double>> get_fftinstance() {

@@ -27,6 +27,9 @@ class EKContainer(ScriptObjectRegistry):
 
         if solver is not None:
             self.call_method("set_poissonsolver", object=solver)
+        elif not self.call_method("is_poissonsolver_set"):
+            raise RuntimeError(
+                "EK solver is not already set. Please provide a solver.")
 
         self.call_method("add", object=ekspecies)
 
