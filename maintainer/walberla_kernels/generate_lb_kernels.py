@@ -127,9 +127,16 @@ def generate_fields(lb_method):
         layout=field_layout,
         index_shape=(q,)
     )
-    velocity_field = ps.fields("velocity(3): [3D]", layout='fzyx')
+    vel_field = ps.Field.create_generic(
+        'velocity',
+        dim,
+        dtype,
+        index_dimensions=1,
+        layout=field_layout,
+        index_shape=(dim,)
+    )
 
-    return src_field, dst_field, velocity_field
+    return src_field, dst_field, vel_field
 
 
 def generate_collision_sweep(
@@ -170,26 +177,13 @@ def generate_stream_sweep(ctx, lb_method, class_name, params):
 
 
 def generate_setters(lb_method):
-    dtype = "float64"
-    field_layout = "fzyx"
-    dim = len(lb_method.stencil[0])
-
-    vel_field = ps.Field.create_generic(
-        'velocity',
-        dim,
-        dtype,
-        index_dimensions=1,
-        layout=field_layout,
-        index_shape=(dim,)
-    )
-
-    pdfs = generate_fields(lb_method)[0]
+    pdf_field, _, vel_field = generate_fields(lb_method)
 
     initial_rho = sp.Symbol('rho_0')
     pdfs_setter = macroscopic_values_setter(lb_method,
                                             initial_rho,
                                             vel_field.center_vector,
-                                            pdfs.center_vector)
+                                            pdf_field.center_vector)
     return pdfs_setter
 
 
