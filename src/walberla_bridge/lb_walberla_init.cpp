@@ -27,8 +27,6 @@
 
 #include <utils/Vector.hpp>
 
-#include <cassert>
-
 void walberla_mpi_init() {
   int argc = 0;
   char **argv = nullptr;
@@ -43,7 +41,6 @@ LBWalberlaBase *new_lb_walberla(double viscosity, double density,
 
   LBWalberlaBase *lb_walberla_instance;
   if (kT == 0.) { // un-thermalized LB
-    assert(seed == 0u);
     lb_walberla_instance = new walberla::LBWalberlaD3Q19MRT(
         viscosity, density, grid_dimensions, node_grid, 1, kT, seed);
   } else { // thermalized LB
