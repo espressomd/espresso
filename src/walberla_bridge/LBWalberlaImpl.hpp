@@ -191,11 +191,7 @@ protected:
   using FlagField = walberla::FlagField<walberla::uint8_t>;
   using PdfField = lbm::PdfField<LatticeModel>;
   /** Velocity boundary condition */
-  using UBB = lbm::UBB<LatticeModel, uint8_t, true, true>;
-
-  /** Boundary handling */
-  using Boundaries =
-      BoundaryHandling<FlagField, typename LatticeModel::Stencil, UBB>;
+  using UBB = lbm::Dynamic_UBB;
 
   // Adaptors
   using VelocityAdaptor = typename lbm::Adaptor<LatticeModel>::VelocityVector;
@@ -251,35 +247,12 @@ protected:
   // Collision sweep
   std::shared_ptr<CollisionModel> m_collision_model;
 
+  // Boundary sweep
+  std::shared_ptr<UBB> m_boundary;
+
   std::size_t stencil_size() const override {
     return static_cast<std::size_t>(LatticeModel::Stencil::Size);
   }
-
-  // Boundary handling
-  class LBBoundaryHandling {
-  public:
-    LBBoundaryHandling(const BlockDataID &flag_field_id,
-                       const BlockDataID &pdf_field_id)
-        : m_flag_field_id(flag_field_id), m_pdf_field_id(pdf_field_id) {}
-
-    Boundaries *operator()(IBlock *const block) {
-
-      auto *flag_field = block->template getData<FlagField>(m_flag_field_id);
-      auto *pdf_field = block->template getData<PdfField>(m_pdf_field_id);
-
-      const auto fluid = flag_field->flagExists(Fluid_flag)
-                             ? flag_field->getFlag(Fluid_flag)
-                             : flag_field->registerFlag(Fluid_flag);
-
-      return new Boundaries(
-          "boundary handling", flag_field, fluid,
-          UBB("velocity bounce back", UBB_flag, pdf_field, nullptr));
-    }
-
-  private:
-    const BlockDataID m_flag_field_id;
-    const BlockDataID m_pdf_field_id;
-  };
 
 public:
   LBWalberlaImpl(double viscosity, const Utils::Vector3i &grid_dimensions,
@@ -341,11 +314,18 @@ public:
       pdf_setter(&(*b));
     }
 
-    // Register boundary handling
-    m_boundary_handling_id = m_blocks->addBlockData<Boundaries>(
-        LBBoundaryHandling(m_flag_field_id, m_pdf_field_id),
-        "boundary handling");
-    clear_boundaries();
+    std::function<walberla::math::Vector3<double>(
+        const walberla::cell::Cell &,
+        const std::shared_ptr<walberla::blockforest::StructuredBlockForest> &,
+        walberla::domain_decomposition::IBlock &)>
+        ubb_callback = [](const Cell &,
+                          const shared_ptr<StructuredBlockForest> &,
+                          IBlock &) -> Vector3<real_t> {
+      throw std::runtime_error("This callback is not meant to be called!");
+    };
+    m_boundary = std::make_shared<UBB>(m_blocks, m_pdf_field_id, ubb_callback);
+    m_boundary->fillFromFlagField<FlagField>(m_blocks, m_flag_field_id,
+                                             UBB_flag, Fluid_flag);
 
     // sets up the communication and registers pdf field and force field to it
     m_pdf_streaming_communication =
@@ -399,7 +379,7 @@ public:
     (*m_pdf_streaming_communication)();
     // Handle boundaries
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
-      Boundaries::getBlockSweep(m_boundary_handling_id)(&*b);
+      (*m_boundary)(&*b);
     // LB stream
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
       (*m_stream)(&*b);
@@ -641,6 +621,7 @@ public:
   // Boundary related
   boost::optional<Utils::Vector3d>
   get_node_velocity_at_boundary(const Utils::Vector3i &node) const override {
+/* TODO
     auto bc = get_block_and_cell(node, true, m_blocks, n_ghost_layers());
     if (!bc)
       return {boost::none};
@@ -654,10 +635,13 @@ public:
     return {to_vector3d(
         boundary_handling->template getBoundaryCondition<UBB>(uid).getValue(
             (*bc).cell[0], (*bc).cell[1], (*bc).cell[2]))};
+*/
+      return {boost::none};
   }
 
   bool set_node_velocity_at_boundary(const Utils::Vector3i &node,
                                      const Utils::Vector3d &v) override {
+/* TODO
     auto bc = get_block_and_cell(node, true, m_blocks, n_ghost_layers());
     if (!bc)
       return false;
@@ -669,11 +653,13 @@ public:
         (*bc).block->template getData<Boundaries>(m_boundary_handling_id);
     boundary_handling->forceBoundary(UBB_flag, bc->cell[0], bc->cell[1],
                                      bc->cell[2], velocity);
+*/
     return true;
   }
 
   boost::optional<Utils::Vector3d>
   get_node_boundary_force(const Utils::Vector3i &node) const override {
+/* TODO
     auto bc = get_block_and_cell(node, true, m_blocks,
                                  n_ghost_layers()); // including ghosts
     if (!bc)
@@ -693,9 +679,12 @@ public:
     auto const &ubb = bh->template getBoundaryCondition<UBB>(uid);
     return {to_vector3d(
         ubb.getForce((*bc).cell.x(), (*bc).cell.y(), (*bc).cell.z()))};
+*/
+      return {boost::none};
   }
 
   bool remove_node_from_boundary(const Utils::Vector3i &node) override {
+/* TODO
     auto bc = get_block_and_cell(node, true, m_blocks, n_ghost_layers());
     if (!bc)
       return false;
@@ -703,12 +692,14 @@ public:
         (*bc).block->template getData<Boundaries>(m_boundary_handling_id);
     boundary_handling->removeBoundary((*bc).cell[0], (*bc).cell[1],
                                       (*bc).cell[2]);
+*/
     return true;
   }
 
   boost::optional<bool>
   get_node_is_boundary(const Utils::Vector3i &node,
                        bool consider_ghosts = false) const override {
+/* TODO
     auto bc =
         get_block_and_cell(node, consider_ghosts, m_blocks, n_ghost_layers());
     if (!bc)
@@ -717,9 +708,12 @@ public:
     auto *boundary_handling =
         (*bc).block->template getData<Boundaries>(m_boundary_handling_id);
     return {boundary_handling->isBoundary((*bc).cell)};
+*/
+      return {boost::none};
   }
 
   void clear_boundaries() override {
+/* TODO
     const CellInterval &domain_bb_in_global_cell_coordinates =
         m_blocks->getCellBBFromAABB(m_blocks->begin()->getAABB().getExtended(
             FloatType(n_ghost_layers())));
@@ -733,6 +727,7 @@ public:
 
       boundary_handling->fillWithDomain(domain_bb);
     }
+*/
   }
 
   // Pressure tensor
