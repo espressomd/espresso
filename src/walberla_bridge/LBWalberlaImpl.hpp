@@ -64,7 +64,6 @@
 #include "ResetForce.hpp"
 #include "generated_kernels/InitialPDFsSetter.h"
 #include "generated_kernels/StreamSweep.h"
-#include "relaxation_rates.hpp"
 #include "walberla_utils.hpp"
 
 #include <utils/Vector.hpp>
@@ -108,7 +107,7 @@ private:
 
   auto generate_collide_sweep_impl(unsigned int, unsigned int,
                                    std::false_type) {
-    real_t const omega = shear_mode_relaxation_rate(get_viscosity());
+    real_t const omega = shear_mode_relaxation_rate();
     real_t const omega_odd = odd_mode_relaxation_rate(omega);
     return std::make_shared<CollisionModel>(m_last_applied_force_field_id,
                                             m_pdf_field_id, omega, omega,
@@ -117,11 +116,10 @@ private:
 
   auto generate_collide_sweep_impl(unsigned int seed, unsigned int time_step,
                                    std::true_type) {
-    real_t const omega = shear_mode_relaxation_rate(get_viscosity());
+    real_t const omega = shear_mode_relaxation_rate();
     real_t const omega_odd = odd_mode_relaxation_rate(omega);
-    real_t const kT = get_kT();
     auto collide = std::make_shared<CollisionModel>(
-        m_last_applied_force_field_id, m_pdf_field_id, 0, 0, 0, kT, omega,
+        m_last_applied_force_field_id, m_pdf_field_id, 0, 0, 0, m_kT, omega,
         omega, omega_odd, omega, seed, time_step);
     collide->block_offset_generator =
         [this](IBlock *const block, uint32_t &block_offset_0,
@@ -174,6 +172,16 @@ private:
 
   void increment_time_step_impl(std::true_type) {
     m_collision_model->time_step_++;
+  }
+
+  double shear_mode_relaxation_rate() const {
+    return 2 / (6 * m_viscosity + 1);
+  }
+
+  double odd_mode_relaxation_rate(double shear_relaxation,
+                                  double magic_number = 3. / 16.) const {
+    return (4 - 2 * shear_relaxation) /
+           (4 * magic_number * shear_relaxation + 2 - shear_relaxation);
   }
 
 protected:
