@@ -57,12 +57,6 @@ public:
     construct_lattice_model(viscosity, kT, seed);
     setup_with_valid_lattice_model(density, seed, 0u);
   };
-  void integrate() override {
-    LBWalberlaImpl<LatticeModelName, CollisionModelName>::integrate();
-    auto *lm = dynamic_cast<LatticeModel *>(m_lattice_model.get());
-    lm->time_step_ += 1;
-    on_lattice_model_change();
-  };
   double get_kT() const override { return m_kT; };
 
 private:
