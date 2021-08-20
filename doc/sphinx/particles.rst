@@ -174,7 +174,7 @@ The rotation of a particle is controlled via the :attr:`espressomd.particle_data
 The rotational state of a particle is stored as a quaternion in the :attr:`espressomd.particle_data.ParticleHandle.quat` property. For a value of (1,0,0,0), the body and space frames coincide.
 When setting up a particle, its orientation state is by default aligned with the space frame of the box.
 If your particles have a rotational symmetry, you can set up the particle direction (the symmetry axis) using the :attr:`espressomd.particle_data.ParticleHandle.director` property.
-Note that then you have no control aver the initial rotation angle around the symmetry axis.
+Note that then you have no control over the initial rotation angle around the symmetry axis.
 If your particles are anisotropic in all three directions, you can either set the :attr:`espressomd.particle_data.ParticleHandle.quat` attribute directly, or (recommended) set up all particle properties in the box frame and then use :attr:`espressomd.particle_data.ParticleHandle.rotate` to rotate the particle to the desired state before starting the simulation.
 
 Notes:

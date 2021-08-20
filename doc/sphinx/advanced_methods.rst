@@ -1590,7 +1590,7 @@ after all Drude particles are added to the system::
     espressomd.drude_helpers.setup_intramol_exclusion_bonds(<system>, <molecule drude types>,
         <molecule core types>, <molecule core partial charges>, <verbose>)
 
-This function creates the requires number of bonds which are later added to the
+This function creates the required number of bonds which are later added to the
 particles. It has to be called only once. In a molecule with :math:`N` polarizable
 sites, :math:`N \cdot (N-1)` bond types are needed to cover all the combinations.
 Parameters are:

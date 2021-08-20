@@ -186,10 +186,9 @@ class Correlator(ScriptInterfaceHelper):
           meaning of the result is unclear.
 
           The above equations are a
-          generalization of the formula presented by Hoefling
-          et. al. :cite:`hofling11a`. For more information, see
+          generalization of the formula presented by Höfling
+          et al. :cite:`hofling11a`. For more information, see
           references therein.
-
 
     delta_N : :obj:`int`
         Number of timesteps between subsequent samples for the auto update mechanism.
