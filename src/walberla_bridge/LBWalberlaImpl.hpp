@@ -907,15 +907,6 @@ public:
     m_vtk_auto[vtk_uid].second = status;
   }
 
-  /** @brief call, if the lattice model was changed */
-  void on_lattice_model_change() {
-    for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b) {
-      auto pdf_field = b->template getData<PdfField>(m_pdf_field_id);
-      pdf_field->resetLatticeModel(*m_lattice_model);
-      pdf_field->latticeModel().configure(*b, *m_blocks);
-    }
-  }
-
   ~LBWalberlaImpl() override = default;
 };
 } // namespace walberla
