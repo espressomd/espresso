@@ -57,7 +57,7 @@ protected:
   std::unique_ptr<pystencils::NoFlux> m_noflux;
   bool m_noflux_dirty = false;
 
-  std::shared_ptr<timeloop::SweepTimeloop> m_time_loop;
+  std::unique_ptr<pystencils::ContinuityKernel> m_continuity;
 
   // ResetFlux + external force
   // TODO: kernel for that
@@ -122,6 +122,9 @@ public:
     m_noflux = std::make_unique<pystencils::NoFlux>(
         get_blockforest()->get_blocks(), m_flux_field_flattened_id);
 
+    m_continuity = std::make_unique<pystencils::ContinuityKernel>(
+        m_flux_field_flattened_id, m_density_field_flattened_id);
+
     // Init and register flag field (domain/boundary)
     m_flag_field_id = field::addFlagFieldToStorage<FlagField>(
         get_blockforest()->get_blocks(), "flag field",
@@ -155,28 +158,6 @@ public:
         std::make_shared<field::communication::PackInfo<DensityField>>(
             m_density_field_id));
 
-    // TODO: kernels references
-
-    // Add steps to the integration loop
-    m_time_loop = std::make_shared<timeloop::SweepTimeloop>(
-        get_blockforest()->get_blocks()->getBlockStorage(), 1);
-    // TODO: figure out if there is a less-hacky solution to this because this
-    // re-instantiates the Diffusive-Flux kernel for every call...
-    m_time_loop->add() << Sweep(
-        [this](IBlock *block) {
-          return pystencils::DiffusiveFluxKernel(this->get_diffusion(),
-                                                 m_flux_field_flattened_id,
-                                                 m_density_field_flattened_id)
-              .run(block);
-        },
-        "ekin diffusive flux");
-    m_time_loop->add() << Sweep(*m_noflux, "no flux boundary condition");
-    m_time_loop->add()
-        << Sweep(pystencils::ContinuityKernel(m_flux_field_flattened_id,
-                                              m_density_field_flattened_id),
-                 "ekin continuity")
-        << AfterFunction(*m_full_communication, "ekin density communication");
-
     // reset flux field
     // diffusive flux + migrative flux + output friction force if field is
     // provided... add advective flux continuum update
@@ -205,7 +186,23 @@ public:
       boundary_noflux_update();
       m_noflux_dirty = false;
     }
-    m_time_loop->singleStep();
+    // calculate diffusive flux contribution
+    for (auto &block : *get_blockforest()->get_blocks()) {
+      pystencils::DiffusiveFluxKernel(
+          EKinWalberlaBase<FloatType>::get_diffusion(),
+          m_flux_field_flattened_id, m_density_field_flattened_id)
+          .run(&block);
+    }
+    // noflux
+    for (auto &block : *get_blockforest()->get_blocks()) {
+      (*m_noflux).run(&block);
+    }
+    // continuity
+    for (auto &block : *get_blockforest()->get_blocks()) {
+      (*m_continuity).run(&block);
+    }
+    // communication
+    (*m_full_communication)();
 
     // Handle VTK writers
     for (const auto &it : m_vtk_auto) {
