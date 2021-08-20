@@ -216,12 +216,7 @@ with CodeGeneration() as ctx:
 
     # generate initial densities
     pdfs_setter = generate_setters(method)
-    codegen.generate_sweep(ctx, "InitialPDFsSetter", pdfs_setter, params)
-    codegen.generate_sweep(
-        ctx,
-        "InitialPDFsSetterAVX",
-        pdfs_setter,
-        params_vec)
+    codegen.generate_sweep(ctx, "InitialPDFsSetter", pdfs_setter)
 
     # generate unthermalized collision rule
     collision_rule_unthermalized = create_lb_collision_rule(
