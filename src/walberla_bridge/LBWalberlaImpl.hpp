@@ -59,6 +59,7 @@
 #include "lbm/sweeps/CellwiseSweep.h"
 
 #include "stencil/D3Q27.h"
+#include "stencil/D3Q19.h"
 
 #include "LBWalberlaBase.hpp"
 #include "ResetForce.hpp"
@@ -98,6 +99,8 @@ const FlagUID UBB_flag("velocity bounce back");
 template <typename LatticeModel, typename CollisionModel,
           typename FloatType = double>
 class LBWalberlaImpl : public LBWalberlaBase {
+public:
+  using Stencil = stencil::D3Q19;
 private:
   template <typename Sweep, typename = void>
   struct is_thermalized : std::false_type {};
@@ -189,7 +192,8 @@ protected:
   // Type definitions
   using VectorField = GhostLayerField<FloatType, 3>;
   using FlagField = walberla::FlagField<walberla::uint8_t>;
-  using PdfField = lbm::PdfField<LatticeModel>;
+  //using PdfField = lbm::PdfField<LatticeModel>;
+  using PdfField = GhostLayerField<FloatType, 19>;
   /** Velocity boundary condition */
   using UBB = lbm::Dynamic_UBB;
 
@@ -211,6 +215,7 @@ protected:
 
   // Block data access handles
   BlockDataID m_pdf_field_id;
+  BlockDataID m_pdf_tmp_field_id;
   BlockDataID m_flag_field_id;
 
   BlockDataID m_last_applied_force_field_id;
@@ -285,7 +290,13 @@ public:
         uint_c(node_grid[2]), // cpus per direction
         true, true, true);
 
-    // Init and register force fields
+    // Init and register fields
+    m_pdf_field_id = field::addToStorage<PdfField>(
+        m_blocks, "pdfs", FloatType{0}, field::fzyx, field::fzyx,
+        m_n_ghost_layers);
+    m_pdf_tmp_field_id = field::addToStorage<PdfField>(
+        m_blocks, "pdfs_tmp", FloatType{0}, field::fzyx, field::fzyx,
+        m_n_ghost_layers);
     m_last_applied_force_field_id = field::addToStorage<VectorField>(
         m_blocks, "force field", FloatType{0}, field::fzyx, m_n_ghost_layers);
     m_force_to_be_applied_id = field::addToStorage<VectorField>(
@@ -303,10 +314,6 @@ public:
                                       unsigned int time_step) {
 
     // Init and register pdf field
-    m_pdf_field_id = lbm::addPdfFieldToStorage(
-        m_blocks, "pdf field", *(m_lattice_model.get()),
-        to_vector3(Utils::Vector3d{}), FloatType(density), m_n_ghost_layers,
-        field::fzyx);
     auto pdf_setter = pystencils::InitialPDFsSetter(
         m_force_to_be_applied_id, m_pdf_field_id, m_velocity_field_id,
         static_cast<FloatType>(density));
