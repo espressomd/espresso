@@ -23,8 +23,8 @@ def u(x, t, nu, v, h, k_max):
         Upper limit of sums for sinus series
     """
     u = x / h - 0.5
-        for k in np.arange(1, k_max + 1):
-            u += 1.0 / (np.pi * k) * np.exp(-4 * np.pi ** 2 * nu * k ** 2 / h ** 2 * t) * np.sin(2 * np.pi / h * k * x)
+    for k in np.arange(1, k_max + 1):
+        u += 1.0 / (np.pi * k) * np.exp(-4 * np.pi ** 2 * nu * k ** 2 / h ** 2 * t) * np.sin(2 * np.pi / h * k * x)
     return v * u
 
 TIME_STEP = 1.0
@@ -41,7 +41,7 @@ AGRID = 1.0
 LB_PARAMS = {'agrid': AGRID,
              'dens': RHO,
              'visc': NU,
-             'tau', TIME_STEP}
+             'tau': TIME_STEP}
 
 class LBCouetteFlow:
     
@@ -52,8 +52,8 @@ class LBCouetteFlow:
     system = espressomd.System(box_l=[h, h, h])
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
-    self.system.actors.clear()
-    self.system.actors.add(self.lbf)
+    system.actors.clear()
+    system.actors.add(lbf)
 
     for t in range(total_time):
         

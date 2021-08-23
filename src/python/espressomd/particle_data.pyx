@@ -243,6 +243,9 @@ cdef class ParticleHandle:
 
         """
 
+        def __set__(self, unused):
+            pass
+
         def __get__(self):
             self.update_particle_data()
             return self.particle_data.l.lees_edwards_offset
@@ -252,6 +255,9 @@ cdef class ParticleHandle:
            if the particle crossed the upper or lower boundary.
 
         """
+
+        def __set__(self, unused):
+            pass
 
         def __get__(self):
             self.update_particle_data()
