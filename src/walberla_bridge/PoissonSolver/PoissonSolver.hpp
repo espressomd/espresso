@@ -19,6 +19,7 @@ protected:
   BlockDataID m_potential_field_flattened_id;
 
   using PotentialField = GhostLayerField<FloatType, 1>;
+  using ChargeField = GhostLayerField<FloatType, 1>;
 
   using FullCommunicator = blockforest::communication::UniformBufferedScheme<
       typename stencil::D3Q27>;
