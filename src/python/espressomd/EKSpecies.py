@@ -11,6 +11,12 @@ class EKFFT(ScriptObjectRegistry):
 
 
 @script_interface_register
+class EKNone(ScriptObjectRegistry):
+    _so_name = "walberla::None"
+    _so_creation_policy = "GLOBAL"
+
+
+@script_interface_register
 class EKContainer(ScriptObjectRegistry):
     _so_name = "walberla::EKContainer"
 
