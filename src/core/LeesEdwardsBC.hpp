@@ -18,7 +18,7 @@ struct LeesEdwardsBC {
     assert(shear_direction >= 0 and shear_direction <= 2);
     assert(shear_plane_normal >= 0 and shear_plane_normal <= 2);
 
-    Utils::Vector3d n_jumps;
+    Utils::Vector3d n_jumps = {};
     Utils::Vector3d res = d;
 
     double n_le_crossings =
@@ -32,5 +32,5 @@ struct LeesEdwardsBC {
     }
 
     return res;
-  };
+  }
 };

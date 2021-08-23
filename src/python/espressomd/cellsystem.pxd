@@ -23,7 +23,7 @@ from libcpp.pair cimport pair, tuple
 from .utils cimport Vector3i, Vector3d
 
 cdef extern from "cells.hpp":
-    struct PairInfo:
+    cppclass PairInfo:
         int id1
         int id2
         Vector3d pos1
