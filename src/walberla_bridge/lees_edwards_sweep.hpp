@@ -1,9 +1,27 @@
+#include "blockforest/Initialization.h"
+#include "blockforest/communication/UniformBufferedScheme.h"
+
+#include "core/Environment.h"
+#include "core/timing/RemainingTimeLogger.h"
+
+#include "field/AddToStorage.h"
+#include "field/vtk/VTKWriter.h"
+
+#include "timeloop/SweepTimeloop.h"
+
+#include <memory>
+#include <math>
+
 using namespace walberla;
+
+using PackInfo_T  = lbm::LeesEdwards_PackInfo;
+using flag_t      = walberla::uint8_t;
+using FlagField_T = FlagField< flag_t >;
 
 class LeesEdwardsUpdate
 {
  public:
-   LeesEdwardsUpdate(const shared_ptr< StructuredBlockForest >& blocks, BlockDataID fieldID, real_t offset)
+   LeesEdwardsUpdate(const std::shared_ptr< StructuredBlockForest >& blocks, BlockDataID fieldID, real_t offset)
       : blocks_(blocks), fieldID_(fieldID), offset_(offset)
    {}
 
