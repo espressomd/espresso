@@ -82,7 +82,7 @@ template <class F, class Tuple> void for_each(F &&f, Tuple &&t) {
 }
 
 namespace detail {
-template <size_t I, size_t N> struct find_if_impl {
+template <std::size_t I, std::size_t N> struct find_if_impl {
   template <class Pred, class Tuple, class F>
   static constexpr bool eval(Pred &&pred, Tuple const &t, F &&f) {
     using Utils::get;
@@ -98,7 +98,7 @@ template <size_t I, size_t N> struct find_if_impl {
   }
 };
 
-template <size_t N> struct find_if_impl<N, N> {
+template <std::size_t N> struct find_if_impl<N, N> {
   template <class Pred, class Tuple, class F>
   static constexpr bool eval(Pred, Tuple, F) {
     return false;
@@ -129,7 +129,7 @@ constexpr auto find_if(Pred &&pred, Tuple const &t, F &&f) {
 }
 
 namespace detail {
-template <template <class> class Predicate, size_t I, size_t N>
+template <template <class> class Predicate, std::size_t I, std::size_t N>
 struct filter_impl {
   template <class Tuple>
   constexpr static auto get(Tuple const &t, std::true_type) {
@@ -154,7 +154,7 @@ struct filter_impl {
   }
 };
 
-template <template <class> class Predicate, size_t I>
+template <template <class> class Predicate, std::size_t I>
 struct filter_impl<Predicate, I, I> {
   template <class Tuple> constexpr static auto eval(Tuple const &) {
     return std::make_tuple();

@@ -19,6 +19,7 @@
 #ifndef UTILS_INDEX_HPP
 #define UTILS_INDEX_HPP
 
+#include <cassert>
 #include <cstddef>
 #include <iterator>
 #include <numeric>
@@ -37,7 +38,8 @@ namespace Utils {
  * @retval the flat index
  */
 template <typename T, typename U>
-inline size_t ravel_index(const T &unravelled_indices, const U &dimensions) {
+inline std::size_t ravel_index(const T &unravelled_indices,
+                               const U &dimensions) {
   const auto n_dims = unravelled_indices.size();
   if (n_dims != dimensions.size()) {
     throw std::invalid_argument(

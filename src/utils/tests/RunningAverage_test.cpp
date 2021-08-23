@@ -81,7 +81,8 @@ BOOST_AUTO_TEST_CASE(simple_variance_check) {
 
 BOOST_AUTO_TEST_CASE(mean_and_variance) {
   Utils::Statistics::RunningAverage<double> running_average;
-  const size_t sample_size = sizeof(RandomSequence::values) / sizeof(double);
+  const std::size_t sample_size =
+      sizeof(RandomSequence::values) / sizeof(double);
 
   for (auto const &val : RandomSequence::values) {
     running_average.add_sample(val);

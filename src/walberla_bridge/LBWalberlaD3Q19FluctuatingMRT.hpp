@@ -1,7 +1,23 @@
+/*
+ * Copyright (C) 2020 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #include "LBWalberlaImpl.hpp"
-#include "relaxation_rates.hpp"
-
-#ifdef __AVX__
+#ifdef __AVX2__
 #include "generated_kernels/CollideSweepThermalizedAVX.h"
 #define CollisionModelName walberla::pystencils::CollideSweepThermalizedAVX
 #include "generated_kernels/FluctuatingMRTLatticeModelAvx.h"
@@ -16,68 +32,20 @@
 namespace walberla {
 class LBWalberlaD3Q19FluctuatingMRT
     : public LBWalberlaImpl<LatticeModelName, CollisionModelName> {
-
   using LatticeModel = LatticeModelName;
 
 public:
-  void construct_lattice_model(double viscosity, double kT, unsigned int seed) {
-    const real_t omega = shear_mode_relaxation_rate(viscosity);
-    const real_t omega_odd = odd_mode_relaxation_rate(omega);
-    m_lattice_model = std::make_shared<LatticeModel>(
-        LatticeModel(m_last_applied_force_field_id, real_c(kT),
-                     omega,     // bulk
-                     omega,     // even
-                     omega_odd, // odd
-                     omega,     // shear
-                     seed,      // RNG seed
-                     0          // time_step
-                     ));
-  };
-  void set_viscosity(double viscosity) override {
-    auto *lm = dynamic_cast<LatticeModel *>(m_lattice_model.get());
-    const real_t omega = shear_mode_relaxation_rate(viscosity);
-    const real_t omega_odd = odd_mode_relaxation_rate(omega);
-    lm->omega_shear_ = omega;
-    lm->omega_odd_ = omega_odd;
-    lm->omega_even_ = omega;
-    lm->omega_bulk_ = omega;
-    on_lattice_model_change();
-  };
-  double get_viscosity() const override {
-    auto *lm = dynamic_cast<LatticeModel *>(m_lattice_model.get());
-    return viscosity_from_shear_relaxation_rate(lm->omega_shear_);
-  };
   LBWalberlaD3Q19FluctuatingMRT(double viscosity, double density,
                                 const Utils::Vector3i &grid_dimensions,
                                 const Utils::Vector3i &node_grid,
                                 int n_ghost_layers, double kT,
                                 unsigned int seed)
-      : LBWalberlaImpl(viscosity, grid_dimensions, node_grid, n_ghost_layers) {
-    m_kT = kT;
-    construct_lattice_model(viscosity, kT, seed);
+      : LBWalberlaImpl(viscosity, grid_dimensions, node_grid, n_ghost_layers,
+                       kT, seed) {
+    m_lattice_model = std::make_shared<LatticeModel>(
+        m_last_applied_force_field_id, real_c(kT), -1., -1., -1., -1., seed, 0);
     setup_with_valid_lattice_model(density, seed, 0u);
   };
-  void integrate() override {
-    m_time_loop->singleStep();
-    auto *lm = dynamic_cast<LatticeModel *>(m_lattice_model.get());
-    lm->time_step_ += 1;
-    on_lattice_model_change();
-  };
-  double get_kT() const override { return m_kT; };
-
-  uint64_t get_rng_state() const override {
-    auto *lm = dynamic_cast<LatticeModel *>(m_lattice_model.get());
-    return lm->time_step_;
-  }
-
-  void set_rng_state(uint64_t counter) override {
-    auto *lm = dynamic_cast<LatticeModel *>(m_lattice_model.get());
-    lm->time_step_ = counter;
-    on_lattice_model_change();
-  }
-
-private:
-  double m_kT;
 };
 
 } // namespace walberla

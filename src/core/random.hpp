@@ -107,18 +107,18 @@ auto philox_4_uint64s(uint64_t counter, uint32_t seed, int key1, int key2 = 0) {
  *
  * @return Vector of uniform random numbers.
  */
-template <RNGSalt salt, size_t N = 3,
+template <RNGSalt salt, std::size_t N = 3,
           std::enable_if_t<(N > 1) and (N <= 4), int> = 0>
 auto noise_uniform(uint64_t counter, uint32_t seed, int key1, int key2 = 0) {
 
   auto const integers = philox_4_uint64s<salt>(counter, seed, key1, key2);
   Utils::VectorXd<N> noise{};
   std::transform(integers.begin(), integers.begin() + N, noise.begin(),
-                 [](size_t value) { return Utils::uniform(value) - 0.5; });
+                 [](std::size_t value) { return Utils::uniform(value) - 0.5; });
   return noise;
 }
 
-template <RNGSalt salt, size_t N, std::enable_if_t<N == 1, int> = 0>
+template <RNGSalt salt, std::size_t N, std::enable_if_t<N == 1, int> = 0>
 auto noise_uniform(uint64_t counter, uint32_t seed, int key1, int key2 = 0) {
 
   auto const integers = philox_4_uint64s<salt>(counter, seed, key1, key2);
@@ -145,17 +145,17 @@ auto noise_uniform(uint64_t counter, uint32_t seed, int key1, int key2 = 0) {
  * @return Vector of Gaussian random numbers.
  *
  */
-template <RNGSalt salt, size_t N = 3,
+template <RNGSalt salt, std::size_t N = 3,
           class = std::enable_if_t<(N >= 1) and (N <= 4)>>
 auto noise_gaussian(uint64_t counter, uint32_t seed, int key1, int key2 = 0) {
 
   auto const integers = philox_4_uint64s<salt>(counter, seed, key1, key2);
   static const double epsilon = std::numeric_limits<double>::min();
 
-  constexpr size_t M = (N <= 2) ? 2 : 4;
+  constexpr std::size_t M = (N <= 2) ? 2 : 4;
   Utils::VectorXd<M> u{};
   std::transform(integers.begin(), integers.begin() + M, u.begin(),
-                 [](size_t value) {
+                 [](std::size_t value) {
                    auto u = Utils::uniform(value);
                    return (u < epsilon) ? epsilon : u;
                  });

@@ -87,8 +87,8 @@ namespace Mpiio {
  * \param MPI_T The MPI_Datatype corresponding to the template parameter T.
  */
 template <typename T>
-static void mpiio_dump_array(const std::string &fn, T *arr, size_t len,
-                             size_t pref, MPI_Datatype MPI_T) {
+static void mpiio_dump_array(const std::string &fn, T *arr, std::size_t len,
+                             std::size_t pref, MPI_Datatype MPI_T) {
   MPI_File f;
   int ret;
 
@@ -139,8 +139,9 @@ static void dump_info(const std::string &fn, unsigned fields) {
   for (int i = 0; i < bonded_ia_params.size(); ++i) {
     npartners[i] = number_of_partners(bonded_ia_params[i]);
   }
-  auto ia_params_size = static_cast<size_t>(bonded_ia_params.size());
-  success = success && (fwrite(&ia_params_size, sizeof(size_t), 1, f) == 1);
+  auto ia_params_size = static_cast<std::size_t>(bonded_ia_params.size());
+  success =
+      success && (fwrite(&ia_params_size, sizeof(std::size_t), 1, f) == 1);
   success =
       success && (fwrite(npartners.data(), sizeof(int), bonded_ia_params.size(),
                          f) == bonded_ia_params.size());
@@ -246,7 +247,7 @@ void mpi_mpiio_common_write(const char *filename, unsigned fields,
  * \param elem_sz Sizeof a single element
  * \return The number of elements stored binary in the file
  */
-static int get_num_elem(const std::string &fn, size_t elem_sz) {
+static int get_num_elem(const std::string &fn, std::size_t elem_sz) {
   // Could also be done via MPI_File_open, MPI_File_get_size,
   // MPI_File_close.
   struct stat st;
@@ -264,8 +265,8 @@ static int get_num_elem(const std::string &fn, size_t elem_sz) {
  *  have to match!
  */
 template <typename T>
-static void mpiio_read_array(const std::string &fn, T *arr, size_t len,
-                             size_t pref, MPI_Datatype MPI_T) {
+static void mpiio_read_array(const std::string &fn, T *arr, std::size_t len,
+                             std::size_t pref, MPI_Datatype MPI_T) {
   MPI_File f;
   int ret;
 

@@ -30,7 +30,7 @@
 
 #include <stdexcept>
 
-Debye_hueckel_params dh_params{};
+DebyeHueckelParameters dh_params{};
 
 void dh_set_params(double kappa, double r_cut) {
   if (kappa < 0.0)

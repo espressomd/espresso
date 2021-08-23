@@ -63,7 +63,8 @@ cpdef handle_errors(msg)
 
 cdef extern from "utils/Vector.hpp" namespace "Utils":
     cppclass Vector2d:
-        pass
+        double & operator[](int i)
+        double * data()
     cppclass Vector4d:
         double & operator[](int i)
         double * data()

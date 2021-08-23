@@ -40,6 +40,9 @@
 #include <boost/range/adaptor/reversed.hpp>
 #include <boost/range/algorithm.hpp>
 
+#include <algorithm>
+#include <cassert>
+#include <iterator>
 #include <memory>
 #include <vector>
 

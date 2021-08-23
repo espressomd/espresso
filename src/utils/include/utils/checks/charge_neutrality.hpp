@@ -28,13 +28,13 @@
 
 namespace Utils {
 template <typename ParticleRange>
-bool check_charge_neutrality(ParticleRange &prange,
-                             double relative_tolerance = 1e-12) {
+bool check_charge_neutrality(ParticleRange &prange) {
   using namespace boost::accumulators;
   using KahanSum = accumulator_set<double, features<tag::sum_kahan>>;
 
   KahanSum q_sum;
   auto q_min = std::numeric_limits<double>::infinity();
+  constexpr auto relative_tolerance = 2e-12;
 
   for (auto const &p : prange) {
     auto const &q = p.p.q;

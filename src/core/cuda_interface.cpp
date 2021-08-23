@@ -31,6 +31,8 @@
 #include <utils/mpi/gather_buffer.hpp>
 #include <utils/mpi/scatter_buffer.hpp>
 
+#include <vector>
+
 /* TODO: We should only transfer data for enabled methods,
          not for those that are barely compiled in. (fw)
 */

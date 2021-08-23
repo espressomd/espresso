@@ -33,6 +33,10 @@
 #include "utils/Vector.hpp"
 #include "utils/matrix.hpp"
 
+#include <cassert>
+#include <cstddef>
+#include <type_traits>
+
 /**
  * @file quaternion.hpp
  *

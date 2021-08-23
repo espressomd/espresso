@@ -59,14 +59,14 @@ public:
       return box_geo.get_mi_vector(traits.position(particles[index + 1]),
                                    traits.position(particles[index]));
     };
-    for (size_t i = 0; i < no_of_bonds; ++i) {
+    for (std::size_t i = 0; i < no_of_bonds; ++i) {
       auto const tmp = get_bond_vector(i);
       bond_vectors[i] = tmp / tmp.norm();
     }
     // calculate angles between neighbouring bonds, next neighbours, etc...
-    for (size_t i = 0; i < no_of_angles; ++i) {
+    for (std::size_t i = 0; i < no_of_angles; ++i) {
       auto average = 0.0;
-      for (size_t j = 0; j < no_of_angles - i; ++j) {
+      for (std::size_t j = 0; j < no_of_angles - i; ++j) {
         average += bond_vectors[j] * bond_vectors[j + i + 1];
       }
       angles[i] = average / static_cast<double>(no_of_angles - i);
@@ -74,7 +74,7 @@ public:
 
     return angles;
   }
-  std::vector<size_t> shape() const override {
+  std::vector<std::size_t> shape() const override {
     assert(ids().size() >= 2);
     return {ids().size() - 2};
   }

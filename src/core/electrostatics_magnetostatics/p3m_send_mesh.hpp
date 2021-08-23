@@ -67,7 +67,7 @@ class p3m_send_mesh {
 
 public:
   void resize(const boost::mpi::communicator &comm,
-              const p3m_local_mesh &local_mesh);
+              const P3MLocalMesh &local_mesh);
   void gather_grid(Utils::Span<double *> meshes,
                    const boost::mpi::communicator &comm,
                    const Utils::Vector3i &dim);

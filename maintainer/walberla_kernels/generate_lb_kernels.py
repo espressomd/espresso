@@ -33,7 +33,7 @@ from lbmpy_walberla.additional_data_handler import UBBAdditionalDataHandler
 import relaxation_rates
 from lbmpy.fieldaccess import CollideOnlyInplaceAccessor
 from lbmpy.stencils import get_stencil
-from lbmpy.updatekernels import create_lbm_kernel, create_stream_pull_only_kernel
+from lbmpy.updatekernels import create_lbm_kernel, create_stream_pull_with_output_kernel
 from lbmpy.macroscopic_value_kernels import macroscopic_values_setter
 
 import lees_edwards
@@ -50,18 +50,9 @@ def adapt_pystencils():
     def new_add_pystencils_filters_to_jinja_env(jinja_env):
         # save original pystencils to adapt
         old_add_pystencils_filters_to_jinja_env(jinja_env)
-        old_generate_call = jinja_env.filters['generate_call']
         old_generate_members = jinja_env.filters['generate_members']
         old_generate_refs_for_kernel_parameters = jinja_env.filters[
             'generate_refs_for_kernel_parameters']
-
-        @jinja2.contextfilter
-        def new_generate_call(*args, **kwargs):
-            output = old_generate_call(*args, **kwargs)
-            function_call = output.split('\n')[-1]
-            if 'block_offset_0' in function_call:
-                output += '\nthis->time_step_++;'
-            return output
 
         @jinja2.contextfilter
         def new_generate_members(*args, **kwargs):
@@ -85,7 +76,6 @@ def adapt_pystencils():
             return output
 
         # replace pystencils
-        jinja_env.filters['generate_call'] = new_generate_call
         jinja_env.filters['generate_members'] = new_generate_members
         jinja_env.filters['generate_refs_for_kernel_parameters'] = new_generate_refs_for_kernel_parameters
 
@@ -139,15 +129,23 @@ def generate_fields(lb_method):
         layout=field_layout,
         index_shape=(q,)
     )
+    vel_field = ps.Field.create_generic(
+        'velocity',
+        dim,
+        dtype,
+        index_dimensions=1,
+        layout=field_layout,
+        index_shape=(dim,)
+    )
 
-    return src_field, dst_field
+    return src_field, dst_field, vel_field
 
 
 def generate_collision_sweep(
         ctx, lb_method, collision_rule, class_name, params):
 
     # Symbols for PDF (twice, due to double buffering)
-    src_field, dst_field = generate_fields(lb_method)
+    src_field, dst_field, _ = generate_fields(lb_method)
 
     # Generate collision kernel
     collide_update_rule = create_lbm_kernel(
@@ -162,15 +160,17 @@ def generate_collision_sweep(
 
 
 def generate_stream_sweep(ctx, lb_method, class_name, params):
-    dtype = "float64"
-    field_layout = "fzyx"
+    #dtype = "float64"
+    #field_layout = "fzyx"
 
     # Symbols for PDF (twice, due to double buffering)
-    src_field, dst_field = generate_fields(lb_method)
+    src_field, dst_field, velocity_field = generate_fields(lb_method)
 
     # Generate stream kernel
-    stream_update_rule = create_stream_pull_only_kernel(
-        lb_method.stencil, None, 'pdfs', 'pdfs_tmp', field_layout, dtype)
+    stream_update_rule = create_stream_pull_with_output_kernel(lb_method, src_field, dst_field,
+                                                               output={'velocity': velocity_field})
+    # stream_update_rule = create_stream_pull_only_kernel(
+    #    lb_method.stencil, None, 'pdfs', 'pdfs_tmp', field_layout, dtype)
     stream_ast = ps.create_kernel(stream_update_rule, **params)
     stream_ast.function_name = 'kernel_stream'
     stream_ast.assumed_inner_stride_one = True
@@ -179,26 +179,13 @@ def generate_stream_sweep(ctx, lb_method, class_name, params):
 
 
 def generate_setters(lb_method):
-    dtype = "float64"
-    field_layout = "fzyx"
-    dim = len(lb_method.stencil[0])
-
-    vel_field = ps.Field.create_generic(
-        'velocity',
-        dim,
-        dtype,
-        index_dimensions=1,
-        layout=field_layout,
-        index_shape=(dim,)
-    )
-
-    pdfs = generate_fields(lb_method)[0]
+    pdf_field, _, vel_field = generate_fields(lb_method)
 
     initial_rho = sp.Symbol('rho_0')
     pdfs_setter = macroscopic_values_setter(lb_method,
                                             initial_rho,
                                             vel_field.center_vector,
-                                            pdfs.center_vector)
+                                            pdf_field.center_vector)
     return pdfs_setter
 
 
@@ -231,12 +218,7 @@ with CodeGeneration() as ctx:
 
     # generate initial densities
     pdfs_setter = generate_setters(method)
-    codegen.generate_sweep(ctx, "InitialPDFsSetter", pdfs_setter, params)
-    codegen.generate_sweep(
-        ctx,
-        "InitialPDFsSetterAVX",
-        pdfs_setter,
-        params_vec)
+    codegen.generate_sweep(ctx, "InitialPDFsSetter", pdfs_setter)
 
     # generate unthermalized collision rule
     u_p = lees_edwards.velocity_shift(1, 64)

@@ -62,17 +62,15 @@ std::pair<double, double> WidomInsertion::measure_excess_chemical_potential(
   restore_properties(hidden_particles_properties, number_of_saved_properties);
   // 3) restore previously changed reactant particles
   restore_properties(changed_particles_properties, number_of_saved_properties);
-  std::vector<double> exponential = {
-      exp(-1.0 / temperature * (E_pot_new - E_pot_old))};
-  current_reaction.accumulator_exponentials(exponential);
+  std::vector<double> exponential = {exp(-1.0 / kT * (E_pot_new - E_pot_old))};
+  current_reaction.accumulator_potential_energy_difference_exponential(
+      exponential);
 
   // calculate mean excess chemical potential and standard error of the mean
-  std::pair<double, double> result = std::make_pair(
-      -temperature * log(current_reaction.accumulator_exponentials.mean()[0]),
-      std::abs(-temperature /
-               current_reaction.accumulator_exponentials.mean()[0] *
-               current_reaction.accumulator_exponentials.std_error()[0]));
-  return result;
+  auto const &accumulator =
+      current_reaction.accumulator_potential_energy_difference_exponential;
+  return {-kT * log(accumulator.mean()[0]),
+          std::abs(-kT / accumulator.mean()[0] * accumulator.std_error()[0])};
 }
 
 } // namespace ReactionMethods

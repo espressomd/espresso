@@ -17,23 +17,21 @@
 
 import unittest as ut
 import importlib_wrapper
-import os
+import numpy as np
 
-tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@TUTORIALS_DIR@/active_matter/solutions/flow_field.py", gpu=True,
-    cmd_arguments=["pusher", 5.0], PROD_STEPS=100, PROD_LENGTH=50)
+# make simulation deterministic
+np.random.seed(42)
+
+benchmark, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
+    "@BENCHMARKS_DIR@/ferrofluid.py", measurement_steps=100, n_iterations=2,
+    cmd_arguments=["--particles_per_core", "400"], min_skin=0.225, max_skin=0.225,
+    dp3m_params={'prefactor': 1, 'accuracy': 1e-4, 'cao': 7, 'r_cut': 5.193,
+                 'mesh': [20, 20, 20], 'alpha': 0.64788, 'tune': False})
 
 
 @skipIfMissingFeatures
-class Tutorial(ut.TestCase):
-    system = tutorial.system
-
-    def test_file_generation(self):
-        for name in ["trajectory.dat", "position_0.vtk", "lb_velocity_0.vtu"]:
-            filepath = os.path.join(tutorial.vtk_outdir, name)
-            self.assertTrue(
-                os.path.isfile(filepath),
-                filepath + " not created")
+class Sample(ut.TestCase):
+    system = benchmark.system
 
 
 if __name__ == "__main__":

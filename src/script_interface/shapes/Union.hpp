@@ -27,6 +27,10 @@
 
 #include <shapes/Union.hpp>
 
+#include <memory>
+#include <string>
+#include <vector>
+
 namespace ScriptInterface {
 namespace Shapes {
 

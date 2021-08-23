@@ -28,6 +28,8 @@
 
 #include <memory>
 #include <stdexcept>
+#include <string>
+#include <vector>
 
 namespace ScriptInterface {
 namespace Observables {

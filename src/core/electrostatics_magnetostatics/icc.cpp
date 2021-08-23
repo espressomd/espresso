@@ -48,7 +48,9 @@
 
 #include <cmath>
 #include <cstdlib>
+#include <stdexcept>
 #include <tuple>
+#include <vector>
 
 icc_struct icc_cfg;
 

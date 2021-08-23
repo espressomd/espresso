@@ -55,9 +55,9 @@ def missing_features(*args):
 
     if len(args) == 1 and not isinstance(
             args[0], str) and hasattr(args[0], "__iter__"):
-        return set(args[0]) - set(features())
+        return sorted(set(args[0]) - set(features()))
 
-    return set(args) - set(features())
+    return sorted(set(args) - set(features()))
 
 
 def assert_features(*args):

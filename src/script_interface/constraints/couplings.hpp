@@ -37,6 +37,7 @@
 #include "script_interface/ScriptInterface.hpp"
 
 #include <unordered_map>
+#include <vector>
 
 namespace ScriptInterface {
 namespace Constraints {

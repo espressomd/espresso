@@ -23,6 +23,9 @@
 
 #include <script_interface/packed_variant.hpp>
 
+#include <unordered_map>
+#include <vector>
+
 BOOST_AUTO_TEST_CASE(object_id_) {
   using ScriptInterface::object_id;
 

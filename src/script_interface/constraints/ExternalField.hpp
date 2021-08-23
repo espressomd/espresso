@@ -34,6 +34,7 @@
 #include <utils/Vector.hpp>
 
 #include <memory>
+#include <string>
 
 namespace ScriptInterface {
 namespace Constraints {

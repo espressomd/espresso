@@ -92,6 +92,7 @@ set_default_value make_check_python true
 set_default_value make_check_tutorials false
 set_default_value make_check_samples false
 set_default_value make_check_benchmarks false
+set_default_value with_fast_math false
 set_default_value with_cuda false
 set_default_value with_cuda_compiler "nvcc"
 set_default_value with_cxx_standard 14
@@ -115,6 +116,10 @@ if [ "${with_coverage}" = true ]; then
 fi
 if [ "${with_coverage}" = true ] || [ "${with_coverage_python}" = true ] ; then
     bash <(curl -s https://codecov.io/env) 1>/dev/null 2>&1
+fi
+
+if [ "${with_fast_math}" = true ]; then
+    cmake_param_protected="-DCMAKE_CXX_FLAGS=-ffast-math -fno-finite-math-only"
 fi
 
 cmake_params="-DCMAKE_BUILD_TYPE=${build_type} -DCMAKE_CXX_STANDARD=${with_cxx_standard} -DWARNINGS_ARE_ERRORS=ON ${cmake_params}"
@@ -187,7 +192,7 @@ outp srcdir builddir \
     with_coverage with_coverage_python \
     with_ubsan with_asan \
     check_odd_only \
-    with_static_analysis myconfig \
+    with_static_analysis with_fast_math myconfig \
     build_procs check_procs with_walberla \
     with_cuda with_cuda_compiler with_ccache
 
@@ -215,9 +220,12 @@ else
     fi
     echo "Copying ${myconfig}.hpp to ${builddir}/myconfig.hpp..."
     cp "${myconfig_file}" "${builddir}/myconfig.hpp"
+    if [ "${with_fast_math}" = true ]; then
+        sed -i '/#define ADDITIONAL_CHECKS/d' "${builddir}/myconfig.hpp"
+    fi
 fi
 
-cmake ${cmake_params} "${srcdir}" || exit 1
+cmake ${cmake_params} "${cmake_param_protected}" "${srcdir}" || exit 1
 end "CONFIGURE"
 
 # BUILD

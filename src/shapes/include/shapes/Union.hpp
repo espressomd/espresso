@@ -22,9 +22,14 @@
 
 #include <boost/algorithm/cxx11/all_of.hpp>
 
-#include <memory>
-
 #include "Shape.hpp"
+
+#include <algorithm>
+#include <limits>
+#include <memory>
+#include <stdexcept>
+#include <utility>
+#include <vector>
 
 namespace Shapes {
 

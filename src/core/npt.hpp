@@ -33,7 +33,7 @@
 #include <utils/Vector.hpp>
 
 /** Parameters of the isotropic NpT-integration scheme. */
-typedef struct {
+struct NptIsoParameters {
   /** mass of a virtual piston representing the shaken box */
   double piston;
   /** inverse of \ref piston */
@@ -74,9 +74,9 @@ typedef struct {
    *  the variable box_l
    */
   int non_const_dim;
-} nptiso_struct;
+};
 
-extern nptiso_struct nptiso;
+extern NptIsoParameters nptiso;
 
 /** @brief NpT initializer.
  *
@@ -94,7 +94,7 @@ void nptiso_init(double ext_pressure, double piston, bool xdir_rescale,
                  bool ydir_rescale, bool zdir_rescale, bool cubic_box);
 
 /** @name NpT geometry bitmasks.
- *  Allowed values for @ref nptiso_struct::geometry.
+ *  Allowed values for @ref NptIsoParameters::geometry.
  */
 /**@{*/
 #define NPTGEOM_XDIR 1

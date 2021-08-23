@@ -18,35 +18,47 @@
 import unittest as ut
 import importlib_wrapper
 import os
-import numpy as np
-
-np.random.seed(40)
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@TUTORIALS_DIR@/active_matter/solutions/rectification_simulation.py",
-    cmd_arguments=[6.0], PROD_STEPS=100, PROD_LENGTH=100)
+    "@TUTORIALS_DIR@/active_matter/active_matter.py", 
+    ED_N_SAMPLING_STEPS=100000,
+    RECT_N_SAMPLES=150,
+    HYDRO_N_STEPS=100
+)
 
 
 @skipIfMissingFeatures
-class Tutorial(ut.TestCase):
+class TestActMat(ut.TestCase):
     system = tutorial.system
 
+    def test_enhanced_diffusion(self):
+        """ Check that the active particle diffuses faster than the passive one
+        """
+        self.assertGreater(
+            tutorial.msd_result[-1, 0], tutorial.msd_result[-1, 1])
+
     def test_rectification(self):
-        x = tutorial.system.part[:].pos[:, 0]
-        left_chamber = np.sum(x < tutorial.LENGTH / 2.0)
-        right_chamber = np.sum(x > tutorial.LENGTH / 2.0)
-        excess = (right_chamber - left_chamber) * 100. / tutorial.N_PART
-        # expecting at least 5% excess due to rectification
-        self.assertGreater(excess, 5.0)
+        """ Check that the center of mass is in the right half of the box
+        """
+        self.assertGreater(tutorial.com_deviations[-1], 0)
+
+    def test_hydrodynamics(self):
+        """ Check that the particle is moving up and the fluid down
+        """
+        self.assertGreater(
+            tutorial.system.analysis.linear_momentum(
+                include_lbfluid=False)[2], 0)
+        self.assertLess(
+            tutorial.system.analysis.linear_momentum(
+                include_particles=False)[2], 0)
 
     def test_file_generation(self):
-        # test .vtk/.dat files exist
-        for name in ["CMS_{}.dat", "points_{}.vtk"]:
-            filepath = os.path.join(tutorial.outdir, name.format(tutorial.vel))
+        for name in ["position_0.vtk", "lb_velocity_0.vtu"]:
+            filepath = os.path.join(tutorial.vtk_outdir, name)
             self.assertTrue(
                 os.path.isfile(filepath),
                 filepath + " not created")
 
 
 if __name__ == "__main__":
-    ut.main()
+    ut.main() 

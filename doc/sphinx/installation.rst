@@ -44,7 +44,7 @@ C++ Compiler
 
 Boost
     A number of advanced C++ features used by |es| are provided by Boost.
-    We strongly recommend to use at least Boost 1.67.
+    We strongly recommend to use at least Boost 1.71.
 
 FFTW
     For some algorithms (P\ :math:`^3`\ M), |es| needs the FFTW library
@@ -86,8 +86,8 @@ are required:
 
 .. code-block:: bash
 
-    sudo apt install python3-matplotlib python3-scipy python3-pint ipython3 jupyter-notebook
-    pip3 install --user 'jupyter_contrib_nbextensions==0.5.1' \
+    sudo apt install python3-matplotlib python3-pint ipython3 jupyter-notebook
+    pip3 install --user 'jupyter_contrib_nbextensions==0.5.1' 'python3-scipy>=1.4.0' \
                         'sphinx>=1.6.7,!=2.1.0,!=3.0.0' 'sphinxcontrib-bibtex>=0.3.5' \
                         'MDAnalysis>=1.0.0'
     jupyter contrib nbextension install --user
@@ -182,7 +182,7 @@ Run the following commands:
 .. code-block:: bash
 
     sudo port selfupdate
-    sudo port install cmake python37 py37-cython py37-numpy \
+    sudo port install cmake python37 py37-cython py37-numpy py37-scipy \
       openmpi-default fftw-3 +openmpi boost +openmpi +python37 \
       doxygen py37-opengl py37-sphinx gsl hdf5 +openmpi \
       py37-matplotlib py37-ipython py37-jupyter
@@ -199,7 +199,7 @@ Run the following commands:
 .. code-block:: bash
 
     brew install cmake python cython boost boost-mpi fftw \
-      doxygen gsl numpy ipython jupyter
+      doxygen gsl numpy scipy ipython jupyter
     brew install hdf5-mpi
     brew link --force cython
     pip install PyOpenGL matplotlib
@@ -294,7 +294,13 @@ General features
 
    .. seealso:: :ref:`Electrostatics`
 
--  ``MMM1D_GPU``
+-  ``MMM1D_GPU``: This enables MMM1D on GPU. It is faster than the CPU version
+   by several orders of magnitude, but has float precision instead of double
+   precision.
+
+-  ``MMM1D_MACHINE_PREC``: This enables high-precision Bessel functions
+   for MMM1D on CPU. Comes with a 60% slow-down penalty. The low-precision
+   functions are in most cases precise enough and are enabled by default.
 
 -  ``DIPOLES`` This activates the dipole-moment property of particles; In addition,
    the various magnetostatics algorithms, such as P3M are switched on.
@@ -669,6 +675,38 @@ If you have multiple versions of the CUDA library installed, you can select the
 correct one with ``CUDA_BIN_PATH=/usr/local/cuda-10.0 cmake .. -DWITH_CUDA=ON``
 (with Clang as the CUDA compiler, you also need to override its default CUDA
 path with ``-DCMAKE_CXX_FLAGS=--cuda-path=/usr/local/cuda-10.0``).
+
+.. _Build types and compiler flags:
+
+Build types and compiler flags
+""""""""""""""""""""""""""""""
+
+The build type is controlled by ``-D CMAKE_BUILD_TYPE=<type>`` where
+``<type>`` can take one of the following values:
+
+* ``Release``: for production use: disables assertions and debug information,
+  enables ``-O3`` optimization (this is the default)
+* ``RelWithAssert``: for debugging purposes: enables assertions and
+  ``-O3`` optimization (use this to track the source of a fatal error)
+* ``Debug``: for debugging in GDB
+* ``Coverage``: for code coverage
+
+Cluster users and HPC developers may be interested in manually editing the
+``cxx_interface`` variable in the top-level ``CMakeLists.txt`` file for
+finer control over compiler flags. The variable declaration is followed
+by a series of conditionals to enable or disable compiler-specific flags.
+Compiler flags passed to CMake via the ``-DCMAKE_CXX_FLAGS`` option
+(such as ``cmake . -DCMAKE_CXX_FLAGS="-ffast-math -fno-finite-math-only"``)
+will appear in the compiler command before the flags in ``cxx_interface``,
+and will therefore have lower precedence.
+
+Be aware that fast-math mode can break |es|. It is incompatible with the
+``ADDITIONAL_CHECKS`` feature due to the loss of precision in the LB code
+on CPU. The Clang 10 compiler breaks field couplings with ``-ffast-math``.
+The Intel compiler enables the ``-fp-model fast=1`` flag by default;
+it can be disabled by adding the ``-fp-model=strict`` flag.
+
+|es| currently doesn't fully support link-time optimization (LTO).
 
 
 .. _Configuring without a network connection:
