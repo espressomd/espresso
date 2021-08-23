@@ -283,87 +283,91 @@ protected:
     const BlockDataID m_pdf_field_id;
   };
 
-class LeesEdwardsUpdate {
- public:
-   LeesEdwardsUpdate(const std::shared_ptr< StructuredBlockForest >& blocks, BlockDataID fieldID, real_t offset)
-      : blocks_(blocks), fieldID_(fieldID), offset_(offset)
-   {}
+  class LeesEdwardsUpdate {
+  public:
+    LeesEdwardsUpdate(const std::shared_ptr<StructuredBlockForest> &blocks,
+                      BlockDataID fieldID, real_t offset)
+        : blocks_(blocks), fieldID_(fieldID), offset_(offset) {}
 
-   void operator()(IBlock* block) {
-      // TODO should dimension_x contain the ghost layers or not. At the moment value is 64 with GL it is 66. In the
-      // lbmpy Leed Edwards this is mixed. Probably not good
-
+    void operator()(IBlock *block) {
+      // TODO should dimension_x contain the ghost layers or not. At the moment
+      // value is 64 with GL it is 66. In the lbmpy Leed Edwards this is mixed.
+      // Probably not good
 
       // Top cells
-      if (blocks_->atDomainYMaxBorder(*block))
-      {
-         uint_t dimension_x = blocks_->getNumberOfXCells(*block);
-         real_t weight      = fmod(offset_ + real_c(dimension_x), 1.0);
+      if (blocks_->atDomainYMaxBorder(*block)) {
+        uint_t dimension_x = blocks_->getNumberOfXCells(*block);
+        real_t weight = fmod(offset_ + real_c(dimension_x), 1.0);
 
-         auto pdf_field = block->template getData<PdfField>(fieldID_);
+        // TODO: Add temporary pdfs to interpolate from in order to avoid race
+        // condition
+        auto pdf_field = block->template getData<PdfField>(fieldID_);
 
-         CellInterval ci;
-         pdf_field->getGhostRegion(stencil::N, ci, 1, true);
+        CellInterval ci;
+        pdf_field->getGhostRegion(stencil::N, ci, 1, true);
 
-         for (auto cell = ci.begin(); cell != ci.end(); ++cell)
-         {
-            cell_idx_t x = cell->x();
+        for (auto cell = ci.begin(); cell != ci.end(); ++cell) {
+          cell_idx_t x = cell->x();
 
-            uint_t ind1 = uint_c(floor(x - offset_)) % dimension_x;
-            uint_t ind2 = uint_c(ceil(x - offset_)) % dimension_x;
+          uint_t ind1 = uint_c(floor(x - offset_)) % dimension_x;
+          uint_t ind2 = uint_c(ceil(x - offset_)) % dimension_x;
 
-            for (uint_t q = 0; q < LatticeModel::Stencil::Q; ++q)
-            {
-               pdf_field->get(*cell, 0) = (1 - weight) * pdf_field->get(cell_idx_c(ind1), cell->y(), cell->z(), q) +
-                                          weight * pdf_field->get(cell_idx_c(ind2), cell->y(), cell->z(), q);
-            }
-         }
+          for (uint_t q = 0; q < LatticeModel::Stencil::Q; ++q) {
+            pdf_field->get(*cell, 0) =
+                (1 - weight) *
+                    pdf_field->get(cell_idx_c(ind1), cell->y(), cell->z(), q) +
+                weight *
+                    pdf_field->get(cell_idx_c(ind2), cell->y(), cell->z(), q);
+          }
+        }
       }
       // Bottom cells
-      if (blocks_->atDomainYMinBorder(*block))
-      {
-         uint_t dimension_x = blocks_->getNumberOfXCells(*block);
-         real_t weight      = fmod(offset_ + real_c(dimension_x), 1.0);
+      if (blocks_->atDomainYMinBorder(*block)) {
+        uint_t dimension_x = blocks_->getNumberOfXCells(*block);
+        real_t weight = fmod(offset_ + real_c(dimension_x), 1.0);
 
-         auto pdf_field = block->template getData<PdfField>(fieldID_);
+        // TODO: Add temporary pdfs to interpolate from in order to avoid race
+        // condition
+        auto pdf_field = block->template getData<PdfField>(fieldID_);
 
-         CellInterval ci;
-         pdf_field->getGhostRegion(stencil::S, ci, 1, true);
+        CellInterval ci;
+        pdf_field->getGhostRegion(stencil::S, ci, 1, true);
 
-         for (auto cell = ci.begin(); cell != ci.end(); ++cell)
-         {
-            cell_idx_t x = cell->x();
+        for (auto cell = ci.begin(); cell != ci.end(); ++cell) {
+          cell_idx_t x = cell->x();
 
-            uint_t ind1 = uint_c(floor(x + offset_)) % dimension_x;
-            uint_t ind2 = uint_c(ceil(x + offset_)) % dimension_x;
+          uint_t ind1 = uint_c(floor(x + offset_)) % dimension_x;
+          uint_t ind2 = uint_c(ceil(x + offset_)) % dimension_x;
 
-            for (uint_t q = 0; q < LatticeModel::Stencil::Q; ++q)
-            {
-               pdf_field->get(*cell, 0) = (1 - weight) * pdf_field->get(cell_idx_c(ind1), cell->y(), cell->z(), q) +
-                                          weight * pdf_field->get(cell_idx_c(ind2), cell->y(), cell->z(), q);
-            }
-         }
+          for (uint_t q = 0; q < LatticeModel::Stencil::Q; ++q) {
+            pdf_field->get(*cell, 0) =
+                (1 - weight) *
+                    pdf_field->get(cell_idx_c(ind1), cell->y(), cell->z(), q) +
+                weight *
+                    pdf_field->get(cell_idx_c(ind2), cell->y(), cell->z(), q);
+          }
+        }
       }
-   }
+    }
 
- private:
-   const std::shared_ptr< StructuredBlockForest >& blocks_;
-   BlockDataID fieldID_;
-   real_t offset_;
-};
+  private:
+    const std::shared_ptr<StructuredBlockForest> &blocks_;
+    BlockDataID fieldID_;
+    real_t offset_;
+  };
 
   // Lees-Edwards sweep
   std::shared_ptr<LeesEdwardsUpdate> m_lees_edwards_sweep;
+  boost::optional<LeesEdwardsCallbacks> m_lees_edwards_callbacks;
 
 public:
   LBWalberlaImpl(double viscosity, const Utils::Vector3i &grid_dimensions,
                  const Utils::Vector3i &node_grid, int n_ghost_layers,
                  double kT, unsigned int seed,
-                 bool lees_edwards_boundaries = true, real_t offset = 0.0)
+                 boost::optional<LeesEdwardsCallbacks> &lees_edwards_callbacks)
       : m_grid_dimensions(grid_dimensions), m_n_ghost_layers(n_ghost_layers),
         m_viscosity(viscosity), m_kT(kT), m_seed(seed),
-        m_lees_edwards_active(lees_edwards_boundaries),
-        m_lees_edwards_offset(offset) {
+        m_lees_edwards_callbacks(lees_edwards_callbacks) {
 
     if (m_n_ghost_layers <= 0)
       throw std::runtime_error("At least one ghost layer must be used");
@@ -419,9 +423,9 @@ public:
     }
 
     // Lees-Edwards
-    if (m_lees_edwards_active) {
+    if (m_lees_edwards_callbacks) {
       m_lees_edwards_sweep = std::make_shared<LeesEdwardsUpdate>(
-        m_blocks, m_pdf_field_id, m_lees_edwards_offset);
+          m_blocks, m_pdf_field_id, m_lees_edwards_callbacks->get_pos_offset());
     }
 
     // Register boundary handling
@@ -481,7 +485,7 @@ public:
       (*m_collision_model)(&*b);
     (*m_pdf_streaming_communication)();
 
-    if (m_lees_edwards_active) {
+    if (m_lees_edwards_callbacks) {
       for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
         (*m_lees_edwards_sweep)(&*b);
     }

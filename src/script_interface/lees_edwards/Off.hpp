@@ -2,6 +2,7 @@
 #define SCRIPT_INTERFACE_LEES_EDWARDS_OFF_HPP
 
 #include "config.hpp"
+#include "core/grid_based_algorithms/lb_walberla_instance.hpp"
 #include "core/lees_edwards.hpp"
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
@@ -11,8 +12,11 @@ namespace LeesEdwards {
 
 class Off : public Protocol {
 public:
-  Off()
-      : m_protocol{new ::LeesEdwards::ActiveProtocol{::LeesEdwards::Off()}} {};
+  Off() : m_protocol{new ::LeesEdwards::ActiveProtocol{::LeesEdwards::Off()}} {
+#ifdef WALBERLA
+    ::lees_edwards_active_protocol = m_protocol;
+#endif
+  }
   std::shared_ptr<::LeesEdwards::ActiveProtocol> protocol() override {
     return m_protocol;
   }

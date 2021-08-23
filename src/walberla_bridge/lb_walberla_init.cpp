@@ -34,18 +34,21 @@ void walberla_mpi_init() {
       walberla::mpi::Environment(argc, argv);
 }
 
-LBWalberlaBase *new_lb_walberla(double viscosity, double density,
-                                const Utils::Vector3i &grid_dimensions,
-                                const Utils::Vector3i &node_grid, double kT,
-                                unsigned int seed) {
+LBWalberlaBase *
+new_lb_walberla(double viscosity, double density,
+                const Utils::Vector3i &grid_dimensions,
+                const Utils::Vector3i &node_grid, double kT, unsigned int seed,
+                boost::optional<LeesEdwardsCallbacks> &lees_edwards_callbacks) {
 
   LBWalberlaBase *lb_walberla_instance;
   if (kT == 0.) { // un-thermalized LB
     lb_walberla_instance = new walberla::LBWalberlaD3Q19MRT(
-        viscosity, density, grid_dimensions, node_grid, 1, kT, seed);
+        viscosity, density, grid_dimensions, node_grid, 1, kT, seed,
+        lees_edwards_callbacks);
   } else { // thermalized LB
     lb_walberla_instance = new walberla::LBWalberlaD3Q19FluctuatingMRT(
-        viscosity, density, grid_dimensions, node_grid, 1, kT, seed);
+        viscosity, density, grid_dimensions, node_grid, 1, kT, seed,
+        lees_edwards_callbacks);
   }
   return lb_walberla_instance;
 }

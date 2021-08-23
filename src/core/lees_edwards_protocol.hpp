@@ -1,8 +1,13 @@
 #ifndef LEES_EDWARDS_PROTOCOL_HPP
 #define LEES_EDWARDS_PROTOCOL_HPP
 
-#include "boost/variant.hpp"
-#include "utils/Vector.hpp"
+#include "integrate.hpp"
+
+#include <utils/Vector.hpp>
+
+#include <boost/variant.hpp>
+
+#include <cmath>
 
 /** \file lees_edwards.hpp
  *

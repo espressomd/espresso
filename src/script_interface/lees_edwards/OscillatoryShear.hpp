@@ -1,4 +1,5 @@
 #include "config.hpp"
+#include "core/grid_based_algorithms/lb_walberla_instance.hpp"
 #include "core/lees_edwards.hpp"
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
@@ -18,6 +19,9 @@ public:
           boost::get<::LeesEdwards::OscillatoryShear>(*m_protocol).m_omega},
          {"time_0",
           boost::get<::LeesEdwards::OscillatoryShear>(*m_protocol).m_time_0}});
+#ifdef WALBERLA
+    ::lees_edwards_active_protocol = m_protocol;
+#endif
   }
   std::shared_ptr<::LeesEdwards::ActiveProtocol> protocol() override {
     return m_protocol;
