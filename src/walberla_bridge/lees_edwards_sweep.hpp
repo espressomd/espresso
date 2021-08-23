@@ -10,11 +10,10 @@
 #include "timeloop/SweepTimeloop.h"
 
 #include <memory>
-#include <math>
-
+#include <cmath>
+/*
 using namespace walberla;
 
-using PackInfo_T  = lbm::LeesEdwards_PackInfo;
 using flag_t      = walberla::uint8_t;
 using FlagField_T = FlagField< flag_t >;
 
@@ -38,6 +37,7 @@ class LeesEdwardsUpdate
          real_t weight      = fmod(offset_ + real_c(dimension_x), 1.0);
 
          auto pdf_field = block->getData< PdfField_T >(fieldID_);
+         // auto pdf_field = (*bc).block->template getData<PdfField>(m_pdf_field_id);
 
          CellInterval ci;
          pdf_field->getGhostRegion(stencil::N, ci, 1, true);
@@ -89,3 +89,4 @@ class LeesEdwardsUpdate
    real_t offset_;
 };
 
+*/
