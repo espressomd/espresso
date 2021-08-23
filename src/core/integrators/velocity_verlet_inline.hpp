@@ -38,7 +38,6 @@
 inline void velocity_verlet_propagate_vel_pos(const ParticleRange &particles,
                                               double time_step) {
 
-  auto const skin2 = Utils::sqr(0.5 * skin);
   for (auto &p : particles) {
 #ifdef ROTATION
     propagate_omega_quat_particle(p, time_step);
@@ -57,10 +56,6 @@ inline void velocity_verlet_propagate_vel_pos(const ParticleRange &particles,
         p.r.p[j] += time_step * p.m.v[j];
       }
     }
-
-    /* Verlet criterion check*/
-    if ((p.r.p - p.l.p_old).norm2() > skin2)
-      cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
   }
 }
 

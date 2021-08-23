@@ -84,6 +84,31 @@ std::vector<std::pair<int, int>> get_pairs_filtered(double const distance,
   return ret;
 }
 
+namespace boost {
+namespace serialization {
+template <class Archive>
+void serialize(Archive &ar, PairInfo p, const unsigned int /* version */) {
+  ar &p.id1;
+  ar &p.id2;
+  ar &p.pos1;
+  ar &p.pos2;
+  ar &p.vec21;
+}
+} // namespace serialization
+} // namespace boost
+
+std::vector<PairInfo> non_bonded_loop_trace() {
+  std::vector<PairInfo> ret;
+  auto pair_kernel = [&ret](Particle const &p1, Particle const &p2,
+                            Distance const &d) {
+    ret.emplace_back(p1.p.identity, p2.p.identity, p1.r.p, p2.r.p, d.vec21);
+  };
+
+  cell_structure.non_bonded_loop(pair_kernel);
+
+  return ret;
+}
+
 std::vector<std::pair<int, int>> get_pairs(double const distance) {
   return get_pairs_filtered(distance, [](Particle const &p) { return true; });
 }
@@ -142,8 +167,22 @@ mpi_get_pairs_of_types(double const distance, std::vector<int> const &types) {
   return pairs;
 }
 
+void non_bonded_loop_trace_local() {
+  auto pairs = non_bonded_loop_trace();
+  Utils::Mpi::gather_buffer(pairs, comm_cart);
+}
+
+REGISTER_CALLBACK(non_bonded_loop_trace_local)
+
+std::vector<PairInfo> mpi_non_bonded_loop_trace() {
+  mpi_call(non_bonded_loop_trace_local);
+  auto pairs = non_bonded_loop_trace();
+  Utils::Mpi::gather_buffer(pairs, comm_cart);
+  return pairs;
+}
+
 void mpi_resort_particles_local(int global_flag, int) {
-  cell_structure.resort_particles(global_flag);
+  cell_structure.resort_particles(global_flag, box_geo);
 
   boost::mpi::gather(
       comm_cart, static_cast<int>(cell_structure.local_particles().size()), 0);
@@ -153,7 +192,7 @@ REGISTER_CALLBACK(mpi_resort_particles_local)
 
 std::vector<int> mpi_resort_particles(int global_flag) {
   mpi_call(mpi_resort_particles_local, global_flag, 0);
-  cell_structure.resort_particles(global_flag);
+  cell_structure.resort_particles(global_flag, box_geo);
 
   clear_particle_node();
 
@@ -214,7 +253,7 @@ void cells_update_ghosts(unsigned data_parts) {
                      : CELL_NEIGHBOR_EXCHANGE;
 
     /* Resort cell system */
-    cell_structure.resort_particles(global);
+    cell_structure.resort_particles(global, box_geo);
     cell_structure.ghosts_count();
     cell_structure.ghosts_update(data_parts);
 

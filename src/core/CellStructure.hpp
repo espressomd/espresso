@@ -34,6 +34,7 @@
 #include "bond_error.hpp"
 #include "ghosts.hpp"
 
+#include "utils/math/sqr.hpp"
 #include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/container/static_vector.hpp>
 #include <boost/iterator/indirect_iterator.hpp>
@@ -45,6 +46,8 @@
 #include <memory>
 #include <utility>
 #include <vector>
+
+extern BoxGeometry box_geo;
 
 /** Cell Structure */
 enum CellStructureType : int {
@@ -361,6 +364,23 @@ public:
    */
   void clear_resort_particles() { m_resort_particles = Cells::RESORT_NONE; }
 
+  /** Checks whether a particle has moved further than the skin, thus
+  requiring a resort
+
+  @param particles Particles to check
+  @param skin Skin
+  @param additional_offset Offset which is added to the distance the particle
+  has travelled when comparing to skin/2 (e.g., for Lees Edwards BC).
+
+  */
+  bool check_resort_required(const ParticleRange &particles, double skin,
+                             const Utils::Vector3d &additional_offset) {
+    double lim = Utils::sqr(skin / 2) - additional_offset.norm2();
+    return std::any_of(
+        particles.begin(), particles.end(),
+        [lim](const auto &p) { return ((p.r.p - p.l.p_old).norm2() > lim); });
+  }
+
   /**
    * @brief Synchronize number of ghosts.
    */
@@ -458,7 +478,7 @@ public:
   /**
    * @brief Resort particles.
    */
-  void resort_particles(int global_flag);
+  void resort_particles(int global_flag, const BoxGeometry &box);
 
 private:
   /** @brief Set the particle decomposition, keeping the particles. */
@@ -519,9 +539,14 @@ private:
     if (maybe_box) {
       Algorithm::link_cell(
           first, last,
-          [&kernel, df = detail::MinimalImageDistance{*maybe_box}](
+          [&kernel, df = detail::MinimalImageDistance{box_geo}](
               Particle &p1, Particle &p2) { kernel(p1, p2, df(p1, p2)); });
     } else {
+      if (decomposition().box().type() != BoxType::CUBOID) {
+        throw std::runtime_error("Non-cuboid box type is not compatible with a "
+                                 "particle decomposition that relies on "
+                                 "EuclideanDistance for distance calculation.");
+      }
       Algorithm::link_cell(
           first, last,
           [&kernel, df = detail::EuclidianDistance{}](
@@ -555,7 +580,7 @@ private:
       auto const maybe_box = decomposition().minimum_image_distance();
       /* In this case the pair kernel is just run over the verlet list. */
       if (maybe_box) {
-        auto const distance_function = detail::MinimalImageDistance{*maybe_box};
+        auto const distance_function = detail::MinimalImageDistance{box_geo};
         for (auto &pair : m_verlet_list) {
           pair_kernel(*pair.first, *pair.second,
                       distance_function(*pair.first, *pair.second));

@@ -24,6 +24,8 @@
 #include "AtomDecomposition.hpp"
 #include "DomainDecomposition.hpp"
 
+#include "lees_edwards.hpp"
+
 #include <utils/contains.hpp>
 
 #include <algorithm>
@@ -220,7 +222,7 @@ struct UpdateParticleIndexVisitor {
 };
 } // namespace
 
-void CellStructure::resort_particles(int global_flag) {
+void CellStructure::resort_particles(int global_flag, const BoxGeometry &box) {
   invalidate_ghosts();
 
   static std::vector<ParticleChange> diff;
@@ -233,6 +235,7 @@ void CellStructure::resort_particles(int global_flag) {
   }
 
   m_rebuild_verlet_list = true;
+  LeesEdwards::on_resort(box);
 
 #ifdef ADDITIONAL_CHECKS
   check_particle_index();
