@@ -66,7 +66,6 @@
 #include "generated_kernels/InitialPDFsSetter.h"
 #include "generated_kernels/StreamSweep.h"
 #include "walberla_utils.hpp"
-#include "lees_edwards_sweep.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/interpolation/bspline_3d.hpp>
