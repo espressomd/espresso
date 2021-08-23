@@ -132,16 +132,11 @@ where nearest and next nearest neighbor interactions along a chain of bonded
 particles have to be omitted since they are included in the bonding potentials.
 Exclusions do not apply to the short range part of electrostatics and magnetostatics methods, e.g. to P3M.
 
-::
+To create exclusions for particles pairs 0 and 1::
 
     system.part[0].add_exclusion(1)
 
-
-Create exclusions for particles pairs 0 and 1.
-
-To delete the exclusion, simply use
-
-::
+To delete the exclusion::
 
     system.part[0].delete_exclusion(1)
 
