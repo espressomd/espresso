@@ -17,7 +17,11 @@ template <typename FloatType = double>
 class FFT : public PoissonSolver<FloatType> {
 private:
   using PS = PoissonSolver<FloatType>;
-  using PotentialField = typename PS::PotentialField;
+  using PS::get_blockforest;
+  using PS::ghost_communication;
+  using PS::m_potential_field_id;
+  using typename PS::ChargeField;
+  using typename PS::PotentialField;
 
   std::unique_ptr<fft::FourierTransform<PotentialField>> m_ft;
 
@@ -27,7 +31,7 @@ private:
 
 public:
   explicit FFT(const WalberlaBlockForest *blockforest) : PS(blockforest) {
-    m_blocks = PS::get_blockforest()->get_blocks();
+    m_blocks = get_blockforest()->get_blocks();
 
     Vector3<uint_t> dim(m_blocks->getNumberOfXCells(),
                         m_blocks->getNumberOfYCells(),
@@ -43,24 +47,23 @@ public:
     };
 
     m_ft = std::make_unique<fft::FourierTransform<PotentialField>>(
-        m_blocks, PS::m_potential_field_id, greens);
+        m_blocks, m_potential_field_id, greens);
   }
 
   void reset_charge_field() override {
     // the FFT-solver re-uses the potential field for the charge
-    for (auto &block : *PS::get_blockforest()->get_blocks()) {
-      auto field =
-          block.template getData<PotentialField>(PS::m_potential_field_id);
+    for (auto &block : *get_blockforest()->get_blocks()) {
+      auto field = block.template getData<PotentialField>(m_potential_field_id);
       WALBERLA_FOR_ALL_CELLS_XYZ(field, field->get(x, y, z) = 0.;)
     }
   }
 
   void add_charge_to_field(const BlockDataID &id, FloatType valency) override {
     // the FFT-solver re-uses the potential field for the charge
-    for (auto &block : *PS::get_blockforest()->get_blocks()) {
+    for (auto &block : *get_blockforest()->get_blocks()) {
       auto charge_field =
-          block.template getData<PotentialField>(PS::m_potential_field_id);
-      auto density_field = block.template getData<typename PS::ChargeField>(id);
+          block.template getData<PotentialField>(m_potential_field_id);
+      auto density_field = block.template getData<ChargeField>(id);
       WALBERLA_FOR_ALL_CELLS_XYZ(charge_field,
                                  charge_field->get(x, y, z) +=
                                  valency * density_field->get(x, y, z);)
@@ -73,7 +76,7 @@ public:
 
   void solve() override {
     (*m_ft)();
-    PS::ghost_communication();
+    ghost_communication();
   }
 };
 } // namespace walberla
