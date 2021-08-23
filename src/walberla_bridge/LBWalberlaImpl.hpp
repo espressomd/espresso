@@ -212,8 +212,6 @@ protected:
   double m_viscosity;
   double m_kT;
   double m_seed;
-  bool m_lees_edwards_active;
-  real_t m_lees_edwards_offset;
 
   // Block data access handles
   BlockDataID m_pdf_field_id;
@@ -286,18 +284,19 @@ protected:
   class LeesEdwardsUpdate {
   public:
     LeesEdwardsUpdate(const std::shared_ptr<StructuredBlockForest> &blocks,
-                      BlockDataID fieldID, real_t offset)
-        : blocks_(blocks), fieldID_(fieldID), offset_(offset) {}
+                      BlockDataID fieldID, LeesEdwardsCallbacks callbacks)
+        : blocks_(blocks), fieldID_(fieldID), m_callbacks(callbacks) {}
 
     void operator()(IBlock *block) {
       // TODO should dimension_x contain the ghost layers or not. At the moment
       // value is 64 with GL it is 66. In the lbmpy Leed Edwards this is mixed.
       // Probably not good
+      auto const offset = m_callbacks->get_pos_offset();
 
       // Top cells
       if (blocks_->atDomainYMaxBorder(*block)) {
         uint_t dimension_x = blocks_->getNumberOfXCells(*block);
-        real_t weight = fmod(offset_ + real_c(dimension_x), 1.0);
+        real_t weight = fmod(offset + real_c(dimension_x), 1.0);
 
         // TODO: Add temporary pdfs to interpolate from in order to avoid race
         // condition
@@ -309,8 +308,8 @@ protected:
         for (auto cell = ci.begin(); cell != ci.end(); ++cell) {
           cell_idx_t x = cell->x();
 
-          uint_t ind1 = uint_c(floor(x - offset_)) % dimension_x;
-          uint_t ind2 = uint_c(ceil(x - offset_)) % dimension_x;
+          uint_t ind1 = uint_c(floor(x - offset)) % dimension_x;
+          uint_t ind2 = uint_c(ceil(x - offset)) % dimension_x;
 
           for (uint_t q = 0; q < LatticeModel::Stencil::Q; ++q) {
             pdf_field->get(*cell, 0) =
@@ -324,7 +323,7 @@ protected:
       // Bottom cells
       if (blocks_->atDomainYMinBorder(*block)) {
         uint_t dimension_x = blocks_->getNumberOfXCells(*block);
-        real_t weight = fmod(offset_ + real_c(dimension_x), 1.0);
+        real_t weight = fmod(offset + real_c(dimension_x), 1.0);
 
         // TODO: Add temporary pdfs to interpolate from in order to avoid race
         // condition
@@ -336,8 +335,8 @@ protected:
         for (auto cell = ci.begin(); cell != ci.end(); ++cell) {
           cell_idx_t x = cell->x();
 
-          uint_t ind1 = uint_c(floor(x + offset_)) % dimension_x;
-          uint_t ind2 = uint_c(ceil(x + offset_)) % dimension_x;
+          uint_t ind1 = uint_c(floor(x + offset)) % dimension_x;
+          uint_t ind2 = uint_c(ceil(x + offset)) % dimension_x;
 
           for (uint_t q = 0; q < LatticeModel::Stencil::Q; ++q) {
             pdf_field->get(*cell, 0) =
@@ -353,7 +352,7 @@ protected:
   private:
     const std::shared_ptr<StructuredBlockForest> &blocks_;
     BlockDataID fieldID_;
-    real_t offset_;
+    boost::optional<LeesEdwardsCallbacks> m_callbacks;
   };
 
   // Lees-Edwards sweep
@@ -425,7 +424,7 @@ public:
     // Lees-Edwards
     if (m_lees_edwards_callbacks) {
       m_lees_edwards_sweep = std::make_shared<LeesEdwardsUpdate>(
-          m_blocks, m_pdf_field_id, m_lees_edwards_callbacks->get_pos_offset());
+          m_blocks, m_pdf_field_id, *m_lees_edwards_callbacks);
     }
 
     // Register boundary handling

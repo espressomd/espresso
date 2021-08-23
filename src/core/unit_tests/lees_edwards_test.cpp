@@ -137,4 +137,4 @@ BOOST_AUTO_TEST_CASE(protocols) {
                     std::numeric_limits<double>::epsilon());
   BOOST_CHECK_CLOSE(get_shear_velocity(3.3, osc), a * o * cos(o * (3.3 - t0)),
                     std::numeric_limits<double>::epsilon());
-};
+}
