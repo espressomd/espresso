@@ -93,12 +93,15 @@ The Mayavi visualizer is created with the following syntax:
 :class:`espressomd.visualization.mayaviLive()`
 
 Required parameters:
-    * ``system``: The :class:`espressomd.System() <espressomd.system.System>` object.
+
+* ``system``: The :class:`espressomd.System() <espressomd.system.System>` object.
+
 Optional keywords:
-    * ``particle_sizes``:
-        * ``"auto"`` (default): The Lennard-Jones sigma value of the self-interaction is used for the particle diameter.
-        * ``callable``: A lambda function with one argument. Internally, the numerical particle type is passed to the lambda function to determine the particle radius.
-        * ``list``: A list of particle radii, indexed by the particle type.
+
+* ``particle_sizes``:
+    * ``"auto"`` (default): The Lennard-Jones sigma value of the self-interaction is used for the particle diameter.
+    * ``callable``: A lambda function with one argument. Internally, the numerical particle type is passed to the lambda function to determine the particle radius.
+    * ``list``: A list of particle radii, indexed by the particle type.
 
 .. _OpenGL visualizer:
 
@@ -111,9 +114,12 @@ The optional keywords in ``**kwargs`` are used to adjust the appearance of the v
 The parameters have suitable default values for most simulations.
 
 Required parameters:
-    * ``system``: The :class:`espressomd.System() <espressomd.system.System>` object.
+
+* ``system``: The :class:`espressomd.System() <espressomd.system.System>` object.
+
 Optional keywords:
-    * Have a look at the attribute list in :class:`espressomd.visualization.openGLLive()`
+
+* Have a look at the attribute list in :class:`espressomd.visualization.openGLLive()`
 
 
 .. note::
@@ -223,10 +229,10 @@ Visualize vectorial properties
 Most vectorial particle properties can be visualized by 3D-arrows on the
 particles:
 
-    * ``ext_force``: An external force. Activate with the keyword ``ext_force_arrows = True``.
-    * ``f``: The force acting on the particle. Activate with the keyword ``force_arrows = True``.
-    * ``v``: The velocity of the particle. Activate with the keyword ``velocity_arrows = True``.
-    * ``director``: A vector associated with the orientation of the particle. Activate with the keyword ``director_arrows = True``.
+* ``ext_force``: An external force. Activate with the keyword ``ext_force_arrows = True``.
+* ``f``: The force acting on the particle. Activate with the keyword ``force_arrows = True``.
+* ``v``: The velocity of the particle. Activate with the keyword ``velocity_arrows = True``.
+* ``director``: A vector associated with the orientation of the particle. Activate with the keyword ``director_arrows = True``.
 
 Arrow colors, scales and radii can be adjusted. Again, the lists specifying
 these quantities are indexed circularly by the numerical particle type. The
@@ -274,17 +280,17 @@ Controls
 
 The camera can be controlled via mouse and keyboard:
 
-    * hold left button: rotate the system
-    * hold right button: translate the system
-    * hold middle button: zoom / roll
-    * mouse wheel / key pair TG: zoom
-    * WASD-Keyboard control (WS: move forwards/backwards, AD: move sidewards)
-    * Key pairs QE, RF, ZC: rotate the system
-    * Double click on a particle: Show particle information
-    * Double click in empty space: Toggle system information
-    * Left/Right arrows: Cycle through particles
-    * Space: If started with ``run(n)``, this pauses the simulation
-    * Enter: Creates a snapshot of the current window and saves it to :file:`<scriptname>_n.png` (with incrementing ``n``)
+* hold left button: rotate the system
+* hold right button: translate the system
+* hold middle button: zoom / roll
+* mouse wheel / key pair TG: zoom
+* WASD-Keyboard control (WS: move forwards/backwards, AD: move sidewards)
+* Key pairs QE, RF, ZC: rotate the system
+* Double click on a particle: Show particle information
+* Double click in empty space: Toggle system information
+* Left/Right arrows: Cycle through particles
+* Space: If started with ``run(n)``, this pauses the simulation
+* Enter: Creates a snapshot of the current window and saves it to :file:`<scriptname>_n.png` (with incrementing ``n``)
 
 Additional input functionality for mouse and keyboard is possible by assigning
 callbacks to specified keyboard or mouse buttons. This may be useful for

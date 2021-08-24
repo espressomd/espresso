@@ -48,17 +48,17 @@ create a wall shape you could do::
 
 Available shapes are listed below.
 
-    - :class:`espressomd.shapes.Wall`
-    - :class:`espressomd.shapes.Cylinder`
-    - :class:`espressomd.shapes.Ellipsoid`
-    - :class:`espressomd.shapes.Rhomboid`
-    - :class:`espressomd.shapes.SimplePore`
-    - :class:`espressomd.shapes.Slitpore`
-    - :class:`espressomd.shapes.Sphere`
-    - :class:`espressomd.shapes.SpheroCylinder`
-    - :class:`espressomd.shapes.Torus`
-    - :class:`espressomd.shapes.HollowConicalFrustum`
-    - :class:`espressomd.shapes.Union`
+- :class:`espressomd.shapes.Wall`
+- :class:`espressomd.shapes.Cylinder`
+- :class:`espressomd.shapes.Ellipsoid`
+- :class:`espressomd.shapes.Rhomboid`
+- :class:`espressomd.shapes.SimplePore`
+- :class:`espressomd.shapes.Slitpore`
+- :class:`espressomd.shapes.Sphere`
+- :class:`espressomd.shapes.SpheroCylinder`
+- :class:`espressomd.shapes.Torus`
+- :class:`espressomd.shapes.HollowConicalFrustum`
+- :class:`espressomd.shapes.Union`
 
 
 .. _Adding shape-based constraints to the system:
@@ -453,7 +453,7 @@ are described in the shape's class :class:`espressomd.shapes.HollowConicalFrustu
    :alt: Visualization a HollowConicalFrustum shape with central angle
    :align: center
    :height: 6.00000cm
-   
+
 .. figure:: figures/conical_frustum.png
    :alt: Schematic for the HollowConicalFrustum shape with labeled geometrical parameters.
    :align: center

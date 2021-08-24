@@ -159,7 +159,7 @@ Coupling LB to a MD simulation
 
 MD particles can be coupled to a LB fluid through frictional coupling. The friction force
 
-  .. math:: F_{i,\text{frict}} = - \gamma (v_i(t)-u(x_i(t),t))
+.. math:: F_{i,\text{frict}} = - \gamma (v_i(t)-u(x_i(t),t))
 
 depends on the particle velocity :math:`v` and the fluid velocity :math:`u`. It acts both
 on the particle and the fluid (in opposite direction). Because the fluid is also affected,
@@ -295,8 +295,8 @@ The feature ``CUDA`` allows the use of Lees-Edwards boundary conditions. Our imp
 Electrohydrodynamics
 --------------------
 
-        .. note::
-           This needs the feature ``LB_ELECTROHYDRODYNAMICS``.
+.. note::
+   This needs the feature ``LB_ELECTROHYDRODYNAMICS``.
 
 If the feature is activated, the lattice-Boltzmann code can be
 used to implicitly model surrounding salt ions in an external electric

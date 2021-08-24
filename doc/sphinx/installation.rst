@@ -534,18 +534,18 @@ directory. Suppose that you have a source directory :file:`$srcdir` and two
 build directories :file:`$builddir1` and :file:`$builddir2` that contain
 different configuration headers:
 
-*  :file:`$builddir1/myconfig.hpp`:
+* :file:`$builddir1/myconfig.hpp`:
 
   .. code-block:: c++
 
-    #define ELECTROSTATICS
-    #define LENNARD_JONES
+      #define ELECTROSTATICS
+      #define LENNARD_JONES
 
-*  :file:`$builddir2/myconfig.hpp`:
+* :file:`$builddir2/myconfig.hpp`:
 
   .. code-block:: c++
 
-    #define LJCOS
+      #define LJCOS
 
 Then you can simply compile two different versions of |es| via:
 

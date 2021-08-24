@@ -97,26 +97,26 @@ The checkpointing instance itself will also be restored. I.e., the same variable
 
 Be aware of the following limitations:
 
-  * Checkpointing makes use of the ``pickle`` python package. Objects will only be restored as far as they support pickling. This is the case for Python's basic data types, ``numpy`` arrays and many other objects. Still, pickling support cannot be taken for granted.
+* Checkpointing makes use of the ``pickle`` python package. Objects will only be restored as far as they support pickling. This is the case for Python's basic data types, ``numpy`` arrays and many other objects. Still, pickling support cannot be taken for granted.
 
-  * Pickling support of the :class:`espressomd.system.System` instance and contained objects such as bonded and non-bonded interactions and electrostatics methods. However, there are many more combinations of active interactions and algorithms than can be tested.
+* Pickling support of the :class:`espressomd.system.System` instance and contained objects such as bonded and non-bonded interactions and electrostatics methods. However, there are many more combinations of active interactions and algorithms than can be tested.
 
-  * Checkpointing only supports recursion on the head node. It is therefore
-    impossible to checkpoint a :class:`espressomd.system.System` instance that
-    contains LB boundaries, constraints or auto-update accumulators, when the
-    simulation is running with 2 or more MPI nodes.
+* Checkpointing only supports recursion on the head node. It is therefore
+  impossible to checkpoint a :class:`espressomd.system.System` instance that
+  contains LB boundaries, constraints or auto-update accumulators, when the
+  simulation is running with 2 or more MPI nodes.
 
-  * The active actors, i.e., the content of ``system.actors``, are checkpointed. For lattice-Boltzmann fluids, this only includes the parameters such as the lattice constant (``agrid``). The actual flow field has to be saved separately with the lattice-Boltzmann specific methods
-    :meth:`espressomd.lb.HydrodynamicInteraction.save_checkpoint`
-    and loaded via :meth:`espressomd.lb.HydrodynamicInteraction.load_checkpoint` after restoring the checkpoint.
+* The active actors, i.e., the content of ``system.actors``, are checkpointed. For lattice-Boltzmann fluids, this only includes the parameters such as the lattice constant (``agrid``). The actual flow field has to be saved separately with the lattice-Boltzmann specific methods
+  :meth:`espressomd.lb.HydrodynamicInteraction.save_checkpoint`
+  and loaded via :meth:`espressomd.lb.HydrodynamicInteraction.load_checkpoint` after restoring the checkpoint.
 
-  * References between Python objects are not maintained during checkpointing. For example, if an instance of a shape and an instance of a constraint containing the shape are checkpointed, these two objects are equal before checkpointing but independent copies which have the same parameters after restoring the checkpoint. Changing one will no longer affect the other.
+* References between Python objects are not maintained during checkpointing. For example, if an instance of a shape and an instance of a constraint containing the shape are checkpointed, these two objects are equal before checkpointing but independent copies which have the same parameters after restoring the checkpoint. Changing one will no longer affect the other.
 
-  * The state of the cell system as well as the MPI node grid are checkpointed. Therefore, checkpoints can only be loaded, when the script runs on the same number of MPI ranks.
+* The state of the cell system as well as the MPI node grid are checkpointed. Therefore, checkpoints can only be loaded, when the script runs on the same number of MPI ranks.
 
-  * Checkpoints are not compatible between different |es| versions.
+* Checkpoints are not compatible between different |es| versions.
 
-  * Checkpoints may depend on the presence of other Python modules at specific versions. It may therefore not be possible to load a checkpoint in a different environment than where it was loaded.
+* Checkpoints may depend on the presence of other Python modules at specific versions. It may therefore not be possible to load a checkpoint in a different environment than where it was loaded.
 
 For additional methods of the checkpointing class, see :class:`espressomd.checkpointing.Checkpoint`.
 
@@ -151,7 +151,7 @@ respective hdf5-file. This may, for example, look like:
     h5 = espressomd.io.writer.h5md.H5md(file_path="trajectory.h5")
 
 An optional argument to the constructor of :class:`espressomd.io.writer.h5md.H5md` is
-an instance of :class:`espressomd.io.writer.h5md.UnitSystem` which encapsulates 
+an instance of :class:`espressomd.io.writer.h5md.UnitSystem` which encapsulates
 physical units for time, mass, length and electrical charge.	
 
 If a file at the given filepath exists and has a valid H5MD structure,
@@ -225,14 +225,14 @@ Here, :file:`/tmp/mydata` is the prefix used for several files. The call will ou
 particle positions, velocities, types and their bonds to the following files in
 folder :file:`/tmp`:
 
-    - :file:`mydata.head`
-    - :file:`mydata.id`
-    - :file:`mydata.pos`
-    - :file:`mydata.pref`
-    - :file:`mydata.type`
-    - :file:`mydata.vel`
-    - :file:`mydata.boff`
-    - :file:`mydata.bond`
+- :file:`mydata.head`
+- :file:`mydata.id`
+- :file:`mydata.pos`
+- :file:`mydata.pref`
+- :file:`mydata.type`
+- :file:`mydata.vel`
+- :file:`mydata.boff`
+- :file:`mydata.bond`
 
 Depending on the chosen output, not all of these files might be created.
 To read these in again, simply call :meth:`espressomd.io.mpiio.Mpiio.read`. It has the same signature as
