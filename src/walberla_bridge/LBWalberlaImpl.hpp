@@ -224,6 +224,10 @@ private:
   FloatType getDensity(const BlockAndCell &bc) const;
   FloatType getDensityAndVelocity(const BlockAndCell &bc,
                                   Vector3<real_t> &velocity) const;
+  FloatType getDensityAndVelocity(const PdfField *pdf_field,
+                                  const VectorField *force_field, cell_idx_t x,
+                                  cell_idx_t y, cell_idx_t z,
+                                  Vector3<real_t> &velocity) const;
   void setDensityAndVelocity(const BlockAndCell &bc,
                              Vector3<real_t> const &velocity, FloatType rho);
   Matrix3<real_t> getPressureTensor(const BlockAndCell &bc) const;
@@ -319,11 +323,9 @@ public:
 
     // Init and register fields
     m_pdf_field_id = field::addToStorage<PdfField>(
-        m_blocks, "pdfs", FloatType{0}, field::fzyx, field::fzyx,
-        m_n_ghost_layers);
+        m_blocks, "pdfs", FloatType{0}, field::fzyx, m_n_ghost_layers);
     m_pdf_tmp_field_id = field::addToStorage<PdfField>(
-        m_blocks, "pdfs_tmp", FloatType{0}, field::fzyx, field::fzyx,
-        m_n_ghost_layers);
+        m_blocks, "pdfs_tmp", FloatType{0}, field::fzyx, m_n_ghost_layers);
     m_last_applied_force_field_id = field::addToStorage<VectorField>(
         m_blocks, "force field", FloatType{0}, field::fzyx, m_n_ghost_layers);
     m_force_to_be_applied_id = field::addToStorage<VectorField>(
@@ -369,9 +371,9 @@ public:
     m_pdf_streaming_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<PdfField>>(
             m_pdf_field_id, uint_t(m_n_ghost_layers)));
-    //    m_pdf_streaming_communication->addPackInfo(
-    //        std::make_shared<field::communication::PackInfo<VectorField>>(
-    //            m_last_applied_force_field_id));
+    m_pdf_streaming_communication->addPackInfo(
+        std::make_shared<field::communication::PackInfo<VectorField>>(
+            m_last_applied_force_field_id, uint_t(m_n_ghost_layers)));
 
     m_full_communication = std::make_shared<FullCommunicator>(m_blocks);
     m_full_communication->addPackInfo(
@@ -767,11 +769,12 @@ public:
     for (auto block_it = m_blocks->begin(); block_it != m_blocks->end();
          ++block_it) {
       auto pdf_field = block_it->template getData<PdfField>(m_pdf_field_id);
+      auto force_field =
+          block_it->template getData<VectorField>(m_last_applied_force_field_id);
       Vector3<FloatType> local_v;
       WALBERLA_FOR_ALL_CELLS_XYZ(pdf_field, {
-        auto bc =
-            get_block_and_cell({x, y, z}, false, m_blocks, n_ghost_layers());
-        FloatType local_dens = getDensityAndVelocity(*bc, local_v);
+        FloatType local_dens =
+            getDensityAndVelocity(pdf_field, force_field, x, y, z, local_v);
         mom += local_dens * local_v;
       });
     }
@@ -968,6 +971,17 @@ FloatType LBWalberlaImpl<CollisionModel, FloatType>::getDensityAndVelocity(
     velocity *= invRho;
   }
   */
+  return rho;
+}
+
+template <typename CollisionModel, typename FloatType>
+FloatType LBWalberlaImpl<CollisionModel, FloatType>::getDensityAndVelocity(
+    const PdfField *pdf_field, const VectorField *force_field,
+    const cell_idx_t x, const cell_idx_t y, const cell_idx_t z,
+    Vector3<real_t> &velocity) const {
+  const real_t rho =
+      lbm::MyDensityAndMomentumDensity<CollisionModel, FloatType>::get(
+          velocity, *force_field, *pdf_field, x, y, z);
   return rho;
 }
 
