@@ -58,8 +58,8 @@
 #include "lbm/lattice_model/D3Q19.h"
 #include "lbm/sweeps/CellwiseSweep.h"
 
-#include "stencil/D3Q27.h"
 #include "stencil/D3Q19.h"
+#include "stencil/D3Q27.h"
 
 #include "LBWalberlaBase.hpp"
 #include "ResetForce.hpp"
@@ -69,14 +69,16 @@
 #include "walberla_utils.hpp"
 
 #ifdef __AVX2__
-#include "generated_kernels/CollideSweepThermalizedAVX.h"
 #include "generated_kernels/CollideSweepAVX.h"
-#define CollisionModelNameThermalized walberla::pystencils::CollideSweepThermalizedAVX
+#include "generated_kernels/CollideSweepThermalizedAVX.h"
+#define CollisionModelNameThermalized                                          \
+  walberla::pystencils::CollideSweepThermalizedAVX
 #define CollisionModelNameUnthermalized walberla::pystencils::CollideSweepAVX
 #else
-#include "generated_kernels/CollideSweepThermalized.h"
 #include "generated_kernels/CollideSweep.h"
-#define CollisionModelNameThermalized walberla::pystencils::CollideSweepThermalized
+#include "generated_kernels/CollideSweepThermalized.h"
+#define CollisionModelNameThermalized                                          \
+  walberla::pystencils::CollideSweepThermalized
 #define CollisionModelNameUnthermalized walberla::pystencils::CollideSweep
 #endif
 
@@ -208,18 +210,23 @@ protected:
 
 private:
   // Backend classes can access private members:
-  template<class LM, class Enable> friend class  lbm::EquilibriumDistribution;
-  template<class LM, class Enable> friend struct lbm::Equilibrium;
-  template<class LM, class Enable> friend struct lbm::internal::AdaptVelocityToForce;
-  template<class LM, class Enable> friend struct lbm::Density;
-  template<class LM>               friend struct lbm::DensityAndVelocity;
-  template<class LM, class Enable> friend struct lbm::DensityAndMomentumDensity;
-  template<class LM, class Enable> friend struct lbm::MomentumDensity;
-  template<class LM, class It, class Enable> friend struct lbm::DensityAndVelocityRange;
-  FloatType getDensity(const BlockAndCell & bc) const;
-  FloatType getDensityAndVelocity(const BlockAndCell & bc, Vector3< real_t > & velocity) const;
-  void setDensityAndVelocity(const BlockAndCell & bc, Vector3< real_t > const & velocity, FloatType rho);
-  Matrix3< real_t >  getPressureTensor(const BlockAndCell & bc) const;
+  template <class LM, class Enable> friend class lbm::EquilibriumDistribution;
+  template <class LM, class Enable> friend struct lbm::Equilibrium;
+  template <class LM, class Enable>
+  friend struct lbm::internal::AdaptVelocityToForce;
+  template <class LM, class Enable> friend struct lbm::Density;
+  template <class LM> friend struct lbm::DensityAndVelocity;
+  template <class LM, class Enable>
+  friend struct lbm::DensityAndMomentumDensity;
+  template <class LM, class Enable> friend struct lbm::MomentumDensity;
+  template <class LM, class It, class Enable>
+  friend struct lbm::DensityAndVelocityRange;
+  FloatType getDensity(const BlockAndCell &bc) const;
+  FloatType getDensityAndVelocity(const BlockAndCell &bc,
+                                  Vector3<real_t> &velocity) const;
+  void setDensityAndVelocity(const BlockAndCell &bc,
+                             Vector3<real_t> const &velocity, FloatType rho);
+  Matrix3<real_t> getPressureTensor(const BlockAndCell &bc) const;
 
 protected:
   /** VTK writers that are executed automatically */
@@ -392,7 +399,8 @@ public:
     m_collision_model = generate_collide_sweep(seed, time_step);
 
     // Synchronize ghost layers
-    (*m_full_communication)(); // TODO: THIS ONE FAILS: nrOfGhostLayers == 0 when m_n_ghost_layers == 1
+    (*m_full_communication)(); // TODO: THIS ONE FAILS: nrOfGhostLayers == 0
+                               // when m_n_ghost_layers == 1
   }
 
   void integrate() override {
@@ -452,7 +460,8 @@ public:
       return false;
     // We have to set both, the pdf and the stored velocity field
     auto const density = getDensity(*bc);
-    auto const vel = Vector3<FloatType>{FloatType(v[0]), FloatType(v[1]), FloatType(v[2])};
+    auto const vel =
+        Vector3<FloatType>{FloatType(v[0]), FloatType(v[1]), FloatType(v[2])};
     setDensityAndVelocity(*bc, vel, density);
     auto vel_field =
         (*bc).block->template getData<VectorField>(m_velocity_field_id);
@@ -614,7 +623,7 @@ public:
     if (!bc)
       return false;
 
-    Vector3< real_t > vel;
+    Vector3<real_t> vel;
     getDensityAndVelocity(*bc, vel);
     setDensityAndVelocity(*bc, vel, density);
 
@@ -634,7 +643,7 @@ public:
   // Boundary related
   boost::optional<Utils::Vector3d>
   get_node_velocity_at_boundary(const Utils::Vector3i &node) const override {
-/* TODO
+    /* TODO
     auto bc = get_block_and_cell(node, true, m_blocks, n_ghost_layers());
     if (!bc)
       return {boost::none};
@@ -648,13 +657,13 @@ public:
     return {to_vector3d(
         boundary_handling->template getBoundaryCondition<UBB>(uid).getValue(
             (*bc).cell[0], (*bc).cell[1], (*bc).cell[2]))};
-*/
-      return {boost::none};
+    */
+    return {boost::none};
   }
 
   bool set_node_velocity_at_boundary(const Utils::Vector3i &node,
                                      const Utils::Vector3d &v) override {
-/* TODO
+    /* TODO
     auto bc = get_block_and_cell(node, true, m_blocks, n_ghost_layers());
     if (!bc)
       return false;
@@ -666,13 +675,13 @@ public:
         (*bc).block->template getData<Boundaries>(m_boundary_handling_id);
     boundary_handling->forceBoundary(UBB_flag, bc->cell[0], bc->cell[1],
                                      bc->cell[2], velocity);
-*/
+    */
     return true;
   }
 
   boost::optional<Utils::Vector3d>
   get_node_boundary_force(const Utils::Vector3i &node) const override {
-/* TODO
+    /* TODO
     auto bc = get_block_and_cell(node, true, m_blocks,
                                  n_ghost_layers()); // including ghosts
     if (!bc)
@@ -692,12 +701,12 @@ public:
     auto const &ubb = bh->template getBoundaryCondition<UBB>(uid);
     return {to_vector3d(
         ubb.getForce((*bc).cell.x(), (*bc).cell.y(), (*bc).cell.z()))};
-*/
-      return {boost::none};
+    */
+    return {boost::none};
   }
 
   bool remove_node_from_boundary(const Utils::Vector3i &node) override {
-/* TODO
+    /* TODO
     auto bc = get_block_and_cell(node, true, m_blocks, n_ghost_layers());
     if (!bc)
       return false;
@@ -705,14 +714,14 @@ public:
         (*bc).block->template getData<Boundaries>(m_boundary_handling_id);
     boundary_handling->removeBoundary((*bc).cell[0], (*bc).cell[1],
                                       (*bc).cell[2]);
-*/
+    */
     return true;
   }
 
   boost::optional<bool>
   get_node_is_boundary(const Utils::Vector3i &node,
                        bool consider_ghosts = false) const override {
-/* TODO
+    /* TODO
     auto bc =
         get_block_and_cell(node, consider_ghosts, m_blocks, n_ghost_layers());
     if (!bc)
@@ -721,12 +730,12 @@ public:
     auto *boundary_handling =
         (*bc).block->template getData<Boundaries>(m_boundary_handling_id);
     return {boundary_handling->isBoundary((*bc).cell)};
-*/
-      return {boost::none};
+    */
+    return {boost::none};
   }
 
   void clear_boundaries() override {
-/* TODO
+    /* TODO
     const CellInterval &domain_bb_in_global_cell_coordinates =
         m_blocks->getCellBBFromAABB(m_blocks->begin()->getAABB().getExtended(
             FloatType(n_ghost_layers())));
@@ -740,7 +749,7 @@ public:
 
       boundary_handling->fillWithDomain(domain_bb);
     }
-*/
+    */
   }
 
   // Pressure tensor
@@ -760,7 +769,8 @@ public:
       auto pdf_field = block_it->template getData<PdfField>(m_pdf_field_id);
       Vector3<FloatType> local_v;
       WALBERLA_FOR_ALL_CELLS_XYZ(pdf_field, {
-        auto bc = get_block_and_cell({x,y,z}, false, m_blocks, n_ghost_layers());
+        auto bc =
+            get_block_and_cell({x, y, z}, false, m_blocks, n_ghost_layers());
         FloatType local_dens = getDensityAndVelocity(*bc, local_v);
         mom += local_dens * local_v;
       });
@@ -935,38 +945,50 @@ public:
 namespace walberla {
 
 template <typename CollisionModel, typename FloatType>
-FloatType LBWalberlaImpl<CollisionModel, FloatType>::getDensity(const BlockAndCell & bc) const {
+FloatType LBWalberlaImpl<CollisionModel, FloatType>::getDensity(
+    const BlockAndCell &bc) const {
   auto pdf_field = bc.block->template getData<PdfField>(m_pdf_field_id);
-  return lbm::Density< LBWalberlaImpl<CollisionModel, FloatType>>::get( *this, *pdf_field, bc.cell.x(), bc.cell.y(), bc.cell.z() );
+  return lbm::Density<LBWalberlaImpl<CollisionModel, FloatType>>::get(
+      *this, *pdf_field, bc.cell.x(), bc.cell.y(), bc.cell.z());
 }
 
 template <typename CollisionModel, typename FloatType>
-FloatType LBWalberlaImpl<CollisionModel, FloatType>::getDensityAndVelocity(const BlockAndCell & bc, Vector3< real_t > & velocity) const {
+FloatType LBWalberlaImpl<CollisionModel, FloatType>::getDensityAndVelocity(
+    const BlockAndCell &bc, Vector3<real_t> &velocity) const {
   auto pdf_field = bc.block->template getData<PdfField>(m_pdf_field_id);
-  auto force_field = bc.block->template getData<VectorField>(
-      m_last_applied_force_field_id);
-  const real_t rho = lbm::MyDensityAndMomentumDensity<CollisionModel, FloatType>::get( velocity, *force_field, *pdf_field, bc.cell.x(), bc.cell.y(), bc.cell.z() );
-  if( false /*compressible*/ )
-  {
+  auto force_field =
+      bc.block->template getData<VectorField>(m_last_applied_force_field_id);
+  const real_t rho =
+      lbm::MyDensityAndMomentumDensity<CollisionModel, FloatType>::get(
+          velocity, *force_field, *pdf_field, bc.cell.x(), bc.cell.y(),
+          bc.cell.z());
+  /*
+  if (compressible) {
     const real_t invRho = FloatType(1) / rho;
     velocity *= invRho;
   }
+  */
   return rho;
 }
 
 template <typename CollisionModel, typename FloatType>
-void LBWalberlaImpl<CollisionModel, FloatType>::setDensityAndVelocity(const BlockAndCell & bc, Vector3< real_t > const & velocity, FloatType rho) {
+void LBWalberlaImpl<CollisionModel, FloatType>::setDensityAndVelocity(
+    const BlockAndCell &bc, Vector3<real_t> const &velocity, FloatType rho) {
   auto pdf_field = bc.block->template getData<PdfField>(m_pdf_field_id);
-  auto force_field = bc.block->template getData<VectorField>(
-      m_last_applied_force_field_id);
-  lbm::MyDensityAndVelocity<CollisionModel, FloatType >::set( *pdf_field, bc.cell.x(), bc.cell.y(), bc.cell.z(), *force_field, velocity, rho );
+  auto force_field =
+      bc.block->template getData<VectorField>(m_last_applied_force_field_id);
+  lbm::MyDensityAndVelocity<CollisionModel, FloatType>::set(
+      *pdf_field, bc.cell.x(), bc.cell.y(), bc.cell.z(), *force_field, velocity,
+      rho);
 }
 
 template <typename CollisionModel, typename FloatType>
-Matrix3< real_t > LBWalberlaImpl<CollisionModel, FloatType>::getPressureTensor(const BlockAndCell & bc) const {
-  Matrix3< real_t > pressureTensor;
+Matrix3<real_t> LBWalberlaImpl<CollisionModel, FloatType>::getPressureTensor(
+    const BlockAndCell &bc) const {
+  Matrix3<real_t> pressureTensor;
   auto pdf_field = bc.block->template getData<PdfField>(m_pdf_field_id);
-  lbm::PressureTensor<LBWalberlaImpl<CollisionModel, FloatType>>::get( pressureTensor,  *this, *pdf_field, bc.cell.x(), bc.cell.y(), bc.cell.z() );
+  lbm::PressureTensor<LBWalberlaImpl<CollisionModel, FloatType>>::get(
+      pressureTensor, *this, *pdf_field, bc.cell.x(), bc.cell.y(), bc.cell.z());
   return pressureTensor;
 }
 
