@@ -241,7 +241,7 @@ protected:
 
   // Member variables
   Utils::Vector3i m_grid_dimensions;
-  int m_n_ghost_layers;
+  unsigned int m_n_ghost_layers;
   double m_viscosity;
   double m_density;
   double m_kT;
@@ -294,10 +294,11 @@ public:
                  const Utils::Vector3i &grid_dimensions,
                  const Utils::Vector3i &node_grid, int n_ghost_layers,
                  double kT, unsigned int seed)
-      : m_grid_dimensions(grid_dimensions), m_n_ghost_layers(n_ghost_layers),
+      : m_grid_dimensions(grid_dimensions),
+        m_n_ghost_layers(static_cast<unsigned int>(n_ghost_layers)),
         m_viscosity(viscosity), m_density(density), m_kT(kT), m_seed(seed) {
 
-    if (m_n_ghost_layers <= 0)
+    if (n_ghost_layers <= 0)
       throw std::runtime_error("At least one ghost layer must be used");
     for (int i : {0, 1, 2}) {
       if (m_grid_dimensions[i] % node_grid[i] != 0) {
@@ -370,21 +371,21 @@ public:
         std::make_shared<PDFStreamingCommunicator>(m_blocks);
     m_pdf_streaming_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<PdfField>>(
-            m_pdf_field_id, uint_t(m_n_ghost_layers)));
+            m_pdf_field_id, m_n_ghost_layers));
     m_pdf_streaming_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<VectorField>>(
-            m_last_applied_force_field_id, uint_t(m_n_ghost_layers)));
+            m_last_applied_force_field_id, m_n_ghost_layers));
 
     m_full_communication = std::make_shared<FullCommunicator>(m_blocks);
     m_full_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<PdfField>>(
-            m_pdf_field_id, uint_t(m_n_ghost_layers)));
+            m_pdf_field_id, m_n_ghost_layers));
     m_full_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<VectorField>>(
-            m_last_applied_force_field_id, uint_t(m_n_ghost_layers)));
+            m_last_applied_force_field_id, m_n_ghost_layers));
     m_full_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<VectorField>>(
-            m_velocity_field_id, uint_t(m_n_ghost_layers)));
+            m_velocity_field_id, m_n_ghost_layers));
 
     // Instance the sweep responsible for force double buffering and
     // external forces
@@ -769,8 +770,8 @@ public:
     for (auto block_it = m_blocks->begin(); block_it != m_blocks->end();
          ++block_it) {
       auto pdf_field = block_it->template getData<PdfField>(m_pdf_field_id);
-      auto force_field =
-          block_it->template getData<VectorField>(m_last_applied_force_field_id);
+      auto force_field = block_it->template getData<VectorField>(
+          m_last_applied_force_field_id);
       Vector3<FloatType> local_v;
       WALBERLA_FOR_ALL_CELLS_XYZ(pdf_field, {
         FloatType local_dens =
@@ -798,7 +799,9 @@ public:
   }
 
   // Grid, domain, halo
-  int n_ghost_layers() const override { return m_n_ghost_layers; }
+  int n_ghost_layers() const override {
+    return static_cast<int>(m_n_ghost_layers);
+  }
   Utils::Vector3i get_grid_dimensions() const override {
     return m_grid_dimensions;
   }
@@ -831,7 +834,7 @@ public:
   node_indices_positions(bool include_ghosts = false) const override {
     int ghost_offset = 0;
     if (include_ghosts)
-      ghost_offset = m_n_ghost_layers;
+      ghost_offset = static_cast<int>(m_n_ghost_layers);
     std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>> res;
     for (auto block = m_blocks->begin(); block != m_blocks->end(); ++block) {
       auto left = block->getAABB().min();
