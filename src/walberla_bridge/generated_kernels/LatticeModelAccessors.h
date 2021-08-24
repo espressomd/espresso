@@ -343,7 +343,7 @@ struct Density<LBWalberlaImpl<LatticeModel, CollisionModel, FloatType>, void>
 
 
 template <typename LatticeModel, typename CollisionModel, typename FloatType>
-struct DensityAndVelocity<LBWalberlaImpl<LatticeModel, CollisionModel, FloatType>>
+struct MyDensityAndVelocity
 {
   template< typename FieldPtrOrIterator, typename VectorField_T >
     static void set( FieldPtrOrIterator & it, const VectorField_T & force,
@@ -354,9 +354,9 @@ struct DensityAndVelocity<LBWalberlaImpl<LatticeModel, CollisionModel, FloatType
         auto z = it.z();
 
         const double rho = rho_in;
-        const double u_0 = -0.5*force->get(x,y,z,0)/rho_in + u[0];
-        const double u_1 = -0.5*force->get(x,y,z,1)/rho_in + u[1];
-        const double u_2 = -0.5*force->get(x,y,z,2)/rho_in + u[2];
+        const double u_0 = -0.5*force.get(x,y,z,0)/rho_in + u[0];
+        const double u_1 = -0.5*force.get(x,y,z,1)/rho_in + u[1];
+        const double u_2 = -0.5*force.get(x,y,z,2)/rho_in + u[2];
         
 
         Equilibrium<LBWalberlaImpl<LatticeModel, CollisionModel, FloatType>>::set(it, Vector3<real_t>(u_0, u_1, u_2), rho);
@@ -367,9 +367,9 @@ struct DensityAndVelocity<LBWalberlaImpl<LatticeModel, CollisionModel, FloatType
                      const Vector3< real_t > & u = Vector3< real_t >( real_t(0.0) ), const real_t rho_in = real_t(1.0) )
     {
         const double rho = rho_in;
-        const double u_0 = -0.5*force->get(x,y,z,0)/rho_in + u[0];
-        const double u_1 = -0.5*force->get(x,y,z,1)/rho_in + u[1];
-        const double u_2 = -0.5*force->get(x,y,z,2)/rho_in + u[2];
+        const double u_0 = -0.5*force.get(x,y,z,0)/rho_in + u[0];
+        const double u_1 = -0.5*force.get(x,y,z,1)/rho_in + u[1];
+        const double u_2 = -0.5*force.get(x,y,z,2)/rho_in + u[2];
         
 
         Equilibrium<LBWalberlaImpl<LatticeModel, CollisionModel, FloatType>>::set(pdf, x, y, z, Vector3<real_t>(u_0, u_1, u_2), rho );
@@ -403,7 +403,7 @@ struct DensityAndVelocityRange<LBWalberlaImpl<LatticeModel, CollisionModel, Floa
 
 
 template <typename LatticeModel, typename CollisionModel, typename FloatType>
-struct DensityAndMomentumDensity<LBWalberlaImpl<LatticeModel, CollisionModel, FloatType>>
+struct MyDensityAndMomentumDensity
 {
   template< typename FieldPtrOrIterator, typename VectorField_T >
    static real_t get( Vector3< real_t > & momentumDensity, const VectorField_T & force,
@@ -436,9 +436,9 @@ struct DensityAndMomentumDensity<LBWalberlaImpl<LatticeModel, CollisionModel, Fl
         const double vel1Term = f_1 + f_11 + f_15 + f_7;
         const double vel2Term = f_12 + f_13 + f_5;
         const double rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term + vel1Term + vel2Term;
-        const double md_0 = -f_13 - f_17 - f_3 - f_7 - f_9 + (0.5)*force->get(x,y,z,0) + vel0Term;
-        const double md_1 = -f_10 - f_12 - f_16 - f_2 + f_8 - f_9 + (0.5)*force->get(x,y,z,1) + vel1Term;
-        const double md_2 = f_11 + f_14 - f_15 - f_16 - f_17 - f_18 - f_6 + (0.5)*force->get(x,y,z,2) + vel2Term;
+        const double md_0 = -f_13 - f_17 - f_3 - f_7 - f_9 + (0.5)*force.get(x,y,z,0) + vel0Term;
+        const double md_1 = -f_10 - f_12 - f_16 - f_2 + f_8 - f_9 + (0.5)*force.get(x,y,z,1) + vel1Term;
+        const double md_2 = f_11 + f_14 - f_15 - f_16 - f_17 - f_18 - f_6 + (0.5)*force.get(x,y,z,2) + vel2Term;
         momentumDensity[0] = md_0;
         momentumDensity[1] = md_1;
         momentumDensity[2] = md_2;
@@ -474,9 +474,9 @@ struct DensityAndMomentumDensity<LBWalberlaImpl<LatticeModel, CollisionModel, Fl
         const double vel1Term = f_1 + f_11 + f_15 + f_7;
         const double vel2Term = f_12 + f_13 + f_5;
         const double rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term + vel1Term + vel2Term;
-        const double md_0 = -f_13 - f_17 - f_3 - f_7 - f_9 + (0.5)*force->get(x,y,z,0) + vel0Term;
-        const double md_1 = -f_10 - f_12 - f_16 - f_2 + f_8 - f_9 + (0.5)*force->get(x,y,z,1) + vel1Term;
-        const double md_2 = f_11 + f_14 - f_15 - f_16 - f_17 - f_18 - f_6 + (0.5)*force->get(x,y,z,2) + vel2Term;
+        const double md_0 = -f_13 - f_17 - f_3 - f_7 - f_9 + (0.5)*force.get(x,y,z,0) + vel0Term;
+        const double md_1 = -f_10 - f_12 - f_16 - f_2 + f_8 - f_9 + (0.5)*force.get(x,y,z,1) + vel1Term;
+        const double md_2 = f_11 + f_14 - f_15 - f_16 - f_17 - f_18 - f_6 + (0.5)*force.get(x,y,z,2) + vel2Term;
         momentumDensity[0] = md_0;
         momentumDensity[1] = md_1;
         momentumDensity[2] = md_2;

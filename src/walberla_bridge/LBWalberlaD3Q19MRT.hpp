@@ -41,8 +41,6 @@ public:
                      double kT, unsigned int seed)
       : LBWalberlaImpl(viscosity, grid_dimensions, node_grid, n_ghost_layers,
                        kT, seed) {
-    m_lattice_model = std::make_shared<LatticeModel>(
-        m_last_applied_force_field_id, -1., -1., -1., -1.);
     setup_with_valid_lattice_model(density, 0u, 0u);
   };
 };
