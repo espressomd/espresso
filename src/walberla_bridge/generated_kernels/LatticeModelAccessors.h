@@ -65,11 +65,11 @@ namespace lbm {
 //======================================================================================================================
 
 
-template <typename LatticeModel, typename CollisionModel, typename FloatType>
-class EquilibriumDistribution< LBWalberlaImpl<LatticeModel, CollisionModel, FloatType>, void>
+template <typename CollisionModel, typename FloatType>
+class EquilibriumDistribution< LBWalberlaImpl<CollisionModel, FloatType>, void>
 {
 public:
-   typedef typename LBWalberlaImpl<LatticeModel, CollisionModel, FloatType>::Stencil Stencil;
+   typedef typename LBWalberlaImpl<CollisionModel, FloatType>::Stencil Stencil;
 
    static real_t get( const stencil::Direction direction,
                       const Vector3< real_t > & u = Vector3< real_t >( real_t(0.0) ),
@@ -187,11 +187,11 @@ public:
 
 namespace internal {
 
-template<typename LatticeModel, typename CollisionModel, typename FloatType>
-struct AdaptVelocityToForce<LBWalberlaImpl<LatticeModel, CollisionModel, FloatType>, void>
+template<typename CollisionModel, typename FloatType>
+struct AdaptVelocityToForce<LBWalberlaImpl<CollisionModel, FloatType>, void>
 {
    template< typename FieldPtrOrIterator >
-   static Vector3<real_t> get( FieldPtrOrIterator & it, const LBWalberlaImpl<LatticeModel, CollisionModel, FloatType> & lm,
+   static Vector3<real_t> get( FieldPtrOrIterator & it, const LBWalberlaImpl<CollisionModel, FloatType> & lm,
                                const Vector3< real_t > & velocity, const real_t rho )
    {
       auto x = it.x();
@@ -202,7 +202,7 @@ struct AdaptVelocityToForce<LBWalberlaImpl<LatticeModel, CollisionModel, FloatTy
       
    }
 
-   static Vector3<real_t> get( const cell_idx_t x, const cell_idx_t y, const cell_idx_t z, const LBWalberlaImpl<LatticeModel, CollisionModel, FloatType> & lm,
+   static Vector3<real_t> get( const cell_idx_t x, const cell_idx_t y, const cell_idx_t z, const LBWalberlaImpl<CollisionModel, FloatType> & lm,
                                const Vector3< real_t > & velocity, const real_t rho )
    {
       
@@ -216,8 +216,8 @@ struct AdaptVelocityToForce<LBWalberlaImpl<LatticeModel, CollisionModel, FloatTy
 
 
 
-template <typename LatticeModel, typename CollisionModel, typename FloatType>
-struct Equilibrium< LBWalberlaImpl<LatticeModel, CollisionModel, FloatType>, void >
+template <typename CollisionModel, typename FloatType>
+struct Equilibrium< LBWalberlaImpl<CollisionModel, FloatType>, void >
 {
 
    template< typename FieldPtrOrIterator >
@@ -277,11 +277,11 @@ struct Equilibrium< LBWalberlaImpl<LatticeModel, CollisionModel, FloatType>, voi
 };
 
 
-template <typename LatticeModel, typename CollisionModel, typename FloatType>
-struct Density<LBWalberlaImpl<LatticeModel, CollisionModel, FloatType>, void>
+template <typename CollisionModel, typename FloatType>
+struct Density<LBWalberlaImpl<CollisionModel, FloatType>, void>
 {
    template< typename FieldPtrOrIterator >
-   static inline real_t get( const LBWalberlaImpl<LatticeModel, CollisionModel, FloatType> & , const FieldPtrOrIterator & it )
+   static inline real_t get( const LBWalberlaImpl<CollisionModel, FloatType> & , const FieldPtrOrIterator & it )
    {
         const real_t f_0 = it[0];
         const real_t f_1 = it[1];
@@ -310,7 +310,7 @@ struct Density<LBWalberlaImpl<LatticeModel, CollisionModel, FloatType>, void>
    }
 
    template< typename PdfField_T >
-   static inline real_t get( const LBWalberlaImpl<LatticeModel, CollisionModel, FloatType> & ,
+   static inline real_t get( const LBWalberlaImpl<CollisionModel, FloatType> & ,
                              const PdfField_T & pdf, const cell_idx_t x, const cell_idx_t y, const cell_idx_t z )
    {
         const real_t & xyz0 = pdf(x,y,z,0);
@@ -342,7 +342,7 @@ struct Density<LBWalberlaImpl<LatticeModel, CollisionModel, FloatType>, void>
 };
 
 
-template <typename LatticeModel, typename CollisionModel, typename FloatType>
+template <typename CollisionModel, typename FloatType>
 struct MyDensityAndVelocity
 {
   template< typename FieldPtrOrIterator, typename VectorField_T >
@@ -359,7 +359,7 @@ struct MyDensityAndVelocity
         const double u_2 = -0.5*force.get(x,y,z,2)/rho_in + u[2];
         
 
-        Equilibrium<LBWalberlaImpl<LatticeModel, CollisionModel, FloatType>>::set(it, Vector3<real_t>(u_0, u_1, u_2), rho);
+        Equilibrium<LBWalberlaImpl<CollisionModel, FloatType>>::set(it, Vector3<real_t>(u_0, u_1, u_2), rho);
     }
 
     template< typename PdfField_T, typename VectorField_T >
@@ -372,16 +372,16 @@ struct MyDensityAndVelocity
         const double u_2 = -0.5*force.get(x,y,z,2)/rho_in + u[2];
         
 
-        Equilibrium<LBWalberlaImpl<LatticeModel, CollisionModel, FloatType>>::set(pdf, x, y, z, Vector3<real_t>(u_0, u_1, u_2), rho );
+        Equilibrium<LBWalberlaImpl<CollisionModel, FloatType>>::set(pdf, x, y, z, Vector3<real_t>(u_0, u_1, u_2), rho );
     }
 };
 
 
-template <typename LatticeModel, typename CollisionModel, typename FloatType, typename FieldIteratorXYZ>
-struct DensityAndVelocityRange<LBWalberlaImpl<LatticeModel, CollisionModel, FloatType>, FieldIteratorXYZ>
+template <typename CollisionModel, typename FloatType, typename FieldIteratorXYZ>
+struct DensityAndVelocityRange<LBWalberlaImpl<CollisionModel, FloatType>, FieldIteratorXYZ>
 {
 
-   static void set( FieldIteratorXYZ & begin, const FieldIteratorXYZ & end, const LBWalberlaImpl<LatticeModel, CollisionModel, FloatType> & lm,
+   static void set( FieldIteratorXYZ & begin, const FieldIteratorXYZ & end, const LBWalberlaImpl<CollisionModel, FloatType> & lm,
                     const Vector3< real_t > & u = Vector3< real_t >( real_t(0.0) ), const real_t rho_in = real_t(1.0) )
    {
         for( auto cellIt = begin; cellIt != end; ++cellIt )
@@ -395,14 +395,14 @@ struct DensityAndVelocityRange<LBWalberlaImpl<LatticeModel, CollisionModel, Floa
             const double u_2 = -0.5*lm.force_->get(x,y,z,2)/rho_in + u[2];
             
 
-            Equilibrium<LBWalberlaImpl<LatticeModel, CollisionModel, FloatType>>::set(cellIt, Vector3<real_t>(u_0, u_1, u_2), rho);
+            Equilibrium<LBWalberlaImpl<CollisionModel, FloatType>>::set(cellIt, Vector3<real_t>(u_0, u_1, u_2), rho);
         }
    }
 };
 
 
 
-template <typename LatticeModel, typename CollisionModel, typename FloatType>
+template <typename CollisionModel, typename FloatType>
 struct MyDensityAndMomentumDensity
 {
   template< typename FieldPtrOrIterator, typename VectorField_T >
@@ -486,11 +486,11 @@ struct MyDensityAndMomentumDensity
 };
 
 
-template <typename LatticeModel, typename CollisionModel, typename FloatType>
-struct MomentumDensity< LBWalberlaImpl<LatticeModel, CollisionModel, FloatType>>
+template <typename CollisionModel, typename FloatType>
+struct MomentumDensity< LBWalberlaImpl<CollisionModel, FloatType>>
 {
    template< typename FieldPtrOrIterator >
-   static void get( Vector3< real_t > & momentumDensity, const LBWalberlaImpl<LatticeModel, CollisionModel, FloatType> & lm, const FieldPtrOrIterator & it )
+   static void get( Vector3< real_t > & momentumDensity, const LBWalberlaImpl<CollisionModel, FloatType> & lm, const FieldPtrOrIterator & it )
    {
         const auto x = it.x();
         const auto y = it.y();
@@ -529,7 +529,7 @@ struct MomentumDensity< LBWalberlaImpl<LatticeModel, CollisionModel, FloatType>>
    }
 
    template< typename PdfField_T >
-   static void get( Vector3< real_t > & momentumDensity, const LBWalberlaImpl<LatticeModel, CollisionModel, FloatType> & lm, const PdfField_T & pdf,
+   static void get( Vector3< real_t > & momentumDensity, const LBWalberlaImpl<CollisionModel, FloatType> & lm, const PdfField_T & pdf,
                     const cell_idx_t x, const cell_idx_t y, const cell_idx_t z )
    {
         const real_t & xyz0 = pdf(x,y,z,0);
@@ -567,17 +567,17 @@ struct MomentumDensity< LBWalberlaImpl<LatticeModel, CollisionModel, FloatType>>
 };
 
 
-template <typename LatticeModel, typename CollisionModel, typename FloatType>
-struct PressureTensor<LBWalberlaImpl<LatticeModel, CollisionModel, FloatType>>
+template <typename CollisionModel, typename FloatType>
+struct PressureTensor<LBWalberlaImpl<CollisionModel, FloatType>>
 {
    template< typename FieldPtrOrIterator >
-   static void get( Matrix3< real_t > & /* pressureTensor */, const LBWalberlaImpl<LatticeModel, CollisionModel, FloatType> & /* latticeModel */, const FieldPtrOrIterator & /* it */ )
+   static void get( Matrix3< real_t > & /* pressureTensor */, const LBWalberlaImpl<CollisionModel, FloatType> & /* latticeModel */, const FieldPtrOrIterator & /* it */ )
    {
        WALBERLA_ABORT("Not implemented");
    }
 
    template< typename PdfField_T >
-   static void get( Matrix3< real_t > & /* pressureTensor */, const LBWalberlaImpl<LatticeModel, CollisionModel, FloatType> & /* latticeModel */, const PdfField_T & /* pdf */,
+   static void get( Matrix3< real_t > & /* pressureTensor */, const LBWalberlaImpl<CollisionModel, FloatType> & /* latticeModel */, const PdfField_T & /* pdf */,
                     const cell_idx_t /* x */, const cell_idx_t /* y */, const cell_idx_t /* z */ )
    {
        WALBERLA_ABORT("Not implemented");
@@ -585,11 +585,11 @@ struct PressureTensor<LBWalberlaImpl<LatticeModel, CollisionModel, FloatType>>
 };
 
 
-template <typename LatticeModel, typename CollisionModel, typename FloatType>
-struct ShearRate<LBWalberlaImpl<LatticeModel, CollisionModel, FloatType>>
+template <typename CollisionModel, typename FloatType>
+struct ShearRate<LBWalberlaImpl<CollisionModel, FloatType>>
 {
    template< typename FieldPtrOrIterator >
-   static inline real_t get( const LBWalberlaImpl<LatticeModel, CollisionModel, FloatType> & /* latticeModel */, const FieldPtrOrIterator & /* it */,
+   static inline real_t get( const LBWalberlaImpl<CollisionModel, FloatType> & /* latticeModel */, const FieldPtrOrIterator & /* it */,
                              const Vector3< real_t > & /* velocity */, const real_t /* rho */)
    {
        WALBERLA_ABORT("Not implemented");
@@ -597,7 +597,7 @@ struct ShearRate<LBWalberlaImpl<LatticeModel, CollisionModel, FloatType>>
    }
 
    template< typename PdfField_T >
-   static inline real_t get( const LBWalberlaImpl<LatticeModel, CollisionModel, FloatType> & latticeModel,
+   static inline real_t get( const LBWalberlaImpl<CollisionModel, FloatType> & latticeModel,
                              const PdfField_T & /* pdf */, const cell_idx_t /* x */, const cell_idx_t /* y */, const cell_idx_t /* z */,
                              const Vector3< real_t > & /* velocity */, const real_t /* rho */ )
    {

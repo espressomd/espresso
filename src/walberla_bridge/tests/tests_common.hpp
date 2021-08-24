@@ -23,8 +23,7 @@
 #ifdef LB_WALBERLA
 
 #include <LBWalberlaBase.hpp>
-#include <LBWalberlaD3Q19FluctuatingMRT.hpp>
-#include <LBWalberlaD3Q19MRT.hpp>
+#include <LBWalberlaImpl.hpp>
 #include <lb_walberla_init.hpp>
 
 #include <utils/Vector.hpp>
@@ -53,14 +52,14 @@ LbGeneratorVector unthermalized_lbs() {
   // Unthermalized D3Q19 MRT
   lbs.push_back(
       [](const Utils::Vector3i mpi_shape, const LBTestParameters &params) {
-        return std::make_shared<walberla::LBWalberlaD3Q19MRT>(
+        return std::make_shared<walberla::LBWalberlaImpl<CollisionModelNameUnthermalized>>(
             params.viscosity, params.density, params.grid_dimensions, mpi_shape,
             1, 0.0, 0u);
       });
 
   // Thermalized D3Q19 MRT with kT set to 0
   lbs.push_back([](Utils::Vector3i mpi_shape, const LBTestParameters &params) {
-    return std::make_shared<walberla::LBWalberlaD3Q19FluctuatingMRT>(
+    return std::make_shared<walberla::LBWalberlaImpl<CollisionModelNameThermalized>>(
         params.viscosity, params.density, params.grid_dimensions, mpi_shape, 1,
         0.0, params.seed);
   });
@@ -74,7 +73,7 @@ LbGeneratorVector thermalized_lbs() {
   // Thermalized D3Q19 MRT with kT set to 0
   lbs.push_back(
       [](const Utils::Vector3i mpi_shape, const LBTestParameters &params) {
-        return std::make_shared<walberla::LBWalberlaD3Q19FluctuatingMRT>(
+        return std::make_shared<walberla::LBWalberlaImpl<CollisionModelNameThermalized>>(
             params.viscosity, params.density, params.grid_dimensions, mpi_shape,
             1, params.kT, params.seed);
       });
