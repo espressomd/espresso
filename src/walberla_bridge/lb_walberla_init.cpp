@@ -34,6 +34,11 @@ void walberla_mpi_init() {
       walberla::mpi::Environment(argc, argv);
 }
 
+/*
+#include "generated_kernels/MRTLatticeModel.h"
+#include "field/adaptors/GhostLayerFieldAdaptor.h"
+#include "lbm/field/Adaptors.h"
+ */
 LBWalberlaBase *new_lb_walberla(double viscosity, double density,
                                 const Utils::Vector3i &grid_dimensions,
                                 const Utils::Vector3i &node_grid, double kT,
@@ -41,8 +46,14 @@ LBWalberlaBase *new_lb_walberla(double viscosity, double density,
 
   LBWalberlaBase *lb_walberla_instance;
   if (kT == 0.) { // un-thermalized LB
-    lb_walberla_instance = new walberla::LBWalberlaD3Q19MRT(
+     auto ptr = new walberla::LBWalberlaD3Q19MRT(
         viscosity, density, grid_dimensions, node_grid, 1, kT, seed);
+     lb_walberla_instance = ptr;
+     /*
+      * auto [bc, pdf_field] = ptr->foo({1,1,1});
+     //< walberla::lbm::MRTLatticeModel>
+     walberla::field::GhostLayerFieldAdaptor<walberla::lbm::DensityAdaptionFunction<walberla::lbm::MRTLatticeModel>, 0>().get( pdf_field->latticeModel(), *pdf_field, bc->cell.x(), bc->cell.y(), bc->cell.z());
+      */
   } else { // thermalized LB
     lb_walberla_instance = new walberla::LBWalberlaD3Q19FluctuatingMRT(
         viscosity, density, grid_dimensions, node_grid, 1, kT, seed);

@@ -99,8 +99,6 @@ const FlagUID UBB_flag("velocity bounce back");
 template <typename LatticeModel, typename CollisionModel,
           typename FloatType = double>
 class LBWalberlaImpl : public LBWalberlaBase {
-public:
-  using Stencil = stencil::D3Q19;
 private:
   template <typename Sweep, typename = void>
   struct is_thermalized : std::false_type {};
@@ -190,13 +188,29 @@ private:
 
 protected:
   // Type definitions
+  using Stencil = stencil::D3Q19;
   using VectorField = GhostLayerField<FloatType, 3>;
   using FlagField = walberla::FlagField<walberla::uint8_t>;
-  //using PdfField = lbm::PdfField<LatticeModel>;
-  using PdfField = GhostLayerField<FloatType, 19>;
+  using PdfField = GhostLayerField<FloatType, Stencil::Size>;
+  using PdfFieldLM = lbm::PdfField<LatticeModel>;
   /** Velocity boundary condition */
   using UBB = lbm::Dynamic_UBB;
 
+private:
+  // Backend classes can access private members:
+  template<class LM, class Enable> friend class  lbm::EquilibriumDistribution;
+  template<class LM, class Enable> friend struct lbm::Equilibrium;
+  template<class LM, class Enable> friend struct lbm::internal::AdaptVelocityToForce;
+  template<class LM, class Enable> friend struct lbm::Density;
+  template<class LM>               friend struct lbm::DensityAndVelocity;
+  template<class LM, class Enable> friend struct lbm::DensityAndMomentumDensity;
+  template<class LM, class Enable> friend struct lbm::MomentumDensity;
+  template<class LM, class It, class Enable> friend struct lbm::DensityAndVelocityRange;
+  FloatType getDensity(const BlockAndCell & bc) const;
+  FloatType getDensityAndVelocity(const BlockAndCell & bc, Vector3< real_t > & velocity) const;
+  void setDensityAndVelocity(const BlockAndCell & bc, Vector3< real_t > const & velocity, FloatType rho);
+
+protected:
   // Adaptors
   using VelocityAdaptor = typename lbm::Adaptor<LatticeModel>::VelocityVector;
 
@@ -428,19 +442,15 @@ public:
                            double_c(vel_field->get((*bc).cell, uint_t(1u))),
                            double_c(vel_field->get((*bc).cell, uint_t(2u)))};
   }
-
   bool set_node_velocity(const Utils::Vector3i &node,
                          const Utils::Vector3d &v) override {
     auto bc = get_block_and_cell(node, false, m_blocks, n_ghost_layers());
     if (!bc)
       return false;
     // We have to set both, the pdf and the stored velocity field
-    auto pdf_field = (*bc).block->template getData<PdfField>(m_pdf_field_id);
-    const FloatType density = pdf_field->getDensity((*bc).cell);
-    pdf_field->setDensityAndVelocity(
-        (*bc).cell,
-        Vector3<FloatType>{FloatType(v[0]), FloatType(v[1]), FloatType(v[2])},
-        density);
+    auto const density = getDensity(*bc);
+    auto const vel = Vector3<FloatType>{FloatType(v[0]), FloatType(v[1]), FloatType(v[2])};
+    setDensityAndVelocity(*bc, vel, density);
     auto vel_field =
         (*bc).block->template getData<VectorField>(m_velocity_field_id);
     for (uint_t f = 0u; f < 3u; ++f) {
@@ -449,7 +459,6 @@ public:
 
     return true;
   }
-
   boost::optional<Utils::Vector3d>
   get_velocity_at_pos(const Utils::Vector3d &pos,
                       bool consider_points_in_halo = false) const override {
@@ -604,7 +613,7 @@ public:
     if (!bc)
       return false;
 
-    auto pdf_field = (*bc).block->template getData<PdfField>(m_pdf_field_id);
+    auto pdf_field = (*bc).block->template getData<PdfFieldLM>(m_pdf_field_id);
     auto const &vel_adaptor =
         (*bc).block->template getData<VelocityAdaptor>(m_velocity_adaptor_id);
     Vector3<FloatType> v = vel_adaptor->get((*bc).cell);
@@ -620,7 +629,7 @@ public:
     if (!bc)
       return {boost::none};
 
-    auto pdf_field = (*bc).block->template getData<PdfField>(m_pdf_field_id);
+    auto pdf_field = (*bc).block->template getData<PdfFieldLM>(m_pdf_field_id);
 
     return {double_c(pdf_field->getDensity((*bc).cell))};
   }
@@ -743,7 +752,7 @@ public:
     auto bc = get_block_and_cell(node, false, m_blocks, n_ghost_layers());
     if (!bc)
       return {boost::none};
-    auto pdf_field = (*bc).block->template getData<PdfField>(m_pdf_field_id);
+    auto pdf_field = (*bc).block->template getData<PdfFieldLM>(m_pdf_field_id);
     return to_vector6d(pdf_field->getPressureTensor((*bc).cell));
   }
 
@@ -752,7 +761,7 @@ public:
     Vector3<FloatType> mom;
     for (auto block_it = m_blocks->begin(); block_it != m_blocks->end();
          ++block_it) {
-      auto pdf_field = block_it->template getData<PdfField>(m_pdf_field_id);
+      auto pdf_field = block_it->template getData<PdfFieldLM>(m_pdf_field_id);
       Vector3<FloatType> local_v;
       WALBERLA_FOR_ALL_CELLS_XYZ(pdf_field, {
         FloatType local_dens =
@@ -920,6 +929,40 @@ public:
 
   ~LBWalberlaImpl() override = default;
 };
+} // namespace walberla
+
+#include "generated_kernels/LatticeModelAccessors.h"
+
+namespace walberla {
+
+template <typename LatticeModel, typename CollisionModel, typename FloatType>
+FloatType LBWalberlaImpl<LatticeModel, CollisionModel, FloatType>::getDensity(const BlockAndCell & bc) const {
+  auto pdf_field = bc.block->template getData<PdfField>(m_pdf_field_id);
+  return lbm::Density< LBWalberlaImpl<LatticeModel, CollisionModel, FloatType>>::get( *this, *pdf_field, bc.cell.x(), bc.cell.y(), bc.cell.z() );
+}
+
+template <typename LatticeModel, typename CollisionModel, typename FloatType>
+FloatType LBWalberlaImpl<LatticeModel, CollisionModel, FloatType>::getDensityAndVelocity(const BlockAndCell & bc, Vector3< real_t > & velocity) const {
+  auto pdf_field = bc.block->template getData<PdfField>(m_pdf_field_id);
+  auto force_field = bc.block->template getData<VectorField>(
+      m_last_applied_force_field_id);
+  const real_t rho = lbm::DensityAndMomentumDensity< LBWalberlaImpl<LatticeModel, CollisionModel, FloatType> >::get( velocity, *force_field, *pdf_field, bc.cell.x(), bc.cell.y(), bc.cell.z() );
+  if( false /*compressible*/ )
+  {
+    const real_t invRho = FloatType(1) / rho;
+    velocity *= invRho;
+  }
+  return rho;
+}
+
+template <typename LatticeModel, typename CollisionModel, typename FloatType>
+void LBWalberlaImpl<LatticeModel, CollisionModel, FloatType>::setDensityAndVelocity(const BlockAndCell & bc, Vector3< real_t > const & velocity, FloatType rho) {
+  auto pdf_field = bc.block->template getData<PdfField>(m_pdf_field_id);
+  auto force_field = bc.block->template getData<VectorField>(
+      m_last_applied_force_field_id);
+  lbm::DensityAndVelocity< LBWalberlaImpl<LatticeModel, CollisionModel, FloatType> >::set( *pdf_field, bc.cell.x(), bc.cell.y(), bc.cell.z(), force_field, velocity, rho );
+}
+
 } // namespace walberla
 
 #endif // LB_WALBERLA_H
