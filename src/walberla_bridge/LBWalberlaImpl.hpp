@@ -442,7 +442,7 @@ public:
         m_force_to_be_applied_id);
 
     // Prepare LB sweeps
-    // Note: For now combined collide-stream sweeps cannot be used,
+    // Note: For now, combined collide-stream sweeps cannot be used,
     // because the collide-push variant is not supported by lbmpy.
     // The following functors are individual in-place collide and stream steps
     m_stream = std::make_shared<pystencils::StreamSweep>(
@@ -450,8 +450,7 @@ public:
     m_collision_model = generate_collide_sweep(seed, time_step);
 
     // Synchronize ghost layers
-    (*m_full_communication)(); // TODO: THIS ONE FAILS: nrOfGhostLayers == 0
-                               // when m_n_ghost_layers == 1
+    (*m_full_communication)();
   }
 
   void integrate() override {
@@ -694,7 +693,7 @@ public:
   // Boundary related
   boost::optional<Utils::Vector3d>
   get_node_velocity_at_boundary(const Utils::Vector3i &node) const override {
-    /* TODO
+    /* TODO WALBERLA
     auto bc = get_block_and_cell(node, true, m_blocks, n_ghost_layers());
     if (!bc)
       return {boost::none};
@@ -714,7 +713,7 @@ public:
 
   bool set_node_velocity_at_boundary(const Utils::Vector3i &node,
                                      const Utils::Vector3d &v) override {
-    /* TODO
+    /* TODO WALBERLA
     auto bc = get_block_and_cell(node, true, m_blocks, n_ghost_layers());
     if (!bc)
       return false;
@@ -732,7 +731,7 @@ public:
 
   boost::optional<Utils::Vector3d>
   get_node_boundary_force(const Utils::Vector3i &node) const override {
-    /* TODO
+    /* TODO WALBERLA
     auto bc = get_block_and_cell(node, true, m_blocks,
                                  n_ghost_layers()); // including ghosts
     if (!bc)
@@ -757,7 +756,7 @@ public:
   }
 
   bool remove_node_from_boundary(const Utils::Vector3i &node) override {
-    /* TODO
+    /* TODO WALBERLA
     auto bc = get_block_and_cell(node, true, m_blocks, n_ghost_layers());
     if (!bc)
       return false;
@@ -772,7 +771,7 @@ public:
   boost::optional<bool>
   get_node_is_boundary(const Utils::Vector3i &node,
                        bool consider_ghosts = false) const override {
-    /* TODO
+    /* TODO WALBERLA
     auto bc =
         get_block_and_cell(node, consider_ghosts, m_blocks, n_ghost_layers());
     if (!bc)
@@ -786,7 +785,7 @@ public:
   }
 
   void clear_boundaries() override {
-    /* TODO
+    /* TODO WALBERLA
     const CellInterval &domain_bb_in_global_cell_coordinates =
         m_blocks->getCellBBFromAABB(m_blocks->begin()->getAABB().getExtended(
             FloatType(n_ghost_layers())));
@@ -936,7 +935,7 @@ public:
     fluid_filter.addFlag(Fluid_flag);
     pdf_field_vtk->addCellInclusionFilter(fluid_filter);
 
-    // TODO: re-enable VTK writers
+    // TODO WALBERLA: re-enable VTK writers
     /*
     // add writers
     if (static_cast<unsigned>(OutputVTK::density) & flag_observables) {
