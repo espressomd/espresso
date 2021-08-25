@@ -251,8 +251,10 @@ napoleon_use_param = False
 # http://stackoverflow.com/questions/12206334/sphinx-autosummary-toctree-contains-reference-to-nonexisting-document-warnings
 autodoc_mock_imports = ['featuredefs', 'matplotlib', 'OpenGL', 'mayavi', 'pyface', 'tvtk', 'vtk']
 
+# Add custom stylesheets
 def setup(app):
     app.add_css_file('bibtex.css')
+    app.add_css_file('blockquotes.css')
 
 
 # -- Options for Cython ---------------------------------------------------
