@@ -72,15 +72,14 @@
 #ifdef __AVX2__
 #include "generated_kernels/CollideSweepAVX.h"
 #include "generated_kernels/CollideSweepThermalizedAVX.h"
-#define CollisionModelNameThermalized                                          \
+#define ThermalizedCollisionModel                                              \
   walberla::pystencils::CollideSweepThermalizedAVX
-#define CollisionModelNameUnthermalized walberla::pystencils::CollideSweepAVX
+#define UnthermalizedCollisionModel walberla::pystencils::CollideSweepAVX
 #else
 #include "generated_kernels/CollideSweep.h"
 #include "generated_kernels/CollideSweepThermalized.h"
-#define CollisionModelNameThermalized                                          \
-  walberla::pystencils::CollideSweepThermalized
-#define CollisionModelNameUnthermalized walberla::pystencils::CollideSweep
+#define ThermalizedCollisionModel walberla::pystencils::CollideSweepThermalized
+#define UnthermalizedCollisionModel walberla::pystencils::CollideSweep
 #endif
 
 #include <utils/Vector.hpp>

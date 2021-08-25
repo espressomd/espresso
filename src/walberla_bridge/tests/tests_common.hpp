@@ -53,7 +53,7 @@ LbGeneratorVector unthermalized_lbs() {
   lbs.push_back(
       [](const Utils::Vector3i mpi_shape, const LBTestParameters &params) {
         return std::make_shared<
-            walberla::LBWalberlaImpl<CollisionModelNameUnthermalized>>(
+            walberla::LBWalberlaImpl<UnthermalizedCollisionModel>>(
             params.viscosity, params.density, params.grid_dimensions, mpi_shape,
             1, 0.0, 0u);
       });
@@ -61,7 +61,7 @@ LbGeneratorVector unthermalized_lbs() {
   // Thermalized D3Q19 MRT with kT set to 0
   lbs.push_back([](Utils::Vector3i mpi_shape, const LBTestParameters &params) {
     return std::make_shared<
-        walberla::LBWalberlaImpl<CollisionModelNameThermalized>>(
+        walberla::LBWalberlaImpl<ThermalizedCollisionModel>>(
         params.viscosity, params.density, params.grid_dimensions, mpi_shape, 1,
         0.0, params.seed);
   });
@@ -76,7 +76,7 @@ LbGeneratorVector thermalized_lbs() {
   lbs.push_back(
       [](const Utils::Vector3i mpi_shape, const LBTestParameters &params) {
         return std::make_shared<
-            walberla::LBWalberlaImpl<CollisionModelNameThermalized>>(
+            walberla::LBWalberlaImpl<ThermalizedCollisionModel>>(
             params.viscosity, params.density, params.grid_dimensions, mpi_shape,
             1, params.kT, params.seed);
       });
