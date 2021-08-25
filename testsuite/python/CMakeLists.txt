@@ -97,7 +97,7 @@ python_test(FILE dawaanr-and-bh-gpu.py MAX_NUM_PROC 1 LABELS gpu)
 python_test(FILE dds-and-bh-gpu.py MAX_NUM_PROC 4 LABELS gpu)
 python_test(FILE electrostaticInteractions.py MAX_NUM_PROC 2)
 python_test(FILE engine_langevin.py MAX_NUM_PROC 4)
-# python_test(FILE engine_lb.py MAX_NUM_PROC 2 LABELS gpu) # TODO WALBERLA: Fix momentum getter
+python_test(FILE engine_lb.py MAX_NUM_PROC 2 LABELS gpu)
 python_test(FILE experimental_decorator.py)
 python_test(FILE icc.py MAX_NUM_PROC 4)
 python_test(FILE mass-and-rinertia_per_particle.py MAX_NUM_PROC 2 LABELS long)
@@ -152,9 +152,9 @@ python_test(FILE dipolar_direct_summation.py MAX_NUM_PROC 1 LABELS gpu)
 python_test(FILE dipolar_p3m.py MAX_NUM_PROC 2)
 python_test(FILE dipolar_interface.py MAX_NUM_PROC 1 LABELS gpu)
 python_test(FILE dipolar_mpi_exceptions.py MAX_NUM_PROC 2)
-# python_test(FILE lb.py MAX_NUM_PROC 2) # TODO WALBERLA: Fix momentum getter
+python_test(FILE lb.py MAX_NUM_PROC 2)
 python_test(FILE lb_walberla.py MAX_NUM_PROC 2)
-# python_test(FILE lb_stats.py MAX_NUM_PROC 2) # TODO WALBERLA: Fix momentum getter
+python_test(FILE lb_stats.py MAX_NUM_PROC 2)
 # python_test(FILE lb_vtk.py MAX_NUM_PROC 1) # TODO WALBERLA: boundaries
 python_test(FILE force_cap.py MAX_NUM_PROC 2)
 python_test(FILE dpd.py MAX_NUM_PROC 4)
@@ -208,7 +208,7 @@ python_test(FILE field_test.py MAX_NUM_PROC 1)
 # python_test(FILE lb_shear.py MAX_NUM_PROC 2) # TODO WALBERLA: boundaries
 # python_test(FILE lb_thermostat.py MAX_NUM_PROC 1) # TODO WALBERLA
 # python_test(FILE lb_buoyancy_force.py MAX_NUM_PROC 2) # TODO WALBERLA: boundaries
-# python_test(FILE lb_momentum_conservation.py MAX_NUM_PROC 4) # TODO WALBERLA: Fix momentum getter
+python_test(FILE lb_momentum_conservation.py MAX_NUM_PROC 4)
 python_test(FILE p3m_electrostatic_pressure.py MAX_NUM_PROC 2)
 python_test(FILE sigint.py DEPENDENCIES sigint_child.py MAX_NUM_PROC 1)
 python_test(FILE lb_density.py MAX_NUM_PROC 2)
@@ -219,7 +219,7 @@ python_test(FILE features.py MAX_NUM_PROC 1)
 python_test(FILE decorators.py MAX_NUM_PROC 1)
 python_test(FILE galilei.py MAX_NUM_PROC 32)
 python_test(FILE linear_momentum.py MAX_NUM_PROC 4)
-# python_test(FILE linear_momentum_lb.py MAX_NUM_PROC 2) # TODO WALBERLA: Fix momentum getter
+python_test(FILE linear_momentum_lb.py MAX_NUM_PROC 2)
 python_test(FILE mmm1d.py MAX_NUM_PROC 2)
 python_test(FILE mmm1d_gpu.py MAX_NUM_PROC 1 LABELS gpu)
 python_test(FILE stokesian_dynamics.py MAX_NUM_PROC 2 LABELS long)
