@@ -18,7 +18,7 @@ traitsui>=4.5.1
 requests>=2.18.4 # to post on GitHub as espresso-ci
 lxml>=4.2.1 # to deploy tutorials
 # sphinx and its dependencies
-sphinx>=1.6.7,!=2.1.0,!=3.0.0
+sphinx>=2.3.0,!=3.0.0
 sphinxcontrib-bibtex>=0.3.5
 # jupyter dependencies
 jupyter_contrib_nbextensions==0.5.1

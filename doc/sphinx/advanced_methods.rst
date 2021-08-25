@@ -25,19 +25,19 @@ Several modes are available for different types of binding.
 
 * ``"bind_centers"``: adds a pair-bond between two particles at their first collision. By making the bonded interaction *stiff* enough, the particles can be held together after the collision. Note that the particles can still slide on each others' surface, as the pair bond is not directional. This mode is set up as follows::
 
-    import espressomd
-    import espressomd.interactions
+      import espressomd
+      import espressomd.interactions
 
-    system = espressomd.System(box_l=[1, 1, 1])
-    bond_centers = espressomd.interactions.HarmonicBond(k=1000, r_0=<CUTOFF>)
-    system.bonded_inter.add(bond_centers)
-    system.collision_detection.set_params(mode="bind_centers", distance=<CUTOFF>,
-                                          bond_centers=bond_centers)
+      system = espressomd.System(box_l=[1, 1, 1])
+      bond_centers = espressomd.interactions.HarmonicBond(k=1000, r_0=<CUTOFF>)
+      system.bonded_inter.add(bond_centers)
+      system.collision_detection.set_params(mode="bind_centers", distance=<CUTOFF>,
+                                            bond_centers=bond_centers)
 
   The parameters are as follows:
 
-    * ``distance`` is the distance between two particles at which the binding is triggered. This cutoff distance, ``<CUTOFF>`` in the example above, is typically chosen slightly larger than the particle diameter. It is also a good choice for the equilibrium length of the bond.
-    * ``bond_centers`` is the bonded interaction (an instance of :class:`espressomd.interactions.HarmonicBond`) to be created between the particles. No guarantees are made regarding which of the two colliding particles gets the bond. Once there is a bond of this type on any of the colliding particles, no further binding occurs for this pair of particles.
+  * ``distance`` is the distance between two particles at which the binding is triggered. This cutoff distance, ``<CUTOFF>`` in the example above, is typically chosen slightly larger than the particle diameter. It is also a good choice for the equilibrium length of the bond.
+  * ``bond_centers`` is the bonded interaction (an instance of :class:`espressomd.interactions.HarmonicBond`) to be created between the particles. No guarantees are made regarding which of the two colliding particles gets the bond. Once there is a bond of this type on any of the colliding particles, no further binding occurs for this pair of particles.
 
 * ``"bind_at_point_of_collision"``: this mode prevents sliding of the colliding particles at the contact. This is achieved by
   creating two virtual sites at the point of collision. They are
@@ -55,16 +55,15 @@ Several modes are available for different types of binding.
   the point of contact or you can use :class:`espressomd.interactions.Virtual` which acts as a marker, only.
   The method is setup as follows::
 
-     system.collision_detection.set_params(mode="bind_at_point_of_collision",
-         distance=<CUTOFF>, bond_centers=<BOND_CENTERS>, bond_vs=<BOND_VS>,
-         part_type_vs=<PART_TYPE_VS>, vs_placement=<VS_PLACEMENT>)
-
+      system.collision_detection.set_params(mode="bind_at_point_of_collision",
+          distance=<CUTOFF>, bond_centers=<BOND_CENTERS>, bond_vs=<BOND_VS>,
+          part_type_vs=<PART_TYPE_VS>, vs_placement=<VS_PLACEMENT>)
 
   The parameters ``distance`` and ``bond_centers`` have the same meaning as in the ``"bind_centers"`` mode. The remaining parameters are as follows:
 
-    * ``bond_vs`` is the bond to be added between the two virtual sites created on collision. This is either a pair-bond with an equilibrium length matching the distance between the virtual sites, or an angle bond fully stretched in its equilibrium configuration.
-    * ``part_type_vs`` is the particle type assigned to the virtual sites created on collision. In nearly all cases, no non-bonded interactions should be defined for this particle type.
-    * ``vs_placement`` controls, where on the line connecting the centers of the colliding particles, the virtual sites are placed. A value of 0 means that the virtual sites are placed at the same position as the colliding particles on which they are based. A value of 0.5 will result in the virtual sites being placed ad the mid-point between the two colliding particles. A value of 1 will result the virtual site associated to the first colliding particle to be placed at the position of the second colliding particle. In most cases, 0.5, is a good choice. Then, the bond connecting the virtual sites should have an equilibrium length of zero.
+  * ``bond_vs`` is the bond to be added between the two virtual sites created on collision. This is either a pair-bond with an equilibrium length matching the distance between the virtual sites, or an angle bond fully stretched in its equilibrium configuration.
+  * ``part_type_vs`` is the particle type assigned to the virtual sites created on collision. In nearly all cases, no non-bonded interactions should be defined for this particle type.
+  * ``vs_placement`` controls, where on the line connecting the centers of the colliding particles, the virtual sites are placed. A value of 0 means that the virtual sites are placed at the same position as the colliding particles on which they are based. A value of 0.5 will result in the virtual sites being placed ad the mid-point between the two colliding particles. A value of 1 will result the virtual site associated to the first colliding particle to be placed at the position of the second colliding particle. In most cases, 0.5, is a good choice. Then, the bond connecting the virtual sites should have an equilibrium length of zero.
 
 * ``"glue_to_surface"``: This mode is used to irreversibly attach small particles to the surface of a big particle. It is asymmetric in that several small particles can be bound to a big particle but not vice versa. The small particles can change type after collision to make them *inert*. On collision, a single virtual site is placed and related to the big particle. Then, a bond (``bond_centers``) connects the big and the small particle. A second bond (``bond_vs``) connects the virtual site and the small particle. Further required parameters are:
 
@@ -80,9 +79,7 @@ Several modes are available for different types of binding.
   time step, no guarantees are made with regards to which partner is selected.
   In particular, there is no guarantee that the choice is unbiased.
 
-
-
-- ``"bind_three_particles"`` allows for the creation of agglomerates which maintain their shape
+* ``"bind_three_particles"`` allows for the creation of agglomerates which maintain their shape
   similarly to those create by the mode ``"bind_at_point_of_collision"``. The present approach works
   without virtual sites. Instead, for each two-particle collision, the
   surrounding is searched for a third particle. If one is found,
@@ -156,9 +153,9 @@ the local fluid velocity.
 
 The immersed boundary method consists of two components, which can be used independently:
 
-  * :ref:`Inertialess lattice-Boltzmann tracers` implemented as virtual sites
+* :ref:`Inertialess lattice-Boltzmann tracers` implemented as virtual sites
 
-  * Interactions providing the elastic forces for the particles forming the surface. These are described in :ref:`Immersed Boundary Method interactions`.
+* Interactions providing the elastic forces for the particles forming the surface. These are described in :ref:`Immersed Boundary Method interactions`.
 
 For a more detailed description, see e.g. :cite:`guckenberger17a` or contact us.
 This feature probably does not work with advanced LB features such as electrokinetics.
@@ -1302,7 +1299,7 @@ that your computer contains a CUDA capable GPU which is sufficiently
 modern.
 
 To set up a proper LB fluid using this command one has to specify at
-least the following options: ``agrid``, ``lb_density``, ``viscosity``, 
+least the following options: ``agrid``, ``lb_density``, ``viscosity``,
 ``friction``, ``T``, and ``prefactor``. The other options can be
 used to modify the behavior of the LB fluid. Note that the command does
 not allow the user to set the time step parameter as is the case for the
@@ -1456,7 +1453,7 @@ number density and flux of species ``species``, respectively.
 Local Quantities
 ^^^^^^^^^^^^^^^^
 
-Local quantities like velocity or fluid density for single nodes can be accessed in the same way 
+Local quantities like velocity or fluid density for single nodes can be accessed in the same way
 as for an LB fluid, see :ref:`Lattice-Boltzmann`. The only EK-specific quantity is the potential.
 
 ::
@@ -1590,16 +1587,16 @@ after all Drude particles are added to the system::
     espressomd.drude_helpers.setup_intramol_exclusion_bonds(<system>, <molecule drude types>,
         <molecule core types>, <molecule core partial charges>, <verbose>)
 
-This function creates the requires number of bonds which are later added to the
+This function creates the required number of bonds which are later added to the
 particles. It has to be called only once. In a molecule with :math:`N` polarizable
 sites, :math:`N \cdot (N-1)` bond types are needed to cover all the combinations.
 Parameters are:
 
-    * ``<system>``: The :class:`espressomd.System() <espressomd.system.System>`.
-    * ``<molecule drude types>``: List of the Drude types within the molecule.
-    * ``<molecule core types>``: List of the core types within the molecule that have partial charges.
-    * ``<molecule core partial charges>``: List of the partial charges on the cores.
-    * ``<verbose>``: (bool, optional) Prints out information about the created bonds (default: False)
+* ``<system>``: The :class:`espressomd.System() <espressomd.system.System>`.
+* ``<molecule drude types>``: List of the Drude types within the molecule.
+* ``<molecule core types>``: List of the core types within the molecule that have partial charges.
+* ``<molecule core partial charges>``: List of the partial charges on the cores.
+* ``<verbose>``: (bool, optional) Prints out information about the created bonds (default: False)
 
 After setting up the bonds, one has to add them to each molecule with the
 following method::
@@ -1608,10 +1605,10 @@ following method::
 
 This method has to be called for all molecules and needs the following parameters:
 
-    * ``<system>``: The :class:`espressomd.System() <espressomd.system.System>`.
-    * ``<drude ids>``: The ids of the Drude particles within one molecule.
-    * ``<core ids>``: The ids of the core particles within one molecule.
-    * ``<verbose>``: (bool, optional) Prints out information about the added bonds (default: ``False``)
+* ``<system>``: The :class:`espressomd.System() <espressomd.system.System>`.
+* ``<drude ids>``: The ids of the Drude particles within one molecule.
+* ``<core ids>``: The ids of the core particles within one molecule.
+* ``<verbose>``: (bool, optional) Prints out information about the added bonds (default: ``False``)
 
 Internally, this is done with the bond described in  :ref:`Subtract P3M short-range bond`, that
 simply adds the p3m shortrange pair-force of scale :math:`- q_d q_{partial}` the to
