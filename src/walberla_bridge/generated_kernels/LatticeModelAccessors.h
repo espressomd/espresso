@@ -382,26 +382,26 @@ namespace internal {
 template <typename LatticeModel_T>
 struct AdaptVelocityToForce {
   template <typename FieldPtrOrIterator>
-  static Vector3<real_t> get(FieldPtrOrIterator &it, const LatticeModel_T &lm,
+  static Vector3<real_t> get(FieldPtrOrIterator &it, GhostLayerField<real_t, 3> * force_field,
                              const Vector3<real_t> &velocity,
                              const real_t rho) {
     auto x = it.x();
     auto y = it.y();
     auto z = it.z();
 
-    return velocity - Vector3<real_t>(lm.force_->get(x, y, z, 0) * 0.5 / rho,
-                                      lm.force_->get(x, y, z, 1) * 0.5 / rho,
-                                      lm.force_->get(x, y, z, 2) * 0.5 / rho);
+    return velocity - Vector3<real_t>(force_field->get(x, y, z, 0) * 0.5 / rho,
+                                      force_field->get(x, y, z, 1) * 0.5 / rho,
+                                      force_field->get(x, y, z, 2) * 0.5 / rho);
   }
 
   static Vector3<real_t> get(const cell_idx_t x, const cell_idx_t y,
-                             const cell_idx_t z, const LatticeModel_T &lm,
+                             const cell_idx_t z, GhostLayerField<real_t, 3> * force_field,
                              const Vector3<real_t> &velocity,
                              const real_t rho) {
 
-    return velocity - Vector3<real_t>(lm.force_->get(x, y, z, 0) * 0.5 / rho,
-                                      lm.force_->get(x, y, z, 1) * 0.5 / rho,
-                                      lm.force_->get(x, y, z, 2) * 0.5 / rho);
+    return velocity - Vector3<real_t>(force_field->get(x, y, z, 0) * 0.5 / rho,
+                                      force_field->get(x, y, z, 1) * 0.5 / rho,
+                                      force_field->get(x, y, z, 2) * 0.5 / rho);
   }
 };
 } // namespace internal

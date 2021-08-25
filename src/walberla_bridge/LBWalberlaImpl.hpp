@@ -63,10 +63,10 @@
 
 #include "LBWalberlaBase.hpp"
 #include "ResetForce.hpp"
-#include "generated_kernels/Dynamic_UBB.h"
 #include "generated_kernels/InitialPDFsSetter.h"
 #include "generated_kernels/LatticeModelAccessors.h"
 #include "generated_kernels/StreamSweep.h"
+#include "generated_kernels/UBB.h"
 #include "walberla_utils.hpp"
 
 #ifdef __AVX2__
@@ -201,16 +201,35 @@ private:
            (4 * magic_number * shear_relaxation + 2 - shear_relaxation);
   }
 
+public:
+  typedef stencil::D3Q19 Stencil;
+  typedef stencil::D3Q19 CommunicationStencil;
+  using LatticeModel_T = LBWalberlaImpl<CollisionModel, FloatType>;
+  static constexpr bool compressible = true;
+  static constexpr real_t w[19] = {
+      0.333333333333333,  0.0555555555555556, 0.0555555555555556,
+      0.0555555555555556, 0.0555555555555556, 0.0555555555555556,
+      0.0555555555555556, 0.0277777777777778, 0.0277777777777778,
+      0.0277777777777778, 0.0277777777777778, 0.0277777777777778,
+      0.0277777777777778, 0.0277777777777778, 0.0277777777777778,
+      0.0277777777777778, 0.0277777777777778, 0.0277777777777778,
+      0.0277777777777778};
+  static constexpr real_t wInv[19] = {
+      3.00000000000000, 18.0000000000000, 18.0000000000000, 18.0000000000000,
+      18.0000000000000, 18.0000000000000, 18.0000000000000, 36.0000000000000,
+      36.0000000000000, 36.0000000000000, 36.0000000000000, 36.0000000000000,
+      36.0000000000000, 36.0000000000000, 36.0000000000000, 36.0000000000000,
+      36.0000000000000, 36.0000000000000, 36.0000000000000};
+
 protected:
   // Type definitions
-  using Stencil = stencil::D3Q19;
   static constexpr bool m_compressible = true;
-  using LatticeModel_T = LBWalberlaImpl<CollisionModel, FloatType>;
   using VectorField = GhostLayerField<FloatType, 3>;
-  using FlagField = walberla::FlagField<walberla::uint8_t>;
+  using FlagField = field::FlagField<uint8_t>;
   using PdfField = GhostLayerField<FloatType, Stencil::Size>;
   /** Velocity boundary condition */
-  using UBB = lbm::Dynamic_UBB;
+  using UBB = lbm::espresso::UBB<LatticeModel_T, uint8_t, true, true>;
+  using Boundaries = BoundaryHandling<FlagField, Stencil, UBB>;
 
 private:
   // Backend classes can access private members:
@@ -332,6 +351,38 @@ protected:
   // Collision sweep
   std::shared_ptr<CollisionModel> m_collision_model;
 
+  // Boundary handling
+  class LBBoundaryHandling {
+  public:
+    LBBoundaryHandling(const BlockDataID &flag_field_id,
+                       const BlockDataID &pdf_field_id,
+                       const BlockDataID &force_field_id,
+                       const LatticeModel_T *lm)
+        : m_flag_field_id(flag_field_id), m_pdf_field_id(pdf_field_id),
+          m_force_field_id(force_field_id), m_lm(lm) {}
+
+    Boundaries *operator()(IBlock *const block) {
+
+      auto flag_field = block->template getData<FlagField>(m_flag_field_id);
+      auto pdf_field = block->template getData<PdfField>(m_pdf_field_id);
+      auto force_field = block->template getData<VectorField>(m_force_field_id);
+
+      const auto fluid = flag_field->flagExists(Fluid_flag)
+                             ? flag_field->getFlag(Fluid_flag)
+                             : flag_field->registerFlag(Fluid_flag);
+
+      return new Boundaries("boundary handling", flag_field, fluid,
+                            UBB("velocity bounce back", UBB_flag, m_lm,
+                                pdf_field, force_field, nullptr));
+    }
+
+  private:
+    const BlockDataID m_flag_field_id;
+    const BlockDataID m_pdf_field_id;
+    const BlockDataID m_force_field_id;
+    const LatticeModel_T *m_lm;
+  };
+
   // Boundary sweep
   std::shared_ptr<UBB> m_boundary;
 
@@ -403,18 +454,12 @@ public:
       pdf_setter(&(*b));
     }
 
-    std::function<walberla::math::Vector3<double>(
-        const walberla::cell::Cell &,
-        const std::shared_ptr<walberla::blockforest::StructuredBlockForest> &,
-        walberla::domain_decomposition::IBlock &)>
-        ubb_callback = [](const Cell &,
-                          const shared_ptr<StructuredBlockForest> &,
-                          IBlock &) -> Vector3<real_t> {
-      throw std::runtime_error("This callback is not meant to be called!");
-    };
-    m_boundary = std::make_shared<UBB>(m_blocks, m_pdf_field_id, ubb_callback);
-    m_boundary->fillFromFlagField<FlagField>(m_blocks, m_flag_field_id,
-                                             UBB_flag, Fluid_flag);
+    // Register boundary handling
+    m_boundary_handling_id = m_blocks->addBlockData<Boundaries>(
+        LBBoundaryHandling(m_flag_field_id, m_pdf_field_id,
+                           m_last_applied_force_field_id, this),
+        "boundary handling");
+    clear_boundaries();
 
     // sets up the communication and registers pdf field and force field to it
     m_pdf_streaming_communication =
@@ -465,7 +510,7 @@ public:
     (*m_pdf_streaming_communication)();
     // Handle boundaries
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
-      (*m_boundary)(&*b);
+      Boundaries::getBlockSweep(m_boundary_handling_id)(&*b);
     // LB stream
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
       (*m_stream)(&*b);
@@ -695,7 +740,6 @@ public:
   // Boundary related
   [[nodiscard]] boost::optional<Utils::Vector3d>
   get_node_velocity_at_boundary(const Utils::Vector3i &node) const override {
-    /* TODO WALBERLA
     auto bc = get_block_and_cell(node, true, m_blocks, n_ghost_layers());
     if (!bc)
       return {boost::none};
@@ -709,13 +753,10 @@ public:
     return {to_vector3d(
         boundary_handling->template getBoundaryCondition<UBB>(uid).getValue(
             (*bc).cell[0], (*bc).cell[1], (*bc).cell[2]))};
-    */
-    return {boost::none};
   }
 
   bool set_node_velocity_at_boundary(const Utils::Vector3i &node,
                                      const Utils::Vector3d &v) override {
-    /* TODO WALBERLA
     auto bc = get_block_and_cell(node, true, m_blocks, n_ghost_layers());
     if (!bc)
       return false;
@@ -727,13 +768,11 @@ public:
         (*bc).block->template getData<Boundaries>(m_boundary_handling_id);
     boundary_handling->forceBoundary(UBB_flag, bc->cell[0], bc->cell[1],
                                      bc->cell[2], velocity);
-    */
     return true;
   }
 
   [[nodiscard]] boost::optional<Utils::Vector3d>
   get_node_boundary_force(const Utils::Vector3i &node) const override {
-    /* TODO WALBERLA
     auto bc = get_block_and_cell(node, true, m_blocks,
                                  n_ghost_layers()); // including ghosts
     if (!bc)
@@ -753,12 +792,9 @@ public:
     auto const &ubb = bh->template getBoundaryCondition<UBB>(uid);
     return {to_vector3d(
         ubb.getForce((*bc).cell.x(), (*bc).cell.y(), (*bc).cell.z()))};
-    */
-    return {boost::none};
   }
 
   bool remove_node_from_boundary(const Utils::Vector3i &node) override {
-    /* TODO WALBERLA
     auto bc = get_block_and_cell(node, true, m_blocks, n_ghost_layers());
     if (!bc)
       return false;
@@ -766,14 +802,12 @@ public:
         (*bc).block->template getData<Boundaries>(m_boundary_handling_id);
     boundary_handling->removeBoundary((*bc).cell[0], (*bc).cell[1],
                                       (*bc).cell[2]);
-    */
     return true;
   }
 
   [[nodiscard]] boost::optional<bool>
   get_node_is_boundary(const Utils::Vector3i &node,
                        bool consider_ghosts = false) const override {
-    /* TODO WALBERLA
     auto bc =
         get_block_and_cell(node, consider_ghosts, m_blocks, n_ghost_layers());
     if (!bc)
@@ -782,12 +816,9 @@ public:
     auto *boundary_handling =
         (*bc).block->template getData<Boundaries>(m_boundary_handling_id);
     return {boundary_handling->isBoundary((*bc).cell)};
-    */
-    return {boost::none};
   }
 
   void clear_boundaries() override {
-    /* TODO WALBERLA
     const CellInterval &domain_bb_in_global_cell_coordinates =
         m_blocks->getCellBBFromAABB(m_blocks->begin()->getAABB().getExtended(
             FloatType(n_ghost_layers())));
@@ -801,7 +832,6 @@ public:
 
       boundary_handling->fillWithDomain(domain_bb);
     }
-    */
   }
 
   // Pressure tensor
