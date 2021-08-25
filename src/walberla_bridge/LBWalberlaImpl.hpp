@@ -160,11 +160,11 @@ private:
     m_collision_model->seed_ = seed;
   }
 
-  uint32_t get_rng_seed_impl(std::false_type) const {
+  [[nodiscard]] uint32_t get_rng_seed_impl(std::false_type) const {
     throw std::runtime_error("The LB does not use a random number generator");
   }
 
-  uint32_t get_rng_seed_impl(std::true_type) const {
+  [[nodiscard]] uint32_t get_rng_seed_impl(std::true_type) const {
     return m_collision_model->seed_;
   }
 
@@ -176,11 +176,11 @@ private:
     m_collision_model->time_step_ = time_step;
   }
 
-  uint32_t get_time_step_impl(std::false_type) const {
+  [[nodiscard]] uint32_t get_time_step_impl(std::false_type) const {
     throw std::runtime_error("The LB does not use a random number generator");
   }
 
-  uint32_t get_time_step_impl(std::true_type) const {
+  [[nodiscard]] uint32_t get_time_step_impl(std::true_type) const {
     return m_collision_model->time_step_;
   }
 
@@ -190,12 +190,13 @@ private:
     m_collision_model->time_step_++;
   }
 
-  double shear_mode_relaxation_rate() const {
+  [[nodiscard]] double shear_mode_relaxation_rate() const {
     return 2 / (6 * m_viscosity + 1);
   }
 
-  double odd_mode_relaxation_rate(double shear_relaxation,
-                                  double magic_number = 3. / 16.) const {
+  [[nodiscard]] double
+  odd_mode_relaxation_rate(double shear_relaxation,
+                           double magic_number = 3. / 16.) const {
     return (4 - 2 * shear_relaxation) /
            (4 * magic_number * shear_relaxation + 2 - shear_relaxation);
   }
@@ -224,7 +225,7 @@ private:
   template <class LM, class It>
   friend struct lbm::espresso::DensityAndVelocityRange;
 
-  FloatType getDensity(const BlockAndCell &bc) const {
+  [[nodiscard]] FloatType getDensity(const BlockAndCell &bc) const {
     auto pdf_field = bc.block->template getData<PdfField>(m_pdf_field_id);
     return lbm::espresso::Density<LatticeModel_T>::get(
         *this, *pdf_field, bc.cell.x(), bc.cell.y(), bc.cell.z());
@@ -271,7 +272,8 @@ private:
         velocity, rho);
   }
 
-  Matrix3<real_t> getPressureTensor(const BlockAndCell &bc) const {
+  [[nodiscard]] Matrix3<real_t>
+  getPressureTensor(const BlockAndCell &bc) const {
     Matrix3<real_t> pressureTensor;
     auto pdf_field = bc.block->template getData<PdfField>(m_pdf_field_id);
     lbm::espresso::PressureTensor<LatticeModel_T>::get(
@@ -333,7 +335,7 @@ protected:
   // Boundary sweep
   std::shared_ptr<UBB> m_boundary;
 
-  std::size_t stencil_size() const override {
+  [[nodiscard]] std::size_t stencil_size() const override {
     return static_cast<std::size_t>(Stencil::Size);
   }
 
@@ -482,10 +484,10 @@ public:
 
   void set_viscosity(double viscosity) override { m_viscosity = viscosity; }
 
-  double get_viscosity() const override { return m_viscosity; }
+  [[nodiscard]] double get_viscosity() const override { return m_viscosity; }
 
   // Velocity
-  boost::optional<Utils::Vector3d>
+  [[nodiscard]] boost::optional<Utils::Vector3d>
   get_node_velocity(const Utils::Vector3i &node,
                     bool consider_ghosts = false) const override {
     boost::optional<bool> is_boundary =
@@ -521,7 +523,7 @@ public:
 
     return true;
   }
-  boost::optional<Utils::Vector3d>
+  [[nodiscard]] boost::optional<Utils::Vector3d>
   get_velocity_at_pos(const Utils::Vector3d &pos,
                       bool consider_points_in_halo = false) const override {
     if (!consider_points_in_halo and !pos_in_local_domain(pos))
@@ -547,7 +549,7 @@ public:
     return {v};
   }
 
-  boost::optional<double> get_interpolated_density_at_pos(
+  [[nodiscard]] boost::optional<double> get_interpolated_density_at_pos(
       const Utils::Vector3d &pos,
       bool consider_points_in_halo = false) const override {
     if (!consider_points_in_halo and !pos_in_local_domain(pos))
@@ -593,7 +595,7 @@ public:
     return true;
   }
 
-  boost::optional<Utils::Vector3d>
+  [[nodiscard]] boost::optional<Utils::Vector3d>
   get_node_force_to_be_applied(const Utils::Vector3i &node) const override {
     auto const bc = get_block_and_cell(node, true, m_blocks, n_ghost_layers());
     if (!bc)
@@ -621,7 +623,7 @@ public:
     return true;
   }
 
-  boost::optional<Utils::Vector3d>
+  [[nodiscard]] boost::optional<Utils::Vector3d>
   get_node_last_applied_force(const Utils::Vector3i &node,
                               bool consider_ghosts = false) const override {
     auto const bc =
@@ -652,7 +654,7 @@ public:
     return true;
   }
 
-  boost::optional<std::vector<double>>
+  [[nodiscard]] boost::optional<std::vector<double>>
   get_node_pop(const Utils::Vector3i &node) const override {
     auto bc = get_block_and_cell(node, false, m_blocks, n_ghost_layers());
     if (!bc)
@@ -680,7 +682,7 @@ public:
     return true;
   }
 
-  boost::optional<double>
+  [[nodiscard]] boost::optional<double>
   get_node_density(const Utils::Vector3i &node) const override {
     auto bc = get_block_and_cell(node, false, m_blocks, n_ghost_layers());
     if (!bc)
@@ -691,7 +693,7 @@ public:
   }
 
   // Boundary related
-  boost::optional<Utils::Vector3d>
+  [[nodiscard]] boost::optional<Utils::Vector3d>
   get_node_velocity_at_boundary(const Utils::Vector3i &node) const override {
     /* TODO WALBERLA
     auto bc = get_block_and_cell(node, true, m_blocks, n_ghost_layers());
@@ -729,7 +731,7 @@ public:
     return true;
   }
 
-  boost::optional<Utils::Vector3d>
+  [[nodiscard]] boost::optional<Utils::Vector3d>
   get_node_boundary_force(const Utils::Vector3i &node) const override {
     /* TODO WALBERLA
     auto bc = get_block_and_cell(node, true, m_blocks,
@@ -768,7 +770,7 @@ public:
     return true;
   }
 
-  boost::optional<bool>
+  [[nodiscard]] boost::optional<bool>
   get_node_is_boundary(const Utils::Vector3i &node,
                        bool consider_ghosts = false) const override {
     /* TODO WALBERLA
@@ -803,7 +805,7 @@ public:
   }
 
   // Pressure tensor
-  boost::optional<Utils::Vector6d>
+  [[nodiscard]] boost::optional<Utils::Vector6d>
   get_node_pressure_tensor(const Utils::Vector3i &node) const override {
     auto bc = get_block_and_cell(node, false, m_blocks, n_ghost_layers());
     if (!bc)
@@ -812,7 +814,7 @@ public:
   }
 
   // Global momentum
-  Utils::Vector3d get_momentum() const override {
+  [[nodiscard]] Utils::Vector3d get_momentum() const override {
     Vector3<FloatType> mom;
     for (auto block_it = m_blocks->begin(); block_it != m_blocks->end();
          ++block_it) {
@@ -832,13 +834,13 @@ public:
   void set_external_force(const Utils::Vector3d &ext_force) override {
     m_reset_force->set_ext_force(ext_force);
   }
-  Utils::Vector3d get_external_force() const override {
+  [[nodiscard]] Utils::Vector3d get_external_force() const override {
     return m_reset_force->get_ext_force();
   }
 
-  double get_kT() const override { return m_kT; }
+  [[nodiscard]] double get_kT() const override { return m_kT; }
 
-  uint64_t get_rng_state() const override {
+  [[nodiscard]] uint64_t get_rng_state() const override {
     return get_time_step_impl(is_thermalized<CollisionModel>{});
   }
   void set_rng_state(uint64_t counter) override {
@@ -846,13 +848,13 @@ public:
   }
 
   // Grid, domain, halo
-  int n_ghost_layers() const override {
+  [[nodiscard]] int n_ghost_layers() const override {
     return static_cast<int>(m_n_ghost_layers);
   }
-  Utils::Vector3i get_grid_dimensions() const override {
+  [[nodiscard]] Utils::Vector3i get_grid_dimensions() const override {
     return m_grid_dimensions;
   }
-  std::pair<Utils::Vector3d, Utils::Vector3d>
+  [[nodiscard]] std::pair<Utils::Vector3d, Utils::Vector3d>
   get_local_domain() const override {
     // We only have one block per mpi rank
     assert(++(m_blocks->begin()) == m_blocks->end());
@@ -861,23 +863,27 @@ public:
     return {to_vector3d(ab.min()), to_vector3d(ab.max())};
   }
 
-  bool node_in_local_domain(const Utils::Vector3i &node) const override {
+  [[nodiscard]] bool
+  node_in_local_domain(const Utils::Vector3i &node) const override {
     // Note: Lattice constant =1, cell centers offset by .5
     return get_block_and_cell(node, false, m_blocks, n_ghost_layers()) !=
            boost::none;
   }
-  bool node_in_local_halo(const Utils::Vector3i &node) const override {
+  [[nodiscard]] bool
+  node_in_local_halo(const Utils::Vector3i &node) const override {
     return get_block_and_cell(node, true, m_blocks, n_ghost_layers()) !=
            boost::none;
   }
-  bool pos_in_local_domain(const Utils::Vector3d &pos) const override {
+  [[nodiscard]] bool
+  pos_in_local_domain(const Utils::Vector3d &pos) const override {
     return get_block(pos, false, m_blocks, n_ghost_layers()) != nullptr;
   }
-  bool pos_in_local_halo(const Utils::Vector3d &pos) const override {
+  [[nodiscard]] bool
+  pos_in_local_halo(const Utils::Vector3d &pos) const override {
     return get_block(pos, true, m_blocks, n_ghost_layers()) != nullptr;
   }
 
-  std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>>
+  [[nodiscard]] std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>>
   node_indices_positions(bool include_ghosts = false) const override {
     int ghost_offset = 0;
     if (include_ghosts)
