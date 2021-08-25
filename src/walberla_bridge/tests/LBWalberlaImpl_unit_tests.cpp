@@ -75,9 +75,7 @@ BOOST_DATA_TEST_CASE(initial_state, bdata::make(all_lbs()), lb_generator) {
   for (auto &node :
        local_nodes_incl_ghosts(lb->get_local_domain(), lb->n_ghost_layers())) {
     bool consider_ghosts = !lb->node_in_local_domain(node);
-    /* TODO WALBERLA: boundaries
     BOOST_CHECK(!(*lb->get_node_is_boundary(node, consider_ghosts)));
-    */
     if (lb->node_in_local_domain(node)) {
       BOOST_CHECK((*lb->get_node_force_to_be_applied(node)) == Vector3d{});
       BOOST_CHECK((*lb->get_node_last_applied_force(node)) == Vector3d{});
@@ -102,7 +100,6 @@ BOOST_DATA_TEST_CASE(kT_thermalized, bdata::make(thermalized_lbs()),
   BOOST_CHECK_EQUAL(lb->get_kT(), params.kT);
 }
 
-/* TODO WALBERLA: boundaries
 BOOST_DATA_TEST_CASE(boundary, bdata::make(all_lbs()), lb_generator) {
   Vector3d vel = {0.2, 3.8, 4.2};
   auto lb = lb_generator(mpi_shape, params);
@@ -136,7 +133,6 @@ BOOST_DATA_TEST_CASE(boundary, bdata::make(all_lbs()), lb_generator) {
     BOOST_CHECK(!(*lb->get_node_is_boundary(node, true)));
   }
 }
-*/
 
 BOOST_DATA_TEST_CASE(domain_and_halo, bdata::make(all_lbs()), lb_generator) {
   auto lb = lb_generator(mpi_shape, params);
