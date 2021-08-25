@@ -325,7 +325,7 @@ IF P3M == 1:
         timings : :obj:`int`
             Number of force calculations during tuning.
         verbose : :obj:`bool`, optional
-            If ``True``, disable log output during tuning.
+            If ``False``, disable log output during tuning.
         check_neutrality : :obj:`bool`, optional
             Raise a warning if the system is not electrically neutral when
             set to ``True`` (default).
@@ -373,7 +373,7 @@ IF P3M == 1:
             timings : :obj:`int`
                 Number of force calculations during tuning.
             verbose : :obj:`bool`, optional
-                If ``True``, disable log output during tuning.
+                If ``False``, disable log output during tuning.
             check_neutrality : :obj:`bool`, optional
                 Raise a warning if the system is not electrically neutral when
                 set to ``True`` (default).
