@@ -2,7 +2,6 @@
 
 #include "EKinWalberlaBase.hpp"
 #include "EKinWalberlaImpl.hpp"
-#include "PoissonSolver/PoissonSolver.hpp"
 
 #include <memory>
 
