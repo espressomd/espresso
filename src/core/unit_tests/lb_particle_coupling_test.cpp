@@ -364,6 +364,38 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, coupling_particle_lattice_ia,
       BOOST_REQUIRE_GE(ghost_particles.size(), with_ghosts);
     }
 
+    // check box shifts
+    {
+      auto constexpr reference_shifts =
+          std::array<Utils::Vector3i, 7>{{{{0, 0, 8}},
+                                          {{0, 8, 0}},
+                                          {{0, 8, 8}},
+                                          {{8, 0, 0}},
+                                          {{8, 0, 8}},
+                                          {{8, 8, 0}},
+                                          {{8, 8, 8}}}};
+      boost::mpi::communicator world;
+      assert(world.size() <= 4);
+      auto const cutoff = 8 / world.size() - 1;
+      {
+        auto const shifts = shifted_positions({0., 0., 0.}, box_geo);
+        BOOST_REQUIRE_EQUAL(shifts.size(), cutoff);
+        for (std::size_t i = 0; i < shifts.size(); ++i) {
+          BOOST_REQUIRE_EQUAL(shifts[i], reference_shifts[i]);
+        }
+      }
+      {
+        auto const shifts = shifted_positions({1., 1., 1.}, box_geo);
+        BOOST_REQUIRE_EQUAL(shifts.size(), 0);
+      }
+      {
+        auto const reference_shift = Utils::Vector3d{1., 2., 8.};
+        auto const shifts = shifted_positions({1., 2., 0.}, box_geo);
+        BOOST_REQUIRE_EQUAL(shifts.size(), 1);
+        BOOST_REQUIRE_EQUAL(shifts[0], reference_shift);
+      }
+    }
+
     // check without LB coupling
     {
       lb_lbcoupling_deactivate();
