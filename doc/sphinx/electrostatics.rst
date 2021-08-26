@@ -136,7 +136,7 @@ Debye-Hückel potential
 
 The Debye-Hückel electrostatic potential is defined by
 
-  .. math:: U^{C-DH} = C \cdot \frac{q_1 q_2 \exp(-\kappa r)}{r}\quad \mathrm{for}\quad r<r_{\mathrm{cut}}
+.. math:: U^{C-DH} = C \cdot \frac{q_1 q_2 \exp(-\kappa r)}{r}\quad \mathrm{for}\quad r<r_{\mathrm{cut}}
 
 where :math:`C` is defined as in Eqn. :eq:`coulomb_prefactor` and
 :math:`\kappa` is the ionic strength.
@@ -157,12 +157,12 @@ Reaction Field method
 
 The Reaction Field electrostatic potential is defined by
 
-  .. math:: U^{C-RF} = C \cdot q_1 q_2 \left[\frac{1}{r} - \frac{B r^2}{2r_{\mathrm{cut}}^3} - \frac{1 - B/2}{r_{\mathrm{cut}}}\right] \quad \mathrm{for}\quad r<r_{\mathrm{cut}}
+.. math:: U^{C-RF} = C \cdot q_1 q_2 \left[\frac{1}{r} - \frac{B r^2}{2r_{\mathrm{cut}}^3} - \frac{1 - B/2}{r_{\mathrm{cut}}}\right] \quad \mathrm{for}\quad r<r_{\mathrm{cut}}
 
 where :math:`C` is defined as in Eqn. :eq:`coulomb_prefactor` and :math:`B`
 is defined as:
 
-  .. math:: B = \frac{2(\varepsilon_1 - \varepsilon_2)(1 + \kappa r_{\mathrm{cut}}) - \varepsilon_2 (\kappa r_{\mathrm{cut}})^2}{(\varepsilon_1 + 2\varepsilon_2)(1 + \kappa r_{\mathrm{cut}}) + \varepsilon_2 (\kappa r_{\mathrm{cut}})^2}
+.. math:: B = \frac{2(\varepsilon_1 - \varepsilon_2)(1 + \kappa r_{\mathrm{cut}}) - \varepsilon_2 (\kappa r_{\mathrm{cut}})^2}{(\varepsilon_1 + 2\varepsilon_2)(1 + \kappa r_{\mathrm{cut}}) + \varepsilon_2 (\kappa r_{\mathrm{cut}})^2}
 
 with :math:`\kappa` the ionic strength, :math:`\varepsilon_1` the dielectric
 constant inside the cavity and :math:`\varepsilon_2` the dielectric constant
@@ -273,14 +273,14 @@ See :ref:`ELC theory` for more details.
 
 Usage notes:
 
-  * The non-periodic direction is always the **z-direction**.
+* The non-periodic direction is always the **z-direction**.
 
-  * The method relies on a slab of the simulation box perpendicular to the
-    z-direction not to contain particles. The size in z-direction of this slab
-    is controlled by the ``gap_size`` parameter. The user has to ensure that
-    no particles enter this region by means of constraints or by fixing the
-    particles' z-coordinate. When particles enter the slab of the specified
-    size, an error will be thrown.
+* The method relies on a slab of the simulation box perpendicular to the
+  z-direction not to contain particles. The size in z-direction of this slab
+  is controlled by the ``gap_size`` parameter. The user has to ensure that
+  no particles enter this region by means of constraints or by fixing the
+  particles' z-coordinate. When particles enter the slab of the specified
+  size, an error will be thrown.
 
 *ELC* is an |es| actor and is used with::
 

@@ -103,7 +103,81 @@ class TimeSeries(ScriptInterfaceHelper):
 class Correlator(ScriptInterfaceHelper):
 
     """
-    Calculates correlations based on results from observables.
+    Calculates the correlation of two observables :math:`A` and :math:`B`,
+    or of one observable against itself (i.e. :math:`B = A`).
+    The correlation can be compressed using the :ref:`multiple tau correlation
+    algorithm <Details of the multiple tau correlation algorithm>`.
+
+    The operation that is performed on :math:`A(t)` and :math:`B(t+\\tau)`
+    to obtain :math:`C(\\tau)` depends on the ``corr_operation`` argument:
+
+    * ``"scalar_product"``: Scalar product of :math:`A` and
+      :math:`B`, i.e., :math:`C=\\sum\\limits_{i} A_i B_i`
+
+    * ``"componentwise_product"``: Componentwise product of
+      :math:`A` and :math:`B`, i.e., :math:`C_i = A_i B_i`
+
+    * ``"square_distance_componentwise"``: Each component of
+      the correlation vector is the square of the difference
+      between the corresponding components of the observables, i.e.,
+      :math:`C_i = (A_i-B_i)^2`. Example: when :math:`A` is
+      :class:`espressomd.observables.ParticlePositions`, it produces the
+      mean square displacement (for each component separately).
+
+    * ``"tensor_product"``: Tensor product of :math:`A` and
+      :math:`B`, i.e., :math:`C_{i \\cdot l_B + j} = A_i B_j`
+      with :math:`l_B` the length of :math:`B`.
+
+    * ``"fcs_acf"``: Fluorescence Correlation Spectroscopy (FCS)
+      autocorrelation function, i.e.,
+
+      .. math::
+
+           G_i(\\tau) =
+           \\frac{1}{N} \\left< \\exp \\left(
+           - \\frac{\\Delta x_i^2(\\tau)}{w_x^2}
+           - \\frac{\\Delta y_i^2(\\tau)}{w_y^2}
+           - \\frac{\\Delta z_i^2(\\tau)}{w_z^2}
+           \\right) \\right>
+
+      where :math:`N` is the average number of fluorophores in the
+      illumination area,
+
+      .. math::
+
+          \\Delta x_i^2(\\tau) = \\left( x_i(0) - x_i(\\tau) \\right)^2
+
+      is the square displacement of particle
+      :math:`i` in the :math:`x` direction, and :math:`w_x`
+      is the beam waist of the intensity profile of the
+      exciting laser beam,
+
+      .. math::
+
+          W(x,y,z) = I_0 \\exp
+          \\left( - \\frac{2x^2}{w_x^2} - \\frac{2y^2}{w_y^2} -
+          \\frac{2z^2}{w_z^2} \\right).
+
+      The values of :math:`w_x`, :math:`w_y`, and :math:`w_z`
+      are passed to the correlator as ``args``. The correlator calculates
+
+      .. math::
+
+           C_i(\\tau) =
+           \\exp \\left(
+           - \\frac{\\Delta x_i^2(\\tau)}{w_x^2}
+           - \\frac{\\Delta y_i^2(\\tau)}{w_y^2}
+           - \\frac{\\Delta z_i^2(\\tau)}{w_z^2}
+           \\right)
+
+      Per each 3 dimensions of the observable, one dimension of the correlation
+      output is produced. If ``"fcs_acf"`` is used with other observables than
+      :class:`espressomd.observables.ParticlePositions`, the physical meaning
+      of the result is unclear.
+
+      The above equations are a generalization of the formula presented by
+      Höfling et al. :cite:`hofling11a`. For more information, see references
+      therein.
 
     Parameters
     ----------
@@ -116,80 +190,7 @@ class Correlator(ScriptInterfaceHelper):
         The observable :math:`B` to be correlated with :math:`A` (``obs1``).
 
     corr_operation : :obj:`str`
-        The operation that is performed on :math:`A(t)` and
-        :math:`B(t+\\tau)` to obtain :math:`C(\\tau)`. The
-        following operations are currently available:
-
-        * ``"scalar_product"``: Scalar product of :math:`A` and
-          :math:`B`, i.e., :math:`C=\\sum\\limits_{i} A_i B_i`
-
-        * ``"componentwise_product"``: Componentwise product of
-          :math:`A` and :math:`B`, i.e., :math:`C_i = A_i B_i`
-
-        * ``"square_distance_componentwise"``: Each component of
-          the correlation vector is the square of the difference
-          between the corresponding components of the observables, i.e.,
-          :math:`C_i = (A_i-B_i)^2`. Example: when :math:`A` is
-          :class:`espressomd.observables.ParticlePositions`, it produces the
-          mean square displacement (for each component separately).
-
-        * ``"tensor_product"``: Tensor product of :math:`A` and
-          :math:`B`, i.e., :math:`C_{i \\cdot l_B + j} = A_i B_j`
-          with :math:`l_B` the length of :math:`B`.
-
-        * ``"fcs_acf"``: Fluorescence Correlation Spectroscopy (FCS)
-          autocorrelation function, i.e.,
-
-          .. math::
-
-               G_i(\\tau) =
-               \\frac{1}{N} \\left< \\exp \\left(
-               - \\frac{\\Delta x_i^2(\\tau)}{w_x^2}
-               - \\frac{\\Delta y_i^2(\\tau)}{w_y^2}
-               - \\frac{\\Delta z_i^2(\\tau)}{w_z^2}
-               \\right) \\right>
-
-          where :math:`N` is the average number of fluorophores in the
-          illumination area,
-
-          .. math::
-
-              \\Delta x_i^2(\\tau) = \\left( x_i(0) - x_i(\\tau) \\right)^2
-
-          is the square displacement of particle
-          :math:`i` in the :math:`x` direction, and :math:`w_x`
-          is the beam waist of the intensity profile of the
-          exciting laser beam,
-
-          .. math::
-
-              W(x,y,z) = I_0 \\exp
-              \\left( - \\frac{2x^2}{w_x^2} - \\frac{2y^2}{w_y^2} -
-              \\frac{2z^2}{w_z^2} \\right).
-
-          The values of :math:`w_x`, :math:`w_y`, and :math:`w_z`
-          are passed to the correlator as ``args``. The correlator calculates
-
-          .. math::
-
-               C_i(\\tau) =
-               \\exp \\left(
-               - \\frac{\\Delta x_i^2(\\tau)}{w_x^2}
-               - \\frac{\\Delta y_i^2(\\tau)}{w_y^2}
-               - \\frac{\\Delta z_i^2(\\tau)}{w_z^2}
-               \\right)
-
-          Per each 3 dimensions of the
-          observable, one dimension of the correlation output
-          is produced. If ``"fcs_acf"`` is used with other observables than
-          :class:`espressomd.observables.ParticlePositions`, the physical
-          meaning of the result is unclear.
-
-          The above equations are a
-          generalization of the formula presented by Hoefling
-          et. al. :cite:`hofling11a`. For more information, see
-          references therein.
-
+        The operation that is performed on :math:`A(t)` and :math:`B(t+\\tau)`.
 
     delta_N : :obj:`int`
         Number of timesteps between subsequent samples for the auto update mechanism.
