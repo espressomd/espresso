@@ -222,7 +222,6 @@ public:
 
 protected:
   // Type definitions
-  static constexpr bool m_compressible = true;
   using VectorField = GhostLayerField<FloatType, 3>;
   using FlagField = field::FlagField<uint8_t>;
   using PdfField = GhostLayerField<FloatType, Stencil::Size>;
@@ -258,7 +257,7 @@ private:
         lbm::espresso::DensityAndMomentumDensity<LatticeModel_T>::get(
             velocity, *force_field, *pdf_field, bc.cell.x(), bc.cell.y(),
             bc.cell.z());
-    if constexpr (m_compressible) {
+    if constexpr (compressible) {
       const real_t invRho = FloatType(1) / rho;
       velocity *= invRho;
     }
@@ -273,7 +272,7 @@ private:
     const real_t rho =
         lbm::espresso::DensityAndMomentumDensity<LatticeModel_T>::get(
             velocity, *force_field, *pdf_field, x, y, z);
-    if constexpr (m_compressible) {
+    if constexpr (compressible) {
       const real_t invRho = FloatType(1) / rho;
       velocity *= invRho;
     }
