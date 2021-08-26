@@ -17,14 +17,18 @@ private:
   FloatType m_diffusion;
   FloatType m_kT;
   FloatType m_valency;
+  bool m_advection;
 
 protected:
-  EKinWalberlaBase(FloatType diffusion, FloatType kT, FloatType valency)
-      : m_diffusion{diffusion}, m_kT{kT}, m_valency{valency} {}
+  EKinWalberlaBase(FloatType diffusion, FloatType kT, FloatType valency,
+                   bool advection)
+      : m_diffusion{diffusion}, m_kT{kT}, m_valency{valency}, m_advection{
+                                                                  advection} {}
 
 public:
   /** @brief Integrate EKin for one time step */
-  virtual void integrate() = 0;
+  virtual void
+  integrate(const walberla::domain_decomposition::BlockDataID &velocity_id) = 0;
 
   /** @brief perform ghost communication of densities */
   virtual void ghost_communication() = 0;
@@ -54,6 +58,8 @@ public:
   [[nodiscard]] FloatType get_kT() const { return m_kT; }
   void set_valency(FloatType valency) { m_valency = valency; }
   [[nodiscard]] FloatType get_valency() const { return m_valency; }
+  void set_advection(bool advection) { m_advection = advection; }
+  [[nodiscard]] bool get_advection() const { return m_advection; }
 
   //* @brief Fet the rng counter for thermalized LBs */
   virtual uint64_t get_rng_state() const = 0;

@@ -15,6 +15,7 @@
 #include "EKinWalberlaBase.hpp"
 #include "walberla_utils.hpp"
 
+#include "generated_kernels/AdvectiveFluxKernel.h"
 #include "generated_kernels/ContinuityKernel.h"
 #include "generated_kernels/DiffusiveFluxKernel.h"
 #include "generated_kernels/NoFlux.h"
@@ -36,6 +37,8 @@ protected:
   using FluxField = GhostLayerField<FloatType, FluxCount>;
   using FlagField = walberla::FlagField<walberla::uint8_t>;
   using DensityField = GhostLayerField<FloatType, 1>;
+
+  using EKinWalberlaBase<FloatType>::get_advection;
 
   /** VTK writers that are executed automatically */
   std::map<std::string, std::pair<std::shared_ptr<vtk::VTKOutput>, bool>>
@@ -101,9 +104,10 @@ protected:
 
 public:
   EKinWalberlaImpl(const WalberlaBlockForest *blockforest, FloatType diffusion,
-                   FloatType kT, FloatType valency, FloatType density)
-      : EKinWalberlaBase<FloatType>(diffusion, kT, valency), m_blockforest{
-                                                                 blockforest} {
+                   FloatType kT, FloatType valency, FloatType density,
+                   bool advection)
+      : EKinWalberlaBase<FloatType>(diffusion, kT, valency, advection),
+        m_blockforest{blockforest} {
     m_density_field_id = field::addToStorage<DensityField>(
         get_blockforest()->get_blocks(), "density field", density, field::fzyx,
         get_blockforest()->get_ghost_layers());
@@ -195,18 +199,27 @@ private:
   }
 
   inline void kernel_diffusion() {
+    auto kernel = pystencils::DiffusiveFluxKernel(
+        EKinWalberlaBase<FloatType>::get_diffusion(), m_flux_field_flattened_id,
+        m_density_field_flattened_id);
+
     for (auto &block : *get_blockforest()->get_blocks()) {
-      pystencils::DiffusiveFluxKernel(
-          EKinWalberlaBase<FloatType>::get_diffusion(),
-          m_flux_field_flattened_id, m_density_field_flattened_id)
-          .run(&block);
+      kernel.run(&block);
+    }
+  }
+
+  inline void kernel_advection(const BlockDataID &velocity_id) {
+    auto kernel = pystencils::AdvectiveFluxKernel(
+        m_flux_field_flattened_id, m_density_field_id, velocity_id);
+    for (auto &block : *get_blockforest()->get_blocks()) {
+      kernel.run(&block);
     }
   }
 
   inline void kernel_migration() {}
 
 public:
-  void integrate() override {
+  void integrate(const BlockDataID &velocity_id) override {
     if (m_noflux_dirty) {
       boundary_noflux_update();
       m_noflux_dirty = false;
@@ -218,7 +231,15 @@ public:
     kernel_migration();
     kernel_noflux();
     // friction coupling
-    // advection
+    if (get_advection()) {
+      if (velocity_id == BlockDataID{}) {
+        throw std::runtime_error("Walberla EK: advection enabled but no "
+                                 "velocity field accessible. velocity_id is " +
+                                 std::to_string(velocity_id) +
+                                 ". Have you enabled LB?");
+      }
+      kernel_advection(velocity_id);
+    }
     kernel_continuity();
     ghost_communication();
 

@@ -29,7 +29,7 @@ class EKNoFlux(ut.TestCase):
             box_size=self.system.box_l, ghost_layers=1, agrid=self.AGRID)
 
         ekspecies = espressomd.EKSpecies.EKSpecies(
-            density=0.0, kT=0.0, diffusion=self.DIFFUSION_COEFFICIENT, valency=0.0)
+            density=0.0, kT=0.0, diffusion=self.DIFFUSION_COEFFICIENT, valency=0.0, advection=False)
 
         eksolver = espressomd.EKSpecies.EKNone()
 
