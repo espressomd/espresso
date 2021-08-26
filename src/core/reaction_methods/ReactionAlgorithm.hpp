@@ -30,6 +30,7 @@
 #include <map>
 #include <random>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 namespace ReactionMethods {
@@ -53,7 +54,7 @@ public:
 
   std::vector<SingleReaction> reactions;
   std::map<int, double> charges_of_types;
-  double temperature = -10.0;
+  double kT = -10.0;
   /**
    * Hard sphere radius. If particles are closer than this value,
    * it is assumed that their interaction energy gets approximately
@@ -62,13 +63,6 @@ public:
    */
   double exclusion_radius = 0.0;
   double volume = -10.0;
-  bool box_is_cylindric_around_z_axis = false;
-  double cyl_radius = -10.0;
-  double cyl_x = -10.0;
-  double cyl_y = -10.0;
-  bool box_has_wall_constraints = false;
-  double slab_start_z = -10.0;
-  double slab_end_z = -10.0;
   int non_interacting_type = 100;
 
   int m_accepted_configurational_MC_moves = 0;
@@ -81,6 +75,12 @@ public:
   void set_cuboid_reaction_ensemble_volume();
   virtual int do_reaction(int reaction_steps);
   void check_reaction_method() const;
+  void remove_constraint() { m_reaction_constraint = ReactionConstraint::NONE; }
+  void set_cyl_constraint(double center_x, double center_y, double radius);
+  void set_slab_constraint(double slab_start_z, double slab_end_z);
+  Utils::Vector2d get_slab_constraint_parameters() const {
+    return {m_slab_start_z, m_slab_end_z};
+  }
 
   int delete_particle(int p_id);
   void add_reaction(double gamma, const std::vector<int> &reactant_types,
@@ -147,6 +147,15 @@ private:
   void append_particle_property_of_random_particle(
       int type, std::vector<StoredParticleProperty> &list_of_particles);
 
+  enum class ReactionConstraint { NONE, CYL_Z, SLAB_Z };
+  ReactionConstraint m_reaction_constraint = ReactionConstraint::NONE;
+  double m_cyl_radius = -10.0;
+  double m_cyl_x = -10.0;
+  double m_cyl_y = -10.0;
+  double m_slab_start_z = -10.0;
+  double m_slab_end_z = -10.0;
+
+protected:
   Utils::Vector3d get_random_position_in_box();
 };
 

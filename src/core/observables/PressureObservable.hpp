@@ -28,7 +28,7 @@ namespace Observables {
 
 class Pressure : public Observable {
 public:
-  std::vector<size_t> shape() const override { return {1}; }
+  std::vector<std::size_t> shape() const override { return {1}; }
   std::vector<double> operator()() const override {
     auto const ptensor = observable_compute_pressure_tensor();
     std::vector<double> res{1};

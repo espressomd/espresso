@@ -90,19 +90,19 @@ struct CUDA_particle_data {
 };
 
 /** data structure for the different kinds of energies */
-typedef struct {
+struct CUDA_energy {
   float coulomb, dipolar;
-} CUDA_energy;
+};
 
 /** Global variables associated with all of the particles and not with
  *  one individual particle.
  */
-typedef struct {
+struct CUDA_global_part_vars {
   /** Boolean flag to indicate if particle info should be communicated
    *  between the cpu and gpu
    */
   unsigned int communication_enabled;
-} CUDA_global_part_vars;
+};
 
 void copy_forces_from_GPU(ParticleRange &particles);
 CUDA_energy copy_energy_from_GPU();

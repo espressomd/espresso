@@ -29,6 +29,8 @@
 #include "script_interface/get_value.hpp"
 #include <core/cells.hpp>
 
+#include <string>
+
 #define field_value(use, v) ((use) ? (v) : 0u)
 
 namespace ScriptInterface {

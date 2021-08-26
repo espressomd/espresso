@@ -57,7 +57,7 @@ endfunction(PYTHON_TEST)
 # Separate features with hyphens, use a period to add an optional flag.
 foreach(
   TEST_COMBINATION
-  lb.walberla-p3m.cpu-lj-therm.lb;lb.walberla-p3m.elc-lj-therm.lb;lb.off-therm.npt-int.npt;lb.off-int.sd;lb.off-dp3m.cpu-therm.langevin-int.nvt;lb.off-therm.dpd-int.nvt;lb.off-scafacos-therm.bd-int.bd;lb.off-therm.sdm-int.sdm;lb.cpu-p3m.cpu-lj-therm.lb-mpi.1.core
+  lb.active.walberla-p3m.cpu-lj-therm.lb;lb.active.walberla-p3m.elc-lj-therm.lb;lb.off-therm.npt-int.npt;lb.off-int.sd;lb.off-dp3m.cpu-therm.langevin-int.nvt;lb.off-therm.dpd-int.nvt;lb.off-scafacos-therm.bd-int.bd;lb.off-therm.sdm-int.sdm;lb.active.walberla-p3m.cpu-lj-therm.lb-mpi.1.core
 )
   if(${TEST_COMBINATION} MATCHES "mpi\\.1\\.core")
     set(TEST_NPROCS 1)
@@ -154,8 +154,8 @@ python_test(FILE dipolar_interface.py MAX_NUM_PROC 1 LABELS gpu)
 python_test(FILE dipolar_mpi_exceptions.py MAX_NUM_PROC 2)
 python_test(FILE lb.py MAX_NUM_PROC 2)
 python_test(FILE lb_walberla.py MAX_NUM_PROC 2)
-python_test(FILE lb_stats.py MAX_NUM_PROC 2) # TODO WALBERLA: add "LABELS long"
-python_test(FILE lb_vtk.py MAX_NUM_PROC 1)
+python_test(FILE lb_stats.py MAX_NUM_PROC 2)
+# python_test(FILE lb_vtk.py MAX_NUM_PROC 1) # TODO WALBERLA
 python_test(FILE force_cap.py MAX_NUM_PROC 2)
 python_test(FILE dpd.py MAX_NUM_PROC 4)
 python_test(FILE dpd_stats.py MAX_NUM_PROC 4 LABELS long)
@@ -216,6 +216,7 @@ python_test(FILE observable_chain.py MAX_NUM_PROC 4)
 python_test(FILE mpiio.py MAX_NUM_PROC 4)
 python_test(FILE gpu_availability.py MAX_NUM_PROC 2 LABELS gpu)
 python_test(FILE features.py MAX_NUM_PROC 1)
+python_test(FILE decorators.py MAX_NUM_PROC 1)
 python_test(FILE galilei.py MAX_NUM_PROC 32)
 python_test(FILE linear_momentum.py MAX_NUM_PROC 4)
 python_test(FILE linear_momentum_lb.py MAX_NUM_PROC 2)

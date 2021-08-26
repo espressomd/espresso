@@ -62,7 +62,7 @@ void deep_copy(boost::multi_array<T, 3> &dst,
  *  @tparam codim  Dimension of the field: 3 for a vector field,
  *                 1 for a scalar field.
  */
-template <typename T, size_t codim> class Interpolated {
+template <typename T, std::size_t codim> class Interpolated {
 public:
   /** Type of the values, usually @ref Utils::Vector<T, 3> for vector fields
    *  and @p T for scalar fields

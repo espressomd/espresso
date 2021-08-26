@@ -96,7 +96,7 @@ class Galilei(ut.TestCase):
         g.galilei_transform()
 
         np.testing.assert_allclose(
-            np.copy(g.system_CMS_velocity()), np.zeros((3,)), atol=1e-15)
+            np.copy(g.system_CMS_velocity()), np.zeros((3,)), atol=1e-14)
 
 
 if __name__ == "__main__":

@@ -84,7 +84,7 @@ public:
   /**
    * @brief Number of elements in the container.
    */
-  size_t size() const { return m_storage.size(); }
+  std::size_t size() const { return m_storage.size(); }
 
   /**
    * @brief Is the container empty?
@@ -98,12 +98,12 @@ public:
    * Number of elements the container can at least hold
    * without reallocating.
    */
-  size_t capacity() const { return m_storage.capacity(); }
+  std::size_t capacity() const { return m_storage.capacity(); }
 
   /**
    * @brief Maximum number of elements the container can hold.
    */
-  size_t max_size() const { return m_storage.max_size(); }
+  std::size_t max_size() const { return m_storage.max_size(); }
 
   /**
    * @brief Reserve storage.
@@ -112,7 +112,7 @@ public:
    *
    *     @param new_capacity New minimum capacity.
    */
-  void reserve(size_t new_capacity) { m_storage.reserve(new_capacity); }
+  void reserve(std::size_t new_capacity) { m_storage.reserve(new_capacity); }
 
   /**
    * @brief Resize container.
@@ -123,7 +123,7 @@ public:
    *
    *     @param new_size Size to resize to.
    */
-  void resize(size_t new_size) { m_storage.resize(new_size); }
+  void resize(std::size_t new_size) { m_storage.resize(new_size); }
 
   /**
    * @brief Remove all elements form container.

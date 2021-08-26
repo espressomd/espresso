@@ -26,7 +26,7 @@
 #include <cstddef>
 
 namespace Utils {
-template <typename T, size_t N, size_t M>
+template <typename T, std::size_t N, std::size_t M>
 Matrix<T, N, M> tensor_product(const Vector<T, N> &x, const Vector<T, M> &y) {
   return boost::qvm::col_mat(x) * boost::qvm::row_mat(y);
 }
@@ -34,7 +34,7 @@ Matrix<T, N, M> tensor_product(const Vector<T, N> &x, const Vector<T, M> &y) {
 /*
  * @brief Overload if left operand is scalar.
  */
-template <typename T, size_t N>
+template <typename T, std::size_t N>
 Vector<T, N> tensor_product(const T &x, const Vector<T, N> &y) {
   return x * y;
 }

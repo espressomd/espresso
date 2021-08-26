@@ -37,7 +37,9 @@
 #include <utils/matrix.hpp>
 #include <utils/quaternion.hpp>
 
+#include <cassert>
 #include <cmath>
+#include <limits>
 #include <utility>
 
 /** @brief Propagate angular velocities and update quaternions on a

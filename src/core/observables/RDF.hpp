@@ -48,9 +48,9 @@ public:
   // Range of the profile.
   double min_r, max_r;
   // Number of bins
-  size_t n_r_bins;
+  std::size_t n_r_bins;
 
-  std::vector<size_t> shape() const override { return {n_r_bins}; }
+  std::vector<std::size_t> shape() const override { return {n_r_bins}; }
 
   explicit RDF(std::vector<int> ids1, std::vector<int> ids2, int n_r_bins,
                double min_r, double max_r)

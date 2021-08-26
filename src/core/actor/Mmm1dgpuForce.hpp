@@ -48,14 +48,14 @@ public:
 private:
   // CUDA parameters
   unsigned int numThreads;
-  unsigned int numBlocks(SystemInterface &s);
+  unsigned int numBlocks(SystemInterface const &s) const;
 
   // the box length currently set on the GPU
   // Needed to make sure it hasn't been modified after inter coulomb was used.
   float host_boxz;
   // the number of particles we had during the last run. Needed to check if we
   // have to realloc dev_forcePairs
-  int host_npart;
+  unsigned int host_npart;
   bool need_tune;
 
   // pairs==0: return forces using atomicAdd

@@ -29,6 +29,7 @@
 #include <cmath>
 #include <cstddef>
 #include <stdexcept>
+#include <vector>
 
 namespace Observables {
 
@@ -71,15 +72,15 @@ public:
            sampling_delta[2] > 0.);
     assert(sampling_offset[0] >= 0. and sampling_offset[1] >= 0. and
            sampling_offset[2] >= 0.);
-    const auto n_samples_x = static_cast<size_t>(
+    const auto n_samples_x = static_cast<std::size_t>(
         std::rint((lim[0].second - lim[0].first) / sampling_delta[0]));
-    const auto n_samples_y = static_cast<size_t>(
+    const auto n_samples_y = static_cast<std::size_t>(
         std::rint((lim[1].second - lim[1].first) / sampling_delta[1]));
-    const auto n_samples_z = static_cast<size_t>(
+    const auto n_samples_z = static_cast<std::size_t>(
         std::rint((lim[2].second - lim[2].first) / sampling_delta[2]));
-    for (size_t x = 0; x < n_samples_x; ++x) {
-      for (size_t y = 0; y < n_samples_y; ++y) {
-        for (size_t z = 0; z < n_samples_z; ++z) {
+    for (std::size_t x = 0; x < n_samples_x; ++x) {
+      for (std::size_t y = 0; y < n_samples_y; ++y) {
+        for (std::size_t z = 0; z < n_samples_z; ++z) {
           sampling_positions.push_back(Utils::Vector3d{
               {lim[0].first + sampling_offset[0] +
                    static_cast<double>(x) * sampling_delta[0],

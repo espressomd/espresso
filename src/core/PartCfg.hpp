@@ -109,7 +109,7 @@ private:
 public:
   /** Number of particles in the config.
    */
-  size_t size() {
+  std::size_t size() {
     if (!m_valid)
       update();
 

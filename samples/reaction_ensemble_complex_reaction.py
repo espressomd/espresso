@@ -82,7 +82,7 @@ for i in range(N0):
 
 # use an exclusion radius of 0 to simulate an ideal gas
 RE = espressomd.reaction_ensemble.ReactionEnsemble(
-    temperature=1, exclusion_radius=0, seed=4)
+    kT=1, exclusion_radius=0, seed=4)
 
 
 RE.add_reaction(
@@ -94,6 +94,10 @@ RE.add_reaction(
 pprint.pprint(RE.get_status())
 
 numbers = {type_A: [], type_B: [], type_C: [], type_D: [], type_E: []}
+
+# Set the hidden particle type to the lowest possible number to speed 
+# up the simulation
+RE.set_non_interacting_type(max(types) + 1)
 
 # warmup
 RE.reaction(200)

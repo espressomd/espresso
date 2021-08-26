@@ -38,7 +38,7 @@ std::vector<double> LBVelocityProfile::operator()() const {
   }
   auto hist_tmp = histogram.get_histogram();
   auto const tot_count = histogram.get_tot_count();
-  for (size_t ind = 0; ind < hist_tmp.size(); ++ind) {
+  for (std::size_t ind = 0; ind < hist_tmp.size(); ++ind) {
     if (tot_count[ind] == 0 and not allow_empty_bins) {
       auto const error = "Decrease sampling delta(s), bin " +
                          std::to_string(ind) + " has no hit";

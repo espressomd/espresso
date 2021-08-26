@@ -51,40 +51,41 @@ namespace {
 
 using Utils::Vector;
 
-class visitor_size : public boost::static_visitor<size_t> {
+class visitor_size : public boost::static_visitor<std::size_t> {
 public:
-  template <size_t N> size_t operator()(Vector<double, N> const &v) const {
+  template <std::size_t N>
+  std::size_t operator()(Vector<double, N> const &v) const {
     return v.size();
   }
-  size_t operator()(Utils::Quaternion<double> const &q) const { return 4; }
-  size_t operator()(double v) const { return 1; }
+  std::size_t operator()(Utils::Quaternion<double> const &q) const { return 4; }
+  std::size_t operator()(double v) const { return 1; }
 };
 
 class visitor_get : public boost::static_visitor<double> {
 public:
-  template <size_t N>
-  double operator()(Vector<double, N> const &v, size_t i) const {
+  template <std::size_t N>
+  double operator()(Vector<double, N> const &v, std::size_t i) const {
     return v[i];
   }
-  double operator()(Utils::Quaternion<double> const &q, size_t i) const {
+  double operator()(Utils::Quaternion<double> const &q, std::size_t i) const {
     return q[i];
   }
-  double operator()(double v, size_t i) const {
+  double operator()(double v, std::size_t i) const {
     assert(i == 0);
     return v;
   }
 };
 
-size_t get_size(VariantVectorXd const &vec) {
+std::size_t get_size(VariantVectorXd const &vec) {
   return boost::apply_visitor(visitor_size(), vec);
 }
 
-double get_value(VariantVectorXd const &vec, size_t i) {
+double get_value(VariantVectorXd const &vec, std::size_t i) {
   return boost::apply_visitor(
       std::bind(visitor_get(), std::placeholders::_1, i), vec);
 }
 
-template <typename T> auto square_matrix(size_t N) {
+template <typename T> auto square_matrix(std::size_t N) {
   return std::vector<std::vector<T>>(N, std::vector<T>(N));
 }
 
@@ -100,16 +101,16 @@ template <typename T> auto square_matrix(size_t N) {
 template <typename NoiseKernel>
 std::tuple<std::vector<double>, std::vector<double>,
            std::vector<std::vector<double>>, std::vector<std::vector<double>>>
-noise_statistics(NoiseKernel &&noise_function, size_t sample_size) {
+noise_statistics(NoiseKernel &&noise_function, std::size_t sample_size) {
 
   // get size of the arrays and size of the triangular correlation matrix
   auto const first_value = noise_function();
   auto const n_vectors = first_value.size();
-  std::vector<size_t> dimensions(n_vectors);
+  std::vector<std::size_t> dimensions(n_vectors);
   std::transform(first_value.begin(), first_value.end(), dimensions.begin(),
                  [](auto const &element) { return get_size(element); });
   auto const matrix_dim = std::accumulate(dimensions.begin(), dimensions.end(),
-                                          0, std::plus<size_t>());
+                                          0, std::plus<std::size_t>());
 
   // set up boost accumulators
   namespace ba = boost::accumulators;
@@ -122,22 +123,22 @@ noise_statistics(NoiseKernel &&noise_function, size_t sample_size) {
   auto acc_covariance = ::square_matrix<boost_covariance>(matrix_dim);
 
   // accumulate
-  for (size_t step = 0; step < sample_size; ++step) {
+  for (std::size_t step = 0; step < sample_size; ++step) {
     auto const noise_tuple = noise_function();
     // for each vector, pool the random numbers of all columns
-    for (size_t vec1 = 0; vec1 < dimensions.size(); ++vec1) {
-      for (size_t col1 = 0; col1 < dimensions[vec1]; ++col1) {
+    for (std::size_t vec1 = 0; vec1 < dimensions.size(); ++vec1) {
+      for (std::size_t col1 = 0; col1 < dimensions[vec1]; ++col1) {
         acc_variance[vec1](::get_value(noise_tuple[vec1], col1));
       }
     }
     // fill the covariance matrix (upper triangle)
-    size_t index1 = 0;
-    for (size_t vec1 = 0; vec1 < dimensions.size(); ++vec1) {
-      for (size_t col1 = 0; col1 < dimensions[vec1]; ++col1) {
-        size_t index2 = index1;
-        for (size_t vec2 = vec1; vec2 < dimensions.size(); ++vec2) {
-          for (size_t col2 = (vec2 == vec1) ? col1 : 0; col2 < dimensions[vec2];
-               ++col2) {
+    std::size_t index1 = 0;
+    for (std::size_t vec1 = 0; vec1 < dimensions.size(); ++vec1) {
+      for (std::size_t col1 = 0; col1 < dimensions[vec1]; ++col1) {
+        std::size_t index2 = index1;
+        for (std::size_t vec2 = vec1; vec2 < dimensions.size(); ++vec2) {
+          for (std::size_t col2 = (vec2 == vec1) ? col1 : 0;
+               col2 < dimensions[vec2]; ++col2) {
             acc_covariance[index1][index2](
                 ::get_value(noise_tuple[vec1], col1),
                 ba::covariate1 = ::get_value(noise_tuple[vec2], col2));
@@ -152,20 +153,20 @@ noise_statistics(NoiseKernel &&noise_function, size_t sample_size) {
   // compute statistics
   std::vector<double> means(n_vectors);
   std::vector<double> variances(n_vectors);
-  for (size_t i = 0; i < n_vectors; ++i) {
+  for (std::size_t i = 0; i < n_vectors; ++i) {
     means[i] = ba::mean(acc_variance[i]);
     variances[i] = ba::variance(acc_variance[i]);
   }
   auto covariance = ::square_matrix<double>(matrix_dim);
-  for (size_t i = 0; i < matrix_dim; ++i) {
-    for (size_t j = i; j < matrix_dim; ++j) {
+  for (std::size_t i = 0; i < matrix_dim; ++i) {
+    for (std::size_t j = i; j < matrix_dim; ++j) {
       covariance[i][j] = covariance[j][i] =
           ba::covariance(acc_covariance[i][j]);
     }
   }
   auto correlation = ::square_matrix<double>(matrix_dim);
-  for (size_t i = 0; i < matrix_dim; ++i) {
-    for (size_t j = i; j < matrix_dim; ++j) {
+  for (std::size_t i = 0; i < matrix_dim; ++i) {
+    for (std::size_t j = i; j < matrix_dim; ++j) {
       correlation[i][j] = correlation[j][i] =
           covariance[i][j] / sqrt(covariance[i][i] * covariance[j][j]);
     }
@@ -175,8 +176,8 @@ noise_statistics(NoiseKernel &&noise_function, size_t sample_size) {
 }
 
 boost::test_tools::predicate_result correlation_almost_equal(
-    std::vector<std::vector<double>> const &correlation_matrix, size_t i,
-    size_t j, double reference, double threshold) {
+    std::vector<std::vector<double>> const &correlation_matrix, std::size_t i,
+    std::size_t j, double reference, double threshold) {
   auto const value = correlation_matrix[i][j];
   auto const diff = std::abs(value - reference);
   if (diff > threshold) {

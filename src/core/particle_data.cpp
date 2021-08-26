@@ -50,10 +50,16 @@
 #include <boost/serialization/vector.hpp>
 #include <boost/variant.hpp>
 
+#include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <cstddef>
+#include <stdexcept>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
+#include <vector>
 
 namespace {
 /**
@@ -476,7 +482,7 @@ Utils::Cache<int, Particle> particle_fetch_cache(max_cache_size);
 } // namespace
 
 void invalidate_fetch_cache() { particle_fetch_cache.invalidate(); }
-size_t fetch_cache_max_size() { return particle_fetch_cache.max_size(); }
+std::size_t fetch_cache_max_size() { return particle_fetch_cache.max_size(); }
 
 boost::optional<const Particle &> get_particle_data_local(int id) {
   auto p = cell_structure.get_local_particle(id);

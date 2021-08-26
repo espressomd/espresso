@@ -67,11 +67,11 @@ template <class T> struct fft_allocator {
     return false;
   }
 
-  T *allocate(const size_t n) const {
+  T *allocate(const std::size_t n) const {
     if (n == 0) {
       return nullptr;
     }
-    if (n > static_cast<size_t>(-1) / sizeof(T)) {
+    if (n > static_cast<std::size_t>(-1) / sizeof(T)) {
       throw std::bad_array_new_length();
     }
     void *const pv = fftw_malloc(n * sizeof(T));
@@ -80,7 +80,7 @@ template <class T> struct fft_allocator {
     }
     return static_cast<T *>(pv);
   }
-  void deallocate(T *const p, size_t) const noexcept { fftw_free(p); }
+  void deallocate(T *const p, std::size_t) const noexcept { fftw_free(p); }
 };
 
 template <class T> using fft_vector = std::vector<T, fft_allocator<T>>;

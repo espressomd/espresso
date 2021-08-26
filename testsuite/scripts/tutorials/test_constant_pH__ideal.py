@@ -27,7 +27,8 @@ except ImportError:
         "Python module pint not available, skipping test!")
 else:
     tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-        "@TUTORIALS_DIR@/constant_pH/constant_pH.py", script_suffix="ideal")
+        "@TUTORIALS_DIR@/constant_pH/constant_pH.py", script_suffix="ideal",
+        USE_WCA=False, USE_ELECTROSTATICS=False, NUM_PHS=10)
 
 
 @skipIfMissingFeatures
@@ -35,13 +36,12 @@ class Tutorial(ut.TestCase):
     system = tutorial.system
 
     def test(self):
-        expected_values = 1. / (1 + 10**(tutorial.pK - tutorial.pHs))
-        simulated_values = tutorial.av_alpha
-        simulated_values_error = tutorial.err_alpha
-        # test alpha +/- 0.05 and standard error of alpha less than 0.05
-        np.testing.assert_allclose(expected_values, simulated_values, rtol=0,
-                                   atol=0.05)
-        self.assertLess(np.max(simulated_values_error), 0.05)
+        ref_values = 1. / (1 + 10**(tutorial.pKa - tutorial.pHs))
+        sim_values = tutorial.av_alpha
+        sim_values_error = tutorial.err_alpha
+        # test alpha +/- 0.02 and standard error of alpha less than 0.02
+        np.testing.assert_allclose(sim_values, ref_values, rtol=0., atol=0.02)
+        np.testing.assert_array_less(sim_values_error, 0.02)
 
 
 if __name__ == "__main__":

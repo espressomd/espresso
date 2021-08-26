@@ -46,6 +46,7 @@ using Utils::get_linear_index;
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 ActiveLB lattice_switch = ActiveLB::NONE;
 
@@ -270,11 +271,11 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
           auto const pop = lb_lbnode_get_pop(ind);
           auto const laf = lb_lbnode_get_last_applied_force(ind);
           if (!binary) {
-            for (size_t n = 0; n < pop_size; n++) {
+            for (std::size_t n = 0; n < pop_size; n++) {
               cpfile << pop[n] << " ";
             }
             cpfile << "\n";
-            for (size_t n = 0; n < 3; n++) {
+            for (std::size_t n = 0; n < 3; n++) {
               cpfile << laf[n] << " ";
             }
             cpfile << "\n";
@@ -304,7 +305,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
     }
 
     auto const pop_size = lb_walberla()->stencil_size();
-    size_t saved_pop_size;
+    std::size_t saved_pop_size;
     Utils::Vector3d laf;
     auto const gridsize = lb_walberla()->get_grid_dimensions();
     int saved_gridsize[3];
@@ -324,7 +325,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
         fclose(cpfile);
         throw std::runtime_error(err_msg + "incorrectly formatted data.");
       }
-      if (fread(&saved_pop_size, sizeof(size_t), 1, cpfile) != 1) {
+      if (fread(&saved_pop_size, sizeof(std::size_t), 1, cpfile) != 1) {
         fclose(cpfile);
         throw std::runtime_error(err_msg + "incorrectly formatted data.");
       }
@@ -353,7 +354,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
         for (int k = 0; k < gridsize[2]; k++) {
           Utils::Vector3i const ind{{i, j, k}};
           if (!binary) {
-            for (size_t f = 0; f < saved_pop_size; ++f) {
+            for (std::size_t f = 0; f < saved_pop_size; ++f) {
               res = fscanf(cpfile, "%lf ", &pop[f]);
               if (res == EOF) {
                 fclose(cpfile);

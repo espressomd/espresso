@@ -24,6 +24,7 @@
 
 #include <utils/Factory.hpp>
 
+#include <cassert>
 #include <memory>
 #include <string>
 #include <utility>

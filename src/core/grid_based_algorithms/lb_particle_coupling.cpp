@@ -157,7 +157,8 @@ using Utils::Vector;
 using Utils::Vector3d;
 using Utils::Vector3i;
 
-template <class T, size_t N> using Box = std::pair<Vector<T, N>, Vector<T, N>>;
+template <class T, std::size_t N>
+using Box = std::pair<Vector<T, N>, Vector<T, N>>;
 
 /**
  * @brief Check if a position is in a box.
@@ -171,7 +172,7 @@ template <class T, size_t N> using Box = std::pair<Vector<T, N>, Vector<T, N>>;
  *
  * @return True iff the point is inside of the box.
  */
-template <class T, size_t N>
+template <class T, std::size_t N>
 bool in_box(Vector<T, N> const &pos, Box<T, N> const &box) {
   return (pos >= box.first) and (pos < box.second);
 }

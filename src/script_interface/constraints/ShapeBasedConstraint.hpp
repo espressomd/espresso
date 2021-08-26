@@ -30,6 +30,7 @@
 #include "script_interface/shapes/Shape.hpp"
 
 #include <memory>
+#include <string>
 
 namespace ScriptInterface {
 namespace Constraints {

@@ -20,10 +20,11 @@
 #include "lb_walberla_init.hpp"
 
 #include "LBWalberlaBase.hpp"
-#include "LBWalberlaD3Q19FluctuatingMRT.hpp"
-#include "LBWalberlaD3Q19MRT.hpp"
+#include "LBWalberlaImpl.hpp"
 
 #include "core/mpi/Environment.h"
+
+#include <utils/Vector.hpp>
 
 void walberla_mpi_init() {
   int argc = 0;
@@ -40,12 +41,12 @@ LBWalberlaBase *new_lb_walberla(double viscosity, double density,
   LBWalberlaBase *lb_walberla_instance;
   if (kT == 0.) { // un-thermalized LB
     lb_walberla_instance =
-        new walberla::LBWalberlaD3Q19MRT(walberla::LBWalberlaD3Q19MRT{
-            viscosity, density, grid_dimensions, node_grid, 1});
+        new walberla::LBWalberlaImpl<UnthermalizedCollisionModel>(
+            viscosity, density, grid_dimensions, node_grid, 1, kT, seed);
   } else { // thermalized LB
-    lb_walberla_instance = new walberla::LBWalberlaD3Q19FluctuatingMRT(
-        walberla::LBWalberlaD3Q19FluctuatingMRT{
-            viscosity, density, grid_dimensions, node_grid, 1, kT, seed});
+    lb_walberla_instance =
+        new walberla::LBWalberlaImpl<ThermalizedCollisionModel>(
+            viscosity, density, grid_dimensions, node_grid, 1, kT, seed);
   }
   return lb_walberla_instance;
 }

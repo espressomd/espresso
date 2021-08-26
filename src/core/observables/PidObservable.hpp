@@ -72,14 +72,14 @@ namespace detail {
 template <class T> struct shape_impl;
 
 template <> struct shape_impl<double> {
-  static std::vector<size_t> eval(size_t /* n_part */) { return {1}; }
+  static std::vector<std::size_t> eval(std::size_t /* n_part */) { return {1}; }
 };
-template <class _, size_t N> struct shape_impl<Utils::Vector<_, N>> {
-  static std::vector<size_t> eval(size_t /* n_part */) { return {N}; }
+template <class _, std::size_t N> struct shape_impl<Utils::Vector<_, N>> {
+  static std::vector<std::size_t> eval(std::size_t /* n_part */) { return {N}; }
 };
 template <class T> struct shape_impl<std::vector<T>> {
-  static std::vector<size_t> eval(size_t n_part) {
-    std::vector<size_t> ret{n_part};
+  static std::vector<std::size_t> eval(std::size_t n_part) {
+    std::vector<std::size_t> ret{n_part};
     boost::copy(shape_impl<T>::eval(n_part), std::back_inserter(ret));
 
     return ret;
@@ -104,7 +104,7 @@ template <class T> struct shape_impl<std::vector<T>> {
 template <class ObsType> class ParticleObservable : public PidObservable {
 public:
   using PidObservable::PidObservable;
-  std::vector<size_t> shape() const override {
+  std::vector<std::size_t> shape() const override {
     using std::declval;
 
     return detail::shape_impl<decltype(declval<ObsType>()(

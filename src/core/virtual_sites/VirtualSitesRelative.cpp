@@ -55,7 +55,8 @@ orientation(Particle const *p_ref,
  *
  * @return Relative distance.
  */
-Utils::Vector3d connection_vector(
+inline Utils::Vector3d connection_vector(
+
     Particle const *p_ref,
     const ParticleProperties::VirtualSitesRelativeParameters &vs_rel) {
   // Calculate the quaternion defining the orientation of the vector connecting

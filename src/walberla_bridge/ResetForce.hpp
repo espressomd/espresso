@@ -41,13 +41,13 @@ public:
       : m_pdf_field_id(pdf_field_id),
         m_last_applied_force_field_id(last_applied_force_field_id),
         m_force_to_be_applied_id(force_to_be_applied_id),
-        m_ext_force(Vector3<real_t>{0, 0, 0}){};
+        m_ext_force(Vector3<real_t>{0, 0, 0}) {}
 
   void set_ext_force(const Utils::Vector3d &ext_force) {
     m_ext_force = to_vector3(ext_force);
   }
 
-  Utils::Vector3d get_ext_force() const { return to_vector3d(m_ext_force); };
+  Utils::Vector3d get_ext_force() const { return to_vector3d(m_ext_force); }
 
   void operator()(IBlock *block) {
     auto *pdf_field = block->template getData<PdfField>(m_pdf_field_id);
