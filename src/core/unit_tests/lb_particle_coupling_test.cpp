@@ -235,12 +235,12 @@ BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
 
   auto const coupling_pos =
       p.r.p + Utils::Vector3d{0., 0., p.p.swim.dipole_length / params.agrid};
-  void add_swimmer_force(Particle const &p, double time_step);
+  void add_swimmer_force(Particle const &p, double time_step, bool has_ghosts);
 
   // swimmer coupling
   {
     if (in_local_halo(p.r.p)) {
-      add_swimmer_force(p, params.time_step);
+      add_swimmer_force(p, params.time_step, true);
     }
     if (in_local_halo(coupling_pos)) {
       auto const interpolated =
@@ -313,7 +313,7 @@ BOOST_DATA_TEST_CASE(particle_coupling, bdata::make(kTs), kT) {
   // coupling
   {
     if (in_local_halo(p.r.p)) {
-      couple_particle(p, false, noise, rng, params.time_step);
+      couple_particle(p, false, noise, rng, params.time_step, true);
       BOOST_CHECK_SMALL((p.f.f - expected).norm(), tol);
 
       auto const interpolated = lb_lbfluid_get_force_to_be_applied(p.r.p);

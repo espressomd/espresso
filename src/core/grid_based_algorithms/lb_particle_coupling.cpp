@@ -121,7 +121,7 @@ std::vector<Utils::Vector3d> shifted_positions(Utils::Vector3d pos,
     }
   }
   return res;
-};
+}
 
 /**
  * @brief Add a force to the lattice force density.

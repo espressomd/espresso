@@ -186,13 +186,16 @@ class SwimmerTestDomDecWALBERLA(SwimmerTest, ut.TestCase):
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=self.gamma)
 
+
 @utx.skipIfMissingFeatures(
     ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "LB_WALBERLA"])
 class SwimmerTestNSquareWALBERLA(SwimmerTest, ut.TestCase):
 
     def setUp(self):
         self.tol = 1e-10
-        if any(self.system.cell_system.node_grid > 1): self.skipTest("N Square and LB not compatible on more than one core")
+        if any(self.system.cell_system.node_grid > 1):
+            self.skipTest(
+                "N Square and LB not compatible on more than one core")
         self.system.cell_system.set_n_square()
         self.lbf = espressomd.lb.LBFluidWalberla(**self.LB_params)
         self.system.actors.add(self.lbf)

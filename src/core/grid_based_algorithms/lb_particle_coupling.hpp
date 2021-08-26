@@ -86,7 +86,8 @@ Utils::Vector3d lb_particle_coupling_noise(bool enabled, int part_id,
 
 // internal function exposed for unit testing
 void couple_particle(Particle &p, bool couple_virtual, double noise_amplitude,
-                     const OptionalCounter &rng_counter, double time_step);
+                     const OptionalCounter &rng_counter, double time_step,
+                     bool has_ghosts);
 
 Utils::Vector3d lb_particle_coupling_drift_vel_offset(const Particle &p);
 

@@ -85,11 +85,8 @@ class Momentum(object):
                 break
 
         # Make sure, the particle has crossed the periodic boundaries
-        self.assertGreater(
-            max(
-                np.abs(p.v) *
-                self.system.time),
-            self.system.box_l[0])
+        self.assertGreater(max(np.abs(p.v)) * self.system.time,
+                           self.system.box_l[0])
 
 
 @utx.skipIfMissingFeatures(['LB_WALBERLA', 'EXTERNAL_FORCES'])
@@ -106,7 +103,9 @@ class LBWalberlaMomentum(ut.TestCase, Momentum):
         self.check()
 
     def test_n_square(self):
-        if all(self.system.cell_system.node_grid != [1, 1, 1]): return
+        if self.system.cell_system.get_state()["n_nodes"] > 1:
+            self.skipTest(
+                "LB only works with domain decomposition for more than 1 MPI rank")
         self.system.cell_system.set_n_square()
         self.check()
 
