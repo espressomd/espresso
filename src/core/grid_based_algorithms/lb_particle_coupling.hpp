@@ -19,7 +19,9 @@
 #ifndef LB_PARTICLE_COUPLING_HPP
 #define LB_PARTICLE_COUPLING_HPP
 
+#include "Particle.hpp"
 #include "ParticleRange.hpp"
+#include "grid.hpp"
 
 #include <utils/Counter.hpp>
 #include <utils/Vector.hpp>
@@ -29,6 +31,7 @@
 #include <boost/serialization/optional.hpp>
 
 #include <cstdint>
+#include <vector>
 
 using OptionalCounter = boost::optional<Utils::Counter<uint64_t>>;
 
@@ -85,9 +88,16 @@ Utils::Vector3d lb_particle_coupling_noise(bool enabled, int part_id,
                                            const OptionalCounter &rng_counter);
 
 // internal function exposed for unit testing
+std::vector<Utils::Vector3d> shifted_positions(Utils::Vector3d pos,
+                                               const BoxGeometry &box);
+
+// internal function exposed for unit testing
 void couple_particle(Particle &p, bool couple_virtual, double noise_amplitude,
                      const OptionalCounter &rng_counter, double time_step,
                      bool has_ghosts);
+
+// internal function exposed for unit testing
+void add_swimmer_force(Particle const &p, double time_step, bool has_ghosts);
 
 Utils::Vector3d lb_particle_coupling_drift_vel_offset(const Particle &p);
 

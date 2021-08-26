@@ -32,8 +32,6 @@ namespace utf = boost::unit_test;
 
 #ifdef LB_WALBERLA
 
-#include <lb_walberla_init.hpp>
-
 #include "ParticleFactory.hpp"
 
 #include "EspressoSystemStandAlone.hpp"
@@ -46,7 +44,6 @@ namespace utf = boost::unit_test;
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "grid_based_algorithms/lb_walberla_instance.hpp"
-#include "integrate.hpp"
 #include "random.hpp"
 #include "thermostat.hpp"
 
@@ -58,19 +55,8 @@ namespace utf = boost::unit_test;
 #include <cmath>
 #include <limits>
 #include <memory>
-#include <stdexcept>
 #include <string>
 #include <vector>
-
-/* Guard against a bug in Boost versions < 1.68 where fixtures used to skip
- * test are not propagated correctly to the testsuite, causing skipped tests
- * to trigger a failure of the complete testsuite without any error message.
- * More details in ticket https://svn.boost.org/trac10/ticket/12095
- */
-#include <boost/serialization/version.hpp>
-#if BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 < 68
-int main(int argc, char **argv) {}
-#else
 
 namespace espresso {
 // ESPResSo system instance
@@ -235,12 +221,11 @@ BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
 
   auto const coupling_pos =
       p.r.p + Utils::Vector3d{0., 0., p.p.swim.dipole_length / params.agrid};
-  void add_swimmer_force(Particle const &p, double time_step, bool has_ghosts);
 
   // swimmer coupling
   {
     if (in_local_halo(p.r.p)) {
-      add_swimmer_force(p, params.time_step, true);
+      add_swimmer_force(p, params.time_step, false);
     }
     if (in_local_halo(coupling_pos)) {
       auto const interpolated =
@@ -313,7 +298,7 @@ BOOST_DATA_TEST_CASE(particle_coupling, bdata::make(kTs), kT) {
   // coupling
   {
     if (in_local_halo(p.r.p)) {
-      couple_particle(p, false, noise, rng, params.time_step, true);
+      couple_particle(p, false, noise, rng, params.time_step, false);
       BOOST_CHECK_SMALL((p.f.f - expected).norm(), tol);
 
       auto const interpolated = lb_lbfluid_get_force_to_be_applied(p.r.p);
@@ -440,8 +425,6 @@ int main(int argc, char **argv) {
 
   return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }
-
-#endif // Boost version >= 1.68
 
 #else // ifdef LB_WALBERLA
 int main(int argc, char **argv) {}
