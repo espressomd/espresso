@@ -31,9 +31,9 @@ class EKNoFlux(ut.TestCase):
         ekspecies = espressomd.EKSpecies.EKSpecies(
             density=0.0, kT=0.0, diffusion=self.DIFFUSION_COEFFICIENT, valency=0.0)
 
-        ekfft = espressomd.EKSpecies.EKFFT()
+        eksolver = espressomd.EKSpecies.EKNone()
 
-        self.system.ekcontainer.add(ekspecies, tau=1.0, solver=ekfft)
+        self.system.ekcontainer.add(ekspecies, tau=1.0, solver=eksolver)
 
         center = np.asarray(self.system.box_l / 2, dtype=np.int)
 
