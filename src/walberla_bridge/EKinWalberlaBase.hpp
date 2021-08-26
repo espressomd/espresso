@@ -18,17 +18,19 @@ private:
   FloatType m_kT;
   FloatType m_valency;
   bool m_advection;
+  bool m_friction_coupling;
 
 protected:
   EKinWalberlaBase(FloatType diffusion, FloatType kT, FloatType valency,
-                   bool advection)
-      : m_diffusion{diffusion}, m_kT{kT}, m_valency{valency}, m_advection{
-                                                                  advection} {}
+                   bool advection, bool friction_coupling)
+      : m_diffusion{diffusion}, m_kT{kT}, m_valency{valency},
+        m_advection{advection}, m_friction_coupling(friction_coupling) {}
 
 public:
   /** @brief Integrate EKin for one time step */
   virtual void
-  integrate(const walberla::domain_decomposition::BlockDataID &velocity_id) = 0;
+  integrate(const walberla::domain_decomposition::BlockDataID &velocity_id,
+            const walberla::domain_decomposition::BlockDataID &force_id) = 0;
 
   /** @brief perform ghost communication of densities */
   virtual void ghost_communication() = 0;
@@ -52,14 +54,20 @@ public:
   virtual void clear_boundaries() = 0;
 
   // Global parameters
-  void set_diffusion(FloatType diffusion) { m_diffusion = diffusion; }
-  [[nodiscard]] FloatType get_diffusion() const { return m_diffusion; }
-  void set_kT(FloatType kT) { m_kT = kT; }
-  [[nodiscard]] FloatType get_kT() const { return m_kT; }
-  void set_valency(FloatType valency) { m_valency = valency; }
-  [[nodiscard]] FloatType get_valency() const { return m_valency; }
-  void set_advection(bool advection) { m_advection = advection; }
-  [[nodiscard]] bool get_advection() const { return m_advection; }
+  void set_diffusion(FloatType diffusion) noexcept { m_diffusion = diffusion; }
+  [[nodiscard]] FloatType get_diffusion() const noexcept { return m_diffusion; }
+  void set_kT(FloatType kT) noexcept { m_kT = kT; }
+  [[nodiscard]] FloatType get_kT() const noexcept { return m_kT; }
+  void set_valency(FloatType valency) noexcept { m_valency = valency; }
+  [[nodiscard]] FloatType get_valency() const noexcept { return m_valency; }
+  void set_advection(bool advection) noexcept { m_advection = advection; }
+  [[nodiscard]] bool get_advection() const noexcept { return m_advection; }
+  void set_friction_coupling(bool friction_coupling) noexcept {
+    m_friction_coupling = friction_coupling;
+  }
+  [[nodiscard]] bool get_friction_coupling() const noexcept {
+    return m_friction_coupling;
+  }
 
   //* @brief Fet the rng counter for thermalized LBs */
   virtual uint64_t get_rng_state() const = 0;

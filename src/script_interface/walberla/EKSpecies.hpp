@@ -39,7 +39,8 @@ public:
     m_ekinstance = ::walberla::new_ek_walberla(
         get_walberla_blockforest(), get_value<double>(args, "diffusion"),
         get_value<double>(args, "kT"), get_value<double>(args, "valency"),
-        get_value<double>(args, "density"), get_value<bool>(args, "advection"));
+        get_value<double>(args, "density"), get_value<bool>(args, "advection"),
+        get_value<bool>(args, "friction_coupling"));
 
     add_parameters(
         {{"diffusion",
@@ -62,6 +63,11 @@ public:
             m_ekinstance->set_advection(get_value<bool>(v));
           },
           [this]() { return m_ekinstance->get_advection(); }},
+         {"friction_coupling",
+          [this](Variant const &v) {
+            m_ekinstance->set_friction_coupling(get_value<bool>(v));
+          },
+          [this]() { return m_ekinstance->get_friction_coupling(); }},
          {"shape", AutoParameter::read_only, [this]() {
             return m_ekinstance->get_blockforest()->get_grid_dimensions();
           }}});
