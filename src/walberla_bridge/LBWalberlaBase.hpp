@@ -128,7 +128,16 @@ public:
   /** @brief set the rng state of thermalized LBs */
   virtual void set_rng_state(uint64_t counter) = 0;
 
-  [[nodiscard]] virtual const walberla::WalberlaBlockForest * get_blockforest() const = 0;
+  /** @brief get the velocity field id */
+  [[nodiscard]] virtual walberla::domain_decomposition::BlockDataID
+  get_velocity_field_id() const = 0;
+
+  /** @brief get the force field id */
+  [[nodiscard]] virtual walberla::domain_decomposition::BlockDataID
+  get_force_field_id() const = 0;
+
+  [[nodiscard]] virtual const walberla::WalberlaBlockForest *
+  get_blockforest() const = 0;
   /** @brief Create a VTK observable.
    *
    *  @param delta_N          Write frequency, if 0 write a single frame,

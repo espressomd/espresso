@@ -339,7 +339,7 @@ protected:
   std::shared_ptr<PDFStreamingCommunicator> m_pdf_streaming_communication;
 
   /** Block forest */
-  const WalberlaBlockForest * m_blockforest;
+  const WalberlaBlockForest *m_blockforest;
 
   // MPI
   std::shared_ptr<mpi::Environment> m_env;
@@ -393,13 +393,12 @@ protected:
   }
 
 public:
-  LBWalberlaImpl(const WalberlaBlockForest * blockforest,
-                 double viscosity, double density,
-                 int n_ghost_layers,
-                 double kT, unsigned int seed)
-       : m_n_ghost_layers(static_cast<unsigned int>(n_ghost_layers)),
-         m_viscosity(viscosity), m_density(density), m_kT(kT), m_seed(seed),
-         m_blockforest(blockforest) {
+  LBWalberlaImpl(const WalberlaBlockForest *blockforest, double viscosity,
+                 double density, int n_ghost_layers, double kT,
+                 unsigned int seed)
+      : m_n_ghost_layers(static_cast<unsigned int>(n_ghost_layers)),
+        m_viscosity(viscosity), m_density(density), m_kT(kT), m_seed(seed),
+        m_blockforest(blockforest) {
 
     if (m_n_ghost_layers <= 0)
       throw std::runtime_error("At least one ghost layer must be used");
@@ -423,8 +422,7 @@ public:
 
     // Init and register flag field (fluid/boundary)
     m_flag_field_id = field::addFlagFieldToStorage<FlagField>(
-        m_blockforest->get_blocks(), "flag field",
-        m_n_ghost_layers);
+        m_blockforest->get_blocks(), "flag field", m_n_ghost_layers);
 
     setup_with_valid_lattice_model(m_density, m_seed, 0u);
   }
@@ -524,7 +522,7 @@ public:
 
   [[nodiscard]] double get_viscosity() const override { return m_viscosity; }
 
-  [[nodiscard]] const WalberlaBlockForest * get_blockforest() const override {
+  [[nodiscard]] const WalberlaBlockForest *get_blockforest() const override {
     return m_blockforest;
   };
 
@@ -537,9 +535,8 @@ public:
     if (is_boundary)    // is info available locally
       if (*is_boundary) // is the node a boundary
         return get_node_velocity_at_boundary(node);
-    auto const bc =
-        get_block_and_cell(node, consider_ghosts, m_blockforest->get_blocks(),
-                           m_n_ghost_layers);
+    auto const bc = get_block_and_cell(
+        node, consider_ghosts, m_blockforest->get_blocks(), m_n_ghost_layers);
     if (!bc)
       return {};
     auto const &vel_field =
@@ -626,9 +623,9 @@ public:
       return false;
     auto force_at_node = [this, force](const std::array<int, 3> node,
                                        double weight) {
-      auto const bc = get_block_and_cell(to_vector3i(node), true,
-                                         m_blockforest->get_blocks(),
-                                         m_n_ghost_layers);
+      auto const bc =
+          get_block_and_cell(to_vector3i(node), true,
+                             m_blockforest->get_blocks(), m_n_ghost_layers);
       if (bc) {
         auto force_field = (*bc).block->template getData<VectorField>(
             m_force_to_be_applied_id);
@@ -673,9 +670,8 @@ public:
   [[nodiscard]] boost::optional<Utils::Vector3d>
   get_node_last_applied_force(const Utils::Vector3i &node,
                               bool consider_ghosts = false) const override {
-    auto const bc =
-        get_block_and_cell(node, consider_ghosts, m_blockforest->get_blocks(),
-                           m_n_ghost_layers);
+    auto const bc = get_block_and_cell(
+        node, consider_ghosts, m_blockforest->get_blocks(), m_n_ghost_layers);
     if (!bc)
       return {};
 
@@ -782,9 +778,8 @@ public:
 
   [[nodiscard]] boost::optional<Utils::Vector3d>
   get_node_boundary_force(const Utils::Vector3i &node) const override {
-    auto bc = get_block_and_cell(
-        node, true, m_blockforest->get_blocks(),
-        m_n_ghost_layers); // including ghosts
+    auto bc = get_block_and_cell(node, true, m_blockforest->get_blocks(),
+                                 m_n_ghost_layers); // including ghosts
     if (!bc)
       return {boost::none};
     // Get boundary handling
@@ -819,9 +814,8 @@ public:
   [[nodiscard]] boost::optional<bool>
   get_node_is_boundary(const Utils::Vector3i &node,
                        bool consider_ghosts = false) const override {
-    auto bc =
-        get_block_and_cell(node, consider_ghosts, m_blockforest->get_blocks(),
-                           m_n_ghost_layers);
+    auto bc = get_block_and_cell(node, consider_ghosts,
+                                 m_blockforest->get_blocks(), m_n_ghost_layers);
     if (!bc)
       return {boost::none};
 
@@ -930,6 +924,14 @@ public:
     }
     return res;
   }
+
+  [[nodiscard]] BlockDataID get_velocity_field_id() const override {
+    return m_velocity_field_id;
+  }
+
+  [[nodiscard]] BlockDataID get_force_field_id() const override {
+    return m_force_to_be_applied_id;
+  };
 
   void create_vtk(unsigned delta_N, unsigned initial_count,
                   unsigned flag_observables, std::string const &identifier,
