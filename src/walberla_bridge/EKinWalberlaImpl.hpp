@@ -181,28 +181,46 @@ public:
 
   void ghost_communication() override { (*m_full_communication)(); };
 
-  void integrate() override {
-    if (m_noflux_dirty) {
-      boundary_noflux_update();
-      m_noflux_dirty = false;
+private:
+  inline void kernel_noflux() {
+    for (auto &block : *get_blockforest()->get_blocks()) {
+      (*m_noflux).run(&block);
     }
-    // calculate diffusive flux contribution
+  }
+
+  inline void kernel_continuity() {
+    for (auto &block : *get_blockforest()->get_blocks()) {
+      (*m_continuity).run(&block);
+    }
+  }
+
+  inline void kernel_diffusion() {
     for (auto &block : *get_blockforest()->get_blocks()) {
       pystencils::DiffusiveFluxKernel(
           EKinWalberlaBase<FloatType>::get_diffusion(),
           m_flux_field_flattened_id, m_density_field_flattened_id)
           .run(&block);
     }
-    // noflux
-    for (auto &block : *get_blockforest()->get_blocks()) {
-      (*m_noflux).run(&block);
+  }
+
+  inline void kernel_migration() {}
+
+public:
+  void integrate() override {
+    if (m_noflux_dirty) {
+      boundary_noflux_update();
+      m_noflux_dirty = false;
     }
-    // continuity
-    for (auto &block : *get_blockforest()->get_blocks()) {
-      (*m_continuity).run(&block);
-    }
-    // communication
-    (*m_full_communication)();
+    // TODO: generate kernel with electrostatic and add poisson-field ID as
+    //       a parameter
+
+    kernel_diffusion();
+    kernel_migration();
+    kernel_noflux();
+    // friction coupling
+    // advection
+    kernel_continuity();
+    ghost_communication();
 
     // Handle VTK writers
     for (const auto &it : m_vtk_auto) {
