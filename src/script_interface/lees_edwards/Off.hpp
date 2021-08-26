@@ -2,7 +2,6 @@
 #define SCRIPT_INTERFACE_LEES_EDWARDS_OFF_HPP
 
 #include "config.hpp"
-#include "core/grid_based_algorithms/lb_walberla_instance.hpp"
 #include "core/lees_edwards.hpp"
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"

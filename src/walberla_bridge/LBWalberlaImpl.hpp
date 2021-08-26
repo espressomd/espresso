@@ -363,10 +363,10 @@ public:
   LBWalberlaImpl(double viscosity, const Utils::Vector3i &grid_dimensions,
                  const Utils::Vector3i &node_grid, int n_ghost_layers,
                  double kT, unsigned int seed,
-                 boost::optional<LeesEdwardsCallbacks> &lees_edwards_callbacks)
+                 boost::optional<LeesEdwardsCallbacks> &&lees_edwards_callbacks)
       : m_grid_dimensions(grid_dimensions), m_n_ghost_layers(n_ghost_layers),
         m_viscosity(viscosity), m_kT(kT), m_seed(seed),
-        m_lees_edwards_callbacks(lees_edwards_callbacks) {
+        m_lees_edwards_callbacks(std::move(lees_edwards_callbacks)) {
 
     if (m_n_ghost_layers <= 0)
       throw std::runtime_error("At least one ghost layer must be used");

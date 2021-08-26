@@ -50,19 +50,20 @@ using LbGeneratorVector =
 // Add all LBs with kT=0 to be tested, here
 LbGeneratorVector unthermalized_lbs() {
   LbGeneratorVector lbs;
+
   // Unthermalized D3Q19 MRT
   lbs.push_back(
       [](const Utils::Vector3i mpi_shape, const LBTestParameters &params) {
         return std::make_shared<walberla::LBWalberlaD3Q19MRT>(
             params.viscosity, params.density, params.grid_dimensions, mpi_shape,
-            1, 0.0, 0u);
+            1, 0.0, 0u, boost::optional<LeesEdwardsCallbacks>{boost::none});
       });
 
   // Thermalized D3Q19 MRT with kT set to 0
   lbs.push_back([](Utils::Vector3i mpi_shape, const LBTestParameters &params) {
     return std::make_shared<walberla::LBWalberlaD3Q19FluctuatingMRT>(
         params.viscosity, params.density, params.grid_dimensions, mpi_shape, 1,
-        0.0, params.seed);
+        0.0, params.seed, boost::optional<LeesEdwardsCallbacks>{boost::none});
   });
   return lbs;
 }
@@ -76,7 +77,8 @@ LbGeneratorVector thermalized_lbs() {
       [](const Utils::Vector3i mpi_shape, const LBTestParameters &params) {
         return std::make_shared<walberla::LBWalberlaD3Q19FluctuatingMRT>(
             params.viscosity, params.density, params.grid_dimensions, mpi_shape,
-            1, params.kT, params.seed);
+            1, params.kT, params.seed,
+            boost::optional<LeesEdwardsCallbacks>{boost::none});
       });
   return lbs;
 }

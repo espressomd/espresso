@@ -37,8 +37,7 @@
 #include <memory>
 
 // TODO walberla: use proper script interface logic
-std::weak_ptr<LeesEdwards::ActiveProtocol> lees_edwards_active_protocol =
-    nullptr;
+std::weak_ptr<LeesEdwards::ActiveProtocol> lees_edwards_active_protocol{};
 
 namespace {
 LBWalberlaBase *lb_walberla_instance = nullptr;
@@ -69,19 +68,18 @@ void init_lb_walberla(double viscosity, double density, double agrid,
   // handled from Python in a parallel simulation
   try {
     boost::optional<LeesEdwardsCallbacks> lees_edwards_object;
-    if (!lees_edwards_active_protocol.expired()) {
-      auto active_protocol_ref = lees_edwards_active_protocol.lock();
+    if (auto active_protocol = lees_edwards_active_protocol.lock()) {
       lees_edwards_object = LeesEdwardsCallbacks(
-          [= active_protocol]() {
-            return get_pos_offset(get_sim_time(), active_protocol);
+          [active_protocol]() {
+            return get_pos_offset(get_sim_time(), *active_protocol);
           },
-          [= active_protocol]() {
-            return get_shear_velocity(get_sim_time(), active_protocol);
+          [active_protocol]() {
+            return get_shear_velocity(get_sim_time(), *active_protocol);
           });
     }
     lb_walberla_instance =
         new_lb_walberla(viscosity, density, grid_dimensions, node_grid, kT,
-                        seed, lees_edwards_object);
+                        seed, std::move(lees_edwards_object));
     lb_walberla_params_instance = new LBWalberlaParams{agrid, tau};
   } catch (const std::exception &e) {
     runtimeErrorMsg() << "Error during Walberla initialization: " << e.what();

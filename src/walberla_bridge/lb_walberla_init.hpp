@@ -23,12 +23,15 @@
 
 #include <utils/Vector.hpp>
 
+#include <boost/optional.hpp>
+
 /** @brief Initialize Walberla's MPI manager */
 void walberla_mpi_init();
 
-LBWalberlaBase *new_lb_walberla(double viscosity, double density,
-                                const Utils::Vector3i &grid_dimensions,
-                                const Utils::Vector3i &node_grid, double kT,
-                                unsigned int seed);
+LBWalberlaBase *
+new_lb_walberla(double viscosity, double density,
+                const Utils::Vector3i &grid_dimensions,
+                const Utils::Vector3i &node_grid, double kT, unsigned int seed,
+                boost::optional<LeesEdwardsCallbacks> &&lees_edwards_callbacks);
 
 #endif
