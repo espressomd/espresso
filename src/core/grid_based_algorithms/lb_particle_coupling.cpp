@@ -101,6 +101,28 @@ void lb_lbcoupling_set_rng_state(uint64_t counter) {
     throw std::runtime_error("No LB active");
 }
 
+/** @brief Return a vector of positions shifted by +,- box length in each
+ * coordinate */
+std::vector<Utils::Vector3d> shifted_positions(Utils::Vector3d pos,
+                                               const BoxGeometry &box) {
+  std::vector<Utils::Vector3d> res;
+  for (int i : {-1, 0, 1}) {
+    for (int j : {-1, 0, 1}) {
+      for (int k : {-1, 0, 1}) {
+        if (i == 0 and j == 0 and k == 0)
+          continue;
+        Utils::Vector3d shift{{double(i), double(j), double(k)}};
+        Utils::Vector3d pos_shifted =
+            pos + Utils::hadamard_product(box.length(), shift);
+        if (in_local_halo(pos_shifted)) {
+          res.push_back(pos_shifted);
+        }
+      }
+    }
+  }
+  return res;
+};
+
 /**
  * @brief Add a force to the lattice force density.
  * @param pos Position of the force
@@ -210,40 +232,28 @@ bool in_local_halo(Vector3d const &pos) {
 }
 
 #ifdef ENGINE
-void add_swimmer_force(Particle const &p, double time_step) {
+void add_swimmer_force(Particle const &p, double time_step, bool has_ghosts) {
   if (p.p.swim.swimming) {
     // calculate source position
     const double direction =
         double(p.p.swim.push_pull) * p.p.swim.dipole_length;
     auto const director = p.r.calc_director();
     auto const source_position = p.r.p + direction * director;
+    auto const force = p.p.swim.f_swim * director;
 
     if (in_local_halo(source_position)) {
-      add_md_force(source_position, p.p.swim.f_swim * director, time_step);
+      add_md_force(source_position, force, time_step);
+    }
+    if (not has_ghosts) {
+      // couple positions shifted by one box length to add forces to ghost
+      // layers
+      for (auto pos : shifted_positions(source_position, box_geo)) {
+        add_md_force(pos, force, time_step);
+      }
     }
   }
 }
 #endif
-
-std::vector<Utils::Vector3d> shifted_positions(Utils::Vector3d pos,
-                                               const BoxGeometry &box) {
-  std::vector<Utils::Vector3d> res;
-  for (int i : {-1, 0, 1}) {
-    for (int j : {-1, 0, 1}) {
-      for (int k : {-1, 0, 1}) {
-        if (i == 0 and j == 0 and k == 0)
-          continue;
-        Utils::Vector3d shift{{double(i), double(j), double(k)}};
-        Utils::Vector3d pos_shifted =
-            pos + Utils::hadamard_product(box.length(), shift);
-        if (in_local_halo(pos_shifted)) {
-          res.push_back(pos_shifted);
-        }
-      }
-    }
-  }
-  return res;
-};
 
 Utils::Vector3d lb_particle_coupling_noise(bool enabled, int part_id,
                                            const OptionalCounter &rng_counter) {
@@ -329,7 +339,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
                         lb_particle_coupling.rng_counter_coupling, time_step,
                         has_ghosts);
 #ifdef ENGINE
-        add_swimmer_force(p, time_step);
+        add_swimmer_force(p, time_step, has_ghosts);
 #endif
       }
 
@@ -338,7 +348,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
                         lb_particle_coupling.rng_counter_coupling, time_step,
                         has_ghosts);
 #ifdef ENGINE
-        add_swimmer_force(p, time_step);
+        add_swimmer_force(p, time_step, has_ghosts);
 #endif
       }
     }
