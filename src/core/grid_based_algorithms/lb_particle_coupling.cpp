@@ -223,24 +223,8 @@ bool in_local_halo(Vector3d const &pos) {
   return in_local_domain(pos, halo);
 }
 
-#ifdef ENGINE
-void add_swimmer_force(Particle const &p, double time_step) {
-  if (p.swimming().swimming) {
-    // calculate source position
-    const double direction =
-        double(p.swimming().push_pull) * p.swimming().dipole_length;
-    auto const director = p.calc_director();
-    auto const source_position = p.pos() + direction * director;
-
-    if (not in_local_halo(source_position)) {
-      return;
-    }
-
-    add_md_force(source_position, p.swimming().f_swim * director, time_step);
-  }
-}
-#endif
-
+/** @brief Return a vector of positions shifted by +,- box length in each
+ ** coordinate */
 std::vector<Utils::Vector3d> shifted_positions(Utils::Vector3d pos,
                                                const BoxGeometry &box) {
   std::vector<Utils::Vector3d> res;
@@ -260,6 +244,30 @@ std::vector<Utils::Vector3d> shifted_positions(Utils::Vector3d pos,
   }
   return res;
 }
+
+#ifdef ENGINE
+void add_swimmer_force(Particle const &p, double time_step, bool has_ghosts) {
+  if (p.swimming().swimming) {
+    // calculate source position
+    const double direction =
+        double(p.swimming().push_pull) * p.swimming().dipole_length;
+    auto const director = p.calc_director();
+    auto const source_position = p.pos() + direction * director;
+    auto const force = p.swimming().f_swim * director;
+
+    if (in_local_halo(source_position)) {
+      add_md_force(source_position, force, time_step);
+    }
+    if (not has_ghosts) {
+      // couple positions shifted by one box length to add forces to ghost
+      // layers
+      for (auto pos : shifted_positions(source_position, box_geo)) {
+        add_md_force(pos, force, time_step);
+      }
+    }
+  }
+}
+#endif
 
 } // namespace
 
@@ -346,7 +354,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
           }
 
 #ifdef ENGINE
-          add_swimmer_force(p, time_step);
+          add_swimmer_force(p, time_step, has_ghosts);
 #endif
         };
 

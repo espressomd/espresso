@@ -69,6 +69,14 @@ class SwimmerTest():
                                   "dipole_length": 0.8})
 
     def setUp(self):
+        if self.decomposition_type == "regular":
+            self.system.cell_system.set_regular_decomposition()
+        elif self.decomposition_type == "n_square":
+            if any(self.system.cell_system.node_grid > 1):
+                self.skipTest(
+                    "N Square and LB not compatible on more than one core")
+            self.system.cell_system.set_n_square()
+
         self.lbf = self.lb_class(**self.LB_params)
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=self.gamma)
@@ -126,16 +134,35 @@ class SwimmerTest():
 
 
 @utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
-class SwimmerTestCPU(SwimmerTest, ut.TestCase):
+class SwimmerTestRegularCPU(SwimmerTest, ut.TestCase):
 
+    decomposition_type = "regular"
+    lb_class = espressomd.lb.LBFluid
+    tol = 1e-10
+
+
+@utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
+class SwimmerTestNSquareCPU(SwimmerTest, ut.TestCase):
+
+    decomposition_type = "n_square"
     lb_class = espressomd.lb.LBFluid
     tol = 1e-10
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
-class SwimmerTestGPU(SwimmerTest, ut.TestCase):
+class SwimmerTestRegularGPU(SwimmerTest, ut.TestCase):
 
+    decomposition_type = "regular"
+    lb_class = espressomd.lb.LBFluidGPU
+    tol = 1e-5
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
+class SwimmerTestNSquareGPU(SwimmerTest, ut.TestCase):
+
+    decomposition_type = "n_square"
     lb_class = espressomd.lb.LBFluidGPU
     tol = 1e-5
 
