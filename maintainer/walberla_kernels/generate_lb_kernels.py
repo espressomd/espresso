@@ -38,6 +38,44 @@ from lbmpy.macroscopic_value_kernels import macroscopic_values_setter
 # for collide-push from lbmpy.fieldaccess import StreamPushTwoFieldsAccessor
 
 
+def adapt_and_import_walberla_lbm_generation():
+    import sys
+    import importlib
+    old_tpl = 'LatticeModel.tmpl.h'
+    new_tpl = 'MacroscopicValuesAccessors.tmpl.h'
+    old_token = f"env.get_template('{old_tpl}')"
+    new_token = f"env.get_template('{new_tpl}')"
+    # copy template
+    spec = importlib.util.find_spec('lbmpy_walberla', None)
+    lm = spec.origin.replace('__init__.py', 'templates/LatticeModel.tmpl.h')
+    assert os.path.isfile(lm), f'could not find file "{lm}"'
+    with open(os.path.join(os.path.dirname(__file__), new_tpl)) as f:
+        tpl = f.read()
+    typenames = 'typename CollisionModel, typename FloatType'
+    tpl = (
+        tpl.replace(
+            '{{class_name}}',
+            'LBWalberlaImpl<CollisionModel, FloatType>')
+        .replace('\ntemplate<', f'\ntemplate<{typenames}, ')
+        .replace(f'{typenames}, >', f'{typenames}>'))
+    with open(os.path.join(os.path.dirname(lm), new_tpl), 'w') as f:
+        f.write(tpl)
+    # edit lbm generator code
+    module_name = 'lbmpy_walberla.walberla_lbm_generation'
+    spec = importlib.util.find_spec(module_name, None)
+    source = spec.loader.get_source(module_name)
+    assert old_token in source, f'could not find "{old_token}" in {spec.origin}'
+    new_source = source.replace(old_token, new_token)
+    module = importlib.util.module_from_spec(spec)
+    codeobj = compile(new_source, module.__spec__.origin, 'exec')
+    exec(codeobj, module.__dict__)
+    sys.modules[module_name] = module
+    return module
+
+
+generate_accessors = adapt_and_import_walberla_lbm_generation().generate_lattice_model
+
+
 def adapt_pystencils():
     '''
     Adapt pystencils to the SFINAE method (add the block offset lambda
@@ -187,6 +225,18 @@ def generate_setters(lb_method):
     return pdfs_setter
 
 
+def patch_accessors(name):
+    with open(f'{name}.h') as f:
+        content = f.read()
+    content = (
+        content.replace('namespace lbm {', 'namespace lbm::espresso {')
+               .replace('Equilibrium::', 'Equilibrium<CollisionModel, FloatType>::')
+    )
+    with open(f'{name}.h', 'w') as f:
+        f.write(content)
+    os.remove(f'{name}.cpp')
+
+
 adapt_pystencils()
 
 with CodeGeneration() as ctx:
@@ -262,6 +312,14 @@ with CodeGeneration() as ctx:
         "CollideSweepThermalizedAVX",
         params_vec
     )
+
+    # generate accessors
+    generate_accessors(
+        ctx,
+        'macroscopic_values_accessors',
+        collision_rule_unthermalized,
+        field_layout="fzyx")
+    patch_accessors('macroscopic_values_accessors')
 
     # Boundary conditions
     ubb_dynamic = UBB(lambda *args: None, dim=3)
