@@ -23,7 +23,7 @@ Plot the phase diagram and the fitted critical point.
 """
 
 import numpy as np
-from scipy.optimize import curve_fit
+import scipy.optimize
 from scipy import signal
 import pickle
 import gzip
@@ -75,8 +75,8 @@ def autocorr(x):
 def relaxation_time(x):
     """ Compute the relaxation time """
     corr = autocorr(x)
-    popt, _ = curve_fit(lambda x, a: np.exp(-a * x),
-                        range(np.size(corr)), corr, p0=(1. / 15000))
+    popt, _ = scipy.optimize.curve_fit(lambda x, a: np.exp(-a * x),
+                                       range(np.size(corr)), corr, p0=(1. / 15000))
     return popt[0]
 
 
@@ -152,7 +152,7 @@ y_scaling = dens_liquid - dens_gas
 y_rectilinear = 0.5 * (dens_liquid + dens_gas)
 
 # Fit using scaling law
-fit_scaling, p_cov_scaling = curve_fit(
+fit_scaling, p_cov_scaling = scipy.optimize.curve_fit(
     scaling_law, kTs, y_scaling, p0=(1., 1.), maxfev=6000)
 
 # Print fit values
@@ -163,7 +163,7 @@ logging.info("Fit uncertainty: {}".format(np.diag(p_cov_scaling)))
 kT_c_scaling = fit_scaling[1]
 
 # Fit using rectilinear law
-fit_rectilinear, p_cov_rectilinear = curve_fit(
+fit_rectilinear, p_cov_rectilinear = scipy.optimize.curve_fit(
     rectilinear_law, kTs, y_rectilinear, p0=(
         0.3, 0.2, kT_c_scaling), maxfev=6000)
 
