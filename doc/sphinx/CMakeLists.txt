@@ -1,4 +1,4 @@
-find_package(Sphinx 1.6.6)
+find_package(Sphinx 2.3.0)
 if(SPHINX_FOUND)
   # configured documentation tools and intermediate build results
   set(SPHINX_BASE "${CMAKE_CURRENT_BINARY_DIR}")

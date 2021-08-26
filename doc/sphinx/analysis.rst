@@ -22,17 +22,17 @@ The direct analysis commands can be classified into two types:
 
 - Instantaneous analysis routines, that only take into account the current configuration of the system:
 
-    - :ref:`Energies`
-    - :ref:`Pressure`
-    - :ref:`Pressure Tensor`
-    - :ref:`Momentum of the System`
-    - :ref:`Minimal distances between particles`
-    - :ref:`Particles in the neighborhood`
-    - :ref:`Particle distribution`
-    - :ref:`Structure factor`
-    - :ref:`Center of mass`
-    - :ref:`Moment of inertia matrix`
-    - :ref:`Gyration tensor`
+- :ref:`Energies`
+- :ref:`Pressure`
+- :ref:`Pressure Tensor`
+- :ref:`Momentum of the System`
+- :ref:`Minimal distances between particles`
+- :ref:`Particles in the neighborhood`
+- :ref:`Particle distribution`
+- :ref:`Structure factor`
+- :ref:`Center of mass`
+- :ref:`Moment of inertia matrix`
+- :ref:`Gyration tensor`
 
 .. _Energies:
 
@@ -416,7 +416,7 @@ They require special parameters if the cylindrical coordinate system is non-stan
 For this purpose, use :class:`espressomd.math.CylindricalTransformationParameters` to create a consistent set of the parameters needed. Example::
 
     import espressomd.math
-    
+
     # shifted and rotated cylindrical coordinates
     cyl_transform_params = espressomd.math.CylindricalTransformationParameters(
         center=[5.0, 5.0, 0.0], axis=[0, 1, 0], orientation=[0, 0, 1])
@@ -449,7 +449,6 @@ The following list contains some of the available observables. You can find
 documentation for all available observables in :mod:`espressomd.observables`.
 
 - Observables working on a given set of particles:
-
    - :class:`~espressomd.observables.ParticlePositions`: Positions of the particles
 
    - :class:`~espressomd.observables.ParticleVelocities`: Velocities of the particles
@@ -463,7 +462,6 @@ documentation for all available observables in :mod:`espressomd.observables`.
    - :class:`~espressomd.observables.ParticleBodyAngularVelocities`: As above, but in the particles' body-fixed frame.
 
 - Observables working on a given set of particles and returning reduced quantities:
-
    - :class:`~espressomd.observables.DipoleMoment`: Total electric dipole moment of the system obtained based on unfolded positions
 
    - :class:`~espressomd.observables.MagneticDipoleMoment`: Total magnetic dipole moment of the system based on the :attr:`espressomd.particle_data.ParticleHandle.dip` property.
@@ -486,7 +484,6 @@ documentation for all available observables in :mod:`espressomd.observables`.
    - :class:`~espressomd.observables.RDF`: Radial distribution function. Can be used on two different sets of particles.
 
 - Profile observables sampling the spatial profile of various quantities:
-
    - :class:`~espressomd.observables.DensityProfile`
 
    - :class:`~espressomd.observables.FluxDensityProfile`
@@ -496,7 +493,6 @@ documentation for all available observables in :mod:`espressomd.observables`.
    - :class:`~espressomd.observables.LBVelocityProfile`
 
 - Observables sampling the cylindrical profile of various quantities:
-
    - :class:`~espressomd.observables.CylindricalDensityProfile`
 
    - :class:`~espressomd.observables.CylindricalFluxDensityProfile`
@@ -508,7 +504,6 @@ documentation for all available observables in :mod:`espressomd.observables`.
    - :class:`~espressomd.observables.CylindricalLBVelocityProfileAtParticlePositions`
 
 - System-wide observables
-
    - :class:`~espressomd.observables.Energy`: Total energy (see :ref:`Energies`)
 
    - :class:`~espressomd.observables.Pressure`: Total scalar pressure (see :ref:`Pressure`)

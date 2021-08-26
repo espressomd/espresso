@@ -51,7 +51,7 @@ class Momentum(object):
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.01
 
-    def test(self):
+    def check(self):
         self.system.actors.clear()
         self.system.part.clear()
         self.system.actors.add(self.lbf)
@@ -85,11 +85,8 @@ class Momentum(object):
                 break
 
         # Make sure, the particle has crossed the periodic boundaries
-        self.assertGreater(
-            max(
-                np.abs(p.v) *
-                self.system.time),
-            self.system.box_l[0])
+        self.assertGreater(max(np.abs(p.v)) * self.system.time,
+                           self.system.box_l[0])
 
 
 @utx.skipIfMissingFeatures(['LB_WALBERLA', 'EXTERNAL_FORCES'])
@@ -97,6 +94,20 @@ class LBWalberlaMomentum(ut.TestCase, Momentum):
 
     def setUp(self):
         self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMS)
+
+    def tearDown(self):
+        self.system.actors.clear()
+
+    def test_dom_dec(self):
+        self.system.cell_system.set_domain_decomposition()
+        self.check()
+
+    def test_n_square(self):
+        if self.system.cell_system.get_state()["n_nodes"] > 1:
+            self.skipTest(
+                "LB only works with domain decomposition for more than 1 MPI rank")
+        self.system.cell_system.set_n_square()
+        self.check()
 
 
 if __name__ == "__main__":
