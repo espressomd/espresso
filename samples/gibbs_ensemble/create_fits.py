@@ -131,14 +131,14 @@ errors_liquid = np.array(errors_liquid)[order]
 errors_gas = np.array(errors_gas)[order]
 
 # Average over simulation results with different seeds
-dens_liquid = [np.mean([dens_liquid[i] for (i, T) in enumerate(
-               kTs) if T == kT]) for kT in np.unique(kTs)]
+dens_liquid = [np.mean([dens_liquid[i] for (i, T) in enumerate(kTs) if T == kT])
+               for kT in np.unique(kTs)]
 dens_gas = [np.mean([dens_gas[i] for (i, T) in enumerate(kTs) if T == kT])
             for kT in np.unique(kTs)]
 
 # Compute Errors as maximum of each simulation error
-errors_liquid = [np.max([errors_liquid[i] for (i, T) in enumerate(
-                 kTs) if T == kT]) for kT in np.unique(kTs)]
+errors_liquid = [np.max([errors_liquid[i] for (i, T) in enumerate(kTs)
+                         if T == kT]) for kT in np.unique(kTs)]
 errors_gas = [np.max([errors_gas[i] for (i, T) in enumerate(kTs) if T == kT])
               for kT in np.unique(kTs)]
 kTs = np.unique(kTs)
@@ -164,8 +164,8 @@ kT_c_scaling = fit_scaling[1]
 
 # Fit using rectilinear law
 fit_rectilinear, p_cov_rectilinear = scipy.optimize.curve_fit(
-    rectilinear_law, kTs, y_rectilinear, p0=(
-        0.3, 0.2, kT_c_scaling), maxfev=6000)
+    rectilinear_law, kTs, y_rectilinear, p0=(0.3, 0.2, kT_c_scaling),
+    maxfev=6000)
 
 # Print fit values
 logging.info(

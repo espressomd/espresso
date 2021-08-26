@@ -78,9 +78,7 @@ objects like::
 or by calling the corresponding ``get_state()`` methods like::
 
     temperature = system.thermostat.get_state()[0]['kT']
-
     gamma = system.thermostat.get_state()[0]['gamma']
-
     gamma_rot = system.thermostat.get_state()[0]['gamma_rotation']
 
 .. _Cellsystems:
@@ -162,7 +160,6 @@ interaction in the cell model require the calculation of all pair
 interactions. ::
 
     system = espressomd.System(box_l=[1, 1, 1])
-
     system.cell_system.set_n_square()
 
 In a multiple processor environment, the N-squared cellsystem uses a
@@ -201,7 +198,6 @@ CUDA internally chooses one, which is normally the most powerful GPU
 available, but load-independent. ::
 
     system = espressomd.System(box_l=[1, 1, 1])
-
     dev = system.cuda_init_handle.device
     system.cuda_init_handle.device = dev
 
@@ -215,7 +211,6 @@ GPU Acceleration with CUDA
 
 .. note::
     Feature ``CUDA`` required
-
 
 |es| is capable of GPU acceleration to speed up simulations.
 Not every simulation method is parallelizable or profits from

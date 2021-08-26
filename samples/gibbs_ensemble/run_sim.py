@@ -449,9 +449,7 @@ for _ in (tqdm(range(warmup)) if not args.log else range(warmup)):
 
 logging.info(
     "Particle move acceptance rate during warmup: {:.2f}%".format(
-        num_accepted_moves[Moves.MOVE_PARTICLE] /
-        warmup *
-        100))
+        num_accepted_moves[Moves.MOVE_PARTICLE] / warmup * 100))
 
 # Reset the counter for particle moves
 num_accepted_moves[Moves.MOVE_PARTICLE] = 0
