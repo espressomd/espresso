@@ -64,7 +64,6 @@
 #include "LBWalberlaBase.hpp"
 #include "ResetForce.hpp"
 #include "generated_kernels/InitialPDFsSetter.h"
-#include "generated_kernels/LatticeModelAccessors.h"
 #include "generated_kernels/StreamSweep.h"
 #include "generated_kernels/UBB.h"
 #include "walberla_utils.hpp"
@@ -103,6 +102,14 @@
 #include <vector>
 
 namespace walberla {
+// forward declare
+template <typename CollisionModel, typename FloatType = double>
+class LBWalberlaImpl;
+} // namespace walberla
+
+#include "generated_kernels/macroscopic_values_accessors.h"
+
+namespace walberla {
 
 // Flags marking fluid and boundaries
 const FlagUID Fluid_flag("fluid");
@@ -110,7 +117,7 @@ const FlagUID UBB_flag("velocity bounce back");
 
 /** Class that runs and controls the LB on WaLBerla
  */
-template <typename CollisionModel, typename FloatType = double>
+template <typename CollisionModel, typename FloatType>
 class LBWalberlaImpl : public LBWalberlaBase {
 private:
   template <typename Sweep, typename = void>
@@ -201,10 +208,7 @@ private:
   }
 
 public:
-  typedef stencil::D3Q19 Stencil;
-  typedef stencil::D3Q19 CommunicationStencil;
   using LatticeModel_T = LBWalberlaImpl<CollisionModel, FloatType>;
-  static constexpr bool compressible = true;
   static constexpr real_t w[19] = {
       0.333333333333333,  0.0555555555555556, 0.0555555555555556,
       0.0555555555555556, 0.0555555555555556, 0.0555555555555556,
@@ -221,6 +225,8 @@ public:
       36.0000000000000, 36.0000000000000, 36.0000000000000};
 
 protected:
+  typedef stencil::D3Q19 Stencil;
+  static constexpr bool compressible = true;
   // Type definitions
   using VectorField = GhostLayerField<FloatType, 3>;
   using FlagField = field::FlagField<uint8_t>;
@@ -231,32 +237,39 @@ protected:
 
 private:
   // Backend classes can access private members:
-  template <class LM> friend class lbm::espresso::EquilibriumDistribution;
-  template <class LM> friend struct lbm::espresso::Equilibrium;
-  template <class LM>
+  template <typename CM, typename T>
+  friend class lbm::espresso::EquilibriumDistribution;
+  template <typename CM, typename T> friend struct lbm::espresso::Equilibrium;
+  template <typename CM, typename T>
   friend struct lbm::espresso::internal::AdaptVelocityToForce;
-  template <class LM> friend struct lbm::espresso::Density;
-  template <class LM> friend struct lbm::espresso::DensityAndVelocity;
-  template <class LM> friend struct lbm::espresso::DensityAndMomentumDensity;
-  template <class LM> friend struct lbm::espresso::MomentumDensity;
-  template <class LM, class It>
+  template <typename CM, typename T> friend struct lbm::espresso::Density;
+  template <typename CM, typename T>
+  friend struct lbm::espresso::DensityAndVelocity;
+  template <typename CM, typename T>
+  friend struct lbm::espresso::DensityAndMomentumDensity;
+  template <typename CM, typename T>
+  friend struct lbm::espresso::MomentumDensity;
+  template <typename CM, typename T, class It>
   friend struct lbm::espresso::DensityAndVelocityRange;
+  template <class LM, typename flag_t, bool A, bool B>
+  friend class lbm::espresso::UBB;
+
+  GhostLayerField<FloatType, 3u> *force_;
 
   [[nodiscard]] FloatType getDensity(const BlockAndCell &bc) const {
     auto pdf_field = bc.block->template getData<PdfField>(m_pdf_field_id);
-    return lbm::espresso::Density<LatticeModel_T>::get(
+    return lbm::espresso::Density<CollisionModel, FloatType>::get(
         *this, *pdf_field, bc.cell.x(), bc.cell.y(), bc.cell.z());
   }
 
   FloatType getDensityAndVelocity(const BlockAndCell &bc,
-                                  Vector3<real_t> &velocity) const {
+                                  Vector3<real_t> &velocity) {
     auto pdf_field = bc.block->template getData<PdfField>(m_pdf_field_id);
-    auto force_field =
+    force_ =
         bc.block->template getData<VectorField>(m_last_applied_force_field_id);
-    const real_t rho =
-        lbm::espresso::DensityAndMomentumDensity<LatticeModel_T>::get(
-            velocity, *force_field, *pdf_field, bc.cell.x(), bc.cell.y(),
-            bc.cell.z());
+    const real_t rho = lbm::espresso::DensityAndMomentumDensity<
+        CollisionModel, FloatType>::get(velocity, *this, *pdf_field,
+                                        bc.cell.x(), bc.cell.y(), bc.cell.z());
     if constexpr (compressible) {
       const real_t invRho = FloatType(1) / rho;
       velocity *= invRho;
@@ -264,14 +277,11 @@ private:
     return rho;
   }
 
-  FloatType getDensityAndVelocity(const PdfField *pdf_field,
-                                  const VectorField *force_field,
-                                  const cell_idx_t x, const cell_idx_t y,
-                                  const cell_idx_t z,
+  FloatType getDensityAndVelocity(const PdfField *pdf_field, const cell_idx_t x,
+                                  const cell_idx_t y, const cell_idx_t z,
                                   Vector3<real_t> &velocity) const {
-    const real_t rho =
-        lbm::espresso::DensityAndMomentumDensity<LatticeModel_T>::get(
-            velocity, *force_field, *pdf_field, x, y, z);
+    const real_t rho = lbm::espresso::DensityAndMomentumDensity<
+        CollisionModel, FloatType>::get(velocity, *this, *pdf_field, x, y, z);
     if constexpr (compressible) {
       const real_t invRho = FloatType(1) / rho;
       velocity *= invRho;
@@ -282,18 +292,18 @@ private:
   void setDensityAndVelocity(const BlockAndCell &bc,
                              Vector3<real_t> const &velocity, FloatType rho) {
     auto pdf_field = bc.block->template getData<PdfField>(m_pdf_field_id);
-    auto force_field =
+    force_ =
         bc.block->template getData<VectorField>(m_last_applied_force_field_id);
-    lbm::espresso::DensityAndVelocity<LatticeModel_T>::set(
-        *pdf_field, bc.cell.x(), bc.cell.y(), bc.cell.z(), *force_field,
-        velocity, rho);
+    lbm::espresso::DensityAndVelocity<CollisionModel, FloatType>::set(
+        *pdf_field, bc.cell.x(), bc.cell.y(), bc.cell.z(), *this, velocity,
+        rho);
   }
 
   [[nodiscard]] Matrix3<real_t>
   getPressureTensor(const BlockAndCell &bc) const {
     Matrix3<real_t> pressureTensor;
     auto pdf_field = bc.block->template getData<PdfField>(m_pdf_field_id);
-    lbm::espresso::PressureTensor<LatticeModel_T>::get(
+    lbm::espresso::PressureTensor<CollisionModel, FloatType>::get(
         pressureTensor, *this, *pdf_field, bc.cell.x(), bc.cell.y(),
         bc.cell.z());
     return pressureTensor;
@@ -842,17 +852,17 @@ public:
   }
 
   // Global momentum
-  [[nodiscard]] Utils::Vector3d get_momentum() const override {
+  [[nodiscard]] Utils::Vector3d get_momentum() override {
     Vector3<FloatType> mom;
     for (auto block_it = m_blocks->begin(); block_it != m_blocks->end();
          ++block_it) {
       auto pdf_field = block_it->template getData<PdfField>(m_pdf_field_id);
-      auto force_field = block_it->template getData<VectorField>(
+      force_ = block_it->template getData<VectorField>(
           m_last_applied_force_field_id);
       Vector3<FloatType> local_v;
       WALBERLA_FOR_ALL_CELLS_XYZ(pdf_field, {
         FloatType local_dens =
-            getDensityAndVelocity(pdf_field, force_field, x, y, z, local_v);
+            getDensityAndVelocity(pdf_field, x, y, z, local_v);
         mom += local_dens * local_v;
       });
     }

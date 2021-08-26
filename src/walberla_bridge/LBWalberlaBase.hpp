@@ -110,7 +110,7 @@ public:
   get_node_pressure_tensor(const Utils::Vector3i &node) const = 0;
 
   /** @brief Calculate momentum summed over all nodes on the MPI rank */
-  virtual Utils::Vector3d get_momentum() const = 0;
+  virtual Utils::Vector3d get_momentum() = 0;
 
   virtual void set_external_force(const Utils::Vector3d &ext_force) = 0;
   virtual Utils::Vector3d get_external_force() const = 0;
