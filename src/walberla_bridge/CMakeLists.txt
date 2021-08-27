@@ -21,8 +21,7 @@ set(WalberlaBridge_SRC generated_kernels/StreamSweep.cpp generated_kernels/Colli
                        lb_walberla_init.cpp
                        generated_kernels/DiffusiveFluxKernel.cpp generated_kernels/ContinuityKernel.cpp generated_kernels/NoFlux.cpp
                        generated_kernels/AdvectiveFluxKernel.cpp generated_kernels/FrictionCouplingKernel.cpp
-                       generated_kernels/DiffusiveFluxKernelWithElectrostatic.cpp
-                       ekin_walberla_init.cpp)
+                       generated_kernels/DiffusiveFluxKernelWithElectrostatic.cpp)
 if (WALBERLA_USE_AVX)
   list(APPEND WalberlaBridge_SRC generated_kernels/CollideSweepAVX.cpp generated_kernels/CollideSweepThermalizedAVX.cpp)
 endif()

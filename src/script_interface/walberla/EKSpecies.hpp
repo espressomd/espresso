@@ -8,7 +8,7 @@
 #include "grid_based_algorithms/walberla_blockforest.hpp"
 
 #include "walberla_bridge/EKinWalberlaBase.hpp"
-#include "walberla_bridge/ekin_walberla_init.hpp"
+#include "walberla_bridge/EKinWalberlaImpl.hpp"
 
 namespace ScriptInterface::walberla {
 
@@ -36,9 +36,10 @@ template <typename T> T mpi_return_one_rank(const boost::optional<T> &val) {
 class EKSpecies : public AutoParameters<EKinWalberlaBase<double>> {
 public:
   void do_construct(VariantMap const &args) override {
-    m_ekinstance = ::walberla::new_ek_walberla(
+    m_ekinstance = std::make_shared<::walberla::EKinWalberlaImpl<13, double>>(
         get_walberla_blockforest(), get_value<double>(args, "diffusion"),
         get_value<double>(args, "kT"), get_value<double>(args, "valency"),
+        get_value<Utils::Vector3d>(args, "ext_efield"),
         get_value<double>(args, "density"), get_value<bool>(args, "advection"),
         get_value<bool>(args, "friction_coupling"));
 
@@ -58,6 +59,11 @@ public:
             m_ekinstance->set_valency(get_value<double>(v));
           },
           [this]() { return m_ekinstance->get_valency(); }},
+         {"ext_efield",
+          [this](Variant const &v) {
+            m_ekinstance->set_ext_efield(get_value<Utils::Vector3d>(v));
+          },
+          [this]() { return m_ekinstance->get_ext_efield(); }},
          {"advection",
           [this](Variant const &v) {
             m_ekinstance->set_advection(get_value<bool>(v));

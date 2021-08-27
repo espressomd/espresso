@@ -17,14 +17,17 @@ private:
   FloatType m_diffusion;
   FloatType m_kT;
   FloatType m_valency;
+  Utils::Vector3d m_ext_efield;
   bool m_advection;
   bool m_friction_coupling;
 
 protected:
   EKinWalberlaBase(FloatType diffusion, FloatType kT, FloatType valency,
-                   bool advection, bool friction_coupling)
+                   Utils::Vector<FloatType, 3> ext_efield, bool advection,
+                   bool friction_coupling)
       : m_diffusion{diffusion}, m_kT{kT}, m_valency{valency},
-        m_advection{advection}, m_friction_coupling(friction_coupling) {}
+        m_ext_efield{ext_efield}, m_advection{advection},
+        m_friction_coupling(friction_coupling) {}
 
 public:
   /** @brief Integrate EKin for one time step */
@@ -68,6 +71,12 @@ public:
   }
   [[nodiscard]] bool get_friction_coupling() const noexcept {
     return m_friction_coupling;
+  }
+  [[nodiscard]] Utils::Vector<FloatType, 3> get_ext_efield() const noexcept {
+    return m_ext_efield;
+  }
+  void set_ext_efield(const Utils::Vector<FloatType, 3> &field) noexcept {
+    m_ext_efield = field;
   }
 
   //* @brief Fet the rng counter for thermalized LBs */

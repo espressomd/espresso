@@ -43,6 +43,7 @@ protected:
   using EKinWalberlaBase<FloatType>::get_diffusion;
   using EKinWalberlaBase<FloatType>::get_kT;
   using EKinWalberlaBase<FloatType>::get_valency;
+  using EKinWalberlaBase<FloatType>::get_ext_efield;
   using EKinWalberlaBase<FloatType>::get_advection;
   using EKinWalberlaBase<FloatType>::get_friction_coupling;
 
@@ -110,10 +111,11 @@ protected:
 
 public:
   EKinWalberlaImpl(const WalberlaBlockForest *blockforest, FloatType diffusion,
-                   FloatType kT, FloatType valency, FloatType density,
+                   FloatType kT, FloatType valency,
+                   Utils::Vector<FloatType, 3> ext_efield, FloatType density,
                    bool advection, bool friction_coupling)
-      : EKinWalberlaBase<FloatType>(diffusion, kT, valency, advection,
-                                    friction_coupling),
+      : EKinWalberlaBase<FloatType>(diffusion, kT, valency, ext_efield,
+                                    advection, friction_coupling),
         m_blockforest{blockforest} {
     m_density_field_id = field::addToStorage<DensityField>(
         get_blockforest()->get_blocks(), "density field", density, field::fzyx,
@@ -232,9 +234,11 @@ private:
   }
 
   inline void kernel_diffusion_electrostatic(const BlockDataID &potential_id) {
+    const auto ext_field = get_ext_efield();
     auto kernel = pystencils::DiffusiveFluxKernelWithElectrostatic(
         get_diffusion(), m_flux_field_flattened_id, potential_id,
-        m_density_field_flattened_id, 0.0, 0.0, 0.0, get_kT(), get_valency());
+        m_density_field_flattened_id, ext_field[0], ext_field[1], ext_field[2],
+        get_kT(), get_valency());
     for (auto &block : *get_blockforest()->get_blocks()) {
       kernel.run(&block);
     }
