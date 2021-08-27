@@ -38,11 +38,6 @@
 #include "lbm/lattice_model/D3Q19.h"
 #include "lbm/vtk/all.h"
 
-#include "core/mpi/Environment.h"
-#include "core/mpi/MPIManager.h"
-#include "core/mpi/MPITextFile.h"
-#include "core/mpi/Reduce.h"
-
 #include "domain_decomposition/SharedSweep.h"
 
 #include "field/AddToStorage.h"
@@ -161,30 +156,6 @@ private:
       throw std::runtime_error("The LB does not use a random number generator");
     }
 
-    void operator()(ThermalizedCollisionModel &cm, uint32_t seed) const {
-      cm.seed_ = seed;
-    }
-
-  } set_rng_seed_impl;
-
-  class : public boost::static_visitor<uint32_t> {
-  public:
-    uint32_t operator()(UnthermalizedCollisionModel const &cm) const {
-      throw std::runtime_error("The LB does not use a random number generator");
-    }
-
-    uint32_t operator()(ThermalizedCollisionModel const &cm) const {
-      return cm.seed_;
-    }
-
-  } get_rng_seed_impl;
-
-  class : public boost::static_visitor<> {
-  public:
-    void operator()(UnthermalizedCollisionModel &cm, uint32_t) const {
-      throw std::runtime_error("The LB does not use a random number generator");
-    }
-
     void operator()(ThermalizedCollisionModel &cm, uint32_t time_step) const {
       cm.time_step_ = time_step;
     }
@@ -230,19 +201,12 @@ public:
   using PdfField = GhostLayerField<real_t, Stencil::Size>;
 
   static constexpr real_t w[19] = {
-      0.333333333333333,  0.0555555555555556, 0.0555555555555556,
-      0.0555555555555556, 0.0555555555555556, 0.0555555555555556,
-      0.0555555555555556, 0.0277777777777778, 0.0277777777777778,
-      0.0277777777777778, 0.0277777777777778, 0.0277777777777778,
-      0.0277777777777778, 0.0277777777777778, 0.0277777777777778,
-      0.0277777777777778, 0.0277777777777778, 0.0277777777777778,
-      0.0277777777777778};
-  static constexpr real_t wInv[19] = {
-      3.00000000000000, 18.0000000000000, 18.0000000000000, 18.0000000000000,
-      18.0000000000000, 18.0000000000000, 18.0000000000000, 36.0000000000000,
-      36.0000000000000, 36.0000000000000, 36.0000000000000, 36.0000000000000,
-      36.0000000000000, 36.0000000000000, 36.0000000000000, 36.0000000000000,
-      36.0000000000000, 36.0000000000000, 36.0000000000000};
+      1. / 3.,  1. / 18., 1. / 18., 1. / 18., 1. / 18., 1. / 18., 1. / 18.,
+      1. / 36., 1. / 36., 1. / 36., 1. / 36., 1. / 36., 1. / 36., 1. / 36.,
+      1. / 36., 1. / 36., 1. / 36., 1. / 36., 1. / 36.};
+  static constexpr real_t wInv[19] = {3.,  18., 18., 18., 18., 18., 18.,
+                                      36., 36., 36., 36., 36., 36., 36.,
+                                      36., 36., 36., 36., 36.};
   static constexpr bool compressible = true;
 
 protected:
@@ -277,14 +241,8 @@ private:
     auto const pdf_field = bc.block->template getData<PdfField>(m_pdf_field_id);
     auto const force_field =
         bc.block->template getData<VectorField>(m_last_applied_force_field_id);
-    const real_t rho = lbm::DensityAndMomentumDensity<LatticeModel_T>::get(
-        velocity, *force_field, *pdf_field, bc.cell.x(), bc.cell.y(),
-        bc.cell.z());
-    if constexpr (compressible) {
-      const real_t invRho = real_t(1) / rho;
-      velocity *= invRho;
-    }
-    return rho;
+    return getDensityAndVelocity(pdf_field, force_field, bc.cell.x(),
+                                 bc.cell.y(), bc.cell.z(), velocity);
   }
 
   real_t getDensityAndVelocity(const PdfField *pdf_field,
@@ -357,9 +315,6 @@ protected:
 
   /** Block forest */
   std::shared_ptr<blockforest::StructuredBlockForest> m_blocks;
-
-  // MPI
-  std::shared_ptr<mpi::Environment> m_env;
 
   // ResetForce sweep + external force handling
   std::shared_ptr<ResetForce<PdfField, VectorField>> m_reset_force;
