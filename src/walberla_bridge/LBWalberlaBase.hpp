@@ -121,10 +121,10 @@ public:
   virtual double get_viscosity() const = 0;
   virtual double get_kT() const = 0;
 
-  //* @brief Fet the rng counter for thermalized LBs */
+  //* @brief Set the rng counter for thermalized LBs */
   virtual uint64_t get_rng_state() const = 0;
 
-  /** @brief set the rng state of thermalized LBs */
+  /** @brief Set the rng state of thermalized LBs */
   virtual void set_rng_state(uint64_t counter) = 0;
 
   // Grid, domain, halo

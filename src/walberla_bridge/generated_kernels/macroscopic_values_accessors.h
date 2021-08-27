@@ -1,4 +1,6 @@
-// kernel generated with pystencils v0.3.3+39.g587a822, lbmpy v0.3.3+33.g036fe13, lbmpy_walberla/pystencils_walberla from commit ref: refs/heads/LeesEdwards
+// kernel generated with pystencils v0.3.3+44.gf2d4181, lbmpy
+// v0.3.3+37.g2faceda, lbmpy_walberla/pystencils_walberla from commit
+// b17ca5caf00db7d19f86c5f85c6f67fec6c16aff
 
 //======================================================================================================================
 //
@@ -19,16 +21,22 @@
 //
 //======================================================================================================================
 
-
+#pragma once
 #include "core/DataTypes.h"
 #include "core/logging/Logging.h"
 
-#include "lbm/lattice_model/EquilibriumDistribution.h"
+#include "domain_decomposition/BlockDataID.h"
+#include "domain_decomposition/IBlock.h"
+#include "field/GhostLayerField.h"
+#include "field/SwapableCompare.h"
+#include "stencil/D3Q19.h"
+
 #include "lbm/field/Density.h"
 #include "lbm/field/DensityAndMomentumDensity.h"
 #include "lbm/field/DensityAndVelocity.h"
 #include "lbm/field/PressureTensor.h"
 #include "lbm/field/ShearRate.h"
+#include "lbm/lattice_model/EquilibriumDistribution.h"
 
 #include <vector>
 
@@ -52,10 +60,8 @@
 #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
-
 namespace walberla {
 namespace lbm {
-namespace espresso {
 
 //======================================================================================================================
 //
@@ -63,10 +69,9 @@ namespace espresso {
 //
 //======================================================================================================================
 
-template <typename LatticeModel_T>
-class EquilibriumDistribution {
+template <> class EquilibriumDistribution<LBWalberlaImpl, void> {
 public:
-  typedef typename LatticeModel_T::Stencil Stencil;
+  typedef stencil::D3Q19 Stencil;
 
   static real_t get(const stencil::Direction direction,
                     const Vector3<real_t> &u = Vector3<real_t>(real_t(0.0)),
@@ -210,9 +215,8 @@ public:
     using namespace stencil;
     switch (direction) {
     case C:
-      return rho * ((double)(-0.5)) * (u[0] * u[0]) +
-             rho * ((double)(-0.5)) * (u[1] * u[1]) +
-             rho * ((double)(-0.5)) * (u[2] * u[2]) + rho * 0.333333333333333;
+      return rho * -0.5 * (u[0] * u[0]) + rho * -0.5 * (u[1] * u[1]) +
+             rho * -0.5 * (u[2] * u[2]) + rho * 0.333333333333333;
     case N:
       return rho * -0.0833333333333333 * (u[0] * u[0]) +
              rho * -0.0833333333333333 * (u[2] * u[2]) +
@@ -316,11 +320,7 @@ public:
     using namespace stencil;
     switch (direction) {
     case C:
-      return rho * -0.5 * (u[0] * u[0]) + rho * -0.5 * (u[1] * u[1]) +
-             rho * -0.5 * (u[2] * u[2]) -
-             rho * ((double)(-0.5)) * (u[0] * u[0]) -
-             rho * ((double)(-0.5)) * (u[1] * u[1]) -
-             rho * ((double)(-0.5)) * (u[2] * u[2]);
+      return 0;
     case N:
       return rho * 0.166666666666667 * u[1];
     case S:
@@ -379,34 +379,44 @@ public:
 
 namespace internal {
 
-template <typename LatticeModel_T>
-struct AdaptVelocityToForce {
+template <> struct AdaptVelocityToForce<LBWalberlaImpl, void> {
   template <typename FieldPtrOrIterator>
-  static Vector3<real_t> get(FieldPtrOrIterator &it, GhostLayerField<real_t, 3> * force_field,
-                             const Vector3<real_t> &velocity,
-                             const real_t rho) {
+  static Vector3<real_t>
+  get(FieldPtrOrIterator &it, /* const LBWalberlaImpl & lm */
+      const GhostLayerField<real_t, 3u> &force_field,
+      const Vector3<real_t> &velocity, const real_t rho) {
     auto x = it.x();
     auto y = it.y();
     auto z = it.z();
 
-    return velocity - Vector3<real_t>(force_field->get(x, y, z, 0) * 0.5 / rho,
-                                      force_field->get(x, y, z, 1) * 0.5 / rho,
-                                      force_field->get(x, y, z, 2) * 0.5 / rho);
+    return velocity - Vector3<real_t>(force_field.get(x, y, z, 0) * 0.5 / rho,
+                                      force_field.get(x, y, z, 1) * 0.5 / rho,
+                                      force_field.get(x, y, z, 2) * 0.5 / rho);
   }
 
   static Vector3<real_t> get(const cell_idx_t x, const cell_idx_t y,
-                             const cell_idx_t z, GhostLayerField<real_t, 3> * force_field,
+                             const cell_idx_t z, /* const LBWalberlaImpl & lm */
+                             const GhostLayerField<real_t, 3u> &force_field,
                              const Vector3<real_t> &velocity,
                              const real_t rho) {
 
-    return velocity - Vector3<real_t>(force_field->get(x, y, z, 0) * 0.5 / rho,
-                                      force_field->get(x, y, z, 1) * 0.5 / rho,
-                                      force_field->get(x, y, z, 2) * 0.5 / rho);
+    return velocity - Vector3<real_t>(force_field.get(x, y, z, 0) * 0.5 / rho,
+                                      force_field.get(x, y, z, 1) * 0.5 / rho,
+                                      force_field.get(x, y, z, 2) * 0.5 / rho);
+  }
+
+  static Vector3<real_t> get(const cell_idx_t x, const cell_idx_t y,
+                             const cell_idx_t z,
+                             const GhostLayerField<real_t, 3u> *force_field,
+                             const Vector3<real_t> &velocity,
+                             const real_t rho) {
+
+    return get(x, y, z, *force_field, velocity, rho);
   }
 };
 } // namespace internal
 
-template <typename LatticeModel_T> struct Equilibrium {
+template <> struct Equilibrium<LBWalberlaImpl, void> {
 
   template <typename FieldPtrOrIterator>
   static void set(FieldPtrOrIterator &it,
@@ -628,9 +638,9 @@ template <typename LatticeModel_T> struct Equilibrium {
   }
 };
 
-template <typename LatticeModel_T> struct Density {
+template <> struct Density<LBWalberlaImpl, void> {
   template <typename FieldPtrOrIterator>
-  static inline real_t get(const LatticeModel_T &,
+  static inline real_t get(const LBWalberlaImpl &,
                            const FieldPtrOrIterator &it) {
     const real_t f_0 = it[0];
     const real_t f_1 = it[1];
@@ -660,7 +670,7 @@ template <typename LatticeModel_T> struct Density {
   }
 
   template <typename PdfField_T>
-  static inline real_t get(const LatticeModel_T &, const PdfField_T &pdf,
+  static inline real_t get(const LBWalberlaImpl &, const PdfField_T &pdf,
                            const cell_idx_t x, const cell_idx_t y,
                            const cell_idx_t z) {
     const real_t &xyz0 = pdf(x, y, z, 0);
@@ -692,9 +702,10 @@ template <typename LatticeModel_T> struct Density {
   }
 };
 
-template <typename LatticeModel_T> struct DensityAndVelocity {
-  template <typename FieldPtrOrIterator, typename VectorField_T>
-  static void set(FieldPtrOrIterator &it, const VectorField_T &force,
+template <> struct DensityAndVelocity<LBWalberlaImpl> {
+  template <typename FieldPtrOrIterator>
+  static void set(FieldPtrOrIterator &it, /* const LBWalberlaImpl & lm */
+                  const GhostLayerField<real_t, 3u> &force_field,
                   const Vector3<real_t> &u = Vector3<real_t>(real_t(0.0)),
                   const real_t rho_in = real_t(1.0)) {
     auto x = it.x();
@@ -702,33 +713,35 @@ template <typename LatticeModel_T> struct DensityAndVelocity {
     auto z = it.z();
 
     const double rho = rho_in;
-    const double u_0 = -0.5 * force.get(x, y, z, 0) / rho_in + u[0];
-    const double u_1 = -0.5 * force.get(x, y, z, 1) / rho_in + u[1];
-    const double u_2 = -0.5 * force.get(x, y, z, 2) / rho_in + u[2];
+    const double u_0 = -0.5 * force_field.get(x, y, z, 0) / rho_in + u[0];
+    const double u_1 = -0.5 * force_field.get(x, y, z, 1) / rho_in + u[1];
+    const double u_2 = -0.5 * force_field.get(x, y, z, 2) / rho_in + u[2];
 
-    Equilibrium<LatticeModel_T>::set(it, Vector3<real_t>(u_0, u_1, u_2), rho);
+    Equilibrium<LBWalberlaImpl>::set(it, Vector3<real_t>(u_0, u_1, u_2), rho);
   }
 
-  template <typename PdfField_T, typename VectorField_T>
+  template <typename PdfField_T>
   static void set(PdfField_T &pdf, const cell_idx_t x, const cell_idx_t y,
-                  const cell_idx_t z, const VectorField_T &force,
+                  const cell_idx_t z, /* const LBWalberlaImpl & lm */
+                  const GhostLayerField<real_t, 3u> &force_field,
                   const Vector3<real_t> &u = Vector3<real_t>(real_t(0.0)),
                   const real_t rho_in = real_t(1.0)) {
     const double rho = rho_in;
-    const double u_0 = -0.5 * force.get(x, y, z, 0) / rho_in + u[0];
-    const double u_1 = -0.5 * force.get(x, y, z, 1) / rho_in + u[1];
-    const double u_2 = -0.5 * force.get(x, y, z, 2) / rho_in + u[2];
+    const double u_0 = -0.5 * force_field.get(x, y, z, 0) / rho_in + u[0];
+    const double u_1 = -0.5 * force_field.get(x, y, z, 1) / rho_in + u[1];
+    const double u_2 = -0.5 * force_field.get(x, y, z, 2) / rho_in + u[2];
 
-    Equilibrium<LatticeModel_T>::set(pdf, x, y, z,
+    Equilibrium<LBWalberlaImpl>::set(pdf, x, y, z,
                                      Vector3<real_t>(u_0, u_1, u_2), rho);
   }
 };
 
-template <typename LatticeModel_T, typename FieldIteratorXYZ>
-struct DensityAndVelocityRange {
+template <typename FieldIteratorXYZ>
+struct DensityAndVelocityRange<LBWalberlaImpl, FieldIteratorXYZ> {
 
   static void set(FieldIteratorXYZ &begin, const FieldIteratorXYZ &end,
-                  const LatticeModel_T &lm,
+                  /* const LBWalberlaImpl & lm */
+                  const GhostLayerField<real_t, 3u> &force_field,
                   const Vector3<real_t> &u = Vector3<real_t>(real_t(0.0)),
                   const real_t rho_in = real_t(1.0)) {
     for (auto cellIt = begin; cellIt != end; ++cellIt) {
@@ -736,20 +749,22 @@ struct DensityAndVelocityRange {
       const auto y = cellIt.y();
       const auto z = cellIt.z();
       const double rho = rho_in;
-      const double u_0 = -0.5 * lm.force_->get(x, y, z, 0) / rho_in + u[0];
-      const double u_1 = -0.5 * lm.force_->get(x, y, z, 1) / rho_in + u[1];
-      const double u_2 = -0.5 * lm.force_->get(x, y, z, 2) / rho_in + u[2];
+      const double u_0 = -0.5 * force_field.get(x, y, z, 0) / rho_in + u[0];
+      const double u_1 = -0.5 * force_field.get(x, y, z, 1) / rho_in + u[1];
+      const double u_2 = -0.5 * force_field.get(x, y, z, 2) / rho_in + u[2];
 
-      Equilibrium<LatticeModel_T>::set(cellIt, Vector3<real_t>(u_0, u_1, u_2),
+      Equilibrium<LBWalberlaImpl>::set(cellIt, Vector3<real_t>(u_0, u_1, u_2),
                                        rho);
     }
   }
 };
 
-template <typename LatticeModel_T> struct DensityAndMomentumDensity {
-  template <typename FieldPtrOrIterator, typename VectorField_T>
+template <> struct DensityAndMomentumDensity<LBWalberlaImpl> {
+  template <typename FieldPtrOrIterator>
   static real_t get(Vector3<real_t> &momentumDensity,
-                    const VectorField_T &force, const FieldPtrOrIterator &it) {
+                    /* const LBWalberlaImpl & lm */
+                    const GhostLayerField<real_t, 3u> &force_field,
+                    const FieldPtrOrIterator &it) {
     const auto x = it.x();
     const auto y = it.y();
     const auto z = it.z();
@@ -779,11 +794,11 @@ template <typename LatticeModel_T> struct DensityAndMomentumDensity {
     const double rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term +
                        vel1Term + vel2Term;
     const double md_0 = -f_13 - f_17 - f_3 - f_7 - f_9 +
-                        (0.5) * force.get(x, y, z, 0) + vel0Term;
+                        (0.5) * force_field.get(x, y, z, 0) + vel0Term;
     const double md_1 = -f_10 - f_12 - f_16 - f_2 + f_8 - f_9 +
-                        (0.5) * force.get(x, y, z, 1) + vel1Term;
+                        (0.5) * force_field.get(x, y, z, 1) + vel1Term;
     const double md_2 = f_11 + f_14 - f_15 - f_16 - f_17 - f_18 - f_6 +
-                        (0.5) * force.get(x, y, z, 2) + vel2Term;
+                        (0.5) * force_field.get(x, y, z, 2) + vel2Term;
     momentumDensity[0] = md_0;
     momentumDensity[1] = md_1;
     momentumDensity[2] = md_2;
@@ -791,11 +806,11 @@ template <typename LatticeModel_T> struct DensityAndMomentumDensity {
     return rho;
   }
 
-  template <typename PdfField_T, typename VectorField_T>
-  static real_t get(Vector3<real_t> &momentumDensity,
-                    const VectorField_T &force, const PdfField_T &pdf,
-                    const cell_idx_t x, const cell_idx_t y,
-                    const cell_idx_t z) {
+  template <typename PdfField_T>
+  static real_t
+  get(Vector3<real_t> &momentumDensity, /* const LBWalberlaImpl & lm */
+      const GhostLayerField<real_t, 3u> &force_field, const PdfField_T &pdf,
+      const cell_idx_t x, const cell_idx_t y, const cell_idx_t z) {
     const real_t &xyz0 = pdf(x, y, z, 0);
     const real_t f_0 = pdf.getF(&xyz0, 0);
     const real_t f_1 = pdf.getF(&xyz0, 1);
@@ -822,11 +837,11 @@ template <typename LatticeModel_T> struct DensityAndMomentumDensity {
     const double rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term +
                        vel1Term + vel2Term;
     const double md_0 = -f_13 - f_17 - f_3 - f_7 - f_9 +
-                        (0.5) * force.get(x, y, z, 0) + vel0Term;
+                        (0.5) * force_field.get(x, y, z, 0) + vel0Term;
     const double md_1 = -f_10 - f_12 - f_16 - f_2 + f_8 - f_9 +
-                        (0.5) * force.get(x, y, z, 1) + vel1Term;
+                        (0.5) * force_field.get(x, y, z, 1) + vel1Term;
     const double md_2 = f_11 + f_14 - f_15 - f_16 - f_17 - f_18 - f_6 +
-                        (0.5) * force.get(x, y, z, 2) + vel2Term;
+                        (0.5) * force_field.get(x, y, z, 2) + vel2Term;
     momentumDensity[0] = md_0;
     momentumDensity[1] = md_1;
     momentumDensity[2] = md_2;
@@ -835,9 +850,11 @@ template <typename LatticeModel_T> struct DensityAndMomentumDensity {
   }
 };
 
-template <typename LatticeModel_T> struct MomentumDensity {
+template <> struct MomentumDensity<LBWalberlaImpl> {
   template <typename FieldPtrOrIterator>
-  static void get(Vector3<real_t> &momentumDensity, const LatticeModel_T &lm,
+  static void get(Vector3<real_t> &momentumDensity,
+                  /* const LBWalberlaImpl & lm */
+                  const GhostLayerField<real_t, 3u> &force_field,
                   const FieldPtrOrIterator &it) {
     const auto x = it.x();
     const auto y = it.y();
@@ -868,20 +885,21 @@ template <typename LatticeModel_T> struct MomentumDensity {
     const double rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term +
                        vel1Term + vel2Term;
     const double md_0 = -f_13 - f_17 - f_3 - f_7 - f_9 +
-                        (0.5) * lm.force_->get(x, y, z, 0) + vel0Term;
+                        (0.5) * force_field.get(x, y, z, 0) + vel0Term;
     const double md_1 = -f_10 - f_12 - f_16 - f_2 + f_8 - f_9 +
-                        (0.5) * lm.force_->get(x, y, z, 1) + vel1Term;
+                        (0.5) * force_field.get(x, y, z, 1) + vel1Term;
     const double md_2 = f_11 + f_14 - f_15 - f_16 - f_17 - f_18 - f_6 +
-                        (0.5) * lm.force_->get(x, y, z, 2) + vel2Term;
+                        (0.5) * force_field.get(x, y, z, 2) + vel2Term;
     momentumDensity[0] = md_0;
     momentumDensity[1] = md_1;
     momentumDensity[2] = md_2;
   }
 
   template <typename PdfField_T>
-  static void get(Vector3<real_t> &momentumDensity, const LatticeModel_T &lm,
-                  const PdfField_T &pdf, const cell_idx_t x, const cell_idx_t y,
-                  const cell_idx_t z) {
+  static void
+  get(Vector3<real_t> &momentumDensity, /* const LBWalberlaImpl & lm */
+      const GhostLayerField<real_t, 3u> &force_field, const PdfField_T &pdf,
+      const cell_idx_t x, const cell_idx_t y, const cell_idx_t z) {
     const real_t &xyz0 = pdf(x, y, z, 0);
     const real_t f_0 = pdf.getF(&xyz0, 0);
     const real_t f_1 = pdf.getF(&xyz0, 1);
@@ -908,37 +926,37 @@ template <typename LatticeModel_T> struct MomentumDensity {
     const double rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term +
                        vel1Term + vel2Term;
     const double md_0 = -f_13 - f_17 - f_3 - f_7 - f_9 +
-                        (0.5) * lm.force_->get(x, y, z, 0) + vel0Term;
+                        (0.5) * force_field.get(x, y, z, 0) + vel0Term;
     const double md_1 = -f_10 - f_12 - f_16 - f_2 + f_8 - f_9 +
-                        (0.5) * lm.force_->get(x, y, z, 1) + vel1Term;
+                        (0.5) * force_field.get(x, y, z, 1) + vel1Term;
     const double md_2 = f_11 + f_14 - f_15 - f_16 - f_17 - f_18 - f_6 +
-                        (0.5) * lm.force_->get(x, y, z, 2) + vel2Term;
+                        (0.5) * force_field.get(x, y, z, 2) + vel2Term;
     momentumDensity[0] = md_0;
     momentumDensity[1] = md_1;
     momentumDensity[2] = md_2;
   }
 };
 
-template <typename LatticeModel_T> struct PressureTensor {
+template <> struct PressureTensor<LBWalberlaImpl> {
   template <typename FieldPtrOrIterator>
   static void get(Matrix3<real_t> & /* pressureTensor */,
-                  const LatticeModel_T & /* latticeModel */,
+                  const LBWalberlaImpl & /* latticeModel */,
                   const FieldPtrOrIterator & /* it */) {
     WALBERLA_ABORT("Not implemented");
   }
 
   template <typename PdfField_T>
   static void get(Matrix3<real_t> & /* pressureTensor */,
-                  const LatticeModel_T & /* latticeModel */,
+                  const LBWalberlaImpl & /* latticeModel */,
                   const PdfField_T & /* pdf */, const cell_idx_t /* x */,
                   const cell_idx_t /* y */, const cell_idx_t /* z */) {
     WALBERLA_ABORT("Not implemented");
   }
 };
 
-template <typename LatticeModel_T> struct ShearRate {
+template <> struct ShearRate<LBWalberlaImpl> {
   template <typename FieldPtrOrIterator>
-  static inline real_t get(const LatticeModel_T & /* latticeModel */,
+  static inline real_t get(const LBWalberlaImpl & /* latticeModel */,
                            const FieldPtrOrIterator & /* it */,
                            const Vector3<real_t> & /* velocity */,
                            const real_t /* rho */) {
@@ -948,7 +966,7 @@ template <typename LatticeModel_T> struct ShearRate {
 
   template <typename PdfField_T>
   static inline real_t
-  get(const LatticeModel_T &latticeModel, const PdfField_T & /* pdf */,
+  get(const LBWalberlaImpl &latticeModel, const PdfField_T & /* pdf */,
       const cell_idx_t /* x */, const cell_idx_t /* y */,
       const cell_idx_t /* z */, const Vector3<real_t> & /* velocity */,
       const real_t /* rho */) {
@@ -964,11 +982,8 @@ template <typename LatticeModel_T> struct ShearRate {
   }
 };
 
-} // namespace espresso
 } // namespace lbm
 } // namespace walberla
-
-
 
 #ifdef WALBERLA_CXX_COMPILER_IS_GNU
 #pragma GCC diagnostic pop

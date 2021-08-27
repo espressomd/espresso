@@ -40,17 +40,8 @@ LBWalberlaBase *new_lb_walberla(
     const Utils::Vector3i &node_grid, double kT, unsigned int seed,
     boost::optional<LeesEdwardsCallbacks> &&lees_edwards_callbacks) {
 
-  LBWalberlaBase *lb_walberla_instance;
-  if (kT == 0.) { // un-thermalized LB
-    lb_walberla_instance =
-        new walberla::LBWalberlaImpl<UnthermalizedCollisionModel>(
-            viscosity, density, grid_dimensions, node_grid, 1, kT, seed,
-            std::move(lees_edwards_callbacks));
-  } else { // thermalized LB
-    lb_walberla_instance =
-        new walberla::LBWalberlaImpl<ThermalizedCollisionModel>(
-            viscosity, density, grid_dimensions, node_grid, 1, kT, seed,
-            std::move(lees_edwards_callbacks));
-  }
+  LBWalberlaBase *lb_walberla_instance = new walberla::LBWalberlaImpl(
+      viscosity, density, grid_dimensions, node_grid, 1u, kT, seed,
+      std::move(lees_edwards_callbacks));
   return lb_walberla_instance;
 }
