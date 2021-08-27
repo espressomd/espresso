@@ -271,7 +271,7 @@ private:
 
   [[nodiscard]] real_t getDensity(const BlockAndCell &bc) const {
     auto pdf_field = bc.block->template getData<PdfField>(m_pdf_field_id);
-    return lbm::Density<LatticeModel_T>::get(nullptr, *pdf_field, bc.cell.x(),
+    return lbm::Density<LatticeModel_T>::get(*this, *pdf_field, bc.cell.x(),
                                              bc.cell.y(), bc.cell.z());
   }
 
@@ -318,7 +318,7 @@ private:
   getPressureTensor(const BlockAndCell &bc) const {
     Matrix3<real_t> pressureTensor;
     auto pdf_field = bc.block->template getData<PdfField>(m_pdf_field_id);
-    lbm::PressureTensor<LatticeModel_T>::get(pressureTensor, nullptr,
+    lbm::PressureTensor<LatticeModel_T>::get(pressureTensor, *this,
                                              *pdf_field, bc.cell.x(),
                                              bc.cell.y(), bc.cell.z());
     return pressureTensor;
@@ -784,8 +784,8 @@ public:
     if (!bc)
       return false;
 
-    const typename UBB::Velocity velocity(FloatType{v[0]}, FloatType{v[1]},
-                                          FloatType{v[2]});
+    const typename UBB::Velocity velocity(real_c(v[0]), real_c(v[1]),
+                                          real_c(v[2]));
 
     auto *boundary_handling =
         (*bc).block->template getData<Boundaries>(m_boundary_handling_id);
@@ -844,7 +844,7 @@ public:
   void clear_boundaries() override {
     const CellInterval &domain_bb_in_global_cell_coordinates =
         m_blocks->getCellBBFromAABB(m_blocks->begin()->getAABB().getExtended(
-            FloatType(n_ghost_layers())));
+            real_c(n_ghost_layers())));
     for (auto block = m_blocks->begin(); block != m_blocks->end(); ++block) {
 
       auto *boundary_handling =
@@ -867,7 +867,7 @@ public:
   }
 
   // Global momentum
-  [[nodiscard]] Utils::Vector3d get_momentum() override {
+  [[nodiscard]] Utils::Vector3d get_momentum() const override {
     Vector3<real_t> mom;
     for (auto block_it = m_blocks->begin(); block_it != m_blocks->end();
          ++block_it) {
@@ -995,22 +995,21 @@ public:
     fluid_filter.addFlag(Fluid_flag);
     pdf_field_vtk->addCellInclusionFilter(fluid_filter);
 
-    // TODO WALBERLA: re-enable VTK writers
-    /*
+    /* TODO WALBERLA: re-enable VTK writers
     // add writers
     if (static_cast<unsigned>(OutputVTK::density) & flag_observables) {
       pdf_field_vtk->addCellDataWriter(
-          make_shared<lbm::DensityVTKWriter<LatticeModel, float>>(
+          make_shared<lbm::DensityVTKWriter<LatticeModel_T, float>>(
               m_pdf_field_id, "DensityFromPDF"));
     }
     if (static_cast<unsigned>(OutputVTK::velocity_vector) & flag_observables) {
       pdf_field_vtk->addCellDataWriter(
-          make_shared<lbm::VelocityVTKWriter<LatticeModel, float>>(
+          make_shared<lbm::VelocityVTKWriter<LatticeModel_T, float>>(
               m_pdf_field_id, "VelocityFromPDF"));
     }
     if (static_cast<unsigned>(OutputVTK::pressure_tensor) & flag_observables) {
       pdf_field_vtk->addCellDataWriter(
-          make_shared<lbm::PressureTensorVTKWriter<LatticeModel, float>>(
+          make_shared<lbm::PressureTensorVTKWriter<LatticeModel_T, float>>(
               m_pdf_field_id, "PressureTensorFromPDF"));
     }
     */

@@ -75,7 +75,7 @@ template<>
 class EquilibriumDistribution< {{class_name}}, void>
 {
 public:
-   typedef typename {{class_name}}::Stencil Stencil;
+   typedef stencil::D3Q19 Stencil;
 
    static real_t get( const stencil::Direction direction,
                       const Vector3< real_t > & u = Vector3< real_t >( real_t(0.0) ),
@@ -153,6 +153,13 @@ struct AdaptVelocityToForce<{{class_name}}, void>
       return velocity;
       {% endif %}
    }
+
+   static Vector3<real_t> get( const cell_idx_t x, const cell_idx_t y, const cell_idx_t z,
+                               const GhostLayerField<real_t, 3u> * force_field,
+                               const Vector3< real_t > & velocity, const real_t rho ) {
+
+      return get(x, y, z, *force_field, velocity, rho);
+   }
 };
 } // namespace internal
 
@@ -195,7 +202,7 @@ template<>
 struct Density<{{class_name}}, void>
 {
    template< typename FieldPtrOrIterator >
-   static inline real_t get( const {{class_name}} & , const FieldPtrOrIterator & it )
+   static inline real_t get( {{class_name}} const & , const FieldPtrOrIterator & it )
    {
         {% for i in range(Q) -%}
             const real_t f_{{i}} = it[{{i}}];
@@ -205,7 +212,7 @@ struct Density<{{class_name}}, void>
    }
 
    template< typename PdfField_T >
-   static inline real_t get( const {{class_name}} & ,
+   static inline real_t get( {{class_name}} const & ,
                              const PdfField_T & pdf, const cell_idx_t x, const cell_idx_t y, const cell_idx_t z )
    {
         const real_t & xyz0 = pdf(x,y,z,0);
@@ -356,13 +363,13 @@ template<>
 struct PressureTensor<{{class_name}}>
 {
    template< typename FieldPtrOrIterator >
-   static void get( Matrix3< real_t > & /* pressureTensor */, const {{class_name}} & /* latticeModel */, const FieldPtrOrIterator & /* it */ )
+   static void get( Matrix3< real_t > & /* pressureTensor */, {{class_name}} const & /* latticeModel */, const FieldPtrOrIterator & /* it */ )
    {
        WALBERLA_ABORT("Not implemented");
    }
 
    template< typename PdfField_T >
-   static void get( Matrix3< real_t > & /* pressureTensor */, const {{class_name}} & /* latticeModel */, const PdfField_T & /* pdf */,
+   static void get( Matrix3< real_t > & /* pressureTensor */, {{class_name}} const & /* latticeModel */, const PdfField_T & /* pdf */,
                     const cell_idx_t /* x */, const cell_idx_t /* y */, const cell_idx_t /* z */ )
    {
        WALBERLA_ABORT("Not implemented");
@@ -374,7 +381,7 @@ template<>
 struct ShearRate<{{class_name}}>
 {
    template< typename FieldPtrOrIterator >
-   static inline real_t get( const {{class_name}} & /* latticeModel */, const FieldPtrOrIterator & /* it */,
+   static inline real_t get( {{class_name}} const & /* latticeModel */, const FieldPtrOrIterator & /* it */,
                              const Vector3< real_t > & /* velocity */, const real_t /* rho */)
    {
        WALBERLA_ABORT("Not implemented");
@@ -382,7 +389,7 @@ struct ShearRate<{{class_name}}>
    }
 
    template< typename PdfField_T >
-   static inline real_t get( const {{class_name}} & latticeModel,
+   static inline real_t get( {{class_name}} const & latticeModel,
                              const PdfField_T & /* pdf */, const cell_idx_t /* x */, const cell_idx_t /* y */, const cell_idx_t /* z */,
                              const Vector3< real_t > & /* velocity */, const real_t /* rho */ )
    {

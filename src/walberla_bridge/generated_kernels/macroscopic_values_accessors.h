@@ -405,6 +405,15 @@ template <> struct AdaptVelocityToForce<LBWalberlaImpl, void> {
                            (0.5) * force_field.get(x, y, z, 1) / rho,
                            (0.5) * force_field.get(x, y, z, 2) / rho);
   }
+
+  static Vector3<real_t> get(const cell_idx_t x, const cell_idx_t y,
+                             const cell_idx_t z,
+                             const GhostLayerField<real_t, 3u> *force_field,
+                             const Vector3<real_t> &velocity,
+                             const real_t rho) {
+
+    return get(x, y, z, *force_field, velocity, rho);
+  }
 };
 } // namespace internal
 
@@ -632,7 +641,8 @@ template <> struct Equilibrium<LBWalberlaImpl, void> {
 
 template <> struct Density<LBWalberlaImpl, void> {
   template <typename FieldPtrOrIterator>
-  static inline real_t get(void *, const FieldPtrOrIterator &it) {
+  static inline real_t get(LBWalberlaImpl const &,
+                           const FieldPtrOrIterator &it) {
     const real_t f_0 = it[0];
     const real_t f_1 = it[1];
     const real_t f_2 = it[2];
@@ -661,8 +671,9 @@ template <> struct Density<LBWalberlaImpl, void> {
   }
 
   template <typename PdfField_T>
-  static inline real_t get(void *, const PdfField_T &pdf, const cell_idx_t x,
-                           const cell_idx_t y, const cell_idx_t z) {
+  static inline real_t get(LBWalberlaImpl const &, const PdfField_T &pdf,
+                           const cell_idx_t x, const cell_idx_t y,
+                           const cell_idx_t z) {
     const real_t &xyz0 = pdf(x, y, z, 0);
     const real_t f_0 = pdf.getF(&xyz0, 0);
     const real_t f_1 = pdf.getF(&xyz0, 1);
@@ -927,34 +938,36 @@ template <> struct MomentumDensity<LBWalberlaImpl> {
 template <> struct PressureTensor<LBWalberlaImpl> {
   template <typename FieldPtrOrIterator>
   static void get(Matrix3<real_t> & /* pressureTensor */,
-                  void * /* latticeModel */,
+                  LBWalberlaImpl const & /* latticeModel */,
                   const FieldPtrOrIterator & /* it */) {
     WALBERLA_ABORT("Not implemented");
   }
 
   template <typename PdfField_T>
   static void get(Matrix3<real_t> & /* pressureTensor */,
-                  void * /* latticeModel */, const PdfField_T & /* pdf */,
-                  const cell_idx_t /* x */, const cell_idx_t /* y */,
-                  const cell_idx_t /* z */) {
+                  LBWalberlaImpl const & /* latticeModel */,
+                  const PdfField_T & /* pdf */, const cell_idx_t /* x */,
+                  const cell_idx_t /* y */, const cell_idx_t /* z */) {
     WALBERLA_ABORT("Not implemented");
   }
 };
 
 template <> struct ShearRate<LBWalberlaImpl> {
   template <typename FieldPtrOrIterator>
-  static inline real_t
-  get(void * /* latticeModel */, const FieldPtrOrIterator & /* it */,
-      const Vector3<real_t> & /* velocity */, const real_t /* rho */) {
+  static inline real_t get(LBWalberlaImpl const & /* latticeModel */,
+                           const FieldPtrOrIterator & /* it */,
+                           const Vector3<real_t> & /* velocity */,
+                           const real_t /* rho */) {
     WALBERLA_ABORT("Not implemented");
     return real_t(0.0);
   }
 
   template <typename PdfField_T>
   static inline real_t
-  get(void *, const PdfField_T & /* pdf */, const cell_idx_t /* x */,
-      const cell_idx_t /* y */, const cell_idx_t /* z */,
-      const Vector3<real_t> & /* velocity */, const real_t /* rho */) {
+  get(LBWalberlaImpl const &latticeModel, const PdfField_T & /* pdf */,
+      const cell_idx_t /* x */, const cell_idx_t /* y */,
+      const cell_idx_t /* z */, const Vector3<real_t> & /* velocity */,
+      const real_t /* rho */) {
     WALBERLA_ABORT("Not implemented");
     return real_t(0.0);
   }
