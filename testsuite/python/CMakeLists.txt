@@ -55,34 +55,34 @@ endfunction(PYTHON_TEST)
 
 # Checkpointing tests: semicolon-separated list of mutually-compatible features.
 # Separate features with hyphens, use a period to add an optional flag.
-#foreach( # TODO WALBERLA: boundaries
-#  TEST_COMBINATION
-#  lb.active.walberla-p3m.cpu-lj-therm.lb;lb.active.walberla-p3m.elc-lj-therm.lb;lb.off-therm.npt-int.npt;lb.off-int.sd;lb.off-dp3m.cpu-therm.langevin-int.nvt;lb.off-therm.dpd-int.nvt;lb.off-scafacos-therm.bd-int.bd;lb.off-therm.sdm-int.sdm;lb.active.walberla-p3m.cpu-lj-therm.lb-mpi.1.core
-#)
-#  if(${TEST_COMBINATION} MATCHES "mpi\\.1\\.core")
-#    set(TEST_NPROCS 1)
-#  else()
-#    set(TEST_NPROCS 2)
-#  endif()
-#  if(${TEST_COMBINATION} MATCHES "\\.gpu")
-#    set(TEST_LABELS "gpu")
-#  else()
-#    set(TEST_LABELS "")
-#  endif()
-#  if(${TEST_COMBINATION} MATCHES "lb\\.off")
-#    set(TEST_BINARY_LIST "1")
-#  else()
-#    set(TEST_BINARY_LIST "1;0")
-#  endif()
-#  foreach(TEST_BINARY ${TEST_BINARY_LIST})
-#    python_test(FILE save_checkpoint.py MAX_NUM_PROC ${TEST_NPROCS} LABELS
-#                ${TEST_LABELS} SUFFIX ${TEST_COMBINATION}_${TEST_BINARY})
-#    python_test(
-#      FILE test_checkpoint.py MAX_NUM_PROC ${TEST_NPROCS} LABELS ${TEST_LABELS}
-#      SUFFIX ${TEST_COMBINATION}_${TEST_BINARY} DEPENDS
-#      save_checkpoint_${TEST_COMBINATION}_${TEST_BINARY})
-#  endforeach(TEST_BINARY)
-#endforeach(TEST_COMBINATION)
+foreach(
+  TEST_COMBINATION
+  lb.active.walberla-p3m.cpu-lj-therm.lb;lb.active.walberla-p3m.elc-lj-therm.lb;lb.off-therm.npt-int.npt;lb.off-int.sd;lb.off-dp3m.cpu-therm.langevin-int.nvt;lb.off-therm.dpd-int.nvt;lb.off-scafacos-therm.bd-int.bd;lb.off-therm.sdm-int.sdm;lb.active.walberla-p3m.cpu-lj-therm.lb-mpi.1.core
+)
+  if(${TEST_COMBINATION} MATCHES "mpi\\.1\\.core")
+    set(TEST_NPROCS 1)
+  else()
+    set(TEST_NPROCS 2)
+  endif()
+  if(${TEST_COMBINATION} MATCHES "\\.gpu")
+    set(TEST_LABELS "gpu")
+  else()
+    set(TEST_LABELS "")
+  endif()
+  if(${TEST_COMBINATION} MATCHES "lb\\.off")
+    set(TEST_BINARY_LIST "1")
+  else()
+    set(TEST_BINARY_LIST "1;0")
+  endif()
+  foreach(TEST_BINARY ${TEST_BINARY_LIST})
+    python_test(FILE save_checkpoint.py MAX_NUM_PROC ${TEST_NPROCS} LABELS
+                ${TEST_LABELS} SUFFIX ${TEST_COMBINATION}_${TEST_BINARY})
+    python_test(
+      FILE test_checkpoint.py MAX_NUM_PROC ${TEST_NPROCS} LABELS ${TEST_LABELS}
+      SUFFIX ${TEST_COMBINATION}_${TEST_BINARY} DEPENDS
+      save_checkpoint_${TEST_COMBINATION}_${TEST_BINARY})
+  endforeach(TEST_BINARY)
+endforeach(TEST_COMBINATION)
 python_test(FILE cellsystem.py MAX_NUM_PROC 4)
 python_test(FILE tune_skin.py MAX_NUM_PROC 1)
 python_test(FILE constraint_homogeneous_magnetic_field.py MAX_NUM_PROC 4)
@@ -141,7 +141,7 @@ python_test(FILE brownian_dynamics.py MAX_NUM_PROC 1)
 python_test(FILE brownian_dynamics_stats.py MAX_NUM_PROC 1 LABELS long)
 python_test(FILE nsquare.py MAX_NUM_PROC 4)
 python_test(FILE virtual_sites_relative.py MAX_NUM_PROC 2)
-# python_test(FILE virtual_sites_tracers_walberla.py MAX_NUM_PROC 1) # TODO WALBERLA: boundaries
+python_test(FILE virtual_sites_tracers_walberla.py MAX_NUM_PROC 1) # TODO WALBERLA
 python_test(FILE domain_decomposition.py MAX_NUM_PROC 4)
 python_test(FILE integrator_npt.py MAX_NUM_PROC 4)
 python_test(FILE integrator_npt_stats.py MAX_NUM_PROC 4 LABELS long)
@@ -192,22 +192,22 @@ python_test(FILE actor.py MAX_NUM_PROC 1)
 python_test(FILE drude.py MAX_NUM_PROC 2)
 python_test(FILE thermalized_bond.py MAX_NUM_PROC 4)
 python_test(FILE thole.py MAX_NUM_PROC 4)
-# python_test(FILE lb_slice.py MAX_NUM_PROC 1) # TODO WALBERLA: boundaries
-# python_test(FILE lb_boundary_velocity.py MAX_NUM_PROC 1) # TODO WALBERLA: boundaries
-# python_test(FILE lb_boundary_volume_force.py MAX_NUM_PROC 2) # TODO WALBERLA: boundaries
+python_test(FILE lb_slice.py MAX_NUM_PROC 1)
+python_test(FILE lb_boundary_velocity.py MAX_NUM_PROC 1)
+python_test(FILE lb_boundary_volume_force.py MAX_NUM_PROC 2)
 python_test(FILE lb_thermo_virtual.py MAX_NUM_PROC 2)
-# python_test(FILE lb_poiseuille.py MAX_NUM_PROC 2) # TODO WALBERLA: boundaries
-# python_test(FILE lb_poiseuille_cylinder.py MAX_NUM_PROC 2) # TODO WALBERLA: boundaries
-# python_test(FILE lb_interpolation.py MAX_NUM_PROC 2) # TODO WALBERLA: boundaries
+python_test(FILE lb_poiseuille.py MAX_NUM_PROC 2)
+python_test(FILE lb_poiseuille_cylinder.py MAX_NUM_PROC 2)
+python_test(FILE lb_interpolation.py MAX_NUM_PROC 2)
 python_test(FILE analyze_gyration_tensor.py MAX_NUM_PROC 1)
 python_test(FILE oif_volume_conservation.py MAX_NUM_PROC 2)
 python_test(FILE simple_pore.py MAX_NUM_PROC 1)
 python_test(FILE field_test.py MAX_NUM_PROC 1)
-# python_test(FILE lb_boundary.py MAX_NUM_PROC 2) # TODO WALBERLA: boundaries
+python_test(FILE lb_boundary.py MAX_NUM_PROC 2)
 # python_test(FILE lb_streaming.py MAX_NUM_PROC 4) # TODO WALBERLA
-# python_test(FILE lb_shear.py MAX_NUM_PROC 2) # TODO WALBERLA: boundaries
+python_test(FILE lb_shear.py MAX_NUM_PROC 2)
 # python_test(FILE lb_thermostat.py MAX_NUM_PROC 1) # TODO WALBERLA
-# python_test(FILE lb_buoyancy_force.py MAX_NUM_PROC 2) # TODO WALBERLA: boundaries
+python_test(FILE lb_buoyancy_force.py MAX_NUM_PROC 2)
 python_test(FILE lb_momentum_conservation.py MAX_NUM_PROC 4)
 python_test(FILE p3m_electrostatic_pressure.py MAX_NUM_PROC 2)
 python_test(FILE sigint.py DEPENDENCIES sigint_child.py MAX_NUM_PROC 1)
