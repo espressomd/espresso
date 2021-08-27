@@ -39,44 +39,6 @@ from lbmpy.macroscopic_value_kernels import macroscopic_values_setter
 # for collide-push from lbmpy.fieldaccess import StreamPushTwoFieldsAccessor
 
 
-def adapt_and_import_walberla_lbm_generation():
-    import sys
-    import importlib
-    old_tpl = 'LatticeModel.tmpl.h'
-    new_tpl = 'MacroscopicValuesAccessors.tmpl.h'
-    old_token = f"env.get_template('{old_tpl}')"
-    new_token = f"env.get_template('{new_tpl}')"
-    # copy template
-    spec = importlib.util.find_spec('lbmpy_walberla', None)
-    lm = spec.origin.replace('__init__.py', 'templates/LatticeModel.tmpl.h')
-    assert os.path.isfile(lm), f'could not find file "{lm}"'
-    with open(os.path.join(os.path.dirname(__file__), new_tpl)) as f:
-        tpl = (
-            f.read()
-            .replace(
-                'const {{class_name}} & lm',
-                'const GhostLayerField<real_t, 3u> & force_field')
-            .replace('const {{class_name}} & latticeModel', 'void *')
-            .replace('const {{class_name}} &', 'void *')
-        )
-    with open(os.path.join(os.path.dirname(lm), new_tpl), 'w') as f:
-        f.write(tpl)
-    # edit lbm generator code
-    module_name = 'lbmpy_walberla.walberla_lbm_generation'
-    spec = importlib.util.find_spec(module_name, None)
-    source = spec.loader.get_source(module_name)
-    assert old_token in source, f'could not find "{old_token}" in {spec.origin}'
-    new_source = source.replace(old_token, new_token)
-    module = importlib.util.module_from_spec(spec)
-    codeobj = compile(new_source, module.__spec__.origin, 'exec')
-    exec(codeobj, module.__dict__)
-    sys.modules[module_name] = module
-    return module
-
-
-generate_accessors = adapt_and_import_walberla_lbm_generation().generate_lattice_model
-
-
 def adapt_pystencils():
     '''
     Adapt pystencils to the SFINAE method (add the block offset lambda
