@@ -72,7 +72,7 @@ namespace {{namespace}} {
 //======================================================================================================================
 
 template<>
-class EquilibriumDistribution
+class EquilibriumDistribution< {{class_name}}, void>
 {
 public:
    typedef typename {{class_name}}::Stencil Stencil;
@@ -127,7 +127,7 @@ public:
 namespace internal {
 
 template<>
-struct AdaptVelocityToForce
+struct AdaptVelocityToForce<{{class_name}}, void>
 {
    template< typename FieldPtrOrIterator >
    static Vector3<real_t> get( FieldPtrOrIterator & it, const {{class_name}} & lm,
@@ -159,7 +159,7 @@ struct AdaptVelocityToForce
 
 
 template<>
-struct Equilibrium
+struct Equilibrium< {{class_name}}, void >
 {
 
    template< typename FieldPtrOrIterator >
@@ -192,7 +192,7 @@ struct Equilibrium
 
 
 template<>
-struct Density
+struct Density<{{class_name}}, void>
 {
    template< typename FieldPtrOrIterator >
    static inline real_t get( const {{class_name}} & , const FieldPtrOrIterator & it )
@@ -219,7 +219,7 @@ struct Density
 
 
 template<>
-struct DensityAndVelocity
+struct DensityAndVelocity<{{class_name}}>
 {
     template< typename FieldPtrOrIterator >
     static void set( FieldPtrOrIterator & it, const {{class_name}} & lm,
@@ -234,7 +234,7 @@ struct DensityAndVelocity
         const real_t u_2(0.0);
         {% endif %}
 
-        Equilibrium::set(it, Vector3<real_t>(u_0, u_1, u_2), rho{%if not compressible %} + real_t(1) {%endif%});
+        Equilibrium<{{class_name}}>::set(it, Vector3<real_t>(u_0, u_1, u_2), rho{%if not compressible %} + real_t(1) {%endif%});
     }
 
     template< typename PdfField_T >
@@ -246,13 +246,13 @@ struct DensityAndVelocity
         const real_t u_2(0.0);
         {% endif %}
 
-        Equilibrium::set(pdf, x, y, z, Vector3<real_t>(u_0, u_1, u_2), rho {%if not compressible %} + real_t(1) {%endif%});
+        Equilibrium<{{class_name}}>::set(pdf, x, y, z, Vector3<real_t>(u_0, u_1, u_2), rho {%if not compressible %} + real_t(1) {%endif%});
     }
 };
 
 
 template<typename FieldIteratorXYZ >
-struct DensityAndVelocityRange
+struct DensityAndVelocityRange<{{class_name}}, FieldIteratorXYZ>
 {
 
    static void set( FieldIteratorXYZ & begin, const FieldIteratorXYZ & end, const {{class_name}} & lm,
@@ -268,7 +268,7 @@ struct DensityAndVelocityRange
             const real_t u_2(0.0);
             {% endif %}
 
-            Equilibrium::set(cellIt, Vector3<real_t>(u_0, u_1, u_2), rho{%if not compressible %} + real_t(1) {%endif%});
+            Equilibrium<{{class_name}}>::set(cellIt, Vector3<real_t>(u_0, u_1, u_2), rho{%if not compressible %} + real_t(1) {%endif%});
         }
    }
 };
@@ -276,7 +276,7 @@ struct DensityAndVelocityRange
 
 
 template<>
-struct DensityAndMomentumDensity
+struct DensityAndMomentumDensity<{{class_name}}>
 {
    template< typename FieldPtrOrIterator >
    static real_t get( Vector3< real_t > & momentumDensity, const {{class_name}} & lm,
@@ -316,7 +316,7 @@ struct DensityAndMomentumDensity
 
 
 template<>
-struct MomentumDensity
+struct MomentumDensity< {{class_name}}>
 {
    template< typename FieldPtrOrIterator >
    static void get( Vector3< real_t > & momentumDensity, const {{class_name}} & lm, const FieldPtrOrIterator & it )
@@ -353,7 +353,7 @@ struct MomentumDensity
 
 
 template<>
-struct PressureTensor
+struct PressureTensor<{{class_name}}>
 {
    template< typename FieldPtrOrIterator >
    static void get( Matrix3< real_t > & /* pressureTensor */, const {{class_name}} & /* latticeModel */, const FieldPtrOrIterator & /* it */ )
@@ -371,7 +371,7 @@ struct PressureTensor
 
 
 template<>
-struct ShearRate
+struct ShearRate<{{class_name}}>
 {
    template< typename FieldPtrOrIterator >
    static inline real_t get( const {{class_name}} & /* latticeModel */, const FieldPtrOrIterator & /* it */,

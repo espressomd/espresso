@@ -87,6 +87,7 @@
 
 #include <boost/optional.hpp>
 #include <boost/tuple/tuple.hpp>
+#include <boost/variant.hpp>
 
 #include <array>
 #include <cmath>
@@ -103,7 +104,6 @@
 
 namespace walberla {
 // forward declare
-template <typename CollisionModel, typename FloatType = double>
 class LBWalberlaImpl;
 } // namespace walberla
 
@@ -117,84 +117,99 @@ const FlagUID UBB_flag("velocity bounce back");
 
 /** Class that runs and controls the LB on WaLBerla
  */
-template <typename CollisionModel, typename FloatType>
 class LBWalberlaImpl : public LBWalberlaBase {
+protected:
+  using CollisionModel =
+      boost::variant<UnthermalizedCollisionModel, ThermalizedCollisionModel>;
+
 private:
-  template <typename Sweep, typename = void>
-  struct is_thermalized : std::false_type {};
-
-  template <typename Sweep>
-  struct is_thermalized<Sweep, decltype((void)Sweep::time_step_, void())>
-      : std::true_type {};
-
-  auto generate_collide_sweep_impl(unsigned int, unsigned int,
-                                   std::false_type) {
+  auto generate_collide_sweep() const {
     real_t const omega = shear_mode_relaxation_rate();
     real_t const omega_odd = odd_mode_relaxation_rate(omega);
-    return std::make_shared<CollisionModel>(m_last_applied_force_field_id,
-                                            m_pdf_field_id, omega, omega,
-                                            omega_odd, omega);
+    std::shared_ptr<CollisionModel> ptr;
+    if (m_kT == 0.) {
+      auto obj = UnthermalizedCollisionModel(m_last_applied_force_field_id,
+                                             m_pdf_field_id, omega, omega,
+                                             omega_odd, omega);
+      ptr = std::make_shared<CollisionModel>(std::move(obj));
+    } else {
+      auto obj = ThermalizedCollisionModel(
+          m_last_applied_force_field_id, m_pdf_field_id, uint32_t(0u),
+          uint32_t(0u), uint32_t(0u), m_kT, omega, omega, omega_odd, omega,
+          m_seed, 0u);
+      obj.block_offset_generator =
+          [this](IBlock *const block, uint32_t &block_offset_0,
+                 uint32_t &block_offset_1, uint32_t &block_offset_2) {
+            block_offset_0 = m_blocks->getBlockCellBB(*block).xMin();
+            block_offset_1 = m_blocks->getBlockCellBB(*block).yMin();
+            block_offset_2 = m_blocks->getBlockCellBB(*block).zMin();
+          };
+      ptr = std::make_shared<CollisionModel>(std::move(obj));
+    }
+    return ptr;
   }
 
-  auto generate_collide_sweep_impl(unsigned int seed, unsigned int time_step,
-                                   std::true_type) {
-    real_t const omega = shear_mode_relaxation_rate();
-    real_t const omega_odd = odd_mode_relaxation_rate(omega);
-    auto collide = std::make_shared<CollisionModel>(
-        m_last_applied_force_field_id, m_pdf_field_id, 0, 0, 0, m_kT, omega,
-        omega, omega_odd, omega, seed, time_step);
-    collide->block_offset_generator =
-        [this](IBlock *const block, uint32_t &block_offset_0,
-               uint32_t &block_offset_1, uint32_t &block_offset_2) {
-          block_offset_0 = m_blocks->getBlockCellBB(*block).xMin();
-          block_offset_1 = m_blocks->getBlockCellBB(*block).yMin();
-          block_offset_2 = m_blocks->getBlockCellBB(*block).zMin();
-        };
-    return collide;
-  }
+  class : public boost::static_visitor<> {
+  public:
+    template <typename CM> void operator()(CM &cm, IBlock *b) const { cm(b); }
 
-  auto generate_collide_sweep(unsigned int seed, unsigned int time_step) {
-    return generate_collide_sweep_impl(seed, time_step,
-                                       is_thermalized<CollisionModel>{});
-  }
+  } run_collide_sweep;
 
-  void set_rng_seed_impl(uint32_t, std::false_type) {
-    throw std::runtime_error("The LB does not use a random number generator");
-  }
+  class : public boost::static_visitor<> {
+  public:
+    void operator()(UnthermalizedCollisionModel &cm, uint32_t) const {
+      throw std::runtime_error("The LB does not use a random number generator");
+    }
 
-  void set_rng_seed_impl(uint32_t seed, std::true_type) {
-    m_collision_model->seed_ = seed;
-  }
+    void operator()(ThermalizedCollisionModel &cm, uint32_t seed) const {
+      cm.seed_ = seed;
+    }
 
-  [[nodiscard]] uint32_t get_rng_seed_impl(std::false_type) const {
-    throw std::runtime_error("The LB does not use a random number generator");
-  }
+  } set_rng_seed_impl;
 
-  [[nodiscard]] uint32_t get_rng_seed_impl(std::true_type) const {
-    return m_collision_model->seed_;
-  }
+  class : public boost::static_visitor<uint32_t> {
+  public:
+    uint32_t operator()(UnthermalizedCollisionModel const &cm) const {
+      throw std::runtime_error("The LB does not use a random number generator");
+    }
 
-  void set_time_step_impl(uint32_t, std::false_type) {
-    throw std::runtime_error("The LB does not use a random number generator");
-  }
+    uint32_t operator()(ThermalizedCollisionModel const &cm) const {
+      return cm.seed_;
+    }
 
-  void set_time_step_impl(uint32_t time_step, std::true_type) {
-    m_collision_model->time_step_ = time_step;
-  }
+  } get_rng_seed_impl;
 
-  [[nodiscard]] uint32_t get_time_step_impl(std::false_type) const {
-    throw std::runtime_error("The LB does not use a random number generator");
-  }
+  class : public boost::static_visitor<> {
+  public:
+    void operator()(UnthermalizedCollisionModel &cm, uint32_t) const {
+      throw std::runtime_error("The LB does not use a random number generator");
+    }
 
-  [[nodiscard]] uint32_t get_time_step_impl(std::true_type) const {
-    return m_collision_model->time_step_;
-  }
+    void operator()(ThermalizedCollisionModel &cm, uint32_t time_step) const {
+      cm.time_step_ = time_step;
+    }
 
-  void increment_time_step_impl(std::false_type) {}
+  } set_time_step_impl;
 
-  void increment_time_step_impl(std::true_type) {
-    m_collision_model->time_step_++;
-  }
+  class : public boost::static_visitor<uint32_t> {
+  public:
+    uint32_t operator()(UnthermalizedCollisionModel const &cm) const {
+      throw std::runtime_error("The LB does not use a random number generator");
+    }
+
+    uint32_t operator()(ThermalizedCollisionModel const &cm) const {
+      return cm.time_step_;
+    }
+
+  } get_time_step_impl;
+
+  class : public boost::static_visitor<> {
+  public:
+    void operator()(UnthermalizedCollisionModel &cm) const {}
+
+    void operator()(ThermalizedCollisionModel &cm) const { cm.time_step_++; }
+
+  } increment_time_step_if_thermalized_impl;
 
   [[nodiscard]] double shear_mode_relaxation_rate() const {
     return 2 / (6 * m_viscosity + 1);
@@ -208,7 +223,13 @@ private:
   }
 
 public:
-  using LatticeModel_T = LBWalberlaImpl<CollisionModel, FloatType>;
+  // Type definitions
+  using LatticeModel_T = LBWalberlaImpl;
+  typedef stencil::D3Q19 Stencil;
+  using VectorField = GhostLayerField<real_t, 3u>;
+  using FlagField = field::FlagField<uint8_t>;
+  using PdfField = GhostLayerField<real_t, Stencil::Size>;
+
   static constexpr real_t w[19] = {
       0.333333333333333,  0.0555555555555556, 0.0555555555555556,
       0.0555555555555556, 0.0555555555555556, 0.0555555555555556,
@@ -223,89 +244,83 @@ public:
       36.0000000000000, 36.0000000000000, 36.0000000000000, 36.0000000000000,
       36.0000000000000, 36.0000000000000, 36.0000000000000, 36.0000000000000,
       36.0000000000000, 36.0000000000000, 36.0000000000000};
+  static constexpr bool compressible = true;
 
 protected:
-  typedef stencil::D3Q19 Stencil;
-  static constexpr bool compressible = true;
-  // Type definitions
-  using VectorField = GhostLayerField<FloatType, 3>;
-  using FlagField = field::FlagField<uint8_t>;
-  using PdfField = GhostLayerField<FloatType, Stencil::Size>;
   /** Velocity boundary condition */
   // using UBB = lbm::espresso::UBB<LatticeModel_T, uint8_t, true, true>;
   // using Boundaries = BoundaryHandling<FlagField, Stencil, UBB>;
 
 private:
   // Backend classes can access private members:
-  template <typename CM, typename T>
-  friend class lbm::espresso::EquilibriumDistribution;
-  template <typename CM, typename T> friend struct lbm::espresso::Equilibrium;
-  template <typename CM, typename T>
-  friend struct lbm::espresso::internal::AdaptVelocityToForce;
-  template <typename CM, typename T> friend struct lbm::espresso::Density;
-  template <typename CM, typename T>
-  friend struct lbm::espresso::DensityAndVelocity;
-  template <typename CM, typename T>
-  friend struct lbm::espresso::DensityAndMomentumDensity;
-  template <typename CM, typename T>
-  friend struct lbm::espresso::MomentumDensity;
-  template <typename CM, typename T, class It>
-  friend struct lbm::espresso::DensityAndVelocityRange;
+  template <class LM, class Enable> friend class lbm::EquilibriumDistribution;
+  template <class LM, class Enable> friend struct lbm::Equilibrium;
+  template <class LM, class Enable>
+  friend struct lbm::internal::AdaptVelocityToForce;
+  template <class LM, class Enable> friend struct lbm::Density;
+  template <class LM> friend struct lbm::DensityAndVelocity;
+  template <class LM, class Enable>
+  friend struct lbm::DensityAndMomentumDensity;
+  template <class LM, class Enable> friend struct lbm::MomentumDensity;
+  template <class LM, class It, class Enable>
+  friend struct lbm::DensityAndVelocityRange;
   // template <class LM, typename flag_t, bool A, bool B> friend class
   // lbm::espresso::UBB;
 
-  GhostLayerField<FloatType, 3u> *force_;
+  GhostLayerField<real_t, 3u> *force_;
 
-  [[nodiscard]] FloatType getDensity(const BlockAndCell &bc) const {
+  [[nodiscard]] real_t getDensity(const BlockAndCell &bc) const {
     auto pdf_field = bc.block->template getData<PdfField>(m_pdf_field_id);
-    return lbm::espresso::Density<CollisionModel, FloatType>::get(
-        *this, *pdf_field, bc.cell.x(), bc.cell.y(), bc.cell.z());
+    return lbm::Density<LatticeModel_T>::get(nullptr, *pdf_field, bc.cell.x(),
+                                             bc.cell.y(), bc.cell.z());
   }
 
-  FloatType getDensityAndVelocity(const BlockAndCell &bc,
-                                  Vector3<real_t> &velocity) {
-    auto pdf_field = bc.block->template getData<PdfField>(m_pdf_field_id);
-    force_ =
+  real_t getDensityAndVelocity(const BlockAndCell &bc,
+                               Vector3<real_t> &velocity) const {
+    auto const pdf_field = bc.block->template getData<PdfField>(m_pdf_field_id);
+    auto const force_field =
         bc.block->template getData<VectorField>(m_last_applied_force_field_id);
-    const real_t rho = lbm::espresso::DensityAndMomentumDensity<
-        CollisionModel, FloatType>::get(velocity, *this, *pdf_field,
-                                        bc.cell.x(), bc.cell.y(), bc.cell.z());
+    const real_t rho = lbm::DensityAndMomentumDensity<LatticeModel_T>::get(
+        velocity, *force_field, *pdf_field, bc.cell.x(), bc.cell.y(),
+        bc.cell.z());
     if constexpr (compressible) {
-      const real_t invRho = FloatType(1) / rho;
+      const real_t invRho = real_t(1) / rho;
       velocity *= invRho;
     }
     return rho;
   }
 
-  FloatType getDensityAndVelocity(const PdfField *pdf_field, const cell_idx_t x,
-                                  const cell_idx_t y, const cell_idx_t z,
-                                  Vector3<real_t> &velocity) const {
-    const real_t rho = lbm::espresso::DensityAndMomentumDensity<
-        CollisionModel, FloatType>::get(velocity, *this, *pdf_field, x, y, z);
+  real_t getDensityAndVelocity(const PdfField *pdf_field,
+                               const VectorField *force_field,
+                               const cell_idx_t x, const cell_idx_t y,
+                               const cell_idx_t z,
+                               Vector3<real_t> &velocity) const {
+    const real_t rho = lbm::DensityAndMomentumDensity<LatticeModel_T>::get(
+        velocity, *force_field, *pdf_field, x, y, z);
     if constexpr (compressible) {
-      const real_t invRho = FloatType(1) / rho;
+      const real_t invRho = real_t(1) / rho;
       velocity *= invRho;
     }
     return rho;
   }
 
   void setDensityAndVelocity(const BlockAndCell &bc,
-                             Vector3<real_t> const &velocity, FloatType rho) {
+                             Vector3<real_t> const &velocity, real_t rho) {
     auto pdf_field = bc.block->template getData<PdfField>(m_pdf_field_id);
-    force_ =
+    auto force_field =
         bc.block->template getData<VectorField>(m_last_applied_force_field_id);
-    lbm::espresso::DensityAndVelocity<CollisionModel, FloatType>::set(
-        *pdf_field, bc.cell.x(), bc.cell.y(), bc.cell.z(), *this, velocity,
-        rho);
+    lbm::DensityAndVelocity<LatticeModel_T>::set(*pdf_field, bc.cell.x(),
+                                                 bc.cell.y(), bc.cell.z(),
+                                                 *force_field, velocity, rho);
   }
 
   [[nodiscard]] Matrix3<real_t>
   getPressureTensor(const BlockAndCell &bc) const {
     Matrix3<real_t> pressureTensor;
     auto pdf_field = bc.block->template getData<PdfField>(m_pdf_field_id);
-    lbm::espresso::PressureTensor<CollisionModel, FloatType>::get(
-        pressureTensor, *this, *pdf_field, bc.cell.x(), bc.cell.y(),
-        bc.cell.z());
+    lbm::PressureTensor<LatticeModel_T>::get(pressureTensor, nullptr,
+                                             *pdf_field, bc.cell.x(),
+                                             bc.cell.y(), bc.cell.z());
     return pressureTensor;
   }
 
@@ -435,16 +450,15 @@ public:
 
     // Init and register fields
     m_pdf_field_id = field::addToStorage<PdfField>(
-        m_blocks, "pdfs", FloatType{0}, field::fzyx, m_n_ghost_layers);
+        m_blocks, "pdfs", real_t{0}, field::fzyx, m_n_ghost_layers);
     m_pdf_tmp_field_id = field::addToStorage<PdfField>(
-        m_blocks, "pdfs_tmp", FloatType{0}, field::fzyx, m_n_ghost_layers);
+        m_blocks, "pdfs_tmp", real_t{0}, field::fzyx, m_n_ghost_layers);
     m_last_applied_force_field_id = field::addToStorage<VectorField>(
-        m_blocks, "force field", FloatType{0}, field::fzyx, m_n_ghost_layers);
+        m_blocks, "force field", real_t{0}, field::fzyx, m_n_ghost_layers);
     m_force_to_be_applied_id = field::addToStorage<VectorField>(
-        m_blocks, "force field", FloatType{0}, field::fzyx, m_n_ghost_layers);
+        m_blocks, "force field", real_t{0}, field::fzyx, m_n_ghost_layers);
     m_velocity_field_id = field::addToStorage<VectorField>(
-        m_blocks, "velocity field", FloatType{0}, field::fzyx,
-        m_n_ghost_layers);
+        m_blocks, "velocity field", real_t{0}, field::fzyx, m_n_ghost_layers);
 
     // Init and register flag field (fluid/boundary)
     m_flag_field_id = field::addFlagFieldToStorage<FlagField>(
@@ -457,9 +471,9 @@ public:
                                       unsigned int time_step) {
 
     // Init and register pdf field
-    auto pdf_setter = pystencils::InitialPDFsSetter(
-        m_force_to_be_applied_id, m_pdf_field_id, m_velocity_field_id,
-        static_cast<FloatType>(density));
+    auto pdf_setter =
+        pystencils::InitialPDFsSetter(m_force_to_be_applied_id, m_pdf_field_id,
+                                      m_velocity_field_id, real_c(density));
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b) {
       pdf_setter(&(*b));
     }
@@ -506,7 +520,7 @@ public:
     // The following functors are individual in-place collide and stream steps
     m_stream = std::make_shared<pystencils::StreamSweep>(
         m_last_applied_force_field_id, m_pdf_field_id, m_velocity_field_id);
-    m_collision_model = generate_collide_sweep(seed, time_step);
+    m_collision_model = generate_collide_sweep();
 
     // Synchronize ghost layers
     (*m_full_communication)();
@@ -518,7 +532,8 @@ public:
       (*m_reset_force)(&*b);
     // LB collide
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
-      (*m_collision_model)(&*b);
+      boost::apply_visitor(run_collide_sweep, *m_collision_model,
+                           boost::variant<IBlock *>(&*b));
     (*m_pdf_streaming_communication)();
     /* TODO boundaries
     // Handle boundaries
@@ -536,7 +551,8 @@ public:
         vtk::writeFiles(it->second.first)();
     }
 
-    increment_time_step_impl(is_thermalized<CollisionModel>{});
+    boost::apply_visitor(increment_time_step_if_thermalized_impl,
+                         *m_collision_model);
   }
 
   void ghost_communication() override { (*m_full_communication)(); }
@@ -571,13 +587,12 @@ public:
       return false;
     // We have to set both, the pdf and the stored velocity field
     auto const density = getDensity(*bc);
-    auto const vel =
-        Vector3<FloatType>{FloatType(v[0]), FloatType(v[1]), FloatType(v[2])};
+    auto const vel = Vector3<real_t>{real_c(v[0]), real_c(v[1]), real_c(v[2])};
     setDensityAndVelocity(*bc, vel, density);
     auto vel_field =
         (*bc).block->template getData<VectorField>(m_velocity_field_id);
     for (uint_t f = 0u; f < 3u; ++f) {
-      vel_field->get((*bc).cell, f) = FloatType(v[f]);
+      vel_field->get((*bc).cell, f) = real_c(v[f]);
     }
 
     return true;
@@ -647,7 +662,7 @@ public:
         auto force_field = (*bc).block->template getData<VectorField>(
             m_force_to_be_applied_id);
         for (int i : {0, 1, 2})
-          force_field->get((*bc).cell, i) += FloatType(force[i] * weight);
+          force_field->get((*bc).cell, i) += real_c(force[i] * weight);
       }
     };
     interpolate_bspline_at_pos(pos, force_at_node);
@@ -676,7 +691,7 @@ public:
     auto force_field = (*bc).block->template getData<VectorField>(
         m_last_applied_force_field_id);
     for (uint_t f = 0u; f < 3u; ++f) {
-      force_field->get((*bc).cell, f) = FloatType(force[f]);
+      force_field->get((*bc).cell, f) = real_c(force[f]);
     }
 
     return true;
@@ -707,7 +722,7 @@ public:
     auto pdf_field = (*bc).block->template getData<PdfField>(m_pdf_field_id);
     assert(population.size() == Stencil::Size);
     for (uint_t f = 0u; f < Stencil::Size; ++f) {
-      pdf_field->get((*bc).cell, f) = FloatType(population[f]);
+      pdf_field->get((*bc).cell, f) = real_c(population[f]);
     }
 
     return true;
@@ -874,16 +889,16 @@ public:
 
   // Global momentum
   [[nodiscard]] Utils::Vector3d get_momentum() override {
-    Vector3<FloatType> mom;
+    Vector3<real_t> mom;
     for (auto block_it = m_blocks->begin(); block_it != m_blocks->end();
          ++block_it) {
       auto pdf_field = block_it->template getData<PdfField>(m_pdf_field_id);
-      force_ = block_it->template getData<VectorField>(
+      auto force_field = block_it->template getData<VectorField>(
           m_last_applied_force_field_id);
-      Vector3<FloatType> local_v;
+      Vector3<real_t> local_v;
       WALBERLA_FOR_ALL_CELLS_XYZ(pdf_field, {
-        FloatType local_dens =
-            getDensityAndVelocity(pdf_field, x, y, z, local_v);
+        real_t local_dens =
+            getDensityAndVelocity(pdf_field, force_field, x, y, z, local_v);
         mom += local_dens * local_v;
       });
     }
@@ -900,10 +915,11 @@ public:
   [[nodiscard]] double get_kT() const override { return m_kT; }
 
   [[nodiscard]] uint64_t get_rng_state() const override {
-    return get_time_step_impl(is_thermalized<CollisionModel>{});
+    return boost::apply_visitor(get_time_step_impl, *m_collision_model);
   }
   void set_rng_state(uint64_t counter) override {
-    set_time_step_impl(counter, is_thermalized<CollisionModel>{});
+    boost::apply_visitor(set_time_step_impl, *m_collision_model,
+                         boost::variant<uint64_t>(counter));
   }
 
   // Grid, domain, halo

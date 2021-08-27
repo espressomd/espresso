@@ -50,14 +50,14 @@ def adapt_and_import_walberla_lbm_generation():
     lm = spec.origin.replace('__init__.py', 'templates/LatticeModel.tmpl.h')
     assert os.path.isfile(lm), f'could not find file "{lm}"'
     with open(os.path.join(os.path.dirname(__file__), new_tpl)) as f:
-        tpl = f.read()
-    typenames = 'typename CollisionModel, typename FloatType'
-    tpl = (
-        tpl.replace(
-            '{{class_name}}',
-            'LBWalberlaImpl<CollisionModel, FloatType>')
-        .replace('\ntemplate<', f'\ntemplate<{typenames}, ')
-        .replace(f'{typenames}, >', f'{typenames}>'))
+        tpl = (
+            f.read()
+            .replace(
+                'const {{class_name}} & lm',
+                'const GhostLayerField<real_t, 3u> & force_field')
+            .replace('const {{class_name}} & latticeModel', 'void *')
+            .replace('const {{class_name}} &', 'void *')
+        )
     with open(os.path.join(os.path.dirname(lm), new_tpl), 'w') as f:
         f.write(tpl)
     # edit lbm generator code
@@ -225,16 +225,12 @@ def generate_setters(lb_method):
     return pdfs_setter
 
 
-def patch_accessors(name):
-    with open(f'{name}.h') as f:
-        content = f.read()
-    content = (
-        content.replace('namespace lbm {', 'namespace lbm::espresso {')
-               .replace('Equilibrium::', 'Equilibrium<CollisionModel, FloatType>::')
-    )
-    with open(f'{name}.h', 'w') as f:
-        f.write(content)
-    os.remove(f'{name}.cpp')
+def patch_accessors(classname, name):
+    with open(f'{classname}.h') as f:
+        with open(f'{name}.h', 'w') as g:
+            g.write(f.read().replace('lm.force_->', 'force_field.'))
+    os.remove(f'{classname}.h')
+    os.remove(f'{classname}.cpp')
 
 
 adapt_pystencils()
@@ -316,10 +312,10 @@ with CodeGeneration() as ctx:
     # generate accessors
     generate_accessors(
         ctx,
-        'macroscopic_values_accessors',
+        'LBWalberlaImpl',
         collision_rule_unthermalized,
         field_layout="fzyx")
-    patch_accessors('macroscopic_values_accessors')
+    patch_accessors('LBWalberlaImpl', 'macroscopic_values_accessors')
 
     # Boundary conditions
     ubb_dynamic = UBB(lambda *args: None, dim=3)
