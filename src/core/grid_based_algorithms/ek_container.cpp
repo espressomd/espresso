@@ -51,7 +51,8 @@ void propagate() {
   std::for_each(ek_container.begin(), ek_container.end(),
                 [velocity_field_id, force_field_id](auto const &ek) {
                   try {
-                    ek->integrate(velocity_field_id, force_field_id);
+                    ek->integrate(ek_container.get_potential_field_id(),
+                                  velocity_field_id, force_field_id);
                   } catch (const std::runtime_error &e) {
                     runtimeErrorMsg() << e.what();
                   };

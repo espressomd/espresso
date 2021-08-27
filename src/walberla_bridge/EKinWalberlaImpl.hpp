@@ -18,6 +18,7 @@
 #include "generated_kernels/AdvectiveFluxKernel.h"
 #include "generated_kernels/ContinuityKernel.h"
 #include "generated_kernels/DiffusiveFluxKernel.h"
+#include "generated_kernels/DiffusiveFluxKernelWithElectrostatic.h"
 #include "generated_kernels/FrictionCouplingKernel.h"
 #include "generated_kernels/NoFlux.h"
 
@@ -230,19 +231,37 @@ private:
     }
   }
 
+  inline void kernel_diffusion_electrostatic(const BlockDataID &potential_id) {
+    auto kernel = pystencils::DiffusiveFluxKernelWithElectrostatic(
+        get_diffusion(), m_flux_field_flattened_id, potential_id,
+        m_density_field_flattened_id, 0.0, 0.0, 0.0, get_kT(), get_valency());
+    for (auto &block : *get_blockforest()->get_blocks()) {
+      kernel.run(&block);
+    }
+  }
+
   inline void kernel_migration() {}
 
 public:
-  void integrate(const BlockDataID &velocity_id,
+  void integrate(const BlockDataID &potential_id,
+                 const BlockDataID &velocity_id,
                  const BlockDataID &force_id) override {
     if (m_noflux_dirty) {
       boundary_noflux_update();
       m_noflux_dirty = false;
     }
-    // TODO: generate kernel with electrostatic and add poisson-field ID as
-    //       a parameter
 
-    kernel_diffusion();
+    if (get_valency() != 0) {
+      if (potential_id == BlockDataID{}) {
+        throw std::runtime_error("Walberla EK: electrostatic potential enabled "
+                                 "but no field accessible. potential id is " +
+                                 std::to_string(potential_id));
+      }
+      kernel_diffusion_electrostatic(potential_id);
+    } else {
+      kernel_diffusion();
+    }
+
     kernel_migration();
     kernel_noflux();
     // friction coupling

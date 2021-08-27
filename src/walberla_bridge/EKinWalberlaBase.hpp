@@ -29,7 +29,8 @@ protected:
 public:
   /** @brief Integrate EKin for one time step */
   virtual void
-  integrate(const walberla::domain_decomposition::BlockDataID &velocity_id,
+  integrate(const walberla::domain_decomposition::BlockDataID &potential_id,
+            const walberla::domain_decomposition::BlockDataID &velocity_id,
             const walberla::domain_decomposition::BlockDataID &force_id) = 0;
 
   /** @brief perform ghost communication of densities */
