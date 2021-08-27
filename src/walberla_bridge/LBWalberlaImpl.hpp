@@ -248,8 +248,8 @@ public:
 
 protected:
   /** Velocity boundary condition */
-  // using UBB = lbm::espresso::UBB<LatticeModel_T, uint8_t, true, true>;
-  // using Boundaries = BoundaryHandling<FlagField, Stencil, UBB>;
+  using UBB = lbm::espresso::UBB<LatticeModel_T, uint8_t, true, true>;
+  using Boundaries = BoundaryHandling<FlagField, Stencil, UBB>;
 
 private:
   // Backend classes can access private members:
@@ -264,8 +264,8 @@ private:
   template <class LM, class Enable> friend struct lbm::MomentumDensity;
   template <class LM, class It, class Enable>
   friend struct lbm::DensityAndVelocityRange;
-  // template <class LM, typename flag_t, bool A, bool B> friend class
-  // lbm::espresso::UBB;
+  template <class LM, typename flag_t, bool A, bool B>
+  friend class lbm::espresso::UBB;
 
   GhostLayerField<real_t, 3u> *force_;
 
@@ -374,7 +374,6 @@ protected:
   // Collision sweep
   std::shared_ptr<CollisionModel> m_collision_model;
 
-  /*
   // Boundary handling
   class LBBoundaryHandling {
   public:
@@ -409,7 +408,6 @@ protected:
 
   // Boundary sweep
   std::shared_ptr<UBB> m_boundary;
-  */
 
   [[nodiscard]] std::size_t stencil_size() const override {
     return static_cast<std::size_t>(Stencil::Size);
@@ -478,14 +476,12 @@ public:
       pdf_setter(&(*b));
     }
 
-    /* TODO boundaries
     // Register boundary handling
     m_boundary_handling_id = m_blocks->addBlockData<Boundaries>(
         LBBoundaryHandling(m_flag_field_id, m_pdf_field_id,
                            m_last_applied_force_field_id, this),
         "boundary handling");
     clear_boundaries();
-    */
 
     // sets up the communication and registers pdf field and force field to it
     m_pdf_streaming_communication =
@@ -535,11 +531,9 @@ public:
       boost::apply_visitor(run_collide_sweep, *m_collision_model,
                            boost::variant<IBlock *>(&*b));
     (*m_pdf_streaming_communication)();
-    /* TODO boundaries
     // Handle boundaries
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
       Boundaries::getBlockSweep(m_boundary_handling_id)(&*b);
-    */
     // LB stream
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
       (*m_stream)(&*b);
@@ -769,7 +763,6 @@ public:
   // Boundary related
   [[nodiscard]] boost::optional<Utils::Vector3d>
   get_node_velocity_at_boundary(const Utils::Vector3i &node) const override {
-    /* TODO boundaries
     auto bc = get_block_and_cell(node, true, m_blocks, n_ghost_layers());
     if (!bc)
       return {boost::none};
@@ -783,13 +776,10 @@ public:
     return {to_vector3d(
         boundary_handling->template getBoundaryCondition<UBB>(uid).getValue(
             (*bc).cell[0], (*bc).cell[1], (*bc).cell[2]))};
-    */
-    return {boost::none};
   }
 
   bool set_node_velocity_at_boundary(const Utils::Vector3i &node,
                                      const Utils::Vector3d &v) override {
-    /* TODO boundaries
     auto bc = get_block_and_cell(node, true, m_blocks, n_ghost_layers());
     if (!bc)
       return false;
@@ -801,13 +791,11 @@ public:
         (*bc).block->template getData<Boundaries>(m_boundary_handling_id);
     boundary_handling->forceBoundary(UBB_flag, bc->cell[0], bc->cell[1],
                                      bc->cell[2], velocity);
-    */
     return true;
   }
 
   [[nodiscard]] boost::optional<Utils::Vector3d>
   get_node_boundary_force(const Utils::Vector3i &node) const override {
-    /* TODO boundaries
     auto bc = get_block_and_cell(node, true, m_blocks,
                                  n_ghost_layers()); // including ghosts
     if (!bc)
@@ -827,12 +815,9 @@ public:
     auto const &ubb = bh->template getBoundaryCondition<UBB>(uid);
     return {to_vector3d(
         ubb.getForce((*bc).cell.x(), (*bc).cell.y(), (*bc).cell.z()))};
-    */
-    return {boost::none};
   }
 
   bool remove_node_from_boundary(const Utils::Vector3i &node) override {
-    /* TODO boundaries
     auto bc = get_block_and_cell(node, true, m_blocks, n_ghost_layers());
     if (!bc)
       return false;
@@ -840,14 +825,12 @@ public:
         (*bc).block->template getData<Boundaries>(m_boundary_handling_id);
     boundary_handling->removeBoundary((*bc).cell[0], (*bc).cell[1],
                                       (*bc).cell[2]);
-    */
     return true;
   }
 
   [[nodiscard]] boost::optional<bool>
   get_node_is_boundary(const Utils::Vector3i &node,
                        bool consider_ghosts = false) const override {
-    /* TODO boundaries
     auto bc =
         get_block_and_cell(node, consider_ghosts, m_blocks, n_ghost_layers());
     if (!bc)
@@ -856,12 +839,9 @@ public:
     auto *boundary_handling =
         (*bc).block->template getData<Boundaries>(m_boundary_handling_id);
     return {boundary_handling->isBoundary((*bc).cell)};
-    */
-    return {boost::none};
   }
 
   void clear_boundaries() override {
-    /* TODO boundaries
     const CellInterval &domain_bb_in_global_cell_coordinates =
         m_blocks->getCellBBFromAABB(m_blocks->begin()->getAABB().getExtended(
             FloatType(n_ghost_layers())));
@@ -875,7 +855,6 @@ public:
 
       boundary_handling->fillWithDomain(domain_bb);
     }
-   */
   }
 
   // Pressure tensor
