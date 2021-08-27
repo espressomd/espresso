@@ -295,32 +295,51 @@ int integrate(int n_steps, int reuse_forces) {
     }
 #endif
 
-    // TODO: this will not work if ek is coupled to lb
     // propagate one-step functionalities
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-      if (lb_lbfluid_get_lattice_switch() != ActiveLB::NONE) {
-        auto const tau = lb_lbfluid_get_tau();
-        auto const lb_steps_per_md_step =
-            static_cast<int>(std::round(tau / time_step));
+      const bool lb_active = lb_lbfluid_get_lattice_switch() != ActiveLB::NONE;
+#ifdef EK_WALBERLA
+      const bool ek_active = !EK::ek_container.empty();
+#else
+      constexpr bool ek_active = false;
+#endif
+
+      if (lb_active and ek_active) {
+        // assume that they are coupled, which is not necessarily true
+        auto const lb_steps_per_md_step = LB::get_steps_per_md_step(time_step);
+        auto const ek_steps_per_md_step = EK::get_steps_per_md_step(time_step);
+
+        if (lb_steps_per_md_step != ek_steps_per_md_step) {
+          runtimeErrorMsg()
+              << "LB and EK are active but with different timesteps.";
+        }
+
+        // only use fluid_step in this case
+        assert(fluid_step == ek_step);
+
+        fluid_step += 1;
+        if (fluid_step >= lb_steps_per_md_step) {
+          fluid_step = 0;
+          lb_lbfluid_propagate();
+          EK::propagate();
+        }
+        lb_lbcoupling_propagate();
+      } else if (lb_active) {
+        auto const lb_steps_per_md_step = LB::get_steps_per_md_step(time_step);
         fluid_step += 1;
         if (fluid_step >= lb_steps_per_md_step) {
           fluid_step = 0;
           lb_lbfluid_propagate();
         }
         lb_lbcoupling_propagate();
-      }
-#ifdef EK_WALBERLA
-      if (!EK::ek_container.empty()) {
-        auto const tau = EK::get_tau();
-        auto const ek_steps_per_md_step =
-            static_cast<int>(std::round(tau / time_step));
+      } else if (ek_active) {
+        auto const ek_steps_per_md_step = EK::get_steps_per_md_step(time_step);
         ek_step += 1;
         if (ek_step >= ek_steps_per_md_step) {
           ek_step = 0;
           EK::propagate();
         }
       }
-#endif
 
 #ifdef VIRTUAL_SITES
       virtual_sites()->after_lb_propagation(time_step);

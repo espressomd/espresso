@@ -48,6 +48,12 @@ using Utils::get_linear_index;
 #include <string>
 #include <vector>
 
+namespace LB {
+int get_steps_per_md_step(double md_timestep) {
+  return static_cast<int>(std::round(lb_lbfluid_get_tau() / md_timestep));
+}
+} // namespace LB
+
 ActiveLB lattice_switch = ActiveLB::NONE;
 
 struct NoLBActive : public std::exception {
@@ -251,7 +257,8 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
     }
 
     double laf[3];
-    auto const gridsize = lb_walberla()->get_blockforest()->get_grid_dimensions();
+    auto const gridsize =
+        lb_walberla()->get_blockforest()->get_grid_dimensions();
     auto const pop_size = lb_walberla()->stencil_size();
     std::vector<double> pop(pop_size);
 
@@ -307,7 +314,8 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
     auto const pop_size = lb_walberla()->stencil_size();
     std::size_t saved_pop_size;
     Utils::Vector3d laf;
-    auto const gridsize = lb_walberla()->get_blockforest()->get_grid_dimensions();
+    auto const gridsize =
+        lb_walberla()->get_blockforest()->get_grid_dimensions();
     int saved_gridsize[3];
     if (!binary) {
       res = fscanf(cpfile, "%i %i %i\n%zu\n", &saved_gridsize[0],

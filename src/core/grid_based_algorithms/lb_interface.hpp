@@ -27,6 +27,10 @@
 #include <string>
 #include <vector>
 
+namespace LB {
+int get_steps_per_md_step(double md_timestep);
+}
+
 /** @brief LB implementation currently active. */
 enum class ActiveLB : int { NONE, WALBERLA };
 

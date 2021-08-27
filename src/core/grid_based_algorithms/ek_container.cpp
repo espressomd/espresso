@@ -9,6 +9,10 @@ EKContainer<EKinWalberlaBase<double>> ek_container;
 
 double get_tau() { return ek_container.get_tau(); }
 
+int get_steps_per_md_step(double md_timestep) {
+  return static_cast<int>(std::round(get_tau() / md_timestep));
+}
+
 void propagate() {
   // first calculate the charge for the potential, for that get all the
   // field-ids from the ekspecies pass the potential-field-id to the
@@ -27,7 +31,6 @@ void propagate() {
 
   ek_container.solve_poisson();
 
-  // get the lb-fluid id
   // TODO: find a way for a proper interface
   const walberla::BlockDataID velocity_field_id =
       []() -> walberla::BlockDataID {
