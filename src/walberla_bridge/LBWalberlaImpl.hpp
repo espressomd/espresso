@@ -266,8 +266,6 @@ private:
   template <class LM, typename flag_t, bool A, bool B>
   friend class lbm::espresso::UBB;
 
-  GhostLayerField<real_t, 3u> *force_;
-
   real_t getDensity(const BlockAndCell &bc) const {
     auto pdf_field = bc.block->template getData<PdfField>(m_pdf_field_id);
     return lbm::Density<LatticeModel_T>::get(*this, *pdf_field, bc.cell.x(),
@@ -414,13 +412,12 @@ protected:
 public:
   LBWalberlaImpl(double viscosity, double density,
                  const Utils::Vector3i &grid_dimensions,
-                 const Utils::Vector3i &node_grid, int n_ghost_layers,
+                 const Utils::Vector3i &node_grid, unsigned int n_ghost_layers,
                  double kT, unsigned int seed)
-      : m_grid_dimensions(grid_dimensions),
-        m_n_ghost_layers(static_cast<unsigned int>(n_ghost_layers)),
+      : m_grid_dimensions(grid_dimensions), m_n_ghost_layers(n_ghost_layers),
         m_viscosity(viscosity), m_density(density), m_kT(kT), m_seed(seed) {
 
-    if (n_ghost_layers <= 0)
+    if (n_ghost_layers == 0)
       throw std::runtime_error("At least one ghost layer must be used");
     for (int i : {0, 1, 2}) {
       if (m_grid_dimensions[i] % node_grid[i] != 0) {

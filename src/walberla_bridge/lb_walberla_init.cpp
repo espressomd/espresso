@@ -39,6 +39,6 @@ LBWalberlaBase *new_lb_walberla(double viscosity, double density,
                                 unsigned int seed) {
 
   LBWalberlaBase *lb_walberla_instance = new walberla::LBWalberlaImpl(
-      viscosity, density, grid_dimensions, node_grid, 1, kT, seed);
+      viscosity, density, grid_dimensions, node_grid, 1u, kT, seed);
   return lb_walberla_instance;
 }
