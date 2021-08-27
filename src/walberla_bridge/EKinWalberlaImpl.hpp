@@ -255,7 +255,11 @@ public:
       m_noflux_dirty = false;
     }
 
-    if (get_valency() != 0) {
+    // early-breakout, has to be removed when reactions are included
+    if (get_diffusion() == 0.)
+      return;
+
+    if (get_valency() != 0.) {
       if (potential_id == BlockDataID{}) {
         throw std::runtime_error("Walberla EK: electrostatic potential enabled "
                                  "but no field accessible. potential id is " +
