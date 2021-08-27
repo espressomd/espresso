@@ -457,16 +457,10 @@ public:
     m_flag_field_id = field::addFlagFieldToStorage<FlagField>(
         m_blocks, "flag field", m_n_ghost_layers);
 
-    setup_with_valid_lattice_model(m_density, m_seed, 0u);
-  }
-
-  void setup_with_valid_lattice_model(double density, unsigned int seed,
-                                      unsigned int time_step) {
-
     // Init and register pdf field
     auto pdf_setter =
         pystencils::InitialPDFsSetter(m_force_to_be_applied_id, m_pdf_field_id,
-                                      m_velocity_field_id, real_c(density));
+                                      m_velocity_field_id, real_c(m_density));
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b) {
       pdf_setter(&(*b));
     }
