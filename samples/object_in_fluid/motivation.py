@@ -23,8 +23,8 @@ import espressomd
 import espressomd.lbboundaries
 import espressomd.shapes
 
-required_features = ["LB_BOUNDARIES", "EXTERNAL_FORCES", "SOFT_SPHERE",
-                     "MASS"]
+required_features = ["LB_WALBERLA", "LB_BOUNDARIES", "EXTERNAL_FORCES",
+                     "SOFT_SPHERE", "MASS"]
 espressomd.assert_features(required_features)
 
 import os
