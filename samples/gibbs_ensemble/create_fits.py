@@ -22,9 +22,9 @@ datafile and take means for simulations with same temperature.
 Plot the phase diagram and the fitted critical point.
 """
 
+import espressomd.analyze
 import numpy as np
 import scipy.optimize
-from scipy import signal
 import pickle
 import gzip
 import matplotlib.pyplot as plt
@@ -68,8 +68,8 @@ BETA = 0.32
 def autocorr(x):
     """ Compute the normalized autocorrelation function """
     _x = x - np.mean(x)
-    return (signal.convolve(
-        _x, _x[::-1], mode='full', method='auto')[(np.size(_x) - 1):]) / np.sum(_x * _x)
+    acf = espressomd.analyze.autocorrelation(_x) * np.arange(len(_x), 0, -1)
+    return acf / acf[0]
 
 
 def relaxation_time(x):
