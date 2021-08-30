@@ -158,7 +158,7 @@ cdef class CellSystem:
                 (pair.id1, pair.id2,
                  make_array_locked(pair.pos1),
                  make_array_locked(pair.pos2),
-                 make_array_locked(pair.vec21)))
+                 make_array_locked(pair.vec21), pair.node))
         return res
 
     def resort(self, global_flag=True):

@@ -87,12 +87,13 @@ std::vector<std::pair<int, int>> get_pairs_filtered(double const distance,
 namespace boost {
 namespace serialization {
 template <class Archive>
-void serialize(Archive &ar, PairInfo p, const unsigned int /* version */) {
+void serialize(Archive &ar, PairInfo &p, const unsigned int /* version */) {
   ar &p.id1;
   ar &p.id2;
   ar &p.pos1;
   ar &p.pos2;
   ar &p.vec21;
+  ar &p.node;
 }
 } // namespace serialization
 } // namespace boost
@@ -101,7 +102,8 @@ std::vector<PairInfo> non_bonded_loop_trace() {
   std::vector<PairInfo> ret;
   auto pair_kernel = [&ret](Particle const &p1, Particle const &p2,
                             Distance const &d) {
-    ret.emplace_back(p1.p.identity, p2.p.identity, p1.r.p, p2.r.p, d.vec21);
+    ret.emplace_back(p1.p.identity, p2.p.identity, p1.r.p, p2.r.p, d.vec21,
+                     comm_cart.rank());
   };
 
   cell_structure.non_bonded_loop(pair_kernel);

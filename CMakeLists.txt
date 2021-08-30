@@ -458,23 +458,25 @@ if(WITH_WALBERLA)
     PATCH_COMMAND  patch -p0 --ignore-whitespace -i
                    ${PROJECT_SOURCE_DIR}/cmake/waLBerlaFunctions.patch
   )
-  FetchContent_Populate(walberla)
-  set(WALBERLA_BUILD_TESTS off CACHE BOOL "")
-  set(WALBERLA_BUILD_BENCHMARKS off CACHE BOOL "")
-  set(WALBERLA_BUILD_TOOLS off CACHE BOOL "")
-  set(WALBERLA_BUILD_TUTORIALS off CACHE BOOL "")
-  set(WALBERLA_BUILD_SHOWCASES off CACHE BOOL "")
-  set(WALBERLA_BUILD_DOC off CACHE BOOL "")
-  set(CMAKE_POSITION_INDEPENDENT_CODE on CACHE BOOL "")
-  add_subdirectory("${walberla_SOURCE_DIR}" "${walberla_BINARY_DIR}")
-  set(WALBERLA 1)
-  set(WALBERLA_LIBS
-      walberla::core walberla::domain_decomposition walberla::blockforest
-      walberla::boundary walberla::core walberla::domain_decomposition
-      walberla::field walberla::lbm walberla::timeloop walberla::vtk)
-  # TODO WALBERLA: remove -lmpi_cxx -lmpi (required to find symbol MPI::Datatype::Free() in VTK code) and -lstdc++fs
-  if(NOT CMAKE_CXX_COMPILER_ID MATCHES "AppleClang")
-    set(WALBERLA_LIBS ${WALBERLA_LIBS} stdc++fs -lmpi_cxx -lmpi)
+  if(NOT walberla_POPULATED)
+    FetchContent_Populate(walberla)
+    set(WALBERLA_BUILD_TESTS off CACHE BOOL "")
+    set(WALBERLA_BUILD_BENCHMARKS off CACHE BOOL "")
+    set(WALBERLA_BUILD_TOOLS off CACHE BOOL "")
+    set(WALBERLA_BUILD_TUTORIALS off CACHE BOOL "")
+    set(WALBERLA_BUILD_SHOWCASES off CACHE BOOL "")
+    set(WALBERLA_BUILD_DOC off CACHE BOOL "")
+    set(CMAKE_POSITION_INDEPENDENT_CODE on CACHE BOOL "")
+    add_subdirectory("${walberla_SOURCE_DIR}" "${walberla_BINARY_DIR}")
+    set(WALBERLA 1)
+    set(WALBERLA_LIBS
+        walberla::core walberla::domain_decomposition walberla::blockforest
+        walberla::boundary walberla::core walberla::domain_decomposition
+        walberla::field walberla::lbm walberla::timeloop walberla::vtk)
+    # TODO WALBERLA: remove -lmpi_cxx -lmpi (required to find symbol MPI::Datatype::Free() in VTK code) and -lstdc++fs
+    if(NOT CMAKE_CXX_COMPILER_ID MATCHES "AppleClang")
+      set(WALBERLA_LIBS ${WALBERLA_LIBS} stdc++fs -lmpi_cxx -lmpi)
+    endif()
   endif()
 endif(WITH_WALBERLA)
 

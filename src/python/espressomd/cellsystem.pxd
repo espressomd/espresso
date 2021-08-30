@@ -29,6 +29,7 @@ cdef extern from "cells.hpp":
         Vector3d pos1
         Vector3d pos2
         Vector3d vec21
+        int node
 
 
 cdef extern from "communication.hpp":

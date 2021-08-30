@@ -675,6 +675,7 @@ def check_non_bonded_loop_trace(system):
     """
 
     cs_pairs = system.cell_system.non_bonded_loop_trace()
+    # format [id1, id2, pos1, pos2, vec2, mpi_node]
 
     distance_vec = system.distance_vec
     cutoff = system.cell_system.max_cut_nonbonded
@@ -690,10 +691,6 @@ def check_non_bonded_loop_trace(system):
         # Note that system.distance_vec uses the opposite sign convention
         # as the minimum image distance in the core
 
-        # Uncomment the following lines to get a full trace
-        #print("pos:", p[2], p[3])
-        # print("ed", p[2] - p[3], "mi", p[4], "py",
-        #      distance_vec(system.part[p[0]], system.part[p[1]]))
         if (p[0], p[1]) in py_distances:
             np.testing.assert_allclose(
                 np.copy(p[4]), -py_distances[p[0], p[1]])
