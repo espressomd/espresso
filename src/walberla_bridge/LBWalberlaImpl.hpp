@@ -494,11 +494,9 @@ public:
   LBWalberlaImpl(double viscosity, double density,
                  const Utils::Vector3i &grid_dimensions,
                  const Utils::Vector3i &node_grid, unsigned int n_ghost_layers,
-                 double kT, unsigned int seed,
-                 boost::optional<LeesEdwardsCallbacks> &&lees_edwards_callbacks)
+                 double kT, unsigned int seed)
       : m_grid_dimensions(grid_dimensions), m_n_ghost_layers(n_ghost_layers),
-        m_viscosity(viscosity), m_density(density), m_kT(kT), m_seed(seed),
-        m_lees_edwards_callbacks(std::move(lees_edwards_callbacks)) {
+        m_viscosity(viscosity), m_density(density), m_kT(kT), m_seed(seed) {
 
     if (n_ghost_layers == 0)
       throw std::runtime_error("At least one ghost layer must be used");
@@ -548,15 +546,6 @@ public:
       pdf_setter(&(*b));
     }
 
-    // Lees-Edwards
-    if (m_lees_edwards_callbacks) {
-      m_lees_edwards_update_sweep = std::make_shared<LeesEdwardsUpdate>(
-          m_blocks, m_pdf_field_id, m_pdf_tmp_field_id,
-          *m_lees_edwards_callbacks);
-      m_lees_edwards_swap_sweep =
-          std::make_shared<LeesEdwardsSwap>(m_pdf_field_id, m_pdf_tmp_field_id);
-    }
-
     // Register boundary handling
     m_boundary_handling_id = m_blocks->addBlockData<Boundaries>(
         LBBoundaryHandling(m_flag_field_id, m_pdf_field_id,
@@ -601,6 +590,15 @@ public:
 
     // Synchronize ghost layers
     (*m_full_communication)();
+  }
+
+  void add_lees_edwards(LeesEdwardsCallbacks &&lees_edwards_callbacks) {
+    m_lees_edwards_callbacks = std::move(lees_edwards_callbacks);
+    m_lees_edwards_update_sweep = std::make_shared<LeesEdwardsUpdate>(
+        m_blocks, m_pdf_field_id, m_pdf_tmp_field_id,
+        *m_lees_edwards_callbacks);
+    m_lees_edwards_swap_sweep =
+        std::make_shared<LeesEdwardsSwap>(m_pdf_field_id, m_pdf_tmp_field_id);
   }
 
   void integrate() override {

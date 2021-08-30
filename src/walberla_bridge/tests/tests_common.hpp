@@ -55,14 +55,14 @@ LbGeneratorVector unthermalized_lbs() {
       [](const Utils::Vector3i mpi_shape, const LBTestParameters &params) {
         return std::make_shared<walberla::LBWalberlaImpl>(
             params.viscosity, params.density, params.grid_dimensions, mpi_shape,
-            1, 0.0, 0u, boost::optional<LeesEdwardsCallbacks>{boost::none});
+            1u, 0.0, 0u);
       });
 
   // Thermalized D3Q19 MRT with kT set to 0
   lbs.push_back([](Utils::Vector3i mpi_shape, const LBTestParameters &params) {
     return std::make_shared<walberla::LBWalberlaImpl>(
-        params.viscosity, params.density, params.grid_dimensions, mpi_shape, 1,
-        0.0, params.seed, boost::optional<LeesEdwardsCallbacks>{boost::none});
+        params.viscosity, params.density, params.grid_dimensions, mpi_shape, 1u,
+        0.0, params.seed);
   });
   return lbs;
 }
@@ -76,8 +76,7 @@ LbGeneratorVector thermalized_lbs() {
       [](const Utils::Vector3i mpi_shape, const LBTestParameters &params) {
         return std::make_shared<walberla::LBWalberlaImpl>(
             params.viscosity, params.density, params.grid_dimensions, mpi_shape,
-            1, params.kT, params.seed,
-            boost::optional<LeesEdwardsCallbacks>{boost::none});
+            1u, params.kT, params.seed);
       });
   return lbs;
 }
