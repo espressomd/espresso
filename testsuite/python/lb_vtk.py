@@ -44,6 +44,24 @@ class TestVTK(ut.TestCase):
     system.time_step = 0.01
     system.cell_system.skin = 0.4
 
+    def get_vtk_folder_names(self, filepaths):
+        return set(os.path.dirname(filepath) for filepath in filepaths)
+
+    def cleanup_vtk_files(self, filepaths):
+        '''
+        Remove VTK files (.vtk and .vtu files), their folder (if empty) and
+        their summaries (.vtd files).
+        '''
+        for filepath in filepaths:
+            if os.path.exists(filepath):
+                os.remove(filepath)
+        for dirname in self.get_vtk_folder_names(filepaths):
+            if os.path.exists(dirname) and len(os.listdir(dirname)) == 0:
+                os.rmdir(dirname)
+            filepath = dirname + '.pvd'
+            if os.path.exists(filepath):
+                os.remove(filepath)
+
     def get_cell_array(self, cell, name, shape):
         return VN.vtk_to_numpy(cell.GetArray(name)).reshape(shape, order='F')
 
@@ -57,7 +75,7 @@ class TestVTK(ut.TestCase):
 
         vtk_density = self.get_cell_array(cell, 'DensityFromPDF', shape)
         vtk_velocity = self.get_cell_array(
-            cell, 'VelocityFromPDF', shape + [3])
+            cell, 'VelocityFromVelocityField', shape + [3])
         # TODO Walberla
         # vtk_pressure = self.get_cell_array(
         #     cell, 'PressureTensorFromPDF', shape + [3, 3])
@@ -91,9 +109,7 @@ class TestVTK(ut.TestCase):
                 i) for i in range(lb_steps)]
 
         # cleanup action
-        for filepath in filepaths:
-            if os.path.exists(filepath):
-                os.remove(filepath)
+        self.cleanup_vtk_files(filepaths)
 
         # write VTK files
         # TODO Walberla: add 'pressure_tensor'
@@ -108,6 +124,11 @@ class TestVTK(ut.TestCase):
             self.assertTrue(
                 os.path.exists(filepath),
                 f'VTK file "{filepath}" not written to disk')
+        for dirname in self.get_vtk_folder_names(filepaths):
+            filepath = dirname + '.pvd'
+            self.assertTrue(
+                os.path.exists(filepath),
+                f'VTK summary file "{filepath}" not written to disk')
 
         # check velocity profile is symmetric at all time steps
         for filepath in filepaths:
@@ -138,6 +159,8 @@ class TestVTK(ut.TestCase):
                 vtk_velocity, node_velocity * self.lbf.tau, rtol=5e-7)
             # TODO Walberla
             # np.testing.assert_allclose(node_pressure, vtk_pressure, rtol=5e-7)
+
+        self.cleanup_vtk_files(filepaths)
 
 
 if __name__ == '__main__':

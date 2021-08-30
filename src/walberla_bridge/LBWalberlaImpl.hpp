@@ -461,6 +461,31 @@ protected:
   std::shared_ptr<LeesEdwardsSwap> m_lees_edwards_swap_sweep;
   boost::optional<LeesEdwardsCallbacks> m_lees_edwards_callbacks;
 
+  template <typename LatticeModel_T, typename OutputType = float>
+  class DensityVTKWriter : public vtk::BlockCellDataWriter<OutputType> {
+  public:
+    using PdfField_T = typename LatticeModel_T::PdfField;
+
+    DensityVTKWriter(const ConstBlockDataID &pdf, const std::string &id)
+        : vtk::BlockCellDataWriter<OutputType>(id), bdid_(pdf), pdf_(nullptr) {}
+
+  protected:
+    void configure() override {
+      WALBERLA_ASSERT_NOT_NULLPTR(this->block_);
+      pdf_ = this->block_->template getData<PdfField_T>(bdid_);
+    }
+
+    OutputType evaluate(const cell_idx_t x, const cell_idx_t y,
+                        const cell_idx_t z, const cell_idx_t /*f*/) override {
+      WALBERLA_ASSERT_NOT_NULLPTR(pdf_);
+      return numeric_cast<OutputType>(
+          lbm::Density<LatticeModel_T>::get(*pdf_, x, y, z));
+    }
+
+    const ConstBlockDataID bdid_;
+    const PdfField_T *pdf_;
+  };
+
   std::size_t stencil_size() const override {
     return static_cast<std::size_t>(Stencil::Size);
   }
@@ -1055,18 +1080,18 @@ public:
     fluid_filter.addFlag(Fluid_flag);
     pdf_field_vtk->addCellInclusionFilter(fluid_filter);
 
-    /* TODO WALBERLA: re-enable VTK writers
     // add writers
     if (static_cast<unsigned>(OutputVTK::density) & flag_observables) {
       pdf_field_vtk->addCellDataWriter(
-          make_shared<lbm::DensityVTKWriter<LatticeModel_T, float>>(
+          make_shared<DensityVTKWriter<LatticeModel_T, float>>(
               m_pdf_field_id, "DensityFromPDF"));
     }
     if (static_cast<unsigned>(OutputVTK::velocity_vector) & flag_observables) {
       pdf_field_vtk->addCellDataWriter(
-          make_shared<lbm::VelocityVTKWriter<LatticeModel_T, float>>(
-              m_pdf_field_id, "VelocityFromPDF"));
+          make_shared<field::VTKWriter<VectorField, float>>(
+              m_velocity_field_id, "VelocityFromVelocityField"));
     }
+    /* TODO WALBERLA: pressure tensor
     if (static_cast<unsigned>(OutputVTK::pressure_tensor) & flag_observables) {
       pdf_field_vtk->addCellDataWriter(
           make_shared<lbm::PressureTensorVTKWriter<LatticeModel_T, float>>(
