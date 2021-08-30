@@ -57,7 +57,7 @@ class TestVTK(ut.TestCase):
 
         vtk_density = self.get_cell_array(cell, 'DensityFromPDF', shape)
         vtk_velocity = self.get_cell_array(
-            cell, 'VelocityFromPDF', shape + [3])
+            cell, 'VelocityFromVelocityField', shape + [3])
         # TODO Walberla
         # vtk_pressure = self.get_cell_array(
         #     cell, 'PressureTensorFromPDF', shape + [3, 3])

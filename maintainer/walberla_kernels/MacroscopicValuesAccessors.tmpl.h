@@ -222,6 +222,17 @@ struct Density<{{class_name}}, void>
         {{density_getters | indent(8)}}
         return rho;
    }
+
+   template< typename PdfField_T >
+   static inline real_t get( const PdfField_T & pdf, const cell_idx_t x, const cell_idx_t y, const cell_idx_t z )
+   {
+        const real_t & xyz0 = pdf(x,y,z,0);
+        {% for i in range(Q) -%}
+            const real_t f_{{i}} = pdf.getF( &xyz0, {{i}});
+        {% endfor -%}
+        {{density_getters | indent(8)}}
+        return rho;
+   }
 };
 
 

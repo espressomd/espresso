@@ -700,6 +700,37 @@ template <> struct Density<LBWalberlaImpl, void> {
                        vel1Term + vel2Term;
     return rho;
   }
+
+  template <typename PdfField_T>
+  static inline real_t get(const PdfField_T &pdf, const cell_idx_t x,
+                           const cell_idx_t y, const cell_idx_t z) {
+    const real_t &xyz0 = pdf(x, y, z, 0);
+    const real_t f_0 = pdf.getF(&xyz0, 0);
+    const real_t f_1 = pdf.getF(&xyz0, 1);
+    const real_t f_2 = pdf.getF(&xyz0, 2);
+    const real_t f_3 = pdf.getF(&xyz0, 3);
+    const real_t f_4 = pdf.getF(&xyz0, 4);
+    const real_t f_5 = pdf.getF(&xyz0, 5);
+    const real_t f_6 = pdf.getF(&xyz0, 6);
+    const real_t f_7 = pdf.getF(&xyz0, 7);
+    const real_t f_8 = pdf.getF(&xyz0, 8);
+    const real_t f_9 = pdf.getF(&xyz0, 9);
+    const real_t f_10 = pdf.getF(&xyz0, 10);
+    const real_t f_11 = pdf.getF(&xyz0, 11);
+    const real_t f_12 = pdf.getF(&xyz0, 12);
+    const real_t f_13 = pdf.getF(&xyz0, 13);
+    const real_t f_14 = pdf.getF(&xyz0, 14);
+    const real_t f_15 = pdf.getF(&xyz0, 15);
+    const real_t f_16 = pdf.getF(&xyz0, 16);
+    const real_t f_17 = pdf.getF(&xyz0, 17);
+    const real_t f_18 = pdf.getF(&xyz0, 18);
+    const double vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
+    const double vel1Term = f_1 + f_11 + f_15 + f_7;
+    const double vel2Term = f_12 + f_13 + f_5;
+    const double rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term +
+                       vel1Term + vel2Term;
+    return rho;
+  }
 };
 
 template <> struct DensityAndVelocity<LBWalberlaImpl> {
