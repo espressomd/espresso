@@ -27,7 +27,7 @@ from .cellsystem cimport get_verlet_reuse
 from .cellsystem cimport mpi_set_skin, skin
 from .utils import handle_errors
 from .utils cimport Vector3i
-from .utils cimport check_type_or_throw_except
+from .utils cimport check_type_or_throw_except, make_array_locked
 
 cdef class CellSystem:
     def set_domain_decomposition(self, use_verlet_lists=True):
@@ -148,6 +148,18 @@ cdef class CellSystem:
         for type in types:
             types_c.push_back(type)
         return mpi_get_pairs_of_types(distance, types_c)
+
+    def non_bonded_loop_trace(self):
+        cdef vector[PairInfo] pairs = mpi_non_bonded_loop_trace()
+        cdef PairInfo pair
+        res = []
+        for pair in pairs:
+            res.append(
+                (pair.id1, pair.id2,
+                 make_array_locked(pair.pos1),
+                 make_array_locked(pair.pos2),
+                 make_array_locked(pair.vec21), pair.node))
+        return res
 
     def resort(self, global_flag=True):
         """
