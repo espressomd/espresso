@@ -385,8 +385,8 @@ protected:
         for (auto cell = ci.begin(); cell != ci.end(); ++cell) {
           cell_idx_t x = cell->x();
 
-          uint_t ind1 = uint_c(floor(x - offset)) % dimension_x;
-          uint_t ind2 = uint_c(ceil(x - offset)) % dimension_x;
+          uint_t ind1 = uint_c(floor(x - offset) + dimension_x) % dimension_x;
+          uint_t ind2 = uint_c(ceil(x - offset) + dimension_x) % dimension_x;
 
           for (uint_t q = 0; q < Stencil::Q; ++q) {
             pdf_field->get(*cell, 0) =
@@ -410,8 +410,8 @@ protected:
         for (auto cell = ci.begin(); cell != ci.end(); ++cell) {
           cell_idx_t x = cell->x();
 
-          uint_t ind1 = uint_c(floor(x + offset)) % dimension_x;
-          uint_t ind2 = uint_c(ceil(x + offset)) % dimension_x;
+          uint_t ind1 = uint_c(floor(x + offset) + dimension_x) % dimension_x;
+          uint_t ind2 = uint_c(ceil(x + offset) + dimension_x) % dimension_x;
 
           for (uint_t q = 0; q < Stencil::Q; ++q) {
             pdf_field->get(*cell, 0) =
