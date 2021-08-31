@@ -387,6 +387,8 @@ protected:
 
           uint_t ind1 = uint_c(floor(x - offset) + dimension_x) % dimension_x;
           uint_t ind2 = uint_c(ceil(x - offset) + dimension_x) % dimension_x;
+    
+          printf("%d = %lu + % lu \n", x, ind1, ind2);
 
           for (uint_t q = 0; q < Stencil::Q; ++q) {
             pdf_field->get(*cell, 0) =
