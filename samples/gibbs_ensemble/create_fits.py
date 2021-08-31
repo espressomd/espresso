@@ -100,7 +100,7 @@ def rectilinear_law(kT, p_c, A, kT_c):
 # Load data
 for f in args.files:
 
-    logging.info("Loading {}...".format(f))
+    logging.info(f"Loading {f}...")
     with gzip.open(f, 'rb') as _f:
         data = pickle.load(_f)
 
@@ -156,8 +156,8 @@ fit_scaling, p_cov_scaling = scipy.optimize.curve_fit(
     scaling_law, kTs, y_scaling, p0=(1., 1.), maxfev=6000)
 
 # Print fit values
-logging.info("Fits using scaling law: B, T_c: {}".format(fit_scaling))
-logging.info("Fit uncertainty: {}".format(np.diag(p_cov_scaling)))
+logging.info(f"Fits using scaling law: B, T_c: {fit_scaling}")
+logging.info(f"Fit uncertainty: {np.diag(p_cov_scaling)}")
 
 # Critical temperature obtained via scaling law
 kT_c_scaling = fit_scaling[1]
@@ -168,9 +168,8 @@ fit_rectilinear, p_cov_rectilinear = scipy.optimize.curve_fit(
     maxfev=6000)
 
 # Print fit values
-logging.info(
-    "Fits using rectilinear law: p_c, A, T_c: {}".format(fit_rectilinear))
-logging.info("Fit uncertainty: {}".format(np.diag(p_cov_rectilinear)))
+logging.info(f"Fits using rectilinear law: p_c, A, T_c: {fit_rectilinear}")
+logging.info(f"Fit uncertainty: {np.diag(p_cov_rectilinear)}")
 
 # Critical point obtained via rectilinear law
 p_c = fit_rectilinear[0]
