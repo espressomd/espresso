@@ -25,10 +25,6 @@
 #include <LBWalberlaBase.hpp>
 #include <lb_walberla_init.hpp>
 
-// TODO walberla
-#include "lees_edwards_protocol.hpp"
-extern std::weak_ptr<LeesEdwards::ActiveProtocol> lees_edwards_active_protocol;
-
 struct LBWalberlaParams {
   LBWalberlaParams(double agrid, double tau) : m_agrid(agrid), m_tau(tau) {}
   double get_agrid() const { return m_agrid; };

@@ -18,7 +18,7 @@ public:
           boost::get<::LeesEdwards::OscillatoryShear>(*m_protocol).m_omega},
          {"time_0",
           boost::get<::LeesEdwards::OscillatoryShear>(*m_protocol).m_time_0}});
-#ifdef WALBERLA
+#ifdef LB_WALBERLA
     ::lees_edwards_active_protocol = m_protocol;
 #endif
   }

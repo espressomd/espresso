@@ -398,6 +398,7 @@ protected:
                     pdf_field->get(cell_idx_c(ind1), cell->y(), cell->z(), q) +
                 weight *
                     pdf_field->get(cell_idx_c(ind2), cell->y(), cell->z(), q);
+            // printf("%f -> %f\n", pdf_field->get(*cell, 0), pdf_tmp_field->get(*cell, 0));
           }
         }
       }

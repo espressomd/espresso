@@ -12,7 +12,7 @@ namespace LeesEdwards {
 class Off : public Protocol {
 public:
   Off() : m_protocol{new ::LeesEdwards::ActiveProtocol{::LeesEdwards::Off()}} {
-#ifdef WALBERLA
+#ifdef LB_WALBERLA
     ::lees_edwards_active_protocol = m_protocol;
 #endif
   }

@@ -6,6 +6,10 @@
 
 #include "Particle.hpp"
 
+#include <memory>
+
+extern std::weak_ptr<LeesEdwards::ActiveProtocol> lees_edwards_active_protocol;
+
 namespace LeesEdwards {
 inline void update_offset(Particle &p, const BoxGeometry &box,
                           double time_step) {

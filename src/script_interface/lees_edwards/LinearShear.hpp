@@ -19,7 +19,7 @@ public:
           boost::get<::LeesEdwards::LinearShear>(*m_protocol).m_shear_velocity},
          {"time_0",
           boost::get<::LeesEdwards::LinearShear>(*m_protocol).m_time_0}});
-#ifdef WALBERLA
+#ifdef LB_WALBERLA
     ::lees_edwards_active_protocol = m_protocol;
 #endif
   }
