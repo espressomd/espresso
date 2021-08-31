@@ -156,7 +156,7 @@ cdef class System:
         lbboundaries
         """:class:`espressomd.lbboundaries.LBBoundaries`"""
         lees_edwards
-        """:class:`espressomd.lees_edwards.Lees_Edwards`"""
+        """:class:`espressomd.lees_edwards.LeesEdwards`"""
         collision_detection
         """:class:`espressomd.collision_detection.CollisionDetection`"""
         cuda_init_handle
