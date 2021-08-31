@@ -579,11 +579,6 @@ public:
                            boost::variant<IBlock *>(&*b));
     (*m_pdf_streaming_communication)();
 
-    // Lees-Edwards shift
-    if (m_lees_edwards_callbacks) {
-      for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
-        (*m_lees_edwards_update_sweep)(&*b);
-    }
     // Handle boundaries
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
       Boundaries::getBlockSweep(m_boundary_handling_id)(&*b);
@@ -591,6 +586,11 @@ public:
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
       (*m_stream)(&*b);
     (*m_full_communication)();
+    // Lees-Edwards shift
+    if (m_lees_edwards_callbacks) {
+      for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
+        (*m_lees_edwards_update_sweep)(&*b);
+    }
 
     // Handle VTK writers
     for (auto it = m_vtk_auto.begin(); it != m_vtk_auto.end(); ++it) {
