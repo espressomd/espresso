@@ -389,8 +389,10 @@ protected:
         for (auto cell = ci.begin(); cell != ci.end(); ++cell) {
           cell_idx_t x = cell->x();
 
-          uint_t ind1 = uint_c(floor(x - offset)) % dimension_x;
-          uint_t ind2 = uint_c(ceil(x - offset)) % dimension_x;
+          uint_t ind1 = uint_c(floor(x - offset) + dimension_x) % dimension_x;
+          uint_t ind2 = uint_c(ceil(x - offset)  + dimension_x) % dimension_x;
+
+          printf("%d,= %lu, + %lu \n", x, ind1, ind2);
 
           for (uint_t q = 0; q < Stencil::Q; ++q) {
             pdf_tmp_field->get(*cell, 0) =
@@ -398,7 +400,7 @@ protected:
                     pdf_field->get(cell_idx_c(ind1), cell->y(), cell->z(), q) +
                 weight *
                     pdf_field->get(cell_idx_c(ind2), cell->y(), cell->z(), q);
-            // printf("%f -> %f\n", pdf_field->get(*cell, 0), pdf_tmp_field->get(*cell, 0));
+             //printf("%f -> %f\n", pdf_field->get(*cell, 0), pdf_tmp_field->get(*cell, 0));
           }
         }
       }
@@ -417,8 +419,8 @@ protected:
         for (auto cell = ci.begin(); cell != ci.end(); ++cell) {
           cell_idx_t x = cell->x();
 
-          uint_t ind1 = uint_c(floor(x + offset)) % dimension_x;
-          uint_t ind2 = uint_c(ceil(x + offset)) % dimension_x;
+          uint_t ind1 = uint_c(floor(x + offset) + dimension_x) % dimension_x;
+          uint_t ind2 = uint_c(ceil(x + offset)  + dimension_x) % dimension_x;
 
           for (uint_t q = 0; q < Stencil::Q; ++q) {
             pdf_tmp_field->get(*cell, 0) =
