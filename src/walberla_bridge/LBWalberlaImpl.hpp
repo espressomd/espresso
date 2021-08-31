@@ -295,7 +295,6 @@ protected:
 
   // Block data access handles
   BlockDataID m_pdf_field_id;
-  BlockDataID m_pdf_tmp_field_id;
   BlockDataID m_flag_field_id;
 
   BlockDataID m_last_applied_force_field_id;
@@ -363,10 +362,9 @@ protected:
   class LeesEdwardsUpdate {
   public:
     LeesEdwardsUpdate(const std::shared_ptr<StructuredBlockForest> &blocks,
-                      BlockDataID pdf_field_id, BlockDataID pdf_tmp_field_id,
-                      LeesEdwardsCallbacks callbacks)
+                      BlockDataID pdf_field_id, LeesEdwardsCallbacks callbacks)
         : blocks_(blocks), m_pdf_field_id(pdf_field_id),
-          m_pdf_tmp_field_id(pdf_tmp_field_id), m_callbacks(callbacks) {}
+          m_callbacks(callbacks) {}
 
     void operator()(IBlock *block) {
       // TODO should dimension_x contain the ghost layers or not. At the moment
@@ -380,8 +378,6 @@ protected:
         real_t weight = fmod(offset + real_c(dimension_x), 1.0);
 
         auto pdf_field = block->template getData<PdfField>(m_pdf_field_id);
-        auto pdf_tmp_field =
-            block->template getData<PdfField>(m_pdf_tmp_field_id);
 
         CellInterval ci;
         pdf_field->getGhostRegion(stencil::N, ci, 1, true);
@@ -393,12 +389,11 @@ protected:
           uint_t ind2 = uint_c(ceil(x - offset)) % dimension_x;
 
           for (uint_t q = 0; q < Stencil::Q; ++q) {
-            pdf_tmp_field->get(*cell, 0) =
+            pdf_field->get(*cell, 0) =
                 (1 - weight) *
                     pdf_field->get(cell_idx_c(ind1), cell->y(), cell->z(), q) +
                 weight *
                     pdf_field->get(cell_idx_c(ind2), cell->y(), cell->z(), q);
-            // printf("%f -> %f\n", pdf_field->get(*cell, 0), pdf_tmp_field->get(*cell, 0));
           }
         }
       }
@@ -408,8 +403,6 @@ protected:
         real_t weight = fmod(offset + real_c(dimension_x), 1.0);
 
         auto pdf_field = block->template getData<PdfField>(m_pdf_field_id);
-        auto pdf_tmp_field =
-            block->template getData<PdfField>(m_pdf_tmp_field_id);
 
         CellInterval ci;
         pdf_field->getGhostRegion(stencil::S, ci, 1, true);
@@ -421,7 +414,7 @@ protected:
           uint_t ind2 = uint_c(ceil(x + offset)) % dimension_x;
 
           for (uint_t q = 0; q < Stencil::Q; ++q) {
-            pdf_tmp_field->get(*cell, 0) =
+            pdf_field->get(*cell, 0) =
                 (1 - weight) *
                     pdf_field->get(cell_idx_c(ind1), cell->y(), cell->z(), q) +
                 weight *
@@ -434,32 +427,11 @@ protected:
   private:
     const std::shared_ptr<StructuredBlockForest> &blocks_;
     BlockDataID m_pdf_field_id;
-    BlockDataID m_pdf_tmp_field_id;
     boost::optional<LeesEdwardsCallbacks> m_callbacks;
-  };
-
-  /** Sweep that swaps @c pdf_field and @c pdf_tmp_field.
-   */
-  class LeesEdwardsSwap {
-  public:
-    LeesEdwardsSwap(BlockDataID pdf_field_id, BlockDataID pdf_tmp_field_id)
-        : m_pdf_field_id(pdf_field_id), m_pdf_tmp_field_id(pdf_tmp_field_id) {}
-
-    void operator()(IBlock *block) {
-      auto pdf_field = block->template getData<PdfField>(m_pdf_field_id);
-      auto m_pdf_tmp_field =
-          block->template getData<PdfField>(m_pdf_tmp_field_id);
-      m_pdf_tmp_field->swapDataPointers(pdf_field);
-    }
-
-  private:
-    const BlockDataID m_pdf_field_id;
-    const BlockDataID m_pdf_tmp_field_id;
   };
 
   // Lees-Edwards sweep
   std::shared_ptr<LeesEdwardsUpdate> m_lees_edwards_update_sweep;
-  std::shared_ptr<LeesEdwardsSwap> m_lees_edwards_swap_sweep;
   boost::optional<LeesEdwardsCallbacks> m_lees_edwards_callbacks;
 
   template <typename LatticeModel_T, typename OutputType = float>
@@ -526,8 +498,6 @@ public:
     // Init and register fields
     m_pdf_field_id = field::addToStorage<PdfField>(
         m_blocks, "pdfs", real_t{0}, field::fzyx, m_n_ghost_layers);
-    m_pdf_tmp_field_id = field::addToStorage<PdfField>(
-        m_blocks, "pdfs_tmp", real_t{0}, field::fzyx, m_n_ghost_layers);
     m_last_applied_force_field_id = field::addToStorage<VectorField>(
         m_blocks, "force field", real_t{0}, field::fzyx, m_n_ghost_layers);
     m_force_to_be_applied_id = field::addToStorage<VectorField>(
@@ -596,10 +566,7 @@ public:
   void add_lees_edwards(LeesEdwardsCallbacks &&lees_edwards_callbacks) {
     m_lees_edwards_callbacks = std::move(lees_edwards_callbacks);
     m_lees_edwards_update_sweep = std::make_shared<LeesEdwardsUpdate>(
-        m_blocks, m_pdf_field_id, m_pdf_tmp_field_id,
-        *m_lees_edwards_callbacks);
-    m_lees_edwards_swap_sweep =
-        std::make_shared<LeesEdwardsSwap>(m_pdf_field_id, m_pdf_tmp_field_id);
+        m_blocks, m_pdf_field_id, *m_lees_edwards_callbacks);
   }
 
   void integrate() override {
@@ -616,8 +583,6 @@ public:
     if (m_lees_edwards_callbacks) {
       for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
         (*m_lees_edwards_update_sweep)(&*b);
-      for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
-        (*m_lees_edwards_swap_sweep)(&*b);
     }
     // Handle boundaries
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
