@@ -107,19 +107,18 @@ for f in args.files:
     kT = data["temperature"]
 
     # Calculate densities of both phases
-    density1 = np.mean(data["densities_box01"][WARMUP_LENGTH:])
-    density2 = np.mean(data["densities_box02"][WARMUP_LENGTH:])
+    key1, key2 = ("densities_box01", "densities_box02")
+    density1 = np.mean(data[key1][WARMUP_LENGTH:])
+    density2 = np.mean(data[key2][WARMUP_LENGTH:])
 
     dens_liquid.append(np.max((density1, density2)))
     dens_gas.append(np.min((density1, density2)))
 
     # Calculate errors
-    errors_liquid.append(
-        std_error_mean(data["densities_box01"]) if density1 > density2 else
-        std_error_mean(data["densities_box02"]))
-    errors_gas.append(
-        std_error_mean(data["densities_box01"]) if density1 < density2 else
-        std_error_mean(data["densities_box02"]))
+    if density1 < density2:
+        key1, key2 = (key2, key1)
+    errors_liquid.append(std_error_mean(data[key2]))
+    errors_gas.append(std_error_mean(data[key1]))
     kTs.append(kT)
 
 # Sort temperatures and densities respectively

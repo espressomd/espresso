@@ -28,13 +28,9 @@ def calc_com_x(system, x, id_list):
 
     # Filter out virtual particles by using mass=0 for them
     virtual = system.part[id_list].virtual
-    for i in range(len(masses)):
-        if virtual[i]:
-            masses[i] = 0.
+    masses[np.nonzero(virtual)] = 0.
 
-    com_x = np.average(
-        getattr(system.part[id_list], x), weights=masses, axis=0)
-    return com_x
+    return np.average(getattr(system.part[id_list], x), weights=masses, axis=0)
 
 
 class Observables(ut.TestCase):

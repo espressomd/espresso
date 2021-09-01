@@ -63,9 +63,9 @@ types = {
     "H+": 2,
 }
 charge_dict = {
-    0: 0,
-    1: -1,
-    2: +1,
+    types["HA"]: 0,
+    types["A-"]: -1,
+    types["H+"]: +1,
 }
 
 N0 = 50  # number of titratable units

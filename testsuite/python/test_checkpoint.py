@@ -446,7 +446,7 @@ class CheckpointTest(ut.TestCase):
                               or espressomd.has_features("LB_BOUNDARIES_GPU")), "Missing features")
     @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
     def test_lb_boundaries(self):
-        # check boundaries agree on all MPI nodes
+        # check boundary objects
         self.assertEqual(len(system.lbboundaries), 2)
         np.testing.assert_allclose(
             np.copy(system.lbboundaries[0].velocity), [1e-4, 1e-4, 0])
@@ -456,17 +456,15 @@ class CheckpointTest(ut.TestCase):
             system.lbboundaries[0].shape, espressomd.shapes.Wall)
         self.assertIsInstance(
             system.lbboundaries[1].shape, espressomd.shapes.Wall)
-        np.testing.assert_equal(
-            system.actors[0][0, :, :].boundary.astype(int), 1)
-        np.testing.assert_equal(
-            system.actors[0][-1, :, :].boundary.astype(int), 2)
-        np.testing.assert_equal(
-            system.actors[0][1:-1, :, :].boundary.astype(int), 0)
-        # remove boundaries on all MPI nodes
+        # check boundary flag
+        lbf = self.get_active_actor_of_type(espressomd.lb.HydrodynamicInteraction)
+        np.testing.assert_equal(lbf[0, :, :].boundary.astype(int), 1)
+        np.testing.assert_equal(lbf[-1, :, :].boundary.astype(int), 2)
+        np.testing.assert_equal(lbf[1:-1, :, :].boundary.astype(int), 0)
+        # remove boundaries
         system.lbboundaries.clear()
         self.assertEqual(len(system.lbboundaries), 0)
-        np.testing.assert_equal(
-            system.actors[0][:, :, :].boundary.astype(int), 0)
+        np.testing.assert_equal(lbf[:, :, :].boundary.astype(int), 0)
 
     @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
     def test_constraints(self):

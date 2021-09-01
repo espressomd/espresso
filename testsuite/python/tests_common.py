@@ -69,8 +69,10 @@ def generate_test_for_class(_system, _interClass, _params):
 
 
 def lj_force_vector(v_d, d, lj_params):
-    """Returns lj force for distance d and distance vector v_d based on the given lj_params.
-    Supports epsilon and cutoff."""
+    """Returns LJ force for distance ``d`` and distance vector ``v_d``
+    based on the given ``lj_params``.
+    Supports epsilon and cutoff.
+    """
 
     if d >= lj_params["cutoff"]:
         return np.zeros(3)
@@ -79,10 +81,11 @@ def lj_force_vector(v_d, d, lj_params):
 
 
 def verify_lj_forces(system, tolerance, ids_to_skip=()):
-    """Goes over all pairs of particles in system and compares the forces on them
-       to what would be expected based on the systems LJ parameters.
-       Particle ids listed in ids_to_skip are not checked
-       Do not run this with a thermostat enabled."""
+    """Goes over all pairs of particles in system and compares the forces
+    on them to what would be expected based on the systems LJ parameters.
+    Particle ids listed in ``ids_to_skip`` are not checked.
+    Do not run this with a thermostat enabled.
+    """
 
     # Initialize dict with expected forces
     f_expected = {}
@@ -93,7 +96,7 @@ def verify_lj_forces(system, tolerance, ids_to_skip=()):
     dist_vec = system.distance_vec
     norm = np.linalg.norm
     non_bonded_inter = system.non_bonded_inter
-    # lj parameters
+    # LJ parameters
     lj_params = {}
     all_types = np.unique(system.part[:].type)
     for i in all_types:
@@ -111,18 +114,18 @@ def verify_lj_forces(system, tolerance, ids_to_skip=()):
         v_d = dist_vec(p0, p1)
         d = norm(v_d)
 
-        # calc and add expected lj force
+        # Calculate and add expected LJ force
         f = lj_force_vector(v_d, d, lj_params[p0.type, p1.type])
         f_expected[p0.id] += f
         f_expected[p1.id] -= f
 
-    # Check actual forces against expected
+    # Check actual forces against expected forces
     for p in system.part:
         if p.id in ids_to_skip:
             continue
-        if np.linalg.norm(p.f - f_expected[p.id]) >= tolerance:
-            raise Exception(f"LJ force verification failed on particle "
-                            f"{p.id}. Got {p.f}, expected {f_expected[p.id]}")
+        np.testing.assert_allclose(
+            np.copy(p.f), f_expected[p.id], rtol=0, atol=tolerance,
+            err_msg=f"LJ force verification failed on particle {p.id}.")
 
 
 def abspath(path):
