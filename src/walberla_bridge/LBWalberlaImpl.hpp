@@ -361,16 +361,19 @@ protected:
 
   class LeesEdwardsUpdate {
   public:
-    LeesEdwardsUpdate(const std::shared_ptr<StructuredBlockForest> &blocks,
-                      BlockDataID pdf_field_id, LeesEdwardsCallbacks callbacks)
+    LeesEdwardsUpdate(std::shared_ptr<StructuredBlockForest> const &blocks,
+                      BlockDataID pdf_field_id, unsigned int n_ghost_layers,
+                      LeesEdwardsCallbacks callbacks)
         : blocks_(blocks), m_pdf_field_id(pdf_field_id),
-          m_callbacks(callbacks) {}
+          m_n_ghost_layers(n_ghost_layers), m_callbacks(callbacks) {}
 
     void operator()(IBlock *block) {
       // TODO should dimension_x contain the ghost layers or not. At the moment
       // value is 64 with GL it is 66. In the lbmpy Leed Edwards this is mixed.
       // Probably not good
       auto const offset = m_callbacks->get_pos_offset();
+      assert(m_n_ghost_layers == 1u);
+      auto constexpr th = cell_idx_t{1};
 
       // Top cells
       if (blocks_->atDomainYMaxBorder(*block)) {
@@ -380,7 +383,7 @@ protected:
         auto pdf_field = block->template getData<PdfField>(m_pdf_field_id);
 
         CellInterval ci;
-        pdf_field->getGhostRegion(stencil::N, ci, 1, true);
+        pdf_field->getGhostRegion(stencil::N, ci, th, true);
 
         for (auto cell = ci.begin(); cell != ci.end(); ++cell) {
           cell_idx_t x = cell->x();
@@ -389,11 +392,11 @@ protected:
           uint_t ind2 = uint_c(ceil(x - offset) + dimension_x) % dimension_x;
 
           for (uint_t q = 0; q < Stencil::Q; ++q) {
-            pdf_field->get(*cell, 0) =
-                (1 - weight) *
-                    pdf_field->get(cell_idx_c(ind1), cell->y(), cell->z(), q) +
-                weight *
-                    pdf_field->get(cell_idx_c(ind2), cell->y(), cell->z(), q);
+            pdf_field->get(cell->x(), cell->y() - th, cell->z(), 0) =
+                (1 - weight) * pdf_field->get(cell_idx_c(ind1), cell->y() - th,
+                                              cell->z(), q) +
+                weight * pdf_field->get(cell_idx_c(ind2), cell->y() - th,
+                                        cell->z(), q);
           }
         }
       }
@@ -405,7 +408,7 @@ protected:
         auto pdf_field = block->template getData<PdfField>(m_pdf_field_id);
 
         CellInterval ci;
-        pdf_field->getGhostRegion(stencil::S, ci, 1, true);
+        pdf_field->getGhostRegion(stencil::S, ci, th, true);
 
         for (auto cell = ci.begin(); cell != ci.end(); ++cell) {
           cell_idx_t x = cell->x();
@@ -414,11 +417,11 @@ protected:
           uint_t ind2 = uint_c(ceil(x + offset) + dimension_x) % dimension_x;
 
           for (uint_t q = 0; q < Stencil::Q; ++q) {
-            pdf_field->get(*cell, 0) =
-                (1 - weight) *
-                    pdf_field->get(cell_idx_c(ind1), cell->y(), cell->z(), q) +
-                weight *
-                    pdf_field->get(cell_idx_c(ind2), cell->y(), cell->z(), q);
+            pdf_field->get(cell->x(), cell->y() + th, cell->z(), 0) =
+                (1 - weight) * pdf_field->get(cell_idx_c(ind1), cell->y() + th,
+                                              cell->z(), q) +
+                weight * pdf_field->get(cell_idx_c(ind2), cell->y() + th,
+                                        cell->z(), q);
           }
         }
       }
@@ -427,6 +430,7 @@ protected:
   private:
     const std::shared_ptr<StructuredBlockForest> &blocks_;
     BlockDataID m_pdf_field_id;
+    unsigned int m_n_ghost_layers;
     boost::optional<LeesEdwardsCallbacks> m_callbacks;
   };
 
@@ -566,7 +570,7 @@ public:
   void add_lees_edwards(LeesEdwardsCallbacks &&lees_edwards_callbacks) {
     m_lees_edwards_callbacks = std::move(lees_edwards_callbacks);
     m_lees_edwards_update_sweep = std::make_shared<LeesEdwardsUpdate>(
-        m_blocks, m_pdf_field_id, *m_lees_edwards_callbacks);
+        m_blocks, m_pdf_field_id, m_n_ghost_layers, *m_lees_edwards_callbacks);
   }
 
   void integrate() override {
@@ -585,12 +589,13 @@ public:
     // LB stream
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
       (*m_stream)(&*b);
-    (*m_full_communication)();
     // Lees-Edwards shift
     if (m_lees_edwards_callbacks) {
       for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
         (*m_lees_edwards_update_sweep)(&*b);
     }
+    // Refresh ghost layers
+    (*m_full_communication)();
 
     // Handle VTK writers
     for (auto it = m_vtk_auto.begin(); it != m_vtk_auto.end(); ++it) {
