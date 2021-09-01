@@ -369,59 +369,43 @@ protected:
 
     void operator()(IBlock *block) {
       // TODO should dimension_x contain the ghost layers or not. At the moment
-      // value is 64 with GL it is 66. In the lbmpy Leed Edwards this is mixed.
+      // value is 64 with GL it is 66. In the lbmpy Lees-Edwards this is fixed.
       // Probably not good
-      auto const offset = m_callbacks->get_pos_offset();
-      assert(m_n_ghost_layers == 1u);
-      auto constexpr th = cell_idx_t{1};
-
-      // Top cells
-      if (blocks_->atDomainYMaxBorder(*block)) {
-        uint_t dimension_x = blocks_->getNumberOfXCells(*block);
-        real_t weight = fmod(offset + real_c(dimension_x), 1.0);
-
-        auto pdf_field = block->template getData<PdfField>(m_pdf_field_id);
-
-        CellInterval ci;
-        pdf_field->getGhostRegion(stencil::N, ci, th, true);
-
-        for (auto cell = ci.begin(); cell != ci.end(); ++cell) {
-          cell_idx_t x = cell->x();
-
-          uint_t ind1 = uint_c(floor(x - offset) + dimension_x) % dimension_x;
-          uint_t ind2 = uint_c(ceil(x - offset) + dimension_x) % dimension_x;
-
-          for (uint_t q = 0; q < Stencil::Q; ++q) {
-            pdf_field->get(cell->x(), cell->y() - th, cell->z(), 0) =
-                (1 - weight) * pdf_field->get(cell_idx_c(ind1), cell->y() - th,
-                                              cell->z(), q) +
-                weight * pdf_field->get(cell_idx_c(ind2), cell->y() - th,
-                                        cell->z(), q);
-          }
-        }
-      }
-      // Bottom cells
-      if (blocks_->atDomainYMinBorder(*block)) {
-        uint_t dimension_x = blocks_->getNumberOfXCells(*block);
-        real_t weight = fmod(offset + real_c(dimension_x), 1.0);
+      auto const is_upper_slice = blocks_->atDomainYMaxBorder(*block);
+      auto const is_lower_slice = blocks_->atDomainYMinBorder(*block);
+      if (is_upper_slice or is_lower_slice) {
+        assert(m_n_ghost_layers == 1u);
+        auto constexpr th = cell_idx_t{1};
+        uint_t const dim_x = blocks_->getNumberOfXCells(*block);
+        uint_t const dim_y = blocks_->getNumberOfYCells(*block);
+        // TODO right now the direction of LE is hardcoded for the Y-axis
+        assert(dim_y >= 2u);
 
         auto pdf_field = block->template getData<PdfField>(m_pdf_field_id);
-
+        auto const index_dir = cell_idx_c((is_upper_slice) ? -1 : 1);
+        auto const modes_dir = (is_upper_slice) ? stencil::N : stencil::S;
+        auto const offset = real_c(m_callbacks->get_pos_offset());
+        auto const weight = fmod(offset + real_c(dim_x), real_t{1});
         CellInterval ci;
-        pdf_field->getGhostRegion(stencil::S, ci, th, true);
+        pdf_field->getGhostRegion(modes_dir, ci, th, true);
 
         for (auto cell = ci.begin(); cell != ci.end(); ++cell) {
-          cell_idx_t x = cell->x();
+          cell_idx_t const x = cell->x();
+          cell_idx_t const y = cell->y();
+          cell_idx_t const z = cell->z();
 
-          uint_t ind1 = uint_c(floor(x + offset) + dimension_x) % dimension_x;
-          uint_t ind2 = uint_c(ceil(x + offset) + dimension_x) % dimension_x;
+          auto const x1 =
+              cell_idx_c(floor(x + index_dir * offset + real_c(dim_x))) %
+              cell_idx_c(dim_x);
+          auto const x2 =
+              cell_idx_c(ceil(x + index_dir * offset + real_c(dim_x))) %
+              cell_idx_c(dim_x);
+          auto const ys = y + index_dir * th;
 
           for (uint_t q = 0; q < Stencil::Q; ++q) {
-            pdf_field->get(cell->x(), cell->y() + th, cell->z(), 0) =
-                (1 - weight) * pdf_field->get(cell_idx_c(ind1), cell->y() + th,
-                                              cell->z(), q) +
-                weight * pdf_field->get(cell_idx_c(ind2), cell->y() + th,
-                                        cell->z(), q);
+            pdf_field->get(x, ys, z, 0) =
+                pdf_field->get(x1, ys, z, q) * (1 - weight) +
+                pdf_field->get(x2, ys, z, q) * weight;
           }
         }
       }
