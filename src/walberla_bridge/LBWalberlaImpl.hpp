@@ -361,7 +361,7 @@ protected:
 
   class LeesEdwardsUpdate {
   public:
-    LeesEdwardsUpdate(const std::shared_ptr<StructuredBlockForest> &blocks,
+    LeesEdwardsUpdate(std::shared_ptr<StructuredBlockForest> blocks,
                       BlockDataID pdf_field_id, LeesEdwardsCallbacks callbacks)
         : blocks_(blocks), m_pdf_field_id(pdf_field_id),
           m_callbacks(callbacks) {}
@@ -382,11 +382,14 @@ protected:
         CellInterval ci;
         pdf_field->getGhostRegion(stencil::N, ci, 1, true);
 
+        printf("Lees-Edwards\n");
         for (auto cell = ci.begin(); cell != ci.end(); ++cell) {
           cell_idx_t x = cell->x();
 
           uint_t ind1 = uint_c(floor(x - offset) + dimension_x) % dimension_x;
           uint_t ind2 = uint_c(ceil(x - offset) + dimension_x) % dimension_x;
+          if (cell->z() == 0u)
+            printf("%i %i %i : %f", cell_idx_c(ind1), cell->y(), cell->z(), pdf_field->get(*cell, 0));
 
           for (uint_t q = 0; q < Stencil::Q; ++q) {
             pdf_field->get(*cell, 0) =
@@ -394,7 +397,10 @@ protected:
                     pdf_field->get(cell_idx_c(ind1), cell->y(), cell->z(), q) +
                 weight *
                     pdf_field->get(cell_idx_c(ind2), cell->y(), cell->z(), q);
+            pdf_field->get(*cell, 0) = 0./0;
           }
+          if (cell->z() == 0u)
+            printf(" -> %f\n", pdf_field->get(*cell, 0));
         }
       }
       // Bottom cells
@@ -419,13 +425,37 @@ protected:
                     pdf_field->get(cell_idx_c(ind1), cell->y(), cell->z(), q) +
                 weight *
                     pdf_field->get(cell_idx_c(ind2), cell->y(), cell->z(), q);
+            pdf_field->get(*cell, 0) = 0./0;
           }
         }
       }
     }
 
+    void observe(IBlock *block, std::string label) {
+      auto const offset = m_callbacks->get_pos_offset();
+
+      // Top cells
+      if (blocks_->atDomainYMaxBorder(*block)) {
+        uint_t dimension_x = blocks_->getNumberOfXCells(*block);
+        real_t weight = fmod(offset + real_c(dimension_x), 1.0);
+
+        auto pdf_field = block->template getData<PdfField>(m_pdf_field_id);
+
+        CellInterval ci;
+        pdf_field->getGhostRegion(stencil::N, ci, 1, true);
+
+        printf("%s\n", label.c_str());
+        for (auto cell = ci.begin(); cell != ci.end(); ++cell) {
+          cell_idx_t x = cell->x();
+          uint_t ind1 = uint_c(floor(x - offset) + dimension_x) % dimension_x;
+          if (cell->z() == 0u)
+            printf("%i %i %i : %f\n", cell_idx_c(ind1), cell->y(), cell->z(), pdf_field->get(*cell, 0));
+        }
+      }
+    }
+
   private:
-    const std::shared_ptr<StructuredBlockForest> &blocks_;
+    std::shared_ptr<StructuredBlockForest> blocks_;
     BlockDataID m_pdf_field_id;
     boost::optional<LeesEdwardsCallbacks> m_callbacks;
   };
@@ -570,27 +600,53 @@ public:
   }
 
   void integrate() override {
+    if (m_lees_edwards_callbacks) {
+      for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
+        m_lees_edwards_update_sweep->observe(&*b, "before reset forces");
+    }
     // Reset force fields
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
       (*m_reset_force)(&*b);
+    if (m_lees_edwards_callbacks) {
+      for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
+        m_lees_edwards_update_sweep->observe(&*b, "before LB collide");
+    }
     // LB collide
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
       boost::apply_visitor(run_collide_sweep, *m_collision_model,
                            boost::variant<IBlock *>(&*b));
+    if (m_lees_edwards_callbacks) {
+      for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
+        m_lees_edwards_update_sweep->observe(&*b, "before streaming communication");
+    }
     (*m_pdf_streaming_communication)();
 
+    if (m_lees_edwards_callbacks) {
+      for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
+        m_lees_edwards_update_sweep->observe(&*b, "before boundaries");
+    }
     // Handle boundaries
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
       Boundaries::getBlockSweep(m_boundary_handling_id)(&*b);
+    if (m_lees_edwards_callbacks) {
+      for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
+        m_lees_edwards_update_sweep->observe(&*b, "before streaming");
+    }
     // LB stream
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
       (*m_stream)(&*b);
+    if (m_lees_edwards_callbacks) {
+      for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
+        m_lees_edwards_update_sweep->observe(&*b, "before full communication");
+    }
     (*m_full_communication)();
     // Lees-Edwards shift
+    /*
     if (m_lees_edwards_callbacks) {
       for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
         (*m_lees_edwards_update_sweep)(&*b);
     }
+     */
 
     // Handle VTK writers
     for (auto it = m_vtk_auto.begin(); it != m_vtk_auto.end(); ++it) {
