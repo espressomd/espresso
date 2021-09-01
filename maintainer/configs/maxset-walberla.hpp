@@ -19,6 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 /* maximal set of features usable at the same time */
 #define ELECTROSTATICS
 #define DIPOLES
+#ifdef SCAFACOS
+#define SCAFACOS_DIPOLES
+#endif
 #define ROTATION
 #define ROTATIONAL_INERTIA
 #define PARTICLE_ANISOTROPY
@@ -61,10 +64,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define BUCKINGHAM
 #define SOFT_SPHERE
 #define WCA
-
-#ifdef P3M
 #define THOLE
-#endif
 
 #define EXPERIMENTAL_FEATURES
 
