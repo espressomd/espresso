@@ -384,8 +384,7 @@ protected:
         // TODO right now the direction of LE is hardcoded for the Y-axis
         assert(dim_y >= 2u);
 
-        auto const pdf_field =
-            block->template getData<PdfField>(m_pdf_field_id);
+        auto pdf_field = block->template getData<PdfField>(m_pdf_field_id);
         auto pdf_tmp_field =
             block->template getData<PdfField>(m_pdf_tmp_field_id);
         auto const index_dir = cell_idx_c((is_upper_slice) ? -1 : 1);
@@ -395,6 +394,7 @@ protected:
         CellInterval ci;
         pdf_field->getGhostRegion(modes_dir, ci, th, true);
 
+        // shift
         for (auto cell = ci.begin(); cell != ci.end(); ++cell) {
           cell_idx_t const x = cell->x();
           cell_idx_t const y = cell->y();
@@ -414,6 +414,16 @@ protected:
                 pdf_field->get(x2, ys, z, q) * weight;
           }
         }
+
+        // swap
+        for (auto cell = ci.begin(); cell != ci.end(); ++cell) {
+          cell_idx_t const x = cell->x();
+          cell_idx_t const y = cell->y();
+          cell_idx_t const z = cell->z();
+          auto const ys = y + index_dir * th;
+
+          pdf_field->get(x, ys, z, 0) = pdf_tmp_field->get(x, ys, z, 0);
+        }
       }
     }
 
@@ -425,28 +435,8 @@ protected:
     boost::optional<LeesEdwardsCallbacks> m_callbacks;
   };
 
-  /** Sweep that swaps @c pdf_field and @c pdf_tmp_field.
-   */
-  class LeesEdwardsSwap {
-  public:
-    LeesEdwardsSwap(BlockDataID pdf_field_id, BlockDataID pdf_tmp_field_id)
-        : m_pdf_field_id(pdf_field_id), m_pdf_tmp_field_id(pdf_tmp_field_id) {}
-
-    void operator()(IBlock *block) {
-      auto pdf_field = block->template getData<PdfField>(m_pdf_field_id);
-      auto m_pdf_tmp_field =
-          block->template getData<PdfField>(m_pdf_tmp_field_id);
-      m_pdf_tmp_field->swapDataPointers(pdf_field);
-    }
-
-  private:
-    const BlockDataID m_pdf_field_id;
-    const BlockDataID m_pdf_tmp_field_id;
-  };
-
   // Lees-Edwards sweep
   std::shared_ptr<LeesEdwardsUpdate> m_lees_edwards_update_sweep;
-  std::shared_ptr<LeesEdwardsSwap> m_lees_edwards_swap_sweep;
   boost::optional<LeesEdwardsCallbacks> m_lees_edwards_callbacks;
 
   template <typename LatticeModel_T, typename OutputType = float>
@@ -585,8 +575,6 @@ public:
     m_lees_edwards_update_sweep = std::make_shared<LeesEdwardsUpdate>(
         m_blocks, m_pdf_field_id, m_pdf_tmp_field_id, m_n_ghost_layers,
         *m_lees_edwards_callbacks);
-    m_lees_edwards_swap_sweep =
-        std::make_shared<LeesEdwardsSwap>(m_pdf_field_id, m_pdf_tmp_field_id);
   }
 
   void integrate() override {
@@ -609,8 +597,6 @@ public:
     if (m_lees_edwards_callbacks) {
       for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
         (*m_lees_edwards_update_sweep)(&*b);
-      for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
-        (*m_lees_edwards_swap_sweep)(&*b);
     }
     // Refresh ghost layers
     (*m_full_communication)();
