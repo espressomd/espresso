@@ -720,22 +720,8 @@ class CollisionDetection(ut.TestCase):
         found_pairs = sorted(found_pairs)
         found_angle_bonds = sorted(found_angle_bonds)
         expected_angle_bonds = sorted(expected_angle_bonds)
-        self.assertEqual(expected_pairs, found_pairs)
-
-        if expected_angle_bonds != found_angle_bonds:
-            # Verbose info
-            print("expected:", expected_angle_bonds)
-            missing = []
-            for b in expected_angle_bonds:
-                if b in found_angle_bonds:
-                    found_angle_bonds.remove(b)
-                else:
-                    missing.append(b)
-            print("missing", missing)
-            print("extra:", found_angle_bonds)
-            print()
-
-        self.assertEqual(expected_angle_bonds, found_angle_bonds)
+        self.assertEqual(found_pairs, expected_pairs)
+        self.assertEqual(found_angle_bonds, expected_angle_bonds)
 
     def test_zz_serialization(self):
         self.system.collision_detection.set_params(

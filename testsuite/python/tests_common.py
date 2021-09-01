@@ -147,22 +147,6 @@ def transform_pos_from_cartesian_to_polar_coordinates(pos):
                      np.arctan2(pos[1], pos[0]), pos[2]])
 
 
-def transform_vel_from_cartesian_to_polar_coordinates(pos, vel):
-    """Transform the given cartesian velocities to polar velocities.
-
-    Parameters
-    ----------
-    pos : array_like :obj:`float`
-        ``x``, ``y``, and ``z``-component of the cartesian position.
-    vel : array_like :obj:`float`
-        ``x``, ``y``, and ``z``-component of the cartesian velocity.
-
-    """
-    return np.array([
-        (pos[0] * vel[0] + pos[1] * vel[1]) / np.sqrt(pos[0]**2 + pos[1]**2),
-        (pos[0] * vel[1] - pos[1] * vel[0]) / np.sqrt(pos[0]**2 + pos[1]**2), vel[2]])
-
-
 def get_cylindrical_basis_vectors(pos):
     phi = transform_pos_from_cartesian_to_polar_coordinates(pos)[1]
     e_r = np.array([np.cos(phi), np.sin(phi), 0.])
