@@ -411,24 +411,18 @@ protected:
         auto const x2 =
             cell_idx_c(ceil(x + index_dir * offset + real_c(dim_x))) %
             cell_idx_c(dim_x);
-        auto const ys = y + index_dir * th;
 
         for (uint_t q = 0; q < Stencil::Q; ++q) {
-          pdf_tmp_field->get(x, ys, z, q) =
-              pdf_field->get(x1, ys, z, q) * (1 - weight) +
-              pdf_field->get(x2, ys, z, q) * weight;
+          pdf_tmp_field->get(x, y, z, q) =
+              pdf_field->get(x1, y, z, q) * (1 - weight) +
+              pdf_field->get(x2, y, z, q) * weight;
         }
       }
 
       // swap
       for (auto cell = ci.begin(); cell != ci.end(); ++cell) {
-        cell_idx_t const x = cell->x();
-        cell_idx_t const y = cell->y();
-        cell_idx_t const z = cell->z();
-        auto const ys = y + index_dir * th;
-
         for (uint_t q = 0; q < Stencil::Q; ++q)
-          pdf_field->get(x, ys, z, q) = pdf_tmp_field->get(x, ys, z, q);
+          pdf_field->get(*cell, q) = pdf_tmp_field->get(*cell, q);
       }
     }
 
@@ -595,14 +589,14 @@ public:
     // Handle boundaries
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
       Boundaries::getBlockSweep(m_boundary_handling_id)(&*b);
-    // LB stream
-    for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
-      (*m_stream)(&*b);
     // Lees-Edwards shift
     if (m_lees_edwards_callbacks) {
       for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
         (*m_lees_edwards_update_sweep)(&*b);
     }
+    // LB stream
+    for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
+      (*m_stream)(&*b);
     // Refresh ghost layers
     (*m_full_communication)();
 
