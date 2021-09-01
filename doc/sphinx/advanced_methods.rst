@@ -322,8 +322,8 @@ Specification of fluid and movement
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ::
 
-    lbf = espressomd.lb.LBFluid(agrid=1, dens=1.0, visc=1.5, fric=1.5,
-                                tau=time_step, ext_force_density=[0.002, 0.0, 0.0])
+    lbf = espressomd.lb.LBFluidWalberla(agrid=1, dens=1.0, visc=1.5, fric=1.5,
+                                        tau=time_step, ext_force_density=[0.002, 0.0, 0.0])
     system.actors.add(lbf)
 
 This part of the script specifies the fluid that will get the system
@@ -1131,6 +1131,9 @@ this type is created. This saves computational time, since the data for
 elastic interactions of the given object do not need to be recalculated
 every time.
 
+.. [5]
+   https://www.paraview.org/
+
 
 .. _Electrokinetics:
 
@@ -1439,9 +1442,6 @@ The local ``density`` and ``flux`` of a species can be obtained in the same fash
 
     species[0, 0, 0].density
     species[0, 0, 0].flux
-
-.. [5]
-   https://www.paraview.org/
 
 
 .. _Particle polarizability with thermalized cold Drude oscillators:

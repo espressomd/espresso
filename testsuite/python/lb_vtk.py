@@ -114,9 +114,9 @@ class TestVTK(ut.TestCase):
         # write VTK files
         # TODO Walberla: add 'pressure_tensor'
         vtk_obs = ['density', 'velocity_vector']
-        self.lbf.add_vtk_writer('test_lb_vtk_continuous', vtk_obs, 1)
+        self.lbf.add_vtk_writer('test_lb_vtk_continuous', vtk_obs, delta_N=1)
         self.system.integrator.run(n_steps)
-        lb_vtk = self.lbf.add_vtk_writer('test_lb_vtk_end', vtk_obs, 0)
+        lb_vtk = self.lbf.add_vtk_writer('test_lb_vtk_end', vtk_obs, delta_N=0)
         lb_vtk.write()
 
         # check VTK files exist
