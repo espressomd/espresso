@@ -55,6 +55,14 @@ LBWalberlaParams *lb_walberla_params() {
   return lb_walberla_params_instance;
 }
 
+void destruct_lb_walberla() {
+  delete lb_walberla_instance;
+  delete lb_walberla_params_instance;
+  lb_walberla_instance = nullptr;
+  lb_walberla_params_instance = nullptr;
+}
+REGISTER_CALLBACK(destruct_lb_walberla)
+
 void init_lb_walberla(double viscosity, double density, double agrid,
                       double tau, const Utils::Vector3i &grid_dimensions,
                       const Utils::Vector3i &node_grid, double kT,
@@ -67,19 +75,10 @@ void init_lb_walberla(double viscosity, double density, double agrid,
     lb_walberla_params_instance = new LBWalberlaParams{agrid, tau};
   } catch (const std::exception &e) {
     runtimeErrorMsg() << "Error during Walberla initialization: " << e.what();
-    lb_walberla_instance = nullptr;
-    lb_walberla_params_instance = nullptr;
+    destruct_lb_walberla();
   }
 }
 REGISTER_CALLBACK(init_lb_walberla)
-
-void destruct_lb_walberla() {
-  delete lb_walberla_instance;
-  delete lb_walberla_params_instance;
-  lb_walberla_instance = nullptr;
-  lb_walberla_params_instance = nullptr;
-}
-REGISTER_CALLBACK(destruct_lb_walberla)
 
 void mpi_init_lb_walberla(double viscosity, double density, double agrid,
                           double tau, Utils::Vector3d box_size, double kT,
