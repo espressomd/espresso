@@ -35,15 +35,16 @@ void walberla_mpi_init() {
       walberla::mpi::Environment(argc, argv);
 }
 
-LBWalberlaBase *new_lb_walberla(
-    double viscosity, double density, const Utils::Vector3i &grid_dimensions,
-    const Utils::Vector3i &node_grid, double kT, unsigned int seed,
-    boost::optional<LeesEdwardsCallbacks> &&lees_edwards_callbacks) {
+LBWalberlaBase *
+new_lb_walberla(double viscosity, double density,
+                const Utils::Vector3i &grid_dimensions,
+                const Utils::Vector3i &node_grid, double kT, unsigned int seed,
+                boost::optional<LeesEdwardsPack> &&lees_edwards_pack) {
 
   auto ptr = new walberla::LBWalberlaImpl(viscosity, density, grid_dimensions,
                                           node_grid, 1u, kT, seed);
-  if (lees_edwards_callbacks) {
-    ptr->add_lees_edwards(std::move(*lees_edwards_callbacks));
+  if (lees_edwards_pack) {
+    ptr->add_lees_edwards(std::move(*lees_edwards_pack));
   }
   return ptr;
 }

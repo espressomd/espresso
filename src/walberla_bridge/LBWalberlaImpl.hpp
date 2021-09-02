@@ -364,58 +364,66 @@ protected:
   public:
     LeesEdwardsUpdate(std::shared_ptr<StructuredBlockForest> const &blocks,
                       BlockDataID pdf_field_id, BlockDataID pdf_tmp_field_id,
-                      unsigned int n_ghost_layers,
-                      LeesEdwardsCallbacks callbacks)
+                      unsigned int n_ghost_layers, LeesEdwardsPack &&le_pack)
         : blocks_(blocks), m_pdf_field_id(pdf_field_id),
           m_pdf_tmp_field_id(pdf_tmp_field_id),
-          m_n_ghost_layers(n_ghost_layers), m_callbacks(callbacks) {}
+          m_n_ghost_layers(n_ghost_layers),
+          m_shear_direction(uint_c(le_pack.shear_direction)),
+          m_shear_plane_normal(uint_c(le_pack.shear_plane_normal)),
+          m_get_pos_offset(std::move(le_pack.get_pos_offset)),
+          m_get_shear_velocity(std::move(le_pack.get_shear_velocity)) {
+      if (m_n_ghost_layers != 1u) {
+        throw std::runtime_error("The Lees-Edwards sweep is implemeted "
+                                 "for a ghost layer of thickness 1");
+      }
+      if (m_shear_plane_normal == 0u) {
+        m_slab_min = stencil::W;
+        m_slab_max = stencil::E;
+      } else if (m_shear_plane_normal == 1u) {
+        m_slab_min = stencil::S;
+        m_slab_max = stencil::N;
+      } else if (m_shear_plane_normal == 2u) {
+        m_slab_min = stencil::B;
+        m_slab_max = stencil::T;
+      }
+    }
 
     void operator()(IBlock *block) {
-      if (blocks_->atDomainYMaxBorder(*block))
-        kernel(block, true);
-      if (blocks_->atDomainYMinBorder(*block))
-        kernel(block, false);
+      if (blocks_->atDomainMinBorder(m_shear_plane_normal, *block))
+        kernel(block, m_slab_min);
+      if (blocks_->atDomainMaxBorder(m_shear_plane_normal, *block))
+        kernel(block, m_slab_max);
     }
 
   private:
-    void kernel(IBlock *block, bool upper) {
-      // TODO should dimension_x contain the ghost layers or not. At the moment
-      // value is 64 with GL it is 66. In the lbmpy Lees-Edwards this is fixed.
-      // Probably not good
-      assert(m_n_ghost_layers == 1u);
-      auto constexpr th = cell_idx_t{1};
-      uint_t const dim_x = blocks_->getNumberOfXCells(*block);
-      uint_t const dim_y = blocks_->getNumberOfYCells(*block);
-      // TODO right now the direction of LE is hardcoded for the Y-axis
-      assert(dim_y >= 2u);
+    void kernel(IBlock *block, stencil::Direction slab_dir) {
+      // setup lengths
+      assert(blocks_->getNumberOfCells(*block, m_shear_plane_normal) >= 2u);
+      auto const dir = m_shear_direction;
+      auto const dim = cell_idx_c(blocks_->getNumberOfCells(*block, dir));
+      auto const length = real_c(dim);
+      auto offset = real_c(m_get_pos_offset());
+      auto const weight = fmod(offset + length, real_t{1});
 
+      // setup slab
       auto pdf_field = block->template getData<PdfField>(m_pdf_field_id);
       auto pdf_tmp_field =
           block->template getData<PdfField>(m_pdf_tmp_field_id);
-      auto const index_dir = (upper) ? cell_idx_c(-1) : cell_idx_c(1);
-      auto const modes_dir = (upper) ? stencil::N : stencil::S;
-      auto const offset = real_c(m_callbacks->get_pos_offset());
-      auto const weight = fmod(offset + real_c(dim_x), real_t{1});
       CellInterval ci;
-      pdf_field->getGhostRegion(modes_dir, ci, th, true);
+      pdf_field->getGhostRegion(slab_dir, ci, cell_idx_t{1}, true);
 
       // shift
+      offset *= real_c((slab_dir == m_slab_max) ? -1 : 1);
       for (auto cell = ci.begin(); cell != ci.end(); ++cell) {
-        cell_idx_t const x = cell->x();
-        cell_idx_t const y = cell->y();
-        cell_idx_t const z = cell->z();
-
-        auto const x1 =
-            cell_idx_c(floor(x + index_dir * offset + real_c(dim_x))) %
-            cell_idx_c(dim_x);
-        auto const x2 =
-            cell_idx_c(ceil(x + index_dir * offset + real_c(dim_x))) %
-            cell_idx_c(dim_x);
+        Cell source1 = *cell;
+        Cell source2 = *cell;
+        source1[dir] = cell_idx_c(floor(source1[dir] + offset + length)) % dim;
+        source2[dir] = cell_idx_c(ceil(source2[dir] + offset + length)) % dim;
 
         for (uint_t q = 0; q < Stencil::Q; ++q) {
-          pdf_tmp_field->get(x, y, z, q) =
-              pdf_field->get(x1, y, z, q) * (1 - weight) +
-              pdf_field->get(x2, y, z, q) * weight;
+          pdf_tmp_field->get(*cell, q) =
+              pdf_field->get(source1, q) * (1 - weight) +
+              pdf_field->get(source2, q) * weight;
         }
       }
 
@@ -431,12 +439,16 @@ protected:
     BlockDataID m_pdf_field_id;
     BlockDataID m_pdf_tmp_field_id;
     unsigned int m_n_ghost_layers;
-    boost::optional<LeesEdwardsCallbacks> m_callbacks;
+    unsigned int m_shear_direction;
+    unsigned int m_shear_plane_normal;
+    std::function<double()> m_get_pos_offset;
+    std::function<double()> m_get_shear_velocity;
+    stencil::Direction m_slab_min;
+    stencil::Direction m_slab_max;
   };
 
   // Lees-Edwards sweep
   std::shared_ptr<LeesEdwardsUpdate> m_lees_edwards_update_sweep;
-  boost::optional<LeesEdwardsCallbacks> m_lees_edwards_callbacks;
 
   template <typename LatticeModel_T, typename OutputType = float>
   class DensityVTKWriter : public vtk::BlockCellDataWriter<OutputType> {
@@ -569,11 +581,10 @@ public:
     (*m_full_communication)();
   }
 
-  void add_lees_edwards(LeesEdwardsCallbacks &&lees_edwards_callbacks) {
-    m_lees_edwards_callbacks = std::move(lees_edwards_callbacks);
+  void add_lees_edwards(LeesEdwardsPack &&lees_edwards_pack) {
     m_lees_edwards_update_sweep = std::make_shared<LeesEdwardsUpdate>(
         m_blocks, m_pdf_field_id, m_pdf_tmp_field_id, m_n_ghost_layers,
-        *m_lees_edwards_callbacks);
+        std::move(lees_edwards_pack));
   }
 
   void integrate() override {
@@ -590,7 +601,7 @@ public:
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
       Boundaries::getBlockSweep(m_boundary_handling_id)(&*b);
     // Lees-Edwards shift
-    if (m_lees_edwards_callbacks) {
+    if (m_lees_edwards_update_sweep) {
       for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
         (*m_lees_edwards_update_sweep)(&*b);
     }

@@ -179,11 +179,16 @@ enum class OutputVTK : unsigned {
   pressure_tensor = 1u << 2u,
 };
 
-struct LeesEdwardsCallbacks {
-  LeesEdwardsCallbacks(std::function<double()> get_pos_offset,
-                       std::function<double()> get_shear_velocity)
-      : get_pos_offset(std::move(get_pos_offset)),
+struct LeesEdwardsPack {
+  LeesEdwardsPack(int shear_direction, int shear_plane_normal,
+                  std::function<double()> get_pos_offset,
+                  std::function<double()> get_shear_velocity)
+      : shear_direction(shear_direction),
+        shear_plane_normal(shear_plane_normal),
+        get_pos_offset(std::move(get_pos_offset)),
         get_shear_velocity(std::move(get_shear_velocity)) {}
+  int shear_direction;
+  int shear_plane_normal;
   std::function<double()> get_pos_offset;
   std::function<double()> get_shear_velocity;
 };
