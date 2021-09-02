@@ -34,8 +34,6 @@
 #include "field/adaptors/GhostLayerFieldAdaptor.h"
 #include "field/vtk/FlagFieldCellFilter.h"
 #include "field/vtk/VTKWriter.h"
-#include "lbm/lattice_model/CollisionModel.h"
-#include "lbm/lattice_model/D3Q19.h"
 #include "lbm/vtk/all.h"
 
 #include "domain_decomposition/SharedSweep.h"
@@ -50,7 +48,6 @@
 #include "lbm/field/Adaptors.h"
 #include "lbm/field/AddToStorage.h"
 #include "lbm/field/PdfField.h"
-#include "lbm/lattice_model/D3Q19.h"
 #include "lbm/sweeps/CellwiseSweep.h"
 
 #include "stencil/D3Q19.h"
@@ -447,7 +444,7 @@ public:
         pystencils::InitialPDFsSetter(m_force_to_be_applied_id, m_pdf_field_id,
                                       m_velocity_field_id, real_c(m_density));
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b) {
-      pdf_setter(&(*b));
+      pdf_setter(&*b);
     }
 
     // Register boundary handling
