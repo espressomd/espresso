@@ -100,25 +100,6 @@ class LBLeesEdwards(ut.TestCase):
         """
         system = self.system
 
-        def debug(profile, stencil):
-            import matplotlib.pyplot as plt
-
-            for n, (x, y) in stencil.items():
-                print(f'{n} : {profile[x, y] * 100 / np.max(profile):.0f}%')
-
-            fig, (ax1, ax2) = plt.subplots(1, 2)
-            ax1.imshow(profile.T, cmap='viridis', interpolation='bilinear',
-                       origin='lower')
-            ax1.set_xlabel("x")
-            ax1.set_ylabel("y")
-            ax1.set_title("step 10")
-            ax2.imshow(profile.T > np.percentile(profile, 90), cmap='hot',
-                       interpolation='gaussian', origin='lower')
-            ax2.set_xlabel("x")
-            ax2.set_ylabel("y")
-            ax2.set_title("step 10 (contour)")
-            plt.show()
-
         class LBContextManager:
             """
             Add an LB actor and remove it from the actor list at the end.
@@ -214,8 +195,6 @@ class LBLeesEdwards(ut.TestCase):
             with LBContextManager() as lbf:
                 for profile in sample_lb_velocities(lbf):
                     check_profile(profile, stencil, ('W', 'E'), ('S', 'N'))
-
-        debug(profile, stencil)
 
 
 if __name__ == "__main__":
