@@ -1,82 +1,222 @@
+#
+# Copyright (C) 2021 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+import espressomd
+import espressomd.lb
+import espressomd.lees_edwards
+
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 
-import espressomd.lb
 
-def u(x, t, nu, v, h, k_max):
+@utx.skipIfMissingFeatures(['LB_WALBERLA'])
+class LBLeesEdwards(ut.TestCase):
+
     """
-    Analytical solution with Fourier series of Navier-Stokes equation
-    
-    Parameters
-    ----------
-    x : :obj:`float`
-        Height within the channel
-    t : :obj:`float`
-        Time since the start up of the shear flow
-    nu: :obj:`float`
-        Kinematic viscosity
-    v: :obj:`float`
-        Shearing velocity
-    h : :obj:`float`
-        Distance between shear planes
-    k_max : :obj:`int`
-        Upper limit of sums for sinus series
+    Check that velocities interpolated from spatially fixed particles wrap
+    around shear boundaries with the correct offset. A two-dimensional LB
+    grid is used for simplicity.
     """
-    u = x / h - 0.5
-    for k in np.arange(1, k_max + 1):
-        u += 1.0 / (np.pi * k) * np.exp(-4 * np.pi ** 2 * nu * k ** 2 / h ** 2 * t) * np.sin(2 * np.pi / h * k * x)
-    return v * u
+    system = espressomd.System(box_l=[17, 17, 1])
+    system.cell_system.skin = 0.1
+    system.time_step = 0.01
 
-TIME_STEP = 1.0
-total_time = 1000
+    def tearDown(self):
+        self.system.part.clear()
 
-v = 0.0087
-k_max = 100
-eta = 0.27
+    def test_velocity_shift(self):
+        """
+        Place particles at the center and borders of a square (a cuboid LB
+        grid with thickness 1 in the z-axis). Particles are fixed in space
+        and apply a force on the fluid. The velocity vectors of particle
+        pairs that are in contact across a periodic boundary are aligned,
+        such that their contribution to the interpolation is constructive,
+        i.e. at time = 0 the velocity of a LB cell containing a particle
+        is 100%, and at time = 10 it is still 100% (70% from the particle,
+        30% from the neighboring particle across the periodic boundary).
 
-RHO = 0.97
-NU = eta / RHO
-AGRID = 1.0
+        Below is a diagram of the time evolution of such a system.
+        The magnitude of the interpolated velocity is initially 5,
+        and decreases to 4 at the next time step, with a magnitude
+        of 1 for neighboring LB cells. LB cells at the boundaries
+        remain at velocity = 5 because they gain 1 unit from the
+        periodic images.
 
-LB_PARAMS = {'agrid': AGRID,
-             'dens': RHO,
-             'visc': NU,
-             'tau': TIME_STEP}
+        .. code-block:: none
 
-class LBCouetteFlow:
-    
-    """Base class of the test that holds the test logic."""
-    h = 10.
+            /-------------\        /-------------\
+            |      5      |        |     151     |
+            |             |        |      1      |
+            |             |        | 1    1    1 |
+            | 5    5    5 |  --->  | 51  141  15 |
+            |             |        | 1    1    1 |
+            |             |        |      1      |
+            |      5      |        |     151     |
+            \-------------/        \-------------/
 
-    lbf = None
-    system = espressomd.System(box_l=[h, h, h])
-    system.time_step = TIME_STEP
-    system.cell_system.skin = 0.4 * AGRID
-    system.actors.clear()
-    system.actors.add(lbf)
 
-    for t in range(total_time):
-        
-        #Compute analytical solution
-        v_expected = u(X, system.time, nu, v / time_step, box_l, k_max)
-        
-        #Read data from nodes
-        X = np.arange(0, box_l) + 0.5
-        
-        # TODO finish test case for comparisson
-        v_measured =
+        When Lees-Edwards boundary conditions are present, contributions
+        to the interpolation are no longer constructive across the shear
+        boundary due to the shear offset.
 
-        p.testing.assert_allclose(v_measured, v_expected, atol=1e-5)
+        Below is a diagram of the time evolution of such a system,
+        where the shear plane normal is the y-axis and the shear
+        direction is the x-axis with an offset of 3 agrid:
 
-        system.integrator.run(1)
+        .. code-block:: none
 
-@utx.skipIfMissingFeatures("LB_WALBERLA")
-class LBWalberlaPoiseuille(ut.TestCase, LBPoiseuilleCommon):
+            /-------------\        /-------------\
+            |      5      |        |     141 1   |
+            |             |        |      1      |
+            |             |        | 1    1    1 |
+            | 5    5    5 |  --->  | 51  141  15 |
+            |             |        | 1    1    1 |
+            |             |        |      1      |
+            |      5      |        |   1 141     |
+            \-------------/        \-------------/
 
-    """Test for the Walberla implementation of the LB."""
 
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMS)
+        The interpolated velocity at the shear boundary is equal to
+        the interpolated velocity of a particle moving diagonally.
+        The central particle is moving diagonally and is used as a
+        reference.
 
-if __name__ == '__main__':
+        """
+        system = self.system
+
+        def debug(profile, stencil):
+            import matplotlib.pyplot as plt
+
+            for n, (x, y) in stencil.items():
+                print(f'{n} : {profile[x, y] * 100 / np.max(profile):.0f}%')
+
+            fig, (ax1, ax2) = plt.subplots(1, 2)
+            ax1.imshow(profile.T, cmap='viridis', interpolation='bilinear',
+                       origin='lower')
+            ax1.set_xlabel("x")
+            ax1.set_ylabel("y")
+            ax1.set_title("step 10")
+            ax2.imshow(profile.T > np.percentile(profile, 90), cmap='hot',
+                       interpolation='gaussian', origin='lower')
+            ax2.set_xlabel("x")
+            ax2.set_ylabel("y")
+            ax2.set_title("step 10 (contour)")
+            plt.show()
+
+        class LBContextManager:
+            """
+            Add an LB actor and remove it from the actor list at the end.
+            """
+
+            def __enter__(self):
+                self.lbf = espressomd.lb.LBFluidWalberla(
+                    agrid=1., dens=1., visc=1., tau=system.time_step)
+                system.actors.add(self.lbf)
+                system.thermostat.set_lb(LB_fluid=self.lbf, gamma=1.0)
+                return self.lbf
+
+            def __exit__(self, exc_type, exc_value, exc_traceback):
+                system.actors.remove(self.lbf)
+
+        class LEContextManager:
+            """
+            Add a Lees-Edwards linear shear boundary and remove it at the end.
+            """
+
+            def __init__(self, shear_direction, shear_plane_normal, offset):
+                mapping = {'x': 0, 'y': 1, 'z': 2}
+                self.shear_direction = mapping[shear_direction]
+                self.shear_plane_normal = mapping[shear_plane_normal]
+                self.offset = offset
+
+            def __enter__(self):
+                system.lees_edwards.protocol = espressomd.lees_edwards.LinearShear(
+                    shear_velocity=0., initial_pos_offset=self.offset, time_0=0.)
+                system.lees_edwards.shear_direction = self.shear_direction
+                system.lees_edwards.shear_plane_normal = self.shear_plane_normal
+
+            def __exit__(self, exc_type, exc_value, exc_traceback):
+                system.lees_edwards = espressomd.lees_edwards.LeesEdwards()
+
+        def sample_lb_velocities(lbf):
+            profiles = []
+            for _ in range(5):
+                system.integrator.run(2)
+                vel_grid = lbf[:, :, :].velocity[:, :, 0, :]
+                profiles.append(np.linalg.norm(vel_grid, axis=2))
+            return profiles
+
+        def check_profile(profile, stencil, nodes_shifted, nodes_unshifted):
+            tol = 0.012
+            profile = np.copy(profile) / np.max(profile)
+            for node in nodes_unshifted:
+                self.assertAlmostEqual(profile[stencil[node]], 1.0, delta=tol)
+            for node in nodes_shifted:
+                ref = profile[stencil['C']]
+                self.assertAlmostEqual(profile[stencil[node]], ref, delta=tol)
+                node += '~'
+                ref = 1.0 - ref
+                self.assertAlmostEqual(profile[stencil[node]], ref, delta=tol)
+
+        # stencil for D2Q8
+        stencil_D2Q8 = {'S': (8, 0), 'W': (0, 8), 'N': (8, 16), 'E': (16, 8),
+                        'C': (8, 8)}
+
+        # place particles at the square edges and at the center of the square
+        for x, y in stencil_D2Q8.values():
+            v = np.array([y == 8, x == 8, 0], dtype=float)
+            v /= np.linalg.norm(v)
+            system.part.add(pos=[x + 0.5, y + 0.5, 0.5], v=v, fix=3 * [True])
+
+        # without Lees-Edwards, velocities remain unaffected
+        with LBContextManager() as lbf:
+            for profile in sample_lb_velocities(lbf):
+                check_profile(profile, stencil_D2Q8, (), 'SNWE')
+
+        # with Lees-Edwards and no offset, velocities remain unaffected
+        with LEContextManager('x', 'y', 0):
+            with LBContextManager() as lbf:
+                for profile in sample_lb_velocities(lbf):
+                    check_profile(profile, stencil_D2Q8, (), 'SNWE')
+
+        le_offset = 6
+
+        # North and South are sheared horizontally
+        with LEContextManager('x', 'y', le_offset):
+            stencil = {'N~': (8 - le_offset, 0),
+                       'S~': (8 + le_offset, 16),
+                       **stencil_D2Q8}
+            with LBContextManager() as lbf:
+                for profile in sample_lb_velocities(lbf):
+                    check_profile(profile, stencil, ('S', 'N'), ('W', 'E'))
+
+        # East and West are sheared vertically
+        with LEContextManager('y', 'x', le_offset):
+            stencil = {'E~': (0, 8 - le_offset),
+                       'W~': (16, 8 + le_offset),
+                       **stencil_D2Q8}
+            with LBContextManager() as lbf:
+                for profile in sample_lb_velocities(lbf):
+                    check_profile(profile, stencil, ('W', 'E'), ('S', 'N'))
+
+        debug(profile, stencil)
+
+
+if __name__ == "__main__":
     ut.main()
