@@ -82,21 +82,6 @@ class importlib_wrapper(ut.TestCase):
         str_out = iw.disable_matplotlib_gui(str_inp)
         self.assertEqual(str_out, str_exp)
 
-    def test_set_random_seeds(self):
-        # NumPy seed
-        str_np = "import numpy as np\n"
-        str_lambda = "(lambda *args, **kwargs: None)"
-        str_inp = str_np + "np.random.seed(seed=42)"
-        str_exp = str_np + "np.random.seed;_random_seed_np = " + \
-            str_lambda + "(seed=42)"
-        str_out = iw.set_random_seeds(str_inp)
-        self.assertEqual(str_out, str_exp)
-        str_np = "import numpy.random as npr\n"
-        str_inp = str_np + "npr.seed(42)"
-        str_exp = str_np + "npr.seed;_random_seed_np = " + str_lambda + "(42)"
-        str_out = iw.set_random_seeds(str_inp)
-        self.assertEqual(str_out, str_exp)
-
     def test_mock_es_visualization(self):
         statement = "import espressomd.visualization"
         expected = """
