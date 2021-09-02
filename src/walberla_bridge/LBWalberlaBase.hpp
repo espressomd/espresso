@@ -32,7 +32,6 @@
 #include <boost/optional.hpp>
 
 #include <cstddef>
-#include <functional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -177,20 +176,6 @@ enum class OutputVTK : unsigned {
   density = 1u << 0u,
   velocity_vector = 1u << 1u,
   pressure_tensor = 1u << 2u,
-};
-
-struct LeesEdwardsPack {
-  LeesEdwardsPack(int shear_direction, int shear_plane_normal,
-                  std::function<double()> get_pos_offset,
-                  std::function<double()> get_shear_velocity)
-      : shear_direction(shear_direction),
-        shear_plane_normal(shear_plane_normal),
-        get_pos_offset(std::move(get_pos_offset)),
-        get_shear_velocity(std::move(get_shear_velocity)) {}
-  int shear_direction;
-  int shear_plane_normal;
-  std::function<double()> get_pos_offset;
-  std::function<double()> get_shear_velocity;
 };
 
 #endif // LB_WALBERLA_H

@@ -21,6 +21,7 @@
 
 #include "LBWalberlaBase.hpp"
 #include "LBWalberlaImpl.hpp"
+#include "LeesEdwardsPack.hpp"
 
 #include "core/mpi/Environment.h"
 

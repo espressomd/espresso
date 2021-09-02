@@ -20,6 +20,7 @@
 #define LB_WALBERLA_INIT_HPP
 
 #include "LBWalberlaBase.hpp"
+#include "LeesEdwardsPack.hpp"
 
 #include <utils/Vector.hpp>
 

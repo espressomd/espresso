@@ -29,6 +29,7 @@
 #include "lees_edwards_protocol.hpp"
 
 #include <LBWalberlaBase.hpp>
+#include <LeesEdwardsPack.hpp>
 #include <lb_walberla_init.hpp>
 
 #include <utils/Vector.hpp>

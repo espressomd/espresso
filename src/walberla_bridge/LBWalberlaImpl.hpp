@@ -57,6 +57,8 @@
 #include "stencil/D3Q27.h"
 
 #include "LBWalberlaBase.hpp"
+#include "LeesEdwardsPack.hpp"
+#include "LeesEdwardsUpdate.hpp"
 #include "ResetForce.hpp"
 #include "generated_kernels/InitialPDFsSetter.h"
 #include "generated_kernels/StreamSweep.h"
@@ -360,95 +362,8 @@ protected:
   // Boundary sweep
   std::shared_ptr<UBB> m_boundary;
 
-  class LeesEdwardsUpdate {
-  public:
-    LeesEdwardsUpdate(std::shared_ptr<StructuredBlockForest> const &blocks,
-                      BlockDataID pdf_field_id, BlockDataID pdf_tmp_field_id,
-                      unsigned int n_ghost_layers, LeesEdwardsPack &&le_pack)
-        : blocks_(blocks), m_pdf_field_id(pdf_field_id),
-          m_pdf_tmp_field_id(pdf_tmp_field_id),
-          m_n_ghost_layers(n_ghost_layers),
-          m_shear_direction(uint_c(le_pack.shear_direction)),
-          m_shear_plane_normal(uint_c(le_pack.shear_plane_normal)),
-          m_get_pos_offset(std::move(le_pack.get_pos_offset)),
-          m_get_shear_velocity(std::move(le_pack.get_shear_velocity)) {
-      if (m_n_ghost_layers != 1u) {
-        throw std::runtime_error("The Lees-Edwards sweep is implemeted "
-                                 "for a ghost layer of thickness 1");
-      }
-      if (m_shear_plane_normal == 0u) {
-        m_slab_min = stencil::W;
-        m_slab_max = stencil::E;
-      } else if (m_shear_plane_normal == 1u) {
-        m_slab_min = stencil::S;
-        m_slab_max = stencil::N;
-      } else if (m_shear_plane_normal == 2u) {
-        m_slab_min = stencil::B;
-        m_slab_max = stencil::T;
-      }
-    }
-
-    void operator()(IBlock *block) {
-      if (blocks_->atDomainMinBorder(m_shear_plane_normal, *block))
-        kernel(block, m_slab_min);
-      if (blocks_->atDomainMaxBorder(m_shear_plane_normal, *block))
-        kernel(block, m_slab_max);
-    }
-
-  private:
-    void kernel(IBlock *block, stencil::Direction slab_dir) {
-      // setup lengths
-      assert(blocks_->getNumberOfCells(*block, m_shear_plane_normal) >= 2u);
-      auto const dir = m_shear_direction;
-      auto const dim = cell_idx_c(blocks_->getNumberOfCells(*block, dir));
-      auto const length = real_c(dim);
-      auto offset = real_c(m_get_pos_offset());
-      auto const weight = fmod(offset + length, real_t{1});
-
-      // setup slab
-      auto pdf_field = block->template getData<PdfField>(m_pdf_field_id);
-      auto pdf_tmp_field =
-          block->template getData<PdfField>(m_pdf_tmp_field_id);
-      CellInterval ci;
-      pdf_field->getGhostRegion(slab_dir, ci, cell_idx_t{1}, true);
-
-      // shift
-      offset *= real_c((slab_dir == m_slab_max) ? -1 : 1);
-      for (auto cell = ci.begin(); cell != ci.end(); ++cell) {
-        Cell source1 = *cell;
-        Cell source2 = *cell;
-        source1[dir] = cell_idx_c(floor(source1[dir] + offset + length)) % dim;
-        source2[dir] = cell_idx_c(ceil(source2[dir] + offset + length)) % dim;
-
-        for (uint_t q = 0; q < Stencil::Q; ++q) {
-          pdf_tmp_field->get(*cell, q) =
-              pdf_field->get(source1, q) * (1 - weight) +
-              pdf_field->get(source2, q) * weight;
-        }
-      }
-
-      // swap
-      for (auto cell = ci.begin(); cell != ci.end(); ++cell) {
-        for (uint_t q = 0; q < Stencil::Q; ++q)
-          pdf_field->get(*cell, q) = pdf_tmp_field->get(*cell, q);
-      }
-    }
-
-  private:
-    const std::shared_ptr<StructuredBlockForest> &blocks_;
-    BlockDataID m_pdf_field_id;
-    BlockDataID m_pdf_tmp_field_id;
-    unsigned int m_n_ghost_layers;
-    unsigned int m_shear_direction;
-    unsigned int m_shear_plane_normal;
-    std::function<double()> m_get_pos_offset;
-    std::function<double()> m_get_shear_velocity;
-    stencil::Direction m_slab_min;
-    stencil::Direction m_slab_max;
-  };
-
   // Lees-Edwards sweep
-  std::shared_ptr<LeesEdwardsUpdate> m_lees_edwards_update_sweep;
+  std::shared_ptr<LeesEdwardsUpdate> m_lees_edwards_sweep;
 
   template <typename LatticeModel_T, typename OutputType = float>
   class DensityVTKWriter : public vtk::BlockCellDataWriter<OutputType> {
@@ -582,7 +497,7 @@ public:
   }
 
   void add_lees_edwards(LeesEdwardsPack &&lees_edwards_pack) {
-    m_lees_edwards_update_sweep = std::make_shared<LeesEdwardsUpdate>(
+    m_lees_edwards_sweep = std::make_shared<LeesEdwardsUpdate>(
         m_blocks, m_pdf_field_id, m_pdf_tmp_field_id, m_n_ghost_layers,
         std::move(lees_edwards_pack));
   }
@@ -601,9 +516,9 @@ public:
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
       Boundaries::getBlockSweep(m_boundary_handling_id)(&*b);
     // Lees-Edwards shift
-    if (m_lees_edwards_update_sweep) {
+    if (m_lees_edwards_sweep) {
       for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
-        (*m_lees_edwards_update_sweep)(&*b);
+        (*m_lees_edwards_sweep)(&*b);
     }
     // LB stream
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
