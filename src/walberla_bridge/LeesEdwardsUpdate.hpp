@@ -32,7 +32,18 @@
 
 namespace walberla {
 
-/** Lees-Edwards sweep. Only works for 1 MPI rank! */
+/** Lees-Edwards sweep.
+ * TODO WALBERLA
+ *   Currently only works for 1 MPI rank! It should work in parallel if the MPI
+ *   domain decomposition for the structured block forest doesn't partition
+ *   along the shear direction. For example if the shear direction goes along
+ *   the z-axis, it should be possible to run on 4 MPI ranks with [2, 2, 1].
+ *   At the moment, ESPResSo requires system.cell_system.node_grid to be in
+ *   decreasing order, therefore parallelization requires a shear direction
+ *   along the z-axis and a MPI node_grid of [x, y, 1] with x >= y. This
+ *   restriction on the ordering of the node_grid may be lifted in the
+ *   distant future, when our FFT algorithm is replaced by a new one.
+ */
 class LeesEdwardsUpdate {
 public:
   LeesEdwardsUpdate(std::shared_ptr<StructuredBlockForest> blocks,
