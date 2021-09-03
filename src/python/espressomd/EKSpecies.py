@@ -97,7 +97,7 @@ class EKRoutines:
 
     @property
     def is_boundary(self):
-        return self.species.call_method("get_boundary", position=self.node)
+        return self.species.call_method("is_boundary", position=self.node)
 
 
 class EKSlice:
