@@ -383,8 +383,9 @@ public:
       return {boost::none};
 
     auto *flagField = (*bc).block->template getData<FlagField>(m_flag_field_id);
+    // TODO: this has to be adapted when other BCs are added
     return {flagField->isPartOfMaskSet((*bc).cell,
-                                       ~flagField->getFlag(domain_flag))};
+                                       flagField->getFlag(noflux_flag))};
   };
 
   void clear_boundaries() override {
