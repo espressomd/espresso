@@ -50,7 +50,8 @@ print(f"system.box_l = {system.box_l}")
 
 # test "system.non_bonded_inter"
 print("\n### system.non_bonded_inter test ###")
-print(f"system.non_bonded_inter[0, 0].wca.get_params() = {system.non_bonded_inter[0, 0].wca.get_params()}")
+print(
+    f"system.non_bonded_inter[0, 0].wca.get_params() = {system.non_bonded_inter[0, 0].wca.get_params()}")
 
 # test "system.part"
 print("\n### system.part test ###")
@@ -69,7 +70,8 @@ print(f"p3m.get_params() = {p3m.get_params()}")
 # all objects that are registered when writing a checkpoint are
 # automatically registered after loading this checkpoint
 print("\n### checkpoint register test ###")
-print(f"checkpoint.get_registered_objects() = {checkpoint.get_registered_objects()}")
+print(
+    f"checkpoint.get_registered_objects() = {checkpoint.get_registered_objects()}")
 
 
 # integrate system

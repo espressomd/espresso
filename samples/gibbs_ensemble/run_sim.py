@@ -352,7 +352,8 @@ def perform_particle_exchange(boxes):
             recipient_box.num_part,
             GLOBAL_NUM_PART)
 
-    logging.debug(f"Exchange particle of {donor_box.box_name} to {recipient_box.box_name}.")
+    logging.debug(
+        f"Exchange particle of {donor_box.box_name} to {recipient_box.box_name}.")
 
     # ---- Check move ----
 

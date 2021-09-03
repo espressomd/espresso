@@ -91,16 +91,11 @@ class ClusterAnalysis(ut.TestCase):
         self.assertEqual(min(l1, l2), 2)
         self.assertEqual(max(l1, l2), 4)
 
-        # Verify particle ids
-        smaller_cluster = None
-        bigger_cluster = None
-        if l1 < l2:
-            smaller_cluster = self.cs.clusters[cids[0]]
-            bigger_cluster = self.cs.clusters[cids[1]]
-        else:
-            smaller_cluster = self.cs.clusters[cids[1]]
-            bigger_cluster = self.cs.clusters[cids[0]]
+        clusters = self.cs.clusters[cids[0]], self.cs.clusters[cids[1]]
+        smaller_cluster, bigger_cluster = sorted(
+            clusters, key=lambda c: c.size())
 
+        # Verify particle ids
         self.assertEqual(bigger_cluster.particle_ids(), [0, 1, 2, 3])
         self.assertEqual(smaller_cluster.particle_ids(), [4, 5])
 

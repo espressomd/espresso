@@ -457,7 +457,8 @@ class CheckpointTest(ut.TestCase):
         self.assertIsInstance(
             system.lbboundaries[1].shape, espressomd.shapes.Wall)
         # check boundary flag
-        lbf = self.get_active_actor_of_type(espressomd.lb.HydrodynamicInteraction)
+        lbf = self.get_active_actor_of_type(
+            espressomd.lb.HydrodynamicInteraction)
         np.testing.assert_equal(lbf[0, :, :].boundary.astype(int), 1)
         np.testing.assert_equal(lbf[-1, :, :].boundary.astype(int), 2)
         np.testing.assert_equal(lbf[1:-1, :, :].boundary.astype(int), 0)
