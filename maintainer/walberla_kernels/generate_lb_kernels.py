@@ -228,6 +228,7 @@ def __lattice_model(generation_context, class_name, lb_method,
         IndexedBase(sp.Symbol('u'), shape=(1,))[i]
         for i in range(len(vel_symbols))]
     momentum_density_symbols = sp.symbols(f'md_:{len(vel_symbols)}')
+    second_momentum_symbols = sp.symbols(f'p_:{len(vel_symbols)**2}')
 
     equilibrium = lb_method.get_equilibrium()
     equilibrium = equilibrium.new_with_substitutions(
@@ -257,6 +258,7 @@ def __lattice_model(generation_context, class_name, lb_method,
         eq_input_from_input_eqs, dtype=dtype_string, variables_without_prefix=['rho_in', 'u'])
     momentum_density_getter = cqc.output_equations_from_pdfs(
         pdfs_sym, {'density': rho_sym, 'momentum_density': momentum_density_symbols})
+    second_momentum_getter = cqc.output_equations_from_pdfs(pdfs_sym, {'moment2': second_momentum_symbols})
     constant_suffix = "f" if is_float else ""
 
     required_headers = get_headers(stream_collide_ast)
@@ -296,6 +298,8 @@ def __lattice_model(generation_context, class_name, lb_method,
                                              variables_without_prefix=[e.name for e in pdfs_sym], dtype=dtype_string),
         'momentum_density_getter': equations_to_code(momentum_density_getter, variables_without_prefix=pdfs_sym,
                                                      dtype=dtype_string),
+        'second_momentum_getter': equations_to_code(second_momentum_getter, variables_without_prefix=pdfs_sym,
+                                                    dtype=dtype_string),
         'density_velocity_setter_macroscopic_values': density_velocity_setter_macroscopic_values,
 
         'refinement_scaling_info': refinement_scaling_info,
