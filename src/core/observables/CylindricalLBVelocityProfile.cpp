@@ -31,7 +31,7 @@
 namespace Observables {
 
 std::vector<double> CylindricalLBVelocityProfile::operator()() const {
-  Utils::CylindricalHistogram<double, 3> histogram(n_bins(), 3, limits());
+  Utils::CylindricalHistogram<double, 3> histogram(n_bins(), limits());
   for (auto const &p : sampling_positions) {
     auto const velocity = lb_lbfluid_get_interpolated_velocity(p) *
                           lb_lbfluid_get_lattice_speed();

@@ -534,18 +534,18 @@ directory. Suppose that you have a source directory :file:`$srcdir` and two
 build directories :file:`$builddir1` and :file:`$builddir2` that contain
 different configuration headers:
 
-*  :file:`$builddir1/myconfig.hpp`:
+* :file:`$builddir1/myconfig.hpp`:
 
   .. code-block:: c++
 
-    #define ELECTROSTATICS
-    #define LENNARD_JONES
+      #define ELECTROSTATICS
+      #define LENNARD_JONES
 
-*  :file:`$builddir2/myconfig.hpp`:
+* :file:`$builddir2/myconfig.hpp`:
 
   .. code-block:: c++
 
-    #define LJCOS
+      #define LJCOS
 
 Then you can simply compile two different versions of |es| via:
 
@@ -683,6 +683,38 @@ If you have multiple versions of the CUDA library installed, you can select the
 correct one with ``CUDA_BIN_PATH=/usr/local/cuda-10.0 cmake .. -DWITH_CUDA=ON``
 (with Clang as the CUDA compiler, you also need to override its default CUDA
 path with ``-DCMAKE_CXX_FLAGS=--cuda-path=/usr/local/cuda-10.0``).
+
+.. _Build types and compiler flags:
+
+Build types and compiler flags
+""""""""""""""""""""""""""""""
+
+The build type is controlled by ``-D CMAKE_BUILD_TYPE=<type>`` where
+``<type>`` can take one of the following values:
+
+* ``Release``: for production use: disables assertions and debug information,
+  enables ``-O3`` optimization (this is the default)
+* ``RelWithAssert``: for debugging purposes: enables assertions and
+  ``-O3`` optimization (use this to track the source of a fatal error)
+* ``Debug``: for debugging in GDB
+* ``Coverage``: for code coverage
+
+Cluster users and HPC developers may be interested in manually editing the
+``cxx_interface`` variable in the top-level ``CMakeLists.txt`` file for
+finer control over compiler flags. The variable declaration is followed
+by a series of conditionals to enable or disable compiler-specific flags.
+Compiler flags passed to CMake via the ``-DCMAKE_CXX_FLAGS`` option
+(such as ``cmake . -DCMAKE_CXX_FLAGS="-ffast-math -fno-finite-math-only"``)
+will appear in the compiler command before the flags in ``cxx_interface``,
+and will therefore have lower precedence.
+
+Be aware that fast-math mode can break |es|. It is incompatible with the
+``ADDITIONAL_CHECKS`` feature due to the loss of precision in the LB code
+on CPU. The Clang 10 compiler breaks field couplings with ``-ffast-math``.
+The Intel compiler enables the ``-fp-model fast=1`` flag by default;
+it can be disabled by adding the ``-fp-model=strict`` flag.
+
+|es| currently doesn't fully support link-time optimization (LTO).
 
 
 .. _Configuring without a network connection:

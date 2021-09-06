@@ -69,6 +69,7 @@ BOOST_AUTO_TEST_CASE(with_image_count) {
     BOOST_CHECK_EQUAL(res.second, i + 1);
   }
 
+#ifndef __FAST_MATH__
   /* Pathological (NaN) */
   {
     auto const x = std::nan("");
@@ -77,23 +78,22 @@ BOOST_AUTO_TEST_CASE(with_image_count) {
     auto const res = periodic_fold(x, i, box);
     BOOST_CHECK(std::isnan(res.first));
   }
+#endif // __FAST_MATH__
 
   /* Overflow right */
   {
-    auto const x =
-        (100. * static_cast<double>(std::numeric_limits<int>::max()));
+    auto const x = 100. * static_cast<double>(std::numeric_limits<int>::max());
     auto const box = 10.;
-    int const i = std::numeric_limits<int>::max() - 10;
+    auto const i = std::numeric_limits<int>::max() - 10;
     auto const res = periodic_fold(x, i, box);
     BOOST_CHECK_EQUAL(res.second, std::numeric_limits<int>::max());
   }
 
   /* Overflow left */
   {
-    auto const x =
-        (100. * static_cast<double>(std::numeric_limits<int>::min()));
+    auto const x = 100. * static_cast<double>(std::numeric_limits<int>::min());
     auto const box = 10.;
-    int const i = std::numeric_limits<int>::min() + 10;
+    auto const i = std::numeric_limits<int>::min() + 10;
     auto const res = periodic_fold(x, i, box);
     BOOST_CHECK_EQUAL(res.second, std::numeric_limits<int>::min());
   }
@@ -104,7 +104,7 @@ BOOST_AUTO_TEST_CASE(with_image_count) {
     auto const box = 10.;
     auto const res = periodic_fold(x, 0, box);
     BOOST_CHECK(res.first >= 0.);
-    BOOST_CHECK(res.first < box);
+    BOOST_CHECK(res.first <= box);
     BOOST_CHECK(std::abs(res.first - x + res.second * box) <=
                 std::numeric_limits<double>::epsilon());
   }
@@ -155,6 +155,7 @@ BOOST_AUTO_TEST_CASE(without_image_count) {
     BOOST_CHECK_EQUAL(res, x - box);
   }
 
+#ifndef __FAST_MATH__
   /* Pathological (NaN value) */
   {
     auto const x = std::nan("");
@@ -170,6 +171,7 @@ BOOST_AUTO_TEST_CASE(without_image_count) {
     auto const res = periodic_fold(x, box);
     BOOST_CHECK(std::isnan(res));
   }
+#endif // __FAST_MATH__
 
   /* Corner left */
   {

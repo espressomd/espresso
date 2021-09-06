@@ -41,38 +41,37 @@ for act in system.actors.active_actors:
 
 # test user variable
 print("\n### user variable test ###")
-print("myvar = {}".format(myvar))
+print(f"myvar = {myvar}")
 
 # test "system"
 print("\n### system test ###")
-print("system.time = {}".format(system.time))
-print("system.box_l = {}".format(system.box_l))
+print(f"system.time = {system.time}")
+print(f"system.box_l = {system.box_l}")
 
 # test "system.non_bonded_inter"
 print("\n### system.non_bonded_inter test ###")
-print("system.non_bonded_inter[0, 0].wca.get_params() = {}".format(
-    system.non_bonded_inter[0, 0].wca.get_params()))
+print(
+    f"system.non_bonded_inter[0, 0].wca.get_params() = {system.non_bonded_inter[0, 0].wca.get_params()}")
 
 # test "system.part"
 print("\n### system.part test ###")
-print("system.part[:].pos = {}".format(system.part[:].pos))
+print(f"system.part[:].pos = {system.part[:].pos}")
 
 # test "system.thermostat"
 print("\n### system.thermostat test ###")
-print("system.thermostat.get_state() = {}".format(
-    system.thermostat.get_state()))
+print(f"system.thermostat.get_state() = {system.thermostat.get_state()}")
 
 # test "p3m"
 print("\n### p3m test ###")
-print("p3m.get_params() = {}".format(p3m.get_params()))
+print(f"p3m.get_params() = {p3m.get_params()}")
 
 
 # test registered objects
 # all objects that are registered when writing a checkpoint are
 # automatically registered after loading this checkpoint
 print("\n### checkpoint register test ###")
-print("checkpoint.get_registered_objects() = {}".format(
-    checkpoint.get_registered_objects()))
+print(
+    f"checkpoint.get_registered_objects() = {checkpoint.get_registered_objects()}")
 
 
 # integrate system

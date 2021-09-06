@@ -113,6 +113,11 @@ widom.add_reaction(reactant_types=[],
 print(widom.get_status())
 system.setup_type_map([0, 1, 2])
 
+
+# Set the hidden particle type to the lowest possible number to speed
+# up the simulation
+widom.set_non_interacting_type(max(types) + 1)
+
 n_iterations = 100
 for i in range(n_iterations):
     for j in range(50):
@@ -124,6 +129,7 @@ for i in range(n_iterations):
         print(f"HA {system.number_of_particles(type=0)}",
               f"A- {system.number_of_particles(type=1)}",
               f"H+ {system.number_of_particles(type=2)}")
+
 
 print("excess chemical potential for an ion pair ",
       widom.measure_excess_chemical_potential(insertion_reaction_id))

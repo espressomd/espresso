@@ -15,7 +15,6 @@
 # serve to show the default.
 
 import sys
-import sphinx
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -228,14 +227,11 @@ htmlhelp_basename = 'ESPResSo'
 
 # -- reStructuredText options ---------------------------------------------
 
-if sphinx.version_info[:2] < (1, 8):
-    autodoc_default_flags = ['members', 'show-inheritance', 'undoc-members']
-else:
-    autodoc_default_options = {
-        'members': None,
-        'show-inheritance': None,
-        'undoc-members': None,
-    }
+autodoc_default_options = {
+    'members': None,
+    'show-inheritance': None,
+    'undoc-members': None,
+}
 # For sidebar toc depth
 rst_prolog = """
 :tocdepth: 3
@@ -254,14 +250,11 @@ napoleon_use_param = False
 # Suppress warnings for features not compiled in
 # http://stackoverflow.com/questions/12206334/sphinx-autosummary-toctree-contains-reference-to-nonexisting-document-warnings
 autodoc_mock_imports = ['featuredefs', 'matplotlib', 'OpenGL', 'mayavi', 'pyface', 'tvtk', 'vtk']
-if sphinx.version_info[:3] < (2, 0, 1):
-    autodoc_mock_imports.append('MDAnalysis')
 
+# Add custom stylesheets
 def setup(app):
-    if sphinx.version_info[:2] < (1, 8):
-        app.add_stylesheet('bibtex.css')
-    else:
-        app.add_css_file('bibtex.css')
+    app.add_css_file('bibtex.css')
+    app.add_css_file('blockquotes.css')
 
 
 # -- Options for Cython ---------------------------------------------------

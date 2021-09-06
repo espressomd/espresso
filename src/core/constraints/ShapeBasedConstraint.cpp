@@ -20,6 +20,7 @@
 #include "ShapeBasedConstraint.hpp"
 
 #include "BoxGeometry.hpp"
+#include "Observable_stat.hpp"
 #include "communication.hpp"
 #include "config.hpp"
 #include "dpd.hpp"
@@ -129,8 +130,7 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
 }
 
 void ShapeBasedConstraint::add_energy(const Particle &p,
-                                      const Utils::Vector3d &folded_pos,
-                                      double t,
+                                      const Utils::Vector3d &folded_pos, double,
                                       Observable_stat &obs_energy) const {
   double energy = 0.0;
 

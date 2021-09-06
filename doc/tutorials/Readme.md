@@ -12,8 +12,8 @@ physical systems.
 * **Simulate a simple Lennard-Jones liquid**  
   Modelling of a single-component and a two-component Lennard-Jones liquid.  
   [Guide](lennard_jones/lennard_jones.ipynb)
-* **Error_analysis**  
-  Statistical analysis of simulation results
+* **Error analysis**  
+  Statistical analysis of simulation results  
   Guide
   [Part 1](error_analysis/error_analysis_part1.ipynb) |
   [Part 2](error_analysis/error_analysis_part2.ipynb)
@@ -26,6 +26,9 @@ physical systems.
 * **Charged systems**  
   Modelling of ion condensation around a charged rod.  
   [Guide](charged_system/charged_system.ipynb)
+* **Langevin dynamics**  
+  Modelling of Brownian motion and measurement of diffusion coefficients.  
+  [Guide](langevin_dynamics/langevin_dynamics.ipynb)
 * **Ferrofluid**  
   Modelling of a monolayer ferrofluid system.  
   Guide
@@ -35,10 +38,11 @@ physical systems.
 * **Lattice-Boltzmann**  
   Simulations including hydrodynamic interactions using the Lattice-Boltzmann method.  
   Guide
-  [Part 1](lattice_boltzmann/lattice_boltzmann_part1.ipynb) |
-  [Part 2](lattice_boltzmann/lattice_boltzmann_part2.ipynb) |
-  [Part 3](lattice_boltzmann/lattice_boltzmann_part3.ipynb) |
-  [Part 4](lattice_boltzmann/lattice_boltzmann_part4.ipynb)
+  [Part 1](lattice_boltzmann/lattice_boltzmann_theory.ipynb) |
+  [Part 2](lattice_boltzmann/lattice_boltzmann_poiseuille_flow.ipynb)
+* **Polymers**  
+  Modelling polymers with hydrodynamic interactions.  
+  [Guide](polymers/polymers.ipynb)
 * **Raspberry electrophoresis**  
   Extended objects in a Lattice-Boltzmann fluid, raspberry particles.  
   [Guide](raspberry_electrophoresis/raspberry_electrophoresis.ipynb)
@@ -114,3 +118,20 @@ This will launch a web browser in which the notebooks for the tutorials can be
 viewed and run. For more details, please see the user guide section on
 [running ESPResSo](https://espressomd.github.io/doc/installation.html#running-es),
 which walks you through the Jupyter interface.
+
+## Video lectures
+
+[comment]: # (Begin of videos landing page)
+
+* [Introduction to ESPResSo](https://www.youtube.com/watch?v=aP4jvpD-D1w)
+* [How to run ESPResSo inside Visual Studio Code](https://www.youtube.com/watch?v=dlvF1Zk3AAs)
+* [Error Estimation in Time-Correlated Data](https://www.youtube.com/watch?v=I-HCxj9dUIU)
+* [Electrostatic Algorithms](https://www.youtube.com/watch?v=YPryFf7MQTg)
+* [Introduction to Charged Soft Matter](https://www.youtube.com/watch?v=wrnDg-3j2ik)
+* [Managing Simulation Data](https://www.youtube.com/watch?v=64rNmTpoS1c)
+* [Introduction to Ferrofluids](https://www.youtube.com/watch?v=wbL3EdVCbkI)
+* [Molecular Modelling of Polymers](https://www.youtube.com/watch?v=vSF5-eciwms)
+* [Simulating Chemical Reactions in ESPResSo](https://www.youtube.com/watch?v=MUG-PSaMFVM)
+* [Introduction to Lattice Boltzmann Method](https://www.youtube.com/watch?v=jfk4feD7rFQ)
+
+[comment]: # (End of videos landing page)

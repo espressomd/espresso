@@ -29,9 +29,16 @@ class ReactionEnsembleTest(ut.TestCase):
 
     N0 = 40
     c0 = 0.00028
-    type_HA = 0
-    type_A = 1
-    type_H = 5
+    types = {
+        "HA": 0,
+        "A-": 1,
+        "H+": 5,
+    }
+    charges_dict = {
+        types["HA"]: 0,
+        types["A-"]: -1,
+        types["H+"]: +1,
+    }
     temperature = 1.0
     # choose target alpha not too far from 0.5 to get good statistics in a
     # small number of steps
@@ -51,13 +58,13 @@ class ReactionEnsembleTest(ut.TestCase):
     def setUpClass(cls):
         cls.system.part.add(
             pos=np.random.random((2 * cls.N0, 3)) * cls.system.box_l,
-            type=cls.N0 * [cls.type_A, cls.type_H])
+            type=cls.N0 * [cls.types["A-"], cls.types["H+"]])
 
         cls.RE.add_reaction(
             gamma=cls.Ka,
-            reactant_types=[cls.type_HA],
-            product_types=[cls.type_A, cls.type_H],
-            default_charges={cls.type_HA: 0, cls.type_A: -1, cls.type_H: +1})
+            reactant_types=[cls.types["HA"]],
+            product_types=[cls.types["A-"], cls.types["H+"]],
+            default_charges=cls.charges_dict)
         cls.RE.constant_pH = cls.pH
 
     @classmethod
@@ -66,11 +73,14 @@ class ReactionEnsembleTest(ut.TestCase):
 
     def test_ideal_titration_curve(self):
         N0 = ReactionEnsembleTest.N0
-        type_A = ReactionEnsembleTest.type_A
-        type_H = ReactionEnsembleTest.type_H
-        type_HA = ReactionEnsembleTest.type_HA
+        types = ReactionEnsembleTest.types
         system = ReactionEnsembleTest.system
         RE = ReactionEnsembleTest.RE
+
+        # Set the hidden particle type to the lowest possible number to speed
+        # up the simulation
+        RE.set_non_interacting_type(max(types.values()) + 1)
+
         # chemical warmup - get close to chemical equilibrium before we start
         # sampling
         RE.reaction(40 * N0)
@@ -81,9 +91,9 @@ class ReactionEnsembleTest(ut.TestCase):
         num_samples = 1000
         for _ in range(num_samples):
             RE.reaction(10)
-            average_NH += system.number_of_particles(type=type_H)
-            average_NHA += system.number_of_particles(type=type_HA)
-            average_NA += system.number_of_particles(type=type_A)
+            average_NH += system.number_of_particles(type=types["H+"])
+            average_NHA += system.number_of_particles(type=types["HA"])
+            average_NA += system.number_of_particles(type=types["A-"])
         average_NH /= float(num_samples)
         average_NA /= float(num_samples)
         average_NHA /= float(num_samples)

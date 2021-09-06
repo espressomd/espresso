@@ -34,7 +34,6 @@
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "pressure_inline.hpp"
-#include "reduce_observable_stat.hpp"
 #include "virtual_sites.hpp"
 
 #include "short_range_loop.hpp"
@@ -50,42 +49,30 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <memory>
 #include <utility>
 
-/** Pressure tensor of the system */
-Observable_stat obs_pressure{9};
+static std::shared_ptr<Observable_stat> calculate_pressure_local() {
 
-Observable_stat const &get_obs_pressure() { return obs_pressure; }
-
-/** Calculate long-range virials (P3M, ...). */
-void calc_long_range_virials(const ParticleRange &particles) {
-#ifdef ELECTROSTATICS
-  /* calculate k-space part of electrostatic interaction. */
-  auto const coulomb_pressure = Coulomb::calc_pressure_long_range(particles);
-  boost::copy(coulomb_pressure, obs_pressure.coulomb.begin() + 9);
-#endif
-#ifdef DIPOLES
-  /* calculate k-space part of magnetostatic interaction. */
-  Dipole::calc_pressure_long_range();
-#endif
-}
-
-void pressure_calc() {
-  auto const volume = box_geo.volume();
+  auto obs_pressure_ptr = std::make_shared<Observable_stat>(9);
 
   if (!interactions_sanity_checks())
-    return;
+    return obs_pressure_ptr;
 
-  obs_pressure = Observable_stat{9};
+  auto &obs_pressure = *obs_pressure_ptr;
 
   on_observable_calc();
 
-  for (auto const &p : cell_structure.local_particles()) {
+  auto const volume = box_geo.volume();
+  auto const local_parts = cell_structure.local_particles();
+
+  for (auto const &p : local_parts) {
     add_kinetic_virials(p, obs_pressure);
   }
 
   short_range_loop(
-      [](Particle &p1, int bond_id, Utils::Span<Particle *> partners) {
+      [&obs_pressure](Particle const &p1, int bond_id,
+                      Utils::Span<Particle *> partners) {
         auto const &iaparams = bonded_ia_params[bond_id];
         auto const result = calc_bonded_pressure_tensor(iaparams, p1, partners);
         if (result) {
@@ -100,13 +87,22 @@ void pressure_calc() {
         }
         return true;
       },
-      [](Particle &p1, Particle &p2, Distance const &d) {
+      [&obs_pressure](Particle const &p1, Particle const &p2,
+                      Distance const &d) {
         add_non_bonded_pair_virials(p1, p2, d.vec21, sqrt(d.dist2),
                                     obs_pressure);
       },
       maximal_cutoff(), maximal_cutoff_bonded());
 
-  calc_long_range_virials(cell_structure.local_particles());
+#ifdef ELECTROSTATICS
+  /* calculate k-space part of electrostatic interaction. */
+  auto const coulomb_pressure = Coulomb::calc_pressure_long_range(local_parts);
+  boost::copy(coulomb_pressure, obs_pressure.coulomb.begin() + 9);
+#endif
+#ifdef DIPOLES
+  /* calculate k-space part of magnetostatic interaction. */
+  Dipole::calc_pressure_long_range();
+#endif
 
 #ifdef VIRTUAL_SITES
   if (!obs_pressure.virtual_sites.empty()) {
@@ -117,24 +113,21 @@ void pressure_calc() {
 
   obs_pressure.rescale(volume);
 
-  /* gather data */
-  auto obs_pressure_res = reduce(comm_cart, obs_pressure);
-  if (obs_pressure_res) {
-    std::swap(obs_pressure, *obs_pressure_res);
-  }
+  obs_pressure.mpi_reduce();
+  return obs_pressure_ptr;
 }
 
-void update_pressure_local(int, int) { pressure_calc(); }
+REGISTER_CALLBACK_MASTER_RANK(calculate_pressure_local)
 
-REGISTER_CALLBACK(update_pressure_local)
-
-void update_pressure() { mpi_call_all(update_pressure_local, -1, -1); }
+std::shared_ptr<Observable_stat> calculate_pressure() {
+  return mpi_call(Communication::Result::master_rank, calculate_pressure_local);
+}
 
 Utils::Vector9d observable_compute_pressure_tensor() {
-  update_pressure();
+  auto const obs_pressure = calculate_pressure();
   Utils::Vector9d pressure_tensor{};
   for (std::size_t j = 0; j < 9; j++) {
-    pressure_tensor[j] = obs_pressure.accumulate(0, j);
+    pressure_tensor[j] = obs_pressure->accumulate(0, j);
   }
   return pressure_tensor;
 }

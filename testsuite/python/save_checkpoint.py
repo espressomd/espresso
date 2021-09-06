@@ -28,7 +28,6 @@ import espressomd.accumulators
 import espressomd.observables
 import espressomd.lb
 import espressomd.lbboundaries
-import espressomd.electrokinetics
 import espressomd.shapes
 import espressomd.constraints
 
@@ -70,33 +69,12 @@ if LB_implementation:
     system.actors.add(lbf)
     if 'THERM.LB' in modes:
         system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)
-    if any(espressomd.has_features(i)
-           for i in ["LB_BOUNDARIES", "LB_BOUNDARIES_GPU"]) and n_nodes == 1:
-        if 'EK.GPU' not in modes:
-            system.lbboundaries.add(
-                espressomd.lbboundaries.LBBoundary(shape=espressomd.shapes.Wall(normal=(1, 0, 0), dist=0.5), velocity=(1e-4, 1e-4, 0)))
-            system.lbboundaries.add(
-                espressomd.lbboundaries.LBBoundary(shape=espressomd.shapes.Wall(normal=(-1, 0, 0), dist=-(system.box_l[0] - 0.5)), velocity=(0, 0, 0)))
-
-EK_implementation = None
-if 'EK.GPU' in modes and espressomd.gpu_available(
-) and espressomd.has_features('ELECTROKINETICS'):
-    EK_implementation = espressomd.electrokinetics
-    ek = EK_implementation.Electrokinetics(
-        agrid=0.5,
-        lb_density=26.15,
-        viscosity=1.7,
-        friction=0.0,
-        T=1.1,
-        prefactor=0.88,
-        stencil="linkcentered")
-    ek_species = EK_implementation.Species(
-        density=0.4,
-        D=0.02,
-        valency=0.3,
-        ext_force_density=[0.01, -0.08, 0.06])
-    ek.add_species(ek_species)
-    system.actors.add(ek)
+    if n_nodes == 1 and (espressomd.has_features(
+            "LB_BOUNDARIES") or espressomd.has_features("LB_BOUNDARIES_GPU")):
+        system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(
+            shape=espressomd.shapes.Wall(normal=(1, 0, 0), dist=0.5), velocity=(1e-4, 1e-4, 0)))
+        system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(
+            shape=espressomd.shapes.Wall(normal=(-1, 0, 0), dist=-(system.box_l[0] - 0.5)), velocity=(0, 0, 0)))
 
 p1 = system.part.add(id=0, pos=[1.0] * 3)
 p2 = system.part.add(id=1, pos=[1.0, 1.0, 2.0])
@@ -311,23 +289,6 @@ if LB_implementation:
     # save LB checkpoint file
     lbf_cpt_path = checkpoint.checkpoint_dir + "/lb.cpt"
     lbf.save_checkpoint(lbf_cpt_path, cpt_mode)
-
-if EK_implementation:
-    m = np.pi / 12
-    nx = int(np.round(system.box_l[0] / ek.get_params()["agrid"]))
-    ny = int(np.round(system.box_l[1] / ek.get_params()["agrid"]))
-    nz = int(np.round(system.box_l[2] / ek.get_params()["agrid"]))
-    # Create a 3D grid with deterministic values to fill the LB fluid lattice
-    grid_3D = np.fromfunction(
-        lambda i, j, k: np.cos(i * m) * np.cos(j * m) * np.cos(k * m),
-        (nx, ny, nz), dtype=float)
-    for i in range(nx):
-        for j in range(ny):
-            for k in range(nz):
-                ek_species[i, j, k].density = grid_3D[i, j, k]
-    # save LB checkpoint file
-    ek_cpt_path = checkpoint.checkpoint_dir + "/ek"
-    ek.save_checkpoint(ek_cpt_path)
 
 # save checkpoint file
 checkpoint.save(0)

@@ -166,18 +166,13 @@ std::pair<double, double> Cluster::fractal_dimension(double dr) {
     last_dist = distances[idx];
     if (subcluster_ids.size() == 1)
       continue;
-    double current_rg = radius_of_gyration_subcluster(subcluster_ids);
-    log_pcounts.push_back(log(subcluster_ids.size()));
+    auto const current_rg = radius_of_gyration_subcluster(subcluster_ids);
+    log_pcounts.push_back(log(static_cast<double>(subcluster_ids.size())));
     log_diameters.push_back(log(current_rg * 2.0));
   }
-  // usage: Function: int gsl_fit_linear (const double * x, const size_t
-  // xstride, const double * y, const std::size_t ystride, std::size_t n, double
-  // * c0, double * c1, double * cov00, double * cov01, double * cov11, double *
-  // sumsq)
-  const int n = log_pcounts.size();
   double c0, c1, cov00, cov01, cov11, sumsq;
-  gsl_fit_linear(&log_diameters.front(), 1, &log_pcounts.front(), 1, n, &c0,
-                 &c1, &cov00, &cov01, &cov11, &sumsq);
+  gsl_fit_linear(log_diameters.data(), 1, log_pcounts.data(), 1,
+                 log_pcounts.size(), &c0, &c1, &cov00, &cov01, &cov11, &sumsq);
   double mean_sq_residual = sumsq / static_cast<double>(log_diameters.size());
   return {c1, mean_sq_residual};
 #else

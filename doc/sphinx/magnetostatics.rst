@@ -90,19 +90,19 @@ It is based on :cite:`brodka04a` and the dipolar version of
 
 Usage notes:
 
-  * The non-periodic direction is always the **z-direction**.
+* The non-periodic direction is always the **z-direction**.
 
-  * The method relies on a slab of the simulation box perpendicular to the
-    z-direction not to contain particles. The size in z-direction of this slab
-    is controlled by the ``gap_size`` parameter. The user has to ensure that
-    no particles enter this region by means of constraints or by fixing the
-    particles' z-coordinate. When particles enter the slab of the specified
-    size, an error will be thrown.
+* The method relies on a slab of the simulation box perpendicular to the
+  z-direction not to contain particles. The size in z-direction of this slab
+  is controlled by the ``gap_size`` parameter. The user has to ensure that
+  no particles enter this region by means of constraints or by fixing the
+  particles' z-coordinate. When particles enter the slab of the specified
+  size, an error will be thrown.
 
-  * The method can be tuned using the ``accuracy`` parameter. In contrast to
-    the electrostatic method, it refers to the energy. Furthermore, it is
-    assumed that all dipole moment are as large as the largest of the dipoles
-    in the system.
+* The method can be tuned using the ``accuracy`` parameter. In contrast to
+  the electrostatic method, it refers to the energy. Furthermore, it is
+  assumed that all dipole moment are as large as the largest of the dipoles
+  in the system.
 
 The method is used as follows::
 

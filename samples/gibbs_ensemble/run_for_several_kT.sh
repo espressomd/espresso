@@ -18,7 +18,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-python=$(which python3)
 pypresso=../../build/pypresso
 
 if [ ! -e "${pypresso}" ]
@@ -40,4 +39,4 @@ done
 wait
 
 # Plot the results, create fits
-"${python}" create_fits.py temp_*.dat.gz
+"${pypresso}" create_fits.py temp_*.dat.gz
