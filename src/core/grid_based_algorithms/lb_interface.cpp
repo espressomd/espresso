@@ -528,9 +528,24 @@ lb_lbnode_get_pressure_tensor(const Utils::Vector3i &ind) {
 }
 
 const Utils::Vector6d lb_lbfluid_get_pressure_tensor() {
+#ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
-    throw std::runtime_error("Not implemented yet");
+    auto const gridsize = lb_walberla()->get_grid_dimensions();
+    Utils::Vector6d tensor{};
+    for (int i = 0; i < gridsize[0]; i++) {
+      for (int j = 0; j < gridsize[1]; j++) {
+        for (int k = 0; k < gridsize[2]; k++) {
+          const Utils::Vector3i node{{i, j, k}};
+          tensor += lb_lbnode_get_pressure_tensor(node);
+        }
+      }
+    }
+
+    auto const number_of_nodes = gridsize[0] * gridsize[1] * gridsize[2];
+    tensor /= static_cast<double>(number_of_nodes);
+    return tensor;
   }
+#endif
   throw NoLBActive();
 }
 

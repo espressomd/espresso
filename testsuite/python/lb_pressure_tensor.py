@@ -102,11 +102,10 @@ class TestLBPressureTensor:
         p_avg_expected = np.diag(3 * [DENS * c_s**2 + KT / AGRID**3])
 
         # ... globally,
-#        print(np.mean(self.p_global, axis=0))
-#        print(np.std(self.p_global, axis=0))
-#        self.assert_allclose_matrix(
-#            np.mean(self.p_global, axis=0),
-# p_avg_expected, atol_diag=c_s_lb**2 / 60, atol_offdiag=c_s_lb**2 / 90)
+        self.assert_allclose_matrix(
+            np.mean(self.p_global, axis=0),
+            p_avg_expected, atol_diag=c_s_lb**2 / 6 * 40,
+            atol_offdiag=c_s_lb**2 / 9 * 40)
 
         # ... for two nodes.
         for time_series in [self.p_node0, self.p_node1]:
@@ -142,6 +141,7 @@ class TestLBPressureTensor:
                 self.assertLess(avg_ij, tol_global)
 
 
+@utx.skipIfMissingFeatures("LB_WALBERLA")
 class TestLBPressureTensorCPU(TestLBPressureTensor, ut.TestCase):
 
     def setUp(self):
@@ -150,6 +150,7 @@ class TestLBPressureTensorCPU(TestLBPressureTensor, ut.TestCase):
         self.sample_pressure_tensor()
 
 
+@utx.skipIfMissingFeatures("LB_WALBERLA")
 @utx.skipIfMissingGPU()
 @ut.skipIf(True, "LBFluidWalberlaGPU not implemented yet")  # TODO WALBERLA
 class TestLBPressureTensorGPU(TestLBPressureTensor, ut.TestCase):
