@@ -111,7 +111,7 @@ elif args.shape == "Torus":
         particle_type=0, penetrable=True)
 
 else:
-    raise ValueError("Unknown shape '{}'".format(args.shape))
+    raise ValueError(f"Unknown shape '{args.shape}'")
 
 for i in range(100):
     # place particles outside the shape

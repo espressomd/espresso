@@ -448,6 +448,8 @@ IF LB_WALBERLA:
             mpi_destruct_lb_walberla()
             super()._deactivate_method()
 
+        # TODO WALBERLA: maybe split this method in 2 methods with clear names
+        # like add_vtk_writer_auto_update() and add_vtk_writer_manual()
         def add_vtk_writer(self, identifier, observables, delta_N=0,
                            base_folder='vtk_out', prefix='simulation_step'):
             """
@@ -501,6 +503,18 @@ IF LB_WALBERLA:
             else:
                 obj = VTKOutputManual(*args)
             return obj
+
+    IF CUDA:
+        cdef class LBFluidWalberlaGPU(HydrodynamicInteraction):
+            """
+            Initialize the lattice-Boltzmann method for hydrodynamic flow using
+            waLBerla for the GPU. See :class:`HydrodynamicInteraction` for the
+            list of parameters.
+
+            """
+
+            def __init__(self, *args, **kwargs):
+                raise NotImplementedError("Not implemented yet")
 
 
 cdef class LBFluidRoutines:

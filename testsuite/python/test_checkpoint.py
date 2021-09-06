@@ -486,11 +486,13 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(list(system.part[1].exclusions), [2])
         self.assertEqual(list(system.part[2].exclusions), [0, 1])
 
+    @utx.skipIfMissingFeatures('LB_WALBERLA')
+    @ut.skipIf('LB.ACTIVE.WALBERLA' not in modes, 'waLBerla LBM not in modes')
     @ut.skipIf(not LB or not espressomd.has_features("LB_BOUNDARIES"),
                "Missing features")
     @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
     def test_lb_boundaries(self):
-        # check boundaries agree on all MPI nodes
+        # check boundary objects
         self.assertEqual(len(system.lbboundaries), 2)
         np.testing.assert_allclose(
             np.copy(system.lbboundaries[0].velocity), [1e-4, 1e-4, 0])
@@ -500,11 +502,12 @@ class CheckpointTest(ut.TestCase):
             system.lbboundaries[0].shape, espressomd.shapes.Wall)
         self.assertIsInstance(
             system.lbboundaries[1].shape, espressomd.shapes.Wall)
+        # check boundary flag
         lbf = self.get_active_actor_of_type(espressomd.lb.LBFluidWalberla)
         np.testing.assert_equal(lbf[0, :, :].is_boundary.astype(int), 1)
         np.testing.assert_equal(lbf[-1, :, :].is_boundary.astype(int), 1)
         np.testing.assert_equal(lbf[1:-1, :, :].is_boundary.astype(int), 0)
-        # remove boundaries on all MPI nodes
+        # remove boundaries
         system.lbboundaries.clear()
         self.assertEqual(len(system.lbboundaries), 0)
         # TODO WALBERLA: removing LBBoundaries doesn't reset the fluid flag

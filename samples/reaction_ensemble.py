@@ -63,9 +63,9 @@ types = {
     "H+": 2,
 }
 charge_dict = {
-    0: 0,
-    1: -1,
-    2: +1,
+    types["HA"]: 0,
+    types["A-"]: -1,
+    types["H+"]: +1,
 }
 
 N0 = 50  # number of titratable units
@@ -103,15 +103,16 @@ print(RE.get_status())
 system.setup_type_map(list(types.values()))
 
 
-# Set the hidden particle type to the lowest possible number_of_particles
-# to speed up the simulation
+# Set the hidden particle type to the lowest possible number to speed
+# up the simulation
 RE.set_non_interacting_type(max(types.values()) + 1)
 
 for i in range(10000):
     RE.reaction()
     if i % 100 == 0:
-        print("HA", system.number_of_particles(type=types["HA"]), "A-",
-              system.number_of_particles(type=types["A-"]), "H+", system.number_of_particles(type=types["H+"]))
+        print("HA", system.number_of_particles(type=types["HA"]),
+              "A-", system.number_of_particles(type=types["A-"]),
+              "H+", system.number_of_particles(type=types["H+"]))
 
 print("reaction 0 has acceptance rate: ", RE.get_acceptance_rate_reaction(0))
 print("reaction 1 has acceptance rate: ", RE.get_acceptance_rate_reaction(1))
