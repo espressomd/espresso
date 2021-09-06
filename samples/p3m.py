@@ -168,11 +168,10 @@ pprint.pprint(system.__getstate__())
 #############################################################
 #      Integration                                          #
 #############################################################
-print("\nStart integration: run {} times {} steps"
-      .format(int_n_times, int_steps))
+print(f"\nStart integration: run {int_n_times} times {int_steps} steps")
 
 for i in range(int_n_times):
-    print("run {} at time={:.2f}".format(i, system.time))
+    print(f"run {i} at time={system.time:.2f}")
 
     system.integrator.run(int_steps)
 

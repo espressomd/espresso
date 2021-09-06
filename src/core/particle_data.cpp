@@ -872,7 +872,7 @@ void set_particle_torque_lab(int part, const Utils::Vector3d &torque_lab) {
                       &ParticleForce::torque>(
       part, convert_vector_space_to_body(particle, torque_lab));
 }
-#endif
+#endif // ROTATION
 
 #ifdef THERMOSTAT_PER_PARTICLE
 #ifndef PARTICLE_ANISOTROPY
@@ -907,7 +907,7 @@ void set_particle_ext_torque(int part, const Utils::Vector3d &torque) {
   mpi_update_particle_property<Utils::Vector3d,
                                &ParticleProperties::ext_torque>(part, torque);
 }
-#endif
+#endif // ROTATION
 
 void set_particle_ext_force(int part, const Utils::Vector3d &force) {
   mpi_update_particle_property<Utils::Vector3d, &ParticleProperties::ext_force>(
@@ -918,7 +918,7 @@ void set_particle_fix(int part, uint8_t flag) {
   mpi_update_particle_property<uint8_t, &ParticleProperties::ext_flag>(part,
                                                                        flag);
 }
-#endif
+#endif // EXTERNAL_FORCES
 
 void delete_particle_bond(int part, Utils::Span<const int> bond) {
   mpi_send_update_message(
@@ -1139,7 +1139,7 @@ void auto_exclusions(int distance) {
         change_exclusion(id, j, 0);
   }
 }
-#endif
+#endif // EXCLUSIONS
 
 void init_type_map(int type) {
   type_list_enable = true;
@@ -1228,7 +1228,6 @@ void pointer_to_vs_relative(Particle const *p, int const *&res1,
 #endif
 
 #ifdef DIPOLES
-
 void pointer_to_dipm(Particle const *p, double const *&res) {
   res = &(p->p.dipm);
 }
@@ -1246,7 +1245,7 @@ void pointer_to_ext_torque(Particle const *p, double const *&res2) {
 void pointer_to_fix(Particle const *p, const uint8_t *&res) {
   res = &(p->p.ext_flag);
 }
-#endif
+#endif // EXTERNAL_FORCES
 
 #ifdef THERMOSTAT_PER_PARTICLE
 void pointer_to_gamma(Particle const *p, double const *&res) {
@@ -1263,7 +1262,7 @@ void pointer_to_gamma_rot(Particle const *p, double const *&res) {
   res = &(p->p.gamma_rot);
 #else
   res = p->p.gamma_rot.data(); // array [3]
-#endif // ROTATIONAL_INERTIA
+#endif // PARTICLE_ANISOTROPY
 }
 #endif // ROTATION
 

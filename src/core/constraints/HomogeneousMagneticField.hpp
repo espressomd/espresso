@@ -35,11 +35,11 @@ public:
 
   Utils::Vector3d const &H() const { return m_field; }
 
-  void add_energy(const Particle &p, const Utils::Vector3d &folded_pos,
-                  double t, Observable_stat &energy) const override;
+  void add_energy(const Particle &p, const Utils::Vector3d &, double,
+                  Observable_stat &energy) const override;
 
-  ParticleForce force(const Particle &p, const Utils::Vector3d &folded_pos,
-                      double t) override;
+  ParticleForce force(const Particle &p, const Utils::Vector3d &,
+                      double) override;
 
   bool fits_in_box(Utils::Vector3d const &box) const override { return true; }
 

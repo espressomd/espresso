@@ -226,7 +226,7 @@ class VirtualSites(ut.TestCase):
         gamma = .5
 
         # box
-        l = (n / 6. * np.pi * sigma**3 / phi)**(1. / 3.)
+        l = np.cbrt(n / 6. * np.pi * sigma**3 / phi)
 
         # Setup
         system.box_l = [l, l, l]
@@ -238,7 +238,7 @@ class VirtualSites(ut.TestCase):
 
         # Dumbells consist of 2 virtual lj spheres + central particle w/o interactions
         # For n spheres, n/2 dumbells.
-        for i in range(int(n / 2)):
+        for i in range(n // 2):
             # Type=1, i.e., no lj ia for the center of mass particles
             system.part.add(
                 rotation=(1, 1, 1), id=3 * i, pos=np.random.random(3) * l, type=1,
@@ -283,8 +283,7 @@ class VirtualSites(ut.TestCase):
             # Verify lj forces on the particles. The non-virtual particles are
             # skipped because the forces on them originate from the vss and not
             # the lj interaction
-            tests_common.verify_lj_forces(system, 1E-10, 3 *
-                                          np.arange(int(n / 2), dtype=int))
+            tests_common.verify_lj_forces(system, 1E-10, 3 * np.arange(n // 2))
 
         # Test applying changes
         enegry_pre_change = system.analysis.energy()['total']
@@ -327,10 +326,10 @@ class VirtualSites(ut.TestCase):
 
         # vs relative contrib
         system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
-        p0 = system.part.add(pos=(0, 0, 0), id=0)
-        p1 = system.part.add(pos=(0.1, 0.1, 0.1), id=1, ext_force=(1, 2, 3))
+        p0 = system.part.add(id=0, pos=(0.0, 0.0, 0.0))
+        p1 = system.part.add(id=1, pos=(0.1, 0.1, 0.1), ext_force=(1, 2, 3))
+        p2 = system.part.add(id=2, pos=(0.1, 0.0, 0.0), ext_force=(-1, 0, 0))
         p1.vs_auto_relate_to(p0)
-        p2 = system.part.add(pos=(0.1, 0, 0), id=2, ext_force=(-1, 0, 0))
         p2.vs_auto_relate_to(p0)
         system.integrator.run(0, recalc_forces=True)
         sim_pressure = system.analysis.pressure()

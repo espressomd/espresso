@@ -31,22 +31,22 @@ public:
    *
    * @param[in] p The particle to add the energy for.
    * @param[in] folded_pos Folded position of the particle.
-   * @param[in] t The time at which the energy should be calculated.
+   * @param[in] time The time at which the energy should be calculated.
    * @param[out] energy Energy observable to add this constraint's energy to.
    */
   virtual void add_energy(const Particle &p, const Utils::Vector3d &folded_pos,
-                          double t, Observable_stat &energy) const = 0;
+                          double time, Observable_stat &energy) const = 0;
 
   /**
    * @brief Calculate the force of the constraint on a particle.
    *
    * @param[in] p The particle to calculate the force for.
    * @param[in] folded_pos Folded position of the particle.
-   * @param[in] t The time at which the force should be calculated.
+   * @param[in] time The time at which the force should be calculated.
    * @return The force on the particle.
    */
-  virtual ParticleForce force(const Particle &p,
-                              const Utils::Vector3d &folded_pos, double t) = 0;
+  virtual ParticleForce
+  force(const Particle &p, const Utils::Vector3d &folded_pos, double time) = 0;
 
   /**
    * @brief Check if constraints if compatible with box size.

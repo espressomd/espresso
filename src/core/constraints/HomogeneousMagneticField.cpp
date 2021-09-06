@@ -27,8 +27,7 @@
 namespace Constraints {
 
 ParticleForce HomogeneousMagneticField::force(const Particle &p,
-                                              const Utils::Vector3d &folded_pos,
-                                              double t) {
+                                              const Utils::Vector3d &, double) {
 #if defined(ROTATION) && defined(DIPOLES)
   return {{}, vector_product(p.calc_dip(), m_field)};
 #else
@@ -37,11 +36,10 @@ ParticleForce HomogeneousMagneticField::force(const Particle &p,
 }
 
 void HomogeneousMagneticField::add_energy(const Particle &p,
-                                          const Utils::Vector3d &folded_pos,
-                                          double t,
-                                          Observable_stat &energy) const {
+                                          const Utils::Vector3d &, double,
+                                          Observable_stat &obs_energy) const {
 #ifdef DIPOLES
-  energy.dipolar[0] += -1.0 * m_field * p.calc_dip();
+  obs_energy.dipolar[0] += -1.0 * m_field * p.calc_dip();
 #endif
 }
 

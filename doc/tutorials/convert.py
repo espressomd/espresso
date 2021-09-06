@@ -245,7 +245,7 @@ def handle_ci_case(args):
 
     if args.substitutions or args.execute:
         # substitute global variables
-        cell_separator = '\n##{}\n'.format(uuid.uuid4().hex)
+        cell_separator = f'\n##{uuid.uuid4().hex}\n'
         src = cell_separator.join(get_code_cells(nb))
         new_values = args.substitutions or []
         parameters = dict(x.split('=', 1) for x in new_values)

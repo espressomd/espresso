@@ -75,8 +75,8 @@ system.min_global_cut = max_inter
 principal_moments, principal_axes = espressomd.rotation.diagonalized_inertia_tensor(
     system.part[:].pos, system.part[:].mass)
 # in this simple case, the cluster has principal axes aligned with the box
-print("Principal moments: {}, principal axes tensor: {}".format(
-    principal_moments, principal_axes))
+print(f"Principal moments: {principal_moments}")
+print(f"Principal axes tensor:\n{principal_axes}")
 
 # if we rotate the arms, we have to make sure that we set the quaternion of the
 # center particle accordingly while setting the principal moments of inertia
@@ -96,8 +96,9 @@ for p in system.part:
 principal_moments, principal_axes = espressomd.rotation.diagonalized_inertia_tensor(
     system.part[:].pos, system.part[:].mass)
 # after rotating the whole object the principal axes changed
-print("After rotating: principal moments: {}, principal axes tensor: {}".format(
-    principal_moments, principal_axes))
+print("After rotating:")
+print(f"Principal moments: {principal_moments}")
+print(f"Principal axes tensor:\n{principal_axes}")
 
 # place center bead
 p_center = system.part.add(

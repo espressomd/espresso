@@ -453,9 +453,9 @@ def main():
 
             w = visualizer.specs['window_size']
             visualizer.user_texts = [
-                [[20, w[1] - 20], 'LEFT: {}   RIGHT: {}'.format(Nl, Nr)],
-                [[20, w[1] - 40], 'TEMPERATURE LEFT: {:.0f}   TEMPERATURE RIGHT: {:.0f}'.format(temp_l, temp_r)]]
-            # [[w[0] * 0.5, w[1] - 60], 'GAMMA LEFT: {:0.4f}   GAMMA RIGHT: {:0.4f}'.format( T_to_g(temp_l), T_to_g(temp_r))]]
+                [[20, w[1] - 20], f'LEFT: {Nl}   RIGHT: {Nr}'],
+                [[20, w[1] - 40], f'TEMPERATURE LEFT: {temp_l:.0f}   TEMPERATURE RIGHT: {temp_r:.0f}']]
+            # [[w[0] * 0.5, w[1] - 60], f'GAMMA LEFT: {T_to_g(temp_l):0.4f}   GAMMA RIGHT: {T_to_g(temp_r):0.4f}']]
 
         # TEMP CHANGE COLLISION
         repos_temp_inc = False

@@ -22,7 +22,6 @@ from . cimport analyze
 from libcpp.vector cimport vector  # import std::vector as vector
 import numpy as np
 cimport numpy as np
-import scipy.signal
 from .grid cimport box_geo
 
 from .system import System
@@ -59,6 +58,8 @@ def autocorrelation(time_series):
     (N,) array_like of :obj:`float`
         The time series autocorrelation function.
     """
+    import scipy.signal
+
     def acf_1d(signal, n_with_padding, n):
         acf = scipy.signal.correlate(signal, signal, mode="full", method="fft")
         acf = acf[-n_with_padding:][:n] / (n - np.arange(n))

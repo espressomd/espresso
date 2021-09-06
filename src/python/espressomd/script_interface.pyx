@@ -75,7 +75,7 @@ cdef class PScriptInterface:
         elif policy == "LOCAL":
             policy_ = LOCAL
         else:
-            raise Exception("Unknown policy '{}'.".format(policy))
+            raise Exception(f"Unknown policy '{policy}'.")
 
         if sip:
             sip_ = sip
