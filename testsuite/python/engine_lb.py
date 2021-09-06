@@ -122,12 +122,6 @@ class SwimmerTest():
             np.testing.assert_allclose(
                 np.copy(swimmer.f), force, atol=self.tol)
 
-    def check_fluid_force(self, swimmer):
-        pass
-        # forces on particles are checked
-        # total force on the fluid matches (momentum conservation)
-        # TODO: only thing left to check is the location of the fluid force.
-
 
 @utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
 class SwimmerTestCPU(SwimmerTest, ut.TestCase):

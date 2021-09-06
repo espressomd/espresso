@@ -38,13 +38,13 @@ public:
   const Field &field() const { return impl.field(); }
 
   void add_energy(const Particle &p, const Utils::Vector3d &folded_pos,
-                  double t, Observable_stat &e) const override {
-    e.external_fields[0] += impl.energy(p, folded_pos, t);
+                  double time, Observable_stat &obs_energy) const override {
+    obs_energy.external_fields[0] += impl.energy(p, folded_pos, time);
   }
 
   ParticleForce force(const Particle &p, const Utils::Vector3d &folded_pos,
-                      double t) override {
-    return impl.force(p, folded_pos, t);
+                      double time) override {
+    return impl.force(p, folded_pos, time);
   }
 
   bool fits_in_box(Utils::Vector3d const &box) const override {

@@ -69,13 +69,12 @@ if LB_implementation:
     system.actors.add(lbf)
     if 'THERM.LB' in modes:
         system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)
-    if any(espressomd.has_features(i)
-           for i in ["LB_BOUNDARIES", "LB_BOUNDARIES_GPU"]) and n_nodes == 1:
-        if 'EK.GPU' not in modes:
-            system.lbboundaries.add(
-                espressomd.lbboundaries.LBBoundary(shape=espressomd.shapes.Wall(normal=(1, 0, 0), dist=0.5), velocity=(1e-4, 1e-4, 0)))
-            system.lbboundaries.add(
-                espressomd.lbboundaries.LBBoundary(shape=espressomd.shapes.Wall(normal=(-1, 0, 0), dist=-(system.box_l[0] - 0.5)), velocity=(0, 0, 0)))
+    if n_nodes == 1 and (espressomd.has_features(
+            "LB_BOUNDARIES") or espressomd.has_features("LB_BOUNDARIES_GPU")):
+        system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(
+            shape=espressomd.shapes.Wall(normal=(1, 0, 0), dist=0.5), velocity=(1e-4, 1e-4, 0)))
+        system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(
+            shape=espressomd.shapes.Wall(normal=(-1, 0, 0), dist=-(system.box_l[0] - 0.5)), velocity=(0, 0, 0)))
 
 p1 = system.part.add(id=0, pos=[1.0] * 3)
 p2 = system.part.add(id=1, pos=[1.0, 1.0, 2.0])

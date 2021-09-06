@@ -53,7 +53,7 @@ public:
                          VariantMap const &parameters) override {
     if (method == "get_cluster") {
       // Note: Cluster objects are generated on the fly, to avoid having to
-      // store a script interface object for all clusters (which can by
+      // store a script interface object for all clusters (which can be
       // thousands)
       auto c = std::dynamic_pointer_cast<Cluster>(
           context()->make_shared("ClusterAnalysis::Cluster", {}));
