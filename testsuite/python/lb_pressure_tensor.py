@@ -143,16 +143,17 @@ class TestLBPressureTensor:
 class TestLBPressureTensorCPU(TestLBPressureTensor, ut.TestCase):
 
     def setUp(self):
-        self.lb_class = espressomd.lb.LBFluid
+        self.lb_class = espressomd.lb.LBFluidWalberla
         self.steps = 5000
         self.sample_pressure_tensor()
 
 
 @utx.skipIfMissingGPU()
+@ut.skipIf(True, "LBFluidWalberlaGPU not implemented yet")  # TODO WALBERLA
 class TestLBPressureTensorGPU(TestLBPressureTensor, ut.TestCase):
 
     def setUp(self):
-        self.lb_class = espressomd.lb.LBFluidGPU
+        self.lb_class = espressomd.lb.LBFluidWalberlaGPU
         self.steps = 50000
         self.sample_pressure_tensor()
 

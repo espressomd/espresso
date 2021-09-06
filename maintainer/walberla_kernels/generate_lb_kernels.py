@@ -258,7 +258,8 @@ def __lattice_model(generation_context, class_name, lb_method,
         eq_input_from_input_eqs, dtype=dtype_string, variables_without_prefix=['rho_in', 'u'])
     momentum_density_getter = cqc.output_equations_from_pdfs(
         pdfs_sym, {'density': rho_sym, 'momentum_density': momentum_density_symbols})
-    second_momentum_getter = cqc.output_equations_from_pdfs(pdfs_sym, {'moment2': second_momentum_symbols})
+    second_momentum_getter = cqc.output_equations_from_pdfs(
+        pdfs_sym, {'moment2': second_momentum_symbols})
     constant_suffix = "f" if is_float else ""
 
     required_headers = get_headers(stream_collide_ast)
