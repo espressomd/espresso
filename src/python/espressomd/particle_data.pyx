@@ -2081,6 +2081,14 @@ Set quat and scalar dipole moment (dipm) instead.")
             raise Exception(
                 "select() takes either selection function as positional argument or a set of keyword arguments.")
 
+    def get_anion_slice(self):
+        """ Get all particles with charge -1 """
+        ids = []
+        for p in self:
+            if p.q == -1:
+                ids.append(p.id)
+        return ParticleSlice(ids)
+
 
 def set_slice_one_for_all(particle_slice, attribute, values):
     for i in particle_slice.id_selection:
