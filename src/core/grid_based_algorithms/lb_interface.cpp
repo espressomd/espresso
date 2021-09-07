@@ -23,17 +23,11 @@
 #include "config.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
-#include "integrate.hpp"
 #include "lb_boundaries.hpp"
-#include "lb_constants.hpp"
-#include "lb_interpolation.hpp"
 #include "lb_walberla_instance.hpp"
 #include "lb_walberla_interface.hpp"
 
-#include <utils/Counter.hpp>
 #include <utils/Vector.hpp>
-#include <utils/index.hpp>
-using Utils::get_linear_index;
 
 #include <boost/serialization/vector.hpp>
 
@@ -44,7 +38,6 @@ using Utils::get_linear_index;
 #include <functional>
 #include <iostream>
 #include <limits>
-#include <memory>
 #include <sstream>
 #include <stdexcept>
 #include <string>

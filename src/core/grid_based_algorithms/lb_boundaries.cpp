@@ -27,26 +27,16 @@
 
 #include "grid_based_algorithms/lb_boundaries.hpp"
 
-#include "communication.hpp"
-#include "errorhandling.hpp"
 #include "event.hpp"
-#include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_walberla_instance.hpp"
 #include "lbboundaries/LBBoundary.hpp"
-
-#include <utils/index.hpp>
-
-#include <boost/range/adaptor/reversed.hpp>
-#include <boost/range/algorithm.hpp>
 
 #include <algorithm>
 #include <cassert>
 #include <iterator>
 #include <memory>
 #include <vector>
-
-using Utils::get_linear_index;
 
 namespace LBBoundaries {
 
