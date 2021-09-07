@@ -42,8 +42,10 @@ using Utils::get_linear_index;
 #include <cstdio>
 #include <fstream>
 #include <functional>
+#include <iostream>
 #include <limits>
 #include <memory>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -108,19 +110,17 @@ void lb_lbfluid_sanity_checks(double time_step) {
     walberla_domain.first *= agrid;
     walberla_domain.second *= agrid;
 
+    auto const my_left = local_geo.my_left();
+    auto const my_right = local_geo.my_right();
     auto const tol = lb_lbfluid_get_agrid() / 1E6;
-    if ((walberla_domain.first - local_geo.my_left()).norm2() > tol or
-        (walberla_domain.second - local_geo.my_right()).norm2() > tol) {
-      printf("%d: %g %g %g, %g %g %g\n", this_node, local_geo.my_left()[0],
-             local_geo.my_left()[1], local_geo.my_left()[2],
-             walberla_domain.first[0], walberla_domain.first[1],
-             walberla_domain.first[2]);
-      printf("%d: %g %g %g, %g %g %g\n", this_node, local_geo.my_right()[0],
-             local_geo.my_right()[1], local_geo.my_right()[2],
-             walberla_domain.second[0], walberla_domain.second[1],
-             walberla_domain.second[2]);
+    if ((walberla_domain.first - my_left).norm2() > tol or
+        (walberla_domain.second - my_right).norm2() > tol) {
+      std::cout << this_node << ": left ESPResSo: [" << my_left << "], "
+                << "left waLBerla: [" << walberla_domain.first << "]\n";
+      std::cout << this_node << ": right ESPResSo: [" << my_right << "], "
+                << "right waLBerla: [" << walberla_domain.second << "]\n";
       throw std::runtime_error(
-          "Walberla and Espresso disagree about domain decomposition.");
+          "waLBerla and ESPResSo disagree about domain decomposition.");
     }
 #endif
   }
@@ -308,7 +308,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
     std::size_t saved_pop_size;
     Utils::Vector3d laf;
     auto const gridsize = lb_walberla()->get_grid_dimensions();
-    int saved_gridsize[3];
+    Utils::Vector3i saved_gridsize;
     if (!binary) {
       res = fscanf(cpfile, "%i %i %i\n%zu\n", &saved_gridsize[0],
                    &saved_gridsize[1], &saved_gridsize[2], &saved_pop_size);
@@ -330,16 +330,13 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
         throw std::runtime_error(err_msg + "incorrectly formatted data.");
       }
     }
-    if (saved_gridsize[0] != gridsize[0] || saved_gridsize[1] != gridsize[1] ||
-        saved_gridsize[2] != gridsize[2]) {
+    if (saved_gridsize != gridsize) {
       fclose(cpfile);
-      throw std::runtime_error(err_msg + "grid dimensions mismatch, read [" +
-                               std::to_string(saved_gridsize[0]) + ' ' +
-                               std::to_string(saved_gridsize[1]) + ' ' +
-                               std::to_string(saved_gridsize[2]) +
-                               "], expected [" + std::to_string(gridsize[0]) +
-                               ' ' + std::to_string(gridsize[1]) + ' ' +
-                               std::to_string(gridsize[2]) + "].");
+      std::stringstream message;
+      message << " grid dimensions mismatch,"
+              << " read [" << saved_gridsize << "],"
+              << " expected [" << gridsize << "].";
+      throw std::runtime_error(err_msg + message.str());
     }
     if (saved_pop_size != pop_size) {
       fclose(cpfile);
@@ -680,7 +677,7 @@ lb_lbfluid_get_force_to_be_applied(const Utils::Vector3d &pos) {
                                      static_cast<int>(pos[2] / agrid)};
     auto const res = lb_walberla()->get_node_force_to_be_applied(ind);
     if (!res) {
-      printf("%d: position: %g %g %g\n", this_node, pos[0], pos[1], pos[2]);
+      std::cout << this_node << ": position: [" << pos << "]\n";
       throw std::runtime_error(
           "Force to be applied could not be obtained from Walberla");
     }
