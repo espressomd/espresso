@@ -17,15 +17,13 @@
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
-from copy import copy
 import itertools
 
 import espressomd
 import espressomd.lb
 import espressomd.observables
 import sys
-
-from tests_common import get_lb_nodes_around_pos
+import tests_common
 
 
 class TestLB:
@@ -275,7 +273,7 @@ class TestLB:
             coupling_pos = p.pos + self.system.time_step * p.v
             v_fluid = self.lbf.get_interpolated_velocity(coupling_pos)
             # Nodes to which forces will be interpolated
-            lb_nodes = get_lb_nodes_around_pos(
+            lb_nodes = tests_common.get_lb_nodes_around_pos(
                 coupling_pos, self.lbf)
 
             self.system.integrator.run(1)
@@ -329,9 +327,9 @@ class TestLB:
             v_fluid1 = self.lbf.get_interpolated_velocity(coupling_pos1)
             v_fluid2 = self.lbf.get_interpolated_velocity(coupling_pos2)
             # Nodes to which forces will be interpolated
-            lb_nodes1 = get_lb_nodes_around_pos(
+            lb_nodes1 = tests_common.get_lb_nodes_around_pos(
                 coupling_pos1, self.lbf)
-            lb_nodes2 = get_lb_nodes_around_pos(
+            lb_nodes2 = tests_common.get_lb_nodes_around_pos(
                 coupling_pos2, self.lbf)
 
             all_coupling_nodes = [self.lbf[index] for index in set(
@@ -466,7 +464,7 @@ class TestLB:
             agrid=self.params['agrid'])
 
         def params_with_tau(tau):
-            params = copy(base_params)
+            params = base_params.copy()
             params.update(tau=tau)
             return params
 
@@ -484,11 +482,12 @@ class TestLB:
         with self.assertRaises(ValueError):
             self.system.actors.add(
                 self.lb_class(**params_with_tau(0.5 * self.system.time_step)))
+        self.system.actors.clear()
         with self.assertRaises(ValueError):
             self.system.actors.add(
-                self.lb_class(params_with_tau(1.1 * self.system.time_step)))
-
+                self.lb_class(**params_with_tau(1.1 * self.system.time_step)))
         self.system.actors.clear()
+
         self.system.actors.add(
             self.lb_class(**params_with_tau(self.system.time_step)))
 
@@ -515,12 +514,6 @@ class TestLBWalberla(TestLB, ut.TestCase):
 
     def setUp(self):
         self.lb_class = espressomd.lb.LBFluidWalberla
-
-    def test_stress_tensor(self):
-        print("stress tensor not implemented for Walberla. skipping test.")
-
-    def test_pressure_tensor_observable(self):
-        print("Not supported by Walberla")
 
 
 if __name__ == "__main__":
