@@ -507,6 +507,15 @@ void lb_lbfluid_switch_vtk(std::string const &vtk_uid, int status) {
   throw NoLBActive();
 }
 
+/** Revert the correction done by waLBerla on off-diagonal terms. */
+inline void walberla_off_diagonal_correction(Utils::Vector6d &tensor) {
+  auto const visc = lb_lbfluid_get_viscosity();
+  auto const revert_factor = visc / (visc + 1.0 / 6.0);
+  tensor[1] *= revert_factor;
+  tensor[3] *= revert_factor;
+  tensor[4] *= revert_factor;
+}
+
 const Utils::Vector6d
 lb_lbnode_get_pressure_tensor(const Utils::Vector3i &ind) {
 #ifdef LB_WALBERLA
@@ -515,20 +524,14 @@ lb_lbnode_get_pressure_tensor(const Utils::Vector3i &ind) {
         ::Communication::Result::one_rank, Walberla::get_node_pressure_tensor,
         ind);
 
-    // reverts the correction done by walberla
-    auto const visc = lb_lbfluid_get_viscosity();
-    auto const revert_factor = visc / (visc + 1.0 / 6.0);
-    tensor[1] *= revert_factor;
-    tensor[3] *= revert_factor;
-    tensor[4] *= revert_factor;
-
+    walberla_off_diagonal_correction(tensor);
     return tensor;
   }
 #endif
   throw NoLBActive();
 }
 
-const Utils::Vector6d lb_lbfluid_get_pressure_tensor() {
+Utils::Vector6d lb_lbfluid_get_pressure_tensor_local() {
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
     auto const gridsize = lb_walberla()->get_grid_dimensions();
@@ -537,13 +540,33 @@ const Utils::Vector6d lb_lbfluid_get_pressure_tensor() {
       for (int j = 0; j < gridsize[1]; j++) {
         for (int k = 0; k < gridsize[2]; k++) {
           const Utils::Vector3i node{{i, j, k}};
-          tensor += lb_lbnode_get_pressure_tensor(node);
+          auto const node_tensor = Walberla::get_node_pressure_tensor(node);
+          if (node_tensor) {
+            tensor += *node_tensor;
+          }
         }
       }
     }
+    return tensor;
+  }
+#endif
+  return {};
+}
 
+REGISTER_CALLBACK_REDUCTION(lb_lbfluid_get_pressure_tensor_local,
+                            std::plus<Utils::Vector6d>())
+
+const Utils::Vector6d lb_lbfluid_get_pressure_tensor() {
+#ifdef LB_WALBERLA
+  if (lattice_switch == ActiveLB::WALBERLA) {
+    auto const gridsize = lb_walberla()->get_grid_dimensions();
     auto const number_of_nodes = gridsize[0] * gridsize[1] * gridsize[2];
+    auto tensor = ::Communication::mpiCallbacks().call(
+        ::Communication::Result::reduction, std::plus<Utils::Vector6d>(),
+        lb_lbfluid_get_pressure_tensor_local);
     tensor /= static_cast<double>(number_of_nodes);
+
+    walberla_off_diagonal_correction(tensor);
     return tensor;
   }
 #endif
