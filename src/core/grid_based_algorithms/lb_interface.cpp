@@ -511,17 +511,18 @@ const Utils::Vector6d
 lb_lbnode_get_pressure_tensor(const Utils::Vector3i &ind) {
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
-    Utils::Vector6d stress = ::Communication::mpiCallbacks().call(
+    Utils::Vector6d tensor = ::Communication::mpiCallbacks().call(
         ::Communication::Result::one_rank, Walberla::get_node_pressure_tensor,
         ind);
 
     // reverts the correction done by walberla
-    //    auto const revert_factor =
-    //        lb_lbfluid_get_viscosity() / (lb_lbfluid_get_viscosity() + 1.0
-    //        / 6.0); stress[1] /= revert_factor; stress[3] /= revert_factor;
-    //        stress[4] /= revert_factor;
+    auto const visc = lb_lbfluid_get_viscosity();
+    auto const revert_factor = visc / (visc + 1.0 / 6.0);
+    tensor[1] *= revert_factor;
+    tensor[3] *= revert_factor;
+    tensor[4] *= revert_factor;
 
-    return stress;
+    return tensor;
   }
 #endif
   throw NoLBActive();
