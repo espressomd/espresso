@@ -16,16 +16,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "lb_interface.hpp"
+
+#include "grid_based_algorithms/lb_interface.hpp"
+#include "grid_based_algorithms/lb_boundaries.hpp"
+#include "grid_based_algorithms/lb_walberla_instance.hpp"
+#include "grid_based_algorithms/lb_walberla_interface.hpp"
+
 #include "BoxGeometry.hpp"
 #include "MpiCallbacks.hpp"
 #include "communication.hpp"
 #include "config.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
-#include "lb_boundaries.hpp"
-#include "lb_walberla_instance.hpp"
-#include "lb_walberla_interface.hpp"
 
 #include <utils/Vector.hpp>
 

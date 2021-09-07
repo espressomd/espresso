@@ -26,10 +26,10 @@
  */
 
 #include "grid_based_algorithms/lb_boundaries.hpp"
-
-#include "event.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_walberla_instance.hpp"
+
+#include "event.hpp"
 #include "lbboundaries/LBBoundary.hpp"
 
 #include <algorithm>

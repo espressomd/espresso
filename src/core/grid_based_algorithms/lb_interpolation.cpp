@@ -17,11 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "grid_based_algorithms/lb_interpolation.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
+#include "grid_based_algorithms/lb_walberla_instance.hpp"
+
 #include "communication.hpp"
 #include "config.hpp"
-#include "grid_based_algorithms/lb_interface.hpp"
-#include "grid_based_algorithms/lb_interpolation.hpp"
-#include "grid_based_algorithms/lb_walberla_instance.hpp"
 
 #include <utils/Vector.hpp>
 
