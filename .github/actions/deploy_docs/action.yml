@@ -33,6 +33,7 @@ runs:
         # HTML theme and Markdown files, then convert them to HTML files
         git merge --quiet --commit --no-edit --allow-unrelated-histories remotes/origin/landing_page
         make tutorials.md
+        make videos.md
         for filename in *.md; do
           make "${filename%.md}.html";
         done
