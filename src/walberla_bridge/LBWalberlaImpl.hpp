@@ -31,7 +31,6 @@
 #include "blockforest/communication/UniformBufferedScheme.h"
 #include "boundary/BoundaryHandling.h"
 #include "field/GhostLayerField.h"
-#include "field/adaptors/GhostLayerFieldAdaptor.h"
 #include "field/vtk/FlagFieldCellFilter.h"
 #include "field/vtk/VTKWriter.h"
 #include "lbm/vtk/all.h"
@@ -40,12 +39,10 @@
 
 #include "field/AddToStorage.h"
 #include "field/FlagField.h"
-#include "field/adaptors/AdaptorCreators.h"
 #include "field/communication/PackInfo.h"
 #include "lbm/boundary/NoSlip.h"
 #include "lbm/boundary/UBB.h"
 #include "lbm/communication/PdfFieldPackInfo.h"
-#include "lbm/field/Adaptors.h"
 #include "lbm/field/AddToStorage.h"
 #include "lbm/field/PdfField.h"
 #include "lbm/sweeps/CellwiseSweep.h"
@@ -525,8 +522,7 @@ public:
   boost::optional<Utils::Vector3d>
   get_node_velocity(const Utils::Vector3i &node,
                     bool consider_ghosts = false) const override {
-    boost::optional<bool> is_boundary =
-        get_node_is_boundary(node, consider_ghosts);
+    auto const is_boundary = get_node_is_boundary(node, consider_ghosts);
     if (is_boundary)    // is info available locally
       if (*is_boundary) // is the node a boundary
         return get_node_velocity_at_boundary(node);
@@ -573,8 +569,9 @@ public:
             auto res = get_node_velocity(
                 Utils::Vector3i{{node[0], node[1], node[2]}}, true);
             if (!res) {
-              printf("Pos: %g %g %g, Node %d %d %d, weight %g\n", pos[0],
-                     pos[1], pos[2], node[0], node[1], node[2], weight);
+              std::cout << "pos [" << pos << "], "
+                        << "node [" << Utils::Vector3i(node) << "], "
+                        << "weight " << weight << "\n";
               throw std::runtime_error("Access to LB velocity field failed.");
             }
             v += *res * weight;
@@ -596,11 +593,11 @@ public:
           // Nodes with zero weight might not be accessible, because they can be
           // outside ghost layers
           if (weight != 0) {
-            auto res =
-                get_node_density(Utils::Vector3i{{node[0], node[1], node[2]}});
+            auto const res = get_node_density(Utils::Vector3i(node));
             if (!res) {
-              printf("Pos: %g %g %g, Node %d %d %d, weight %g\n", pos[0],
-                     pos[1], pos[2], node[0], node[1], node[2], weight);
+              std::cout << "pos [" << pos << "], "
+                        << "node [" << Utils::Vector3i(node) << "], "
+                        << "weight " << weight << "\n";
               throw std::runtime_error("Access to LB density field failed.");
             }
             dens += *res * weight;
