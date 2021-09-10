@@ -30,7 +30,8 @@ private:
   std::shared_ptr<blockforest::StructuredBlockForest> m_blocks;
 
 public:
-  explicit FFT(const WalberlaBlockForest *blockforest) : PS(blockforest) {
+  FFT(const WalberlaBlockForest *blockforest, FloatType permittivity)
+      : PS(blockforest, permittivity) {
     m_blocks = get_blockforest()->get_blocks();
 
     Vector3<uint_t> dim(m_blocks->getNumberOfXCells(),
@@ -50,6 +51,9 @@ public:
         m_blocks, m_potential_field_id, greens);
   }
 
+  using PS::get_permittivity;
+  using PS::set_permittivity;
+
   void reset_charge_field() override {
     // the FFT-solver re-uses the potential field for the charge
     for (auto &block : *get_blockforest()->get_blocks()) {
@@ -59,6 +63,7 @@ public:
   }
 
   void add_charge_to_field(const BlockDataID &id, FloatType valency) override {
+    auto const factor = valency / get_permittivity();
     // the FFT-solver re-uses the potential field for the charge
     for (auto &block : *get_blockforest()->get_blocks()) {
       auto charge_field =
@@ -66,7 +71,7 @@ public:
       auto density_field = block.template getData<ChargeField>(id);
       WALBERLA_FOR_ALL_CELLS_XYZ(charge_field,
                                  charge_field->get(x, y, z) +=
-                                 valency * density_field->get(x, y, z);)
+                                 factor * density_field->get(x, y, z);)
     }
   }
 

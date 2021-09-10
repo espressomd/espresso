@@ -16,7 +16,8 @@ private:
   using PoissonSolver<FloatType>::m_potential_field_id;
 
 public:
-  explicit None(const WalberlaBlockForest *blockforest) : PS(blockforest) {}
+  explicit None(const WalberlaBlockForest *blockforest)
+      : PS(blockforest, 0.0) {}
 
   void reset_charge_field() override {}
 

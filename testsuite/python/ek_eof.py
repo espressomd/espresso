@@ -28,7 +28,8 @@ class EKEOF(ut.TestCase):
         Testing EK for the electroosmotic flow
         """
 
-        eps0 = epsR = 1.0
+        eps0 = 1.0
+        epsR = 80.0
         kT = 1.0
         offset = 1
         d = self.system.box_l[0] - 2 * offset
@@ -49,7 +50,7 @@ class EKEOF(ut.TestCase):
         ekwallcharge = espressomd.EKSpecies.EKSpecies(
             density=0.0, kT=kT, diffusion=0.0, valency=-valency, advection=False, friction_coupling=False, ext_efield=[0, 0, 0])
 
-        eksolver = espressomd.EKSpecies.EKFFT()
+        eksolver = espressomd.EKSpecies.EKFFT(permittivity=eps0 * epsR)
         self.system.ekcontainer.add(ekspecies, tau=1.0, solver=eksolver)
         self.system.ekcontainer.add(ekwallcharge)
 

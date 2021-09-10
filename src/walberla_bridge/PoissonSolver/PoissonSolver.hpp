@@ -12,6 +12,7 @@ namespace walberla {
 template <typename FloatType = double> class PoissonSolver {
 private:
   const WalberlaBlockForest *m_blockforest;
+  FloatType m_permittivity;
 
 protected:
   BlockDataID m_potential_field_id;
@@ -26,8 +27,8 @@ protected:
   std::shared_ptr<FullCommunicator> m_full_communication;
 
 public:
-  explicit PoissonSolver(const WalberlaBlockForest *blockforest)
-      : m_blockforest{blockforest} {
+  PoissonSolver(const WalberlaBlockForest *blockforest, FloatType permittivity)
+      : m_blockforest{blockforest}, m_permittivity{permittivity} {
     m_potential_field_id = field::addToStorage<PotentialField>(
         get_blockforest()->get_blocks(), "potential field", 0.0, field::fzyx,
         get_blockforest()->get_ghost_layers());
@@ -51,6 +52,10 @@ public:
   [[nodiscard]] const WalberlaBlockForest *get_blockforest() const {
     return m_blockforest;
   };
+  void set_permittivity(FloatType permittivity) {
+    m_permittivity = permittivity;
+  }
+  [[nodiscard]] FloatType get_permittivity() const { return m_permittivity; }
 
   virtual void solve() = 0;
   void ghost_communication() { (*m_full_communication)(); };
