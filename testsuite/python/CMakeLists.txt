@@ -241,6 +241,7 @@ python_test(FILE npt_thermostat.py MAX_NUM_PROC 4)
 python_test(FILE box_geometry.py MAX_NUM_PROC 1)
 python_test(FILE ek_diffusion.py MAX_NUM_PROC 1)
 python_test(FILE ek_noflux.py MAX_NUM_PROC 1)
+python_test(FILE ek_eof.py MAX_NUM_PROC 1)
 
 add_custom_target(
   python_test_data
