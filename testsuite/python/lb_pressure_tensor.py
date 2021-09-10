@@ -127,8 +127,8 @@ class TestLBPressureTensor:
                 self.assertEqual(avg_node0_ij, avg_node0_ji)
                 self.assertEqual(avg_node1_ij, avg_node1_ji)
 
-                self.assertLess(avg_node0_ij, tol_node)
-                self.assertLess(avg_node1_ij, tol_node)
+                self.assertAlmostEqual(avg_node0_ij, 0., delta=tol_node)
+                self.assertAlmostEqual(avg_node1_ij, 0., delta=tol_node)
 
         # ... for the system-wide pressure tensor
         for i in range(3):
@@ -137,7 +137,7 @@ class TestLBPressureTensor:
                 avg_ji = np.average(self.p_global[:, j, i])
                 self.assertEqual(avg_ij, avg_ji)
 
-                self.assertLess(avg_ij, tol_global)
+                self.assertAlmostEqual(avg_ij, 0., delta=tol_node)
 
 
 class TestLBPressureTensorCPU(TestLBPressureTensor, ut.TestCase):
