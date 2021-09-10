@@ -959,12 +959,15 @@ stress_modes(LB_rho_v_gpu const &rho_v, const Utils::Array<float, 19> &modes) {
   return res;
 }
 
-// Transform the stress tensor components according to the modes that
-// correspond to those used by U. Schiller. In terms of populations this
-// expression then corresponds exactly to those in eq. (116)-(121) in
-// @cite dunweg07a, when these are written out in populations.
-// But to ensure this, the expression in Schiller's modes has to be
-// different!
+/** Calculate the stress tensor.
+ *  Transform the stress tensor components according to the modes that
+ *  correspond to those used by U. Schiller. In terms of populations this
+ *  expression then corresponds exactly to those in eq. (116)-(121) in
+ *  @cite dunweg07a, when these are written out in populations.
+ *  But to ensure this, the expression in Schiller's modes has to be
+ *  different!
+ *  @param[in]  modes   Local register values modes
+ */
 __device__ Utils::Array<float, 6>
 stress_from_stress_modes(Utils::Array<float, 19> const &modes) {
   return {(2.0f * (modes[0] + modes[4]) + modes[6] + 3.0f * modes[5]) / 6.0f,
@@ -977,7 +980,7 @@ stress_from_stress_modes(Utils::Array<float, 19> const &modes) {
 
 /** Calculate hydrodynamic fields in LB units
  *  @param[in]  n_a     Local node residing in array a for boundary flag
- *  @param[out] modes    Local register values modes
+ *  @param[in]  modes   Local register values modes
  *  @param[out] d_p_v   Local print values
  *  @param[out] d_v     Local device values
  *  @param[in]  node_f  Local node force
