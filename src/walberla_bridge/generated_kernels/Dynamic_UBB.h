@@ -428,6 +428,7 @@ private:
   void run_impl(IBlock *block, IndexVectors::Type type);
 
   BlockDataID indexVectorID;
+public:
   std::function<Vector3<real_t>(
       const Cell &, const shared_ptr<StructuredBlockForest> &, IBlock &)>
       elementInitaliser;

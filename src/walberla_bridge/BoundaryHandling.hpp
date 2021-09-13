@@ -101,7 +101,10 @@ public:
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b) {
       flag_reset_kernel(&*b);
     }
-    ubb_generate_sweep();
+    // instantiate the boundary sweep
+    std::function callback = m_callback;
+    m_boundary =
+        std::make_shared<lbm::Dynamic_UBB>(m_blocks, m_pdf_field_id, callback);
   }
 
   void operator()(IBlock *block) { (*m_boundary)(block); }
@@ -140,16 +143,8 @@ private:
   DynamicVelocityCallback m_callback;
   std::shared_ptr<lbm::Dynamic_UBB> m_boundary;
 
-  /** Instantiate the boundary sweep. */
-  void ubb_generate_sweep() {
-    std::function callback = m_callback;
-    m_boundary =
-        std::make_shared<lbm::Dynamic_UBB>(m_blocks, m_pdf_field_id, callback);
-  }
-
   /** Assign velocity boundary conditions to boundary cells. */
   void ubb_update() {
-    ubb_generate_sweep();
     m_boundary->fillFromFlagField<FlagField>(m_blocks, m_flag_field_id,
                                              Boundary_flag, Domain_flag);
   }
