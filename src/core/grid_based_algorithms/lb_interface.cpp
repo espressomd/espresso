@@ -288,6 +288,15 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
 #endif
 }
 
+inline auto message_dim_mismatch(Utils::Vector3i const &saved_gridsize,
+                                 Utils::Vector3i const &gridsize) {
+  std::stringstream message;
+  message << " grid dimensions mismatch,"
+          << " read [" << saved_gridsize << "],"
+          << " expected [" << gridsize << "].";
+  return message.str();
+}
+
 void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
   int res;
   std::string err_msg = "Error while reading LB checkpoint: ";
