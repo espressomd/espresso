@@ -245,7 +245,6 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
       cpfile << std::fixed;
     }
 
-    double laf[3];
     auto const gridsize = lb_walberla()->get_grid_dimensions();
     auto const pop_size = lb_walberla()->stencil_size();
     std::vector<double> pop(pop_size);
@@ -286,15 +285,6 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
     cpfile.close();
   }
 #endif
-}
-
-inline auto message_dim_mismatch(Utils::Vector3i const &saved_gridsize,
-                                 Utils::Vector3i const &gridsize) {
-  std::stringstream message;
-  message << " grid dimensions mismatch,"
-          << " read [" << saved_gridsize << "],"
-          << " expected [" << gridsize << "].";
-  return message.str();
 }
 
 void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
