@@ -34,14 +34,14 @@
 #include "lbgpu.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/index.hpp>
-using Utils::get_linear_index;
 
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <fstream>
+#include <iostream>
 #include <limits>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -676,8 +676,7 @@ void lb_lbfluid_print_velocity(const std::string &filename) {
     std::vector<LB_rho_v_pi_gpu> host_values(lbpar_gpu.number_of_nodes);
     lb_get_values_GPU(host_values.data());
     Utils::Vector3i xyz;
-    int j;
-    for (j = 0; j < int(lbpar_gpu.number_of_nodes); ++j) {
+    for (int j = 0; j < static_cast<int>(lbpar_gpu.number_of_nodes); ++j) {
       xyz[0] = j % lbpar_gpu.dim[0];
       auto k = j / lbpar_gpu.dim[0];
       xyz[1] = k % lbpar_gpu.dim[1];
@@ -711,31 +710,31 @@ void lb_lbfluid_print_velocity(const std::string &filename) {
 void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
-    std::vector<float> host_checkpoint_vd(19 * lbpar_gpu.number_of_nodes);
+    std::fstream cpfile;
+    if (binary) {
+      cpfile.open(filename, std::ios::out | std::ios::binary);
+    } else {
+      cpfile.open(filename, std::ios::out);
+      cpfile.precision(8);
+      cpfile << std::fixed;
+    }
+
+    auto const gridsize = lb_lbfluid_get_shape();
+    auto const data_length = lbpar_gpu.number_of_nodes * D3Q19::n_vel;
+    std::vector<float> host_checkpoint_vd(data_length);
     lb_save_checkpoint_GPU(host_checkpoint_vd.data());
     if (!binary) {
-      std::fstream cpfile(filename, std::ios::out);
-      cpfile << std::fixed;
-      cpfile.precision(8);
-      cpfile << lbpar_gpu.dim[0] << " ";
-      cpfile << lbpar_gpu.dim[1] << " ";
-      cpfile << lbpar_gpu.dim[2] << "\n";
-      for (int n = 0; n < (19 * int(lbpar_gpu.number_of_nodes)); n++) {
+      cpfile << gridsize[0] << " " << gridsize[1] << " " << gridsize[2] << "\n";
+      for (std::size_t n = 0; n < data_length; n++) {
         cpfile << host_checkpoint_vd[n] << "\n";
       }
-      cpfile.close();
     } else {
-      std::fstream cpfile(filename, std::ios::out | std::ios::binary);
-      cpfile.write(reinterpret_cast<char *>(&lbpar_gpu.dim[0]),
-                   sizeof(lbpar_gpu.dim[0]));
-      cpfile.write(reinterpret_cast<char *>(&lbpar_gpu.dim[1]),
-                   sizeof(lbpar_gpu.dim[1]));
-      cpfile.write(reinterpret_cast<char *>(&lbpar_gpu.dim[2]),
-                   sizeof(lbpar_gpu.dim[2]));
+      cpfile.write(reinterpret_cast<const char *>(gridsize.data()),
+                   3 * sizeof(gridsize[0]));
       cpfile.write(reinterpret_cast<char *>(host_checkpoint_vd.data()),
-                   19 * sizeof(float) * lbpar_gpu.number_of_nodes);
-      cpfile.close();
+                   data_length * sizeof(float));
     }
+    cpfile.close();
 #endif //  CUDA
   } else if (lattice_switch == ActiveLB::CPU) {
     std::fstream cpfile;
@@ -748,7 +747,6 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
     }
 
     auto const gridsize = lblattice.global_grid;
-
     if (!binary) {
       cpfile << gridsize[0] << " " << gridsize[1] << " " << gridsize[2] << "\n";
     } else {
@@ -767,7 +765,7 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
               cpfile << p << "\n";
             }
           } else {
-            cpfile.write(reinterpret_cast<const char *>(&pop[0]),
+            cpfile.write(reinterpret_cast<const char *>(pop.data()),
                          pop.size() * sizeof(double));
           }
         }
@@ -775,6 +773,15 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
     }
     cpfile.close();
   }
+}
+
+inline auto message_dim_mismatch(Utils::Vector3i const &saved_gridsize,
+                                 Utils::Vector3i const &gridsize) {
+  std::stringstream message;
+  message << " grid dimensions mismatch,"
+          << " read [" << saved_gridsize << "],"
+          << " expected [" << gridsize << "].";
+  return message.str();
 }
 
 void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
@@ -787,9 +794,11 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
     if (!cpfile) {
       throw std::runtime_error(err_msg + "could not open file for reading.");
     }
-    std::vector<float> host_checkpoint_vd(lbpar_gpu.number_of_nodes * 19);
+    auto const gridsize = lb_lbfluid_get_shape();
+    auto const data_length = lbpar_gpu.number_of_nodes * D3Q19::n_vel;
+    std::vector<float> host_checkpoint_vd(data_length);
+    Utils::Vector3i saved_gridsize;
     if (!binary) {
-      int saved_gridsize[3];
       for (int &n : saved_gridsize) {
         res = fscanf(cpfile, "%i", &n);
         if (res == EOF) {
@@ -801,20 +810,12 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
           throw std::runtime_error(err_msg + "incorrectly formatted data.");
         }
       }
-      if (saved_gridsize[0] != lbpar_gpu.dim[0] ||
-          saved_gridsize[1] != lbpar_gpu.dim[1] ||
-          saved_gridsize[2] != lbpar_gpu.dim[2]) {
+      if (saved_gridsize != gridsize) {
         fclose(cpfile);
-        throw std::runtime_error(err_msg + "grid dimensions mismatch, read [" +
-                                 std::to_string(saved_gridsize[0]) + ' ' +
-                                 std::to_string(saved_gridsize[1]) + ' ' +
-                                 std::to_string(saved_gridsize[2]) +
-                                 "], expected [" +
-                                 std::to_string(lbpar_gpu.dim[0]) + ' ' +
-                                 std::to_string(lbpar_gpu.dim[1]) + ' ' +
-                                 std::to_string(lbpar_gpu.dim[2]) + "].");
+        auto const message = message_dim_mismatch(saved_gridsize, gridsize);
+        throw std::runtime_error(err_msg + message);
       }
-      for (int n = 0; n < (19 * int(lbpar_gpu.number_of_nodes)); n++) {
+      for (std::size_t n = 0; n < data_length; n++) {
         res = fscanf(cpfile, "%f", &host_checkpoint_vd[n]);
         if (res == EOF) {
           fclose(cpfile);
@@ -826,27 +827,17 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
         }
       }
     } else {
-      Utils::Vector3i saved_gridsize;
       if (fread(saved_gridsize.data(), sizeof(int), 3, cpfile) != 3) {
         fclose(cpfile);
         throw std::runtime_error(err_msg + "incorrectly formatted data.");
       }
-      if (saved_gridsize[0] != lbpar_gpu.dim[0] ||
-          saved_gridsize[1] != lbpar_gpu.dim[1] ||
-          saved_gridsize[2] != lbpar_gpu.dim[2]) {
+      if (saved_gridsize != gridsize) {
         fclose(cpfile);
-        throw std::runtime_error(err_msg + "grid dimensions mismatch, read [" +
-                                 std::to_string(saved_gridsize[0]) + ' ' +
-                                 std::to_string(saved_gridsize[1]) + ' ' +
-                                 std::to_string(saved_gridsize[2]) +
-                                 "], expected [" +
-                                 std::to_string(lbpar_gpu.dim[0]) + ' ' +
-                                 std::to_string(lbpar_gpu.dim[1]) + ' ' +
-                                 std::to_string(lbpar_gpu.dim[2]) + "].");
+        auto const message = message_dim_mismatch(saved_gridsize, gridsize);
+        throw std::runtime_error(err_msg + message);
       }
-      if (fread(host_checkpoint_vd.data(), sizeof(float),
-                19 * int(lbpar_gpu.number_of_nodes),
-                cpfile) != (unsigned int)(19 * lbpar_gpu.number_of_nodes)) {
+      if (fread(host_checkpoint_vd.data(), sizeof(float), data_length,
+                cpfile) != data_length) {
         fclose(cpfile);
         throw std::runtime_error(err_msg + "incorrectly formatted data.");
       }
@@ -875,8 +866,8 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
       throw std::runtime_error(err_msg + "could not open file for reading.");
     }
 
-    auto const gridsize = lblattice.global_grid;
-    int saved_gridsize[3];
+    auto const gridsize = lb_lbfluid_get_shape();
+    Utils::Vector3i saved_gridsize;
     mpi_bcast_lb_params(LBParam::DENSITY);
 
     if (!binary) {
@@ -896,16 +887,10 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
         throw std::runtime_error(err_msg + "incorrectly formatted data.");
       }
     }
-    if (saved_gridsize[0] != gridsize[0] || saved_gridsize[1] != gridsize[1] ||
-        saved_gridsize[2] != gridsize[2]) {
+    if (saved_gridsize != gridsize) {
       fclose(cpfile);
-      throw std::runtime_error(err_msg + "grid dimensions mismatch, read [" +
-                               std::to_string(saved_gridsize[0]) + ' ' +
-                               std::to_string(saved_gridsize[1]) + ' ' +
-                               std::to_string(saved_gridsize[2]) +
-                               "], expected [" + std::to_string(gridsize[0]) +
-                               ' ' + std::to_string(gridsize[1]) + ' ' +
-                               std::to_string(gridsize[2]) + "].");
+      auto const message = message_dim_mismatch(saved_gridsize, gridsize);
+      throw std::runtime_error(err_msg + message);
     }
 
     for (int i = 0; i < gridsize[0]; i++) {
@@ -1113,11 +1098,11 @@ int lb_lbnode_get_boundary(const Utils::Vector3i &ind) {
 const Utils::Vector19d lb_lbnode_get_pop(const Utils::Vector3i &ind) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
-    float population[19];
+    float population[D3Q19::n_vel];
 
     lb_lbfluid_get_population(ind, population);
     Utils::Vector19d p_pop;
-    for (int i = 0; i < LBQ; ++i)
+    for (std::size_t i = 0; i < D3Q19::n_vel; ++i)
       p_pop[i] = static_cast<double>(population[i]);
     return p_pop;
 #else
@@ -1180,9 +1165,9 @@ void lb_lbnode_set_pop(const Utils::Vector3i &ind,
                        const Utils::Vector19d &p_pop) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
-    float population[19];
+    float population[D3Q19::n_vel];
 
-    for (int i = 0; i < LBQ; ++i)
+    for (std::size_t i = 0; i < D3Q19::n_vel; ++i)
       population[i] = static_cast<float>(p_pop[i]);
 
     lb_lbfluid_set_population(ind, population);
