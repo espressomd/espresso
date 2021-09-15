@@ -287,6 +287,14 @@ BOOST_AUTO_TEST_CASE(vector_product_test) {
   BOOST_CHECK_SMALL(std::abs(v2 * res), 1e-14);
 }
 
+BOOST_AUTO_TEST_CASE(product_test) {
+  auto const v1 = Utils::Vector<int, 2>{8, -9};
+  auto const v2 = Utils::Vector<int, 2>{0, 6};
+
+  BOOST_CHECK_EQUAL(Utils::product(v1), -8 * 9);
+  BOOST_CHECK_EQUAL(Utils::product(v2), 0);
+}
+
 BOOST_AUTO_TEST_CASE(hadamard_product_test) {
   auto const v1 = Utils::Vector<int, 2>{8, 9};
   auto const v2 = Utils::Vector<int, 2>{5, 6};
