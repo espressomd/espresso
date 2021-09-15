@@ -16,7 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "lb_particle_coupling.hpp"
 #include "LocalBox.hpp"
 #include "Particle.hpp"
 #include "cells.hpp"
@@ -24,10 +23,11 @@
 #include "config.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
-#include "integrate.hpp"
-#include "lb_interface.hpp"
-#include "lb_interpolation.hpp"
 #include "random.hpp"
+
+#include "grid_based_algorithms/lb_interface.hpp"
+#include "grid_based_algorithms/lb_interpolation.hpp"
+#include "grid_based_algorithms/lb_particle_coupling.hpp"
 
 #include <profiler/profiler.hpp>
 #include <utils/Counter.hpp>
@@ -39,7 +39,6 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
-#include <iostream>
 #include <stdexcept>
 #include <utility>
 
@@ -275,7 +274,6 @@ void couple_particle(Particle &p, bool couple_virtual, double noise_amplitude,
   if (p.p.is_virtual and not couple_virtual)
     return;
 
-  //  std::cout << "Coupling "<<p.r.p<<std::endl;
   /* Particles within one agrid of the outermost lattice point
    * of the lb domain can contribute forces to the local lb due to
    * interpolation on neighboring LB nodes. If the particle

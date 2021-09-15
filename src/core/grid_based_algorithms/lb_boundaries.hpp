@@ -42,9 +42,6 @@
 
 #include "config.hpp"
 
-#include <utils/Span.hpp>
-
-#include <array>
 #include <memory>
 #include <vector>
 

@@ -128,7 +128,7 @@ python_test(FILE constant_pH.py MAX_NUM_PROC 1)
 python_test(FILE constant_pH_stats.py MAX_NUM_PROC 4 LABELS long)
 python_test(FILE writevtf.py MAX_NUM_PROC 4)
 # python_test(FILE lb_stokes_sphere.py MAX_NUM_PROC 8 LABELS gpu long) # TODO WALBERLA
-# python_test(FILE lb_pressure_tensor.py MAX_NUM_PROC 1 LABELS gpu long) # TODO WALBERLA
+python_test(FILE lb_pressure_tensor.py MAX_NUM_PROC 1 LABELS gpu long)
 # python_test(FILE ek_fluctuations.py MAX_NUM_PROC 1 LABELS gpu) # TODO WALBERLA
 # python_test(FILE ek_charged_plate.py MAX_NUM_PROC 1 LABELS gpu) # TODO WALBERLA
 # python_test(FILE ek_eof_one_species.py MAX_NUM_PROC 1 LABELS gpu SUFFIX x) # TODO WALBERLA

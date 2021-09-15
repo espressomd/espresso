@@ -31,8 +31,8 @@ if has_features(["LB_BOUNDARIES"]):
 
         def add(self, *args, **kwargs):
             """
-            Adds a boundary to the set.
-            Either a valid boundary is an argument,
+            Adds a boundary to the set of boundaries.
+            Either pass a valid boundary as argument,
             or a valid set of parameters to create a boundary.
 
             """
@@ -55,7 +55,7 @@ if has_features(["LB_BOUNDARIES"]):
             Parameters
             ----------
             lbboundary : :obj:`LBBoundary`
-                         The boundary to be removed from the set.
+                The boundary to be removed from the set.
 
             """
 

@@ -1,5 +1,5 @@
 // kernel generated with pystencils v0.3.3+44.gf2d4181, lbmpy
-// v0.3.3+37.g2faceda, lbmpy_walberla/pystencils_walberla from commit
+// v0.3.1+53.g2faceda, lbmpy_walberla/pystencils_walberla from commit
 // b17ca5caf00db7d19f86c5f85c6f67fec6c16aff
 
 //======================================================================================================================
@@ -970,18 +970,103 @@ template <> struct MomentumDensity<LBWalberlaImpl> {
 
 template <> struct PressureTensor<LBWalberlaImpl> {
   template <typename FieldPtrOrIterator>
-  static void get(Matrix3<real_t> & /* pressureTensor */,
-                  const LBWalberlaImpl & /* latticeModel */,
-                  const FieldPtrOrIterator & /* it */) {
-    WALBERLA_ABORT("Not implemented");
+  static void get(Matrix3<real_t> &pressureTensor, const LBWalberlaImpl &lm,
+                  const FieldPtrOrIterator &it) {
+    const auto x = it.x();
+    const auto y = it.y();
+    const auto z = it.z();
+
+    const real_t f_0 = it[0];
+    const real_t f_1 = it[1];
+    const real_t f_2 = it[2];
+    const real_t f_3 = it[3];
+    const real_t f_4 = it[4];
+    const real_t f_5 = it[5];
+    const real_t f_6 = it[6];
+    const real_t f_7 = it[7];
+    const real_t f_8 = it[8];
+    const real_t f_9 = it[9];
+    const real_t f_10 = it[10];
+    const real_t f_11 = it[11];
+    const real_t f_12 = it[12];
+    const real_t f_13 = it[13];
+    const real_t f_14 = it[14];
+    const real_t f_15 = it[15];
+    const real_t f_16 = it[16];
+    const real_t f_17 = it[17];
+    const real_t f_18 = it[18];
+    const double p_0 =
+        f_10 + f_13 + f_14 + f_17 + f_18 + f_3 + f_4 + f_7 + f_8 + f_9;
+    const double p_1 = -f_10 - f_7 + f_8 + f_9;
+    const double p_2 = -f_13 + f_14 + f_17 - f_18;
+    const double p_3 = -f_10 - f_7 + f_8 + f_9;
+    const double p_4 =
+        f_1 + f_10 + f_11 + f_12 + f_15 + f_16 + f_2 + f_7 + f_8 + f_9;
+    const double p_5 = f_11 - f_12 - f_15 + f_16;
+    const double p_6 = -f_13 + f_14 + f_17 - f_18;
+    const double p_7 = f_11 - f_12 - f_15 + f_16;
+    const double p_8 =
+        f_11 + f_12 + f_13 + f_14 + f_15 + f_16 + f_17 + f_18 + f_5 + f_6;
+    pressureTensor[0] = p_0;
+    pressureTensor[1] = p_1;
+    pressureTensor[2] = p_2;
+
+    pressureTensor[3] = p_3;
+    pressureTensor[4] = p_4;
+    pressureTensor[5] = p_5;
+
+    pressureTensor[6] = p_6;
+    pressureTensor[7] = p_7;
+    pressureTensor[8] = p_8;
   }
 
   template <typename PdfField_T>
-  static void get(Matrix3<real_t> & /* pressureTensor */,
-                  const LBWalberlaImpl & /* latticeModel */,
-                  const PdfField_T & /* pdf */, const cell_idx_t /* x */,
-                  const cell_idx_t /* y */, const cell_idx_t /* z */) {
-    WALBERLA_ABORT("Not implemented");
+  static void get(Matrix3<real_t> &pressureTensor, const LBWalberlaImpl &lm,
+                  const PdfField_T &pdf, const cell_idx_t x, const cell_idx_t y,
+                  const cell_idx_t z) {
+    const real_t &xyz0 = pdf(x, y, z, 0);
+    const real_t f_0 = pdf.getF(&xyz0, 0);
+    const real_t f_1 = pdf.getF(&xyz0, 1);
+    const real_t f_2 = pdf.getF(&xyz0, 2);
+    const real_t f_3 = pdf.getF(&xyz0, 3);
+    const real_t f_4 = pdf.getF(&xyz0, 4);
+    const real_t f_5 = pdf.getF(&xyz0, 5);
+    const real_t f_6 = pdf.getF(&xyz0, 6);
+    const real_t f_7 = pdf.getF(&xyz0, 7);
+    const real_t f_8 = pdf.getF(&xyz0, 8);
+    const real_t f_9 = pdf.getF(&xyz0, 9);
+    const real_t f_10 = pdf.getF(&xyz0, 10);
+    const real_t f_11 = pdf.getF(&xyz0, 11);
+    const real_t f_12 = pdf.getF(&xyz0, 12);
+    const real_t f_13 = pdf.getF(&xyz0, 13);
+    const real_t f_14 = pdf.getF(&xyz0, 14);
+    const real_t f_15 = pdf.getF(&xyz0, 15);
+    const real_t f_16 = pdf.getF(&xyz0, 16);
+    const real_t f_17 = pdf.getF(&xyz0, 17);
+    const real_t f_18 = pdf.getF(&xyz0, 18);
+    const double p_0 =
+        f_10 + f_13 + f_14 + f_17 + f_18 + f_3 + f_4 + f_7 + f_8 + f_9;
+    const double p_1 = -f_10 - f_7 + f_8 + f_9;
+    const double p_2 = -f_13 + f_14 + f_17 - f_18;
+    const double p_3 = -f_10 - f_7 + f_8 + f_9;
+    const double p_4 =
+        f_1 + f_10 + f_11 + f_12 + f_15 + f_16 + f_2 + f_7 + f_8 + f_9;
+    const double p_5 = f_11 - f_12 - f_15 + f_16;
+    const double p_6 = -f_13 + f_14 + f_17 - f_18;
+    const double p_7 = f_11 - f_12 - f_15 + f_16;
+    const double p_8 =
+        f_11 + f_12 + f_13 + f_14 + f_15 + f_16 + f_17 + f_18 + f_5 + f_6;
+    pressureTensor[0] = p_0;
+    pressureTensor[1] = p_1;
+    pressureTensor[2] = p_2;
+
+    pressureTensor[3] = p_3;
+    pressureTensor[4] = p_4;
+    pressureTensor[5] = p_5;
+
+    pressureTensor[6] = p_6;
+    pressureTensor[7] = p_7;
+    pressureTensor[8] = p_8;
   }
 };
 

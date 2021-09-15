@@ -17,19 +17,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "lb_interpolation.hpp"
+#include "grid_based_algorithms/lb_interpolation.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
+#include "grid_based_algorithms/lb_walberla_instance.hpp"
 
 #include "communication.hpp"
 #include "config.hpp"
-#include "grid.hpp"
-#include "grid_based_algorithms/lb_interface.hpp"
-#include "grid_based_algorithms/lb_interpolation.hpp"
-#include "grid_based_algorithms/lb_walberla_instance.hpp"
 
 #include <utils/Vector.hpp>
 
-#include <algorithm>
-#include <cstdio>
+#include <iostream>
 #include <stdexcept>
 
 const Utils::Vector3d
@@ -42,7 +39,7 @@ lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
     auto res =
         lb_walberla()->get_velocity_at_pos(pos / lb_lbfluid_get_agrid(), true);
     if (!res) {
-      printf("%d: position: %g %g %g\n", this_node, pos[0], pos[1], pos[2]);
+      std::cout << this_node << ": position: [" << pos << "]\n";
       throw std::runtime_error(
           "Interpolated velocity could not be obtained from Walberla");
     }

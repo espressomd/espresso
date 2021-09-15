@@ -16,24 +16,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "lb_interface.hpp"
+
+#include "grid_based_algorithms/lb_interface.hpp"
+#include "grid_based_algorithms/lb_boundaries.hpp"
+#include "grid_based_algorithms/lb_walberla_instance.hpp"
+#include "grid_based_algorithms/lb_walberla_interface.hpp"
+
 #include "BoxGeometry.hpp"
 #include "MpiCallbacks.hpp"
 #include "communication.hpp"
 #include "config.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
-#include "integrate.hpp"
-#include "lb_boundaries.hpp"
-#include "lb_constants.hpp"
-#include "lb_interpolation.hpp"
-#include "lb_walberla_instance.hpp"
-#include "lb_walberla_interface.hpp"
 
-#include <utils/Counter.hpp>
 #include <utils/Vector.hpp>
-#include <utils/index.hpp>
-using Utils::get_linear_index;
 
 #include <boost/serialization/vector.hpp>
 
@@ -42,8 +38,9 @@ using Utils::get_linear_index;
 #include <cstdio>
 #include <fstream>
 #include <functional>
+#include <iostream>
 #include <limits>
-#include <memory>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -108,19 +105,17 @@ void lb_lbfluid_sanity_checks(double time_step) {
     walberla_domain.first *= agrid;
     walberla_domain.second *= agrid;
 
+    auto const my_left = local_geo.my_left();
+    auto const my_right = local_geo.my_right();
     auto const tol = lb_lbfluid_get_agrid() / 1E6;
-    if ((walberla_domain.first - local_geo.my_left()).norm2() > tol or
-        (walberla_domain.second - local_geo.my_right()).norm2() > tol) {
-      printf("%d: %g %g %g, %g %g %g\n", this_node, local_geo.my_left()[0],
-             local_geo.my_left()[1], local_geo.my_left()[2],
-             walberla_domain.first[0], walberla_domain.first[1],
-             walberla_domain.first[2]);
-      printf("%d: %g %g %g, %g %g %g\n", this_node, local_geo.my_right()[0],
-             local_geo.my_right()[1], local_geo.my_right()[2],
-             walberla_domain.second[0], walberla_domain.second[1],
-             walberla_domain.second[2]);
+    if ((walberla_domain.first - my_left).norm2() > tol or
+        (walberla_domain.second - my_right).norm2() > tol) {
+      std::cout << this_node << ": left ESPResSo: [" << my_left << "], "
+                << "left waLBerla: [" << walberla_domain.first << "]\n";
+      std::cout << this_node << ": right ESPResSo: [" << my_right << "], "
+                << "right waLBerla: [" << walberla_domain.second << "]\n";
       throw std::runtime_error(
-          "Walberla and Espresso disagree about domain decomposition.");
+          "waLBerla and ESPResSo disagree about domain decomposition.");
     }
 #endif
   }
@@ -250,7 +245,6 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
       cpfile << std::fixed;
     }
 
-    double laf[3];
     auto const gridsize = lb_walberla()->get_grid_dimensions();
     auto const pop_size = lb_walberla()->stencil_size();
     std::vector<double> pop(pop_size);
@@ -308,7 +302,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
     std::size_t saved_pop_size;
     Utils::Vector3d laf;
     auto const gridsize = lb_walberla()->get_grid_dimensions();
-    int saved_gridsize[3];
+    Utils::Vector3i saved_gridsize;
     if (!binary) {
       res = fscanf(cpfile, "%i %i %i\n%zu\n", &saved_gridsize[0],
                    &saved_gridsize[1], &saved_gridsize[2], &saved_pop_size);
@@ -330,16 +324,13 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
         throw std::runtime_error(err_msg + "incorrectly formatted data.");
       }
     }
-    if (saved_gridsize[0] != gridsize[0] || saved_gridsize[1] != gridsize[1] ||
-        saved_gridsize[2] != gridsize[2]) {
+    if (saved_gridsize != gridsize) {
       fclose(cpfile);
-      throw std::runtime_error(err_msg + "grid dimensions mismatch, read [" +
-                               std::to_string(saved_gridsize[0]) + ' ' +
-                               std::to_string(saved_gridsize[1]) + ' ' +
-                               std::to_string(saved_gridsize[2]) +
-                               "], expected [" + std::to_string(gridsize[0]) +
-                               ' ' + std::to_string(gridsize[1]) + ' ' +
-                               std::to_string(gridsize[2]) + "].");
+      std::stringstream message;
+      message << " grid dimensions mismatch,"
+              << " read [" << saved_gridsize << "],"
+              << " expected [" << gridsize << "].";
+      throw std::runtime_error(err_msg + message.str());
     }
     if (saved_pop_size != pop_size) {
       fclose(cpfile);
@@ -507,30 +498,69 @@ void lb_lbfluid_switch_vtk(std::string const &vtk_uid, int status) {
   throw NoLBActive();
 }
 
+/** Revert the correction done by waLBerla on off-diagonal terms. */
+inline void walberla_off_diagonal_correction(Utils::Vector6d &tensor) {
+  auto const visc = lb_lbfluid_get_viscosity();
+  auto const revert_factor = visc / (visc + 1.0 / 6.0);
+  tensor[1] *= revert_factor;
+  tensor[3] *= revert_factor;
+  tensor[4] *= revert_factor;
+}
+
 const Utils::Vector6d
 lb_lbnode_get_pressure_tensor(const Utils::Vector3i &ind) {
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
-    Utils::Vector6d stress = ::Communication::mpiCallbacks().call(
+    Utils::Vector6d tensor = ::Communication::mpiCallbacks().call(
         ::Communication::Result::one_rank, Walberla::get_node_pressure_tensor,
         ind);
 
-    // reverts the correction done by walberla
-    //    auto const revert_factor =
-    //        lb_lbfluid_get_viscosity() / (lb_lbfluid_get_viscosity() + 1.0
-    //        / 6.0); stress[1] /= revert_factor; stress[3] /= revert_factor;
-    //        stress[4] /= revert_factor;
-
-    return stress;
+    walberla_off_diagonal_correction(tensor);
+    return tensor;
   }
 #endif
   throw NoLBActive();
 }
 
-const Utils::Vector6d lb_lbfluid_get_pressure_tensor() {
+Utils::Vector6d lb_lbfluid_get_pressure_tensor_local() {
+#ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
-    throw std::runtime_error("Not implemented yet");
+    auto const gridsize = lb_walberla()->get_grid_dimensions();
+    Utils::Vector6d tensor{};
+    for (int i = 0; i < gridsize[0]; i++) {
+      for (int j = 0; j < gridsize[1]; j++) {
+        for (int k = 0; k < gridsize[2]; k++) {
+          const Utils::Vector3i node{{i, j, k}};
+          auto const node_tensor = Walberla::get_node_pressure_tensor(node);
+          if (node_tensor) {
+            tensor += *node_tensor;
+          }
+        }
+      }
+    }
+    return tensor;
   }
+#endif
+  return {};
+}
+
+REGISTER_CALLBACK_REDUCTION(lb_lbfluid_get_pressure_tensor_local,
+                            std::plus<Utils::Vector6d>())
+
+const Utils::Vector6d lb_lbfluid_get_pressure_tensor() {
+#ifdef LB_WALBERLA
+  if (lattice_switch == ActiveLB::WALBERLA) {
+    auto const gridsize = lb_walberla()->get_grid_dimensions();
+    auto const number_of_nodes = gridsize[0] * gridsize[1] * gridsize[2];
+    auto tensor = ::Communication::mpiCallbacks().call(
+        ::Communication::Result::reduction, std::plus<Utils::Vector6d>(),
+        lb_lbfluid_get_pressure_tensor_local);
+    tensor /= static_cast<double>(number_of_nodes);
+
+    walberla_off_diagonal_correction(tensor);
+    return tensor;
+  }
+#endif
   throw NoLBActive();
 }
 
@@ -641,7 +671,7 @@ lb_lbfluid_get_force_to_be_applied(const Utils::Vector3d &pos) {
                                      static_cast<int>(pos[2] / agrid)};
     auto const res = lb_walberla()->get_node_force_to_be_applied(ind);
     if (!res) {
-      printf("%d: position: %g %g %g\n", this_node, pos[0], pos[1], pos[2]);
+      std::cout << this_node << ": position: [" << pos << "]\n";
       throw std::runtime_error(
           "Force to be applied could not be obtained from Walberla");
     }
