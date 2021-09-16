@@ -42,6 +42,7 @@
 #include <mpi.h>
 
 #include <functional>
+#include <type_traits>
 #include <vector>
 
 using Utils::hadamard_product;
@@ -227,22 +228,87 @@ BOOST_DATA_TEST_CASE(velocity_at_node_and_pos, bdata::make(all_lbs()),
   // check velocities
   for (auto const &node :
        all_nodes_incl_ghosts(params.grid_dimensions, n_ghost_layers)) {
-    auto const eps = 1E-8;
-
+    auto constexpr eps = 1E-8;
     if (lb->node_in_local_halo(node)) {
       bool const consider_ghosts = !lb->node_in_local_domain(node);
       auto res = lb->get_node_velocity(node, consider_ghosts);
-      BOOST_CHECK(res);                               // value available
-      BOOST_CHECK((*res - n_vel(node)).norm() < eps); // correct value?
+      BOOST_CHECK(res);                                    // value available
+      BOOST_CHECK_SMALL((*res - n_vel(node)).norm(), eps); // value correct?
       // Check that the interpolated velocity at the node pos equals the node
       // vel
       res = lb->get_velocity_at_pos(n_pos(node), consider_ghosts);
-      BOOST_CHECK(res);                                    // locally available
+      BOOST_CHECK(res);                                    // value available
       BOOST_CHECK_SMALL((*res - n_vel(node)).norm(), eps); // value correct?
     } else {
       // Check that access to node velocity is not possible
       BOOST_CHECK(!lb->get_node_velocity(node));
       BOOST_CHECK(!lb->get_velocity_at_pos(n_pos(node), true));
+    }
+  }
+}
+
+BOOST_DATA_TEST_CASE(interpolated_density_at_pos, bdata::make(all_lbs()),
+                     lb_generator) {
+  auto lb = lb_generator(mpi_shape, params);
+  auto const n_ghost_layers = lb->n_ghost_layers();
+
+  // Values
+  auto n_pos = [](Vector3i const &n) { return n + Vector3d::broadcast(.5); };
+
+  auto fold = [](Vector3i n) {
+    for (int i = 0; i < 3; i++) {
+      if (n[i] < 0)
+        n[i] += params.grid_dimensions[i];
+      else if (n[i] >= params.grid_dimensions[i])
+        n[i] -= params.grid_dimensions[i];
+    }
+    return n;
+  };
+
+  auto n_dens = [&fold](Vector3i const &node) {
+    return 1.0 + static_cast<double>(Utils::product(node)) * 1e-6;
+  };
+
+  // Assign densities
+  for (auto const &node :
+       all_nodes_incl_ghosts(params.grid_dimensions, n_ghost_layers)) {
+    if (lb->node_in_local_domain(node)) {
+      BOOST_CHECK(lb->set_node_density(node, n_dens(node)));
+    } else {
+      // Check that access to node density is not possible
+      BOOST_CHECK(!lb->set_node_density(node, 0.));
+    }
+  }
+
+  lb->ghost_communication();
+
+  // check densities
+  for (auto const &node :
+       all_nodes_incl_ghosts(params.grid_dimensions, n_ghost_layers)) {
+    auto constexpr eps = 1E-8;
+    if (lb->node_in_local_halo(node)) {
+      if (lb->node_in_local_domain(node)) {
+        auto res = lb->get_node_density(node);
+        BOOST_CHECK(res);                            // value available
+        BOOST_CHECK_SMALL(*res - n_dens(node), eps); // value correct?
+        // Check that the interpolated density at the node pos equals the node
+        // density
+        res = lb->get_interpolated_density_at_pos(n_pos(node));
+        BOOST_CHECK(res);                            // value available
+        BOOST_CHECK_SMALL(*res - n_dens(node), eps); // value correct?
+      } else {
+        BOOST_CHECK(!lb->get_node_density(node));
+        BOOST_CHECK(!lb->get_interpolated_density_at_pos(n_pos(node), false));
+        if (node == Vector3i{}) {
+          BOOST_CHECK_THROW(
+              lb->get_interpolated_density_at_pos(n_pos(node), true),
+              std::runtime_error);
+        }
+      }
+    } else {
+      // Check that access to node density is not possible
+      BOOST_CHECK(!lb->get_node_density(node));
+      BOOST_CHECK(!lb->get_interpolated_density_at_pos(n_pos(node), true));
     }
   }
 }
@@ -385,6 +451,27 @@ BOOST_DATA_TEST_CASE(force_in_corner, bdata::make(all_lbs()), lb_generator) {
   };
   boost::mpi::all_reduce(world, boost::mpi::inplace(count), std::plus<int>());
   BOOST_CHECK_EQUAL(count, 8);
+}
+
+BOOST_DATA_TEST_CASE(vtk_exceptions,
+                     bdata::make(LbGeneratorVector{unthermalized_lbs()[0]}),
+                     lb_generator) {
+  auto lb = lb_generator(mpi_shape, params);
+  auto const flag =
+      static_cast<std::underlying_type_t<OutputVTK>>(OutputVTK::density);
+  // cannot create the same observable twice
+  lb->create_vtk(1u, 0u, flag, "density", "vtk_out", "step");
+  BOOST_CHECK_THROW(lb->create_vtk(1u, 0u, flag, "density", "vtk_out", "step"),
+                    std::runtime_error);
+  // cannot manually call an automatic observable
+  lb->create_vtk(1u, 0u, flag, "density_auto", "vtk_out", "step");
+  BOOST_CHECK_THROW(lb->write_vtk("density_auto"), std::runtime_error);
+  // cannot activate a manual observable
+  lb->create_vtk(0u, 0u, flag, "density_manual", "vtk_out", "step");
+  BOOST_CHECK_THROW(lb->switch_vtk("density_manual", 0), std::runtime_error);
+  // cannot call or activate observables that haven't been registered yet
+  BOOST_CHECK_THROW(lb->write_vtk("unknown"), std::runtime_error);
+  BOOST_CHECK_THROW(lb->switch_vtk("unknown", 0), std::runtime_error);
 }
 
 int main(int argc, char **argv) {

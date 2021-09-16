@@ -154,7 +154,7 @@ private:
       cm.time_step_ = time_step;
     }
 
-  } set_time_step_impl;
+  } set_rng_state_impl;
 
   class : public boost::static_visitor<uint32_t> {
   public:
@@ -166,7 +166,7 @@ private:
       return cm.time_step_;
     }
 
-  } get_time_step_impl;
+  } get_rng_state_impl;
 
   class : public boost::static_visitor<> {
   public:
@@ -871,10 +871,10 @@ public:
   double get_kT() const override { return m_kT; }
 
   uint64_t get_rng_state() const override {
-    return boost::apply_visitor(get_time_step_impl, *m_collision_model);
+    return boost::apply_visitor(get_rng_state_impl, *m_collision_model);
   }
   void set_rng_state(uint64_t counter) override {
-    boost::apply_visitor(set_time_step_impl, *m_collision_model,
+    boost::apply_visitor(set_rng_state_impl, *m_collision_model,
                          boost::variant<uint64_t>(counter));
   }
 

@@ -160,6 +160,13 @@ class TestLB:
             ext_force_density,
             atol=1e-4)
 
+        self.assertEqual(self.lbf.kT, 0.0)
+        rng_error_msg = 'The LB does not use a random number generator'
+        with self.assertRaisesRegex(RuntimeError, rng_error_msg):
+            seed = self.lbf.seed
+        with self.assertRaisesRegex(RuntimeError, rng_error_msg):
+            self.lbf.seed = 5
+
     def test_parameter_change_without_seed(self):
         self.lbf = self.lb_class(
             visc=self.params['viscosity'],
