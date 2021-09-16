@@ -59,7 +59,7 @@ struct ArrayFormatter {
 
 inline ArrayFormatterStream operator<<(std::ostream &os,
                                        ArrayFormatter const &fmt) {
-  return ArrayFormatterStream(os, fmt.separator);
+  return {os, fmt.separator};
 }
 
 } // namespace detail

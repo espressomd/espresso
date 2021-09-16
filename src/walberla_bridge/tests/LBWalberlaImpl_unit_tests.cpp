@@ -182,7 +182,8 @@ BOOST_DATA_TEST_CASE(domain_and_halo, bdata::make(all_lbs()), lb_generator) {
     constexpr auto origin = Vector3i{0, 0, 0};
     if (n >= origin and n < params.grid_dimensions) {
       boost::mpi::communicator world;
-      boost::mpi::all_reduce(world, boost::mpi::inplace(is_local), std::plus());
+      boost::mpi::all_reduce(world, boost::mpi::inplace(is_local),
+                             std::plus<int>());
       BOOST_CHECK(is_local == 1);
     }
   }
@@ -262,7 +263,8 @@ BOOST_DATA_TEST_CASE(total_momentum, bdata::make(all_lbs()), lb_generator) {
   boost::mpi::communicator world;
   auto const mom_local = lb->get_momentum();
   auto const mom_exp = params.density * (v1 + v2);
-  auto const mom = boost::mpi::all_reduce(world, mom_local, std::plus());
+  auto const mom =
+      boost::mpi::all_reduce(world, mom_local, std::plus<Vector3d>());
   BOOST_CHECK_SMALL((mom - mom_exp).norm(), 1E-10);
 }
 
@@ -367,7 +369,7 @@ BOOST_DATA_TEST_CASE(force_in_corner, bdata::make(all_lbs()), lb_generator) {
       count += 1;
     }
   };
-  boost::mpi::all_reduce(world, boost::mpi::inplace(count), std::plus());
+  boost::mpi::all_reduce(world, boost::mpi::inplace(count), std::plus<int>());
   BOOST_CHECK_EQUAL(count, 8);
 
   lb->integrate();
@@ -381,7 +383,7 @@ BOOST_DATA_TEST_CASE(force_in_corner, bdata::make(all_lbs()), lb_generator) {
       count += 1;
     }
   };
-  boost::mpi::all_reduce(world, boost::mpi::inplace(count), std::plus());
+  boost::mpi::all_reduce(world, boost::mpi::inplace(count), std::plus<int>());
   BOOST_CHECK_EQUAL(count, 8);
 }
 

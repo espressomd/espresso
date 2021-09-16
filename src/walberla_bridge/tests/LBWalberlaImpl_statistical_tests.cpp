@@ -100,8 +100,10 @@ BOOST_DATA_TEST_CASE(velocity_fluctuation, bdata::make(thermalized_lbs()),
 
   // aggregate
   boost::mpi::communicator world;
-  boost::mpi::all_reduce(world, boost::mpi::inplace(sum_v), std::plus());
-  boost::mpi::all_reduce(world, boost::mpi::inplace(sum_v_square), std::plus());
+  boost::mpi::all_reduce(world, boost::mpi::inplace(sum_v),
+                         std::plus<Vector3d>());
+  boost::mpi::all_reduce(world, boost::mpi::inplace(sum_v_square),
+                         std::plus<Vector3d>());
   auto const num_ranks = Utils::product(mpi_shape);
   sum_v /= static_cast<double>(num_ranks);
   sum_v_square /= static_cast<double>(num_ranks);

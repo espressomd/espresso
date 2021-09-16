@@ -64,7 +64,7 @@ BOOST_DATA_TEST_CASE(integrate_with_point_force_thermalized,
   lb->integrate();
   lb->integrate();
   auto mom_local = lb->get_momentum();
-  auto mom = boost::mpi::all_reduce(world, mom_local, std::plus());
+  auto mom = boost::mpi::all_reduce(world, mom_local, std::plus<Vector3d>());
   BOOST_CHECK_SMALL(mom.norm(), 1E-10);
 
   // Check that momentum changes as expected when applying forces
@@ -87,7 +87,7 @@ BOOST_DATA_TEST_CASE(integrate_with_point_force_thermalized,
     }
   }
   mom_local = lb->get_momentum();
-  mom = boost::mpi::all_reduce(world, mom_local, std::plus());
+  mom = boost::mpi::all_reduce(world, mom_local, std::plus<Vector3d>());
 
   // Expected momentum = momentum added in prev. time step
   // + f/2 from velocity shift due to last applied forces
@@ -103,7 +103,7 @@ BOOST_DATA_TEST_CASE(integrate_with_point_force_thermalized,
   mom_exp = 1.0 * f1 * Utils::product(params.grid_dimensions) + 1.0 * f2;
   lb->integrate();
   mom_local = lb->get_momentum();
-  mom = boost::mpi::all_reduce(world, mom_local, std::plus());
+  mom = boost::mpi::all_reduce(world, mom_local, std::plus<Vector3d>());
   BOOST_CHECK_SMALL((mom - mom_exp).norm(), 1E-10);
 }
 
@@ -126,7 +126,7 @@ BOOST_DATA_TEST_CASE(integrate_with_point_force_unthermalized,
   lb->integrate();
 
   auto mom_local = lb->get_momentum();
-  auto mom = boost::mpi::all_reduce(world, mom_local, std::plus());
+  auto mom = boost::mpi::all_reduce(world, mom_local, std::plus<Vector3d>());
 
   // Expected momentum = momentum added in prev. time step
   // + f/2 from velocity shift due to last applied forces
@@ -142,7 +142,7 @@ BOOST_DATA_TEST_CASE(integrate_with_point_force_unthermalized,
   // No f/2 correction, since no force was applied in last time step
   mom_exp = 1.0 * f1 * Utils::product(params.grid_dimensions) + 1.0 * f2;
   mom_local = lb->get_momentum();
-  mom = boost::mpi::all_reduce(world, mom_local, std::plus());
+  mom = boost::mpi::all_reduce(world, mom_local, std::plus<Vector3d>());
   BOOST_CHECK_SMALL((mom - mom_exp).norm(), 1E-10);
 }
 
