@@ -299,7 +299,7 @@ BOOST_DATA_TEST_CASE(interpolated_density_at_pos, bdata::make(all_lbs()),
       } else {
         BOOST_CHECK(!lb->get_node_density(node));
         BOOST_CHECK(!lb->get_interpolated_density_at_pos(n_pos(node), false));
-        if (node == Vector3i{}) {
+        if (node == Vector3i{-1, -1, -1}) {
           BOOST_CHECK_THROW(
               lb->get_interpolated_density_at_pos(n_pos(node), true),
               std::runtime_error);
@@ -464,11 +464,11 @@ BOOST_DATA_TEST_CASE(vtk_exceptions,
   BOOST_CHECK_THROW(lb->create_vtk(1u, 0u, flag, "density", "vtk_out", "step"),
                     std::runtime_error);
   // cannot manually call an automatic observable
-  lb->create_vtk(1u, 0u, flag, "density_auto", "vtk_out", "step");
-  BOOST_CHECK_THROW(lb->write_vtk("density_auto"), std::runtime_error);
+  lb->create_vtk(1u, 0u, flag, "auto", "vtk_out", "step");
+  BOOST_CHECK_THROW(lb->write_vtk("vtk_out/auto"), std::runtime_error);
   // cannot activate a manual observable
-  lb->create_vtk(0u, 0u, flag, "density_manual", "vtk_out", "step");
-  BOOST_CHECK_THROW(lb->switch_vtk("density_manual", 0), std::runtime_error);
+  lb->create_vtk(0u, 0u, flag, "manual", "vtk_out", "step");
+  BOOST_CHECK_THROW(lb->switch_vtk("vtk_out/manual", 0), std::runtime_error);
   // cannot call or activate observables that haven't been registered yet
   BOOST_CHECK_THROW(lb->write_vtk("unknown"), std::runtime_error);
   BOOST_CHECK_THROW(lb->switch_vtk("unknown", 0), std::runtime_error);
