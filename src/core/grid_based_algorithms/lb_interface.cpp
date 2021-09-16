@@ -250,7 +250,7 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
     std::vector<double> pop(pop_size);
 
     if (!binary) {
-      cpfile << gridsize[0] << " " << gridsize[1] << " " << gridsize[2] << "\n";
+      cpfile << Utils::Vector3d::formatter(" ") << gridsize << "\n";
       cpfile << pop_size << "\n";
     } else {
       cpfile.write(reinterpret_cast<const char *>(gridsize.data()),
