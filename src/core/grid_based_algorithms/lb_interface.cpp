@@ -487,66 +487,96 @@ double lb_lbfluid_get_lattice_speed() {
 }
 
 void lb_lbfluid_print_vtk_boundary(const std::string &filename) {
-  FILE *fp = fopen(filename.c_str(), "w");
+  std::fstream cpfile;
+  cpfile.open(filename, std::ios::out);
 
-  if (fp == nullptr) {
-    throw std::runtime_error("Could not open file for writing.");
+  if (!cpfile) {
+    throw std::runtime_error("Could not open '" + filename + "' for writing.");
   }
+
+  auto const vtk_writer = [&](std::string const &label,
+                              auto const &write_boundaries) {
+    using Utils::Vector3d;
+    cpfile.precision(6);
+    cpfile << std::fixed;
+    auto constexpr vtk_format = Vector3d::formatter(" ");
+    auto const agrid = lb_lbfluid_get_agrid();
+    auto const grid_size = lb_lbfluid_get_shape();
+    auto const origin = Vector3d::broadcast(0.5) * agrid;
+    cpfile << "# vtk DataFile Version 2.0\n"
+           << label << "\n"
+           << "ASCII\n"
+           << "DATASET STRUCTURED_POINTS\n"
+           << "DIMENSIONS " << vtk_format << grid_size << "\n"
+           << "ORIGIN " << vtk_format << origin << "\n"
+           << "SPACING " << vtk_format << Vector3d::broadcast(agrid) << "\n"
+           << "POINT_DATA " << Utils::product(grid_size) << "\n"
+           << "SCALARS boundary float 1\n"
+           << "LOOKUP_TABLE default\n";
+    write_boundaries();
+  };
 
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
     std::vector<unsigned int> bound_array(lbpar_gpu.number_of_nodes);
     lb_get_boundary_flags_GPU(bound_array.data());
-
-    fprintf(fp,
-            "# vtk DataFile Version 2.0\nlbboundaries\n"
-            "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\n"
-            "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %u\n"
-            "SCALARS boundary float 1\nLOOKUP_TABLE default\n",
-            lbpar_gpu.dim[0], lbpar_gpu.dim[1], lbpar_gpu.dim[2],
-            lbpar_gpu.agrid * 0.5, lbpar_gpu.agrid * 0.5, lbpar_gpu.agrid * 0.5,
-            lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid,
-            lbpar_gpu.number_of_nodes);
-    for (int j = 0; j < int(lbpar_gpu.number_of_nodes); ++j) {
-      fprintf(fp, "%d \n", bound_array[j]);
-    }
+    vtk_writer("lbboundaries", [&]() {
+      for (unsigned int j = 0; j < lbpar_gpu.number_of_nodes; ++j) {
+        cpfile << bound_array[j] << "\n";
+      }
+    });
 #endif //  CUDA
   } else {
-    Utils::Vector3i pos;
-    auto const grid_size = lblattice.global_grid;
-
-    fprintf(fp,
-            "# vtk DataFile Version 2.0\nlbboundaries\n"
-            "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\n"
-            "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\n"
-            "SCALARS boundary float 1\nLOOKUP_TABLE default\n",
-            grid_size[0], grid_size[1], grid_size[2], lblattice.agrid * 0.5,
-            lblattice.agrid * 0.5, lblattice.agrid * 0.5, lblattice.agrid,
-            lblattice.agrid, lblattice.agrid,
-            grid_size[0] * grid_size[1] * grid_size[2]);
-
-    for (pos[2] = 0; pos[2] < grid_size[2]; pos[2]++) {
-      for (pos[1] = 0; pos[1] < grid_size[1]; pos[1]++) {
-        for (pos[0] = 0; pos[0] < grid_size[0]; pos[0]++) {
-          auto boundary = lb_lbnode_get_boundary(pos);
-          fprintf(fp, "%d \n", boundary);
-        }
-      }
-    }
+    vtk_writer("lbboundaries", [&]() {
+      auto const grid_size = lb_lbfluid_get_shape();
+      Utils::Vector3i pos;
+      for (pos[2] = 0; pos[2] < grid_size[2]; pos[2]++)
+        for (pos[1] = 0; pos[1] < grid_size[1]; pos[1]++)
+          for (pos[0] = 0; pos[0] < grid_size[0]; pos[0]++)
+            cpfile << lb_lbnode_get_boundary(pos) << "\n";
+    });
   }
-  fclose(fp);
+  cpfile.close();
 }
 
 void lb_lbfluid_print_vtk_velocity(const std::string &filename,
                                    std::vector<int> bb1, std::vector<int> bb2) {
-  FILE *fp = fopen(filename.c_str(), "w");
+  std::fstream cpfile;
+  cpfile.open(filename, std::ios::out);
 
-  if (fp == nullptr) {
-    throw std::runtime_error("Could not open file for writing.");
+  if (!cpfile) {
+    throw std::runtime_error("Could not open '" + filename + "' for writing.");
   }
 
   auto bb_low = Utils::Vector3i{};
   auto bb_high = lb_lbfluid_get_shape();
+
+  auto const vtk_writer = [&](std::string const &label, auto const &get_vel) {
+    using Utils::Vector3d;
+    cpfile.precision(6);
+    cpfile << std::fixed;
+    auto constexpr vtk_format = Vector3d::formatter(" ");
+    auto const agrid = lb_lbfluid_get_agrid();
+    auto const bb_dim = bb_high - bb_low;
+    auto const origin = (bb_low + Vector3d::broadcast(0.5)) * agrid;
+    auto const lattice_speed = lb_lbfluid_get_lattice_speed();
+    cpfile << "# vtk DataFile Version 2.0\n"
+           << label << "\n"
+           << "ASCII\n"
+           << "DATASET STRUCTURED_POINTS\n"
+           << "DIMENSIONS " << vtk_format << bb_dim << "\n"
+           << "ORIGIN " << vtk_format << origin << "\n"
+           << "SPACING " << vtk_format << Vector3d::broadcast(agrid) << "\n"
+           << "POINT_DATA " << Utils::product(bb_dim) << "\n"
+           << "SCALARS velocity float 3\n"
+           << "LOOKUP_TABLE default\n";
+
+    Utils::Vector3i pos;
+    for (pos[2] = bb_low[2]; pos[2] < bb_high[2]; pos[2]++)
+      for (pos[1] = bb_low[1]; pos[1] < bb_high[1]; pos[1]++)
+        for (pos[0] = bb_low[0]; pos[0] < bb_high[0]; pos[0]++)
+          cpfile << vtk_format << get_vel(pos) * lattice_speed << "\n";
+  };
 
   int it = 0;
   for (auto val1 = bb1.begin(), val2 = bb2.begin();
@@ -567,144 +597,107 @@ void lb_lbfluid_print_vtk_velocity(const std::string &filename,
     it++;
   }
 
-  Utils::Vector3i pos;
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
     host_values.resize(lbpar_gpu.number_of_nodes);
     lb_get_values_GPU(host_values.data());
-    auto const lattice_speed = lb_lbfluid_get_agrid() / lb_lbfluid_get_tau();
-    fprintf(fp,
-            "# vtk DataFile Version 2.0\nlbfluid_gpu\n"
-            "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\n"
-            "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\n"
-            "SCALARS velocity float 3\nLOOKUP_TABLE default\n",
-            bb_high[0] - bb_low[0], bb_high[1] - bb_low[1],
-            bb_high[2] - bb_low[2], (bb_low[0] + 0.5) * lbpar_gpu.agrid,
-            (bb_low[1] + 0.5) * lbpar_gpu.agrid,
-            (bb_low[2] + 0.5) * lbpar_gpu.agrid, lbpar_gpu.agrid,
-            lbpar_gpu.agrid, lbpar_gpu.agrid,
-            (bb_high[0] - bb_low[0]) * (bb_high[1] - bb_low[1]) *
-                (bb_high[2] - bb_low[2]));
-    for (pos[2] = bb_low[2]; pos[2] < bb_high[2]; pos[2]++)
-      for (pos[1] = bb_low[1]; pos[1] < bb_high[1]; pos[1]++)
-        for (pos[0] = bb_low[0]; pos[0] < bb_high[0]; pos[0]++) {
-          auto const j =
-              static_cast<int>(lbpar_gpu.dim[0] * lbpar_gpu.dim[0] * pos[2] +
-                               lbpar_gpu.dim[0] * pos[1] + pos[0]);
-          fprintf(fp, "%f %f %f\n", host_values[j].v[0] * lattice_speed,
-                  host_values[j].v[1] * lattice_speed,
-                  host_values[j].v[2] * lattice_speed);
-        }
+    auto const box_l_x = lb_lbfluid_get_shape()[0];
+    vtk_writer("lbfluid_gpu", [box_l_x](Utils::Vector3i const &pos) {
+      auto const j = box_l_x * box_l_x * pos[2] + box_l_x * pos[1] + pos[0];
+      return Utils::Vector3d{host_values[j].v};
+    });
 #endif //  CUDA
   } else {
-    fprintf(fp,
-            "# vtk DataFile Version 2.0\nlbfluid_cpu\n"
-            "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\n"
-            "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\n"
-            "SCALARS velocity float 3\nLOOKUP_TABLE default\n",
-            bb_high[0] - bb_low[0], bb_high[1] - bb_low[1],
-            bb_high[2] - bb_low[2], (bb_low[0] + 0.5) * lblattice.agrid,
-            (bb_low[1] + 0.5) * lblattice.agrid,
-            (bb_low[2] + 0.5) * lblattice.agrid, lblattice.agrid,
-            lblattice.agrid, lblattice.agrid,
-            (bb_high[0] - bb_low[0]) * (bb_high[1] - bb_low[1]) *
-                (bb_high[2] - bb_low[2]));
-
-    for (pos[2] = bb_low[2]; pos[2] < bb_high[2]; pos[2]++)
-      for (pos[1] = bb_low[1]; pos[1] < bb_high[1]; pos[1]++)
-        for (pos[0] = bb_low[0]; pos[0] < bb_high[0]; pos[0]++) {
-          auto u = lb_lbnode_get_velocity(pos) * lb_lbfluid_get_lattice_speed();
-          fprintf(fp, "%f %f %f\n", u[0], u[1], u[2]);
-        }
+    vtk_writer("lbfluid_cpu", lb_lbnode_get_velocity);
   }
-  fclose(fp);
+  cpfile.close();
 }
 
 void lb_lbfluid_print_boundary(const std::string &filename) {
-  FILE *fp = fopen(filename.c_str(), "w");
+  std::fstream cpfile;
+  cpfile.open(filename, std::ios::out);
 
-  if (fp == nullptr) {
-    throw std::runtime_error("Could not open file for writing.");
+  if (!cpfile) {
+    throw std::runtime_error("Could not open '" + filename + "' for writing.");
   }
+
+  using Utils::Vector3d;
+  auto constexpr vtk_format = Vector3d::formatter(" ");
+  cpfile.precision(6);
+  cpfile << std::fixed;
 
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
     std::vector<unsigned int> bound_array(lbpar_gpu.number_of_nodes);
     lb_get_boundary_flags_GPU(bound_array.data());
-
-    Utils::Vector3i xyz;
-    for (int j = 0; j < static_cast<int>(lbpar_gpu.number_of_nodes); ++j) {
-      xyz[0] = j % lbpar_gpu.dim[0];
-      auto k = j / lbpar_gpu.dim[0];
-      xyz[1] = k % lbpar_gpu.dim[1];
-      k /= lbpar_gpu.dim[1];
-      xyz[2] = k;
-      fprintf(fp, "%f %f %f %u\n", (xyz[0] + 0.5) * lbpar_gpu.agrid,
-              (xyz[1] + 0.5) * lbpar_gpu.agrid,
-              (xyz[2] + 0.5) * lbpar_gpu.agrid, bound_array[j]);
+    auto const agrid = lb_lbfluid_get_agrid();
+    Utils::Vector3d pos;
+    for (unsigned int j = 0; j < lbpar_gpu.number_of_nodes; ++j) {
+      auto const k = j / lbpar_gpu.dim[0];
+      pos[0] = (static_cast<double>(j % lbpar_gpu.dim[0]) + 0.5) * agrid;
+      pos[1] = (static_cast<double>(k % lbpar_gpu.dim[1]) + 0.5) * agrid;
+      pos[2] = (static_cast<double>(k / lbpar_gpu.dim[1]) + 0.5) * agrid;
+      cpfile << vtk_format << pos << " " << bound_array[j] << "\n";
     }
 #endif //  CUDA
   } else {
+    auto constexpr shift = Vector3d{0.5, 0.5, 0.5};
+    auto const agrid = lb_lbfluid_get_agrid();
+    auto const grid_size = lb_lbfluid_get_shape();
     Utils::Vector3i pos;
-
-    for (pos[2] = 0; pos[2] < lblattice.global_grid[2]; pos[2]++) {
-      for (pos[1] = 0; pos[1] < lblattice.global_grid[1]; pos[1]++) {
-        for (pos[0] = 0; pos[0] < lblattice.global_grid[0]; pos[0]++) {
-          auto boundary = lb_lbnode_get_boundary(pos);
-          boundary = (boundary != 0 ? 1 : 0);
-          fprintf(fp, "%f %f %f %d\n", (pos[0] + 0.5) * lblattice.agrid,
-                  (pos[1] + 0.5) * lblattice.agrid,
-                  (pos[2] + 0.5) * lblattice.agrid, boundary);
+    for (pos[2] = 0; pos[2] < grid_size[2]; pos[2]++)
+      for (pos[1] = 0; pos[1] < grid_size[1]; pos[1]++)
+        for (pos[0] = 0; pos[0] < grid_size[0]; pos[0]++) {
+          auto const flag = (lb_lbnode_get_boundary(pos) != 0) ? 1 : 0;
+          cpfile << vtk_format << (pos + shift) * agrid << " " << flag << "\n";
         }
-      }
-    }
   }
-  fclose(fp);
+  cpfile.close();
 }
 
 void lb_lbfluid_print_velocity(const std::string &filename) {
-  FILE *fp = fopen(filename.c_str(), "w");
+  std::fstream cpfile;
+  cpfile.open(filename, std::ios::out);
 
-  if (fp == nullptr) {
-    throw std::runtime_error("Could not open file for writing.");
+  if (!cpfile) {
+    throw std::runtime_error("Could not open '" + filename + "' for writing.");
   }
 
-  auto const lattice_speed = lb_lbfluid_get_agrid() / lb_lbfluid_get_tau();
-  auto const agrid = lb_lbfluid_get_agrid();
+  using Utils::Vector3d;
+  auto constexpr vtk_format = Vector3d::formatter(" ");
+  cpfile.precision(6);
+  cpfile << std::fixed;
+
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
     std::vector<LB_rho_v_pi_gpu> host_values(lbpar_gpu.number_of_nodes);
     lb_get_values_GPU(host_values.data());
-    Utils::Vector3i xyz;
-    for (int j = 0; j < static_cast<int>(lbpar_gpu.number_of_nodes); ++j) {
-      xyz[0] = j % lbpar_gpu.dim[0];
-      auto k = j / lbpar_gpu.dim[0];
-      xyz[1] = k % lbpar_gpu.dim[1];
-      k /= lbpar_gpu.dim[1];
-      xyz[2] = k;
-      fprintf(fp, "%f %f %f %f %f %f\n", (xyz[0] + 0.5) * agrid,
-              (xyz[1] + 0.5) * agrid, (xyz[2] + 0.5) * agrid,
-              host_values[j].v[0] * lattice_speed,
-              host_values[j].v[1] * lattice_speed,
-              host_values[j].v[2] * lattice_speed);
+    auto const agrid = lb_lbfluid_get_agrid();
+    auto const lattice_speed = lb_lbfluid_get_lattice_speed();
+    Utils::Vector3d pos;
+    for (unsigned int j = 0; j < lbpar_gpu.number_of_nodes; ++j) {
+      auto const k = j / lbpar_gpu.dim[0];
+      pos[0] = (static_cast<double>(j % lbpar_gpu.dim[0]) + 0.5) * agrid;
+      pos[1] = (static_cast<double>(k % lbpar_gpu.dim[1]) + 0.5) * agrid;
+      pos[2] = (static_cast<double>(k / lbpar_gpu.dim[1]) + 0.5) * agrid;
+      auto const velocity = Utils::Vector3f(host_values[j].v) * lattice_speed;
+      cpfile << vtk_format << pos << " " << vtk_format << velocity << "\n";
     }
 #endif //  CUDA
   } else {
+    auto constexpr shift = Vector3d{0.5, 0.5, 0.5};
+    auto const agrid = lb_lbfluid_get_agrid();
+    auto const grid_size = lb_lbfluid_get_shape();
+    auto const lattice_speed = lb_lbfluid_get_lattice_speed();
     Utils::Vector3i pos;
-
-    for (pos[2] = 0; pos[2] < lblattice.global_grid[2]; pos[2]++) {
-      for (pos[1] = 0; pos[1] < lblattice.global_grid[1]; pos[1]++) {
-        for (pos[0] = 0; pos[0] < lblattice.global_grid[0]; pos[0]++) {
-          auto const u = lb_lbnode_get_velocity(pos) * lattice_speed;
-          fprintf(fp, "%f %f %f %f %f %f\n", (pos[0] + 0.5) * agrid,
-                  (pos[1] + 0.5) * agrid, (pos[2] + 0.5) * agrid, u[0], u[1],
-                  u[2]);
-        }
-      }
-    }
+    for (pos[2] = 0; pos[2] < grid_size[2]; pos[2]++)
+      for (pos[1] = 0; pos[1] < grid_size[1]; pos[1]++)
+        for (pos[0] = 0; pos[0] < grid_size[0]; pos[0]++)
+          cpfile << vtk_format << (pos + shift) * agrid << " " << vtk_format
+                 << lb_lbnode_get_velocity(pos) * lattice_speed << "\n";
   }
 
-  fclose(fp);
+  cpfile.close();
 }
 
 void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
