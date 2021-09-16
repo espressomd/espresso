@@ -724,7 +724,7 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
     std::vector<float> host_checkpoint_vd(data_length);
     lb_save_checkpoint_GPU(host_checkpoint_vd.data());
     if (!binary) {
-      cpfile << gridsize[0] << " " << gridsize[1] << " " << gridsize[2] << "\n";
+      cpfile << Utils::Vector3d::formatter(" ") << gridsize << "\n";
       for (std::size_t n = 0; n < data_length; n++) {
         cpfile << host_checkpoint_vd[n] << "\n";
       }
@@ -746,9 +746,9 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
       cpfile << std::fixed;
     }
 
-    auto const gridsize = lblattice.global_grid;
+    auto const gridsize = lb_lbfluid_get_shape();
     if (!binary) {
-      cpfile << gridsize[0] << " " << gridsize[1] << " " << gridsize[2] << "\n";
+      cpfile << Utils::Vector3d::formatter(" ") << gridsize << "\n";
     } else {
       cpfile.write(reinterpret_cast<const char *>(gridsize.data()),
                    3 * sizeof(gridsize[0]));
@@ -775,18 +775,17 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
   }
 }
 
-inline auto message_dim_mismatch(Utils::Vector3i const &saved_gridsize,
-                                 Utils::Vector3i const &gridsize) {
-  std::stringstream message;
-  message << " grid dimensions mismatch,"
-          << " read [" << saved_gridsize << "],"
-          << " expected [" << gridsize << "].";
-  return message.str();
-}
-
 void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
-  int res;
-  std::string err_msg = "Error while reading LB checkpoint: ";
+  auto const err_msg = std::string("Error while reading LB checkpoint: ");
+  auto const message_dim_mismatch = [](Utils::Vector3i const &read,
+                                       Utils::Vector3i const &expected) {
+    std::stringstream message;
+    message << " grid dimensions mismatch,"
+            << " read [" << read << "],"
+            << " expected [" << expected << "].";
+    return message.str();
+  };
+
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
     FILE *cpfile;
@@ -794,10 +793,13 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
     if (!cpfile) {
       throw std::runtime_error(err_msg + "could not open file for reading.");
     }
+
+    int res;
     auto const gridsize = lb_lbfluid_get_shape();
     auto const data_length = lbpar_gpu.number_of_nodes * D3Q19::n_vel;
     std::vector<float> host_checkpoint_vd(data_length);
     Utils::Vector3i saved_gridsize;
+
     if (!binary) {
       for (int &n : saved_gridsize) {
         res = fscanf(cpfile, "%i", &n);
@@ -866,6 +868,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
       throw std::runtime_error(err_msg + "could not open file for reading.");
     }
 
+    int res;
     auto const gridsize = lb_lbfluid_get_shape();
     Utils::Vector3i saved_gridsize;
     mpi_bcast_lb_params(LBParam::DENSITY);
@@ -1057,21 +1060,18 @@ const Utils::Vector6d lb_lbfluid_get_pressure_tensor() {
 #endif
   }
   if (lattice_switch == ActiveLB::CPU) {
+    auto const grid_size = lb_lbfluid_get_shape();
     Utils::Vector6d tensor{};
-    for (int i = 0; i < lblattice.global_grid[0]; i++) {
-      for (int j = 0; j < lblattice.global_grid[1]; j++) {
-        for (int k = 0; k < lblattice.global_grid[2]; k++) {
+    for (int i = 0; i < grid_size[0]; i++) {
+      for (int j = 0; j < grid_size[1]; j++) {
+        for (int k = 0; k < grid_size[2]; k++) {
           const Utils::Vector3i node{{i, j, k}};
           tensor += lb_lbnode_get_pressure_tensor(node);
         }
       }
     }
 
-    auto const number_of_nodes = lblattice.global_grid[0] *
-                                 lblattice.global_grid[1] *
-                                 lblattice.global_grid[2];
-
-    tensor /= static_cast<double>(number_of_nodes);
+    tensor /= static_cast<double>(Utils::product(grid_size));
     return tensor;
   }
   throw NoLBActive();
