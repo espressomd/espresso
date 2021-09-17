@@ -634,9 +634,10 @@ void lb_lbfluid_print_boundary(const std::string &filename) {
     Utils::Vector3d pos;
     for (unsigned int j = 0; j < lbpar_gpu.number_of_nodes; ++j) {
       auto const k = j / lbpar_gpu.dim[0];
+      auto const l = k / lbpar_gpu.dim[1];
       pos[0] = (static_cast<double>(j % lbpar_gpu.dim[0]) + 0.5) * agrid;
       pos[1] = (static_cast<double>(k % lbpar_gpu.dim[1]) + 0.5) * agrid;
-      pos[2] = (static_cast<double>(k / lbpar_gpu.dim[1]) + 0.5) * agrid;
+      pos[2] = (static_cast<double>(l) + 0.5) * agrid;
       cpfile << vtk_format << pos << " " << bound_array[j] << "\n";
     }
 #endif //  CUDA
@@ -677,9 +678,10 @@ void lb_lbfluid_print_velocity(const std::string &filename) {
     Utils::Vector3d pos;
     for (unsigned int j = 0; j < lbpar_gpu.number_of_nodes; ++j) {
       auto const k = j / lbpar_gpu.dim[0];
+      auto const l = k / lbpar_gpu.dim[1];
       pos[0] = (static_cast<double>(j % lbpar_gpu.dim[0]) + 0.5) * agrid;
       pos[1] = (static_cast<double>(k % lbpar_gpu.dim[1]) + 0.5) * agrid;
-      pos[2] = (static_cast<double>(k / lbpar_gpu.dim[1]) + 0.5) * agrid;
+      pos[2] = (static_cast<double>(l) + 0.5) * agrid;
       auto const velocity = Utils::Vector3f(host_values[j].v) * lattice_speed;
       cpfile << vtk_format << pos << " " << vtk_format << velocity << "\n";
     }
