@@ -160,6 +160,13 @@ class TestLB:
             ext_force_density,
             atol=1e-4)
 
+        self.assertEqual(self.lbf.kT, 0.0)
+        rng_error_msg = 'The LB does not use a random number generator'
+        with self.assertRaisesRegex(RuntimeError, rng_error_msg):
+            _ = self.lbf.seed
+        with self.assertRaisesRegex(RuntimeError, rng_error_msg):
+            self.lbf.seed = 5
+
     def test_parameter_change_without_seed(self):
         self.lbf = self.lb_class(
             visc=self.params['viscosity'],
@@ -252,7 +259,6 @@ class TestLB:
             agrid=self.params['agrid'],
             tau=self.system.time_step,
             ext_force_density=[0, 0, 0])
-        print("box_l", self.system.box_l)
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(
             LB_fluid=self.lbf,
@@ -358,11 +364,9 @@ class TestLB:
     def test_thermalization_force_balance(self):
         system = self.system
 
-        self.system.part.add(
-            pos=np.random.random((1000, 3)) * self.system.box_l)
+        system.part.add(pos=np.random.random((1000, 3)) * system.box_l)
         if espressomd.has_features("MASS"):
-            self.system.part[:].mass = 0.1 + np.random.random(
-                len(self.system.part))
+            system.part[:].mass = 0.1 + np.random.random(len(system.part))
 
         self.lbf = self.lb_class(
             kT=self.params['temp'],
@@ -371,8 +375,8 @@ class TestLB:
             agrid=self.params['agrid'],
             tau=self.system.time_step,
             ext_force_density=[0, 0, 0], seed=4)
-        self.system.actors.add(self.lbf)
-        self.system.thermostat.set_lb(
+        system.actors.add(self.lbf)
+        system.thermostat.set_lb(
             LB_fluid=self.lbf,
             seed=3,
             gamma=self.params['friction'])
@@ -390,11 +394,11 @@ class TestLB:
             visc=self.params['viscosity'],
             dens=self.params['dens'],
             agrid=self.params['agrid'],
-            tau=self.system.time_step,
+            tau=system.time_step,
             ext_force_density=[0, 0, 0])
 
-        self.system.actors.add(self.lbf)
-        self.system.thermostat.set_lb(
+        system.actors.add(self.lbf)
+        system.thermostat.set_lb(
             LB_fluid=self.lbf,
             seed=3,
             gamma=self.params['friction'])

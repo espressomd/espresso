@@ -245,13 +245,12 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
       cpfile << std::fixed;
     }
 
-    double laf[3];
     auto const gridsize = lb_walberla()->get_grid_dimensions();
     auto const pop_size = lb_walberla()->stencil_size();
     std::vector<double> pop(pop_size);
 
     if (!binary) {
-      cpfile << gridsize[0] << " " << gridsize[1] << " " << gridsize[2] << "\n";
+      cpfile << Utils::Vector3d::formatter(" ") << gridsize << "\n";
       cpfile << pop_size << "\n";
     } else {
       cpfile.write(reinterpret_cast<const char *>(gridsize.data()),

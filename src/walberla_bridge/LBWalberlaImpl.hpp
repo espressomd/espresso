@@ -147,7 +147,7 @@ private:
       cm.time_step_ = time_step;
     }
 
-  } set_time_step_impl;
+  } set_rng_state_impl;
 
   class : public boost::static_visitor<uint32_t> {
   public:
@@ -159,7 +159,7 @@ private:
       return cm.time_step_;
     }
 
-  } get_time_step_impl;
+  } get_rng_state_impl;
 
   class : public boost::static_visitor<> {
   public:
@@ -257,6 +257,26 @@ private:
                                              bc.cell.z());
     return pressureTensor;
   }
+
+  class interpolation_illegal_access : public std::runtime_error {
+  public:
+    explicit interpolation_illegal_access(std::string const &field,
+                                          Utils::Vector3d const &pos,
+                                          std::array<int, 3> const &node,
+                                          double weight)
+        : std::runtime_error("Access to LB " + field + " field failed") {
+      std::cerr << "pos [" << pos << "], "
+                << "node [" << Utils::Vector3i(node) << "], "
+                << "weight " << weight << "\n";
+    }
+  };
+
+  class vtk_runtime_error : public std::runtime_error {
+  public:
+    explicit vtk_runtime_error(std::string const &vtk_uid,
+                               std::string const &reason)
+        : std::runtime_error("VTKOutput object " + vtk_uid + " " + reason) {}
+  };
 
 protected:
   /** VTK writers that are executed automatically */
@@ -522,10 +542,7 @@ public:
             auto res = get_node_velocity(
                 Utils::Vector3i{{node[0], node[1], node[2]}}, true);
             if (!res) {
-              std::cout << "pos [" << pos << "], "
-                        << "node [" << Utils::Vector3i(node) << "], "
-                        << "weight " << weight << "\n";
-              throw std::runtime_error("Access to LB velocity field failed.");
+              throw interpolation_illegal_access("velocity", pos, node, weight);
             }
             v += *res * weight;
           }
@@ -548,10 +565,7 @@ public:
           if (weight != 0) {
             auto const res = get_node_density(Utils::Vector3i(node));
             if (!res) {
-              std::cout << "pos [" << pos << "], "
-                        << "node [" << Utils::Vector3i(node) << "], "
-                        << "weight " << weight << "\n";
-              throw std::runtime_error("Access to LB density field failed.");
+              throw interpolation_illegal_access("density", pos, node, weight);
             }
             dens += *res * weight;
           }
@@ -769,10 +783,10 @@ public:
   double get_kT() const override { return m_kT; }
 
   uint64_t get_rng_state() const override {
-    return boost::apply_visitor(get_time_step_impl, *m_collision_model);
+    return boost::apply_visitor(get_rng_state_impl, *m_collision_model);
   }
   void set_rng_state(uint64_t counter) override {
-    boost::apply_visitor(set_time_step_impl, *m_collision_model,
+    boost::apply_visitor(set_rng_state_impl, *m_collision_model,
                          boost::variant<uint64_t>(counter));
   }
 
@@ -853,8 +867,7 @@ public:
     std::string const vtk_uid = unique_identifier.str();
     if (m_vtk_auto.find(vtk_uid) != m_vtk_auto.end() or
         m_vtk_manual.find(vtk_uid) != m_vtk_manual.end()) {
-      throw std::runtime_error("VTKOutput object " + vtk_uid +
-                               " already exists");
+      throw vtk_runtime_error(vtk_uid, "already exists");
     }
 
     // instantiate VTKOutput object
@@ -896,12 +909,10 @@ public:
   /** Manually call a VTK callback */
   void write_vtk(std::string const &vtk_uid) override {
     if (m_vtk_auto.find(vtk_uid) != m_vtk_auto.end()) {
-      throw std::runtime_error("VTKOutput object " + vtk_uid +
-                               " is an automatic observable");
+      throw vtk_runtime_error(vtk_uid, "is an automatic observable");
     }
     if (m_vtk_manual.find(vtk_uid) == m_vtk_manual.end()) {
-      throw std::runtime_error("VTKOutput object " + vtk_uid +
-                               " doesn't exist");
+      throw vtk_runtime_error(vtk_uid, "doesn't exist");
     }
     vtk::writeFiles(m_vtk_manual[vtk_uid])();
   }
@@ -909,12 +920,10 @@ public:
   /** Activate or deactivate a VTK callback */
   void switch_vtk(std::string const &vtk_uid, int status) override {
     if (m_vtk_manual.find(vtk_uid) != m_vtk_manual.end()) {
-      throw std::runtime_error("VTKOutput object " + vtk_uid +
-                               " is a manual observable");
+      throw vtk_runtime_error(vtk_uid, "is a manual observable");
     }
     if (m_vtk_auto.find(vtk_uid) == m_vtk_auto.end()) {
-      throw std::runtime_error("VTKOutput object " + vtk_uid +
-                               " doesn't exist");
+      throw vtk_runtime_error(vtk_uid, "doesn't exist");
     }
     m_vtk_auto[vtk_uid].second = status;
   }

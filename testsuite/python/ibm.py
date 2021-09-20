@@ -22,7 +22,6 @@ import unittest as ut
 import unittest_decorators as utx
 
 import espressomd
-import espressomd.lb
 import espressomd.interactions
 import espressomd.virtual_sites
 
@@ -135,12 +134,10 @@ class IBM(ut.TestCase):
         # check not bonded particles. Positions should still be distorted
         np.testing.assert_allclose(np.copy(non_bound.pos), distorted_pos)
 
-    # TODO WALBERLA
-    @ut.skipIf(True, "IBM doesn't support waLBerla particle coupling")
     def test_volcons(self):
         '''Check volume conservation forces on a simple mesh (cube).'''
         system = self.system
-        system.virtual_sites = espressomd.virtual_sites.VirtualSitesInertialessTracers()
+        system.virtual_sites = espressomd.virtual_sites.VirtualSitesOff()
         system.thermostat.set_langevin(kT=0, gamma=1, seed=1)
 
         # Place particles on a cube.
@@ -148,7 +145,7 @@ class IBM(ut.TestCase):
         positions = positions[:4] + positions[6:] + positions[4:6]
         positions = np.array(positions) - 0.5
         mesh_center_ref = np.copy(system.box_l) / 2.
-        system.part.add(pos=positions + mesh_center_ref, virtual=8 * [True])
+        system.part.add(pos=positions + mesh_center_ref)
 
         # Divide the cube. All triangle normals must point inside the mesh.
         # Use the right hand rule to determine the order of the indices.
@@ -167,7 +164,9 @@ class IBM(ut.TestCase):
             system.part[id1].add_bond((bond, id2, id3))
 
         # Add volume conservation force.
-        volCons = espressomd.interactions.IBM_VolCons(softID=15, kappaV=1.)
+        KAPPA_V = 0.01
+        volCons = espressomd.interactions.IBM_VolCons(
+            softID=15, kappaV=KAPPA_V)
         system.bonded_inter.add(volCons)
         for p in system.part:
             p.add_bond((volCons,))
@@ -185,7 +184,7 @@ class IBM(ut.TestCase):
         self.assertAlmostEqual(volCons.current_volume(), 8., delta=1e-10)
 
         # Reference forces for that particular mesh geometry.
-        ref_forces = 1.75 * np.array(
+        ref_forces = 1.75 * KAPPA_V * np.array(
             [(1, 2, 2), (2, 1, -2), (2, -1, 1), (1, -2, -1),
              (-1, -2, 2), (-2, -1, -2), (-2, 1, 1), (-1, 2, -1)])
         np.testing.assert_almost_equal(
@@ -197,25 +196,18 @@ class IBM(ut.TestCase):
         self.assertAlmostEqual(energy['bonded'], 0., delta=1e-10)
         self.assertAlmostEqual(pressure['bonded'], 0., delta=1e-10)
 
-        # Add unthermalized LB.
-        system.thermostat.turn_off()
-        lbf = espressomd.lb.LBFluidWalberla(
-            kT=0.0, agrid=2, dens=1, visc=1.8, tau=system.time_step)
-        system.actors.add(lbf)
-        system.thermostat.set_lb(LB_fluid=lbf, act_on_virtual=False, gamma=1)
-
         # Check the cube is shrinking. The geometrical center shouldn't move.
-        volume_diff_ref = 5.805e-4
+        volume_diff_ref = 0.1  # arbitrary, but should work for the given setup
         # warmup
-        system.integrator.run(80)
+        system.integrator.run(10)
         # sampling
         previous_volume = volCons.current_volume()
         for _ in range(10):
-            system.integrator.run(20)
+            system.integrator.run(5)
             current_volume = volCons.current_volume()
             volume_diff = previous_volume - current_volume
             self.assertLess(current_volume, previous_volume)
-            self.assertAlmostEqual(volume_diff, volume_diff_ref, places=6)
+            self.assertGreater(volume_diff, volume_diff_ref)
             previous_volume = current_volume
             mesh_center = np.mean(self.system.part[:].pos, axis=0)
             np.testing.assert_allclose(mesh_center, mesh_center_ref, rtol=1e-3)
@@ -225,17 +217,17 @@ class IBM(ut.TestCase):
         self.assertAlmostEqual(volCons.current_volume(), 1. / 8., delta=1e-10)
 
         # Check the cube is expanding. The geometrical center shouldn't move.
-        volume_diff_ref = 6.6066e-7
+        volume_diff_ref = 0.005  # arbitrary, but should work for the given setup
         # warmup
-        system.integrator.run(80)
+        system.integrator.run(40)
         # sampling
         previous_volume = volCons.current_volume()
         for _ in range(10):
-            system.integrator.run(20)
+            system.integrator.run(5)
             current_volume = volCons.current_volume()
             volume_diff = current_volume - previous_volume
             self.assertGreater(current_volume, previous_volume)
-            self.assertAlmostEqual(volume_diff, volume_diff_ref, places=7)
+            self.assertGreater(volume_diff, volume_diff_ref)
             previous_volume = current_volume
             mesh_center = np.mean(self.system.part[:].pos, axis=0)
             np.testing.assert_allclose(mesh_center, mesh_center_ref, rtol=1e-3)

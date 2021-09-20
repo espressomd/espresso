@@ -75,7 +75,7 @@ class TestLBPressureTensor:
 
     def assert_allclose_matrix(self, x, y, atol_diag, atol_offdiag):
         """Assert that all elements x_ij, y_ij are close with
-        different absolute tolerances for on- an off-diagonal elements.
+        different absolute tolerances for on- and off-diagonal elements.
 
         """
         assert x.shape == y.shape
