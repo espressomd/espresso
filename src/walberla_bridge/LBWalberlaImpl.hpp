@@ -706,6 +706,7 @@ public:
       return false;
 
     m_boundary->set_node_velocity_at_boundary(node, v, *bc);
+    m_boundary->ubb_update();
 
     return true;
   }
@@ -726,6 +727,7 @@ public:
       return false;
 
     m_boundary->remove_node_from_boundary(node, *bc);
+    m_boundary->ubb_update();
 
     return true;
   }

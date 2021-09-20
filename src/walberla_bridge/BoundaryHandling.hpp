@@ -110,7 +110,7 @@ public:
   void operator()(IBlock *block) { (*m_boundary)(block); }
 
   bool node_is_boundary(BlockAndCell const &bc) const {
-    auto &&[flag_field, boundary_flag] = get_flag_field_and_flag(bc);
+    auto [flag_field, boundary_flag] = get_flag_field_and_flag(bc);
     return flag_field->isFlagSet(bc.cell, boundary_flag);
   }
 
@@ -122,18 +122,22 @@ public:
   void set_node_velocity_at_boundary(Utils::Vector3i const &node,
                                      Utils::Vector3d const &v,
                                      BlockAndCell const &bc) {
-    auto &&[flag_field, boundary_flag] = get_flag_field_and_flag(bc);
+    auto [flag_field, boundary_flag] = get_flag_field_and_flag(bc);
     m_callback.set_node_boundary_velocity(node, v);
     flag_field->addFlag(bc.cell, boundary_flag);
-    ubb_update();
   }
 
   void remove_node_from_boundary(Utils::Vector3i const &node,
                                  BlockAndCell const &bc) {
-    auto &&[flag_field, boundary_flag] = get_flag_field_and_flag(bc);
+    auto [flag_field, boundary_flag] = get_flag_field_and_flag(bc);
     m_callback.unset_node_boundary_velocity(node);
     flag_field->removeFlag(bc.cell, boundary_flag);
-    ubb_update();
+  }
+
+  /** Assign velocity boundary conditions to boundary cells. */
+  void ubb_update() {
+    m_boundary->fillFromFlagField<FlagField>(m_blocks, m_flag_field_id,
+                                             Boundary_flag, Domain_flag);
   }
 
 private:
@@ -142,12 +146,6 @@ private:
   BlockDataID m_flag_field_id;
   DynamicVelocityCallback m_callback;
   std::shared_ptr<lbm::Dynamic_UBB> m_boundary;
-
-  /** Assign velocity boundary conditions to boundary cells. */
-  void ubb_update() {
-    m_boundary->fillFromFlagField<FlagField>(m_blocks, m_flag_field_id,
-                                             Boundary_flag, Domain_flag);
-  }
 
   /** Register flags and set all cells to @ref Domain_flag. */
   void flag_reset_kernel(IBlock *const block) {
