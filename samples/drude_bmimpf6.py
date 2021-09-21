@@ -29,9 +29,9 @@ import espressomd.observables
 import espressomd.accumulators
 import espressomd.electrostatics
 import espressomd.interactions
+import espressomd.drude_helpers
 import espressomd.virtual_sites
 import espressomd.visualization_opengl
-from espressomd.drude_helpers import DrudeHelpers
 
 required_features = ["LENNARD_JONES", "P3M", "MASS", "ROTATION",
                      "ROTATIONAL_INERTIA", "VIRTUAL_SITES_RELATIVE",
@@ -200,7 +200,7 @@ for i in range(n_ionpairs):
     # Add an anion ...
     anions.append(
         system.part.add(type=types["PF6"], pos=np.random.random(3) * box_l,
-                        q=charges["PF6"], mass=masses["PF6"]))    
+                        q=charges["PF6"], mass=masses["PF6"]))
 
     # ... and a cation
     pos_com = np.random.random(3) * box_l
@@ -265,7 +265,7 @@ if args.drude:
     system.bonded_inter.add(thermalized_dist_bond)
     system.bonded_inter.add(harmonic_bond)
 
-    dh = DrudeHelpers()
+    dh = espressomd.drude_helpers.DrudeHelpers()
 
     # Add Drude particles for the anions ...
     for anion in anions:

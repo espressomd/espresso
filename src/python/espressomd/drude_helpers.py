@@ -20,7 +20,7 @@ from .__init__ import has_features
 
 class DrudeHelpers:
     """
-    Provides helper functions the creation of Drude particles.
+    Provides helper functions to assist in the creation of Drude particles.
 
     """
 
@@ -92,8 +92,7 @@ class DrudeHelpers:
 
         if verbose:
             print(
-                "Adding to core", p_core.id, "  pol", alpha, "  core charge",
-                p_core.q, "->", p_core.q - q_drude, "  drude charge", q_drude)
+                f"Adding to core {p_core.id}   pol {alpha}   core charge {p_core.q} -> {p_core.q - q_drude}   drude charge {q_drude}")
 
         p_core.q -= q_drude
         p_core.mass -= mass_drude
@@ -170,8 +169,8 @@ class DrudeHelpers:
             scaling_coeff=s, q1q2=qq)
 
         if verbose:
-            print("Added THOLE non-bonded interaction for types",
-                  t1, "<->", t2, "S", s, "q1q2", qq)
+            print(
+                f"Added THOLE non-bonded interaction for types {t1} <-> {t2} S {s} q1q2 {qq}")
 
     def add_all_thole(self, system, verbose=False):
         """
@@ -228,8 +227,8 @@ class DrudeHelpers:
             system.bonded_inter.add(subtr_sr_bond)
             self.drude_dict[td]["subtr_sr_bonds_drude-core"] = subtr_sr_bond
             if verbose:
-                print("Added drude-core SR exclusion bond ",
-                      subtr_sr_bond, "for drude", qd, "<-> core", qc, "to system")
+                print(
+                    f"Added drude-core SR exclusion bond {subtr_sr_bond} for drude {qd} <-> core {qc} to system")
 
         for drude_id in self.drude_id_list:
             core_id = self.core_id_from_drude_id[drude_id]
@@ -238,8 +237,8 @@ class DrudeHelpers:
             bond = self.drude_dict[pd.type]["subtr_sr_bonds_drude-core"]
             pc.add_bond((bond, drude_id))
             if verbose:
-                print("Added drude-core SR bond", bond,
-                      "between ids", drude_id, "and", core_id)
+                print(
+                    f"Added drude-core SR bond {bond} between ids {drude_id} and {core_id}")
 
     def setup_intramol_exclusion_bonds(self, system, mol_drude_types, mol_core_types,
                                        mol_core_partial_charges, verbose=False):
@@ -278,8 +277,8 @@ class DrudeHelpers:
                     self.drude_dict[td]["subtr_sr_bonds_intramol"][
                         tc] = subtr_sr_bond
                     if verbose:
-                        print("Added intramolecular exclusion", subtr_sr_bond,
-                              "for drude", qd, "<-> core", qp, "to system")
+                        print(
+                            f"Added intramolecular exclusion {subtr_sr_bond} for drude {qd} <-> core {qp} to system")
 
     def add_intramol_exclusion_bonds(
             self, drude_parts, core_parts, verbose=False):
@@ -311,5 +310,5 @@ class DrudeHelpers:
                         "subtr_sr_bonds_intramol"][pc.type]
                     pd.add_bond((bond, core_id))
                     if verbose:
-                        print("Added subtr_sr bond", bond,
-                              "between ids", drude_id, "and", core_id)
+                        print(
+                            f"Added subtr_sr bond {bond} between ids {drude_id} and {core_id}")

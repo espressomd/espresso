@@ -1528,8 +1528,8 @@ It returns an `espressomd.particle_data.ParticleHandle` to the created Drude
 particle. Note that as the function also adds the first two bonds between Drude
 and core, these bonds have to be already available.::
 
-    from espressomd.drude_helpers import DrudeHelpers
-    dh = DrudeHelper()
+    import espressomd.drude_helpers
+    dh = espressomd.drude_helpers.DrudeHelpers()
     drude_part = dh.add_drude_particle_to_core(<system>, <harmonic_bond>,
         <thermalized_bond>, <core particle>, <type drude>, <alpha>,
         <mass drude>, <coulomb_prefactor>, <thole damping>, <verbose>)
@@ -1559,11 +1559,11 @@ One bond type of this kind is needed per Drude type. The above helper function a
 tracks particle types, ids and charges of Drude and core particles, so a simple call of
 another helper function::
 
-    dh.setup_and_add_drude_exclusion_bonds(S)
+    dh.setup_and_add_drude_exclusion_bonds(system)
 
 will use this data to create a :ref:`Subtract P3M short-range bond` per Drude type
 and set it up it between all Drude and core particles collected in calls of
-:meth:`~espressomd.drude_helpers.DrudeHelper.add_drude_particle_to_core`.
+:meth:`~espressomd.drude_helpers.DrudeHelpers.add_drude_particle_to_core`.
 
 .. _Canceling intramolecular electrostatics:
 
