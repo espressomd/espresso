@@ -45,6 +45,11 @@ class BoundaryHandling {
   /** Container for the map between cells and velocities. */
   class DynamicVelocityCallback {
   public:
+    DynamicVelocityCallback() {
+      m_velocity_boundary =
+          std::make_shared<std::unordered_map<Cell, Vector3<real_t>>>();
+    }
+
     Vector3<real_t> operator()(
         Cell const &local,
         std::shared_ptr<blockforest::StructuredBlockForest> const &blocks,
@@ -57,27 +62,28 @@ class BoundaryHandling {
     void set_node_boundary_velocity(Utils::Vector3i const &node,
                                     Utils::Vector3d const &vel) {
       auto const global = Cell(node[0], node[1], node[2]);
-      m_velocity_boundary[global] = to_vector3(vel);
+      (*m_velocity_boundary)[global] = to_vector3(vel);
     }
 
     void unset_node_boundary_velocity(Utils::Vector3i const &node) {
       auto const global = Cell(node[0], node[1], node[2]);
-      m_velocity_boundary.erase(global);
+      m_velocity_boundary->erase(global);
     }
 
     Utils::Vector3d
     get_node_boundary_velocity(Utils::Vector3i const &node) const {
       auto const global = Cell(node[0], node[1], node[2]);
-      return to_vector3d(m_velocity_boundary.at(global));
+      return to_vector3d(m_velocity_boundary->at(global));
     }
 
   private:
-    std::unordered_map<Cell, Vector3<real_t>> m_velocity_boundary;
+    std::shared_ptr<std::unordered_map<Cell, Vector3<real_t>>>
+        m_velocity_boundary;
 
     Vector3<real_t> get_velocity(Cell const &cell) const {
       constexpr Vector3<real_t> no_slip = Vector3<real_t>{0, 0, 0};
-      auto needle = m_velocity_boundary.find(cell);
-      if (needle != m_velocity_boundary.end()) {
+      auto needle = m_velocity_boundary->find(cell);
+      if (needle != m_velocity_boundary->end()) {
         return needle->second;
       }
       return no_slip;
