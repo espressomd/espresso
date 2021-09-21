@@ -1524,13 +1524,15 @@ polarizability :math:`\alpha` (in units of inverse volume) with :math:`q_d =
 
 The following helper method takes into account all the preceding considerations
 and can be used to conveniently add a Drude particle to a given core particle.
-As it also adds the first two bonds between Drude and core, these bonds have to
-be created beforehand::
+It returns an `espressomd.particle_data.ParticleHandle` to the created Drude
+particle. Note that as the function also adds the first two bonds between Drude
+and core, these bonds have to be already available.::
 
     import espressomd.drude_helpers
-    espressomd.drude_helpers(<system>, <harmonic_bond>, <thermalized_bond>,
-        <core particle>, <id drude>, <type drude>, <alpha>, <mass drude>,
-        <coulomb_prefactor>, <thole damping>, <verbose>)
+    dh = espressomd.drude_helpers.DrudeHelpers()
+    drude_part = dh.add_drude_particle_to_core(<system>, <harmonic_bond>,
+        <thermalized_bond>, <core particle>, <type drude>, <alpha>,
+        <mass drude>, <coulomb_prefactor>, <thole damping>, <verbose>)
 
 The arguments of the helper function are:
     * ``<system>``: The :class:`espressomd.System() <espressomd.system.System>`.
@@ -1539,7 +1541,6 @@ The arguments of the helper function are:
     * ``<thermalized_bond>``: The thermalized distance bond for the cold and hot
       thermostats.
     * ``<core particle>``: The core particle on which the Drude particle is added.
-    * ``<id drude>``: The user-defined id of the Drude particle that is created.
     * ``<type drude>``: The user-defined type of the Drude particle.
       Each Drude particle of each complex should have an
       individual type (e.g. in an ionic system with Anions (type 0) and Cations
@@ -1558,10 +1559,11 @@ One bond type of this kind is needed per Drude type. The above helper function a
 tracks particle types, ids and charges of Drude and core particles, so a simple call of
 another helper function::
 
-    espressomd.drude_helpers.setup_and_add_drude_exclusion_bonds(S)
+    dh.setup_and_add_drude_exclusion_bonds(system)
 
 will use this data to create a :ref:`Subtract P3M short-range bond` per Drude type
-and set it up it between all Drude and core particles collected in calls of :meth:`~espressomd.drude_helpers.add_drude_particle_to_core`.
+and set it up it between all Drude and core particles collected in calls of
+:meth:`~espressomd.drude_helpers.DrudeHelpers.add_drude_particle_to_core`.
 
 .. _Canceling intramolecular electrostatics:
 
