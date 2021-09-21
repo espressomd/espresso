@@ -28,6 +28,8 @@
 #include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_walberla_instance.hpp"
+#include "shapes/Shape.hpp"
+#include "utils/raster.hpp"
 
 #include "event.hpp"
 #include "lbboundaries/LBBoundary.hpp"
@@ -75,12 +77,14 @@ void lb_init_boundaries() {
       auto const pos = index_and_pos.second * agrid;
 
       for (auto const &lbboundary : lbboundaries) {
-        if (not lbboundary->shape().is_inside(pos)) {
+        if (lbboundary->shape().is_inside(pos)) {
           lb_walberla()->set_node_velocity_at_boundary(
               index, lbboundary->velocity() / lb_lbfluid_get_lattice_speed());
         }
       }
     }
+
+
 #endif
 #endif
   } // lattice switch is WALBERLA
