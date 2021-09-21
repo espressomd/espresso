@@ -544,6 +544,45 @@ cdef class LBFluidRoutines:
             c_velocity[1] = value[1]
             c_velocity[2] = value[2]
             python_lbnode_set_velocity(self.node, c_velocity)
+    
+    property boundary:
+        def __get__(self):
+            """
+            Returns
+            -------
+            lbboundaries.VelocityBounceBack 
+                If the node is a velocity bounce back boundary node
+            None
+                If the node is not a boundary node
+            """
+
+            is_boundary = lb_lbnode_is_boundary(self.node)
+            if is_boundary:
+                vel = array_locked(python_lbnode_get_velocity_at_boundary(self.node))
+                return lbboundaries.VelocityBounceBack(vel)
+            else:
+                return None
+        
+        def __set__(self, value):
+            """
+            Parameters
+            ----------
+            value : lbboundaries.VelocityBounceBack or None
+                If value is lbboundaries.VelocityBounceBack, set the node to be a boundary node with the specified velocity.
+                If value is None, the node will be a non-boundary node (fluid).
+            """
+
+            if isinstance(value, lbboundaries.VelocityBounceBack):
+                cdef Vector3d c_vel
+                p_vel = value.velocity
+                c_vel[0] = p_vel[0]
+                c_vel[1] = p_vel[1]
+                c_vel[2] = p_vel[2]
+                python_lbnode_set_velocity_at_boundar(self.node, c_vel)
+            elif value is None:
+                lb_lbnode_remove_boundary(self.node)
+            else:
+                raise ValueError("LB Boundary must be instance of lbboundaries.VelocityBounceBack or None")
 
     property density:
         def __get__(self):
