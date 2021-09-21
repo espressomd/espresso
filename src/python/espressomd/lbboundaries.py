@@ -87,12 +87,13 @@ if has_features(["LB_BOUNDARIES"]):
 
         _so_name = "LBBoundaries::LBBoundary"
         _so_bind_methods = ("get_force",)
-    
+
     class VelocityBounceBack:
         """
         Holds velocity information for the velocity bounce back boundary condition at a single node.
         """
 
         def __init__(self, velocity):
-            check_type_or_throw_except(velocity, 3, float, "VelocityBounceBack velocity must be three floats")
+            check_type_or_throw_except(
+                velocity, 3, float, "VelocityBounceBack velocity must be three floats")
             self.velocity = velocity

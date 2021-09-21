@@ -170,7 +170,7 @@ cdef inline Vector3d python_lbnode_get_velocity_at_boundary(Vector3i node) excep
 cdef inline Vector3d python_lbnode_get_boundary_force(Vector3i node) except +:
     cdef Vector3d force = lb_lbnode_get_boundary_force(node)
     cdef double conv = lb_lbfluid_get_agrid() / lb_lbfluid_get_tau()**2
-    return force *conv
+    return force * conv
 
 cdef inline void python_lbnode_set_last_applied_force(Vector3i node, Vector3d force) except +:
     cdef double inv_conv = lb_lbfluid_get_tau()**2 / lb_lbfluid_get_agrid()

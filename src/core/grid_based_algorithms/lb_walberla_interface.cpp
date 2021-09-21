@@ -41,7 +41,8 @@ boost::optional<Utils::Vector3d> get_node_velocity(Utils::Vector3i ind) {
 
 REGISTER_CALLBACK_ONE_RANK(get_node_velocity)
 
-boost::optional<Utils::Vector3d> get_node_velocity_at_boundary(Utils::Vector3i ind) {
+boost::optional<Utils::Vector3d>
+get_node_velocity_at_boundary(Utils::Vector3i ind) {
   auto res = lb_walberla()->get_node_velocity_at_boundary(ind);
   return res;
 }
@@ -96,8 +97,7 @@ void clear_boundaries() {
 
 REGISTER_CALLBACK(clear_boundaries)
 
-boost::optional<Utils::Vector3d>
-get_node_boundary_force(Utils::Vector3i ind) {
+boost::optional<Utils::Vector3d> get_node_boundary_force(Utils::Vector3i ind) {
   return lb_walberla()->get_node_boundary_force(ind);
 }
 

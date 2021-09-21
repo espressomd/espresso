@@ -449,14 +449,16 @@ IF LB_WALBERLA:
         def _deactivate_method(self):
             mpi_destruct_lb_walberla()
             super()._deactivate_method()
-        
+
         def get_nodes_in_shape(self, shape):
             """Provides a generator for iterating over all lb nodes inside the given shape"""
-            utils.check_type_or_throw_except(shape, 1, Shape, "expected a espressomd.shapes.Shape")
+            utils.check_type_or_throw_except(
+                shape, 1, Shape, "expected a espressomd.shapes.Shape")
             lb_shape = self.shape
             idxs = list(itertools.product(
-                    range(lb_shape[0]), range(lb_shape[1]), range(lb_shape[2])))
-            nodes = shape.get_nodes_in_shape(idx_to_check = idxs, agrid = self.agrid)
+                range(lb_shape[0]), range(lb_shape[1]), range(lb_shape[2])))
+            nodes = shape.get_nodes_in_shape(
+                idx_to_check=idxs, agrid=self.agrid)
             for node in nodes:
                 yield self[node]
 
@@ -556,7 +558,7 @@ cdef class LBFluidRoutines:
             c_velocity[1] = value[1]
             c_velocity[2] = value[2]
             python_lbnode_set_velocity(self.node, c_velocity)
-    
+
     property boundary:
         def __get__(self):
             """
@@ -570,11 +572,13 @@ cdef class LBFluidRoutines:
 
             is_boundary = lb_lbnode_is_boundary(self.node)
             if is_boundary:
-                vel = make_array_locked(python_lbnode_get_velocity_at_boundary(self.node))
+                vel = make_array_locked(
+                    python_lbnode_get_velocity_at_boundary(
+                        self.node))
                 return VelocityBounceBack(vel)
             else:
                 return None
-        
+
         def __set__(self, value):
             """
             Parameters
@@ -594,7 +598,8 @@ cdef class LBFluidRoutines:
             elif value is None:
                 lb_lbnode_remove_from_boundary(self.node)
             else:
-                raise ValueError("LB Boundary must be instance of lbboundaries.VelocityBounceBack or None")
+                raise ValueError(
+                    "LB Boundary must be instance of lbboundaries.VelocityBounceBack or None")
 
     property density:
         def __get__(self):

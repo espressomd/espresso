@@ -32,7 +32,8 @@
 namespace Walberla {
 
 boost::optional<Utils::Vector3d> get_node_velocity(Utils::Vector3i ind);
-boost::optional<Utils::Vector3d> get_node_velocity_at_boundary(Utils::Vector3i ind);
+boost::optional<Utils::Vector3d>
+get_node_velocity_at_boundary(Utils::Vector3i ind);
 boost::optional<Utils::Vector3d>
 get_node_last_applied_force(Utils::Vector3i ind);
 boost::optional<double> get_node_density(Utils::Vector3i ind);

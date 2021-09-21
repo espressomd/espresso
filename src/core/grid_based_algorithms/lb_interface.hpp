@@ -97,7 +97,7 @@ void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
  * @brief Set the LB fluid velocity for a single boundary node.
  */
 void lb_lbnode_set_velocity_at_boundary(const Utils::Vector3i &ind,
-                            const Utils::Vector3d &u);
+                                        const Utils::Vector3d &u);
 
 /**
  * @brief Set the LB fluid populations for a single node.
@@ -178,7 +178,8 @@ const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind);
 /**
  * @brief Get the LB fluid velocity for a single node.
  */
-const Utils::Vector3d lb_lbnode_get_velocity_at_boundary(const Utils::Vector3i &ind);
+const Utils::Vector3d
+lb_lbnode_get_velocity_at_boundary(const Utils::Vector3i &ind);
 
 /**
  * @brief Get the LB fluid pressure tensor for a single node.

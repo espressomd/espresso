@@ -32,25 +32,26 @@ public:
   virtual void calculate_dist(const Utils::Vector3d &pos, double &dist,
                               Utils::Vector3d &vec) const = 0;
   /**
- * @brief Check whether the given point is inside the shape or not.
- * @param pos Position to check.
- */
+   * @brief Check whether the given point is inside the shape or not.
+   * @param pos Position to check.
+   */
   virtual bool is_inside(Utils::Vector3d const &pos) const {
     Utils::Vector3d vec;
     double dist;
     calculate_dist(pos, dist, vec);
     return dist < 0.0;
   }
-  std::vector<Utils::Vector3i> get_nodes_in_shape(std::vector<Utils::Vector3i> const &idxs_to_check,  double const agrid) {
+  std::vector<Utils::Vector3i>
+  get_nodes_in_shape(std::vector<Utils::Vector3i> const &idxs_to_check,
+                     double const agrid) {
     std::vector<Utils::Vector3i> indices_in_shape;
     for (auto idx : idxs_to_check) {
-        auto const pos = idx * agrid + Utils::Vector3d::broadcast(0.5*agrid);
-        if (is_inside(pos)){
-            indices_in_shape.push_back(idx);
-        }
-   }
+      auto const pos = idx * agrid + Utils::Vector3d::broadcast(0.5 * agrid);
+      if (is_inside(pos)) {
+        indices_in_shape.push_back(idx);
+      }
+    }
     return indices_in_shape;
-
   }
   virtual ~Shape() = default;
 };
