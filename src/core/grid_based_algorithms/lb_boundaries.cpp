@@ -86,22 +86,6 @@ void lb_init_boundaries() {
   } // lattice switch is WALBERLA
 }
   
-std::vector<Utils::Vector3i> get_nodes_in_shape(Shapes::Shape const &shape) {
-    std::vector<Utils::Vector3i> indices_in_shape;
-    auto const agrid = lb_lbfluid_get_agrid();
-    #ifdef LB_WALBERLA
-    for (auto index_and_pos : lb_walberla()->node_indices_positions(true)) {
-        auto const pos = index_and_pos.second * agrid;
-        if (shape.is_inside(pos)){
-            indices_in_shape.push_back(index_and_pos.first);
-        }
-    #endif
-   }
-    return indices_in_shape;
-
-  }
-
-
 #endif /* LB_BOUNDARIES */
 
 } // namespace LBBoundaries

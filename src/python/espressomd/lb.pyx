@@ -25,12 +25,14 @@ import numpy as np
 cimport numpy as np
 from libc cimport stdint
 from .actors cimport Actor
+from .shapes import Shape
 from . cimport cuda_init
 from . import cuda_init
 from . import utils
 from .utils import array_locked, is_valid_type, to_char_pointer
 from .utils cimport Vector3i, Vector3d, Vector6d, make_array_locked, create_nparray_from_double_array
 from .grid cimport box_geo
+from .lbboundaries import VelocityBounceBack
 
 
 IF LB_WALBERLA:
@@ -447,6 +449,16 @@ IF LB_WALBERLA:
         def _deactivate_method(self):
             mpi_destruct_lb_walberla()
             super()._deactivate_method()
+        
+        def get_nodes_in_shape(self, shape):
+            """Provides a generator for iterating over all lb nodes inside the given shape"""
+            utils.check_type_or_throw_except(shape, 1, Shape, "expected a espressomd.shapes.Shape")
+            lb_shape = self.shape
+            idxs = list(itertools.product(
+                    range(lb_shape[0]), range(lb_shape[1]), range(lb_shape[2])))
+            nodes = shape.get_nodes_in_shape(idx_to_check = idxs, agrid = self.agrid)
+            for node in nodes:
+                yield self[node]
 
         # TODO WALBERLA: maybe split this method in 2 methods with clear names
         # like add_vtk_writer_auto_update() and add_vtk_writer_manual()
@@ -550,7 +562,7 @@ cdef class LBFluidRoutines:
             """
             Returns
             -------
-            lbboundaries.VelocityBounceBack 
+            :ref:`espressomd.lbboundaries.VelocityBounceBack` 
                 If the node is a velocity bounce back boundary node
             None
                 If the node is not a boundary node
@@ -558,8 +570,8 @@ cdef class LBFluidRoutines:
 
             is_boundary = lb_lbnode_is_boundary(self.node)
             if is_boundary:
-                vel = array_locked(python_lbnode_get_velocity_at_boundary(self.node))
-                return lbboundaries.VelocityBounceBack(vel)
+                vel = make_array_locked(python_lbnode_get_velocity_at_boundary(self.node))
+                return VelocityBounceBack(vel)
             else:
                 return None
         
@@ -567,20 +579,20 @@ cdef class LBFluidRoutines:
             """
             Parameters
             ----------
-            value : lbboundaries.VelocityBounceBack or None
-                If value is lbboundaries.VelocityBounceBack, set the node to be a boundary node with the specified velocity.
+            value : :ref:`espressomd.lbboundaries.VelocityBounceBack` or None
+                If value is :ref:`espressomd.lbboundaries.VelocityBounceBack`, set the node to be a boundary node with the specified velocity.
                 If value is None, the node will be a non-boundary node (fluid).
             """
 
-            if isinstance(value, lbboundaries.VelocityBounceBack):
-                cdef Vector3d c_vel
+            cdef Vector3d c_vel
+            if isinstance(value, VelocityBounceBack):
                 p_vel = value.velocity
                 c_vel[0] = p_vel[0]
                 c_vel[1] = p_vel[1]
                 c_vel[2] = p_vel[2]
-                python_lbnode_set_velocity_at_boundar(self.node, c_vel)
+                python_lbnode_set_velocity_at_boundary(self.node, c_vel)
             elif value is None:
-                lb_lbnode_remove_boundary(self.node)
+                lb_lbnode_remove_from_boundary(self.node)
             else:
                 raise ValueError("LB Boundary must be instance of lbboundaries.VelocityBounceBack or None")
 

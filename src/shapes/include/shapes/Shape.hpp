@@ -23,6 +23,7 @@
 #define SHAPES_SHAPE_HPP
 
 #include <utils/Vector.hpp>
+#include <vector>
 
 namespace Shapes {
 
@@ -39,6 +40,17 @@ public:
     double dist;
     calculate_dist(pos, dist, vec);
     return dist < 0.0;
+  }
+  std::vector<Utils::Vector3i> get_nodes_in_shape(std::vector<Utils::Vector3i> const &idxs_to_check,  double const agrid) {
+    std::vector<Utils::Vector3i> indices_in_shape;
+    for (auto idx : idxs_to_check) {
+        auto const pos = idx * agrid + Utils::Vector3d::broadcast(0.5*agrid);
+        if (is_inside(pos)){
+            indices_in_shape.push_back(idx);
+        }
+   }
+    return indices_in_shape;
+
   }
   virtual ~Shape() = default;
 };
