@@ -94,6 +94,12 @@ void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
                             const Utils::Vector3d &u);
 
 /**
+ * @brief Set the LB fluid velocity for a single boundary node.
+ */
+void lb_lbnode_set_velocity_at_boundary(const Utils::Vector3i &ind,
+                            const Utils::Vector3d &u);
+
+/**
  * @brief Set the LB fluid populations for a single node.
  */
 void lb_lbnode_set_pop(const Utils::Vector3i &ind,
@@ -170,6 +176,11 @@ double lb_lbnode_get_density(const Utils::Vector3i &ind);
 const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind);
 
 /**
+ * @brief Get the LB fluid velocity for a single node.
+ */
+const Utils::Vector3d lb_lbnode_get_velocity_at_boundary(const Utils::Vector3i &ind);
+
+/**
  * @brief Get the LB fluid pressure tensor for a single node.
  */
 const Utils::Vector6d lb_lbnode_get_pressure_tensor(const Utils::Vector3i &ind);
@@ -190,6 +201,21 @@ const Utils::Vector6d lb_lbfluid_get_pressure_tensor();
  * @brief Get the LB fluid boundary bool for a single node.
  */
 bool lb_lbnode_is_boundary(const Utils::Vector3i &ind);
+
+/**
+ * @brief Clear boundaries
+ */
+void lb_lbfluid_clear_boundaries();
+
+/**
+ * @brief Get the LB fluid velocity for a single node.
+ */
+const Utils::Vector3d lb_lbnode_get_boundary_force(const Utils::Vector3i &ind);
+
+/**
+ * @brief Remove single node from boundary
+ */
+void lb_lbnode_remove_from_boundary(const Utils::Vector3i &ind);
 
 /**
  * @brief Get the LB fluid populations for a single node.

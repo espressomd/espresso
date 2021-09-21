@@ -448,6 +448,17 @@ const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind) {
   throw NoLBActive();
 }
 
+const Utils::Vector3d lb_lbnode_get_velocity_at_boundary(const Utils::Vector3i &ind) {
+#ifdef LB_WALBERLA
+  if (lattice_switch == ActiveLB::WALBERLA) {
+    return ::Communication::mpiCallbacks().call(
+        ::Communication::Result::one_rank, Walberla::get_node_velocity_at_boundary, ind);
+  }
+#endif
+
+  throw NoLBActive();
+}
+
 const Utils::Vector3d
 lb_lbnode_get_last_applied_force(const Utils::Vector3i &ind) {
 #ifdef LB_WALBERLA
@@ -574,6 +585,37 @@ bool lb_lbnode_is_boundary(const Utils::Vector3i &ind) {
   throw NoLBActive();
 }
 
+const Utils::Vector3d lb_lbnode_get_boundary_force(const Utils::Vector3i &ind){
+  #ifdef LB_WALBERLA
+  if (lattice_switch == ActiveLB::WALBERLA) {
+    return ::Communication::mpiCallbacks().call(
+        ::Communication::Result::one_rank, Walberla::get_node_boundary_force, ind);
+  }
+#endif
+
+  throw NoLBActive();
+}
+
+void lb_lbnode_remove_from_boundary(const Utils::Vector3i &ind){
+  if (lattice_switch == ActiveLB::WALBERLA) {
+#ifdef LB_WALBERLA
+    ::Communication::mpiCallbacks().call_all(Walberla::remove_node_from_boundary, ind);
+#endif
+  } else {
+    throw NoLBActive();
+  }
+}
+
+void lb_lbfluid_clear_boundaries(){
+    if (lattice_switch == ActiveLB::WALBERLA) {
+#ifdef LB_WALBERLA
+    ::Communication::mpiCallbacks().call_all(Walberla::clear_boundaries);
+#endif
+  } else {
+    throw NoLBActive();
+  }
+}
+
 const std::vector<double> lb_lbnode_get_pop(const Utils::Vector3i &ind) {
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
@@ -607,6 +649,20 @@ void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
     throw NoLBActive();
   }
 }
+
+
+void lb_lbnode_set_velocity_at_boundary(const Utils::Vector3i &ind,
+                            const Utils::Vector3d &u) {
+  if (lattice_switch == ActiveLB::WALBERLA) {
+#ifdef LB_WALBERLA
+    ::Communication::mpiCallbacks().call_all(Walberla::set_node_velocity_at_boundary, ind,
+                                             u);
+#endif
+  } else {
+    throw NoLBActive();
+  }
+}
+
 
 void lb_lbnode_set_last_applied_force(const Utils::Vector3i &ind,
                                       const Utils::Vector3d &f) {
