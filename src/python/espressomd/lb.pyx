@@ -601,6 +601,15 @@ cdef class LBFluidRoutines:
                 raise ValueError(
                     "LB Boundary must be instance of lbboundaries.VelocityBounceBack or None")
 
+    property boundary_force:
+        def __get__(self):
+            return make_array_locked(
+                python_lbnode_get_boundary_force(self.node))
+
+        def __set__(self, val):
+            raise NotImplementedError(
+                "The boundary force can only be read, never set.")
+
     property density:
         def __get__(self):
             return python_lbnode_get_density(self.node)
