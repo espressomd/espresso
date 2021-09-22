@@ -458,7 +458,7 @@ IF LB_WALBERLA:
             idxs = list(itertools.product(
                 range(lb_shape[0]), range(lb_shape[1]), range(lb_shape[2])))
             nodes = shape.get_nodes_in_shape(
-                idx_to_check=idxs, agrid=self.agrid)
+                idxs_to_check=idxs, agrid=self.agrid)
             for node in nodes:
                 yield self[node]
 

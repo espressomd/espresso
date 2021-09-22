@@ -70,7 +70,7 @@ constexpr const None none{};
 using Variant = boost::make_recursive_variant<
     None, bool, int, std::size_t, double, std::string, std::vector<int>,
     std::vector<double>, ObjectRef, std::vector<boost::recursive_variant_>,
-    Utils::Vector2d, Utils::Vector3d, Utils::Vector4d,
+    Utils::Vector2d, Utils::Vector3d, Utils::Vector3i, Utils::Vector4d,
     std::unordered_map<int, boost::recursive_variant_>>::type;
 
 using VariantMap = std::unordered_map<std::string, Variant>;
