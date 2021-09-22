@@ -105,7 +105,7 @@ class TestLBPressureTensor:
         # ... globally,
         self.assert_allclose_matrix(
             np.mean(self.p_global, axis=0),
-            p_avg_expected, atol_diag=c_s_lb**2 / 6 * 15,
+            p_avg_expected, atol_diag=c_s_lb**2 / 5 * 10,
             atol_offdiag=c_s_lb**2 / 9 * 10)
 
         # ... for two nodes.

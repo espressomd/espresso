@@ -29,7 +29,12 @@ from . cimport cuda_init
 from . import cuda_init
 from . import utils
 from .utils import array_locked, is_valid_type, to_char_pointer
-from .utils cimport Vector3i, Vector3d, Vector6d, make_array_locked, create_nparray_from_double_array
+from .utils cimport Vector3i
+from .utils cimport Vector3d
+from .utils cimport Vector6d
+from .utils cimport make_array_locked
+from .utils cimport make_Vector3d
+from .utils cimport create_nparray_from_double_array
 from .grid cimport box_geo
 
 
@@ -290,12 +295,7 @@ cdef class HydrodynamicInteraction(Actor):
             The LB fluid velocity at ``pos``.
 
         """
-        cdef Vector3d p
-
-        for i in range(3):
-            p[i] = pos[i]
-        cdef Vector3d v = lb_lbfluid_get_interpolated_velocity(p) * lb_lbfluid_get_lattice_speed()
-        return make_array_locked(v)
+        return python_lbnode_get_interpolated_velocity(make_Vector3d(pos))
 
     def add_force_at_pos(self, pos, force):
         """Adds a force to the fluid at given position
@@ -308,13 +308,7 @@ cdef class HydrodynamicInteraction(Actor):
               The force vector which will be distributed at the position.
 
         """
-        cdef Vector3d p
-        cdef Vector3d f
-
-        for i in range(3):
-            p[i] = pos[i]
-            f[i] = force[i]
-        lb_lbfluid_add_force_at_pos(p, f)
+        lb_lbfluid_add_force_at_pos(make_Vector3d(pos), make_Vector3d(force))
 
     def save_checkpoint(self, path, binary):
         '''
@@ -364,24 +358,19 @@ cdef class HydrodynamicInteraction(Actor):
 
     property pressure_tensor:
         def __get__(self):
-            cdef Vector6d tensor = python_lbfluid_get_pressure_tensor(self.agrid, self.tau)
-            return array_locked(np.array([[tensor[0], tensor[1], tensor[3]],
-                                          [tensor[1], tensor[2], tensor[4]],
-                                          [tensor[3], tensor[4], tensor[5]]]))
+            tensor = python_lbfluid_get_pressure_tensor(self.agrid, self.tau)
+            return array_locked(tensor)
 
         def __set__(self, value):
             raise NotImplementedError
 
     property ext_force_density:
         def __get__(self):
-            cdef Vector3d res
-            res = python_lbfluid_get_ext_force_density(
-                self.agrid, self.tau)
-            return make_array_locked(res)
+            return python_lbfluid_get_ext_force_density(self.agrid, self.tau)
 
         def __set__(self, ext_force_density):
             python_lbfluid_set_ext_force_density(
-                ext_force_density, self.agrid, self.tau)
+                make_Vector3d(ext_force_density), self.agrid, self.tau)
 
     property viscosity:
         def __get__(self):
@@ -534,16 +523,12 @@ cdef class LBFluidRoutines:
 
     property velocity:
         def __get__(self):
-            return make_array_locked(python_lbnode_get_velocity(self.node))
+            return python_lbnode_get_velocity(self.node)
 
         def __set__(self, value):
-            cdef Vector3d c_velocity
             utils.check_type_or_throw_except(
                 value, 3, float, "velocity has to be 3 floats")
-            c_velocity[0] = value[0]
-            c_velocity[1] = value[1]
-            c_velocity[2] = value[2]
-            python_lbnode_set_velocity(self.node, c_velocity)
+            python_lbnode_set_velocity(self.node, make_Vector3d(value))
 
     property density:
         def __get__(self):
@@ -554,10 +539,8 @@ cdef class LBFluidRoutines:
 
     property pressure_tensor:
         def __get__(self):
-            cdef Vector6d tensor = python_lbnode_get_pressure_tensor(self.node)
-            return array_locked(np.array([[tensor[0], tensor[1], tensor[3]],
-                                          [tensor[1], tensor[2], tensor[4]],
-                                          [tensor[3], tensor[4], tensor[5]]]))
+            tensor = python_lbnode_get_pressure_tensor(self.node)
+            return array_locked(tensor)
 
         def __set__(self, value):
             raise NotImplementedError
@@ -585,14 +568,11 @@ cdef class LBFluidRoutines:
 
     property last_applied_force:
         def __get__(self):
-            return make_array_locked(
-                python_lbnode_get_last_applied_force(self.node))
+            return python_lbnode_get_last_applied_force(self.node)
 
         def __set__(self, force):
-            cdef Vector3d _force
-            for i in range(3):
-                _force[i] = force[i]
-            python_lbnode_set_last_applied_force(self.node, _force)
+            python_lbnode_set_last_applied_force(
+                self.node, make_Vector3d(force))
 
     def __eq__(self, obj1):
         index_1 = np.array(self.index)
