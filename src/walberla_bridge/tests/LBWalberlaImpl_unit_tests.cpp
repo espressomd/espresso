@@ -112,13 +112,13 @@ BOOST_DATA_TEST_CASE(boundary, bdata::make(all_lbs()), lb_generator) {
   for (auto const &node : std::vector<Vector3i>{
            {-lb->n_ghost_layers(), 0, 0}, {0, 0, 0}, {0, 1, 2}, {9, 9, 9}}) {
     if (lb->node_in_local_halo(node)) {
-      BOOST_CHECK(lb->set_node_velocity_at_boundary(node, vel));
+      BOOST_CHECK(lb->set_node_velocity_at_boundary(node, vel, true));
       auto const vel_check = lb->get_node_velocity_at_boundary(node);
       // Do we have a value
       BOOST_CHECK(vel_check);
       // Check the value
       BOOST_CHECK_SMALL((*vel_check - vel).norm(), 1E-12);
-      BOOST_CHECK(lb->remove_node_from_boundary(node));
+      BOOST_CHECK(lb->remove_node_from_boundary(node, true));
       auto const res = lb->get_node_is_boundary(node, true);
       // Did we get a value?
       BOOST_CHECK(res);
@@ -126,9 +126,9 @@ BOOST_DATA_TEST_CASE(boundary, bdata::make(all_lbs()), lb_generator) {
       BOOST_CHECK(*res == false);
     } else {
       // Not in the local halo.
-      BOOST_CHECK(!lb->set_node_velocity_at_boundary(node, vel));
+      BOOST_CHECK(!lb->set_node_velocity_at_boundary(node, vel, true));
       BOOST_CHECK(!lb->get_node_velocity_at_boundary(node));
-      BOOST_CHECK(!lb->remove_node_from_boundary(node));
+      BOOST_CHECK(!lb->remove_node_from_boundary(node, true));
       BOOST_CHECK(!lb->get_node_is_boundary(node));
     }
   }

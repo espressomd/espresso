@@ -704,13 +704,16 @@ public:
   }
 
   bool set_node_velocity_at_boundary(const Utils::Vector3i &node,
-                                     const Utils::Vector3d &v) override {
+                                     const Utils::Vector3d &v,
+                                     bool reallocate) override {
     auto bc = get_block_and_cell(node, true, m_blocks, n_ghost_layers());
     if (!bc)
       return false;
 
     m_boundary->set_node_velocity_at_boundary(node, v, *bc);
-    m_boundary->ubb_update();
+    if (reallocate) {
+      m_boundary->ubb_update();
+    }
 
     return true;
   }
@@ -725,13 +728,16 @@ public:
     return get_node_last_applied_force(node, true);
   }
 
-  bool remove_node_from_boundary(const Utils::Vector3i &node) override {
+  bool remove_node_from_boundary(const Utils::Vector3i &node,
+                                 bool reallocate) override {
     auto bc = get_block_and_cell(node, true, m_blocks, n_ghost_layers());
     if (!bc)
       return false;
 
     m_boundary->remove_node_from_boundary(node, *bc);
-    m_boundary->ubb_update();
+    if (reallocate) {
+      m_boundary->ubb_update();
+    }
 
     return true;
   }
@@ -746,6 +752,8 @@ public:
 
     return {m_boundary->node_is_boundary(*bc)};
   }
+
+  void reallocate_ubb_field() override { m_boundary->ubb_update(); }
 
   void clear_boundaries() override { reset_boundary_handling(); }
 
