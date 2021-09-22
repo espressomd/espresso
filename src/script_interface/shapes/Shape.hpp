@@ -51,16 +51,10 @@ public:
       return std::vector<Variant>{dist, vec};
     }
 
-    if (name == "get_nodes_in_shape") {
-//      auto const idxs_to_check =
-//          get_value<std::vector<Utils::Vector3i>>(params.at("idxs_to_check"));
-        std::vector<Variant> const idxs_to_check_var = get_value<std::vector<Variant>>(params.at("idxs_to_check"));
-        std::vector<Utils::Vector3i> const idxs_to_check(idxs_to_check_var.begin(), idxs_to_check_var.end());
-      auto const agrid = get_value<double>(params.at("agrid"));
-
-      auto const idxs = shape()->get_nodes_in_shape(idxs_to_check, agrid);
-      std::vector<Variant> ret(idxs.begin(), idxs.end());
-      return ret;
+    if (name == "is_inside") {
+        auto const pos = get_value<Utils::Vector3d>(params.at("position"));
+      auto is_in = shape()->is_inside(pos);
+      return {is_in};
     }
 
     return {};

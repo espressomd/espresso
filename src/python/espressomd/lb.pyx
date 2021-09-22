@@ -455,12 +455,12 @@ IF LB_WALBERLA:
             utils.check_type_or_throw_except(
                 shape, 1, Shape, "expected a espressomd.shapes.Shape")
             lb_shape = self.shape
-            idxs = list(itertools.product(
-                range(lb_shape[0]), range(lb_shape[1]), range(lb_shape[2])))
-            nodes = shape.get_nodes_in_shape(
-                idxs_to_check=idxs, agrid=self.agrid)
-            for node in nodes:
-                yield self[node]
+            idxs = itertools.product(
+                range(lb_shape[0]), range(lb_shape[1]), range(lb_shape[2]))
+            for idx in idxs:
+                pos = (np.asarray(idx)+0.5)*self._params['agrid']
+                if shape.is_inside(position = pos):
+                    yield self[idx]
 
         # TODO WALBERLA: maybe split this method in 2 methods with clear names
         # like add_vtk_writer_auto_update() and add_vtk_writer_manual()
