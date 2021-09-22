@@ -152,6 +152,16 @@ cdef inline Vector3d python_lbnode_get_velocity(Vector3i node) except +:
     cdef Vector3d c_velocity = lb_lbnode_get_velocity(node)
     return c_velocity * lattice_speed
 
+cdef inline void python_lbnode_set_density(Vector3i node, double density) except +:
+    cdef double agrid = lb_lbfluid_get_agrid()
+    cdef double c_density = density * agrid * agrid * agrid
+    lb_lbnode_set_density(node, c_density)
+
+cdef inline double python_lbnode_get_density(Vector3i node) except +: 
+    cdef double agrid = lb_lbfluid_get_agrid()
+    cdef double c_density = lb_lbnode_get_density(node)
+    return c_density / agrid**3
+
 cdef inline void python_lbnode_set_last_applied_force(Vector3i node, Vector3d force) except +:
     cdef double inv_conv = lb_lbfluid_get_tau()**2 / lb_lbfluid_get_agrid()
     cdef Vector3d c_f = force * inv_conv
@@ -168,16 +178,6 @@ cdef inline Vector6d python_lbnode_get_pressure_tensor(Vector3i node) except +:
     cdef double unit_conversion = 1.0 / (tau * tau * agrid)
     cdef Vector6d c_tensor = lb_lbnode_get_pressure_tensor(node)
     return c_tensor * unit_conversion
-
-cdef inline double python_lbnode_get_density(Vector3i node) except +: 
-    cdef double agrid = lb_lbfluid_get_agrid()
-    cdef double c_density = lb_lbnode_get_density(node)
-    return c_density / agrid**3
-
-cdef inline void python_lbnode_set_density(Vector3i node, double density) except +:
-    cdef double agrid = lb_lbfluid_get_agrid()
-    cdef double c_density = density * agrid * agrid * agrid
-    lb_lbnode_set_density(node, c_density)
 
 cdef inline python_lbfluid_set_gamma(p_gamma) except +:
     cdef double c_gamma
