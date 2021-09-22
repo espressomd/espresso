@@ -116,7 +116,9 @@ class LBPoiseuilleCommon:
                                      self.system.box_l[0] - 2.0 * AGRID,
                                      EXT_FORCE,
                                      VISC * DENS)
-        np.testing.assert_allclose(v_measured, v_expected, atol=4E-3)
+        np.testing.assert_allclose(v_measured, v_expected, atol=6E-3)
+        np.testing.assert_allclose(
+            v_measured[1:-1], v_expected[1:-1], atol=1E-5)
 
 
 @utx.skipIfMissingFeatures("LB_WALBERLA")

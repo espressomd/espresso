@@ -136,7 +136,7 @@ class TestVTK(ut.TestCase):
             v_profile = np.mean(
                 np.linalg.norm(vtk_velocity, axis=-1),
                 axis=(1, 2))
-            np.testing.assert_allclose(v_profile, v_profile[::-1], rtol=1e-5)
+            np.testing.assert_allclose(v_profile, v_profile[::-1], atol=5e-6)
 
         # check VTK values match node values in the final time step
         node_density = np.zeros(shape)
