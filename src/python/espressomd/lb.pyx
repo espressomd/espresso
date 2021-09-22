@@ -29,7 +29,7 @@ from . cimport cuda_init
 from . import cuda_init
 from . import utils
 from .utils import array_locked, is_valid_type, check_type_or_throw_except
-from .utils cimport Vector3i, Vector3d, Vector6d, Vector19d, make_array_locked
+from .utils cimport Vector3i, Vector3d, Vector6d, Vector19d, make_array_locked, make_Vector3d
 from .integrate cimport get_time_step
 
 
@@ -210,12 +210,7 @@ cdef class HydrodynamicInteraction(Actor):
             The LB fluid velocity at ``pos``.
 
         """
-        cdef Vector3d p
-
-        for i in range(3):
-            p[i] = pos[i]
-        cdef Vector3d v = lb_lbfluid_get_interpolated_velocity(p) * lb_lbfluid_get_lattice_speed()
-        return make_array_locked(v)
+        return python_lbnode_get_interpolated_velocity(make_Vector3d(pos))
 
     def write_vtk_velocity(self, path, bb1=None, bb2=None):
         """Write the LB fluid velocity to a VTK file.
@@ -336,7 +331,7 @@ cdef class HydrodynamicInteraction(Actor):
     property pressure_tensor:
         def __get__(self):
             tensor = python_lbfluid_get_pressure_tensor(self.agrid, self.tau)
-            return array_locked(np.array(tensor))
+            return array_locked(tensor)
 
         def __set__(self, value):
             raise NotImplementedError
@@ -349,7 +344,7 @@ cdef class HydrodynamicInteraction(Actor):
         def __set__(self, ext_force_density):
             self._assert_agrid_tau_set()
             python_lbfluid_set_ext_force_density(
-                ext_force_density, self.agrid, self.tau)
+                make_Vector3d(ext_force_density), self.agrid, self.tau)
 
     property density:
         def __get__(self):
@@ -486,13 +481,9 @@ cdef class LBFluidRoutines:
             return python_lbnode_get_velocity(self.node)
 
         def __set__(self, value):
-            cdef Vector3d c_velocity
             utils.check_type_or_throw_except(
                 value, 3, float, "velocity has to be 3 floats")
-            c_velocity[0] = value[0]
-            c_velocity[1] = value[1]
-            c_velocity[2] = value[2]
-            python_lbnode_set_velocity(self.node, c_velocity)
+            python_lbnode_set_velocity(self.node, make_Vector3d(value))
 
     property density:
         def __get__(self):
@@ -504,7 +495,7 @@ cdef class LBFluidRoutines:
     property pressure_tensor:
         def __get__(self):
             tensor = python_lbnode_get_pressure_tensor(self.node)
-            return array_locked(np.array(tensor))
+            return array_locked(tensor)
 
         def __set__(self, value):
             raise NotImplementedError
@@ -512,7 +503,7 @@ cdef class LBFluidRoutines:
     property pressure_tensor_neq:
         def __get__(self):
             tensor = python_lbnode_get_pressure_tensor_neq(self.node)
-            return array_locked(np.array(tensor))
+            return array_locked(tensor)
 
         def __set__(self, value):
             raise NotImplementedError

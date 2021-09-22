@@ -170,6 +170,8 @@ class TestLB:
             _ = lbf.ext_force_density
         with self.assertRaises(RuntimeError):
             lbf.ext_force_density = [1, 1, 1]
+        with self.assertRaises(RuntimeError):
+            lbf.get_interpolated_velocity([0, 0, 0])
 
         # check exceptions from LB node
         self.system.actors.add(lbf)
