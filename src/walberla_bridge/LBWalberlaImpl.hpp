@@ -179,6 +179,11 @@ private:
            (4 * magic_number * shear_relaxation + 2 - shear_relaxation);
   }
 
+  void reset_boundary_handling() {
+    m_boundary = std::make_shared<BoundaryHandling>(m_blocks, m_pdf_field_id,
+                                                    m_flag_field_id);
+  }
+
 public:
   // Type definitions
   using LatticeModel_T = LBWalberlaImpl;
@@ -398,10 +403,6 @@ public:
     m_velocity_field_id = field::addToStorage<VectorField>(
         m_blocks, "velocity field", real_t{0}, field::fzyx, m_n_ghost_layers);
 
-    // Init and register flag field (fluid/boundary)
-    m_flag_field_id = field::addFlagFieldToStorage<FlagField>(
-        m_blocks, "flag field", m_n_ghost_layers);
-
     // Init and register pdf field
     auto pdf_setter =
         pystencils::InitialPDFsSetter(m_force_to_be_applied_id, m_pdf_field_id,
@@ -410,8 +411,11 @@ public:
       pdf_setter(&*b);
     }
 
-    // Initialize and register flag field, initialize boundary sweep
-    clear_boundaries();
+    // Init and register flag field (fluid/boundary)
+    m_flag_field_id = field::addFlagFieldToStorage<FlagField>(
+        m_blocks, "flag field", m_n_ghost_layers);
+    // Init boundary sweep
+    reset_boundary_handling();
 
     // Set up the communication and register fields
     m_pdf_streaming_communication =
@@ -743,10 +747,7 @@ public:
     return {m_boundary->node_is_boundary(*bc)};
   }
 
-  void clear_boundaries() override {
-    m_boundary = std::make_shared<BoundaryHandling>(m_blocks, m_pdf_field_id,
-                                                    m_flag_field_id);
-  }
+  void clear_boundaries() override { reset_boundary_handling(); }
 
   // Pressure tensor
   boost::optional<Utils::Vector6d>

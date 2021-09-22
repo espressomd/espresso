@@ -27,6 +27,7 @@
 
 #include <utils/Vector.hpp>
 
+#include <cassert>
 #include <functional>
 #include <memory>
 #include <tuple>
@@ -67,26 +68,26 @@ class BoundaryHandling {
 
     void unset_node_boundary_velocity(Utils::Vector3i const &node) {
       auto const global = Cell(node[0], node[1], node[2]);
+      assert(m_velocity_boundary->count(global));
       m_velocity_boundary->erase(global);
     }
 
     Utils::Vector3d
     get_node_boundary_velocity(Utils::Vector3i const &node) const {
       auto const global = Cell(node[0], node[1], node[2]);
-      return to_vector3d(m_velocity_boundary->at(global));
+      return to_vector3d(get_velocity(global));
     }
 
   private:
     std::shared_ptr<std::unordered_map<Cell, Vector3<real_t>>>
         m_velocity_boundary;
+    static constexpr Vector3<real_t> no_slip{0, 0, 0};
 
     Vector3<real_t> get_velocity(Cell const &cell) const {
-      constexpr Vector3<real_t> no_slip = Vector3<real_t>{0, 0, 0};
-      auto needle = m_velocity_boundary->find(cell);
-      if (needle != m_velocity_boundary->end()) {
-        return needle->second;
+      if (m_velocity_boundary->count(cell) == 0) {
+        return no_slip;
       }
-      return no_slip;
+      return m_velocity_boundary->at(cell);
     }
   };
 
