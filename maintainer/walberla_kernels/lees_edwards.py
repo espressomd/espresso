@@ -1,6 +1,7 @@
 from pystencils.astnodes import LoopOverCoordinate
 #from pystencils.field import fields
 from pystencils.data_types import type_all_numbers
+from pystencils.data_types import TypedSymbol
 from pystencils import Assignment
 
 #from lbmpy.creationfunctions import create_lb_update_rule, create_mrt_orthogonal, force_model_from_string
@@ -18,8 +19,8 @@ def velocity_shift(shear_velocity, grid_size):
     dim = 3
     counters = [LoopOverCoordinate.get_loop_counter_symbol(
         i) for i in range(dim)]
-    points_up = sp.Symbol('points_up')
-    points_down = sp.Symbol('points_down')
+    points_up = TypedSymbol('points_up', bool)
+    points_down = TypedSymbol('points_down', bool)
 
     u_p = sp.Piecewise((1, sp.And(type_all_numbers(counters[1] <= 0, 'int'), points_down)),
                        (-1,
@@ -31,8 +32,8 @@ def velocity_shift(shear_velocity, grid_size):
 
 
 def modify_method(collision, shear_dir, shear_dir_normal):
-    points_up = sp.Symbol('points_up')
-    points_down = sp.Symbol('points_down')
+    points_up = TypedSymbol('points_up', bool)
+    points_down = TypedSymbol('points_down', bool)
 
     to_insert = [s.lhs for s in collision.subexpressions
                  if collision.method.first_order_equilibrium_moment_symbols[shear_dir]

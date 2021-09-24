@@ -416,7 +416,7 @@ with CodeGeneration() as ctx:
 
     # generate unthermalized collision rule
     u_p = lees_edwards.velocity_shift(1, 64)
-    velocity_field = ps.fields("velocitye(3): [3D]", layout='fzyx')
+    velocity_field = ps.fields("velocity(3): [3D]", layout='fzyx')
     density_field = ps.fields("density(1): [3D]", layout='fzyx')
     collision_rule_unthermalized = create_lb_collision_rule(
         method,
