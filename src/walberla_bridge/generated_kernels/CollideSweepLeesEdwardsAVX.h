@@ -17,7 +17,7 @@
 //  You should have received a copy of the GNU General Public License along
 //  with waLBerla (see COPYING.txt). If not, see <http://www.gnu.org/licenses/>.
 //
-//! \\file StreamSweep.h
+//! \\file CollideSweepLeesEdwardsAVX.h
 //! \\author pystencils
 //======================================================================================================================
 
@@ -49,17 +49,18 @@
 namespace walberla {
 namespace pystencils {
 
-class StreamSweep {
+class CollideSweepLeesEdwardsAVX {
 public:
-  StreamSweep(BlockDataID forceID_, BlockDataID pdfsID_,
-              BlockDataID velocityID_)
-      : forceID(forceID_), pdfsID(pdfsID_), velocityID(velocityID_){};
-
-  ~StreamSweep() {
-    for (auto p : cache_pdfs_) {
-      delete p;
-    }
-  }
+  CollideSweepLeesEdwardsAVX(BlockDataID densityID_, BlockDataID forceID_,
+                             BlockDataID pdfsID_, BlockDataID velocityID_,
+                             double omega_bulk, double omega_even,
+                             double omega_odd, double omega_shear,
+                             bool points_down, bool points_up)
+      : densityID(densityID_), forceID(forceID_), pdfsID(pdfsID_),
+        velocityID(velocityID_), omega_bulk_(omega_bulk),
+        omega_even_(omega_even), omega_odd_(omega_odd),
+        omega_shear_(omega_shear), points_down_(points_down),
+        points_up_(points_up){};
 
   void operator()(IBlock *block);
   void runOnCellInterval(const shared_ptr<StructuredBlockStorage> &blocks,
@@ -67,12 +68,12 @@ public:
                          cell_idx_t ghostLayers, IBlock *block);
 
   static std::function<void(IBlock *)>
-  getSweep(const shared_ptr<StreamSweep> &kernel) {
+  getSweep(const shared_ptr<CollideSweepLeesEdwardsAVX> &kernel) {
     return [kernel](IBlock *b) { (*kernel)(b); };
   }
 
   static std::function<void(IBlock *)>
-  getSweepOnCellInterval(const shared_ptr<StreamSweep> &kernel,
+  getSweepOnCellInterval(const shared_ptr<CollideSweepLeesEdwardsAVX> &kernel,
                          const shared_ptr<StructuredBlockStorage> &blocks,
                          const CellInterval &globalCellInterval,
                          cell_idx_t ghostLayers = 1) {
@@ -81,14 +82,16 @@ public:
     };
   }
 
+  BlockDataID densityID;
   BlockDataID forceID;
   BlockDataID pdfsID;
   BlockDataID velocityID;
-
-private:
-  std::set<field::GhostLayerField<double, 19> *,
-           field::SwapableCompare<field::GhostLayerField<double, 19> *>>
-      cache_pdfs_;
+  double omega_bulk_;
+  double omega_even_;
+  double omega_odd_;
+  double omega_shear_;
+  bool points_down_;
+  bool points_up_;
 };
 
 } // namespace pystencils
