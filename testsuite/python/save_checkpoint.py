@@ -23,6 +23,7 @@ import espressomd.checkpointing
 import espressomd.electrostatics
 import espressomd.magnetostatics
 import espressomd.interactions
+import espressomd.drude_helpers
 import espressomd.virtual_sites
 import espressomd.accumulators
 import espressomd.observables
@@ -196,6 +197,11 @@ if 'THERM.LB' not in modes:
         r_cut=2, seed=51)
     system.bonded_inter.add(thermalized_bond)
     p2.add_bond((thermalized_bond, p1))
+    if espressomd.has_features(['ELECTROSTATICS', 'MASS']):
+        dh = espressomd.drude_helpers.DrudeHelpers()
+        dh.add_drude_particle_to_core(system, harmonic_bond, thermalized_bond,
+                                      p2, 10, 1., 4.6, 0.8, 2.)
+        checkpoint.register("dh")
 strong_harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0.0, k=5e5)
 system.bonded_inter.add(strong_harmonic_bond)
 p4.add_bond((strong_harmonic_bond, p3))

@@ -73,26 +73,22 @@ class LBInterpolation:
         """
         self.set_boundaries([0.0, 0.0, V_BOUNDARY])
         self.system.integrator.run(250)
+
         # Check interpolated vel at upper boundary. The node position is at
         # box_l[0]-agrid/2.
-
         np.testing.assert_allclose(
             np.copy(self.lbf.get_interpolated_velocity(
                 [self.system.box_l[0] - AGRID / 2, 0, 0])),
             np.array([0, 0, V_BOUNDARY]))
 
-        # Check interpolated velocity involving boundary and neighboring node
+        # Check interpolated velocity involving boundary and neighboring node.
         # The boundary node index is lbf.shape[0]-1, so -2 refers to the
         # node in front of the boundary.
-        node_next_to_boundary = self.lbf[
-            self.lbf.shape[0] - 2, 0, 0]
-        # The midpoint between the boundary and
-        # that node is box_l - agrid.
+        node_next_to_boundary = self.lbf[self.lbf.shape[0] - 2, 0, 0]
+        # The midpoint between the boundary and that node is box_l - agrid.
         np.testing.assert_allclose(
-            np.copy(self.lbf.get_interpolated_velocity(
-                [self.system.box_l[0] - AGRID, 0, 0])),
-            0.5 * (np.array([0, 0, V_BOUNDARY]) +
-                   node_next_to_boundary.velocity),
+            np.copy(self.lbf.get_interpolated_velocity([BOX_L - AGRID, 0, 0])),
+            ([0, 0, V_BOUNDARY] + np.copy(node_next_to_boundary.velocity)) / 2.,
             rtol=2e-7)
 
         # Bulk

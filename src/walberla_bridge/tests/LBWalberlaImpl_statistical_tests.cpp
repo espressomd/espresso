@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#define BOOST_TEST_MODULE Walberla node setters and getters test
+#define BOOST_TEST_MODULE Walberla statistical tests
 #define BOOST_TEST_DYN_LINK
 #include "config.hpp"
 
@@ -28,17 +28,22 @@
 #include <boost/test/data/test_case.hpp>
 #include <boost/test/unit_test.hpp>
 
+#include "tests_common.hpp"
+
 #include <LBWalberlaBase.hpp>
 #include <lb_walberla_init.hpp>
 
 #include <utils/Vector.hpp>
 
-#include <boost/mpi.hpp>
+#include <boost/mpi/collectives/all_reduce.hpp>
+#include <boost/mpi/communicator.hpp>
+#include <boost/mpi/inplace.hpp>
+
+#include <mpi.h>
 
 #include <cmath>
-#include <cstdio>
-
-#include "tests_common.hpp"
+#include <functional>
+#include <iostream>
 
 using Utils::hadamard_product;
 using Utils::Vector3d;
@@ -60,13 +65,10 @@ BOOST_DATA_TEST_CASE(velocity_fluctuation, bdata::make(thermalized_lbs()),
   // Sample
   int steps = 800;
 
-  auto my_left = lb->get_local_domain().first;
-  auto my_right = lb->get_local_domain().second;
+  auto const [my_left, my_right] = lb->get_local_domain();
+  auto const denominator = Utils::product(my_right - my_left);
 
   Vector3d sum_v{}, sum_v_square{};
-  auto const count =
-      static_cast<int>((my_right[0] - my_left[0]) * (my_right[1] - my_left[1]) *
-                       (my_right[2] - my_left[2]));
 
   for (int i = 0; i < steps; i++) {
     Vector3d step_v{}, step_v_square{};
@@ -84,13 +86,12 @@ BOOST_DATA_TEST_CASE(velocity_fluctuation, bdata::make(thermalized_lbs()),
         }
       }
     }
-    step_v /= double(count);
-    step_v_square /= double(count);
+    step_v /= denominator;
+    step_v_square /= denominator;
 
     sum_v += step_v;
     sum_v_square += step_v_square;
-    auto tmp = sum_v_square / double(i + 1);
-    printf("%g %g %g\n", tmp[0], tmp[1], tmp[2]);
+    std::cout << sum_v_square / static_cast<double>(i + 1) << std::endl;
 
     lb->integrate();
     lb->integrate();
@@ -98,16 +99,17 @@ BOOST_DATA_TEST_CASE(velocity_fluctuation, bdata::make(thermalized_lbs()),
   }
 
   // aggregate
-  MPI_Allreduce(MPI_IN_PLACE, sum_v.data(), 3, MPI_DOUBLE, MPI_SUM,
-                MPI_COMM_WORLD);
-  MPI_Allreduce(MPI_IN_PLACE, sum_v_square.data(), 3, MPI_DOUBLE, MPI_SUM,
-                MPI_COMM_WORLD);
-  const int num_ranks = mpi_shape[0] * mpi_shape[1] * mpi_shape[2];
-  sum_v /= double(num_ranks);
-  sum_v_square /= double(num_ranks);
-  // check
-  const double tol_v = 3E-6;
+  boost::mpi::communicator world;
+  boost::mpi::all_reduce(world, boost::mpi::inplace(sum_v),
+                         std::plus<Vector3d>());
+  boost::mpi::all_reduce(world, boost::mpi::inplace(sum_v_square),
+                         std::plus<Vector3d>());
+  auto const num_ranks = Utils::product(mpi_shape);
+  sum_v /= static_cast<double>(num_ranks);
+  sum_v_square /= static_cast<double>(num_ranks);
 
+  // check
+  auto const tol_v = 3E-6;
   BOOST_CHECK_SMALL(std::abs(sum_v[0] / steps), tol_v * 100); // boost oddity
   BOOST_CHECK_SMALL(std::abs(sum_v[1] / steps), tol_v * 100);
   BOOST_CHECK_SMALL(std::abs(sum_v[2] / steps), tol_v * 100);
@@ -133,7 +135,7 @@ int main(int argc, char **argv) {
   params.box_dimensions = Vector3d{6, 6, 9};
 
   walberla_mpi_init();
-  auto res = boost::unit_test::unit_test_main(init_unit_test, argc, argv);
+  auto const res = boost::unit_test::unit_test_main(init_unit_test, argc, argv);
   MPI_Finalize();
   return res;
 }

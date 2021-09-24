@@ -29,7 +29,6 @@
 #include "blockforest/Initialization.h"
 #include "blockforest/StructuredBlockForest.h"
 #include "blockforest/communication/UniformBufferedScheme.h"
-#include "boundary/BoundaryHandling.h"
 #include "field/GhostLayerField.h"
 #include "field/vtk/FlagFieldCellFilter.h"
 #include "field/vtk/VTKWriter.h"
@@ -40,8 +39,6 @@
 #include "field/AddToStorage.h"
 #include "field/FlagField.h"
 #include "field/communication/PackInfo.h"
-#include "lbm/boundary/NoSlip.h"
-#include "lbm/boundary/UBB.h"
 #include "lbm/communication/PdfFieldPackInfo.h"
 #include "lbm/field/AddToStorage.h"
 #include "lbm/field/PdfField.h"
@@ -50,13 +47,13 @@
 #include "stencil/D3Q19.h"
 #include "stencil/D3Q27.h"
 
+#include "BoundaryHandling.hpp"
 #include "LBWalberlaBase.hpp"
 #include "LeesEdwardsPack.hpp"
 #include "LeesEdwardsUpdate.hpp"
 #include "ResetForce.hpp"
 #include "generated_kernels/InitialPDFsSetter.h"
 #include "generated_kernels/StreamSweep.h"
-#include "generated_kernels/UBB.h"
 #include "walberla_utils.hpp"
 
 #ifdef __AVX2__
@@ -101,10 +98,6 @@ class LBWalberlaImpl;
 #include "generated_kernels/macroscopic_values_accessors.h"
 
 namespace walberla {
-
-// Flags marking fluid and boundaries
-const FlagUID Fluid_flag("fluid");
-const FlagUID UBB_flag("velocity bounce back");
 
 /** Class that runs and controls the LB on WaLBerla
  */
@@ -156,7 +149,7 @@ private:
       cm.time_step_ = time_step;
     }
 
-  } set_time_step_impl;
+  } set_rng_state_impl;
 
   class : public boost::static_visitor<uint32_t> {
   public:
@@ -168,7 +161,7 @@ private:
       return cm.time_step_;
     }
 
-  } get_time_step_impl;
+  } get_rng_state_impl;
 
   class : public boost::static_visitor<> {
   public:
@@ -188,12 +181,17 @@ private:
            (4 * magic_number * shear_relaxation + 2 - shear_relaxation);
   }
 
+  void reset_boundary_handling() {
+    m_boundary = std::make_shared<BoundaryHandling>(m_blocks, m_pdf_field_id,
+                                                    m_flag_field_id);
+  }
+
 public:
   // Type definitions
   using LatticeModel_T = LBWalberlaImpl;
   typedef stencil::D3Q19 Stencil;
   using VectorField = GhostLayerField<real_t, 3u>;
-  using FlagField = field::FlagField<uint8_t>;
+  using FlagField = BoundaryHandling::FlagField;
   using PdfField = GhostLayerField<real_t, Stencil::Size>;
 
   static constexpr real_t w[19] = {
@@ -204,11 +202,6 @@ public:
                                       36., 36., 36., 36., 36., 36., 36.,
                                       36., 36., 36., 36., 36.};
   static constexpr bool compressible = true;
-
-protected:
-  /** Velocity boundary condition */
-  using UBB = lbm::espresso::UBB<LatticeModel_T, uint8_t, true, true>;
-  using Boundaries = BoundaryHandling<FlagField, Stencil, UBB>;
 
 private:
   // Backend classes can access private members:
@@ -223,8 +216,6 @@ private:
   template <class LM, class Enable> friend struct lbm::MomentumDensity;
   template <class LM, class It, class Enable>
   friend struct lbm::DensityAndVelocityRange;
-  template <class LM, typename flag_t, bool A, bool B>
-  friend class lbm::espresso::UBB;
 
   real_t getDensity(const BlockAndCell &bc) const {
     auto pdf_field = bc.block->template getData<PdfField>(m_pdf_field_id);
@@ -274,6 +265,26 @@ private:
     return pressureTensor;
   }
 
+  class interpolation_illegal_access : public std::runtime_error {
+  public:
+    explicit interpolation_illegal_access(std::string const &field,
+                                          Utils::Vector3d const &pos,
+                                          std::array<int, 3> const &node,
+                                          double weight)
+        : std::runtime_error("Access to LB " + field + " field failed") {
+      std::cerr << "pos [" << pos << "], "
+                << "node [" << Utils::Vector3i(node) << "], "
+                << "weight " << weight << "\n";
+    }
+  };
+
+  class vtk_runtime_error : public std::runtime_error {
+  public:
+    explicit vtk_runtime_error(std::string const &vtk_uid,
+                               std::string const &reason)
+        : std::runtime_error("VTKOutput object " + vtk_uid + " " + reason) {}
+  };
+
 protected:
   /** VTK writers that are executed automatically */
   std::map<std::string, std::pair<std::shared_ptr<vtk::VTKOutput>, bool>>
@@ -299,8 +310,6 @@ protected:
 
   BlockDataID m_velocity_field_id;
 
-  BlockDataID m_boundary_handling_id;
-
   using FullCommunicator = blockforest::communication::UniformBufferedScheme<
       typename stencil::D3Q27>;
   std::shared_ptr<FullCommunicator> m_full_communication;
@@ -321,40 +330,7 @@ protected:
   // Collision sweep
   std::shared_ptr<CollisionModel> m_collision_model;
 
-  // Boundary handling
-  class LBBoundaryHandling {
-  public:
-    LBBoundaryHandling(const BlockDataID &flag_field_id,
-                       const BlockDataID &pdf_field_id,
-                       const BlockDataID &force_field_id,
-                       const LatticeModel_T *lm)
-        : m_flag_field_id(flag_field_id), m_pdf_field_id(pdf_field_id),
-          m_force_field_id(force_field_id), m_lm(lm) {}
-
-    Boundaries *operator()(IBlock *const block) {
-
-      auto flag_field = block->template getData<FlagField>(m_flag_field_id);
-      auto pdf_field = block->template getData<PdfField>(m_pdf_field_id);
-      auto force_field = block->template getData<VectorField>(m_force_field_id);
-
-      const auto fluid = flag_field->flagExists(Fluid_flag)
-                             ? flag_field->getFlag(Fluid_flag)
-                             : flag_field->registerFlag(Fluid_flag);
-
-      return new Boundaries("boundary handling", flag_field, fluid,
-                            UBB("velocity bounce back", UBB_flag, m_lm,
-                                pdf_field, force_field, nullptr));
-    }
-
-  private:
-    const BlockDataID m_flag_field_id;
-    const BlockDataID m_pdf_field_id;
-    const BlockDataID m_force_field_id;
-    const LatticeModel_T *m_lm;
-  };
-
-  // Boundary sweep
-  std::shared_ptr<UBB> m_boundary;
+  std::shared_ptr<BoundaryHandling> m_boundary;
 
   // Lees-Edwards sweep
   std::shared_ptr<LeesEdwardsUpdate> m_lees_edwards_sweep;
@@ -432,10 +408,6 @@ public:
     m_velocity_field_id = field::addToStorage<VectorField>(
         m_blocks, "velocity field", real_t{0}, field::fzyx, m_n_ghost_layers);
 
-    // Init and register flag field (fluid/boundary)
-    m_flag_field_id = field::addFlagFieldToStorage<FlagField>(
-        m_blocks, "flag field", m_n_ghost_layers);
-
     // Init and register pdf field
     auto pdf_setter =
         pystencils::InitialPDFsSetter(m_force_to_be_applied_id, m_pdf_field_id,
@@ -444,14 +416,13 @@ public:
       pdf_setter(&*b);
     }
 
-    // Register boundary handling
-    m_boundary_handling_id = m_blocks->addBlockData<Boundaries>(
-        LBBoundaryHandling(m_flag_field_id, m_pdf_field_id,
-                           m_last_applied_force_field_id, this),
-        "boundary handling");
-    clear_boundaries();
+    // Init and register flag field (fluid/boundary)
+    m_flag_field_id = field::addFlagFieldToStorage<FlagField>(
+        m_blocks, "flag field", m_n_ghost_layers);
+    // Init boundary sweep
+    reset_boundary_handling();
 
-    // sets up the communication and registers pdf field and force field to it
+    // Set up the communication and register fields
     m_pdf_streaming_communication =
         std::make_shared<PDFStreamingCommunicator>(m_blocks);
     m_pdf_streaming_communication->addPackInfo(
@@ -460,6 +431,9 @@ public:
     m_pdf_streaming_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<VectorField>>(
             m_last_applied_force_field_id, m_n_ghost_layers));
+    m_pdf_streaming_communication->addPackInfo(
+        std::make_shared<field::communication::PackInfo<FlagField>>(
+            m_flag_field_id, m_n_ghost_layers));
 
     m_full_communication = std::make_shared<FullCommunicator>(m_blocks);
     m_full_communication->addPackInfo(
@@ -471,6 +445,9 @@ public:
     m_full_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<VectorField>>(
             m_velocity_field_id, m_n_ghost_layers));
+    m_full_communication->addPackInfo(
+        std::make_shared<field::communication::PackInfo<FlagField>>(
+            m_flag_field_id, m_n_ghost_layers));
 
     // Instance the sweep responsible for force double buffering and
     // external forces
@@ -505,10 +482,6 @@ public:
       boost::apply_visitor(run_collide_sweep, *m_collision_model,
                            boost::variant<IBlock *>(&*b));
     (*m_pdf_streaming_communication)();
-
-    // Handle boundaries
-    for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
-      Boundaries::getBlockSweep(m_boundary_handling_id)(&*b);
     // Lees-Edwards shift
     if (m_lees_edwards_sweep) {
       for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
@@ -519,6 +492,9 @@ public:
       (*m_stream)(&*b);
     // Refresh ghost layers
     (*m_full_communication)();
+    // Handle boundaries
+    for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
+      (*m_boundary)(&*b);
 
     // Handle VTK writers
     for (auto it = m_vtk_auto.begin(); it != m_vtk_auto.end(); ++it) {
@@ -587,10 +563,7 @@ public:
             auto res = get_node_velocity(
                 Utils::Vector3i{{node[0], node[1], node[2]}}, true);
             if (!res) {
-              std::cout << "pos [" << pos << "], "
-                        << "node [" << Utils::Vector3i(node) << "], "
-                        << "weight " << weight << "\n";
-              throw std::runtime_error("Access to LB velocity field failed.");
+              throw interpolation_illegal_access("velocity", pos, node, weight);
             }
             v += *res * weight;
           }
@@ -613,10 +586,7 @@ public:
           if (weight != 0) {
             auto const res = get_node_density(Utils::Vector3i(node));
             if (!res) {
-              std::cout << "pos [" << pos << "], "
-                        << "node [" << Utils::Vector3i(node) << "], "
-                        << "weight " << weight << "\n";
-              throw std::runtime_error("Access to LB density field failed.");
+              throw interpolation_illegal_access("density", pos, node, weight);
             }
             dens += *res * weight;
           }
@@ -741,37 +711,27 @@ public:
     return {double_c(density)};
   }
 
-  // Boundary related
   boost::optional<Utils::Vector3d>
   get_node_velocity_at_boundary(const Utils::Vector3i &node) const override {
     auto bc = get_block_and_cell(node, true, m_blocks, n_ghost_layers());
-    if (!bc)
-      return {boost::none};
-    const Boundaries *boundary_handling =
-        (*bc).block->template getData<Boundaries>(m_boundary_handling_id);
-    boundary::BoundaryUID uid = boundary_handling->getBoundaryUID(UBB_flag);
-
-    if (!boundary_handling->isBoundary((*bc).cell))
+    if (!bc or !m_boundary->node_is_boundary(*bc))
       return {boost::none};
 
-    return {to_vector3d(
-        boundary_handling->template getBoundaryCondition<UBB>(uid).getValue(
-            (*bc).cell[0], (*bc).cell[1], (*bc).cell[2]))};
+    return {m_boundary->get_node_velocity_at_boundary(node)};
   }
 
   bool set_node_velocity_at_boundary(const Utils::Vector3i &node,
-                                     const Utils::Vector3d &v) override {
+                                     const Utils::Vector3d &v,
+                                     bool reallocate) override {
     auto bc = get_block_and_cell(node, true, m_blocks, n_ghost_layers());
     if (!bc)
       return false;
 
-    const typename UBB::Velocity velocity(real_c(v[0]), real_c(v[1]),
-                                          real_c(v[2]));
+    m_boundary->set_node_velocity_at_boundary(node, v, *bc);
+    if (reallocate) {
+      m_boundary->ubb_update();
+    }
 
-    auto *boundary_handling =
-        (*bc).block->template getData<Boundaries>(m_boundary_handling_id);
-    boundary_handling->forceBoundary(UBB_flag, bc->cell[0], bc->cell[1],
-                                     bc->cell[2], velocity);
     return true;
   }
 
@@ -779,33 +739,23 @@ public:
   get_node_boundary_force(const Utils::Vector3i &node) const override {
     auto bc = get_block_and_cell(node, true, m_blocks,
                                  n_ghost_layers()); // including ghosts
-    if (!bc)
+    if (!bc or !m_boundary->node_is_boundary(*bc))
       return {boost::none};
-    // Get boundary handling
-    auto const &bh =
-        (*bc).block->template getData<Boundaries>(m_boundary_handling_id);
-    auto const &ff = (*bc).block->template getData<FlagField>(m_flag_field_id);
-    try {
-      if (!ff->isFlagSet((*bc).cell, ff->getFlag(UBB_flag)))
-        return {boost::none};
-    } catch (std::exception &e) {
-      return {boost::none};
-    }
 
-    auto const uid = bh->getBoundaryUID(UBB_flag);
-    auto const &ubb = bh->template getBoundaryCondition<UBB>(uid);
-    return {to_vector3d(
-        ubb.getForce((*bc).cell.x(), (*bc).cell.y(), (*bc).cell.z()))};
+    return get_node_last_applied_force(node, true);
   }
 
-  bool remove_node_from_boundary(const Utils::Vector3i &node) override {
+  bool remove_node_from_boundary(const Utils::Vector3i &node,
+                                 bool reallocate) override {
     auto bc = get_block_and_cell(node, true, m_blocks, n_ghost_layers());
     if (!bc)
       return false;
-    auto *boundary_handling =
-        (*bc).block->template getData<Boundaries>(m_boundary_handling_id);
-    boundary_handling->removeBoundary((*bc).cell[0], (*bc).cell[1],
-                                      (*bc).cell[2]);
+
+    m_boundary->remove_node_from_boundary(node, *bc);
+    if (reallocate) {
+      m_boundary->ubb_update();
+    }
+
     return true;
   }
 
@@ -817,26 +767,12 @@ public:
     if (!bc)
       return {boost::none};
 
-    auto *boundary_handling =
-        (*bc).block->template getData<Boundaries>(m_boundary_handling_id);
-    return {boundary_handling->isBoundary((*bc).cell)};
+    return {m_boundary->node_is_boundary(*bc)};
   }
 
-  void clear_boundaries() override {
-    const CellInterval &domain_bb_in_global_cell_coordinates =
-        m_blocks->getCellBBFromAABB(
-            m_blocks->begin()->getAABB().getExtended(real_c(n_ghost_layers())));
-    for (auto block = m_blocks->begin(); block != m_blocks->end(); ++block) {
+  void reallocate_ubb_field() override { m_boundary->ubb_update(); }
 
-      auto *boundary_handling =
-          block->template getData<Boundaries>(m_boundary_handling_id);
-
-      CellInterval domain_bb(domain_bb_in_global_cell_coordinates);
-      m_blocks->transformGlobalToBlockLocalCellInterval(domain_bb, *block);
-
-      boundary_handling->fillWithDomain(domain_bb);
-    }
-  }
+  void clear_boundaries() override { reset_boundary_handling(); }
 
   // Pressure tensor
   boost::optional<Utils::Vector6d>
@@ -875,10 +811,10 @@ public:
   double get_kT() const override { return m_kT; }
 
   uint64_t get_rng_state() const override {
-    return boost::apply_visitor(get_time_step_impl, *m_collision_model);
+    return boost::apply_visitor(get_rng_state_impl, *m_collision_model);
   }
   void set_rng_state(uint64_t counter) override {
-    boost::apply_visitor(set_time_step_impl, *m_collision_model,
+    boost::apply_visitor(set_rng_state_impl, *m_collision_model,
                          boost::variant<uint64_t>(counter));
   }
 
@@ -959,8 +895,7 @@ public:
     std::string const vtk_uid = unique_identifier.str();
     if (m_vtk_auto.find(vtk_uid) != m_vtk_auto.end() or
         m_vtk_manual.find(vtk_uid) != m_vtk_manual.end()) {
-      throw std::runtime_error("VTKOutput object " + vtk_uid +
-                               " already exists");
+      throw vtk_runtime_error(vtk_uid, "already exists");
     }
 
     // instantiate VTKOutput object
@@ -969,8 +904,8 @@ public:
         m_blocks, identifier, uint_c(write_freq), uint_c(0), false, base_folder,
         prefix, true, true, true, true, uint_c(initial_count));
     field::FlagFieldCellFilter<FlagField> fluid_filter(m_flag_field_id);
-    fluid_filter.addFlag(Fluid_flag);
-    pdf_field_vtk->addCellInclusionFilter(fluid_filter);
+    fluid_filter.addFlag(Boundary_flag);
+    pdf_field_vtk->addCellExclusionFilter(fluid_filter);
 
     // add writers
     if (static_cast<unsigned>(OutputVTK::density) & flag_observables) {
@@ -1002,12 +937,10 @@ public:
   /** Manually call a VTK callback */
   void write_vtk(std::string const &vtk_uid) override {
     if (m_vtk_auto.find(vtk_uid) != m_vtk_auto.end()) {
-      throw std::runtime_error("VTKOutput object " + vtk_uid +
-                               " is an automatic observable");
+      throw vtk_runtime_error(vtk_uid, "is an automatic observable");
     }
     if (m_vtk_manual.find(vtk_uid) == m_vtk_manual.end()) {
-      throw std::runtime_error("VTKOutput object " + vtk_uid +
-                               " doesn't exist");
+      throw vtk_runtime_error(vtk_uid, "doesn't exist");
     }
     vtk::writeFiles(m_vtk_manual[vtk_uid])();
   }
@@ -1015,12 +948,10 @@ public:
   /** Activate or deactivate a VTK callback */
   void switch_vtk(std::string const &vtk_uid, int status) override {
     if (m_vtk_manual.find(vtk_uid) != m_vtk_manual.end()) {
-      throw std::runtime_error("VTKOutput object " + vtk_uid +
-                               " is a manual observable");
+      throw vtk_runtime_error(vtk_uid, "is a manual observable");
     }
     if (m_vtk_auto.find(vtk_uid) == m_vtk_auto.end()) {
-      throw std::runtime_error("VTKOutput object " + vtk_uid +
-                               " doesn't exist");
+      throw vtk_runtime_error(vtk_uid, "doesn't exist");
     }
     m_vtk_auto[vtk_uid].second = status;
   }

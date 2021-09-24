@@ -347,6 +347,25 @@ class CheckpointTest(ut.TestCase):
             state = system.part[1].bonds[1][0].params
             self.assertEqual(state, reference)
 
+    @ut.skipIf('THERM.LB' in modes, 'LB thermostat in modes')
+    @utx.skipIfMissingFeatures(['MASS'])
+    def test_drude_helpers(self):
+        drude_type = 10
+        core_type = 0
+        self.assertIn(drude_type, dh.drude_dict)
+        self.assertEqual(dh.drude_dict[drude_type]['alpha'], 1.)
+        self.assertEqual(dh.drude_dict[drude_type]['thole_damping'], 2.)
+        self.assertEqual(dh.drude_dict[drude_type]['core_type'], core_type)
+        self.assertIn(core_type, dh.drude_dict)
+        self.assertEqual(dh.drude_dict[core_type]['alpha'], 1.)
+        self.assertEqual(dh.drude_dict[core_type]['thole_damping'], 2.)
+        self.assertEqual(dh.drude_dict[core_type]['drude_type'], drude_type)
+        self.assertEqual(len(dh.drude_dict), 2)
+        self.assertEqual(dh.core_type_list, [core_type])
+        self.assertEqual(dh.drude_type_list, [drude_type])
+        self.assertEqual(dh.core_id_from_drude_id, {5: 1})
+        self.assertEqual(dh.drude_id_list, [5])
+
     @utx.skipIfMissingFeatures(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE'])
     def test_virtual_sites(self):
         self.assertTrue(system.part[1].virtual)

@@ -79,8 +79,69 @@ class TestLB:
 
     def test_raise_if_not_active(self):
         lbf = self.lb_class(visc=1.0, dens=1.0, agrid=1.0, tau=0.1)
+
+        # check exceptions from LB actor
+        with self.assertRaises(RuntimeError):
+            _ = lbf.viscosity
+        with self.assertRaises(AttributeError):
+            lbf.viscosity = 0.2
+        with self.assertRaises(RuntimeError):
+            _ = lbf.seed
         with self.assertRaises(RuntimeError):
             lbf.seed = 2
+        with self.assertRaises(RuntimeError):
+            _ = lbf.kT
+        with self.assertRaises(AttributeError):
+            lbf.kT = 2
+        with self.assertRaises(RuntimeError):
+            _ = lbf.shape
+        with self.assertRaises(RuntimeError):
+            _ = lbf.agrid
+        with self.assertRaises(AttributeError):
+            lbf.agrid = 0.2
+        with self.assertRaises(RuntimeError):
+            _ = lbf.tau
+        with self.assertRaises(AttributeError):
+            lbf.tau = 0.01
+        with self.assertRaises(RuntimeError):
+            _ = lbf.pressure_tensor
+        with self.assertRaises(NotImplementedError):
+            lbf.pressure_tensor = np.eye(3, 3)
+        with self.assertRaises(RuntimeError):
+            _ = lbf.ext_force_density
+        with self.assertRaises(RuntimeError):
+            lbf.ext_force_density = [1, 1, 1]
+        with self.assertRaises(RuntimeError):
+            lbf.get_interpolated_velocity([0, 0, 0])
+
+        # check exceptions from LB node
+        self.system.actors.add(lbf)
+        node = lbf[0, 0, 0]
+        self.system.actors.remove(lbf)
+        with self.assertRaises(RuntimeError):
+            _ = node.density
+        with self.assertRaises(RuntimeError):
+            node.density = 1.
+        with self.assertRaises(RuntimeError):
+            _ = node.velocity
+        with self.assertRaises(RuntimeError):
+            node.velocity = [1, 1, 1]
+        with self.assertRaises(RuntimeError):
+            _ = node.last_applied_force
+        with self.assertRaises(RuntimeError):
+            node.last_applied_force = [1, 1, 1]
+        with self.assertRaises(RuntimeError):
+            _ = node.pressure_tensor
+        with self.assertRaises(NotImplementedError):
+            node.pressure_tensor = np.eye(3, 3)
+        with self.assertRaises(RuntimeError):
+            _ = node.is_boundary
+        with self.assertRaises(NotImplementedError):
+            node.is_boundary = 1
+        with self.assertRaises(RuntimeError):
+            _ = node.population
+        with self.assertRaises(RuntimeError):
+            node.population = np.zeros(19)
 
     def test_pressure_tensor_observable(self):
         """
@@ -159,6 +220,13 @@ class TestLB:
             np.copy(self.lbf.ext_force_density),
             ext_force_density,
             atol=1e-4)
+
+        self.assertEqual(self.lbf.kT, 0.0)
+        rng_error_msg = 'The LB does not use a random number generator'
+        with self.assertRaisesRegex(RuntimeError, rng_error_msg):
+            _ = self.lbf.seed
+        with self.assertRaisesRegex(RuntimeError, rng_error_msg):
+            self.lbf.seed = 5
 
     def test_parameter_change_without_seed(self):
         self.lbf = self.lb_class(
@@ -252,7 +320,6 @@ class TestLB:
             agrid=self.params['agrid'],
             tau=self.system.time_step,
             ext_force_density=[0, 0, 0])
-        print("box_l", self.system.box_l)
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(
             LB_fluid=self.lbf,
@@ -358,11 +425,9 @@ class TestLB:
     def test_thermalization_force_balance(self):
         system = self.system
 
-        self.system.part.add(
-            pos=np.random.random((1000, 3)) * self.system.box_l)
+        system.part.add(pos=np.random.random((1000, 3)) * system.box_l)
         if espressomd.has_features("MASS"):
-            self.system.part[:].mass = 0.1 + np.random.random(
-                len(self.system.part))
+            system.part[:].mass = 0.1 + np.random.random(len(system.part))
 
         self.lbf = self.lb_class(
             kT=self.params['temp'],
@@ -371,8 +436,8 @@ class TestLB:
             agrid=self.params['agrid'],
             tau=self.system.time_step,
             ext_force_density=[0, 0, 0], seed=4)
-        self.system.actors.add(self.lbf)
-        self.system.thermostat.set_lb(
+        system.actors.add(self.lbf)
+        system.thermostat.set_lb(
             LB_fluid=self.lbf,
             seed=3,
             gamma=self.params['friction'])
@@ -390,11 +455,11 @@ class TestLB:
             visc=self.params['viscosity'],
             dens=self.params['dens'],
             agrid=self.params['agrid'],
-            tau=self.system.time_step,
+            tau=system.time_step,
             ext_force_density=[0, 0, 0])
 
-        self.system.actors.add(self.lbf)
-        self.system.thermostat.set_lb(
+        system.actors.add(self.lbf)
+        system.thermostat.set_lb(
             LB_fluid=self.lbf,
             seed=3,
             gamma=self.params['friction'])

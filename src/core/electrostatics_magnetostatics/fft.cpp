@@ -620,7 +620,7 @@ int fft_init(const Utils::Vector3i &ca_mesh_dim, int const *ca_mesh_margin,
 
   /* Factor 2 for complex fields */
   fft.max_comm_size *= 2;
-  fft.max_mesh_size = (ca_mesh_dim[0] * ca_mesh_dim[1] * ca_mesh_dim[2]);
+  fft.max_mesh_size = Utils::product(ca_mesh_dim);
   for (i = 1; i < 4; i++)
     if (2 * fft.plan[i].new_size > fft.max_mesh_size)
       fft.max_mesh_size = 2 * fft.plan[i].new_size;

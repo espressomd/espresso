@@ -33,6 +33,7 @@ using Utils::Vector;
 #include <algorithm>
 #include <cmath>
 #include <complex>
+#include <cstddef>
 #include <iterator>
 #include <limits>
 #include <numeric>
@@ -43,12 +44,11 @@ using Utils::Vector;
 /* Number of nontrivial Baxter permutations of length 2n-1. (A001185) */
 #define TEST_NUMBERS                                                           \
   { 0, 1, 1, 7, 21, 112, 456, 2603, 13203 }
-#define TEST_NUMBERS_PARTIAL_NORM2                                             \
-  { 0, 1, 2, 51, 492, 13036 }
-constexpr int test_numbers[] = TEST_NUMBERS;
-constexpr int n_test_numbers = sizeof(test_numbers) / sizeof(int);
 
-template <int n> bool norm2() {
+constexpr int test_numbers[] = TEST_NUMBERS;
+constexpr std::size_t n_test_numbers = sizeof(test_numbers) / sizeof(int);
+
+template <std::size_t n> bool norm2() {
   Vector<int, n> v(std::begin(test_numbers), test_numbers + n);
 
   return v.norm2() == std::inner_product(v.begin(), v.end(), v.begin(), 0);
@@ -270,8 +270,8 @@ BOOST_AUTO_TEST_CASE(conversion) {
   using Utils::Vector3d;
   using Utils::Vector3f;
 
-  auto orig = Vector3d{1., 2., 3.};
-  auto result = static_cast<Vector3f>(orig);
+  auto const orig = Vector3d{1., 2., 3.};
+  auto const result = static_cast<Vector3f>(orig);
 
   BOOST_CHECK_EQUAL(result[0], static_cast<float>(orig[0]));
   BOOST_CHECK_EQUAL(result[1], static_cast<float>(orig[1]));
@@ -287,24 +287,32 @@ BOOST_AUTO_TEST_CASE(vector_product_test) {
   BOOST_CHECK_SMALL(std::abs(v2 * res), 1e-14);
 }
 
+BOOST_AUTO_TEST_CASE(product_test) {
+  auto const v1 = Utils::Vector<int, 2>{8, -9};
+  auto const v2 = Utils::Vector<int, 2>{0, 6};
+
+  BOOST_CHECK_EQUAL(Utils::product(v1), -8 * 9);
+  BOOST_CHECK_EQUAL(Utils::product(v2), 0);
+}
+
 BOOST_AUTO_TEST_CASE(hadamard_product_test) {
   auto const v1 = Utils::Vector<int, 2>{8, 9};
   auto const v2 = Utils::Vector<int, 2>{5, 6};
   auto const a = 6;
 
-  auto res1 = Utils::hadamard_product(v1, v2);
+  auto const res1 = Utils::hadamard_product(v1, v2);
   BOOST_CHECK_EQUAL(res1[0], v1[0] * v2[0]);
   BOOST_CHECK_EQUAL(res1[1], v1[1] * v2[1]);
 
-  auto res2 = Utils::hadamard_product(a, v1);
+  auto const res2 = Utils::hadamard_product(a, v1);
   BOOST_CHECK_EQUAL(res2[0], a * v1[0]);
   BOOST_CHECK_EQUAL(res2[1], a * v1[1]);
 
-  auto res3 = Utils::hadamard_product(v1, a);
+  auto const res3 = Utils::hadamard_product(v1, a);
   BOOST_CHECK_EQUAL(res3[0], a * v1[0]);
   BOOST_CHECK_EQUAL(res3[1], a * v1[1]);
 
-  auto res4 = Utils::hadamard_product(a, a);
+  auto const res4 = Utils::hadamard_product(a, a);
   BOOST_CHECK_EQUAL(res4, a * a);
 }
 
@@ -313,19 +321,19 @@ BOOST_AUTO_TEST_CASE(hadamard_division_test) {
   auto const v2 = Utils::Vector<int, 2>{8, 4};
   auto const a = 2;
 
-  auto res1 = Utils::hadamard_division(v1, v2);
+  auto const res1 = Utils::hadamard_division(v1, v2);
   BOOST_CHECK_EQUAL(res1[0], v1[0] / v2[0]);
   BOOST_CHECK_EQUAL(res1[1], v1[1] / v2[1]);
 
-  auto res2 = Utils::hadamard_division(a, v1);
+  auto const res2 = Utils::hadamard_division(a, v1);
   BOOST_CHECK_EQUAL(res2[0], a / v1[0]);
   BOOST_CHECK_EQUAL(res2[1], a / v1[1]);
 
-  auto res3 = Utils::hadamard_division(v1, a);
+  auto const res3 = Utils::hadamard_division(v1, a);
   BOOST_CHECK_EQUAL(res3[0], v1[0] / a);
   BOOST_CHECK_EQUAL(res3[1], v1[1] / a);
 
-  auto res4 = Utils::hadamard_division(a, a);
+  auto const res4 = Utils::hadamard_division(a, a);
   BOOST_CHECK_EQUAL(res4, 1);
 }
 

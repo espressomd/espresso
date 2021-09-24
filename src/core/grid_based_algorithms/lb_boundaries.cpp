@@ -77,10 +77,12 @@ void lb_init_boundaries() {
       for (auto const &lbboundary : lbboundaries) {
         if (not lbboundary->shape().is_inside(pos)) {
           lb_walberla()->set_node_velocity_at_boundary(
-              index, lbboundary->velocity() / lb_lbfluid_get_lattice_speed());
+              index, lbboundary->velocity() / lb_lbfluid_get_lattice_speed(),
+              false);
         }
       }
     }
+    lb_walberla()->reallocate_ubb_field();
 #endif
 #endif
   } // lattice switch is WALBERLA
