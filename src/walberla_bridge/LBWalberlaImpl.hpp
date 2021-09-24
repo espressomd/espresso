@@ -58,14 +58,19 @@
 
 #ifdef __AVX2__
 #include "generated_kernels/CollideSweepAVX.h"
+#include "generated_kernels/CollideSweepLeesEdwardsAVX.h"
 #include "generated_kernels/CollideSweepThermalizedAVX.h"
 #define ThermalizedCollisionModel                                              \
   walberla::pystencils::CollideSweepThermalizedAVX
+#define LeesEdwardsCollisionModel                                              \
+  walberla::pystencils::CollideSweepLeesEdwardsAVX
 #define UnthermalizedCollisionModel walberla::pystencils::CollideSweepAVX
 #else
 #include "generated_kernels/CollideSweep.h"
+#include "generated_kernels/CollideSweepLeesEdwards.h"
 #include "generated_kernels/CollideSweepThermalized.h"
 #define ThermalizedCollisionModel walberla::pystencils::CollideSweepThermalized
+#define LeesEdwardsCollisionModel walberla::pystencils::CollideSweepLeesEdwards
 #define UnthermalizedCollisionModel walberla::pystencils::CollideSweep
 #endif
 
@@ -104,14 +109,20 @@ namespace walberla {
 class LBWalberlaImpl : public LBWalberlaBase {
 protected:
   using CollisionModel =
-      boost::variant<UnthermalizedCollisionModel, ThermalizedCollisionModel>;
+      boost::variant<UnthermalizedCollisionModel, ThermalizedCollisionModel,
+                     LeesEdwardsCollisionModel>;
 
 private:
   auto generate_collide_sweep() const {
     real_t const omega = shear_mode_relaxation_rate();
     real_t const omega_odd = odd_mode_relaxation_rate(omega);
     std::shared_ptr<CollisionModel> ptr;
-    if (m_kT == 0.) {
+    if (m_kT == 0. and m_lees_edwards_sweep) {
+      auto obj = LeesEdwardsCollisionModel(
+          m_density_field_id, m_last_applied_force_field_id, m_pdf_field_id,
+          m_velocity_field_id, omega, omega, omega_odd, omega, false, false);
+      ptr = std::make_shared<CollisionModel>(std::move(obj));
+    } else if (m_kT == 0.) {
       auto obj = UnthermalizedCollisionModel(m_last_applied_force_field_id,
                                              m_pdf_field_id, omega, omega,
                                              omega_odd, omega);
@@ -145,6 +156,10 @@ private:
       throw std::runtime_error("The LB does not use a random number generator");
     }
 
+    void operator()(LeesEdwardsCollisionModel &cm, uint32_t) const {
+      throw std::runtime_error("The LB does not use a random number generator");
+    }
+
     void operator()(ThermalizedCollisionModel &cm, uint32_t time_step) const {
       cm.time_step_ = time_step;
     }
@@ -157,6 +172,10 @@ private:
       throw std::runtime_error("The LB does not use a random number generator");
     }
 
+    uint32_t operator()(LeesEdwardsCollisionModel const &cm) const {
+      throw std::runtime_error("The LB does not use a random number generator");
+    }
+
     uint32_t operator()(ThermalizedCollisionModel const &cm) const {
       return cm.time_step_;
     }
@@ -166,6 +185,8 @@ private:
   class : public boost::static_visitor<> {
   public:
     void operator()(UnthermalizedCollisionModel &cm) const {}
+
+    void operator()(LeesEdwardsCollisionModel &cm) const {}
 
     void operator()(ThermalizedCollisionModel &cm) const { cm.time_step_++; }
 
@@ -191,6 +212,7 @@ public:
   using LatticeModel_T = LBWalberlaImpl;
   typedef stencil::D3Q19 Stencil;
   using VectorField = GhostLayerField<real_t, 3u>;
+  using ScalarField = GhostLayerField<real_t, 1u>;
   using FlagField = BoundaryHandling::FlagField;
   using PdfField = GhostLayerField<real_t, Stencil::Size>;
 
@@ -309,6 +331,7 @@ protected:
   BlockDataID m_force_to_be_applied_id;
 
   BlockDataID m_velocity_field_id;
+  BlockDataID m_density_field_id;
 
   using FullCommunicator = blockforest::communication::UniformBufferedScheme<
       typename stencil::D3Q27>;
@@ -407,6 +430,8 @@ public:
         m_blocks, "force field", real_t{0}, field::fzyx, m_n_ghost_layers);
     m_velocity_field_id = field::addToStorage<VectorField>(
         m_blocks, "velocity field", real_t{0}, field::fzyx, m_n_ghost_layers);
+    m_density_field_id = field::addToStorage<ScalarField>(
+        m_blocks, "density field", real_t{0}, field::fzyx, m_n_ghost_layers);
 
     // Init and register pdf field
     auto pdf_setter =
@@ -446,6 +471,9 @@ public:
         std::make_shared<field::communication::PackInfo<VectorField>>(
             m_velocity_field_id, m_n_ghost_layers));
     m_full_communication->addPackInfo(
+        std::make_shared<field::communication::PackInfo<ScalarField>>(
+            m_density_field_id, m_n_ghost_layers));
+    m_full_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<FlagField>>(
             m_flag_field_id, m_n_ghost_layers));
 
@@ -468,9 +496,14 @@ public:
   }
 
   void add_lees_edwards(LeesEdwardsPack &&lees_edwards_pack) {
+    if (m_kT != 0.) {
+      throw std::runtime_error(
+          "Lees-Edwards LB doesn't support thermalization");
+    }
     m_lees_edwards_sweep = std::make_shared<LeesEdwardsUpdate>(
         m_blocks, m_pdf_field_id, m_pdf_tmp_field_id, m_n_ghost_layers,
         std::move(lees_edwards_pack));
+    m_collision_model = generate_collide_sweep();
   }
 
   void integrate() override {

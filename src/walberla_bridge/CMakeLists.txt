@@ -16,11 +16,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-set(WalberlaBridge_SRC generated_kernels/StreamSweep.cpp generated_kernels/CollideSweep.cpp generated_kernels/CollideSweepThermalized.cpp
-                       generated_kernels/InitialPDFsSetter.cpp generated_kernels/Dynamic_UBB.cpp
+set(WalberlaBridge_SRC generated_kernels/StreamSweep.cpp
+                       generated_kernels/CollideSweep.cpp
+                       generated_kernels/CollideSweepLeesEdwards.cpp
+                       generated_kernels/CollideSweepThermalized.cpp
+                       generated_kernels/InitialPDFsSetter.cpp
+                       generated_kernels/Dynamic_UBB.cpp
                        lb_walberla_init.cpp)
 if (WALBERLA_USE_AVX)
-  list(APPEND WalberlaBridge_SRC generated_kernels/CollideSweepAVX.cpp generated_kernels/CollideSweepThermalizedAVX.cpp)
+  list(APPEND WalberlaBridge_SRC generated_kernels/CollideSweepAVX.cpp
+                                 generated_kernels/CollideSweepLeesEdwardsAVX.cpp
+                                 generated_kernels/CollideSweepThermalizedAVX.cpp)
 endif()
 add_library(WalberlaBridge SHARED ${WalberlaBridge_SRC})
 target_link_libraries(WalberlaBridge PUBLIC MPI::MPI_CXX EspressoUtils
