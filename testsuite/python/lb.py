@@ -106,17 +106,101 @@ class TestLB:
             self.lbf[0, 1].velocity = [1, 2, 3]
 
     def test_raise_if_not_active(self):
-        lbf = self.lb_class(visc=1.0, dens=1.0, agrid=1.0, tau=0.1)
+        class MockLBFluid(self.lb_class):
+            '''LB class mock that ignores runtime errors from agrid and tau.'''
+            @property
+            def agrid(self):
+                return 1.
+
+            @agrid.setter
+            def agrid(self, value):
+                pass
+
+            @property
+            def tau(self):
+                return 0.01
+
+            @tau.setter
+            def tau(self, value):
+                pass
+
+        self.check_raise_if_not_active(self.lb_class, False)
+        self.check_raise_if_not_active(MockLBFluid, True)
+
+    def check_raise_if_not_active(self, lb_class, mock):
+        lbf = lb_class(visc=1.0, dens=1.0, agrid=1.0, tau=0.1)
+
+        # check exceptions from LB actor
         with self.assertRaises(RuntimeError):
-            lbf.viscosity = 0.2
-        with self.assertRaises(RuntimeError):
-            lbf.bulk_viscosity = 0.2
+            _ = lbf.density
         with self.assertRaises(RuntimeError):
             lbf.density = 0.2
         with self.assertRaises(RuntimeError):
+            _ = lbf.viscosity
+        with self.assertRaises(RuntimeError):
+            lbf.viscosity = 0.2
+        with self.assertRaises(RuntimeError):
+            _ = lbf.bulk_viscosity
+        with self.assertRaises(RuntimeError):
+            lbf.bulk_viscosity = 0.2
+        with self.assertRaises(RuntimeError):
+            _ = lbf.seed
+        with self.assertRaises(RuntimeError):
             lbf.seed = 2
         with self.assertRaises(RuntimeError):
-            lbf.agrid = 0.2
+            _ = lbf.kT
+        with self.assertRaises(RuntimeError):
+            lbf.kT = 2
+        with self.assertRaises(RuntimeError):
+            _ = lbf.shape
+        if not mock:
+            with self.assertRaises(RuntimeError):
+                _ = lbf.agrid
+            with self.assertRaises(RuntimeError):
+                lbf.agrid = 0.2
+            with self.assertRaises(RuntimeError):
+                _ = lbf.tau
+            with self.assertRaises(RuntimeError):
+                lbf.tau = 0.01
+        with self.assertRaises(RuntimeError):
+            _ = lbf.pressure_tensor
+        with self.assertRaises(NotImplementedError):
+            lbf.pressure_tensor = np.eye(3, 3)
+        with self.assertRaises(RuntimeError):
+            _ = lbf.ext_force_density
+        with self.assertRaises(RuntimeError):
+            lbf.ext_force_density = [1, 1, 1]
+        with self.assertRaises(RuntimeError):
+            lbf.get_interpolated_velocity([0, 0, 0])
+
+        # check exceptions from LB node
+        self.system.actors.add(lbf)
+        node = lbf[0, 0, 0]
+        self.system.actors.remove(lbf)
+        with self.assertRaises(RuntimeError):
+            _ = node.density
+        with self.assertRaises(RuntimeError):
+            node.density = 1.
+        with self.assertRaises(RuntimeError):
+            _ = node.velocity
+        with self.assertRaises(RuntimeError):
+            node.velocity = [1, 1, 1]
+        with self.assertRaises(RuntimeError):
+            _ = node.pressure_tensor
+        with self.assertRaises(NotImplementedError):
+            node.pressure_tensor = np.eye(3, 3)
+        with self.assertRaises(RuntimeError):
+            _ = node.pressure_tensor_neq
+        with self.assertRaises(NotImplementedError):
+            node.pressure_tensor_neq = np.eye(3, 3)
+        with self.assertRaises(RuntimeError):
+            _ = node.boundary
+        with self.assertRaises(NotImplementedError):
+            node.boundary = 1
+        with self.assertRaises(RuntimeError):
+            _ = node.population
+        with self.assertRaises(RuntimeError):
+            node.population = np.zeros(19)
 
     def test_pressure_tensor_observable(self):
         """
