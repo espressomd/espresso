@@ -415,16 +415,10 @@ with CodeGeneration() as ctx:
     codegen.generate_sweep(ctx, "InitialPDFsSetter", pdfs_setter)
 
     # generate unthermalized collision rule
-    u_p = lees_edwards.velocity_shift(1, 64)
-    velocity_field = ps.fields("velocity(3): [3D]", layout='fzyx')
-    density_field = ps.fields("density(1): [3D]", layout='fzyx')
     collision_rule_unthermalized = create_lb_collision_rule(
         method,
-        velocity_input=velocity_field.center_vector + sp.Matrix([u_p, 0, 0]),
-        density_input=density_field,
         optimization={'cse_global': True}
     )
-    lees_edwards.modify_method(collision_rule_unthermalized, 0, 1)
     generate_collision_sweep(
         ctx,
         method,
@@ -437,6 +431,32 @@ with CodeGeneration() as ctx:
         method,
         collision_rule_unthermalized,
         "CollideSweepAVX",
+        {"cpu_vectorize_info": cpu_vectorize_info}
+    )
+
+    # generate unthermalized Lees-Edwards collision rule
+    u_p = lees_edwards.velocity_shift(1, 64)
+    velocity_field = ps.fields("velocity(3): [3D]", layout='fzyx')
+    density_field = ps.fields("density(1): [3D]", layout='fzyx')
+    le_collision_rule_unthermalized = create_lb_collision_rule(
+        method,
+        velocity_input=velocity_field.center_vector + sp.Matrix([u_p, 0, 0]),
+        density_input=density_field,
+        optimization={'cse_global': True}
+    )
+    lees_edwards.modify_method(le_collision_rule_unthermalized, 0, 1)
+    generate_collision_sweep(
+        ctx,
+        method,
+        le_collision_rule_unthermalized,
+        "CollideSweepLeesEdwards",
+        {}
+    )
+    generate_collision_sweep(
+        ctx,
+        method,
+        le_collision_rule_unthermalized,
+        "CollideSweepLeesEdwardsAVX",
         {"cpu_vectorize_info": cpu_vectorize_info}
     )
 
