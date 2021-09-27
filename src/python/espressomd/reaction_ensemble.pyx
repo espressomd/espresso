@@ -154,7 +154,9 @@ cdef class ReactionAlgorithm:
         This is used to temporarily hide particles during a reaction trial
         move, if they are to be deleted after the move is accepted. Please
         change this value if you intend to use the type 100 for some other
-        particle types with interactions. Please also note that particles
+        particle types with interactions, or if you need improved performance,
+        as the default value of 100 causes some overhead.
+        Please also note that particles
         in the current implementation of the Reaction Ensemble are only
         hidden with respect to Lennard-Jones and Coulomb interactions. Hiding
         of other interactions, for example a magnetic, needs to be implemented

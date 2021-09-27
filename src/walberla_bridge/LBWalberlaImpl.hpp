@@ -150,48 +150,6 @@ private:
 
   } run_collide_sweep;
 
-  class : public boost::static_visitor<> {
-  public:
-    void operator()(UnthermalizedCollisionModel &cm, uint32_t) const {
-      throw std::runtime_error("The LB does not use a random number generator");
-    }
-
-    void operator()(LeesEdwardsCollisionModel &cm, uint32_t) const {
-      throw std::runtime_error("The LB does not use a random number generator");
-    }
-
-    void operator()(ThermalizedCollisionModel &cm, uint32_t time_step) const {
-      cm.time_step_ = time_step;
-    }
-
-  } set_rng_state_impl;
-
-  class : public boost::static_visitor<uint32_t> {
-  public:
-    uint32_t operator()(UnthermalizedCollisionModel const &cm) const {
-      throw std::runtime_error("The LB does not use a random number generator");
-    }
-
-    uint32_t operator()(LeesEdwardsCollisionModel const &cm) const {
-      throw std::runtime_error("The LB does not use a random number generator");
-    }
-
-    uint32_t operator()(ThermalizedCollisionModel const &cm) const {
-      return cm.time_step_;
-    }
-
-  } get_rng_state_impl;
-
-  class : public boost::static_visitor<> {
-  public:
-    void operator()(UnthermalizedCollisionModel &cm) const {}
-
-    void operator()(LeesEdwardsCollisionModel &cm) const {}
-
-    void operator()(ThermalizedCollisionModel &cm) const { cm.time_step_++; }
-
-  } increment_time_step_if_thermalized_impl;
-
   double shear_mode_relaxation_rate() const {
     return 2 / (6 * m_viscosity + 1);
   }
@@ -514,6 +472,9 @@ public:
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
       boost::apply_visitor(run_collide_sweep, *m_collision_model,
                            boost::variant<IBlock *>(&*b));
+    if (auto *cm = boost::get<ThermalizedCollisionModel>(&*m_collision_model)) {
+      cm->time_step_++;
+    }
     (*m_pdf_streaming_communication)();
     // Lees-Edwards shift
     if (m_lees_edwards_sweep) {
@@ -534,9 +495,6 @@ public:
       if (it->second.second)
         vtk::writeFiles(it->second.first)();
     }
-
-    boost::apply_visitor(increment_time_step_if_thermalized_impl,
-                         *m_collision_model);
   }
 
   void ghost_communication() override { (*m_full_communication)(); }
@@ -844,11 +802,16 @@ public:
   double get_kT() const override { return m_kT; }
 
   uint64_t get_rng_state() const override {
-    return boost::apply_visitor(get_rng_state_impl, *m_collision_model);
+    auto const *cm = boost::get<ThermalizedCollisionModel>(&*m_collision_model);
+    if (!cm)
+      throw std::runtime_error("The LB does not use a random number generator");
+    return cm->time_step_;
   }
   void set_rng_state(uint64_t counter) override {
-    boost::apply_visitor(set_rng_state_impl, *m_collision_model,
-                         boost::variant<uint64_t>(counter));
+    auto *cm = boost::get<ThermalizedCollisionModel>(&*m_collision_model);
+    if (!cm)
+      throw std::runtime_error("The LB does not use a random number generator");
+    cm->time_step_ = counter;
   }
 
   // Grid, domain, halo

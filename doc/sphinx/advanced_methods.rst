@@ -136,7 +136,7 @@ Please contact the Biofluid Simulation and Modeling Group at the
 University of Bayreuth if you plan to use this feature.
 
 With the Immersed Boundary Method (IBM), soft particles are considered as an infinitely
-thin shell filled with liquid (see e.g. :cite:`Peskin2002,Crowl2010,KruegerThesis`). When the
+thin shell filled with liquid (see e.g. :cite:`peskin02a,crowl10a,kruger11a`). When the
 shell is deformed by an external flow, it responds with elastic restoring
 forces which are transmitted into the fluid. In the present case, the
 inner and outer liquid are of the same type and are simulated using
@@ -170,9 +170,9 @@ Object-in-fluid
 If you plan to use this feature, please contact the Cell-in-fluid Research Group at the
 University of Zilina: ivan.cimrak@fri.uniza.sk or iveta.jancigova@fri.uniza.sk.
 
-When using this module, please cite :cite:`Cimrak2014` (BibTeX key
-``Cimrak2014`` in :file:`doc/sphinx/zrefs.bib`) and :cite:`Cimrak2012`
-(BibTeX key ``Cimrak2012`` in :file:`doc/sphinx/zrefs.bib`)
+When using this module, please cite :cite:`cimrak14a` (BibTeX key
+``cimrak14a`` in :file:`doc/sphinx/zrefs.bib`) and :cite:`cimrak12a`
+(BibTeX key ``cimrak12a`` in :file:`doc/sphinx/zrefs.bib`)
 
 This documentation introduces the features of module Object-in-fluid (OIF).
 Even though |es| was not primarily intended to work with closed
@@ -544,7 +544,7 @@ would cause "particle out of range" error and crash the simulation.
 File format
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-ParaView (download at http://www.paraview.org) accepts .vtk files. For
+ParaView (download at https://www.paraview.org) accepts .vtk files. For
 our cells we use the following format:
 
 .. code-block:: none
@@ -701,7 +701,7 @@ Vector data for objects .vtk file
    Example of vector data stored in points of the object
 
 | More info on .vtk files and possible options:
-| http://www.vtk.org/VTK/img/file-formats.pdf
+| https://vtk.org/wp-content/uploads/2015/04/file-formats.pdf
 
 
 
@@ -1583,7 +1583,7 @@ This method has to be called for all molecules and needs the following parameter
 * ``<verbose>``: (bool, optional) Prints out information about the added bonds (default: ``False``)
 
 Internally, this is done with the bond described in  :ref:`Subtract P3M short-range bond`, that
-simply adds the p3m shortrange pair-force of scale :math:`- q_d q_{partial}` the to
+simply adds the p3m shortrange pair-force of scale :math:`- q_{\textrm{d}} q_{\textrm{partial}}` the to
 bonded particles.
 
 .. seealso::
@@ -1597,14 +1597,25 @@ bonded particles.
 Monte Carlo Methods
 -------------------
 
-.. note:: The whole Reaction Ensemble module uses Monte Carlo moves which require potential energies. Therefore the Reaction Ensemble requires support for energy calculations for all active interactions in the simulation. Please also note that Monte Carlo methods may create and delete particles from the system. This process can invalidate particle ids, in which case the particles are no longer numbered contiguously. Particle slices returned by ``system.part`` are still iterable, but the indices no longer match the particle ids.
+.. note::
+    The whole Reaction Ensemble module uses Monte Carlo moves which require
+    potential energies. Therefore the Reaction Ensemble requires support for
+    energy calculations for all active interactions in the simulation.
+    Please also note that Monte Carlo methods may create and delete
+    particles from the system. This process can invalidate particle ids,
+    in which case the particles are no longer numbered contiguously.
+    Particle slices returned by ``system.part`` are still iterable, but
+    the indices no longer match the particle ids. For improved performance,
+    you can set the type of invalidated particles with
+    :meth:`~espressomd.reaction_ensemble.ReactionAlgorithm.set_non_interacting_type`
+    in all Reaction Ensemble classes.
 
 .. _Reaction Ensemble:
 
 Reaction Ensemble
 ~~~~~~~~~~~~~~~~~
 
-The reaction ensemble :cite:`smith94c,turner2008simulation` allows to simulate
+The reaction ensemble :cite:`smith94c,turner08a` allows to simulate
 chemical reactions which can be represented by the general equation:
 
 .. math::
