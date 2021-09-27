@@ -23,7 +23,7 @@
  *
  *  A velocity Verlet algorithm using quaternions is implemented to tackle
  *  rotational motion. See @cite martys99a for the method and
- *  @cite allen2017 for the quaternion components indexing used here.
+ *  @cite allen17a for the quaternion components indexing used here.
  *  A random torque and a friction
  *  term are added to provide the constant NVT conditions. Due to this feature
  *  all particles are
