@@ -60,8 +60,9 @@ static FUNC_PREFIX void collidesweepleesedwardsavx(
     int64_t const _stride_force_3, int64_t const _stride_pdfs_1,
     int64_t const _stride_pdfs_2, int64_t const _stride_pdfs_3,
     int64_t const _stride_velocity_1, int64_t const _stride_velocity_2,
-    int64_t const _stride_velocity_3, double omega_bulk, double omega_even,
-    double omega_odd, double omega_shear, bool points_down, bool points_up) {
+    int64_t const _stride_velocity_3, int64_t grid_size, double omega_bulk,
+    double omega_even, double omega_odd, double omega_shear, bool points_down,
+    bool points_up, double shear_velocity) {
   const double xi_16 = -omega_shear + 2.0;
   const double xi_17 = xi_16 * 0.5;
   const double xi_22 = xi_16 * 0.0833333333333333;
@@ -79,167 +80,167 @@ static FUNC_PREFIX void collidesweepleesedwardsavx(
   for (int64_t ctr_2 = 0; ctr_2 < _size_force_2; ctr_2 += 1) {
     double *RESTRICT _data_pdfs_20_316 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 16 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_32 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 2 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_314 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 14 * _stride_pdfs_3;
-    double *RESTRICT _data_force_20_31 =
-        _data_force + _stride_force_2 * ctr_2 + _stride_force_3;
     double *RESTRICT _data_pdfs_20_317 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 17 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_30 = _data_pdfs + _stride_pdfs_2 * ctr_2;
-    double *RESTRICT _data_pdfs_20_31 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + _stride_pdfs_3;
-    double *RESTRICT _data_velocity_20_32 =
-        _data_velocity + _stride_velocity_2 * ctr_2 + 2 * _stride_velocity_3;
-    double *RESTRICT _data_pdfs_20_35 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 5 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_313 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 13 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_39 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 9 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_33 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 3 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_312 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 12 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_36 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 6 * _stride_pdfs_3;
-    double *RESTRICT _data_force_20_30 = _data_force + _stride_force_2 * ctr_2;
     double *RESTRICT _data_velocity_20_30 =
         _data_velocity + _stride_velocity_2 * ctr_2;
-    double *RESTRICT _data_pdfs_20_311 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 11 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_38 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 8 * _stride_pdfs_3;
-    double *RESTRICT _data_force_20_32 =
-        _data_force + _stride_force_2 * ctr_2 + 2 * _stride_force_3;
-    double *RESTRICT _data_pdfs_20_318 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 18 * _stride_pdfs_3;
-    double *RESTRICT _data_velocity_20_31 =
-        _data_velocity + _stride_velocity_2 * ctr_2 + _stride_velocity_3;
-    double *RESTRICT _data_pdfs_20_310 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 10 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_315 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 15 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_314 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 14 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_30 = _data_pdfs + _stride_pdfs_2 * ctr_2;
     double *RESTRICT _data_pdfs_20_37 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 7 * _stride_pdfs_3;
     double *RESTRICT _data_pdfs_20_34 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 4 * _stride_pdfs_3;
+    double *RESTRICT _data_force_20_31 =
+        _data_force + _stride_force_2 * ctr_2 + _stride_force_3;
+    double *RESTRICT _data_pdfs_20_315 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 15 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_35 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 5 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_318 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 18 * _stride_pdfs_3;
+    double *RESTRICT _data_velocity_20_31 =
+        _data_velocity + _stride_velocity_2 * ctr_2 + _stride_velocity_3;
+    double *RESTRICT _data_pdfs_20_39 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 9 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_32 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 2 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_31 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + _stride_pdfs_3;
+    double *RESTRICT _data_force_20_30 = _data_force + _stride_force_2 * ctr_2;
+    double *RESTRICT _data_velocity_20_32 =
+        _data_velocity + _stride_velocity_2 * ctr_2 + 2 * _stride_velocity_3;
+    double *RESTRICT _data_force_20_32 =
+        _data_force + _stride_force_2 * ctr_2 + 2 * _stride_force_3;
+    double *RESTRICT _data_pdfs_20_310 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 10 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_33 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 3 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_36 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 6 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_313 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 13 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_38 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 8 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_312 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 12 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_311 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 11 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_force_1; ctr_1 += 1) {
       double *RESTRICT _data_pdfs_20_316_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_20_316;
-      double *RESTRICT _data_pdfs_20_32_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_32;
-      double *RESTRICT _data_pdfs_20_314_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_314;
-      double *RESTRICT _data_force_20_31_10 =
-          _stride_force_1 * ctr_1 + _data_force_20_31;
       double *RESTRICT _data_pdfs_20_317_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_20_317;
-      double *RESTRICT _data_pdfs_20_30_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_30;
-      double *RESTRICT _data_pdfs_20_31_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_31;
-      double *RESTRICT _data_velocity_20_32_10 =
-          _stride_velocity_1 * ctr_1 + _data_velocity_20_32;
-      double *RESTRICT _data_pdfs_20_35_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_35;
-      double *RESTRICT _data_pdfs_20_313_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_313;
-      double *RESTRICT _data_pdfs_20_39_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_39;
-      double *RESTRICT _data_pdfs_20_33_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_33;
-      double *RESTRICT _data_pdfs_20_312_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_312;
-      double *RESTRICT _data_pdfs_20_36_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_36;
-      double *RESTRICT _data_force_20_30_10 =
-          _stride_force_1 * ctr_1 + _data_force_20_30;
       double *RESTRICT _data_velocity_20_30_10 =
           _stride_velocity_1 * ctr_1 + _data_velocity_20_30;
-      double *RESTRICT _data_pdfs_20_311_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_311;
-      double *RESTRICT _data_pdfs_20_38_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_38;
-      double *RESTRICT _data_force_20_32_10 =
-          _stride_force_1 * ctr_1 + _data_force_20_32;
-      double *RESTRICT _data_pdfs_20_318_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_318;
-      double *RESTRICT _data_velocity_20_31_10 =
-          _stride_velocity_1 * ctr_1 + _data_velocity_20_31;
-      double *RESTRICT _data_pdfs_20_310_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_310;
-      double *RESTRICT _data_pdfs_20_315_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_315;
+      double *RESTRICT _data_pdfs_20_314_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_314;
+      double *RESTRICT _data_pdfs_20_30_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_30;
       double *RESTRICT _data_pdfs_20_37_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_20_37;
       double *RESTRICT _data_pdfs_20_34_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_20_34;
+      double *RESTRICT _data_force_20_31_10 =
+          _stride_force_1 * ctr_1 + _data_force_20_31;
+      double *RESTRICT _data_pdfs_20_315_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_315;
+      double *RESTRICT _data_pdfs_20_35_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_35;
+      double *RESTRICT _data_pdfs_20_318_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_318;
+      double *RESTRICT _data_velocity_20_31_10 =
+          _stride_velocity_1 * ctr_1 + _data_velocity_20_31;
+      double *RESTRICT _data_pdfs_20_39_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_39;
+      double *RESTRICT _data_pdfs_20_32_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_32;
+      double *RESTRICT _data_pdfs_20_31_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_31;
+      double *RESTRICT _data_force_20_30_10 =
+          _stride_force_1 * ctr_1 + _data_force_20_30;
+      double *RESTRICT _data_velocity_20_32_10 =
+          _stride_velocity_1 * ctr_1 + _data_velocity_20_32;
+      double *RESTRICT _data_force_20_32_10 =
+          _stride_force_1 * ctr_1 + _data_force_20_32;
+      double *RESTRICT _data_pdfs_20_310_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_310;
+      double *RESTRICT _data_pdfs_20_33_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_33;
+      double *RESTRICT _data_pdfs_20_36_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_36;
+      double *RESTRICT _data_pdfs_20_313_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_313;
+      double *RESTRICT _data_pdfs_20_38_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_38;
+      double *RESTRICT _data_pdfs_20_312_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_312;
+      double *RESTRICT _data_pdfs_20_311_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_311;
       for (int64_t ctr_0 = 0;
            ctr_0 < ((_size_force_0) % (4) == 0
                         ? _size_force_0
                         : ((int64_t)((_size_force_0) / (4)) + 1) * (4));
            ctr_0 += 4) {
         const __m256d xi_198 = _mm256_load_pd(&_data_pdfs_20_316_10[ctr_0]);
-        const __m256d xi_199 = _mm256_load_pd(&_data_pdfs_20_32_10[ctr_0]);
-        const __m256d xi_200 = _mm256_load_pd(&_data_pdfs_20_314_10[ctr_0]);
-        const __m256d xi_201 = _mm256_load_pd(&_data_force_20_31_10[ctr_0]);
-        const __m256d xi_202 = _mm256_load_pd(&_data_pdfs_20_317_10[ctr_0]);
-        const __m256d xi_203 = _mm256_load_pd(&_data_pdfs_20_30_10[ctr_0]);
-        const __m256d xi_204 = _mm256_load_pd(&_data_pdfs_20_31_10[ctr_0]);
-        const __m256d xi_205 = _mm256_load_pd(&_data_velocity_20_32_10[ctr_0]);
-        const __m256d xi_206 = _mm256_load_pd(&_data_pdfs_20_35_10[ctr_0]);
-        const __m256d xi_207 = _mm256_load_pd(&_data_pdfs_20_313_10[ctr_0]);
-        const __m256d xi_208 = _mm256_load_pd(&_data_pdfs_20_39_10[ctr_0]);
-        const __m256d xi_209 = _mm256_load_pd(&_data_pdfs_20_33_10[ctr_0]);
-        const __m256d xi_210 = _mm256_load_pd(&_data_pdfs_20_312_10[ctr_0]);
-        const __m256d xi_211 = _mm256_load_pd(&_data_pdfs_20_36_10[ctr_0]);
-        const __m256d xi_212 = _mm256_load_pd(&_data_force_20_30_10[ctr_0]);
-        const __m256d xi_213 = _mm256_load_pd(&_data_velocity_20_30_10[ctr_0]);
-        const __m256d xi_214 = _mm256_load_pd(&_data_pdfs_20_311_10[ctr_0]);
-        const __m256d xi_215 = _mm256_load_pd(&_data_pdfs_20_38_10[ctr_0]);
-        const __m256d xi_216 = _mm256_load_pd(&_data_force_20_32_10[ctr_0]);
-        const __m256d xi_217 = _mm256_load_pd(&_data_pdfs_20_318_10[ctr_0]);
-        const __m256d xi_218 = _mm256_load_pd(&_data_velocity_20_31_10[ctr_0]);
-        const __m256d xi_219 = _mm256_load_pd(&_data_pdfs_20_310_10[ctr_0]);
-        const __m256d xi_220 = _mm256_load_pd(&_data_pdfs_20_315_10[ctr_0]);
-        const __m256d xi_221 = _mm256_load_pd(&_data_pdfs_20_37_10[ctr_0]);
-        const __m256d xi_222 = _mm256_load_pd(&_data_pdfs_20_34_10[ctr_0]);
-        const __m256d xi_0 = _mm256_add_pd(xi_198, xi_220);
-        const __m256d xi_1 = _mm256_add_pd(xi_210, xi_214);
-        const __m256d xi_2 = _mm256_add_pd(xi_199, xi_208);
-        const __m256d xi_3 = _mm256_add_pd(xi_209, xi_221);
+        const __m256d xi_199 = _mm256_load_pd(&_data_pdfs_20_317_10[ctr_0]);
+        const __m256d xi_200 = _mm256_load_pd(&_data_velocity_20_30_10[ctr_0]);
+        const __m256d xi_201 = _mm256_load_pd(&_data_pdfs_20_314_10[ctr_0]);
+        const __m256d xi_202 = _mm256_load_pd(&_data_pdfs_20_30_10[ctr_0]);
+        const __m256d xi_203 = _mm256_load_pd(&_data_pdfs_20_37_10[ctr_0]);
+        const __m256d xi_204 = _mm256_load_pd(&_data_pdfs_20_34_10[ctr_0]);
+        const __m256d xi_205 = _mm256_load_pd(&_data_force_20_31_10[ctr_0]);
+        const __m256d xi_206 = _mm256_load_pd(&_data_pdfs_20_315_10[ctr_0]);
+        const __m256d xi_207 = _mm256_load_pd(&_data_pdfs_20_35_10[ctr_0]);
+        const __m256d xi_208 = _mm256_load_pd(&_data_pdfs_20_318_10[ctr_0]);
+        const __m256d xi_209 = _mm256_load_pd(&_data_velocity_20_31_10[ctr_0]);
+        const __m256d xi_210 = _mm256_load_pd(&_data_pdfs_20_39_10[ctr_0]);
+        const __m256d xi_211 = _mm256_load_pd(&_data_pdfs_20_32_10[ctr_0]);
+        const __m256d xi_212 = _mm256_load_pd(&_data_pdfs_20_31_10[ctr_0]);
+        const __m256d xi_213 = _mm256_load_pd(&_data_force_20_30_10[ctr_0]);
+        const __m256d xi_214 = _mm256_load_pd(&_data_velocity_20_32_10[ctr_0]);
+        const __m256d xi_215 = _mm256_load_pd(&_data_force_20_32_10[ctr_0]);
+        const __m256d xi_216 = _mm256_load_pd(&_data_pdfs_20_310_10[ctr_0]);
+        const __m256d xi_217 = _mm256_load_pd(&_data_pdfs_20_33_10[ctr_0]);
+        const __m256d xi_218 = _mm256_load_pd(&_data_pdfs_20_36_10[ctr_0]);
+        const __m256d xi_219 = _mm256_load_pd(&_data_pdfs_20_313_10[ctr_0]);
+        const __m256d xi_220 = _mm256_load_pd(&_data_pdfs_20_38_10[ctr_0]);
+        const __m256d xi_221 = _mm256_load_pd(&_data_pdfs_20_312_10[ctr_0]);
+        const __m256d xi_222 = _mm256_load_pd(&_data_pdfs_20_311_10[ctr_0]);
+        const __m256d xi_0 = _mm256_add_pd(xi_198, xi_206);
+        const __m256d xi_1 = _mm256_add_pd(xi_221, xi_222);
+        const __m256d xi_2 = _mm256_add_pd(xi_210, xi_211);
+        const __m256d xi_3 = _mm256_add_pd(xi_203, xi_217);
         const __m256d xi_4 =
-            _mm256_add_pd(_mm256_add_pd(xi_202, xi_211), xi_217);
+            _mm256_add_pd(_mm256_add_pd(xi_199, xi_208), xi_218);
         const __m256d xi_5 = _mm256_add_pd(
-            _mm256_add_pd(_mm256_add_pd(xi_200, xi_206), xi_207), xi_4);
+            _mm256_add_pd(_mm256_add_pd(xi_201, xi_207), xi_219), xi_4);
         const __m256d xi_21 = _mm256_mul_pd(
-            xi_201, _mm256_set_pd(0.166666666666667, 0.166666666666667,
+            xi_205, _mm256_set_pd(0.166666666666667, 0.166666666666667,
                                   0.166666666666667, 0.166666666666667));
         const __m256d xi_29 = _mm256_mul_pd(
-            xi_212, _mm256_set_pd(0.166666666666667, 0.166666666666667,
+            xi_213, _mm256_set_pd(0.166666666666667, 0.166666666666667,
                                   0.166666666666667, 0.166666666666667));
         const __m256d xi_33 = _mm256_mul_pd(
-            xi_216, _mm256_set_pd(0.166666666666667, 0.166666666666667,
+            xi_215, _mm256_set_pd(0.166666666666667, 0.166666666666667,
                                   0.166666666666667, 0.166666666666667));
         const __m256d xi_36 =
-            _mm256_mul_pd(xi_201, _mm256_set_pd(0.5, 0.5, 0.5, 0.5));
+            _mm256_mul_pd(xi_205, _mm256_set_pd(0.5, 0.5, 0.5, 0.5));
         const __m256d xi_40 = _mm256_mul_pd(
-            xi_212, _mm256_set_pd(0.0833333333333333, 0.0833333333333333,
+            xi_213, _mm256_set_pd(0.0833333333333333, 0.0833333333333333,
                                   0.0833333333333333, 0.0833333333333333));
         const __m256d xi_44 = _mm256_mul_pd(
-            xi_201, _mm256_set_pd(0.0833333333333333, 0.0833333333333333,
+            xi_205, _mm256_set_pd(0.0833333333333333, 0.0833333333333333,
                                   0.0833333333333333, 0.0833333333333333));
         const __m256d xi_54 = _mm256_mul_pd(
-            xi_216, _mm256_set_pd(0.0833333333333333, 0.0833333333333333,
+            xi_215, _mm256_set_pd(0.0833333333333333, 0.0833333333333333,
                                   0.0833333333333333, 0.0833333333333333));
         const __m256d xi_65 =
-            _mm256_mul_pd(xi_203, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
+            _mm256_mul_pd(xi_202, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
         const __m256d xi_66 = _mm256_add_pd(
             _mm256_add_pd(
-                _mm256_mul_pd(xi_206, _mm256_set_pd(3.0, 3.0, 3.0, 3.0)),
-                _mm256_mul_pd(xi_211, _mm256_set_pd(3.0, 3.0, 3.0, 3.0))),
+                _mm256_mul_pd(xi_207, _mm256_set_pd(3.0, 3.0, 3.0, 3.0)),
+                _mm256_mul_pd(xi_218, _mm256_set_pd(3.0, 3.0, 3.0, 3.0))),
             xi_65);
         const __m256d xi_67 = _mm256_mul_pd(
             _mm256_add_pd(
@@ -252,15 +253,15 @@ static FUNC_PREFIX void collidesweepleesedwardsavx(
                                         xi_198,
                                         _mm256_set_pd(-3.0, -3.0, -3.0, -3.0)),
                                     _mm256_mul_pd(
-                                        xi_199,
-                                        _mm256_set_pd(3.0, 3.0, 3.0, 3.0))),
+                                        xi_206,
+                                        _mm256_set_pd(-3.0, -3.0, -3.0, -3.0))),
                                 _mm256_mul_pd(
-                                    xi_204, _mm256_set_pd(3.0, 3.0, 3.0, 3.0))),
-                            _mm256_mul_pd(
-                                xi_210, _mm256_set_pd(-3.0, -3.0, -3.0, -3.0))),
-                        _mm256_mul_pd(xi_214,
+                                    xi_211, _mm256_set_pd(3.0, 3.0, 3.0, 3.0))),
+                            _mm256_mul_pd(xi_212,
+                                          _mm256_set_pd(3.0, 3.0, 3.0, 3.0))),
+                        _mm256_mul_pd(xi_221,
                                       _mm256_set_pd(-3.0, -3.0, -3.0, -3.0))),
-                    _mm256_mul_pd(xi_220,
+                    _mm256_mul_pd(xi_222,
                                   _mm256_set_pd(-3.0, -3.0, -3.0, -3.0))),
                 xi_66),
             _mm256_set_pd(omega_even, omega_even, omega_even, omega_even));
@@ -268,13 +269,13 @@ static FUNC_PREFIX void collidesweepleesedwardsavx(
             _mm256_add_pd(
                 _mm256_add_pd(
                     _mm256_mul_pd(xi_198, _mm256_set_pd(2.0, 2.0, 2.0, 2.0)),
-                    _mm256_mul_pd(xi_210, _mm256_set_pd(2.0, 2.0, 2.0, 2.0))),
-                _mm256_mul_pd(xi_214, _mm256_set_pd(2.0, 2.0, 2.0, 2.0))),
-            _mm256_mul_pd(xi_220, _mm256_set_pd(2.0, 2.0, 2.0, 2.0)));
+                    _mm256_mul_pd(xi_206, _mm256_set_pd(2.0, 2.0, 2.0, 2.0))),
+                _mm256_mul_pd(xi_221, _mm256_set_pd(2.0, 2.0, 2.0, 2.0))),
+            _mm256_mul_pd(xi_222, _mm256_set_pd(2.0, 2.0, 2.0, 2.0)));
         const __m256d xi_69 = _mm256_add_pd(
             _mm256_add_pd(
-                _mm256_mul_pd(xi_209, _mm256_set_pd(5.0, 5.0, 5.0, 5.0)),
-                _mm256_mul_pd(xi_222, _mm256_set_pd(5.0, 5.0, 5.0, 5.0))),
+                _mm256_mul_pd(xi_204, _mm256_set_pd(5.0, 5.0, 5.0, 5.0)),
+                _mm256_mul_pd(xi_217, _mm256_set_pd(5.0, 5.0, 5.0, 5.0))),
             xi_68);
         const __m256d xi_70 = _mm256_mul_pd(
             _mm256_add_pd(
@@ -285,61 +286,61 @@ static FUNC_PREFIX void collidesweepleesedwardsavx(
                                 _mm256_add_pd(
                                     _mm256_add_pd(
                                         _mm256_mul_pd(
-                                            xi_199, _mm256_set_pd(-2.0, -2.0,
-                                                                  -2.0, -2.0)),
+                                            xi_199, _mm256_set_pd(-5.0, -5.0,
+                                                                  -5.0, -5.0)),
                                         _mm256_mul_pd(
-                                            xi_200, _mm256_set_pd(-5.0, -5.0,
+                                            xi_201, _mm256_set_pd(-5.0, -5.0,
                                                                   -5.0, -5.0))),
                                     _mm256_mul_pd(
-                                        xi_202,
+                                        xi_208,
                                         _mm256_set_pd(-5.0, -5.0, -5.0, -5.0))),
                                 _mm256_mul_pd(
-                                    xi_204,
+                                    xi_211,
                                     _mm256_set_pd(-2.0, -2.0, -2.0, -2.0))),
                             _mm256_mul_pd(
-                                xi_207, _mm256_set_pd(-5.0, -5.0, -5.0, -5.0))),
-                        _mm256_mul_pd(xi_217,
+                                xi_212, _mm256_set_pd(-2.0, -2.0, -2.0, -2.0))),
+                        _mm256_mul_pd(xi_219,
                                       _mm256_set_pd(-5.0, -5.0, -5.0, -5.0))),
                     xi_66),
                 xi_69),
             _mm256_set_pd(omega_even, omega_even, omega_even, omega_even));
         const __m256d xi_73 =
-            _mm256_mul_pd(xi_214, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
+            _mm256_mul_pd(xi_222, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
         const __m256d xi_74 =
-            _mm256_mul_pd(xi_210, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
+            _mm256_mul_pd(xi_221, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
         const __m256d xi_75 = _mm256_add_pd(xi_73, xi_74);
         const __m256d xi_76 =
             _mm256_mul_pd(xi_198, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
         const __m256d xi_77 =
-            _mm256_mul_pd(xi_220, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
+            _mm256_mul_pd(xi_206, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
         const __m256d xi_78 = _mm256_add_pd(xi_76, xi_77);
         const __m256d xi_79 =
-            _mm256_mul_pd(xi_208, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
+            _mm256_mul_pd(xi_210, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
         const __m256d xi_81 =
-            _mm256_mul_pd(xi_215, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
+            _mm256_mul_pd(xi_220, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
         const __m256d xi_82 = _mm256_add_pd(
-            _mm256_mul_pd(xi_219, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)),
+            _mm256_mul_pd(xi_216, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)),
             xi_81);
         const __m256d xi_84 =
-            _mm256_mul_pd(xi_202, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
+            _mm256_mul_pd(xi_199, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
         const __m256d xi_85 =
-            _mm256_mul_pd(xi_217, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
+            _mm256_mul_pd(xi_208, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
         const __m256d xi_86 =
-            _mm256_mul_pd(xi_221, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
+            _mm256_mul_pd(xi_203, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
         const __m256d xi_87 =
-            _mm256_mul_pd(xi_200, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
+            _mm256_mul_pd(xi_201, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
         const __m256d xi_88 =
-            _mm256_mul_pd(xi_207, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
+            _mm256_mul_pd(xi_219, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
         const __m256d xi_89 = _mm256_add_pd(xi_87, xi_88);
         const __m256d xi_90 = _mm256_add_pd(
             _mm256_add_pd(_mm256_add_pd(xi_84, xi_85), xi_86), xi_89);
         const __m256d xi_92 =
-            _mm256_mul_pd(xi_207, _mm256_set_pd(2.0, 2.0, 2.0, 2.0));
+            _mm256_mul_pd(xi_219, _mm256_set_pd(2.0, 2.0, 2.0, 2.0));
         const __m256d xi_93 =
-            _mm256_mul_pd(xi_200, _mm256_set_pd(2.0, 2.0, 2.0, 2.0));
+            _mm256_mul_pd(xi_201, _mm256_set_pd(2.0, 2.0, 2.0, 2.0));
         const __m256d xi_94 = _mm256_add_pd(
-            _mm256_mul_pd(xi_202, _mm256_set_pd(2.0, 2.0, 2.0, 2.0)),
-            _mm256_mul_pd(xi_217, _mm256_set_pd(2.0, 2.0, 2.0, 2.0)));
+            _mm256_mul_pd(xi_199, _mm256_set_pd(2.0, 2.0, 2.0, 2.0)),
+            _mm256_mul_pd(xi_208, _mm256_set_pd(2.0, 2.0, 2.0, 2.0)));
         const __m256d xi_95 = _mm256_mul_pd(
             _mm256_add_pd(
                 _mm256_add_pd(
@@ -354,38 +355,39 @@ static FUNC_PREFIX void collidesweepleesedwardsavx(
                                                     _mm256_add_pd(
                                                         _mm256_add_pd(
                                                             _mm256_mul_pd(
-                                                                xi_199,
+                                                                xi_203,
                                                                 _mm256_set_pd(
-                                                                    5.0, 5.0,
-                                                                    5.0, 5.0)),
+                                                                    -7.0, -7.0,
+                                                                    -7.0,
+                                                                    -7.0)),
                                                             _mm256_mul_pd(
-                                                                xi_204,
+                                                                xi_207,
                                                                 _mm256_set_pd(
+                                                                    -4.0, -4.0,
+                                                                    -4.0,
+                                                                    -4.0))),
+                                                        _mm256_mul_pd(
+                                                            xi_210,
+                                                            _mm256_set_pd(
+                                                                -7.0, -7.0,
+                                                                -7.0, -7.0))),
+                                                    _mm256_mul_pd(
+                                                        xi_211, _mm256_set_pd(
                                                                     5.0, 5.0,
                                                                     5.0, 5.0))),
-                                                        _mm256_mul_pd(
-                                                            xi_206,
-                                                            _mm256_set_pd(
-                                                                -4.0, -4.0,
-                                                                -4.0, -4.0))),
-                                                    _mm256_mul_pd(
-                                                        xi_208,
-                                                        _mm256_set_pd(
-                                                            -7.0, -7.0, -7.0,
-                                                            -7.0))),
                                                 _mm256_mul_pd(
-                                                    xi_211,
-                                                    _mm256_set_pd(-4.0, -4.0,
-                                                                  -4.0, -4.0))),
+                                                    xi_212,
+                                                    _mm256_set_pd(5.0, 5.0, 5.0,
+                                                                  5.0))),
                                             _mm256_mul_pd(
-                                                xi_215,
+                                                xi_216,
                                                 _mm256_set_pd(-7.0, -7.0, -7.0,
                                                               -7.0))),
                                         _mm256_mul_pd(
-                                            xi_219, _mm256_set_pd(-7.0, -7.0,
-                                                                  -7.0, -7.0))),
+                                            xi_218, _mm256_set_pd(-4.0, -4.0,
+                                                                  -4.0, -4.0))),
                                     _mm256_mul_pd(
-                                        xi_221,
+                                        xi_220,
                                         _mm256_set_pd(-7.0, -7.0, -7.0, -7.0))),
                                 xi_65),
                             xi_69),
@@ -394,22 +396,22 @@ static FUNC_PREFIX void collidesweepleesedwardsavx(
                 xi_94),
             _mm256_set_pd(omega_even, omega_even, omega_even, omega_even));
         const __m256d xi_96 =
-            _mm256_mul_pd(xi_199, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
-        const __m256d xi_97 = _mm256_add_pd(xi_204, xi_96);
-        const __m256d xi_98 = _mm256_add_pd(xi_210, xi_73);
+            _mm256_mul_pd(xi_211, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
+        const __m256d xi_97 = _mm256_add_pd(xi_212, xi_96);
+        const __m256d xi_98 = _mm256_add_pd(xi_221, xi_73);
         const __m256d xi_99 =
             _mm256_add_pd(_mm256_add_pd(xi_198, xi_77), xi_98);
         const __m256d xi_100 = _mm256_add_pd(xi_97, xi_99);
         const __m256d xi_102 = _mm256_mul_pd(
             xi_100, _mm256_set_pd(xi_101, xi_101, xi_101, xi_101));
         const __m256d xi_103 =
-            _mm256_mul_pd(xi_221, _mm256_set_pd(2.0, 2.0, 2.0, 2.0));
+            _mm256_mul_pd(xi_203, _mm256_set_pd(2.0, 2.0, 2.0, 2.0));
         const __m256d xi_104 =
-            _mm256_mul_pd(xi_219, _mm256_set_pd(2.0, 2.0, 2.0, 2.0));
-        const __m256d xi_105 = _mm256_add_pd(xi_220, xi_76);
+            _mm256_mul_pd(xi_216, _mm256_set_pd(2.0, 2.0, 2.0, 2.0));
+        const __m256d xi_105 = _mm256_add_pd(xi_206, xi_76);
         const __m256d xi_106 = _mm256_add_pd(
-            _mm256_mul_pd(xi_208, _mm256_set_pd(2.0, 2.0, 2.0, 2.0)),
-            _mm256_mul_pd(xi_215, _mm256_set_pd(-2.0, -2.0, -2.0, -2.0)));
+            _mm256_mul_pd(xi_210, _mm256_set_pd(2.0, 2.0, 2.0, 2.0)),
+            _mm256_mul_pd(xi_220, _mm256_set_pd(-2.0, -2.0, -2.0, -2.0)));
         const __m256d xi_107 = _mm256_add_pd(
             _mm256_add_pd(
                 _mm256_add_pd(
@@ -422,30 +424,30 @@ static FUNC_PREFIX void collidesweepleesedwardsavx(
                                 xi_104),
                             xi_105),
                         xi_106),
-                    xi_214),
+                    xi_222),
                 xi_74),
             xi_97);
         const __m256d xi_109 = _mm256_mul_pd(
             xi_107, _mm256_set_pd(xi_108, xi_108, xi_108, xi_108));
         const __m256d xi_110 =
             _mm256_mul_pd(xi_109, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
-        const __m256d xi_112 = _mm256_add_pd(xi_219, xi_81);
+        const __m256d xi_112 = _mm256_add_pd(xi_216, xi_81);
         const __m256d xi_113 = _mm256_add_pd(
-            _mm256_mul_pd(xi_204, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)),
+            _mm256_mul_pd(xi_212, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)),
             xi_86);
         const __m256d xi_120 = _mm256_mul_pd(
             xi_95, _mm256_set_pd(-0.0198412698412698, -0.0198412698412698,
                                  -0.0198412698412698, -0.0198412698412698));
-        const __m256d xi_126 = _mm256_add_pd(xi_207, xi_87);
+        const __m256d xi_126 = _mm256_add_pd(xi_219, xi_87);
         const __m256d xi_127 =
-            _mm256_add_pd(_mm256_add_pd(xi_126, xi_202), xi_85);
+            _mm256_add_pd(_mm256_add_pd(xi_126, xi_199), xi_85);
         const __m256d xi_130 = _mm256_add_pd(
-            _mm256_mul_pd(xi_209, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)),
-            xi_222);
+            _mm256_mul_pd(xi_217, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)),
+            xi_204);
         const __m256d xi_131 = _mm256_add_pd(xi_127, xi_130);
         const __m256d xi_132 = _mm256_mul_pd(
             xi_131, _mm256_set_pd(xi_101, xi_101, xi_101, xi_101));
-        const __m256d xi_133 = _mm256_add_pd(xi_217, xi_84);
+        const __m256d xi_133 = _mm256_add_pd(xi_208, xi_84);
         const __m256d xi_134 = _mm256_add_pd(
             _mm256_add_pd(
                 _mm256_add_pd(
@@ -459,15 +461,15 @@ static FUNC_PREFIX void collidesweepleesedwardsavx(
                             xi_106),
                         xi_130),
                     xi_133),
-                xi_200),
+                xi_201),
             xi_88);
         const __m256d xi_135 = _mm256_mul_pd(
             xi_134, _mm256_set_pd(xi_108, xi_108, xi_108, xi_108));
         const __m256d xi_137 =
             _mm256_mul_pd(xi_135, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
         const __m256d xi_138 = _mm256_add_pd(
-            _mm256_mul_pd(xi_211, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)),
-            xi_206);
+            _mm256_mul_pd(xi_218, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)),
+            xi_207);
         const __m256d xi_139 = _mm256_add_pd(xi_0, xi_75);
         const __m256d xi_140 = _mm256_add_pd(xi_138, xi_139);
         const __m256d xi_141 = _mm256_mul_pd(
@@ -525,28 +527,37 @@ static FUNC_PREFIX void collidesweepleesedwardsavx(
                                 _mm256_add_pd(
                                     _mm256_add_pd(_mm256_add_pd(xi_0, xi_1),
                                                   xi_2),
-                                    xi_203),
+                                    xi_202),
                                 xi_204),
-                            xi_215),
-                        xi_219),
-                    xi_222),
+                            xi_212),
+                        xi_216),
+                    xi_220),
                 xi_3),
             xi_5);
         const __m256d u_0 = _mm256_add_pd(
-            xi_213, _mm256_set_pd(
-                        ((points_down && ctr_1 <= 0)
-                             ? (1.0)
-                             : ((points_up && ctr_1 >= 63) ? (-1.0) : (0.0))),
-                        ((points_down && ctr_1 <= 0)
-                             ? (1.0)
-                             : ((points_up && ctr_1 >= 63) ? (-1.0) : (0.0))),
-                        ((points_down && ctr_1 <= 0)
-                             ? (1.0)
-                             : ((points_up && ctr_1 >= 63) ? (-1.0) : (0.0))),
-                        ((points_down && ctr_1 <= 0)
-                             ? (1.0)
-                             : ((points_up && ctr_1 >= 63) ? (-1.0) : (0.0)))));
-        const __m256d xi_6 = _mm256_mul_pd(u_0, xi_212);
+            xi_200,
+            _mm256_set_pd(
+                shear_velocity *
+                    ((points_down && ctr_1 <= 0)
+                         ? (1.0)
+                         : ((points_up && ctr_1 >= grid_size - 1) ? (-1.0)
+                                                                  : (0.0))),
+                shear_velocity *
+                    ((points_down && ctr_1 <= 0)
+                         ? (1.0)
+                         : ((points_up && ctr_1 >= grid_size - 1) ? (-1.0)
+                                                                  : (0.0))),
+                shear_velocity *
+                    ((points_down && ctr_1 <= 0)
+                         ? (1.0)
+                         : ((points_up && ctr_1 >= grid_size - 1) ? (-1.0)
+                                                                  : (0.0))),
+                shear_velocity *
+                    ((points_down && ctr_1 <= 0)
+                         ? (1.0)
+                         : ((points_up && ctr_1 >= grid_size - 1) ? (-1.0)
+                                                                  : (0.0)))));
+        const __m256d xi_6 = _mm256_mul_pd(u_0, xi_213);
         const __m256d xi_7 = _mm256_mul_pd(
             xi_6, _mm256_set_pd(0.333333333333333, 0.333333333333333,
                                 0.333333333333333, 0.333333333333333));
@@ -560,18 +571,18 @@ static FUNC_PREFIX void collidesweepleesedwardsavx(
                     _mm256_add_pd(
                         _mm256_add_pd(
                             _mm256_mul_pd(
-                                xi_222, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)),
+                                xi_204, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)),
                             xi_125),
                         xi_127),
-                    xi_208),
+                    xi_210),
                 xi_3),
             xi_82);
         const __m256d xi_129 = _mm256_mul_pd(
             xi_128, _mm256_set_pd(xi_115, xi_115, xi_115, xi_115));
         const __m256d xi_158 = _mm256_mul_pd(
             xi_128, _mm256_set_pd(xi_154, xi_154, xi_154, xi_154));
-        const __m256d u_1 = xi_218;
-        const __m256d xi_8 = _mm256_mul_pd(u_1, xi_201);
+        const __m256d u_1 = xi_209;
+        const __m256d xi_8 = _mm256_mul_pd(u_1, xi_205);
         const __m256d xi_9 = _mm256_mul_pd(
             xi_8, _mm256_set_pd(0.333333333333333, 0.333333333333333,
                                 0.333333333333333, 0.333333333333333));
@@ -581,7 +592,7 @@ static FUNC_PREFIX void collidesweepleesedwardsavx(
             _mm256_mul_pd(u_1, _mm256_set_pd(0.5, 0.5, 0.5, 0.5));
         const __m256d xi_38 =
             _mm256_mul_pd(_mm256_add_pd(_mm256_mul_pd(u_0, xi_36),
-                                        _mm256_mul_pd(xi_212, xi_35)),
+                                        _mm256_mul_pd(xi_213, xi_35)),
                           _mm256_set_pd(xi_37, xi_37, xi_37, xi_37));
         const __m256d xi_39 =
             _mm256_mul_pd(xi_38, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
@@ -597,7 +608,7 @@ static FUNC_PREFIX void collidesweepleesedwardsavx(
         const __m256d xi_150 = _mm256_mul_pd(
             _mm256_add_pd(
                 _mm256_add_pd(_mm256_add_pd(_mm256_mul_pd(u_0, xi_111), xi_112),
-                              xi_221),
+                              xi_203),
                 xi_79),
             _mm256_set_pd(xi_149, xi_149, xi_149, xi_149));
         const __m256d xi_155 = _mm256_mul_pd(
@@ -617,8 +628,8 @@ static FUNC_PREFIX void collidesweepleesedwardsavx(
                 _mm256_mul_pd(xi_181, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)),
                 xi_166),
             xi_180);
-        const __m256d u_2 = xi_205;
-        const __m256d xi_10 = _mm256_mul_pd(u_2, xi_216);
+        const __m256d u_2 = xi_214;
+        const __m256d xi_10 = _mm256_mul_pd(u_2, xi_215);
         const __m256d xi_11 = _mm256_mul_pd(
             xi_10, _mm256_set_pd(0.333333333333333, 0.333333333333333,
                                  0.333333333333333, 0.333333333333333));
@@ -692,7 +703,7 @@ static FUNC_PREFIX void collidesweepleesedwardsavx(
         const __m256d xi_51 = _mm256_add_pd(xi_43, xi_50);
         const __m256d xi_52 =
             _mm256_mul_pd(_mm256_add_pd(_mm256_mul_pd(u_2, xi_36),
-                                        _mm256_mul_pd(xi_216, xi_35)),
+                                        _mm256_mul_pd(xi_215, xi_35)),
                           _mm256_set_pd(xi_37, xi_37, xi_37, xi_37));
         const __m256d xi_53 = _mm256_mul_pd(
             _mm256_mul_pd(xi_20, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)),
@@ -702,9 +713,9 @@ static FUNC_PREFIX void collidesweepleesedwardsavx(
         const __m256d xi_57 =
             _mm256_mul_pd(xi_52, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
         const __m256d xi_58 = _mm256_mul_pd(
-            _mm256_add_pd(_mm256_mul_pd(_mm256_mul_pd(u_0, xi_216),
+            _mm256_add_pd(_mm256_mul_pd(_mm256_mul_pd(u_0, xi_215),
                                         _mm256_set_pd(0.5, 0.5, 0.5, 0.5)),
-                          _mm256_mul_pd(_mm256_mul_pd(u_2, xi_212),
+                          _mm256_mul_pd(_mm256_mul_pd(u_2, xi_213),
                                         _mm256_set_pd(0.5, 0.5, 0.5, 0.5))),
             _mm256_set_pd(xi_37, xi_37, xi_37, xi_37));
         const __m256d xi_59 =
@@ -723,7 +734,7 @@ static FUNC_PREFIX void collidesweepleesedwardsavx(
                 _mm256_add_pd(
                     _mm256_add_pd(
                         _mm256_add_pd(
-                            _mm256_add_pd(_mm256_add_pd(xi_203, xi_71), xi_72),
+                            _mm256_add_pd(_mm256_add_pd(xi_202, xi_71), xi_72),
                             xi_75),
                         xi_78),
                     xi_83),
@@ -753,13 +764,13 @@ static FUNC_PREFIX void collidesweepleesedwardsavx(
                                                     _mm256_add_pd(
                                                         _mm256_add_pd(
                                                             _mm256_mul_pd(
-                                                                xi_209,
+                                                                xi_204,
                                                                 _mm256_set_pd(
                                                                     -2.0, -2.0,
                                                                     -2.0,
                                                                     -2.0)),
                                                             _mm256_mul_pd(
-                                                                xi_222,
+                                                                xi_217,
                                                                 _mm256_set_pd(
                                                                     -2.0, -2.0,
                                                                     -2.0,
@@ -775,10 +786,10 @@ static FUNC_PREFIX void collidesweepleesedwardsavx(
                                                             -1.0, -1.0, -1.0,
                                                             -1.0))),
                                                 xi_117),
-                                            xi_199),
-                                        xi_204),
-                                    xi_206),
-                                xi_211),
+                                            xi_207),
+                                        xi_211),
+                                    xi_212),
+                                xi_218),
                             xi_68),
                         xi_79),
                     xi_82),
@@ -816,7 +827,7 @@ static FUNC_PREFIX void collidesweepleesedwardsavx(
                 _mm256_add_pd(
                     _mm256_add_pd(
                         _mm256_mul_pd(rho, u_2),
-                        _mm256_mul_pd(xi_206,
+                        _mm256_mul_pd(xi_207,
                                       _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))),
                     xi_139),
                 xi_4),
@@ -988,7 +999,7 @@ static FUNC_PREFIX void collidesweepleesedwardsavx(
                                                     0.0238095238095238,
                                                     0.0238095238095238))),
                     forceTerm_0),
-                xi_203));
+                xi_202));
         _mm256_store_pd(
             &_data_pdfs_20_31_10[ctr_0],
             _mm256_add_pd(
@@ -1003,7 +1014,7 @@ static FUNC_PREFIX void collidesweepleesedwardsavx(
                             xi_110),
                         xi_116),
                     xi_124),
-                xi_204));
+                xi_212));
         _mm256_store_pd(
             &_data_pdfs_20_32_10[ctr_0],
             _mm256_add_pd(
@@ -1018,7 +1029,7 @@ static FUNC_PREFIX void collidesweepleesedwardsavx(
                             xi_102),
                         xi_109),
                     xi_124),
-                xi_199));
+                xi_211));
         _mm256_store_pd(
             &_data_pdfs_20_33_10[ctr_0],
             _mm256_add_pd(
@@ -1033,7 +1044,7 @@ static FUNC_PREFIX void collidesweepleesedwardsavx(
                             xi_132),
                         xi_135),
                     xi_136),
-                xi_209));
+                xi_217));
         _mm256_store_pd(
             &_data_pdfs_20_34_10[ctr_0],
             _mm256_add_pd(
@@ -1048,7 +1059,7 @@ static FUNC_PREFIX void collidesweepleesedwardsavx(
                             xi_129),
                         xi_136),
                     xi_137),
-                xi_222));
+                xi_204));
         _mm256_store_pd(
             &_data_pdfs_20_35_10[ctr_0],
             _mm256_add_pd(
@@ -1063,7 +1074,7 @@ static FUNC_PREFIX void collidesweepleesedwardsavx(
                             xi_143),
                         xi_146),
                     xi_147),
-                xi_206));
+                xi_207));
         _mm256_store_pd(
             &_data_pdfs_20_36_10[ctr_0],
             _mm256_add_pd(
@@ -1078,70 +1089,70 @@ static FUNC_PREFIX void collidesweepleesedwardsavx(
                             xi_141),
                         xi_147),
                     xi_148),
-                xi_211));
+                xi_218));
         _mm256_store_pd(
             &_data_pdfs_20_37_10[ctr_0],
             _mm256_add_pd(
                 _mm256_add_pd(
                     _mm256_add_pd(_mm256_add_pd(forceTerm_7, xi_153), xi_157),
                     xi_162),
-                xi_221));
+                xi_203));
         _mm256_store_pd(
             &_data_pdfs_20_38_10[ctr_0],
             _mm256_add_pd(
                 _mm256_add_pd(
                     _mm256_add_pd(_mm256_add_pd(forceTerm_8, xi_157), xi_163),
                     xi_165),
-                xi_215));
+                xi_220));
         _mm256_store_pd(
             &_data_pdfs_20_39_10[ctr_0],
             _mm256_add_pd(
                 _mm256_add_pd(
                     _mm256_add_pd(_mm256_add_pd(forceTerm_9, xi_162), xi_163),
                     xi_167),
-                xi_208));
+                xi_210));
         _mm256_store_pd(
             &_data_pdfs_20_310_10[ctr_0],
             _mm256_add_pd(
                 _mm256_add_pd(
                     _mm256_add_pd(_mm256_add_pd(forceTerm_10, xi_153), xi_165),
                     xi_167),
-                xi_219));
+                xi_216));
         _mm256_store_pd(
             &_data_pdfs_20_311_10[ctr_0],
             _mm256_add_pd(
                 _mm256_add_pd(
                     _mm256_add_pd(_mm256_add_pd(forceTerm_11, xi_171), xi_179),
                     xi_182),
-                xi_214));
+                xi_222));
         _mm256_store_pd(
             &_data_pdfs_20_312_10[ctr_0],
             _mm256_add_pd(
                 _mm256_add_pd(
                     _mm256_add_pd(_mm256_add_pd(forceTerm_12, xi_179), xi_183),
                     xi_184),
-                xi_210));
+                xi_221));
         _mm256_store_pd(
             &_data_pdfs_20_313_10[ctr_0],
             _mm256_add_pd(
                 _mm256_add_pd(
                     _mm256_add_pd(_mm256_add_pd(forceTerm_13, xi_188), xi_189),
                     xi_192),
-                xi_207));
+                xi_219));
         _mm256_store_pd(
             &_data_pdfs_20_314_10[ctr_0],
             _mm256_add_pd(
                 _mm256_add_pd(
                     _mm256_add_pd(_mm256_add_pd(forceTerm_14, xi_189), xi_193),
                     xi_194),
-                xi_200));
+                xi_201));
         _mm256_store_pd(
             &_data_pdfs_20_315_10[ctr_0],
             _mm256_add_pd(
                 _mm256_add_pd(
                     _mm256_add_pd(_mm256_add_pd(forceTerm_15, xi_182), xi_184),
                     xi_196),
-                xi_220));
+                xi_206));
         _mm256_store_pd(
             &_data_pdfs_20_316_10[ctr_0],
             _mm256_add_pd(
@@ -1155,14 +1166,14 @@ static FUNC_PREFIX void collidesweepleesedwardsavx(
                 _mm256_add_pd(
                     _mm256_add_pd(_mm256_add_pd(forceTerm_17, xi_192), xi_193),
                     xi_197),
-                xi_202));
+                xi_199));
         _mm256_store_pd(
             &_data_pdfs_20_318_10[ctr_0],
             _mm256_add_pd(
                 _mm256_add_pd(
                     _mm256_add_pd(_mm256_add_pd(forceTerm_18, xi_188), xi_194),
                     xi_197),
-                xi_217));
+                xi_208));
       }
     }
   }
@@ -1170,16 +1181,18 @@ static FUNC_PREFIX void collidesweepleesedwardsavx(
 } // namespace internal_collidesweepleesedwardsavx
 
 void CollideSweepLeesEdwardsAVX::operator()(IBlock *block) {
+  auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
   auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
   auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
-  auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
 
+  auto &shear_velocity = this->shear_velocity_;
   auto &points_up = this->points_up_;
+  auto &omega_shear = this->omega_shear_;
   auto &omega_even = this->omega_even_;
-  auto &omega_odd = this->omega_odd_;
   auto &points_down = this->points_down_;
   auto &omega_bulk = this->omega_bulk_;
-  auto &omega_shear = this->omega_shear_;
+  auto &omega_odd = this->omega_odd_;
+  auto &grid_size = this->grid_size_;
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(force->nrOfGhostLayers()));
   double *RESTRICT const _data_force = force->dataAt(0, 0, 0, 0);
   WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx);
@@ -1214,8 +1227,8 @@ void CollideSweepLeesEdwardsAVX::operator()(IBlock *block) {
       _data_force, _data_pdfs, _data_velocity, _size_force_0, _size_force_1,
       _size_force_2, _stride_force_1, _stride_force_2, _stride_force_3,
       _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_velocity_1,
-      _stride_velocity_2, _stride_velocity_3, omega_bulk, omega_even, omega_odd,
-      omega_shear, points_down, points_up);
+      _stride_velocity_2, _stride_velocity_3, grid_size, omega_bulk, omega_even,
+      omega_odd, omega_shear, points_down, points_up, shear_velocity);
 }
 
 void CollideSweepLeesEdwardsAVX::runOnCellInterval(
@@ -1230,16 +1243,18 @@ void CollideSweepLeesEdwardsAVX::runOnCellInterval(
   if (ci.empty())
     return;
 
+  auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
   auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
   auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
-  auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
 
+  auto &shear_velocity = this->shear_velocity_;
   auto &points_up = this->points_up_;
+  auto &omega_shear = this->omega_shear_;
   auto &omega_even = this->omega_even_;
-  auto &omega_odd = this->omega_odd_;
   auto &points_down = this->points_down_;
   auto &omega_bulk = this->omega_bulk_;
-  auto &omega_shear = this->omega_shear_;
+  auto &omega_odd = this->omega_odd_;
+  auto &grid_size = this->grid_size_;
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(force->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(force->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(force->nrOfGhostLayers()));
@@ -1283,8 +1298,8 @@ void CollideSweepLeesEdwardsAVX::runOnCellInterval(
       _data_force, _data_pdfs, _data_velocity, _size_force_0, _size_force_1,
       _size_force_2, _stride_force_1, _stride_force_2, _stride_force_3,
       _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_velocity_1,
-      _stride_velocity_2, _stride_velocity_3, omega_bulk, omega_even, omega_odd,
-      omega_shear, points_down, points_up);
+      _stride_velocity_2, _stride_velocity_3, grid_size, omega_bulk, omega_even,
+      omega_odd, omega_shear, points_down, points_up, shear_velocity);
 }
 
 } // namespace pystencils

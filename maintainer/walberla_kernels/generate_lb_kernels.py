@@ -435,7 +435,7 @@ with CodeGeneration() as ctx:
     )
 
     # generate unthermalized Lees-Edwards collision rule
-    u_p = lees_edwards.velocity_shift(1, 64)
+    u_p = lees_edwards.velocity_shift()
     velocity_field = ps.fields("velocity(3): [3D]", layout='fzyx')
     le_collision_rule_unthermalized = create_lb_collision_rule(
         method,

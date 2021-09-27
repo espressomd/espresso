@@ -15,12 +15,14 @@ from pystencils import Assignment
 import sympy as sp
 
 
-def velocity_shift(shear_velocity, grid_size):
+def velocity_shift():
     dim = 3
     counters = [LoopOverCoordinate.get_loop_counter_symbol(
         i) for i in range(dim)]
     points_up = TypedSymbol('points_up', bool)
     points_down = TypedSymbol('points_down', bool)
+    shear_velocity = TypedSymbol('shear_velocity', float)
+    grid_size = TypedSymbol('grid_size', int)
 
     u_p = sp.Piecewise((1, sp.And(type_all_numbers(counters[1] <= 0, 'int'), points_down)),
                        (-1,

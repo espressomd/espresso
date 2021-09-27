@@ -56,7 +56,7 @@ public:
         m_get_pos_offset(std::move(le_pack.get_pos_offset)),
         m_get_shear_velocity(std::move(le_pack.get_shear_velocity)) {
     if (m_n_ghost_layers != 1u) {
-      throw std::runtime_error("The Lees-Edwards sweep is implemeted "
+      throw std::runtime_error("The Lees-Edwards sweep is implemented "
                                "for a ghost layer of thickness 1");
     }
     if (m_shear_plane_normal == 0u) {
@@ -73,10 +73,20 @@ public:
   typedef stencil::D3Q19 Stencil;
   using PdfField = GhostLayerField<real_t, Stencil::Size>;
 
+  bool points_up(IBlock const *block) const {
+    return m_blocks->atDomainMaxBorder(m_shear_plane_normal, *block);
+  }
+
+  bool points_down(IBlock const *block) const {
+    return m_blocks->atDomainMinBorder(m_shear_plane_normal, *block);
+  }
+
+  double get_shear_velocity() const { return m_get_shear_velocity(); }
+
   void operator()(IBlock *block) {
-    if (m_blocks->atDomainMinBorder(m_shear_plane_normal, *block))
+    if (points_down(block))
       kernel(block, m_slab_min);
-    if (m_blocks->atDomainMaxBorder(m_shear_plane_normal, *block))
+    if (points_up(block))
       kernel(block, m_slab_max);
   }
 

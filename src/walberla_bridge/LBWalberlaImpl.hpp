@@ -118,9 +118,10 @@ private:
     real_t const omega_odd = odd_mode_relaxation_rate(omega);
     std::shared_ptr<CollisionModel> ptr;
     if (m_kT == 0. and m_lees_edwards_sweep) {
+      // a few values are initialized to 0 or false, will be updated later
       auto obj = LeesEdwardsCollisionModel(
-          m_last_applied_force_field_id, m_pdf_field_id,
-          m_velocity_field_id, omega, omega, omega_odd, omega, false, false);
+          m_last_applied_force_field_id, m_pdf_field_id, m_velocity_field_id,
+          int64_c(0u), omega, omega, omega_odd, omega, false, false, 0.);
       ptr = std::make_shared<CollisionModel>(std::move(obj));
     } else if (m_kT == 0.) {
       auto obj = UnthermalizedCollisionModel(m_last_applied_force_field_id,
@@ -146,7 +147,18 @@ private:
 
   class : public boost::static_visitor<> {
   public:
-    template <typename CM> void operator()(CM &cm, IBlock *b) const { cm(b); }
+    void operator()(UnthermalizedCollisionModel &cm, IBlock *b) { cm(b); }
+
+    void operator()(ThermalizedCollisionModel &cm, IBlock *b) { cm(b); }
+
+    void operator()(LeesEdwardsCollisionModel &cm, IBlock *b) {
+      cm.shear_velocity_ = m_lees_edwards_sweep->get_shear_velocity();
+      cm.points_up_ = m_lees_edwards_sweep->points_up(b);
+      cm.points_down_ = m_lees_edwards_sweep->points_down(b);
+      cm(b);
+    }
+
+    std::shared_ptr<LeesEdwardsUpdate> m_lees_edwards_sweep;
 
   } run_collide_sweep;
 
@@ -451,10 +463,16 @@ public:
       throw std::runtime_error(
           "Lees-Edwards LB doesn't support thermalization");
     }
+    auto const shear_plane_size =
+        Utils::product(m_grid_dimensions) /
+        m_grid_dimensions[lees_edwards_pack.shear_plane_normal];
     m_lees_edwards_sweep = std::make_shared<LeesEdwardsUpdate>(
         m_blocks, m_pdf_field_id, m_pdf_tmp_field_id, m_n_ghost_layers,
         std::move(lees_edwards_pack));
+    run_collide_sweep.m_lees_edwards_sweep = m_lees_edwards_sweep;
     m_collision_model = generate_collide_sweep();
+    auto *cm = boost::get<LeesEdwardsCollisionModel>(&*m_collision_model);
+    cm->grid_size_ = int64_t(shear_plane_size);
   }
 
   void integrate() override {

@@ -52,13 +52,16 @@ namespace pystencils {
 class CollideSweepLeesEdwards {
 public:
   CollideSweepLeesEdwards(BlockDataID forceID_, BlockDataID pdfsID_,
-                          BlockDataID velocityID_, double omega_bulk,
-                          double omega_even, double omega_odd,
-                          double omega_shear, bool points_down, bool points_up)
+                          BlockDataID velocityID_, int64_t grid_size,
+                          double omega_bulk, double omega_even,
+                          double omega_odd, double omega_shear,
+                          bool points_down, bool points_up,
+                          double shear_velocity)
       : forceID(forceID_), pdfsID(pdfsID_), velocityID(velocityID_),
-        omega_bulk_(omega_bulk), omega_even_(omega_even), omega_odd_(omega_odd),
-        omega_shear_(omega_shear), points_down_(points_down),
-        points_up_(points_up){};
+        grid_size_(grid_size), omega_bulk_(omega_bulk), omega_even_(omega_even),
+        omega_odd_(omega_odd), omega_shear_(omega_shear),
+        points_down_(points_down), points_up_(points_up),
+        shear_velocity_(shear_velocity){};
 
   void operator()(IBlock *block);
   void runOnCellInterval(const shared_ptr<StructuredBlockStorage> &blocks,
@@ -83,12 +86,14 @@ public:
   BlockDataID forceID;
   BlockDataID pdfsID;
   BlockDataID velocityID;
+  int64_t grid_size_;
   double omega_bulk_;
   double omega_even_;
   double omega_odd_;
   double omega_shear_;
   bool points_down_;
   bool points_up_;
+  double shear_velocity_;
 };
 
 } // namespace pystencils
