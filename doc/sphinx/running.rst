@@ -43,7 +43,7 @@ particle :math:`i` and :math:`F_i(\{x_j\},v_i,t)` the forces acting on it.
 These forces comprise all interactions with other particles and external fields
 as well as non-deterministic contributions described in :ref:`Thermostats`.
 
-For numerical integration, this equation is discretized to the following steps (:cite:`rapaport04` eqs. 3.5.8 - 3.5.10):
+For numerical integration, this equation is discretized to the following steps (:cite:`rapaport04a` eqs. 3.5.8 - 3.5.10):
 
 1. Calculate the velocity at the half step
 
@@ -283,7 +283,7 @@ The correct forces need to be re-calculated after running the integration::
 Brownian Dynamics
 ^^^^^^^^^^^^^^^^^
 
-Brownian Dynamics integrator :cite:`schlick2010`.
+Brownian Dynamics integrator :cite:`schlick10a`.
 See details in :ref:`Brownian thermostat`.
 
 .. _Stokesian Dynamics:
@@ -462,7 +462,7 @@ Brownian thermostat
 ^^^^^^^^^^^^^^^^^^^
 
 Brownian thermostat is a formal name of a thermostat enabling the
-Brownian Dynamics feature (see :cite:`schlick2010`) which implies
+Brownian Dynamics feature (see :cite:`schlick10a`) which implies
 a propagation scheme involving systematic and thermal parts of the
 classical Ermak-McCammom's (see :cite:`ermak78a`)
 Brownian Dynamics. Currently it is implemented without
@@ -616,7 +616,7 @@ To preserve momentum, an equal and opposite friction force and random force act 
 Numerically the fluid velocity is determined from the lattice-Boltzmann node velocities
 by interpolating as described in :ref:`Interpolating velocities`.
 The backcoupling of friction forces and noise to the fluid is also done by distributing those forces amongst the nearest LB nodes.
-Details for both the interpolation and the force distribution can be found in :cite:`ahlrichs99` and :cite:`duenweg08a`.
+Details for both the interpolation and the force distribution can be found in :cite:`ahlrichs99a` and :cite:`duenweg08a`.
 
 The LB fluid can be used to thermalize particles, while also including their hydrodynamic interactions.
 The LB thermostat expects an instance of either :class:`espressomd.lb.LBFluid` or :class:`espressomd.lb.LBFluidGPU`.
