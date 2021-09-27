@@ -51,14 +51,13 @@ namespace pystencils {
 
 class CollideSweepLeesEdwardsAVX {
 public:
-  CollideSweepLeesEdwardsAVX(BlockDataID densityID_, BlockDataID forceID_,
-                             BlockDataID pdfsID_, BlockDataID velocityID_,
-                             double omega_bulk, double omega_even,
-                             double omega_odd, double omega_shear,
-                             bool points_down, bool points_up)
-      : densityID(densityID_), forceID(forceID_), pdfsID(pdfsID_),
-        velocityID(velocityID_), omega_bulk_(omega_bulk),
-        omega_even_(omega_even), omega_odd_(omega_odd),
+  CollideSweepLeesEdwardsAVX(BlockDataID forceID_, BlockDataID pdfsID_,
+                             BlockDataID velocityID_, double omega_bulk,
+                             double omega_even, double omega_odd,
+                             double omega_shear, bool points_down,
+                             bool points_up)
+      : forceID(forceID_), pdfsID(pdfsID_), velocityID(velocityID_),
+        omega_bulk_(omega_bulk), omega_even_(omega_even), omega_odd_(omega_odd),
         omega_shear_(omega_shear), points_down_(points_down),
         points_up_(points_up){};
 
@@ -82,7 +81,6 @@ public:
     };
   }
 
-  BlockDataID densityID;
   BlockDataID forceID;
   BlockDataID pdfsID;
   BlockDataID velocityID;

@@ -119,7 +119,7 @@ private:
     std::shared_ptr<CollisionModel> ptr;
     if (m_kT == 0. and m_lees_edwards_sweep) {
       auto obj = LeesEdwardsCollisionModel(
-          m_density_field_id, m_last_applied_force_field_id, m_pdf_field_id,
+          m_last_applied_force_field_id, m_pdf_field_id,
           m_velocity_field_id, omega, omega, omega_odd, omega, false, false);
       ptr = std::make_shared<CollisionModel>(std::move(obj));
     } else if (m_kT == 0.) {
@@ -170,7 +170,6 @@ public:
   using LatticeModel_T = LBWalberlaImpl;
   typedef stencil::D3Q19 Stencil;
   using VectorField = GhostLayerField<real_t, 3u>;
-  using ScalarField = GhostLayerField<real_t, 1u>;
   using FlagField = BoundaryHandling::FlagField;
   using PdfField = GhostLayerField<real_t, Stencil::Size>;
 
@@ -289,7 +288,6 @@ protected:
   BlockDataID m_force_to_be_applied_id;
 
   BlockDataID m_velocity_field_id;
-  BlockDataID m_density_field_id;
 
   using FullCommunicator = blockforest::communication::UniformBufferedScheme<
       typename stencil::D3Q27>;
@@ -388,8 +386,6 @@ public:
         m_blocks, "force field", real_t{0}, field::fzyx, m_n_ghost_layers);
     m_velocity_field_id = field::addToStorage<VectorField>(
         m_blocks, "velocity field", real_t{0}, field::fzyx, m_n_ghost_layers);
-    m_density_field_id = field::addToStorage<ScalarField>(
-        m_blocks, "density field", real_t{0}, field::fzyx, m_n_ghost_layers);
 
     // Init and register pdf field
     auto pdf_setter =
@@ -428,9 +424,6 @@ public:
     m_full_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<VectorField>>(
             m_velocity_field_id, m_n_ghost_layers));
-    m_full_communication->addPackInfo(
-        std::make_shared<field::communication::PackInfo<ScalarField>>(
-            m_density_field_id, m_n_ghost_layers));
     m_full_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<FlagField>>(
             m_flag_field_id, m_n_ghost_layers));
