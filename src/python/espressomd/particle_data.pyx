@@ -1473,12 +1473,34 @@ cdef class ParticleHandle:
 
         delete_particle_bonds(self._id)
 
-    def update(self, P):
-        if "id" in P:
+    def update(self, new_properties):
+        """
+        Update properties of a particle.
+
+        Parameters
+        ----------
+        new_properties : :obj:`dict`
+            Map particle property names to values. All properties except
+            for the particle id can be changed.
+
+        Examples
+        --------
+
+        >>> import espressomd
+        >>> system = espressomd.System(box_l=[10, 10, 10])
+        >>> p = system.part.add(pos=[1, 2, 3], q=1, virtual=True)
+        >>> print(p.pos, p.q, p.virtual)
+        [1. 2. 3.] 1.0 True
+        >>> p.update({'pos': [4, 5, 6], 'virtual': False, 'q': 0})
+        >>> print(p.pos, p.q, p.virtual)
+        [4. 5. 6.] 0.0 False
+
+        """
+        if "id" in new_properties:
             raise Exception("Cannot change particle id.")
 
-        for k in P.keys():
-            setattr(self, k, P[k])
+        for k, v in new_properties.items():
+            setattr(self, k, v)
 
     IF ROTATION:
         def convert_vector_body_to_space(self, vec):
@@ -1635,12 +1657,12 @@ cdef class _ParticleSliceImpl:
         # Remove final comma
         return f"ParticleSlice([{res[:-2]}])"
 
-    def update(self, P):
-        if "id" in P:
+    def update(self, new_properties):
+        if "id" in new_properties:
             raise Exception("Cannot change particle id.")
 
-        for k in P.keys():
-            setattr(self, k, P[k])
+        for k, v in new_properties.items():
+            setattr(self, k, v)
 
     # Bond related methods
     def add_bond(self, _bond):
