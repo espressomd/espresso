@@ -209,7 +209,7 @@ class ClusterAnalysis(ut.TestCase):
         self.assertEqual(cluster.particle_ids(), [p1.id, p2.id, p3.id])
 
         # There should be one cluster containing all particles
-        # with CoM lying outside the simulation box (edge case)
+        # with CoM lying inside the simulation box after folding
         p1.pos = [0.0, 0.0, 0.06]
         p2.pos = [0.0, 0.0, -0.09]
         dc = espressomd.pair_criteria.DistanceCriterion(cut_off=0.20)
@@ -220,7 +220,7 @@ class ClusterAnalysis(ut.TestCase):
         self.assertEqual(cluster.particle_ids(), [p1.id, p2.id, p3.id])
         np.testing.assert_allclose(
             np.copy(cluster.center_of_mass()),
-            [-0.03, 0.0, -0.01],
+            [0.97, 0.0, 0.99],
             atol=1e-10)
 
         # Remove periodicity in the direction of the cluster
@@ -258,6 +258,23 @@ class ClusterAnalysis(ut.TestCase):
             np.copy(cluster.center_of_mass()),
             [0.29, 0.0, 0.0],
             atol=1e-10)
+
+        # There should be one cluster containing all particles
+        # with CoM lying outside the simulation box (aperiodic box)
+        dc = espressomd.pair_criteria.DistanceCriterion(cut_off=3.10)
+        self.cs.set_params(pair_criterion=dc)
+        p1.pos = [0.00, 0.0, 0.0]
+        p2.pos = [3.00, 0.0, 0.0]
+        p3.pos = [3.00, 0.0, 0.0]
+        self.cs.run_for_all_pairs()
+        self.assertEqual(len(self.cs.clusters), 1)
+        cluster = self.cs.clusters[self.cs.cluster_ids()[0]]
+        self.assertEqual(cluster.particle_ids(), [p1.id, p2.id, p3.id])
+        np.testing.assert_allclose(
+            np.copy(cluster.center_of_mass()),
+            [2.0, 0.0, 0.0],
+            atol=1e-10)
+        self.assertAlmostEqual(cluster.longest_distance(), 3.0, delta=1E-10)
 
 
 if __name__ == "__main__":
