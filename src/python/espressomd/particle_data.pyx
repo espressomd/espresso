@@ -33,6 +33,7 @@ import functools
 from .utils import nesting_level, array_locked, is_valid_type
 from .utils cimport make_array_locked, make_const_span, check_type_or_throw_except
 from .utils cimport Vector3i, Vector3d, Vector4d
+from .utils cimport make_Vector3d
 from .grid cimport box_geo, folded_position, unfolded_position
 
 
@@ -170,14 +171,11 @@ cdef class ParticleHandle:
         """
 
         def __set__(self, _pos):
-            cdef Vector3d pos
             if np.isnan(_pos).any() or np.isinf(_pos).any():
                 raise ValueError("invalid particle position")
             check_type_or_throw_except(
                 _pos, 3, float, "Position must be 3 floats")
-            for i in range(3):
-                pos[i] = _pos[i]
-            if place_particle(self._id, pos) == -1:
+            if place_particle(self._id, make_Vector3d(_pos)) == -1:
                 raise Exception("particle could not be set")
 
         def __get__(self):
@@ -249,12 +247,9 @@ cdef class ParticleHandle:
         """
 
         def __set__(self, _v):
-            cdef Vector3d v
             check_type_or_throw_except(
                 _v, 3, float, "Velocity has to be floats")
-            for i in range(3):
-                v[i] = _v[i]
-            set_particle_v(self._id, v)
+            set_particle_v(self._id, make_Vector3d(_v))
 
         def __get__(self):
             self.update_particle_data()
@@ -275,11 +270,8 @@ cdef class ParticleHandle:
         """
 
         def __set__(self, _f):
-            cdef Vector3d f
             check_type_or_throw_except(_f, 3, float, "Force has to be floats")
-            for i in range(3):
-                f[i] = _f[i]
-            set_particle_f(self._id, f)
+            set_particle_f(self._id, make_Vector3d(_f))
 
         def __get__(self):
             self.update_particle_data()
@@ -397,12 +389,9 @@ cdef class ParticleHandle:
             """
 
             def __set__(self, _o):
-                cdef Vector3d myo
                 check_type_or_throw_except(
                     _o, 3, float, "Omega_lab has to be 3 floats.")
-                for i in range(3):
-                    myo[i] = _o[i]
-                set_particle_omega_lab(self._id, myo)
+                set_particle_omega_lab(self._id, make_Vector3d(_o))
 
             def __get__(self):
                 self.update_particle_data()
@@ -457,12 +446,9 @@ cdef class ParticleHandle:
             """
 
             def __set__(self, _d):
-                cdef Vector3d myd
                 check_type_or_throw_except(
                     _d, 3, float, "Particle director has to be 3 floats.")
-                for i in range(3):
-                    myd[i] = _d[i]
-                set_particle_director(self._id, myd)
+                set_particle_director(self._id, make_Vector3d(_d))
 
             def __get__(self):
                 self.update_particle_data()
@@ -483,12 +469,9 @@ cdef class ParticleHandle:
             """
 
             def __set__(self, _o):
-                cdef Vector3d myo
                 check_type_or_throw_except(
                     _o, 3, float, "Omega_body has to be 3 floats.")
-                for i in range(3):
-                    myo[i] = _o[i]
-                set_particle_omega_body(self._id, myo)
+                set_particle_omega_body(self._id, make_Vector3d(_o))
 
             def __get__(self):
                 self.update_particle_data()
@@ -514,12 +497,9 @@ cdef class ParticleHandle:
             """
 
             def __set__(self, _t):
-                cdef Vector3d myt
                 check_type_or_throw_except(
                     _t, 3, float, "Torque has to be 3 floats.")
-                for i in range(3):
-                    myt[i] = _t[i]
-                set_particle_torque_lab(self._id, myt)
+                set_particle_torque_lab(self._id, make_Vector3d(_t))
 
             def __get__(self):
                 self.update_particle_data()
@@ -550,18 +530,15 @@ cdef class ParticleHandle:
             """
 
             def __set__(self, _rinertia):
-                cdef Vector3d rinertia
                 check_type_or_throw_except(
                     _rinertia, 3, float, "Rotation_inertia has to be 3 floats.")
-                for i in range(3):
-                    rinertia[i] = _rinertia[i]
-                set_particle_rotational_inertia(self._id, rinertia)
+                set_particle_rotational_inertia(
+                    self._id, make_Vector3d(_rinertia))
 
             def __get__(self):
                 self.update_particle_data()
-                cdef Vector3d rinertia
-                rinertia = get_particle_rotational_inertia(self.particle_data)
-                return make_array_locked(rinertia)
+                return make_array_locked(
+                    get_particle_rotational_inertia(self.particle_data))
 
     # Charge
     property q:
@@ -575,17 +552,14 @@ cdef class ParticleHandle:
 
         """
 
-        def __set__(self, _q):
-            cdef double myq
+        def __set__(self, q):
             check_type_or_throw_except(
-                _q, 1, float, "Charge has to be floats.")
-            myq = _q
-            set_particle_q(self._id, myq)
+                q, 1, float, "Charge has to be a float.")
+            set_particle_q(self._id, q)
 
         def __get__(self):
             self.update_particle_data()
-            cdef double q = get_particle_q(self.particle_data)
-            return q
+            return get_particle_q(self.particle_data)
 
     IF LB_ELECTROHYDRODYNAMICS:
         property mu_E:
@@ -604,17 +578,13 @@ cdef class ParticleHandle:
             """
 
             def __set__(self, mu_E):
-                cdef Vector3d _mu_E
                 check_type_or_throw_except(
                     mu_E, 3, float, "mu_E has to be 3 floats.")
-                for i in range(3):
-                    _mu_E[i] = mu_E[i]
-                set_particle_mu_E(self._id, _mu_E)
+                set_particle_mu_E(self._id, make_Vector3d(mu_E))
 
             def __get__(self):
                 self.update_particle_data()
-                cdef Vector3d mu_E = get_particle_mu_E(self.particle_data)
-                return make_array_locked(mu_E)
+                return make_array_locked(get_particle_mu_E(self.particle_data))
 
     property virtual:
         """Virtual flag.
@@ -646,8 +616,7 @@ cdef class ParticleHandle:
             # is constexpr.
             IF VIRTUAL_SITES:
                 self.update_particle_data()
-                cdef bool x = get_particle_virtual(self.particle_data)
-                return x
+                return get_particle_virtual(self.particle_data)
             ELSE:
                 return False
 
@@ -753,16 +722,12 @@ cdef class ParticleHandle:
             """
 
             def __set__(self, _dip):
-                cdef Vector3d dip
                 check_type_or_throw_except(
                     _dip, 3, float, "Dipole moment vector has to be 3 floats.")
-                for i in range(3):
-                    dip[i] = _dip[i]
-                set_particle_dip(self._id, dip)
+                set_particle_dip(self._id, make_Vector3d(_dip))
 
             def __get__(self):
                 self.update_particle_data()
-
                 return make_array_locked(self.particle_data.calc_dip())
 
         # Scalar magnitude of dipole moment
@@ -777,10 +742,10 @@ cdef class ParticleHandle:
 
             """
 
-            def __set__(self, _q):
+            def __set__(self, dipm):
                 check_type_or_throw_except(
-                    _q, 1, float, "Magnitude of dipole moment has to be 1 float.")
-                set_particle_dipm(self._id, _q)
+                    dipm, 1, float, "Magnitude of dipole moment has to be 1 float.")
+                set_particle_dipm(self._id, dipm)
 
             def __get__(self):
                 self.update_particle_data()
@@ -799,18 +764,14 @@ cdef class ParticleHandle:
             """
 
             def __set__(self, _ext_f):
-                cdef Vector3d ext_f
                 check_type_or_throw_except(
                     _ext_f, 3, float, "External force vector has to be 3 floats.")
-                for i in range(3):
-                    ext_f[i] = _ext_f[i]
-
-                set_particle_ext_force(self._id, ext_f)
+                set_particle_ext_force(self._id, make_Vector3d(_ext_f))
 
             def __get__(self):
                 self.update_particle_data()
-                cdef Vector3d ext_f = get_particle_ext_force(self.particle_data)
-                return array_locked([ext_f[0], ext_f[1], ext_f[2]])
+                return make_array_locked(
+                    get_particle_ext_force(self.particle_data))
 
         property fix:
             """
@@ -864,18 +825,14 @@ cdef class ParticleHandle:
                 """
 
                 def __set__(self, _ext_t):
-                    cdef Vector3d ext_t
                     check_type_or_throw_except(
                         _ext_t, 3, float, "External force vector has to be 3 floats.")
-                    for i in range(3):
-                        ext_t[i] = _ext_t[i]
-
-                    set_particle_ext_torque(self._id, ext_t)
+                    set_particle_ext_torque(self._id, make_Vector3d(_ext_t))
 
                 def __get__(self):
                     self.update_particle_data()
-                    cdef Vector3d ext_t = get_particle_ext_torque(self.particle_data)
-                    return make_array_locked(ext_t)
+                    return make_array_locked(
+                        get_particle_ext_torque(self.particle_data))
 
     IF THERMOSTAT_PER_PARTICLE:
         IF PARTICLE_ANISOTROPY:
@@ -897,22 +854,17 @@ cdef class ParticleHandle:
                 """
 
                 def __set__(self, _gamma):
-                    cdef Vector3d gamma
-
                     # We accept a single number by just repeating it
                     if not isinstance(_gamma, collections.abc.Iterable):
                         _gamma = 3 * [_gamma]
-
                     check_type_or_throw_except(
                         _gamma, 3, float, "Friction has to be 3 floats.")
-                    for i in range(3):
-                        gamma[i] = _gamma[i]
-                    set_particle_gamma(self._id, gamma)
+                    set_particle_gamma(self._id, make_Vector3d(_gamma))
 
                 def __get__(self):
                     self.update_particle_data()
-                    cdef Vector3d gamma = get_particle_gamma(self.particle_data)
-                    return make_array_locked(gamma)
+                    return make_array_locked(
+                        get_particle_gamma(self.particle_data))
 
         ELSE:
             property gamma:
@@ -938,8 +890,7 @@ cdef class ParticleHandle:
 
                 def __get__(self):
                     self.update_particle_data()
-                    cdef double gamma = get_particle_gamma(self.particle_data)
-                    return gamma
+                    return get_particle_gamma(self.particle_data)
 
         IF ROTATION:
             IF PARTICLE_ANISOTROPY:
@@ -957,22 +908,19 @@ cdef class ParticleHandle:
                     """
 
                     def __set__(self, _gamma_rot):
-                        cdef Vector3d gamma_rot
                         # We accept a single number by just repeating it
                         if not isinstance(
                                 _gamma_rot, collections.abc.Iterable):
                             _gamma_rot = 3 * [_gamma_rot]
-
                         check_type_or_throw_except(
                             _gamma_rot, 3, float, "Rotational friction has to be 3 floats.")
-                        for i in range(3):
-                            gamma_rot[i] = _gamma_rot[i]
-                        set_particle_gamma_rot(self._id, gamma_rot)
+                        set_particle_gamma_rot(
+                            self._id, make_Vector3d(_gamma_rot))
 
                     def __get__(self):
                         self.update_particle_data()
-                        cdef Vector3d gamma_rot = get_particle_gamma_rot(self.particle_data)
-                        return make_array_locked(gamma_rot)
+                        return make_array_locked(
+                            get_particle_gamma_rot(self.particle_data))
             ELSE:
                 property gamma_rot:
                     """
@@ -994,8 +942,7 @@ cdef class ParticleHandle:
 
                     def __get__(self):
                         self.update_particle_data()
-                        cdef double gamma_rot = get_particle_gamma_rot(self.particle_data)
-                        return gamma_rot
+                        return get_particle_gamma_rot(self.particle_data)
 
     IF ROTATION:
         property rotation:
@@ -1488,29 +1435,17 @@ cdef class ParticleHandle:
     IF ROTATION:
         def convert_vector_body_to_space(self, vec):
             """Converts the given vector from the particle's body frame to the space frame"""
-            cdef Vector3d res
-            cdef Vector3d _v
-            _v[0] = vec[0]
-            _v[1] = vec[1]
-            _v[2] = vec[2]
             self.update_particle_data()
-            res = convert_vector_body_to_space(
-                dereference(self.particle_data), _v)
-            return np.array((res[0], res[1], res[2]))
+            return np.array(make_array_locked(convert_vector_body_to_space(
+                dereference(self.particle_data), make_Vector3d(vec))))
 
         def convert_vector_space_to_body(self, vec):
             """Converts the given vector from the space frame to the particle's body frame"""
-            cdef Vector3d res
-            cdef Vector3d _v
-            _v[0] = vec[0]
-            _v[1] = vec[1]
-            _v[2] = vec[2]
             self.update_particle_data()
-            res = convert_vector_space_to_body(
-                dereference(self.particle_data), _v)
-            return np.array((res[0], res[1], res[2]))
+            return np.array(make_array_locked(convert_vector_space_to_body(
+                dereference(self.particle_data), make_Vector3d(vec))))
 
-        def rotate(self, axis=None, angle=None):
+        def rotate(self, axis, angle):
             """Rotates the particle around the given axis
 
             Parameters
@@ -1520,12 +1455,7 @@ cdef class ParticleHandle:
             angle : :obj:`float`
 
             """
-            cdef Vector3d a
-            a[0] = axis[0]
-            a[1] = axis[1]
-            a[2] = axis[2]
-
-            rotate_particle(self._id, a, angle)
+            rotate_particle(self._id, make_Vector3d(axis), angle)
 
 cdef class _ParticleSliceImpl:
     """Handles slice inputs.
@@ -1562,8 +1492,8 @@ cdef class _ParticleSliceImpl:
         ParticleSlice for a given range or slice object.
         """
         # Prevent negative bounds
-        if (not slice_.start is None and slice_.start < 0) or \
-           (not slice_.stop is None and slice_.stop < 0):
+        if (slice_.start is not None and slice_.start < 0) or \
+           (slice_.stop is not None and slice_.stop < 0):
             raise IndexError(
                 "Negative start and end ids are not supported on ParticleSlice")
 
@@ -1863,12 +1793,9 @@ Set quat and scalar dipole moment (dipm) instead.")
         # The ParticleList[]-getter ist not valid yet, as the particle
         # doesn't yet exist. Hence, the setting of position has to be
         # done here. the code is from the pos:property of ParticleHandle
-        cdef Vector3d mypos
         check_type_or_throw_except(
             P["pos"], 3, float, "Position must be 3 floats.")
-        for i in range(3):
-            mypos[i] = P["pos"][i]
-        if place_particle(P["id"], mypos) == -1:
+        if place_particle(P["id"], make_Vector3d(P["pos"])) == -1:
             raise Exception("particle could not be set.")
 
         # Pos is taken care of
