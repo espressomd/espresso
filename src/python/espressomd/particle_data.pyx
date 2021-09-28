@@ -20,6 +20,7 @@ include "myconfig.pxi"
 
 cimport numpy as np
 import numpy as np
+from cython.operator cimport dereference
 from . cimport particle_data
 from .interactions import BondedInteraction
 from .interactions import BondedInteractions
@@ -420,19 +421,18 @@ cdef class ParticleHandle:
             """
 
             def __set__(self, _q):
-                cdef double myq[4]
+                cdef Quaternion[double] q
                 check_type_or_throw_except(
                     _q, 4, float, "Quaternions has to be 4 floats.")
                 for i in range(4):
-                    myq[i] = _q[i]
-                set_particle_quat(self._id, myq)
+                    q[i] = _q[i]
+                set_particle_quat(self._id, q)
 
             def __get__(self):
                 self.update_particle_data()
 
-                cdef const double * x = NULL
-                pointer_to_quat(self.particle_data, x)
-                return array_locked([x[0], x[1], x[2], x[3]])
+                cdef Quaternion[double] q = get_particle_quat(self.particle_data)
+                return array_locked([q[0], q[1], q[2], q[3]])
 
         property director:
             """
@@ -492,9 +492,9 @@ cdef class ParticleHandle:
 
             def __get__(self):
                 self.update_particle_data()
-                cdef const double * o = NULL
-                pointer_to_omega_body(self.particle_data, o)
-                return array_locked([o[0], o[1], o[2]])
+                cdef Vector3d omega_body
+                omega_body = get_particle_omega_body(self.particle_data)
+                return make_array_locked(omega_body)
 
         property torque_lab:
             """
@@ -525,9 +525,9 @@ cdef class ParticleHandle:
                 self.update_particle_data()
                 cdef Vector3d torque_body
                 cdef Vector3d torque_space
-                torque_body = get_torque_body(self.particle_data[0])
+                torque_body = get_particle_torque_body(self.particle_data)
                 torque_space = convert_vector_body_to_space(
-                    self.particle_data[0], torque_body)
+                    dereference(self.particle_data), torque_body)
 
                 return make_array_locked(torque_space)
 
@@ -559,10 +559,9 @@ cdef class ParticleHandle:
 
             def __get__(self):
                 self.update_particle_data()
-                cdef const double * rinertia = NULL
-                pointer_to_rotational_inertia(
-                    self.particle_data, rinertia)
-                return array_locked([rinertia[0], rinertia[1], rinertia[2]])
+                cdef Vector3d rinertia
+                rinertia = get_particle_rotational_inertia(self.particle_data)
+                return make_array_locked(rinertia)
 
     # Charge
     property q:
@@ -585,9 +584,8 @@ cdef class ParticleHandle:
 
         def __get__(self):
             self.update_particle_data()
-            cdef const double * x = NULL
-            pointer_to_q(self.particle_data, x)
-            return x[0]
+            cdef double q = get_particle_q(self.particle_data)
+            return q
 
     IF LB_ELECTROHYDRODYNAMICS:
         property mu_E:
@@ -614,9 +612,9 @@ cdef class ParticleHandle:
                 set_particle_mu_E(self._id, _mu_E)
 
             def __get__(self):
-                cdef Vector3d _mu_E
-                _mu_E = get_particle_mu_E(self._id)
-                return make_array_locked(_mu_E)
+                self.update_particle_data()
+                cdef Vector3d mu_E = get_particle_mu_E(self.particle_data)
+                return make_array_locked(mu_E)
 
     property virtual:
         """Virtual flag.
@@ -648,9 +646,8 @@ cdef class ParticleHandle:
             # is constexpr.
             IF VIRTUAL_SITES:
                 self.update_particle_data()
-                cdef const bool * x = NULL
-                pointer_to_virtual(self.particle_data, x)
-                return x[0]
+                cdef bool x = get_particle_virtual(self.particle_data)
+                return x
             ELSE:
                 return False
 
@@ -678,9 +675,9 @@ cdef class ParticleHandle:
 
             def __get__(self):
                 self.update_particle_data()
-                cdef const double * q = NULL
-                pointer_to_vs_quat(self.particle_data, q)
-                return np.array([q[0], q[1], q[2], q[3]])
+                cdef Quaternion[double] q
+                q = get_particle_vs_quat(self.particle_data)
+                return array_locked([q[0], q[1], q[2], q[3]])
 
         property vs_relative:
             """
@@ -717,12 +714,11 @@ cdef class ParticleHandle:
 
             def __get__(self):
                 self.update_particle_data()
-                cdef const int * rel_to = NULL
-                cdef const double * dist = NULL
-                cdef const double * q = NULL
-                pointer_to_vs_relative(
-                    self.particle_data, rel_to, dist, q)
-                return (rel_to[0], dist[0], np.array((q[0], q[1], q[2], q[3])))
+                cdef int rel_to = -1
+                cdef double dist = 0.
+                cdef Quaternion[double] q
+                q = get_particle_vs_relative(self.particle_data, rel_to, dist)
+                return (rel_to, dist, array_locked([q[0], q[1], q[2], q[3]]))
 
         # vs_auto_relate_to
         def vs_auto_relate_to(self, rel_to):
@@ -788,9 +784,7 @@ cdef class ParticleHandle:
 
             def __get__(self):
                 self.update_particle_data()
-                cdef const double * x = NULL
-                pointer_to_dipm(self.particle_data, x)
-                return x[0]
+                return get_particle_dipm(self.particle_data)
 
     IF EXTERNAL_FORCES:
         property ext_force:
@@ -815,9 +809,7 @@ cdef class ParticleHandle:
 
             def __get__(self):
                 self.update_particle_data()
-
-                cdef const double * ext_f = NULL
-                pointer_to_ext_force(self.particle_data, ext_f)
+                cdef Vector3d ext_f = get_particle_ext_force(self.particle_data)
                 return array_locked([ext_f[0], ext_f[1], ext_f[2]])
 
         property fix:
@@ -851,10 +843,10 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 fixed_coord_flag = np.array([0, 0, 0], dtype=int)
-                cdef const stdint.uint8_t * ext_flag = NULL
-                pointer_to_fix(self.particle_data, ext_flag)
+                cdef stdint.uint8_t ext_flag
+                ext_flag = get_particle_fix(self.particle_data)
                 for i in map(long, range(3)):
-                    if ext_flag[0] & _COORD_FIXED(i):
+                    if ext_flag & _COORD_FIXED(i):
                         fixed_coord_flag[i] = 1
                 return array_locked(fixed_coord_flag)
 
@@ -882,10 +874,8 @@ cdef class ParticleHandle:
 
                 def __get__(self):
                     self.update_particle_data()
-                    cdef const double * ext_t = NULL
-                    pointer_to_ext_torque(
-                        self.particle_data, ext_t)
-                    return array_locked([ext_t[0], ext_t[1], ext_t[2]])
+                    cdef Vector3d ext_t = get_particle_ext_torque(self.particle_data)
+                    return make_array_locked(ext_t)
 
     IF THERMOSTAT_PER_PARTICLE:
         IF PARTICLE_ANISOTROPY:
@@ -921,10 +911,8 @@ cdef class ParticleHandle:
 
                 def __get__(self):
                     self.update_particle_data()
-
-                    cdef const double * gamma = NULL
-                    pointer_to_gamma(self.particle_data, gamma)
-                    return array_locked([gamma[0], gamma[1], gamma[2]])
+                    cdef Vector3d gamma = get_particle_gamma(self.particle_data)
+                    return make_array_locked(gamma)
 
         ELSE:
             property gamma:
@@ -950,9 +938,9 @@ cdef class ParticleHandle:
 
                 def __get__(self):
                     self.update_particle_data()
-                    cdef const double * gamma = NULL
-                    pointer_to_gamma(self.particle_data, gamma)
-                    return gamma[0]
+                    cdef double gamma = get_particle_gamma(self.particle_data)
+                    return gamma
+
         IF ROTATION:
             IF PARTICLE_ANISOTROPY:
                 property gamma_rot:
@@ -983,11 +971,8 @@ cdef class ParticleHandle:
 
                     def __get__(self):
                         self.update_particle_data()
-                        cdef const double * gamma_rot = NULL
-                        pointer_to_gamma_rot(
-                            self.particle_data, gamma_rot)
-                        return array_locked(
-                            [gamma_rot[0], gamma_rot[1], gamma_rot[2]])
+                        cdef Vector3d gamma_rot = get_particle_gamma_rot(self.particle_data)
+                        return make_array_locked(gamma_rot)
             ELSE:
                 property gamma_rot:
                     """
@@ -1009,10 +994,8 @@ cdef class ParticleHandle:
 
                     def __get__(self):
                         self.update_particle_data()
-                        cdef const double * gamma_rot = NULL
-                        pointer_to_gamma_rot(
-                            self.particle_data, gamma_rot)
-                        return gamma_rot[0]
+                        cdef double gamma_rot = get_particle_gamma_rot(self.particle_data)
+                        return gamma_rot
 
     IF ROTATION:
         property rotation:
@@ -1232,8 +1215,8 @@ cdef class ParticleHandle:
                 self.update_particle_data()
                 swim = {}
                 mode = "N/A"
-                cdef const particle_parameters_swimming * _swim = NULL
-                pointer_to_swimming(self.particle_data, _swim)
+                cdef particle_parameters_swimming _swim
+                _swim = get_particle_swimming(self.particle_data)
 
                 if _swim.push_pull == -1:
                     mode = 'pusher'
@@ -1511,7 +1494,8 @@ cdef class ParticleHandle:
             _v[1] = vec[1]
             _v[2] = vec[2]
             self.update_particle_data()
-            res = convert_vector_body_to_space(self.particle_data[0], _v)
+            res = convert_vector_body_to_space(
+                dereference(self.particle_data), _v)
             return np.array((res[0], res[1], res[2]))
 
         def convert_vector_space_to_body(self, vec):
@@ -1522,7 +1506,8 @@ cdef class ParticleHandle:
             _v[1] = vec[1]
             _v[2] = vec[2]
             self.update_particle_data()
-            res = convert_vector_space_to_body(self.particle_data[0], _v)
+            res = convert_vector_space_to_body(
+                dereference(self.particle_data), _v)
             return np.array((res[0], res[1], res[2]))
 
         def rotate(self, axis=None, angle=None):
