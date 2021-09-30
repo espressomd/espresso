@@ -18,11 +18,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-/** \file
- *
- * Lattice class definition
- *
- */
 
 #include "grid_based_algorithms/lattice.hpp"
 
@@ -98,15 +93,15 @@ void Lattice::map_position_to_lattice(const Utils::Vector3d &pos,
        adjust if this is due to round off errors */
     if (ind[dir] < 0) {
       if (fabs(rel) < epsilon) {
-        ind[dir] = 0; // TODO
+        ind[dir] = 0;
       } else {
-        throw std::runtime_error("position not inside a local plaquette");
+        throw std::runtime_error("position outside local LB domain");
       }
     } else if (ind[dir] > grid[dir]) {
       if (lpos - local_box[dir] < epsilon * local_box[dir])
         ind[dir] = grid[dir];
       else
-        throw std::runtime_error("position not inside a local plaquette");
+        throw std::runtime_error("position outside local LB domain");
     }
 
     delta[3 + dir] = rel - ind[dir]; // delta_x/a
