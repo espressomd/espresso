@@ -383,6 +383,31 @@ def generate_macroscopic_values_accessors(
 
 adapt_pystencils()
 
+
+class BounceBackSlipVelocityUBB(UBBAdditionalDataHandler):
+    '''
+    Dynamic UBB that implements the bounce-back method with slip velocity.
+    '''
+
+    def data_initialisation(self, direction):
+        '''
+        Modified ``indexVector`` initialiser. The "classical" dynamic UBB
+        uses the velocity callback as a velocity flow profile generator.
+        Here we use that callback as a bounce-back slip velocity generator.
+        This way, the dynamic UBB can be used to implement a LB boundary.
+        '''
+        code = super().data_initialisation(direction)
+        dirVec = self.stencil_info[direction][1]
+        token = ' = elementInitaliser(Cell(it.x(){}, it.y(){}, it.z(){}),'
+        old_initialiser = token.format('', '', '')
+        assert old_initialiser in code
+        new_initialiser = token.format(
+            '+' + str(dirVec[0]),
+            '+' + str(dirVec[1]),
+            '+' + str(dirVec[2])).replace('+-', '-')
+        return code.replace(old_initialiser, new_initialiser)
+
+
 with CodeGeneration() as ctx:
     kT = sp.symbols("kT")
     force_field = ps.fields("force(3): [3D]", layout='fzyx')
@@ -467,7 +492,7 @@ with CodeGeneration() as ctx:
 
     # Boundary conditions
     ubb_dynamic = UBB(lambda *args: None, dim=3)
-    ubb_data_handler = UBBAdditionalDataHandler(method.stencil, ubb_dynamic)
+    ubb_data_handler = BounceBackSlipVelocityUBB(method.stencil, ubb_dynamic)
 
     generate_boundary(ctx, 'Dynamic_UBB', ubb_dynamic, method,
                       additional_data_handler=ubb_data_handler,
