@@ -432,6 +432,26 @@ class ParticleProperties(ut.TestCase):
         self.system.part.add(pdict)
         self.assertEqual(str(self.system.part.select()), pp)
 
+    def test_update(self):
+        self.system.part.clear()
+        p = self.system.part.add(pos=0.5 * self.system.box_l)
+        # cannot change id
+        with self.assertRaisesRegex(Exception, "Cannot change particle id."):
+            p.update({'id': 1})
+        # check value change
+        new_pos = [1., 2., 3.]
+        p.update({'pos': new_pos})
+        np.testing.assert_almost_equal(p.pos, new_pos)
+        # updating self should not change anything
+        pdict = p.to_dict()
+        del pdict['id']
+        del pdict['_id']
+        p.update(pdict)
+        new_pdict = p.to_dict()
+        del new_pdict['id']
+        del new_pdict['_id']
+        self.assertEqual(str(new_pdict), str(pdict))
+
 
 if __name__ == "__main__":
     ut.main()

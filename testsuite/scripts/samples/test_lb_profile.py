@@ -28,10 +28,8 @@ class Sample(ut.TestCase):
     system = sample.system
 
     def test_fit(self):
-        # compare the simulated data against the analytical solution
-        sim = sample.lb_fluid_profile[:, 0, 0, 2]
-        ana = sample.poiseuille_flow(sample.r, sample.r_max, 0.15)
-        self.assertLess(np.max(np.abs(sim - ana)), 0.16)
+        np.testing.assert_allclose(sample.lb_fluid_profile[:, 0, 0, 2],
+                                   sample.expected_profile, atol=7e-2)
 
 
 if __name__ == "__main__":
