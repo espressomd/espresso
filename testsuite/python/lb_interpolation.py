@@ -89,19 +89,19 @@ class LBInterpolation:
         np.testing.assert_allclose(
             np.copy(self.lbf.get_interpolated_velocity([BOX_L - AGRID, 0, 0])),
             ([0, 0, V_BOUNDARY] + np.copy(node_next_to_boundary.velocity)) / 2.,
-            rtol=2e-7)
+            atol=5e-4)
 
         # Bulk
         for pos in itertools.product(
                 np.arange(1.5 * AGRID, BOX_L - 1.5 * AGRID, 0.5 * AGRID),
                 np.arange(0.5 * AGRID, BOX_L, AGRID),
                 np.arange(0.5 * AGRID, BOX_L, AGRID)):
-            np.testing.assert_almost_equal(
-                self.lbf.get_interpolated_velocity(pos)[2], velocity_profile(pos[0]), decimal=4)
-        # Shear plane for boundary 2
-        # for pos in itertools.product((9 * AGRID,), np.arange(0.5 * AGRID, BOX_L, AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID)):
-        # np.testing.assert_almost_equal(self.lbf.get_interpolated_velocity(pos)[2],
-        # 1.0, decimal=4)
+            tol = 5e-3
+            if pos[0] >= 2.01 * AGRID and pos[0] <= BOX_L - 2.01 * AGRID:
+                tol = 2e-4
+            np.testing.assert_allclose(
+                self.lbf.get_interpolated_velocity(pos)[2],
+                velocity_profile(pos[0]), atol=tol)
 
     def test_mach_limit_check(self):
         """
@@ -120,8 +120,7 @@ class LBInterpolation:
         print("End: Test error generation")
 
 
-@utx.skipIfMissingFeatures(['LB_BOUNDARIES'])
-@utx.skipIfMissingFeatures(['LB_WALBERLA'])
+@utx.skipIfMissingFeatures(['LB_BOUNDARIES', 'LB_WALBERLA'])
 class LBInterpolationWalberla(ut.TestCase, LBInterpolation):
 
     def setUp(self):
