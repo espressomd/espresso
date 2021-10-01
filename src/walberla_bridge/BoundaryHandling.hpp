@@ -105,6 +105,7 @@ public:
                    BlockDataID pdf_field_id, BlockDataID flag_field_id)
       : m_blocks(std::move(blocks)), m_pdf_field_id(pdf_field_id),
         m_flag_field_id(flag_field_id), m_callback(DynamicVelocityCallback()) {
+    // reinitialize the flag field
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b) {
       flag_reset_kernel(&*b);
     }
@@ -162,10 +163,12 @@ private:
       flag_field->registerFlag(Domain_flag);
     if (!flag_field->flagExists(Boundary_flag))
       flag_field->registerFlag(Boundary_flag);
-    // mark all cells as domain cells
+    // mark all cells as domain cells and fluid cells
     auto domain_flag = flag_field->getFlag(Domain_flag);
+    auto boundary_flag = flag_field->getFlag(Boundary_flag);
     for (auto it = flag_field->begin(); it != flag_field->end(); ++it) {
       flag_field->addFlag(it.x(), it.y(), it.z(), domain_flag);
+      flag_field->removeFlag(it.x(), it.y(), it.z(), boundary_flag);
     }
   }
 };

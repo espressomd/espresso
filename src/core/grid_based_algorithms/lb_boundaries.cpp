@@ -64,7 +64,6 @@ void lb_init_boundaries() {
   if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
 #if defined(LB_BOUNDARIES)
-
     lb_walberla()->clear_boundaries();
 
     auto const agrid = lb_lbfluid_get_agrid();

@@ -529,8 +529,7 @@ class CheckpointTest(ut.TestCase):
         # remove boundaries
         system.lbboundaries.clear()
         self.assertEqual(len(system.lbboundaries), 0)
-        # TODO WALBERLA: removing LBBoundaries doesn't reset the fluid flag
-        # np.testing.assert_equal(lbf[:, :, :].is_boundary.astype(int), 0)
+        np.testing.assert_equal(lbf[:, :, :].is_boundary.astype(int), 0)
 
     @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
     def test_constraints(self):
