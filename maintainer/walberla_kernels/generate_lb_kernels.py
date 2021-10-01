@@ -473,6 +473,13 @@ with CodeGeneration() as ctx:
                       additional_data_handler=ubb_data_handler,
                       streaming_pattern="push")
 
+    # patch for old versions of pystencils_walberla
+    with open('Dynamic_UBB.h') as f:
+        dynamic_ubb_code = f.read()
+    if '#pragma once' not in dynamic_ubb_code:
+        with open('Dynamic_UBB.h', 'w') as f:
+            f.write('#pragma once\n' + dynamic_ubb_code)
+
     # communication
     pdfs = Field.create_generic(
         'pdfs', 3, index_shape=(len(method.stencil),), layout='fzyx')
