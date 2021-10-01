@@ -1,4 +1,3 @@
-
 # Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -21,7 +20,7 @@ import numpy as np
 
 import espressomd
 import espressomd.lb
-import scipy.optimize
+#import scipy.optimize
 
 AGRID = .5
 N_CELLS = 12
@@ -151,53 +150,53 @@ class TestLBPressureTensorCPU(TestLBPressureTensor, ut.TestCase):
         self.sample_pressure_tensor()
 
 
-@utx.skipIfMissingFeatures("LB_WALBERLA")
-@utx.skipIfMissingGPU()
-@ut.skipIf(True, "LBFluidWalberlaGPU not implemented yet")  # TODO WALBERLA
-class TestLBPressureTensorGPU(TestLBPressureTensor, ut.TestCase):
+# TODO WALBERLA
+# @utx.skipIfMissingFeatures("LB_WALBERLA")
+# @utx.skipIfMissingGPU()
+# class TestLBPressureTensorGPU(TestLBPressureTensor, ut.TestCase):
 
-    def setUp(self):
-        self.lb_class = espressomd.lb.LBFluidWalberlaGPU
-        self.steps = 50000
-        self.sample_pressure_tensor()
+#    def setUp(self):
+#        self.lb_class = espressomd.lb.LBFluidWalberlaGPU
+#        self.steps = 50000
+#        self.sample_pressure_tensor()
 
-    def test_gk_viscosity(self):
-        # Check that stress auto correlation matches dynamic viscosity
-        # eta = V/kT integral (stress acf), e.g., eq. (5) in Cui et. et al
-        # (https://doi.org/10.1080/00268979609484542).
-        # Cannot be run for CPU with sufficient statistics without CI timeout.
-        all_viscs = []
-        for i in range(3):
-            for j in range(i + 1, 3):
+#    def test_gk_viscosity(self):
+#        # Check that stress auto correlation matches dynamic viscosity
+#        # eta = V/kT integral (stress acf), e.g., eq. (5) in Cui et. et al
+#        # (https://doi.org/10.1080/00268979609484542).
+#        # Cannot be run for CPU with sufficient statistics without CI timeout.
+#        all_viscs = []
+#        for i in range(3):
+#            for j in range(i + 1, 3):
 
-                # Calculate acf
-                tmp = np.correlate(
-                    self.p_global[:, i, j],
-                    self.p_global[:, i, j], mode="full")
-                acf = tmp[len(tmp) // 2:] / self.steps
+#                # Calculate acf
+#                tmp = np.correlate(
+#                    self.p_global[:, i, j],
+#                    self.p_global[:, i, j], mode="full")
+#                acf = tmp[len(tmp) // 2:] / self.steps
 
-                # integrate first part numerically, fit exponential to tail
-                t_max_fit = 50 * TAU
-                ts = np.arange(0, t_max_fit, 2 * TAU)
-                numeric_integral = np.trapz(acf[:len(ts)], dx=2 * TAU)
+#                # integrate first part numerically, fit exponential to tail
+#                t_max_fit = 50 * TAU
+#                ts = np.arange(0, t_max_fit, 2 * TAU)
+#                numeric_integral = np.trapz(acf[:len(ts)], dx=2 * TAU)
 
-                # fit tail
-                def f(x, a, b): return a * np.exp(-b * x)
+#                # fit tail
+#                def f(x, a, b): return a * np.exp(-b * x)
 
-                (a, b), _ = scipy.optimize.curve_fit(f, acf[:len(ts)], ts)
-                tail = f(ts[-1], a, b) / b
+#                (a, b), _ = scipy.optimize.curve_fit(f, acf[:len(ts)], ts)
+#                tail = f(ts[-1], a, b) / b
 
-                integral = numeric_integral + tail
+#                integral = numeric_integral + tail
 
-                measured_visc = integral * self.system.volume() / KT
+#                measured_visc = integral * self.system.volume() / KT
 
-                self.assertAlmostEqual(
-                    measured_visc, VISC * DENS, delta=VISC * DENS * .15)
-                all_viscs.append(measured_visc)
+#                self.assertAlmostEqual(
+#                    measured_visc, VISC * DENS, delta=VISC * DENS * .15)
+#                all_viscs.append(measured_visc)
 
-        # Check average over xy, xz and yz against tighter limit
-        self.assertAlmostEqual(np.average(all_viscs),
-                               VISC * DENS, delta=VISC * DENS * .07)
+#        # Check average over xy, xz and yz against tighter limit
+#        self.assertAlmostEqual(np.average(all_viscs),
+#                               VISC * DENS, delta=VISC * DENS * .07)
 
 
 if __name__ == "__main__":
