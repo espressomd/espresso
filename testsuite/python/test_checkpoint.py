@@ -186,6 +186,8 @@ class CheckpointTest(ut.TestCase):
                 np.copy(p3.f), -np.copy(p4.f), rtol=1e-4)
             self.assertGreater(np.linalg.norm(np.copy(p3.f) - old_force), 1e6)
 
+    @utx.skipIfMissingFeatures('LB_WALBERLA')
+    @ut.skipIf('LB.ACTIVE.WALBERLA' not in modes, 'waLBerla LBM not in modes')
     @ut.skipIf('THERM.LB' not in modes, 'LB thermostat not in modes')
     def test_thermostat_LB(self):
         thmst = system.thermostat.get_state()[0]
