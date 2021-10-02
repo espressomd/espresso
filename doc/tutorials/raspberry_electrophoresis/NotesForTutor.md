@@ -2,7 +2,7 @@
 
 ## Learning objectives (physics)
 
-After the tutorial, students should be able to 
+After the tutorial, students should be able to
 
 * explain
   * the basics of electrophoresis to a 2nd year physics student
@@ -13,7 +13,7 @@ After the tutorial, students should be able to
 
 ## Learning objectives (ESPResSo)
 
-After the tutorial, students should be able to 
+After the tutorial, students should be able to
 
 * set up a raspberry model using virtual sites
 * explain to a new ESPResSo user the concept of `VIRTUAL_SITES_RELATIVE`
