@@ -52,7 +52,7 @@ public:
     }
 
     if (name == "is_inside") {
-        auto const pos = get_value<Utils::Vector3d>(params.at("position"));
+      auto const pos = get_value<Utils::Vector3d>(params.at("position"));
       auto is_in = shape()->is_inside(pos);
       return {is_in};
     }

@@ -148,8 +148,8 @@ cdef inline python_lbfluid_get_pressure_tensor(double agrid, double tau) except 
 cdef inline python_lbnode_set_velocity(Vector3i node, Vector3d velocity) except +:
     lb_lbnode_set_velocity(node, velocity / lb_lbfluid_get_lattice_speed())
 
-cdef inline void python_lbnode_set_velocity_at_boundary(Vector3i node, Vector3d velocity) except +:
-    cdef double inv_lattice_speed = lb_lbfluid_get_tau() / lb_lbfluid_get_agrid()
+cdef inline python_lbnode_set_velocity_at_boundary(Vector3i node, Vector3d velocity) except +:
+    cdef double inv_lattice_speed = 1.0 / lb_lbfluid_get_lattice_speed()
     cdef Vector3d c_velocity = velocity * inv_lattice_speed
     lb_lbnode_set_velocity_at_boundary(node, c_velocity)
 
@@ -166,15 +166,15 @@ cdef inline python_lbnode_set_last_applied_force(Vector3i node, Vector3d force) 
     cdef Vector3d c_f = force * unit_conversion
     lb_lbnode_set_last_applied_force(node, c_f)
 
-cdef inline Vector3d python_lbnode_get_velocity_at_boundary(Vector3i node) except +:
-    cdef double lattice_speed = lb_lbfluid_get_agrid() / lb_lbfluid_get_tau()
+cdef inline python_lbnode_get_velocity_at_boundary(Vector3i node) except +:
     cdef Vector3d c_velocity = lb_lbnode_get_velocity_at_boundary(node)
-    return c_velocity * lattice_speed
+    cdef double lattice_speed = lb_lbfluid_get_lattice_speed()
+    return make_array_locked(c_velocity * lattice_speed)
 
-cdef inline Vector3d python_lbnode_get_boundary_force(Vector3i node) except +:
+cdef inline python_lbnode_get_boundary_force(Vector3i node) except +:
     cdef Vector3d force = lb_lbnode_get_boundary_force(node)
-    cdef double conv = lb_lbfluid_get_agrid() / lb_lbfluid_get_tau()**2
-    return force * conv
+    cdef double unit_conversion = lb_lbfluid_get_agrid() / lb_lbfluid_get_tau()**2
+    return make_array_locked(force * unit_conversion)
 
 cdef inline python_lbnode_get_last_applied_force(Vector3i node) except +:
     cdef Vector3d c_f = lb_lbnode_get_last_applied_force(node)

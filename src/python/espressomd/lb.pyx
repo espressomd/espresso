@@ -427,7 +427,7 @@ IF LB_WALBERLA:
                 self._params['tau'] / self._params['agrid']**2
             lb_dens = self._params['dens'] * self._params['agrid']**3
             lb_kT = self._params['kT'] * \
-                self._params['tau']**2 / self._params['agrid']**2 
+                self._params['tau']**2 / self._params['agrid']**2
             mpi_init_lb_walberla(
                 lb_visc, lb_dens, self._params["agrid"], self._params["tau"],
                 box_geo.length(),
@@ -447,8 +447,8 @@ IF LB_WALBERLA:
             idxs = itertools.product(
                 range(lb_shape[0]), range(lb_shape[1]), range(lb_shape[2]))
             for idx in idxs:
-                pos = (np.asarray(idx)+0.5)*self._params['agrid']
-                if shape.is_inside(position = pos):
+                pos = (np.asarray(idx) + 0.5) * self._params['agrid']
+                if shape.is_inside(position=pos):
                     yield self[idx]
 
         # TODO WALBERLA: maybe split this method in 2 methods with clear names
@@ -549,37 +549,31 @@ cdef class LBFluidRoutines:
             """
             Returns
             -------
-            :ref:`espressomd.lbboundaries.VelocityBounceBack` 
-                If the node is a velocity bounce back boundary node
+            :ref:`espressomd.lbboundaries.VelocityBounceBack`
+                If the node is a boundary node
             None
                 If the node is not a boundary node
             """
 
             is_boundary = lb_lbnode_is_boundary(self.node)
             if is_boundary:
-                vel = make_array_locked(
-                    python_lbnode_get_velocity_at_boundary(
-                        self.node))
+                vel = python_lbnode_get_velocity_at_boundary(self.node)
                 return VelocityBounceBack(vel)
-            else:
-                return None
+            return None
 
         def __set__(self, value):
             """
             Parameters
             ----------
             value : :ref:`espressomd.lbboundaries.VelocityBounceBack` or None
-                If value is :ref:`espressomd.lbboundaries.VelocityBounceBack`, set the node to be a boundary node with the specified velocity.
-                If value is None, the node will be a non-boundary node (fluid).
+                If value is :ref:`espressomd.lbboundaries.VelocityBounceBack`,
+                set the node to be a boundary node with the specified velocity.
+                If value is ``None``, the node will become a fluid node.
             """
 
-            cdef Vector3d c_vel
             if isinstance(value, VelocityBounceBack):
-                p_vel = value.velocity
-                c_vel[0] = p_vel[0]
-                c_vel[1] = p_vel[1]
-                c_vel[2] = p_vel[2]
-                python_lbnode_set_velocity_at_boundary(self.node, c_vel)
+                python_lbnode_set_velocity_at_boundary(
+                    self.node, make_Vector3d(value.velocity))
             elif value is None:
                 lb_lbnode_remove_from_boundary(self.node)
             else:
@@ -588,8 +582,7 @@ cdef class LBFluidRoutines:
 
     property boundary_force:
         def __get__(self):
-            return make_array_locked(
-                python_lbnode_get_boundary_force(self.node))
+            return python_lbnode_get_boundary_force(self.node)
 
         def __set__(self, val):
             raise NotImplementedError(

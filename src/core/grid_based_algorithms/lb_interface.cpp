@@ -594,7 +594,6 @@ const Utils::Vector3d lb_lbnode_get_boundary_force(const Utils::Vector3i &ind) {
         ind);
   }
 #endif
-
   throw NoLBActive();
 }
 
