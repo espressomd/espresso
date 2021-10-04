@@ -41,6 +41,14 @@ boost::optional<Utils::Vector3d> get_node_velocity(Utils::Vector3i ind) {
 
 REGISTER_CALLBACK_ONE_RANK(get_node_velocity)
 
+boost::optional<Utils::Vector3d>
+get_node_velocity_at_boundary(Utils::Vector3i ind) {
+  auto res = lb_walberla()->get_node_velocity_at_boundary(ind);
+  return res;
+}
+
+REGISTER_CALLBACK_ONE_RANK(get_node_velocity_at_boundary)
+
 void create_vtk(unsigned delta_N, unsigned initial_count,
                 unsigned flag_observables, std::string const &identifier,
                 std::string const &base_folder, std::string const &prefix) {
@@ -82,6 +90,26 @@ boost::optional<bool> get_node_is_boundary(Utils::Vector3i ind) {
 
 REGISTER_CALLBACK_ONE_RANK(get_node_is_boundary)
 
+void clear_boundaries() {
+  lb_walberla()->clear_boundaries();
+  lb_walberla()->ghost_communication();
+}
+
+REGISTER_CALLBACK(clear_boundaries)
+
+boost::optional<Utils::Vector3d> get_node_boundary_force(Utils::Vector3i ind) {
+  return lb_walberla()->get_node_boundary_force(ind);
+}
+
+REGISTER_CALLBACK_ONE_RANK(get_node_boundary_force)
+
+void remove_node_from_boundary(Utils::Vector3i ind) {
+  lb_walberla()->remove_node_from_boundary(ind, true);
+  lb_walberla()->ghost_communication();
+}
+
+REGISTER_CALLBACK(remove_node_from_boundary)
+
 boost::optional<std::vector<double>> get_node_pop(Utils::Vector3i ind) {
   return lb_walberla()->get_node_pop(ind);
 }
@@ -101,6 +129,13 @@ void set_node_velocity(Utils::Vector3i ind, Utils::Vector3d u) {
 }
 
 REGISTER_CALLBACK(set_node_velocity)
+
+void set_node_velocity_at_boundary(Utils::Vector3i ind, Utils::Vector3d u) {
+  lb_walberla()->set_node_velocity_at_boundary(ind, u, true);
+  lb_walberla()->ghost_communication();
+}
+
+REGISTER_CALLBACK(set_node_velocity_at_boundary)
 
 void set_node_last_applied_force(Utils::Vector3i ind, Utils::Vector3d f) {
   lb_walberla()->set_node_last_applied_force(ind, f);

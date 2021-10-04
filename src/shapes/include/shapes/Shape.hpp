@@ -23,6 +23,7 @@
 #define SHAPES_SHAPE_HPP
 
 #include <utils/Vector.hpp>
+#include <vector>
 
 namespace Shapes {
 
@@ -30,11 +31,15 @@ class Shape {
 public:
   virtual void calculate_dist(const Utils::Vector3d &pos, double &dist,
                               Utils::Vector3d &vec) const = 0;
+  /**
+   * @brief Check whether the given point is inside the shape or not.
+   * @param pos Position to check.
+   */
   virtual bool is_inside(Utils::Vector3d const &pos) const {
     Utils::Vector3d vec;
     double dist;
     calculate_dist(pos, dist, vec);
-    return dist > 0.0;
+    return dist < 0.0;
   }
   virtual ~Shape() = default;
 };
