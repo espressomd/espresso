@@ -246,6 +246,7 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
   }
   cpfile.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
+#ifdef LB_WALBERLA
   // write the grid size in the checkpoint header
   auto const write_header = [&](Utils::Vector3i const &grid_size,
                                 std::size_t pop_size) {
@@ -258,6 +259,7 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
       cpfile.write(reinterpret_cast<const char *>(&pop_size), sizeof(pop_size));
     }
   };
+#endif // WALBERLA
 
   try {
     if (lattice_switch == ActiveLB::WALBERLA) {
@@ -317,6 +319,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
   }
   cpfile.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
+#ifdef LB_WALBERLA
   // check the grid size in the checkpoint header matches the current grid size
   auto const check_header = [&](Utils::Vector3i const &expected_grid_size,
                                 std::size_t expected_pop_size) {
@@ -344,6 +347,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
                                std::to_string(expected_pop_size) + ".");
     }
   };
+#endif // WALBERLA
 
   try {
     if (lattice_switch == ActiveLB::WALBERLA) {
