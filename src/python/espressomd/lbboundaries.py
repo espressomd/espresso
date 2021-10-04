@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from .script_interface import ScriptObjectRegistry, ScriptInterfaceHelper, script_interface_register
-from espressomd.utils import check_type_or_throw_except
+from .utils import check_type_or_throw_except
 from .__init__ import has_features
 
 

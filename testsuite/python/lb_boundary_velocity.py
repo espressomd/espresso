@@ -51,7 +51,7 @@ class LBBoundaryVelocityTest(ut.TestCase):
         Check that the fluid adopts the velocity set by the boundary conditions.
         """
 
-        agrid = self.lb_params['agrid']
+        # agrid = self.lb_params['agrid']
         # TODO WALBERLA: with normal=[1, 2, 3], the velocity diverges
         wall_shape_left = espressomd.shapes.Wall(normal=[1, 0, 0], dist=0.5)
 #        wall_shape_right = espressomd.shapes.Wall(

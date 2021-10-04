@@ -417,7 +417,6 @@ Utils::Vector3i lb_lbfluid_get_shape() {
     return lb_walberla()->get_grid_dimensions();
   }
 #endif
-
   throw NoLBActive();
 }
 
@@ -443,7 +442,6 @@ const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind) {
         ::Communication::Result::one_rank, Walberla::get_node_velocity, ind);
   }
 #endif
-
   throw NoLBActive();
 }
 
@@ -456,7 +454,6 @@ lb_lbnode_get_velocity_at_boundary(const Utils::Vector3i &ind) {
         Walberla::get_node_velocity_at_boundary, ind);
   }
 #endif
-
   throw NoLBActive();
 }
 

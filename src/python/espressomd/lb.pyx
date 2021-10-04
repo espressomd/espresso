@@ -26,10 +26,11 @@ cimport numpy as np
 from libc cimport stdint
 from .actors cimport Actor
 from .shapes import Shape
+from . import lbboundaries
 from . cimport cuda_init
 from . import cuda_init
 from . import utils
-from .utils import array_locked, is_valid_type, to_char_pointer
+from .utils import is_valid_type, to_char_pointer
 from .utils cimport Vector3i
 from .utils cimport Vector3d
 from .utils cimport Vector6d
@@ -37,7 +38,6 @@ from .utils cimport make_array_locked
 from .utils cimport make_Vector3d
 from .utils cimport create_nparray_from_double_array
 from .grid cimport box_geo
-from .lbboundaries import VelocityBounceBack
 
 
 IF LB_WALBERLA:
@@ -361,7 +361,7 @@ cdef class HydrodynamicInteraction(Actor):
     property pressure_tensor:
         def __get__(self):
             tensor = python_lbfluid_get_pressure_tensor(self.agrid, self.tau)
-            return array_locked(tensor)
+            return utils.array_locked(tensor)
 
         def __set__(self, value):
             raise NotImplementedError
@@ -558,7 +558,7 @@ cdef class LBFluidRoutines:
             is_boundary = lb_lbnode_is_boundary(self.node)
             if is_boundary:
                 vel = python_lbnode_get_velocity_at_boundary(self.node)
-                return VelocityBounceBack(vel)
+                return lbboundaries.VelocityBounceBack(vel)
             return None
 
         def __set__(self, value):
@@ -571,7 +571,7 @@ cdef class LBFluidRoutines:
                 If value is ``None``, the node will become a fluid node.
             """
 
-            if isinstance(value, VelocityBounceBack):
+            if isinstance(value, lbboundaries.VelocityBounceBack):
                 python_lbnode_set_velocity_at_boundary(
                     self.node, make_Vector3d(value.velocity))
             elif value is None:
@@ -598,7 +598,7 @@ cdef class LBFluidRoutines:
     property pressure_tensor:
         def __get__(self):
             tensor = python_lbnode_get_pressure_tensor(self.node)
-            return array_locked(tensor)
+            return utils.array_locked(tensor)
 
         def __set__(self, value):
             raise NotImplementedError
@@ -607,7 +607,7 @@ cdef class LBFluidRoutines:
         def __get__(self):
             cdef vector[double] pop
             pop = lb_lbnode_get_pop(self.node)
-            return array_locked(
+            return utils.array_locked(
                 create_nparray_from_double_array(pop.data(), pop.size()))
 
         def __set__(self, population):
@@ -668,7 +668,7 @@ class LBSlice:
                         np.array([x, y, z])), prop_name)
         if shape_res == (1,):
             res = np.squeeze(res, axis=-1)
-        return array_locked(res)
+        return utils.array_locked(res)
 
     def set_values(self, x_indices, y_indices, z_indices, prop_name, value):
         for i, x in enumerate(x_indices):

@@ -35,16 +35,14 @@
 namespace Walberla {
 
 boost::optional<Utils::Vector3d> get_node_velocity(Utils::Vector3i ind) {
-  auto res = lb_walberla()->get_node_velocity(ind);
-  return res;
+  return lb_walberla()->get_node_velocity(ind);
 }
 
 REGISTER_CALLBACK_ONE_RANK(get_node_velocity)
 
 boost::optional<Utils::Vector3d>
 get_node_velocity_at_boundary(Utils::Vector3i ind) {
-  auto res = lb_walberla()->get_node_velocity_at_boundary(ind);
-  return res;
+  return lb_walberla()->get_node_velocity_at_boundary(ind);
 }
 
 REGISTER_CALLBACK_ONE_RANK(get_node_velocity_at_boundary)
@@ -78,8 +76,7 @@ get_node_last_applied_force(Utils::Vector3i ind) {
 REGISTER_CALLBACK_ONE_RANK(get_node_last_applied_force)
 
 boost::optional<double> get_node_density(Utils::Vector3i ind) {
-  auto res = lb_walberla()->get_node_density(ind);
-  return res;
+  return lb_walberla()->get_node_density(ind);
 }
 
 REGISTER_CALLBACK_ONE_RANK(get_node_density)
@@ -117,8 +114,7 @@ boost::optional<std::vector<double>> get_node_pop(Utils::Vector3i ind) {
 REGISTER_CALLBACK_ONE_RANK(get_node_pop)
 
 boost::optional<Utils::Vector6d> get_node_pressure_tensor(Utils::Vector3i ind) {
-  auto res = lb_walberla()->get_node_pressure_tensor(ind);
-  return res;
+  return lb_walberla()->get_node_pressure_tensor(ind);
 }
 
 REGISTER_CALLBACK_ONE_RANK(get_node_pressure_tensor)
@@ -181,15 +177,13 @@ Utils::Vector3d get_momentum() { return lb_walberla()->get_momentum(); }
 REGISTER_CALLBACK_REDUCTION(get_momentum, std::plus<>())
 
 boost::optional<Utils::Vector3d> get_velocity_at_pos(Utils::Vector3d pos) {
-  auto res = lb_walberla()->get_velocity_at_pos(pos);
-  return res;
+  return lb_walberla()->get_velocity_at_pos(pos);
 }
 
 REGISTER_CALLBACK_ONE_RANK(get_velocity_at_pos)
 
 boost::optional<double> get_interpolated_density_at_pos(Utils::Vector3d pos) {
-  auto res = lb_walberla()->get_interpolated_density_at_pos(pos);
-  return res;
+  return lb_walberla()->get_interpolated_density_at_pos(pos);
 }
 
 REGISTER_CALLBACK_ONE_RANK(get_interpolated_density_at_pos)
