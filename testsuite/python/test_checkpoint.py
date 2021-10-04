@@ -77,10 +77,24 @@ class CheckpointTest(ut.TestCase):
         lbf = self.get_active_actor_of_type(espressomd.lb.LBFluidWalberla)
         cpt_mode = int("@TEST_BINARY@")
         cpt_path = self.checkpoint.checkpoint_dir + "/lb{}.cpt"
-        with self.assertRaises(RuntimeError):
-            lbf.load_checkpoint(cpt_path.format("-corrupted"), cpt_mode)
-        with self.assertRaisesRegex(RuntimeError, 'grid dimensions mismatch'):
-            lbf.load_checkpoint(cpt_path.format("-wrong-boxdim"), cpt_mode)
+
+        # check exception mechanism with corrupted LB checkpoint files
+        with self.assertRaisesRegex(RuntimeError, 'EOF found'):
+            lbf.load_checkpoint(cpt_path.format("-missing-data"), cpt_mode)
+        with self.assertRaisesRegex(RuntimeError, 'extra data found, expected EOF'):
+            lbf.load_checkpoint(cpt_path.format("-extra-data"), cpt_mode)
+        if cpt_mode == 0:
+            with self.assertRaisesRegex(RuntimeError, 'incorrectly formatted data'):
+                lbf.load_checkpoint(cpt_path.format("-wrong-format"), cpt_mode)
+            with self.assertRaisesRegex(RuntimeError, 'grid dimensions mismatch'):
+                lbf.load_checkpoint(cpt_path.format("-wrong-boxdim"), cpt_mode)
+            with self.assertRaisesRegex(RuntimeError, 'population size mismatch'):
+                lbf.load_checkpoint(
+                    cpt_path.format("-wrong-popsize"), cpt_mode)
+        with self.assertRaisesRegex(RuntimeError, 'could not open file'):
+            lbf.load_checkpoint(cpt_path.format("-unknown"), cpt_mode)
+
+        # load the valid LB checkpoint file
         lbf.load_checkpoint(cpt_path.format(""), cpt_mode)
         precision = 9 if "LB.ACTIVE.WALBERLA" in modes else 5
         m = np.pi / 12

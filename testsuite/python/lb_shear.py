@@ -17,7 +17,6 @@
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
-import math
 
 import espressomd.lb
 import espressomd.lbboundaries
@@ -83,9 +82,7 @@ def shear_flow(x, t, nu, v, h, k_max):
 class LBShearCommon:
 
     """Base class of the test that holds the test logic."""
-    system = espressomd.System(box_l=[H + 2. * AGRID,
-                                      W,
-                                      W])
+    system = espressomd.System(box_l=[H + 2. * AGRID, W, W])
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
 
@@ -142,11 +139,12 @@ class LBShearCommon:
 
         # speed of sound of the LB fluid in MD units (agrid/tau is due to
         # LB->MD unit conversion)
-        speed_of_sound = 1. / math.sqrt(3.) * self.lbf.agrid / self.lbf.tau
+        speed_of_sound = 1. / np.sqrt(3.) * self.lbf.agrid / self.lbf.tau
         # equation of state for the LB fluid
-        p_eq = speed_of_sound**2.0 * DENS
-        # see Eq. 1.15 and 1.29 in
-        # Krüger, Timm, et al. "The lattice Boltzmann method." Springer International Publishing 10 (2017): 978-3.
+        p_eq = speed_of_sound**2 * DENS
+        # see Eq. 1.15 and 1.29 in Timm Krüger et al. "The lattice Boltzmann
+        # method", Springer International Publishing 10 (2017): 978-3,
+        # https://doi.org/10.1007/978-3-319-44649-3
         # and
         # https://de.wikipedia.org/wiki/Navier-Stokes-Gleichungen
         # note that for an incompressible fluid the viscous stress tensor is
@@ -174,9 +172,9 @@ class LBShearCommon:
 # SHEAR_VELOCITY / H * W**2 * dynamic_viscosity, atol=2E-4)
 
     def test(self):
-        x = np.array((1, 0, 0), dtype=float)
-        y = np.array((0, 1, 0), dtype=float)
-        z = np.array((0, 0, 1), dtype=float)
+        x = np.array((1, 0, 0), dtype=int)
+        y = np.array((0, 1, 0), dtype=int)
+        z = np.array((0, 0, 1), dtype=int)
         self.check_profile(x, y)
         self.check_profile(x, z)
         self.check_profile(y, z)
