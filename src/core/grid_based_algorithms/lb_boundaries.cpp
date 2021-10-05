@@ -124,7 +124,7 @@ void ek_init_boundaries() {
           std::vector<std::shared_ptr<LBBoundary>> boundaries;
           std::copy_if(lbboundaries.begin(), lbboundaries.end(),
                        std::back_inserter(boundaries), [&pos](auto const lbb) {
-                         return not lbb->shape().is_inside(pos);
+                         return lbb->shape().is_inside(pos);
                        });
           for (auto lbb : boundaries) {
             if ((*lbb).charge_density() != 0.0f) {
@@ -180,9 +180,8 @@ void lb_init_boundaries() {
 
           // take last boundary containing the node
           auto const boundary = boost::find_if(
-              lbboundaries | boost::adaptors::reversed, [&pos](auto const lbb) {
-                return not lbb->shape().is_inside(pos);
-              });
+              lbboundaries | boost::adaptors::reversed,
+              [&pos](auto const lbb) { return lbb->shape().is_inside(pos); });
 
           if (boundary != boost::rend(lbboundaries)) {
             size_of_index = (number_of_boundnodes + 1) * sizeof(int);
@@ -238,9 +237,8 @@ void lb_init_boundaries() {
               lblattice.agrid;
 
           auto const boundary = boost::find_if(
-              lbboundaries | boost::adaptors::reversed, [&pos](auto const lbb) {
-                return not lbb->shape().is_inside(pos);
-              });
+              lbboundaries | boost::adaptors::reversed,
+              [&pos](auto const lbb) { return lbb->shape().is_inside(pos); });
           if (boundary != boost::rend(lbboundaries)) {
             auto const index = get_linear_index(x, y, z, lblattice.halo_grid);
             auto const boundary_number =

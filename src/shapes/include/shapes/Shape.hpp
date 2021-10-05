@@ -28,13 +28,29 @@ namespace Shapes {
 
 class Shape {
 public:
+  /**
+   * @brief Calculate the minimum distance and the corresponding
+   * distance vector between a given position and the shape.
+   * @param[in]  pos  Position for which to calculate the distance.
+   * @param[out] dist Minimum distance between @p pos and the shape. Value
+   *                  is negative when @c pos is inside the shape, zero if
+   *                  @c pos is on the shape surface or positive if @c pos
+   *                  is outside the shape.
+   * @param[out] vec  Distance vector.
+   */
   virtual void calculate_dist(const Utils::Vector3d &pos, double &dist,
                               Utils::Vector3d &vec) const = 0;
+  /**
+   * @brief Check whether the given point is inside the shape or not.
+   * For the edge case where the point is on the surface (zero distance),
+   * it is considered to be inside the shape.
+   * @param pos Position to check.
+   */
   virtual bool is_inside(Utils::Vector3d const &pos) const {
     Utils::Vector3d vec;
     double dist;
     calculate_dist(pos, dist, vec);
-    return dist > 0.0;
+    return dist <= 0.0;
   }
   virtual ~Shape() = default;
 };
