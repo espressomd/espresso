@@ -442,14 +442,14 @@ public:
       cm->time_step_++;
     }
     (*m_pdf_streaming_communication)();
+    // Handle boundaries
+    for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
+      (*m_boundary)(&*b);
     // LB stream
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
       (*m_stream)(&*b);
     // Refresh ghost layers
     (*m_full_communication)();
-    // Handle boundaries
-    for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
-      (*m_boundary)(&*b);
 
     // Handle VTK writers
     for (auto it = m_vtk_auto.begin(); it != m_vtk_auto.end(); ++it) {

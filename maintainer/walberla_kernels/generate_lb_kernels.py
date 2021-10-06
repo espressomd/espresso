@@ -29,14 +29,16 @@ from pystencils_walberla import CodeGeneration, codegen
 
 from lbmpy_walberla import generate_boundary, generate_lb_pack_info
 
-from lbmpy.boundaries import UBB
-from lbmpy_walberla.additional_data_handler import UBBAdditionalDataHandler
+import lbmpy.boundaries
+import lbmpy_walberla.additional_data_handler
 import relaxation_rates
 from lbmpy.fieldaccess import CollideOnlyInplaceAccessor
 from lbmpy.stencils import get_stencil
 from lbmpy.updatekernels import create_lbm_kernel, create_stream_pull_with_output_kernel
 from lbmpy.macroscopic_value_kernels import macroscopic_values_setter
 # for collide-push from lbmpy.fieldaccess import StreamPushTwoFieldsAccessor
+
+from lbmpy.advanced_streaming.indexing import NeighbourOffsetArrays
 
 
 def adapt_pystencils():
@@ -384,7 +386,8 @@ def generate_macroscopic_values_accessors(
 adapt_pystencils()
 
 
-class BounceBackSlipVelocityUBB(UBBAdditionalDataHandler):
+class BounceBackSlipVelocityUBB(
+        lbmpy_walberla.additional_data_handler.UBBAdditionalDataHandler):
     '''
     Dynamic UBB that implements the bounce-back method with slip velocity.
     '''
@@ -406,6 +409,35 @@ class BounceBackSlipVelocityUBB(UBBAdditionalDataHandler):
             '+' + str(dirVec[1]),
             '+' + str(dirVec[2])).replace('+-', '-')
         return code.replace(old_initialiser, new_initialiser)
+
+
+class PatchedUBB(lbmpy.boundaries.UBB):
+    '''
+    Velocity bounce back boundary condition, enforcing specified velocity at obstacle.
+    '''
+
+    def __call__(self, f_out, f_in, dir_symbol,
+                 inv_dir, lb_method, index_field):
+        '''
+        Modify the assignments such that the source and target pdfs are swapped.
+        '''
+        assignments = super().__call__(
+            f_out, f_in, dir_symbol, inv_dir, lb_method, index_field)
+
+        assert len(assignments) > 0
+
+        out = []
+        if len(assignments) > 1:
+            out.extend(assignments[:-1])
+
+        neighbor_offset = NeighbourOffsetArrays.neighbour_offset(
+            dir_symbol, lb_method.stencil)
+
+        assignment = assignments[-1]
+        assert assignment.lhs.field == f_in
+        out.append(ps.Assignment(assignment.lhs.get_shifted(*neighbor_offset),
+                                 assignment.rhs - f_out(dir_symbol) + f_in(dir_symbol)))
+        return out
 
 
 with CodeGeneration() as ctx:
@@ -491,7 +523,7 @@ with CodeGeneration() as ctx:
     patch_accessors('LBWalberlaImpl', 'macroscopic_values_accessors')
 
     # Boundary conditions
-    ubb_dynamic = UBB(lambda *args: None, dim=3)
+    ubb_dynamic = PatchedUBB(lambda *args: None, dim=3)
     ubb_data_handler = BounceBackSlipVelocityUBB(method.stencil, ubb_dynamic)
 
     generate_boundary(ctx, 'Dynamic_UBB', ubb_dynamic, method,

@@ -55,12 +55,6 @@ boundary_Dynamic_UBB(uint8_t *RESTRICT const _data_indexVector,
 
   const int64_t f_in_inv_dir_idx[] = {0, 2,  1,  4,  3,  6,  5,  10, 9, 8,
                                       7, 16, 15, 18, 17, 12, 11, 14, 13};
-  const int64_t f_out_offsets_x[] = {0, 0, 0, -1, 1, 0, 0, -1, 1, -1,
-                                     1, 0, 0, -1, 1, 0, 0, -1, 1};
-  const int64_t f_out_offsets_y[] = {0,  1, -1, 0, 0, 0, 0,  1, 1, -1,
-                                     -1, 1, -1, 0, 0, 1, -1, 0, 0};
-  const int64_t f_out_offsets_z[] = {0, 0, 0, 0, 0, 1,  -1, 0,  0, 0,
-                                     0, 1, 1, 1, 1, -1, -1, -1, -1};
 
   const double weights[] = {
       0.333333333333333,  0.0555555555555556, 0.0555555555555556,
@@ -126,7 +120,9 @@ boundary_Dynamic_UBB(uint8_t *RESTRICT const _data_indexVector,
                    _stride_pdfs_2 * z - _stride_pdfs_2 + 17 * _stride_pdfs_3] +
         _data_pdfs[_stride_pdfs_0 * x - _stride_pdfs_0 + _stride_pdfs_1 * y -
                    _stride_pdfs_1 + _stride_pdfs_2 * z + 9 * _stride_pdfs_3];
-    _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_1 * y + _stride_pdfs_2 * z +
+    _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_0 * neighbour_offset_x[dir] +
+               _stride_pdfs_1 * y + _stride_pdfs_1 * neighbour_offset_y[dir] +
+               _stride_pdfs_2 * z + _stride_pdfs_2 * neighbour_offset_z[dir] +
                _stride_pdfs_3 * f_in_inv_dir_idx[dir]] =
         -rho *
             (6.0 * *((double *)(&_data_indexVector[40 * ctr_0 + 16])) *
@@ -136,10 +132,8 @@ boundary_Dynamic_UBB(uint8_t *RESTRICT const _data_indexVector,
              6.0 * *((double *)(&_data_indexVector[40 * ctr_0 + 32])) *
                  neighbour_offset_z[dir]) *
             weights[dir] +
-        _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_0 * f_out_offsets_x[dir] +
-                   _stride_pdfs_1 * y + _stride_pdfs_1 * f_out_offsets_y[dir] +
-                   _stride_pdfs_2 * z + _stride_pdfs_2 * f_out_offsets_z[dir] +
-                   _stride_pdfs_3 * dir];
+        _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_1 * y +
+                   _stride_pdfs_2 * z + _stride_pdfs_3 * dir];
   }
 }
 } // namespace internal_boundary_Dynamic_UBB
