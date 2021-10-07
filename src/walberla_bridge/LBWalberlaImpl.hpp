@@ -32,7 +32,6 @@
 #include "field/GhostLayerField.h"
 #include "field/vtk/FlagFieldCellFilter.h"
 #include "field/vtk/VTKWriter.h"
-#include "lbm/vtk/all.h"
 
 #include "domain_decomposition/SharedSweep.h"
 
@@ -52,6 +51,7 @@
 #include "ResetForce.hpp"
 #include "generated_kernels/InitialPDFsSetter.h"
 #include "generated_kernels/StreamSweep.h"
+#include "vtk_writers.hpp"
 #include "walberla_utils.hpp"
 
 #ifdef __AVX2__
@@ -296,60 +296,6 @@ protected:
   std::shared_ptr<CollisionModel> m_collision_model;
 
   std::shared_ptr<BoundaryHandling> m_boundary;
-
-  template <typename LatticeModel_T, typename OutputType = float>
-  class DensityVTKWriter : public vtk::BlockCellDataWriter<OutputType, 1u> {
-  public:
-    using PdfField_T = typename LatticeModel_T::PdfField;
-
-    DensityVTKWriter(ConstBlockDataID const &pdf, std::string const &id)
-        : vtk::BlockCellDataWriter<OutputType, 1u>(id), bdid_(pdf),
-          pdf_(nullptr) {}
-
-  protected:
-    void configure() override {
-      WALBERLA_ASSERT_NOT_NULLPTR(this->block_);
-      pdf_ = this->block_->template getData<PdfField_T>(bdid_);
-    }
-
-    OutputType evaluate(const cell_idx_t x, const cell_idx_t y,
-                        const cell_idx_t z, const cell_idx_t /*f*/) override {
-      WALBERLA_ASSERT_NOT_NULLPTR(pdf_);
-      return numeric_cast<OutputType>(
-          lbm::Density<LatticeModel_T>::get(*pdf_, x, y, z));
-    }
-
-    ConstBlockDataID const bdid_;
-    PdfField_T const *pdf_;
-  };
-
-  template <typename LatticeModel_T, typename OutputType = float>
-  class PressureTensorVTKWriter
-      : public vtk::BlockCellDataWriter<OutputType, 9u> {
-  public:
-    using PdfField_T = typename LatticeModel_T::PdfField;
-
-    PressureTensorVTKWriter(ConstBlockDataID const &pdf, std::string const &id)
-        : vtk::BlockCellDataWriter<OutputType, 9u>(id), bdid_(pdf),
-          pdf_(nullptr) {}
-
-  protected:
-    void configure() override {
-      WALBERLA_ASSERT_NOT_NULLPTR(this->block_);
-      pdf_ = this->block_->template getData<PdfField_T>(bdid_);
-    }
-
-    OutputType evaluate(const cell_idx_t x, const cell_idx_t y,
-                        const cell_idx_t z, const cell_idx_t f) override {
-      WALBERLA_ASSERT_NOT_NULLPTR(pdf_);
-      Matrix3<real_t> pressureTensor;
-      lbm::PressureTensor<LatticeModel_T>::get(pressureTensor, *pdf_, x, y, z);
-      return numeric_cast<OutputType>(pressureTensor[f]);
-    }
-
-    ConstBlockDataID const bdid_;
-    PdfField_T const *pdf_;
-  };
 
   std::size_t stencil_size() const override {
     return static_cast<std::size_t>(Stencil::Size);
@@ -895,7 +841,7 @@ public:
     // add writers
     if (static_cast<unsigned>(OutputVTK::density) & flag_observables) {
       pdf_field_vtk->addCellDataWriter(
-          make_shared<DensityVTKWriter<LatticeModel_T, float>>(
+          make_shared<lbm::DensityVTKWriter<LatticeModel_T, float>>(
               m_pdf_field_id, "DensityFromPDF"));
     }
     if (static_cast<unsigned>(OutputVTK::velocity_vector) & flag_observables) {
@@ -905,7 +851,7 @@ public:
     }
     if (static_cast<unsigned>(OutputVTK::pressure_tensor) & flag_observables) {
       pdf_field_vtk->addCellDataWriter(
-          make_shared<PressureTensorVTKWriter<LatticeModel_T, float>>(
+          make_shared<lbm::PressureTensorVTKWriter<LatticeModel_T, float>>(
               m_pdf_field_id, "PressureTensorFromPDF"));
     }
 
