@@ -298,12 +298,13 @@ protected:
   std::shared_ptr<BoundaryHandling> m_boundary;
 
   template <typename LatticeModel_T, typename OutputType = float>
-  class DensityVTKWriter : public vtk::BlockCellDataWriter<OutputType> {
+  class DensityVTKWriter : public vtk::BlockCellDataWriter<OutputType, 1u> {
   public:
     using PdfField_T = typename LatticeModel_T::PdfField;
 
-    DensityVTKWriter(const ConstBlockDataID &pdf, const std::string &id)
-        : vtk::BlockCellDataWriter<OutputType>(id), bdid_(pdf), pdf_(nullptr) {}
+    DensityVTKWriter(ConstBlockDataID const &pdf, std::string const &id)
+        : vtk::BlockCellDataWriter<OutputType, 1u>(id), bdid_(pdf),
+          pdf_(nullptr) {}
 
   protected:
     void configure() override {
@@ -318,8 +319,36 @@ protected:
           lbm::Density<LatticeModel_T>::get(*pdf_, x, y, z));
     }
 
-    const ConstBlockDataID bdid_;
-    const PdfField_T *pdf_;
+    ConstBlockDataID const bdid_;
+    PdfField_T const *pdf_;
+  };
+
+  template <typename LatticeModel_T, typename OutputType = float>
+  class PressureTensorVTKWriter
+      : public vtk::BlockCellDataWriter<OutputType, 9u> {
+  public:
+    using PdfField_T = typename LatticeModel_T::PdfField;
+
+    PressureTensorVTKWriter(ConstBlockDataID const &pdf, std::string const &id)
+        : vtk::BlockCellDataWriter<OutputType, 9u>(id), bdid_(pdf),
+          pdf_(nullptr) {}
+
+  protected:
+    void configure() override {
+      WALBERLA_ASSERT_NOT_NULLPTR(this->block_);
+      pdf_ = this->block_->template getData<PdfField_T>(bdid_);
+    }
+
+    OutputType evaluate(const cell_idx_t x, const cell_idx_t y,
+                        const cell_idx_t z, const cell_idx_t f) override {
+      WALBERLA_ASSERT_NOT_NULLPTR(pdf_);
+      Matrix3<real_t> pressureTensor;
+      lbm::PressureTensor<LatticeModel_T>::get(pressureTensor, *pdf_, x, y, z);
+      return numeric_cast<OutputType>(pressureTensor[f]);
+    }
+
+    ConstBlockDataID const bdid_;
+    PdfField_T const *pdf_;
   };
 
   std::size_t stencil_size() const override {
@@ -874,13 +903,11 @@ public:
           make_shared<field::VTKWriter<VectorField, float>>(
               m_velocity_field_id, "VelocityFromVelocityField"));
     }
-    /* TODO WALBERLA: pressure tensor
     if (static_cast<unsigned>(OutputVTK::pressure_tensor) & flag_observables) {
       pdf_field_vtk->addCellDataWriter(
-          make_shared<lbm::PressureTensorVTKWriter<LatticeModel_T, float>>(
+          make_shared<PressureTensorVTKWriter<LatticeModel_T, float>>(
               m_pdf_field_id, "PressureTensorFromPDF"));
     }
-    */
 
     // register object
     if (delta_N) {
