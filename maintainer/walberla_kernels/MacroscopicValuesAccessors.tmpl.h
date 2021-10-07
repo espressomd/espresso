@@ -374,7 +374,7 @@ template<>
 struct PressureTensor<{{class_name}}>
 {
    template< typename FieldPtrOrIterator >
-   static void get( Matrix3< real_t > & pressureTensor, const {{class_name}} & lm, const FieldPtrOrIterator & it )
+   static void get( Matrix3< real_t > & pressureTensor, /* const {{class_name}} & lm */ const FieldPtrOrIterator & it )
    {
         const auto x = it.x();
         const auto y = it.y();
@@ -393,7 +393,7 @@ struct PressureTensor<{{class_name}}>
    }
 
    template< typename PdfField_T >
-   static void get( Matrix3< real_t > & pressureTensor , const {{class_name}} & lm , const PdfField_T & pdf,
+   static void get( Matrix3< real_t > & pressureTensor, /* const {{class_name}} & lm */ const PdfField_T & pdf,
                     const cell_idx_t x, const cell_idx_t y, const cell_idx_t z )
    {
         const real_t & xyz0 = pdf(x,y,z,0);

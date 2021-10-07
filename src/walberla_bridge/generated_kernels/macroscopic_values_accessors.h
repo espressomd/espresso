@@ -970,8 +970,9 @@ template <> struct MomentumDensity<LBWalberlaImpl> {
 
 template <> struct PressureTensor<LBWalberlaImpl> {
   template <typename FieldPtrOrIterator>
-  static void get(Matrix3<real_t> &pressureTensor, const LBWalberlaImpl &lm,
-                  const FieldPtrOrIterator &it) {
+  static void
+  get(Matrix3<real_t> &pressureTensor,
+      /* const LBWalberlaImpl & lm */ const FieldPtrOrIterator &it) {
     const auto x = it.x();
     const auto y = it.y();
     const auto z = it.z();
@@ -1021,9 +1022,9 @@ template <> struct PressureTensor<LBWalberlaImpl> {
   }
 
   template <typename PdfField_T>
-  static void get(Matrix3<real_t> &pressureTensor, const LBWalberlaImpl &lm,
-                  const PdfField_T &pdf, const cell_idx_t x, const cell_idx_t y,
-                  const cell_idx_t z) {
+  static void get(Matrix3<real_t> &pressureTensor,
+                  /* const LBWalberlaImpl & lm */ const PdfField_T &pdf,
+                  const cell_idx_t x, const cell_idx_t y, const cell_idx_t z) {
     const real_t &xyz0 = pdf(x, y, z, 0);
     const real_t f_0 = pdf.getF(&xyz0, 0);
     const real_t f_1 = pdf.getF(&xyz0, 1);

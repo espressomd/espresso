@@ -225,9 +225,8 @@ private:
   Matrix3<real_t> getPressureTensor(const BlockAndCell &bc) const {
     Matrix3<real_t> pressureTensor;
     auto pdf_field = bc.block->template getData<PdfField>(m_pdf_field_id);
-    lbm::PressureTensor<LatticeModel_T>::get(pressureTensor, *this, *pdf_field,
-                                             bc.cell.x(), bc.cell.y(),
-                                             bc.cell.z());
+    lbm::PressureTensor<LatticeModel_T>::get(
+        pressureTensor, *pdf_field, bc.cell.x(), bc.cell.y(), bc.cell.z());
     return pressureTensor;
   }
 
