@@ -317,7 +317,7 @@ def __lattice_model(generation_context, class_name, lb_method,
     add_pystencils_filters_to_jinja_env(env)
 
     header = env.get_template(
-        'MacroscopicValuesAccessors.tmpl.h').render(**jinja_context)
+        'macroscopic_values_accessors.tmpl.h').render(**jinja_context)
 
     generation_context.write_file(f"{class_name}.h", header)
 

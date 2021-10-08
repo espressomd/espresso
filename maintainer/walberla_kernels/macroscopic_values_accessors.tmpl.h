@@ -27,13 +27,6 @@
 #include "domain_decomposition/IBlock.h"
 #include "stencil/{{stencil_name}}.h"
 
-#include "lbm/lattice_model/EquilibriumDistribution.h"
-#include "lbm/field/Density.h"
-#include "lbm/field/DensityAndMomentumDensity.h"
-#include "lbm/field/DensityAndVelocity.h"
-#include "lbm/field/PressureTensor.h"
-#include "lbm/field/ShearRate.h"
-
 #include <vector>
 
 #ifdef __GNUC__
@@ -63,6 +56,7 @@
 
 namespace walberla {
 namespace {{namespace}} {
+namespace accessor {
 
 
 //======================================================================================================================
@@ -71,15 +65,11 @@ namespace {{namespace}} {
 //
 //======================================================================================================================
 
-template<>
-class EquilibriumDistribution< {{class_name}}, void>
+namespace EquilibriumDistribution
 {
-public:
-   typedef stencil::{{stencil_name}} Stencil;
-
-   static real_t get( const stencil::Direction direction,
-                      const Vector3< real_t > & u = Vector3< real_t >( real_t(0.0) ),
-                      real_t rho = real_t(1.0) )
+   real_t get( const stencil::Direction direction,
+               const Vector3< real_t > & u = Vector3< real_t >( real_t(0.0) ),
+               real_t rho = real_t(1.0) )
    {
         {% if not compressible %}
         rho -= real_t(1.0);
@@ -87,9 +77,9 @@ public:
         {{equilibrium_from_direction}}
    }
 
-   static real_t getSymmetricPart( const stencil::Direction direction,
-                                   const Vector3<real_t> & u = Vector3< real_t >(real_t(0.0)),
-                                   real_t rho = real_t(1.0) )
+   real_t getSymmetricPart( const stencil::Direction direction,
+                            const Vector3<real_t> & u = Vector3< real_t >(real_t(0.0)),
+                            real_t rho = real_t(1.0) )
    {
         {% if not compressible %}
         rho -= real_t(1.0);
@@ -97,9 +87,9 @@ public:
         {{symmetric_equilibrium_from_direction}}
    }
 
-   static real_t getAsymmetricPart( const stencil::Direction direction,
-                                    const Vector3< real_t > & u = Vector3<real_t>( real_t(0.0) ),
-                                    real_t rho = real_t(1.0) )
+   real_t getAsymmetricPart( const stencil::Direction direction,
+                             const Vector3< real_t > & u = Vector3<real_t>( real_t(0.0) ),
+                             real_t rho = real_t(1.0) )
    {
         {% if not compressible %}
         rho -= real_t(1.0);
@@ -107,13 +97,14 @@ public:
         {{asymmetric_equilibrium_from_direction}}
    }
 
-   static std::vector< real_t > get( const Vector3< real_t > & u = Vector3<real_t>( real_t(0.0) ),
-                                     real_t rho = real_t(1.0) )
+   std::vector< real_t > get( const Vector3< real_t > & u = Vector3<real_t>( real_t(0.0) ),
+                              real_t rho = real_t(1.0) )
    {
       {% if not compressible %}
       rho -= real_t(1.0);
       {% endif %}
 
+      typedef stencil::{{stencil_name}} Stencil;
       std::vector< real_t > equilibrium( Stencil::Size );
       for( auto d = Stencil::begin(); d != Stencil::end(); ++d )
       {
@@ -121,17 +112,17 @@ public:
       }
       return equilibrium;
    }
-};
+} // EquilibriumDistribution
 
 
-namespace internal {
-
-template<>
-struct AdaptVelocityToForce<{{class_name}}, void>
+namespace internal
+{
+namespace AdaptVelocityToForce
 {
    template< typename FieldPtrOrIterator >
-   static Vector3<real_t> get( FieldPtrOrIterator & it, /* const {{class_name}} & lm */ const GhostLayerField<real_t, 3u> & force_field,
-                               const Vector3< real_t > & velocity, const real_t rho )
+   Vector3<real_t> get( FieldPtrOrIterator & it,
+                        const GhostLayerField<real_t, 3u> & force_field,
+                        const Vector3< real_t > & velocity, const real_t rho )
    {
       auto x = it.x();
       auto y = it.y();
@@ -143,8 +134,9 @@ struct AdaptVelocityToForce<{{class_name}}, void>
       {% endif %}
    }
 
-   static Vector3<real_t> get( const cell_idx_t x, const cell_idx_t y, const cell_idx_t z, /* const {{class_name}} & lm */ const GhostLayerField<real_t, 3u> & force_field,
-                               const Vector3< real_t > & velocity, const real_t rho )
+   Vector3<real_t> get( const cell_idx_t x, const cell_idx_t y, const cell_idx_t z,
+                        const GhostLayerField<real_t, 3u> & force_field,
+                        const Vector3< real_t > & velocity, const real_t rho )
    {
       {% if macroscopic_velocity_shift %}
 
@@ -154,24 +146,23 @@ struct AdaptVelocityToForce<{{class_name}}, void>
       {% endif %}
    }
 
-   static Vector3<real_t> get( const cell_idx_t x, const cell_idx_t y, const cell_idx_t z,
-                               const GhostLayerField<real_t, 3u> * force_field,
-                               const Vector3< real_t > & velocity, const real_t rho ) {
+   Vector3<real_t> get( const cell_idx_t x, const cell_idx_t y, const cell_idx_t z,
+                        const GhostLayerField<real_t, 3u> * force_field,
+                        const Vector3< real_t > & velocity, const real_t rho ) {
 
       return get(x, y, z, *force_field, velocity, rho);
    }
-};
+} // namespace AdaptVelocityToForce
 } // namespace internal
 
 
 
-template<>
-struct Equilibrium< {{class_name}}, void >
+namespace Equilibrium
 {
-
    template< typename FieldPtrOrIterator >
-   static void set( FieldPtrOrIterator & it,
-                    const Vector3< real_t > & u = Vector3< real_t >( real_t(0.0) ), real_t rho = real_t(1.0) )
+   void set( FieldPtrOrIterator & it,
+             const Vector3< real_t > & u = Vector3< real_t >( real_t(0.0) ),
+             real_t rho = real_t(1.0) )
    {
         {%if not compressible %}
         rho -= real_t(1.0);
@@ -183,8 +174,9 @@ struct Equilibrium< {{class_name}}, void >
    }
 
    template< typename PdfField_T >
-   static void set( PdfField_T & pdf, const cell_idx_t x, const cell_idx_t y, const cell_idx_t z,
-                    const Vector3< real_t > & u = Vector3< real_t >( real_t(0.0) ), real_t rho = real_t(1.0) )
+   void set( PdfField_T & pdf, const cell_idx_t x, const cell_idx_t y, const cell_idx_t z,
+             const Vector3< real_t > & u = Vector3< real_t >( real_t(0.0) ),
+             real_t rho = real_t(1.0) )
    {
       {%if not compressible %}
       rho -= real_t(1.0);
@@ -195,14 +187,13 @@ struct Equilibrium< {{class_name}}, void >
       pdf.getF( &xyz0, {{loop.index0 }})= {{eqTerm}};
       {% endfor -%}
    }
-};
+} // Equilibrium
 
 
-template<>
-struct Density<{{class_name}}, void>
+namespace Density
 {
    template< typename FieldPtrOrIterator >
-   static inline real_t get( const {{class_name}} & , const FieldPtrOrIterator & it )
+   inline real_t get( const FieldPtrOrIterator & it )
    {
         {% for i in range(Q) -%}
             const real_t f_{{i}} = it[{{i}}];
@@ -212,8 +203,7 @@ struct Density<{{class_name}}, void>
    }
 
    template< typename PdfField_T >
-   static inline real_t get( const {{class_name}} & ,
-                             const PdfField_T & pdf, const cell_idx_t x, const cell_idx_t y, const cell_idx_t z )
+   inline real_t get( const PdfField_T & pdf, const cell_idx_t x, const cell_idx_t y, const cell_idx_t z )
    {
         const real_t & xyz0 = pdf(x,y,z,0);
         {% for i in range(Q) -%}
@@ -222,26 +212,16 @@ struct Density<{{class_name}}, void>
         {{density_getters | indent(8)}}
         return rho;
    }
-
-   template< typename PdfField_T >
-   static inline real_t get( const PdfField_T & pdf, const cell_idx_t x, const cell_idx_t y, const cell_idx_t z )
-   {
-        const real_t & xyz0 = pdf(x,y,z,0);
-        {% for i in range(Q) -%}
-            const real_t f_{{i}} = pdf.getF( &xyz0, {{i}});
-        {% endfor -%}
-        {{density_getters | indent(8)}}
-        return rho;
-   }
-};
+} // Density
 
 
-template<>
-struct DensityAndVelocity<{{class_name}}>
+namespace DensityAndVelocity
 {
     template< typename FieldPtrOrIterator >
-    static void set( FieldPtrOrIterator & it, /* const {{class_name}} & lm */ const GhostLayerField<real_t, 3u> & force_field,
-                     const Vector3< real_t > & u = Vector3< real_t >( real_t(0.0) ), const real_t rho_in = real_t(1.0) )
+    void set( FieldPtrOrIterator & it,
+              const GhostLayerField<real_t, 3u> & force_field,
+              const Vector3< real_t > & u = Vector3< real_t >( real_t(0.0) ),
+              const real_t rho_in = real_t(1.0) )
     {
         auto x = it.x();
         auto y = it.y();
@@ -252,29 +232,33 @@ struct DensityAndVelocity<{{class_name}}>
         const real_t u_2(0.0);
         {% endif %}
 
-        Equilibrium<{{class_name}}>::set(it, Vector3<real_t>(u_0, u_1, u_2), rho{%if not compressible %} + real_t(1) {%endif%});
+        Equilibrium::set(it, Vector3<real_t>(u_0, u_1, u_2), rho{%if not compressible %} + real_t(1) {%endif%});
     }
 
     template< typename PdfField_T >
-    static void set( PdfField_T & pdf, const cell_idx_t x, const cell_idx_t y, const cell_idx_t z, /* const {{class_name}} & lm */ const GhostLayerField<real_t, 3u> & force_field,
-                     const Vector3< real_t > & u = Vector3< real_t >( real_t(0.0) ), const real_t rho_in = real_t(1.0) )
+    void set( PdfField_T & pdf, const cell_idx_t x, const cell_idx_t y, const cell_idx_t z,
+              const GhostLayerField<real_t, 3u> & force_field,
+              const Vector3< real_t > & u = Vector3< real_t >( real_t(0.0) ),
+              const real_t rho_in = real_t(1.0) )
     {
         {{density_velocity_setter_macroscopic_values | indent(8)}}
         {% if D == 2 -%}
         const real_t u_2(0.0);
         {% endif %}
 
-        Equilibrium<{{class_name}}>::set(pdf, x, y, z, Vector3<real_t>(u_0, u_1, u_2), rho {%if not compressible %} + real_t(1) {%endif%});
+        Equilibrium::set(pdf, x, y, z, Vector3<real_t>(u_0, u_1, u_2), rho {%if not compressible %} + real_t(1) {%endif%});
     }
-};
+} // DensityAndVelocity
 
 
-template<typename FieldIteratorXYZ >
-struct DensityAndVelocityRange<{{class_name}}, FieldIteratorXYZ>
+namespace DensityAndVelocityRange
 {
 
-   static void set( FieldIteratorXYZ & begin, const FieldIteratorXYZ & end, /* const {{class_name}} & lm */ const GhostLayerField<real_t, 3u> & force_field,
-                    const Vector3< real_t > & u = Vector3< real_t >( real_t(0.0) ), const real_t rho_in = real_t(1.0) )
+   template< typename FieldIteratorXYZ >
+   void set( FieldIteratorXYZ & begin, const FieldIteratorXYZ & end,
+             const GhostLayerField<real_t, 3u> & force_field,
+             const Vector3< real_t > & u = Vector3< real_t >( real_t(0.0) ),
+             const real_t rho_in = real_t(1.0) )
    {
         for( auto cellIt = begin; cellIt != end; ++cellIt )
         {
@@ -286,19 +270,19 @@ struct DensityAndVelocityRange<{{class_name}}, FieldIteratorXYZ>
             const real_t u_2(0.0);
             {% endif %}
 
-            Equilibrium<{{class_name}}>::set(cellIt, Vector3<real_t>(u_0, u_1, u_2), rho{%if not compressible %} + real_t(1) {%endif%});
+            Equilibrium::set(cellIt, Vector3<real_t>(u_0, u_1, u_2), rho{%if not compressible %} + real_t(1) {%endif%});
         }
    }
-};
+} // DensityAndVelocityRange
 
 
 
-template<>
-struct DensityAndMomentumDensity<{{class_name}}>
+namespace DensityAndMomentumDensity
 {
    template< typename FieldPtrOrIterator >
-   static real_t get( Vector3< real_t > & momentumDensity, /* const {{class_name}} & lm */ const GhostLayerField<real_t, 3u> & force_field,
-                      const FieldPtrOrIterator & it )
+   real_t get( Vector3< real_t > & momentumDensity,
+               const GhostLayerField<real_t, 3u> & force_field,
+               const FieldPtrOrIterator & it )
    {
         const auto x = it.x();
         const auto y = it.y();
@@ -316,8 +300,10 @@ struct DensityAndMomentumDensity<{{class_name}}>
    }
 
    template< typename PdfField_T >
-   static real_t get( Vector3< real_t > & momentumDensity, /* const {{class_name}} & lm */ const GhostLayerField<real_t, 3u> & force_field, const PdfField_T & pdf,
-                      const cell_idx_t x, const cell_idx_t y, const cell_idx_t z )
+   real_t get( Vector3< real_t > & momentumDensity,
+               const GhostLayerField<real_t, 3u> & force_field,
+               const PdfField_T & pdf,
+               const cell_idx_t x, const cell_idx_t y, const cell_idx_t z )
    {
         const real_t & xyz0 = pdf(x,y,z,0);
         {% for i in range(Q) -%}
@@ -330,14 +316,15 @@ struct DensityAndMomentumDensity<{{class_name}}>
         {% endfor %}
        return rho;
    }
-};
+} // DensityAndMomentumDensity
 
 
-template<>
-struct MomentumDensity< {{class_name}}>
+namespace MomentumDensity
 {
    template< typename FieldPtrOrIterator >
-   static void get( Vector3< real_t > & momentumDensity, /* const {{class_name}} & lm */ const GhostLayerField<real_t, 3u> & force_field, const FieldPtrOrIterator & it )
+   void get( Vector3< real_t > & momentumDensity,
+             const GhostLayerField<real_t, 3u> & force_field,
+             const FieldPtrOrIterator & it )
    {
         const auto x = it.x();
         const auto y = it.y();
@@ -354,8 +341,10 @@ struct MomentumDensity< {{class_name}}>
    }
 
    template< typename PdfField_T >
-   static void get( Vector3< real_t > & momentumDensity, /* const {{class_name}} & lm */ const GhostLayerField<real_t, 3u> & force_field, const PdfField_T & pdf,
-                    const cell_idx_t x, const cell_idx_t y, const cell_idx_t z )
+   void get( Vector3< real_t > & momentumDensity,
+             const GhostLayerField<real_t, 3u> & force_field,
+             const PdfField_T & pdf,
+             const cell_idx_t x, const cell_idx_t y, const cell_idx_t z )
    {
         const real_t & xyz0 = pdf(x,y,z,0);
         {% for i in range(Q) -%}
@@ -367,14 +356,13 @@ struct MomentumDensity< {{class_name}}>
             momentumDensity[{{i}}] = md_{{i}};
         {% endfor %}
    }
-};
+} // MomentumDensity
 
 
-template<>
-struct PressureTensor<{{class_name}}>
+namespace PressureTensor
 {
    template< typename FieldPtrOrIterator >
-   static void get( Matrix3< real_t > & pressureTensor, /* const {{class_name}} & lm */ const FieldPtrOrIterator & it )
+   void get( Matrix3< real_t > & pressureTensor, const FieldPtrOrIterator & it )
    {
         const auto x = it.x();
         const auto y = it.y();
@@ -393,8 +381,8 @@ struct PressureTensor<{{class_name}}>
    }
 
    template< typename PdfField_T >
-   static void get( Matrix3< real_t > & pressureTensor, /* const {{class_name}} & lm */ const PdfField_T & pdf,
-                    const cell_idx_t x, const cell_idx_t y, const cell_idx_t z )
+   void get( Matrix3< real_t > & pressureTensor, const PdfField_T & pdf,
+             const cell_idx_t x, const cell_idx_t y, const cell_idx_t z )
    {
         const real_t & xyz0 = pdf(x,y,z,0);
         {% for i in range(Q) -%}
@@ -408,38 +396,39 @@ struct PressureTensor<{{class_name}}>
             {% endfor %}
         {% endfor %}
    }
-};
+} // PressureTensor
 
 
-template<>
-struct ShearRate<{{class_name}}>
+namespace ShearRate
 {
    template< typename FieldPtrOrIterator >
-   static inline real_t get( const {{class_name}} & /* latticeModel */, const FieldPtrOrIterator & /* it */,
-                             const Vector3< real_t > & /* velocity */, const real_t /* rho */)
+   inline real_t get( const FieldPtrOrIterator & /* it */,
+                      const Vector3< real_t > & /* velocity */,
+                      const real_t /* rho */)
    {
        WALBERLA_ABORT("Not implemented");
        return real_t(0.0);
    }
 
    template< typename PdfField_T >
-   static inline real_t get( const {{class_name}} & latticeModel,
-                             const PdfField_T & /* pdf */, const cell_idx_t /* x */, const cell_idx_t /* y */, const cell_idx_t /* z */,
-                             const Vector3< real_t > & /* velocity */, const real_t /* rho */ )
+   inline real_t get( const PdfField_T & /* pdf */,
+                      const cell_idx_t /* x */, const cell_idx_t /* y */, const cell_idx_t /* z */,
+                      const Vector3< real_t > & /* velocity */, const real_t /* rho */ )
    {
        WALBERLA_ABORT("Not implemented");
        return real_t(0.0);
    }
 
-   static inline real_t get( const std::vector< real_t > & /* nonEquilibrium */, const real_t /* relaxationParam */,
-                             const real_t /* rho */ = real_t(1) )
+   inline real_t get( const std::vector< real_t > & /* nonEquilibrium */, const real_t /* relaxationParam */,
+                      const real_t /* rho */ = real_t(1) )
    {
        WALBERLA_ABORT("Not implemented");
        return real_t(0.0);
    }
-};
+} // ShearRate
 
 
+} // namespace accessor
 } // namespace {{namespace}}
 } // namespace walberla
 

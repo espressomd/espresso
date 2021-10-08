@@ -19,6 +19,8 @@
 
 #include "vtk/BlockCellDataWriter.h"
 
+#include "generated_kernels/macroscopic_values_accessors.h"
+
 namespace walberla {
 namespace lbm {
 
@@ -42,7 +44,7 @@ protected:
                       const cell_idx_t z, const cell_idx_t /*f*/) override {
     WALBERLA_ASSERT_NOT_NULLPTR(pdf_);
     return numeric_cast<OutputType>(
-        lbm::Density<LatticeModel_T>::get(*pdf_, x, y, z));
+        lbm::accessor::Density::get(*pdf_, x, y, z));
   }
 
   ConstBlockDataID const bdid_;
@@ -69,7 +71,7 @@ protected:
                       const cell_idx_t z, const cell_idx_t f) override {
     WALBERLA_ASSERT_NOT_NULLPTR(pdf_);
     Matrix3<real_t> pressureTensor;
-    lbm::PressureTensor<LatticeModel_T>::get(pressureTensor, *pdf_, x, y, z);
+    lbm::accessor::PressureTensor::get(pressureTensor, *pdf_, x, y, z);
     return numeric_cast<OutputType>(pressureTensor[f]);
   }
 

@@ -154,7 +154,6 @@ private:
 
 public:
   // Type definitions
-  using LatticeModel_T = LBWalberlaImpl;
   typedef stencil::D3Q19 Stencil;
   using VectorField = GhostLayerField<real_t, 3u>;
   using FlagField = BoundaryHandling::FlagField;
@@ -170,23 +169,10 @@ public:
   static constexpr bool compressible = true;
 
 private:
-  // Backend classes can access private members:
-  template <class LM, class Enable> friend class lbm::EquilibriumDistribution;
-  template <class LM, class Enable> friend struct lbm::Equilibrium;
-  template <class LM, class Enable>
-  friend struct lbm::internal::AdaptVelocityToForce;
-  template <class LM, class Enable> friend struct lbm::Density;
-  template <class LM> friend struct lbm::DensityAndVelocity;
-  template <class LM, class Enable>
-  friend struct lbm::DensityAndMomentumDensity;
-  template <class LM, class Enable> friend struct lbm::MomentumDensity;
-  template <class LM, class It, class Enable>
-  friend struct lbm::DensityAndVelocityRange;
-
   real_t getDensity(const BlockAndCell &bc) const {
     auto pdf_field = bc.block->template getData<PdfField>(m_pdf_field_id);
-    return lbm::Density<LatticeModel_T>::get(*this, *pdf_field, bc.cell.x(),
-                                             bc.cell.y(), bc.cell.z());
+    return lbm::accessor::Density::get(*pdf_field, bc.cell.x(), bc.cell.y(),
+                                       bc.cell.z());
   }
 
   real_t getDensityAndVelocity(const BlockAndCell &bc,
@@ -203,7 +189,7 @@ private:
                                const cell_idx_t x, const cell_idx_t y,
                                const cell_idx_t z,
                                Vector3<real_t> &velocity) const {
-    const real_t rho = lbm::DensityAndMomentumDensity<LatticeModel_T>::get(
+    const real_t rho = lbm::accessor::DensityAndMomentumDensity::get(
         velocity, *force_field, *pdf_field, x, y, z);
     if constexpr (compressible) {
       const real_t invRho = real_t(1) / rho;
@@ -217,16 +203,16 @@ private:
     auto pdf_field = bc.block->template getData<PdfField>(m_pdf_field_id);
     auto force_field =
         bc.block->template getData<VectorField>(m_last_applied_force_field_id);
-    lbm::DensityAndVelocity<LatticeModel_T>::set(*pdf_field, bc.cell.x(),
-                                                 bc.cell.y(), bc.cell.z(),
-                                                 *force_field, velocity, rho);
+    lbm::accessor::DensityAndVelocity::set(*pdf_field, bc.cell.x(), bc.cell.y(),
+                                           bc.cell.z(), *force_field, velocity,
+                                           rho);
   }
 
   Matrix3<real_t> getPressureTensor(const BlockAndCell &bc) const {
     Matrix3<real_t> pressureTensor;
     auto pdf_field = bc.block->template getData<PdfField>(m_pdf_field_id);
-    lbm::PressureTensor<LatticeModel_T>::get(
-        pressureTensor, *pdf_field, bc.cell.x(), bc.cell.y(), bc.cell.z());
+    lbm::accessor::PressureTensor::get(pressureTensor, *pdf_field, bc.cell.x(),
+                                       bc.cell.y(), bc.cell.z());
     return pressureTensor;
   }
 
@@ -841,7 +827,7 @@ public:
     // add writers
     if (static_cast<unsigned>(OutputVTK::density) & flag_observables) {
       pdf_field_vtk->addCellDataWriter(
-          make_shared<lbm::DensityVTKWriter<LatticeModel_T, float>>(
+          make_shared<lbm::DensityVTKWriter<LBWalberlaImpl, float>>(
               m_pdf_field_id, "DensityFromPDF"));
     }
     if (static_cast<unsigned>(OutputVTK::velocity_vector) & flag_observables) {
@@ -851,7 +837,7 @@ public:
     }
     if (static_cast<unsigned>(OutputVTK::pressure_tensor) & flag_observables) {
       pdf_field_vtk->addCellDataWriter(
-          make_shared<lbm::PressureTensorVTKWriter<LatticeModel_T, float>>(
+          make_shared<lbm::PressureTensorVTKWriter<LBWalberlaImpl, float>>(
               m_pdf_field_id, "PressureTensorFromPDF"));
     }
 
