@@ -72,7 +72,6 @@ cdef extern from "particle_data.hpp":
         vector[int] exclusions() except +
         Vector3d calc_dip()
 
-
     IF ENGINE:
         ctypedef struct particle_parameters_swimming "ParticleParametersSwimming":
             bool swimming
