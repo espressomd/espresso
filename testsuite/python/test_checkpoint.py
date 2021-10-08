@@ -77,10 +77,24 @@ class CheckpointTest(ut.TestCase):
         lbf = self.get_active_actor_of_type(espressomd.lb.LBFluidWalberla)
         cpt_mode = int("@TEST_BINARY@")
         cpt_path = self.checkpoint.checkpoint_dir + "/lb{}.cpt"
-        with self.assertRaises(RuntimeError):
-            lbf.load_checkpoint(cpt_path.format("-corrupted"), cpt_mode)
-        with self.assertRaisesRegex(RuntimeError, 'grid dimensions mismatch'):
-            lbf.load_checkpoint(cpt_path.format("-wrong-boxdim"), cpt_mode)
+
+        # check exception mechanism with corrupted LB checkpoint files
+        with self.assertRaisesRegex(RuntimeError, 'EOF found'):
+            lbf.load_checkpoint(cpt_path.format("-missing-data"), cpt_mode)
+        with self.assertRaisesRegex(RuntimeError, 'extra data found, expected EOF'):
+            lbf.load_checkpoint(cpt_path.format("-extra-data"), cpt_mode)
+        if cpt_mode == 0:
+            with self.assertRaisesRegex(RuntimeError, 'incorrectly formatted data'):
+                lbf.load_checkpoint(cpt_path.format("-wrong-format"), cpt_mode)
+            with self.assertRaisesRegex(RuntimeError, 'grid dimensions mismatch'):
+                lbf.load_checkpoint(cpt_path.format("-wrong-boxdim"), cpt_mode)
+            with self.assertRaisesRegex(RuntimeError, 'population size mismatch'):
+                lbf.load_checkpoint(
+                    cpt_path.format("-wrong-popsize"), cpt_mode)
+        with self.assertRaisesRegex(RuntimeError, 'could not open file'):
+            lbf.load_checkpoint(cpt_path.format("-unknown"), cpt_mode)
+
+        # load the valid LB checkpoint file
         lbf.load_checkpoint(cpt_path.format(""), cpt_mode)
         precision = 9 if "LB.ACTIVE.WALBERLA" in modes else 5
         m = np.pi / 12
@@ -186,17 +200,18 @@ class CheckpointTest(ut.TestCase):
                 np.copy(p3.f), -np.copy(p4.f), rtol=1e-4)
             self.assertGreater(np.linalg.norm(np.copy(p3.f) - old_force), 1e6)
 
-#    # TODO WALBERLA
-#    @ut.skipIf('THERM.LB' not in modes, 'LB thermostat not in modes')
-#    def test_thermostat_LB(self):
-#        thmst = system.thermostat.get_state()[0]
-#        if 'LB.GPU' in modes and not espressomd.gpu_available():
-#            self.assertEqual(thmst['type'], 'OFF')
-#        else:
-#            self.assertEqual(thmst['type'], 'LB')
-#            # rng_counter_fluid = seed, seed is 0 because kT=0
-#            self.assertEqual(thmst['rng_counter_fluid'], 0)
-#            self.assertEqual(thmst['gamma'], 2.0)
+    @utx.skipIfMissingFeatures('LB_WALBERLA')
+    @ut.skipIf('LB.ACTIVE.WALBERLA' not in modes, 'waLBerla LBM not in modes')
+    @ut.skipIf('THERM.LB' not in modes, 'LB thermostat not in modes')
+    def test_thermostat_LB(self):
+        thmst = system.thermostat.get_state()[0]
+        if 'LB.GPU' in modes and not espressomd.gpu_available():
+            self.assertEqual(thmst['type'], 'OFF')
+        else:
+            self.assertEqual(thmst['type'], 'LB')
+            # rng_counter_fluid = seed, seed is 0 because kT=0
+            self.assertEqual(thmst['rng_counter_fluid'], 0)
+            self.assertEqual(thmst['gamma'], 2.0)
 
     @ut.skipIf('THERM.LANGEVIN' not in modes,
                'Langevin thermostat not in modes')
@@ -529,8 +544,7 @@ class CheckpointTest(ut.TestCase):
         # remove boundaries
         system.lbboundaries.clear()
         self.assertEqual(len(system.lbboundaries), 0)
-        # TODO WALBERLA: removing LBBoundaries doesn't reset the fluid flag
-        # np.testing.assert_equal(lbf[:, :, :].is_boundary.astype(int), 0)
+        np.testing.assert_equal(lbf[:, :, :].is_boundary.astype(int), 0)
 
     @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
     def test_constraints(self):

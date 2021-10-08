@@ -127,6 +127,10 @@ class TestLB:
         with self.assertRaises(RuntimeError):
             node.velocity = [1, 1, 1]
         with self.assertRaises(RuntimeError):
+            _ = node.boundary_force
+        with self.assertRaises(RuntimeError):
+            _ = node.boundary
+        with self.assertRaises(RuntimeError):
             _ = node.last_applied_force
         with self.assertRaises(RuntimeError):
             node.last_applied_force = [1, 1, 1]

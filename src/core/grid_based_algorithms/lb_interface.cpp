@@ -35,7 +35,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <cstdio>
 #include <fstream>
 #include <functional>
 #include <iostream>
@@ -234,182 +233,182 @@ double lb_lbfluid_get_lattice_speed() {
 }
 
 void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
+  auto const err_msg = std::string("Error while writing LB checkpoint: ");
+
+  // open file and set exceptions
+  auto flags = std::ios_base::out;
+  if (binary)
+    flags |= std::ios_base::binary;
+  std::fstream cpfile;
+  cpfile.open(filename, flags);
+  if (!cpfile) {
+    throw std::runtime_error(err_msg + "could not open file " + filename);
+  }
+  cpfile.exceptions(std::ios_base::failbit | std::ios_base::badbit);
+
 #ifdef LB_WALBERLA
-  if (lattice_switch == ActiveLB::WALBERLA) {
-    std::fstream cpfile;
-    if (binary) {
-      cpfile.open(filename, std::ios::out | std::ios::binary);
-    } else {
-      cpfile.open(filename, std::ios::out);
-      cpfile.precision(16);
-      cpfile << std::fixed;
-    }
-
-    auto const gridsize = lb_walberla()->get_grid_dimensions();
-    auto const pop_size = lb_walberla()->stencil_size();
-    std::vector<double> pop(pop_size);
-
+  // write the grid size in the checkpoint header
+  auto const write_header = [&](Utils::Vector3i const &grid_size,
+                                std::size_t pop_size) {
     if (!binary) {
-      cpfile << Utils::Vector3d::formatter(" ") << gridsize << "\n";
+      cpfile << Utils::Vector3i::formatter(" ") << grid_size << "\n";
       cpfile << pop_size << "\n";
     } else {
-      cpfile.write(reinterpret_cast<const char *>(gridsize.data()),
-                   3 * sizeof(gridsize[0]));
+      cpfile.write(reinterpret_cast<const char *>(grid_size.data()),
+                   3 * sizeof(int));
       cpfile.write(reinterpret_cast<const char *>(&pop_size), sizeof(pop_size));
     }
+  };
+#endif // WALBERLA
 
-    for (int i = 0; i < gridsize[0]; i++) {
-      for (int j = 0; j < gridsize[1]; j++) {
-        for (int k = 0; k < gridsize[2]; k++) {
-          Utils::Vector3i const ind{{i, j, k}};
-          auto const pop = lb_lbnode_get_pop(ind);
-          auto const laf = lb_lbnode_get_last_applied_force(ind);
-          if (!binary) {
-            for (std::size_t n = 0; n < pop_size; n++) {
-              cpfile << pop[n] << " ";
+  try {
+    if (lattice_switch == ActiveLB::WALBERLA) {
+#ifdef LB_WALBERLA
+      if (!binary) {
+        cpfile.precision(16);
+        cpfile << std::fixed;
+      }
+
+      auto const gridsize = lb_walberla()->get_grid_dimensions();
+      auto const pop_size = lb_walberla()->stencil_size();
+      write_header(gridsize, pop_size);
+
+      for (int i = 0; i < gridsize[0]; i++) {
+        for (int j = 0; j < gridsize[1]; j++) {
+          for (int k = 0; k < gridsize[2]; k++) {
+            Utils::Vector3i const ind{{i, j, k}};
+            auto const pop = lb_lbnode_get_pop(ind);
+            auto const laf = lb_lbnode_get_last_applied_force(ind);
+            if (!binary) {
+              for (auto const p : pop) {
+                cpfile << p << "\n";
+              }
+              cpfile << Utils::Vector3d::formatter(" ") << laf << "\n";
+            } else {
+              cpfile.write(reinterpret_cast<const char *>(pop.data()),
+                           pop_size * sizeof(double));
+              cpfile.write(reinterpret_cast<const char *>(laf.data()),
+                           3 * sizeof(double));
             }
-            cpfile << "\n";
-            for (std::size_t n = 0; n < 3; n++) {
-              cpfile << laf[n] << " ";
-            }
-            cpfile << "\n";
-          } else {
-            cpfile.write(reinterpret_cast<const char *>(pop.data()),
-                         pop_size * sizeof(double));
-            cpfile.write(reinterpret_cast<const char *>(laf.data()),
-                         3 * sizeof(double));
           }
         }
       }
+#endif // WALBERLA
     }
+  } catch (std::ios_base::failure const &fail) {
     cpfile.close();
+    throw std::runtime_error(err_msg + "could not write data to " + filename);
+  } catch (std::runtime_error const &fail) {
+    cpfile.close();
+    throw;
   }
-#endif
+  cpfile.close();
 }
 
 void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
-  int res;
-  std::string err_msg = "Error while reading LB checkpoint: ";
-#ifdef LB_WALBERLA
-  if (lattice_switch == ActiveLB::WALBERLA) {
-    FILE *cpfile;
-    cpfile = fopen(filename.c_str(), "r");
-    if (!cpfile) {
-      throw std::runtime_error(err_msg + "could not open file for reading.");
-    }
+  auto const err_msg = std::string("Error while reading LB checkpoint: ");
 
-    auto const pop_size = lb_walberla()->stencil_size();
-    std::size_t saved_pop_size;
-    Utils::Vector3d laf;
-    auto const gridsize = lb_walberla()->get_grid_dimensions();
-    Utils::Vector3i saved_gridsize;
+  // open file and set exceptions
+  auto flags = std::ios_base::in;
+  if (binary)
+    flags |= std::ios_base::binary;
+  std::fstream cpfile;
+  cpfile.open(filename, flags);
+  if (!cpfile) {
+    throw std::runtime_error(err_msg + "could not open file " + filename);
+  }
+  cpfile.exceptions(std::ios_base::failbit | std::ios_base::badbit);
+
+#ifdef LB_WALBERLA
+  // check the grid size in the checkpoint header matches the current grid size
+  auto const check_header = [&](Utils::Vector3i const &expected_grid_size,
+                                std::size_t expected_pop_size) {
+    Utils::Vector3i grid_size;
+    std::size_t pop_size;
     if (!binary) {
-      res = fscanf(cpfile, "%i %i %i\n%zu\n", &saved_gridsize[0],
-                   &saved_gridsize[1], &saved_gridsize[2], &saved_pop_size);
-      if (res == EOF) {
-        fclose(cpfile);
-        throw std::runtime_error(err_msg + "EOF found.");
+      for (auto &n : grid_size) {
+        cpfile >> n;
       }
-      if (res != 4) {
-        fclose(cpfile);
-        throw std::runtime_error(err_msg + "incorrectly formatted data.");
-      }
+      cpfile >> pop_size;
     } else {
-      if (fread(&saved_gridsize[0], sizeof(int), 3, cpfile) != 3) {
-        fclose(cpfile);
-        throw std::runtime_error(err_msg + "incorrectly formatted data.");
-      }
-      if (fread(&saved_pop_size, sizeof(std::size_t), 1, cpfile) != 1) {
-        fclose(cpfile);
-        throw std::runtime_error(err_msg + "incorrectly formatted data.");
-      }
+      cpfile.read(reinterpret_cast<char *>(grid_size.data()), 3 * sizeof(int));
+      cpfile.read(reinterpret_cast<char *>(&pop_size), sizeof(pop_size));
     }
-    if (saved_gridsize != gridsize) {
-      fclose(cpfile);
+    if (grid_size != expected_grid_size) {
       std::stringstream message;
       message << " grid dimensions mismatch,"
-              << " read [" << saved_gridsize << "],"
-              << " expected [" << gridsize << "].";
+              << " read [" << grid_size << "],"
+              << " expected [" << expected_grid_size << "].";
       throw std::runtime_error(err_msg + message.str());
     }
-    if (saved_pop_size != pop_size) {
-      fclose(cpfile);
+    if (pop_size != expected_pop_size) {
       throw std::runtime_error(err_msg + "population size mismatch, read " +
-                               std::to_string(saved_pop_size) + ", expected " +
-                               std::to_string(pop_size) + ".");
+                               std::to_string(pop_size) + ", expected " +
+                               std::to_string(expected_pop_size) + ".");
     }
+  };
+#endif // WALBERLA
 
-    std::vector<double> pop(saved_pop_size);
-    for (int i = 0; i < gridsize[0]; i++) {
-      for (int j = 0; j < gridsize[1]; j++) {
-        for (int k = 0; k < gridsize[2]; k++) {
-          Utils::Vector3i const ind{{i, j, k}};
-          if (!binary) {
-            for (std::size_t f = 0; f < saved_pop_size; ++f) {
-              res = fscanf(cpfile, "%lf ", &pop[f]);
-              if (res == EOF) {
-                fclose(cpfile);
-                throw std::runtime_error(err_msg + "EOF found.");
+  try {
+    if (lattice_switch == ActiveLB::WALBERLA) {
+#ifdef LB_WALBERLA
+      auto const gridsize = lb_walberla()->get_grid_dimensions();
+      auto const pop_size = lb_walberla()->stencil_size();
+      check_header(gridsize, pop_size);
+
+      Utils::Vector3d laf;
+      std::vector<double> pop(pop_size);
+      for (int i = 0; i < gridsize[0]; i++) {
+        for (int j = 0; j < gridsize[1]; j++) {
+          for (int k = 0; k < gridsize[2]; k++) {
+            Utils::Vector3i const ind{{i, j, k}};
+            if (!binary) {
+              for (auto &p : pop) {
+                cpfile >> p;
               }
-              if (res != 1) {
-                fclose(cpfile);
-                throw std::runtime_error(err_msg +
-                                         "incorrectly formatted data.");
+              for (auto &l : laf) {
+                cpfile >> l;
               }
+            } else {
+              cpfile.read(reinterpret_cast<char *>(pop.data()),
+                          pop_size * sizeof(double));
+              cpfile.read(reinterpret_cast<char *>(laf.data()),
+                          3 * sizeof(double));
             }
-            res = fscanf(cpfile, "\n");
-            if (res == EOF) {
-              fclose(cpfile);
-              throw std::runtime_error(err_msg + "EOF found.");
-            }
-            res = fscanf(cpfile, "%lf %lf %lf \n", &laf[0], &laf[1], &laf[2]);
-            if (res == EOF) {
-              fclose(cpfile);
-              throw std::runtime_error(err_msg + "EOF found.");
-            }
-            if (res != 3) {
-              fclose(cpfile);
-              throw std::runtime_error(err_msg + "incorrectly formatted data.");
-            }
-          } else {
-            if (fread(pop.data(), sizeof(double), saved_pop_size, cpfile) !=
-                saved_pop_size) {
-              fclose(cpfile);
-              throw std::runtime_error(err_msg + "incorrectly formatted data.");
-            }
-            if (fread(laf.data(), sizeof(double), 3, cpfile) != 3) {
-              fclose(cpfile);
-              throw std::runtime_error(err_msg + "incorrectly formatted data.");
-            }
+            ::Communication::mpiCallbacks().call_all(
+                Walberla::set_node_from_checkpoint, ind, pop, laf);
           }
-          ::Communication::mpiCallbacks().call_all(
-              Walberla::set_node_from_checkpoint, ind, pop, laf);
         }
       }
-    }
-    ::Communication::mpiCallbacks().call_all(Walberla::do_ghost_communication);
-    if (!binary) {
-      // skip spaces
-      for (int n = 0; n < 2; ++n) {
-        res = fgetc(cpfile);
-        if (res != (int)' ' && res != (int)'\n')
-          break;
-      }
+      ::Communication::mpiCallbacks().call_all(
+          Walberla::do_ghost_communication);
+#endif // WALBERLA
     } else {
-      res = fgetc(cpfile);
+      throw std::runtime_error(
+          "To load an LB checkpoint one needs to have already "
+          "initialized the LB fluid with the same grid size.");
     }
-    if (res != EOF) {
-      fclose(cpfile);
+    // check EOF
+    if (!binary) {
+      if (cpfile.peek() == '\n') {
+        static_cast<void>(cpfile.get());
+      }
+    }
+    if (cpfile.peek() != EOF) {
       throw std::runtime_error(err_msg + "extra data found, expected EOF.");
     }
-    fclose(cpfile);
-  } else
-#endif
-  {
-    throw std::runtime_error(
-        "To load an LB checkpoint one needs to have already "
-        "initialized the LB fluid with the same grid size.");
+  } catch (std::ios_base::failure const &fail) {
+    auto const eof_error = cpfile.eof();
+    cpfile.close();
+    if (eof_error) {
+      throw std::runtime_error(err_msg + "EOF found.");
+    }
+    throw std::runtime_error(err_msg + "incorrectly formatted data.");
+  } catch (std::runtime_error const &fail) {
+    cpfile.close();
+    throw;
   }
+  cpfile.close();
 }
 
 Utils::Vector3i lb_lbfluid_get_shape() {
@@ -418,7 +417,6 @@ Utils::Vector3i lb_lbfluid_get_shape() {
     return lb_walberla()->get_grid_dimensions();
   }
 #endif
-
   throw NoLBActive();
 }
 
@@ -444,7 +442,18 @@ const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind) {
         ::Communication::Result::one_rank, Walberla::get_node_velocity, ind);
   }
 #endif
+  throw NoLBActive();
+}
 
+const Utils::Vector3d
+lb_lbnode_get_velocity_at_boundary(const Utils::Vector3i &ind) {
+#ifdef LB_WALBERLA
+  if (lattice_switch == ActiveLB::WALBERLA) {
+    return ::Communication::mpiCallbacks().call(
+        ::Communication::Result::one_rank,
+        Walberla::get_node_velocity_at_boundary, ind);
+  }
+#endif
   throw NoLBActive();
 }
 
@@ -574,6 +583,38 @@ bool lb_lbnode_is_boundary(const Utils::Vector3i &ind) {
   throw NoLBActive();
 }
 
+const Utils::Vector3d lb_lbnode_get_boundary_force(const Utils::Vector3i &ind) {
+#ifdef LB_WALBERLA
+  if (lattice_switch == ActiveLB::WALBERLA) {
+    return ::Communication::mpiCallbacks().call(
+        ::Communication::Result::one_rank, Walberla::get_node_boundary_force,
+        ind);
+  }
+#endif
+  throw NoLBActive();
+}
+
+void lb_lbnode_remove_from_boundary(const Utils::Vector3i &ind) {
+  if (lattice_switch == ActiveLB::WALBERLA) {
+#ifdef LB_WALBERLA
+    ::Communication::mpiCallbacks().call_all(
+        Walberla::remove_node_from_boundary, ind);
+#endif
+  } else {
+    throw NoLBActive();
+  }
+}
+
+void lb_lbfluid_clear_boundaries() {
+  if (lattice_switch == ActiveLB::WALBERLA) {
+#ifdef LB_WALBERLA
+    ::Communication::mpiCallbacks().call_all(Walberla::clear_boundaries);
+#endif
+  } else {
+    throw NoLBActive();
+  }
+}
+
 const std::vector<double> lb_lbnode_get_pop(const Utils::Vector3i &ind) {
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
@@ -602,6 +643,18 @@ void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
 #ifdef LB_WALBERLA
     ::Communication::mpiCallbacks().call_all(Walberla::set_node_velocity, ind,
                                              u);
+#endif
+  } else {
+    throw NoLBActive();
+  }
+}
+
+void lb_lbnode_set_velocity_at_boundary(const Utils::Vector3i &ind,
+                                        const Utils::Vector3d &u) {
+  if (lattice_switch == ActiveLB::WALBERLA) {
+#ifdef LB_WALBERLA
+    ::Communication::mpiCallbacks().call_all(
+        Walberla::set_node_velocity_at_boundary, ind, u);
 #endif
   } else {
     throw NoLBActive();

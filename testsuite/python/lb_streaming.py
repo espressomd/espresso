@@ -1,5 +1,3 @@
-# DISABLED FOR NOW
-
 # Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -35,24 +33,46 @@ VISC = 1e18
 BULK_VISC = VISC
 VELOCITY_VECTORS = np.array([
     [0, 0, 0],
-    [1, 0, 0],
-    [-1, 0, 0],
     [0, 1, 0],
     [0, -1, 0],
+    [-1, 0, 0],
+    [1, 0, 0],
     [0, 0, 1],
     [0, 0, -1],
+    [-1, 1, 0],
     [1, 1, 0],
     [-1, -1, 0],
     [1, -1, 0],
-    [-1, 1, 0],
-    [1, 0, 1],
-    [-1, 0, -1],
-    [1, 0, -1],
-    [-1, 0, 1],
     [0, 1, 1],
-    [0, -1, -1],
+    [0, -1, 1],
+    [-1, 0, 1],
+    [1, 0, 1],
     [0, 1, -1],
-    [0, -1, 1]])
+    [0, -1, -1],
+    [-1, 0, -1],
+    [1, 0, -1]])
+# populations after streaming and relaxation using parameters omega_odd = 2
+# and omega_bulk = omega_even = omega_shear = 0
+REFERENCE_POPULATIONS = np.array([
+    1,
+    2 / 3,
+    4 + 1 / 3,
+    3 + 1 / 3,
+    5 + 2 / 3,
+    1 + 1 / 3,
+    11 + 2 / 3,
+    9,
+    9 + 2 / 3,
+    9 + 1 / 3,
+    10,
+    13,
+    14 + 1 / 3,
+    15 + 1 / 3,
+    16,
+    14 + 2 / 3,
+    16,
+    17,
+    17 + 2 / 3])
 LB_PARAMETERS = {
     'agrid': AGRID,
     'visc': VISC,
@@ -67,8 +87,8 @@ LB_PARAMETERS = {
 class LBStreamingCommon:
 
     """
-    Check the streaming step of the LB fluid implementation by setting all populations
-    to zero except one. Relaxation is suppressed by choosing appropriate parameters.
+    Check the streaming and relaxation steps of the LB fluid implementation by
+    setting all populations to zero except one.
 
     """
     lbf = None
@@ -88,7 +108,7 @@ class LBStreamingCommon:
         """
         for i in itertools.product(range(self.grid[0]), range(
                 self.grid[1]), range(self.grid[2])):
-            self.lbf[i].population = np.zeros(19)
+            self.lbf[i].population = np.zeros(19) + 1e-10
 
     def set_fluid_populations(self, grid_index):
         """Set the population of direction n_v of grid_index to n_v+1.
@@ -107,25 +127,29 @@ class LBStreamingCommon:
                 target_node_index = np.mod(
                     grid_index + VELOCITY_VECTORS[n_v], self.grid)
                 np.testing.assert_almost_equal(
-                    self.lbf[target_node_index].population[n_v], float(n_v + 1))
-                self.lbf[target_node_index].population = np.zeros(19)
+                    self.lbf[target_node_index].population[n_v],
+                    REFERENCE_POPULATIONS[n_v])
+                self.lbf[target_node_index].population = np.zeros(19) + 1e-10
 
 
+@utx.skipIfMissingFeatures(["LB_WALBERLA"])
 class LBCPU(ut.TestCase, LBStreamingCommon):
 
     """Test for the CPU implementation of the LB."""
 
     def setUp(self):
-        self.lbf = espressomd.lb.LBFluid(**LB_PARAMETERS)
+        self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMETERS)
 
 
-@utx.skipIfMissingGPU()
-class LBGPU(ut.TestCase, LBStreamingCommon):
+# TODO WALBERLA
+# @utx.skipIfMissingGPU()
+# @utx.skipIfMissingFeatures(["LB_WALBERLA"])
+# class LBGPU(ut.TestCase, LBStreamingCommon):
 
-    """Test for the GPU implementation of the LB."""
+#    """Test for the GPU implementation of the LB."""
 
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMETERS)
+#    def setUp(self):
+#        self.lbf = espressomd.lb.LBFluidWalberlaGPU(**LB_PARAMETERS)
 
 
 if __name__ == "__main__":

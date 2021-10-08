@@ -85,23 +85,21 @@ class LBInterpolation:
         # The boundary node index is lbf.shape[0]-1, so -2 refers to the
         # node in front of the boundary.
         node_next_to_boundary = self.lbf[self.lbf.shape[0] - 2, 0, 0]
-        # The midpoint between the boundary and that node is box_l - agrid.
+        # The midpoint between the boundary and
+        # that node is box_l - agrid.
         np.testing.assert_allclose(
             np.copy(self.lbf.get_interpolated_velocity([BOX_L - AGRID, 0, 0])),
             ([0, 0, V_BOUNDARY] + np.copy(node_next_to_boundary.velocity)) / 2.,
-            rtol=2e-7)
+            atol=1e-6)
 
         # Bulk
         for pos in itertools.product(
                 np.arange(1.5 * AGRID, BOX_L - 1.5 * AGRID, 0.5 * AGRID),
                 np.arange(0.5 * AGRID, BOX_L, AGRID),
                 np.arange(0.5 * AGRID, BOX_L, AGRID)):
-            np.testing.assert_almost_equal(
-                self.lbf.get_interpolated_velocity(pos)[2], velocity_profile(pos[0]), decimal=4)
-        # Shear plane for boundary 2
-        # for pos in itertools.product((9 * AGRID,), np.arange(0.5 * AGRID, BOX_L, AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID)):
-        # np.testing.assert_almost_equal(self.lbf.get_interpolated_velocity(pos)[2],
-        # 1.0, decimal=4)
+            np.testing.assert_allclose(
+                self.lbf.get_interpolated_velocity(pos)[2],
+                velocity_profile(pos[0]), atol=5e-5)
 
     def test_mach_limit_check(self):
         """
@@ -120,8 +118,7 @@ class LBInterpolation:
         print("End: Test error generation")
 
 
-@utx.skipIfMissingFeatures(['LB_BOUNDARIES'])
-@utx.skipIfMissingFeatures(['LB_WALBERLA'])
+@utx.skipIfMissingFeatures(['LB_BOUNDARIES', 'LB_WALBERLA'])
 class LBInterpolationWalberla(ut.TestCase, LBInterpolation):
 
     def setUp(self):
