@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from .script_interface import ScriptObjectRegistry, ScriptInterfaceHelper, script_interface_register
+from .utils import check_type_or_throw_except
 from .__init__ import has_features
 
 
@@ -31,8 +32,8 @@ if has_features(["LB_BOUNDARIES"]):
 
         def add(self, *args, **kwargs):
             """
-            Adds a boundary to the set.
-            Either a valid boundary is an argument,
+            Adds a boundary to the set of boundaries.
+            Either pass a valid boundary as argument,
             or a valid set of parameters to create a boundary.
 
             """
@@ -55,7 +56,7 @@ if has_features(["LB_BOUNDARIES"]):
             Parameters
             ----------
             lbboundary : :obj:`LBBoundary`
-                         The boundary to be removed from the set.
+                The boundary to be removed from the set.
 
             """
 
@@ -86,3 +87,13 @@ if has_features(["LB_BOUNDARIES"]):
 
         _so_name = "LBBoundaries::LBBoundary"
         _so_bind_methods = ("get_force",)
+
+    class VelocityBounceBack:
+        """
+        Holds velocity information for the velocity bounce back boundary condition at a single node.
+        """
+
+        def __init__(self, velocity):
+            check_type_or_throw_except(
+                velocity, 3, float, "VelocityBounceBack velocity must be three floats")
+            self.velocity = velocity

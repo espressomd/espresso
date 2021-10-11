@@ -77,7 +77,6 @@ class LBBoundariesBase:
 
         self.assertTrue(lbb.empty())
 
-# WALBERLA TODO
     def check_boundary_flags(self, boundary1, boundary2):
         rng = range(20)
 
@@ -95,9 +94,8 @@ class LBBoundariesBase:
                 np.copy(self.lbf[i].velocity), np.copy(boundary2.velocity))
 
         self.system.lbboundaries.clear()
-        # WALBERLA TODO
-#        for i in itertools.product(rng, rng, rng):
-#            self.assertFalse(self.lbf[i].is_boundary)
+        for i in itertools.product(rng, rng, rng):
+            self.assertFalse(self.lbf[i].is_boundary)
 
     def test_boundary_flags(self):
         lbb = self.system.lbboundaries

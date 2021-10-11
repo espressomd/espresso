@@ -29,8 +29,8 @@ from pystencils_walberla import CodeGeneration, codegen
 
 from lbmpy_walberla import generate_boundary, generate_lb_pack_info
 
-from lbmpy.boundaries import UBB
-from lbmpy_walberla.additional_data_handler import UBBAdditionalDataHandler
+import lbmpy.boundaries
+import lbmpy_walberla.additional_data_handler
 import relaxation_rates
 from lbmpy.fieldaccess import CollideOnlyInplaceAccessor
 from lbmpy.stencils import get_stencil
@@ -39,6 +39,8 @@ from lbmpy.macroscopic_value_kernels import macroscopic_values_setter
 
 import lees_edwards
 # for collide-push from lbmpy.fieldaccess import StreamPushTwoFieldsAccessor
+
+from lbmpy.advanced_streaming.indexing import NeighbourOffsetArrays
 
 
 def adapt_pystencils():
@@ -230,6 +232,7 @@ def __lattice_model(generation_context, class_name, lb_method,
         IndexedBase(sp.Symbol('u'), shape=(1,))[i]
         for i in range(len(vel_symbols))]
     momentum_density_symbols = sp.symbols(f'md_:{len(vel_symbols)}')
+    second_momentum_symbols = sp.symbols(f'p_:{len(vel_symbols)**2}')
 
     equilibrium = lb_method.get_equilibrium()
     equilibrium = equilibrium.new_with_substitutions(
@@ -259,6 +262,8 @@ def __lattice_model(generation_context, class_name, lb_method,
         eq_input_from_input_eqs, dtype=dtype_string, variables_without_prefix=['rho_in', 'u'])
     momentum_density_getter = cqc.output_equations_from_pdfs(
         pdfs_sym, {'density': rho_sym, 'momentum_density': momentum_density_symbols})
+    second_momentum_getter = cqc.output_equations_from_pdfs(
+        pdfs_sym, {'moment2': second_momentum_symbols})
     constant_suffix = "f" if is_float else ""
 
     required_headers = get_headers(stream_collide_ast)
@@ -298,6 +303,8 @@ def __lattice_model(generation_context, class_name, lb_method,
                                              variables_without_prefix=[e.name for e in pdfs_sym], dtype=dtype_string),
         'momentum_density_getter': equations_to_code(momentum_density_getter, variables_without_prefix=pdfs_sym,
                                                      dtype=dtype_string),
+        'second_momentum_getter': equations_to_code(second_momentum_getter, variables_without_prefix=pdfs_sym,
+                                                    dtype=dtype_string),
         'density_velocity_setter_macroscopic_values': density_velocity_setter_macroscopic_values,
 
         'refinement_scaling_info': refinement_scaling_info,
@@ -312,7 +319,7 @@ def __lattice_model(generation_context, class_name, lb_method,
     add_pystencils_filters_to_jinja_env(env)
 
     header = env.get_template(
-        'MacroscopicValuesAccessors.tmpl.h').render(**jinja_context)
+        'macroscopic_values_accessors.tmpl.h').render(**jinja_context)
 
     generation_context.write_file(f"{class_name}.h", header)
 
@@ -380,6 +387,61 @@ def generate_macroscopic_values_accessors(
 
 adapt_pystencils()
 
+
+class BounceBackSlipVelocityUBB(
+        lbmpy_walberla.additional_data_handler.UBBAdditionalDataHandler):
+    '''
+    Dynamic UBB that implements the bounce-back method with slip velocity.
+    '''
+
+    def data_initialisation(self, direction):
+        '''
+        Modified ``indexVector`` initialiser. The "classical" dynamic UBB
+        uses the velocity callback as a velocity flow profile generator.
+        Here we use that callback as a bounce-back slip velocity generator.
+        This way, the dynamic UBB can be used to implement a LB boundary.
+        '''
+        code = super().data_initialisation(direction)
+        dirVec = self.stencil_info[direction][1]
+        token = ' = elementInitaliser(Cell(it.x(){}, it.y(){}, it.z(){}),'
+        old_initialiser = token.format('', '', '')
+        assert old_initialiser in code
+        new_initialiser = token.format(
+            '+' + str(dirVec[0]),
+            '+' + str(dirVec[1]),
+            '+' + str(dirVec[2])).replace('+-', '-')
+        return code.replace(old_initialiser, new_initialiser)
+
+
+class PatchedUBB(lbmpy.boundaries.UBB):
+    '''
+    Velocity bounce back boundary condition, enforcing specified velocity at obstacle.
+    '''
+
+    def __call__(self, f_out, f_in, dir_symbol,
+                 inv_dir, lb_method, index_field):
+        '''
+        Modify the assignments such that the source and target pdfs are swapped.
+        '''
+        assignments = super().__call__(
+            f_out, f_in, dir_symbol, inv_dir, lb_method, index_field)
+
+        assert len(assignments) > 0
+
+        out = []
+        if len(assignments) > 1:
+            out.extend(assignments[:-1])
+
+        neighbor_offset = NeighbourOffsetArrays.neighbour_offset(
+            dir_symbol, lb_method.stencil)
+
+        assignment = assignments[-1]
+        assert assignment.lhs.field == f_in
+        out.append(ps.Assignment(assignment.lhs.get_shifted(*neighbor_offset),
+                                 assignment.rhs - f_out(dir_symbol) + f_in(dir_symbol)))
+        return out
+
+
 with CodeGeneration() as ctx:
     kT = sp.symbols("kT")
     force_field = ps.fields("force(3): [3D]", layout='fzyx')
@@ -410,16 +472,10 @@ with CodeGeneration() as ctx:
     codegen.generate_sweep(ctx, "InitialPDFsSetter", pdfs_setter)
 
     # generate unthermalized collision rule
-    u_p = lees_edwards.velocity_shift(1, 64)
-    velocity_field = ps.fields("velocitye(3): [3D]", layout='fzyx')
-    density_field = ps.fields("density(1): [3D]", layout='fzyx')
     collision_rule_unthermalized = create_lb_collision_rule(
         method,
-        velocity_input=velocity_field.center_vector + sp.Matrix([u_p, 0, 0]),
-        density_input=density_field,
         optimization={'cse_global': True}
     )
-    lees_edwards.modify_method(collision_rule_unthermalized, 0, 1)
     generate_collision_sweep(
         ctx,
         method,
@@ -432,6 +488,30 @@ with CodeGeneration() as ctx:
         method,
         collision_rule_unthermalized,
         "CollideSweepAVX",
+        {"cpu_vectorize_info": cpu_vectorize_info}
+    )
+
+    # generate unthermalized Lees-Edwards collision rule
+    u_p = lees_edwards.velocity_shift()
+    velocity_field = ps.fields("velocity(3): [3D]", layout='fzyx')
+    le_collision_rule_unthermalized = create_lb_collision_rule(
+        method,
+        velocity_input=velocity_field.center_vector + sp.Matrix([u_p, 0, 0]),
+        optimization={'cse_global': True}
+    )
+    lees_edwards.modify_method(le_collision_rule_unthermalized, 0, 1)
+    generate_collision_sweep(
+        ctx,
+        method,
+        le_collision_rule_unthermalized,
+        "CollideSweepLeesEdwards",
+        {}
+    )
+    generate_collision_sweep(
+        ctx,
+        method,
+        le_collision_rule_unthermalized,
+        "CollideSweepLeesEdwardsAVX",
         {"cpu_vectorize_info": cpu_vectorize_info}
     )
 
@@ -469,12 +549,19 @@ with CodeGeneration() as ctx:
     patch_accessors('LBWalberlaImpl', 'macroscopic_values_accessors')
 
     # Boundary conditions
-    ubb_dynamic = UBB(lambda *args: None, dim=3)
-    ubb_data_handler = UBBAdditionalDataHandler(method.stencil, ubb_dynamic)
+    ubb_dynamic = PatchedUBB(lambda *args: None, dim=3)
+    ubb_data_handler = BounceBackSlipVelocityUBB(method.stencil, ubb_dynamic)
 
     generate_boundary(ctx, 'Dynamic_UBB', ubb_dynamic, method,
                       additional_data_handler=ubb_data_handler,
                       streaming_pattern="push")
+
+    # patch for old versions of pystencils_walberla
+    with open('Dynamic_UBB.h') as f:
+        dynamic_ubb_code = f.read()
+    if '#pragma once' not in dynamic_ubb_code:
+        with open('Dynamic_UBB.h', 'w') as f:
+            f.write('#pragma once\n' + dynamic_ubb_code)
 
     # communication
     pdfs = Field.create_generic(

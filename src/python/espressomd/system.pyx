@@ -156,7 +156,7 @@ cdef class System:
         lbboundaries
         """:class:`espressomd.lbboundaries.LBBoundaries`"""
         lees_edwards
-        """:class:`espressomd.lees_edwards.Lees_Edwards`"""
+        """:class:`espressomd.lees_edwards.LeesEdwards`"""
         collision_detection
         """:class:`espressomd.collision_detection.CollisionDetection`"""
         cuda_init_handle
@@ -424,9 +424,8 @@ cdef class System:
             check_type_or_throw_except(
                 p2, 3, float, "p2 must be a particle or 3 floats")
             pos2 = make_Vector3d(p2)
-        cdef Vector3d mi_vec = box_geo.get_mi_vector(pos2, pos1)
 
-        return make_array_locked(mi_vec)
+        return make_array_locked(box_geo.get_mi_vector(pos2, pos1))
 
     def velocity_difference(self, p1, p2):
         """Return the velocity difference between two particles,

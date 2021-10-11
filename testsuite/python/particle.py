@@ -219,8 +219,7 @@ class ParticleProperties(ut.TestCase):
 
     @utx.skipIfMissingFeatures("ELECTROSTATICS")
     def test_particle_selection(self):
-        s = self.system
-        s.part.clear()
+        self.system.part.clear()
         positions = ((0.2, 0.3, 0.4), (0.4, 0.2, 0.3), (0.7, 0.7, 0.7))
         charges = [0, 1E-6, -1, 1]
 
@@ -228,31 +227,31 @@ class ParticleProperties(ut.TestCase):
         i = 0
         for pos in positions:
             for q in charges:
-                s.part.add(pos=pos, q=q, id=i)
+                self.system.part.add(pos=pos, q=q, id=i)
                 i += 2
 
         # Scalar property
-        res = s.part.select(q=0)
+        res = self.system.part.select(q=0)
         self.assertEqual(len(res.id), len(positions))
         for p in res:
             self.assertAlmostEqual(p.q, 0, places=13)
 
         # Vectorial property
-        res = s.part.select(pos=(0.2, 0.3, 0.4))
+        res = self.system.part.select(pos=(0.2, 0.3, 0.4))
         self.assertEqual(len(res.id), len(charges))
         for p in res:
             np.testing.assert_allclose(
                 (0.2, 0.3, 0.4), np.copy(p.pos), atol=1E-12)
 
         # Two criteria
-        res = s.part.select(pos=(0.2, 0.3, 0.4), q=0)
+        res = self.system.part.select(pos=(0.2, 0.3, 0.4), q=0)
         self.assertEqual(tuple(res.id), (0,))
 
         # Empty result
-        res = s.part.select(q=17)
+        res = self.system.part.select(q=17)
         self.assertEqual(tuple(res.id), ())
         # User-specified criterion
-        res = s.part.select(lambda p: p.pos[0] < 0.5)
+        res = self.system.part.select(lambda p: p.pos[0] < 0.5)
         np.testing.assert_equal(sorted(res.id), np.arange(0, 16, 2, dtype=int))
 
     def test_image_box(self):
@@ -283,9 +282,8 @@ class ParticleProperties(ut.TestCase):
             # Uncomment to identify guilty property
             # print( p)
 
-            if not hasattr(s.part[0], p):
-                raise Exception(
-                    "Inconsistency between ParticleHandle and particle_data.particle_attributes")
+            assert hasattr(s.part[0], p), \
+                "Inconsistency between ParticleHandle and particle_data.particle_attributes"
             try:
                 setattr(s.part[:], p, getattr(s.part[0], p))
             except AttributeError:
@@ -331,15 +329,15 @@ class ParticleProperties(ut.TestCase):
             p2.delete_bond((self.f1, 'p1'))
 
     def test_zz_remove_all(self):
-        for id in self.system.part[:].id:
-            self.system.part[id].remove()
+        for pid in self.system.part[:].id:
+            self.system.part[pid].remove()
         self.system.part.add(
             pos=np.random.random((100, 3)) * self.system.box_l,
             id=np.arange(100, dtype=int))
         ids = self.system.part[:].id
         np.random.shuffle(ids)
-        for id in ids:
-            self.system.part[id].remove()
+        for pid in ids:
+            self.system.part[pid].remove()
         with self.assertRaises(Exception):
             self.system.part[17].remove()
 
@@ -433,6 +431,26 @@ class ParticleProperties(ut.TestCase):
         p.remove()
         self.system.part.add(pdict)
         self.assertEqual(str(self.system.part.select()), pp)
+
+    def test_update(self):
+        self.system.part.clear()
+        p = self.system.part.add(pos=0.5 * self.system.box_l)
+        # cannot change id
+        with self.assertRaisesRegex(Exception, "Cannot change particle id."):
+            p.update({'id': 1})
+        # check value change
+        new_pos = [1., 2., 3.]
+        p.update({'pos': new_pos})
+        np.testing.assert_almost_equal(p.pos, new_pos)
+        # updating self should not change anything
+        pdict = p.to_dict()
+        del pdict['id']
+        del pdict['_id']
+        p.update(pdict)
+        new_pdict = p.to_dict()
+        del new_pdict['id']
+        del new_pdict['_id']
+        self.assertEqual(str(new_pdict), str(pdict))
 
 
 if __name__ == "__main__":

@@ -22,12 +22,12 @@ from . cimport analyze
 from libcpp.vector cimport vector  # import std::vector as vector
 import numpy as np
 cimport numpy as np
-import scipy.signal
 from .grid cimport box_geo
 
 from .system import System
 from .utils import array_locked, is_valid_type, handle_errors
 from .utils cimport Vector3i, Vector3d, Vector9d
+from .utils cimport make_Vector3d
 from .utils cimport make_array_locked
 from .utils cimport check_type_or_throw_except
 from .utils cimport create_nparray_from_double_array
@@ -59,6 +59,8 @@ def autocorrelation(time_series):
     (N,) array_like of :obj:`float`
         The time series autocorrelation function.
     """
+    import scipy.signal
+
     def acf_1d(signal, n_with_padding, n):
         acf = scipy.signal.correlate(signal, signal, mode="full", method="fft")
         acf = acf[-n_with_padding:][:n] / (n - np.arange(n))
@@ -203,12 +205,10 @@ class Analysis:
         """
 
         cdef Vector3i planedims
-        cdef Vector3d c_pos
 
+        check_type_or_throw_except(pos, 3, float, "pos must be 3 floats")
         check_type_or_throw_except(
-            pos, 3, float, "pos=(float,float,float) must be passed to nbhood")
-        check_type_or_throw_except(
-            r_catch, 1, float, "r_catch=float needs to be passed to nbhood")
+            r_catch, 1, float, "r_catch must be a float")
 
         # default 3d takes into account dist in x, y and z
         planedims[0] = 1
@@ -224,10 +224,8 @@ class Analysis:
             raise ValueError(
                 'Invalid argument for specifying plane, must be xy, xz, or yz plane')
 
-        for i in range(3):
-            c_pos[i] = pos[i]
-
-        return analyze.nbhood(analyze.partCfg(), c_pos, r_catch, planedims)
+        return analyze.nbhood(
+            analyze.partCfg(), make_Vector3d(pos), r_catch, planedims)
 
     def pressure(self):
         """Calculate the instantaneous pressure (in parallel). This is only
@@ -622,8 +620,7 @@ class Analysis:
         check_type_or_throw_except(
             p_type, 1, int, "p_type has to be an int")
 
-        cdef int p1 = p_type
-        cdef Vector3d res = analyze.angularmomentum(analyze.partCfg(), p1)
+        cdef Vector3d res = analyze.angularmomentum(analyze.partCfg(), p_type)
 
         return np.array([res[0], res[1], res[2]])
 

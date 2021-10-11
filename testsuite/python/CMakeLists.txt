@@ -128,7 +128,7 @@ python_test(FILE constant_pH.py MAX_NUM_PROC 1)
 python_test(FILE constant_pH_stats.py MAX_NUM_PROC 4 LABELS long)
 python_test(FILE writevtf.py MAX_NUM_PROC 4)
 # python_test(FILE lb_stokes_sphere.py MAX_NUM_PROC 8 LABELS gpu long) # TODO WALBERLA
-# python_test(FILE lb_pressure_tensor.py MAX_NUM_PROC 1 LABELS gpu long) # TODO WALBERLA
+python_test(FILE lb_pressure_tensor.py MAX_NUM_PROC 1 LABELS gpu long)
 # python_test(FILE ek_fluctuations.py MAX_NUM_PROC 1 LABELS gpu) # TODO WALBERLA
 # python_test(FILE ek_charged_plate.py MAX_NUM_PROC 1 LABELS gpu) # TODO WALBERLA
 # python_test(FILE ek_eof_one_species.py MAX_NUM_PROC 1 LABELS gpu SUFFIX x) # TODO WALBERLA
@@ -140,10 +140,11 @@ python_test(FILE langevin_thermostat_stats.py MAX_NUM_PROC 1 LABELS long)
 python_test(FILE brownian_dynamics.py MAX_NUM_PROC 1)
 python_test(FILE brownian_dynamics_stats.py MAX_NUM_PROC 1 LABELS long)
 # python_test(FILE lees_edwards.py MAX_NUM_PROC 1) # TODO WALBERLA
-# python_test(FILE lb_lees_edwards.py MAX_NUM_PROC 1) # TODO WALBERLA
+python_test(FILE lb_lees_edwards.py MAX_NUM_PROC 1)
+# python_test(FILE lb_couette_flow.py MAX_NUM_PROC 1) # TODO WALBERLA
 python_test(FILE nsquare.py MAX_NUM_PROC 4)
 python_test(FILE virtual_sites_relative.py MAX_NUM_PROC 2)
-python_test(FILE virtual_sites_tracers_walberla.py MAX_NUM_PROC 1) # TODO WALBERLA
+python_test(FILE virtual_sites_tracers_walberla.py MAX_NUM_PROC 1)
 python_test(FILE domain_decomposition.py MAX_NUM_PROC 4)
 # python_test(FILE integrator_npt.py MAX_NUM_PROC 4)  # TODO WALBERLA: Random segfault in the CellSystem
 # python_test(FILE integrator_npt_stats.py MAX_NUM_PROC 4 LABELS long)  # TODO WALBERLA: Random segfault in the CellSystem
@@ -206,10 +207,10 @@ python_test(FILE oif_volume_conservation.py MAX_NUM_PROC 2)
 python_test(FILE simple_pore.py MAX_NUM_PROC 1)
 python_test(FILE field_test.py MAX_NUM_PROC 1)
 python_test(FILE lb_boundary.py MAX_NUM_PROC 2)
-# python_test(FILE lb_streaming.py MAX_NUM_PROC 4) # TODO WALBERLA
+python_test(FILE lb_streaming.py MAX_NUM_PROC 4)
 python_test(FILE lb_shear.py MAX_NUM_PROC 2)
-# python_test(FILE lb_thermostat.py MAX_NUM_PROC 1) # TODO WALBERLA
-python_test(FILE lb_buoyancy_force.py MAX_NUM_PROC 2)
+python_test(FILE lb_thermostat.py MAX_NUM_PROC 1)
+# python_test(FILE lb_buoyancy_force.py MAX_NUM_PROC 2) # TODO WALBERLA (dynamic UBB)
 python_test(FILE lb_momentum_conservation.py MAX_NUM_PROC 4)
 python_test(FILE p3m_electrostatic_pressure.py MAX_NUM_PROC 2)
 python_test(FILE sigint.py DEPENDENCIES sigint_child.py MAX_NUM_PROC 1)

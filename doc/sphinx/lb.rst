@@ -16,7 +16,7 @@ geometries and boundary conditions are somewhat limited in comparison to
 Here we restrict the documentation to the interface. For a more detailed
 description of the method, please refer to the literature.
 
-.. note:: Please cite :cite:`arnold13a` (BibTeX key ``arnold13a`` in :file:`doc/sphinx/zrefs.bib`) if you use the LB fluid and :cite:`rohm12a` (BibTeX key ``rohm12a`` in :file:`doc/sphinx/zrefs.bib`) if you use the GPU implementation.
+.. note:: Please cite :cite:`godenschwager13a` and :cite:`bauer21a` (BibTeX keys ``godenschwager13a`` and ``bauer21a`` in :file:`doc/sphinx/zrefs.bib`) if you use the LB fluid. When generating your own kernels with pystencils and lbmpy, please also cite :cite:`bauer19a` resp. and :cite:`bauer21b` (BibTeX key ``bauer19a`` resp. ``bauer21b`` in :file:`doc/sphinx/zrefs.bib`).
 
 .. _Setting up a LB fluid:
 
@@ -29,18 +29,18 @@ The following minimal example illustrates how to use the LBM in |es|::
     system = espressomd.System(box_l=[10, 20, 30])
     system.time_step = 0.01
     system.cell_system.skin = 0.4
-    lb = espressomd.lb.LBFluid(agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
+    lb = espressomd.lb.LBFluidWalberla(agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
     system.actors.add(lb)
     system.integrator.run(100)
 
 To use the GPU accelerated variant, replace line 5 in the example above by::
 
-    lb = espressomd.lb.LBFluidGPU(agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
+    lb = espressomd.lb.LBFluidWalberlaGPU(agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
 
 .. note:: Feature ``CUDA`` required for GPU accelerated variant
 
 To use the (much faster) GPU implementation of the LBM, use
-:class:`espressomd.lb.LBFluidGPU` in place of :class:`espressomd.lb.LBFluid`.
+:class:`espressomd.lb.LBFluidWalberlaGPU` in place of :class:`espressomd.lb.LBFluidWalberla`.
 Please note that the GPU implementation uses single precision floating point operations. This decreases the accuracy of calculations compared to the CPU implementation. In particular, due to rounding errors, the fluid density decreases over time, when external forces, coupling to particles, or thermalization is used. The loss of density is on the order of :math:`10^{-12}` per time step.
 
 The command initializes the fluid with a given set of parameters. It is
@@ -50,7 +50,7 @@ to set up a box of a desired size. The parameter is used to set the
 lattice constant of the fluid, so the size of the box in every direction
 must be a multiple of ``agrid``.
 
-In the following, we discuss the parameters that can be supplied to the LBM in |es|. The detailed interface definition is available at :class:`espressomd.lb.LBFluid`.
+In the following, we discuss the parameters that can be supplied to the LBM in |es|. The detailed interface definition is available at :class:`espressomd.lb.LBFluidWalberla`.
 
 The LB scheme and the MD scheme are not synchronized: In one LB time
 step typically several MD steps are performed. This allows to speed up
@@ -72,7 +72,7 @@ Thermalization of the fluid (and particle coupling later on) can be activated by
 providing a non-zero value for the parameter ``kT``. Then, a seed has to be provided for
 the fluid thermalization::
 
-    lbfluid = espressomd.lb.LBFluid(kT=1.0, seed=134, ...)
+    lb = espressomd.lb.LBFluidWalberla(kT=1.0, seed=134, ...)
 
 The parameter ``ext_force_density`` takes a three dimensional vector as an
 array_like of :obj:`float`, representing a homogeneous external body force density in MD
@@ -89,7 +89,7 @@ expert, leave their defaults unchanged. If you do change them, note that they
 are to be given in LB units.
 
 Before running a simulation at least the following parameters must be
-set up: ``agrid``, ``tau``, ``visc``, ``dens``. For the other parameters, the following are taken: ``bulk_visc=0``, ``gamma_odd=0``, ``gamma_even=0``, ``ext_force_density=[0,0,0]``.
+set up: ``agrid``, ``tau``, ``visc``, ``dens``.
 
 .. _Checkpointing LB:
 
@@ -133,18 +133,8 @@ To get interpolated velocity values between lattice nodes, the function::
     lb.get_interpolated_velocity(pos = [1.1,1.2,1.3])
 
 with a single position  ``pos`` as an argument can be used.
-For the GPU fluid :class:`espressomd.lb.LBFluidGPU`
-also :py:meth:`espressomd.lb.LBFluidGPU.get_interpolated_fluid_velocity_at_positions()`
-is available, which expects a numpy array of positions as an argument.
 
-By default, the interpolation is done linearly between the nearest 8 LB nodes,
-but for the GPU implementation also a quadratic scheme involving 27 nodes is implemented
-(see eqs. 297 and 301 in :cite:`duenweg08a`).
-You can choose by calling
-one of::
-
-    lb.set_interpolation_order('linear')
-    lb.set_interpolation_order('quadratic')
+The interpolation is done linearly between the nearest 8 LB nodes.
 
 A note on boundaries:
 both interpolation schemes don't take into account the physical location of the boundaries
@@ -169,7 +159,7 @@ the :ref:`LB thermostat` (See more detailed description there). A short example 
 
     system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1.5)
 
-where ``lbf`` is an instance of either :class:`espressomd.lb.LBFluid` or :class:`espressomd.lb.LBFluidGPU`,
+where ``lbf`` is an instance of either :class:`espressomd.lb.LBFluidWalberla` or :class:`~espressomd.lb.LBFluidWalberlaGPU`,
 ``gamma`` the friction coefficient and ``seed`` the seed for the random number generator involved
 in the thermalization.
 
@@ -184,11 +174,10 @@ Appending three indices to the ``lb`` object returns an object that represents t
     lb[x, y, z].density              # fluid density (one scalar for LB and CUDA)
     lb[x, y, z].velocity             # fluid velocity (a numpy array of three floats)
     lb[x, y, z].pressure_tensor      # fluid pressure tensor (a symmetric 3x3 numpy array of floats)
-    lb[x, y, z].pressure_tensor_neq  # nonequilibrium part of the pressure tensor (as above)
-    lb[x, y, z].boundary             # flag indicating whether the node is fluid or boundary (fluid: boundary=0, boundary: boundary != 0)
+    lb[x, y, z].is_boundary          # flag indicating whether the node is fluid or boundary (fluid: boundary=0, boundary: boundary != 1)
     lb[x, y, z].population           # 19 LB populations (a numpy array of 19 floats, check order from the source code)
 
-All of these properties can be read and used in further calculations. Only the property ``population`` can be modified. The indices ``x,y,z`` are integers and enumerate the LB nodes in the three directions, starts with 0. To modify ``boundary``, refer to :ref:`Setting up boundary conditions`.
+All of these properties can be read and used in further calculations. Only the property ``population`` can be modified. The indices ``x,y,z`` are integers and enumerate the LB nodes in the three directions, starts with 0. To modify ``is_boundary``, refer to :ref:`Setting up boundary conditions`.
 
 Example::
 
@@ -228,8 +217,8 @@ drift. To remove the momentum in the fluid call::
 Output for visualization
 ------------------------
 
-|es| implements the :meth:`LBFluidWalberla.write_vtk()` command to output
-one or multiple fluid field data into a single file::
+|es| implements the :meth:`espressomd.lb.LBFluidWalberla.add_vtk_writer()`
+command to output one or multiple fluid field data into a single file::
 
 
     vtk_obs = ['density', 'velocity_vector']
@@ -240,14 +229,14 @@ one or multiple fluid field data into a single file::
     lb_vtk.disable()
     self.system.integrator.run(10)
     lb_vtk.enable()
-    # create a VTK callback that writes on demand
-    lb_vtk = lbf.add_vtk_writer('vtk_now', vtk_obs)
-    lb_vtk.write()
+    # create a VTK callback that writes only when explicitly called
+    lb_vtk_on_demand = lbf.add_vtk_writer('vtk_now', vtk_obs)
+    lb_vtk_on_demand.write()
 
 Currently supported fluid properties are the density, velocity vector
 and pressure tensor. By default, the properties of the current state
-of the fluid are written to disk. To add a callback that writes to
-disk continuously, use the optional argument ``delta_N`` to indicate
+of the fluid are written to disk on demand. To add a callback that writes
+to disk continuously, use the optional argument ``delta_N`` to indicate
 the level of subsampling. Such a callback can be deactivated.
 
 The VTK format is readable by visualization software such as ParaView [1]_
@@ -264,7 +253,7 @@ Choosing between the GPU and CPU implementations
 |es| contains an implementation of the LBM for NVIDIA
 GPUs using the CUDA framework. On CUDA-supporting machines this can be
 activated by compiling with the feature ``CUDA``. Within the
-Python script, the :class:`~espressomd.lb.LBFluid` object can be substituted with the :class:`~espressomd.lb.LBFluidGPU` object to switch from CPU based to GPU based execution. For further
+Python script, the :class:`~espressomd.lb.LBFluidWalberla` object can be substituted with the :class:`~espressomd.lb.LBFluidWalberlaGPU` object to switch from CPU based to GPU based execution. For further
 information on CUDA support see section :ref:`GPU Acceleration with CUDA`.
 
 The following minimal example demonstrates how to use the GPU implementation of the LBM in analogy to the example for the CPU given in section :ref:`Setting up a LB fluid`::
@@ -273,7 +262,7 @@ The following minimal example demonstrates how to use the GPU implementation of 
     system = espressomd.System(box_l=[10, 20, 30])
     system.time_step = 0.01
     system.cell_system.skin = 0.4
-    lb = espressomd.lb.LBFluidGPU(agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
+    lb = espressomd.lb.LBFluidWalberlaGPU(agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
     system.actors.add(lb)
     system.integrator.run(100)
 
@@ -355,7 +344,7 @@ The following example sets up a system consisting of a spherical boundary in the
     system.time_step = 0.01
     system.cell_system.skin = 0.4
 
-    lb = espressomd.lb.LBFluid(agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
+    lb = espressomd.lb.LBFluidWalberla(agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
     system.actors.add(lb)
 
     v = [0, 0, 0.01]  # the boundary slip
@@ -410,7 +399,7 @@ straightforward. The ``LBBoundary`` object furthermore possesses a property ``fo
 
 
 .. [1]
-   http://www.paraview.org/
+   https://www.paraview.org/
 
 .. [2]
    http://code.enthought.com/projects/mayavi/

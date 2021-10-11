@@ -25,11 +25,18 @@ import numpy as np
 cimport numpy as np
 from libc cimport stdint
 from .actors cimport Actor
+from .shapes import Shape
+from . import lbboundaries
 from . cimport cuda_init
 from . import cuda_init
 from . import utils
-from .utils import array_locked, is_valid_type, to_char_pointer
-from .utils cimport Vector3i, Vector3d, Vector6d, make_array_locked, create_nparray_from_double_array
+from .utils import is_valid_type, to_char_pointer
+from .utils cimport Vector3i
+from .utils cimport Vector3d
+from .utils cimport Vector6d
+from .utils cimport make_array_locked
+from .utils cimport make_Vector3d
+from .utils cimport create_nparray_from_double_array
 from .grid cimport box_geo
 
 
@@ -290,12 +297,7 @@ cdef class HydrodynamicInteraction(Actor):
             The LB fluid velocity at ``pos``.
 
         """
-        cdef Vector3d p
-
-        for i in range(3):
-            p[i] = pos[i]
-        cdef Vector3d v = lb_lbfluid_get_interpolated_velocity(p) * lb_lbfluid_get_lattice_speed()
-        return make_array_locked(v)
+        return python_lbnode_get_interpolated_velocity(make_Vector3d(pos))
 
     def add_force_at_pos(self, pos, force):
         """Adds a force to the fluid at given position
@@ -308,13 +310,7 @@ cdef class HydrodynamicInteraction(Actor):
               The force vector which will be distributed at the position.
 
         """
-        cdef Vector3d p
-        cdef Vector3d f
-
-        for i in range(3):
-            p[i] = pos[i]
-            f[i] = force[i]
-        lb_lbfluid_add_force_at_pos(p, f)
+        lb_lbfluid_add_force_at_pos(make_Vector3d(pos), make_Vector3d(force))
 
     def save_checkpoint(self, path, binary):
         '''
@@ -364,24 +360,19 @@ cdef class HydrodynamicInteraction(Actor):
 
     property pressure_tensor:
         def __get__(self):
-            cdef Vector6d tensor = python_lbfluid_get_pressure_tensor(self.agrid, self.tau)
-            return array_locked(np.array([[tensor[0], tensor[1], tensor[3]],
-                                          [tensor[1], tensor[2], tensor[4]],
-                                          [tensor[3], tensor[4], tensor[5]]]))
+            tensor = python_lbfluid_get_pressure_tensor(self.agrid, self.tau)
+            return utils.array_locked(tensor)
 
         def __set__(self, value):
             raise NotImplementedError
 
     property ext_force_density:
         def __get__(self):
-            cdef Vector3d res
-            res = python_lbfluid_get_ext_force_density(
-                self.agrid, self.tau)
-            return make_array_locked(res)
+            return python_lbfluid_get_ext_force_density(self.agrid, self.tau)
 
         def __set__(self, ext_force_density):
             python_lbfluid_set_ext_force_density(
-                ext_force_density, self.agrid, self.tau)
+                make_Vector3d(ext_force_density), self.agrid, self.tau)
 
     property viscosity:
         def __get__(self):
@@ -436,7 +427,7 @@ IF LB_WALBERLA:
                 self._params['tau'] / self._params['agrid']**2
             lb_dens = self._params['dens'] * self._params['agrid']**3
             lb_kT = self._params['kT'] * \
-                self._params['tau']**2 / self._params['agrid']**2 
+                self._params['tau']**2 / self._params['agrid']**2
             mpi_init_lb_walberla(
                 lb_visc, lb_dens, self._params["agrid"], self._params["tau"],
                 box_geo.length(),
@@ -448,6 +439,20 @@ IF LB_WALBERLA:
             mpi_destruct_lb_walberla()
             super()._deactivate_method()
 
+        def get_nodes_in_shape(self, shape):
+            """Provides a generator for iterating over all lb nodes inside the given shape"""
+            utils.check_type_or_throw_except(
+                shape, 1, Shape, "expected a espressomd.shapes.Shape")
+            lb_shape = self.shape
+            idxs = itertools.product(
+                range(lb_shape[0]), range(lb_shape[1]), range(lb_shape[2]))
+            for idx in idxs:
+                pos = (np.asarray(idx) + 0.5) * self._params['agrid']
+                if shape.is_inside(position=pos):
+                    yield self[idx]
+
+        # TODO WALBERLA: maybe split this method in 2 methods with clear names
+        # like add_vtk_writer_auto_update() and add_vtk_writer_manual()
         def add_vtk_writer(self, identifier, observables, delta_N=0,
                            base_folder='vtk_out', prefix='simulation_step'):
             """
@@ -502,6 +507,18 @@ IF LB_WALBERLA:
                 obj = VTKOutputManual(*args)
             return obj
 
+    IF CUDA:
+        cdef class LBFluidWalberlaGPU(HydrodynamicInteraction):
+            """
+            Initialize the lattice-Boltzmann method for hydrodynamic flow using
+            waLBerla for the GPU. See :class:`HydrodynamicInteraction` for the
+            list of parameters.
+
+            """
+
+            def __init__(self, *args, **kwargs):
+                raise NotImplementedError("Not implemented yet")
+
 
 cdef class LBFluidRoutines:
 
@@ -520,16 +537,56 @@ cdef class LBFluidRoutines:
 
     property velocity:
         def __get__(self):
-            return make_array_locked(python_lbnode_get_velocity(self.node))
+            return python_lbnode_get_velocity(self.node)
 
         def __set__(self, value):
-            cdef Vector3d c_velocity
             utils.check_type_or_throw_except(
                 value, 3, float, "velocity has to be 3 floats")
-            c_velocity[0] = value[0]
-            c_velocity[1] = value[1]
-            c_velocity[2] = value[2]
-            python_lbnode_set_velocity(self.node, c_velocity)
+            python_lbnode_set_velocity(self.node, make_Vector3d(value))
+
+    property boundary:
+        def __get__(self):
+            """
+            Returns
+            -------
+            :ref:`espressomd.lbboundaries.VelocityBounceBack`
+                If the node is a boundary node
+            None
+                If the node is not a boundary node
+            """
+
+            is_boundary = lb_lbnode_is_boundary(self.node)
+            if is_boundary:
+                vel = python_lbnode_get_velocity_at_boundary(self.node)
+                return lbboundaries.VelocityBounceBack(vel)
+            return None
+
+        def __set__(self, value):
+            """
+            Parameters
+            ----------
+            value : :ref:`espressomd.lbboundaries.VelocityBounceBack` or None
+                If value is :ref:`espressomd.lbboundaries.VelocityBounceBack`,
+                set the node to be a boundary node with the specified velocity.
+                If value is ``None``, the node will become a fluid node.
+            """
+
+            if isinstance(value, lbboundaries.VelocityBounceBack):
+                python_lbnode_set_velocity_at_boundary(
+                    self.node, make_Vector3d(value.velocity))
+            elif value is None:
+                lb_lbnode_remove_from_boundary(self.node)
+            else:
+                raise ValueError(
+                    "LB Boundary must be instance of lbboundaries.VelocityBounceBack or None")
+
+    property boundary_force:
+        def __get__(self):
+            return python_lbnode_get_boundary_force(self.node)
+
+        def __set__(self, val):
+            raise NotImplementedError(
+                "The boundary force can only be read, never set.")
 
     property density:
         def __get__(self):
@@ -540,10 +597,8 @@ cdef class LBFluidRoutines:
 
     property pressure_tensor:
         def __get__(self):
-            cdef Vector6d tensor = python_lbnode_get_pressure_tensor(self.node)
-            return array_locked(np.array([[tensor[0], tensor[1], tensor[3]],
-                                          [tensor[1], tensor[2], tensor[4]],
-                                          [tensor[3], tensor[4], tensor[5]]]))
+            tensor = python_lbnode_get_pressure_tensor(self.node)
+            return utils.array_locked(tensor)
 
         def __set__(self, value):
             raise NotImplementedError
@@ -552,7 +607,7 @@ cdef class LBFluidRoutines:
         def __get__(self):
             cdef vector[double] pop
             pop = lb_lbnode_get_pop(self.node)
-            return array_locked(
+            return utils.array_locked(
                 create_nparray_from_double_array(pop.data(), pop.size()))
 
         def __set__(self, population):
@@ -571,14 +626,11 @@ cdef class LBFluidRoutines:
 
     property last_applied_force:
         def __get__(self):
-            return make_array_locked(
-                python_lbnode_get_last_applied_force(self.node))
+            return python_lbnode_get_last_applied_force(self.node)
 
         def __set__(self, force):
-            cdef Vector3d _force
-            for i in range(3):
-                _force[i] = force[i]
-            python_lbnode_set_last_applied_force(self.node, _force)
+            python_lbnode_set_last_applied_force(
+                self.node, make_Vector3d(force))
 
     def __eq__(self, obj1):
         index_1 = np.array(self.index)
@@ -616,7 +668,7 @@ class LBSlice:
                         np.array([x, y, z])), prop_name)
         if shape_res == (1,):
             res = np.squeeze(res, axis=-1)
-        return array_locked(res)
+        return utils.array_locked(res)
 
     def set_values(self, x_indices, y_indices, z_indices, prop_name, value):
         for i, x in enumerate(x_indices):

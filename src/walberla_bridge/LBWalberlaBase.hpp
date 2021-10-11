@@ -32,7 +32,6 @@
 #include <boost/optional.hpp>
 
 #include <cstddef>
-#include <functional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -93,17 +92,27 @@ public:
   get_node_velocity_at_boundary(const Utils::Vector3i &node) const = 0;
 
   /** @brief Set a node as velocity boundary condition and assign boundary
-   *  velocity
+   *  velocity. For batch processing, use @p reallocate = false and call
+   *  @ref reallocate_ubb_field at the end (useful for e.g. LB boundaries).
    */
   virtual bool set_node_velocity_at_boundary(const Utils::Vector3i &node,
-                                             const Utils::Vector3d &v) = 0;
+                                             const Utils::Vector3d &v,
+                                             bool reallocate) = 0;
   /** @brief Get (stored) force applied on node due to boundary condition */
   virtual boost::optional<Utils::Vector3d>
   get_node_boundary_force(const Utils::Vector3i &node) const = 0;
-  virtual bool remove_node_from_boundary(const Utils::Vector3i &node) = 0;
+  /** @brief Remove a node from the boundaries.
+   *  For batch processing, use @p reallocate = false and call
+   *  @ref reallocate_ubb_field at the end (useful for e.g. LB boundaries).
+   */
+  virtual bool remove_node_from_boundary(const Utils::Vector3i &node,
+                                         bool reallocate) = 0;
   virtual boost::optional<bool>
   get_node_is_boundary(const Utils::Vector3i &node,
                        bool consider_ghosts = false) const = 0;
+  /** @brief Rebuild the UBB field. This is a time consuming operation. */
+  virtual void reallocate_ubb_field() = 0;
+  /** @brief Clear the boundary flag field and the UBB field. */
   virtual void clear_boundaries() = 0;
 
   // Pressure tensor
@@ -177,15 +186,6 @@ enum class OutputVTK : unsigned {
   density = 1u << 0u,
   velocity_vector = 1u << 1u,
   pressure_tensor = 1u << 2u,
-};
-
-struct LeesEdwardsCallbacks {
-  LeesEdwardsCallbacks(std::function<double()> get_pos_offset,
-                       std::function<double()> get_shear_velocity)
-      : get_pos_offset(std::move(get_pos_offset)),
-        get_shear_velocity(std::move(get_shear_velocity)) {}
-  std::function<double()> get_pos_offset;
-  std::function<double()> get_shear_velocity;
 };
 
 #endif // LB_WALBERLA_H

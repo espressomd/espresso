@@ -152,7 +152,7 @@ When the feature ``ROTATION`` is compiled in, particles not only have a position
 Even if the particle rotational inertia is isotropic, the rotation state can be important if, e.g., the particle carries a dipole or is an active particle.
 
 The rotational degrees of freedom are integrated using a velocity Verlet scheme.
-The implementation is based on a quaternion representation of the particle orientation and described in :cite:`omelyan98` with quaternion components indexing made according to the formalism :math:`q = a + b\mathbf{i} + c\mathbf{j} + d\mathbf{k}` :cite:`allen2017`.
+The implementation is based on a quaternion representation of the particle orientation and described in :cite:`omelyan98a` with quaternion components indexing made according to the formalism :math:`q = a + b\mathbf{i} + c\mathbf{j} + d\mathbf{k}` :cite:`allen17a`.
 
 When the Langevin thermostat is enabled, the rotational degrees of freedom are also thermalized.
 
@@ -558,7 +558,7 @@ Self-propelled swimmers
 
 .. note::
 
-    If you are using this feature, please cite :cite:`degraaf16`.
+    If you are using this feature, please cite :cite:`degraaf16a`.
 
 
 .. seealso::

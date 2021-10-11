@@ -6,7 +6,7 @@ class LeesEdwards(ScriptInterfaceHelper):
 
     """Interface to the Lees-Edwards boundary conditions.
 
-       See documentation.
+    See documentation.
 
     """
 
@@ -48,16 +48,15 @@ class OscillatoryShear(ScriptInterfaceHelper):
     Parameters
     ----------
     shear_direction
-       Cartesian coordinate of the shear direction (0=x,1=y,2=z)
+        Cartesian coordinate of the shear direction (0=x,1=y,2=z)
     shear_plane_normal
-       Cartesian coordinate of the shear plane normal
-   amplitude
-      Maximum amplitude of the positional offset at the Lees-Edwards boundary
-   frequency
-       Frequency of the shear
+        Cartesian coordinate of the shear plane normal
+    amplitude
+        Maximum amplitude of the positional offset at the Lees-Edwards boundary
+    frequency
+        Frequency of the shear
     time_0
-       Time offset of the oscillation
-
+        Time offset of the oscillation
 
     """
     _so_name = "LeesEdwards::OscillatoryShear"

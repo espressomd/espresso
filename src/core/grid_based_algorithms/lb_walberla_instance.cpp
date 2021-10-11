@@ -29,6 +29,7 @@
 #include "lees_edwards_protocol.hpp"
 
 #include <LBWalberlaBase.hpp>
+#include <LeesEdwardsPack.hpp>
 #include <lb_walberla_init.hpp>
 
 #include <utils/Vector.hpp>
@@ -61,35 +62,6 @@ LBWalberlaParams *lb_walberla_params() {
   return lb_walberla_params_instance;
 }
 
-void init_lb_walberla(double viscosity, double density, double agrid,
-                      double tau, const Utils::Vector3i &grid_dimensions,
-                      const Utils::Vector3i &node_grid, double kT,
-                      unsigned int seed) {
-  // Exceptions need to be converted to runtime errors so they can be
-  // handled from Python in a parallel simulation
-  try {
-    boost::optional<LeesEdwardsCallbacks> lees_edwards_object;
-    if (auto active_protocol = lees_edwards_active_protocol.lock()) {
-      lees_edwards_object = LeesEdwardsCallbacks(
-          [active_protocol]() {
-            return get_pos_offset(get_sim_time(), *active_protocol);
-          },
-          [active_protocol]() {
-            return get_shear_velocity(get_sim_time(), *active_protocol);
-          });
-    }
-    lb_walberla_instance =
-        new_lb_walberla(viscosity, density, grid_dimensions, node_grid, kT,
-                        seed, std::move(lees_edwards_object));
-    lb_walberla_params_instance = new LBWalberlaParams{agrid, tau};
-  } catch (const std::exception &e) {
-    runtimeErrorMsg() << "Error during Walberla initialization: " << e.what();
-    lb_walberla_instance = nullptr;
-    lb_walberla_params_instance = nullptr;
-  }
-}
-REGISTER_CALLBACK(init_lb_walberla)
-
 void destruct_lb_walberla() {
   delete lb_walberla_instance;
   delete lb_walberla_params_instance;
@@ -97,6 +69,36 @@ void destruct_lb_walberla() {
   lb_walberla_params_instance = nullptr;
 }
 REGISTER_CALLBACK(destruct_lb_walberla)
+
+void init_lb_walberla(double viscosity, double density, double agrid,
+                      double tau, const Utils::Vector3i &grid_dimensions,
+                      const Utils::Vector3i &node_grid, double kT,
+                      unsigned int seed) {
+  boost::optional<LeesEdwardsPack> lees_edwards_object;
+  if (auto active_protocol = lees_edwards_active_protocol.lock()) {
+    auto const &le_bc = box_geo.clees_edwards_bc();
+    lees_edwards_object = LeesEdwardsPack(
+        le_bc.shear_direction, le_bc.shear_plane_normal,
+        [active_protocol]() {
+          return get_pos_offset(get_sim_time(), *active_protocol);
+        },
+        [active_protocol]() {
+          return get_shear_velocity(get_sim_time(), *active_protocol);
+        });
+  }
+  // Exceptions need to be converted to runtime errors so they can be
+  // handled from Python in a parallel simulation
+  try {
+    lb_walberla_instance =
+        new_lb_walberla(viscosity, density, grid_dimensions, node_grid, kT,
+                        seed, std::move(lees_edwards_object));
+    lb_walberla_params_instance = new LBWalberlaParams{agrid, tau};
+  } catch (const std::exception &e) {
+    runtimeErrorMsg() << "Error during Walberla initialization: " << e.what();
+    destruct_lb_walberla();
+  }
+}
+REGISTER_CALLBACK(init_lb_walberla)
 
 void mpi_init_lb_walberla(double viscosity, double density, double agrid,
                           double tau, Utils::Vector3d box_size, double kT,

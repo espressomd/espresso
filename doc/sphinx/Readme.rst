@@ -5,7 +5,7 @@ How to get started with Sphinx
 
    .. code-block:: bash
 
-       pip3 install --user --upgrade 'sphinx>=1.6.7,!=2.1.0,!=3.0.0' 'sphinxcontrib-bibtex>=0.3.5'
+       pip3 install --user --upgrade 'sphinx>=2.3.0,!=3.0.0' 'sphinxcontrib-bibtex>=0.3.5'
 
 #. Compile the ``sphinx`` target in your build directory (that can take some
    time since we depend on finishing the build of the interface):

@@ -21,7 +21,7 @@ import unittest_decorators as utx
 import espressomd
 import espressomd.electrostatics
 import espressomd.interactions
-import espressomd.drude_helpers
+from espressomd.drude_helpers import DrudeHelpers
 
 
 @utx.skipIfMissingFeatures(["P3M", "ELECTROSTATICS", "THOLE",
@@ -130,21 +130,23 @@ class Drude(ut.TestCase):
         # Place Particles
         dmol = 5.0
 
-        # Test Anion
+        # anion
         pos_pf6 = box_center + np.array([0, dmol, 0])
-        system.part.add(id=0, type=types["PF6"], pos=pos_pf6, q=charges["PF6"],
-                        mass=masses["PF6"], fix=[1, 1, 1])
+        part0 = system.part.add(
+            type=types["PF6"], pos=pos_pf6, q=charges["PF6"],
+            mass=masses["PF6"], fix=[1, 1, 1])
 
+        # cation
         pos_com = box_center - np.array([0, dmol, 0])
-        system.part.add(id=2, type=types["BMIM_C1"],
-                        pos=pos_com + [0, -0.527, 1.365], q=charges["BMIM_C1"],
-                        mass=masses["BMIM_C1"], fix=[1, 1, 1])
-        system.part.add(id=4, type=types["BMIM_C2"],
-                        pos=pos_com + [0, 1.641, 2.987], q=charges["BMIM_C2"],
-                        mass=masses["BMIM_C2"], fix=[1, 1, 1])
-        system.part.add(id=6, type=types["BMIM_C3"],
-                        pos=pos_com + [0, 0.187, -2.389], q=charges["BMIM_C3"],
-                        mass=masses["BMIM_C3"], fix=[1, 1, 1])
+        part2 = system.part.add(id=2, type=types["BMIM_C1"],
+                                pos=pos_com + [0, -0.527, 1.365], q=charges["BMIM_C1"],
+                                mass=masses["BMIM_C1"], fix=[1, 1, 1])
+        part4 = system.part.add(id=4, type=types["BMIM_C2"],
+                                pos=pos_com + [0, 1.641, 2.987], q=charges["BMIM_C2"],
+                                mass=masses["BMIM_C2"], fix=[1, 1, 1])
+        part6 = system.part.add(id=6, type=types["BMIM_C3"],
+                                pos=pos_com + [0, 0.187, -2.389], q=charges["BMIM_C3"],
+                                mass=masses["BMIM_C3"], fix=[1, 1, 1])
 
         system.thermostat.set_langevin(
             kT=temperature_com,
@@ -166,43 +168,44 @@ class Drude(ut.TestCase):
         system.bonded_inter.add(thermalized_dist_bond)
         system.bonded_inter.add(harmonic_bond)
 
-        espressomd.drude_helpers.add_drude_particle_to_core(
-            system, harmonic_bond, thermalized_dist_bond, system.part[0], 1,
+        dh = DrudeHelpers()
+
+        part1 = dh.add_drude_particle_to_core(
+            system, harmonic_bond, thermalized_dist_bond, part0,
             types["PF6_D"], polarizations["PF6"], mass_drude,
             coulomb_prefactor, 2.0)
-        espressomd.drude_helpers.add_drude_particle_to_core(
-            system, harmonic_bond, thermalized_dist_bond, system.part[2], 3,
+        part3 = dh.add_drude_particle_to_core(
+            system, harmonic_bond, thermalized_dist_bond, part2,
             types["BMIM_C1_D"], polarizations["BMIM_C1"], mass_drude,
             coulomb_prefactor, 2.0)
-        espressomd.drude_helpers.add_drude_particle_to_core(
-            system, harmonic_bond, thermalized_dist_bond, system.part[4], 5,
+        part5 = dh.add_drude_particle_to_core(
+            system, harmonic_bond, thermalized_dist_bond, part4,
             types["BMIM_C2_D"], polarizations["BMIM_C2"], mass_drude,
             coulomb_prefactor, 2.0)
-        espressomd.drude_helpers.add_drude_particle_to_core(
-            system, harmonic_bond, thermalized_dist_bond, system.part[6], 7,
+        part7 = dh.add_drude_particle_to_core(
+            system, harmonic_bond, thermalized_dist_bond, part6,
             types["BMIM_C3_D"], polarizations["BMIM_C3"], mass_drude,
             coulomb_prefactor, 2.0)
 
         # Setup and add Drude-Core SR exclusion bonds
-        espressomd.drude_helpers.setup_and_add_drude_exclusion_bonds(system)
+        dh.setup_and_add_drude_exclusion_bonds(system)
 
         # Setup intramol SR exclusion bonds once
-        espressomd.drude_helpers.setup_intramol_exclusion_bonds(
-            system, [6, 7, 8], [1, 2, 3],
+        dh.setup_intramol_exclusion_bonds(
+            system,
+            [types["BMIM_C1_D"], types["BMIM_C2_D"], types["BMIM_C3_D"]],
+            [types["BMIM_C1"], types["BMIM_C2"], types["BMIM_C3"]],
             [charges["BMIM_C1"], charges["BMIM_C2"], charges["BMIM_C3"]])
-
         # Add bonds per molecule
-        espressomd.drude_helpers.add_intramol_exclusion_bonds(
-            system, [3, 5, 7], [2, 4, 6])
+        dh.add_intramol_exclusion_bonds(
+            [part3, part5, part7], [part2, part4, part6])
 
         # Thole
-        espressomd.drude_helpers.add_all_thole(system)
+        dh.add_all_thole(system)
 
-        def dipole_moment(id_core, id_drude):
-            pc = system.part[id_core]
-            pd = system.part[id_drude]
-            v = pd.pos - pc.pos
-            return pd.q * v
+        def dipole_moment(core_part, drude_part):
+            v = drude_part.pos - core_part.pos
+            return drude_part.q * v
 
         def measure_dipole_moments():
             dm_pf6 = []
@@ -215,10 +218,10 @@ class Drude(ut.TestCase):
             for _ in range(100):
                 system.integrator.run(1)
 
-                dm_pf6.append(dipole_moment(0, 1))
-                dm_C1.append(dipole_moment(2, 3))
-                dm_C2.append(dipole_moment(4, 5))
-                dm_C3.append(dipole_moment(6, 7))
+                dm_pf6.append(dipole_moment(part0, part1))
+                dm_C1.append(dipole_moment(part2, part3))
+                dm_C2.append(dipole_moment(part4, part5))
+                dm_C3.append(dipole_moment(part6, part7))
 
             dm_pf6_m = np.mean(dm_pf6, axis=0)
             dm_C1_m = np.mean(dm_C1, axis=0)

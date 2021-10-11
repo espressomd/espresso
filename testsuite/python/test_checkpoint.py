@@ -77,10 +77,24 @@ class CheckpointTest(ut.TestCase):
         lbf = self.get_active_actor_of_type(espressomd.lb.LBFluidWalberla)
         cpt_mode = int("@TEST_BINARY@")
         cpt_path = self.checkpoint.checkpoint_dir + "/lb{}.cpt"
-        with self.assertRaises(RuntimeError):
-            lbf.load_checkpoint(cpt_path.format("-corrupted"), cpt_mode)
-        with self.assertRaisesRegex(RuntimeError, 'grid dimensions mismatch'):
-            lbf.load_checkpoint(cpt_path.format("-wrong-boxdim"), cpt_mode)
+
+        # check exception mechanism with corrupted LB checkpoint files
+        with self.assertRaisesRegex(RuntimeError, 'EOF found'):
+            lbf.load_checkpoint(cpt_path.format("-missing-data"), cpt_mode)
+        with self.assertRaisesRegex(RuntimeError, 'extra data found, expected EOF'):
+            lbf.load_checkpoint(cpt_path.format("-extra-data"), cpt_mode)
+        if cpt_mode == 0:
+            with self.assertRaisesRegex(RuntimeError, 'incorrectly formatted data'):
+                lbf.load_checkpoint(cpt_path.format("-wrong-format"), cpt_mode)
+            with self.assertRaisesRegex(RuntimeError, 'grid dimensions mismatch'):
+                lbf.load_checkpoint(cpt_path.format("-wrong-boxdim"), cpt_mode)
+            with self.assertRaisesRegex(RuntimeError, 'population size mismatch'):
+                lbf.load_checkpoint(
+                    cpt_path.format("-wrong-popsize"), cpt_mode)
+        with self.assertRaisesRegex(RuntimeError, 'could not open file'):
+            lbf.load_checkpoint(cpt_path.format("-unknown"), cpt_mode)
+
+        # load the valid LB checkpoint file
         lbf.load_checkpoint(cpt_path.format(""), cpt_mode)
         precision = 9 if "LB.ACTIVE.WALBERLA" in modes else 5
         m = np.pi / 12
@@ -186,17 +200,18 @@ class CheckpointTest(ut.TestCase):
                 np.copy(p3.f), -np.copy(p4.f), rtol=1e-4)
             self.assertGreater(np.linalg.norm(np.copy(p3.f) - old_force), 1e6)
 
-#    # TODO WALBERLA
-#    @ut.skipIf('THERM.LB' not in modes, 'LB thermostat not in modes')
-#    def test_thermostat_LB(self):
-#        thmst = system.thermostat.get_state()[0]
-#        if 'LB.GPU' in modes and not espressomd.gpu_available():
-#            self.assertEqual(thmst['type'], 'OFF')
-#        else:
-#            self.assertEqual(thmst['type'], 'LB')
-#            # rng_counter_fluid = seed, seed is 0 because kT=0
-#            self.assertEqual(thmst['rng_counter_fluid'], 0)
-#            self.assertEqual(thmst['gamma'], 2.0)
+    @utx.skipIfMissingFeatures('LB_WALBERLA')
+    @ut.skipIf('LB.ACTIVE.WALBERLA' not in modes, 'waLBerla LBM not in modes')
+    @ut.skipIf('THERM.LB' not in modes, 'LB thermostat not in modes')
+    def test_thermostat_LB(self):
+        thmst = system.thermostat.get_state()[0]
+        if 'LB.GPU' in modes and not espressomd.gpu_available():
+            self.assertEqual(thmst['type'], 'OFF')
+        else:
+            self.assertEqual(thmst['type'], 'LB')
+            # rng_counter_fluid = seed, seed is 0 because kT=0
+            self.assertEqual(thmst['rng_counter_fluid'], 0)
+            self.assertEqual(thmst['gamma'], 2.0)
 
     @ut.skipIf('THERM.LANGEVIN' not in modes,
                'Langevin thermostat not in modes')
@@ -347,6 +362,25 @@ class CheckpointTest(ut.TestCase):
             state = system.part[1].bonds[1][0].params
             self.assertEqual(state, reference)
 
+    @ut.skipIf('THERM.LB' in modes, 'LB thermostat in modes')
+    @utx.skipIfMissingFeatures(['MASS'])
+    def test_drude_helpers(self):
+        drude_type = 10
+        core_type = 0
+        self.assertIn(drude_type, dh.drude_dict)
+        self.assertEqual(dh.drude_dict[drude_type]['alpha'], 1.)
+        self.assertEqual(dh.drude_dict[drude_type]['thole_damping'], 2.)
+        self.assertEqual(dh.drude_dict[drude_type]['core_type'], core_type)
+        self.assertIn(core_type, dh.drude_dict)
+        self.assertEqual(dh.drude_dict[core_type]['alpha'], 1.)
+        self.assertEqual(dh.drude_dict[core_type]['thole_damping'], 2.)
+        self.assertEqual(dh.drude_dict[core_type]['drude_type'], drude_type)
+        self.assertEqual(len(dh.drude_dict), 2)
+        self.assertEqual(dh.core_type_list, [core_type])
+        self.assertEqual(dh.drude_type_list, [drude_type])
+        self.assertEqual(dh.core_id_from_drude_id, {5: 1})
+        self.assertEqual(dh.drude_id_list, [5])
+
     @utx.skipIfMissingFeatures(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE'])
     def test_virtual_sites(self):
         self.assertTrue(system.part[1].virtual)
@@ -486,11 +520,13 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(list(system.part[1].exclusions), [2])
         self.assertEqual(list(system.part[2].exclusions), [0, 1])
 
+    @utx.skipIfMissingFeatures('LB_WALBERLA')
+    @ut.skipIf('LB.ACTIVE.WALBERLA' not in modes, 'waLBerla LBM not in modes')
     @ut.skipIf(not LB or not espressomd.has_features("LB_BOUNDARIES"),
                "Missing features")
     @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
     def test_lb_boundaries(self):
-        # check boundaries agree on all MPI nodes
+        # check boundary objects
         self.assertEqual(len(system.lbboundaries), 2)
         np.testing.assert_allclose(
             np.copy(system.lbboundaries[0].velocity), [1e-4, 1e-4, 0])
@@ -500,15 +536,15 @@ class CheckpointTest(ut.TestCase):
             system.lbboundaries[0].shape, espressomd.shapes.Wall)
         self.assertIsInstance(
             system.lbboundaries[1].shape, espressomd.shapes.Wall)
+        # check boundary flag
         lbf = self.get_active_actor_of_type(espressomd.lb.LBFluidWalberla)
         np.testing.assert_equal(lbf[0, :, :].is_boundary.astype(int), 1)
         np.testing.assert_equal(lbf[-1, :, :].is_boundary.astype(int), 1)
         np.testing.assert_equal(lbf[1:-1, :, :].is_boundary.astype(int), 0)
-        # remove boundaries on all MPI nodes
+        # remove boundaries
         system.lbboundaries.clear()
         self.assertEqual(len(system.lbboundaries), 0)
-        # TODO WALBERLA: removing LBBoundaries doesn't reset the fluid flag
-        # np.testing.assert_equal(lbf[:, :, :].is_boundary.astype(int), 0)
+        np.testing.assert_equal(lbf[:, :, :].is_boundary.astype(int), 0)
 
     @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
     def test_constraints(self):

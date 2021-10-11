@@ -349,6 +349,11 @@ Vector<T, 3> vector_product(Vector<T, 3> const &a, Vector<T, 3> const &b) {
           a[0] * b[1] - a[1] * b[0]};
 }
 
+// Product of array elements.
+template <class T, std::size_t N> T product(Vector<T, N> const &v) {
+  return std::accumulate(v.cbegin(), v.cend(), T{1}, std::multiplies<T>());
+}
+
 template <class T, class U, std::size_t N>
 auto hadamard_product(Vector<T, N> const &a, Vector<U, N> const &b) {
   using std::declval;
@@ -434,14 +439,6 @@ template <typename T, typename U,
                                        detail::is_vector<U>::value)>>
 auto hadamard_division(T const &a, U const &b) {
   return a / b;
-}
-
-template <typename T>
-Vector<T,3> unit_vector(int i) {
-	if (i==0) return {1.,0.,0.};
-	if (i==1) return {0.,1.,0.};
-	if (i==2) return {0.,0.,1.};
-	throw std::runtime_error("coordiante out of range");
 }
 
 /**

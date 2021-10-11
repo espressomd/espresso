@@ -6,7 +6,10 @@
 
 #include "Particle.hpp"
 
+#include <utils/Vector.hpp>
+
 #include <memory>
+#include <stdexcept>
 
 extern std::weak_ptr<LeesEdwards::ActiveProtocol> lees_edwards_active_protocol;
 
@@ -15,7 +18,7 @@ inline void update_offset(Particle &p, const BoxGeometry &box,
                           double time_step) {
   auto const &le = box.clees_edwards_bc();
   p.l.lees_edwards_offset -=
-      (0.5 * time_step * p.l.i[le.shear_plane_normal] * le.shear_velocity);
+      0.5 * time_step * p.l.i[le.shear_plane_normal] * le.shear_velocity;
 }
 
 inline void push(Particle &p, const BoxGeometry &box, double time_step) {
@@ -34,8 +37,9 @@ inline void push(Particle &p, const BoxGeometry &box, double time_step) {
   } else if (p.r.p[le.shear_plane_normal] < 0) {
     p.l.lees_edwards_flag = 1; // perform a positive half velocity shift in
                                // propagate_vel_finalize_p_inst
-  } else
+  } else {
     p.l.lees_edwards_flag = 0;
+  }
 
   p.m.v[le.shear_direction] += p.l.lees_edwards_flag * le.shear_velocity;
   p.r.p[le.shear_direction] += p.l.lees_edwards_flag * le.pos_offset;
@@ -54,7 +58,14 @@ inline double velocity_shift(short int le_flag, const BoxGeometry &box) {
 }
 
 inline Utils::Vector3d shear_direction(const BoxGeometry &box) {
-  return Utils::unit_vector<double>(box.clees_edwards_bc().shear_direction);
+  auto const dir = box.clees_edwards_bc().shear_direction;
+  if (dir == 0)
+    return {1., 0., 0.};
+  if (dir == 1)
+    return {0., 1., 0.};
+  if (dir == 2)
+    return {0., 0., 1.};
+  throw std::runtime_error("coordinate out of range");
 }
 
 extern std::shared_ptr<ActiveProtocol> active_protocol;
@@ -64,7 +75,7 @@ inline void update_pos_offset(const ActiveProtocol &protocol, BoxGeometry &box,
                               double time) {
   if (box.type() == BoxType::LEES_EDWARDS) {
     box.lees_edwards_bc().pos_offset = get_pos_offset(time, protocol);
-  };
+  }
 }
 
 inline void update_shear_velocity(const ActiveProtocol &protocol,
