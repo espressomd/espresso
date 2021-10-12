@@ -239,8 +239,8 @@ void lb_init_boundaries() {
           auto const boundary = boost::find_if(
               lbboundaries | boost::adaptors::reversed,
               [&pos](auto const lbb) { return lbb->shape().is_inside(pos); });
+          auto const index = get_linear_index(x, y, z, lblattice.halo_grid);
           if (boundary != boost::rend(lbboundaries)) {
-            auto const index = get_linear_index(x, y, z, lblattice.halo_grid);
             auto const boundary_number =
                 std::distance(lbboundaries.begin(), boundary.base()) - 1;
             auto &node = lbfields[index];
@@ -249,8 +249,7 @@ void lb_init_boundaries() {
                 (*boundary)->velocity() *
                 (lb_lbfluid_get_tau() / lb_lbfluid_get_agrid());
           } else {
-            lbfields[get_linear_index(x, y, z, lblattice.halo_grid)].boundary =
-                0;
+            lbfields[index].boundary = 0;
           }
         }
       }
