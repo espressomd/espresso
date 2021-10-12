@@ -27,8 +27,8 @@ import pystencils as ps
 # walberla project, commit 3455bf3eebc64efa9beaecd74ebde3459b98991d
 
 
-def __lattice_model(generation_context, class_name, lb_method,
-                    stream_collide_ast, refinement_scaling):
+def __macroscopic_values_accessors(generation_context, class_name, lb_method,
+                                   stream_collide_ast):
 
     # Function derived from lbmpy_walberla.walberla_lbm_generation.__lattice_model()
     # in the walberla project, commit 3455bf3eebc64efa9beaecd74ebde3459b98991d
@@ -36,11 +36,9 @@ def __lattice_model(generation_context, class_name, lb_method,
     from jinja2 import Environment, FileSystemLoader, StrictUndefined
     from sympy.tensor import IndexedBase
     from pystencils.backends.cbackend import CustomSympyPrinter, get_headers
-    from pystencils.data_types import cast_func
-    from pystencils.sympyextensions import get_symmetric_part
     from pystencils.transformations import add_types
     from pystencils_walberla.jinja_filters import add_pystencils_filters_to_jinja_env
-    from lbmpy_walberla.walberla_lbm_generation import get_stencil_name, equations_to_code, expression_to_code, stencil_switch_statement
+    from lbmpy_walberla.walberla_lbm_generation import get_stencil_name, equations_to_code, stencil_switch_statement
 
     cpp_printer = CustomSympyPrinter()
     stencil_name = get_stencil_name(lb_method.stencil)
@@ -68,19 +66,6 @@ def __lattice_model(generation_context, class_name, lb_method,
         equilibrium.main_assignments, dtype_string, False)[2]
     equilibrium = sp.Matrix([e.rhs for e in equilibrium])
 
-    symmetric_equilibrium = get_symmetric_part(equilibrium, vel_arr_symbols)
-    symmetric_equilibrium = symmetric_equilibrium.subs(
-        sp.Rational(1, 2), cast_func(sp.Rational(1, 2), dtype_string))
-    asymmetric_equilibrium = sp.expand(equilibrium - symmetric_equilibrium)
-
-    force_model = lb_method.force_model
-    macroscopic_velocity_shift = None
-    if force_model and hasattr(force_model, 'macroscopic_velocity_shift'):
-        es = (sp.Rational(1, 2), cast_func(sp.Rational(1, 2), dtype_string))
-        macroscopic_velocity_shift = [
-            expression_to_code(e.subs(*es), "lm.", ['rho'], dtype=dtype_string)
-            for e in force_model.macroscopic_velocity_shift(rho_sym)]
-
     cqc = lb_method.conserved_quantity_computation
 
     eq_input_from_input_eqs = cqc.equilibrium_input_equations_from_init_values(
@@ -95,21 +80,6 @@ def __lattice_model(generation_context, class_name, lb_method,
 
     required_headers = get_headers(stream_collide_ast)
 
-    if refinement_scaling:
-        refinement_scaling_info = [(e0, e1, expression_to_code(e2, '', dtype=dtype_string)) for e0, e1, e2 in
-                                   refinement_scaling.scaling_info]
-        # append '_' to entries since they are used as members
-        for i in range(len(refinement_scaling_info)):
-            updated_entry = (refinement_scaling_info[i][0],
-                             refinement_scaling_info[i][1].replace(refinement_scaling_info[i][1],
-                                                                   refinement_scaling_info[i][1] + '_'),
-                             refinement_scaling_info[i][2].replace(refinement_scaling_info[i][1],
-                                                                   refinement_scaling_info[i][1] + '_'),
-                             )
-            refinement_scaling_info[i] = updated_entry
-    else:
-        refinement_scaling_info = None
-
     jinja_context = {
         'class_name': class_name,
         'stencil_name': stencil_name,
@@ -121,11 +91,8 @@ def __lattice_model(generation_context, class_name, lb_method,
         'inverse_weights': ",".join(str((1 / w).evalf()) + constant_suffix for w in lb_method.weights),
 
         'equilibrium_from_direction': stencil_switch_statement(lb_method.stencil, equilibrium),
-        'symmetric_equilibrium_from_direction': stencil_switch_statement(lb_method.stencil, symmetric_equilibrium),
-        'asymmetric_equilibrium_from_direction': stencil_switch_statement(lb_method.stencil, asymmetric_equilibrium),
         'equilibrium': [cpp_printer.doprint(e) for e in equilibrium],
 
-        'macroscopic_velocity_shift': macroscopic_velocity_shift,
         'density_getters': equations_to_code(cqc.output_equations_from_pdfs(pdfs_sym, {"density": rho_sym}),
                                              variables_without_prefix=[e.name for e in pdfs_sym], dtype=dtype_string),
         'momentum_density_getter': equations_to_code(momentum_density_getter, variables_without_prefix=pdfs_sym,
@@ -133,8 +100,6 @@ def __lattice_model(generation_context, class_name, lb_method,
         'second_momentum_getter': equations_to_code(second_momentum_getter, variables_without_prefix=pdfs_sym,
                                                     dtype=dtype_string),
         'density_velocity_setter_macroscopic_values': density_velocity_setter_macroscopic_values,
-
-        'refinement_scaling_info': refinement_scaling_info,
 
         'target': 'cpu',
         'namespace': 'lbm',
@@ -153,14 +118,13 @@ def __lattice_model(generation_context, class_name, lb_method,
 
 def generate_macroscopic_values_accessors(
         generation_context, class_name, collision_rule, field_layout='zyxf',
-        refinement_scaling=None, **create_kernel_params):
+        **create_kernel_params):
 
     # Function derived from lbmpy_walberla.walberla_lbm_generation.generate_lattice_model()
     # in the walberla project, commit 3455bf3eebc64efa9beaecd74ebde3459b98991d
 
     from lbmpy.fieldaccess import StreamPullTwoFieldsAccessor
     from lbmpy.updatekernels import create_lbm_kernel
-    from pystencils import create_kernel
     from pystencils_walberla.codegen import default_create_kernel_parameters
 
     # usually a numpy layout is chosen by default i.e. xyzf - which is bad for waLBerla where at least the spatial
@@ -195,16 +159,15 @@ def generate_macroscopic_values_accessors(
 
     stream_collide_update_rule = create_lbm_kernel(
         collision_rule, src_field, dst_field, StreamPullTwoFieldsAccessor())
-    stream_collide_ast = create_kernel(
+    stream_collide_ast = ps.create_kernel(
         stream_collide_update_rule,
         **create_kernel_params)
     stream_collide_ast.function_name = 'kernel_streamCollide'
     stream_collide_ast.assumed_inner_stride_one = create_kernel_params[
         'cpu_vectorize_info']['assume_inner_stride_one']
 
-    __lattice_model(
+    __macroscopic_values_accessors(
         generation_context,
         class_name,
         lb_method,
-        stream_collide_ast,
-        refinement_scaling)
+        stream_collide_ast)
