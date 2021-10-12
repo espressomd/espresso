@@ -27,15 +27,14 @@ import pystencils as ps
 # walberla project, commit 3455bf3eebc64efa9beaecd74ebde3459b98991d
 
 
-def __macroscopic_values_accessors(generation_context, class_name, lb_method,
-                                   stream_collide_ast):
+def __macroscopic_values_accessors(generation_context, lb_method):
 
     # Function derived from lbmpy_walberla.walberla_lbm_generation.__lattice_model()
     # in the walberla project, commit 3455bf3eebc64efa9beaecd74ebde3459b98991d
 
     from jinja2 import Environment, FileSystemLoader, StrictUndefined
     from sympy.tensor import IndexedBase
-    from pystencils.backends.cbackend import CustomSympyPrinter, get_headers
+    from pystencils.backends.cbackend import CustomSympyPrinter
     from pystencils.transformations import add_types
     from pystencils_walberla.jinja_filters import add_pystencils_filters_to_jinja_env
     from lbmpy_walberla.walberla_lbm_generation import get_stencil_name, equations_to_code, stencil_switch_statement
@@ -46,7 +45,6 @@ def __macroscopic_values_accessors(generation_context, class_name, lb_method,
         raise ValueError(
             "lb_method uses a stencil that is not supported in waLBerla")
 
-    communication_stencil_name = stencil_name if stencil_name != "D3Q15" else "D3Q27"
     is_float = not generation_context.double_accuracy
     dtype_string = "float32" if is_float else "float64"
 
@@ -76,19 +74,12 @@ def __macroscopic_values_accessors(generation_context, class_name, lb_method,
         pdfs_sym, {'density': rho_sym, 'momentum_density': momentum_density_symbols})
     second_momentum_getter = cqc.output_equations_from_pdfs(
         pdfs_sym, {'moment2': second_momentum_symbols})
-    constant_suffix = "f" if is_float else ""
-
-    required_headers = get_headers(stream_collide_ast)
 
     jinja_context = {
-        'class_name': class_name,
         'stencil_name': stencil_name,
-        'communication_stencil_name': communication_stencil_name,
         'D': lb_method.dim,
         'Q': len(lb_method.stencil),
         'compressible': lb_method.conserved_quantity_computation.compressible,
-        'weights': ",".join(str(w.evalf()) + constant_suffix for w in lb_method.weights),
-        'inverse_weights': ",".join(str((1 / w).evalf()) + constant_suffix for w in lb_method.weights),
 
         'equilibrium_from_direction': stencil_switch_statement(lb_method.stencil, equilibrium),
         'equilibrium': [cpp_printer.doprint(e) for e in equilibrium],
@@ -101,9 +92,7 @@ def __macroscopic_values_accessors(generation_context, class_name, lb_method,
                                                     dtype=dtype_string),
         'density_velocity_setter_macroscopic_values': density_velocity_setter_macroscopic_values,
 
-        'target': 'cpu',
         'namespace': 'lbm',
-        'headers': required_headers,
     }
 
     env = Environment(loader=FileSystemLoader(os.path.dirname(__file__)),
@@ -113,11 +102,17 @@ def __macroscopic_values_accessors(generation_context, class_name, lb_method,
     header = env.get_template(
         'macroscopic_values_accessors.tmpl.h').render(**jinja_context)
 
-    generation_context.write_file(f"{class_name}.h", header)
+    generation_context.write_file('macroscopic_values_accessors.h', header)
+    with open('macroscopic_values_accessors.h', 'a+') as f:
+        f.seek(0)
+        content = f.read()
+        f.seek(0)
+        f.truncate()
+        f.write(content.replace('lm.force_->', 'force_field.'))
 
 
 def generate_macroscopic_values_accessors(
-        generation_context, class_name, collision_rule, field_layout='zyxf',
+        generation_context, collision_rule, field_layout='zyxf',
         **create_kernel_params):
 
     # Function derived from lbmpy_walberla.walberla_lbm_generation.generate_lattice_model()
@@ -138,9 +133,6 @@ def generate_macroscopic_values_accessors(
 
     create_kernel_params = default_create_kernel_parameters(
         generation_context, create_kernel_params)
-    if create_kernel_params['target'] == 'gpu':
-        raise ValueError(
-            "Lattice Models can only be generated for CPUs. To generate LBM on GPUs use sweeps directly")
 
     if field_layout == 'fzyx':
         create_kernel_params['cpu_vectorize_info']['assume_inner_stride_one'] = True
@@ -166,8 +158,4 @@ def generate_macroscopic_values_accessors(
     stream_collide_ast.assumed_inner_stride_one = create_kernel_params[
         'cpu_vectorize_info']['assume_inner_stride_one']
 
-    __macroscopic_values_accessors(
-        generation_context,
-        class_name,
-        lb_method,
-        stream_collide_ast)
+    __macroscopic_values_accessors(generation_context, lb_method)

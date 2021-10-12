@@ -190,13 +190,6 @@ def generate_setters(lb_method):
     return pdfs_setter
 
 
-def patch_accessors(classname, name):
-    with open(f'{classname}.h') as f:
-        with open(f'{name}.h', 'w') as g:
-            g.write(f.read().replace('lm.force_->', 'force_field.'))
-    os.remove(f'{classname}.h')
-
-
 adapt_pystencils()
 
 
@@ -331,10 +324,8 @@ with CodeGeneration() as ctx:
     # generate accessors
     generate_macroscopic_values_accessors(
         ctx,
-        'LBWalberlaImpl',
         collision_rule_unthermalized,
         field_layout="fzyx")
-    patch_accessors('LBWalberlaImpl', 'macroscopic_values_accessors')
 
     # Boundary conditions
     ubb_dynamic = PatchedUBB(lambda *args: None, dim=3)

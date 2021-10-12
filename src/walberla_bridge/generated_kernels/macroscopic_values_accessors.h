@@ -31,8 +31,6 @@
 #include "field/SwapableCompare.h"
 #include "stencil/D3Q19.h"
 
-#include <vector>
-
 #ifdef __GNUC__
 #define RESTRICT __restrict__
 #elif _MSC_VER
@@ -806,13 +804,6 @@ inline real_t get(const PdfField_T & /* pdf */, const cell_idx_t /* x */,
                   const cell_idx_t /* y */, const cell_idx_t /* z */,
                   const Vector3<real_t> & /* velocity */,
                   const real_t /* rho */) {
-  WALBERLA_ABORT("Not implemented");
-  return real_t(0.0);
-}
-
-inline real_t get(const std::vector<real_t> & /* nonEquilibrium */,
-                  const real_t /* relaxationParam */,
-                  const real_t /* rho */ = real_t(1)) {
   WALBERLA_ABORT("Not implemented");
   return real_t(0.0);
 }
