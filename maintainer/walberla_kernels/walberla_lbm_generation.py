@@ -103,8 +103,7 @@ def __macroscopic_values_accessors(generation_context, lb_method):
         'macroscopic_values_accessors.tmpl.h').render(**jinja_context)
 
     generation_context.write_file('macroscopic_values_accessors.h', header)
-    with open('macroscopic_values_accessors.h', 'a+') as f:
-        f.seek(0)
+    with open('macroscopic_values_accessors.h', 'r+') as f:
         content = f.read()
         f.seek(0)
         f.truncate()

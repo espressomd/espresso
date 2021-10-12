@@ -23,7 +23,6 @@ import sympy as sp
 import pystencils as ps
 from pystencils.field import Field
 from lbmpy.creationfunctions import create_lb_collision_rule, create_mrt_orthogonal, force_model_from_string
-from lbmpy.stencils import get_stencil
 from pystencils_walberla import CodeGeneration, codegen
 
 from lbmpy_walberla import generate_boundary, generate_lb_pack_info
@@ -88,8 +87,6 @@ def earmark_generated_kernels():
     Add an earmark at the beginning of generated kernels to document the
     pystencils/lbmpy toolchain that was used to create them.
     '''
-    import lbmpy
-    import lbmpy_walberla
     walberla_root = lbmpy_walberla.__file__.split('/python/lbmpy_walberla/')[0]
     with open(os.path.join(walberla_root, '.git/HEAD')) as f:
         walberla_commit = f.read()
@@ -336,11 +333,11 @@ with CodeGeneration() as ctx:
                       streaming_pattern="push")
 
     # patch for old versions of pystencils_walberla
-    with open('Dynamic_UBB.h') as f:
-        dynamic_ubb_code = f.read()
-    if '#pragma once' not in dynamic_ubb_code:
-        with open('Dynamic_UBB.h', 'w') as f:
-            f.write('#pragma once\n' + dynamic_ubb_code)
+    with open('Dynamic_UBB.h', 'r+') as f:
+        content = f.read()
+        if '#pragma once' not in content:
+            f.seek(0)
+            f.write('#pragma once\n' + content)
 
     # communication
     pdfs = Field.create_generic(
