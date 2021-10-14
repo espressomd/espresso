@@ -78,7 +78,7 @@ class Buoyancy(object):
         sphere_volume = 4. / 3. * np.pi * RADIUS**3
 
         # Equilibration
-        last_force = -999999
+        last_force = np.inf * np.ones(3)
         self.system.integrator.run(100)
         while True:
             self.system.integrator.run(10)

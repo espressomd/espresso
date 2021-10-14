@@ -125,8 +125,8 @@ class LBPoiseuilleCommon:
                                      self.system.box_l[0] - 2.0 * AGRID,
                                      EXT_FORCE,
                                      VISC * DENS)
-        rmsd = np.linalg.norm(v_expected - v_measured)
-        self.assertLess(rmsd, 0.015 * AGRID / TIME_STEP)
+        atol = self.tolerance * AGRID / TIME_STEP
+        np.testing.assert_allclose(v_measured, v_expected, atol=atol)
 
 
 @utx.skipIfMissingFeatures(['LB_BOUNDARIES', 'EXTERNAL_FORCES'])
@@ -136,6 +136,7 @@ class LBCPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
 
     def setUp(self):
         self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
+        self.tolerance = 0.015
 
 
 @utx.skipIfMissingGPU()
@@ -146,6 +147,7 @@ class LBGPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
 
     def setUp(self):
         self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
+        self.tolerance = 0.00015
 
 
 @utx.skipIfMissingGPU()
@@ -160,6 +162,7 @@ class LBEkinPoiseuille(ut.TestCase, LBPoiseuilleCommon):
         species = espressomd.electrokinetics.Species(
             density=0., D=1., valency=0.)
         self.lbf.add_species(species)
+        self.tolerance = 0.00015
 
 
 @utx.skipIfMissingGPU()
@@ -171,6 +174,7 @@ class LBGPUPoiseuilleInterpolation(ut.TestCase, LBPoiseuilleCommon):
     def setUp(self):
         self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
         self.lbf.set_interpolation_order("quadratic")
+        self.tolerance = 0.015
 
     def test_profile(self):
         """
@@ -179,10 +183,7 @@ class LBGPUPoiseuilleInterpolation(ut.TestCase, LBPoiseuilleCommon):
         """
         self.prepare()
         velocities = np.zeros((50, 2))
-        x_values = np.linspace(
-            2.0 * AGRID,
-            self.system.box_l[0] - 2.0 * AGRID,
-            50)
+        x_values = np.linspace(2 * AGRID, self.system.box_l[0] - 2 * AGRID, 50)
 
         cnt = 0
         for x in x_values:
@@ -199,8 +200,9 @@ class LBGPUPoiseuilleInterpolation(ut.TestCase, LBPoiseuilleCommon):
                                      self.system.box_l[0] - 2.0 * AGRID,
                                      EXT_FORCE,
                                      VISC * DENS)
-        rmsd = np.linalg.norm(v_expected - velocities[:, 1])
-        self.assertLess(rmsd, 0.02 * AGRID / TIME_STEP)
+        v_measured = velocities[:, 1]
+        atol = self.tolerance * AGRID / TIME_STEP
+        np.testing.assert_allclose(v_measured, v_expected, atol=atol)
 
 
 if __name__ == '__main__':
