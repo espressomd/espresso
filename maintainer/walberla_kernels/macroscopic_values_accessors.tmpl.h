@@ -143,9 +143,6 @@ namespace DensityAndVelocity
         auto z = it.z();
 
         {{density_velocity_setter_macroscopic_values | indent(8)}}
-        {% if D == 2 -%}
-        const real_t u_2(0.0);
-        {% endif %}
 
         Equilibrium::set(it, Vector3<real_t>(u_0, u_1, u_2), rho{%if not compressible %} + real_t(1) {%endif%});
     }
@@ -157,9 +154,6 @@ namespace DensityAndVelocity
               const real_t rho_in = real_t(1.0) )
     {
         {{density_velocity_setter_macroscopic_values | indent(8)}}
-        {% if D == 2 -%}
-        const real_t u_2(0.0);
-        {% endif %}
 
         Equilibrium::set(pdf, x, y, z, Vector3<real_t>(u_0, u_1, u_2), rho {%if not compressible %} + real_t(1) {%endif%});
     }
@@ -181,9 +175,6 @@ namespace DensityAndVelocityRange
             const auto y = cellIt.y();
             const auto z = cellIt.z();
             {{density_velocity_setter_macroscopic_values | indent(12)}}
-            {% if D == 2 -%}
-            const real_t u_2(0.0);
-            {% endif %}
 
             Equilibrium::set(cellIt, Vector3<real_t>(u_0, u_1, u_2), rho{%if not compressible %} + real_t(1) {%endif%});
         }
