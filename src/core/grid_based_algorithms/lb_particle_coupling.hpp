@@ -66,8 +66,7 @@ void lb_lbcoupling_activate();
 void lb_lbcoupling_deactivate();
 
 /**
- * @brief Check if a position is within the local LB domain
- *       plus halo.
+ * @brief Check if a position is within the local LB domain plus halo.
  *
  * @param pos Position to check
  *
@@ -107,9 +106,9 @@ void mpi_bcast_lb_particle_coupling();
  *
  *  Section II.C. @cite ahlrichs99a
  *
- *  @param[in] p             The coupled particle.
- *  @param vel_offset        Velocity offset to be added to interpolated LB
- * velocity before calculating the force
+ *  @param[in] p           The coupled particle.
+ *  @param[in] vel_offset  Velocity offset to be added to interpolated LB
+ *                         velocity before calculating the force
  *
  *  @return The viscous coupling force
  */

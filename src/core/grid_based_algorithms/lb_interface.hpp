@@ -44,9 +44,6 @@ void lb_lbfluid_propagate();
  */
 void lb_lbfluid_init();
 
-/** @brief (Re-)initialize the fluid. */
-void lb_lbfluid_reinit_fluid();
-
 /**
  * @brief Get the current counter of the Philox RNG.
  */
@@ -247,6 +244,13 @@ const Utils::Vector3d
 lb_lbfluid_get_interpolated_velocity(const Utils::Vector3d &pos);
 
 /**
+ * @brief Calculates the interpolated fluid density on the master process.
+ * @param pos Position at which the density is to be calculated.
+ * @retval interpolated fluid density.
+ */
+double lb_lbfluid_get_interpolated_density(const Utils::Vector3d &pos);
+
+/**
  * @brief Calculates the interpolated force to be applied on the master process.
  * @param pos Position at which the force is to be calculated.
  * @retval interpolated force to be applied.
@@ -262,13 +266,6 @@ lb_lbfluid_get_force_to_be_applied(const Utils::Vector3d &pos);
  */
 void lb_lbfluid_add_force_at_pos(const Utils::Vector3d &pos,
                                  const Utils::Vector3d &f);
-
-/**
- * @brief Calculates the interpolated fluid density on the master process.
- * @param pos Position at which the density is to be calculated.
- * @retval interpolated fluid density.
- */
-double lb_lbfluid_get_interpolated_density(const Utils::Vector3d &pos);
 
 void mpi_set_lattice_switch(ActiveLB lattice_switch);
 
