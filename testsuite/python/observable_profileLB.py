@@ -16,9 +16,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
 import unittest_decorators as utx
-import numpy as np 
+import numpy as np
 import copy
-# import tests_common
+import tests_common
 
 import espressomd
 import espressomd.lb
@@ -73,14 +73,18 @@ class ObservableProfileLBCommon:
             for y in range(int(self.system.box_l[1] / AGRID)):
                 for z in range(int(self.system.box_l[2] / AGRID)):
                     self.lbf[x, y, z].velocity = [float(x), 0.0, 0.0]
-                    np.testing.assert_allclose(np.copy(self.lbf[x, y, z].velocity), [
-                                               float(x), 0.0, 0.0], atol=1E-6)
 
     def test_velocity_profile(self):
         self.set_fluid_velocities()
         obs = espressomd.observables.LBVelocityProfile(
             **LB_VELOCITY_PROFILE_PARAMS)
         obs_data = obs.calculate()
+        obs_edges = obs.call_method("edges")
+        _, np_edges = tests_common.get_histogram(
+            np.zeros([1, 3]), LB_VELOCITY_PROFILE_PARAMS, 'cartesian',
+            normed=True)
+        for i in range(3):
+            np.testing.assert_array_almost_equal(obs_edges[i], np_edges[i])
         for x in range(obs_data.shape[0]):
             for y in range(obs_data.shape[1]):
                 for z in range(obs_data.shape[2]):

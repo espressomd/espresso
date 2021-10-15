@@ -38,9 +38,9 @@ extern ActiveLB lattice_switch;
  */
 void lb_lbfluid_propagate();
 
-/** @brief Perform a full initialization of
- *  the lattice-Boltzmann system. All derived parameters
- *  and the fluid are reset to their default values.
+/**
+ * @brief Perform a full initialization of the lattice-Boltzmann system.
+ * All derived parameters and the fluid are reset to their default values.
  */
 void lb_lbfluid_init();
 
