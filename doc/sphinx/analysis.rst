@@ -530,8 +530,8 @@ In order to take snapshots of an observable,
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     system.cell_system.skin = 0.4
     system.time_step = 0.01
-    system.part.add(id=0, pos=[5.0, 5.0, 5.0], v=[0, 2, 0])
-    position_observable = espressomd.observables.ParticlePositions(ids=(0,))
+    p1 = system.part.add(pos=[5.0, 5.0, 5.0], v=[0, 2, 0])
+    position_observable = espressomd.observables.ParticlePositions(ids=[p1.id])
     accumulator = espressomd.accumulators.TimeSeries(
         obs=position_observable, delta_N=2)
     system.auto_update_accumulators.add(accumulator)
@@ -557,8 +557,8 @@ In order to calculate the running mean and variance of an observable,
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     system.cell_system.skin = 0.4
     system.time_step = 0.01
-    system.part.add(id=0, pos=[5.0, 5.0, 5.0], v=[0, 2, 0])
-    position_observable = espressomd.observables.ParticlePositions(ids=(0,))
+    p1 = system.part.add(pos=[5.0, 5.0, 5.0], v=[0, 2, 0])
+    position_observable = espressomd.observables.ParticlePositions(ids=[p1.id])
     accumulator = espressomd.accumulators.MeanVarianceCalculator(
         obs=position_observable, delta_N=2)
     system.auto_update_accumulators.add(accumulator)
@@ -636,13 +636,13 @@ Example: Calculating a particle's diffusion coefficient
 
 For setting up an observable and correlator to obtain the mean square displacement of particle 0, use::
 
-    pos_obs = ParticlePositions(ids=(0,))
+    pos_obs = ParticlePositions(ids=[p1.id])
     c_pos = Correlator(obs1=pos_obs, tau_lin=16, tau_max=100., delta_N=10,
                        corr_operation="square_distance_componentwise", compress1="discard1")
 
 To obtain the velocity auto-correlation function of particle 0, use::
 
-    obs = ParticleVelocities(ids=(0,))
+    obs = ParticleVelocities(ids=[p1.id])
     c_vel = Correlator(obs1=vel_obs, tau_lin=16, tau_max=20., delta_N=1,
                        corr_operation="scalar_product", compress1="discard1")
 
