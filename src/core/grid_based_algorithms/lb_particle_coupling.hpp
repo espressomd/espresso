@@ -98,13 +98,17 @@ void couple_particle(Particle &p, bool couple_virtual, double noise_amplitude,
 // internal function exposed for unit testing
 void add_swimmer_force(Particle const &p, double time_step, bool has_ghosts);
 
+/**
+ * @brief Calculate particle drift velocity offset due to ENGINE and
+ * ELECTROHYDRODYNAMICS.
+ */
 Utils::Vector3d lb_particle_coupling_drift_vel_offset(const Particle &p);
 
 void mpi_bcast_lb_particle_coupling();
 
-/** calculate drag force on a single particle
+/** @brief Calculate drag force on a single particle.
  *
- *  Section II.C. @cite ahlrichs99a
+ *  See section II.C. @cite ahlrichs99a
  *
  *  @param[in] p           The coupled particle.
  *  @param[in] vel_offset  Velocity offset to be added to interpolated LB
