@@ -75,7 +75,7 @@ class Ellipsoid(Shape, ScriptInterfaceHelper):
 @script_interface_register
 class Rhomboid(Shape, ScriptInterfaceHelper):
     """
-    An parallelepiped.
+    A parallelepiped.
 
     Attributes
     ----------
@@ -244,7 +244,7 @@ class HollowConicalFrustum(Shape, ScriptInterfaceHelper):
     direction: :obj:`int`, optional
         Surface orientation, for +1 the normal points
         out of the mantel, for -1 it points inside of the shape. Defaults to 1
-    cantral_angle: :obj:`float`, optional
+    central_angle: :obj:`float`, optional
         A ``central_angle`` creates an opening in the frustum along the side, centered symmetrically around the ``direction`` of ``cyl_transform_params``. Must be between ``0`` and ``2 pi``. Defaults to 0.
 
 
