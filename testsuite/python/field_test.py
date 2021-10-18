@@ -91,12 +91,12 @@ class FieldTest(ut.TestCase):
                                self.system.analysis.energy()['external_fields'])
 
         np.testing.assert_allclose(
-            electric_field.call_method("_eval_field", x=[0, 0, 0]), phi0)
+            np.copy(electric_field.call_method("_eval_field", x=[0, 0, 0])), phi0)
         np.testing.assert_allclose(
-            electric_field.call_method("_eval_field", x=[3, 2, 1]),
+            np.copy(electric_field.call_method("_eval_field", x=[3, 2, 1])),
             np.dot(-E, [3, 2, 1]) + phi0)
         np.testing.assert_allclose(
-            electric_field.call_method("_eval_jacobian", x=[3, 2, 1]), -E)
+            np.copy(electric_field.call_method("_eval_jacobian", x=[3, 2, 1])), -E)
 
     @utx.skipIfMissingFeatures("ELECTROSTATICS")
     def test_electric_plane_wave(self):
