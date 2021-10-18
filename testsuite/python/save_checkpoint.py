@@ -197,7 +197,7 @@ if 'THERM.LB' not in modes:
         r_cut=2, seed=51)
     system.bonded_inter.add(thermalized_bond)
     p2.add_bond((thermalized_bond, p1))
-    if espressomd.has_features(['ELECTROSTATICS', 'MASS']):
+    if espressomd.has_features(['ELECTROSTATICS', 'MASS', 'ROTATION']):
         dh = espressomd.drude_helpers.DrudeHelpers()
         dh.add_drude_particle_to_core(system, harmonic_bond, thermalized_bond,
                                       p2, 10, 1., 4.6, 0.8, 2.)

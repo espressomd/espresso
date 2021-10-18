@@ -363,7 +363,7 @@ class CheckpointTest(ut.TestCase):
             self.assertEqual(state, reference)
 
     @ut.skipIf('THERM.LB' in modes, 'LB thermostat in modes')
-    @utx.skipIfMissingFeatures(['MASS'])
+    @utx.skipIfMissingFeatures(['ELECTROSTATICS', 'MASS', 'ROTATION'])
     def test_drude_helpers(self):
         drude_type = 10
         core_type = 0
@@ -538,13 +538,17 @@ class CheckpointTest(ut.TestCase):
             system.lbboundaries[1].shape, espressomd.shapes.Wall)
         # check boundary flag
         lbf = self.get_active_actor_of_type(espressomd.lb.LBFluidWalberla)
-        np.testing.assert_equal(lbf[0, :, :].is_boundary.astype(int), 1)
-        np.testing.assert_equal(lbf[-1, :, :].is_boundary.astype(int), 1)
-        np.testing.assert_equal(lbf[1:-1, :, :].is_boundary.astype(int), 0)
+        np.testing.assert_equal(
+            np.copy(lbf[0, :, :].is_boundary.astype(int)), 1)
+        np.testing.assert_equal(
+            np.copy(lbf[-1, :, :].is_boundary.astype(int)), 1)
+        np.testing.assert_equal(
+            np.copy(lbf[1:-1, :, :].is_boundary.astype(int)), 0)
         # remove boundaries
         system.lbboundaries.clear()
         self.assertEqual(len(system.lbboundaries), 0)
-        np.testing.assert_equal(lbf[:, :, :].is_boundary.astype(int), 0)
+        np.testing.assert_equal(
+            np.copy(lbf[:, :, :].is_boundary.astype(int)), 0)
 
     @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
     def test_constraints(self):

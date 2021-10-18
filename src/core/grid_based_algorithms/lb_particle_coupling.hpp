@@ -51,14 +51,14 @@ void lb_lbcoupling_set_gamma(double friction);
 double lb_lbcoupling_get_gamma();
 bool lb_lbcoupling_is_seed_required();
 
-/*
+/**
  * @brief Activate the coupling between LB and MD particles.
  * @note This is a collective function and needs to be called from all
  * processes.
  */
 void lb_lbcoupling_activate();
 
-/*
+/**
  * @brief Deactivate the coupling between LB and MD particles.
  * @note This is a collective function and needs to be called from all
  * processes.
@@ -117,9 +117,7 @@ Utils::Vector3d lb_drag_force(Particle const &p,
 
 struct LB_Particle_Coupling {
   OptionalCounter rng_counter_coupling = {};
-  /*
-   * @brief Friction constant for the particle coupling.
-   */
+  /** @brief Friction coefficient for the particle coupling. */
   double gamma = 0.0;
   bool couple_to_md = false;
 

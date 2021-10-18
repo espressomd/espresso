@@ -146,8 +146,7 @@ void search_distance_sanity_check(double const distance) {
   auto range = *boost::min_element(cell_structure.max_range());
   if (distance > range) {
     runtimeErrorMsg() << "pair search distance " << distance
-                      << " bigger than the decomposition range " << range
-                      << ".\n";
+                      << " bigger than the decomposition range " << range;
   }
 }
 } // namespace detail

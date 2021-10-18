@@ -39,7 +39,6 @@ VISC = 2.7
 DENS = 1.7
 TIME_STEP = 0.05
 BOX_L = 8.0
-# Location of the LB wall. This was box_l/2 -1 for Espresso's LB
 EFFECTIVE_RADIUS = BOX_L / 2.0 - 1.0
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
