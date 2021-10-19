@@ -1,3 +1,4 @@
+#
 # Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -14,6 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 import espressomd.lb
 import espressomd.lbboundaries
 import espressomd.shapes
@@ -46,47 +48,37 @@ class LBBoundaryVelocityTest(ut.TestCase):
         self.lb_fluid = espressomd.lb.LBFluidWalberla(**self.lb_params)
         self.system.actors.add(self.lb_fluid)
 
-    def check_wall_slip(self, v_boundary):
+    def check_wall_slip(self, v_boundary, atol):
         """
         Check that the fluid adopts the velocity set by the boundary conditions.
         """
 
-        # agrid = self.lb_params['agrid']
-        # TODO WALBERLA: with normal=[1, 2, 3], the velocity diverges
-        wall_shape_left = espressomd.shapes.Wall(normal=[1, 0, 0], dist=0.5)
-#        wall_shape_right = espressomd.shapes.Wall(
-#            normal=[-1, 0, 0], dist=-(self.system.box_l[0] - agrid))
-        for shape in [wall_shape_left]:
+        agrid = self.lb_params['agrid']
+        wall_shape_left = espressomd.shapes.Wall(normal=[1, 0, 0], dist=agrid)
+        wall_shape_right = espressomd.shapes.Wall(
+            normal=[-1, 0, 0], dist=-(self.system.box_l[0] - agrid))
+        for shape in [wall_shape_left, wall_shape_right]:
             wall = espressomd.lbboundaries.LBBoundary(
                 shape=shape, velocity=v_boundary)
             self.system.lbboundaries.add(wall)
 
-#        import matplotlib.pyplot as plt
-#        a= []
-#        for i in range(60):
-#            self.system.integrator.run(200)
-#            v_fluid = self.lb_fluid[2, 1, 3].velocity
-#            a.append(np.linalg.norm(v_fluid))
-#        plt.plot(a)
-#        plt.show()
         # fluid in contact with moving boundary adopts same velocity
-        self.system.integrator.run(100)
-        v_fluid = self.lb_fluid[2, 0, 0].velocity
-        np.testing.assert_allclose(v_fluid, v_boundary, atol=1E-5)
+        self.system.integrator.run(200)
+        v_fluid = self.lb_fluid[2, 1, 3].velocity
+        np.testing.assert_allclose(v_fluid, v_boundary, atol=atol)
 
         # velocity in the middle needs to propagate first
         self.system.integrator.run(200)
         v_fluid = self.lb_fluid[2, 1, 3].velocity
-        np.testing.assert_allclose(v_fluid, v_boundary, atol=1E-5)
+        np.testing.assert_allclose(v_fluid, v_boundary, atol=atol)
 
-        # TODO WALBERLA
-#    def test_wall_slip_parallel(self):
-#        v_boundary = [0, 0, 0.07]
-#        self.check_wall_slip(v_boundary)
+    def test_wall_slip_parallel(self):
+        v_boundary = [0, 0, 0.07]
+        self.check_wall_slip(v_boundary, 2e-4)
 
-#    def test_wall_slip_nonparallel(self):
-#        v_boundary = [0.03, 0.02, 0.01]
-#        self.check_wall_slip(v_boundary)
+    def test_wall_slip_nonparallel(self):
+        v_boundary = [0.03, 0.02, 0.01]
+        self.check_wall_slip(v_boundary, 5e-4)
 
     def test_boundary_readout(self):
         """
