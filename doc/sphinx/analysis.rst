@@ -648,8 +648,7 @@ To obtain the velocity auto-correlation function of particle 0, use::
 
 The full example can be found in :file:`samples/diffusion_coefficient.py`.
 Note that in this example, the operation :literal:`square_distance_componentwise`
-is used, which is not a true correlation function but rather the squared
-distance of each component to the first sample is being computed. Other
+is used, which is not a correlation function in the mathematical sense. Other
 available operations include actual correlation functions, as described
 in the source documentation of :class:`espressomd.accumulators.Correlator`.
 
