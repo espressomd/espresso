@@ -15,6 +15,7 @@ set(EspressoCore_SRC
     galilei.cpp
     ghosts.cpp
     grid.cpp
+    HybridDecomposition.cpp
     immersed_boundaries.cpp
     interactions.cpp
     event.cpp

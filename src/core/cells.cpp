@@ -43,6 +43,7 @@
 
 #include <algorithm>
 #include <boost/range/algorithm/min_element.hpp>
+#include <boost/serialization/set.hpp>
 #include <functional>
 #include <stdexcept>
 #include <utility>
@@ -195,6 +196,61 @@ std::vector<int> mpi_resort_particles(int global_flag) {
   return n_parts;
 }
 
+void set_regular_decomposition() {
+  cell_structure.set_regular_decomposition(comm_cart, interaction_range(),
+                                           box_geo, local_geo);
+  on_cell_structure_change();
+}
+
+void set_atom_decomposition() {
+  cell_structure.set_atom_decomposition(comm_cart, box_geo, local_geo);
+  on_cell_structure_change();
+}
+
+void set_hybrid_decomposition(std::set<int> n_square_types,
+                              double cutoff_regular) {
+  cell_structure.set_hybrid_decomposition(comm_cart, cutoff_regular, box_geo,
+                                          local_geo, n_square_types);
+  on_cell_structure_change();
+}
+
+REGISTER_CALLBACK(set_regular_decomposition)
+REGISTER_CALLBACK(set_atom_decomposition)
+REGISTER_CALLBACK(set_hybrid_decomposition)
+
+void mpi_set_regular_decomposition() {
+  mpi_call_all(set_regular_decomposition);
+}
+void mpi_set_atom_decomposition() { mpi_call_all(set_atom_decomposition); }
+void mpi_set_hybrid_decomposition(std::set<int> n_square_types,
+                                  double cutoff_regular) {
+  mpi_call_all(set_hybrid_decomposition, n_square_types, cutoff_regular);
+}
+
+static Utils::Vector<std::size_t, 2> hybrid_parts_per_decomposition_local() {
+  assert(cell_structure.decomposition_type() ==
+         CellStructureType::CELL_STRUCTURE_HYBRID);
+  /* Get current HybridDecomposition to extract n_square_types */
+  auto &current_hybrid_decomposition =
+      dynamic_cast<const HybridDecomposition &>(
+          Utils::as_const(cell_structure).decomposition());
+
+  Utils::Vector<std::size_t, 2> parts_per_decomposition;
+  boost::mpi::reduce(
+      comm_cart, current_hybrid_decomposition.parts_per_decomposition_local(),
+      parts_per_decomposition, std::plus<>{}, 0);
+
+  return parts_per_decomposition;
+}
+
+REGISTER_CALLBACK_MAIN_RANK(hybrid_parts_per_decomposition_local)
+
+std::pair<std::size_t, std::size_t> hybrid_parts_per_decomposition() {
+  auto const parts_per_decomposition = mpi_call(
+      Communication::Result::main_rank, hybrid_parts_per_decomposition_local);
+  return std::make_pair(parts_per_decomposition[0], parts_per_decomposition[1]);
+}
+
 void cells_re_init(CellStructureType new_cs) {
   switch (new_cs) {
   case CellStructureType::CELL_STRUCTURE_REGULAR:
@@ -204,6 +260,16 @@ void cells_re_init(CellStructureType new_cs) {
   case CellStructureType::CELL_STRUCTURE_NSQUARE:
     cell_structure.set_atom_decomposition(comm_cart, box_geo, local_geo);
     break;
+  case CellStructureType::CELL_STRUCTURE_HYBRID: {
+    /* Get current HybridDecomposition to extract n_square_types */
+    auto &current_hybrid_decomposition =
+        dynamic_cast<const HybridDecomposition &>(
+            Utils::as_const(cell_structure).decomposition());
+    cell_structure.set_hybrid_decomposition(
+        comm_cart, current_hybrid_decomposition.get_cutoff_regular(), box_geo,
+        local_geo, current_hybrid_decomposition.get_n_square_types());
+    break;
+  }
   default:
     throw std::runtime_error("Unknown cell system type");
   }
@@ -267,6 +333,11 @@ Cell *find_current_cell(const Particle &p) {
 
 const RegularDecomposition *get_regular_decomposition() {
   return &dynamic_cast<const RegularDecomposition &>(
+      Utils::as_const(cell_structure).decomposition());
+}
+
+const HybridDecomposition *get_hybrid_decomposition() {
+  return &dynamic_cast<const HybridDecomposition &>(
       Utils::as_const(cell_structure).decomposition());
 }
 

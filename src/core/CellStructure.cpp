@@ -23,6 +23,7 @@
 
 #include "AtomDecomposition.hpp"
 #include "CellStructureType.hpp"
+#include "HybridDecomposition.hpp"
 #include "RegularDecomposition.hpp"
 #include "grid.hpp"
 #include "lees_edwards/lees_edwards.hpp"
@@ -154,7 +155,7 @@ void CellStructure::remove_all_particles() {
 
 /* Map the data parts flags from cells to those used internally
  * by the ghost communication */
-static unsigned map_data_parts(unsigned data_parts) {
+unsigned map_data_parts(unsigned data_parts) {
   using namespace Cells;
 
   /* clang-format off */
@@ -258,5 +259,15 @@ void CellStructure::set_regular_decomposition(
   set_particle_decomposition(
       std::make_unique<RegularDecomposition>(comm, range, box, local_geo));
   m_type = CellStructureType::CELL_STRUCTURE_REGULAR;
+  local_geo.set_cell_structure_type(m_type);
+}
+
+void CellStructure::set_hybrid_decomposition(
+    boost::mpi::communicator const &comm, double cutoff_regular,
+    BoxGeometry const &box, LocalBox<double> &local_geo,
+    std::set<int> n_square_types) {
+  set_particle_decomposition(std::make_unique<HybridDecomposition>(
+      comm, cutoff_regular, box, local_geo, n_square_types));
+  m_type = CellStructureType::CELL_STRUCTURE_HYBRID;
   local_geo.set_cell_structure_type(m_type);
 }

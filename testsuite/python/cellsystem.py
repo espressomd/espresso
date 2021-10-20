@@ -35,16 +35,31 @@ class CellSystem(ut.TestCase):
         s = self.system.cell_system.get_state()
         self.assertEqual(
             [s['use_verlet_list'], s['type']], [1, "regular_decomposition"])
+        self.system.cell_system.set_hybrid_decomposition(
+            use_verlet_lists=False, n_square_types={1, 3, 5}, cutoff_regular=1.27)
+        s = self.system.cell_system.get_state()
+        self.assertEqual(
+            [s['use_verlet_list'], s['type'],
+                s['n_square_types'], s['cutoff_regular']],
+            [0, "hybrid_decomposition", {1, 3, 5}, 1.27])
 
     @ut.skipIf(n_nodes == 1, "Skipping test: only runs for n_nodes >= 2")
-    def test_node_grid(self):
-        self.system.cell_system.set_regular_decomposition()
+    def check_node_grid(self):
         for i in range(3):
             node_grid_ref = [1, 1, 1]
             node_grid_ref[i] = self.n_nodes
             self.system.cell_system.node_grid = node_grid_ref
             node_grid = self.system.cell_system.get_state()['node_grid']
             np.testing.assert_array_equal(node_grid, node_grid_ref)
+
+    def test_node_grid_regular(self):
+        self.system.cell_system.set_regular_decomposition()
+        self.check_node_grid()
+
+    def test_node_grid_hybrid(self):
+        self.system.cell_system.set_hybrid_decomposition(
+            n_square_types={1}, cutoff_regular=0)
+        self.check_node_grid()
 
 
 if __name__ == "__main__":

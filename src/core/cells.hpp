@@ -36,6 +36,14 @@
  *    regardless their spatial position (see \ref AtomDecomposition.hpp).
  *    This is suitable for long range interactions that cannot be treated by a
  *    special method like P3M.
+ *  - hybrid decomposition: Initializes both regular decomposition and nsquare
+ *    at the same time and and has is given a set of particle types
+ *    n_square_types (see \ref HybridDecomposition.hpp). By default, particles
+ *    will be distributed using the regular decomposition. For particles of the
+ *    types defined as n_square_types the nsquare method is used. This is
+ *    suitable for systems containing lots of small particles with short
+ *    interaction range mixed with a few large particles with long interaction
+ *    range. There, the large particles should be treated using nsquare.
  */
 
 #include "Cell.hpp"
@@ -60,6 +68,39 @@ enum {
 
 /** Type of cell structure in use. */
 extern CellStructure cell_structure;
+
+/** Initialize cell sturcture DomainDecomposition */
+void set_regular_decomposition();
+
+/** Initialize cell structure AtomDecomposition */
+void set_atom_decomposition();
+
+/** Initialize cell structure HybridDecomposition
+ *  @param n_square_types Set of particle types that will use n_square.
+ */
+void set_hybrid_decomposition(std::set<int> n_square_types,
+                              double cutoff_regular);
+
+/** Change cell structure to DomainDecomposition on all nodes. */
+void mpi_set_regular_decomposition();
+
+/** Change cell structure to AtomDecomposition on all nodes. */
+void mpi_set_atom_decomposition();
+
+/** Change cell structure to HybridDecomposition on all nodes.
+ *  @param n_square_types Set of particle types that will use n_square.
+ */
+void mpi_set_hybrid_decomposition(std::set<int> n_square_types,
+                                  double cutoff_regular);
+
+/**
+ * @brief Number of parts in child decompositions of a HybridDecomposition.
+ *
+ * Throws if called when active decomposition type is not hybrid.
+ *
+ * @return pair(parts_in_domain_dec, parts_in_n_square)
+ */
+std::pair<std::size_t, std::size_t> hybrid_parts_per_decomposition();
 
 /** Reinitialize the cell structures.
  *  @param new_cs The new topology to use afterwards.
@@ -127,6 +168,13 @@ Cell *find_current_cell(const Particle &p);
  * @return Pointer to the decomposition if it is set, nullptr otherwise.
  */
 const RegularDecomposition *get_regular_decomposition();
+
+/**
+ * @brief Return a pointer to the global HybridDecomposition.
+ *
+ * @return Pointer to the decomposition if it is set, nullptr otherwise.
+ */
+const HybridDecomposition *get_hybrid_decomposition();
 
 class PairInfo {
 public:

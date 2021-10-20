@@ -63,6 +63,31 @@ cdef class CellSystem:
 
         return True
 
+    def set_hybrid_decomposition(
+            self, n_square_types=None,
+            cutoff_regular=None, use_verlet_lists=True):
+        """
+        Activates the hybrid domain decomposition.
+
+        Parameters
+        ----------
+        n_square_types : list of :obj:`int`
+            Particles types that should be handled in nsquare cell system.
+        cutoff_regular : :obj:`float`
+            Maximum cutoff to consider in regular decomposition.
+            Should be as low as the system permits.
+        use_verlet_lists : :obj:`bool`, optional
+            Activates or deactivates the usage of the Verlet
+            lists for this algorithm.
+
+        """
+        mpi_set_use_verlet_lists(use_verlet_lists)
+        if n_square_types is None:
+            n_square_types = set()
+        mpi_set_hybrid_decomposition(n_square_types, cutoff_regular)
+
+        return True
+
     def get_state(self):
         s = self.__getstate__()
 
@@ -72,6 +97,22 @@ cdef class CellSystem:
                 [rd.cell_grid[0], rd.cell_grid[1], rd.cell_grid[2]])
             s["cell_size"] = np.array(
                 [rd.cell_size[0], rd.cell_size[1], rd.cell_size[2]])
+        elif cell_structure.decomposition_type() == CellStructureType.CELL_STRUCTURE_HYBRID:
+            hd = get_hybrid_decomposition()
+            cell_grid = hd.get_cell_grid()
+            cell_size = hd.get_cell_size()
+            s["cell_grid"] = np.array([cell_grid[d] for d in range(3)])
+            s["cell_size"] = np.array([cell_size[d] for d in range(3)])
+            s["n_square_types"] = hd.get_n_square_types()
+            s["cutoff_regular"] = hd.get_cutoff_regular()
+            # manually trigger resort to make sure that particles end up
+            # in their respective child decomposition before querying
+            self.resort()
+            n_regular, n_n_square = hybrid_parts_per_decomposition()
+            s["parts_per_decomposition"] = {
+                "regular": n_regular,
+                "n_square": n_n_square
+            }
 
         s["verlet_reuse"] = get_verlet_reuse()
         s["n_nodes"] = n_nodes
@@ -85,6 +126,8 @@ cdef class CellSystem:
             s["type"] = "regular_decomposition"
         if cell_structure.decomposition_type() == CellStructureType.CELL_STRUCTURE_NSQUARE:
             s["type"] = "nsquare"
+        if cell_structure.decomposition_type() == CellStructureType.CELL_STRUCTURE_HYBRID:
+            s["type"] = "hybrid_decomposition"
 
         s["skin"] = skin
         s["node_grid"] = np.array([node_grid[0], node_grid[1], node_grid[2]])
@@ -99,6 +142,9 @@ cdef class CellSystem:
                     use_verlet_lists=d['use_verlet_list'])
             elif d['type'] == "nsquare":
                 self.set_n_square(use_verlet_lists=d['use_verlet_list'])
+            elif d['type'] == "hybrid_decomposition":
+                self.set_hybrid_decomposition(
+                    use_verlet_lists=d['use_verlet_list'])
 
     def get_pairs(self, distance, types='all'):
         """
