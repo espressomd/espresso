@@ -25,6 +25,7 @@
 
 #include "script_interface/LocalContext.hpp"
 #include "script_interface/ObjectMap.hpp"
+#include "script_interface/get_value.hpp"
 
 #include "core/communication.hpp"
 
@@ -123,6 +124,50 @@ BOOST_AUTO_TEST_CASE(serialization) {
   // key bookkeeping is also restored
   auto const key = map->insert(ctx->make_shared("ObjectHandle", {}));
   BOOST_CHECK(key == 3);
+}
+
+BOOST_AUTO_TEST_CASE(calling_methods) {
+  // Check the different call_method functions
+  auto e = std::make_shared<ObjectHandle>();
+  auto f = std::make_shared<ObjectHandle>();
+  VariantMap params{};
+  ObjectMapImpl map;
+  BOOST_CHECK(boost::get<bool>(map.call_method("empty", params)));
+
+  // insert an element with key
+  int first_key = 3;
+  params["key"] = make_variant(first_key);
+  params["object"] = make_variant(e);
+  map.call_method("insert", params);
+  // insert an element without key
+  params.clear();
+  params["object"] = make_variant(f);
+  auto const second_key = boost::get<int>(map.call_method("insert", params));
+
+  // Check the returned map
+  auto const map_ret = boost::get<std::unordered_map<int, Variant>>(
+      map.call_method("get_map", params));
+  BOOST_CHECK(e == boost::get<ObjectRef>(map_ret.at(first_key)));
+  BOOST_CHECK(f == boost::get<ObjectRef>(map_ret.at(second_key)));
+  BOOST_REQUIRE_EQUAL(map_ret.size(), 2);
+
+  // Check contents of the internal map
+  BOOST_CHECK(map.elements().at(first_key) == e);
+  BOOST_CHECK(map.elements().at(second_key) == f);
+  params.clear();
+  BOOST_CHECK(!boost::get<bool>(map.call_method("empty", params)));
+  BOOST_REQUIRE_EQUAL(boost::get<int>(map.call_method("size", params)), 2);
+
+  // Erase an element
+  params["key"] = second_key;
+  map.call_method("erase", params);
+  BOOST_CHECK_THROW(map.elements().at(second_key), std::out_of_range);
+  params.clear();
+  BOOST_REQUIRE_EQUAL(boost::get<int>(map.call_method("size", params)), 1);
+
+  // Clear map
+  map.call_method("clear", params);
+  BOOST_CHECK(boost::get<bool>(map.call_method("empty", params)));
 }
 
 int main(int argc, char **argv) {

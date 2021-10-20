@@ -47,31 +47,31 @@ void calc_oif_global(Utils::Vector2d &area_volume, int molType,
 
   Utils::Vector2d part_area_volume; // added
 
-  cs.bond_loop(
-      [&partArea, &VOL_partVol, molType](Particle &p1, int bond_id,
-                                         Utils::Span<Particle *> partners) {
-        if (p1.p.mol_id != molType)
-          return false;
+  cs.bond_loop([&partArea, &VOL_partVol,
+                molType](Particle &p1, int bond_id,
+                         Utils::Span<Particle *> partners) {
+    if (p1.p.mol_id != molType)
+      return false;
 
-        if (boost::get<OifGlobalForcesBond>(&bonded_ia_params[bond_id]) !=
-            nullptr) {
-          // remaining neighbors fetched
-          auto const p11 = unfolded_position(p1.r.p, p1.l.i, box_geo.length());
-          auto const p22 = p11 + box_geo.get_mi_vector(partners[0]->r.p, p11);
-          auto const p33 = p11 + box_geo.get_mi_vector(partners[1]->r.p, p11);
+    if (boost::get<OifGlobalForcesBond>(bonded_ia_params.at(bond_id).get()) !=
+        nullptr) {
+      // remaining neighbors fetched
+      auto const p11 = unfolded_position(p1.r.p, p1.l.i, box_geo.length());
+      auto const p22 = p11 + box_geo.get_mi_vector(partners[0]->r.p, p11);
+      auto const p33 = p11 + box_geo.get_mi_vector(partners[1]->r.p, p11);
 
-          // unfolded positions correct
-          auto const VOL_A = area_triangle(p11, p22, p33);
-          partArea += VOL_A;
+      // unfolded positions correct
+      auto const VOL_A = area_triangle(p11, p22, p33);
+      partArea += VOL_A;
 
-          auto const VOL_norm = get_n_triangle(p11, p22, p33);
-          auto const VOL_dn = VOL_norm.norm();
-          auto const VOL_hz = 1.0 / 3.0 * (p11[2] + p22[2] + p33[2]);
-          VOL_partVol += VOL_A * -1 * VOL_norm[2] / VOL_dn * VOL_hz;
-        }
+      auto const VOL_norm = get_n_triangle(p11, p22, p33);
+      auto const VOL_dn = VOL_norm.norm();
+      auto const VOL_hz = 1.0 / 3.0 * (p11[2] + p22[2] + p33[2]);
+      VOL_partVol += VOL_A * -1 * VOL_norm[2] / VOL_dn * VOL_hz;
+    }
 
-        return false;
-      });
+    return false;
+  });
 
   part_area_volume[0] = partArea;
   part_area_volume[1] = VOL_partVol;
@@ -91,8 +91,8 @@ void add_oif_global_forces(Utils::Vector2d const &area_volume, int molType,
     if (p1.p.mol_id != molType)
       return false;
 
-    if (auto const *iaparams =
-            boost::get<OifGlobalForcesBond>(&bonded_ia_params[bond_id])) {
+    if (auto const *iaparams = boost::get<OifGlobalForcesBond>(
+            bonded_ia_params.at(bond_id).get())) {
       auto const p11 = unfolded_position(p1.r.p, p1.l.i, box_geo.length());
       auto const p22 = p11 + box_geo.get_mi_vector(partners[0]->r.p, p11);
       auto const p33 = p11 + box_geo.get_mi_vector(partners[1]->r.p, p11);

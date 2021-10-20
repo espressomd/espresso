@@ -25,8 +25,6 @@
  *  force for a particle quadruple. Note that usage of dihedrals
  *  increases the interaction range of bonded interactions to 2 times
  *  the maximal bond length!
- *
- *  Implementation in \ref dihedral.cpp.
  */
 
 #include "BoxGeometry.hpp"
@@ -51,8 +49,11 @@ struct DihedralBond {
 
   static constexpr int num = 3;
 
-  DihedralBond() = default;
-  DihedralBond(int mult, double bend, double phase);
+  DihedralBond(int mult, double bend, double phase) {
+    this->mult = mult;
+    this->bend = bend;
+    this->phase = phase;
+  }
 
   boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d,
                              Utils::Vector3d>>

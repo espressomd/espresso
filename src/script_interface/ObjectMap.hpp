@@ -146,6 +146,11 @@ protected:
       return m_elements.empty();
     }
 
+    if (method == "contains") {
+      return m_elements.find(get_value<KeyType>(parameters.at("key"))) !=
+             m_elements.end();
+    }
+
     return BaseType::do_call_method(method, parameters);
   }
 

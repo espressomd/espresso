@@ -26,9 +26,9 @@ from .utils cimport create_nparray_from_double_span
 from libcpp.vector cimport vector  # import std::vector as vector
 from libcpp cimport bool as cbool
 from libcpp.memory cimport shared_ptr
-from .interactions cimport bonded_ia_params_is_type
+from .interactions cimport bonded_ia_params_zero_based_type
+from .interactions cimport enum_bonded_interaction
 from .interactions cimport bonded_ia_params_size
-from .interactions cimport CoreNoneBond
 include "myconfig.pxi"
 
 cdef extern from "<array>" namespace "std" nogil:
@@ -208,7 +208,8 @@ cdef inline Observable_stat_to_dict(Observable_stat * obs, cbool calc_sp):
     # Bonded
     total_bonded = observable_stat_matrix(obs_dim, calc_sp)
     for i in range(n_bonded):
-        if not bonded_ia_params_is_type[CoreNoneBond](i):
+        if bonded_ia_params_zero_based_type(
+                i) != enum_bonded_interaction.BONDED_IA_NONE:
             val = get_obs_contrib(obs.bonded_contribution(i), calc_sp)
             p["bonded", i] = val
             total_bonded += val

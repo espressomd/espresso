@@ -22,8 +22,6 @@
 #define _HARMONIC_HPP
 /** \file
  *  Routines to calculate the harmonic bond potential between particle pairs.
- *
- *  Implementation in \ref harmonic.cpp.
  */
 
 #include "config.hpp"
@@ -46,8 +44,11 @@ struct HarmonicBond {
 
   static constexpr int num = 1;
 
-  HarmonicBond() = default;
-  HarmonicBond(double k, double r, double r_cut);
+  HarmonicBond(double k, double r, double r_cut) {
+    this->k = k;
+    this->r = r;
+    this->r_cut = r_cut;
+  }
 
   boost::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;
   boost::optional<double> energy(Utils::Vector3d const &dx) const;

@@ -329,12 +329,10 @@ cdef class ParticleHandle:
             part_bonds = get_particle_bonds(self._id)
             # Go through the bond list of the particle
             for part_bond in part_bonds:
-                bond = []
-                bond.append(BondedInteractions()[part_bond.bond_id()])
-                partner_ids = part_bond.partner_ids()
-
-                bonds.append(tuple(bond + [partner_ids[i]
-                                           for i in range(partner_ids.size())]))
+                bond_id = part_bond.bond_id()
+                partners = part_bond.partner_ids()
+                partner_ids = [partners[i] for i in range(partners.size())]
+                bonds.append((BondedInteractions()[bond_id], *partner_ids))
 
             return tuple(bonds)
 
@@ -1339,7 +1337,7 @@ cdef class ParticleHandle:
             bond[0] = BondedInteractions()[bond[0]]
         elif not isinstance(bond[0], BondedInteraction):
             raise Exception(
-                "1st element of Bond has to be of type BondedInteraction or int.")
+                f"1st element of Bond has to be of type BondedInteraction or int, got {type(bond[0])}.")
 
         # Check the bond is in the list of active bonded interactions
         if bond[0]._bond_id == -1:

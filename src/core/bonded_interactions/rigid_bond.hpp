@@ -51,7 +51,6 @@ struct RigidBond {
 
   static constexpr int num = 1;
 
-  RigidBond() = default;
   RigidBond(double d, double p_tol, double v_tol);
 
 private:

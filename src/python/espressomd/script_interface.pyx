@@ -31,6 +31,9 @@ cdef class PObjectRef:
 
     cdef shared_ptr[ObjectHandle] sip
 
+    def print_sip(self):
+        print( < long > (self.sip.get()))
+
 cdef class PScriptInterface:
 
     """
@@ -107,6 +110,7 @@ cdef class PScriptInterface:
 
         ret = PObjectRef()
         ret.sip = self.sip
+
         return ret
 
     cdef set_sip(self, shared_ptr[ObjectHandle] sip):
@@ -279,6 +283,9 @@ cdef variant_to_python_object(const Variant & value) except +:
             res[kv.first] = variant_to_python_object(kv.second)
 
         return res
+
+    if is_type[size_t](value):
+        return get_value[size_t](value)
 
     raise TypeError("Unknown type")
 

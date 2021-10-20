@@ -24,8 +24,6 @@
  *  Routines to calculate the short-range part of the bonded Coulomb potential
  *  between particle pairs. Can be used to subtract certain intramolecular
  *  interactions in combination with Thole damping.
- *
- *  Implementation in \ref bonded_coulomb_sr.cpp.
  */
 
 #include "config.hpp"
@@ -48,8 +46,7 @@ struct BondedCoulombSR {
 
   static constexpr int num = 1;
 
-  BondedCoulombSR() = default;
-  BondedCoulombSR(double q1q2);
+  BondedCoulombSR(double q1q2) { this->q1q2 = q1q2; }
 
   boost::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;
   boost::optional<double> energy(Particle const &p1, Particle const &p2,

@@ -102,7 +102,7 @@ static bool compute_correction_vector(CellStructure &cs, Kernel kernel) {
   bool correction = false;
   cs.bond_loop([&correction, &kernel](Particle &p1, int bond_id,
                                       Utils::Span<Particle *> partners) {
-    auto const &iaparams = bonded_ia_params[bond_id];
+    auto const &iaparams = *bonded_ia_params.at(bond_id);
 
     if (auto const *bond = boost::get<RigidBond>(&iaparams)) {
       auto const corrected = kernel(*bond, p1, *partners[0]);

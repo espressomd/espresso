@@ -45,8 +45,10 @@ struct AngleHarmonicBond {
 
   static constexpr int num = 2;
 
-  AngleHarmonicBond() = default;
-  AngleHarmonicBond(double bend, double phi0);
+  AngleHarmonicBond(double bend, double phi0) {
+    this->bend = bend;
+    this->phi0 = phi0;
+  }
 
   std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
   forces(Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,

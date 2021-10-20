@@ -197,6 +197,7 @@ if espressomd.has_features(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']):
         have_quaternion=True)
     p2.vs_auto_relate_to(p1)
 
+# non-bonded interactions
 if espressomd.has_features(['LENNARD_JONES']) and 'LJ' in modes:
     system.non_bonded_inter[0, 0].lennard_jones.set_params(
         epsilon=1.2, sigma=1.3, cutoff=2.0, shift=0.1)
@@ -205,6 +206,7 @@ if espressomd.has_features(['LENNARD_JONES']) and 'LJ' in modes:
     system.non_bonded_inter[1, 17].lennard_jones.set_params(
         epsilon=1.2e5, sigma=1.7, cutoff=2.0, shift=0.1)
 
+# bonded interactions
 harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0.0, k=1.0)
 system.bonded_inter.add(harmonic_bond)
 p2.add_bond((harmonic_bond, p1))
@@ -217,10 +219,12 @@ if 'THERM.LB' not in modes:
 strong_harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0.0, k=5e5)
 system.bonded_inter.add(strong_harmonic_bond)
 p4.add_bond((strong_harmonic_bond, p3))
+
 checkpoint.register("system")
 checkpoint.register("acc_mean_variance")
 checkpoint.register("acc_time_series")
 checkpoint.register("acc_correlator")
+
 # calculate forces
 system.integrator.run(0)
 particle_force0 = np.copy(p1.f)

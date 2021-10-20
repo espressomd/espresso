@@ -44,5 +44,6 @@ IBMVolCons::IBMVolCons(const int softID, const double kappaV) {
   // this softID. Calculate it later in the init function of
   // \ref ImmersedBoundaries::init_volume_conservation()
   volRef = 0.;
-  mpi_set_n_ibm_volcons_bonds(softID);
+  if (this_node == 0)
+    mpi_set_n_ibm_volcons_bonds(softID);
 }

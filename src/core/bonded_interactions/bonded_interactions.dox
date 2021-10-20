@@ -33,6 +33,10 @@
  *    - Add calls to these kernels in the force, energy and pressure
  *      calculation functions.
  *    - Register the new bond type.
+ *  * ScriptInterface:
+ *    - Define the %ScriptInterface class of the new bond type, which serves as
+ *      the connection between the C++ core and the Python representation of the
+ *      bond.
  *  * Python interface:
  *    - Import the definition of the interaction struct from the core
  *    - Implement a class for the bonded interaction derived from the Python
@@ -82,11 +86,7 @@
  *    This function returns the bond energy. The same information as given for
  *    the force calculation above applies here. This function will be called
  *    from @ref energy_inline.hpp .
- *  * An explicit default constructor, for example
- *    @code{.cpp}
- *    FeneBond() = default;
- *    @endcode
- *  * A custom constructor which is used to set all parameters and to do
+ *  * A constructor which is used to set all parameters and to do
  *    preparatory calculations if necessary, for example
  *    @code{.cpp}
  *    FeneBond(double k, double drmax, double r0);
@@ -167,10 +167,79 @@
  *    you have to implement a custom solution for virial calculation.
  *    The pressure occurs twice, once for the parallelized isotropic pressure
  *    and once for the tensorial pressure calculation. For pair forces, the
- *    pressure is calculated using the virials, for many body interactions
+ *    pressure is calculated using the virials; for many body interactions,
  *    currently no pressure is calculated.
  *
  *  Note that the force and energy functions cannot alter the particle states.
+ *
+ *  @subsection bondedIA_new_script_interface Registering the new interaction in the ScriptInterface
+ *
+ *  * In src/script_interface/interactions/BondedInteraction.hpp:
+ *    Add a new class representing your new bond type in the %ScriptInterface.
+ *    - We recommend that the new class has the same name as the interaction in the core.
+ *    - You can use ScriptInterface::Interactions::FeneBond as a template.
+ *    - The class must be derived from ScriptInterface::Interactions::BondedInteraction.
+ *    - It is recommended to include the statement
+ *      @code{.cpp}
+ *      using CoreBondedInteraction = ::YourNewBond;
+ *      @endcode
+ *      where \c YourNewBond is the core type you defined.
+ *    - Implement a member function with the signature
+ *      @code{.cpp}
+ *      void construct_bond(VariantMap const &params) override { /* ... */ }
+ *      @endcode
+ *      In this function, the member \c m_bonded_ia shall be initialized using
+ *      the parameters that are given in <tt>params</tt>. Use the constructor
+ *      of \c %FeneBond as a template. An instance of your core type
+ *      \c %YourNewBond should be initialized, which is then used to initialize
+ *      a \c std::shared_ptr to a \ref Bonded_IA_Parameters, which is then
+ *      assigned to \c m_bonded_ia.
+ *      The values of the parameters are extracted from \c params using
+ *      @code{.cpp}
+ *      get_value<parameter_type>(params, "parameter_name")
+ *      @endcode
+ *      where \c parameter_type is the type of the parameter, e.g. \c double or
+ *      \c int or even \c std::string, and <tt>"parameter_name"</tt> must be
+ *      replaced by the name of the respective parameter. This name must be the
+ *      same as in the Python interface, but may differ from the name in the
+ *      core interaction type. It is, however, recommended to use the same
+ *      names for both the Python interface and the ESPResSo core for
+ *      consistency whenever possible.
+ *    - Implement a member function called <tt>get_struct()</tt>, which returns
+ *      the bond parameters, which are stored in <tt>m_bonded_ia</tt>.
+ *      The return type should be a reference to an object of the new type
+ *      <tt>YourNewBond</tt> that you defined in the core. If you included the
+ *      above <tt>using</tt> statement, you can simply copy the routine from
+ *      \c %FeneBond, since <tt>CoreBondedInteraction</tt> is already set to
+ *      the correct core type.
+ *    - Implement the constructor. We recommend to adapt it from \c %FeneBond.
+ *      All it needs to do is to register its parameters so they can be set
+ *      from Python. For this purpose, call
+ *      @code{.cpp}
+ *      add_parameters(/* ... */);
+ *      @endcode
+ *      inside the constructors. It expects a vector of
+ *      \ref ScriptInterface::AutoParameter. Usually, this vector is initialized
+ *      using an initializer list, each element of which is in itself a list which
+ *      initializes one instance of \c AutoParameter (see @ref AutoParameter.hpp).
+ *      One of many ways to initialize these parameters is to pass the parameter name
+ *      as a string, a custom setter and a custom getter function. The parameters
+ *      are typically made read-only by passing <tt>AutoParameter::read_only</tt>
+ *      instead of a setter function. The getter function can be a lambda function,
+ *      which is directly passed to the constructor.
+ *
+ *  * In src/script_interface/interactions/initialize.cpp:
+ *    Your new interaction type needs to be registered here so that the
+ *    %ScriptInterface can find it by its name. In the function \c initialize
+ *    add a new line of the form
+ *    @code{.cpp}
+ *    om->register_new<YourNewBond>("Interactions::YourNewBond");
+ *    @endcode
+ *    where \c YourNewBond must be replaced by the name of your new bond type.
+ *    The string is used to match the %ScriptInterface class with the Python
+ *    class (see below).
+ *
+ *
  *
  *  @subsection bondedIA_new_interface Adding the interaction in the Python interface
  *
@@ -178,21 +247,6 @@
  *  pure Python.
  *
  *  * In file <tt>src/python/espressomd/interactions.pxd</tt>:
- *    - Import the parameter data structure from the C++ header file for the
- *      new interaction with an alias. For the FENE bond, this looks like:
- *      @code{.py}
- *      cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
- *          # Parameters for FENE bond
- *          cdef cppclass CoreFeneBond "FeneBond":
- *              CoreFeneBond()
- *              CoreFeneBond(double k, double drmax, double r0)
- *              double k
- *              double drmax
- *              double r0
- *              double drmax2
- *              double drmax2i
- *      @endcode
- *  * In file <tt>src/python/espressomd/interactions.pyx</tt>:
  *    - Add the bonded interaction to \c enum_bonded_interaction.
  *      The order of the enum values must match the order of types in
  *      @ref Bonded_IA_Parameters exactly:
@@ -202,8 +256,15 @@
  *          BONDED_IA_FENE,
  *          [...]
  *      @endcode
+ *  * In file <tt>src/python/espressomd/interactions.pyx</tt>:
  *    - Implement the Cython class for the bonded interaction, using the one
  *      for the FENE bond as template. Please use pep8 naming convention.
+ *    - Set the class' member
+ *      @code{.py}
+ *      _so_name = "Interactions::YourNewBond"
+ *      @endcode
+ *      where you put the name of your bond instead of \c YourNewBond.
+ *      This connects the %ScriptInterface class with the Python class.
  *    - Create a new entry in the dictionary \c bonded_interaction_classes to
  *      register the new class you have written:
  *      @code{.py}

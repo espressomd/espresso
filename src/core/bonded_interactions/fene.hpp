@@ -51,7 +51,6 @@ struct FeneBond {
 
   static constexpr int num = 1;
 
-  FeneBond() = default;
   FeneBond(double k, double drmax, double r0);
 
   boost::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;

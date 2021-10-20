@@ -58,8 +58,6 @@ struct IBMTriel {
 
   static constexpr int num = 2;
 
-  IBMTriel() = default;
-
   /** Set the IBM Triel parameters.
    *  Also calculate and store the reference state.
    */

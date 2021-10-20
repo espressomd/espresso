@@ -50,8 +50,6 @@
 struct TabulatedBond {
   std::shared_ptr<TabulatedPotential> pot;
 
-  TabulatedBond() = default;
-
   /** Set the parameters of a bonded tabulated potential.
    *  ia_params and force/energy tables are communicated to each node.
    *
@@ -77,7 +75,6 @@ struct TabulatedDistanceBond : public TabulatedBond {
 
   static constexpr int num = 1;
 
-  TabulatedDistanceBond() = default;
   TabulatedDistanceBond(double min, double max,
                         std::vector<double> const &energy,
                         std::vector<double> const &force);
@@ -92,7 +89,6 @@ struct TabulatedAngleBond : public TabulatedBond {
 
   static constexpr int num = 2;
 
-  TabulatedAngleBond() = default;
   TabulatedAngleBond(double min, double max, std::vector<double> const &energy,
                      std::vector<double> const &force);
   std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
@@ -108,7 +104,6 @@ struct TabulatedDihedralBond : public TabulatedBond {
 
   static constexpr int num = 3;
 
-  TabulatedDihedralBond() = default;
   TabulatedDihedralBond(double min, double max,
                         std::vector<double> const &energy,
                         std::vector<double> const &force);

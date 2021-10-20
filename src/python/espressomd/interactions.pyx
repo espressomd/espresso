@@ -23,6 +23,7 @@ import collections
 include "myconfig.pxi"
 from .utils import is_valid_type
 from .utils cimport check_type_or_throw_except
+from .script_interface import ScriptObjectRegistry, ScriptInterfaceHelper, script_interface_register
 
 
 cdef class NonBondedInteraction:
@@ -1653,7 +1654,9 @@ cdef class NonBondedInteractions:
 
         reset_ia_params()
 
-cdef class BondedInteraction:
+
+class BondedInteraction(ScriptInterfaceHelper):
+
     """
     Base class for bonded interactions.
 
@@ -1663,19 +1666,25 @@ cdef class BondedInteraction:
 
     """
 
+    _so_name = "Interactions::BondedInteraction"
+    _so_creation_policy = "GLOBAL"
+
     # This means, the instance does not yet represent a bond in the simulation
     _bond_id = -1
 
     def __init__(self, *args, **kwargs):
+
         # Interaction id as argument
         if len(args) == 1 and is_valid_type(args[0], int):
             bond_id = args[0]
+
             # Check if the bond type in ESPResSo core matches this class
             if get_bonded_interaction_type_from_es_core(
                     bond_id) != self.type_number():
                 raise Exception(
                     "The bond with this id is not defined as a " + self.type_name() + " bond in the ESPResSo core.")
 
+            super().__init__(bond_id=bond_id)
             self._bond_id = bond_id
 
             # Load the parameters currently set in the ESPResSo core
@@ -1683,13 +1692,11 @@ cdef class BondedInteraction:
 
         # Or have we been called with keyword args describing the interaction
         elif len(args) == 0:
-            # Check if all required keys are given
-            for k in self.required_keys():
-                if k not in kwargs:
-                    raise ValueError(
-                        "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__())
-
-            self.params = kwargs
+            params = self.get_default_params()
+            params.update(kwargs)
+            self._check_keys(params.keys(), check_required=True)
+            super().__init__(*args, **params)
+            self._params = params
 
             # Validation of parameters
             self.validate_params()
@@ -1698,8 +1705,28 @@ cdef class BondedInteraction:
             raise Exception(
                 "The constructor has to be called either with a bond id (as integer), or with a set of keyword arguments describing a new interaction")
 
+    def _check_keys(self, keys, check_required=False):
+        def err_msg(key_set):
+            return f'{{{", ".join(key_set)}}}'
+
+        if check_required:
+            for required_key in self.required_keys():
+                if required_key not in keys:
+                    raise ValueError(
+                        f"At least the following keys have to be given as keyword arguments: {err_msg(self.required_keys())}")
+
+        for key in keys:
+            if key not in self.valid_keys():
+                raise ValueError(
+                    f"Key '{key}' invalid! Only the following keys are supported: {err_msg(self.valid_keys())}")
+
     def __reduce__(self):
         return (self.__class__, (self._bond_id,))
+
+    def __setattr__(self, attr, value):
+        super().__setattr__(attr, value)
+        if attr in self._valid_parameters():
+            self.validate_params()
 
     def is_valid(self):
         """Check, if the data stored in the instance still matches what is in ESPResSo.
@@ -1720,21 +1747,16 @@ cdef class BondedInteraction:
         # If we're still here, the instance is valid
         return True
 
-    property params:
-        def __get__(self):
-            return self._params
+    @property
+    def params(self):
+        return self._params
 
-        def __set__(self, p):
-            # Check, if any key was passed, which is not known
-            for k in p.keys():
-                if k not in self.valid_keys():
-                    raise ValueError(f"Key '{k}' invalid! Only the following "
-                                     f"keys are supported: {', '.join(self.valid_keys())}")
-
-            # Initialize default values
-            self.set_default_params()
-            # Put in values given by the user
-            self._params.update(p)
+    @params.setter
+    def params(self, p):
+        self._check_keys(p.keys(), check_required=False)
+        params = self.get_default_params()
+        params.update(p)
+        self._params = params
 
     def validate_params(self):
         """Check that parameters are valid.
@@ -1761,19 +1783,15 @@ cdef class BondedInteraction:
         raise Exception(
             "Subclasses of BondedInteraction must define the _get_params_from_es_core() method.")
 
-    def _set_params_in_es_core(self):
-        raise Exception(
-            "Subclasses of BondedInteraction must define the _set_params_in_es_core() method.")
-
     def __str__(self):
         return f'{self.__class__.__name__}({self._params})'
 
-    def set_default_params(self):
-        """Sets parameters that are not required to their default value.
+    def get_default_params(self):
+        """Gets default values of optional parameters.
 
         """
         raise Exception(
-            "Subclasses of BondedInteraction must define the set_default_params() method.")
+            "Subclasses of BondedInteraction must define the get_default_params() method.")
 
     def type_number(self):
         raise Exception(
@@ -1809,6 +1827,9 @@ cdef class BondedInteraction:
         return self.__class__.__name__ + \
             "(" + id_str + "): " + self._params.__str__()
 
+    def __eq__(self, other):
+        return self.__richcmp__(other, 2)
+
     def __richcmp__(self, other, i):
         if i != 2:
             raise Exception("only == supported")
@@ -1816,7 +1837,8 @@ cdef class BondedInteraction:
             return False
         if self._bond_id != other._bond_id:
             return False
-        return self._params == other._params
+        return self.call_method(
+            "get_address") == other.call_method("get_address")
 
 
 class BondedInteractionNotDefined:
@@ -1846,8 +1868,8 @@ class BondedInteractionNotDefined:
         """
         raise Exception(f"{self.name} has to be defined in myconfig.hpp.")
 
-    def set_default_params(self):
-        """Sets parameters that are not required to their default value.
+    def get_default_params(self):
+        """Gets default values of optional parameters.
 
         """
         raise Exception(f"{self.name} has to be defined in myconfig.hpp.")
@@ -1859,6 +1881,7 @@ class BondedInteractionNotDefined:
         raise Exception(f"{self.name} has to be defined in myconfig.hpp.")
 
 
+@script_interface_register
 class FeneBond(BondedInteraction):
 
     """
@@ -1875,8 +1898,7 @@ class FeneBond(BondedInteraction):
 
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    _so_name = "Interactions::FeneBond"
 
     def type_number(self):
         return BONDED_IA_FENE
@@ -1899,23 +1921,17 @@ class FeneBond(BondedInteraction):
         """
         return {"k", "d_r_max"}
 
-    def set_default_params(self):
-        """Sets parameters that are not required to their default value.
+    def get_default_params(self):
+        """Gets default values of optional parameters.
 
         """
-        self._params = {"r_0": 0.}
+        return {"r_0": 0.}
 
     def _get_params_from_es_core(self):
-        cdef CoreFeneBond p_fene = bonded_ia_params_at[CoreFeneBond](self._bond_id)
-        return {"k": p_fene.k, "d_r_max": p_fene.drmax, "r_0": p_fene.r0}
-
-    def _set_params_in_es_core(self):
-        set_bonded_ia_params(
-            self._bond_id, CoreFeneBond(self._params["k"],
-                                        self._params["d_r_max"],
-                                        self._params["r_0"]))
+        return {"k": self.k, "d_r_max": self.d_r_max, "r_0": self.r_0}
 
 
+@script_interface_register
 class HarmonicBond(BondedInteraction):
 
     """
@@ -1932,8 +1948,7 @@ class HarmonicBond(BondedInteraction):
 
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    _so_name = "Interactions::HarmonicBond"
 
     def type_number(self):
         return BONDED_IA_HARMONIC
@@ -1956,22 +1971,14 @@ class HarmonicBond(BondedInteraction):
         """
         return {"k", "r_0"}
 
-    def set_default_params(self):
-        """Sets parameters that are not required to their default value.
+    def get_default_params(self):
+        """Gets default values of optional parameters.
 
         """
-        self._params = {"r_cut": 0.}
+        return {"r_cut": 0.}
 
     def _get_params_from_es_core(self):
-        cdef CoreHarmonicBond p_harmonic = bonded_ia_params_at[CoreHarmonicBond](self._bond_id)
-        return {"k": p_harmonic.k, "r_0": p_harmonic.r,
-                "r_cut": p_harmonic.r_cut}
-
-    def _set_params_in_es_core(self):
-        set_bonded_ia_params(
-            self._bond_id, CoreHarmonicBond(self._params["k"],
-                                            self._params["r_0"],
-                                            self._params["r_cut"]))
+        return {"k": self.k, "r_0": self.r_0, "r_cut": self.r_cut}
 
 
 if ELECTROSTATICS:
@@ -1988,6 +1995,8 @@ if ELECTROSTATICS:
             Coulomb prefactor of the bonded Coulomb interaction.
         """
 
+        _so_name = "Interactions::BondedCoulomb"
+
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
 
@@ -2003,19 +2012,18 @@ if ELECTROSTATICS:
         def required_keys(self):
             return {"prefactor"}
 
-        def set_default_params(self):
-            self._params = {}
+        def get_default_params(self):
+            """Gets default values of optional parameters.
+
+            """
+            return {}
 
         def _get_params_from_es_core(self):
-            return {"prefactor": bonded_ia_params_at[CoreBondedCoulomb](
-                self._bond_id).prefactor}
-
-        def _set_params_in_es_core(self):
-            set_bonded_ia_params(
-                self._bond_id, CoreBondedCoulomb(self._params["prefactor"]))
+            return {"prefactor": self.prefactor}
 
 if ELECTROSTATICS:
 
+    @script_interface_register
     class BondedCoulombSRBond(BondedInteraction):
 
         """
@@ -2031,8 +2039,7 @@ if ELECTROSTATICS:
             of the involved charges.
         """
 
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
+        _so_name = "Interactions::BondedCoulombSR"
 
         def type_number(self):
             return BONDED_IA_BONDED_COULOMB_SR
@@ -2046,17 +2053,11 @@ if ELECTROSTATICS:
         def required_keys(self):
             return {"q1q2"}
 
-        def set_default_params(self):
-            self._params = {}
+        def get_default_params(self):
+            return {}
 
         def _get_params_from_es_core(self):
-            return \
-                {"q1q2": bonded_ia_params_at[CoreBondedCoulombSR](
-                    self._bond_id).q1q2}
-
-        def _set_params_in_es_core(self):
-            set_bonded_ia_params(
-                self._bond_id, CoreBondedCoulombSR(self._params["q1q2"]))
+            return {"q1q2": self.q1q2}
 
 
 class ThermalizedBond(BondedInteraction):
@@ -2089,6 +2090,8 @@ class ThermalizedBond(BondedInteraction):
 
     """
 
+    _so_name = "Interactions::ThermalizedBond"
+
     def __init__(self, *args, **kwargs):
         counter = None
         # Interaction id as argument
@@ -2098,6 +2101,9 @@ class ThermalizedBond(BondedInteraction):
         super().__init__(*args, **kwargs)
         if counter is not None:
             thermalized_bond_set_rng_counter(counter)
+        if self.params["seed"] is None and thermalized_bond.is_seed_required():
+            raise ValueError(
+                "A seed has to be given as keyword argument on first activation of the thermalized bond")
 
     def __reduce__(self):
         return (self.__class__, (self._bond_id, thermalized_bond.rng_counter()))
@@ -2112,39 +2118,29 @@ class ThermalizedBond(BondedInteraction):
         return {"temp_com", "gamma_com", "temp_distance",
                 "gamma_distance", "r_cut", "seed"}
 
-    def required_keys(self):
-        return {"temp_com", "gamma_com", "temp_distance", "gamma_distance"}
-
-    def set_default_params(self):
-        self._params = {"r_cut": 0., "seed": None}
-
-    def _get_params_from_es_core(self):
-        cdef CoreThermalizedBond p_thermalized \
-            = bonded_ia_params_at[CoreThermalizedBond](self._bond_id)
-        return \
-            {"temp_com": p_thermalized.temp_com,
-             "gamma_com": p_thermalized.gamma_com,
-             "temp_distance": p_thermalized.temp_distance,
-             "gamma_distance": p_thermalized.gamma_distance,
-             "r_cut": p_thermalized.r_cut,
-             "seed": thermalized_bond.rng_seed()
-             }
-
-    def _set_params_in_es_core(self):
-        if self.params["seed"] is None and thermalized_bond.is_seed_required():
-            raise ValueError(
-                "A seed has to be given as keyword argument on first activation of the thermalized bond")
+    def validate_params(self):
         if self.params["seed"] is not None:
             check_type_or_throw_except(
                 self.params["seed"], 1, int, "seed must be a positive integer")
             if self.params["seed"] < 0:
                 raise ValueError("seed must be a positive integer")
-            thermalized_bond_set_rng_seed(self.params["seed"])
+        return True
 
-        set_bonded_ia_params(
-            self._bond_id, CoreThermalizedBond(self._params["temp_com"],
-                                               self._params["gamma_com"], self._params["temp_distance"],
-                                               self._params["gamma_distance"], self._params["r_cut"]))
+    def required_keys(self):
+        return {"temp_com", "gamma_com", "temp_distance", "gamma_distance"}
+
+    def get_default_params(self):
+        return {"r_cut": 0., "seed": None}
+
+    def _get_params_from_es_core(self):
+        return \
+            {"temp_com": self.temp_com,
+             "gamma_com": self.gamma_com,
+             "temp_distance": self.temp_distance,
+             "gamma_distance": self.gamma_distance,
+             "r_cut": self.r_cut,
+             "seed": self.seed
+             }
 
 
 IF THOLE:
@@ -2223,6 +2219,8 @@ IF BOND_CONSTRAINT == 1:
 
         """
 
+        _so_name = "Interactions::RigidBond"
+
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
 
@@ -2247,23 +2245,16 @@ IF BOND_CONSTRAINT == 1:
             """
             return {"r"}
 
-        def set_default_params(self):
-            """Sets parameters that are not required to their default value.
+        def get_default_params(self):
+            """Gets default values of optional parameters.
 
             """
             # TODO rationality of Default Parameters has to be checked
-            self._params = {"ptol": 0.001,
-                            "vtol": 0.001}
+            return {"ptol": 0.001, "vtol": 0.001}
 
         def _get_params_from_es_core(self):
-            cdef CoreRigidBond p_rigid = bonded_ia_params_at[CoreRigidBond](self._bond_id)
-            return {"r": p_rigid.d2**0.5,
-                    "ptol": p_rigid.p_tol, "vtol": p_rigid.v_tol}
+            return {"r": self.r, "ptol": self.ptol, "vtol": self.vtol}
 
-        def _set_params_in_es_core(self):
-            set_bonded_ia_params(
-                self._bond_id, CoreRigidBond(self._params["r"], self._params["ptol"],
-                                             self._params["vtol"]))
 ELSE:
     class RigidBond(BondedInteractionNotDefined):
         name = "RIGID"
@@ -2284,6 +2275,8 @@ class Dihedral(BondedInteraction):
         Angle of the first local minimum in radians.
 
     """
+
+    _so_name = "Interactions::DihedralBond"
 
     def type_number(self):
         return BONDED_IA_DIHEDRAL
@@ -2306,21 +2299,22 @@ class Dihedral(BondedInteraction):
         """
         return {"mult", "bend", "phase"}
 
-    def set_default_params(self):
-        """Sets parameters that are not required to their default value.
+    def validate_params(self):
+        """Check that parameters are valid.
 
         """
-        self._params = {}
+        if self.params["mult"] is not None:
+            check_type_or_throw_except(
+                self.params["mult"], 1, int, "mult must be a positive integer")
+
+    def get_default_params(self):
+        """Gets default values of optional parameters.
+
+        """
+        return {}
 
     def _get_params_from_es_core(self):
-        cdef CoreDihedralBond p_dihedral = bonded_ia_params_at[CoreDihedralBond](self._bond_id)
-        return {"mult": p_dihedral.mult,
-                "bend": p_dihedral.bend, "phase": p_dihedral.phase}
-
-    def _set_params_in_es_core(self):
-        set_bonded_ia_params(
-            self._bond_id, CoreDihedralBond(self._params["mult"],
-                                            self._params["bend"], self._params["phase"]))
+        return {"mult": self.mult, "bend": self.bend, "phase": self.phase}
 
 
 IF TABULATED:
@@ -2368,11 +2362,11 @@ IF TABULATED:
             """
             return {"min", "max", "energy", "force"}
 
-        def set_default_params(self):
-            """Sets parameters that are not required to their default value.
+        def get_default_params(self):
+            """Gets default values of optional parameters.
 
             """
-            self._params = {}
+            return {}
 
     class TabulatedDistance(_TabulatedBase):
 
@@ -2393,6 +2387,8 @@ IF TABULATED:
 
         """
 
+        _so_name = "Interactions::TabulatedDistanceBond"
+
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
 
@@ -2412,23 +2408,11 @@ IF TABULATED:
             pass
 
         def _get_params_from_es_core(self):
-            cdef CoreTabulatedDistanceBond p = bonded_ia_params_at[CoreTabulatedDistanceBond](self._bond_id)
-            return {"min": dereference(p.pot).minval,
-                    "max": dereference(p.pot).maxval,
-                    "energy": dereference(p.pot).energy_tab,
-                    "force": dereference(p.pot).force_tab
+            return {"min": self.min,
+                    "max": self.max,
+                    "energy": self.energy,
+                    "force": self.force
                     }
-
-        def _set_params_in_es_core(self):
-            set_bonded_ia_params(
-                self._bond_id, CoreTabulatedDistanceBond(
-                    self._params["min"],
-                    self._params["max"],
-                    self._params["energy"],
-                    self._params["force"]))
-
-            # Retrieve some params, Es calculates.
-            self._params = self._get_params_from_es_core()
 
     class TabulatedAngle(_TabulatedBase):
 
@@ -2444,6 +2428,9 @@ IF TABULATED:
             The force table for the range :math:`0-\\pi`.
 
         """
+
+        _so_name = "Interactions::TabulatedAngleBond"
+
         pi = 3.14159265358979
 
         def __init__(self, *args, **kwargs):
@@ -2470,23 +2457,11 @@ IF TABULATED:
                                  f"within the range [0, pi], got {phi}")
 
         def _get_params_from_es_core(self):
-            cdef CoreTabulatedAngleBond p = bonded_ia_params_at[CoreTabulatedAngleBond](self._bond_id)
-            return {"min": dereference(p.pot).minval,
-                    "max": dereference(p.pot).maxval,
-                    "energy": dereference(p.pot).energy_tab,
-                    "force": dereference(p.pot).force_tab
+            return {"min": self.min,
+                    "max": self.max,
+                    "energy": self.energy,
+                    "force": self.force
                     }
-
-        def _set_params_in_es_core(self):
-            set_bonded_ia_params(
-                self._bond_id, CoreTabulatedAngleBond(
-                    self._params["min"],
-                    self._params["max"],
-                    self._params["energy"],
-                    self._params["force"]))
-
-            # Retrieve some params, Es calculates.
-            self._params = self._get_params_from_es_core()
 
     class TabulatedDihedral(_TabulatedBase):
 
@@ -2502,6 +2477,9 @@ IF TABULATED:
             The force table for the range :math:`0-2\\pi`.
 
         """
+
+        _so_name = "Interactions::TabulatedDihedralBond"
+
         pi = 3.14159265358979
 
         def __init__(self, *args, **kwargs):
@@ -2528,23 +2506,11 @@ IF TABULATED:
                                  f"within the range [0, 2*pi], got {phi}")
 
         def _get_params_from_es_core(self):
-            cdef CoreTabulatedDihedralBond p = bonded_ia_params_at[CoreTabulatedDihedralBond](self._bond_id)
-            return {"min": dereference(p.pot).minval,
-                    "max": dereference(p.pot).maxval,
-                    "energy": dereference(p.pot).energy_tab,
-                    "force": dereference(p.pot).force_tab
+            return {"min": self.min,
+                    "max": self.max,
+                    "energy": self.energy,
+                    "force": self.force
                     }
-
-        def _set_params_in_es_core(self):
-            set_bonded_ia_params(
-                self._bond_id, CoreTabulatedDihedralBond(
-                    self._params["min"],
-                    self._params["max"],
-                    self._params["energy"],
-                    self._params["force"]))
-
-            # Retrieve some params, Es calculates.
-            self._params = self._get_params_from_es_core()
 
     cdef class TabulatedNonBonded(NonBondedInteraction):
 
@@ -2631,6 +2597,8 @@ class Virtual(BondedInteraction):
     Virtual bond.
     """
 
+    _so_name = "Interactions::VirtualBond"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -2655,17 +2623,14 @@ class Virtual(BondedInteraction):
         """
         return set()
 
-    def set_default_params(self):
-        """Sets parameters that are not required to their default value.
+    def get_default_params(self):
+        """Gets default values of optional parameters.
 
         """
-        self._params = {}
+        return {}
 
     def _get_params_from_es_core(self):
         return {}
-
-    def _set_params_in_es_core(self):
-        set_bonded_ia_params(self._bond_id, CoreVirtualBond())
 
 
 class AngleHarmonic(BondedInteraction):
@@ -2681,6 +2646,8 @@ class AngleHarmonic(BondedInteraction):
         Magnitude of the bond interaction.
 
     """
+
+    _so_name = "Interactions::AngleHarmonicBond"
 
     def type_number(self):
         return BONDED_IA_ANGLE_HARMONIC
@@ -2703,22 +2670,16 @@ class AngleHarmonic(BondedInteraction):
         """
         return {"bend", "phi0"}
 
-    def set_default_params(self):
-        """Sets parameters that are not required to their default value.
+    def get_default_params(self):
+        """Gets default values of optional parameters.
 
         """
-        self._params = {}
+        return {}
 
     def _get_params_from_es_core(self):
-        cdef CoreAngleHarmonicBond p_angle_harmonic \
-            = bonded_ia_params_at[CoreAngleHarmonicBond](self._bond_id)
         return \
-            {"bend": p_angle_harmonic.bend,
-             "phi0": p_angle_harmonic.phi0}
-
-    def _set_params_in_es_core(self):
-        set_bonded_ia_params(self._bond_id, CoreAngleHarmonicBond(
-            self._params["bend"], self._params["phi0"]))
+            {"bend": self.bend,
+             "phi0": self.phi0}
 
 
 class AngleCosine(BondedInteraction):
@@ -2734,6 +2695,8 @@ class AngleCosine(BondedInteraction):
         Magnitude of the bond interaction.
 
     """
+
+    _so_name = "Interactions::AngleCosineBond"
 
     def type_number(self):
         return BONDED_IA_ANGLE_COSINE
@@ -2756,22 +2719,16 @@ class AngleCosine(BondedInteraction):
         """
         return {"bend", "phi0"}
 
-    def set_default_params(self):
-        """Sets parameters that are not required to their default value.
+    def get_default_params(self):
+        """Gets default values of optional parameters.
 
         """
-        self._params = {}
+        return {}
 
     def _get_params_from_es_core(self):
-        cdef CoreAngleCosineBond p_cosine_harmonic \
-            = bonded_ia_params_at[CoreAngleCosineBond](self._bond_id)
         return \
-            {"bend": p_cosine_harmonic.bend,
-             "phi0": p_cosine_harmonic.phi0}
-
-    def _set_params_in_es_core(self):
-        set_bonded_ia_params(self._bond_id, CoreAngleCosineBond(
-            self._params["bend"], self._params["phi0"]))
+            {"bend": self.bend,
+             "phi0": self.phi0}
 
 
 class AngleCossquare(BondedInteraction):
@@ -2787,6 +2744,8 @@ class AngleCossquare(BondedInteraction):
         Magnitude of the bond interaction.
 
     """
+
+    _so_name = "Interactions::AngleCossquareBond"
 
     def type_number(self):
         return BONDED_IA_ANGLE_COSSQUARE
@@ -2809,21 +2768,15 @@ class AngleCossquare(BondedInteraction):
         """
         return {"bend", "phi0"}
 
-    def set_default_params(self):
-        """Sets parameters that are not required to their default value.
+    def get_default_params(self):
+        """Gets default values of optional parameters.
 
         """
-        self._params = {}
+        return {}
 
     def _get_params_from_es_core(self):
-        cdef CoreAngleCossquareBond p_cossquare_harmonic \
-            = bonded_ia_params_at[CoreAngleCossquareBond](self._bond_id)
-        return {"bend": p_cossquare_harmonic.bend,
-                "phi0": p_cossquare_harmonic.phi0}
-
-    def _set_params_in_es_core(self):
-        set_bonded_ia_params(self._bond_id, CoreAngleCossquareBond(
-            self._params["bend"], self._params["phi0"]))
+        return {"bend": self.bend,
+                "phi0": self.phi0}
 
 
 class IBM_Triel(BondedInteraction):
@@ -2849,6 +2802,8 @@ class IBM_Triel(BondedInteraction):
 
     """
 
+    _so_name = "Interactions::IBMTriel"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -2864,28 +2819,25 @@ class IBM_Triel(BondedInteraction):
     def required_keys(self):
         return {"ind1", "ind2", "ind3", "k1", "maxDist", "elasticLaw"}
 
-    def set_default_params(self):
-        self._params = {"k2": 0}
+    def validate_params(self):
+        """Check that parameters are valid.
+
+        The validity of ``elasticLaw`` is checked in the ScriptInterface.
+        """
+        return True
+
+    def get_default_params(self):
+        """Gets default values of optional parameters.
+
+        """
+        return {"k2": 0}
 
     def _get_params_from_es_core(self):
-        cdef CoreIBMTriel p_ibm_triel \
-            = bonded_ia_params_at[CoreIBMTriel](self._bond_id)
         return \
-            {"maxDist": p_ibm_triel.maxDist,
-             "k1": p_ibm_triel.k1,
-             "k2": p_ibm_triel.k2,
-             "elasticLaw": < int > p_ibm_triel.elasticLaw}
-
-    def _set_params_in_es_core(self):
-        cdef tElasticLaw el
-        if self._params["elasticLaw"] == "NeoHookean":
-            el = NeoHookean
-        if self._params["elasticLaw"] == "Skalak":
-            el = Skalak
-        set_bonded_ia_params(self._bond_id, CoreIBMTriel(
-            self._params["ind1"], self._params["ind2"],
-            self._params["ind3"], self._params["maxDist"], el,
-            self._params["k1"], self._params["k2"]))
+            {"maxDist": self.maxDist,
+             "k1": self.k1,
+             "k2": self.k2,
+             "elasticLaw": self.elasticLaw}
 
 
 class IBM_Tribend(BondedInteraction):
@@ -2907,6 +2859,8 @@ class IBM_Tribend(BondedInteraction):
 
     """
 
+    _so_name = "Interactions::IBMTribend"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -2922,23 +2876,21 @@ class IBM_Tribend(BondedInteraction):
     def required_keys(self):
         return {"ind1", "ind2", "ind3", "ind4", "kb"}
 
-    def set_default_params(self):
-        self._params = {"refShape": "Flat"}
+    def validate_params(self):
+        """Check that parameters are valid.
+
+        The validity of ``refShape`` is checked in the ScriptInterface.
+        """
+        return True
+
+    def get_default_params(self):
+        """Gets default values of optional parameters.
+
+        """
+        return {"refShape": "Flat"}
 
     def _get_params_from_es_core(self):
-        cdef CoreIBMTribend p_ibm_tribend \
-            = bonded_ia_params_at[CoreIBMTribend](self._bond_id)
-        return {"kb": p_ibm_tribend.kb, "theta0": p_ibm_tribend.theta0}
-
-    def _set_params_in_es_core(self):
-        if self._params["refShape"] == "Flat":
-            flat = True
-        if self._params["refShape"] == "Initial":
-            flat = False
-        set_bonded_ia_params(self._bond_id, CoreIBMTribend(
-            self._params["ind1"],
-            self._params["ind2"], self._params["ind3"],
-            self._params["ind4"], self._params["kb"], flat))
+        return {"kb": self.kb, "theta0": self.theta0}
 
 
 class IBM_VolCons(BondedInteraction):
@@ -2959,6 +2911,8 @@ class IBM_VolCons(BondedInteraction):
 
     """
 
+    _so_name = "Interactions::IBMVolCons"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -2974,18 +2928,15 @@ class IBM_VolCons(BondedInteraction):
     def required_keys(self):
         return {"softID", "kappaV"}
 
-    def set_default_params(self):
-        self._params = {}
+    def get_default_params(self):
+        """Gets default values of optional parameters.
+
+        """
+        return {}
 
     def _get_params_from_es_core(self):
-        cdef CoreIBMVolCons p_ibm_volconst \
-            = bonded_ia_params_at[CoreIBMVolCons](self._bond_id)
-        return {"softID": p_ibm_volconst.softID,
-                "kappaV": p_ibm_volconst.kappaV}
-
-    def _set_params_in_es_core(self):
-        set_bonded_ia_params(self._bond_id, CoreIBMVolCons(
-            self._params["softID"], self._params["kappaV"]))
+        return {"softID": self.softID,
+                "kappaV": self.kappaV}
 
     def current_volume(self):
         """
@@ -3017,6 +2968,8 @@ class OifGlobalForces(BondedInteraction):
 
     """
 
+    _so_name = "Interactions::OifGlobalForcesBond"
+
     def type_number(self):
         return BONDED_IA_OIF_GLOBAL_FORCES
 
@@ -3038,24 +2991,18 @@ class OifGlobalForces(BondedInteraction):
         """
         return {"A0_g", "ka_g", "V0", "kv"}
 
-    def set_default_params(self):
-        """Sets parameters that are not required to their default value.
+    def get_default_params(self):
+        """Gets default values of optional parameters.
 
         """
-        self._params = {}
+        return {}
 
     def _get_params_from_es_core(self):
-        cdef CoreOifGlobalForcesBond p_oif_global_forces \
-            = bonded_ia_params_at[CoreOifGlobalForcesBond](self._bond_id)
         return \
-            {"A0_g": p_oif_global_forces.A0_g,
-             "ka_g": p_oif_global_forces.ka_g,
-             "V0": p_oif_global_forces.V0,
-             "kv": p_oif_global_forces.kv}
-
-    def _set_params_in_es_core(self):
-        set_bonded_ia_params(self._bond_id, CoreOifGlobalForcesBond(
-            self._params["A0_g"], self._params["ka_g"], self._params["V0"], self._params["kv"]))
+            {"A0_g": self.A0_g,
+             "ka_g": self.ka_g,
+             "V0": self.V0,
+             "kv": self.kv}
 
 
 class OifLocalForces(BondedInteraction):
@@ -3088,6 +3035,8 @@ class OifLocalForces(BondedInteraction):
 
     """
 
+    _so_name = "Interactions::OifLocalForcesBond"
+
     def type_number(self):
         return BONDED_IA_OIF_LOCAL_FORCES
 
@@ -3111,32 +3060,23 @@ class OifLocalForces(BondedInteraction):
         return {"r0", "ks", "kslin", "phi0",
                 "kb", "A01", "A02", "kal", "kvisc"}
 
-    def set_default_params(self):
-        """Sets parameters that are not required to their default value.
+    def get_default_params(self):
+        """Gets default values of optional parameters.
 
         """
-        self._params = {}
+        return {}
 
     def _get_params_from_es_core(self):
-        cdef CoreOifLocalForcesBond p_oif_local_forces \
-            = bonded_ia_params_at[CoreOifLocalForcesBond](self._bond_id)
         return \
-            {"r0": p_oif_local_forces.r0,
-             "ks": p_oif_local_forces.ks,
-             "kslin": p_oif_local_forces.kslin,
-             "phi0": p_oif_local_forces.phi0,
-             "kb": p_oif_local_forces.kb,
-             "A01": p_oif_local_forces.A01,
-             "A02": p_oif_local_forces.A02,
-             "kal": p_oif_local_forces.kal,
-             "kvisc": p_oif_local_forces.kvisc}
-
-    def _set_params_in_es_core(self):
-        set_bonded_ia_params(self._bond_id, CoreOifLocalForcesBond(
-            self._params["r0"], self._params["ks"],
-            self._params["kslin"], self._params["phi0"], self._params["kb"],
-            self._params["A01"], self._params["A02"], self._params["kal"],
-            self._params["kvisc"]))
+            {"r0": self.r0,
+             "ks": self.ks,
+             "kslin": self.kslin,
+             "phi0": self.phi0,
+             "kb": self.kb,
+             "A01": self.A01,
+             "A02": self.A02,
+             "kal": self.kal,
+             "kvisc": self.kvisc}
 
 
 class QuarticBond(BondedInteraction):
@@ -3155,6 +3095,8 @@ class QuarticBond(BondedInteraction):
     r_cut : :obj:`float`
         Maximum interaction length.
     """
+
+    _so_name = "Interactions::QuarticBond"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -3180,50 +3122,19 @@ class QuarticBond(BondedInteraction):
         """
         return {"k0", "k1", "r", "r_cut"}
 
-    def set_default_params(self):
-        """Sets parameters that are not required to their default value.
+    def get_default_params(self):
+        """Gets default values of optional parameters.
 
         """
-        self._params = {}
+        return {}
 
     def _get_params_from_es_core(self):
-        cdef CoreQuarticBond p_quartic \
-            = bonded_ia_params_at[CoreQuarticBond](self._bond_id)
         return \
-            {"k0": p_quartic.k0,
-             "k1": p_quartic.k1,
-             "r": p_quartic.r,
-             "r_cut": p_quartic.r_cut}
+            {"k0": self.k0,
+             "k1": self.k1,
+             "r": self.r,
+             "r_cut": self.r_cut}
 
-    def _set_params_in_es_core(self):
-        set_bonded_ia_params(self._bond_id, CoreQuarticBond(
-            self._params["k0"], self._params["k1"], self._params["r"], self._params["r_cut"]))
-
-
-# Map the boost::variant type indices to python type identifiers. These enum
-# values must be in the same order as in the definition of the boost::variant.
-cdef enum enum_bonded_interaction:
-    BONDED_IA_NONE = 0,
-    BONDED_IA_FENE,
-    BONDED_IA_HARMONIC,
-    BONDED_IA_QUARTIC,
-    BONDED_IA_BONDED_COULOMB,
-    BONDED_IA_BONDED_COULOMB_SR,
-    BONDED_IA_ANGLE_HARMONIC,
-    BONDED_IA_ANGLE_COSINE,
-    BONDED_IA_ANGLE_COSSQUARE,
-    BONDED_IA_DIHEDRAL,
-    BONDED_IA_TABULATED_DISTANCE,
-    BONDED_IA_TABULATED_ANGLE,
-    BONDED_IA_TABULATED_DIHEDRAL,
-    BONDED_IA_THERMALIZED_DIST,
-    BONDED_IA_RIGID_BOND,
-    BONDED_IA_IBM_TRIEL,
-    BONDED_IA_IBM_VOLUME_CONSERVATION,
-    BONDED_IA_IBM_TRIBEND,
-    BONDED_IA_OIF_GLOBAL_FORCES,
-    BONDED_IA_OIF_LOCAL_FORCES,
-    BONDED_IA_VIRTUAL_BOND
 
 bonded_interaction_classes = {
     int(BONDED_IA_FENE): FeneBond,
@@ -3259,24 +3170,81 @@ def get_bonded_interaction_type_from_es_core(bond_id):
     return < enum_bonded_interaction > bonded_ia_params_zero_based_type(bond_id)
 
 
-class BondedInteractions:
+@script_interface_register
+class BondedInteractions(ScriptObjectRegistry):
 
     """
-    Represents the bonded interactions.
+    Represents the bonded interactions list.
 
     Individual interactions can be accessed using ``BondedInteractions[i]``,
     where ``i`` is the bond id.
     """
 
+    _so_name = "Interactions::BondedInteractions"
+    _so_creation_policy = "GLOBAL"
+
+    def __init__(self, *args, **kwargs):
+        if args:
+            params, (_unpickle_so_class, (_so_name, bytestring)) = args
+            assert _so_name == self._so_name
+            self = _unpickle_so_class(_so_name, bytestring)
+            self.__setstate__(params)
+        else:
+            super().__init__(**kwargs)
+
+    def add(self, *args, **kwargs):
+        """
+        Add a bond to the list.
+
+        Parameters
+        ----------
+        bond: :class:`espressomd.interactions.BondedInteraction`
+            Either a bond object...
+        \*\*kwargs : any
+            ... or parameters to construct a
+            :class:`~espressomd.interactions.BondedInteraction` object
+
+        """
+
+        if len(args) == 1 and isinstance(args[0], BondedInteraction):
+            bonded_ia = args[0]
+        else:
+            raise TypeError("A BondedInteraction object needs to be passed.")
+        bond_id = self._insert_bond(bonded_ia)
+        return bond_id
+
+    def remove(self, bond_id):
+        """
+        Remove a bond from the list. This is a noop if the bond does not exist.
+
+        Parameters
+        ----------
+        bond_id : :obj:`int`
+
+        """
+        # type of key must be int
+        if not is_valid_type(bond_id, int):
+            raise ValueError(
+                "Index to BondedInteractions[] has to be an integer referring to a bond id")
+
+        self.call_method("erase", key=bond_id)
+
+    def clear(self):
+        """
+        Remove all bonds.
+
+        """
+        self.call_method("clear")
+
     def __getitem__(self, key):
+        return self._get_bond(key)
+
+    def _get_bond(self, key):
         if not is_valid_type(key, int):
             raise ValueError(
                 "Index to BondedInteractions[] has to be an integer referring to a bond id")
 
         # Find out the type of the interaction from ESPResSo
-        if key < 0 or key >= bonded_ia_params_size():
-            raise IndexError(
-                "Index to BondedInteractions[] out of range")
         bond_type = get_bonded_interaction_type_from_es_core(key)
 
         # Check if the bonded interaction exists in ESPResSo core
@@ -3287,28 +3255,49 @@ class BondedInteractions:
         # Find the appropriate class representing such a bond
         bond_class = bonded_interaction_classes[bond_type]
 
-        # And return an instance of it, which refers to the bonded interaction
-        # id in ESPResSo
+        # Create a new script interface object (i.e. a copy of the shared_ptr)
+        # which links to the bonded interaction object
         return bond_class(key)
 
     def __setitem__(self, key, value):
+        self._insert_bond(value, key)
+
+    def _insert_bond(self, bond, key=None):
+        """
+        Inserts a new bond. If a key (id) is given, the bond is inserted at
+        that id. If no key is given, a new id is generated.
+
+        Bonds can only be overwritten if the new bond is of the same type as the
+        old one, e.g. a :class:`~espressomd.interactions.FeneBond` bond can only
+        be overwritten by another :class:`~espressomd.interactions.FeneBond` bond.
+        """
+
         # Validate arguments
-
-        # type of key must be int
-        if not is_valid_type(key, int):
-            raise ValueError(
-                "Index to BondedInteractions[] has to be an integer referring to a bond id")
-
-        # Value must be subclass off BondedInteraction
-        if not isinstance(value, BondedInteraction):
+        if not (key is None):
+            if not is_valid_type(key, int):
+                raise ValueError(
+                    "Index to BondedInteractions[] has to be an integer referring to a bond id")
+        if not isinstance(bond, BondedInteraction):
             raise ValueError(
                 "Only subclasses of BondedInteraction can be assigned.")
 
-        # Save the bond id in the BondedInteraction instance
-        value._bond_id = key
+        # Send the script interface object pointer to the core
+        if key is None:
+            key = self.call_method("insert", object=bond)
+        else:
+            # Throw error if attempting to overwrite a bond of different type
+            if self.call_method("contains", key=key):
+                old_type = bonded_interaction_classes[
+                    get_bonded_interaction_type_from_es_core(key)]
+                if not type(bond) is old_type:
+                    raise ValueError(
+                        "Bonds can only be overwritten by bonds of equal type.")
+            self.call_method("insert", key=key, object=bond)
 
-        # Set the parameters of the BondedInteraction instance in the Es core
-        value._set_params_in_es_core()
+        # Save the bond id in the BondedInteraction instance
+        bond._bond_id = key
+
+        return key
 
     def __len__(self):
         return bonded_ia_params_size()
@@ -3319,16 +3308,15 @@ class BondedInteractions:
             if get_bonded_interaction_type_from_es_core(i) != BONDED_IA_NONE:
                 yield self[i]
 
-    def add(self, bonded_ia):
-        """Add a bonded IA to the simulation"""
-        self[bonded_ia_params_size()] = bonded_ia
+    def __reduce__(self):
+        so_reduce = super().__reduce__()
+        return (self.__class__, (self.__getstate__(), so_reduce))
 
     def __getstate__(self):
         params = {}
-        for i, bonded_instance in enumerate(self):
-            if hasattr(bonded_instance, 'params'):
-                params[i] = bonded_instance.params
-                params[i]['bond_type'] = bonded_instance.type_number()
+        for i, bond_obj in enumerate(self):
+            if hasattr(bond_obj, 'params'):
+                params[i] = (bond_obj.params, bond_obj.type_number())
             else:
                 params[i] = None
         return params
@@ -3336,6 +3324,5 @@ class BondedInteractions:
     def __setstate__(self, params):
         for i in params:
             if params[i] is not None:
-                bond_type = params[i]['bond_type']
-                del params[i]['bond_type']
-                self[i] = bonded_interaction_classes[bond_type](**params[i])
+                bond_params, bond_type = params[i]
+                self[i] = bonded_interaction_classes[bond_type](**bond_params)

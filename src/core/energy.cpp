@@ -73,7 +73,7 @@ static std::shared_ptr<Observable_stat> calculate_energy_local() {
   short_range_loop(
       [&obs_energy](Particle const &p1, int bond_id,
                     Utils::Span<Particle *> partners) {
-        auto const &iaparams = bonded_ia_params[bond_id];
+        auto const &iaparams = *bonded_ia_params.at(bond_id);
         auto const result = calc_bonded_energy(iaparams, p1, partners);
         if (result) {
           obs_energy.bonded_contribution(bond_id)[0] += result.get();
