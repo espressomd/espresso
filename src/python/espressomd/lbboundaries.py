@@ -17,6 +17,7 @@
 from .script_interface import ScriptObjectRegistry, ScriptInterfaceHelper, script_interface_register
 from .utils import check_type_or_throw_except
 from .__init__ import has_features
+import numpy as np
 
 
 if has_features(["LB_BOUNDARIES"]):
@@ -97,3 +98,49 @@ if has_features(["LB_BOUNDARIES"]):
             check_type_or_throw_except(
                 velocity, 3, float, "VelocityBounceBack velocity must be three floats")
             self.velocity = velocity
+
+
+def edge_detection(boundary_mask, periodicity):
+    """
+    Find boundary nodes in contact with the fluid. Relies on a convolution
+    kernel constructed from the D3Q19 stencil.
+
+    Parameters
+    ----------
+    boundary_mask : (N, M, L) array_like of :obj:`bool`
+        Bitmask for the rasterized boundary geometry.
+    periodicity : (3,) array_like of :obj:`bool`
+        Bitmask for the box periodicity.
+
+    Returns
+    -------
+    (N, 3) array_like of :obj:`int`
+        The indices of the boundary nodes at the interface with the fluid.
+    """
+    import scipy.signal
+    import itertools
+
+    fluid_mask = np.logical_not(boundary_mask)
+
+    # edge kernel
+    edge = -np.ones((3, 3, 3))
+    for i, j, k in itertools.product((0, 2), (0, 2), (0, 2)):
+        edge[i, j, k] = 0
+    edge[1, 1, 1] = -np.sum(edge)
+
+    # periodic convolution
+    wrapped_mask = np.pad(fluid_mask.astype(int), 3 * [(2, 2)], mode='wrap')
+    if not periodicity[0]:
+        wrapped_mask[:2, :, :] = 0
+        wrapped_mask[-2:, :, :] = 0
+    if not periodicity[1]:
+        wrapped_mask[:, :2, :] = 0
+        wrapped_mask[:, -2:, :] = 0
+    if not periodicity[2]:
+        wrapped_mask[:, :, :2] = 0
+        wrapped_mask[:, :, -2:] = 0
+    convolution = scipy.signal.convolve(
+        wrapped_mask, edge, mode='same', method='direct')[2:-2, 2:-2, 2:-2]
+    convolution = np.multiply(convolution, boundary_mask)
+
+    return np.array(np.nonzero(convolution < 0)).T

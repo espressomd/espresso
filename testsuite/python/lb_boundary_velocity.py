@@ -22,6 +22,7 @@ import espressomd.shapes
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
+import itertools
 
 
 @utx.skipIfMissingFeatures(["LB_BOUNDARIES", "LB_WALBERLA"])
@@ -179,6 +180,101 @@ class LBBoundaryVelocityTest(ut.TestCase):
 
         idx_ref = set(itertools.product(range(1, 3), range(1, 4), range(1, 5)))
         self.assertSetEqual(idxs_in_boundary, idx_ref)
+
+    def test_edge_detection_x(self):
+        self.check_edge_detection(0)
+
+    def test_edge_detection_y(self):
+        self.check_edge_detection(1)
+
+    def test_edge_detection_z(self):
+        self.check_edge_detection(2)
+
+    def check_edge_detection(self, axis):
+        """
+        Test if the ``edge_detection`` method correctly identifies the grid
+        points on the surface of a cube and on the surface of a square
+        column (finite or infinite, periodic or aperiodic).
+        """
+        def get_surface_indices(mask, periodicity):
+            idx = espressomd.lbboundaries.edge_detection(mask, periodicity)
+            return set(map(tuple, idx))
+
+        def roll_product(a, b, c):
+            """
+            Calculate ``itertools.product`` of 3 objects that are rolled.
+            """
+            collection = np.array([list(a), list(b), list(c)], dtype=object)
+            return itertools.product(*np.roll(collection, axis))
+
+        def create_column_shape_roll(lengths, corner):
+            """
+            Create a prism with lengths and corner that are rolled.
+            """
+            lengths = np.roll(lengths, axis)
+            corner = np.roll(corner, axis)
+            return espressomd.shapes.Rhomboid(
+                a=lengths[0] * agrid * np.array([1, 0, 0]),
+                b=lengths[1] * agrid * np.array([0, 1, 0]),
+                c=lengths[2] * agrid * np.array([0, 0, 1]),
+                corner=agrid * corner,
+                direction=1)
+
+        agrid = self.lb_params['agrid']
+        system = self.system
+        periodic = np.roll([True, True, True], axis)
+        aperiodic = np.roll([False, False, False], axis)
+
+        # check a simple cube
+        cube = create_column_shape_roll([4, 4, 4], [1, 1, 1])
+        system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(shape=cube))
+        cube_mask = np.copy(self.lb_fluid[:, :, :].is_boundary.astype(bool))
+        idx_ref = set(roll_product(range(1, 5), range(1, 5), range(1, 5)))
+        for item in roll_product(range(2, 4), range(2, 4), range(2, 4)):
+            idx_ref.remove(item)
+
+        idxs_on_surface = get_surface_indices(cube_mask, periodic)
+        self.assertSetEqual(idxs_on_surface, idx_ref)
+
+        system.lbboundaries.clear()
+
+        # create an infinite square column
+        col = create_column_shape_roll([8, 4, 4], [0, 1, 1])
+        system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(shape=col))
+        col_mask = np.copy(self.lb_fluid[:, :, :].is_boundary.astype(bool))
+        idx_ref = set(roll_product(range(0, 8), range(1, 5), range(1, 5)))
+        for item in roll_product(range(0, 8), range(2, 4), range(2, 4)):
+            idx_ref.remove(item)
+
+        # with periodicity: check neither ends are in contact with fluid
+        idxs_on_surface = get_surface_indices(col_mask, periodic)
+        self.assertSetEqual(idxs_on_surface, idx_ref)
+
+        # without periodicity: check neither ends are in contact with fluid
+        idxs_on_surface = get_surface_indices(col_mask, aperiodic)
+        self.assertSetEqual(idxs_on_surface, idx_ref)
+
+        system.lbboundaries.clear()
+
+        # create a finite square column; both ends of the columns are in
+        # contact with a thin slice of fluid
+        col = create_column_shape_roll([7, 4, 4], [0, 1, 1])
+        system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(shape=col))
+        col_mask = np.copy(self.lb_fluid[:, :, :].is_boundary.astype(bool))
+        idx_ref = set(roll_product(range(0, 7), range(1, 5), range(1, 5)))
+
+        # with periodicity: check both ends are in contact with fluid
+        for item in roll_product(range(1, 6), range(2, 4), range(2, 4)):
+            idx_ref.remove(item)
+        idxs_on_surface = get_surface_indices(col_mask, periodic)
+        self.assertSetEqual(idxs_on_surface, idx_ref)
+
+        # without periodicity: check one end of the column is no longer in
+        # contact with the fluid
+        for item in roll_product(range(0, 1), range(2, 4), range(2, 4)):
+            idx_ref.remove(item)
+        idxs_on_surface = get_surface_indices(col_mask, aperiodic)
+        self.assertSetEqual(idxs_on_surface, idx_ref)
 
 
 if __name__ == "__main__":
