@@ -22,6 +22,9 @@ from .grid cimport node_grid
 from .grid cimport box_geo
 from . cimport integrate
 from libcpp.vector cimport vector
+from libcpp.set cimport set as cset
+from libcpp.unordered_map cimport unordered_map
+from cython.operator cimport dereference, preincrement
 from .cellsystem cimport cell_structure
 from .cellsystem cimport get_verlet_reuse
 from .cellsystem cimport mpi_set_skin, skin
@@ -148,6 +151,163 @@ cdef class CellSystem:
         for type in types:
             types_c.push_back(type)
         return mpi_get_pairs_of_types(distance, types_c)
+
+    def __helper_function_convert_to_list(self, distance, types):
+        cdef vector[int] types_c
+        for ptype in types:
+            types_c.push_back(ptype)
+        return mpi_get_pairs_of_types(distance, types_c)
+
+    def generate_map_deniz_1(self, distance, types):
+        '''Original implementation, but converted in pure python.'''
+        def give_unique(list_of_pairs):
+            dim_1 = np.shape(list_of_pairs)[0]
+            set_ret = dim_1 * [None]
+            for ii in range(dim_1):
+                set_ret[ii]=list_of_pairs[ii][0]
+            return set_ret
+        def neighbors(pairs, item):
+            return [p[1-p.index(item)] for p in pairs if item in p]
+        list_of_pairs = self.__helper_function_convert_to_list(distance, types)
+        return {k: neighbors(list_of_pairs, k) for k in give_unique(list_of_pairs)}
+
+    def generate_map_deniz_2(self, distance, types):
+        '''Original implementation, but converted in pure python and reduced to one-liners.'''
+        def give_unique(list_of_pairs):
+            return [pair[0] for pair in list_of_pairs]
+        def neighbors(list_of_pairs, pid):
+            return [pair[1 - pair.index(pid)] for pair in list_of_pairs if pid in pair]
+        list_of_pairs = self.__helper_function_convert_to_list(distance, types)
+        return {k: neighbors(list_of_pairs, k) for k in give_unique(list_of_pairs)}
+
+    def generate_map_deniz_3(self, distance, types):
+        '''C++ implementation in Cython.'''
+        cdef vector[int] types_c
+        for ptype in types:
+            types_c.push_back(ptype)
+
+        cdef vector[pair[int, int]] list_of_pairs
+        list_of_pairs = mpi_get_pairs_of_types(distance, types_c)
+
+        cdef int i
+        cdef int j
+        output = {}
+        for i in range(list_of_pairs.size()):
+            pid = list_of_pairs[i].first
+            output[pid] = []
+            for j in range(list_of_pairs.size()):
+                if list_of_pairs[j].first == pid:
+                    output[pid].append(list_of_pairs[j].second)
+                elif list_of_pairs[j].second == pid:
+                    output[pid].append(list_of_pairs[j].first)
+
+        return output
+
+    def generate_map_deniz_4(self, distance, types):
+        '''C++ implementation in Cython, modified core function to skip partial sort and sanity checks, without Verlet list.'''
+        cdef vector[int] types_c
+        for ptype in types:
+            types_c.push_back(ptype)
+
+        cdef vector[pair[int, int]] list_of_pairs
+        list_of_pairs = mpi_get_pairs_of_types_deniz(distance, types_c)
+
+        cdef int pid
+        cdef int i
+        cdef int j
+        cdef cset[int] keys
+        output = {}
+        for i in range(list_of_pairs.size()):
+            pid = list_of_pairs[i].first
+            if keys.count(pid) == 0:
+                keys.insert(pid)
+                output[pid] = []
+                for j in range(list_of_pairs.size()):
+                    if list_of_pairs[j].first == pid:
+                        output[pid].append(list_of_pairs[j].second)
+                    elif list_of_pairs[j].second == pid:
+                        output[pid].append(list_of_pairs[j].first)
+            pid = list_of_pairs[i].second
+            if keys.count(pid) == 0:
+                keys.insert(pid)
+                output[pid] = []
+                for j in range(list_of_pairs.size()):
+                    if list_of_pairs[j].first == pid:
+                        output[pid].append(list_of_pairs[j].second)
+                    elif list_of_pairs[j].second == pid:
+                        output[pid].append(list_of_pairs[j].first)
+
+        return output
+
+    def generate_map_deniz_5(self, distance, types):
+        '''C++ implementation in Cython, modified core function to skip partial sort and sanity checks, without Verlet list, uses an intermediate associative array.'''
+        cdef vector[int] types_c
+        for ptype in types:
+            types_c.push_back(ptype)
+
+        cdef vector[pair[int, int]] list_of_pairs
+        list_of_pairs = mpi_get_pairs_of_types_deniz(distance, types_c)
+
+        cdef int i
+        cdef int j
+        cdef cset[pair[int, int]] associative_array
+        for i in range(list_of_pairs.size()):
+            associative_array.insert(list_of_pairs[i])
+            associative_array.insert(pair[ int, int ]( list_of_pairs[i].second, list_of_pairs[i].first ))
+
+        output = {}
+        cdef cset[int] keys
+        cdef cset[pair[int, int]].iterator it = associative_array.begin()
+        while it != associative_array.end():
+            i = dereference(it).first
+            j = dereference(it).second
+            if keys.count(i) == 0:
+                keys.insert(i)
+                output[i] = []
+            if keys.count(j) == 0:
+                keys.insert(j)
+                output[j] = []
+            output[i].append(j)
+            output[j].append(i)
+            preincrement(it)
+
+        return output
+
+    def generate_map_deniz_6(self, distance, types):
+        '''C++ implementation in Cython, modified core function to skip partial sort and sanity checks, with Verlet lists'''
+        cdef vector[int] types_c
+        for ptype in types:
+            types_c.push_back(ptype)
+
+        cdef vector[pair[int, int]] list_of_pairs
+        list_of_pairs = mpi_get_pairs_of_types_deniz_verlet(distance, types_c)
+
+        cdef int pid
+        cdef int i
+        cdef int j
+        cdef cset[int] keys
+        output = {}
+        for i in range(list_of_pairs.size()):
+            pid = list_of_pairs[i].first
+            if keys.count(pid) == 0:
+                keys.insert(pid)
+                output[pid] = []
+                for j in range(list_of_pairs.size()):
+                    if list_of_pairs[j].first == pid:
+                        output[pid].append(list_of_pairs[j].second)
+                    elif list_of_pairs[j].second == pid:
+                        output[pid].append(list_of_pairs[j].first)
+            pid = list_of_pairs[i].second
+            if keys.count(pid) == 0:
+                keys.insert(pid)
+                output[pid] = []
+                for j in range(list_of_pairs.size()):
+                    if list_of_pairs[j].first == pid:
+                        output[pid].append(list_of_pairs[j].second)
+                    elif list_of_pairs[j].second == pid:
+                        output[pid].append(list_of_pairs[j].first)
+
+        return output
 
     def non_bonded_loop_trace(self):
         cdef vector[PairInfo] pairs = mpi_non_bonded_loop_trace()

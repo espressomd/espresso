@@ -96,6 +96,13 @@ std::vector<std::pair<int, int>> mpi_get_pairs(double distance);
 std::vector<std::pair<int, int>>
 mpi_get_pairs_of_types(double distance, std::vector<int> const &types);
 
+std::vector<std::pair<int, int>>
+mpi_get_pairs_of_types_deniz(double distance, std::vector<int> const &types);
+
+std::vector<std::pair<int, int>>
+mpi_get_pairs_of_types_deniz_verlet(double distance,
+                                    std::vector<int> const &types);
+
 /** Check if a particle resorting is required. */
 void check_resort_particles();
 

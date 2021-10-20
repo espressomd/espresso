@@ -49,6 +49,8 @@ cdef extern from "cells.hpp":
 
     vector[pair[int, int]] mpi_get_pairs(double distance) except +
     vector[pair[int, int]] mpi_get_pairs_of_types(double distance, vector[int] types) except +
+    vector[pair[int, int]] mpi_get_pairs_of_types_deniz(double distance, vector[int] types)
+    vector[pair[int, int]] mpi_get_pairs_of_types_deniz_verlet(double distance, vector[int] types)
     vector[PairInfo] mpi_non_bonded_loop_trace() 
     vector[int] mpi_resort_particles(int global_flag)
     void mpi_bcast_cell_structure(int cs)

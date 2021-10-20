@@ -84,6 +84,63 @@ std::vector<std::pair<int, int>> get_pairs_filtered(double const distance,
   return ret;
 }
 
+template <class Filter>
+std::vector<std::pair<int, int>> get_pairs_filtered_deniz(double const distance,
+                                                          Filter filter) {
+  std::vector<std::pair<int, int>> ret;
+  on_observable_calc();
+  auto const cutoff2 = distance * distance;
+  auto pair_kernel = [&ret, &cutoff2, &filter](Particle const &p1,
+                                               Particle const &p2,
+                                               Distance const &d) {
+    if (d.dist2 < cutoff2 and filter(p1) and filter(p2))
+      ret.emplace_back(p1.p.identity, p2.p.identity);
+  };
+
+  cell_structure.non_bonded_loop(pair_kernel);
+
+  return ret;
+}
+
+#include "collision.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
+#include "nonbonded_interactions/VerletCriterion.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+
+template <class Filter>
+std::vector<std::pair<int, int>>
+get_pairs_filtered_deniz_verlet(double const distance, Filter filter) {
+  std::vector<std::pair<int, int>> ret;
+  on_observable_calc();
+  auto const cutoff2 = distance * distance;
+  auto pair_kernel = [&ret, &cutoff2, &filter](Particle const &p1,
+                                               Particle const &p2,
+                                               Distance const &d) {
+    if (d.dist2 < cutoff2 and filter(p1) and filter(p2))
+      ret.emplace_back(p1.p.identity, p2.p.identity);
+  };
+
+#ifdef ELECTROSTATICS
+  auto const coulomb_cutoff = Coulomb::cutoff(box_geo.length());
+#else
+  auto const coulomb_cutoff = INACTIVE_CUTOFF;
+#endif
+
+#ifdef DIPOLES
+  auto const dipole_cutoff = Dipole::cutoff(box_geo.length());
+#else
+  auto const dipole_cutoff = INACTIVE_CUTOFF;
+#endif
+
+  cell_structure.non_bonded_loop(pair_kernel,
+                                 VerletCriterion{skin, interaction_range(),
+                                                 coulomb_cutoff, dipole_cutoff,
+                                                 collision_detection_cutoff()});
+
+  return ret;
+}
+
 namespace boost {
 namespace serialization {
 template <class Archive>
@@ -138,6 +195,32 @@ void get_pairs_of_types_local(double const distance,
 
 REGISTER_CALLBACK(get_pairs_of_types_local)
 
+auto get_pairs_of_types_deniz_local(double const distance,
+                                    std::vector<int> const &types) {
+  auto local_pairs =
+      get_pairs_filtered_deniz(distance, [types](Particle const &p) {
+        return std::any_of(types.begin(), types.end(),
+                           [p](int const type) { return p.p.type == type; });
+      });
+  Utils::Mpi::gather_buffer(local_pairs, comm_cart);
+  return local_pairs;
+}
+
+REGISTER_CALLBACK_MASTER_RANK(get_pairs_of_types_deniz_local)
+
+auto get_pairs_of_types_deniz_verlet_local(double const distance,
+                                           std::vector<int> const &types) {
+  auto local_pairs =
+      get_pairs_filtered_deniz_verlet(distance, [types](Particle const &p) {
+        return std::any_of(types.begin(), types.end(),
+                           [p](int const type) { return p.p.type == type; });
+      });
+  Utils::Mpi::gather_buffer(local_pairs, comm_cart);
+  return local_pairs;
+}
+
+REGISTER_CALLBACK_MASTER_RANK(get_pairs_of_types_deniz_verlet_local)
+
 namespace detail {
 void search_distance_sanity_check(double const distance) {
   /* get_pairs_filtered() finds pairs via the non_bonded_loop. The maximum
@@ -146,8 +229,7 @@ void search_distance_sanity_check(double const distance) {
   auto range = *boost::min_element(cell_structure.max_range());
   if (distance > range) {
     runtimeErrorMsg() << "pair search distance " << distance
-                      << " bigger than the decomposition range " << range
-                      << ".\n";
+                      << " bigger than the decomposition range " << range;
   }
 }
 } // namespace detail
@@ -167,6 +249,20 @@ mpi_get_pairs_of_types(double const distance, std::vector<int> const &types) {
   auto pairs = get_pairs_of_types(distance, types);
   Utils::Mpi::gather_buffer(pairs, comm_cart);
   return pairs;
+}
+
+std::vector<std::pair<int, int>>
+mpi_get_pairs_of_types_deniz(double const distance,
+                             std::vector<int> const &types) {
+  return mpi_call(::Communication::Result::master_rank,
+                  get_pairs_of_types_deniz_local, distance, types);
+}
+
+std::vector<std::pair<int, int>>
+mpi_get_pairs_of_types_deniz_verlet(double const distance,
+                                    std::vector<int> const &types) {
+  return mpi_call(::Communication::Result::master_rank,
+                  get_pairs_of_types_deniz_verlet_local, distance, types);
 }
 
 void non_bonded_loop_trace_local() {
