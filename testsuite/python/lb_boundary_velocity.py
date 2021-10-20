@@ -128,20 +128,57 @@ class LBBoundaryVelocityTest(ut.TestCase):
         self.lb_fluid[1, 2, 3].boundary = None
         self.assertIsNone(self.lb_fluid[1, 2, 3].boundary)
 
-    def test_nodes_in_shape(self):
+    def test_nodes_in_shape_line(self):
         """
-        Test if the get_nodes_in_shape method correctly identifies the grid points inside a cylinder
+        Test if the ``get_nodes_in_shape`` method correctly identifies the grid
+        points inside a line.
         """
         agrid = self.lb_params['agrid']
         cyl = espressomd.shapes.Cylinder(center=agrid * np.array([1.5, 2.5, 5.5]),
                                          axis=[0, 0, 1],
                                          length=2.1 * agrid,
                                          radius=0.5 * agrid)
-        nodes_in_cyl = self.lb_fluid.get_nodes_in_shape(cyl)
-        idxs_in_cyl = set(tuple(node.index) for node in nodes_in_cyl)
+        nodes_in_boundary = self.lb_fluid.get_nodes_in_shape(cyl)
+        idxs_in_boundary = set(tuple(node.index) for node in nodes_in_boundary)
 
-        idx_should_be = {(1, 2, 5), (1, 2, 4), (1, 2, 6)}
-        self.assertSetEqual(idxs_in_cyl, idx_should_be)
+        idx_ref = {(1, 2, 5), (1, 2, 4), (1, 2, 6)}
+        self.assertSetEqual(idxs_in_boundary, idx_ref)
+
+    def test_nodes_in_shape_cylinder(self):
+        """
+        Test if the ``get_nodes_in_shape`` method correctly identifies the grid
+        points inside a cylinder.
+        """
+        agrid = self.lb_params['agrid']
+        cyl = espressomd.shapes.Cylinder(center=agrid * np.array([1.5, 1.5, 0.5]),
+                                         axis=[0, 0, 1],
+                                         length=2.0 * self.system.box_l[2],
+                                         radius=2.0 * agrid)
+        nodes_in_boundary = self.lb_fluid.get_nodes_in_shape(cyl)
+        idxs_in_boundary = list(tuple(node.index)
+                                for node in nodes_in_boundary)
+
+        for node in idxs_in_boundary:
+            self.assertIn(node[0], [0, 1, 2])
+            self.assertIn(node[1], [0, 1, 2])
+            self.assertIn(node[2], np.arange(8))
+
+    def test_nodes_in_shape_cube(self):
+        """
+        Test if the ``get_nodes_in_shape`` method correctly identifies the grid
+        points inside a cube.
+        """
+        agrid = self.lb_params['agrid']
+        prism = espressomd.shapes.Rhomboid(a=2 * agrid * np.array([1, 0, 0]),
+                                           b=3 * agrid * np.array([0, 1, 0]),
+                                           c=4 * agrid * np.array([0, 0, 1]),
+                                           corner=agrid * np.array([1, 1, 1]),
+                                           direction=1)
+        nodes_in_boundary = self.lb_fluid.get_nodes_in_shape(prism)
+        idxs_in_boundary = set(tuple(node.index) for node in nodes_in_boundary)
+
+        idx_ref = set(itertools.product(range(1, 3), range(1, 4), range(1, 5)))
+        self.assertSetEqual(idxs_in_boundary, idx_ref)
 
 
 if __name__ == "__main__":
