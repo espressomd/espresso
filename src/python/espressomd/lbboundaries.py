@@ -144,3 +144,31 @@ def edge_detection(boundary_mask, periodicity):
     convolution = np.multiply(convolution, boundary_mask)
 
     return np.array(np.nonzero(convolution < 0)).T
+
+
+def add_constant_tangential_slip_velocity_to_cylinder(
+        lb_fluid, node_indices, center, magnitude):
+    """
+    Utility function to add a constant slip velocity parallel to the
+    surface of a cylinder.
+
+    Parameters
+    ----------
+    lb_fluid : :obj:`espressomd.lb.HydrodynamicInteraction`
+        LB instance.
+    node_indices : (N, 3) array_like of :obj:`int`
+        Indices of the boundary surface nodes.
+    center : (3,) array_like of :obj:`float`
+        Center of the cylinder.
+    magnitude : :obj:`float`
+        Magnitude of the slip velocity; positive value for counter-clockwise
+        motion, negative value for clockwise motion.
+    """
+    for ijk in node_indices:
+        p = (ijk + 0.5) * lb_fluid.agrid
+        r = center - p
+        angle_r = np.arccos(np.dot(r[:2] / np.linalg.norm(r[:2]), [1, 0]))
+        angle_v = angle_r - np.pi / 2
+        flip = np.sign(r[1])
+        slip_velocity = np.array([flip * np.cos(angle_v), np.sin(angle_v), 0.])
+        lb_fluid[ijk].boundary = VelocityBounceBack(magnitude * slip_velocity)
