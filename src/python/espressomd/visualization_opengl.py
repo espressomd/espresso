@@ -2482,7 +2482,10 @@ def rotation_helper(d):
     # the rotation axis is the cross product between z and d
     vz = np.cross([0.0, 0.0, 1.0], d)
     # get the angle using a dot product
-    angle = 180.0 / np.pi * math.acos(d[2] / np.linalg.norm(d))
+    norm = np.linalg.norm(d)
+    angle = np.nan
+    if norm != 0.:
+        angle = 180.0 / np.pi * math.acos(d[2] / norm)
 
     return angle, vz[0], vz[1]
 
@@ -2506,6 +2509,8 @@ def draw_arrow(pos, d, radius, color, material, quality):
     draw_cylinder(pos, pos2, radius, color, material, quality)
 
     ax, rx, ry = rotation_helper(d)
+    if math.isnan(ax):
+        return
 
     OpenGL.GL.glPushMatrix()
     OpenGL.GL.glTranslatef(pos2[0], pos2[1], pos2[2])
