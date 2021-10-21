@@ -44,14 +44,15 @@ void lb_lbfluid_propagate();
  */
 void lb_lbfluid_on_integration_start();
 
-/** Perform a full initialization of
- *  the lattice Boltzmann system. All derived parameters
- *  and the fluid are reset to their default values.
+/**
+ * @brief Perform a full initialization of the lattice-Boltzmann system.
+ * All derived parameters and the fluid are reset to their default values.
  */
 void lb_lbfluid_init();
 
-/** (Re-)initialize the derived parameters for the lattice Boltzmann system.
- *  The current state of the fluid is unchanged.
+/**
+ * @brief Reinitialize the derived parameters for the lattice-Boltzmann system.
+ * The current state of the fluid is unchanged.
  */
 void lb_lbfluid_reinit_parameters();
 

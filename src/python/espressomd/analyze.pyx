@@ -242,16 +242,17 @@ class Analysis:
             * ``"kinetic"``: kinetic pressure
             * ``"bonded"``: total bonded pressure
             * ``"bonded", <bond_type>``: bonded pressure which arises from the given bond_type
-            * ``"nonbonded"``: total nonbonded pressure
-            * ``"nonbonded", <type_i>, <type_j>``: nonbonded pressure which arises from the interactions between type_i and type_j
-            * ``"nonbonded_intra", <type_i>, <type_j>``: nonbonded pressure between short ranged forces between type i and j and with the same mol_id
-            * ``"nonbonded_inter", <type_i>, <type_j>``: nonbonded pressure between short ranged forces between type i and j and different mol_ids
+            * ``"non_bonded"``: total non-bonded pressure
+            * ``"non_bonded", <type_i>, <type_j>``: non-bonded pressure which arises from the interactions between type_i and type_j
+            * ``"non_bonded_intra", <type_i>, <type_j>``: non-bonded pressure between short ranged forces between type i and j and with the same mol_id
+            * ``"non_bonded_inter", <type_i>, <type_j>``: non-bonded pressure between short ranged forces between type i and j and different mol_ids
             * ``"coulomb"``: Coulomb pressure, how it is calculated depends on the method. It is equivalent to 1/3 of the trace of the Coulomb pressure tensor.
               For how the pressure tensor is calculated, see :ref:`Pressure Tensor`. The averaged value in an isotropic NVT simulation is equivalent to the average of
               :math:`E^{coulomb}/(3V)`, see :cite:`brown95a`.
             * ``"coulomb", <i>``: Coulomb pressure from particle pairs (``i=0``), electrostatics solvers (``i=1``)
             * ``"dipolar"``: not implemented
             * ``"virtual_sites"``: Pressure contribution from virtual sites
+            * ``"external_fields"``: external fields contribution
 
         """
 
@@ -277,14 +278,15 @@ class Analysis:
             * ``"kinetic"``: kinetic pressure tensor
             * ``"bonded"``: total bonded pressure tensor
             * ``"bonded", <bond_type>``: bonded pressure tensor which arises from the given bond_type
-            * ``"nonbonded"``: total nonbonded pressure tensor
-            * ``"nonbonded", <type_i>, <type_j>``: nonbonded pressure tensor which arises from the interactions between type_i and type_j
-            * ``"nonbonded_intra", <type_i>, <type_j>``: nonbonded pressure tensor between short ranged forces between type i and j and with the same mol_id
-            * ``"nonbonded_inter", <type_i>, <type_j>``: nonbonded pressure tensor between short ranged forces between type i and j and different mol_ids
+            * ``"non_bonded"``: total non-bonded pressure tensor
+            * ``"non_bonded", <type_i>, <type_j>``: non-bonded pressure tensor which arises from the interactions between type_i and type_j
+            * ``"non_bonded_intra", <type_i>, <type_j>``: non-bonded pressure tensor between short ranged forces between type i and j and with the same mol_id
+            * ``"non_bonded_inter", <type_i>, <type_j>``: non-bonded pressure tensor between short ranged forces between type i and j and different mol_ids
             * ``"coulomb"``: Maxwell pressure tensor, how it is calculated depends on the method
             * ``"coulomb", <i>``: Maxwell pressure tensor from particle pairs (``i=0``), electrostatics solvers (``i=1``)
             * ``"dipolar"``: not implemented
             * ``"virtual_sites"``: pressure tensor contribution from virtual sites
+            * ``"external_fields"``: external fields contribution
 
         """
 
@@ -317,14 +319,15 @@ class Analysis:
             * ``"kinetic"``: linear and rotational kinetic energy
             * ``"bonded"``: total bonded energy
             * ``"bonded", <bond_type>``: bonded energy which arises from the given bond_type
-            * ``"nonbonded"``: total nonbonded energy
-            * ``"nonbonded", <type_i>, <type_j>``: nonbonded energy which arises from the interactions between type_i and type_j
-            * ``"nonbonded_intra", <type_i>, <type_j>``: nonbonded energy between short ranged forces between type i and j and with the same mol_id
-            * ``"nonbonded_inter", <type_i>, <type_j>``: nonbonded energy between short ranged forces between type i and j and different mol_ids
+            * ``"non_bonded"``: total non-bonded energy
+            * ``"non_bonded", <type_i>, <type_j>``: non-bonded energy which arises from the interactions between type_i and type_j
+            * ``"non_bonded_intra", <type_i>, <type_j>``: non-bonded energy between short ranged forces between type i and j and with the same mol_id
+            * ``"non_bonded_inter", <type_i>, <type_j>``: non-bonded energy between short ranged forces between type i and j and different mol_ids
             * ``"coulomb"``: Coulomb energy, how it is calculated depends on the method
             * ``"coulomb", <i>``: Coulomb energy from particle pairs (``i=0``), electrostatics solvers (``i=1``)
             * ``"dipolar"``: dipolar energy
             * ``"dipolar", <i>``: dipolar energy from particle pairs and magnetic field constraints (``i=0``), magnetostatics solvers (``i=1``)
+            * ``"external_fields"``: external fields contribution
 
 
         Examples

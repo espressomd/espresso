@@ -39,16 +39,10 @@
 
 #include <cmath>
 
-/**********************************************
- * variables
- **********************************************/
-
 BoxGeometry box_geo;
 LocalBox<double> local_geo;
 
 Utils::Vector3i node_grid{};
-
-/************************************************************/
 
 void init_node_grid() { grid_changed_n_nodes(); }
 

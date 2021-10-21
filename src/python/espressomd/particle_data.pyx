@@ -1742,7 +1742,7 @@ cdef class ParticleList:
         >>> system.part.add(id=0, pos=(1, 0, 0))
         >>> system.part.add(id=1, pos=(2, 0, 0))
 
-        Pos is mandatory, id can be omitted, in which case it is assigned automatically.
+        ``pos`` is mandatory, ``id`` can be omitted, in which case it is assigned automatically.
         Several particles can be added by passing one value per particle to each property::
 
             system.part.add(pos=((1, 2, 3), (4, 5, 6)), q=(1, -1))

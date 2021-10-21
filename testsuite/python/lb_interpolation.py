@@ -73,6 +73,7 @@ class LBInterpolation:
         """
         self.set_boundaries([0.0, 0.0, V_BOUNDARY])
         self.system.integrator.run(250)
+
         # Check interpolated vel at upper boundary. The node position is at
         # box_l[0]-agrid/2.
         np.testing.assert_allclose(
@@ -84,8 +85,7 @@ class LBInterpolation:
         # The boundary node index is lbf.shape[0]-1, so -2 refers to the
         # node in front of the boundary.
         node_next_to_boundary = self.lbf[self.lbf.shape[0] - 2, 0, 0]
-        # The midpoint between the boundary and
-        # that node is box_l - agrid.
+        # The midpoint between the boundary and that node is box_l - agrid.
         np.testing.assert_allclose(
             np.copy(self.lbf.get_interpolated_velocity(
                 [self.system.box_l[0] - AGRID, 0, 0])),

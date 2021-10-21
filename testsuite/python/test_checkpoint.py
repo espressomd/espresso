@@ -316,7 +316,7 @@ class CheckpointTest(ut.TestCase):
             self.assertEqual(state, reference)
 
     @ut.skipIf('THERM.LB' in modes, 'LB thermostat in modes')
-    @utx.skipIfMissingFeatures(['MASS'])
+    @utx.skipIfMissingFeatures(['ELECTROSTATICS', 'MASS', 'ROTATION'])
     def test_drude_helpers(self):
         drude_type = 10
         core_type = 0
@@ -490,13 +490,14 @@ class CheckpointTest(ut.TestCase):
         # check boundary flag
         lbf = self.get_active_actor_of_type(
             espressomd.lb.HydrodynamicInteraction)
-        np.testing.assert_equal(lbf[0, :, :].boundary.astype(int), 1)
-        np.testing.assert_equal(lbf[-1, :, :].boundary.astype(int), 2)
-        np.testing.assert_equal(lbf[1:-1, :, :].boundary.astype(int), 0)
+        np.testing.assert_equal(np.copy(lbf[0, :, :].boundary.astype(int)), 1)
+        np.testing.assert_equal(np.copy(lbf[-1, :, :].boundary.astype(int)), 2)
+        np.testing.assert_equal(
+            np.copy(lbf[1:-1, :, :].boundary.astype(int)), 0)
         # remove boundaries
         system.lbboundaries.clear()
         self.assertEqual(len(system.lbboundaries), 0)
-        np.testing.assert_equal(lbf[:, :, :].boundary.astype(int), 0)
+        np.testing.assert_equal(np.copy(lbf[:, :, :].boundary.astype(int)), 0)
 
     @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
     def test_constraints(self):

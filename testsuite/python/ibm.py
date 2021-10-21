@@ -22,7 +22,6 @@ import unittest as ut
 import unittest_decorators as utx
 
 import espressomd
-import espressomd.lb
 import espressomd.interactions
 import espressomd.virtual_sites
 
