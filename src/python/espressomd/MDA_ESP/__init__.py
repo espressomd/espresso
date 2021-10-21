@@ -31,7 +31,7 @@ A minimal working example is the following:
 >>> system = espressomd.System(box_l=[10., 10., 10.])
 >>> system.time_step = 1.
 >>> system.cell_system.skin = 1.
->>> system.part.add(id=0, pos=[1., 2., 3.])
+>>> system.part.add(pos=[1., 2., 3.])
 >>> # set up the stream
 >>> eos = espressomd.MDA_ESP.Stream(system)
 >>> # feed Universe with a topology and coordinates

@@ -780,6 +780,11 @@ targets are available:
     Runs the testsuite. By default, all available tests will be run on
     1, 2, 3, 4, 6, or 8 processors.
 
+``test``
+    Do not use this target, it is a broken feature
+    (see `issue #4370 <https://github.com/espressomd/espresso/issues/4370>`__).
+    Use ``make check`` instead.
+
 ``clean``
     Deletes all files that were created during the compilation.
 
