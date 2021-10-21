@@ -317,6 +317,7 @@ class openGLLive():
             'LB_plane_dist': 0,
             'LB_plane_ngrid': 5,
             'LB_vel_scale': 1.0,
+            'LB_vel_radius_scale': 0.005,
             'LB_arrow_color': [1, 1, 1],
             'LB_arrow_material': 'transparent1',
             'LB_arrow_quality': 16,
@@ -1597,7 +1598,7 @@ class openGLLive():
             self.lb_plane_p = np.array(pn) * self.specs['LB_plane_dist']
 
             self.lb_arrow_radius = self.system.box_l[
-                self.specs['LB_plane_axis']] * 0.005
+                self.specs['LB_plane_axis']] * self.specs['LB_vel_radius_scale']
 
             self.lb_min_vel = np.array([-1e-6] * 3)
             self.lb_max_vel = np.array([1e-6] * 3)
@@ -2492,6 +2493,8 @@ def draw_arrow(pos, d, radius, color, material, quality):
     draw_cylinder(pos, pos2, radius, color, material, quality)
 
     ax, rx, ry = rotation_helper(d)
+    if math.isnan(ax):
+        return
 
     OpenGL.GL.glPushMatrix()
     OpenGL.GL.glTranslatef(pos2[0], pos2[1], pos2[2])
