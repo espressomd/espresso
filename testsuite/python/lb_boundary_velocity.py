@@ -181,6 +181,47 @@ class LBBoundaryVelocityTest(ut.TestCase):
         idx_ref = set(itertools.product(range(1, 3), range(1, 4), range(1, 5)))
         self.assertSetEqual(idxs_in_boundary, idx_ref)
 
+    def test_shape_bitmask(self):
+        """
+        Test if the ``get_shape_bitmask`` method correctly identifies the grid
+        points inside a shape and matches the LB ``is_boundary`` property.
+        """
+        def get_masks(shape):
+            """
+            Get the shape mask and the LB boundary mask.
+            """
+            self.system.lbboundaries.add(
+                espressomd.lbboundaries.LBBoundary(shape=shape))
+            lb_bitmask = np.copy(self.lb_fluid[:, :, :].is_boundary)
+            shape_bitmask = self.lb_fluid.get_shape_bitmask(shape)
+            self.system.lbboundaries.clear()
+            return lb_bitmask.astype(int), shape_bitmask.astype(int)
+
+        agrid = self.lb_params['agrid']
+
+        # check a prism
+        for nudge_corner in (0.5 + 1e-6, 1.0, 1.5 - 1e-6):
+            shape = espressomd.shapes.Rhomboid(
+                a=2 * agrid * np.array([1, 0, 0]),
+                b=3 * agrid * np.array([0, 1, 0]),
+                c=4 * agrid * np.array([0, 0, 1]),
+                corner=agrid * nudge_corner * np.array([1, 1, 1]),
+                direction=1)
+            lb_bitmask, shape_bitmask = get_masks(shape)
+            np.testing.assert_array_equal(shape_bitmask, lb_bitmask)
+            np.testing.assert_array_equal(shape_bitmask[1:3, 1:4, 1:5], 1)
+            shape_bitmask[1:3, 1:4, 1:5] = 0
+            np.testing.assert_array_equal(shape_bitmask, 0)
+
+        # check a sphere
+        for nudge_radius in (-0.1, -0.01, 0., 0.01, 0.1):
+            for nudge_center in ([0.1, 0., 0.], [0., 0.15, 0.20]):
+                shape = espressomd.shapes.Sphere(
+                    center=4 * agrid * np.array([1, 1, 1]) + nudge_center,
+                    radius=3 * agrid + nudge_radius)
+                lb_bitmask, shape_bitmask = get_masks(shape)
+                np.testing.assert_array_equal(shape_bitmask, lb_bitmask)
+
     def test_edge_detection_x(self):
         self.check_edge_detection(0)
 

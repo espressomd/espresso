@@ -451,6 +451,15 @@ IF LB_WALBERLA:
                 if shape.is_inside(position=pos):
                     yield self[idx]
 
+        def get_shape_bitmask(self, shape):
+            """Create a bitmask for the given shape."""
+            utils.check_type_or_throw_except(
+                shape, 1, Shape, "expected a espressomd.shapes.Shape")
+            mask_flat = shape.rasterize(grid_size=self.shape,
+                                        grid_spacing=self._params['agrid'],
+                                        grid_offset=0.5)
+            return np.reshape(mask_flat, self.shape).astype(type(True))
+
         # TODO WALBERLA: maybe split this method in 2 methods with clear names
         # like add_vtk_writer_auto_update() and add_vtk_writer_manual()
         def add_vtk_writer(self, identifier, observables, delta_N=0,

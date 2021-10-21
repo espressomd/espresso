@@ -21,7 +21,7 @@ from .script_interface import ScriptInterfaceHelper, script_interface_register, 
 
 
 class Shape:
-    _so_bind_methods = ("calc_distance", "is_inside")
+    _so_bind_methods = ("calc_distance", "is_inside", "rasterize")
 
 
 @script_interface_register
