@@ -177,7 +177,18 @@ class openGLLive():
     LB_draw_boundaries : :obj:`bool`, optional
         Draws the LB shapes.
     LB_draw_velocity_plane : :obj:`bool`, optional
-        Draws LB node velocity arrows specified by LB_plane_axis, LB_plane_dist, LB_plane_ngrid.
+        Draws LB node velocity arrows in a plane perpendicular to the axis in
+        ``LB_plane_axis``, at a distance ``LB_plane_dist`` from the origin,
+        every ``LB_plane_ngrid`` grid points.
+    LB_plane_axis : :obj:`int`, optional
+        LB node velocity arrows are drawn in a plane perpendicular to the
+        x, y, or z axes, which are encoded by values 0, 1, or 2 respectively.
+    LB_plane_dist : :obj:`float`, optional
+        LB node velocity arrows are drawn in a plane perpendicular to the
+        x, y, or z axes, at a distance ``LB_plane_dist`` from the origin.
+    LB_plane_ngrid : :obj:`int`, optional
+        LB node velocity arrows are drawn in a plane perpendicular to the
+        x, y, or z axes, every ``LB_plane_ngrid`` grid points.
     light_pos : (3,) array_like of :obj:`float`, optional
         If auto (default) is used, the light is placed dynamically in
         the particle barycenter of the system. Otherwise, a fixed
