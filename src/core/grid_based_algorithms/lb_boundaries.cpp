@@ -76,6 +76,17 @@ void remove(const std::shared_ptr<LBBoundary> &b) {
   on_lbboundary_change();
 }
 
+bool sanity_check_mach_limit() {
+  // Boundary velocities are stored in MD units, therefore we need to scale them
+  // in order to get lattice units.
+  auto const conv_fac = lb_lbfluid_get_tau() / lb_lbfluid_get_agrid();
+  double constexpr mach_limit = 0.3;
+  return std::any_of(lbboundaries.begin(), lbboundaries.end(),
+                     [conv_fac, mach_limit](auto const &b) {
+                       return (b->velocity() * conv_fac).norm() >= mach_limit;
+                     });
+}
+
 void ek_init_boundaries() {
 #if defined(CUDA) && defined(EK_BOUNDARIES)
   int number_of_boundnodes = 0;
