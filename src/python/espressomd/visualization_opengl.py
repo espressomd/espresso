@@ -189,6 +189,8 @@ class openGLLive():
     LB_plane_ngrid : :obj:`int`, optional
         LB node velocity arrows are drawn in a plane perpendicular to the
         x, y, or z axes, every ``LB_plane_ngrid`` grid points.
+    LB_vel_radius_scale : :obj:`float`, optional
+        Rescale LB node velocity arrow radii.
     light_pos : (3,) array_like of :obj:`float`, optional
         If auto (default) is used, the light is placed dynamically in
         the particle barycenter of the system. Otherwise, a fixed
@@ -328,6 +330,7 @@ class openGLLive():
             'LB_plane_dist': 0,
             'LB_plane_ngrid': 5,
             'LB_vel_scale': 1.0,
+            'LB_vel_radius_scale': 0.005,
             'LB_arrow_color': [1, 1, 1],
             'LB_arrow_material': 'transparent1',
             'LB_arrow_quality': 16,
@@ -1611,7 +1614,7 @@ class openGLLive():
             self.lb_plane_p = np.array(pn) * self.specs['LB_plane_dist']
 
             self.lb_arrow_radius = self.system.box_l[
-                self.specs['LB_plane_axis']] * 0.005
+                self.specs['LB_plane_axis']] * self.specs['LB_vel_radius_scale']
 
             self.lb_min_vel = np.array([-1e-6] * 3)
             self.lb_max_vel = np.array([1e-6] * 3)
