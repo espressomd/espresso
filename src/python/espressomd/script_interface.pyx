@@ -17,15 +17,18 @@
 import numpy as np
 from .utils import to_char_pointer, to_str, handle_errors
 from .utils cimport Vector3d, make_array_locked
+cimport cpython.object
 
 from libcpp.memory cimport make_shared
 
 cdef shared_ptr[ContextManager] _om
 
 cdef class PObjectRef:
-    def __richcmp__(PObjectRef a, PObjectRef b, op):
-        if op == 2:
+    def __richcmp__(PObjectRef a, PObjectRef b, int op):
+        if op == cpython.object.Py_EQ:
             return a.sip == b.sip
+        elif op == cpython.object.Py_NE:
+            return a.sip != b.sip
         else:
             raise NotImplementedError
 
@@ -92,8 +95,10 @@ cdef class PScriptInterface:
                     self._sanitize_params(kwargs)))
 
     def __richcmp__(a, b, op):
-        if op == 2:
+        if op == cpython.object.Py_EQ:
             return a.get_sip() == b.get_sip()
+        elif op == cpython.object.Py_NE:
+            return a.get_sip() != b.get_sip()
         else:
             raise NotImplementedError
 

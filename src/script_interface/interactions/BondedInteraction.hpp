@@ -73,22 +73,20 @@ private:
 public:
   template <typename T>
   bool operator==(const BondedInteractionInterface<T> &other) {
-    printf("Comparing");
     return m_bonded_ia == other.m_bonded_ia;
   }
 
   Variant do_call_method(std::string const &name,
                          VariantMap const &params) override {
+    // this feature is needed to compare bonds
     if (name == "get_address") {
       return reinterpret_cast<std::size_t>(bonded_ia().get());
     }
+    if (name == "get_num_partners") {
+      return number_of_partners(*bonded_ia());
+    }
 
     return {};
-  }
-
-  // This function is needed to compare bonds
-  std::size_t get_address() const {
-    return reinterpret_cast<std::size_t>(bonded_ia().get());
   }
 };
 
@@ -486,10 +484,7 @@ private:
     if (boost::iequals(el, "NeoHookean")) {
       return tElasticLaw::NeoHookean;
     }
-    if (boost::iequals(el, "Skalak")) {
-      return tElasticLaw::Skalak;
-    }
-    throw std::runtime_error("Unknown elastic law: " + el);
+    return tElasticLaw::Skalak;
   }
 
 public:
@@ -553,26 +548,13 @@ private:
 class IBMTribend : public BondedInteraction {
   using CoreBondedInteraction = ::IBMTribend;
 
-private:
-  bool str2refShape(std::string rs) {
-    if (boost::iequals(rs, "flat")) {
-      return true;
-    }
-    if (boost::iequals(rs, "initial")) {
-      return false;
-    }
-    throw std::runtime_error("Unknown reference shape: " + rs);
-  }
-
 public:
   IBMTribend() {
     add_parameters({
         {"kb", AutoParameter::read_only, [this]() { return get_struct().kb; }},
         {"refShape", AutoParameter::read_only,
          [this]() {
-           if (flat)
-             return std::string("Flat");
-           return std::string("Initial");
+           return (m_flat) ? std::string("Flat") : std::string("Initial");
          }},
         {"theta0", AutoParameter::read_only,
          [this]() { return get_struct().theta0; }},
@@ -584,14 +566,15 @@ public:
   }
 
 private:
-  bool flat;
+  bool m_flat;
   void construct_bond(VariantMap const &params) override {
-    flat = str2refShape(get_value<std::string>(params, "refShape"));
+    auto const &refShape = get_value<std::string>(params, "refShape");
+    m_flat = boost::iequals(refShape, "Flat");
     m_bonded_ia =
         std::make_shared<::Bonded_IA_Parameters>(CoreBondedInteraction(
             get_value<int>(params, "ind1"), get_value<int>(params, "ind2"),
             get_value<int>(params, "ind3"), get_value<int>(params, "ind4"),
-            get_value<double>(params, "kb"), flat));
+            get_value<double>(params, "kb"), m_flat));
   }
 };
 

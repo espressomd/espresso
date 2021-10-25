@@ -23,8 +23,7 @@ import numpy as np
 from . cimport particle_data
 from .interactions import BondedInteraction
 from .interactions import BondedInteractions
-from .interactions cimport bonded_ia_params_size
-from .interactions cimport bonded_ia_params_num_partners
+from .interactions cimport bonded_ia_params_zero_based_type
 from .analyze cimport max_seen_particle_type
 from copy import copy
 import collections
@@ -1345,15 +1344,15 @@ cdef class ParticleHandle:
                 "The bonded interaction has not yet been added to the list of active bonds in ESPResSo.")
 
         # Validity of the numeric id
-        if bond[0]._bond_id >= bonded_ia_params_size():
+        if not bonded_ia_params_zero_based_type(bond[0]._bond_id):
             raise ValueError(
                 f"The bond type f{bond[0]._bond_id} does not exist.")
 
-        bond_id = bond[0]._bond_id
         # Number of partners
-        if bonded_ia_params_num_partners(bond_id) != len(bond) - 1:
-            raise ValueError(f"Bond {bond[0]} needs "
-                             f"{bonded_ia_params_num_partners(bond_id)} partners.")
+        expected_num_partners = bond[0].call_method('get_num_partners')
+        if len(bond) - 1 != expected_num_partners:
+            raise ValueError(
+                f"Bond {bond[0]} needs {expected_num_partners} partners.")
 
         # Type check on partners
         for i in range(1, len(bond)):

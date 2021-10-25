@@ -304,9 +304,9 @@ IF TABULATED:
                                  vector[double] force)
 
 cdef extern from "script_interface/interactions/bonded.hpp":
-    int bonded_ia_params_num_partners(int bond_id) except +
     int bonded_ia_params_zero_based_type(int bond_id) except +
     int bonded_ia_params_size()
+    int bonded_ia_params_next_key()
 
 # Map the boost::variant type indices to python type identifiers. These enum
 # values must be in the same order as in the definition of the boost::variant.

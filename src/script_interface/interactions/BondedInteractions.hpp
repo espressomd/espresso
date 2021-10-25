@@ -29,6 +29,7 @@
 
 #include <memory>
 #include <unordered_map>
+#include <vector>
 
 namespace ScriptInterface {
 namespace Interactions {
@@ -49,6 +50,18 @@ public:
   }
   void erase_in_core(key_type const &key) override {
     ::bonded_ia_params.erase(key);
+  }
+
+  Variant do_call_method(std::string const &name,
+                         VariantMap const &params) override {
+    if (name == "get_bond_ids") {
+      std::vector<int> bond_ids;
+      for (auto const &kv : ::bonded_ia_params)
+        bond_ids.push_back(kv.first);
+      return bond_ids;
+    }
+
+    return ObjectMap<BondedInteraction>::do_call_method(name, params);
   }
 
 private:

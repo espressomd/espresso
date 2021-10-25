@@ -27,25 +27,20 @@
 
 #include <boost/variant.hpp>
 
-#include <stdexcept>
-
-/** Return the number of bonded partners for the specified bond. */
-inline int bonded_ia_params_num_partners(int bond_id) {
-  if (!bonded_ia_params.contains(bond_id)) {
-    throw std::out_of_range("Access out of bounds");
-  }
-  return number_of_partners(*bonded_ia_params.at(bond_id));
-}
-
 /** Return the 0-based type number of the specified bond. */
 inline int bonded_ia_params_zero_based_type(int bond_id) {
-  if (!bonded_ia_params.contains(bond_id)) {
-    throw std::out_of_range("Access out of bounds");
+  if (bonded_ia_params.contains(bond_id)) {
+    return (*bonded_ia_params.at(bond_id)).which();
   }
-  return (*bonded_ia_params.at(bond_id)).which();
+  return 0;
 }
 
 /** Return the total number of bonds. */
 inline int bonded_ia_params_size() { return bonded_ia_params.size(); }
+
+/** Return the next key. */
+inline int bonded_ia_params_next_key() {
+  return bonded_ia_params.get_next_key();
+}
 
 #endif

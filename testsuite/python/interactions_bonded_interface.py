@@ -27,7 +27,11 @@ import espressomd.interactions
 class BondedInteractions(ut.TestCase):
     system = espressomd.System(box_l=[20.0, 20.0, 20.0])
 
+    def setUp(self):
+        self.system.part.add(pos=4 * [[0, 0, 0]])
+
     def tearDown(self):
+        self.system.part.clear()
         self.system.bonded_inter.clear()
 
     def bondsMatch(self, inType, outBond, inParams, outParams, msg_long):
@@ -74,15 +78,7 @@ class BondedInteractions(ut.TestCase):
                             "{}.get_default_params() should have keys: {}, got: {}".format(
                                 classname, valid_keys - required_keys, default_keys))
 
-    def getBondDifferentFrom(self, _bond_type):
-        """Returns a bond object that has a different type than the one
-        passed to the function.
-        """
-        if isinstance(_bond_type, espressomd.interactions.FeneBond):
-            return espressomd.interactions.HarmonicBond(r_0=1.0, k=1.2)
-        return espressomd.interactions.FeneBond(r_0=1.0, k=1.3, d_r_max=2.0)
-
-    def generateTestForBondParams(_bondId, _bondClass, _params):
+    def generateTestForBondParams(_bondId, _bondClass, _params, _refs=None):
         """Generates test cases for checking bond parameters set and gotten
         back from the espresso core actually match those in the Python classes.
         Only keys which are present in ``_params`` are checked.
@@ -96,10 +92,20 @@ class BondedInteractions(ut.TestCase):
             :class:`~espressomd.interactions.FeneBond`
         _params: :obj:`dict`
             Bond parameters, e.g. ``{"k": 1., "r_0": 0}``
+        _refs: :obj:`set` or :obj:`dict`
+            Subset of keys in ``_params`` to check in the bond parameters read
+            from the core, or subset of the ``_params`` dictionary. Leave it
+            as ``None`` if all keys need to be checked.
         """
         bondId = _bondId
         bondClass = _bondClass
         params = _params
+        if _refs is None:
+            outParamsRef = _params.copy()
+        elif isinstance(_refs, dict):
+            outParamsRef = _refs
+        else:
+            outParamsRef = {key: params[key] for key in _refs}
 
         def func(self):
             # This code is run at the execution of the generated function.
@@ -108,15 +114,13 @@ class BondedInteractions(ut.TestCase):
             self.system.bonded_inter.remove(bondId)
             self.system.bonded_inter.remove(bondId + 1)
 
-            bondInstance = bondClass(**params)
-            self.system.bonded_inter[bondId] = bondInstance
+            bond = bondClass(**params)
+            self.system.bonded_inter[bondId] = bond
+            self.system.bonded_inter[bondId + 1] = bond
 
-            # check that bonds are identified by their id
-            self.assertTrue(bondInstance == self.system.bonded_inter[bondId])
-            # check that bonds are distinguished by their id
-            self.system.bonded_inter[bondId + 1] = bondInstance
-            self.assertFalse(
-                self.system.bonded_inter[bondId] == self.system.bonded_inter[bondId + 1])
+            # check that bonds are identified by their pointer
+            self.assertEqual(bond, self.system.bonded_inter[bondId])
+            self.assertEqual(bond, self.system.bonded_inter[bondId + 1])
             # check that bonds are removed
             bonded_len = len(self.system.bonded_inter)
             self.system.bonded_inter.remove(bondId + 1)
@@ -125,18 +129,12 @@ class BondedInteractions(ut.TestCase):
             with self.assertRaises(Exception):
                 self.system.bonded_inter[bondId + 1]
             # check that bonds are distinguished by their internal object address
-            # put two identical bonds in the same ID, so that they have the
-            # same internal ID
-            # this bond is identical to the previous one
-            bondInstance_2 = bondClass(**params)
-            self.system.bonded_inter[bondId] = bondInstance_2
-            self.system.bonded_inter[bondId] = bondInstance
-            self.assertFalse(bondInstance == bondInstance_2)
-            # check that overwriting bonds with a bond of a different type is
-            # prohibited
-            different_bond = self.getBondDifferentFrom(bondInstance)
-            with self.assertRaises(ValueError):
-                self.system.bonded_inter[bondId] = different_bond
+            # put two identical bonds in the same ID, so that they only differ
+            # in their shared_ptr address
+            new_bond = bondClass(**params)
+            self.system.bonded_inter[bondId] = new_bond
+            self.system.bonded_inter[bondId] = bond
+            self.assertNotEqual(bond, new_bond)
 
             # check that parameters written and read back are identical
             outBond = self.system.bonded_inter[bondId]
@@ -144,9 +142,9 @@ class BondedInteractions(ut.TestCase):
             tnOut = outBond.type_number()
             outParams = outBond.params
             self.bondsMatch(
-                tnIn, tnOut, params, outParams,
+                tnIn, tnOut, outParamsRef, outParams,
                 "{}: value set and value gotten back differ for bond id {}: {} vs. {}"
-                .format(bondClass(**params).type_name(), bondId, params, outParams))
+                .format(bondClass(**params).type_name(), bondId, outParamsRef, outParams))
             self.parameterKeys(outBond)
 
         return func
@@ -159,6 +157,21 @@ class BondedInteractions(ut.TestCase):
         0, espressomd.interactions.HarmonicBond, {"r_0": 1.1, "k": 5.2})
     test_harmonic2 = generateTestForBondParams(
         0, espressomd.interactions.HarmonicBond, {"r_0": 1.1, "k": 5.2, "r_cut": 1.3})
+    test_quartic = generateTestForBondParams(
+        0, espressomd.interactions.QuarticBond, {"k0": 2., "k1": 5., "r": 0.5, "r_cut": 1.2})
+    test_ibm_volcons = generateTestForBondParams(
+        0, espressomd.interactions.IBM_VolCons, {"softID": 15, "kappaV": 0.01})
+    test_ibm_tribend = generateTestForBondParams(
+        0, espressomd.interactions.IBM_Tribend,
+        {"ind1": 0, "ind2": 1, "ind3": 2, "ind4": 3,
+            "kb": 1.1, "refShape": "Initial"},
+        {"kb": 1.1, "theta0": 0.0})
+    test_ibm_triel = generateTestForBondParams(
+        0, espressomd.interactions.IBM_Triel,
+        {"ind1": 0, "ind2": 1, "ind3": 2, "k1": 1.1, "k2": 1.2,
+            "maxDist": 1.6, "elasticLaw": "NeoHookean"},
+        {"k1", "k2", "maxDist", "elasticLaw"})
+
     test_dihedral = generateTestForBondParams(
         0, espressomd.interactions.Dihedral, {"mult": 3, "bend": 5.2, "phase": 3.})
 
@@ -207,10 +220,10 @@ class BondedInteractions(ut.TestCase):
             0, espressomd.interactions.BondedCoulombSRBond, params)(self)
 
     def test_exceptions(self):
-        with self.assertRaisesRegex(IndexError, 'Access out of bounds'):
-            espressomd.interactions.get_bonded_interaction_type_from_es_core(
-                5000)
-        with self.assertRaisesRegex(IndexError, 'Access out of bounds'):
+        bond_type = espressomd.interactions.get_bonded_interaction_type_from_es_core(
+            5000)
+        self.assertEqual(bond_type, 0)
+        with self.assertRaisesRegex(ValueError, 'The bonded interaction with the id 0 is not yet defined'):
             self.system.bonded_inter[0]
 
         # bonds can only be overwritten by bonds of the same type
@@ -228,6 +241,16 @@ class BondedInteractions(ut.TestCase):
         # bonds are immutable
         with self.assertRaisesRegex(RuntimeError, 'Parameter r_0 is read-only'):
             harm_bond1.r_0 = 5.
+
+        # sanity checks during bond construction
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'r_0' is missing"):
+            espressomd.interactions.HarmonicBond(k=1.)
+        with self.assertRaisesRegex(ValueError, "Unknown refShape: 'Unknown'"):
+            espressomd.interactions.IBM_Tribend(
+                ind1=0, ind2=1, ind3=2, ind4=3, kb=1.1, refShape='Unknown')
+        with self.assertRaisesRegex(ValueError, "Unknown elasticLaw: 'Unknown'"):
+            espressomd.interactions.IBM_Triel(
+                ind1=0, ind2=1, ind3=2, k1=1.1, k2=1.2, maxDist=1.6, elasticLaw='Unknown')
 
 
 if __name__ == "__main__":

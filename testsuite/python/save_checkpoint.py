@@ -219,11 +219,20 @@ if 'THERM.LB' not in modes:
 strong_harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0.0, k=5e5)
 system.bonded_inter.add(strong_harmonic_bond)
 p4.add_bond((strong_harmonic_bond, p3))
+ibm_volcons_bond = espressomd.interactions.IBM_VolCons(softID=15, kappaV=0.01)
+ibm_tribend_bond = espressomd.interactions.IBM_Tribend(
+    ind1=p1.id, ind2=p2.id, ind3=p3.id, ind4=p4.id, kb=2., refShape="Initial")
+ibm_triel_bond = espressomd.interactions.IBM_Triel(
+    ind1=p1.id, ind2=p2.id, ind3=p3.id, k1=1.1, k2=1.2, maxDist=1.6,
+    elasticLaw="NeoHookean")
 
 checkpoint.register("system")
 checkpoint.register("acc_mean_variance")
 checkpoint.register("acc_time_series")
 checkpoint.register("acc_correlator")
+checkpoint.register("ibm_volcons_bond")
+checkpoint.register("ibm_tribend_bond")
+checkpoint.register("ibm_triel_bond")
 
 # calculate forces
 system.integrator.run(0)

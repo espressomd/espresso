@@ -28,7 +28,7 @@ from libcpp cimport bool as cbool
 from libcpp.memory cimport shared_ptr
 from .interactions cimport bonded_ia_params_zero_based_type
 from .interactions cimport enum_bonded_interaction
-from .interactions cimport bonded_ia_params_size
+from .interactions cimport bonded_ia_params_next_key
 include "myconfig.pxi"
 
 cdef extern from "<array>" namespace "std" nogil:
@@ -186,7 +186,7 @@ cdef inline Observable_stat_to_dict(Observable_stat * obs, cbool calc_sp):
     cdef size_t i
     cdef size_t j
     cdef size_t obs_dim = obs.get_chunk_size()
-    cdef size_t n_bonded = bonded_ia_params_size()
+    cdef size_t n_bonded = bonded_ia_params_next_key()
     cdef size_t n_nonbonded = <size_t > max_seen_particle_type
     cdef double[9] total
 
