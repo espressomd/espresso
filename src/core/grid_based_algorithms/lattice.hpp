@@ -20,8 +20,8 @@
  */
 /** \file
  *
- * Lattice class definition
- * Contains the lattice layout and pointers to the data fields.
+ * Lattice class definition.
+ * Contains the lattice layout.
  * For parallelization purposes, it is assumed that a halo region
  * surrounds the local lattice sites.
  */
@@ -37,28 +37,34 @@ class Lattice {
 public:
   using index_t = int;
 
-  Utils::Vector3i grid; /**< number of local lattice sites in each direction
-                         *   (excluding halo) */
+  /** number of local lattice sites in each direction (excluding halo) */
+  Utils::Vector3i grid;
   Utils::Vector3i global_grid;
   double agrid; /**< lattice constant */
 
-  Utils::Vector3i halo_grid; /**< number of lattice sites in each direction
-                              *   (including halo) */
-  index_t halo_size;         /**< halo size in all directions */
+  /** number of lattice sites in each direction (including halo) */
+  Utils::Vector3i halo_grid;
+  index_t halo_size; /**< halo size in all directions */
 
   double offset; /**< global offset */
+  /** global index of the local domain origin */
   Utils::Vector3i local_index_offset;
+  /** global domain partition */
   Utils::Vector3i node_grid;
+  /** dimensions of the local domain */
   Utils::Vector3d local_box;
+  /** global position of the top right corner of the local domain */
   Utils::Vector3d my_right;
 
-  index_t halo_grid_volume; /**< total number (volume) of lattice sites
-                             *   (including halo) */
-  index_t halo_offset; /**< offset for number of halo sites stored in front of
-                        *   the local lattice sites */
+  /** total number of lattice sites (including halo) */
+  index_t halo_grid_volume;
+  /** offset for number of halo sites stored in front of the local
+   *  lattice sites
+   */
+  index_t halo_offset;
 
   Lattice() = default;
-  /** @brief Lattice constructor.
+  /** @brief %Lattice constructor.
    *
    *  This function initializes the variables describing the lattice
    *  layout. Important: The lattice data is <em>not</em> allocated here!
@@ -82,16 +88,15 @@ public:
    * This function takes a global spatial position and determines the
    * surrounding elementary cell of the lattice for this position.
    * The distance fraction in each direction is also calculated.
-   * <br><em>Remarks:</em>
-   * <ul>
-   * <li>The spatial position has to be in the local domain.</li>
-   * <li>The lattice sites of the elementary cell are returned as local
-   * indices</li>
-   * </ul>
-   * @param pos        spatial position (Input)
-   * @param node_index local indices of the surrounding lattice sites (Output)
-   * @param delta      distance fraction of %p pos from the surrounding
-   *                   elementary cell, 6 directions (Output)
+   *
+   * Remarks:
+   * - The spatial position has to be in the local domain
+   * - The lattice sites of the elementary cell are returned as local indices
+   *
+   * @param[in]  pos        spatial position
+   * @param[out] node_index local indices of the surrounding lattice sites
+   * @param[out] delta      distance fraction of %p pos from the surrounding
+   *                        elementary cell, 6 directions
    */
   void map_position_to_lattice(Utils::Vector3d const &pos,
                                Utils::Vector<std::size_t, 8> &node_index,

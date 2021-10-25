@@ -71,13 +71,25 @@ class CheckpointTest(ut.TestCase):
         contained in ``system.lbboundaries`. This test method is named such
         that it is executed after ``self.test_lb_boundaries()``.
         '''
-        lbf = system.actors[0]
+        lbf = self.get_active_actor_of_type(
+            espressomd.lb.HydrodynamicInteraction)
         cpt_mode = int("@TEST_BINARY@")
         cpt_path = self.checkpoint.checkpoint_dir + "/lb{}.cpt"
-        with self.assertRaises(RuntimeError):
-            lbf.load_checkpoint(cpt_path.format("-corrupted"), cpt_mode)
-        with self.assertRaisesRegex(RuntimeError, 'grid dimensions mismatch'):
-            lbf.load_checkpoint(cpt_path.format("-wrong-boxdim"), cpt_mode)
+
+        # check exception mechanism with corrupted LB checkpoint files
+        with self.assertRaisesRegex(RuntimeError, 'EOF found'):
+            lbf.load_checkpoint(cpt_path.format("-missing-data"), cpt_mode)
+        with self.assertRaisesRegex(RuntimeError, 'extra data found, expected EOF'):
+            lbf.load_checkpoint(cpt_path.format("-extra-data"), cpt_mode)
+        if cpt_mode == 0:
+            with self.assertRaisesRegex(RuntimeError, 'incorrectly formatted data'):
+                lbf.load_checkpoint(cpt_path.format("-wrong-format"), cpt_mode)
+            with self.assertRaisesRegex(RuntimeError, 'grid dimensions mismatch'):
+                lbf.load_checkpoint(cpt_path.format("-wrong-boxdim"), cpt_mode)
+        with self.assertRaisesRegex(RuntimeError, 'could not open file'):
+            lbf.load_checkpoint(cpt_path.format("-unknown"), cpt_mode)
+
+        # load the valid LB checkpoint file
         lbf.load_checkpoint(cpt_path.format(""), cpt_mode)
         precision = 9 if "LB.CPU" in modes else 5
         m = np.pi / 12
@@ -304,7 +316,7 @@ class CheckpointTest(ut.TestCase):
             self.assertEqual(state, reference)
 
     @ut.skipIf('THERM.LB' in modes, 'LB thermostat in modes')
-    @utx.skipIfMissingFeatures(['MASS'])
+    @utx.skipIfMissingFeatures(['ELECTROSTATICS', 'MASS', 'ROTATION'])
     def test_drude_helpers(self):
         drude_type = 10
         core_type = 0
@@ -478,13 +490,14 @@ class CheckpointTest(ut.TestCase):
         # check boundary flag
         lbf = self.get_active_actor_of_type(
             espressomd.lb.HydrodynamicInteraction)
-        np.testing.assert_equal(lbf[0, :, :].boundary.astype(int), 1)
-        np.testing.assert_equal(lbf[-1, :, :].boundary.astype(int), 2)
-        np.testing.assert_equal(lbf[1:-1, :, :].boundary.astype(int), 0)
+        np.testing.assert_equal(np.copy(lbf[0, :, :].boundary.astype(int)), 1)
+        np.testing.assert_equal(np.copy(lbf[-1, :, :].boundary.astype(int)), 2)
+        np.testing.assert_equal(
+            np.copy(lbf[1:-1, :, :].boundary.astype(int)), 0)
         # remove boundaries
         system.lbboundaries.clear()
         self.assertEqual(len(system.lbboundaries), 0)
-        np.testing.assert_equal(lbf[:, :, :].boundary.astype(int), 0)
+        np.testing.assert_equal(np.copy(lbf[:, :, :].boundary.astype(int)), 0)
 
     @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
     def test_constraints(self):
