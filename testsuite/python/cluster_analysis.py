@@ -54,6 +54,7 @@ class ClusterAnalysis(ut.TestCase):
     def tearDown(self):
         self.system.part.clear()
         self.cs.clear()
+        self.system.periodicity = [True, True, True]
 
     def test_00_fails_without_criterion_set(self):
         self.set_two_clusters()
@@ -191,6 +192,89 @@ class ClusterAnalysis(ut.TestCase):
 
         # Unknown method should return None
         self.assertIsNone(self.cs.call_method("unknown"))
+
+    def test_analysis_for_aperiodic_boxes(self):
+        system = self.system
+
+        p1 = system.part.add(id=1, pos=(0.00, 0.0, 0.0))
+        p2 = system.part.add(id=2, pos=(0.01, 0.0, 0.0))
+        p3 = system.part.add(id=3, pos=(0.91, 0.0, 0.0))
+
+        # There should be one cluster containing all particles
+        dc = espressomd.pair_criteria.DistanceCriterion(cut_off=0.12)
+        self.cs.set_params(pair_criterion=dc)
+        self.cs.run_for_all_pairs()
+        self.assertEqual(len(self.cs.clusters), 1)
+        cluster = self.cs.clusters[self.cs.cluster_ids()[0]]
+        self.assertEqual(cluster.particle_ids(), [p1.id, p2.id, p3.id])
+
+        # There should be one cluster containing all particles
+        # with CoM lying inside the simulation box after folding
+        p1.pos = [0.0, 0.0, 0.06]
+        p2.pos = [0.0, 0.0, -0.09]
+        dc = espressomd.pair_criteria.DistanceCriterion(cut_off=0.20)
+        self.cs.set_params(pair_criterion=dc)
+        self.cs.run_for_all_pairs()
+        self.assertEqual(len(self.cs.clusters), 1)
+        cluster = self.cs.clusters[self.cs.cluster_ids()[0]]
+        self.assertEqual(cluster.particle_ids(), [p1.id, p2.id, p3.id])
+        np.testing.assert_allclose(
+            np.copy(cluster.center_of_mass()),
+            [0.97, 0.0, 0.99],
+            atol=1e-10)
+
+        # Remove periodicity in the direction of the cluster
+        self.system.periodicity = [False, True, True]
+
+        # There should be one cluster containing the first two particles
+        # with CoM lying outside the simulation box (open boundaries)
+        dc = espressomd.pair_criteria.DistanceCriterion(cut_off=0.12)
+        self.cs.set_params(pair_criterion=dc)
+        p1.pos = [0.00, 0.0, 0.0]
+        p2.pos = [0.01, 0.0, 0.0]
+        self.cs.run_for_all_pairs()
+        self.assertEqual(len(self.cs.clusters), 1)
+        cluster = self.cs.clusters[self.cs.cluster_ids()[0]]
+        self.assertEqual(cluster.particle_ids(), [p1.id, p2.id])
+        p1.pos = [-0.01, 0.0, 0.0]
+        p2.pos = [-0.03, 0.0, 0.0]
+        self.cs.run_for_all_pairs()
+        cluster = self.cs.clusters[self.cs.cluster_ids()[0]]
+        np.testing.assert_allclose(
+            np.copy(cluster.center_of_mass()),
+            [-0.02, 0.0, 0.0],
+            atol=1e-10)
+        self.assertAlmostEqual(cluster.longest_distance(), 0.02, delta=1E-10)
+
+        # There should be one cluster containing all particles
+        # with CoM lying inside the simulation box
+        dc = espressomd.pair_criteria.DistanceCriterion(cut_off=0.93)
+        self.cs.set_params(pair_criterion=dc)
+        self.cs.run_for_all_pairs()
+        self.assertEqual(len(self.cs.clusters), 1)
+        cluster = self.cs.clusters[self.cs.cluster_ids()[0]]
+        self.assertEqual(cluster.particle_ids(), [p1.id, p2.id, p3.id])
+        np.testing.assert_allclose(
+            np.copy(cluster.center_of_mass()),
+            [0.29, 0.0, 0.0],
+            atol=1e-10)
+
+        # There should be one cluster containing all particles
+        # with CoM lying outside the simulation box (aperiodic box)
+        dc = espressomd.pair_criteria.DistanceCriterion(cut_off=3.10)
+        self.cs.set_params(pair_criterion=dc)
+        p1.pos = [0.00, 0.0, 0.0]
+        p2.pos = [3.00, 0.0, 0.0]
+        p3.pos = [3.00, 0.0, 0.0]
+        self.cs.run_for_all_pairs()
+        self.assertEqual(len(self.cs.clusters), 1)
+        cluster = self.cs.clusters[self.cs.cluster_ids()[0]]
+        self.assertEqual(cluster.particle_ids(), [p1.id, p2.id, p3.id])
+        np.testing.assert_allclose(
+            np.copy(cluster.center_of_mass()),
+            [2.0, 0.0, 0.0],
+            atol=1e-10)
+        self.assertAlmostEqual(cluster.longest_distance(), 3.0, delta=1E-10)
 
 
 if __name__ == "__main__":

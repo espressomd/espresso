@@ -502,7 +502,7 @@ The comma is needed to create a tuple containing a single item.
 Object-in-fluid interactions
 ----------------------------
 
-Please cite :cite:`Cimrak2014` when using the interactions in this section in
+Please cite :cite:`cimrak14a` when using the interactions in this section in
 order to simulate extended objects embedded in a LB fluid. For more details
 please consult the dedicated OIF documentation available at
 `http://cell-in-fluid.fri.uniza.sk/en/content/oif-espresso
@@ -511,7 +511,7 @@ please consult the dedicated OIF documentation available at
 The following interactions are implemented in order to mimic the
 mechanics of elastic or rigid objects immersed in the LB fluid flow.
 Their mathematical formulations were inspired by
-:cite:`dupin07`. Details on how the bonds can be used for
+:cite:`dupin07a`. Details on how the bonds can be used for
 modeling objects are described in section :ref:`Object-in-fluid`.
 
 .. _OIF local forces:

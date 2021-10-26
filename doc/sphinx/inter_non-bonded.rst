@@ -635,7 +635,7 @@ cores, except the one it's connected to.  This exception is handled internally
 by disabling Thole interaction between particles connected via Drude bonds.
 Also, each Drude core has a Thole correction interaction with all other Drude
 cores and Drude charges. To assist with the bookkeeping of mixed scaling
-coefficients, the helper method :meth:`~espressomd.drude_helpers.add_drude_particle_to_core` (see
+coefficients, the helper method :meth:`~espressomd.drude_helpers.DrudeHelpers.add_drude_particle_to_core` (see
 :ref:`Particle polarizability with thermalized cold Drude oscillators`)
 collects all core types, Drude types and relevant parameters when a Drude
 particle is created. The user already provided all the information when
@@ -647,7 +647,7 @@ given the :class:`espressomd.System() <espressomd.system.System>` object, uses t
 necessary Thole interactions. The method calculates the mixed scaling
 coefficient ``s`` and creates the non-bonded Thole interactions between the
 collected types to cover all the Drude-Drude, Drude-core and core-core
-combinations. No further calls of :meth:`~espressomd.drude_helpers.add_drude_particle_to_core` should
+combinations. No further calls of :meth:`~espressomd.drude_helpers.DrudeHelpers.add_drude_particle_to_core` should
 follow. Set ``verbose`` to ``True`` to print out the coefficients, charge factors
 and involved types.
 

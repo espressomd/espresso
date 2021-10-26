@@ -141,11 +141,12 @@ class ShapeBasedConstraintTest(ut.TestCase):
 
         dist = shape.calc_distance(position=[R1, 0, LENGTH / 2. + 5])
         self.assertAlmostEqual(dist[0], 5 - D / 2.)
-        np.testing.assert_array_almost_equal(dist[1], [0, 0, dist[0]])
+        np.testing.assert_array_almost_equal(np.copy(dist[1]), [0, 0, dist[0]])
 
         dist = shape.calc_distance(position=[0.1, 0, LENGTH / 2.])
         self.assertAlmostEqual(dist[0], R1 - D / 2. - 0.1)
-        np.testing.assert_array_almost_equal(dist[1], [-dist[0], 0, 0])
+        np.testing.assert_array_almost_equal(
+            np.copy(dist[1]), [-dist[0], 0, 0])
 
         # check rotated coordinates, central angle with straight frustum
         CENTER = np.array(3 * [5])

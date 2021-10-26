@@ -42,14 +42,14 @@ void lb_lbcoupling_set_gamma(double friction);
 double lb_lbcoupling_get_gamma();
 bool lb_lbcoupling_is_seed_required();
 
-/*
+/**
  * @brief Activate the coupling between LB and MD particles.
  * @note This is a collective function and needs to be called from all
  * processes.
  */
 void lb_lbcoupling_activate();
 
-/*
+/**
  * @brief Deactivate the coupling between LB and MD particles.
  * @note This is a collective function and needs to be called from all
  * processes.
@@ -57,24 +57,19 @@ void lb_lbcoupling_activate();
 void lb_lbcoupling_deactivate();
 
 struct LB_Particle_Coupling {
-  OptionalCounter rng_counter_coupling;
-  /*
-   * @brief Friction constant for the particle coupling.
-   */
+  OptionalCounter rng_counter_coupling = {};
+  /** @brief Friction coefficient for the particle coupling. */
   double gamma = 0.0;
   bool couple_to_md = false;
 
 private:
   friend class boost::serialization::access;
 
-  template <class Archive>
-  void serialize(Archive &ar, const unsigned int version) {
+  template <class Archive> void serialize(Archive &ar, const unsigned int) {
     ar &rng_counter_coupling;
     ar &gamma;
     ar &couple_to_md;
   }
 };
-
-extern LB_Particle_Coupling lb_particle_coupling;
 
 #endif

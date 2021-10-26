@@ -225,9 +225,8 @@ void DomainDecomposition::resort(bool global,
     auto sort_cell = local_cells()[0];
 
     for (auto &part : displaced_parts) {
-      runtimeErrorMsg() << "Particle " << part.identity()
-                        << " moved more than"
-                           " one local box length in one timestep.";
+      runtimeErrorMsg() << "Particle " << part.identity() << " moved more "
+                        << "than one local box length in one timestep";
       sort_cell->particles().insert(std::move(part));
 
       diff.emplace_back(ModifiedList{sort_cell->particles()});
@@ -300,11 +299,8 @@ void DomainDecomposition::create_cell_grid(double range) {
     auto const cells_per_dir =
         static_cast<int>(std::ceil(std::pow(min_num_cells, 1. / 3.)));
 
-    cell_grid[0] = cells_per_dir;
-    cell_grid[1] = cells_per_dir;
-    cell_grid[2] = cells_per_dir;
-
-    n_local_cells = cell_grid[0] * cell_grid[1] * cell_grid[2];
+    cell_grid = Utils::Vector3i::broadcast(cells_per_dir);
+    n_local_cells = Utils::product(cell_grid);
   } else {
     /* Calculate initial cell grid */
     double volume = m_local_box.length()[0];
@@ -334,7 +330,7 @@ void DomainDecomposition::create_cell_grid(double range) {
        For a symmetric box, it gives a symmetric result. Here we correct that.
        */
     for (;;) {
-      n_local_cells = cell_grid[0] * cell_grid[1] * cell_grid[2];
+      n_local_cells = Utils::product(cell_grid);
 
       /* done */
       if (n_local_cells <= DomainDecomposition::max_num_cells)
@@ -376,7 +372,7 @@ void DomainDecomposition::create_cell_grid(double range) {
   for (int i = 0; i < 3; i++) {
     ghost_cell_grid[i] = cell_grid[i] + 2;
     new_cells *= ghost_cell_grid[i];
-    cell_size[i] = m_local_box.length()[i] / (double)cell_grid[i];
+    cell_size[i] = m_local_box.length()[i] / static_cast<double>(cell_grid[i]);
     inv_cell_size[i] = 1.0 / cell_size[i];
     cell_offset[i] = node_pos[i] * cell_grid[i];
   }

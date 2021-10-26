@@ -263,9 +263,9 @@ void on_boxl_change(bool skip_method_adaption) {
 void on_cell_structure_change() {
   clear_particle_node();
 
-  /* Now give methods a chance to react to the change in cell
-   * structure. Most ES methods need to reinitialize, as they depend
-   * on skin, node grid and so on. */
+  /* Now give methods a chance to react to the change in cell structure.
+   * Most ES methods need to reinitialize, as they depend on skin,
+   * node grid and so on. */
 #ifdef ELECTROSTATICS
   Coulomb::init();
 #endif /* ifdef ELECTROSTATICS */

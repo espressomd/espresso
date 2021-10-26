@@ -170,16 +170,17 @@ cdef inline Observable_stat_to_dict(Observable_stat * obs, cbool calc_sp):
         * ``"kinetic"``: kinetic contribution
         * ``"bonded"``: total bonded contribution
         * ``"bonded", <bond_type>``: bonded contribution which arises from the given bond_type
-        * ``"nonbonded"``: total nonbonded contribution
-        * ``"nonbonded", <type_i>, <type_j>``: nonbonded contribution which arises from the interactions between type_i and type_j
-        * ``"nonbonded_intra", <type_i>, <type_j>``: nonbonded contribution between short ranged forces between type i and j and with the same mol_id
-        * ``"nonbonded_inter", <type_i>, <type_j>``: nonbonded contribution between short ranged forces between type i and j and different mol_ids
+        * ``"non_bonded"``: total non-bonded contribution
+        * ``"non_bonded", <type_i>, <type_j>``: non-bonded contribution which arises from the interactions between type_i and type_j
+        * ``"non_bonded_intra", <type_i>, <type_j>``: non-bonded contribution between short ranged forces between type i and j and with the same mol_id
+        * ``"non_bonded_inter", <type_i>, <type_j>``: non-bonded contribution between short ranged forces between type i and j and different mol_ids
         * ``"coulomb"``: Coulomb contribution, how it is calculated depends on the method
         * ``"coulomb", <i>``: Coulomb contribution from particle pairs (``i=0``), electrostatics solvers (``i=1``)
         * ``"dipolar"``: dipolar contribution, how it is calculated depends on the method
         * ``"dipolar", <i>``: dipolar contribution from particle pairs and magnetic field constraints (``i=0``), magnetostatics solvers (``i=1``)
         * ``"virtual_sites"``: virtual sites contribution
         * ``"virtual_sites", <i>``: contribution from virtual site i
+        * ``"external_fields"``: external fields contribution
 
     """
 

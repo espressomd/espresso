@@ -102,7 +102,55 @@ cdef class ReactionAlgorithm:
     def set_wall_constraints_in_z_direction(self, slab_start_z, slab_end_z):
         """
         Restrict the sampling area to a slab in z-direction. Requires setting
-        the volume using :meth:`set_volume`.
+        the volume using :meth:`set_volume`. This constraint is necessary when
+        working with :ref:`Electrostatic Layer Correction (ELC)`.
+
+        Parameters
+        ----------
+        slab_start_z : :obj:`float`
+            z coordinate of the bottom wall.
+        slab_end_z : :obj:`float`
+            z coordinate of the top wall.
+
+        Examples
+        --------
+
+        >>> import espressomd
+        >>> import espressomd.shapes
+        >>> import espressomd.electrostatics
+        >>> import espressomd.reaction_ensemble
+        >>> import numpy as np
+        >>> # setup a charged system
+        >>> box_l = 20
+        >>> elc_gap = 10
+        >>> system = espressomd.System(box_l=[box_l, box_l, box_l + elc_gap])
+        >>> system.time_step = 0.001
+        >>> system.cell_system.skin = 0.4
+        >>> types = {"HA": 0, "A-": 1, "H+": 2, "wall": 3}
+        >>> charges = {types["HA"]: 0, types["A-"]: -1, types["H+"]: +1}
+        >>> for i in range(10):
+        ...     system.part.add(pos=np.random.random(3) * box_l, type=types["A-"], q=charges[types["A-"]])
+        ...     system.part.add(pos=np.random.random(3) * box_l, type=types["H+"], q=charges[types["H+"]])
+        >>> for particle_type in charges.keys():
+        ...     system.non_bonded_inter[particle_type, types["wall"]].wca.set_params(epsilon=1.0, sigma=1.0)
+        >>> # add ELC actor
+        >>> p3m = espressomd.electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
+        >>> elc = espressomd.electrostatics.ELC(p3m_actor=p3m, maxPWerror=1.0, gap_size=elc_gap)
+        >>> system.actors.add(elc)
+        >>> # add constant pH method
+        >>> RE = espressomd.reaction_ensemble.ConstantpHEnsemble(kT=1, exclusion_radius=1, seed=77)
+        >>> RE.constant_pH = 2
+        >>> RE.add_reaction(gamma=0.0088, reactant_types=[types["HA"]],
+        ...                 product_types=[types["A-"], types["H+"]],
+        ...                 default_charges=charges)
+        >>> # add walls for the ELC gap
+        >>> RE.set_wall_constraints_in_z_direction(0, box_l)
+        >>> RE.set_volume(box_l**3)
+        >>> system.constraints.add(shape=espressomd.shapes.Wall(dist=0, normal=[0, 0, 1]),
+        ...                        particle_type=types["wall"])
+        >>> system.constraints.add(shape=espressomd.shapes.Wall(dist=-box_l, normal=[0, 0, -1]),
+        ...                        particle_type=types["wall"])
+
 
         """
         deref(self.RE).set_slab_constraint(slab_start_z, slab_end_z)
@@ -154,7 +202,9 @@ cdef class ReactionAlgorithm:
         This is used to temporarily hide particles during a reaction trial
         move, if they are to be deleted after the move is accepted. Please
         change this value if you intend to use the type 100 for some other
-        particle types with interactions. Please also note that particles
+        particle types with interactions, or if you need improved performance,
+        as the default value of 100 causes some overhead.
+        Please also note that particles
         in the current implementation of the Reaction Ensemble are only
         hidden with respect to Lennard-Jones and Coulomb interactions. Hiding
         of other interactions, for example a magnetic, needs to be implemented

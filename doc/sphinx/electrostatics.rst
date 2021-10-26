@@ -66,7 +66,7 @@ P3M requires full periodicity (1 1 1). When using a non-metallic dielectric
 constant (``epsilon != 0.0``), the box must be cubic.
 Make sure that you know the relevance of the P3M parameters before using P3M!
 If you are not sure, read the following references:
-:cite:`ewald21,hockney88,kolafa92,deserno98a,deserno98b,deserno00,deserno00a,cerda08d`.
+:cite:`ewald21a,hockney88,kolafa92a,deserno98a,deserno98b,deserno00e,deserno00b,cerda08d`.
 
 .. _Tuning Coulomb P3M:
 
@@ -101,7 +101,7 @@ where most charges are placed in one plane, one small region, or on a
 regular grid.
 
 The function employs the analytical expression of the error estimate for
-the P3M method :cite:`hockney88` and its real space error :cite:`kolafa92` to
+the P3M method :cite:`hockney88` and its real space error :cite:`kolafa92a` to
 obtain sets of parameters that yield the desired accuracy, then it measures how
 long it takes to compute the Coulomb interaction using these parameter sets and
 chooses the set with the shortest run time.
@@ -139,7 +139,7 @@ The Debye-Hückel electrostatic potential is defined by
 .. math:: U^{C-DH} = C \cdot \frac{q_1 q_2 \exp(-\kappa r)}{r}\quad \mathrm{for}\quad r<r_{\mathrm{cut}}
 
 where :math:`C` is defined as in Eqn. :eq:`coulomb_prefactor` and
-:math:`\kappa` is the ionic strength.
+:math:`\kappa` is the inverse Debye screening length.
 The Debye-Hückel potential is an approximate method for calculating
 electrostatic interactions, but technically it is treated as other
 short-ranged non-bonding potentials. For :math:`r > r_{\textrm{cut}}` it is
@@ -164,7 +164,7 @@ is defined as:
 
 .. math:: B = \frac{2(\varepsilon_1 - \varepsilon_2)(1 + \kappa r_{\mathrm{cut}}) - \varepsilon_2 (\kappa r_{\mathrm{cut}})^2}{(\varepsilon_1 + 2\varepsilon_2)(1 + \kappa r_{\mathrm{cut}}) + \varepsilon_2 (\kappa r_{\mathrm{cut}})^2}
 
-with :math:`\kappa` the ionic strength, :math:`\varepsilon_1` the dielectric
+with :math:`\kappa` the inverse Debye screening length, :math:`\varepsilon_1` the dielectric
 constant inside the cavity and :math:`\varepsilon_2` the dielectric constant
 outside the cavity :cite:`tironi95a`.
 

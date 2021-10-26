@@ -421,7 +421,7 @@ straightforward. The ``LBBoundary`` object furthermore possesses a property ``fo
 
 
 .. [1]
-   http://www.paraview.org/
+   https://www.paraview.org/
 
 .. [2]
    http://code.enthought.com/projects/mayavi/

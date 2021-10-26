@@ -1,4 +1,4 @@
-
+#
 # Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -15,6 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
@@ -104,7 +105,7 @@ class TestLBPressureTensor:
         # ... globally,
         self.assert_allclose_matrix(
             np.mean(self.p_global, axis=0),
-            p_avg_expected, atol_diag=c_s_lb**2 / 6, atol_offdiag=c_s_lb**2 / 9)
+            p_avg_expected, atol_diag=c_s_lb**2 / 5, atol_offdiag=c_s_lb**2 / 9)
 
         # ... for two nodes.
         for time_series in [self.p_node0, self.p_node1]:

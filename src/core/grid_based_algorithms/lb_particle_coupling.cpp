@@ -63,8 +63,7 @@ void lb_lbcoupling_deactivate() {
     runtimeWarningMsg()
         << "Recalculating forces, so the LB coupling forces are not "
            "included in the particle force the first time step. This "
-           "only matters if it happens frequently during "
-           "sampling.";
+           "only matters if it happens frequently during sampling.";
   }
 
   lb_particle_coupling.couple_to_md = false;
