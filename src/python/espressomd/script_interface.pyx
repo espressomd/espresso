@@ -17,19 +17,25 @@
 import numpy as np
 from .utils import to_char_pointer, to_str, handle_errors
 from .utils cimport Vector3d, make_array_locked
+cimport cpython.object
 
 from libcpp.memory cimport make_shared
 
 cdef shared_ptr[ContextManager] _om
 
 cdef class PObjectRef:
-    def __richcmp__(PObjectRef a, PObjectRef b, op):
-        if op == 2:
+    def __richcmp__(PObjectRef a, PObjectRef b, int op):
+        if op == cpython.object.Py_EQ:
             return a.sip == b.sip
+        elif op == cpython.object.Py_NE:
+            return a.sip != b.sip
         else:
             raise NotImplementedError
 
     cdef shared_ptr[ObjectHandle] sip
+
+    def print_sip(self):
+        print( < long > (self.sip.get()))
 
 cdef class PScriptInterface:
 
@@ -89,8 +95,10 @@ cdef class PScriptInterface:
                     self._sanitize_params(kwargs)))
 
     def __richcmp__(a, b, op):
-        if op == 2:
+        if op == cpython.object.Py_EQ:
             return a.get_sip() == b.get_sip()
+        elif op == cpython.object.Py_NE:
+            return a.get_sip() != b.get_sip()
         else:
             raise NotImplementedError
 
@@ -107,6 +115,7 @@ cdef class PScriptInterface:
 
         ret = PObjectRef()
         ret.sip = self.sip
+
         return ret
 
     cdef set_sip(self, shared_ptr[ObjectHandle] sip):
@@ -279,6 +288,9 @@ cdef variant_to_python_object(const Variant & value) except +:
             res[kv.first] = variant_to_python_object(kv.second)
 
         return res
+
+    if is_type[size_t](value):
+        return get_value[size_t](value)
 
     raise TypeError("Unknown type")
 

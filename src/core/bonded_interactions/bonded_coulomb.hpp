@@ -23,8 +23,6 @@
 /** \file
  *  Routines to calculate the bonded Coulomb potential between
  *  particle pairs.
- *
- *  Implementation in \ref bonded_coulomb.cpp
  */
 
 #include "config.hpp"
@@ -44,8 +42,7 @@ struct BondedCoulomb {
 
   static constexpr int num = 1;
 
-  BondedCoulomb() = default;
-  BondedCoulomb(double prefactor);
+  BondedCoulomb(double prefactor) { this->prefactor = prefactor; }
 
   boost::optional<Utils::Vector3d> force(double q1q2,
                                          Utils::Vector3d const &dx) const;

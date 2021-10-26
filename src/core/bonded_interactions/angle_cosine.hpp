@@ -49,7 +49,6 @@ struct AngleCosineBond {
 
   static constexpr int num = 2;
 
-  AngleCosineBond() = default;
   AngleCosineBond(double bend, double phi0);
 
   std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>

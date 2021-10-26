@@ -28,8 +28,8 @@
 #include <boost/variant.hpp>
 
 void thermalized_bond_init(double time_step) {
-  for (auto &bonded_ia_param : bonded_ia_params) {
-    if (auto *t = boost::get<ThermalizedBond>(&bonded_ia_param)) {
+  for (auto &kv : bonded_ia_params) {
+    if (auto *t = boost::get<ThermalizedBond>(&(*kv.second))) {
       t->pref1_com = t->gamma_com;
       t->pref2_com = sqrt(24.0 * t->gamma_com / time_step * t->temp_com);
       t->pref1_dist = t->gamma_distance;

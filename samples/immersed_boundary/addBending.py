@@ -33,6 +33,6 @@ def AddBending(system, kb):
             id3 = int(line[2])
             id4 = int(line[3])
             tribend = espressomd.interactions.IBM_Tribend(
-                ind1=id1, ind2=id2, ind3=id3, ind4=id4, kb=kb, refShape="initial")
+                ind1=id1, ind2=id2, ind3=id3, ind4=id4, kb=kb, refShape="Initial")
             system.bonded_inter.add(tribend)
             system.part[id1].add_bond((tribend, id2, id3, id4))

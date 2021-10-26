@@ -41,8 +41,6 @@ struct IBMTribend {
   // Krüger always has three partners
   static constexpr int num = 3;
 
-  IBMTribend() = default;
-
   /** Set the IBM Tribend parameters.
    *  Also calculate and store the reference state.
    *  See details in @cite gompper96a and @cite kruger12a.

@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2010-2019 The ESPResSo project
- * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
- *   Max-Planck-Institute for Polymer Research, Theory Group
+ * Copyright (C) 2010-2021 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -18,13 +16,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-/** \file
- *
- *  Implementation of \ref angle_harmonic.hpp
- */
-#include "angle_harmonic.hpp"
 
-AngleHarmonicBond::AngleHarmonicBond(double bend, double phi0) {
-  this->bend = bend;
-  this->phi0 = phi0;
-}
+#ifndef IMMERSED_BOUNDARY_IBM_COMMON_HPP
+#define IMMERSED_BOUNDARY_IBM_COMMON_HPP
+
+#include <utils/Vector.hpp>
+
+/**
+ * @brief Returns the position of a given particle.
+ *
+ * @param pid %Particle id.
+ * @return position of the particle.
+ */
+Utils::Vector3d get_ibm_particle_position(int pid);
+
+#endif

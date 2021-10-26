@@ -45,15 +45,7 @@ void mpi_bcast_ia_params_local(int i, int j) {
   if (j >= 0) {
     // non-bonded interaction parameters
     boost::mpi::broadcast(comm_cart, *get_ia_param(i, j), 0);
-  } else {
-    // bonded interaction parameters
-    if (this_node) {
-      // resize array on local nodes
-      make_bond_type_exist(i);
-    }
-    boost::mpi::broadcast(comm_cart, bonded_ia_params[i], 0);
   }
-
   on_short_range_ia_change();
 }
 

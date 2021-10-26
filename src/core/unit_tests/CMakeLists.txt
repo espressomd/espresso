@@ -50,3 +50,5 @@ unit_test(NAME thermostats_test SRC thermostats_test.cpp DEPENDS EspressoCore)
 unit_test(NAME random_test SRC random_test.cpp DEPENDS EspressoUtils Random123)
 unit_test(NAME BondList_test SRC BondList_test.cpp DEPENDS EspressoCore)
 unit_test(NAME energy_test SRC energy_test.cpp DEPENDS EspressoCore)
+unit_test(NAME bonded_interactions_map_test SRC
+          bonded_interactions_map_test.cpp DEPENDS EspressoCore)
