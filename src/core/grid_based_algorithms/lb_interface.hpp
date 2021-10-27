@@ -206,6 +206,19 @@ bool lb_lbnode_is_boundary(const Utils::Vector3i &ind);
 void lb_lbfluid_clear_boundaries();
 
 /**
+ * @brief Add a boundary.
+ */
+void lb_lbfluid_update_boundary_from_shape(
+    std::vector<int> const &raster_flat,
+    std::vector<double> const &slip_velocity_flat);
+
+/**
+ * @brief Update a boundary slip velocity.
+ */
+void lb_lbfluid_update_boundary_from_list(std::vector<int> const &nodes_flat,
+                                          std::vector<double> const &vel_flat);
+
+/**
  * @brief Get the LB fluid velocity for a single node.
  */
 const Utils::Vector3d lb_lbnode_get_boundary_force(const Utils::Vector3i &ind);

@@ -439,6 +439,85 @@ IF LB_WALBERLA:
             mpi_destruct_lb_walberla()
             super()._deactivate_method()
 
+        def clear_boundaries(self):
+            """
+            Remove boundary conditions.
+            """
+            lb_lbfluid_clear_boundaries()
+
+        def add_boundary_from_shape(
+                self, shape, velocity=np.zeros(3, dtype=float)):
+            """
+            Set boundary conditions from a shape.
+
+            Parameters
+            ----------
+            shape : :obj:`espressomd.shapes.Shape`
+                Shape to rasterize.
+            velocity : (3,) or (L, M, N, 3) array_like of :obj:`float`, optional
+                Slip velocity. By default no-slip boundary conditions are used.
+                If a vector of 3 values, a uniform slip velocity is used,
+                otherwise ``L, M, N`` must be equal to the LB grid dimensions.
+            """
+            utils.check_type_or_throw_except(
+                shape, 1, Shape, "expected an espressomd.shapes.Shape")
+            if np.shape(velocity) not in [(3,), self.shape + (3,)]:
+                raise ValueError(
+                    f'Cannot process velocity grid of shape {np.shape(velocity)}')
+
+            velocity_flat = np.array(velocity, dtype=float).reshape((-1,))
+            mask_flat = shape.call_method('rasterize', grid_size=self.shape,
+                                          grid_spacing=self._params['agrid'],
+                                          grid_offset=0.5)
+
+            cdef double unit_conversion = 1. / lb_lbfluid_get_lattice_speed()
+            cdef double[::1] velocity_view = np.ascontiguousarray(
+                velocity_flat * unit_conversion, dtype=np.double)
+            cdef int[::1] raster_view = np.ascontiguousarray(
+                mask_flat, dtype=np.int32)
+            python_lb_lbfluid_update_boundary_from_shape(
+                raster_view, velocity_view)
+
+        def add_boundary_from_list(
+                self, nodes, velocity=np.zeros(3, dtype=float)):
+            """
+            Set boundary conditions from a list of node indices.
+
+            Parameters
+            ----------
+            nodes : (N, 3) array_like of :obj:`int`
+                List of node indices to update. If they were originally not
+                boundary nodes, they will become boundary nodes.
+            velocity : (3,) or (N, 3) array_like of :obj:`float`, optional
+                Slip velocity. By default no-slip boundary conditions are used.
+                If a vector of 3 values, a uniform slip velocity is used,
+                otherwise ``N`` must be identical to the ``N`` of ``nodes``.
+            """
+
+            # serialize velocity
+            nodes = np.array(nodes, dtype=int)
+            velocity = np.array(velocity, dtype=float)
+            if len(nodes.shape) != 2 or nodes.shape[1] != 3:
+                raise ValueError(
+                    f'Cannot process node list of shape {nodes.shape}')
+            if np.any(np.logical_or(np.max(nodes, axis=0) >= self.shape,
+                                    np.min(nodes, axis=0) < 0)):
+                raise ValueError(
+                    f'Node indices must be in the range (0, 0, 0) to {self.shape}')
+            if velocity.shape == (3,):
+                velocity = np.array(nodes.shape[0] * [list(velocity)])
+            if nodes.shape != velocity.shape:
+                raise ValueError(
+                    f'Node indices and velocities must have the same shape, got {nodes.shape} and {velocity.shape}')
+
+            cdef double unit_conversion = 1. / lb_lbfluid_get_lattice_speed()
+            cdef double[::1] velocity_view = np.ascontiguousarray(
+                velocity.reshape((-1,)) * unit_conversion, dtype=np.double)
+            cdef int[::1] nodes_view = np.ascontiguousarray(
+                nodes.reshape((-1,)), dtype=np.int32)
+            python_lb_lbfluid_update_boundary_from_list(
+                nodes_view, velocity_view)
+
         def get_nodes_in_shape(self, shape):
             """Provides a generator for iterating over all lb nodes inside the given shape"""
             utils.check_type_or_throw_except(

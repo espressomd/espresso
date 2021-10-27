@@ -606,6 +606,31 @@ void lb_lbfluid_clear_boundaries() {
   }
 }
 
+void lb_lbfluid_update_boundary_from_shape(
+    std::vector<int> const &raster_flat,
+    std::vector<double> const &slip_velocity_flat) {
+  if (lattice_switch == ActiveLB::WALBERLA) {
+#ifdef LB_WALBERLA
+    ::Communication::mpiCallbacks().call_all(
+        Walberla::update_boundary_from_shape, raster_flat, slip_velocity_flat);
+#endif
+  } else {
+    throw NoLBActive();
+  }
+}
+
+void lb_lbfluid_update_boundary_from_list(std::vector<int> const &nodes_flat,
+                                          std::vector<double> const &vel_flat) {
+  if (lattice_switch == ActiveLB::WALBERLA) {
+#ifdef LB_WALBERLA
+    ::Communication::mpiCallbacks().call_all(
+        Walberla::update_boundary_from_list, nodes_flat, vel_flat);
+#endif
+  } else {
+    throw NoLBActive();
+  }
+}
+
 const std::vector<double> lb_lbnode_get_pop(const Utils::Vector3i &ind) {
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {

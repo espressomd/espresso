@@ -71,6 +71,7 @@
 #include <utils/interpolation/bspline_3d.hpp>
 #include <utils/math/make_lin_space.hpp>
 
+#include <boost/multi_array.hpp>
 #include <boost/optional.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/variant.hpp>
@@ -685,6 +686,83 @@ public:
   void reallocate_ubb_field() override { m_boundary->ubb_update(); }
 
   void clear_boundaries() override { reset_boundary_handling(); }
+
+  /** @brief Update boundary conditions from a rasterized shape. */
+  void update_boundary_from_shape(
+      std::vector<int> const &raster_flat,
+      std::vector<double> const &slip_velocity_flat) override {
+    // reshape grids
+    auto const &grid_size = m_grid_dimensions;
+    auto const n_grid_points = Utils::product(grid_size);
+    assert(raster_flat.size() == n_grid_points);
+    assert(slip_velocity_flat.size() == 3 * n_grid_points or
+           slip_velocity_flat.size() == 3);
+    std::vector<Utils::Vector3d> slip_velocity_vectors;
+    {
+      auto const vel_begin = std::begin(slip_velocity_flat);
+      auto const vel_end = std::end(slip_velocity_flat);
+      if (slip_velocity_flat.size() == 3) {
+        auto const uniform_slip_velocity = Utils::Vector3d(vel_begin, vel_end);
+        slip_velocity_vectors.assign(n_grid_points, uniform_slip_velocity);
+      } else {
+        slip_velocity_vectors.reserve(n_grid_points);
+        for (auto it = vel_begin; it < vel_end; it += 3) {
+          slip_velocity_vectors.emplace_back(Utils::Vector3d(it, it + 3));
+        }
+      }
+    }
+    boost::const_multi_array_ref<Utils::Vector3d, 3> slip_velocity(
+        slip_velocity_vectors.data(), grid_size);
+    boost::const_multi_array_ref<int, 3> raster(raster_flat.data(), grid_size);
+
+    for (auto block = m_blocks->begin(); block != m_blocks->end(); ++block) {
+      // lattice constant is 1
+      auto const left = block->getAABB().min();
+      auto const off_i = int_c(left[0]);
+      auto const off_j = int_c(left[1]);
+      auto const off_k = int_c(left[2]);
+
+      // Get field data which knows about the indices
+      // In the loop, x,y,z are in block-local coordinates
+      auto const ghosts = static_cast<int>(m_n_ghost_layers);
+      auto pdf_field = block->template getData<PdfField>(m_pdf_field_id);
+      for (int i = -ghosts; i < int_c(pdf_field->xSize() + ghosts); ++i) {
+        for (int j = -ghosts; j < int_c(pdf_field->ySize() + ghosts); ++j) {
+          for (int k = -ghosts; k < int_c(pdf_field->zSize() + ghosts); ++k) {
+            Utils::Vector3i const node{{off_i + i, off_j + j, off_k + k}};
+            auto const idx = (node + grid_size) % grid_size;
+            if (raster(idx)) {
+              auto const bc =
+                  get_block_and_cell(node, true, m_blocks, m_n_ghost_layers);
+              auto const &vel = slip_velocity(idx);
+              m_boundary->set_node_velocity_at_boundary(node, vel, *bc);
+            }
+          }
+        }
+      }
+    }
+    reallocate_ubb_field();
+  }
+
+  /** @brief Update boundary conditions from a list of nodes. */
+  void update_boundary_from_list(std::vector<int> const &nodes_flat,
+                                 std::vector<double> const &vel_flat) override {
+    // reshape grids
+    auto const &grid_size = m_grid_dimensions;
+    auto const n_grid_points = Utils::product(grid_size);
+    assert(nodes_flat.size() == vel_flat.size());
+    assert(nodes_flat.size() % 3u == 0);
+    for (std::size_t i = 0; i < nodes_flat.size(); i += 3) {
+      auto const node = Utils::Vector3i(&nodes_flat[i], &nodes_flat[i + 3]);
+      auto const vel = Utils::Vector3d(&vel_flat[i], &vel_flat[i + 3]);
+      auto const bc =
+          get_block_and_cell(node, true, m_blocks, m_n_ghost_layers);
+      if (bc) {
+        m_boundary->set_node_velocity_at_boundary(node, vel, *bc);
+      }
+    }
+    reallocate_ubb_field();
+  }
 
   // Pressure tensor
   boost::optional<Utils::Vector6d>

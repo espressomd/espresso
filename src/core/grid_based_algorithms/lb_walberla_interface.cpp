@@ -21,6 +21,7 @@
 #ifdef LB_WALBERLA
 
 #include "MpiCallbacks.hpp"
+#include "event.hpp"
 #include "lb_walberla_instance.hpp"
 
 #include <utils/Vector.hpp>
@@ -90,9 +91,26 @@ REGISTER_CALLBACK_ONE_RANK(get_node_is_boundary)
 void clear_boundaries() {
   lb_walberla()->clear_boundaries();
   lb_walberla()->ghost_communication();
+  on_lb_boundary_conditions_change();
 }
 
 REGISTER_CALLBACK(clear_boundaries)
+
+void update_boundary_from_shape(std::vector<int> const &raster_flat,
+                                std::vector<double> const &slip_velocity_flat) {
+  lb_walberla()->update_boundary_from_shape(raster_flat, slip_velocity_flat);
+  on_lb_boundary_conditions_change();
+}
+
+REGISTER_CALLBACK(update_boundary_from_shape)
+
+void update_boundary_from_list(std::vector<int> const &nodes_flat,
+                               std::vector<double> const &vel_flat) {
+  lb_walberla()->update_boundary_from_list(nodes_flat, vel_flat);
+  on_lb_boundary_conditions_change();
+}
+
+REGISTER_CALLBACK(update_boundary_from_list)
 
 boost::optional<Utils::Vector3d> get_node_boundary_force(Utils::Vector3i ind) {
   return lb_walberla()->get_node_boundary_force(ind);
