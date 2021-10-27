@@ -24,6 +24,7 @@ Simulate a four-roller mill via slip velocity boundary conditions.
 import espressomd.lb
 import espressomd.lbboundaries
 import espressomd.shapes
+import espressomd.constraints
 import espressomd.observables
 import espressomd.math
 import numpy as np
@@ -57,17 +58,23 @@ lb_fluid = espressomd.lb.LBFluidWalberla(
     agrid=agrid, dens=0.5, visc=3.2, tau=system.time_step)
 system.actors.add(lb_fluid)
 
-# set up rollers
-logging.info('Setting up LB boundaries')
+# set up rollers by adding tangential slip velocities to cylinders
+logging.info('Setting up the rollers')
 cyl_center = agrid * (grid_size // 2 + 0.5) * [1, 1, 0]
-rollers = []
 for i, j in itertools.product(range(2), range(2)):
     cyl_offset = np.array([1 + i * 0.99 - 0.51, 1 + j * 0.99 - 0.51, 0])
     cyl = espressomd.shapes.Cylinder(
         center=agrid * (grid_size // 2 + 0.5) * cyl_offset, axis=[0, 0, 1],
         length=3 * system.box_l[2], radius=14.1 * agrid, direction=1)
-    system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(shape=cyl))
-    rollers.append(cyl)
+    if args.visualizer:
+        system.constraints.add(shape=cyl)
+    lb_fluid.add_boundary_from_shape(cyl)
+    surface_nodes = espressomd.lbboundaries.edge_detection(
+        lb_fluid.get_shape_bitmask(cyl), system.periodicity)
+    tangents = espressomd.lbboundaries.calc_cylinder_tangential_vectors(
+        cyl.center, lb_fluid.agrid, 0.5, surface_nodes)
+    velocity = 0.01 * (1 if (i + j) % 2 == 0 else -1)
+    lb_fluid.add_boundary_from_list(surface_nodes, velocity * tangents)
 
 # the system needs to be fully symmetric
 mask = np.copy(lb_fluid[:, :, :].is_boundary.astype(int))
@@ -75,30 +82,18 @@ np.testing.assert_array_equal(mask, np.flip(mask, axis=0))
 np.testing.assert_array_equal(mask, np.flip(mask, axis=1))
 np.testing.assert_array_equal(mask, np.flip(mask, axis=2))
 
-# add tangential slip velocity to the inner cylinder
-logging.info('Setting up slip velocity boundary conditions')
-for i, cyl in enumerate(tqdm.tqdm(rollers)):
-    surface_nodes = espressomd.lbboundaries.edge_detection(
-        lb_fluid.get_shape_bitmask(cyl), system.periodicity)
-    tangents = espressomd.lbboundaries.calc_cylinder_tangential_vectors(
-        cyl.center, lb_fluid.agrid, 0.5, surface_nodes)
-    velocity = 0.01 * (1 if i % 3 == 0 else -1)
-    for ijk, slip_velocity in zip(surface_nodes, velocity * tangents):
-        lb_fluid[ijk].boundary = espressomd.lbboundaries.VelocityBounceBack(
-            slip_velocity)
-
 if args.visualizer:
     import espressomd.visualization_opengl
     visualizer = espressomd.visualization_opengl.openGLLive(
         system,
-        LB_draw_boundaries=True,
         LB_draw_velocity_plane=True,
         LB_plane_dist=0,
         LB_plane_axis=2,
         LB_vel_scale=80,
         LB_vel_radius_scale=0.05,
         LB_plane_ngrid=24,
-        quality_constraints=64,
+        LB_arrow_quality=6,
+        quality_constraints=48,
         camera_position=[4, 4, 50],
         background_color=[1, 1, 1],
         velocity_arrows_type_colors=[[0, 1, 0]]

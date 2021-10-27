@@ -365,6 +365,9 @@ providing a list of nodes and a list of velocities of the same dimensions::
     # remove boundary conditions
     lbf.clear_boundaries()
 
+See the script :file:`samples/lb_circular_couette.py` for how to set up a
+complete LB simulation with slip velocities at the surface of a cylinder.
+
 .. _Shape-based boundary conditions:
 
 Shape-based boundary conditions

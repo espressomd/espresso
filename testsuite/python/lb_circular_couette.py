@@ -65,8 +65,8 @@ class LBRollerMill(ut.TestCase):
         cyl2 = espressomd.shapes.Cylinder(
             center=cyl_center, axis=[0, 0, 1], length=3 * system.box_l[2],
             radius=30.1 * agrid, direction=-1)
-        system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(shape=cyl1))
-        system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(shape=cyl2))
+        lb_fluid.add_boundary_from_shape(cyl1)
+        lb_fluid.add_boundary_from_shape(cyl2)
 
         # the system needs to be fully symmetric
         mask = np.copy(lb_fluid[:63, :63, :].is_boundary.astype(int))
@@ -81,14 +81,12 @@ class LBRollerMill(ut.TestCase):
         np.testing.assert_array_equal(mask[:, -1, :], 1)
 
         # add tangential slip velocity to the inner cylinder
-        vel_magnitude = 0.01
+        slip_vel = 0.01
         surface_nodes = espressomd.lbboundaries.edge_detection(
             lb_fluid.get_shape_bitmask(cyl1), system.periodicity)
         tangents = espressomd.lbboundaries.calc_cylinder_tangential_vectors(
             cyl1.center, lb_fluid.agrid, 0.5, surface_nodes)
-        for ijk, slip_velocity in zip(surface_nodes, vel_magnitude * tangents):
-            lb_fluid[ijk].boundary = espressomd.lbboundaries.VelocityBounceBack(
-                slip_velocity)
+        lb_fluid.add_boundary_from_list(surface_nodes, slip_vel * tangents)
 
         # add observable for the fluid velocity in cylindrical coordinates
         cyl_transform_params = espressomd.math.CylindricalTransformationParameters(
@@ -132,7 +130,7 @@ class LBRollerMill(ut.TestCase):
         xdata = profile_r[9:]
         ydata = v_phi[9:]
         a_ref, b_ref = taylor_couette(
-            vel_magnitude, 0.0, cyl1.radius, cyl2.radius, agrid)
+            slip_vel, 0.0, cyl1.radius, cyl2.radius, agrid)
         (a_sim, b_sim), _ = scipy.optimize.curve_fit(
             lambda x, a, b: a * x + b / x, xdata, ydata)
         np.testing.assert_allclose([a_sim, b_sim], [a_ref, b_ref], atol=5e-4)

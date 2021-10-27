@@ -24,6 +24,7 @@ Simulate a rotating cylinder in a fluid via slip velocity boundary conditions.
 import espressomd.lb
 import espressomd.lbboundaries
 import espressomd.shapes
+import espressomd.constraints
 import espressomd.observables
 import espressomd.math
 import numpy as np
@@ -61,8 +62,8 @@ cylinder_in = espressomd.shapes.Cylinder(
 cylinder_out = espressomd.shapes.Cylinder(
     center=cyl_center, axis=[0, 0, 1], length=3 * system.box_l[2],
     radius=14.5 * agrid, direction=-1)
-system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(shape=cylinder_in))
-system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(shape=cylinder_out))
+lb_fluid.add_boundary_from_shape(cylinder_in)
+lb_fluid.add_boundary_from_shape(cylinder_out)
 
 # the system needs to be fully symmetric
 mask = np.copy(lb_fluid[:, :, :].is_boundary.astype(int))
@@ -82,15 +83,12 @@ surface_nodes = espressomd.lbboundaries.edge_detection(
     lb_fluid.get_shape_bitmask(cylinder_in), system.periodicity)
 tangents = espressomd.lbboundaries.calc_cylinder_tangential_vectors(
     cylinder_in.center, lb_fluid.agrid, 0.5, surface_nodes)
-for ijk, slip_velocity in zip(surface_nodes, velocity_magnitude * tangents):
-    lb_fluid[ijk].boundary = espressomd.lbboundaries.VelocityBounceBack(
-        slip_velocity)
+lb_fluid.add_boundary_from_list(surface_nodes, velocity_magnitude * tangents)
 
 if args.visualizer:
     import espressomd.visualization_opengl
     visualizer = espressomd.visualization_opengl.openGLLive(
         system,
-        LB_draw_boundaries=True,
         LB_draw_velocity_plane=True,
         LB_plane_dist=0,
         LB_plane_axis=2,
@@ -102,6 +100,9 @@ if args.visualizer:
         background_color=[1, 1, 1],
         velocity_arrows_type_colors=[[0, 1, 0]]
     )
+    system.constraints.add(shape=cylinder_in)
+    system.constraints.add(shape=cylinder_out)
+    system.integrator.run(100)
     visualizer.run(1)
 
 # add observable for the fluid velocity in cylindrical coordinates
