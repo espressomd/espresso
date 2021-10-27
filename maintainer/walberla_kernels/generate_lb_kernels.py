@@ -103,8 +103,8 @@ def earmark_generated_kernels():
                     f.write(earmark + content)
 
 
-def generate_fields(stencil):
-    dtype = 'float64'
+def generate_fields(ctx, stencil):
+    dtype = 'float64' if ctx.double_accuracy else 'float32'
     field_layout = 'fzyx'
     q = len(stencil)
     dim = len(stencil[0])
@@ -151,7 +151,7 @@ def generate_collision_sweep(
         ctx, lb_method, collision_rule, class_name, params):
 
     # Symbols for PDF (twice, due to double buffering)
-    fields = generate_fields(lb_method.stencil)
+    fields = generate_fields(ctx, lb_method.stencil)
 
     # Generate collision kernel
     collide_update_rule = create_lbm_kernel(
@@ -159,7 +159,8 @@ def generate_collision_sweep(
         fields['pdfs'],
         fields['pdfs_tmp'],
         CollideOnlyInplaceAccessor())
-    collide_ast = ps.create_kernel(collide_update_rule, **params)
+    collide_ast = ps.create_kernel(collide_update_rule, **params,
+                                   data_type='double' if ctx.double_accuracy else 'float')
     collide_ast.function_name = 'kernel_collide'
     collide_ast.assumed_inner_stride_one = True
     codegen.generate_sweep(ctx, class_name, collide_ast)
@@ -167,12 +168,13 @@ def generate_collision_sweep(
 
 def generate_stream_sweep(ctx, lb_method, class_name, params):
     # Symbols for PDF (twice, due to double buffering)
-    fields = generate_fields(lb_method.stencil)
+    fields = generate_fields(ctx, lb_method.stencil)
 
     # Generate stream kernel
     stream_update_rule = create_stream_pull_with_output_kernel(lb_method, fields['pdfs'], fields['pdfs_tmp'],
                                                                output={'velocity': fields['velocity']})
-    stream_ast = ps.create_kernel(stream_update_rule, **params)
+    stream_ast = ps.create_kernel(stream_update_rule, **params,
+                                  data_type='double' if ctx.double_accuracy else 'float')
     stream_ast.function_name = 'kernel_stream'
     stream_ast.assumed_inner_stride_one = True
     codegen.generate_sweep(
@@ -180,7 +182,7 @@ def generate_stream_sweep(ctx, lb_method, class_name, params):
 
 
 def generate_setters(lb_method):
-    fields = generate_fields(lb_method.stencil)
+    fields = generate_fields(ctx, lb_method.stencil)
 
     initial_rho = sp.Symbol('rho_0')
     pdfs_setter = macroscopic_values_setter(lb_method,
@@ -250,7 +252,7 @@ class PatchedUBB(lbmpy.boundaries.UBB):
 with CodeGeneration() as ctx:
     kT = sp.symbols("kT")
     stencil = get_stencil('D3Q19')
-    fields = generate_fields(stencil)
+    fields = generate_fields(ctx, stencil)
     force_field = fields['force']
 
     # Vectorization parameters
@@ -281,7 +283,8 @@ with CodeGeneration() as ctx:
     # generate unthermalized collision rule
     collision_rule_unthermalized = create_lb_collision_rule(
         method,
-        optimization={'cse_global': True}
+        optimization={'cse_global': True,
+                      'double_precision': ctx.double_accuracy}
     )
     generate_collision_sweep(
         ctx,
@@ -306,7 +309,8 @@ with CodeGeneration() as ctx:
             'block_offsets': 'walberla',
             'rng_node': ps.rng.PhiloxTwoDoubles
         },
-        optimization={'cse_global': True}
+        optimization={'cse_global': True,
+                      'double_precision': ctx.double_accuracy}
     )
     generate_collision_sweep(
         ctx,
