@@ -107,8 +107,8 @@ protected:
 
 private:
   auto generate_collide_sweep() const {
-    real_t const omega = shear_mode_relaxation_rate();
-    real_t const omega_odd = odd_mode_relaxation_rate(omega);
+    auto const omega = shear_mode_relaxation_rate();
+    auto const omega_odd = odd_mode_relaxation_rate(omega);
     std::shared_ptr<CollisionModel> ptr;
     if (m_kT == 0.) {
       auto obj = UnthermalizedCollisionModel(m_last_applied_force_field_id,
@@ -138,14 +138,16 @@ private:
 
   } run_collide_sweep;
 
-  double shear_mode_relaxation_rate() const {
-    return 2 / (6 * m_viscosity + 1);
+  real_t shear_mode_relaxation_rate() const {
+    return real_t(2) / (real_t(6) * m_viscosity + real_t(1));
   }
 
-  double odd_mode_relaxation_rate(double shear_relaxation,
-                                  double magic_number = 3. / 16.) const {
-    return (4 - 2 * shear_relaxation) /
-           (4 * magic_number * shear_relaxation + 2 - shear_relaxation);
+  real_t odd_mode_relaxation_rate(real_t shear_relaxation,
+                                  real_t magic_number = real_c(3) /
+                                                        real_t(16)) const {
+    return (real_t(4) - real_t(2) * shear_relaxation) /
+           (real_t(4) * magic_number * shear_relaxation + real_t(2) -
+            shear_relaxation);
   }
 
   void reset_boundary_handling() {
@@ -181,7 +183,7 @@ private:
                                const cell_idx_t x, const cell_idx_t y,
                                const cell_idx_t z,
                                Vector3<real_t> &velocity) const {
-    const real_t rho = lbm::accessor::DensityAndMomentumDensity::get(
+    auto const rho = lbm::accessor::DensityAndMomentumDensity::get(
         velocity, *force_field, *pdf_field, x, y, z);
     auto const invRho = real_t(1) / rho;
     velocity *= invRho;
@@ -236,9 +238,9 @@ protected:
   // Member variables
   Utils::Vector3i m_grid_dimensions;
   unsigned int m_n_ghost_layers;
-  double m_viscosity;
-  double m_density;
-  double m_kT;
+  real_t m_viscosity;
+  real_t m_density;
+  real_t m_kT;
   unsigned int m_seed;
 
   // Block data access handles
@@ -283,7 +285,8 @@ public:
                  const Utils::Vector3i &node_grid, unsigned int n_ghost_layers,
                  double kT, unsigned int seed)
       : m_grid_dimensions(grid_dimensions), m_n_ghost_layers(n_ghost_layers),
-        m_viscosity(viscosity), m_density(density), m_kT(kT), m_seed(seed) {
+        m_viscosity(real_c(viscosity)), m_density(real_c(density)),
+        m_kT(real_c(kT)), m_seed(seed) {
 
     if (n_ghost_layers == 0)
       throw std::runtime_error("At least one ghost layer must be used");
@@ -324,7 +327,7 @@ public:
     // Init and register pdf field
     auto pdf_setter =
         pystencils::InitialPDFsSetter(m_force_to_be_applied_id, m_pdf_field_id,
-                                      m_velocity_field_id, real_c(m_density));
+                                      m_velocity_field_id, m_density);
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b) {
       pdf_setter(&*b);
     }
