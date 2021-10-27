@@ -18,7 +18,11 @@
 #
 
 import os
+import sys
+import json
 import jinja2
+import argparse
+
 import sympy as sp
 import pystencils as ps
 from lbmpy.creationfunctions import create_lb_collision_rule, create_mrt_orthogonal, force_model_from_string
@@ -37,6 +41,12 @@ from lbmpy.macroscopic_value_kernels import macroscopic_values_setter
 # for collide-push from lbmpy.fieldaccess import StreamPushTwoFieldsAccessor
 
 from lbmpy.advanced_streaming.indexing import NeighbourOffsetArrays
+
+
+parser = argparse.ArgumentParser(description='Generate the waLBerla kernels.')
+parser.add_argument('codegen_cfg', type=str, nargs='?',
+                    help='codegen configuration file (JSON format)')
+args = parser.parse_args()
 
 
 def adapt_pystencils():
@@ -249,7 +259,27 @@ class PatchedUBB(lbmpy.boundaries.UBB):
         return out
 
 
-with CodeGeneration() as ctx:
+class PatchedCodeGeneration(CodeGeneration):
+    '''
+    Code generator class that reads the configuration from a file.
+    '''
+
+    def __init__(self, codegen_cfg):
+        if codegen_cfg:
+            assert sys.argv[1] == codegen_cfg
+            del sys.argv[1]
+        super().__init__()
+        if codegen_cfg:
+            cmake_map = {"ON": True, "1": True, "YES": True,
+                         "OFF": False, "0": False, "NO": False}
+            with open(codegen_cfg) as f:
+                cmake_vars = json.loads(f.read())['CMAKE_VARS']
+                for key, value in cmake_vars.items():
+                    cmake_vars[key] = cmake_map.get(value, value)
+            self.context = type(self.context)(cmake_vars)
+
+
+with PatchedCodeGeneration(args.codegen_cfg) as ctx:
     kT = sp.symbols("kT")
     stencil = get_stencil('D3Q19')
     fields = generate_fields(ctx, stencil)

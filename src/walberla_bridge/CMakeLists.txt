@@ -16,12 +16,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-set(WalberlaBridge_SRC generated_kernels/StreamSweep.cpp generated_kernels/CollideSweep.cpp generated_kernels/CollideSweepThermalized.cpp
-                       generated_kernels/InitialPDFsSetter.cpp generated_kernels/Dynamic_UBB.cpp
-                       lb_walberla_init.cpp)
-if (WALBERLA_USE_AVX)
-  list(APPEND WalberlaBridge_SRC generated_kernels/CollideSweepAVX.cpp generated_kernels/CollideSweepThermalizedAVX.cpp)
+set(WalberlaBridgeCodegen_SRC
+    generated_kernels/StreamSweep.cpp generated_kernels/CollideSweep.cpp
+    generated_kernels/CollideSweepThermalized.cpp
+    generated_kernels/InitialPDFsSetter.cpp generated_kernels/Dynamic_UBB.cpp)
+if(WALBERLA_USE_AVX)
+  list(APPEND WalberlaBridgeCodegen_SRC generated_kernels/CollideSweepAVX.cpp
+       generated_kernels/CollideSweepThermalizedAVX.cpp)
 endif()
+set(WalberlaBridge_SRC ${WalberlaBridgeCodegen_SRC} lb_walberla_init.cpp)
 add_library(WalberlaBridge SHARED ${WalberlaBridge_SRC})
 target_link_libraries(WalberlaBridge PUBLIC MPI::MPI_CXX EspressoUtils
                       PRIVATE Boost::boost cxx_interface ${WALBERLA_LIBS})
@@ -30,6 +33,25 @@ target_include_directories(
   PRIVATE ${WALBERLA_INCLUDE_DIRS} ${walberla_BINARY_DIR}/src)
 
 install(TARGETS WalberlaBridge LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
+
+list(JOIN WalberlaBridgeCodegen_SRC "\",\n    \""
+     WalberlaBridgeCodegen_SRC_json)
+set(WalberlaBridgeCodegenJson
+    "{\n\
+  \"EXPECTED_FILES\": [\n\
+    \"${WalberlaBridgeCodegen_SRC_json}\"\n\
+  ],\n\
+  \"CMAKE_VARS\" : {\n\
+    \"WALBERLA_OPTIMIZE_FOR_LOCALHOST\": \"${WALBERLA_OPTIMIZE_FOR_LOCALHOST}\",\n\
+    \"WALBERLA_DOUBLE_ACCURACY\": \"${WALBERLA_DOUBLE_ACCURACY}\",\n\
+    \"CODEGEN_CFG\": \"${codegenCfg}\",\n\
+    \"WALBERLA_BUILD_WITH_MPI\": \"${WALBERLA_BUILD_WITH_MPI}\",\n\
+    \"WALBERLA_BUILD_WITH_CUDA\": \"${WALBERLA_BUILD_WITH_CUDA}\",\n\
+    \"WALBERLA_BUILD_WITH_OPENMP\": \"${WALBERLA_BUILD_WITH_OPENMP}\"\n\
+  }\n\
+}")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/codegenCfg.json"
+     ${WalberlaBridgeCodegenJson})
 
 if(WITH_TESTS)
   add_subdirectory(tests)
