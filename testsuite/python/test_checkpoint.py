@@ -370,10 +370,10 @@ class CheckpointTest(ut.TestCase):
         # immersed boundary bonds
         self.assertEqual(
             ibm_volcons_bond.params, {'softID': 15, 'kappaV': 0.01})
+        self.assertAlmostEqual(ibm_tribend_bond.params['kb'], 2., delta=1E-9)
         if 'DP3M.CPU' not in modes:
-            self.assertEqual(
-                ibm_tribend_bond.params,
-                {'kb': 2., 'theta0': 5.973991986236586})
+            self.assertAlmostEqual(
+                ibm_tribend_bond.params['theta0'], 5.9739919862366, delta=1E-9)
         self.assertEqual(
             ibm_triel_bond.params,
             {'k1': 1.1, 'k2': 1.2, 'maxDist': 1.6, 'elasticLaw': 'NeoHookean'})
