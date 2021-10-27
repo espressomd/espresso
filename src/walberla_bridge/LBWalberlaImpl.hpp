@@ -160,15 +160,6 @@ public:
   using FlagField = BoundaryHandling::FlagField;
   using PdfField = GhostLayerField<real_t, Stencil::Size>;
 
-  static constexpr real_t w[19] = {
-      1. / 3.,  1. / 18., 1. / 18., 1. / 18., 1. / 18., 1. / 18., 1. / 18.,
-      1. / 36., 1. / 36., 1. / 36., 1. / 36., 1. / 36., 1. / 36., 1. / 36.,
-      1. / 36., 1. / 36., 1. / 36., 1. / 36., 1. / 36.};
-  static constexpr real_t wInv[19] = {3.,  18., 18., 18., 18., 18., 18.,
-                                      36., 36., 36., 36., 36., 36., 36.,
-                                      36., 36., 36., 36., 36.};
-  static constexpr bool compressible = true;
-
 private:
   real_t getDensity(const BlockAndCell &bc) const {
     auto pdf_field = bc.block->template getData<PdfField>(m_pdf_field_id);
@@ -192,10 +183,8 @@ private:
                                Vector3<real_t> &velocity) const {
     const real_t rho = lbm::accessor::DensityAndMomentumDensity::get(
         velocity, *force_field, *pdf_field, x, y, z);
-    if constexpr (compressible) {
-      const real_t invRho = real_t(1) / rho;
-      velocity *= invRho;
-    }
+    auto const invRho = real_t(1) / rho;
+    velocity *= invRho;
     return rho;
   }
 
