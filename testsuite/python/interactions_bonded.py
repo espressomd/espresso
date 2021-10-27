@@ -22,6 +22,7 @@ import numpy as np
 
 import espressomd
 import espressomd.electrostatics
+import espressomd.interactions
 import tests_common
 
 

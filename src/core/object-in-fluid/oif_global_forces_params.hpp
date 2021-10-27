@@ -40,7 +40,6 @@ struct OifGlobalForcesBond {
 
   static constexpr int num = 2;
 
-  OifGlobalForcesBond() = default;
   OifGlobalForcesBond(double A0_g, double ka_g, double V0, double kv) {
     this->ka_g = ka_g;
     this->A0_g = A0_g;

@@ -27,11 +27,13 @@ namespace utf = boost::unit_test;
 #include "ParticleFactory.hpp"
 
 #include "EspressoSystemStandAlone.hpp"
+#include "MpiCallbacks.hpp"
 #include "Particle.hpp"
 #include "accumulators/TimeSeries.hpp"
 #include "bonded_interactions/bonded_interaction_utils.hpp"
 #include "bonded_interactions/fene.hpp"
 #include "bonded_interactions/harmonic.hpp"
+#include "communication.hpp"
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/p3m.hpp"
 #include "energy.hpp"
@@ -48,6 +50,7 @@ namespace utf = boost::unit_test;
 
 #include <boost/mpi.hpp>
 #include <boost/range/numeric.hpp>
+#include <boost/variant.hpp>
 
 #include <cassert>
 #include <cmath>
@@ -71,6 +74,23 @@ struct if_head_node {
 private:
   boost::mpi::communicator world;
 };
+
+void create_bonds_local(int harm_bond_id, int fene_bond_id) {
+  // set up a harmonic bond
+  auto const harm_bond = HarmonicBond(200.0, 0.3, 1.0);
+  auto const harm_bond_ia = std::make_shared<Bonded_IA_Parameters>(harm_bond);
+  bonded_ia_params.insert(harm_bond_id, harm_bond_ia);
+  // set up a FENE bond
+  auto const fene_bond = FeneBond(300.0, 1.0, 0.3);
+  auto const fene_bond_ia = std::make_shared<Bonded_IA_Parameters>(fene_bond);
+  bonded_ia_params.insert(fene_bond_id, fene_bond_ia);
+}
+
+REGISTER_CALLBACK(create_bonds_local)
+
+void create_bonds(int harm_bond_id, int fene_bond_id) {
+  mpi_call_all(create_bonds_local, harm_bond_id, fene_bond_id);
+}
 
 BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
                         *utf::precondition(if_head_node())) {
@@ -192,17 +212,16 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
   {
     // distance between particles
     auto const dist = 0.2;
-    // set up an empty bond
-    auto const none_bond_id = 0;
-    // set up a harmonic bond
-    auto const harm_bond_id = 1;
-    auto const harm_bond = HarmonicBond(200.0, 0.3, 1.0);
-    set_bonded_ia_params(harm_bond_id, harm_bond);
-    add_particle_bond(pid2, std::vector<int>{harm_bond_id, pid1});
-    // set up a FENE bond
+    // set up a harmonic bond and a FENE bond, with a gap
+    auto const harm_bond_id = 0;
+    auto const none_bond_id = 1;
     auto const fene_bond_id = 2;
-    auto const fene_bond = FeneBond(300.0, 1.0, 0.3);
-    set_bonded_ia_params(fene_bond_id, fene_bond);
+    create_bonds(harm_bond_id, fene_bond_id);
+    auto const &harm_bond =
+        *boost::get<HarmonicBond>(bonded_ia_params.at(harm_bond_id).get());
+    auto const &fene_bond =
+        *boost::get<FeneBond>(bonded_ia_params.at(fene_bond_id).get());
+    add_particle_bond(pid2, std::vector<int>{harm_bond_id, pid1});
     add_particle_bond(pid2, std::vector<int>{fene_bond_id, pid3});
 
     // measure energies

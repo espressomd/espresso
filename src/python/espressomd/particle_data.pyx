@@ -24,8 +24,7 @@ from cython.operator cimport dereference
 from . cimport particle_data
 from .interactions import BondedInteraction
 from .interactions import BondedInteractions
-from .interactions cimport bonded_ia_params_size
-from .interactions cimport bonded_ia_params_num_partners
+from .interactions cimport bonded_ia_params_zero_based_type
 from .analyze cimport max_seen_particle_type
 from copy import copy
 import collections
@@ -322,12 +321,10 @@ cdef class ParticleHandle:
             part_bonds = get_particle_bonds(self._id)
             # Go through the bond list of the particle
             for part_bond in part_bonds:
-                bond = []
-                bond.append(BondedInteractions()[part_bond.bond_id()])
-                partner_ids = part_bond.partner_ids()
-
-                bonds.append(tuple(bond + [partner_ids[i]
-                                           for i in range(partner_ids.size())]))
+                bond_id = part_bond.bond_id()
+                partners = part_bond.partner_ids()
+                partner_ids = [partners[i] for i in range(partners.size())]
+                bonds.append((BondedInteractions()[bond_id], *partner_ids))
 
             return tuple(bonds)
 
@@ -1269,7 +1266,7 @@ cdef class ParticleHandle:
             bond[0] = BondedInteractions()[bond[0]]
         elif not isinstance(bond[0], BondedInteraction):
             raise Exception(
-                "1st element of Bond has to be of type BondedInteraction or int.")
+                f"1st element of Bond has to be of type BondedInteraction or int, got {type(bond[0])}.")
 
         # Check the bond is in the list of active bonded interactions
         if bond[0]._bond_id == -1:
@@ -1277,15 +1274,15 @@ cdef class ParticleHandle:
                 "The bonded interaction has not yet been added to the list of active bonds in ESPResSo.")
 
         # Validity of the numeric id
-        if bond[0]._bond_id >= bonded_ia_params_size():
+        if not bonded_ia_params_zero_based_type(bond[0]._bond_id):
             raise ValueError(
                 f"The bond type f{bond[0]._bond_id} does not exist.")
 
-        bond_id = bond[0]._bond_id
         # Number of partners
-        if bonded_ia_params_num_partners(bond_id) != len(bond) - 1:
-            raise ValueError(f"Bond {bond[0]} needs "
-                             f"{bonded_ia_params_num_partners(bond_id)} partners.")
+        expected_num_partners = bond[0].call_method('get_num_partners')
+        if len(bond) - 1 != expected_num_partners:
+            raise ValueError(
+                f"Bond {bond[0]} needs {expected_num_partners} partners.")
 
         # Type check on partners
         for i in range(1, len(bond)):

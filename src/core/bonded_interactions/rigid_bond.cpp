@@ -26,8 +26,6 @@
 #include "rigid_bond.hpp"
 #include "communication.hpp"
 
-#include <utils/Vector.hpp>
-
 int n_rigidbonds = 0;
 
 RigidBond::RigidBond(double d, double p_tol, double v_tol) {
@@ -35,7 +33,8 @@ RigidBond::RigidBond(double d, double p_tol, double v_tol) {
   this->p_tol = 2.0 * p_tol;
   this->v_tol = v_tol;
 
-  mpi_set_n_rigidbonds(n_rigidbonds + 1);
+  if (this_node == 0)
+    mpi_set_n_rigidbonds(n_rigidbonds + 1);
 }
 
 void mpi_set_n_rigidbonds_local(int n_rigidbonds) {

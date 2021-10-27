@@ -73,7 +73,7 @@ static std::shared_ptr<Observable_stat> calculate_pressure_local() {
   short_range_loop(
       [&obs_pressure](Particle const &p1, int bond_id,
                       Utils::Span<Particle *> partners) {
-        auto const &iaparams = bonded_ia_params[bond_id];
+        auto const &iaparams = *bonded_ia_params.at(bond_id);
         auto const result = calc_bonded_pressure_tensor(iaparams, p1, partners);
         if (result) {
           auto const &tensor = result.get();

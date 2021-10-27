@@ -22,12 +22,10 @@
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "grid.hpp"
-#include "particle_data.hpp"
+#include "ibm_common.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
-
-#include <boost/optional.hpp>
 
 #include <cmath>
 #include <cstdio>
@@ -201,17 +199,17 @@ IBMTriel::IBMTriel(const int ind1, const int ind2, const int ind3,
                    const double maxDist, const tElasticLaw elasticLaw,
                    const double k1, const double k2) {
 
-  // Get data (especially location) of three particles
-  auto part1 = get_particle_data(ind1);
-  auto part2 = get_particle_data(ind2);
-  auto part3 = get_particle_data(ind3);
+  // collect particles from nodes
+  auto const pos1 = get_ibm_particle_position(ind1);
+  auto const pos2 = get_ibm_particle_position(ind2);
+  auto const pos3 = get_ibm_particle_position(ind3);
 
   // Calculate equilibrium lengths and angle; Note the sequence of the points!
   // l0 = length between 1 and 3
-  auto const temp_l0 = box_geo.get_mi_vector(part3.r.p, part1.r.p);
+  auto const temp_l0 = box_geo.get_mi_vector(pos3, pos1);
   l0 = temp_l0.norm();
   // lp0 = length between 1 and 2
-  auto const temp_lp0 = box_geo.get_mi_vector(part2.r.p, part1.r.p);
+  auto const temp_lp0 = box_geo.get_mi_vector(pos2, pos1);
   lp0 = temp_lp0.norm();
 
   // cospo / sinpo angle functions between these vectors; calculated directly
