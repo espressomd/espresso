@@ -78,7 +78,6 @@ else()
   target_compile_options(pyx_interface INTERFACE -Wno-pedantic
                                                  -Wno-unused-variable)
 endif()
-target_link_libraries(pyx_interface INTERFACE cxx_interface)
 
 # Configure, compile and install Cython files
 foreach(cython_file ${cython_SRC})
@@ -126,6 +125,7 @@ foreach(cython_file ${cython_SRC})
     if(WALBERLA)
       target_link_libraries(${target} PRIVATE WalberlaBridge)
     endif()
+    target_link_libraries(${target} PRIVATE cxx_interface)
     target_link_libraries(${target} PRIVATE pyx_interface)
     target_include_directories(${target} SYSTEM PRIVATE ${PYTHON_INCLUDE_DIRS}
                                                         ${NUMPY_INCLUDE_DIR})
