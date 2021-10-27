@@ -1,6 +1,6 @@
-// kernel generated with pystencils v0.3.3+39.g587a822, lbmpy
-// v0.3.3+33.g036fe13, lbmpy_walberla/pystencils_walberla from commit ref:
-// refs/heads/LeesEdwards
+// kernel generated with pystencils v0.3.4+4.g4fecf0c, lbmpy v0.3.4+6.g2faceda,
+// lbmpy_walberla/pystencils_walberla from commit
+// b17ca5caf00db7d19f86c5f85c6f67fec6c16aff
 
 //======================================================================================================================
 //
@@ -49,20 +49,21 @@ using namespace std;
 namespace walberla {
 namespace pystencils {
 
-namespace internal_streamsweep_streamsweep {
-static FUNC_PREFIX void streamsweep_streamsweep(
-    double *RESTRICT const _data_force, double *RESTRICT const _data_pdfs,
-    double *RESTRICT _data_pdfs_tmp, double *RESTRICT _data_velocity,
-    int64_t const _size_force_0, int64_t const _size_force_1,
-    int64_t const _size_force_2, int64_t const _stride_force_0,
-    int64_t const _stride_force_1, int64_t const _stride_force_2,
-    int64_t const _stride_force_3, int64_t const _stride_pdfs_0,
-    int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
-    int64_t const _stride_pdfs_3, int64_t const _stride_pdfs_tmp_0,
-    int64_t const _stride_pdfs_tmp_1, int64_t const _stride_pdfs_tmp_2,
-    int64_t const _stride_pdfs_tmp_3, int64_t const _stride_velocity_0,
-    int64_t const _stride_velocity_1, int64_t const _stride_velocity_2,
-    int64_t const _stride_velocity_3) {
+namespace internal_streamsweep {
+static FUNC_PREFIX void
+streamsweep(double *RESTRICT const _data_force,
+            double *RESTRICT const _data_pdfs, double *RESTRICT _data_pdfs_tmp,
+            double *RESTRICT _data_velocity, int64_t const _size_force_0,
+            int64_t const _size_force_1, int64_t const _size_force_2,
+            int64_t const _stride_force_0, int64_t const _stride_force_1,
+            int64_t const _stride_force_2, int64_t const _stride_force_3,
+            int64_t const _stride_pdfs_0, int64_t const _stride_pdfs_1,
+            int64_t const _stride_pdfs_2, int64_t const _stride_pdfs_3,
+            int64_t const _stride_pdfs_tmp_0, int64_t const _stride_pdfs_tmp_1,
+            int64_t const _stride_pdfs_tmp_2, int64_t const _stride_pdfs_tmp_3,
+            int64_t const _stride_velocity_0, int64_t const _stride_velocity_1,
+            int64_t const _stride_velocity_2,
+            int64_t const _stride_velocity_3) {
   for (int64_t ctr_2 = 1; ctr_2 < _size_force_2 - 1; ctr_2 += 1) {
     double *RESTRICT _data_pdfs_20_30 = _data_pdfs + _stride_pdfs_2 * ctr_2;
     double *RESTRICT _data_pdfs_20_31 =
@@ -321,12 +322,12 @@ static FUNC_PREFIX void streamsweep_streamsweep(
     }
   }
 }
-} // namespace internal_streamsweep_streamsweep
+} // namespace internal_streamsweep
 
-void StreamSweep::run(IBlock *block) {
-  auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
+void StreamSweep::operator()(IBlock *block) {
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
   auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
+  auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
   field::GhostLayerField<double, 19> *pdfs_tmp;
   {
     // Getting temporary field pdfs_tmp
@@ -379,7 +380,7 @@ void StreamSweep::run(IBlock *block) {
   const int64_t _stride_velocity_1 = int64_t(velocity->yStride());
   const int64_t _stride_velocity_2 = int64_t(velocity->zStride());
   const int64_t _stride_velocity_3 = int64_t(1 * int64_t(velocity->fStride()));
-  internal_streamsweep_streamsweep::streamsweep_streamsweep(
+  internal_streamsweep::streamsweep(
       _data_force, _data_pdfs, _data_pdfs_tmp, _data_velocity, _size_force_0,
       _size_force_1, _size_force_2, _stride_force_0, _stride_force_1,
       _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1,
@@ -401,9 +402,9 @@ void StreamSweep::runOnCellInterval(
   if (ci.empty())
     return;
 
-  auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
   auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
+  auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
   field::GhostLayerField<double, 19> *pdfs_tmp;
   {
     // Getting temporary field pdfs_tmp
@@ -477,7 +478,7 @@ void StreamSweep::runOnCellInterval(
   const int64_t _stride_velocity_1 = int64_t(velocity->yStride());
   const int64_t _stride_velocity_2 = int64_t(velocity->zStride());
   const int64_t _stride_velocity_3 = int64_t(1 * int64_t(velocity->fStride()));
-  internal_streamsweep_streamsweep::streamsweep_streamsweep(
+  internal_streamsweep::streamsweep(
       _data_force, _data_pdfs, _data_pdfs_tmp, _data_velocity, _size_force_0,
       _size_force_1, _size_force_2, _stride_force_0, _stride_force_1,
       _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1,

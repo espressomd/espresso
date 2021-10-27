@@ -1,6 +1,6 @@
-// kernel generated with pystencils v0.3.3+39.g587a822, lbmpy
-// v0.3.3+33.g036fe13, lbmpy_walberla/pystencils_walberla from commit ref:
-// refs/heads/LeesEdwards
+// kernel generated with pystencils v0.3.4+4.g4fecf0c, lbmpy v0.3.4+6.g2faceda,
+// lbmpy_walberla/pystencils_walberla from commit
+// b17ca5caf00db7d19f86c5f85c6f67fec6c16aff
 
 //======================================================================================================================
 //
@@ -51,8 +51,8 @@ using namespace std;
 namespace walberla {
 namespace pystencils {
 
-namespace internal_streamsweepavx_streamsweepavx {
-static FUNC_PREFIX void streamsweepavx_streamsweepavx(
+namespace internal_streamsweepavx {
+static FUNC_PREFIX void streamsweepavx(
     double *RESTRICT const _data_force, double *RESTRICT const _data_pdfs,
     double *RESTRICT _data_pdfs_tmp, double *RESTRICT _data_velocity,
     int64_t const _size_force_0, int64_t const _size_force_1,
@@ -425,12 +425,12 @@ static FUNC_PREFIX void streamsweepavx_streamsweepavx(
     }
   }
 }
-} // namespace internal_streamsweepavx_streamsweepavx
+} // namespace internal_streamsweepavx
 
-void StreamSweepAVX::run(IBlock *block) {
-  auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
+void StreamSweepAVX::operator()(IBlock *block) {
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
   auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
+  auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
   field::GhostLayerField<double, 19> *pdfs_tmp;
   {
     // Getting temporary field pdfs_tmp
@@ -446,34 +446,27 @@ void StreamSweepAVX::run(IBlock *block) {
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(force->nrOfGhostLayers()));
   double *RESTRICT const _data_force = force->dataAt(-1, -1, -1, 0);
   WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx);
-  WALBERLA_ASSERT_EQUAL((uintptr_t)force->dataAt(0, 0, 0, 0) % 32, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(pdfs->nrOfGhostLayers()));
   double *RESTRICT const _data_pdfs = pdfs->dataAt(-1, -1, -1, 0);
   WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
-  WALBERLA_ASSERT_EQUAL((uintptr_t)pdfs->dataAt(0, 0, 0, 0) % 32, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(pdfs_tmp->nrOfGhostLayers()));
   double *RESTRICT _data_pdfs_tmp = pdfs_tmp->dataAt(-1, -1, -1, 0);
   WALBERLA_ASSERT_EQUAL(pdfs_tmp->layout(), field::fzyx);
-  WALBERLA_ASSERT_EQUAL((uintptr_t)pdfs_tmp->dataAt(0, 0, 0, 0) % 32, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(velocity->nrOfGhostLayers()));
   double *RESTRICT _data_velocity = velocity->dataAt(-1, -1, -1, 0);
   WALBERLA_ASSERT_EQUAL(velocity->layout(), field::fzyx);
-  WALBERLA_ASSERT_EQUAL((uintptr_t)velocity->dataAt(0, 0, 0, 0) % 32, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(force->xSizeWithGhostLayer(),
                                 int64_t(cell_idx_c(force->xSize()) + 2));
   const int64_t _size_force_0 = int64_t(cell_idx_c(force->xSize()) + 2);
   WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx);
-  WALBERLA_ASSERT_EQUAL((uintptr_t)force->dataAt(0, 0, 0, 0) % 32, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(force->ySizeWithGhostLayer(),
                                 int64_t(cell_idx_c(force->ySize()) + 2));
   const int64_t _size_force_1 = int64_t(cell_idx_c(force->ySize()) + 2);
   WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx);
-  WALBERLA_ASSERT_EQUAL((uintptr_t)force->dataAt(0, 0, 0, 0) % 32, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(force->zSizeWithGhostLayer(),
                                 int64_t(cell_idx_c(force->zSize()) + 2));
   const int64_t _size_force_2 = int64_t(cell_idx_c(force->zSize()) + 2);
   WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx);
-  WALBERLA_ASSERT_EQUAL((uintptr_t)force->dataAt(0, 0, 0, 0) % 32, 0);
   const int64_t _stride_force_1 = int64_t(force->yStride());
   const int64_t _stride_force_2 = int64_t(force->zStride());
   const int64_t _stride_force_3 = int64_t(1 * int64_t(force->fStride()));
@@ -486,7 +479,7 @@ void StreamSweepAVX::run(IBlock *block) {
   const int64_t _stride_velocity_1 = int64_t(velocity->yStride());
   const int64_t _stride_velocity_2 = int64_t(velocity->zStride());
   const int64_t _stride_velocity_3 = int64_t(1 * int64_t(velocity->fStride()));
-  internal_streamsweepavx_streamsweepavx::streamsweepavx_streamsweepavx(
+  internal_streamsweepavx::streamsweepavx(
       _data_force, _data_pdfs, _data_pdfs_tmp, _data_velocity, _size_force_0,
       _size_force_1, _size_force_2, _stride_force_1, _stride_force_2,
       _stride_force_3, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3,
@@ -507,9 +500,9 @@ void StreamSweepAVX::runOnCellInterval(
   if (ci.empty())
     return;
 
-  auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
   auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
+  auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
   field::GhostLayerField<double, 19> *pdfs_tmp;
   {
     // Getting temporary field pdfs_tmp
@@ -531,14 +524,12 @@ void StreamSweepAVX::runOnCellInterval(
   double *RESTRICT const _data_force =
       force->dataAt(ci.xMin() - 1, ci.yMin() - 1, ci.zMin() - 1, 0);
   WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx);
-  WALBERLA_ASSERT_EQUAL((uintptr_t)force->dataAt(0, 0, 0, 0) % 32, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1, -int_c(pdfs->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1, -int_c(pdfs->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin() - 1, -int_c(pdfs->nrOfGhostLayers()));
   double *RESTRICT const _data_pdfs =
       pdfs->dataAt(ci.xMin() - 1, ci.yMin() - 1, ci.zMin() - 1, 0);
   WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
-  WALBERLA_ASSERT_EQUAL((uintptr_t)pdfs->dataAt(0, 0, 0, 0) % 32, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1,
                                 -int_c(pdfs_tmp->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1,
@@ -548,7 +539,6 @@ void StreamSweepAVX::runOnCellInterval(
   double *RESTRICT _data_pdfs_tmp =
       pdfs_tmp->dataAt(ci.xMin() - 1, ci.yMin() - 1, ci.zMin() - 1, 0);
   WALBERLA_ASSERT_EQUAL(pdfs_tmp->layout(), field::fzyx);
-  WALBERLA_ASSERT_EQUAL((uintptr_t)pdfs_tmp->dataAt(0, 0, 0, 0) % 32, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1,
                                 -int_c(velocity->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1,
@@ -558,22 +548,18 @@ void StreamSweepAVX::runOnCellInterval(
   double *RESTRICT _data_velocity =
       velocity->dataAt(ci.xMin() - 1, ci.yMin() - 1, ci.zMin() - 1, 0);
   WALBERLA_ASSERT_EQUAL(velocity->layout(), field::fzyx);
-  WALBERLA_ASSERT_EQUAL((uintptr_t)velocity->dataAt(0, 0, 0, 0) % 32, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(force->xSizeWithGhostLayer(),
                                 int64_t(cell_idx_c(ci.xSize()) + 2));
   const int64_t _size_force_0 = int64_t(cell_idx_c(ci.xSize()) + 2);
   WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx);
-  WALBERLA_ASSERT_EQUAL((uintptr_t)force->dataAt(0, 0, 0, 0) % 32, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(force->ySizeWithGhostLayer(),
                                 int64_t(cell_idx_c(ci.ySize()) + 2));
   const int64_t _size_force_1 = int64_t(cell_idx_c(ci.ySize()) + 2);
   WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx);
-  WALBERLA_ASSERT_EQUAL((uintptr_t)force->dataAt(0, 0, 0, 0) % 32, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(force->zSizeWithGhostLayer(),
                                 int64_t(cell_idx_c(ci.zSize()) + 2));
   const int64_t _size_force_2 = int64_t(cell_idx_c(ci.zSize()) + 2);
   WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx);
-  WALBERLA_ASSERT_EQUAL((uintptr_t)force->dataAt(0, 0, 0, 0) % 32, 0);
   const int64_t _stride_force_1 = int64_t(force->yStride());
   const int64_t _stride_force_2 = int64_t(force->zStride());
   const int64_t _stride_force_3 = int64_t(1 * int64_t(force->fStride()));
@@ -586,7 +572,7 @@ void StreamSweepAVX::runOnCellInterval(
   const int64_t _stride_velocity_1 = int64_t(velocity->yStride());
   const int64_t _stride_velocity_2 = int64_t(velocity->zStride());
   const int64_t _stride_velocity_3 = int64_t(1 * int64_t(velocity->fStride()));
-  internal_streamsweepavx_streamsweepavx::streamsweepavx_streamsweepavx(
+  internal_streamsweepavx::streamsweepavx(
       _data_force, _data_pdfs, _data_pdfs_tmp, _data_velocity, _size_force_0,
       _size_force_1, _size_force_2, _stride_force_1, _stride_force_2,
       _stride_force_3, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3,
