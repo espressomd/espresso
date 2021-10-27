@@ -455,9 +455,9 @@ IF LB_WALBERLA:
             """Create a bitmask for the given shape."""
             utils.check_type_or_throw_except(
                 shape, 1, Shape, "expected a espressomd.shapes.Shape")
-            mask_flat = shape.rasterize(grid_size=self.shape,
-                                        grid_spacing=self._params['agrid'],
-                                        grid_offset=0.5)
+            mask_flat = shape.call_method('rasterize', grid_size=self.shape,
+                                          grid_spacing=self._params['agrid'],
+                                          grid_offset=0.5)
             return np.reshape(mask_flat, self.shape).astype(type(True))
 
         # TODO WALBERLA: maybe split this method in 2 methods with clear names

@@ -77,13 +77,13 @@ class LBBoundariesBase:
 
         self.assertTrue(lbb.empty())
 
-    def check_boundary_flags(self, boundary1, boundary2):
+    def check_boundary_flags(self, slip_velocity1, slip_velocity2):
         rng = range(20)
 
         for i in itertools.product(range(0, 5), rng, rng):
             self.assertTrue(self.lbf[i].is_boundary)
             np.testing.assert_allclose(
-                np.copy(self.lbf[i].velocity), np.copy(boundary1.velocity))
+                np.copy(self.lbf[i].velocity), slip_velocity1)
 
         for i in itertools.product(range(5, 15), rng, rng):
             self.assertFalse(self.lbf[i].is_boundary)
@@ -91,7 +91,7 @@ class LBBoundariesBase:
         for i in itertools.product(range(15, 20), rng, rng):
             self.assertTrue(self.lbf[i].is_boundary)
             np.testing.assert_allclose(
-                np.copy(self.lbf[i].velocity), np.copy(boundary2.velocity))
+                np.copy(self.lbf[i].velocity), slip_velocity2)
 
         self.system.lbboundaries.clear()
         for i in itertools.product(rng, rng, rng):
@@ -103,14 +103,16 @@ class LBBoundariesBase:
         lbb.add(espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
         lbb.add(espressomd.lbboundaries.LBBoundary(shape=self.wall_shape2))
 
-        self.check_boundary_flags(lbb[0], lbb[1])
+        self.check_boundary_flags(np.copy(lbb[0].velocity),
+                                  np.copy(lbb[1].velocity))
 
     def test_union(self):
         union = espressomd.shapes.Union()
         union.add([self.wall_shape1, self.wall_shape2])
+
         lbb = self.system.lbboundaries.add(
             espressomd.lbboundaries.LBBoundary(shape=union))
-        self.check_boundary_flags(lbb, lbb)
+        self.check_boundary_flags(np.copy(lbb.velocity), np.copy(lbb.velocity))
 
 
 @utx.skipIfMissingFeatures(["LB_BOUNDARIES"])

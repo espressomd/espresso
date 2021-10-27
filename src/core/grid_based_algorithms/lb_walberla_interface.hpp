@@ -23,9 +23,9 @@
 
 #ifdef LB_WALBERLA
 
-#include <boost/optional.hpp>
-
 #include <utils/Vector.hpp>
+
+#include <boost/optional.hpp>
 
 #include <vector>
 

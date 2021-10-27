@@ -91,9 +91,8 @@ class BoundaryHandling {
     }
   };
 
-  inline auto get_flag_field_and_flag(BlockAndCell const &bc) const {
-    auto const flag_field =
-        bc.block->template getData<FlagField>(m_flag_field_id);
+  inline auto get_flag_field_and_flag(IBlock *block) const {
+    auto const flag_field = block->template getData<FlagField>(m_flag_field_id);
     auto const boundary_flag = flag_field->getFlag(Boundary_flag);
     return std::make_tuple(flag_field, boundary_flag);
   }
@@ -118,7 +117,7 @@ public:
   void operator()(IBlock *block) { (*m_boundary)(block); }
 
   bool node_is_boundary(BlockAndCell const &bc) const {
-    auto [flag_field, boundary_flag] = get_flag_field_and_flag(bc);
+    auto [flag_field, boundary_flag] = get_flag_field_and_flag(bc.block);
     return flag_field->isFlagSet(bc.cell, boundary_flag);
   }
 
@@ -130,14 +129,14 @@ public:
   void set_node_velocity_at_boundary(Utils::Vector3i const &node,
                                      Utils::Vector3d const &v,
                                      BlockAndCell const &bc) {
-    auto [flag_field, boundary_flag] = get_flag_field_and_flag(bc);
+    auto [flag_field, boundary_flag] = get_flag_field_and_flag(bc.block);
     m_callback.set_node_boundary_velocity(node, v);
     flag_field->addFlag(bc.cell, boundary_flag);
   }
 
   void remove_node_from_boundary(Utils::Vector3i const &node,
                                  BlockAndCell const &bc) {
-    auto [flag_field, boundary_flag] = get_flag_field_and_flag(bc);
+    auto [flag_field, boundary_flag] = get_flag_field_and_flag(bc.block);
     m_callback.unset_node_boundary_velocity(node);
     flag_field->removeFlag(bc.cell, boundary_flag);
   }

@@ -317,6 +317,27 @@ class LBBoundaryVelocityTest(ut.TestCase):
         idxs_on_surface = get_surface_indices(col_mask, aperiodic)
         self.assertSetEqual(idxs_on_surface, idx_ref)
 
+    def test_calc_cylinder_tangential_vectors(self):
+        """
+        Test the ``calc_cylinder_tangential_vectors`` method.
+        """
+        agrid = 1.
+        offset = 0.5
+        center = np.array(3 * [offset])
+        node_indices = np.array([[0, 0, 0],
+                                 [2, 0, 0],
+                                 [0, 2, 0],
+                                 [-2, 0, 0],
+                                 [0, -2, 0]])
+        ref_tangents = np.array([[0, 0, 0],
+                                 [0, 1, 0],
+                                 [-1, 0, 0],
+                                 [0, -1, 0],
+                                 [1, 0, 0]])
+        tangents = espressomd.lbboundaries.calc_cylinder_tangential_vectors(
+            center, agrid, offset, node_indices)
+        np.testing.assert_array_almost_equal(tangents, ref_tangents)
+
 
 if __name__ == "__main__":
     ut.main()

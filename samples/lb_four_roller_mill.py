@@ -78,11 +78,14 @@ np.testing.assert_array_equal(mask, np.flip(mask, axis=2))
 # add tangential slip velocity to the inner cylinder
 logging.info('Setting up slip velocity boundary conditions')
 for i, cyl in enumerate(tqdm.tqdm(rollers)):
-    slip_velocity = 0.01 * (1 if i % 3 == 0 else -1)
     surface_nodes = espressomd.lbboundaries.edge_detection(
         lb_fluid.get_shape_bitmask(cyl), system.periodicity)
-    espressomd.lbboundaries.add_constant_tangential_slip_velocity_to_cylinder(
-        lb_fluid, surface_nodes, cyl.center, slip_velocity)
+    tangents = espressomd.lbboundaries.calc_cylinder_tangential_vectors(
+        cyl.center, lb_fluid.agrid, 0.5, surface_nodes)
+    velocity = 0.01 * (1 if i % 3 == 0 else -1)
+    for ijk, slip_velocity in zip(surface_nodes, velocity * tangents):
+        lb_fluid[ijk].boundary = espressomd.lbboundaries.VelocityBounceBack(
+            slip_velocity)
 
 if args.visualizer:
     import espressomd.visualization_opengl
