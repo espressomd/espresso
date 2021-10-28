@@ -238,7 +238,7 @@ BOOST_AUTO_TEST_CASE(one_rank_callback) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(master_rank_callback) {
+BOOST_AUTO_TEST_CASE(main_rank_callback) {
   auto cb = []() -> int {
     boost::mpi::communicator world;
     if (world.rank() == 0) {
@@ -250,14 +250,13 @@ BOOST_AUTO_TEST_CASE(master_rank_callback) {
 
   auto const fp = static_cast<int (*)()>(cb);
 
-  Communication::MpiCallbacks::add_static(Communication::Result::master_rank,
-                                          fp);
+  Communication::MpiCallbacks::add_static(Communication::Result::main_rank, fp);
 
   boost::mpi::communicator world;
   Communication::MpiCallbacks cbs(world);
 
   if (0 == world.rank()) {
-    BOOST_CHECK_EQUAL(cbs.call(Communication::Result::master_rank, fp),
+    BOOST_CHECK_EQUAL(cbs.call(Communication::Result::main_rank, fp),
                       world.size());
   } else {
     cbs.loop();

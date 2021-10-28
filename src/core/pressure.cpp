@@ -117,10 +117,10 @@ static std::shared_ptr<Observable_stat> calculate_pressure_local() {
   return obs_pressure_ptr;
 }
 
-REGISTER_CALLBACK_MASTER_RANK(calculate_pressure_local)
+REGISTER_CALLBACK_MAIN_RANK(calculate_pressure_local)
 
 std::shared_ptr<Observable_stat> calculate_pressure() {
-  return mpi_call(Communication::Result::master_rank, calculate_pressure_local);
+  return mpi_call(Communication::Result::main_rank, calculate_pressure_local);
 }
 
 Utils::Vector9d observable_compute_pressure_tensor() {

@@ -111,10 +111,10 @@ static std::shared_ptr<Observable_stat> calculate_energy_local() {
   return obs_energy_ptr;
 }
 
-REGISTER_CALLBACK_MASTER_RANK(calculate_energy_local)
+REGISTER_CALLBACK_MAIN_RANK(calculate_energy_local)
 
 std::shared_ptr<Observable_stat> calculate_energy() {
-  return mpi_call(Communication::Result::master_rank, calculate_energy_local);
+  return mpi_call(Communication::Result::main_rank, calculate_energy_local);
 }
 
 double calculate_current_potential_energy_of_system() {

@@ -74,8 +74,8 @@ ScafacosContextBase *fcs_coulomb() {
 }
 
 #ifdef SCAFACOS_DIPOLES
-static void set_parameters_dipoles_worker(const std::string &method,
-                                          const std::string &params) {
+static void set_parameters_dipoles_local(const std::string &method,
+                                         const std::string &params) {
   delete dipoles_instance;
   dipoles_instance = nullptr;
 
@@ -93,11 +93,11 @@ static void set_parameters_dipoles_worker(const std::string &method,
   on_coulomb_change();
 }
 
-REGISTER_CALLBACK(set_parameters_dipoles_worker)
+REGISTER_CALLBACK(set_parameters_dipoles_local)
 #endif
 
-static void set_parameters_coulomb_worker(const std::string &method,
-                                          const std::string &params) {
+static void set_parameters_coulomb_local(const std::string &method,
+                                         const std::string &params) {
   delete coulomb_instance;
   coulomb_instance = nullptr;
 
@@ -116,10 +116,10 @@ static void set_parameters_coulomb_worker(const std::string &method,
   instance->tune();
 }
 
-REGISTER_CALLBACK(set_parameters_coulomb_worker)
+REGISTER_CALLBACK(set_parameters_coulomb_local)
 
-void set_r_cut_and_tune_local(double r_cut) {
-  coulomb_instance->set_r_cut_and_tune_local(r_cut);
+void set_r_cut_and_tune(double r_cut) {
+  coulomb_instance->set_r_cut_and_tune(r_cut);
 }
 
 void free_handle(bool dipolar) {
@@ -142,10 +142,10 @@ void set_parameters(const std::string &method, const std::string &params,
                     bool dipolar) {
   if (dipolar) {
 #ifdef SCAFACOS_DIPOLES
-    mpi_call_all(set_parameters_dipoles_worker, method, params);
+    mpi_call_all(set_parameters_dipoles_local, method, params);
 #endif
   } else {
-    mpi_call_all(set_parameters_coulomb_worker, method, params);
+    mpi_call_all(set_parameters_coulomb_local, method, params);
   }
 }
 

@@ -26,21 +26,21 @@
  *  It is the header file for communication.cpp.
  *
  *  The asynchronous MPI communication is used during the script
- *  evaluation. Except for the master node that interprets the interface
- *  script, all other nodes wait in @ref mpi_loop() for the master node to
+ *  evaluation. Except for the head node that interprets the interface
+ *  script, all other nodes wait in @ref mpi_loop() for the head node to
  *  issue an action using @ref mpi_call(). @ref mpi_loop() immediately
- *  executes an @c MPI_Bcast and therefore waits for the master node to
+ *  executes an @c MPI_Bcast and therefore waits for the head node to
  *  broadcast a command, which is done by @ref mpi_call(). The request
  *  consists of a callback function with an arbitrary number of arguments.
  *
  *  To add new actions (e.g. to implement new interface functionality), do the
  *  following:
- *  - write the @c mpi_* function that is executed on the master
- *  - write the @c mpi_*_slave function that is executed on worker nodes
- *  - register your slave function with one of the @c REGISTER_CALLBACK macros
+ *  - write the @c mpi_* function that is executed on the head node
+ *  - write the @c mpi_*_local function that is executed on worker nodes
+ *  - register the local function with one of the @c REGISTER_CALLBACK macros
  *
  *  After this, your procedure is free to do anything. However, it has
- *  to be in (MPI) sync with what your new @c mpi_*_slave does. This
+ *  to be in (MPI) sync with what your new @c mpi_*_local does. This
  *  procedure is called immediately after the broadcast.
  */
 
@@ -74,44 +74,44 @@ MpiCallbacks &mpiCallbacks();
 
 /**************************************************
  * for every procedure requesting a MPI negotiation,
- * a slave exists which processes this request on
- * the slave nodes. It is denoted by *_slave.
+ * a callback exists which processes this request on
+ * the worker nodes. It is denoted by *_local.
  **************************************************/
 
 /** Initialize MPI. */
 std::shared_ptr<boost::mpi::environment> mpi_init(int argc = 0,
                                                   char **argv = nullptr);
 
-/** @brief Call a slave function.
- *  @tparam Args   Slave function argument types
- *  @tparam ArgRef Slave function argument types
- *  @param fp      Slave function
- *  @param args    Slave function arguments
+/** @brief Call a local function.
+ *  @tparam Args   Local function argument types
+ *  @tparam ArgRef Local function argument types
+ *  @param fp      Local function
+ *  @param args    Local function arguments
  */
 template <class... Args, class... ArgRef>
 void mpi_call(void (*fp)(Args...), ArgRef &&... args) {
   Communication::mpiCallbacks().call(fp, std::forward<ArgRef>(args)...);
 }
 
-/** @brief Call a slave function.
- *  @tparam Args   Slave function argument types
- *  @tparam ArgRef Slave function argument types
- *  @param fp      Slave function
- *  @param args    Slave function arguments
+/** @brief Call a local function.
+ *  @tparam Args   Local function argument types
+ *  @tparam ArgRef Local function argument types
+ *  @param fp      Local function
+ *  @param args    Local function arguments
  */
 template <class... Args, class... ArgRef>
 void mpi_call_all(void (*fp)(Args...), ArgRef &&... args) {
   Communication::mpiCallbacks().call_all(fp, std::forward<ArgRef>(args)...);
 }
 
-/** @brief Call a slave function.
+/** @brief Call a local function.
  *  @tparam Tag    Any tag type defined in @ref Communication::Result
- *  @tparam R      Return type of the slave function
- *  @tparam Args   Slave function argument types
- *  @tparam ArgRef Slave function argument types
+ *  @tparam R      Return type of the local function
+ *  @tparam Args   Local function argument types
+ *  @tparam ArgRef Local function argument types
  *  @param tag     Reduction strategy
- *  @param fp      Slave function
- *  @param args    Slave function arguments
+ *  @param fp      Local function
+ *  @param args    Local function arguments
  */
 template <class Tag, class R, class... Args, class... ArgRef>
 auto mpi_call(Tag tag, R (*fp)(Args...), ArgRef &&... args) {
@@ -119,16 +119,16 @@ auto mpi_call(Tag tag, R (*fp)(Args...), ArgRef &&... args) {
                                             std::forward<ArgRef>(args)...);
 }
 
-/** @brief Call a slave function.
+/** @brief Call a local function.
  *  @tparam Tag    Any tag type defined in @ref Communication::Result
  *  @tparam TagArg Types of arguments to @p Tag
- *  @tparam R      Return type of the slave function
- *  @tparam Args   Slave function argument types
- *  @tparam ArgRef Slave function argument types
+ *  @tparam R      Return type of the local function
+ *  @tparam Args   Local function argument types
+ *  @tparam ArgRef Local function argument types
  *  @param tag     Reduction strategy
  *  @param tag_arg Arguments to the reduction strategy
- *  @param fp      Slave function
- *  @param args    Slave function arguments
+ *  @param fp      Local function
+ *  @param args    Local function arguments
  */
 template <class Tag, class TagArg, class R, class... Args, class... ArgRef>
 auto mpi_call(Tag tag, TagArg &&tag_arg, R (*fp)(Args...), ArgRef &&... args) {
@@ -136,7 +136,7 @@ auto mpi_call(Tag tag, TagArg &&tag_arg, R (*fp)(Args...), ArgRef &&... args) {
                                             fp, std::forward<ArgRef>(args)...);
 }
 
-/** Process requests from master node. Slave nodes main loop. */
+/** Process requests from head node. Worker nodes main loop. */
 void mpi_loop();
 
 namespace Communication {

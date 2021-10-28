@@ -78,7 +78,7 @@ double calc_mu_max() {
   return mu_max;
 }
 
-REGISTER_CALLBACK_MASTER_RANK(calc_mu_max)
+REGISTER_CALLBACK_MAIN_RANK(calc_mu_max)
 
 inline double g1_DLC_dip(double g, double x) {
   auto const c = g / x;
@@ -433,7 +433,7 @@ double add_mdlc_energy_corrections(const ParticleRange &particles) {
 double mdlc_tune_far_cut(DLC_struct const &params) {
   /* we take the maximum dipole in the system, to be sure that the errors
    * in the other case will be equal or less than for this one */
-  auto const mu_max = mpi_call(Communication::Result::master_rank, calc_mu_max);
+  auto const mu_max = mpi_call(Communication::Result::main_rank, calc_mu_max);
   auto const mu_max_sq = mu_max * mu_max;
 
   const double n = get_n_part();

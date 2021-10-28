@@ -153,7 +153,7 @@ void cuda_mpi_send_forces(const ParticleRange &particles,
 
     add_forces_and_torques(particles, buffer_forces, buffer_torques);
   } else {
-    /* Scatter forces to slaves */
+    /* Scatter forces */
     Utils::Mpi::scatter_buffer(host_forces.data(), n_elements, comm_cart);
 #ifdef ROTATION
     Utils::Mpi::scatter_buffer(host_torques.data(), n_elements, comm_cart);

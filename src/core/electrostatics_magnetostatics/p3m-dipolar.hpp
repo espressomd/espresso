@@ -67,9 +67,9 @@ struct dp3m_data_struct : public p3m_data_struct_base {
   /** k-space mesh (local) for k-space calculation and FFT. */
   std::vector<double> ks_mesh;
 
-  /** number of dipolar particles (only on master node). */
+  /** number of dipolar particles (only on head node). */
   int sum_dip_part;
-  /** Sum of square of magnetic dipoles (only on master node). */
+  /** Sum of square of magnetic dipoles (only on head node). */
   double sum_mu2;
 
   /** position shift for calculation of first assignment mesh point. */

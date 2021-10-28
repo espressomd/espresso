@@ -30,8 +30,8 @@ communication.init(mpi_env)
 # Has to be _after_ mpi_init
 script_interface.init(communication.mpiCallbacks())
 
-# Block the slaves in the callback loop
-# The master is just returning to the user script
+# Block the worker nodes in the callback loop.
+# The head node is just returning to the user script.
 if communication.this_node != 0:
     communication.mpi_loop()
     sys.exit(0)
