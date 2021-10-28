@@ -1,5 +1,5 @@
-// kernel generated with pystencils v0.3.3+39.g587a822, lbmpy
-// v0.3.3+33.g036fe13, lbmpy_walberla/pystencils_walberla from commit
+// kernel generated with pystencils v0.3.4+4.g4fecf0c, lbmpy v0.3.4+6.g2faceda,
+// lbmpy_walberla/pystencils_walberla from commit
 // b17ca5caf00db7d19f86c5f85c6f67fec6c16aff
 
 //======================================================================================================================
@@ -284,9 +284,9 @@ static FUNC_PREFIX void initialpdfssetter(
 } // namespace internal_initialpdfssetter
 
 void InitialPDFsSetter::operator()(IBlock *block) {
-  auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
   auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
+  auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
 
   auto &rho_0 = this->rho_0_;
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(force->nrOfGhostLayers()));
@@ -342,9 +342,9 @@ void InitialPDFsSetter::runOnCellInterval(
   if (ci.empty())
     return;
 
-  auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
   auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
+  auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
 
   auto &rho_0 = this->rho_0_;
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(force->nrOfGhostLayers()));

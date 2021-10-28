@@ -43,7 +43,7 @@ public:
   std::vector<double>
   evaluate(ParticleReferenceRange particles,
            const ParticleObservables::traits<Particle> &traits) const override {
-    Utils::Histogram<double, 3> histogram(n_bins(), 3, limits());
+    Utils::Histogram<double, 3> histogram(n_bins(), limits());
     for (auto p : particles) {
       histogram.update(folded_position(p.get().r.p, box_geo), p.get().f.f);
     }

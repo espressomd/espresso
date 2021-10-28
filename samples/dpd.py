@@ -73,5 +73,4 @@ for V in range(100, 1000, 100):
     # Standard deviation of pressure
     p_std = np.std(p_samples)
 
-    print('rho {:.2f} p {:.2f} ({:.2f})'
-          .format(float(n_part) / V, p_avg, p_std))
+    print(f'rho = {float(n_part) / V:.2f} p = {p_avg:.2f} ({p_std:.2f})')

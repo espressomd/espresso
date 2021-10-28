@@ -69,8 +69,10 @@ def generate_test_for_class(_system, _interClass, _params):
 
 
 def lj_force_vector(v_d, d, lj_params):
-    """Returns lj force for distance d and distance vector v_d based on the given lj_params.
-    Supports epsilon and cutoff."""
+    """Returns LJ force for distance ``d`` and distance vector ``v_d``
+    based on the given ``lj_params``.
+    Supports epsilon and cutoff.
+    """
 
     if d >= lj_params["cutoff"]:
         return np.zeros(3)
@@ -79,10 +81,11 @@ def lj_force_vector(v_d, d, lj_params):
 
 
 def verify_lj_forces(system, tolerance, ids_to_skip=()):
-    """Goes over all pairs of particles in system and compares the forces on them
-       to what would be expected based on the systems LJ parameters.
-       Particle ids listed in ids_to_skip are not checked
-       Do not run this with a thermostat enabled."""
+    """Goes over all pairs of particles in system and compares the forces
+    on them to what would be expected based on the systems LJ parameters.
+    Particle ids listed in ``ids_to_skip`` are not checked.
+    Do not run this with a thermostat enabled.
+    """
 
     # Initialize dict with expected forces
     f_expected = {}
@@ -93,7 +96,7 @@ def verify_lj_forces(system, tolerance, ids_to_skip=()):
     dist_vec = system.distance_vec
     norm = np.linalg.norm
     non_bonded_inter = system.non_bonded_inter
-    # lj parameters
+    # LJ parameters
     lj_params = {}
     all_types = np.unique(system.part[:].type)
     for i in all_types:
@@ -111,18 +114,18 @@ def verify_lj_forces(system, tolerance, ids_to_skip=()):
         v_d = dist_vec(p0, p1)
         d = norm(v_d)
 
-        # calc and add expected lj force
+        # Calculate and add expected LJ force
         f = lj_force_vector(v_d, d, lj_params[p0.type, p1.type])
         f_expected[p0.id] += f
         f_expected[p1.id] -= f
 
-    # Check actual forces against expected
+    # Check actual forces against expected forces
     for p in system.part:
         if p.id in ids_to_skip:
             continue
-        if np.linalg.norm(p.f - f_expected[p.id]) >= tolerance:
-            raise Exception(f"LJ force verification failed on particle "
-                            f"{p.id}. Got {p.f}, expected {f_expected[p.id]}")
+        np.testing.assert_allclose(
+            np.copy(p.f), f_expected[p.id], rtol=0, atol=tolerance,
+            err_msg=f"LJ force verification failed on particle {p.id}.")
 
 
 def abspath(path):
@@ -145,22 +148,6 @@ def transform_pos_from_cartesian_to_polar_coordinates(pos):
     """
     return np.array([np.sqrt(pos[0]**2.0 + pos[1]**2.0),
                      np.arctan2(pos[1], pos[0]), pos[2]])
-
-
-def transform_vel_from_cartesian_to_polar_coordinates(pos, vel):
-    """Transform the given cartesian velocities to polar velocities.
-
-    Parameters
-    ----------
-    pos : array_like :obj:`float`
-        ``x``, ``y``, and ``z``-component of the cartesian position.
-    vel : array_like :obj:`float`
-        ``x``, ``y``, and ``z``-component of the cartesian velocity.
-
-    """
-    return np.array([
-        (pos[0] * vel[0] + pos[1] * vel[1]) / np.sqrt(pos[0]**2 + pos[1]**2),
-        (pos[0] * vel[1] - pos[1] * vel[0]) / np.sqrt(pos[0]**2 + pos[1]**2), vel[2]])
 
 
 def get_cylindrical_basis_vectors(pos):
@@ -666,3 +653,42 @@ def random_dipoles(n_particles):
                     sin_theta * np.sin(phi),
                     cos_theta]).T
     return dip
+
+
+def check_non_bonded_loop_trace(system):
+    """Validates that the distances used by the non-bonded loop 
+    match with the minimum image distance accessible by Python,
+    checks that no pairs are lost or double-counted.
+    """
+
+    cs_pairs = system.cell_system.non_bonded_loop_trace()
+    # format [id1, id2, pos1, pos2, vec2, mpi_node]
+
+    distance_vec = system.distance_vec
+    cutoff = system.cell_system.max_cut_nonbonded
+
+    # Distance for all pairs of particles obtained by Python
+    py_distances = {}
+    for p1, p2 in system.part.pairs():
+        py_distances[p1.id, p2.id] = np.copy(distance_vec(p1, p2))
+
+    # Go through pairs found by the non-bonded loop and check distance
+    for p in cs_pairs:
+        # p is a tuple with (id1,id2,pos1,pos2,vec21)
+        # Note that system.distance_vec uses the opposite sign convention
+        # as the minimum image distance in the core
+
+        if (p[0], p[1]) in py_distances:
+            np.testing.assert_allclose(
+                np.copy(p[4]), -py_distances[p[0], p[1]])
+            del py_distances[p[0], p[1]]
+        elif (p[1], p[0]) in py_distances:
+            np.testing.assert_allclose(
+                np.copy(p[4]), py_distances[p[1], p[0]])
+            del py_distances[p[1], p[0]]
+        else:
+            raise Exception("Extra pair from core", p)
+
+    for ids, dist in py_distances.items():
+        if np.linalg.norm(dist) < cutoff:
+            raise Exception("Pair not found by the core", ids)

@@ -17,7 +17,6 @@
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
-# import math WALBERLA TODO
 
 import espressomd.lb
 import espressomd.lbboundaries
@@ -83,9 +82,7 @@ def shear_flow(x, t, nu, v, h, k_max):
 class LBShearCommon:
 
     """Base class of the test that holds the test logic."""
-    system = espressomd.System(box_l=[H + 2. * AGRID,
-                                      W,
-                                      W])
+    system = espressomd.System(box_l=[H + 2. * AGRID, W, W])
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
 
@@ -97,10 +94,6 @@ class LBShearCommon:
         """
         self.system.lbboundaries.clear()
         self.system.actors.clear()
-        try: 
-            del self.lbf
-        except BaseException:
-            pass
         self.system.box_l = np.max(
             ((W, W, W), shear_plane_normal * (H + 2 * AGRID)), 0)
 
@@ -122,33 +115,33 @@ class LBShearCommon:
         t0 = self.system.time
         sample_points = int(H / AGRID - 1)
 
+        # warmup
+        self.system.integrator.run(40)
         for _ in range(9):
             self.system.integrator.run(20)
 
-            v_expected = shear_flow(
+            shear_profile = shear_flow(
                 x=(np.arange(0, sample_points) + .5) * AGRID,
                 t=self.system.time - t0,
                 nu=VISC,
                 v=SHEAR_VELOCITY,
                 h=H,
                 k_max=100)
+            v_expected = -np.outer(shear_profile, shear_direction)
             v_measured = np.zeros((sample_points, 3))
             for j in range(0, sample_points):
                 ind = np.max(((1, 1, 1), shear_plane_normal * j + 1), 0)
-                ind = np.array(ind, dtype=int)
                 v_measured[j] = self.lbf[ind[0], ind[1], ind[2]].velocity
-#            print(np.vstack((v_measured[:,1], v_expected)).T)
-            np.testing.assert_allclose(
-                v_measured,
-                -np.outer(v_expected, shear_direction), atol=8E-4)
+            np.testing.assert_allclose(v_measured, v_expected, atol=8E-4)
 
         # speed of sound of the LB fluid in MD units (agrid/tau is due to
         # LB->MD unit conversion)
-#        speed_of_sound = 1. / math.sqrt(3.) * self.lbf.agrid / self.lbf.tau
+        speed_of_sound = 1. / np.sqrt(3.) * self.lbf.agrid / self.lbf.tau
         # equation of state for the LB fluid
-#        p_eq = speed_of_sound**2.0 * DENS
-        # see Eq. 1.15 and 1.29 in
-        # Krüger, Timm, et al. "The lattice Boltzmann method." Springer International Publishing 10 (2017): 978-3.
+        p_eq = speed_of_sound**2 * DENS
+        # see Eq. 1.15 and 1.29 in Timm Krüger et al. "The lattice Boltzmann
+        # method", Springer International Publishing 10 (2017): 978-3,
+        # https://doi.org/10.1007/978-3-319-44649-3
         # and
         # https://de.wikipedia.org/wiki/Navier-Stokes-Gleichungen
         # note that for an incompressible fluid the viscous stress tensor is
@@ -157,42 +150,37 @@ class LBShearCommon:
         # '*' denotes the outer product and 'u' is the velocity field
         # NOTE: the so called stress property of the fluid is actually the
         # pressure tensor not the viscous stress tensor!
-#        shear_rate = SHEAR_VELOCITY / H
+        shear_rate = SHEAR_VELOCITY / H
         dynamic_viscosity = self.lbf.viscosity * DENS
-#        p_expected = p_eq * np.identity(3) - dynamic_viscosity * shear_rate * (
-#            np.outer(shear_plane_normal, shear_direction) + np.transpose(np.outer(shear_plane_normal, shear_direction)))
-#        for n in (2, 3, 4), (3, 4, 2), (5, 4, 3):
-#            node_pressure_tensor = np.copy(
-#                self.lbf[n[0], n[1], n[2]].pressure_tensor)
-# WALBERLA TODO 
-#            np.testing.assert_allclose(node_pressure_tensor,
-#                                       p_expected, atol=1E-5, rtol=5E-3)
+        p_expected = p_eq * np.identity(3) - dynamic_viscosity * shear_rate * (
+            np.outer(shear_plane_normal, shear_direction) + np.transpose(np.outer(shear_plane_normal, shear_direction)))
+        for n in (2, 3, 4), (3, 4, 2), (5, 4, 3):
+            node_pressure_tensor = np.copy(
+                self.lbf[n[0], n[1], n[2]].pressure_tensor)
+            np.testing.assert_allclose(node_pressure_tensor,
+                                       p_expected, atol=1E-5, rtol=5E-3)
 
-        np.testing.assert_allclose(
-            np.copy(wall1.get_force()),
-            -np.copy(wall2.get_force()),
-            atol=1E-4)
-        np.testing.assert_allclose(np.dot(np.copy(wall1.get_force()), shear_direction),
-                                   SHEAR_VELOCITY / H * W**2 * dynamic_viscosity, atol=2E-4)
+        # TODO WALBERLA
+#        np.testing.assert_allclose(
+#            np.copy(wall1.get_force()),
+#            -np.copy(wall2.get_force()),
+#            atol=1E-4)
+#        np.testing.assert_allclose(np.dot(np.copy(wall1.get_force()), shear_direction),
+# SHEAR_VELOCITY / H * W**2 * dynamic_viscosity, atol=2E-4)
 
-    x = np.array((1, 0, 0), dtype=float)
-    y = np.array((0, 1, 0), dtype=float)
-    z = np.array((0, 0, 1), dtype=float)
-
-    def test_xy(self):
-        self.check_profile(self.x, self.y)
-        self.check_profile(self.x, -self.y)
-
-    def test_xz(self):
-        self.check_profile(self.x, self.z)
-        self.check_profile(self.x, -self.z)
-
-    def test_yz(self):
-        self.check_profile(self.y, self.z)
-        self.check_profile(self.y, -self.z)
+    def test(self):
+        x = np.array((1, 0, 0), dtype=int)
+        y = np.array((0, 1, 0), dtype=int)
+        z = np.array((0, 0, 1), dtype=int)
+        self.check_profile(x, y)
+        self.check_profile(x, z)
+        self.check_profile(y, z)
+        self.check_profile(x, -y)
+        self.check_profile(x, -z)
+        self.check_profile(y, -z)
 
 
-@utx.skipIfMissingFeatures(['LB_WALBERLA'])
+@utx.skipIfMissingFeatures(['LB_WALBERLA', 'LB_BOUNDARIES'])
 class LBWalberlaShear(ut.TestCase, LBShearCommon):
 
     """Test for the Walberla implementation of the LB."""

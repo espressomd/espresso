@@ -23,7 +23,6 @@
 
 #include <utils/Histogram.hpp>
 #include <utils/constants.hpp>
-#include <utils/index.hpp>
 #include <utils/sampling.hpp>
 
 #include <array>
@@ -51,16 +50,14 @@ BOOST_AUTO_TEST_CASE(get_cylindrical_sampling_positions_test) {
   std::array<std::size_t, 3> n_bins{{static_cast<std::size_t>(n_r_bins),
                                      static_cast<std::size_t>(n_phi_bins),
                                      static_cast<std::size_t>(n_z_bins)}};
-  Utils::CylindricalHistogram<double, 3> histogram(n_bins, 3, limits);
+  Utils::CylindricalHistogram<double, 3> histogram(n_bins, limits);
   for (auto const &p : sampling_positions) {
     histogram.update(p);
   }
   auto const tot_count = histogram.get_tot_count();
   std::array<std::size_t, 3> const dimensions{{n_r_bins, n_phi_bins, n_z_bins}};
   std::array<std::size_t, 3> index{};
-  for (int c = 0; c < tot_count.size(); ++c) {
-    Utils::unravel_index(dimensions.begin(), dimensions.end(), index.begin(),
-                         c);
-    BOOST_CHECK(tot_count[c] > 0);
+  for (auto const &c : tot_count) {
+    BOOST_CHECK(c > 0);
   }
 }

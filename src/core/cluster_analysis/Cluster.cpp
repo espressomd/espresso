@@ -49,23 +49,21 @@ Utils::Vector3d Cluster::center_of_mass() {
 
 // Center of mass of an aggregate
 Utils::Vector3d
-Cluster::center_of_mass_subcluster(std::vector<int> &subcl_partcicle_ids) {
+Cluster::center_of_mass_subcluster(std::vector<int> const &particle_ids) {
   Utils::Vector3d com{};
 
-  // The distances between the particles "folded", such that all distances
+  // The distances between the particles are "folded", such that all distances
   // are smaller than box_l/2 in a periodic system. The 1st particle
   // of the cluster is arbitrarily chosen as reference.
 
   auto const reference_position =
       folded_position(get_particle_data(particles[0]).r.p, box_geo);
   double total_mass = 0.;
-  for (int pid :
-       subcl_partcicle_ids) // iterate over all particle ids within a cluster
-  {
+  for (int pid : particle_ids) {
     auto const folded_pos =
         folded_position(get_particle_data(pid).r.p, box_geo);
-    auto const dist_to_reference = box_geo.get_mi_vector(
-        folded_pos, reference_position); // add current particle positions
+    auto const dist_to_reference =
+        box_geo.get_mi_vector(folded_pos, reference_position);
     com += dist_to_reference * get_particle_data(pid).p.mass;
     total_mass += get_particle_data(pid).p.mass;
   }
@@ -77,11 +75,7 @@ Cluster::center_of_mass_subcluster(std::vector<int> &subcl_partcicle_ids) {
   com += reference_position;
 
   // Fold into simulation box
-
-  for (int i = 0; i < 3; i++) {
-    com[i] = fmod(com[i], box_geo.length()[i]);
-  }
-  return com;
+  return folded_position(com, box_geo);
 }
 
 double Cluster::longest_distance() {
@@ -106,17 +100,17 @@ double Cluster::radius_of_gyration() {
 }
 
 double
-Cluster::radius_of_gyration_subcluster(std::vector<int> &subcl_particle_ids) {
+Cluster::radius_of_gyration_subcluster(std::vector<int> const &particle_ids) {
   // Center of mass
-  Utils::Vector3d com = center_of_mass_subcluster(subcl_particle_ids);
+  Utils::Vector3d com = center_of_mass_subcluster(particle_ids);
   double sum_sq_dist = 0.;
-  for (auto const pid : subcl_particle_ids) {
+  for (auto const pid : particle_ids) {
     // calculate square length of this distance
     sum_sq_dist +=
         box_geo.get_mi_vector(com, get_particle_data(pid).r.p).norm2();
   }
 
-  return sqrt(sum_sq_dist / static_cast<double>(subcl_particle_ids.size()));
+  return sqrt(sum_sq_dist / static_cast<double>(particle_ids.size()));
 }
 
 template <typename T>
@@ -166,18 +160,13 @@ std::pair<double, double> Cluster::fractal_dimension(double dr) {
     last_dist = distances[idx];
     if (subcluster_ids.size() == 1)
       continue;
-    double current_rg = radius_of_gyration_subcluster(subcluster_ids);
-    log_pcounts.push_back(log(subcluster_ids.size()));
+    auto const current_rg = radius_of_gyration_subcluster(subcluster_ids);
+    log_pcounts.push_back(log(static_cast<double>(subcluster_ids.size())));
     log_diameters.push_back(log(current_rg * 2.0));
   }
-  // usage: Function: int gsl_fit_linear (const double * x, const size_t
-  // xstride, const double * y, const std::size_t ystride, std::size_t n, double
-  // * c0, double * c1, double * cov00, double * cov01, double * cov11, double *
-  // sumsq)
-  const int n = log_pcounts.size();
   double c0, c1, cov00, cov01, cov11, sumsq;
-  gsl_fit_linear(&log_diameters.front(), 1, &log_pcounts.front(), 1, n, &c0,
-                 &c1, &cov00, &cov01, &cov11, &sumsq);
+  gsl_fit_linear(log_diameters.data(), 1, log_pcounts.data(), 1,
+                 log_pcounts.size(), &c0, &c1, &cov00, &cov01, &cov11, &sumsq);
   double mean_sq_residual = sumsq / static_cast<double>(log_diameters.size());
   return {c1, mean_sq_residual};
 #else

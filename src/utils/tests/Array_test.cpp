@@ -137,3 +137,23 @@ BOOST_AUTO_TEST_CASE(streaming_operator) {
     BOOST_CHECK_EQUAL(ss.str(), "1, 2, 3");
   }
 }
+
+BOOST_AUTO_TEST_CASE(formatter_and_streaming_operator) {
+  {
+    auto const a = Utils::Array<int, 1>{1};
+
+    std::stringstream ss;
+    ss << a.formatter("xyz") << a;
+
+    BOOST_CHECK_EQUAL(ss.str(), "1");
+  }
+
+  {
+    auto const a = Utils::Array<int, 3>{1, 2, 3};
+
+    std::stringstream ss;
+    ss << a.formatter(" + ") << a;
+
+    BOOST_CHECK_EQUAL(ss.str(), "1 + 2 + 3");
+  }
+}

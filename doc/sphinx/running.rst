@@ -43,7 +43,7 @@ particle :math:`i` and :math:`F_i(\{x_j\},v_i,t)` the forces acting on it.
 These forces comprise all interactions with other particles and external fields
 as well as non-deterministic contributions described in :ref:`Thermostats`.
 
-For numerical integration, this equation is discretized to the following steps (:cite:`rapaport04` eqs. 3.5.8 - 3.5.10):
+For numerical integration, this equation is discretized to the following steps (:cite:`rapaport04a` eqs. 3.5.8 - 3.5.10):
 
 1. Calculate the velocity at the half step
 
@@ -278,12 +278,35 @@ The correct forces need to be re-calculated after running the integration::
         system.integrator.run(0, recalc_forces=True)  # re-calculate forces from virtual sites
     system.integrator.set_vv()
 
+The algorithm can also be used for energy minimization::
+
+    # minimize until energy difference < 5% or energy < 1e-3
+    system.integrator.set_steepest_descent(f_max=0, gamma=1.0, max_displacement=0.01)
+    relative_energy_change = float('inf')
+    relative_energy_change_threshold = 0.05
+    energy_threshold = 1e-3
+    energy_old = system.analysis.energy()['total']
+    print(f'Energy: {energy_old:.2e}')
+    for i in range(20):
+        system.integrator.run(50)
+        energy = system.analysis.energy()['total']
+        print(f'Energy: {energy:.2e}')
+        relative_energy_change = (energy_old - energy) / energy_old
+        if relative_energy_change < relative_energy_change_threshold or energy < energy_threshold:
+            break
+        energy_old = energy
+    else:
+        print(f'Energy minimization did not converge in {i + 1} cycles')
+    system.integrator.set_vv()
+
+Please note that not all features support energy calculation.
+
 .. _Brownian Dynamics:
 
 Brownian Dynamics
 ^^^^^^^^^^^^^^^^^
 
-Brownian Dynamics integrator :cite:`schlick2010`.
+Brownian Dynamics integrator :cite:`schlick10a`.
 See details in :ref:`Brownian thermostat`.
 
 .. _Stokesian Dynamics:
@@ -462,7 +485,7 @@ Brownian thermostat
 ^^^^^^^^^^^^^^^^^^^
 
 Brownian thermostat is a formal name of a thermostat enabling the
-Brownian Dynamics feature (see :cite:`schlick2010`) which implies
+Brownian Dynamics feature (see :cite:`schlick10a`) which implies
 a propagation scheme involving systematic and thermal parts of the
 classical Ermak-McCammom's (see :cite:`ermak78a`)
 Brownian Dynamics. Currently it is implemented without
@@ -616,10 +639,10 @@ To preserve momentum, an equal and opposite friction force and random force act 
 Numerically the fluid velocity is determined from the lattice-Boltzmann node velocities
 by interpolating as described in :ref:`Interpolating velocities`.
 The backcoupling of friction forces and noise to the fluid is also done by distributing those forces amongst the nearest LB nodes.
-Details for both the interpolation and the force distribution can be found in :cite:`ahlrichs99` and :cite:`duenweg08a`.
+Details for both the interpolation and the force distribution can be found in :cite:`ahlrichs99a` and :cite:`duenweg08a`.
 
 The LB fluid can be used to thermalize particles, while also including their hydrodynamic interactions.
-The LB thermostat expects an instance of either :class:`espressomd.lb.LBFluid` or :class:`espressomd.lb.LBFluidGPU`.
+The LB thermostat expects an instance of either :class:`espressomd.lb.LBFluidWalberla` or :class:`espressomd.lb.LBFluidWalberlaGPU`.
 Temperature is set via the ``kT`` argument of the LB fluid.
 
 The magnitude of the frictional coupling can be adjusted by the
@@ -628,7 +651,7 @@ parameter ``gamma``. To enable the LB thermostat, use::
     import espressomd
     import espressomd.lb
     system = espressomd.System(box_l=[1, 1, 1])
-    lbf = espressomd.lb.LBFluid(agrid=1, dens=1, visc=1, tau=0.01)
+    lbf = espressomd.lb.LBFluidWalberla(agrid=1, dens=1, visc=1, tau=0.01)
     system.actors.add(lbf)
     system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1.5)
 

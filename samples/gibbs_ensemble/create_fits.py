@@ -22,9 +22,9 @@ datafile and take means for simulations with same temperature.
 Plot the phase diagram and the fitted critical point.
 """
 
+import espressomd.analyze
 import numpy as np
-from scipy.optimize import curve_fit
-from scipy import signal
+import scipy.optimize
 import pickle
 import gzip
 import matplotlib.pyplot as plt
@@ -68,15 +68,15 @@ BETA = 0.32
 def autocorr(x):
     """ Compute the normalized autocorrelation function """
     _x = x - np.mean(x)
-    return (signal.convolve(
-        _x, _x[::-1], mode='full', method='auto')[(np.size(_x) - 1):]) / np.sum(_x * _x)
+    acf = espressomd.analyze.autocorrelation(_x) * np.arange(len(_x), 0, -1)
+    return acf / acf[0]
 
 
 def relaxation_time(x):
     """ Compute the relaxation time """
     corr = autocorr(x)
-    popt, _ = curve_fit(lambda x, a: np.exp(-a * x),
-                        range(np.size(corr)), corr, p0=(1. / 15000))
+    popt, _ = scipy.optimize.curve_fit(lambda x, a: np.exp(-a * x),
+                                       range(np.size(corr)), corr, p0=(1. / 15000))
     return popt[0]
 
 
@@ -100,26 +100,25 @@ def rectilinear_law(kT, p_c, A, kT_c):
 # Load data
 for f in args.files:
 
-    logging.info("Loading {}...".format(f))
+    logging.info(f"Loading {f}...")
     with gzip.open(f, 'rb') as _f:
         data = pickle.load(_f)
 
     kT = data["temperature"]
 
     # Calculate densities of both phases
-    density1 = np.mean(data["densities_box01"][WARMUP_LENGTH:])
-    density2 = np.mean(data["densities_box02"][WARMUP_LENGTH:])
+    key1, key2 = ("densities_box01", "densities_box02")
+    density1 = np.mean(data[key1][WARMUP_LENGTH:])
+    density2 = np.mean(data[key2][WARMUP_LENGTH:])
 
     dens_liquid.append(np.max((density1, density2)))
     dens_gas.append(np.min((density1, density2)))
 
     # Calculate errors
-    errors_liquid.append(
-        std_error_mean(data["densities_box01"]) if density1 > density2 else
-        std_error_mean(data["densities_box02"]))
-    errors_gas.append(
-        std_error_mean(data["densities_box01"]) if density1 < density2 else
-        std_error_mean(data["densities_box02"]))
+    if density1 < density2:
+        key1, key2 = (key2, key1)
+    errors_liquid.append(std_error_mean(data[key2]))
+    errors_gas.append(std_error_mean(data[key1]))
     kTs.append(kT)
 
 # Sort temperatures and densities respectively
@@ -131,14 +130,14 @@ errors_liquid = np.array(errors_liquid)[order]
 errors_gas = np.array(errors_gas)[order]
 
 # Average over simulation results with different seeds
-dens_liquid = [np.mean([dens_liquid[i] for (i, T) in enumerate(
-               kTs) if T == kT]) for kT in np.unique(kTs)]
+dens_liquid = [np.mean([dens_liquid[i] for (i, T) in enumerate(kTs) if T == kT])
+               for kT in np.unique(kTs)]
 dens_gas = [np.mean([dens_gas[i] for (i, T) in enumerate(kTs) if T == kT])
             for kT in np.unique(kTs)]
 
 # Compute Errors as maximum of each simulation error
-errors_liquid = [np.max([errors_liquid[i] for (i, T) in enumerate(
-                 kTs) if T == kT]) for kT in np.unique(kTs)]
+errors_liquid = [np.max([errors_liquid[i] for (i, T) in enumerate(kTs)
+                         if T == kT]) for kT in np.unique(kTs)]
 errors_gas = [np.max([errors_gas[i] for (i, T) in enumerate(kTs) if T == kT])
               for kT in np.unique(kTs)]
 kTs = np.unique(kTs)
@@ -152,25 +151,24 @@ y_scaling = dens_liquid - dens_gas
 y_rectilinear = 0.5 * (dens_liquid + dens_gas)
 
 # Fit using scaling law
-fit_scaling, p_cov_scaling = curve_fit(
+fit_scaling, p_cov_scaling = scipy.optimize.curve_fit(
     scaling_law, kTs, y_scaling, p0=(1., 1.), maxfev=6000)
 
 # Print fit values
-logging.info("Fits using scaling law: B, T_c: {}".format(fit_scaling))
-logging.info("Fit uncertainty: {}".format(np.diag(p_cov_scaling)))
+logging.info(f"Fits using scaling law: B, T_c: {fit_scaling}")
+logging.info(f"Fit uncertainty: {np.diag(p_cov_scaling)}")
 
 # Critical temperature obtained via scaling law
 kT_c_scaling = fit_scaling[1]
 
 # Fit using rectilinear law
-fit_rectilinear, p_cov_rectilinear = curve_fit(
-    rectilinear_law, kTs, y_rectilinear, p0=(
-        0.3, 0.2, kT_c_scaling), maxfev=6000)
+fit_rectilinear, p_cov_rectilinear = scipy.optimize.curve_fit(
+    rectilinear_law, kTs, y_rectilinear, p0=(0.3, 0.2, kT_c_scaling),
+    maxfev=6000)
 
 # Print fit values
-logging.info(
-    "Fits using rectilinear law: p_c, A, T_c: {}".format(fit_rectilinear))
-logging.info("Fit uncertainty: {}".format(np.diag(p_cov_rectilinear)))
+logging.info(f"Fits using rectilinear law: p_c, A, T_c: {fit_rectilinear}")
+logging.info(f"Fit uncertainty: {np.diag(p_cov_rectilinear)}")
 
 # Critical point obtained via rectilinear law
 p_c = fit_rectilinear[0]

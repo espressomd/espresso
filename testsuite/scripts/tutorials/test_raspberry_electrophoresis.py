@@ -30,6 +30,9 @@ class Tutorial(ut.TestCase):
     '''Check the raspberry travels a longer distance on the x-axis'''
     system = tutorial.system
 
+    def test_steepest_descent_convergence(self):
+        self.assertLess(tutorial.force_max, 10.)
+
     def test_trajectory_sample(self):
         trajectory = np.loadtxt('posVsTime_sample.dat')[:, 1:4]
         x, y, z = np.abs(trajectory[-1, :] - trajectory[0, :])

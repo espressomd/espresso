@@ -42,7 +42,7 @@ IF ELECTROSTATICS:
         cdef extern icc_struct icc_cfg
 
         void icc_set_params(int n_icc, double convergence, double relaxation,
-                            Vector3d & ext_field, int max_iterations,
+                            const Vector3d & ext_field, int max_iterations,
                             int first_id, double eps_out,
                             vector[double] & areas,
                             vector[double] & e_in,

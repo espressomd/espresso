@@ -32,7 +32,7 @@ class Cluster(ScriptInterfaceHelper):
         Returns the number of particles in the cluster
 
     center_of_mass()
-        Center of mass of the cluster
+        Center of mass of the cluster (folded coordinates)
 
     longest_distance()
         Longest distance between any combination of two particles in the cluster
@@ -153,11 +153,13 @@ class Clusters:
 
     * number of clusters: ``len(clusters)``
     * access a cluster via its id: ``clusters[id]``
-    * iterate over clusters::
+    * iterate over clusters (yields ``(id, cluster)`` tuples)
 
-          for c in clusters:
+    Example::
 
-      where ``c`` will be a tuple containing the cluster id and the cluster object.
+        >>> for cluster_id, cluster in clusters:
+        ...     print(f"{cluster_id=} CoM={cluster.center_of_mass()}")
+        cluster_id=1 CoM=[1.71834061 1.54988961 1.54734631]
 
     """
 

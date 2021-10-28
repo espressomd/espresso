@@ -15,9 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* Unit tests for the Utils::ravel_index and Utils::unravel_index functions. */
-
-#define BOOST_TEST_MODULE Utils::ravel_index test
+#define BOOST_TEST_MODULE Utils index test
 #define BOOST_TEST_DYN_LINK
 
 #include <utils/Vector.hpp>
@@ -27,22 +25,6 @@
 
 #include <array>
 #include <cstddef>
-
-BOOST_AUTO_TEST_CASE(ravel_index_test) {
-  const std::array<std::size_t, 4> unravelled_indices{{12, 23, 5, 51}};
-  const std::array<std::size_t, 4> dimensions{{15, 35, 6, 52}};
-  auto const result = Utils::ravel_index(unravelled_indices, dimensions);
-  BOOST_CHECK(result == 138527);
-}
-
-BOOST_AUTO_TEST_CASE(unravel_index_test) {
-  const std::array<std::size_t, 4> dimensions{{15, 35, 6, 52}};
-  const std::size_t ravelled_index = 138527;
-  std::array<std::size_t, 4> result{};
-  Utils::unravel_index(dimensions.begin(), dimensions.end(), result.begin(),
-                       ravelled_index);
-  BOOST_CHECK((result == std::array<std::size_t, 4>{{12, 23, 5, 51}}));
-}
 
 BOOST_AUTO_TEST_CASE(get_linear_index) {
   using Utils::get_linear_index;

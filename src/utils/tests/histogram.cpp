@@ -34,8 +34,8 @@ BOOST_AUTO_TEST_CASE(histogram) {
   std::array<std::size_t, 2> n_bins{{10, 10}};
   std::array<std::pair<double, double>, 2> limits{
       {std::make_pair(1.0, 20.0), std::make_pair(5.0, 10.0)}};
-  std::size_t n_dims_data = 2;
-  auto hist = Utils::Histogram<double, 2>(n_bins, n_dims_data, limits);
+  constexpr std::size_t n_dims_data = 2;
+  auto hist = Utils::Histogram<double, n_dims_data, 2>(n_bins, limits);
   // Check getters.
   BOOST_CHECK(hist.get_limits() == limits);
   BOOST_CHECK(hist.get_n_bins() == n_bins);
@@ -59,6 +59,9 @@ BOOST_AUTO_TEST_CASE(histogram) {
   BOOST_CHECK((hist.get_histogram())[1] == 11.0);
   BOOST_CHECK_THROW(hist.update(std::vector<double>{{1.0, 5.0, 3.0}}),
                     std::invalid_argument);
+  BOOST_CHECK_THROW(hist.update(std::vector<double>{{0.0, 0.0}},
+                                std::vector<double>{{0.0, 0.0, 0.0}}),
+                    std::invalid_argument);
 }
 
 BOOST_AUTO_TEST_CASE(cylindrical_histogram) {
@@ -67,9 +70,8 @@ BOOST_AUTO_TEST_CASE(cylindrical_histogram) {
   std::array<std::pair<double, double>, 3> limits{{std::make_pair(0.0, 2.0),
                                                    std::make_pair(0.0, 2 * pi),
                                                    std::make_pair(0.0, 10.0)}};
-  std::size_t n_dims_data = 3;
-  auto hist =
-      Utils::CylindricalHistogram<double, 3>(n_bins, n_dims_data, limits);
+  constexpr std::size_t n_dims_data = 3;
+  auto hist = Utils::CylindricalHistogram<double, n_dims_data>(n_bins, limits);
   // Check getters.
   BOOST_CHECK(hist.get_limits() == limits);
   BOOST_CHECK(hist.get_n_bins() == n_bins);
@@ -96,5 +98,8 @@ BOOST_AUTO_TEST_CASE(cylindrical_histogram) {
   BOOST_CHECK((hist.get_histogram())[1] == 11.0);
   BOOST_CHECK((hist.get_histogram())[2] == 11.0);
   BOOST_CHECK_THROW(hist.update(std::vector<double>{{1.0, pi}}),
+                    std::invalid_argument);
+  BOOST_CHECK_THROW(hist.update(std::vector<double>{{0.0, 0.0, 0.0}},
+                                std::vector<double>{{0.0, 0.0}}),
                     std::invalid_argument);
 }

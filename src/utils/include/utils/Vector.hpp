@@ -349,6 +349,11 @@ Vector<T, 3> vector_product(Vector<T, 3> const &a, Vector<T, 3> const &b) {
           a[0] * b[1] - a[1] * b[0]};
 }
 
+// Product of array elements.
+template <class T, std::size_t N> T product(Vector<T, N> const &v) {
+  return std::accumulate(v.cbegin(), v.cend(), T{1}, std::multiplies<T>());
+}
+
 template <class T, class U, std::size_t N>
 auto hadamard_product(Vector<T, N> const &a, Vector<U, N> const &b) {
   using std::declval;

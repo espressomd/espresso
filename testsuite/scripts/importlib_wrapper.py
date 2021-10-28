@@ -42,7 +42,6 @@ def configure_and_import(filepath,
                          cmd_arguments=None,
                          script_suffix=None,
                          move_to_script_dir=True,
-                         random_seeds=False,
                          mock_visualizers=True,
                          **parameters):
     """
@@ -52,7 +51,6 @@ def configure_and_import(filepath,
     - pass command line arguments during import to emulate shell execution
     - disable the OpenGL/Mayavi modules if they are not compiled
     - disable the matplotlib GUI using a text-based backend
-    - use random seeds for the RNG in NumPy
     - temporarily move to the directory where the script is located
 
     Parameters
@@ -69,8 +67,6 @@ def configure_and_import(filepath,
     script_suffix : str
         suffix to append to the configured script (useful when a single
         module is being tested by multiple tests in parallel)
-    random_seeds : bool
-        if ``True``, use random seeds in RNGs
     mock_visualizers : bool
         if ``True``, substitute ES visualizers with `Mock()` classes in case
         of `ImportError()` (use ``False`` if an `ImportError()` is relevant
@@ -112,9 +108,6 @@ def configure_and_import(filepath,
     # disable OpenGL/Mayavi GUI using MagicMock()
     if mock_visualizers:
         code = mock_es_visualization(code)
-    # use random seeds for NumPy RNG
-    if random_seeds:
-        code = set_random_seeds(code)
     # save changes to a new file
     if script_suffix:
         if script_suffix[0] != "_":
@@ -387,26 +380,6 @@ class GetPrngSeedEspressomdSystem(ast.NodeVisitor):
         self.abort_message = "function definitions"
         ast.NodeVisitor.generic_visit(self, node)
         self.abort_message = None
-
-
-def set_random_seeds(code):
-    """
-    Remove numpy random number generator seeds, such that
-    the sample/tutorial always starts with different random seeds.
-    """
-    code = protect_ipython_magics(code)
-    tree = ast.parse(code)
-    visitor = GetPrngSeedEspressomdSystem()
-    visitor.visit(tree)
-    lines = code.split("\n")
-    # delete explicit NumPy seed
-    for lineno in visitor.numpy_seeds:
-        old_stmt = ".seed"
-        new_stmt = ".seed;_random_seed_np = (lambda *args, **kwargs: None)"
-        lines[lineno - 1] = lines[lineno - 1].replace(old_stmt, new_stmt, 1)
-    code = "\n".join(lines)
-    code = deprotect_ipython_magics(code)
-    return code
 
 
 def delimit_statements(code):

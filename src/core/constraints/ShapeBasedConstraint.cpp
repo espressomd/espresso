@@ -112,9 +112,8 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
 #endif
       }
     } else {
-      runtimeErrorMsg() << "Constraint"
-                        << " violated by particle " << p.p.identity << " dist "
-                        << dist;
+      runtimeErrorMsg() << "Constraint violated by particle " << p.p.identity
+                        << " dist " << dist;
     }
 
 #ifdef ROTATION
@@ -130,8 +129,7 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
 }
 
 void ShapeBasedConstraint::add_energy(const Particle &p,
-                                      const Utils::Vector3d &folded_pos,
-                                      double t,
+                                      const Utils::Vector3d &folded_pos, double,
                                       Observable_stat &obs_energy) const {
   double energy = 0.0;
 

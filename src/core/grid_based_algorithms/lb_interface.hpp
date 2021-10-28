@@ -42,14 +42,11 @@ extern ActiveLB lattice_switch;
  */
 void lb_lbfluid_propagate();
 
-/** @brief Perform a full initialization of
- *  the lattice-Boltzmann system. All derived parameters
- *  and the fluid are reset to their default values.
+/**
+ * @brief Perform a full initialization of the lattice-Boltzmann system.
+ * All derived parameters and the fluid are reset to their default values.
  */
 void lb_lbfluid_init();
-
-/** @brief (Re-)initialize the fluid. */
-void lb_lbfluid_reinit_fluid();
 
 /**
  * @brief Get the current counter of the Philox RNG.
@@ -96,6 +93,12 @@ void lb_lbnode_set_density(const Utils::Vector3i &ind, double density);
  */
 void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
                             const Utils::Vector3d &u);
+
+/**
+ * @brief Set the LB fluid velocity for a single boundary node.
+ */
+void lb_lbnode_set_velocity_at_boundary(const Utils::Vector3i &ind,
+                                        const Utils::Vector3d &u);
 
 /**
  * @brief Set the LB fluid populations for a single node.
@@ -172,6 +175,16 @@ double lb_lbnode_get_density(const Utils::Vector3i &ind);
  * @brief Get the LB fluid velocity for a single node.
  */
 const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind);
+
+/**
+ * @brief Get the LB fluid velocity for a single node.
+ */
+const Utils::Vector3d
+lb_lbnode_get_velocity_at_boundary(const Utils::Vector3i &ind);
+
+/**
+ * @brief Get the LB fluid pressure tensor for a single node.
+ */
 const Utils::Vector6d lb_lbnode_get_pressure_tensor(const Utils::Vector3i &ind);
 
 /**
@@ -179,8 +192,6 @@ const Utils::Vector6d lb_lbnode_get_pressure_tensor(const Utils::Vector3i &ind);
  */
 const Utils::Vector3d
 lb_lbnode_get_last_applied_force(const Utils::Vector3i &ind);
-
-const Utils::Vector6d lb_lbnode_get_pressure_tensor(const Utils::Vector3i &ind);
 
 /** @brief Calculate the average pressure tensor of all nodes by accumulating
  *  over all nodes and dividing by the number of nodes.
@@ -192,6 +203,34 @@ const Utils::Vector6d lb_lbfluid_get_pressure_tensor();
  * @brief Get the LB fluid boundary bool for a single node.
  */
 bool lb_lbnode_is_boundary(const Utils::Vector3i &ind);
+
+/**
+ * @brief Clear boundaries
+ */
+void lb_lbfluid_clear_boundaries();
+
+/**
+ * @brief Add a boundary.
+ */
+void lb_lbfluid_update_boundary_from_shape(
+    std::vector<int> const &raster_flat,
+    std::vector<double> const &slip_velocity_flat);
+
+/**
+ * @brief Update a boundary slip velocity.
+ */
+void lb_lbfluid_update_boundary_from_list(std::vector<int> const &nodes_flat,
+                                          std::vector<double> const &vel_flat);
+
+/**
+ * @brief Get the LB fluid velocity for a single node.
+ */
+const Utils::Vector3d lb_lbnode_get_boundary_force(const Utils::Vector3i &ind);
+
+/**
+ * @brief Remove single node from boundary
+ */
+void lb_lbnode_remove_from_boundary(const Utils::Vector3i &ind);
 
 /**
  * @brief Get the LB fluid populations for a single node.
@@ -222,6 +261,13 @@ const Utils::Vector3d
 lb_lbfluid_get_interpolated_velocity(const Utils::Vector3d &pos);
 
 /**
+ * @brief Calculates the interpolated fluid density on the master process.
+ * @param pos Position at which the density is to be calculated.
+ * @retval interpolated fluid density.
+ */
+double lb_lbfluid_get_interpolated_density(const Utils::Vector3d &pos);
+
+/**
  * @brief Calculates the interpolated force to be applied on the master process.
  * @param pos Position at which the force is to be calculated.
  * @retval interpolated force to be applied.
@@ -237,13 +283,6 @@ lb_lbfluid_get_force_to_be_applied(const Utils::Vector3d &pos);
  */
 void lb_lbfluid_add_force_at_pos(const Utils::Vector3d &pos,
                                  const Utils::Vector3d &f);
-
-/**
- * @brief Calculates the interpolated fluid density on the master process.
- * @param pos Position at which the density is to be calculated.
- * @retval interpolated fluid density.
- */
-double lb_lbfluid_get_interpolated_density(const Utils::Vector3d &pos);
 
 void mpi_set_lattice_switch(ActiveLB lattice_switch);
 

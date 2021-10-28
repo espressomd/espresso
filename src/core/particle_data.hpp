@@ -172,7 +172,6 @@ void set_particle_q(int part, double q);
  *  @param mu_E its new mobility.
  */
 void set_particle_mu_E(int part, Utils::Vector3d const &mu_E);
-Utils::Vector3d get_particle_mu_E(int part);
 #endif
 
 /** Call only on the master node: set particle type.
@@ -192,7 +191,7 @@ void set_particle_mol_id(int part, int mid);
  *  @param part the particle.
  *  @param quat its new value for quaternions.
  */
-void set_particle_quat(int part, double *quat);
+void set_particle_quat(int part, Utils::Quaternion<double> const &quat);
 
 /** Call only on the master node: set particle orientation using director.
  *  The particle director defines the z-axis in the body-fixed frame.
@@ -357,50 +356,92 @@ int number_of_particles_with_type(int type);
 // This is needed, because cython does not support conditional compilation
 // within a ctypedef definition
 
-#ifdef ROTATION
-void pointer_to_omega_body(Particle const *p, double const *&res);
-
-inline Utils::Vector3d get_torque_body(const Particle &p) { return p.f.torque; }
-
-void pointer_to_quat(Particle const *p, double const *&res);
+#ifdef LB_ELECTROHYDRODYNAMICS
+inline Utils::Vector3d get_particle_mu_E(Particle const *p) {
+  return p->p.mu_E;
+}
 #endif
 
-void pointer_to_q(Particle const *p, double const *&res);
+#ifdef ROTATION
+inline Utils::Vector3d get_particle_omega_body(Particle const *p) {
+  return p->m.omega;
+}
+
+inline Utils::Vector3d get_particle_torque_body(Particle const *p) {
+  return p->f.torque;
+}
+
+inline Utils::Quaternion<double> get_particle_quat(Particle const *p) {
+  return p->r.quat;
+}
+#endif
+
+inline double get_particle_q(Particle const *p) { return p->p.q; }
 
 #ifdef VIRTUAL_SITES
-void pointer_to_virtual(Particle const *p, bool const *&res);
+inline bool get_particle_virtual(Particle const *p) { return p->p.is_virtual; }
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
-void pointer_to_vs_quat(Particle const *p, double const *&res);
-void pointer_to_vs_relative(Particle const *p, int const *&res1,
-                            double const *&res2, double const *&res3);
+inline Utils::Quaternion<double> get_particle_vs_quat(Particle const *p) {
+  return p->p.vs_relative.quat;
+}
+inline Utils::Quaternion<double> get_particle_vs_relative(Particle const *p,
+                                                          int &vs_relative_to,
+                                                          double &vs_distance) {
+  vs_relative_to = p->p.vs_relative.to_particle_id;
+  vs_distance = p->p.vs_relative.distance;
+  return p->p.vs_relative.rel_orientation;
+}
 #endif
 
-void pointer_to_dipm(Particle const *P, double const *&res);
+#ifdef DIPOLES
+inline double get_particle_dipm(Particle const *p) { return p->p.dipm; }
+#endif
 
 #ifdef EXTERNAL_FORCES
-void pointer_to_ext_force(Particle const *p, double const *&res2);
+inline Utils::Vector3d get_particle_ext_force(Particle const *p) {
+  return p->p.ext_force;
+}
 #ifdef ROTATION
-void pointer_to_ext_torque(Particle const *p, double const *&res2);
+inline Utils::Vector3d get_particle_ext_torque(Particle const *p) {
+  return p->p.ext_torque;
+}
 #endif
-void pointer_to_fix(Particle const *p, const uint8_t *&res);
+inline uint8_t get_particle_fix(Particle const *p) { return p->p.ext_flag; }
 #endif
 
 #ifdef THERMOSTAT_PER_PARTICLE
-void pointer_to_gamma(Particle const *p, double const *&res);
+#ifdef PARTICLE_ANISOTROPY
+inline Utils::Vector3d get_particle_gamma(Particle const *p) {
+  return p->p.gamma;
+}
+#else
+inline double get_particle_gamma(Particle const *p) { return p->p.gamma; }
+#endif // PARTICLE_ANISOTROPY
 #ifdef ROTATION
-void pointer_to_gamma_rot(Particle const *p, double const *&res);
-#endif
+#ifdef PARTICLE_ANISOTROPY
+inline Utils::Vector3d get_particle_gamma_rot(Particle const *p) {
+  return p->p.gamma_rot;
+}
+#else
+inline double get_particle_gamma_rot(Particle const *p) {
+  return p->p.gamma_rot;
+}
+#endif // PARTICLE_ANISOTROPY
+#endif // ROTATION
 #endif // THERMOSTAT_PER_PARTICLE
 
 #ifdef ENGINE
-void pointer_to_swimming(Particle const *p,
-                         ParticleParametersSwimming const *&swim);
+inline ParticleParametersSwimming get_particle_swimming(Particle const *p) {
+  return p->p.swim;
+}
 #endif
 
 #ifdef ROTATIONAL_INERTIA
-void pointer_to_rotational_inertia(Particle const *p, double const *&res);
+inline Utils::Vector3d get_particle_rotational_inertia(Particle const *p) {
+  return p->p.rinertia;
+}
 #endif
 
 /**

@@ -25,19 +25,19 @@ Several modes are available for different types of binding.
 
 * ``"bind_centers"``: adds a pair-bond between two particles at their first collision. By making the bonded interaction *stiff* enough, the particles can be held together after the collision. Note that the particles can still slide on each others' surface, as the pair bond is not directional. This mode is set up as follows::
 
-    import espressomd
-    import espressomd.interactions
+      import espressomd
+      import espressomd.interactions
 
-    system = espressomd.System(box_l=[1, 1, 1])
-    bond_centers = espressomd.interactions.HarmonicBond(k=1000, r_0=<CUTOFF>)
-    system.bonded_inter.add(bond_centers)
-    system.collision_detection.set_params(mode="bind_centers", distance=<CUTOFF>,
-                                          bond_centers=bond_centers)
+      system = espressomd.System(box_l=[1, 1, 1])
+      bond_centers = espressomd.interactions.HarmonicBond(k=1000, r_0=<CUTOFF>)
+      system.bonded_inter.add(bond_centers)
+      system.collision_detection.set_params(mode="bind_centers", distance=<CUTOFF>,
+                                            bond_centers=bond_centers)
 
   The parameters are as follows:
 
-    * ``distance`` is the distance between two particles at which the binding is triggered. This cutoff distance, ``<CUTOFF>`` in the example above, is typically chosen slightly larger than the particle diameter. It is also a good choice for the equilibrium length of the bond.
-    * ``bond_centers`` is the bonded interaction (an instance of :class:`espressomd.interactions.HarmonicBond`) to be created between the particles. No guarantees are made regarding which of the two colliding particles gets the bond. Once there is a bond of this type on any of the colliding particles, no further binding occurs for this pair of particles.
+  * ``distance`` is the distance between two particles at which the binding is triggered. This cutoff distance, ``<CUTOFF>`` in the example above, is typically chosen slightly larger than the particle diameter. It is also a good choice for the equilibrium length of the bond.
+  * ``bond_centers`` is the bonded interaction (an instance of :class:`espressomd.interactions.HarmonicBond`) to be created between the particles. No guarantees are made regarding which of the two colliding particles gets the bond. Once there is a bond of this type on any of the colliding particles, no further binding occurs for this pair of particles.
 
 * ``"bind_at_point_of_collision"``: this mode prevents sliding of the colliding particles at the contact. This is achieved by
   creating two virtual sites at the point of collision. They are
@@ -55,16 +55,15 @@ Several modes are available for different types of binding.
   the point of contact or you can use :class:`espressomd.interactions.Virtual` which acts as a marker, only.
   The method is setup as follows::
 
-     system.collision_detection.set_params(mode="bind_at_point_of_collision",
-         distance=<CUTOFF>, bond_centers=<BOND_CENTERS>, bond_vs=<BOND_VS>,
-         part_type_vs=<PART_TYPE_VS>, vs_placement=<VS_PLACEMENT>)
-
+      system.collision_detection.set_params(mode="bind_at_point_of_collision",
+          distance=<CUTOFF>, bond_centers=<BOND_CENTERS>, bond_vs=<BOND_VS>,
+          part_type_vs=<PART_TYPE_VS>, vs_placement=<VS_PLACEMENT>)
 
   The parameters ``distance`` and ``bond_centers`` have the same meaning as in the ``"bind_centers"`` mode. The remaining parameters are as follows:
 
-    * ``bond_vs`` is the bond to be added between the two virtual sites created on collision. This is either a pair-bond with an equilibrium length matching the distance between the virtual sites, or an angle bond fully stretched in its equilibrium configuration.
-    * ``part_type_vs`` is the particle type assigned to the virtual sites created on collision. In nearly all cases, no non-bonded interactions should be defined for this particle type.
-    * ``vs_placement`` controls, where on the line connecting the centers of the colliding particles, the virtual sites are placed. A value of 0 means that the virtual sites are placed at the same position as the colliding particles on which they are based. A value of 0.5 will result in the virtual sites being placed ad the mid-point between the two colliding particles. A value of 1 will result the virtual site associated to the first colliding particle to be placed at the position of the second colliding particle. In most cases, 0.5, is a good choice. Then, the bond connecting the virtual sites should have an equilibrium length of zero.
+  * ``bond_vs`` is the bond to be added between the two virtual sites created on collision. This is either a pair-bond with an equilibrium length matching the distance between the virtual sites, or an angle bond fully stretched in its equilibrium configuration.
+  * ``part_type_vs`` is the particle type assigned to the virtual sites created on collision. In nearly all cases, no non-bonded interactions should be defined for this particle type.
+  * ``vs_placement`` controls, where on the line connecting the centers of the colliding particles, the virtual sites are placed. A value of 0 means that the virtual sites are placed at the same position as the colliding particles on which they are based. A value of 0.5 will result in the virtual sites being placed ad the mid-point between the two colliding particles. A value of 1 will result the virtual site associated to the first colliding particle to be placed at the position of the second colliding particle. In most cases, 0.5, is a good choice. Then, the bond connecting the virtual sites should have an equilibrium length of zero.
 
 * ``"glue_to_surface"``: This mode is used to irreversibly attach small particles to the surface of a big particle. It is asymmetric in that several small particles can be bound to a big particle but not vice versa. The small particles can change type after collision to make them *inert*. On collision, a single virtual site is placed and related to the big particle. Then, a bond (``bond_centers``) connects the big and the small particle. A second bond (``bond_vs``) connects the virtual site and the small particle. Further required parameters are:
 
@@ -80,9 +79,7 @@ Several modes are available for different types of binding.
   time step, no guarantees are made with regards to which partner is selected.
   In particular, there is no guarantee that the choice is unbiased.
 
-
-
-- ``"bind_three_particles"`` allows for the creation of agglomerates which maintain their shape
+* ``"bind_three_particles"`` allows for the creation of agglomerates which maintain their shape
   similarly to those create by the mode ``"bind_at_point_of_collision"``. The present approach works
   without virtual sites. Instead, for each two-particle collision, the
   surrounding is searched for a third particle. If one is found,
@@ -139,7 +136,7 @@ Please contact the Biofluid Simulation and Modeling Group at the
 University of Bayreuth if you plan to use this feature.
 
 With the Immersed Boundary Method (IBM), soft particles are considered as an infinitely
-thin shell filled with liquid (see e.g. :cite:`Peskin2002,Crowl2010,KruegerThesis`). When the
+thin shell filled with liquid (see e.g. :cite:`peskin02a,crowl10a,kruger11a`). When the
 shell is deformed by an external flow, it responds with elastic restoring
 forces which are transmitted into the fluid. In the present case, the
 inner and outer liquid are of the same type and are simulated using
@@ -156,9 +153,9 @@ the local fluid velocity.
 
 The immersed boundary method consists of two components, which can be used independently:
 
-  * :ref:`Inertialess lattice-Boltzmann tracers` implemented as virtual sites
+* :ref:`Inertialess lattice-Boltzmann tracers` implemented as virtual sites
 
-  * Interactions providing the elastic forces for the particles forming the surface. These are described in :ref:`Immersed Boundary Method interactions`.
+* Interactions providing the elastic forces for the particles forming the surface. These are described in :ref:`Immersed Boundary Method interactions`.
 
 For a more detailed description, see e.g. :cite:`guckenberger17a` or contact us.
 This feature probably does not work with advanced LB features such as electrokinetics.
@@ -173,9 +170,9 @@ Object-in-fluid
 If you plan to use this feature, please contact the Cell-in-fluid Research Group at the
 University of Zilina: ivan.cimrak@fri.uniza.sk or iveta.jancigova@fri.uniza.sk.
 
-When using this module, please cite :cite:`Cimrak2014` (BibTeX key
-``Cimrak2014`` in :file:`doc/sphinx/zrefs.bib`) and :cite:`Cimrak2012`
-(BibTeX key ``Cimrak2012`` in :file:`doc/sphinx/zrefs.bib`)
+When using this module, please cite :cite:`cimrak14a` (BibTeX key
+``cimrak14a`` in :file:`doc/sphinx/zrefs.bib`) and :cite:`cimrak12a`
+(BibTeX key ``cimrak12a`` in :file:`doc/sphinx/zrefs.bib`)
 
 This documentation introduces the features of module Object-in-fluid (OIF).
 Even though |es| was not primarily intended to work with closed
@@ -325,8 +322,8 @@ Specification of fluid and movement
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ::
 
-    lbf = espressomd.lb.LBFluid(agrid=1, dens=1.0, visc=1.5, fric=1.5,
-                                tau=time_step, ext_force_density=[0.002, 0.0, 0.0])
+    lbf = espressomd.lb.LBFluidWalberla(agrid=1, dens=1.0, visc=1.5, fric=1.5,
+                                        tau=time_step, ext_force_density=[0.002, 0.0, 0.0])
     system.actors.add(lbf)
 
 This part of the script specifies the fluid that will get the system
@@ -547,7 +544,7 @@ would cause "particle out of range" error and crash the simulation.
 File format
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-ParaView (download at http://www.paraview.org) accepts .vtk files. For
+ParaView (download at https://www.paraview.org) accepts .vtk files. For
 our cells we use the following format:
 
 .. code-block:: none
@@ -704,7 +701,7 @@ Vector data for objects .vtk file
    Example of vector data stored in points of the object
 
 | More info on .vtk files and possible options:
-| http://www.vtk.org/VTK/img/file-formats.pdf
+| https://vtk.org/wp-content/uploads/2015/04/file-formats.pdf
 
 
 
@@ -1134,317 +1131,318 @@ this type is created. This saves computational time, since the data for
 elastic interactions of the given object do not need to be recalculated
 every time.
 
-
-.. _Electrokinetics:
-
-Electrokinetics
----------------
-
-The electrokinetics setup in |es| allows for the description of
-electro-hydrodynamic systems on the level of ion density distributions
-coupled to a lattice-Boltzmann (LB) fluid. The ion density distributions
-may also interact with explicit charged particles, which are
-interpolated on the LB grid. In the following paragraph we briefly
-explain the electrokinetic model implemented in |es|, before we come to the
-description of the interface.
-
-.. _Electrokinetic Equations:
-
-Electrokinetic Equations
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-In the electrokinetics code we solve the following system of coupled
-continuity, diffusion-advection, Poisson, and Navier-Stokes equations:
-
-.. math::
-
-   \begin{aligned}
-   \label{eq:ek-model-continuity} \frac{\partial n_k}{\partial t} & = & -\, \nabla \cdot \vec{j}_k \vphantom{\left(\frac{\partial}{\partial}\right)} ; \\
-   \label{eq:ek-model-fluxes} \vec{j}_{k} & = & -D_k \nabla n_k - \nu_k \, q_k n_k\, \nabla \Phi + n_k \vec{v}_{\mathrm{fl}} \vphantom{\left(\frac{\partial}{\partial}\right)} + \sqrt{n_k}\vec{\mathcal{W}}_k; \\
-   \label{eq:ek-model-poisson} \Delta \Phi & = & -4 \pi \, {l_\mathrm{B}}\, {k_\mathrm{B}T}\sum_k q_k n_k \vphantom{\left(\frac{\partial}{\partial}\right)}; \\
-   \nonumber \left(\frac{\partial \vec{v}_{\mathrm{fl}}}{\partial t} + \vec{v}_{\mathrm{fl}} \cdot \vec{\nabla} \vec{v}_{\mathrm{fl}} \right) \rho_\mathrm{fl} & = & -{k_\mathrm{B}T}\, \nabla \rho_\mathrm{fl} - q_k n_k \nabla \Phi \\
-   \label{eq:ek-model-velocity} & & +\, \eta \vec{\Delta} \vec{v}_{\mathrm{fl}} + (\eta / 3 + \eta_{\text{b}}) \nabla (\nabla \cdot \vec{v}_{\mathrm{fl}}) \vphantom{\left(\frac{\partial}{\partial}\right)} ; \\
-   \label{eq:ek-model-continuity-fl} \frac{\partial \rho_\mathrm{fl}}{\partial t} & = & -\,\nabla\cdot\left( \rho_\mathrm{fl} \vec{v}_{\mathrm{fl}} \right) \vphantom{\left(\frac{\partial}{\partial}\right)} , \end{aligned}
-
-which define relations between the following observables
-
-:math:`n_k`
-    the number density of the particles of species :math:`k`,
-
-:math:`\vec{j}_k`
-    the number density flux of the particles of species :math:`k`,
-
-:math:`\Phi`
-    the electrostatic potential,
-
-:math:`\rho_{\mathrm{fl}}`
-    the mass density of the fluid,
-
-:math:`\vec{v}_{\mathrm{fl}}`
-    the advective velocity of the fluid,
-
-and input parameters
-
-:math:`D_k`
-    the diffusion constant of species :math:`k`,
-
-:math:`\nu_k`
-    the mobility of species :math:`k`,
-
-:math:`\vec{\mathcal{W}}_k`
-    the white-noise term for the fluctuations of species :math:`k`,
-
-:math:`q_k`
-    the charge of a single particle of species :math:`k`,
-
-:math:`{l_\mathrm{B}}`
-    the Bjerrum length,
-
-:math:`{k_\mathrm{B}T}`
-    | the thermal energy given by the product of Boltzmann's constant
-      :math:`k_\text{B}`
-    | and the temperature :math:`T`,
-
-:math:`\eta`
-    the dynamic viscosity of the fluid,
-
-:math:`\eta_{\text{b}}`
-    the bulk viscosity of the fluid.
-
-The temperature :math:`T`, and diffusion constants :math:`D_k` and
-mobilities :math:`\nu_k` of individual species are linked through the
-Einstein-Smoluchowski relation :math:`D_k /
-\nu_k = {k_\mathrm{B}T}`. This system of equations
-combining diffusion-advection, electrostatics, and hydrodynamics is
-conventionally referred to as the *Electrokinetic Equations*.
-
-The electrokinetic equations have the following properties:
-
--  On the coarse time and length scale of the model, the dynamics of the
-   particle species can be described in terms of smooth density
-   distributions and potentials as opposed to the microscale where
-   highly localized densities cause singularities in the potential.
-
-   In most situations, this restricts the application of the model to
-   species of monovalent ions, since ions of higher valency typically
-   show strong condensation and correlation effects – the localization
-   of individual ions in local potential minima and the subsequent
-   correlated motion with the charges causing this minima.
-
--  Only the entropy of an ideal gas and electrostatic interactions are
-   accounted for. In particular, there is no excluded volume.
-
-   This restricts the application of the model to monovalent ions and
-   moderate charge densities. At higher valencies or densities,
-   overcharging and layering effects can occur, which lead to
-   non-monotonic charge densities and potentials, that can not be
-   covered by a mean-field model such as Poisson--Boltzmann or this one.
-
-   Even in salt free systems containing only counter ions, the
-   counter-ion densities close to highly charged objects can be
-   overestimated when neglecting excluded volume effects. Decades of the
-   application of Poisson--Boltzmann theory to systems of electrolytic
-   solutions, however, show that those conditions are fulfilled for
-   monovalent salt ions (such as sodium chloride or potassium chloride)
-   at experimentally realizable concentrations.
-
--  Electrodynamic and magnetic effects play no role. Electrolytic
-   solutions fulfill those conditions as long as they don't contain
-   magnetic particles.
-
--  The diffusion coefficient is a scalar, which means there can not be
-   any cross-diffusion. Additionally, the diffusive behavior has been
-   deduced using a formalism relying on the notion of a local
-   equilibrium. The resulting diffusion equation, however, is known to
-   be valid also far from equilibrium.
-
--  The temperature is constant throughout the system.
-
--  The density fluxes instantaneously relax to their local equilibrium
-   values. Obviously one can not extract information about processes on
-   length and time scales not covered by the model, such as dielectric
-   spectra at frequencies, high enough that they correspond to times
-   faster than the diffusive time scales of the charged species.
-
-.. _Setup:
-
-Setup
-~~~~~
-
-.. _Initialization:
-
-Initialization
-^^^^^^^^^^^^^^
-::
-
-    import espressomd
-    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
-    system.time_step = 0.0
-    system.cell_system.skin = 0.4
-    ek = espressomd.electrokinetics.Electrokinetics(agrid=1.0, lb_density=1.0,
-        viscosity=1.0, ext_force_density = [1,0,0], friction=1.0, T=1.0, prefactor=1.0,
-        stencil='linkcentered', advection=True, fluid_coupling='friction')
-    system.actors.add(ek)
-
-.. note:: Features ``ELECTROKINETICS`` and ``CUDA`` required
-
-The above is a minimal example how to initialize the LB fluid, and
-it is very similar to the lattice-Boltzmann command in set-up. We
-therefore refer the reader to Chapter :ref:`Lattice-Boltzmann` for details on the
-implementation of LB in |es| and describe only the major differences here.
-
-The first major difference with the LB implementation is that the
-electrokinetics set-up is a Graphics Processing Unit (GPU) only
-implementation. There is no Central Processing Unit (CPU) version, and
-at this time there are no plans to make a CPU version available in the
-future. To use the electrokinetics features it is therefore imperative
-that your computer contains a CUDA capable GPU which is sufficiently
-modern.
-
-To set up a proper LB fluid using this command one has to specify at
-least the following options: ``agrid``, ``lb_density``, ``viscosity``, 
-``friction``, ``T``, and ``prefactor``. The other options can be
-used to modify the behavior of the LB fluid. Note that the command does
-not allow the user to set the time step parameter as is the case for the
-lattice-Boltzmann command, this parameter is instead taken directly from the value set for
-:attr:`espressomd.system.System.time_step`. The LB *mass density* is set independently from the
-electrokinetic *number densities*, since the LB fluid serves only as a
-medium through which hydrodynamic interactions are propagated, as will
-be explained further in the next paragraph. If no ``lb_density`` is specified, then our
-algorithm assumes ``lb_density= 1.0``. The two 'new' parameters are the temperature ``T`` at
-which the diffusive species are simulated and the ``prefactor``
-associated with the electrostatic properties of the medium. See the
-above description of the electrokinetic equations for an explanation of
-the introduction of a temperature, which does not come in directly via a
-thermostat that produces thermal fluctuations.
-
-``advection`` can be set to ``True`` or ``False``. It controls whether there should be an
-advective contribution to the diffusive species' fluxes. Default is
-``True``.
-
-``fluid_coupling`` can be set to ``"friction"`` or ``"estatics"``. This option determines the force
-term acting on the fluid. The former specifies the force term to be the
-sum of the species fluxes divided by their respective mobilities while
-the latter simply uses the electrostatic force density acting on all
-species. Note that this switching is only possible for the linkcentered
-stencil. For all other stencils, this choice is hardcoded. The default
-is ``"friction"``.
-
-
-``es_coupling`` enables the action of the electrostatic potential due to the
-electrokinetics species and charged boundaries on the MD particles. The
-forces on the particles are calculated by interpolation from the
-electric field which is in turn calculated from the potential via finite
-differences. This only includes interactions between the species and
-boundaries and MD particles, not between MD particles and MD particles.
-To get complete electrostatic interactions a particles Coulomb method
-like Ewald or P3M has to be activated too.
-
-The fluctuation of the EK species can be turned on by the flag ``fluctuations``.
-This adds a white-noise term to the fluxes. The amplitude of this noise term
-can be controlled by ``fluctuation_amplitude``. To circumvent that these fluctuations
-lead to negative densities, they are modified by a smoothed Heaviside function,
-which decreases the magnitude of the fluctuation for densities close to 0.
-By default the fluctuations are turned off.
-
-.. _Diffusive Species:
-
-Diffusive Species
-^^^^^^^^^^^^^^^^^
-::
-
-    species = electrokinetics.Species(density=density, D=D, valency=valency,
-        ext_force_density=ext_force)
-
-:class:`espressomd.electrokinetics.Species` is used to initialize a diffusive species. Here the
-options specify: the number density ``density``, the diffusion coefficient ``D``, the
-valency of the particles of that species ``valency``, and an optional external
-(electric) force which is applied to the diffusive species. As mentioned
-before, the LB density is completely decoupled from the electrokinetic
-densities. This has the advantage that greater freedom can be achieved
-in matching the internal parameters to an experimental system. Moreover,
-it is possible to choose parameters for which the LB is more stable. The species can be added to a LB fluid::
-
-    ek.add_species(species)
-
-One can also add the species during the initialization step of the
-:class:`espressomd.electrokinetics.Electrokinetics` by defining the list variable ``species``::
-
-    ek = espressomd.electrokinetics.Electrokinetics(species=[species], ...)
-
-The variables ``density``, ``D``, and
-``valency`` must be set to properly initialize the diffusive species; the
-``ext_force_density`` is optional.
-
-.. _Boundaries:
-
-Boundaries
-^^^^^^^^^^
-::
-
-    ek_boundary = espressomd.ekboundaries.EKBoundary(charge_density=1.0, shape=my_shape)
-    system.ekboundaries.add(ek_boundary)
-
-.. note:: Feature ``EK_BOUNDARIES`` required
-
-The EKBoundary command allows one to set up (internal or external) boundaries for
-the electrokinetics algorithm in much the same way as the command is
-used for the LB fluid. The major difference with the LB command is given
-by the option ``charge_density``, with which a boundary can be endowed with a volume
-charge density. To create a surface charge density, a combination of two
-oppositely charged boundaries, one inside the other, can be used.
-However, care should be taken to maintain the surface charge density when the value of ``agrid``
-is changed. Examples for possible shapes are wall, sphere, ellipsoid, cylinder,
-rhomboid and hollowcone. We refer to the documentation of the
-:class:`espressomd.shapes` module for more possible shapes and information on
-the options associated to these shapes. In order to properly set up the
-boundaries, the ``charge_density`` and ``shape``
-must be specified.
-
-.. _Checkpointing:
-
-Checkpointing
-^^^^^^^^^^^^^
-::
-
-    ek.save_checkpoint(path)
-
-Checkpointing in the EK works quite similar to checkpointing in the LB, because the density is not saved within the :class:`espressomd.checkpointing` object. However one should keep in mind, that the EK not only saves the density of the species but also saves the population of the LB fluid in a separate file. To load a checkpoint the :class:`espressomd.electrokinetics.Electrokinetics` should have the same name as in the script it was saved, but to use the species one need to extract them from the :class:`espressomd.electrokinetics.Electrokinetics` via ``species``.
-
-::
-
-    checkpoint.load(cpt_path)
-    species = ek.get_params()['species']
-    ek.load_checkpoint(path)
-
-.. _Output:
-
-Output
-~~~~~~
-
-.. _Local Quantities:
-
-Local Quantities
-^^^^^^^^^^^^^^^^
-
-Local quantities like velocity or fluid density for single nodes can be accessed in the same way 
-as for an LB fluid, see :ref:`Lattice-Boltzmann`. The only EK-specific quantity is the potential.
-
-::
-
-    ek[0, 0, 0].potential
-    ek[0, 0, 0].velocity
-    ek[0, 0, 0].boundary
-
-The local ``density`` and ``flux`` of a species can be obtained in the same fashion:
-
-::
-
-    species[0, 0, 0].density
-    species[0, 0, 0].flux
-
 .. [5]
    https://www.paraview.org/
+
+
+..
+    .. _Electrokinetics:
+
+    Electrokinetics
+    ---------------
+
+    The electrokinetics setup in |es| allows for the description of
+    electro-hydrodynamic systems on the level of ion density distributions
+    coupled to a lattice-Boltzmann (LB) fluid. The ion density distributions
+    may also interact with explicit charged particles, which are
+    interpolated on the LB grid. In the following paragraph we briefly
+    explain the electrokinetic model implemented in |es|, before we come to the
+    description of the interface.
+
+    .. _Electrokinetic Equations:
+
+    Electrokinetic Equations
+    ~~~~~~~~~~~~~~~~~~~~~~~~
+
+    In the electrokinetics code we solve the following system of coupled
+    continuity, diffusion-advection, Poisson, and Navier-Stokes equations:
+
+    .. math::
+
+       \begin{aligned}
+       \label{eq:ek-model-continuity} \frac{\partial n_k}{\partial t} & = & -\, \nabla \cdot \vec{j}_k \vphantom{\left(\frac{\partial}{\partial}\right)} ; \\
+       \label{eq:ek-model-fluxes} \vec{j}_{k} & = & -D_k \nabla n_k - \nu_k \, q_k n_k\, \nabla \Phi + n_k \vec{v}_{\mathrm{fl}} \vphantom{\left(\frac{\partial}{\partial}\right)} + \sqrt{n_k}\vec{\mathcal{W}}_k; \\
+       \label{eq:ek-model-poisson} \Delta \Phi & = & -4 \pi \, {l_\mathrm{B}}\, {k_\mathrm{B}T}\sum_k q_k n_k \vphantom{\left(\frac{\partial}{\partial}\right)}; \\
+       \nonumber \left(\frac{\partial \vec{v}_{\mathrm{fl}}}{\partial t} + \vec{v}_{\mathrm{fl}} \cdot \vec{\nabla} \vec{v}_{\mathrm{fl}} \right) \rho_\mathrm{fl} & = & -{k_\mathrm{B}T}\, \nabla \rho_\mathrm{fl} - q_k n_k \nabla \Phi \\
+       \label{eq:ek-model-velocity} & & +\, \eta \vec{\Delta} \vec{v}_{\mathrm{fl}} + (\eta / 3 + \eta_{\text{b}}) \nabla (\nabla \cdot \vec{v}_{\mathrm{fl}}) \vphantom{\left(\frac{\partial}{\partial}\right)} ; \\
+       \label{eq:ek-model-continuity-fl} \frac{\partial \rho_\mathrm{fl}}{\partial t} & = & -\,\nabla\cdot\left( \rho_\mathrm{fl} \vec{v}_{\mathrm{fl}} \right) \vphantom{\left(\frac{\partial}{\partial}\right)} , \end{aligned}
+
+    which define relations between the following observables
+
+    :math:`n_k`
+        the number density of the particles of species :math:`k`,
+
+    :math:`\vec{j}_k`
+        the number density flux of the particles of species :math:`k`,
+
+    :math:`\Phi`
+        the electrostatic potential,
+
+    :math:`\rho_{\mathrm{fl}}`
+        the mass density of the fluid,
+
+    :math:`\vec{v}_{\mathrm{fl}}`
+        the advective velocity of the fluid,
+
+    and input parameters
+
+    :math:`D_k`
+        the diffusion constant of species :math:`k`,
+
+    :math:`\nu_k`
+        the mobility of species :math:`k`,
+
+    :math:`\vec{\mathcal{W}}_k`
+        the white-noise term for the fluctuations of species :math:`k`,
+
+    :math:`q_k`
+        the charge of a single particle of species :math:`k`,
+
+    :math:`{l_\mathrm{B}}`
+        the Bjerrum length,
+
+    :math:`{k_\mathrm{B}T}`
+        | the thermal energy given by the product of Boltzmann's constant
+          :math:`k_\text{B}`
+        | and the temperature :math:`T`,
+
+    :math:`\eta`
+        the dynamic viscosity of the fluid,
+
+    :math:`\eta_{\text{b}}`
+        the bulk viscosity of the fluid.
+
+    The temperature :math:`T`, and diffusion constants :math:`D_k` and
+    mobilities :math:`\nu_k` of individual species are linked through the
+    Einstein-Smoluchowski relation :math:`D_k /
+    \nu_k = {k_\mathrm{B}T}`. This system of equations
+    combining diffusion-advection, electrostatics, and hydrodynamics is
+    conventionally referred to as the *Electrokinetic Equations*.
+
+    The electrokinetic equations have the following properties:
+
+    -  On the coarse time and length scale of the model, the dynamics of the
+       particle species can be described in terms of smooth density
+       distributions and potentials as opposed to the microscale where
+       highly localized densities cause singularities in the potential.
+
+       In most situations, this restricts the application of the model to
+       species of monovalent ions, since ions of higher valency typically
+       show strong condensation and correlation effects – the localization
+       of individual ions in local potential minima and the subsequent
+       correlated motion with the charges causing this minima.
+
+    -  Only the entropy of an ideal gas and electrostatic interactions are
+       accounted for. In particular, there is no excluded volume.
+
+       This restricts the application of the model to monovalent ions and
+       moderate charge densities. At higher valencies or densities,
+       overcharging and layering effects can occur, which lead to
+       non-monotonic charge densities and potentials, that can not be
+       covered by a mean-field model such as Poisson--Boltzmann or this one.
+
+       Even in salt free systems containing only counter ions, the
+       counter-ion densities close to highly charged objects can be
+       overestimated when neglecting excluded volume effects. Decades of the
+       application of Poisson--Boltzmann theory to systems of electrolytic
+       solutions, however, show that those conditions are fulfilled for
+       monovalent salt ions (such as sodium chloride or potassium chloride)
+       at experimentally realizable concentrations.
+
+    -  Electrodynamic and magnetic effects play no role. Electrolytic
+       solutions fulfill those conditions as long as they don't contain
+       magnetic particles.
+
+    -  The diffusion coefficient is a scalar, which means there can not be
+       any cross-diffusion. Additionally, the diffusive behavior has been
+       deduced using a formalism relying on the notion of a local
+       equilibrium. The resulting diffusion equation, however, is known to
+       be valid also far from equilibrium.
+
+    -  The temperature is constant throughout the system.
+
+    -  The density fluxes instantaneously relax to their local equilibrium
+       values. Obviously one can not extract information about processes on
+       length and time scales not covered by the model, such as dielectric
+       spectra at frequencies, high enough that they correspond to times
+       faster than the diffusive time scales of the charged species.
+
+    .. _Setup:
+
+    Setup
+    ~~~~~
+
+    .. _Initialization:
+
+    Initialization
+    ^^^^^^^^^^^^^^
+    ::
+
+        import espressomd
+        system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+        system.time_step = 0.0
+        system.cell_system.skin = 0.4
+        ek = espressomd.electrokinetics.Electrokinetics(agrid=1.0, lb_density=1.0,
+            viscosity=1.0, ext_force_density = [1,0,0], friction=1.0, T=1.0, prefactor=1.0,
+            stencil='linkcentered', advection=True, fluid_coupling='friction')
+        system.actors.add(ek)
+
+    .. note:: Features ``ELECTROKINETICS`` and ``CUDA`` required
+
+    The above is a minimal example how to initialize the LB fluid, and
+    it is very similar to the lattice-Boltzmann command in set-up. We
+    therefore refer the reader to Chapter :ref:`Lattice-Boltzmann` for details on the
+    implementation of LB in |es| and describe only the major differences here.
+
+    The first major difference with the LB implementation is that the
+    electrokinetics set-up is a Graphics Processing Unit (GPU) only
+    implementation. There is no Central Processing Unit (CPU) version, and
+    at this time there are no plans to make a CPU version available in the
+    future. To use the electrokinetics features it is therefore imperative
+    that your computer contains a CUDA capable GPU which is sufficiently
+    modern.
+
+    To set up a proper LB fluid using this command one has to specify at
+    least the following options: ``agrid``, ``lb_density``, ``viscosity``,
+    ``friction``, ``T``, and ``prefactor``. The other options can be
+    used to modify the behavior of the LB fluid. Note that the command does
+    not allow the user to set the time step parameter as is the case for the
+    lattice-Boltzmann command, this parameter is instead taken directly from the value set for
+    :attr:`espressomd.system.System.time_step`. The LB *mass density* is set independently from the
+    electrokinetic *number densities*, since the LB fluid serves only as a
+    medium through which hydrodynamic interactions are propagated, as will
+    be explained further in the next paragraph. If no ``lb_density`` is specified, then our
+    algorithm assumes ``lb_density= 1.0``. The two 'new' parameters are the temperature ``T`` at
+    which the diffusive species are simulated and the ``prefactor``
+    associated with the electrostatic properties of the medium. See the
+    above description of the electrokinetic equations for an explanation of
+    the introduction of a temperature, which does not come in directly via a
+    thermostat that produces thermal fluctuations.
+
+    ``advection`` can be set to ``True`` or ``False``. It controls whether there should be an
+    advective contribution to the diffusive species' fluxes. Default is
+    ``True``.
+
+    ``fluid_coupling`` can be set to ``"friction"`` or ``"estatics"``. This option determines the force
+    term acting on the fluid. The former specifies the force term to be the
+    sum of the species fluxes divided by their respective mobilities while
+    the latter simply uses the electrostatic force density acting on all
+    species. Note that this switching is only possible for the linkcentered
+    stencil. For all other stencils, this choice is hardcoded. The default
+    is ``"friction"``.
+
+
+    ``es_coupling`` enables the action of the electrostatic potential due to the
+    electrokinetics species and charged boundaries on the MD particles. The
+    forces on the particles are calculated by interpolation from the
+    electric field which is in turn calculated from the potential via finite
+    differences. This only includes interactions between the species and
+    boundaries and MD particles, not between MD particles and MD particles.
+    To get complete electrostatic interactions a particles Coulomb method
+    like Ewald or P3M has to be activated too.
+
+    The fluctuation of the EK species can be turned on by the flag ``fluctuations``.
+    This adds a white-noise term to the fluxes. The amplitude of this noise term
+    can be controlled by ``fluctuation_amplitude``. To circumvent that these fluctuations
+    lead to negative densities, they are modified by a smoothed Heaviside function,
+    which decreases the magnitude of the fluctuation for densities close to 0.
+    By default the fluctuations are turned off.
+
+    .. _Diffusive Species:
+
+    Diffusive Species
+    ^^^^^^^^^^^^^^^^^
+    ::
+
+        species = electrokinetics.Species(density=density, D=D, valency=valency,
+            ext_force_density=ext_force)
+
+    :class:`espressomd.electrokinetics.Species` is used to initialize a diffusive species. Here the
+    options specify: the number density ``density``, the diffusion coefficient ``D``, the
+    valency of the particles of that species ``valency``, and an optional external
+    (electric) force which is applied to the diffusive species. As mentioned
+    before, the LB density is completely decoupled from the electrokinetic
+    densities. This has the advantage that greater freedom can be achieved
+    in matching the internal parameters to an experimental system. Moreover,
+    it is possible to choose parameters for which the LB is more stable. The species can be added to a LB fluid::
+
+        ek.add_species(species)
+
+    One can also add the species during the initialization step of the
+    :class:`espressomd.electrokinetics.Electrokinetics` by defining the list variable ``species``::
+
+        ek = espressomd.electrokinetics.Electrokinetics(species=[species], ...)
+
+    The variables ``density``, ``D``, and
+    ``valency`` must be set to properly initialize the diffusive species; the
+    ``ext_force_density`` is optional.
+
+    .. _Boundaries:
+
+    Boundaries
+    ^^^^^^^^^^
+    ::
+
+        ek_boundary = espressomd.ekboundaries.EKBoundary(charge_density=1.0, shape=my_shape)
+        system.ekboundaries.add(ek_boundary)
+
+    .. note:: Feature ``EK_BOUNDARIES`` required
+
+    The EKBoundary command allows one to set up (internal or external) boundaries for
+    the electrokinetics algorithm in much the same way as the command is
+    used for the LB fluid. The major difference with the LB command is given
+    by the option ``charge_density``, with which a boundary can be endowed with a volume
+    charge density. To create a surface charge density, a combination of two
+    oppositely charged boundaries, one inside the other, can be used.
+    However, care should be taken to maintain the surface charge density when the value of ``agrid``
+    is changed. Examples for possible shapes are wall, sphere, ellipsoid, cylinder,
+    rhomboid and hollowcone. We refer to the documentation of the
+    :class:`espressomd.shapes` module for more possible shapes and information on
+    the options associated to these shapes. In order to properly set up the
+    boundaries, the ``charge_density`` and ``shape``
+    must be specified.
+
+    .. _Checkpointing:
+
+    Checkpointing
+    ^^^^^^^^^^^^^
+    ::
+
+        ek.save_checkpoint(path)
+
+    Checkpointing in the EK works quite similar to checkpointing in the LB, because the density is not saved within the :class:`espressomd.checkpointing` object. However one should keep in mind, that the EK not only saves the density of the species but also saves the population of the LB fluid in a separate file. To load a checkpoint the :class:`espressomd.electrokinetics.Electrokinetics` should have the same name as in the script it was saved, but to use the species one need to extract them from the :class:`espressomd.electrokinetics.Electrokinetics` via ``species``.
+
+    ::
+
+        checkpoint.load(cpt_path)
+        species = ek.get_params()['species']
+        ek.load_checkpoint(path)
+
+    .. _Output:
+
+    Output
+    ~~~~~~
+
+    .. _Local Quantities:
+
+    Local Quantities
+    ^^^^^^^^^^^^^^^^
+
+    Local quantities like velocity or fluid density for single nodes can be accessed in the same way
+    as for an LB fluid, see :ref:`Lattice-Boltzmann`. The only EK-specific quantity is the potential.
+
+    ::
+
+        ek[0, 0, 0].potential
+        ek[0, 0, 0].velocity
+        ek[0, 0, 0].boundary
+
+    The local ``density`` and ``flux`` of a species can be obtained in the same fashion:
+
+    ::
+
+        species[0, 0, 0].density
+        species[0, 0, 0].flux
 
 
 .. _Particle polarizability with thermalized cold Drude oscillators:
@@ -1496,13 +1494,15 @@ polarizability :math:`\alpha` (in units of inverse volume) with :math:`q_d =
 
 The following helper method takes into account all the preceding considerations
 and can be used to conveniently add a Drude particle to a given core particle.
-As it also adds the first two bonds between Drude and core, these bonds have to
-be created beforehand::
+It returns an `espressomd.particle_data.ParticleHandle` to the created Drude
+particle. Note that as the function also adds the first two bonds between Drude
+and core, these bonds have to be already available.::
 
     import espressomd.drude_helpers
-    espressomd.drude_helpers(<system>, <harmonic_bond>, <thermalized_bond>,
-        <core particle>, <id drude>, <type drude>, <alpha>, <mass drude>,
-        <coulomb_prefactor>, <thole damping>, <verbose>)
+    dh = espressomd.drude_helpers.DrudeHelpers()
+    drude_part = dh.add_drude_particle_to_core(<system>, <harmonic_bond>,
+        <thermalized_bond>, <core particle>, <type drude>, <alpha>,
+        <mass drude>, <coulomb_prefactor>, <thole damping>, <verbose>)
 
 The arguments of the helper function are:
     * ``<system>``: The :class:`espressomd.System() <espressomd.system.System>`.
@@ -1511,7 +1511,6 @@ The arguments of the helper function are:
     * ``<thermalized_bond>``: The thermalized distance bond for the cold and hot
       thermostats.
     * ``<core particle>``: The core particle on which the Drude particle is added.
-    * ``<id drude>``: The user-defined id of the Drude particle that is created.
     * ``<type drude>``: The user-defined type of the Drude particle.
       Each Drude particle of each complex should have an
       individual type (e.g. in an ionic system with Anions (type 0) and Cations
@@ -1530,10 +1529,11 @@ One bond type of this kind is needed per Drude type. The above helper function a
 tracks particle types, ids and charges of Drude and core particles, so a simple call of
 another helper function::
 
-    espressomd.drude_helpers.setup_and_add_drude_exclusion_bonds(S)
+    dh.setup_and_add_drude_exclusion_bonds(system)
 
 will use this data to create a :ref:`Subtract P3M short-range bond` per Drude type
-and set it up it between all Drude and core particles collected in calls of :meth:`~espressomd.drude_helpers.add_drude_particle_to_core`.
+and set it up it between all Drude and core particles collected in calls of
+:meth:`~espressomd.drude_helpers.DrudeHelpers.add_drude_particle_to_core`.
 
 .. _Canceling intramolecular electrostatics:
 
@@ -1559,16 +1559,16 @@ after all Drude particles are added to the system::
     espressomd.drude_helpers.setup_intramol_exclusion_bonds(<system>, <molecule drude types>,
         <molecule core types>, <molecule core partial charges>, <verbose>)
 
-This function creates the requires number of bonds which are later added to the
+This function creates the required number of bonds which are later added to the
 particles. It has to be called only once. In a molecule with :math:`N` polarizable
 sites, :math:`N \cdot (N-1)` bond types are needed to cover all the combinations.
 Parameters are:
 
-    * ``<system>``: The :class:`espressomd.System() <espressomd.system.System>`.
-    * ``<molecule drude types>``: List of the Drude types within the molecule.
-    * ``<molecule core types>``: List of the core types within the molecule that have partial charges.
-    * ``<molecule core partial charges>``: List of the partial charges on the cores.
-    * ``<verbose>``: (bool, optional) Prints out information about the created bonds (default: False)
+* ``<system>``: The :class:`espressomd.System() <espressomd.system.System>`.
+* ``<molecule drude types>``: List of the Drude types within the molecule.
+* ``<molecule core types>``: List of the core types within the molecule that have partial charges.
+* ``<molecule core partial charges>``: List of the partial charges on the cores.
+* ``<verbose>``: (bool, optional) Prints out information about the created bonds (default: False)
 
 After setting up the bonds, one has to add them to each molecule with the
 following method::
@@ -1577,13 +1577,13 @@ following method::
 
 This method has to be called for all molecules and needs the following parameters:
 
-    * ``<system>``: The :class:`espressomd.System() <espressomd.system.System>`.
-    * ``<drude ids>``: The ids of the Drude particles within one molecule.
-    * ``<core ids>``: The ids of the core particles within one molecule.
-    * ``<verbose>``: (bool, optional) Prints out information about the added bonds (default: ``False``)
+* ``<system>``: The :class:`espressomd.System() <espressomd.system.System>`.
+* ``<drude ids>``: The ids of the Drude particles within one molecule.
+* ``<core ids>``: The ids of the core particles within one molecule.
+* ``<verbose>``: (bool, optional) Prints out information about the added bonds (default: ``False``)
 
 Internally, this is done with the bond described in  :ref:`Subtract P3M short-range bond`, that
-simply adds the p3m shortrange pair-force of scale :math:`- q_d q_{partial}` the to
+simply adds the p3m shortrange pair-force of scale :math:`- q_{\textrm{d}} q_{\textrm{partial}}` the to
 bonded particles.
 
 .. seealso::
@@ -1597,14 +1597,25 @@ bonded particles.
 Monte Carlo Methods
 -------------------
 
-.. note:: The whole Reaction Ensemble module uses Monte Carlo moves which require potential energies. Therefore the Reaction Ensemble requires support for energy calculations for all active interactions in the simulation. Please also note that Monte Carlo methods may create and delete particles from the system. This process can invalidate particle ids, in which case the particles are no longer numbered contiguously. Particle slices returned by ``system.part`` are still iterable, but the indices no longer match the particle ids.
+.. note::
+    The whole Reaction Ensemble module uses Monte Carlo moves which require
+    potential energies. Therefore the Reaction Ensemble requires support for
+    energy calculations for all active interactions in the simulation.
+    Please also note that Monte Carlo methods may create and delete
+    particles from the system. This process can invalidate particle ids,
+    in which case the particles are no longer numbered contiguously.
+    Particle slices returned by ``system.part`` are still iterable, but
+    the indices no longer match the particle ids. For improved performance,
+    you can set the type of invalidated particles with
+    :meth:`~espressomd.reaction_ensemble.ReactionAlgorithm.set_non_interacting_type`
+    in all Reaction Ensemble classes.
 
 .. _Reaction Ensemble:
 
 Reaction Ensemble
 ~~~~~~~~~~~~~~~~~
 
-The reaction ensemble :cite:`smith94c,turner2008simulation` allows to simulate
+The reaction ensemble :cite:`smith94c,turner08a` allows to simulate
 chemical reactions which can be represented by the general equation:
 
 .. math::

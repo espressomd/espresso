@@ -1,6 +1,6 @@
-// kernel generated with pystencils v0.3.3+39.g587a822, lbmpy
-// v0.3.3+33.g036fe13, lbmpy_walberla/pystencils_walberla from commit ref:
-// refs/heads/LeesEdwards
+// kernel generated with pystencils v0.3.4+4.g4fecf0c, lbmpy v0.3.4+6.g2faceda,
+// lbmpy_walberla/pystencils_walberla from commit
+// b17ca5caf00db7d19f86c5f85c6f67fec6c16aff
 
 //======================================================================================================================
 //
@@ -46,21 +46,15 @@ namespace lbm {
 #pragma diag_suppress = declared_but_not_referenced
 #endif
 
-namespace internal_dynamic_ubb_boundary_Dynamic_UBB {
-static FUNC_PREFIX void dynamic_ubb_boundary_Dynamic_UBB(
-    uint8_t *RESTRICT const _data_indexVector, double *RESTRICT _data_pdfs,
-    int64_t const _stride_pdfs_0, int64_t const _stride_pdfs_1,
-    int64_t const _stride_pdfs_2, int64_t const _stride_pdfs_3,
-    int64_t indexVectorSize) {
+namespace internal_boundary_Dynamic_UBB {
+static FUNC_PREFIX void
+boundary_Dynamic_UBB(uint8_t *RESTRICT const _data_indexVector,
+                     double *RESTRICT _data_pdfs, int64_t const _stride_pdfs_0,
+                     int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
+                     int64_t const _stride_pdfs_3, int64_t indexVectorSize) {
 
   const int64_t f_in_inv_dir_idx[] = {0, 2,  1,  4,  3,  6,  5,  10, 9, 8,
                                       7, 16, 15, 18, 17, 12, 11, 14, 13};
-  const int64_t f_out_offsets_x[] = {0, 0, 0, -1, 1, 0, 0, -1, 1, -1,
-                                     1, 0, 0, -1, 1, 0, 0, -1, 1};
-  const int64_t f_out_offsets_y[] = {0,  1, -1, 0, 0, 0, 0,  1, 1, -1,
-                                     -1, 1, -1, 0, 0, 1, -1, 0, 0};
-  const int64_t f_out_offsets_z[] = {0, 0, 0, 0, 0, 1,  -1, 0,  0, 0,
-                                     0, 1, 1, 1, 1, -1, -1, -1, -1};
 
   const double weights[] = {
       0.333333333333333,  0.0555555555555556, 0.0555555555555556,
@@ -126,7 +120,9 @@ static FUNC_PREFIX void dynamic_ubb_boundary_Dynamic_UBB(
                    _stride_pdfs_2 * z - _stride_pdfs_2 + 17 * _stride_pdfs_3] +
         _data_pdfs[_stride_pdfs_0 * x - _stride_pdfs_0 + _stride_pdfs_1 * y -
                    _stride_pdfs_1 + _stride_pdfs_2 * z + 9 * _stride_pdfs_3];
-    _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_1 * y + _stride_pdfs_2 * z +
+    _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_0 * neighbour_offset_x[dir] +
+               _stride_pdfs_1 * y + _stride_pdfs_1 * neighbour_offset_y[dir] +
+               _stride_pdfs_2 * z + _stride_pdfs_2 * neighbour_offset_z[dir] +
                _stride_pdfs_3 * f_in_inv_dir_idx[dir]] =
         -rho *
             (6.0 * *((double *)(&_data_indexVector[40 * ctr_0 + 16])) *
@@ -136,13 +132,11 @@ static FUNC_PREFIX void dynamic_ubb_boundary_Dynamic_UBB(
              6.0 * *((double *)(&_data_indexVector[40 * ctr_0 + 32])) *
                  neighbour_offset_z[dir]) *
             weights[dir] +
-        _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_0 * f_out_offsets_x[dir] +
-                   _stride_pdfs_1 * y + _stride_pdfs_1 * f_out_offsets_y[dir] +
-                   _stride_pdfs_2 * z + _stride_pdfs_2 * f_out_offsets_z[dir] +
-                   _stride_pdfs_3 * dir];
+        _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_1 * y +
+                   _stride_pdfs_2 * z + _stride_pdfs_3 * dir];
   }
 }
-} // namespace internal_dynamic_ubb_boundary_Dynamic_UBB
+} // namespace internal_boundary_Dynamic_UBB
 
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
@@ -152,7 +146,7 @@ static FUNC_PREFIX void dynamic_ubb_boundary_Dynamic_UBB(
 #pragma pop
 #endif
 
-void Dynamic_UBB::run_impl(IBlock *block, IndexVectors::Type type) {
+void Dynamic_UBB::run(IBlock *block, IndexVectors::Type type) {
   auto *indexVectors = block->getData<IndexVectors>(indexVectorID);
   int64_t indexVectorSize = int64_c(indexVectors->indexVector(type).size());
   if (indexVectorSize == 0)
@@ -170,16 +164,16 @@ void Dynamic_UBB::run_impl(IBlock *block, IndexVectors::Type type) {
   const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
   const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
   const int64_t _stride_pdfs_3 = int64_t(1 * int64_t(pdfs->fStride()));
-  internal_dynamic_ubb_boundary_Dynamic_UBB::dynamic_ubb_boundary_Dynamic_UBB(
+  internal_boundary_Dynamic_UBB::boundary_Dynamic_UBB(
       _data_indexVector, _data_pdfs, _stride_pdfs_0, _stride_pdfs_1,
       _stride_pdfs_2, _stride_pdfs_3, indexVectorSize);
 }
 
-void Dynamic_UBB::run(IBlock *block) { run_impl(block, IndexVectors::ALL); }
+void Dynamic_UBB::operator()(IBlock *block) { run(block, IndexVectors::ALL); }
 
-void Dynamic_UBB::inner(IBlock *block) { run_impl(block, IndexVectors::INNER); }
+void Dynamic_UBB::inner(IBlock *block) { run(block, IndexVectors::INNER); }
 
-void Dynamic_UBB::outer(IBlock *block) { run_impl(block, IndexVectors::OUTER); }
+void Dynamic_UBB::outer(IBlock *block) { run(block, IndexVectors::OUTER); }
 
 } // namespace lbm
 } // namespace walberla

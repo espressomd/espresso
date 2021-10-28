@@ -149,7 +149,7 @@ else
 fi
 
 if [ "${with_walberla}" = true ]; then
-  cmake_params="$cmake_params -DWITH_WALBERLA=ON"
+  cmake_params="${cmake_params} -DWITH_WALBERLA=ON"
 fi
 
 if [ "${with_coverage}" = true ]; then
@@ -323,7 +323,7 @@ if [ "${with_coverage}" = true ] || [ "${with_coverage_python}" = true ]; then
     fi
     if [ "${with_coverage_python}" = true ]; then
         echo "Running python3-coverage..."
-        python3 -m coverage combine testsuite/python testsuite/scripts/tutorials testsuite/scripts/samples
+        python3 -m coverage combine testsuite/python testsuite/scripts/tutorials testsuite/scripts/samples testsuite/scripts/benchmarks
         python3 -m coverage xml
     fi
     echo "Uploading to Codecov..."

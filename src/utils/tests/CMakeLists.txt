@@ -28,7 +28,7 @@ unit_test(NAME bspline_test SRC bspline_test.cpp DEPENDS EspressoUtils)
 unit_test(NAME Span_test SRC Span_test.cpp DEPENDS EspressoUtils)
 unit_test(NAME matrix_vector_product SRC matrix_vector_product.cpp DEPENDS
           EspressoUtils)
-unit_test(NAME ravel_index SRC index_test.cpp DEPENDS EspressoUtils)
+unit_test(NAME index_test SRC index_test.cpp DEPENDS EspressoUtils)
 unit_test(NAME tuple_test SRC tuple_test.cpp DEPENDS EspressoUtils)
 unit_test(NAME Array_test SRC Array_test.cpp DEPENDS Boost::serialization
           EspressoUtils)

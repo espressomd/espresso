@@ -41,7 +41,7 @@ Utils::Vector3d LBBoundary::get_force() const {
       // Convert to MD units
       auto const index = index_and_pos.first;
       auto const pos = index_and_pos.second * agrid;
-      if (not shape().is_inside(pos)) {
+      if (shape().is_inside(pos)) {
         auto node_force_density = lb_walberla()->get_node_boundary_force(index);
         if (node_force_density) {
           force += (*node_force_density);

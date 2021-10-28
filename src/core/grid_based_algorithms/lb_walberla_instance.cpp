@@ -54,21 +54,6 @@ LBWalberlaParams *lb_walberla_params() {
   return lb_walberla_params_instance;
 }
 
-void init_lb_walberla(double viscosity, double density, double agrid,
-                      double tau, double kT, unsigned int seed) {
-  // Exceptions need to be converted to runtime errors so they can be
-  // handled from Python in a parallel simulation
-  try {
-    lb_walberla_instance = new_lb_walberla(get_walberla_blockforest(), viscosity, density, kT, seed);
-    lb_walberla_params_instance = new LBWalberlaParams{agrid, tau};
-  } catch (const std::exception &e) {
-    runtimeErrorMsg() << "Error during Walberla initialization: " << e.what();
-    lb_walberla_instance = nullptr;
-    lb_walberla_params_instance = nullptr;
-  }
-}
-REGISTER_CALLBACK(init_lb_walberla)
-
 void destruct_lb_walberla() {
   delete lb_walberla_instance;
   delete lb_walberla_params_instance;
@@ -77,7 +62,23 @@ void destruct_lb_walberla() {
 }
 REGISTER_CALLBACK(destruct_lb_walberla)
 
-void mpi_init_lb_walberla(double viscosity, double density, double agrid, double tau, double kT, unsigned int seed) {
+void init_lb_walberla(double viscosity, double density, double agrid,
+                      double tau, double kT, unsigned int seed) {
+  // Exceptions need to be converted to runtime errors so they can be
+  // handled from Python in a parallel simulation
+  try {
+    lb_walberla_instance = new_lb_walberla(get_walberla_blockforest(),
+                                           viscosity, density, kT, seed);
+    lb_walberla_params_instance = new LBWalberlaParams{agrid, tau};
+  } catch (const std::exception &e) {
+    runtimeErrorMsg() << "Error during Walberla initialization: " << e.what();
+    destruct_lb_walberla();
+  }
+}
+REGISTER_CALLBACK(init_lb_walberla)
+
+void mpi_init_lb_walberla(double viscosity, double density, double agrid,
+                          double tau, double kT, unsigned int seed) {
   mpi_call_all(init_lb_walberla, viscosity, density, agrid, tau, kT, seed);
   if (lb_walberla_instance) {
     lb_lbfluid_set_lattice_switch(ActiveLB::WALBERLA);

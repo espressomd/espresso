@@ -21,33 +21,22 @@
 /** \file
  *
  * Boundary conditions for lattice Boltzmann fluid dynamics.
- * Header file for \ref lb_boundaries.hpp.
- *
+ * Source file for \ref lb_boundaries.hpp.
  */
 
 #include "grid_based_algorithms/lb_boundaries.hpp"
-
-#include "communication.hpp"
-#include "errorhandling.hpp"
-#include "event.hpp"
-#include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_walberla_instance.hpp"
+
+#include "event.hpp"
 #include "lbboundaries/LBBoundary.hpp"
 #include "walberla_blockforest.hpp"
-
-#include <utils/index.hpp>
-
-#include <boost/range/adaptor/reversed.hpp>
-#include <boost/range/algorithm.hpp>
 
 #include <algorithm>
 #include <cassert>
 #include <iterator>
 #include <memory>
 #include <vector>
-
-using Utils::get_linear_index;
 
 namespace LBBoundaries {
 
@@ -74,8 +63,6 @@ void remove(const std::shared_ptr<LBBoundary> &b) {
 void lb_init_boundaries() {
   if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
-#if defined(LB_BOUNDARIES)
-
     lb_walberla()->clear_boundaries();
 
     auto const agrid = lb_lbfluid_get_agrid();
@@ -86,13 +73,14 @@ void lb_init_boundaries() {
       auto const pos = index_and_pos.second * agrid;
 
       for (auto const &lbboundary : lbboundaries) {
-        if (not lbboundary->shape().is_inside(pos)) {
+        if (lbboundary->shape().is_inside(pos)) {
           lb_walberla()->set_node_velocity_at_boundary(
-              index, lbboundary->velocity() / lb_lbfluid_get_lattice_speed());
+              index, lbboundary->velocity() / lb_lbfluid_get_lattice_speed(),
+              false);
         }
       }
     }
-#endif
+    lb_walberla()->reallocate_ubb_field();
 #endif
   } // lattice switch is WALBERLA
 }

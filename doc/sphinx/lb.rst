@@ -16,7 +16,7 @@ geometries and boundary conditions are somewhat limited in comparison to
 Here we restrict the documentation to the interface. For a more detailed
 description of the method, please refer to the literature.
 
-.. note:: Please cite :cite:`arnold13a` (BibTeX key ``arnold13a`` in :file:`doc/sphinx/zrefs.bib`) if you use the LB fluid and :cite:`rohm12a` (BibTeX key ``rohm12a`` in :file:`doc/sphinx/zrefs.bib`) if you use the GPU implementation.
+.. note:: Please cite :cite:`godenschwager13a` and :cite:`bauer21a` (BibTeX keys ``godenschwager13a`` and ``bauer21a`` in :file:`doc/sphinx/zrefs.bib`) if you use the LB fluid. When generating your own kernels with pystencils and lbmpy, please also cite :cite:`bauer19a` resp. and :cite:`bauer21b` (BibTeX key ``bauer19a`` resp. ``bauer21b`` in :file:`doc/sphinx/zrefs.bib`).
 
 .. _Setting up a LB fluid:
 
@@ -29,18 +29,18 @@ The following minimal example illustrates how to use the LBM in |es|::
     system = espressomd.System(box_l=[10, 20, 30])
     system.time_step = 0.01
     system.cell_system.skin = 0.4
-    lb = espressomd.lb.LBFluid(agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
+    lb = espressomd.lb.LBFluidWalberla(agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
     system.actors.add(lb)
     system.integrator.run(100)
 
 To use the GPU accelerated variant, replace line 5 in the example above by::
 
-    lb = espressomd.lb.LBFluidGPU(agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
+    lb = espressomd.lb.LBFluidWalberlaGPU(agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
 
 .. note:: Feature ``CUDA`` required for GPU accelerated variant
 
 To use the (much faster) GPU implementation of the LBM, use
-:class:`espressomd.lb.LBFluidGPU` in place of :class:`espressomd.lb.LBFluid`.
+:class:`espressomd.lb.LBFluidWalberlaGPU` in place of :class:`espressomd.lb.LBFluidWalberla`.
 Please note that the GPU implementation uses single precision floating point operations. This decreases the accuracy of calculations compared to the CPU implementation. In particular, due to rounding errors, the fluid density decreases over time, when external forces, coupling to particles, or thermalization is used. The loss of density is on the order of :math:`10^{-12}` per time step.
 
 The command initializes the fluid with a given set of parameters. It is
@@ -50,7 +50,7 @@ to set up a box of a desired size. The parameter is used to set the
 lattice constant of the fluid, so the size of the box in every direction
 must be a multiple of ``agrid``.
 
-In the following, we discuss the parameters that can be supplied to the LBM in |es|. The detailed interface definition is available at :class:`espressomd.lb.LBFluid`.
+In the following, we discuss the parameters that can be supplied to the LBM in |es|. The detailed interface definition is available at :class:`espressomd.lb.LBFluidWalberla`.
 
 The LB scheme and the MD scheme are not synchronized: In one LB time
 step typically several MD steps are performed. This allows to speed up
@@ -72,7 +72,7 @@ Thermalization of the fluid (and particle coupling later on) can be activated by
 providing a non-zero value for the parameter ``kT``. Then, a seed has to be provided for
 the fluid thermalization::
 
-    lbfluid = espressomd.lb.LBFluid(kT=1.0, seed=134, ...)
+    lb = espressomd.lb.LBFluidWalberla(kT=1.0, seed=134, ...)
 
 The parameter ``ext_force_density`` takes a three dimensional vector as an
 array_like of :obj:`float`, representing a homogeneous external body force density in MD
@@ -89,7 +89,7 @@ expert, leave their defaults unchanged. If you do change them, note that they
 are to be given in LB units.
 
 Before running a simulation at least the following parameters must be
-set up: ``agrid``, ``tau``, ``visc``, ``dens``. For the other parameters, the following are taken: ``bulk_visc=0``, ``gamma_odd=0``, ``gamma_even=0``, ``ext_force_density=[0,0,0]``.
+set up: ``agrid``, ``tau``, ``visc``, ``dens``.
 
 .. _Checkpointing LB:
 
@@ -133,18 +133,8 @@ To get interpolated velocity values between lattice nodes, the function::
     lb.get_interpolated_velocity(pos = [1.1,1.2,1.3])
 
 with a single position  ``pos`` as an argument can be used.
-For the GPU fluid :class:`espressomd.lb.LBFluidGPU`
-also :py:meth:`espressomd.lb.LBFluidGPU.get_interpolated_fluid_velocity_at_positions()`
-is available, which expects a numpy array of positions as an argument.
 
-By default, the interpolation is done linearly between the nearest 8 LB nodes,
-but for the GPU implementation also a quadratic scheme involving 27 nodes is implemented
-(see eqs. 297 and 301 in :cite:`duenweg08a`).
-You can choose by calling
-one of::
-
-    lb.set_interpolation_order('linear')
-    lb.set_interpolation_order('quadratic')
+The interpolation is done linearly between the nearest 8 LB nodes.
 
 A note on boundaries:
 both interpolation schemes don't take into account the physical location of the boundaries
@@ -159,7 +149,7 @@ Coupling LB to a MD simulation
 
 MD particles can be coupled to a LB fluid through frictional coupling. The friction force
 
-  .. math:: F_{i,\text{frict}} = - \gamma (v_i(t)-u(x_i(t),t))
+.. math:: F_{i,\text{frict}} = - \gamma (v_i(t)-u(x_i(t),t))
 
 depends on the particle velocity :math:`v` and the fluid velocity :math:`u`. It acts both
 on the particle and the fluid (in opposite direction). Because the fluid is also affected,
@@ -169,7 +159,7 @@ the :ref:`LB thermostat` (See more detailed description there). A short example 
 
     system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1.5)
 
-where ``lbf`` is an instance of either :class:`espressomd.lb.LBFluid` or :class:`espressomd.lb.LBFluidGPU`,
+where ``lbf`` is an instance of either :class:`espressomd.lb.LBFluidWalberla` or :class:`~espressomd.lb.LBFluidWalberlaGPU`,
 ``gamma`` the friction coefficient and ``seed`` the seed for the random number generator involved
 in the thermalization.
 
@@ -184,11 +174,13 @@ Appending three indices to the ``lb`` object returns an object that represents t
     lb[x, y, z].density              # fluid density (one scalar for LB and CUDA)
     lb[x, y, z].velocity             # fluid velocity (a numpy array of three floats)
     lb[x, y, z].pressure_tensor      # fluid pressure tensor (a symmetric 3x3 numpy array of floats)
-    lb[x, y, z].pressure_tensor_neq  # nonequilibrium part of the pressure tensor (as above)
-    lb[x, y, z].boundary             # flag indicating whether the node is fluid or boundary (fluid: boundary=0, boundary: boundary != 0)
+    lb[x, y, z].is_boundary          # flag indicating whether the node is fluid or boundary (fluid: boundary=0, boundary: boundary != 1)
     lb[x, y, z].population           # 19 LB populations (a numpy array of 19 floats, check order from the source code)
 
-All of these properties can be read and used in further calculations. Only the property ``population`` can be modified. The indices ``x,y,z`` are integers and enumerate the LB nodes in the three directions, starts with 0. To modify ``boundary``, refer to :ref:`Setting up boundary conditions`.
+All of these properties can be read and used in further calculations.
+Only the property ``population`` can be modified. The indices ``x,y,z``
+are integers and enumerate the LB nodes in the three directions, start
+with 0. To modify ``is_boundary``, refer to :ref:`Setting up boundary conditions`.
 
 Example::
 
@@ -228,8 +220,8 @@ drift. To remove the momentum in the fluid call::
 Output for visualization
 ------------------------
 
-|es| implements the :meth:`LBFluidWalberla.write_vtk()` command to output
-one or multiple fluid field data into a single file::
+|es| implements the :meth:`espressomd.lb.LBFluidWalberla.add_vtk_writer()`
+command to output one or multiple fluid field data into a single file::
 
 
     vtk_obs = ['density', 'velocity_vector']
@@ -240,14 +232,14 @@ one or multiple fluid field data into a single file::
     lb_vtk.disable()
     self.system.integrator.run(10)
     lb_vtk.enable()
-    # create a VTK callback that writes on demand
-    lb_vtk = lbf.add_vtk_writer('vtk_now', vtk_obs)
-    lb_vtk.write()
+    # create a VTK callback that writes only when explicitly called
+    lb_vtk_on_demand = lbf.add_vtk_writer('vtk_now', vtk_obs)
+    lb_vtk_on_demand.write()
 
 Currently supported fluid properties are the density, velocity vector
 and pressure tensor. By default, the properties of the current state
-of the fluid are written to disk. To add a callback that writes to
-disk continuously, use the optional argument ``delta_N`` to indicate
+of the fluid are written to disk on demand. To add a callback that writes
+to disk continuously, use the optional argument ``delta_N`` to indicate
 the level of subsampling. Such a callback can be deactivated.
 
 The VTK format is readable by visualization software such as ParaView [1]_
@@ -264,7 +256,7 @@ Choosing between the GPU and CPU implementations
 |es| contains an implementation of the LBM for NVIDIA
 GPUs using the CUDA framework. On CUDA-supporting machines this can be
 activated by compiling with the feature ``CUDA``. Within the
-Python script, the :class:`~espressomd.lb.LBFluid` object can be substituted with the :class:`~espressomd.lb.LBFluidGPU` object to switch from CPU based to GPU based execution. For further
+Python script, the :class:`~espressomd.lb.LBFluidWalberla` object can be substituted with the :class:`~espressomd.lb.LBFluidWalberlaGPU` object to switch from CPU based to GPU based execution. For further
 information on CUDA support see section :ref:`GPU Acceleration with CUDA`.
 
 The following minimal example demonstrates how to use the GPU implementation of the LBM in analogy to the example for the CPU given in section :ref:`Setting up a LB fluid`::
@@ -273,7 +265,7 @@ The following minimal example demonstrates how to use the GPU implementation of 
     system = espressomd.System(box_l=[10, 20, 30])
     system.time_step = 0.01
     system.cell_system.skin = 0.4
-    lb = espressomd.lb.LBFluidGPU(agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
+    lb = espressomd.lb.LBFluidWalberlaGPU(agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
     system.actors.add(lb)
     system.integrator.run(100)
 
@@ -284,8 +276,8 @@ The feature ``CUDA`` allows the use of Lees-Edwards boundary conditions. Our imp
 Electrohydrodynamics
 --------------------
 
-        .. note::
-           This needs the feature ``LB_ELECTROHYDRODYNAMICS``.
+.. note::
+   This needs the feature ``LB_ELECTROHYDRODYNAMICS``.
 
 If the feature is activated, the lattice-Boltzmann code can be
 used to implicitly model surrounding salt ions in an external electric
@@ -300,117 +292,116 @@ For more information on this method and how it works, read the
 publication :cite:`hickey10a`.
 
 
-.. _Using shapes as lattice-Boltzmann boundary:
-
-Using shapes as lattice-Boltzmann boundary
-------------------------------------------
-
-.. note::
-    Feature ``LB_BOUNDARIES`` required
-
-Lattice-Boltzmann boundaries are implemented in the module
-:mod:`espressomd.lbboundaries`. You might want to take a look
-at the classes :class:`espressomd.lbboundaries.LBBoundary`
-and :class:`espressomd.lbboundaries.LBBoundaries` for more information.
-
-Adding a shape-based boundary is straightforward::
-
-    lbb = espressomd.lbboundaries.LBBoundary(shape=my_shape, velocity=[0, 0, 0])
-    system.lbboundaries.add(lbb)
-
-or::
-
-    lbb = espressomd.lbboundaries.LBBoundary()
-    lbb.shape = my_shape
-    lbb.velocity = [0, 0, 0]
-    system.lbboundaries.add(lbb)
-
-.. _Minimal usage example:
-
-Minimal usage example
-~~~~~~~~~~~~~~~~~~~~~
-
-.. note:: Feature ``LB_BOUNDARIES`` required
-
-In order to add a wall as boundary for a lattice-Boltzmann fluid
-you could do the following::
-
-    wall = espressomd.shapes.Wall(dist=5, normal=[1, 0, 0])
-    lbb = espressomd.lbboundaries.LBBoundary(shape=wall, velocity=[0, 0, 0])
-    system.lbboundaries.add(lbb)
-
 .. _Setting up boundary conditions:
 
 Setting up boundary conditions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------
 
-The following example sets up a system consisting of a spherical boundary in the center of the simulation box acting as a no-slip boundary for the LB fluid that is driven by 4 walls with a slip velocity::
+Currently, only the so-called "link-bounce-back" algorithm for boundary
+nodes is available. This creates a boundary that is located
+approximately midway between lattice nodes. With no-slip boundary conditions,
+populations are reflected back. With slip velocities, the reflection is
+followed by a velocity interpolation. This allows to create shear flow and
+boundaries "moving" relative to each other.
 
-    import espressomd
+Under the hood, a boundary field is added to the blockforest, which contains
+pre-calculated information for the reflection and interpolation operations.
+
+.. _Per-node boundary conditions:
+
+Per-node boundary conditions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+One can set (or update) the slip velocity of individual nodes::
+
     import espressomd.lb
     import espressomd.lbboundaries
-    import espressomd.shapes
-
-    system = espressomd.System(box_l=[64, 64, 64])
+    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system.cell_system.skin = 0.1
     system.time_step = 0.01
-    system.cell_system.skin = 0.4
+    lbf = espressomd.lb.LBFluidWalberla(agrid=0.5, dens=1.0, visc=1.0, tau=0.01)
+    system.actors.add(lbf)
+    # make one node a boundary node with a slip velocity
+    lbf[0, 0, 0].boundary = espressomd.lbboundaries.VelocityBounceBack([0, 0, 1])
+    # update node for no-slip boundary conditions
+    lbf[0, 0, 0].boundary = espressomd.lbboundaries.VelocityBounceBack([0, 0, 0])
+    # remove boundary conditions
+    lbf[0, 0, 0].boundary = None
 
-    lb = espressomd.lb.LBFluid(agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
-    system.actors.add(lb)
+Please note that setting individual boundary nodes in this way can be slow
+in a for loop, because each assigment to ``lbf[i, j, k].boundary`` results
+in a complete reconstruction of the boundary field. For batch processing,
+prefer using :meth:`lbf.add_boundary_from_list()
+<espressomd.lb.LBFluidWalberla.add_boundary_from_list>`.
 
-    v = [0, 0, 0.01]  # the boundary slip
-    walls = [None] * 4
+.. _Batch per-node boundary conditions:
 
-    wall_shape = espressomd.shapes.Wall(normal=[1, 0, 0], dist=1)
-    walls[0] = espressomd.lbboundaries.LBBoundary(shape=wall_shape, velocity=v)
+Batch per-node boundary conditions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    wall_shape = espressomd.shapes.Wall(normal=[-1, 0, 0], dist=-63)
-    walls[1] = espressomd.lbboundaries.LBBoundary(shape=wall_shape, velocity=v)
+Alternatively, one can set up a boundary (or update an existing one) by
+providing a list of nodes and a list of velocities of the same dimensions::
 
-    wall_shape = espressomd.shapes.Wall(normal=[0, 1, 0], dist=1)
-    walls[2] = espressomd.lbboundaries.LBBoundary(shape=wall_shape, velocity=v)
+    import espressomd.lb
+    import espressomd.shapes
+    import espressomd.lbboundaries
+    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system.cell_system.skin = 0.1
+    system.time_step = 0.01
+    lbf = espressomd.lb.LBFluidWalberla(agrid=0.5, dens=1.0, visc=1.0, tau=0.01)
+    system.actors.add(lbf)
+    velocity_magnitude = 0.01
+    # set up a static cylinder
+    cylinder = espressomd.shapes.Cylinder(
+        center=[5., 5., 5.], axis=[0, 0, 1], length=3 * system.box_l[2],
+        radius=8.1 * lbf.agrid, direction=1)
+    lbf.add_boundary(cylinder)
+    # update surface nodes with a tangential slip velocity
+    surface_nodes = espressomd.lbboundaries.edge_detection(
+        lbf.get_shape_bitmask(cylinder), system.periodicity)
+    tangents = espressomd.lbboundaries.calc_cylinder_tangential_vectors(
+        cylinder.center, lbf.agrid, 0.5, surface_nodes)
+    lbf.add_boundary_from_list(surface_nodes, velocity_magnitude * tangents)
+    # remove boundary conditions
+    lbf.clear_boundaries()
 
-    wall_shape = espressomd.shapes.Wall(normal=[0, -1, 0], dist=-63)
-    walls[3] = espressomd.lbboundaries.LBBoundary(shape=wall_shape, velocity=v)
+See the script :file:`samples/lb_circular_couette.py` for how to set up a
+complete LB simulation with slip velocities at the surface of a cylinder.
 
-    for wall in walls:
-        system.lbboundaries.add(wall)
+.. _Shape-based boundary conditions:
 
-    sphere_shape = espressomd.shapes.Sphere(radius=5.5, center=[33, 33, 33], direction=1)
-    sphere = espressomd.lbboundaries.LBBoundary(shape=sphere_shape)
-    system.lbboundaries.add(sphere)
+Shape-based boundary conditions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    system.integrator.run(4000)
+Adding a shape-based boundary is straightforward::
 
-    print(sphere.get_force())
+    import espressomd.lb
+    import espressomd.shapes
+    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system.cell_system.skin = 0.1
+    system.time_step = 0.01
+    lbf = espressomd.lb.LBFluidWalberla(agrid=0.5, dens=1.0, visc=1.0, tau=0.01)
+    system.actors.add(lbf)
+    # set up shear flow between two sliding walls
+    wall1 = espressomd.shapes.Wall(normal=[+1., 0., 0.], dist=2.5)
+    lbf.add_boundary(shape=wall1, velocity=[0., +0.05, 0.])
+    wall2 = espressomd.shapes.Wall(normal=[-1., 0., 0.], dist=-(system.box_l[0] - 2.5))
+    lbf.add_boundary(shape=wall2, velocity=[0., -0.05, 0.])
 
-After integrating the system for a sufficient time to reach the steady state, the hydrodynamic drag force exerted on the sphere is evaluated.
+The ``velocity`` argument is optional, in which case the no-slip boundary
+conditions are used. For a position-dependent slip velocity, the argument
+to ``velocity`` must be a 4D grid (the first three dimensions must match
+the LB grid shape, the fourth dimension has size 3 for the velocity).
 
-The LB boundaries use the same :mod:`~espressomd.shapes` objects to specify their geometry as :mod:`~espressomd.constraints` do for particles. This allows the user to quickly set up a system with boundary conditions that simultaneously act on the fluid and particles. For a complete description of all available shapes, refer to :mod:`espressomd.shapes`.
-
-Intersecting boundaries are in principle possible but must be treated
-with care. In the current implementation, all nodes that are
-within at least one boundary are treated as boundary nodes.
-
-Currently, only the so-called "link-bounce-back" algorithm for wall
-nodes is available. This creates a boundary that is located
-approximately midway between the lattice nodes, so in the above example ``wall[0]``
-corresponds to a boundary at :math:`x=1.5`. Note that the
-location of the boundary is unfortunately not entirely independent of
-the viscosity. This can be seen when using the sample script with a high
-viscosity.
-
-The bounce back boundary conditions permit it to set the velocity at the boundary
-to a nonzero value via the ``v`` property of an ``LBBoundary`` object. This allows to create shear flow and boundaries
-moving relative to each other. The velocity boundary conditions are
-implemented according to :cite:`succi01a` eq. 12.58. Using
-this implementation as a blueprint for the boundary treatment, an
-implementation of the Ladd-Coupling should be relatively
-straightforward. The ``LBBoundary`` object furthermore possesses a property ``force``, which keeps track of the hydrodynamic drag force exerted onto the boundary by the moving fluid.
+The LB boundaries use the same :mod:`~espressomd.shapes` objects to specify
+their geometry as :mod:`~espressomd.constraints` do for particles. This
+allows the user to quickly set up a system with boundary conditions that
+simultaneously act on the fluid and particles. For a complete description
+of all available shapes, refer to :mod:`espressomd.shapes`.
 
 
 .. [1]
-   http://www.paraview.org/
+   https://www.paraview.org/
 
 .. [2]
    http://code.enthought.com/projects/mayavi/

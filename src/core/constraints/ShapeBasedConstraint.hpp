@@ -43,10 +43,10 @@ public:
   }
 
   void add_energy(const Particle &p, const Utils::Vector3d &folded_pos,
-                  double t, Observable_stat &energy) const override;
+                  double time, Observable_stat &energy) const override;
 
   ParticleForce force(const Particle &p, const Utils::Vector3d &folded_pos,
-                      double t) override;
+                      double time) override;
 
   bool fits_in_box(Utils::Vector3d const &) const override { return true; }
 

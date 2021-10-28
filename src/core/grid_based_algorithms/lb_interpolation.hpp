@@ -25,20 +25,14 @@
  * @brief Calculates the fluid velocity at a given position of the
  * lattice.
  * @note It can lead to undefined behaviour if the
- * position is not within the local lattice. */
+ * position is not within the local lattice.
+ */
 const Utils::Vector3d
-lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &p);
-
-/**
- * @brief Calculates the fluid density at a given position of the
- * lattice.
- * @note It can lead to undefined behaviour if the
- * position is not within the local lattice. */
-double lb_lbinterpolation_get_interpolated_density(const Utils::Vector3d &p);
+lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos);
 
 /**
  * @brief Add a force density to the fluid at the given position.
  */
-void lb_lbinterpolation_add_force_density(const Utils::Vector3d &p,
+void lb_lbinterpolation_add_force_density(const Utils::Vector3d &pos,
                                           const Utils::Vector3d &force_density);
 #endif

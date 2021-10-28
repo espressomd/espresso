@@ -30,7 +30,7 @@ import espressomd.lbboundaries
 import espressomd.virtual_sites
 
 required_features = ["LB_BOUNDARIES", "VIRTUAL_SITES_INERTIALESS_TRACERS",
-                     "EXPERIMENTAL_FEATURES"]
+                     "LB_WALBERLA", "EXPERIMENTAL_FEATURES"]
 espressomd.assert_features(required_features)
 
 parser = argparse.ArgumentParser()

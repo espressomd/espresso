@@ -15,7 +15,6 @@
 # serve to show the default.
 
 import sys
-import sphinx
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -58,7 +57,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'ESPResSo'
-copyright = '2018-2020, The ESPResSo project'
+copyright = '2018-2021, The ESPResSo project'
 author = 'C. Holm, F. Weik, R. Weeber'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -139,10 +138,10 @@ html_theme_options = {
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-html_title = "ESPResSo documentation"
+html_title = f"{project} documentation"
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
-html_short_title = "ESPResSo doc"
+html_short_title = f"{project} v{release} documentation"
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
@@ -228,14 +227,11 @@ htmlhelp_basename = 'ESPResSo'
 
 # -- reStructuredText options ---------------------------------------------
 
-if sphinx.version_info[:2] < (1, 8):
-    autodoc_default_flags = ['members', 'show-inheritance', 'undoc-members']
-else:
-    autodoc_default_options = {
-        'members': None,
-        'show-inheritance': None,
-        'undoc-members': None,
-    }
+autodoc_default_options = {
+    'members': None,
+    'show-inheritance': None,
+    'undoc-members': None,
+}
 # For sidebar toc depth
 rst_prolog = """
 :tocdepth: 3
@@ -252,16 +248,13 @@ napoleon_use_param = False
 # -- Other options --------------------------------------------------------
 
 # Suppress warnings for features not compiled in
-# http://stackoverflow.com/questions/12206334/sphinx-autosummary-toctree-contains-reference-to-nonexisting-document-warnings
+# https://stackoverflow.com/questions/12206334/sphinx-autosummary-toctree-contains-reference-to-nonexisting-document-warnings
 autodoc_mock_imports = ['featuredefs', 'matplotlib', 'OpenGL', 'mayavi', 'pyface', 'tvtk', 'vtk']
-if sphinx.version_info[:3] < (2, 0, 1):
-    autodoc_mock_imports.append('MDAnalysis')
 
+# Add custom stylesheets
 def setup(app):
-    if sphinx.version_info[:2] < (1, 8):
-        app.add_stylesheet('bibtex.css')
-    else:
-        app.add_css_file('bibtex.css')
+    app.add_css_file('bibtex.css')
+    app.add_css_file('blockquotes.css')
 
 
 # -- Options for Cython ---------------------------------------------------

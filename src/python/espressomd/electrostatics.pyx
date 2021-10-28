@@ -32,10 +32,9 @@ import sys
 
 IF ELECTROSTATICS == 1:
     def check_neutrality(_params):
-        if "check_neutrality" in _params:
-            if(_params["check_neutrality"]):
-                if not check_charge_neutrality[PartCfg](partCfg()):
-                    raise Exception("""
+        if _params.get("check_neutrality", False):
+            if not check_charge_neutrality[PartCfg](partCfg()):
+                raise Exception(' '.join("""
                     The system is not charge neutral. Please
                     neutralize the system before adding a new actor by adding
                     the corresponding counterions to the system. Alternatively
@@ -47,7 +46,7 @@ IF ELECTROSTATICS == 1:
                     energies of the system. Since simulations of non charge
                     neutral systems are special please make sure you know what
                     you are doing.
-                    """)
+                    """.split()))
 
     cdef class ElectrostaticInteraction(Actor):
         def _tune(self):
@@ -324,6 +323,8 @@ IF P3M == 1:
             Defaults to ``True``.
         timings : :obj:`int`
             Number of force calculations during tuning.
+        verbose : :obj:`bool`, optional
+            If ``False``, disable log output during tuning.
         check_neutrality : :obj:`bool`, optional
             Raise a warning if the system is not electrically neutral when
             set to ``True`` (default).
@@ -370,6 +371,8 @@ IF P3M == 1:
                 Defaults to ``True``.
             timings : :obj:`int`
                 Number of force calculations during tuning.
+            verbose : :obj:`bool`, optional
+                If ``False``, disable log output during tuning.
             check_neutrality : :obj:`bool`, optional
                 Raise a warning if the system is not electrically neutral when
                 set to ``True`` (default).

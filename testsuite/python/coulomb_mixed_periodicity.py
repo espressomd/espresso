@@ -30,7 +30,7 @@ class CoulombMixedPeriodicity(ut.TestCase):
 
     """Test mixed periodicity electrostatics"""
 
-    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system = espressomd.System(box_l=[10, 10, 10])
     data = np.genfromtxt(tests_common.abspath(
         "data/coulomb_mixed_periodicity_system.data"))
 
@@ -41,7 +41,6 @@ class CoulombMixedPeriodicity(ut.TestCase):
     reference_energy = 216.640984711
 
     def setUp(self):
-        self.system.box_l = (10, 10, 10)
         self.system.time_step = 0.01
         self.system.cell_system.skin = 0.
 
@@ -71,20 +70,16 @@ class CoulombMixedPeriodicity(ut.TestCase):
                 self.reference_energy, delta=self.tolerance_energy,
                 msg="Absolute energy difference too large for " + method_name)
 
-    # Tests for individual methods
-
     @utx.skipIfMissingFeatures(["P3M"])
     def test_elc(self):
         # Make sure, the data satisfies the gap
         for p in self.system.part:
-            if p.pos[2] < 0 or p.pos[2] > 9.:
-                raise Exception("Particle z pos invalid")
+            assert p.pos[2] >= 0. and p.pos[2] <= 9., f'particle {p.id} in gap'
 
         self.system.cell_system.set_domain_decomposition()
         self.system.cell_system.node_grid = sorted(
             self.system.cell_system.node_grid, key=lambda x: -x)
         self.system.periodicity = [1, 1, 1]
-        self.system.box_l = (10, 10, 10)
 
         p3m = espressomd.electrostatics.P3M(
             prefactor=1, accuracy=1e-6, mesh=(64, 64, 64))
@@ -101,7 +96,6 @@ class CoulombMixedPeriodicity(ut.TestCase):
     def test_scafacos_p2nfft(self):
         self.system.periodicity = [1, 1, 0]
         self.system.cell_system.set_domain_decomposition()
-        self.system.box_l = [10, 10, 10]
 
         scafacos = espressomd.electrostatics.Scafacos(
             prefactor=1,

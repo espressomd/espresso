@@ -120,15 +120,15 @@ class CollisionDetection(ut.TestCase):
         for pos in positions:
             p1 = system.part.add(pos=pos + (0, 0, 0))
             p2 = system.part.add(pos=pos + (0.1, 0, 0))
-            if system.distance(p1, p) < 0.12 or system.distance(p2, p) < 0.12:
-                raise Exception(
-                    "Test particle too close to particle, which should not take part in collision")
+            assert system.distance(p1, p) >= 0.12 and system.distance(
+                p2, p) >= 0.12, "Test particles too close to particle, which should not take part in collision"
 
         # 2 non-virtual + 2 virtual + one that doesn't take part
         expected_np = 4 * len(positions) + 1
 
         system.collision_detection.set_params(
-            mode="bind_at_point_of_collision", distance=0.11, bond_centers=self.H, bond_vs=self.H2, part_type_vs=1, vs_placement=0.4)
+            mode="bind_at_point_of_collision", bond_centers=self.H,
+            bond_vs=self.H2, part_type_vs=1, vs_placement=0.4, distance=0.11)
         self.get_state_set_state_consistency()
         system.integrator.run(1, recalc_forces=True)
         self.verify_state_after_bind_at_poc(expected_np)
@@ -406,8 +406,7 @@ class CollisionDetection(ut.TestCase):
                         for b in candidate.bonds:
                             if b[0] == self.H and b[1] == base_p.id:
                                 p2 = candidate
-                if p2 is None:
-                    raise Exception("Bound particle not found")
+                assert p2 is not None, "Bound particle not found"
             # Take note of accounted-for particles
             parts_not_accounted_for.remove(base_p.id)
             parts_not_accounted_for.remove(p.id)
@@ -486,12 +485,10 @@ class CollisionDetection(ut.TestCase):
         system.part.clear()
 
         # Add randomly placed particles
-        system.part.add(pos=np.random.random((100, 3)),
-                        type=100 * [self.part_type_to_attach_vs_to])
-        system.part.add(pos=np.random.random(
-            (100, 3)), type=100 * [self.part_type_to_be_glued])
-        system.part.add(pos=np.random.random(
-            (100, 3)), type=100 * [self.other_type])
+        system.part.add(pos=np.random.random((300, 3)),
+                        type=np.repeat([self.part_type_to_attach_vs_to,
+                                        self.part_type_to_be_glued,
+                                        self.other_type], [100, 100, 100]))
 
         # Setup Lennard-Jones
         system.non_bonded_inter[0, 0].lennard_jones.set_params(
@@ -561,8 +558,8 @@ class CollisionDetection(ut.TestCase):
                         system.part[bond[1]].type,
                         self.part_type_after_glueing)
                 else:
-                    print(p.id, p.type, p.bonds)
-                    raise Exception("Particle should not have bonds. ")
+                    raise Exception(
+                        f"Particle {p.id} of type {p.type} should not have bonds, yet has {p.bonds}.")
 
                 # Collect bonds
                 # Sort bond partners to make them unique independently of
@@ -612,7 +609,7 @@ class CollisionDetection(ut.TestCase):
 
         # Setup bonds
         res = 181
-        for i in range(0, res, 1):
+        for i in range(res):
             system.bonded_inter[i + 2] = espressomd.interactions.AngleHarmonic(
                 bend=1, phi0=float(i) / (res - 1) * np.pi)
         cutoff = 0.11
@@ -713,29 +710,15 @@ class CollisionDetection(ut.TestCase):
                         (i, b[0]._bond_id, partners[0], partners[1]))
                 else:
                     raise Exception(
-                        "There should be only 2 and three particle bonds")
+                        "There should be only 2- and 3-particle bonds")
 
         # The order between expected and found bonds does not always match
         # because collisions occur in random order. Sort stuff
         found_pairs = sorted(found_pairs)
         found_angle_bonds = sorted(found_angle_bonds)
         expected_angle_bonds = sorted(expected_angle_bonds)
-        self.assertEqual(expected_pairs, found_pairs)
-
-        if expected_angle_bonds != found_angle_bonds:
-            # Verbose info
-            print("expected:", expected_angle_bonds)
-            missing = []
-            for b in expected_angle_bonds:
-                if b in found_angle_bonds:
-                    found_angle_bonds.remove(b)
-                else:
-                    missing.append(b)
-            print("missing", missing)
-            print("extra:", found_angle_bonds)
-            print()
-
-        self.assertEqual(expected_angle_bonds, found_angle_bonds)
+        self.assertEqual(found_pairs, expected_pairs)
+        self.assertEqual(found_angle_bonds, expected_angle_bonds)
 
     def test_zz_serialization(self):
         self.system.collision_detection.set_params(

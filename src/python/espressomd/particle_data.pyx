@@ -20,11 +20,11 @@ include "myconfig.pxi"
 
 cimport numpy as np
 import numpy as np
+from cython.operator cimport dereference
 from . cimport particle_data
 from .interactions import BondedInteraction
 from .interactions import BondedInteractions
-from .interactions cimport bonded_ia_params_size
-from .interactions cimport bonded_ia_params_num_partners
+from .interactions cimport bonded_ia_params_zero_based_type
 from .analyze cimport max_seen_particle_type
 from copy import copy
 import collections
@@ -32,6 +32,7 @@ import functools
 from .utils import nesting_level, array_locked, is_valid_type
 from .utils cimport make_array_locked, make_const_span, check_type_or_throw_except
 from .utils cimport Vector3i, Vector3d, Vector4d
+from .utils cimport make_Vector3d
 from .grid cimport box_geo, folded_position, unfolded_position
 
 
@@ -169,14 +170,11 @@ cdef class ParticleHandle:
         """
 
         def __set__(self, _pos):
-            cdef Vector3d pos
             if np.isnan(_pos).any() or np.isinf(_pos).any():
                 raise ValueError("invalid particle position")
             check_type_or_throw_except(
                 _pos, 3, float, "Position must be 3 floats")
-            for i in range(3):
-                pos[i] = _pos[i]
-            if place_particle(self._id, pos) == -1:
+            if place_particle(self._id, make_Vector3d(_pos)) == -1:
                 raise Exception("particle could not be set")
 
         def __get__(self):
@@ -248,12 +246,9 @@ cdef class ParticleHandle:
         """
 
         def __set__(self, _v):
-            cdef Vector3d v
             check_type_or_throw_except(
                 _v, 3, float, "Velocity has to be floats")
-            for i in range(3):
-                v[i] = _v[i]
-            set_particle_v(self._id, v)
+            set_particle_v(self._id, make_Vector3d(_v))
 
         def __get__(self):
             self.update_particle_data()
@@ -274,11 +269,8 @@ cdef class ParticleHandle:
         """
 
         def __set__(self, _f):
-            cdef Vector3d f
             check_type_or_throw_except(_f, 3, float, "Force has to be floats")
-            for i in range(3):
-                f[i] = _f[i]
-            set_particle_f(self._id, f)
+            set_particle_f(self._id, make_Vector3d(_f))
 
         def __get__(self):
             self.update_particle_data()
@@ -329,12 +321,10 @@ cdef class ParticleHandle:
             part_bonds = get_particle_bonds(self._id)
             # Go through the bond list of the particle
             for part_bond in part_bonds:
-                bond = []
-                bond.append(BondedInteractions()[part_bond.bond_id()])
-                partner_ids = part_bond.partner_ids()
-
-                bonds.append(tuple(bond + [partner_ids[i]
-                                           for i in range(partner_ids.size())]))
+                bond_id = part_bond.bond_id()
+                partners = part_bond.partner_ids()
+                partner_ids = [partners[i] for i in range(partners.size())]
+                bonds.append((BondedInteractions()[bond_id], *partner_ids))
 
             return tuple(bonds)
 
@@ -396,12 +386,9 @@ cdef class ParticleHandle:
             """
 
             def __set__(self, _o):
-                cdef Vector3d myo
                 check_type_or_throw_except(
                     _o, 3, float, "Omega_lab has to be 3 floats.")
-                for i in range(3):
-                    myo[i] = _o[i]
-                set_particle_omega_lab(self._id, myo)
+                set_particle_omega_lab(self._id, make_Vector3d(_o))
 
             def __get__(self):
                 self.update_particle_data()
@@ -420,19 +407,18 @@ cdef class ParticleHandle:
             """
 
             def __set__(self, _q):
-                cdef double myq[4]
+                cdef Quaternion[double] q
                 check_type_or_throw_except(
                     _q, 4, float, "Quaternions has to be 4 floats.")
                 for i in range(4):
-                    myq[i] = _q[i]
-                set_particle_quat(self._id, myq)
+                    q[i] = _q[i]
+                set_particle_quat(self._id, q)
 
             def __get__(self):
                 self.update_particle_data()
 
-                cdef const double * x = NULL
-                pointer_to_quat(self.particle_data, x)
-                return array_locked([x[0], x[1], x[2], x[3]])
+                cdef Quaternion[double] q = get_particle_quat(self.particle_data)
+                return array_locked([q[0], q[1], q[2], q[3]])
 
         property director:
             """
@@ -457,12 +443,9 @@ cdef class ParticleHandle:
             """
 
             def __set__(self, _d):
-                cdef Vector3d myd
                 check_type_or_throw_except(
                     _d, 3, float, "Particle director has to be 3 floats.")
-                for i in range(3):
-                    myd[i] = _d[i]
-                set_particle_director(self._id, myd)
+                set_particle_director(self._id, make_Vector3d(_d))
 
             def __get__(self):
                 self.update_particle_data()
@@ -483,18 +466,15 @@ cdef class ParticleHandle:
             """
 
             def __set__(self, _o):
-                cdef Vector3d myo
                 check_type_or_throw_except(
                     _o, 3, float, "Omega_body has to be 3 floats.")
-                for i in range(3):
-                    myo[i] = _o[i]
-                set_particle_omega_body(self._id, myo)
+                set_particle_omega_body(self._id, make_Vector3d(_o))
 
             def __get__(self):
                 self.update_particle_data()
-                cdef const double * o = NULL
-                pointer_to_omega_body(self.particle_data, o)
-                return array_locked([o[0], o[1], o[2]])
+                cdef Vector3d omega_body
+                omega_body = get_particle_omega_body(self.particle_data)
+                return make_array_locked(omega_body)
 
         property torque_lab:
             """
@@ -514,20 +494,17 @@ cdef class ParticleHandle:
             """
 
             def __set__(self, _t):
-                cdef Vector3d myt
                 check_type_or_throw_except(
                     _t, 3, float, "Torque has to be 3 floats.")
-                for i in range(3):
-                    myt[i] = _t[i]
-                set_particle_torque_lab(self._id, myt)
+                set_particle_torque_lab(self._id, make_Vector3d(_t))
 
             def __get__(self):
                 self.update_particle_data()
                 cdef Vector3d torque_body
                 cdef Vector3d torque_space
-                torque_body = get_torque_body(self.particle_data[0])
+                torque_body = get_particle_torque_body(self.particle_data)
                 torque_space = convert_vector_body_to_space(
-                    self.particle_data[0], torque_body)
+                    dereference(self.particle_data), torque_body)
 
                 return make_array_locked(torque_space)
 
@@ -550,19 +527,15 @@ cdef class ParticleHandle:
             """
 
             def __set__(self, _rinertia):
-                cdef Vector3d rinertia
                 check_type_or_throw_except(
                     _rinertia, 3, float, "Rotation_inertia has to be 3 floats.")
-                for i in range(3):
-                    rinertia[i] = _rinertia[i]
-                set_particle_rotational_inertia(self._id, rinertia)
+                set_particle_rotational_inertia(
+                    self._id, make_Vector3d(_rinertia))
 
             def __get__(self):
                 self.update_particle_data()
-                cdef const double * rinertia = NULL
-                pointer_to_rotational_inertia(
-                    self.particle_data, rinertia)
-                return array_locked([rinertia[0], rinertia[1], rinertia[2]])
+                return make_array_locked(
+                    get_particle_rotational_inertia(self.particle_data))
 
     # Charge
     property q:
@@ -576,18 +549,14 @@ cdef class ParticleHandle:
 
         """
 
-        def __set__(self, _q):
-            cdef double myq
+        def __set__(self, q):
             check_type_or_throw_except(
-                _q, 1, float, "Charge has to be floats.")
-            myq = _q
-            set_particle_q(self._id, myq)
+                q, 1, float, "Charge has to be a float.")
+            set_particle_q(self._id, q)
 
         def __get__(self):
             self.update_particle_data()
-            cdef const double * x = NULL
-            pointer_to_q(self.particle_data, x)
-            return x[0]
+            return get_particle_q(self.particle_data)
 
     IF LB_ELECTROHYDRODYNAMICS:
         property mu_E:
@@ -606,17 +575,13 @@ cdef class ParticleHandle:
             """
 
             def __set__(self, mu_E):
-                cdef Vector3d _mu_E
                 check_type_or_throw_except(
                     mu_E, 3, float, "mu_E has to be 3 floats.")
-                for i in range(3):
-                    _mu_E[i] = mu_E[i]
-                set_particle_mu_E(self._id, _mu_E)
+                set_particle_mu_E(self._id, make_Vector3d(mu_E))
 
             def __get__(self):
-                cdef Vector3d _mu_E
-                _mu_E = get_particle_mu_E(self._id)
-                return make_array_locked(_mu_E)
+                self.update_particle_data()
+                return make_array_locked(get_particle_mu_E(self.particle_data))
 
     property virtual:
         """Virtual flag.
@@ -648,9 +613,7 @@ cdef class ParticleHandle:
             # is constexpr.
             IF VIRTUAL_SITES:
                 self.update_particle_data()
-                cdef const bool * x = NULL
-                pointer_to_virtual(self.particle_data, x)
-                return x[0]
+                return get_particle_virtual(self.particle_data)
             ELSE:
                 return False
 
@@ -678,9 +641,9 @@ cdef class ParticleHandle:
 
             def __get__(self):
                 self.update_particle_data()
-                cdef const double * q = NULL
-                pointer_to_vs_quat(self.particle_data, q)
-                return np.array([q[0], q[1], q[2], q[3]])
+                cdef Quaternion[double] q
+                q = get_particle_vs_quat(self.particle_data)
+                return array_locked([q[0], q[1], q[2], q[3]])
 
         property vs_relative:
             """
@@ -717,12 +680,11 @@ cdef class ParticleHandle:
 
             def __get__(self):
                 self.update_particle_data()
-                cdef const int * rel_to = NULL
-                cdef const double * dist = NULL
-                cdef const double * q = NULL
-                pointer_to_vs_relative(
-                    self.particle_data, rel_to, dist, q)
-                return (rel_to[0], dist[0], np.array((q[0], q[1], q[2], q[3])))
+                cdef int rel_to = -1
+                cdef double dist = 0.
+                cdef Quaternion[double] q
+                q = get_particle_vs_relative(self.particle_data, rel_to, dist)
+                return (rel_to, dist, array_locked([q[0], q[1], q[2], q[3]]))
 
         # vs_auto_relate_to
         def vs_auto_relate_to(self, rel_to):
@@ -757,16 +719,12 @@ cdef class ParticleHandle:
             """
 
             def __set__(self, _dip):
-                cdef Vector3d dip
                 check_type_or_throw_except(
                     _dip, 3, float, "Dipole moment vector has to be 3 floats.")
-                for i in range(3):
-                    dip[i] = _dip[i]
-                set_particle_dip(self._id, dip)
+                set_particle_dip(self._id, make_Vector3d(_dip))
 
             def __get__(self):
                 self.update_particle_data()
-
                 return make_array_locked(self.particle_data.calc_dip())
 
         # Scalar magnitude of dipole moment
@@ -781,16 +739,14 @@ cdef class ParticleHandle:
 
             """
 
-            def __set__(self, _q):
+            def __set__(self, dipm):
                 check_type_or_throw_except(
-                    _q, 1, float, "Magnitude of dipole moment has to be 1 float.")
-                set_particle_dipm(self._id, _q)
+                    dipm, 1, float, "Magnitude of dipole moment has to be 1 float.")
+                set_particle_dipm(self._id, dipm)
 
             def __get__(self):
                 self.update_particle_data()
-                cdef const double * x = NULL
-                pointer_to_dipm(self.particle_data, x)
-                return x[0]
+                return get_particle_dipm(self.particle_data)
 
     IF EXTERNAL_FORCES:
         property ext_force:
@@ -805,20 +761,14 @@ cdef class ParticleHandle:
             """
 
             def __set__(self, _ext_f):
-                cdef Vector3d ext_f
                 check_type_or_throw_except(
                     _ext_f, 3, float, "External force vector has to be 3 floats.")
-                for i in range(3):
-                    ext_f[i] = _ext_f[i]
-
-                set_particle_ext_force(self._id, ext_f)
+                set_particle_ext_force(self._id, make_Vector3d(_ext_f))
 
             def __get__(self):
                 self.update_particle_data()
-
-                cdef const double * ext_f = NULL
-                pointer_to_ext_force(self.particle_data, ext_f)
-                return array_locked([ext_f[0], ext_f[1], ext_f[2]])
+                return make_array_locked(
+                    get_particle_ext_force(self.particle_data))
 
         property fix:
             """
@@ -851,10 +801,10 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 fixed_coord_flag = np.array([0, 0, 0], dtype=int)
-                cdef const stdint.uint8_t * ext_flag = NULL
-                pointer_to_fix(self.particle_data, ext_flag)
+                cdef stdint.uint8_t ext_flag
+                ext_flag = get_particle_fix(self.particle_data)
                 for i in map(long, range(3)):
-                    if ext_flag[0] & _COORD_FIXED(i):
+                    if ext_flag & _COORD_FIXED(i):
                         fixed_coord_flag[i] = 1
                 return array_locked(fixed_coord_flag)
 
@@ -872,20 +822,14 @@ cdef class ParticleHandle:
                 """
 
                 def __set__(self, _ext_t):
-                    cdef Vector3d ext_t
                     check_type_or_throw_except(
                         _ext_t, 3, float, "External force vector has to be 3 floats.")
-                    for i in range(3):
-                        ext_t[i] = _ext_t[i]
-
-                    set_particle_ext_torque(self._id, ext_t)
+                    set_particle_ext_torque(self._id, make_Vector3d(_ext_t))
 
                 def __get__(self):
                     self.update_particle_data()
-                    cdef const double * ext_t = NULL
-                    pointer_to_ext_torque(
-                        self.particle_data, ext_t)
-                    return array_locked([ext_t[0], ext_t[1], ext_t[2]])
+                    return make_array_locked(
+                        get_particle_ext_torque(self.particle_data))
 
     IF THERMOSTAT_PER_PARTICLE:
         IF PARTICLE_ANISOTROPY:
@@ -907,24 +851,17 @@ cdef class ParticleHandle:
                 """
 
                 def __set__(self, _gamma):
-                    cdef Vector3d gamma
-
                     # We accept a single number by just repeating it
                     if not isinstance(_gamma, collections.abc.Iterable):
                         _gamma = 3 * [_gamma]
-
                     check_type_or_throw_except(
                         _gamma, 3, float, "Friction has to be 3 floats.")
-                    for i in range(3):
-                        gamma[i] = _gamma[i]
-                    set_particle_gamma(self._id, gamma)
+                    set_particle_gamma(self._id, make_Vector3d(_gamma))
 
                 def __get__(self):
                     self.update_particle_data()
-
-                    cdef const double * gamma = NULL
-                    pointer_to_gamma(self.particle_data, gamma)
-                    return array_locked([gamma[0], gamma[1], gamma[2]])
+                    return make_array_locked(
+                        get_particle_gamma(self.particle_data))
 
         ELSE:
             property gamma:
@@ -950,9 +887,8 @@ cdef class ParticleHandle:
 
                 def __get__(self):
                     self.update_particle_data()
-                    cdef const double * gamma = NULL
-                    pointer_to_gamma(self.particle_data, gamma)
-                    return gamma[0]
+                    return get_particle_gamma(self.particle_data)
+
         IF ROTATION:
             IF PARTICLE_ANISOTROPY:
                 property gamma_rot:
@@ -969,25 +905,19 @@ cdef class ParticleHandle:
                     """
 
                     def __set__(self, _gamma_rot):
-                        cdef Vector3d gamma_rot
                         # We accept a single number by just repeating it
                         if not isinstance(
                                 _gamma_rot, collections.abc.Iterable):
                             _gamma_rot = 3 * [_gamma_rot]
-
                         check_type_or_throw_except(
                             _gamma_rot, 3, float, "Rotational friction has to be 3 floats.")
-                        for i in range(3):
-                            gamma_rot[i] = _gamma_rot[i]
-                        set_particle_gamma_rot(self._id, gamma_rot)
+                        set_particle_gamma_rot(
+                            self._id, make_Vector3d(_gamma_rot))
 
                     def __get__(self):
                         self.update_particle_data()
-                        cdef const double * gamma_rot = NULL
-                        pointer_to_gamma_rot(
-                            self.particle_data, gamma_rot)
-                        return array_locked(
-                            [gamma_rot[0], gamma_rot[1], gamma_rot[2]])
+                        return make_array_locked(
+                            get_particle_gamma_rot(self.particle_data))
             ELSE:
                 property gamma_rot:
                     """
@@ -1009,10 +939,7 @@ cdef class ParticleHandle:
 
                     def __get__(self):
                         self.update_particle_data()
-                        cdef const double * gamma_rot = NULL
-                        pointer_to_gamma_rot(
-                            self.particle_data, gamma_rot)
-                        return gamma_rot[0]
+                        return get_particle_gamma_rot(self.particle_data)
 
     IF ROTATION:
         property rotation:
@@ -1232,8 +1159,8 @@ cdef class ParticleHandle:
                 self.update_particle_data()
                 swim = {}
                 mode = "N/A"
-                cdef const particle_parameters_swimming * _swim = NULL
-                pointer_to_swimming(self.particle_data, _swim)
+                cdef particle_parameters_swimming _swim
+                _swim = get_particle_swimming(self.particle_data)
 
                 if _swim.push_pull == -1:
                     mode = 'pusher'
@@ -1339,7 +1266,7 @@ cdef class ParticleHandle:
             bond[0] = BondedInteractions()[bond[0]]
         elif not isinstance(bond[0], BondedInteraction):
             raise Exception(
-                "1st element of Bond has to be of type BondedInteraction or int.")
+                f"1st element of Bond has to be of type BondedInteraction or int, got {type(bond[0])}.")
 
         # Check the bond is in the list of active bonded interactions
         if bond[0]._bond_id == -1:
@@ -1347,15 +1274,15 @@ cdef class ParticleHandle:
                 "The bonded interaction has not yet been added to the list of active bonds in ESPResSo.")
 
         # Validity of the numeric id
-        if bond[0]._bond_id >= bonded_ia_params_size():
+        if not bonded_ia_params_zero_based_type(bond[0]._bond_id):
             raise ValueError(
                 f"The bond type f{bond[0]._bond_id} does not exist.")
 
-        bond_id = bond[0]._bond_id
         # Number of partners
-        if bonded_ia_params_num_partners(bond_id) != len(bond) - 1:
-            raise ValueError(f"Bond {bond[0]} needs "
-                             f"{bonded_ia_params_num_partners(bond_id)} partners.")
+        expected_num_partners = bond[0].call_method('get_num_partners')
+        if len(bond) - 1 != expected_num_partners:
+            raise ValueError(
+                f"Bond {bond[0]} needs {expected_num_partners} partners.")
 
         # Type check on partners
         for i in range(1, len(bond)):
@@ -1473,37 +1400,49 @@ cdef class ParticleHandle:
 
         delete_particle_bonds(self._id)
 
-    def update(self, P):
-        if "id" in P:
+    def update(self, new_properties):
+        """
+        Update properties of a particle.
+
+        Parameters
+        ----------
+        new_properties : :obj:`dict`
+            Map particle property names to values. All properties except
+            for the particle id can be changed.
+
+        Examples
+        --------
+
+        >>> import espressomd
+        >>> system = espressomd.System(box_l=[10, 10, 10])
+        >>> p = system.part.add(pos=[1, 2, 3], q=1, virtual=True)
+        >>> print(p.pos, p.q, p.virtual)
+        [1. 2. 3.] 1.0 True
+        >>> p.update({'pos': [4, 5, 6], 'virtual': False, 'q': 0})
+        >>> print(p.pos, p.q, p.virtual)
+        [4. 5. 6.] 0.0 False
+
+        """
+        if "id" in new_properties:
             raise Exception("Cannot change particle id.")
 
-        for k in P.keys():
-            setattr(self, k, P[k])
+        for k, v in new_properties.items():
+            setattr(self, k, v)
 
     IF ROTATION:
         def convert_vector_body_to_space(self, vec):
             """Converts the given vector from the particle's body frame to the space frame"""
-            cdef Vector3d res
-            cdef Vector3d _v
-            _v[0] = vec[0]
-            _v[1] = vec[1]
-            _v[2] = vec[2]
             self.update_particle_data()
-            res = convert_vector_body_to_space(self.particle_data[0], _v)
-            return np.array((res[0], res[1], res[2]))
+            return np.array(make_array_locked(convert_vector_body_to_space(
+                dereference(self.particle_data), make_Vector3d(vec))))
 
         def convert_vector_space_to_body(self, vec):
             """Converts the given vector from the space frame to the particle's body frame"""
-            cdef Vector3d res
-            cdef Vector3d _v
-            _v[0] = vec[0]
-            _v[1] = vec[1]
-            _v[2] = vec[2]
             self.update_particle_data()
-            res = convert_vector_space_to_body(self.particle_data[0], _v)
-            return np.array((res[0], res[1], res[2]))
+            return np.array(make_array_locked(convert_vector_space_to_body(
+                dereference(self.particle_data), make_Vector3d(vec))))
 
-        def rotate(self, axis=None, angle=None):
+        def rotate(self, axis, angle):
             """Rotates the particle around the given axis
 
             Parameters
@@ -1513,12 +1452,7 @@ cdef class ParticleHandle:
             angle : :obj:`float`
 
             """
-            cdef Vector3d a
-            a[0] = axis[0]
-            a[1] = axis[1]
-            a[2] = axis[2]
-
-            rotate_particle(self._id, a, angle)
+            rotate_particle(self._id, make_Vector3d(axis), angle)
 
 cdef class _ParticleSliceImpl:
     """Handles slice inputs.
@@ -1555,8 +1489,8 @@ cdef class _ParticleSliceImpl:
         ParticleSlice for a given range or slice object.
         """
         # Prevent negative bounds
-        if (not slice_.start is None and slice_.start < 0) or \
-           (not slice_.stop is None and slice_.stop < 0):
+        if (slice_.start is not None and slice_.start < 0) or \
+           (slice_.stop is not None and slice_.stop < 0):
             raise IndexError(
                 "Negative start and end ids are not supported on ParticleSlice")
 
@@ -1635,12 +1569,12 @@ cdef class _ParticleSliceImpl:
         # Remove final comma
         return f"ParticleSlice([{res[:-2]}])"
 
-    def update(self, P):
-        if "id" in P:
+    def update(self, new_properties):
+        if "id" in new_properties:
             raise Exception("Cannot change particle id.")
 
-        for k in P.keys():
-            setattr(self, k, P[k])
+        for k, v in new_properties.items():
+            setattr(self, k, v)
 
     # Bond related methods
     def add_bond(self, _bond):
@@ -1805,7 +1739,7 @@ cdef class ParticleList:
         >>> system.part.add(id=0, pos=(1, 0, 0))
         >>> system.part.add(id=1, pos=(2, 0, 0))
 
-        Pos is mandatory, id can be omitted, in which case it is assigned automatically.
+        ``pos`` is mandatory, ``id`` can be omitted, in which case it is assigned automatically.
         Several particles can be added by passing one value per particle to each property::
 
             system.part.add(pos=((1, 2, 3), (4, 5, 6)), q=(1, -1))
@@ -1856,12 +1790,9 @@ Set quat and scalar dipole moment (dipm) instead.")
         # The ParticleList[]-getter ist not valid yet, as the particle
         # doesn't yet exist. Hence, the setting of position has to be
         # done here. the code is from the pos:property of ParticleHandle
-        cdef Vector3d mypos
         check_type_or_throw_except(
             P["pos"], 3, float, "Position must be 3 floats.")
-        for i in range(3):
-            mypos[i] = P["pos"][i]
-        if place_particle(P["id"], mypos) == -1:
+        if place_particle(P["id"], make_Vector3d(P["pos"])) == -1:
             raise Exception("particle could not be set.")
 
         # Pos is taken care of

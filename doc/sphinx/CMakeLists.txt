@@ -1,4 +1,4 @@
-find_package(Sphinx 1.6.6)
+find_package(Sphinx 2.3.0)
 if(SPHINX_FOUND)
   # configured documentation tools and intermediate build results
   set(SPHINX_BASE "${CMAKE_CURRENT_BINARY_DIR}")
@@ -45,7 +45,6 @@ if(SPHINX_FOUND)
       "${CMAKE_CURRENT_SOURCE_DIR}/running.rst"
       "${CMAKE_CURRENT_SOURCE_DIR}/system_manipulation.rst"
       "${CMAKE_CURRENT_SOURCE_DIR}/system_setup.rst"
-      "${CMAKE_CURRENT_SOURCE_DIR}/ug.rst"
       "${CMAKE_CURRENT_SOURCE_DIR}/under_the_hood.rst"
       "${CMAKE_CURRENT_SOURCE_DIR}/visualization.rst"
       "${CMAKE_CURRENT_SOURCE_DIR}/zrefs.bib"

@@ -38,10 +38,9 @@ parser.add_argument("--volume_fraction", metavar="FRAC", action="store",
                     type=float, default=0.03, required=False,
                     help="Fraction of the simulation box volume occupied by "
                     "particles (range: [0.01-0.74], default: 0.50)")
-group = parser.add_mutually_exclusive_group()
-group.add_argument("--output", metavar="FILEPATH", action="store",
-                   type=str, required=False, default="benchmarks.csv",
-                   help="Output file (default: benchmarks.csv)")
+parser.add_argument("--output", metavar="FILEPATH", action="store",
+                    type=str, required=False, default="benchmarks.csv",
+                    help="Output file (default: benchmarks.csv)")
 
 args = parser.parse_args()
 

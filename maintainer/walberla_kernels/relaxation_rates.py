@@ -1,6 +1,6 @@
 # This describes the mapping between LB moments and the corresponding relaxation rates
 # There are 4 relaxation rates for shear, bulk, even and odd modes,
-# respectiely.
+# respectively.
 
 from lbmpy.moments import is_bulk_moment, is_shear_moment, get_order
 import sympy as sp

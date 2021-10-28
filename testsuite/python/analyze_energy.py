@@ -43,7 +43,7 @@ class AnalyzeEnergy(ut.TestCase):
             epsilon=1.0, sigma=1.0,
             cutoff=2**(1. / 6.), shift="auto")
         cls.system.thermostat.set_langevin(kT=0., gamma=1., seed=42)
-        cls.system.bonded_inter.add(cls.harmonic)
+        cls.system.bonded_inter[5] = cls.harmonic
 
     def setUp(self):
         self.system.part.add(pos=[1, 2, 2], type=0)

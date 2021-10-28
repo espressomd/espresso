@@ -438,9 +438,8 @@ cdef class System:
             check_type_or_throw_except(
                 p2, 3, float, "p2 must be a particle or 3 floats")
             pos2 = make_Vector3d(p2)
-        cdef Vector3d mi_vec = box_geo.get_mi_vector(pos2, pos1)
 
-        return make_array_locked(mi_vec)
+        return make_array_locked(box_geo.get_mi_vector(pos2, pos1))
 
     def rotate_system(self, **kwargs):
         """Rotate the particles in the system about the center of mass.

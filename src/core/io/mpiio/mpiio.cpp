@@ -137,7 +137,7 @@ static void dump_info(const std::string &fn, unsigned fields) {
     npartners.resize(bonded_ia_params.size());
 
   for (int i = 0; i < bonded_ia_params.size(); ++i) {
-    npartners[i] = number_of_partners(bonded_ia_params[i]);
+    npartners[i] = number_of_partners(*bonded_ia_params.at(i));
   }
   auto ia_params_size = static_cast<std::size_t>(bonded_ia_params.size());
   success =

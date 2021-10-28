@@ -105,8 +105,8 @@ void on_skin_change();
  */
 void on_thermostat_param_change();
 
-/** @brief Called when the timestep changed. Internally calls @ref
- * on_thermostat_param_change.
+/** @brief Called when the timestep changed.
+ *  Internally calls @ref on_thermostat_param_change.
  */
 void on_timestep_change();
 
@@ -126,6 +126,11 @@ unsigned global_ghost_flags();
 
 /** called every time the walls for the lb fluid are changed */
 void on_lbboundary_change();
+
+/** @brief Called when the LB boundary conditions are changed
+ *  (geometry, slip velocity, or both).
+ */
+void on_lb_boundary_conditions_change();
 
 /** called every time the boundaries for the ek are changed */
 void on_ekboundary_change();

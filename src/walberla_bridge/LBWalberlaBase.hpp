@@ -94,18 +94,34 @@ public:
   get_node_velocity_at_boundary(const Utils::Vector3i &node) const = 0;
 
   /** @brief Set a node as velocity boundary condition and assign boundary
-   *  velocity
+   *  velocity. For batch processing, use @p reallocate = false and call
+   *  @ref reallocate_ubb_field at the end (useful for e.g. LB boundaries).
    */
   virtual bool set_node_velocity_at_boundary(const Utils::Vector3i &node,
-                                             const Utils::Vector3d &v) = 0;
+                                             const Utils::Vector3d &v,
+                                             bool reallocate) = 0;
   /** @brief Get (stored) force applied on node due to boundary condition */
   virtual boost::optional<Utils::Vector3d>
   get_node_boundary_force(const Utils::Vector3i &node) const = 0;
-  virtual bool remove_node_from_boundary(const Utils::Vector3i &node) = 0;
+  /** @brief Remove a node from the boundaries.
+   *  For batch processing, use @p reallocate = false and call
+   *  @ref reallocate_ubb_field at the end (useful for e.g. LB boundaries).
+   */
+  virtual bool remove_node_from_boundary(const Utils::Vector3i &node,
+                                         bool reallocate) = 0;
   virtual boost::optional<bool>
   get_node_is_boundary(const Utils::Vector3i &node,
                        bool consider_ghosts = false) const = 0;
+  /** @brief Rebuild the UBB field. This is a time consuming operation. */
+  virtual void reallocate_ubb_field() = 0;
+  /** @brief Clear the boundary flag field and the UBB field. */
   virtual void clear_boundaries() = 0;
+  /** @brief Update boundary conditions from a rasterized shape. */
+  virtual void update_boundary_from_shape(std::vector<int> const &,
+                                          std::vector<double> const &) = 0;
+  /** @brief Update boundary conditions from a list of nodes. */
+  virtual void update_boundary_from_list(std::vector<int> const &,
+                                         std::vector<double> const &) = 0;
 
   // Pressure tensor
   virtual boost::optional<Utils::Vector6d>
@@ -122,10 +138,10 @@ public:
   virtual double get_viscosity() const = 0;
   virtual double get_kT() const = 0;
 
-  //* @brief Fet the rng counter for thermalized LBs */
+  //* @brief Set the rng counter for thermalized LBs */
   virtual uint64_t get_rng_state() const = 0;
 
-  /** @brief set the rng state of thermalized LBs */
+  /** @brief Set the rng state of thermalized LBs */
   virtual void set_rng_state(uint64_t counter) = 0;
 
   /** @brief get the velocity field id */

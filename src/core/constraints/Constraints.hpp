@@ -91,13 +91,13 @@ public:
     }
   }
 
-  void add_energy(const ParticleRange &particles, double t,
-                  Observable_stat &energy) const {
+  void add_energy(const ParticleRange &particles, double time,
+                  Observable_stat &obs_energy) const {
     for (auto &p : particles) {
       auto const pos = folded_position(p.r.p, box_geo);
 
-      for (auto const &c : *this) {
-        c->add_energy(p, pos, t, energy);
+      for (auto const &constraint : *this) {
+        constraint->add_energy(p, pos, time, obs_energy);
       }
     }
   }

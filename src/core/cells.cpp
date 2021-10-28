@@ -84,6 +84,33 @@ std::vector<std::pair<int, int>> get_pairs_filtered(double const distance,
   return ret;
 }
 
+namespace boost {
+namespace serialization {
+template <class Archive>
+void serialize(Archive &ar, PairInfo &p, const unsigned int /* version */) {
+  ar &p.id1;
+  ar &p.id2;
+  ar &p.pos1;
+  ar &p.pos2;
+  ar &p.vec21;
+  ar &p.node;
+}
+} // namespace serialization
+} // namespace boost
+
+std::vector<PairInfo> non_bonded_loop_trace() {
+  std::vector<PairInfo> ret;
+  auto pair_kernel = [&ret](Particle const &p1, Particle const &p2,
+                            Distance const &d) {
+    ret.emplace_back(p1.p.identity, p2.p.identity, p1.r.p, p2.r.p, d.vec21,
+                     comm_cart.rank());
+  };
+
+  cell_structure.non_bonded_loop(pair_kernel);
+
+  return ret;
+}
+
 std::vector<std::pair<int, int>> get_pairs(double const distance) {
   return get_pairs_filtered(distance, [](Particle const &p) { return true; });
 }
@@ -119,8 +146,7 @@ void search_distance_sanity_check(double const distance) {
   auto range = *boost::min_element(cell_structure.max_range());
   if (distance > range) {
     runtimeErrorMsg() << "pair search distance " << distance
-                      << " bigger than the decomposition range " << range
-                      << ".\n";
+                      << " bigger than the decomposition range " << range;
   }
 }
 } // namespace detail
@@ -138,6 +164,20 @@ mpi_get_pairs_of_types(double const distance, std::vector<int> const &types) {
   detail::search_distance_sanity_check(distance);
   mpi_call(get_pairs_of_types_local, distance, types);
   auto pairs = get_pairs_of_types(distance, types);
+  Utils::Mpi::gather_buffer(pairs, comm_cart);
+  return pairs;
+}
+
+void non_bonded_loop_trace_local() {
+  auto pairs = non_bonded_loop_trace();
+  Utils::Mpi::gather_buffer(pairs, comm_cart);
+}
+
+REGISTER_CALLBACK(non_bonded_loop_trace_local)
+
+std::vector<PairInfo> mpi_non_bonded_loop_trace() {
+  mpi_call(non_bonded_loop_trace_local);
+  auto pairs = non_bonded_loop_trace();
   Utils::Mpi::gather_buffer(pairs, comm_cart);
   return pairs;
 }

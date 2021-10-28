@@ -46,6 +46,21 @@ private:
 
 template <typename T> struct Storage<T, 0> {};
 
+struct ArrayFormatterStream {
+  std::ostream &stream;
+  char const *separator;
+  ArrayFormatterStream(std::ostream &s, char const *sep)
+      : stream(s), separator(sep){};
+};
+
+struct ArrayFormatter {
+  char const *separator;
+  friend ArrayFormatterStream operator<<(std::ostream &os,
+                                         ArrayFormatter const &fmt) {
+    return {os, fmt.separator};
+  }
+};
+
 } // namespace detail
 
 template <typename T, std::size_t N> struct Array {
@@ -147,6 +162,10 @@ template <typename T, std::size_t N> struct Array {
     return ret;
   }
 
+  static constexpr detail::ArrayFormatter formatter(char const *sep = " ") {
+    return {sep};
+  }
+
 private:
   friend boost::serialization::access;
   template <typename Archive>
@@ -154,14 +173,24 @@ private:
     ar &m_storage;
   }
 
-  friend std::ostream &operator<<(std::ostream &out, Array const &a) {
+  static std::ostream &format(std::ostream &out, Array const &a,
+                              char const *const sep) {
     if (not a.empty())
       out << a[0];
 
     for (auto it = std::next(a.begin()); it != a.end(); ++it)
-      out << ", " << *it;
+      out << sep << *it;
 
     return out;
+  }
+
+  friend std::ostream &operator<<(std::ostream &out, Array const &a) {
+    return format(out, a, ", ");
+  }
+
+  friend std::ostream &operator<<(detail::ArrayFormatterStream const &fmt,
+                                  Array const &a) {
+    return format(fmt.stream, a, fmt.separator);
   }
 };
 

@@ -33,11 +33,15 @@ runs:
         # HTML theme and Markdown files, then convert them to HTML files
         git merge --quiet --commit --no-edit --allow-unrelated-histories remotes/origin/landing_page
         make tutorials.md
+        make videos.md
         for filename in *.md; do
           make "${filename%.md}.html";
         done
-        git add *.html tutorials.md
-        git commit --quiet  -m "Generate landing page"
+        rm *_header.html
+        git add *.html
+        git clean -f
+        git rm *.md *.py Makefile
+        git commit --quiet -m "Generate landing page"
         # add devel documentation
         rsync -a --delete --exclude='*.md5' --exclude='*.map' "build/doc/doxygen/html/" dox/
         rsync -a --delete --exclude='.buildinfo' "build/doc/sphinx/html/" doc/

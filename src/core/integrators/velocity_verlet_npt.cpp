@@ -58,9 +58,10 @@ void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles,
         if (nptiso.geometry & nptiso.nptgeom_dir[j]) {
           nptiso.p_vel[j] += Utils::sqr(p.m.v[j] * time_step) * p.p.mass;
           p.m.v[j] += (p.f.f[j] * time_step / 2.0 + noise[j]) / p.p.mass;
-        } else
+        } else {
           // Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt)
           p.m.v[j] += p.f.f[j] * time_step / 2.0 / p.p.mass;
+        }
       }
     }
   }
@@ -82,9 +83,8 @@ void velocity_verlet_npt_finalize_p_inst(double time_step) {
   boost::mpi::reduce(comm_cart, nptiso.p_inst, p_sum, std::plus<double>(), 0);
   if (this_node == 0) {
     nptiso.p_inst = p_sum / (nptiso.dimension * nptiso.volume);
-    nptiso.p_diff = nptiso.p_diff +
-                    (nptiso.p_inst - nptiso.p_ext) * 0.5 * time_step +
-                    friction_thermV_nptiso(npt_iso, nptiso.p_diff);
+    nptiso.p_diff += (nptiso.p_inst - nptiso.p_ext) * 0.5 * time_step +
+                     friction_thermV_nptiso(npt_iso, nptiso.p_diff);
   }
 }
 
@@ -128,11 +128,9 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles,
     for (int j = 0; j < 3; j++) {
       if (!(p.p.ext_flag & COORD_FIXED(j))) {
         if (nptiso.geometry & nptiso.nptgeom_dir[j]) {
-          {
-            p.r.p[j] = scal[1] * (p.r.p[j] + scal[2] * p.m.v[j] * time_step);
-            p.l.p_old[j] *= scal[1];
-            p.m.v[j] *= scal[0];
-          }
+          p.r.p[j] = scal[1] * (p.r.p[j] + scal[2] * p.m.v[j] * time_step);
+          p.l.p_old[j] *= scal[1];
+          p.m.v[j] *= scal[0];
         } else {
           p.r.p[j] += p.m.v[j] * time_step;
         }
@@ -150,7 +148,7 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles,
     new_box = box_geo.length();
 
     for (int i = 0; i < 3; i++) {
-      if (nptiso.geometry & nptiso.nptgeom_dir[i] || nptiso.cubic_box) {
+      if (nptiso.cubic_box || nptiso.geometry & nptiso.nptgeom_dir[i]) {
         new_box[i] = L_new;
       }
     }
@@ -184,9 +182,10 @@ void velocity_verlet_npt_propagate_vel(const ParticleRange &particles,
             (nptiso.geometry & nptiso.nptgeom_dir[j])) {
           p.m.v[j] += (p.f.f[j] * time_step / 2.0 + noise[j]) / p.p.mass;
           nptiso.p_vel[j] += Utils::sqr(p.m.v[j] * time_step) * p.p.mass;
-        } else
+        } else {
           // Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * a(t)
           p.m.v[j] += p.f.f[j] * time_step / 2.0 / p.p.mass;
+        }
       }
     }
   }

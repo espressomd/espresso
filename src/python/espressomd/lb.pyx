@@ -25,11 +25,18 @@ import numpy as np
 cimport numpy as np
 from libc cimport stdint
 from .actors cimport Actor
+from .shapes import Shape
+from . import lbboundaries
 from . cimport cuda_init
 from . import cuda_init
 from . import utils
-from .utils import array_locked, is_valid_type, to_char_pointer
-from .utils cimport Vector3i, Vector3d, Vector6d, make_array_locked, create_nparray_from_double_array
+from .utils import is_valid_type, to_char_pointer
+from .utils cimport Vector3i
+from .utils cimport Vector3d
+from .utils cimport Vector6d
+from .utils cimport make_array_locked
+from .utils cimport make_Vector3d
+from .utils cimport create_nparray_from_double_array
 from .grid cimport box_geo
 
 
@@ -254,6 +261,39 @@ cdef class HydrodynamicInteraction(Actor):
                 "seed": 0,
                 "kT": 0.}
 
+    def mach_limit(self):
+        """
+        The fluid velocity is limited to :math:`v_{\\mathrm{max}} = 0.20`
+        (see *quasi-incompressible limit* in :cite:`kruger17a`,
+        chapter 7, page 272), which corresponds to Mach 0.35.
+
+        The relative error in the fluid density between a compressible fluid
+        and an incompressible fluid at Mach 0.30 is less than 5% (see
+        *constant density assumption* in :cite:`kundu01a` chapter 16, page
+        663). Since the speed of sound is :math:`c_s = 1 / \\sqrt{3}` in LB
+        velocity units in a D3Q19 lattice, the velocity limit at Mach 0.30
+        is :math:`v_{\\mathrm{max}} = 0.30 / \\sqrt{3} \\approx 0.17`.
+        At Mach 0.35 the relative error is around 6% and
+        :math:`v_{\\mathrm{max}} = 0.35 / \\sqrt{3} \\approx 0.20`.
+
+        Returns
+        -------
+        v_max : :obj:`float`
+            The Mach limit expressed in LB velocity units.
+
+        """
+        return 0.20
+
+    @classmethod
+    def _check_mach_limit(cls, velocities):
+        lattice_vel = lb_lbfluid_get_lattice_speed()
+        vel_max = cls.mach_limit()
+        velocities = np.reshape(velocities, (-1, 3))
+        if np.any(np.linalg.norm(velocities, axis=1) > vel_max * lattice_vel):
+            speed_of_sound = 1. / np.sqrt(3.)
+            mach_number = vel_max / speed_of_sound
+            raise ValueError(f'Slip velocity exceeds Mach {mach_number:.2f}')
+
     def _set_lattice_switch(self):
         raise Exception(
             "Subclasses of HydrodynamicInteraction must define the _set_lattice_switch() method.")
@@ -290,12 +330,7 @@ cdef class HydrodynamicInteraction(Actor):
             The LB fluid velocity at ``pos``.
 
         """
-        cdef Vector3d p
-
-        for i in range(3):
-            p[i] = pos[i]
-        cdef Vector3d v = lb_lbfluid_get_interpolated_velocity(p) * lb_lbfluid_get_lattice_speed()
-        return make_array_locked(v)
+        return python_lbnode_get_interpolated_velocity(make_Vector3d(pos))
 
     def add_force_at_pos(self, pos, force):
         """Adds a force to the fluid at given position
@@ -308,13 +343,7 @@ cdef class HydrodynamicInteraction(Actor):
               The force vector which will be distributed at the position.
 
         """
-        cdef Vector3d p
-        cdef Vector3d f
-
-        for i in range(3):
-            p[i] = pos[i]
-            f[i] = force[i]
-        lb_lbfluid_add_force_at_pos(p, f)
+        lb_lbfluid_add_force_at_pos(make_Vector3d(pos), make_Vector3d(force))
 
     def save_checkpoint(self, path, binary):
         '''
@@ -364,24 +393,19 @@ cdef class HydrodynamicInteraction(Actor):
 
     property pressure_tensor:
         def __get__(self):
-            cdef Vector6d tensor = python_lbfluid_get_pressure_tensor(self.agrid, self.tau)
-            return array_locked(np.array([[tensor[0], tensor[1], tensor[3]],
-                                          [tensor[1], tensor[2], tensor[4]],
-                                          [tensor[3], tensor[4], tensor[5]]]))
+            tensor = python_lbfluid_get_pressure_tensor(self.agrid, self.tau)
+            return utils.array_locked(tensor)
 
         def __set__(self, value):
             raise NotImplementedError
 
     property ext_force_density:
         def __get__(self):
-            cdef Vector3d res
-            res = python_lbfluid_get_ext_force_density(
-                self.agrid, self.tau)
-            return make_array_locked(res)
+            return python_lbfluid_get_ext_force_density(self.agrid, self.tau)
 
         def __set__(self, ext_force_density):
             python_lbfluid_set_ext_force_density(
-                ext_force_density, self.agrid, self.tau)
+                make_Vector3d(ext_force_density), self.agrid, self.tau)
 
     property viscosity:
         def __get__(self):
@@ -409,7 +433,6 @@ IF LB_WALBERLA:
         """
         Initialize the lattice-Boltzmann method for hydrodynamic flow using waLBerla.
         See :class:`HydrodynamicInteraction` for the list of parameters.
-
         """
 
         def _set_params_in_es_core(self):
@@ -447,6 +470,114 @@ IF LB_WALBERLA:
             mpi_destruct_lb_walberla()
             super()._deactivate_method()
 
+        def clear_boundaries(self):
+            """
+            Remove boundary conditions.
+            """
+            lb_lbfluid_clear_boundaries()
+
+        def add_boundary_from_shape(
+                self, shape, velocity=np.zeros(3, dtype=float)):
+            """
+            Set boundary conditions from a shape.
+
+            Parameters
+            ----------
+            shape : :obj:`espressomd.shapes.Shape`
+                Shape to rasterize.
+            velocity : (3,) or (L, M, N, 3) array_like of :obj:`float`, optional
+                Slip velocity. By default no-slip boundary conditions are used.
+                If a vector of 3 values, a uniform slip velocity is used,
+                otherwise ``L, M, N`` must be equal to the LB grid dimensions.
+            """
+            utils.check_type_or_throw_except(
+                shape, 1, Shape, "expected an espressomd.shapes.Shape")
+            if np.shape(velocity) not in [(3,), self.shape + (3,)]:
+                raise ValueError(
+                    f'Cannot process velocity grid of shape {np.shape(velocity)}')
+
+            # range checks
+            velocity = np.array(velocity, dtype=float).reshape((-1, 3))
+            self._check_mach_limit(velocity)
+
+            velocity *= 1. / lb_lbfluid_get_lattice_speed()
+            velocity_flat = velocity.reshape((-1,))
+            mask_flat = shape.call_method('rasterize', grid_size=self.shape,
+                                          grid_spacing=self._params['agrid'],
+                                          grid_offset=0.5)
+
+            cdef double[::1] velocity_view = np.ascontiguousarray(
+                velocity_flat, dtype=np.double)
+            cdef int[::1] raster_view = np.ascontiguousarray(
+                mask_flat, dtype=np.int32)
+            python_lb_lbfluid_update_boundary_from_shape(
+                raster_view, velocity_view)
+
+        def add_boundary_from_list(
+                self, nodes, velocity=np.zeros(3, dtype=float)):
+            """
+            Set boundary conditions from a list of node indices.
+
+            Parameters
+            ----------
+            nodes : (N, 3) array_like of :obj:`int`
+                List of node indices to update. If they were originally not
+                boundary nodes, they will become boundary nodes.
+            velocity : (3,) or (N, 3) array_like of :obj:`float`, optional
+                Slip velocity. By default no-slip boundary conditions are used.
+                If a vector of 3 values, a uniform slip velocity is used,
+                otherwise ``N`` must be identical to the ``N`` of ``nodes``.
+            """
+
+            nodes = np.array(nodes, dtype=int)
+            velocity = np.array(velocity, dtype=float)
+            if len(nodes.shape) != 2 or nodes.shape[1] != 3:
+                raise ValueError(
+                    f'Cannot process node list of shape {nodes.shape}')
+            if velocity.shape == (3,):
+                velocity = np.tile(velocity, (nodes.shape[0], 1))
+            elif nodes.shape != velocity.shape:
+                raise ValueError(
+                    f'Node indices and velocities must have the same shape, got {nodes.shape} and {velocity.shape}')
+
+            # range checks
+            self._check_mach_limit(velocity)
+            if np.any(np.logical_or(np.max(nodes, axis=0) >= self.shape,
+                                    np.min(nodes, axis=0) < 0)):
+                raise ValueError(
+                    f'Node indices must be in the range (0, 0, 0) to {self.shape}')
+
+            velocity *= 1. / lb_lbfluid_get_lattice_speed()
+            cdef double[::1] velocity_view = np.ascontiguousarray(
+                velocity.reshape((-1,)), dtype=np.double)
+            cdef int[::1] nodes_view = np.ascontiguousarray(
+                nodes.reshape((-1,)), dtype=np.int32)
+            python_lb_lbfluid_update_boundary_from_list(
+                nodes_view, velocity_view)
+
+        def get_nodes_in_shape(self, shape):
+            """Provides a generator for iterating over all lb nodes inside the given shape"""
+            utils.check_type_or_throw_except(
+                shape, 1, Shape, "expected a espressomd.shapes.Shape")
+            lb_shape = self.shape
+            idxs = itertools.product(
+                range(lb_shape[0]), range(lb_shape[1]), range(lb_shape[2]))
+            for idx in idxs:
+                pos = (np.asarray(idx) + 0.5) * self._params['agrid']
+                if shape.is_inside(position=pos):
+                    yield self[idx]
+
+        def get_shape_bitmask(self, shape):
+            """Create a bitmask for the given shape."""
+            utils.check_type_or_throw_except(
+                shape, 1, Shape, "expected a espressomd.shapes.Shape")
+            mask_flat = shape.call_method('rasterize', grid_size=self.shape,
+                                          grid_spacing=self._params['agrid'],
+                                          grid_offset=0.5)
+            return np.reshape(mask_flat, self.shape).astype(type(True))
+
+        # TODO WALBERLA: maybe split this method in 2 methods with clear names
+        # like add_vtk_writer_auto_update() and add_vtk_writer_manual()
         def add_vtk_writer(self, identifier, observables, delta_N=0,
                            base_folder='vtk_out', prefix='simulation_step'):
             """
@@ -501,6 +632,18 @@ IF LB_WALBERLA:
                 obj = VTKOutputManual(*args)
             return obj
 
+    IF CUDA:
+        cdef class LBFluidWalberlaGPU(HydrodynamicInteraction):
+            """
+            Initialize the lattice-Boltzmann method for hydrodynamic flow using
+            waLBerla for the GPU. See :class:`HydrodynamicInteraction` for the
+            list of parameters.
+
+            """
+
+            def __init__(self, *args, **kwargs):
+                raise NotImplementedError("Not implemented yet")
+
 
 cdef class LBFluidRoutines:
 
@@ -519,16 +662,57 @@ cdef class LBFluidRoutines:
 
     property velocity:
         def __get__(self):
-            return make_array_locked(python_lbnode_get_velocity(self.node))
+            return python_lbnode_get_velocity(self.node)
 
         def __set__(self, value):
-            cdef Vector3d c_velocity
             utils.check_type_or_throw_except(
                 value, 3, float, "velocity has to be 3 floats")
-            c_velocity[0] = value[0]
-            c_velocity[1] = value[1]
-            c_velocity[2] = value[2]
-            python_lbnode_set_velocity(self.node, c_velocity)
+            python_lbnode_set_velocity(self.node, make_Vector3d(value))
+
+    property boundary:
+        def __get__(self):
+            """
+            Returns
+            -------
+            :ref:`espressomd.lbboundaries.VelocityBounceBack`
+                If the node is a boundary node
+            None
+                If the node is not a boundary node
+            """
+
+            is_boundary = lb_lbnode_is_boundary(self.node)
+            if is_boundary:
+                vel = python_lbnode_get_velocity_at_boundary(self.node)
+                return lbboundaries.VelocityBounceBack(vel)
+            return None
+
+        def __set__(self, value):
+            """
+            Parameters
+            ----------
+            value : :ref:`espressomd.lbboundaries.VelocityBounceBack` or None
+                If value is :ref:`espressomd.lbboundaries.VelocityBounceBack`,
+                set the node to be a boundary node with the specified velocity.
+                If value is ``None``, the node will become a fluid node.
+            """
+
+            if isinstance(value, lbboundaries.VelocityBounceBack):
+                HydrodynamicInteraction._check_mach_limit(value.velocity)
+                python_lbnode_set_velocity_at_boundary(
+                    self.node, make_Vector3d(value.velocity))
+            elif value is None:
+                lb_lbnode_remove_from_boundary(self.node)
+            else:
+                raise ValueError(
+                    "value must be an instance of lbboundaries.VelocityBounceBack or None")
+
+    property boundary_force:
+        def __get__(self):
+            return python_lbnode_get_boundary_force(self.node)
+
+        def __set__(self, val):
+            raise NotImplementedError(
+                "The boundary force can only be read, never set.")
 
     property density:
         def __get__(self):
@@ -539,10 +723,8 @@ cdef class LBFluidRoutines:
 
     property pressure_tensor:
         def __get__(self):
-            cdef Vector6d tensor = python_lbnode_get_pressure_tensor(self.node)
-            return array_locked(np.array([[tensor[0], tensor[1], tensor[3]],
-                                          [tensor[1], tensor[2], tensor[4]],
-                                          [tensor[3], tensor[4], tensor[5]]]))
+            tensor = python_lbnode_get_pressure_tensor(self.node)
+            return utils.array_locked(tensor)
 
         def __set__(self, value):
             raise NotImplementedError
@@ -551,7 +733,7 @@ cdef class LBFluidRoutines:
         def __get__(self):
             cdef vector[double] pop
             pop = lb_lbnode_get_pop(self.node)
-            return array_locked(
+            return utils.array_locked(
                 create_nparray_from_double_array(pop.data(), pop.size()))
 
         def __set__(self, population):
@@ -570,14 +752,11 @@ cdef class LBFluidRoutines:
 
     property last_applied_force:
         def __get__(self):
-            return make_array_locked(
-                python_lbnode_get_last_applied_force(self.node))
+            return python_lbnode_get_last_applied_force(self.node)
 
         def __set__(self, force):
-            cdef Vector3d _force
-            for i in range(3):
-                _force[i] = force[i]
-            python_lbnode_set_last_applied_force(self.node, _force)
+            python_lbnode_set_last_applied_force(
+                self.node, make_Vector3d(force))
 
     def __eq__(self, obj1):
         index_1 = np.array(self.index)
@@ -615,7 +794,7 @@ class LBSlice:
                         np.array([x, y, z])), prop_name)
         if shape_res == (1,):
             res = np.squeeze(res, axis=-1)
-        return array_locked(res)
+        return utils.array_locked(res)
 
     def set_values(self, x_indices, y_indices, z_indices, prop_name, value):
         for i, x in enumerate(x_indices):

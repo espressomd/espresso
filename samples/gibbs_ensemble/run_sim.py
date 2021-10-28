@@ -135,7 +135,7 @@ np.random.seed(seed)
 box_seeds = np.random.randint(0, np.iinfo(np.int32).max, size=NUM_OF_CLIENTS)
 
 # Filename
-filename = "temp_{}_seed_{}".format(kT, seed)
+filename = f"temp_{kT}_seed_{seed}"
 
 # Set the logging level
 logging.basicConfig(
@@ -187,12 +187,12 @@ class Box:
 
     def send_data(self, data):
         assert isinstance(data, list)
-        logging.debug("Send to {}: {}".format(self.box_name, data))
+        logging.debug(f"Send to {self.box_name}: {data}")
         self.pipe.send(data)
 
     def recv_data(self):
         msg = self.pipe.recv()
-        logging.debug("Receive from {}: {}".format(self.box_name, msg))
+        logging.debug(f"Receive from {self.box_name}: {msg}")
         return msg
 
     def recv_energy(self):
@@ -200,8 +200,8 @@ class Box:
         # Debugging
         if msg[0] != MessageID.ENERGY:
             raise ConnectionError(
-                "Error during energy return of {}, got this instead: \n{}".format(
-                    self.box_name, msg))
+                f"Error during energy return of {self.box_name}, "
+                f"got this instead: \n{msg}")
         self.old_energy = self.energy
         self.energy = msg[1]
 
@@ -213,8 +213,7 @@ def validate_info(boxes):
         msg = box.pipe.recv()
         if msg[0] != MessageID.INFO:
             raise ConnectionError(
-                "Connection to {} seems to be broken.".format(
-                    box.box_name))
+                f"Connection to {box.box_name} seems to be broken.")
         np.testing.assert_equal(
             box.box_length,
             msg[1],
@@ -224,8 +223,8 @@ def validate_info(boxes):
             msg[2],
             err_msg="Server side num part (actual) differs from client side (desired)")
         logging.debug(
-            "Validation correct. Values of {}:\nBox length:\t{}\nNum Part:\t{}.".format(
-                box.box_name, box.box_length, box.num_part))
+            f"Validation correct. Values of {box.box_name}:\n"
+            f"Box length:\t{box.box_length}\nNum Part:\t{box.num_part}.")
 
 
 def choose_random_box(boxes):
@@ -248,7 +247,7 @@ def perform_move_particle(boxes):
     box.recv_energy()
 
     # Debug
-    logging.debug("Performing particle move in {}.".format(box.box_name))
+    logging.debug(f"Performing particle move in {box.box_name}.")
 
     # ---- Check move ----
 
@@ -297,14 +296,9 @@ def perform_volume_change(boxes):
     boxes[1].box_length = np.cbrt(new_volume_2)
 
     # Debug
-    logging.debug(
-        "Perform volume change: {}: {} -> {}; {}: {} -> {}.".format(
-            boxes[0].box_name,
-            old_volume_1,
-            new_volume_1,
-            boxes[1].box_name,
-            old_volume_2,
-            new_volume_2))
+    logging.debug("Perform volume change:"
+                  f" {boxes[0].box_name}: {old_volume_1} -> {new_volume_1};"
+                  f" {boxes[1].box_name}: {old_volume_2} -> {new_volume_2}.")
 
     # Send new box lengths, recv new energies
     [box.send_data([MessageID.CHANGE_VOLUME, box.box_length]) for box in boxes]
@@ -359,9 +353,7 @@ def perform_particle_exchange(boxes):
             GLOBAL_NUM_PART)
 
     logging.debug(
-        "Exchange particle of {} to {}.".format(
-            donor_box.box_name,
-            recipient_box.box_name))
+        f"Exchange particle of {donor_box.box_name} to {recipient_box.box_name}.")
 
     # ---- Check move ----
 
@@ -418,7 +410,7 @@ pipes = []
 # Start processes
 for i in range(NUM_OF_CLIENTS):
     pipes.append(Pipe())
-    boxes.append(Box("Box0{}".format(i),
+    boxes.append(Box(f"Box0{i}",
                      pipes[i],
                      box_seeds[i],
                      init_box_length,
@@ -432,12 +424,8 @@ for i in range(NUM_OF_CLIENTS):
 
 logging.info("-------------------- Start of program --------------------")
 
-logging.info(
-    "Simulation parameters:\nRandom seed: {},\tWarmup steps: {},\tSteps: {},\tFilename: {}".format(
-        args.seed,
-        warmup,
-        steps,
-        filename))
+logging.info(f"Simulation parameters:\nRandom seed: {args.seed},\tWarmup "
+             f"steps: {warmup},\tSteps: {steps},\tFilename: {filename}")
 
 logging.info("Warming up.")
 
@@ -449,9 +437,7 @@ for _ in (tqdm(range(warmup)) if not args.log else range(warmup)):
 
 logging.info(
     "Particle move acceptance rate during warmup: {:.2f}%".format(
-        num_accepted_moves[Moves.MOVE_PARTICLE] /
-        warmup *
-        100))
+        num_accepted_moves[Moves.MOVE_PARTICLE] / warmup * 100))
 
 # Reset the counter for particle moves
 num_accepted_moves[Moves.MOVE_PARTICLE] = 0

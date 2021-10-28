@@ -25,7 +25,7 @@ performance of the code. Therefore it is not possible to build a single
 binary that can satisfy all needs. For performance reasons a user
 should always activate only those features that are actually needed.
 This means, however, that learning how to compile is a necessary evil.
-The build system of |es| uses ``cmake`` [4]_ to compile
+The build system of |es| uses CMake [4]_ to compile
 software easily on a wide range of platforms.
 
 .. _Requirements:
@@ -71,9 +71,10 @@ To compile |es| on Ubuntu 20.04 LTS, install the following dependencies:
 
 .. code-block:: bash
 
-    sudo apt install build-essential cmake cython3 python3-numpy \
+    sudo apt install build-essential cmake cython3 python3-pip python3-numpy \
       libboost-all-dev openmpi-common fftw3-dev libhdf5-dev libhdf5-openmpi-dev \
       python3-opengl libgsl-dev
+    pip3 install --user 'scipy>=1.4.0'
 
 Optionally the ccmake utility can be installed for easier configuration:
 
@@ -86,10 +87,9 @@ are required:
 
 .. code-block:: bash
 
-    sudo apt install python3-matplotlib python3-pint ipython3 jupyter-notebook
-    pip3 install --user 'jupyter_contrib_nbextensions==0.5.1' 'python3-scipy>=1.4.0' \
-                        'sphinx>=1.6.7,!=2.1.0,!=3.0.0' 'sphinxcontrib-bibtex>=0.3.5' \
-                        'MDAnalysis>=1.0.0'
+    sudo apt install python3-matplotlib python3-pint python3-tqdm ipython3 jupyter-notebook
+    pip3 install --user 'jupyter_contrib_nbextensions==0.5.1' 'MDAnalysis>=1.0.0' \
+                        'sphinx>=2.3.0,!=3.0.0' 'sphinxcontrib-bibtex>=0.3.5'
     jupyter contrib nbextension install --user
     jupyter nbextension enable rubberband/main
     jupyter nbextension enable exercise2/main
@@ -121,6 +121,21 @@ required to compile |es| on other Linux distributions:
 * `Fedora <https://github.com/espressomd/docker/blob/master/docker/Dockerfile-fedora>`_
 * `Debian <https://github.com/espressomd/docker/blob/master/docker/Dockerfile-debian>`_
 * `OpenSUSE <https://github.com/espressomd/docker/blob/master/docker/Dockerfile-opensuse>`_
+
+.. _Installing requirements on Windows via WSL:
+
+Installing requirements on Windows via WSL
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To run |es| on Windows, use the Linux subsystem. For that you need to
+
+* follow `these instructions <https://docs.microsoft.com/en-us/windows/wsl/install-win10>`__ to install Ubuntu
+* start Ubuntu (or open an Ubuntu tab in `Windows Terminal <https://www.microsoft.com/en-us/p/windows-terminal/9n0dx20hk701>`__)
+* execute ``sudo apt update`` to prepare the installation of dependencies
+* optional step: If you have a NVIDIA graphics card available and want to make
+  use of |es|'s GPU acceleration, follow `these instructions <https://docs.nvidia.com/cuda/wsl-user-guide/index.html#ch03a-setting-up-cuda>`__
+  to set up CUDA.
+* follow the instructions for :ref:`Installing requirements on Ubuntu Linux`
 
 
 .. _Installing requirements on Mac OS X:
@@ -526,18 +541,18 @@ directory. Suppose that you have a source directory :file:`$srcdir` and two
 build directories :file:`$builddir1` and :file:`$builddir2` that contain
 different configuration headers:
 
-*  :file:`$builddir1/myconfig.hpp`:
+* :file:`$builddir1/myconfig.hpp`:
 
   .. code-block:: c++
 
-    #define ELECTROSTATICS
-    #define LENNARD_JONES
+      #define ELECTROSTATICS
+      #define LENNARD_JONES
 
-*  :file:`$builddir2/myconfig.hpp`:
+* :file:`$builddir2/myconfig.hpp`:
 
   .. code-block:: c++
 
-    #define LJCOS
+      #define LJCOS
 
 Then you can simply compile two different versions of |es| via:
 
@@ -765,6 +780,11 @@ targets are available:
     Runs the testsuite. By default, all available tests will be run on
     1, 2, 3, 4, 6, or 8 processors.
 
+``test``
+    Do not use this target, it is a broken feature
+    (see `issue #4370 <https://github.com/espressomd/espresso/issues/4370>`__).
+    Use ``make check`` instead.
+
 ``clean``
     Deletes all files that were created during the compilation.
 
@@ -967,10 +987,10 @@ on the wiki. If you still didn't find an answer, see :ref:`Community support`.
 ____
 
 .. [1]
-   http://espressomd.org
+   https://espressomd.org
 
 .. [2]
-   http://git.org
+   https://git-scm.com/
 
 .. [3]
    https://github.com/espressomd/espresso
@@ -979,4 +999,4 @@ ____
    https://cmake.org/
 
 .. [5]
-   http://www.fftw.org/
+   https://www.fftw.org/

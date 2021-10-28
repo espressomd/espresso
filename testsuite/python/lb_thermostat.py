@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2020 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -26,10 +26,10 @@ Check the lattice-Boltzmann thermostat with respect to the particle velocity
 distribution.
 """
 
-KT = 0.9 
+KT = 0.9
 AGRID = 0.8
 node_volume = AGRID**3
-VISC = 6 
+VISC = 6
 DENS = 1.7
 TIME_STEP = 0.005
 GAMMA = 2
@@ -48,6 +48,7 @@ class LBThermostatCommon(thermostats_common.ThermostatsCommon):
     system = espressomd.System(box_l=[AGRID * 12] * 3)
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
+    np.random.seed(41)
 
     def test_fluid(self):
         self.prepare()
@@ -70,9 +71,9 @@ class LBThermostatCommon(thermostats_common.ThermostatsCommon):
         self.prepare()
         self.system.part.add(
             pos=np.random.random((100, 3)) * self.system.box_l)
-        self.system.integrator.run(100)
+        self.system.integrator.run(120)
         N = len(self.system.part)
-        loops = 500
+        loops = 250
         v_particles = np.zeros((loops, N, 3))
         fluid_temps = []
 
@@ -84,25 +85,36 @@ class LBThermostatCommon(thermostats_common.ThermostatsCommon):
             v_particles[i] = self.system.part[:].v
         fluid_temp = np.average(fluid_temps)
 
-        np.testing.assert_allclose(np.average(v_particles), 0, atol=0.02)
-        np.testing.assert_allclose(np.var(v_particles), KT, rtol=0.02)
+        np.testing.assert_allclose(np.average(v_particles), 0, atol=0.03)
+        np.testing.assert_allclose(np.var(v_particles), KT, atol=0.02)
 
         minmax = 3
         n_bins = 7
-        error_tol = 0.015  
+        error_tol = 0.016
         self.check_velocity_distribution(
             v_particles.reshape((-1, 3)), minmax, n_bins, error_tol, KT)
 
-        np.testing.assert_allclose(fluid_temp, KT, rtol=0.01)
+        np.testing.assert_allclose(fluid_temp, KT, atol=5e-3)
 
 
-@utx.skipIfMissingFeatures("LB_WALBERLA")
+@utx.skipIfMissingFeatures(["LB_WALBERLA"])
 class LBWalberlaThermostat(ut.TestCase, LBThermostatCommon):
 
     """Test for the CPU implementation of the LB."""
 
     def setUp(self):
         self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMS)
+
+
+# TODO WALBERLA
+# @utx.skipIfMissingGPU()
+# @utx.skipIfMissingFeatures(["LB_WALBERLA"])
+# class LBWalberlaGPUThermostat(ut.TestCase, LBThermostatCommon):
+
+#    """Test for the GPU implementation of the LB."""
+
+#    def setUp(self):
+#        self.lbf = espressomd.lb.LBFluidWalberlaGPU(**LB_PARAMS)
 
 
 if __name__ == '__main__':

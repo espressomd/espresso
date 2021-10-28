@@ -91,24 +91,24 @@ class SwimmerTest():
         self.add_all_types_of_swimmers(rotation=False)
 
         # Comments by Christoph Lohrmann from #3514:
-        # - why I used ` reuse_forces=True` : If I don't use it, ` force_calc()`  is
-        # called the first time without LB-coupling. That means no friction for any
-        # swimmer and no additional force for the ` v_swim`  type swimmers. The 
-        # active force for the ` f_swim`  swimmers gets added anyway because it is
-        # not derived from the coupling to LB. With ` reuse_forces`  at least both
-        # types are treated the same.
-        # - Therefore, in the first halfstep, the active forces on the particles are
-        # missing.  This creates the first half of the missing momentum.
-        # - The LB fluid is always ahead by a half step (as checked by 
-        # ` test_ext_force_density()`  in ` lb.py` ). It is also not affected by the
-        # ` reuse_forces`  in the first halfstep because ` force_calc()`  with 
-        # coupling is called in the main integration loop before 
-        # ` lb_lbfluid_propagate()` 
+        # - why I used `reuse_forces=True` : If I don't use it, `force_calc()`
+        #   is called the first time without LB-coupling. That means no friction
+        #   for any swimmer and no additional force for the `v_swim` type swimmers.
+        #   The active force for the `f_swim` swimmers gets added anyway because
+        #   it is not derived from the coupling to LB. With `reuse_forces` at
+        #   least both types are treated the same.
+        # - Therefore, in the first halfstep, the active forces on the particles
+        #   are missing. This creates the first half of the missing momentum.
+        # - The LB fluid is always ahead by a half step (as checked by
+        #   `test_ext_force_density()` in `lb.py`). It is also not affected by
+        #   the `reuse_forces` in the first halfstep because `force_calc()`
+        #   with coupling is called in the main integration loop before
+        #   `lb_lbfluid_propagate()`
         # - => in total, the fluid momentum is ahead by a full time step
         self.system.integrator.run(100, reuse_forces=True)
         tot_mom = self.system.analysis.linear_momentum(include_particles=True,
                                                        include_lbfluid=True)
-        # compensate offset between force calculation and LB-update    
+        # compensate offset between force calculation and LB-update
         for part in self.system.part:
             tot_mom += part.f * self.system.time_step
 
@@ -177,10 +177,26 @@ class SwimmerTest():
 
 @utx.skipIfMissingFeatures(
     ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "LB_WALBERLA"])
-class SwimmerTestWALBERLA(SwimmerTest, ut.TestCase):
+class SwimmerTestDomDecWALBERLA(SwimmerTest, ut.TestCase):
 
     def setUp(self):
         self.tol = 1e-10
+        self.system.cell_system.set_domain_decomposition()
+        self.lbf = espressomd.lb.LBFluidWalberla(**self.LB_params)
+        self.system.actors.add(self.lbf)
+        self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=self.gamma)
+
+
+@utx.skipIfMissingFeatures(
+    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "LB_WALBERLA"])
+class SwimmerTestNSquareWALBERLA(SwimmerTest, ut.TestCase):
+
+    def setUp(self):
+        self.tol = 1e-10
+        if any(self.system.cell_system.node_grid > 1):
+            self.skipTest(
+                "N Square and LB not compatible on more than one core")
+        self.system.cell_system.set_n_square()
         self.lbf = espressomd.lb.LBFluidWalberla(**self.LB_params)
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=self.gamma)

@@ -30,7 +30,7 @@
 namespace Observables {
 
 std::vector<double> LBVelocityProfile::operator()() const {
-  Utils::Histogram<double, 3> histogram(n_bins(), 3, limits());
+  Utils::Histogram<double, 3> histogram(n_bins(), limits());
   for (auto const &p : sampling_positions) {
     const auto v = lb_lbfluid_get_interpolated_velocity(p) *
                    lb_lbfluid_get_lattice_speed();

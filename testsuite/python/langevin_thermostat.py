@@ -180,38 +180,31 @@ class LangevinThermostat(ut.TestCase):
 
         system = self.system
         # Translation
-        gamma_t_i = 2
-        gamma_t_a = [0.5, 2, 1.5]
-        gamma_r_i = 3
-        gamma_r_a = np.array((1.5, 0.7, 1.2))
+        if espressomd.has_features("PARTICLE_ANISOTROPY"):
+            gamma_t = [0.5, 2, 1.5]
+            gamma_r = np.array((1.5, 0.7, 1.2))
+        else:
+            gamma_t = 2
+            gamma_r = 3
         o0 = np.array((5., 5., 5.))
 
+        system.time = 0
         system.time_step = 0.0001
         p = system.part.add(pos=(0, 0, 0), omega_body=o0, rotation=(1, 1, 1))
         if espressomd.has_features("ROTATIONAL_INERTIA"):
-            p.rinertia = [2, 2, 2]
-        if espressomd.has_features("PARTICLE_ANISOTROPY"):
-            system.thermostat.set_langevin(
-                kT=0, gamma=gamma_t_a, gamma_rotation=gamma_r_a, seed=41)
-        else:
-            system.thermostat.set_langevin(
-                kT=0, gamma=gamma_t_i, gamma_rotation=gamma_r_i, seed=41)
-
-        system.time = 0
-        if espressomd.has_features("ROTATIONAL_INERTIA"):
-            rinertia = np.copy(p.rinertia)
+            rinertia = np.array((2, 2, 2))
+            p.rinertia = rinertia
         else:
             rinertia = np.array((1, 1, 1))
+        system.thermostat.set_langevin(
+            kT=0, gamma=gamma_t, gamma_rotation=gamma_r, seed=41)
+
+        system.time = 0
         for _ in range(100):
             system.integrator.run(10)
-            if espressomd.has_features("PARTICLE_ANISOTROPY"):
-                np.testing.assert_allclose(
-                    np.copy(p.omega_body),
-                    o0 * np.exp(-gamma_r_a / rinertia * system.time), atol=5E-4)
-            else:
-                np.testing.assert_allclose(
-                    np.copy(p.omega_body),
-                    o0 * np.exp(-gamma_r_i / rinertia * system.time), atol=5E-4)
+            ref_omega_body = o0 * np.exp(-gamma_r / rinertia * system.time)
+            np.testing.assert_allclose(
+                np.copy(p.omega_body), ref_omega_body, atol=5E-4)
 
     @utx.skipIfMissingFeatures("VIRTUAL_SITES")
     def test_07__virtual(self):

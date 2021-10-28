@@ -28,6 +28,8 @@
 #include <boost/test/data/test_case.hpp>
 #include <boost/test/unit_test.hpp>
 
+#include "tests_common.hpp"
+
 #include <LBWalberlaBase.hpp>
 #include <lb_walberla_init.hpp>
 
@@ -38,8 +40,6 @@
 #include <cassert>
 #include <cmath>
 #include <numeric>
-
-#include "tests_common.hpp"
 
 using Utils::Vector3d;
 using Utils::Vector3i;
@@ -58,15 +58,15 @@ BOOST_DATA_TEST_CASE(force_interpolation_bspline, bdata::make(all_lbs()),
    * in the range (-0.5, +0.5) around the LB node mid point.
    */
 
-  constexpr double dx = 0.02;
-  Vector3d const f = {-1.0, 0.5, 1.5};
-  Vector3d offset = Vector3d::broadcast(-0.5 + dx);
+  constexpr auto dx = 0.02;
+  auto const f = Vector3d{{-1.0, 0.5, 1.5}};
+  auto offset = Vector3d::broadcast(-0.5 + dx);
   int index = 0;
   for (auto const &n : local_nodes_incl_ghosts(lb->get_local_domain(), 0)) {
     if (lb->node_in_local_halo(n)) {
       index = (index + 1) % 3;
       offset[index] = std::fmod(offset[index] + 0.5, 1. - dx) - 0.5 + dx;
-      Vector3d const pos = n + offset;
+      auto const pos = n + offset;
       lb->add_force_at_pos(pos, f);
       // Check neighboring nodes for bspline weights
       Vector3d sum{};
@@ -108,7 +108,7 @@ BOOST_DATA_TEST_CASE(velocity_interpolation_bspline, bdata::make(all_lbs()),
          params.grid_dimensions[2] % 3 == 0);
 
   // set node velocities on a simple cubic lattice
-  Vector3d const vel{-1., 0.5, 1.5};
+  auto const vel = Vector3d{{-1., 0.5, 1.5}};
   for (auto const &n : local_nodes_incl_ghosts(lb->get_local_domain(), 0)) {
     if (lb->node_in_local_domain(n)) {
       if ((n[0] + 2) % 3 == 0 and (n[1] + 2) % 3 == 0 and (n[2] + 2) % 3 == 0) {
@@ -153,7 +153,7 @@ int main(int argc, char **argv) {
   params.box_dimensions = Vector3d{12, 6, 9};
 
   walberla_mpi_init();
-  auto res = boost::unit_test::unit_test_main(init_unit_test, argc, argv);
+  auto const res = boost::unit_test::unit_test_main(init_unit_test, argc, argv);
   MPI_Finalize();
   return res;
 }

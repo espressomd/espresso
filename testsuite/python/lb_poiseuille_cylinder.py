@@ -1,4 +1,3 @@
-
 # Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -40,8 +39,7 @@ VISC = 2.7
 DENS = 1.7
 TIME_STEP = 0.05
 BOX_L = 8.0
-# Location of the LB wall. This was box_l/2 -1 for Espresso's LB
-EFFECTIVE_RADIUS = BOX_L / 2 - 1.0
+EFFECTIVE_RADIUS = BOX_L / 2.0 - 1.0
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': VISC,
@@ -53,7 +51,7 @@ OBS_PARAMS = {'n_r_bins': 25,
               'min_r': 0.0,
               'min_phi': -np.pi,
               'min_z': 0.0,
-              'max_r': BOX_L / 2.0 - 1.0,
+              'max_r': EFFECTIVE_RADIUS,
               'max_phi': np.pi,
               'max_z': BOX_L,
               'sampling_density': 1.0}
@@ -96,16 +94,17 @@ class LBPoiseuilleCommon:
         """
         # disable periodicity except in the flow direction
         self.system.periodicity = np.logical_not(self.params['axis'])
+
         local_lb_params = LB_PARAMS.copy()
         local_lb_params['ext_force_density'] = np.array(
             self.params['axis']) * EXT_FORCE
         self.lbf = self.lbf(**local_lb_params)
         self.system.actors.add(self.lbf)
+
         cylinder_shape = espressomd.shapes.Cylinder(
             center=self.system.box_l / 2.0, axis=self.params['axis'],
-            direction=-1, radius=BOX_L / 2.0 - 1.0, length=BOX_L * 1.5)
+            direction=-1, radius=EFFECTIVE_RADIUS, length=BOX_L * 1.5)
         cylinder = espressomd.lbboundaries.LBBoundary(shape=cylinder_shape)
-
         self.system.lbboundaries.add(cylinder)
 
         mid_indices = 3 * [int((BOX_L / AGRID) / 2)]
@@ -139,7 +138,7 @@ class LBPoiseuilleCommon:
 
         v_measured = velocities[1:-1]
         v_expected = poiseuille_flow(
-            positions[1:-1] - 0.5 * BOX_L,
+            positions[1:-1] - BOX_L / 2.0,
             EFFECTIVE_RADIUS,
             EXT_FORCE,
             VISC * DENS)
@@ -216,5 +215,5 @@ class LBWalberlaPoiseuille(ut.TestCase, LBPoiseuilleCommon):
         self.system.lbboundaries.clear()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     ut.main()

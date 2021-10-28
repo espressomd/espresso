@@ -52,7 +52,7 @@ Observable_stat::Observable_stat(std::size_t chunk_size)
 #else
   constexpr std::size_t n_vs = 0;
 #endif
-  auto const n_bonded = bonded_ia_params.size();
+  auto const n_bonded = bonded_ia_params.get_next_key();
   auto const n_non_bonded = max_non_bonded_pairs();
   constexpr std::size_t n_ext_fields = 1; // reduction over all fields
   constexpr std::size_t n_kinetic = 1; // linear+angular kinetic contributions

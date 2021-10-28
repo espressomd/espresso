@@ -35,17 +35,9 @@ void walberla_mpi_init() {
 
 LBWalberlaBase *new_lb_walberla(
     const std::shared_ptr<walberla::WalberlaBlockForest> &blockforest,
-    double viscosity, double density, double kT, unsigned int seed) {
+    double viscosity, double density, const Utils::Vector3i &grid_dimensions,
+    const Utils::Vector3i &node_grid, double kT, unsigned int seed) {
 
-  LBWalberlaBase *lb_walberla_instance;
-  if (kT == 0.) { // un-thermalized LB
-    lb_walberla_instance =
-        new walberla::LBWalberlaImpl<UnthermalizedCollisionModel>(
-            blockforest, viscosity, density, 1, kT, seed);
-  } else { // thermalized LB
-    lb_walberla_instance =
-        new walberla::LBWalberlaImpl<ThermalizedCollisionModel>(
-            blockforest, viscosity, density, 1, kT, seed);
-  }
-  return lb_walberla_instance;
+  return new walberla::LBWalberlaImpl(blockforest, viscosity, density, 1u, kT,
+                                      seed);
 }

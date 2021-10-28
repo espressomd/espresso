@@ -156,7 +156,7 @@ class LangevinThermostat(ut.TestCase, thermostats_common.ThermostatsCommon):
             p_gamma = system.part.add(pos=(0, 0, 0))
             self.setup_diff_mass_rinertia(p_gamma)
             if espressomd.has_features("PARTICLE_ANISOTROPY"):
-                p_gamma.gamma = per_part_gamma, per_part_gamma, per_part_gamma
+                p_gamma.gamma = 3 * [per_part_gamma]
                 if espressomd.has_features("ROTATION"):
                     p_gamma.gamma_rot = per_part_gamma_rot_a
             else:

@@ -120,7 +120,7 @@ public:
     return gpu_get_particle_force_pointer() + 3 * m_gpu_npart;
   };
   float *eGpu() override {
-    // cast struct of floats to array of floats
+    // cast pointer to struct of floats to array of floats
     // https://stackoverflow.com/a/29278260
     return reinterpret_cast<float *>(gpu_get_energy_pointer());
   };

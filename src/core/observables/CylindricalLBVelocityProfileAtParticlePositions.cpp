@@ -33,7 +33,7 @@ namespace Observables {
 std::vector<double> CylindricalLBVelocityProfileAtParticlePositions::evaluate(
     Utils::Span<std::reference_wrapper<const Particle>> particles,
     const ParticleObservables::traits<Particle> &traits) const {
-  Utils::CylindricalHistogram<double, 3> histogram(n_bins(), 3, limits());
+  Utils::CylindricalHistogram<double, 3> histogram(n_bins(), limits());
 
   for (auto p : particles) {
     auto const pos = folded_position(traits.position(p), box_geo);

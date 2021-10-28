@@ -56,7 +56,7 @@ This is the dipolar version of the P3M algorithm, described in :cite:`cerda08d`.
 
 Make sure that you know the relevance of the P3M parameters before using
 P3M! If you are not sure, read the following references:
-:cite:`ewald21,hockney88,kolafa92,deserno98a,deserno98b,deserno00,deserno00a,cerda08d`.
+:cite:`ewald21a,hockney88,kolafa92a,deserno98a,deserno98b,deserno00e,deserno00b,cerda08d`.
 
 Note that dipolar P3M does not work with non-cubic boxes.
 
@@ -90,19 +90,19 @@ It is based on :cite:`brodka04a` and the dipolar version of
 
 Usage notes:
 
-  * The non-periodic direction is always the **z-direction**.
+* The non-periodic direction is always the **z-direction**.
 
-  * The method relies on a slab of the simulation box perpendicular to the
-    z-direction not to contain particles. The size in z-direction of this slab
-    is controlled by the ``gap_size`` parameter. The user has to ensure that
-    no particles enter this region by means of constraints or by fixing the
-    particles' z-coordinate. When particles enter the slab of the specified
-    size, an error will be thrown.
+* The method relies on a slab of the simulation box perpendicular to the
+  z-direction not to contain particles. The size in z-direction of this slab
+  is controlled by the ``gap_size`` parameter. The user has to ensure that
+  no particles enter this region by means of constraints or by fixing the
+  particles' z-coordinate. When particles enter the slab of the specified
+  size, an error will be thrown.
 
-  * The method can be tuned using the ``accuracy`` parameter. In contrast to
-    the electrostatic method, it refers to the energy. Furthermore, it is
-    assumed that all dipole moment are as large as the largest of the dipoles
-    in the system.
+* The method can be tuned using the ``accuracy`` parameter. In contrast to
+  the electrostatic method, it refers to the energy. Furthermore, it is
+  assumed that all dipole moment are as large as the largest of the dipoles
+  in the system.
 
 The method is used as follows::
 
@@ -179,7 +179,7 @@ cell is far enough are :math:`I_{\mathrm{tol}}^2` and
 :math:`\varepsilon^2` which define a fraction of the cell and
 an additive distance respectively. For the detailed description of the
 Barnes-Hut method application to the dipole-dipole interactions, please
-refer to :cite:`Polyakov2013`.
+refer to :cite:`polyakov13a`.
 
 To use the method, create an instance of :class:`~espressomd.magnetostatics.DipolarBarnesHutGpu`
 and add it to the system's list of active actors::

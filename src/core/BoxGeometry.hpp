@@ -131,7 +131,7 @@ public:
    * @brief Box volume
    * @return Return the volume of the box.
    */
-  double volume() const { return m_length[0] * m_length[1] * m_length[2]; }
+  double volume() const { return Utils::product(m_length); }
 
   /**
    * @brief Get the minimum-image distance between two coordinates.

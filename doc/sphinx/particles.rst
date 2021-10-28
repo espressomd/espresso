@@ -65,7 +65,7 @@ Accessing particle properties
 Particle properties can be accessed like a class member.
 
 To access property ``PROPERTY`` of a particle ``a_particle``::
-    
+
     a_particle.<PROPERTY>
 
 For example, to print the particle's current position, call::
@@ -132,16 +132,11 @@ where nearest and next nearest neighbor interactions along a chain of bonded
 particles have to be omitted since they are included in the bonding potentials.
 Exclusions do not apply to the short range part of electrostatics and magnetostatics methods, e.g. to P3M.
 
-::
+To create exclusions for particles pairs 0 and 1::
 
     system.part[0].add_exclusion(1)
 
-
-Create exclusions for particles pairs 0 and 1.
-
-To delete the exclusion, simply use
-
-::
+To delete the exclusion::
 
     system.part[0].delete_exclusion(1)
 
@@ -157,7 +152,7 @@ When the feature ``ROTATION`` is compiled in, particles not only have a position
 Even if the particle rotational inertia is isotropic, the rotation state can be important if, e.g., the particle carries a dipole or is an active particle.
 
 The rotational degrees of freedom are integrated using a velocity Verlet scheme.
-The implementation is based on a quaternion representation of the particle orientation and described in :cite:`omelyan98` with quaternion components indexing made according to the formalism :math:`q = a + b\mathbf{i} + c\mathbf{j} + d\mathbf{k}` :cite:`allen2017`.
+The implementation is based on a quaternion representation of the particle orientation and described in :cite:`omelyan98a` with quaternion components indexing made according to the formalism :math:`q = a + b\mathbf{i} + c\mathbf{j} + d\mathbf{k}` :cite:`allen17a`.
 
 When the Langevin thermostat is enabled, the rotational degrees of freedom are also thermalized.
 
@@ -170,11 +165,11 @@ The rotation of a particle is controlled via the :attr:`espressomd.particle_data
     import espressomd
     system = espressomd.System(box_l=[1, 1, 1])
     system.part.add(pos=(0, 0, 0), rotation=(True, False, False))
-    
+
 The rotational state of a particle is stored as a quaternion in the :attr:`espressomd.particle_data.ParticleHandle.quat` property. For a value of (1,0,0,0), the body and space frames coincide.
 When setting up a particle, its orientation state is by default aligned with the space frame of the box.
 If your particles have a rotational symmetry, you can set up the particle direction (the symmetry axis) using the :attr:`espressomd.particle_data.ParticleHandle.director` property.
-Note that then you have no control aver the initial rotation angle around the symmetry axis.
+Note that then you have no control over the initial rotation angle around the symmetry axis.
 If your particles are anisotropic in all three directions, you can either set the :attr:`espressomd.particle_data.ParticleHandle.quat` attribute directly, or (recommended) set up all particle properties in the box frame and then use :attr:`espressomd.particle_data.ParticleHandle.rotate` to rotate the particle to the desired state before starting the simulation.
 
 Notes:
@@ -348,40 +343,40 @@ to retrieve a particle slice:
 
 - By calling :meth:`espressomd.particle_data.ParticleList.add`
 
-    When adding several particles at once, a particle slice is returned instead
-    of a particle handle.
+  When adding several particles at once, a particle slice is returned instead
+  of a particle handle.
 
 - By slicing :py:attr:`espressomd.system.System.part`
 
-    The :class:`~espressomd.particle_data.ParticleList` supports slicing
-    similarly to lists and NumPy arrays, however with the distinction that
-    particle slices can have gaps.
+  The :class:`~espressomd.particle_data.ParticleList` supports slicing
+  similarly to lists and NumPy arrays, however with the distinction that
+  particle slices can have gaps.
 
-    Using a colon returns a slice containing all particles::
+  Using a colon returns a slice containing all particles::
 
-        print(system.part[:])
-    
-    To access particles with ids ranging from 0 to 9, use::
+      print(system.part[:])
 
-        system.part[0:10]
+  To access particles with ids ranging from 0 to 9, use::
 
-    Note that, like in other cases in Python, the lower bound is inclusive and
-    the upper bound is non-inclusive. The length of the slice does not have to
-    be 10, it can be for example 2 if there are only 2 particles in the system
-    with an id between 0 and 9.
+      system.part[0:10]
 
-    It is also possible to get a slice containing particles of specific ids::
+  Note that, like in other cases in Python, the lower bound is inclusive and
+  the upper bound is non-inclusive. The length of the slice does not have to
+  be 10, it can be for example 2 if there are only 2 particles in the system
+  with an id between 0 and 9.
 
-        system.part[[1, 4, 3]]
+  It is also possible to get a slice containing particles of specific ids::
 
-    would contain the particles with ids 1, 4, and 3 in that specific order.
+      system.part[[1, 4, 3]]
+
+  would contain the particles with ids 1, 4, and 3 in that specific order.
 
 - By calling :meth:`espressomd.particle_data.ParticleList.select`
 
-    This is useful to filter out particles with distinct properties, e.g.::
+  This is useful to filter out particles with distinct properties, e.g.::
 
-        slice1 = system.part.select(type=0, q=1)
-        slice2 = system.part.select(lambda p: p.pos[0] < 0.5)
+      slice1 = system.part.select(type=0, q=1)
+      slice2 = system.part.select(lambda p: p.pos[0] < 0.5)
 
 Properties of particle slices can be accessed just like with single particles.
 A list of all values is returned::
@@ -394,11 +389,11 @@ Setting properties of slices can be done by
 
 - supplying a *single value* that is assigned to each entry of the slice, e.g.::
 
-    system.part[0:10].ext_force = [1, 0, 0]
+      system.part[0:10].ext_force = [1, 0, 0]
 
 - supplying an *array of values* that matches the length of the slice which sets each entry individually, e.g.::
 
-    system.part[0:3].ext_force = [[1, 0, 0], [2, 0, 0], [3, 0, 0]]
+      system.part[0:3].ext_force = [[1, 0, 0], [2, 0, 0], [3, 0, 0]]
 
 For list properties that have no fixed length like ``exclusions`` or ``bonds``, some care has to be taken.
 There, *single value* assignment also accepts lists/tuples just like setting the property of an individual particle. For example::
@@ -563,7 +558,7 @@ Self-propelled swimmers
 
 .. note::
 
-    If you are using this feature, please cite :cite:`degraaf16`.
+    If you are using this feature, please cite :cite:`degraaf16a`.
 
 
 .. seealso::

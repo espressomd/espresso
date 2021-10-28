@@ -24,11 +24,11 @@ import numpy as np
 
 # Define the LB Parameters
 TIME_STEP = 0.008
-AGRID = .4 
-GRID_SIZE = 6 
+AGRID = .4
+GRID_SIZE = 6
 KVISC = 4
 DENS = 2.3
-F = 5.5 / GRID_SIZE**3 
+F = 5.5 / GRID_SIZE**3
 GAMMA = 1
 
 
@@ -51,7 +51,7 @@ class Momentum(object):
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.01
 
-    def test(self):
+    def check(self):
         self.system.actors.clear()
         self.system.part.clear()
         self.system.actors.add(self.lbf)
@@ -71,25 +71,22 @@ class Momentum(object):
             pos=self.system.box_l / 2, ext_force=-ext_fluid_force, v=[.2, .4, .6])
         initial_momentum = np.array(self.system.analysis.linear_momentum())
         np.testing.assert_allclose(initial_momentum, np.copy(p.v) * p.mass)
-        while True: 
+        while True:
             self.system.integrator.run(500)
 
             measured_momentum = self.system.analysis.linear_momentum()
             coupling_force = -(p.f - p.ext_force)
             compensation = -TIME_STEP / 2 * coupling_force
 
-            np.testing.assert_allclose(measured_momentum + compensation, 
+            np.testing.assert_allclose(measured_momentum + compensation,
                                        initial_momentum, atol=1E-4)
             if np.linalg.norm(p.f) < 0.01 \
                and np.all(np.abs(p.pos) > 10.1 * self.system.box_l):
                 break
 
         # Make sure, the particle has crossed the periodic boundaries
-        self.assertGreater(
-            max(
-                np.abs(p.v) *
-                self.system.time),
-            self.system.box_l[0])
+        self.assertGreater(max(np.abs(p.v)) * self.system.time,
+                           self.system.box_l[0])
 
 
 @utx.skipIfMissingFeatures(['LB_WALBERLA', 'EXTERNAL_FORCES'])
@@ -97,6 +94,20 @@ class LBWalberlaMomentum(ut.TestCase, Momentum):
 
     def setUp(self):
         self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMS)
+
+    def tearDown(self):
+        self.system.actors.clear()
+
+    def test_dom_dec(self):
+        self.system.cell_system.set_domain_decomposition()
+        self.check()
+
+    def test_n_square(self):
+        if self.system.cell_system.get_state()["n_nodes"] > 1:
+            self.skipTest(
+                "LB only works with domain decomposition for more than 1 MPI rank")
+        self.system.cell_system.set_n_square()
+        self.check()
 
 
 if __name__ == "__main__":

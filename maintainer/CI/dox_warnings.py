@@ -41,8 +41,8 @@ if content:
         ext = os.path.splitext(filepath)[1]
         if ext.lower() not in source_code_ext:
             continue
-        warning = ('argument \'{0}\' of {1} has no description, either add one'
-                   ' or remove {1}'.format(varname, paramtype))
+        warning = (f'argument \'{varname}\' of {paramtype} has no description,'
+                   f' either add one or remove {paramtype}')
         raw_warnings.append((filepath, lineno, warning))
 
 # remove duplicated warnings
@@ -61,9 +61,9 @@ for (filepath, lineno, warning), warning_list in raw_warnings.items():
         # defined in another group in the .cpp file; this is usually caused by
         # the "Private functions" and "Exported functions" groups in .hpp files
         continue
-    if re.search(r'^documented symbol `\S+\' was not declared or defined\.$',
+    if re.search(r"^documented symbol [\'`][^\r\n]+\' was not declared or defined\.$",
                  warning):
-        # known bug, fixed in 1.8.16
+        # known bug, still exists in 1.8.17 for anonymous classes
         continue
     if re.search('^no uniquely matching class member found for $', warning):
         # known bug, not fixed yet
@@ -88,8 +88,8 @@ if n_unique == 0:
 
 # generate a log file
 with open('dox_warnings_summary.log', 'w') as f:
-    f.write('The Doxygen documentation generated {} unique warnings (total: {},'
-            ' ignored: {}):\n'.format(n_unique, n_all, n_unique_raw - n_unique))
+    f.write(f'The Doxygen documentation generated {n_unique} unique warnings '
+            f'(total: {n_all}, ignored: {n_unique_raw - n_unique}):\n')
     for filepath in sorted(warnings.keys()):
         f.write(filepath + ':\n')
         for (lineno, warning) in sorted(warnings[filepath].keys()):
@@ -97,4 +97,4 @@ with open('dox_warnings_summary.log', 'w') as f:
             s = re.sub(r'\(.*\)', '()', warning)
             if warning_list:
                 s += ': ' + ', '.join(x.strip() for x in warning_list)
-            f.write('  line {}: {}\n'.format(lineno, s))
+            f.write(f'  line {lineno}: {s}\n')

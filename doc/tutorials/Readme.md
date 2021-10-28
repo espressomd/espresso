@@ -118,3 +118,20 @@ This will launch a web browser in which the notebooks for the tutorials can be
 viewed and run. For more details, please see the user guide section on
 [running ESPResSo](https://espressomd.github.io/doc/installation.html#running-es),
 which walks you through the Jupyter interface.
+
+## Video lectures
+
+[comment]: # (Begin of videos landing page)
+
+* [Introduction to ESPResSo](https://www.youtube.com/watch?v=aP4jvpD-D1w)
+* [How to run ESPResSo inside Visual Studio Code](https://www.youtube.com/watch?v=dlvF1Zk3AAs)
+* [Error Estimation in Time-Correlated Data](https://www.youtube.com/watch?v=I-HCxj9dUIU)
+* [Electrostatic Algorithms](https://www.youtube.com/watch?v=YPryFf7MQTg)
+* [Introduction to Charged Soft Matter](https://www.youtube.com/watch?v=wrnDg-3j2ik)
+* [Managing Simulation Data](https://www.youtube.com/watch?v=64rNmTpoS1c)
+* [Introduction to Ferrofluids](https://www.youtube.com/watch?v=wbL3EdVCbkI)
+* [Molecular Modelling of Polymers](https://www.youtube.com/watch?v=vSF5-eciwms)
+* [Simulating Chemical Reactions in ESPResSo](https://www.youtube.com/watch?v=MUG-PSaMFVM)
+* [Introduction to Lattice Boltzmann Method](https://www.youtube.com/watch?v=jfk4feD7rFQ)
+
+[comment]: # (End of videos landing page)

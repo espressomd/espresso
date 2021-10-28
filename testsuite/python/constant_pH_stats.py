@@ -35,9 +35,9 @@ class ReactionEnsembleTest(ut.TestCase):
         "H+": 5,
     }
     charges_dict = {
-        0: 0,
-        1: -1,
-        5: +1,
+        types["HA"]: 0,
+        types["A-"]: -1,
+        types["H+"]: +1,
     }
     temperature = 1.0
     # choose target alpha not too far from 0.5 to get good statistics in a

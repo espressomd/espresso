@@ -25,13 +25,7 @@
  *
  * In the current version only simple bounce back walls are implemented. Thus
  * after the streaming step, in all wall nodes all populations are bounced
- * back from where they came from. Ulf Schiller spent a lot of time
- * working on more powerful alternatives, they are to be found in the
- * lb_testing branch of ESPResSo until the end of 2010. Now we stripped
- * down the code to a minimum, as most of it was not sufficiently
- * understandable.
- *
- * Anyone who wants to revive these, please look into the git.
+ * back from where they came from.
  *
  */
 
@@ -42,9 +36,6 @@
 
 #include "config.hpp"
 
-#include <utils/Span.hpp>
-
-#include <array>
 #include <memory>
 #include <vector>
 
