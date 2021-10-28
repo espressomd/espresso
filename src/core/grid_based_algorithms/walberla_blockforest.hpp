@@ -1,6 +1,8 @@
 #ifndef ESPRESSO_WALBERLA_BLOCKFOREST_HPP
 #define ESPRESSO_WALBERLA_BLOCKFOREST_HPP
 
+#include <memory>
+
 #include "WalberlaBlockForest.hpp"
 
 namespace walberla {
@@ -13,7 +15,7 @@ private:
 };
 } // namespace walberla
 
-const walberla::WalberlaBlockForest *get_walberla_blockforest();
+std::shared_ptr<walberla::WalberlaBlockForest> get_walberla_blockforest();
 const walberla::WalberlaBlockForestParams *get_walberla_blockforest_params();
 
 void mpi_init_walberla_blockforest(const Utils::Vector3d &box_size,

@@ -339,7 +339,7 @@ protected:
   std::shared_ptr<PDFStreamingCommunicator> m_pdf_streaming_communication;
 
   /** Block forest */
-  const WalberlaBlockForest *m_blockforest;
+  const std::shared_ptr<WalberlaBlockForest> m_blockforest;
 
   // MPI
   std::shared_ptr<mpi::Environment> m_env;
@@ -393,12 +393,12 @@ protected:
   }
 
 public:
-  LBWalberlaImpl(const WalberlaBlockForest *blockforest, double viscosity,
-                 double density, int n_ghost_layers, double kT,
-                 unsigned int seed)
+  LBWalberlaImpl(std::shared_ptr<WalberlaBlockForest> blockforest,
+                 double viscosity, double density, int n_ghost_layers,
+                 double kT, unsigned int seed)
       : m_n_ghost_layers(static_cast<unsigned int>(n_ghost_layers)),
         m_viscosity(viscosity), m_density(density), m_kT(kT), m_seed(seed),
-        m_blockforest(blockforest) {
+        m_blockforest(std::move(blockforest)) {
 
     if (m_n_ghost_layers <= 0)
       throw std::runtime_error("At least one ghost layer must be used");
@@ -522,7 +522,8 @@ public:
 
   [[nodiscard]] double get_viscosity() const override { return m_viscosity; }
 
-  [[nodiscard]] const WalberlaBlockForest *get_blockforest() const override {
+  [[nodiscard]] const std::shared_ptr<WalberlaBlockForest> &
+  get_blockforest() const override {
     return m_blockforest;
   };
 

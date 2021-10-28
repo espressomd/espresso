@@ -30,8 +30,8 @@ private:
   std::shared_ptr<blockforest::StructuredBlockForest> m_blocks;
 
 public:
-  FFT(const WalberlaBlockForest *blockforest, FloatType permittivity)
-      : PS(blockforest, permittivity) {
+  FFT(std::shared_ptr<WalberlaBlockForest> blockforest, FloatType permittivity)
+      : PS(std::move(blockforest), permittivity) {
     m_blocks = get_blockforest()->get_blocks();
 
     Vector3<uint_t> dim(m_blocks->getNumberOfXCells(),

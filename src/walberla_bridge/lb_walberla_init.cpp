@@ -33,10 +33,9 @@ void walberla_mpi_init() {
       walberla::mpi::Environment(argc, argv);
 }
 
-LBWalberlaBase *
-new_lb_walberla(const walberla::WalberlaBlockForest * blockforest,
-                double viscosity, double density, double kT,
-                unsigned int seed) {
+LBWalberlaBase *new_lb_walberla(
+    const std::shared_ptr<walberla::WalberlaBlockForest> &blockforest,
+    double viscosity, double density, double kT, unsigned int seed) {
 
   LBWalberlaBase *lb_walberla_instance;
   if (kT == 0.) { // un-thermalized LB

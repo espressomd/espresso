@@ -10,7 +10,6 @@
 namespace EKBoundaries {
 
 std::vector<std::shared_ptr<EKBoundary>> ekboundaries;
-#ifdef EK_BOUNDARIES
 void ek_init_boundaries() {
 #ifdef EK_WALBERLA
   std::for_each(
@@ -48,5 +47,4 @@ void remove(const std::shared_ptr<EKBoundary> &b) {
 
   on_ekboundary_change();
 }
-#endif // EK_BOUNDARIES
 } // namespace EKBoundaries

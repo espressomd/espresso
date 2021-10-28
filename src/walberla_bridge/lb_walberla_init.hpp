@@ -27,8 +27,8 @@
 /** @brief Initialize Walberla's MPI manager */
 void walberla_mpi_init();
 
-LBWalberlaBase *
-new_lb_walberla(const walberla::WalberlaBlockForest * blockforest,
-                double viscosity, double density, double kT, unsigned int seed);
+LBWalberlaBase *new_lb_walberla(
+    const std::shared_ptr<walberla::WalberlaBlockForest> &blockforest,
+    double viscosity, double density, double kT, unsigned int seed);
 
 #endif

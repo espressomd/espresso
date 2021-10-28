@@ -16,8 +16,8 @@ private:
   using PoissonSolver<FloatType>::m_potential_field_id;
 
 public:
-  explicit None(const WalberlaBlockForest *blockforest)
-      : PS(blockforest, 0.0) {}
+  explicit None(std::shared_ptr<WalberlaBlockForest> blockforest)
+      : PS(std::move(blockforest), 0.0) {}
 
   void reset_charge_field() override {}
 

@@ -136,7 +136,7 @@ public:
   [[nodiscard]] virtual walberla::domain_decomposition::BlockDataID
   get_force_field_id() const = 0;
 
-  [[nodiscard]] virtual const walberla::WalberlaBlockForest *
+  [[nodiscard]] virtual const std::shared_ptr<walberla::WalberlaBlockForest> &
   get_blockforest() const = 0;
   /** @brief Create a VTK observable.
    *

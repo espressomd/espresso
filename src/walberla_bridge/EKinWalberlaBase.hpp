@@ -85,7 +85,7 @@ public:
   /** @brief set the rng state of thermalized LBs */
   virtual void set_rng_state(uint64_t counter) = 0;
 
-  [[nodiscard]] virtual const walberla::WalberlaBlockForest *
+  [[nodiscard]] virtual const std::shared_ptr<walberla::WalberlaBlockForest> &
   get_blockforest() const = 0;
 
   [[nodiscard]] virtual walberla::BlockDataID get_density_id() const = 0;

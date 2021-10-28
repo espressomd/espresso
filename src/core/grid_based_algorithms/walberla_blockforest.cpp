@@ -10,12 +10,12 @@ std::unique_ptr<walberla::WalberlaBlockForestParams>
     walberla_blockforest_params;
 } // namespace
 
-const walberla::WalberlaBlockForest *get_walberla_blockforest() {
+std::shared_ptr<walberla::WalberlaBlockForest> get_walberla_blockforest() {
   if (!walberla_blockforest) {
     throw std::runtime_error(
         "Attempted access to uninitialized BlockForest instance.");
   }
-  return walberla_blockforest.get();
+  return walberla_blockforest;
 }
 
 const walberla::WalberlaBlockForestParams *get_walberla_blockforest_params() {

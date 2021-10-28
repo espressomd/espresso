@@ -62,7 +62,7 @@ protected:
   BlockDataID m_flux_field_flattened_id;
 
   /** Block forest */
-  const WalberlaBlockForest *m_blockforest;
+  const std::shared_ptr<WalberlaBlockForest> m_blockforest;
 
   std::unique_ptr<pystencils::NoFlux> m_noflux;
   bool m_noflux_dirty = false;
@@ -110,13 +110,13 @@ protected:
   std::shared_ptr<FullCommunicator> m_full_communication;
 
 public:
-  EKinWalberlaImpl(const WalberlaBlockForest *blockforest, FloatType diffusion,
-                   FloatType kT, FloatType valency,
+  EKinWalberlaImpl(std::shared_ptr<WalberlaBlockForest> blockforest,
+                   FloatType diffusion, FloatType kT, FloatType valency,
                    Utils::Vector<FloatType, 3> ext_efield, FloatType density,
                    bool advection, bool friction_coupling)
       : EKinWalberlaBase<FloatType>(diffusion, kT, valency, ext_efield,
                                     advection, friction_coupling),
-        m_blockforest{blockforest} {
+        m_blockforest{std::move(blockforest)} {
     m_density_field_id = field::addToStorage<DensityField>(
         get_blockforest()->get_blocks(), "density field", density, field::fzyx,
         get_blockforest()->get_ghost_layers());
@@ -302,7 +302,8 @@ public:
     }
   };
 
-  [[nodiscard]] const WalberlaBlockForest *get_blockforest() const override {
+  [[nodiscard]] const std::shared_ptr<WalberlaBlockForest> &
+  get_blockforest() const override {
     return m_blockforest;
   };
 

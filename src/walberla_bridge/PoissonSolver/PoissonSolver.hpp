@@ -1,6 +1,8 @@
 #ifndef ESPRESSO_POISSONSOLVER_HPP
 #define ESPRESSO_POISSONSOLVER_HPP
 
+#include <utility>
+
 #include "WalberlaBlockForest.hpp"
 #include "blockforest/communication/UniformBufferedScheme.h"
 #include "field/AddToStorage.h"
@@ -11,7 +13,7 @@
 namespace walberla {
 template <typename FloatType = double> class PoissonSolver {
 private:
-  const WalberlaBlockForest *m_blockforest;
+  const std::shared_ptr<WalberlaBlockForest> m_blockforest;
   FloatType m_permittivity;
 
 protected:
@@ -27,8 +29,9 @@ protected:
   std::shared_ptr<FullCommunicator> m_full_communication;
 
 public:
-  PoissonSolver(const WalberlaBlockForest *blockforest, FloatType permittivity)
-      : m_blockforest{blockforest}, m_permittivity{permittivity} {
+  PoissonSolver(std::shared_ptr<WalberlaBlockForest> blockforest,
+                FloatType permittivity)
+      : m_blockforest{std::move(blockforest)}, m_permittivity{permittivity} {
     m_potential_field_id = field::addToStorage<PotentialField>(
         get_blockforest()->get_blocks(), "potential field", 0.0, field::fzyx,
         get_blockforest()->get_ghost_layers());
@@ -49,7 +52,8 @@ public:
                                    FloatType valency) = 0;
   virtual BlockDataID get_potential_field_id() = 0;
 
-  [[nodiscard]] const WalberlaBlockForest *get_blockforest() const {
+  [[nodiscard]] const std::shared_ptr<WalberlaBlockForest> &
+  get_blockforest() const {
     return m_blockforest;
   };
   void set_permittivity(FloatType permittivity) {

@@ -13,12 +13,10 @@ namespace EKBoundaries {
 
 extern std::vector<std::shared_ptr<EKBoundary>> ekboundaries;
 
-#ifdef EK_BOUNDARIES
 void ek_init_boundaries();
 
 void add(const std::shared_ptr<EKBoundary> &);
 void remove(const std::shared_ptr<EKBoundary> &);
-#endif // EK_BOUNDARIES
 } // namespace EKBoundaries
 
 #endif // ESPRESSO_EK_BOUNDARIES_HPP
