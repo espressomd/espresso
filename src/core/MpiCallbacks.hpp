@@ -540,7 +540,7 @@ private:
 
     /* Check if callback exists */
     if (m_callback_map.find(id) == m_callback_map.end()) {
-      throw std::out_of_range("Callback does not exists.");
+      throw std::out_of_range("Callback does not exist.");
     }
 
     /* Send request to worker nodes */
@@ -556,14 +556,11 @@ private:
 
 public:
   /**
-   * @brief call a callback.
+   * @brief Call a callback on worker nodes.
    *
-   * Call a static callback by pointer.
-   * The method can only be called on the head node
-   * and has the prerequisite that the other nodes are
-   * in the MPI loop. Also the function has to be previously
-   * registered e.g. with the @ref REGISTER_CALLBACK macro.
    * The callback is **not** called on the head node.
+   *
+   * This method can only be called on the head node.
    *
    * @param fp Pointer to the function to call.
    * @param args Arguments for the callback.
@@ -579,14 +576,11 @@ public:
   }
 
   /**
-   * @brief call a callback.
+   * @brief Call a callback on all nodes.
    *
-   * Call a static callback by pointer.
-   * The method can only be called on the head node
-   * and has the prerequisite that the other nodes are
-   * in the MPI loop. Also the function has to be previously
-   * registered e.g. with the @ref REGISTER_CALLBACK macro.
-   * The callback is called on the head node.
+   * This calls a callback on all nodes, including the head node.
+   *
+   * This method can only be called on the head node.
    *
    * @param fp Pointer to the function to call.
    * @param args Arguments for the callback.
