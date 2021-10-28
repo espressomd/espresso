@@ -413,14 +413,15 @@ int python_integrate(int n_steps, bool recalc_forces_par,
   return ES_OK;
 }
 
-static int mpi_steepest_descent_local(int steps, int) {
+static int mpi_steepest_descent_local(int steps) {
   return integrate(steps, -1);
 }
+
 REGISTER_CALLBACK_MASTER_RANK(mpi_steepest_descent_local)
 
 int mpi_steepest_descent(int steps) {
   return mpi_call(Communication::Result::master_rank,
-                  mpi_steepest_descent_local, steps, 0);
+                  mpi_steepest_descent_local, steps);
 }
 
 static int mpi_integrate_local(int n_steps, int reuse_forces) {

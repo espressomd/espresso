@@ -168,7 +168,7 @@ mpi_get_pairs_of_types(double const distance, std::vector<int> const &types) {
   return pairs;
 }
 
-void non_bonded_loop_trace_local() {
+static void non_bonded_loop_trace_local() {
   auto pairs = non_bonded_loop_trace();
   Utils::Mpi::gather_buffer(pairs, comm_cart);
 }
@@ -182,7 +182,7 @@ std::vector<PairInfo> mpi_non_bonded_loop_trace() {
   return pairs;
 }
 
-void mpi_resort_particles_local(int global_flag, int) {
+static void mpi_resort_particles_local(int global_flag) {
   cell_structure.resort_particles(global_flag);
 
   boost::mpi::gather(
@@ -192,7 +192,7 @@ void mpi_resort_particles_local(int global_flag, int) {
 REGISTER_CALLBACK(mpi_resort_particles_local)
 
 std::vector<int> mpi_resort_particles(int global_flag) {
-  mpi_call(mpi_resort_particles_local, global_flag, 0);
+  mpi_call(mpi_resort_particles_local, global_flag);
   cell_structure.resort_particles(global_flag);
 
   clear_particle_node();

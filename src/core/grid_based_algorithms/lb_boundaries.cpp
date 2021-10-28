@@ -259,7 +259,7 @@ void lb_init_boundaries() {
 }
 
 #if defined(LB_BOUNDARIES)
-void lb_collect_boundary_forces_local(int, int) {
+static void lb_collect_boundary_forces_local() {
   lb_collect_boundary_forces(nullptr);
 }
 
@@ -284,7 +284,7 @@ Utils::Vector3d lbboundary_get_force(LBBoundary const *lbb) {
 #endif
   } else if (lattice_switch == ActiveLB::CPU) {
 #if defined(LB_BOUNDARIES)
-    mpi_call(lb_collect_boundary_forces_local, -1, -1);
+    mpi_call(lb_collect_boundary_forces_local);
     lb_collect_boundary_forces(forces.data());
 #endif
   }

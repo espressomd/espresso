@@ -27,24 +27,21 @@
  *
  *  The asynchronous MPI communication is used during the script
  *  evaluation. Except for the master node that interprets the interface
- *  script, all other nodes wait in mpi_loop() for the master node to
- *  issue an action using mpi_call(). mpi_loop() immediately
- *  executes an MPI_Bcast and therefore waits for the master node to
- *  broadcast a command, which is done by mpi_call(). The request
- *  consists of a callback function and two arbitrary integers. If
- *  applicable, the first integer is the node number of the slave
- *  this request is dedicated to.
+ *  script, all other nodes wait in @ref mpi_loop() for the master node to
+ *  issue an action using @ref mpi_call(). @ref mpi_loop() immediately
+ *  executes an @c MPI_Bcast and therefore waits for the master node to
+ *  broadcast a command, which is done by @ref mpi_call(). The request
+ *  consists of a callback function with an arbitrary number of arguments.
  *
  *  To add new actions (e.g. to implement new interface functionality), do the
  *  following:
  *  - write the @c mpi_* function that is executed on the master
- *  - write the @c mpi_*_slave function
+ *  - write the @c mpi_*_slave function that is executed on worker nodes
  *  - register your slave function with one of the @c REGISTER_CALLBACK macros
  *
  *  After this, your procedure is free to do anything. However, it has
  *  to be in (MPI) sync with what your new @c mpi_*_slave does. This
- *  procedure is called immediately after the broadcast with the
- *  arbitrary integer as parameter.
+ *  procedure is called immediately after the broadcast.
  */
 
 #include "MpiCallbacks.hpp"
