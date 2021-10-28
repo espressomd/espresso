@@ -27,7 +27,7 @@ cdef extern from "grid.hpp":
     void rescale_boxl(int dir, double d_new)
 
 cdef extern from "rotate_system.hpp":
-    void rotate_system(double phi, double theta, double alpha)
+    void mpi_rotate_system(double phi, double theta, double alpha)
 
 IF EXCLUSIONS:
     cdef extern from "particle_data.hpp":

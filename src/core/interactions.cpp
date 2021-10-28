@@ -23,29 +23,13 @@
 #include "TabulatedPotential.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "bonded_interactions/bonded_tab.hpp"
-#include "event.hpp"
 
 #include "serialization/IA_parameters.hpp"
 
-#include <utils/mpi/cart_comm.hpp>
-
 #include <boost/mpi.hpp>
 
-#include <mpi.h>
-
-void mpi_bcast_all_ia_params_local() {
-  boost::mpi::broadcast(comm_cart, ia_params, 0);
-}
-
-REGISTER_CALLBACK(mpi_bcast_all_ia_params_local)
-
-void mpi_bcast_all_ia_params() { mpi_call_all(mpi_bcast_all_ia_params_local); }
-
 void mpi_bcast_ia_params_local(int i, int j) {
-  if (j >= 0) {
-    // non-bonded interaction parameters
-    boost::mpi::broadcast(comm_cart, *get_ia_param(i, j), 0);
-  }
+  boost::mpi::broadcast(comm_cart, *get_ia_param(i, j), 0);
   on_short_range_ia_change();
 }
 
@@ -54,7 +38,3 @@ REGISTER_CALLBACK(mpi_bcast_ia_params_local)
 void mpi_bcast_ia_params(int i, int j) {
   mpi_call_all(mpi_bcast_ia_params_local, i, j);
 }
-
-REGISTER_CALLBACK(realloc_ia_params)
-
-void mpi_realloc_ia_params(int ns) { mpi_call_all(realloc_ia_params, ns); }

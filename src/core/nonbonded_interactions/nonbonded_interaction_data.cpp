@@ -25,10 +25,11 @@
 
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "collision.hpp"
+#include "communication.hpp"
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
+#include "event.hpp"
 #include "grid.hpp"
-#include "interactions.hpp"
 #include "serialization/IA_parameters.hpp"
 
 #include <boost/archive/binary_iarchive.hpp>
@@ -58,6 +59,41 @@ double min_global_cut = INACTIVE_CUTOFF;
 /*****************************************
  * general low-level functions
  *****************************************/
+
+static void mpi_realloc_ia_params_local(int new_size) {
+  if (new_size <= max_seen_particle_type)
+    return;
+
+  auto new_params = std::vector<IA_parameters>(new_size * (new_size + 1) / 2);
+
+  /* if there is an old field, move entries */
+  for (int i = 0; i < max_seen_particle_type; i++)
+    for (int j = i; j < max_seen_particle_type; j++) {
+      new_params.at(Utils::upper_triangular(i, j, new_size)) =
+          std::move(*get_ia_param(i, j));
+    }
+
+  max_seen_particle_type = new_size;
+  std::swap(ia_params, new_params);
+}
+
+REGISTER_CALLBACK(mpi_realloc_ia_params_local)
+
+/** Increase the size of the @ref ia_params vector. */
+inline void mpi_realloc_ia_params(int new_size) {
+  mpi_call_all(mpi_realloc_ia_params_local, new_size);
+}
+
+static void mpi_bcast_all_ia_params_local() {
+  boost::mpi::broadcast(comm_cart, ia_params, 0);
+}
+
+REGISTER_CALLBACK(mpi_bcast_all_ia_params_local)
+
+/** Broadcast @ref ia_params to all nodes. */
+inline void mpi_bcast_all_ia_params() {
+  mpi_call_all(mpi_bcast_all_ia_params_local);
+}
 
 IA_parameters *get_ia_param_safe(int i, int j) {
   make_particle_type_exist(std::max(i, j));
@@ -206,27 +242,6 @@ double maximal_cutoff() {
   return max_cut;
 }
 
-/** Increase the LOCAL @ref ia_params field for non-bonded interactions
- *  to the given size. This function is not exported since it does not
- *  do this on all nodes. Use @ref make_particle_type_exist for that.
- */
-void realloc_ia_params(int nsize) {
-  if (nsize <= max_seen_particle_type)
-    return;
-
-  auto new_params = std::vector<IA_parameters>(nsize * (nsize + 1) / 2);
-
-  /* if there is an old field, move entries */
-  for (int i = 0; i < max_seen_particle_type; i++)
-    for (int j = i; j < max_seen_particle_type; j++) {
-      new_params.at(Utils::upper_triangular(i, j, nsize)) =
-          std::move(*get_ia_param(i, j));
-    }
-
-  max_seen_particle_type = nsize;
-  std::swap(ia_params, new_params);
-}
-
 void reset_ia_params() {
   boost::fill(ia_params, IA_parameters{});
   mpi_bcast_all_ia_params();
@@ -243,7 +258,7 @@ void make_particle_type_exist(int type) {
 
 void make_particle_type_exist_local(int type) {
   if (is_new_particle_type(type))
-    realloc_ia_params(type + 1);
+    mpi_realloc_ia_params_local(type + 1);
 }
 
 int interactions_sanity_checks() {

@@ -339,12 +339,6 @@ void make_particle_type_exist(int type);
 
 void make_particle_type_exist_local(int type);
 
-/** This function increases the LOCAL ia_params field to the given size.
- *  Better use \ref make_particle_type_exist since it takes care of
- *  the other nodes.
- */
-void realloc_ia_params(int nsize);
-
 /** Calculate the maximal cutoff of all pair interactions.
  */
 double maximal_cutoff();

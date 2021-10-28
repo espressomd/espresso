@@ -17,7 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "bonded_interaction_data.hpp"
-#include "interactions.hpp"
 
 #include <boost/range/numeric.hpp>
 #include <boost/variant.hpp>
