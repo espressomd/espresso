@@ -58,17 +58,6 @@ void remove(const std::shared_ptr<LBBoundary> &b) {
   on_lbboundary_change();
 }
 
-bool sanity_check_mach_limit() {
-  // Boundary velocities are stored in MD units, therefore we need to scale them
-  // in order to get lattice units.
-  auto const conv_fac = 1. / lb_lbfluid_get_lattice_speed();
-  auto constexpr mach_limit = 0.3;
-  return std::any_of(lbboundaries.begin(), lbboundaries.end(),
-                     [conv_fac, mach_limit](auto const &b) {
-                       return (b->velocity() * conv_fac).norm() >= mach_limit;
-                     });
-}
-
 /** Initialize boundary conditions for all constraints in the system. */
 void lb_init_boundaries() {
   if (lattice_switch == ActiveLB::WALBERLA) {

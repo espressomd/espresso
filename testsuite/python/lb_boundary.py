@@ -107,14 +107,14 @@ class LBBoundariesBase:
         self.check_boundary_flags(np.copy(lbb[0].velocity),
                                   np.copy(lbb[1].velocity))
 
-        slip_velocity1 = np.array([1., 2., 3.])
-        slip_velocity2 = np.array([4., 5., 6.])
+        slip_velocity1 = 1e-3 * np.array([1., 2., 3.])
+        slip_velocity2 = 1e-3 * np.array([4., 5., 6.])
         self.lbf.add_boundary_from_shape(self.wall_shape1, slip_velocity1)
         self.lbf.add_boundary_from_shape(self.wall_shape2, slip_velocity2)
         self.check_boundary_flags(slip_velocity1, slip_velocity2)
 
-        new_slip_velocity1 = np.array([-1., 0., 1.])
-        new_slip_velocity2 = np.array([-2., 2., 2.])
+        new_slip_velocity1 = 1e-3 * np.array([-1., 0., 1.])
+        new_slip_velocity2 = 1e-3 * np.array([-2., 2., 2.])
         bitmask1 = self.lbf.get_shape_bitmask(self.wall_shape1)
         bitmask2 = self.lbf.get_shape_bitmask(self.wall_shape2)
         nodes1 = np.array(np.nonzero(bitmask1)).T
@@ -132,7 +132,7 @@ class LBBoundariesBase:
             espressomd.lbboundaries.LBBoundary(shape=union))
         self.check_boundary_flags(np.copy(lbb.velocity), np.copy(lbb.velocity))
 
-        slip_velocity = np.array([1., 2., 3.])
+        slip_velocity = 1e-3 * np.array([1., 2., 3.])
         self.lbf.add_boundary_from_shape(union, slip_velocity)
         self.check_boundary_flags(slip_velocity, slip_velocity)
 

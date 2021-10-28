@@ -53,13 +53,6 @@ void lb_init_boundaries();
 void add(const std::shared_ptr<LBBoundary> &);
 void remove(const std::shared_ptr<LBBoundary> &);
 
-/**
- * @brief Check the boundary velocities.
- * Sanity check if the velocity defined at LB boundaries is within the Mach
- * number limit of the scheme, i.e. u < 0.3.
- */
-bool sanity_check_mach_limit();
-
 #endif // (LB_BOUNDARIES)
 } // namespace LBBoundaries
 #endif /* LB_BOUNDARIES_H */

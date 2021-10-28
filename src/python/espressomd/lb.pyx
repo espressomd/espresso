@@ -261,6 +261,39 @@ cdef class HydrodynamicInteraction(Actor):
                 "seed": 0,
                 "kT": 0.}
 
+    def mach_limit(self):
+        """
+        The fluid velocity is limited to :math:`v_{\\mathrm{max}} = 0.20`
+        (see *quasi-incompressible limit* in :cite:`kruger17a`,
+        chapter 7, page 272), which corresponds to Mach 0.35.
+
+        The relative error in the fluid density between a compressible fluid
+        and an incompressible fluid at Mach 0.30 is less than 5% (see
+        *constant density assumption* in :cite:`kundu01a` chapter 16, page
+        663). Since the speed of sound is :math:`c_s = 1 / \\sqrt{3}` in LB
+        velocity units in a D3Q19 lattice, the velocity limit at Mach 0.30
+        is :math:`v_{\\mathrm{max}} = 0.30 / \\sqrt{3} \\approx 0.17`.
+        At Mach 0.35 the relative error is around 6% and
+        :math:`v_{\\mathrm{max}} = 0.35 / \\sqrt{3} \\approx 0.20`.
+
+        Returns
+        -------
+        v_max : :obj:`float`
+            The Mach limit expressed in LB velocity units.
+
+        """
+        return 0.20
+
+    @classmethod
+    def _check_mach_limit(cls, velocities):
+        lattice_vel = lb_lbfluid_get_lattice_speed()
+        vel_max = cls.mach_limit()
+        velocities = np.reshape(velocities, (-1, 3))
+        if np.any(np.linalg.norm(velocities, axis=1) > vel_max * lattice_vel):
+            speed_of_sound = 1. / np.sqrt(3.)
+            mach_number = vel_max / speed_of_sound
+            raise ValueError(f'Slip velocity exceeds Mach {mach_number:.2f}')
+
     def _set_lattice_switch(self):
         raise Exception(
             "Subclasses of HydrodynamicInteraction must define the _set_lattice_switch() method.")
@@ -400,7 +433,6 @@ IF LB_WALBERLA:
         """
         Initialize the lattice-Boltzmann method for hydrodynamic flow using waLBerla.
         See :class:`HydrodynamicInteraction` for the list of parameters.
-
         """
 
         def _set_params_in_es_core(self):
@@ -465,14 +497,18 @@ IF LB_WALBERLA:
                 raise ValueError(
                     f'Cannot process velocity grid of shape {np.shape(velocity)}')
 
-            velocity_flat = np.array(velocity, dtype=float).reshape((-1,))
+            # range checks
+            velocity = np.array(velocity, dtype=float).reshape((-1, 3))
+            self._check_mach_limit(velocity)
+
+            velocity *= 1. / lb_lbfluid_get_lattice_speed()
+            velocity_flat = velocity.reshape((-1,))
             mask_flat = shape.call_method('rasterize', grid_size=self.shape,
                                           grid_spacing=self._params['agrid'],
                                           grid_offset=0.5)
 
-            cdef double unit_conversion = 1. / lb_lbfluid_get_lattice_speed()
             cdef double[::1] velocity_view = np.ascontiguousarray(
-                velocity_flat * unit_conversion, dtype=np.double)
+                velocity_flat, dtype=np.double)
             cdef int[::1] raster_view = np.ascontiguousarray(
                 mask_flat, dtype=np.int32)
             python_lb_lbfluid_update_boundary_from_shape(
@@ -494,25 +530,27 @@ IF LB_WALBERLA:
                 otherwise ``N`` must be identical to the ``N`` of ``nodes``.
             """
 
-            # serialize velocity
             nodes = np.array(nodes, dtype=int)
             velocity = np.array(velocity, dtype=float)
             if len(nodes.shape) != 2 or nodes.shape[1] != 3:
                 raise ValueError(
                     f'Cannot process node list of shape {nodes.shape}')
+            if velocity.shape == (3,):
+                velocity = np.tile(velocity, (nodes.shape[0], 1))
+            elif nodes.shape != velocity.shape:
+                raise ValueError(
+                    f'Node indices and velocities must have the same shape, got {nodes.shape} and {velocity.shape}')
+
+            # range checks
+            self._check_mach_limit(velocity)
             if np.any(np.logical_or(np.max(nodes, axis=0) >= self.shape,
                                     np.min(nodes, axis=0) < 0)):
                 raise ValueError(
                     f'Node indices must be in the range (0, 0, 0) to {self.shape}')
-            if velocity.shape == (3,):
-                velocity = np.array(nodes.shape[0] * [list(velocity)])
-            if nodes.shape != velocity.shape:
-                raise ValueError(
-                    f'Node indices and velocities must have the same shape, got {nodes.shape} and {velocity.shape}')
 
-            cdef double unit_conversion = 1. / lb_lbfluid_get_lattice_speed()
+            velocity *= 1. / lb_lbfluid_get_lattice_speed()
             cdef double[::1] velocity_view = np.ascontiguousarray(
-                velocity.reshape((-1,)) * unit_conversion, dtype=np.double)
+                velocity.reshape((-1,)), dtype=np.double)
             cdef int[::1] nodes_view = np.ascontiguousarray(
                 nodes.reshape((-1,)), dtype=np.int32)
             python_lb_lbfluid_update_boundary_from_list(
@@ -660,13 +698,14 @@ cdef class LBFluidRoutines:
             """
 
             if isinstance(value, lbboundaries.VelocityBounceBack):
+                HydrodynamicInteraction._check_mach_limit(value.velocity)
                 python_lbnode_set_velocity_at_boundary(
                     self.node, make_Vector3d(value.velocity))
             elif value is None:
                 lb_lbnode_remove_from_boundary(self.node)
             else:
                 raise ValueError(
-                    "LB Boundary must be instance of lbboundaries.VelocityBounceBack or None")
+                    "value must be an instance of lbboundaries.VelocityBounceBack or None")
 
     property boundary_force:
         def __get__(self):

@@ -116,7 +116,7 @@ class LBBoundaryVelocityTest(ut.TestCase):
         """
         Test setting and un-setting individual lb boundary nodes.
         """
-        v_boundary = [0.2, 0.1, 0.3]
+        v_boundary = [0.02, 0.01, 0.03]
         bound_cond = espressomd.lbboundaries.VelocityBounceBack(v_boundary)
 
         with self.assertRaises(ValueError):

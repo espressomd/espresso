@@ -66,23 +66,10 @@ void lb_lbfluid_propagate() {
   }
 }
 
-/**
- * @brief Check the boundary velocities.
- */
-inline void lb_boundary_mach_check() {
-#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
-  if (LBBoundaries::sanity_check_mach_limit()) {
-    runtimeErrorMsg() << "Lattice velocity exceeds the Mach number limit";
-  }
-#endif
-}
-
 void lb_lbfluid_sanity_checks(double time_step) {
   if (lattice_switch == ActiveLB::NONE)
     return;
 
-  // LB GPU interface functions only work on the head node.
-  lb_boundary_mach_check();
   if (time_step > 0.)
     check_tau_time_step_consistency(lb_lbfluid_get_tau(), time_step);
 
