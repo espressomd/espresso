@@ -456,7 +456,7 @@ if(WITH_WALBERLA)
     GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla
     GIT_TAG        b17ca5caf00db7d19f86c5f85c6f67fec6c16aff
     PATCH_COMMAND  patch -p0 -sN --ignore-whitespace -i
-                   ${PROJECT_SOURCE_DIR}/cmake/waLBerlaFunctions.patch
+                   ${PROJECT_SOURCE_DIR}/cmake/waLBerlaFunctions.patch || echo "Patch not applied"
   )
   if(NOT walberla_POPULATED)
     FetchContent_Populate(walberla)
