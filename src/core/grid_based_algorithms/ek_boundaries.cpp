@@ -23,7 +23,7 @@ void ek_init_boundaries() {
           auto const pos = index_and_pos.second * agrid;
 
           for (auto const &ekboundary : ekboundaries) {
-            if (not ekboundary->shape().is_inside(pos)) {
+            if (ekboundary->shape().is_inside(pos)) {
               ek->set_node_noflux_boundary(index);
             }
           }
