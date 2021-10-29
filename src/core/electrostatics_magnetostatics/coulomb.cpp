@@ -84,11 +84,12 @@ Utils::Vector9d calc_pressure_long_range(const ParticleRange &particles) {
   return {};
 }
 
-void sanity_checks(int &state) {
+bool sanity_checks() {
+  bool failed = false;
   switch (coulomb.method) {
   case COULOMB_MMM1D:
     if (MMM1D_sanity_checks())
-      state = 0;
+      failed = true;
     break;
 #ifdef P3M
   case COULOMB_ELC_P3M:
@@ -96,18 +97,19 @@ void sanity_checks(int &state) {
       ELC_sanity_checks(elc_params);
     } catch (std::runtime_error const &err) {
       runtimeErrorMsg() << err.what();
-      state = 0;
+      failed = true;
     }
     // fall through
   case COULOMB_P3M_GPU:
   case COULOMB_P3M:
     if (p3m_sanity_checks())
-      state = 0;
+      failed = true;
     break;
 #endif
   default:
     break;
   }
+  return failed;
 }
 
 double cutoff(const Utils::Vector3d &box_l) {

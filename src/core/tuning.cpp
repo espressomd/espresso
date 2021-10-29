@@ -27,6 +27,7 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
+#include "interactions.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include <utils/statistics/RunningAverage.hpp>

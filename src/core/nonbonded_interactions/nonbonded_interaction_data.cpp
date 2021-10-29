@@ -23,11 +23,8 @@
  */
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
-#include "bonded_interactions/bonded_interaction_data.hpp"
-#include "collision.hpp"
 #include "communication.hpp"
 #include "electrostatics_magnetostatics/coulomb.hpp"
-#include "electrostatics_magnetostatics/dipole.hpp"
 #include "event.hpp"
 #include "grid.hpp"
 #include "serialization/IA_parameters.hpp"
@@ -118,21 +115,6 @@ void ia_params_set_state(std::string const &state) {
   ia >> max_seen_particle_type;
   mpi_realloc_ia_params(max_seen_particle_type);
   mpi_bcast_all_ia_params();
-}
-
-static double recalc_long_range_cutoff() {
-  auto max_cut_long_range = INACTIVE_CUTOFF;
-#ifdef ELECTROSTATICS
-  max_cut_long_range =
-      std::max(max_cut_long_range, Coulomb::cutoff(box_geo.length()));
-#endif
-
-#ifdef DIPOLES
-  max_cut_long_range =
-      std::max(max_cut_long_range, Dipole::cutoff(box_geo.length()));
-#endif
-
-  return max_cut_long_range;
 }
 
 static double recalc_maximal_cutoff(const IA_parameters &data) {
@@ -228,20 +210,6 @@ double maximal_cutoff_nonbonded() {
   return max_cut_nonbonded;
 }
 
-double maximal_cutoff() {
-  auto max_cut = min_global_cut;
-  auto const max_cut_long_range = recalc_long_range_cutoff();
-  auto const max_cut_bonded = maximal_cutoff_bonded();
-  auto const max_cut_nonbonded = maximal_cutoff_nonbonded();
-
-  max_cut = std::max(max_cut, max_cut_long_range);
-  max_cut = std::max(max_cut, max_cut_bonded);
-  max_cut = std::max(max_cut, max_cut_nonbonded);
-  max_cut = std::max(max_cut, collision_detection_cutoff());
-
-  return max_cut;
-}
-
 void reset_ia_params() {
   boost::fill(ia_params, IA_parameters{});
   mpi_bcast_all_ia_params();
@@ -259,21 +227,6 @@ void make_particle_type_exist(int type) {
 void make_particle_type_exist_local(int type) {
   if (is_new_particle_type(type))
     mpi_realloc_ia_params_local(type + 1);
-}
-
-int interactions_sanity_checks() {
-  /* set to zero if initialization was not successful. */
-  int state = 1;
-
-#ifdef ELECTROSTATICS
-  Coulomb::sanity_checks(state);
-#endif /* ifdef ELECTROSTATICS */
-
-#ifdef DIPOLES
-  Dipole::nonbonded_sanity_check(state);
-#endif /* ifdef DIPOLES */
-
-  return state;
 }
 
 void mpi_set_min_global_cut_local(double min_global_cut) {

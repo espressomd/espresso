@@ -24,6 +24,14 @@
 #ifndef _INTERACTIONS_HPP
 #define _INTERACTIONS_HPP
 
+/** Calculate the maximal cutoff of all interactions. */
+double maximal_cutoff();
+
+/** Check electrostatic and magnetostatic methods are properly initialized.
+ *  @return true if sanity checks failed.
+ */
+bool long_range_interactions_sanity_checks();
+
 /** Send new IA params.
  *  Also calls \ref on_short_range_ia_change.
  *
