@@ -42,8 +42,13 @@ void Sphere::calculate_dist(const Utils::Vector3d &pos, double &dist,
   } else {
     /* apply force towards outside the sphere */
     dist = c_dist - m_rad;
-    auto const fac = dist / c_dist;
-    vec *= -fac;
+    if (c_dist == 0) {
+      // any vector of length `dist` is correct in this case
+      vec = Utils::Vector3d{dist, 0, 0};
+    } else {
+      auto const fac = dist / c_dist;
+      vec *= -fac;
+    }
   }
 }
 } // namespace Shapes
