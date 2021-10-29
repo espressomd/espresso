@@ -34,7 +34,7 @@ void check_distance_function(Shapes::Sphere &s) {
   Utils::Vector3d vec;
   double dist;
   // multiply by 100 because BOOST_REQUIRE_CLOSE takes a percentage tolerance
-  auto const tol = std::numeric_limits<double>::epsilon()*100;
+  auto const tol = std::numeric_limits<double>::epsilon() * 100;
 
   s.rad() = 1.0;
 
