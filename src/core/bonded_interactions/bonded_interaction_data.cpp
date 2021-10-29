@@ -17,6 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "bonded_interaction_data.hpp"
+#include "event.hpp"
 
 #include <boost/range/numeric.hpp>
 #include <boost/variant.hpp>
@@ -28,6 +29,8 @@
 #include <vector>
 
 BondedInteractionsMap bonded_ia_params;
+
+void mpi_update_cell_system_ia_range_local() { on_short_range_ia_change(); }
 
 /** Visitor to get the bond cutoff from the bond parameter variant */
 class BondCutoff : public boost::static_visitor<double> {

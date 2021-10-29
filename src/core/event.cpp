@@ -108,7 +108,9 @@ void on_integration_start(double time_step) {
 #ifdef NPT
   integrator_npt_sanity_checks();
 #endif
-  interactions_sanity_checks();
+  if (!interactions_sanity_checks()) {
+    runtimeErrorMsg() << "Long-range interactions returned an error.";
+  }
   lb_lbfluid_sanity_checks(time_step);
 
   /********************************************/
