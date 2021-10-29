@@ -35,8 +35,7 @@ void walberla_mpi_init() {
 
 LBWalberlaBase *new_lb_walberla(
     const std::shared_ptr<walberla::WalberlaBlockForest> &blockforest,
-    double viscosity, double density, const Utils::Vector3i &grid_dimensions,
-    const Utils::Vector3i &node_grid, double kT, unsigned int seed) {
+    double viscosity, double density, double kT, unsigned int seed) {
 
   return new walberla::LBWalberlaImpl(blockforest, viscosity, density, 1u, kT,
                                       seed);
