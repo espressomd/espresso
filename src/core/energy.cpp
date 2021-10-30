@@ -32,6 +32,7 @@
 #include "event.hpp"
 #include "forces.hpp"
 #include "integrate.hpp"
+#include "interactions.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include "short_range_loop.hpp"
@@ -47,7 +48,7 @@ static std::shared_ptr<Observable_stat> calculate_energy_local() {
 
   auto obs_energy_ptr = std::make_shared<Observable_stat>(1);
 
-  if (!interactions_sanity_checks())
+  if (long_range_interactions_sanity_checks())
     return obs_energy_ptr;
 
   auto &obs_energy = *obs_energy_ptr;
@@ -111,10 +112,10 @@ static std::shared_ptr<Observable_stat> calculate_energy_local() {
   return obs_energy_ptr;
 }
 
-REGISTER_CALLBACK_MASTER_RANK(calculate_energy_local)
+REGISTER_CALLBACK_MAIN_RANK(calculate_energy_local)
 
 std::shared_ptr<Observable_stat> calculate_energy() {
-  return mpi_call(Communication::Result::master_rank, calculate_energy_local);
+  return mpi_call(Communication::Result::main_rank, calculate_energy_local);
 }
 
 double calculate_current_potential_energy_of_system() {

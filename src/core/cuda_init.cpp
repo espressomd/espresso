@@ -51,7 +51,7 @@ struct CompareDevices {
   }
 };
 
-/** Gather list of CUDA devices on all nodes on the master node.
+/** Gather list of CUDA devices on all nodes on the head node.
  *  It relies on <tt>MPI_Get_processor_name()</tt> to get a unique identifier
  *  of the physical node, as opposed to the logical rank of which there can
  *  be more than one per node.
@@ -59,7 +59,7 @@ struct CompareDevices {
 static std::vector<EspressoGpuDevice> mpi_cuda_gather_gpus_local() {
   /* List of local devices */
   std::vector<EspressoGpuDevice> devices_local;
-  /* Global unique device list (only relevant on master) */
+  /* Global unique device list (only relevant on the head node) */
   std::vector<EspressoGpuDevice> devices_global;
 
   int n_devices;
@@ -113,9 +113,9 @@ static std::vector<EspressoGpuDevice> mpi_cuda_gather_gpus_local() {
               std::inserter(devices_global, devices_global.begin()));
     delete[] n_gpu_array;
   } else {
-    /* Send number of devices to master */
+    /* Send number of devices to head node */
     MPI_Gather(&n_gpus, 1, MPI_INT, nullptr, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    /* Send devices to master */
+    /* Send devices to head node */
     for (auto const &device : devices_local) {
       MPI_Send(&device, sizeof(EspressoGpuDevice), MPI_BYTE, 0, 0,
                MPI_COMM_WORLD);
@@ -124,11 +124,10 @@ static std::vector<EspressoGpuDevice> mpi_cuda_gather_gpus_local() {
   return devices_global;
 }
 
-REGISTER_CALLBACK_MASTER_RANK(mpi_cuda_gather_gpus_local)
+REGISTER_CALLBACK_MAIN_RANK(mpi_cuda_gather_gpus_local)
 
 std::vector<EspressoGpuDevice> cuda_gather_gpus() {
-  return mpi_call(Communication::Result::master_rank,
-                  mpi_cuda_gather_gpus_local);
+  return mpi_call(Communication::Result::main_rank, mpi_cuda_gather_gpus_local);
 }
 
 #endif /* CUDA */

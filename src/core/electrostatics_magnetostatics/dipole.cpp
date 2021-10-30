@@ -64,7 +64,8 @@ void calc_pressure_long_range() {
   }
 }
 
-void nonbonded_sanity_check(int &state) {
+bool sanity_checks() {
+  bool failed = false;
 #ifdef DP3M
   try {
     switch (dipole.method) {
@@ -73,7 +74,7 @@ void nonbonded_sanity_check(int &state) {
       // fall through
     case DIPOLAR_P3M:
       if (dp3m_sanity_checks(node_grid))
-        state = 0;
+        failed = true;
       break;
     case DIPOLAR_MDLC_DS:
       mdlc_sanity_checks();
@@ -86,9 +87,10 @@ void nonbonded_sanity_check(int &state) {
     }
   } catch (std::runtime_error const &err) {
     runtimeErrorMsg() << err.what();
-    state = 0;
+    failed = true;
   }
 #endif
+  return failed;
 }
 
 double cutoff(const Utils::Vector3d &box_l) {

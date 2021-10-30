@@ -163,18 +163,18 @@ auto mpi_lb_get_pressure_tensor(Utils::Vector3i const &index) {
 
 REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_pressure_tensor)
 
-void mpi_bcast_lb_params_slave(LBParam field, LB_Parameters const &params) {
+void mpi_bcast_lb_params_local(LBParam field, LB_Parameters const &params) {
   lbpar = params;
   lb_on_param_change(field);
 }
 
-REGISTER_CALLBACK(mpi_bcast_lb_params_slave)
+REGISTER_CALLBACK(mpi_bcast_lb_params_local)
 
 /** @brief Broadcast a parameter for lattice Boltzmann.
  *  @param[in] field  References the parameter field to be broadcasted.
  *                    The references are defined in lb.hpp
  */
 void mpi_bcast_lb_params(LBParam field) {
-  mpi_call(mpi_bcast_lb_params_slave, field, lbpar);
+  mpi_call(mpi_bcast_lb_params_local, field, lbpar);
   lb_on_param_change(field);
 }

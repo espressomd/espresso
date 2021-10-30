@@ -62,7 +62,7 @@ static void pack_particles(ParticleRange const &particles,
   }
 }
 
-/** Gather particle positions on the master node in order to communicate them
+/** Gather particle positions on the head node in order to communicate them
  *  to GPU. We transfer all particles (real and virtual), but actually we would
  *  only need the virtual ones. Room for improvement...
  *  Analogous to @ref cuda_mpi_get_particles.
@@ -112,7 +112,7 @@ void IBM_cuda_mpi_send_velocities(ParticleRange const &particles) {
 
     set_velocities(particles, buffer);
   } else {
-    /* Scatter forces to slaves */
+    /* Scatter forces */
     Utils::Mpi::scatter_buffer(IBM_ParticleDataOutput_host.data(), n_part,
                                comm_cart);
 

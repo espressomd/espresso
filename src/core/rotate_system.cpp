@@ -34,10 +34,9 @@
 #include <cmath>
 #include <functional>
 
-namespace mpi = boost::mpi;
+static void mpi_rotate_system_local(double phi, double theta, double alpha) {
+  auto const particles = cell_structure.local_particles();
 
-void local_rotate_system(double phi, double theta, double alpha,
-                         const ParticleRange &particles) {
   // Calculate center of mass
   Utils::Vector3d local_com{};
   double local_mass = 0.0;
@@ -49,9 +48,10 @@ void local_rotate_system(double phi, double theta, double alpha,
     }
   }
 
-  auto const total_mass = mpi::all_reduce(comm_cart, local_mass, std::plus<>());
+  auto const total_mass =
+      boost::mpi::all_reduce(comm_cart, local_mass, std::plus<>());
   auto const com =
-      mpi::all_reduce(comm_cart, local_com, std::plus<>()) / total_mass;
+      boost::mpi::all_reduce(comm_cart, local_com, std::plus<>()) / total_mass;
 
   // Rotation axis in Cartesian coordinates
   Utils::Vector3d axis;
@@ -62,11 +62,7 @@ void local_rotate_system(double phi, double theta, double alpha,
   // Rotate particle coordinates
   for (auto &p : particles) {
     // Move the center of mass of the system to the origin
-    for (int j = 0; j < 3; j++) {
-      p.r.p[j] -= com[j];
-    }
-
-    p.r.p = com + Utils::vec_rotate(axis, alpha, p.r.p);
+    p.r.p = com + Utils::vec_rotate(axis, alpha, p.r.p - com);
 #ifdef ROTATION
     local_rotate_particle(p, axis, alpha);
 #endif
@@ -77,28 +73,8 @@ void local_rotate_system(double phi, double theta, double alpha,
   update_dependent_particles();
 }
 
-void mpi_rotate_system_local(int, int) {
-  std::array<double, 3> params;
-  mpi::broadcast(comm_cart, params, 0);
-
-  local_rotate_system(params[0], params[1], params[2],
-                      cell_structure.local_particles());
-}
-
 REGISTER_CALLBACK(mpi_rotate_system_local)
 
 void mpi_rotate_system(double phi, double theta, double alpha) {
-  mpi_call(mpi_rotate_system_local, 0, 0);
-
-  std::array<double, 3> params{{phi, theta, alpha}};
-  mpi::broadcast(comm_cart, params, 0);
-
-  local_rotate_system(params[0], params[1], params[2],
-                      cell_structure.local_particles());
-}
-
-/** Rotate all particle coordinates around an axis given by phi,theta through
- * the center of mass by an angle alpha */
-void rotate_system(double phi, double theta, double alpha) {
-  mpi_rotate_system(phi, theta, alpha);
+  mpi_call_all(mpi_rotate_system_local, phi, theta, alpha);
 }

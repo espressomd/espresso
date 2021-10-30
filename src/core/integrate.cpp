@@ -44,6 +44,7 @@
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
+#include "interactions.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "rattle.hpp"
@@ -413,14 +414,15 @@ int python_integrate(int n_steps, bool recalc_forces_par,
   return ES_OK;
 }
 
-static int mpi_steepest_descent_local(int steps, int) {
+static int mpi_steepest_descent_local(int steps) {
   return integrate(steps, -1);
 }
-REGISTER_CALLBACK_MASTER_RANK(mpi_steepest_descent_local)
+
+REGISTER_CALLBACK_MAIN_RANK(mpi_steepest_descent_local)
 
 int mpi_steepest_descent(int steps) {
-  return mpi_call(Communication::Result::master_rank,
-                  mpi_steepest_descent_local, steps, 0);
+  return mpi_call(Communication::Result::main_rank, mpi_steepest_descent_local,
+                  steps);
 }
 
 static int mpi_integrate_local(int n_steps, int reuse_forces) {

@@ -86,9 +86,9 @@ BOOST_IS_BITWISE_SERIALIZABLE(SD_particle_data)
 void sd_update_locally(ParticleRange const &parts) {
   std::size_t i = 0;
 
-  // Even though on the master node, the v_sd vector is larger than
+  // Even though on the head node, the v_sd vector is larger than
   // the (local) parts vector, this should still work. Because the local
-  // particles correspond to the first 6*n entries in the master's v_sd
+  // particles correspond to the first 6*n entries in the head node's v_sd
   // (which holds the velocities of ALL particles).
 
   for (auto &p : parts) {
@@ -154,8 +154,8 @@ void propagate_vel_pos_sd(const ParticleRange &particles,
                    [](auto const &p) { return SD_particle_data(p); });
   Utils::Mpi::gather_buffer(parts_buffer, comm, 0);
 
-  /* Buffer that holds local particle data, and all particles on the master
-   * node used for sending particle data to master node. */
+  /* Buffer that holds local particle data, and all particles on the head
+   * node used for sending particle data to head node. */
   if (comm.rank() == 0) {
     std::size_t n_part = parts_buffer.size();
 

@@ -153,7 +153,7 @@ void cuda_mpi_send_forces(const ParticleRange &particles,
 
     add_forces_and_torques(particles, buffer_forces, buffer_torques);
   } else {
-    /* Scatter forces to slaves */
+    /* Scatter forces */
     Utils::Mpi::scatter_buffer(host_forces.data(), n_elements, comm_cart);
 #ifdef ROTATION
     Utils::Mpi::scatter_buffer(host_torques.data(), n_elements, comm_cart);
@@ -163,7 +163,7 @@ void cuda_mpi_send_forces(const ParticleRange &particles,
   }
 }
 
-void cuda_bcast_global_part_params_local(int, int) {
+static void cuda_bcast_global_part_params_local() {
   MPI_Bcast(gpu_get_global_particle_vars_pointer_host(),
             sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
   espressoSystemInterface.requestParticleStructGpu();
@@ -172,7 +172,7 @@ void cuda_bcast_global_part_params_local(int, int) {
 REGISTER_CALLBACK(cuda_bcast_global_part_params_local)
 
 void cuda_bcast_global_part_params() {
-  mpi_call_all(cuda_bcast_global_part_params_local, -1, -1);
+  mpi_call_all(cuda_bcast_global_part_params_local);
 }
 
 #endif /* ifdef CUDA */
