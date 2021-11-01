@@ -107,7 +107,7 @@ class LBInterpolation:
         Assert that the Mach number check fires an exception.
 
         """
-        max_vel = 0.31 * AGRID / TAU
+        max_vel = 0.21 * AGRID / TAU
         print("Begin: Test error generation")
         sys.stdout.flush()
         sys.stderr.flush()

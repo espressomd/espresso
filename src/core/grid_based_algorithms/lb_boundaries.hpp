@@ -60,7 +60,7 @@ void remove(const std::shared_ptr<LBBoundary> &);
 /**
  * @brief Check the boundary velocities.
  * Sanity check if the velocity defined at LB boundaries is within the Mach
- * number limit of the scheme, i.e. u < 0.3.
+ * number limit of the scheme, i.e. u < 0.2.
  */
 bool sanity_check_mach_limit();
 
