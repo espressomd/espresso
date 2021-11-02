@@ -15,12 +15,15 @@ add_subdirectory(pair_criteria)
 add_subdirectory(mpiio)
 add_subdirectory(shapes)
 add_subdirectory(h5md)
+if (WALBERLA)
+    add_subdirectory(walberla)
+endif (WALBERLA)
 
 install(TARGETS ScriptInterface
         LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 
 target_link_libraries(
-  ScriptInterface PRIVATE EspressoConfig EspressoCore
+  ScriptInterface PRIVATE EspressoConfig EspressoCore WalberlaBridge
   PUBLIC mpiio EspressoUtils MPI::MPI_CXX EspressoShapes core_cluster_analysis
   PRIVATE cxx_interface)
 
