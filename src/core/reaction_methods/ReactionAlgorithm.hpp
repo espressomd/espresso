@@ -98,7 +98,26 @@ public:
 
 protected:
   std::vector<int> m_empty_p_ids_smaller_than_max_seen_particle;
-  void generic_oneway_reaction(SingleReaction &current_reaction);
+  /**
+   * @brief Carry out a generic one-way chemical reaction.
+   *
+   * Generic one way reaction of the type
+   * <tt>A+B+...+G +... --> K+...X + Z +...</tt>
+   * You need to use <tt>2A --> B</tt> instead of <tt>A+A --> B</tt> since
+   * in the latter you assume distinctness of the particles, however both
+   * ways to describe the reaction are equivalent in the thermodynamic limit
+   * (large particle numbers). Furthermore, it is crucial for the function
+   * in which order you provide the reactant and product types since particles
+   * will be replaced correspondingly! If there are less reactants than
+   * products, new product particles are created randomly in the box.
+   * Matching particles simply change the types. If there are more reactants
+   * than products, old reactant particles are deleted.
+   *
+   * @param[in,out] current_reaction  The reaction to attempt.
+   * @param[in,out] E_pot_old         The current potential energy.
+   */
+  void generic_oneway_reaction(SingleReaction &current_reaction,
+                               double &E_pot_old);
 
   std::tuple<std::vector<StoredParticleProperty>, std::vector<int>,
              std::vector<StoredParticleProperty>>
