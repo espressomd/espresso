@@ -49,9 +49,13 @@ namespace ReactionMethods {
  * Performs a randomly selected reaction in the reaction ensemble
  */
 int ReactionAlgorithm::do_reaction(int reaction_steps) {
+  // calculate potential energy; only consider potential energy since we
+  // assume that the kinetic part drops out in the process of calculating
+  // ensemble averages (kinetic part may be separated and crossed out)
+  auto current_E_pot = calculate_current_potential_energy_of_system();
   for (int i = 0; i < reaction_steps; i++) {
     int reaction_id = i_random(static_cast<int>(reactions.size()));
-    generic_oneway_reaction(reactions[reaction_id]);
+    generic_oneway_reaction(reactions[reaction_id], current_E_pot);
   }
   return 0;
 }
@@ -278,20 +282,8 @@ std::map<int, int> ReactionAlgorithm::save_old_particle_numbers(
   return old_particle_numbers;
 }
 
-/**
- * Generic one way reaction
- * A+B+...+G +... --> K+...X + Z +...
- * You need to use 2A --> B instead of A+A --> B since in the last case you
- * assume distinctness of the particles, however both ways to describe the
- * reaction are equivalent in the thermodynamic limit (large particle numbers).
- * Furthermore, it is crucial for the function in which order you provide the
- * reactant and product types since particles will be replaced correspondingly!
- * If there are less reactants than products, new product particles are created
- * randomly in the box. Matching particles simply change the types. If there
- * are more reactants than products, old reactant particles are deleted.
- */
 void ReactionAlgorithm::generic_oneway_reaction(
-    SingleReaction &current_reaction) {
+    SingleReaction &current_reaction, double &E_pot_old) {
 
   current_reaction.tried_moves += 1;
   particle_inside_exclusion_radius_touched = false;
@@ -300,18 +292,6 @@ void ReactionAlgorithm::generic_oneway_reaction(
     // rollback of complete reactions
     return;
   }
-
-  // calculate potential energy
-  const double E_pot_old =
-      calculate_current_potential_energy_of_system(); // only consider potential
-                                                      // energy since we assume
-                                                      // that the kinetic part
-                                                      // drops out in the
-                                                      // process of calculating
-                                                      // ensemble averages
-                                                      // (kinetic part may be
-                                                      // separated and crossed
-                                                      // out)
 
   // find reacting molecules in reactants and save their properties for later
   // recreation if step is not accepted
@@ -363,6 +343,8 @@ void ReactionAlgorithm::generic_oneway_reaction(
       delete_particle(to_be_deleted_hidden_ids[i]); // delete particle
     }
     current_reaction.accepted_moves += 1;
+    E_pot_old = E_pot_new; // Update the system energy
+
   } else {
     // reject
     // reverse reaction

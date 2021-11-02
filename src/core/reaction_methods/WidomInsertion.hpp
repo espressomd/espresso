@@ -29,8 +29,8 @@ namespace ReactionMethods {
 class WidomInsertion : public ReactionAlgorithm {
 public:
   WidomInsertion(int seed) : ReactionAlgorithm(seed) {}
-  std::pair<double, double>
-  measure_excess_chemical_potential(SingleReaction &current_reaction);
+  double calculate_particle_insertion_potential_energy(
+      SingleReaction &current_reaction);
 };
 
 } // namespace ReactionMethods
