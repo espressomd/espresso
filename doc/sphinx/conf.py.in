@@ -38,6 +38,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.doctest',
     'sphinxcontrib.bibtex',
+    'sphinx_toggleprompt',
     'sphinx.ext.napoleon'
 ]
 
