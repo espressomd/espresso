@@ -120,7 +120,6 @@ required to compile |es| on other Linux distributions:
 
 * `Fedora <https://github.com/espressomd/docker/blob/master/docker/Dockerfile-fedora>`_
 * `Debian <https://github.com/espressomd/docker/blob/master/docker/Dockerfile-debian>`_
-* `OpenSUSE <https://github.com/espressomd/docker/blob/master/docker/Dockerfile-opensuse>`_
 
 .. _Installing requirements on Windows via WSL:
 
