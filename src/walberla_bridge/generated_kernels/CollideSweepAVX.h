@@ -1,6 +1,4 @@
-// kernel generated with pystencils v0.3.4+4.g4fecf0c, lbmpy v0.3.4+6.g2faceda,
-// lbmpy_walberla/pystencils_walberla from commit
-// b17ca5caf00db7d19f86c5f85c6f67fec6c16aff
+// kernel generated with pystencils v0.3.4+4.g4fecf0c, lbmpy v0.3.3+37.g2faceda, lbmpy_walberla/pystencils_walberla from commit b17ca5caf00db7d19f86c5f85c6f67fec6c16aff
 
 //======================================================================================================================
 //
@@ -24,11 +22,11 @@
 #pragma once
 #include "core/DataTypes.h"
 
+#include "field/GhostLayerField.h"
+#include "field/SwapableCompare.h"
 #include "domain_decomposition/BlockDataID.h"
 #include "domain_decomposition/IBlock.h"
 #include "domain_decomposition/StructuredBlockStorage.h"
-#include "field/GhostLayerField.h"
-#include "field/SwapableCompare.h"
 #include <set>
 
 #ifdef __GNUC__
@@ -39,56 +37,60 @@
 #define RESTRICT
 #endif
 
-#if (defined WALBERLA_CXX_COMPILER_IS_GNU) ||                                  \
-    (defined WALBERLA_CXX_COMPILER_IS_CLANG)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wreorder"
+#if ( defined WALBERLA_CXX_COMPILER_IS_GNU ) || ( defined WALBERLA_CXX_COMPILER_IS_CLANG )
+#   pragma GCC diagnostic push
+#   pragma GCC diagnostic ignored "-Wunused-parameter"
+#   pragma GCC diagnostic ignored "-Wreorder"
 #endif
 
 namespace walberla {
 namespace pystencils {
 
-class CollideSweepAVX {
+
+class CollideSweepAVX
+{
 public:
-  CollideSweepAVX(BlockDataID forceID_, BlockDataID pdfsID_, double omega_bulk,
-                  double omega_even, double omega_odd, double omega_shear)
-      : forceID(forceID_), pdfsID(pdfsID_), omega_bulk_(omega_bulk),
-        omega_even_(omega_even), omega_odd_(omega_odd),
-        omega_shear_(omega_shear){};
+    CollideSweepAVX( BlockDataID forceID_, BlockDataID pdfsID_, double omega_bulk, double omega_even, double omega_odd, double omega_shear )
+        : forceID(forceID_), pdfsID(pdfsID_), omega_bulk_(omega_bulk), omega_even_(omega_even), omega_odd_(omega_odd), omega_shear_(omega_shear)
+    {};
 
-  void operator()(IBlock *block);
-  void runOnCellInterval(const shared_ptr<StructuredBlockStorage> &blocks,
-                         const CellInterval &globalCellInterval,
-                         cell_idx_t ghostLayers, IBlock *block);
+    
 
-  static std::function<void(IBlock *)>
-  getSweep(const shared_ptr<CollideSweepAVX> &kernel) {
-    return [kernel](IBlock *b) { (*kernel)(b); };
-  }
+    void operator() ( IBlock * block );
+    void runOnCellInterval(const shared_ptr<StructuredBlockStorage> & blocks,
+                           const CellInterval & globalCellInterval, cell_idx_t ghostLayers, IBlock * block
+                           );
 
-  static std::function<void(IBlock *)>
-  getSweepOnCellInterval(const shared_ptr<CollideSweepAVX> &kernel,
-                         const shared_ptr<StructuredBlockStorage> &blocks,
-                         const CellInterval &globalCellInterval,
-                         cell_idx_t ghostLayers = 1) {
-    return [kernel, blocks, globalCellInterval, ghostLayers](IBlock *b) {
-      kernel->runOnCellInterval(blocks, globalCellInterval, ghostLayers, b);
-    };
-  }
 
-  BlockDataID forceID;
-  BlockDataID pdfsID;
-  double omega_bulk_;
-  double omega_even_;
-  double omega_odd_;
-  double omega_shear_;
+
+    static std::function<void (IBlock*)> getSweep(const shared_ptr<CollideSweepAVX> & kernel) {
+        return [kernel](IBlock * b) { (*kernel)(b); };
+    }
+
+    static std::function<void (IBlock*)>
+            getSweepOnCellInterval(const shared_ptr<CollideSweepAVX> & kernel,
+                                   const shared_ptr<StructuredBlockStorage> & blocks,
+                                   const CellInterval & globalCellInterval,
+                                   cell_idx_t ghostLayers=1 )
+    {
+        return [kernel, blocks, globalCellInterval, ghostLayers] (IBlock * b) {
+            kernel->runOnCellInterval(blocks, globalCellInterval, ghostLayers, b);
+        };
+    }
+
+BlockDataID forceID;
+    BlockDataID pdfsID;
+    double omega_bulk_;
+    double omega_even_;
+    double omega_odd_;
+    double omega_shear_;
 };
+
 
 } // namespace pystencils
 } // namespace walberla
 
-#if (defined WALBERLA_CXX_COMPILER_IS_GNU) ||                                  \
-    (defined WALBERLA_CXX_COMPILER_IS_CLANG)
-#pragma GCC diagnostic pop
+
+#if ( defined WALBERLA_CXX_COMPILER_IS_GNU ) || ( defined WALBERLA_CXX_COMPILER_IS_CLANG )
+#   pragma GCC diagnostic pop
 #endif
