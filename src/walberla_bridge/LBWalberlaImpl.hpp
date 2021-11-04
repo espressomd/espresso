@@ -51,6 +51,7 @@
 #include "ResetForce.hpp"
 #include "generated_kernels/InitialPDFsSetter.h"
 #include "generated_kernels/StreamSweep.h"
+#include "generated_kernels/macroscopic_values_accessors.h"
 #include "vtk_writers.hpp"
 #include "walberla_utils.hpp"
 
@@ -88,13 +89,6 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
-
-namespace walberla {
-// forward declare
-class LBWalberlaImpl;
-} // namespace walberla
-
-#include "generated_kernels/macroscopic_values_accessors.h"
 
 namespace walberla {
 

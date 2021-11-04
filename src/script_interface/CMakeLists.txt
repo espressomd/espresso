@@ -23,9 +23,13 @@ install(TARGETS ScriptInterface
         LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 
 target_link_libraries(
-  ScriptInterface PRIVATE EspressoConfig EspressoCore WalberlaBridge
+  ScriptInterface PRIVATE EspressoConfig EspressoCore
   PUBLIC mpiio EspressoUtils MPI::MPI_CXX EspressoShapes core_cluster_analysis
   PRIVATE cxx_interface)
+
+if(WALBERLA)
+  target_link_libraries(ScriptInterface PRIVATE WalberlaBridge)
+endif()
 
 target_include_directories(ScriptInterface PUBLIC ${CMAKE_SOURCE_DIR}/src)
 
