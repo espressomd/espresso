@@ -1,6 +1,5 @@
 #
 # Copyright (C) 2020-2021 The ESPResSo project
-# Copyright (C) 2020-2021 The waLBerla project
 #
 # This file is part of ESPResSo.
 #
@@ -19,15 +18,18 @@
 #
 
 import os
+import sys
+import json
 import jinja2
+import argparse
+
 import sympy as sp
 import pystencils as ps
-from pystencils.field import Field
 from lbmpy.creationfunctions import create_lb_collision_rule, create_mrt_orthogonal, force_model_from_string
-from lbmpy.stencils import get_stencil
 from pystencils_walberla import CodeGeneration, codegen
 
 from lbmpy_walberla import generate_boundary, generate_lb_pack_info
+from walberla_lbm_generation import generate_macroscopic_values_accessors
 
 import lbmpy.boundaries
 import lbmpy_walberla.additional_data_handler
@@ -41,6 +43,12 @@ import lees_edwards
 # for collide-push from lbmpy.fieldaccess import StreamPushTwoFieldsAccessor
 
 from lbmpy.advanced_streaming.indexing import NeighbourOffsetArrays
+
+
+parser = argparse.ArgumentParser(description='Generate the waLBerla kernels.')
+parser.add_argument('codegen_cfg', type=str, nargs='?',
+                    help='codegen configuration file (JSON format)')
+args = parser.parse_args()
 
 
 def adapt_pystencils():
@@ -90,8 +98,6 @@ def earmark_generated_kernels():
     Add an earmark at the beginning of generated kernels to document the
     pystencils/lbmpy toolchain that was used to create them.
     '''
-    import lbmpy
-    import lbmpy_walberla
     walberla_root = lbmpy_walberla.__file__.split('/python/lbmpy_walberla/')[0]
     with open(os.path.join(walberla_root, '.git/HEAD')) as f:
         walberla_commit = f.read()
@@ -109,14 +115,15 @@ def earmark_generated_kernels():
                     f.write(earmark + content)
 
 
-def generate_fields(lb_method):
-    dtype = "float64" 
-    field_layout = "fzyx"
-    q = len(lb_method.stencil)
-    dim = len(lb_method.stencil[0])
+def generate_fields(ctx, stencil):
+    dtype = 'float64' if ctx.double_accuracy else 'float32'
+    field_layout = 'fzyx'
+    q = len(stencil)
+    dim = len(stencil[0])
 
+    fields = {}
     # Symbols for PDF (twice, due to double buffering)
-    src_field = ps.Field.create_generic(
+    fields['pdfs'] = ps.Field.create_generic(
         'pdfs',
         dim,
         dtype,
@@ -124,7 +131,7 @@ def generate_fields(lb_method):
         layout=field_layout,
         index_shape=(q,)
     )
-    dst_field = ps.Field.create_generic(
+    fields['pdfs_tmp'] = ps.Field.create_generic(
         'pdfs_tmp',
         dim,
         dtype,
@@ -132,7 +139,7 @@ def generate_fields(lb_method):
         layout=field_layout,
         index_shape=(q,)
     )
-    vel_field = ps.Field.create_generic(
+    fields['velocity'] = ps.Field.create_generic(
         'velocity',
         dim,
         dtype,
@@ -140,249 +147,61 @@ def generate_fields(lb_method):
         layout=field_layout,
         index_shape=(dim,)
     )
+    fields['force'] = ps.Field.create_generic(
+        'force',
+        dim,
+        dtype,
+        index_dimensions=1,
+        layout=field_layout,
+        index_shape=(dim,)
+    )
 
-    return src_field, dst_field, vel_field
+    return fields
 
 
 def generate_collision_sweep(
         ctx, lb_method, collision_rule, class_name, params):
 
     # Symbols for PDF (twice, due to double buffering)
-    src_field, dst_field, _ = generate_fields(lb_method)
+    fields = generate_fields(ctx, lb_method.stencil)
 
     # Generate collision kernel
     collide_update_rule = create_lbm_kernel(
         collision_rule,
-        src_field,
-        dst_field,
+        fields['pdfs'],
+        fields['pdfs_tmp'],
         CollideOnlyInplaceAccessor())
-    collide_ast = ps.create_kernel(collide_update_rule, **params)
+    collide_ast = ps.create_kernel(collide_update_rule, **params,
+                                   data_type='double' if ctx.double_accuracy else 'float')
     collide_ast.function_name = 'kernel_collide'
     collide_ast.assumed_inner_stride_one = True
     codegen.generate_sweep(ctx, class_name, collide_ast)
 
 
 def generate_stream_sweep(ctx, lb_method, class_name, params):
-    #dtype = "float64"
-    #field_layout = "fzyx"
-
     # Symbols for PDF (twice, due to double buffering)
-    src_field, dst_field, velocity_field = generate_fields(lb_method)
+    fields = generate_fields(ctx, lb_method.stencil)
 
     # Generate stream kernel
-    stream_update_rule = create_stream_pull_with_output_kernel(lb_method, src_field, dst_field,
-                                                               output={'velocity': velocity_field})
-    # stream_update_rule = create_stream_pull_only_kernel(
-    #    lb_method.stencil, None, 'pdfs', 'pdfs_tmp', field_layout, dtype)
-    stream_ast = ps.create_kernel(stream_update_rule, **params)
+    stream_update_rule = create_stream_pull_with_output_kernel(lb_method, fields['pdfs'], fields['pdfs_tmp'],
+                                                               output={'velocity': fields['velocity']})
+    stream_ast = ps.create_kernel(stream_update_rule, **params,
+                                  data_type='double' if ctx.double_accuracy else 'float')
     stream_ast.function_name = 'kernel_stream'
     stream_ast.assumed_inner_stride_one = True
     codegen.generate_sweep(
-        ctx, class_name, stream_ast, field_swaps=[(src_field, dst_field)])
+        ctx, class_name, stream_ast, field_swaps=[(fields['pdfs'], fields['pdfs_tmp'])])
 
 
 def generate_setters(lb_method):
-    pdf_field, _, vel_field = generate_fields(lb_method)
+    fields = generate_fields(ctx, lb_method.stencil)
 
     initial_rho = sp.Symbol('rho_0')
     pdfs_setter = macroscopic_values_setter(lb_method,
                                             initial_rho,
-                                            vel_field.center_vector,
-                                            pdf_field.center_vector)
+                                            fields['velocity'].center_vector,
+                                            fields['pdfs'].center_vector)
     return pdfs_setter
-
-
-def patch_accessors(classname, name):
-    with open(f'{classname}.h') as f:
-        with open(f'{name}.h', 'w') as g:
-            g.write(f.read().replace('lm.force_->', 'force_field.'))
-    os.remove(f'{classname}.h')
-
-
-def __lattice_model(generation_context, class_name, lb_method,
-                    stream_collide_ast, refinement_scaling):
-
-    # Function derived from lbmpy_walberla.walberla_lbm_generation.__lattice_model()
-    # in the walberla project, commit 3455bf3eebc64efa9beaecd74ebde3459b98991d
-
-    import sympy as sp
-    from jinja2 import Environment, FileSystemLoader, StrictUndefined
-    from sympy.tensor import IndexedBase
-    from pystencils.backends.cbackend import CustomSympyPrinter, get_headers
-    from pystencils.data_types import cast_func
-    from pystencils.sympyextensions import get_symmetric_part
-    from pystencils.transformations import add_types
-    from pystencils_walberla.jinja_filters import add_pystencils_filters_to_jinja_env
-    from lbmpy_walberla.walberla_lbm_generation import get_stencil_name, equations_to_code, expression_to_code, stencil_switch_statement
-
-    cpp_printer = CustomSympyPrinter()
-    stencil_name = get_stencil_name(lb_method.stencil)
-    if not stencil_name:
-        raise ValueError(
-            "lb_method uses a stencil that is not supported in waLBerla")
-
-    communication_stencil_name = stencil_name if stencil_name != "D3Q15" else "D3Q27"
-    is_float = not generation_context.double_accuracy
-    dtype_string = "float32" if is_float else "float64"
-
-    vel_symbols = lb_method.conserved_quantity_computation.first_order_moment_symbols
-    rho_sym = sp.Symbol('rho')
-    pdfs_sym = sp.symbols(f'f_:{len(lb_method.stencil)}')
-    vel_arr_symbols = [
-        IndexedBase(sp.Symbol('u'), shape=(1,))[i]
-        for i in range(len(vel_symbols))]
-    momentum_density_symbols = sp.symbols(f'md_:{len(vel_symbols)}')
-    second_momentum_symbols = sp.symbols(f'p_:{len(vel_symbols)**2}')
-
-    equilibrium = lb_method.get_equilibrium()
-    equilibrium = equilibrium.new_with_substitutions(
-        {a: b for a, b in zip(vel_symbols, vel_arr_symbols)})
-    equilibrium = add_types(
-        equilibrium.main_assignments, dtype_string, False)[2]
-    equilibrium = sp.Matrix([e.rhs for e in equilibrium])
-
-    symmetric_equilibrium = get_symmetric_part(equilibrium, vel_arr_symbols)
-    symmetric_equilibrium = symmetric_equilibrium.subs(
-        sp.Rational(1, 2), cast_func(sp.Rational(1, 2), dtype_string))
-    asymmetric_equilibrium = sp.expand(equilibrium - symmetric_equilibrium)
-
-    force_model = lb_method.force_model
-    macroscopic_velocity_shift = None
-    if force_model and hasattr(force_model, 'macroscopic_velocity_shift'):
-        es = (sp.Rational(1, 2), cast_func(sp.Rational(1, 2), dtype_string))
-        macroscopic_velocity_shift = [
-            expression_to_code(e.subs(*es), "lm.", ['rho'], dtype=dtype_string)
-            for e in force_model.macroscopic_velocity_shift(rho_sym)]
-
-    cqc = lb_method.conserved_quantity_computation
-
-    eq_input_from_input_eqs = cqc.equilibrium_input_equations_from_init_values(
-        sp.Symbol('rho_in'), vel_arr_symbols)
-    density_velocity_setter_macroscopic_values = equations_to_code(
-        eq_input_from_input_eqs, dtype=dtype_string, variables_without_prefix=['rho_in', 'u'])
-    momentum_density_getter = cqc.output_equations_from_pdfs(
-        pdfs_sym, {'density': rho_sym, 'momentum_density': momentum_density_symbols})
-    second_momentum_getter = cqc.output_equations_from_pdfs(
-        pdfs_sym, {'moment2': second_momentum_symbols})
-    constant_suffix = "f" if is_float else ""
-
-    required_headers = get_headers(stream_collide_ast)
-
-    if refinement_scaling:
-        refinement_scaling_info = [(e0, e1, expression_to_code(e2, '', dtype=dtype_string)) for e0, e1, e2 in
-                                   refinement_scaling.scaling_info]
-        # append '_' to entries since they are used as members
-        for i in range(len(refinement_scaling_info)):
-            updated_entry = (refinement_scaling_info[i][0],
-                             refinement_scaling_info[i][1].replace(refinement_scaling_info[i][1],
-                                                                   refinement_scaling_info[i][1] + '_'),
-                             refinement_scaling_info[i][2].replace(refinement_scaling_info[i][1],
-                                                                   refinement_scaling_info[i][1] + '_'),
-                             )
-            refinement_scaling_info[i] = updated_entry
-    else:
-        refinement_scaling_info = None
-
-    jinja_context = {
-        'class_name': class_name,
-        'stencil_name': stencil_name,
-        'communication_stencil_name': communication_stencil_name,
-        'D': lb_method.dim,
-        'Q': len(lb_method.stencil),
-        'compressible': lb_method.conserved_quantity_computation.compressible,
-        'weights': ",".join(str(w.evalf()) + constant_suffix for w in lb_method.weights),
-        'inverse_weights': ",".join(str((1 / w).evalf()) + constant_suffix for w in lb_method.weights),
-
-        'equilibrium_from_direction': stencil_switch_statement(lb_method.stencil, equilibrium),
-        'symmetric_equilibrium_from_direction': stencil_switch_statement(lb_method.stencil, symmetric_equilibrium),
-        'asymmetric_equilibrium_from_direction': stencil_switch_statement(lb_method.stencil, asymmetric_equilibrium),
-        'equilibrium': [cpp_printer.doprint(e) for e in equilibrium],
-
-        'macroscopic_velocity_shift': macroscopic_velocity_shift,
-        'density_getters': equations_to_code(cqc.output_equations_from_pdfs(pdfs_sym, {"density": rho_sym}),
-                                             variables_without_prefix=[e.name for e in pdfs_sym], dtype=dtype_string),
-        'momentum_density_getter': equations_to_code(momentum_density_getter, variables_without_prefix=pdfs_sym,
-                                                     dtype=dtype_string),
-        'second_momentum_getter': equations_to_code(second_momentum_getter, variables_without_prefix=pdfs_sym,
-                                                    dtype=dtype_string),
-        'density_velocity_setter_macroscopic_values': density_velocity_setter_macroscopic_values,
-
-        'refinement_scaling_info': refinement_scaling_info,
-
-        'target': 'cpu',
-        'namespace': 'lbm',
-        'headers': required_headers,
-    }
-
-    env = Environment(loader=FileSystemLoader(os.path.dirname(__file__)),
-                      undefined=StrictUndefined)
-    add_pystencils_filters_to_jinja_env(env)
-
-    header = env.get_template(
-        'macroscopic_values_accessors.tmpl.h').render(**jinja_context)
-
-    generation_context.write_file(f"{class_name}.h", header)
-
-
-def generate_macroscopic_values_accessors(
-        generation_context, class_name, collision_rule, field_layout='zyxf',
-        refinement_scaling=None, **create_kernel_params):
-
-    # Function derived from lbmpy_walberla.walberla_lbm_generation.generate_lattice_model()
-    # in the walberla project, commit 3455bf3eebc64efa9beaecd74ebde3459b98991d
-
-    import numpy as np
-    import pystencils as ps
-    from lbmpy.fieldaccess import StreamPullTwoFieldsAccessor
-    from lbmpy.updatekernels import create_lbm_kernel
-    from pystencils import create_kernel
-    from pystencils_walberla.codegen import default_create_kernel_parameters
-
-    # usually a numpy layout is chosen by default i.e. xyzf - which is bad for waLBerla where at least the spatial
-    # coordinates should be ordered in reverse direction i.e. zyx
-    is_float = not generation_context.double_accuracy
-    dtype = np.float32 if is_float else np.float64
-    lb_method = collision_rule.method
-
-    q = len(lb_method.stencil)
-    dim = lb_method.dim
-
-    create_kernel_params = default_create_kernel_parameters(
-        generation_context, create_kernel_params)
-    if create_kernel_params['target'] == 'gpu':
-        raise ValueError(
-            "Lattice Models can only be generated for CPUs. To generate LBM on GPUs use sweeps directly")
-
-    if field_layout == 'fzyx':
-        create_kernel_params['cpu_vectorize_info']['assume_inner_stride_one'] = True
-    elif field_layout == 'zyxf':
-        create_kernel_params['cpu_vectorize_info']['assume_inner_stride_one'] = False
-
-    src_field = ps.Field.create_generic(
-        'pdfs',
-        dim,
-        dtype,
-        index_dimensions=1,
-        layout=field_layout,
-        index_shape=(q,))
-    dst_field = ps.Field.create_generic(
-        'pdfs_tmp', dim, dtype, index_dimensions=1, layout=field_layout, index_shape=(q,))
-
-    stream_collide_update_rule = create_lbm_kernel(
-        collision_rule, src_field, dst_field, StreamPullTwoFieldsAccessor())
-    stream_collide_ast = create_kernel(
-        stream_collide_update_rule,
-        **create_kernel_params)
-    stream_collide_ast.function_name = 'kernel_streamCollide'
-    stream_collide_ast.assumed_inner_stride_one = create_kernel_params[
-        'cpu_vectorize_info']['assume_inner_stride_one']
-
-    __lattice_model(
-        generation_context,
-        class_name,
-        lb_method,
-        stream_collide_ast,
-        refinement_scaling)
 
 
 adapt_pystencils()
@@ -442,9 +261,31 @@ class PatchedUBB(lbmpy.boundaries.UBB):
         return out
 
 
-with CodeGeneration() as ctx:
+class PatchedCodeGeneration(CodeGeneration):
+    '''
+    Code generator class that reads the configuration from a file.
+    '''
+
+    def __init__(self, codegen_cfg):
+        if codegen_cfg:
+            assert sys.argv[1] == codegen_cfg
+            del sys.argv[1]
+        super().__init__()
+        if codegen_cfg:
+            cmake_map = {"ON": True, "1": True, "YES": True,
+                         "OFF": False, "0": False, "NO": False}
+            with open(codegen_cfg) as f:
+                cmake_vars = json.loads(f.read())['CMAKE_VARS']
+                for key, value in cmake_vars.items():
+                    cmake_vars[key] = cmake_map.get(value, value)
+            self.context = type(self.context)(cmake_vars)
+
+
+with PatchedCodeGeneration(args.codegen_cfg) as ctx:
     kT = sp.symbols("kT")
-    force_field = ps.fields("force(3): [3D]", layout='fzyx')
+    stencil = get_stencil('D3Q19')
+    fields = generate_fields(ctx, stencil)
+    force_field = fields['force']
 
     # Vectorization parameters
     cpu_vectorize_info = {
@@ -457,7 +298,7 @@ with CodeGeneration() as ctx:
 
     # LB Method definition
     method = create_mrt_orthogonal(
-        stencil=get_stencil('D3Q19'),
+        stencil=stencil,
         compressible=True,
         weighted=True,
         relaxation_rate_getter=relaxation_rates.rr_getter,
@@ -474,7 +315,8 @@ with CodeGeneration() as ctx:
     # generate unthermalized collision rule
     collision_rule_unthermalized = create_lb_collision_rule(
         method,
-        optimization={'cse_global': True}
+        optimization={'cse_global': True,
+                      'double_precision': ctx.double_accuracy}
     )
     generate_collision_sweep(
         ctx,
@@ -523,7 +365,8 @@ with CodeGeneration() as ctx:
             'block_offsets': 'walberla',
             'rng_node': ps.rng.PhiloxTwoDoubles
         },
-        optimization={'cse_global': True}
+        optimization={'cse_global': True,
+                      'double_precision': ctx.double_accuracy}
     )
     generate_collision_sweep(
         ctx,
@@ -543,10 +386,8 @@ with CodeGeneration() as ctx:
     # generate accessors
     generate_macroscopic_values_accessors(
         ctx,
-        'LBWalberlaImpl',
         collision_rule_unthermalized,
         field_layout="fzyx")
-    patch_accessors('LBWalberlaImpl', 'macroscopic_values_accessors')
 
     # Boundary conditions
     ubb_dynamic = PatchedUBB(lambda *args: None, dim=3)
@@ -557,20 +398,18 @@ with CodeGeneration() as ctx:
                       streaming_pattern="push")
 
     # patch for old versions of pystencils_walberla
-    with open('Dynamic_UBB.h') as f:
-        dynamic_ubb_code = f.read()
-    if '#pragma once' not in dynamic_ubb_code:
-        with open('Dynamic_UBB.h', 'w') as f:
-            f.write('#pragma once\n' + dynamic_ubb_code)
+    with open('Dynamic_UBB.h', 'r+') as f:
+        content = f.read()
+        if '#pragma once' not in content:
+            f.seek(0)
+            f.write('#pragma once\n' + content)
 
     # communication
-    pdfs = Field.create_generic(
-        'pdfs', 3, index_shape=(len(method.stencil),), layout='fzyx')
     generate_lb_pack_info(
         ctx,
         'PushPackInfo',
         method.stencil,
-        pdfs,
+        fields['pdfs'],
         streaming_pattern='push'
     )
 

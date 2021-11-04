@@ -224,10 +224,11 @@ void on_constraint_change() { recalc_forces = true; }
 void on_lbboundary_change() {
 #if defined(LB_BOUNDARIES)
   LBBoundaries::lb_init_boundaries();
-
-  recalc_forces = true;
+  on_lb_boundary_conditions_change();
 #endif
 }
+
+void on_lb_boundary_conditions_change() { recalc_forces = true; }
 
 void on_boxl_change(bool skip_method_adaption) {
   grid_changed_box_l(box_geo);

@@ -51,14 +51,14 @@ void lb_lbcoupling_set_gamma(double friction);
 double lb_lbcoupling_get_gamma();
 bool lb_lbcoupling_is_seed_required();
 
-/*
+/**
  * @brief Activate the coupling between LB and MD particles.
  * @note This is a collective function and needs to be called from all
  * processes.
  */
 void lb_lbcoupling_activate();
 
-/*
+/**
  * @brief Deactivate the coupling between LB and MD particles.
  * @note This is a collective function and needs to be called from all
  * processes.
@@ -66,8 +66,7 @@ void lb_lbcoupling_activate();
 void lb_lbcoupling_deactivate();
 
 /**
- * @brief Check if a position is within the local LB domain
- *       plus halo.
+ * @brief Check if a position is within the local LB domain plus halo.
  *
  * @param pos Position to check
  *
@@ -99,17 +98,21 @@ void couple_particle(Particle &p, bool couple_virtual, double noise_amplitude,
 // internal function exposed for unit testing
 void add_swimmer_force(Particle const &p, double time_step, bool has_ghosts);
 
+/**
+ * @brief Calculate particle drift velocity offset due to ENGINE and
+ * ELECTROHYDRODYNAMICS.
+ */
 Utils::Vector3d lb_particle_coupling_drift_vel_offset(const Particle &p);
 
 void mpi_bcast_lb_particle_coupling();
 
-/** calculate drag force on a single particle
+/** @brief Calculate drag force on a single particle.
  *
- *  Section II.C. @cite ahlrichs99a
+ *  See section II.C. @cite ahlrichs99a
  *
- *  @param[in] p             The coupled particle.
- *  @param vel_offset        Velocity offset to be added to interpolated LB
- * velocity before calculating the force
+ *  @param[in] p           The coupled particle.
+ *  @param[in] vel_offset  Velocity offset to be added to interpolated LB
+ *                         velocity before calculating the force
  *
  *  @return The viscous coupling force
  */
@@ -118,9 +121,7 @@ Utils::Vector3d lb_drag_force(Particle const &p,
 
 struct LB_Particle_Coupling {
   OptionalCounter rng_counter_coupling = {};
-  /*
-   * @brief Friction constant for the particle coupling.
-   */
+  /** @brief Friction coefficient for the particle coupling. */
   double gamma = 0.0;
   bool couple_to_md = false;
 

@@ -58,7 +58,6 @@ struct ThermalizedBond {
 
   static constexpr int num = 1;
 
-  ThermalizedBond() = default;
   ThermalizedBond(double temp_com, double gamma_com, double temp_distance,
                   double gamma_distance, double r_cut);
   boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d>>

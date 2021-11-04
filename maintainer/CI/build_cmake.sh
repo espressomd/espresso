@@ -149,7 +149,7 @@ else
 fi
 
 if [ "${with_walberla}" = true ]; then
-  cmake_params="$cmake_params -DWITH_WALBERLA=ON"
+  cmake_params="${cmake_params} -DWITH_WALBERLA=ON"
 fi
 
 if [ "${with_coverage}" = true ]; then

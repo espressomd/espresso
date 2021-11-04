@@ -1,4 +1,4 @@
-// kernel generated with pystencils v0.3.3+39.g587a822, lbmpy v0.3.3+33.g036fe13, lbmpy_walberla/pystencils_walberla from commit ref: refs/heads/LeesEdwards
+// kernel generated with pystencils v0.3.4+4.g4fecf0c, lbmpy v0.3.3+37.g2faceda, lbmpy_walberla/pystencils_walberla from commit b17ca5caf00db7d19f86c5f85c6f67fec6c16aff
 
 //======================================================================================================================
 //
@@ -29,8 +29,6 @@
 #include "domain_decomposition/StructuredBlockStorage.h"
 #include <set>
 
-
-
 #ifdef __GNUC__
 #define RESTRICT __restrict__
 #elif _MSC_VER
@@ -58,47 +56,29 @@ public:
 
     
 
-    void run(IBlock * block);
-    
-    void runOnCellInterval(const shared_ptr<StructuredBlockStorage> & blocks, const CellInterval & globalCellInterval, cell_idx_t ghostLayers, IBlock * block);
+    void operator() ( IBlock * block );
+    void runOnCellInterval(const shared_ptr<StructuredBlockStorage> & blocks,
+                           const CellInterval & globalCellInterval, cell_idx_t ghostLayers, IBlock * block
+                           );
 
-    
-    void operator() (IBlock * block)
-    {
-        run(block);
-    }
-    
 
-    static std::function<void (IBlock *)> getSweep(const shared_ptr<CollideSweepThermalized> & kernel)
-    {
-        return [kernel] 
-               (IBlock * b) 
-               { kernel->run(b); };
+
+    static std::function<void (IBlock*)> getSweep(const shared_ptr<CollideSweepThermalized> & kernel) {
+        return [kernel](IBlock * b) { (*kernel)(b); };
     }
 
-    static std::function<void (IBlock*)> getSweepOnCellInterval(const shared_ptr<CollideSweepThermalized> & kernel, const shared_ptr<StructuredBlockStorage> & blocks, const CellInterval & globalCellInterval, cell_idx_t ghostLayers=1)
+    static std::function<void (IBlock*)>
+            getSweepOnCellInterval(const shared_ptr<CollideSweepThermalized> & kernel,
+                                   const shared_ptr<StructuredBlockStorage> & blocks,
+                                   const CellInterval & globalCellInterval,
+                                   cell_idx_t ghostLayers=1 )
     {
-        return [kernel, blocks, globalCellInterval, ghostLayers]
-               (IBlock * b) 
-               { kernel->runOnCellInterval(blocks, globalCellInterval, ghostLayers, b); };
+        return [kernel, blocks, globalCellInterval, ghostLayers] (IBlock * b) {
+            kernel->runOnCellInterval(blocks, globalCellInterval, ghostLayers, b);
+        };
     }
 
-    std::function<void (IBlock *)> getSweep()
-    {
-        return [this] 
-               (IBlock * b) 
-               { this->run(b); };
-    }
-
-    std::function<void (IBlock *)> getSweepOnCellInterval(const shared_ptr<StructuredBlockStorage> & blocks, const CellInterval & globalCellInterval, cell_idx_t ghostLayers=1)
-    {
-        return [this, blocks, globalCellInterval, ghostLayers]
-               (IBlock * b) 
-               { this->runOnCellInterval(blocks, globalCellInterval, ghostLayers, b); };
-    }
-
-
-    BlockDataID forceID;
+BlockDataID forceID;
     BlockDataID pdfsID;
     uint32_t block_offset_0_;
     uint32_t block_offset_1_;
@@ -111,7 +91,6 @@ public:
     uint32_t seed_;
     uint32_t time_step_;
     std::function<void(IBlock *, uint32_t&, uint32_t&, uint32_t&)> block_offset_generator = [](IBlock * const, uint32_t&, uint32_t&, uint32_t&) { };
-
 };
 
 

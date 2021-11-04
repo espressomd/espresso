@@ -131,11 +131,8 @@ class LBShearCommon:
             v_measured = np.zeros((sample_points, 3))
             for j in range(0, sample_points):
                 ind = np.max(((1, 1, 1), shear_plane_normal * j + 1), 0)
-                ind = np.array(ind, dtype=int)
                 v_measured[j] = self.lbf[ind[0], ind[1], ind[2]].velocity
-            np.testing.assert_allclose(v_measured, v_expected, atol=3E-3)
-            np.testing.assert_allclose(
-                v_measured[1:-1], v_expected[1:-1], atol=8E-4)
+            np.testing.assert_allclose(v_measured, v_expected, atol=8E-4)
 
         # speed of sound of the LB fluid in MD units (agrid/tau is due to
         # LB->MD unit conversion)

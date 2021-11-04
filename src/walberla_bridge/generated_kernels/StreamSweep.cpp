@@ -1,5 +1,5 @@
-// kernel generated with pystencils v0.3.3+44.gf2d4181, lbmpy
-// v0.3.1+53.g2faceda, lbmpy_walberla/pystencils_walberla from commit
+// kernel generated with pystencils v0.3.4+4.g4fecf0c, lbmpy v0.3.3+37.g2faceda,
+// lbmpy_walberla/pystencils_walberla from commit
 // b17ca5caf00db7d19f86c5f85c6f67fec6c16aff
 
 //======================================================================================================================
@@ -325,8 +325,8 @@ streamsweep(double *RESTRICT const _data_force,
 } // namespace internal_streamsweep
 
 void StreamSweep::operator()(IBlock *block) {
-  auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
+  auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
   auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
   field::GhostLayerField<double, 19> *pdfs_tmp;
   {
@@ -402,8 +402,8 @@ void StreamSweep::runOnCellInterval(
   if (ci.empty())
     return;
 
-  auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
+  auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
   auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
   field::GhostLayerField<double, 19> *pdfs_tmp;
   {

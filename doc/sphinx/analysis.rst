@@ -8,7 +8,7 @@ Analysis
 - :ref:`Direct analysis routines`: The :mod:`espressomd.analyze` module provides
   online-calculation of specialized local and global observables with
   calculation and data accumulation performed in the core.
-- :ref:`Observables and correlators`: This provides a more flexible concept of
+- :ref:`Observables framework`: This provides a more flexible concept of
   in-core analysis, where a certain observable (:ref:`Available observables`),
   a rule for data accumulation (:ref:`Accumulators`) and/or correlation (:ref:`Correlations`) can be defined.
 
@@ -18,9 +18,8 @@ Analysis
 Direct analysis routines
 ------------------------
 
-The direct analysis commands can be classified into two types:
-
-- Instantaneous analysis routines, that only take into account the current configuration of the system:
+The direct analysis commands only take into account the current configuration of the system.
+Available commands are:
 
 - :ref:`Energies`
 - :ref:`Pressure`
@@ -312,14 +311,18 @@ Note that the hydrodynamic radius is sometimes defined in a similar fashion but 
 Both versions are equivalent in the :math:`N\rightarrow \infty` limit but give numerically different values for finite polymers.
 
 
-.. _Observables and correlators:
+.. _Observables framework:
 
-Observables and correlators
----------------------------
+Observables framework
+---------------------
 
 Observables extract properties of the particles and the LB fluid and
-return either the raw data or a statistic derived from them. The
-Observable framework is progressively replacing the Analysis framework.
+return either the raw data or a statistic derived from them.
+Correlators and accumulators provide functionality to collect and
+process the output of observables automatically throughout the course
+of the simulation.
+
+The Observables framework is progressively replacing the Analysis framework.
 This is motivated by the fact, that sometimes it is desirable that the
 analysis functions do more than just return a value to the scripting
 interface. For some observables it is desirable to be sampled every few
@@ -331,19 +334,13 @@ the script level and back, which produces a significant overhead when
 performed too often.
 
 Some observables in the core have their corresponding counterparts in
-the :mod:`espressomd.analyze` module. However, only the core-observables can be used
-on the fly with the toolbox of the correlator and on the fly analysis of
-time series.
-Similarly, some special cases of using the correlator have
-their redundant counterparts in :mod:`espressomd.analyze`,
-but the correlator provides a general and
-versatile toolbox which can be used with any implemented
-core-observables.
+the :mod:`espressomd.analyze` module. However, only the core-observables
+can be used on the fly with the toolbox of accumulators and correlators.
 
 The first step of the core analysis is to create an observable.
 An observable in the sense of the core analysis can be considered as a
 rule how to compute a certain set of numbers from a given state of the
-system or a role how to collect data from other observables. Any
+system or a rule how to collect data from other observables. Any
 observable is represented as a single array of double values in the core.
 Any more complex shape (tensor, complex number, …) must be compatible to this
 prerequisite. Every observable however documents the storage order and returns
@@ -389,12 +386,12 @@ or bin edges for the axes. Example::
     import espressomd.observables
 
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
-    system.part.add(id=0, pos=[4.0, 3.0, 6.0])
-    system.part.add(id=1, pos=[7.0, 3.0, 6.0])
+    p1 = system.part.add(pos=[4.0, 3.0, 6.0])
+    p2 = system.part.add(pos=[7.0, 3.0, 6.0])
 
     # histogram in Cartesian coordinates
     density_profile = espressomd.observables.DensityProfile(
-        ids=[0, 1],
+        ids=[p1.id, p2.id],
         n_x_bins=8, min_x=1.0, max_x=9.0,
         n_y_bins=8, min_y=1.0, max_y=9.0,
         n_z_bins=4, min_z=4.0, max_z=8.0)
@@ -419,15 +416,15 @@ For this purpose, use :class:`espressomd.math.CylindricalTransformationParameter
 
     # shifted and rotated cylindrical coordinates
     cyl_transform_params = espressomd.math.CylindricalTransformationParameters(
-        center=[5.0, 5.0, 0.0], axis=[0, 1, 0], orientation=[0, 0, 1])
+        center=[5.0, 0.0, 5.0], axis=[0, 1, 0], orientation=[0, 0, 1])
 
     # histogram in cylindrical coordinates
     density_profile = espressomd.observables.CylindricalDensityProfile(
-        ids=[0, 1],
+        ids=[p1.id, p2.id],
         transform_params = cyl_transform_params,
         n_r_bins=8, min_r=1.0, max_r=4.0,
         n_phi_bins=16, min_phi=-np.pi, max_phi=np.pi,
-        n_z_bins=4, min_z=4.0, max_z=8.0)
+        n_z_bins=4, min_z=0.0, max_z=8.0)
     obs_data = density_profile.calculate()
     obs_bins = density_profile.bin_edges()
 
@@ -436,7 +433,7 @@ For this purpose, use :class:`espressomd.math.CylindricalTransformationParameter
     ax = fig.add_subplot(111, polar='True')
     r = obs_bins[:, 0, 0, 0]
     phi = obs_bins[0, :, 0, 1]
-    ax.pcolormesh(phi, r, obs_data[:, :, 2])
+    ax.pcolormesh(phi, r, obs_data[:, :, 1])
     plt.show()
 
 
@@ -499,6 +496,8 @@ documentation for all available observables in :mod:`espressomd.observables`.
 
    - :class:`~espressomd.observables.CylindricalVelocityProfile`
 
+   - :class:`~espressomd.observables.CylindricalLBVelocityProfile`
+
    - :class:`~espressomd.observables.CylindricalLBFluxDensityProfileAtParticlePositions`
 
    - :class:`~espressomd.observables.CylindricalLBVelocityProfileAtParticlePositions`
@@ -511,6 +510,67 @@ documentation for all available observables in :mod:`espressomd.observables`.
    - :class:`~espressomd.observables.PressureTensor`: Total pressure tensor (see :ref:`Pressure Tensor`)
 
    - :class:`~espressomd.observables.DPDStress`
+
+
+.. _Accumulators:
+
+Accumulators
+~~~~~~~~~~~~
+
+.. _Time series:
+
+Time series
+^^^^^^^^^^^
+
+In order to take snapshots of an observable,
+:class:`espressomd.accumulators.TimeSeries` can be used::
+
+    import espressomd
+    import espressomd.observables
+    import espressomd.accumulators
+
+    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system.cell_system.skin = 0.4
+    system.time_step = 0.01
+    p1 = system.part.add(pos=[5.0, 5.0, 5.0], v=[0, 2, 0])
+    position_observable = espressomd.observables.ParticlePositions(ids=[p1.id])
+    accumulator = espressomd.accumulators.TimeSeries(
+        obs=position_observable, delta_N=2)
+    system.auto_update_accumulators.add(accumulator)
+    system.integrator.run(10)
+    print(accumulator.time_series())
+
+In the example above the automatic update of the accumulator is used. However,
+it's also possible to manually update the accumulator by calling
+:meth:`espressomd.accumulators.TimeSeries.update`.
+
+.. _Mean-variance calculator:
+
+Mean-variance calculator
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+In order to calculate the running mean and variance of an observable,
+:class:`espressomd.accumulators.MeanVarianceCalculator` can be used::
+
+    import espressomd
+    import espressomd.observables
+    import espressomd.accumulators
+
+    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system.cell_system.skin = 0.4
+    system.time_step = 0.01
+    p1 = system.part.add(pos=[5.0, 5.0, 5.0], v=[0, 2, 0])
+    position_observable = espressomd.observables.ParticlePositions(ids=[p1.id])
+    accumulator = espressomd.accumulators.MeanVarianceCalculator(
+        obs=position_observable, delta_N=2)
+    system.auto_update_accumulators.add(accumulator)
+    system.integrator.run(10)
+    print(accumulator.mean())
+    print(accumulator.variance())
+
+In the example above the automatic update of the accumulator is used. However,
+it's also possible to manually update the accumulator by calling
+:meth:`espressomd.accumulators.MeanVarianceCalculator.update`.
 
 
 .. _Correlations:
@@ -578,17 +638,21 @@ Example: Calculating a particle's diffusion coefficient
 
 For setting up an observable and correlator to obtain the mean square displacement of particle 0, use::
 
-    pos_obs = ParticlePositions(ids=(0,))
+    pos_obs = ParticlePositions(ids=[p1.id])
     c_pos = Correlator(obs1=pos_obs, tau_lin=16, tau_max=100., delta_N=10,
                        corr_operation="square_distance_componentwise", compress1="discard1")
 
 To obtain the velocity auto-correlation function of particle 0, use::
 
-    obs = ParticleVelocities(ids=(0,))
+    obs = ParticleVelocities(ids=[p1.id])
     c_vel = Correlator(obs1=vel_obs, tau_lin=16, tau_max=20., delta_N=1,
                        corr_operation="scalar_product", compress1="discard1")
 
 The full example can be found in :file:`samples/diffusion_coefficient.py`.
+Note that in this example, the operation :literal:`square_distance_componentwise`
+is used, which is not a correlation function in the mathematical sense. Other
+available operations include actual correlation functions, as described
+in the source documentation of :class:`espressomd.accumulators.Correlator`.
 
 
 .. _Details of the multiple tau correlation algorithm:
@@ -691,66 +755,6 @@ different contributions cancel each other. On the other hand, in the of
 the case of mean square displacement the difference is always positive,
 resulting in a non-negligible systematic error. A more general
 discussion is presented in Ref. :cite:`ramirez10a`.
-
-.. _Accumulators:
-
-Accumulators
-------------
-
-.. _Time series:
-
-Time series
-~~~~~~~~~~~
-
-In order to take snapshots of an observable,
-:class:`espressomd.accumulators.TimeSeries` can be used::
-
-    import espressomd
-    import espressomd.observables
-    import espressomd.accumulators
-
-    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
-    system.cell_system.skin = 0.4
-    system.time_step = 0.01
-    system.part.add(id=0, pos=[5.0, 5.0, 5.0], v=[0, 2, 0])
-    position_observable = espressomd.observables.ParticlePositions(ids=(0,))
-    accumulator = espressomd.accumulators.TimeSeries(
-        obs=position_observable, delta_N=2)
-    system.auto_update_accumulators.add(accumulator)
-    system.integrator.run(10)
-    print(accumulator.time_series())
-
-In the example above the automatic update of the accumulator is used. However,
-it's also possible to manually update the accumulator by calling
-:meth:`espressomd.accumulators.TimeSeries.update`.
-
-.. _Mean-variance calculator:
-
-Mean-variance calculator
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-In order to calculate the running mean and variance of an observable,
-:class:`espressomd.accumulators.MeanVarianceCalculator` can be used::
-
-    import espressomd
-    import espressomd.observables
-    import espressomd.accumulators
-
-    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
-    system.cell_system.skin = 0.4
-    system.time_step = 0.01
-    system.part.add(id=0, pos=[5.0, 5.0, 5.0], v=[0, 2, 0])
-    position_observable = espressomd.observables.ParticlePositions(ids=(0,))
-    accumulator = espressomd.accumulators.MeanVarianceCalculator(
-        obs=position_observable, delta_N=2)
-    system.auto_update_accumulators.add(accumulator)
-    system.integrator.run(10)
-    print(accumulator.mean())
-    print(accumulator.variance())
-
-In the example above the automatic update of the accumulator is used. However,
-it's also possible to manually update the accumulator by calling
-:meth:`espressomd.accumulators.MeanVarianceCalculator.update`.
 
 Cluster analysis
 ----------------

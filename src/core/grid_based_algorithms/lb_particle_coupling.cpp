@@ -100,8 +100,10 @@ void lb_lbcoupling_set_rng_state(uint64_t counter) {
     throw std::runtime_error("No LB active");
 }
 
-/** @brief Return a vector of positions shifted by +,- box length in each
- * coordinate */
+/**
+ * @brief Return a vector of positions shifted by +,- box length in each
+ * coordinate.
+ */
 std::vector<Utils::Vector3d> shifted_positions(Utils::Vector3d pos,
                                                const BoxGeometry &box) {
   std::vector<Utils::Vector3d> res;
@@ -122,12 +124,6 @@ std::vector<Utils::Vector3d> shifted_positions(Utils::Vector3d pos,
   return res;
 }
 
-/**
- * @brief Add a force to the lattice force density.
- * @param pos Position of the force
- * @param force Force in MD units.
- * @param time_step MD time step.
- */
 void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force,
                   double time_step) {
   /* transform momentum transfer to lattice units
@@ -135,8 +131,7 @@ void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force,
   auto const delta_j = -(time_step / lb_lbfluid_get_lattice_speed()) * force;
   lb_lbinterpolation_add_force_density(pos, delta_j);
 }
-/** @brief Calculate particle drift velocity offset due to ENGINE and
- *  ELECTROHYDRODYNAMICS */
+
 Utils::Vector3d lb_particle_coupling_drift_vel_offset(const Particle &p) {
   Utils::Vector3d vel_offset{};
 #ifdef ENGINE
@@ -151,16 +146,6 @@ Utils::Vector3d lb_particle_coupling_drift_vel_offset(const Particle &p) {
   return vel_offset;
 }
 
-/** calculate drag force on a single particle
- *
- *  Section II.C. @cite ahlrichs99a
- *
- *  @param[in] p             The coupled particle.
- *  @param vel_offset        Velocity offset to be added to interpolated LB
- * velocity before calculating the force
- *
- *  @return The viscous coupling force
- */
 Utils::Vector3d lb_drag_force(Particle const &p,
                               const Utils::Vector3d &vel_offset) {
   /* calculate fluid velocity at particle's position
@@ -216,14 +201,6 @@ bool in_local_domain(Vector<T, 3> const &pos, LocalBox<T> const &local_box,
       pos, {local_geo.my_left() - halo_vec, local_geo.my_right() + halo_vec});
 }
 
-/**
- * @brief Check if a position is within the local LB domain
- *       plus halo.
- *
- * @param pos Position to check
- *
- * @return True iff the point is inside of the domain.
- */
 bool in_local_halo(Vector3d const &pos) {
   auto const halo = 0.5 * lb_lbfluid_get_agrid();
 

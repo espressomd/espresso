@@ -18,7 +18,6 @@ import unittest as ut
 import unittest_decorators as utx
 import numpy as np
 import itertools
-import sys
 
 import espressomd
 import espressomd.shapes
@@ -85,8 +84,7 @@ class LBInterpolation:
         # The boundary node index is lbf.shape[0]-1, so -2 refers to the
         # node in front of the boundary.
         node_next_to_boundary = self.lbf[self.lbf.shape[0] - 2, 0, 0]
-        # The midpoint between the boundary and
-        # that node is box_l - agrid.
+        # The midpoint between the boundary and that node is box_l - agrid.
         np.testing.assert_allclose(
             np.copy(self.lbf.get_interpolated_velocity([BOX_L - AGRID, 0, 0])),
             ([0, 0, V_BOUNDARY] + np.copy(node_next_to_boundary.velocity)) / 2.,
@@ -103,19 +101,25 @@ class LBInterpolation:
 
     def test_mach_limit_check(self):
         """
-        Assert that the mach number check fires an exception.
+        Assert that the Mach number check fires an exception.
 
         """
-        max_vel = 0.31 * AGRID / TAU
-        print("Begin: Test error generation")
-        sys.stdout.flush()
-        sys.stderr.flush()
-        with self.assertRaises(Exception):
-            self.set_boundaries([0.0, 0.0, max_vel])
-            self.system.integrator.run(1)
-        sys.stdout.flush()
-        sys.stderr.flush()
-        print("End: Test error generation")
+        max_vel = 1.1 * self.lbf.mach_limit() * AGRID / TAU
+        vbb = espressomd.lbboundaries.VelocityBounceBack([0, 0, max_vel])
+        error_msg = 'Slip velocity exceeds Mach 0.35'
+
+        with self.assertRaisesRegex(ValueError, error_msg):
+            self.lbf[0, 0, 0].boundary = vbb
+        self.assertIsNone(self.lbf[0, 0, 0].boundary)
+
+        with self.assertRaisesRegex(ValueError, error_msg):
+            shape = espressomd.shapes.Wall(normal=[1, 0, 0], dist=AGRID)
+            self.lbf.add_boundary_from_shape(shape, vbb.velocity)
+        self.assertIsNone(self.lbf[0, 0, 0].boundary)
+
+        with self.assertRaisesRegex(ValueError, error_msg):
+            self.lbf.add_boundary_from_list([[0, 0, 0]], vbb.velocity)
+        self.assertIsNone(self.lbf[0, 0, 0].boundary)
 
 
 @utx.skipIfMissingFeatures(['LB_BOUNDARIES', 'LB_WALBERLA'])

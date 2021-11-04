@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2010-2021 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -21,7 +21,7 @@
 
 #include "BoxGeometry.hpp"
 #include "grid.hpp"
-#include "particle_data.hpp"
+#include "ibm_common.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -95,15 +95,15 @@ IBMTribend::IBMTribend(const int ind1, const int ind2, const int ind3,
     theta0 = 0;
   } else {
     // Get particles
-    auto const p1 = get_particle_data(ind1);
-    auto const p2 = get_particle_data(ind2);
-    auto const p3 = get_particle_data(ind3);
-    auto const p4 = get_particle_data(ind4);
+    auto const pos1 = get_ibm_particle_position(ind1);
+    auto const pos2 = get_ibm_particle_position(ind2);
+    auto const pos3 = get_ibm_particle_position(ind3);
+    auto const pos4 = get_ibm_particle_position(ind4);
 
     // Get vectors of triangles
-    auto const dx1 = box_geo.get_mi_vector(p1.r.p, p3.r.p);
-    auto const dx2 = box_geo.get_mi_vector(p2.r.p, p3.r.p);
-    auto const dx3 = box_geo.get_mi_vector(p4.r.p, p3.r.p);
+    auto const dx1 = box_geo.get_mi_vector(pos1, pos3);
+    auto const dx2 = box_geo.get_mi_vector(pos2, pos3);
+    auto const dx3 = box_geo.get_mi_vector(pos4, pos3);
 
     // Get normals on triangle; pointing outwards by definition of indices
     // sequence

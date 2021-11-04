@@ -38,6 +38,7 @@
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/communicator.hpp>
 #include <boost/mpi/inplace.hpp>
+#include <boost/multi_array.hpp>
 
 #include <mpi.h>
 
@@ -106,24 +107,42 @@ BOOST_DATA_TEST_CASE(kT_thermalized, bdata::make(thermalized_lbs()),
   BOOST_CHECK_EQUAL(lb->get_kT(), params.kT);
 }
 
-BOOST_DATA_TEST_CASE(boundary, bdata::make(all_lbs()), lb_generator) {
+BOOST_DATA_TEST_CASE(per_node_boundary, bdata::make(all_lbs()), lb_generator) {
   auto const vel = Vector3d{{0.2, 3.8, 4.2}};
   auto lb = lb_generator(mpi_shape, params);
   for (auto const &node : std::vector<Vector3i>{
            {-lb->n_ghost_layers(), 0, 0}, {0, 0, 0}, {0, 1, 2}, {9, 9, 9}}) {
     if (lb->node_in_local_halo(node)) {
-      BOOST_CHECK(lb->set_node_velocity_at_boundary(node, vel, true));
-      auto const vel_check = lb->get_node_velocity_at_boundary(node);
-      // Do we have a value
-      BOOST_CHECK(vel_check);
-      // Check the value
-      BOOST_CHECK_SMALL((*vel_check - vel).norm(), 1E-12);
-      BOOST_CHECK(lb->remove_node_from_boundary(node, true));
-      auto const res = lb->get_node_is_boundary(node, true);
-      // Did we get a value?
-      BOOST_CHECK(res);
-      // Should not be a boundary node
-      BOOST_CHECK(*res == false);
+      {
+        auto const res = lb->get_node_is_boundary(node, true);
+        // Did we get a value?
+        BOOST_REQUIRE(res);
+        // Should not be a boundary node
+        BOOST_CHECK(*res == false);
+      }
+      {
+        BOOST_CHECK(lb->set_node_velocity_at_boundary(node, vel, true));
+        auto const res = lb->get_node_is_boundary(node, true);
+        // Did we get a value?
+        BOOST_REQUIRE(res);
+        // Should be a boundary node
+        BOOST_CHECK(*res == true);
+      }
+      {
+        auto const vel_check = lb->get_node_velocity_at_boundary(node);
+        // Do we have a value
+        BOOST_REQUIRE(vel_check);
+        // Check the value
+        BOOST_CHECK_SMALL((*vel_check - vel).norm(), 1E-12);
+      }
+      {
+        BOOST_CHECK(lb->remove_node_from_boundary(node, true));
+        auto const res = lb->get_node_is_boundary(node, true);
+        // Did we get a value?
+        BOOST_REQUIRE(res);
+        // Should not be a boundary node
+        BOOST_CHECK(*res == false);
+      }
     } else {
       // Not in the local halo.
       BOOST_CHECK(!lb->set_node_velocity_at_boundary(node, vel, true));
@@ -134,6 +153,117 @@ BOOST_DATA_TEST_CASE(boundary, bdata::make(all_lbs()), lb_generator) {
   }
 
   lb->clear_boundaries();
+  for (auto const &node :
+       local_nodes_incl_ghosts(lb->get_local_domain(), lb->n_ghost_layers())) {
+    BOOST_CHECK(!(*lb->get_node_is_boundary(node, true)));
+  }
+}
+
+BOOST_DATA_TEST_CASE(update_boundary_from_shape, bdata::make(all_lbs()),
+                     lb_generator) {
+  auto const vel = Vector3d{{0.2, 3.8, 4.2}};
+  auto lb = lb_generator(mpi_shape, params);
+
+  auto const vec3to4 = [](Utils::Vector<int, 3> const &d, int v) {
+    return Utils::Vector<int, 4>{{d[0], d[1], d[2], v}};
+  };
+
+  auto const nodes = std::vector<Vector3i>{
+      {-lb->n_ghost_layers(), 0, 0}, {0, 0, 0}, {0, 1, 2}, {9, 9, 9}};
+  // set up boundary
+  {
+    auto const n_grid_points = Utils::product(params.grid_dimensions);
+    boost::multi_array<int, 3> raster_3d(params.grid_dimensions);
+    boost::multi_array<double, 4> vel_3d(vec3to4(params.grid_dimensions, 3));
+    BOOST_CHECK_EQUAL(raster_3d.num_elements(), n_grid_points);
+    for (auto const &node : nodes) {
+      auto const idx = (node + params.grid_dimensions) % params.grid_dimensions;
+      raster_3d(idx) = 1;
+      for (auto const i : {0, 1, 2}) {
+        vel_3d(vec3to4(idx, i)) = vel[i];
+      }
+    }
+    std::vector<int> raster_flat(raster_3d.data(),
+                                 raster_3d.data() + raster_3d.num_elements());
+    std::vector<double> vel_flat(vel_3d.data(),
+                                 vel_3d.data() + vel_3d.num_elements());
+    lb->update_boundary_from_shape(raster_flat, vel_flat);
+  }
+
+  for (auto const &node : nodes) {
+    if (lb->node_in_local_halo(node)) {
+      {
+        auto const res = lb->get_node_is_boundary(node, true);
+        // Did we get a value?
+        BOOST_REQUIRE(res);
+        // Should be a boundary node
+        BOOST_CHECK(*res == true);
+      }
+      {
+        auto const vel_check = lb->get_node_velocity_at_boundary(node);
+        // Do we have a value
+        BOOST_REQUIRE(vel_check);
+        // Check the value
+        BOOST_CHECK_SMALL((*vel_check - vel).norm(), 1E-12);
+      }
+    } else {
+      // Not in the local halo.
+      BOOST_CHECK(!lb->get_node_velocity_at_boundary(node));
+    }
+  }
+
+  lb->clear_boundaries();
+  lb->ghost_communication();
+  for (auto const &node :
+       local_nodes_incl_ghosts(lb->get_local_domain(), lb->n_ghost_layers())) {
+    BOOST_CHECK(!(*lb->get_node_is_boundary(node, true)));
+  }
+}
+
+BOOST_DATA_TEST_CASE(update_boundary_from_list, bdata::make(all_lbs()),
+                     lb_generator) {
+  auto const vel = Vector3d{{0.2, 3.8, 4.2}};
+  auto lb = lb_generator(mpi_shape, params);
+
+  auto const nodes = std::vector<Vector3i>{
+      {-lb->n_ghost_layers(), 0, 0}, {0, 0, 0}, {0, 1, 2}, {9, 9, 9}};
+  // set up boundary
+  {
+    std::vector<double> velocities_flat;
+    std::vector<int> indices_flat;
+    for (auto const &node : nodes) {
+      for (auto const i : {0, 1, 2}) {
+        indices_flat.emplace_back(node[i]);
+        velocities_flat.emplace_back(vel[i]);
+      }
+    }
+    lb->update_boundary_from_list(indices_flat, velocities_flat);
+  }
+
+  for (auto const &node : nodes) {
+    if (lb->node_in_local_halo(node)) {
+      {
+        auto const res = lb->get_node_is_boundary(node, true);
+        // Did we get a value?
+        BOOST_REQUIRE(res);
+        // Should be a boundary node
+        BOOST_CHECK(*res == true);
+      }
+      {
+        auto const vel_check = lb->get_node_velocity_at_boundary(node);
+        // Do we have a value
+        BOOST_REQUIRE(vel_check);
+        // Check the value
+        BOOST_CHECK_SMALL((*vel_check - vel).norm(), 1E-12);
+      }
+    } else {
+      // Not in the local halo.
+      BOOST_CHECK(!lb->get_node_velocity_at_boundary(node));
+    }
+  }
+
+  lb->clear_boundaries();
+  lb->ghost_communication();
   for (auto const &node :
        local_nodes_incl_ghosts(lb->get_local_domain(), lb->n_ghost_layers())) {
     BOOST_CHECK(!(*lb->get_node_is_boundary(node, true)));
@@ -190,6 +320,16 @@ BOOST_DATA_TEST_CASE(domain_and_halo, bdata::make(all_lbs()), lb_generator) {
   }
 }
 
+auto fold_node(Vector3i n) {
+  for (int i = 0; i < 3; i++) {
+    if (n[i] < 0)
+      n[i] += params.grid_dimensions[i];
+    else if (n[i] >= params.grid_dimensions[i])
+      n[i] -= params.grid_dimensions[i];
+  }
+  return n;
+}
+
 BOOST_DATA_TEST_CASE(velocity_at_node_and_pos, bdata::make(all_lbs()),
                      lb_generator) {
   auto lb = lb_generator(mpi_shape, params);
@@ -198,18 +338,8 @@ BOOST_DATA_TEST_CASE(velocity_at_node_and_pos, bdata::make(all_lbs()),
   // Values
   auto n_pos = [](Vector3i const &n) { return n + Vector3d::broadcast(.5); };
 
-  auto fold = [](Vector3i n) {
-    for (int i = 0; i < 3; i++) {
-      if (n[i] < 0)
-        n[i] += params.grid_dimensions[i];
-      else if (n[i] >= params.grid_dimensions[i])
-        n[i] -= params.grid_dimensions[i];
-    }
-    return n;
-  };
-
-  auto n_vel = [&fold](Vector3i const &node) {
-    return fold(node) + Vector3d{{1., 2., -.5}};
+  auto n_vel = [](Vector3i const &node) {
+    return fold_node(node) + Vector3d{{1., 2., -.5}};
   };
 
   // Assign velocities
@@ -255,18 +385,8 @@ BOOST_DATA_TEST_CASE(interpolated_density_at_pos, bdata::make(all_lbs()),
   // Values
   auto n_pos = [](Vector3i const &n) { return n + Vector3d::broadcast(.5); };
 
-  auto fold = [](Vector3i n) {
-    for (int i = 0; i < 3; i++) {
-      if (n[i] < 0)
-        n[i] += params.grid_dimensions[i];
-      else if (n[i] >= params.grid_dimensions[i])
-        n[i] -= params.grid_dimensions[i];
-    }
-    return n;
-  };
-
-  auto n_dens = [&fold](Vector3i const &node) {
-    return 1.0 + static_cast<double>(Utils::product(node)) * 1e-6;
+  auto n_dens = [](Vector3i const &node) {
+    return 1.0 + static_cast<double>(Utils::product(fold_node(node))) * 1e-6;
   };
 
   // Assign densities

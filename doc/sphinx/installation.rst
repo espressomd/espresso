@@ -87,9 +87,9 @@ are required:
 
 .. code-block:: bash
 
-    sudo apt install python3-matplotlib python3-pint ipython3 jupyter-notebook
+    sudo apt install python3-matplotlib python3-pint python3-tqdm ipython3 jupyter-notebook
     pip3 install --user 'jupyter_contrib_nbextensions==0.5.1' 'MDAnalysis>=1.0.0' \
-                        'sphinx>=1.6.7,!=2.1.0,!=3.0.0' 'sphinxcontrib-bibtex>=0.3.5'
+                        'sphinx>=2.3.0,!=3.0.0' 'sphinxcontrib-bibtex>=0.3.5'
     jupyter contrib nbextension install --user
     jupyter nbextension enable rubberband/main
     jupyter nbextension enable exercise2/main
@@ -779,6 +779,11 @@ targets are available:
 ``check``
     Runs the testsuite. By default, all available tests will be run on
     1, 2, 3, 4, 6, or 8 processors.
+
+``test``
+    Do not use this target, it is a broken feature
+    (see `issue #4370 <https://github.com/espressomd/espresso/issues/4370>`__).
+    Use ``make check`` instead.
 
 ``clean``
     Deletes all files that were created during the compilation.

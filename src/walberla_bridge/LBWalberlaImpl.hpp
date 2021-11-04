@@ -79,6 +79,7 @@
 #include <utils/interpolation/bspline_3d.hpp>
 #include <utils/math/make_lin_space.hpp>
 
+#include <boost/multi_array.hpp>
 #include <boost/optional.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/variant.hpp>
@@ -108,8 +109,8 @@ protected:
 
 private:
   auto generate_collide_sweep() const {
-    real_t const omega = shear_mode_relaxation_rate();
-    real_t const omega_odd = odd_mode_relaxation_rate(omega);
+    auto const omega = shear_mode_relaxation_rate();
+    auto const omega_odd = odd_mode_relaxation_rate(omega);
     std::shared_ptr<CollisionModel> ptr;
     if (m_kT == 0. and m_lees_edwards_sweep) {
       // a few values are initialized to 0 or false, will be updated later
@@ -156,14 +157,16 @@ private:
 
   } run_collide_sweep;
 
-  double shear_mode_relaxation_rate() const {
-    return 2 / (6 * m_viscosity + 1);
+  real_t shear_mode_relaxation_rate() const {
+    return real_t(2) / (real_t(6) * m_viscosity + real_t(1));
   }
 
-  double odd_mode_relaxation_rate(double shear_relaxation,
-                                  double magic_number = 3. / 16.) const {
-    return (4 - 2 * shear_relaxation) /
-           (4 * magic_number * shear_relaxation + 2 - shear_relaxation);
+  real_t odd_mode_relaxation_rate(real_t shear_relaxation,
+                                  real_t magic_number = real_c(3) /
+                                                        real_t(16)) const {
+    return (real_t(4) - real_t(2) * shear_relaxation) /
+           (real_t(4) * magic_number * shear_relaxation + real_t(2) -
+            shear_relaxation);
   }
 
   void reset_boundary_handling() {
@@ -177,15 +180,6 @@ public:
   using VectorField = GhostLayerField<real_t, 3u>;
   using FlagField = BoundaryHandling::FlagField;
   using PdfField = GhostLayerField<real_t, Stencil::Size>;
-
-  static constexpr real_t w[19] = {
-      1. / 3.,  1. / 18., 1. / 18., 1. / 18., 1. / 18., 1. / 18., 1. / 18.,
-      1. / 36., 1. / 36., 1. / 36., 1. / 36., 1. / 36., 1. / 36., 1. / 36.,
-      1. / 36., 1. / 36., 1. / 36., 1. / 36., 1. / 36.};
-  static constexpr real_t wInv[19] = {3.,  18., 18., 18., 18., 18., 18.,
-                                      36., 36., 36., 36., 36., 36., 36.,
-                                      36., 36., 36., 36., 36.};
-  static constexpr bool compressible = true;
 
 private:
   real_t getDensity(const BlockAndCell &bc) const {
@@ -208,12 +202,10 @@ private:
                                const cell_idx_t x, const cell_idx_t y,
                                const cell_idx_t z,
                                Vector3<real_t> &velocity) const {
-    const real_t rho = lbm::accessor::DensityAndMomentumDensity::get(
+    auto const rho = lbm::accessor::DensityAndMomentumDensity::get(
         velocity, *force_field, *pdf_field, x, y, z);
-    if constexpr (compressible) {
-      const real_t invRho = real_t(1) / rho;
-      velocity *= invRho;
-    }
+    auto const invRho = real_t(1) / rho;
+    velocity *= invRho;
     return rho;
   }
 
@@ -265,9 +257,9 @@ protected:
   // Member variables
   Utils::Vector3i m_grid_dimensions;
   unsigned int m_n_ghost_layers;
-  double m_viscosity;
-  double m_density;
-  double m_kT;
+  real_t m_viscosity;
+  real_t m_density;
+  real_t m_kT;
   unsigned int m_seed;
 
   // Block data access handles
@@ -315,7 +307,8 @@ public:
                  const Utils::Vector3i &node_grid, unsigned int n_ghost_layers,
                  double kT, unsigned int seed)
       : m_grid_dimensions(grid_dimensions), m_n_ghost_layers(n_ghost_layers),
-        m_viscosity(viscosity), m_density(density), m_kT(kT), m_seed(seed) {
+        m_viscosity(real_c(viscosity)), m_density(real_c(density)),
+        m_kT(real_c(kT)), m_seed(seed) {
 
     if (n_ghost_layers == 0)
       throw std::runtime_error("At least one ghost layer must be used");
@@ -356,7 +349,7 @@ public:
     // Init and register pdf field
     auto pdf_setter =
         pystencils::InitialPDFsSetter(m_force_to_be_applied_id, m_pdf_field_id,
-                                      m_velocity_field_id, real_c(m_density));
+                                      m_velocity_field_id, m_density);
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b) {
       pdf_setter(&*b);
     }
@@ -430,28 +423,30 @@ public:
   }
 
   void integrate() override {
-    // Reset force fields
+    // Handle boundaries
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
-      (*m_reset_force)(&*b);
+      (*m_boundary)(&*b);
+
+    // LB stream
+    for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
+      (*m_stream)(&*b);
     // LB collide
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
       boost::apply_visitor(run_collide_sweep, *m_collision_model,
                            boost::variant<IBlock *>(&*b));
+    // rng counter
     if (auto *cm = boost::get<ThermalizedCollisionModel>(&*m_collision_model)) {
       cm->time_step_++;
     }
-    (*m_pdf_streaming_communication)();
-    // Handle boundaries
+
+    // Reset force
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
-      (*m_boundary)(&*b);
-    // Lees-Edwards shift
+      (*m_reset_force)(&*b);
+  // Lees-Edwards shift
     if (m_lees_edwards_sweep) {
       for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
         (*m_lees_edwards_sweep)(&*b);
     }
-    // LB stream
-    for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
-      (*m_stream)(&*b);
     // Refresh ghost layers
     (*m_full_communication)();
 
@@ -729,6 +724,83 @@ public:
   void reallocate_ubb_field() override { m_boundary->ubb_update(); }
 
   void clear_boundaries() override { reset_boundary_handling(); }
+
+  /** @brief Update boundary conditions from a rasterized shape. */
+  void update_boundary_from_shape(
+      std::vector<int> const &raster_flat,
+      std::vector<double> const &slip_velocity_flat) override {
+    // reshape grids
+    auto const &grid_size = m_grid_dimensions;
+    auto const n_grid_points = Utils::product(grid_size);
+    assert(raster_flat.size() == n_grid_points);
+    assert(slip_velocity_flat.size() == 3 * n_grid_points or
+           slip_velocity_flat.size() == 3);
+    std::vector<Utils::Vector3d> slip_velocity_vectors;
+    {
+      auto const vel_begin = std::begin(slip_velocity_flat);
+      auto const vel_end = std::end(slip_velocity_flat);
+      if (slip_velocity_flat.size() == 3) {
+        auto const uniform_slip_velocity = Utils::Vector3d(vel_begin, vel_end);
+        slip_velocity_vectors.assign(n_grid_points, uniform_slip_velocity);
+      } else {
+        slip_velocity_vectors.reserve(n_grid_points);
+        for (auto it = vel_begin; it < vel_end; it += 3) {
+          slip_velocity_vectors.emplace_back(Utils::Vector3d(it, it + 3));
+        }
+      }
+    }
+    boost::const_multi_array_ref<Utils::Vector3d, 3> slip_velocity(
+        slip_velocity_vectors.data(), grid_size);
+    boost::const_multi_array_ref<int, 3> raster(raster_flat.data(), grid_size);
+
+    for (auto block = m_blocks->begin(); block != m_blocks->end(); ++block) {
+      // lattice constant is 1
+      auto const left = block->getAABB().min();
+      auto const off_i = int_c(left[0]);
+      auto const off_j = int_c(left[1]);
+      auto const off_k = int_c(left[2]);
+
+      // Get field data which knows about the indices
+      // In the loop, x,y,z are in block-local coordinates
+      auto const ghosts = static_cast<int>(m_n_ghost_layers);
+      auto pdf_field = block->template getData<PdfField>(m_pdf_field_id);
+      for (int i = -ghosts; i < int_c(pdf_field->xSize() + ghosts); ++i) {
+        for (int j = -ghosts; j < int_c(pdf_field->ySize() + ghosts); ++j) {
+          for (int k = -ghosts; k < int_c(pdf_field->zSize() + ghosts); ++k) {
+            Utils::Vector3i const node{{off_i + i, off_j + j, off_k + k}};
+            auto const idx = (node + grid_size) % grid_size;
+            if (raster(idx)) {
+              auto const bc =
+                  get_block_and_cell(node, true, m_blocks, m_n_ghost_layers);
+              auto const &vel = slip_velocity(idx);
+              m_boundary->set_node_velocity_at_boundary(node, vel, *bc);
+            }
+          }
+        }
+      }
+    }
+    reallocate_ubb_field();
+  }
+
+  /** @brief Update boundary conditions from a list of nodes. */
+  void update_boundary_from_list(std::vector<int> const &nodes_flat,
+                                 std::vector<double> const &vel_flat) override {
+    // reshape grids
+    auto const &grid_size = m_grid_dimensions;
+    auto const n_grid_points = Utils::product(grid_size);
+    assert(nodes_flat.size() == vel_flat.size());
+    assert(nodes_flat.size() % 3u == 0);
+    for (std::size_t i = 0; i < nodes_flat.size(); i += 3) {
+      auto const node = Utils::Vector3i(&nodes_flat[i], &nodes_flat[i + 3]);
+      auto const vel = Utils::Vector3d(&vel_flat[i], &vel_flat[i + 3]);
+      auto const bc =
+          get_block_and_cell(node, true, m_blocks, m_n_ghost_layers);
+      if (bc) {
+        m_boundary->set_node_velocity_at_boundary(node, vel, *bc);
+      }
+    }
+    reallocate_ubb_field();
+  }
 
   // Pressure tensor
   boost::optional<Utils::Vector6d>

@@ -33,7 +33,6 @@
 
 #include <boost/serialization/vector.hpp>
 
-#include <algorithm>
 #include <cmath>
 #include <fstream>
 #include <functional>
@@ -67,31 +66,10 @@ void lb_lbfluid_propagate() {
   }
 }
 
-/**
- * @brief Check the boundary velocities.
- * Sanity check if the velocity defined at LB boundaries is within the Mach
- * number limits of the scheme i.e. u < 0.3.
- */
-void lb_boundary_mach_check() {
-  // Boundary velocities are stored in MD units, therefore we need to scale them
-  // in order to get lattice units.
-  auto const conv_fac = lb_lbfluid_get_tau() / lb_lbfluid_get_agrid();
-  double constexpr mach_limit = 0.3;
-  using LBBoundaries::lbboundaries;
-  if (std::any_of(lbboundaries.begin(), lbboundaries.end(),
-                  [conv_fac, mach_limit](auto const &b) {
-                    return (b->velocity() * conv_fac).norm() >= mach_limit;
-                  })) {
-    runtimeErrorMsg() << "Lattice velocity exceeds the Mach number limit";
-  }
-}
-
 void lb_lbfluid_sanity_checks(double time_step) {
   if (lattice_switch == ActiveLB::NONE)
     return;
 
-  // LB GPU interface functions only work on the head node.
-  lb_boundary_mach_check();
   if (time_step > 0.)
     check_tau_time_step_consistency(lb_lbfluid_get_tau(), time_step);
 
@@ -609,6 +587,31 @@ void lb_lbfluid_clear_boundaries() {
   if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
     ::Communication::mpiCallbacks().call_all(Walberla::clear_boundaries);
+#endif
+  } else {
+    throw NoLBActive();
+  }
+}
+
+void lb_lbfluid_update_boundary_from_shape(
+    std::vector<int> const &raster_flat,
+    std::vector<double> const &slip_velocity_flat) {
+  if (lattice_switch == ActiveLB::WALBERLA) {
+#ifdef LB_WALBERLA
+    ::Communication::mpiCallbacks().call_all(
+        Walberla::update_boundary_from_shape, raster_flat, slip_velocity_flat);
+#endif
+  } else {
+    throw NoLBActive();
+  }
+}
+
+void lb_lbfluid_update_boundary_from_list(std::vector<int> const &nodes_flat,
+                                          std::vector<double> const &vel_flat) {
+  if (lattice_switch == ActiveLB::WALBERLA) {
+#ifdef LB_WALBERLA
+    ::Communication::mpiCallbacks().call_all(
+        Walberla::update_boundary_from_list, nodes_flat, vel_flat);
 #endif
   } else {
     throw NoLBActive();

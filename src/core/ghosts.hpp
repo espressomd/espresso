@@ -81,8 +81,7 @@
  *  The pststore is similar and postpones the write back of received data
  *  until a send operation (with a precreated send buffer) is finished.
  *
- *  The ghost communicators are created by the cell
- *  systems.
+ *  The ghost communicators are created by the cell systems.
  */
 #include "ParticleList.hpp"
 

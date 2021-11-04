@@ -22,8 +22,6 @@
 #define _QUARTIC_HPP
 /** \file
  *  Routines to calculate the quartic potential between particle pairs.
- *
- *  Implementation in \ref quartic.cpp.
  */
 
 #include <utils/Vector.hpp>
@@ -42,8 +40,12 @@ struct QuarticBond {
 
   static constexpr int num = 1;
 
-  QuarticBond() = default;
-  QuarticBond(double k0, double k1, double r, double r_cut);
+  QuarticBond(double k0, double k1, double r, double r_cut) {
+    this->k0 = k0;
+    this->k1 = k1;
+    this->r = r;
+    this->r_cut = r_cut;
+  }
 
   boost::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;
   boost::optional<double> energy(Utils::Vector3d const &dx) const;

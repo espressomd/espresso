@@ -338,9 +338,9 @@ class TestLB:
                     self.system.box_l / 2 - self.params['agrid'] / 2):
             p = self.system.part.add(pos=pos, v=[1, 2, 3])
 
-            v_part = p.v 
+            v_part = p.v
             # In the first time step after a system change, LB coupling forces
-            # are ignored. Hence, the coupling position is shifted 
+            # are ignored. Hence, the coupling position is shifted
             coupling_pos = p.pos + self.system.time_step * p.v
             v_fluid = self.lbf.get_interpolated_velocity(coupling_pos)
             # Nodes to which forces will be interpolated
@@ -388,10 +388,10 @@ class TestLB:
             p1 = self.system.part.add(pos=pos, v=[1, 2, 3])
             p2 = self.system.part.add(pos=pos + offset, v=[-2, 1, 0.3])
 
-            v_part1 = p1.v 
+            v_part1 = p1.v
             v_part2 = p2.v
             # In the first time step after a system change, LB coupling forces
-            # are ignored. Hence, the coupling position is shifted 
+            # are ignored. Hence, the coupling position is shifted
             coupling_pos1 = p1.pos + self.system.time_step * p1.v
             coupling_pos2 = p2.pos + self.system.time_step * p2.v
 

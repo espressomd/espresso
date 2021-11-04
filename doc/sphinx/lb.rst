@@ -177,7 +177,10 @@ Appending three indices to the ``lb`` object returns an object that represents t
     lb[x, y, z].is_boundary          # flag indicating whether the node is fluid or boundary (fluid: boundary=0, boundary: boundary != 1)
     lb[x, y, z].population           # 19 LB populations (a numpy array of 19 floats, check order from the source code)
 
-All of these properties can be read and used in further calculations. Only the property ``population`` can be modified. The indices ``x,y,z`` are integers and enumerate the LB nodes in the three directions, starts with 0. To modify ``is_boundary``, refer to :ref:`Setting up boundary conditions`.
+All of these properties can be read and used in further calculations.
+Only the property ``population`` can be modified. The indices ``x,y,z``
+are integers and enumerate the LB nodes in the three directions, start
+with 0. To modify ``is_boundary``, refer to :ref:`Setting up boundary conditions`.
 
 Example::
 
@@ -289,113 +292,112 @@ For more information on this method and how it works, read the
 publication :cite:`hickey10a`.
 
 
-.. _Using shapes as lattice-Boltzmann boundary:
-
-Using shapes as lattice-Boltzmann boundary
-------------------------------------------
-
-.. note::
-    Feature ``LB_BOUNDARIES`` required
-
-Lattice-Boltzmann boundaries are implemented in the module
-:mod:`espressomd.lbboundaries`. You might want to take a look
-at the classes :class:`espressomd.lbboundaries.LBBoundary`
-and :class:`espressomd.lbboundaries.LBBoundaries` for more information.
-
-Adding a shape-based boundary is straightforward::
-
-    lbb = espressomd.lbboundaries.LBBoundary(shape=my_shape, velocity=[0, 0, 0])
-    system.lbboundaries.add(lbb)
-
-or::
-
-    lbb = espressomd.lbboundaries.LBBoundary()
-    lbb.shape = my_shape
-    lbb.velocity = [0, 0, 0]
-    system.lbboundaries.add(lbb)
-
-.. _Minimal usage example:
-
-Minimal usage example
-~~~~~~~~~~~~~~~~~~~~~
-
-.. note:: Feature ``LB_BOUNDARIES`` required
-
-In order to add a wall as boundary for a lattice-Boltzmann fluid
-you could do the following::
-
-    wall = espressomd.shapes.Wall(dist=5, normal=[1, 0, 0])
-    lbb = espressomd.lbboundaries.LBBoundary(shape=wall, velocity=[0, 0, 0])
-    system.lbboundaries.add(lbb)
-
 .. _Setting up boundary conditions:
 
 Setting up boundary conditions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------
 
-The following example sets up a system consisting of a spherical boundary in the center of the simulation box acting as a no-slip boundary for the LB fluid that is driven by 4 walls with a slip velocity::
+Currently, only the so-called "link-bounce-back" algorithm for boundary
+nodes is available. This creates a boundary that is located
+approximately midway between lattice nodes. With no-slip boundary conditions,
+populations are reflected back. With slip velocities, the reflection is
+followed by a velocity interpolation. This allows to create shear flow and
+boundaries "moving" relative to each other.
 
-    import espressomd
+Under the hood, a boundary field is added to the blockforest, which contains
+pre-calculated information for the reflection and interpolation operations.
+
+.. _Per-node boundary conditions:
+
+Per-node boundary conditions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+One can set (or update) the slip velocity of individual nodes::
+
     import espressomd.lb
     import espressomd.lbboundaries
-    import espressomd.shapes
-
-    system = espressomd.System(box_l=[64, 64, 64])
+    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system.cell_system.skin = 0.1
     system.time_step = 0.01
-    system.cell_system.skin = 0.4
+    lbf = espressomd.lb.LBFluidWalberla(agrid=0.5, dens=1.0, visc=1.0, tau=0.01)
+    system.actors.add(lbf)
+    # make one node a boundary node with a slip velocity
+    lbf[0, 0, 0].boundary = espressomd.lbboundaries.VelocityBounceBack([0, 0, 1])
+    # update node for no-slip boundary conditions
+    lbf[0, 0, 0].boundary = espressomd.lbboundaries.VelocityBounceBack([0, 0, 0])
+    # remove boundary conditions
+    lbf[0, 0, 0].boundary = None
 
-    lb = espressomd.lb.LBFluidWalberla(agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
-    system.actors.add(lb)
+Please note that setting individual boundary nodes in this way can be slow
+in a for loop, because each assigment to ``lbf[i, j, k].boundary`` results
+in a complete reconstruction of the boundary field. For batch processing,
+prefer using :meth:`lbf.add_boundary_from_list()
+<espressomd.lb.LBFluidWalberla.add_boundary_from_list>`.
 
-    v = [0, 0, 0.01]  # the boundary slip
-    walls = [None] * 4
+.. _Batch per-node boundary conditions:
 
-    wall_shape = espressomd.shapes.Wall(normal=[1, 0, 0], dist=1)
-    walls[0] = espressomd.lbboundaries.LBBoundary(shape=wall_shape, velocity=v)
+Batch per-node boundary conditions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    wall_shape = espressomd.shapes.Wall(normal=[-1, 0, 0], dist=-63)
-    walls[1] = espressomd.lbboundaries.LBBoundary(shape=wall_shape, velocity=v)
+Alternatively, one can set up a boundary (or update an existing one) by
+providing a list of nodes and a list of velocities of the same dimensions::
 
-    wall_shape = espressomd.shapes.Wall(normal=[0, 1, 0], dist=1)
-    walls[2] = espressomd.lbboundaries.LBBoundary(shape=wall_shape, velocity=v)
+    import espressomd.lb
+    import espressomd.shapes
+    import espressomd.lbboundaries
+    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system.cell_system.skin = 0.1
+    system.time_step = 0.01
+    lbf = espressomd.lb.LBFluidWalberla(agrid=0.5, dens=1.0, visc=1.0, tau=0.01)
+    system.actors.add(lbf)
+    velocity_magnitude = 0.01
+    # set up a static cylinder
+    cylinder = espressomd.shapes.Cylinder(
+        center=[5., 5., 5.], axis=[0, 0, 1], length=3 * system.box_l[2],
+        radius=8.1 * lbf.agrid, direction=1)
+    lbf.add_boundary(cylinder)
+    # update surface nodes with a tangential slip velocity
+    surface_nodes = espressomd.lbboundaries.edge_detection(
+        lbf.get_shape_bitmask(cylinder), system.periodicity)
+    tangents = espressomd.lbboundaries.calc_cylinder_tangential_vectors(
+        cylinder.center, lbf.agrid, 0.5, surface_nodes)
+    lbf.add_boundary_from_list(surface_nodes, velocity_magnitude * tangents)
+    # remove boundary conditions
+    lbf.clear_boundaries()
 
-    wall_shape = espressomd.shapes.Wall(normal=[0, -1, 0], dist=-63)
-    walls[3] = espressomd.lbboundaries.LBBoundary(shape=wall_shape, velocity=v)
+See the script :file:`samples/lb_circular_couette.py` for how to set up a
+complete LB simulation with slip velocities at the surface of a cylinder.
 
-    for wall in walls:
-        system.lbboundaries.add(wall)
+.. _Shape-based boundary conditions:
 
-    sphere_shape = espressomd.shapes.Sphere(radius=5.5, center=[33, 33, 33], direction=1)
-    sphere = espressomd.lbboundaries.LBBoundary(shape=sphere_shape)
-    system.lbboundaries.add(sphere)
+Shape-based boundary conditions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    system.integrator.run(4000)
+Adding a shape-based boundary is straightforward::
 
-    print(sphere.get_force())
+    import espressomd.lb
+    import espressomd.shapes
+    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system.cell_system.skin = 0.1
+    system.time_step = 0.01
+    lbf = espressomd.lb.LBFluidWalberla(agrid=0.5, dens=1.0, visc=1.0, tau=0.01)
+    system.actors.add(lbf)
+    # set up shear flow between two sliding walls
+    wall1 = espressomd.shapes.Wall(normal=[+1., 0., 0.], dist=2.5)
+    lbf.add_boundary(shape=wall1, velocity=[0., +0.05, 0.])
+    wall2 = espressomd.shapes.Wall(normal=[-1., 0., 0.], dist=-(system.box_l[0] - 2.5))
+    lbf.add_boundary(shape=wall2, velocity=[0., -0.05, 0.])
 
-After integrating the system for a sufficient time to reach the steady state, the hydrodynamic drag force exerted on the sphere is evaluated.
+The ``velocity`` argument is optional, in which case the no-slip boundary
+conditions are used. For a position-dependent slip velocity, the argument
+to ``velocity`` must be a 4D grid (the first three dimensions must match
+the LB grid shape, the fourth dimension has size 3 for the velocity).
 
-The LB boundaries use the same :mod:`~espressomd.shapes` objects to specify their geometry as :mod:`~espressomd.constraints` do for particles. This allows the user to quickly set up a system with boundary conditions that simultaneously act on the fluid and particles. For a complete description of all available shapes, refer to :mod:`espressomd.shapes`.
-
-Intersecting boundaries are in principle possible but must be treated
-with care. In the current implementation, all nodes that are
-within at least one boundary are treated as boundary nodes.
-
-Currently, only the so-called "link-bounce-back" algorithm for wall
-nodes is available. This creates a boundary that is located
-approximately midway between the lattice nodes, so in the above example ``wall[0]``
-corresponds to a boundary at :math:`x=1.5`. Note that the
-location of the boundary is unfortunately not entirely independent of
-the viscosity. This can be seen when using the sample script with a high
-viscosity.
-
-The bounce back boundary conditions permit it to set the velocity at the boundary
-to a nonzero value via the ``v`` property of an ``LBBoundary`` object. This allows to create shear flow and boundaries
-moving relative to each other. The velocity boundary conditions are
-implemented according to :cite:`succi01a` eq. 12.58. Using
-this implementation as a blueprint for the boundary treatment, an
-implementation of the Ladd-Coupling should be relatively
-straightforward. The ``LBBoundary`` object furthermore possesses a property ``force``, which keeps track of the hydrodynamic drag force exerted onto the boundary by the moving fluid.
+The LB boundaries use the same :mod:`~espressomd.shapes` objects to specify
+their geometry as :mod:`~espressomd.constraints` do for particles. This
+allows the user to quickly set up a system with boundary conditions that
+simultaneously act on the fluid and particles. For a complete description
+of all available shapes, refer to :mod:`espressomd.shapes`.
 
 
 .. [1]

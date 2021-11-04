@@ -278,6 +278,29 @@ The correct forces need to be re-calculated after running the integration::
         system.integrator.run(0, recalc_forces=True)  # re-calculate forces from virtual sites
     system.integrator.set_vv()
 
+The algorithm can also be used for energy minimization::
+
+    # minimize until energy difference < 5% or energy < 1e-3
+    system.integrator.set_steepest_descent(f_max=0, gamma=1.0, max_displacement=0.01)
+    relative_energy_change = float('inf')
+    relative_energy_change_threshold = 0.05
+    energy_threshold = 1e-3
+    energy_old = system.analysis.energy()['total']
+    print(f'Energy: {energy_old:.2e}')
+    for i in range(20):
+        system.integrator.run(50)
+        energy = system.analysis.energy()['total']
+        print(f'Energy: {energy:.2e}')
+        relative_energy_change = (energy_old - energy) / energy_old
+        if relative_energy_change < relative_energy_change_threshold or energy < energy_threshold:
+            break
+        energy_old = energy
+    else:
+        print(f'Energy minimization did not converge in {i + 1} cycles')
+    system.integrator.set_vv()
+
+Please note that not all features support energy calculation.
+
 .. _Brownian Dynamics:
 
 Brownian Dynamics

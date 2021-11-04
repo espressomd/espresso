@@ -52,6 +52,15 @@ public:
     calculate_dist(pos, dist, vec);
     return dist <= 0.0;
   }
+  /**
+   * @brief Rasterize a shape on a regular grid.
+   * @param grid_size     Number of grid points in every direction.
+   * @param grid_spacing  %Lattice distance.
+   * @param grid_offset   %Lattice offset.
+   * @return Flattened 3D matrix with 1's inside the shape and 0's outside.
+   */
+  std::vector<int> rasterize(Utils::Vector3i const &grid_size,
+                             double grid_spacing, double grid_offset) const;
   virtual ~Shape() = default;
 };
 

@@ -57,6 +57,14 @@ public:
       return {is_in};
     }
 
+    if (name == "rasterize") {
+      auto const grid_size = get_value<Utils::Vector3i>(params.at("grid_size"));
+      auto const grid_spacing = get_value<double>(params.at("grid_spacing"));
+      auto const grid_offset = get_value<double>(params.at("grid_offset"));
+      auto raster = shape()->rasterize(grid_size, grid_spacing, grid_offset);
+      return {raster};
+    }
+
     return {};
   }
 };

@@ -139,7 +139,7 @@ The Debye-Hückel electrostatic potential is defined by
 .. math:: U^{C-DH} = C \cdot \frac{q_1 q_2 \exp(-\kappa r)}{r}\quad \mathrm{for}\quad r<r_{\mathrm{cut}}
 
 where :math:`C` is defined as in Eqn. :eq:`coulomb_prefactor` and
-:math:`\kappa` is the ionic strength.
+:math:`\kappa` is the inverse Debye screening length.
 The Debye-Hückel potential is an approximate method for calculating
 electrostatic interactions, but technically it is treated as other
 short-ranged non-bonding potentials. For :math:`r > r_{\textrm{cut}}` it is
@@ -164,7 +164,7 @@ is defined as:
 
 .. math:: B = \frac{2(\varepsilon_1 - \varepsilon_2)(1 + \kappa r_{\mathrm{cut}}) - \varepsilon_2 (\kappa r_{\mathrm{cut}})^2}{(\varepsilon_1 + 2\varepsilon_2)(1 + \kappa r_{\mathrm{cut}}) + \varepsilon_2 (\kappa r_{\mathrm{cut}})^2}
 
-with :math:`\kappa` the ionic strength, :math:`\varepsilon_1` the dielectric
+with :math:`\kappa` the inverse Debye screening length, :math:`\varepsilon_1` the dielectric
 constant inside the cavity and :math:`\varepsilon_2` the dielectric constant
 outside the cavity :cite:`tironi95a`.
 

@@ -38,13 +38,13 @@ public:
   void add_particle(const Particle &p) { particles.push_back(p.p.identity); }
   /** @brief Calculate the center of mass of the cluster */
   Utils::Vector3d
-  center_of_mass_subcluster(std::vector<int> &subcl_partcicle_ids);
+  center_of_mass_subcluster(std::vector<int> const &particle_ids);
   Utils::Vector3d center_of_mass();
   /** @brief Longest distance between any combination of two particles */
   double longest_distance();
   /** @brief Calculate radius of gyration of the cluster */
   double radius_of_gyration();
-  double radius_of_gyration_subcluster(std::vector<int> &subcl_particle_ids);
+  double radius_of_gyration_subcluster(std::vector<int> const &particle_ids);
   /** @brief Calculate the fractal dimension
    *  N(r) via r^d, where N(r) counts the number of particles in a sphere
    *  of radius n, and d denotes the fractal dimension.

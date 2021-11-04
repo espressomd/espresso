@@ -17,6 +17,7 @@
 from .script_interface import ScriptObjectRegistry, ScriptInterfaceHelper, script_interface_register
 from .utils import check_type_or_throw_except
 from .__init__ import has_features
+import numpy as np
 
 
 if has_features(["LB_BOUNDARIES"]):
@@ -88,12 +89,96 @@ if has_features(["LB_BOUNDARIES"]):
         _so_name = "LBBoundaries::LBBoundary"
         _so_bind_methods = ("get_force",)
 
-    class VelocityBounceBack:
-        """
-        Holds velocity information for the velocity bounce back boundary condition at a single node.
-        """
 
-        def __init__(self, velocity):
-            check_type_or_throw_except(
-                velocity, 3, float, "VelocityBounceBack velocity must be three floats")
-            self.velocity = velocity
+class VelocityBounceBack:
+    """
+    Holds velocity information for the velocity bounce back boundary condition at a single node.
+    """
+
+    def __init__(self, velocity):
+        check_type_or_throw_except(
+            velocity, 3, float, "VelocityBounceBack velocity must be three floats")
+        self.velocity = velocity
+
+
+def edge_detection(boundary_mask, periodicity):
+    """
+    Find boundary nodes in contact with the fluid. Relies on a convolution
+    kernel constructed from the D3Q19 stencil.
+
+    Parameters
+    ----------
+    boundary_mask : (N, M, L) array_like of :obj:`bool`
+        Bitmask for the rasterized boundary geometry.
+    periodicity : (3,) array_like of :obj:`bool`
+        Bitmask for the box periodicity.
+
+    Returns
+    -------
+    (N, 3) array_like of :obj:`int`
+        The indices of the boundary nodes at the interface with the fluid.
+    """
+    import scipy.signal
+    import itertools
+
+    fluid_mask = np.logical_not(boundary_mask)
+
+    # edge kernel
+    edge = -np.ones((3, 3, 3))
+    for i, j, k in itertools.product((0, 2), (0, 2), (0, 2)):
+        edge[i, j, k] = 0
+    edge[1, 1, 1] = -np.sum(edge)
+
+    # periodic convolution
+    wrapped_mask = np.pad(fluid_mask.astype(int), 3 * [(2, 2)], mode='wrap')
+    if not periodicity[0]:
+        wrapped_mask[:2, :, :] = 0
+        wrapped_mask[-2:, :, :] = 0
+    if not periodicity[1]:
+        wrapped_mask[:, :2, :] = 0
+        wrapped_mask[:, -2:, :] = 0
+    if not periodicity[2]:
+        wrapped_mask[:, :, :2] = 0
+        wrapped_mask[:, :, -2:] = 0
+    convolution = scipy.signal.convolve(
+        wrapped_mask, edge, mode='same', method='direct')[2:-2, 2:-2, 2:-2]
+    convolution = np.multiply(convolution, boundary_mask)
+
+    return np.array(np.nonzero(convolution < 0)).T
+
+
+def calc_cylinder_tangential_vectors(center, agrid, offset, node_indices):
+    """
+    Utility function to calculate a constant slip velocity tangential to the
+    surface of a cylinder.
+
+    Parameters
+    ----------
+    center : (3,) array_like of :obj:`float`
+        Center of the cylinder.
+    agrid : :obj:`float`
+        LB agrid.
+    offset : :obj:`float`
+        LB offset.
+    node_indices : (N, 3) array_like of :obj:`int`
+        Indices of the boundary surface nodes.
+
+    Returns
+    -------
+    (N, 3) array_like of :obj:`float`
+        The unit vectors tangential to the surface of a cylinder.
+    """
+    velocities = []
+    for ijk in node_indices:
+        p = (ijk + offset) * agrid
+        r = center - p
+        norm = np.linalg.norm(r[:2])
+        if norm < 1e-10:
+            velocities.append(np.zeros(3))
+            continue
+        angle_r = np.arccos(np.dot(r[:2] / norm, [1, 0]))
+        angle_v = angle_r - np.pi / 2
+        flip = np.sign(r[1])
+        slip_velocity = np.array([flip * np.cos(angle_v), np.sin(angle_v), 0.])
+        velocities.append(slip_velocity)
+    return np.array(velocities)

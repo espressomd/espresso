@@ -114,6 +114,12 @@ public:
   virtual void reallocate_ubb_field() = 0;
   /** @brief Clear the boundary flag field and the UBB field. */
   virtual void clear_boundaries() = 0;
+  /** @brief Update boundary conditions from a rasterized shape. */
+  virtual void update_boundary_from_shape(std::vector<int> const &,
+                                          std::vector<double> const &) = 0;
+  /** @brief Update boundary conditions from a list of nodes. */
+  virtual void update_boundary_from_list(std::vector<int> const &,
+                                         std::vector<double> const &) = 0;
 
   // Pressure tensor
   virtual boost::optional<Utils::Vector6d>

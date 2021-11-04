@@ -29,6 +29,7 @@ from .utils cimport Vector3i
 from .utils cimport Vector6d
 from .utils cimport make_array_locked
 
+
 cdef class HydrodynamicInteraction(Actor):
     pass
 
@@ -92,6 +93,10 @@ cdef extern from "grid_based_algorithms/lb_interface.hpp":
     bool lb_lbnode_is_boundary(const Vector3i & ind) except +
     void lb_lbnode_remove_from_boundary(const Vector3i & ind) except +
     void lb_lbfluid_clear_boundaries() except +
+    void lb_lbfluid_update_boundary_from_shape(const vector[int] & raster,
+                                               const vector[double] & vel) except +
+    void lb_lbfluid_update_boundary_from_list(const vector[int] & nodes_flat,
+                                              const vector[double] & vel_flat) except +
     stdint.uint64_t lb_lbfluid_get_rng_state() except +
     void lb_lbfluid_set_rng_state(stdint.uint64_t) except +
     void lb_lbfluid_set_kT(double) except +
@@ -199,3 +204,21 @@ cdef inline python_lbnode_get_pressure_tensor(Vector3i node) except +:
     return [[p_tensor[0], p_tensor[1], p_tensor[3]],
             [p_tensor[1], p_tensor[2], p_tensor[4]],
             [p_tensor[3], p_tensor[4], p_tensor[5]]]
+
+cdef inline python_lb_lbfluid_update_boundary_from_shape(int[:] raster_view, double[:] vel_view) except +:
+    cdef vector[int] raster
+    cdef vector[double] vel
+    cdef int * raster_ptr = &raster_view[0]
+    cdef double * vel_ptr = &vel_view[0]
+    raster.assign(raster_ptr, raster_ptr + len(raster_view))
+    vel.assign(vel_ptr, vel_ptr + len(vel_view))
+    lb_lbfluid_update_boundary_from_shape(raster, vel)
+
+cdef inline python_lb_lbfluid_update_boundary_from_list(int[:] nodes_view, double[:] vel_view) except +:
+    cdef vector[int] nodes
+    cdef vector[double] vel
+    cdef int * nodes_ptr = &nodes_view[0]
+    cdef double * vel_ptr = &vel_view[0]
+    nodes.assign(nodes_ptr, nodes_ptr + len(nodes_view))
+    vel.assign(vel_ptr, vel_ptr + len(vel_view))
+    lb_lbfluid_update_boundary_from_list(nodes, vel)
