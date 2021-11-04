@@ -25,12 +25,12 @@
 #include <vector>
 
 /**
- * @brief Particle cache on the master.
+ * @brief Particle cache on the head node.
  *
  * This class implements cached access to all particles in a
- * particle range on the master node.
+ * particle range on the head node.
  * This implementation fetches all particles to
- * the master on first access. Updates of the particle data are
+ * the head node on first access. Updates of the particle data are
  * triggered automatically on access. The data in the cache
  * is invalidated automatically on_particle_change, and then
  * updated on the next access.
@@ -101,7 +101,7 @@ public:
    *
    * This triggers a global update. All nodes
    * sort their particle by id, and send them
-   * to the master.
+   * to the head node.
    */
 private:
   void update();

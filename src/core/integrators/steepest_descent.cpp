@@ -103,15 +103,15 @@ bool steepest_descent_step(const ParticleRange &particles) {
   return sqrt(f_max_global) < params.f_max;
 }
 
-void mpi_bcast_steepest_descent_worker() {
+void mpi_bcast_steepest_descent_local() {
   boost::mpi::broadcast(comm_cart, params, 0);
 }
 
-REGISTER_CALLBACK(mpi_bcast_steepest_descent_worker)
+REGISTER_CALLBACK(mpi_bcast_steepest_descent_local)
 
 /** Broadcast steepest descent parameters */
 void mpi_bcast_steepest_descent() {
-  mpi_call_all(mpi_bcast_steepest_descent_worker);
+  mpi_call_all(mpi_bcast_steepest_descent_local);
 }
 
 void steepest_descent_init(const double f_max, const double gamma,

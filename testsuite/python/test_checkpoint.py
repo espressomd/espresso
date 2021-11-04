@@ -133,27 +133,33 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_allclose(np.copy(p1.f), particle_force0)
         np.testing.assert_allclose(np.copy(p2.f), particle_force1)
 
-    @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
-    def test_object_containers_serialization(self):
+    def test_bonded_interactions_serialization(self):
         '''
         Check that particles at the interface between two MPI nodes still
-        experience the force from a shape-based constraint and a harmonic
-        bond. The thermostat friction is negligible compared to the force
-        factors used for both the harmonic bond and LJ potential.
+        experience the force from a harmonic bond. The thermostat friction
+        is negligible compared to the harmonic bond strength.
         '''
-        # check containers agree on all MPI nodes
         p3, p4 = system.part[3:5]
         np.testing.assert_allclose(np.copy(p3.pos), system.box_l / 2. - 1.)
         np.testing.assert_allclose(np.copy(p4.pos), system.box_l / 2. + 1.)
         np.testing.assert_allclose(np.copy(p3.f), -np.copy(p4.f), rtol=1e-4)
-        # remove a shape-based constraint on all MPI nodes
-        if espressomd.has_features('LENNARD_JONES') and 'LJ' in modes:
-            old_force = np.copy(p3.f)
-            system.constraints.remove(system.constraints[0])
-            system.integrator.run(0, recalc_forces=True)
-            np.testing.assert_allclose(
-                np.copy(p3.f), -np.copy(p4.f), rtol=1e-4)
-            self.assertGreater(np.linalg.norm(np.copy(p3.f) - old_force), 1e6)
+
+    @utx.skipIfMissingFeatures('LENNARD_JONES')
+    @ut.skipIf('LJ' not in modes, "Skipping test due to missing mode.")
+    @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
+    def test_shape_based_constraints_serialization(self):
+        '''
+        Check that particles at the interface between two MPI nodes still
+        experience the force from a shape-based constraint. The thermostat
+        friction is negligible compared to the LJ force.
+        '''
+        p3, p4 = system.part[3:5]
+        old_force = np.copy(p3.f)
+        system.constraints.remove(system.constraints[0])
+        system.integrator.run(0, recalc_forces=True)
+        np.testing.assert_allclose(
+            np.copy(p3.f), -np.copy(p4.f), rtol=1e-4)
+        self.assertGreater(np.linalg.norm(np.copy(p3.f) - old_force), 1e6)
 
     @ut.skipIf('THERM.LB' not in modes, 'LB thermostat not in modes')
     def test_thermostat_LB(self):
@@ -314,6 +320,14 @@ class CheckpointTest(ut.TestCase):
             self.assertEqual(state, reference)
             state = system.part[1].bonds[1][0].params
             self.assertEqual(state, reference)
+        # immersed boundary bonds
+        self.assertEqual(
+            ibm_volcons_bond.params, {'softID': 15, 'kappaV': 0.01})
+        if 'DP3M.CPU' not in modes:
+            self.assertEqual(ibm_tribend_bond.params, {'kb': 2., 'theta0': 0.})
+        self.assertEqual(
+            ibm_triel_bond.params,
+            {'k1': 1.1, 'k2': 1.2, 'maxDist': 1.6, 'elasticLaw': 'NeoHookean'})
 
     @ut.skipIf('THERM.LB' in modes, 'LB thermostat in modes')
     @utx.skipIfMissingFeatures(['ELECTROSTATICS', 'MASS', 'ROTATION'])

@@ -44,7 +44,7 @@ class TestMDAnalysis(ut.TestCase):
         system.part.add(id=i, pos=[i, i % 2, 0], v=[0, i, -i], f=[1, 2 * i, 0],
                         type=i % 2, q=i % 3 - 1)
 
-    bond = espressomd.interactions.HarmonicBond(k=1., r_0=1.5, r_cut=2.5)
+    bond = espressomd.interactions.HarmonicBond(k=1., r_0=1.2, r_cut=2.0)
     angle = espressomd.interactions.AngleCosine(bend=1., phi0=2 * np.pi / 3)
     dihe = espressomd.interactions.Dihedral(bend=1., mult=2, phase=np.pi / 3)
     system.bonded_inter.add(bond)

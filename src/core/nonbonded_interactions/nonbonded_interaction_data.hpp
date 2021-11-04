@@ -287,9 +287,6 @@ extern int max_seen_particle_type;
  *  interactions).
  */
 double maximal_cutoff_nonbonded();
-/** Maximal interaction cutoff (bonded interactions).
- */
-double maximal_cutoff_bonded();
 
 /** Minimal global interaction cutoff. Particles with a distance
  *  smaller than this are guaranteed to be available on the same node
@@ -339,23 +336,10 @@ void make_particle_type_exist(int type);
 
 void make_particle_type_exist_local(int type);
 
-/** This function increases the LOCAL ia_params field to the given size.
- *  Better use \ref make_particle_type_exist since it takes care of
- *  the other nodes.
- */
-void realloc_ia_params(int nsize);
-
-/** Calculate the maximal cutoff of all pair interactions.
- */
-double maximal_cutoff();
-
 /**
  * @brief Reset all interaction parameters to their defaults.
  */
 void reset_ia_params();
-
-/** Check whether all force calculation routines are properly initialized. */
-int interactions_sanity_checks();
 
 /** Check if a non-bonded interaction is defined */
 inline bool checkIfInteraction(IA_parameters const &data) {

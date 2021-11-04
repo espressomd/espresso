@@ -49,9 +49,11 @@
 #include <boost/serialization/variant.hpp>
 #include <boost/variant.hpp>
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <stdexcept>
+#include <unordered_map>
 #include <vector>
 
 /* Special cutoff value for a disabled bond.
@@ -100,15 +102,51 @@ using Bonded_IA_Parameters =
                    RigidBond, IBMTriel, IBMVolCons, IBMTribend,
                    OifGlobalForcesBond, OifLocalForcesBond, VirtualBond>;
 
-/** Field containing the parameters of the bonded ia types */
-extern std::vector<Bonded_IA_Parameters> bonded_ia_params;
+class BondedInteractionsMap {
+  using container_type =
+      std::unordered_map<int, std::shared_ptr<Bonded_IA_Parameters>>;
 
-/** Makes sure that \ref bonded_ia_params is large enough to cover the
- *  parameters for the bonded interaction type.
- *  Attention: 1: There is no initialization done here.
- *  2: Use only in connection with creating new or overwriting old bond types
- */
-void make_bond_type_exist(int type);
+public:
+  using key_type = typename container_type::key_type;
+  using mapped_type = typename container_type::mapped_type;
+  using value_type = typename container_type::value_type;
+  using iterator = typename container_type::iterator;
+  using const_iterator = typename container_type::const_iterator;
+
+  explicit BondedInteractionsMap() = default;
+
+  iterator begin() { return m_params.begin(); }
+  iterator end() { return m_params.end(); }
+  const_iterator begin() const { return m_params.begin(); }
+  const_iterator end() const { return m_params.end(); }
+
+  void insert(key_type const &key, mapped_type const &ptr) {
+    next_key = std::max(next_key, key + 1);
+    m_params[key] = ptr;
+  }
+  key_type insert(mapped_type const &ptr) {
+    auto const key = next_key++;
+    m_params[key] = ptr;
+    return key;
+  }
+  auto erase(key_type const &key) { return m_params.erase(key); }
+  mapped_type at(key_type const &key) const { return m_params.at(key); }
+  auto count(key_type const &key) const { return m_params.count(key); }
+  bool contains(key_type const &key) const { return m_params.count(key); }
+  bool empty() const { return m_params.empty(); }
+  auto size() const { return m_params.size(); }
+  auto get_next_key() const { return next_key; }
+
+private:
+  container_type m_params = {};
+  key_type next_key = static_cast<key_type>(0);
+};
+
+/** Notify the cell system about changes to the maximal interaction range. */
+void mpi_update_cell_system_ia_range_local();
+
+/** Field containing the parameters of the bonded ia types */
+extern BondedInteractionsMap bonded_ia_params;
 
 /** Calculate the maximal cutoff of bonded interactions, required to
  *  determine the cell size for communication.

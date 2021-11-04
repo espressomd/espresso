@@ -58,7 +58,6 @@ struct ThermalizedBond {
 
   static constexpr int num = 1;
 
-  ThermalizedBond() = default;
   ThermalizedBond(double temp_com, double gamma_com, double temp_distance,
                   double gamma_distance, double r_cut);
   boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d>>
@@ -135,5 +134,4 @@ ThermalizedBond::forces(Particle const &p1, Particle const &p2,
   return std::make_tuple(force1, force2);
 }
 
-void mpi_set_n_thermalized_bonds(int n_thermalized_bonds);
 #endif

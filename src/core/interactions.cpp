@@ -23,37 +23,63 @@
 #include "TabulatedPotential.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "bonded_interactions/bonded_tab.hpp"
-#include "event.hpp"
+#include "collision.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
+#include "grid.hpp"
 
 #include "serialization/IA_parameters.hpp"
 
-#include <utils/mpi/cart_comm.hpp>
-
 #include <boost/mpi.hpp>
 
-#include <mpi.h>
+#include <algorithm>
 
-void mpi_bcast_all_ia_params_local() {
-  boost::mpi::broadcast(comm_cart, ia_params, 0);
+static double recalc_long_range_cutoff() {
+  auto max_cut_long_range = INACTIVE_CUTOFF;
+#ifdef ELECTROSTATICS
+  max_cut_long_range =
+      std::max(max_cut_long_range, Coulomb::cutoff(box_geo.length()));
+#endif
+
+#ifdef DIPOLES
+  max_cut_long_range =
+      std::max(max_cut_long_range, Dipole::cutoff(box_geo.length()));
+#endif
+
+  return max_cut_long_range;
 }
 
-REGISTER_CALLBACK(mpi_bcast_all_ia_params_local)
+double maximal_cutoff() {
+  auto max_cut = min_global_cut;
+  auto const max_cut_long_range = recalc_long_range_cutoff();
+  auto const max_cut_bonded = maximal_cutoff_bonded();
+  auto const max_cut_nonbonded = maximal_cutoff_nonbonded();
 
-void mpi_bcast_all_ia_params() { mpi_call_all(mpi_bcast_all_ia_params_local); }
+  max_cut = std::max(max_cut, max_cut_long_range);
+  max_cut = std::max(max_cut, max_cut_bonded);
+  max_cut = std::max(max_cut, max_cut_nonbonded);
+  max_cut = std::max(max_cut, collision_detection_cutoff());
+
+  return max_cut;
+}
+
+bool long_range_interactions_sanity_checks() {
+  /* set to zero if initialization was not successful. */
+  bool failed = false;
+
+#ifdef ELECTROSTATICS
+  failed |= Coulomb::sanity_checks();
+#endif /* ifdef ELECTROSTATICS */
+
+#ifdef DIPOLES
+  failed |= Dipole::sanity_checks();
+#endif /* ifdef DIPOLES */
+
+  return failed;
+}
 
 void mpi_bcast_ia_params_local(int i, int j) {
-  if (j >= 0) {
-    // non-bonded interaction parameters
-    boost::mpi::broadcast(comm_cart, *get_ia_param(i, j), 0);
-  } else {
-    // bonded interaction parameters
-    if (this_node) {
-      // resize array on local nodes
-      make_bond_type_exist(i);
-    }
-    boost::mpi::broadcast(comm_cart, bonded_ia_params[i], 0);
-  }
-
+  boost::mpi::broadcast(comm_cart, *get_ia_param(i, j), 0);
   on_short_range_ia_change();
 }
 
@@ -62,7 +88,3 @@ REGISTER_CALLBACK(mpi_bcast_ia_params_local)
 void mpi_bcast_ia_params(int i, int j) {
   mpi_call_all(mpi_bcast_ia_params_local, i, j);
 }
-
-REGISTER_CALLBACK(realloc_ia_params)
-
-void mpi_realloc_ia_params(int ns) { mpi_call_all(realloc_ia_params, ns); }

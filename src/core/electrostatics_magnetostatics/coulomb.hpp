@@ -62,7 +62,7 @@ extern Coulomb_parameters coulomb;
 namespace Coulomb {
 Utils::Vector9d calc_pressure_long_range(const ParticleRange &particles);
 
-void sanity_checks(int &state);
+bool sanity_checks();
 double cutoff(const Utils::Vector3d &box_l);
 void deactivate();
 

@@ -29,14 +29,14 @@
 
 namespace ReactionMethods {
 
-std::pair<double, double> WidomInsertion::measure_excess_chemical_potential(
+double WidomInsertion::calculate_particle_insertion_potential_energy(
     SingleReaction &current_reaction) {
 
   if (!all_reactant_particles_exist(current_reaction))
     throw std::runtime_error("Trying to remove some non-existing particles "
                              "from the system via the inverse Widom scheme.");
 
-  const double E_pot_old = calculate_current_potential_energy_of_system();
+  auto const E_pot_old = calculate_current_potential_energy_of_system();
 
   // make reaction attempt
   std::vector<int> p_ids_created_particles;
@@ -45,13 +45,13 @@ std::pair<double, double> WidomInsertion::measure_excess_chemical_potential(
 
   // save p_id, charge and type of the reactant particle, only thing we
   // need to hide the particle and recover it
-  const int number_of_saved_properties = 3;
+  auto constexpr number_of_saved_properties = 3;
 
   std::tie(changed_particles_properties, p_ids_created_particles,
            hidden_particles_properties) =
       make_reaction_attempt(current_reaction);
 
-  const double E_pot_new = calculate_current_potential_energy_of_system();
+  auto const E_pot_new = calculate_current_potential_energy_of_system();
   // reverse reaction attempt
   // reverse reaction
   // 1) delete created product particles
@@ -62,15 +62,11 @@ std::pair<double, double> WidomInsertion::measure_excess_chemical_potential(
   restore_properties(hidden_particles_properties, number_of_saved_properties);
   // 3) restore previously changed reactant particles
   restore_properties(changed_particles_properties, number_of_saved_properties);
-  std::vector<double> exponential = {exp(-1.0 / kT * (E_pot_new - E_pot_old))};
-  current_reaction.accumulator_potential_energy_difference_exponential(
-      exponential);
 
-  // calculate mean excess chemical potential and standard error of the mean
-  auto const &accumulator =
-      current_reaction.accumulator_potential_energy_difference_exponential;
-  return {-kT * log(accumulator.mean()[0]),
-          std::abs(-kT / accumulator.mean()[0] * accumulator.std_error()[0])};
+  // calculate the particle insertion potential energy
+  auto const E_pot_insertion = E_pot_new - E_pot_old;
+
+  return E_pot_insertion;
 }
 
 } // namespace ReactionMethods

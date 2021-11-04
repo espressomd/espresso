@@ -56,7 +56,7 @@ void synchronize_npt_state() {
   boost::mpi::broadcast(comm_cart, nptiso.volume, 0);
 }
 
-void mpi_bcast_nptiso_geom_barostat_worker() {
+void mpi_bcast_nptiso_geom_barostat_local() {
   boost::mpi::broadcast(comm_cart, nptiso.geometry, 0);
   boost::mpi::broadcast(comm_cart, nptiso.dimension, 0);
   boost::mpi::broadcast(comm_cart, nptiso.cubic_box, 0);
@@ -66,11 +66,11 @@ void mpi_bcast_nptiso_geom_barostat_worker() {
   on_thermostat_param_change();
 }
 
-REGISTER_CALLBACK(mpi_bcast_nptiso_geom_barostat_worker)
+REGISTER_CALLBACK(mpi_bcast_nptiso_geom_barostat_local)
 
 /** Broadcast nptiso geometry and barostat parameters to all nodes. */
 void mpi_bcast_nptiso_geom_barostat() {
-  mpi_call_all(mpi_bcast_nptiso_geom_barostat_worker);
+  mpi_call_all(mpi_bcast_nptiso_geom_barostat_local);
 }
 
 void integrator_npt_coulomb_dipole_sanity_checks(

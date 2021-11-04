@@ -65,7 +65,6 @@ struct OifLocalForcesBond {
 
   static constexpr int num = 3;
 
-  OifLocalForcesBond() = default;
   OifLocalForcesBond(double r0, double ks, double kslin, double phi0, double kb,
                      double A01, double A02, double kal, double kvisc) {
     this->phi0 = phi0;

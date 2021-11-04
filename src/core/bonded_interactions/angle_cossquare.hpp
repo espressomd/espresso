@@ -46,7 +46,6 @@ struct AngleCossquareBond {
 
   static constexpr int num = 2;
 
-  AngleCossquareBond() = default;
   AngleCossquareBond(double bend, double phi0);
 
   std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
