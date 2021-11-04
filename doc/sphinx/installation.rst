@@ -88,8 +88,8 @@ are required:
 .. code-block:: bash
 
     sudo apt install python3-matplotlib python3-pint python3-tqdm ipython3 jupyter-notebook
-    pip3 install --user 'jupyter_contrib_nbextensions==0.5.1' 'MDAnalysis>=1.0.0' \
-                        'sphinx>=2.3.0,!=3.0.0' 'sphinxcontrib-bibtex>=0.3.5'
+    pip3 install --user 'jupyter_contrib_nbextensions==0.5.1' 'MDAnalysis>=1.0.0,<2.0.0' \
+                        'sphinx>=2.3.0,!=3.0.0' 'sphinxcontrib-bibtex>=0.3.5' 'sphinx-toggleprompt==0.0.5'
     jupyter contrib nbextension install --user
     jupyter nbextension enable rubberband/main
     jupyter nbextension enable exercise2/main
@@ -120,7 +120,6 @@ required to compile |es| on other Linux distributions:
 
 * `Fedora <https://github.com/espressomd/docker/blob/master/docker/Dockerfile-fedora>`_
 * `Debian <https://github.com/espressomd/docker/blob/master/docker/Dockerfile-debian>`_
-* `OpenSUSE <https://github.com/espressomd/docker/blob/master/docker/Dockerfile-opensuse>`_
 
 .. _Installing requirements on Windows via WSL:
 
