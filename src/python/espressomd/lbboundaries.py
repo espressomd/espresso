@@ -80,7 +80,28 @@ if any(has_features(i) for i in ["LB_BOUNDARIES", "LB_BOUNDARIES_GPU"]):
     class LBBoundary(ScriptInterfaceHelper):
 
         """
-        Creates a LB boundary.
+        Creates a LB boundary from a shape.
+
+        The fluid velocity is limited to :math:`v_{\\mathrm{max}} = 0.20`
+        (see *quasi-incompressible limit* in :cite:`kruger17a`,
+        chapter 7, page 272), which corresponds to Mach 0.35.
+
+        The relative error in the fluid density between a compressible fluid
+        and an incompressible fluid at Mach 0.30 is less than 5% (see
+        *constant density assumption* in :cite:`kundu01a` chapter 16, page
+        663). Since the speed of sound is :math:`c_s = 1 / \\sqrt{3}` in LB
+        velocity units in a D3Q19 lattice, the velocity limit at Mach 0.30
+        is :math:`v_{\\mathrm{max}} = 0.30 / \\sqrt{3} \\approx 0.17`.
+        At Mach 0.35 the relative error is around 6% and
+        :math:`v_{\\mathrm{max}} = 0.35 / \\sqrt{3} \\approx 0.20`.
+
+        Parameters
+        ----------
+        shape : :obj:`espressomd.shapes.Shape`
+            The shape from which to build the boundary.
+        velocity : (3,) array_like of :obj:`float`, optional
+            The boundary slip velocity. By default, a velocity of zero is used
+            (no-slip boundary condition).
 
         """
 

@@ -496,6 +496,8 @@ documentation for all available observables in :mod:`espressomd.observables`.
 
    - :class:`~espressomd.observables.CylindricalVelocityProfile`
 
+   - :class:`~espressomd.observables.CylindricalLBVelocityProfile`
+
    - :class:`~espressomd.observables.CylindricalLBFluxDensityProfileAtParticlePositions`
 
    - :class:`~espressomd.observables.CylindricalLBVelocityProfileAtParticlePositions`

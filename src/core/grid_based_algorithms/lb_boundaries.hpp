@@ -25,13 +25,7 @@
  *
  * In the current version only simple bounce back walls are implemented. Thus
  * after the streaming step, in all wall nodes all populations are bounced
- * back from where they came from. Ulf Schiller spent a lot of time
- * working on more powerful alternatives, they are to be found in the
- * lb_testing branch of ESPResSo until the end of 2010. Now we stripped
- * down the code to a minimum, as most of it was not sufficiently
- * understandable.
- *
- * Anyone who wants to revive these, please look into the git.
+ * back from where they came from.
  *
  */
 
@@ -62,6 +56,13 @@ void lb_init_boundaries();
 
 void add(const std::shared_ptr<LBBoundary> &);
 void remove(const std::shared_ptr<LBBoundary> &);
+
+/**
+ * @brief Check the boundary velocities.
+ * Sanity check if the velocity defined at LB boundaries is within the Mach
+ * number limit of the scheme, i.e. u < 0.2.
+ */
+bool sanity_check_mach_limit();
 
 #endif // (LB_BOUNDARIES) || (LB_BOUNDARIES_GPU)
 } // namespace LBBoundaries

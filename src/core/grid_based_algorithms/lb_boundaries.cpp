@@ -21,8 +21,7 @@
 /** \file
  *
  * Boundary conditions for lattice Boltzmann fluid dynamics.
- * Header file for \ref lb_boundaries.hpp.
- *
+ * Source file for \ref lb_boundaries.hpp.
  */
 
 #include "grid_based_algorithms/lb_boundaries.hpp"
@@ -40,6 +39,7 @@
 
 #include <utils/Vector.hpp>
 #include <utils/index.hpp>
+#include <utils/math/int_pow.hpp>
 
 #include <boost/range/adaptor/reversed.hpp>
 #include <boost/range/algorithm.hpp>
@@ -74,6 +74,17 @@ void remove(const std::shared_ptr<LBBoundary> &b) {
                      lbboundaries.end());
 
   on_lbboundary_change();
+}
+
+bool sanity_check_mach_limit() {
+  // Boundary velocities are stored in MD units, therefore we need to scale them
+  // in order to get lattice units.
+  auto const conv_fac = 1. / lb_lbfluid_get_lattice_speed();
+  auto constexpr mach_limit = 0.2;
+  return std::any_of(lbboundaries.begin(), lbboundaries.end(),
+                     [conv_fac, mach_limit](auto const &b) {
+                       return (b->velocity() * conv_fac).norm() >= mach_limit;
+                     });
 }
 
 void ek_init_boundaries() {
@@ -112,6 +123,7 @@ void ek_init_boundaries() {
           << "no charged species available to create wall charge\n";
     }
 
+    auto const node_volume = Utils::int_pow<3>(ek_parameters.agrid);
     for (int z = 0; z < int(lbpar_gpu.dim[2]); z++) {
       for (int y = 0; y < int(lbpar_gpu.dim[1]); y++) {
         for (int x = 0; x < int(lbpar_gpu.dim[0]); x++) {
@@ -129,12 +141,9 @@ void ek_init_boundaries() {
           for (auto lbb : boundaries) {
             if ((*lbb).charge_density() != 0.0f) {
               node_charged = true;
-              node_wallcharge += (*lbb).charge_density() * ek_parameters.agrid *
-                                 ek_parameters.agrid * ek_parameters.agrid;
-              (*lbb).set_net_charge(
-                  (*lbb).net_charge() +
-                  (*lbb).charge_density() * ek_parameters.agrid *
-                      ek_parameters.agrid * ek_parameters.agrid);
+              auto const node_charge = (*lbb).charge_density() * node_volume;
+              node_wallcharge += node_charge;
+              (*lbb).set_net_charge((*lbb).net_charge() + node_charge);
             }
           }
           if (not boundaries.empty()) {
@@ -228,6 +237,7 @@ void lb_init_boundaries() {
 
     auto const node_pos = calc_node_pos(comm_cart);
     auto const offset = Utils::hadamard_product(node_pos, lblattice.grid);
+    auto const vel_conv = 1. / lb_lbfluid_get_lattice_speed();
 
     for (int z = 0; z < lblattice.grid[2] + 2; z++) {
       for (int y = 0; y < lblattice.grid[1] + 2; y++) {
@@ -245,9 +255,7 @@ void lb_init_boundaries() {
                 std::distance(lbboundaries.begin(), boundary.base()) - 1;
             auto &node = lbfields[index];
             node.boundary = static_cast<int>(boundary_number) + 1;
-            node.slip_velocity =
-                (*boundary)->velocity() *
-                (lb_lbfluid_get_tau() / lb_lbfluid_get_agrid());
+            node.slip_velocity = (*boundary)->velocity() * vel_conv;
           } else {
             lbfields[index].boundary = 0;
           }
