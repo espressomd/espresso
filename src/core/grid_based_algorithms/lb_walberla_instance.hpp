@@ -23,7 +23,10 @@
 
 #ifdef LB_WALBERLA
 #include <LBWalberlaBase.hpp>
+#include <LatticeWalberla.hpp>
 #include <lb_walberla_init.hpp>
+
+#include <memory>
 
 struct LBWalberlaParams {
   LBWalberlaParams(double agrid, double tau) : m_agrid(agrid), m_tau(tau) {}
@@ -41,25 +44,20 @@ LBWalberlaBase *lb_walberla();
 /** @brief Access the Walberla parameters */
 LBWalberlaParams *lb_walberla_params();
 
-void init_lb_walberla(double viscosity, double density, double agrid,
-                      double tau, const Utils::Vector3i &grid_dimensions,
-                      const Utils::Vector3i &node_grid, double kT,
-                      unsigned int seed);
-
 /** @brief Create the LBWalberla instance and sets the lattice switch to
  *  WALBERLA
  *
+ *  @param lattice   LB lattice
  *  @param viscosity Fluid viscosity
  *  @param density   Fluid density
  *  @param agrid     Size of one LB cell
  *  @param tau       LB time step
- *  @param box_size  Box dimensions
  *  @param kT        Temperature
  *  @param seed      LB random seed
  */
-void mpi_init_lb_walberla(double viscosity, double density, double agrid,
-                          double tau, Utils::Vector3d box_size, double kT,
-                          unsigned int seed);
+void mpi_init_lb_walberla_local(std::shared_ptr<LatticeWalberla> lattice,
+                                double viscosity, double density, double agrid,
+                                double tau, double kT, unsigned int seed);
 
 /** @brief Destruct the LBWalberla instance and set lattice switch to NONE */
 void mpi_destruct_lb_walberla();

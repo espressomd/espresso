@@ -30,7 +30,6 @@ cdef class Actor:
     active_list = dict(ElectrostaticInteraction=False,
                        MagnetostaticInteraction=False,
                        MagnetostaticExtension=False,
-                       HydrodynamicInteraction=False,
                        Scafacos=False)
 
     # __getstate__ and __setstate__ define the pickle interaction

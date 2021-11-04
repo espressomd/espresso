@@ -24,6 +24,7 @@ import functools
 import numpy as np
 cimport numpy as np
 from libc cimport stdint
+from .script_interface import ScriptInterfaceHelper, script_interface_register
 from .actors cimport Actor
 from .shapes import Shape
 from . import lbboundaries
@@ -176,7 +177,7 @@ def _construct(cls, params):
     return obj
 
 
-cdef class HydrodynamicInteraction(Actor):
+class HydrodynamicInteraction:
     """
     Base class for LB implementations.
 
@@ -207,9 +208,34 @@ cdef class HydrodynamicInteraction(Actor):
         Required for a thermalized fluid. Must be positive.
     """
 
+    def __init__(self, *args, **kwargs):
+        self._isactive = False
+        self._params = self.default_params()
+
+        # Check if all required keys are given
+        for k in self.required_keys():
+            if k not in kwargs:
+                raise ValueError(
+                    "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__() + " got " + kwargs.__str__())
+            self._params[k] = kwargs[k]
+
+        for k in kwargs:
+            if k in self.valid_keys():
+                self._params[k] = kwargs[k]
+            else:
+                raise KeyError(f"{k} is not a valid key")
+
     def _lb_init(self):
         raise Exception(
             "Subclasses of HydrodynamicInteraction must define the _lb_init() method.")
+
+    def __getstate__(self):
+        odict = self._params.copy()
+        return odict
+
+    def __setstate__(self, params):
+        self._params = params
+        self._set_params_in_es_core()
 
     def __reduce__(self):
         return _construct, (self.__class__, self._params), None
@@ -226,6 +252,74 @@ cdef class HydrodynamicInteraction(Actor):
         else:
             raise Exception(
                 "%s is not a valid key. Should be a point on the nodegrid e.g. lbf[0,0,0], or a slice" % key)
+
+    def __str__(self):
+        return f"{self.__class__.__name__}({self.get_params()})"
+
+    def _activate(self):
+        self.validate_params()
+        self._activate_method()
+        utils.handle_errors("Activation of a HydrodynamicInteraction object")
+        self._isactive = True
+
+    def _deactivate(self):
+        self._deactivate_method()
+        utils.handle_errors("Deactivation of a HydrodynamicInteraction object")
+        self._isactive = False
+
+    def _activate_method(self):
+        raise Exception(
+            "Subclasses of HydrodynamicInteraction have to implement _activate_method.")
+
+    def _deactivate_method(self):
+        lb_lbfluid_set_lattice_switch(NONE)
+
+    def is_active(self):
+        return self._isactive
+
+    def is_valid(self):
+        """
+        Check if the data stored in this instance still matches the
+        corresponding data in the core.
+        """
+        temp_params = self._get_params_from_es_core()
+        if self._params != temp_params:
+            return False
+
+        # If we're still here, the instance is valid
+        return True
+
+    def get_params(self):
+        """Get interaction parameters"""
+        # If this instance refers to an actual interaction defined in the es
+        # core, load current parameters from there
+        if self.is_active():
+            update = self._get_params_from_es_core()
+            self._params.update(update)
+        return self._params
+
+    def set_params(self, **p):
+        """Update the given parameters."""
+        # Check if keys are valid
+        for k in p.keys():
+            if k not in self.valid_keys():
+                raise ValueError(
+                    "Only the following keys are supported: " + self.valid_keys().__str__())
+
+        # When an interaction is newly activated, all required keys must be
+        # given
+        if not self.is_active():
+            for k in self.required_keys():
+                if k not in p:
+                    raise ValueError(
+                        "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__())
+
+        self._params.update(p)
+        # validate updated parameters
+        self.validate_params()
+        # Put in values given by the user
+        if self.is_active():
+            self._set_params_in_es_core()
 
     def validate_params(self):
         default_params = self.default_params()
@@ -245,7 +339,7 @@ cdef class HydrodynamicInteraction(Actor):
             raise ValueError("tau has to be a positive double")
 
     def valid_keys(self):
-        return {"agrid", "dens", "ext_force_density", "visc", "tau",
+        return {"agrid", "dens", "ext_force_density", "visc", "tau", "lattice",
                 "bulk_visc", "gamma_odd", "gamma_even", "kT", "seed"}
 
     def required_keys(self):
@@ -259,6 +353,7 @@ cdef class HydrodynamicInteraction(Actor):
                 "bulk_visc": -1.0,
                 "tau": -1.0,
                 "seed": 0,
+                "lattice": None,
                 "kT": 0.}
 
     def mach_limit(self):
@@ -287,7 +382,7 @@ cdef class HydrodynamicInteraction(Actor):
     @classmethod
     def _check_mach_limit(cls, velocities):
         lattice_vel = lb_lbfluid_get_lattice_speed()
-        vel_max = cls.mach_limit()
+        vel_max = cls.mach_limit(cls)
         velocities = np.reshape(velocities, (-1, 3))
         if np.any(np.linalg.norm(velocities, axis=1) > vel_max * lattice_vel):
             speed_of_sound = 1. / np.sqrt(3.)
@@ -367,57 +462,53 @@ cdef class HydrodynamicInteraction(Actor):
         '''
         lb_lbfluid_load_checkpoint(utils.to_char_pointer(path), binary)
 
-    def _activate_method(self):
-        raise Exception(
-            "Subclasses of HydrodynamicInteraction have to implement _activate_method.")
+    @property
+    def shape(self):
+        cdef Vector3i shape = lb_lbfluid_get_shape()
+        return (shape[0], shape[1], shape[2])
 
-    def _deactivate_method(self):
-        lb_lbfluid_set_lattice_switch(NONE)
+    @property
+    def kT(self):
+        return lb_lbfluid_get_kT()
 
-    property shape:
-        def __get__(self):
-            cdef Vector3i shape = lb_lbfluid_get_shape()
-            return (shape[0], shape[1], shape[2])
+    @property
+    def seed(self):
+        return lb_lbfluid_get_rng_state()
 
-    property kT:
-        def __get__(self):
-            return lb_lbfluid_get_kT()
+    @seed.setter
+    def seed(self, new_seed):
+        cdef stdint.uint64_t _seed = new_seed
+        lb_lbfluid_set_rng_state(_seed)
 
-    property seed:
-        def __get__(self):
-            return lb_lbfluid_get_rng_state()
+    @property
+    def pressure_tensor(self):
+        tensor = python_lbfluid_get_pressure_tensor(self.agrid, self.tau)
+        return utils.array_locked(tensor)
 
-        def __set__(self, seed):
-            cdef stdint.uint64_t _seed = seed
-            lb_lbfluid_set_rng_state(seed)
+    @pressure_tensor.setter
+    def pressure_tensor(self, value):
+        raise NotImplementedError
 
-    property pressure_tensor:
-        def __get__(self):
-            tensor = python_lbfluid_get_pressure_tensor(self.agrid, self.tau)
-            return utils.array_locked(tensor)
+    @property
+    def ext_force_density(self):
+        return python_lbfluid_get_ext_force_density(self.agrid, self.tau)
 
-        def __set__(self, value):
-            raise NotImplementedError
+    @ext_force_density.setter
+    def ext_force_density(self, ext_force_density):
+        python_lbfluid_set_ext_force_density(
+            make_Vector3d(ext_force_density), self.agrid, self.tau)
 
-    property ext_force_density:
-        def __get__(self):
-            return python_lbfluid_get_ext_force_density(self.agrid, self.tau)
+    @property
+    def viscosity(self):
+        return python_lbfluid_get_viscosity(self.agrid, self.tau)
 
-        def __set__(self, ext_force_density):
-            python_lbfluid_set_ext_force_density(
-                make_Vector3d(ext_force_density), self.agrid, self.tau)
+    @property
+    def tau(self):
+        return lb_lbfluid_get_tau()
 
-    property viscosity:
-        def __get__(self):
-            return python_lbfluid_get_viscosity(self.agrid, self.tau)
-
-    property tau:
-        def __get__(self):
-            return lb_lbfluid_get_tau()
-
-    property agrid:
-        def __get__(self):
-            return lb_lbfluid_get_agrid()
+    @property
+    def agrid(self):
+        return lb_lbfluid_get_agrid()
 
     def nodes(self):
         """Provides a generator for iterating over all lb nodes"""
@@ -429,24 +520,72 @@ cdef class HydrodynamicInteraction(Actor):
 
 
 IF LB_WALBERLA:
-    cdef class LBFluidWalberla(HydrodynamicInteraction):
+    @script_interface_register
+    class LatticeWalberla(ScriptInterfaceHelper):
+        """Interface to the Walberla lattice
+
+        """
+        _so_name = "walberla::LatticeWalberla"
+        _so_creation_policy = "GLOBAL"
+
+        def __init__(self, *args, **kwargs):
+            if 'sip' not in kwargs:
+                if not self.required_keys().issubset(kwargs):
+                    raise ValueError(
+                        f"At least the following keys have to be given as keyword arguments: {self.required_keys()}")
+                params = self.default_params()
+                params.update(kwargs)
+                self.validate_params(params)
+                super().__init__(*args, **params)
+                utils.handle_errors("LatticeWalberla initialization failed")
+                self._params = {k: getattr(self, k) for k in self.valid_keys()}
+            else:
+                super().__init__(**kwargs)
+
+        def validate_params(self, params):
+            utils.check_type_or_throw_except(
+                params['agrid'], 1, float, 'agrid must be a real number')
+            utils.check_type_or_throw_except(
+                params['n_ghost_layers'], 1, int, 'n_ghost_layers must be an integer')
+            if params['agrid'] <= 0.:
+                raise ValueError('agrid has to be a positive double')
+            if params['n_ghost_layers'] < 0:
+                raise ValueError('n_ghost_layers has to be a positive integer')
+
+        def valid_keys(self):
+            return {"agrid", "n_ghost_layers"}
+
+        def required_keys(self):
+            return self.valid_keys()
+
+        def default_params(self):
+            return {}
+
+    @script_interface_register
+    class LBFluidWalberla(HydrodynamicInteraction, ScriptInterfaceHelper):
         """
         Initialize the lattice-Boltzmann method for hydrodynamic flow using waLBerla.
         See :class:`HydrodynamicInteraction` for the list of parameters.
         """
+        _so_name = "walberla::FluidWalberla"
+        _so_creation_policy = "GLOBAL"
+
+        def __init__(self, *args, **kwargs):
+            ScriptInterfaceHelper.__init__(self)
+            HydrodynamicInteraction.__init__(self, *args, **kwargs)
+
+        def __getattr__(self, name):
+            if hasattr(HydrodynamicInteraction, name):
+                return HydrodynamicInteraction.__getattr__(self, name)
+            return ScriptInterfaceHelper.__getattr__(self, name)
+
+        def __setattr__(self, name, value):
+            if hasattr(HydrodynamicInteraction, name):
+                return HydrodynamicInteraction.__setattr__(self, name, value)
+            return ScriptInterfaceHelper.__setattr__(self, name, value)
 
         def _set_params_in_es_core(self):
             pass
-
-        def default_params(self):
-            return {"agrid": -1.0,
-                    "dens": -1.0,
-                    "ext_force_density": [0.0, 0.0, 0.0],
-                    "visc": -1.0,
-                    "bulk_visc": -1.0,
-                    "tau": -1.0,
-                    "kT": 0.0,
-                    "seed": 0}
 
         def _set_lattice_switch(self):
             raise Exception("This may not be called")
@@ -455,21 +594,27 @@ IF LB_WALBERLA:
             self.validate_params()
 
             # unit conversion
-            lb_visc = self._params["visc"] * \
-                self._params['tau'] / self._params['agrid']**2
-            lb_dens = self._params['dens'] * self._params['agrid']**3
-            lb_kT = self._params['kT'] * \
-                self._params['tau']**2 / self._params['agrid']**2
-            mpi_init_lb_walberla(
-                lb_visc, lb_dens, self._params["agrid"], self._params["tau"],
-                box_geo.length(),
-                lb_kT, self._params['seed'])
+            agrid = self._params['agrid']
+            tau = self._params['tau']
+            lb_visc = self._params['visc'] * tau / agrid**2
+            lb_dens = self._params['dens'] * agrid**3
+            lb_kT = self._params['kT'] * tau**2 / agrid**2
+
+            if self._params['lattice'] is None:
+                self._params['lattice'] = LatticeWalberla(
+                    agrid=agrid, n_ghost_layers=1)
+
+            # call constructor
+            self.call_method('init_lb_walberla', lattice=self._params['lattice'],
+                             visc=lb_visc, dens=lb_dens, agrid=agrid,
+                             tau=tau, kT=lb_kT, seed=self._params['seed'])
             utils.handle_errors("LB fluid activation")
+            lb_lbfluid_set_lattice_switch(WALBERLA)
             self.ext_force_density = self._params["ext_force_density"]
 
         def _deactivate_method(self):
             mpi_destruct_lb_walberla()
-            super()._deactivate_method()
+            lb_lbfluid_set_lattice_switch(NONE)
 
         def clear_boundaries(self):
             """
@@ -634,7 +779,7 @@ IF LB_WALBERLA:
             return obj
 
     IF CUDA:
-        cdef class LBFluidWalberlaGPU(HydrodynamicInteraction):
+        class LBFluidWalberlaGPU(HydrodynamicInteraction):
             """
             Initialize the lattice-Boltzmann method for hydrodynamic flow using
             waLBerla for the GPU. See :class:`HydrodynamicInteraction` for the

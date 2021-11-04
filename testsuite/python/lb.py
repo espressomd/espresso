@@ -548,11 +548,11 @@ class TestLB:
         f1 = np.copy(p.f)
         self.system.actors.clear()
         # get fresh LBfluid and change time steps
-        with self.assertRaises(ValueError):
+        with self.assertRaises(Exception):
             self.system.actors.add(
                 self.lb_class(**params_with_tau(0.5 * self.system.time_step)))
         self.system.actors.clear()
-        with self.assertRaises(ValueError):
+        with self.assertRaises(Exception):
             self.system.actors.add(
                 self.lb_class(**params_with_tau(1.1 * self.system.time_step)))
         self.system.actors.clear()

@@ -67,7 +67,7 @@ void lb_lbfluid_set_lattice_switch(ActiveLB local_lattice_switch);
 /**
  * @brief Check if tau is an integer multiple of time_step, throws if not
  */
-void check_tau_time_step_consistency(double tau, double time_s);
+void check_tau_time_step_consistency(double tau, double time_step);
 
 /**
  * @brief Set the external force density acting on the LB fluid.

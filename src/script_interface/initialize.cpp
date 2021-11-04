@@ -57,9 +57,9 @@ void initialize(Utils::Factory<ObjectHandle> *f) {
   VirtualSites::initialize(f);
   MPIIO::initialize(f);
   CollisionDetection::initialize(f);
-  #ifdef LB_WALBERLA
-    walberla::initialize(f);
-  #endif
+#ifdef LB_WALBERLA
+  walberla::initialize(f);
+#endif
 
   f->register_new<ComFixed>("ComFixed");
   f->register_new<CylindricalTransformationParameters>(

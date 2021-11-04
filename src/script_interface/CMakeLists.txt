@@ -15,9 +15,9 @@ add_subdirectory(pair_criteria)
 add_subdirectory(mpiio)
 add_subdirectory(shapes)
 add_subdirectory(h5md)
-if (WALBERLA)
-    add_subdirectory(walberla)
-endif (WALBERLA)
+if(WALBERLA)
+  add_subdirectory(walberla)
+endif(WALBERLA)
 
 install(TARGETS ScriptInterface
         LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)

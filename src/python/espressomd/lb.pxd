@@ -30,9 +30,6 @@ from .utils cimport Vector6d
 from .utils cimport make_array_locked
 
 
-cdef class HydrodynamicInteraction(Actor):
-    pass
-
 cdef class LBFluidRoutines:
     cdef Vector3i node
 
@@ -48,7 +45,7 @@ IF LB_WALBERLA:
         cdef enum OutputVTK:
             pass
 
-    cdef extern from "grid_based_algorithms/lb_interface.hpp" namespace 'OutputVTK':
+    cdef extern from "walberla_bridge/LBWalberlaBase.hpp" namespace 'OutputVTK':
 
         cdef OutputVTK output_vtk_density 'OutputVTK::density'
         cdef OutputVTK output_vtk_velocity_vector 'OutputVTK::velocity_vector'
@@ -116,7 +113,6 @@ cdef extern from "grid_based_algorithms/lb_particle_coupling.hpp":
 
 IF LB_WALBERLA:
     cdef extern from "grid_based_algorithms/lb_walberla_instance.hpp":
-        void mpi_init_lb_walberla(double viscosity, double density, double agrid, double tau, Vector3d box_size, double kT, unsigned int seed) except +
         void mpi_destruct_lb_walberla() except +
 
 

@@ -24,7 +24,8 @@ if(WALBERLA_USE_AVX)
   list(APPEND WalberlaBridgeCodegen_SRC generated_kernels/CollideSweepAVX.cpp
        generated_kernels/CollideSweepThermalizedAVX.cpp)
 endif()
-set(WalberlaBridge_SRC ${WalberlaBridgeCodegen_SRC} lb_walberla_init.cpp)
+set(WalberlaBridge_SRC ${WalberlaBridgeCodegen_SRC} lb_walberla_init.cpp
+                       LatticeWalberla.cpp)
 add_library(WalberlaBridge SHARED ${WalberlaBridge_SRC})
 target_link_libraries(WalberlaBridge PUBLIC MPI::MPI_CXX EspressoUtils
                       PRIVATE Boost::boost cxx_interface ${WALBERLA_LIBS})
