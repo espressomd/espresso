@@ -186,17 +186,6 @@ double lb_lbfluid_get_tau() {
   throw NoLBActive();
 }
 
-void lb_lbfluid_set_lattice_switch(ActiveLB local_lattice_switch) {
-  switch (local_lattice_switch) {
-  case ActiveLB::NONE:
-  case ActiveLB::WALBERLA:
-    break;
-  default:
-    throw std::invalid_argument("Invalid lattice switch.");
-  }
-  mpi_set_lattice_switch(local_lattice_switch);
-}
-
 double lb_lbfluid_get_kT() {
   if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA

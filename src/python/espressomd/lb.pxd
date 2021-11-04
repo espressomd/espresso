@@ -51,14 +51,8 @@ IF LB_WALBERLA:
         cdef OutputVTK output_vtk_velocity_vector 'OutputVTK::velocity_vector'
         cdef OutputVTK output_vtk_pressure_tensor 'OutputVTK::pressure_tensor'
 
-cdef extern from "grid_based_algorithms/lb_interface.hpp" namespace "ActiveLB":
-    cdef ActiveLB NONE
-    cdef ActiveLB WALBERLA
-
 cdef extern from "grid_based_algorithms/lb_interface.hpp":
 
-    cdef enum ActiveLB:
-        pass
     void lb_lbfluid_set_tau(double c_tau) except +
     double lb_lbfluid_get_tau() except +
     double lb_lbfluid_get_viscosity() except +
@@ -68,7 +62,6 @@ cdef extern from "grid_based_algorithms/lb_interface.hpp":
     double lb_lbfluid_get_bulk_viscosity() except +
     void lb_lbfluid_save_checkpoint(string filename, bool binary) except +
     void lb_lbfluid_load_checkpoint(string filename, bool binary) except +
-    void lb_lbfluid_set_lattice_switch(ActiveLB local_lattice_switch) except +
     void lb_lbfluid_create_vtk(unsigned delta_N, unsigned initial_count, unsigned flag_observables, const string identifier, const string base_folder, const string execution_folder) except +
     void lb_lbfluid_switch_vtk(const string vtk_uid, int status) except +
     void lb_lbfluid_write_vtk(const string vtk_uid) except +
@@ -110,10 +103,6 @@ cdef extern from "grid_based_algorithms/lb_particle_coupling.hpp":
     double lb_lbcoupling_get_gamma() except +
     bool lb_lbcoupling_is_seed_required() except +
     void mpi_bcast_lb_particle_coupling()
-
-IF LB_WALBERLA:
-    cdef extern from "grid_based_algorithms/lb_walberla_instance.hpp":
-        void mpi_destruct_lb_walberla() except +
 
 
 ##############################################

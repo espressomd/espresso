@@ -33,6 +33,9 @@
 namespace ScriptInterface::walberla {
 
 class FluidWalberla : public AutoParameters<FluidWalberla> {
+  std::shared_ptr<LBWalberlaBase> m_lb_fluid;
+  std::shared_ptr<LBWalberlaParams> m_lb_params;
+
 public:
   Variant do_call_method(std::string const &name,
                          VariantMap const &params) override {
@@ -46,9 +49,18 @@ public:
       auto const lattice =
           get_value<std::shared_ptr<LatticeWalberla>>(params, "lattice")
               ->lattice();
-      mpi_init_lb_walberla_local(lattice, lb_visc, lb_dens, agrid, tau, lb_kT,
-                                 lb_seed);
+      m_lb_fluid = mpi_init_lb_walberla_local(lattice, lb_visc, lb_dens, agrid,
+                                              tau, lb_kT, lb_seed);
+      if (m_lb_fluid) {
+        m_lb_params = std::make_shared<LBWalberlaParams>(agrid, tau);
+      }
       return {};
+    }
+    if (name == "activate_lb_walberla") {
+      mpi_activate_lb_walberla_local(m_lb_fluid, m_lb_params);
+    }
+    if (name == "deactivate_lb_walberla") {
+      mpi_deactivate_lb_walberla_local();
     }
 
     return {};

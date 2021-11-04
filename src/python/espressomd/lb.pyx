@@ -272,7 +272,7 @@ class HydrodynamicInteraction:
             "Subclasses of HydrodynamicInteraction have to implement _activate_method.")
 
     def _deactivate_method(self):
-        lb_lbfluid_set_lattice_switch(NONE)
+        pass
 
     def is_active(self):
         return self._isactive
@@ -608,13 +608,12 @@ IF LB_WALBERLA:
             self.call_method('init_lb_walberla', lattice=self._params['lattice'],
                              visc=lb_visc, dens=lb_dens, agrid=agrid,
                              tau=tau, kT=lb_kT, seed=self._params['seed'])
-            utils.handle_errors("LB fluid activation")
-            lb_lbfluid_set_lattice_switch(WALBERLA)
+            utils.handle_errors('LB fluid initialization')
+            self.call_method('activate_lb_walberla')
             self.ext_force_density = self._params["ext_force_density"]
 
         def _deactivate_method(self):
-            mpi_destruct_lb_walberla()
-            lb_lbfluid_set_lattice_switch(NONE)
+            self.call_method('deactivate_lb_walberla')
 
         def clear_boundaries(self):
             """

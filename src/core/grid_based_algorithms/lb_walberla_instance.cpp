@@ -35,16 +35,17 @@
 
 #include <boost/mpi/collectives/all_reduce.hpp>
 
+#include <cassert>
 #include <functional>
 #include <memory>
 #include <stdexcept>
 
 namespace {
-LBWalberlaBase *lb_walberla_instance = nullptr;
-LBWalberlaParams *lb_walberla_params_instance = nullptr;
+std::shared_ptr<LBWalberlaBase> lb_walberla_instance = nullptr;
+std::shared_ptr<LBWalberlaParams> lb_walberla_params_instance = nullptr;
 } // namespace
 
-LBWalberlaBase *lb_walberla() {
+std::shared_ptr<LBWalberlaBase> lb_walberla() {
   if (!lb_walberla_instance) {
     throw std::runtime_error(
         "Attempted access to uninitialized LBWalberla instance.");
@@ -52,7 +53,7 @@ LBWalberlaBase *lb_walberla() {
   return lb_walberla_instance;
 }
 
-LBWalberlaParams *lb_walberla_params() {
+std::shared_ptr<LBWalberlaParams> lb_walberla_params() {
   if (!lb_walberla_params_instance) {
     throw std::runtime_error(
         "Attempted access to uninitialized LBWalberlaParams instance.");
@@ -60,41 +61,59 @@ LBWalberlaParams *lb_walberla_params() {
   return lb_walberla_params_instance;
 }
 
-void destruct_lb_walberla() {
-  delete lb_walberla_instance;
-  delete lb_walberla_params_instance;
-  lb_walberla_instance = nullptr;
-  lb_walberla_params_instance = nullptr;
+void mpi_activate_lb_walberla_local(
+    std::shared_ptr<LBWalberlaBase> lb_fluid,
+    std::shared_ptr<LBWalberlaParams> lb_params) {
+  assert(::lattice_switch == ActiveLB::NONE);
+  ::lb_walberla_instance = lb_fluid;
+  ::lb_walberla_params_instance = lb_params;
+  ::lattice_switch = ActiveLB::WALBERLA;
 }
-REGISTER_CALLBACK(destruct_lb_walberla)
 
-void mpi_init_lb_walberla_local(std::shared_ptr<LatticeWalberla> lattice,
-                                double viscosity, double density, double agrid,
-                                double tau, double kT, unsigned int seed) {
+void mpi_deactivate_lb_walberla_local() {
+  ::lb_walberla_instance = nullptr;
+  ::lb_walberla_params_instance = nullptr;
+  ::lattice_switch = ActiveLB::NONE;
+}
+
+static void lb_sanity_checks(LBWalberlaBase const &lb_fluid, double agrid) {
+  // sanity check: waLBerla and ESPResSo must agree on domain decomposition
+  auto [lb_my_left, lb_my_right] = lb_fluid.get_local_domain();
+  lb_my_left *= agrid;
+  lb_my_right *= agrid;
+  auto const my_left = local_geo.my_left();
+  auto const my_right = local_geo.my_right();
+  auto const tol = agrid / 1E6;
+  if ((lb_my_left - my_left).norm2() > tol or
+      (lb_my_right - my_right).norm2() > tol) {
+    runtimeErrorMsg() << this_node << ": left ESPResSo: [" << my_left << "], "
+                      << "left waLBerla: [" << lb_my_left << "]\n";
+    runtimeErrorMsg() << this_node << ": right ESPResSo: [" << my_right << "], "
+                      << "right waLBerla: [" << lb_my_right << "]\n";
+    throw std::runtime_error(
+        "waLBerla and ESPResSo disagree about domain decomposition.");
+  }
+}
+
+std::shared_ptr<LBWalberlaBase>
+mpi_init_lb_walberla_local(std::shared_ptr<LatticeWalberla> lattice,
+                           double viscosity, double density, double agrid,
+                           double tau, double kT, unsigned int seed) {
   bool flag_failure = false;
-  // Exceptions need to be converted to runtime errors so they can be
-  // handled from Python in a parallel simulation
+  std::shared_ptr<LBWalberlaBase> lb_ptr;
   try {
-    check_tau_time_step_consistency(tau, get_time_step());
-    lb_walberla_instance =
-        new_lb_walberla(lattice, viscosity, density, kT, seed);
-    lb_walberla_params_instance = new LBWalberlaParams{agrid, tau};
-    // TODO WALBERLA remove lattice_switch (modify lb_lbfluid_sanity_checks)
-    ::lattice_switch = ActiveLB::WALBERLA;
-    lb_lbfluid_sanity_checks(get_time_step());
+    auto const md_time_step = get_time_step();
+    if (md_time_step > 0.)
+      check_tau_time_step_consistency(tau, md_time_step);
+    lb_ptr = new_lb_walberla(lattice, viscosity, density, kT, seed);
+    lb_sanity_checks(*lb_ptr, agrid);
   } catch (const std::exception &e) {
-    runtimeErrorMsg() << "Error during Walberla initialization: " << e.what();
+    runtimeErrorMsg() << "during waLBerla initialization: " << e.what();
     flag_failure = true;
   }
-  boost::mpi::all_reduce(comm_cart, flag_failure, std::logical_or<>());
-  if (flag_failure) {
-    destruct_lb_walberla();
-    // TODO WALBERLA remove lattice_switch
-    ::lattice_switch = ActiveLB::NONE;
+  if (boost::mpi::all_reduce(comm_cart, flag_failure, std::logical_or<>())) {
+    return nullptr;
   }
-}
-
-void mpi_destruct_lb_walberla() {
-  Communication::mpiCallbacks().call_all(destruct_lb_walberla);
+  return lb_ptr;
 }
 #endif

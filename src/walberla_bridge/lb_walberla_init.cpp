@@ -38,11 +38,11 @@ void walberla_mpi_init() {
       walberla::mpi::Environment(argc, argv);
 }
 
-LBWalberlaBase *new_lb_walberla(std::shared_ptr<LatticeWalberla> lattice,
-                                double viscosity, double density, double kT,
-                                unsigned int seed) {
-
-  return new walberla::LBWalberlaImpl(lattice, viscosity, density, kT, seed);
+std::shared_ptr<LBWalberlaBase>
+new_lb_walberla(std::shared_ptr<LatticeWalberla> lattice, double viscosity,
+                double density, double kT, unsigned int seed) {
+  return std::make_shared<walberla::LBWalberlaImpl>(lattice, viscosity, density,
+                                                    kT, seed);
 }
 
 Utils::Vector3i calc_grid_dimensions(Utils::Vector3d const &box_size,

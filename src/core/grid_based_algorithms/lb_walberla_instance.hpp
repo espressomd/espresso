@@ -39,13 +39,12 @@ private:
 };
 
 /** @brief Access the per-MPI-node LBWalberla instance */
-LBWalberlaBase *lb_walberla();
+std::shared_ptr<LBWalberlaBase> lb_walberla();
 
 /** @brief Access the Walberla parameters */
-LBWalberlaParams *lb_walberla_params();
+std::shared_ptr<LBWalberlaParams> lb_walberla_params();
 
-/** @brief Create the LBWalberla instance and sets the lattice switch to
- *  WALBERLA
+/** @brief Create the LBWalberla instance.
  *
  *  @param lattice   LB lattice
  *  @param viscosity Fluid viscosity
@@ -55,12 +54,18 @@ LBWalberlaParams *lb_walberla_params();
  *  @param kT        Temperature
  *  @param seed      LB random seed
  */
-void mpi_init_lb_walberla_local(std::shared_ptr<LatticeWalberla> lattice,
-                                double viscosity, double density, double agrid,
-                                double tau, double kT, unsigned int seed);
+std::shared_ptr<LBWalberlaBase>
+mpi_init_lb_walberla_local(std::shared_ptr<LatticeWalberla> lattice,
+                           double viscosity, double density, double agrid,
+                           double tau, double kT, unsigned int seed);
 
-/** @brief Destruct the LBWalberla instance and set lattice switch to NONE */
-void mpi_destruct_lb_walberla();
+/** @brief Register a waLBerla LB instance and update @ref lattice switch. */
+void mpi_activate_lb_walberla_local(
+    std::shared_ptr<LBWalberlaBase> lb_fluid,
+    std::shared_ptr<LBWalberlaParams> lb_params);
+
+/** @brief De-register a waLBerla LB instance and update @ref lattice switch. */
+void mpi_deactivate_lb_walberla_local();
 
 #endif // LB_WALBERLA
 

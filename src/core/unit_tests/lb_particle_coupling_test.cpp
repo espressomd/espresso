@@ -107,11 +107,15 @@ LBTestParameters params{23u,
                         Utils::Vector3i::broadcast(8)};
 
 void mpi_setup_lb_local(double kT) {
+  mpi_deactivate_lb_walberla_local();
   params.kT = kT;
-  auto lattice = std::make_shared<::LatticeWalberla>(params.grid_dimensions,
-                                                     node_grid, 1u);
-  mpi_init_lb_walberla_local(lattice, params.viscosity, params.density,
-                             params.agrid, params.tau, params.kT, params.seed);
+  auto lb_params = std::make_shared<LBWalberlaParams>(params.agrid, params.tau);
+  auto lb_lattice = std::make_shared<::LatticeWalberla>(params.grid_dimensions,
+                                                        node_grid, 1u);
+  auto lb_fluid = mpi_init_lb_walberla_local(
+      lb_lattice, params.viscosity, params.density, params.agrid, params.tau,
+      params.kT, params.seed);
+  mpi_activate_lb_walberla_local(lb_fluid, lb_params);
 }
 
 REGISTER_CALLBACK(mpi_setup_lb_local)
