@@ -95,10 +95,12 @@ cdef class PScriptInterface:
                     self._sanitize_params(kwargs)))
 
     def __richcmp__(a, b, op):
+        t = isinstance(a, PScriptInterface) and isinstance(b, PScriptInterface)
+        are_equal = t and (a.get_sip() == b.get_sip())
         if op == cpython.object.Py_EQ:
-            return a.get_sip() == b.get_sip()
+            return are_equal
         elif op == cpython.object.Py_NE:
-            return a.get_sip() != b.get_sip()
+            return not are_equal
         else:
             raise NotImplementedError
 
