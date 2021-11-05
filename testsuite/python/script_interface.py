@@ -62,15 +62,15 @@ class ScriptInterface(ut.TestCase):
         with self.assertRaisesRegex(TypeError, "No conversion from type module to Variant"):
             constraint.call_method('unknown', unknown=ut)
         # check restrictions on the dict type
-        with self.assertRaisesRegex(TypeError, r"No conversion from type dict_item\(\[\(str, int\)\]\) to Variant\[std::unordered_map<int, Variant>\]"):
+        with self.assertRaisesRegex(TypeError, r"No conversion from type dict_item\(\[\(str, int\)\]\) to Variant\[std::(__1::)?unordered_map<int, Variant>\]"):
             constraint.shape = {'1': 2}
         # check type mismatch
-        error_msg = "Provided argument of type {} is not convertible to std::shared_ptr<ScriptInterface::Shapes::Shape>"
+        error_msg = "Provided argument of type {} is not convertible to std::(__1::)?shared_ptr<ScriptInterface::Shapes::Shape>"
         with self.assertRaisesRegex(RuntimeError, error_msg.format("int")):
             constraint.shape = 5
         with self.assertRaisesRegex(RuntimeError, error_msg.format("ScriptInterface::None")):
             constraint.shape = None
-        with self.assertRaisesRegex(RuntimeError, error_msg.format("std::shared_ptr<ScriptInterface::ObjectHandle>")):
+        with self.assertRaisesRegex(RuntimeError, error_msg.format("std::(__1::)?shared_ptr<ScriptInterface::ObjectHandle>")):
             constraint.shape = constraint
 
     def test_compare(self):
