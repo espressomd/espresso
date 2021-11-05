@@ -248,6 +248,7 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
 
     def _deactivate_method(self):
         self.call_method('deactivate')
+        utils.handle_errors("HydrodynamicInteraction deactivation failed")
 
     def get_params(self):
         """Get interaction parameters"""

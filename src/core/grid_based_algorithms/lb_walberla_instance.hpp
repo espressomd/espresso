@@ -62,12 +62,12 @@ void mpi_lb_sanity_checks_local(LBWalberlaBase const &lb_fluid,
                                 LBWalberlaParams const &lb_params,
                                 double md_time_step);
 
-/** @brief Register a waLBerla LB instance and update @ref lattice switch. */
+/** @brief Register a waLBerla LB instance and update lattice switch. */
 bool mpi_activate_lb_walberla_local(
     std::shared_ptr<LBWalberlaBase> lb_fluid,
     std::shared_ptr<LBWalberlaParams> lb_params);
 
-/** @brief De-register a waLBerla LB instance and update @ref lattice switch. */
+/** @brief De-register a waLBerla LB instance and update lattice switch. */
 void mpi_deactivate_lb_walberla_local();
 
 #endif // LB_WALBERLA

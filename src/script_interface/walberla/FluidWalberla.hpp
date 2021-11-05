@@ -19,6 +19,10 @@
 #ifndef SCRIPT_INTERFACE_WALBERLA_FLUIDWALBERLA_HPP
 #define SCRIPT_INTERFACE_WALBERLA_FLUIDWALBERLA_HPP
 
+#include "config.hpp"
+
+#ifdef LB_WALBERLA
+
 #include "LatticeWalberla.hpp"
 
 #include "core/communication.hpp"
@@ -187,4 +191,5 @@ public:
 
 } // namespace ScriptInterface::walberla
 
+#endif // LB_WALBERLA
 #endif

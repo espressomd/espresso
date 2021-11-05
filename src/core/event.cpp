@@ -270,8 +270,8 @@ void on_cell_structure_change() {
 #endif /* ifdef DIPOLES */
   if (lattice_switch == ActiveLB::WALBERLA) {
     runtimeErrorMsg()
-        << "LB does not currently support handling changes of the MD cell"
-           " geometry. Setup the cell system, skin and interactions before "
+        << "LB does not currently support handling changes of the MD cell "
+           "geometry. Setup the cell system, skin and interactions before "
            "activating the CPU LB.";
   }
 }

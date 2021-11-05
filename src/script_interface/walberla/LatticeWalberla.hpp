@@ -19,6 +19,10 @@
 #ifndef SCRIPT_INTERFACE_WALBERLA_WALBERLALATTICE_HPP
 #define SCRIPT_INTERFACE_WALBERLA_WALBERLALATTICE_HPP
 
+#include "config.hpp"
+
+#ifdef LB_WALBERLA
+
 #include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/lb_walberla_init.hpp>
 
@@ -74,4 +78,5 @@ public:
 
 } // namespace ScriptInterface::walberla
 
+#endif // LB_WALBERLA
 #endif

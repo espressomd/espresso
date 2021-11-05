@@ -399,6 +399,7 @@ void lb_lbfluid_switch_vtk(std::string const &vtk_uid, int status) {
   throw NoLBActive();
 }
 
+#ifdef LB_WALBERLA
 /** Revert the correction done by waLBerla on off-diagonal terms. */
 inline void walberla_off_diagonal_correction(Utils::Vector6d &tensor) {
   auto const visc = lb_walberla()->get_viscosity();
@@ -407,6 +408,7 @@ inline void walberla_off_diagonal_correction(Utils::Vector6d &tensor) {
   tensor[3] *= revert_factor;
   tensor[4] *= revert_factor;
 }
+#endif
 
 const Utils::Vector6d
 lb_lbnode_get_pressure_tensor(const Utils::Vector3i &ind) {
