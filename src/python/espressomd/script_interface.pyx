@@ -98,10 +98,13 @@ cdef class PScriptInterface:
                     out_params))
 
     def __richcmp__(a, b, op):
+        cls = PScriptInterface
+        are_equality_comparable = isinstance(a, cls) and isinstance(b, cls)
+        are_equal = are_equality_comparable and (a.get_sip() == b.get_sip())
         if op == cpython.object.Py_EQ:
-            return a.get_sip() == b.get_sip()
+            return are_equal
         elif op == cpython.object.Py_NE:
-            return a.get_sip() != b.get_sip()
+            return not are_equal
         else:
             raise NotImplementedError
 

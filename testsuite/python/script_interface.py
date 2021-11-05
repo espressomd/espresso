@@ -73,6 +73,34 @@ class ScriptInterface(ut.TestCase):
         with self.assertRaisesRegex(RuntimeError, error_msg.format("std::shared_ptr<ScriptInterface::ObjectHandle>")):
             constraint.shape = constraint
 
+    def test_compare(self):
+        """Check that script interface objects are equality comparable"""
+        a = espressomd.constraints.ShapeBasedConstraint()
+        b = espressomd.constraints.ShapeBasedConstraint()
+        c = 5
+        self.assertEqual(a, a)
+        self.assertNotEqual(a, b)
+        self.assertFalse(a == c)
+        self.assertFalse(c == a)
+        self.assertTrue(a != c)
+        self.assertTrue(c != a)
+        with self.assertRaises(NotImplementedError):
+            a > a
+        with self.assertRaises(NotImplementedError):
+            a >= a
+        with self.assertRaises(NotImplementedError):
+            a < a
+        with self.assertRaises(NotImplementedError):
+            a <= a
+        with self.assertRaises(NotImplementedError):
+            a > c
+        with self.assertRaises(NotImplementedError):
+            a >= c
+        with self.assertRaises(NotImplementedError):
+            a < c
+        with self.assertRaises(NotImplementedError):
+            a <= c
+
 
 if __name__ == "__main__":
     ut.main()
