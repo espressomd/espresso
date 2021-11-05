@@ -17,6 +17,8 @@
 include "myconfig.pxi"
 from .highlander import ThereCanOnlyBeOne
 from .utils import handle_errors
+from .lb import HydrodynamicInteraction
+
 
 cdef class Actor:
 
@@ -192,6 +194,9 @@ class Actors:
 
     active_actors = []
 
+    def __del__(self):
+        self.clear()
+
     def __getstate__(self):
         return self.active_actors
 
@@ -230,6 +235,18 @@ class Actors:
 
     def clear(self):
         """Remove all actors."""
+        # The order in which actors are removed matters. LB actors need
+        # to be removed first, because they trigger an assertion when the
+        # MD cellsystem change, which happens whenever the maximal range
+        # of non-bonded interactions changes (e.g. when removing a P3M actor).
+        i = 0
+        while True:
+            if i >= len(self.active_actors):
+                break
+            if isinstance(self.active_actors[i], HydrodynamicInteraction):
+                self.remove(self.active_actors[i])
+            else:
+                i += 1
         while len(self.active_actors):
             self.remove(self.active_actors[0])
 
