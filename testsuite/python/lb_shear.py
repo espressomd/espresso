@@ -41,8 +41,8 @@ W = 6 * AGRID
 SHEAR_VELOCITY = 0.3
 
 LB_PARAMS = {'agrid': AGRID,
-             'dens': DENS,
-             'visc': VISC,
+             'density': DENS,
+             'viscosity': VISC,
              'tau': TIME_STEP
              }
 

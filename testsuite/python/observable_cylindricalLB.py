@@ -37,8 +37,8 @@ class CylindricalLBObservableCommon:
     positions = []
 
     lb_params = {'agrid': 1.,
-                 'dens': 1.2,
-                 'visc': 2.7,
+                 'density': 1.2,
+                 'viscosity': 2.7,
                  'tau': 0.1,
                  }
     cyl_transform_params = espressomd.math.CylindricalTransformationParameters(
@@ -251,17 +251,17 @@ class CylindricalLBObservableCommon:
 
         np.testing.assert_array_almost_equal(
             np_hist_binary *
-            self.lb_params['dens'] *
+            self.lb_params['density'] *
             self.v_r,
             core_hist_fl_r)
         np.testing.assert_array_almost_equal(
             np_hist_binary *
-            self.lb_params['dens'] *
+            self.lb_params['density'] *
             self.v_phi,
             core_hist_fl_phi)
         np.testing.assert_array_almost_equal(
             np_hist_binary *
-            self.lb_params['dens'] *
+            self.lb_params['density'] *
             self.v_z,
             core_hist_fl_z)
         self.check_edges(flux_obs, np_edges)

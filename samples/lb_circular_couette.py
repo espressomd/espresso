@@ -51,7 +51,7 @@ if args.visualizer:
 system.cell_system.skin = 0.1
 system.periodicity = [False, False, True]
 lb_fluid = espressomd.lb.LBFluidWalberla(
-    agrid=agrid, dens=0.5, visc=3.2, tau=system.time_step)
+    agrid=agrid, density=0.5, viscosity=3.2, tau=system.time_step)
 system.actors.add(lb_fluid)
 
 # set up cylinders

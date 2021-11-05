@@ -28,18 +28,24 @@
 #include "lb_interface.hpp"
 
 #include <LBWalberlaBase.hpp>
+#include <LatticeWalberla.hpp>
 #include <lb_walberla_init.hpp>
 
 #include <utils/Vector.hpp>
 
+#include <boost/mpi/collectives/all_reduce.hpp>
+
+#include <cassert>
+#include <functional>
 #include <memory>
+#include <stdexcept>
 
 namespace {
-LBWalberlaBase *lb_walberla_instance = nullptr;
-LBWalberlaParams *lb_walberla_params_instance = nullptr;
+std::shared_ptr<LBWalberlaBase> lb_walberla_instance = nullptr;
+std::shared_ptr<LBWalberlaParams> lb_walberla_params_instance = nullptr;
 } // namespace
 
-LBWalberlaBase *lb_walberla() {
+std::shared_ptr<LBWalberlaBase> lb_walberla() {
   if (!lb_walberla_instance) {
     throw std::runtime_error(
         "Attempted access to uninitialized LBWalberla instance.");
@@ -47,7 +53,7 @@ LBWalberlaBase *lb_walberla() {
   return lb_walberla_instance;
 }
 
-LBWalberlaParams *lb_walberla_params() {
+std::shared_ptr<LBWalberlaParams> lb_walberla_params() {
   if (!lb_walberla_params_instance) {
     throw std::runtime_error(
         "Attempted access to uninitialized LBWalberlaParams instance.");
@@ -55,57 +61,75 @@ LBWalberlaParams *lb_walberla_params() {
   return lb_walberla_params_instance;
 }
 
-void destruct_lb_walberla() {
-  delete lb_walberla_instance;
-  delete lb_walberla_params_instance;
-  lb_walberla_instance = nullptr;
-  lb_walberla_params_instance = nullptr;
+void mpi_lb_sanity_checks_local(LBWalberlaBase const &lb_fluid,
+                                LBWalberlaParams const &lb_params,
+                                double md_time_step) {
+  auto const agrid = lb_params.get_agrid();
+  auto const tau = lb_params.get_tau();
+  // waLBerla and ESPResSo must agree on domain decomposition
+  auto [lb_my_left, lb_my_right] = lb_fluid.get_local_domain();
+  lb_my_left *= agrid;
+  lb_my_right *= agrid;
+  auto const my_left = local_geo.my_left();
+  auto const my_right = local_geo.my_right();
+  auto const tol = agrid / 1E6;
+  if ((lb_my_left - my_left).norm2() > tol or
+      (lb_my_right - my_right).norm2() > tol) {
+    runtimeErrorMsg() << this_node << ": left ESPResSo: [" << my_left << "], "
+                      << "left waLBerla: [" << lb_my_left << "]\n";
+    runtimeErrorMsg() << this_node << ": right ESPResSo: [" << my_right << "], "
+                      << "right waLBerla: [" << lb_my_right << "]\n";
+    throw std::runtime_error(
+        "waLBerla and ESPResSo disagree about domain decomposition.");
+  }
+  // LB time step and MD time step must agree
+  if (md_time_step > 0.) {
+    check_tau_time_step_consistency(tau, md_time_step);
+  }
 }
-REGISTER_CALLBACK(destruct_lb_walberla)
 
-void init_lb_walberla(double viscosity, double density, double agrid,
-                      double tau, const Utils::Vector3i &grid_dimensions,
-                      const Utils::Vector3i &node_grid, double kT,
-                      unsigned int seed) {
-  // Exceptions need to be converted to runtime errors so they can be
-  // handled from Python in a parallel simulation
+bool mpi_activate_lb_walberla_local(
+    std::shared_ptr<LBWalberlaBase> lb_fluid,
+    std::shared_ptr<LBWalberlaParams> lb_params) {
+  bool flag_failure = false;
   try {
-    lb_walberla_instance = new_lb_walberla(viscosity, density, grid_dimensions,
-                                           node_grid, kT, seed);
-    lb_walberla_params_instance = new LBWalberlaParams{agrid, tau};
+    assert(::lattice_switch == ActiveLB::NONE);
+    mpi_lb_sanity_checks_local(*lb_fluid, *lb_params, get_time_step());
   } catch (const std::exception &e) {
-    runtimeErrorMsg() << "Error during Walberla initialization: " << e.what();
-    destruct_lb_walberla();
+    runtimeErrorMsg() << "during waLBerla activation: " << e.what();
+    flag_failure = true;
   }
-}
-REGISTER_CALLBACK(init_lb_walberla)
-
-void mpi_init_lb_walberla(double viscosity, double density, double agrid,
-                          double tau, Utils::Vector3d box_size, double kT,
-                          unsigned int seed) {
-  const Utils::Vector3i grid_dimensions{
-      static_cast<int>(std::round(box_size[0] / agrid)),
-      static_cast<int>(std::round(box_size[1] / agrid)),
-      static_cast<int>(std::round(box_size[2] / agrid))};
-  for (int i : {0, 1, 2}) {
-    if (fabs(grid_dimensions[i] * agrid - box_size[i]) / box_size[i] >
-        std::numeric_limits<double>::epsilon()) {
-      throw std::runtime_error(
-          "Box length not commensurate with agrid in direction " +
-          std::to_string(i) + " length " + std::to_string(box_size[i]) +
-          " agrid " + std::to_string(agrid));
-    }
+  if (boost::mpi::all_reduce(comm_cart, flag_failure, std::logical_or<>())) {
+    return true;
   }
-  mpi_call_all(init_lb_walberla, viscosity, density, agrid, tau,
-               grid_dimensions, node_grid, kT, seed);
-  if (lb_walberla_instance) {
-    lb_lbfluid_set_lattice_switch(ActiveLB::WALBERLA);
-    lb_lbfluid_sanity_checks(get_time_step());
-  }
+  ::lb_walberla_instance = lb_fluid;
+  ::lb_walberla_params_instance = lb_params;
+  ::lattice_switch = ActiveLB::WALBERLA;
+  return false;
 }
 
-void mpi_destruct_lb_walberla() {
-  lb_lbfluid_set_lattice_switch(ActiveLB::NONE);
-  Communication::mpiCallbacks().call_all(destruct_lb_walberla);
+void mpi_deactivate_lb_walberla_local() {
+  ::lb_walberla_instance = nullptr;
+  ::lb_walberla_params_instance = nullptr;
+  ::lattice_switch = ActiveLB::NONE;
+}
+
+std::shared_ptr<LBWalberlaBase>
+mpi_init_lb_walberla_local(LatticeWalberla const &lb_lattice,
+                           LBWalberlaParams const &lb_params, double viscosity,
+                           double density, double kT, int seed) {
+  bool flag_failure = false;
+  std::shared_ptr<LBWalberlaBase> lb_ptr;
+  try {
+    assert(seed >= 0);
+    lb_ptr = new_lb_walberla(lb_lattice, viscosity, density, kT, seed);
+  } catch (const std::exception &e) {
+    runtimeErrorMsg() << "during waLBerla initialization: " << e.what();
+    flag_failure = true;
+  }
+  if (boost::mpi::all_reduce(comm_cart, flag_failure, std::logical_or<>())) {
+    return nullptr;
+  }
+  return lb_ptr;
 }
 #endif

@@ -45,34 +45,14 @@ void lb_lbfluid_propagate();
 void lb_lbfluid_init();
 
 /**
- * @brief Get the current counter of the Philox RNG.
- */
-uint64_t lb_lbfluid_get_rng_state();
-
-/**
- * @brief Set the current counter of the Philox RNG.
- */
-void lb_lbfluid_set_rng_state(uint64_t counter);
-
-/**
  * @brief Get the global variable @ref lattice_switch.
  */
 ActiveLB lb_lbfluid_get_lattice_switch();
 
 /**
- * @brief Set the global variable @ref lattice_switch.
- */
-void lb_lbfluid_set_lattice_switch(ActiveLB local_lattice_switch);
-
-/**
  * @brief Check if tau is an integer multiple of time_step, throws if not
  */
-void check_tau_time_step_consistency(double tau, double time_s);
-
-/**
- * @brief Set the external force density acting on the LB fluid.
- */
-void lb_lbfluid_set_ext_force_density(const Utils::Vector3d &force_density);
+void check_tau_time_step_consistency(double tau, double time_step);
 
 /**
  * @brief Perform LB parameter and boundary velocity checks.
@@ -117,21 +97,6 @@ double lb_lbfluid_get_tau();
  * @brief Get the LB grid spacing.
  */
 double lb_lbfluid_get_agrid();
-
-/**
- * @brief Get the global LB bulk viscosity.
- */
-double lb_lbfluid_get_bulk_viscosity();
-
-/**
- * @brief Get the global LB viscosity.
- */
-double lb_lbfluid_get_viscosity();
-
-/**
- * @brief Get the external force density acting on the LB fluid.
- */
-const Utils::Vector3d lb_lbfluid_get_ext_force_density();
 
 /**
  * @brief Get the thermal energy parameter of the LB fluid.

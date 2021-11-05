@@ -61,8 +61,8 @@ class TestLB:
 
         self.lbf = self.lb_class(
             kT=self.params['temp'],
-            visc=self.params['viscosity'],
-            dens=self.params['dens'],
+            viscosity=self.params['viscosity'],
+            density=self.params['dens'],
             agrid=self.params['agrid'],
             tau=self.system.time_step,
             ext_force_density=[0, 0, 0], seed=4)

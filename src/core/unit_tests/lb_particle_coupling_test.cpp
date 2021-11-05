@@ -47,6 +47,8 @@ namespace utf = boost::unit_test;
 #include "random.hpp"
 #include "thermostat.hpp"
 
+#include <LatticeWalberla.hpp>
+
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 
@@ -104,12 +106,21 @@ LBTestParameters params{23u,
                         Utils::Vector3d::broadcast(8.),
                         Utils::Vector3i::broadcast(8)};
 
-void setup_lb(double kT) {
+void mpi_setup_lb_local(double kT) {
+  mpi_deactivate_lb_walberla_local();
   params.kT = kT;
-  mpi_init_lb_walberla(params.viscosity, params.density, params.agrid,
-                       params.tau, params.box_dimensions, params.kT,
-                       params.seed);
+  auto lb_params = std::make_shared<LBWalberlaParams>(params.agrid, params.tau);
+  auto lb_lattice = std::make_shared<::LatticeWalberla>(params.grid_dimensions,
+                                                        node_grid, 1u);
+  auto lb_fluid =
+      mpi_init_lb_walberla_local(*lb_lattice, *lb_params, params.viscosity,
+                                 params.density, params.kT, params.seed);
+  mpi_activate_lb_walberla_local(lb_fluid, lb_params);
 }
+
+REGISTER_CALLBACK(mpi_setup_lb_local)
+
+void mpi_setup_lb(double kT) { mpi_call_all(mpi_setup_lb_local, kT); }
 
 BOOST_TEST_DECORATOR(*utf::precondition(if_head_node()))
 BOOST_AUTO_TEST_CASE(activate) {
@@ -153,7 +164,7 @@ BOOST_AUTO_TEST_CASE(rng) {
   BOOST_CHECK(step1_random2 == step1_random2_try2);
 
   // Propagation queries kT from lb, so lb needs to be initialized
-  setup_lb(1E-4); // kT
+  mpi_setup_lb(1E-4); // kT
   lb_lbcoupling_propagate();
 
   BOOST_REQUIRE(lb_particle_coupling.rng_counter_coupling);
@@ -191,7 +202,7 @@ const std::vector<double> kTs{0, 1E-4};
 
 BOOST_TEST_DECORATOR(*utf::precondition(if_head_node()))
 BOOST_DATA_TEST_CASE(drag_force, bdata::make(kTs), kT) {
-  setup_lb(kT); // in LB units.
+  mpi_setup_lb(kT); // in LB units.
   Particle p{};
   p.m.v = {-2.5, 1.5, 2};
   p.r.p = lb_walberla()->get_local_domain().first;
@@ -211,7 +222,7 @@ BOOST_TEST_DECORATOR(*utf::precondition(if_head_node()))
 BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
   lattice_switch = ActiveLB::WALBERLA;
   auto const first_lb_node = lb_walberla()->get_local_domain().first;
-  setup_lb(kT); // in LB units.
+  mpi_setup_lb(kT); // in LB units.
   Particle p{};
   p.p.swim.swimming = true;
   p.p.swim.f_swim = 2.;
@@ -278,7 +289,7 @@ BOOST_DATA_TEST_CASE(particle_coupling, bdata::make(kTs), kT) {
   auto const noise =
       (kT > 0.) ? std::sqrt(24. * gamma * kT / params.time_step) : 0.0;
   auto &rng = lb_particle_coupling.rng_counter_coupling;
-  setup_lb(kT); // in LB units.
+  mpi_setup_lb(kT); // in LB units.
   Particle p{};
   Utils::Vector3d expected = noise * Random::noise_uniform<RNGSalt::PARTICLES>(
                                          rng->value(), 0, p.identity());
@@ -328,7 +339,7 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, coupling_particle_lattice_ia,
   auto const noise = std::sqrt(24. * gamma * kT / params.time_step *
                                Utils::sqr(params.agrid / params.tau));
   auto &rng = lb_particle_coupling.rng_counter_coupling;
-  setup_lb(kT); // in LB units.
+  mpi_setup_lb(kT); // in LB units.
 
   auto const pid = 0;
   auto const skin = params.skin;
@@ -452,7 +463,7 @@ int main(int argc, char **argv) {
   espresso::system->set_skin(params.skin);
   boost::mpi::communicator world;
   if (world.rank() == 0) {
-    setup_lb(0.);
+    mpi_setup_lb(0.);
   }
 
   return boost::unit_test::unit_test_main(init_unit_test, argc, argv);

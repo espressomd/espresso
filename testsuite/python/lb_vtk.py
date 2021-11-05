@@ -88,7 +88,7 @@ class TestVTK(ut.TestCase):
 
         # setup LB system
         self.lbf = espressomd.lb.LBFluidWalberla(
-            kT=0, agrid=1.0, dens=1.0, visc=1.0, tau=0.1,
+            kT=0, agrid=1.0, density=1.0, viscosity=1.0, tau=0.1,
             ext_force_density=[0, 0.03, 0])
         self.system.actors.add(self.lbf)
         x_offset = 0

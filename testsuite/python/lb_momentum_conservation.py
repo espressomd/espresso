@@ -33,8 +33,8 @@ GAMMA = 1
 
 
 LB_PARAMS = {'agrid': AGRID,
-             'dens': DENS,
-             'visc': KVISC,
+             'density': DENS,
+             'viscosity': KVISC,
              'tau': TIME_STEP,
              'ext_force_density': [-.7 * F, .9 * F, .8 * F]}
 

@@ -32,8 +32,8 @@ BOX_L = 18.0
 TIME_STEP = TAU
 LB_PARAMETERS = {
     'agrid': AGRID,
-    'visc': VISC,
-    'dens': DENS,
+    'viscosity': VISC,
+    'density': DENS,
     'tau': TAU
 }
 V_BOUNDARY = 0.2

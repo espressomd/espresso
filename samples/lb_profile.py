@@ -40,7 +40,7 @@ n_steps_warmup = 1000
 n_steps = 800
 
 lb_fluid = espressomd.lb.LBFluidWalberla(
-    agrid=1.0, dens=1.0, visc=1.0, tau=0.01,
+    agrid=1.0, density=1.0, viscosity=1.0, tau=0.01,
     ext_force_density=[0, 0, 0.15], kT=0.0)
 system.actors.add(lb_fluid)
 system.thermostat.set_lb(LB_fluid=lb_fluid, seed=23)

@@ -28,6 +28,9 @@
 #ifdef H5MD
 #include "h5md/initialize.hpp"
 #endif
+#ifdef LB_WALBERLA
+#include "walberla/initialize.hpp"
+#endif
 #include "ComFixed.hpp"
 #include "CylindricalTransformationParameters.hpp"
 #include "accumulators/initialize.hpp"
@@ -54,6 +57,9 @@ void initialize(Utils::Factory<ObjectHandle> *f) {
   VirtualSites::initialize(f);
   MPIIO::initialize(f);
   CollisionDetection::initialize(f);
+#ifdef LB_WALBERLA
+  walberla::initialize(f);
+#endif
 
   f->register_new<ComFixed>("ComFixed");
   f->register_new<CylindricalTransformationParameters>(

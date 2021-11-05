@@ -48,9 +48,11 @@
 
 #include "BoundaryHandling.hpp"
 #include "LBWalberlaBase.hpp"
+#include "LatticeWalberla.hpp"
 #include "ResetForce.hpp"
 #include "generated_kernels/InitialPDFsSetter.h"
 #include "generated_kernels/StreamSweep.h"
+#include "generated_kernels/macroscopic_values_accessors.h"
 #include "vtk_writers.hpp"
 #include "walberla_utils.hpp"
 
@@ -88,13 +90,6 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
-
-namespace walberla {
-// forward declare
-class LBWalberlaImpl;
-} // namespace walberla
-
-#include "generated_kernels/macroscopic_values_accessors.h"
 
 namespace walberla {
 
@@ -280,37 +275,15 @@ protected:
   }
 
 public:
-  LBWalberlaImpl(double viscosity, double density,
-                 const Utils::Vector3i &grid_dimensions,
-                 const Utils::Vector3i &node_grid, unsigned int n_ghost_layers,
-                 double kT, unsigned int seed)
-      : m_grid_dimensions(grid_dimensions), m_n_ghost_layers(n_ghost_layers),
+  LBWalberlaImpl(LatticeWalberla const &lattice, double viscosity,
+                 double density, double kT, unsigned int seed)
+      : m_grid_dimensions(lattice.get_grid_dimensions()),
+        m_n_ghost_layers(lattice.get_ghost_layers()),
         m_viscosity(real_c(viscosity)), m_density(real_c(density)),
-        m_kT(real_c(kT)), m_seed(seed) {
+        m_kT(real_c(kT)), m_seed(seed), m_blocks(lattice.get_blocks()) {
 
-    if (n_ghost_layers == 0)
+    if (m_n_ghost_layers == 0)
       throw std::runtime_error("At least one ghost layer must be used");
-    for (int i : {0, 1, 2}) {
-      if (m_grid_dimensions[i] % node_grid[i] != 0) {
-        throw std::runtime_error(
-            "LB grid dimensions and mpi node grid are not compatible.");
-      }
-    }
-
-    m_blocks = blockforest::createUniformBlockGrid(
-        uint_c(node_grid[0]), // blocks in x direction
-        uint_c(node_grid[1]), // blocks in y direction
-        uint_c(node_grid[2]), // blocks in z direction
-        uint_c(m_grid_dimensions[0] /
-               node_grid[0]), // number of cells per block in x direction
-        uint_c(m_grid_dimensions[1] /
-               node_grid[1]), // number of cells per block in y direction
-        uint_c(m_grid_dimensions[2] /
-               node_grid[2]), // number of cells per block in z direction
-        1,                    // Lattice constant
-        uint_c(node_grid[0]), uint_c(node_grid[1]),
-        uint_c(node_grid[2]), // cpus per direction
-        true, true, true);
 
     // Init and register fields
     m_pdf_field_id = field::addToStorage<PdfField>(
@@ -416,6 +389,8 @@ public:
   void set_viscosity(double viscosity) override { m_viscosity = viscosity; }
 
   double get_viscosity() const override { return m_viscosity; }
+
+  double get_density() const override { return m_density; }
 
   // Velocity
   boost::optional<Utils::Vector3d>

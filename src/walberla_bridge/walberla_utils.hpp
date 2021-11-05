@@ -20,6 +20,8 @@
 #define WALBERLA_UTILS_H
 
 #include "blockforest/StructuredBlockForest.h"
+#include "core/math/Matrix3.h"
+#include "core/math/Vector3.h"
 #include "field/GhostLayerField.h"
 
 #include <utils/Vector.hpp>

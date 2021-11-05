@@ -34,8 +34,8 @@ DENS = 1.7
 TIME_STEP = 0.005
 GAMMA = 2
 LB_PARAMS = {'agrid': AGRID,
-             'dens': DENS,
-             'visc': VISC,
+             'density': DENS,
+             'viscosity': VISC,
              'tau': TIME_STEP,
              'kT': KT,
              'seed': 123}

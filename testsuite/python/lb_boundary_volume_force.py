@@ -36,8 +36,8 @@ VISC = 3.5
 DENS = 1.5
 TIME_STEP = 0.05
 LB_PARAMS = {'agrid': AGRID,
-             'dens': DENS,
-             'visc': VISC,
+             'density': DENS,
+             'viscosity': VISC,
              'tau': TIME_STEP,
              'ext_force_density': EXT_FORCE}
 

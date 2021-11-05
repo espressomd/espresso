@@ -24,13 +24,14 @@ if(WALBERLA_USE_AVX)
   list(APPEND WalberlaBridgeCodegen_SRC generated_kernels/CollideSweepAVX.cpp
        generated_kernels/CollideSweepThermalizedAVX.cpp)
 endif()
-set(WalberlaBridge_SRC ${WalberlaBridgeCodegen_SRC} lb_walberla_init.cpp)
+set(WalberlaBridge_SRC ${WalberlaBridgeCodegen_SRC} lb_walberla_init.cpp
+                       LatticeWalberla.cpp)
 add_library(WalberlaBridge SHARED ${WalberlaBridge_SRC})
 target_link_libraries(WalberlaBridge PUBLIC MPI::MPI_CXX EspressoUtils
                       PRIVATE Boost::boost cxx_interface ${WALBERLA_LIBS})
 target_include_directories(
-  WalberlaBridge PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
-  PRIVATE ${WALBERLA_INCLUDE_DIRS} ${walberla_BINARY_DIR}/src)
+  WalberlaBridge PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${WALBERLA_INCLUDE_DIRS}
+  PRIVATE ${walberla_BINARY_DIR}/src)
 
 install(TARGETS WalberlaBridge LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 

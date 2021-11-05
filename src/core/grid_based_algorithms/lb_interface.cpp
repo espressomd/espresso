@@ -70,93 +70,18 @@ void lb_lbfluid_sanity_checks(double time_step) {
   if (lattice_switch == ActiveLB::NONE)
     return;
 
-  if (time_step > 0.)
-    check_tau_time_step_consistency(lb_lbfluid_get_tau(), time_step);
-
   if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
-    // Make sure, Walberla and Espresso agree on domain decomposition
-    auto walberla_domain = lb_walberla()->get_local_domain();
-    // Unit conversion
-    auto const agrid = lb_lbfluid_get_agrid();
-    walberla_domain.first *= agrid;
-    walberla_domain.second *= agrid;
-
-    auto const my_left = local_geo.my_left();
-    auto const my_right = local_geo.my_right();
-    auto const tol = lb_lbfluid_get_agrid() / 1E6;
-    if ((walberla_domain.first - my_left).norm2() > tol or
-        (walberla_domain.second - my_right).norm2() > tol) {
-      std::cout << this_node << ": left ESPResSo: [" << my_left << "], "
-                << "left waLBerla: [" << walberla_domain.first << "]\n";
-      std::cout << this_node << ": right ESPResSo: [" << my_right << "], "
-                << "right waLBerla: [" << walberla_domain.second << "]\n";
-      throw std::runtime_error(
-          "waLBerla and ESPResSo disagree about domain decomposition.");
-    }
+    mpi_lb_sanity_checks_local(*lb_walberla(), *lb_walberla_params(),
+                               time_step);
 #endif
   }
-}
-
-uint64_t lb_lbfluid_get_rng_state() {
-#ifdef LB_WALBERLA
-  if (lattice_switch == ActiveLB::WALBERLA) {
-    return Walberla::get_rng_state();
-  }
-#endif
-  throw NoLBActive();
-}
-
-void lb_lbfluid_set_rng_state(uint64_t counter) {
-#ifdef LB_WALBERLA
-  if (lattice_switch == ActiveLB::WALBERLA) {
-    Walberla::set_rng_state(counter);
-  } else
-#endif
-  {
-    throw NoLBActive();
-  }
-}
-
-double lb_lbfluid_get_viscosity() {
-#ifdef LB_WALBERLA
-  if (lattice_switch == ActiveLB::WALBERLA) {
-    return lb_walberla()->get_viscosity();
-  }
-#endif
-  throw NoLBActive();
-}
-
-double lb_lbfluid_get_bulk_viscosity() {
-  if (lattice_switch == ActiveLB::WALBERLA)
-    throw std::runtime_error("Getting bulk viscosity not implemented.");
-  throw NoLBActive();
 }
 
 double lb_lbfluid_get_agrid() {
   if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
     return lb_walberla_params()->get_agrid();
-#endif
-  }
-  throw NoLBActive();
-}
-
-void lb_lbfluid_set_ext_force_density(const Utils::Vector3d &force_density) {
-  if (lattice_switch == ActiveLB::WALBERLA) {
-#ifdef LB_WALBERLA
-    ::Communication::mpiCallbacks().call_all(Walberla::set_ext_force_density,
-                                             force_density);
-#endif
-  } else {
-    throw NoLBActive();
-  }
-}
-
-const Utils::Vector3d lb_lbfluid_get_ext_force_density() {
-  if (lattice_switch == ActiveLB::WALBERLA) {
-#ifdef LB_WALBERLA
-    return lb_walberla()->get_external_force();
 #endif
   }
   throw NoLBActive();
@@ -184,17 +109,6 @@ double lb_lbfluid_get_tau() {
   }
 #endif
   throw NoLBActive();
-}
-
-void lb_lbfluid_set_lattice_switch(ActiveLB local_lattice_switch) {
-  switch (local_lattice_switch) {
-  case ActiveLB::NONE:
-  case ActiveLB::WALBERLA:
-    break;
-  default:
-    throw std::invalid_argument("Invalid lattice switch.");
-  }
-  mpi_set_lattice_switch(local_lattice_switch);
 }
 
 double lb_lbfluid_get_kT() {
@@ -487,7 +401,7 @@ void lb_lbfluid_switch_vtk(std::string const &vtk_uid, int status) {
 
 /** Revert the correction done by waLBerla on off-diagonal terms. */
 inline void walberla_off_diagonal_correction(Utils::Vector6d &tensor) {
-  auto const visc = lb_lbfluid_get_viscosity();
+  auto const visc = lb_walberla()->get_viscosity();
   auto const revert_factor = visc / (visc + 1.0 / 6.0);
   tensor[1] *= revert_factor;
   tensor[3] *= revert_factor;

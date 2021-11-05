@@ -121,14 +121,9 @@ system.integrator.run(500)
 system.thermostat.turn_off()
 print(f"LB shape: [{lb_grid}, {lb_grid}, {lb_grid}]")
 print(f"LB agrid: {agrid:.3f}")
-if hasattr(espressomd.lb, "LBFluid"):
-    LBClass = espressomd.lb.LBFluid
-elif hasattr(espressomd.lb, "LBFluidWalberla"):
-    LBClass = espressomd.lb.LBFluidWalberla
-else: 
-    raise Exception("LB not built in")
 
-lbf = LBClass(agrid=agrid, dens=1, visc=1, tau=system.time_step, kT=1, seed=1)
+lbf = espressomd.lb.LBFluidWalberla(agrid=agrid, density=1, viscosity=1,
+                                    tau=system.time_step, kT=1, seed=1)
 system.actors.add(lbf)
 system.thermostat.set_lb(gamma=10, LB_fluid=lbf, seed=2)
 
