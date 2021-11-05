@@ -145,8 +145,8 @@ class LBBoundariesWalberla(ut.TestCase, LBBoundariesBase):
     def setUp(self):
         if not self.lbf:
             self.lbf = espressomd.lb.LBFluidWalberla(
-                visc=1.0,
-                dens=1.0,
+                viscosity=1.0,
+                density=1.0,
                 agrid=0.5,
                 tau=1.0)
 

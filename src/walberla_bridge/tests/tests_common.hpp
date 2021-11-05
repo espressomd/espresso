@@ -53,16 +53,14 @@ LbGeneratorVector unthermalized_lbs() {
   // Unthermalized D3Q19 MRT
   lbs.push_back([](const Utils::Vector3i mpi_shape,
                    const LBTestParameters &params) {
-    auto lattice = std::make_shared<::LatticeWalberla>(params.grid_dimensions,
-                                                       mpi_shape, 1u);
+    auto const lattice = LatticeWalberla(params.grid_dimensions, mpi_shape, 1u);
     return std::make_shared<walberla::LBWalberlaImpl>(lattice, params.viscosity,
                                                       params.density, 0.0, 0u);
   });
 
   // Thermalized D3Q19 MRT with kT set to 0
   lbs.push_back([](Utils::Vector3i mpi_shape, const LBTestParameters &params) {
-    auto lattice = std::make_shared<::LatticeWalberla>(params.grid_dimensions,
-                                                       mpi_shape, 1u);
+    auto const lattice = LatticeWalberla(params.grid_dimensions, mpi_shape, 1u);
     return std::make_shared<walberla::LBWalberlaImpl>(
         lattice, params.viscosity, params.density, 0.0, params.seed);
   });
@@ -76,8 +74,7 @@ LbGeneratorVector thermalized_lbs() {
   // Thermalized D3Q19 MRT with kT set to 0
   lbs.push_back([](const Utils::Vector3i mpi_shape,
                    const LBTestParameters &params) {
-    auto lattice = std::make_shared<::LatticeWalberla>(params.grid_dimensions,
-                                                       mpi_shape, 1u);
+    auto const lattice = LatticeWalberla(params.grid_dimensions, mpi_shape, 1u);
     return std::make_shared<walberla::LBWalberlaImpl>(
         lattice, params.viscosity, params.density, params.kT, params.seed);
   });

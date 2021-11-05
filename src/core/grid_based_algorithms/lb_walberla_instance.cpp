@@ -61,23 +61,12 @@ std::shared_ptr<LBWalberlaParams> lb_walberla_params() {
   return lb_walberla_params_instance;
 }
 
-void mpi_activate_lb_walberla_local(
-    std::shared_ptr<LBWalberlaBase> lb_fluid,
-    std::shared_ptr<LBWalberlaParams> lb_params) {
-  assert(::lattice_switch == ActiveLB::NONE);
-  ::lb_walberla_instance = lb_fluid;
-  ::lb_walberla_params_instance = lb_params;
-  ::lattice_switch = ActiveLB::WALBERLA;
-}
-
-void mpi_deactivate_lb_walberla_local() {
-  ::lb_walberla_instance = nullptr;
-  ::lb_walberla_params_instance = nullptr;
-  ::lattice_switch = ActiveLB::NONE;
-}
-
-static void lb_sanity_checks(LBWalberlaBase const &lb_fluid, double agrid) {
-  // sanity check: waLBerla and ESPResSo must agree on domain decomposition
+void mpi_lb_sanity_checks_local(LBWalberlaBase const &lb_fluid,
+                                LBWalberlaParams const &lb_params,
+                                double md_time_step) {
+  auto const agrid = lb_params.get_agrid();
+  auto const tau = lb_params.get_tau();
+  // waLBerla and ESPResSo must agree on domain decomposition
   auto [lb_my_left, lb_my_right] = lb_fluid.get_local_domain();
   lb_my_left *= agrid;
   lb_my_right *= agrid;
@@ -93,20 +82,47 @@ static void lb_sanity_checks(LBWalberlaBase const &lb_fluid, double agrid) {
     throw std::runtime_error(
         "waLBerla and ESPResSo disagree about domain decomposition.");
   }
+  // LB time step and MD time step must agree
+  if (md_time_step > 0.) {
+    check_tau_time_step_consistency(tau, md_time_step);
+  }
+}
+
+bool mpi_activate_lb_walberla_local(
+    std::shared_ptr<LBWalberlaBase> lb_fluid,
+    std::shared_ptr<LBWalberlaParams> lb_params) {
+  bool flag_failure = false;
+  try {
+    assert(::lattice_switch == ActiveLB::NONE);
+    mpi_lb_sanity_checks_local(*lb_fluid, *lb_params, get_time_step());
+  } catch (const std::exception &e) {
+    runtimeErrorMsg() << "during waLBerla activation: " << e.what();
+    flag_failure = true;
+  }
+  if (boost::mpi::all_reduce(comm_cart, flag_failure, std::logical_or<>())) {
+    return true;
+  }
+  ::lb_walberla_instance = lb_fluid;
+  ::lb_walberla_params_instance = lb_params;
+  ::lattice_switch = ActiveLB::WALBERLA;
+  return false;
+}
+
+void mpi_deactivate_lb_walberla_local() {
+  ::lb_walberla_instance = nullptr;
+  ::lb_walberla_params_instance = nullptr;
+  ::lattice_switch = ActiveLB::NONE;
 }
 
 std::shared_ptr<LBWalberlaBase>
-mpi_init_lb_walberla_local(std::shared_ptr<LatticeWalberla> lattice,
-                           double viscosity, double density, double agrid,
-                           double tau, double kT, unsigned int seed) {
+mpi_init_lb_walberla_local(LatticeWalberla const &lb_lattice,
+                           LBWalberlaParams const &lb_params, double viscosity,
+                           double density, double kT, int seed) {
   bool flag_failure = false;
   std::shared_ptr<LBWalberlaBase> lb_ptr;
   try {
-    auto const md_time_step = get_time_step();
-    if (md_time_step > 0.)
-      check_tau_time_step_consistency(tau, md_time_step);
-    lb_ptr = new_lb_walberla(lattice, viscosity, density, kT, seed);
-    lb_sanity_checks(*lb_ptr, agrid);
+    assert(seed >= 0);
+    lb_ptr = new_lb_walberla(lb_lattice, viscosity, density, kT, seed);
   } catch (const std::exception &e) {
     runtimeErrorMsg() << "during waLBerla initialization: " << e.what();
     flag_failure = true;

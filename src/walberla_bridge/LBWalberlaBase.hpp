@@ -134,6 +134,7 @@ public:
   // Global parameters
   virtual void set_viscosity(double viscosity) = 0;
   virtual double get_viscosity() const = 0;
+  virtual double get_density() const = 0;
   virtual double get_kT() const = 0;
 
   //* @brief Set the rng counter for thermalized LBs */

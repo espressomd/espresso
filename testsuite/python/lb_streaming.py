@@ -75,10 +75,10 @@ REFERENCE_POPULATIONS = np.array([
     17 + 2 / 3])
 LB_PARAMETERS = {
     'agrid': AGRID,
-    'visc': VISC,
+    'viscosity': VISC,
     'bulk_visc': BULK_VISC,
     'tau': TAU,
-    'dens': 1.0,
+    'density': 1.0,
     'gamma_odd': 1.0,
     'gamma_even': 1.0
 }

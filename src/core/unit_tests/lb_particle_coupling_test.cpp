@@ -112,9 +112,9 @@ void mpi_setup_lb_local(double kT) {
   auto lb_params = std::make_shared<LBWalberlaParams>(params.agrid, params.tau);
   auto lb_lattice = std::make_shared<::LatticeWalberla>(params.grid_dimensions,
                                                         node_grid, 1u);
-  auto lb_fluid = mpi_init_lb_walberla_local(
-      lb_lattice, params.viscosity, params.density, params.agrid, params.tau,
-      params.kT, params.seed);
+  auto lb_fluid =
+      mpi_init_lb_walberla_local(*lb_lattice, *lb_params, params.viscosity,
+                                 params.density, params.kT, params.seed);
   mpi_activate_lb_walberla_local(lb_fluid, lb_params);
 }
 

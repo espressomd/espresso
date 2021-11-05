@@ -27,8 +27,8 @@ class SwimmerTest():
     system.cell_system.skin = 1
     system.time_step = 1e-2
     LB_params = {'agrid': 1,
-                 'dens': 1.1,
-                 'visc': 1.2,
+                 'density': 1.1,
+                 'viscosity': 1.2,
                  'kT': 0,
                  'tau': system.time_step}
     gamma = 0.3

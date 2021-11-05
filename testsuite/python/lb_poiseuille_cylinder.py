@@ -41,8 +41,8 @@ TIME_STEP = 0.05
 BOX_L = 8.0
 EFFECTIVE_RADIUS = BOX_L / 2.0 - 1.0
 LB_PARAMS = {'agrid': AGRID,
-             'dens': DENS,
-             'visc': VISC,
+             'density': DENS,
+             'viscosity': VISC,
              'tau': TIME_STEP}
 
 OBS_PARAMS = {'n_r_bins': 25,

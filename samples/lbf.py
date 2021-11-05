@@ -44,7 +44,7 @@ system.cell_system.skin = 0.1
 
 particle = system.part.add(pos=[box_l / 2.0] * 3, fix=[True, True, True])
 
-lbf = espressomd.lb.LBFluidWalberla(agrid=1, dens=1, visc=1, tau=0.01,
+lbf = espressomd.lb.LBFluidWalberla(agrid=1, density=1, viscosity=1, tau=0.01,
                                     ext_force_density=[0, 0, -1.0 / (box_l**3)])
 system.actors.add(lbf)
 system.thermostat.set_lb(LB_fluid=lbf, gamma=1.0)

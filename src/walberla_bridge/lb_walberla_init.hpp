@@ -29,9 +29,10 @@
 /** @brief Initialize Walberla's MPI manager */
 void walberla_mpi_init();
 
-std::shared_ptr<LBWalberlaBase>
-new_lb_walberla(std::shared_ptr<LatticeWalberla> lattice, double viscosity,
-                double density, double kT, unsigned int seed);
+std::shared_ptr<LBWalberlaBase> new_lb_walberla(LatticeWalberla const &lattice,
+                                                double viscosity,
+                                                double density, double kT,
+                                                unsigned int seed);
 
 Utils::Vector3i calc_grid_dimensions(Utils::Vector3d const &box_size,
                                      double agrid);

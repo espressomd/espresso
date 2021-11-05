@@ -36,8 +36,8 @@ class LbWalberlaTest(ut.TestCase):
         dens_init = 1.3
         lbf = LBFluidWalberla(
             agrid=.6,
-            dens=dens_init,
-            visc=2.5,
+            density=dens_init,
+            viscosity=2.5,
             tau=s.time_step)
         s.actors.add(lbf)
         max_ind = s.box_l / .6

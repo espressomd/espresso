@@ -46,21 +46,24 @@ std::shared_ptr<LBWalberlaParams> lb_walberla_params();
 
 /** @brief Create the LBWalberla instance.
  *
- *  @param lattice   LB lattice
- *  @param viscosity Fluid viscosity
- *  @param density   Fluid density
- *  @param agrid     Size of one LB cell
- *  @param tau       LB time step
- *  @param kT        Temperature
- *  @param seed      LB random seed
+ *  @param lb_lattice  LB lattice
+ *  @param lb_params   LB parameters
+ *  @param viscosity   Fluid viscosity
+ *  @param density     Fluid density
+ *  @param kT          Temperature
+ *  @param seed        LB random seed
  */
 std::shared_ptr<LBWalberlaBase>
-mpi_init_lb_walberla_local(std::shared_ptr<LatticeWalberla> lattice,
-                           double viscosity, double density, double agrid,
-                           double tau, double kT, unsigned int seed);
+mpi_init_lb_walberla_local(LatticeWalberla const &lb_lattice,
+                           LBWalberlaParams const &lb_params, double viscosity,
+                           double density, double kT, int seed);
+
+void mpi_lb_sanity_checks_local(LBWalberlaBase const &lb_fluid,
+                                LBWalberlaParams const &lb_params,
+                                double md_time_step);
 
 /** @brief Register a waLBerla LB instance and update @ref lattice switch. */
-void mpi_activate_lb_walberla_local(
+bool mpi_activate_lb_walberla_local(
     std::shared_ptr<LBWalberlaBase> lb_fluid,
     std::shared_ptr<LBWalberlaParams> lb_params);
 

@@ -275,12 +275,12 @@ protected:
   }
 
 public:
-  LBWalberlaImpl(std::shared_ptr<LatticeWalberla> lattice, double viscosity,
+  LBWalberlaImpl(LatticeWalberla const &lattice, double viscosity,
                  double density, double kT, unsigned int seed)
-      : m_grid_dimensions(lattice->get_grid_dimensions()),
-        m_n_ghost_layers(lattice->get_ghost_layers()),
+      : m_grid_dimensions(lattice.get_grid_dimensions()),
+        m_n_ghost_layers(lattice.get_ghost_layers()),
         m_viscosity(real_c(viscosity)), m_density(real_c(density)),
-        m_kT(real_c(kT)), m_seed(seed), m_blocks(lattice->get_blocks()) {
+        m_kT(real_c(kT)), m_seed(seed), m_blocks(lattice.get_blocks()) {
 
     if (m_n_ghost_layers == 0)
       throw std::runtime_error("At least one ghost layer must be used");
@@ -389,6 +389,8 @@ public:
   void set_viscosity(double viscosity) override { m_viscosity = viscosity; }
 
   double get_viscosity() const override { return m_viscosity; }
+
+  double get_density() const override { return m_density; }
 
   // Velocity
   boost::optional<Utils::Vector3d>
