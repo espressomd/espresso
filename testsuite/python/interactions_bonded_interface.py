@@ -239,7 +239,7 @@ class BondedInteractions(ut.TestCase):
             self.system.bonded_inter[0] = angle_bond
 
         # bonds are immutable
-        with self.assertRaisesRegex(RuntimeError, 'Parameter r_0 is read-only'):
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'r_0' is read-only"):
             harm_bond1.r_0 = 5.
 
         # sanity checks during bond construction

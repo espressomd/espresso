@@ -166,9 +166,9 @@ class FieldTest(ut.TestCase):
         self.system.constraints.add(F)
         self.assertAlmostEqual(F.default_scale, scaling, delta=1e-9)
         self.assertEqual(F.particle_scales, {1: 0.0})
-        with self.assertRaisesRegex(RuntimeError, 'Parameter default_scale is read-only'):
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'default_scale' is read-only"):
             F.default_scale = 2.0
-        with self.assertRaisesRegex(RuntimeError, 'Parameter particle_scales is read-only'):
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'particle_scales' is read-only"):
             F.particle_scales = {0: 0.0}
 
         for i in itertools.product(*map(range, 3 * [10])):
@@ -229,9 +229,9 @@ class FieldTest(ut.TestCase):
         self.system.constraints.add(F)
         self.assertAlmostEqual(F.default_scale, scaling, delta=1e-9)
         self.assertEqual(F.particle_scales, {1: 0.0})
-        with self.assertRaisesRegex(RuntimeError, 'Parameter default_scale is read-only'):
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'default_scale' is read-only"):
             F.default_scale = 2.0
-        with self.assertRaisesRegex(RuntimeError, 'Parameter particle_scales is read-only'):
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'particle_scales' is read-only"):
             F.particle_scales = {0: 0.0}
 
         for i in itertools.product(*map(range, 3 * [10])):
@@ -258,7 +258,7 @@ class FieldTest(ut.TestCase):
 
         p = self.system.part.add(pos=[0, 0, 0], v=[1, 2, 3])
         self.system.constraints.add(F)
-        with self.assertRaisesRegex(RuntimeError, 'Parameter gamma is read-only'):
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'gamma' is read-only"):
             F.gamma = 2.0
 
         for i in itertools.product(*map(range, 3 * [10])):
