@@ -612,20 +612,75 @@ cdef class WidomInsertion(ReactionAlgorithm):
 
         self._set_params_in_es_core()
 
-    def measure_excess_chemical_potential(self, reaction_id=0):
+    def calculate_particle_insertion_potential_energy(self, reaction_id=0):
         """
-        Measures the excess chemical potential in a homogeneous system for
-        the provided ``reaction_id``. Please define the insertion moves
-        first by calling the method :meth:`~ReactionAlgorithm.add_reaction`
-        (with only product types specified).
-        Returns the excess chemical potential and the standard error for
-        the excess chemical potential. The error estimate assumes that
-        your samples are uncorrelated.
+        Measures the potential energy when particles are inserted in the
+        system following the reaction  provided ``reaction_id``. Please
+        define the insertion moves first by calling the method
+        :meth:`~ReactionAlgorithm.add_reaction` (with only product types
+        specified).
 
+        Note that although this function does not provide directly
+        the chemical potential, it can be used to calculate it.
+        For an example of such an application please check
+        :file:`/samples/widom_insertion.py`.
         """
         # make inverse widom scheme (deletion of particles) inaccessible.
         # The deletion reactions are the odd reaction_ids
         if(reaction_id < 0 or reaction_id > (deref(self.WidomInsertionPtr).reactions.size() + 1) / 2):
             raise ValueError("This reaction is not present")
-        return deref(self.WidomInsertionPtr).measure_excess_chemical_potential(
+        return deref(self.WidomInsertionPtr).calculate_particle_insertion_potential_energy(
             deref(self.WidomInsertionPtr).reactions[int(2 * reaction_id)])
+
+    def calculate_excess_chemical_potential(
+            self, particle_insertion_potential_energy_samples, N_blocks=16):
+        """
+        Given a set of samples of the particle insertion potential energy,
+        calculates the excess chemical potential and its statistical error.
+
+        Parameters
+        ----------
+        particle_insertion_potential_energy_samples : array_like of :obj:`float`
+            Samples of the particle insertion potential energy.
+        N_blocks : :obj:`int`, optional
+            Number of bins for binning analysis.
+
+        Returns
+        -------
+        mean : :obj:`float`
+            Mean excess chemical potential.
+        error : :obj:`float`
+            Standard error of the mean.
+        """
+
+        def do_block_analysis(samples, N_blocks=16):
+            """
+            Performs a binning analysis of samples.
+            Divides the samples in ``N_blocks`` equispaced blocks
+            and returns the mean and its uncertainty
+            """
+            size_block = int(len(samples) / N_blocks)
+            block_list = []
+            for block in range(N_blocks):
+                block_list.append(
+                    np.mean(samples[block * size_block:(block + 1) * size_block]))
+
+            sample_mean = np.mean(block_list)
+            sample_std = np.std(block_list, ddof=1)
+            sample_uncertainty = sample_std / np.sqrt(N_blocks)
+
+            return sample_mean, sample_uncertainty
+
+        gamma_samples = np.exp(-1.0 * np.array(
+            particle_insertion_potential_energy_samples) / self._params["kT"])
+
+        gamma_mean, gamma_std = do_block_analysis(
+            samples=gamma_samples, N_blocks=N_blocks)
+
+        mu_ex_mean = -1 * np.log(gamma_mean) * self._params["kT"]
+
+        # full propagation of error
+        mu_ex_Delta = 0.5 * self._params["kT"] * abs(-np.log(gamma_mean + gamma_std) -
+                                                     (-np.log(gamma_mean - gamma_std)))
+
+        return mu_ex_mean, mu_ex_Delta

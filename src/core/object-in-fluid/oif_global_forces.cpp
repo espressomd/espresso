@@ -20,10 +20,10 @@
 #include "oif_global_forces.hpp"
 
 #include "BoxGeometry.hpp"
+#include "CellStructure.hpp"
 #include "Particle.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
-#include "interactions.hpp"
 
 #include "bonded_interactions/bonded_interaction_data.hpp"
 
@@ -32,20 +32,18 @@
 #include <utils/constants.hpp>
 #include <utils/math/triangle_functions.hpp>
 
-#include <mpi.h>
+#include <boost/mpi/collectives.hpp>
 
-using Utils::angle_btw_triangles;
+#include <functional>
+
 using Utils::area_triangle;
 using Utils::get_n_triangle;
 
-void calc_oif_global(Utils::Vector2d &area_volume, int molType,
-                     CellStructure &cs) {
+Utils::Vector2d calc_oif_global(int molType, CellStructure &cs) {
   // first-fold-then-the-same approach
   double partArea = 0.0;
   // z volume
   double VOL_partVol = 0.;
-
-  Utils::Vector2d part_area_volume; // added
 
   cs.bond_loop([&partArea, &VOL_partVol,
                 molType](Particle &p1, int bond_id,
@@ -73,11 +71,8 @@ void calc_oif_global(Utils::Vector2d &area_volume, int molType,
     return false;
   });
 
-  part_area_volume[0] = partArea;
-  part_area_volume[1] = VOL_partVol;
-
-  MPI_Allreduce(part_area_volume.data(), area_volume.data(), 2, MPI_DOUBLE,
-                MPI_SUM, MPI_COMM_WORLD);
+  auto const area_volume_local = Utils::Vector2d{{partArea, VOL_partVol}};
+  return boost::mpi::all_reduce(comm_cart, area_volume_local, std::plus<>());
 }
 
 void add_oif_global_forces(Utils::Vector2d const &area_volume, int molType,

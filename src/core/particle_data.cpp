@@ -401,7 +401,7 @@ void add_exclusion(Particle *part, int part2);
 
 void auto_exclusion(int distance);
 
-void mpi_who_has_local(int, int) {
+static void mpi_who_has_local() {
   static std::vector<int> sendbuf;
 
   auto local_particles = cell_structure.local_particles();
@@ -423,7 +423,7 @@ void mpi_who_has_local(int, int) {
 REGISTER_CALLBACK(mpi_who_has_local)
 
 void mpi_who_has() {
-  mpi_call(mpi_who_has_local, -1, 0);
+  mpi_call(mpi_who_has_local);
 
   auto local_particles = cell_structure.local_particles();
 
@@ -519,7 +519,7 @@ const Particle &get_particle_data(int part) {
   return *cache_ptr;
 }
 
-void mpi_get_particles_local(int, int) {
+static void mpi_get_particles_local() {
   std::vector<int> ids;
   boost::mpi::scatter(comm_cart, ids, 0);
 
@@ -544,7 +544,7 @@ REGISTER_CALLBACK(mpi_get_particles_local)
  * @returns The particle list.
  */
 std::vector<Particle> mpi_get_particles(Utils::Span<const int> ids) {
-  mpi_call(mpi_get_particles_local, 0, 0);
+  mpi_call(mpi_get_particles_local);
   /* Return value */
   std::vector<Particle> parts(ids.size());
 
@@ -938,9 +938,9 @@ const std::vector<BondView> &get_particle_bonds(int part) {
   return ret;
 }
 
-void mpi_remove_particle_local(int, int part) {
-  if (part != -1) {
-    cell_structure.remove_particle(part);
+static void mpi_remove_particle_local(int p_id) {
+  if (p_id != -1) {
+    cell_structure.remove_particle(p_id);
   } else {
     cell_structure.remove_all_particles();
   }
@@ -953,12 +953,12 @@ REGISTER_CALLBACK(mpi_remove_particle_local)
  *  Also calls \ref on_particle_change.
  *  \param p_id  the particle to remove, use -1 to remove all particles.
  */
-void mpi_remove_particle(int, int p_id) {
-  mpi_call_all(mpi_remove_particle_local, -1, p_id);
+void mpi_remove_particle(int p_id) {
+  mpi_call_all(mpi_remove_particle_local, p_id);
 }
 
 void remove_all_particles() {
-  mpi_remove_particle(-1, -1);
+  mpi_remove_particle(-1);
   clear_particle_node();
 }
 
@@ -971,8 +971,7 @@ int remove_particle(int p_id) {
   }
 
   particle_node[p_id] = -1;
-  mpi_remove_particle(-1, p_id);
-
+  mpi_remove_particle(p_id);
   particle_node.erase(p_id);
 
   return ES_OK;
@@ -992,7 +991,7 @@ void local_rescale_particles(int dir, double scale) {
   }
 }
 
-void mpi_rescale_particles_local(int, int dir) {
+static void mpi_rescale_particles_local(int dir) {
   double scale = 0.0;
   MPI_Recv(&scale, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
   local_rescale_particles(dir, scale);
@@ -1002,7 +1001,7 @@ void mpi_rescale_particles_local(int, int dir) {
 REGISTER_CALLBACK(mpi_rescale_particles_local)
 
 void mpi_rescale_particles(int dir, double scale) {
-  mpi_call(mpi_rescale_particles_local, -1, dir);
+  mpi_call(mpi_rescale_particles_local, dir);
   for (int pnode = 0; pnode < n_nodes; pnode++) {
     if (pnode == this_node) {
       local_rescale_particles(dir, scale);

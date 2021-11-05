@@ -19,7 +19,7 @@
 #
 # Define the espressomd package
 
-# Initialize MPI, start the main loop on the slaves
+# Initialize MPI, start the main loop on the worker nodes
 from . import _init
 
 from .system import System

@@ -63,11 +63,14 @@ RuntimeErrorStream _runtimeMessageStream(RuntimeError::ErrorLevel level,
                             function);
 }
 
-void mpi_gather_runtime_errors_slave() { runtimeErrorCollector->gatherSlave(); }
-REGISTER_CALLBACK(mpi_gather_runtime_errors_slave)
+void mpi_gather_runtime_errors_local() {
+  runtimeErrorCollector->gather_local();
+}
+
+REGISTER_CALLBACK(mpi_gather_runtime_errors_local)
 
 std::vector<RuntimeError> mpi_gather_runtime_errors() {
-  m_callbacks->call(mpi_gather_runtime_errors_slave);
+  m_callbacks->call(mpi_gather_runtime_errors_local);
   return runtimeErrorCollector->gather();
 }
 } // namespace ErrorHandling

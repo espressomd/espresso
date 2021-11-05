@@ -20,7 +20,6 @@
 #define _BONDED_INTERACTION_UTILS_HPP
 
 #include "bonded_interaction_data.hpp"
-#include "interactions.hpp"
 
 #include "BondList.hpp"
 #include "Particle.hpp"

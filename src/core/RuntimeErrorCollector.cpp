@@ -124,7 +124,7 @@ std::vector<RuntimeError> RuntimeErrorCollector::gather() {
   return all_errors;
 }
 
-void RuntimeErrorCollector::gatherSlave() {
+void RuntimeErrorCollector::gather_local() {
   Utils::Mpi::gather_buffer(m_errors, m_comm);
 
   this->clear();

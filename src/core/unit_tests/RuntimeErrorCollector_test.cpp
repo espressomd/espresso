@@ -90,7 +90,7 @@ BOOST_AUTO_TEST_CASE(count) {
 /*
  * Check the message gathering. Every node generates a runtime error
  * and a warning. Then we gather the messages
- * on the master and check if we got the correct messages. Then we
+ * on the head node and check if we got the correct messages. Then we
  * check the post-condition count() == 0.
  */
 BOOST_AUTO_TEST_CASE(gather) {
@@ -125,7 +125,7 @@ BOOST_AUTO_TEST_CASE(gather) {
                       return e.level() == RuntimeError::ErrorLevel::ERROR;
                     }) == world.size());
   } else {
-    rec.gatherSlave();
+    rec.gather_local();
   }
 
   Testing::reduce_and_check(world, rec.count() == 0);
