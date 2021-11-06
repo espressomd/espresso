@@ -245,6 +245,4 @@ lb_lbfluid_get_force_to_be_applied(const Utils::Vector3d &pos);
 void lb_lbfluid_add_force_at_pos(const Utils::Vector3d &pos,
                                  const Utils::Vector3d &f);
 
-void mpi_set_lattice_switch(ActiveLB lattice_switch);
-
 #endif

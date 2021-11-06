@@ -41,16 +41,17 @@
 #include <stdexcept>
 
 namespace {
-std::shared_ptr<LBWalberlaBase> lb_walberla_instance = nullptr;
-std::shared_ptr<LBWalberlaParams> lb_walberla_params_instance = nullptr;
+static std::weak_ptr<LBWalberlaBase> lb_walberla_instance;
+static std::shared_ptr<LBWalberlaParams> lb_walberla_params_instance;
 } // namespace
 
 std::shared_ptr<LBWalberlaBase> lb_walberla() {
-  if (!lb_walberla_instance) {
+  auto lb_walberla_instance_handle = lb_walberla_instance.lock();
+  if (!lb_walberla_instance_handle) {
     throw std::runtime_error(
         "Attempted access to uninitialized LBWalberla instance.");
   }
-  return lb_walberla_instance;
+  return lb_walberla_instance_handle;
 }
 
 std::shared_ptr<LBWalberlaParams> lb_walberla_params() {
@@ -102,15 +103,15 @@ bool mpi_activate_lb_walberla_local(
   if (boost::mpi::all_reduce(comm_cart, flag_failure, std::logical_or<>())) {
     return true;
   }
-  ::lb_walberla_instance = lb_fluid;
+  ::lb_walberla_instance = std::weak_ptr<LBWalberlaBase>{lb_fluid};
   ::lb_walberla_params_instance = lb_params;
   ::lattice_switch = ActiveLB::WALBERLA;
   return false;
 }
 
 void mpi_deactivate_lb_walberla_local() {
-  ::lb_walberla_instance = nullptr;
-  ::lb_walberla_params_instance = nullptr;
+  ::lb_walberla_instance.reset();
+  ::lb_walberla_params_instance.reset();
   ::lattice_switch = ActiveLB::NONE;
 }
 

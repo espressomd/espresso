@@ -121,6 +121,10 @@ public:
   virtual void update_boundary_from_list(std::vector<int> const &,
                                          std::vector<double> const &) = 0;
 
+  virtual void set_collision_model() = 0;
+
+  virtual void set_collision_model(double kT, unsigned int seed) = 0;
+
   // Pressure tensor
   virtual boost::optional<Utils::Vector6d>
   get_node_pressure_tensor(const Utils::Vector3i &node) const = 0;

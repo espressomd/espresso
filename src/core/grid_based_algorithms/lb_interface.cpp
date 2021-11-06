@@ -677,13 +677,3 @@ double lb_lbfluid_get_interpolated_density(const Utils::Vector3d &pos) {
   }
   throw NoLBActive();
 }
-
-void mpi_set_lattice_switch_local(ActiveLB lattice_switch) {
-  ::lattice_switch = lattice_switch;
-}
-
-REGISTER_CALLBACK(mpi_set_lattice_switch_local)
-
-void mpi_set_lattice_switch(ActiveLB lattice_switch) {
-  mpi_call_all(mpi_set_lattice_switch_local, lattice_switch);
-}

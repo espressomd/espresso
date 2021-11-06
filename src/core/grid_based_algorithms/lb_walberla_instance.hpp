@@ -38,10 +38,10 @@ private:
   double m_tau;
 };
 
-/** @brief Access the per-MPI-node LBWalberla instance */
+/** @brief Access the per-MPI-node waLBerla LB instance */
 std::shared_ptr<LBWalberlaBase> lb_walberla();
 
-/** @brief Access the Walberla parameters */
+/** @brief Access the waLBerla parameters */
 std::shared_ptr<LBWalberlaParams> lb_walberla_params();
 
 /** @brief Create the LBWalberla instance.

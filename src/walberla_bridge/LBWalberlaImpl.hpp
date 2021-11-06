@@ -386,6 +386,16 @@ public:
 
   void ghost_communication() override { (*m_full_communication)(); }
 
+  void set_collision_model() override {
+    m_collision_model = generate_collide_sweep();
+  }
+
+  void set_collision_model(double kT, unsigned int seed) override {
+    m_kT = kT;
+    m_seed = seed;
+    m_collision_model = generate_collide_sweep();
+  }
+
   void set_viscosity(double viscosity) override { m_viscosity = viscosity; }
 
   double get_viscosity() const override { return m_viscosity; }

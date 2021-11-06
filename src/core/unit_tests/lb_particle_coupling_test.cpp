@@ -47,6 +47,7 @@ namespace utf = boost::unit_test;
 #include "random.hpp"
 #include "thermostat.hpp"
 
+#include <LBWalberlaBase.hpp>
 #include <LatticeWalberla.hpp>
 
 #include <utils/Vector.hpp>
@@ -59,21 +60,6 @@ namespace utf = boost::unit_test;
 #include <memory>
 #include <string>
 #include <vector>
-
-namespace espresso {
-// ESPResSo system instance
-std::unique_ptr<EspressoSystemStandAlone> system;
-} // namespace espresso
-
-/** Decorator to run a unit test only on the head node. */
-struct if_head_node {
-  boost::test_tools::assertion_result operator()(utf::test_unit_id) {
-    return world.rank() == 0;
-  }
-
-private:
-  boost::mpi::communicator world;
-};
 
 // multiply by 100 because BOOST_CHECK_CLOSE takes a percentage tolerance,
 // and by 6 to account for error accumulation
@@ -106,23 +92,64 @@ LBTestParameters params{23u,
                         Utils::Vector3d::broadcast(8.),
                         Utils::Vector3i::broadcast(8)};
 
-void mpi_setup_lb_local(double kT) {
-  mpi_deactivate_lb_walberla_local();
+/** Boost unit test dataset */
+std::vector<double> const kTs{0, 1E-4};
+
+namespace espresso {
+// ESPResSo system instance
+static std::unique_ptr<EspressoSystemStandAlone> system;
+// ESPResSo actors
+static std::shared_ptr<LBWalberlaParams> lb_params;
+static std::shared_ptr<LatticeWalberla> lb_lattice;
+static std::shared_ptr<LBWalberlaBase> lb_fluid;
+
+void add_lb_actor_local(double kT) {
+  constexpr unsigned int n_ghost_layers = 1u;
   params.kT = kT;
-  auto lb_params = std::make_shared<LBWalberlaParams>(params.agrid, params.tau);
-  auto lb_lattice = std::make_shared<::LatticeWalberla>(params.grid_dimensions,
-                                                        node_grid, 1u);
-  auto lb_fluid =
+  lb_params = std::make_shared<LBWalberlaParams>(params.agrid, params.tau);
+  lb_lattice = std::make_shared<LatticeWalberla>(params.grid_dimensions,
+                                                 node_grid, n_ghost_layers);
+  lb_fluid =
       mpi_init_lb_walberla_local(*lb_lattice, *lb_params, params.viscosity,
                                  params.density, params.kT, params.seed);
   mpi_activate_lb_walberla_local(lb_fluid, lb_params);
 }
 
-REGISTER_CALLBACK(mpi_setup_lb_local)
+void set_lb_kT_local(double kT) {
+  lb_fluid->set_collision_model(kT, params.seed);
+}
 
-void mpi_setup_lb(double kT) { mpi_call_all(mpi_setup_lb_local, kT); }
+void remove_lb_actor_local() { mpi_deactivate_lb_walberla_local(); }
 
-BOOST_TEST_DECORATOR(*utf::precondition(if_head_node()))
+void cells_update_ghosts_local() { cells_update_ghosts(global_ghost_flags()); }
+
+REGISTER_CALLBACK(add_lb_actor_local)
+REGISTER_CALLBACK(set_lb_kT_local)
+REGISTER_CALLBACK(remove_lb_actor_local)
+REGISTER_CALLBACK(cells_update_ghosts_local)
+} // namespace espresso
+
+/** Decorator to run a unit test only on the head node. */
+struct if_head_node {
+  boost::test_tools::assertion_result operator()(utf::test_unit_id) {
+    return world.rank() == 0;
+  }
+
+private:
+  boost::mpi::communicator world;
+};
+
+/** Fixture to manage the lifetime of the LB actor. */
+struct CleanupActorLB : public ParticleFactory {
+  CleanupActorLB() : ParticleFactory() {
+    mpi_call_all(espresso::add_lb_actor_local, 0.);
+  }
+  ~CleanupActorLB() { mpi_call_all(espresso::remove_lb_actor_local); }
+};
+
+BOOST_FIXTURE_TEST_SUITE(suite, CleanupActorLB,
+                         *utf::precondition(if_head_node()))
+
 BOOST_AUTO_TEST_CASE(activate) {
   lb_lbcoupling_deactivate();
   mpi_bcast_lb_particle_coupling();
@@ -131,7 +158,6 @@ BOOST_AUTO_TEST_CASE(activate) {
   BOOST_CHECK(lb_particle_coupling.couple_to_md);
 }
 
-BOOST_TEST_DECORATOR(*utf::precondition(if_head_node()))
 BOOST_AUTO_TEST_CASE(de_activate) {
   lb_lbcoupling_activate();
   mpi_bcast_lb_particle_coupling();
@@ -140,16 +166,12 @@ BOOST_AUTO_TEST_CASE(de_activate) {
   BOOST_CHECK(not lb_particle_coupling.couple_to_md);
 }
 
-BOOST_TEST_DECORATOR(*utf::precondition(if_head_node()))
 BOOST_AUTO_TEST_CASE(rng_initial_state) {
-  lattice_switch = ActiveLB::WALBERLA;
   BOOST_CHECK(lb_lbcoupling_is_seed_required());
   BOOST_CHECK(!lb_particle_coupling.rng_counter_coupling);
 }
 
-BOOST_TEST_DECORATOR(*utf::precondition(if_head_node()))
 BOOST_AUTO_TEST_CASE(rng) {
-  lattice_switch = ActiveLB::WALBERLA;
   lb_lbcoupling_set_rng_state(17);
   BOOST_REQUIRE(lb_particle_coupling.rng_counter_coupling);
   BOOST_CHECK_EQUAL(lb_lbcoupling_get_rng_state(), 17);
@@ -163,8 +185,8 @@ BOOST_AUTO_TEST_CASE(rng) {
   BOOST_CHECK(step1_random1 != step1_random2);
   BOOST_CHECK(step1_random2 == step1_random2_try2);
 
-  // Propagation queries kT from lb, so lb needs to be initialized
-  mpi_setup_lb(1E-4); // kT
+  // Propagation queries kT from LB, so LB needs to be initialized
+  mpi_call_all(espresso::set_lb_kT_local, 1E-4);
   lb_lbcoupling_propagate();
 
   BOOST_REQUIRE(lb_particle_coupling.rng_counter_coupling);
@@ -181,7 +203,6 @@ BOOST_AUTO_TEST_CASE(rng) {
   BOOST_CHECK(step3_norandom == Utils::Vector3d{});
 }
 
-BOOST_TEST_DECORATOR(*utf::precondition(if_head_node()))
 BOOST_AUTO_TEST_CASE(drift_vel_offset) {
   Particle p{};
   BOOST_CHECK_EQUAL(lb_particle_coupling_drift_vel_offset(p).norm(), 0);
@@ -198,11 +219,9 @@ BOOST_AUTO_TEST_CASE(drift_vel_offset) {
   BOOST_CHECK_SMALL(
       (lb_particle_coupling_drift_vel_offset(p) - expected).norm(), tol);
 }
-const std::vector<double> kTs{0, 1E-4};
 
-BOOST_TEST_DECORATOR(*utf::precondition(if_head_node()))
 BOOST_DATA_TEST_CASE(drag_force, bdata::make(kTs), kT) {
-  mpi_setup_lb(kT); // in LB units.
+  mpi_call_all(espresso::set_lb_kT_local, kT);
   Particle p{};
   p.m.v = {-2.5, 1.5, 2};
   p.r.p = lb_walberla()->get_local_domain().first;
@@ -218,11 +237,9 @@ BOOST_DATA_TEST_CASE(drag_force, bdata::make(kTs), kT) {
 }
 
 #ifdef ENGINE
-BOOST_TEST_DECORATOR(*utf::precondition(if_head_node()))
 BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
-  lattice_switch = ActiveLB::WALBERLA;
+  mpi_call_all(espresso::set_lb_kT_local, kT);
   auto const first_lb_node = lb_walberla()->get_local_domain().first;
-  mpi_setup_lb(kT); // in LB units.
   Particle p{};
   p.p.swim.swimming = true;
   p.p.swim.f_swim = 2.;
@@ -278,18 +295,16 @@ BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
     }
   }
 }
-#endif
+#endif // ENGINE
 
-BOOST_TEST_DECORATOR(*utf::precondition(if_head_node()))
 BOOST_DATA_TEST_CASE(particle_coupling, bdata::make(kTs), kT) {
-  lattice_switch = ActiveLB::WALBERLA;
+  mpi_call_all(espresso::set_lb_kT_local, kT);
   lb_lbcoupling_set_rng_state(17);
   auto const first_lb_node = lb_walberla()->get_local_domain().first;
   auto const gamma = 0.2;
   auto const noise =
       (kT > 0.) ? std::sqrt(24. * gamma * kT / params.time_step) : 0.0;
   auto &rng = lb_particle_coupling.rng_counter_coupling;
-  mpi_setup_lb(kT); // in LB units.
   Particle p{};
   Utils::Vector3d expected = noise * Random::noise_uniform<RNGSalt::PARTICLES>(
                                          rng->value(), 0, p.identity());
@@ -326,20 +341,15 @@ BOOST_DATA_TEST_CASE(particle_coupling, bdata::make(kTs), kT) {
   }
 }
 
-void cells_update_ghosts_local() { cells_update_ghosts(global_ghost_flags()); }
-REGISTER_CALLBACK(cells_update_ghosts_local)
-
-BOOST_TEST_DECORATOR(*utf::precondition(if_head_node()))
-BOOST_DATA_TEST_CASE_F(ParticleFactory, coupling_particle_lattice_ia,
+BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
                        bdata::make(kTs), kT) {
-  lattice_switch = ActiveLB::WALBERLA;
+  mpi_call_all(espresso::set_lb_kT_local, kT);
   lb_lbcoupling_set_rng_state(17);
   auto const first_lb_node = lb_walberla()->get_local_domain().first;
   auto const gamma = 0.2;
   auto const noise = std::sqrt(24. * gamma * kT / params.time_step *
                                Utils::sqr(params.agrid / params.tau));
   auto &rng = lb_particle_coupling.rng_counter_coupling;
-  mpi_setup_lb(kT); // in LB units.
 
   auto const pid = 0;
   auto const skin = params.skin;
@@ -367,7 +377,7 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, coupling_particle_lattice_ia,
   for (bool with_ghosts : {false, true}) {
     {
       if (with_ghosts) {
-        mpi_call_all(cells_update_ghosts_local);
+        mpi_call_all(espresso::cells_update_ghosts_local);
       }
       auto const particles = cell_structure.local_particles();
       auto const ghost_particles = cell_structure.ghost_particles();
@@ -456,15 +466,13 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, coupling_particle_lattice_ia,
   }
 }
 
+BOOST_AUTO_TEST_SUITE_END()
+
 int main(int argc, char **argv) {
   espresso::system = std::make_unique<EspressoSystemStandAlone>(argc, argv);
   espresso::system->set_box_l(params.box_dimensions);
   espresso::system->set_time_step(params.time_step);
   espresso::system->set_skin(params.skin);
-  boost::mpi::communicator world;
-  if (world.rank() == 0) {
-    mpi_setup_lb(0.);
-  }
 
   return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }
