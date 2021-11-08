@@ -19,14 +19,10 @@
 
 import unittest as ut
 import importlib_wrapper
-import numpy as np
-
-# make simulation deterministic
-np.random.seed(42)
 
 benchmark, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@BENCHMARKS_DIR@/MC-acid-base-reservoir.py", mode="benchmark", n_part=100,
-    cmd_arguments=["--particles_per_core", "100", "--mode", "benchmark"])
+    "@BENCHMARKS_DIR@/mc_acid_base_reservoir.py", TOTAL_NUM_MC_STEPS=int(1e4),
+    cmd_arguments=["--particles_per_core", "100"])
 
 
 @skipIfMissingFeatures

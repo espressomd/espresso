@@ -1,13 +1,30 @@
-#!/usr/bin/env python
-# coding: utf-8
+#
+# Copyright (C) 2021 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 import numpy as np
-import pint  # module for working with units and dimensions
+import pint
 import time
 import benchmarks
 import espressomd
 import espressomd.electrostatics
 import espressomd.reaction_ensemble
+import setuptools
 import argparse
 
 parser = argparse.ArgumentParser(description="Benchmark MC simulations in the grand-reaction ensemble. "
@@ -15,26 +32,26 @@ parser = argparse.ArgumentParser(description="Benchmark MC simulations in the gr
 parser.add_argument("--particles_per_core", metavar="N", action="store",
                     type=int, default=125, required=False,
                     help="Number of particles per core")
-parser.add_argument("--mode", metavar="MODE", action="store",
-                    type=str, default="benchmark", required=False,
-                    help="Mode of script execution: benchmark or script-tune")
-parser.add_argument("--output", metavar="FILEPATH", action="store",
-                    type=str, required=False, default="benchmarks.csv",
-                    help="Output file (default: benchmarks.csv)")
-
+parser.add_argument("--p3m", action="store_true", required=False,
+                    help="Use P3M instead of DH")
+group = parser.add_mutually_exclusive_group()
+group.add_argument("--output", metavar="FILEPATH", action="store",
+                   type=str, required=False, default="benchmarks.csv",
+                   help="Output file (default: benchmarks.csv)")
+group.add_argument("--script-tune", action="store_true",
+                   help="Tune the benchmark script parameters")
 args = parser.parse_args()
 
 # process and check arguments
-assert args.particles_per_core > 99, "you need to use at least 100 particles per core to avoid finite-size effects in the simulation"
-assert args.mode in [
-    "benchmark", "script-tune"], "Mode can be only 'benchmark' or 'script-tune'"
+assert args.particles_per_core >= 100, "you need to use at least 100 particles per core to avoid finite-size effects in the simulation"
 espressomd.assert_features(['WCA', 'ELECTROSTATICS'])
-
-# ionization degree alpha calculated from the Henderson-Hasselbalch
-# equation for an ideal system
+assert setuptools.version.pkg_resources.packaging.specifiers.SpecifierSet('>=0.10.1').contains(pint.__version__), \
+    f'pint version {pint.__version__} is too old: several numpy operations can cast away the unit'
 
 
 def calc_ideal_alpha(pH, pKa):
+    # ionization degree alpha calculated from the Henderson-Hasselbalch
+    # equation for an ideal system
     return 1. / (1 + 10**(pKa - pH))
 
 
@@ -43,17 +60,12 @@ def calc_donnan_coefficient(c_acid, I_res, charge=-1):
         np.sqrt((charge * c_acid / (2 * I_res))**2 + 1)
 
 
-# initialize the system with an arbitrary box length, so that we can get
-# the number of cores
 system = espressomd.System(box_l=[1.0] * 3)
-
 n_proc = system.cell_system.get_state()['n_nodes']
 n_part = n_proc * args.particles_per_core
-mode = args.mode
-
-ureg = pint.UnitRegistry()
 
 # Important constants
+ureg = pint.UnitRegistry()
 TEMPERATURE = 298 * ureg.K
 WATER_PERMITTIVITY = 78.5  # at 298 K
 KT = TEMPERATURE * ureg.k_B
@@ -69,28 +81,23 @@ pKw = 14
 # 2. (emptyset) <=> Na+ + Cl-
 # The script was tuned so that N_ACID=120 yields about 500 particles per
 # simulation box (average total number of all particles)
-N_ACID = int(120 * (n_part / 500.))
-C_ACID = 1e-2 * ureg('mol/L')  # the test case compared with Espresso
+N_ACID = (120 * n_part) // 500
+C_ACID = 1e-2 * ureg('mol/L')
 pKa = 7
 pH = 7
 pSalt = 2
-# additional parameters of the simualtion
+# additional parameters of the simulation
 RUN_INTEGRATION = True
-USE_P3M = False
 
 # integration time step in reduced units
 dt = 0.01
-# Probability of running MD integration after the reaction move.
-PROB_INTEGRATION = 1.0
 
 TOTAL_NUM_MC_STEPS = int(1e5)
 NUM_SAMPLES = 100
 INTEGRATION_STEPS_PER_SAMPLE = 100
-if TOTAL_NUM_MC_STEPS % NUM_SAMPLES != 0:
-    raise ValueError(
-        f"Total number of MC steps must be divisible by total number of samples, got {TOTAL_NUM_MC_STEPS} and {NUM_SAMPLES}")
-else:
-    MC_STEPS_PER_SAMPLE = int(TOTAL_NUM_MC_STEPS / NUM_SAMPLES)
+assert TOTAL_NUM_MC_STEPS % NUM_SAMPLES == 0, \
+    f"Total number of MC steps must be divisible by total number of samples, got {TOTAL_NUM_MC_STEPS} and {NUM_SAMPLES}"
+MC_STEPS_PER_SAMPLE = TOTAL_NUM_MC_STEPS // NUM_SAMPLES
 
 # definitions of reduced units
 ureg.define(f'reduced_energy = {TEMPERATURE} * boltzmann_constant')
@@ -112,7 +119,7 @@ BOX_L = np.cbrt(BOX_V)
 BOX_L_REDUCED = BOX_L.to('reduced_length').magnitude
 print("C_ACID:", C_ACID.to('mol/L'))
 C_ACID_REDUCED_CORRECT = N_ACID / BOX_V.to('reduced_length^3')
-print("1/C_REDUCED_CORRECT: ", 1 / C_ACID_REDUCED_CORRECT)
+print("1/C_ACID_REDUCED_CORRECT: ", 1 / C_ACID_REDUCED_CORRECT)
 
 c_H_res = 10**(-pH) * ureg('mol/l')
 c_H_reduced = (c_H_res * MOLE).to('reduced_length^-3')
@@ -133,15 +140,12 @@ print("max_donnan:", max_donnan_coefficient)
 print("log10(max_donnan):", np.log10(max_donnan_coefficient))
 
 # equilibrium constant for the insertion of NaCl ion pairs
-K_NaCl_reduced = c_Na_reduced.magnitude * c_Cl_reduced.magnitude 
+K_NaCl_reduced = c_Na_reduced.magnitude * c_Cl_reduced.magnitude
 
 # equilibrium constants for the acid-base reaction
-K_A = 10**(-pKa) 
+K_A = 10**(-pKa)
 K_ANa_reduced = K_A * C_REF_REDUCED.magnitude * \
     (c_salt_res / c_H_res).magnitude
-
-# This parameter changes the speed of convergence but not the limiting
-# result to which the simulation converges
 
 # #### Set the particle types and charges
 
@@ -161,14 +165,16 @@ CHARGES = {
 }
 
 # ### Initialize the ESPResSo system
-system.box_l = [BOX_L_REDUCED] * 3 
+system.box_l = [BOX_L_REDUCED] * 3
 system.time_step = dt
 system.cell_system.skin = 2.0
-np.random.seed(seed=10)  # initialize the random number generator in numpy
+
+# make simulation deterministic
+np.random.seed(seed=10)
 
 # ### Set up particles and bonded-interactions
 
-# add the dissociated acid particlees
+# add the dissociated acid particles
 system.part.add(pos=np.random.random((N_ACID, 3)) * BOX_L_REDUCED,
                 type=[TYPES["A"]] * N_ACID,
                 q=[CHARGES["A"]] * N_ACID)
@@ -177,7 +183,6 @@ system.part.add(pos=np.random.random((N_ACID, 3)) * BOX_L_REDUCED,
 system.part.add(pos=np.random.random((N_ACID, 3)) * BOX_L_REDUCED,
                 type=[TYPES["Na"]] * N_ACID,
                 q=[CHARGES["Na"]] * N_ACID)
-
 
 # add salt ion pairs
 system.part.add(pos=np.random.random((N_SALT, 3)) * BOX_L_REDUCED,
@@ -209,14 +214,14 @@ system.thermostat.set_langevin(kT=KT_REDUCED, gamma=1.0, seed=7)
 system.integrator.run(steps=1000)
 
 COULOMB_PREFACTOR = BJERRUM_LENGTH_REDUCED * KT_REDUCED
-if USE_P3M:
-    coulomb = espressomd.electrostatics.P3M(prefactor=COULOMB_PREFACTOR, 
+if args.p3m:
+    coulomb = espressomd.electrostatics.P3M(prefactor=COULOMB_PREFACTOR,
                                             accuracy=1e-3)
 else:
     KAPPA = np.sqrt(c_salt_res.to('mol/L').magnitude) / 0.304 / ureg.nm
     KAPPA_REDUCED = KAPPA.to('1/reduced_length').magnitude
-    coulomb = espressomd.electrostatics.DH(prefactor=COULOMB_PREFACTOR, 
-                                           kappa=KAPPA_REDUCED, 
+    coulomb = espressomd.electrostatics.DH(prefactor=COULOMB_PREFACTOR,
+                                           kappa=KAPPA_REDUCED,
                                            r_cut=1. / KAPPA_REDUCED)
 
 system.actors.add(coulomb)
@@ -229,7 +234,7 @@ RE = espressomd.reaction_ensemble.ReactionEnsemble(
     seed=77
 )
 # this parameter helps speed up the calculation in an interacting system
-RE.set_non_interacting_type(len(TYPES))
+RE.set_non_interacting_type(max(TYPES.values()) + 1)
 
 RE.add_reaction(
     gamma=K_NaCl_reduced,
@@ -238,8 +243,7 @@ RE.add_reaction(
     product_types=[TYPES["Na"], TYPES["Cl"]],
     product_coefficients=[1, 1],
     default_charges={TYPES["Na"]: CHARGES["Na"],
-                     TYPES["Cl"]: CHARGES["Cl"],
-                     }
+                     TYPES["Cl"]: CHARGES["Cl"]}
 )
 
 RE.add_reaction(
@@ -250,8 +254,7 @@ RE.add_reaction(
     product_coefficients=[1, 1],
     default_charges={TYPES["HA"]: CHARGES["HA"],
                      TYPES["A"]: CHARGES["A"],
-                     TYPES["Na"]: CHARGES["Na"],
-                     }
+                     TYPES["Na"]: CHARGES["Na"]}
 )
 
 
@@ -260,22 +263,19 @@ def equilibrate_reaction(reaction_steps=1):
 
 
 def report_progress(system, i, next_i):
-    n_A = system.number_of_particles(type=TYPES['A']) 
-    n_Na = system.number_of_particles(type=TYPES['Na']) 
-    n_Cl = system.number_of_particles(type=TYPES['Cl']) 
+    n_A = system.number_of_particles(type=TYPES['A'])
+    n_Na = system.number_of_particles(type=TYPES['Na'])
+    n_Cl = system.number_of_particles(type=TYPES['Cl'])
     n_All = len(system.part)
     if i == next_i:
-        percentage_completion = i / NUM_SAMPLES * 100
-        alpha = n_A / N_ACID
         print(
-            f"run {i:d} time {system.time:.3g} completed {percentage_completion:.2f}%",  
-            f"instantaneous values: All {n_All:d}  Na {n_Na:d}  Cl {n_Cl:d}",  
-            f"A {n_A:d}  alpha {alpha:.3f}")
+            f"run {i:d} time {system.time:.3g} completed {i / NUM_SAMPLES * 100:.0f}%",
+            f"instantaneous values: All {n_All:d}  Na {n_Na:d}  Cl {n_Cl:d}",
+            f"A {n_A:d}  alpha {n_A / N_ACID:.3f}")
         if i == 0:
-            i = 1
             next_i = 1
         else:
-            next_i = next_i * 2
+            next_i *= 2
     return next_i
 
 
@@ -286,7 +286,7 @@ equilibrate_reaction(reaction_steps=10 * (N_ACID + 1))
 
 # Main sampling loop
 print(f"perform {NUM_SAMPLES:d} simulation runs")
-if mode == 'benchmark':
+if args.output:
 
     timings_MC = []
     timings_MD = []
@@ -294,18 +294,18 @@ if mode == 'benchmark':
     for i in range(NUM_SAMPLES):
 
         if MC_STEPS_PER_SAMPLE > 0:
-            tick_MC = time.time()  
+            tick_MC = time.time()
             RE.reaction(MC_STEPS_PER_SAMPLE)
             tock_MC = time.time()
 
-        t_MC = (tock_MC - tick_MC) / (MC_STEPS_PER_SAMPLE)
+        t_MC = (tock_MC - tick_MC) / MC_STEPS_PER_SAMPLE
         timings_MC.append(t_MC)
 
         tick_MD = time.time()
         system.integrator.run(INTEGRATION_STEPS_PER_SAMPLE)
         tock_MD = time.time()
 
-        t_MD = (tock_MD - tick_MD) / (INTEGRATION_STEPS_PER_SAMPLE)
+        t_MD = (tock_MD - tick_MD) / INTEGRATION_STEPS_PER_SAMPLE
         timings_MD.append(t_MD)
 
         energy = system.analysis.energy()["total"]
@@ -321,7 +321,7 @@ if mode == 'benchmark':
     # write report
     benchmarks.write_report(args.output, n_proc, timings_MC, NUM_SAMPLES)
     benchmarks.write_report(args.output, n_proc, timings_MD, NUM_SAMPLES)
-elif mode == 'script-tune':
+elif args.script_tune:
     next_i = 0
     n_As = []
     n_Alls = []
@@ -331,16 +331,15 @@ elif mode == 'script-tune':
         if RUN_INTEGRATION:
             system.integrator.run(INTEGRATION_STEPS_PER_SAMPLE)
         RE.reaction(MC_STEPS_PER_SAMPLE)
-        n_A = system.number_of_particles(type=TYPES['A']) 
+        n_A = system.number_of_particles(type=TYPES['A'])
         n_As.append(n_A)
         n_All = len(system.part)
         n_Alls.append(n_All)
         next_i = report_progress(system, i, next_i)
 
-    # caluclate the averages at the end in order to check that we are having
+    # calculate the averages at the end in order to check that we are having
     # the correct number of particles
     n_A_avg = np.average(np.array(n_As))
     n_All_avg = np.average(np.array(n_Alls))
     print(
         f"Average values: n_All {n_All_avg:.2f} , n_A {n_A_avg:.2f}, alpha {N_ACID:.4f}")
-    print("simulation DONE")
