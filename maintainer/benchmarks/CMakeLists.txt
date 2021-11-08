@@ -82,6 +82,8 @@ python_benchmark(FILE lj.py ARGUMENTS
                  "--particles_per_core=10000;--volume_fraction=0.50")
 python_benchmark(FILE lj.py ARGUMENTS
                  "--particles_per_core=10000;--volume_fraction=0.02")
+python_benchmark(FILE MC-acid-base-reservoir.py ARGUMENTS
+                 "--particles_per_core=500;--mode=benchmark")
 python_benchmark(
   FILE lj.py ARGUMENTS
   "--particles_per_core=1000;--volume_fraction=0.10;--bonds" RUN_WITH_MPI FALSE)
@@ -95,13 +97,19 @@ python_benchmark(
 python_benchmark(
   FILE p3m.py ARGUMENTS
   "--particles_per_core=10000;--volume_fraction=0.25;--prefactor=4")
-
 python_benchmark(
   FILE lb.py ARGUMENTS
   "--particles_per_core=125;--volume_fraction=0.03;--lb_sites_per_particle=28")
+python_benchmark(FILE ferrofluid.py ARGUMENTS "--particles_per_core=400")
+python_benchmark(FILE mc_acid_base_reservoir.py ARGUMENTS
+                 "--particles_per_core=500" RUN_WITH_MPI FALSE)
 
+add_custom_target(
+  benchmarks_data
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks.py
+          ${CMAKE_CURRENT_BINARY_DIR})
 add_custom_target(
   benchmark_python COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}
                            ${CTEST_ARGS} --output-on-failure)
 
-add_dependencies(benchmark benchmark_python)
+add_dependencies(benchmark benchmark_python benchmarks_data)
