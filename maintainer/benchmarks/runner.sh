@@ -26,7 +26,7 @@ trap abort EXIT
 set -e
 
 # manage configuration files with different features
-configs="empty.hpp default.hpp maxset.hpp"
+configs="maxset.hpp default.hpp empty.hpp"
 cp ../maintainer/configs/empty.hpp .
 cp ../src/config/myconfig-default.hpp default.hpp
 cp ../maintainer/configs/maxset.hpp .
@@ -40,7 +40,7 @@ for config in ${configs}; do
 done
 
 cat > benchmarks.csv << EOF
-"config","script","arguments","cores","mean","ci","nsteps","duration"
+"config","script","arguments","cores","mean","ci","nsteps","duration","label"
 EOF
 
 # run benchmarks

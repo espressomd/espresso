@@ -319,8 +319,10 @@ if args.output:
     avg_MD, ci_MD = benchmarks.get_average_time(timings_MD)
     print(f"average MD: {avg_MD:.3e} +/- {ci_MD:.3e} (95% C.I.)")
     # write report
-    benchmarks.write_report(args.output, n_proc, timings_MC, NUM_SAMPLES)
-    benchmarks.write_report(args.output, n_proc, timings_MD, NUM_SAMPLES)
+    benchmarks.write_report(args.output, n_proc, timings_MC, NUM_SAMPLES,
+                            label='MC')
+    benchmarks.write_report(args.output, n_proc, timings_MD, NUM_SAMPLES,
+                            label='MD')
 elif args.script_tune:
     next_i = 0
     n_As = []
