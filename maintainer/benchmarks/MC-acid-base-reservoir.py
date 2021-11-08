@@ -48,7 +48,7 @@ def calc_donnan_coefficient(c_acid, I_res, charge=-1):
 system = espressomd.System(box_l=[1.0] * 3)
 
 n_proc = system.cell_system.get_state()['n_nodes']
-desired_n_part = n_proc * args.particles_per_core
+n_part = n_proc * args.particles_per_core
 mode = args.mode
 
 ureg = pint.UnitRegistry()
@@ -69,7 +69,7 @@ pKw = 14
 # 2. (emptyset) <=> Na+ + Cl-
 # The script was tuned so that N_ACID=120 yields about 500 particles per
 # simulation box (average total number of all particles)
-N_ACID = int(120 * (desired_n_part / 500.))
+N_ACID = int(120 * (n_part / 500.))
 C_ACID = 1e-2 * ureg('mol/L')  # the test case compared with Espresso
 pKa = 7
 pH = 7

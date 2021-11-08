@@ -82,6 +82,8 @@ python_benchmark(FILE lj.py ARGUMENTS
                  "--particles_per_core=10000;--volume_fraction=0.50")
 python_benchmark(FILE lj.py ARGUMENTS
                  "--particles_per_core=10000;--volume_fraction=0.02")
+python_benchmark(FILE MC-acid-base-reservoir.py ARGUMENTS
+                 "--particles_per_core=500;--mode=benchmark")
 python_benchmark(
   FILE lj.py ARGUMENTS
   "--particles_per_core=1000;--volume_fraction=0.10;--bonds" RUN_WITH_MPI FALSE)
