@@ -115,7 +115,7 @@ int mpi_icc_init();
 /** Set ICC parameters
  */
 void icc_set_params(int n_ic, double convergence, double relaxation,
-                    Utils::Vector3d &ext_field, int max_iterations,
+                    Utils::Vector3d const &ext_field, int max_iterations,
                     int first_id, double eps_out, std::vector<double> &areas,
                     std::vector<double> &e_in, std::vector<double> &sigma,
                     std::vector<Utils::Vector3d> &normals);

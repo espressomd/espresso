@@ -18,11 +18,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-/** \file
- *
- * Lattice class definition
- *
- */
 
 #include "grid_based_algorithms/lattice.hpp"
 
@@ -71,7 +66,7 @@ Lattice::Lattice(double agrid, double offset, int halo_size,
 
   /* determine the number of total nodes including halo */
   halo_grid = grid + Utils::Vector3i::broadcast(2 * halo_size);
-  halo_grid_volume = boost::accumulate(halo_grid, 1, std::multiplies<int>());
+  halo_grid_volume = Utils::product(halo_grid);
   halo_offset =
       Utils::get_linear_index(halo_size, halo_size, halo_size, halo_grid);
 }
@@ -98,34 +93,34 @@ void Lattice::map_position_to_lattice(const Utils::Vector3d &pos,
        adjust if this is due to round off errors */
     if (ind[dir] < 0) {
       if (fabs(rel) < epsilon) {
-        ind[dir] = 0; // TODO
+        ind[dir] = 0;
       } else {
-        throw std::runtime_error("position not inside a local plaquette");
+        throw std::runtime_error("position outside local LB domain");
       }
     } else if (ind[dir] > grid[dir]) {
       if (lpos - local_box[dir] < epsilon * local_box[dir])
         ind[dir] = grid[dir];
       else
-        throw std::runtime_error("position not inside a local plaquette");
+        throw std::runtime_error("position outside local LB domain");
     }
 
     delta[3 + dir] = rel - ind[dir]; // delta_x/a
     delta[dir] = 1.0 - delta[3 + dir];
   }
+  auto const slice_x = static_cast<std::size_t>(halo_grid[0]);
+  auto const slice_xy = static_cast<std::size_t>(halo_grid[1]) * slice_x;
   node_index[0] = Utils::get_linear_index(ind, halo_grid);
   node_index[1] = node_index[0] + 1u;
-  node_index[2] = node_index[0] + static_cast<std::size_t>(halo_grid[0]);
-  node_index[3] = node_index[0] + static_cast<std::size_t>(halo_grid[0]) + 1u;
-  node_index[4] = node_index[0] + static_cast<std::size_t>(halo_grid[0]) *
-                                      static_cast<std::size_t>(halo_grid[1]);
-  node_index[5] = node_index[4] + 1u;
-  node_index[6] = node_index[4] + static_cast<std::size_t>(halo_grid[0]);
-  node_index[7] = node_index[4] + static_cast<std::size_t>(halo_grid[0]) + 1u;
+  node_index[2] = node_index[0] + slice_x;
+  node_index[3] = node_index[0] + slice_x + 1u;
+  node_index[4] = node_index[0] + slice_xy;
+  node_index[5] = node_index[0] + slice_xy + 1u;
+  node_index[6] = node_index[0] + slice_xy + slice_x;
+  node_index[7] = node_index[0] + slice_xy + slice_x + 1u;
 }
 
 Utils::Vector3i Lattice::local_index(Utils::Vector3i const &global_index) const
     noexcept {
-  return {global_index[0] - local_index_offset[0] + halo_size,
-          global_index[1] - local_index_offset[1] + halo_size,
-          global_index[2] - local_index_offset[2] + halo_size};
+  return global_index - local_index_offset +
+         Utils::Vector3i::broadcast(halo_size);
 }

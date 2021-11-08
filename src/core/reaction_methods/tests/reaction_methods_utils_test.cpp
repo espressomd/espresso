@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE(factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i_test) {
     for (int nu = -4; nu <= 4; ++nu) {
       auto const val = factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(N0, nu);
       auto const ref = reaction_ensemble_combinations(N0, nu);
-      BOOST_CHECK_CLOSE(val, ref, 5 * tol);
+      BOOST_CHECK_CLOSE(val, ref, 10 * tol);
     }
   }
 }

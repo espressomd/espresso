@@ -20,6 +20,7 @@
 #define LATTICE_INTERPOLATION_HPP
 
 #include <utils/Vector.hpp>
+
 /**
  * @brief Interpolation order for the LB fluid interpolation.
  * @note For the CPU LB only linear interpolation is available.
@@ -37,15 +38,16 @@ InterpolationOrder lb_lbinterpolation_get_interpolation_order();
  * @brief Calculates the fluid velocity at a given position of the
  * lattice.
  * @note It can lead to undefined behaviour if the
- * position is not within the local lattice. */
+ * position is not within the local lattice.
+ */
 const Utils::Vector3d
 lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &p);
 
 /**
- * @brief Calculates the fluid density at a given position of the
- * lattice.
+ * @brief Calculates the fluid density at a given position of the lattice.
  * @note It can lead to undefined behaviour if the
- * position is not within the local lattice. */
+ * position is not within the local lattice.
+ */
 double lb_lbinterpolation_get_interpolated_density(const Utils::Vector3d &p);
 
 /**

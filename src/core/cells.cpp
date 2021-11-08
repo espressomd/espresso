@@ -111,32 +111,26 @@ std::vector<PairInfo> non_bonded_loop_trace() {
   return ret;
 }
 
-std::vector<std::pair<int, int>> get_pairs(double const distance) {
-  return get_pairs_filtered(distance, [](Particle const &p) { return true; });
+static auto mpi_get_pairs_local(double const distance) {
+  auto pairs =
+      get_pairs_filtered(distance, [](Particle const &) { return true; });
+  Utils::Mpi::gather_buffer(pairs, comm_cart);
+  return pairs;
 }
 
-std::vector<std::pair<int, int>>
-get_pairs_of_types(double const distance, std::vector<int> const &types) {
-  return get_pairs_filtered(distance, [types](Particle const &p) {
+REGISTER_CALLBACK_MAIN_RANK(mpi_get_pairs_local)
+
+static auto mpi_get_pairs_of_types_local(double const distance,
+                                         std::vector<int> const &types) {
+  auto pairs = get_pairs_filtered(distance, [types](Particle const &p) {
     return std::any_of(types.begin(), types.end(),
                        [p](int const type) { return p.p.type == type; });
   });
+  Utils::Mpi::gather_buffer(pairs, comm_cart);
+  return pairs;
 }
 
-void get_pairs_local(double const distance) {
-  auto local_pairs = get_pairs(distance);
-  Utils::Mpi::gather_buffer(local_pairs, comm_cart);
-}
-
-REGISTER_CALLBACK(get_pairs_local)
-
-void get_pairs_of_types_local(double const distance,
-                              std::vector<int> const &types) {
-  auto local_pairs = get_pairs_of_types(distance, types);
-  Utils::Mpi::gather_buffer(local_pairs, comm_cart);
-}
-
-REGISTER_CALLBACK(get_pairs_of_types_local)
+REGISTER_CALLBACK_MAIN_RANK(mpi_get_pairs_of_types_local)
 
 namespace detail {
 void search_distance_sanity_check(double const distance) {
@@ -146,30 +140,25 @@ void search_distance_sanity_check(double const distance) {
   auto range = *boost::min_element(cell_structure.max_range());
   if (distance > range) {
     runtimeErrorMsg() << "pair search distance " << distance
-                      << " bigger than the decomposition range " << range
-                      << ".\n";
+                      << " bigger than the decomposition range " << range;
   }
 }
 } // namespace detail
 
 std::vector<std::pair<int, int>> mpi_get_pairs(double const distance) {
   detail::search_distance_sanity_check(distance);
-  mpi_call(get_pairs_local, distance);
-  auto pairs = get_pairs(distance);
-  Utils::Mpi::gather_buffer(pairs, comm_cart);
-  return pairs;
+  return mpi_call(::Communication::Result::main_rank, mpi_get_pairs_local,
+                  distance);
 }
 
 std::vector<std::pair<int, int>>
 mpi_get_pairs_of_types(double const distance, std::vector<int> const &types) {
   detail::search_distance_sanity_check(distance);
-  mpi_call(get_pairs_of_types_local, distance, types);
-  auto pairs = get_pairs_of_types(distance, types);
-  Utils::Mpi::gather_buffer(pairs, comm_cart);
-  return pairs;
+  return mpi_call(::Communication::Result::main_rank,
+                  mpi_get_pairs_of_types_local, distance, types);
 }
 
-void non_bonded_loop_trace_local() {
+static void non_bonded_loop_trace_local() {
   auto pairs = non_bonded_loop_trace();
   Utils::Mpi::gather_buffer(pairs, comm_cart);
 }
@@ -183,7 +172,7 @@ std::vector<PairInfo> mpi_non_bonded_loop_trace() {
   return pairs;
 }
 
-void mpi_resort_particles_local(int global_flag, int) {
+static void mpi_resort_particles_local(int global_flag) {
   cell_structure.resort_particles(global_flag);
 
   boost::mpi::gather(
@@ -193,7 +182,7 @@ void mpi_resort_particles_local(int global_flag, int) {
 REGISTER_CALLBACK(mpi_resort_particles_local)
 
 std::vector<int> mpi_resort_particles(int global_flag) {
-  mpi_call(mpi_resort_particles_local, global_flag, 0);
+  mpi_call(mpi_resort_particles_local, global_flag);
   cell_structure.resort_particles(global_flag);
 
   clear_particle_node();

@@ -20,7 +20,7 @@
 #ifndef SHAPES_UNION
 #define SHAPES_UNION
 
-#include <boost/algorithm/cxx11/all_of.hpp>
+#include <boost/algorithm/cxx11/any_of.hpp>
 
 #include "Shape.hpp"
 
@@ -45,11 +45,12 @@ public:
   }
 
   /**
-   * @brief Calculates the minimum of all distances and the corresponding
+   * @brief Calculate the minimum of all distances and the corresponding
    * distance vector for a given position and any contained shape.
-   * @param[in] pos Position for which to calculate the distance.
-   * @param[out] dist Minimum distance between pos and any contained shape.
-   * @param[out] vec Distance vector.
+   * @param[in]  pos  Position from which to get the nearest distance.
+   * @param[out] dist Nearest distance to the shape. Negative if inside the
+   *                  shape, zero if in direct contact with the shape.
+   * @param[out] vec  Vector to nearest point on the shape.
    */
   void calculate_dist(Utils::Vector3d const &pos, double &dist,
                       Utils::Vector3d &vec) const override {
@@ -74,7 +75,7 @@ public:
   }
 
   bool is_inside(Utils::Vector3d const &pos) const override {
-    return boost::algorithm::all_of(
+    return boost::algorithm::any_of(
         m_shapes, [&pos](auto const &s) { return s->is_inside(pos); });
   }
 

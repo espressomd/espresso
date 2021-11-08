@@ -17,19 +17,25 @@
 import numpy as np
 from .utils import to_char_pointer, to_str, handle_errors
 from .utils cimport Vector3d, make_array_locked
+cimport cpython.object
 
 from libcpp.memory cimport make_shared
 
 cdef shared_ptr[ContextManager] _om
 
 cdef class PObjectRef:
-    def __richcmp__(PObjectRef a, PObjectRef b, op):
-        if op == 2:
+    def __richcmp__(PObjectRef a, PObjectRef b, int op):
+        if op == cpython.object.Py_EQ:
             return a.sip == b.sip
+        elif op == cpython.object.Py_NE:
+            return a.sip != b.sip
         else:
             raise NotImplementedError
 
     cdef shared_ptr[ObjectHandle] sip
+
+    def print_sip(self):
+        print( < long > (self.sip.get()))
 
 cdef class PScriptInterface:
 
@@ -64,11 +70,11 @@ cdef class PScriptInterface:
 
     cdef shared_ptr[ObjectHandle] sip
     cdef set_sip(self, shared_ptr[ObjectHandle] sip)
-    cdef VariantMap _sanitize_params(self, in_params) except *
 
     def __init__(self, name=None, policy="GLOBAL", sip=None, **kwargs):
         cdef CreationPolicy policy_
         cdef PObjectRef sip_
+        cdef VariantMap out_params
 
         if policy == "GLOBAL":
             policy_ = GLOBAL
@@ -82,15 +88,23 @@ cdef class PScriptInterface:
             self.sip = sip_.sip
         else:
             global _om
+            for pname in kwargs:
+                out_params[to_char_pointer(pname)] = python_object_to_variant(
+                    kwargs[pname])
             self.set_sip(
                 _om.get().make_shared(
                     policy_,
                     to_char_pointer(name),
-                    self._sanitize_params(kwargs)))
+                    out_params))
 
     def __richcmp__(a, b, op):
-        if op == 2:
-            return a.get_sip() == b.get_sip()
+        cls = PScriptInterface
+        are_equality_comparable = isinstance(a, cls) and isinstance(b, cls)
+        are_equal = are_equality_comparable and (a.get_sip() == b.get_sip())
+        if op == cpython.object.Py_EQ:
+            return are_equal
+        elif op == cpython.object.Py_NE:
+            return not are_equal
         else:
             raise NotImplementedError
 
@@ -107,6 +121,7 @@ cdef class PScriptInterface:
 
         ret = PObjectRef()
         ret.sip = self.sip
+
         return ret
 
     cdef set_sip(self, shared_ptr[ObjectHandle] sip):
@@ -151,15 +166,6 @@ cdef class PScriptInterface:
         cdef shared_ptr[ObjectHandle] so_ptr = _om.get().deserialize(state)
         self.set_sip(so_ptr)
 
-    cdef VariantMap _sanitize_params(self, in_params) except *:
-        cdef VariantMap out_params
-
-        for pname in in_params:
-            out_params[to_char_pointer(pname)] = python_object_to_variant(
-                in_params[pname])
-
-        return out_params
-
     def set_params(self, **kwargs):
         for name, value in kwargs.items():
             self.sip.get().set_parameter(to_char_pointer(name),
@@ -178,7 +184,7 @@ cdef class PScriptInterface:
 
         return odict
 
-cdef Variant python_object_to_variant(value):
+cdef Variant python_object_to_variant(value) except +:
     """Convert Python objects to C++ Variant objects."""
 
     cdef vector[Variant] vec
@@ -201,7 +207,7 @@ cdef Variant python_object_to_variant(value):
                     f"No conversion from type dict_item([({type(k).__name__}, {type(v).__name__})]) to Variant[std::unordered_map<int, Variant>]")
             vmap[k] = python_object_to_variant(v)
         return make_variant[unordered_map[int, Variant]](vmap)
-    elif hasattr(value, '__iter__') and not(type(value) == str):
+    elif hasattr(value, '__iter__') and type(value) != str:
         for e in value:
             vec.push_back(python_object_to_variant(e))
         return make_variant[vector[Variant]](vec)
@@ -280,6 +286,9 @@ cdef variant_to_python_object(const Variant & value) except +:
 
         return res
 
+    if is_type[size_t](value):
+        return get_value[size_t](value)
+
     raise TypeError("Unknown type")
 
 
@@ -319,7 +328,7 @@ class ScriptInterfaceHelper(PScriptInterface):
             return self.__dict__[attr]
 
         raise AttributeError(
-            "Class " + self.__class__.__name__ + " does not have an attribute " + attr)
+            f"Object '{self.__class__.__name__}' has no attribute '{attr}'")
 
     def __setattr__(self, attr, value):
         if attr in self._valid_parameters():

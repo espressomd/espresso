@@ -74,7 +74,7 @@ public:
   void clear();
 
   std::vector<RuntimeError> gather();
-  void gatherSlave();
+  void gather_local();
 
   const boost::mpi::communicator &comm() const { return m_comm; }
 

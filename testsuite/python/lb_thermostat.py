@@ -46,6 +46,7 @@ class LBThermostatCommon(thermostats_common.ThermostatsCommon):
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
+    np.random.seed(42)
 
     def prepare(self):
         self.system.actors.clear()

@@ -102,7 +102,55 @@ cdef class ReactionAlgorithm:
     def set_wall_constraints_in_z_direction(self, slab_start_z, slab_end_z):
         """
         Restrict the sampling area to a slab in z-direction. Requires setting
-        the volume using :meth:`set_volume`.
+        the volume using :meth:`set_volume`. This constraint is necessary when
+        working with :ref:`Electrostatic Layer Correction (ELC)`.
+
+        Parameters
+        ----------
+        slab_start_z : :obj:`float`
+            z coordinate of the bottom wall.
+        slab_end_z : :obj:`float`
+            z coordinate of the top wall.
+
+        Examples
+        --------
+
+        >>> import espressomd
+        >>> import espressomd.shapes
+        >>> import espressomd.electrostatics
+        >>> import espressomd.reaction_ensemble
+        >>> import numpy as np
+        >>> # setup a charged system
+        >>> box_l = 20
+        >>> elc_gap = 10
+        >>> system = espressomd.System(box_l=[box_l, box_l, box_l + elc_gap])
+        >>> system.time_step = 0.001
+        >>> system.cell_system.skin = 0.4
+        >>> types = {"HA": 0, "A-": 1, "H+": 2, "wall": 3}
+        >>> charges = {types["HA"]: 0, types["A-"]: -1, types["H+"]: +1}
+        >>> for i in range(10):
+        ...     system.part.add(pos=np.random.random(3) * box_l, type=types["A-"], q=charges[types["A-"]])
+        ...     system.part.add(pos=np.random.random(3) * box_l, type=types["H+"], q=charges[types["H+"]])
+        >>> for particle_type in charges.keys():
+        ...     system.non_bonded_inter[particle_type, types["wall"]].wca.set_params(epsilon=1.0, sigma=1.0)
+        >>> # add ELC actor
+        >>> p3m = espressomd.electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
+        >>> elc = espressomd.electrostatics.ELC(p3m_actor=p3m, maxPWerror=1.0, gap_size=elc_gap)
+        >>> system.actors.add(elc)
+        >>> # add constant pH method
+        >>> RE = espressomd.reaction_ensemble.ConstantpHEnsemble(kT=1, exclusion_radius=1, seed=77)
+        >>> RE.constant_pH = 2
+        >>> RE.add_reaction(gamma=0.0088, reactant_types=[types["HA"]],
+        ...                 product_types=[types["A-"], types["H+"]],
+        ...                 default_charges=charges)
+        >>> # add walls for the ELC gap
+        >>> RE.set_wall_constraints_in_z_direction(0, box_l)
+        >>> RE.set_volume(box_l**3)
+        >>> system.constraints.add(shape=espressomd.shapes.Wall(dist=0, normal=[0, 0, 1]),
+        ...                        particle_type=types["wall"])
+        >>> system.constraints.add(shape=espressomd.shapes.Wall(dist=-box_l, normal=[0, 0, -1]),
+        ...                        particle_type=types["wall"])
+
 
         """
         deref(self.RE).set_slab_constraint(slab_start_z, slab_end_z)
@@ -154,7 +202,9 @@ cdef class ReactionAlgorithm:
         This is used to temporarily hide particles during a reaction trial
         move, if they are to be deleted after the move is accepted. Please
         change this value if you intend to use the type 100 for some other
-        particle types with interactions. Please also note that particles
+        particle types with interactions, or if you need improved performance,
+        as the default value of 100 causes some overhead.
+        Please also note that particles
         in the current implementation of the Reaction Ensemble are only
         hidden with respect to Lennard-Jones and Coulomb interactions. Hiding
         of other interactions, for example a magnetic, needs to be implemented
@@ -562,20 +612,75 @@ cdef class WidomInsertion(ReactionAlgorithm):
 
         self._set_params_in_es_core()
 
-    def measure_excess_chemical_potential(self, reaction_id=0):
+    def calculate_particle_insertion_potential_energy(self, reaction_id=0):
         """
-        Measures the excess chemical potential in a homogeneous system for
-        the provided ``reaction_id``. Please define the insertion moves
-        first by calling the method :meth:`~ReactionAlgorithm.add_reaction`
-        (with only product types specified).
-        Returns the excess chemical potential and the standard error for
-        the excess chemical potential. The error estimate assumes that
-        your samples are uncorrelated.
+        Measures the potential energy when particles are inserted in the
+        system following the reaction  provided ``reaction_id``. Please
+        define the insertion moves first by calling the method
+        :meth:`~ReactionAlgorithm.add_reaction` (with only product types
+        specified).
 
+        Note that although this function does not provide directly
+        the chemical potential, it can be used to calculate it.
+        For an example of such an application please check
+        :file:`/samples/widom_insertion.py`.
         """
         # make inverse widom scheme (deletion of particles) inaccessible.
         # The deletion reactions are the odd reaction_ids
         if(reaction_id < 0 or reaction_id > (deref(self.WidomInsertionPtr).reactions.size() + 1) / 2):
             raise ValueError("This reaction is not present")
-        return deref(self.WidomInsertionPtr).measure_excess_chemical_potential(
+        return deref(self.WidomInsertionPtr).calculate_particle_insertion_potential_energy(
             deref(self.WidomInsertionPtr).reactions[int(2 * reaction_id)])
+
+    def calculate_excess_chemical_potential(
+            self, particle_insertion_potential_energy_samples, N_blocks=16):
+        """
+        Given a set of samples of the particle insertion potential energy,
+        calculates the excess chemical potential and its statistical error.
+
+        Parameters
+        ----------
+        particle_insertion_potential_energy_samples : array_like of :obj:`float`
+            Samples of the particle insertion potential energy.
+        N_blocks : :obj:`int`, optional
+            Number of bins for binning analysis.
+
+        Returns
+        -------
+        mean : :obj:`float`
+            Mean excess chemical potential.
+        error : :obj:`float`
+            Standard error of the mean.
+        """
+
+        def do_block_analysis(samples, N_blocks=16):
+            """
+            Performs a binning analysis of samples.
+            Divides the samples in ``N_blocks`` equispaced blocks
+            and returns the mean and its uncertainty
+            """
+            size_block = int(len(samples) / N_blocks)
+            block_list = []
+            for block in range(N_blocks):
+                block_list.append(
+                    np.mean(samples[block * size_block:(block + 1) * size_block]))
+
+            sample_mean = np.mean(block_list)
+            sample_std = np.std(block_list, ddof=1)
+            sample_uncertainty = sample_std / np.sqrt(N_blocks)
+
+            return sample_mean, sample_uncertainty
+
+        gamma_samples = np.exp(-1.0 * np.array(
+            particle_insertion_potential_energy_samples) / self._params["kT"])
+
+        gamma_mean, gamma_std = do_block_analysis(
+            samples=gamma_samples, N_blocks=N_blocks)
+
+        mu_ex_mean = -1 * np.log(gamma_mean) * self._params["kT"]
+
+        # full propagation of error
+        mu_ex_Delta = 0.5 * self._params["kT"] * abs(-np.log(gamma_mean + gamma_std) -
+                                                     (-np.log(gamma_mean - gamma_std)))
+
+        return mu_ex_mean, mu_ex_Delta

@@ -29,8 +29,8 @@ import espressomd.observables
 import espressomd.accumulators
 import espressomd.electrostatics
 import espressomd.interactions
-import espressomd.virtual_sites
 import espressomd.drude_helpers
+import espressomd.virtual_sites
 import espressomd.visualization_opengl
 
 required_features = ["LENNARD_JONES", "P3M", "MASS", "ROTATION",
@@ -193,59 +193,36 @@ for i in range(len(lj_types)):
             epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
 
 # Place Particles
-rid = 0
-anion_ids = []
-cation_sites_ids = []
-cation_com_ids = []
-cation_c1_ids = []
-cation_c2_ids = []
-cation_c3_ids = []
+anions = []
+cations = []
 
 for i in range(n_ionpairs):
-    system.part.add(id=rid, type=types["PF6"], pos=np.random.random(3) * box_l,
-                    q=charges["PF6"], mass=masses["PF6"])
-    anion_ids.append(rid)
-    if args.drude:
-        rid += 2
-    else:
-        rid += 1
+    # Add an anion ...
+    anions.append(
+        system.part.add(type=types["PF6"], pos=np.random.random(3) * box_l,
+                        q=charges["PF6"], mass=masses["PF6"]))
 
-for i in range(n_ionpairs):
+    # ... and a cation
     pos_com = np.random.random(3) * box_l
-    system.part.add(
-        id=rid, type=types["BMIM_COM"], pos=pos_com,
+    cation_com = system.part.add(
+        type=types["BMIM_COM"], pos=pos_com,
         mass=masses["BMIM_COM"], rinertia=[646.284, 585.158, 61.126],
         gamma=0, rotation=[1, 1, 1])
-    cation_com_ids.append(rid)
-    com_id = rid
-    rid += 1
-    system.part.add(id=rid, type=types["BMIM_C1"],
-                    pos=pos_com + [0, -0.527, 1.365], q=charges["BMIM_C1"])
-    system.part[rid].vs_auto_relate_to(com_id)
-    cation_c1_ids.append(rid)
-    cation_sites_ids.append(rid)
-    if args.drude:
-        rid += 2
-    else:
-        rid += 1
-    system.part.add(id=rid, type=types["BMIM_C2"],
-                    pos=pos_com + [0, 1.641, 2.987], q=charges["BMIM_C2"])
-    system.part[rid].vs_auto_relate_to(com_id)
-    cation_c2_ids.append(rid)
-    cation_sites_ids.append(rid)
-    if args.drude:
-        rid += 2
-    else:
-        rid += 1
-    system.part.add(id=rid, type=types["BMIM_C3"],
-                    pos=pos_com + [0, 0.187, -2.389], q=charges["BMIM_C3"])
-    system.part[rid].vs_auto_relate_to(com_id)
-    cation_c3_ids.append(rid)
-    cation_sites_ids.append(rid)
-    if args.drude:
-        rid += 2
-    else:
-        rid += 1
+
+    cation_c1 = system.part.add(type=types["BMIM_C1"],
+                                pos=pos_com + [0, -0.527, 1.365], q=charges["BMIM_C1"])
+    cation_c1.vs_auto_relate_to(cation_com)
+    cations.append([cation_c1])
+
+    cation_c2 = system.part.add(type=types["BMIM_C2"],
+                                pos=pos_com + [0, 1.641, 2.987], q=charges["BMIM_C2"])
+    cation_c2.vs_auto_relate_to(cation_com)
+    cations[-1].append(cation_c2)
+
+    cation_c3 = system.part.add(type=types["BMIM_C3"],
+                                pos=pos_com + [0, 0.187, -2.389], q=charges["BMIM_C3"])
+    cation_c3.vs_auto_relate_to(cation_com)
+    cations[-1].append(cation_c3)
 
 # ENERGY MINIMIZATION
 print("\n-->E minimization")
@@ -275,6 +252,8 @@ else:
 
 system.actors.add(p3m)
 
+cation_drude_parts = []
+
 if args.drude:
     print("-->Adding Drude related bonds")
     thermalized_dist_bond = espressomd.interactions.ThermalizedBond(
@@ -286,52 +265,58 @@ if args.drude:
     system.bonded_inter.add(thermalized_dist_bond)
     system.bonded_inter.add(harmonic_bond)
 
-    for i in anion_ids:
-        espressomd.drude_helpers.add_drude_particle_to_core(
-            system, harmonic_bond, thermalized_dist_bond, system.part[i],
-            i + 1, types["PF6_D"], polarizations["PF6"],
-            args.mass_drude, coulomb_prefactor)
-    for i in cation_c1_ids:
-        espressomd.drude_helpers.add_drude_particle_to_core(
-            system, harmonic_bond, thermalized_dist_bond, system.part[i],
-            i + 1, types["BMIM_C1_D"], polarizations["BMIM_C1"],
-            args.mass_drude, coulomb_prefactor)
-    for i in cation_c2_ids:
-        espressomd.drude_helpers.add_drude_particle_to_core(
-            system, harmonic_bond, thermalized_dist_bond, system.part[i],
-            i + 1, types["BMIM_C2_D"], polarizations["BMIM_C2"],
-            args.mass_drude, coulomb_prefactor)
-    for i in cation_c3_ids:
-        espressomd.drude_helpers.add_drude_particle_to_core(
-            system, harmonic_bond, thermalized_dist_bond, system.part[i],
-            i + 1, types["BMIM_C3_D"], polarizations["BMIM_C3"],
+    dh = espressomd.drude_helpers.DrudeHelpers()
+
+    # Add Drude particles for the anions ...
+    for anion in anions:
+        dh.add_drude_particle_to_core(
+            system, harmonic_bond, thermalized_dist_bond, anion,
+            types["PF6_D"], polarizations["PF6"],
             args.mass_drude, coulomb_prefactor)
 
-    espressomd.drude_helpers.setup_and_add_drude_exclusion_bonds(system)
+    # ... and for the cations
+    for cation in cations:
+        cation_c1_drude = dh.add_drude_particle_to_core(
+            system, harmonic_bond, thermalized_dist_bond, cation[0],
+            types["BMIM_C1_D"], polarizations["BMIM_C1"],
+            args.mass_drude, coulomb_prefactor)
+        cation_drude_parts.append([cation_c1_drude])
+
+        cation_c2_drude = dh.add_drude_particle_to_core(
+            system, harmonic_bond, thermalized_dist_bond, cation[1],
+            types["BMIM_C2_D"], polarizations["BMIM_C2"],
+            args.mass_drude, coulomb_prefactor)
+        cation_drude_parts[-1].append(cation_c2_drude)
+
+        cation_c3_drude = dh.add_drude_particle_to_core(
+            system, harmonic_bond, thermalized_dist_bond, cation[2],
+            types["BMIM_C3_D"], polarizations["BMIM_C3"],
+            args.mass_drude, coulomb_prefactor)
+        cation_drude_parts[-1].append(cation_c3_drude)
+
+    dh.setup_and_add_drude_exclusion_bonds(system)
 
     if args.thole:
         print("-->Adding Thole interactions")
-        espressomd.drude_helpers.add_all_thole(system)
+        dh.add_all_thole(system)
 
     if args.intra_ex:
         # SETUP BONDS ONCE
         print("-->Adding intramolecular exclusions")
-        espressomd.drude_helpers.setup_intramol_exclusion_bonds(
+        dh.setup_intramol_exclusion_bonds(
             system,
             [types["BMIM_C1_D"], types["BMIM_C2_D"], types["BMIM_C3_D"]],
             [types["BMIM_C1"], types["BMIM_C2"], types["BMIM_C3"]],
             [charges["BMIM_C1"], charges["BMIM_C2"], charges["BMIM_C3"]])
 
         # ADD SR EX BONDS PER MOLECULE
-        for i in cation_c1_ids:
-            espressomd.drude_helpers.add_intramol_exclusion_bonds(
-                system, [i + 1, i + 3, i + 5], [i, i + 2, i + 4])
+        for cation_drude_part, cation in zip(cation_drude_parts, cations):
+            dh.add_intramol_exclusion_bonds(cation_drude_part, cation)
 
 print("\n-->Short equilibration with smaller time step")
 system.time_step = 0.1 * fs_to_md_time
 system.integrator.run(1000)
 system.time_step = time_step_fs * fs_to_md_time
-
 
 print("\n-->Timing")
 start = time.time()

@@ -32,12 +32,10 @@
  *  Called in force_calc() from within forces.cpp
  *  - calculates the global area and global volume for a cell before the forces
  *    are handled
- *  - sums up parts for area with mpi_reduce from local triangles
- *  - synchronization with allreduce
+ *  - MPI synchronization with all reduce
  *  - !!! loop over particles from domain_decomposition !!!
  */
-void calc_oif_global(Utils::Vector2d &area_volume, int molType,
-                     CellStructure &cs);
+Utils::Vector2d calc_oif_global(int molType, CellStructure &cs);
 
 /** Distribute the OIF global forces to all particles in the mesh. */
 void add_oif_global_forces(Utils::Vector2d const &area_volume, int molType,

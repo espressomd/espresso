@@ -18,7 +18,7 @@
 import unittest as ut
 import importlib_wrapper
 import numpy as np
-np.random.seed(42)
+np.random.seed(41)
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/raspberry_electrophoresis/raspberry_electrophoresis.py",
@@ -29,6 +29,9 @@ tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
 class Tutorial(ut.TestCase):
     '''Check the raspberry travels a longer distance on the x-axis'''
     system = tutorial.system
+
+    def test_steepest_descent_convergence(self):
+        self.assertLess(tutorial.force_max, 10.)
 
     def test_trajectory_sample(self):
         trajectory = np.loadtxt('posVsTime_sample.dat')[:, 1:4]

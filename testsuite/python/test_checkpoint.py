@@ -71,13 +71,25 @@ class CheckpointTest(ut.TestCase):
         contained in ``system.lbboundaries`. This test method is named such
         that it is executed after ``self.test_lb_boundaries()``.
         '''
-        lbf = system.actors[0]
+        lbf = self.get_active_actor_of_type(
+            espressomd.lb.HydrodynamicInteraction)
         cpt_mode = int("@TEST_BINARY@")
         cpt_path = self.checkpoint.checkpoint_dir + "/lb{}.cpt"
-        with self.assertRaises(RuntimeError):
-            lbf.load_checkpoint(cpt_path.format("-corrupted"), cpt_mode)
-        with self.assertRaisesRegex(RuntimeError, 'grid dimensions mismatch'):
-            lbf.load_checkpoint(cpt_path.format("-wrong-boxdim"), cpt_mode)
+
+        # check exception mechanism with corrupted LB checkpoint files
+        with self.assertRaisesRegex(RuntimeError, 'EOF found'):
+            lbf.load_checkpoint(cpt_path.format("-missing-data"), cpt_mode)
+        with self.assertRaisesRegex(RuntimeError, 'extra data found, expected EOF'):
+            lbf.load_checkpoint(cpt_path.format("-extra-data"), cpt_mode)
+        if cpt_mode == 0:
+            with self.assertRaisesRegex(RuntimeError, 'incorrectly formatted data'):
+                lbf.load_checkpoint(cpt_path.format("-wrong-format"), cpt_mode)
+            with self.assertRaisesRegex(RuntimeError, 'grid dimensions mismatch'):
+                lbf.load_checkpoint(cpt_path.format("-wrong-boxdim"), cpt_mode)
+        with self.assertRaisesRegex(RuntimeError, 'could not open file'):
+            lbf.load_checkpoint(cpt_path.format("-unknown"), cpt_mode)
+
+        # load the valid LB checkpoint file
         lbf.load_checkpoint(cpt_path.format(""), cpt_mode)
         precision = 9 if "LB.CPU" in modes else 5
         m = np.pi / 12
@@ -121,27 +133,33 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_allclose(np.copy(p1.f), particle_force0)
         np.testing.assert_allclose(np.copy(p2.f), particle_force1)
 
-    @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
-    def test_object_containers_serialization(self):
+    def test_bonded_interactions_serialization(self):
         '''
         Check that particles at the interface between two MPI nodes still
-        experience the force from a shape-based constraint and a harmonic
-        bond. The thermostat friction is negligible compared to the force
-        factors used for both the harmonic bond and LJ potential.
+        experience the force from a harmonic bond. The thermostat friction
+        is negligible compared to the harmonic bond strength.
         '''
-        # check containers agree on all MPI nodes
         p3, p4 = system.part[3:5]
         np.testing.assert_allclose(np.copy(p3.pos), system.box_l / 2. - 1.)
         np.testing.assert_allclose(np.copy(p4.pos), system.box_l / 2. + 1.)
         np.testing.assert_allclose(np.copy(p3.f), -np.copy(p4.f), rtol=1e-4)
-        # remove a shape-based constraint on all MPI nodes
-        if espressomd.has_features('LENNARD_JONES') and 'LJ' in modes:
-            old_force = np.copy(p3.f)
-            system.constraints.remove(system.constraints[0])
-            system.integrator.run(0, recalc_forces=True)
-            np.testing.assert_allclose(
-                np.copy(p3.f), -np.copy(p4.f), rtol=1e-4)
-            self.assertGreater(np.linalg.norm(np.copy(p3.f) - old_force), 1e6)
+
+    @utx.skipIfMissingFeatures('LENNARD_JONES')
+    @ut.skipIf('LJ' not in modes, "Skipping test due to missing mode.")
+    @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
+    def test_shape_based_constraints_serialization(self):
+        '''
+        Check that particles at the interface between two MPI nodes still
+        experience the force from a shape-based constraint. The thermostat
+        friction is negligible compared to the LJ force.
+        '''
+        p3, p4 = system.part[3:5]
+        old_force = np.copy(p3.f)
+        system.constraints.remove(system.constraints[0])
+        system.integrator.run(0, recalc_forces=True)
+        np.testing.assert_allclose(
+            np.copy(p3.f), -np.copy(p4.f), rtol=1e-4)
+        self.assertGreater(np.linalg.norm(np.copy(p3.f) - old_force), 1e6)
 
     @ut.skipIf('THERM.LB' not in modes, 'LB thermostat not in modes')
     def test_thermostat_LB(self):
@@ -302,6 +320,33 @@ class CheckpointTest(ut.TestCase):
             self.assertEqual(state, reference)
             state = system.part[1].bonds[1][0].params
             self.assertEqual(state, reference)
+        # immersed boundary bonds
+        self.assertEqual(
+            ibm_volcons_bond.params, {'softID': 15, 'kappaV': 0.01})
+        if 'DP3M.CPU' not in modes:
+            self.assertEqual(ibm_tribend_bond.params, {'kb': 2., 'theta0': 0.})
+        self.assertEqual(
+            ibm_triel_bond.params,
+            {'k1': 1.1, 'k2': 1.2, 'maxDist': 1.6, 'elasticLaw': 'NeoHookean'})
+
+    @ut.skipIf('THERM.LB' in modes, 'LB thermostat in modes')
+    @utx.skipIfMissingFeatures(['ELECTROSTATICS', 'MASS', 'ROTATION'])
+    def test_drude_helpers(self):
+        drude_type = 10
+        core_type = 0
+        self.assertIn(drude_type, dh.drude_dict)
+        self.assertEqual(dh.drude_dict[drude_type]['alpha'], 1.)
+        self.assertEqual(dh.drude_dict[drude_type]['thole_damping'], 2.)
+        self.assertEqual(dh.drude_dict[drude_type]['core_type'], core_type)
+        self.assertIn(core_type, dh.drude_dict)
+        self.assertEqual(dh.drude_dict[core_type]['alpha'], 1.)
+        self.assertEqual(dh.drude_dict[core_type]['thole_damping'], 2.)
+        self.assertEqual(dh.drude_dict[core_type]['drude_type'], drude_type)
+        self.assertEqual(len(dh.drude_dict), 2)
+        self.assertEqual(dh.core_type_list, [core_type])
+        self.assertEqual(dh.drude_type_list, [drude_type])
+        self.assertEqual(dh.core_id_from_drude_id, {5: 1})
+        self.assertEqual(dh.drude_id_list, [5])
 
     @utx.skipIfMissingFeatures(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE'])
     def test_virtual_sites(self):
@@ -459,13 +504,14 @@ class CheckpointTest(ut.TestCase):
         # check boundary flag
         lbf = self.get_active_actor_of_type(
             espressomd.lb.HydrodynamicInteraction)
-        np.testing.assert_equal(lbf[0, :, :].boundary.astype(int), 1)
-        np.testing.assert_equal(lbf[-1, :, :].boundary.astype(int), 2)
-        np.testing.assert_equal(lbf[1:-1, :, :].boundary.astype(int), 0)
+        np.testing.assert_equal(np.copy(lbf[0, :, :].boundary.astype(int)), 1)
+        np.testing.assert_equal(np.copy(lbf[-1, :, :].boundary.astype(int)), 2)
+        np.testing.assert_equal(
+            np.copy(lbf[1:-1, :, :].boundary.astype(int)), 0)
         # remove boundaries
         system.lbboundaries.clear()
         self.assertEqual(len(system.lbboundaries), 0)
-        np.testing.assert_equal(lbf[:, :, :].boundary.astype(int), 0)
+        np.testing.assert_equal(np.copy(lbf[:, :, :].boundary.astype(int)), 0)
 
     @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
     def test_constraints(self):

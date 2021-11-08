@@ -94,19 +94,28 @@ class WidomInsertionTest(ut.TestCase):
             default_charges={self.TYPE_HA: self.CHARGE_HA})
 
     def test_widom_insertion(self):
-        num_samples = 100000
+
+        num_samples = 10000
+        particle_insertion_potential_energy_samples = []
+
         for _ in range(num_samples):
             # 0 for insertion reaction
-            self.Widom.measure_excess_chemical_potential(0)
-        mu_ex = self.Widom.measure_excess_chemical_potential(0)
-        deviation_mu_ex = abs(mu_ex[0] - self.target_mu_ex)
+            particle_insertion_potential_energy = self.Widom.calculate_particle_insertion_potential_energy(
+                0)
+            particle_insertion_potential_energy_samples.append(
+                particle_insertion_potential_energy)
+
+        mu_ex_mean, mu_ex_Delta = self.Widom.calculate_excess_chemical_potential(
+            particle_insertion_potential_energy_samples=particle_insertion_potential_energy_samples)
+
+        deviation_mu_ex = abs(np.mean(mu_ex_mean) - self.target_mu_ex)
 
         self.assertLess(
             deviation_mu_ex,
             1e-3,
             msg="\nExcess chemical potential for single LJ-particle computed via Widom insertion is wrong.\n"
-            + f"  average mu_ex: {mu_ex[0]:.4f}"
-            + f"   mu_ex_std_err: {mu_ex[1]:.5f}"
+            + f"  average mu_ex: {np.mean(mu_ex_mean):.4f}"
+            + f"   mu_ex_std_err: {np.std(mu_ex_Delta):.5f}"
             + f"  target_mu_ex: {self.target_mu_ex:.4f}"
         )
 

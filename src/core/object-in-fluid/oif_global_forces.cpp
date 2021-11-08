@@ -20,10 +20,10 @@
 #include "oif_global_forces.hpp"
 
 #include "BoxGeometry.hpp"
+#include "CellStructure.hpp"
 #include "Particle.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
-#include "interactions.hpp"
 
 #include "bonded_interactions/bonded_interaction_data.hpp"
 
@@ -32,52 +32,47 @@
 #include <utils/constants.hpp>
 #include <utils/math/triangle_functions.hpp>
 
-#include <mpi.h>
+#include <boost/mpi/collectives.hpp>
 
-using Utils::angle_btw_triangles;
+#include <functional>
+
 using Utils::area_triangle;
 using Utils::get_n_triangle;
 
-void calc_oif_global(Utils::Vector2d &area_volume, int molType,
-                     CellStructure &cs) {
+Utils::Vector2d calc_oif_global(int molType, CellStructure &cs) {
   // first-fold-then-the-same approach
   double partArea = 0.0;
   // z volume
   double VOL_partVol = 0.;
 
-  Utils::Vector2d part_area_volume; // added
+  cs.bond_loop([&partArea, &VOL_partVol,
+                molType](Particle &p1, int bond_id,
+                         Utils::Span<Particle *> partners) {
+    if (p1.p.mol_id != molType)
+      return false;
 
-  cs.bond_loop(
-      [&partArea, &VOL_partVol, molType](Particle &p1, int bond_id,
-                                         Utils::Span<Particle *> partners) {
-        if (p1.p.mol_id != molType)
-          return false;
+    if (boost::get<OifGlobalForcesBond>(bonded_ia_params.at(bond_id).get()) !=
+        nullptr) {
+      // remaining neighbors fetched
+      auto const p11 = unfolded_position(p1.r.p, p1.l.i, box_geo.length());
+      auto const p22 = p11 + box_geo.get_mi_vector(partners[0]->r.p, p11);
+      auto const p33 = p11 + box_geo.get_mi_vector(partners[1]->r.p, p11);
 
-        if (boost::get<OifGlobalForcesBond>(&bonded_ia_params[bond_id]) !=
-            nullptr) {
-          // remaining neighbors fetched
-          auto const p11 = unfolded_position(p1.r.p, p1.l.i, box_geo.length());
-          auto const p22 = p11 + box_geo.get_mi_vector(partners[0]->r.p, p11);
-          auto const p33 = p11 + box_geo.get_mi_vector(partners[1]->r.p, p11);
+      // unfolded positions correct
+      auto const VOL_A = area_triangle(p11, p22, p33);
+      partArea += VOL_A;
 
-          // unfolded positions correct
-          auto const VOL_A = area_triangle(p11, p22, p33);
-          partArea += VOL_A;
+      auto const VOL_norm = get_n_triangle(p11, p22, p33);
+      auto const VOL_dn = VOL_norm.norm();
+      auto const VOL_hz = 1.0 / 3.0 * (p11[2] + p22[2] + p33[2]);
+      VOL_partVol += VOL_A * -1 * VOL_norm[2] / VOL_dn * VOL_hz;
+    }
 
-          auto const VOL_norm = get_n_triangle(p11, p22, p33);
-          auto const VOL_dn = VOL_norm.norm();
-          auto const VOL_hz = 1.0 / 3.0 * (p11[2] + p22[2] + p33[2]);
-          VOL_partVol += VOL_A * -1 * VOL_norm[2] / VOL_dn * VOL_hz;
-        }
+    return false;
+  });
 
-        return false;
-      });
-
-  part_area_volume[0] = partArea;
-  part_area_volume[1] = VOL_partVol;
-
-  MPI_Allreduce(part_area_volume.data(), area_volume.data(), 2, MPI_DOUBLE,
-                MPI_SUM, MPI_COMM_WORLD);
+  auto const area_volume_local = Utils::Vector2d{{partArea, VOL_partVol}};
+  return boost::mpi::all_reduce(comm_cart, area_volume_local, std::plus<>());
 }
 
 void add_oif_global_forces(Utils::Vector2d const &area_volume, int molType,
@@ -91,8 +86,8 @@ void add_oif_global_forces(Utils::Vector2d const &area_volume, int molType,
     if (p1.p.mol_id != molType)
       return false;
 
-    if (auto const *iaparams =
-            boost::get<OifGlobalForcesBond>(&bonded_ia_params[bond_id])) {
+    if (auto const *iaparams = boost::get<OifGlobalForcesBond>(
+            bonded_ia_params.at(bond_id).get())) {
       auto const p11 = unfolded_position(p1.r.p, p1.l.i, box_geo.length());
       auto const p22 = p11 + box_geo.get_mi_vector(partners[0]->r.p, p11);
       auto const p33 = p11 + box_geo.get_mi_vector(partners[1]->r.p, p11);

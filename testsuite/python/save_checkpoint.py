@@ -23,6 +23,7 @@ import espressomd.checkpointing
 import espressomd.electrostatics
 import espressomd.magnetostatics
 import espressomd.interactions
+import espressomd.drude_helpers
 import espressomd.virtual_sites
 import espressomd.accumulators
 import espressomd.observables
@@ -197,6 +198,7 @@ if espressomd.has_features(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']):
         have_quaternion=True)
     p2.vs_auto_relate_to(p1)
 
+# non-bonded interactions
 if espressomd.has_features(['LENNARD_JONES']) and 'LJ' in modes:
     system.non_bonded_inter[0, 0].lennard_jones.set_params(
         epsilon=1.2, sigma=1.3, cutoff=2.0, shift=0.1)
@@ -205,6 +207,7 @@ if espressomd.has_features(['LENNARD_JONES']) and 'LJ' in modes:
     system.non_bonded_inter[1, 17].lennard_jones.set_params(
         epsilon=1.2e5, sigma=1.7, cutoff=2.0, shift=0.1)
 
+# bonded interactions
 harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0.0, k=1.0)
 system.bonded_inter.add(harmonic_bond)
 p2.add_bond((harmonic_bond, p1))
@@ -214,13 +217,29 @@ if 'THERM.LB' not in modes:
         r_cut=2, seed=51)
     system.bonded_inter.add(thermalized_bond)
     p2.add_bond((thermalized_bond, p1))
+    if espressomd.has_features(['ELECTROSTATICS', 'MASS', 'ROTATION']):
+        dh = espressomd.drude_helpers.DrudeHelpers()
+        dh.add_drude_particle_to_core(system, harmonic_bond, thermalized_bond,
+                                      p2, 10, 1., 4.6, 0.8, 2.)
+        checkpoint.register("dh")
 strong_harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0.0, k=5e5)
 system.bonded_inter.add(strong_harmonic_bond)
 p4.add_bond((strong_harmonic_bond, p3))
+ibm_volcons_bond = espressomd.interactions.IBM_VolCons(softID=15, kappaV=0.01)
+ibm_tribend_bond = espressomd.interactions.IBM_Tribend(
+    ind1=p1.id, ind2=p2.id, ind3=p3.id, ind4=p4.id, kb=2., refShape="Initial")
+ibm_triel_bond = espressomd.interactions.IBM_Triel(
+    ind1=p1.id, ind2=p2.id, ind3=p3.id, k1=1.1, k2=1.2, maxDist=1.6,
+    elasticLaw="NeoHookean")
+
 checkpoint.register("system")
 checkpoint.register("acc_mean_variance")
 checkpoint.register("acc_time_series")
 checkpoint.register("acc_correlator")
+checkpoint.register("ibm_volcons_bond")
+checkpoint.register("ibm_tribend_bond")
+checkpoint.register("ibm_triel_bond")
+
 # calculate forces
 system.integrator.run(0)
 particle_force0 = np.copy(p1.f)
@@ -297,6 +316,9 @@ checkpoint.save(0)
 class TestCheckpointLB(ut.TestCase):
 
     def test_checkpointing(self):
+        '''
+        Check for the presence of the checkpoint files.
+        '''
         self.assertTrue(os.path.isdir(checkpoint.checkpoint_dir),
                         "checkpoint directory not created")
 
@@ -307,20 +329,41 @@ class TestCheckpointLB(ut.TestCase):
         if LB_implementation:
             self.assertTrue(os.path.isfile(lbf_cpt_path),
                             "LB checkpoint file not created")
+            self.check_lb_checkpointing()
 
-            with open(lbf_cpt_path, "rb") as f:
-                lbf_cpt_str = f.read()
-            # write an LB checkpoint with missing data
-            with open(lbf_cpt_path[:-4] + "-corrupted.cpt", "wb") as f:
-                f.write(lbf_cpt_str[:len(lbf_cpt_str) // 2])
-            # write an LB checkpoint with different box dimensions
-            with open(lbf_cpt_path[:-4] + "-wrong-boxdim.cpt", "wb") as f:
-                if cpt_mode == 1:
-                    # first dimension becomes 0
-                    f.write(8 * b"\x00" + lbf_cpt_str[8:])
-                else:
-                    # first dimension becomes larger
-                    f.write(b"1" + lbf_cpt_str)
+    def check_lb_checkpointing(self):
+        '''
+        Check the LB checkpointing exception mechanism. Write corrupted
+        LB checkpoint files that will be tested in ``test_checkpoint.py``.
+        '''
+
+        # check exception mechanism
+        with self.assertRaisesRegex(RuntimeError, 'could not open file'):
+            dirname, filename = os.path.split(lbf_cpt_path)
+            invalid_path = os.path.join(dirname, 'unknown_dir', filename)
+            lbf.save_checkpoint(invalid_path, cpt_mode)
+        system.actors.remove(lbf)
+        with self.assertRaisesRegex(RuntimeError, 'one needs to have already initialized the LB fluid'):
+            lbf.load_checkpoint(lbf_cpt_path, cpt_mode)
+
+        # read the valid LB checkpoint file
+        with open(lbf_cpt_path, "rb") as f:
+            lbf_cpt_str = f.read()
+        cpt_path = checkpoint.checkpoint_dir + "/lb{}.cpt"
+        # write checkpoint file with missing data
+        with open(cpt_path.format("-missing-data"), "wb") as f:
+            f.write(lbf_cpt_str[:len(lbf_cpt_str) // 2])
+        # write checkpoint file with extra data
+        with open(cpt_path.format("-extra-data"), "wb") as f:
+            f.write(lbf_cpt_str + lbf_cpt_str[-8:])
+        if cpt_mode == 0:
+            boxsize, data = lbf_cpt_str.split(b"\n", 1)
+            # write checkpoint file with incorrectly formatted data
+            with open(cpt_path.format("-wrong-format"), "wb") as f:
+                f.write(boxsize + b"\ntext string\n" + data)
+            # write checkpoint file with different box dimensions
+            with open(cpt_path.format("-wrong-boxdim"), "wb") as f:
+                f.write(b"2" + boxsize + b"\n" + data)
 
 
 if __name__ == '__main__':

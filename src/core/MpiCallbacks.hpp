@@ -75,9 +75,9 @@ constexpr auto ignore = Ignore{};
 /** Return value from one rank */
 struct OneRank {};
 constexpr auto one_rank = OneRank{};
-/** Return value from master rank */
-struct MasterRank {};
-constexpr auto master_rank = MasterRank{};
+/** Return value from the head node */
+struct MainRank {};
+constexpr auto main_rank = MainRank{};
 /** Reduce return value over all ranks */
 struct Reduction {};
 constexpr auto reduction = Reduction{};
@@ -224,21 +224,21 @@ struct callback_one_rank_t final : public callback_concept_t {
 };
 
 /**
- * @brief Callback with a return value from the master rank.
+ * @brief Callback with a return value from the head node.
  *
  * This is an implementation of a callback for a specific callable
  * @p F and a set of arguments to call it with, where the value from
- * the master rank is returned.
+ * the head node is returned.
  */
 template <class F, class... Args>
-struct callback_master_rank_t final : public callback_concept_t {
+struct callback_main_rank_t final : public callback_concept_t {
   F m_f;
 
-  callback_master_rank_t(callback_master_rank_t const &) = delete;
-  callback_master_rank_t(callback_master_rank_t &&) = delete;
+  callback_main_rank_t(callback_main_rank_t const &) = delete;
+  callback_main_rank_t(callback_main_rank_t &&) = delete;
 
   template <class FRef>
-  explicit callback_master_rank_t(FRef &&f) : m_f(std::forward<FRef>(f)) {}
+  explicit callback_main_rank_t(FRef &&f) : m_f(std::forward<FRef>(f)) {}
   void operator()(boost::mpi::communicator const &comm,
                   boost::mpi::packed_iarchive &ia) const override {
     (void)detail::invoke<F, Args...>(m_f, ia);
@@ -337,9 +337,8 @@ auto make_model(Result::OneRank, R (*f_ptr)(Args...)) {
 }
 
 template <class R, class... Args>
-auto make_model(Result::MasterRank, R (*f_ptr)(Args...)) {
-  return std::make_unique<callback_master_rank_t<R (*)(Args...), Args...>>(
-      f_ptr);
+auto make_model(Result::MainRank, R (*f_ptr)(Args...)) {
+  return std::make_unique<callback_main_rank_t<R (*)(Args...), Args...>>(f_ptr);
 }
 } // namespace detail
 
@@ -541,7 +540,7 @@ private:
 
     /* Check if callback exists */
     if (m_callback_map.find(id) == m_callback_map.end()) {
-      throw std::out_of_range("Callback does not exists.");
+      throw std::out_of_range("Callback does not exist.");
     }
 
     /* Send request to worker nodes */
@@ -557,14 +556,11 @@ private:
 
 public:
   /**
-   * @brief call a callback.
+   * @brief Call a callback on worker nodes.
    *
-   * Call a static callback by pointer.
-   * The method can only be called on the head node
-   * and has the prerequisite that the other nodes are
-   * in the MPI loop. Also the function has to be previously
-   * registered e.g. with the @ref REGISTER_CALLBACK macro.
    * The callback is **not** called on the head node.
+   *
+   * This method can only be called on the head node.
    *
    * @param fp Pointer to the function to call.
    * @param args Arguments for the callback.
@@ -580,14 +576,11 @@ public:
   }
 
   /**
-   * @brief call a callback.
+   * @brief Call a callback on all nodes.
    *
-   * Call a static callback by pointer.
-   * The method can only be called on the head node
-   * and has the prerequisite that the other nodes are
-   * in the MPI loop. Also the function has to be previously
-   * registered e.g. with the @ref REGISTER_CALLBACK macro.
-   * The callback is called on the head node.
+   * This calls a callback on all nodes, including the head node.
+   *
+   * This method can only be called on the head node.
    *
    * @param fp Pointer to the function to call.
    * @param args Arguments for the callback.
@@ -682,7 +675,7 @@ public:
    * This method can only be called on the head node.
    */
   template <class R, class... Args, class... ArgRef>
-  auto call(Result::MasterRank, R (*fp)(Args...), ArgRef... args) const
+  auto call(Result::MainRank, R (*fp)(Args...), ArgRef... args) const
       -> std::remove_reference_t<R> {
 
     const int id = m_func_ptr_to_id.at(reinterpret_cast<void (*)()>(fp));
@@ -692,13 +685,13 @@ public:
   }
 
   /**
-   * @brief Mpi slave loop.
+   * @brief Start the MPI loop.
    *
-   * This is the callback loop for the slaves. They block
+   * This is the callback loop for the worker nodes. They block
    * on the MPI call and wait for a new callback request
-   * coming from the master.
-   * This should be run on the slaves and must be running
-   * so that the master can issue call().
+   * coming from the head node.
+   * This should be run on the worker nodes and must be running
+   * so that the head node can issue call().
    */
   void loop() const {
     for (;;) {
@@ -718,9 +711,9 @@ public:
   }
 
   /**
-   * @brief Abort mpi loop.
+   * @brief Abort the MPI loop.
    *
-   * Make the slaves exit the MPI loop.
+   * Make the worker nodes exit the MPI loop.
    */
   void abort_loop() { call(LOOP_ABORT); }
 
@@ -864,10 +857,10 @@ public:
  *
  * @param cb A function
  */
-#define REGISTER_CALLBACK_MASTER_RANK(cb)                                      \
+#define REGISTER_CALLBACK_MAIN_RANK(cb)                                        \
   namespace Communication {                                                    \
   static ::Communication::RegisterCallback                                     \
-      register_master_rank_##cb(::Communication::Result::MasterRank{}, &(cb)); \
+      register_main_rank_##cb(::Communication::Result::MainRank{}, &(cb));     \
   }
 
 /**@}*/

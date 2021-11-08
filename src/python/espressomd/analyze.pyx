@@ -27,6 +27,7 @@ from .grid cimport box_geo
 from .system import System
 from .utils import array_locked, is_valid_type, handle_errors
 from .utils cimport Vector3i, Vector3d, Vector9d
+from .utils cimport make_Vector3d
 from .utils cimport make_array_locked
 from .utils cimport check_type_or_throw_except
 from .utils cimport create_nparray_from_double_array
@@ -204,12 +205,10 @@ class Analysis:
         """
 
         cdef Vector3i planedims
-        cdef Vector3d c_pos
 
+        check_type_or_throw_except(pos, 3, float, "pos must be 3 floats")
         check_type_or_throw_except(
-            pos, 3, float, "pos=(float,float,float) must be passed to nbhood")
-        check_type_or_throw_except(
-            r_catch, 1, float, "r_catch=float needs to be passed to nbhood")
+            r_catch, 1, float, "r_catch must be a float")
 
         # default 3d takes into account dist in x, y and z
         planedims[0] = 1
@@ -225,10 +224,8 @@ class Analysis:
             raise ValueError(
                 'Invalid argument for specifying plane, must be xy, xz, or yz plane')
 
-        for i in range(3):
-            c_pos[i] = pos[i]
-
-        return analyze.nbhood(analyze.partCfg(), c_pos, r_catch, planedims)
+        return analyze.nbhood(
+            analyze.partCfg(), make_Vector3d(pos), r_catch, planedims)
 
     def pressure(self):
         """Calculate the instantaneous pressure (in parallel). This is only
@@ -245,16 +242,17 @@ class Analysis:
             * ``"kinetic"``: kinetic pressure
             * ``"bonded"``: total bonded pressure
             * ``"bonded", <bond_type>``: bonded pressure which arises from the given bond_type
-            * ``"nonbonded"``: total nonbonded pressure
-            * ``"nonbonded", <type_i>, <type_j>``: nonbonded pressure which arises from the interactions between type_i and type_j
-            * ``"nonbonded_intra", <type_i>, <type_j>``: nonbonded pressure between short ranged forces between type i and j and with the same mol_id
-            * ``"nonbonded_inter", <type_i>, <type_j>``: nonbonded pressure between short ranged forces between type i and j and different mol_ids
+            * ``"non_bonded"``: total non-bonded pressure
+            * ``"non_bonded", <type_i>, <type_j>``: non-bonded pressure which arises from the interactions between type_i and type_j
+            * ``"non_bonded_intra", <type_i>, <type_j>``: non-bonded pressure between short ranged forces between type i and j and with the same mol_id
+            * ``"non_bonded_inter", <type_i>, <type_j>``: non-bonded pressure between short ranged forces between type i and j and different mol_ids
             * ``"coulomb"``: Coulomb pressure, how it is calculated depends on the method. It is equivalent to 1/3 of the trace of the Coulomb pressure tensor.
               For how the pressure tensor is calculated, see :ref:`Pressure Tensor`. The averaged value in an isotropic NVT simulation is equivalent to the average of
               :math:`E^{coulomb}/(3V)`, see :cite:`brown95a`.
             * ``"coulomb", <i>``: Coulomb pressure from particle pairs (``i=0``), electrostatics solvers (``i=1``)
             * ``"dipolar"``: not implemented
             * ``"virtual_sites"``: Pressure contribution from virtual sites
+            * ``"external_fields"``: external fields contribution
 
         """
 
@@ -280,14 +278,15 @@ class Analysis:
             * ``"kinetic"``: kinetic pressure tensor
             * ``"bonded"``: total bonded pressure tensor
             * ``"bonded", <bond_type>``: bonded pressure tensor which arises from the given bond_type
-            * ``"nonbonded"``: total nonbonded pressure tensor
-            * ``"nonbonded", <type_i>, <type_j>``: nonbonded pressure tensor which arises from the interactions between type_i and type_j
-            * ``"nonbonded_intra", <type_i>, <type_j>``: nonbonded pressure tensor between short ranged forces between type i and j and with the same mol_id
-            * ``"nonbonded_inter", <type_i>, <type_j>``: nonbonded pressure tensor between short ranged forces between type i and j and different mol_ids
+            * ``"non_bonded"``: total non-bonded pressure tensor
+            * ``"non_bonded", <type_i>, <type_j>``: non-bonded pressure tensor which arises from the interactions between type_i and type_j
+            * ``"non_bonded_intra", <type_i>, <type_j>``: non-bonded pressure tensor between short ranged forces between type i and j and with the same mol_id
+            * ``"non_bonded_inter", <type_i>, <type_j>``: non-bonded pressure tensor between short ranged forces between type i and j and different mol_ids
             * ``"coulomb"``: Maxwell pressure tensor, how it is calculated depends on the method
             * ``"coulomb", <i>``: Maxwell pressure tensor from particle pairs (``i=0``), electrostatics solvers (``i=1``)
             * ``"dipolar"``: not implemented
             * ``"virtual_sites"``: pressure tensor contribution from virtual sites
+            * ``"external_fields"``: external fields contribution
 
         """
 
@@ -320,14 +319,15 @@ class Analysis:
             * ``"kinetic"``: linear and rotational kinetic energy
             * ``"bonded"``: total bonded energy
             * ``"bonded", <bond_type>``: bonded energy which arises from the given bond_type
-            * ``"nonbonded"``: total nonbonded energy
-            * ``"nonbonded", <type_i>, <type_j>``: nonbonded energy which arises from the interactions between type_i and type_j
-            * ``"nonbonded_intra", <type_i>, <type_j>``: nonbonded energy between short ranged forces between type i and j and with the same mol_id
-            * ``"nonbonded_inter", <type_i>, <type_j>``: nonbonded energy between short ranged forces between type i and j and different mol_ids
+            * ``"non_bonded"``: total non-bonded energy
+            * ``"non_bonded", <type_i>, <type_j>``: non-bonded energy which arises from the interactions between type_i and type_j
+            * ``"non_bonded_intra", <type_i>, <type_j>``: non-bonded energy between short ranged forces between type i and j and with the same mol_id
+            * ``"non_bonded_inter", <type_i>, <type_j>``: non-bonded energy between short ranged forces between type i and j and different mol_ids
             * ``"coulomb"``: Coulomb energy, how it is calculated depends on the method
             * ``"coulomb", <i>``: Coulomb energy from particle pairs (``i=0``), electrostatics solvers (``i=1``)
             * ``"dipolar"``: dipolar energy
             * ``"dipolar", <i>``: dipolar energy from particle pairs and magnetic field constraints (``i=0``), magnetostatics solvers (``i=1``)
+            * ``"external_fields"``: external fields contribution
 
 
         Examples
@@ -623,8 +623,7 @@ class Analysis:
         check_type_or_throw_except(
             p_type, 1, int, "p_type has to be an int")
 
-        cdef int p1 = p_type
-        cdef Vector3d res = analyze.angularmomentum(analyze.partCfg(), p1)
+        cdef Vector3d res = analyze.angularmomentum(analyze.partCfg(), p_type)
 
         return np.array([res[0], res[1], res[2]])
 

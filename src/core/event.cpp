@@ -42,6 +42,7 @@
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "immersed_boundaries.hpp"
 #include "integrate.hpp"
+#include "interactions.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "partCfg_global.hpp"
@@ -108,7 +109,9 @@ void on_integration_start(double time_step) {
 #ifdef NPT
   integrator_npt_sanity_checks();
 #endif
-  interactions_sanity_checks();
+  if (long_range_interactions_sanity_checks()) {
+    runtimeErrorMsg() << "Long-range interactions returned an error.";
+  }
   lb_lbfluid_sanity_checks(time_step);
 
   /********************************************/
@@ -263,9 +266,9 @@ void on_boxl_change(bool skip_method_adaption) {
 void on_cell_structure_change() {
   clear_particle_node();
 
-  /* Now give methods a chance to react to the change in cell
-   * structure. Most ES methods need to reinitialize, as they depend
-   * on skin, node grid and so on. */
+  /* Now give methods a chance to react to the change in cell structure.
+   * Most ES methods need to reinitialize, as they depend on skin,
+   * node grid and so on. */
 #ifdef ELECTROSTATICS
   Coulomb::init();
 #endif /* ifdef ELECTROSTATICS */

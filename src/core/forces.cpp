@@ -41,6 +41,7 @@
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "immersed_boundaries.hpp"
 #include "integrate.hpp"
+#include "interactions.hpp"
 #include "nonbonded_interactions/VerletCriterion.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
@@ -138,13 +139,9 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
 
   if (max_oif_objects) {
     // There are two global quantities that need to be evaluated:
-    // object's surface and object's volume. One can add another
-    // quantity.
-    Utils::Vector2d area_volume;
-    area_volume[0] = 0.0;
-    area_volume[1] = 0.0;
+    // object's surface and object's volume.
     for (int i = 0; i < max_oif_objects; i++) {
-      calc_oif_global(area_volume, i, cell_structure);
+      auto const area_volume = calc_oif_global(i, cell_structure);
       if (fabs(area_volume[0]) < 1e-100 && fabs(area_volume[1]) < 1e-100)
         break;
       add_oif_global_forces(area_volume, i, cell_structure);

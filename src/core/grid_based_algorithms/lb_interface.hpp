@@ -44,14 +44,15 @@ void lb_lbfluid_propagate();
  */
 void lb_lbfluid_on_integration_start();
 
-/** Perform a full initialization of
- *  the lattice Boltzmann system. All derived parameters
- *  and the fluid are reset to their default values.
+/**
+ * @brief Perform a full initialization of the lattice-Boltzmann system.
+ * All derived parameters and the fluid are reset to their default values.
  */
 void lb_lbfluid_init();
 
-/** (Re-)initialize the derived parameters for the lattice Boltzmann system.
- *  The current state of the fluid is unchanged.
+/**
+ * @brief Reinitialize the derived parameters for the lattice-Boltzmann system.
+ * The current state of the fluid is unchanged.
  */
 void lb_lbfluid_reinit_parameters();
 
@@ -255,7 +256,7 @@ Utils::Vector3i lb_lbfluid_get_shape();
 Utils::Vector3d lb_lbfluid_calc_fluid_momentum();
 
 /**
- * @brief Calculates the interpolated fluid velocity on the master process.
+ * @brief Calculates the interpolated fluid velocity on the head node process.
  * @param pos Position at which the velocity is to be calculated.
  * @retval interpolated fluid velocity.
  */
@@ -263,7 +264,7 @@ const Utils::Vector3d
 lb_lbfluid_get_interpolated_velocity(const Utils::Vector3d &pos);
 
 /**
- * @brief Calculates the interpolated fluid density on the master process.
+ * @brief Calculates the interpolated fluid density on the head node process.
  * @param pos Position at which the density is to be calculated.
  * @retval interpolated fluid density.
  */

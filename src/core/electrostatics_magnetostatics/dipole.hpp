@@ -70,7 +70,7 @@ extern Dipole_parameters dipole;
 namespace Dipole {
 void calc_pressure_long_range();
 
-void nonbonded_sanity_check(int &state);
+bool sanity_checks();
 double cutoff(const Utils::Vector3d &box_l);
 
 void on_observable_calc();

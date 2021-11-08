@@ -352,8 +352,7 @@ Vector<T, 3> vector_product(Vector<T, 3> const &a, Vector<T, 3> const &b) {
 
 // Product of array elements.
 template <class T, std::size_t N> T product(Vector<T, N> const &v) {
-  return std::accumulate(v.cbegin(), v.cend(), T{1},
-                         [](T acc, T item) { return acc * item; });
+  return std::accumulate(v.cbegin(), v.cend(), T{1}, std::multiplies<T>());
 }
 
 template <class T, class U, std::size_t N>

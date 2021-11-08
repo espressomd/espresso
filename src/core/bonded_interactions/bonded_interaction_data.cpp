@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "bonded_interaction_data.hpp"
-#include "interactions.hpp"
+#include "event.hpp"
 
 #include <boost/range/numeric.hpp>
 #include <boost/variant.hpp>
@@ -28,7 +28,9 @@
 #include <cstddef>
 #include <vector>
 
-std::vector<Bonded_IA_Parameters> bonded_ia_params;
+BondedInteractionsMap bonded_ia_params;
+
+void mpi_update_cell_system_ia_range_local() { on_short_range_ia_change(); }
 
 /** Visitor to get the bond cutoff from the bond parameter variant */
 class BondCutoff : public boost::static_visitor<double> {
@@ -41,28 +43,19 @@ public:
 double maximal_cutoff_bonded() {
   auto const max_cut_bonded = boost::accumulate(
       bonded_ia_params, BONDED_INACTIVE_CUTOFF,
-      [](auto max_cut, Bonded_IA_Parameters const &bond) {
-        return std::max(max_cut, boost::apply_visitor(BondCutoff(), bond));
+      [](auto max_cut, auto const &kv) {
+        return std::max(max_cut,
+                        boost::apply_visitor(BondCutoff(), *kv.second));
       });
 
   /* Check if there are dihedrals */
   auto const any_dihedrals = std::any_of(
-      bonded_ia_params.begin(), bonded_ia_params.end(), [](auto const &bond) {
-        return (boost::get<DihedralBond>(&bond) ||
-                boost::get<TabulatedDihedralBond>(&bond));
+      bonded_ia_params.begin(), bonded_ia_params.end(), [](auto const &kv) {
+        return (boost::get<DihedralBond>(&(*kv.second)) ||
+                boost::get<TabulatedDihedralBond>(&(*kv.second)));
       });
 
   /* dihedrals: the central particle is indirectly connected to the fourth
    * particle via the third particle, so we have to double the cutoff */
   return (any_dihedrals) ? 2 * max_cut_bonded : max_cut_bonded;
-}
-
-void make_bond_type_exist(int type) {
-  std::size_t ns = static_cast<std::size_t>(type) + 1;
-  auto const old_size = bonded_ia_params.size();
-  if (ns <= old_size) {
-    return;
-  }
-  /* else allocate new memory */
-  bonded_ia_params.resize(ns, NoneBond());
 }

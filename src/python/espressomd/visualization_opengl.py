@@ -49,7 +49,7 @@ class openGLLive():
         Size of the visualizer window in pixels.
     name : :obj:`str`, optional
         The name of the visualizer window.
-    background_color : (3,) array_like of :obj:`int`, optional
+    background_color : (3,) array_like of :obj:`float`, optional
         RGB of the background.
     periodic_images : (3,) array_like of :obj:`int`, optional
         Periodic repetitions on both sides of the box in xyz-direction.
@@ -79,7 +79,7 @@ class openGLLive():
         Initial camera target. Use ``'auto'`` (default) to look towards the system center.
     camera_right : (3,) array_like of :obj:`float`, optional
         Camera right vector in system coordinates. Default is ``[1, 0, 0]``
-    particle_sizes : :obj:`str` or array_like :obj:`float` or callable, optional
+    particle_sizes : :obj:`str` or array_like of :obj:`float` or callable, optional
         * ``'auto'`` (default): The Lennard-Jones sigma value of the
           self-interaction is used for the particle diameter.
         * callable: A lambda function with one argument. Internally,
@@ -97,9 +97,9 @@ class openGLLive():
         * ``'type'``: Particle colors are specified by ``particle_type_colors``,
           indexed by their numerical particle type.
         * ``'node'``: Color according to the node the particle is on.
-    particle_type_colors : array_like :obj:`float`, optional
+    particle_type_colors : array_like of :obj:`float`, optional
         Colors for particle types.
-    particle_type_materials : array_like :obj:`str`, optional
+    particle_type_materials : array_like of :obj:`str`, optional
         Materials of the particle types.
     particle_charge_colors : (2,) array_like of :obj:`float`, optional
         Two colors for min/max charged particles.
@@ -113,63 +113,62 @@ class openGLLive():
         Accuracy of the rasterization.
     quality_constraints : :obj:`int`, optional
         The number of subdivisions for primitive constraints.
-    constraint_type_colors : array_like :obj:`float`, optional
+    constraint_type_colors : array_like of :obj:`float`, optional
         Colors of the constraints by type.
-    constraint_type_materials : array_like :obj:`str`, optional
+    constraint_type_materials : array_like of :obj:`str`, optional
         Materials of the constraints by type.
     draw_bonds : :obj:`bool`, optional
         Enables bond visualization.
-    bond_type_radius : array_like :obj:`float`, optional
+    bond_type_radius : array_like of :obj:`float`, optional
         Radii of bonds by type.
-    bond_type_colors : array_like :obj:`float`, optional
+    bond_type_colors : array_like of :obj:`float`, optional
         Color of bonds by type.
-    bond_type_materials : array_like :obj:`float`, optional
+    bond_type_materials : array_like of :obj:`str`, optional
         Materials of bonds by type.
     ext_force_arrows : :obj:`bool`, optional
         Enables external force visualization.
-    ext_force_arrows_type_scale : array_like :obj:`float`, optional
+    ext_force_arrows_type_scale : array_like of :obj:`float`, optional
         List of scale factors of external force arrows for different particle types.
-    ext_force_arrows_type_colors : array_like :obj:`float`, optional
+    ext_force_arrows_type_colors : array_like of :obj:`float`, optional
         Colors of ext_force arrows for different particle types.
-    ext_force_arrows_type_materials : array_like :obj:`float`, optional
+    ext_force_arrows_type_materials : array_like of :obj:`str`, optional
         Materials of ext_force arrows for different particle types.
-    ext_force_arrows_type_radii : array_like :obj:`float`, optional
+    ext_force_arrows_type_radii : array_like of :obj:`float`, optional
         List of arrow radii for different particle types.
     force_arrows : :obj:`bool`, optional
         Enables particle force visualization.
-    force_arrows_type_scale : array_like :obj:`float`, optional
+    force_arrows_type_scale : array_like of :obj:`float`, optional
         List of scale factors of particle force arrows for different particle types.
-    force_arrows_type_colors : array_like :obj:`float`, optional
+    force_arrows_type_colors : array_like of :obj:`float`, optional
         Colors of particle force arrows for different particle types.
-    force_arrows_type_materials : array_like :obj:`float`, optional
+    force_arrows_type_materials : array_like of :obj:`str`, optional
         Materials of particle force arrows for different particle types.
-    force_arrows_type_radii : array_like :obj:`float`, optional
+    force_arrows_type_radii : array_like of :obj:`float`, optional
         List of arrow radii for different particle types.
     velocity_arrows : :obj:`bool`, optional
         Enables particle velocity visualization.
-    velocity_arrows_type_scale : array_like :obj:`float`, optional
+    velocity_arrows_type_scale : array_like of :obj:`float`, optional
         List of scale factors of particle velocity arrows for different particle types.
-    velocity_arrows_type_colors : array_like :obj:`float`, optional
+    velocity_arrows_type_colors : array_like of :obj:`float`, optional
         Colors of particle velocity arrows for different particle types.
-    velocity_arrows_type_materials : array_like :obj:`float`, optional
+    velocity_arrows_type_materials : array_like of :obj:`str`, optional
         Materials of particle velocity arrows for different particle types.
-    velocity_arrows_type_radii : array_like :obj:`float`, optional
+    velocity_arrows_type_radii : array_like of :obj:`float`, optional
         List of arrow radii for different particle types.
     director_arrows : :obj:`bool`, optional
         Enables particle director visualization.
     director_arrows_type_scale : :obj:`float`, optional
         Scale factor of particle director arrows for different particle types.
-    director_arrows_type_colors : array_like :obj:`float`, optional
+    director_arrows_type_colors : array_like of :obj:`float`, optional
         Colors of particle director arrows for different particle types.
-    director_arrows_type_materials : array_like :obj:`float`, optional
+    director_arrows_type_materials : array_like of :obj:`str`, optional
         Materials of particle director arrows for different particle types.
-    director_arrows_type_radii : array_like :obj:`float`, optional
+    director_arrows_type_radii : array_like of :obj:`float`, optional
         List of arrow radii for different particle types.
     drag_enabled : :obj:`bool`, optional
         Enables mouse-controlled particles dragging (Default: False)
     drag_force : :obj:`bool`, optional
         Factor for particle dragging
-
     LB_draw_nodes : :obj:`bool`, optional
         Draws a lattice representation of the LB nodes that are no boundaries.
     LB_draw_node_boundaries : :obj:`bool`, optional
@@ -177,12 +176,33 @@ class openGLLive():
     LB_draw_boundaries : :obj:`bool`, optional
         Draws the LB shapes.
     LB_draw_velocity_plane : :obj:`bool`, optional
-        Draws LB node velocity arrows specified by LB_plane_axis, LB_plane_dist, LB_plane_ngrid.
+        Draws LB node velocity arrows in a plane perpendicular to the axis in
+        ``LB_plane_axis``, at a distance ``LB_plane_dist`` from the origin,
+        every ``LB_plane_ngrid`` grid points.
+    LB_plane_axis : :obj:`int`, optional
+        LB node velocity arrows are drawn in a plane perpendicular to the
+        x, y, or z axes, which are encoded by values 0, 1, or 2 respectively.
+    LB_plane_dist : :obj:`float`, optional
+        LB node velocity arrows are drawn in a plane perpendicular to the
+        x, y, or z axes, at a distance ``LB_plane_dist`` from the origin.
+    LB_plane_ngrid : :obj:`int`, optional
+        LB node velocity arrows are drawn in a plane perpendicular to the
+        x, y, or z axes, every ``LB_plane_ngrid`` grid points.
+    LB_vel_scale : :obj:`float`, optional
+        Rescale LB node velocity arrow length.
+    LB_vel_radius_scale : :obj:`float`, optional
+        Rescale LB node velocity arrow radii.
+    LB_arrow_color : (3,) array_like of :obj:`float`, optional
+        RGB of the LB velocity arrows.
+    LB_arrow_material : :obj:`str`, optional
+        Material of LB arrows.
+    quality_constraints : :obj:`int`, optional
+        The number of subdivisions for LB arrows.
     light_pos : (3,) array_like of :obj:`float`, optional
         If auto (default) is used, the light is placed dynamically in
         the particle barycenter of the system. Otherwise, a fixed
         coordinate can be set.
-    light_colors : array_like :obj:`float`, optional
+    light_colors : array_like of :obj:`float`, optional
         Three lists to specify ambient, diffuse and specular light colors.
     light_brightness : :obj:`float`, optional
         Brightness (inverse constant attenuation) of the light.
@@ -193,7 +213,7 @@ class openGLLive():
     spotlight_enabled : :obj:`bool`, optional
         If set to True (default), it enables a spotlight on the
         camera position pointing in look direction.
-    spotlight_colors : array_like :obj:`float`, optional
+    spotlight_colors : array_like of :obj:`float`, optional
         Three lists to specify ambient, diffuse and specular spotlight colors.
     spotlight_angle : :obj:`float`, optional
         The spread angle of the spotlight in degrees (from 0 to 90).
@@ -317,7 +337,8 @@ class openGLLive():
             'LB_plane_dist': 0,
             'LB_plane_ngrid': 5,
             'LB_vel_scale': 1.0,
-            'LB_arrow_color': [1, 1, 1],
+            'LB_vel_radius_scale': 0.005,
+            'LB_arrow_color': [1.0, 1.0, 1.0],
             'LB_arrow_material': 'transparent1',
             'LB_arrow_quality': 16,
 
@@ -1204,12 +1225,10 @@ class openGLLive():
     # ARROWS IN A PLANE FOR LB VELOCITIES
     def _draw_lb_vel(self):
 
-        for lbl in self.lb_plane_vel:
-            p = lbl[0]
-            v = lbl[1]
+        for lb_pos, lb_vel in self.lb_plane_vel:
             draw_arrow(
-                p, v *
-                self.specs['LB_vel_scale'],
+                lb_pos,
+                lb_vel * self.specs['LB_vel_scale'],
                 self.lb_arrow_radius,
                 self.specs['LB_arrow_color'],
                 self.materials[self.specs['LB_arrow_material']],
@@ -1600,7 +1619,7 @@ class openGLLive():
             self.lb_plane_p = np.array(pn) * self.specs['LB_plane_dist']
 
             self.lb_arrow_radius = self.system.box_l[
-                self.specs['LB_plane_axis']] * 0.005
+                self.specs['LB_plane_axis']] * self.specs['LB_vel_radius_scale']
 
             self.lb_min_vel = np.array([-1e-6] * 3)
             self.lb_max_vel = np.array([1e-6] * 3)
@@ -2471,7 +2490,10 @@ def rotation_helper(d):
     # the rotation axis is the cross product between z and d
     vz = np.cross([0.0, 0.0, 1.0], d)
     # get the angle using a dot product
-    angle = 180.0 / np.pi * math.acos(d[2] / np.linalg.norm(d))
+    norm = np.linalg.norm(d)
+    angle = np.nan
+    if norm != 0.:
+        angle = 180.0 / np.pi * math.acos(d[2] / norm)
 
     return angle, vz[0], vz[1]
 
@@ -2495,6 +2517,8 @@ def draw_arrow(pos, d, radius, color, material, quality):
     draw_cylinder(pos, pos2, radius, color, material, quality)
 
     ax, rx, ry = rotation_helper(d)
+    if math.isnan(ax):
+        return
 
     OpenGL.GL.glPushMatrix()
     OpenGL.GL.glTranslatef(pos2[0], pos2[1], pos2[2])

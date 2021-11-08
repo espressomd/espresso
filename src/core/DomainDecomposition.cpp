@@ -225,9 +225,8 @@ void DomainDecomposition::resort(bool global,
     auto sort_cell = local_cells()[0];
 
     for (auto &part : displaced_parts) {
-      runtimeErrorMsg() << "Particle " << part.identity()
-                        << " moved more than"
-                           " one local box length in one timestep.";
+      runtimeErrorMsg() << "Particle " << part.identity() << " moved more "
+                        << "than one local box length in one timestep";
       sort_cell->particles().insert(std::move(part));
 
       diff.emplace_back(ModifiedList{sort_cell->particles()});

@@ -39,6 +39,7 @@
 #include <utils/constants.hpp>
 #include <utils/keys.hpp>
 #include <utils/mpi/gatherv.hpp>
+#include <utils/quaternion.hpp>
 
 #include <boost/algorithm/cxx11/copy_if.hpp>
 #include <boost/mpi/collectives/gather.hpp>
@@ -400,7 +401,7 @@ void add_exclusion(Particle *part, int part2);
 
 void auto_exclusion(int distance);
 
-void mpi_who_has_local(int, int) {
+static void mpi_who_has_local() {
   static std::vector<int> sendbuf;
 
   auto local_particles = cell_structure.local_particles();
@@ -422,7 +423,7 @@ void mpi_who_has_local(int, int) {
 REGISTER_CALLBACK(mpi_who_has_local)
 
 void mpi_who_has() {
-  mpi_call(mpi_who_has_local, -1, 0);
+  mpi_call(mpi_who_has_local);
 
   auto local_particles = cell_structure.local_particles();
 
@@ -518,7 +519,7 @@ const Particle &get_particle_data(int part) {
   return *cache_ptr;
 }
 
-void mpi_get_particles_local(int, int) {
+static void mpi_get_particles_local() {
   std::vector<int> ids;
   boost::mpi::scatter(comm_cart, ids, 0);
 
@@ -543,7 +544,7 @@ REGISTER_CALLBACK(mpi_get_particles_local)
  * @returns The particle list.
  */
 std::vector<Particle> mpi_get_particles(Utils::Span<const int> ids) {
-  mpi_call(mpi_get_particles_local, 0, 0);
+  mpi_call(mpi_get_particles_local);
   /* Return value */
   std::vector<Particle> parts(ids.size());
 
@@ -760,7 +761,7 @@ void set_particle_dip(int part, Utils::Vector3d const &dip) {
   std::tie(quat, dipm) = convert_dip_to_quat(dip);
 
   set_particle_dipm(part, dipm);
-  set_particle_quat(part, quat.data());
+  set_particle_quat(part, quat);
 }
 #endif
 
@@ -810,11 +811,6 @@ void set_particle_mu_E(int part, Utils::Vector3d const &mu_E) {
   mpi_update_particle_property<Utils::Vector3d, &ParticleProperties::mu_E>(
       part, mu_E);
 }
-
-Utils::Vector3d get_particle_mu_E(int part) {
-  auto const &p = get_particle_data(part);
-  return p.p.mu_E;
-}
 #endif
 
 void set_particle_type(int p_id, int type) {
@@ -840,16 +836,15 @@ void set_particle_mol_id(int part, int mid) {
 }
 
 #ifdef ROTATION
-void set_particle_quat(int part, double *const quat) {
+void set_particle_quat(int part, Utils::Quaternion<double> const &quat) {
   mpi_update_particle<ParticlePosition, &Particle::r, Utils::Quaternion<double>,
-                      &ParticlePosition::quat>(
-      part, Utils::Quaternion<double>{quat[0], quat[1], quat[2], quat[3]});
+                      &ParticlePosition::quat>(part, quat);
 }
 
 void set_particle_director(int part, const Utils::Vector3d &director) {
   Utils::Quaternion<double> quat =
       convert_director_to_quaternion(director.normalized());
-  set_particle_quat(part, quat.data());
+  set_particle_quat(part, quat);
 }
 
 void set_particle_omega_lab(int part, const Utils::Vector3d &omega_lab) {
@@ -943,9 +938,9 @@ const std::vector<BondView> &get_particle_bonds(int part) {
   return ret;
 }
 
-void mpi_remove_particle_local(int, int part) {
-  if (part != -1) {
-    cell_structure.remove_particle(part);
+static void mpi_remove_particle_local(int p_id) {
+  if (p_id != -1) {
+    cell_structure.remove_particle(p_id);
   } else {
     cell_structure.remove_all_particles();
   }
@@ -958,12 +953,12 @@ REGISTER_CALLBACK(mpi_remove_particle_local)
  *  Also calls \ref on_particle_change.
  *  \param p_id  the particle to remove, use -1 to remove all particles.
  */
-void mpi_remove_particle(int, int p_id) {
-  mpi_call_all(mpi_remove_particle_local, -1, p_id);
+void mpi_remove_particle(int p_id) {
+  mpi_call_all(mpi_remove_particle_local, p_id);
 }
 
 void remove_all_particles() {
-  mpi_remove_particle(-1, -1);
+  mpi_remove_particle(-1);
   clear_particle_node();
 }
 
@@ -976,8 +971,7 @@ int remove_particle(int p_id) {
   }
 
   particle_node[p_id] = -1;
-  mpi_remove_particle(-1, p_id);
-
+  mpi_remove_particle(p_id);
   particle_node.erase(p_id);
 
   return ES_OK;
@@ -997,7 +991,7 @@ void local_rescale_particles(int dir, double scale) {
   }
 }
 
-void mpi_rescale_particles_local(int, int dir) {
+static void mpi_rescale_particles_local(int dir) {
   double scale = 0.0;
   MPI_Recv(&scale, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
   local_rescale_particles(dir, scale);
@@ -1007,7 +1001,7 @@ void mpi_rescale_particles_local(int, int dir) {
 REGISTER_CALLBACK(mpi_rescale_particles_local)
 
 void mpi_rescale_particles(int dir, double scale) {
-  mpi_call(mpi_rescale_particles_local, -1, dir);
+  mpi_call(mpi_rescale_particles_local, dir);
   for (int pnode = 0; pnode < n_nodes; pnode++) {
     if (pnode == this_node) {
       local_rescale_particles(dir, scale);
@@ -1190,96 +1184,6 @@ int number_of_particles_with_type(int type) {
 
   return static_cast<int>(it->second.size());
 }
-
-// The following functions are used by the python interface to obtain
-// properties of a particle, which are only compiled in in some configurations
-// This is needed, because cython does not support conditional compilation
-// within a ctypedef definition
-
-#ifdef ROTATION
-void pointer_to_omega_body(Particle const *p, double const *&res) {
-  res = p->m.omega.data();
-}
-
-void pointer_to_quat(Particle const *p, double const *&res) {
-  res = p->r.quat.data();
-}
-#endif
-
-void pointer_to_q(Particle const *p, double const *&res) { res = &(p->p.q); }
-
-#ifdef VIRTUAL_SITES
-void pointer_to_virtual(Particle const *p, bool const *&res) {
-  res = &(p->p.is_virtual);
-}
-#endif
-
-#ifdef VIRTUAL_SITES_RELATIVE
-void pointer_to_vs_quat(Particle const *p, double const *&res) {
-  res = (p->p.vs_relative.quat.data());
-}
-
-void pointer_to_vs_relative(Particle const *p, int const *&res1,
-                            double const *&res2, double const *&res3) {
-  res1 = &(p->p.vs_relative.to_particle_id);
-  res2 = &(p->p.vs_relative.distance);
-  res3 = p->p.vs_relative.rel_orientation.data();
-}
-#endif
-
-#ifdef DIPOLES
-void pointer_to_dipm(Particle const *p, double const *&res) {
-  res = &(p->p.dipm);
-}
-#endif
-
-#ifdef EXTERNAL_FORCES
-void pointer_to_ext_force(Particle const *p, double const *&res2) {
-  res2 = p->p.ext_force.data();
-}
-#ifdef ROTATION
-void pointer_to_ext_torque(Particle const *p, double const *&res2) {
-  res2 = p->p.ext_torque.data();
-}
-#endif
-void pointer_to_fix(Particle const *p, const uint8_t *&res) {
-  res = &(p->p.ext_flag);
-}
-#endif // EXTERNAL_FORCES
-
-#ifdef THERMOSTAT_PER_PARTICLE
-void pointer_to_gamma(Particle const *p, double const *&res) {
-#ifndef PARTICLE_ANISOTROPY
-  res = &(p->p.gamma);
-#else
-  res = p->p.gamma.data(); // array [3]
-#endif // PARTICLE_ANISTROPY
-}
-
-#ifdef ROTATION
-void pointer_to_gamma_rot(Particle const *p, double const *&res) {
-#ifndef PARTICLE_ANISOTROPY
-  res = &(p->p.gamma_rot);
-#else
-  res = p->p.gamma_rot.data(); // array [3]
-#endif // PARTICLE_ANISOTROPY
-}
-#endif // ROTATION
-
-#endif // THERMOSTAT_PER_PARTICLE
-
-#ifdef ENGINE
-void pointer_to_swimming(Particle const *p,
-                         ParticleParametersSwimming const *&swim) {
-  swim = &(p->p.swim);
-}
-#endif
-
-#ifdef ROTATIONAL_INERTIA
-void pointer_to_rotational_inertia(Particle const *p, double const *&res) {
-  res = p->p.rinertia.data();
-}
-#endif
 
 bool particle_exists(int part_id) {
   if (particle_node.empty())

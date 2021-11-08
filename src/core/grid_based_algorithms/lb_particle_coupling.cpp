@@ -44,14 +44,14 @@
 
 LB_Particle_Coupling lb_particle_coupling;
 
-void mpi_bcast_lb_particle_coupling_slave() {
+void mpi_bcast_lb_particle_coupling_local() {
   boost::mpi::broadcast(comm_cart, lb_particle_coupling, 0);
 }
 
-REGISTER_CALLBACK(mpi_bcast_lb_particle_coupling_slave)
+REGISTER_CALLBACK(mpi_bcast_lb_particle_coupling_local)
 
 void mpi_bcast_lb_particle_coupling() {
-  mpi_call(mpi_bcast_lb_particle_coupling_slave);
+  mpi_call(mpi_bcast_lb_particle_coupling_local);
   boost::mpi::broadcast(comm_cart, lb_particle_coupling, 0);
 }
 
@@ -63,8 +63,7 @@ void lb_lbcoupling_deactivate() {
     runtimeWarningMsg()
         << "Recalculating forces, so the LB coupling forces are not "
            "included in the particle force the first time step. This "
-           "only matters if it happens frequently during "
-           "sampling.";
+           "only matters if it happens frequently during sampling.";
   }
 
   lb_particle_coupling.couple_to_md = false;

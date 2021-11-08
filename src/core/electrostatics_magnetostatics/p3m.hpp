@@ -66,11 +66,11 @@ struct p3m_data_struct : public p3m_data_struct_base {
   /** mesh (local) for the electric field. */
   std::array<fft_vector<double>, 3> E_mesh;
 
-  /** number of charged particles (only on master node). */
+  /** number of charged particles (only on head node). */
   int sum_qpart;
-  /** Sum of square of charges (only on master node). */
+  /** Sum of square of charges (only on head node). */
   double sum_q2;
-  /** square of sum of charges (only on master node). */
+  /** square of sum of charges (only on head node). */
   double square_sum_q;
 
   p3m_interpolation_cache inter_weights;

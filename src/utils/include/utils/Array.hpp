@@ -55,12 +55,11 @@ struct ArrayFormatterStream {
 
 struct ArrayFormatter {
   char const *separator;
+  friend ArrayFormatterStream operator<<(std::ostream &os,
+                                         ArrayFormatter const &fmt) {
+    return {os, fmt.separator};
+  }
 };
-
-inline ArrayFormatterStream operator<<(std::ostream &os,
-                                       ArrayFormatter const &fmt) {
-  return {os, fmt.separator};
-}
 
 } // namespace detail
 

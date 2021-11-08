@@ -19,21 +19,7 @@
 
 #include "ibm_volcons.hpp"
 
-#include "communication.hpp"
 #include "immersed_boundaries.hpp"
-
-#include <cassert>
-#include <stdexcept>
-
-void mpi_set_n_ibm_volcons_bonds_local(int softID) {
-  immersed_boundaries.register_softID(softID);
-}
-
-REGISTER_CALLBACK(mpi_set_n_ibm_volcons_bonds_local)
-
-void mpi_set_n_ibm_volcons_bonds(int softID) {
-  mpi_call_all(mpi_set_n_ibm_volcons_bonds_local, softID);
-}
 
 /** Set parameters of volume conservation */
 IBMVolCons::IBMVolCons(const int softID, const double kappaV) {
@@ -44,5 +30,5 @@ IBMVolCons::IBMVolCons(const int softID, const double kappaV) {
   // this softID. Calculate it later in the init function of
   // \ref ImmersedBoundaries::init_volume_conservation()
   volRef = 0.;
-  mpi_set_n_ibm_volcons_bonds(softID);
+  immersed_boundaries.register_softID(softID);
 }

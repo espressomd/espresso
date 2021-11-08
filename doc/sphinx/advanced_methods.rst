@@ -136,7 +136,7 @@ Please contact the Biofluid Simulation and Modeling Group at the
 University of Bayreuth if you plan to use this feature.
 
 With the Immersed Boundary Method (IBM), soft particles are considered as an infinitely
-thin shell filled with liquid (see e.g. :cite:`Peskin2002,Crowl2010,KruegerThesis`). When the
+thin shell filled with liquid (see e.g. :cite:`peskin02a,crowl10a,kruger11a`). When the
 shell is deformed by an external flow, it responds with elastic restoring
 forces which are transmitted into the fluid. In the present case, the
 inner and outer liquid are of the same type and are simulated using
@@ -170,9 +170,9 @@ Object-in-fluid
 If you plan to use this feature, please contact the Cell-in-fluid Research Group at the
 University of Zilina: ivan.cimrak@fri.uniza.sk or iveta.jancigova@fri.uniza.sk.
 
-When using this module, please cite :cite:`Cimrak2014` (BibTeX key
-``Cimrak2014`` in :file:`doc/sphinx/zrefs.bib`) and :cite:`Cimrak2012`
-(BibTeX key ``Cimrak2012`` in :file:`doc/sphinx/zrefs.bib`)
+When using this module, please cite :cite:`cimrak14a` (BibTeX key
+``cimrak14a`` in :file:`doc/sphinx/zrefs.bib`) and :cite:`cimrak12a`
+(BibTeX key ``cimrak12a`` in :file:`doc/sphinx/zrefs.bib`)
 
 This documentation introduces the features of module Object-in-fluid (OIF).
 Even though |es| was not primarily intended to work with closed
@@ -544,7 +544,7 @@ would cause "particle out of range" error and crash the simulation.
 File format
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-ParaView (download at http://www.paraview.org) accepts .vtk files. For
+ParaView (download at https://www.paraview.org) accepts .vtk files. For
 our cells we use the following format:
 
 .. code-block:: none
@@ -701,7 +701,7 @@ Vector data for objects .vtk file
    Example of vector data stored in points of the object
 
 | More info on .vtk files and possible options:
-| http://www.vtk.org/VTK/img/file-formats.pdf
+| https://vtk.org/wp-content/uploads/2015/04/file-formats.pdf
 
 
 
@@ -1524,13 +1524,15 @@ polarizability :math:`\alpha` (in units of inverse volume) with :math:`q_d =
 
 The following helper method takes into account all the preceding considerations
 and can be used to conveniently add a Drude particle to a given core particle.
-As it also adds the first two bonds between Drude and core, these bonds have to
-be created beforehand::
+It returns an `espressomd.particle_data.ParticleHandle` to the created Drude
+particle. Note that as the function also adds the first two bonds between Drude
+and core, these bonds have to be already available.::
 
     import espressomd.drude_helpers
-    espressomd.drude_helpers(<system>, <harmonic_bond>, <thermalized_bond>,
-        <core particle>, <id drude>, <type drude>, <alpha>, <mass drude>,
-        <coulomb_prefactor>, <thole damping>, <verbose>)
+    dh = espressomd.drude_helpers.DrudeHelpers()
+    drude_part = dh.add_drude_particle_to_core(<system>, <harmonic_bond>,
+        <thermalized_bond>, <core particle>, <type drude>, <alpha>,
+        <mass drude>, <coulomb_prefactor>, <thole damping>, <verbose>)
 
 The arguments of the helper function are:
     * ``<system>``: The :class:`espressomd.System() <espressomd.system.System>`.
@@ -1539,7 +1541,6 @@ The arguments of the helper function are:
     * ``<thermalized_bond>``: The thermalized distance bond for the cold and hot
       thermostats.
     * ``<core particle>``: The core particle on which the Drude particle is added.
-    * ``<id drude>``: The user-defined id of the Drude particle that is created.
     * ``<type drude>``: The user-defined type of the Drude particle.
       Each Drude particle of each complex should have an
       individual type (e.g. in an ionic system with Anions (type 0) and Cations
@@ -1558,10 +1559,11 @@ One bond type of this kind is needed per Drude type. The above helper function a
 tracks particle types, ids and charges of Drude and core particles, so a simple call of
 another helper function::
 
-    espressomd.drude_helpers.setup_and_add_drude_exclusion_bonds(S)
+    dh.setup_and_add_drude_exclusion_bonds(system)
 
 will use this data to create a :ref:`Subtract P3M short-range bond` per Drude type
-and set it up it between all Drude and core particles collected in calls of :meth:`~espressomd.drude_helpers.add_drude_particle_to_core`.
+and set it up it between all Drude and core particles collected in calls of
+:meth:`~espressomd.drude_helpers.DrudeHelpers.add_drude_particle_to_core`.
 
 .. _Canceling intramolecular electrostatics:
 
@@ -1611,7 +1613,7 @@ This method has to be called for all molecules and needs the following parameter
 * ``<verbose>``: (bool, optional) Prints out information about the added bonds (default: ``False``)
 
 Internally, this is done with the bond described in  :ref:`Subtract P3M short-range bond`, that
-simply adds the p3m shortrange pair-force of scale :math:`- q_d q_{partial}` the to
+simply adds the p3m shortrange pair-force of scale :math:`- q_{\textrm{d}} q_{\textrm{partial}}` the to
 bonded particles.
 
 .. seealso::
@@ -1625,14 +1627,25 @@ bonded particles.
 Monte Carlo Methods
 -------------------
 
-.. note:: The whole Reaction Ensemble module uses Monte Carlo moves which require potential energies. Therefore the Reaction Ensemble requires support for energy calculations for all active interactions in the simulation. Please also note that Monte Carlo methods may create and delete particles from the system. This process can invalidate particle ids, in which case the particles are no longer numbered contiguously. Particle slices returned by ``system.part`` are still iterable, but the indices no longer match the particle ids.
+.. note::
+    The whole Reaction Ensemble module uses Monte Carlo moves which require
+    potential energies. Therefore the Reaction Ensemble requires support for
+    energy calculations for all active interactions in the simulation.
+    Please also note that Monte Carlo methods may create and delete
+    particles from the system. This process can invalidate particle ids,
+    in which case the particles are no longer numbered contiguously.
+    Particle slices returned by ``system.part`` are still iterable, but
+    the indices no longer match the particle ids. For improved performance,
+    you can set the type of invalidated particles with
+    :meth:`~espressomd.reaction_ensemble.ReactionAlgorithm.set_non_interacting_type`
+    in all Reaction Ensemble classes.
 
 .. _Reaction Ensemble:
 
 Reaction Ensemble
 ~~~~~~~~~~~~~~~~~
 
-The reaction ensemble :cite:`smith94c,turner2008simulation` allows to simulate
+The reaction ensemble :cite:`smith94c,turner08a` allows to simulate
 chemical reactions which can be represented by the general equation:
 
 .. math::

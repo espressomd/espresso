@@ -24,7 +24,7 @@ sys.path.insert(0, '@CMAKE_BINARY_DIR@/src/python')
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-#needs_sphinx = '1.0'
+needs_sphinx = '2.3'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -38,6 +38,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.doctest',
     'sphinxcontrib.bibtex',
+    'sphinx_toggleprompt',
     'sphinx.ext.napoleon'
 ]
 
@@ -57,7 +58,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'ESPResSo'
-copyright = '2018-2020, The ESPResSo project'
+copyright = '2018-2021, The ESPResSo project'
 author = 'C. Holm, F. Weik, R. Weeber'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -138,10 +139,10 @@ html_theme_options = {
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-html_title = "ESPResSo documentation"
+html_title = f"{project} documentation"
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
-html_short_title = "ESPResSo doc"
+html_short_title = f"{project} v{release} documentation"
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
@@ -248,7 +249,7 @@ napoleon_use_param = False
 # -- Other options --------------------------------------------------------
 
 # Suppress warnings for features not compiled in
-# http://stackoverflow.com/questions/12206334/sphinx-autosummary-toctree-contains-reference-to-nonexisting-document-warnings
+# https://stackoverflow.com/questions/12206334/sphinx-autosummary-toctree-contains-reference-to-nonexisting-document-warnings
 autodoc_mock_imports = ['featuredefs', 'matplotlib', 'OpenGL', 'mayavi', 'pyface', 'tvtk', 'vtk']
 
 # Add custom stylesheets

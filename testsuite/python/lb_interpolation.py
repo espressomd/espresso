@@ -73,6 +73,7 @@ class LBInterpolation:
         """
         self.set_boundaries([0.0, 0.0, V_BOUNDARY])
         self.system.integrator.run(250)
+
         # Check interpolated vel at upper boundary. The node position is at
         # box_l[0]-agrid/2.
         np.testing.assert_allclose(
@@ -80,38 +81,33 @@ class LBInterpolation:
                 [self.system.box_l[0] - AGRID / 2, 0, 0])),
             np.array([0, 0, V_BOUNDARY]))
 
-        # Check interpolated velocity involving boundary and neighboring node
+        # Check interpolated velocity involving boundary and neighboring node.
         # The boundary node index is lbf.shape[0]-1, so -2 refers to the
         # node in front of the boundary.
-        node_next_to_boundary = self.lbf[
-            self.lbf.shape[0] - 2, 0, 0]
-        # The midpoint between the boundary and
-        # that node is box_l - agrid.
+        node_next_to_boundary = self.lbf[self.lbf.shape[0] - 2, 0, 0]
+        # The midpoint between the boundary and that node is box_l - agrid.
         np.testing.assert_allclose(
             np.copy(self.lbf.get_interpolated_velocity(
                 [self.system.box_l[0] - AGRID, 0, 0])),
             0.5 * (np.array([0, 0, V_BOUNDARY]) +
                    node_next_to_boundary.velocity),
-            rtol=2e-7)
+            atol=1e-7)
 
         # Bulk
         for pos in itertools.product(
                 np.arange(1.5 * AGRID, BOX_L - 1.5 * AGRID, 0.5 * AGRID),
                 np.arange(0.5 * AGRID, BOX_L, AGRID),
                 np.arange(0.5 * AGRID, BOX_L, AGRID)):
-            np.testing.assert_almost_equal(
-                self.lbf.get_interpolated_velocity(pos)[2], velocity_profile(pos[0]), decimal=4)
-        # Shear plane for boundary 2
-        # for pos in itertools.product((9 * AGRID,), np.arange(0.5 * AGRID, BOX_L, AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID)):
-        # np.testing.assert_almost_equal(self.lbf.get_interpolated_velocity(pos)[2],
-        # 1.0, decimal=4)
+            np.testing.assert_allclose(
+                self.lbf.get_interpolated_velocity(pos)[2],
+                velocity_profile(pos[0]), atol=5e-5)
 
     def test_mach_limit_check(self):
         """
-        Assert that the mach number check fires an exception.
+        Assert that the Mach number check fires an exception.
 
         """
-        max_vel = 0.31 * AGRID / TAU
+        max_vel = 0.21 * AGRID / TAU
         print("Begin: Test error generation")
         sys.stdout.flush()
         sys.stderr.flush()

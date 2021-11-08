@@ -35,7 +35,6 @@ struct IBMVolCons {
 
   static constexpr int num = 0;
 
-  IBMVolCons() = default;
   IBMVolCons(int softID, double kappaV);
 
 private:

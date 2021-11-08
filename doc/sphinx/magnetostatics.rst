@@ -56,7 +56,7 @@ This is the dipolar version of the P3M algorithm, described in :cite:`cerda08d`.
 
 Make sure that you know the relevance of the P3M parameters before using
 P3M! If you are not sure, read the following references:
-:cite:`ewald21,hockney88,kolafa92,deserno98a,deserno98b,deserno00,deserno00a,cerda08d`.
+:cite:`ewald21a,hockney88,kolafa92a,deserno98a,deserno98b,deserno00e,deserno00b,cerda08d`.
 
 Note that dipolar P3M does not work with non-cubic boxes.
 
@@ -179,7 +179,7 @@ cell is far enough are :math:`I_{\mathrm{tol}}^2` and
 :math:`\varepsilon^2` which define a fraction of the cell and
 an additive distance respectively. For the detailed description of the
 Barnes-Hut method application to the dipole-dipole interactions, please
-refer to :cite:`Polyakov2013`.
+refer to :cite:`polyakov13a`.
 
 To use the method, create an instance of :class:`~espressomd.magnetostatics.DipolarBarnesHutGpu`
 and add it to the system's list of active actors::
