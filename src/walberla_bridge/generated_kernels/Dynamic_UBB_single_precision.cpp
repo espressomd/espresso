@@ -56,14 +56,14 @@ static FUNC_PREFIX void boundary_Dynamic_UBB_single_precision(
   const int64_t f_in_inv_dir_idx[] = {0, 2,  1,  4,  3,  6,  5,  10, 9, 8,
                                       7, 16, 15, 18, 17, 12, 11, 14, 13};
 
-  const double weights[] = {
-      0.333333333333333,  0.0555555555555556, 0.0555555555555556,
-      0.0555555555555556, 0.0555555555555556, 0.0555555555555556,
-      0.0555555555555556, 0.0277777777777778, 0.0277777777777778,
-      0.0277777777777778, 0.0277777777777778, 0.0277777777777778,
-      0.0277777777777778, 0.0277777777777778, 0.0277777777777778,
-      0.0277777777777778, 0.0277777777777778, 0.0277777777777778,
-      0.0277777777777778};
+  const float weights[] = {
+      0.333333333333333f,  0.0555555555555556f, 0.0555555555555556f,
+      0.0555555555555556f, 0.0555555555555556f, 0.0555555555555556f,
+      0.0555555555555556f, 0.0277777777777778f, 0.0277777777777778f,
+      0.0277777777777778f, 0.0277777777777778f, 0.0277777777777778f,
+      0.0277777777777778f, 0.0277777777777778f, 0.0277777777777778f,
+      0.0277777777777778f, 0.0277777777777778f, 0.0277777777777778f,
+      0.0277777777777778f};
 
   const int64_t neighbour_offset_x[] = {0, 0, 0, -1, 1, 0, 0, -1, 1, -1,
                                         1, 0, 0, -1, 1, 0, 0, -1, 1};
@@ -125,11 +125,17 @@ static FUNC_PREFIX void boundary_Dynamic_UBB_single_precision(
                _stride_pdfs_2 * z + _stride_pdfs_2 * neighbour_offset_z[dir] +
                _stride_pdfs_3 * f_in_inv_dir_idx[dir]] =
         -rho *
-            (6.0f * *((double *)(&_data_indexVector[40 * ctr_0 + 16])) *
+            (6.0f *
+                 static_cast<float>(
+                     *((double *)(&_data_indexVector[40 * ctr_0 + 16]))) *
                  neighbour_offset_x[dir] +
-             6.0f * *((double *)(&_data_indexVector[40 * ctr_0 + 24])) *
+             6.0f *
+                 static_cast<float>(
+                     *((double *)(&_data_indexVector[40 * ctr_0 + 24]))) *
                  neighbour_offset_y[dir] +
-             6.0f * *((double *)(&_data_indexVector[40 * ctr_0 + 32])) *
+             6.0f *
+                 static_cast<float>(
+                     *((double *)(&_data_indexVector[40 * ctr_0 + 32]))) *
                  neighbour_offset_z[dir]) *
             weights[dir] +
         _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_1 * y +
