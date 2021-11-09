@@ -341,8 +341,7 @@ public:
     // Instance the sweep responsible for force double buffering and
     // external forces
     m_reset_force = std::make_shared<ResetForce<PdfField, VectorField>>(
-        m_pdf_field_id, m_last_applied_force_field_id,
-        m_force_to_be_applied_id);
+        m_last_applied_force_field_id, m_force_to_be_applied_id);
 
     // Prepare LB sweeps
     // Note: For now, combined collide-stream sweeps cannot be used,
@@ -427,7 +426,7 @@ public:
       return false;
     // We have to set both, the pdf and the stored velocity field
     auto const density = getDensity(*bc);
-    auto const vel = Vector3<real_t>{real_c(v[0]), real_c(v[1]), real_c(v[2])};
+    auto const vel = to_vector3(v);
     setDensityAndVelocity(*bc, vel, density);
     auto vel_field =
         (*bc).block->template getData<VectorField>(m_velocity_field_id);
