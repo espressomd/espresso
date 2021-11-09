@@ -49,10 +49,18 @@ class LBInterpolation:
     Couette flow profile along x in z-direction. Check that velocity at shear
     plane next to the resting boundary is zero.
     """
-    lbf = None
+
     system = espressomd.System(box_l=[BOX_L] * 3)
     system.cell_system.skin = 0.4 * AGRID
     system.time_step = TIME_STEP
+
+    def setUp(self):
+        self.lbf = self.lb_class(**LB_PARAMETERS, **self.lb_params)
+        self.system.actors.add(self.lbf)
+
+    def tearDown(self):
+        self.system.lbboundaries.clear()
+        self.system.actors.clear()
 
     def set_boundaries(self, velocity):
         """Place boundaries *not* exactly on a LB node."""
@@ -123,13 +131,21 @@ class LBInterpolation:
 
 
 @utx.skipIfMissingFeatures(['LB_BOUNDARIES', 'LB_WALBERLA'])
-class LBInterpolationWalberla(ut.TestCase, LBInterpolation):
+class LBInterpolationWalberla(LBInterpolation, ut.TestCase):
 
-    def setUp(self):
-        self.system.lbboundaries.clear()
-        self.system.actors.clear()
-        self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMETERS)
-        self.system.actors.add(self.lbf)
+    """Test for the Walberla implementation of the LB in double-precision."""
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': False}
+
+
+@utx.skipIfMissingFeatures(['LB_BOUNDARIES', 'LB_WALBERLA'])
+class LBInterpolationWalberlaSinglePrecision(LBInterpolation, ut.TestCase):
+
+    """Test for the Walberla implementation of the LB in single-precision."""
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': True}
 
 
 if __name__ == "__main__":

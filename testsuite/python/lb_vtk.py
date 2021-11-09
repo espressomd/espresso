@@ -37,12 +37,21 @@ if espressomd.has_features('LB_BOUNDARIES'):
     import espressomd.shapes
 
 
-@skipIfMissingPythonPackage
-@utx.skipIfMissingFeatures("LB_WALBERLA")
-class TestVTK(ut.TestCase):
+class LBWrite:
     system = espressomd.System(box_l=3 * [16])
     system.time_step = 0.01
     system.cell_system.skin = 0.4
+
+    def setUp(self):
+        self.lbf = self.lb_class(
+            kT=0, agrid=1.0, density=1.0, viscosity=1.0, tau=0.1,
+            ext_force_density=[0, 0.03, 0], **self.lb_params)
+        self.system.actors.add(self.lbf)
+
+    def tearDown(self):
+        self.system.lbboundaries.clear()
+        self.system.actors.clear()
+        self.system.thermostat.turn_off()
 
     def get_vtk_folder_names(self, filepaths):
         return set(os.path.dirname(filepath) for filepath in filepaths)
@@ -85,12 +94,6 @@ class TestVTK(ut.TestCase):
         Check VTK files. Keep in mind VTK files are written with
         float precision.
         '''
-
-        # setup LB system
-        self.lbf = espressomd.lb.LBFluidWalberla(
-            kT=0, agrid=1.0, density=1.0, viscosity=1.0, tau=0.1,
-            ext_force_density=[0, 0.03, 0])
-        self.system.actors.add(self.lbf)
         x_offset = 0
         shape = [16, 16, 16]
         if espressomd.has_features('LB_BOUNDARIES'):
@@ -103,9 +106,11 @@ class TestVTK(ut.TestCase):
 
         n_steps = 100
         lb_steps = int(np.floor(n_steps * self.lbf.tau))
-        filepath_vtk_end = 'vtk_out/test_lb_vtk_end/simulation_step_0.vtu'
+        label_vtk_end = f'test_lb_vtk_{self.lb_vtk_id}_end'
+        label_vtk_continuous = f'test_lb_vtk_{self.lb_vtk_id}_continuous'
+        filepath_vtk_end = f'vtk_out/{label_vtk_end}/simulation_step_0.vtu'
         filepath_vtk_continuous = [
-            f'vtk_out/test_lb_vtk_continuous/simulation_step_{i}.vtu' for i in range(lb_steps)]
+            f'vtk_out/{label_vtk_continuous}/simulation_step_{i}.vtu' for i in range(lb_steps)]
         filepaths = [filepath_vtk_end] + filepath_vtk_continuous
 
         # cleanup action
@@ -113,9 +118,9 @@ class TestVTK(ut.TestCase):
 
         # write VTK files
         vtk_obs = ['density', 'velocity_vector', 'pressure_tensor']
-        self.lbf.add_vtk_writer('test_lb_vtk_continuous', vtk_obs, delta_N=1)
+        self.lbf.add_vtk_writer(label_vtk_continuous, vtk_obs, delta_N=1)
         self.system.integrator.run(n_steps)
-        lb_vtk = self.lbf.add_vtk_writer('test_lb_vtk_end', vtk_obs, delta_N=0)
+        lb_vtk = self.lbf.add_vtk_writer(label_vtk_end, vtk_obs, delta_N=0)
         lb_vtk.write()
 
         # check VTK files exist
@@ -175,6 +180,22 @@ class TestVTK(ut.TestCase):
             np.testing.assert_allclose(vtk_pressure, node_pressure, atol=1e-3)
 
         self.cleanup_vtk_files(filepaths)
+
+
+@skipIfMissingPythonPackage
+@utx.skipIfMissingFeatures("LB_WALBERLA")
+class LBWalberlaWrite(LBWrite, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': False}
+    lb_vtk_id = 'double_precision'
+
+
+@skipIfMissingPythonPackage
+@utx.skipIfMissingFeatures("LB_WALBERLA")
+class LBWalberlaWriteSinglePrecision(LBWrite, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': True}
+    lb_vtk_id = 'single_precision'
 
 
 if __name__ == '__main__':

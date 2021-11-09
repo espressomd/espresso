@@ -30,7 +30,6 @@ class CylindricalLBObservableCommon:
     Testcase for the CylindricalLBObservables.
 
     """
-    lbf = None
     system = espressomd.System(box_l=3 * [15])
     system.time_step = 0.01
     system.cell_system.skin = 0.4
@@ -61,6 +60,14 @@ class CylindricalLBObservableCommon:
     v_r = 0.02
     v_phi = 0.04
     v_z = 0.03
+
+    def setUp(self):
+        self.lbf = self.lb_class(**self.lb_params, **self.lb_params_extra)
+        self.system.actors.add(self.lbf)
+
+    def tearDown(self):
+        self.system.actors.clear()
+        self.system.part.clear()
 
     def calc_vel_at_pos(self, positions):
         """
@@ -269,15 +276,22 @@ class CylindricalLBObservableCommon:
 
 @utx.skipIfMissingFeatures("LB_WALBERLA")
 class CylindricalLBObservableWalberla(
-        ut.TestCase, CylindricalLBObservableCommon):
+        CylindricalLBObservableCommon, ut.TestCase):
 
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidWalberla(**self.lb_params)
-        self.system.actors.add(self.lbf)
+    """Test for the Walberla implementation of the LB in double-precision."""
 
-    def tearDown(self):
-        self.system.actors.remove(self.lbf)
-        self.system.part.clear()
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params_extra = {'single_precision': False}
+
+
+@utx.skipIfMissingFeatures("LB_WALBERLA")
+class CylindricalLBObservableWalberlaSinglePrecision(
+        CylindricalLBObservableWalberla, ut.TestCase):
+
+    """Test for the Walberla implementation of the LB in single-precision."""
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params_extra = {'single_precision': True}
 
 
 if __name__ == "__main__":

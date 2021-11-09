@@ -124,6 +124,8 @@ class CheckpointTest(ut.TestCase):
         for key in reference:
             self.assertIn(key, state)
             self.assertAlmostEqual(reference[key], state[key], delta=1E-7)
+        self.assertTrue(lbf.is_active)
+        self.assertFalse(lbf.is_single_precision)
 
     @utx.skipIfMissingFeatures('LB_WALBERLA')
     @ut.skipIf('LB.ACTIVE.WALBERLA' not in modes, 'waLBerla LBM not in modes')

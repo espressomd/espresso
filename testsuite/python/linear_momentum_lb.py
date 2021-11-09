@@ -21,10 +21,7 @@ import itertools
 
 import espressomd.lb
 
-"""
-Check linear momentum calculation for lattice-Boltzmann.
-
-"""
+np.random.seed(seed=40)
 
 
 AGRID = .5
@@ -41,32 +38,32 @@ LB_PARAMS = {'agrid': AGRID,
              'ext_force_density': [0.1, 0.2, 0.3]}
 
 
-class LinearMomentumTest:
+class LBLinearMomentum:
 
-    """Base class of the test that holds the test logic."""
-    lbf = None
+    """
+    Check linear momentum calculation for lattice-Boltzmann.
+    """
+
     system = espressomd.System(box_l=[BOX_L] * 3)
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
 
-    def prepare(self):
-        """
-        Setup random node velocities.
-
-        """
-        self.system.actors.clear()
-        self.lbf = self.lbf(**LB_PARAMS)
+    def setUp(self):
+        self.lbf = self.lb_class(**LB_PARAMS, **self.lb_params)
         self.system.actors.add(self.lbf)
-        for index in itertools.product(
-                np.arange(0, int(np.floor(BOX_L / AGRID))), repeat=3):
-            self.lbf[index].velocity = np.random.random(3) - 0.5
+
+    def tearDown(self):
+        self.system.actors.clear()
 
     def test(self):
         """
         Compare direct calculation of fluid momentum with analysis function.
 
         """
-        self.prepare()
+        # setup random node velocities
+        for index in itertools.product(
+                np.arange(0, int(np.floor(BOX_L / AGRID))), repeat=3):
+            self.lbf[index].velocity = np.random.random(3) - 0.5
         linear_momentum = np.zeros(3)
         for index in itertools.product(
                 np.arange(0, int(np.floor(BOX_L / AGRID))), repeat=3):
@@ -74,18 +71,27 @@ class LinearMomentumTest:
         analyze_linear_momentum = self.system.analysis.linear_momentum(True,  # particles
                                                                        True)  # LB fluid
         np.testing.assert_allclose(
-            linear_momentum,
-            analyze_linear_momentum,
-            atol=1e-3)
+            linear_momentum, analyze_linear_momentum, atol=self.atol)
 
 
 @utx.skipIfMissingFeatures(['LB_WALBERLA'])
-class LBWalberlaLinearMomentum(ut.TestCase, LinearMomentumTest):
+class LBLinearMomentumWalberla(LBLinearMomentum, ut.TestCase):
 
-    """Test for the GPU implementation of the LB."""
+    """Test for the Walberla implementation of the LB in double-precision."""
 
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidWalberla
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': False}
+    atol = 1e-10
+
+
+@utx.skipIfMissingFeatures(['LB_WALBERLA'])
+class LBLinearMomentumWalberlaSinglePrecision(LBLinearMomentum, ut.TestCase):
+
+    """Test for the Walberla implementation of the LB in single-precision."""
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': True}
+    atol = 1e-6
 
 
 if __name__ == '__main__':

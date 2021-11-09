@@ -22,7 +22,7 @@ import unittest_decorators as utx
 
 import numpy as np
 
-# Define the LB Parameters
+# Define the LB parameters
 TIME_STEP = 0.008
 AGRID = .4
 GRID_SIZE = 6
@@ -39,21 +39,27 @@ LB_PARAMS = {'agrid': AGRID,
              'ext_force_density': [-.7 * F, .9 * F, .8 * F]}
 
 
-class Momentum(object):
+class TestLBMomentumConservation:
     """
     Tests momentum conservation for an LB coupled to a particle, where opposing
     forces are applied to LB and particle. The test should uncover issues
     with boundary and ghost layer handling.
 
     """
-    lbf = None
+
     system = espressomd.System(box_l=[GRID_SIZE * AGRID] * 3)
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.01
 
-    def check(self):
+    def setUp(self):
+        self.lbf = self.lb_class(**LB_PARAMS, **self.lb_params)
+
+    def tearDown(self):
         self.system.actors.clear()
+        self.system.thermostat.turn_off()
         self.system.part.clear()
+
+    def check(self):
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=GAMMA, seed=1)
         np.testing.assert_allclose(
@@ -79,7 +85,7 @@ class Momentum(object):
             compensation = -TIME_STEP / 2 * coupling_force
 
             np.testing.assert_allclose(measured_momentum + compensation,
-                                       initial_momentum, atol=1E-4)
+                                       initial_momentum, atol=1.2E-4)
             if np.linalg.norm(p.f) < 0.01 \
                and np.all(np.abs(p.pos) > 10.1 * self.system.box_l):
                 break
@@ -87,16 +93,6 @@ class Momentum(object):
         # Make sure, the particle has crossed the periodic boundaries
         self.assertGreater(max(np.abs(p.v)) * self.system.time,
                            self.system.box_l[0])
-
-
-@utx.skipIfMissingFeatures(['LB_WALBERLA', 'EXTERNAL_FORCES'])
-class LBWalberlaMomentum(ut.TestCase, Momentum):
-
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMS)
-
-    def tearDown(self):
-        self.system.actors.clear()
 
     def test_dom_dec(self):
         self.system.cell_system.set_domain_decomposition()
@@ -108,6 +104,20 @@ class LBWalberlaMomentum(ut.TestCase, Momentum):
                 "LB only works with domain decomposition for more than 1 MPI rank")
         self.system.cell_system.set_n_square()
         self.check()
+
+
+@utx.skipIfMissingFeatures(['LB_WALBERLA', 'EXTERNAL_FORCES'])
+class TestLBMomentumConservationWalberla(
+        TestLBMomentumConservation, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': False}
+
+
+@utx.skipIfMissingFeatures(['LB_WALBERLA', 'EXTERNAL_FORCES'])
+class TestLBMomentumConservationWalberlaSinglePrecision(
+        TestLBMomentumConservation, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': True}
 
 
 if __name__ == "__main__":

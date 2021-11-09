@@ -76,10 +76,12 @@ void mpi_lb_sanity_checks_local(LBWalberlaBase const &lb_fluid,
   auto const tol = agrid / 1E6;
   if ((lb_my_left - my_left).norm2() > tol or
       (lb_my_right - my_right).norm2() > tol) {
-    runtimeErrorMsg() << this_node << ": left ESPResSo: [" << my_left << "], "
-                      << "left waLBerla: [" << lb_my_left << "]\n";
-    runtimeErrorMsg() << this_node << ": right ESPResSo: [" << my_right << "], "
-                      << "right waLBerla: [" << lb_my_right << "]\n";
+    runtimeErrorMsg() << "\nMPI rank " << this_node << ": "
+                      << "left ESPResSo: [" << my_left << "], "
+                      << "left waLBerla: [" << lb_my_left << "]"
+                      << "\nMPI rank " << this_node << ": "
+                      << "right ESPResSo: [" << my_right << "], "
+                      << "right waLBerla: [" << lb_my_right << "]";
     throw std::runtime_error(
         "waLBerla and ESPResSo disagree about domain decomposition.");
   }

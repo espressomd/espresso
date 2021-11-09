@@ -31,6 +31,15 @@ class LBBoundariesBase:
     wall_shape1 = espressomd.shapes.Wall(normal=[1., 0., 0.], dist=2.5)
     wall_shape2 = espressomd.shapes.Wall(normal=[-1., 0., 0.], dist=-7.5)
 
+    def setUp(self):
+        self.lbf = self.lb_class(
+            viscosity=1.0, density=1.0, agrid=0.5, tau=1.0, **self.lb_params)
+        self.system.actors.add(self.lbf)
+
+    def tearDown(self):
+        self.system.lbboundaries.clear()
+        self.system.actors.clear()
+
     def test_add(self):
         boundary = espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1)
 
@@ -139,22 +148,22 @@ class LBBoundariesBase:
 
 @utx.skipIfMissingFeatures(["LB_BOUNDARIES"])
 @utx.skipIfMissingFeatures(["LB_WALBERLA"])
-class LBBoundariesWalberla(ut.TestCase, LBBoundariesBase):
-    lbf = None
+class LBBoundariesWalberla(LBBoundariesBase, ut.TestCase):
 
-    def setUp(self):
-        if not self.lbf:
-            self.lbf = espressomd.lb.LBFluidWalberla(
-                viscosity=1.0,
-                density=1.0,
-                agrid=0.5,
-                tau=1.0)
+    """Test for the Walberla implementation of the LB in double-precision."""
 
-        self.system.actors.add(self.lbf)
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': False}
 
-    def tearDown(self):
-        self.system.lbboundaries.clear()
-        self.system.actors.remove(self.lbf)
+
+@utx.skipIfMissingFeatures(["LB_BOUNDARIES"])
+@utx.skipIfMissingFeatures(["LB_WALBERLA"])
+class LBBoundariesWalberlaSinglePrecision(LBBoundariesBase, ut.TestCase):
+
+    """Test for the Walberla implementation of the LB in single-precision."""
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': True}
 
 
 if __name__ == "__main__":
