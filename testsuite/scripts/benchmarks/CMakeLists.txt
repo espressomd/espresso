@@ -25,6 +25,7 @@ benchmark_test(FILE test_lj.py)
 benchmark_test(FILE test_lb.py)
 benchmark_test(FILE test_p3m.py)
 benchmark_test(FILE test_ferrofluid.py)
+benchmark_test(FILE test_mc_acid_base_reservoir.py)
 
 add_custom_target(
   check_benchmarks COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}
