@@ -111,7 +111,7 @@ void add_lb_actor_local(double kT) {
                                                  node_grid, n_ghost_layers);
   lb_fluid =
       mpi_init_lb_walberla_local(*lb_lattice, *lb_params, params.viscosity,
-                                 params.density, params.kT, params.seed);
+                                 params.density, params.kT, params.seed, false);
   mpi_activate_lb_walberla_local(lb_fluid, lb_params);
 }
 

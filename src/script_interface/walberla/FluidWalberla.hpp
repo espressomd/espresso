@@ -45,6 +45,7 @@ namespace ScriptInterface::walberla {
 class FluidWalberla : public AutoParameters<FluidWalberla> {
   std::shared_ptr<::LBWalberlaBase> m_lb_fluid;
   std::shared_ptr<::LBWalberlaParams> m_lb_params;
+  bool m_is_single_precision;
   bool m_is_active;
   double m_conv_visc;
   double m_conv_temp;
@@ -56,6 +57,8 @@ class FluidWalberla : public AutoParameters<FluidWalberla> {
 public:
   FluidWalberla() {
     add_parameters({
+        {"is_single_precision", AutoParameter::read_only,
+         [this]() { return m_is_single_precision; }},
         {"is_active", AutoParameter::read_only,
          [this]() { return m_is_active; }},
         {"is_initialized", AutoParameter::read_only,
@@ -161,6 +164,7 @@ public:
         get_value<int>(params, "seed"),
         m_conv_force * get_value<Utils::Vector3d>(params, "ext_force_density")};
     m_is_active = false;
+    m_is_single_precision = get_value<bool>(params, "single_precision");
   }
 
   Variant do_call_method(std::string const &name,
@@ -171,7 +175,8 @@ public:
           get_value<std::shared_ptr<LatticeWalberla>>(params, "lattice")
               ->lattice();
       m_lb_fluid = mpi_init_lb_walberla_local(*lb_lattice, *m_lb_params,
-                                              lb_visc, lb_dens, lb_kT, lb_seed);
+                                              lb_visc, lb_dens, lb_kT, lb_seed,
+                                              m_is_single_precision);
       m_lb_fluid->set_external_force(ext_f);
     }
     if (name == "activate") {

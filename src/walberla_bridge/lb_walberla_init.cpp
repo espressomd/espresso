@@ -40,10 +40,13 @@ void walberla_mpi_init() {
 
 std::shared_ptr<LBWalberlaBase> new_lb_walberla(LatticeWalberla const &lattice,
                                                 double viscosity,
-                                                double density, double kT,
-                                                unsigned int seed) {
-  return std::make_shared<walberla::LBWalberlaImpl>(lattice, viscosity, density,
-                                                    kT, seed);
+                                                double density,
+                                                bool single_precision) {
+  if (single_precision)
+    return std::make_shared<walberla::LBWalberlaImpl<float>>(lattice, viscosity,
+                                                             density);
+  return std::make_shared<walberla::LBWalberlaImpl<double>>(lattice, viscosity,
+                                                            density);
 }
 
 Utils::Vector3i calc_grid_dimensions(Utils::Vector3d const &box_size,

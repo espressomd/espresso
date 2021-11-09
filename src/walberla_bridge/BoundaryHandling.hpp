@@ -23,7 +23,8 @@
 
 #include "walberla_utils.hpp"
 
-#include "generated_kernels/Dynamic_UBB.h"
+#include "generated_kernels/Dynamic_UBB_double_precision.h"
+#include "generated_kernels/Dynamic_UBB_single_precision.h"
 
 #include <utils/Vector.hpp>
 
@@ -40,18 +41,30 @@ const FlagUID Domain_flag("domain");
 /// Flag for boundary cells
 const FlagUID Boundary_flag("velocity bounce back");
 
+namespace detail {
+template <typename FT> struct BoundaryHandlingTrait {
+  using Dynamic_UBB = lbm::Dynamic_UBB_double_precision;
+};
+template <> struct BoundaryHandlingTrait<float> {
+  using Dynamic_UBB = lbm::Dynamic_UBB_single_precision;
+};
+} // namespace detail
+
 /** Velocity boundary conditions sweep. */
-class BoundaryHandling {
+template <typename FloatType> class BoundaryHandling {
+
+  using Dynamic_UBB =
+      typename detail::BoundaryHandlingTrait<FloatType>::Dynamic_UBB;
 
   /** Container for the map between cells and velocities. */
   class DynamicVelocityCallback {
   public:
     DynamicVelocityCallback() {
       m_velocity_boundary =
-          std::make_shared<std::unordered_map<Cell, Vector3<real_t>>>();
+          std::make_shared<std::unordered_map<Cell, Vector3<FloatType>>>();
     }
 
-    Vector3<real_t> operator()(
+    Vector3<FloatType> operator()(
         Cell const &local,
         std::shared_ptr<blockforest::StructuredBlockForest> const &blocks,
         IBlock &block) const {
@@ -63,7 +76,7 @@ class BoundaryHandling {
     void set_node_boundary_velocity(Utils::Vector3i const &node,
                                     Utils::Vector3d const &vel) {
       auto const global = Cell(node[0], node[1], node[2]);
-      (*m_velocity_boundary)[global] = to_vector3(vel);
+      (*m_velocity_boundary)[global] = to_vector3<FloatType>(vel);
     }
 
     void unset_node_boundary_velocity(Utils::Vector3i const &node) {
@@ -79,11 +92,11 @@ class BoundaryHandling {
     }
 
   private:
-    std::shared_ptr<std::unordered_map<Cell, Vector3<real_t>>>
+    std::shared_ptr<std::unordered_map<Cell, Vector3<FloatType>>>
         m_velocity_boundary;
-    static constexpr Vector3<real_t> no_slip{0, 0, 0};
+    static constexpr Vector3<FloatType> no_slip{0, 0, 0};
 
-    Vector3<real_t> get_velocity(Cell const &cell) const {
+    Vector3<FloatType> get_velocity(Cell const &cell) const {
       if (m_velocity_boundary->count(cell) == 0) {
         return no_slip;
       }
@@ -111,7 +124,7 @@ public:
     // instantiate the boundary sweep
     std::function callback = m_callback;
     m_boundary =
-        std::make_shared<lbm::Dynamic_UBB>(m_blocks, m_pdf_field_id, callback);
+        std::make_shared<Dynamic_UBB>(m_blocks, m_pdf_field_id, callback);
   }
 
   void operator()(IBlock *block) { (*m_boundary)(block); }
@@ -143,8 +156,8 @@ public:
 
   /** Assign velocity boundary conditions to boundary cells. */
   void ubb_update() {
-    m_boundary->fillFromFlagField<FlagField>(m_blocks, m_flag_field_id,
-                                             Boundary_flag, Domain_flag);
+    m_boundary->template fillFromFlagField<FlagField>(
+        m_blocks, m_flag_field_id, Boundary_flag, Domain_flag);
   }
 
 private:
@@ -152,7 +165,7 @@ private:
   BlockDataID m_pdf_field_id;
   BlockDataID m_flag_field_id;
   DynamicVelocityCallback m_callback;
-  std::shared_ptr<lbm::Dynamic_UBB> m_boundary;
+  std::shared_ptr<Dynamic_UBB> m_boundary;
 
   /** Register flags and set all cells to @ref Domain_flag. */
   void flag_reset_kernel(IBlock *const block) {

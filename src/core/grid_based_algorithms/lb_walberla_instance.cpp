@@ -118,12 +118,15 @@ void mpi_deactivate_lb_walberla_local() {
 std::shared_ptr<LBWalberlaBase>
 mpi_init_lb_walberla_local(LatticeWalberla const &lb_lattice,
                            LBWalberlaParams const &lb_params, double viscosity,
-                           double density, double kT, int seed) {
+                           double density, double kT, int seed,
+                           bool single_precision) {
   bool flag_failure = false;
   std::shared_ptr<LBWalberlaBase> lb_ptr;
   try {
     assert(seed >= 0);
-    lb_ptr = new_lb_walberla(lb_lattice, viscosity, density, kT, seed);
+    lb_ptr = new_lb_walberla(lb_lattice, viscosity, density, single_precision);
+    if (kT != 0.)
+      lb_ptr->set_collision_model(kT, seed);
   } catch (const std::exception &e) {
     runtimeErrorMsg() << "during waLBerla initialization: " << e.what();
     flag_failure = true;

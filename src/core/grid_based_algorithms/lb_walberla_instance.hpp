@@ -52,11 +52,13 @@ std::shared_ptr<LBWalberlaParams> lb_walberla_params();
  *  @param density     Fluid density
  *  @param kT          Temperature
  *  @param seed        LB random seed
+ *  @param single_precision   Use single precision
  */
 std::shared_ptr<LBWalberlaBase>
 mpi_init_lb_walberla_local(LatticeWalberla const &lb_lattice,
                            LBWalberlaParams const &lb_params, double viscosity,
-                           double density, double kT, int seed);
+                           double density, double kT, int seed,
+                           bool single_precision);
 
 void mpi_lb_sanity_checks_local(LBWalberlaBase const &lb_fluid,
                                 LBWalberlaParams const &lb_params,

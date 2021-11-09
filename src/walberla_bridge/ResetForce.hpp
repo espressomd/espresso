@@ -34,15 +34,17 @@ namespace walberla {
  *  and resets @c force_to_be_applied to the global external force.
  */
 template <typename PdfField, typename ForceField> class ResetForce {
+  using FloatType = typename PdfField::value_type;
+
 public:
   ResetForce(const BlockDataID &last_applied_force_field_id,
              const BlockDataID &force_to_be_applied_id)
       : m_last_applied_force_field_id(last_applied_force_field_id),
         m_force_to_be_applied_id(force_to_be_applied_id),
-        m_ext_force(Vector3<real_t>{0, 0, 0}) {}
+        m_ext_force(Vector3<FloatType>{0, 0, 0}) {}
 
   void set_ext_force(const Utils::Vector3d &ext_force) {
-    m_ext_force = to_vector3(ext_force);
+    m_ext_force = to_vector3<FloatType>(ext_force);
   }
 
   Utils::Vector3d get_ext_force() const { return to_vector3d(m_ext_force); }
@@ -63,14 +65,14 @@ public:
     WALBERLA_FOR_ALL_CELLS_INCLUDING_GHOST_LAYER_XYZ(force_to_be_applied, {
       Cell cell(x, y, z);
       for (int i : {0, 1, 2})
-        force_to_be_applied->get(cell, i) = real_t{0};
+        force_to_be_applied->get(cell, i) = FloatType{0};
     });
   }
 
 private:
   const BlockDataID m_last_applied_force_field_id;
   const BlockDataID m_force_to_be_applied_id;
-  Vector3<real_t> m_ext_force;
+  Vector3<FloatType> m_ext_force;
 };
 } // namespace walberla
 #endif

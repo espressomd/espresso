@@ -279,8 +279,8 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
             params['ext_force_density'], 3, float, 'ext_force_density must be 3 floats')
 
     def valid_keys(self):
-        return {"agrid", "density", "ext_force_density", "viscosity", "tau", "lattice",
-                "kT", "seed"}
+        return {"agrid", "tau", "density", "ext_force_density", "viscosity",
+                "lattice", "kT", "seed"}
 
     def required_keys(self):
         return {"density", "agrid", "viscosity", "tau"}
@@ -291,8 +291,8 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
                 "ext_force_density": [0.0, 0.0, 0.0],
                 "viscosity": -1.0,
                 "tau": -1.0,
-                "seed": 0,
                 "lattice": None,
+                "seed": 0,
                 "kT": 0.}
 
     def mach_limit(self):
@@ -471,6 +471,12 @@ IF LB_WALBERLA:
                 self.call_method('instantiate', **self._params)
                 utils.handle_errors(
                     "HydrodynamicInteraction instantiation failed")
+
+        def default_params(self):
+            return {"single_precision": False, **super().default_params()}
+
+        def valid_keys(self):
+            return {"single_precision", *super().valid_keys()}
 
         def clear_boundaries(self):
             """
