@@ -17,7 +17,7 @@
 //  You should have received a copy of the GNU General Public License along
 //  with waLBerla (see COPYING.txt). If not, see <http://www.gnu.org/licenses/>.
 //
-//! \\file CollideSweepAVX.h
+//! \\file InitialPDFsSetterDoublePrecision.h
 //! \\author pystencils
 //======================================================================================================================
 
@@ -49,13 +49,12 @@
 namespace walberla {
 namespace pystencils {
 
-class CollideSweepAVX {
+class InitialPDFsSetterDoublePrecision {
 public:
-  CollideSweepAVX(BlockDataID forceID_, BlockDataID pdfsID_, double omega_bulk,
-                  double omega_even, double omega_odd, double omega_shear)
-      : forceID(forceID_), pdfsID(pdfsID_), omega_bulk_(omega_bulk),
-        omega_even_(omega_even), omega_odd_(omega_odd),
-        omega_shear_(omega_shear){};
+  InitialPDFsSetterDoublePrecision(BlockDataID forceID_, BlockDataID pdfsID_,
+                                   BlockDataID velocityID_, double rho_0)
+      : forceID(forceID_), pdfsID(pdfsID_), velocityID(velocityID_),
+        rho_0_(rho_0){};
 
   void operator()(IBlock *block);
   void runOnCellInterval(const shared_ptr<StructuredBlockStorage> &blocks,
@@ -63,15 +62,14 @@ public:
                          cell_idx_t ghostLayers, IBlock *block);
 
   static std::function<void(IBlock *)>
-  getSweep(const shared_ptr<CollideSweepAVX> &kernel) {
+  getSweep(const shared_ptr<InitialPDFsSetterDoublePrecision> &kernel) {
     return [kernel](IBlock *b) { (*kernel)(b); };
   }
 
-  static std::function<void(IBlock *)>
-  getSweepOnCellInterval(const shared_ptr<CollideSweepAVX> &kernel,
-                         const shared_ptr<StructuredBlockStorage> &blocks,
-                         const CellInterval &globalCellInterval,
-                         cell_idx_t ghostLayers = 1) {
+  static std::function<void(IBlock *)> getSweepOnCellInterval(
+      const shared_ptr<InitialPDFsSetterDoublePrecision> &kernel,
+      const shared_ptr<StructuredBlockStorage> &blocks,
+      const CellInterval &globalCellInterval, cell_idx_t ghostLayers = 1) {
     return [kernel, blocks, globalCellInterval, ghostLayers](IBlock *b) {
       kernel->runOnCellInterval(blocks, globalCellInterval, ghostLayers, b);
     };
@@ -79,10 +77,8 @@ public:
 
   BlockDataID forceID;
   BlockDataID pdfsID;
-  double omega_bulk_;
-  double omega_even_;
-  double omega_odd_;
-  double omega_shear_;
+  BlockDataID velocityID;
+  double rho_0_;
 };
 
 } // namespace pystencils

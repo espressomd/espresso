@@ -2,7 +2,7 @@
 // lbmpy_walberla/pystencils_walberla from commit
 // b17ca5caf00db7d19f86c5f85c6f67fec6c16aff
 
-#include "PushPackInfo.h"
+#include "PushPackInfoSinglePrecision.h"
 #include "core/DataTypes.h"
 #include "core/cell/CellInterval.h"
 #include "stencil/Directions.h"
@@ -24,16 +24,16 @@ using walberla::stencil::Direction;
 
 namespace internal_pack_SW {
 static FUNC_PREFIX void
-pack_SW(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
+pack_SW(float *RESTRICT _data_buffer, float *RESTRICT const _data_pdfs,
         int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
         int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
         int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
         int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_20_39 =
+    float *RESTRICT _data_pdfs_20_39 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 9 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_20_39_1m1 =
+      float *RESTRICT _data_pdfs_20_39_1m1 =
           _stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _data_pdfs_20_39;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_buffer[((_size_pdfs_0) / (1)) * ((_size_pdfs_1) / (1)) *
@@ -49,16 +49,16 @@ pack_SW(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
 
 namespace internal_pack_BW {
 static FUNC_PREFIX void
-pack_BW(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
+pack_BW(float *RESTRICT _data_buffer, float *RESTRICT const _data_pdfs,
         int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
         int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
         int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
         int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_2m1_317 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
-                                          _stride_pdfs_2 + 17 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_2m1_317 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
+                                         _stride_pdfs_2 + 17 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_2m1_317_10 =
+      float *RESTRICT _data_pdfs_2m1_317_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_2m1_317;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_buffer[((_size_pdfs_0) / (1)) * ((_size_pdfs_1) / (1)) *
@@ -74,32 +74,32 @@ pack_BW(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
 
 namespace internal_pack_W {
 static FUNC_PREFIX void
-pack_W(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
+pack_W(float *RESTRICT _data_buffer, float *RESTRICT const _data_pdfs,
        int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
        int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
        int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
        int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_20_39 =
+    float *RESTRICT _data_pdfs_20_39 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 9 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_2m1_317 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
-                                          _stride_pdfs_2 + 17 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_33 =
+    float *RESTRICT _data_pdfs_2m1_317 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
+                                         _stride_pdfs_2 + 17 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_20_33 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 3 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_21_313 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
-                                         _stride_pdfs_2 + 13 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_37 =
+    float *RESTRICT _data_pdfs_21_313 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
+                                        _stride_pdfs_2 + 13 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_20_37 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 7 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_20_39_1m1 =
+      float *RESTRICT _data_pdfs_20_39_1m1 =
           _stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _data_pdfs_20_39;
-      double *RESTRICT _data_pdfs_2m1_317_10 =
+      float *RESTRICT _data_pdfs_2m1_317_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_2m1_317;
-      double *RESTRICT _data_pdfs_20_33_10 =
+      float *RESTRICT _data_pdfs_20_33_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_20_33;
-      double *RESTRICT _data_pdfs_21_313_10 =
+      float *RESTRICT _data_pdfs_21_313_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_21_313;
-      double *RESTRICT _data_pdfs_20_37_11 =
+      float *RESTRICT _data_pdfs_20_37_11 =
           _stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _data_pdfs_20_37;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_buffer[5 * ((_size_pdfs_0) / (1)) * ((_size_pdfs_1) / (1)) *
@@ -135,16 +135,16 @@ pack_W(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
 
 namespace internal_pack_TW {
 static FUNC_PREFIX void
-pack_TW(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
+pack_TW(float *RESTRICT _data_buffer, float *RESTRICT const _data_pdfs,
         int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
         int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
         int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
         int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_21_313 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
-                                         _stride_pdfs_2 + 13 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_21_313 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
+                                        _stride_pdfs_2 + 13 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_21_313_10 =
+      float *RESTRICT _data_pdfs_21_313_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_21_313;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_buffer[((_size_pdfs_0) / (1)) * ((_size_pdfs_1) / (1)) *
@@ -160,16 +160,16 @@ pack_TW(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
 
 namespace internal_pack_NW {
 static FUNC_PREFIX void
-pack_NW(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
+pack_NW(float *RESTRICT _data_buffer, float *RESTRICT const _data_pdfs,
         int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
         int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
         int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
         int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_20_37 =
+    float *RESTRICT _data_pdfs_20_37 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 7 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_20_37_11 =
+      float *RESTRICT _data_pdfs_20_37_11 =
           _stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _data_pdfs_20_37;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_buffer[((_size_pdfs_0) / (1)) * ((_size_pdfs_1) / (1)) *
@@ -185,16 +185,16 @@ pack_NW(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
 
 namespace internal_pack_BS {
 static FUNC_PREFIX void
-pack_BS(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
+pack_BS(float *RESTRICT _data_buffer, float *RESTRICT const _data_pdfs,
         int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
         int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
         int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
         int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_2m1_316 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
-                                          _stride_pdfs_2 + 16 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_2m1_316 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
+                                         _stride_pdfs_2 + 16 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_2m1_316_1m1 =
+      float *RESTRICT _data_pdfs_2m1_316_1m1 =
           _stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _data_pdfs_2m1_316;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_buffer[((_size_pdfs_0) / (1)) * ((_size_pdfs_1) / (1)) *
@@ -210,32 +210,32 @@ pack_BS(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
 
 namespace internal_pack_S {
 static FUNC_PREFIX void
-pack_S(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
+pack_S(float *RESTRICT _data_buffer, float *RESTRICT const _data_pdfs,
        int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
        int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
        int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
        int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_20_39 =
+    float *RESTRICT _data_pdfs_20_39 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 9 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_2m1_316 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
-                                          _stride_pdfs_2 + 16 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_32 =
+    float *RESTRICT _data_pdfs_2m1_316 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
+                                         _stride_pdfs_2 + 16 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_20_32 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 2 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_21_312 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
-                                         _stride_pdfs_2 + 12 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_310 =
+    float *RESTRICT _data_pdfs_21_312 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
+                                        _stride_pdfs_2 + 12 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_20_310 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 10 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_20_39_1m1 =
+      float *RESTRICT _data_pdfs_20_39_1m1 =
           _stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _data_pdfs_20_39;
-      double *RESTRICT _data_pdfs_2m1_316_1m1 =
+      float *RESTRICT _data_pdfs_2m1_316_1m1 =
           _stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _data_pdfs_2m1_316;
-      double *RESTRICT _data_pdfs_20_32_1m1 =
+      float *RESTRICT _data_pdfs_20_32_1m1 =
           _stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _data_pdfs_20_32;
-      double *RESTRICT _data_pdfs_21_312_1m1 =
+      float *RESTRICT _data_pdfs_21_312_1m1 =
           _stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _data_pdfs_21_312;
-      double *RESTRICT _data_pdfs_20_310_1m1 =
+      float *RESTRICT _data_pdfs_20_310_1m1 =
           _stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _data_pdfs_20_310;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_buffer[5 * ((_size_pdfs_0) / (1)) * ((_size_pdfs_1) / (1)) *
@@ -271,16 +271,16 @@ pack_S(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
 
 namespace internal_pack_TS {
 static FUNC_PREFIX void
-pack_TS(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
+pack_TS(float *RESTRICT _data_buffer, float *RESTRICT const _data_pdfs,
         int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
         int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
         int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
         int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_21_312 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
-                                         _stride_pdfs_2 + 12 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_21_312 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
+                                        _stride_pdfs_2 + 12 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_21_312_1m1 =
+      float *RESTRICT _data_pdfs_21_312_1m1 =
           _stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _data_pdfs_21_312;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_buffer[((_size_pdfs_0) / (1)) * ((_size_pdfs_1) / (1)) *
@@ -296,32 +296,32 @@ pack_TS(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
 
 namespace internal_pack_B {
 static FUNC_PREFIX void
-pack_B(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
+pack_B(float *RESTRICT _data_buffer, float *RESTRICT const _data_pdfs,
        int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
        int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
        int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
        int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_2m1_317 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
-                                          _stride_pdfs_2 + 17 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_2m1_316 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
-                                          _stride_pdfs_2 + 16 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_2m1_36 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
-                                         _stride_pdfs_2 + 6 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_2m1_315 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
-                                          _stride_pdfs_2 + 15 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_2m1_318 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
-                                          _stride_pdfs_2 + 18 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_2m1_317 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
+                                         _stride_pdfs_2 + 17 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_2m1_316 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
+                                         _stride_pdfs_2 + 16 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_2m1_36 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
+                                        _stride_pdfs_2 + 6 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_2m1_315 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
+                                         _stride_pdfs_2 + 15 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_2m1_318 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
+                                         _stride_pdfs_2 + 18 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_2m1_317_10 =
+      float *RESTRICT _data_pdfs_2m1_317_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_2m1_317;
-      double *RESTRICT _data_pdfs_2m1_316_1m1 =
+      float *RESTRICT _data_pdfs_2m1_316_1m1 =
           _stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _data_pdfs_2m1_316;
-      double *RESTRICT _data_pdfs_2m1_36_10 =
+      float *RESTRICT _data_pdfs_2m1_36_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_2m1_36;
-      double *RESTRICT _data_pdfs_2m1_315_11 =
+      float *RESTRICT _data_pdfs_2m1_315_11 =
           _stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _data_pdfs_2m1_315;
-      double *RESTRICT _data_pdfs_2m1_318_10 =
+      float *RESTRICT _data_pdfs_2m1_318_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_2m1_318;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_buffer[5 * ((_size_pdfs_0) / (1)) * ((_size_pdfs_1) / (1)) *
@@ -357,32 +357,32 @@ pack_B(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
 
 namespace internal_pack_T {
 static FUNC_PREFIX void
-pack_T(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
+pack_T(float *RESTRICT _data_buffer, float *RESTRICT const _data_pdfs,
        int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
        int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
        int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
        int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_21_313 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
-                                         _stride_pdfs_2 + 13 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_21_312 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
-                                         _stride_pdfs_2 + 12 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_21_35 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
-                                        _stride_pdfs_2 + 5 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_21_311 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
-                                         _stride_pdfs_2 + 11 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_21_314 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
-                                         _stride_pdfs_2 + 14 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_21_313 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
+                                        _stride_pdfs_2 + 13 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_21_312 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
+                                        _stride_pdfs_2 + 12 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_21_35 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
+                                       _stride_pdfs_2 + 5 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_21_311 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
+                                        _stride_pdfs_2 + 11 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_21_314 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
+                                        _stride_pdfs_2 + 14 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_21_313_10 =
+      float *RESTRICT _data_pdfs_21_313_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_21_313;
-      double *RESTRICT _data_pdfs_21_312_1m1 =
+      float *RESTRICT _data_pdfs_21_312_1m1 =
           _stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _data_pdfs_21_312;
-      double *RESTRICT _data_pdfs_21_35_10 =
+      float *RESTRICT _data_pdfs_21_35_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_21_35;
-      double *RESTRICT _data_pdfs_21_311_11 =
+      float *RESTRICT _data_pdfs_21_311_11 =
           _stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _data_pdfs_21_311;
-      double *RESTRICT _data_pdfs_21_314_10 =
+      float *RESTRICT _data_pdfs_21_314_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_21_314;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_buffer[5 * ((_size_pdfs_0) / (1)) * ((_size_pdfs_1) / (1)) *
@@ -418,16 +418,16 @@ pack_T(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
 
 namespace internal_pack_BN {
 static FUNC_PREFIX void
-pack_BN(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
+pack_BN(float *RESTRICT _data_buffer, float *RESTRICT const _data_pdfs,
         int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
         int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
         int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
         int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_2m1_315 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
-                                          _stride_pdfs_2 + 15 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_2m1_315 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
+                                         _stride_pdfs_2 + 15 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_2m1_315_11 =
+      float *RESTRICT _data_pdfs_2m1_315_11 =
           _stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _data_pdfs_2m1_315;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_buffer[((_size_pdfs_0) / (1)) * ((_size_pdfs_1) / (1)) *
@@ -443,32 +443,32 @@ pack_BN(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
 
 namespace internal_pack_N {
 static FUNC_PREFIX void
-pack_N(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
+pack_N(float *RESTRICT _data_buffer, float *RESTRICT const _data_pdfs,
        int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
        int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
        int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
        int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_20_37 =
+    float *RESTRICT _data_pdfs_20_37 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 7 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_2m1_315 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
-                                          _stride_pdfs_2 + 15 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_31 =
+    float *RESTRICT _data_pdfs_2m1_315 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
+                                         _stride_pdfs_2 + 15 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_20_31 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_21_311 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
-                                         _stride_pdfs_2 + 11 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_38 =
+    float *RESTRICT _data_pdfs_21_311 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
+                                        _stride_pdfs_2 + 11 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_20_38 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 8 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_20_37_11 =
+      float *RESTRICT _data_pdfs_20_37_11 =
           _stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _data_pdfs_20_37;
-      double *RESTRICT _data_pdfs_2m1_315_11 =
+      float *RESTRICT _data_pdfs_2m1_315_11 =
           _stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _data_pdfs_2m1_315;
-      double *RESTRICT _data_pdfs_20_31_11 =
+      float *RESTRICT _data_pdfs_20_31_11 =
           _stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _data_pdfs_20_31;
-      double *RESTRICT _data_pdfs_21_311_11 =
+      float *RESTRICT _data_pdfs_21_311_11 =
           _stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _data_pdfs_21_311;
-      double *RESTRICT _data_pdfs_20_38_11 =
+      float *RESTRICT _data_pdfs_20_38_11 =
           _stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _data_pdfs_20_38;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_buffer[5 * ((_size_pdfs_0) / (1)) * ((_size_pdfs_1) / (1)) *
@@ -504,16 +504,16 @@ pack_N(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
 
 namespace internal_pack_TN {
 static FUNC_PREFIX void
-pack_TN(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
+pack_TN(float *RESTRICT _data_buffer, float *RESTRICT const _data_pdfs,
         int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
         int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
         int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
         int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_21_311 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
-                                         _stride_pdfs_2 + 11 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_21_311 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
+                                        _stride_pdfs_2 + 11 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_21_311_11 =
+      float *RESTRICT _data_pdfs_21_311_11 =
           _stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _data_pdfs_21_311;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_buffer[((_size_pdfs_0) / (1)) * ((_size_pdfs_1) / (1)) *
@@ -529,16 +529,16 @@ pack_TN(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
 
 namespace internal_pack_SE {
 static FUNC_PREFIX void
-pack_SE(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
+pack_SE(float *RESTRICT _data_buffer, float *RESTRICT const _data_pdfs,
         int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
         int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
         int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
         int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_20_310 =
+    float *RESTRICT _data_pdfs_20_310 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 10 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_20_310_1m1 =
+      float *RESTRICT _data_pdfs_20_310_1m1 =
           _stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _data_pdfs_20_310;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_buffer[((_size_pdfs_0) / (1)) * ((_size_pdfs_1) / (1)) *
@@ -554,16 +554,16 @@ pack_SE(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
 
 namespace internal_pack_BE {
 static FUNC_PREFIX void
-pack_BE(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
+pack_BE(float *RESTRICT _data_buffer, float *RESTRICT const _data_pdfs,
         int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
         int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
         int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
         int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_2m1_318 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
-                                          _stride_pdfs_2 + 18 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_2m1_318 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
+                                         _stride_pdfs_2 + 18 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_2m1_318_10 =
+      float *RESTRICT _data_pdfs_2m1_318_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_2m1_318;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_buffer[((_size_pdfs_0) / (1)) * ((_size_pdfs_1) / (1)) *
@@ -579,32 +579,32 @@ pack_BE(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
 
 namespace internal_pack_E {
 static FUNC_PREFIX void
-pack_E(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
+pack_E(float *RESTRICT _data_buffer, float *RESTRICT const _data_pdfs,
        int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
        int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
        int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
        int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_20_310 =
+    float *RESTRICT _data_pdfs_20_310 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 10 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_2m1_318 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
-                                          _stride_pdfs_2 + 18 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_34 =
+    float *RESTRICT _data_pdfs_2m1_318 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
+                                         _stride_pdfs_2 + 18 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_20_34 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 4 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_21_314 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
-                                         _stride_pdfs_2 + 14 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_38 =
+    float *RESTRICT _data_pdfs_21_314 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
+                                        _stride_pdfs_2 + 14 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_20_38 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 8 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_20_310_1m1 =
+      float *RESTRICT _data_pdfs_20_310_1m1 =
           _stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _data_pdfs_20_310;
-      double *RESTRICT _data_pdfs_2m1_318_10 =
+      float *RESTRICT _data_pdfs_2m1_318_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_2m1_318;
-      double *RESTRICT _data_pdfs_20_34_10 =
+      float *RESTRICT _data_pdfs_20_34_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_20_34;
-      double *RESTRICT _data_pdfs_21_314_10 =
+      float *RESTRICT _data_pdfs_21_314_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_21_314;
-      double *RESTRICT _data_pdfs_20_38_11 =
+      float *RESTRICT _data_pdfs_20_38_11 =
           _stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _data_pdfs_20_38;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_buffer[5 * ((_size_pdfs_0) / (1)) * ((_size_pdfs_1) / (1)) *
@@ -640,16 +640,16 @@ pack_E(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
 
 namespace internal_pack_TE {
 static FUNC_PREFIX void
-pack_TE(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
+pack_TE(float *RESTRICT _data_buffer, float *RESTRICT const _data_pdfs,
         int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
         int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
         int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
         int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_21_314 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
-                                         _stride_pdfs_2 + 14 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_21_314 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
+                                        _stride_pdfs_2 + 14 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_21_314_10 =
+      float *RESTRICT _data_pdfs_21_314_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_21_314;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_buffer[((_size_pdfs_0) / (1)) * ((_size_pdfs_1) / (1)) *
@@ -665,16 +665,16 @@ pack_TE(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
 
 namespace internal_pack_NE {
 static FUNC_PREFIX void
-pack_NE(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
+pack_NE(float *RESTRICT _data_buffer, float *RESTRICT const _data_pdfs,
         int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
         int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
         int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
         int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_20_38 =
+    float *RESTRICT _data_pdfs_20_38 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 8 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_20_38_11 =
+      float *RESTRICT _data_pdfs_20_38_11 =
           _stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _data_pdfs_20_38;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_buffer[((_size_pdfs_0) / (1)) * ((_size_pdfs_1) / (1)) *
@@ -690,16 +690,16 @@ pack_NE(double *RESTRICT _data_buffer, double *RESTRICT const _data_pdfs,
 
 namespace internal_unpack_SW {
 static FUNC_PREFIX void
-unpack_SW(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
+unpack_SW(float *RESTRICT const _data_buffer, float *RESTRICT _data_pdfs,
           int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
           int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
           int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
           int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_20_39 =
+    float *RESTRICT _data_pdfs_20_39 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 9 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_20_39_1m1 =
+      float *RESTRICT _data_pdfs_20_39_1m1 =
           _stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _data_pdfs_20_39;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_pdfs_20_39_1m1[_stride_pdfs_0 * ctr_0 - _stride_pdfs_0] =
@@ -715,16 +715,16 @@ unpack_SW(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
 
 namespace internal_unpack_BW {
 static FUNC_PREFIX void
-unpack_BW(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
+unpack_BW(float *RESTRICT const _data_buffer, float *RESTRICT _data_pdfs,
           int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
           int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
           int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
           int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_2m1_317 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
-                                          _stride_pdfs_2 + 17 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_2m1_317 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
+                                         _stride_pdfs_2 + 17 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_2m1_317_10 =
+      float *RESTRICT _data_pdfs_2m1_317_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_2m1_317;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_pdfs_2m1_317_10[_stride_pdfs_0 * ctr_0 - _stride_pdfs_0] =
@@ -740,32 +740,32 @@ unpack_BW(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
 
 namespace internal_unpack_W {
 static FUNC_PREFIX void
-unpack_W(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
+unpack_W(float *RESTRICT const _data_buffer, float *RESTRICT _data_pdfs,
          int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
          int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
          int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
          int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_20_39 =
+    float *RESTRICT _data_pdfs_20_39 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 9 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_2m1_317 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
-                                          _stride_pdfs_2 + 17 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_33 =
+    float *RESTRICT _data_pdfs_2m1_317 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
+                                         _stride_pdfs_2 + 17 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_20_33 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 3 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_21_313 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
-                                         _stride_pdfs_2 + 13 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_37 =
+    float *RESTRICT _data_pdfs_21_313 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
+                                        _stride_pdfs_2 + 13 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_20_37 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 7 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_20_39_1m1 =
+      float *RESTRICT _data_pdfs_20_39_1m1 =
           _stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _data_pdfs_20_39;
-      double *RESTRICT _data_pdfs_2m1_317_10 =
+      float *RESTRICT _data_pdfs_2m1_317_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_2m1_317;
-      double *RESTRICT _data_pdfs_20_33_10 =
+      float *RESTRICT _data_pdfs_20_33_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_20_33;
-      double *RESTRICT _data_pdfs_21_313_10 =
+      float *RESTRICT _data_pdfs_21_313_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_21_313;
-      double *RESTRICT _data_pdfs_20_37_11 =
+      float *RESTRICT _data_pdfs_20_37_11 =
           _stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _data_pdfs_20_37;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_pdfs_20_39_1m1[_stride_pdfs_0 * ctr_0 - _stride_pdfs_0] =
@@ -801,16 +801,16 @@ unpack_W(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
 
 namespace internal_unpack_TW {
 static FUNC_PREFIX void
-unpack_TW(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
+unpack_TW(float *RESTRICT const _data_buffer, float *RESTRICT _data_pdfs,
           int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
           int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
           int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
           int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_21_313 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
-                                         _stride_pdfs_2 + 13 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_21_313 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
+                                        _stride_pdfs_2 + 13 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_21_313_10 =
+      float *RESTRICT _data_pdfs_21_313_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_21_313;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_pdfs_21_313_10[_stride_pdfs_0 * ctr_0 - _stride_pdfs_0] =
@@ -826,16 +826,16 @@ unpack_TW(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
 
 namespace internal_unpack_NW {
 static FUNC_PREFIX void
-unpack_NW(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
+unpack_NW(float *RESTRICT const _data_buffer, float *RESTRICT _data_pdfs,
           int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
           int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
           int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
           int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_20_37 =
+    float *RESTRICT _data_pdfs_20_37 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 7 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_20_37_11 =
+      float *RESTRICT _data_pdfs_20_37_11 =
           _stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _data_pdfs_20_37;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_pdfs_20_37_11[_stride_pdfs_0 * ctr_0 - _stride_pdfs_0] =
@@ -851,16 +851,16 @@ unpack_NW(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
 
 namespace internal_unpack_BS {
 static FUNC_PREFIX void
-unpack_BS(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
+unpack_BS(float *RESTRICT const _data_buffer, float *RESTRICT _data_pdfs,
           int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
           int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
           int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
           int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_2m1_316 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
-                                          _stride_pdfs_2 + 16 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_2m1_316 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
+                                         _stride_pdfs_2 + 16 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_2m1_316_1m1 =
+      float *RESTRICT _data_pdfs_2m1_316_1m1 =
           _stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _data_pdfs_2m1_316;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_pdfs_2m1_316_1m1[_stride_pdfs_0 * ctr_0] =
@@ -876,32 +876,32 @@ unpack_BS(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
 
 namespace internal_unpack_S {
 static FUNC_PREFIX void
-unpack_S(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
+unpack_S(float *RESTRICT const _data_buffer, float *RESTRICT _data_pdfs,
          int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
          int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
          int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
          int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_20_39 =
+    float *RESTRICT _data_pdfs_20_39 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 9 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_2m1_316 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
-                                          _stride_pdfs_2 + 16 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_32 =
+    float *RESTRICT _data_pdfs_2m1_316 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
+                                         _stride_pdfs_2 + 16 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_20_32 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 2 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_21_312 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
-                                         _stride_pdfs_2 + 12 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_310 =
+    float *RESTRICT _data_pdfs_21_312 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
+                                        _stride_pdfs_2 + 12 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_20_310 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 10 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_20_39_1m1 =
+      float *RESTRICT _data_pdfs_20_39_1m1 =
           _stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _data_pdfs_20_39;
-      double *RESTRICT _data_pdfs_2m1_316_1m1 =
+      float *RESTRICT _data_pdfs_2m1_316_1m1 =
           _stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _data_pdfs_2m1_316;
-      double *RESTRICT _data_pdfs_20_32_1m1 =
+      float *RESTRICT _data_pdfs_20_32_1m1 =
           _stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _data_pdfs_20_32;
-      double *RESTRICT _data_pdfs_21_312_1m1 =
+      float *RESTRICT _data_pdfs_21_312_1m1 =
           _stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _data_pdfs_21_312;
-      double *RESTRICT _data_pdfs_20_310_1m1 =
+      float *RESTRICT _data_pdfs_20_310_1m1 =
           _stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _data_pdfs_20_310;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_pdfs_20_39_1m1[_stride_pdfs_0 * ctr_0 - _stride_pdfs_0] =
@@ -937,16 +937,16 @@ unpack_S(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
 
 namespace internal_unpack_TS {
 static FUNC_PREFIX void
-unpack_TS(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
+unpack_TS(float *RESTRICT const _data_buffer, float *RESTRICT _data_pdfs,
           int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
           int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
           int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
           int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_21_312 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
-                                         _stride_pdfs_2 + 12 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_21_312 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
+                                        _stride_pdfs_2 + 12 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_21_312_1m1 =
+      float *RESTRICT _data_pdfs_21_312_1m1 =
           _stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _data_pdfs_21_312;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_pdfs_21_312_1m1[_stride_pdfs_0 * ctr_0] =
@@ -962,32 +962,32 @@ unpack_TS(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
 
 namespace internal_unpack_B {
 static FUNC_PREFIX void
-unpack_B(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
+unpack_B(float *RESTRICT const _data_buffer, float *RESTRICT _data_pdfs,
          int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
          int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
          int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
          int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_2m1_317 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
-                                          _stride_pdfs_2 + 17 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_2m1_316 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
-                                          _stride_pdfs_2 + 16 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_2m1_36 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
-                                         _stride_pdfs_2 + 6 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_2m1_315 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
-                                          _stride_pdfs_2 + 15 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_2m1_318 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
-                                          _stride_pdfs_2 + 18 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_2m1_317 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
+                                         _stride_pdfs_2 + 17 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_2m1_316 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
+                                         _stride_pdfs_2 + 16 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_2m1_36 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
+                                        _stride_pdfs_2 + 6 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_2m1_315 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
+                                         _stride_pdfs_2 + 15 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_2m1_318 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
+                                         _stride_pdfs_2 + 18 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_2m1_317_10 =
+      float *RESTRICT _data_pdfs_2m1_317_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_2m1_317;
-      double *RESTRICT _data_pdfs_2m1_316_1m1 =
+      float *RESTRICT _data_pdfs_2m1_316_1m1 =
           _stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _data_pdfs_2m1_316;
-      double *RESTRICT _data_pdfs_2m1_36_10 =
+      float *RESTRICT _data_pdfs_2m1_36_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_2m1_36;
-      double *RESTRICT _data_pdfs_2m1_315_11 =
+      float *RESTRICT _data_pdfs_2m1_315_11 =
           _stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _data_pdfs_2m1_315;
-      double *RESTRICT _data_pdfs_2m1_318_10 =
+      float *RESTRICT _data_pdfs_2m1_318_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_2m1_318;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_pdfs_2m1_317_10[_stride_pdfs_0 * ctr_0 - _stride_pdfs_0] =
@@ -1023,32 +1023,32 @@ unpack_B(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
 
 namespace internal_unpack_T {
 static FUNC_PREFIX void
-unpack_T(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
+unpack_T(float *RESTRICT const _data_buffer, float *RESTRICT _data_pdfs,
          int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
          int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
          int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
          int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_21_313 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
-                                         _stride_pdfs_2 + 13 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_21_312 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
-                                         _stride_pdfs_2 + 12 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_21_35 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
-                                        _stride_pdfs_2 + 5 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_21_311 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
-                                         _stride_pdfs_2 + 11 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_21_314 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
-                                         _stride_pdfs_2 + 14 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_21_313 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
+                                        _stride_pdfs_2 + 13 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_21_312 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
+                                        _stride_pdfs_2 + 12 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_21_35 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
+                                       _stride_pdfs_2 + 5 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_21_311 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
+                                        _stride_pdfs_2 + 11 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_21_314 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
+                                        _stride_pdfs_2 + 14 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_21_313_10 =
+      float *RESTRICT _data_pdfs_21_313_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_21_313;
-      double *RESTRICT _data_pdfs_21_312_1m1 =
+      float *RESTRICT _data_pdfs_21_312_1m1 =
           _stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _data_pdfs_21_312;
-      double *RESTRICT _data_pdfs_21_35_10 =
+      float *RESTRICT _data_pdfs_21_35_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_21_35;
-      double *RESTRICT _data_pdfs_21_311_11 =
+      float *RESTRICT _data_pdfs_21_311_11 =
           _stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _data_pdfs_21_311;
-      double *RESTRICT _data_pdfs_21_314_10 =
+      float *RESTRICT _data_pdfs_21_314_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_21_314;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_pdfs_21_313_10[_stride_pdfs_0 * ctr_0 - _stride_pdfs_0] =
@@ -1084,16 +1084,16 @@ unpack_T(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
 
 namespace internal_unpack_BN {
 static FUNC_PREFIX void
-unpack_BN(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
+unpack_BN(float *RESTRICT const _data_buffer, float *RESTRICT _data_pdfs,
           int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
           int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
           int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
           int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_2m1_315 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
-                                          _stride_pdfs_2 + 15 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_2m1_315 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
+                                         _stride_pdfs_2 + 15 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_2m1_315_11 =
+      float *RESTRICT _data_pdfs_2m1_315_11 =
           _stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _data_pdfs_2m1_315;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_pdfs_2m1_315_11[_stride_pdfs_0 * ctr_0] =
@@ -1109,32 +1109,32 @@ unpack_BN(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
 
 namespace internal_unpack_N {
 static FUNC_PREFIX void
-unpack_N(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
+unpack_N(float *RESTRICT const _data_buffer, float *RESTRICT _data_pdfs,
          int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
          int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
          int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
          int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_20_37 =
+    float *RESTRICT _data_pdfs_20_37 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 7 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_2m1_315 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
-                                          _stride_pdfs_2 + 15 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_31 =
+    float *RESTRICT _data_pdfs_2m1_315 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
+                                         _stride_pdfs_2 + 15 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_20_31 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_21_311 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
-                                         _stride_pdfs_2 + 11 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_38 =
+    float *RESTRICT _data_pdfs_21_311 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
+                                        _stride_pdfs_2 + 11 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_20_38 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 8 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_20_37_11 =
+      float *RESTRICT _data_pdfs_20_37_11 =
           _stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _data_pdfs_20_37;
-      double *RESTRICT _data_pdfs_2m1_315_11 =
+      float *RESTRICT _data_pdfs_2m1_315_11 =
           _stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _data_pdfs_2m1_315;
-      double *RESTRICT _data_pdfs_20_31_11 =
+      float *RESTRICT _data_pdfs_20_31_11 =
           _stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _data_pdfs_20_31;
-      double *RESTRICT _data_pdfs_21_311_11 =
+      float *RESTRICT _data_pdfs_21_311_11 =
           _stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _data_pdfs_21_311;
-      double *RESTRICT _data_pdfs_20_38_11 =
+      float *RESTRICT _data_pdfs_20_38_11 =
           _stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _data_pdfs_20_38;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_pdfs_20_37_11[_stride_pdfs_0 * ctr_0 - _stride_pdfs_0] =
@@ -1170,16 +1170,16 @@ unpack_N(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
 
 namespace internal_unpack_TN {
 static FUNC_PREFIX void
-unpack_TN(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
+unpack_TN(float *RESTRICT const _data_buffer, float *RESTRICT _data_pdfs,
           int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
           int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
           int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
           int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_21_311 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
-                                         _stride_pdfs_2 + 11 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_21_311 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
+                                        _stride_pdfs_2 + 11 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_21_311_11 =
+      float *RESTRICT _data_pdfs_21_311_11 =
           _stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _data_pdfs_21_311;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_pdfs_21_311_11[_stride_pdfs_0 * ctr_0] =
@@ -1195,16 +1195,16 @@ unpack_TN(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
 
 namespace internal_unpack_SE {
 static FUNC_PREFIX void
-unpack_SE(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
+unpack_SE(float *RESTRICT const _data_buffer, float *RESTRICT _data_pdfs,
           int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
           int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
           int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
           int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_20_310 =
+    float *RESTRICT _data_pdfs_20_310 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 10 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_20_310_1m1 =
+      float *RESTRICT _data_pdfs_20_310_1m1 =
           _stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _data_pdfs_20_310;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_pdfs_20_310_1m1[_stride_pdfs_0 * ctr_0 + _stride_pdfs_0] =
@@ -1220,16 +1220,16 @@ unpack_SE(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
 
 namespace internal_unpack_BE {
 static FUNC_PREFIX void
-unpack_BE(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
+unpack_BE(float *RESTRICT const _data_buffer, float *RESTRICT _data_pdfs,
           int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
           int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
           int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
           int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_2m1_318 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
-                                          _stride_pdfs_2 + 18 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_2m1_318 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
+                                         _stride_pdfs_2 + 18 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_2m1_318_10 =
+      float *RESTRICT _data_pdfs_2m1_318_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_2m1_318;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_pdfs_2m1_318_10[_stride_pdfs_0 * ctr_0 + _stride_pdfs_0] =
@@ -1245,32 +1245,32 @@ unpack_BE(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
 
 namespace internal_unpack_E {
 static FUNC_PREFIX void
-unpack_E(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
+unpack_E(float *RESTRICT const _data_buffer, float *RESTRICT _data_pdfs,
          int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
          int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
          int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
          int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_20_310 =
+    float *RESTRICT _data_pdfs_20_310 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 10 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_2m1_318 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
-                                          _stride_pdfs_2 + 18 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_34 =
+    float *RESTRICT _data_pdfs_2m1_318 = _data_pdfs + _stride_pdfs_2 * ctr_2 -
+                                         _stride_pdfs_2 + 18 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_20_34 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 4 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_21_314 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
-                                         _stride_pdfs_2 + 14 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_38 =
+    float *RESTRICT _data_pdfs_21_314 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
+                                        _stride_pdfs_2 + 14 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_20_38 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 8 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_20_310_1m1 =
+      float *RESTRICT _data_pdfs_20_310_1m1 =
           _stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _data_pdfs_20_310;
-      double *RESTRICT _data_pdfs_2m1_318_10 =
+      float *RESTRICT _data_pdfs_2m1_318_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_2m1_318;
-      double *RESTRICT _data_pdfs_20_34_10 =
+      float *RESTRICT _data_pdfs_20_34_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_20_34;
-      double *RESTRICT _data_pdfs_21_314_10 =
+      float *RESTRICT _data_pdfs_21_314_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_21_314;
-      double *RESTRICT _data_pdfs_20_38_11 =
+      float *RESTRICT _data_pdfs_20_38_11 =
           _stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _data_pdfs_20_38;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_pdfs_20_310_1m1[_stride_pdfs_0 * ctr_0 + _stride_pdfs_0] =
@@ -1306,16 +1306,16 @@ unpack_E(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
 
 namespace internal_unpack_TE {
 static FUNC_PREFIX void
-unpack_TE(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
+unpack_TE(float *RESTRICT const _data_buffer, float *RESTRICT _data_pdfs,
           int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
           int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
           int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
           int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_21_314 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
-                                         _stride_pdfs_2 + 14 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_21_314 = _data_pdfs + _stride_pdfs_2 * ctr_2 +
+                                        _stride_pdfs_2 + 14 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_21_314_10 =
+      float *RESTRICT _data_pdfs_21_314_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_21_314;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_pdfs_21_314_10[_stride_pdfs_0 * ctr_0 + _stride_pdfs_0] =
@@ -1331,16 +1331,16 @@ unpack_TE(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
 
 namespace internal_unpack_NE {
 static FUNC_PREFIX void
-unpack_NE(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
+unpack_NE(float *RESTRICT const _data_buffer, float *RESTRICT _data_pdfs,
           int64_t const _size_pdfs_0, int64_t const _size_pdfs_1,
           int64_t const _size_pdfs_2, int64_t const _stride_pdfs_0,
           int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
           int64_t const _stride_pdfs_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_pdfs_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_20_38 =
+    float *RESTRICT _data_pdfs_20_38 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 8 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_pdfs_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_20_38_11 =
+      float *RESTRICT _data_pdfs_20_38_11 =
           _stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _data_pdfs_20_38;
       for (int64_t ctr_0 = 0; ctr_0 < _size_pdfs_0; ctr_0 += 1) {
         _data_pdfs_20_38_11[_stride_pdfs_0 * ctr_0 + _stride_pdfs_0] =
@@ -1354,22 +1354,23 @@ unpack_NE(double *RESTRICT const _data_buffer, double *RESTRICT _data_pdfs,
 }
 } // namespace internal_unpack_NE
 
-void PushPackInfo::pack(Direction dir, unsigned char *byte_buffer,
-                        IBlock *block) const {
-  double *buffer = reinterpret_cast<double *>(byte_buffer);
+void PushPackInfoSinglePrecision::pack(Direction dir,
+                                       unsigned char *byte_buffer,
+                                       IBlock *block) const {
+  float *buffer = reinterpret_cast<float *>(byte_buffer);
 
-  auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
+  auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
 
   CellInterval ci;
   pdfs->getSliceBeforeGhostLayer(dir, ci, 1, false);
 
   switch (dir) {
   case stencil::SW: {
-    double *RESTRICT _data_buffer = buffer;
+    float *RESTRICT _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT const _data_pdfs =
+    float *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -1395,11 +1396,11 @@ void PushPackInfo::pack(Direction dir, unsigned char *byte_buffer,
   }
 
   case stencil::BW: {
-    double *RESTRICT _data_buffer = buffer;
+    float *RESTRICT _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT const _data_pdfs =
+    float *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -1425,11 +1426,11 @@ void PushPackInfo::pack(Direction dir, unsigned char *byte_buffer,
   }
 
   case stencil::W: {
-    double *RESTRICT _data_buffer = buffer;
+    float *RESTRICT _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT const _data_pdfs =
+    float *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -1455,11 +1456,11 @@ void PushPackInfo::pack(Direction dir, unsigned char *byte_buffer,
   }
 
   case stencil::TW: {
-    double *RESTRICT _data_buffer = buffer;
+    float *RESTRICT _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT const _data_pdfs =
+    float *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -1485,11 +1486,11 @@ void PushPackInfo::pack(Direction dir, unsigned char *byte_buffer,
   }
 
   case stencil::NW: {
-    double *RESTRICT _data_buffer = buffer;
+    float *RESTRICT _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT const _data_pdfs =
+    float *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -1515,11 +1516,11 @@ void PushPackInfo::pack(Direction dir, unsigned char *byte_buffer,
   }
 
   case stencil::BS: {
-    double *RESTRICT _data_buffer = buffer;
+    float *RESTRICT _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT const _data_pdfs =
+    float *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -1545,11 +1546,11 @@ void PushPackInfo::pack(Direction dir, unsigned char *byte_buffer,
   }
 
   case stencil::S: {
-    double *RESTRICT _data_buffer = buffer;
+    float *RESTRICT _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT const _data_pdfs =
+    float *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -1575,11 +1576,11 @@ void PushPackInfo::pack(Direction dir, unsigned char *byte_buffer,
   }
 
   case stencil::TS: {
-    double *RESTRICT _data_buffer = buffer;
+    float *RESTRICT _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT const _data_pdfs =
+    float *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -1605,11 +1606,11 @@ void PushPackInfo::pack(Direction dir, unsigned char *byte_buffer,
   }
 
   case stencil::B: {
-    double *RESTRICT _data_buffer = buffer;
+    float *RESTRICT _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT const _data_pdfs =
+    float *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -1635,11 +1636,11 @@ void PushPackInfo::pack(Direction dir, unsigned char *byte_buffer,
   }
 
   case stencil::T: {
-    double *RESTRICT _data_buffer = buffer;
+    float *RESTRICT _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT const _data_pdfs =
+    float *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -1665,11 +1666,11 @@ void PushPackInfo::pack(Direction dir, unsigned char *byte_buffer,
   }
 
   case stencil::BN: {
-    double *RESTRICT _data_buffer = buffer;
+    float *RESTRICT _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT const _data_pdfs =
+    float *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -1695,11 +1696,11 @@ void PushPackInfo::pack(Direction dir, unsigned char *byte_buffer,
   }
 
   case stencil::N: {
-    double *RESTRICT _data_buffer = buffer;
+    float *RESTRICT _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT const _data_pdfs =
+    float *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -1725,11 +1726,11 @@ void PushPackInfo::pack(Direction dir, unsigned char *byte_buffer,
   }
 
   case stencil::TN: {
-    double *RESTRICT _data_buffer = buffer;
+    float *RESTRICT _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT const _data_pdfs =
+    float *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -1755,11 +1756,11 @@ void PushPackInfo::pack(Direction dir, unsigned char *byte_buffer,
   }
 
   case stencil::SE: {
-    double *RESTRICT _data_buffer = buffer;
+    float *RESTRICT _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT const _data_pdfs =
+    float *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -1785,11 +1786,11 @@ void PushPackInfo::pack(Direction dir, unsigned char *byte_buffer,
   }
 
   case stencil::BE: {
-    double *RESTRICT _data_buffer = buffer;
+    float *RESTRICT _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT const _data_pdfs =
+    float *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -1815,11 +1816,11 @@ void PushPackInfo::pack(Direction dir, unsigned char *byte_buffer,
   }
 
   case stencil::E: {
-    double *RESTRICT _data_buffer = buffer;
+    float *RESTRICT _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT const _data_pdfs =
+    float *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -1845,11 +1846,11 @@ void PushPackInfo::pack(Direction dir, unsigned char *byte_buffer,
   }
 
   case stencil::TE: {
-    double *RESTRICT _data_buffer = buffer;
+    float *RESTRICT _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT const _data_pdfs =
+    float *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -1875,11 +1876,11 @@ void PushPackInfo::pack(Direction dir, unsigned char *byte_buffer,
   }
 
   case stencil::NE: {
-    double *RESTRICT _data_buffer = buffer;
+    float *RESTRICT _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT const _data_pdfs =
+    float *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -1909,11 +1910,12 @@ void PushPackInfo::pack(Direction dir, unsigned char *byte_buffer,
   }
 }
 
-void PushPackInfo::unpack(Direction dir, unsigned char *byte_buffer,
-                          IBlock *block) const {
-  double *buffer = reinterpret_cast<double *>(byte_buffer);
+void PushPackInfoSinglePrecision::unpack(Direction dir,
+                                         unsigned char *byte_buffer,
+                                         IBlock *block) const {
+  float *buffer = reinterpret_cast<float *>(byte_buffer);
 
-  auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
+  auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
 
   CellInterval ci;
   pdfs->getGhostRegion(dir, ci, 1, false);
@@ -1921,11 +1923,11 @@ void PushPackInfo::unpack(Direction dir, unsigned char *byte_buffer,
 
   switch (communciationDirection) {
   case stencil::SW: {
-    double *RESTRICT const _data_buffer = buffer;
+    float *RESTRICT const _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT _data_pdfs =
+    float *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -1951,11 +1953,11 @@ void PushPackInfo::unpack(Direction dir, unsigned char *byte_buffer,
   }
 
   case stencil::BW: {
-    double *RESTRICT const _data_buffer = buffer;
+    float *RESTRICT const _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT _data_pdfs =
+    float *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -1981,11 +1983,11 @@ void PushPackInfo::unpack(Direction dir, unsigned char *byte_buffer,
   }
 
   case stencil::W: {
-    double *RESTRICT const _data_buffer = buffer;
+    float *RESTRICT const _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT _data_pdfs =
+    float *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -2011,11 +2013,11 @@ void PushPackInfo::unpack(Direction dir, unsigned char *byte_buffer,
   }
 
   case stencil::TW: {
-    double *RESTRICT const _data_buffer = buffer;
+    float *RESTRICT const _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT _data_pdfs =
+    float *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -2041,11 +2043,11 @@ void PushPackInfo::unpack(Direction dir, unsigned char *byte_buffer,
   }
 
   case stencil::NW: {
-    double *RESTRICT const _data_buffer = buffer;
+    float *RESTRICT const _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT _data_pdfs =
+    float *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -2071,11 +2073,11 @@ void PushPackInfo::unpack(Direction dir, unsigned char *byte_buffer,
   }
 
   case stencil::BS: {
-    double *RESTRICT const _data_buffer = buffer;
+    float *RESTRICT const _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT _data_pdfs =
+    float *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -2101,11 +2103,11 @@ void PushPackInfo::unpack(Direction dir, unsigned char *byte_buffer,
   }
 
   case stencil::S: {
-    double *RESTRICT const _data_buffer = buffer;
+    float *RESTRICT const _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT _data_pdfs =
+    float *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -2131,11 +2133,11 @@ void PushPackInfo::unpack(Direction dir, unsigned char *byte_buffer,
   }
 
   case stencil::TS: {
-    double *RESTRICT const _data_buffer = buffer;
+    float *RESTRICT const _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT _data_pdfs =
+    float *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -2161,11 +2163,11 @@ void PushPackInfo::unpack(Direction dir, unsigned char *byte_buffer,
   }
 
   case stencil::B: {
-    double *RESTRICT const _data_buffer = buffer;
+    float *RESTRICT const _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT _data_pdfs =
+    float *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -2191,11 +2193,11 @@ void PushPackInfo::unpack(Direction dir, unsigned char *byte_buffer,
   }
 
   case stencil::T: {
-    double *RESTRICT const _data_buffer = buffer;
+    float *RESTRICT const _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT _data_pdfs =
+    float *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -2221,11 +2223,11 @@ void PushPackInfo::unpack(Direction dir, unsigned char *byte_buffer,
   }
 
   case stencil::BN: {
-    double *RESTRICT const _data_buffer = buffer;
+    float *RESTRICT const _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT _data_pdfs =
+    float *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -2251,11 +2253,11 @@ void PushPackInfo::unpack(Direction dir, unsigned char *byte_buffer,
   }
 
   case stencil::N: {
-    double *RESTRICT const _data_buffer = buffer;
+    float *RESTRICT const _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT _data_pdfs =
+    float *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -2281,11 +2283,11 @@ void PushPackInfo::unpack(Direction dir, unsigned char *byte_buffer,
   }
 
   case stencil::TN: {
-    double *RESTRICT const _data_buffer = buffer;
+    float *RESTRICT const _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT _data_pdfs =
+    float *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -2311,11 +2313,11 @@ void PushPackInfo::unpack(Direction dir, unsigned char *byte_buffer,
   }
 
   case stencil::SE: {
-    double *RESTRICT const _data_buffer = buffer;
+    float *RESTRICT const _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT _data_pdfs =
+    float *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -2341,11 +2343,11 @@ void PushPackInfo::unpack(Direction dir, unsigned char *byte_buffer,
   }
 
   case stencil::BE: {
-    double *RESTRICT const _data_buffer = buffer;
+    float *RESTRICT const _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT _data_pdfs =
+    float *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -2371,11 +2373,11 @@ void PushPackInfo::unpack(Direction dir, unsigned char *byte_buffer,
   }
 
   case stencil::E: {
-    double *RESTRICT const _data_buffer = buffer;
+    float *RESTRICT const _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT _data_pdfs =
+    float *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -2401,11 +2403,11 @@ void PushPackInfo::unpack(Direction dir, unsigned char *byte_buffer,
   }
 
   case stencil::TE: {
-    double *RESTRICT const _data_buffer = buffer;
+    float *RESTRICT const _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT _data_pdfs =
+    float *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -2431,11 +2433,11 @@ void PushPackInfo::unpack(Direction dir, unsigned char *byte_buffer,
   }
 
   case stencil::NE: {
-    double *RESTRICT const _data_buffer = buffer;
+    float *RESTRICT const _data_buffer = buffer;
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()));
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
-    double *RESTRICT _data_pdfs =
+    float *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
     WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
@@ -2465,8 +2467,9 @@ void PushPackInfo::unpack(Direction dir, unsigned char *byte_buffer,
   }
 }
 
-uint_t PushPackInfo::size(stencil::Direction dir, const IBlock *block) const {
-  auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
+uint_t PushPackInfoSinglePrecision::size(stencil::Direction dir,
+                                         const IBlock *block) const {
+  auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
 
   CellInterval ci;
   pdfs->getGhostRegion(dir, ci, 1, false);
@@ -2549,7 +2552,7 @@ uint_t PushPackInfo::size(stencil::Direction dir, const IBlock *block) const {
   default:
     elementsPerCell = 0;
   }
-  return ci.numCells() * elementsPerCell * sizeof(double);
+  return ci.numCells() * elementsPerCell * sizeof(float);
 }
 
 } // namespace lbm

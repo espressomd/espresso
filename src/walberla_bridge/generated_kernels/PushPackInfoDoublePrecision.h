@@ -23,10 +23,11 @@
 namespace walberla {
 namespace lbm {
 
-class PushPackInfo : public ::walberla::communication::UniformPackInfo {
+class PushPackInfoDoublePrecision
+    : public ::walberla::communication::UniformPackInfo {
 public:
-  PushPackInfo(BlockDataID pdfsID_) : pdfsID(pdfsID_){};
-  virtual ~PushPackInfo() {}
+  PushPackInfoDoublePrecision(BlockDataID pdfsID_) : pdfsID(pdfsID_){};
+  virtual ~PushPackInfoDoublePrecision() {}
 
   bool constantDataExchange() const { return true; }
   bool threadsafeReceiving() const { return true; }

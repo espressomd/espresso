@@ -31,6 +31,8 @@
 #include "field/SwapableCompare.h"
 #include "stencil/D3Q19.h"
 
+#include <type_traits>
+
 #ifdef __GNUC__
 #define RESTRICT __restrict__
 #elif _MSC_VER
@@ -62,9 +64,9 @@ namespace accessor {
 //======================================================================================================================
 
 namespace EquilibriumDistribution {
-real_t get(const stencil::Direction direction,
-           const Vector3<real_t> &u = Vector3<real_t>(real_t(0.0)),
-           real_t rho = real_t(1.0)) {
+double get(const stencil::Direction direction,
+           const Vector3<double> &u = Vector3<double>(double(0.0)),
+           double rho = double(1.0)) {
 
   using namespace stencil;
   switch (direction) {
@@ -189,10 +191,13 @@ real_t get(const stencil::Direction direction,
 } // namespace EquilibriumDistribution
 
 namespace Equilibrium {
-template <typename FieldPtrOrIterator>
+template <typename FieldPtrOrIterator,
+          std::enable_if_t<
+              std::is_same<decltype(*(FieldPtrOrIterator())), double>::value,
+              bool> = true>
 void set(FieldPtrOrIterator &it,
-         const Vector3<real_t> &u = Vector3<real_t>(real_t(0.0)),
-         real_t rho = real_t(1.0)) {
+         const Vector3<double> &u = Vector3<double>(double(0.0)),
+         double rho = double(1.0)) {
 
   it[0] = rho * -0.5 * (u[0] * u[0]) + rho * -0.5 * (u[1] * u[1]) +
           rho * -0.5 * (u[2] * u[2]) + rho * 0.333333333333333;
@@ -290,13 +295,16 @@ void set(FieldPtrOrIterator &it,
            rho * 0.0833333333333333 * (u[2] * u[2]) + rho * 0.0277777777777778;
 }
 
-template <typename PdfField_T>
+template <typename PdfField_T,
+          std::enable_if_t<
+              std::is_same<typename PdfField_T::value_type, double>::value,
+              bool> = true>
 void set(PdfField_T &pdf, const cell_idx_t x, const cell_idx_t y,
          const cell_idx_t z,
-         const Vector3<real_t> &u = Vector3<real_t>(real_t(0.0)),
-         real_t rho = real_t(1.0)) {
+         const Vector3<double> &u = Vector3<double>(double(0.0)),
+         double rho = double(1.0)) {
 
-  real_t &xyz0 = pdf(x, y, z, 0);
+  double &xyz0 = pdf(x, y, z, 0);
   pdf.getF(&xyz0, 0) = rho * -0.5 * (u[0] * u[0]) + rho * -0.5 * (u[1] * u[1]) +
                        rho * -0.5 * (u[2] * u[2]) + rho * 0.333333333333333;
   pdf.getF(&xyz0, 1) =
@@ -402,27 +410,30 @@ void set(PdfField_T &pdf, const cell_idx_t x, const cell_idx_t y,
 } // namespace Equilibrium
 
 namespace Density {
-template <typename FieldPtrOrIterator>
-inline real_t get(const FieldPtrOrIterator &it) {
-  const real_t f_0 = it[0];
-  const real_t f_1 = it[1];
-  const real_t f_2 = it[2];
-  const real_t f_3 = it[3];
-  const real_t f_4 = it[4];
-  const real_t f_5 = it[5];
-  const real_t f_6 = it[6];
-  const real_t f_7 = it[7];
-  const real_t f_8 = it[8];
-  const real_t f_9 = it[9];
-  const real_t f_10 = it[10];
-  const real_t f_11 = it[11];
-  const real_t f_12 = it[12];
-  const real_t f_13 = it[13];
-  const real_t f_14 = it[14];
-  const real_t f_15 = it[15];
-  const real_t f_16 = it[16];
-  const real_t f_17 = it[17];
-  const real_t f_18 = it[18];
+template <typename FieldPtrOrIterator,
+          std::enable_if_t<
+              std::is_same<decltype(*(FieldPtrOrIterator())), double>::value,
+              bool> = true>
+inline double get(const FieldPtrOrIterator &it) {
+  const double f_0 = it[0];
+  const double f_1 = it[1];
+  const double f_2 = it[2];
+  const double f_3 = it[3];
+  const double f_4 = it[4];
+  const double f_5 = it[5];
+  const double f_6 = it[6];
+  const double f_7 = it[7];
+  const double f_8 = it[8];
+  const double f_9 = it[9];
+  const double f_10 = it[10];
+  const double f_11 = it[11];
+  const double f_12 = it[12];
+  const double f_13 = it[13];
+  const double f_14 = it[14];
+  const double f_15 = it[15];
+  const double f_16 = it[16];
+  const double f_17 = it[17];
+  const double f_18 = it[18];
   const double vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
   const double vel1Term = f_1 + f_11 + f_15 + f_7;
   const double vel2Term = f_12 + f_13 + f_5;
@@ -431,29 +442,32 @@ inline real_t get(const FieldPtrOrIterator &it) {
   return rho;
 }
 
-template <typename PdfField_T>
-inline real_t get(const PdfField_T &pdf, const cell_idx_t x, const cell_idx_t y,
+template <typename PdfField_T,
+          std::enable_if_t<
+              std::is_same<typename PdfField_T::value_type, double>::value,
+              bool> = true>
+inline double get(const PdfField_T &pdf, const cell_idx_t x, const cell_idx_t y,
                   const cell_idx_t z) {
-  const real_t &xyz0 = pdf(x, y, z, 0);
-  const real_t f_0 = pdf.getF(&xyz0, 0);
-  const real_t f_1 = pdf.getF(&xyz0, 1);
-  const real_t f_2 = pdf.getF(&xyz0, 2);
-  const real_t f_3 = pdf.getF(&xyz0, 3);
-  const real_t f_4 = pdf.getF(&xyz0, 4);
-  const real_t f_5 = pdf.getF(&xyz0, 5);
-  const real_t f_6 = pdf.getF(&xyz0, 6);
-  const real_t f_7 = pdf.getF(&xyz0, 7);
-  const real_t f_8 = pdf.getF(&xyz0, 8);
-  const real_t f_9 = pdf.getF(&xyz0, 9);
-  const real_t f_10 = pdf.getF(&xyz0, 10);
-  const real_t f_11 = pdf.getF(&xyz0, 11);
-  const real_t f_12 = pdf.getF(&xyz0, 12);
-  const real_t f_13 = pdf.getF(&xyz0, 13);
-  const real_t f_14 = pdf.getF(&xyz0, 14);
-  const real_t f_15 = pdf.getF(&xyz0, 15);
-  const real_t f_16 = pdf.getF(&xyz0, 16);
-  const real_t f_17 = pdf.getF(&xyz0, 17);
-  const real_t f_18 = pdf.getF(&xyz0, 18);
+  const double &xyz0 = pdf(x, y, z, 0);
+  const double f_0 = pdf.getF(&xyz0, 0);
+  const double f_1 = pdf.getF(&xyz0, 1);
+  const double f_2 = pdf.getF(&xyz0, 2);
+  const double f_3 = pdf.getF(&xyz0, 3);
+  const double f_4 = pdf.getF(&xyz0, 4);
+  const double f_5 = pdf.getF(&xyz0, 5);
+  const double f_6 = pdf.getF(&xyz0, 6);
+  const double f_7 = pdf.getF(&xyz0, 7);
+  const double f_8 = pdf.getF(&xyz0, 8);
+  const double f_9 = pdf.getF(&xyz0, 9);
+  const double f_10 = pdf.getF(&xyz0, 10);
+  const double f_11 = pdf.getF(&xyz0, 11);
+  const double f_12 = pdf.getF(&xyz0, 12);
+  const double f_13 = pdf.getF(&xyz0, 13);
+  const double f_14 = pdf.getF(&xyz0, 14);
+  const double f_15 = pdf.getF(&xyz0, 15);
+  const double f_16 = pdf.getF(&xyz0, 16);
+  const double f_17 = pdf.getF(&xyz0, 17);
+  const double f_18 = pdf.getF(&xyz0, 18);
   const double vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
   const double vel1Term = f_1 + f_11 + f_15 + f_7;
   const double vel2Term = f_12 + f_13 + f_5;
@@ -465,9 +479,9 @@ inline real_t get(const PdfField_T &pdf, const cell_idx_t x, const cell_idx_t y,
 
 namespace DensityAndVelocity {
 template <typename FieldPtrOrIterator>
-void set(FieldPtrOrIterator &it, const GhostLayerField<real_t, 3u> &force_field,
-         const Vector3<real_t> &u = Vector3<real_t>(real_t(0.0)),
-         const real_t rho_in = real_t(1.0)) {
+void set(FieldPtrOrIterator &it, const GhostLayerField<double, 3u> &force_field,
+         const Vector3<double> &u = Vector3<double>(double(0.0)),
+         const double rho_in = double(1.0)) {
   auto x = it.x();
   auto y = it.y();
   auto z = it.z();
@@ -477,20 +491,20 @@ void set(FieldPtrOrIterator &it, const GhostLayerField<real_t, 3u> &force_field,
   const double u_1 = -0.5 * force_field.get(x, y, z, 1) / rho_in + u[1];
   const double u_2 = -0.5 * force_field.get(x, y, z, 2) / rho_in + u[2];
 
-  Equilibrium::set(it, Vector3<real_t>(u_0, u_1, u_2), rho);
+  Equilibrium::set(it, Vector3<double>(u_0, u_1, u_2), rho);
 }
 
 template <typename PdfField_T>
 void set(PdfField_T &pdf, const cell_idx_t x, const cell_idx_t y,
-         const cell_idx_t z, const GhostLayerField<real_t, 3u> &force_field,
-         const Vector3<real_t> &u = Vector3<real_t>(real_t(0.0)),
-         const real_t rho_in = real_t(1.0)) {
+         const cell_idx_t z, const GhostLayerField<double, 3u> &force_field,
+         const Vector3<double> &u = Vector3<double>(double(0.0)),
+         const double rho_in = double(1.0)) {
   const double rho = rho_in;
   const double u_0 = -0.5 * force_field.get(x, y, z, 0) / rho_in + u[0];
   const double u_1 = -0.5 * force_field.get(x, y, z, 1) / rho_in + u[1];
   const double u_2 = -0.5 * force_field.get(x, y, z, 2) / rho_in + u[2];
 
-  Equilibrium::set(pdf, x, y, z, Vector3<real_t>(u_0, u_1, u_2), rho);
+  Equilibrium::set(pdf, x, y, z, Vector3<double>(u_0, u_1, u_2), rho);
 }
 } // namespace DensityAndVelocity
 
@@ -498,9 +512,9 @@ namespace DensityAndVelocityRange {
 
 template <typename FieldIteratorXYZ>
 void set(FieldIteratorXYZ &begin, const FieldIteratorXYZ &end,
-         const GhostLayerField<real_t, 3u> &force_field,
-         const Vector3<real_t> &u = Vector3<real_t>(real_t(0.0)),
-         const real_t rho_in = real_t(1.0)) {
+         const GhostLayerField<double, 3u> &force_field,
+         const Vector3<double> &u = Vector3<double>(double(0.0)),
+         const double rho_in = double(1.0)) {
   for (auto cellIt = begin; cellIt != end; ++cellIt) {
     const auto x = cellIt.x();
     const auto y = cellIt.y();
@@ -510,39 +524,39 @@ void set(FieldIteratorXYZ &begin, const FieldIteratorXYZ &end,
     const double u_1 = -0.5 * force_field.get(x, y, z, 1) / rho_in + u[1];
     const double u_2 = -0.5 * force_field.get(x, y, z, 2) / rho_in + u[2];
 
-    Equilibrium::set(cellIt, Vector3<real_t>(u_0, u_1, u_2), rho);
+    Equilibrium::set(cellIt, Vector3<double>(u_0, u_1, u_2), rho);
   }
 }
 } // namespace DensityAndVelocityRange
 
 namespace DensityAndMomentumDensity {
 template <typename FieldPtrOrIterator>
-real_t get(Vector3<real_t> &momentumDensity,
-           const GhostLayerField<real_t, 3u> &force_field,
+double get(Vector3<double> &momentumDensity,
+           const GhostLayerField<double, 3u> &force_field,
            const FieldPtrOrIterator &it) {
   const auto x = it.x();
   const auto y = it.y();
   const auto z = it.z();
 
-  const real_t f_0 = it[0];
-  const real_t f_1 = it[1];
-  const real_t f_2 = it[2];
-  const real_t f_3 = it[3];
-  const real_t f_4 = it[4];
-  const real_t f_5 = it[5];
-  const real_t f_6 = it[6];
-  const real_t f_7 = it[7];
-  const real_t f_8 = it[8];
-  const real_t f_9 = it[9];
-  const real_t f_10 = it[10];
-  const real_t f_11 = it[11];
-  const real_t f_12 = it[12];
-  const real_t f_13 = it[13];
-  const real_t f_14 = it[14];
-  const real_t f_15 = it[15];
-  const real_t f_16 = it[16];
-  const real_t f_17 = it[17];
-  const real_t f_18 = it[18];
+  const double f_0 = it[0];
+  const double f_1 = it[1];
+  const double f_2 = it[2];
+  const double f_3 = it[3];
+  const double f_4 = it[4];
+  const double f_5 = it[5];
+  const double f_6 = it[6];
+  const double f_7 = it[7];
+  const double f_8 = it[8];
+  const double f_9 = it[9];
+  const double f_10 = it[10];
+  const double f_11 = it[11];
+  const double f_12 = it[12];
+  const double f_13 = it[13];
+  const double f_14 = it[14];
+  const double f_15 = it[15];
+  const double f_16 = it[16];
+  const double f_17 = it[17];
+  const double f_18 = it[18];
   const double vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
   const double vel1Term = f_1 + f_11 + f_15 + f_7;
   const double vel2Term = f_12 + f_13 + f_5;
@@ -562,30 +576,30 @@ real_t get(Vector3<real_t> &momentumDensity,
 }
 
 template <typename PdfField_T>
-real_t get(Vector3<real_t> &momentumDensity,
-           const GhostLayerField<real_t, 3u> &force_field,
+double get(Vector3<double> &momentumDensity,
+           const GhostLayerField<double, 3u> &force_field,
            const PdfField_T &pdf, const cell_idx_t x, const cell_idx_t y,
            const cell_idx_t z) {
-  const real_t &xyz0 = pdf(x, y, z, 0);
-  const real_t f_0 = pdf.getF(&xyz0, 0);
-  const real_t f_1 = pdf.getF(&xyz0, 1);
-  const real_t f_2 = pdf.getF(&xyz0, 2);
-  const real_t f_3 = pdf.getF(&xyz0, 3);
-  const real_t f_4 = pdf.getF(&xyz0, 4);
-  const real_t f_5 = pdf.getF(&xyz0, 5);
-  const real_t f_6 = pdf.getF(&xyz0, 6);
-  const real_t f_7 = pdf.getF(&xyz0, 7);
-  const real_t f_8 = pdf.getF(&xyz0, 8);
-  const real_t f_9 = pdf.getF(&xyz0, 9);
-  const real_t f_10 = pdf.getF(&xyz0, 10);
-  const real_t f_11 = pdf.getF(&xyz0, 11);
-  const real_t f_12 = pdf.getF(&xyz0, 12);
-  const real_t f_13 = pdf.getF(&xyz0, 13);
-  const real_t f_14 = pdf.getF(&xyz0, 14);
-  const real_t f_15 = pdf.getF(&xyz0, 15);
-  const real_t f_16 = pdf.getF(&xyz0, 16);
-  const real_t f_17 = pdf.getF(&xyz0, 17);
-  const real_t f_18 = pdf.getF(&xyz0, 18);
+  const double &xyz0 = pdf(x, y, z, 0);
+  const double f_0 = pdf.getF(&xyz0, 0);
+  const double f_1 = pdf.getF(&xyz0, 1);
+  const double f_2 = pdf.getF(&xyz0, 2);
+  const double f_3 = pdf.getF(&xyz0, 3);
+  const double f_4 = pdf.getF(&xyz0, 4);
+  const double f_5 = pdf.getF(&xyz0, 5);
+  const double f_6 = pdf.getF(&xyz0, 6);
+  const double f_7 = pdf.getF(&xyz0, 7);
+  const double f_8 = pdf.getF(&xyz0, 8);
+  const double f_9 = pdf.getF(&xyz0, 9);
+  const double f_10 = pdf.getF(&xyz0, 10);
+  const double f_11 = pdf.getF(&xyz0, 11);
+  const double f_12 = pdf.getF(&xyz0, 12);
+  const double f_13 = pdf.getF(&xyz0, 13);
+  const double f_14 = pdf.getF(&xyz0, 14);
+  const double f_15 = pdf.getF(&xyz0, 15);
+  const double f_16 = pdf.getF(&xyz0, 16);
+  const double f_17 = pdf.getF(&xyz0, 17);
+  const double f_18 = pdf.getF(&xyz0, 18);
   const double vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
   const double vel1Term = f_1 + f_11 + f_15 + f_7;
   const double vel2Term = f_12 + f_13 + f_5;
@@ -607,32 +621,32 @@ real_t get(Vector3<real_t> &momentumDensity,
 
 namespace MomentumDensity {
 template <typename FieldPtrOrIterator>
-void get(Vector3<real_t> &momentumDensity,
-         const GhostLayerField<real_t, 3u> &force_field,
+void get(Vector3<double> &momentumDensity,
+         const GhostLayerField<double, 3u> &force_field,
          const FieldPtrOrIterator &it) {
   const auto x = it.x();
   const auto y = it.y();
   const auto z = it.z();
 
-  const real_t f_0 = it[0];
-  const real_t f_1 = it[1];
-  const real_t f_2 = it[2];
-  const real_t f_3 = it[3];
-  const real_t f_4 = it[4];
-  const real_t f_5 = it[5];
-  const real_t f_6 = it[6];
-  const real_t f_7 = it[7];
-  const real_t f_8 = it[8];
-  const real_t f_9 = it[9];
-  const real_t f_10 = it[10];
-  const real_t f_11 = it[11];
-  const real_t f_12 = it[12];
-  const real_t f_13 = it[13];
-  const real_t f_14 = it[14];
-  const real_t f_15 = it[15];
-  const real_t f_16 = it[16];
-  const real_t f_17 = it[17];
-  const real_t f_18 = it[18];
+  const double f_0 = it[0];
+  const double f_1 = it[1];
+  const double f_2 = it[2];
+  const double f_3 = it[3];
+  const double f_4 = it[4];
+  const double f_5 = it[5];
+  const double f_6 = it[6];
+  const double f_7 = it[7];
+  const double f_8 = it[8];
+  const double f_9 = it[9];
+  const double f_10 = it[10];
+  const double f_11 = it[11];
+  const double f_12 = it[12];
+  const double f_13 = it[13];
+  const double f_14 = it[14];
+  const double f_15 = it[15];
+  const double f_16 = it[16];
+  const double f_17 = it[17];
+  const double f_18 = it[18];
   const double vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
   const double vel1Term = f_1 + f_11 + f_15 + f_7;
   const double vel2Term = f_12 + f_13 + f_5;
@@ -650,29 +664,29 @@ void get(Vector3<real_t> &momentumDensity,
 }
 
 template <typename PdfField_T>
-void get(Vector3<real_t> &momentumDensity,
-         const GhostLayerField<real_t, 3u> &force_field, const PdfField_T &pdf,
+void get(Vector3<double> &momentumDensity,
+         const GhostLayerField<double, 3u> &force_field, const PdfField_T &pdf,
          const cell_idx_t x, const cell_idx_t y, const cell_idx_t z) {
-  const real_t &xyz0 = pdf(x, y, z, 0);
-  const real_t f_0 = pdf.getF(&xyz0, 0);
-  const real_t f_1 = pdf.getF(&xyz0, 1);
-  const real_t f_2 = pdf.getF(&xyz0, 2);
-  const real_t f_3 = pdf.getF(&xyz0, 3);
-  const real_t f_4 = pdf.getF(&xyz0, 4);
-  const real_t f_5 = pdf.getF(&xyz0, 5);
-  const real_t f_6 = pdf.getF(&xyz0, 6);
-  const real_t f_7 = pdf.getF(&xyz0, 7);
-  const real_t f_8 = pdf.getF(&xyz0, 8);
-  const real_t f_9 = pdf.getF(&xyz0, 9);
-  const real_t f_10 = pdf.getF(&xyz0, 10);
-  const real_t f_11 = pdf.getF(&xyz0, 11);
-  const real_t f_12 = pdf.getF(&xyz0, 12);
-  const real_t f_13 = pdf.getF(&xyz0, 13);
-  const real_t f_14 = pdf.getF(&xyz0, 14);
-  const real_t f_15 = pdf.getF(&xyz0, 15);
-  const real_t f_16 = pdf.getF(&xyz0, 16);
-  const real_t f_17 = pdf.getF(&xyz0, 17);
-  const real_t f_18 = pdf.getF(&xyz0, 18);
+  const double &xyz0 = pdf(x, y, z, 0);
+  const double f_0 = pdf.getF(&xyz0, 0);
+  const double f_1 = pdf.getF(&xyz0, 1);
+  const double f_2 = pdf.getF(&xyz0, 2);
+  const double f_3 = pdf.getF(&xyz0, 3);
+  const double f_4 = pdf.getF(&xyz0, 4);
+  const double f_5 = pdf.getF(&xyz0, 5);
+  const double f_6 = pdf.getF(&xyz0, 6);
+  const double f_7 = pdf.getF(&xyz0, 7);
+  const double f_8 = pdf.getF(&xyz0, 8);
+  const double f_9 = pdf.getF(&xyz0, 9);
+  const double f_10 = pdf.getF(&xyz0, 10);
+  const double f_11 = pdf.getF(&xyz0, 11);
+  const double f_12 = pdf.getF(&xyz0, 12);
+  const double f_13 = pdf.getF(&xyz0, 13);
+  const double f_14 = pdf.getF(&xyz0, 14);
+  const double f_15 = pdf.getF(&xyz0, 15);
+  const double f_16 = pdf.getF(&xyz0, 16);
+  const double f_17 = pdf.getF(&xyz0, 17);
+  const double f_18 = pdf.getF(&xyz0, 18);
   const double vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
   const double vel1Term = f_1 + f_11 + f_15 + f_7;
   const double vel2Term = f_12 + f_13 + f_5;
@@ -691,31 +705,34 @@ void get(Vector3<real_t> &momentumDensity,
 } // namespace MomentumDensity
 
 namespace PressureTensor {
-template <typename FieldPtrOrIterator>
-void get(Matrix3<real_t> &pressureTensor, const FieldPtrOrIterator &it) {
+template <typename FieldPtrOrIterator,
+          std::enable_if_t<
+              std::is_same<decltype(*(FieldPtrOrIterator())), double>::value,
+              bool> = true>
+void get(Matrix3<double> &pressureTensor, const FieldPtrOrIterator &it) {
   const auto x = it.x();
   const auto y = it.y();
   const auto z = it.z();
 
-  const real_t f_0 = it[0];
-  const real_t f_1 = it[1];
-  const real_t f_2 = it[2];
-  const real_t f_3 = it[3];
-  const real_t f_4 = it[4];
-  const real_t f_5 = it[5];
-  const real_t f_6 = it[6];
-  const real_t f_7 = it[7];
-  const real_t f_8 = it[8];
-  const real_t f_9 = it[9];
-  const real_t f_10 = it[10];
-  const real_t f_11 = it[11];
-  const real_t f_12 = it[12];
-  const real_t f_13 = it[13];
-  const real_t f_14 = it[14];
-  const real_t f_15 = it[15];
-  const real_t f_16 = it[16];
-  const real_t f_17 = it[17];
-  const real_t f_18 = it[18];
+  const double f_0 = it[0];
+  const double f_1 = it[1];
+  const double f_2 = it[2];
+  const double f_3 = it[3];
+  const double f_4 = it[4];
+  const double f_5 = it[5];
+  const double f_6 = it[6];
+  const double f_7 = it[7];
+  const double f_8 = it[8];
+  const double f_9 = it[9];
+  const double f_10 = it[10];
+  const double f_11 = it[11];
+  const double f_12 = it[12];
+  const double f_13 = it[13];
+  const double f_14 = it[14];
+  const double f_15 = it[15];
+  const double f_16 = it[16];
+  const double f_17 = it[17];
+  const double f_18 = it[18];
   const double p_0 =
       f_10 + f_13 + f_14 + f_17 + f_18 + f_3 + f_4 + f_7 + f_8 + f_9;
   const double p_1 = -f_10 - f_7 + f_8 + f_9;
@@ -741,29 +758,32 @@ void get(Matrix3<real_t> &pressureTensor, const FieldPtrOrIterator &it) {
   pressureTensor[8] = p_8;
 }
 
-template <typename PdfField_T>
-void get(Matrix3<real_t> &pressureTensor, const PdfField_T &pdf,
+template <typename PdfField_T,
+          std::enable_if_t<
+              std::is_same<typename PdfField_T::value_type, double>::value,
+              bool> = true>
+void get(Matrix3<double> &pressureTensor, const PdfField_T &pdf,
          const cell_idx_t x, const cell_idx_t y, const cell_idx_t z) {
-  const real_t &xyz0 = pdf(x, y, z, 0);
-  const real_t f_0 = pdf.getF(&xyz0, 0);
-  const real_t f_1 = pdf.getF(&xyz0, 1);
-  const real_t f_2 = pdf.getF(&xyz0, 2);
-  const real_t f_3 = pdf.getF(&xyz0, 3);
-  const real_t f_4 = pdf.getF(&xyz0, 4);
-  const real_t f_5 = pdf.getF(&xyz0, 5);
-  const real_t f_6 = pdf.getF(&xyz0, 6);
-  const real_t f_7 = pdf.getF(&xyz0, 7);
-  const real_t f_8 = pdf.getF(&xyz0, 8);
-  const real_t f_9 = pdf.getF(&xyz0, 9);
-  const real_t f_10 = pdf.getF(&xyz0, 10);
-  const real_t f_11 = pdf.getF(&xyz0, 11);
-  const real_t f_12 = pdf.getF(&xyz0, 12);
-  const real_t f_13 = pdf.getF(&xyz0, 13);
-  const real_t f_14 = pdf.getF(&xyz0, 14);
-  const real_t f_15 = pdf.getF(&xyz0, 15);
-  const real_t f_16 = pdf.getF(&xyz0, 16);
-  const real_t f_17 = pdf.getF(&xyz0, 17);
-  const real_t f_18 = pdf.getF(&xyz0, 18);
+  const double &xyz0 = pdf(x, y, z, 0);
+  const double f_0 = pdf.getF(&xyz0, 0);
+  const double f_1 = pdf.getF(&xyz0, 1);
+  const double f_2 = pdf.getF(&xyz0, 2);
+  const double f_3 = pdf.getF(&xyz0, 3);
+  const double f_4 = pdf.getF(&xyz0, 4);
+  const double f_5 = pdf.getF(&xyz0, 5);
+  const double f_6 = pdf.getF(&xyz0, 6);
+  const double f_7 = pdf.getF(&xyz0, 7);
+  const double f_8 = pdf.getF(&xyz0, 8);
+  const double f_9 = pdf.getF(&xyz0, 9);
+  const double f_10 = pdf.getF(&xyz0, 10);
+  const double f_11 = pdf.getF(&xyz0, 11);
+  const double f_12 = pdf.getF(&xyz0, 12);
+  const double f_13 = pdf.getF(&xyz0, 13);
+  const double f_14 = pdf.getF(&xyz0, 14);
+  const double f_15 = pdf.getF(&xyz0, 15);
+  const double f_16 = pdf.getF(&xyz0, 16);
+  const double f_17 = pdf.getF(&xyz0, 17);
+  const double f_18 = pdf.getF(&xyz0, 18);
   const double p_0 =
       f_10 + f_13 + f_14 + f_17 + f_18 + f_3 + f_4 + f_7 + f_8 + f_9;
   const double p_1 = -f_10 - f_7 + f_8 + f_9;
@@ -791,21 +811,27 @@ void get(Matrix3<real_t> &pressureTensor, const PdfField_T &pdf,
 } // namespace PressureTensor
 
 namespace ShearRate {
-template <typename FieldPtrOrIterator>
-inline real_t get(const FieldPtrOrIterator & /* it */,
-                  const Vector3<real_t> & /* velocity */,
-                  const real_t /* rho */) {
+template <typename FieldPtrOrIterator,
+          std::enable_if_t<
+              std::is_same<decltype(*(FieldPtrOrIterator())), double>::value,
+              bool> = true>
+inline double get(const FieldPtrOrIterator & /* it */,
+                  const Vector3<double> & /* velocity */,
+                  const double /* rho */) {
   WALBERLA_ABORT("Not implemented");
-  return real_t(0.0);
+  return double(0.0);
 }
 
-template <typename PdfField_T>
-inline real_t get(const PdfField_T & /* pdf */, const cell_idx_t /* x */,
+template <typename PdfField_T,
+          std::enable_if_t<
+              std::is_same<typename PdfField_T::value_type, double>::value,
+              bool> = true>
+inline double get(const PdfField_T & /* pdf */, const cell_idx_t /* x */,
                   const cell_idx_t /* y */, const cell_idx_t /* z */,
-                  const Vector3<real_t> & /* velocity */,
-                  const real_t /* rho */) {
+                  const Vector3<double> & /* velocity */,
+                  const double /* rho */) {
   WALBERLA_ABORT("Not implemented");
-  return real_t(0.0);
+  return double(0.0);
 }
 } // namespace ShearRate
 
