@@ -404,8 +404,8 @@ with PatchedCodeGeneration(args.codegen_cfg) as ctx:
         if '#pragma once' not in content:
             content = '#pragma once\n' + content
         # patch for floating point accuracy
-        content = content.replace('real_t',
-            {True: 'double', False: 'float'}[ctx.double_accuracy])
+        content = content.replace(
+            'real_t', {True: 'double', False: 'float'}[ctx.double_accuracy])
         f.write(content)
 
     # communication
