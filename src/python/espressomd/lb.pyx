@@ -651,6 +651,23 @@ IF LB_WALBERLA:
 
             def __init__(self, *args, **kwargs):
                 raise NotImplementedError("Not implemented yet")
+    ELSE:
+        class LBFluidWalberlaGPU(HydrodynamicInteraction):
+            def __init__(self, *args, **kwargs):
+                raise NotImplementedError("Feature not compiled in")
+
+ELSE:
+    class LatticeWalberla(ScriptInterfaceHelper):
+        def __init__(self, *args, **kwargs):
+            raise NotImplementedError("Feature not compiled in")
+
+    class LBFluidWalberla(HydrodynamicInteraction):
+        def __init__(self, *args, **kwargs):
+            raise NotImplementedError("Feature not compiled in")
+
+    class LBFluidWalberlaGPU(HydrodynamicInteraction):
+        def __init__(self, *args, **kwargs):
+            raise NotImplementedError("Feature not compiled in")
 
 
 cdef class LBFluidRoutines:
