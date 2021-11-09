@@ -19,6 +19,7 @@
 #
 
 import os
+import re
 import numpy as np
 import sympy as sp
 import pystencils as ps
@@ -110,6 +111,9 @@ def __macroscopic_values_accessors(generation_context, lb_method, filename):
         f.truncate(0)
         # remove lattice model
         content = content.replace('lm.force_->', 'force_field.')
+        # patch for floating point accuracy
+        if is_float:
+            content = re.sub(r'0\.5(?=[^\df])', '0.5f', content)
         f.write(content)
 
 
