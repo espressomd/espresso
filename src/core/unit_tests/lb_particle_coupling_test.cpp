@@ -58,6 +58,7 @@ namespace utf = boost::unit_test;
 #include <cmath>
 #include <limits>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -466,6 +467,84 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
+bool test_lb_domain_mismatch_local() {
+  boost::mpi::communicator world;
+  auto const node_grid_original = node_grid;
+  auto const node_grid_reversed =
+      Utils::Vector3i{{node_grid[2], node_grid[1], node_grid[0]}};
+  auto const n_ghost_layers = 1u;
+  auto const params = LBWalberlaParams(0.5, 0.01);
+  ::node_grid = node_grid_reversed;
+  auto const lattice = LatticeWalberla(Utils::Vector3i{12, 12, 12},
+                                       node_grid_reversed, n_ghost_layers);
+  auto const ptr = init_lb_walberla(lattice, params, 1.0, 1.0, 0.0, 0, false);
+  ::node_grid = node_grid_original;
+  if (world.rank() == 0) {
+    try {
+      lb_sanity_checks(*ptr, params, params.get_tau());
+    } catch (std::runtime_error const &err) {
+      auto const what_ref = std::string("waLBerla and ESPResSo disagree "
+                                        "about domain decomposition.");
+      return err.what() == what_ref;
+    }
+  }
+  return false;
+}
+
+REGISTER_CALLBACK_MAIN_RANK(test_lb_domain_mismatch_local)
+
+bool test_init_lb_walberla_nullptr_local() {
+  auto const n_ghost_layers = 0u;
+  auto const lattice = LatticeWalberla(node_grid, node_grid, n_ghost_layers);
+  auto const params = LBWalberlaParams(0.5, 0.01);
+  auto const ptr = init_lb_walberla(lattice, params, 1.0, 1.0, 0.0, 0, false);
+  return ptr == nullptr;
+}
+
+REGISTER_CALLBACK_MAIN_RANK(test_init_lb_walberla_nullptr_local)
+
+BOOST_AUTO_TEST_CASE(exceptions, *utf::precondition(if_head_node())) {
+  // accessing uninitialized pointers is not allowed
+  {
+    BOOST_CHECK_THROW(lb_walberla(), std::runtime_error);
+    BOOST_CHECK_THROW(lb_walberla_params(), std::runtime_error);
+  }
+
+  // lattices without a ghost layer are not suitable for LB
+  {
+    boost::mpi::communicator world;
+    auto const is_nullptr = mpi_call(Communication::Result::main_rank,
+                                     test_init_lb_walberla_nullptr_local);
+    auto const n_errors = check_runtime_errors_local();
+    auto const error_queue = ErrorHandling::mpi_gather_runtime_errors();
+    BOOST_TEST_REQUIRE(is_nullptr);
+    BOOST_REQUIRE_EQUAL(n_errors, 1);
+    BOOST_REQUIRE_EQUAL(error_queue.size(), world.size());
+    auto const what_ref = std::string("during waLBerla initialization: At "
+                                      "least one ghost layer must be used");
+    for (auto const &error : error_queue) {
+      BOOST_CHECK_EQUAL(error.what(), what_ref);
+    }
+  }
+
+  // waLBerla and ESPResSo must agree on domain decomposition
+  {
+    auto const has_thrown_correct_exception = mpi_call(
+        Communication::Result::main_rank, test_lb_domain_mismatch_local);
+    auto const n_errors = check_runtime_errors_local();
+    auto const error_queue = ErrorHandling::mpi_gather_runtime_errors();
+    BOOST_TEST_REQUIRE(has_thrown_correct_exception);
+    BOOST_REQUIRE_EQUAL(n_errors, 1);
+    BOOST_REQUIRE_EQUAL(error_queue.size(), 1);
+    auto const what_ref = std::string("MPI rank 0: left ESPResSo: [0, 0, 0], "
+                                      "left waLBerla: [0, 0, 0]");
+    for (auto const &error : error_queue) {
+      auto const error_what = error_queue[0].what().substr(1, what_ref.size());
+      BOOST_CHECK_EQUAL(error_what, what_ref);
+    }
+  }
+}
 
 int main(int argc, char **argv) {
   espresso::system = std::make_unique<EspressoSystemStandAlone>(argc, argv);
