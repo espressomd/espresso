@@ -26,6 +26,8 @@
 
 #include <utils/Vector.hpp>
 
+#include <boost/optional.hpp>
+
 #include <stdexcept>
 #include <utility>
 
