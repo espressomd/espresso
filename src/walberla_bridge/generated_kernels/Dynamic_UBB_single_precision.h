@@ -71,12 +71,12 @@ public:
     enum Type { ALL = 0, INNER = 1, OUTER = 2, NUM_TYPES = 3 };
 
     IndexVectors() = default;
-    bool operator==(IndexVectors &other) {
+    bool operator==(IndexVectors const &other) const {
       return other.cpuVectors_ == cpuVectors_;
     }
 
     CpuIndexVector &indexVector(Type t) { return cpuVectors_[t]; }
-    IndexInfo *pointerCpu(Type t) { return &(cpuVectors_[t][0]); }
+    IndexInfo *pointerCpu(Type t) { return cpuVectors_[t].data(); }
 
     void syncGPU() {}
 

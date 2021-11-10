@@ -20,6 +20,7 @@
 #pragma once
 #include "core/DataTypes.h"
 #include "core/logging/Logging.h"
+#include "core/math/Matrix3.h"
 
 #include "field/GhostLayerField.h"
 #include "field/SwapableCompare.h"

@@ -24,6 +24,7 @@
 #pragma once
 #include "core/DataTypes.h"
 #include "core/logging/Logging.h"
+#include "core/math/Matrix3.h"
 
 #include "domain_decomposition/BlockDataID.h"
 #include "domain_decomposition/IBlock.h"
