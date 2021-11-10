@@ -18,6 +18,7 @@ include "myconfig.pxi"
 from .highlander import ThereCanOnlyBeOne
 from .utils import handle_errors
 
+
 cdef class Actor:
 
     """
@@ -193,6 +194,9 @@ class Actors:
 
     active_actors = []
 
+    def __del__(self):
+        self.clear()
+
     def __getstate__(self):
         return self.active_actors
 
@@ -231,8 +235,13 @@ class Actors:
 
     def clear(self):
         """Remove all actors."""
+        # The order in which actors are removed matters. Some actors set up
+        # global bitfields that activate sanity checks on the MD cellsystem,
+        # and reset these bitfields when removed. Actors need to be removed
+        # in the reverse order they were inserted to guarantee pre-conditions
+        # and post-conditions are always met.
         while len(self.active_actors):
-            self.remove(self.active_actors[0])
+            self.remove(self.active_actors[-1])
 
     def __str__(self):
         return str(self.active_actors)
