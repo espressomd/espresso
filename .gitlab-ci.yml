@@ -114,7 +114,7 @@ maxset-walberla:
   stage: build
   variables:
      with_cuda: 'false'
-     myconfig: 'maxset-walberla'
+     myconfig: 'maxset'
      with_coverage: 'true'
      with_walberla: 'true'
      with_scafacos: 'false'
@@ -267,7 +267,7 @@ cuda10-maxset:
   variables:
      CC: 'gcc-8'
      CXX: 'g++-8'
-     myconfig: 'maxset-walberla'
+     myconfig: 'maxset'
      with_cuda: 'true'
      with_coverage: 'false'
      with_coverage_python: 'true'
@@ -294,7 +294,7 @@ tutorials-samples-maxset:
   variables:
      CC: 'gcc-8'
      CXX: 'g++-8'
-     myconfig: 'maxset-walberla'
+     myconfig: 'maxset'
      with_cuda: 'false'
      with_coverage: 'false'
      with_coverage_python: 'true'
