@@ -18,11 +18,12 @@
  */
 #define BOOST_TEST_MODULE Walberla kernels
 #define BOOST_TEST_DYN_LINK
-#include <boost/test/unit_test.hpp>
 
 #include "config.hpp"
 
 #ifdef LB_WALBERLA
+
+#include <boost/test/unit_test.hpp>
 
 #include <generated_kernels/Dynamic_UBB_double_precision.h>
 #include <generated_kernels/Dynamic_UBB_single_precision.h>

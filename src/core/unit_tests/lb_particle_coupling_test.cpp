@@ -509,6 +509,10 @@ BOOST_AUTO_TEST_CASE(exceptions, *utf::precondition(if_head_node())) {
   {
     BOOST_CHECK_THROW(lb_walberla(), std::runtime_error);
     BOOST_CHECK_THROW(lb_walberla_params(), std::runtime_error);
+    BOOST_CHECK_THROW(lb_lbcoupling_get_rng_state(), std::runtime_error);
+    BOOST_CHECK_THROW(lb_lbcoupling_set_rng_state(0ul), std::runtime_error);
+    BOOST_CHECK_THROW(lb_particle_coupling_noise(true, 0, OptionalCounter{}),
+                      std::runtime_error);
   }
 
   // lattices without a ghost layer are not suitable for LB
