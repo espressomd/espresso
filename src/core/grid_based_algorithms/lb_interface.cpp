@@ -72,8 +72,7 @@ void lb_lbfluid_sanity_checks(double time_step) {
 
   if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
-    mpi_lb_sanity_checks_local(*lb_walberla(), *lb_walberla_params(),
-                               time_step);
+    lb_sanity_checks(*lb_walberla(), *lb_walberla_params(), time_step);
 #endif
   }
 }

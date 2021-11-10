@@ -55,22 +55,19 @@ std::shared_ptr<LBWalberlaParams> lb_walberla_params();
  *  @param single_precision   Use single precision
  */
 std::shared_ptr<LBWalberlaBase>
-mpi_init_lb_walberla_local(LatticeWalberla const &lb_lattice,
-                           LBWalberlaParams const &lb_params, double viscosity,
-                           double density, double kT, int seed,
-                           bool single_precision);
+init_lb_walberla(LatticeWalberla const &lb_lattice,
+                 LBWalberlaParams const &lb_params, double viscosity,
+                 double density, double kT, int seed, bool single_precision);
 
-void mpi_lb_sanity_checks_local(LBWalberlaBase const &lb_fluid,
-                                LBWalberlaParams const &lb_params,
-                                double md_time_step);
+void lb_sanity_checks(LBWalberlaBase const &lb_fluid,
+                      LBWalberlaParams const &lb_params, double md_time_step);
 
 /** @brief Register a waLBerla LB instance and update lattice switch. */
-bool mpi_activate_lb_walberla_local(
-    std::shared_ptr<LBWalberlaBase> lb_fluid,
-    std::shared_ptr<LBWalberlaParams> lb_params);
+bool activate_lb_walberla(std::shared_ptr<LBWalberlaBase> lb_fluid,
+                          std::shared_ptr<LBWalberlaParams> lb_params);
 
 /** @brief De-register a waLBerla LB instance and update lattice switch. */
-void mpi_deactivate_lb_walberla_local();
+void deactivate_lb_walberla();
 
 #endif // LB_WALBERLA
 

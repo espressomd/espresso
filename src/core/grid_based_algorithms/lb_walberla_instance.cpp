@@ -62,9 +62,8 @@ std::shared_ptr<LBWalberlaParams> lb_walberla_params() {
   return lb_walberla_params_instance;
 }
 
-void mpi_lb_sanity_checks_local(LBWalberlaBase const &lb_fluid,
-                                LBWalberlaParams const &lb_params,
-                                double md_time_step) {
+void lb_sanity_checks(LBWalberlaBase const &lb_fluid,
+                      LBWalberlaParams const &lb_params, double md_time_step) {
   auto const agrid = lb_params.get_agrid();
   auto const tau = lb_params.get_tau();
   // waLBerla and ESPResSo must agree on domain decomposition
@@ -91,13 +90,12 @@ void mpi_lb_sanity_checks_local(LBWalberlaBase const &lb_fluid,
   }
 }
 
-bool mpi_activate_lb_walberla_local(
-    std::shared_ptr<LBWalberlaBase> lb_fluid,
-    std::shared_ptr<LBWalberlaParams> lb_params) {
+bool activate_lb_walberla(std::shared_ptr<LBWalberlaBase> lb_fluid,
+                          std::shared_ptr<LBWalberlaParams> lb_params) {
   bool flag_failure = false;
   try {
     assert(::lattice_switch == ActiveLB::NONE);
-    mpi_lb_sanity_checks_local(*lb_fluid, *lb_params, get_time_step());
+    lb_sanity_checks(*lb_fluid, *lb_params, get_time_step());
   } catch (const std::exception &e) {
     runtimeErrorMsg() << "during waLBerla activation: " << e.what();
     flag_failure = true;
@@ -111,17 +109,16 @@ bool mpi_activate_lb_walberla_local(
   return false;
 }
 
-void mpi_deactivate_lb_walberla_local() {
+void deactivate_lb_walberla() {
   ::lb_walberla_instance.reset();
   ::lb_walberla_params_instance.reset();
   ::lattice_switch = ActiveLB::NONE;
 }
 
 std::shared_ptr<LBWalberlaBase>
-mpi_init_lb_walberla_local(LatticeWalberla const &lb_lattice,
-                           LBWalberlaParams const &lb_params, double viscosity,
-                           double density, double kT, int seed,
-                           bool single_precision) {
+init_lb_walberla(LatticeWalberla const &lb_lattice,
+                 LBWalberlaParams const &lb_params, double viscosity,
+                 double density, double kT, int seed, bool single_precision) {
   bool flag_failure = false;
   std::shared_ptr<LBWalberlaBase> lb_ptr;
   try {

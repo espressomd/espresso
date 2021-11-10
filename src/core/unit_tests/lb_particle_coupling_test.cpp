@@ -109,17 +109,16 @@ void add_lb_actor_local(double kT) {
   lb_params = std::make_shared<LBWalberlaParams>(params.agrid, params.tau);
   lb_lattice = std::make_shared<LatticeWalberla>(params.grid_dimensions,
                                                  node_grid, n_ghost_layers);
-  lb_fluid =
-      mpi_init_lb_walberla_local(*lb_lattice, *lb_params, params.viscosity,
-                                 params.density, params.kT, params.seed, false);
-  mpi_activate_lb_walberla_local(lb_fluid, lb_params);
+  lb_fluid = init_lb_walberla(*lb_lattice, *lb_params, params.viscosity,
+                              params.density, params.kT, params.seed, false);
+  activate_lb_walberla(lb_fluid, lb_params);
 }
 
 void set_lb_kT_local(double kT) {
   lb_fluid->set_collision_model(kT, params.seed);
 }
 
-void remove_lb_actor_local() { mpi_deactivate_lb_walberla_local(); }
+void remove_lb_actor_local() { deactivate_lb_walberla(); }
 
 void cells_update_ghosts_local() { cells_update_ghosts(global_ghost_flags()); }
 
