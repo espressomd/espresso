@@ -545,6 +545,7 @@ BOOST_AUTO_TEST_CASE(exceptions, *utf::precondition(if_head_node())) {
     BOOST_CHECK_THROW(lb_lbinterpolation_add_force_density({}, {}),
                       std::runtime_error);
     BOOST_CHECK_THROW(lb_lbfluid_get_interpolated_velocity({}), exception);
+    BOOST_CHECK_THROW(lb_lbfluid_get_force_to_be_applied({}), exception);
     BOOST_CHECK_THROW(lb_lbfluid_add_force_at_pos({}, {}), exception);
     BOOST_CHECK_THROW(lb_lbfluid_get_interpolated_density({}), exception);
     BOOST_CHECK_THROW(lb_lbfluid_get_shape(), exception);

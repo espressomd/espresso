@@ -51,18 +51,11 @@ struct NoLBActive : public std::exception {
 
 void lb_lbfluid_init() {}
 
-void lb_lbfluid_integrate() {
+void lb_lbfluid_propagate() {
   if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
     lb_walberla()->integrate();
 #endif
-  } else
-    throw NoLBActive();
-}
-
-void lb_lbfluid_propagate() {
-  if (lattice_switch != ActiveLB::NONE) {
-    lb_lbfluid_integrate();
   }
 }
 
