@@ -61,7 +61,6 @@ cdef extern from "grid_based_algorithms/lb_interface.hpp":
     void lb_lbfluid_write_vtk(const string vtk_uid) except +
     Vector6d lb_lbfluid_get_pressure_tensor() except +
     bool lb_lbnode_is_index_valid(const Vector3i & ind) except +
-    Vector3i lb_lbfluid_get_shape() except +
     const Vector3d lb_lbnode_get_velocity(const Vector3i & ind) except +
     const Vector3d lb_lbnode_get_velocity_at_boundary(const Vector3i & ind) except +
     const Vector3d lb_lbnode_get_boundary_force(const Vector3i & ind) except +

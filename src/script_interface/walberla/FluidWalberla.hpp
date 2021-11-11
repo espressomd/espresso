@@ -125,10 +125,8 @@ public:
                   m_conv_visc;
          }},
         {"pressure_tensor", AutoParameter::read_only,
-         [this]() {
-           // this getter is overriden by the python class
-           return 0;
-         }},
+         // this getter is overriden by the python class
+         [this]() { return 0; }},
         {"ext_force_density",
          [this](const Variant &v) {
            auto const ext_f = m_conv_force * get_value<Utils::Vector3d>(v);

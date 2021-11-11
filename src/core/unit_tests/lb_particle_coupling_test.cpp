@@ -42,6 +42,7 @@ namespace utf = boost::unit_test;
 #include "event.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
+#include "grid_based_algorithms/lb_interpolation.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "grid_based_algorithms/lb_walberla_instance.hpp"
 #include "random.hpp"
@@ -201,6 +202,14 @@ BOOST_AUTO_TEST_CASE(rng) {
   auto step3_norandom = lb_particle_coupling_noise(
       false, 4, lb_particle_coupling.rng_counter_coupling);
   BOOST_CHECK(step3_norandom == Utils::Vector3d{});
+}
+
+BOOST_AUTO_TEST_CASE(access_outside_domain) {
+  auto const invalid_pos = 2 * params.box_dimensions;
+  BOOST_CHECK_THROW(lb_lbinterpolation_get_interpolated_velocity(invalid_pos),
+                    std::runtime_error);
+  BOOST_CHECK_THROW(lb_lbinterpolation_add_force_density(invalid_pos, {}),
+                    std::runtime_error);
 }
 
 BOOST_AUTO_TEST_CASE(drift_vel_offset) {
@@ -505,14 +514,45 @@ bool test_init_lb_walberla_nullptr_local() {
 REGISTER_CALLBACK_MAIN_RANK(test_init_lb_walberla_nullptr_local)
 
 BOOST_AUTO_TEST_CASE(exceptions, *utf::precondition(if_head_node())) {
-  // accessing uninitialized pointers is not allowed
   {
+    using std::exception;
+    // accessing uninitialized pointers is not allowed
     BOOST_CHECK_THROW(lb_walberla(), std::runtime_error);
     BOOST_CHECK_THROW(lb_walberla_params(), std::runtime_error);
+    // getters and setters
+    BOOST_CHECK_THROW(lb_lbfluid_get_agrid(), exception);
+    BOOST_CHECK_THROW(lb_lbfluid_get_tau(), exception);
+    BOOST_CHECK_THROW(lb_lbfluid_get_kT(), exception);
+    BOOST_CHECK_THROW(lb_lbnode_set_density({}, {}), exception);
+    BOOST_CHECK_THROW(lb_lbnode_get_density({}), exception);
+    BOOST_CHECK_THROW(lb_lbnode_set_velocity({}, {}), exception);
+    BOOST_CHECK_THROW(lb_lbnode_get_velocity({}), exception);
+    BOOST_CHECK_THROW(lb_lbnode_set_pop({}, {}), exception);
+    BOOST_CHECK_THROW(lb_lbnode_get_pop({}), exception);
+    BOOST_CHECK_THROW(lb_lbnode_set_velocity_at_boundary({}, {}), exception);
+    BOOST_CHECK_THROW(lb_lbnode_get_velocity_at_boundary({}), exception);
+    BOOST_CHECK_THROW(lb_lbnode_set_last_applied_force({}, {}), exception);
+    BOOST_CHECK_THROW(lb_lbnode_get_last_applied_force({}), exception);
+    BOOST_CHECK_THROW(lb_lbnode_get_pressure_tensor({}), exception);
+    BOOST_CHECK_THROW(lb_lbnode_get_boundary_force({}), exception);
+    // coupling, interpolation, boundaries
     BOOST_CHECK_THROW(lb_lbcoupling_get_rng_state(), std::runtime_error);
     BOOST_CHECK_THROW(lb_lbcoupling_set_rng_state(0ul), std::runtime_error);
     BOOST_CHECK_THROW(lb_particle_coupling_noise(true, 0, OptionalCounter{}),
                       std::runtime_error);
+    BOOST_CHECK_THROW(lb_lbinterpolation_get_interpolated_velocity({}),
+                      std::runtime_error);
+    BOOST_CHECK_THROW(lb_lbinterpolation_add_force_density({}, {}),
+                      std::runtime_error);
+    BOOST_CHECK_THROW(lb_lbfluid_get_interpolated_velocity({}), exception);
+    BOOST_CHECK_THROW(lb_lbfluid_add_force_at_pos({}, {}), exception);
+    BOOST_CHECK_THROW(lb_lbfluid_get_interpolated_density({}), exception);
+    BOOST_CHECK_THROW(lb_lbfluid_get_shape(), exception);
+    BOOST_CHECK_THROW(lb_lbfluid_clear_boundaries(), exception);
+    BOOST_CHECK_THROW(lb_lbnode_remove_from_boundary({}), exception);
+    BOOST_CHECK_THROW(lb_lbfluid_update_boundary_from_list({}, {}), exception);
+    BOOST_CHECK_THROW(lb_lbfluid_update_boundary_from_shape({}, {}), exception);
+    BOOST_CHECK_THROW(lb_lbfluid_calc_fluid_momentum(), exception);
   }
 
   // lattices without a ghost layer are not suitable for LB
