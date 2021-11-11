@@ -17,9 +17,10 @@
 
 import espressomd
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 
-# Define the LB Parameters
+# Define the LB parameters
 TIME_STEP = 0.1
 AGRID = 1.0
 KVISC = 5
@@ -42,17 +43,21 @@ class Momentum(object):
     with boundary and ghost layer handling.
 
     """
-    lbf = None
     system = espressomd.System(box_l=[BOX_SIZE] * 3)
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.01
 
-    def test(self):
+    def setUp(self):
+        self.lbf = self.lb_class(**LB_PARAMS)
+
+    def tearDown(self):
         self.system.actors.clear()
+        self.system.thermostat.turn_off()
         self.system.part.clear()
+
+    def test(self):
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=GAMMA, seed=1)
-
         applied_force = self.system.volume() * np.array(
             LB_PARAMS['ext_force_density'])
         p = self.system.part.add(
@@ -81,20 +86,17 @@ class Momentum(object):
             BOX_SIZE)
 
 
-@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(
-    ['EXTERNAL_FORCES']), "Skipping test due to missing features.")
-class LBGPUMomentum(ut.TestCase, Momentum):
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(['EXTERNAL_FORCES'])
+class LBGPUMomentum(Momentum, ut.TestCase):
 
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
+    lb_class = espressomd.lb.LBFluidGPU
 
 
-@ut.skipIf(not espressomd.has_features(
-    ['EXTERNAL_FORCES']), "Skipping test due to missing features.")
-class LBCPUMomentum(ut.TestCase, Momentum):
+@utx.skipIfMissingFeatures(['EXTERNAL_FORCES'])
+class LBCPUMomentum(Momentum, ut.TestCase):
 
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
+    lb_class = espressomd.lb.LBFluid
 
 
 if __name__ == "__main__":

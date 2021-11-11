@@ -31,7 +31,6 @@ class SwimmerTest():
                  'kT': 0,
                  'tau': system.time_step}
     gamma = 0.3
-    lbf = None
 
     def add_all_types_of_swimmers(
             self,
@@ -69,12 +68,15 @@ class SwimmerTest():
                         swimming={"mode": "puller", "v_swim": 0.05,
                                   "dipole_length": 0.8})
 
+    def setUp(self):
+        self.lbf = self.lb_class(**self.LB_params)
+        self.system.actors.add(self.lbf)
+        self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=self.gamma)
+
     def tearDown(self):
         self.system.part.clear()
         self.system.actors.clear()
-        self.system.lbboundaries.clear()
         self.system.thermostat.turn_off()
-        self.lbf = None
 
     def test_conflicting_parameters(self):
         """v_swim and f_swim can't be set at the same time
@@ -126,22 +128,16 @@ class SwimmerTest():
 @utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
 class SwimmerTestCPU(SwimmerTest, ut.TestCase):
 
-    def setUp(self):
-        self.tol = 1e-10
-        self.lbf = espressomd.lb.LBFluid(**self.LB_params)
-        self.system.actors.add(self.lbf)
-        self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=self.gamma)
+    lb_class = espressomd.lb.LBFluid
+    tol = 1e-10
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
 class SwimmerTestGPU(SwimmerTest, ut.TestCase):
 
-    def setUp(self):
-        self.tol = 1e-5
-        self.lbf = espressomd.lb.LBFluidGPU(**self.LB_params)
-        self.system.actors.add(self.lbf)
-        self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=self.gamma)
+    lb_class = espressomd.lb.LBFluidGPU
+    tol = 1e-5
 
 
 if __name__ == "__main__":

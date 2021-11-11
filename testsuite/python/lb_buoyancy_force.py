@@ -41,22 +41,25 @@ LB_PARAMS = {'agrid': AGRID,
 RADIUS = 6 * AGRID
 
 
-class Buoyancy(object):
+class LBBuoyancy:
     """
     Tests buoyancy force on a sphere in a closed box of lb fluid and
     the overall force balance
 
     """
-    lbf = None
     system = espressomd.System(box_l=[BOX_SIZE] * 3)
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.01
 
-    def test(self):
-        self.system.actors.clear()
-        self.system.lbboundaries.clear()
+    def setUp(self):
+        self.lbf = self.lb_class(**LB_PARAMS)
         self.system.actors.add(self.lbf)
 
+    def tearDown(self):
+        self.system.actors.clear()
+        self.system.lbboundaries.clear()
+
+    def test(self):
         # Setup walls
         for i in range(3):
             n = np.zeros(3)
@@ -111,17 +114,13 @@ class Buoyancy(object):
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["LB_BOUNDARIES_GPU", "EXTERNAL_FORCES"])
-class LBGPUBuoyancy(ut.TestCase, Buoyancy):
-
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
+class LBGPUBuoyancy(LBBuoyancy, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidGPU
 
 
 @utx.skipIfMissingFeatures(["LB_BOUNDARIES", "EXTERNAL_FORCES"])
-class LBCPUBuoyancy(ut.TestCase, Buoyancy):
-
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
+class LBCPUBuoyancy(LBBuoyancy, ut.TestCase):
+    lb_class = espressomd.lb.LBFluid
 
 
 if __name__ == "__main__":

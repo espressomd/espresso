@@ -41,7 +41,6 @@ class TestLB:
     system.periodicity = [1, 1, 1]
     system.time_step = 0.01
     system.cell_system.skin = 1.0
-    lbf = None
     dof = 3.
 
     def tearDown(self):

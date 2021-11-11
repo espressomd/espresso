@@ -14,18 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# Measuring the force on a single sphere immersed in a fluid with
-# fixed velocity boundary conditions created by two
-# walls at finite distance.
-# The force is compared to th analytical result F=6 pi eta r v
-# i.e. the stokes force on the particles.
-
-
-# We create a box of size box_width x box_width x box_length and
-# place an object in the center. We measure the drag force
-# in z direction. We create walls in the xz and yz plane at the box
-# boundaries, where the velocity is fixed to $v.
-#
 import espressomd
 import espressomd.lbboundaries
 import espressomd.shapes
@@ -33,7 +21,7 @@ import unittest as ut
 import unittest_decorators as utx
 import numpy as np
 
-# Define the LB Parameters
+# Define the LB parameters
 TIME_STEP = 0.5
 AGRID = 0.6
 KVISC = 6
@@ -52,18 +40,33 @@ v = [0, 0, 0.1 * c_s]  # The boundary slip
 
 
 class Stokes:
-    lbf = None
+    """
+    Measure the force on a single sphere immersed in a fluid with fixed
+    velocity boundary conditions created by four walls at finite distance.
+    The force is compared to th analytical result F=6 pi eta r v
+    i.e. the stokes force on the particles.
+
+    We create a box of size box_width x box_width x box_length and
+    place an object in the center. We measure the drag force
+    in z direction. We create walls in the xz and yz plane at the box
+    boundaries, where the velocity is fixed to v.
+    """
     system = espressomd.System(box_l=[real_width, real_width, box_length])
     system.box_l = [real_width, real_width, box_length]
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.01
 
-    def test_stokes(self):
-        self.system.actors.clear()
-        self.system.lbboundaries.clear()
+    def setUp(self):
+        self.lbf = self.lb_class(**LB_PARAMS)
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=1.0)
 
+    def tearDown(self):
+        self.system.actors.clear()
+        self.system.lbboundaries.clear()
+        self.system.thermostat.turn_off()
+
+    def test_stokes(self):
         # Setup walls
         walls = [None] * 4
         walls[0] = espressomd.lbboundaries.LBBoundary(shape=espressomd.shapes.Wall(
@@ -112,17 +115,13 @@ class Stokes:
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(['LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES'])
-class LBGPUStokes(ut.TestCase, Stokes):
-
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
+class LBGPUStokes(Stokes, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidGPU
 
 
 @utx.skipIfMissingFeatures(['LB_BOUNDARIES', 'EXTERNAL_FORCES'])
-class LBCPUStokes(ut.TestCase, Stokes):
-
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
+class LBCPUStokes(Stokes, ut.TestCase):
+    lb_class = espressomd.lb.LBFluid
 
 
 if __name__ == "__main__":

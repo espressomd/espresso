@@ -69,16 +69,17 @@ class LBStreamingCommon:
     to zero except one. Relaxation is suppressed by choosing appropriate parameters.
 
     """
-    lbf = None
     system = espressomd.System(box_l=[3.0] * 3)
     system.cell_system.skin = 0.4 * AGRID
     system.time_step = TAU
     grid = np.array(system.box_l / AGRID, dtype=int)
 
-    def prepare(self):
-        self.system.actors.clear()
+    def setUp(self):
+        self.lbf = self.lb_class(**LB_PARAMETERS)
         self.system.actors.add(self.lbf)
-        self.reset_fluid_populations()
+
+    def tearDown(self):
+        self.system.actors.clear()
 
     def reset_fluid_populations(self):
         """Set all populations to 0.0.
@@ -96,7 +97,7 @@ class LBStreamingCommon:
         self.lbf[grid_index].population = pop
 
     def test_population_streaming(self):
-        self.prepare()
+        self.reset_fluid_populations()
         for grid_index in itertools.product(
                 range(self.grid[0]), range(self.grid[1]), range(self.grid[2])):
             self.set_fluid_populations(grid_index)
@@ -109,21 +110,19 @@ class LBStreamingCommon:
                 self.lbf[target_node_index].population = np.zeros(19)
 
 
-class LBCPU(ut.TestCase, LBStreamingCommon):
+class LBCPU(LBStreamingCommon, ut.TestCase):
 
     """Test for the CPU implementation of the LB."""
 
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluid(**LB_PARAMETERS)
+    lb_class = espressomd.lb.LBFluid
 
 
 @utx.skipIfMissingGPU()
-class LBGPU(ut.TestCase, LBStreamingCommon):
+class LBGPU(LBStreamingCommon, ut.TestCase):
 
     """Test for the GPU implementation of the LB."""
 
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMETERS)
+    lb_class = espressomd.lb.LBFluidGPU
 
 
 if __name__ == "__main__":

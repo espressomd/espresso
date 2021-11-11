@@ -41,22 +41,25 @@ LB_PARAMS = {'agrid': AGRID,
 
 class LBThermostatCommon(thermostats_common.ThermostatsCommon):
 
-    """Base class of the test that holds the test logic."""
-    lbf = None
+    """Check the LB thermostat."""
+
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
     np.random.seed(42)
 
-    def prepare(self):
-        self.system.actors.clear()
+    def setUp(self):
+        self.lbf = self.lb_class(**LB_PARAMS)
         self.system.actors.add(self.lbf)
+
+    def tearDown(self):
+        self.system.actors.clear()
+        self.system.thermostat.turn_off()
+
+    def test_velocity_distribution(self):
         self.system.part.add(
             pos=np.random.random((100, 3)) * self.system.box_l)
         self.system.thermostat.set_lb(LB_fluid=self.lbf, seed=5, gamma=5.0)
-
-    def test_velocity_distribution(self):
-        self.prepare()
         self.system.integrator.run(20)
         N = len(self.system.part)
         loops = 250
@@ -71,21 +74,19 @@ class LBThermostatCommon(thermostats_common.ThermostatsCommon):
             v_stored.reshape((-1, 3)), minmax, n_bins, error_tol, KT)
 
 
-class LBCPUThermostat(ut.TestCase, LBThermostatCommon):
+class LBCPUThermostat(LBThermostatCommon, ut.TestCase):
 
     """Test for the CPU implementation of the LB."""
 
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
+    lb_class = espressomd.lb.LBFluid
 
 
 @utx.skipIfMissingGPU()
-class LBGPUThermostat(ut.TestCase, LBThermostatCommon):
+class LBGPUThermostat(LBThermostatCommon, ut.TestCase):
 
     """Test for the GPU implementation of the LB."""
 
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
+    lb_class = espressomd.lb.LBFluidGPU
 
 
 if __name__ == '__main__':
