@@ -52,9 +52,9 @@ public:
     int32_t y;
     int32_t z;
     int32_t dir;
-    double vel_0;
-    double vel_1;
-    double vel_2;
+    float vel_0;
+    float vel_1;
+    float vel_2;
     IndexInfo(int32_t x_, int32_t y_, int32_t z_, int32_t dir_)
         : x(x_), y(y_), z(z_), dir(dir_), vel_0(), vel_1(), vel_2() {}
     bool operator==(const IndexInfo &o) const {

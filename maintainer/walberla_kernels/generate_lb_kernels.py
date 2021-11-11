@@ -293,6 +293,8 @@ with PatchedCodeGeneration(args.codegen_cfg) as ctx:
         True: 'double_precision',
         False: 'single_precision'}[
         ctx.double_accuracy]
+    data_type_cpp = {True: 'double', False: 'float'}[ctx.double_accuracy]
+    data_type_np = {True: 'float64', False: 'float32'}[ctx.double_accuracy]
     kT = sp.symbols('kT')
     stencil = get_stencil('D3Q19')
     fields = generate_fields(ctx, stencil)
@@ -389,7 +391,7 @@ with PatchedCodeGeneration(args.codegen_cfg) as ctx:
         field_layout="fzyx")
 
     # Boundary conditions
-    ubb_dynamic = PatchedUBB(lambda *args: None, dim=3)
+    ubb_dynamic = PatchedUBB(lambda *args: None, dim=3, data_type=data_type_np)
     ubb_data_handler = BounceBackSlipVelocityUBB(method.stencil, ubb_dynamic)
 
     generate_boundary(ctx, f'Dynamic_UBB_{precision_suffix}', ubb_dynamic,
@@ -404,8 +406,7 @@ with PatchedCodeGeneration(args.codegen_cfg) as ctx:
         if '#pragma once' not in content:
             content = '#pragma once\n' + content
         # patch for floating point accuracy
-        content = content.replace(
-            'real_t', {True: 'double', False: 'float'}[ctx.double_accuracy])
+        content = content.replace('real_t', data_type_cpp)
         f.write(content)
 
     # communication

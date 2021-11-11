@@ -73,10 +73,10 @@ static FUNC_PREFIX void boundary_Dynamic_UBB_single_precision(
                                         0, 1, 1, 1, 1, -1, -1, -1, -1};
 
   for (int64_t ctr_0 = 0; ctr_0 < indexVectorSize; ctr_0 += 1) {
-    const int64_t x = *((int32_t *)(&_data_indexVector[40 * ctr_0]));
-    const int64_t y = *((int32_t *)(&_data_indexVector[40 * ctr_0 + 4]));
-    const int64_t z = *((int32_t *)(&_data_indexVector[40 * ctr_0 + 8]));
-    const int64_t dir = *((int32_t *)(&_data_indexVector[40 * ctr_0 + 12]));
+    const int64_t x = *((int32_t *)(&_data_indexVector[28 * ctr_0]));
+    const int64_t y = *((int32_t *)(&_data_indexVector[28 * ctr_0 + 4]));
+    const int64_t z = *((int32_t *)(&_data_indexVector[28 * ctr_0 + 8]));
+    const int64_t dir = *((int32_t *)(&_data_indexVector[28 * ctr_0 + 12]));
     const float vel0Term =
         _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_0 + _stride_pdfs_1 * y +
                    _stride_pdfs_1 + _stride_pdfs_2 * z + 8 * _stride_pdfs_3] +
@@ -125,17 +125,11 @@ static FUNC_PREFIX void boundary_Dynamic_UBB_single_precision(
                _stride_pdfs_2 * z + _stride_pdfs_2 * neighbour_offset_z[dir] +
                _stride_pdfs_3 * f_in_inv_dir_idx[dir]] =
         -rho *
-            (6.0f *
-                 static_cast<float>(
-                     *((double *)(&_data_indexVector[40 * ctr_0 + 16]))) *
+            (6.0f * *((float *)(&_data_indexVector[28 * ctr_0 + 16])) *
                  neighbour_offset_x[dir] +
-             6.0f *
-                 static_cast<float>(
-                     *((double *)(&_data_indexVector[40 * ctr_0 + 24]))) *
+             6.0f * *((float *)(&_data_indexVector[28 * ctr_0 + 20])) *
                  neighbour_offset_y[dir] +
-             6.0f *
-                 static_cast<float>(
-                     *((double *)(&_data_indexVector[40 * ctr_0 + 32]))) *
+             6.0f * *((float *)(&_data_indexVector[28 * ctr_0 + 24])) *
                  neighbour_offset_z[dir]) *
             weights[dir] +
         _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_1 * y +
