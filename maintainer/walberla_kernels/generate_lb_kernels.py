@@ -50,6 +50,9 @@ parser.add_argument('--single-precision', action='store_true', required=False,
                     help='Use single-precision')
 args = parser.parse_args()
 
+data_type_cpp = {True: 'double', False: 'float'}
+data_type_np = {True: 'float64', False: 'float32'}
+
 
 def adapt_pystencils():
     '''
@@ -116,7 +119,7 @@ def earmark_generated_kernels():
 
 
 def generate_fields(ctx, stencil):
-    dtype = 'float64' if ctx.double_accuracy else 'float32'
+    dtype = data_type_np[ctx.double_accuracy]
     field_layout = 'fzyx'
     q = len(stencil)
     dim = len(stencil[0])
@@ -172,7 +175,7 @@ def generate_collision_sweep(
         fields['pdfs_tmp'],
         CollideOnlyInplaceAccessor())
     collide_ast = ps.create_kernel(collide_update_rule, **params,
-                                   data_type='double' if ctx.double_accuracy else 'float')
+                                   data_type=data_type_np[ctx.double_accuracy])
     collide_ast.function_name = 'kernel_collide'
     collide_ast.assumed_inner_stride_one = True
     codegen.generate_sweep(ctx, class_name, collide_ast)
@@ -186,7 +189,7 @@ def generate_stream_sweep(ctx, lb_method, class_name, params):
     stream_update_rule = create_stream_pull_with_output_kernel(lb_method, fields['pdfs'], fields['pdfs_tmp'],
                                                                output={'velocity': fields['velocity']})
     stream_ast = ps.create_kernel(stream_update_rule, **params,
-                                  data_type='double' if ctx.double_accuracy else 'float')
+                                  data_type=data_type_np[ctx.double_accuracy])
     stream_ast.function_name = 'kernel_stream'
     stream_ast.assumed_inner_stride_one = True
     codegen.generate_sweep(
@@ -293,8 +296,6 @@ with PatchedCodeGeneration(args.codegen_cfg) as ctx:
         True: 'double_precision',
         False: 'single_precision'}[
         ctx.double_accuracy]
-    data_type_cpp = {True: 'double', False: 'float'}[ctx.double_accuracy]
-    data_type_np = {True: 'float64', False: 'float32'}[ctx.double_accuracy]
     kT = sp.symbols('kT')
     stencil = get_stencil('D3Q19')
     fields = generate_fields(ctx, stencil)
@@ -391,7 +392,8 @@ with PatchedCodeGeneration(args.codegen_cfg) as ctx:
         field_layout="fzyx")
 
     # Boundary conditions
-    ubb_dynamic = PatchedUBB(lambda *args: None, dim=3, data_type=data_type_np)
+    ubb_dynamic = PatchedUBB(lambda *args: None, dim=3,
+                             data_type=data_type_np[ctx.double_accuracy])
     ubb_data_handler = BounceBackSlipVelocityUBB(method.stencil, ubb_dynamic)
 
     generate_boundary(ctx, f'Dynamic_UBB_{precision_suffix}', ubb_dynamic,
@@ -406,7 +408,7 @@ with PatchedCodeGeneration(args.codegen_cfg) as ctx:
         if '#pragma once' not in content:
             content = '#pragma once\n' + content
         # patch for floating point accuracy
-        content = content.replace('real_t', data_type_cpp)
+        content = content.replace('real_t', data_type_cpp[ctx.double_accuracy])
         f.write(content)
 
     # communication

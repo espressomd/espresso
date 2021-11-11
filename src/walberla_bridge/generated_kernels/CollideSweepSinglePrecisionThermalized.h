@@ -53,9 +53,9 @@ class CollideSweepSinglePrecisionThermalized {
 public:
   CollideSweepSinglePrecisionThermalized(
       BlockDataID forceID_, BlockDataID pdfsID_, uint32_t block_offset_0,
-      uint32_t block_offset_1, uint32_t block_offset_2, double kT,
-      double omega_bulk, double omega_even, double omega_odd,
-      double omega_shear, uint32_t seed, uint32_t time_step)
+      uint32_t block_offset_1, uint32_t block_offset_2, float kT,
+      float omega_bulk, float omega_even, float omega_odd, float omega_shear,
+      uint32_t seed, uint32_t time_step)
       : forceID(forceID_), pdfsID(pdfsID_), block_offset_0_(block_offset_0),
         block_offset_1_(block_offset_1), block_offset_2_(block_offset_2),
         kT_(kT), omega_bulk_(omega_bulk), omega_even_(omega_even),
@@ -86,11 +86,11 @@ public:
   uint32_t block_offset_0_;
   uint32_t block_offset_1_;
   uint32_t block_offset_2_;
-  double kT_;
-  double omega_bulk_;
-  double omega_even_;
-  double omega_odd_;
-  double omega_shear_;
+  float kT_;
+  float omega_bulk_;
+  float omega_even_;
+  float omega_odd_;
+  float omega_shear_;
   uint32_t seed_;
   uint32_t time_step_;
   std::function<void(IBlock *, uint32_t &, uint32_t &, uint32_t &)>

@@ -305,906 +305,117 @@ static FUNC_PREFIX void streamsweepsingleprecisionavx(
                 vel1Term),
             vel2Term);
         const __m256 u_0 = _mm256_add_ps(
-            _mm256_mul_ps(
-                _mm256_mul_ps(
-                    _mm256_set_ps(
-                        _mm256_div_ps(_mm256_set_ps(1.0, 1.0, 1.0, 1.0, 1.0,
-                                                    1.0, 1.0, 1.0),
-                                      rho),
-                        _mm256_div_ps(_mm256_set_ps(1.0, 1.0, 1.0, 1.0, 1.0,
-                                                    1.0, 1.0, 1.0),
-                                      rho),
-                        _mm256_div_ps(_mm256_set_ps(1.0, 1.0, 1.0, 1.0, 1.0,
-                                                    1.0, 1.0, 1.0),
-                                      rho),
-                        _mm256_div_ps(_mm256_set_ps(1.0, 1.0, 1.0, 1.0, 1.0,
-                                                    1.0, 1.0, 1.0),
-                                      rho),
-                        _mm256_div_ps(_mm256_set_ps(1.0, 1.0, 1.0, 1.0, 1.0,
-                                                    1.0, 1.0, 1.0),
-                                      rho),
-                        _mm256_div_ps(_mm256_set_ps(1.0, 1.0, 1.0, 1.0, 1.0,
-                                                    1.0, 1.0, 1.0),
-                                      rho),
-                        _mm256_div_ps(_mm256_set_ps(1.0, 1.0, 1.0, 1.0, 1.0,
-                                                    1.0, 1.0, 1.0),
-                                      rho),
-                        _mm256_div_ps(_mm256_set_ps(1.0, 1.0, 1.0, 1.0, 1.0,
-                                                    1.0, 1.0, 1.0),
-                                      rho)),
-                    _mm256_set_ps(0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5)),
-                _mm256_load_ps(&_data_force_20_30_10[ctr_0])),
-            _mm256_set_ps(
-                _mm256_div_ps(
+            _mm256_div_ps(
+                _mm256_add_ps(
                     _mm256_add_ps(
                         _mm256_add_ps(
                             _mm256_add_ps(
                                 _mm256_add_ps(
-                                    _mm256_add_ps(
-                                        _mm256_mul_ps(
-                                            streamed_13,
-                                            _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                          -1.0, -1.0, -1.0,
-                                                          -1.0, -1.0)),
-                                        _mm256_mul_ps(
-                                            streamed_17,
-                                            _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                          -1.0, -1.0, -1.0,
-                                                          -1.0, -1.0))),
                                     _mm256_mul_ps(
-                                        streamed_3,
+                                        streamed_13,
+                                        _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
+                                                      -1.0, -1.0, -1.0, -1.0)),
+                                    _mm256_mul_ps(
+                                        streamed_17,
                                         _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
                                                       -1.0, -1.0, -1.0, -1.0))),
-                                _mm256_mul_ps(streamed_7,
+                                _mm256_mul_ps(streamed_3,
                                               _mm256_set_ps(-1.0, -1.0, -1.0,
                                                             -1.0, -1.0, -1.0,
                                                             -1.0, -1.0))),
-                            _mm256_mul_ps(streamed_9,
+                            _mm256_mul_ps(streamed_7,
                                           _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
                                                         -1.0, -1.0, -1.0,
                                                         -1.0))),
-                        vel0Term),
-                    rho),
-                _mm256_div_ps(
-                    _mm256_add_ps(
-                        _mm256_add_ps(
-                            _mm256_add_ps(
-                                _mm256_add_ps(
-                                    _mm256_add_ps(
-                                        _mm256_mul_ps(
-                                            streamed_13,
-                                            _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                          -1.0, -1.0, -1.0,
-                                                          -1.0, -1.0)),
-                                        _mm256_mul_ps(
-                                            streamed_17,
-                                            _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                          -1.0, -1.0, -1.0,
-                                                          -1.0, -1.0))),
-                                    _mm256_mul_ps(
-                                        streamed_3,
-                                        _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
-                                                      -1.0, -1.0, -1.0, -1.0))),
-                                _mm256_mul_ps(streamed_7,
-                                              _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                            -1.0, -1.0, -1.0,
-                                                            -1.0, -1.0))),
-                            _mm256_mul_ps(streamed_9,
-                                          _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
-                                                        -1.0, -1.0, -1.0,
-                                                        -1.0))),
-                        vel0Term),
-                    rho),
-                _mm256_div_ps(
-                    _mm256_add_ps(
-                        _mm256_add_ps(
-                            _mm256_add_ps(
-                                _mm256_add_ps(
-                                    _mm256_add_ps(
-                                        _mm256_mul_ps(
-                                            streamed_13,
-                                            _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                          -1.0, -1.0, -1.0,
-                                                          -1.0, -1.0)),
-                                        _mm256_mul_ps(
-                                            streamed_17,
-                                            _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                          -1.0, -1.0, -1.0,
-                                                          -1.0, -1.0))),
-                                    _mm256_mul_ps(
-                                        streamed_3,
-                                        _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
-                                                      -1.0, -1.0, -1.0, -1.0))),
-                                _mm256_mul_ps(streamed_7,
-                                              _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                            -1.0, -1.0, -1.0,
-                                                            -1.0, -1.0))),
-                            _mm256_mul_ps(streamed_9,
-                                          _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
-                                                        -1.0, -1.0, -1.0,
-                                                        -1.0))),
-                        vel0Term),
-                    rho),
-                _mm256_div_ps(
-                    _mm256_add_ps(
-                        _mm256_add_ps(
-                            _mm256_add_ps(
-                                _mm256_add_ps(
-                                    _mm256_add_ps(
-                                        _mm256_mul_ps(
-                                            streamed_13,
-                                            _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                          -1.0, -1.0, -1.0,
-                                                          -1.0, -1.0)),
-                                        _mm256_mul_ps(
-                                            streamed_17,
-                                            _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                          -1.0, -1.0, -1.0,
-                                                          -1.0, -1.0))),
-                                    _mm256_mul_ps(
-                                        streamed_3,
-                                        _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
-                                                      -1.0, -1.0, -1.0, -1.0))),
-                                _mm256_mul_ps(streamed_7,
-                                              _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                            -1.0, -1.0, -1.0,
-                                                            -1.0, -1.0))),
-                            _mm256_mul_ps(streamed_9,
-                                          _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
-                                                        -1.0, -1.0, -1.0,
-                                                        -1.0))),
-                        vel0Term),
-                    rho),
-                _mm256_div_ps(
-                    _mm256_add_ps(
-                        _mm256_add_ps(
-                            _mm256_add_ps(
-                                _mm256_add_ps(
-                                    _mm256_add_ps(
-                                        _mm256_mul_ps(
-                                            streamed_13,
-                                            _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                          -1.0, -1.0, -1.0,
-                                                          -1.0, -1.0)),
-                                        _mm256_mul_ps(
-                                            streamed_17,
-                                            _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                          -1.0, -1.0, -1.0,
-                                                          -1.0, -1.0))),
-                                    _mm256_mul_ps(
-                                        streamed_3,
-                                        _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
-                                                      -1.0, -1.0, -1.0, -1.0))),
-                                _mm256_mul_ps(streamed_7,
-                                              _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                            -1.0, -1.0, -1.0,
-                                                            -1.0, -1.0))),
-                            _mm256_mul_ps(streamed_9,
-                                          _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
-                                                        -1.0, -1.0, -1.0,
-                                                        -1.0))),
-                        vel0Term),
-                    rho),
-                _mm256_div_ps(
-                    _mm256_add_ps(
-                        _mm256_add_ps(
-                            _mm256_add_ps(
-                                _mm256_add_ps(
-                                    _mm256_add_ps(
-                                        _mm256_mul_ps(
-                                            streamed_13,
-                                            _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                          -1.0, -1.0, -1.0,
-                                                          -1.0, -1.0)),
-                                        _mm256_mul_ps(
-                                            streamed_17,
-                                            _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                          -1.0, -1.0, -1.0,
-                                                          -1.0, -1.0))),
-                                    _mm256_mul_ps(
-                                        streamed_3,
-                                        _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
-                                                      -1.0, -1.0, -1.0, -1.0))),
-                                _mm256_mul_ps(streamed_7,
-                                              _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                            -1.0, -1.0, -1.0,
-                                                            -1.0, -1.0))),
-                            _mm256_mul_ps(streamed_9,
-                                          _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
-                                                        -1.0, -1.0, -1.0,
-                                                        -1.0))),
-                        vel0Term),
-                    rho),
-                _mm256_div_ps(
-                    _mm256_add_ps(
-                        _mm256_add_ps(
-                            _mm256_add_ps(
-                                _mm256_add_ps(
-                                    _mm256_add_ps(
-                                        _mm256_mul_ps(
-                                            streamed_13,
-                                            _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                          -1.0, -1.0, -1.0,
-                                                          -1.0, -1.0)),
-                                        _mm256_mul_ps(
-                                            streamed_17,
-                                            _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                          -1.0, -1.0, -1.0,
-                                                          -1.0, -1.0))),
-                                    _mm256_mul_ps(
-                                        streamed_3,
-                                        _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
-                                                      -1.0, -1.0, -1.0, -1.0))),
-                                _mm256_mul_ps(streamed_7,
-                                              _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                            -1.0, -1.0, -1.0,
-                                                            -1.0, -1.0))),
-                            _mm256_mul_ps(streamed_9,
-                                          _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
-                                                        -1.0, -1.0, -1.0,
-                                                        -1.0))),
-                        vel0Term),
-                    rho),
-                _mm256_div_ps(
-                    _mm256_add_ps(
-                        _mm256_add_ps(
-                            _mm256_add_ps(
-                                _mm256_add_ps(
-                                    _mm256_add_ps(
-                                        _mm256_mul_ps(
-                                            streamed_13,
-                                            _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                          -1.0, -1.0, -1.0,
-                                                          -1.0, -1.0)),
-                                        _mm256_mul_ps(
-                                            streamed_17,
-                                            _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                          -1.0, -1.0, -1.0,
-                                                          -1.0, -1.0))),
-                                    _mm256_mul_ps(
-                                        streamed_3,
-                                        _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
-                                                      -1.0, -1.0, -1.0, -1.0))),
-                                _mm256_mul_ps(streamed_7,
-                                              _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                            -1.0, -1.0, -1.0,
-                                                            -1.0, -1.0))),
-                            _mm256_mul_ps(streamed_9,
-                                          _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
-                                                        -1.0, -1.0, -1.0,
-                                                        -1.0))),
-                        vel0Term),
-                    rho)));
+                        _mm256_mul_ps(streamed_9,
+                                      _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
+                                                    -1.0, -1.0, -1.0, -1.0))),
+                    vel0Term),
+                rho),
+            _mm256_div_ps(
+                _mm256_mul_ps(_mm256_set_ps(0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f,
+                                            0.5f, 0.5f),
+                              _mm256_load_ps(&_data_force_20_30_10[ctr_0])),
+                rho));
         const __m256 u_1 = _mm256_add_ps(
-            _mm256_mul_ps(
-                _mm256_mul_ps(
-                    _mm256_set_ps(
-                        _mm256_div_ps(_mm256_set_ps(1.0, 1.0, 1.0, 1.0, 1.0,
-                                                    1.0, 1.0, 1.0),
-                                      rho),
-                        _mm256_div_ps(_mm256_set_ps(1.0, 1.0, 1.0, 1.0, 1.0,
-                                                    1.0, 1.0, 1.0),
-                                      rho),
-                        _mm256_div_ps(_mm256_set_ps(1.0, 1.0, 1.0, 1.0, 1.0,
-                                                    1.0, 1.0, 1.0),
-                                      rho),
-                        _mm256_div_ps(_mm256_set_ps(1.0, 1.0, 1.0, 1.0, 1.0,
-                                                    1.0, 1.0, 1.0),
-                                      rho),
-                        _mm256_div_ps(_mm256_set_ps(1.0, 1.0, 1.0, 1.0, 1.0,
-                                                    1.0, 1.0, 1.0),
-                                      rho),
-                        _mm256_div_ps(_mm256_set_ps(1.0, 1.0, 1.0, 1.0, 1.0,
-                                                    1.0, 1.0, 1.0),
-                                      rho),
-                        _mm256_div_ps(_mm256_set_ps(1.0, 1.0, 1.0, 1.0, 1.0,
-                                                    1.0, 1.0, 1.0),
-                                      rho),
-                        _mm256_div_ps(_mm256_set_ps(1.0, 1.0, 1.0, 1.0, 1.0,
-                                                    1.0, 1.0, 1.0),
-                                      rho)),
-                    _mm256_set_ps(0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5)),
-                _mm256_load_ps(&_data_force_20_31_10[ctr_0])),
-            _mm256_set_ps(
-                _mm256_div_ps(
+            _mm256_div_ps(
+                _mm256_add_ps(
                     _mm256_add_ps(
                         _mm256_add_ps(
                             _mm256_add_ps(
                                 _mm256_add_ps(
                                     _mm256_add_ps(
-                                        _mm256_add_ps(
-                                            _mm256_mul_ps(
-                                                streamed_10,
-                                                _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                              -1.0, -1.0, -1.0,
-                                                              -1.0, -1.0)),
-                                            _mm256_mul_ps(
-                                                streamed_12,
-                                                _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                              -1.0, -1.0, -1.0,
-                                                              -1.0, -1.0))),
                                         _mm256_mul_ps(
-                                            streamed_16,
+                                            streamed_10,
+                                            _mm256_set_ps(-1.0, -1.0, -1.0,
+                                                          -1.0, -1.0, -1.0,
+                                                          -1.0, -1.0)),
+                                        _mm256_mul_ps(
+                                            streamed_12,
                                             _mm256_set_ps(-1.0, -1.0, -1.0,
                                                           -1.0, -1.0, -1.0,
                                                           -1.0, -1.0))),
                                     _mm256_mul_ps(
-                                        streamed_2,
+                                        streamed_16,
                                         _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
                                                       -1.0, -1.0, -1.0, -1.0))),
-                                _mm256_mul_ps(streamed_9,
+                                _mm256_mul_ps(streamed_2,
                                               _mm256_set_ps(-1.0, -1.0, -1.0,
                                                             -1.0, -1.0, -1.0,
                                                             -1.0, -1.0))),
-                            streamed_8),
-                        vel1Term),
-                    rho),
-                _mm256_div_ps(
-                    _mm256_add_ps(
-                        _mm256_add_ps(
-                            _mm256_add_ps(
-                                _mm256_add_ps(
-                                    _mm256_add_ps(
-                                        _mm256_add_ps(
-                                            _mm256_mul_ps(
-                                                streamed_10,
-                                                _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                              -1.0, -1.0, -1.0,
-                                                              -1.0, -1.0)),
-                                            _mm256_mul_ps(
-                                                streamed_12,
-                                                _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                              -1.0, -1.0, -1.0,
-                                                              -1.0, -1.0))),
-                                        _mm256_mul_ps(
-                                            streamed_16,
-                                            _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                          -1.0, -1.0, -1.0,
-                                                          -1.0, -1.0))),
-                                    _mm256_mul_ps(
-                                        streamed_2,
-                                        _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
-                                                      -1.0, -1.0, -1.0, -1.0))),
-                                _mm256_mul_ps(streamed_9,
-                                              _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                            -1.0, -1.0, -1.0,
-                                                            -1.0, -1.0))),
-                            streamed_8),
-                        vel1Term),
-                    rho),
-                _mm256_div_ps(
-                    _mm256_add_ps(
-                        _mm256_add_ps(
-                            _mm256_add_ps(
-                                _mm256_add_ps(
-                                    _mm256_add_ps(
-                                        _mm256_add_ps(
-                                            _mm256_mul_ps(
-                                                streamed_10,
-                                                _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                              -1.0, -1.0, -1.0,
-                                                              -1.0, -1.0)),
-                                            _mm256_mul_ps(
-                                                streamed_12,
-                                                _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                              -1.0, -1.0, -1.0,
-                                                              -1.0, -1.0))),
-                                        _mm256_mul_ps(
-                                            streamed_16,
-                                            _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                          -1.0, -1.0, -1.0,
-                                                          -1.0, -1.0))),
-                                    _mm256_mul_ps(
-                                        streamed_2,
-                                        _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
-                                                      -1.0, -1.0, -1.0, -1.0))),
-                                _mm256_mul_ps(streamed_9,
-                                              _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                            -1.0, -1.0, -1.0,
-                                                            -1.0, -1.0))),
-                            streamed_8),
-                        vel1Term),
-                    rho),
-                _mm256_div_ps(
-                    _mm256_add_ps(
-                        _mm256_add_ps(
-                            _mm256_add_ps(
-                                _mm256_add_ps(
-                                    _mm256_add_ps(
-                                        _mm256_add_ps(
-                                            _mm256_mul_ps(
-                                                streamed_10,
-                                                _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                              -1.0, -1.0, -1.0,
-                                                              -1.0, -1.0)),
-                                            _mm256_mul_ps(
-                                                streamed_12,
-                                                _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                              -1.0, -1.0, -1.0,
-                                                              -1.0, -1.0))),
-                                        _mm256_mul_ps(
-                                            streamed_16,
-                                            _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                          -1.0, -1.0, -1.0,
-                                                          -1.0, -1.0))),
-                                    _mm256_mul_ps(
-                                        streamed_2,
-                                        _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
-                                                      -1.0, -1.0, -1.0, -1.0))),
-                                _mm256_mul_ps(streamed_9,
-                                              _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                            -1.0, -1.0, -1.0,
-                                                            -1.0, -1.0))),
-                            streamed_8),
-                        vel1Term),
-                    rho),
-                _mm256_div_ps(
-                    _mm256_add_ps(
-                        _mm256_add_ps(
-                            _mm256_add_ps(
-                                _mm256_add_ps(
-                                    _mm256_add_ps(
-                                        _mm256_add_ps(
-                                            _mm256_mul_ps(
-                                                streamed_10,
-                                                _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                              -1.0, -1.0, -1.0,
-                                                              -1.0, -1.0)),
-                                            _mm256_mul_ps(
-                                                streamed_12,
-                                                _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                              -1.0, -1.0, -1.0,
-                                                              -1.0, -1.0))),
-                                        _mm256_mul_ps(
-                                            streamed_16,
-                                            _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                          -1.0, -1.0, -1.0,
-                                                          -1.0, -1.0))),
-                                    _mm256_mul_ps(
-                                        streamed_2,
-                                        _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
-                                                      -1.0, -1.0, -1.0, -1.0))),
-                                _mm256_mul_ps(streamed_9,
-                                              _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                            -1.0, -1.0, -1.0,
-                                                            -1.0, -1.0))),
-                            streamed_8),
-                        vel1Term),
-                    rho),
-                _mm256_div_ps(
-                    _mm256_add_ps(
-                        _mm256_add_ps(
-                            _mm256_add_ps(
-                                _mm256_add_ps(
-                                    _mm256_add_ps(
-                                        _mm256_add_ps(
-                                            _mm256_mul_ps(
-                                                streamed_10,
-                                                _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                              -1.0, -1.0, -1.0,
-                                                              -1.0, -1.0)),
-                                            _mm256_mul_ps(
-                                                streamed_12,
-                                                _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                              -1.0, -1.0, -1.0,
-                                                              -1.0, -1.0))),
-                                        _mm256_mul_ps(
-                                            streamed_16,
-                                            _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                          -1.0, -1.0, -1.0,
-                                                          -1.0, -1.0))),
-                                    _mm256_mul_ps(
-                                        streamed_2,
-                                        _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
-                                                      -1.0, -1.0, -1.0, -1.0))),
-                                _mm256_mul_ps(streamed_9,
-                                              _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                            -1.0, -1.0, -1.0,
-                                                            -1.0, -1.0))),
-                            streamed_8),
-                        vel1Term),
-                    rho),
-                _mm256_div_ps(
-                    _mm256_add_ps(
-                        _mm256_add_ps(
-                            _mm256_add_ps(
-                                _mm256_add_ps(
-                                    _mm256_add_ps(
-                                        _mm256_add_ps(
-                                            _mm256_mul_ps(
-                                                streamed_10,
-                                                _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                              -1.0, -1.0, -1.0,
-                                                              -1.0, -1.0)),
-                                            _mm256_mul_ps(
-                                                streamed_12,
-                                                _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                              -1.0, -1.0, -1.0,
-                                                              -1.0, -1.0))),
-                                        _mm256_mul_ps(
-                                            streamed_16,
-                                            _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                          -1.0, -1.0, -1.0,
-                                                          -1.0, -1.0))),
-                                    _mm256_mul_ps(
-                                        streamed_2,
-                                        _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
-                                                      -1.0, -1.0, -1.0, -1.0))),
-                                _mm256_mul_ps(streamed_9,
-                                              _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                            -1.0, -1.0, -1.0,
-                                                            -1.0, -1.0))),
-                            streamed_8),
-                        vel1Term),
-                    rho),
-                _mm256_div_ps(
-                    _mm256_add_ps(
-                        _mm256_add_ps(
-                            _mm256_add_ps(
-                                _mm256_add_ps(
-                                    _mm256_add_ps(
-                                        _mm256_add_ps(
-                                            _mm256_mul_ps(
-                                                streamed_10,
-                                                _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                              -1.0, -1.0, -1.0,
-                                                              -1.0, -1.0)),
-                                            _mm256_mul_ps(
-                                                streamed_12,
-                                                _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                              -1.0, -1.0, -1.0,
-                                                              -1.0, -1.0))),
-                                        _mm256_mul_ps(
-                                            streamed_16,
-                                            _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                          -1.0, -1.0, -1.0,
-                                                          -1.0, -1.0))),
-                                    _mm256_mul_ps(
-                                        streamed_2,
-                                        _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
-                                                      -1.0, -1.0, -1.0, -1.0))),
-                                _mm256_mul_ps(streamed_9,
-                                              _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                            -1.0, -1.0, -1.0,
-                                                            -1.0, -1.0))),
-                            streamed_8),
-                        vel1Term),
-                    rho)));
+                            _mm256_mul_ps(streamed_9,
+                                          _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
+                                                        -1.0, -1.0, -1.0,
+                                                        -1.0))),
+                        streamed_8),
+                    vel1Term),
+                rho),
+            _mm256_div_ps(
+                _mm256_mul_ps(_mm256_set_ps(0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f,
+                                            0.5f, 0.5f),
+                              _mm256_load_ps(&_data_force_20_31_10[ctr_0])),
+                rho));
         const __m256 u_2 = _mm256_add_ps(
-            _mm256_mul_ps(
-                _mm256_mul_ps(
-                    _mm256_set_ps(
-                        _mm256_div_ps(_mm256_set_ps(1.0, 1.0, 1.0, 1.0, 1.0,
-                                                    1.0, 1.0, 1.0),
-                                      rho),
-                        _mm256_div_ps(_mm256_set_ps(1.0, 1.0, 1.0, 1.0, 1.0,
-                                                    1.0, 1.0, 1.0),
-                                      rho),
-                        _mm256_div_ps(_mm256_set_ps(1.0, 1.0, 1.0, 1.0, 1.0,
-                                                    1.0, 1.0, 1.0),
-                                      rho),
-                        _mm256_div_ps(_mm256_set_ps(1.0, 1.0, 1.0, 1.0, 1.0,
-                                                    1.0, 1.0, 1.0),
-                                      rho),
-                        _mm256_div_ps(_mm256_set_ps(1.0, 1.0, 1.0, 1.0, 1.0,
-                                                    1.0, 1.0, 1.0),
-                                      rho),
-                        _mm256_div_ps(_mm256_set_ps(1.0, 1.0, 1.0, 1.0, 1.0,
-                                                    1.0, 1.0, 1.0),
-                                      rho),
-                        _mm256_div_ps(_mm256_set_ps(1.0, 1.0, 1.0, 1.0, 1.0,
-                                                    1.0, 1.0, 1.0),
-                                      rho),
-                        _mm256_div_ps(_mm256_set_ps(1.0, 1.0, 1.0, 1.0, 1.0,
-                                                    1.0, 1.0, 1.0),
-                                      rho)),
-                    _mm256_set_ps(0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5)),
-                _mm256_load_ps(&_data_force_20_32_10[ctr_0])),
-            _mm256_set_ps(
-                _mm256_div_ps(
+            _mm256_div_ps(
+                _mm256_add_ps(
                     _mm256_add_ps(
                         _mm256_add_ps(
                             _mm256_add_ps(
                                 _mm256_add_ps(
                                     _mm256_add_ps(
                                         _mm256_add_ps(
-                                            _mm256_add_ps(
-                                                _mm256_mul_ps(
-                                                    streamed_15,
-                                                    _mm256_set_ps(-1.0, -1.0,
-                                                                  -1.0, -1.0,
-                                                                  -1.0, -1.0,
-                                                                  -1.0, -1.0)),
-                                                _mm256_mul_ps(
-                                                    streamed_16,
-                                                    _mm256_set_ps(-1.0, -1.0,
-                                                                  -1.0, -1.0,
-                                                                  -1.0, -1.0,
-                                                                  -1.0, -1.0))),
                                             _mm256_mul_ps(
-                                                streamed_17,
+                                                streamed_15,
+                                                _mm256_set_ps(-1.0, -1.0, -1.0,
+                                                              -1.0, -1.0, -1.0,
+                                                              -1.0, -1.0)),
+                                            _mm256_mul_ps(
+                                                streamed_16,
                                                 _mm256_set_ps(-1.0, -1.0, -1.0,
                                                               -1.0, -1.0, -1.0,
                                                               -1.0, -1.0))),
                                         _mm256_mul_ps(
-                                            streamed_18,
+                                            streamed_17,
                                             _mm256_set_ps(-1.0, -1.0, -1.0,
                                                           -1.0, -1.0, -1.0,
                                                           -1.0, -1.0))),
                                     _mm256_mul_ps(
-                                        streamed_6,
+                                        streamed_18,
                                         _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
                                                       -1.0, -1.0, -1.0, -1.0))),
-                                streamed_11),
-                            streamed_14),
-                        vel2Term),
-                    rho),
-                _mm256_div_ps(
-                    _mm256_add_ps(
-                        _mm256_add_ps(
-                            _mm256_add_ps(
-                                _mm256_add_ps(
-                                    _mm256_add_ps(
-                                        _mm256_add_ps(
-                                            _mm256_add_ps(
-                                                _mm256_mul_ps(
-                                                    streamed_15,
-                                                    _mm256_set_ps(-1.0, -1.0,
-                                                                  -1.0, -1.0,
-                                                                  -1.0, -1.0,
-                                                                  -1.0, -1.0)),
-                                                _mm256_mul_ps(
-                                                    streamed_16,
-                                                    _mm256_set_ps(-1.0, -1.0,
-                                                                  -1.0, -1.0,
-                                                                  -1.0, -1.0,
-                                                                  -1.0, -1.0))),
-                                            _mm256_mul_ps(
-                                                streamed_17,
-                                                _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                              -1.0, -1.0, -1.0,
-                                                              -1.0, -1.0))),
-                                        _mm256_mul_ps(
-                                            streamed_18,
-                                            _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                          -1.0, -1.0, -1.0,
-                                                          -1.0, -1.0))),
-                                    _mm256_mul_ps(
-                                        streamed_6,
-                                        _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
-                                                      -1.0, -1.0, -1.0, -1.0))),
-                                streamed_11),
-                            streamed_14),
-                        vel2Term),
-                    rho),
-                _mm256_div_ps(
-                    _mm256_add_ps(
-                        _mm256_add_ps(
-                            _mm256_add_ps(
-                                _mm256_add_ps(
-                                    _mm256_add_ps(
-                                        _mm256_add_ps(
-                                            _mm256_add_ps(
-                                                _mm256_mul_ps(
-                                                    streamed_15,
-                                                    _mm256_set_ps(-1.0, -1.0,
-                                                                  -1.0, -1.0,
-                                                                  -1.0, -1.0,
-                                                                  -1.0, -1.0)),
-                                                _mm256_mul_ps(
-                                                    streamed_16,
-                                                    _mm256_set_ps(-1.0, -1.0,
-                                                                  -1.0, -1.0,
-                                                                  -1.0, -1.0,
-                                                                  -1.0, -1.0))),
-                                            _mm256_mul_ps(
-                                                streamed_17,
-                                                _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                              -1.0, -1.0, -1.0,
-                                                              -1.0, -1.0))),
-                                        _mm256_mul_ps(
-                                            streamed_18,
-                                            _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                          -1.0, -1.0, -1.0,
-                                                          -1.0, -1.0))),
-                                    _mm256_mul_ps(
-                                        streamed_6,
-                                        _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
-                                                      -1.0, -1.0, -1.0, -1.0))),
-                                streamed_11),
-                            streamed_14),
-                        vel2Term),
-                    rho),
-                _mm256_div_ps(
-                    _mm256_add_ps(
-                        _mm256_add_ps(
-                            _mm256_add_ps(
-                                _mm256_add_ps(
-                                    _mm256_add_ps(
-                                        _mm256_add_ps(
-                                            _mm256_add_ps(
-                                                _mm256_mul_ps(
-                                                    streamed_15,
-                                                    _mm256_set_ps(-1.0, -1.0,
-                                                                  -1.0, -1.0,
-                                                                  -1.0, -1.0,
-                                                                  -1.0, -1.0)),
-                                                _mm256_mul_ps(
-                                                    streamed_16,
-                                                    _mm256_set_ps(-1.0, -1.0,
-                                                                  -1.0, -1.0,
-                                                                  -1.0, -1.0,
-                                                                  -1.0, -1.0))),
-                                            _mm256_mul_ps(
-                                                streamed_17,
-                                                _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                              -1.0, -1.0, -1.0,
-                                                              -1.0, -1.0))),
-                                        _mm256_mul_ps(
-                                            streamed_18,
-                                            _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                          -1.0, -1.0, -1.0,
-                                                          -1.0, -1.0))),
-                                    _mm256_mul_ps(
-                                        streamed_6,
-                                        _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
-                                                      -1.0, -1.0, -1.0, -1.0))),
-                                streamed_11),
-                            streamed_14),
-                        vel2Term),
-                    rho),
-                _mm256_div_ps(
-                    _mm256_add_ps(
-                        _mm256_add_ps(
-                            _mm256_add_ps(
-                                _mm256_add_ps(
-                                    _mm256_add_ps(
-                                        _mm256_add_ps(
-                                            _mm256_add_ps(
-                                                _mm256_mul_ps(
-                                                    streamed_15,
-                                                    _mm256_set_ps(-1.0, -1.0,
-                                                                  -1.0, -1.0,
-                                                                  -1.0, -1.0,
-                                                                  -1.0, -1.0)),
-                                                _mm256_mul_ps(
-                                                    streamed_16,
-                                                    _mm256_set_ps(-1.0, -1.0,
-                                                                  -1.0, -1.0,
-                                                                  -1.0, -1.0,
-                                                                  -1.0, -1.0))),
-                                            _mm256_mul_ps(
-                                                streamed_17,
-                                                _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                              -1.0, -1.0, -1.0,
-                                                              -1.0, -1.0))),
-                                        _mm256_mul_ps(
-                                            streamed_18,
-                                            _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                          -1.0, -1.0, -1.0,
-                                                          -1.0, -1.0))),
-                                    _mm256_mul_ps(
-                                        streamed_6,
-                                        _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
-                                                      -1.0, -1.0, -1.0, -1.0))),
-                                streamed_11),
-                            streamed_14),
-                        vel2Term),
-                    rho),
-                _mm256_div_ps(
-                    _mm256_add_ps(
-                        _mm256_add_ps(
-                            _mm256_add_ps(
-                                _mm256_add_ps(
-                                    _mm256_add_ps(
-                                        _mm256_add_ps(
-                                            _mm256_add_ps(
-                                                _mm256_mul_ps(
-                                                    streamed_15,
-                                                    _mm256_set_ps(-1.0, -1.0,
-                                                                  -1.0, -1.0,
-                                                                  -1.0, -1.0,
-                                                                  -1.0, -1.0)),
-                                                _mm256_mul_ps(
-                                                    streamed_16,
-                                                    _mm256_set_ps(-1.0, -1.0,
-                                                                  -1.0, -1.0,
-                                                                  -1.0, -1.0,
-                                                                  -1.0, -1.0))),
-                                            _mm256_mul_ps(
-                                                streamed_17,
-                                                _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                              -1.0, -1.0, -1.0,
-                                                              -1.0, -1.0))),
-                                        _mm256_mul_ps(
-                                            streamed_18,
-                                            _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                          -1.0, -1.0, -1.0,
-                                                          -1.0, -1.0))),
-                                    _mm256_mul_ps(
-                                        streamed_6,
-                                        _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
-                                                      -1.0, -1.0, -1.0, -1.0))),
-                                streamed_11),
-                            streamed_14),
-                        vel2Term),
-                    rho),
-                _mm256_div_ps(
-                    _mm256_add_ps(
-                        _mm256_add_ps(
-                            _mm256_add_ps(
-                                _mm256_add_ps(
-                                    _mm256_add_ps(
-                                        _mm256_add_ps(
-                                            _mm256_add_ps(
-                                                _mm256_mul_ps(
-                                                    streamed_15,
-                                                    _mm256_set_ps(-1.0, -1.0,
-                                                                  -1.0, -1.0,
-                                                                  -1.0, -1.0,
-                                                                  -1.0, -1.0)),
-                                                _mm256_mul_ps(
-                                                    streamed_16,
-                                                    _mm256_set_ps(-1.0, -1.0,
-                                                                  -1.0, -1.0,
-                                                                  -1.0, -1.0,
-                                                                  -1.0, -1.0))),
-                                            _mm256_mul_ps(
-                                                streamed_17,
-                                                _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                              -1.0, -1.0, -1.0,
-                                                              -1.0, -1.0))),
-                                        _mm256_mul_ps(
-                                            streamed_18,
-                                            _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                          -1.0, -1.0, -1.0,
-                                                          -1.0, -1.0))),
-                                    _mm256_mul_ps(
-                                        streamed_6,
-                                        _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
-                                                      -1.0, -1.0, -1.0, -1.0))),
-                                streamed_11),
-                            streamed_14),
-                        vel2Term),
-                    rho),
-                _mm256_div_ps(
-                    _mm256_add_ps(
-                        _mm256_add_ps(
-                            _mm256_add_ps(
-                                _mm256_add_ps(
-                                    _mm256_add_ps(
-                                        _mm256_add_ps(
-                                            _mm256_add_ps(
-                                                _mm256_mul_ps(
-                                                    streamed_15,
-                                                    _mm256_set_ps(-1.0, -1.0,
-                                                                  -1.0, -1.0,
-                                                                  -1.0, -1.0,
-                                                                  -1.0, -1.0)),
-                                                _mm256_mul_ps(
-                                                    streamed_16,
-                                                    _mm256_set_ps(-1.0, -1.0,
-                                                                  -1.0, -1.0,
-                                                                  -1.0, -1.0,
-                                                                  -1.0, -1.0))),
-                                            _mm256_mul_ps(
-                                                streamed_17,
-                                                _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                              -1.0, -1.0, -1.0,
-                                                              -1.0, -1.0))),
-                                        _mm256_mul_ps(
-                                            streamed_18,
-                                            _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                          -1.0, -1.0, -1.0,
-                                                          -1.0, -1.0))),
-                                    _mm256_mul_ps(
-                                        streamed_6,
-                                        _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
-                                                      -1.0, -1.0, -1.0, -1.0))),
-                                streamed_11),
-                            streamed_14),
-                        vel2Term),
-                    rho)));
+                                _mm256_mul_ps(streamed_6,
+                                              _mm256_set_ps(-1.0, -1.0, -1.0,
+                                                            -1.0, -1.0, -1.0,
+                                                            -1.0, -1.0))),
+                            streamed_11),
+                        streamed_14),
+                    vel2Term),
+                rho),
+            _mm256_div_ps(
+                _mm256_mul_ps(_mm256_set_ps(0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f,
+                                            0.5f, 0.5f),
+                              _mm256_load_ps(&_data_force_20_32_10[ctr_0])),
+                rho));
         _mm256_store_ps(&_data_velocity_20_30_10[ctr_0], u_0);
         _mm256_store_ps(&_data_velocity_20_31_10[ctr_0], u_1);
         _mm256_store_ps(&_data_velocity_20_32_10[ctr_0], u_2);

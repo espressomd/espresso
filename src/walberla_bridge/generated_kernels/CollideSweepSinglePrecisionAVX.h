@@ -52,8 +52,8 @@ namespace pystencils {
 class CollideSweepSinglePrecisionAVX {
 public:
   CollideSweepSinglePrecisionAVX(BlockDataID forceID_, BlockDataID pdfsID_,
-                                 double omega_bulk, double omega_even,
-                                 double omega_odd, double omega_shear)
+                                 float omega_bulk, float omega_even,
+                                 float omega_odd, float omega_shear)
       : forceID(forceID_), pdfsID(pdfsID_), omega_bulk_(omega_bulk),
         omega_even_(omega_even), omega_odd_(omega_odd),
         omega_shear_(omega_shear){};
@@ -79,10 +79,10 @@ public:
 
   BlockDataID forceID;
   BlockDataID pdfsID;
-  double omega_bulk_;
-  double omega_even_;
-  double omega_odd_;
-  double omega_shear_;
+  float omega_bulk_;
+  float omega_even_;
+  float omega_odd_;
+  float omega_shear_;
 };
 
 } // namespace pystencils
