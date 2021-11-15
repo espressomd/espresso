@@ -46,7 +46,12 @@ from lbmpy.advanced_streaming.indexing import NeighbourOffsetArrays
 parser = argparse.ArgumentParser(description='Generate the waLBerla kernels.')
 parser.add_argument('codegen_cfg', type=str, nargs='?',
                     help='codegen configuration file (JSON format)')
+parser.add_argument('--single-precision', action='store_true', required=False,
+                    help='Use single-precision')
 args = parser.parse_args()
+
+data_type_cpp = {True: 'double', False: 'float'}
+data_type_np = {True: 'float64', False: 'float32'}
 
 
 def adapt_pystencils():
@@ -114,7 +119,7 @@ def earmark_generated_kernels():
 
 
 def generate_fields(ctx, stencil):
-    dtype = 'float64' if ctx.double_accuracy else 'float32'
+    dtype = data_type_np[ctx.double_accuracy]
     field_layout = 'fzyx'
     q = len(stencil)
     dim = len(stencil[0])
@@ -170,7 +175,7 @@ def generate_collision_sweep(
         fields['pdfs_tmp'],
         CollideOnlyInplaceAccessor())
     collide_ast = ps.create_kernel(collide_update_rule, **params,
-                                   data_type='double' if ctx.double_accuracy else 'float')
+                                   data_type=data_type_np[ctx.double_accuracy])
     collide_ast.function_name = 'kernel_collide'
     collide_ast.assumed_inner_stride_one = True
     codegen.generate_sweep(ctx, class_name, collide_ast)
@@ -184,7 +189,7 @@ def generate_stream_sweep(ctx, lb_method, class_name, params):
     stream_update_rule = create_stream_pull_with_output_kernel(lb_method, fields['pdfs'], fields['pdfs_tmp'],
                                                                output={'velocity': fields['velocity']})
     stream_ast = ps.create_kernel(stream_update_rule, **params,
-                                  data_type='double' if ctx.double_accuracy else 'float')
+                                  data_type=data_type_np[ctx.double_accuracy])
     stream_ast.function_name = 'kernel_stream'
     stream_ast.assumed_inner_stride_one = True
     codegen.generate_sweep(
@@ -265,10 +270,12 @@ class PatchedCodeGeneration(CodeGeneration):
     '''
 
     def __init__(self, codegen_cfg):
+        old_sys_argv = sys.argv
+        sys.argv = sys.argv[:1]
         if codegen_cfg:
             assert sys.argv[1] == codegen_cfg
-            del sys.argv[1]
         super().__init__()
+        sys.argv = old_sys_argv
         if codegen_cfg:
             cmake_map = {"ON": True, "1": True, "YES": True,
                          "OFF": False, "0": False, "NO": False}
@@ -280,7 +287,16 @@ class PatchedCodeGeneration(CodeGeneration):
 
 
 with PatchedCodeGeneration(args.codegen_cfg) as ctx:
-    kT = sp.symbols("kT")
+    ctx.double_accuracy = not args.single_precision
+    precision_prefix = {
+        True: 'DoublePrecision',
+        False: 'SinglePrecision'}[
+        ctx.double_accuracy]
+    precision_suffix = {
+        True: 'double_precision',
+        False: 'single_precision'}[
+        ctx.double_accuracy]
+    kT = sp.symbols('kT')
     stencil = get_stencil('D3Q19')
     fields = generate_fields(ctx, stencil)
     force_field = fields['force']
@@ -303,12 +319,23 @@ with PatchedCodeGeneration(args.codegen_cfg) as ctx:
         force_model=force_model_from_string(
             'schiller', force_field.center_vector)
     )
-    generate_stream_sweep(ctx, method, "StreamSweep", params)
-    generate_stream_sweep(ctx, method, "StreamSweepAVX", params_vec)
+    generate_stream_sweep(
+        ctx,
+        method,
+        f"StreamSweep{precision_prefix}",
+        params)
+    generate_stream_sweep(
+        ctx,
+        method,
+        f"StreamSweep{precision_prefix}AVX",
+        params_vec)
 
     # generate initial densities
     pdfs_setter = generate_setters(method)
-    codegen.generate_sweep(ctx, "InitialPDFsSetter", pdfs_setter)
+    codegen.generate_sweep(
+        ctx,
+        f"InitialPDFsSetter{precision_prefix}",
+        pdfs_setter)
 
     # generate unthermalized collision rule
     collision_rule_unthermalized = create_lb_collision_rule(
@@ -320,14 +347,14 @@ with PatchedCodeGeneration(args.codegen_cfg) as ctx:
         ctx,
         method,
         collision_rule_unthermalized,
-        "CollideSweep",
+        f"CollideSweep{precision_prefix}",
         {}
     )
     generate_collision_sweep(
         ctx,
         method,
         collision_rule_unthermalized,
-        "CollideSweepAVX",
+        f"CollideSweep{precision_prefix}AVX",
         {"cpu_vectorize_info": cpu_vectorize_info}
     )
 
@@ -346,14 +373,14 @@ with PatchedCodeGeneration(args.codegen_cfg) as ctx:
         ctx,
         method,
         collision_rule_thermalized,
-        "CollideSweepThermalized",
+        f"CollideSweep{precision_prefix}Thermalized",
         params
     )
     generate_collision_sweep(
         ctx,
         method,
         collision_rule_thermalized,
-        "CollideSweepThermalizedAVX",
+        f"CollideSweep{precision_prefix}ThermalizedAVX",
         params_vec
     )
 
@@ -361,33 +388,39 @@ with PatchedCodeGeneration(args.codegen_cfg) as ctx:
     generate_macroscopic_values_accessors(
         ctx,
         collision_rule_unthermalized,
+        filename=f'macroscopic_values_accessors_{precision_suffix}.h',
         field_layout="fzyx")
 
     # Boundary conditions
-    ubb_dynamic = PatchedUBB(lambda *args: None, dim=3)
+    ubb_dynamic = PatchedUBB(lambda *args: None, dim=3,
+                             data_type=data_type_np[ctx.double_accuracy])
     ubb_data_handler = BounceBackSlipVelocityUBB(method.stencil, ubb_dynamic)
 
-    generate_boundary(ctx, 'Dynamic_UBB', ubb_dynamic, method,
-                      additional_data_handler=ubb_data_handler,
+    generate_boundary(ctx, f'Dynamic_UBB_{precision_suffix}', ubb_dynamic,
+                      method, additional_data_handler=ubb_data_handler,
                       streaming_pattern="push")
 
-    # patch for old versions of pystencils_walberla
-    with open('Dynamic_UBB.h', 'r+') as f:
+    with open(f'Dynamic_UBB_{precision_suffix}.h', 'r+') as f:
         content = f.read()
+        f.seek(0)
+        f.truncate(0)
+        # patch for old versions of pystencils_walberla
         if '#pragma once' not in content:
-            f.seek(0)
-            f.write('#pragma once\n' + content)
+            content = '#pragma once\n' + content
+        # patch for floating point accuracy
+        content = content.replace('real_t', data_type_cpp[ctx.double_accuracy])
+        f.write(content)
 
     # communication
     generate_lb_pack_info(
         ctx,
-        'PushPackInfo',
+        f'PushPackInfo{precision_prefix}',
         method.stencil,
         fields['pdfs'],
         streaming_pattern='push'
     )
 
     # Info header containing correct template definitions for stencil and field
-    #ctx.write_file("InfoHeader.h", info_header)
+    #ctx.write_file(f"InfoHeader{precision_prefix}.h", info_header)
 
 earmark_generated_kernels()

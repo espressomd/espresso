@@ -18,6 +18,7 @@ include "myconfig.pxi"
 from .highlander import ThereCanOnlyBeOne
 from .utils import handle_errors
 
+
 cdef class Actor:
 
     """
@@ -30,7 +31,6 @@ cdef class Actor:
     active_list = dict(ElectrostaticInteraction=False,
                        MagnetostaticInteraction=False,
                        MagnetostaticExtension=False,
-                       HydrodynamicInteraction=False,
                        Scafacos=False)
 
     # __getstate__ and __setstate__ define the pickle interaction
@@ -193,6 +193,9 @@ class Actors:
 
     active_actors = []
 
+    def __del__(self):
+        self.clear()
+
     def __getstate__(self):
         return self.active_actors
 
@@ -231,8 +234,14 @@ class Actors:
 
     def clear(self):
         """Remove all actors."""
+        # The order in which actors are removed matters. For example LB actors
+        # need to be removed before long-range actors, because LB actors
+        # trigger an assertion when the MD cellsystem change, which happens
+        # when removing a P3M actor (because the maximal range of non-bonded
+        # interactions changes). Actors need to be removed in the reverse
+        # order they were inserted.
         while len(self.active_actors):
-            self.remove(self.active_actors[0])
+            self.remove(self.active_actors[-1])
 
     def __str__(self):
         return str(self.active_actors)

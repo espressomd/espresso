@@ -16,7 +16,7 @@ add_subdirectory(mpiio)
 add_subdirectory(shapes)
 add_subdirectory(h5md)
 if(WALBERLA)
-    add_subdirectory(walberla)
+  add_subdirectory(walberla)
 endif(WALBERLA)
 
 install(TARGETS ScriptInterface
@@ -27,10 +27,10 @@ target_link_libraries(
   PUBLIC mpiio EspressoUtils MPI::MPI_CXX EspressoShapes core_cluster_analysis
   PRIVATE cxx_interface)
 
-target_include_directories(ScriptInterface PUBLIC ${CMAKE_SOURCE_DIR}/src)
-
 if(WALBERLA)
-    target_link_libraries(ScriptInterface PRIVATE WalberlaBridge ${WALBERLA_LIBS})
-endif(WALBERLA)
+  target_link_libraries(ScriptInterface PRIVATE WalberlaBridge)
+endif()
+
+target_include_directories(ScriptInterface PUBLIC ${CMAKE_SOURCE_DIR}/src)
 
 add_subdirectory(tests)

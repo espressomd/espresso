@@ -28,6 +28,9 @@
 #ifdef H5MD
 #include "h5md/initialize.hpp"
 #endif
+#ifdef LB_WALBERLA
+#include "walberla/initialize.hpp"
+#endif
 #include "ComFixed.hpp"
 #include "CylindricalTransformationParameters.hpp"
 #include "accumulators/initialize.hpp"
@@ -37,9 +40,6 @@
 #include "mpiio/initialize.hpp"
 #include "observables/initialize.hpp"
 #include "virtual_sites/initialize.hpp"
-#ifdef EK_WALBERLA
-#include "walberla/initialize.hpp"
-#endif
 
 namespace ScriptInterface {
 void initialize(Utils::Factory<ObjectHandle> *f) {
@@ -58,7 +58,7 @@ void initialize(Utils::Factory<ObjectHandle> *f) {
   VirtualSites::initialize(f);
   MPIIO::initialize(f);
   CollisionDetection::initialize(f);
-#ifdef EK_WALBERLA
+#ifdef LB_WALBERLA
   walberla::initialize(f);
 #endif
 

@@ -236,7 +236,7 @@ LB_implementation = None
 if espressomd.has_features('LB_WALBERLA') and 'LB.ACTIVE.WALBERLA' in modes:
     LB_implementation = espressomd.lb.LBFluidWalberla
 if LB_implementation:
-    lbf = LB_implementation(agrid=0.5, visc=1.3, dens=1.5, tau=0.01)
+    lbf = LB_implementation(agrid=0.5, viscosity=1.3, density=1.5, tau=0.01)
     system.actors.add(lbf)
     if 'THERM.LB' in modes:
         system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)

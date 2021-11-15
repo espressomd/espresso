@@ -17,7 +17,7 @@
 //  You should have received a copy of the GNU General Public License along
 //  with waLBerla (see COPYING.txt). If not, see <http://www.gnu.org/licenses/>.
 //
-//! \\file CollideSweepAVX.h
+//! \\file CollideSweepSinglePrecisionThermalized.h
 //! \\author pystencils
 //======================================================================================================================
 
@@ -49,13 +49,18 @@
 namespace walberla {
 namespace pystencils {
 
-class CollideSweepAVX {
+class CollideSweepSinglePrecisionThermalized {
 public:
-  CollideSweepAVX(BlockDataID forceID_, BlockDataID pdfsID_, double omega_bulk,
-                  double omega_even, double omega_odd, double omega_shear)
-      : forceID(forceID_), pdfsID(pdfsID_), omega_bulk_(omega_bulk),
-        omega_even_(omega_even), omega_odd_(omega_odd),
-        omega_shear_(omega_shear){};
+  CollideSweepSinglePrecisionThermalized(
+      BlockDataID forceID_, BlockDataID pdfsID_, uint32_t block_offset_0,
+      uint32_t block_offset_1, uint32_t block_offset_2, float kT,
+      float omega_bulk, float omega_even, float omega_odd, float omega_shear,
+      uint32_t seed, uint32_t time_step)
+      : forceID(forceID_), pdfsID(pdfsID_), block_offset_0_(block_offset_0),
+        block_offset_1_(block_offset_1), block_offset_2_(block_offset_2),
+        kT_(kT), omega_bulk_(omega_bulk), omega_even_(omega_even),
+        omega_odd_(omega_odd), omega_shear_(omega_shear), seed_(seed),
+        time_step_(time_step){};
 
   void operator()(IBlock *block);
   void runOnCellInterval(const shared_ptr<StructuredBlockStorage> &blocks,
@@ -63,15 +68,14 @@ public:
                          cell_idx_t ghostLayers, IBlock *block);
 
   static std::function<void(IBlock *)>
-  getSweep(const shared_ptr<CollideSweepAVX> &kernel) {
+  getSweep(const shared_ptr<CollideSweepSinglePrecisionThermalized> &kernel) {
     return [kernel](IBlock *b) { (*kernel)(b); };
   }
 
-  static std::function<void(IBlock *)>
-  getSweepOnCellInterval(const shared_ptr<CollideSweepAVX> &kernel,
-                         const shared_ptr<StructuredBlockStorage> &blocks,
-                         const CellInterval &globalCellInterval,
-                         cell_idx_t ghostLayers = 1) {
+  static std::function<void(IBlock *)> getSweepOnCellInterval(
+      const shared_ptr<CollideSweepSinglePrecisionThermalized> &kernel,
+      const shared_ptr<StructuredBlockStorage> &blocks,
+      const CellInterval &globalCellInterval, cell_idx_t ghostLayers = 1) {
     return [kernel, blocks, globalCellInterval, ghostLayers](IBlock *b) {
       kernel->runOnCellInterval(blocks, globalCellInterval, ghostLayers, b);
     };
@@ -79,10 +83,19 @@ public:
 
   BlockDataID forceID;
   BlockDataID pdfsID;
-  double omega_bulk_;
-  double omega_even_;
-  double omega_odd_;
-  double omega_shear_;
+  uint32_t block_offset_0_;
+  uint32_t block_offset_1_;
+  uint32_t block_offset_2_;
+  float kT_;
+  float omega_bulk_;
+  float omega_even_;
+  float omega_odd_;
+  float omega_shear_;
+  uint32_t seed_;
+  uint32_t time_step_;
+  std::function<void(IBlock *, uint32_t &, uint32_t &, uint32_t &)>
+      block_offset_generator =
+          [](IBlock *const, uint32_t &, uint32_t &, uint32_t &) {};
 };
 
 } // namespace pystencils

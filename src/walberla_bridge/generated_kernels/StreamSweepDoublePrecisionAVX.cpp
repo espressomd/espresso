@@ -17,14 +17,14 @@
 //  You should have received a copy of the GNU General Public License along
 //  with waLBerla (see COPYING.txt). If not, see <http://www.gnu.org/licenses/>.
 //
-//! \\file StreamSweepAVX.cpp
+//! \\file StreamSweepDoublePrecisionAVX.cpp
 //! \\ingroup lbm
 //! \\author lbmpy
 //======================================================================================================================
 
 #include <cmath>
 
-#include "StreamSweepAVX.h"
+#include "StreamSweepDoublePrecisionAVX.h"
 #include "core/DataTypes.h"
 #include "core/Macros.h"
 
@@ -51,8 +51,8 @@ using namespace std;
 namespace walberla {
 namespace pystencils {
 
-namespace internal_streamsweepavx {
-static FUNC_PREFIX void streamsweepavx(
+namespace internal_streamsweepdoubleprecisionavx {
+static FUNC_PREFIX void streamsweepdoubleprecisionavx(
     double *RESTRICT const _data_force, double *RESTRICT const _data_pdfs,
     double *RESTRICT _data_pdfs_tmp, double *RESTRICT _data_velocity,
     int64_t const _size_force_0, int64_t const _size_force_1,
@@ -425,12 +425,12 @@ static FUNC_PREFIX void streamsweepavx(
     }
   }
 }
-} // namespace internal_streamsweepavx
+} // namespace internal_streamsweepdoubleprecisionavx
 
-void StreamSweepAVX::operator()(IBlock *block) {
-  auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
+void StreamSweepDoublePrecisionAVX::operator()(IBlock *block) {
   auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
   auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
+  auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
   field::GhostLayerField<double, 19> *pdfs_tmp;
   {
     // Getting temporary field pdfs_tmp
@@ -479,7 +479,7 @@ void StreamSweepAVX::operator()(IBlock *block) {
   const int64_t _stride_velocity_1 = int64_t(velocity->yStride());
   const int64_t _stride_velocity_2 = int64_t(velocity->zStride());
   const int64_t _stride_velocity_3 = int64_t(1 * int64_t(velocity->fStride()));
-  internal_streamsweepavx::streamsweepavx(
+  internal_streamsweepdoubleprecisionavx::streamsweepdoubleprecisionavx(
       _data_force, _data_pdfs, _data_pdfs_tmp, _data_velocity, _size_force_0,
       _size_force_1, _size_force_2, _stride_force_1, _stride_force_2,
       _stride_force_3, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3,
@@ -488,7 +488,7 @@ void StreamSweepAVX::operator()(IBlock *block) {
   pdfs->swapDataPointers(pdfs_tmp);
 }
 
-void StreamSweepAVX::runOnCellInterval(
+void StreamSweepDoublePrecisionAVX::runOnCellInterval(
     const shared_ptr<StructuredBlockStorage> &blocks,
     const CellInterval &globalCellInterval, cell_idx_t ghostLayers,
     IBlock *block) {
@@ -500,9 +500,9 @@ void StreamSweepAVX::runOnCellInterval(
   if (ci.empty())
     return;
 
-  auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
   auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
   auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
+  auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
   field::GhostLayerField<double, 19> *pdfs_tmp;
   {
     // Getting temporary field pdfs_tmp
@@ -572,7 +572,7 @@ void StreamSweepAVX::runOnCellInterval(
   const int64_t _stride_velocity_1 = int64_t(velocity->yStride());
   const int64_t _stride_velocity_2 = int64_t(velocity->zStride());
   const int64_t _stride_velocity_3 = int64_t(1 * int64_t(velocity->fStride()));
-  internal_streamsweepavx::streamsweepavx(
+  internal_streamsweepdoubleprecisionavx::streamsweepdoubleprecisionavx(
       _data_force, _data_pdfs, _data_pdfs_tmp, _data_velocity, _size_force_0,
       _size_force_1, _size_force_2, _stride_force_1, _stride_force_2,
       _stride_force_3, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3,

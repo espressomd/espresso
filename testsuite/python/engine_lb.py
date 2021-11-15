@@ -27,12 +27,11 @@ class SwimmerTest():
     system.cell_system.skin = 1
     system.time_step = 1e-2
     LB_params = {'agrid': 1,
-                 'dens': 1.1,
-                 'visc': 1.2,
+                 'density': 1.1,
+                 'viscosity': 1.2,
                  'kT': 0,
                  'tau': system.time_step}
     gamma = 0.3
-    lbf = None
 
     def add_all_types_of_swimmers(
             self,
@@ -73,9 +72,7 @@ class SwimmerTest():
     def tearDown(self):
         self.system.part.clear()
         self.system.actors.clear()
-        self.system.lbboundaries.clear()
         self.system.thermostat.turn_off()
-        self.lbf = None
 
     def test_conflicting_parameters(self):
         """v_swim and f_swim can't be set at the same time

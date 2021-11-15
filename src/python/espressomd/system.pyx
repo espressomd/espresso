@@ -457,7 +457,7 @@ cdef class System:
             How much to rotate
 
         """
-        rotate_system(kwargs['phi'], kwargs['theta'], kwargs['alpha'])
+        mpi_rotate_system(kwargs['phi'], kwargs['theta'], kwargs['alpha'])
 
     IF EXCLUSIONS:
         def auto_exclusions(self, distance):

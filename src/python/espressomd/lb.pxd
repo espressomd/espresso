@@ -23,15 +23,11 @@ from libcpp.vector cimport vector
 from libcpp.string cimport string
 from libc cimport stdint
 
-from .actors cimport Actor
 from .utils cimport Vector3d
 from .utils cimport Vector3i
 from .utils cimport Vector6d
 from .utils cimport make_array_locked
 
-
-cdef class HydrodynamicInteraction(Actor):
-    pass
 
 cdef class LBFluidRoutines:
     cdef Vector3i node
@@ -48,36 +44,23 @@ IF LB_WALBERLA:
         cdef enum OutputVTK:
             pass
 
-    cdef extern from "grid_based_algorithms/lb_interface.hpp" namespace 'OutputVTK':
+    cdef extern from "walberla_bridge/LBWalberlaBase.hpp" namespace 'OutputVTK':
 
         cdef OutputVTK output_vtk_density 'OutputVTK::density'
         cdef OutputVTK output_vtk_velocity_vector 'OutputVTK::velocity_vector'
         cdef OutputVTK output_vtk_pressure_tensor 'OutputVTK::pressure_tensor'
 
-cdef extern from "grid_based_algorithms/lb_interface.hpp" namespace "ActiveLB":
-    cdef ActiveLB NONE
-    cdef ActiveLB WALBERLA
-
 cdef extern from "grid_based_algorithms/lb_interface.hpp":
 
-    cdef enum ActiveLB:
-        pass
-    void lb_lbfluid_set_tau(double c_tau) except +
     double lb_lbfluid_get_tau() except +
-    double lb_lbfluid_get_viscosity() except +
     double lb_lbfluid_get_agrid() except +
-    void lb_lbfluid_set_ext_force_density(const Vector3d forcedensity) except +
-    const Vector3d lb_lbfluid_get_ext_force_density() except +
-    double lb_lbfluid_get_bulk_viscosity() except +
     void lb_lbfluid_save_checkpoint(string filename, bool binary) except +
     void lb_lbfluid_load_checkpoint(string filename, bool binary) except +
-    void lb_lbfluid_set_lattice_switch(ActiveLB local_lattice_switch) except +
     void lb_lbfluid_create_vtk(unsigned delta_N, unsigned initial_count, unsigned flag_observables, const string identifier, const string base_folder, const string execution_folder) except +
     void lb_lbfluid_switch_vtk(const string vtk_uid, int status) except +
     void lb_lbfluid_write_vtk(const string vtk_uid) except +
     Vector6d lb_lbfluid_get_pressure_tensor() except +
     bool lb_lbnode_is_index_valid(const Vector3i & ind) except +
-    Vector3i lb_lbfluid_get_shape() except +
     const Vector3d lb_lbnode_get_velocity(const Vector3i & ind) except +
     const Vector3d lb_lbnode_get_velocity_at_boundary(const Vector3i & ind) except +
     const Vector3d lb_lbnode_get_boundary_force(const Vector3i & ind) except +
@@ -97,12 +80,8 @@ cdef extern from "grid_based_algorithms/lb_interface.hpp":
                                                const vector[double] & vel) except +
     void lb_lbfluid_update_boundary_from_list(const vector[int] & nodes_flat,
                                               const vector[double] & vel_flat) except +
-    stdint.uint64_t lb_lbfluid_get_rng_state() except +
-    void lb_lbfluid_set_rng_state(stdint.uint64_t) except +
-    void lb_lbfluid_set_kT(double) except +
     double lb_lbfluid_get_kT() except +
     double lb_lbfluid_get_lattice_speed() except +
-    void check_tau_time_step_consistency(double tau, double time_s) except +
     const Vector3d lb_lbfluid_get_interpolated_velocity(const Vector3d & p) except +
     void lb_lbfluid_add_force_at_pos(const Vector3d & p, const Vector3d & f) except +
 
@@ -114,11 +93,6 @@ cdef extern from "grid_based_algorithms/lb_particle_coupling.hpp":
     bool lb_lbcoupling_is_seed_required() except +
     void mpi_bcast_lb_particle_coupling()
 
-IF LB_WALBERLA:
-    cdef extern from "grid_based_algorithms/lb_walberla_instance.hpp":
-        void mpi_init_lb_walberla(double viscosity, double density, double agrid, double tau, double kT, unsigned int seed) except +
-        void mpi_destruct_lb_walberla() except +
-
 
 ##############################################
 #
@@ -126,21 +100,8 @@ IF LB_WALBERLA:
 #
 ##############################################
 
-cdef inline python_lbfluid_set_ext_force_density(Vector3d ext_force_density, double agrid, double tau) except +:
-    lb_lbfluid_set_ext_force_density(ext_force_density * agrid**2 * tau**2)
-
-cdef inline python_lbfluid_get_viscosity(double agrid, double tau) except +:
-    return lb_lbfluid_get_viscosity() / tau * agrid**2
-
-cdef inline python_lbfluid_get_bulk_viscosity(double agrid, double tau) except +:
-    return lb_lbfluid_get_bulk_viscosity() / tau * agrid**2
-
 cdef inline python_lbfluid_get_gamma() except +:
     return lb_lbcoupling_get_gamma()
-
-cdef inline python_lbfluid_get_ext_force_density(double agrid, double tau) except +:
-    cdef Vector3d ext_force_density = lb_lbfluid_get_ext_force_density()
-    return make_array_locked(ext_force_density / (agrid**2 * tau**2))
 
 cdef inline python_lbfluid_get_pressure_tensor(double agrid, double tau) except +:
     cdef Vector6d c_tensor = lb_lbfluid_get_pressure_tensor()

@@ -125,15 +125,15 @@ void cuda_mpi_get_particles(
 void copy_part_data_to_gpu(ParticleRange particles);
 
 /**
- * @brief Distribute forces to the slaves, and add them to the particles.
+ * @brief Distribute forces to the worker nodes, and add them to the particles.
  *
  * @param particles    The particles for which the forces (and torques) should
  *                     be added to.
  * @param host_forces  The forces as flat array of size 3 * particles.size(),
- *                     only relevant on the master.
+ *                     only relevant on the head node.
  * @param host_torques The torques as flat array of size 3 * particles.size(),
  *                     this is only touched if ROTATION is active. Only
- *                     relevant on the master.
+ *                     relevant on the head node.
  *
  * This is a collective call.
  */

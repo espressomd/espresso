@@ -24,7 +24,6 @@
 #include "communication.hpp"
 #include "grid.hpp"
 #include "ibm_volcons.hpp"
-#include "interactions.hpp"
 
 #include "bonded_interactions/bonded_interaction_data.hpp"
 

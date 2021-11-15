@@ -19,6 +19,7 @@
 #
 
 import os
+import re
 import numpy as np
 import sympy as sp
 import pystencils as ps
@@ -27,7 +28,7 @@ import pystencils as ps
 # walberla project, commit 3455bf3eebc64efa9beaecd74ebde3459b98991d
 
 
-def __macroscopic_values_accessors(generation_context, lb_method):
+def __macroscopic_values_accessors(generation_context, lb_method, filename):
 
     # Function derived from lbmpy_walberla.walberla_lbm_generation.__lattice_model()
     # in the walberla project, commit 3455bf3eebc64efa9beaecd74ebde3459b98991d
@@ -80,6 +81,7 @@ def __macroscopic_values_accessors(generation_context, lb_method):
         'D': lb_method.dim,
         'Q': len(lb_method.stencil),
         'compressible': lb_method.conserved_quantity_computation.compressible,
+        'real_t': 'double' if generation_context.double_accuracy else 'float',
 
         'equilibrium_from_direction': stencil_switch_statement(lb_method.stencil, equilibrium),
         'equilibrium': [cpp_printer.doprint(e) for e in equilibrium],
@@ -102,17 +104,22 @@ def __macroscopic_values_accessors(generation_context, lb_method):
     header = env.get_template(
         'macroscopic_values_accessors.tmpl.h').render(**jinja_context)
 
-    generation_context.write_file('macroscopic_values_accessors.h', header)
-    with open('macroscopic_values_accessors.h', 'r+') as f:
+    generation_context.write_file(filename, header)
+    with open(filename, 'r+') as f:
         content = f.read()
         f.seek(0)
-        f.truncate()
-        f.write(content.replace('lm.force_->', 'force_field.'))
+        f.truncate(0)
+        # remove lattice model
+        content = content.replace('lm.force_->', 'force_field.')
+        # patch for floating point accuracy
+        if is_float:
+            content = re.sub(r'0\.5(?=[^\df])', '0.5f', content)
+        f.write(content)
 
 
 def generate_macroscopic_values_accessors(
         generation_context, collision_rule, field_layout='zyxf',
-        **create_kernel_params):
+        filename='macroscopic_values_accessors.h', **create_kernel_params):
 
     # Function derived from lbmpy_walberla.walberla_lbm_generation.generate_lattice_model()
     # in the walberla project, commit 3455bf3eebc64efa9beaecd74ebde3459b98991d
@@ -157,4 +164,4 @@ def generate_macroscopic_values_accessors(
     stream_collide_ast.assumed_inner_stride_one = create_kernel_params[
         'cpu_vectorize_info']['assume_inner_stride_one']
 
-    __macroscopic_values_accessors(generation_context, lb_method)
+    __macroscopic_values_accessors(generation_context, lb_method, filename)

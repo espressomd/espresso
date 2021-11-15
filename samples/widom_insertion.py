@@ -118,18 +118,21 @@ system.setup_type_map([0, 1, 2])
 # up the simulation
 widom.set_non_interacting_type(max(types) + 1)
 
-n_iterations = 100
+particle_insertion_potential_energy_samples = []
+
+n_iterations = 500
 for i in range(n_iterations):
-    for j in range(50):
-        widom.measure_excess_chemical_potential(insertion_reaction_id)
+    particle_insertion_potential_energy_samples.append(
+        widom.calculate_particle_insertion_potential_energy(0))
     system.integrator.run(steps=500)
+
     if i % 20 == 0:
-        print("mu_ex_pair ({:.4f}, +/- {:.4f})".format(
-            *widom.measure_excess_chemical_potential(insertion_reaction_id)))
         print(f"HA {system.number_of_particles(type=0)}",
               f"A- {system.number_of_particles(type=1)}",
               f"H+ {system.number_of_particles(type=2)}")
 
+mu_ex_mean, mu_ex_Delta = widom.calculate_excess_chemical_potential(
+    particle_insertion_potential_energy_samples=particle_insertion_potential_energy_samples)
 
-print("excess chemical potential for an ion pair ",
-      widom.measure_excess_chemical_potential(insertion_reaction_id))
+print(
+    f"excess chemical potential for an ion pair {mu_ex_mean:.4g} +/- {mu_ex_Delta:.4g}")

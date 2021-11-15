@@ -23,7 +23,10 @@
 
 #ifdef LB_WALBERLA
 #include <LBWalberlaBase.hpp>
+#include <LatticeWalberla.hpp>
 #include <lb_walberla_init.hpp>
+
+#include <memory>
 
 struct LBWalberlaParams {
   LBWalberlaParams(double agrid, double tau) : m_agrid(agrid), m_tau(tau) {}
@@ -35,27 +38,36 @@ private:
   double m_tau;
 };
 
-/** @brief Access the per-MPI-node LBWalberla instance */
-LBWalberlaBase *lb_walberla();
+/** @brief Access the per-MPI-node waLBerla LB instance */
+std::shared_ptr<LBWalberlaBase> lb_walberla();
 
-/** @brief Access the Walberla parameters */
-LBWalberlaParams *lb_walberla_params();
+/** @brief Access the waLBerla parameters */
+std::shared_ptr<LBWalberlaParams> lb_walberla_params();
 
-/** @brief Create the LBWalberla instance and sets the lattice switch to
- *  WALBERLA
+/** @brief Create the LBWalberla instance.
  *
- *  @param viscosity Fluid viscosity
- *  @param density   Fluid density
- *  @param agrid     Size of one LB cell
- *  @param tau       LB time step
- *  @param kT        Temperature
- *  @param seed      LB random seed
+ *  @param lb_lattice  LB lattice
+ *  @param lb_params   LB parameters
+ *  @param viscosity   Fluid viscosity
+ *  @param density     Fluid density
+ *  @param kT          Temperature
+ *  @param seed        LB random seed
+ *  @param single_precision   Use single precision
  */
-void mpi_init_lb_walberla(double viscosity, double density, double agrid,
-                          double tau, double kT, unsigned int seed);
+std::shared_ptr<LBWalberlaBase>
+init_lb_walberla(LatticeWalberla const &lb_lattice,
+                 LBWalberlaParams const &lb_params, double viscosity,
+                 double density, double kT, int seed, bool single_precision);
 
-/** @brief Destruct the LBWalberla instance and set lattice switch to NONE */
-void mpi_destruct_lb_walberla();
+void lb_sanity_checks(LBWalberlaBase const &lb_fluid,
+                      LBWalberlaParams const &lb_params, double md_time_step);
+
+/** @brief Register a waLBerla LB instance and update lattice switch. */
+bool activate_lb_walberla(std::shared_ptr<LBWalberlaBase> lb_fluid,
+                          std::shared_ptr<LBWalberlaParams> lb_params);
+
+/** @brief De-register a waLBerla LB instance and update lattice switch. */
+void deactivate_lb_walberla();
 
 #endif // LB_WALBERLA
 

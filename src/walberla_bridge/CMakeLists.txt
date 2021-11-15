@@ -17,17 +17,31 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 set(WalberlaBridgeCodegen_SRC
-    generated_kernels/StreamSweep.cpp generated_kernels/CollideSweep.cpp
-    generated_kernels/CollideSweepThermalized.cpp
-    generated_kernels/InitialPDFsSetter.cpp generated_kernels/Dynamic_UBB.cpp
-    generated_kernels/DiffusiveFluxKernel.cpp generated_kernels/ContinuityKernel.cpp
-    generated_kernels/NoFlux.cpp generated_kernels/AdvectiveFluxKernel.cpp
-    generated_kernels/FrictionCouplingKernel.cpp generated_kernels/DiffusiveFluxKernelWithElectrostatic.cpp)
+    generated_kernels/StreamSweepSinglePrecision.cpp
+    generated_kernels/StreamSweepDoublePrecision.cpp
+    generated_kernels/CollideSweepSinglePrecision.cpp
+    generated_kernels/CollideSweepDoublePrecision.cpp
+    generated_kernels/CollideSweepSinglePrecisionThermalized.cpp
+    generated_kernels/CollideSweepDoublePrecisionThermalized.cpp
+    generated_kernels/InitialPDFsSetterSinglePrecision.cpp
+    generated_kernels/InitialPDFsSetterDoublePrecision.cpp
+    generated_kernels/Dynamic_UBB_single_precision.cpp
+    generated_kernels/Dynamic_UBB_double_precision.cpp
+    generated_kernels/DiffusiveFluxKernel.cpp
+    generated_kernels/ContinuityKernel.cpp
+    generated_kernels/NoFlux.cpp
+    generated_kernels/AdvectiveFluxKernel.cpp
+    generated_kernels/FrictionCouplingKernel.cpp
+    generated_kernels/DiffusiveFluxKernelWithElectrostatic.cpp)
 if(WALBERLA_USE_AVX)
-  list(APPEND WalberlaBridgeCodegen_SRC generated_kernels/CollideSweepAVX.cpp
-       generated_kernels/CollideSweepThermalizedAVX.cpp)
+  list(APPEND WalberlaBridgeCodegen_SRC
+       generated_kernels/CollideSweepSinglePrecisionAVX.cpp
+       generated_kernels/CollideSweepDoublePrecisionAVX.cpp
+       generated_kernels/CollideSweepSinglePrecisionThermalizedAVX.cpp
+       generated_kernels/CollideSweepDoublePrecisionThermalizedAVX.cpp)
 endif()
-set(WalberlaBridge_SRC ${WalberlaBridgeCodegen_SRC} lb_walberla_init.cpp)
+set(WalberlaBridge_SRC ${WalberlaBridgeCodegen_SRC} lb_walberla_init.cpp
+                       LatticeWalberla.cpp)
 add_library(WalberlaBridge SHARED ${WalberlaBridge_SRC})
 target_link_libraries(WalberlaBridge PUBLIC MPI::MPI_CXX EspressoUtils
                       PRIVATE Boost::boost cxx_interface ${WALBERLA_LIBS})

@@ -45,8 +45,8 @@ namespace Mpi {
  * This encapsulates a common combination of <tt>MPI_Gather()</tt>
  * and <tt>MPI_{Send,Recv}()</tt>.
  *
- * @param buffer On the master the target buffer that has the local
- *        part in the beginning. On the slaves the local buffer.
+ * @param buffer On the head node: the target buffer that has the local
+ *        part in the beginning. On worker nodes: the local buffer.
  * @param comm The MPI communicator.
  * @param root The rank where the data should be gathered.
  */

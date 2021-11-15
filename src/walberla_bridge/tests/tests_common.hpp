@@ -24,6 +24,7 @@
 
 #include <LBWalberlaBase.hpp>
 #include <LBWalberlaImpl.hpp>
+#include <LatticeWalberla.hpp>
 #include <lb_walberla_init.hpp>
 
 #include <utils/Vector.hpp>
@@ -34,7 +35,7 @@
 
 class LBTestParameters {
 public:
-  int seed;
+  unsigned int seed;
   double kT;
   double viscosity;
   double density;
@@ -50,18 +51,20 @@ using LbGeneratorVector =
 LbGeneratorVector unthermalized_lbs() {
   LbGeneratorVector lbs;
   // Unthermalized D3Q19 MRT
-  lbs.push_back(
-      [](const Utils::Vector3i mpi_shape, const LBTestParameters &params) {
-        return std::make_shared<walberla::LBWalberlaImpl>(
-            params.viscosity, params.density, params.grid_dimensions, mpi_shape,
-            1u, 0.0, 0u);
-      });
+  lbs.push_back([](const Utils::Vector3i mpi_shape,
+                   const LBTestParameters &params) {
+    auto const lattice = LatticeWalberla(params.grid_dimensions, mpi_shape, 1u);
+    return std::make_shared<walberla::LBWalberlaImpl<>>(
+        lattice, params.viscosity, params.density);
+  });
 
   // Thermalized D3Q19 MRT with kT set to 0
   lbs.push_back([](Utils::Vector3i mpi_shape, const LBTestParameters &params) {
-    return std::make_shared<walberla::LBWalberlaImpl>(
-        params.viscosity, params.density, params.grid_dimensions, mpi_shape, 1u,
-        0.0, params.seed);
+    auto const lattice = LatticeWalberla(params.grid_dimensions, mpi_shape, 1u);
+    auto ptr = std::make_shared<walberla::LBWalberlaImpl<>>(
+        lattice, params.viscosity, params.density);
+    ptr->set_collision_model(0.0, params.seed);
+    return ptr;
   });
   return lbs;
 }
@@ -70,13 +73,15 @@ LbGeneratorVector unthermalized_lbs() {
 LbGeneratorVector thermalized_lbs() {
   LbGeneratorVector lbs;
 
-  // Thermalized D3Q19 MRT with kT set to 0
-  lbs.push_back(
-      [](const Utils::Vector3i mpi_shape, const LBTestParameters &params) {
-        return std::make_shared<walberla::LBWalberlaImpl>(
-            params.viscosity, params.density, params.grid_dimensions, mpi_shape,
-            1u, params.kT, params.seed);
-      });
+  // Thermalized D3Q19 MRT
+  lbs.push_back([](const Utils::Vector3i mpi_shape,
+                   const LBTestParameters &params) {
+    auto const lattice = LatticeWalberla(params.grid_dimensions, mpi_shape, 1u);
+    auto ptr = std::make_shared<walberla::LBWalberlaImpl<>>(
+        lattice, params.viscosity, params.density);
+    ptr->set_collision_model(params.kT, params.seed);
+    return ptr;
+  });
   return lbs;
 }
 

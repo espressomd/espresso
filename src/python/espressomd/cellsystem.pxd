@@ -70,6 +70,8 @@ cdef extern from "DomainDecomposition.hpp":
 cdef extern from "grid.hpp":
     void mpi_set_node_grid(const Vector3i & node_grid)
 
-cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
+cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
     double maximal_cutoff_bonded()
+
+cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     double maximal_cutoff_nonbonded()

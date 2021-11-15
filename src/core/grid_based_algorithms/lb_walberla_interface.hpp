@@ -56,7 +56,6 @@ boost::optional<Utils::Vector6d> get_node_pressure_tensor(Utils::Vector3i ind);
 void set_node_last_applied_force(Utils::Vector3i ind, Utils::Vector3d f);
 void set_node_velocity(Utils::Vector3i ind, Utils::Vector3d u);
 void set_node_velocity_at_boundary(Utils::Vector3i ind, Utils::Vector3d u);
-void set_ext_force_density(Utils::Vector3d f);
 void set_node_density(Utils::Vector3i ind, double density);
 void set_node_pop(Utils::Vector3i ind, std::vector<double> pop);
 void set_node_from_checkpoint(Utils::Vector3i ind, std::vector<double> pop,
@@ -69,12 +68,6 @@ boost::optional<Utils::Vector3d> get_velocity_at_pos(Utils::Vector3d pos);
 boost::optional<double> get_interpolated_density_at_pos(Utils::Vector3d pos);
 
 void add_force_at_pos(Utils::Vector3d pos, Utils::Vector3d f);
-
-uint64_t get_rng_state();
-void set_rng_state(uint64_t code);
-
-walberla::BlockDataID get_velocity_field_id();
-walberla::BlockDataID get_force_field_id();
 
 } // namespace Walberla
 #endif

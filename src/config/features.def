@@ -82,7 +82,6 @@ SCAFACOS_DIPOLES                requires SCAFACOS
 SCAFACOS_DIPOLES                implies DIPOLES
 SCAFACOS                        requires ELECTROSTATICS
 
-LB_WALBERLA
 EK_WALBERLA
 EK_BOUNDARIES
 
@@ -100,3 +99,4 @@ H5MD external
 SCAFACOS external
 GSL external
 STOKESIAN_DYNAMICS external
+LB_WALBERLA external

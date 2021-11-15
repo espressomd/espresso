@@ -37,13 +37,22 @@
 namespace walberla {
 
 // Vector conversion helpers
-inline Utils::Vector3d to_vector3d(const Vector3<real_t> v) {
+inline Utils::Vector3d to_vector3d(const Vector3<float> v) {
   return Utils::Vector3d{double_c(v[0]), double_c(v[1]), double_c(v[2])};
 }
-inline Vector3<real_t> to_vector3(const Utils::Vector3d v) {
-  return Vector3<real_t>{real_c(v[0]), real_c(v[1]), real_c(v[2])};
+inline Utils::Vector3d to_vector3d(const Vector3<double> v) {
+  return Utils::Vector3d{v[0], v[1], v[2]};
 }
-inline Utils::Vector6d to_vector6d(const Matrix3<real_t> m) {
+template <typename FloatType>
+inline Vector3<FloatType> to_vector3(const Utils::Vector3d v) {
+  return Vector3<FloatType>{numeric_cast<FloatType>(v[0]),
+                            numeric_cast<FloatType>(v[1]),
+                            numeric_cast<FloatType>(v[2])};
+}
+inline Utils::Vector6d to_vector6d(const Matrix3<double> m) {
+  return Utils::Vector6d{m[0], m[3], m[4], m[6], m[7], m[8]};
+}
+inline Utils::Vector6d to_vector6d(const Matrix3<float> m) {
   return Utils::Vector6d{double_c(m[0]), double_c(m[3]), double_c(m[4]),
                          double_c(m[6]), double_c(m[7]), double_c(m[8])};
 }

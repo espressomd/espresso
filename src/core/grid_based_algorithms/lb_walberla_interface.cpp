@@ -158,12 +158,6 @@ void set_node_last_applied_force(Utils::Vector3i ind, Utils::Vector3d f) {
 
 REGISTER_CALLBACK(set_node_last_applied_force)
 
-void set_ext_force_density(Utils::Vector3d f) {
-  lb_walberla()->set_external_force(f);
-}
-
-REGISTER_CALLBACK(set_ext_force_density)
-
 void set_node_density(Utils::Vector3i ind, double density) {
   lb_walberla()->set_node_density(ind, density);
   lb_walberla()->ghost_communication();
@@ -211,18 +205,6 @@ void add_force_at_pos(Utils::Vector3d pos, Utils::Vector3d f) {
 }
 
 REGISTER_CALLBACK(add_force_at_pos)
-
-uint64_t get_rng_state() { return lb_walberla()->get_rng_state(); }
-
-void set_rng_state(uint64_t counter) { lb_walberla()->set_rng_state(counter); }
-
-walberla::BlockDataID get_velocity_field_id() {
-  return lb_walberla()->get_velocity_field_id();
-}
-
-walberla::BlockDataID get_force_field_id() {
-  return lb_walberla()->get_force_field_id();
-}
 
 } // namespace Walberla
 #endif

@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(invoke_test) {
 
 /*
  * Test that the implementation of callback_model_t
- * correctly deserialize the parameters and call
+ * correctly deserializes the parameters and calls
  * the callback with them.
  */
 BOOST_AUTO_TEST_CASE(callback_model_t) {
@@ -90,7 +90,7 @@ BOOST_AUTO_TEST_CASE(callback_model_t) {
     BOOST_CHECK(called);
   }
 
-  /* Lambda */
+  /* lambda */
   {
     called = false;
     auto cb = detail::make_model([state = 19](int i, double d) {
@@ -238,7 +238,7 @@ BOOST_AUTO_TEST_CASE(one_rank_callback) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(master_rank_callback) {
+BOOST_AUTO_TEST_CASE(main_rank_callback) {
   auto cb = []() -> int {
     boost::mpi::communicator world;
     if (world.rank() == 0) {
@@ -250,14 +250,13 @@ BOOST_AUTO_TEST_CASE(master_rank_callback) {
 
   auto const fp = static_cast<int (*)()>(cb);
 
-  Communication::MpiCallbacks::add_static(Communication::Result::master_rank,
-                                          fp);
+  Communication::MpiCallbacks::add_static(Communication::Result::main_rank, fp);
 
   boost::mpi::communicator world;
   Communication::MpiCallbacks cbs(world);
 
   if (0 == world.rank()) {
-    BOOST_CHECK_EQUAL(cbs.call(Communication::Result::master_rank, fp),
+    BOOST_CHECK_EQUAL(cbs.call(Communication::Result::main_rank, fp),
                       world.size());
   } else {
     cbs.loop();
@@ -282,6 +281,27 @@ BOOST_AUTO_TEST_CASE(call_all) {
   }
 
   BOOST_CHECK(called);
+}
+
+BOOST_AUTO_TEST_CASE(check_exceptions) {
+  auto cb1 = []() {};
+  auto cb2 = []() {};
+
+  auto const fp1 = static_cast<void (*)()>(cb1);
+  auto const fp2 = static_cast<void (*)()>(cb2);
+
+  Communication::MpiCallbacks::add_static(fp1);
+
+  boost::mpi::communicator world;
+  Communication::MpiCallbacks cbs(world);
+
+  if (0 == world.rank()) {
+    // can't call an unregistered callback
+    BOOST_CHECK_THROW(cbs.call(fp2), std::out_of_range);
+  } else {
+    // can't call a callback from worker nodes
+    BOOST_CHECK_THROW(cbs.call(fp1), std::logic_error);
+  }
 }
 
 int main(int argc, char **argv) {

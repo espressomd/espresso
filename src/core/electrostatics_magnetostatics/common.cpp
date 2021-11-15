@@ -30,7 +30,7 @@
 
 #include <mpi.h>
 
-void mpi_bcast_coulomb_params_local(int, int) {
+static void mpi_bcast_coulomb_params_local() {
 #ifdef ELECTROSTATICS
   MPI_Bcast(&coulomb, sizeof(Coulomb_parameters), MPI_BYTE, 0, comm_cart);
   Coulomb::bcast_coulomb_params();
@@ -51,6 +51,6 @@ REGISTER_CALLBACK(mpi_bcast_coulomb_params_local)
 
 void mpi_bcast_coulomb_params() {
 #if defined(ELECTROSTATICS) || defined(DIPOLES)
-  mpi_call_all(mpi_bcast_coulomb_params_local, -1, -1);
+  mpi_call_all(mpi_bcast_coulomb_params_local);
 #endif
 }

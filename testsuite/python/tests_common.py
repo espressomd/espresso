@@ -624,7 +624,7 @@ def fold_index(idx, shape):
 
 
 def get_lb_nodes_around_pos(pos, lbf):
-    """Returns lb node(s) relevant for interpolaiton around the given position"""
+    """Returns lb node(s) relevant for interpolation around the given position"""
 
     pos_lb_units = pos / lbf.agrid - .5  # Rel to node centers
 

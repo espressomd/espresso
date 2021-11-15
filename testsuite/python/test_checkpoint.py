@@ -116,10 +116,16 @@ class CheckpointTest(ut.TestCase):
                         grid_3D[i, j, k] * np.arange(1, 4),
                         decimal=precision)
         state = lbf.get_params()
-        reference = {'agrid': 0.5, 'visc': 1.3, 'dens': 1.5, 'tau': 0.01}
+        reference = {
+            'agrid': 0.5,
+            'viscosity': 1.3,
+            'density': 1.5,
+            'tau': 0.01}
         for key in reference:
             self.assertIn(key, state)
             self.assertAlmostEqual(reference[key], state[key], delta=1E-7)
+        self.assertTrue(lbf.is_active)
+        self.assertFalse(lbf.is_single_precision)
 
     @utx.skipIfMissingFeatures('LB_WALBERLA')
     @ut.skipIf('LB.ACTIVE.WALBERLA' not in modes, 'waLBerla LBM not in modes')

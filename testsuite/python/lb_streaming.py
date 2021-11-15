@@ -75,10 +75,10 @@ REFERENCE_POPULATIONS = np.array([
     17 + 2 / 3])
 LB_PARAMETERS = {
     'agrid': AGRID,
-    'visc': VISC,
+    'viscosity': VISC,
     'bulk_visc': BULK_VISC,
     'tau': TAU,
-    'dens': 1.0,
+    'density': 1.0,
     'gamma_odd': 1.0,
     'gamma_even': 1.0
 }
@@ -91,16 +91,17 @@ class LBStreamingCommon:
     setting all populations to zero except one.
 
     """
-    lbf = None
     system = espressomd.System(box_l=[3.0] * 3)
     system.cell_system.skin = 0.4 * AGRID
     system.time_step = TAU
     grid = np.array(system.box_l / AGRID, dtype=int)
 
-    def prepare(self):
-        self.system.actors.clear()
+    def setUp(self):
+        self.lbf = self.lb_class(**LB_PARAMETERS, **self.lb_params)
         self.system.actors.add(self.lbf)
-        self.reset_fluid_populations()
+
+    def tearDown(self):
+        self.system.actors.clear()
 
     def reset_fluid_populations(self):
         """Set all populations to 0.0.
@@ -118,7 +119,7 @@ class LBStreamingCommon:
         self.lbf[grid_index].population = pop
 
     def test_population_streaming(self):
-        self.prepare()
+        self.reset_fluid_populations()
         for grid_index in itertools.product(
                 range(self.grid[0]), range(self.grid[1]), range(self.grid[2])):
             self.set_fluid_populations(grid_index)
@@ -126,30 +127,42 @@ class LBStreamingCommon:
             for n_v in range(19):
                 target_node_index = np.mod(
                     grid_index + VELOCITY_VECTORS[n_v], self.grid)
-                np.testing.assert_almost_equal(
+                np.testing.assert_allclose(
                     self.lbf[target_node_index].population[n_v],
-                    REFERENCE_POPULATIONS[n_v])
+                    REFERENCE_POPULATIONS[n_v], rtol=self.rtol)
                 self.lbf[target_node_index].population = np.zeros(19) + 1e-10
 
 
 @utx.skipIfMissingFeatures(["LB_WALBERLA"])
-class LBCPU(ut.TestCase, LBStreamingCommon):
+class LBStreamingWalberla(LBStreamingCommon, ut.TestCase):
 
-    """Test for the CPU implementation of the LB."""
+    """Test for the Walberla implementation of the LB in double-precision."""
 
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMETERS)
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': False}
+    rtol = 1e-10
+
+
+@utx.skipIfMissingFeatures(["LB_WALBERLA"])
+class LBStreamingWalberlaSinglePrecision(LBStreamingCommon, ut.TestCase):
+
+    """Test for the Walberla implementation of the LB in single-precision."""
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': True}
+    rtol = 5e-7
 
 
 # TODO WALBERLA
 # @utx.skipIfMissingGPU()
 # @utx.skipIfMissingFeatures(["LB_WALBERLA"])
-# class LBGPU(ut.TestCase, LBStreamingCommon):
+# class LBGPU(LBStreamingCommon, ut.TestCase):
 
-#    """Test for the GPU implementation of the LB."""
+#    """Test for the Walberla implementation of the LB on the GPU."""
 
-#    def setUp(self):
-#        self.lbf = espressomd.lb.LBFluidWalberlaGPU(**LB_PARAMETERS)
+#    lb_class = espressomd.lb.LBFluidWalberlaGPU
+#    lb_params = {}
+#    rtol = 1e-7
 
 
 if __name__ == "__main__":

@@ -117,7 +117,7 @@ static void mpiio_dump_array(const std::string &fn, T *arr, std::size_t len,
 
 /** Dumps some generic infos like the dumped fields and info to process
  *  the bond information offline (without ESPResSo). To be called by the
- *  master node only.
+ *  head node only.
  *
  * \param fn The filename to write to
  * \param fields The dumped fields
@@ -358,7 +358,7 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
     errexit();
   }
 
-  // 1.head on master node:
+  // 1.head on head node:
   // Read head to determine fields at time of writing.
   // Compare this var to the current fields.
   unsigned avail_fields;

@@ -74,7 +74,7 @@ double mmm1d_coulomb_pair_energy(double q1q2, Utils::Vector3d const &d,
 /** Tuning of the parameters which are not set by the user. Tune either the
  *  @ref MMM1DParameters::far_switch_radius_2 "switching radius" or the
  *  @ref MMM1DParameters::bessel_cutoff "Bessel cutoff". Call this only
- *  on the master node.
+ *  on the head node.
  *
  *  @param verbose output information about the tuning (tried values and errors)
  *  @param timings Number of test force calculations

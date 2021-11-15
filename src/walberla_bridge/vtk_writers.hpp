@@ -19,7 +19,7 @@
 
 #include "vtk/BlockCellDataWriter.h"
 
-#include "generated_kernels/macroscopic_values_accessors.h"
+#include "generated_kernels/macroscopic_values_accessors_double_precision.h"
 
 namespace walberla {
 namespace lbm {
@@ -70,7 +70,7 @@ protected:
   OutputType evaluate(const cell_idx_t x, const cell_idx_t y,
                       const cell_idx_t z, const cell_idx_t f) override {
     WALBERLA_ASSERT_NOT_NULLPTR(pdf_);
-    Matrix3<real_t> pressureTensor;
+    Matrix3<typename PdfField_T::value_type> pressureTensor;
     lbm::accessor::PressureTensor::get(pressureTensor, *pdf_, x, y, z);
     return numeric_cast<OutputType>(pressureTensor[f]);
   }

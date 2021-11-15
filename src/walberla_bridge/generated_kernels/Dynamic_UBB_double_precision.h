@@ -18,7 +18,7 @@
 //  You should have received a copy of the GNU General Public License along
 //  with waLBerla (see COPYING.txt). If not, see <http://www.gnu.org/licenses/>.
 //
-//! \\file Dynamic_UBB.h
+//! \\file Dynamic_UBB_double_precision.h
 //! \\author pystencils
 //======================================================================================================================
 
@@ -45,7 +45,7 @@
 namespace walberla {
 namespace lbm {
 
-class Dynamic_UBB {
+class Dynamic_UBB_double_precision {
 public:
   struct IndexInfo {
     int32_t x;
@@ -71,12 +71,12 @@ public:
     enum Type { ALL = 0, INNER = 1, OUTER = 2, NUM_TYPES = 3 };
 
     IndexVectors() = default;
-    bool operator==(IndexVectors &other) {
+    bool operator==(IndexVectors const &other) const {
       return other.cpuVectors_ == cpuVectors_;
     }
 
     CpuIndexVector &indexVector(Type t) { return cpuVectors_[t]; }
-    IndexInfo *pointerCpu(Type t) { return &(cpuVectors_[t][0]); }
+    IndexInfo *pointerCpu(Type t) { return cpuVectors_[t].data(); }
 
     void syncGPU() {}
 
@@ -84,17 +84,17 @@ public:
     std::vector<CpuIndexVector> cpuVectors_{NUM_TYPES};
   };
 
-  Dynamic_UBB(const shared_ptr<StructuredBlockForest> &blocks,
-              BlockDataID pdfsID_,
-              std::function<Vector3<real_t>(
-                  const Cell &, const shared_ptr<StructuredBlockForest> &,
-                  IBlock &)> &velocityCallback)
+  Dynamic_UBB_double_precision(
+      const shared_ptr<StructuredBlockForest> &blocks, BlockDataID pdfsID_,
+      std::function<Vector3<double>(const Cell &,
+                                    const shared_ptr<StructuredBlockForest> &,
+                                    IBlock &)> &velocityCallback)
       : elementInitaliser(velocityCallback), pdfsID(pdfsID_) {
     auto createIdxVector = [](IBlock *const, StructuredBlockStorage *const) {
       return new IndexVectors();
     };
     indexVectorID = blocks->addStructuredBlockData<IndexVectors>(
-        createIdxVector, "IndexField_Dynamic_UBB");
+        createIdxVector, "IndexField_Dynamic_UBB_double_precision");
   };
 
   void operator()(IBlock *block);
@@ -140,7 +140,7 @@ public:
         continue;
       if (isFlagSet(it.neighbor(0, 0, 0, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 0);
-        Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(
+        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
             Cell(it.x() + 0, it.y() + 0, it.z() + 0), blocks, *block);
         element.vel_0 = InitialisatonAdditionalData[0];
         element.vel_1 = InitialisatonAdditionalData[1];
@@ -154,7 +154,7 @@ public:
 
       if (isFlagSet(it.neighbor(0, 1, 0, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 1);
-        Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(
+        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
             Cell(it.x() + 0, it.y() + 1, it.z() + 0), blocks, *block);
         element.vel_0 = InitialisatonAdditionalData[0];
         element.vel_1 = InitialisatonAdditionalData[1];
@@ -168,7 +168,7 @@ public:
 
       if (isFlagSet(it.neighbor(0, -1, 0, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 2);
-        Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(
+        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
             Cell(it.x() + 0, it.y() - 1, it.z() + 0), blocks, *block);
         element.vel_0 = InitialisatonAdditionalData[0];
         element.vel_1 = InitialisatonAdditionalData[1];
@@ -182,7 +182,7 @@ public:
 
       if (isFlagSet(it.neighbor(-1, 0, 0, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 3);
-        Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(
+        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
             Cell(it.x() - 1, it.y() + 0, it.z() + 0), blocks, *block);
         element.vel_0 = InitialisatonAdditionalData[0];
         element.vel_1 = InitialisatonAdditionalData[1];
@@ -196,7 +196,7 @@ public:
 
       if (isFlagSet(it.neighbor(1, 0, 0, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 4);
-        Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(
+        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
             Cell(it.x() + 1, it.y() + 0, it.z() + 0), blocks, *block);
         element.vel_0 = InitialisatonAdditionalData[0];
         element.vel_1 = InitialisatonAdditionalData[1];
@@ -210,7 +210,7 @@ public:
 
       if (isFlagSet(it.neighbor(0, 0, 1, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 5);
-        Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(
+        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
             Cell(it.x() + 0, it.y() + 0, it.z() + 1), blocks, *block);
         element.vel_0 = InitialisatonAdditionalData[0];
         element.vel_1 = InitialisatonAdditionalData[1];
@@ -224,7 +224,7 @@ public:
 
       if (isFlagSet(it.neighbor(0, 0, -1, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 6);
-        Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(
+        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
             Cell(it.x() + 0, it.y() + 0, it.z() - 1), blocks, *block);
         element.vel_0 = InitialisatonAdditionalData[0];
         element.vel_1 = InitialisatonAdditionalData[1];
@@ -238,7 +238,7 @@ public:
 
       if (isFlagSet(it.neighbor(-1, 1, 0, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 7);
-        Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(
+        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
             Cell(it.x() - 1, it.y() + 1, it.z() + 0), blocks, *block);
         element.vel_0 = InitialisatonAdditionalData[0];
         element.vel_1 = InitialisatonAdditionalData[1];
@@ -252,7 +252,7 @@ public:
 
       if (isFlagSet(it.neighbor(1, 1, 0, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 8);
-        Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(
+        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
             Cell(it.x() + 1, it.y() + 1, it.z() + 0), blocks, *block);
         element.vel_0 = InitialisatonAdditionalData[0];
         element.vel_1 = InitialisatonAdditionalData[1];
@@ -266,7 +266,7 @@ public:
 
       if (isFlagSet(it.neighbor(-1, -1, 0, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 9);
-        Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(
+        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
             Cell(it.x() - 1, it.y() - 1, it.z() + 0), blocks, *block);
         element.vel_0 = InitialisatonAdditionalData[0];
         element.vel_1 = InitialisatonAdditionalData[1];
@@ -280,7 +280,7 @@ public:
 
       if (isFlagSet(it.neighbor(1, -1, 0, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 10);
-        Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(
+        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
             Cell(it.x() + 1, it.y() - 1, it.z() + 0), blocks, *block);
         element.vel_0 = InitialisatonAdditionalData[0];
         element.vel_1 = InitialisatonAdditionalData[1];
@@ -294,7 +294,7 @@ public:
 
       if (isFlagSet(it.neighbor(0, 1, 1, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 11);
-        Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(
+        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
             Cell(it.x() + 0, it.y() + 1, it.z() + 1), blocks, *block);
         element.vel_0 = InitialisatonAdditionalData[0];
         element.vel_1 = InitialisatonAdditionalData[1];
@@ -308,7 +308,7 @@ public:
 
       if (isFlagSet(it.neighbor(0, -1, 1, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 12);
-        Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(
+        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
             Cell(it.x() + 0, it.y() - 1, it.z() + 1), blocks, *block);
         element.vel_0 = InitialisatonAdditionalData[0];
         element.vel_1 = InitialisatonAdditionalData[1];
@@ -322,7 +322,7 @@ public:
 
       if (isFlagSet(it.neighbor(-1, 0, 1, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 13);
-        Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(
+        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
             Cell(it.x() - 1, it.y() + 0, it.z() + 1), blocks, *block);
         element.vel_0 = InitialisatonAdditionalData[0];
         element.vel_1 = InitialisatonAdditionalData[1];
@@ -336,7 +336,7 @@ public:
 
       if (isFlagSet(it.neighbor(1, 0, 1, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 14);
-        Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(
+        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
             Cell(it.x() + 1, it.y() + 0, it.z() + 1), blocks, *block);
         element.vel_0 = InitialisatonAdditionalData[0];
         element.vel_1 = InitialisatonAdditionalData[1];
@@ -350,7 +350,7 @@ public:
 
       if (isFlagSet(it.neighbor(0, 1, -1, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 15);
-        Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(
+        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
             Cell(it.x() + 0, it.y() + 1, it.z() - 1), blocks, *block);
         element.vel_0 = InitialisatonAdditionalData[0];
         element.vel_1 = InitialisatonAdditionalData[1];
@@ -364,7 +364,7 @@ public:
 
       if (isFlagSet(it.neighbor(0, -1, -1, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 16);
-        Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(
+        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
             Cell(it.x() + 0, it.y() - 1, it.z() - 1), blocks, *block);
         element.vel_0 = InitialisatonAdditionalData[0];
         element.vel_1 = InitialisatonAdditionalData[1];
@@ -378,7 +378,7 @@ public:
 
       if (isFlagSet(it.neighbor(-1, 0, -1, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 17);
-        Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(
+        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
             Cell(it.x() - 1, it.y() + 0, it.z() - 1), blocks, *block);
         element.vel_0 = InitialisatonAdditionalData[0];
         element.vel_1 = InitialisatonAdditionalData[1];
@@ -392,7 +392,7 @@ public:
 
       if (isFlagSet(it.neighbor(1, 0, -1, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 18);
-        Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(
+        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
             Cell(it.x() + 1, it.y() + 0, it.z() - 1), blocks, *block);
         element.vel_0 = InitialisatonAdditionalData[0];
         element.vel_1 = InitialisatonAdditionalData[1];
@@ -411,7 +411,7 @@ private:
   void run(IBlock *block, IndexVectors::Type type);
 
   BlockDataID indexVectorID;
-  std::function<Vector3<real_t>(
+  std::function<Vector3<double>(
       const Cell &, const shared_ptr<StructuredBlockForest> &, IBlock &)>
       elementInitaliser;
 

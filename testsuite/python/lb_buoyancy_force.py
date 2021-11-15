@@ -33,30 +33,33 @@ G = 0.08
 BOX_SIZE = 18 * AGRID
 
 LB_PARAMS = {'agrid': AGRID,
-             'dens': DENS,
-             'visc': KVISC,
+             'density': DENS,
+             'viscosity': KVISC,
              'tau': TIME_STEP,
              'ext_force_density': [0, DENS * G, 0]}
 # System setup
 RADIUS = 6 * AGRID
 
 
-class Buoyancy(object):
+class LBBuoyancy:
     """
     Tests buoyancy force on a sphere in a closed box of lb fluid and
     the overall force balance
 
     """
-    lbf = None
     system = espressomd.System(box_l=[BOX_SIZE] * 3)
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.01
 
-    def test(self):
-        self.system.actors.clear()
-        self.system.lbboundaries.clear()
+    def setUp(self):
+        self.lbf = self.lb_class(**LB_PARAMS, **self.lb_params)
         self.system.actors.add(self.lbf)
 
+    def tearDown(self):
+        self.system.actors.clear()
+        self.system.lbboundaries.clear()
+
+    def test(self):
         # Setup walls
         for i in range(3):
             n = np.zeros(3)
@@ -110,10 +113,21 @@ class Buoyancy(object):
 
 
 @utx.skipIfMissingFeatures(["LB_BOUNDARIES", "EXTERNAL_FORCES", "LB_WALBERLA"])
-class LBCPUBuoyancy(ut.TestCase, Buoyancy):
+class LBBuoyancyWalberla(LBBuoyancy, ut.TestCase):
 
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMS)
+    """Test for the Walberla implementation of the LB in double-precision."""
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': False}
+
+
+@utx.skipIfMissingFeatures(["LB_BOUNDARIES", "EXTERNAL_FORCES", "LB_WALBERLA"])
+class LBBuoyancyWalberlaSinglePrecision(LBBuoyancy, ut.TestCase):
+
+    """Test for the Walberla implementation of the LB in single-precision."""
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': True}
 
 
 if __name__ == "__main__":

@@ -32,6 +32,7 @@
 #include "config.hpp"
 #include "event.hpp"
 #include "grid.hpp"
+#include "interactions.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "pressure_inline.hpp"
 #include "virtual_sites.hpp"
@@ -56,7 +57,7 @@ static std::shared_ptr<Observable_stat> calculate_pressure_local() {
 
   auto obs_pressure_ptr = std::make_shared<Observable_stat>(9);
 
-  if (!interactions_sanity_checks())
+  if (long_range_interactions_sanity_checks())
     return obs_pressure_ptr;
 
   auto &obs_pressure = *obs_pressure_ptr;
@@ -117,10 +118,10 @@ static std::shared_ptr<Observable_stat> calculate_pressure_local() {
   return obs_pressure_ptr;
 }
 
-REGISTER_CALLBACK_MASTER_RANK(calculate_pressure_local)
+REGISTER_CALLBACK_MAIN_RANK(calculate_pressure_local)
 
 std::shared_ptr<Observable_stat> calculate_pressure() {
-  return mpi_call(Communication::Result::master_rank, calculate_pressure_local);
+  return mpi_call(Communication::Result::main_rank, calculate_pressure_local);
 }
 
 Utils::Vector9d observable_compute_pressure_tensor() {

@@ -273,9 +273,7 @@ BOOST_DATA_TEST_CASE(update_boundary_from_list, bdata::make(all_lbs()),
 BOOST_DATA_TEST_CASE(domain_and_halo, bdata::make(all_lbs()), lb_generator) {
   auto lb = lb_generator(mpi_shape, params);
   auto const n_ghost_layers = lb->n_ghost_layers();
-
-  auto const my_left = lb->get_local_domain().first;
-  auto const my_right = lb->get_local_domain().second;
+  auto const [my_left, my_right] = lb->get_local_domain();
 
   for (auto const &n :
        all_nodes_incl_ghosts(params.grid_dimensions, n_ghost_layers)) {

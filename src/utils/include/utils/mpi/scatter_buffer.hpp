@@ -36,7 +36,7 @@ namespace Mpi {
  * @brief Scatter buffer with different size on each node.
  *
  * Scatter a buffer to the nodes, where every node gets
- * a different chunk of the buffer, controlled by the slave.
+ * a different chunk of the buffer, controlled by the worker node.
  *
  * This is a collective call.
  */

@@ -101,7 +101,7 @@ public:
   /** @brief Exception thrown when writing to a read-only parameter */
   struct WriteError : public Exception {
     explicit WriteError(std::string const &name)
-        : Exception("Parameter " + name + " is read-only.") {}
+        : Exception("Parameter '" + name + "' is read-only.") {}
   };
 
 protected:
