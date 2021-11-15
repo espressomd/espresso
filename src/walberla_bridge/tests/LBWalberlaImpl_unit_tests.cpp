@@ -31,6 +31,7 @@
 #include "tests_common.hpp"
 
 #include <LBWalberlaBase.hpp>
+#include <VTKHandle.hpp>
 #include <lb_walberla_init.hpp>
 
 #include <utils/Vector.hpp>

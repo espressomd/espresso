@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The ESPResSo project
+ * Copyright (C) 2020-2021 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -16,25 +16,28 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "config.hpp"
+#pragma once
 
-#ifdef LB_WALBERLA
+#include <memory>
+#include <utility>
 
-#include "FluidWalberla.hpp"
-#include "LatticeWalberla.hpp"
-#include "VTKHandle.hpp"
+namespace walberla::vtk {
+// forward declare
+class VTKOutput;
+} // namespace walberla::vtk
 
-#include <script_interface/ObjectHandle.hpp>
-#include <utils/Factory.hpp>
+/** @brief Handle to a VTK object */
+struct VTKHandle {
+  VTKHandle(std::shared_ptr<walberla::vtk::VTKOutput> sp, int ec, bool en)
+      : ptr(std::move(sp)), execution_count(ec), enabled(en) {}
+  std::shared_ptr<walberla::vtk::VTKOutput> ptr;
+  int execution_count;
+  bool enabled;
+};
 
-namespace ScriptInterface::walberla {
-
-void initialize(Utils::Factory<ObjectHandle> *om) {
-  om->register_new<LatticeWalberla>("walberla::LatticeWalberla");
-  om->register_new<FluidWalberla>("walberla::FluidWalberla");
-  om->register_new<VTKHandle>("walberla::VTKHandle");
-}
-
-} // namespace ScriptInterface::walberla
-
-#endif // LB_WALBERLA
+/** @brief LB statistics to write to VTK files */
+enum class OutputVTK : int {
+  density = 1 << 0,
+  velocity_vector = 1 << 1,
+  pressure_tensor = 1 << 2,
+};

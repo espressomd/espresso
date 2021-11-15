@@ -241,15 +241,14 @@ private:
   public:
     explicit vtk_runtime_error(std::string const &vtk_uid,
                                std::string const &reason)
-        : std::runtime_error("VTKOutput object " + vtk_uid + " " + reason) {}
+        : std::runtime_error("VTKOutput object '" + vtk_uid + "' " + reason) {}
   };
 
 protected:
   /** VTK writers that are executed automatically */
-  std::map<std::string, std::pair<std::shared_ptr<vtk::VTKOutput>, bool>>
-      m_vtk_auto;
+  std::map<std::string, std::shared_ptr<VTKHandle>> m_vtk_auto;
   /** VTK writers that are executed manually */
-  std::map<std::string, std::shared_ptr<vtk::VTKOutput>> m_vtk_manual;
+  std::map<std::string, std::shared_ptr<VTKHandle>> m_vtk_manual;
 
   // Member variables
   Utils::Vector3i m_grid_dimensions;
@@ -399,8 +398,11 @@ public:
 
     // Handle VTK writers
     for (auto it = m_vtk_auto.begin(); it != m_vtk_auto.end(); ++it) {
-      if (it->second.second)
-        vtk::writeFiles(it->second.first)();
+      auto &vtk_handle = it->second;
+      if (vtk_handle->enabled) {
+        vtk::writeFiles(vtk_handle->ptr)();
+        vtk_handle->execution_count++;
+      }
     }
   }
 
@@ -896,10 +898,11 @@ public:
     return res;
   }
 
-  void create_vtk(unsigned delta_N, unsigned initial_count,
-                  unsigned flag_observables, std::string const &identifier,
-                  std::string const &base_folder,
-                  std::string const &prefix) override {
+  std::shared_ptr<VTKHandle> create_vtk(int delta_N, int initial_count,
+                                        int flag_observables,
+                                        std::string const &identifier,
+                                        std::string const &base_folder,
+                                        std::string const &prefix) override {
     // VTKOuput object must be unique
     std::stringstream unique_identifier;
     unique_identifier << base_folder << "/" << identifier;
@@ -919,28 +922,31 @@ public:
     pdf_field_vtk->addCellExclusionFilter(fluid_filter);
 
     // add writers
-    if (static_cast<unsigned>(OutputVTK::density) & flag_observables) {
+    if (flag_observables & static_cast<int>(OutputVTK::density)) {
       pdf_field_vtk->addCellDataWriter(
           make_shared<lbm::DensityVTKWriter<LBWalberlaImpl, float>>(
               m_pdf_field_id, "DensityFromPDF"));
     }
-    if (static_cast<unsigned>(OutputVTK::velocity_vector) & flag_observables) {
+    if (flag_observables & static_cast<int>(OutputVTK::velocity_vector)) {
       pdf_field_vtk->addCellDataWriter(
           make_shared<field::VTKWriter<VectorField, float>>(
               m_velocity_field_id, "VelocityFromVelocityField"));
     }
-    if (static_cast<unsigned>(OutputVTK::pressure_tensor) & flag_observables) {
+    if (flag_observables & static_cast<int>(OutputVTK::pressure_tensor)) {
       pdf_field_vtk->addCellDataWriter(
           make_shared<lbm::PressureTensorVTKWriter<LBWalberlaImpl, float>>(
               m_pdf_field_id, "PressureTensorFromPDF"));
     }
 
     // register object
+    auto vtk_handle =
+        std::make_shared<VTKHandle>(pdf_field_vtk, initial_count, true);
     if (delta_N) {
-      m_vtk_auto[vtk_uid] = {pdf_field_vtk, true};
+      m_vtk_auto[vtk_uid] = vtk_handle;
     } else {
-      m_vtk_manual[vtk_uid] = pdf_field_vtk;
+      m_vtk_manual[vtk_uid] = vtk_handle;
     }
+    return vtk_handle;
   }
 
   /** Manually call a VTK callback */
@@ -951,18 +957,20 @@ public:
     if (m_vtk_manual.find(vtk_uid) == m_vtk_manual.end()) {
       throw vtk_runtime_error(vtk_uid, "doesn't exist");
     }
-    vtk::writeFiles(m_vtk_manual[vtk_uid])();
+    auto &vtk_handle = m_vtk_manual[vtk_uid];
+    vtk::writeFiles(vtk_handle->ptr)();
+    vtk_handle->execution_count++;
   }
 
   /** Activate or deactivate a VTK callback */
-  void switch_vtk(std::string const &vtk_uid, int status) override {
+  void switch_vtk(std::string const &vtk_uid, bool status) override {
     if (m_vtk_manual.find(vtk_uid) != m_vtk_manual.end()) {
       throw vtk_runtime_error(vtk_uid, "is a manual observable");
     }
     if (m_vtk_auto.find(vtk_uid) == m_vtk_auto.end()) {
       throw vtk_runtime_error(vtk_uid, "doesn't exist");
     }
-    m_vtk_auto[vtk_uid].second = status;
+    m_vtk_auto[vtk_uid]->enabled = status;
   }
 
   ~LBWalberlaImpl() override = default;

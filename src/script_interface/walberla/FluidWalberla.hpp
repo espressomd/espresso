@@ -23,6 +23,8 @@
 
 #ifdef LB_WALBERLA
 
+#include <walberla_bridge/LBWalberlaBase.hpp>
+
 #include "LatticeWalberla.hpp"
 
 #include "core/communication.hpp"
@@ -189,6 +191,12 @@ public:
 
     return {};
   }
+
+  /** Non-owning pointer to the LB fluid. */
+  std::weak_ptr<::LBWalberlaBase> lb_fluid() { return m_lb_fluid; }
+
+  /** Non-owning pointer to the LB parameters. */
+  std::weak_ptr<::LBWalberlaParams> lb_params() { return m_lb_params; }
 };
 
 } // namespace ScriptInterface::walberla

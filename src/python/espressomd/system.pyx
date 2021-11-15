@@ -39,7 +39,7 @@ from .galilei import GalileiTransform
 from .constraints import Constraints
 from .accumulators import AutoUpdateAccumulators
 IF LB_WALBERLA:
-    from .lb import _vtk_registry
+    from . import lb
 if LB_BOUNDARIES:
     from .lbboundaries import LBBoundaries
 from .comfixed import ComFixed
@@ -161,8 +161,6 @@ cdef class System:
         comfixed
         """:class:`espressomd.comfixed.ComFixed`"""
         _active_virtual_sites_handle
-        IF LB_WALBERLA:
-            _vtk_registry
 
     def __init__(self, **kwargs):
         global _system_created
@@ -198,8 +196,6 @@ cdef class System:
             IF VIRTUAL_SITES:
                 self._active_virtual_sites_handle = ActiveVirtualSitesHandle(
                     implementation=VirtualSitesOff())
-            IF LB_WALBERLA:
-                self._vtk_registry = _vtk_registry
             _system_created = True
         else:
             raise RuntimeError(
@@ -233,17 +229,22 @@ cdef class System:
         odict['integrator'] = System.__getattribute__(self, "integrator")
         odict['thermostat'] = System.__getattribute__(self, "thermostat")
         IF LB_WALBERLA:
-            odict['_vtk_registry'] = System.__getattribute__(
-                self, "_vtk_registry")
+            odict['_vtk_registry'] = lb._vtk_registry
         return odict
 
     def __setstate__(self, params):
         # MD cell geometry cannot be reset with a walberla LB actor
         md_cell_reset = ("box_l", "min_global_cut", "periodicity", "time_step")
+        # external globals are unpickled by other modules
+        external_globals = ('_vtk_registry')
         for property_ in params.keys():
             if property_ in md_cell_reset:
                 continue
+            if property_ in external_globals:
+                continue
             System.__setattr__(self, property_, params[property_])
+        IF LB_WALBERLA:
+            lb._vtk_registry = params['_vtk_registry']
 
     property box_l:
         """

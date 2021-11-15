@@ -45,11 +45,6 @@ void update_boundary_from_list(std::vector<int> const &nodes_flat,
                                std::vector<double> const &vel_flat);
 boost::optional<Utils::Vector3d> get_node_boundary_force(Utils::Vector3i ind);
 void remove_node_from_boundary(Utils::Vector3i ind);
-void create_vtk(unsigned delta_N, unsigned initial_count,
-                unsigned flag_observables, std::string const &identifier,
-                std::string const &base_folder, std::string const &prefix);
-void write_vtk(std::string const &vtk_uid);
-void switch_vtk(std::string const &vtk_uid, int status);
 boost::optional<std::vector<double>> get_node_pop(Utils::Vector3i ind);
 boost::optional<Utils::Vector6d> get_node_pressure_tensor(Utils::Vector3i ind);
 

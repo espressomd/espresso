@@ -48,27 +48,6 @@ get_node_velocity_at_boundary(Utils::Vector3i ind) {
 
 REGISTER_CALLBACK_ONE_RANK(get_node_velocity_at_boundary)
 
-void create_vtk(unsigned delta_N, unsigned initial_count,
-                unsigned flag_observables, std::string const &identifier,
-                std::string const &base_folder, std::string const &prefix) {
-  lb_walberla()->create_vtk(delta_N, initial_count, flag_observables,
-                            identifier, base_folder, prefix);
-}
-
-REGISTER_CALLBACK(create_vtk)
-
-void write_vtk(std::string const &vtk_uid) {
-  lb_walberla()->write_vtk(vtk_uid);
-}
-
-REGISTER_CALLBACK(write_vtk)
-
-void switch_vtk(std::string const &vtk_uid, int status) {
-  lb_walberla()->switch_vtk(vtk_uid, status);
-}
-
-REGISTER_CALLBACK(switch_vtk)
-
 boost::optional<Utils::Vector3d>
 get_node_last_applied_force(Utils::Vector3i ind) {
   return lb_walberla()->get_node_last_applied_force(ind);
