@@ -65,14 +65,23 @@ BOOST_AUTO_TEST_CASE(exceptions) {
   BOOST_CHECK_THROW(lb_lbnode_get_pop({}), std::exception);
   BOOST_CHECK_THROW(lb_lbnode_get_pressure_tensor({}), std::exception);
   BOOST_CHECK_THROW(lb_lbnode_get_pressure_tensor_neq({}), std::exception);
-  // coupling, interpolation, boundaries
+  // particle coupling and interpolation
   BOOST_CHECK_EQUAL(lb_lbcoupling_get_rng_state(), 0u);
-  BOOST_CHECK_THROW(lb_lbinterpolation_get_interpolated_velocity({}),
-                    std::runtime_error);
-  BOOST_CHECK_THROW(lb_lbinterpolation_add_force_density({}, {}),
-                    std::runtime_error);
   BOOST_CHECK_THROW(lb_lbfluid_get_interpolated_velocity({}), std::exception);
   BOOST_CHECK_THROW(lb_lbfluid_get_interpolated_density({}), std::exception);
   BOOST_CHECK_THROW(lb_lbfluid_get_shape(), std::exception);
   BOOST_CHECK_EQUAL(lb_lbfluid_calc_fluid_momentum(), Utils::Vector3d{});
+  BOOST_CHECK_THROW(lb_lbfluid_set_lattice_switch(static_cast<ActiveLB>(100)),
+                    std::invalid_argument);
+  ::lattice_switch = ActiveLB::CPU;
+  mpi_set_interpolation_order_local(InterpolationOrder::quadratic);
+  BOOST_CHECK_THROW(lb_lbfluid_get_interpolated_density({}), std::exception);
+  BOOST_CHECK_THROW(lb_lbfluid_get_interpolated_velocity({}),
+                    std::runtime_error);
+  BOOST_CHECK_THROW(lb_lbinterpolation_add_force_density({}, {}),
+                    std::runtime_error);
+  ::lattice_switch = ActiveLB::GPU;
+  BOOST_CHECK_THROW(lb_lbfluid_get_interpolated_density({}), std::exception);
+  ::lattice_switch = ActiveLB::NONE;
+  mpi_set_interpolation_order_local(InterpolationOrder::linear);
 }
