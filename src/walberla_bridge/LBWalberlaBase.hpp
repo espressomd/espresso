@@ -36,8 +36,6 @@
 #include <utility>
 #include <vector>
 
-#include "WalberlaBlockForest.hpp"
-
 /** Class that runs and controls the LB on WaLBerla
  */
 class LBWalberlaBase {
@@ -149,6 +147,16 @@ public:
   /** @brief Set the rng state of thermalized LBs */
   virtual void set_rng_state(uint64_t counter) = 0;
 
+  // Grid, domain, halo
+  virtual int n_ghost_layers() const = 0;
+  virtual Utils::Vector3i get_grid_dimensions() const = 0;
+  virtual std::pair<Utils::Vector3d, Utils::Vector3d>
+  get_local_domain() const = 0;
+  virtual bool node_in_local_domain(const Utils::Vector3i &node) const = 0;
+  virtual bool node_in_local_halo(const Utils::Vector3i &node) const = 0;
+  virtual bool pos_in_local_domain(const Utils::Vector3d &pos) const = 0;
+  virtual bool pos_in_local_halo(const Utils::Vector3d &pos) const = 0;
+
   /** @brief get the velocity field id */
   [[nodiscard]] virtual walberla::domain_decomposition::BlockDataID
   get_velocity_field_id() const = 0;
@@ -157,8 +165,6 @@ public:
   [[nodiscard]] virtual walberla::domain_decomposition::BlockDataID
   get_force_field_id() const = 0;
 
-  [[nodiscard]] virtual const std::shared_ptr<walberla::WalberlaBlockForest> &
-  get_blockforest() const = 0;
   /** @brief Create a VTK observable.
    *
    *  @param delta_N          Write frequency, if 0 write a single frame,
