@@ -123,7 +123,7 @@ class LBTest:
         lbf = self.lb_class(**self.params, **self.lb_params)
         for key in {'agrid', 'tau', 'density', 'kT', 'is_single_precision',
                     'shape', 'pressure_tensor', 'seed', 'is_active'}:
-            with self.assertRaisesRegex(RuntimeError, f"Parameter '{key}' is read-only"):
+            with self.assertRaisesRegex(RuntimeError, f"(Parameter|Property) '{key}' is read-only"):
                 setattr(lbf, key, 0)
 
     def test_raise_if_not_active(self):

@@ -88,7 +88,7 @@ void check_tau_time_step_consistency(double tau, double time_step) {
   auto const factor = tau / time_step;
   if (fabs(round(factor) - factor) / factor > eps)
     throw std::invalid_argument("LB tau (" + std::to_string(tau) +
-                                ") must be integer multiple of "
+                                ") must be an integer multiple of the "
                                 "MD time_step (" +
                                 std::to_string(time_step) + "). Factor is " +
                                 std::to_string(factor));

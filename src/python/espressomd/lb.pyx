@@ -270,6 +270,10 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
         tensor = python_lbfluid_get_pressure_tensor(self.agrid, self.tau)
         return utils.array_locked(tensor)
 
+    @pressure_tensor.setter
+    def pressure_tensor(self, value):
+        raise RuntimeError(f"Property 'pressure_tensor' is read-only")
+
     def nodes(self):
         """Provides a generator for iterating over all lb nodes"""
 
