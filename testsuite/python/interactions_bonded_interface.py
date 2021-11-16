@@ -59,9 +59,7 @@ class BondedInteractions(ut.TestCase):
         classname = bondObject.__class__.__name__
         valid_keys = bondObject.valid_keys()
         required_keys = bondObject.required_keys()
-        old_params = dict(bondObject.params)
         default_keys = set(bondObject.get_default_params())
-        bondObject.params = old_params
         self.assertIsInstance(valid_keys, set,
                               "{}.valid_keys() must return a set".format(
                                   classname))
