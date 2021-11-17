@@ -74,7 +74,10 @@ public:
           [this](Variant const &v) {
             m_ekinstance->set_friction_coupling(get_value<bool>(v));
           },
-          [this]() { return m_ekinstance->get_friction_coupling(); }}});
+          [this]() { return m_ekinstance->get_friction_coupling(); }},
+         {"shape", AutoParameter::read_only, [this]() {
+            return m_ekinstance->get_lattice()->get_grid_dimensions();
+          }}});
   }
 
   [[nodiscard]] std::shared_ptr<EKinWalberlaBase<double>> get_ekinstance() {
