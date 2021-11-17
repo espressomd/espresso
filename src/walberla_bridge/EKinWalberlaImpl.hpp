@@ -412,6 +412,10 @@ public:
     throw std::runtime_error("The LB does not use a random number generator");
   };
 
+  [[nodiscard]] std::shared_ptr<LatticeWalberla> get_lattice() const override {
+    return m_lattice;
+  };
+
   // Grid, domain, halo
 
   [[nodiscard]] std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>>
