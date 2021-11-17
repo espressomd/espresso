@@ -30,7 +30,6 @@
 
 #include "event.hpp"
 #include "lbboundaries/LBBoundary.hpp"
-#include "walberla_blockforest.hpp"
 
 #include <algorithm>
 #include <cassert>

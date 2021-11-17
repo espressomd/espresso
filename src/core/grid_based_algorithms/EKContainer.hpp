@@ -1,8 +1,6 @@
 #ifndef ESPRESSO_EKCONTAINER_HPP
 #define ESPRESSO_EKCONTAINER_HPP
 
-#include "walberla_blockforest.hpp"
-
 #include "PoissonSolver/FFT.hpp"
 #include "PoissonSolver/PoissonSolver.hpp"
 
