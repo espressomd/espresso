@@ -28,7 +28,8 @@ target_link_libraries(
   PRIVATE cxx_interface)
 
 if(WALBERLA)
-  target_link_libraries(ScriptInterface PRIVATE WalberlaBridge)
+  # the walbera_libs are currently necessary because of the FFT-Solver...
+  target_link_libraries(ScriptInterface PRIVATE WalberlaBridge ${WALBERLA_LIBS})
 endif()
 
 target_include_directories(ScriptInterface PUBLIC ${CMAKE_SOURCE_DIR}/src)
