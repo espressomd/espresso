@@ -18,9 +18,10 @@
  */
 #pragma once
 
-#include "blockforest/StructuredBlockForest.h"
-#include "field/FlagField.h"
+#include <blockforest/StructuredBlockForest.h>
+#include <field/FlagField.h>
 
+#include "BlockAndCell.hpp"
 #include "walberla_utils.hpp"
 
 #include "generated_kernels/Dynamic_UBB_double_precision.h"

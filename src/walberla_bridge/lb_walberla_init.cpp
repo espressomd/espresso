@@ -23,13 +23,15 @@
 #include "LBWalberlaImpl.hpp"
 #include "LatticeWalberla.hpp"
 
-#include "core/mpi/Environment.h"
+#include <core/mpi/Environment.h>
 
 #include <utils/Vector.hpp>
 
 #include <cmath>
+#include <limits>
 #include <memory>
 #include <stdexcept>
+#include <string>
 
 void walberla_mpi_init() {
   int argc = 0;

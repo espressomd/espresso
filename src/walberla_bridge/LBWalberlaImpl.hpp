@@ -26,26 +26,28 @@
  * (see <tt>maintainer/walberla_kernels</tt>).
  */
 
-#include "blockforest/Initialization.h"
-#include "blockforest/StructuredBlockForest.h"
-#include "blockforest/communication/UniformBufferedScheme.h"
-#include "field/GhostLayerField.h"
-#include "field/vtk/FlagFieldCellFilter.h"
-#include "field/vtk/VTKWriter.h"
+#include <blockforest/Initialization.h>
+#include <blockforest/StructuredBlockForest.h>
+#include <blockforest/communication/UniformBufferedScheme.h>
+#include <domain_decomposition/IBlock.h>
+#include <field/GhostLayerField.h>
+#include <field/vtk/FlagFieldCellFilter.h>
+#include <field/vtk/VTKWriter.h>
 
-#include "domain_decomposition/SharedSweep.h"
+#include <domain_decomposition/SharedSweep.h>
 
-#include "field/AddToStorage.h"
-#include "field/FlagField.h"
-#include "field/communication/PackInfo.h"
-#include "lbm/communication/PdfFieldPackInfo.h"
-#include "lbm/field/AddToStorage.h"
-#include "lbm/field/PdfField.h"
-#include "lbm/sweeps/CellwiseSweep.h"
+#include <field/AddToStorage.h>
+#include <field/FlagField.h>
+#include <field/communication/PackInfo.h>
+#include <lbm/communication/PdfFieldPackInfo.h>
+#include <lbm/field/AddToStorage.h>
+#include <lbm/field/PdfField.h>
+#include <lbm/sweeps/CellwiseSweep.h>
 
-#include "stencil/D3Q19.h"
-#include "stencil/D3Q27.h"
+#include <stencil/D3Q19.h>
+#include <stencil/D3Q27.h>
 
+#include "BlockAndCell.hpp"
 #include "BoundaryHandling.hpp"
 #include "LBWalberlaBase.hpp"
 #include "LatticeWalberla.hpp"

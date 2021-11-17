@@ -19,20 +19,14 @@
 #ifndef WALBERLA_UTILS_H
 #define WALBERLA_UTILS_H
 
-#include "core/math/Matrix3.h"
-#include "core/math/Vector3.h"
-
-#include "LatticeWalberla.hpp"
+#include <core/DataTypes.h>
+#include <core/math/Matrix3.h>
+#include <core/math/Vector3.h>
 
 #include <utils/Vector.hpp>
 #include <utils/interpolation/bspline_3d.hpp>
 
-#include <boost/optional.hpp>
-
-#include <cstddef>
-#include <limits>
-#include <memory>
-#include <stdexcept>
+#include <array>
 
 namespace walberla {
 
@@ -58,59 +52,6 @@ inline Utils::Vector6d to_vector6d(const Matrix3<float> m) {
 }
 inline Utils::Vector3i to_vector3i(const std::array<int, 3> v) {
   return Utils::Vector3i{v[0], v[1], v[2]};
-}
-
-// Helpers to retrieve blocks and cells
-struct BlockAndCell {
-  IBlock *block;
-  Cell cell;
-};
-
-template <typename Vector>
-IBlock *get_block_extended(LatticeWalberla const &lattice, Vector const &pos) {
-  auto const blocks = lattice.get_blocks();
-  for (auto b = blocks->begin(); b != blocks->end(); ++b) {
-    if (b->getAABB()
-            .getExtended(real_c(lattice.get_ghost_layers()))
-            .contains(real_c(pos[0]), real_c(pos[1]), real_c(pos[2]))) {
-      return &(*b);
-    }
-  }
-  // Cell not in local blocks
-  return {};
-}
-
-inline boost::optional<BlockAndCell>
-get_block_and_cell(LatticeWalberla const &lattice, Utils::Vector3i const &node,
-                   bool consider_ghost_layers) {
-  // Get block and local cell
-  auto const blocks = lattice.get_blocks();
-  Cell global_cell{uint_c(node[0]), uint_c(node[1]), uint_c(node[2])};
-  auto block = blocks->getBlock(global_cell, 0);
-  // Return if we don't have the cell
-  if (consider_ghost_layers and !block) {
-    // Try to find a block which has the cell as ghost layer
-    block = get_block_extended(lattice, node);
-  }
-  if (!block)
-    return {boost::none};
-
-  // Transform coords to block local
-  Cell local_cell;
-  blocks->transformGlobalToBlockLocalCell(local_cell, *block, global_cell);
-  return {{block, local_cell}};
-}
-
-inline IBlock *get_block(LatticeWalberla const &lattice,
-                         const Utils::Vector3d &pos,
-                         bool consider_ghost_layers) {
-  // Get block
-  auto const blocks = lattice.get_blocks();
-  auto block = blocks->getBlock(real_c(pos[0]), real_c(pos[1]), real_c(pos[2]));
-  if (consider_ghost_layers and !block) {
-    block = get_block_extended(lattice, pos);
-  }
-  return block;
 }
 
 template <typename Function>

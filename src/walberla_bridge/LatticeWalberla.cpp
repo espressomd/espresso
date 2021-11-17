@@ -21,7 +21,11 @@
 
 #include <blockforest/Initialization.h>
 #include <blockforest/StructuredBlockForest.h>
+#include <core/DataTypes.h>
+#include <core/cell/Cell.h>
+#include <domain_decomposition/IBlock.h>
 
+#include "BlockAndCell.hpp"
 #include "walberla_utils.hpp"
 
 #include <utils/Vector.hpp>
