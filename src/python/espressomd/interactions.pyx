@@ -1911,6 +1911,7 @@ class HarmonicBond(BondedInteraction):
 
 if ELECTROSTATICS:
 
+    @script_interface_register
     class BondedCoulomb(BondedInteraction):
 
         """
@@ -1971,6 +1972,7 @@ if ELECTROSTATICS:
             return {}
 
 
+@script_interface_register
 class ThermalizedBond(BondedInteraction):
 
     """
@@ -2100,6 +2102,7 @@ IF THOLE:
 
 IF BOND_CONSTRAINT == 1:
 
+    @script_interface_register
     class RigidBond(BondedInteraction):
 
         """
@@ -2142,6 +2145,7 @@ ELSE:
         name = "RIGID"
 
 
+@script_interface_register
 class Dihedral(BondedInteraction):
 
     """
@@ -2223,6 +2227,7 @@ IF TABULATED:
             """
             return {}
 
+    @script_interface_register
     class TabulatedDistance(_TabulatedBase):
 
         """
@@ -2256,6 +2261,7 @@ IF TABULATED:
             """
             return "TABULATED_DISTANCE"
 
+    @script_interface_register
     class TabulatedAngle(_TabulatedBase):
 
         """
@@ -2298,6 +2304,7 @@ IF TABULATED:
                 raise ValueError(f"Tabulated angle expects forces/energies "
                                  f"within the range [0, pi], got {phi}")
 
+    @script_interface_register
     class TabulatedDihedral(_TabulatedBase):
 
         """
@@ -2419,6 +2426,7 @@ IF TABULATED:
                 return True
 
 
+@script_interface_register
 class Virtual(BondedInteraction):
 
     """
@@ -2446,6 +2454,7 @@ class Virtual(BondedInteraction):
         return {}
 
 
+@script_interface_register
 class AngleHarmonic(BondedInteraction):
 
     """
@@ -2478,6 +2487,7 @@ class AngleHarmonic(BondedInteraction):
         return {}
 
 
+@script_interface_register
 class AngleCosine(BondedInteraction):
 
     """
@@ -2510,6 +2520,7 @@ class AngleCosine(BondedInteraction):
         return {}
 
 
+@script_interface_register
 class AngleCossquare(BondedInteraction):
 
     """
@@ -2542,6 +2553,7 @@ class AngleCossquare(BondedInteraction):
         return {}
 
 
+@script_interface_register
 class IBM_Triel(BondedInteraction):
 
     """
@@ -2600,6 +2612,7 @@ class IBM_Triel(BondedInteraction):
              "elasticLaw": self.elasticLaw}
 
 
+@script_interface_register
 class IBM_Tribend(BondedInteraction):
 
     """
@@ -2650,6 +2663,7 @@ class IBM_Tribend(BondedInteraction):
         return {"kb": self.kb, "theta0": self.theta0}
 
 
+@script_interface_register
 class IBM_VolCons(BondedInteraction):
 
     """
@@ -2694,6 +2708,7 @@ class IBM_VolCons(BondedInteraction):
         return immersed_boundaries.get_current_volume(self.softID)
 
 
+@script_interface_register
 class OifGlobalForces(BondedInteraction):
 
     """
@@ -2733,6 +2748,7 @@ class OifGlobalForces(BondedInteraction):
         return {}
 
 
+@script_interface_register
 class OifLocalForces(BondedInteraction):
 
     """
@@ -2781,6 +2797,7 @@ class OifLocalForces(BondedInteraction):
         return {}
 
 
+@script_interface_register
 class QuarticBond(BondedInteraction):
 
     """
