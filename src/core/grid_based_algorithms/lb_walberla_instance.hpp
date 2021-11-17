@@ -55,7 +55,7 @@ std::shared_ptr<LBWalberlaParams> lb_walberla_params();
  *  @param single_precision   Use single precision
  */
 std::shared_ptr<LBWalberlaBase>
-init_lb_walberla(LatticeWalberla const &lb_lattice,
+init_lb_walberla(std::shared_ptr<LatticeWalberla> const &lb_lattice,
                  LBWalberlaParams const &lb_params, double viscosity,
                  double density, double kT, int seed, bool single_precision);
 

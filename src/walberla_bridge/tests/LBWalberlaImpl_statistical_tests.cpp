@@ -52,11 +52,10 @@ using Utils::Vector3i;
 namespace bdata = boost::unit_test::data;
 
 LBTestParameters params; // populated in main()
-Vector3i mpi_shape;      // populated in main
 
 BOOST_DATA_TEST_CASE(velocity_fluctuation, bdata::make(thermalized_lbs()),
                      lb_generator) {
-  auto lb = lb_generator(mpi_shape, params);
+  auto lb = lb_generator(params);
 
   // Warmup
   for (int i = 0; i < 200; i++)
@@ -65,7 +64,7 @@ BOOST_DATA_TEST_CASE(velocity_fluctuation, bdata::make(thermalized_lbs()),
   // Sample
   int steps = 800;
 
-  auto const [my_left, my_right] = lb->get_local_domain();
+  auto const [my_left, my_right] = lb->lattice().get_local_domain();
   auto const denominator = Utils::product(my_right - my_left);
 
   Vector3d sum_v{}, sum_v_square{};
@@ -104,9 +103,8 @@ BOOST_DATA_TEST_CASE(velocity_fluctuation, bdata::make(thermalized_lbs()),
                          std::plus<Vector3d>());
   boost::mpi::all_reduce(world, boost::mpi::inplace(sum_v_square),
                          std::plus<Vector3d>());
-  auto const num_ranks = Utils::product(mpi_shape);
-  sum_v /= static_cast<double>(num_ranks);
-  sum_v_square /= static_cast<double>(num_ranks);
+  sum_v /= static_cast<double>(world.size());
+  sum_v_square /= static_cast<double>(world.size());
 
   // check
   auto const tol_v = 3E-6;
@@ -121,20 +119,23 @@ BOOST_DATA_TEST_CASE(velocity_fluctuation, bdata::make(thermalized_lbs()),
 }
 
 int main(int argc, char **argv) {
-  MPI_Init(&argc, &argv);
   int n_nodes;
+  Vector3i mpi_shape{};
 
+  MPI_Init(&argc, &argv);
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
   MPI_Dims_create(n_nodes, 3, mpi_shape.data());
+  walberla_mpi_init();
 
-  params.seed = 1;
-  params.viscosity = 0.02;
+  params.seed = 1u;
   params.kT = 1.1E-4;
+  params.viscosity = 0.02;
   params.density = 1.4;
   params.grid_dimensions = Vector3i{12, 12, 18};
   params.box_dimensions = Vector3d{6, 6, 9};
+  params.lattice =
+      std::make_shared<LatticeWalberla>(params.grid_dimensions, mpi_shape, 1u);
 
-  walberla_mpi_init();
   auto const res = boost::unit_test::unit_test_main(init_unit_test, argc, argv);
   MPI_Finalize();
   return res;

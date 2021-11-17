@@ -153,7 +153,7 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
         cpfile << std::fixed;
       }
 
-      auto const gridsize = lb_walberla()->get_grid_dimensions();
+      auto const gridsize = lb_walberla()->lattice().get_grid_dimensions();
       auto const pop_size = lb_walberla()->stencil_size();
       write_header(gridsize, pop_size);
 
@@ -236,7 +236,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
   try {
     if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
-      auto const gridsize = lb_walberla()->get_grid_dimensions();
+      auto const gridsize = lb_walberla()->lattice().get_grid_dimensions();
       auto const pop_size = lb_walberla()->stencil_size();
       check_header(gridsize, pop_size);
 
@@ -298,7 +298,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
 Utils::Vector3i lb_lbfluid_get_shape() {
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
-    return lb_walberla()->get_grid_dimensions();
+    return lb_walberla()->lattice().get_grid_dimensions();
   }
 #endif
   throw NoLBActive();
@@ -383,7 +383,7 @@ lb_lbnode_get_pressure_tensor(const Utils::Vector3i &ind) {
 Utils::Vector6d lb_lbfluid_get_pressure_tensor_local() {
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
-    auto const gridsize = lb_walberla()->get_grid_dimensions();
+    auto const gridsize = lb_walberla()->lattice().get_grid_dimensions();
     Utils::Vector6d tensor{};
     for (int i = 0; i < gridsize[0]; i++) {
       for (int j = 0; j < gridsize[1]; j++) {
@@ -408,7 +408,7 @@ REGISTER_CALLBACK_REDUCTION(lb_lbfluid_get_pressure_tensor_local,
 const Utils::Vector6d lb_lbfluid_get_pressure_tensor() {
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
-    auto const gridsize = lb_walberla()->get_grid_dimensions();
+    auto const gridsize = lb_walberla()->lattice().get_grid_dimensions();
     auto const number_of_nodes = gridsize[0] * gridsize[1] * gridsize[2];
     auto tensor = ::Communication::mpiCallbacks().call(
         ::Communication::Result::reduction, std::plus<Utils::Vector6d>(),

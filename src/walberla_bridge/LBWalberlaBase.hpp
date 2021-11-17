@@ -27,6 +27,7 @@
  * by @ref walberla::LBWalberlaImpl.
  */
 
+#include "LatticeWalberla.hpp"
 #include "VTKHandle.hpp"
 
 #include <utils/Vector.hpp>
@@ -144,21 +145,14 @@ public:
   virtual double get_density() const = 0;
   virtual double get_kT() const = 0;
 
-  //* @brief Set the rng counter for thermalized LBs */
+  /** @brief Set the rng counter for thermalized LBs */
   virtual uint64_t get_rng_state() const = 0;
 
   /** @brief Set the rng state of thermalized LBs */
   virtual void set_rng_state(uint64_t counter) = 0;
 
-  // Grid, domain, halo
-  virtual int n_ghost_layers() const = 0;
-  virtual Utils::Vector3i get_grid_dimensions() const = 0;
-  virtual std::pair<Utils::Vector3d, Utils::Vector3d>
-  get_local_domain() const = 0;
-  virtual bool node_in_local_domain(const Utils::Vector3i &node) const = 0;
-  virtual bool node_in_local_halo(const Utils::Vector3i &node) const = 0;
-  virtual bool pos_in_local_domain(const Utils::Vector3d &pos) const = 0;
-  virtual bool pos_in_local_halo(const Utils::Vector3d &pos) const = 0;
+  /** @brief The underlying lattice */
+  virtual LatticeWalberla const &lattice() const = 0;
 
   /** @brief Create a VTK observable.
    *

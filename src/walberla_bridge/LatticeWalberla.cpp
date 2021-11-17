@@ -73,13 +73,13 @@ LatticeWalberla::get_local_domain() const {
 [[nodiscard]] bool
 LatticeWalberla::node_in_local_domain(const Utils::Vector3i &node) const {
   // Note: Lattice constant =1, cell centers offset by .5
-  return get_block_and_cell(node, false, m_blocks, get_ghost_layers()) !=
-         boost::none;
+  return ::walberla::get_block_and_cell(node, false, m_blocks,
+                                        get_ghost_layers()) != boost::none;
 }
 [[nodiscard]] bool
 LatticeWalberla::node_in_local_halo(const Utils::Vector3i &node) const {
-  return get_block_and_cell(node, true, m_blocks, get_ghost_layers()) !=
-         boost::none;
+  return ::walberla::get_block_and_cell(node, true, m_blocks,
+                                        get_ghost_layers()) != boost::none;
 }
 [[nodiscard]] bool
 LatticeWalberla::pos_in_local_domain(const Utils::Vector3d &pos) const {

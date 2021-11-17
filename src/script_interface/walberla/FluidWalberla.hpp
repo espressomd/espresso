@@ -71,7 +71,7 @@ public:
          [this]() { return m_lb_params->get_tau(); }},
         {"shape", AutoParameter::read_only,
          [this]() {
-           return (m_lb_fluid) ? m_lb_fluid->get_grid_dimensions()
+           return (m_lb_fluid) ? m_lb_fluid->lattice().get_grid_dimensions()
                                : Utils::Vector3i::broadcast(-1);
          }},
         {"kT", AutoParameter::read_only,
@@ -171,7 +171,7 @@ public:
       auto const lb_lattice =
           get_value<std::shared_ptr<LatticeWalberla>>(params, "lattice")
               ->lattice();
-      m_lb_fluid = init_lb_walberla(*lb_lattice, *m_lb_params, lb_visc, lb_dens,
+      m_lb_fluid = init_lb_walberla(lb_lattice, *m_lb_params, lb_visc, lb_dens,
                                     lb_kT, lb_seed, m_is_single_precision);
       m_lb_fluid->set_external_force(ext_f);
     }
