@@ -49,7 +49,8 @@ class LBWrite:
         self.system.actors.add(self.lbf)
 
     def tearDown(self):
-        self.system.lbboundaries.clear()
+        if espressomd.has_features('LB_BOUNDARIES'):
+            self.system.lbboundaries.clear()
         self.system.actors.clear()
         self.system.thermostat.turn_off()
 
