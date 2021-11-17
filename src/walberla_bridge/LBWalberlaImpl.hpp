@@ -896,11 +896,11 @@ public:
     return res;
   }
 
-  [[nodiscard]] BlockDataID get_velocity_field_id() const override {
+  [[nodiscard]] std::size_t get_velocity_field_id() const override {
     return m_velocity_field_id;
   }
 
-  [[nodiscard]] BlockDataID get_force_field_id() const override {
+  [[nodiscard]] std::size_t get_force_field_id() const override {
     return m_force_to_be_applied_id;
   };
 

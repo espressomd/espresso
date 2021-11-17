@@ -158,12 +158,10 @@ public:
   virtual bool pos_in_local_halo(const Utils::Vector3d &pos) const = 0;
 
   /** @brief get the velocity field id */
-  [[nodiscard]] virtual walberla::domain_decomposition::BlockDataID
-  get_velocity_field_id() const = 0;
+  [[nodiscard]] virtual std::size_t get_velocity_field_id() const = 0;
 
   /** @brief get the force field id */
-  [[nodiscard]] virtual walberla::domain_decomposition::BlockDataID
-  get_force_field_id() const = 0;
+  [[nodiscard]] virtual std::size_t get_force_field_id() const = 0;
 
   /** @brief Create a VTK observable.
    *
