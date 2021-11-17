@@ -3,7 +3,8 @@
 
 #include <utility>
 
-#include "WalberlaBlockForest.hpp"
+#include "LatticeWalberla.hpp"
+
 #include "blockforest/communication/UniformBufferedScheme.h"
 #include "field/AddToStorage.h"
 #include "field/GhostLayerField.h"
@@ -13,10 +14,11 @@
 namespace walberla {
 template <typename FloatType = double> class PoissonSolver {
 private:
-  const std::shared_ptr<WalberlaBlockForest> m_blockforest;
   FloatType m_permittivity;
 
 protected:
+  std::shared_ptr<LatticeWalberla> m_lattice;
+
   BlockDataID m_potential_field_id;
   // TODO: check that this is necessary
   BlockDataID m_potential_field_flattened_id;
@@ -29,19 +31,19 @@ protected:
   std::shared_ptr<FullCommunicator> m_full_communication;
 
 public:
-  PoissonSolver(std::shared_ptr<WalberlaBlockForest> blockforest,
+  PoissonSolver(std::shared_ptr<LatticeWalberla> lattice,
                 FloatType permittivity)
-      : m_blockforest{std::move(blockforest)}, m_permittivity{permittivity} {
+      : m_lattice{std::move(lattice)}, m_permittivity{permittivity} {
     m_potential_field_id = field::addToStorage<PotentialField>(
-        get_blockforest()->get_blocks(), "potential field", 0.0, field::fzyx,
-        get_blockforest()->get_ghost_layers());
+        m_lattice->get_blocks(), "potential field", 0.0, field::fzyx,
+        m_lattice->get_ghost_layers());
     m_potential_field_flattened_id =
         field::addFlattenedShallowCopyToStorage<PotentialField>(
-            get_blockforest()->get_blocks(), m_potential_field_id,
+            m_lattice->get_blocks(), m_potential_field_id,
             "flattened potential field");
 
     m_full_communication =
-        std::make_shared<FullCommunicator>(get_blockforest()->get_blocks());
+        std::make_shared<FullCommunicator>(m_lattice->get_blocks());
     m_full_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<PotentialField>>(
             m_potential_field_id));
@@ -52,10 +54,6 @@ public:
                                    FloatType valency) = 0;
   virtual BlockDataID get_potential_field_id() = 0;
 
-  [[nodiscard]] const std::shared_ptr<WalberlaBlockForest> &
-  get_blockforest() const {
-    return m_blockforest;
-  };
   void set_permittivity(FloatType permittivity) {
     m_permittivity = permittivity;
   }

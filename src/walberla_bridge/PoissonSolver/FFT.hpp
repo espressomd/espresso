@@ -1,8 +1,8 @@
 #ifndef ESPRESSO_FFT_HPP
 #define ESPRESSO_FFT_HPP
 
+#include "LatticeWalberla.hpp"
 #include "PoissonSolver.hpp"
-#include "WalberlaBlockForest.hpp"
 
 #include "utils/constants.hpp"
 
@@ -19,6 +19,7 @@ private:
   using PS = PoissonSolver<FloatType>;
   using PS::get_blockforest;
   using PS::ghost_communication;
+  using PS::m_lattice;
   using PS::m_potential_field_id;
   using typename PS::ChargeField;
   using typename PS::PotentialField;
@@ -30,9 +31,9 @@ private:
   std::shared_ptr<blockforest::StructuredBlockForest> m_blocks;
 
 public:
-  FFT(std::shared_ptr<WalberlaBlockForest> blockforest, FloatType permittivity)
-      : PS(std::move(blockforest), permittivity) {
-    m_blocks = get_blockforest()->get_blocks();
+  FFT(std::shared_ptr<LatticeWalberla> lattice, FloatType permittivity)
+      : PS(std::move(lattice), permittivity) {
+    m_blocks = m_lattice->get_blocks();
 
     Vector3<uint_t> dim(m_blocks->getNumberOfXCells(),
                         m_blocks->getNumberOfYCells(),
@@ -56,7 +57,7 @@ public:
 
   void reset_charge_field() override {
     // the FFT-solver re-uses the potential field for the charge
-    for (auto &block : *get_blockforest()->get_blocks()) {
+    for (auto &block : *m_lattice->get_blocks()) {
       auto field = block.template getData<PotentialField>(m_potential_field_id);
       WALBERLA_FOR_ALL_CELLS_XYZ(field, field->get(x, y, z) = 0.;)
     }
@@ -65,7 +66,7 @@ public:
   void add_charge_to_field(const BlockDataID &id, FloatType valency) override {
     auto const factor = valency / get_permittivity();
     // the FFT-solver re-uses the potential field for the charge
-    for (auto &block : *get_blockforest()->get_blocks()) {
+    for (auto &block : *m_lattice->get_blocks()) {
       auto charge_field =
           block.template getData<PotentialField>(m_potential_field_id);
       auto density_field = block.template getData<ChargeField>(id);
