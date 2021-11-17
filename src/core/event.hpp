@@ -132,9 +132,6 @@ void on_lbboundary_change();
  */
 void on_lb_boundary_conditions_change();
 
-/** called every time the boundaries for the ek are changed */
-void on_ekboundary_change();
-
 /** @brief Update particles with properties depending on other particles,
  *  namely virtual sites and ICC charges.
  */
