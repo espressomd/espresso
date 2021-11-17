@@ -166,7 +166,8 @@ private:
   }
 
   void reset_boundary_handling() {
-    m_boundary = std::make_shared<BoundaryModel>(m_blocks, m_pdf_field_id,
+    auto const &blocks = lattice().get_blocks();
+    m_boundary = std::make_shared<BoundaryModel>(blocks, m_pdf_field_id,
                                                  m_flag_field_id);
   }
 
@@ -273,9 +274,6 @@ protected:
           typename stencil::D3Q19>;
   std::shared_ptr<PDFStreamingCommunicator> m_pdf_streaming_communication;
 
-  /** Block forest */
-  std::shared_ptr<blockforest::StructuredBlockForest> m_blocks;
-
   // ResetForce sweep + external force handling
   std::shared_ptr<ResetForce<PdfField, VectorField>> m_reset_force;
 
@@ -299,42 +297,42 @@ public:
   LBWalberlaImpl(std::shared_ptr<LatticeWalberla> const &lattice,
                  double viscosity, double density)
       : m_viscosity(FloatType_c(viscosity)), m_density(FloatType_c(density)),
-        m_kT(FloatType{0}), m_blocks(lattice->get_blocks()),
-        m_lattice(lattice) {
+        m_kT(FloatType{0}), m_lattice(lattice) {
 
+    auto const &blocks = m_lattice->get_blocks();
     auto const n_ghost_layers = m_lattice->get_ghost_layers();
     if (n_ghost_layers == 0)
       throw std::runtime_error("At least one ghost layer must be used");
 
     // Init and register fields
-    m_pdf_field_id = field::addToStorage<PdfField>(
-        m_blocks, "pdfs", FloatType{0}, field::fzyx, n_ghost_layers);
+    m_pdf_field_id = field::addToStorage<PdfField>(blocks, "pdfs", FloatType{0},
+                                                   field::fzyx, n_ghost_layers);
     m_pdf_tmp_field_id = field::addToStorage<PdfField>(
-        m_blocks, "pdfs_tmp", FloatType{0}, field::fzyx, n_ghost_layers);
+        blocks, "pdfs_tmp", FloatType{0}, field::fzyx, n_ghost_layers);
     m_last_applied_force_field_id = field::addToStorage<VectorField>(
-        m_blocks, "force field", FloatType{0}, field::fzyx, n_ghost_layers);
+        blocks, "force field", FloatType{0}, field::fzyx, n_ghost_layers);
     m_force_to_be_applied_id = field::addToStorage<VectorField>(
-        m_blocks, "force field", FloatType{0}, field::fzyx, n_ghost_layers);
+        blocks, "force field", FloatType{0}, field::fzyx, n_ghost_layers);
     m_velocity_field_id = field::addToStorage<VectorField>(
-        m_blocks, "velocity field", FloatType{0}, field::fzyx, n_ghost_layers);
+        blocks, "velocity field", FloatType{0}, field::fzyx, n_ghost_layers);
 
     // Init and register pdf field
     auto pdf_setter =
         InitialPDFsSetter(m_force_to_be_applied_id, m_pdf_field_id,
                           m_velocity_field_id, m_density);
-    for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b) {
+    for (auto b = blocks->begin(); b != blocks->end(); ++b) {
       pdf_setter(&*b);
     }
 
     // Init and register flag field (fluid/boundary)
     m_flag_field_id = field::addFlagFieldToStorage<FlagField>(
-        m_blocks, "flag field", n_ghost_layers);
+        blocks, "flag field", n_ghost_layers);
     // Init boundary sweep
     reset_boundary_handling();
 
     // Set up the communication and register fields
     m_pdf_streaming_communication =
-        std::make_shared<PDFStreamingCommunicator>(m_blocks);
+        std::make_shared<PDFStreamingCommunicator>(blocks);
     m_pdf_streaming_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<PdfField>>(
             m_pdf_field_id, n_ghost_layers));
@@ -345,7 +343,7 @@ public:
         std::make_shared<field::communication::PackInfo<FlagField>>(
             m_flag_field_id, n_ghost_layers));
 
-    m_full_communication = std::make_shared<FullCommunicator>(m_blocks);
+    m_full_communication = std::make_shared<FullCommunicator>(blocks);
     m_full_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<PdfField>>(
             m_pdf_field_id, n_ghost_layers));
@@ -377,11 +375,12 @@ public:
   }
 
   void integrate() override {
+    auto const &blocks = lattice().get_blocks();
     // Reset force fields
-    for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
+    for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_reset_force)(&*b);
     // LB collide
-    for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
+    for (auto b = blocks->begin(); b != blocks->end(); ++b)
       boost::apply_visitor(run_collide_sweep, *m_collision_model,
                            boost::variant<IBlock *>(&*b));
     if (auto *cm = boost::get<ThermalizedCollisionModel>(&*m_collision_model)) {
@@ -389,10 +388,10 @@ public:
     }
     (*m_pdf_streaming_communication)();
     // Handle boundaries
-    for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
+    for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_boundary)(&*b);
     // LB stream
-    for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
+    for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_stream)(&*b);
     // Refresh ghost layers
     (*m_full_communication)();
@@ -429,9 +428,10 @@ public:
     obj.block_offset_generator =
         [this](IBlock *const block, uint32_t &block_offset_0,
                uint32_t &block_offset_1, uint32_t &block_offset_2) {
-          block_offset_0 = m_blocks->getBlockCellBB(*block).xMin();
-          block_offset_1 = m_blocks->getBlockCellBB(*block).yMin();
-          block_offset_2 = m_blocks->getBlockCellBB(*block).zMin();
+          auto const &blocks = lattice().get_blocks();
+          block_offset_0 = blocks->getBlockCellBB(*block).xMin();
+          block_offset_1 = blocks->getBlockCellBB(*block).yMin();
+          block_offset_2 = blocks->getBlockCellBB(*block).zMin();
         };
     m_collision_model = std::make_shared<CollisionModel>(std::move(obj));
   }
@@ -729,7 +729,8 @@ public:
         slip_velocity_vectors.data(), grid_size);
     boost::const_multi_array_ref<int, 3> raster(raster_flat.data(), grid_size);
 
-    for (auto block = m_blocks->begin(); block != m_blocks->end(); ++block) {
+    auto const &blocks = lattice().get_blocks();
+    for (auto block = blocks->begin(); block != blocks->end(); ++block) {
       // lattice constant is 1
       auto const left = block->getAABB().min();
       auto const off_i = int_c(left[0]);
@@ -790,12 +791,12 @@ public:
 
   // Global momentum
   Utils::Vector3d get_momentum() const override {
+    auto const &blocks = lattice().get_blocks();
     Vector3<FloatType> mom;
-    for (auto block_it = m_blocks->begin(); block_it != m_blocks->end();
-         ++block_it) {
-      auto pdf_field = block_it->template getData<PdfField>(m_pdf_field_id);
-      auto force_field = block_it->template getData<VectorField>(
-          m_last_applied_force_field_id);
+    for (auto block = blocks->begin(); block != blocks->end(); ++block) {
+      auto pdf_field = block->template getData<PdfField>(m_pdf_field_id);
+      auto force_field =
+          block->template getData<VectorField>(m_last_applied_force_field_id);
       Vector3<FloatType> local_v;
       WALBERLA_FOR_ALL_CELLS_XYZ(pdf_field, {
         FloatType local_dens =
@@ -835,8 +836,9 @@ public:
     int ghost_offset = 0;
     if (include_ghosts)
       ghost_offset = lattice().get_ghost_layers();
+    auto const &blocks = lattice().get_blocks();
     std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>> res;
-    for (auto block = m_blocks->begin(); block != m_blocks->end(); ++block) {
+    for (auto block = blocks->begin(); block != blocks->end(); ++block) {
       auto left = block->getAABB().min();
       // Lattice constant is 1, node centers are offset by .5
       Utils::Vector3d pos_offset =
@@ -880,9 +882,10 @@ public:
     }
 
     // instantiate VTKOutput object
-    unsigned const write_freq = (delta_N) ? static_cast<unsigned>(delta_N) : 1u;
+    auto const &blocks = lattice().get_blocks();
+    auto const write_freq = (delta_N) ? static_cast<unsigned int>(delta_N) : 1u;
     auto pdf_field_vtk = vtk::createVTKOutput_BlockData(
-        m_blocks, identifier, uint_c(write_freq), uint_c(0), false, base_folder,
+        blocks, identifier, uint_c(write_freq), uint_c(0), false, base_folder,
         prefix, true, true, true, true, uint_c(initial_count));
     field::FlagFieldCellFilter<FlagField> fluid_filter(m_flag_field_id);
     fluid_filter.addFlag(Boundary_flag);
