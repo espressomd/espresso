@@ -53,7 +53,6 @@ void initialize(Utils::Factory<ObjectHandle> *f) {
   ClusterAnalysis::initialize(f);
   Interactions::initialize(f);
   LBBoundaries::initialize(f);
-  EKBoundaries::initialize(f);
   PairCriteria::initialize(f);
   VirtualSites::initialize(f);
   MPIIO::initialize(f);

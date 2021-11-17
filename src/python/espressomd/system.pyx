@@ -42,8 +42,6 @@ IF LB_WALBERLA:
     from .lb import _vtk_registry
 if LB_BOUNDARIES:
     from .lbboundaries import LBBoundaries
-if EK_BOUNDARIES:
-    from .ekboundaries import EKBoundaries
 IF EK_WALBERLA:
     from .EKSpecies import EKContainer
 from .comfixed import ComFixed
@@ -158,8 +156,6 @@ cdef class System:
         """:class:`espressomd.constraints.Constraints`"""
         lbboundaries
         """:class:`espressomd.lbboundaries.LBBoundaries`"""
-        ekboundaries
-        """:class:`espressomd.ekboundaries.EKBoundaries`"""
         ekcontainer
         """:class:`espressomd.EKSpecies.EKContainer`"""
         collision_detection
@@ -200,8 +196,6 @@ cdef class System:
             self.galilei = GalileiTransform()
             if LB_BOUNDARIES:
                 self.lbboundaries = LBBoundaries()
-            if EK_BOUNDARIES:
-                self.ekboundaries = EKBoundaries()
             IF EK_WALBERLA:
                 self.ekcontainer = EKContainer()
             self.non_bonded_inter = interactions.NonBondedInteractions()
@@ -242,9 +236,6 @@ cdef class System:
         IF LB_BOUNDARIES:
             odict['lbboundaries'] = System.__getattribute__(
                 self, "lbboundaries")
-        IF EK_BOUNDARIES:
-            odict['ekboundaries'] = System.__getattribute__(
-                self, "ekboundaries")
         IF EK_WALBERLA:
             odict['ekcontainer'] = System.__getattribute__(
                 self, "ekcontainer")

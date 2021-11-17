@@ -1,7 +1,6 @@
 target_sources(
         EspressoCore
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lb_boundaries.cpp
-        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/ek_boundaries.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/lbboundaries/LBBoundary.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/lb_interface.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/lb_interpolation.cpp
