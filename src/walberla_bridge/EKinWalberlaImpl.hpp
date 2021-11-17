@@ -216,26 +216,28 @@ private:
     }
   }
 
-  inline void kernel_advection(const BlockDataID &velocity_id) {
-    auto kernel = pystencils::AdvectiveFluxKernel(
-        m_flux_field_flattened_id, m_density_field_id, velocity_id);
+  inline void kernel_advection(const std::size_t &velocity_id) {
+    auto kernel = pystencils::AdvectiveFluxKernel(m_flux_field_flattened_id,
+                                                  m_density_field_id,
+                                                  BlockDataID(velocity_id));
     for (auto &block : *m_lattice->get_blocks()) {
       kernel.run(&block);
     }
   }
 
-  inline void kernel_friction_coupling(const BlockDataID &force_id) {
+  inline void kernel_friction_coupling(const std::size_t &force_id) {
     auto kernel = pystencils::FrictionCouplingKernel(
-        get_diffusion(), force_id, m_flux_field_flattened_id, get_kT());
+        get_diffusion(), BlockDataID(force_id), m_flux_field_flattened_id,
+        get_kT());
     for (auto &block : *m_lattice->get_blocks()) {
       kernel.run(&block);
     }
   }
 
-  inline void kernel_diffusion_electrostatic(const BlockDataID &potential_id) {
+  inline void kernel_diffusion_electrostatic(const std::size_t &potential_id) {
     const auto ext_field = get_ext_efield();
     auto kernel = pystencils::DiffusiveFluxKernelWithElectrostatic(
-        get_diffusion(), m_flux_field_flattened_id, potential_id,
+        get_diffusion(), m_flux_field_flattened_id, BlockDataID(potential_id),
         m_density_field_flattened_id, ext_field[0], ext_field[1], ext_field[2],
         get_kT(), get_valency());
     for (auto &block : *m_lattice->get_blocks()) {
@@ -246,9 +248,9 @@ private:
   inline void kernel_migration() {}
 
 public:
-  void integrate(const BlockDataID &potential_id,
-                 const BlockDataID &velocity_id,
-                 const BlockDataID &force_id) override {
+  void integrate(const std::size_t &potential_id,
+                 const std::size_t &velocity_id,
+                 const std::size_t &force_id) override {
     if (m_noflux_dirty) {
       boundary_noflux_update();
       m_noflux_dirty = false;

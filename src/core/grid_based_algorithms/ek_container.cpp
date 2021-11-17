@@ -32,15 +32,14 @@ void propagate() {
   ek_container.solve_poisson();
 
   // TODO: find a way for a proper interface
-  const walberla::BlockDataID velocity_field_id =
-      []() -> walberla::BlockDataID {
+  const std::size_t velocity_field_id = []() -> std::size_t {
     try {
       return Walberla::get_velocity_field_id();
     } catch (const std::runtime_error &e) {
       return {};
     }
   }();
-  const walberla::BlockDataID force_field_id = []() -> walberla::BlockDataID {
+  const std::size_t force_field_id = []() -> std::size_t {
     try {
       return Walberla::get_force_field_id();
     } catch (const std::runtime_error &e) {
