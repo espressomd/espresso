@@ -69,6 +69,9 @@ boost::optional<double> get_interpolated_density_at_pos(Utils::Vector3d pos);
 
 void add_force_at_pos(Utils::Vector3d pos, Utils::Vector3d f);
 
+std::size_t get_velocity_field_id();
+std::size_t get_force_field_id();
+
 } // namespace Walberla
 #endif
 #endif

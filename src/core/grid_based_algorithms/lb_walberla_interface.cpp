@@ -206,5 +206,11 @@ void add_force_at_pos(Utils::Vector3d pos, Utils::Vector3d f) {
 
 REGISTER_CALLBACK(add_force_at_pos)
 
+std::size_t get_velocity_field_id() {
+  return lb_walberla()->get_velocity_field_id();
+}
+
+std::size_t get_force_field_id() { return lb_walberla()->get_force_field_id(); }
+
 } // namespace Walberla
 #endif
