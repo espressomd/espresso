@@ -59,22 +59,24 @@ class BondedInteractions(ut.TestCase):
         classname = bondObject.__class__.__name__
         valid_keys = bondObject.valid_keys()
         required_keys = bondObject.required_keys()
+        old_params = bondObject.params.copy()
         default_keys = set(bondObject.get_default_params())
         self.assertIsInstance(valid_keys, set,
-                              "{}.valid_keys() must return a set".format(
-                                  classname))
+                              f"{classname}.valid_keys() must return a set")
         self.assertIsInstance(required_keys, set,
-                              "{}.required_keys() must return a set".format(
-                                  classname))
+                              f"{classname}.required_keys() must return a set")
         self.assertTrue(default_keys.issubset(valid_keys),
-                        "{}.get_default_params() has unknown parameters: {}".format(
-            classname, default_keys.difference(valid_keys)))
+                        f"{classname}.get_default_params() has unknown "
+                        f"parameters: {default_keys.difference(valid_keys)}")
         self.assertTrue(default_keys.isdisjoint(required_keys),
-                        "{}.get_default_params() has extra parameters: {}".format(
-            classname, default_keys.intersection(required_keys)))
+                        f"{classname}.get_default_params() has extra "
+                        f"parameters: {default_keys.intersection(required_keys)}")
         self.assertSetEqual(default_keys, valid_keys - required_keys,
-                            "{}.get_default_params() should have keys: {}, got: {}".format(
-                                classname, valid_keys - required_keys, default_keys))
+                            f"{classname}.get_default_params() should have keys: "
+                            f"{valid_keys - required_keys}, got: {default_keys}")
+        with self.assertRaisesRegex(RuntimeError, "Bond parameters are immutable"):
+            bondObject.params = {}
+        self.assertEqual(bondObject.params, old_params)
 
     def generateTestForBondParams(_bondId, _bondClass, _params, _refs=None):
         """Generates test cases for checking bond parameters set and gotten

@@ -1735,7 +1735,7 @@ class BondedInteraction(ScriptInterfaceHelper):
 
     @params.setter
     def params(self, p):
-        raise Exception("Bonds are immutable.")
+        raise RuntimeError("Bond parameters are immutable.")
 
     def validate_params(self, params):
         """Check that parameters are valid.
