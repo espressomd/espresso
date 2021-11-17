@@ -17,7 +17,6 @@ template <typename FloatType = double>
 class FFT : public PoissonSolver<FloatType> {
 private:
   using PS = PoissonSolver<FloatType>;
-  using PS::get_blockforest;
   using PS::ghost_communication;
   using PS::m_lattice;
   using PS::m_potential_field_id;

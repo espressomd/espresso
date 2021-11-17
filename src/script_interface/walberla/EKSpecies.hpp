@@ -7,8 +7,6 @@
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameter.hpp"
 
-#include "grid_based_algorithms/walberla_blockforest.hpp"
-
 #include "walberla_bridge/EKinWalberlaBase.hpp"
 #include "walberla_bridge/EKinWalberlaImpl.hpp"
 
@@ -76,10 +74,7 @@ public:
           [this](Variant const &v) {
             m_ekinstance->set_friction_coupling(get_value<bool>(v));
           },
-          [this]() { return m_ekinstance->get_friction_coupling(); }},
-         {"shape", AutoParameter::read_only, [this]() {
-            return m_ekinstance->get_blockforest()->get_grid_dimensions();
-          }}});
+          [this]() { return m_ekinstance->get_friction_coupling(); }}});
   }
 
   [[nodiscard]] std::shared_ptr<EKinWalberlaBase<double>> get_ekinstance() {
