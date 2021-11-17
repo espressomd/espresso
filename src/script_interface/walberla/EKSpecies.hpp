@@ -1,6 +1,8 @@
 #ifndef SCRIPT_INTERFACE_WALBERLA__EKSPECIES_HPP
 #define SCRIPT_INTERFACE_WALBERLA__EKSPECIES_HPP
 
+#include "LatticeWalberla.hpp"
+
 #include "core/communication.hpp"
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameter.hpp"
@@ -37,8 +39,9 @@ class EKSpecies : public AutoParameters<EKinWalberlaBase<double>> {
 public:
   void do_construct(VariantMap const &args) override {
     m_ekinstance = std::make_shared<::walberla::EKinWalberlaImpl<13, double>>(
-        get_walberla_blockforest(), get_value<double>(args, "diffusion"),
-        get_value<double>(args, "kT"), get_value<double>(args, "valency"),
+        get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice")->lattice(),
+        get_value<double>(args, "diffusion"), get_value<double>(args, "kT"),
+        get_value<double>(args, "valency"),
         get_value<Utils::Vector3d>(args, "ext_efield"),
         get_value<double>(args, "density"), get_value<bool>(args, "advection"),
         get_value<bool>(args, "friction_coupling"));

@@ -1,9 +1,10 @@
 #ifndef SCRIPT_INTERFACE_WALBERLA_FFT_HPP
 #define SCRIPT_INTERFACE_WALBERLA_FFT_HPP
 
+#include "EKPoissonSolver.hpp"
+#include "LatticeWalberla.hpp"
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameter.hpp"
-#include "script_interface/walberla/EKPoissonSolver.hpp"
 
 #include "grid_based_algorithms/walberla_blockforest.hpp"
 #include "walberla_bridge/PoissonSolver/FFT.hpp"
@@ -16,7 +17,8 @@ class EKFFT : public EKPoissonSolver {
 public:
   void do_construct(VariantMap const &args) override {
     m_fftinstance = std::make_shared<::walberla::FFT<double>>(
-        get_walberla_blockforest(), get_value<double>(args, "permittivity"));
+        get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice")->lattice(),
+        get_value<double>(args, "permittivity"));
 
     add_parameters({{"permittivity",
                      [this](Variant const &v) {

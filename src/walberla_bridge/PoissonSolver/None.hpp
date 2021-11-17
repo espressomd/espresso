@@ -1,7 +1,7 @@
 #ifndef ESPRESSO_NONE_HPP
 #define ESPRESSO_NONE_HPP
 
-#include "LatticeWalberla.hpp.hpp"
+#include "LatticeWalberla.hpp"
 #include "PoissonSolver.hpp"
 
 #include "field/AddToStorage.h"

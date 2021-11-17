@@ -5,7 +5,7 @@
 #include "script_interface/auto_parameters/AutoParameter.hpp"
 #include "script_interface/walberla/EKPoissonSolver.hpp"
 
-#include "grid_based_algorithms/walberla_blockforest.hpp"
+#include "LatticeWalberla.hpp"
 #include "walberla_bridge/PoissonSolver/None.hpp"
 
 #include <memory>
@@ -15,8 +15,9 @@ namespace ScriptInterface::walberla {
 class EKNone : public EKPoissonSolver {
 public:
   void do_construct(VariantMap const &args) override {
-    m_noneinstance =
-        std::make_shared<::walberla::None<double>>(get_walberla_blockforest());
+    m_noneinstance = std::make_shared<::walberla::None<double>>(
+        get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice")
+            ->lattice());
   }
 
   [[nodiscard]] std::shared_ptr<::walberla::PoissonSolver<double>>

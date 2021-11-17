@@ -13,12 +13,13 @@
 
 namespace walberla {
 template <typename FloatType = double> class PoissonSolver {
+protected:
+  std::shared_ptr<LatticeWalberla> m_lattice;
+
 private:
   FloatType m_permittivity;
 
 protected:
-  std::shared_ptr<LatticeWalberla> m_lattice;
-
   BlockDataID m_potential_field_id;
   // TODO: check that this is necessary
   BlockDataID m_potential_field_flattened_id;
