@@ -8,9 +8,7 @@
 
 #include "blockforest/StructuredBlockForest.h"
 
-#include "WalberlaBlockForest.hpp"
-
-/** Class that runs and controls the LB on WaLBerla
+/** Class that runs and controls the EK on WaLBerla
  */
 template <typename FloatType = double> class EKinWalberlaBase {
 private:
@@ -84,9 +82,6 @@ public:
 
   /** @brief set the rng state of thermalized LBs */
   virtual void set_rng_state(uint64_t counter) = 0;
-
-  [[nodiscard]] virtual const std::shared_ptr<walberla::WalberlaBlockForest> &
-  get_blockforest() const = 0;
 
   [[nodiscard]] virtual walberla::BlockDataID get_density_id() const = 0;
   /** @brief Create a VTK observable.

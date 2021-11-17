@@ -13,6 +13,7 @@
 #include "timeloop/SweepTimeloop.h"
 
 #include "EKinWalberlaBase.hpp"
+#include "LatticeWalberla.hpp"
 #include "walberla_utils.hpp"
 
 #include "generated_kernels/AdvectiveFluxKernel.h"
@@ -62,7 +63,7 @@ protected:
   BlockDataID m_flux_field_flattened_id;
 
   /** Block forest */
-  const std::shared_ptr<WalberlaBlockForest> m_blockforest;
+  std::shared_ptr<LatticeWalberla> m_lattice;
 
   std::unique_ptr<pystencils::NoFlux> m_noflux;
   bool m_noflux_dirty = false;
@@ -110,41 +111,39 @@ protected:
   std::shared_ptr<FullCommunicator> m_full_communication;
 
 public:
-  EKinWalberlaImpl(std::shared_ptr<WalberlaBlockForest> blockforest,
+  EKinWalberlaImpl(std::shared_ptr<LatticeWalberla> lattice,
                    FloatType diffusion, FloatType kT, FloatType valency,
                    Utils::Vector<FloatType, 3> ext_efield, FloatType density,
                    bool advection, bool friction_coupling)
       : EKinWalberlaBase<FloatType>(diffusion, kT, valency, ext_efield,
                                     advection, friction_coupling),
-        m_blockforest{std::move(blockforest)} {
+        m_lattice(std::move(lattice)) {
     m_density_field_id = field::addToStorage<DensityField>(
-        get_blockforest()->get_blocks(), "density field", density, field::fzyx,
-        get_blockforest()->get_ghost_layers());
+        m_lattice->get_blocks(), "density field", density, field::fzyx,
+        m_lattice->get_ghost_layers());
     m_density_field_flattened_id =
         field::addFlattenedShallowCopyToStorage<DensityField>(
-            get_blockforest()->get_blocks(), m_density_field_id,
+            m_lattice->get_blocks(), m_density_field_id,
             "flattened density field");
     m_flux_field_id = field::addToStorage<FluxField>(
-        get_blockforest()->get_blocks(), "flux field", FloatType{0},
-        field::fzyx, get_blockforest()->get_ghost_layers());
+        m_lattice->get_blocks(), "flux field", FloatType{0}, field::fzyx,
+        m_lattice->get_ghost_layers());
     m_flux_field_flattened_id =
         field::addFlattenedShallowCopyToStorage<FluxField>(
-            get_blockforest()->get_blocks(), m_flux_field_id,
-            "flattened flux field");
+            m_lattice->get_blocks(), m_flux_field_id, "flattened flux field");
 
-    m_noflux = std::make_unique<pystencils::NoFlux>(
-        get_blockforest()->get_blocks(), m_flux_field_flattened_id);
+    m_noflux = std::make_unique<pystencils::NoFlux>(m_lattice->get_blocks(),
+                                                    m_flux_field_flattened_id);
 
     m_continuity = std::make_unique<pystencils::ContinuityKernel>(
         m_flux_field_flattened_id, m_density_field_flattened_id);
 
     // Init and register flag field (domain/boundary)
     m_flag_field_id = field::addFlagFieldToStorage<FlagField>(
-        get_blockforest()->get_blocks(), "flag field",
-        get_blockforest()->get_ghost_layers());
+        m_lattice->get_blocks(), "flag field", m_lattice->get_ghost_layers());
 
-    for (auto block = get_blockforest()->get_blocks()->begin();
-         block != get_blockforest()->get_blocks()->end(); ++block) {
+    for (auto block = m_lattice->get_blocks()->begin();
+         block != m_lattice->get_blocks()->end(); ++block) {
       auto *flagField = block->template getData<FlagField>(m_flag_field_id);
 
       flagField->registerFlag(domain_flag);
@@ -154,7 +153,7 @@ public:
     // set domain flag everywhere
     clear_boundaries();
 
-    // m_noflux = pystencils::NoFlux(get_blockforest(),
+    // m_noflux = pystencils::NoFlux(m_lattice,
     // m_flux_field_flattened_id);
 
     // TODO: boundary handlings
@@ -166,7 +165,7 @@ public:
     //    clear_boundaries();
 
     m_full_communication =
-        std::make_shared<FullCommunicator>(get_blockforest()->get_blocks());
+        std::make_shared<FullCommunicator>(m_lattice->get_blocks());
     m_full_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<DensityField>>(
             m_density_field_id));
@@ -196,13 +195,13 @@ public:
 
 private:
   inline void kernel_noflux() {
-    for (auto &block : *get_blockforest()->get_blocks()) {
+    for (auto &block : *m_lattice->get_blocks()) {
       (*m_noflux).run(&block);
     }
   }
 
   inline void kernel_continuity() {
-    for (auto &block : *get_blockforest()->get_blocks()) {
+    for (auto &block : *m_lattice->get_blocks()) {
       (*m_continuity).run(&block);
     }
   }
@@ -212,7 +211,7 @@ private:
                                                   m_flux_field_flattened_id,
                                                   m_density_field_flattened_id);
 
-    for (auto &block : *get_blockforest()->get_blocks()) {
+    for (auto &block : *m_lattice->get_blocks()) {
       kernel.run(&block);
     }
   }
@@ -220,7 +219,7 @@ private:
   inline void kernel_advection(const BlockDataID &velocity_id) {
     auto kernel = pystencils::AdvectiveFluxKernel(
         m_flux_field_flattened_id, m_density_field_id, velocity_id);
-    for (auto &block : *get_blockforest()->get_blocks()) {
+    for (auto &block : *m_lattice->get_blocks()) {
       kernel.run(&block);
     }
   }
@@ -228,7 +227,7 @@ private:
   inline void kernel_friction_coupling(const BlockDataID &force_id) {
     auto kernel = pystencils::FrictionCouplingKernel(
         get_diffusion(), force_id, m_flux_field_flattened_id, get_kT());
-    for (auto &block : *get_blockforest()->get_blocks()) {
+    for (auto &block : *m_lattice->get_blocks()) {
       kernel.run(&block);
     }
   }
@@ -239,7 +238,7 @@ private:
         get_diffusion(), m_flux_field_flattened_id, potential_id,
         m_density_field_flattened_id, ext_field[0], ext_field[1], ext_field[2],
         get_kT(), get_valency());
-    for (auto &block : *get_blockforest()->get_blocks()) {
+    for (auto &block : *m_lattice->get_blocks()) {
       kernel.run(&block);
     }
   }
@@ -302,11 +301,6 @@ public:
     }
   };
 
-  [[nodiscard]] const std::shared_ptr<WalberlaBlockForest> &
-  get_blockforest() const override {
-    return m_blockforest;
-  };
-
   [[nodiscard]] walberla::BlockDataID get_density_id() const override {
     return m_density_field_id;
   }
@@ -314,8 +308,8 @@ public:
   // Density
   bool set_node_density(const Utils::Vector3i &node,
                         FloatType density) override {
-    auto bc = get_block_and_cell(node, false, get_blockforest()->get_blocks(),
-                                 get_blockforest()->get_ghost_layers());
+    auto bc = get_block_and_cell(node, false, m_lattice->get_blocks(),
+                                 m_lattice->get_ghost_layers());
     if (!bc)
       return false;
 
@@ -328,8 +322,8 @@ public:
 
   [[nodiscard]] boost::optional<FloatType>
   get_node_density(const Utils::Vector3i &node) const override {
-    auto bc = get_block_and_cell(node, false, get_blockforest()->get_blocks(),
-                                 get_blockforest()->get_ghost_layers());
+    auto bc = get_block_and_cell(node, false, m_lattice->get_blocks(),
+                                 m_lattice->get_ghost_layers());
 
     if (!bc)
       return {boost::none};
@@ -342,14 +336,13 @@ public:
 
   void boundary_noflux_update() {
     m_noflux.get()->template fillFromFlagField<FlagField>(
-        get_blockforest()->get_blocks(), m_flag_field_id, noflux_flag,
-        domain_flag);
+        m_lattice->get_blocks(), m_flag_field_id, noflux_flag, domain_flag);
   }
 
   [[nodiscard]] bool
   set_node_noflux_boundary(const Utils::Vector3i &node) override {
-    auto bc = get_block_and_cell(node, true, get_blockforest()->get_blocks(),
-                                 get_blockforest()->get_ghost_layers());
+    auto bc = get_block_and_cell(node, true, m_lattice->get_blocks(),
+                                 m_lattice->get_ghost_layers());
     if (!bc)
       return false;
 
@@ -362,8 +355,8 @@ public:
 
   [[nodiscard]] bool
   remove_node_from_boundary(const Utils::Vector3i &node) override {
-    auto bc = get_block_and_cell(node, true, get_blockforest()->get_blocks(),
-                                 get_blockforest()->get_ghost_layers());
+    auto bc = get_block_and_cell(node, true, m_lattice->get_blocks(),
+                                 m_lattice->get_ghost_layers());
     if (!bc)
       return false;
 
@@ -377,9 +370,8 @@ public:
   [[nodiscard]] boost::optional<bool>
   get_node_is_boundary(const Utils::Vector3i &node,
                        bool consider_ghosts = false) const override {
-    auto bc = get_block_and_cell(node, consider_ghosts,
-                                 get_blockforest()->get_blocks(),
-                                 get_blockforest()->get_ghost_layers());
+    auto bc = get_block_and_cell(node, consider_ghosts, m_lattice->get_blocks(),
+                                 m_lattice->get_ghost_layers());
     if (!bc)
       return {boost::none};
 
@@ -391,16 +383,16 @@ public:
 
   void clear_boundaries() override {
     const CellInterval &domain_bb_in_global_cell_coordinates =
-        get_blockforest()->get_blocks()->getCellBBFromAABB(
-            get_blockforest()->get_blocks()->begin()->getAABB().getExtended(
-                FloatType(get_blockforest()->get_ghost_layers())));
-    for (auto block = get_blockforest()->get_blocks()->begin();
-         block != get_blockforest()->get_blocks()->end(); ++block) {
+        m_lattice->get_blocks()->getCellBBFromAABB(
+            m_lattice->get_blocks()->begin()->getAABB().getExtended(
+                FloatType(m_lattice->get_ghost_layers())));
+    for (auto block = m_lattice->get_blocks()->begin();
+         block != m_lattice->get_blocks()->end(); ++block) {
 
       auto *flagField = block->template getData<FlagField>(m_flag_field_id);
 
       CellInterval domain_bb(domain_bb_in_global_cell_coordinates);
-      get_blockforest()->get_blocks()->transformGlobalToBlockLocalCellInterval(
+      m_lattice->get_blocks()->transformGlobalToBlockLocalCellInterval(
           domain_bb, *block);
 
       for (auto cell : domain_bb) {
@@ -424,10 +416,10 @@ public:
   node_indices_positions(bool include_ghosts = false) const override {
     int ghost_offset = 0;
     if (include_ghosts)
-      ghost_offset = get_blockforest()->get_ghost_layers();
+      ghost_offset = m_lattice->get_ghost_layers();
     std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>> res;
-    for (auto block = get_blockforest()->get_blocks()->begin();
-         block != get_blockforest()->get_blocks()->end(); ++block) {
+    for (auto block = m_lattice->get_blocks()->begin();
+         block != m_lattice->get_blocks()->end(); ++block) {
       auto left = block->getAABB().min();
       // Lattice constant is 1, node centers are offset by .5
       Utils::Vector3d pos_offset =
@@ -474,8 +466,8 @@ public:
     // instantiate VTKOutput object
     unsigned const write_freq = (delta_N) ? static_cast<unsigned>(delta_N) : 1u;
     auto vtk_writer = vtk::createVTKOutput_BlockData(
-        get_blockforest()->get_blocks(), identifier, uint_c(write_freq),
-        uint_c(0), false, base_folder, prefix, true, true, true, true,
+        m_lattice->get_blocks(), identifier, uint_c(write_freq), uint_c(0),
+        false, base_folder, prefix, true, true, true, true,
         uint_c(initial_count));
     field::FlagFieldCellFilter<FlagField> domain_filter(m_flag_field_id);
     domain_filter.addFlag(domain_flag);
