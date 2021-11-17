@@ -19,10 +19,10 @@
 #ifndef WALBERLA_UTILS_H
 #define WALBERLA_UTILS_H
 
-#include "blockforest/StructuredBlockForest.h"
 #include "core/math/Matrix3.h"
 #include "core/math/Vector3.h"
-#include "field/GhostLayerField.h"
+
+#include "LatticeWalberla.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/interpolation/bspline_3d.hpp>
@@ -66,12 +66,12 @@ struct BlockAndCell {
   Cell cell;
 };
 
-template <typename PosVector, typename BlockForest>
-IBlock *get_block_extended(const PosVector &pos, BlockForest const &blocks,
-                           unsigned int n_ghost_layers) {
+template <typename Vector>
+IBlock *get_block_extended(LatticeWalberla const &lattice, Vector const &pos) {
+  auto const blocks = lattice.get_blocks();
   for (auto b = blocks->begin(); b != blocks->end(); ++b) {
     if (b->getAABB()
-            .getExtended(real_c(n_ghost_layers))
+            .getExtended(real_c(lattice.get_ghost_layers()))
             .contains(real_c(pos[0]), real_c(pos[1]), real_c(pos[2]))) {
       return &(*b);
     }
@@ -80,17 +80,17 @@ IBlock *get_block_extended(const PosVector &pos, BlockForest const &blocks,
   return {};
 }
 
-template <typename BlockForest>
-boost::optional<BlockAndCell>
-get_block_and_cell(const Utils::Vector3i &node, bool consider_ghost_layers,
-                   BlockForest const &blocks, unsigned int n_ghost_layers) {
+inline boost::optional<BlockAndCell>
+get_block_and_cell(LatticeWalberla const &lattice, Utils::Vector3i const &node,
+                   bool consider_ghost_layers) {
   // Get block and local cell
+  auto const blocks = lattice.get_blocks();
   Cell global_cell{uint_c(node[0]), uint_c(node[1]), uint_c(node[2])};
   auto block = blocks->getBlock(global_cell, 0);
   // Return if we don't have the cell
   if (consider_ghost_layers and !block) {
     // Try to find a block which has the cell as ghost layer
-    block = get_block_extended(node, blocks, n_ghost_layers);
+    block = get_block_extended(lattice, node);
   }
   if (!block)
     return {boost::none};
@@ -101,19 +101,20 @@ get_block_and_cell(const Utils::Vector3i &node, bool consider_ghost_layers,
   return {{block, local_cell}};
 }
 
-template <typename BlockForest>
-IBlock *get_block(const Utils::Vector3d &pos, bool consider_ghost_layers,
-                  BlockForest const &blocks, unsigned int n_ghost_layers) {
+inline IBlock *get_block(LatticeWalberla const &lattice,
+                         const Utils::Vector3d &pos,
+                         bool consider_ghost_layers) {
   // Get block
+  auto const blocks = lattice.get_blocks();
   auto block = blocks->getBlock(real_c(pos[0]), real_c(pos[1]), real_c(pos[2]));
   if (consider_ghost_layers and !block) {
-    block = get_block_extended(pos, blocks, n_ghost_layers);
+    block = get_block_extended(lattice, pos);
   }
   return block;
 }
 
 template <typename Function>
-void interpolate_bspline_at_pos(Utils::Vector3d pos, Function f) {
+void interpolate_bspline_at_pos(Utils::Vector3d const &pos, Function const &f) {
   Utils::Interpolation::bspline_3d<2>(
       pos, f, Utils::Vector3d{1.0, 1.0, 1.0}, // grid spacing
       Utils::Vector3d::broadcast(.5));        // offset
