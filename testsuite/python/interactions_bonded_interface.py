@@ -220,11 +220,16 @@ class BondedInteractions(ut.TestCase):
             0, espressomd.interactions.BondedCoulombSRBond, params)(self)
 
     def test_exceptions(self):
+        error_msg_not_yet_defined = 'The bond with id 0 is not yet defined'
         bond_type = espressomd.interactions.get_bonded_interaction_type_from_es_core(
             5000)
         self.assertEqual(bond_type, 0)
-        with self.assertRaisesRegex(ValueError, 'The bonded interaction with the id 0 is not yet defined'):
+        has_bond = self.system.bonded_inter.call_method('has_bond', bond_id=0)
+        self.assertFalse(has_bond)
+        with self.assertRaisesRegex(ValueError, error_msg_not_yet_defined):
             self.system.bonded_inter[0]
+        with self.assertRaisesRegex(IndexError, error_msg_not_yet_defined):
+            self.system.bonded_inter.call_method('get_bond', bond_id=0)
 
         # bonds can only be overwritten by bonds of the same type
         harm_bond1 = espressomd.interactions.HarmonicBond(r_0=1., k=1.)
@@ -254,18 +259,17 @@ class BondedInteractions(ut.TestCase):
 
         # sanity checks when removing bonds
         self.system.bonded_inter.clear()
-        error_msg = 'The bonded interaction with the id 0 is not yet defined'
-        with self.assertRaisesRegex(ValueError, error_msg):
+        with self.assertRaisesRegex(ValueError, error_msg_not_yet_defined):
             self.system.bonded_inter[0]
         self.system.bonded_inter[0] = harm_bond1
         self.system.bonded_inter[0]
         self.system.bonded_inter.remove(0)
-        with self.assertRaisesRegex(ValueError, error_msg):
+        with self.assertRaisesRegex(ValueError, error_msg_not_yet_defined):
             self.system.bonded_inter[0]
         self.system.bonded_inter[0] = harm_bond1
         self.system.bonded_inter[0]
         del self.system.bonded_inter[0]
-        with self.assertRaisesRegex(ValueError, error_msg):
+        with self.assertRaisesRegex(ValueError, error_msg_not_yet_defined):
             self.system.bonded_inter[0]
 
 

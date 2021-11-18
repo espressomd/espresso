@@ -1672,38 +1672,39 @@ class BondedInteraction(ScriptInterfaceHelper):
 
     def __init__(self, *args, **kwargs):
         if len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], dict):
+            # this branch is only visited by checkpointing constructor #2
             kwargs = args[0]
             args = []
 
-        # Interaction id as argument
-        if len(args) == 1 and is_valid_type(args[0], int):
-            bond_id = args[0]
-
-            # Check if the bond type in ESPResSo core matches this class
-            if get_bonded_interaction_type_from_es_core(
-                    bond_id) != self.type_number():
-                raise Exception(
-                    "The bond with this id is not defined as a " + self.type_name() + " bond in the ESPResSo core.")
-
-            super().__init__(bond_id=bond_id)
-            self._bond_id = bond_id
-
-            # Load the parameters currently set in the ESPResSo core
-            self._ctor_params = self._get_params_from_es_core()
-
-        # Or have we been called with keyword args describing the interaction
-        elif len(args) == 0:
-            params = self.get_default_params()
-            params.update(kwargs)
-            self.validate_params(params)
-            super().__init__(*args, **params)
-            self._check_keys(params.keys(), check_required=True)
-            self._ctor_params = params
-            self._bond_id = -1
-
+        if not 'sip' in kwargs:
+            if len(args) == 1 and is_valid_type(args[0], int):
+                # create a new script interface object for a bond that already
+                # exists in the core via bond_id (checkpointing constructor #1)
+                bond_id = args[0]
+                # Check if the bond type in ESPResSo core matches this class
+                if get_bonded_interaction_type_from_es_core(
+                        bond_id) != self.type_number():
+                    raise Exception(
+                        f"The bond with this id is not defined as a "
+                        f"{self.type_name()} bond in the ESPResSo core.")
+                super().__init__(bond_id=bond_id)
+                self._bond_id = bond_id
+                self._ctor_params = self._get_params_from_es_core()
+            else:
+                # create a bond from bond parameters
+                params = self.get_default_params()
+                params.update(kwargs)
+                self.validate_params(params)
+                super().__init__(*args, **params)
+                self._check_keys(params.keys(), check_required=True)
+                self._ctor_params = params
+                self._bond_id = -1
         else:
-            raise Exception(
-                "The constructor has to be called either with a bond id (as integer), or with a set of keyword arguments describing a new interaction")
+            # create a new bond based on a bond in the script interface
+            # (checkpointing constructor #2 or BondedInteractions getter)
+            super().__init__(**kwargs)
+            self._bond_id = -1
+            self._ctor_params = self._get_params_from_es_core()
 
     def _check_keys(self, keys, check_required=False):
         def err_msg(key_set):
@@ -1722,8 +1723,10 @@ class BondedInteraction(ScriptInterfaceHelper):
 
     def __reduce__(self):
         if self._bond_id != -1:
+            # checkpointing constructor #1
             return (self.__class__, (self._bond_id,))
         else:
+            # checkpointing constructor #2
             return (self.__class__, (self._ctor_params,))
 
     def __setattr__(self, attr, value):
@@ -2932,13 +2935,17 @@ class BondedInteractions(ScriptObjectRegistry):
             raise ValueError(
                 "Index to BondedInteractions[] has to be an integer referring to a bond id")
 
+        if self.call_method('has_bond', bond_id=bond_id):
+            bond_obj = self.call_method('get_bond', bond_id=bond_id)
+            bond_obj._bond_id = bond_id
+            return bond_obj
+
         # Find out the type of the interaction from ESPResSo
         bond_type = get_bonded_interaction_type_from_es_core(bond_id)
 
         # Check if the bonded interaction exists in ESPResSo core
         if bond_type == BONDED_IA_NONE:
-            raise ValueError(
-                f"The bonded interaction with the id {bond_id} is not yet defined.")
+            raise ValueError(f"The bond with id {bond_id} is not yet defined.")
 
         # Find the appropriate class representing such a bond
         bond_class = bonded_interaction_classes[bond_type]

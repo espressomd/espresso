@@ -22,13 +22,17 @@
 
 #include "BondedInteraction.hpp"
 
+#include "core/communication.hpp"
 #include "core/bonded_interactions/bonded_interaction_data.hpp"
 
 #include "script_interface/ObjectMap.hpp"
 #include "script_interface/ScriptInterface.hpp"
 
+#include <cassert>
 #include <memory>
+#include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace ScriptInterface {
@@ -43,16 +47,21 @@ public:
 
   key_type insert_in_core(mapped_type const &obj_ptr) override {
     auto const key = ::bonded_ia_params.insert(obj_ptr->bonded_ia());
+    m_bonds[key] = std::move(obj_ptr);
     mpi_update_cell_system_ia_range_local();
     return key;
   }
+
   void insert_in_core(key_type const &key,
                       mapped_type const &obj_ptr) override {
     ::bonded_ia_params.insert(key, obj_ptr->bonded_ia());
+    m_bonds[key] = std::move(obj_ptr);
     mpi_update_cell_system_ia_range_local();
   }
+
   void erase_in_core(key_type const &key) override {
     ::bonded_ia_params.erase(key);
+    m_bonds.erase(key);
     mpi_update_cell_system_ia_range_local();
   }
 
@@ -65,6 +74,25 @@ public:
       return bond_ids;
     }
 
+    if (name == "has_bond") {
+      auto const bond_id = get_value<int>(params, "bond_id");
+      return {m_bonds.count(bond_id) != 0};
+    }
+
+    if (name == "get_bond") {
+      auto const bond_id = get_value<int>(params, "bond_id");
+      // core and script interface must agree
+      assert(m_bonds.count(bond_id) == ::bonded_ia_params.count(bond_id));
+      if (this_node != 0)
+        return {};
+      // bond must exist
+      if (m_bonds.count(bond_id) == 0) {
+        throw std::out_of_range("The bond with id " + std::to_string(bond_id) +
+                                " is not yet defined.");
+      }
+      return {m_bonds.at(bond_id)};
+    }
+
     return ObjectMap<BondedInteraction>::do_call_method(name, params);
   }
 
@@ -72,6 +100,7 @@ private:
   // disable serialization: bonded interactions have their own pickling logic
   std::string get_internal_state() const override { return {}; }
   void set_internal_state(std::string const &state) override {}
+  container_type m_bonds;
 };
 } // namespace Interactions
 } // namespace ScriptInterface
