@@ -2883,15 +2883,6 @@ class BondedInteractions(ScriptObjectRegistry):
     _so_name = "Interactions::BondedInteractions"
     _so_creation_policy = "GLOBAL"
 
-    def __init__(self, *args, **kwargs):
-        if args:
-            params, (_unpickle_so_class, (_so_name, bytestring)) = args
-            assert _so_name == self._so_name
-            self = _unpickle_so_class(_so_name, bytestring)
-            self.__setstate__(params)
-        else:
-            super().__init__(**kwargs)
-
     def add(self, *args, **kwargs):
         """
         Add a bond to the list.
@@ -3012,8 +3003,9 @@ class BondedInteractions(ScriptObjectRegistry):
                 yield self[bond_id]
 
     def __reduce__(self):
-        so_reduce = super().__reduce__()
-        return (self.__class__, (self.__getstate__(), so_reduce))
+        so_callback, (so_name, so_bytestring) = super().__reduce__()
+        return (_restore_bonded_interactions,
+                (so_callback, (so_name, so_bytestring), self.__getstate__()))
 
     def __getstate__(self):
         params = {}
@@ -3029,3 +3021,9 @@ class BondedInteractions(ScriptObjectRegistry):
         for bond_id, (bond_params, bond_type) in params.items():
             self[bond_id] = bonded_interaction_classes[bond_type](
                 **bond_params)
+
+
+def _restore_bonded_interactions(so_callback, so_callback_args, state):
+    so = so_callback(*so_callback_args)
+    so.__setstate__(state)
+    return so
