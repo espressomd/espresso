@@ -97,6 +97,8 @@ public:
    */
   virtual boost::string_ref name(const ObjectHandle *o) const = 0;
 
+  virtual bool is_head_node() const = 0;
+
   virtual ~Context() = default;
 };
 } // namespace ScriptInterface

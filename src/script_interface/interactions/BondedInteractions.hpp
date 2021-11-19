@@ -22,7 +22,6 @@
 
 #include "BondedInteraction.hpp"
 
-#include "core/communication.hpp"
 #include "core/bonded_interactions/bonded_interaction_data.hpp"
 
 #include "script_interface/ObjectMap.hpp"
@@ -87,7 +86,7 @@ public:
       auto const bond_id = get_value<int>(params, "bond_id");
       // core and script interface must agree
       assert(m_bonds.count(bond_id) == ::bonded_ia_params.count(bond_id));
-      if (this_node != 0)
+      if (not context()->is_head_node())
         return {};
       // bond must exist
       if (m_bonds.count(bond_id) == 0) {
