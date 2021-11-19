@@ -1276,7 +1276,7 @@ cdef class ParticleHandle:
         # Validity of the numeric id
         if not bonded_ia_params_zero_based_type(bond[0]._bond_id):
             raise ValueError(
-                f"The bond type f{bond[0]._bond_id} does not exist.")
+                f"The bond type {bond[0]._bond_id} does not exist.")
 
         # Number of partners
         expected_num_partners = bond[0].call_method('get_num_partners')

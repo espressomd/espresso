@@ -3001,7 +3001,7 @@ class BondedInteractions(ScriptObjectRegistry):
         return bond_id
 
     def __len__(self):
-        return bonded_ia_params_size()
+        return self.call_method('get_size')
 
     # Support iteration over active bonded interactions
     def __iter__(self):

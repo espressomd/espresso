@@ -67,6 +67,10 @@ public:
 
   Variant do_call_method(std::string const &name,
                          VariantMap const &params) override {
+    if (name == "get_size") {
+      return {static_cast<int>(::bonded_ia_params.size())};
+    }
+
     if (name == "get_bond_ids") {
       std::vector<int> bond_ids;
       for (auto const &kv : ::bonded_ia_params)
