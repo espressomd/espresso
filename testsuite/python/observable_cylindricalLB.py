@@ -30,11 +30,9 @@ class CylindricalLBObservableCommon:
     Testcase for the CylindricalLBObservables.
 
     """
-    lbf = None
     system = espressomd.System(box_l=3 * [15])
     system.time_step = 0.01
     system.cell_system.skin = 0.4
-    positions = []
 
     lb_params = {'agrid': 1.,
                  'dens': 1.2,
@@ -61,6 +59,14 @@ class CylindricalLBObservableCommon:
     v_r = 0.02
     v_phi = 0.04
     v_z = 0.03
+
+    def setUp(self):
+        self.lbf = self.lb_class(**self.lb_params)
+        self.system.actors.add(self.lbf)
+
+    def tearDown(self):
+        self.system.actors.clear()
+        self.system.part.clear()
 
     def calc_vel_at_pos(self, positions):
         """
@@ -235,16 +241,9 @@ class CylindricalLBObservableCommon:
                                                  np.copy(observable.transform_params.__getattr__(attr_name)))
 
 
-class CylindricalLBObservableCPU(ut.TestCase, CylindricalLBObservableCommon):
+class CylindricalLBObservableCPU(CylindricalLBObservableCommon, ut.TestCase):
 
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluid(**self.lb_params)
-        self.system.actors.add(self.lbf)
-
-    def tearDown(self):
-        del self.positions[:]
-        self.system.actors.remove(self.lbf)
-        self.system.part.clear()
+    lb_class = espressomd.lb.LBFluid
 
     def test_cylindrical_lb_flux_density_obs(self):
         """
@@ -280,15 +279,9 @@ class CylindricalLBObservableCPU(ut.TestCase, CylindricalLBObservableCommon):
 
 
 @utx.skipIfMissingGPU()
-class CylindricalLBObservableGPU(ut.TestCase, CylindricalLBObservableCommon):
+class CylindricalLBObservableGPU(CylindricalLBObservableCommon, ut.TestCase):
 
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidGPU(**self.lb_params)
-        self.system.actors.add(self.lbf)
-
-    def tearDown(self):
-        self.system.actors.remove(self.lbf)
-        self.system.part.clear()
+    lb_class = espressomd.lb.LBFluidGPU
 
 
 if __name__ == "__main__":

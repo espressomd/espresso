@@ -15,14 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 
 import espressomd
 import espressomd.lb
-
-"""
-Check the lattice-Boltzmann mass conservation.
-"""
 
 KT = 2.25
 AGRID = .5
@@ -39,45 +36,48 @@ LB_PARAMS = {'agrid': AGRID,
 
 class LBMassCommon:
 
-    """Base class of the test that holds the test logic."""
-    lbf = None
+    """Check the lattice-Boltzmann mass conservation."""
+
     system = espressomd.System(box_l=[3.0, 3.0, 3.0])
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
 
-    def prepare(self):
-        self.system.actors.clear()
+    def setUp(self):
+        self.lbf = self.lb_class(**LB_PARAMS)
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(LB_fluid=self.lbf, seed=3, gamma=2.0)
 
-    def test_mass_conservation(self):
-        self.prepare()
-        self.system.integrator.run(1000)
-        nodes = []
-        for i in range(int(self.system.box_l[0] / LB_PARAMS['agrid'])):
-            for j in range(int(self.system.box_l[1] / LB_PARAMS['agrid'])):
-                for k in range(int(self.system.box_l[2] / LB_PARAMS['agrid'])):
-                    nodes.append(self.lbf[i, j, k])
+    def tearDown(self):
+        self.system.actors.clear()
+        self.system.thermostat.turn_off()
 
-        result = np.zeros(10)
+    def test_mass_conservation(self):
+        self.system.integrator.run(1000)
+        result = np.zeros((10, 2))
         for i in range(10):
             self.system.integrator.run(10)
-            v = []
-            for n in nodes:
-                v.append(n.density)
-            result[i] = np.mean(v)
-        np.testing.assert_allclose(
-            result - DENS,
-            np.zeros_like(result),
-            atol=1e-7)
+            diff = self.lbf[:, :, :].density - DENS
+            result[i][0] = np.mean(diff)
+            result[i][1] = np.std(diff, ddof=1) / np.sqrt(np.prod(diff.shape))
+        np.testing.assert_allclose(result[:, 0], 0., atol=self.atol, rtol=0.)
+        np.testing.assert_array_less(result[:, 1], 0.015)
 
 
-class LBCPUMass(ut.TestCase, LBMassCommon):
+class LBCPUMass(LBMassCommon, ut.TestCase):
 
     """Test for the CPU implementation of the LB."""
 
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
+    lb_class = espressomd.lb.LBFluid
+    atol = 1e-10
+
+
+@utx.skipIfMissingGPU()
+class LBGPUMass(LBMassCommon, ut.TestCase):
+
+    """Test for the GPU implementation of the LB."""
+
+    lb_class = espressomd.lb.LBFluidGPU
+    atol = 3e-7
 
 
 if __name__ == '__main__':

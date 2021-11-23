@@ -50,10 +50,17 @@ class LBInterpolation:
     Couette flow profile along x in z-direction. Check that velocity at shear
     plane next to the resting boundary is zero.
     """
-    lbf = None
     system = espressomd.System(box_l=[BOX_L] * 3)
     system.cell_system.skin = 0.4 * AGRID
     system.time_step = TIME_STEP
+
+    def setUp(self):
+        self.lbf = self.lb_class(**LB_PARAMETERS)
+        self.system.actors.add(self.lbf)
+
+    def tearDown(self):
+        self.system.lbboundaries.clear()
+        self.system.actors.clear()
 
     def set_boundaries(self, velocity):
         """Place boundaries *not* exactly on a LB node."""
@@ -120,24 +127,16 @@ class LBInterpolation:
 
 
 @utx.skipIfMissingFeatures(['LB_BOUNDARIES'])
-class LBInterpolationCPU(ut.TestCase, LBInterpolation):
+class LBInterpolationCPU(LBInterpolation, ut.TestCase):
 
-    def setUp(self):
-        self.system.lbboundaries.clear()
-        self.system.actors.clear()
-        self.lbf = espressomd.lb.LBFluid(**LB_PARAMETERS)
-        self.system.actors.add(self.lbf)
+    lb_class = espressomd.lb.LBFluid
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(['LB_BOUNDARIES_GPU'])
-class LBInterpolationGPU(ut.TestCase, LBInterpolation):
+class LBInterpolationGPU(LBInterpolation, ut.TestCase):
 
-    def setUp(self):
-        self.system.lbboundaries.clear()
-        self.system.actors.clear()
-        self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMETERS)
-        self.system.actors.add(self.lbf)
+    lb_class = espressomd.lb.LBFluidGPU
 
 
 if __name__ == "__main__":

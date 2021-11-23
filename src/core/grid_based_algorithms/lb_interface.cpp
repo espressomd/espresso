@@ -188,8 +188,6 @@ double lb_lbfluid_get_density() {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
     return static_cast<double>(lbpar_gpu.rho);
-#else
-    return {};
 #endif //  CUDA
   }
   if (lattice_switch == ActiveLB::CPU) {
@@ -218,8 +216,6 @@ double lb_lbfluid_get_viscosity() {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
     return static_cast<double>(lbpar_gpu.viscosity);
-#else
-    return {};
 #endif //  CUDA
   }
   if (lattice_switch == ActiveLB::CPU) {
@@ -251,8 +247,6 @@ double lb_lbfluid_get_bulk_viscosity() {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
     return lbpar_gpu.bulk_viscosity;
-#else
-    return {};
 #endif //  CUDA
   }
   if (lattice_switch == ActiveLB::CPU) {
@@ -424,8 +418,6 @@ double lb_lbfluid_get_tau() {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
     return lbpar_gpu.tau;
-#else
-    return {};
 #endif //  CUDA
   }
   if (lattice_switch == ActiveLB::CPU) {
@@ -902,8 +894,6 @@ double lb_lbnode_get_density(const Utils::Vector3i &ind) {
     static LB_rho_v_pi_gpu host_print_values;
     lb_print_node_GPU(single_nodeindex, &host_print_values);
     return host_print_values.rho;
-#else
-    return {};
 #endif //  CUDA
   }
   if (lattice_switch == ActiveLB::CPU) {
@@ -1011,8 +1001,6 @@ int lb_lbnode_get_boundary(const Utils::Vector3i &ind) {
     auto const single_nodeindex = calculate_node_index(lbpar_gpu, ind);
     lb_get_boundary_flag_GPU(single_nodeindex, &host_flag);
     return static_cast<int>(host_flag);
-#else
-    return {};
 #endif //  CUDA
   }
   if (lattice_switch == ActiveLB::CPU) {
@@ -1032,8 +1020,6 @@ const Utils::Vector19d lb_lbnode_get_pop(const Utils::Vector3i &ind) {
     for (std::size_t i = 0; i < D3Q19::n_vel; ++i)
       p_pop[i] = static_cast<double>(population[i]);
     return p_pop;
-#else
-    return {};
 #endif //  CUDA
   }
   if (lattice_switch == ActiveLB::CPU) {

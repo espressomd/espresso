@@ -23,14 +23,6 @@ import espressomd.lbboundaries
 import espressomd.electrokinetics
 import espressomd.shapes
 
-
-"""
-Check the lattice-Boltzmann 'pressure' driven flow in a slab system
-by comparing to the analytical solution.
-
-"""
-
-
 AGRID = .25
 EXT_FORCE = .1
 VISC = 2.7
@@ -72,8 +64,11 @@ def poiseuille_flow(z, H, ext_force_density, dyn_visc):
 
 class LBPoiseuilleCommon:
 
-    """Base class of the test that holds the test logic."""
-    lbf = None
+    """
+    Check the lattice-Boltzmann pressure-driven flow in a slab system
+    by comparing to the analytical solution for the planar Poiseuille.
+    """
+
     system = espressomd.System(box_l=[9.0, 3.0, 3.0])
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID

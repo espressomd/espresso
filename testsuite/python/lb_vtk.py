@@ -71,7 +71,6 @@ class TestLBWrite:
 
         return VN.vtk_to_numpy(points.GetArray(name)).reshape(shape, order='F')
 
-    @skipIfMissingPythonPackage
     def test_vtk(self):
         '''
         Check VTK files.
@@ -144,7 +143,6 @@ class TestLBWrite:
             'vtk_out/boundary.vtk', 'boundary', shape)
         np.testing.assert_equal(vtk_boundary, node_boundary.astype(int))
 
-    @skipIfMissingPythonPackage
     def test_print(self):
         '''
         Check data files.
@@ -208,6 +206,7 @@ class TestLBWrite:
         np.testing.assert_equal(dat_bound, ref_bound)
 
 
+@skipIfMissingPythonPackage
 class TestLBWriteCPU(TestLBWrite, ut.TestCase):
 
     def setUp(self):
@@ -215,6 +214,7 @@ class TestLBWriteCPU(TestLBWrite, ut.TestCase):
 
 
 @utx.skipIfMissingGPU()
+@skipIfMissingPythonPackage
 class TestLBWriteGPU(TestLBWrite, ut.TestCase):
 
     def setUp(self):

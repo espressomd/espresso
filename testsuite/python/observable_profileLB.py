@@ -62,10 +62,16 @@ LB_VELOCITY_PROFILE_PARAMS = {
 
 
 class ObservableProfileLBCommon:
-    lbf = None
     system = espressomd.System(box_l=[BOX_L_X, BOX_L_Y, BOX_L_Z])
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
+
+    def setUp(self):
+        self.lbf = self.lb_class(**LB_PARAMS)
+        self.system.actors.add(self.lbf)
+
+    def tearDown(self):
+        self.system.actors.clear()
 
     def set_fluid_velocities(self):
         """Set an x dependent fluid velocity."""
@@ -190,25 +196,19 @@ class ObservableProfileLBCommon:
         self.assertEqual(obs.sampling_offset_z, 15)
 
 
-class LBCPU(ut.TestCase, ObservableProfileLBCommon):
+class LBCPU(ObservableProfileLBCommon, ut.TestCase):
 
     """Test for the CPU implementation of the LB."""
 
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
-        self.system.actors.clear()
-        self.system.actors.add(self.lbf)
+    lb_class = espressomd.lb.LBFluid
 
 
 @utx.skipIfMissingGPU()
-class LBGPU(ut.TestCase, ObservableProfileLBCommon):
+class LBGPU(ObservableProfileLBCommon, ut.TestCase):
 
     """Test for the GPU implementation of the LB."""
 
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
-        self.system.actors.clear()
-        self.system.actors.add(self.lbf)
+    lb_class = espressomd.lb.LBFluidGPU
 
 
 if __name__ == "__main__":

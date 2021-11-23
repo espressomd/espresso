@@ -49,7 +49,6 @@ class TestLB:
     system.periodicity = [1, 1, 1]
     system.time_step = params['time_step']
     system.cell_system.skin = 1.0
-    lbf = None
     interpolation = False
 
     def tearDown(self):
@@ -57,53 +56,54 @@ class TestLB:
         self.system.part.clear()
         self.system.thermostat.turn_off()
         self.system.box_l = 3 * [6.0]
+        self.system.time_step = self.params['time_step']
 
     def test_properties(self):
-        self.lbf = self.lb_class(
+        lbf = self.lb_class(
             kT=1.0, seed=42, visc=self.params['viscosity'],
             dens=self.params['dens'],
             agrid=self.params['agrid'],
             tau=self.system.time_step)
-        self.system.actors.add(self.lbf)
+        self.system.actors.add(lbf)
         with self.assertRaises(ValueError):
-            self.lbf.tau = -0.1
-        self.assertAlmostEqual(self.lbf.tau, self.system.time_step, places=6)
+            lbf.tau = -0.1
+        self.assertAlmostEqual(lbf.tau, self.system.time_step, delta=self.atol)
         with self.assertRaises(ValueError):
-            self.lbf.density = -0.1
-        self.lbf.density = 1.0
+            lbf.density = -0.1
+        lbf.density = 1.0
         with self.assertRaises(ValueError):
-            self.lbf.viscosity = -0.1
-        self.lbf.density = 2.4
+            lbf.viscosity = -0.1
+        lbf.density = 2.4
         with self.assertRaises(ValueError):
-            self.lbf.density = -2.4
-        self.assertAlmostEqual(self.lbf.density, 2.4, places=6)
-        self.lbf.seed = 56
+            lbf.density = -2.4
+        self.assertAlmostEqual(lbf.density, 2.4, delta=self.atol)
+        lbf.seed = 56
         self.system.integrator.run(1)
-        self.assertEqual(self.lbf.seed, 57)
-        self.lbf.tau = 0.2
-        self.assertAlmostEqual(self.lbf.tau, 0.2, places=6)
+        self.assertEqual(lbf.seed, 57)
+        lbf.tau = 0.2
+        self.assertAlmostEqual(lbf.tau, 0.2, delta=self.atol)
         with self.assertRaises(ValueError):
-            self.lbf.set_params(bulk_visc=-1.2)
-        self.lbf.set_params(bulk_visc=1.2)
+            lbf.set_params(bulk_visc=-1.2)
+        lbf.set_params(bulk_visc=1.2)
         self.assertAlmostEqual(
-            self.lbf.get_params()['bulk_visc'], 1.2, places=6)
+            lbf.get_params()['bulk_visc'], 1.2, delta=self.atol)
         with self.assertRaises(ValueError):
-            self.lbf.set_params(gamma_odd=1.3)
-        self.lbf.set_params(gamma_odd=0.3)
+            lbf.set_params(gamma_odd=1.3)
+        lbf.set_params(gamma_odd=0.3)
         self.assertAlmostEqual(
-            self.lbf.get_params()['gamma_odd'], 0.3, places=6)
+            lbf.get_params()['gamma_odd'], 0.3, delta=self.atol)
         with self.assertRaises(ValueError):
-            self.lbf.set_params(gamma_even=1.4)
-        self.lbf.set_params(gamma_even=0.4)
+            lbf.set_params(gamma_even=1.4)
+        lbf.set_params(gamma_even=0.4)
         self.assertAlmostEqual(
-            self.lbf.get_params()['gamma_even'], 0.4, places=6)
-        self.lbf[0, 0, 0].velocity = [1, 2, 3]
+            lbf.get_params()['gamma_even'], 0.4, delta=self.atol)
+        lbf[0, 0, 0].velocity = [1, 2, 3]
         np.testing.assert_allclose(
-            np.copy(self.lbf[0, 0, 0].velocity), [1, 2, 3], atol=1E-10)
+            np.copy(lbf[0, 0, 0].velocity), [1, 2, 3], atol=self.atol)
         with self.assertRaises(Exception):
-            self.lbf[0, 0, 0].velocity = [1, 2]
+            lbf[0, 0, 0].velocity = [1, 2]
         with self.assertRaises(Exception):
-            self.lbf[0, 1].velocity = [1, 2, 3]
+            lbf[0, 1].velocity = [1, 2, 3]
 
     def test_raise_if_not_active(self):
         class MockLBFluid(self.lb_class):
@@ -132,42 +132,42 @@ class TestLB:
 
         # check exceptions from LB actor
         with self.assertRaises(RuntimeError):
-            _ = lbf.density
+            lbf.density
         with self.assertRaises(RuntimeError):
             lbf.density = 0.2
         with self.assertRaises(RuntimeError):
-            _ = lbf.viscosity
+            lbf.viscosity
         with self.assertRaises(RuntimeError):
             lbf.viscosity = 0.2
         with self.assertRaises(RuntimeError):
-            _ = lbf.bulk_viscosity
+            lbf.bulk_viscosity
         with self.assertRaises(RuntimeError):
             lbf.bulk_viscosity = 0.2
         with self.assertRaises(RuntimeError):
-            _ = lbf.seed
+            lbf.seed
         with self.assertRaises(RuntimeError):
             lbf.seed = 2
         with self.assertRaises(RuntimeError):
-            _ = lbf.kT
+            lbf.kT
         with self.assertRaises(RuntimeError):
             lbf.kT = 2
         with self.assertRaises(RuntimeError):
-            _ = lbf.shape
+            lbf.shape
         if not mock:
             with self.assertRaises(RuntimeError):
-                _ = lbf.agrid
+                lbf.agrid
             with self.assertRaises(RuntimeError):
                 lbf.agrid = 0.2
             with self.assertRaises(RuntimeError):
-                _ = lbf.tau
+                lbf.tau
             with self.assertRaises(RuntimeError):
                 lbf.tau = 0.01
         with self.assertRaises(RuntimeError):
-            _ = lbf.pressure_tensor
+            lbf.pressure_tensor
         with self.assertRaises(NotImplementedError):
             lbf.pressure_tensor = np.eye(3, 3)
         with self.assertRaises(RuntimeError):
-            _ = lbf.ext_force_density
+            lbf.ext_force_density
         with self.assertRaises(RuntimeError):
             lbf.ext_force_density = [1, 1, 1]
         with self.assertRaises(RuntimeError):
@@ -178,27 +178,27 @@ class TestLB:
         node = lbf[0, 0, 0]
         self.system.actors.remove(lbf)
         with self.assertRaises(RuntimeError):
-            _ = node.density
+            node.density
         with self.assertRaises(RuntimeError):
             node.density = 1.
         with self.assertRaises(RuntimeError):
-            _ = node.velocity
+            node.velocity
         with self.assertRaises(RuntimeError):
             node.velocity = [1, 1, 1]
         with self.assertRaises(RuntimeError):
-            _ = node.pressure_tensor
+            node.pressure_tensor
         with self.assertRaises(NotImplementedError):
             node.pressure_tensor = np.eye(3, 3)
         with self.assertRaises(RuntimeError):
-            _ = node.pressure_tensor_neq
+            node.pressure_tensor_neq
         with self.assertRaises(NotImplementedError):
             node.pressure_tensor_neq = np.eye(3, 3)
         with self.assertRaises(RuntimeError):
-            _ = node.boundary
+            node.boundary
         with self.assertRaises(NotImplementedError):
             node.boundary = 1
         with self.assertRaises(RuntimeError):
-            _ = node.population
+            node.population
         with self.assertRaises(RuntimeError):
             node.population = np.zeros(19)
 
@@ -215,18 +215,18 @@ class TestLB:
             v=np.random.random((self.n_col_part, 3)))
         system.thermostat.turn_off()
 
-        self.lbf = self.lb_class(
+        lbf = self.lb_class(
             visc=self.params['viscosity'],
             dens=self.params['dens'],
             agrid=self.params['agrid'],
             tau=system.time_step,
             kT=1, ext_force_density=[0, 0, 0], seed=1)
-        system.actors.add(self.lbf)
-        system.thermostat.set_lb(LB_fluid=self.lbf, seed=1)
+        system.actors.add(lbf)
+        system.thermostat.set_lb(LB_fluid=lbf, seed=1)
         system.integrator.run(10)
         pressure_tensor = np.zeros((3, 3))
         agrid = self.params["agrid"]
-        for n in self.lbf.nodes():
+        for n in lbf.nodes():
             pressure_tensor += n.pressure_tensor
 
         pressure_tensor /= system.volume() / agrid**3
@@ -234,50 +234,42 @@ class TestLB:
         obs = espressomd.observables.LBFluidPressureTensor()
         obs_pressure_tensor = obs.calculate()
         np.testing.assert_allclose(
-            pressure_tensor,
-            obs_pressure_tensor,
-            atol=1E-7)
+            pressure_tensor, obs_pressure_tensor, atol=1E-7)
         np.testing.assert_allclose(
-            np.copy(self.lbf.pressure_tensor),
-            obs_pressure_tensor,
-            atol=1E-10)
+            np.copy(lbf.pressure_tensor), obs_pressure_tensor, atol=1E-10)
 
     def test_lb_node_set_get(self):
-        self.lbf = self.lb_class(
+        lbf = self.lb_class(
             kT=0.0,
             visc=self.params['viscosity'],
             dens=self.params['dens'],
             agrid=self.params['agrid'],
             tau=self.system.time_step,
             ext_force_density=[0, 0, 0])
-        self.system.actors.add(self.lbf)
+        self.system.actors.add(lbf)
 
         shape_ref = np.copy(self.system.box_l) / self.params['agrid']
-        np.testing.assert_array_equal(self.lbf.shape, shape_ref.astype(int))
+        np.testing.assert_array_equal(lbf.shape, shape_ref.astype(int))
 
         v_fluid = np.array([1.2, 4.3, 0.2])
-        self.lbf[0, 0, 0].velocity = v_fluid
+        lbf[0, 0, 0].velocity = v_fluid
         np.testing.assert_allclose(
-            np.copy(self.lbf[0, 0, 0].velocity), v_fluid, atol=1e-4)
+            np.copy(lbf[0, 0, 0].velocity), v_fluid, atol=1e-4)
         density = 0.234
-        self.lbf[0, 0, 0].density = density
-        self.assertAlmostEqual(self.lbf[0, 0, 0].density, density, delta=1e-4)
+        lbf[0, 0, 0].density = density
+        self.assertAlmostEqual(lbf[0, 0, 0].density, density, delta=1e-4)
 
-        self.assertEqual(self.lbf[3, 2, 1].index, (3, 2, 1))
+        self.assertEqual(lbf[3, 2, 1].index, (3, 2, 1))
         ext_force_density = [0.1, 0.2, 1.2]
-        self.lbf.ext_force_density = ext_force_density
-        self.lbf[1, 2, 3].velocity = v_fluid
+        lbf.ext_force_density = ext_force_density
+        lbf[1, 2, 3].velocity = v_fluid
         np.testing.assert_allclose(
-            np.copy(self.lbf[1, 2, 3].velocity),
-            v_fluid,
-            atol=1e-4)
+            np.copy(lbf[1, 2, 3].velocity), v_fluid, atol=1e-4)
         np.testing.assert_allclose(
-            np.copy(self.lbf.ext_force_density),
-            ext_force_density,
-            atol=1e-4)
+            np.copy(lbf.ext_force_density), ext_force_density, atol=1e-4)
 
     def test_parameter_change_without_seed(self):
-        self.lbf = self.lb_class(
+        lbf = self.lb_class(
             visc=self.params['viscosity'],
             dens=self.params['dens'],
             agrid=self.params['agrid'],
@@ -285,38 +277,38 @@ class TestLB:
             ext_force_density=[0, 0, 0],
             kT=1.0,
             seed=42)
-        self.system.actors.add(self.lbf)
-        self.system.thermostat.set_lb(LB_fluid=self.lbf, seed=23, gamma=2.0)
-        self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=3.0)
+        self.system.actors.add(lbf)
+        self.system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)
+        self.system.thermostat.set_lb(LB_fluid=lbf, gamma=3.0)
 
     def test_grid_index(self):
-        self.lbf = self.lb_class(
+        lbf = self.lb_class(
             visc=self.params['viscosity'],
             dens=self.params['dens'],
             agrid=self.params['agrid'],
             tau=self.system.time_step,
             ext_force_density=[0, 0, 0])
-        self.system.actors.add(self.lbf)
+        self.system.actors.add(lbf)
         out_of_bounds = int(max(self.system.box_l) / self.params['agrid']) + 1
         with self.assertRaises(ValueError):
-            _ = self.lbf[out_of_bounds, 0, 0].velocity
+            lbf[out_of_bounds, 0, 0].velocity
         with self.assertRaises(ValueError):
-            _ = self.lbf[0, out_of_bounds, 0].velocity
+            lbf[0, out_of_bounds, 0].velocity
         with self.assertRaises(ValueError):
-            _ = self.lbf[0, 0, out_of_bounds].velocity
+            lbf[0, 0, out_of_bounds].velocity
         # resize system
         self.system.box_l = self.system.box_l + 1.
         shape_ref = np.copy(self.system.box_l) / self.params['agrid']
-        np.testing.assert_array_equal(self.lbf.shape, shape_ref.astype(int))
+        np.testing.assert_array_equal(lbf.shape, shape_ref.astype(int))
         np.testing.assert_array_equal(
-            np.copy(self.lbf[out_of_bounds, 0, 0].velocity), 0.)
+            np.copy(lbf[out_of_bounds, 0, 0].velocity), 0.)
 
     def test_incompatible_agrid(self):
         """
         LB lattice initialization must raise an exception when either box_l or
         local_box_l aren't integer multiples of agrid.
         """
-        self.lbf = self.lb_class(
+        lbf = self.lb_class(
             visc=self.params['viscosity'],
             dens=self.params['dens'],
             agrid=self.params['agrid'] + 1e-6,
@@ -325,7 +317,7 @@ class TestLB:
         print("\nTesting LB error messages:", file=sys.stderr)
         sys.stderr.flush()
         with self.assertRaises(Exception):
-            self.system.actors.add(self.lbf)
+            self.system.actors.add(lbf)
         print("End of LB error messages", file=sys.stderr)
         sys.stderr.flush()
 
@@ -346,20 +338,20 @@ class TestLB:
         system.box_l = old_l
 
     def test_bool_operations_on_node(self):
-        self.lbf = self.lb_class(
+        lbf = self.lb_class(
             kT=1.0, seed=42, visc=self.params['viscosity'],
             dens=self.params['dens'],
             agrid=self.params['agrid'],
             tau=self.system.time_step)
-        self.system.actors.add(self.lbf)
+        self.system.actors.add(lbf)
         # test __eq()__ where a node is equal to itself and not equal to any
         # other node
-        assert self.lbf[0, 0, 0] == self.lbf[0, 0, 0]
+        assert lbf[0, 0, 0] == lbf[0, 0, 0]
         x, y, z = range(int(self.system.box_l[0])), range(
             int(self.system.box_l[1])), range(int(self.system.box_l[2]))
-        nodes = [self.lbf[i, j, k] for i, j, k in itertools.product(x, y, z)]
-        nodes.remove(self.lbf[0, 0, 0])
-        assert all(self.lbf[0, 0, 0] != node for node in nodes)
+        nodes = [lbf[i, j, k] for i, j, k in itertools.product(x, y, z)]
+        nodes.remove(lbf[0, 0, 0])
+        assert all(lbf[0, 0, 0] != node for node in nodes)
         # test __hash()__ intercept to identify nodes based on index rather
         # than name. set() constructor runs hash()
         subset1, subset2 = nodes[:-10], nodes[-10:]
@@ -370,24 +362,22 @@ class TestLB:
     def test_viscous_coupling(self):
         v_part = np.array([1, 2, 3])
         v_fluid = np.array([1.2, 4.3, 0.2])
-        self.lbf = self.lb_class(
+        lbf = self.lb_class(
             visc=self.params['viscosity'],
             dens=self.params['dens'],
             agrid=self.params['agrid'],
             tau=self.system.time_step,
             ext_force_density=[0, 0, 0])
-        self.system.actors.add(self.lbf)
+        self.system.actors.add(lbf)
         if self.interpolation:
-            self.lbf.set_interpolation_order("quadratic")
+            lbf.set_interpolation_order("quadratic")
         self.system.thermostat.set_lb(
-            LB_fluid=self.lbf,
-            seed=3,
-            gamma=self.params['friction'])
+            LB_fluid=lbf, seed=3, gamma=self.params['friction'])
         p = self.system.part.add(
             pos=[0.5 * self.params['agrid']] * 3, v=v_part, fix=[1, 1, 1])
-        self.lbf[0, 0, 0].velocity = v_fluid
+        lbf[0, 0, 0].velocity = v_fluid
         if self.interpolation:
-            v_fluid = self.lbf.get_interpolated_velocity(p.pos)
+            v_fluid = lbf.get_interpolated_velocity(p.pos)
         self.system.integrator.run(1)
         np.testing.assert_allclose(
             np.copy(p.f), -self.params['friction'] * (v_part - v_fluid), atol=1E-6)
@@ -395,22 +385,23 @@ class TestLB:
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_ext_force_density(self):
         ext_force_density = [2.3, 1.2, 0.1]
-        self.lbf = self.lb_class(
+        lbf = self.lb_class(
             visc=self.params['viscosity'],
             dens=self.params['dens'],
             agrid=self.params['agrid'],
             tau=self.system.time_step,
             ext_force_density=ext_force_density)
-        self.system.actors.add(self.lbf)
+        self.system.actors.add(lbf)
         n_time_steps = 5
         self.system.integrator.run(n_time_steps)
         # ext_force_density is a force density, therefore v = ext_force_density
         # / dens * tau * (n_time_steps + 0.5)
         fluid_velocity = np.array(ext_force_density) * self.system.time_step * (
             n_time_steps + 0.5) / self.params['dens']
-        for n in self.lbf.nodes():
+        for n in lbf.nodes():
             np.testing.assert_allclose(
-                np.copy(n.velocity), fluid_velocity, atol=1E-6, err_msg="Fluid node velocity not as expected on node {}".format(n.index))
+                np.copy(n.velocity), fluid_velocity, atol=1E-6,
+                err_msg=f"Fluid node velocity not as expected on node {n.index}")
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_unequal_time_step(self):
@@ -468,16 +459,14 @@ class TestLB:
 
 
 class TestLBCPU(TestLB, ut.TestCase):
-
-    def setUp(self):
-        self.lb_class = espressomd.lb.LBFluid
+    lb_class = espressomd.lb.LBFluid
+    atol = 1e-10
 
 
 @utx.skipIfMissingGPU()
 class TestLBGPU(TestLB, ut.TestCase):
-
-    def setUp(self):
-        self.lb_class = espressomd.lb.LBFluidGPU
+    lb_class = espressomd.lb.LBFluidGPU
+    atol = 1e-7
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_viscous_coupling_higher_order_interpolation(self):

@@ -21,13 +21,7 @@ import numpy as np
 import espressomd.lb
 import espressomd.lbboundaries
 import espressomd.shapes
-
-from tests_common import count_fluid_nodes
-
-
-"""
-Checks force on lb boundaries for a fluid with a uniform volume force
-"""
+import tests_common
 
 
 AGRID = 0.5
@@ -44,11 +38,21 @@ LB_PARAMS = {'agrid': AGRID,
 
 class LBBoundaryForceCommon:
 
-    """Base class of the test that holds the test logic."""
-    lbf = None
+    """
+    Checks force on lb boundaries for a fluid with a uniform volume force
+    """
+
     system = espressomd.System(box_l=np.array([12.0, 4.0, 4.0]) * AGRID)
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
+
+    def setUp(self):
+        self.lbf = self.lb_class(**LB_PARAMS)
+        self.system.actors.add(self.lbf)
+
+    def tearDown(self):
+        self.system.lbboundaries.clear()
+        self.system.actors.clear()
 
     def test(self):
         """
@@ -57,9 +61,6 @@ class LBBoundaryForceCommon:
         and forces acting on the boundaries.
 
         """
-        self.system.actors.clear()
-        self.system.lbboundaries.clear()
-        self.system.actors.add(self.lbf)
         wall_shape1 = espressomd.shapes.Wall(normal=[1, 0, 0], dist=AGRID)
         wall_shape2 = espressomd.shapes.Wall(
             normal=[-1, 0, 0], dist=-(self.system.box_l[0] - AGRID))
@@ -68,7 +69,7 @@ class LBBoundaryForceCommon:
 
         self.system.lbboundaries.add(wall1)
         self.system.lbboundaries.add(wall2)
-        fluid_nodes = count_fluid_nodes(self.lbf)
+        fluid_nodes = tests_common.count_fluid_nodes(self.lbf)
 
         self.system.integrator.run(20)
         diff = float("inf")
@@ -87,22 +88,20 @@ class LBBoundaryForceCommon:
 
 
 @utx.skipIfMissingFeatures(['LB_BOUNDARIES', 'EXTERNAL_FORCES'])
-class LBCPUBoundaryForce(ut.TestCase, LBBoundaryForceCommon):
+class LBCPUBoundaryForce(LBBoundaryForceCommon, ut.TestCase):
 
     """Test for the CPU implementation of the LB."""
 
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
+    lb_class = espressomd.lb.LBFluid
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(['LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES'])
-class LBGPUBoundaryForce(ut.TestCase, LBBoundaryForceCommon):
+class LBGPUBoundaryForce(LBBoundaryForceCommon, ut.TestCase):
 
     """Test for the GPU implementation of the LB."""
 
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
+    lb_class = espressomd.lb.LBFluidGPU
 
 
 if __name__ == '__main__':

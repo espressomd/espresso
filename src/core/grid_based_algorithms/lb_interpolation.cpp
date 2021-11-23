@@ -34,15 +34,15 @@ namespace {
 InterpolationOrder interpolation_order = InterpolationOrder::linear;
 }
 
-void mpi_set_interpolation_order(InterpolationOrder const &order) {
+void mpi_set_interpolation_order_local(InterpolationOrder const &order) {
   interpolation_order = order;
 }
 
-REGISTER_CALLBACK(mpi_set_interpolation_order)
+REGISTER_CALLBACK(mpi_set_interpolation_order_local)
 
 void lb_lbinterpolation_set_interpolation_order(
     InterpolationOrder const &order) {
-  mpi_call_all(mpi_set_interpolation_order, order);
+  mpi_call_all(mpi_set_interpolation_order_local, order);
 }
 
 InterpolationOrder lb_lbinterpolation_get_interpolation_order() {

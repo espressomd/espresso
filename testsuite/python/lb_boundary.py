@@ -30,6 +30,14 @@ class LBBoundariesBase:
     wall_shape1 = espressomd.shapes.Wall(normal=[1., 0., 0.], dist=2.5)
     wall_shape2 = espressomd.shapes.Wall(normal=[-1., 0., 0.], dist=-7.5)
 
+    def setUp(self):
+        self.lbf = self.lb_class(visc=1.0, dens=1.0, agrid=0.5, tau=1.0)
+        self.system.actors.add(self.lbf)
+
+    def tearDown(self):
+        self.system.lbboundaries.clear()
+        self.system.actors.clear()
+
     def test_add(self):
         boundary = espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1)
 
@@ -109,42 +117,14 @@ class LBBoundariesBase:
 
 
 @utx.skipIfMissingFeatures(["LB_BOUNDARIES"])
-class LBBoundariesCPU(ut.TestCase, LBBoundariesBase):
-    lbf = None
-
-    def setUp(self):
-        if not self.lbf:
-            self.lbf = espressomd.lb.LBFluid(
-                visc=1.0,
-                dens=1.0,
-                agrid=0.5,
-                tau=1.0)
-
-        self.system.actors.add(self.lbf)
-
-    def tearDown(self):
-        self.system.lbboundaries.clear()
-        self.system.actors.remove(self.lbf)
+class LBBoundariesCPU(LBBoundariesBase, ut.TestCase):
+    lb_class = espressomd.lb.LBFluid
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["LB_BOUNDARIES_GPU"])
-class LBBoundariesGPU(ut.TestCase, LBBoundariesBase):
-    lbf = None
-
-    def setUp(self):
-        if not self.lbf:
-            self.lbf = espressomd.lb.LBFluidGPU(
-                visc=1.0,
-                dens=1.0,
-                agrid=0.5,
-                tau=1.0)
-
-        self.system.actors.add(self.lbf)
-
-    def tearDown(self):
-        self.system.lbboundaries.clear()
-        self.system.actors.remove(self.lbf)
+class LBBoundariesGPU(LBBoundariesBase, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidGPU
 
 
 if __name__ == "__main__":

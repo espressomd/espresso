@@ -33,7 +33,14 @@ enum class InterpolationOrder { linear, quadratic };
 void lb_lbinterpolation_set_interpolation_order(
     InterpolationOrder const &interpolation_order);
 
+// MPI callback exposed for unit testing only
+void mpi_set_interpolation_order_local(InterpolationOrder const &order);
+
+/**
+ * @brief Get the interpolation order for the LB.
+ */
 InterpolationOrder lb_lbinterpolation_get_interpolation_order();
+
 /**
  * @brief Calculates the fluid velocity at a given position of the
  * lattice.

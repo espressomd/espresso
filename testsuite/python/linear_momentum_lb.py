@@ -21,6 +21,8 @@ import itertools
 
 import espressomd.lb
 
+np.random.seed(seed=40)
+
 """
 Check linear momentum calculation for lattice-Boltzmann.
 
@@ -44,29 +46,26 @@ LB_PARAMS = {'agrid': AGRID,
 class LinearMomentumTest:
 
     """Base class of the test that holds the test logic."""
-    lbf = None
     system = espressomd.System(box_l=[BOX_L] * 3)
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
 
-    def prepare(self):
-        """
-        Setup random node velocities.
-
-        """
-        self.system.actors.clear()
-        self.lbf = self.lbf(**LB_PARAMS)
+    def setUp(self):
+        self.lbf = self.lb_class(**LB_PARAMS)
         self.system.actors.add(self.lbf)
-        for index in itertools.product(
-                np.arange(0, int(np.floor(BOX_L / AGRID))), repeat=3):
-            self.lbf[index].velocity = np.random.random(3) - 0.5
+
+    def tearDown(self):
+        self.system.actors.clear()
 
     def test(self):
         """
         Compare direct calculation of fluid momentum with analysis function.
 
         """
-        self.prepare()
+        # setup random node velocities
+        for index in itertools.product(
+                np.arange(0, int(np.floor(BOX_L / AGRID))), repeat=3):
+            self.lbf[index].velocity = np.random.random(3) - 0.5
         linear_momentum = np.zeros(3)
         for index in itertools.product(
                 np.arange(0, int(np.floor(BOX_L / AGRID))), repeat=3):
@@ -74,28 +73,26 @@ class LinearMomentumTest:
         analyze_linear_momentum = self.system.analysis.linear_momentum(True,  # particles
                                                                        True)  # LB fluid
         np.testing.assert_allclose(
-            linear_momentum,
-            analyze_linear_momentum,
-            atol=1e-3)
+            linear_momentum, analyze_linear_momentum, atol=self.atol)
 
 
 @utx.skipIfMissingFeatures(['EXTERNAL_FORCES'])
-class LBCPULinearMomentum(ut.TestCase, LinearMomentumTest):
+class LBCPULinearMomentum(LinearMomentumTest, ut.TestCase):
 
     """Test for the CPU implementation of the LB."""
 
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluid
+    lb_class = espressomd.lb.LBFluid
+    atol = 1e-10
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(['LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES'])
-class LBGPULinearMomentum(ut.TestCase, LinearMomentumTest):
+class LBGPULinearMomentum(LinearMomentumTest, ut.TestCase):
 
     """Test for the GPU implementation of the LB."""
 
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidGPU
+    lb_class = espressomd.lb.LBFluidGPU
+    atol = 1e-6
 
 
 if __name__ == '__main__':

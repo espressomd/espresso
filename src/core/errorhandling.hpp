@@ -57,7 +57,7 @@ class communicator;
 void errexit();
 
 /**
- * @brief check for runtime errors on all nodes.
+ * @brief Count runtime errors on all nodes.
  * This has to be called on all nodes synchronously.
  *
  * @return the number of error messages of all nodes together.
@@ -65,7 +65,7 @@ void errexit();
 int check_runtime_errors(boost::mpi::communicator const &comm);
 
 /**
- * @brief check for runtime errors on all nodes.
+ * @brief Count runtime errors on the local node.
  * This has to be called on all nodes synchronously.
  *
  * @return the number of error messages on this node.

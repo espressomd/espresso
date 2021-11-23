@@ -461,6 +461,12 @@ IF CUDA:
                 linear_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             return velocities * lb_lbfluid_get_lattice_speed()
 
+ELSE:
+    cdef class LBFluidGPU(HydrodynamicInteraction):
+        def __init__(self, *args, **kwargs):
+            raise Exception("LBFluidGPU not compiled in.")
+
+
 cdef class LBFluidRoutines:
 
     def __init__(self, key):
