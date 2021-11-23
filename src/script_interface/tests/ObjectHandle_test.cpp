@@ -163,6 +163,8 @@ struct LogContext : public Context {
   boost::string_ref name(const ObjectHandle *o) const override {
     return "Dummy";
   }
+
+  bool is_head_node() const override { return true; };
 };
 
 /*
