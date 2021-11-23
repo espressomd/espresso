@@ -173,7 +173,7 @@ class CollisionDetection(ScriptInterfaceHelper):
         if name == "mode":
             res = self._str_mode(value)
 
-        # Convert bond parameters from bond ids to into BondedInteractions
+        # Get bonded interaction
         if name in ["bond_centers", "bond_vs", "bond_three_particle_binding"]:
             if value == -1:  # Not defined
                 res = None

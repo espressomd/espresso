@@ -49,7 +49,6 @@ class LBInterpolation:
     Couette flow profile along x in z-direction. Check that velocity at shear
     plane next to the resting boundary is zero.
     """
-
     system = espressomd.System(box_l=[BOX_L] * 3)
     system.cell_system.skin = 0.4 * AGRID
     system.time_step = TIME_STEP

@@ -21,7 +21,6 @@
 
 #include "config.hpp"
 
-#include "core/communication.hpp"
 #include "core/grid_based_algorithms/lb_interface.hpp"
 #include "core/grid_based_algorithms/lbboundaries/LBBoundary.hpp"
 #include "script_interface/ScriptInterface.hpp"
