@@ -39,10 +39,11 @@ namespace ScriptInterface {
  */
 class LocalContext : public Context {
   Utils::Factory<ObjectHandle> m_factory;
+  bool m_is_head_node;
 
 public:
-  explicit LocalContext(Utils::Factory<ObjectHandle> factory)
-      : m_factory(std::move(factory)) {}
+  explicit LocalContext(Utils::Factory<ObjectHandle> factory, int mpi_rank)
+      : m_factory(std::move(factory)), m_is_head_node(mpi_rank == 0) {}
 
   const Utils::Factory<ObjectHandle> &factory() const { return m_factory; }
 
@@ -66,6 +67,8 @@ public:
 
     return factory().type_name(*o);
   }
+
+  bool is_head_node() const override { return m_is_head_node; };
 };
 } // namespace ScriptInterface
 

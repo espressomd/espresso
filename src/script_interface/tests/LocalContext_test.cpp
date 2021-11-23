@@ -57,7 +57,7 @@ auto factory = []() {
 }();
 
 BOOST_AUTO_TEST_CASE(LocalContext_make_shared) {
-  auto ctx = std::make_shared<si::LocalContext>(factory);
+  auto ctx = std::make_shared<si::LocalContext>(factory, 0);
 
   auto res = ctx->make_shared("Dummy", {});
   BOOST_REQUIRE(res != nullptr);
@@ -66,7 +66,7 @@ BOOST_AUTO_TEST_CASE(LocalContext_make_shared) {
 }
 
 BOOST_AUTO_TEST_CASE(LocalContext_serialization) {
-  auto ctx = std::make_shared<si::LocalContext>(factory);
+  auto ctx = std::make_shared<si::LocalContext>(factory, 0);
 
   auto const serialized = [&]() {
     auto d1 = ctx->make_shared("Dummy", {});

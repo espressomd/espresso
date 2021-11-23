@@ -21,7 +21,6 @@
 
 #include "config.hpp"
 
-#include "core/communication.hpp"
 #include "core/grid_based_algorithms/lb_interface.hpp"
 #include "core/grid_based_algorithms/lbboundaries/LBBoundary.hpp"
 #include "script_interface/ScriptInterface.hpp"
@@ -69,7 +68,7 @@ public:
   Variant do_call_method(const std::string &name, const VariantMap &) override {
     if (name == "get_force") {
       // The get force method uses mpi callbacks on lb cpu
-      if (this_node == 0) {
+      if (context()->is_head_node()) {
         const auto agrid = lb_lbfluid_get_agrid();
         const auto tau = lb_lbfluid_get_tau();
         const double unit_conversion = agrid / tau / tau;

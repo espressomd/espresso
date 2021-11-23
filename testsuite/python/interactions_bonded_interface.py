@@ -59,24 +59,24 @@ class BondedInteractions(ut.TestCase):
         classname = bondObject.__class__.__name__
         valid_keys = bondObject.valid_keys()
         required_keys = bondObject.required_keys()
-        old_params = dict(bondObject.params)
+        old_params = bondObject.params.copy()
         default_keys = set(bondObject.get_default_params())
-        bondObject.params = old_params
         self.assertIsInstance(valid_keys, set,
-                              "{}.valid_keys() must return a set".format(
-                                  classname))
+                              f"{classname}.valid_keys() must return a set")
         self.assertIsInstance(required_keys, set,
-                              "{}.required_keys() must return a set".format(
-                                  classname))
+                              f"{classname}.required_keys() must return a set")
         self.assertTrue(default_keys.issubset(valid_keys),
-                        "{}.get_default_params() has unknown parameters: {}".format(
-            classname, default_keys.difference(valid_keys)))
+                        f"{classname}.get_default_params() has unknown "
+                        f"parameters: {default_keys.difference(valid_keys)}")
         self.assertTrue(default_keys.isdisjoint(required_keys),
-                        "{}.get_default_params() has extra parameters: {}".format(
-            classname, default_keys.intersection(required_keys)))
+                        f"{classname}.get_default_params() has extra "
+                        f"parameters: {default_keys.intersection(required_keys)}")
         self.assertSetEqual(default_keys, valid_keys - required_keys,
-                            "{}.get_default_params() should have keys: {}, got: {}".format(
-                                classname, valid_keys - required_keys, default_keys))
+                            f"{classname}.get_default_params() should have keys: "
+                            f"{valid_keys - required_keys}, got: {default_keys}")
+        with self.assertRaisesRegex(RuntimeError, "Bond parameters are immutable"):
+            bondObject.params = {}
+        self.assertEqual(bondObject.params, old_params)
 
     def generateTestForBondParams(_bondId, _bondClass, _params, _refs=None):
         """Generates test cases for checking bond parameters set and gotten
@@ -220,11 +220,16 @@ class BondedInteractions(ut.TestCase):
             0, espressomd.interactions.BondedCoulombSRBond, params)(self)
 
     def test_exceptions(self):
+        error_msg_not_yet_defined = 'The bond with id 0 is not yet defined'
         bond_type = espressomd.interactions.get_bonded_interaction_type_from_es_core(
             5000)
         self.assertEqual(bond_type, 0)
-        with self.assertRaisesRegex(ValueError, 'The bonded interaction with the id 0 is not yet defined'):
+        has_bond = self.system.bonded_inter.call_method('has_bond', bond_id=0)
+        self.assertFalse(has_bond)
+        with self.assertRaisesRegex(ValueError, error_msg_not_yet_defined):
             self.system.bonded_inter[0]
+        with self.assertRaisesRegex(IndexError, error_msg_not_yet_defined):
+            self.system.bonded_inter.call_method('get_bond', bond_id=0)
 
         # bonds can only be overwritten by bonds of the same type
         harm_bond1 = espressomd.interactions.HarmonicBond(r_0=1., k=1.)
@@ -254,18 +259,17 @@ class BondedInteractions(ut.TestCase):
 
         # sanity checks when removing bonds
         self.system.bonded_inter.clear()
-        error_msg = 'The bonded interaction with the id 0 is not yet defined'
-        with self.assertRaisesRegex(ValueError, error_msg):
+        with self.assertRaisesRegex(ValueError, error_msg_not_yet_defined):
             self.system.bonded_inter[0]
         self.system.bonded_inter[0] = harm_bond1
         self.system.bonded_inter[0]
         self.system.bonded_inter.remove(0)
-        with self.assertRaisesRegex(ValueError, error_msg):
+        with self.assertRaisesRegex(ValueError, error_msg_not_yet_defined):
             self.system.bonded_inter[0]
         self.system.bonded_inter[0] = harm_bond1
         self.system.bonded_inter[0]
         del self.system.bonded_inter[0]
-        with self.assertRaisesRegex(ValueError, error_msg):
+        with self.assertRaisesRegex(ValueError, error_msg_not_yet_defined):
             self.system.bonded_inter[0]
 
 

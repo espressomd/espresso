@@ -308,6 +308,10 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(params2, reference2)
 
     def test_bonded_inter(self):
+        # check the ObjectHandle was correctly initialized (including MPI)
+        bond_ids = system.bonded_inter.call_method('get_bond_ids')
+        self.assertEqual(len(bond_ids), len(system.bonded_inter))
+        # check bonded interactions
         state = system.part[1].bonds[0][0].params
         reference = {'r_0': 0.0, 'k': 1.0, 'r_cut': 0.0}
         self.assertEqual(state, reference)
@@ -328,6 +332,11 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(
             ibm_triel_bond.params,
             {'k1': 1.1, 'k2': 1.2, 'maxDist': 1.6, 'elasticLaw': 'NeoHookean'})
+        # check new bonds can be added
+        new_harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0.2, k=1.)
+        system.bonded_inter.add(new_harmonic_bond)
+        bond_ids = system.bonded_inter.call_method('get_bond_ids')
+        self.assertEqual(len(bond_ids), len(system.bonded_inter))
 
     @ut.skipIf('THERM.LB' in modes, 'LB thermostat in modes')
     @utx.skipIfMissingFeatures(['ELECTROSTATICS', 'MASS', 'ROTATION'])
