@@ -54,6 +54,13 @@ using namespace std;
 namespace walberla {
 namespace pystencils {
 
+auto const __m256d_to_twice___m256 = [](__m256d value_m256d) {
+  __m128 value_m128 = _mm256_castps256_ps128(_mm256_castpd_ps(value_m256d));
+  __m256 value_m256 = _mm256_castps128_ps256(value_m128);
+  value_m256 = _mm256_insertf128_ps(value_m256, value_m128, 1);
+  return value_m256;
+};
+
 namespace internal_collidesweepsingleprecisionthermalizedavx {
 static FUNC_PREFIX void collidesweepsingleprecisionthermalizedavx(
     float *RESTRICT const _data_force, float *RESTRICT _data_pdfs,
@@ -608,9 +615,10 @@ static FUNC_PREFIX void collidesweepsingleprecisionthermalizedavx(
             xi_114, _mm256_set_ps(xi_115, xi_115, xi_115, xi_115, xi_115,
                                   xi_115, xi_115, xi_115));
         const __m256 xi_118 = _mm256_add_ps(xi_103, xi_254);
-        const __m256d xi_122 = _mm256_add_ps(
-            random_5_1, _mm256_set_ps(-0.5f, -0.5f, -0.5f, -0.5f, -0.5f, -0.5f,
-                                      -0.5f, -0.5f));
+        const __m256 xi_122 =
+            _mm256_add_ps(__m256d_to_twice___m256(random_5_1),
+                          _mm256_set_ps(-0.5f, -0.5f, -0.5f, -0.5f, -0.5f,
+                                        -0.5f, -0.5f, -0.5f));
         const __m256 xi_127 =
             _mm256_mul_ps(xi_269, _mm256_set_ps(2.0f, 2.0f, 2.0f, 2.0f, 2.0f,
                                                 2.0f, 2.0f, 2.0f));
@@ -638,12 +646,14 @@ static FUNC_PREFIX void collidesweepsingleprecisionthermalizedavx(
         const __m256 xi_132 = _mm256_mul_ps(
             xi_130, _mm256_set_ps(xi_131, xi_131, xi_131, xi_131, xi_131,
                                   xi_131, xi_131, xi_131));
-        const __m256d xi_133 = _mm256_add_ps(
-            random_3_0, _mm256_set_ps(-0.5f, -0.5f, -0.5f, -0.5f, -0.5f, -0.5f,
-                                      -0.5f, -0.5f));
-        const __m256d xi_138 = _mm256_add_ps(
-            random_0_1, _mm256_set_ps(-0.5f, -0.5f, -0.5f, -0.5f, -0.5f, -0.5f,
-                                      -0.5f, -0.5f));
+        const __m256 xi_133 =
+            _mm256_add_ps(__m256d_to_twice___m256(random_3_0),
+                          _mm256_set_ps(-0.5f, -0.5f, -0.5f, -0.5f, -0.5f,
+                                        -0.5f, -0.5f, -0.5f));
+        const __m256 xi_138 =
+            _mm256_add_ps(__m256d_to_twice___m256(random_0_1),
+                          _mm256_set_ps(-0.5f, -0.5f, -0.5f, -0.5f, -0.5f,
+                                        -0.5f, -0.5f, -0.5f));
         const __m256 xi_142 = _mm256_add_ps(xi_262, xi_267);
         const __m256 xi_156 = _mm256_add_ps(xi_106, xi_267);
         const __m256 xi_157 = _mm256_add_ps(
@@ -653,9 +663,10 @@ static FUNC_PREFIX void collidesweepsingleprecisionthermalizedavx(
         const __m256 xi_158 = _mm256_mul_ps(
             xi_157, _mm256_set_ps(xi_115, xi_115, xi_115, xi_115, xi_115,
                                   xi_115, xi_115, xi_115));
-        const __m256d xi_159 = _mm256_add_ps(
-            random_4_1, _mm256_set_ps(-0.5f, -0.5f, -0.5f, -0.5f, -0.5f, -0.5f,
-                                      -0.5f, -0.5f));
+        const __m256 xi_159 =
+            _mm256_add_ps(__m256d_to_twice___m256(random_4_1),
+                          _mm256_set_ps(-0.5f, -0.5f, -0.5f, -0.5f, -0.5f,
+                                        -0.5f, -0.5f, -0.5f));
         const __m256 xi_161 = _mm256_add_ps(
             _mm256_add_ps(
                 _mm256_add_ps(
@@ -670,18 +681,20 @@ static FUNC_PREFIX void collidesweepsingleprecisionthermalizedavx(
         const __m256 xi_162 = _mm256_mul_ps(
             xi_161, _mm256_set_ps(xi_131, xi_131, xi_131, xi_131, xi_131,
                                   xi_131, xi_131, xi_131));
-        const __m256d xi_163 = _mm256_add_ps(
-            random_4_0, _mm256_set_ps(-0.5f, -0.5f, -0.5f, -0.5f, -0.5f, -0.5f,
-                                      -0.5f, -0.5f));
+        const __m256 xi_163 =
+            _mm256_add_ps(__m256d_to_twice___m256(random_4_0),
+                          _mm256_set_ps(-0.5f, -0.5f, -0.5f, -0.5f, -0.5f,
+                                        -0.5f, -0.5f, -0.5f));
         const __m256 xi_168 = _mm256_add_ps(xi_250, xi_257);
         const __m256 xi_169 = _mm256_add_ps(
             _mm256_add_ps(_mm256_add_ps(xi_102, xi_168), xi_23), xi_260);
         const __m256 xi_170 = _mm256_mul_ps(
             xi_169, _mm256_set_ps(xi_115, xi_115, xi_115, xi_115, xi_115,
                                   xi_115, xi_115, xi_115));
-        const __m256d xi_173 = _mm256_add_ps(
-            random_5_0, _mm256_set_ps(-0.5f, -0.5f, -0.5f, -0.5f, -0.5f, -0.5f,
-                                      -0.5f, -0.5f));
+        const __m256 xi_173 =
+            _mm256_add_ps(__m256d_to_twice___m256(random_5_0),
+                          _mm256_set_ps(-0.5f, -0.5f, -0.5f, -0.5f, -0.5f,
+                                        -0.5f, -0.5f, -0.5f));
         const __m256 xi_175 = _mm256_add_ps(
             _mm256_add_ps(
                 _mm256_add_ps(
@@ -698,9 +711,10 @@ static FUNC_PREFIX void collidesweepsingleprecisionthermalizedavx(
         const __m256 xi_176 = _mm256_mul_ps(
             xi_175, _mm256_set_ps(xi_131, xi_131, xi_131, xi_131, xi_131,
                                   xi_131, xi_131, xi_131));
-        const __m256d xi_177 = _mm256_add_ps(
-            random_3_1, _mm256_set_ps(-0.5f, -0.5f, -0.5f, -0.5f, -0.5f, -0.5f,
-                                      -0.5f, -0.5f));
+        const __m256 xi_177 =
+            _mm256_add_ps(__m256d_to_twice___m256(random_3_1),
+                          _mm256_set_ps(-0.5f, -0.5f, -0.5f, -0.5f, -0.5f,
+                                        -0.5f, -0.5f, -0.5f));
         const __m256 xi_184 = _mm256_mul_ps(
             xi_112, _mm256_set_ps(0.0138888888888889f, 0.0138888888888889f,
                                   0.0138888888888889f, 0.0138888888888889f,
@@ -767,26 +781,24 @@ static FUNC_PREFIX void collidesweepsingleprecisionthermalizedavx(
                        -((-omega_even + 1.0f) * (-omega_even + 1.0f)) + 1.0f)));
         const __m256 xi_88 = _mm256_mul_ps(
             _mm256_mul_ps(
-                _mm256_add_ps(random_6_0,
+                _mm256_add_ps(__m256d_to_twice___m256(random_6_0),
                               _mm256_set_ps(-0.5f, -0.5f, -0.5f, -0.5f, -0.5f,
                                             -0.5f, -0.5f, -0.5f)),
                 _mm256_set_ps(3.7416573867739413, 3.7416573867739413,
                               3.7416573867739413, 3.7416573867739413,
                               3.7416573867739413, 3.7416573867739413,
                               3.7416573867739413, 3.7416573867739413)),
-            _mm256_set_ps(xi_87, xi_87, xi_87, xi_87, xi_87, xi_87, xi_87,
-                          xi_87));
+            xi_87);
         const __m256 xi_89 = _mm256_mul_ps(
             _mm256_mul_ps(
-                _mm256_add_ps(random_7_0,
+                _mm256_add_ps(__m256d_to_twice___m256(random_7_0),
                               _mm256_set_ps(-0.5f, -0.5f, -0.5f, -0.5f, -0.5f,
                                             -0.5f, -0.5f, -0.5f)),
                 _mm256_set_ps(5.4772255750516612, 5.4772255750516612,
                               5.4772255750516612, 5.4772255750516612,
                               5.4772255750516612, 5.4772255750516612,
                               5.4772255750516612, 5.4772255750516612)),
-            _mm256_set_ps(xi_87, xi_87, xi_87, xi_87, xi_87, xi_87, xi_87,
-                          xi_87));
+            xi_87);
         const __m256 xi_91 = _mm256_mul_ps(
             _mm256_mul_ps(
                 _mm256_sqrt_ps(_mm256_mul_ps(
@@ -799,22 +811,21 @@ static FUNC_PREFIX void collidesweepsingleprecisionthermalizedavx(
                                   -((xi_25 + 1.0f) * (xi_25 + 1.0f)) + 1.0f,
                                   -((xi_25 + 1.0f) * (xi_25 + 1.0f)) + 1.0f,
                                   -((xi_25 + 1.0f) * (xi_25 + 1.0f)) + 1.0f))),
-                _mm256_add_ps(random_2_1,
+                _mm256_add_ps(__m256d_to_twice___m256(random_2_1),
                               _mm256_set_ps(-0.5f, -0.5f, -0.5f, -0.5f, -0.5f,
                                             -0.5f, -0.5f, -0.5f))),
             _mm256_set_ps(xi_90, xi_90, xi_90, xi_90, xi_90, xi_90, xi_90,
                           xi_90));
         const __m256 xi_92 = _mm256_mul_ps(
             _mm256_mul_ps(
-                _mm256_add_ps(random_6_1,
+                _mm256_add_ps(__m256d_to_twice___m256(random_6_1),
                               _mm256_set_ps(-0.5f, -0.5f, -0.5f, -0.5f, -0.5f,
                                             -0.5f, -0.5f, -0.5f)),
                 _mm256_set_ps(8.3666002653407556, 8.3666002653407556,
                               8.3666002653407556, 8.3666002653407556,
                               8.3666002653407556, 8.3666002653407556,
                               8.3666002653407556, 8.3666002653407556)),
-            _mm256_set_ps(xi_87, xi_87, xi_87, xi_87, xi_87, xi_87, xi_87,
-                          xi_87));
+            xi_87);
         const __m256 xi_123 = _mm256_sqrt_ps(_mm256_mul_ps(
             xi_86, _mm256_set_ps(
                        -((-omega_odd + 1.0f) * (-omega_odd + 1.0f)) + 1.0f,
@@ -830,14 +841,11 @@ static FUNC_PREFIX void collidesweepsingleprecisionthermalizedavx(
                                         1.4142135623730951, 1.4142135623730951,
                                         1.4142135623730951, 1.4142135623730951,
                                         1.4142135623730951, 1.4142135623730951),
-                          _mm256_set_ps(xi_123, xi_123, xi_123, xi_123, xi_123,
-                                        xi_123, xi_123, xi_123));
+                          xi_123);
         const __m256 xi_125 =
             _mm256_mul_ps(xi_124, _mm256_set_ps(0.5f, 0.5f, 0.5f, 0.5f, 0.5f,
                                                 0.5f, 0.5f, 0.5f));
-        const __m256 xi_126 = _mm256_mul_ps(
-            xi_122, _mm256_set_ps(xi_125, xi_125, xi_125, xi_125, xi_125,
-                                  xi_125, xi_125, xi_125));
+        const __m256 xi_126 = _mm256_mul_ps(xi_122, xi_125);
         const __m256 xi_134 =
             _mm256_mul_ps(xi_123, _mm256_set_ps(xi_90, xi_90, xi_90, xi_90,
                                                 xi_90, xi_90, xi_90, xi_90));
@@ -846,9 +854,7 @@ static FUNC_PREFIX void collidesweepsingleprecisionthermalizedavx(
                                   0.166666666666667f, 0.166666666666667f,
                                   0.166666666666667f, 0.166666666666667f,
                                   0.166666666666667f, 0.166666666666667f));
-        const __m256 xi_136 = _mm256_mul_ps(
-            xi_133, _mm256_set_ps(xi_135, xi_135, xi_135, xi_135, xi_135,
-                                  xi_135, xi_135, xi_135));
+        const __m256 xi_136 = _mm256_mul_ps(xi_133, xi_135);
         const __m256 xi_137 = _mm256_add_ps(
             _mm256_mul_ps(xi_132, _mm256_set_ps(-1.0, -1.0, -1.0, -1.0, -1.0,
                                                 -1.0, -1.0, -1.0)),
@@ -866,9 +872,7 @@ static FUNC_PREFIX void collidesweepsingleprecisionthermalizedavx(
         const __m256 xi_140 =
             _mm256_mul_ps(xi_139, _mm256_set_ps(0.5f, 0.5f, 0.5f, 0.5f, 0.5f,
                                                 0.5f, 0.5f, 0.5f));
-        const __m256 xi_141 = _mm256_mul_ps(
-            xi_138, _mm256_set_ps(xi_140, xi_140, xi_140, xi_140, xi_140,
-                                  xi_140, xi_140, xi_140));
+        const __m256 xi_141 = _mm256_mul_ps(xi_138, xi_140);
         const __m256 xi_146 = _mm256_add_ps(
             _mm256_mul_ps(
                 xi_112,
@@ -884,34 +888,25 @@ static FUNC_PREFIX void collidesweepsingleprecisionthermalizedavx(
                               -0.119047619047619f, -0.119047619047619f)));
         const __m256 xi_148 = _mm256_mul_ps(
             _mm256_mul_ps(
-                _mm256_add_ps(random_0_0,
+                _mm256_add_ps(__m256d_to_twice___m256(random_0_0),
                               _mm256_set_ps(-0.5f, -0.5f, -0.5f, -0.5f, -0.5f,
                                             -0.5f, -0.5f, -0.5f)),
                 _mm256_set_ps(1.7320508075688772, 1.7320508075688772,
                               1.7320508075688772, 1.7320508075688772,
                               1.7320508075688772, 1.7320508075688772,
                               1.7320508075688772, 1.7320508075688772)),
-            _mm256_set_ps(xi_139, xi_139, xi_139, xi_139, xi_139, xi_139,
-                          xi_139, xi_139));
+            xi_139);
         const __m256 xi_152 = _mm256_add_ps(xi_132, xi_136);
-        const __m256 xi_160 = _mm256_mul_ps(
-            xi_159, _mm256_set_ps(xi_125, xi_125, xi_125, xi_125, xi_125,
-                                  xi_125, xi_125, xi_125));
-        const __m256 xi_164 = _mm256_mul_ps(
-            xi_163, _mm256_set_ps(xi_135, xi_135, xi_135, xi_135, xi_135,
-                                  xi_135, xi_135, xi_135));
+        const __m256 xi_160 = _mm256_mul_ps(xi_159, xi_125);
+        const __m256 xi_164 = _mm256_mul_ps(xi_163, xi_135);
         const __m256 xi_165 = _mm256_add_ps(xi_162, xi_164);
         const __m256 xi_167 = _mm256_add_ps(
             _mm256_mul_ps(xi_162, _mm256_set_ps(-1.0, -1.0, -1.0, -1.0, -1.0,
                                                 -1.0, -1.0, -1.0)),
             _mm256_mul_ps(xi_164, _mm256_set_ps(-1.0, -1.0, -1.0, -1.0, -1.0,
                                                 -1.0, -1.0, -1.0)));
-        const __m256 xi_174 = _mm256_mul_ps(
-            xi_173, _mm256_set_ps(xi_125, xi_125, xi_125, xi_125, xi_125,
-                                  xi_125, xi_125, xi_125));
-        const __m256 xi_178 = _mm256_mul_ps(
-            xi_177, _mm256_set_ps(xi_135, xi_135, xi_135, xi_135, xi_135,
-                                  xi_135, xi_135, xi_135));
+        const __m256 xi_174 = _mm256_mul_ps(xi_173, xi_125);
+        const __m256 xi_178 = _mm256_mul_ps(xi_177, xi_135);
         const __m256 xi_179 = _mm256_add_ps(
             _mm256_mul_ps(xi_176, _mm256_set_ps(-1.0, -1.0, -1.0, -1.0, -1.0,
                                                 -1.0, -1.0, -1.0)),
@@ -921,25 +916,22 @@ static FUNC_PREFIX void collidesweepsingleprecisionthermalizedavx(
         const __m256 xi_182 = _mm256_mul_ps(
             _mm256_mul_ps(xi_138, _mm256_set_ps(0.25f, 0.25f, 0.25f, 0.25f,
                                                 0.25f, 0.25f, 0.25f, 0.25f)),
-            _mm256_set_ps(xi_139, xi_139, xi_139, xi_139, xi_139, xi_139,
-                          xi_139, xi_139));
+            xi_139);
         const __m256 xi_185 = _mm256_mul_ps(
             xi_88, _mm256_set_ps(0.0833333333333333f, 0.0833333333333333f,
                                  0.0833333333333333f, 0.0833333333333333f,
                                  0.0833333333333333f, 0.0833333333333333f,
                                  0.0833333333333333f, 0.0833333333333333f));
         const __m256 xi_195 = _mm256_mul_ps(
-            _mm256_add_ps(random_1_0,
+            _mm256_add_ps(__m256d_to_twice___m256(random_1_0),
                           _mm256_set_ps(-0.5f, -0.5f, -0.5f, -0.5f, -0.5f,
                                         -0.5f, -0.5f, -0.5f)),
-            _mm256_set_ps(xi_140, xi_140, xi_140, xi_140, xi_140, xi_140,
-                          xi_140, xi_140));
+            xi_140);
         const __m256 xi_204 = _mm256_mul_ps(
-            _mm256_add_ps(random_2_0,
+            _mm256_add_ps(__m256d_to_twice___m256(random_2_0),
                           _mm256_set_ps(-0.5f, -0.5f, -0.5f, -0.5f, -0.5f,
                                         -0.5f, -0.5f, -0.5f)),
-            _mm256_set_ps(xi_140, xi_140, xi_140, xi_140, xi_140, xi_140,
-                          xi_140, xi_140));
+            xi_140);
         const __m256 xi_208 = _mm256_mul_ps(
             xi_92, _mm256_set_ps(-0.0142857142857143f, -0.0142857142857143f,
                                  -0.0142857142857143f, -0.0142857142857143f,
@@ -953,15 +945,11 @@ static FUNC_PREFIX void collidesweepsingleprecisionthermalizedavx(
                                   0.0833333333333333f, 0.0833333333333333f,
                                   0.0833333333333333f, 0.0833333333333333f,
                                   0.0833333333333333f, 0.0833333333333333f));
-        const __m256 xi_216 = _mm256_mul_ps(
-            xi_177, _mm256_set_ps(xi_215, xi_215, xi_215, xi_215, xi_215,
-                                  xi_215, xi_215, xi_215));
+        const __m256 xi_216 = _mm256_mul_ps(xi_177, xi_215);
         const __m256 xi_217 =
             _mm256_mul_ps(xi_124, _mm256_set_ps(0.25f, 0.25f, 0.25f, 0.25f,
                                                 0.25f, 0.25f, 0.25f, 0.25f));
-        const __m256 xi_218 = _mm256_mul_ps(
-            xi_173, _mm256_set_ps(xi_217, xi_217, xi_217, xi_217, xi_217,
-                                  xi_217, xi_217, xi_217));
+        const __m256 xi_218 = _mm256_mul_ps(xi_173, xi_217);
         const __m256 xi_220 = _mm256_add_ps(
             _mm256_mul_ps(
                 xi_112,
@@ -975,12 +963,8 @@ static FUNC_PREFIX void collidesweepsingleprecisionthermalizedavx(
                               -0.0238095238095238f, -0.0238095238095238f,
                               -0.0238095238095238f, -0.0238095238095238f,
                               -0.0238095238095238f, -0.0238095238095238f)));
-        const __m256 xi_225 = _mm256_mul_ps(
-            xi_133, _mm256_set_ps(xi_215, xi_215, xi_215, xi_215, xi_215,
-                                  xi_215, xi_215, xi_215));
-        const __m256 xi_226 = _mm256_mul_ps(
-            xi_122, _mm256_set_ps(xi_217, xi_217, xi_217, xi_217, xi_217,
-                                  xi_217, xi_217, xi_217));
+        const __m256 xi_225 = _mm256_mul_ps(xi_133, xi_215);
+        const __m256 xi_226 = _mm256_mul_ps(xi_122, xi_217);
         const __m256 xi_230 =
             _mm256_mul_ps(xi_182, _mm256_set_ps(-1.0, -1.0, -1.0, -1.0, -1.0,
                                                 -1.0, -1.0, -1.0));
@@ -990,17 +974,12 @@ static FUNC_PREFIX void collidesweepsingleprecisionthermalizedavx(
                                  0.0357142857142857f, 0.0357142857142857f,
                                  0.0357142857142857f, 0.0357142857142857f));
         const __m256 xi_235 = _mm256_mul_ps(
-            _mm256_add_ps(random_1_1,
+            _mm256_add_ps(__m256d_to_twice___m256(random_1_1),
                           _mm256_set_ps(-0.5f, -0.5f, -0.5f, -0.5f, -0.5f,
                                         -0.5f, -0.5f, -0.5f)),
-            _mm256_set_ps(xi_140, xi_140, xi_140, xi_140, xi_140, xi_140,
-                          xi_140, xi_140));
-        const __m256 xi_240 = _mm256_mul_ps(
-            xi_159, _mm256_set_ps(xi_217, xi_217, xi_217, xi_217, xi_217,
-                                  xi_217, xi_217, xi_217));
-        const __m256 xi_241 = _mm256_mul_ps(
-            xi_163, _mm256_set_ps(xi_215, xi_215, xi_215, xi_215, xi_215,
-                                  xi_215, xi_215, xi_215));
+            xi_140);
+        const __m256 xi_240 = _mm256_mul_ps(xi_159, xi_217);
+        const __m256 xi_241 = _mm256_mul_ps(xi_163, xi_215);
         const __m256 u_0 = _mm256_mul_ps(
             xi_7, _mm256_add_ps(_mm256_add_ps(vel0Term, xi_13), xi_9));
         const __m256 xi_26 = _mm256_mul_ps(u_0, xi_264);
