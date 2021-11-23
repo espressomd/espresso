@@ -19,10 +19,6 @@
 set(WalberlaBridgeCodegen_SRC
     generated_kernels/StreamSweepSinglePrecision.cpp
     generated_kernels/StreamSweepDoublePrecision.cpp
-    generated_kernels/CollideSweepSinglePrecision.cpp
-    generated_kernels/CollideSweepDoublePrecision.cpp
-    generated_kernels/CollideSweepSinglePrecisionThermalized.cpp
-    generated_kernels/CollideSweepDoublePrecisionThermalized.cpp
     generated_kernels/InitialPDFsSetterSinglePrecision.cpp
     generated_kernels/InitialPDFsSetterDoublePrecision.cpp
     generated_kernels/Dynamic_UBB_single_precision.cpp
@@ -33,12 +29,25 @@ if(WALBERLA_USE_AVX)
        generated_kernels/CollideSweepDoublePrecisionAVX.cpp
        generated_kernels/CollideSweepSinglePrecisionThermalizedAVX.cpp
        generated_kernels/CollideSweepDoublePrecisionThermalizedAVX.cpp)
+else()
+  list(APPEND WalberlaBridgeCodegen_SRC
+       generated_kernels/CollideSweepSinglePrecision.cpp
+       generated_kernels/CollideSweepDoublePrecision.cpp
+       generated_kernels/CollideSweepSinglePrecisionThermalized.cpp
+       generated_kernels/CollideSweepDoublePrecisionThermalized.cpp)
 endif()
 set(WalberlaBridge_SRC ${WalberlaBridgeCodegen_SRC} lb_walberla_init.cpp
                        LatticeWalberla.cpp)
+
+add_library(cxx_walberla_interface INTERFACE)
+if(WALBERLA_USE_AVX)
+  target_compile_options(cxx_walberla_interface INTERFACE -mavx2)
+endif(WALBERLA_USE_AVX)
+
 add_library(WalberlaBridge SHARED ${WalberlaBridge_SRC})
 target_link_libraries(WalberlaBridge PUBLIC MPI::MPI_CXX EspressoUtils
-                      PRIVATE Boost::boost cxx_interface ${WALBERLA_LIBS})
+                      PRIVATE Boost::boost cxx_interface cxx_walberla_interface
+                      ${WALBERLA_LIBS})
 target_include_directories(
   WalberlaBridge PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${WALBERLA_INCLUDE_DIRS}
   PRIVATE ${walberla_BINARY_DIR}/src)
