@@ -55,7 +55,7 @@ In the following, we discuss the parameters that can be supplied to the LBM in |
 The LB scheme and the MD scheme are not synchronized: In one LB time
 step typically several MD steps are performed. This allows to speed up
 the simulations and is adjusted with the parameter ``tau``, the LB time step.
-The parameters ``dens`` and ``visc`` set up the density and (kinematic) viscosity of the
+The parameters ``density`` and ``viscosity`` set up the density and (kinematic) viscosity of the
 LB fluid in (usual) MD units. Internally the LB implementation works
 with a different set of units: all lengths are expressed in ``agrid``, all times
 in ``tau`` and so on.
@@ -76,20 +76,21 @@ the fluid thermalization::
 
 The parameter ``ext_force_density`` takes a three dimensional vector as an
 array_like of :obj:`float`, representing a homogeneous external body force density in MD
-units to be applied to the fluid. The parameter ``bulk_visc`` allows one to
-tune the bulk viscosity of the fluid and is given in MD units. In the limit of
-low Mach number, the flow does not compress the fluid and the resulting flow
-field is therefore independent of the bulk viscosity. It is however known that
-the value of the viscosity does affect the quality of the implemented
-link-bounce-back method. ``gamma_even`` and ``gamma_odd`` are the relaxation
-parameters for the kinetic modes. These fluid parameters do not correspond to
-any macroscopic fluid properties, but do influence numerical properties of the
-algorithm, such as the magnitude of the error at boundaries. Unless you are an
-expert, leave their defaults unchanged. If you do change them, note that they
-are to be given in LB units.
+units to be applied to the fluid.
 
 Before running a simulation at least the following parameters must be
-set up: ``agrid``, ``tau``, ``visc``, ``dens``.
+set up: ``agrid``, ``tau``, ``viscosity``, ``density``.
+
+Performance considerations
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The CPU implementation of the LB has an extra flag ``single_precision`` to
+use single-precision floating point values. These are approximately 10%
+faster than double-precision, at the cost of a small loss in precision.
+
+To enable vectorization, run ``cmake . -DWALBERLA_USE_AVX=ON``.
+An AVX2-capable microprocessor is required. Currently only works
+for double-precision kernels.
 
 .. _Checkpointing LB:
 
