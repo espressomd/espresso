@@ -104,6 +104,10 @@ def earmark_generated_kernels():
     walberla_root = lbmpy_walberla.__file__.split('/python/lbmpy_walberla/')[0]
     with open(os.path.join(walberla_root, '.git/HEAD')) as f:
         walberla_commit = f.read()
+    if walberla_commit.startswith('ref: refs/heads/master'):
+        ref = walberla_commit.split()[1]
+        with open(os.path.join(walberla_root, f'.git/{ref}')) as f:
+            walberla_commit = f.read()
     token = '// kernel generated with'
     earmark = (
         f'{token} pystencils v{ps.__version__}, lbmpy v{lbmpy.__version__}, '
