@@ -23,7 +23,6 @@ import espressomd.lb
 import espressomd.lbboundaries
 import espressomd.observables
 import espressomd.shapes
-import espressomd.accumulators
 
 AGRID = .5
 EXT_FORCE = .1
@@ -37,7 +36,7 @@ LB_PARAMS = {'agrid': AGRID,
              'visc': VISC,
              'tau': TIME_STEP}
 
-OBS_PARAMS = {'n_r_bins': 25,
+OBS_PARAMS = {'n_r_bins': 6,
               'n_phi_bins': 1,
               'n_z_bins': 1,
               'min_r': 0.0,
@@ -106,6 +105,7 @@ class LBPoiseuilleCommon:
         cylinder = espressomd.lbboundaries.LBBoundary(shape=cylinder_shape)
         self.system.lbboundaries.add(cylinder)
 
+        # simulate until profile converges
         mid_indices = 3 * [int((BOX_L / AGRID) / 2)]
         diff = float("inf")
         old_val = self.lbf[mid_indices].velocity[2]
@@ -141,44 +141,37 @@ class LBPoiseuilleCommon:
             EFFECTIVE_RADIUS,
             EXT_FORCE,
             VISC * DENS)
-        rmsd = np.linalg.norm(v_expected - v_measured)
-        self.assertLess(rmsd, 0.02 * AGRID / TIME_STEP)
+        np.testing.assert_allclose(v_measured, v_expected, atol=0.02, rtol=0.)
 
-    def prepare_obs(self):
+    def check_observable(self):
         if self.params['axis'] == [1, 0, 0]:
             obs_center = [0.0, BOX_L / 2.0, BOX_L / 2.0]
         elif self.params['axis'] == [0, 1, 0]:
             obs_center = [BOX_L / 2.0, 0.0, BOX_L / 2.0]
         else:
             obs_center = [BOX_L / 2.0, BOX_L / 2.0, 0.0]
+        ctp = espressomd.math.CylindricalTransformationParameters(
+            center=obs_center,
+            axis=self.params['axis'],
+            orientation=self.params['orientation'])
         local_obs_params = OBS_PARAMS.copy()
-        ctp = espressomd.math.CylindricalTransformationParameters(center=obs_center,
-                                                                  axis=self.params['axis'],
-                                                                  orientation=self.params['orientation'])
         local_obs_params['transform_params'] = ctp
         obs = espressomd.observables.CylindricalLBVelocityProfile(
             **local_obs_params)
-        self.accumulator = espressomd.accumulators.MeanVarianceCalculator(
-            obs=obs)
-        self.system.auto_update_accumulators.add(self.accumulator)
 
-    def check_observable(self):
-        self.prepare_obs()
-        # gather some statistics for the observable accumulator
-        self.system.integrator.run(1)
-        obs_result = self.accumulator.mean()
-        x = np.linspace(
-            OBS_PARAMS['min_r'],
-            OBS_PARAMS['max_r'],
-            OBS_PARAMS['n_r_bins'])
+        self.system.integrator.run(5)
+        r = obs.bin_centers()[:, :, :, 0].reshape(-1)
         v_expected = poiseuille_flow(
-            x,
+            r,
             EFFECTIVE_RADIUS,
             EXT_FORCE,
             VISC * DENS)
-        v_measured = obs_result[:, 0, 0, 2]
-        rmsd = np.sqrt(np.sum(np.square(v_expected - v_measured)))
-        self.assertLess(rmsd, 0.004 * AGRID / TIME_STEP)
+        v_r, v_phi, v_z = np.copy(obs.calculate()).reshape([-1, 3]).T
+        # check velocity is zero for the radial and azimuthal components
+        np.testing.assert_allclose(v_r, 0., atol=1e-4, rtol=0.)
+        np.testing.assert_allclose(v_phi, 0., atol=1e-4, rtol=0.)
+        # check velocity is correct in the axial component
+        np.testing.assert_allclose(v_z, v_expected, atol=2.6e-3, rtol=0.)
 
     def test_x(self):
         self.params['axis'] = [1, 0, 0]
