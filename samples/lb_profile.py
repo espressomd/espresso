@@ -28,7 +28,7 @@ import espressomd.shapes
 import espressomd.accumulators
 import espressomd.math
 
-required_features = ["LB_WALBERLA", "LB_BOUNDARIES"]
+required_features = ["LB_WALBERLA"]
 espressomd.assert_features(required_features)
 
 system = espressomd.System(box_l=[10.0, 10.0, 5.0])

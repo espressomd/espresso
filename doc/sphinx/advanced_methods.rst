@@ -237,7 +237,6 @@ Description of sample script
 .. note::
 
     The following features are required:
-    ``LB_BOUNDARIES``,
     ``EXTERNAL_FORCES``,
     ``MASS``, ``SOFT_SPHERE``
 

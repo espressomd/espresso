@@ -48,9 +48,6 @@
 // Active matter
 #define ENGINE
 
-// Hydrodynamics
-#define LB_BOUNDARIES
-
 // Force/energy calculation
 #define EXCLUSIONS
 

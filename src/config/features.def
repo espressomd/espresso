@@ -55,7 +55,6 @@ VIRTUAL_SITES_INERTIALESS_TRACERS implies VIRTUAL_SITES
 DPD
 
 /* Lattice-Boltzmann features */
-LB_BOUNDARIES
 LB_ELECTROHYDRODYNAMICS
 
 /* Interaction features */

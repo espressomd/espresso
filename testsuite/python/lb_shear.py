@@ -177,7 +177,7 @@ class LBShearCommon:
         self.check_profile(y, -z)
 
 
-@utx.skipIfMissingFeatures(['LB_WALBERLA', 'LB_BOUNDARIES'])
+@utx.skipIfMissingFeatures(['LB_WALBERLA'])
 class LBWalberlaShear(ut.TestCase, LBShearCommon):
 
     """Test for the Walberla implementation of the LB."""

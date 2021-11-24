@@ -91,13 +91,12 @@ class TestVTK(ut.TestCase):
         self.system.actors.add(self.lbf)
         x_offset = 0
         shape = [16, 16, 16]
-        if espressomd.has_features('LB_BOUNDARIES'):
-            self.lbf.add_boundary_from_shape(
-                espressomd.shapes.Wall(normal=[1, 0, 0], dist=1.5))
-            self.lbf.add_boundary_from_shape(
-                espressomd.shapes.Wall(normal=[-1, 0, 0], dist=-14.5))
-            x_offset = 2
-            shape[0] = 12
+        self.lbf.add_boundary_from_shape(
+            espressomd.shapes.Wall(normal=[1, 0, 0], dist=1.5))
+        self.lbf.add_boundary_from_shape(
+            espressomd.shapes.Wall(normal=[-1, 0, 0], dist=-14.5))
+        x_offset = 2
+        shape[0] = 12
 
         n_steps = 100
         lb_steps = int(np.floor(n_steps * self.lbf.tau))

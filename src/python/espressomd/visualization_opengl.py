@@ -377,9 +377,6 @@ class openGLLive():
         if not espressomd.has_features('ROTATION'):
             self.specs['director_arrows'] = False
 
-        if not espressomd.has_features('LB_BOUNDARIES'):
-            self.specs['LB_draw_node_boundaries'] = False
-
         # ESPRESSO RELATED INITS THAT ARE KNOWN ONLY WHEN RUNNING THE
         # INTEGRATION LOOP ARE CALLED ONCE IN UPDATE LOOP:
         # CONSTRAINTS, NODE BOXES, CELL BOXES, CHARGE RANGE, BONDS

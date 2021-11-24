@@ -29,7 +29,7 @@ import espressomd.lb
 import espressomd.shapes
 import espressomd.virtual_sites
 
-required_features = ["LB_BOUNDARIES", "VIRTUAL_SITES_INERTIALESS_TRACERS",
+required_features = ["VIRTUAL_SITES_INERTIALESS_TRACERS",
                      "LB_WALBERLA", "EXPERIMENTAL_FEATURES"]
 espressomd.assert_features(required_features)
 

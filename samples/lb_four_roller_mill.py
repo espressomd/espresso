@@ -37,7 +37,7 @@ import logging
 import tqdm
 import sys
 
-espressomd.assert_features(["LB_WALBERLA", "LB_BOUNDARIES"])
+espressomd.assert_features(["LB_WALBERLA"])
 logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 
 parser = argparse.ArgumentParser(epilog=__doc__)

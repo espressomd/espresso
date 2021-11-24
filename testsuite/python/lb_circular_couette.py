@@ -37,7 +37,7 @@ def taylor_couette(v1, v2, r1, r2, agrid):
     return a, b
 
 
-@utx.skipIfMissingFeatures(["LB_BOUNDARIES", "LB_WALBERLA"])
+@utx.skipIfMissingFeatures(["LB_WALBERLA"])
 class LBRollerMill(ut.TestCase):
 
     def test_taylor_couette_flow(self):

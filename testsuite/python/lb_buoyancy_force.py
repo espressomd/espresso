@@ -105,7 +105,7 @@ class Buoyancy(object):
         #     atol=np.linalg.norm(expected_force) * 0.02)
 
 
-@utx.skipIfMissingFeatures(["LB_BOUNDARIES", "EXTERNAL_FORCES", "LB_WALBERLA"])
+@utx.skipIfMissingFeatures(["EXTERNAL_FORCES", "LB_WALBERLA"])
 class LBCPUBuoyancy(ut.TestCase, Buoyancy):
 
     def setUp(self):

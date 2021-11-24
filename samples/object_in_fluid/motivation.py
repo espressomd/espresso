@@ -22,7 +22,7 @@ with solid obstacles. For more details, see :ref:`Object-in-fluid`.
 import espressomd
 import espressomd.shapes
 
-required_features = ["LB_WALBERLA", "LB_BOUNDARIES", "EXTERNAL_FORCES",
+required_features = ["LB_WALBERLA", "EXTERNAL_FORCES",
                      "SOFT_SPHERE", "MASS"]
 espressomd.assert_features(required_features)
 
