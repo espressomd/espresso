@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_OBJECT_CONTAINER_MPI_GUARD__HPP
-#define ESPRESSO_OBJECT_CONTAINER_MPI_GUARD__HPP
+#ifndef ESPRESSO_OBJECT_CONTAINER_MPI_GUARD_HPP
+#define ESPRESSO_OBJECT_CONTAINER_MPI_GUARD_HPP
 
 #include <boost/utility/string_ref.hpp>
 

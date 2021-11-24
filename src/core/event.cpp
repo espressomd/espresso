@@ -62,8 +62,8 @@
 
 /** whether the thermostat has to be reinitialized before integration */
 static bool reinit_thermo = true;
-static int reinit_electrostatics = false;
-static int reinit_magnetostatics = false;
+static bool reinit_electrostatics = false;
+static bool reinit_magnetostatics = false;
 
 #if defined(OPEN_MPI) &&                                                       \
     (OMPI_MAJOR_VERSION == 2 && OMPI_MINOR_VERSION <= 1 ||                     \
