@@ -18,7 +18,6 @@
  */
 
 #include "grid_based_algorithms/lb_interface.hpp"
-#include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lb_walberla_instance.hpp"
 #include "grid_based_algorithms/lb_walberla_interface.hpp"
 

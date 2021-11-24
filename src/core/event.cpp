@@ -37,7 +37,6 @@
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
-#include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "immersed_boundaries.hpp"
 #include "integrate.hpp"
@@ -223,13 +222,6 @@ void on_short_range_ia_change() {
 
 void on_constraint_change() { recalc_forces = true; }
 
-void on_lbboundary_change() {
-#if defined(LB_BOUNDARIES)
-  LBBoundaries::lb_init_boundaries();
-  on_lb_boundary_conditions_change();
-#endif
-}
-
 void on_lb_boundary_conditions_change() { recalc_forces = true; }
 
 void on_boxl_change(bool skip_method_adaption) {
@@ -249,9 +241,6 @@ void on_boxl_change(bool skip_method_adaption) {
 #endif
 
     lb_lbfluid_init();
-#ifdef LB_BOUNDARIES
-    LBBoundaries::lb_init_boundaries();
-#endif
   }
 }
 

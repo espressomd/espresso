@@ -124,9 +124,6 @@ void on_nodegrid_change();
 
 unsigned global_ghost_flags();
 
-/** called every time the walls for the lb fluid are changed */
-void on_lbboundary_change();
-
 /** @brief Called when the LB boundary conditions are changed
  *  (geometry, slip velocity, or both).
  */

@@ -351,8 +351,7 @@ class ScriptInterfaceHelper(PScriptInterface):
 class ScriptObjectRegistry(ScriptInterfaceHelper):
     """
     Base class for container-like classes such as
-    :class:`~espressomd.constraints.Constraints` and
-    :class:`~espressomd.lbboundaries.LBBoundaries`. Derived classes must
+    :class:`~espressomd.constraints.Constraints`. Derived classes must
     implement an ``add()`` method which adds a single item to the container.
 
     The core class should derive from ScriptObjectRegistry or provide
