@@ -2919,9 +2919,6 @@ class BondedInteractions(ScriptObjectRegistry):
         """
         self.call_method("clear")
 
-    def __getitem__(self, bond_id):
-        return self._get_bond(bond_id)
-
     def _get_bond(self, bond_id):
         if not is_valid_type(bond_id, int):
             raise ValueError(
@@ -2942,8 +2939,14 @@ class BondedInteractions(ScriptObjectRegistry):
         # which links to the bonded interaction object
         return bond_class(bond_id)
 
+    def __getitem__(self, bond_id):
+        return self._get_bond(bond_id)
+
     def __setitem__(self, bond_id, value):
         self._insert_bond(value, bond_id)
+
+    def __delitem__(self, bond_id):
+        self.remove(bond_id)
 
     def _insert_bond(self, bond, bond_id=None):
         """

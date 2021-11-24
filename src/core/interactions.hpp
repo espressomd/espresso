@@ -24,8 +24,13 @@
 #ifndef _INTERACTIONS_HPP
 #define _INTERACTIONS_HPP
 
-/** Broadcast \ref ia_params to all nodes. */
-void mpi_bcast_all_ia_params();
+/** Calculate the maximal cutoff of all interactions. */
+double maximal_cutoff();
+
+/** Check electrostatic and magnetostatic methods are properly initialized.
+ *  @return true if sanity checks failed.
+ */
+bool long_range_interactions_sanity_checks();
 
 /** Send new IA params.
  *  Also calls \ref on_short_range_ia_change.
@@ -39,10 +44,5 @@ void mpi_bcast_all_ia_params();
  *             parameters / if negative: flag for bonded interaction
  */
 void mpi_bcast_ia_params(int i, int j);
-
-/** Resize \ref ia_params.
- *  \param s   the new size.
- */
-void mpi_realloc_ia_params(int s);
 
 #endif

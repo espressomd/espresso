@@ -116,40 +116,43 @@ class CheckpointTest(ut.TestCase):
                         grid_3D[i, j, k] * np.arange(1, 4),
                         decimal=precision)
         state = lbf.get_params()
-        reference = {'agrid': 0.5, 'visc': 1.3, 'dens': 1.5, 'tau': 0.01}
+        reference = {
+            'agrid': 0.5,
+            'viscosity': 1.3,
+            'density': 1.5,
+            'tau': 0.01}
         for key in reference:
             self.assertIn(key, state)
             self.assertAlmostEqual(reference[key], state[key], delta=1E-7)
+        self.assertTrue(lbf.is_active)
+        self.assertFalse(lbf.is_single_precision)
 
     @utx.skipIfMissingFeatures('LB_WALBERLA')
     @ut.skipIf('LB.ACTIVE.WALBERLA' not in modes, 'waLBerla LBM not in modes')
     def test_VTK(self):
         vtk_suffix = '@TEST_COMBINATION@_@TEST_BINARY@'
-        for vtk_registry in (system._vtk_registry,
-                             espressomd.lb._vtk_registry):
-            key = f'vtk_out/auto_{vtk_suffix}'
-            self.assertIn(key, vtk_registry.map)
-            obj = vtk_registry.map[key]
-            self.assertIsInstance(obj, espressomd.lb.VTKOutputAutomatic)
-            self.assertEqual(obj._params['vtk_uid'], key)
-            self.assertEqual(obj._params['delta_N'], 1)
-            self.assertFalse(obj._params['enabled'])
-            self.assertEqual(obj._params['observables'],
-                             {'density', 'velocity_vector'})
-            self.assertIn(
-                "writes to '{}' every 1 LB step (disabled)>".format(key),
-                repr(obj))
-            key = f'vtk_out/manual_{vtk_suffix}'
-            self.assertIn(key, vtk_registry.map)
-            obj = vtk_registry.map[key]
-            self.assertIsInstance(obj, espressomd.lb.VTKOutputManual)
-            self.assertEqual(obj._params['vtk_uid'], key)
-            self.assertEqual(obj._params['delta_N'], 0)
-            self.assertEqual(obj._params['observables'], {'density'})
-            self.assertIn("writes to '{}' on demand>".format(key), repr(obj))
+        vtk_registry = espressomd.lb._vtk_registry
+        key_auto = f'vtk_out/auto_{vtk_suffix}'
+        self.assertIn(key_auto, vtk_registry.map)
+        obj = vtk_registry.map[key_auto]
+        self.assertIsInstance(obj, espressomd.lb.VTKOutput)
+        self.assertEqual(obj.vtk_uid, key_auto)
+        self.assertEqual(obj.delta_N, 1)
+        self.assertFalse(obj.enabled)
+        self.assertEqual(set(obj.observables), {'density', 'velocity_vector'})
+        self.assertIn(
+            f"write to '{key_auto}' every 1 LB steps (disabled)>", repr(obj))
+        key_manual = f'vtk_out/manual_{vtk_suffix}'
+        self.assertIn(key_manual, vtk_registry.map)
+        obj = vtk_registry.map[key_manual]
+        self.assertIsInstance(obj, espressomd.lb.VTKOutput)
+        self.assertEqual(obj.vtk_uid, key_manual)
+        self.assertEqual(obj.delta_N, 0)
+        self.assertEqual(set(obj.observables), {'density'})
+        self.assertIn(f"write to '{key_manual}' on demand>", repr(obj))
         # check file numbering when resuming VTK write operations
-        filepath_template = key + '/simulation_step_{}.vtu'
-        vtk_manual = system._vtk_registry.map[key]
+        filepath_template = key_manual + '/simulation_step_{}.vtu'
+        vtk_manual = espressomd.lb._vtk_registry.map[key_manual]
         self.assertTrue(os.path.isfile(filepath_template.format(0)))
         self.assertFalse(os.path.isfile(filepath_template.format(1)))
         self.assertFalse(os.path.isfile(filepath_template.format(2)))

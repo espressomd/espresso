@@ -22,13 +22,6 @@ import espressomd.lb
 import espressomd.lbboundaries
 import espressomd.shapes
 
-"""
-Check the lattice-Boltzmann lid-driven shear flow in a slab system
-by comparing to the analytical solution.
-
-"""
-
-
 AGRID = 0.6
 VISC = 5.2
 DENS = 2.3
@@ -41,8 +34,8 @@ W = 6 * AGRID
 SHEAR_VELOCITY = 0.3
 
 LB_PARAMS = {'agrid': AGRID,
-             'dens': DENS,
-             'visc': VISC,
+             'density': DENS,
+             'viscosity': VISC,
              'tau': TIME_STEP
              }
 
@@ -81,10 +74,20 @@ def shear_flow(x, t, nu, v, h, k_max):
 
 class LBShearCommon:
 
-    """Base class of the test that holds the test logic."""
+    """
+    Check the lattice-Boltzmann lid-driven shear flow in a slab system
+    by comparing to the analytical solution.
+    """
     system = espressomd.System(box_l=[H + 2. * AGRID, W, W])
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
+
+    def setUp(self):
+        self.lbf = self.lb_class(**LB_PARAMS, **self.lb_params)
+
+    def tearDown(self):
+        self.system.lbboundaries.clear()
+        self.system.actors.clear()
 
     def check_profile(self, shear_plane_normal, shear_direction):
         """
@@ -92,12 +95,10 @@ class LBShearCommon:
         the exact solution.
 
         """
-        self.system.lbboundaries.clear()
-        self.system.actors.clear()
+        self.tearDown()
+        self.setUp()
         self.system.box_l = np.max(
             ((W, W, W), shear_plane_normal * (H + 2 * AGRID)), 0)
-
-        self.lbf = self.lb_class(**LB_PARAMS)
         self.system.actors.add(self.lbf)
 
         wall_shape1 = espressomd.shapes.Wall(
@@ -181,12 +182,21 @@ class LBShearCommon:
 
 
 @utx.skipIfMissingFeatures(['LB_WALBERLA', 'LB_BOUNDARIES'])
-class LBWalberlaShear(ut.TestCase, LBShearCommon):
+class LBShearWalberla(LBShearCommon, ut.TestCase):
 
-    """Test for the Walberla implementation of the LB."""
+    """Test for the Walberla implementation of the LB in double-precision."""
 
-    def setUp(self):
-        self.lb_class = espressomd.lb.LBFluidWalberla
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': False}
+
+
+@utx.skipIfMissingFeatures(['LB_WALBERLA', 'LB_BOUNDARIES'])
+class LBShearWalberlaSinglePrecision(LBShearCommon, ut.TestCase):
+
+    """Test for the Walberla implementation of the LB in single-precision."""
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': True}
 
 
 if __name__ == '__main__':

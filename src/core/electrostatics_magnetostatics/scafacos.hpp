@@ -52,7 +52,7 @@ void set_parameters(const std::string &method, const std::string &params,
                     bool dipolar);
 void free_handle(bool dipolar);
 
-void set_r_cut_and_tune_local(double r_cut);
+void set_r_cut_and_tune(double r_cut);
 
 std::list<std::string> available_methods();
 

@@ -42,14 +42,18 @@ public:
   using mapped_type = typename container_type::mapped_type;
 
   key_type insert_in_core(mapped_type const &obj_ptr) override {
-    return ::bonded_ia_params.insert(obj_ptr->bonded_ia());
+    auto const key = ::bonded_ia_params.insert(obj_ptr->bonded_ia());
+    mpi_update_cell_system_ia_range_local();
+    return key;
   }
   void insert_in_core(key_type const &key,
                       mapped_type const &obj_ptr) override {
     ::bonded_ia_params.insert(key, obj_ptr->bonded_ia());
+    mpi_update_cell_system_ia_range_local();
   }
   void erase_in_core(key_type const &key) override {
     ::bonded_ia_params.erase(key);
+    mpi_update_cell_system_ia_range_local();
   }
 
   Variant do_call_method(std::string const &name,

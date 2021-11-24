@@ -50,7 +50,7 @@ class TestLBPressureTensor:
     def sample_pressure_tensor(self):
         # Setup
         system = self.system
-        lb = self.lb_class(agrid=AGRID, dens=DENS, visc=VISC,
+        lb = self.lb_class(agrid=AGRID, density=DENS, viscosity=VISC,
                            tau=TAU, kT=KT, seed=SEED)
         system.actors.add(lb)
         system.thermostat.set_lb(LB_fluid=lb, seed=SEED + 1)

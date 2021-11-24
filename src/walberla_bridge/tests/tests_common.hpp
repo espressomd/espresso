@@ -24,6 +24,7 @@
 
 #include <LBWalberlaBase.hpp>
 #include <LBWalberlaImpl.hpp>
+#include <LatticeWalberla.hpp>
 #include <lb_walberla_init.hpp>
 
 #include <utils/Vector.hpp>
@@ -34,35 +35,34 @@
 
 class LBTestParameters {
 public:
-  int seed;
+  unsigned int seed;
   double kT;
   double viscosity;
   double density;
   Utils::Vector3d box_dimensions;
   Utils::Vector3i grid_dimensions;
+  std::shared_ptr<LatticeWalberla> lattice;
 };
 
-using LbGeneratorVector =
-    std::vector<std::function<std::shared_ptr<LBWalberlaBase>(
-        Utils::Vector3i, LBTestParameters)>>;
+using LbGeneratorVector = std::vector<
+    std::function<std::shared_ptr<LBWalberlaBase>(LBTestParameters const &)>>;
 
 // Add all LBs with kT=0 to be tested, here
 LbGeneratorVector unthermalized_lbs() {
   LbGeneratorVector lbs;
 
   // Unthermalized D3Q19 MRT
-  lbs.push_back(
-      [](const Utils::Vector3i mpi_shape, const LBTestParameters &params) {
-        return std::make_shared<walberla::LBWalberlaImpl>(
-            params.viscosity, params.density, params.grid_dimensions, mpi_shape,
-            1u, 0.0, 0u);
-      });
+  lbs.push_back([](LBTestParameters const &params) {
+    return std::make_shared<walberla::LBWalberlaImpl<>>(
+        params.lattice, params.viscosity, params.density);
+  });
 
   // Thermalized D3Q19 MRT with kT set to 0
-  lbs.push_back([](Utils::Vector3i mpi_shape, const LBTestParameters &params) {
-    return std::make_shared<walberla::LBWalberlaImpl>(
-        params.viscosity, params.density, params.grid_dimensions, mpi_shape, 1u,
-        0.0, params.seed);
+  lbs.push_back([](LBTestParameters const &params) {
+    auto ptr = std::make_shared<walberla::LBWalberlaImpl<>>(
+        params.lattice, params.viscosity, params.density);
+    ptr->set_collision_model(0.0, params.seed);
+    return ptr;
   });
   return lbs;
 }
@@ -71,13 +71,13 @@ LbGeneratorVector unthermalized_lbs() {
 LbGeneratorVector thermalized_lbs() {
   LbGeneratorVector lbs;
 
-  // Thermalized D3Q19 MRT with kT set to 0
-  lbs.push_back(
-      [](const Utils::Vector3i mpi_shape, const LBTestParameters &params) {
-        return std::make_shared<walberla::LBWalberlaImpl>(
-            params.viscosity, params.density, params.grid_dimensions, mpi_shape,
-            1u, params.kT, params.seed);
-      });
+  // Thermalized D3Q19 MRT
+  lbs.push_back([](LBTestParameters const &params) {
+    auto ptr = std::make_shared<walberla::LBWalberlaImpl<>>(
+        params.lattice, params.viscosity, params.density);
+    ptr->set_collision_model(params.kT, params.seed);
+    return ptr;
+  });
   return lbs;
 }
 
@@ -92,8 +92,10 @@ LbGeneratorVector all_lbs() {
 BOOST_TEST_DONT_PRINT_LOG_VALUE(LbGeneratorVector::value_type)
 
 std::vector<Utils::Vector3i>
-all_nodes_incl_ghosts(const Utils::Vector3i &grid_dimensions,
-                      int n_ghost_layers) {
+all_nodes_incl_ghosts(LatticeWalberla const &lattice, bool with_ghosts = true) {
+  auto const &grid_dimensions = lattice.get_grid_dimensions();
+  auto const n_ghost_layers =
+      (with_ghosts) ? static_cast<int>(lattice.get_ghost_layers()) : 0;
   std::vector<Utils::Vector3i> res;
   for (int x = -n_ghost_layers; x < grid_dimensions[0] + n_ghost_layers; x++) {
     for (int y = -n_ghost_layers; y < grid_dimensions[1] + n_ghost_layers;
@@ -107,13 +109,13 @@ all_nodes_incl_ghosts(const Utils::Vector3i &grid_dimensions,
   return res;
 }
 
-std::vector<Utils::Vector3i> local_nodes_incl_ghosts(
-    std::pair<Utils::Vector3d, Utils::Vector3d> local_domain,
-    int n_ghost_layers) {
+std::vector<Utils::Vector3i>
+local_nodes_incl_ghosts(LatticeWalberla const &lattice,
+                        bool with_ghosts = true) {
+  auto const [left, right] = lattice.get_local_domain();
+  auto const n_ghost_layers =
+      (with_ghosts) ? static_cast<int>(lattice.get_ghost_layers()) : 0;
   std::vector<Utils::Vector3i> res;
-  auto const left = local_domain.first;
-  auto const right = local_domain.second;
-
   for (int x = static_cast<int>(left[0]) - n_ghost_layers;
        x < static_cast<int>(right[0]) + n_ghost_layers; x++) {
     for (int y = static_cast<int>(left[1]) - n_ghost_layers;
@@ -127,7 +129,7 @@ std::vector<Utils::Vector3i> local_nodes_incl_ghosts(
   return res;
 }
 
-std::vector<Utils::Vector3i> corner_nodes(Utils::Vector3i n) {
+std::vector<Utils::Vector3i> corner_nodes(Utils::Vector3i const &n) {
   std::vector<Utils::Vector3i> res;
   for (int i : {0, n[0] - 1})
     for (int j : {0, n[1] - 1})

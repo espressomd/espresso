@@ -70,11 +70,11 @@ cdef class PScriptInterface:
 
     cdef shared_ptr[ObjectHandle] sip
     cdef set_sip(self, shared_ptr[ObjectHandle] sip)
-    cdef VariantMap _sanitize_params(self, in_params) except *
 
     def __init__(self, name=None, policy="GLOBAL", sip=None, **kwargs):
         cdef CreationPolicy policy_
         cdef PObjectRef sip_
+        cdef VariantMap out_params
 
         if policy == "GLOBAL":
             policy_ = GLOBAL
@@ -88,17 +88,23 @@ cdef class PScriptInterface:
             self.sip = sip_.sip
         else:
             global _om
+            for pname in kwargs:
+                out_params[to_char_pointer(pname)] = python_object_to_variant(
+                    kwargs[pname])
             self.set_sip(
                 _om.get().make_shared(
                     policy_,
                     to_char_pointer(name),
-                    self._sanitize_params(kwargs)))
+                    out_params))
 
     def __richcmp__(a, b, op):
+        cls = PScriptInterface
+        are_equality_comparable = isinstance(a, cls) and isinstance(b, cls)
+        are_equal = are_equality_comparable and (a.get_sip() == b.get_sip())
         if op == cpython.object.Py_EQ:
-            return a.get_sip() == b.get_sip()
+            return are_equal
         elif op == cpython.object.Py_NE:
-            return a.get_sip() != b.get_sip()
+            return not are_equal
         else:
             raise NotImplementedError
 
@@ -160,15 +166,6 @@ cdef class PScriptInterface:
         cdef shared_ptr[ObjectHandle] so_ptr = _om.get().deserialize(state)
         self.set_sip(so_ptr)
 
-    cdef VariantMap _sanitize_params(self, in_params) except *:
-        cdef VariantMap out_params
-
-        for pname in in_params:
-            out_params[to_char_pointer(pname)] = python_object_to_variant(
-                in_params[pname])
-
-        return out_params
-
     def set_params(self, **kwargs):
         for name, value in kwargs.items():
             self.sip.get().set_parameter(to_char_pointer(name),
@@ -187,7 +184,7 @@ cdef class PScriptInterface:
 
         return odict
 
-cdef Variant python_object_to_variant(value):
+cdef Variant python_object_to_variant(value) except +:
     """Convert Python objects to C++ Variant objects."""
 
     cdef vector[Variant] vec
@@ -210,7 +207,7 @@ cdef Variant python_object_to_variant(value):
                     f"No conversion from type dict_item([({type(k).__name__}, {type(v).__name__})]) to Variant[std::unordered_map<int, Variant>]")
             vmap[k] = python_object_to_variant(v)
         return make_variant[unordered_map[int, Variant]](vmap)
-    elif hasattr(value, '__iter__') and not(type(value) == str):
+    elif hasattr(value, '__iter__') and type(value) != str:
         for e in value:
             vec.push_back(python_object_to_variant(e))
         return make_variant[vector[Variant]](vec)
@@ -331,13 +328,19 @@ class ScriptInterfaceHelper(PScriptInterface):
             return self.__dict__[attr]
 
         raise AttributeError(
-            "Class " + self.__class__.__name__ + " does not have an attribute " + attr)
+            f"Object '{self.__class__.__name__}' has no attribute '{attr}'")
 
     def __setattr__(self, attr, value):
         if attr in self._valid_parameters():
             self.set_params(**{attr: value})
         else:
-            self.__dict__[attr] = value
+            super().__setattr__(attr, value)
+
+    def __delattr__(self, attr):
+        if attr in self._valid_parameters():
+            raise RuntimeError(f"Parameter '{attr}' is read-only")
+        else:
+            super().__delattr__(attr)
 
     def generate_caller(self, method_name):
         def template_method(**kwargs):

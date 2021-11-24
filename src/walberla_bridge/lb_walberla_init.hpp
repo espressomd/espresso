@@ -20,19 +20,20 @@
 #define LB_WALBERLA_INIT_HPP
 
 #include "LBWalberlaBase.hpp"
-#include "LeesEdwardsPack.hpp"
+#include "LatticeWalberla.hpp"
 
 #include <utils/Vector.hpp>
 
-#include <boost/optional.hpp>
+#include <memory>
 
 /** @brief Initialize Walberla's MPI manager */
 void walberla_mpi_init();
 
-LBWalberlaBase *
-new_lb_walberla(double viscosity, double density,
-                const Utils::Vector3i &grid_dimensions,
-                const Utils::Vector3i &node_grid, double kT, unsigned int seed,
-                boost::optional<LeesEdwardsPack> &&lees_edwards_callbacks);
+std::shared_ptr<LBWalberlaBase>
+new_lb_walberla(std::shared_ptr<LatticeWalberla> const &lattice,
+                double viscosity, double density, bool single_precision);
+
+Utils::Vector3i calc_grid_dimensions(Utils::Vector3d const &box_size,
+                                     double agrid);
 
 #endif

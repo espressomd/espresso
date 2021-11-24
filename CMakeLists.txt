@@ -455,8 +455,8 @@ if(WITH_WALBERLA)
     walberla
     GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla
     GIT_TAG        b17ca5caf00db7d19f86c5f85c6f67fec6c16aff
-    PATCH_COMMAND  patch -p0 --ignore-whitespace -i
-                   ${PROJECT_SOURCE_DIR}/cmake/waLBerlaFunctions.patch
+    PATCH_COMMAND  patch -p0 -sN --ignore-whitespace -i
+                   ${PROJECT_SOURCE_DIR}/cmake/waLBerlaFunctions.patch || echo "Patch not applied!"
   )
   if(NOT walberla_POPULATED)
     FetchContent_Populate(walberla)
@@ -468,7 +468,7 @@ if(WITH_WALBERLA)
     set(WALBERLA_BUILD_DOC off CACHE BOOL "")
     set(CMAKE_POSITION_INDEPENDENT_CODE on CACHE BOOL "")
     add_subdirectory("${walberla_SOURCE_DIR}" "${walberla_BINARY_DIR}")
-    set(WALBERLA 1)
+    set(LB_WALBERLA 1)
     set(WALBERLA_LIBS
         walberla::core walberla::domain_decomposition walberla::blockforest
         walberla::boundary walberla::core walberla::domain_decomposition

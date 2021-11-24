@@ -37,8 +37,8 @@ BOX_L_Z = 13.0 * AGRID
 VISC = .7
 DENS = 1.7
 LB_PARAMS = {'agrid': AGRID,
-             'dens': DENS,
-             'visc': VISC,
+             'density': DENS,
+             'viscosity': VISC,
              'tau': TIME_STEP
              }
 
@@ -62,10 +62,16 @@ LB_VELOCITY_PROFILE_PARAMS = {
 
 
 class ObservableProfileLBCommon:
-    lbf = None
     system = espressomd.System(box_l=[BOX_L_X, BOX_L_Y, BOX_L_Z])
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
+
+    def setUp(self):
+        self.lbf = self.lb_class(**LB_PARAMS, **self.lb_params)
+        self.system.actors.add(self.lbf)
+
+    def tearDown(self):
+        self.system.actors.clear()
 
     def set_fluid_velocities(self):
         """Set an x dependent fluid velocity."""
@@ -190,15 +196,23 @@ class ObservableProfileLBCommon:
         self.assertEqual(obs.sampling_offset_z, 15)
 
 
-@utx.skipIfMissingFeatures("LB_WALBERLA")
-class LBWalberla(ut.TestCase, ObservableProfileLBCommon):
+@utx.skipIfMissingFeatures(["LB_WALBERLA"])
+class ObservableProfileWalberla(ObservableProfileLBCommon, ut.TestCase):
 
-    """Test for the CPU implementation of the LB."""
+    """Test for the Walberla implementation of the LB in double-precision."""
 
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMS)
-        self.system.actors.clear()
-        self.system.actors.add(self.lbf)
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': False}
+
+
+@utx.skipIfMissingFeatures(["LB_WALBERLA"])
+class ObservableProfileWalberlaSinglePrecision(
+        ObservableProfileLBCommon, ut.TestCase):
+
+    """Test for the Walberla implementation of the LB in single-precision."""
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': True}
 
 
 if __name__ == "__main__":

@@ -322,17 +322,15 @@ Specification of fluid and movement
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ::
 
-    lbf = espressomd.lb.LBFluidWalberla(agrid=1, dens=1.0, visc=1.5, fric=1.5,
+    lbf = espressomd.lb.LBFluidWalberla(agrid=1, density=1.0, viscosity=1.5,
                                         tau=time_step, ext_force_density=[0.002, 0.0, 0.0])
     system.actors.add(lbf)
 
 This part of the script specifies the fluid that will get the system
 moving. Here ``agrid`` :math:`=\Delta x` is the spatial discretisation
 step, ``tau`` is the time step that will be the same as the time step
-for particles, viscosity ``visc`` and density ``dens`` of the fluid are
-physical parameters scaled to lattice units. ``fric`` is a
-(non-physical) friction parameter that enters the fluid-object
-interaction and has to be set carefully. Finally, ``ext_force_density`` sets the
+for particles, viscosity ``viscosity`` and density ``density`` of the fluid are
+physical parameters scaled to lattice units, ``ext_force_density`` sets the
 force-per-unit-volume vector that drives the fluid. Another option to
 add momentum to fluid is by specifying the velocity on the boundaries.
 

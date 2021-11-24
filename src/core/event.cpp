@@ -41,6 +41,7 @@
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "immersed_boundaries.hpp"
 #include "integrate.hpp"
+#include "interactions.hpp"
 #include "lees_edwards.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
@@ -108,7 +109,9 @@ void on_integration_start(double time_step) {
 #ifdef NPT
   integrator_npt_sanity_checks();
 #endif
-  interactions_sanity_checks();
+  if (long_range_interactions_sanity_checks()) {
+    runtimeErrorMsg() << "Long-range interactions returned an error.";
+  }
   lb_lbfluid_sanity_checks(time_step);
 
   /********************************************/
@@ -268,8 +271,8 @@ void on_cell_structure_change() {
 #endif /* ifdef DIPOLES */
   if (lattice_switch == ActiveLB::WALBERLA) {
     runtimeErrorMsg()
-        << "LB does not currently support handling changes of the MD cell"
-           " geometry. Setup the cell system, skin and interactions before "
+        << "LB does not currently support handling changes of the MD cell "
+           "geometry. Setup the cell system, skin and interactions before "
            "activating the CPU LB.";
   }
 }

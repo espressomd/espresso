@@ -26,13 +26,6 @@ import espressomd.shapes
 import espressomd.accumulators
 
 
-"""
-Check the lattice-Boltzmann 'pressure' driven flow in a cylindrical constraint
-by comparing to the analytical solution.
-
-"""
-
-
 AGRID = .5
 EXT_FORCE = .1
 VISC = 2.7
@@ -41,8 +34,8 @@ TIME_STEP = 0.05
 BOX_L = 8.0
 EFFECTIVE_RADIUS = BOX_L / 2.0 - 1.0
 LB_PARAMS = {'agrid': AGRID,
-             'dens': DENS,
-             'visc': VISC,
+             'density': DENS,
+             'viscosity': VISC,
              'tau': TIME_STEP}
 
 OBS_PARAMS = {'n_r_bins': 25,
@@ -78,13 +71,20 @@ def poiseuille_flow(r, R, ext_force_density, dyn_visc):
 
 class LBPoiseuilleCommon:
 
-    """Base class of the test that holds the test logic."""
-    lbf = None
+    """
+    Check the lattice-Boltzmann pressure-driven flow in a cylindrical constraint
+    by comparing to the analytical solution.
+    """
+
     system = espressomd.System(box_l=[BOX_L] * 3)
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
     params = {'axis': [0, 0, 1],
               'orientation': [1, 0, 0]}
+
+    def tearDown(self):
+        self.system.actors.clear()
+        self.system.lbboundaries.clear()
 
     def prepare(self):
         """
@@ -98,7 +98,7 @@ class LBPoiseuilleCommon:
         local_lb_params = LB_PARAMS.copy()
         local_lb_params['ext_force_density'] = np.array(
             self.params['axis']) * EXT_FORCE
-        self.lbf = self.lbf(**local_lb_params)
+        self.lbf = self.lb_class(**local_lb_params, **self.lb_params)
         self.system.actors.add(self.lbf)
 
         cylinder_shape = espressomd.shapes.Cylinder(
@@ -202,17 +202,24 @@ class LBPoiseuilleCommon:
         self.check_observable()
 
 
+@utx.skipIfMissingFeatures(['LB_BOUNDARIES'])
 @utx.skipIfMissingFeatures(['LB_WALBERLA'])
-class LBWalberlaPoiseuille(ut.TestCase, LBPoiseuilleCommon):
+class LBPoiseuilleWalberla(LBPoiseuilleCommon, ut.TestCase):
 
-    """Test for the Walberla implementation of the LB."""
+    """Test for the Walberla implementation of the LB in double-precision."""
 
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidWalberla
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': False}
 
-    def tearDown(self):
-        self.system.actors.clear()
-        self.system.lbboundaries.clear()
+
+@utx.skipIfMissingFeatures(['LB_BOUNDARIES'])
+@utx.skipIfMissingFeatures(['LB_WALBERLA'])
+class LBPoiseuilleWalberlaSinglePrecision(LBPoiseuilleCommon, ut.TestCase):
+
+    """Test for the Walberla implementation of the LB in single-precision."""
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': True}
 
 
 if __name__ == '__main__':

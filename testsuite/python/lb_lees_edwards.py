@@ -107,7 +107,7 @@ class LBLeesEdwards(ut.TestCase):
 
             def __enter__(self):
                 self.lbf = espressomd.lb.LBFluidWalberla(
-                    agrid=1., dens=1., visc=1., tau=system.time_step)
+                    agrid=1., density=1., viscosity=1., tau=system.time_step)
                 system.actors.add(self.lbf)
                 system.thermostat.set_lb(LB_fluid=self.lbf, gamma=1.0)
                 return self.lbf

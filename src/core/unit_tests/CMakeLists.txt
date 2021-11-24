@@ -47,11 +47,11 @@ unit_test(NAME lees_edwards_test SRC lees_edwards_test.cpp DEPENDS EspressoCore)
 unit_test(NAME BoxGeometry_test SRC BoxGeometry_test.cpp DEPENDS EspressoCore)
 unit_test(NAME LocalBox_test SRC LocalBox_test.cpp DEPENDS EspressoCore)
 unit_test(NAME thermostats_test SRC thermostats_test.cpp DEPENDS EspressoCore)
-if(WALBERLA)
+if(WITH_WALBERLA)
   unit_test(NAME lb_particle_coupling_test SRC lb_particle_coupling_test.cpp
             DEPENDS EspressoCore WalberlaBridge Boost::mpi MPI::MPI_CXX
             NUM_PROC 2)
-endif()
+endif(WITH_WALBERLA)
 unit_test(NAME random_test SRC random_test.cpp DEPENDS EspressoUtils Random123)
 unit_test(NAME BondList_test SRC BondList_test.cpp DEPENDS EspressoCore)
 unit_test(NAME energy_test SRC energy_test.cpp DEPENDS EspressoCore)

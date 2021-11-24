@@ -45,18 +45,12 @@ void update_boundary_from_list(std::vector<int> const &nodes_flat,
                                std::vector<double> const &vel_flat);
 boost::optional<Utils::Vector3d> get_node_boundary_force(Utils::Vector3i ind);
 void remove_node_from_boundary(Utils::Vector3i ind);
-void create_vtk(unsigned delta_N, unsigned initial_count,
-                unsigned flag_observables, std::string const &identifier,
-                std::string const &base_folder, std::string const &prefix);
-void write_vtk(std::string const &vtk_uid);
-void switch_vtk(std::string const &vtk_uid, int status);
 boost::optional<std::vector<double>> get_node_pop(Utils::Vector3i ind);
 boost::optional<Utils::Vector6d> get_node_pressure_tensor(Utils::Vector3i ind);
 
 void set_node_last_applied_force(Utils::Vector3i ind, Utils::Vector3d f);
 void set_node_velocity(Utils::Vector3i ind, Utils::Vector3d u);
 void set_node_velocity_at_boundary(Utils::Vector3i ind, Utils::Vector3d u);
-void set_ext_force_density(Utils::Vector3d f);
 void set_node_density(Utils::Vector3i ind, double density);
 void set_node_pop(Utils::Vector3i ind, std::vector<double> pop);
 void set_node_from_checkpoint(Utils::Vector3i ind, std::vector<double> pop,
@@ -69,9 +63,6 @@ boost::optional<Utils::Vector3d> get_velocity_at_pos(Utils::Vector3d pos);
 boost::optional<double> get_interpolated_density_at_pos(Utils::Vector3d pos);
 
 void add_force_at_pos(Utils::Vector3d pos, Utils::Vector3d f);
-
-uint64_t get_rng_state();
-void set_rng_state(uint64_t code);
 
 } // namespace Walberla
 #endif

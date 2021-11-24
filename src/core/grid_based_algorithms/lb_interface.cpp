@@ -51,18 +51,11 @@ struct NoLBActive : public std::exception {
 
 void lb_lbfluid_init() {}
 
-void lb_lbfluid_integrate() {
+void lb_lbfluid_propagate() {
   if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
     lb_walberla()->integrate();
 #endif
-  } else
-    throw NoLBActive();
-}
-
-void lb_lbfluid_propagate() {
-  if (lattice_switch != ActiveLB::NONE) {
-    lb_lbfluid_integrate();
   }
 }
 
@@ -70,93 +63,17 @@ void lb_lbfluid_sanity_checks(double time_step) {
   if (lattice_switch == ActiveLB::NONE)
     return;
 
-  if (time_step > 0.)
-    check_tau_time_step_consistency(lb_lbfluid_get_tau(), time_step);
-
   if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
-    // Make sure, Walberla and Espresso agree on domain decomposition
-    auto walberla_domain = lb_walberla()->get_local_domain();
-    // Unit conversion
-    auto const agrid = lb_lbfluid_get_agrid();
-    walberla_domain.first *= agrid;
-    walberla_domain.second *= agrid;
-
-    auto const my_left = local_geo.my_left();
-    auto const my_right = local_geo.my_right();
-    auto const tol = lb_lbfluid_get_agrid() / 1E6;
-    if ((walberla_domain.first - my_left).norm2() > tol or
-        (walberla_domain.second - my_right).norm2() > tol) {
-      std::cout << this_node << ": left ESPResSo: [" << my_left << "], "
-                << "left waLBerla: [" << walberla_domain.first << "]\n";
-      std::cout << this_node << ": right ESPResSo: [" << my_right << "], "
-                << "right waLBerla: [" << walberla_domain.second << "]\n";
-      throw std::runtime_error(
-          "waLBerla and ESPResSo disagree about domain decomposition.");
-    }
+    lb_sanity_checks(*lb_walberla(), *lb_walberla_params(), time_step);
 #endif
   }
-}
-
-uint64_t lb_lbfluid_get_rng_state() {
-#ifdef LB_WALBERLA
-  if (lattice_switch == ActiveLB::WALBERLA) {
-    return Walberla::get_rng_state();
-  }
-#endif
-  throw NoLBActive();
-}
-
-void lb_lbfluid_set_rng_state(uint64_t counter) {
-#ifdef LB_WALBERLA
-  if (lattice_switch == ActiveLB::WALBERLA) {
-    Walberla::set_rng_state(counter);
-  } else
-#endif
-  {
-    throw NoLBActive();
-  }
-}
-
-double lb_lbfluid_get_viscosity() {
-#ifdef LB_WALBERLA
-  if (lattice_switch == ActiveLB::WALBERLA) {
-    return lb_walberla()->get_viscosity();
-  }
-#endif
-  throw NoLBActive();
-}
-
-double lb_lbfluid_get_bulk_viscosity() {
-  if (lattice_switch == ActiveLB::WALBERLA)
-    throw std::runtime_error("Getting bulk viscosity not implemented.");
-  throw NoLBActive();
 }
 
 double lb_lbfluid_get_agrid() {
   if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
     return lb_walberla_params()->get_agrid();
-#endif
-  }
-  throw NoLBActive();
-}
-
-void lb_lbfluid_set_ext_force_density(const Utils::Vector3d &force_density) {
-  if (lattice_switch == ActiveLB::WALBERLA) {
-#ifdef LB_WALBERLA
-    ::Communication::mpiCallbacks().call_all(Walberla::set_ext_force_density,
-                                             force_density);
-#endif
-  } else {
-    throw NoLBActive();
-  }
-}
-
-const Utils::Vector3d lb_lbfluid_get_ext_force_density() {
-  if (lattice_switch == ActiveLB::WALBERLA) {
-#ifdef LB_WALBERLA
-    return lb_walberla()->get_external_force();
 #endif
   }
   throw NoLBActive();
@@ -171,7 +88,7 @@ void check_tau_time_step_consistency(double tau, double time_step) {
   auto const factor = tau / time_step;
   if (fabs(round(factor) - factor) / factor > eps)
     throw std::invalid_argument("LB tau (" + std::to_string(tau) +
-                                ") must be integer multiple of "
+                                ") must be an integer multiple of the "
                                 "MD time_step (" +
                                 std::to_string(time_step) + "). Factor is " +
                                 std::to_string(factor));
@@ -184,17 +101,6 @@ double lb_lbfluid_get_tau() {
   }
 #endif
   throw NoLBActive();
-}
-
-void lb_lbfluid_set_lattice_switch(ActiveLB local_lattice_switch) {
-  switch (local_lattice_switch) {
-  case ActiveLB::NONE:
-  case ActiveLB::WALBERLA:
-    break;
-  default:
-    throw std::invalid_argument("Invalid lattice switch.");
-  }
-  mpi_set_lattice_switch(local_lattice_switch);
 }
 
 double lb_lbfluid_get_kT() {
@@ -247,7 +153,7 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
         cpfile << std::fixed;
       }
 
-      auto const gridsize = lb_walberla()->get_grid_dimensions();
+      auto const gridsize = lb_walberla()->lattice().get_grid_dimensions();
       auto const pop_size = lb_walberla()->stencil_size();
       write_header(gridsize, pop_size);
 
@@ -330,7 +236,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
   try {
     if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
-      auto const gridsize = lb_walberla()->get_grid_dimensions();
+      auto const gridsize = lb_walberla()->lattice().get_grid_dimensions();
       auto const pop_size = lb_walberla()->stencil_size();
       check_header(gridsize, pop_size);
 
@@ -392,7 +298,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
 Utils::Vector3i lb_lbfluid_get_shape() {
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
-    return lb_walberla()->get_grid_dimensions();
+    return lb_walberla()->lattice().get_grid_dimensions();
   }
 #endif
   throw NoLBActive();
@@ -448,51 +354,16 @@ lb_lbnode_get_last_applied_force(const Utils::Vector3i &ind) {
   throw NoLBActive();
 }
 
-void lb_lbfluid_create_vtk(unsigned delta_N, unsigned initial_count,
-                           unsigned flag_observables,
-                           std::string const &identifier,
-                           std::string const &base_folder,
-                           std::string const &prefix) {
 #ifdef LB_WALBERLA
-  if (lattice_switch == ActiveLB::WALBERLA) {
-    ::Communication::mpiCallbacks().call_all(Walberla::create_vtk, delta_N,
-                                             initial_count, flag_observables,
-                                             identifier, base_folder, prefix);
-    return;
-  }
-#endif
-  throw NoLBActive();
-}
-
-void lb_lbfluid_write_vtk(std::string const &vtk_uid) {
-#ifdef LB_WALBERLA
-  if (lattice_switch == ActiveLB::WALBERLA) {
-    ::Communication::mpiCallbacks().call_all(Walberla::write_vtk, vtk_uid);
-    return;
-  }
-#endif
-  throw NoLBActive();
-}
-
-void lb_lbfluid_switch_vtk(std::string const &vtk_uid, int status) {
-#ifdef LB_WALBERLA
-  if (lattice_switch == ActiveLB::WALBERLA) {
-    ::Communication::mpiCallbacks().call_all(Walberla::switch_vtk, vtk_uid,
-                                             status);
-    return;
-  }
-#endif
-  throw NoLBActive();
-}
-
 /** Revert the correction done by waLBerla on off-diagonal terms. */
 inline void walberla_off_diagonal_correction(Utils::Vector6d &tensor) {
-  auto const visc = lb_lbfluid_get_viscosity();
+  auto const visc = lb_walberla()->get_viscosity();
   auto const revert_factor = visc / (visc + 1.0 / 6.0);
   tensor[1] *= revert_factor;
   tensor[3] *= revert_factor;
   tensor[4] *= revert_factor;
 }
+#endif
 
 const Utils::Vector6d
 lb_lbnode_get_pressure_tensor(const Utils::Vector3i &ind) {
@@ -512,7 +383,7 @@ lb_lbnode_get_pressure_tensor(const Utils::Vector3i &ind) {
 Utils::Vector6d lb_lbfluid_get_pressure_tensor_local() {
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
-    auto const gridsize = lb_walberla()->get_grid_dimensions();
+    auto const gridsize = lb_walberla()->lattice().get_grid_dimensions();
     Utils::Vector6d tensor{};
     for (int i = 0; i < gridsize[0]; i++) {
       for (int j = 0; j < gridsize[1]; j++) {
@@ -537,7 +408,7 @@ REGISTER_CALLBACK_REDUCTION(lb_lbfluid_get_pressure_tensor_local,
 const Utils::Vector6d lb_lbfluid_get_pressure_tensor() {
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
-    auto const gridsize = lb_walberla()->get_grid_dimensions();
+    auto const gridsize = lb_walberla()->lattice().get_grid_dimensions();
     auto const number_of_nodes = gridsize[0] * gridsize[1] * gridsize[2];
     auto tensor = ::Communication::mpiCallbacks().call(
         ::Communication::Result::reduction, std::plus<Utils::Vector6d>(),
@@ -760,14 +631,4 @@ double lb_lbfluid_get_interpolated_density(const Utils::Vector3d &pos) {
 #endif
   }
   throw NoLBActive();
-}
-
-void mpi_set_lattice_switch_local(ActiveLB lattice_switch) {
-  ::lattice_switch = lattice_switch;
-}
-
-REGISTER_CALLBACK(mpi_set_lattice_switch_local)
-
-void mpi_set_lattice_switch(ActiveLB lattice_switch) {
-  mpi_call_all(mpi_set_lattice_switch_local, lattice_switch);
 }

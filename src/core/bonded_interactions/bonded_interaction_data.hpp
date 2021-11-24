@@ -142,6 +142,9 @@ private:
   key_type next_key = static_cast<key_type>(0);
 };
 
+/** Notify the cell system about changes to the maximal interaction range. */
+void mpi_update_cell_system_ia_range_local();
+
 /** Field containing the parameters of the bonded ia types */
 extern BondedInteractionsMap bonded_ia_params;
 

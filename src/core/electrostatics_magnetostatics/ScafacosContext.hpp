@@ -77,7 +77,7 @@ struct ScafacosContextCoulomb : ScafacosContext {
     update_particle_forces();
   }
   void tune();
-  void set_r_cut_and_tune_local(double r_cut);
+  void set_r_cut_and_tune(double r_cut);
 
 private:
   /** Inputs */

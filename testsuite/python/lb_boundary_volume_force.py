@@ -24,31 +24,35 @@ import espressomd.shapes
 
 from tests_common import count_fluid_nodes
 
-
-"""
-Checks force on lb boundaries for a fluid with a uniform volume force
-"""
-
-
 AGRID = 0.5
 EXT_FORCE = np.array([-.01, 0.02, 0.03])
 VISC = 3.5
 DENS = 1.5
 TIME_STEP = 0.05
 LB_PARAMS = {'agrid': AGRID,
-             'dens': DENS,
-             'visc': VISC,
+             'density': DENS,
+             'viscosity': VISC,
              'tau': TIME_STEP,
              'ext_force_density': EXT_FORCE}
 
 
 class LBBoundaryForceCommon:
 
-    """Base class of the test that holds the test logic."""
-    lbf = None
+    """
+    Checks force on lb boundaries for a fluid with a uniform volume force
+    """
+
     system = espressomd.System(box_l=np.array([12.0, 4.0, 4.0]) * AGRID)
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
+
+    def setUp(self):
+        self.lbf = self.lb_class(**LB_PARAMS, **self.lb_params)
+        self.system.actors.add(self.lbf)
+
+    def tearDown(self):
+        self.system.lbboundaries.clear()
+        self.system.actors.clear()
 
     def test(self):
         """
@@ -57,9 +61,6 @@ class LBBoundaryForceCommon:
         and forces acting on the boundaries.
 
         """
-        self.system.actors.clear()
-        self.system.lbboundaries.clear()
-        self.system.actors.add(self.lbf)
         wall_shape1 = espressomd.shapes.Wall(normal=[1, 0, 0], dist=AGRID)
         wall_shape2 = espressomd.shapes.Wall(
             normal=[-1, 0, 0], dist=-(self.system.box_l[0] - AGRID))
@@ -90,13 +91,25 @@ class LBBoundaryForceCommon:
             atol=1E-10)
 
 
-@utx.skipIfMissingFeatures("LB_WALBERLA")
-class LBWalberlaBoundaryForce(ut.TestCase, LBBoundaryForceCommon):
+@utx.skipIfMissingFeatures(["LB_BOUNDARIES"])
+@utx.skipIfMissingFeatures(["LB_WALBERLA"])
+class LBBoundaryForceWalberla(LBBoundaryForceCommon, ut.TestCase):
 
-    """Test for the Walberla implementation of the LB."""
+    """Test for the Walberla implementation of the LB in double-precision."""
 
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMS)
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': False}
+
+
+@utx.skipIfMissingFeatures(["LB_BOUNDARIES"])
+@utx.skipIfMissingFeatures(["LB_WALBERLA"])
+class LBBoundaryForceWalberlaSinglePrecision(
+        LBBoundaryForceCommon, ut.TestCase):
+
+    """Test for the Walberla implementation of the LB in single-precision."""
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': True}
 
 
 if __name__ == '__main__':

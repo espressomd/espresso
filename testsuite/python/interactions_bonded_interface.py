@@ -59,9 +59,7 @@ class BondedInteractions(ut.TestCase):
         classname = bondObject.__class__.__name__
         valid_keys = bondObject.valid_keys()
         required_keys = bondObject.required_keys()
-        old_params = dict(bondObject.params)
         default_keys = set(bondObject.get_default_params())
-        bondObject.params = old_params
         self.assertIsInstance(valid_keys, set,
                               "{}.valid_keys() must return a set".format(
                                   classname))
@@ -239,7 +237,7 @@ class BondedInteractions(ut.TestCase):
             self.system.bonded_inter[0] = angle_bond
 
         # bonds are immutable
-        with self.assertRaisesRegex(RuntimeError, 'Parameter r_0 is read-only'):
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'r_0' is read-only"):
             harm_bond1.r_0 = 5.
 
         # sanity checks during bond construction
@@ -251,6 +249,22 @@ class BondedInteractions(ut.TestCase):
         with self.assertRaisesRegex(ValueError, "Unknown elasticLaw: 'Unknown'"):
             espressomd.interactions.IBM_Triel(
                 ind1=0, ind2=1, ind3=2, k1=1.1, k2=1.2, maxDist=1.6, elasticLaw='Unknown')
+
+        # sanity checks when removing bonds
+        self.system.bonded_inter.clear()
+        error_msg = 'The bonded interaction with the id 0 is not yet defined'
+        with self.assertRaisesRegex(ValueError, error_msg):
+            self.system.bonded_inter[0]
+        self.system.bonded_inter[0] = harm_bond1
+        self.system.bonded_inter[0]
+        self.system.bonded_inter.remove(0)
+        with self.assertRaisesRegex(ValueError, error_msg):
+            self.system.bonded_inter[0]
+        self.system.bonded_inter[0] = harm_bond1
+        self.system.bonded_inter[0]
+        del self.system.bonded_inter[0]
+        with self.assertRaisesRegex(ValueError, error_msg):
+            self.system.bonded_inter[0]
 
 
 if __name__ == "__main__":

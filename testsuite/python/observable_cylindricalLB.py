@@ -30,15 +30,14 @@ class CylindricalLBObservableCommon:
     Testcase for the CylindricalLBObservables.
 
     """
-    lbf = None
     system = espressomd.System(box_l=3 * [15])
     system.time_step = 0.01
     system.cell_system.skin = 0.4
     positions = []
 
     lb_params = {'agrid': 1.,
-                 'dens': 1.2,
-                 'visc': 2.7,
+                 'density': 1.2,
+                 'viscosity': 2.7,
                  'tau': 0.1,
                  }
     cyl_transform_params = espressomd.math.CylindricalTransformationParameters(
@@ -61,6 +60,14 @@ class CylindricalLBObservableCommon:
     v_r = 0.02
     v_phi = 0.04
     v_z = 0.03
+
+    def setUp(self):
+        self.lbf = self.lb_class(**self.lb_params, **self.lb_params_extra)
+        self.system.actors.add(self.lbf)
+
+    def tearDown(self):
+        self.system.actors.clear()
+        self.system.part.clear()
 
     def calc_vel_at_pos(self, positions):
         """
@@ -251,17 +258,17 @@ class CylindricalLBObservableCommon:
 
         np.testing.assert_array_almost_equal(
             np_hist_binary *
-            self.lb_params['dens'] *
+            self.lb_params['density'] *
             self.v_r,
             core_hist_fl_r)
         np.testing.assert_array_almost_equal(
             np_hist_binary *
-            self.lb_params['dens'] *
+            self.lb_params['density'] *
             self.v_phi,
             core_hist_fl_phi)
         np.testing.assert_array_almost_equal(
             np_hist_binary *
-            self.lb_params['dens'] *
+            self.lb_params['density'] *
             self.v_z,
             core_hist_fl_z)
         self.check_edges(flux_obs, np_edges)
@@ -269,15 +276,22 @@ class CylindricalLBObservableCommon:
 
 @utx.skipIfMissingFeatures("LB_WALBERLA")
 class CylindricalLBObservableWalberla(
-        ut.TestCase, CylindricalLBObservableCommon):
+        CylindricalLBObservableCommon, ut.TestCase):
 
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidWalberla(**self.lb_params)
-        self.system.actors.add(self.lbf)
+    """Test for the Walberla implementation of the LB in double-precision."""
 
-    def tearDown(self):
-        self.system.actors.remove(self.lbf)
-        self.system.part.clear()
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params_extra = {'single_precision': False}
+
+
+@utx.skipIfMissingFeatures("LB_WALBERLA")
+class CylindricalLBObservableWalberlaSinglePrecision(
+        CylindricalLBObservableWalberla, ut.TestCase):
+
+    """Test for the Walberla implementation of the LB in single-precision."""
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params_extra = {'single_precision': True}
 
 
 if __name__ == "__main__":
