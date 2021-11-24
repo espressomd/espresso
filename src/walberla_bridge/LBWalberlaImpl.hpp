@@ -403,31 +403,24 @@ public:
 
   void integrate() override {
     auto const &blocks = lattice().get_blocks();
+    // Reset force fields
+    for (auto b = blocks->begin(); b != blocks->end(); ++b)
+      (*m_reset_force)(&*b);
     // Handle boundaries
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_boundary)(&*b);
     // LB stream
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_stream)(&*b);
-    (*m_full_communication)();
     // LB collide
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       boost::apply_visitor(run_collide_sweep, *m_collision_model,
                            boost::variant<IBlock *>(&*b));
-    // rng counter
     if (auto *cm = boost::get<ThermalizedCollisionModel>(&*m_collision_model)) {
       cm->time_step_++;
     }
-    // Reset force fields
-    for (auto b = blocks->begin(); b != blocks->end(); ++b)
-      (*m_reset_force)(&*b);
-    // Lees-Edwards shift
-//    if (m_lees_edwards_sweep) {
-//      for (auto b = blocks->begin(); b != blocks->end(); ++b)
-//        (*m_lees_edwards_sweep)(&*b);
-//    }
     // Refresh ghost layers
-    //(*m_full_communication)();
+    (*m_full_communication)();
 
     // Handle VTK writers
     for (auto it = m_vtk_auto.begin(); it != m_vtk_auto.end(); ++it) {
