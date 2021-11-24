@@ -412,6 +412,8 @@ public:
     // LB stream
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_stream)(&*b);
+    // Refresh ghost layers
+    (*m_full_communication)();
     // LB collide
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       boost::apply_visitor(run_collide_sweep, *m_collision_model,
@@ -419,8 +421,6 @@ public:
     if (auto *cm = boost::get<ThermalizedCollisionModel>(&*m_collision_model)) {
       cm->time_step_++;
     }
-    // Refresh ghost layers
-    (*m_full_communication)();
 
     // Handle VTK writers
     for (auto it = m_vtk_auto.begin(); it != m_vtk_auto.end(); ++it) {
