@@ -378,7 +378,6 @@ class openGLLive():
             self.specs['director_arrows'] = False
 
         if not espressomd.has_features('LB_BOUNDARIES'):
-            self.specs['LB_draw_boundaries'] = False
             self.specs['LB_draw_node_boundaries'] = False
 
         # ESPRESSO RELATED INITS THAT ARE KNOWN ONLY WHEN RUNNING THE
@@ -867,21 +866,6 @@ class openGLLive():
                     except KeyError:
                         self.shapes.append(Shape(*arguments))
 
-        if self.specs['LB_draw_boundaries']:
-            ni = 0
-            for constraint in self.system.lbboundaries:
-                if isinstance(constraint, espressomd.lbboundaries.LBBoundary):
-                    part_type = ni
-                    ni += 1
-                    shape = constraint.get_parameter('shape')
-                    for sub_shape in unpack_shapes(shape):
-                        arguments = shape_arguments(sub_shape, part_type)
-                        try:
-                            self.shapes.append(
-                                shape_mapping[sub_shape.name()](*arguments))
-                        except KeyError:
-                            self.shapes.append(Shape(*arguments))
-
     # GET THE BOND DATA, SO FAR CALLED ONCE UPON INITIALIZATION
     def _update_bonds(self):
         if self.specs['draw_bonds']:
@@ -935,6 +919,8 @@ class openGLLive():
             self._draw_cells()
         if self.specs['LB_draw_nodes'] or self.specs['LB_draw_node_boundaries']:
             self._draw_lb_grid()
+        if self.specs['LB_draw_boundaries']:
+            self._draw_lb_boundaries()
 
     def _draw_system_box(self):
         draw_box([0, 0, 0], self.system.box_l, self.inverse_bg_color,
@@ -968,6 +954,21 @@ class openGLLive():
                             and not self.lb[i, j, k].is_boundary:
                         draw_box(n, cell_size, self.lb_box_color,
                                  self.materials['transparent2'], 1.5)
+
+    def _draw_lb_boundaries(self):
+        a = self.lb_params['agrid']
+        dims = np.rint(np.array(self.system.box_l) / a)
+
+        set_solid_material(self.inverse_bg_color)
+        OpenGL.GL.glPointSize(self.specs['rasterize_pointsize'])
+        OpenGL.GL.glBegin(OpenGL.GL.GL_POINTS)
+        for i in range(int(dims[0])):
+            for j in range(int(dims[1])):
+                for k in range(int(dims[2])):
+                    if self.lb[i, j, k].is_boundary:
+                        OpenGL.GL.glVertex3f(
+                            i * a + 0.5, j * a + 0.5, k * a + 0.5)
+        OpenGL.GL.glEnd()
 
     def _draw_constraints(self):
 
