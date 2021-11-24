@@ -45,8 +45,6 @@ from lbmpy.advanced_streaming.indexing import NeighbourOffsetArrays
 
 
 parser = argparse.ArgumentParser(description='Generate the waLBerla kernels.')
-parser.add_argument('codegen_cfg', type=str, nargs='?',
-                    help='codegen configuration file (JSON format)')
 parser.add_argument('--single-precision', action='store_true', required=False,
                     help='Use single-precision')
 args = parser.parse_args()
@@ -270,28 +268,15 @@ class PatchedUBB(lbmpy.boundaries.UBB):
 
 
 class PatchedCodeGeneration(CodeGeneration):
-    '''
-    Code generator class that reads the configuration from a file.
-    '''
 
-    def __init__(self, codegen_cfg):
+    def __init__(self):
         old_sys_argv = sys.argv
         sys.argv = sys.argv[:1]
-        if codegen_cfg:
-            assert sys.argv[1] == codegen_cfg
         super().__init__()
         sys.argv = old_sys_argv
-        if codegen_cfg:
-            cmake_map = {"ON": True, "1": True, "YES": True,
-                         "OFF": False, "0": False, "NO": False}
-            with open(codegen_cfg) as f:
-                cmake_vars = json.loads(f.read())['CMAKE_VARS']
-                for key, value in cmake_vars.items():
-                    cmake_vars[key] = cmake_map.get(value, value)
-            self.context = type(self.context)(cmake_vars)
 
 
-with PatchedCodeGeneration(args.codegen_cfg) as ctx:
+with PatchedCodeGeneration() as ctx:
     ctx.double_accuracy = not args.single_precision
     precision_prefix = {
         True: 'DoublePrecision',
