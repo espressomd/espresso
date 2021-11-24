@@ -391,9 +391,8 @@ with PatchedCodeGeneration(args.codegen_cfg) as ctx:
     # generate accessors
     generate_macroscopic_values_accessors(
         ctx,
-        collision_rule_unthermalized,
-        filename=f'macroscopic_values_accessors_{precision_suffix}.h',
-        field_layout="fzyx")
+        collision_rule_unthermalized.method,
+        f'macroscopic_values_accessors_{precision_suffix}.h')
 
     # Boundary conditions
     ubb_dynamic = PatchedUBB(lambda *args: None, dim=3,

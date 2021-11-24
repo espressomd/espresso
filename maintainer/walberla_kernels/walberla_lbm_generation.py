@@ -28,7 +28,7 @@ import pystencils as ps
 # walberla project, commit 3455bf3eebc64efa9beaecd74ebde3459b98991d
 
 
-def __macroscopic_values_accessors(generation_context, lb_method, filename):
+def generate_macroscopic_values_accessors(gen_context, lb_method, filename):
 
     # Function derived from lbmpy_walberla.walberla_lbm_generation.__lattice_model()
     # in the walberla project, commit 3455bf3eebc64efa9beaecd74ebde3459b98991d
@@ -47,7 +47,7 @@ def __macroscopic_values_accessors(generation_context, lb_method, filename):
         raise ValueError(
             "lb_method uses a stencil that is not supported in waLBerla")
 
-    is_float = not generation_context.double_accuracy
+    is_float = not gen_context.double_accuracy
     dtype_string = "float32" if is_float else "float64"
 
     vel_symbols = lb_method.conserved_quantity_computation.first_order_moment_symbols
@@ -82,7 +82,7 @@ def __macroscopic_values_accessors(generation_context, lb_method, filename):
         'D': lb_method.stencil.D,
         'Q': lb_method.stencil.Q,
         'compressible': lb_method.conserved_quantity_computation.compressible,
-        'dtype': 'double' if generation_context.double_accuracy else 'float',
+        'dtype': 'double' if gen_context.double_accuracy else 'float',
 
         'equilibrium_from_direction': stencil_switch_statement(lb_method.stencil, equilibrium),
         'equilibrium': [cpp_printer.doprint(e) for e in equilibrium],
@@ -105,7 +105,7 @@ def __macroscopic_values_accessors(generation_context, lb_method, filename):
     header = env.get_template(
         'macroscopic_values_accessors.tmpl.h').render(**jinja_context)
 
-    generation_context.write_file(filename, header)
+    gen_context.write_file(filename, header)
     with open(filename, 'r+') as f:
         content = f.read()
         f.seek(0)
@@ -116,50 +116,3 @@ def __macroscopic_values_accessors(generation_context, lb_method, filename):
         if is_float:
             content = re.sub(r'0\.5(?=[^\df])', '0.5f', content)
         f.write(content)
-
-
-def generate_macroscopic_values_accessors(
-        generation_context, collision_rule, field_layout='zyxf',
-        filename='macroscopic_values_accessors.h', **create_kernel_params):
-
-    # Function derived from lbmpy_walberla.walberla_lbm_generation.generate_lattice_model()
-    # in the walberla project, commit 3455bf3eebc64efa9beaecd74ebde3459b98991d
-    # with backports from commit de6b00071233a9a1f45d7a6773988363e058f1a0
-
-    from lbmpy.fieldaccess import StreamPullTwoFieldsAccessor
-    from lbmpy.updatekernels import create_lbm_kernel
-
-    # usually a numpy layout is chosen by default i.e. xyzf - which is bad for waLBerla where at least the spatial
-    # coordinates should be ordered in reverse direction i.e. zyx
-    is_float = not generation_context.double_accuracy
-    dtype = np.float32 if is_float else np.float64
-    lb_method = collision_rule.method
-
-    q = lb_method.stencil.Q
-    dim = lb_method.stencil.D
-
-    if field_layout == 'fzyx':
-        create_kernel_params['cpu_vectorize_info']['assume_inner_stride_one'] = True
-    elif field_layout == 'zyxf':
-        create_kernel_params['cpu_vectorize_info']['assume_inner_stride_one'] = False
-
-    src_field = ps.Field.create_generic(
-        'pdfs',
-        dim,
-        dtype,
-        index_dimensions=1,
-        layout=field_layout,
-        index_shape=(q,))
-    dst_field = ps.Field.create_generic(
-        'pdfs_tmp', dim, dtype, index_dimensions=1, layout=field_layout, index_shape=(q,))
-
-    stream_collide_update_rule = create_lbm_kernel(
-        collision_rule, src_field, dst_field, StreamPullTwoFieldsAccessor())
-    stream_collide_ast = ps.create_kernel(
-        stream_collide_update_rule,
-        **create_kernel_params)
-    stream_collide_ast.function_name = 'kernel_streamCollide'
-    stream_collide_ast.assumed_inner_stride_one = create_kernel_params[
-        'cpu_vectorize_info']['assume_inner_stride_one']
-
-    __macroscopic_values_accessors(generation_context, lb_method, filename)
