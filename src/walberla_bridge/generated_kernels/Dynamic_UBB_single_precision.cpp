@@ -1,6 +1,6 @@
-// kernel generated with pystencils v0.3.4+4.g4fecf0c, lbmpy v0.3.4+6.g2faceda,
+// kernel generated with pystencils v0.4.3, lbmpy v0.4.3,
 // lbmpy_walberla/pystencils_walberla from commit
-// b17ca5caf00db7d19f86c5f85c6f67fec6c16aff
+// 88f85eb7a979f81d68e76009811aeed53ec3014e
 
 //======================================================================================================================
 //
@@ -46,8 +46,9 @@ namespace lbm {
 #pragma diag_suppress = declared_but_not_referenced
 #endif
 
-namespace internal_boundary_Dynamic_UBB_single_precision {
-static FUNC_PREFIX void boundary_Dynamic_UBB_single_precision(
+namespace internal_dynamic_ubb_single_precision_boundary_Dynamic_UBB_single_precision {
+static FUNC_PREFIX void
+dynamic_ubb_single_precision_boundary_Dynamic_UBB_single_precision(
     uint8_t *RESTRICT const _data_indexVector, float *RESTRICT _data_pdfs,
     int64_t const _stride_pdfs_0, int64_t const _stride_pdfs_1,
     int64_t const _stride_pdfs_2, int64_t const _stride_pdfs_3,
@@ -136,7 +137,8 @@ static FUNC_PREFIX void boundary_Dynamic_UBB_single_precision(
                    _stride_pdfs_2 * z + _stride_pdfs_3 * dir];
   }
 }
-} // namespace internal_boundary_Dynamic_UBB_single_precision
+} // namespace
+  // internal_dynamic_ubb_single_precision_boundary_Dynamic_UBB_single_precision
 
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
@@ -146,7 +148,8 @@ static FUNC_PREFIX void boundary_Dynamic_UBB_single_precision(
 #pragma pop
 #endif
 
-void Dynamic_UBB_single_precision::run(IBlock *block, IndexVectors::Type type) {
+void Dynamic_UBB_single_precision::run_impl(IBlock *block,
+                                            IndexVectors::Type type) {
   auto *indexVectors = block->getData<IndexVectors>(indexVectorID);
   int64_t indexVectorSize = int64_c(indexVectors->indexVector(type).size());
   if (indexVectorSize == 0)
@@ -164,22 +167,22 @@ void Dynamic_UBB_single_precision::run(IBlock *block, IndexVectors::Type type) {
   const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
   const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
   const int64_t _stride_pdfs_3 = int64_t(1 * int64_t(pdfs->fStride()));
-  internal_boundary_Dynamic_UBB_single_precision::
-      boundary_Dynamic_UBB_single_precision(
+  internal_dynamic_ubb_single_precision_boundary_Dynamic_UBB_single_precision::
+      dynamic_ubb_single_precision_boundary_Dynamic_UBB_single_precision(
           _data_indexVector, _data_pdfs, _stride_pdfs_0, _stride_pdfs_1,
           _stride_pdfs_2, _stride_pdfs_3, indexVectorSize);
 }
 
-void Dynamic_UBB_single_precision::operator()(IBlock *block) {
-  run(block, IndexVectors::ALL);
+void Dynamic_UBB_single_precision::run(IBlock *block) {
+  run_impl(block, IndexVectors::ALL);
 }
 
 void Dynamic_UBB_single_precision::inner(IBlock *block) {
-  run(block, IndexVectors::INNER);
+  run_impl(block, IndexVectors::INNER);
 }
 
 void Dynamic_UBB_single_precision::outer(IBlock *block) {
-  run(block, IndexVectors::OUTER);
+  run_impl(block, IndexVectors::OUTER);
 }
 
 } // namespace lbm
