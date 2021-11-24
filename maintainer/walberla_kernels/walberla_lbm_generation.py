@@ -32,16 +32,17 @@ def __macroscopic_values_accessors(generation_context, lb_method, filename):
 
     # Function derived from lbmpy_walberla.walberla_lbm_generation.__lattice_model()
     # in the walberla project, commit 3455bf3eebc64efa9beaecd74ebde3459b98991d
+    # with backports from commit de6b00071233a9a1f45d7a6773988363e058f1a0
 
     from jinja2 import Environment, FileSystemLoader, StrictUndefined
     from sympy.tensor import IndexedBase
     from pystencils.backends.cbackend import CustomSympyPrinter
     from pystencils.transformations import add_types
     from pystencils_walberla.jinja_filters import add_pystencils_filters_to_jinja_env
-    from lbmpy_walberla.walberla_lbm_generation import get_stencil_name, equations_to_code, stencil_switch_statement
+    from lbmpy_walberla.walberla_lbm_generation import equations_to_code, stencil_switch_statement
 
     cpp_printer = CustomSympyPrinter()
-    stencil_name = get_stencil_name(lb_method.stencil)
+    stencil_name = lb_method.stencil.name
     if not stencil_name:
         raise ValueError(
             "lb_method uses a stencil that is not supported in waLBerla")
@@ -51,7 +52,7 @@ def __macroscopic_values_accessors(generation_context, lb_method, filename):
 
     vel_symbols = lb_method.conserved_quantity_computation.first_order_moment_symbols
     rho_sym = sp.Symbol('rho')
-    pdfs_sym = sp.symbols(f'f_:{len(lb_method.stencil)}')
+    pdfs_sym = sp.symbols(f'f_:{lb_method.stencil.Q}')
     vel_arr_symbols = [
         IndexedBase(sp.Symbol('u'), shape=(1,))[i]
         for i in range(len(vel_symbols))]
@@ -78,10 +79,10 @@ def __macroscopic_values_accessors(generation_context, lb_method, filename):
 
     jinja_context = {
         'stencil_name': stencil_name,
-        'D': lb_method.dim,
-        'Q': len(lb_method.stencil),
+        'D': lb_method.stencil.D,
+        'Q': lb_method.stencil.Q,
         'compressible': lb_method.conserved_quantity_computation.compressible,
-        'real_t': 'double' if generation_context.double_accuracy else 'float',
+        'dtype': 'double' if generation_context.double_accuracy else 'float',
 
         'equilibrium_from_direction': stencil_switch_statement(lb_method.stencil, equilibrium),
         'equilibrium': [cpp_printer.doprint(e) for e in equilibrium],
@@ -123,10 +124,10 @@ def generate_macroscopic_values_accessors(
 
     # Function derived from lbmpy_walberla.walberla_lbm_generation.generate_lattice_model()
     # in the walberla project, commit 3455bf3eebc64efa9beaecd74ebde3459b98991d
+    # with backports from commit de6b00071233a9a1f45d7a6773988363e058f1a0
 
     from lbmpy.fieldaccess import StreamPullTwoFieldsAccessor
     from lbmpy.updatekernels import create_lbm_kernel
-    from pystencils_walberla.codegen import default_create_kernel_parameters
 
     # usually a numpy layout is chosen by default i.e. xyzf - which is bad for waLBerla where at least the spatial
     # coordinates should be ordered in reverse direction i.e. zyx
@@ -134,11 +135,8 @@ def generate_macroscopic_values_accessors(
     dtype = np.float32 if is_float else np.float64
     lb_method = collision_rule.method
 
-    q = len(lb_method.stencil)
-    dim = lb_method.dim
-
-    create_kernel_params = default_create_kernel_parameters(
-        generation_context, create_kernel_params)
+    q = lb_method.stencil.Q
+    dim = lb_method.stencil.D
 
     if field_layout == 'fzyx':
         create_kernel_params['cpu_vectorize_info']['assume_inner_stride_one'] = True

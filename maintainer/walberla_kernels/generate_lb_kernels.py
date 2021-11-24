@@ -25,7 +25,8 @@ import argparse
 
 import sympy as sp
 import pystencils as ps
-from lbmpy.creationfunctions import create_lb_collision_rule, create_mrt_orthogonal, force_model_from_string
+from lbmpy.creationfunctions import create_lb_collision_rule, create_mrt_orthogonal
+import lbmpy.forcemodels
 from pystencils_walberla import CodeGeneration, codegen
 
 from lbmpy_walberla import generate_boundary, generate_lb_pack_info
@@ -319,9 +320,8 @@ with PatchedCodeGeneration(args.codegen_cfg) as ctx:
         stencil=stencil,
         compressible=True,
         weighted=True,
-        relaxation_rate_getter=relaxation_rates.rr_getter,
-        force_model=force_model_from_string(
-            'schiller', force_field.center_vector)
+        relaxation_rates=relaxation_rates.rr_getter,
+        force_model=lbmpy.forcemodels.Schiller(force_field.center_vector)
     )
     generate_stream_sweep(
         ctx,
