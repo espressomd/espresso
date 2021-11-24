@@ -32,9 +32,7 @@ except ImportError:
 
 import espressomd
 import espressomd.lb
-if espressomd.has_features('LB_BOUNDARIES'):
-    import espressomd.lbboundaries
-    import espressomd.shapes
+import espressomd.shapes
 
 
 @skipIfMissingPythonPackage
@@ -94,10 +92,10 @@ class TestVTK(ut.TestCase):
         x_offset = 0
         shape = [16, 16, 16]
         if espressomd.has_features('LB_BOUNDARIES'):
-            self.system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(
-                shape=espressomd.shapes.Wall(normal=[1, 0, 0], dist=1.5)))
-            self.system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(
-                shape=espressomd.shapes.Wall(normal=[-1, 0, 0], dist=-14.5)))
+            self.lbf.add_boundary_from_shape(
+                espressomd.shapes.Wall(normal=[1, 0, 0], dist=1.5))
+            self.lbf.add_boundary_from_shape(
+                espressomd.shapes.Wall(normal=[-1, 0, 0], dist=-14.5))
             x_offset = 2
             shape[0] = 12
 

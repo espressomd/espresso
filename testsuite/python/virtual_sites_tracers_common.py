@@ -20,7 +20,6 @@ import numpy as np
 
 import espressomd
 import espressomd.shapes
-import espressomd.lbboundaries
 import espressomd.virtual_sites
 import espressomd.utils
 
@@ -41,7 +40,6 @@ class VirtualSitesTracersCommon:
         self.system.thermostat.turn_off()
 
     def reset_lb(self, ext_force_density=(0, 0, 0)):
-        self.system.lbboundaries.clear()
         self.lbf = self.LBClass(
             kT=0.0, agrid=1, density=1, viscosity=1.8,
             tau=self.system.time_step, ext_force_density=ext_force_density)
@@ -52,14 +50,13 @@ class VirtualSitesTracersCommon:
             gamma=1)
 
         # Setup boundaries
-        walls = [espressomd.lbboundaries.LBBoundary() for k in range(2)]
-        walls[0].set_params(shape=espressomd.shapes.Wall(
-            normal=[0, 0, 1], dist=0.5))
-        walls[1].set_params(shape=espressomd.shapes.Wall(
-            normal=[0, 0, -1], dist=-self.box_height - 0.5))
+        wall_shapes = [None] * 2
+        wall_shapes[0] = espressomd.shapes.Wall(normal=[0, 0, 1], dist=0.5)
+        wall_shapes[1] = espressomd.shapes.Wall(
+            normal=[0, 0, -1], dist=-self.box_height - 0.5)
 
-        for wall in walls:
-            self.system.lbboundaries.add(wall)
+        for wall_shape in wall_shapes:
+            self.lbf.add_boundary_from_shape(wall_shape)
 
         espressomd.utils.handle_errors("setup")
 
@@ -77,7 +74,7 @@ class VirtualSitesTracersCommon:
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_ab_single_step(self):
         self.reset_lb()
-        self.system.lbboundaries.clear()
+        self.lbf.clear_boundaries()
         self.system.part.clear()
         self.system.virtual_sites = espressomd.virtual_sites.VirtualSitesInertialessTracers()
 

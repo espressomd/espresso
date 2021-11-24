@@ -28,7 +28,6 @@ import espressomd.virtual_sites
 import espressomd.accumulators
 import espressomd.observables
 import espressomd.lb
-import espressomd.lbboundaries
 import espressomd.shapes
 import espressomd.constraints
 
@@ -240,11 +239,6 @@ if LB_implementation:
     system.actors.add(lbf)
     if 'THERM.LB' in modes:
         system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)
-    if espressomd.has_features("LB_BOUNDARIES") and n_nodes == 1:
-        system.lbboundaries.add(
-            espressomd.lbboundaries.LBBoundary(shape=espressomd.shapes.Wall(normal=(1, 0, 0), dist=0.5), velocity=(1e-4, 1e-4, 0)))
-        system.lbboundaries.add(
-            espressomd.lbboundaries.LBBoundary(shape=espressomd.shapes.Wall(normal=(-1, 0, 0), dist=-(system.box_l[0] - 0.5)), velocity=(0, 0, 0)))
 
 if espressomd.has_features('DP3M') and 'DP3M' in modes:
     dp3m = espressomd.magnetostatics.DipolarP3M(

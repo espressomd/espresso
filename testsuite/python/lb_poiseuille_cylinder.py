@@ -20,7 +20,6 @@ import numpy as np
 
 import espressomd.math
 import espressomd.lb
-import espressomd.lbboundaries
 import espressomd.observables
 import espressomd.shapes
 import espressomd.accumulators
@@ -104,8 +103,7 @@ class LBPoiseuilleCommon:
         cylinder_shape = espressomd.shapes.Cylinder(
             center=self.system.box_l / 2.0, axis=self.params['axis'],
             direction=-1, radius=EFFECTIVE_RADIUS, length=BOX_L * 1.5)
-        cylinder = espressomd.lbboundaries.LBBoundary(shape=cylinder_shape)
-        self.system.lbboundaries.add(cylinder)
+        self.lbf.add_boundary_from_shape(cylinder_shape)
 
         mid_indices = 3 * [int((BOX_L / AGRID) / 2)]
         diff = float("inf")
@@ -211,8 +209,8 @@ class LBWalberlaPoiseuille(ut.TestCase, LBPoiseuilleCommon):
         self.lbf = espressomd.lb.LBFluidWalberla
 
     def tearDown(self):
+        self.lbf.clear_boundaries()
         self.system.actors.clear()
-        self.system.lbboundaries.clear()
 
 
 if __name__ == '__main__':

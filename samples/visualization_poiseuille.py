@@ -21,7 +21,6 @@ external force applied.
 
 import espressomd
 import espressomd.lb
-import espressomd.lbboundaries
 import espressomd.shapes
 import espressomd.visualization_opengl
 import numpy as np
@@ -57,15 +56,14 @@ system.actors.add(lbf)
 system.thermostat.set_lb(LB_fluid=lbf, gamma=1.5)
 
 # Setup boundaries
-walls = [espressomd.lbboundaries.LBBoundary() for k in range(2)]
-walls[0].set_params(shape=espressomd.shapes.Wall(normal=[1, 0, 0], dist=1.5))
-walls[1].set_params(shape=espressomd.shapes.Wall(
-    normal=[-1, 0, 0], dist=-14.5))
+wall_shapes = [None] * 2
+wall_shapes[0] = espressomd.shapes.Wall(normal=[1, 0, 0], dist=1.5)
+wall_shapes[1] = espressomd.shapes.Wall(normal=[-1, 0, 0], dist=-14.5)
 
 for i in range(100):
     system.part.add(pos=np.random.random(3) * system.box_l)
 
-for wall in walls:
-    system.lbboundaries.add(wall)
+for wall_shape in wall_shapes:
+    lbf.add_boundary_from_shape(wall_shape)
 
 visualizer.run(1)

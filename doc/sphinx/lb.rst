@@ -315,16 +315,15 @@ Per-node boundary conditions
 One can set (or update) the slip velocity of individual nodes::
 
     import espressomd.lb
-    import espressomd.lbboundaries
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     system.cell_system.skin = 0.1
     system.time_step = 0.01
     lbf = espressomd.lb.LBFluidWalberla(agrid=0.5, density=1.0, viscosity=1.0, tau=0.01)
     system.actors.add(lbf)
     # make one node a boundary node with a slip velocity
-    lbf[0, 0, 0].boundary = espressomd.lbboundaries.VelocityBounceBack([0, 0, 1])
+    lbf[0, 0, 0].boundary = espressomd.lb.VelocityBounceBack([0, 0, 1])
     # update node for no-slip boundary conditions
-    lbf[0, 0, 0].boundary = espressomd.lbboundaries.VelocityBounceBack([0, 0, 0])
+    lbf[0, 0, 0].boundary = espressomd.lb.VelocityBounceBack([0, 0, 0])
     # remove boundary conditions
     lbf[0, 0, 0].boundary = None
 
@@ -355,7 +354,8 @@ providing a list of nodes and a list of velocities of the same dimensions::
     cylinder = espressomd.shapes.Cylinder(
         center=[5., 5., 5.], axis=[0, 0, 1], length=3 * system.box_l[2],
         radius=8.1 * lbf.agrid, direction=1)
-    lbf.add_boundary(cylinder)
+    # mark nodes inside cylinder as boundaries
+    lbf.add_boundary_from_list(lbf.get_nodes_in_shape(cylinder))
     # update surface nodes with a tangential slip velocity
     surface_nodes = espressomd.lbboundaries.edge_detection(
         lbf.get_shape_bitmask(cylinder), system.periodicity)
@@ -384,9 +384,9 @@ Adding a shape-based boundary is straightforward::
     system.actors.add(lbf)
     # set up shear flow between two sliding walls
     wall1 = espressomd.shapes.Wall(normal=[+1., 0., 0.], dist=2.5)
-    lbf.add_boundary(shape=wall1, velocity=[0., +0.05, 0.])
+    lbf.add_boundary_from_shape(shape=wall1, velocity=[0., +0.05, 0.])
     wall2 = espressomd.shapes.Wall(normal=[-1., 0., 0.], dist=-(system.box_l[0] - 2.5))
-    lbf.add_boundary(shape=wall2, velocity=[0., -0.05, 0.])
+    lbf.add_boundary_from_shape(shape=wall2, velocity=[0., -0.05, 0.])
 
 The ``velocity`` argument is optional, in which case the no-slip boundary
 conditions are used. For a position-dependent slip velocity, the argument

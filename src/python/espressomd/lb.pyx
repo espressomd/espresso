@@ -25,17 +25,27 @@ import numpy as np
 cimport numpy as np
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 from .shapes import Shape
-from . import lbboundaries
 from . cimport cuda_init
 from . import cuda_init
 from . import utils
-from .utils import is_valid_type, to_char_pointer
+from .utils import is_valid_type, to_char_pointer, check_type_or_throw_except
 from .utils cimport Vector3i
 from .utils cimport Vector3d
 from .utils cimport Vector6d
 from .utils cimport make_array_locked
 from .utils cimport make_Vector3d
 from .utils cimport create_nparray_from_double_array
+
+
+class VelocityBounceBack:
+    """
+    Holds velocity information for the velocity bounce back boundary condition at a single node.
+    """
+
+    def __init__(self, velocity):
+        check_type_or_throw_except(
+            velocity, 3, float, "VelocityBounceBack velocity must be three floats")
+        self.velocity = velocity
 
 
 IF LB_WALBERLA:
@@ -376,8 +386,7 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
     def save_checkpoint(self, path, binary):
         '''
         Write LB node populations to a file.
-        :class:`~espressomd.lbboundaries.LBBoundaries`
-        information is not written to the file.
+        Boundary information is not written to the file.
         '''
         tmp_path = path + ".__tmp__"
         lb_lbfluid_save_checkpoint(utils.to_char_pointer(tmp_path), binary)
@@ -386,12 +395,8 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
     def load_checkpoint(self, path, binary):
         '''
         Load LB node populations from a file.
-        :class:`~espressomd.lbboundaries.LBBoundaries`
-        information is not available in the file. The boundary
-        information of the grid will be set to zero,
-        even if :class:`~espressomd.lbboundaries.LBBoundaries`
-        contains :class:`~espressomd.lbboundaries.LBBoundary`
-        objects (they are ignored).
+        Boundary information is not available in the file. The boundary
+        information of the grid will be set to zero.
         '''
         lb_lbfluid_load_checkpoint(utils.to_char_pointer(path), binary)
 
@@ -676,7 +681,7 @@ cdef class LBFluidRoutines:
             """
             Returns
             -------
-            :ref:`espressomd.lbboundaries.VelocityBounceBack`
+            :ref:`VelocityBounceBack`
                 If the node is a boundary node
             None
                 If the node is not a boundary node
@@ -685,20 +690,20 @@ cdef class LBFluidRoutines:
             is_boundary = lb_lbnode_is_boundary(self.node)
             if is_boundary:
                 vel = python_lbnode_get_velocity_at_boundary(self.node)
-                return lbboundaries.VelocityBounceBack(vel)
+                return VelocityBounceBack(vel)
             return None
 
         def __set__(self, value):
             """
             Parameters
             ----------
-            value : :ref:`espressomd.lbboundaries.VelocityBounceBack` or None
-                If value is :ref:`espressomd.lbboundaries.VelocityBounceBack`,
+            value : :ref:`VelocityBounceBack` or None
+                If value is :ref:`VelocityBounceBack`,
                 set the node to be a boundary node with the specified velocity.
                 If value is ``None``, the node will become a fluid node.
             """
 
-            if isinstance(value, lbboundaries.VelocityBounceBack):
+            if isinstance(value, VelocityBounceBack):
                 HydrodynamicInteraction._check_mach_limit(value.velocity)
                 python_lbnode_set_velocity_at_boundary(
                     self.node, make_Vector3d(value.velocity))
@@ -706,7 +711,7 @@ cdef class LBFluidRoutines:
                 lb_lbnode_remove_from_boundary(self.node)
             else:
                 raise ValueError(
-                    "value must be an instance of lbboundaries.VelocityBounceBack or None")
+                    "value must be an instance of VelocityBounceBack or None")
 
     property boundary_force:
         def __get__(self):

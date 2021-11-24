@@ -21,10 +21,9 @@ Visualize lattice-Boltzmann boundary nodes.
 import espressomd
 import espressomd.lb
 import espressomd.shapes
-import espressomd.lbboundaries
 import espressomd.visualization_opengl
 
-required_features = ["LB_WALBERLA", "LB_BOUNDARIES"]
+required_features = ["LB_WALBERLA"]
 espressomd.assert_features(required_features)
 
 system = espressomd.System(box_l=[10.0, 10.0, 5.0])
@@ -41,8 +40,7 @@ cylinder_shape = espressomd.shapes.Cylinder(
     direction=-1,
     radius=4.0,
     length=20.0)
-cylinder_boundary = espressomd.lbboundaries.LBBoundary(shape=cylinder_shape)
-system.lbboundaries.add(cylinder_boundary)
+lb_fluid.add_boundary_from_shape(cylinder_shape)
 
 visualizer = espressomd.visualization_opengl.openGLLive(
     system,

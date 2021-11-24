@@ -19,7 +19,6 @@ import unittest_decorators as utx
 import numpy as np
 
 import espressomd.lb
-import espressomd.lbboundaries
 import espressomd.shapes
 
 """
@@ -92,25 +91,23 @@ class LBShearCommon:
         the exact solution.
 
         """
-        self.system.lbboundaries.clear()
         self.system.actors.clear()
         self.system.box_l = np.max(
             ((W, W, W), shear_plane_normal * (H + 2 * AGRID)), 0)
 
         self.lbf = self.lb_class(**LB_PARAMS)
         self.system.actors.add(self.lbf)
+        self.lbf.clear_boundaries()
 
         wall_shape1 = espressomd.shapes.Wall(
             normal=shear_plane_normal, dist=AGRID)
         wall_shape2 = espressomd.shapes.Wall(
             normal=-1.0 * shear_plane_normal, dist=-(H + AGRID))
-        wall1 = espressomd.lbboundaries.LBBoundary(
-            shape=wall_shape1, velocity=-.5 * SHEAR_VELOCITY * shear_direction)
-        wall2 = espressomd.lbboundaries.LBBoundary(
-            shape=wall_shape2, velocity=.5 * SHEAR_VELOCITY * shear_direction)
 
-        self.system.lbboundaries.add(wall1)
-        self.system.lbboundaries.add(wall2)
+        self.lbf.add_boundary_from_shape(
+            wall_shape1, velocity=-.5 * SHEAR_VELOCITY * shear_direction)
+        self.lbf.add_boundary_from_shape(
+            wall_shape2, velocity=.5 * SHEAR_VELOCITY * shear_direction)
 
         t0 = self.system.time
         sample_points = int(H / AGRID - 1)
@@ -160,7 +157,7 @@ class LBShearCommon:
             np.testing.assert_allclose(node_pressure_tensor,
                                        p_expected, atol=1E-5, rtol=5E-3)
 
-        # TODO WALBERLA
+        # TODO: WALBERLA: (#4381) boundary forces not reliable at the moment
 #        np.testing.assert_allclose(
 #            np.copy(wall1.get_force()),
 #            -np.copy(wall2.get_force()),

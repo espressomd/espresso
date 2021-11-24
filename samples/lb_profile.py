@@ -25,7 +25,6 @@ import espressomd
 import espressomd.lb
 import espressomd.observables
 import espressomd.shapes
-import espressomd.lbboundaries
 import espressomd.accumulators
 import espressomd.math
 
@@ -61,8 +60,7 @@ cylinder_shape = espressomd.shapes.Cylinder(
     direction=-1,
     radius=radius,
     length=20.0)
-cylinder_boundary = espressomd.lbboundaries.LBBoundary(shape=cylinder_shape)
-system.lbboundaries.add(cylinder_boundary)
+lb_fluid.add_boundary_from_shape(cylinder_shape)
 
 # equilibrate fluid
 system.integrator.run(n_steps_warmup)

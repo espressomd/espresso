@@ -111,17 +111,6 @@ if has_features(["LB_BOUNDARIES"]):
         _so_bind_methods = ("get_force",)
 
 
-class VelocityBounceBack:
-    """
-    Holds velocity information for the velocity bounce back boundary condition at a single node.
-    """
-
-    def __init__(self, velocity):
-        check_type_or_throw_except(
-            velocity, 3, float, "VelocityBounceBack velocity must be three floats")
-        self.velocity = velocity
-
-
 def edge_detection(boundary_mask, periodicity):
     """
     Find boundary nodes in contact with the fluid. Relies on a convolution

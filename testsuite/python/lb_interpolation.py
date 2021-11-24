@@ -60,10 +60,8 @@ class LBInterpolation:
             normal=[1, 0, 0], dist=AGRID)
         wall_shape2 = espressomd.shapes.Wall(
             normal=[-1, 0, 0], dist=-(BOX_L - AGRID))
-        self.system.lbboundaries.add(
-            espressomd.lbboundaries.LBBoundary(shape=wall_shape1))
-        self.system.lbboundaries.add(
-            espressomd.lbboundaries.LBBoundary(shape=wall_shape2, velocity=velocity))
+        self.lbf.add_boundary_from_shape(wall_shape1)
+        self.lbf.add_boundary_from_shape(wall_shape2, velocity)
 
     def test_interpolated_velocity(self):
         """
@@ -105,7 +103,7 @@ class LBInterpolation:
 
         """
         max_vel = 1.1 * self.lbf.mach_limit() * AGRID / TAU
-        vbb = espressomd.lbboundaries.VelocityBounceBack([0, 0, max_vel])
+        vbb = espressomd.lb.VelocityBounceBack([0, 0, max_vel])
         error_msg = 'Slip velocity exceeds Mach 0.35'
 
         with self.assertRaisesRegex(ValueError, error_msg):
@@ -122,11 +120,10 @@ class LBInterpolation:
         self.assertIsNone(self.lbf[0, 0, 0].boundary)
 
 
-@utx.skipIfMissingFeatures(['LB_BOUNDARIES', 'LB_WALBERLA'])
+@utx.skipIfMissingFeatures(['LB_WALBERLA'])
 class LBInterpolationWalberla(ut.TestCase, LBInterpolation):
 
     def setUp(self):
-        self.system.lbboundaries.clear()
         self.system.actors.clear()
         self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMETERS)
         self.system.actors.add(self.lbf)
