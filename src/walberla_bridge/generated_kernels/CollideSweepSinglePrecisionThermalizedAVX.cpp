@@ -54,7 +54,7 @@ using namespace std;
 namespace walberla {
 namespace pystencils {
 
-namespace internal_collidesweepsingleprecisionthermalizedavx_collidesweepsingleprecisionthermalizedavx {
+namespace internal_48c9ee502281a70505dce0378c55abd5 {
 static FUNC_PREFIX void
 collidesweepsingleprecisionthermalizedavx_collidesweepsingleprecisionthermalizedavx(
     float *RESTRICT const _data_force, float *RESTRICT _data_pdfs,
@@ -2342,8 +2342,7 @@ collidesweepsingleprecisionthermalizedavx_collidesweepsingleprecisionthermalized
     }
   }
 }
-} // namespace
-  // internal_collidesweepsingleprecisionthermalizedavx_collidesweepsingleprecisionthermalizedavx
+} // namespace internal_48c9ee502281a70505dce0378c55abd5
 
 void CollideSweepSinglePrecisionThermalizedAVX::run(IBlock *block) {
   auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
@@ -2384,7 +2383,7 @@ void CollideSweepSinglePrecisionThermalizedAVX::run(IBlock *block) {
   const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
   const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
   const int64_t _stride_pdfs_3 = int64_t(1 * int64_t(pdfs->fStride()));
-  internal_collidesweepsingleprecisionthermalizedavx_collidesweepsingleprecisionthermalizedavx::
+  internal_48c9ee502281a70505dce0378c55abd5::
       collidesweepsingleprecisionthermalizedavx_collidesweepsingleprecisionthermalizedavx(
           _data_force, _data_pdfs, _size_force_0, _size_force_1, _size_force_2,
           _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_1,
@@ -2448,7 +2447,7 @@ void CollideSweepSinglePrecisionThermalizedAVX::runOnCellInterval(
   const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
   const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
   const int64_t _stride_pdfs_3 = int64_t(1 * int64_t(pdfs->fStride()));
-  internal_collidesweepsingleprecisionthermalizedavx_collidesweepsingleprecisionthermalizedavx::
+  internal_48c9ee502281a70505dce0378c55abd5::
       collidesweepsingleprecisionthermalizedavx_collidesweepsingleprecisionthermalizedavx(
           _data_force, _data_pdfs, _size_force_0, _size_force_1, _size_force_2,
           _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_1,

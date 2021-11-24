@@ -51,7 +51,7 @@ using namespace std;
 namespace walberla {
 namespace pystencils {
 
-namespace internal_streamsweepdoubleprecisionavx_streamsweepdoubleprecisionavx {
+namespace internal_91e2c9bdb4c4fa8a405803890749bf98 {
 static FUNC_PREFIX void
 streamsweepdoubleprecisionavx_streamsweepdoubleprecisionavx(
     double *RESTRICT const _data_force, double *RESTRICT const _data_pdfs,
@@ -426,8 +426,7 @@ streamsweepdoubleprecisionavx_streamsweepdoubleprecisionavx(
     }
   }
 }
-} // namespace
-  // internal_streamsweepdoubleprecisionavx_streamsweepdoubleprecisionavx
+} // namespace internal_91e2c9bdb4c4fa8a405803890749bf98
 
 void StreamSweepDoublePrecisionAVX::run(IBlock *block) {
   auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
@@ -481,7 +480,7 @@ void StreamSweepDoublePrecisionAVX::run(IBlock *block) {
   const int64_t _stride_velocity_1 = int64_t(velocity->yStride());
   const int64_t _stride_velocity_2 = int64_t(velocity->zStride());
   const int64_t _stride_velocity_3 = int64_t(1 * int64_t(velocity->fStride()));
-  internal_streamsweepdoubleprecisionavx_streamsweepdoubleprecisionavx::
+  internal_91e2c9bdb4c4fa8a405803890749bf98::
       streamsweepdoubleprecisionavx_streamsweepdoubleprecisionavx(
           _data_force, _data_pdfs, _data_pdfs_tmp, _data_velocity,
           _size_force_0, _size_force_1, _size_force_2, _stride_force_1,
@@ -576,7 +575,7 @@ void StreamSweepDoublePrecisionAVX::runOnCellInterval(
   const int64_t _stride_velocity_1 = int64_t(velocity->yStride());
   const int64_t _stride_velocity_2 = int64_t(velocity->zStride());
   const int64_t _stride_velocity_3 = int64_t(1 * int64_t(velocity->fStride()));
-  internal_streamsweepdoubleprecisionavx_streamsweepdoubleprecisionavx::
+  internal_91e2c9bdb4c4fa8a405803890749bf98::
       streamsweepdoubleprecisionavx_streamsweepdoubleprecisionavx(
           _data_force, _data_pdfs, _data_pdfs_tmp, _data_velocity,
           _size_force_0, _size_force_1, _size_force_2, _stride_force_1,

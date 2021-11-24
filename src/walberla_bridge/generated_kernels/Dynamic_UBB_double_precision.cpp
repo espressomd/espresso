@@ -46,7 +46,7 @@ namespace lbm {
 #pragma diag_suppress = declared_but_not_referenced
 #endif
 
-namespace internal_dynamic_ubb_double_precision_boundary_Dynamic_UBB_double_precision {
+namespace internal_451fd042b8d7665063ea81b98853365b {
 static FUNC_PREFIX void
 dynamic_ubb_double_precision_boundary_Dynamic_UBB_double_precision(
     uint8_t *RESTRICT const _data_indexVector, double *RESTRICT _data_pdfs,
@@ -137,8 +137,7 @@ dynamic_ubb_double_precision_boundary_Dynamic_UBB_double_precision(
                    _stride_pdfs_2 * z + _stride_pdfs_3 * dir];
   }
 }
-} // namespace
-  // internal_dynamic_ubb_double_precision_boundary_Dynamic_UBB_double_precision
+} // namespace internal_451fd042b8d7665063ea81b98853365b
 
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
@@ -167,7 +166,7 @@ void Dynamic_UBB_double_precision::run_impl(IBlock *block,
   const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
   const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
   const int64_t _stride_pdfs_3 = int64_t(1 * int64_t(pdfs->fStride()));
-  internal_dynamic_ubb_double_precision_boundary_Dynamic_UBB_double_precision::
+  internal_451fd042b8d7665063ea81b98853365b::
       dynamic_ubb_double_precision_boundary_Dynamic_UBB_double_precision(
           _data_indexVector, _data_pdfs, _stride_pdfs_0, _stride_pdfs_1,
           _stride_pdfs_2, _stride_pdfs_3, indexVectorSize);

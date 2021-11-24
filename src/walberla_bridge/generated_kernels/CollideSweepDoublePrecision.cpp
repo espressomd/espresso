@@ -49,7 +49,7 @@ using namespace std;
 namespace walberla {
 namespace pystencils {
 
-namespace internal_collidesweepdoubleprecision_collidesweepdoubleprecision {
+namespace internal_25323b08e38db120cab02b751f026e5f {
 static FUNC_PREFIX void collidesweepdoubleprecision_collidesweepdoubleprecision(
     double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
     int64_t const _size_force_0, int64_t const _size_force_1,
@@ -488,7 +488,7 @@ static FUNC_PREFIX void collidesweepdoubleprecision_collidesweepdoubleprecision(
     }
   }
 }
-} // namespace internal_collidesweepdoubleprecision_collidesweepdoubleprecision
+} // namespace internal_25323b08e38db120cab02b751f026e5f
 
 void CollideSweepDoublePrecision::run(IBlock *block) {
   auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
@@ -524,7 +524,7 @@ void CollideSweepDoublePrecision::run(IBlock *block) {
   const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
   const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
   const int64_t _stride_pdfs_3 = int64_t(1 * int64_t(pdfs->fStride()));
-  internal_collidesweepdoubleprecision_collidesweepdoubleprecision::
+  internal_25323b08e38db120cab02b751f026e5f::
       collidesweepdoubleprecision_collidesweepdoubleprecision(
           _data_force, _data_pdfs, _size_force_0, _size_force_1, _size_force_2,
           _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3,
@@ -583,7 +583,7 @@ void CollideSweepDoublePrecision::runOnCellInterval(
   const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
   const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
   const int64_t _stride_pdfs_3 = int64_t(1 * int64_t(pdfs->fStride()));
-  internal_collidesweepdoubleprecision_collidesweepdoubleprecision::
+  internal_25323b08e38db120cab02b751f026e5f::
       collidesweepdoubleprecision_collidesweepdoubleprecision(
           _data_force, _data_pdfs, _size_force_0, _size_force_1, _size_force_2,
           _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3,

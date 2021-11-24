@@ -51,7 +51,7 @@ using namespace std;
 namespace walberla {
 namespace pystencils {
 
-namespace internal_collidesweepdoubleprecisionthermalized_collidesweepdoubleprecisionthermalized {
+namespace internal_0d943397135d13b4628c5752888935d7 {
 static FUNC_PREFIX void
 collidesweepdoubleprecisionthermalized_collidesweepdoubleprecisionthermalized(
     double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
@@ -614,8 +614,7 @@ collidesweepdoubleprecisionthermalized_collidesweepdoubleprecisionthermalized(
     }
   }
 }
-} // namespace
-  // internal_collidesweepdoubleprecisionthermalized_collidesweepdoubleprecisionthermalized
+} // namespace internal_0d943397135d13b4628c5752888935d7
 
 void CollideSweepDoublePrecisionThermalized::run(IBlock *block) {
   auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
@@ -658,7 +657,7 @@ void CollideSweepDoublePrecisionThermalized::run(IBlock *block) {
   const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
   const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
   const int64_t _stride_pdfs_3 = int64_t(1 * int64_t(pdfs->fStride()));
-  internal_collidesweepdoubleprecisionthermalized_collidesweepdoubleprecisionthermalized::
+  internal_0d943397135d13b4628c5752888935d7::
       collidesweepdoubleprecisionthermalized_collidesweepdoubleprecisionthermalized(
           _data_force, _data_pdfs, _size_force_0, _size_force_1, _size_force_2,
           _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3,
@@ -725,7 +724,7 @@ void CollideSweepDoublePrecisionThermalized::runOnCellInterval(
   const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
   const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
   const int64_t _stride_pdfs_3 = int64_t(1 * int64_t(pdfs->fStride()));
-  internal_collidesweepdoubleprecisionthermalized_collidesweepdoubleprecisionthermalized::
+  internal_0d943397135d13b4628c5752888935d7::
       collidesweepdoubleprecisionthermalized_collidesweepdoubleprecisionthermalized(
           _data_force, _data_pdfs, _size_force_0, _size_force_1, _size_force_2,
           _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3,

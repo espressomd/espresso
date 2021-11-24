@@ -49,7 +49,7 @@ using namespace std;
 namespace walberla {
 namespace pystencils {
 
-namespace internal_initialpdfssetterdoubleprecision_initialpdfssetterdoubleprecision {
+namespace internal_2df07fce91f5444fc18533f996cd1a79 {
 static FUNC_PREFIX void
 initialpdfssetterdoubleprecision_initialpdfssetterdoubleprecision(
     double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
@@ -282,8 +282,7 @@ initialpdfssetterdoubleprecision_initialpdfssetterdoubleprecision(
     }
   }
 }
-} // namespace
-  // internal_initialpdfssetterdoubleprecision_initialpdfssetterdoubleprecision
+} // namespace internal_2df07fce91f5444fc18533f996cd1a79
 
 void InitialPDFsSetterDoublePrecision::run(IBlock *block) {
   auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
@@ -324,7 +323,7 @@ void InitialPDFsSetterDoublePrecision::run(IBlock *block) {
   const int64_t _stride_velocity_1 = int64_t(velocity->yStride());
   const int64_t _stride_velocity_2 = int64_t(velocity->zStride());
   const int64_t _stride_velocity_3 = int64_t(1 * int64_t(velocity->fStride()));
-  internal_initialpdfssetterdoubleprecision_initialpdfssetterdoubleprecision::
+  internal_2df07fce91f5444fc18533f996cd1a79::
       initialpdfssetterdoubleprecision_initialpdfssetterdoubleprecision(
           _data_force, _data_pdfs, _data_velocity, _size_force_0, _size_force_1,
           _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2,
@@ -392,7 +391,7 @@ void InitialPDFsSetterDoublePrecision::runOnCellInterval(
   const int64_t _stride_velocity_1 = int64_t(velocity->yStride());
   const int64_t _stride_velocity_2 = int64_t(velocity->zStride());
   const int64_t _stride_velocity_3 = int64_t(1 * int64_t(velocity->fStride()));
-  internal_initialpdfssetterdoubleprecision_initialpdfssetterdoubleprecision::
+  internal_2df07fce91f5444fc18533f996cd1a79::
       initialpdfssetterdoubleprecision_initialpdfssetterdoubleprecision(
           _data_force, _data_pdfs, _data_velocity, _size_force_0, _size_force_1,
           _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2,

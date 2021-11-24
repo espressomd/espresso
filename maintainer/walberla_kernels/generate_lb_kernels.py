@@ -120,6 +120,29 @@ def earmark_generated_kernels():
                     f.write(earmark + content)
 
 
+def guard_generated_kernels_clang_format():
+    '''
+    Some namespaces are too long and will break ``clang-format`` versions
+    9 and 10. Replace them with a unique string of reasonable size.
+    '''
+    import re
+    import hashlib
+    for filename in os.listdir('.'):
+        if filename.endswith('.cpp'):
+            with open(filename, 'r') as f:
+                content = f.read()
+            all_ns = re.findall(r"^namespace (internal_[a-zA-Z0-9_]{54,}) \{$",
+                                content, flags=re.MULTILINE)
+            if not all_ns:
+                continue
+            for ns in all_ns:
+                content = re.sub(rf"(?<=[^a-zA-Z0-9_]){ns}(?=[^a-zA-Z0-9_])",
+                                 f"internal_{hashlib.md5(ns.encode('utf-8')).hexdigest()}",
+                                 content)
+            with open(filename, 'w') as f:
+                f.write(content)
+
+
 def generate_fields(ctx, stencil):
     dtype = data_type_np[ctx.double_accuracy]
     field_layout = 'fzyx'
@@ -411,3 +434,4 @@ with PatchedCodeGeneration() as ctx:
     #ctx.write_file(f"InfoHeader{precision_prefix}.h", info_header)
 
 earmark_generated_kernels()
+guard_generated_kernels_clang_format()
