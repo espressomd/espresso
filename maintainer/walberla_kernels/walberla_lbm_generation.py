@@ -20,9 +20,7 @@
 
 import os
 import re
-import numpy as np
 import sympy as sp
-import pystencils as ps
 
 # File derived from lbmpy_walberla.walberla_lbm_generation in the
 # walberla project, commit 3455bf3eebc64efa9beaecd74ebde3459b98991d
