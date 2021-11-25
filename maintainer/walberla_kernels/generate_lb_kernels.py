@@ -40,6 +40,7 @@ from lbmpy.updatekernels import create_lbm_kernel, create_stream_pull_with_outpu
 from lbmpy.macroscopic_value_kernels import macroscopic_values_setter
 
 import lees_edwards
+from pystencils.data_types import TypedSymbol
 # for collide-push from lbmpy.fieldaccess import StreamPushTwoFieldsAccessor
 
 from lbmpy.advanced_streaming.indexing import NeighbourOffsetArrays
@@ -361,14 +362,20 @@ with PatchedCodeGeneration(args.codegen_cfg) as ctx:
     )
 
     # generate unthermalized Lees-Edwards collision rule
-    u_p = lees_edwards.velocity_shift()
-    velocity_field = ps.fields("velocity(3): [3D]", layout='fzyx')
+
+    points_up = TypedSymbol('points_up', bool)
+    points_down = TypedSymbol('points_down', bool)
+
+    u_p = lees_edwards.velocity_shift(points_up, points_down)
+
+    #u_p = lees_edwards.velocity_shift()
+    #velocity_field = ps.fields("velocity(3): [3D]", layout='fzyx')
     le_collision_rule_unthermalized = create_lb_collision_rule(
         method,
-        velocity_input=velocity_field.center_vector + sp.Matrix([u_p, 0, 0]),
+        velocity_input=fields['velocity'].center_vector + sp.Matrix([u_p, 0, 0]),
         optimization={'cse_global': True}
     )
-    lees_edwards.modify_method(le_collision_rule_unthermalized, 0, 1)
+    lees_edwards.modify_method(le_collision_rule_unthermalized, 0, 1, points_up, points_down)
     generate_collision_sweep(
         ctx,
         method,
