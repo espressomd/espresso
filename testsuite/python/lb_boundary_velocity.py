@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import espressomd.lb
-import espressomd.lbboundaries
 import espressomd.shapes
 import unittest as ut
 import unittest_decorators as utx
@@ -232,7 +231,7 @@ class LBBoundaryVelocityTest(ut.TestCase):
         column (finite or infinite, periodic or aperiodic).
         """
         def get_surface_indices(mask, periodicity):
-            idx = espressomd.lbboundaries.edge_detection(mask, periodicity)
+            idx = espressomd.lb.edge_detection(mask, periodicity)
             return set(map(tuple, idx))
 
         def roll_product(a, b, c):
@@ -328,7 +327,7 @@ class LBBoundaryVelocityTest(ut.TestCase):
                                  [-1, 0, 0],
                                  [0, -1, 0],
                                  [1, 0, 0]])
-        tangents = espressomd.lbboundaries.calc_cylinder_tangential_vectors(
+        tangents = espressomd.lb.calc_cylinder_tangential_vectors(
             center, agrid, offset, node_indices)
         np.testing.assert_array_almost_equal(tangents, ref_tangents)
 

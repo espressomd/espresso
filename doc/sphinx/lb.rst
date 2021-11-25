@@ -343,7 +343,6 @@ providing a list of nodes and a list of velocities of the same dimensions::
 
     import espressomd.lb
     import espressomd.shapes
-    import espressomd.lbboundaries
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     system.cell_system.skin = 0.1
     system.time_step = 0.01
@@ -357,9 +356,9 @@ providing a list of nodes and a list of velocities of the same dimensions::
     # mark nodes inside cylinder as boundaries
     lbf.add_boundary_from_list(lbf.get_nodes_in_shape(cylinder))
     # update surface nodes with a tangential slip velocity
-    surface_nodes = espressomd.lbboundaries.edge_detection(
+    surface_nodes = espressomd.lb.edge_detection(
         lbf.get_shape_bitmask(cylinder), system.periodicity)
-    tangents = espressomd.lbboundaries.calc_cylinder_tangential_vectors(
+    tangents = espressomd.lb.calc_cylinder_tangential_vectors(
         cylinder.center, lbf.agrid, 0.5, surface_nodes)
     lbf.add_boundary_from_list(surface_nodes, velocity_magnitude * tangents)
     # remove boundary conditions
