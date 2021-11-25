@@ -24,9 +24,9 @@ def velocity_shift(points_up, points_down):
     #shear_velocity = TypedSymbol('shear_velocity', float)
     #grid_size = TypedSymbol('grid_size', int)
 
-    u_p = sp.Piecewise((1, sp.And(type_all_numbers(counters[1] <= 1, 'int'), points_down)),
+    u_p = sp.Piecewise((1, sp.And(type_all_numbers(counters[1] <= 0, 'int'), points_down)),
                        (-1,
-                        sp.And(type_all_numbers(counters[1] >= 64,
+                        sp.And(type_all_numbers(counters[1] >= 63,
                                                 'int'),
                                points_up)),
                        (0, True)) * 0.05

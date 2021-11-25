@@ -32,12 +32,15 @@ class StructuredBlockForest;
 /** Class that runs and controls the BlockForest in walberla
  */
 class LatticeWalberla {
+public:
+  using Lattice_T = walberla::blockforest::StructuredBlockForest;
+
 private:
   Utils::Vector3i m_grid_dimensions;
   unsigned int m_n_ghost_layers;
 
   /** Block forest */
-  std::shared_ptr<walberla::blockforest::StructuredBlockForest> m_blocks;
+  std::shared_ptr<Lattice_T> m_blocks;
 
 public:
   LatticeWalberla(Utils::Vector3i const &grid_dimensions,

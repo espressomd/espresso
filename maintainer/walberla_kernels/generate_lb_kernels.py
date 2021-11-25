@@ -24,7 +24,7 @@ import argparse
 
 import sympy as sp
 import pystencils as ps
-from lbmpy.creationfunctions import create_lb_collision_rule, create_mrt_orthogonal
+from lbmpy.creationfunctions import create_lb_collision_rule, create_mrt_orthogonal, create_srt
 import lbmpy.forcemodels
 from pystencils_walberla import CodeGeneration, codegen
 
@@ -333,6 +333,8 @@ with PatchedCodeGeneration() as ctx:
         relaxation_rates=relaxation_rates.rr_getter,
         force_model=lbmpy.forcemodels.Schiller(force_field.center_vector)
     )
+
+    # generate stream kernels
     generate_stream_sweep(
         ctx,
         method,
@@ -381,24 +383,33 @@ with PatchedCodeGeneration() as ctx:
 
     #u_p = lees_edwards.velocity_shift()
     #velocity_field = ps.fields("velocity(3): [3D]", layout='fzyx')
+
+    # LB Method definition
+    le_method = create_srt(
+        stencil=stencil,
+        compressible=True,
+        relaxation_rate=sp.Symbol("omega_bulk"),
+        force_model=lbmpy.forcemodels.Guo(force_field.center_vector)
+    )
+
     le_collision_rule_unthermalized = create_lb_collision_rule(
-        method,
+        le_method,
         velocity_input=fields['velocity'].center_vector + sp.Matrix([u_p, 0, 0]),
         optimization={'cse_global': True}
     )
     lees_edwards.modify_method(le_collision_rule_unthermalized, 0, 1, points_up, points_down)
     generate_collision_sweep(
         ctx,
-        method,
+        le_method,
         le_collision_rule_unthermalized,
-        "CollideSweepLeesEdwards",
+        f"CollideSweep{precision_prefix}LeesEdwards",
         {}
     )
     generate_collision_sweep(
         ctx,
-        method,
+        le_method,
         le_collision_rule_unthermalized,
-        "CollideSweepLeesEdwardsAVX",
+        f"CollideSweep{precision_prefix}LeesEdwardsAVX",
         {"cpu_vectorize_info": cpu_vectorize_info}
     )
 

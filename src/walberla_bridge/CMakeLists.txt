@@ -21,19 +21,22 @@ set(WalberlaBridgeCodegen_SRC
     generated_kernels/StreamSweepDoublePrecision.cpp
     generated_kernels/InitialPDFsSetterSinglePrecision.cpp
     generated_kernels/InitialPDFsSetterDoublePrecision.cpp
-    generated_kernels/CollideSweepLeesEdwards.cpp
     generated_kernels/Dynamic_UBB_single_precision.cpp
     generated_kernels/Dynamic_UBB_double_precision.cpp)
 if(WALBERLA_USE_AVX)
   list(APPEND WalberlaBridgeCodegen_SRC
        generated_kernels/CollideSweepSinglePrecisionAVX.cpp
        generated_kernels/CollideSweepDoublePrecisionAVX.cpp
+       generated_kernels/CollideSweepSinglePrecisionLeesEdwardsAVX.cpp
+       generated_kernels/CollideSweepDoublePrecisionLeesEdwardsAVX.cpp
        generated_kernels/CollideSweepSinglePrecisionThermalizedAVX.cpp
        generated_kernels/CollideSweepDoublePrecisionThermalizedAVX.cpp)
 else()
   list(APPEND WalberlaBridgeCodegen_SRC
        generated_kernels/CollideSweepSinglePrecision.cpp
        generated_kernels/CollideSweepDoublePrecision.cpp
+       generated_kernels/CollideSweepSinglePrecisionLeesEdwards.cpp
+       generated_kernels/CollideSweepDoublePrecisionLeesEdwards.cpp
        generated_kernels/CollideSweepSinglePrecisionThermalized.cpp
        generated_kernels/CollideSweepDoublePrecisionThermalized.cpp)
 endif()
