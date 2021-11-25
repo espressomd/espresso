@@ -308,6 +308,10 @@ with PatchedCodeGeneration() as ctx:
         True: 'double_precision',
         False: 'single_precision'}[
         ctx.double_accuracy]
+    precision_rng = {
+        True: ps.rng.PhiloxTwoDoubles,
+        False: ps.rng.PhiloxFourFloats}[
+        ctx.double_accuracy]
     kT = sp.symbols('kT')
     stencil = get_stencil('D3Q19')
     fields = generate_fields(ctx, stencil)
@@ -375,7 +379,7 @@ with PatchedCodeGeneration() as ctx:
         fluctuating={
             'temperature': kT,
             'block_offsets': 'walberla',
-            'rng_node': ps.rng.PhiloxTwoDoubles
+            'rng_node': precision_rng
         },
         optimization={'cse_global': True,
                       'double_precision': ctx.double_accuracy}
