@@ -491,8 +491,9 @@ IF LB_WALBERLA:
             """
             lb_lbfluid_clear_boundaries()
 
-        def add_boundary_from_shape(
-                self, shape, velocity=np.zeros(3, dtype=float)):
+        def add_boundary_from_shape(self, shape,
+                 velocity=np.zeros(3, dtype=float),
+                 boundary_type=VelocityBounceBack):
             """
             Set boundary conditions from a shape.
 
@@ -504,7 +505,13 @@ IF LB_WALBERLA:
                 Slip velocity. By default no-slip boundary conditions are used.
                 If a vector of 3 values, a uniform slip velocity is used,
                 otherwise ``L, M, N`` must be equal to the LB grid dimensions.
+            boundary_type : Union[:ref:`VelocityBounceBack`] (optional), default is :ref:`VelocityBounceBack`
+                Type of the boundary condition.
             """
+            if not issubclass(boundary_type, VelocityBounceBack):
+                raise ValueError(
+                    "boundary_type must be a subclass of VelocityBounceBack")
+
             utils.check_type_or_throw_except(
                 shape, 1, Shape, "expected an espressomd.shapes.Shape")
             if np.shape(velocity) not in [(3,), tuple(self.shape) + (3,)]:
@@ -528,8 +535,9 @@ IF LB_WALBERLA:
             python_lb_lbfluid_update_boundary_from_shape(
                 raster_view, velocity_view)
 
-        def add_boundary_from_list(
-                self, nodes, velocity=np.zeros(3, dtype=float)):
+        def add_boundary_from_list(self, nodes,
+                velocity=np.zeros(3, dtype=float),
+                boundary_type=VelocityBounceBack):
             """
             Set boundary conditions from a list of node indices.
 
@@ -542,7 +550,12 @@ IF LB_WALBERLA:
                 Slip velocity. By default no-slip boundary conditions are used.
                 If a vector of 3 values, a uniform slip velocity is used,
                 otherwise ``N`` must be identical to the ``N`` of ``nodes``.
+            boundary_type : Union[:ref:`VelocityBounceBack`] (optional), default is :ref:`VelocityBounceBack`
+                Type of the boundary condition.
             """
+            if not issubclass(boundary_type, VelocityBounceBack):
+                raise ValueError(
+                    "boundary_type must be a subclass of VelocityBounceBack")
 
             nodes = np.array(nodes, dtype=int)
             velocity = np.array(velocity, dtype=float)
