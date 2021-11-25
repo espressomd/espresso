@@ -25,7 +25,6 @@ import espressomd.observables
 import espressomd.shapes
 import espressomd.accumulators
 
-
 AGRID = .5
 EXT_FORCE = .1
 VISC = 2.7

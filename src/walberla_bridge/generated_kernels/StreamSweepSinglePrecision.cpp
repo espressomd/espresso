@@ -1,6 +1,6 @@
-// kernel generated with pystencils v0.3.4+4.g4fecf0c, lbmpy v0.3.4+6.g2faceda,
+// kernel generated with pystencils v0.4.3, lbmpy v0.4.3,
 // lbmpy_walberla/pystencils_walberla from commit
-// b17ca5caf00db7d19f86c5f85c6f67fec6c16aff
+// 88f85eb7a979f81d68e76009811aeed53ec3014e
 
 //======================================================================================================================
 //
@@ -49,8 +49,8 @@ using namespace std;
 namespace walberla {
 namespace pystencils {
 
-namespace internal_streamsweepsingleprecision {
-static FUNC_PREFIX void streamsweepsingleprecision(
+namespace internal_streamsweepsingleprecision_streamsweepsingleprecision {
+static FUNC_PREFIX void streamsweepsingleprecision_streamsweepsingleprecision(
     float *RESTRICT const _data_force, float *RESTRICT const _data_pdfs,
     float *RESTRICT _data_pdfs_tmp, float *RESTRICT _data_velocity,
     int64_t const _size_force_0, int64_t const _size_force_1,
@@ -319,12 +319,12 @@ static FUNC_PREFIX void streamsweepsingleprecision(
     }
   }
 }
-} // namespace internal_streamsweepsingleprecision
+} // namespace internal_streamsweepsingleprecision_streamsweepsingleprecision
 
-void StreamSweepSinglePrecision::operator()(IBlock *block) {
-  auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
-  auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
+void StreamSweepSinglePrecision::run(IBlock *block) {
   auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
+  auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
+  auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
   field::GhostLayerField<float, 19> *pdfs_tmp;
   {
     // Getting temporary field pdfs_tmp
@@ -377,13 +377,15 @@ void StreamSweepSinglePrecision::operator()(IBlock *block) {
   const int64_t _stride_velocity_1 = int64_t(velocity->yStride());
   const int64_t _stride_velocity_2 = int64_t(velocity->zStride());
   const int64_t _stride_velocity_3 = int64_t(1 * int64_t(velocity->fStride()));
-  internal_streamsweepsingleprecision::streamsweepsingleprecision(
-      _data_force, _data_pdfs, _data_pdfs_tmp, _data_velocity, _size_force_0,
-      _size_force_1, _size_force_2, _stride_force_0, _stride_force_1,
-      _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1,
-      _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_0, _stride_pdfs_tmp_1,
-      _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, _stride_velocity_0,
-      _stride_velocity_1, _stride_velocity_2, _stride_velocity_3);
+  internal_streamsweepsingleprecision_streamsweepsingleprecision::
+      streamsweepsingleprecision_streamsweepsingleprecision(
+          _data_force, _data_pdfs, _data_pdfs_tmp, _data_velocity,
+          _size_force_0, _size_force_1, _size_force_2, _stride_force_0,
+          _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0,
+          _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_0,
+          _stride_pdfs_tmp_1, _stride_pdfs_tmp_2, _stride_pdfs_tmp_3,
+          _stride_velocity_0, _stride_velocity_1, _stride_velocity_2,
+          _stride_velocity_3);
   pdfs->swapDataPointers(pdfs_tmp);
 }
 
@@ -399,9 +401,9 @@ void StreamSweepSinglePrecision::runOnCellInterval(
   if (ci.empty())
     return;
 
-  auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
-  auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
   auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
+  auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
+  auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
   field::GhostLayerField<float, 19> *pdfs_tmp;
   {
     // Getting temporary field pdfs_tmp
@@ -475,13 +477,15 @@ void StreamSweepSinglePrecision::runOnCellInterval(
   const int64_t _stride_velocity_1 = int64_t(velocity->yStride());
   const int64_t _stride_velocity_2 = int64_t(velocity->zStride());
   const int64_t _stride_velocity_3 = int64_t(1 * int64_t(velocity->fStride()));
-  internal_streamsweepsingleprecision::streamsweepsingleprecision(
-      _data_force, _data_pdfs, _data_pdfs_tmp, _data_velocity, _size_force_0,
-      _size_force_1, _size_force_2, _stride_force_0, _stride_force_1,
-      _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1,
-      _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_0, _stride_pdfs_tmp_1,
-      _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, _stride_velocity_0,
-      _stride_velocity_1, _stride_velocity_2, _stride_velocity_3);
+  internal_streamsweepsingleprecision_streamsweepsingleprecision::
+      streamsweepsingleprecision_streamsweepsingleprecision(
+          _data_force, _data_pdfs, _data_pdfs_tmp, _data_velocity,
+          _size_force_0, _size_force_1, _size_force_2, _stride_force_0,
+          _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0,
+          _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_0,
+          _stride_pdfs_tmp_1, _stride_pdfs_tmp_2, _stride_pdfs_tmp_3,
+          _stride_velocity_0, _stride_velocity_1, _stride_velocity_2,
+          _stride_velocity_3);
   pdfs->swapDataPointers(pdfs_tmp);
 }
 

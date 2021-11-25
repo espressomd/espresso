@@ -1,6 +1,6 @@
-// kernel generated with pystencils v0.3.4+4.g4fecf0c, lbmpy v0.3.4+6.g2faceda,
+// kernel generated with pystencils v0.4.3, lbmpy v0.4.3,
 // lbmpy_walberla/pystencils_walberla from commit
-// b17ca5caf00db7d19f86c5f85c6f67fec6c16aff
+// 88f85eb7a979f81d68e76009811aeed53ec3014e
 
 //======================================================================================================================
 //
@@ -62,14 +62,17 @@ public:
         omega_odd_(omega_odd), omega_shear_(omega_shear), seed_(seed),
         time_step_(time_step){};
 
-  void operator()(IBlock *block);
+  void run(IBlock *block);
+
   void runOnCellInterval(const shared_ptr<StructuredBlockStorage> &blocks,
                          const CellInterval &globalCellInterval,
                          cell_idx_t ghostLayers, IBlock *block);
 
+  void operator()(IBlock *block) { run(block); }
+
   static std::function<void(IBlock *)> getSweep(
       const shared_ptr<CollideSweepSinglePrecisionThermalizedAVX> &kernel) {
-    return [kernel](IBlock *b) { (*kernel)(b); };
+    return [kernel](IBlock *b) { kernel->run(b); };
   }
 
   static std::function<void(IBlock *)> getSweepOnCellInterval(
@@ -78,6 +81,19 @@ public:
       const CellInterval &globalCellInterval, cell_idx_t ghostLayers = 1) {
     return [kernel, blocks, globalCellInterval, ghostLayers](IBlock *b) {
       kernel->runOnCellInterval(blocks, globalCellInterval, ghostLayers, b);
+    };
+  }
+
+  std::function<void(IBlock *)> getSweep() {
+    return [this](IBlock *b) { this->run(b); };
+  }
+
+  std::function<void(IBlock *)>
+  getSweepOnCellInterval(const shared_ptr<StructuredBlockStorage> &blocks,
+                         const CellInterval &globalCellInterval,
+                         cell_idx_t ghostLayers = 1) {
+    return [this, blocks, globalCellInterval, ghostLayers](IBlock *b) {
+      this->runOnCellInterval(blocks, globalCellInterval, ghostLayers, b);
     };
   }
 

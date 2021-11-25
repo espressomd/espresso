@@ -1,6 +1,6 @@
-// kernel generated with pystencils v0.3.4+4.g4fecf0c, lbmpy v0.3.4+6.g2faceda,
+// kernel generated with pystencils v0.4.3, lbmpy v0.4.3,
 // lbmpy_walberla/pystencils_walberla from commit
-// b17ca5caf00db7d19f86c5f85c6f67fec6c16aff
+// 88f85eb7a979f81d68e76009811aeed53ec3014e
 
 #include "PushPackInfoDoublePrecision.h"
 #include "core/DataTypes.h"
@@ -1372,19 +1372,15 @@ void PushPackInfoDoublePrecision::pack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -1402,19 +1398,15 @@ void PushPackInfoDoublePrecision::pack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -1432,19 +1424,15 @@ void PushPackInfoDoublePrecision::pack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -1462,19 +1450,15 @@ void PushPackInfoDoublePrecision::pack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -1492,19 +1476,15 @@ void PushPackInfoDoublePrecision::pack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -1522,19 +1502,15 @@ void PushPackInfoDoublePrecision::pack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -1552,19 +1528,15 @@ void PushPackInfoDoublePrecision::pack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -1582,19 +1554,15 @@ void PushPackInfoDoublePrecision::pack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -1612,19 +1580,15 @@ void PushPackInfoDoublePrecision::pack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -1642,19 +1606,15 @@ void PushPackInfoDoublePrecision::pack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -1672,19 +1632,15 @@ void PushPackInfoDoublePrecision::pack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -1702,19 +1658,15 @@ void PushPackInfoDoublePrecision::pack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -1732,19 +1684,15 @@ void PushPackInfoDoublePrecision::pack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -1762,19 +1710,15 @@ void PushPackInfoDoublePrecision::pack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -1792,19 +1736,15 @@ void PushPackInfoDoublePrecision::pack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -1822,19 +1762,15 @@ void PushPackInfoDoublePrecision::pack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -1852,19 +1788,15 @@ void PushPackInfoDoublePrecision::pack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -1882,19 +1814,15 @@ void PushPackInfoDoublePrecision::pack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT const _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -1929,19 +1857,15 @@ void PushPackInfoDoublePrecision::unpack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -1959,19 +1883,15 @@ void PushPackInfoDoublePrecision::unpack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -1989,19 +1909,15 @@ void PushPackInfoDoublePrecision::unpack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -2019,19 +1935,15 @@ void PushPackInfoDoublePrecision::unpack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -2049,19 +1961,15 @@ void PushPackInfoDoublePrecision::unpack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -2079,19 +1987,15 @@ void PushPackInfoDoublePrecision::unpack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -2109,19 +2013,15 @@ void PushPackInfoDoublePrecision::unpack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -2139,19 +2039,15 @@ void PushPackInfoDoublePrecision::unpack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -2169,19 +2065,15 @@ void PushPackInfoDoublePrecision::unpack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -2199,19 +2091,15 @@ void PushPackInfoDoublePrecision::unpack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -2229,19 +2117,15 @@ void PushPackInfoDoublePrecision::unpack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -2259,19 +2143,15 @@ void PushPackInfoDoublePrecision::unpack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -2289,19 +2169,15 @@ void PushPackInfoDoublePrecision::unpack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -2319,19 +2195,15 @@ void PushPackInfoDoublePrecision::unpack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -2349,19 +2221,15 @@ void PushPackInfoDoublePrecision::unpack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -2379,19 +2247,15 @@ void PushPackInfoDoublePrecision::unpack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -2409,19 +2273,15 @@ void PushPackInfoDoublePrecision::unpack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
@@ -2439,19 +2299,15 @@ void PushPackInfoDoublePrecision::unpack(Direction dir,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
     double *RESTRICT _data_pdfs =
         pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->xSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.xSize()) + 0));
     const int64_t _size_pdfs_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->ySizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.ySize()) + 0));
     const int64_t _size_pdfs_1 = int64_t(cell_idx_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     WALBERLA_ASSERT_GREATER_EQUAL(pdfs->zSizeWithGhostLayer(),
                                   int64_t(cell_idx_c(ci.zSize()) + 0));
     const int64_t _size_pdfs_2 = int64_t(cell_idx_c(ci.zSize()) + 0);
-    WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
     const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
     const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
     const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());

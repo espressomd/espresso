@@ -39,8 +39,8 @@
 namespace ErrorHandling {
 namespace {
 /** RuntimeErrorCollector instance.
- *  This is a weak pointer so we don't
- *  leak on repeated calls of init_error_handling.
+ *  This is a unique pointer so we don't
+ *  leak on repeated calls of @ref init_error_handling.
  */
 std::unique_ptr<RuntimeErrorCollector> runtimeErrorCollector;
 

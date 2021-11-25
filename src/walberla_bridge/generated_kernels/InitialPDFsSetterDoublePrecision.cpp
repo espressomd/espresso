@@ -1,6 +1,6 @@
-// kernel generated with pystencils v0.3.4+4.g4fecf0c, lbmpy v0.3.4+6.g2faceda,
+// kernel generated with pystencils v0.4.3, lbmpy v0.4.3,
 // lbmpy_walberla/pystencils_walberla from commit
-// b17ca5caf00db7d19f86c5f85c6f67fec6c16aff
+// 88f85eb7a979f81d68e76009811aeed53ec3014e
 
 //======================================================================================================================
 //
@@ -49,8 +49,9 @@ using namespace std;
 namespace walberla {
 namespace pystencils {
 
-namespace internal_initialpdfssetterdoubleprecision {
-static FUNC_PREFIX void initialpdfssetterdoubleprecision(
+namespace internal_2df07fce91f5444fc18533f996cd1a79 {
+static FUNC_PREFIX void
+initialpdfssetterdoubleprecision_initialpdfssetterdoubleprecision(
     double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
     double *RESTRICT const _data_velocity, int64_t const _size_force_0,
     int64_t const _size_force_1, int64_t const _size_force_2,
@@ -281,9 +282,9 @@ static FUNC_PREFIX void initialpdfssetterdoubleprecision(
     }
   }
 }
-} // namespace internal_initialpdfssetterdoubleprecision
+} // namespace internal_2df07fce91f5444fc18533f996cd1a79
 
-void InitialPDFsSetterDoublePrecision::operator()(IBlock *block) {
+void InitialPDFsSetterDoublePrecision::run(IBlock *block) {
   auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
   auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
@@ -322,12 +323,13 @@ void InitialPDFsSetterDoublePrecision::operator()(IBlock *block) {
   const int64_t _stride_velocity_1 = int64_t(velocity->yStride());
   const int64_t _stride_velocity_2 = int64_t(velocity->zStride());
   const int64_t _stride_velocity_3 = int64_t(1 * int64_t(velocity->fStride()));
-  internal_initialpdfssetterdoubleprecision::initialpdfssetterdoubleprecision(
-      _data_force, _data_pdfs, _data_velocity, _size_force_0, _size_force_1,
-      _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2,
-      _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2,
-      _stride_pdfs_3, _stride_velocity_0, _stride_velocity_1,
-      _stride_velocity_2, _stride_velocity_3, rho_0);
+  internal_2df07fce91f5444fc18533f996cd1a79::
+      initialpdfssetterdoubleprecision_initialpdfssetterdoubleprecision(
+          _data_force, _data_pdfs, _data_velocity, _size_force_0, _size_force_1,
+          _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2,
+          _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2,
+          _stride_pdfs_3, _stride_velocity_0, _stride_velocity_1,
+          _stride_velocity_2, _stride_velocity_3, rho_0);
 }
 
 void InitialPDFsSetterDoublePrecision::runOnCellInterval(
@@ -389,12 +391,13 @@ void InitialPDFsSetterDoublePrecision::runOnCellInterval(
   const int64_t _stride_velocity_1 = int64_t(velocity->yStride());
   const int64_t _stride_velocity_2 = int64_t(velocity->zStride());
   const int64_t _stride_velocity_3 = int64_t(1 * int64_t(velocity->fStride()));
-  internal_initialpdfssetterdoubleprecision::initialpdfssetterdoubleprecision(
-      _data_force, _data_pdfs, _data_velocity, _size_force_0, _size_force_1,
-      _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2,
-      _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2,
-      _stride_pdfs_3, _stride_velocity_0, _stride_velocity_1,
-      _stride_velocity_2, _stride_velocity_3, rho_0);
+  internal_2df07fce91f5444fc18533f996cd1a79::
+      initialpdfssetterdoubleprecision_initialpdfssetterdoubleprecision(
+          _data_force, _data_pdfs, _data_velocity, _size_force_0, _size_force_1,
+          _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2,
+          _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2,
+          _stride_pdfs_3, _stride_velocity_0, _stride_velocity_1,
+          _stride_velocity_2, _stride_velocity_3, rho_0);
 }
 
 } // namespace pystencils

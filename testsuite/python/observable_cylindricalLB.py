@@ -33,7 +33,6 @@ class CylindricalLBObservableCommon:
     system = espressomd.System(box_l=3 * [15])
     system.time_step = 0.01
     system.cell_system.skin = 0.4
-    positions = []
 
     lb_params = {'agrid': 1.,
                  'density': 1.2,

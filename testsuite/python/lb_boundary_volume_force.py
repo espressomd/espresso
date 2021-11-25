@@ -21,8 +21,7 @@ import numpy as np
 import espressomd.lb
 import espressomd.lbboundaries
 import espressomd.shapes
-
-from tests_common import count_fluid_nodes
+import tests_common
 
 AGRID = 0.5
 EXT_FORCE = np.array([-.01, 0.02, 0.03])
@@ -69,7 +68,7 @@ class LBBoundaryForceCommon:
 
         self.system.lbboundaries.add(wall1)
         self.system.lbboundaries.add(wall2)
-        fluid_nodes = count_fluid_nodes(self.lbf)
+        fluid_nodes = tests_common.count_fluid_nodes(self.lbf)
 
         self.system.integrator.run(20)
         diff = float("inf")

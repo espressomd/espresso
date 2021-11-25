@@ -19,13 +19,13 @@
 
 import os
 import sys
-import json
 import jinja2
 import argparse
 
 import sympy as sp
 import pystencils as ps
-from lbmpy.creationfunctions import create_lb_collision_rule, create_mrt_orthogonal, force_model_from_string
+from lbmpy.creationfunctions import create_lb_collision_rule, create_mrt_orthogonal
+import lbmpy.forcemodels
 from pystencils_walberla import CodeGeneration, codegen
 
 from lbmpy_walberla import generate_boundary, generate_lb_pack_info
@@ -47,8 +47,6 @@ from lbmpy.advanced_streaming.indexing import NeighbourOffsetArrays
 
 
 parser = argparse.ArgumentParser(description='Generate the waLBerla kernels.')
-parser.add_argument('codegen_cfg', type=str, nargs='?',
-                    help='codegen configuration file (JSON format)')
 parser.add_argument('--single-precision', action='store_true', required=False,
                     help='Use single-precision')
 args = parser.parse_args()
@@ -107,6 +105,10 @@ def earmark_generated_kernels():
     walberla_root = lbmpy_walberla.__file__.split('/python/lbmpy_walberla/')[0]
     with open(os.path.join(walberla_root, '.git/HEAD')) as f:
         walberla_commit = f.read()
+    if walberla_commit.startswith('ref: refs/heads/master'):
+        ref = walberla_commit.split()[1]
+        with open(os.path.join(walberla_root, f'.git/{ref}')) as f:
+            walberla_commit = f.read()
     token = '// kernel generated with'
     earmark = (
         f'{token} pystencils v{ps.__version__}, lbmpy v{lbmpy.__version__}, '
@@ -119,6 +121,29 @@ def earmark_generated_kernels():
                 if not content.startswith(token):
                     f.seek(0)
                     f.write(earmark + content)
+
+
+def guard_generated_kernels_clang_format():
+    '''
+    Some namespaces are too long and will break ``clang-format`` versions
+    9 and 10. Replace them with a unique string of reasonable size.
+    '''
+    import re
+    import hashlib
+    for filename in os.listdir('.'):
+        if filename.endswith('.cpp'):
+            with open(filename, 'r') as f:
+                content = f.read()
+            all_ns = re.findall(r"^namespace (internal_[a-zA-Z0-9_]{54,}) \{$",
+                                content, flags=re.MULTILINE)
+            if not all_ns:
+                continue
+            for ns in all_ns:
+                content = re.sub(rf"(?<=[^a-zA-Z0-9_]){ns}(?=[^a-zA-Z0-9_])",
+                                 f"internal_{hashlib.md5(ns.encode('utf-8')).hexdigest()}",
+                                 content)
+            with open(filename, 'w') as f:
+                f.write(content)
 
 
 def generate_fields(ctx, stencil):
@@ -268,28 +293,15 @@ class PatchedUBB(lbmpy.boundaries.UBB):
 
 
 class PatchedCodeGeneration(CodeGeneration):
-    '''
-    Code generator class that reads the configuration from a file.
-    '''
 
-    def __init__(self, codegen_cfg):
+    def __init__(self):
         old_sys_argv = sys.argv
         sys.argv = sys.argv[:1]
-        if codegen_cfg:
-            assert sys.argv[1] == codegen_cfg
         super().__init__()
         sys.argv = old_sys_argv
-        if codegen_cfg:
-            cmake_map = {"ON": True, "1": True, "YES": True,
-                         "OFF": False, "0": False, "NO": False}
-            with open(codegen_cfg) as f:
-                cmake_vars = json.loads(f.read())['CMAKE_VARS']
-                for key, value in cmake_vars.items():
-                    cmake_vars[key] = cmake_map.get(value, value)
-            self.context = type(self.context)(cmake_vars)
 
 
-with PatchedCodeGeneration(args.codegen_cfg) as ctx:
+with PatchedCodeGeneration() as ctx:
     ctx.double_accuracy = not args.single_precision
     precision_prefix = {
         True: 'DoublePrecision',
@@ -318,9 +330,8 @@ with PatchedCodeGeneration(args.codegen_cfg) as ctx:
         stencil=stencil,
         compressible=True,
         weighted=True,
-        relaxation_rate_getter=relaxation_rates.rr_getter,
-        force_model=force_model_from_string(
-            'schiller', force_field.center_vector)
+        relaxation_rates=relaxation_rates.rr_getter,
+        force_model=lbmpy.forcemodels.Schiller(force_field.center_vector)
     )
     generate_stream_sweep(
         ctx,
@@ -420,9 +431,8 @@ with PatchedCodeGeneration(args.codegen_cfg) as ctx:
     # generate accessors
     generate_macroscopic_values_accessors(
         ctx,
-        collision_rule_unthermalized,
-        filename=f'macroscopic_values_accessors_{precision_suffix}.h',
-        field_layout="fzyx")
+        collision_rule_unthermalized.method,
+        f'macroscopic_values_accessors_{precision_suffix}.h')
 
     # Boundary conditions
     ubb_dynamic = PatchedUBB(lambda *args: None, dim=3,
@@ -457,3 +467,4 @@ with PatchedCodeGeneration(args.codegen_cfg) as ctx:
     #ctx.write_file(f"InfoHeader{precision_prefix}.h", info_header)
 
 earmark_generated_kernels()
+guard_generated_kernels_clang_format()

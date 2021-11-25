@@ -55,7 +55,8 @@ std::string ContextManager::serialize(const ObjectHandle *o) const {
 
 ContextManager::ContextManager(Communication::MpiCallbacks &callbacks,
                                const Utils::Factory<ObjectHandle> &factory) {
-  auto local_context = std::make_shared<LocalContext>(factory);
+  auto const mpi_rank = callbacks.comm().rank();
+  auto local_context = std::make_shared<LocalContext>(factory, mpi_rank);
 
   /* If there is only one node, we can treat all objects as local, and thus
    * never invoke any callback. */

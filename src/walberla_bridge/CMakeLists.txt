@@ -55,25 +55,6 @@ target_include_directories(
 
 install(TARGETS WalberlaBridge LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 
-list(JOIN WalberlaBridgeCodegen_SRC "\",\n    \""
-     WalberlaBridgeCodegen_SRC_json)
-set(WalberlaBridgeCodegenJson
-    "{\n\
-  \"EXPECTED_FILES\": [\n\
-    \"${WalberlaBridgeCodegen_SRC_json}\"\n\
-  ],\n\
-  \"CMAKE_VARS\" : {\n\
-    \"WALBERLA_OPTIMIZE_FOR_LOCALHOST\": \"${WALBERLA_OPTIMIZE_FOR_LOCALHOST}\",\n\
-    \"WALBERLA_DOUBLE_ACCURACY\": \"${WALBERLA_DOUBLE_ACCURACY}\",\n\
-    \"CODEGEN_CFG\": \"${codegenCfg}\",\n\
-    \"WALBERLA_BUILD_WITH_MPI\": \"${WALBERLA_BUILD_WITH_MPI}\",\n\
-    \"WALBERLA_BUILD_WITH_CUDA\": \"${WALBERLA_BUILD_WITH_CUDA}\",\n\
-    \"WALBERLA_BUILD_WITH_OPENMP\": \"${WALBERLA_BUILD_WITH_OPENMP}\"\n\
-  }\n\
-}")
-file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/codegenCfg.json"
-     ${WalberlaBridgeCodegenJson})
-
 if(WITH_TESTS)
   add_subdirectory(tests)
 endif(WITH_TESTS)
