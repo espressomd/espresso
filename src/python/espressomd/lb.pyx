@@ -39,7 +39,8 @@ from .utils cimport create_nparray_from_double_array
 
 class VelocityBounceBack:
     """
-    Holds velocity information for the velocity bounce back boundary condition at a single node.
+    Holds velocity information for the velocity bounce back boundary
+    condition at a single node.
     """
 
     def __init__(self, velocity):
@@ -505,7 +506,7 @@ IF LB_WALBERLA:
                 Slip velocity. By default no-slip boundary conditions are used.
                 If a vector of 3 values, a uniform slip velocity is used,
                 otherwise ``L, M, N`` must be equal to the LB grid dimensions.
-            boundary_type : Union[:ref:`VelocityBounceBack`] (optional), default is :ref:`VelocityBounceBack`
+            boundary_type : Union[:class:`~espressomd.lb.VelocityBounceBack`] (optional)
                 Type of the boundary condition.
             """
             if not issubclass(boundary_type, VelocityBounceBack):
@@ -550,7 +551,7 @@ IF LB_WALBERLA:
                 Slip velocity. By default no-slip boundary conditions are used.
                 If a vector of 3 values, a uniform slip velocity is used,
                 otherwise ``N`` must be identical to the ``N`` of ``nodes``.
-            boundary_type : Union[:ref:`VelocityBounceBack`] (optional), default is :ref:`VelocityBounceBack`
+            boundary_type : Union[:class:`~espressomd.lb.VelocityBounceBack`] (optional)
                 Type of the boundary condition.
             """
             if not issubclass(boundary_type, VelocityBounceBack):
@@ -672,7 +673,7 @@ cdef class LBFluidRoutines:
             """
             Returns
             -------
-            :ref:`VelocityBounceBack`
+            :class:`~espressomd.lb.VelocityBounceBack`
                 If the node is a boundary node
             None
                 If the node is not a boundary node
@@ -688,8 +689,8 @@ cdef class LBFluidRoutines:
             """
             Parameters
             ----------
-            value : :ref:`VelocityBounceBack` or None
-                If value is :ref:`VelocityBounceBack`,
+            value : :class:`~espressomd.lb.VelocityBounceBack` or None
+                If value is :class:`~espressomd.lb.VelocityBounceBack`,
                 set the node to be a boundary node with the specified velocity.
                 If value is ``None``, the node will become a fluid node.
             """
