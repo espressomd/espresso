@@ -38,7 +38,6 @@
 
 #define DPD
 
-#define LB_BOUNDARIES
 #define LB_ELECTROHYDRODYNAMICS
 
 #define ENGINE

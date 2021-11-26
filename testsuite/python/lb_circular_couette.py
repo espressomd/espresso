@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import espressomd.lb
-import espressomd.lbboundaries
 import espressomd.shapes
 import espressomd.observables
 import espressomd.math
@@ -37,7 +36,7 @@ def taylor_couette(v1, v2, r1, r2, agrid):
     return a, b
 
 
-@utx.skipIfMissingFeatures(["LB_BOUNDARIES", "LB_WALBERLA"])
+@utx.skipIfMissingFeatures(["LB_WALBERLA"])
 class LBRollerMill(ut.TestCase):
 
     def test_taylor_couette_flow(self):
@@ -82,9 +81,9 @@ class LBRollerMill(ut.TestCase):
 
         # add tangential slip velocity to the inner cylinder
         slip_vel = 0.01
-        surface_nodes = espressomd.lbboundaries.edge_detection(
+        surface_nodes = espressomd.lb.edge_detection(
             lb_fluid.get_shape_bitmask(cyl1), system.periodicity)
-        tangents = espressomd.lbboundaries.calc_cylinder_tangential_vectors(
+        tangents = espressomd.lb.calc_cylinder_tangential_vectors(
             cyl1.center, lb_fluid.agrid, 0.5, surface_nodes)
         lb_fluid.add_boundary_from_list(surface_nodes, slip_vel * tangents)
 

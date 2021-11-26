@@ -22,7 +22,6 @@ Simulate a four-roller mill via slip velocity boundary conditions.
 """
 
 import espressomd.lb
-import espressomd.lbboundaries
 import espressomd.shapes
 import espressomd.constraints
 import espressomd.observables
@@ -37,7 +36,7 @@ import logging
 import tqdm
 import sys
 
-espressomd.assert_features(["LB_WALBERLA", "LB_BOUNDARIES"])
+espressomd.assert_features(["LB_WALBERLA"])
 logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 
 parser = argparse.ArgumentParser(epilog=__doc__)
@@ -69,9 +68,9 @@ for i, j in itertools.product(range(2), range(2)):
     if args.visualizer:
         system.constraints.add(shape=cyl)
     lb_fluid.add_boundary_from_shape(cyl)
-    surface_nodes = espressomd.lbboundaries.edge_detection(
+    surface_nodes = espressomd.lb.edge_detection(
         lb_fluid.get_shape_bitmask(cyl), system.periodicity)
-    tangents = espressomd.lbboundaries.calc_cylinder_tangential_vectors(
+    tangents = espressomd.lb.calc_cylinder_tangential_vectors(
         cyl.center, lb_fluid.agrid, 0.5, surface_nodes)
     velocity = 0.01 * (1 if (i + j) % 2 == 0 else -1)
     lb_fluid.add_boundary_from_list(surface_nodes, velocity * tangents)

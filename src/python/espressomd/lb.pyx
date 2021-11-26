@@ -25,17 +25,27 @@ import numpy as np
 cimport numpy as np
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 from .shapes import Shape
-from . import lbboundaries
 from . cimport cuda_init
 from . import cuda_init
 from . import utils
-from .utils import is_valid_type, to_char_pointer
+from .utils import is_valid_type, to_char_pointer, check_type_or_throw_except
 from .utils cimport Vector3i
 from .utils cimport Vector3d
 from .utils cimport Vector6d
 from .utils cimport make_array_locked
 from .utils cimport make_Vector3d
 from .utils cimport create_nparray_from_double_array
+
+
+class VelocityBounceBack:
+    """
+    Holds velocity information for the velocity bounce back boundary condition at a single node.
+    """
+
+    def __init__(self, velocity):
+        check_type_or_throw_except(
+            velocity, 3, float, "VelocityBounceBack velocity must be three floats")
+        self.velocity = velocity
 
 
 def _construct(cls, params):
@@ -246,8 +256,7 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
     def save_checkpoint(self, path, binary):
         '''
         Write LB node populations to a file.
-        :class:`~espressomd.lbboundaries.LBBoundaries`
-        information is not written to the file.
+        Boundary information is not written to the file.
         '''
         tmp_path = path + ".__tmp__"
         lb_lbfluid_save_checkpoint(utils.to_char_pointer(tmp_path), binary)
@@ -256,12 +265,8 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
     def load_checkpoint(self, path, binary):
         '''
         Load LB node populations from a file.
-        :class:`~espressomd.lbboundaries.LBBoundaries`
-        information is not available in the file. The boundary
-        information of the grid will be set to zero,
-        even if :class:`~espressomd.lbboundaries.LBBoundaries`
-        contains :class:`~espressomd.lbboundaries.LBBoundary`
-        objects (they are ignored).
+        Boundary information is not available in the file. The boundary
+        information of the grid will be set to zero.
         '''
         lb_lbfluid_load_checkpoint(utils.to_char_pointer(path), binary)
 
@@ -486,8 +491,9 @@ IF LB_WALBERLA:
             """
             lb_lbfluid_clear_boundaries()
 
-        def add_boundary_from_shape(
-                self, shape, velocity=np.zeros(3, dtype=float)):
+        def add_boundary_from_shape(self, shape,
+                                    velocity=np.zeros(3, dtype=float),
+                                    boundary_type=VelocityBounceBack):
             """
             Set boundary conditions from a shape.
 
@@ -499,7 +505,13 @@ IF LB_WALBERLA:
                 Slip velocity. By default no-slip boundary conditions are used.
                 If a vector of 3 values, a uniform slip velocity is used,
                 otherwise ``L, M, N`` must be equal to the LB grid dimensions.
+            boundary_type : Union[:ref:`VelocityBounceBack`] (optional), default is :ref:`VelocityBounceBack`
+                Type of the boundary condition.
             """
+            if not issubclass(boundary_type, VelocityBounceBack):
+                raise ValueError(
+                    "boundary_type must be a subclass of VelocityBounceBack")
+
             utils.check_type_or_throw_except(
                 shape, 1, Shape, "expected an espressomd.shapes.Shape")
             if np.shape(velocity) not in [(3,), tuple(self.shape) + (3,)]:
@@ -523,8 +535,9 @@ IF LB_WALBERLA:
             python_lb_lbfluid_update_boundary_from_shape(
                 raster_view, velocity_view)
 
-        def add_boundary_from_list(
-                self, nodes, velocity=np.zeros(3, dtype=float)):
+        def add_boundary_from_list(self, nodes,
+                                   velocity=np.zeros(3, dtype=float),
+                                   boundary_type=VelocityBounceBack):
             """
             Set boundary conditions from a list of node indices.
 
@@ -537,7 +550,12 @@ IF LB_WALBERLA:
                 Slip velocity. By default no-slip boundary conditions are used.
                 If a vector of 3 values, a uniform slip velocity is used,
                 otherwise ``N`` must be identical to the ``N`` of ``nodes``.
+            boundary_type : Union[:ref:`VelocityBounceBack`] (optional), default is :ref:`VelocityBounceBack`
+                Type of the boundary condition.
             """
+            if not issubclass(boundary_type, VelocityBounceBack):
+                raise ValueError(
+                    "boundary_type must be a subclass of VelocityBounceBack")
 
             nodes = np.array(nodes, dtype=int)
             velocity = np.array(velocity, dtype=float)
@@ -654,7 +672,7 @@ cdef class LBFluidRoutines:
             """
             Returns
             -------
-            :ref:`espressomd.lbboundaries.VelocityBounceBack`
+            :ref:`VelocityBounceBack`
                 If the node is a boundary node
             None
                 If the node is not a boundary node
@@ -663,20 +681,20 @@ cdef class LBFluidRoutines:
             is_boundary = lb_lbnode_is_boundary(self.node)
             if is_boundary:
                 vel = python_lbnode_get_velocity_at_boundary(self.node)
-                return lbboundaries.VelocityBounceBack(vel)
+                return VelocityBounceBack(vel)
             return None
 
         def __set__(self, value):
             """
             Parameters
             ----------
-            value : :ref:`espressomd.lbboundaries.VelocityBounceBack` or None
-                If value is :ref:`espressomd.lbboundaries.VelocityBounceBack`,
+            value : :ref:`VelocityBounceBack` or None
+                If value is :ref:`VelocityBounceBack`,
                 set the node to be a boundary node with the specified velocity.
                 If value is ``None``, the node will become a fluid node.
             """
 
-            if isinstance(value, lbboundaries.VelocityBounceBack):
+            if isinstance(value, VelocityBounceBack):
                 HydrodynamicInteraction._check_mach_limit(value.velocity)
                 python_lbnode_set_velocity_at_boundary(
                     self.node, make_Vector3d(value.velocity))
@@ -684,7 +702,7 @@ cdef class LBFluidRoutines:
                 lb_lbnode_remove_from_boundary(self.node)
             else:
                 raise ValueError(
-                    "value must be an instance of lbboundaries.VelocityBounceBack or None")
+                    "value must be an instance of VelocityBounceBack or None")
 
     property boundary_force:
         def __get__(self):
@@ -853,3 +871,86 @@ def _add_lb_slice_properties():
 
 
 _add_lb_slice_properties()
+
+
+def edge_detection(boundary_mask, periodicity):
+    """
+    Find boundary nodes in contact with the fluid. Relies on a convolution
+    kernel constructed from the D3Q19 stencil.
+
+    Parameters
+    ----------
+    boundary_mask : (N, M, L) array_like of :obj:`bool`
+        Bitmask for the rasterized boundary geometry.
+    periodicity : (3,) array_like of :obj:`bool`
+        Bitmask for the box periodicity.
+
+    Returns
+    -------
+    (N, 3) array_like of :obj:`int`
+        The indices of the boundary nodes at the interface with the fluid.
+    """
+    import scipy.signal
+    import itertools
+
+    fluid_mask = np.logical_not(boundary_mask)
+
+    # edge kernel
+    edge = -np.ones((3, 3, 3))
+    for i, j, k in itertools.product((0, 2), (0, 2), (0, 2)):
+        edge[i, j, k] = 0
+    edge[1, 1, 1] = -np.sum(edge)
+
+    # periodic convolution
+    wrapped_mask = np.pad(fluid_mask.astype(int), 3 * [(2, 2)], mode='wrap')
+    if not periodicity[0]:
+        wrapped_mask[:2, :, :] = 0
+        wrapped_mask[-2:, :, :] = 0
+    if not periodicity[1]:
+        wrapped_mask[:, :2, :] = 0
+        wrapped_mask[:, -2:, :] = 0
+    if not periodicity[2]:
+        wrapped_mask[:, :, :2] = 0
+        wrapped_mask[:, :, -2:] = 0
+    convolution = scipy.signal.convolve(
+        wrapped_mask, edge, mode='same', method='direct')[2:-2, 2:-2, 2:-2]
+    convolution = np.multiply(convolution, boundary_mask)
+
+    return np.array(np.nonzero(convolution < 0)).T
+
+
+def calc_cylinder_tangential_vectors(center, agrid, offset, node_indices):
+    """
+    Utility function to calculate a constant slip velocity tangential to the
+    surface of a cylinder.
+
+    Parameters
+    ----------
+    center : (3,) array_like of :obj:`float`
+        Center of the cylinder.
+    agrid : :obj:`float`
+        LB agrid.
+    offset : :obj:`float`
+        LB offset.
+    node_indices : (N, 3) array_like of :obj:`int`
+        Indices of the boundary surface nodes.
+
+    Returns
+    -------
+    (N, 3) array_like of :obj:`float`
+        The unit vectors tangential to the surface of a cylinder.
+    """
+    velocities = []
+    for ijk in node_indices:
+        p = (ijk + offset) * agrid
+        r = center - p
+        norm = np.linalg.norm(r[:2])
+        if norm < 1e-10:
+            velocities.append(np.zeros(3))
+            continue
+        angle_r = np.arccos(np.dot(r[:2] / norm, [1, 0]))
+        angle_v = angle_r - np.pi / 2
+        flip = np.sign(r[1])
+        slip_velocity = np.array([flip * np.cos(angle_v), np.sin(angle_v), 0.])
+        velocities.append(slip_velocity)
+    return np.array(velocities)

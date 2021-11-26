@@ -19,6 +19,7 @@ Simulate the motion of a spherical red blood cell-like particle advected
 in a planar Poiseuille flow, with or without volume conservation. For more
 details, see :ref:`Immersed Boundary Method for soft elastic objects`.
 """
+from addSoft import AddSoft
 import os
 import argparse
 import writeVTK
@@ -26,10 +27,9 @@ import writeVTK
 import espressomd
 import espressomd.lb
 import espressomd.shapes
-import espressomd.lbboundaries
 import espressomd.virtual_sites
 
-required_features = ["LB_BOUNDARIES", "VIRTUAL_SITES_INERTIALESS_TRACERS",
+required_features = ["VIRTUAL_SITES_INERTIALESS_TRACERS",
                      "LB_WALBERLA", "EXPERIMENTAL_FEATURES"]
 espressomd.assert_features(required_features)
 
@@ -54,7 +54,6 @@ system.virtual_sites = espressomd.virtual_sites.VirtualSitesInertialessTracers()
 print(f"Parallelization: {system.cell_system.node_grid}")
 
 force = 0.001
-from addSoft import AddSoft
 k1 = 0.1
 k2 = 1
 AddSoft(system, 10, 10, 10, k1, k2)
@@ -84,13 +83,12 @@ system.actors.add(lbf)
 system.thermostat.set_lb(LB_fluid=lbf, gamma=1.0, act_on_virtual=False)
 
 # Setup boundaries
-walls = [espressomd.lbboundaries.LBBoundary() for k in range(2)]
-walls[0].set_params(shape=espressomd.shapes.Wall(normal=[0, 0, 1], dist=0.5))
-walls[1].set_params(shape=espressomd.shapes.Wall(
-    normal=[0, 0, -1], dist=-boxZ + 0.5))
+wall_shapes = [None] * 2
+wall_shapes[0] = espressomd.shapes.Wall(normal=[0, 0, 1], dist=0.5)
+wall_shapes[1] = espressomd.shapes.Wall(normal=[0, 0, -1], dist=-boxZ + 0.5)
 
-for wall in walls:
-    system.lbboundaries.add(wall)
+for wall_shape in wall_shapes:
+    lbf.add_boundary_from_shape(wall_shape)
 
 # make directory
 os.makedirs(outputDir)
