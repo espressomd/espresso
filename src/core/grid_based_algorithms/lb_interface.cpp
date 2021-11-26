@@ -115,77 +115,110 @@ double lb_lbfluid_get_lattice_speed() {
   return lb_lbfluid_get_agrid() / lb_lbfluid_get_tau();
 }
 
-void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
+struct CheckPointFile {
+  std::fstream stream;
+  std::ios_base::openmode flags;
+
+  CheckPointFile(std::string const &filename, std::ios_base::openmode mode,
+                 bool binary) {
+    flags = mode;
+    if (binary)
+      flags |= std::ios_base::binary;
+    stream.open(filename, flags);
+  }
+
+  template <typename T> void write(T const &value) {
+    if (flags & std::ios_base::binary) {
+      stream.write(reinterpret_cast<const char *>(&value), sizeof(T));
+    } else {
+      stream << value << "\n";
+    }
+  }
+
+  template <typename T> void write(Utils::Vector<T, 3> const &vector) {
+    if (flags & std::ios_base::binary) {
+      stream.write(reinterpret_cast<const char *>(vector.data()),
+                   3u * sizeof(T));
+    } else {
+      stream << Utils::Vector<T, 3>::formatter(" ") << vector << "\n";
+    }
+  }
+
+  template <typename T> void write(std::vector<T> const &vector) {
+    if (flags & std::ios_base::binary) {
+      stream.write(reinterpret_cast<const char *>(vector.data()),
+                   vector.size() * sizeof(T));
+    } else {
+      for (auto const &value : vector) {
+        stream << value << "\n";
+      }
+    }
+  }
+
+  template <typename T> void read(T &value) {
+    if (flags & std::ios_base::binary) {
+      stream.read(reinterpret_cast<char *>(&value), sizeof(T));
+    } else {
+      stream >> value;
+    }
+  }
+
+  template <typename T> void read(Utils::Vector<T, 3> &vector) {
+    if (flags & std::ios_base::binary) {
+      stream.read(reinterpret_cast<char *>(vector.data()), 3u * sizeof(T));
+    } else {
+      for (auto &value : vector) {
+        stream >> value;
+      }
+    }
+  }
+
+  template <typename T> void read(std::vector<T> &vector) {
+    if (flags & std::ios_base::binary) {
+      stream.read(reinterpret_cast<char *>(vector.data()),
+                  vector.size() * sizeof(T));
+    } else {
+      for (auto &value : vector) {
+        stream >> value;
+      }
+    }
+  }
+};
+
+void lb_lbfluid_save_checkpoint(std::string const &filename, bool binary) {
   auto const err_msg = std::string("Error while writing LB checkpoint: ");
 
   // open file and set exceptions
-  auto flags = std::ios_base::out;
-  if (binary)
-    flags |= std::ios_base::binary;
-  std::fstream cpfile;
-  cpfile.open(filename, flags);
-  if (!cpfile) {
+  auto cpfile = CheckPointFile(filename, std::ios_base::out, binary);
+  if (!cpfile.stream) {
     throw std::runtime_error(err_msg + "could not open file " + filename);
   }
-  cpfile.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-
-#ifdef LB_WALBERLA
-  // write the grid size in the checkpoint header
-  auto const write_header = [&](Utils::Vector3i const &grid_size,
-                                std::size_t pop_size) {
-    if (!binary) {
-      cpfile << Utils::Vector3i::formatter(" ") << grid_size << "\n";
-      cpfile << pop_size << "\n";
-    } else {
-      cpfile.write(reinterpret_cast<const char *>(grid_size.data()),
-                   3 * sizeof(int));
-      cpfile.write(reinterpret_cast<const char *>(&pop_size), sizeof(pop_size));
-    }
-  };
-#endif // WALBERLA
+  cpfile.stream.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
   try {
     if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
       if (!binary) {
-        cpfile.precision(16);
-        cpfile << std::fixed;
+        cpfile.stream.precision(16);
+        cpfile.stream << std::fixed;
       }
 
-      auto const gridsize = lb_walberla()->lattice().get_grid_dimensions();
+      auto const grid_size = lb_walberla()->lattice().get_grid_dimensions();
       auto const pop_size = lb_walberla()->stencil_size();
-      write_header(gridsize, pop_size);
+      cpfile.write(grid_size);
+      cpfile.write(pop_size);
 
       Utils::Vector3d vbb;
-      for (int i = 0; i < gridsize[0]; i++) {
-        for (int j = 0; j < gridsize[1]; j++) {
-          for (int k = 0; k < gridsize[2]; k++) {
+      for (int i = 0; i < grid_size[0]; i++) {
+        for (int j = 0; j < grid_size[1]; j++) {
+          for (int k = 0; k < grid_size[2]; k++) {
             Utils::Vector3i const ind{{i, j, k}};
-            auto const pop = lb_lbnode_get_pop(ind);
-            auto const laf = lb_lbnode_get_last_applied_force(ind);
+            cpfile.write(lb_lbnode_get_pop(ind));
+            cpfile.write(lb_lbnode_get_last_applied_force(ind));
             auto const lbb = lb_lbnode_is_boundary(ind);
+            cpfile.write(lbb);
             if (lbb) {
-              vbb = lb_lbnode_get_velocity_at_boundary(ind);
-            }
-            if (!binary) {
-              for (auto const p : pop) {
-                cpfile << p << "\n";
-              }
-              cpfile << Utils::Vector3d::formatter(" ") << laf << "\n";
-              cpfile << lbb << "\n";
-              if (lbb) {
-                cpfile << Utils::Vector3d::formatter(" ") << vbb << "\n";
-              }
-            } else {
-              cpfile.write(reinterpret_cast<const char *>(pop.data()),
-                           pop_size * sizeof(double));
-              cpfile.write(reinterpret_cast<const char *>(laf.data()),
-                           3 * sizeof(double));
-              cpfile.write(reinterpret_cast<const char *>(&lbb), sizeof(lbb));
-              if (lbb) {
-                cpfile.write(reinterpret_cast<const char *>(vbb.data()),
-                             3 * sizeof(double));
-              }
+              cpfile.write(lb_lbnode_get_velocity_at_boundary(ind));
             }
           }
         }
@@ -193,28 +226,24 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
 #endif // WALBERLA
     }
   } catch (std::ios_base::failure const &fail) {
-    cpfile.close();
+    cpfile.stream.close();
     throw std::runtime_error(err_msg + "could not write data to " + filename);
   } catch (std::runtime_error const &fail) {
-    cpfile.close();
+    cpfile.stream.close();
     throw;
   }
-  cpfile.close();
+  cpfile.stream.close();
 }
 
 void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
   auto const err_msg = std::string("Error while reading LB checkpoint: ");
 
   // open file and set exceptions
-  auto flags = std::ios_base::in;
-  if (binary)
-    flags |= std::ios_base::binary;
-  std::fstream cpfile;
-  cpfile.open(filename, flags);
-  if (!cpfile) {
+  auto cpfile = CheckPointFile(filename, std::ios_base::in, binary);
+  if (!cpfile.stream) {
     throw std::runtime_error(err_msg + "could not open file " + filename);
   }
-  cpfile.exceptions(std::ios_base::failbit | std::ios_base::badbit);
+  cpfile.stream.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
 #ifdef LB_WALBERLA
   // check the grid size in the checkpoint header matches the current grid size
@@ -222,15 +251,8 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
                                 std::size_t expected_pop_size) {
     Utils::Vector3i grid_size;
     std::size_t pop_size;
-    if (!binary) {
-      for (auto &n : grid_size) {
-        cpfile >> n;
-      }
-      cpfile >> pop_size;
-    } else {
-      cpfile.read(reinterpret_cast<char *>(grid_size.data()), 3 * sizeof(int));
-      cpfile.read(reinterpret_cast<char *>(&pop_size), sizeof(pop_size));
-    }
+    cpfile.read(grid_size);
+    cpfile.read(pop_size);
     if (grid_size != expected_grid_size) {
       std::stringstream message;
       message << " grid dimensions mismatch,"
@@ -261,29 +283,11 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
         for (int j = 0; j < gridsize[1]; j++) {
           for (int k = 0; k < gridsize[2]; k++) {
             Utils::Vector3i const ind{{i, j, k}};
-            if (!binary) {
-              for (auto &p : pop) {
-                cpfile >> p;
-              }
-              for (auto &l : laf) {
-                cpfile >> l;
-              }
-              cpfile >> lbb;
-              if (lbb) {
-                for (auto &v : vbb) {
-                  cpfile >> v;
-                }
-              }
-            } else {
-              cpfile.read(reinterpret_cast<char *>(pop.data()),
-                          pop_size * sizeof(double));
-              cpfile.read(reinterpret_cast<char *>(laf.data()),
-                          3 * sizeof(double));
-              cpfile.read(reinterpret_cast<char *>(&lbb), sizeof(lbb));
-              if (lbb) {
-                cpfile.read(reinterpret_cast<char *>(vbb.data()),
-                            3 * sizeof(double));
-              }
+            cpfile.read(pop);
+            cpfile.read(laf);
+            cpfile.read(lbb);
+            if (lbb) {
+              cpfile.read(vbb);
             }
             ::Communication::mpiCallbacks().call_all(
                 Walberla::set_node_from_checkpoint, ind, pop, laf, vbb, lbb);
@@ -302,25 +306,25 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
     }
     // check EOF
     if (!binary) {
-      if (cpfile.peek() == '\n') {
-        static_cast<void>(cpfile.get());
+      if (cpfile.stream.peek() == '\n') {
+        static_cast<void>(cpfile.stream.get());
       }
     }
-    if (cpfile.peek() != EOF) {
+    if (cpfile.stream.peek() != EOF) {
       throw std::runtime_error(err_msg + "extra data found, expected EOF.");
     }
   } catch (std::ios_base::failure const &fail) {
-    auto const eof_error = cpfile.eof();
-    cpfile.close();
+    auto const eof_error = cpfile.stream.eof();
+    cpfile.stream.close();
     if (eof_error) {
       throw std::runtime_error(err_msg + "EOF found.");
     }
     throw std::runtime_error(err_msg + "incorrectly formatted data.");
   } catch (std::runtime_error const &fail) {
-    cpfile.close();
+    cpfile.stream.close();
     throw;
   }
-  cpfile.close();
+  cpfile.stream.close();
 }
 
 Utils::Vector3i lb_lbfluid_get_shape() {
