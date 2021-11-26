@@ -492,8 +492,8 @@ IF LB_WALBERLA:
             lb_lbfluid_clear_boundaries()
 
         def add_boundary_from_shape(self, shape,
-                 velocity=np.zeros(3, dtype=float),
-                 boundary_type=VelocityBounceBack):
+                                    velocity=np.zeros(3, dtype=float),
+                                    boundary_type=VelocityBounceBack):
             """
             Set boundary conditions from a shape.
 
@@ -536,8 +536,8 @@ IF LB_WALBERLA:
                 raster_view, velocity_view)
 
         def add_boundary_from_list(self, nodes,
-                velocity=np.zeros(3, dtype=float),
-                boundary_type=VelocityBounceBack):
+                                   velocity=np.zeros(3, dtype=float),
+                                   boundary_type=VelocityBounceBack):
             """
             Set boundary conditions from a list of node indices.
 
