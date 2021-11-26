@@ -21,14 +21,6 @@ import numpy as np
 import espressomd.lb
 import espressomd.shapes
 
-
-"""
-Check the lattice-Boltzmann 'pressure' driven flow in a slab system
-by comparing to the analytical solution.
-
-"""
-
-
 AGRID = .25
 EXT_FORCE = .1
 VISC = 2.7
@@ -43,7 +35,7 @@ LB_PARAMS = {'agrid': AGRID,
 
 def poiseuille_flow(z, H, ext_force_density, dyn_visc):
     """
-    Analytical solution for plane Poiseuille flow.
+    Analytical solution for planar Poiseuille flow.
 
     Parameters
     ----------
@@ -62,11 +54,22 @@ def poiseuille_flow(z, H, ext_force_density, dyn_visc):
 
 class LBPoiseuilleCommon:
 
-    """Base class of the test that holds the test logic."""
-    lbf = None
+    """
+    Check the lattice-Boltzmann pressure-driven flow in a slab system
+    by comparing to the analytical solution for the planar Poiseuille.
+    """
+
     system = espressomd.System(box_l=[10, 3.0, 3.0])
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
+
+    def setUp(self):
+        self.lbf = self.lb_class(**LB_PARAMS, **self.lb_params)
+        self.system.actors.add(self.lbf)
+
+    def tearDown(self):
+        self.lbf.clear_boundaries()
+        self.system.actors.clear()
 
     def prepare(self):
         """
@@ -74,8 +77,6 @@ class LBPoiseuilleCommon:
         accuracy.
 
         """
-        self.system.actors.clear()
-        self.system.actors.add(self.lbf)
         wall_shape1 = espressomd.shapes.Wall(normal=[1, 0, 0], dist=AGRID)
         wall_shape2 = espressomd.shapes.Wall(
             normal=[-1, 0, 0], dist=-(self.system.box_l[0] - AGRID))
@@ -113,16 +114,25 @@ class LBPoiseuilleCommon:
                                      self.system.box_l[0] - 2.0 * AGRID,
                                      EXT_FORCE,
                                      VISC * DENS)
-        np.testing.assert_allclose(v_measured, v_expected, atol=1E-5)
+        np.testing.assert_allclose(v_measured, v_expected, rtol=5E-5)
 
 
 @utx.skipIfMissingFeatures("LB_WALBERLA")
-class LBWalberlaPoiseuille(ut.TestCase, LBPoiseuilleCommon):
+class LBPoiseuilleWalberla(LBPoiseuilleCommon, ut.TestCase):
 
-    """Test for the Walberla implementation of the LB."""
+    """Test for the Walberla implementation of the LB in double-precision."""
 
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMS)
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': False}
+
+
+@utx.skipIfMissingFeatures("LB_WALBERLA")
+class LBPoiseuilleWalberlaSinglePrecision(LBPoiseuilleCommon, ut.TestCase):
+
+    """Test for the Walberla implementation of the LB in single-precision."""
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': True}
 
 
 if __name__ == '__main__':

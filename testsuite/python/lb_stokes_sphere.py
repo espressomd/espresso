@@ -14,25 +14,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# Measuring the force on a single sphere immersed in a fluid with
-# fixed velocity boundary conditions created by two
-# walls at finite distance.
-# The force is compared to th analytical result F=6 pi eta r v
-# i.e. the stokes force on the particles.
 
-
-# We create a box of size box_width x box_width x box_length and
-# place an object in the center. We measure the drag force
-# in z direction. We create walls in the xz and yz plane at the box
-# boundaries, where the velocity is fixed to $v.
-#
 import espressomd
 import espressomd.shapes
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
 
-# Define the LB Parameters
+# Define the LB parameters
 TIME_STEP = 0.5
 AGRID = 0.6
 KVISC = 6
@@ -51,18 +40,34 @@ v = [0, 0, 0.1 * c_s]  # The boundary slip
 
 
 class Stokes:
-    lbf = None
+    """
+    Measure the force on a single sphere immersed in a fluid with fixed
+    velocity boundary conditions created by four walls at finite distance.
+    The force is compared to th analytical result F=6 pi eta r v
+    i.e. the stokes force on the particles.
+
+    We create a box of size box_width x box_width x box_length and
+    place an object in the center. We measure the drag force
+    in z direction. We create walls in the xz and yz plane at the box
+    boundaries, where the velocity is fixed to v.
+    """
     system = espressomd.System(box_l=[real_width, real_width, box_length])
     system.box_l = [real_width, real_width, box_length]
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.01
 
-    def test_stokes(self):
-        self.system.actors.clear()
+    def setUp(self):
+        self.lbf = self.lb_class(**LB_PARAMS, **self.lb_params)
         self.system.actors.add(self.lbf)
         self.lbf.clear_boundaries()
         self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=1.0)
 
+    def tearDown(self):
+        self.lbf.clear_boundaries()
+        self.system.actors.clear()
+        self.system.thermostat.turn_off()
+
+    def test_stokes(self):
         # Setup walls
         wall_shapes = [None] * 4
         wall_shapes[0] = espressomd.shapes.Wall(
@@ -107,11 +112,22 @@ class Stokes:
         #     atol=stokes_force * 0.03)
 
 
-@utx.skipIfMissingFeatures(['LB_WALBERLA', 'EXTERNAL_FORCES'])
-class LBWalberlaStokes(ut.TestCase, Stokes):
+@utx.skipIfMissingFeatures(['LB_WALBERLA'])
+class StokesWalberla(Stokes, ut.TestCase):
 
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMS)
+    """Test for the Walberla implementation of the LB in double-precision."""
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': False}
+
+
+@utx.skipIfMissingFeatures(['LB_WALBERLA'])
+class StokesWalberlaSinglePrecision(Stokes, ut.TestCase):
+
+    """Test for the Walberla implementation of the LB in single-precision."""
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': True}
 
 
 if __name__ == "__main__":

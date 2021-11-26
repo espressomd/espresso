@@ -1,6 +1,6 @@
-// kernel generated with pystencils v0.3.4+4.g4fecf0c, lbmpy v0.3.4+6.g2faceda,
+// kernel generated with pystencils v0.4.3, lbmpy v0.4.3,
 // lbmpy_walberla/pystencils_walberla from commit
-// b17ca5caf00db7d19f86c5f85c6f67fec6c16aff
+// 88f85eb7a979f81d68e76009811aeed53ec3014e
 
 #pragma once
 #include "communication/UniformPackInfo.h"
@@ -23,10 +23,11 @@
 namespace walberla {
 namespace lbm {
 
-class PushPackInfo : public ::walberla::communication::UniformPackInfo {
+class PushPackInfoSinglePrecision
+    : public ::walberla::communication::UniformPackInfo {
 public:
-  PushPackInfo(BlockDataID pdfsID_) : pdfsID(pdfsID_){};
-  virtual ~PushPackInfo() {}
+  PushPackInfoSinglePrecision(BlockDataID pdfsID_) : pdfsID(pdfsID_){};
+  virtual ~PushPackInfoSinglePrecision() {}
 
   bool constantDataExchange() const { return true; }
   bool threadsafeReceiving() const { return true; }

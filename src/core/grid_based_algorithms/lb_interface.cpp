@@ -50,18 +50,11 @@ struct NoLBActive : public std::exception {
 
 void lb_lbfluid_init() {}
 
-void lb_lbfluid_integrate() {
+void lb_lbfluid_propagate() {
   if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
     lb_walberla()->integrate();
 #endif
-  } else
-    throw NoLBActive();
-}
-
-void lb_lbfluid_propagate() {
-  if (lattice_switch != ActiveLB::NONE) {
-    lb_lbfluid_integrate();
   }
 }
 
@@ -71,8 +64,7 @@ void lb_lbfluid_sanity_checks(double time_step) {
 
   if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
-    mpi_lb_sanity_checks_local(*lb_walberla(), *lb_walberla_params(),
-                               time_step);
+    lb_sanity_checks(*lb_walberla(), *lb_walberla_params(), time_step);
 #endif
   }
 }
@@ -95,7 +87,7 @@ void check_tau_time_step_consistency(double tau, double time_step) {
   auto const factor = tau / time_step;
   if (fabs(round(factor) - factor) / factor > eps)
     throw std::invalid_argument("LB tau (" + std::to_string(tau) +
-                                ") must be integer multiple of "
+                                ") must be an integer multiple of the "
                                 "MD time_step (" +
                                 std::to_string(time_step) + "). Factor is " +
                                 std::to_string(factor));
@@ -160,7 +152,7 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
         cpfile << std::fixed;
       }
 
-      auto const gridsize = lb_walberla()->get_grid_dimensions();
+      auto const gridsize = lb_walberla()->lattice().get_grid_dimensions();
       auto const pop_size = lb_walberla()->stencil_size();
       write_header(gridsize, pop_size);
 
@@ -243,7 +235,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
   try {
     if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
-      auto const gridsize = lb_walberla()->get_grid_dimensions();
+      auto const gridsize = lb_walberla()->lattice().get_grid_dimensions();
       auto const pop_size = lb_walberla()->stencil_size();
       check_header(gridsize, pop_size);
 
@@ -305,7 +297,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
 Utils::Vector3i lb_lbfluid_get_shape() {
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
-    return lb_walberla()->get_grid_dimensions();
+    return lb_walberla()->lattice().get_grid_dimensions();
   }
 #endif
   throw NoLBActive();
@@ -361,43 +353,6 @@ lb_lbnode_get_last_applied_force(const Utils::Vector3i &ind) {
   throw NoLBActive();
 }
 
-void lb_lbfluid_create_vtk(unsigned delta_N, unsigned initial_count,
-                           unsigned flag_observables,
-                           std::string const &identifier,
-                           std::string const &base_folder,
-                           std::string const &prefix) {
-#ifdef LB_WALBERLA
-  if (lattice_switch == ActiveLB::WALBERLA) {
-    ::Communication::mpiCallbacks().call_all(Walberla::create_vtk, delta_N,
-                                             initial_count, flag_observables,
-                                             identifier, base_folder, prefix);
-    return;
-  }
-#endif
-  throw NoLBActive();
-}
-
-void lb_lbfluid_write_vtk(std::string const &vtk_uid) {
-#ifdef LB_WALBERLA
-  if (lattice_switch == ActiveLB::WALBERLA) {
-    ::Communication::mpiCallbacks().call_all(Walberla::write_vtk, vtk_uid);
-    return;
-  }
-#endif
-  throw NoLBActive();
-}
-
-void lb_lbfluid_switch_vtk(std::string const &vtk_uid, int status) {
-#ifdef LB_WALBERLA
-  if (lattice_switch == ActiveLB::WALBERLA) {
-    ::Communication::mpiCallbacks().call_all(Walberla::switch_vtk, vtk_uid,
-                                             status);
-    return;
-  }
-#endif
-  throw NoLBActive();
-}
-
 #ifdef LB_WALBERLA
 /** Revert the correction done by waLBerla on off-diagonal terms. */
 inline void walberla_off_diagonal_correction(Utils::Vector6d &tensor) {
@@ -427,7 +382,7 @@ lb_lbnode_get_pressure_tensor(const Utils::Vector3i &ind) {
 Utils::Vector6d lb_lbfluid_get_pressure_tensor_local() {
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
-    auto const gridsize = lb_walberla()->get_grid_dimensions();
+    auto const gridsize = lb_walberla()->lattice().get_grid_dimensions();
     Utils::Vector6d tensor{};
     for (int i = 0; i < gridsize[0]; i++) {
       for (int j = 0; j < gridsize[1]; j++) {
@@ -452,7 +407,7 @@ REGISTER_CALLBACK_REDUCTION(lb_lbfluid_get_pressure_tensor_local,
 const Utils::Vector6d lb_lbfluid_get_pressure_tensor() {
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
-    auto const gridsize = lb_walberla()->get_grid_dimensions();
+    auto const gridsize = lb_walberla()->lattice().get_grid_dimensions();
     auto const number_of_nodes = gridsize[0] * gridsize[1] * gridsize[2];
     auto tensor = ::Communication::mpiCallbacks().call(
         ::Communication::Result::reduction, std::plus<Utils::Vector6d>(),

@@ -23,6 +23,8 @@
 
 #ifdef LB_WALBERLA
 
+#include <walberla_bridge/LBWalberlaBase.hpp>
+
 #include "LatticeWalberla.hpp"
 
 #include "core/communication.hpp"
@@ -45,6 +47,7 @@ namespace ScriptInterface::walberla {
 class FluidWalberla : public AutoParameters<FluidWalberla> {
   std::shared_ptr<::LBWalberlaBase> m_lb_fluid;
   std::shared_ptr<::LBWalberlaParams> m_lb_params;
+  bool m_is_single_precision;
   bool m_is_active;
   double m_conv_visc;
   double m_conv_temp;
@@ -56,6 +59,8 @@ class FluidWalberla : public AutoParameters<FluidWalberla> {
 public:
   FluidWalberla() {
     add_parameters({
+        {"is_single_precision", AutoParameter::read_only,
+         [this]() { return m_is_single_precision; }},
         {"is_active", AutoParameter::read_only,
          [this]() { return m_is_active; }},
         {"is_initialized", AutoParameter::read_only,
@@ -66,7 +71,7 @@ public:
          [this]() { return m_lb_params->get_tau(); }},
         {"shape", AutoParameter::read_only,
          [this]() {
-           return (m_lb_fluid) ? m_lb_fluid->get_grid_dimensions()
+           return (m_lb_fluid) ? m_lb_fluid->lattice().get_grid_dimensions()
                                : Utils::Vector3i::broadcast(-1);
          }},
         {"kT", AutoParameter::read_only,
@@ -121,11 +126,6 @@ public:
                                 : std::get<0>(m_ctor_params)) /
                   m_conv_visc;
          }},
-        {"pressure_tensor", AutoParameter::read_only,
-         [this]() {
-           // this getter is overriden by the python class
-           return 0;
-         }},
         {"ext_force_density",
          [this](const Variant &v) {
            auto const ext_f = m_conv_force * get_value<Utils::Vector3d>(v);
@@ -161,6 +161,7 @@ public:
         get_value<int>(params, "seed"),
         m_conv_force * get_value<Utils::Vector3d>(params, "ext_force_density")};
     m_is_active = false;
+    m_is_single_precision = get_value<bool>(params, "single_precision");
   }
 
   Variant do_call_method(std::string const &name,
@@ -170,23 +171,29 @@ public:
       auto const lb_lattice =
           get_value<std::shared_ptr<LatticeWalberla>>(params, "lattice")
               ->lattice();
-      m_lb_fluid = mpi_init_lb_walberla_local(*lb_lattice, *m_lb_params,
-                                              lb_visc, lb_dens, lb_kT, lb_seed);
+      m_lb_fluid = init_lb_walberla(lb_lattice, *m_lb_params, lb_visc, lb_dens,
+                                    lb_kT, lb_seed, m_is_single_precision);
       m_lb_fluid->set_external_force(ext_f);
     }
     if (name == "activate") {
-      auto const fail = mpi_activate_lb_walberla_local(m_lb_fluid, m_lb_params);
+      auto const fail = activate_lb_walberla(m_lb_fluid, m_lb_params);
       if (not fail) {
         m_is_active = true;
       }
     }
     if (name == "deactivate") {
-      mpi_deactivate_lb_walberla_local();
+      deactivate_lb_walberla();
       m_is_active = false;
     }
 
     return {};
   }
+
+  /** Non-owning pointer to the LB fluid. */
+  std::weak_ptr<::LBWalberlaBase> lb_fluid() { return m_lb_fluid; }
+
+  /** Non-owning pointer to the LB parameters. */
+  std::weak_ptr<::LBWalberlaParams> lb_params() { return m_lb_params; }
 };
 
 } // namespace ScriptInterface::walberla

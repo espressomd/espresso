@@ -19,6 +19,8 @@
 
 #cmakedefine STOKESIAN_DYNAMICS
 
+#cmakedefine LB_WALBERLA
+
 #cmakedefine VALGRIND_INSTRUMENTATION
 
 #define PACKAGE_NAME "${PROJECT_NAME}"

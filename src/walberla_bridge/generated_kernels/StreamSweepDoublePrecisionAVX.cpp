@@ -1,6 +1,6 @@
-// kernel generated with pystencils v0.3.4+4.g4fecf0c, lbmpy v0.3.4+6.g2faceda,
+// kernel generated with pystencils v0.4.3, lbmpy v0.4.3,
 // lbmpy_walberla/pystencils_walberla from commit
-// b17ca5caf00db7d19f86c5f85c6f67fec6c16aff
+// 88f85eb7a979f81d68e76009811aeed53ec3014e
 
 //======================================================================================================================
 //
@@ -17,16 +17,18 @@
 //  You should have received a copy of the GNU General Public License along
 //  with waLBerla (see COPYING.txt). If not, see <http://www.gnu.org/licenses/>.
 //
-//! \\file StreamSweep.cpp
+//! \\file StreamSweepDoublePrecisionAVX.cpp
 //! \\ingroup lbm
 //! \\author lbmpy
 //======================================================================================================================
 
 #include <cmath>
 
-#include "StreamSweep.h"
+#include "StreamSweepDoublePrecisionAVX.h"
 #include "core/DataTypes.h"
 #include "core/Macros.h"
+
+#include <immintrin.h>
 
 #define FUNC_PREFIX
 
@@ -49,21 +51,19 @@ using namespace std;
 namespace walberla {
 namespace pystencils {
 
-namespace internal_streamsweep {
+namespace internal_91e2c9bdb4c4fa8a405803890749bf98 {
 static FUNC_PREFIX void
-streamsweep(double *RESTRICT const _data_force,
-            double *RESTRICT const _data_pdfs, double *RESTRICT _data_pdfs_tmp,
-            double *RESTRICT _data_velocity, int64_t const _size_force_0,
-            int64_t const _size_force_1, int64_t const _size_force_2,
-            int64_t const _stride_force_0, int64_t const _stride_force_1,
-            int64_t const _stride_force_2, int64_t const _stride_force_3,
-            int64_t const _stride_pdfs_0, int64_t const _stride_pdfs_1,
-            int64_t const _stride_pdfs_2, int64_t const _stride_pdfs_3,
-            int64_t const _stride_pdfs_tmp_0, int64_t const _stride_pdfs_tmp_1,
-            int64_t const _stride_pdfs_tmp_2, int64_t const _stride_pdfs_tmp_3,
-            int64_t const _stride_velocity_0, int64_t const _stride_velocity_1,
-            int64_t const _stride_velocity_2,
-            int64_t const _stride_velocity_3) {
+streamsweepdoubleprecisionavx_streamsweepdoubleprecisionavx(
+    double *RESTRICT const _data_force, double *RESTRICT const _data_pdfs,
+    double *RESTRICT _data_pdfs_tmp, double *RESTRICT _data_velocity,
+    int64_t const _size_force_0, int64_t const _size_force_1,
+    int64_t const _size_force_2, int64_t const _stride_force_1,
+    int64_t const _stride_force_2, int64_t const _stride_force_3,
+    int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
+    int64_t const _stride_pdfs_3, int64_t const _stride_pdfs_tmp_1,
+    int64_t const _stride_pdfs_tmp_2, int64_t const _stride_pdfs_tmp_3,
+    int64_t const _stride_velocity_1, int64_t const _stride_velocity_2,
+    int64_t const _stride_velocity_3) {
   for (int64_t ctr_2 = 1; ctr_2 < _size_force_2 - 1; ctr_2 += 1) {
     double *RESTRICT _data_pdfs_20_30 = _data_pdfs + _stride_pdfs_2 * ctr_2;
     double *RESTRICT _data_pdfs_20_31 =
@@ -240,94 +240,198 @@ streamsweep(double *RESTRICT const _data_force,
           _stride_pdfs_tmp_1 * ctr_1 + _data_pdfs_tmp_20_317;
       double *RESTRICT _data_pdfs_tmp_20_318_10 =
           _stride_pdfs_tmp_1 * ctr_1 + _data_pdfs_tmp_20_318;
-      for (int64_t ctr_0 = 1; ctr_0 < _size_force_0 - 1; ctr_0 += 1) {
-        const double streamed_0 = _data_pdfs_20_30_10[_stride_pdfs_0 * ctr_0];
-        const double streamed_1 = _data_pdfs_20_31_1m1[_stride_pdfs_0 * ctr_0];
-        const double streamed_2 = _data_pdfs_20_32_11[_stride_pdfs_0 * ctr_0];
-        const double streamed_3 =
-            _data_pdfs_20_33_10[_stride_pdfs_0 * ctr_0 + _stride_pdfs_0];
-        const double streamed_4 =
-            _data_pdfs_20_34_10[_stride_pdfs_0 * ctr_0 - _stride_pdfs_0];
-        const double streamed_5 = _data_pdfs_2m1_35_10[_stride_pdfs_0 * ctr_0];
-        const double streamed_6 = _data_pdfs_21_36_10[_stride_pdfs_0 * ctr_0];
-        const double streamed_7 =
-            _data_pdfs_20_37_1m1[_stride_pdfs_0 * ctr_0 + _stride_pdfs_0];
-        const double streamed_8 =
-            _data_pdfs_20_38_1m1[_stride_pdfs_0 * ctr_0 - _stride_pdfs_0];
-        const double streamed_9 =
-            _data_pdfs_20_39_11[_stride_pdfs_0 * ctr_0 + _stride_pdfs_0];
-        const double streamed_10 =
-            _data_pdfs_20_310_11[_stride_pdfs_0 * ctr_0 - _stride_pdfs_0];
-        const double streamed_11 =
-            _data_pdfs_2m1_311_1m1[_stride_pdfs_0 * ctr_0];
-        const double streamed_12 =
-            _data_pdfs_2m1_312_11[_stride_pdfs_0 * ctr_0];
-        const double streamed_13 =
-            _data_pdfs_2m1_313_10[_stride_pdfs_0 * ctr_0 + _stride_pdfs_0];
-        const double streamed_14 =
-            _data_pdfs_2m1_314_10[_stride_pdfs_0 * ctr_0 - _stride_pdfs_0];
-        const double streamed_15 =
-            _data_pdfs_21_315_1m1[_stride_pdfs_0 * ctr_0];
-        const double streamed_16 = _data_pdfs_21_316_11[_stride_pdfs_0 * ctr_0];
-        const double streamed_17 =
-            _data_pdfs_21_317_10[_stride_pdfs_0 * ctr_0 + _stride_pdfs_0];
-        const double streamed_18 =
-            _data_pdfs_21_318_10[_stride_pdfs_0 * ctr_0 - _stride_pdfs_0];
-        const double vel0Term =
-            streamed_10 + streamed_14 + streamed_18 + streamed_4 + streamed_8;
-        const double vel1Term =
-            streamed_1 + streamed_11 + streamed_15 + streamed_7;
-        const double vel2Term = streamed_12 + streamed_13 + streamed_5;
-        const double rho = streamed_0 + streamed_16 + streamed_17 + streamed_2 +
-                           streamed_3 + streamed_6 + streamed_9 + vel0Term +
-                           vel1Term + vel2Term;
-        const double u_0 =
-            (-streamed_13 - streamed_17 - streamed_3 - streamed_7 - streamed_9 +
-             vel0Term) /
-                rho +
-            0.5 * _data_force_20_30_10[_stride_force_0 * ctr_0] / rho;
-        const double u_1 =
-            (-streamed_10 - streamed_12 - streamed_16 - streamed_2 +
-             streamed_8 - streamed_9 + vel1Term) /
-                rho +
-            0.5 * _data_force_20_31_10[_stride_force_0 * ctr_0] / rho;
-        const double u_2 =
-            (streamed_11 + streamed_14 - streamed_15 - streamed_16 -
-             streamed_17 - streamed_18 - streamed_6 + vel2Term) /
-                rho +
-            0.5 * _data_force_20_32_10[_stride_force_0 * ctr_0] / rho;
-        _data_velocity_20_30_10[_stride_velocity_0 * ctr_0] = u_0;
-        _data_velocity_20_31_10[_stride_velocity_0 * ctr_0] = u_1;
-        _data_velocity_20_32_10[_stride_velocity_0 * ctr_0] = u_2;
-        _data_pdfs_tmp_20_30_10[_stride_pdfs_tmp_0 * ctr_0] = streamed_0;
-        _data_pdfs_tmp_20_31_10[_stride_pdfs_tmp_0 * ctr_0] = streamed_1;
-        _data_pdfs_tmp_20_32_10[_stride_pdfs_tmp_0 * ctr_0] = streamed_2;
-        _data_pdfs_tmp_20_33_10[_stride_pdfs_tmp_0 * ctr_0] = streamed_3;
-        _data_pdfs_tmp_20_34_10[_stride_pdfs_tmp_0 * ctr_0] = streamed_4;
-        _data_pdfs_tmp_20_35_10[_stride_pdfs_tmp_0 * ctr_0] = streamed_5;
-        _data_pdfs_tmp_20_36_10[_stride_pdfs_tmp_0 * ctr_0] = streamed_6;
-        _data_pdfs_tmp_20_37_10[_stride_pdfs_tmp_0 * ctr_0] = streamed_7;
-        _data_pdfs_tmp_20_38_10[_stride_pdfs_tmp_0 * ctr_0] = streamed_8;
-        _data_pdfs_tmp_20_39_10[_stride_pdfs_tmp_0 * ctr_0] = streamed_9;
-        _data_pdfs_tmp_20_310_10[_stride_pdfs_tmp_0 * ctr_0] = streamed_10;
-        _data_pdfs_tmp_20_311_10[_stride_pdfs_tmp_0 * ctr_0] = streamed_11;
-        _data_pdfs_tmp_20_312_10[_stride_pdfs_tmp_0 * ctr_0] = streamed_12;
-        _data_pdfs_tmp_20_313_10[_stride_pdfs_tmp_0 * ctr_0] = streamed_13;
-        _data_pdfs_tmp_20_314_10[_stride_pdfs_tmp_0 * ctr_0] = streamed_14;
-        _data_pdfs_tmp_20_315_10[_stride_pdfs_tmp_0 * ctr_0] = streamed_15;
-        _data_pdfs_tmp_20_316_10[_stride_pdfs_tmp_0 * ctr_0] = streamed_16;
-        _data_pdfs_tmp_20_317_10[_stride_pdfs_tmp_0 * ctr_0] = streamed_17;
-        _data_pdfs_tmp_20_318_10[_stride_pdfs_tmp_0 * ctr_0] = streamed_18;
+      for (int64_t ctr_0 = 1;
+           ctr_0 < ((_size_force_0 - 2) % (4) == 0
+                        ? _size_force_0 - 2
+                        : ((int64_t)((_size_force_0 - 2) / (4)) + 1) * (4)) +
+                       1;
+           ctr_0 += 4) {
+        const __m256d streamed_0 = _mm256_load_pd(&_data_pdfs_20_30_10[ctr_0]);
+        const __m256d streamed_1 = _mm256_load_pd(&_data_pdfs_20_31_1m1[ctr_0]);
+        const __m256d streamed_2 = _mm256_load_pd(&_data_pdfs_20_32_11[ctr_0]);
+        const __m256d streamed_3 =
+            _mm256_loadu_pd(&_data_pdfs_20_33_10[ctr_0 + 1]);
+        const __m256d streamed_4 =
+            _mm256_loadu_pd(&_data_pdfs_20_34_10[ctr_0 - 1]);
+        const __m256d streamed_5 = _mm256_load_pd(&_data_pdfs_2m1_35_10[ctr_0]);
+        const __m256d streamed_6 = _mm256_load_pd(&_data_pdfs_21_36_10[ctr_0]);
+        const __m256d streamed_7 =
+            _mm256_loadu_pd(&_data_pdfs_20_37_1m1[ctr_0 + 1]);
+        const __m256d streamed_8 =
+            _mm256_loadu_pd(&_data_pdfs_20_38_1m1[ctr_0 - 1]);
+        const __m256d streamed_9 =
+            _mm256_loadu_pd(&_data_pdfs_20_39_11[ctr_0 + 1]);
+        const __m256d streamed_10 =
+            _mm256_loadu_pd(&_data_pdfs_20_310_11[ctr_0 - 1]);
+        const __m256d streamed_11 =
+            _mm256_load_pd(&_data_pdfs_2m1_311_1m1[ctr_0]);
+        const __m256d streamed_12 =
+            _mm256_load_pd(&_data_pdfs_2m1_312_11[ctr_0]);
+        const __m256d streamed_13 =
+            _mm256_loadu_pd(&_data_pdfs_2m1_313_10[ctr_0 + 1]);
+        const __m256d streamed_14 =
+            _mm256_loadu_pd(&_data_pdfs_2m1_314_10[ctr_0 - 1]);
+        const __m256d streamed_15 =
+            _mm256_load_pd(&_data_pdfs_21_315_1m1[ctr_0]);
+        const __m256d streamed_16 =
+            _mm256_load_pd(&_data_pdfs_21_316_11[ctr_0]);
+        const __m256d streamed_17 =
+            _mm256_loadu_pd(&_data_pdfs_21_317_10[ctr_0 + 1]);
+        const __m256d streamed_18 =
+            _mm256_loadu_pd(&_data_pdfs_21_318_10[ctr_0 - 1]);
+        const __m256d vel0Term = _mm256_add_pd(
+            _mm256_add_pd(_mm256_add_pd(_mm256_add_pd(streamed_10, streamed_14),
+                                        streamed_18),
+                          streamed_4),
+            streamed_8);
+        const __m256d vel1Term = _mm256_add_pd(
+            _mm256_add_pd(_mm256_add_pd(streamed_1, streamed_11), streamed_15),
+            streamed_7);
+        const __m256d vel2Term =
+            _mm256_add_pd(_mm256_add_pd(streamed_12, streamed_13), streamed_5);
+        const __m256d rho = _mm256_add_pd(
+            _mm256_add_pd(
+                _mm256_add_pd(
+                    _mm256_add_pd(
+                        _mm256_add_pd(
+                            _mm256_add_pd(
+                                _mm256_add_pd(
+                                    _mm256_add_pd(
+                                        _mm256_add_pd(streamed_0, streamed_16),
+                                        streamed_17),
+                                    streamed_2),
+                                streamed_3),
+                            streamed_6),
+                        streamed_9),
+                    vel0Term),
+                vel1Term),
+            vel2Term);
+        const __m256d u_0 = _mm256_add_pd(
+            _mm256_div_pd(
+                _mm256_add_pd(
+                    _mm256_add_pd(
+                        _mm256_add_pd(
+                            _mm256_add_pd(
+                                _mm256_add_pd(
+                                    _mm256_mul_pd(
+                                        streamed_13,
+                                        _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)),
+                                    _mm256_mul_pd(
+                                        streamed_17,
+                                        _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))),
+                                _mm256_mul_pd(
+                                    streamed_3,
+                                    _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))),
+                            _mm256_mul_pd(
+                                streamed_7,
+                                _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))),
+                        _mm256_mul_pd(streamed_9,
+                                      _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))),
+                    vel0Term),
+                rho),
+            _mm256_div_pd(
+                _mm256_mul_pd(_mm256_set_pd(0.5, 0.5, 0.5, 0.5),
+                              _mm256_load_pd(&_data_force_20_30_10[ctr_0])),
+                rho));
+        const __m256d u_1 = _mm256_add_pd(
+            _mm256_div_pd(
+                _mm256_add_pd(
+                    _mm256_add_pd(
+                        _mm256_add_pd(
+                            _mm256_add_pd(
+                                _mm256_add_pd(
+                                    _mm256_add_pd(
+                                        _mm256_mul_pd(streamed_10,
+                                                      _mm256_set_pd(-1.0, -1.0,
+                                                                    -1.0,
+                                                                    -1.0)),
+                                        _mm256_mul_pd(streamed_12,
+                                                      _mm256_set_pd(-1.0, -1.0,
+                                                                    -1.0,
+                                                                    -1.0))),
+                                    _mm256_mul_pd(
+                                        streamed_16,
+                                        _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))),
+                                _mm256_mul_pd(
+                                    streamed_2,
+                                    _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))),
+                            _mm256_mul_pd(
+                                streamed_9,
+                                _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))),
+                        streamed_8),
+                    vel1Term),
+                rho),
+            _mm256_div_pd(
+                _mm256_mul_pd(_mm256_set_pd(0.5, 0.5, 0.5, 0.5),
+                              _mm256_load_pd(&_data_force_20_31_10[ctr_0])),
+                rho));
+        const __m256d u_2 = _mm256_add_pd(
+            _mm256_div_pd(
+                _mm256_add_pd(
+                    _mm256_add_pd(
+                        _mm256_add_pd(
+                            _mm256_add_pd(
+                                _mm256_add_pd(
+                                    _mm256_add_pd(
+                                        _mm256_add_pd(
+                                            _mm256_mul_pd(
+                                                streamed_15,
+                                                _mm256_set_pd(-1.0, -1.0, -1.0,
+                                                              -1.0)),
+                                            _mm256_mul_pd(
+                                                streamed_16,
+                                                _mm256_set_pd(-1.0, -1.0, -1.0,
+                                                              -1.0))),
+                                        _mm256_mul_pd(streamed_17,
+                                                      _mm256_set_pd(-1.0, -1.0,
+                                                                    -1.0,
+                                                                    -1.0))),
+                                    _mm256_mul_pd(
+                                        streamed_18,
+                                        _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))),
+                                _mm256_mul_pd(
+                                    streamed_6,
+                                    _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))),
+                            streamed_11),
+                        streamed_14),
+                    vel2Term),
+                rho),
+            _mm256_div_pd(
+                _mm256_mul_pd(_mm256_set_pd(0.5, 0.5, 0.5, 0.5),
+                              _mm256_load_pd(&_data_force_20_32_10[ctr_0])),
+                rho));
+        _mm256_store_pd(&_data_velocity_20_30_10[ctr_0], u_0);
+        _mm256_store_pd(&_data_velocity_20_31_10[ctr_0], u_1);
+        _mm256_store_pd(&_data_velocity_20_32_10[ctr_0], u_2);
+        _mm256_store_pd(&_data_pdfs_tmp_20_30_10[ctr_0], streamed_0);
+        _mm256_store_pd(&_data_pdfs_tmp_20_31_10[ctr_0], streamed_1);
+        _mm256_store_pd(&_data_pdfs_tmp_20_32_10[ctr_0], streamed_2);
+        _mm256_store_pd(&_data_pdfs_tmp_20_33_10[ctr_0], streamed_3);
+        _mm256_store_pd(&_data_pdfs_tmp_20_34_10[ctr_0], streamed_4);
+        _mm256_store_pd(&_data_pdfs_tmp_20_35_10[ctr_0], streamed_5);
+        _mm256_store_pd(&_data_pdfs_tmp_20_36_10[ctr_0], streamed_6);
+        _mm256_store_pd(&_data_pdfs_tmp_20_37_10[ctr_0], streamed_7);
+        _mm256_store_pd(&_data_pdfs_tmp_20_38_10[ctr_0], streamed_8);
+        _mm256_store_pd(&_data_pdfs_tmp_20_39_10[ctr_0], streamed_9);
+        _mm256_store_pd(&_data_pdfs_tmp_20_310_10[ctr_0], streamed_10);
+        _mm256_store_pd(&_data_pdfs_tmp_20_311_10[ctr_0], streamed_11);
+        _mm256_store_pd(&_data_pdfs_tmp_20_312_10[ctr_0], streamed_12);
+        _mm256_store_pd(&_data_pdfs_tmp_20_313_10[ctr_0], streamed_13);
+        _mm256_store_pd(&_data_pdfs_tmp_20_314_10[ctr_0], streamed_14);
+        _mm256_store_pd(&_data_pdfs_tmp_20_315_10[ctr_0], streamed_15);
+        _mm256_store_pd(&_data_pdfs_tmp_20_316_10[ctr_0], streamed_16);
+        _mm256_store_pd(&_data_pdfs_tmp_20_317_10[ctr_0], streamed_17);
+        _mm256_store_pd(&_data_pdfs_tmp_20_318_10[ctr_0], streamed_18);
       }
     }
   }
 }
-} // namespace internal_streamsweep
+} // namespace internal_91e2c9bdb4c4fa8a405803890749bf98
 
-void StreamSweep::operator()(IBlock *block) {
-  auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
+void StreamSweepDoublePrecisionAVX::run(IBlock *block) {
   auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
   auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
+  auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
   field::GhostLayerField<double, 19> *pdfs_tmp;
   {
     // Getting temporary field pdfs_tmp
@@ -364,33 +468,30 @@ void StreamSweep::operator()(IBlock *block) {
                                 int64_t(cell_idx_c(force->zSize()) + 2));
   const int64_t _size_force_2 = int64_t(cell_idx_c(force->zSize()) + 2);
   WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx);
-  const int64_t _stride_force_0 = int64_t(force->xStride());
   const int64_t _stride_force_1 = int64_t(force->yStride());
   const int64_t _stride_force_2 = int64_t(force->zStride());
   const int64_t _stride_force_3 = int64_t(1 * int64_t(force->fStride()));
-  const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
   const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
   const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
   const int64_t _stride_pdfs_3 = int64_t(1 * int64_t(pdfs->fStride()));
-  const int64_t _stride_pdfs_tmp_0 = int64_t(pdfs_tmp->xStride());
   const int64_t _stride_pdfs_tmp_1 = int64_t(pdfs_tmp->yStride());
   const int64_t _stride_pdfs_tmp_2 = int64_t(pdfs_tmp->zStride());
   const int64_t _stride_pdfs_tmp_3 = int64_t(1 * int64_t(pdfs_tmp->fStride()));
-  const int64_t _stride_velocity_0 = int64_t(velocity->xStride());
   const int64_t _stride_velocity_1 = int64_t(velocity->yStride());
   const int64_t _stride_velocity_2 = int64_t(velocity->zStride());
   const int64_t _stride_velocity_3 = int64_t(1 * int64_t(velocity->fStride()));
-  internal_streamsweep::streamsweep(
-      _data_force, _data_pdfs, _data_pdfs_tmp, _data_velocity, _size_force_0,
-      _size_force_1, _size_force_2, _stride_force_0, _stride_force_1,
-      _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1,
-      _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_0, _stride_pdfs_tmp_1,
-      _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, _stride_velocity_0,
-      _stride_velocity_1, _stride_velocity_2, _stride_velocity_3);
+  internal_91e2c9bdb4c4fa8a405803890749bf98::
+      streamsweepdoubleprecisionavx_streamsweepdoubleprecisionavx(
+          _data_force, _data_pdfs, _data_pdfs_tmp, _data_velocity,
+          _size_force_0, _size_force_1, _size_force_2, _stride_force_1,
+          _stride_force_2, _stride_force_3, _stride_pdfs_1, _stride_pdfs_2,
+          _stride_pdfs_3, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2,
+          _stride_pdfs_tmp_3, _stride_velocity_1, _stride_velocity_2,
+          _stride_velocity_3);
   pdfs->swapDataPointers(pdfs_tmp);
 }
 
-void StreamSweep::runOnCellInterval(
+void StreamSweepDoublePrecisionAVX::runOnCellInterval(
     const shared_ptr<StructuredBlockStorage> &blocks,
     const CellInterval &globalCellInterval, cell_idx_t ghostLayers,
     IBlock *block) {
@@ -402,9 +503,9 @@ void StreamSweep::runOnCellInterval(
   if (ci.empty())
     return;
 
-  auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
   auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
   auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
+  auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
   field::GhostLayerField<double, 19> *pdfs_tmp;
   {
     // Getting temporary field pdfs_tmp
@@ -462,29 +563,26 @@ void StreamSweep::runOnCellInterval(
                                 int64_t(cell_idx_c(ci.zSize()) + 2));
   const int64_t _size_force_2 = int64_t(cell_idx_c(ci.zSize()) + 2);
   WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx);
-  const int64_t _stride_force_0 = int64_t(force->xStride());
   const int64_t _stride_force_1 = int64_t(force->yStride());
   const int64_t _stride_force_2 = int64_t(force->zStride());
   const int64_t _stride_force_3 = int64_t(1 * int64_t(force->fStride()));
-  const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
   const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
   const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
   const int64_t _stride_pdfs_3 = int64_t(1 * int64_t(pdfs->fStride()));
-  const int64_t _stride_pdfs_tmp_0 = int64_t(pdfs_tmp->xStride());
   const int64_t _stride_pdfs_tmp_1 = int64_t(pdfs_tmp->yStride());
   const int64_t _stride_pdfs_tmp_2 = int64_t(pdfs_tmp->zStride());
   const int64_t _stride_pdfs_tmp_3 = int64_t(1 * int64_t(pdfs_tmp->fStride()));
-  const int64_t _stride_velocity_0 = int64_t(velocity->xStride());
   const int64_t _stride_velocity_1 = int64_t(velocity->yStride());
   const int64_t _stride_velocity_2 = int64_t(velocity->zStride());
   const int64_t _stride_velocity_3 = int64_t(1 * int64_t(velocity->fStride()));
-  internal_streamsweep::streamsweep(
-      _data_force, _data_pdfs, _data_pdfs_tmp, _data_velocity, _size_force_0,
-      _size_force_1, _size_force_2, _stride_force_0, _stride_force_1,
-      _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1,
-      _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_0, _stride_pdfs_tmp_1,
-      _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, _stride_velocity_0,
-      _stride_velocity_1, _stride_velocity_2, _stride_velocity_3);
+  internal_91e2c9bdb4c4fa8a405803890749bf98::
+      streamsweepdoubleprecisionavx_streamsweepdoubleprecisionavx(
+          _data_force, _data_pdfs, _data_pdfs_tmp, _data_velocity,
+          _size_force_0, _size_force_1, _size_force_2, _stride_force_1,
+          _stride_force_2, _stride_force_3, _stride_pdfs_1, _stride_pdfs_2,
+          _stride_pdfs_3, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2,
+          _stride_pdfs_tmp_3, _stride_velocity_1, _stride_velocity_2,
+          _stride_velocity_3);
   pdfs->swapDataPointers(pdfs_tmp);
 }
 

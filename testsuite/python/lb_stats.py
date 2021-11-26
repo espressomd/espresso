@@ -41,8 +41,6 @@ class TestLB:
     system.periodicity = [1, 1, 1]
     system.time_step = 0.01
     system.cell_system.skin = 0
-    lbf = None
-    dof = 3.
 
     def tearDown(self):
         self.system.actors.clear()
@@ -143,8 +141,9 @@ class TestLB:
 @utx.skipIfMissingFeatures("LB_WALBERLA")
 class TestLBWalberla(TestLB, ut.TestCase):
 
-    def setUp(self):
-        self.lb_class = espressomd.lb.LBFluidWalberla
+    """Test for the Walberla implementation of the LB in double-precision."""
+
+    lb_class = espressomd.lb.LBFluidWalberla
 
 
 if __name__ == "__main__":

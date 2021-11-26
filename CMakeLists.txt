@@ -468,7 +468,7 @@ if(WITH_WALBERLA)
     set(WALBERLA_BUILD_DOC off CACHE BOOL "")
     set(CMAKE_POSITION_INDEPENDENT_CODE on CACHE BOOL "")
     add_subdirectory("${walberla_SOURCE_DIR}" "${walberla_BINARY_DIR}")
-    set(WALBERLA 1)
+    set(LB_WALBERLA 1)
     set(WALBERLA_LIBS
         walberla::core walberla::domain_decomposition walberla::blockforest
         walberla::boundary walberla::core walberla::domain_decomposition

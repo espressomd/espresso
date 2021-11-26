@@ -48,136 +48,6 @@ class VelocityBounceBack:
         self.velocity = velocity
 
 
-IF LB_WALBERLA:
-
-    import lxml.etree
-
-    class VTKRegistry:
-
-        def __init__(self):
-            self.map = {}
-            self.collisions = {}
-
-        def _register_vtk_object(self, vtk_uid, vtk_obj):
-            self.map[vtk_uid] = vtk_obj
-            self.collisions[os.path.abspath(vtk_uid)] = vtk_uid
-
-        def __getstate__(self):
-            return self.map
-
-        def __setstate__(self, active_vtk_objects):
-            self.map = {}
-            self.collisions = {}
-            for vtk_uid, vtk_obj in active_vtk_objects.items():
-                self.map[vtk_uid] = vtk_obj
-                self.collisions[os.path.abspath(vtk_uid)] = vtk_uid
-
-    _vtk_registry = VTKRegistry()
-
-    class VTKOutput:
-        """
-        VTK callback.
-        """
-        observable2enum = {
-            'density': < int > output_vtk_density,
-            'velocity_vector': < int > output_vtk_velocity_vector,
-            'pressure_tensor': < int > output_vtk_pressure_tensor}
-
-        def __init__(self, vtk_uid, identifier, observables, delta_N,
-                     base_folder, prefix):
-            observables = set(observables)
-            flag = sum(self.observable2enum[obs] for obs in observables)
-            self._params = {
-                'vtk_uid': vtk_uid, 'identifier': identifier, 'prefix': prefix,
-                'delta_N': delta_N, 'base_folder': base_folder, 'flag': flag,
-                'enabled': True, 'initial_count': 0, 'observables': observables}
-            self._set_params_in_es_core()
-
-        def __getstate__(self):
-            odict = self._params.copy()
-            # get initial execution counter
-            pvd = os.path.abspath(self._params['vtk_uid']) + '.pvd'
-            if os.path.isfile(pvd):
-                tree = lxml.etree.parse(pvd)
-                nodes = tree.xpath('/VTKFile/Collection/DataSet')
-                if nodes:
-                    odict['initial_count'] = int(
-                        nodes[-1].attrib['timestep']) + 1
-            return odict
-
-        def __setstate__(self, params):
-            self._params = params
-            self._set_params_in_es_core()
-
-        def _set_params_in_es_core(self):
-            _vtk_registry._register_vtk_object(self._params['vtk_uid'], self)
-            lb_lbfluid_create_vtk(self._params['delta_N'],
-                                  self._params['initial_count'],
-                                  self._params['flag'],
-                                  to_char_pointer(self._params['identifier']),
-                                  to_char_pointer(self._params['base_folder']),
-                                  to_char_pointer(self._params['prefix']))
-            if not self._params['enabled']:
-                self.disable()
-
-        def write(self):
-            raise NotImplementedError()
-
-        def disable(self):
-            raise NotImplementedError()
-
-        def enable(self):
-            raise NotImplementedError()
-
-    class VTKOutputAutomatic(VTKOutput):
-        """
-        Automatic VTK callback. Can be disabled at any time and re-enabled later.
-
-        Please note that the internal VTK counter is no longer incremented
-        when the callback is disabled, which means the number of LB steps
-        between two frames will not always be an integer multiple of delta_N.
-        """
-
-        def __repr__(self):
-            return "<{}.{}: writes to '{}' every {} LB step{}{}>".format(
-                self.__class__.__module__, self.__class__.__name__,
-                self._params['vtk_uid'], self._params['delta_N'],
-                '' if self._params['delta_N'] == 1 else 's',
-                '' if self._params['enabled'] else ' (disabled)')
-
-        def write(self):
-            raise RuntimeError(
-                'Automatic VTK callbacks writes automaticall, cannot be triggered manually')
-
-        def enable(self):
-            lb_lbfluid_switch_vtk(to_char_pointer(self._params['vtk_uid']), 1)
-            self._params['enabled'] = True
-
-        def disable(self):
-            lb_lbfluid_switch_vtk(to_char_pointer(self._params['vtk_uid']), 0)
-            self._params['enabled'] = False
-
-    class VTKOutputManual(VTKOutput):
-        """
-        Manual VTK callback. Can be called at any time to take a snapshot
-        of the current state of the LB fluid.
-        """
-
-        def __repr__(self):
-            return "<{}.{}: writes to '{}' on demand>".format(
-                self.__class__.__module__, self.__class__.__name__,
-                self._params['vtk_uid'])
-
-        def write(self):
-            lb_lbfluid_write_vtk(to_char_pointer(self._params['vtk_uid']))
-
-        def disable(self):
-            raise RuntimeError('Manual VTK callbacks cannot be disabled')
-
-        def enable(self):
-            raise RuntimeError('Manual VTK callbacks cannot be enabled')
-
-
 def _construct(cls, params):
     obj = cls(**params)
     obj._params = params
@@ -289,8 +159,8 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
             params['ext_force_density'], 3, float, 'ext_force_density must be 3 floats')
 
     def valid_keys(self):
-        return {"agrid", "density", "ext_force_density", "viscosity", "tau", "lattice",
-                "kT", "seed"}
+        return {"agrid", "tau", "density", "ext_force_density", "viscosity",
+                "lattice", "kT", "seed"}
 
     def required_keys(self):
         return {"density", "agrid", "viscosity", "tau"}
@@ -301,8 +171,8 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
                 "ext_force_density": [0.0, 0.0, 0.0],
                 "viscosity": -1.0,
                 "tau": -1.0,
-                "seed": 0,
                 "lattice": None,
+                "seed": 0,
                 "kT": 0.}
 
     def mach_limit(self):
@@ -405,6 +275,10 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
         tensor = python_lbfluid_get_pressure_tensor(self.agrid, self.tau)
         return utils.array_locked(tensor)
 
+    @pressure_tensor.setter
+    def pressure_tensor(self, value):
+        raise RuntimeError(f"Property 'pressure_tensor' is read-only")
+
     def nodes(self):
         """Provides a generator for iterating over all lb nodes"""
 
@@ -415,6 +289,134 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
 
 
 IF LB_WALBERLA:
+
+    class VTKRegistry:
+
+        def __init__(self):
+            self.map = {}
+            self.collisions = {}
+
+        def _register_vtk_object(self, vtk_obj):
+            vtk_uid = vtk_obj.vtk_uid
+            self.map[vtk_uid] = vtk_obj
+            self.collisions[os.path.abspath(vtk_uid)] = vtk_uid
+
+        def __getstate__(self):
+            return self.map
+
+        def __setstate__(self, active_vtk_objects):
+            self.map = {}
+            self.collisions = {}
+            for vtk_uid, vtk_obj in active_vtk_objects.items():
+                self.map[vtk_uid] = vtk_obj
+                self.collisions[os.path.abspath(vtk_uid)] = vtk_uid
+
+    _vtk_registry = VTKRegistry()
+
+    @script_interface_register
+    class VTKOutput(ScriptInterfaceHelper):
+        """
+        Create a VTK writer.
+
+        Files are written to ``<base_folder>/<identifier>/<prefix>_*.vtu``.
+        Summary is written to ``<base_folder>/<identifier>.pvd``.
+
+        Manual VTK callbacks can be called at any time to take a snapshot
+        of the current state of the LB fluid.
+
+        Automatic VTK callbacks can be disabled at any time and re-enabled later.
+        Please note that the internal VTK counter is no longer incremented when
+        an automatic callback is disabled, which means the number of LB steps
+        between two frames will not always be an integer multiple of ``delta_N``.
+
+        Parameters
+        ----------
+        identifier : :obj:`str`
+            Name of the VTK writer.
+        observables : :obj:`list`, \{'density', 'velocity_vector', 'pressure_tensor'\}
+            List of observables to write to the VTK files.
+        delta_N : :obj:`int`
+            Write frequency. If this value is 0 (default), the object is a
+            manual VTK callback that must be triggered manually. Otherwise,
+            it is an automatic callback that is added to the time loop and
+            writes every ``delta_N`` LB steps.
+        base_folder : :obj:`str` (optional), default is 'vtk_out'
+            Path to the output VTK folder.
+        prefix : :obj:`str` (optional), default is 'simulation_step'
+            Prefix for VTK files.
+
+        """
+        _so_name = "walberla::VTKHandle"
+        _so_creation_policy = "GLOBAL"
+        _so_bind_methods = ("enable", "disable", "write")
+
+        def __init__(self, *args, **kwargs):
+            if 'sip' not in kwargs:
+                params = self.default_params()
+                params.update(kwargs)
+                if isinstance(params['observables'], str):
+                    params['observables'] = [params['observables']]
+                self.validate_params(params)
+                super().__init__(*args, **params)
+                utils.handle_errors(
+                    f"{self.__class__.__name__} initialization failed")
+            else:
+                super().__init__(**kwargs)
+            _vtk_registry._register_vtk_object(self)
+
+        def validate_params(self, params):
+            if not self.required_keys().issubset(params):
+                raise ValueError(
+                    f"At least the following keys have to be given as keyword arguments: {sorted(self.required_keys())}")
+            if not self.valid_observables().issuperset(params['observables']):
+                raise ValueError(
+                    f"Only the following VTK observables are supported: {sorted(self.valid_observables())}, got {params['observables']}")
+            if not isinstance(params['lb_fluid'], HydrodynamicInteraction):
+                raise ValueError("'lb_fluid' must be an LB actor")
+            utils.check_type_or_throw_except(
+                params['delta_N'], 1, int, "'delta_N' must be 1 integer")
+            if params['delta_N'] < 0:
+                raise ValueError("'delta_N' must be a positive integer")
+            utils.check_type_or_throw_except(
+                params['base_folder'], 1, str, "'base_folder' must be a string")
+            utils.check_type_or_throw_except(
+                params['identifier'], 1, str, "'identifier' must be a string")
+            if os.path.sep in params['identifier']:
+                raise ValueError(
+                    "'identifier' must be a string, not a filepath")
+            vtk_uid = os.path.join(params['base_folder'],
+                                   params['identifier'])
+            vtk_path = os.path.abspath(vtk_uid)
+            if vtk_path in _vtk_registry.collisions:
+                raise RuntimeError(
+                    f"VTK object '{vtk_uid}' would overwrite files written "
+                    f"by VTK object '{_vtk_registry.collisions[vtk_path]}'")
+            params['vtk_uid'] = vtk_uid
+
+        def valid_observables(self):
+            return {'density', 'velocity_vector', 'pressure_tensor'}
+
+        def valid_keys(self):
+            return {'lb_fluid', 'delta_N', 'execution_count', 'observables',
+                    'identifier', 'base_folder', 'prefix', 'enabled'}
+
+        def required_keys(self):
+            return self.valid_keys() - self.default_params().keys()
+
+        def default_params(self):
+            return {'delta_N': 0, 'enabled': True, 'execution_count': 0,
+                    'base_folder': 'vtk_out', 'prefix': 'simulation_step'}
+
+        def __repr__(self):
+            class_id = f"{self.__class__.__module__}.{self.__class__.__name__}"
+            if self.delta_N:
+                write_when = f"every {self.delta_N} LB steps"
+                if not self.enabled:
+                    write_when += " (disabled)"
+            else:
+                write_when = "on demand"
+            return f"<{class_id}: write to '{self.vtk_uid}' {write_when}>"
+
     @script_interface_register
     class LatticeWalberla(ScriptInterfaceHelper):
         """Interface to the Walberla lattice
@@ -476,6 +478,12 @@ IF LB_WALBERLA:
                 self.call_method('instantiate', **self._params)
                 utils.handle_errors(
                     "HydrodynamicInteraction instantiation failed")
+
+        def default_params(self):
+            return {"single_precision": False, **super().default_params()}
+
+        def valid_keys(self):
+            return {"single_precision", *super().valid_keys()}
 
         def clear_boundaries(self):
             """
@@ -583,61 +591,14 @@ IF LB_WALBERLA:
                                           grid_offset=0.5)
             return np.reshape(mask_flat, self.shape).astype(type(True))
 
-        # TODO WALBERLA: maybe split this method in 2 methods with clear names
-        # like add_vtk_writer_auto_update() and add_vtk_writer_manual()
-        def add_vtk_writer(self, identifier, observables, delta_N=0,
-                           base_folder='vtk_out', prefix='simulation_step'):
+        # TODO WALBERLA: deprecated function, consider removing it
+        def add_vtk_writer(self, identifier, observables, **kwargs):
             """
             Create a VTK observable.
 
-            Files are written to ``<base_folder>/<identifier>/<prefix>_*.vtu``.
-            Summary is written to ``<base_folder>/<identifier>.pvd``.
-
-            Parameters
-            ----------
-            identifier : :obj:`str`
-                Name of the VTK dataset.
-            observables : :obj:`list`, \{'density', 'velocity_vector', 'pressure_tensor'\}
-                List of observables to write to the VTK files.
-            delta_N : :obj:`int`
-                Write frequency, if 0 write a single frame (default),
-                otherwise add a callback to write every ``delta_N`` LB steps
-                to a new file.
-            base_folder : :obj:`str`
-                Path to the output VTK folder.
-            prefix : :obj:`str`
-                Prefix for VTK files.
             """
-            # sanity checks
-            utils.check_type_or_throw_except(
-                delta_N, 1, int, "delta_N must be 1 integer")
-            assert delta_N >= 0, 'delta_N must be a positive integer'
-            utils.check_type_or_throw_except(
-                identifier, 1, str, "identifier must be 1 string")
-            assert os.path.sep not in identifier, 'identifier must be a string, not a filepath'
-            if isinstance(observables, str):
-                observables = [observables]
-            for obs in observables:
-                if obs not in VTKOutput.observable2enum:
-                    raise ValueError('Unknown VTK observable ' + obs)
-            vtk_uid = base_folder + '/' + identifier
-            vtk_path = os.path.abspath(vtk_uid)
-            if vtk_path in _vtk_registry.collisions:
-                raise RuntimeError(
-                    'VTK identifier "{}" would overwrite files written by VTK identifier "{}"'.format(
-                        vtk_uid, _vtk_registry.collisions[vtk_path]))
-            args = (
-                vtk_uid,
-                identifier,
-                observables,
-                delta_N,
-                base_folder,
-                prefix)
-            if delta_N:
-                obj = VTKOutputAutomatic(*args)
-            else:
-                obj = VTKOutputManual(*args)
-            return obj
+            return VTKOutput(lb_fluid=self, identifier=identifier,
+                             observables=observables, **kwargs)
 
     IF CUDA:
         class LBFluidWalberlaGPU(HydrodynamicInteraction):
@@ -650,6 +611,23 @@ IF LB_WALBERLA:
 
             def __init__(self, *args, **kwargs):
                 raise NotImplementedError("Not implemented yet")
+    ELSE:
+        class LBFluidWalberlaGPU(HydrodynamicInteraction):
+            def __init__(self, *args, **kwargs):
+                raise NotImplementedError("Feature not compiled in")
+
+ELSE:
+    class LatticeWalberla(ScriptInterfaceHelper):
+        def __init__(self, *args, **kwargs):
+            raise NotImplementedError("Feature not compiled in")
+
+    class LBFluidWalberla(HydrodynamicInteraction):
+        def __init__(self, *args, **kwargs):
+            raise NotImplementedError("Feature not compiled in")
+
+    class LBFluidWalberlaGPU(HydrodynamicInteraction):
+        def __init__(self, *args, **kwargs):
+            raise NotImplementedError("Feature not compiled in")
 
 
 cdef class LBFluidRoutines:

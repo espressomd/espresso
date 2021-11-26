@@ -32,7 +32,6 @@ class SwimmerTest():
                  'kT': 0,
                  'tau': system.time_step}
     gamma = 0.3
-    lbf = None
 
     def add_all_types_of_swimmers(
             self,
@@ -70,12 +69,17 @@ class SwimmerTest():
                         swimming={"mode": "puller", "v_swim": 0.05,
                                   "dipole_length": 0.8})
 
+    def setUp(self):
+        self.set_cellsystem()
+        self.lbf = self.lb_class(**self.LB_params)
+        self.system.actors.add(self.lbf)
+        self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=self.gamma)
+
     def tearDown(self):
         self.system.part.clear()
         self.lbf.clear_boundaries()
         self.system.actors.clear()
         self.system.thermostat.turn_off()
-        self.lbf = None
 
     def test_conflicting_parameters(self):
         """v_swim and f_swim can't be set at the same time
@@ -179,27 +183,25 @@ class SwimmerTest():
     ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "LB_WALBERLA"])
 class SwimmerTestDomDecWALBERLA(SwimmerTest, ut.TestCase):
 
-    def setUp(self):
-        self.tol = 1e-10
+    lb_class = espressomd.lb.LBFluidWalberla
+    tol = 1e-10
+
+    def set_cellsystem(self):
         self.system.cell_system.set_domain_decomposition()
-        self.lbf = espressomd.lb.LBFluidWalberla(**self.LB_params)
-        self.system.actors.add(self.lbf)
-        self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=self.gamma)
 
 
 @utx.skipIfMissingFeatures(
     ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "LB_WALBERLA"])
 class SwimmerTestNSquareWALBERLA(SwimmerTest, ut.TestCase):
 
-    def setUp(self):
-        self.tol = 1e-10
+    lb_class = espressomd.lb.LBFluidWalberla
+    tol = 1e-10
+
+    def set_cellsystem(self):
         if any(self.system.cell_system.node_grid > 1):
             self.skipTest(
                 "N Square and LB not compatible on more than one core")
         self.system.cell_system.set_n_square()
-        self.lbf = espressomd.lb.LBFluidWalberla(**self.LB_params)
-        self.system.actors.add(self.lbf)
-        self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=self.gamma)
 
 
 if __name__ == "__main__":

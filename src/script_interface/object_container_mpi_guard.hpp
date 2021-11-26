@@ -16,6 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef ESPRESSO_OBJECT_CONTAINER_MPI_GUARD__HPP
+#define ESPRESSO_OBJECT_CONTAINER_MPI_GUARD__HPP
 
 #include <boost/utility/string_ref.hpp>
 
@@ -40,3 +42,5 @@
  */
 void object_container_mpi_guard(boost::string_ref const &name,
                                 std::size_t n_elements);
+
+#endif

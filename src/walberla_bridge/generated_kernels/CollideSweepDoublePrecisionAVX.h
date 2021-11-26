@@ -1,6 +1,6 @@
-// kernel generated with pystencils v0.3.4+4.g4fecf0c, lbmpy v0.3.4+6.g2faceda,
+// kernel generated with pystencils v0.4.3, lbmpy v0.4.3,
 // lbmpy_walberla/pystencils_walberla from commit
-// b17ca5caf00db7d19f86c5f85c6f67fec6c16aff
+// 88f85eb7a979f81d68e76009811aeed53ec3014e
 
 //======================================================================================================================
 //
@@ -17,7 +17,7 @@
 //  You should have received a copy of the GNU General Public License along
 //  with waLBerla (see COPYING.txt). If not, see <http://www.gnu.org/licenses/>.
 //
-//! \\file StreamSweep.h
+//! \\file CollideSweepDoublePrecisionAVX.h
 //! \\author pystencils
 //======================================================================================================================
 
@@ -49,46 +49,56 @@
 namespace walberla {
 namespace pystencils {
 
-class StreamSweep {
+class CollideSweepDoublePrecisionAVX {
 public:
-  StreamSweep(BlockDataID forceID_, BlockDataID pdfsID_,
-              BlockDataID velocityID_)
-      : forceID(forceID_), pdfsID(pdfsID_), velocityID(velocityID_){};
+  CollideSweepDoublePrecisionAVX(BlockDataID forceID_, BlockDataID pdfsID_,
+                                 double omega_bulk, double omega_even,
+                                 double omega_odd, double omega_shear)
+      : forceID(forceID_), pdfsID(pdfsID_), omega_bulk_(omega_bulk),
+        omega_even_(omega_even), omega_odd_(omega_odd),
+        omega_shear_(omega_shear){};
 
-  ~StreamSweep() {
-    for (auto p : cache_pdfs_) {
-      delete p;
-    }
-  }
+  void run(IBlock *block);
 
-  void operator()(IBlock *block);
   void runOnCellInterval(const shared_ptr<StructuredBlockStorage> &blocks,
                          const CellInterval &globalCellInterval,
                          cell_idx_t ghostLayers, IBlock *block);
 
-  static std::function<void(IBlock *)>
-  getSweep(const shared_ptr<StreamSweep> &kernel) {
-    return [kernel](IBlock *b) { (*kernel)(b); };
-  }
+  void operator()(IBlock *block) { run(block); }
 
   static std::function<void(IBlock *)>
-  getSweepOnCellInterval(const shared_ptr<StreamSweep> &kernel,
-                         const shared_ptr<StructuredBlockStorage> &blocks,
-                         const CellInterval &globalCellInterval,
-                         cell_idx_t ghostLayers = 1) {
+  getSweep(const shared_ptr<CollideSweepDoublePrecisionAVX> &kernel) {
+    return [kernel](IBlock *b) { kernel->run(b); };
+  }
+
+  static std::function<void(IBlock *)> getSweepOnCellInterval(
+      const shared_ptr<CollideSweepDoublePrecisionAVX> &kernel,
+      const shared_ptr<StructuredBlockStorage> &blocks,
+      const CellInterval &globalCellInterval, cell_idx_t ghostLayers = 1) {
     return [kernel, blocks, globalCellInterval, ghostLayers](IBlock *b) {
       kernel->runOnCellInterval(blocks, globalCellInterval, ghostLayers, b);
     };
   }
 
+  std::function<void(IBlock *)> getSweep() {
+    return [this](IBlock *b) { this->run(b); };
+  }
+
+  std::function<void(IBlock *)>
+  getSweepOnCellInterval(const shared_ptr<StructuredBlockStorage> &blocks,
+                         const CellInterval &globalCellInterval,
+                         cell_idx_t ghostLayers = 1) {
+    return [this, blocks, globalCellInterval, ghostLayers](IBlock *b) {
+      this->runOnCellInterval(blocks, globalCellInterval, ghostLayers, b);
+    };
+  }
+
   BlockDataID forceID;
   BlockDataID pdfsID;
-  BlockDataID velocityID;
-
-private:
-  std::set<field::GhostLayerField<double, 19> *,
-           field::SwapableCompare<field::GhostLayerField<double, 19> *>>
-      cache_pdfs_;
+  double omega_bulk_;
+  double omega_even_;
+  double omega_odd_;
+  double omega_shear_;
 };
 
 } // namespace pystencils

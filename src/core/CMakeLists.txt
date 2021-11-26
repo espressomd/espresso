@@ -101,9 +101,9 @@ if(WITH_TESTS)
   add_subdirectory(unit_tests)
 endif(WITH_TESTS)
 
-if(WALBERLA)
+if(WITH_WALBERLA)
   target_link_libraries(EspressoCore PRIVATE WalberlaBridge ${WALBERLA_LIBS})
-endif(WALBERLA)
+endif(WITH_WALBERLA)
 
 if(STOKESIAN_DYNAMICS)
   add_subdirectory(stokesian_dynamics)

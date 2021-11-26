@@ -21,13 +21,6 @@ import numpy as np
 import espressomd.lb
 import espressomd.shapes
 
-"""
-Check the lattice-Boltzmann lid-driven shear flow in a slab system
-by comparing to the analytical solution.
-
-"""
-
-
 AGRID = 0.6
 VISC = 5.2
 DENS = 2.3
@@ -80,10 +73,20 @@ def shear_flow(x, t, nu, v, h, k_max):
 
 class LBShearCommon:
 
-    """Base class of the test that holds the test logic."""
+    """
+    Check the lattice-Boltzmann lid-driven shear flow in a slab system
+    by comparing to the analytical solution.
+    """
     system = espressomd.System(box_l=[H + 2. * AGRID, W, W])
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
+
+    def setUp(self):
+        self.lbf = self.lb_class(**LB_PARAMS, **self.lb_params)
+
+    def tearDown(self):
+        self.lbf.clear_boundaries()
+        self.system.actors.clear()
 
     def check_profile(self, shear_plane_normal, shear_direction):
         """
@@ -91,11 +94,10 @@ class LBShearCommon:
         the exact solution.
 
         """
-        self.system.actors.clear()
+        self.tearDown()
+        self.setUp()
         self.system.box_l = np.max(
             ((W, W, W), shear_plane_normal * (H + 2 * AGRID)), 0)
-
-        self.lbf = self.lb_class(**LB_PARAMS)
         self.system.actors.add(self.lbf)
         self.lbf.clear_boundaries()
 
@@ -178,12 +180,21 @@ class LBShearCommon:
 
 
 @utx.skipIfMissingFeatures(['LB_WALBERLA'])
-class LBWalberlaShear(ut.TestCase, LBShearCommon):
+class LBShearWalberla(LBShearCommon, ut.TestCase):
 
-    """Test for the Walberla implementation of the LB."""
+    """Test for the Walberla implementation of the LB in double-precision."""
 
-    def setUp(self):
-        self.lb_class = espressomd.lb.LBFluidWalberla
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': False}
+
+
+@utx.skipIfMissingFeatures(['LB_WALBERLA'])
+class LBShearWalberlaSinglePrecision(LBShearCommon, ut.TestCase):
+
+    """Test for the Walberla implementation of the LB in single-precision."""
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': True}
 
 
 if __name__ == '__main__':

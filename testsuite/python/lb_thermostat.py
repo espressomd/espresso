@@ -43,15 +43,23 @@ LB_PARAMS = {'agrid': AGRID,
 
 class LBThermostatCommon(thermostats_common.ThermostatsCommon):
 
-    """Base class of the test that holds the test logic."""
-    lbf = None
+    """Check the LB thermostat."""
+
     system = espressomd.System(box_l=[AGRID * 12] * 3)
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
     np.random.seed(41)
 
+    def setUp(self):
+        self.lbf = self.lb_class(**LB_PARAMS, **self.lb_params)
+        self.system.actors.add(self.lbf)
+        self.system.thermostat.set_lb(LB_fluid=self.lbf, seed=5, gamma=GAMMA)
+
+    def tearDown(self):
+        self.system.actors.clear()
+        self.system.thermostat.turn_off()
+
     def test_fluid(self):
-        self.prepare()
         self.system.integrator.run(100)
         fluid_temps = []
         for _ in range(100):
@@ -62,13 +70,7 @@ class LBThermostatCommon(thermostats_common.ThermostatsCommon):
         fluid_temp = np.average(fluid_temps)
         self.assertAlmostEqual(fluid_temp, KT, delta=0.05)
 
-    def prepare(self):
-        self.system.actors.clear()
-        self.system.actors.add(self.lbf)
-        self.system.thermostat.set_lb(LB_fluid=self.lbf, seed=5, gamma=GAMMA)
-
     def test_with_particles(self):
-        self.prepare()
         self.system.part.add(
             pos=np.random.random((100, 3)) * self.system.box_l)
         self.system.integrator.run(120)
@@ -85,8 +87,8 @@ class LBThermostatCommon(thermostats_common.ThermostatsCommon):
             v_particles[i] = self.system.part[:].v
         fluid_temp = np.average(fluid_temps)
 
-        np.testing.assert_allclose(np.average(v_particles), 0, atol=0.03)
-        np.testing.assert_allclose(np.var(v_particles), KT, atol=0.02)
+        np.testing.assert_allclose(np.average(v_particles), 0, atol=0.033)
+        np.testing.assert_allclose(np.var(v_particles), KT, atol=0.033)
 
         minmax = 3
         n_bins = 7
@@ -98,23 +100,32 @@ class LBThermostatCommon(thermostats_common.ThermostatsCommon):
 
 
 @utx.skipIfMissingFeatures(["LB_WALBERLA"])
-class LBWalberlaThermostat(ut.TestCase, LBThermostatCommon):
+class LBWalberlaThermostat(LBThermostatCommon, ut.TestCase):
 
     """Test for the CPU implementation of the LB."""
 
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMS)
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': False}
+
+
+@utx.skipIfMissingFeatures(["LB_WALBERLA"])
+class LBWalberlaThermostatSinglePrecision(LBThermostatCommon, ut.TestCase):
+
+    """Test for the CPU implementation of the LB in single-precision."""
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': True}
 
 
 # TODO WALBERLA
 # @utx.skipIfMissingGPU()
 # @utx.skipIfMissingFeatures(["LB_WALBERLA"])
-# class LBWalberlaGPUThermostat(ut.TestCase, LBThermostatCommon):
+# class LBWalberlaGPUThermostat(LBThermostatCommon, ut.TestCase):
 
 #    """Test for the GPU implementation of the LB."""
 
-#    def setUp(self):
-#        self.lbf = espressomd.lb.LBFluidWalberlaGPU(**LB_PARAMS)
+#    lb_class = espressomd.lb.LBFluidWalberlaGPU
+#    lb_params = {}
 
 
 if __name__ == '__main__':

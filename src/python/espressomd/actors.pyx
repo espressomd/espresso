@@ -234,12 +234,11 @@ class Actors:
 
     def clear(self):
         """Remove all actors."""
-        # The order in which actors are removed matters. For example LB actors
-        # need to be removed before long-range actors, because LB actors
-        # trigger an assertion when the MD cellsystem change, which happens
-        # when removing a P3M actor (because the maximal range of non-bonded
-        # interactions changes). Actors need to be removed in the reverse
-        # order they were inserted.
+        # The order in which actors are removed matters. Some actors set up
+        # global bitfields that activate sanity checks on the MD cellsystem,
+        # and reset these bitfields when removed. Actors need to be removed
+        # in the reverse order they were inserted to guarantee pre-conditions
+        # and post-conditions are always met.
         while len(self.active_actors):
             self.remove(self.active_actors[-1])
 

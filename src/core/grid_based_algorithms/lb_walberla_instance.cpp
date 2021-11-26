@@ -62,13 +62,12 @@ std::shared_ptr<LBWalberlaParams> lb_walberla_params() {
   return lb_walberla_params_instance;
 }
 
-void mpi_lb_sanity_checks_local(LBWalberlaBase const &lb_fluid,
-                                LBWalberlaParams const &lb_params,
-                                double md_time_step) {
+void lb_sanity_checks(LBWalberlaBase const &lb_fluid,
+                      LBWalberlaParams const &lb_params, double md_time_step) {
   auto const agrid = lb_params.get_agrid();
   auto const tau = lb_params.get_tau();
   // waLBerla and ESPResSo must agree on domain decomposition
-  auto [lb_my_left, lb_my_right] = lb_fluid.get_local_domain();
+  auto [lb_my_left, lb_my_right] = lb_fluid.lattice().get_local_domain();
   lb_my_left *= agrid;
   lb_my_right *= agrid;
   auto const my_left = local_geo.my_left();
@@ -76,10 +75,12 @@ void mpi_lb_sanity_checks_local(LBWalberlaBase const &lb_fluid,
   auto const tol = agrid / 1E6;
   if ((lb_my_left - my_left).norm2() > tol or
       (lb_my_right - my_right).norm2() > tol) {
-    runtimeErrorMsg() << this_node << ": left ESPResSo: [" << my_left << "], "
-                      << "left waLBerla: [" << lb_my_left << "]\n";
-    runtimeErrorMsg() << this_node << ": right ESPResSo: [" << my_right << "], "
-                      << "right waLBerla: [" << lb_my_right << "]\n";
+    runtimeErrorMsg() << "\nMPI rank " << this_node << ": "
+                      << "left ESPResSo: [" << my_left << "], "
+                      << "left waLBerla: [" << lb_my_left << "]"
+                      << "\nMPI rank " << this_node << ": "
+                      << "right ESPResSo: [" << my_right << "], "
+                      << "right waLBerla: [" << lb_my_right << "]";
     throw std::runtime_error(
         "waLBerla and ESPResSo disagree about domain decomposition.");
   }
@@ -89,13 +90,12 @@ void mpi_lb_sanity_checks_local(LBWalberlaBase const &lb_fluid,
   }
 }
 
-bool mpi_activate_lb_walberla_local(
-    std::shared_ptr<LBWalberlaBase> lb_fluid,
-    std::shared_ptr<LBWalberlaParams> lb_params) {
+bool activate_lb_walberla(std::shared_ptr<LBWalberlaBase> lb_fluid,
+                          std::shared_ptr<LBWalberlaParams> lb_params) {
   bool flag_failure = false;
   try {
     assert(::lattice_switch == ActiveLB::NONE);
-    mpi_lb_sanity_checks_local(*lb_fluid, *lb_params, get_time_step());
+    lb_sanity_checks(*lb_fluid, *lb_params, get_time_step());
   } catch (const std::exception &e) {
     runtimeErrorMsg() << "during waLBerla activation: " << e.what();
     flag_failure = true;
@@ -109,21 +109,23 @@ bool mpi_activate_lb_walberla_local(
   return false;
 }
 
-void mpi_deactivate_lb_walberla_local() {
+void deactivate_lb_walberla() {
   ::lb_walberla_instance.reset();
   ::lb_walberla_params_instance.reset();
   ::lattice_switch = ActiveLB::NONE;
 }
 
 std::shared_ptr<LBWalberlaBase>
-mpi_init_lb_walberla_local(LatticeWalberla const &lb_lattice,
-                           LBWalberlaParams const &lb_params, double viscosity,
-                           double density, double kT, int seed) {
+init_lb_walberla(std::shared_ptr<LatticeWalberla> const &lb_lattice,
+                 LBWalberlaParams const &lb_params, double viscosity,
+                 double density, double kT, int seed, bool single_precision) {
   bool flag_failure = false;
   std::shared_ptr<LBWalberlaBase> lb_ptr;
   try {
     assert(seed >= 0);
-    lb_ptr = new_lb_walberla(lb_lattice, viscosity, density, kT, seed);
+    lb_ptr = new_lb_walberla(lb_lattice, viscosity, density, single_precision);
+    if (kT != 0.)
+      lb_ptr->set_collision_model(kT, seed);
   } catch (const std::exception &e) {
     runtimeErrorMsg() << "during waLBerla initialization: " << e.what();
     flag_failure = true;
