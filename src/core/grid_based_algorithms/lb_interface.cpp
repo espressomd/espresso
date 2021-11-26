@@ -28,8 +28,13 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 
+#ifdef LB_WALBERLA
+#include <LBWalberlaNodeState.hpp>
+#endif
+
 #include <utils/Vector.hpp>
 
+#include <boost/serialization/access.hpp>
 #include <boost/serialization/vector.hpp>
 
 #include <cmath>
@@ -208,17 +213,18 @@ void lb_lbfluid_save_checkpoint(std::string const &filename, bool binary) {
       cpfile.write(grid_size);
       cpfile.write(pop_size);
 
-      Utils::Vector3d vbb;
       for (int i = 0; i < grid_size[0]; i++) {
         for (int j = 0; j < grid_size[1]; j++) {
           for (int k = 0; k < grid_size[2]; k++) {
-            Utils::Vector3i const ind{{i, j, k}};
-            cpfile.write(lb_lbnode_get_pop(ind));
-            cpfile.write(lb_lbnode_get_last_applied_force(ind));
-            auto const lbb = lb_lbnode_is_boundary(ind);
-            cpfile.write(lbb);
-            if (lbb) {
-              cpfile.write(lb_lbnode_get_velocity_at_boundary(ind));
+            auto const ind = Utils::Vector3i{{i, j, k}};
+            auto const cpnode = ::Communication::mpiCallbacks().call(
+                ::Communication::Result::one_rank,
+                Walberla::get_node_checkpoint, ind);
+            cpfile.write(cpnode.populations);
+            cpfile.write(cpnode.last_applied_force);
+            cpfile.write(cpnode.is_boundary);
+            if (cpnode.is_boundary) {
+              cpfile.write(cpnode.slip_velocity);
             }
           }
         }
@@ -271,26 +277,24 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
   try {
     if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
-      auto const gridsize = lb_walberla()->lattice().get_grid_dimensions();
+      auto const grid_size = lb_walberla()->lattice().get_grid_dimensions();
       auto const pop_size = lb_walberla()->stencil_size();
-      check_header(gridsize, pop_size);
+      check_header(grid_size, pop_size);
 
-      bool lbb;
-      Utils::Vector3d vbb;
-      Utils::Vector3d laf;
-      std::vector<double> pop(pop_size);
-      for (int i = 0; i < gridsize[0]; i++) {
-        for (int j = 0; j < gridsize[1]; j++) {
-          for (int k = 0; k < gridsize[2]; k++) {
-            Utils::Vector3i const ind{{i, j, k}};
-            cpfile.read(pop);
-            cpfile.read(laf);
-            cpfile.read(lbb);
-            if (lbb) {
-              cpfile.read(vbb);
+      LBWalberlaNodeState cpnode;
+      cpnode.populations.resize(pop_size);
+      for (int i = 0; i < grid_size[0]; i++) {
+        for (int j = 0; j < grid_size[1]; j++) {
+          for (int k = 0; k < grid_size[2]; k++) {
+            auto const ind = Utils::Vector3i{{i, j, k}};
+            cpfile.read(cpnode.populations);
+            cpfile.read(cpnode.last_applied_force);
+            cpfile.read(cpnode.is_boundary);
+            if (cpnode.is_boundary) {
+              cpfile.read(cpnode.slip_velocity);
             }
             ::Communication::mpiCallbacks().call_all(
-                Walberla::set_node_from_checkpoint, ind, pop, laf, vbb, lbb);
+                Walberla::set_node_from_checkpoint, ind, cpnode);
           }
         }
       }

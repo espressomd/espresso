@@ -23,6 +23,8 @@
 
 #ifdef LB_WALBERLA
 
+#include <LBWalberlaNodeState.hpp>
+
 #include <utils/Vector.hpp>
 
 #include <boost/optional.hpp>
@@ -53,8 +55,8 @@ void set_node_velocity(Utils::Vector3i ind, Utils::Vector3d u);
 void set_node_velocity_at_boundary(Utils::Vector3i ind, Utils::Vector3d u);
 void set_node_density(Utils::Vector3i ind, double density);
 void set_node_pop(Utils::Vector3i ind, std::vector<double> pop);
-void set_node_from_checkpoint(Utils::Vector3i ind, std::vector<double> pop,
-                              Utils::Vector3d f, Utils::Vector3d v, bool lbb);
+void set_node_from_checkpoint(Utils::Vector3i ind, LBWalberlaNodeState cpt);
+boost::optional<LBWalberlaNodeState> get_node_checkpoint(Utils::Vector3i ind);
 void do_reallocate_ubb_field();
 void do_ghost_communication();
 
