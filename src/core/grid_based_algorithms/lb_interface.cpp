@@ -683,114 +683,137 @@ void lb_lbfluid_print_velocity(const std::string &filename) {
   cpfile.close();
 }
 
+/** Handle for a LB checkpoint file. */
+class LBCheckpointFile {
+private:
+  bool m_binary;
+
+public:
+  std::fstream stream;
+
+  LBCheckpointFile(std::string const &filename, std::ios_base::openmode mode,
+                   bool binary) {
+    m_binary = binary;
+    auto flags = mode;
+    if (m_binary)
+      flags |= std::ios_base::binary;
+    stream.open(filename, flags);
+  }
+
+  ~LBCheckpointFile() = default;
+
+  template <typename T> void write(std::vector<T> const &vector) {
+    if (m_binary) {
+      stream.write(reinterpret_cast<const char *>(vector.data()),
+                   vector.size() * sizeof(T));
+    } else {
+      for (auto const &value : vector) {
+        stream << value << "\n";
+      }
+    }
+  }
+
+  template <typename T, std::size_t N>
+  void write(Utils::Vector<T, N> const &vector) {
+    if (m_binary) {
+      stream.write(reinterpret_cast<const char *>(vector.data()),
+                   N * sizeof(T));
+    } else {
+      stream << Utils::Vector<T, N>::formatter(" ") << vector << "\n";
+    }
+  }
+
+  template <typename T, std::size_t N> void read(Utils::Vector<T, N> &vector) {
+    if (m_binary) {
+      stream.read(reinterpret_cast<char *>(vector.data()), N * sizeof(T));
+    } else {
+      for (auto &value : vector) {
+        stream >> value;
+      }
+    }
+  }
+
+  template <typename T> void read(std::vector<T> &vector) {
+    if (m_binary) {
+      stream.read(reinterpret_cast<char *>(vector.data()),
+                  vector.size() * sizeof(T));
+    } else {
+      for (auto &value : vector) {
+        stream >> value;
+      }
+    }
+  }
+};
+
 void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
   auto const err_msg = std::string("Error while writing LB checkpoint: ");
 
   // open file and set exceptions
-  auto flags = std::ios_base::out;
-  if (binary)
-    flags |= std::ios_base::binary;
-  std::fstream cpfile;
-  cpfile.open(filename, flags);
-  if (!cpfile) {
+  LBCheckpointFile cpfile(filename, std::ios_base::out, binary);
+  if (!cpfile.stream) {
     throw std::runtime_error(err_msg + "could not open file " + filename);
   }
-  cpfile.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-
-  // write the grid size in the checkpoint header
-  auto const write_header = [&](Utils::Vector3i const &grid_size) {
-    if (!binary) {
-      cpfile << Utils::Vector3i::formatter(" ") << grid_size << "\n";
-    } else {
-      cpfile.write(reinterpret_cast<const char *>(grid_size.data()),
-                   3 * sizeof(int));
-    }
-  };
+  cpfile.stream.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
   try {
     if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
       if (!binary) {
-        cpfile.precision(8);
-        cpfile << std::fixed;
+        cpfile.stream.precision(8);
+        cpfile.stream << std::fixed;
       }
 
-      auto const gridsize = lb_lbfluid_get_shape();
+      auto const grid_size = lb_lbfluid_get_shape();
       auto const data_length = lbpar_gpu.number_of_nodes * D3Q19::n_vel;
-      write_header(gridsize);
+      cpfile.write(grid_size);
 
       std::vector<float> host_checkpoint_vd(data_length);
       lb_save_checkpoint_GPU(host_checkpoint_vd.data());
-      if (!binary) {
-        for (auto const p : host_checkpoint_vd) {
-          cpfile << p << "\n";
-        }
-      } else {
-        cpfile.write(reinterpret_cast<char *>(host_checkpoint_vd.data()),
-                     data_length * sizeof(float));
-      }
+      cpfile.write(host_checkpoint_vd);
 #endif //  CUDA
     } else if (lattice_switch == ActiveLB::CPU) {
       if (!binary) {
-        cpfile.precision(16);
-        cpfile << std::fixed;
+        cpfile.stream.precision(16);
+        cpfile.stream << std::fixed;
       }
 
-      auto const gridsize = lb_lbfluid_get_shape();
-      write_header(gridsize);
+      auto const grid_size = lb_lbfluid_get_shape();
+      cpfile.write(grid_size);
 
-      for (int i = 0; i < gridsize[0]; i++) {
-        for (int j = 0; j < gridsize[1]; j++) {
-          for (int k = 0; k < gridsize[2]; k++) {
-            Utils::Vector3i const ind{{i, j, k}};
+      for (int i = 0; i < grid_size[0]; i++) {
+        for (int j = 0; j < grid_size[1]; j++) {
+          for (int k = 0; k < grid_size[2]; k++) {
+            auto const ind = Utils::Vector3i{{i, j, k}};
             auto const pop = mpi_call(::Communication::Result::one_rank,
                                       mpi_lb_get_populations, ind);
-            if (!binary) {
-              for (auto const p : pop) {
-                cpfile << p << "\n";
-              }
-            } else {
-              cpfile.write(reinterpret_cast<const char *>(pop.data()),
-                           D3Q19::n_vel * sizeof(double));
-            }
+            cpfile.write(pop);
           }
         }
       }
     }
   } catch (std::ios_base::failure const &fail) {
-    cpfile.close();
+    cpfile.stream.close();
     throw std::runtime_error(err_msg + "could not write data to " + filename);
   } catch (std::runtime_error const &fail) {
-    cpfile.close();
+    cpfile.stream.close();
     throw;
   }
-  cpfile.close();
 }
 
 void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
   auto const err_msg = std::string("Error while reading LB checkpoint: ");
 
   // open file and set exceptions
-  auto flags = std::ios_base::in;
-  if (binary)
-    flags |= std::ios_base::binary;
-  std::fstream cpfile;
-  cpfile.open(filename, flags);
-  if (!cpfile) {
+  LBCheckpointFile cpfile(filename, std::ios_base::in, binary);
+  if (!cpfile.stream) {
     throw std::runtime_error(err_msg + "could not open file " + filename);
   }
-  cpfile.exceptions(std::ios_base::failbit | std::ios_base::badbit);
+  cpfile.stream.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
   // check the grid size in the checkpoint header matches the current grid size
   auto const check_header = [&](Utils::Vector3i const &expected_grid_size) {
     Utils::Vector3i grid_size;
-    if (!binary) {
-      for (auto &n : grid_size) {
-        cpfile >> n;
-      }
-    } else {
-      cpfile.read(reinterpret_cast<char *>(grid_size.data()), 3 * sizeof(int));
-    }
+    cpfile.read(grid_size);
     if (grid_size != expected_grid_size) {
       std::stringstream message;
       message << " grid dimensions mismatch,"
@@ -808,14 +831,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
       std::vector<float> host_checkpoint_vd(data_length);
       check_header(gridsize);
 
-      if (!binary) {
-        for (auto &p : host_checkpoint_vd) {
-          cpfile >> p;
-        }
-      } else {
-        cpfile.read(reinterpret_cast<char *>(host_checkpoint_vd.data()),
-                    data_length * sizeof(float));
-      }
+      cpfile.read(host_checkpoint_vd);
       lb_load_checkpoint_GPU(host_checkpoint_vd.data());
 #endif //  CUDA
     } else if (lattice_switch == ActiveLB::CPU) {
@@ -827,15 +843,8 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
       for (int i = 0; i < gridsize[0]; i++) {
         for (int j = 0; j < gridsize[1]; j++) {
           for (int k = 0; k < gridsize[2]; k++) {
-            Utils::Vector3i const ind{{i, j, k}};
-            if (!binary) {
-              for (auto &p : pop) {
-                cpfile >> p;
-              }
-            } else {
-              cpfile.read(reinterpret_cast<char *>(pop.data()),
-                          D3Q19::n_vel * sizeof(double));
-            }
+            auto const ind = Utils::Vector3i{{i, j, k}};
+            cpfile.read(pop);
             lb_lbnode_set_pop(ind, pop);
           }
         }
@@ -847,25 +856,24 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
     }
     // check EOF
     if (!binary) {
-      if (cpfile.peek() == '\n') {
-        static_cast<void>(cpfile.get());
+      if (cpfile.stream.peek() == '\n') {
+        static_cast<void>(cpfile.stream.get());
       }
     }
-    if (cpfile.peek() != EOF) {
+    if (cpfile.stream.peek() != EOF) {
       throw std::runtime_error(err_msg + "extra data found, expected EOF.");
     }
   } catch (std::ios_base::failure const &fail) {
-    auto const eof_error = cpfile.eof();
-    cpfile.close();
+    auto const eof_error = cpfile.stream.eof();
+    cpfile.stream.close();
     if (eof_error) {
       throw std::runtime_error(err_msg + "EOF found.");
     }
     throw std::runtime_error(err_msg + "incorrectly formatted data.");
   } catch (std::runtime_error const &fail) {
-    cpfile.close();
+    cpfile.stream.close();
     throw;
   }
-  cpfile.close();
 }
 
 Utils::Vector3i lb_lbfluid_get_shape() {
