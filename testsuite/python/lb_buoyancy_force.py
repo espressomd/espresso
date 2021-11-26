@@ -74,37 +74,39 @@ class LBBuoyancy:
 
         sphere_volume = 4. / 3. * np.pi * RADIUS**3
 
+        # TODO WALBERLA: (#4381)
+        self.skipTest("boundary forces not implemented at the moment")
+
         # Equilibration
-        # TODO: WALBERLA: (#4381) boundary forces not reliable at the moment
-        # last_force = np.inf * np.ones(3)
-        # self.system.integrator.run(100)
-        # while True:
-        #     self.system.integrator.run(10)
-        #     force = np.linalg.norm(sphere.get_force())
-        #     if np.linalg.norm(force - last_force) < 0.01:
-        #         break
-        #     last_force = force
+        last_force = np.inf * np.ones(3)
+        self.system.integrator.run(100)
+        while True:
+            self.system.integrator.run(10)
+            force = np.linalg.norm(self.lbf.boundary['sphere'].get_force())
+            if np.linalg.norm(force - last_force) < 0.01:
+                break
+            last_force = force
 
-        # # Check force balance
-        # boundary_force = np.zeros(3)
-        # for b in self.system.lbboundaries:
-        #     boundary_force += b.get_force()
+        # Check force balance
+        boundary_force = np.zeros(3)
+        for b in self.lbf.boundary:
+            boundary_force += b.get_force()
 
-        # fluid_nodes = tests_common.count_fluid_nodes(self.lbf)
-        # fluid_volume = fluid_nodes * AGRID**3
-        # applied_force = fluid_volume * np.array(LB_PARAMS['ext_force_density'])
+        fluid_nodes = tests_common.count_fluid_nodes(self.lbf)
+        fluid_volume = fluid_nodes * AGRID**3
+        applied_force = fluid_volume * np.array(LB_PARAMS['ext_force_density'])
 
-        # np.testing.assert_allclose(
-        #     boundary_force,
-        #     applied_force,
-        #     atol=0.08 * np.linalg.norm(applied_force))
+        np.testing.assert_allclose(
+            boundary_force,
+            applied_force,
+            atol=0.08 * np.linalg.norm(applied_force))
 
-        # # Check buoyancy force on the sphere
-        # expected_force = np.array(
-        #     [0, -sphere_volume * DENS * G, 0])
-        # np.testing.assert_allclose(
-        #     np.copy(sphere.get_force()), expected_force,
-        #     atol=np.linalg.norm(expected_force) * 0.02)
+        # Check buoyancy force on the sphere
+        expected_force = np.array(
+            [0, -sphere_volume * DENS * G, 0])
+        np.testing.assert_allclose(
+            np.copy(self.lbf.boundary['sphere'].get_force()), expected_force,
+            atol=np.linalg.norm(expected_force) * 0.02)
 
 
 @utx.skipIfMissingFeatures(["EXTERNAL_FORCES", "LB_WALBERLA"])

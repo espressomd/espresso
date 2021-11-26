@@ -90,24 +90,26 @@ class Stokes:
                 tmp += k * k
             return np.sqrt(tmp)
 
-        # TODO: WALBERLA: (#4381) boundary forces not reliable at the moment
-        # last_force = -1000.
-        # dynamic_viscosity = self.lbf.viscosity * DENS
-        # stokes_force = 6 * np.pi * dynamic_viscosity * radius * size(v)
-        # self.system.integrator.run(50)
-        # while True:
-        #     self.system.integrator.run(3)
-        #     force = np.linalg.norm(sphere.get_force())
-        #     if np.abs(last_force - force) < 0.01 * stokes_force:
-        #         break
-        #     last_force = force
+        # TODO WALBERLA: (#4381)
+        self.skipTest("boundary forces not implemented at the moment")
 
-        # force = np.copy(sphere.get_force())
-        # np.testing.assert_allclose(
-        #     force,
-        #     [0, 0, stokes_force],
-        #     rtol=0.03,
-        #     atol=stokes_force * 0.03)
+        last_force = -1000.
+        dynamic_viscosity = self.lbf.viscosity * DENS
+        stokes_force = 6 * np.pi * dynamic_viscosity * radius * size(v)
+        self.system.integrator.run(50)
+        while True:
+            self.system.integrator.run(3)
+            force = np.linalg.norm(self.lbf.boundary['sphere'].get_force())
+            if np.abs(last_force - force) < 0.01 * stokes_force:
+                break
+            last_force = force
+
+        force = np.copy(self.lbf.boundary['sphere'].get_force())
+        np.testing.assert_allclose(
+            force,
+            [0, 0, stokes_force],
+            rtol=0.03,
+            atol=stokes_force * 0.03)
 
 
 @utx.skipIfMissingFeatures(['LB_WALBERLA'])

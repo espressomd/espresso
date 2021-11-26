@@ -66,25 +66,27 @@ class LBBoundaryForceCommon:
         self.lbf.add_boundary_from_shape(wall_shape1)
         self.lbf.add_boundary_from_shape(wall_shape2)
 
+        # TODO WALBERLA: (#4381)
+        self.skipTest("boundary forces not implemented at the moment")
+
         self.system.integrator.run(20)
         diff = float("inf")
         old_val = float("inf")
-        # TODO: WALBERLA: (#4381) boundary forces not reliable at the moment
-        # while diff > 0.002:
-        #     self.system.integrator.run(10)
-        #     new_val = wall1.get_force()[0]
-        #     diff = abs(new_val - old_val)
-        #     old_val = new_val
+        while diff > 0.002:
+            self.system.integrator.run(10)
+            new_val = self.lbf.boundary['wall1'].get_force()[0]
+            diff = abs(new_val - old_val)
+            old_val = new_val
 
-        # expected_force = fluid_nodes * AGRID**3 * \
-        #     np.copy(self.lbf.ext_force_density)
-        # measured_force = np.array(wall1.get_force()) + \
-        #     np.array(wall2.get_force())
-        # # TODO WALBERLA: the force converges to 90% of the expected force
-        # np.testing.assert_allclose(
-        #     measured_force,
-        #     expected_force * 0.9,
-        #     atol=1E-10)
+        expected_force = fluid_nodes * AGRID**3 * \
+            np.copy(self.lbf.ext_force_density)
+        measured_force = np.array(self.lbf.boundary['wall1'].get_force()) + \
+            np.array(self.lbf.boundary['wall2'].get_force())
+        # TODO WALBERLA: the force converges to 90% of the expected force
+        np.testing.assert_allclose(
+            measured_force,
+            expected_force * 0.9,
+            atol=1E-10)
 
 
 @utx.skipIfMissingFeatures(["LB_WALBERLA"])
