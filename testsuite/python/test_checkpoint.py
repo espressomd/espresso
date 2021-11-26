@@ -67,11 +67,6 @@ class CheckpointTest(ut.TestCase):
 
     @ut.skipIf(not LB, "Skipping test due to missing mode.")
     def test_lb_fluid(self):
-        '''
-        Check serialization of the LB fluid. The checkpoint file only stores
-        population information, therefore calling ``lbf.load_checkpoint()``
-        erases all boundary information.
-        '''
         lbf = self.get_active_actor_of_type(espressomd.lb.LBFluidWalberla)
         cpt_mode = int("@TEST_BINARY@")
         cpt_path = self.checkpoint.checkpoint_dir + "/lb{}.cpt"
@@ -124,6 +119,27 @@ class CheckpointTest(ut.TestCase):
             self.assertAlmostEqual(reference[key], state[key], delta=1E-7)
         self.assertTrue(lbf.is_active)
         self.assertFalse(lbf.is_single_precision)
+
+        # check boundary objects
+        slip_velocity1 = np.array([1e-4, 1e-4, 0.])
+        slip_velocity2 = np.array([0., 0., 0.])
+        # check boundary flag
+        np.testing.assert_equal(
+            np.copy(lbf[0, :, :].is_boundary.astype(int)), 1)
+        np.testing.assert_equal(
+            np.copy(lbf[-1, :, :].is_boundary.astype(int)), 1)
+        np.testing.assert_equal(
+            np.copy(lbf[1:-1, :, :].is_boundary.astype(int)), 0)
+        for node in lbf[0, :, :]:
+            np.testing.assert_allclose(np.copy(node.velocity), slip_velocity1)
+        for node in lbf[-1, :, :]:
+            np.testing.assert_allclose(np.copy(node.velocity), slip_velocity2)
+        for node in lbf[2, :, :]:
+            np.testing.assert_allclose(np.copy(node.velocity), 0.)
+        # remove boundaries
+        lbf.clear_boundaries()
+        np.testing.assert_equal(
+            np.copy(lbf[:, :, :].is_boundary.astype(int)), 0)
 
     @utx.skipIfMissingFeatures('LB_WALBERLA')
     @ut.skipIf('LB.ACTIVE.WALBERLA' not in modes, 'waLBerla LBM not in modes')

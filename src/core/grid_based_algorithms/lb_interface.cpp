@@ -156,22 +156,36 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
       auto const pop_size = lb_walberla()->stencil_size();
       write_header(gridsize, pop_size);
 
+      Utils::Vector3d vbb;
       for (int i = 0; i < gridsize[0]; i++) {
         for (int j = 0; j < gridsize[1]; j++) {
           for (int k = 0; k < gridsize[2]; k++) {
             Utils::Vector3i const ind{{i, j, k}};
             auto const pop = lb_lbnode_get_pop(ind);
             auto const laf = lb_lbnode_get_last_applied_force(ind);
+            auto const lbb = lb_lbnode_is_boundary(ind);
+            if (lbb) {
+              vbb = lb_lbnode_get_velocity_at_boundary(ind);
+            }
             if (!binary) {
               for (auto const p : pop) {
                 cpfile << p << "\n";
               }
               cpfile << Utils::Vector3d::formatter(" ") << laf << "\n";
+              cpfile << lbb << "\n";
+              if (lbb) {
+                cpfile << Utils::Vector3d::formatter(" ") << vbb << "\n";
+              }
             } else {
               cpfile.write(reinterpret_cast<const char *>(pop.data()),
                            pop_size * sizeof(double));
               cpfile.write(reinterpret_cast<const char *>(laf.data()),
                            3 * sizeof(double));
+              cpfile.write(reinterpret_cast<const char *>(&lbb), sizeof(lbb));
+              if (lbb) {
+                cpfile.write(reinterpret_cast<const char *>(vbb.data()),
+                             3 * sizeof(double));
+              }
             }
           }
         }
@@ -239,6 +253,8 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
       auto const pop_size = lb_walberla()->stencil_size();
       check_header(gridsize, pop_size);
 
+      bool lbb;
+      Utils::Vector3d vbb;
       Utils::Vector3d laf;
       std::vector<double> pop(pop_size);
       for (int i = 0; i < gridsize[0]; i++) {
@@ -252,17 +268,30 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
               for (auto &l : laf) {
                 cpfile >> l;
               }
+              cpfile >> lbb;
+              if (lbb) {
+                for (auto &v : vbb) {
+                  cpfile >> v;
+                }
+              }
             } else {
               cpfile.read(reinterpret_cast<char *>(pop.data()),
                           pop_size * sizeof(double));
               cpfile.read(reinterpret_cast<char *>(laf.data()),
                           3 * sizeof(double));
+              cpfile.read(reinterpret_cast<char *>(&lbb), sizeof(lbb));
+              if (lbb) {
+                cpfile.read(reinterpret_cast<char *>(vbb.data()),
+                            3 * sizeof(double));
+              }
             }
             ::Communication::mpiCallbacks().call_all(
-                Walberla::set_node_from_checkpoint, ind, pop, laf);
+                Walberla::set_node_from_checkpoint, ind, pop, laf, vbb, lbb);
           }
         }
       }
+      ::Communication::mpiCallbacks().call_all(
+          Walberla::do_reallocate_ubb_field);
       ::Communication::mpiCallbacks().call_all(
           Walberla::do_ghost_communication);
 #endif // WALBERLA

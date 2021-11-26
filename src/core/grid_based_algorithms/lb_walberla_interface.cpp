@@ -152,12 +152,19 @@ void set_node_pop(Utils::Vector3i ind, std::vector<double> pop) {
 REGISTER_CALLBACK(set_node_pop)
 
 void set_node_from_checkpoint(Utils::Vector3i ind, std::vector<double> pop,
-                              Utils::Vector3d f) {
+                              Utils::Vector3d f, Utils::Vector3d v, bool lbb) {
   lb_walberla()->set_node_pop(ind, pop);
   lb_walberla()->set_node_last_applied_force(ind, f);
+  if (lbb) {
+    lb_walberla()->set_node_velocity_at_boundary(ind, v, false);
+  }
 }
 
 REGISTER_CALLBACK(set_node_from_checkpoint)
+
+void do_reallocate_ubb_field() { lb_walberla()->reallocate_ubb_field(); }
+
+REGISTER_CALLBACK(do_reallocate_ubb_field)
 
 void do_ghost_communication() { lb_walberla()->ghost_communication(); }
 
