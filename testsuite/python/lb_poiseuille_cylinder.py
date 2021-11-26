@@ -81,7 +81,6 @@ class LBPoiseuilleCommon:
               'orientation': [1, 0, 0]}
 
     def tearDown(self):
-        self.lbf.clear_boundaries()
         self.system.actors.clear()
 
     def prepare(self):

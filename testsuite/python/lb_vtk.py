@@ -47,8 +47,6 @@ class LBWrite:
         self.system.actors.add(self.lbf)
 
     def tearDown(self):
-        if self.lbf is not None:
-            self.lbf.clear_boundaries()
         self.system.actors.clear()
         self.system.thermostat.turn_off()
 

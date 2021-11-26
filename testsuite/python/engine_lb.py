@@ -77,7 +77,6 @@ class SwimmerTest():
 
     def tearDown(self):
         self.system.part.clear()
-        self.lbf.clear_boundaries()
         self.system.actors.clear()
         self.system.thermostat.turn_off()
 

@@ -55,7 +55,6 @@ class LBBuoyancy:
         self.system.actors.add(self.lbf)
 
     def tearDown(self):
-        self.lbf.clear_boundaries()
         self.system.actors.clear()
 
     def test(self):
@@ -76,9 +75,9 @@ class LBBuoyancy:
         sphere_volume = 4. / 3. * np.pi * RADIUS**3
 
         # Equilibration
-        last_force = np.inf * np.ones(3)
-        self.system.integrator.run(100)
         # TODO: WALBERLA: (#4381) boundary forces not reliable at the moment
+        # last_force = np.inf * np.ones(3)
+        # self.system.integrator.run(100)
         # while True:
         #     self.system.integrator.run(10)
         #     force = np.linalg.norm(sphere.get_force())

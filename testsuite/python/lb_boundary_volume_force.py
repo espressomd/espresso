@@ -49,7 +49,6 @@ class LBBoundaryForceCommon:
         self.system.actors.add(self.lbf)
 
     def tearDown(self):
-        self.lbf.clear_boundaries()
         self.system.actors.clear()
 
     def test(self):

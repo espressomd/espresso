@@ -85,7 +85,6 @@ class LBShearCommon:
         self.lbf = self.lb_class(**LB_PARAMS, **self.lb_params)
 
     def tearDown(self):
-        self.lbf.clear_boundaries()
         self.system.actors.clear()
 
     def check_profile(self, shear_plane_normal, shear_direction):

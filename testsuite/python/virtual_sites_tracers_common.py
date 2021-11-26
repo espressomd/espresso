@@ -39,7 +39,7 @@ class VirtualSitesTracersCommon:
         self.system.actors.clear()
         self.system.thermostat.turn_off()
 
-    def reset_lb(self, ext_force_density=(0, 0, 0)):
+    def set_lb(self, ext_force_density=(0, 0, 0)):
         self.lbf = self.LBClass(
             kT=0.0, agrid=1, density=1, viscosity=1.8,
             tau=self.system.time_step, ext_force_density=ext_force_density)
@@ -73,8 +73,7 @@ class VirtualSitesTracersCommon:
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_ab_single_step(self):
-        self.reset_lb()
-        self.lbf.clear_boundaries()
+        self.set_lb()
         self.system.part.clear()
         self.system.virtual_sites = espressomd.virtual_sites.VirtualSitesInertialessTracers()
 
@@ -122,7 +121,7 @@ class VirtualSitesTracersCommon:
                 np.sum(applied_forces, axis=0), [0, 0, 0])
 
     def test_advection(self):
-        self.reset_lb(ext_force_density=[0.1, 0, 0])
+        self.set_lb(ext_force_density=[0.1, 0, 0])
         # System setup
         system = self.system
 
@@ -147,7 +146,7 @@ class VirtualSitesTracersCommon:
         virtual ones.
 
         """
-        self.reset_lb()
+        self.set_lb()
         system = self.system
         system.virtual_sites = espressomd.virtual_sites.VirtualSitesInertialessTracers()
         system.actors.clear()

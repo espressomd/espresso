@@ -38,12 +38,10 @@ class LBBoundaryVelocityTest(ut.TestCase):
     system.time_step = lb_params['tau']
     system.cell_system.skin = 0.1
 
-    lb_fluid = None
-
-    def tearDown(self) -> None:
+    def tearDown(self):
         self.system.actors.clear()
 
-    def setUp(self) -> None:
+    def setUp(self):
         self.lb_fluid = espressomd.lb.LBFluidWalberla(**self.lb_params)
         self.system.actors.add(self.lb_fluid)
 
@@ -255,7 +253,6 @@ class LBBoundaryVelocityTest(ut.TestCase):
                 direction=1)
 
         agrid = self.lb_params['agrid']
-        system = self.system
         periodic = np.roll([True, True, True], axis)
         aperiodic = np.roll([False, False, False], axis)
 

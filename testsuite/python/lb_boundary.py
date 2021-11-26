@@ -36,7 +36,6 @@ class LBBoundariesBase:
         self.system.actors.add(self.lbf)
 
     def tearDown(self):
-        self.lbf.clear_boundaries()
         self.system.actors.clear()
 
     def check_boundary_flags(self, slip_velocity1, slip_velocity2):

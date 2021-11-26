@@ -59,11 +59,9 @@ class Stokes:
     def setUp(self):
         self.lbf = self.lb_class(**LB_PARAMS, **self.lb_params)
         self.system.actors.add(self.lbf)
-        self.lbf.clear_boundaries()
         self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=1.0)
 
     def tearDown(self):
-        self.lbf.clear_boundaries()
         self.system.actors.clear()
         self.system.thermostat.turn_off()
 
@@ -92,10 +90,10 @@ class Stokes:
                 tmp += k * k
             return np.sqrt(tmp)
 
-        last_force = -1000.
-        dynamic_viscosity = self.lbf.viscosity * DENS
-        stokes_force = 6 * np.pi * dynamic_viscosity * radius * size(v)
         # TODO: WALBERLA: (#4381) boundary forces not reliable at the moment
+        # last_force = -1000.
+        # dynamic_viscosity = self.lbf.viscosity * DENS
+        # stokes_force = 6 * np.pi * dynamic_viscosity * radius * size(v)
         # self.system.integrator.run(50)
         # while True:
         #     self.system.integrator.run(3)
