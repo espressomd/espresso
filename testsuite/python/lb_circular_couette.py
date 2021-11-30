@@ -17,7 +17,6 @@
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
-import scipy.optimize
 
 import espressomd.math
 import espressomd.lb
@@ -47,6 +46,16 @@ OBS_PARAMS = {'n_r_bins': 12,
               'max_phi': np.pi,
               'max_z': BOX_L / 2.,
               'sampling_density': 1.0}
+
+
+def taylor_couette(v1, v2, r1, r2):
+    # Taylor-Couette equation
+    omega1 = v1 / r1
+    omega2 = v2 / r2
+    eta = r1 / r2
+    a = (omega2 - omega1 * eta**2) / (1. - eta**2)
+    b = r1**2 * (omega1 - omega2) / (1. - eta**2)
+    return a, b
 
 
 class LBCircularCouetteCommon:
@@ -102,10 +111,11 @@ class LBCircularCouetteCommon:
             2. * AGRID - BOX_L * (1. + (np.sqrt(2.) - 1.) / 2.),
         ]
         # outer cylinder with tangential slip velocity
+        slip_vel = 0.01
         for normal, dist in zip(normals, dists):
             self.system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(
                 shape=espressomd.shapes.Wall(normal=normal, dist=dist),
-                velocity=0.3 * np.cross(self.params['axis'], normal)))
+                velocity=slip_vel * np.cross(normal, self.params['axis'])))
         # inner cylinder without slip velocity
         self.system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(
             shape=espressomd.shapes.Cylinder(
@@ -147,22 +157,17 @@ class LBCircularCouetteCommon:
         r = obs.bin_centers()[:, :, :, 0].reshape(-1)
         v_r, v_phi, v_z = np.copy(obs.calculate()).reshape([-1, 3]).T
 
-        def taylor_couette_kernel(r, a, b):
-            return a * r + b / r
-
         # check velocity is zero for the radial and axial components
-        np.testing.assert_allclose(v_r, 0., atol=1e-3)
+        np.testing.assert_allclose(v_r, 0., atol=1e-6)
         np.testing.assert_allclose(v_z, 0., atol=1e-8)
 
-        # get Taylor-Couette coefficients
-        (a_sim, b_sim), _ = scipy.optimize.curve_fit(
-            taylor_couette_kernel, r, v_phi)
-        # check deviations are small (the outer cylinder isn't perfect)
-        v_phi_fit = taylor_couette_kernel(r, a_sim, b_sim)
-        np.testing.assert_allclose(v_phi, v_phi_fit, atol=1e-2)
-        # check the correct coefficients are recovered
-        a_ref, b_ref = (-0.0388038, 0.019088255)
-        np.testing.assert_allclose([a_sim, b_sim], [a_ref, b_ref], atol=1e-6)
+        # check azimuthal velocity in the Couette regime
+        a_ref, b_ref = taylor_couette(
+            0.0, slip_vel, 1., BOX_L / 2. - 2. * AGRID)
+        v_phi_ref = a_ref * r + b_ref / r
+        v_phi_drift = np.mean(v_phi) - np.mean(v_phi_ref)
+        np.testing.assert_allclose(v_phi_drift, 0., atol=5e-4)
+        np.testing.assert_allclose(v_phi - v_phi_drift, v_phi_ref, atol=1e-3)
 
 
 @utx.skipIfMissingFeatures(['LB_BOUNDARIES'])
