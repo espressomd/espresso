@@ -120,37 +120,35 @@ double lb_lbfluid_get_lattice_speed() {
   return lb_lbfluid_get_agrid() / lb_lbfluid_get_tau();
 }
 
-struct CheckPointFile {
-  std::fstream stream;
-  std::ios_base::openmode flags;
+/** Handle for a LB checkpoint file. */
+class LBCheckpointFile {
+private:
+  bool m_binary;
 
-  CheckPointFile(std::string const &filename, std::ios_base::openmode mode,
-                 bool binary) {
-    flags = mode;
-    if (binary)
+public:
+  std::fstream stream;
+
+  LBCheckpointFile(std::string const &filename, std::ios_base::openmode mode,
+                   bool binary) {
+    m_binary = binary;
+    auto flags = mode;
+    if (m_binary)
       flags |= std::ios_base::binary;
     stream.open(filename, flags);
   }
 
+  ~LBCheckpointFile() = default;
+
   template <typename T> void write(T const &value) {
-    if (flags & std::ios_base::binary) {
+    if (m_binary) {
       stream.write(reinterpret_cast<const char *>(&value), sizeof(T));
     } else {
       stream << value << "\n";
     }
   }
 
-  template <typename T> void write(Utils::Vector<T, 3> const &vector) {
-    if (flags & std::ios_base::binary) {
-      stream.write(reinterpret_cast<const char *>(vector.data()),
-                   3u * sizeof(T));
-    } else {
-      stream << Utils::Vector<T, 3>::formatter(" ") << vector << "\n";
-    }
-  }
-
   template <typename T> void write(std::vector<T> const &vector) {
-    if (flags & std::ios_base::binary) {
+    if (m_binary) {
       stream.write(reinterpret_cast<const char *>(vector.data()),
                    vector.size() * sizeof(T));
     } else {
@@ -160,17 +158,27 @@ struct CheckPointFile {
     }
   }
 
+  template <typename T, std::size_t N>
+  void write(Utils::Vector<T, N> const &vector) {
+    if (m_binary) {
+      stream.write(reinterpret_cast<const char *>(vector.data()),
+                   N * sizeof(T));
+    } else {
+      stream << Utils::Vector<T, N>::formatter(" ") << vector << "\n";
+    }
+  }
+
   template <typename T> void read(T &value) {
-    if (flags & std::ios_base::binary) {
+    if (m_binary) {
       stream.read(reinterpret_cast<char *>(&value), sizeof(T));
     } else {
       stream >> value;
     }
   }
 
-  template <typename T> void read(Utils::Vector<T, 3> &vector) {
-    if (flags & std::ios_base::binary) {
-      stream.read(reinterpret_cast<char *>(vector.data()), 3u * sizeof(T));
+  template <typename T, std::size_t N> void read(Utils::Vector<T, N> &vector) {
+    if (m_binary) {
+      stream.read(reinterpret_cast<char *>(vector.data()), N * sizeof(T));
     } else {
       for (auto &value : vector) {
         stream >> value;
@@ -179,7 +187,7 @@ struct CheckPointFile {
   }
 
   template <typename T> void read(std::vector<T> &vector) {
-    if (flags & std::ios_base::binary) {
+    if (m_binary) {
       stream.read(reinterpret_cast<char *>(vector.data()),
                   vector.size() * sizeof(T));
     } else {
@@ -190,11 +198,11 @@ struct CheckPointFile {
   }
 };
 
-void lb_lbfluid_save_checkpoint(std::string const &filename, bool binary) {
+void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
   auto const err_msg = std::string("Error while writing LB checkpoint: ");
 
   // open file and set exceptions
-  auto cpfile = CheckPointFile(filename, std::ios_base::out, binary);
+  LBCheckpointFile cpfile(filename, std::ios_base::out, binary);
   if (!cpfile.stream) {
     throw std::runtime_error(err_msg + "could not open file " + filename);
   }
@@ -238,14 +246,13 @@ void lb_lbfluid_save_checkpoint(std::string const &filename, bool binary) {
     cpfile.stream.close();
     throw;
   }
-  cpfile.stream.close();
 }
 
 void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
   auto const err_msg = std::string("Error while reading LB checkpoint: ");
 
   // open file and set exceptions
-  auto cpfile = CheckPointFile(filename, std::ios_base::in, binary);
+  LBCheckpointFile cpfile(filename, std::ios_base::in, binary);
   if (!cpfile.stream) {
     throw std::runtime_error(err_msg + "could not open file " + filename);
   }
@@ -328,7 +335,6 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
     cpfile.stream.close();
     throw;
   }
-  cpfile.stream.close();
 }
 
 Utils::Vector3i lb_lbfluid_get_shape() {

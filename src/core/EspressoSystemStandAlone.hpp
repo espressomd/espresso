@@ -16,6 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef ESPRESSO_SYSTEM_STAND_ALONE_HPP
+#define ESPRESSO_SYSTEM_STAND_ALONE_HPP
 
 #include <utils/Vector.hpp>
 
@@ -32,3 +34,5 @@ public:
 private:
   bool head_node;
 };
+
+#endif
