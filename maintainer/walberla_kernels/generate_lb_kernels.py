@@ -234,6 +234,8 @@ def generate_setters(lb_method):
 
 def check_dependencies():
     import setuptools
+    import pystencils
+    import lbmpy
     SpecifierSet = setuptools.version.pkg_resources.packaging.specifiers.SpecifierSet
     for module, requirement in [(pystencils, '==0.4.3'), (lbmpy, '==0.4.3')]:
         assert SpecifierSet(requirement).contains(module.__version__), \
