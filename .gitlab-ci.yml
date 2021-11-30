@@ -127,6 +127,26 @@ maxset-walberla:
     - docker
     - linux
 
+maxset-walberla-avx:
+  <<: *global_job_definition
+  stage: build
+  variables:
+     with_cuda: 'false'
+     myconfig: 'maxset'
+     with_coverage: 'false'
+     with_walberla: 'true'
+     with_scafacos: 'false'
+     with_stokesian_dynamics: 'false'
+     check_skip_long: 'true'
+     check_procs: '4'
+     cmake_params: '-DWALBERLA_USE_AVX=TRUE'
+  script:
+    - bash maintainer/CI/build_cmake.sh
+  tags:
+    - docker
+    - linux
+  when: manual
+
 no_rotation:
   <<: *global_job_definition
   stage: build
@@ -443,7 +463,6 @@ empty:
     - linux
     - cuda
 
-# WALBERLA TODO
 check_sphinx:
   <<: *global_job_definition
   stage: additional_checks
