@@ -61,8 +61,8 @@ function(PYTHON_BENCHMARK)
         NAME ${BENCHMARK_TEST_NAME}
         COMMAND
           ${MPIEXEC} ${MPIEXEC_OVERSUBSCRIBE} ${MPIEXEC_NUMPROC_FLAG} ${nproc}
-          ${MPIEXEC_PREFLAGS} ${CMAKE_BINARY_DIR}/pypresso ${BENCHMARK_FILE}
-          ${BENCHMARK_ARGUMENTS} ${MPIEXEC_POSTFLAGS})
+          ${MPIEXEC_PREFLAGS} ${CMAKE_BINARY_DIR}/pypresso
+          ${BENCHMARK_FILE} ${BENCHMARK_ARGUMENTS} ${MPIEXEC_POSTFLAGS})
       set_tests_properties(${BENCHMARK_TEST_NAME} PROPERTIES RUN_SERIAL TRUE)
     endforeach(nproc)
   else()
@@ -74,35 +74,14 @@ function(PYTHON_BENCHMARK)
   endif()
 endfunction(PYTHON_BENCHMARK)
 
-python_benchmark(FILE lj.py ARGUMENTS
-                 "--particles_per_core=1000;--volume_fraction=0.50")
-python_benchmark(FILE lj.py ARGUMENTS
-                 "--particles_per_core=1000;--volume_fraction=0.02")
-python_benchmark(FILE lj.py ARGUMENTS
-                 "--particles_per_core=10000;--volume_fraction=0.50")
-python_benchmark(FILE lj.py ARGUMENTS
-                 "--particles_per_core=10000;--volume_fraction=0.02")
-python_benchmark(FILE mc_acid_base_reservoir.py ARGUMENTS
-                 "--particles_per_core=500;--mode=benchmark")
-python_benchmark(
-  FILE lj.py ARGUMENTS
-  "--particles_per_core=1000;--volume_fraction=0.10;--bonds" RUN_WITH_MPI FALSE)
-python_benchmark(
-  FILE lj.py ARGUMENTS
-  "--particles_per_core=10000;--volume_fraction=0.10;--bonds" RUN_WITH_MPI
-  FALSE)
-python_benchmark(
-  FILE p3m.py ARGUMENTS
-  "--particles_per_core=1000;--volume_fraction=0.25;--prefactor=4")
-python_benchmark(
-  FILE p3m.py ARGUMENTS
-  "--particles_per_core=10000;--volume_fraction=0.25;--prefactor=4")
-python_benchmark(
-  FILE lb.py ARGUMENTS
-  "--particles_per_core=125;--volume_fraction=0.03;--lb_sites_per_particle=28")
-python_benchmark(FILE ferrofluid.py ARGUMENTS "--particles_per_core=400")
-python_benchmark(FILE mc_acid_base_reservoir.py ARGUMENTS
-                 "--particles_per_core=500" RUN_WITH_MPI FALSE)
+python_benchmark(FILE lb.py ARGUMENTS "--box_l=32;--single_precision")
+python_benchmark(FILE lb.py ARGUMENTS "--box_l=32")
+python_benchmark(FILE lb.py ARGUMENTS "--box_l=64;--single_precision")
+python_benchmark(FILE lb.py ARGUMENTS "--box_l=64")
+python_benchmark(FILE lb.py ARGUMENTS "--box_l=128;--single_precision")
+python_benchmark(FILE lb.py ARGUMENTS "--box_l=128")
+python_benchmark(FILE lb.py ARGUMENTS "--box_l=196;--single_precision")
+python_benchmark(FILE lb.py ARGUMENTS "--box_l=196")
 
 add_custom_target(
   benchmarks_data
