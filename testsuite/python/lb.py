@@ -466,7 +466,7 @@ class LBTest:
         # Chck global linear momentum = density * volume * velocity
         rtol = self.rtol
         if hasattr(lbf, 'is_single_precision') and lbf.is_single_precision:
-            rtol = 2e-4
+            rtol *= 10.
         np.testing.assert_allclose(
             self.system.analysis.linear_momentum(),
             fluid_velocity * self.params['density'] * self.system.volume(),
