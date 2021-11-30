@@ -240,205 +240,278 @@ streamsweepsingleprecisionavx_streamsweepsingleprecisionavx(
           _stride_pdfs_tmp_1 * ctr_1 + _data_pdfs_tmp_20_317;
       float *RESTRICT _data_pdfs_tmp_20_318_10 =
           _stride_pdfs_tmp_1 * ctr_1 + _data_pdfs_tmp_20_318;
-      for (int64_t ctr_0 = 1;
-           ctr_0 < ((_size_force_0 - 2) % (8) == 0
-                        ? _size_force_0 - 2
-                        : ((int64_t)((_size_force_0 - 2) / (8)) + 1) * (8)) +
-                       1;
-           ctr_0 += 8) {
-        const __m256 streamed_0 = _mm256_load_ps(&_data_pdfs_20_30_10[ctr_0]);
-        const __m256 streamed_1 = _mm256_load_ps(&_data_pdfs_20_31_1m1[ctr_0]);
-        const __m256 streamed_2 = _mm256_load_ps(&_data_pdfs_20_32_11[ctr_0]);
-        const __m256 streamed_3 =
-            _mm256_loadu_ps(&_data_pdfs_20_33_10[ctr_0 + 1]);
-        const __m256 streamed_4 =
-            _mm256_loadu_ps(&_data_pdfs_20_34_10[ctr_0 - 1]);
-        const __m256 streamed_5 = _mm256_load_ps(&_data_pdfs_2m1_35_10[ctr_0]);
-        const __m256 streamed_6 = _mm256_load_ps(&_data_pdfs_21_36_10[ctr_0]);
-        const __m256 streamed_7 =
-            _mm256_loadu_ps(&_data_pdfs_20_37_1m1[ctr_0 + 1]);
-        const __m256 streamed_8 =
-            _mm256_loadu_ps(&_data_pdfs_20_38_1m1[ctr_0 - 1]);
-        const __m256 streamed_9 =
-            _mm256_loadu_ps(&_data_pdfs_20_39_11[ctr_0 + 1]);
-        const __m256 streamed_10 =
-            _mm256_loadu_ps(&_data_pdfs_20_310_11[ctr_0 - 1]);
-        const __m256 streamed_11 =
-            _mm256_load_ps(&_data_pdfs_2m1_311_1m1[ctr_0]);
-        const __m256 streamed_12 =
-            _mm256_load_ps(&_data_pdfs_2m1_312_11[ctr_0]);
-        const __m256 streamed_13 =
-            _mm256_loadu_ps(&_data_pdfs_2m1_313_10[ctr_0 + 1]);
-        const __m256 streamed_14 =
-            _mm256_loadu_ps(&_data_pdfs_2m1_314_10[ctr_0 - 1]);
-        const __m256 streamed_15 =
-            _mm256_load_ps(&_data_pdfs_21_315_1m1[ctr_0]);
-        const __m256 streamed_16 = _mm256_load_ps(&_data_pdfs_21_316_11[ctr_0]);
-        const __m256 streamed_17 =
-            _mm256_loadu_ps(&_data_pdfs_21_317_10[ctr_0 + 1]);
-        const __m256 streamed_18 =
-            _mm256_loadu_ps(&_data_pdfs_21_318_10[ctr_0 - 1]);
-        const __m256 vel0Term = _mm256_add_ps(
-            _mm256_add_ps(_mm256_add_ps(_mm256_add_ps(streamed_10, streamed_14),
-                                        streamed_18),
-                          streamed_4),
-            streamed_8);
-        const __m256 vel1Term = _mm256_add_ps(
-            _mm256_add_ps(_mm256_add_ps(streamed_1, streamed_11), streamed_15),
-            streamed_7);
-        const __m256 vel2Term =
-            _mm256_add_ps(_mm256_add_ps(streamed_12, streamed_13), streamed_5);
-        const __m256 rho = _mm256_add_ps(
-            _mm256_add_ps(
-                _mm256_add_ps(
-                    _mm256_add_ps(
-                        _mm256_add_ps(
-                            _mm256_add_ps(
-                                _mm256_add_ps(
-                                    _mm256_add_ps(
-                                        _mm256_add_ps(streamed_0, streamed_16),
-                                        streamed_17),
-                                    streamed_2),
-                                streamed_3),
-                            streamed_6),
-                        streamed_9),
-                    vel0Term),
-                vel1Term),
-            vel2Term);
-        const __m256 u_0 = _mm256_add_ps(
-            _mm256_div_ps(
-                _mm256_add_ps(
-                    _mm256_add_ps(
-                        _mm256_add_ps(
-                            _mm256_add_ps(
-                                _mm256_add_ps(
-                                    _mm256_mul_ps(
-                                        streamed_13,
-                                        _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
-                                                      -1.0, -1.0, -1.0, -1.0)),
-                                    _mm256_mul_ps(
-                                        streamed_17,
-                                        _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
-                                                      -1.0, -1.0, -1.0, -1.0))),
-                                _mm256_mul_ps(streamed_3,
-                                              _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                            -1.0, -1.0, -1.0,
-                                                            -1.0, -1.0))),
-                            _mm256_mul_ps(streamed_7,
-                                          _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
-                                                        -1.0, -1.0, -1.0,
-                                                        -1.0))),
-                        _mm256_mul_ps(streamed_9,
-                                      _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
-                                                    -1.0, -1.0, -1.0, -1.0))),
-                    vel0Term),
-                rho),
-            _mm256_div_ps(
-                _mm256_mul_ps(_mm256_set_ps(0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f,
-                                            0.5f, 0.5f),
-                              _mm256_load_ps(&_data_force_20_30_10[ctr_0])),
-                rho));
-        const __m256 u_1 = _mm256_add_ps(
-            _mm256_div_ps(
-                _mm256_add_ps(
-                    _mm256_add_ps(
-                        _mm256_add_ps(
-                            _mm256_add_ps(
-                                _mm256_add_ps(
-                                    _mm256_add_ps(
-                                        _mm256_mul_ps(
-                                            streamed_10,
-                                            _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                          -1.0, -1.0, -1.0,
-                                                          -1.0, -1.0)),
-                                        _mm256_mul_ps(
-                                            streamed_12,
-                                            _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                          -1.0, -1.0, -1.0,
-                                                          -1.0, -1.0))),
-                                    _mm256_mul_ps(
-                                        streamed_16,
-                                        _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
-                                                      -1.0, -1.0, -1.0, -1.0))),
-                                _mm256_mul_ps(streamed_2,
-                                              _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                            -1.0, -1.0, -1.0,
-                                                            -1.0, -1.0))),
-                            _mm256_mul_ps(streamed_9,
-                                          _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
-                                                        -1.0, -1.0, -1.0,
-                                                        -1.0))),
-                        streamed_8),
-                    vel1Term),
-                rho),
-            _mm256_div_ps(
-                _mm256_mul_ps(_mm256_set_ps(0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f,
-                                            0.5f, 0.5f),
-                              _mm256_load_ps(&_data_force_20_31_10[ctr_0])),
-                rho));
-        const __m256 u_2 = _mm256_add_ps(
-            _mm256_div_ps(
-                _mm256_add_ps(
-                    _mm256_add_ps(
-                        _mm256_add_ps(
-                            _mm256_add_ps(
-                                _mm256_add_ps(
-                                    _mm256_add_ps(
-                                        _mm256_add_ps(
-                                            _mm256_mul_ps(
-                                                streamed_15,
-                                                _mm256_set_ps(-1.0, -1.0, -1.0,
-                                                              -1.0, -1.0, -1.0,
-                                                              -1.0, -1.0)),
-                                            _mm256_mul_ps(
-                                                streamed_16,
+      {
+        for (int64_t ctr_0 = 1;
+             ctr_0 < (int64_t)((_size_force_0 - 2) / (8)) * (8) + 1;
+             ctr_0 += 8) {
+          const __m256 streamed_0 = _mm256_load_ps(&_data_pdfs_20_30_10[ctr_0]);
+          const __m256 streamed_1 =
+              _mm256_load_ps(&_data_pdfs_20_31_1m1[ctr_0]);
+          const __m256 streamed_2 = _mm256_load_ps(&_data_pdfs_20_32_11[ctr_0]);
+          const __m256 streamed_3 =
+              _mm256_loadu_ps(&_data_pdfs_20_33_10[ctr_0 + 1]);
+          const __m256 streamed_4 =
+              _mm256_loadu_ps(&_data_pdfs_20_34_10[ctr_0 - 1]);
+          const __m256 streamed_5 =
+              _mm256_load_ps(&_data_pdfs_2m1_35_10[ctr_0]);
+          const __m256 streamed_6 = _mm256_load_ps(&_data_pdfs_21_36_10[ctr_0]);
+          const __m256 streamed_7 =
+              _mm256_loadu_ps(&_data_pdfs_20_37_1m1[ctr_0 + 1]);
+          const __m256 streamed_8 =
+              _mm256_loadu_ps(&_data_pdfs_20_38_1m1[ctr_0 - 1]);
+          const __m256 streamed_9 =
+              _mm256_loadu_ps(&_data_pdfs_20_39_11[ctr_0 + 1]);
+          const __m256 streamed_10 =
+              _mm256_loadu_ps(&_data_pdfs_20_310_11[ctr_0 - 1]);
+          const __m256 streamed_11 =
+              _mm256_load_ps(&_data_pdfs_2m1_311_1m1[ctr_0]);
+          const __m256 streamed_12 =
+              _mm256_load_ps(&_data_pdfs_2m1_312_11[ctr_0]);
+          const __m256 streamed_13 =
+              _mm256_loadu_ps(&_data_pdfs_2m1_313_10[ctr_0 + 1]);
+          const __m256 streamed_14 =
+              _mm256_loadu_ps(&_data_pdfs_2m1_314_10[ctr_0 - 1]);
+          const __m256 streamed_15 =
+              _mm256_load_ps(&_data_pdfs_21_315_1m1[ctr_0]);
+          const __m256 streamed_16 =
+              _mm256_load_ps(&_data_pdfs_21_316_11[ctr_0]);
+          const __m256 streamed_17 =
+              _mm256_loadu_ps(&_data_pdfs_21_317_10[ctr_0 + 1]);
+          const __m256 streamed_18 =
+              _mm256_loadu_ps(&_data_pdfs_21_318_10[ctr_0 - 1]);
+          const __m256 vel0Term = _mm256_add_ps(
+              _mm256_add_ps(
+                  _mm256_add_ps(_mm256_add_ps(streamed_10, streamed_14),
+                                streamed_18),
+                  streamed_4),
+              streamed_8);
+          const __m256 vel1Term = _mm256_add_ps(
+              _mm256_add_ps(_mm256_add_ps(streamed_1, streamed_11),
+                            streamed_15),
+              streamed_7);
+          const __m256 vel2Term = _mm256_add_ps(
+              _mm256_add_ps(streamed_12, streamed_13), streamed_5);
+          const __m256 rho = _mm256_add_ps(
+              _mm256_add_ps(
+                  _mm256_add_ps(
+                      _mm256_add_ps(
+                          _mm256_add_ps(
+                              _mm256_add_ps(
+                                  _mm256_add_ps(
+                                      _mm256_add_ps(_mm256_add_ps(streamed_0,
+                                                                  streamed_16),
+                                                    streamed_17),
+                                      streamed_2),
+                                  streamed_3),
+                              streamed_6),
+                          streamed_9),
+                      vel0Term),
+                  vel1Term),
+              vel2Term);
+          const __m256 u_0 = _mm256_add_ps(
+              _mm256_div_ps(
+                  _mm256_add_ps(
+                      _mm256_add_ps(
+                          _mm256_add_ps(
+                              _mm256_add_ps(
+                                  _mm256_add_ps(
+                                      _mm256_mul_ps(streamed_13,
+                                                    _mm256_set_ps(-1.0, -1.0,
+                                                                  -1.0, -1.0,
+                                                                  -1.0, -1.0,
+                                                                  -1.0, -1.0)),
+                                      _mm256_mul_ps(streamed_17,
+                                                    _mm256_set_ps(-1.0, -1.0,
+                                                                  -1.0, -1.0,
+                                                                  -1.0, -1.0,
+                                                                  -1.0, -1.0))),
+                                  _mm256_mul_ps(streamed_3,
                                                 _mm256_set_ps(-1.0, -1.0, -1.0,
                                                               -1.0, -1.0, -1.0,
                                                               -1.0, -1.0))),
-                                        _mm256_mul_ps(
-                                            streamed_17,
+                              _mm256_mul_ps(streamed_7,
                                             _mm256_set_ps(-1.0, -1.0, -1.0,
                                                           -1.0, -1.0, -1.0,
                                                           -1.0, -1.0))),
-                                    _mm256_mul_ps(
-                                        streamed_18,
+                          _mm256_mul_ps(streamed_9,
                                         _mm256_set_ps(-1.0, -1.0, -1.0, -1.0,
                                                       -1.0, -1.0, -1.0, -1.0))),
-                                _mm256_mul_ps(streamed_6,
+                      vel0Term),
+                  rho),
+              _mm256_div_ps(
+                  _mm256_mul_ps(_mm256_set_ps(0.5f, 0.5f, 0.5f, 0.5f, 0.5f,
+                                              0.5f, 0.5f, 0.5f),
+                                _mm256_load_ps(&_data_force_20_30_10[ctr_0])),
+                  rho));
+          const __m256 u_1 = _mm256_add_ps(
+              _mm256_div_ps(
+                  _mm256_add_ps(
+                      _mm256_add_ps(
+                          _mm256_add_ps(
+                              _mm256_add_ps(
+                                  _mm256_add_ps(
+                                      _mm256_add_ps(
+                                          _mm256_mul_ps(
+                                              streamed_10,
+                                              _mm256_set_ps(-1.0, -1.0, -1.0,
+                                                            -1.0, -1.0, -1.0,
+                                                            -1.0, -1.0)),
+                                          _mm256_mul_ps(
+                                              streamed_12,
                                               _mm256_set_ps(-1.0, -1.0, -1.0,
                                                             -1.0, -1.0, -1.0,
                                                             -1.0, -1.0))),
-                            streamed_11),
-                        streamed_14),
-                    vel2Term),
-                rho),
-            _mm256_div_ps(
-                _mm256_mul_ps(_mm256_set_ps(0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f,
-                                            0.5f, 0.5f),
-                              _mm256_load_ps(&_data_force_20_32_10[ctr_0])),
-                rho));
-        _mm256_store_ps(&_data_velocity_20_30_10[ctr_0], u_0);
-        _mm256_store_ps(&_data_velocity_20_31_10[ctr_0], u_1);
-        _mm256_store_ps(&_data_velocity_20_32_10[ctr_0], u_2);
-        _mm256_store_ps(&_data_pdfs_tmp_20_30_10[ctr_0], streamed_0);
-        _mm256_store_ps(&_data_pdfs_tmp_20_31_10[ctr_0], streamed_1);
-        _mm256_store_ps(&_data_pdfs_tmp_20_32_10[ctr_0], streamed_2);
-        _mm256_store_ps(&_data_pdfs_tmp_20_33_10[ctr_0], streamed_3);
-        _mm256_store_ps(&_data_pdfs_tmp_20_34_10[ctr_0], streamed_4);
-        _mm256_store_ps(&_data_pdfs_tmp_20_35_10[ctr_0], streamed_5);
-        _mm256_store_ps(&_data_pdfs_tmp_20_36_10[ctr_0], streamed_6);
-        _mm256_store_ps(&_data_pdfs_tmp_20_37_10[ctr_0], streamed_7);
-        _mm256_store_ps(&_data_pdfs_tmp_20_38_10[ctr_0], streamed_8);
-        _mm256_store_ps(&_data_pdfs_tmp_20_39_10[ctr_0], streamed_9);
-        _mm256_store_ps(&_data_pdfs_tmp_20_310_10[ctr_0], streamed_10);
-        _mm256_store_ps(&_data_pdfs_tmp_20_311_10[ctr_0], streamed_11);
-        _mm256_store_ps(&_data_pdfs_tmp_20_312_10[ctr_0], streamed_12);
-        _mm256_store_ps(&_data_pdfs_tmp_20_313_10[ctr_0], streamed_13);
-        _mm256_store_ps(&_data_pdfs_tmp_20_314_10[ctr_0], streamed_14);
-        _mm256_store_ps(&_data_pdfs_tmp_20_315_10[ctr_0], streamed_15);
-        _mm256_store_ps(&_data_pdfs_tmp_20_316_10[ctr_0], streamed_16);
-        _mm256_store_ps(&_data_pdfs_tmp_20_317_10[ctr_0], streamed_17);
-        _mm256_store_ps(&_data_pdfs_tmp_20_318_10[ctr_0], streamed_18);
+                                      _mm256_mul_ps(streamed_16,
+                                                    _mm256_set_ps(-1.0, -1.0,
+                                                                  -1.0, -1.0,
+                                                                  -1.0, -1.0,
+                                                                  -1.0, -1.0))),
+                                  _mm256_mul_ps(streamed_2,
+                                                _mm256_set_ps(-1.0, -1.0, -1.0,
+                                                              -1.0, -1.0, -1.0,
+                                                              -1.0, -1.0))),
+                              _mm256_mul_ps(streamed_9,
+                                            _mm256_set_ps(-1.0, -1.0, -1.0,
+                                                          -1.0, -1.0, -1.0,
+                                                          -1.0, -1.0))),
+                          streamed_8),
+                      vel1Term),
+                  rho),
+              _mm256_div_ps(
+                  _mm256_mul_ps(_mm256_set_ps(0.5f, 0.5f, 0.5f, 0.5f, 0.5f,
+                                              0.5f, 0.5f, 0.5f),
+                                _mm256_load_ps(&_data_force_20_31_10[ctr_0])),
+                  rho));
+          const __m256 u_2 = _mm256_add_ps(
+              _mm256_div_ps(
+                  _mm256_add_ps(
+                      _mm256_add_ps(
+                          _mm256_add_ps(
+                              _mm256_add_ps(
+                                  _mm256_add_ps(
+                                      _mm256_add_ps(
+                                          _mm256_add_ps(
+                                              _mm256_mul_ps(
+                                                  streamed_15,
+                                                  _mm256_set_ps(
+                                                      -1.0, -1.0, -1.0, -1.0,
+                                                      -1.0, -1.0, -1.0, -1.0)),
+                                              _mm256_mul_ps(
+                                                  streamed_16,
+                                                  _mm256_set_ps(
+                                                      -1.0, -1.0, -1.0, -1.0,
+                                                      -1.0, -1.0, -1.0, -1.0))),
+                                          _mm256_mul_ps(
+                                              streamed_17,
+                                              _mm256_set_ps(-1.0, -1.0, -1.0,
+                                                            -1.0, -1.0, -1.0,
+                                                            -1.0, -1.0))),
+                                      _mm256_mul_ps(streamed_18,
+                                                    _mm256_set_ps(-1.0, -1.0,
+                                                                  -1.0, -1.0,
+                                                                  -1.0, -1.0,
+                                                                  -1.0, -1.0))),
+                                  _mm256_mul_ps(streamed_6,
+                                                _mm256_set_ps(-1.0, -1.0, -1.0,
+                                                              -1.0, -1.0, -1.0,
+                                                              -1.0, -1.0))),
+                              streamed_11),
+                          streamed_14),
+                      vel2Term),
+                  rho),
+              _mm256_div_ps(
+                  _mm256_mul_ps(_mm256_set_ps(0.5f, 0.5f, 0.5f, 0.5f, 0.5f,
+                                              0.5f, 0.5f, 0.5f),
+                                _mm256_load_ps(&_data_force_20_32_10[ctr_0])),
+                  rho));
+          _mm256_store_ps(&_data_velocity_20_30_10[ctr_0], u_0);
+          _mm256_store_ps(&_data_velocity_20_31_10[ctr_0], u_1);
+          _mm256_store_ps(&_data_velocity_20_32_10[ctr_0], u_2);
+          _mm256_store_ps(&_data_pdfs_tmp_20_30_10[ctr_0], streamed_0);
+          _mm256_store_ps(&_data_pdfs_tmp_20_31_10[ctr_0], streamed_1);
+          _mm256_store_ps(&_data_pdfs_tmp_20_32_10[ctr_0], streamed_2);
+          _mm256_store_ps(&_data_pdfs_tmp_20_33_10[ctr_0], streamed_3);
+          _mm256_store_ps(&_data_pdfs_tmp_20_34_10[ctr_0], streamed_4);
+          _mm256_store_ps(&_data_pdfs_tmp_20_35_10[ctr_0], streamed_5);
+          _mm256_store_ps(&_data_pdfs_tmp_20_36_10[ctr_0], streamed_6);
+          _mm256_store_ps(&_data_pdfs_tmp_20_37_10[ctr_0], streamed_7);
+          _mm256_store_ps(&_data_pdfs_tmp_20_38_10[ctr_0], streamed_8);
+          _mm256_store_ps(&_data_pdfs_tmp_20_39_10[ctr_0], streamed_9);
+          _mm256_store_ps(&_data_pdfs_tmp_20_310_10[ctr_0], streamed_10);
+          _mm256_store_ps(&_data_pdfs_tmp_20_311_10[ctr_0], streamed_11);
+          _mm256_store_ps(&_data_pdfs_tmp_20_312_10[ctr_0], streamed_12);
+          _mm256_store_ps(&_data_pdfs_tmp_20_313_10[ctr_0], streamed_13);
+          _mm256_store_ps(&_data_pdfs_tmp_20_314_10[ctr_0], streamed_14);
+          _mm256_store_ps(&_data_pdfs_tmp_20_315_10[ctr_0], streamed_15);
+          _mm256_store_ps(&_data_pdfs_tmp_20_316_10[ctr_0], streamed_16);
+          _mm256_store_ps(&_data_pdfs_tmp_20_317_10[ctr_0], streamed_17);
+          _mm256_store_ps(&_data_pdfs_tmp_20_318_10[ctr_0], streamed_18);
+        }
+        for (int64_t ctr_0 = (int64_t)((_size_force_0 - 2) / (8)) * (8) + 1;
+             ctr_0 < _size_force_0 - 1; ctr_0 += 1) {
+          const float streamed_0 = _data_pdfs_20_30_10[ctr_0];
+          const float streamed_1 = _data_pdfs_20_31_1m1[ctr_0];
+          const float streamed_2 = _data_pdfs_20_32_11[ctr_0];
+          const float streamed_3 = _data_pdfs_20_33_10[ctr_0 + 1];
+          const float streamed_4 = _data_pdfs_20_34_10[ctr_0 - 1];
+          const float streamed_5 = _data_pdfs_2m1_35_10[ctr_0];
+          const float streamed_6 = _data_pdfs_21_36_10[ctr_0];
+          const float streamed_7 = _data_pdfs_20_37_1m1[ctr_0 + 1];
+          const float streamed_8 = _data_pdfs_20_38_1m1[ctr_0 - 1];
+          const float streamed_9 = _data_pdfs_20_39_11[ctr_0 + 1];
+          const float streamed_10 = _data_pdfs_20_310_11[ctr_0 - 1];
+          const float streamed_11 = _data_pdfs_2m1_311_1m1[ctr_0];
+          const float streamed_12 = _data_pdfs_2m1_312_11[ctr_0];
+          const float streamed_13 = _data_pdfs_2m1_313_10[ctr_0 + 1];
+          const float streamed_14 = _data_pdfs_2m1_314_10[ctr_0 - 1];
+          const float streamed_15 = _data_pdfs_21_315_1m1[ctr_0];
+          const float streamed_16 = _data_pdfs_21_316_11[ctr_0];
+          const float streamed_17 = _data_pdfs_21_317_10[ctr_0 + 1];
+          const float streamed_18 = _data_pdfs_21_318_10[ctr_0 - 1];
+          const float vel0Term =
+              streamed_10 + streamed_14 + streamed_18 + streamed_4 + streamed_8;
+          const float vel1Term =
+              streamed_1 + streamed_11 + streamed_15 + streamed_7;
+          const float vel2Term = streamed_12 + streamed_13 + streamed_5;
+          const float rho = streamed_0 + streamed_16 + streamed_17 +
+                            streamed_2 + streamed_3 + streamed_6 + streamed_9 +
+                            vel0Term + vel1Term + vel2Term;
+          const float u_0 = (-streamed_13 - streamed_17 - streamed_3 -
+                             streamed_7 - streamed_9 + vel0Term) /
+                                rho +
+                            0.5f * _data_force_20_30_10[ctr_0] / rho;
+          const float u_1 = (-streamed_10 - streamed_12 - streamed_16 -
+                             streamed_2 + streamed_8 - streamed_9 + vel1Term) /
+                                rho +
+                            0.5f * _data_force_20_31_10[ctr_0] / rho;
+          const float u_2 =
+              (streamed_11 + streamed_14 - streamed_15 - streamed_16 -
+               streamed_17 - streamed_18 - streamed_6 + vel2Term) /
+                  rho +
+              0.5f * _data_force_20_32_10[ctr_0] / rho;
+          _data_velocity_20_30_10[ctr_0] = u_0;
+          _data_velocity_20_31_10[ctr_0] = u_1;
+          _data_velocity_20_32_10[ctr_0] = u_2;
+          _data_pdfs_tmp_20_30_10[ctr_0] = streamed_0;
+          _data_pdfs_tmp_20_31_10[ctr_0] = streamed_1;
+          _data_pdfs_tmp_20_32_10[ctr_0] = streamed_2;
+          _data_pdfs_tmp_20_33_10[ctr_0] = streamed_3;
+          _data_pdfs_tmp_20_34_10[ctr_0] = streamed_4;
+          _data_pdfs_tmp_20_35_10[ctr_0] = streamed_5;
+          _data_pdfs_tmp_20_36_10[ctr_0] = streamed_6;
+          _data_pdfs_tmp_20_37_10[ctr_0] = streamed_7;
+          _data_pdfs_tmp_20_38_10[ctr_0] = streamed_8;
+          _data_pdfs_tmp_20_39_10[ctr_0] = streamed_9;
+          _data_pdfs_tmp_20_310_10[ctr_0] = streamed_10;
+          _data_pdfs_tmp_20_311_10[ctr_0] = streamed_11;
+          _data_pdfs_tmp_20_312_10[ctr_0] = streamed_12;
+          _data_pdfs_tmp_20_313_10[ctr_0] = streamed_13;
+          _data_pdfs_tmp_20_314_10[ctr_0] = streamed_14;
+          _data_pdfs_tmp_20_315_10[ctr_0] = streamed_15;
+          _data_pdfs_tmp_20_316_10[ctr_0] = streamed_16;
+          _data_pdfs_tmp_20_317_10[ctr_0] = streamed_17;
+          _data_pdfs_tmp_20_318_10[ctr_0] = streamed_18;
+        }
       }
     }
   }
@@ -446,9 +519,9 @@ streamsweepsingleprecisionavx_streamsweepsingleprecisionavx(
 } // namespace internal_5e7ed0276adbfbb1ac4789ac0a0f54c4
 
 void StreamSweepSinglePrecisionAVX::run(IBlock *block) {
+  auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
   auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
   auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
-  auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
   field::GhostLayerField<float, 19> *pdfs_tmp;
   {
     // Getting temporary field pdfs_tmp
@@ -520,9 +593,9 @@ void StreamSweepSinglePrecisionAVX::runOnCellInterval(
   if (ci.empty())
     return;
 
+  auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
   auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
   auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
-  auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
   field::GhostLayerField<float, 19> *pdfs_tmp;
   {
     // Getting temporary field pdfs_tmp
