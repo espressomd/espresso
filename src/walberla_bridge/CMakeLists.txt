@@ -36,9 +36,6 @@ else()
        generated_kernels/CollideSweepSinglePrecisionThermalized.cpp
        generated_kernels/CollideSweepDoublePrecisionThermalized.cpp)
 endif()
-foreach(source_file  ${WalberlaBridgeCodegen_SRC})
-set_source_files_properties(${source_file} PROPERTIES COMPILE_FLAGS -ffast-math)
-endforeach()
 set(WalberlaBridge_SRC ${WalberlaBridgeCodegen_SRC} lb_walberla_init.cpp
                        LatticeWalberla.cpp)
 

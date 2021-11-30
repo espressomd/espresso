@@ -80,8 +80,10 @@ python_benchmark(FILE lb.py ARGUMENTS "--box_l=64;--single_precision")
 python_benchmark(FILE lb.py ARGUMENTS "--box_l=64")
 python_benchmark(FILE lb.py ARGUMENTS "--box_l=128;--single_precision")
 python_benchmark(FILE lb.py ARGUMENTS "--box_l=128")
-python_benchmark(FILE lb.py ARGUMENTS "--box_l=196;--single_precision")
-python_benchmark(FILE lb.py ARGUMENTS "--box_l=196")
+if(NOT WALBERLA_USE_AVX)
+  python_benchmark(FILE lb.py ARGUMENTS "--box_l=196;--single_precision")
+  python_benchmark(FILE lb.py ARGUMENTS "--box_l=196")
+endif()
 
 add_custom_target(
   benchmarks_data
