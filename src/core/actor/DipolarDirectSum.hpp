@@ -32,10 +32,10 @@
 
 #include <memory>
 
-void DipolarDirectSum_kernel_wrapper_energy(float k, int n, float *pos,
+void DipolarDirectSum_kernel_wrapper_energy(float k, unsigned int n, float *pos,
                                             float *dip, float box_l[3],
                                             int periodic[3], float *E);
-void DipolarDirectSum_kernel_wrapper_force(float k, int n, float *pos,
+void DipolarDirectSum_kernel_wrapper_force(float k, unsigned int n, float *pos,
                                            float *dip, float *f, float *torque,
                                            float box_l[3], int periodic[3]);
 
@@ -59,10 +59,10 @@ public:
     int per[3];
     for (int i = 0; i < 3; i++) {
       box[i] = static_cast<float>(s.box()[i]);
-      per[i] = (box_geo.periodic(i));
+      per[i] = box_geo.periodic(i);
     }
     DipolarDirectSum_kernel_wrapper_force(
-        k, static_cast<int>(s.npart_gpu()), s.rGpuBegin(), s.dipGpuBegin(),
+        k, static_cast<unsigned>(s.npart_gpu()), s.rGpuBegin(), s.dipGpuBegin(),
         s.fGpuBegin(), s.torqueGpuBegin(), box, per);
   };
   void computeEnergy(SystemInterface &s) override {
@@ -70,11 +70,11 @@ public:
     int per[3];
     for (int i = 0; i < 3; i++) {
       box[i] = static_cast<float>(s.box()[i]);
-      per[i] = (box_geo.periodic(i));
+      per[i] = box_geo.periodic(i);
     }
     DipolarDirectSum_kernel_wrapper_energy(
-        k, static_cast<int>(s.npart_gpu()), s.rGpuBegin(), s.dipGpuBegin(), box,
-        per, &(reinterpret_cast<CUDA_energy *>(s.eGpu())->dipolar));
+        k, static_cast<unsigned>(s.npart_gpu()), s.rGpuBegin(), s.dipGpuBegin(),
+        box, per, &(reinterpret_cast<CUDA_energy *>(s.eGpu())->dipolar));
   };
 
 private:
