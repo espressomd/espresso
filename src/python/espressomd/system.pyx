@@ -40,8 +40,6 @@ from .constraints import Constraints
 from .accumulators import AutoUpdateAccumulators
 IF LB_WALBERLA:
     from . import lb
-if LB_BOUNDARIES:
-    from .lbboundaries import LBBoundaries
 from . import lees_edwards
 from .comfixed import ComFixed
 from .utils cimport check_type_or_throw_except
@@ -153,8 +151,6 @@ cdef class System:
         """:class:`espressomd.accumulators.AutoUpdateAccumulators`"""
         constraints
         """:class:`espressomd.constraints.Constraints`"""
-        lbboundaries
-        """:class:`espressomd.lbboundaries.LBBoundaries`"""
         lees_edwards
         """:class:`espressomd.lees_edwards.LeesEdwards`"""
         collision_detection
@@ -191,8 +187,6 @@ cdef class System:
             IF CUDA:
                 self.cuda_init_handle = cuda_init.CudaInitHandle()
             self.galilei = GalileiTransform()
-            if LB_BOUNDARIES:
-                self.lbboundaries = LBBoundaries()
             self.lees_edwards = lees_edwards.LeesEdwards()
             self.non_bonded_inter = interactions.NonBondedInteractions()
             self.part = particle_data.ParticleList()
@@ -227,9 +221,6 @@ cdef class System:
             odict['collision_detection'] = System.__getattribute__(
                 self, "collision_detection")
         odict['actors'] = System.__getattribute__(self, "actors")
-        IF LB_BOUNDARIES:
-            odict['lbboundaries'] = System.__getattribute__(
-                self, "lbboundaries")
         odict['integrator'] = System.__getattribute__(self, "integrator")
         odict['thermostat'] = System.__getattribute__(self, "thermostat")
         IF LB_WALBERLA:
@@ -513,7 +504,7 @@ cdef class System:
         Raises
         ------
         RuntimeError
-            If the particle ``type`` is not currently tracked by the system. 
+            If the particle ``type`` is not currently tracked by the system.
             To select which particle types are tracked, call :meth:`setup_type_map`.
 
         """

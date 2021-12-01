@@ -235,7 +235,14 @@ def generate_setters(lb_method):
     return pdfs_setter
 
 
-adapt_pystencils()
+def check_dependencies():
+    import setuptools
+    import pystencils
+    import lbmpy
+    SpecifierSet = setuptools.version.pkg_resources.packaging.specifiers.SpecifierSet
+    for module, requirement in [(pystencils, '==0.4.3'), (lbmpy, '==0.4.3')]:
+        assert SpecifierSet(requirement).contains(module.__version__), \
+            f"{module.__name__} version {module.__version__} doesn't match requirement {requirement}"
 
 
 class BounceBackSlipVelocityUBB(
@@ -292,6 +299,10 @@ class PatchedUBB(lbmpy.boundaries.UBB):
         return out
 
 
+check_dependencies()
+adapt_pystencils()
+
+
 class PatchedCodeGeneration(CodeGeneration):
 
     def __init__(self):
@@ -311,6 +322,10 @@ with PatchedCodeGeneration() as ctx:
         True: 'double_precision',
         False: 'single_precision'}[
         ctx.double_accuracy]
+    precision_rng = {
+        True: ps.rng.PhiloxTwoDoubles,
+        False: ps.rng.PhiloxFourFloats}[
+        ctx.double_accuracy]
     kT = sp.symbols('kT')
     stencil = get_stencil('D3Q19')
     fields = generate_fields(ctx, stencil)
@@ -321,7 +336,7 @@ with PatchedCodeGeneration() as ctx:
         "instruction_set": "avx",
         "assume_inner_stride_one": True,
         "assume_aligned": True,
-        "assume_sufficient_line_padding": True}
+        "assume_sufficient_line_padding": False}
     params = {"target": "cpu"}
     params_vec = {"target": "cpu", "cpu_vectorize_info": cpu_vectorize_info}
 
@@ -419,7 +434,7 @@ with PatchedCodeGeneration() as ctx:
         fluctuating={
             'temperature': kT,
             'block_offsets': 'walberla',
-            'rng_node': ps.rng.PhiloxTwoDoubles
+            'rng_node': precision_rng
         },
         optimization={'cse_global': True,
                       'double_precision': ctx.double_accuracy}

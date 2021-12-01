@@ -19,7 +19,6 @@ import unittest_decorators as utx
 import espressomd
 import espressomd.lb
 import espressomd.shapes
-import espressomd.lbboundaries
 import itertools
 import numpy as np
 
@@ -37,54 +36,7 @@ class LBBoundariesBase:
         self.system.actors.add(self.lbf)
 
     def tearDown(self):
-        self.system.lbboundaries.clear()
         self.system.actors.clear()
-
-    def test_add(self):
-        boundary = espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1)
-
-        self.system.lbboundaries.add(boundary)
-        self.assertEqual(boundary, self.system.lbboundaries[0])
-
-    def test_remove(self):
-        lbb = self.system.lbboundaries
-
-        b1 = lbb.add(
-            espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
-        b2 = lbb.add(
-            espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
-
-        lbb.remove(b1)
-
-        self.assertNotIn(b1, lbb)
-        self.assertIn(b2, lbb)
-
-    def test_size(self):
-        lbb = self.system.lbboundaries
-        self.assertEqual(lbb.size(), 0)
-
-        lbb.add(espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
-        self.assertEqual(lbb.size(), 1)
-
-        lbb.add(espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
-        self.assertEqual(lbb.size(), 2)
-
-    def test_empty(self):
-        lbb = self.system.lbboundaries
-        self.assertTrue(lbb.empty())
-
-        lbb.add(espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
-        self.assertFalse(lbb.empty())
-
-    def test_clear(self):
-        lbb = self.system.lbboundaries
-
-        lbb.add(espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
-        lbb.add(espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
-
-        lbb.clear()
-
-        self.assertTrue(lbb.empty())
 
     def check_boundary_flags(self, slip_velocity1, slip_velocity2):
         rng = range(20)
@@ -102,20 +54,11 @@ class LBBoundariesBase:
             np.testing.assert_allclose(
                 np.copy(self.lbf[i].velocity), slip_velocity2)
 
-        self.system.lbboundaries.clear()
         self.lbf.clear_boundaries()
         for i in itertools.product(rng, rng, rng):
             self.assertFalse(self.lbf[i].is_boundary)
 
     def test_boundary_flags(self):
-        lbb = self.system.lbboundaries
-
-        lbb.add(espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
-        lbb.add(espressomd.lbboundaries.LBBoundary(shape=self.wall_shape2))
-
-        self.check_boundary_flags(np.copy(lbb[0].velocity),
-                                  np.copy(lbb[1].velocity))
-
         slip_velocity1 = 1e-3 * np.array([1., 2., 3.])
         slip_velocity2 = 1e-3 * np.array([4., 5., 6.])
         self.lbf.add_boundary_from_shape(self.wall_shape1, slip_velocity1)
@@ -137,16 +80,11 @@ class LBBoundariesBase:
         union = espressomd.shapes.Union()
         union.add([self.wall_shape1, self.wall_shape2])
 
-        lbb = self.system.lbboundaries.add(
-            espressomd.lbboundaries.LBBoundary(shape=union))
-        self.check_boundary_flags(np.copy(lbb.velocity), np.copy(lbb.velocity))
-
         slip_velocity = 1e-3 * np.array([1., 2., 3.])
         self.lbf.add_boundary_from_shape(union, slip_velocity)
         self.check_boundary_flags(slip_velocity, slip_velocity)
 
 
-@utx.skipIfMissingFeatures(["LB_BOUNDARIES"])
 @utx.skipIfMissingFeatures(["LB_WALBERLA"])
 class LBBoundariesWalberla(LBBoundariesBase, ut.TestCase):
 
@@ -156,7 +94,6 @@ class LBBoundariesWalberla(LBBoundariesBase, ut.TestCase):
     lb_params = {'single_precision': False}
 
 
-@utx.skipIfMissingFeatures(["LB_BOUNDARIES"])
 @utx.skipIfMissingFeatures(["LB_WALBERLA"])
 class LBBoundariesWalberlaSinglePrecision(LBBoundariesBase, ut.TestCase):
 

@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import espressomd.lb
-import espressomd.lbboundaries
 import espressomd.shapes
 import unittest as ut
 import unittest_decorators as utx
@@ -25,7 +24,7 @@ import numpy as np
 import itertools
 
 
-@utx.skipIfMissingFeatures(["LB_BOUNDARIES", "LB_WALBERLA"])
+@utx.skipIfMissingFeatures(["LB_WALBERLA"])
 class LBBoundaryVelocityTest(ut.TestCase):
     """
     Various tests to check the interaction of lb velocity boundary conditions and the fluid
@@ -39,13 +38,10 @@ class LBBoundaryVelocityTest(ut.TestCase):
     system.time_step = lb_params['tau']
     system.cell_system.skin = 0.1
 
-    lb_fluid = None
-
-    def tearDown(self) -> None:
+    def tearDown(self):
         self.system.actors.clear()
-        self.system.lbboundaries.clear()
 
-    def setUp(self) -> None:
+    def setUp(self):
         self.lb_fluid = espressomd.lb.LBFluidWalberla(**self.lb_params)
         self.system.actors.add(self.lb_fluid)
 
@@ -59,9 +55,7 @@ class LBBoundaryVelocityTest(ut.TestCase):
         wall_shape_right = espressomd.shapes.Wall(
             normal=[-1, 0, 0], dist=-(self.system.box_l[0] - agrid))
         for shape in [wall_shape_left, wall_shape_right]:
-            wall = espressomd.lbboundaries.LBBoundary(
-                shape=shape, velocity=v_boundary)
-            self.system.lbboundaries.add(wall)
+            self.lb_fluid.add_boundary_from_shape(shape, v_boundary)
 
         # fluid in contact with moving boundary adopts same velocity
         self.system.integrator.run(200)
@@ -88,9 +82,7 @@ class LBBoundaryVelocityTest(ut.TestCase):
         v_boundary = [0.03, 0.05, 0.07]
         wall_shape = espressomd.shapes.Wall(
             normal=[1, 0, 0], dist=self.lb_params['agrid'])
-        wall = espressomd.lbboundaries.LBBoundary(
-            shape=wall_shape, velocity=v_boundary)
-        self.system.lbboundaries.add(wall)
+        self.lb_fluid.add_boundary_from_shape(wall_shape, v_boundary)
 
         # check non_boundary node
         bound_cond = self.lb_fluid[4, 4, 4].boundary
@@ -104,12 +96,12 @@ class LBBoundaryVelocityTest(ut.TestCase):
 
     def test_velocity_bounce_back_class(self):
         """
-        Test setters and getters of :ref:`espressomd.lbboundaries.VelocityBounceBack`
+        Test setters and getters of :class:`espressomd.lb.VelocityBounceBack`
         """
         with self.assertRaises(ValueError):
-            bound_cond = espressomd.lbboundaries.VelocityBounceBack([1, 2])
+            bound_cond = espressomd.lb.VelocityBounceBack([1, 2])
         v = [1, 2, 17.4]
-        bound_cond = espressomd.lbboundaries.VelocityBounceBack(v)
+        bound_cond = espressomd.lb.VelocityBounceBack(v)
         np.testing.assert_array_almost_equal(bound_cond.velocity, v)
 
     def test_boundary_setting(self):
@@ -117,7 +109,7 @@ class LBBoundaryVelocityTest(ut.TestCase):
         Test setting and un-setting individual lb boundary nodes.
         """
         v_boundary = [0.02, 0.01, 0.03]
-        bound_cond = espressomd.lbboundaries.VelocityBounceBack(v_boundary)
+        bound_cond = espressomd.lb.VelocityBounceBack(v_boundary)
 
         with self.assertRaises(ValueError):
             self.lb_fluid[1, 2, 3].boundary = 17
@@ -190,11 +182,10 @@ class LBBoundaryVelocityTest(ut.TestCase):
             """
             Get the shape mask and the LB boundary mask.
             """
-            self.system.lbboundaries.add(
-                espressomd.lbboundaries.LBBoundary(shape=shape))
+            self.lb_fluid.add_boundary_from_shape(shape)
             lb_bitmask = np.copy(self.lb_fluid[:, :, :].is_boundary)
             shape_bitmask = self.lb_fluid.get_shape_bitmask(shape)
-            self.system.lbboundaries.clear()
+            self.lb_fluid.clear_boundaries()
             return lb_bitmask.astype(int), shape_bitmask.astype(int)
 
         agrid = self.lb_params['agrid']
@@ -238,7 +229,7 @@ class LBBoundaryVelocityTest(ut.TestCase):
         column (finite or infinite, periodic or aperiodic).
         """
         def get_surface_indices(mask, periodicity):
-            idx = espressomd.lbboundaries.edge_detection(mask, periodicity)
+            idx = espressomd.lb.edge_detection(mask, periodicity)
             return set(map(tuple, idx))
 
         def roll_product(a, b, c):
@@ -262,13 +253,12 @@ class LBBoundaryVelocityTest(ut.TestCase):
                 direction=1)
 
         agrid = self.lb_params['agrid']
-        system = self.system
         periodic = np.roll([True, True, True], axis)
         aperiodic = np.roll([False, False, False], axis)
 
         # check a simple cube
         cube = create_column_shape_roll([4, 4, 4], [1, 1, 1])
-        system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(shape=cube))
+        self.lb_fluid.add_boundary_from_shape(cube)
         cube_mask = np.copy(self.lb_fluid[:, :, :].is_boundary.astype(bool))
         idx_ref = set(roll_product(range(1, 5), range(1, 5), range(1, 5)))
         for item in roll_product(range(2, 4), range(2, 4), range(2, 4)):
@@ -277,11 +267,11 @@ class LBBoundaryVelocityTest(ut.TestCase):
         idxs_on_surface = get_surface_indices(cube_mask, periodic)
         self.assertSetEqual(idxs_on_surface, idx_ref)
 
-        system.lbboundaries.clear()
+        self.lb_fluid.clear_boundaries()
 
         # create an infinite square column
         col = create_column_shape_roll([8, 4, 4], [0, 1, 1])
-        system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(shape=col))
+        self.lb_fluid.add_boundary_from_shape(col)
         col_mask = np.copy(self.lb_fluid[:, :, :].is_boundary.astype(bool))
         idx_ref = set(roll_product(range(0, 8), range(1, 5), range(1, 5)))
         for item in roll_product(range(0, 8), range(2, 4), range(2, 4)):
@@ -295,12 +285,12 @@ class LBBoundaryVelocityTest(ut.TestCase):
         idxs_on_surface = get_surface_indices(col_mask, aperiodic)
         self.assertSetEqual(idxs_on_surface, idx_ref)
 
-        system.lbboundaries.clear()
+        self.lb_fluid.clear_boundaries()
 
         # create a finite square column; both ends of the columns are in
         # contact with a thin slice of fluid
         col = create_column_shape_roll([7, 4, 4], [0, 1, 1])
-        system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(shape=col))
+        self.lb_fluid.add_boundary_from_shape(col)
         col_mask = np.copy(self.lb_fluid[:, :, :].is_boundary.astype(bool))
         idx_ref = set(roll_product(range(0, 7), range(1, 5), range(1, 5)))
 
@@ -334,7 +324,7 @@ class LBBoundaryVelocityTest(ut.TestCase):
                                  [-1, 0, 0],
                                  [0, -1, 0],
                                  [1, 0, 0]])
-        tangents = espressomd.lbboundaries.calc_cylinder_tangential_vectors(
+        tangents = espressomd.lb.calc_cylinder_tangential_vectors(
             center, agrid, offset, node_indices)
         np.testing.assert_array_almost_equal(tangents, ref_tangents)
 

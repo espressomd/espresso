@@ -22,7 +22,6 @@ Simulate a rotating cylinder in a fluid via slip velocity boundary conditions.
 """
 
 import espressomd.lb
-import espressomd.lbboundaries
 import espressomd.shapes
 import espressomd.constraints
 import espressomd.observables
@@ -34,7 +33,7 @@ import matplotlib.ticker
 import itertools
 import argparse
 
-espressomd.assert_features(["LB_WALBERLA", "LB_BOUNDARIES"])
+espressomd.assert_features(["LB_WALBERLA"])
 
 parser = argparse.ArgumentParser(epilog=__doc__)
 parser.add_argument("--visualizer", action="store_true", dest="visualizer",
@@ -79,9 +78,9 @@ np.testing.assert_array_equal(mask[:, -1, :], 1)
 
 # add tangential slip velocity to the inner cylinder
 velocity_magnitude = 0.01
-surface_nodes = espressomd.lbboundaries.edge_detection(
+surface_nodes = espressomd.lb.edge_detection(
     lb_fluid.get_shape_bitmask(cylinder_in), system.periodicity)
-tangents = espressomd.lbboundaries.calc_cylinder_tangential_vectors(
+tangents = espressomd.lb.calc_cylinder_tangential_vectors(
     cylinder_in.center, lb_fluid.agrid, 0.5, surface_nodes)
 lb_fluid.add_boundary_from_list(surface_nodes, velocity_magnitude * tangents)
 

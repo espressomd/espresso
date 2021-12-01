@@ -34,15 +34,14 @@ namespace ScriptInterface {
 /**
  * @brief Trivial context.
  *
- * This context just maintains a local copy of an
- * object.
+ * This context just maintains a local copy of an object.
  */
 class LocalContext : public Context {
   Utils::Factory<ObjectHandle> m_factory;
   bool m_is_head_node;
 
 public:
-  explicit LocalContext(Utils::Factory<ObjectHandle> factory, int mpi_rank)
+  LocalContext(Utils::Factory<ObjectHandle> factory, int mpi_rank)
       : m_factory(std::move(factory)), m_is_head_node(mpi_rank == 0) {}
 
   const Utils::Factory<ObjectHandle> &factory() const { return m_factory; }

@@ -471,7 +471,7 @@ class LBTest:
             / (fluid_velocity * self.params['density'] * self.system.volume())
         print(ratio, 1 / ratio)
         if hasattr(lbf, 'is_single_precision') and lbf.is_single_precision:
-            rtol = 2e-4
+            rtol *= 10.
         # Walberla todo: The factor 1.5 can go, once f/2 correction is back
         np.testing.assert_allclose(
             np.array(self.system.analysis.linear_momentum()), 

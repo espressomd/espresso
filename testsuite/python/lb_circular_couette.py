@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021 The ESPResSo project
+# Copyright (C) 2010-2021 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,29 +16,41 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import espressomd.lb
-import espressomd.lbboundaries
-import espressomd.shapes
-import espressomd.observables
-import espressomd.math
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
-import scipy.optimize
+
+import espressomd.lb
+import espressomd.shapes
+import espressomd.observables
+import espressomd.math
 
 
-def taylor_couette(v1, v2, r1, r2, agrid):
+AGRID = .5
+TIME_STEP = 0.1
+GRID_SIZE = np.array([63, 63, 4])
+
+
+def taylor_couette(v1, v2, r1, r2):
     # Taylor-Couette equation
-    mu = v2 / v1
+    omega1 = v1 / r1
+    omega2 = v2 / r2
     eta = r1 / r2
-    scale = 1. / 2**3 / agrid
-    a = scale * v1 * (mu - eta**2) / (1 - eta**2)
-    b = scale * v1 * r1**2 * (1 - mu) / (1 - eta**2)
+    a = (omega2 - omega1 * eta**2) / (1. - eta**2)
+    b = r1**2 * (omega1 - omega2) / (1. - eta**2)
     return a, b
 
 
-@utx.skipIfMissingFeatures(["LB_BOUNDARIES", "LB_WALBERLA"])
-class LBRollerMill(ut.TestCase):
+@utx.skipIfMissingFeatures(["LB_WALBERLA"])
+class LBCircularCouetteCommon:
+
+    system = espressomd.System(box_l=(GRID_SIZE + [1, 1, 0]) * AGRID)
+    system.time_step = TIME_STEP
+    system.cell_system.skin = 0.1
+    system.periodicity = [False, False, True]
+
+    def tearDown(self):
+        self.system.actors.clear()
 
     def test_taylor_couette_flow(self):
         """
@@ -47,24 +59,19 @@ class LBRollerMill(ut.TestCase):
         Taylor-Couette equation.
         """
 
-        agrid = 0.5
-        grid_size = np.array([63, 63, 4])
-        system = espressomd.System(box_l=(grid_size + [1, 1, 0]) * agrid)
-        system.time_step = 0.1
-        system.cell_system.skin = 0.1
-        system.periodicity = [False, False, True]
+        system = self.system
         lb_fluid = espressomd.lb.LBFluidWalberla(
-            agrid=agrid, density=0.5, viscosity=3.2, tau=system.time_step)
+            agrid=AGRID, density=0.5, viscosity=3.2, tau=system.time_step)
         system.actors.add(lb_fluid)
 
         # set up two cylinders
-        cyl_center = agrid * (grid_size // 2 + 0.5) * [1, 1, 0]
+        cyl_center = AGRID * (GRID_SIZE // 2 + 0.5) * [1, 1, 0]
         cyl1 = espressomd.shapes.Cylinder(
             center=cyl_center, axis=[0, 0, 1], length=3 * system.box_l[2],
-            radius=8.1 * agrid, direction=1)
+            radius=8.1 * AGRID, direction=1)
         cyl2 = espressomd.shapes.Cylinder(
             center=cyl_center, axis=[0, 0, 1], length=3 * system.box_l[2],
-            radius=30.1 * agrid, direction=-1)
+            radius=30.1 * AGRID, direction=-1)
         lb_fluid.add_boundary_from_shape(cyl1)
         lb_fluid.add_boundary_from_shape(cyl2)
 
@@ -82,10 +89,10 @@ class LBRollerMill(ut.TestCase):
 
         # add tangential slip velocity to the inner cylinder
         slip_vel = 0.01
-        surface_nodes = espressomd.lbboundaries.edge_detection(
+        surface_nodes = espressomd.lb.edge_detection(
             lb_fluid.get_shape_bitmask(cyl1), system.periodicity)
-        tangents = espressomd.lbboundaries.calc_cylinder_tangential_vectors(
-            cyl1.center, lb_fluid.agrid, 0.5, surface_nodes)
+        tangents = espressomd.lb.calc_cylinder_tangential_vectors(
+            cyl1.center, AGRID, 0.5, surface_nodes)
         lb_fluid.add_boundary_from_list(surface_nodes, slip_vel * tangents)
 
         # add observable for the fluid velocity in cylindrical coordinates
@@ -93,7 +100,7 @@ class LBRollerMill(ut.TestCase):
             center=cyl_center, axis=[0, 0, 1], orientation=[1, 0, 0])
         observable = espressomd.observables.CylindricalLBVelocityProfile(
             transform_params=cyl_transform_params,
-            n_r_bins=grid_size[0] // 2,
+            n_r_bins=GRID_SIZE[0] // 2,
             n_phi_bins=1,
             n_z_bins=1,
             min_r=0.0,
@@ -108,7 +115,7 @@ class LBRollerMill(ut.TestCase):
 
         # equilibrate the fluid and sample velocities
         obs_data_baseline = observable.calculate()
-        system.integrator.run(100)
+        system.integrator.run(200)
         obs_data = observable.calculate()
         profile_r = np.copy(observable.bin_centers()).reshape([-1, 3])[:, 0]
         profile_v = np.copy(obs_data - obs_data_baseline).reshape([-1, 3])
@@ -127,13 +134,32 @@ class LBRollerMill(ut.TestCase):
         self.assertGreater(v_phi[9], v_phi[8])
 
         # check azimuthal velocity in the Couette regime
-        xdata = profile_r[9:]
-        ydata = v_phi[9:]
-        a_ref, b_ref = taylor_couette(
-            slip_vel, 0.0, cyl1.radius, cyl2.radius, agrid)
-        (a_sim, b_sim), _ = scipy.optimize.curve_fit(
-            lambda x, a, b: a * x + b / x, xdata, ydata)
-        np.testing.assert_allclose([a_sim, b_sim], [a_ref, b_ref], atol=5e-4)
+        r = profile_r[10:-1]
+        v_phi = v_phi[10:-1]
+        a_ref, b_ref = taylor_couette(slip_vel, 0.0, cyl1.radius, cyl2.radius)
+        v_phi_ref = a_ref * r + b_ref / r
+        v_phi_drift = np.mean(v_phi) - np.mean(v_phi_ref)
+        np.testing.assert_allclose(v_phi_drift, 0., atol=1.2e-4)
+        np.testing.assert_allclose(v_phi - v_phi_drift, v_phi_ref, atol=1e-4)
+
+
+@utx.skipIfMissingFeatures(["LB_WALBERLA"])
+class LBCircularCouetteWalberla(LBCircularCouetteCommon, ut.TestCase):
+
+    """Test for the Walberla implementation of the LB in double-precision."""
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': False}
+
+
+@utx.skipIfMissingFeatures(["LB_WALBERLA"])
+class LBCircularCouetteWalberlaSinglePrecision(
+        LBCircularCouetteCommon, ut.TestCase):
+
+    """Test for the Walberla implementation of the LB in single-precision."""
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': True}
 
 
 if __name__ == "__main__":

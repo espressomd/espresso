@@ -20,10 +20,9 @@ with solid obstacles. For more details, see :ref:`Object-in-fluid`.
 """
 
 import espressomd
-import espressomd.lbboundaries
 import espressomd.shapes
 
-required_features = ["LB_WALBERLA", "LB_BOUNDARIES", "EXTERNAL_FORCES",
+required_features = ["LB_WALBERLA", "EXTERNAL_FORCES",
                      "SOFT_SPHERE", "MASS"]
 espressomd.assert_features(required_features)
 
@@ -82,64 +81,64 @@ system.thermostat.set_lb(LB_fluid=lbf, gamma=1.5)
 
 # creating boundaries and obstacles in the channel
 # OutputVtk writes a file
-# lbboundaries created boundaries for fluid
-# constraints created boundaries for the cells
+# boundaries for the fluid are set up by marking LB nodes as boundaries, here with the help of shapes
+# boundaries for the cells are created by creating constraints from the shapes
 
-boundaries = []
+boundary_shapes = []
 
 # bottom of the channel
 bottom_shape = espressomd.shapes.Rhomboid(corner=[0.0, 0.0, 0.0], a=[boxX, 0.0, 0.0],
                                           b=[0.0, boxY, 0.0], c=[0.0, 0.0, 1.0],
                                           direction=1)
-boundaries.append(bottom_shape)
+boundary_shapes.append(bottom_shape)
 output_vtk_rhomboid(
     bottom_shape, out_file=os.path.join(output_path, "wallBottom.vtk"))
 
 # top of the channel
 top_shape = espressomd.shapes.Rhomboid(corner=[0.0, 0.0, boxZ - 1], a=[boxX, 0.0, 0.0],
                                        b=[0.0, boxY, 0.0], c=[0.0, 0.0, 1.0], direction=1)
-boundaries.append(top_shape)
+boundary_shapes.append(top_shape)
 output_vtk_rhomboid(
     top_shape, out_file=os.path.join(output_path, "wallTop.vtk"))
 
 # front wall of the channel
 front_shape = espressomd.shapes.Rhomboid(corner=[0.0, 0.0, 0.0], a=[boxX, 0.0, 0.0],
                                          b=[0.0, 1.0, 0.0], c=[0.0, 0.0, boxZ], direction=1)
-boundaries.append(front_shape)
+boundary_shapes.append(front_shape)
 output_vtk_rhomboid(
     front_shape, out_file=os.path.join(output_path, "wallFront.vtk"))
 
 # back wall of the channel
 back_shape = espressomd.shapes.Rhomboid(corner=[0.0, boxY - 1.0, 0.0], a=[boxX, 0.0, 0.0],
                                         b=[0.0, 1.0, 0.0], c=[0.0, 0.0, boxZ], direction=1)
-boundaries.append(back_shape)
+boundary_shapes.append(back_shape)
 output_vtk_rhomboid(
     back_shape, out_file=os.path.join(output_path, "wallBack.vtk"))
 
 # obstacle - cylinder A
 cylA_shape = espressomd.shapes.Cylinder(center=[11.0, 2.0, boxZ / 2.], axis=[0.0, 0.0, 1.0],
                                         length=boxZ, radius=2.0, direction=1)
-boundaries.append(cylA_shape)
+boundary_shapes.append(cylA_shape)
 output_vtk_cylinder(
     cylA_shape, n=20, out_file=os.path.join(output_path, "cylinderA.vtk"))
 
 # obstacle - cylinder B
 cylB_shape = espressomd.shapes.Cylinder(center=[16.0, 8.0, boxZ / 2.], axis=[0.0, 0.0, 1.0],
                                         length=boxZ, radius=2.0, direction=1)
-boundaries.append(cylB_shape)
+boundary_shapes.append(cylB_shape)
 output_vtk_cylinder(
     cylB_shape, n=20, out_file=os.path.join(output_path, "cylinderB.vtk"))
 
 # obstacle - cylinder C
 cylC_shape = espressomd.shapes.Cylinder(center=[11.0, 12.0, boxZ / 2.], axis=[0.0, 0.0, 1.0],
                                         length=boxZ, radius=2.0, direction=1)
-boundaries.append(cylC_shape)
+boundary_shapes.append(cylC_shape)
 output_vtk_cylinder(
     cylC_shape, n=20, out_file=os.path.join(output_path, "cylinderC.vtk"))
 
-for boundary in boundaries:
-    system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(shape=boundary))
-    system.constraints.add(shape=boundary, particle_type=10)
+for shape in boundary_shapes:
+    lbf.add_boundary_from_shape(shape)
+    system.constraints.add(shape=shape, particle_type=10)
 
 
 maxCycle = 50
