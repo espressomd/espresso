@@ -36,6 +36,9 @@
 
 #include <cuda.h>
 
+#include <algorithm>
+#include <cstdio>
+
 // Method performance/accuracy parameters
 __constant__ float epssqd[1], itolsqd[1];
 // blkcntd is a factual blocks' count.

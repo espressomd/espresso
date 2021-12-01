@@ -30,8 +30,6 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 
-#include <memory>
-
 void DipolarDirectSum_kernel_wrapper_energy(float k, unsigned int n, float *pos,
                                             float *dip, float box_l[3],
                                             int periodic[3], float *E);

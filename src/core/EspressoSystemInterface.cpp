@@ -23,6 +23,8 @@
 #include "cuda_interface.hpp"
 #include "grid.hpp"
 
+#include <utils/Vector.hpp>
+
 /* Initialize instance pointer */
 EspressoSystemInterface *EspressoSystemInterface::m_instance = nullptr;
 

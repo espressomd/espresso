@@ -35,6 +35,7 @@
 #include <utils/math/tensor_product.hpp>
 #include <utils/matrix.hpp>
 
+#include <cstdio>
 #include <tuple>
 
 namespace Coulomb {
