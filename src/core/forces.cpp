@@ -88,7 +88,8 @@ void init_forces_ghosts(const ParticleRange &particles) {
 void force_calc(CellStructure &cell_structure, double time_step, double kT) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
-  espressoSystemInterface.update();
+  auto &espresso_system = EspressoSystemInterface::Instance();
+  espresso_system.update();
 
 #ifdef COLLISION_DETECTION
   prepare_local_collision_queue();
@@ -102,9 +103,9 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
   init_forces(particles, time_step, kT);
 
   for (auto &forceActor : forceActors) {
-    forceActor->computeForces(espressoSystemInterface);
+    forceActor->computeForces(espresso_system);
 #ifdef ROTATION
-    forceActor->computeTorques(espressoSystemInterface);
+    forceActor->computeTorques(espresso_system);
 #endif
   }
 

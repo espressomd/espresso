@@ -36,8 +36,6 @@
 
 #include <cuda.h>
 
-#define IND (blockDim.x * blockIdx.x + threadIdx.x)
-
 // Method performance/accuracy parameters
 __constant__ float epssqd[1], itolsqd[1];
 // blkcntd is a factual blocks' count.
@@ -73,8 +71,7 @@ __device__ void dds_sumReduction_BH(float *input, float *sum) {
 /******************************************************************************/
 
 __global__ void initializationKernel() {
-  int ind;
-  ind = IND;
+  auto const ind = blockDim.x * blockIdx.x + threadIdx.x;
   if (ind == 0) {
     *bhpara->err = 0;
     *bhpara->max_lps = 0;

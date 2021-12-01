@@ -84,8 +84,6 @@ private:
 void activate_dipolar_direct_sum_gpu();
 void deactivate_dipolar_direct_sum_gpu();
 
-extern std::unique_ptr<DipolarDirectSum> dipolarDirectSum;
-
 #endif
 
 #endif

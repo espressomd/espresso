@@ -31,15 +31,15 @@
 
 #include <memory>
 
-std::unique_ptr<DipolarBarnesHut> dipolarBarnesHut;
+static std::unique_ptr<DipolarBarnesHut> dipolarBarnesHut;
 
 void activate_dipolar_barnes_hut(float epssq, float itolsq) {
   // also necessary on 1 CPU or GPU, does more than just broadcasting
   dipole.method = DIPOLAR_BH_GPU;
   mpi_bcast_coulomb_params();
 
-  dipolarBarnesHut = std::make_unique<DipolarBarnesHut>(espressoSystemInterface,
-                                                        epssq, itolsq);
+  dipolarBarnesHut = std::make_unique<DipolarBarnesHut>(
+      EspressoSystemInterface::Instance(), epssq, itolsq);
   forceActors.push_back(dipolarBarnesHut.get());
   energyActors.push_back(dipolarBarnesHut.get());
 }

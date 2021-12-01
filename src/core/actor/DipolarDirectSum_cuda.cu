@@ -32,6 +32,10 @@
 #error CU-file includes mpi.h! This should not happen!
 #endif
 
+__device__ inline float scalar_product(float const *a, float const *b) {
+  return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+
 __device__ inline void get_mi_vector_dds(float res[3], float const a[3],
                                          float const b[3], float const box_l[3],
                                          int const periodic[3]) {
@@ -41,8 +45,6 @@ __device__ inline void get_mi_vector_dds(float res[3], float const a[3],
       res[i] -= floor(res[i] / box_l[i] + 0.5f) * box_l[i];
   }
 }
-
-#define scalar(a, b) ((a)[0] * (b)[0] + (a)[1] * (b)[1] + (a)[2] * (b)[2])
 
 __device__ void dipole_ia_force(int id, float pf, float const *r1,
                                 float const *r2, float const *dip1,
@@ -69,7 +71,7 @@ __device__ void dipole_ia_force(int id, float pf, float const *r1,
   get_mi_vector_dds(dr, _r1, _r2, box_l, periodic);
 
   // Powers of distance
-  r_sq = scalar(dr, dr);
+  r_sq = scalar_product(dr, dr);
   r_sq_inv = 1 / r_sq;
   r_inv = rsqrtf(r_sq);
   r3_inv = 1 / r_sq * r_inv;
@@ -77,9 +79,9 @@ __device__ void dipole_ia_force(int id, float pf, float const *r1,
   r7_inv = r5_inv * r_sq_inv;
 
   // Dot products
-  pe1 = scalar(_dip1, _dip2);
-  pe2 = scalar(_dip1, dr);
-  pe3 = scalar(_dip2, dr);
+  pe1 = scalar_product(_dip1, _dip2);
+  pe2 = scalar_product(_dip1, dr);
+  pe3 = scalar_product(_dip2, dr);
   pe4 = 3.0f * r5_inv;
 
   // Force
@@ -136,16 +138,16 @@ __device__ float dipole_ia_energy(int id, float pf, float const *r1,
   get_mi_vector_dds(dr, _r1, _r2, box_l, periodic);
 
   // Powers of distance
-  r_sq = scalar(dr, dr);
+  r_sq = scalar_product(dr, dr);
   r_sq_inv = 1 / r_sq;
   r_inv = rsqrtf(r_sq);
   r3_inv = 1 / r_sq * r_inv;
   r5_inv = r3_inv * r_sq_inv;
 
   // Dot products
-  pe1 = scalar(_dip1, _dip2);
-  pe2 = scalar(_dip1, dr);
-  pe3 = scalar(_dip2, dr);
+  pe1 = scalar_product(_dip1, _dip2);
+  pe2 = scalar_product(_dip1, dr);
+  pe3 = scalar_product(_dip2, dr);
   pe4 = 3.0f * r5_inv;
 
   // Energy

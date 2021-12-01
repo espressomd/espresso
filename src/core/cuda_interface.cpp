@@ -166,7 +166,7 @@ void cuda_mpi_send_forces(const ParticleRange &particles,
 static void cuda_bcast_global_part_params_local() {
   MPI_Bcast(gpu_get_global_particle_vars_pointer_host(),
             sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
-  espressoSystemInterface.requestParticleStructGpu();
+  EspressoSystemInterface::Instance().requestParticleStructGpu();
 }
 
 REGISTER_CALLBACK(cuda_bcast_global_part_params_local)

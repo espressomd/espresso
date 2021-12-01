@@ -30,7 +30,7 @@
 
 #include <memory>
 
-std::unique_ptr<DipolarDirectSum> dipolarDirectSum;
+static std::unique_ptr<DipolarDirectSum> dipolarDirectSum;
 
 void activate_dipolar_direct_sum_gpu() {
   // also necessary on 1 CPU or GPU, does more than just broadcasting
@@ -38,7 +38,7 @@ void activate_dipolar_direct_sum_gpu() {
   mpi_bcast_coulomb_params();
 
   dipolarDirectSum =
-      std::make_unique<DipolarDirectSum>(espressoSystemInterface);
+      std::make_unique<DipolarDirectSum>(EspressoSystemInterface::Instance());
   forceActors.push_back(dipolarDirectSum.get());
   energyActors.push_back(dipolarDirectSum.get());
 }

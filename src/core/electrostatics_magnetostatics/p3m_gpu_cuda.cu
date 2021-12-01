@@ -51,7 +51,6 @@
 
 #include "electrostatics_magnetostatics/p3m_gpu.hpp"
 
-#include "BoxGeometry.hpp"
 #include "EspressoSystemInterface.hpp"
 #include "cuda_interface.hpp"
 #include "cuda_utils.cuh"
@@ -75,8 +74,6 @@
 
 using Utils::int_pow;
 using Utils::sqr;
-
-extern BoxGeometry box_geo;
 
 struct P3MGpuData {
   /** Charge mesh */
@@ -115,7 +112,7 @@ struct p3m_gpu_fft_plans_t {
   cufftHandle back_plan;
 } p3m_gpu_fft_plans;
 
-static char p3m_gpu_data_initialized = 0;
+static bool p3m_gpu_data_initialized = false;
 
 template <int cao>
 __device__ void static Aliasing_sums_ik(const P3MGpuData p, int NX, int NY,
@@ -562,33 +559,34 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
   if (mesh[0] == -1 && mesh[1] == -1 && mesh[2] == -1)
     throw std::runtime_error("P3M: invalid mesh size");
 
-  espressoSystemInterface.requestParticleStructGpu();
+  auto &espresso_system = EspressoSystemInterface::Instance();
+  espresso_system.requestParticleStructGpu();
 
   bool reinit_if = false, mesh_changed = false;
   p3m_gpu_data.n_part = gpu_get_particle_pointer().size();
 
-  if ((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.alpha != alpha)) {
+  if (!p3m_gpu_data_initialized || p3m_gpu_data.alpha != alpha) {
     p3m_gpu_data.alpha = static_cast<REAL_TYPE>(alpha);
     reinit_if = true;
   }
 
-  if ((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.cao != cao)) {
+  if (!p3m_gpu_data_initialized || p3m_gpu_data.cao != cao) {
     p3m_gpu_data.cao = cao;
     // NOLINTNEXTLINE(bugprone-integer-division)
     p3m_gpu_data.pos_shift = static_cast<REAL_TYPE>((p3m_gpu_data.cao - 1) / 2);
     reinit_if = true;
   }
 
-  if ((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.mesh[0] != mesh[0]) ||
+  if (!p3m_gpu_data_initialized || (p3m_gpu_data.mesh[0] != mesh[0]) ||
       (p3m_gpu_data.mesh[1] != mesh[1]) || (p3m_gpu_data.mesh[2] != mesh[2])) {
     std::copy(mesh, mesh + 3, p3m_gpu_data.mesh);
     mesh_changed = true;
     reinit_if = true;
   }
 
-  auto const box_l = box_geo.length();
+  auto const box_l = espresso_system.box();
 
-  if ((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.box[0] != box_l[0]) ||
+  if (!p3m_gpu_data_initialized || (p3m_gpu_data.box[0] != box_l[0]) ||
       (p3m_gpu_data.box[1] != box_l[1]) || (p3m_gpu_data.box[2] != box_l[2])) {
     std::copy(box_l.begin(), box_l.end(), p3m_gpu_data.box);
     reinit_if = true;
@@ -602,7 +600,7 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
         static_cast<REAL_TYPE>(p3m_gpu_data.mesh[i]) / p3m_gpu_data.box[i];
   }
 
-  if ((p3m_gpu_data_initialized == 1) && mesh_changed) {
+  if (p3m_gpu_data_initialized && mesh_changed) {
     cuda_safe_mem(cudaFree(p3m_gpu_data.charge_mesh));
     p3m_gpu_data.charge_mesh = nullptr;
     cuda_safe_mem(cudaFree(p3m_gpu_data.force_mesh_x));
@@ -617,10 +615,10 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
     cufftDestroy(p3m_gpu_fft_plans.forw_plan);
     cufftDestroy(p3m_gpu_fft_plans.back_plan);
 
-    p3m_gpu_data_initialized = 0;
+    p3m_gpu_data_initialized = false;
   }
 
-  if ((p3m_gpu_data_initialized == 0) && (p3m_gpu_data.mesh_size > 0)) {
+  if (!p3m_gpu_data_initialized && p3m_gpu_data.mesh_size > 0) {
     /* Size of the complex mesh Nx * Ny * ( Nz / 2 + 1 ) */
     const int cmesh_size = p3m_gpu_data.mesh[0] * p3m_gpu_data.mesh[1] *
                            (p3m_gpu_data.mesh[2] / 2 + 1);
@@ -644,8 +642,7 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
     }
   }
 
-  if ((reinit_if || (p3m_gpu_data_initialized == 0)) &&
-      (p3m_gpu_data.mesh_size > 0)) {
+  if ((reinit_if or !p3m_gpu_data_initialized) && p3m_gpu_data.mesh_size > 0) {
     dim3 grid(1, 1, 1);
     dim3 block(1, 1, 1);
     block.x = 512 / mesh[0] + 1;
@@ -686,7 +683,7 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
     }
   }
   if (p3m_gpu_data.mesh_size > 0)
-    p3m_gpu_data_initialized = 1;
+    p3m_gpu_data_initialized = true;
 }
 
 /**

@@ -100,8 +100,6 @@ private:
 void activate_dipolar_barnes_hut(float epssq, float itolsq);
 void deactivate_dipolar_barnes_hut();
 
-extern std::unique_ptr<DipolarBarnesHut> dipolarBarnesHut;
-
 #endif
 
 #endif // DIPOLAR_BARNES_HUT

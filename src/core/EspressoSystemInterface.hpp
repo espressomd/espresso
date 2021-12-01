@@ -24,9 +24,6 @@
 
 #include <cstddef>
 
-/* Syntactic sugar */
-#define espressoSystemInterface EspressoSystemInterface::Instance()
-
 class EspressoSystemInterface : public SystemInterface {
 public:
   static EspressoSystemInterface &Instance() {
@@ -83,6 +80,7 @@ public:
     return m_needsVGpu;
   };
 
+#ifdef ELECTROSTATICS
   float *qGpuBegin() override { return m_q_gpu_begin; };
   float *qGpuEnd() override { return m_q_gpu_end; };
   bool hasQGpu() override { return true; };
@@ -94,6 +92,7 @@ public:
       enableParticleCommunication();
     return m_needsQGpu;
   };
+#endif
 
   float *directorGpuBegin() override { return m_director_gpu_begin; };
   float *directorGpuEnd() override { return m_director_gpu_end; };
