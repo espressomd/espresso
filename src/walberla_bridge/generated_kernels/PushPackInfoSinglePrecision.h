@@ -1,4 +1,4 @@
-// kernel generated with pystencils v0.4.3+12.g29e0e84, lbmpy v0.4.3+2.g0e17e61, lbmpy_walberla/pystencils_walberla from commit 55e6cf598e7e55f496ffaecd40bde632de76930e
+// kernel generated with pystencils v0.4.3+12.g29e0e84, lbmpy v0.4.3+2.g0e17e61, lbmpy_walberla/pystencils_walberla from commit 08f04ef64f95609b47838db85862033a1600afa1
 
 #pragma once
 #include "stencil/Directions.h"
