@@ -133,19 +133,7 @@ void resize_buffers(std::size_t number_of_particles) {
 void gpu_init_particle_comm() {
   if (this_node == 0 && global_part_vars_host.communication_enabled == 0) {
     try {
-      if (cuda_get_n_gpus() == 0) {
-        fprintf(stderr, "ERROR: No GPU was found.\n");
-        errexit();
-      }
-      auto const devID = cuda_get_device();
-      auto const compute_capability = cuda_check_gpu_compute_capability(devID);
-      auto const communication_test = cuda_test_device_access();
-      if (compute_capability != ES_OK or communication_test != ES_OK) {
-        fprintf(stderr,
-                "ERROR: CUDA device %i is not capable of running ESPResSo.\n",
-                devID);
-        errexit();
-      }
+      cuda_check_device();
     } catch (cuda_runtime_error const &err) {
       fprintf(stderr, "ERROR: %s\n", err.what());
       errexit();
