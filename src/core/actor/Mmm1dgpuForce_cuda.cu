@@ -133,13 +133,10 @@ int modpsi_init() {
   return 0;
 }
 
-Mmm1dgpuForce::Mmm1dgpuForce(SystemInterface &s, float _coulomb_prefactor,
-                             float _maxPWerror, float _far_switch_radius,
-                             int _bessel_cutoff)
+Mmm1dgpuForce::Mmm1dgpuForce(SystemInterface &s)
     : numThreads(64), host_boxz(0), host_npart(0), need_tune(true), pairs(-1),
-      dev_forcePairs(nullptr), dev_energyBlocks(nullptr),
-      coulomb_prefactor(_coulomb_prefactor), maxPWerror(_maxPWerror),
-      far_switch_radius(_far_switch_radius), bessel_cutoff(_bessel_cutoff) {
+      dev_forcePairs(nullptr), dev_energyBlocks(nullptr), coulomb_prefactor(0),
+      maxPWerror(-1), far_switch_radius(-1), bessel_cutoff(-1) {
   // interface sanity checks
   if (!s.requestFGpu())
     throw std::runtime_error("Mmm1dgpuForce needs access to forces on GPU!");
@@ -312,7 +309,7 @@ void Mmm1dgpuForce::tune(SystemInterface &s, float _maxPWerror,
 
 void Mmm1dgpuForce::set_params(float _boxz, float _coulomb_prefactor,
                                float _maxPWerror, float _far_switch_radius,
-                               int _bessel_cutoff, bool manual) {
+                               int _bessel_cutoff) {
   if (_boxz > 0 && _far_switch_radius > _boxz) {
     throw std::runtime_error(
         "switching radius must not be larger than box length");
@@ -323,11 +320,6 @@ void Mmm1dgpuForce::set_params(float _boxz, float _coulomb_prefactor,
     // double colons are needed to access the constant memory variables because
     // they are file globals and we have identically named class variables
     cudaSetDevice(d);
-    if (manual) // tuning needs to be performed again
-    {
-      far_switch_radius = _far_switch_radius;
-      bessel_cutoff = _bessel_cutoff;
-    }
     if (_far_switch_radius >= 0) {
       mmm1d_params.far_switch_radius_2 = _far_switch_radius_2;
       cuda_safe_mem(cudaMemcpyToSymbol(::far_switch_radius_2,

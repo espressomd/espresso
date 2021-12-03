@@ -46,6 +46,9 @@ public:
     if (!s.requestFGpu())
       runtimeErrorMsg() << "DipolarDirectSum needs access to forces on GPU!";
 
+    if (!s.requestTorqueGpu())
+      runtimeErrorMsg() << "DipolarDirectSum needs access to torques on GPU!";
+
     if (!s.requestRGpu())
       runtimeErrorMsg() << "DipolarDirectSum needs access to positions on GPU!";
 

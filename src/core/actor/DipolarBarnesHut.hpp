@@ -41,6 +41,9 @@ public:
     if (!s.requestFGpu())
       runtimeErrorMsg() << "DipolarBarnesHut needs access to forces on GPU!";
 
+    if (!s.requestTorqueGpu())
+      runtimeErrorMsg() << "DipolarBarnesHut needs access to torques on GPU!";
+
     if (!s.requestRGpu())
       runtimeErrorMsg() << "DipolarBarnesHut needs access to positions on GPU!";
 

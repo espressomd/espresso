@@ -29,8 +29,7 @@
 class Mmm1dgpuForce : public Actor {
 public:
   // constructor
-  Mmm1dgpuForce(SystemInterface &s, float coulomb_prefactor, float maxPWerror,
-                float far_switch_radius = -1, int bessel_cutoff = -1);
+  Mmm1dgpuForce(SystemInterface &s);
   ~Mmm1dgpuForce() override;
   // interface methods
   void computeForces(SystemInterface &s) override;
@@ -40,8 +39,7 @@ public:
   void tune(SystemInterface &s, float _maxPWerror, float _far_switch_radius,
             int _bessel_cutoff);
   void set_params(float _boxz, float _coulomb_prefactor, float _maxPWerror,
-                  float _far_switch_radius, int _bessel_cutoff,
-                  bool manual = false);
+                  float _far_switch_radius, int _bessel_cutoff);
   void activate();
   void deactivate();
 

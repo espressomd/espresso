@@ -27,9 +27,7 @@ cdef extern from "SystemInterface.hpp":
 cdef extern from "EspressoSystemInterface.hpp":
     cdef cppclass EspressoSystemInterface(SystemInterface):
         @staticmethod
-        EspressoSystemInterface * _Instance()
-        bool requestRGpu()
-        void update()
+        EspressoSystemInterface & Instance()
 
 
 IF ELECTROSTATICS:
@@ -139,29 +137,10 @@ IF ELECTROSTATICS and MMM1D_GPU:
 
     cdef extern from "actor/Mmm1dgpuForce.hpp":
         cdef cppclass Mmm1dgpuForce:
-            Mmm1dgpuForce(SystemInterface & s, float coulomb_prefactor, float maxPWerror, float far_switch_radius, int bessel_cutoff) except+
-            Mmm1dgpuForce(SystemInterface & s, float coulomb_prefactor, float maxPWerror, float far_switch_radius) except+
-            Mmm1dgpuForce(SystemInterface & s, float coulomb_prefactor, float maxPWerror) except+
+            Mmm1dgpuForce(SystemInterface & s) except+
             void setup(SystemInterface & s)
             void tune(SystemInterface & s, float _maxPWerror, float _far_switch_radius, int _bessel_cutoff)
-            void set_params(float _boxz, float _coulomb_prefactor, float _maxPWerror, float _far_switch_radius, int _bessel_cutoff, bool manual)
             void set_params(float _boxz, float _coulomb_prefactor, float _maxPWerror, float _far_switch_radius, int _bessel_cutoff)
-
-            unsigned int numThreads
-            unsigned int numBlocks(SystemInterface & s)
-
-            float host_boxz
-            unsigned int host_npart
-            bool need_tune
-
-            int pairs
-            float * dev_forcePairs
-            float * dev_energyBlocks
-
-            float coulomb_prefactor, maxPWerror, far_switch_radius
-            int bessel_cutoff
-
-            float force_benchmark(SystemInterface & s)
 
             void activate()
             void deactivate()
