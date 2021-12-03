@@ -68,6 +68,8 @@ private:
 
   std::shared_ptr<LocalContext> m_node_local_context;
 
+  bool m_is_head_node;
+
 private:
   Communication::CallbackHandle<ObjectId, const std::string &,
                                 const PackedMap &>
@@ -83,7 +85,8 @@ private:
 public:
   GlobalContext(Communication::MpiCallbacks &callbacks,
                 std::shared_ptr<LocalContext> node_local_context)
-      : m_node_local_context(std::move(node_local_context)),
+      : m_local_objects(), m_node_local_context(std::move(node_local_context)),
+        m_is_head_node(callbacks.comm().rank() == 0),
         cb_make_handle(&callbacks,
                        [this](ObjectId id, const std::string &name,
                               const PackedMap &parameters) {
@@ -157,6 +160,8 @@ public:
   make_shared(std::string const &name, const VariantMap &parameters) override;
 
   boost::string_ref name(const ObjectHandle *o) const override;
+
+  bool is_head_node() const override { return m_is_head_node; };
 };
 } // namespace ScriptInterface
 

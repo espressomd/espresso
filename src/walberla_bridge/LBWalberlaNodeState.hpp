@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 The ESPResSo project
+ * Copyright (C) 2021 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -16,18 +16,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#pragma once
 
-#include "initialize.hpp"
+#include <utils/Vector.hpp>
 
-#include "LBBoundaries.hpp"
-#include "LBBoundary.hpp"
+#include <vector>
 
-namespace ScriptInterface {
-namespace LBBoundaries {
+/** Checkpoint data for a LB node. */
+struct LBWalberlaNodeState {
+  std::vector<double> populations;
+  Utils::Vector3d last_applied_force;
+  Utils::Vector3d slip_velocity;
+  bool is_boundary;
 
-void initialize(Utils::Factory<ObjectHandle> *om) {
-  om->register_new<LBBoundaries>("LBBoundaries::LBBoundaries");
-  om->register_new<LBBoundary>("LBBoundaries::LBBoundary");
-}
-} /* namespace LBBoundaries */
-} // namespace ScriptInterface
+private:
+  friend boost::serialization::access;
+  template <typename Archive>
+  void serialize(Archive &ar, long int /* version */) {
+    ar &populations &last_applied_force &slip_velocity &is_boundary;
+  }
+};

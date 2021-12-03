@@ -121,9 +121,12 @@ widom.set_non_interacting_type(max(types) + 1)
 particle_insertion_potential_energy_samples = []
 
 n_iterations = 500
+n_samples_per_iteration = 100
+
 for i in range(n_iterations):
-    particle_insertion_potential_energy_samples.append(
-        widom.calculate_particle_insertion_potential_energy(0))
+    for _ in range(n_samples_per_iteration):
+        particle_insertion_potential_energy_samples.append(
+            widom.calculate_particle_insertion_potential_energy(0))
     system.integrator.run(steps=500)
 
     if i % 20 == 0:

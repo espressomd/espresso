@@ -18,7 +18,6 @@
  */
 
 #include "grid_based_algorithms/lb_interface.hpp"
-#include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lb_walberla_instance.hpp"
 #include "grid_based_algorithms/lb_walberla_interface.hpp"
 
@@ -29,8 +28,13 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 
+#ifdef LB_WALBERLA
+#include <LBWalberlaNodeState.hpp>
+#endif
+
 #include <utils/Vector.hpp>
 
+#include <boost/serialization/access.hpp>
 #include <boost/serialization/vector.hpp>
 
 #include <cmath>
@@ -94,7 +98,7 @@ void check_tau_time_step_consistency(double tau, double time_step) {
   auto const factor = tau / time_step;
   if (fabs(round(factor) - factor) / factor > eps)
     throw std::invalid_argument("LB tau (" + std::to_string(tau) +
-                                ") must be integer multiple of "
+                                ") must be an integer multiple of the "
                                 "MD time_step (" +
                                 std::to_string(time_step) + "). Factor is " +
                                 std::to_string(factor));
@@ -122,63 +126,119 @@ double lb_lbfluid_get_lattice_speed() {
   return lb_lbfluid_get_agrid() / lb_lbfluid_get_tau();
 }
 
+/** Handle for a LB checkpoint file. */
+class LBCheckpointFile {
+private:
+  bool m_binary;
+
+public:
+  std::fstream stream;
+
+  LBCheckpointFile(std::string const &filename, std::ios_base::openmode mode,
+                   bool binary) {
+    m_binary = binary;
+    auto flags = mode;
+    if (m_binary)
+      flags |= std::ios_base::binary;
+    stream.open(filename, flags);
+  }
+
+  ~LBCheckpointFile() = default;
+
+  template <typename T> void write(T const &value) {
+    if (m_binary) {
+      stream.write(reinterpret_cast<const char *>(&value), sizeof(T));
+    } else {
+      stream << value << "\n";
+    }
+  }
+
+  template <typename T> void write(std::vector<T> const &vector) {
+    if (m_binary) {
+      stream.write(reinterpret_cast<const char *>(vector.data()),
+                   vector.size() * sizeof(T));
+    } else {
+      for (auto const &value : vector) {
+        stream << value << "\n";
+      }
+    }
+  }
+
+  template <typename T, std::size_t N>
+  void write(Utils::Vector<T, N> const &vector) {
+    if (m_binary) {
+      stream.write(reinterpret_cast<const char *>(vector.data()),
+                   N * sizeof(T));
+    } else {
+      stream << Utils::Vector<T, N>::formatter(" ") << vector << "\n";
+    }
+  }
+
+  template <typename T> void read(T &value) {
+    if (m_binary) {
+      stream.read(reinterpret_cast<char *>(&value), sizeof(T));
+    } else {
+      stream >> value;
+    }
+  }
+
+  template <typename T, std::size_t N> void read(Utils::Vector<T, N> &vector) {
+    if (m_binary) {
+      stream.read(reinterpret_cast<char *>(vector.data()), N * sizeof(T));
+    } else {
+      for (auto &value : vector) {
+        stream >> value;
+      }
+    }
+  }
+
+  template <typename T> void read(std::vector<T> &vector) {
+    if (m_binary) {
+      stream.read(reinterpret_cast<char *>(vector.data()),
+                  vector.size() * sizeof(T));
+    } else {
+      for (auto &value : vector) {
+        stream >> value;
+      }
+    }
+  }
+};
+
 void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
   auto const err_msg = std::string("Error while writing LB checkpoint: ");
 
   // open file and set exceptions
-  auto flags = std::ios_base::out;
-  if (binary)
-    flags |= std::ios_base::binary;
-  std::fstream cpfile;
-  cpfile.open(filename, flags);
-  if (!cpfile) {
+  LBCheckpointFile cpfile(filename, std::ios_base::out, binary);
+  if (!cpfile.stream) {
     throw std::runtime_error(err_msg + "could not open file " + filename);
   }
-  cpfile.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-
-#ifdef LB_WALBERLA
-  // write the grid size in the checkpoint header
-  auto const write_header = [&](Utils::Vector3i const &grid_size,
-                                std::size_t pop_size) {
-    if (!binary) {
-      cpfile << Utils::Vector3i::formatter(" ") << grid_size << "\n";
-      cpfile << pop_size << "\n";
-    } else {
-      cpfile.write(reinterpret_cast<const char *>(grid_size.data()),
-                   3 * sizeof(int));
-      cpfile.write(reinterpret_cast<const char *>(&pop_size), sizeof(pop_size));
-    }
-  };
-#endif // WALBERLA
+  cpfile.stream.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
   try {
     if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
       if (!binary) {
-        cpfile.precision(16);
-        cpfile << std::fixed;
+        cpfile.stream.precision(16);
+        cpfile.stream << std::fixed;
       }
 
-      auto const gridsize = lb_walberla()->get_grid_dimensions();
+      auto const grid_size = lb_walberla()->lattice().get_grid_dimensions();
       auto const pop_size = lb_walberla()->stencil_size();
-      write_header(gridsize, pop_size);
+      cpfile.write(grid_size);
+      cpfile.write(pop_size);
 
-      for (int i = 0; i < gridsize[0]; i++) {
-        for (int j = 0; j < gridsize[1]; j++) {
-          for (int k = 0; k < gridsize[2]; k++) {
-            Utils::Vector3i const ind{{i, j, k}};
-            auto const pop = lb_lbnode_get_pop(ind);
-            auto const laf = lb_lbnode_get_last_applied_force(ind);
-            if (!binary) {
-              for (auto const p : pop) {
-                cpfile << p << "\n";
-              }
-              cpfile << Utils::Vector3d::formatter(" ") << laf << "\n";
-            } else {
-              cpfile.write(reinterpret_cast<const char *>(pop.data()),
-                           pop_size * sizeof(double));
-              cpfile.write(reinterpret_cast<const char *>(laf.data()),
-                           3 * sizeof(double));
+      for (int i = 0; i < grid_size[0]; i++) {
+        for (int j = 0; j < grid_size[1]; j++) {
+          for (int k = 0; k < grid_size[2]; k++) {
+            auto const ind = Utils::Vector3i{{i, j, k}};
+            auto const cpnode = ::Communication::mpiCallbacks().call(
+                ::Communication::Result::one_rank,
+                Walberla::get_node_checkpoint, ind);
+            cpfile.write(cpnode.populations);
+            cpfile.write(cpnode.last_applied_force);
+            cpfile.write(cpnode.is_boundary);
+            if (cpnode.is_boundary) {
+              cpfile.write(cpnode.slip_velocity);
             }
           }
         }
@@ -186,28 +246,23 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
 #endif // WALBERLA
     }
   } catch (std::ios_base::failure const &fail) {
-    cpfile.close();
+    cpfile.stream.close();
     throw std::runtime_error(err_msg + "could not write data to " + filename);
   } catch (std::runtime_error const &fail) {
-    cpfile.close();
+    cpfile.stream.close();
     throw;
   }
-  cpfile.close();
 }
 
 void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
   auto const err_msg = std::string("Error while reading LB checkpoint: ");
 
   // open file and set exceptions
-  auto flags = std::ios_base::in;
-  if (binary)
-    flags |= std::ios_base::binary;
-  std::fstream cpfile;
-  cpfile.open(filename, flags);
-  if (!cpfile) {
+  LBCheckpointFile cpfile(filename, std::ios_base::in, binary);
+  if (!cpfile.stream) {
     throw std::runtime_error(err_msg + "could not open file " + filename);
   }
-  cpfile.exceptions(std::ios_base::failbit | std::ios_base::badbit);
+  cpfile.stream.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
 #ifdef LB_WALBERLA
   // check the grid size in the checkpoint header matches the current grid size
@@ -215,15 +270,8 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
                                 std::size_t expected_pop_size) {
     Utils::Vector3i grid_size;
     std::size_t pop_size;
-    if (!binary) {
-      for (auto &n : grid_size) {
-        cpfile >> n;
-      }
-      cpfile >> pop_size;
-    } else {
-      cpfile.read(reinterpret_cast<char *>(grid_size.data()), 3 * sizeof(int));
-      cpfile.read(reinterpret_cast<char *>(&pop_size), sizeof(pop_size));
-    }
+    cpfile.read(grid_size);
+    cpfile.read(pop_size);
     if (grid_size != expected_grid_size) {
       std::stringstream message;
       message << " grid dimensions mismatch,"
@@ -242,34 +290,29 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
   try {
     if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
-      auto const gridsize = lb_walberla()->get_grid_dimensions();
+      auto const grid_size = lb_walberla()->lattice().get_grid_dimensions();
       auto const pop_size = lb_walberla()->stencil_size();
-      check_header(gridsize, pop_size);
+      check_header(grid_size, pop_size);
 
-      Utils::Vector3d laf;
-      std::vector<double> pop(pop_size);
-      for (int i = 0; i < gridsize[0]; i++) {
-        for (int j = 0; j < gridsize[1]; j++) {
-          for (int k = 0; k < gridsize[2]; k++) {
-            Utils::Vector3i const ind{{i, j, k}};
-            if (!binary) {
-              for (auto &p : pop) {
-                cpfile >> p;
-              }
-              for (auto &l : laf) {
-                cpfile >> l;
-              }
-            } else {
-              cpfile.read(reinterpret_cast<char *>(pop.data()),
-                          pop_size * sizeof(double));
-              cpfile.read(reinterpret_cast<char *>(laf.data()),
-                          3 * sizeof(double));
+      LBWalberlaNodeState cpnode;
+      cpnode.populations.resize(pop_size);
+      for (int i = 0; i < grid_size[0]; i++) {
+        for (int j = 0; j < grid_size[1]; j++) {
+          for (int k = 0; k < grid_size[2]; k++) {
+            auto const ind = Utils::Vector3i{{i, j, k}};
+            cpfile.read(cpnode.populations);
+            cpfile.read(cpnode.last_applied_force);
+            cpfile.read(cpnode.is_boundary);
+            if (cpnode.is_boundary) {
+              cpfile.read(cpnode.slip_velocity);
             }
             ::Communication::mpiCallbacks().call_all(
-                Walberla::set_node_from_checkpoint, ind, pop, laf);
+                Walberla::set_node_from_checkpoint, ind, cpnode);
           }
         }
       }
+      ::Communication::mpiCallbacks().call_all(
+          Walberla::do_reallocate_ubb_field);
       ::Communication::mpiCallbacks().call_all(
           Walberla::do_ghost_communication);
 #endif // WALBERLA
@@ -280,31 +323,30 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
     }
     // check EOF
     if (!binary) {
-      if (cpfile.peek() == '\n') {
-        static_cast<void>(cpfile.get());
+      if (cpfile.stream.peek() == '\n') {
+        static_cast<void>(cpfile.stream.get());
       }
     }
-    if (cpfile.peek() != EOF) {
+    if (cpfile.stream.peek() != EOF) {
       throw std::runtime_error(err_msg + "extra data found, expected EOF.");
     }
   } catch (std::ios_base::failure const &fail) {
-    auto const eof_error = cpfile.eof();
-    cpfile.close();
+    auto const eof_error = cpfile.stream.eof();
+    cpfile.stream.close();
     if (eof_error) {
       throw std::runtime_error(err_msg + "EOF found.");
     }
     throw std::runtime_error(err_msg + "incorrectly formatted data.");
   } catch (std::runtime_error const &fail) {
-    cpfile.close();
+    cpfile.stream.close();
     throw;
   }
-  cpfile.close();
 }
 
 Utils::Vector3i lb_lbfluid_get_shape() {
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
-    return lb_walberla()->get_grid_dimensions();
+    return lb_walberla()->lattice().get_grid_dimensions();
   }
 #endif
   throw NoLBActive();
@@ -360,43 +402,6 @@ lb_lbnode_get_last_applied_force(const Utils::Vector3i &ind) {
   throw NoLBActive();
 }
 
-void lb_lbfluid_create_vtk(unsigned delta_N, unsigned initial_count,
-                           unsigned flag_observables,
-                           std::string const &identifier,
-                           std::string const &base_folder,
-                           std::string const &prefix) {
-#ifdef LB_WALBERLA
-  if (lattice_switch == ActiveLB::WALBERLA) {
-    ::Communication::mpiCallbacks().call_all(Walberla::create_vtk, delta_N,
-                                             initial_count, flag_observables,
-                                             identifier, base_folder, prefix);
-    return;
-  }
-#endif
-  throw NoLBActive();
-}
-
-void lb_lbfluid_write_vtk(std::string const &vtk_uid) {
-#ifdef LB_WALBERLA
-  if (lattice_switch == ActiveLB::WALBERLA) {
-    ::Communication::mpiCallbacks().call_all(Walberla::write_vtk, vtk_uid);
-    return;
-  }
-#endif
-  throw NoLBActive();
-}
-
-void lb_lbfluid_switch_vtk(std::string const &vtk_uid, int status) {
-#ifdef LB_WALBERLA
-  if (lattice_switch == ActiveLB::WALBERLA) {
-    ::Communication::mpiCallbacks().call_all(Walberla::switch_vtk, vtk_uid,
-                                             status);
-    return;
-  }
-#endif
-  throw NoLBActive();
-}
-
 #ifdef LB_WALBERLA
 /** Revert the correction done by waLBerla on off-diagonal terms. */
 inline void walberla_off_diagonal_correction(Utils::Vector6d &tensor) {
@@ -426,7 +431,7 @@ lb_lbnode_get_pressure_tensor(const Utils::Vector3i &ind) {
 Utils::Vector6d lb_lbfluid_get_pressure_tensor_local() {
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
-    auto const gridsize = lb_walberla()->get_grid_dimensions();
+    auto const gridsize = lb_walberla()->lattice().get_grid_dimensions();
     Utils::Vector6d tensor{};
     for (int i = 0; i < gridsize[0]; i++) {
       for (int j = 0; j < gridsize[1]; j++) {
@@ -451,7 +456,7 @@ REGISTER_CALLBACK_REDUCTION(lb_lbfluid_get_pressure_tensor_local,
 const Utils::Vector6d lb_lbfluid_get_pressure_tensor() {
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
-    auto const gridsize = lb_walberla()->get_grid_dimensions();
+    auto const gridsize = lb_walberla()->lattice().get_grid_dimensions();
     auto const number_of_nodes = gridsize[0] * gridsize[1] * gridsize[2];
     auto tensor = ::Communication::mpiCallbacks().call(
         ::Communication::Result::reduction, std::plus<Utils::Vector6d>(),

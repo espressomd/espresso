@@ -67,7 +67,7 @@ void lb_sanity_checks(LBWalberlaBase const &lb_fluid,
   auto const agrid = lb_params.get_agrid();
   auto const tau = lb_params.get_tau();
   // waLBerla and ESPResSo must agree on domain decomposition
-  auto [lb_my_left, lb_my_right] = lb_fluid.get_local_domain();
+  auto [lb_my_left, lb_my_right] = lb_fluid.lattice().get_local_domain();
   lb_my_left *= agrid;
   lb_my_right *= agrid;
   auto const my_left = local_geo.my_left();
@@ -116,7 +116,7 @@ void deactivate_lb_walberla() {
 }
 
 std::shared_ptr<LBWalberlaBase>
-init_lb_walberla(LatticeWalberla const &lb_lattice,
+init_lb_walberla(std::shared_ptr<LatticeWalberla> const &lb_lattice,
                  LBWalberlaParams const &lb_params, double viscosity,
                  double density, double kT, int seed, bool single_precision) {
   bool flag_failure = false;

@@ -55,7 +55,7 @@ In the following, we discuss the parameters that can be supplied to the LBM in |
 The LB scheme and the MD scheme are not synchronized: In one LB time
 step typically several MD steps are performed. This allows to speed up
 the simulations and is adjusted with the parameter ``tau``, the LB time step.
-The parameters ``dens`` and ``visc`` set up the density and (kinematic) viscosity of the
+The parameters ``density`` and ``viscosity`` set up the density and (kinematic) viscosity of the
 LB fluid in (usual) MD units. Internally the LB implementation works
 with a different set of units: all lengths are expressed in ``agrid``, all times
 in ``tau`` and so on.
@@ -76,20 +76,21 @@ the fluid thermalization::
 
 The parameter ``ext_force_density`` takes a three dimensional vector as an
 array_like of :obj:`float`, representing a homogeneous external body force density in MD
-units to be applied to the fluid. The parameter ``bulk_visc`` allows one to
-tune the bulk viscosity of the fluid and is given in MD units. In the limit of
-low Mach number, the flow does not compress the fluid and the resulting flow
-field is therefore independent of the bulk viscosity. It is however known that
-the value of the viscosity does affect the quality of the implemented
-link-bounce-back method. ``gamma_even`` and ``gamma_odd`` are the relaxation
-parameters for the kinetic modes. These fluid parameters do not correspond to
-any macroscopic fluid properties, but do influence numerical properties of the
-algorithm, such as the magnitude of the error at boundaries. Unless you are an
-expert, leave their defaults unchanged. If you do change them, note that they
-are to be given in LB units.
+units to be applied to the fluid.
 
 Before running a simulation at least the following parameters must be
-set up: ``agrid``, ``tau``, ``visc``, ``dens``.
+set up: ``agrid``, ``tau``, ``viscosity``, ``density``.
+
+Performance considerations
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The CPU implementation of the LB has an extra flag ``single_precision`` to
+use single-precision floating point values. These are approximately 10%
+faster than double-precision, at the cost of a small loss in precision.
+
+To enable vectorization, run ``cmake . -DWALBERLA_USE_AVX=ON``.
+An AVX2-capable microprocessor is required. Currently only works
+for double-precision kernels.
 
 .. _Checkpointing LB:
 
@@ -315,16 +316,15 @@ Per-node boundary conditions
 One can set (or update) the slip velocity of individual nodes::
 
     import espressomd.lb
-    import espressomd.lbboundaries
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     system.cell_system.skin = 0.1
     system.time_step = 0.01
     lbf = espressomd.lb.LBFluidWalberla(agrid=0.5, density=1.0, viscosity=1.0, tau=0.01)
     system.actors.add(lbf)
     # make one node a boundary node with a slip velocity
-    lbf[0, 0, 0].boundary = espressomd.lbboundaries.VelocityBounceBack([0, 0, 1])
+    lbf[0, 0, 0].boundary = espressomd.lb.VelocityBounceBack([0, 0, 1])
     # update node for no-slip boundary conditions
-    lbf[0, 0, 0].boundary = espressomd.lbboundaries.VelocityBounceBack([0, 0, 0])
+    lbf[0, 0, 0].boundary = espressomd.lb.VelocityBounceBack([0, 0, 0])
     # remove boundary conditions
     lbf[0, 0, 0].boundary = None
 
@@ -344,7 +344,6 @@ providing a list of nodes and a list of velocities of the same dimensions::
 
     import espressomd.lb
     import espressomd.shapes
-    import espressomd.lbboundaries
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     system.cell_system.skin = 0.1
     system.time_step = 0.01
@@ -355,11 +354,12 @@ providing a list of nodes and a list of velocities of the same dimensions::
     cylinder = espressomd.shapes.Cylinder(
         center=[5., 5., 5.], axis=[0, 0, 1], length=3 * system.box_l[2],
         radius=8.1 * lbf.agrid, direction=1)
-    lbf.add_boundary(cylinder)
+    # mark nodes inside cylinder as boundaries
+    lbf.add_boundary_from_list(lbf.get_nodes_in_shape(cylinder))
     # update surface nodes with a tangential slip velocity
-    surface_nodes = espressomd.lbboundaries.edge_detection(
+    surface_nodes = espressomd.lb.edge_detection(
         lbf.get_shape_bitmask(cylinder), system.periodicity)
-    tangents = espressomd.lbboundaries.calc_cylinder_tangential_vectors(
+    tangents = espressomd.lb.calc_cylinder_tangential_vectors(
         cylinder.center, lbf.agrid, 0.5, surface_nodes)
     lbf.add_boundary_from_list(surface_nodes, velocity_magnitude * tangents)
     # remove boundary conditions
@@ -384,9 +384,9 @@ Adding a shape-based boundary is straightforward::
     system.actors.add(lbf)
     # set up shear flow between two sliding walls
     wall1 = espressomd.shapes.Wall(normal=[+1., 0., 0.], dist=2.5)
-    lbf.add_boundary(shape=wall1, velocity=[0., +0.05, 0.])
+    lbf.add_boundary_from_shape(shape=wall1, velocity=[0., +0.05, 0.])
     wall2 = espressomd.shapes.Wall(normal=[-1., 0., 0.], dist=-(system.box_l[0] - 2.5))
-    lbf.add_boundary(shape=wall2, velocity=[0., -0.05, 0.])
+    lbf.add_boundary_from_shape(shape=wall2, velocity=[0., -0.05, 0.])
 
 The ``velocity`` argument is optional, in which case the no-slip boundary
 conditions are used. For a position-dependent slip velocity, the argument

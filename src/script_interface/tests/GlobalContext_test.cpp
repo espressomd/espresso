@@ -57,7 +57,7 @@ auto make_global_context(Communication::MpiCallbacks &cb) {
   factory.register_new<Dummy>("Dummy");
 
   return std::make_shared<si::GlobalContext>(
-      cb, std::make_shared<si::LocalContext>(factory));
+      cb, std::make_shared<si::LocalContext>(factory, 0));
 }
 
 BOOST_AUTO_TEST_CASE(GlobalContext_make_shared) {

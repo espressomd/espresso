@@ -23,6 +23,8 @@
 
 #ifdef LB_WALBERLA
 
+#include <walberla_bridge/LBWalberlaBase.hpp>
+
 #include "LatticeWalberla.hpp"
 
 #include "core/communication.hpp"
@@ -69,7 +71,7 @@ public:
          [this]() { return m_lb_params->get_tau(); }},
         {"shape", AutoParameter::read_only,
          [this]() {
-           return (m_lb_fluid) ? m_lb_fluid->get_grid_dimensions()
+           return (m_lb_fluid) ? m_lb_fluid->lattice().get_grid_dimensions()
                                : Utils::Vector3i::broadcast(-1);
          }},
         {"kT", AutoParameter::read_only,
@@ -124,9 +126,6 @@ public:
                                 : std::get<0>(m_ctor_params)) /
                   m_conv_visc;
          }},
-        {"pressure_tensor", AutoParameter::read_only,
-         // this getter is overriden by the python class
-         [this]() { return 0; }},
         {"ext_force_density",
          [this](const Variant &v) {
            auto const ext_f = m_conv_force * get_value<Utils::Vector3d>(v);
@@ -172,7 +171,7 @@ public:
       auto const lb_lattice =
           get_value<std::shared_ptr<LatticeWalberla>>(params, "lattice")
               ->lattice();
-      m_lb_fluid = init_lb_walberla(*lb_lattice, *m_lb_params, lb_visc, lb_dens,
+      m_lb_fluid = init_lb_walberla(lb_lattice, *m_lb_params, lb_visc, lb_dens,
                                     lb_kT, lb_seed, m_is_single_precision);
       m_lb_fluid->set_external_force(ext_f);
     }
@@ -189,6 +188,12 @@ public:
 
     return {};
   }
+
+  /** Non-owning pointer to the LB fluid. */
+  std::weak_ptr<::LBWalberlaBase> lb_fluid() { return m_lb_fluid; }
+
+  /** Non-owning pointer to the LB parameters. */
+  std::weak_ptr<::LBWalberlaParams> lb_params() { return m_lb_params; }
 };
 
 } // namespace ScriptInterface::walberla

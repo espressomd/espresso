@@ -1,8 +1,7 @@
-// kernel generated with pystencils v0.3.4+4.g4fecf0c, lbmpy v0.3.4+6.g2faceda,
+// kernel generated with pystencils v0.4.3, lbmpy v0.4.3,
 // lbmpy_walberla/pystencils_walberla from commit
-// b17ca5caf00db7d19f86c5f85c6f67fec6c16aff
+// 88f85eb7a979f81d68e76009811aeed53ec3014e
 
-#pragma once
 //======================================================================================================================
 //
 //  This file is part of waLBerla. waLBerla is free software: you can
@@ -22,6 +21,7 @@
 //! \\author pystencils
 //======================================================================================================================
 
+#pragma once
 #include "core/DataTypes.h"
 
 #include "blockforest/StructuredBlockForest.h"
@@ -97,9 +97,25 @@ public:
         createIdxVector, "IndexField_Dynamic_UBB_single_precision");
   };
 
-  void operator()(IBlock *block);
+  void run(IBlock *block);
+
+  void operator()(IBlock *block) { run(block); }
+
   void inner(IBlock *block);
+
   void outer(IBlock *block);
+
+  std::function<void(IBlock *)> getSweep() {
+    return [this](IBlock *b) { this->run(b); };
+  }
+
+  std::function<void(IBlock *)> getInnerSweep() {
+    return [this](IBlock *b) { this->inner(b); };
+  }
+
+  std::function<void(IBlock *)> getOuterSweep() {
+    return [this](IBlock *b) { this->outer(b); };
+  }
 
   template <typename FlagField_T>
   void fillFromFlagField(const shared_ptr<StructuredBlockForest> &blocks,
@@ -404,11 +420,12 @@ public:
           indexVectorOuter.push_back(element);
       }
     }
+
     indexVectors->syncGPU();
   }
 
 private:
-  void run(IBlock *block, IndexVectors::Type type);
+  void run_impl(IBlock *block, IndexVectors::Type type);
 
   BlockDataID indexVectorID;
   std::function<Vector3<float>(

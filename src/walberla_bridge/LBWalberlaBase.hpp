@@ -27,11 +27,15 @@
  * by @ref walberla::LBWalberlaImpl.
  */
 
+#include "LatticeWalberla.hpp"
+#include "VTKHandle.hpp"
+
 #include <utils/Vector.hpp>
 
 #include <boost/optional.hpp>
 
 #include <cstddef>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -141,21 +145,14 @@ public:
   virtual double get_density() const = 0;
   virtual double get_kT() const = 0;
 
-  //* @brief Set the rng counter for thermalized LBs */
+  /** @brief Set the rng counter for thermalized LBs */
   virtual uint64_t get_rng_state() const = 0;
 
   /** @brief Set the rng state of thermalized LBs */
   virtual void set_rng_state(uint64_t counter) = 0;
 
-  // Grid, domain, halo
-  virtual int n_ghost_layers() const = 0;
-  virtual Utils::Vector3i get_grid_dimensions() const = 0;
-  virtual std::pair<Utils::Vector3d, Utils::Vector3d>
-  get_local_domain() const = 0;
-  virtual bool node_in_local_domain(const Utils::Vector3i &node) const = 0;
-  virtual bool node_in_local_halo(const Utils::Vector3i &node) const = 0;
-  virtual bool pos_in_local_domain(const Utils::Vector3d &pos) const = 0;
-  virtual bool pos_in_local_halo(const Utils::Vector3d &pos) const = 0;
+  /** @brief The underlying lattice */
+  virtual LatticeWalberla const &lattice() const = 0;
 
   /** @brief get the velocity field id */
   [[nodiscard]] virtual std::size_t get_velocity_field_id() const = 0;
@@ -166,20 +163,20 @@ public:
   /** @brief Create a VTK observable.
    *
    *  @param delta_N          Write frequency, if 0 write a single frame,
-   *         otherwise add a callback to write every @p delta_N LB steps
-   *         to a new file
+   *                          otherwise add a callback to write every
+   *                          @p delta_N LB steps to a new file
    *  @param initial_count    Initial execution count
    *  @param flag_observables Which observables to measure (OR'ing of
-   *         @ref OutputVTK values)
+   *                          @ref OutputVTK values)
    *  @param identifier       Name of the VTK dataset
    *  @param base_folder      Path to the VTK folder
    *  @param prefix           Prefix of the VTK files
    */
-  virtual void create_vtk(unsigned delta_N, unsigned initial_count,
-                          unsigned flag_observables,
-                          std::string const &identifier,
-                          std::string const &base_folder,
-                          std::string const &prefix) = 0;
+  virtual std::shared_ptr<VTKHandle> create_vtk(int delta_N, int initial_count,
+                                                int flag_observables,
+                                                std::string const &identifier,
+                                                std::string const &base_folder,
+                                                std::string const &prefix) = 0;
   /** @brief Write a VTK observable to disk.
    *
    *  @param vtk_uid          Name of the VTK object
@@ -188,9 +185,9 @@ public:
   /** @brief Toggle a VTK observable on/off.
    *
    *  @param vtk_uid          Name of the VTK object
-   *  @param status           1 to switch on, 0 to switch off
+   *  @param status           @c true to switch on, @c false to switch off
    */
-  virtual void switch_vtk(std::string const &vtk_uid, int status) = 0;
+  virtual void switch_vtk(std::string const &vtk_uid, bool status) = 0;
 
   /** @brief return a pairs of global node index and node center position */
   virtual std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>>
@@ -198,11 +195,4 @@ public:
   virtual ~LBWalberlaBase() = default;
 };
 
-/** @brief LB statistics to write to VTK files */
-enum class OutputVTK : unsigned {
-  density = 1u << 0u,
-  velocity_vector = 1u << 1u,
-  pressure_tensor = 1u << 2u,
-};
-
-#endif // LB_WALBERLA_H
+#endif // LB_WALBERLA_BASE_HPP

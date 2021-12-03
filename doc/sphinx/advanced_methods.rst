@@ -237,7 +237,6 @@ Description of sample script
 .. note::
 
     The following features are required:
-    ``LB_BOUNDARIES``,
     ``EXTERNAL_FORCES``,
     ``MASS``, ``SOFT_SPHERE``
 
@@ -346,7 +345,7 @@ Specification of boundaries
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To set up the geometry of the channels, we mostly use rhomboids and
-cylinders, but there are also other boundary types available in |es|.
+cylinders, but there are also other shape types available in |es|.
 Their usage is described elsewhere.
 
 
@@ -379,14 +378,14 @@ defined as follows. First we define the two shapes:
                                 direction=1)
 
 The ``direction=1`` determines that the fluid is on the *outside*. Next
-we create boundaries for the fluid:
+we mark the LB nodes within the shapes as boundaries:
 
 ::
 
-    system.lbboundaries.add(lbboundaries.LBBoundary(shape=boundary1))
-    system.lbboundaries.add(lbboundaries.LBBoundary(shape=boundary2))
+    lbf.add_boundary_from_shape(boundary1)
+    lbf.add_boundary_from_shape(boundary2)
 
-Followed by constraints for cells:
+Followed by creating the constraints for cells:
 
 ::
 

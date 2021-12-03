@@ -67,13 +67,6 @@ class CheckpointTest(ut.TestCase):
 
     @ut.skipIf(not LB, "Skipping test due to missing mode.")
     def test_lb_fluid(self):
-        '''
-        Check serialization of the LB fluid. The checkpoint file only stores
-        population information, therefore calling ``lbf.load_checkpoint()``
-        erases all LBBoundaries information but doesn't remove the objects
-        contained in ``system.lbboundaries`. This test method is named such
-        that it is executed after ``self.test_lb_boundaries()``.
-        '''
         lbf = self.get_active_actor_of_type(espressomd.lb.LBFluidWalberla)
         cpt_mode = int("@TEST_BINARY@")
         cpt_path = self.checkpoint.checkpoint_dir + "/lb{}.cpt"
@@ -127,35 +120,53 @@ class CheckpointTest(ut.TestCase):
         self.assertTrue(lbf.is_active)
         self.assertFalse(lbf.is_single_precision)
 
+        # check boundary objects
+        slip_velocity1 = np.array([1e-4, 1e-4, 0.])
+        slip_velocity2 = np.array([0., 0., 0.])
+        # check boundary flag
+        np.testing.assert_equal(
+            np.copy(lbf[0, :, :].is_boundary.astype(int)), 1)
+        np.testing.assert_equal(
+            np.copy(lbf[-1, :, :].is_boundary.astype(int)), 1)
+        np.testing.assert_equal(
+            np.copy(lbf[1:-1, :, :].is_boundary.astype(int)), 0)
+        for node in lbf[0, :, :]:
+            np.testing.assert_allclose(np.copy(node.velocity), slip_velocity1)
+        for node in lbf[-1, :, :]:
+            np.testing.assert_allclose(np.copy(node.velocity), slip_velocity2)
+        for node in lbf[2, :, :]:
+            np.testing.assert_allclose(np.copy(node.velocity), 0.)
+        # remove boundaries
+        lbf.clear_boundaries()
+        np.testing.assert_equal(
+            np.copy(lbf[:, :, :].is_boundary.astype(int)), 0)
+
     @utx.skipIfMissingFeatures('LB_WALBERLA')
     @ut.skipIf('LB.ACTIVE.WALBERLA' not in modes, 'waLBerla LBM not in modes')
     def test_VTK(self):
         vtk_suffix = '@TEST_COMBINATION@_@TEST_BINARY@'
-        for vtk_registry in (system._vtk_registry,
-                             espressomd.lb._vtk_registry):
-            key = f'vtk_out/auto_{vtk_suffix}'
-            self.assertIn(key, vtk_registry.map)
-            obj = vtk_registry.map[key]
-            self.assertIsInstance(obj, espressomd.lb.VTKOutputAutomatic)
-            self.assertEqual(obj._params['vtk_uid'], key)
-            self.assertEqual(obj._params['delta_N'], 1)
-            self.assertFalse(obj._params['enabled'])
-            self.assertEqual(obj._params['observables'],
-                             {'density', 'velocity_vector'})
-            self.assertIn(
-                "writes to '{}' every 1 LB step (disabled)>".format(key),
-                repr(obj))
-            key = f'vtk_out/manual_{vtk_suffix}'
-            self.assertIn(key, vtk_registry.map)
-            obj = vtk_registry.map[key]
-            self.assertIsInstance(obj, espressomd.lb.VTKOutputManual)
-            self.assertEqual(obj._params['vtk_uid'], key)
-            self.assertEqual(obj._params['delta_N'], 0)
-            self.assertEqual(obj._params['observables'], {'density'})
-            self.assertIn("writes to '{}' on demand>".format(key), repr(obj))
+        vtk_registry = espressomd.lb._vtk_registry
+        key_auto = f'vtk_out/auto_{vtk_suffix}'
+        self.assertIn(key_auto, vtk_registry.map)
+        obj = vtk_registry.map[key_auto]
+        self.assertIsInstance(obj, espressomd.lb.VTKOutput)
+        self.assertEqual(obj.vtk_uid, key_auto)
+        self.assertEqual(obj.delta_N, 1)
+        self.assertFalse(obj.enabled)
+        self.assertEqual(set(obj.observables), {'density', 'velocity_vector'})
+        self.assertIn(
+            f"write to '{key_auto}' every 1 LB steps (disabled)>", repr(obj))
+        key_manual = f'vtk_out/manual_{vtk_suffix}'
+        self.assertIn(key_manual, vtk_registry.map)
+        obj = vtk_registry.map[key_manual]
+        self.assertIsInstance(obj, espressomd.lb.VTKOutput)
+        self.assertEqual(obj.vtk_uid, key_manual)
+        self.assertEqual(obj.delta_N, 0)
+        self.assertEqual(set(obj.observables), {'density'})
+        self.assertIn(f"write to '{key_manual}' on demand>", repr(obj))
         # check file numbering when resuming VTK write operations
-        filepath_template = key + '/simulation_step_{}.vtu'
-        vtk_manual = system._vtk_registry.map[key]
+        filepath_template = key_manual + '/simulation_step_{}.vtu'
+        vtk_manual = espressomd.lb._vtk_registry.map[key_manual]
         self.assertTrue(os.path.isfile(filepath_template.format(0)))
         self.assertFalse(os.path.isfile(filepath_template.format(1)))
         self.assertFalse(os.path.isfile(filepath_template.format(2)))
@@ -361,6 +372,10 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(params2, reference2)
 
     def test_bonded_inter(self):
+        # check the ObjectHandle was correctly initialized (including MPI)
+        bond_ids = system.bonded_inter.call_method('get_bond_ids')
+        self.assertEqual(len(bond_ids), len(system.bonded_inter))
+        # check bonded interactions
         state = system.part[1].bonds[0][0].params
         reference = {'r_0': 0.0, 'k': 1.0, 'r_cut': 0.0}
         self.assertEqual(state, reference)
@@ -383,6 +398,12 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(
             ibm_triel_bond.params,
             {'k1': 1.1, 'k2': 1.2, 'maxDist': 1.6, 'elasticLaw': 'NeoHookean'})
+        # check new bonds can be added
+        if 'LB.ACTIVE.WALBERLA' not in modes:
+            new_bond = espressomd.interactions.HarmonicBond(r_0=0.2, k=1.)
+            system.bonded_inter.add(new_bond)
+            bond_ids = system.bonded_inter.call_method('get_bond_ids')
+            self.assertEqual(len(bond_ids), len(system.bonded_inter))
 
     @ut.skipIf('THERM.LB' in modes, 'LB thermostat in modes')
     @utx.skipIfMissingFeatures(['ELECTROSTATICS', 'MASS', 'ROTATION'])
@@ -541,36 +562,6 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(list(system.part[0].exclusions), [2])
         self.assertEqual(list(system.part[1].exclusions), [2])
         self.assertEqual(list(system.part[2].exclusions), [0, 1])
-
-    @utx.skipIfMissingFeatures('LB_WALBERLA')
-    @ut.skipIf('LB.ACTIVE.WALBERLA' not in modes, 'waLBerla LBM not in modes')
-    @ut.skipIf(not LB or not espressomd.has_features("LB_BOUNDARIES"),
-               "Missing features")
-    @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
-    def test_lb_boundaries(self):
-        # check boundary objects
-        self.assertEqual(len(system.lbboundaries), 2)
-        np.testing.assert_allclose(
-            np.copy(system.lbboundaries[0].velocity), [1e-4, 1e-4, 0])
-        np.testing.assert_allclose(
-            np.copy(system.lbboundaries[1].velocity), [0, 0, 0])
-        self.assertIsInstance(
-            system.lbboundaries[0].shape, espressomd.shapes.Wall)
-        self.assertIsInstance(
-            system.lbboundaries[1].shape, espressomd.shapes.Wall)
-        # check boundary flag
-        lbf = self.get_active_actor_of_type(espressomd.lb.LBFluidWalberla)
-        np.testing.assert_equal(
-            np.copy(lbf[0, :, :].is_boundary.astype(int)), 1)
-        np.testing.assert_equal(
-            np.copy(lbf[-1, :, :].is_boundary.astype(int)), 1)
-        np.testing.assert_equal(
-            np.copy(lbf[1:-1, :, :].is_boundary.astype(int)), 0)
-        # remove boundaries
-        system.lbboundaries.clear()
-        self.assertEqual(len(system.lbboundaries), 0)
-        np.testing.assert_equal(
-            np.copy(lbf[:, :, :].is_boundary.astype(int)), 0)
 
     @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
     def test_constraints(self):

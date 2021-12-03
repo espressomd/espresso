@@ -53,11 +53,10 @@ using Utils::Vector3i;
 namespace bdata = boost::unit_test::data;
 
 LBTestParameters params; // populated in main()
-Vector3i mpi_shape;      // populated in main
 
 BOOST_DATA_TEST_CASE(integrate_with_point_force_thermalized,
                      bdata::make(thermalized_lbs()), lb_generator) {
-  auto lb = lb_generator(mpi_shape, params);
+  auto lb = lb_generator(params);
   boost::mpi::communicator world;
 
   // Check that momentum stays zero after initial integration
@@ -76,8 +75,8 @@ BOOST_DATA_TEST_CASE(integrate_with_point_force_thermalized,
   auto const force_node = Vector3i{{1, 1, 1}};
   lb->add_force_at_pos(force_node + Vector3d::broadcast(.5), f2);
   lb->integrate();
-  for (auto const &n : all_nodes_incl_ghosts(params.grid_dimensions, 1)) {
-    if (lb->node_in_local_halo(n)) {
+  for (auto const &n : all_nodes_incl_ghosts(lb->lattice())) {
+    if (lb->lattice().node_in_local_halo(n)) {
       auto const laf = *(lb->get_node_last_applied_force(n, true));
       if (n == force_node) {
         BOOST_CHECK_SMALL((laf - f1 - f2).norm(), 1E-10);
@@ -110,7 +109,7 @@ BOOST_DATA_TEST_CASE(integrate_with_point_force_thermalized,
 // this can be merged with the thermalized test, once that passes
 BOOST_DATA_TEST_CASE(integrate_with_point_force_unthermalized,
                      bdata::make(unthermalized_lbs()), lb_generator) {
-  auto lb = lb_generator(mpi_shape, params);
+  auto lb = lb_generator(params);
   boost::mpi::communicator world;
 
   // Check that momentum stays zero after initial integration
@@ -147,19 +146,23 @@ BOOST_DATA_TEST_CASE(integrate_with_point_force_unthermalized,
 }
 
 int main(int argc, char **argv) {
-  MPI_Init(&argc, &argv);
   int n_nodes;
+  Vector3i mpi_shape{};
 
+  MPI_Init(&argc, &argv);
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
   MPI_Dims_create(n_nodes, 3, mpi_shape.data());
+  walberla_mpi_init();
 
-  params.viscosity = 0.02;
+  params.seed = 0u;
   params.kT = 1.1E-4;
+  params.viscosity = 0.02;
   params.density = 1.4;
   params.grid_dimensions = Vector3i{12, 12, 18};
   params.box_dimensions = Vector3d{6, 6, 9};
+  params.lattice =
+      std::make_shared<LatticeWalberla>(params.grid_dimensions, mpi_shape, 1u);
 
-  walberla_mpi_init();
   auto const res = boost::unit_test::unit_test_main(init_unit_test, argc, argv);
   MPI_Finalize();
   return res;

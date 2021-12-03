@@ -32,9 +32,7 @@ except ImportError:
 
 import espressomd
 import espressomd.lb
-if espressomd.has_features('LB_BOUNDARIES'):
-    import espressomd.lbboundaries
-    import espressomd.shapes
+import espressomd.shapes
 
 
 class LBWrite:
@@ -49,7 +47,6 @@ class LBWrite:
         self.system.actors.add(self.lbf)
 
     def tearDown(self):
-        self.system.lbboundaries.clear()
         self.system.actors.clear()
         self.system.thermostat.turn_off()
 
@@ -96,13 +93,12 @@ class LBWrite:
         '''
         x_offset = 0
         shape = [16, 16, 16]
-        if espressomd.has_features('LB_BOUNDARIES'):
-            self.system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(
-                shape=espressomd.shapes.Wall(normal=[1, 0, 0], dist=1.5)))
-            self.system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(
-                shape=espressomd.shapes.Wall(normal=[-1, 0, 0], dist=-14.5)))
-            x_offset = 2
-            shape[0] = 12
+        self.lbf.add_boundary_from_shape(
+            espressomd.shapes.Wall(normal=[1, 0, 0], dist=1.5))
+        self.lbf.add_boundary_from_shape(
+            espressomd.shapes.Wall(normal=[-1, 0, 0], dist=-14.5))
+        x_offset = 2
+        shape[0] = 12
 
         n_steps = 100
         lb_steps = int(np.floor(n_steps * self.lbf.tau))
@@ -180,6 +176,38 @@ class LBWrite:
             np.testing.assert_allclose(vtk_pressure, node_pressure, atol=1e-3)
 
         self.cleanup_vtk_files(filepaths)
+
+    def test_exceptions(self):
+        label_invalid_obs = f'test_lb_vtk_{self.lb_vtk_id}_invalid_obs'
+        error_msg = r"Only the following VTK observables are supported: \['density', 'pressure_tensor', 'velocity_vector'\], got \['dens'\]"
+        with self.assertRaisesRegex(ValueError, error_msg):
+            self.lbf.add_vtk_writer(label_invalid_obs, ['dens'])
+        label_manual_lbf = f'test_lb_vtk_{self.lb_vtk_id}_manual_lbf'
+        label_auto_lbf = f'test_lb_vtk_{self.lb_vtk_id}_auto_lbf'
+        vtk_manual = self.lbf.add_vtk_writer(label_manual_lbf, ['density'])
+        vtk_auto = self.lbf.add_vtk_writer(
+            label_auto_lbf, ['density'], delta_N=1)
+        with self.assertRaisesRegex(RuntimeError, 'Automatic VTK callbacks cannot be triggered manually'):
+            vtk_auto.write()
+        with self.assertRaisesRegex(RuntimeError, 'Manual VTK callbacks cannot be disabled'):
+            vtk_manual.disable()
+        with self.assertRaisesRegex(RuntimeError, 'Manual VTK callbacks cannot be enabled'):
+            vtk_manual.enable()
+
+        # can still use VTK when the LB actor has been cleared but not deleted
+        label_cleared = f'test_lb_vtk_{self.lb_vtk_id}_cleared_lbf'
+        vtk_cleared = self.lbf.add_vtk_writer(label_cleared, ['density'])
+        self.system.actors.clear()
+        vtk_cleared.write()
+        espressomd.lb.VTKOutput(lb_fluid=self.lbf, observables=['density'],
+                                identifier=label_cleared + '_1')
+
+        # cannot use VTK when the LB actor has expired
+        label_expired = f'test_lb_vtk_{self.lb_vtk_id}_expired_lbf'
+        vtk_expired = self.lbf.add_vtk_writer(label_expired, ['density'])
+        self.lbf = None
+        with self.assertRaisesRegex(RuntimeError, 'Attempted access to uninitialized LBWalberla instance'):
+            vtk_expired.write()
 
 
 @skipIfMissingPythonPackage

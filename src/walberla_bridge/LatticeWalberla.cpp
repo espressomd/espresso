@@ -21,7 +21,11 @@
 
 #include <blockforest/Initialization.h>
 #include <blockforest/StructuredBlockForest.h>
+#include <core/DataTypes.h>
+#include <core/cell/Cell.h>
+#include <domain_decomposition/IBlock.h>
 
+#include "BlockAndCell.hpp"
 #include "walberla_utils.hpp"
 
 #include <utils/Vector.hpp>
@@ -73,21 +77,17 @@ LatticeWalberla::get_local_domain() const {
 [[nodiscard]] bool
 LatticeWalberla::node_in_local_domain(const Utils::Vector3i &node) const {
   // Note: Lattice constant =1, cell centers offset by .5
-  return get_block_and_cell(node, false, m_blocks, get_ghost_layers()) !=
-         boost::none;
+  return ::walberla::get_block_and_cell(*this, node, false) != boost::none;
 }
 [[nodiscard]] bool
 LatticeWalberla::node_in_local_halo(const Utils::Vector3i &node) const {
-  return get_block_and_cell(node, true, m_blocks, get_ghost_layers()) !=
-         boost::none;
+  return ::walberla::get_block_and_cell(*this, node, true) != boost::none;
 }
 [[nodiscard]] bool
 LatticeWalberla::pos_in_local_domain(const Utils::Vector3d &pos) const {
-  return ::walberla::get_block(pos, false, m_blocks, get_ghost_layers()) !=
-         nullptr;
+  return ::walberla::get_block(*this, pos, false) != nullptr;
 }
 [[nodiscard]] bool
 LatticeWalberla::pos_in_local_halo(const Utils::Vector3d &pos) const {
-  return ::walberla::get_block(pos, true, m_blocks, get_ghost_layers()) !=
-         nullptr;
+  return ::walberla::get_block(*this, pos, true) != nullptr;
 }

@@ -16,10 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#pragma once
 
-#include "vtk/BlockCellDataWriter.h"
+#include <vtk/BlockCellDataWriter.h>
 
 #include "generated_kernels/macroscopic_values_accessors_double_precision.h"
+#include "generated_kernels/macroscopic_values_accessors_single_precision.h"
 
 namespace walberla {
 namespace lbm {

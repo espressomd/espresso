@@ -19,7 +19,6 @@ import unittest_decorators as utx
 import numpy as np
 
 import espressomd.lb
-import espressomd.lbboundaries
 import espressomd.shapes
 
 AGRID = .25
@@ -69,7 +68,6 @@ class LBPoiseuilleCommon:
         self.system.actors.add(self.lbf)
 
     def tearDown(self):
-        self.system.lbboundaries.clear()
         self.system.actors.clear()
 
     def prepare(self):
@@ -81,11 +79,9 @@ class LBPoiseuilleCommon:
         wall_shape1 = espressomd.shapes.Wall(normal=[1, 0, 0], dist=AGRID)
         wall_shape2 = espressomd.shapes.Wall(
             normal=[-1, 0, 0], dist=-(self.system.box_l[0] - AGRID))
-        wall1 = espressomd.lbboundaries.LBBoundary(shape=wall_shape1)
-        wall2 = espressomd.lbboundaries.LBBoundary(shape=wall_shape2)
 
-        self.system.lbboundaries.add(wall1)
-        self.system.lbboundaries.add(wall2)
+        self.lbf.add_boundary_from_shape(wall_shape1)
+        self.lbf.add_boundary_from_shape(wall_shape2)
 
         mid_indices = (self.system.box_l / AGRID / 2).astype(int)
         diff = float("inf")

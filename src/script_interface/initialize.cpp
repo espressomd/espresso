@@ -36,7 +36,6 @@
 #include "accumulators/initialize.hpp"
 #include "collision_detection/initialize.hpp"
 #include "interactions/initialize.hpp"
-#include "lbboundaries/initialize.hpp"
 #include "mpiio/initialize.hpp"
 #include "observables/initialize.hpp"
 #include "virtual_sites/initialize.hpp"
@@ -52,7 +51,6 @@ void initialize(Utils::Factory<ObjectHandle> *f) {
   Observables::initialize(f);
   ClusterAnalysis::initialize(f);
   Interactions::initialize(f);
-  LBBoundaries::initialize(f);
   PairCriteria::initialize(f);
   VirtualSites::initialize(f);
   MPIIO::initialize(f);

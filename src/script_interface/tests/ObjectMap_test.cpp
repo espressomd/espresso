@@ -101,7 +101,7 @@ BOOST_AUTO_TEST_CASE(serialization) {
   Utils::Factory<ObjectHandle> f;
   f.register_new<ObjectHandle>("ObjectHandle");
   f.register_new<ObjectMapImpl>("ObjectMap");
-  auto ctx = std::make_shared<LocalContext>(f);
+  auto ctx = std::make_shared<LocalContext>(f, 0);
   // A list of some elements
   auto map = std::dynamic_pointer_cast<ObjectMapImpl>(
       ctx->make_shared("ObjectMap", {}));

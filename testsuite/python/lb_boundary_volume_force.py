@@ -19,10 +19,8 @@ import unittest_decorators as utx
 import numpy as np
 
 import espressomd.lb
-import espressomd.lbboundaries
 import espressomd.shapes
-
-from tests_common import count_fluid_nodes
+import tests_common
 
 AGRID = 0.5
 EXT_FORCE = np.array([-.01, 0.02, 0.03])
@@ -51,7 +49,6 @@ class LBBoundaryForceCommon:
         self.system.actors.add(self.lbf)
 
     def tearDown(self):
-        self.system.lbboundaries.clear()
         self.system.actors.clear()
 
     def test(self):
@@ -64,26 +61,27 @@ class LBBoundaryForceCommon:
         wall_shape1 = espressomd.shapes.Wall(normal=[1, 0, 0], dist=AGRID)
         wall_shape2 = espressomd.shapes.Wall(
             normal=[-1, 0, 0], dist=-(self.system.box_l[0] - AGRID))
-        wall1 = espressomd.lbboundaries.LBBoundary(shape=wall_shape1)
-        wall2 = espressomd.lbboundaries.LBBoundary(shape=wall_shape2)
 
-        self.system.lbboundaries.add(wall1)
-        self.system.lbboundaries.add(wall2)
-        fluid_nodes = count_fluid_nodes(self.lbf)
+        fluid_nodes = tests_common.count_fluid_nodes(self.lbf)
+        self.lbf.add_boundary_from_shape(wall_shape1)
+        self.lbf.add_boundary_from_shape(wall_shape2)
+
+        # TODO WALBERLA: (#4381)
+        self.skipTest("boundary forces not implemented at the moment")
 
         self.system.integrator.run(20)
         diff = float("inf")
         old_val = float("inf")
         while diff > 0.002:
             self.system.integrator.run(10)
-            new_val = wall1.get_force()[0]
+            new_val = self.lbf.boundary['wall1'].get_force()[0]
             diff = abs(new_val - old_val)
             old_val = new_val
 
         expected_force = fluid_nodes * AGRID**3 * \
             np.copy(self.lbf.ext_force_density)
-        measured_force = np.array(wall1.get_force()) + \
-            np.array(wall2.get_force())
+        measured_force = np.array(self.lbf.boundary['wall1'].get_force()) + \
+            np.array(self.lbf.boundary['wall2'].get_force())
         # TODO WALBERLA: the force converges to 90% of the expected force
         np.testing.assert_allclose(
             measured_force,
@@ -91,7 +89,6 @@ class LBBoundaryForceCommon:
             atol=1E-10)
 
 
-@utx.skipIfMissingFeatures(["LB_BOUNDARIES"])
 @utx.skipIfMissingFeatures(["LB_WALBERLA"])
 class LBBoundaryForceWalberla(LBBoundaryForceCommon, ut.TestCase):
 
@@ -101,7 +98,6 @@ class LBBoundaryForceWalberla(LBBoundaryForceCommon, ut.TestCase):
     lb_params = {'single_precision': False}
 
 
-@utx.skipIfMissingFeatures(["LB_BOUNDARIES"])
 @utx.skipIfMissingFeatures(["LB_WALBERLA"])
 class LBBoundaryForceWalberlaSinglePrecision(
         LBBoundaryForceCommon, ut.TestCase):

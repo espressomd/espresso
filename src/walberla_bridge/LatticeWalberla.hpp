@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_WALBERLALATTICE_HPP
-#define ESPRESSO_WALBERLALATTICE_HPP
+#ifndef ESPRESSO_WALBERLA_LATTICE_HPP
+#define ESPRESSO_WALBERLA_LATTICE_HPP
 
 #include <utils/Vector.hpp>
 
@@ -57,4 +57,4 @@ public:
   [[nodiscard]] bool pos_in_local_halo(const Utils::Vector3d &pos) const;
 };
 
-#endif // ESPRESSO_WALBERLALATTICE_HPP
+#endif // ESPRESSO_WALBERLA_LATTICE_HPP

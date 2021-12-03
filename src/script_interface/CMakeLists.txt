@@ -8,16 +8,15 @@ add_subdirectory(collision_detection)
 add_subdirectory(constraints)
 add_subdirectory(cluster_analysis)
 add_subdirectory(interactions)
-add_subdirectory(lbboundaries)
 add_subdirectory(virtual_sites)
 add_subdirectory(observables)
 add_subdirectory(pair_criteria)
 add_subdirectory(mpiio)
 add_subdirectory(shapes)
 add_subdirectory(h5md)
-if(WALBERLA)
+if(WITH_WALBERLA)
   add_subdirectory(walberla)
-endif(WALBERLA)
+endif(WITH_WALBERLA)
 
 install(TARGETS ScriptInterface
         LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
@@ -27,10 +26,10 @@ target_link_libraries(
   PUBLIC mpiio EspressoUtils MPI::MPI_CXX EspressoShapes core_cluster_analysis
   PRIVATE cxx_interface)
 
-if(WALBERLA)
+if(WITH_WALBERLA)
   # the walbera_libs are currently necessary because of the FFT-Solver...
   target_link_libraries(ScriptInterface PRIVATE WalberlaBridge ${WALBERLA_LIBS})
-endif()
+endif(WITH_WALBERLA)
 
 target_include_directories(ScriptInterface PUBLIC ${CMAKE_SOURCE_DIR}/src)
 

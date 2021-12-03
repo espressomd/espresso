@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2019 The ESPResSo project
+# Copyright (C) 2021 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,23 +16,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+
 import unittest as ut
-import unittest_decorators as utx
-import espressomd.lb
+import importlib_wrapper
 
-from virtual_sites_tracers_common import VirtualSitesTracersCommon
+benchmark, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
+    "@BENCHMARKS_DIR@/mc_acid_base_reservoir.py", TOTAL_NUM_MC_STEPS=int(1e4),
+    cmd_arguments=["--particles_per_core", "100"])
 
 
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(
-    ['VIRTUAL_SITES_INERTIALESS_TRACERS'])
-class VirtualSitesTracers(ut.TestCase, VirtualSitesTracersCommon):
-
-    def setUp(self):
-        self.LBClass = espressomd.lb.LBFluidGPU
-
-    def tearDown(self):
-        VirtualSitesTracersCommon.tearDown(self)
+@skipIfMissingFeatures
+class Sample(ut.TestCase):
+    system = benchmark.system
 
 
 if __name__ == "__main__":

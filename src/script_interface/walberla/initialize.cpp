@@ -22,6 +22,7 @@
 
 #include "FluidWalberla.hpp"
 #include "LatticeWalberla.hpp"
+#include "VTKHandle.hpp"
 
 #include <script_interface/ObjectHandle.hpp>
 #include <utils/Factory.hpp>
@@ -36,6 +37,7 @@ namespace ScriptInterface::walberla {
 void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<LatticeWalberla>("walberla::LatticeWalberla");
   om->register_new<FluidWalberla>("walberla::FluidWalberla");
+  om->register_new<VTKHandle>("walberla::VTKHandle");
 
   om->register_new<EKContainer>("walberla::EKContainer");
   om->register_new<EKSpecies>("walberla::EKSpecies");

@@ -26,26 +26,28 @@
  * (see <tt>maintainer/walberla_kernels</tt>).
  */
 
-#include "blockforest/Initialization.h"
-#include "blockforest/StructuredBlockForest.h"
-#include "blockforest/communication/UniformBufferedScheme.h"
-#include "field/GhostLayerField.h"
-#include "field/vtk/FlagFieldCellFilter.h"
-#include "field/vtk/VTKWriter.h"
+#include <blockforest/Initialization.h>
+#include <blockforest/StructuredBlockForest.h>
+#include <blockforest/communication/UniformBufferedScheme.h>
+#include <domain_decomposition/IBlock.h>
+#include <field/GhostLayerField.h>
+#include <field/vtk/FlagFieldCellFilter.h>
+#include <field/vtk/VTKWriter.h>
 
-#include "domain_decomposition/SharedSweep.h"
+#include <domain_decomposition/SharedSweep.h>
 
-#include "field/AddToStorage.h"
-#include "field/FlagField.h"
-#include "field/communication/PackInfo.h"
-#include "lbm/communication/PdfFieldPackInfo.h"
-#include "lbm/field/AddToStorage.h"
-#include "lbm/field/PdfField.h"
-#include "lbm/sweeps/CellwiseSweep.h"
+#include <field/AddToStorage.h>
+#include <field/FlagField.h>
+#include <field/communication/PackInfo.h>
+#include <lbm/communication/PdfFieldPackInfo.h>
+#include <lbm/field/AddToStorage.h>
+#include <lbm/field/PdfField.h>
+#include <lbm/sweeps/CellwiseSweep.h>
 
-#include "stencil/D3Q19.h"
-#include "stencil/D3Q27.h"
+#include <stencil/D3Q19.h>
+#include <stencil/D3Q27.h>
 
+#include "BlockAndCell.hpp"
 #include "BoundaryHandling.hpp"
 #include "LBWalberlaBase.hpp"
 #include "LatticeWalberla.hpp"
@@ -166,7 +168,8 @@ private:
   }
 
   void reset_boundary_handling() {
-    m_boundary = std::make_shared<BoundaryModel>(m_blocks, m_pdf_field_id,
+    auto const &blocks = lattice().get_blocks();
+    m_boundary = std::make_shared<BoundaryModel>(blocks, m_pdf_field_id,
                                                  m_flag_field_id);
   }
 
@@ -241,19 +244,16 @@ private:
   public:
     explicit vtk_runtime_error(std::string const &vtk_uid,
                                std::string const &reason)
-        : std::runtime_error("VTKOutput object " + vtk_uid + " " + reason) {}
+        : std::runtime_error("VTKOutput object '" + vtk_uid + "' " + reason) {}
   };
 
 protected:
   /** VTK writers that are executed automatically */
-  std::map<std::string, std::pair<std::shared_ptr<vtk::VTKOutput>, bool>>
-      m_vtk_auto;
+  std::map<std::string, std::shared_ptr<VTKHandle>> m_vtk_auto;
   /** VTK writers that are executed manually */
-  std::map<std::string, std::shared_ptr<vtk::VTKOutput>> m_vtk_manual;
+  std::map<std::string, std::shared_ptr<VTKHandle>> m_vtk_manual;
 
   // Member variables
-  Utils::Vector3i m_grid_dimensions;
-  unsigned int m_n_ghost_layers;
   FloatType m_viscosity;
   FloatType m_density;
   FloatType m_kT;
@@ -276,9 +276,6 @@ protected:
           typename stencil::D3Q19>;
   std::shared_ptr<PDFStreamingCommunicator> m_pdf_streaming_communication;
 
-  /** Block forest */
-  std::shared_ptr<blockforest::StructuredBlockForest> m_blocks;
-
   // ResetForce sweep + external force handling
   std::shared_ptr<ResetForce<PdfField, VectorField>> m_reset_force;
 
@@ -288,76 +285,79 @@ protected:
   // Collision sweep
   std::shared_ptr<CollisionModel> m_collision_model;
 
+  // boundaries
   std::shared_ptr<BoundaryModel> m_boundary;
+
+  // lattice
+  std::shared_ptr<LatticeWalberla> m_lattice;
 
   std::size_t stencil_size() const override {
     return static_cast<std::size_t>(Stencil::Size);
   }
 
 public:
-  LBWalberlaImpl(LatticeWalberla const &lattice, double viscosity,
-                 double density)
-      : m_grid_dimensions(lattice.get_grid_dimensions()),
-        m_n_ghost_layers(lattice.get_ghost_layers()),
-        m_viscosity(FloatType_c(viscosity)), m_density(FloatType_c(density)),
-        m_kT(FloatType{0}), m_blocks(lattice.get_blocks()) {
+  LBWalberlaImpl(std::shared_ptr<LatticeWalberla> const &lattice,
+                 double viscosity, double density)
+      : m_viscosity(FloatType_c(viscosity)), m_density(FloatType_c(density)),
+        m_kT(FloatType{0}), m_lattice(lattice) {
 
-    if (m_n_ghost_layers == 0)
+    auto const &blocks = m_lattice->get_blocks();
+    auto const n_ghost_layers = m_lattice->get_ghost_layers();
+    if (n_ghost_layers == 0)
       throw std::runtime_error("At least one ghost layer must be used");
 
     // Init and register fields
-    m_pdf_field_id = field::addToStorage<PdfField>(
-        m_blocks, "pdfs", FloatType{0}, field::fzyx, m_n_ghost_layers);
+    m_pdf_field_id = field::addToStorage<PdfField>(blocks, "pdfs", FloatType{0},
+                                                   field::fzyx, n_ghost_layers);
     m_pdf_tmp_field_id = field::addToStorage<PdfField>(
-        m_blocks, "pdfs_tmp", FloatType{0}, field::fzyx, m_n_ghost_layers);
+        blocks, "pdfs_tmp", FloatType{0}, field::fzyx, n_ghost_layers);
     m_last_applied_force_field_id = field::addToStorage<VectorField>(
-        m_blocks, "force field", FloatType{0}, field::fzyx, m_n_ghost_layers);
+        blocks, "force field", FloatType{0}, field::fzyx, n_ghost_layers);
     m_force_to_be_applied_id = field::addToStorage<VectorField>(
-        m_blocks, "force field", FloatType{0}, field::fzyx, m_n_ghost_layers);
+        blocks, "force field", FloatType{0}, field::fzyx, n_ghost_layers);
     m_velocity_field_id = field::addToStorage<VectorField>(
-        m_blocks, "velocity field", FloatType{0}, field::fzyx,
-        m_n_ghost_layers);
+        blocks, "velocity field", FloatType{0}, field::fzyx, n_ghost_layers);
 
     // Init and register pdf field
     auto pdf_setter =
         InitialPDFsSetter(m_force_to_be_applied_id, m_pdf_field_id,
                           m_velocity_field_id, m_density);
-    for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b) {
+    for (auto b = blocks->begin(); b != blocks->end(); ++b) {
       pdf_setter(&*b);
     }
 
     // Init and register flag field (fluid/boundary)
     m_flag_field_id = field::addFlagFieldToStorage<FlagField>(
-        m_blocks, "flag field", m_n_ghost_layers);
+        blocks, "flag field", n_ghost_layers);
     // Init boundary sweep
     reset_boundary_handling();
 
     // Set up the communication and register fields
     m_pdf_streaming_communication =
-        std::make_shared<PDFStreamingCommunicator>(m_blocks);
+        std::make_shared<PDFStreamingCommunicator>(blocks);
     m_pdf_streaming_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<PdfField>>(
-            m_pdf_field_id, m_n_ghost_layers));
+            m_pdf_field_id, n_ghost_layers));
     m_pdf_streaming_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<VectorField>>(
-            m_last_applied_force_field_id, m_n_ghost_layers));
+            m_last_applied_force_field_id, n_ghost_layers));
     m_pdf_streaming_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<FlagField>>(
-            m_flag_field_id, m_n_ghost_layers));
+            m_flag_field_id, n_ghost_layers));
 
-    m_full_communication = std::make_shared<FullCommunicator>(m_blocks);
+    m_full_communication = std::make_shared<FullCommunicator>(blocks);
     m_full_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<PdfField>>(
-            m_pdf_field_id, m_n_ghost_layers));
+            m_pdf_field_id, n_ghost_layers));
     m_full_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<VectorField>>(
-            m_last_applied_force_field_id, m_n_ghost_layers));
+            m_last_applied_force_field_id, n_ghost_layers));
     m_full_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<VectorField>>(
-            m_velocity_field_id, m_n_ghost_layers));
+            m_velocity_field_id, n_ghost_layers));
     m_full_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<FlagField>>(
-            m_flag_field_id, m_n_ghost_layers));
+            m_flag_field_id, n_ghost_layers));
 
     // Instance the sweep responsible for force double buffering and
     // external forces
@@ -377,11 +377,12 @@ public:
   }
 
   void integrate() override {
+    auto const &blocks = lattice().get_blocks();
     // Reset force fields
-    for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
+    for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_reset_force)(&*b);
     // LB collide
-    for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
+    for (auto b = blocks->begin(); b != blocks->end(); ++b)
       boost::apply_visitor(run_collide_sweep, *m_collision_model,
                            boost::variant<IBlock *>(&*b));
     if (auto *cm = boost::get<ThermalizedCollisionModel>(&*m_collision_model)) {
@@ -389,18 +390,21 @@ public:
     }
     (*m_pdf_streaming_communication)();
     // Handle boundaries
-    for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
+    for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_boundary)(&*b);
     // LB stream
-    for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b)
+    for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_stream)(&*b);
     // Refresh ghost layers
     (*m_full_communication)();
 
     // Handle VTK writers
     for (auto it = m_vtk_auto.begin(); it != m_vtk_auto.end(); ++it) {
-      if (it->second.second)
-        vtk::writeFiles(it->second.first)();
+      auto &vtk_handle = it->second;
+      if (vtk_handle->enabled) {
+        vtk::writeFiles(vtk_handle->ptr)();
+        vtk_handle->execution_count++;
+      }
     }
   }
 
@@ -426,9 +430,10 @@ public:
     obj.block_offset_generator =
         [this](IBlock *const block, uint32_t &block_offset_0,
                uint32_t &block_offset_1, uint32_t &block_offset_2) {
-          block_offset_0 = m_blocks->getBlockCellBB(*block).xMin();
-          block_offset_1 = m_blocks->getBlockCellBB(*block).yMin();
-          block_offset_2 = m_blocks->getBlockCellBB(*block).zMin();
+          auto const &blocks = lattice().get_blocks();
+          block_offset_0 = blocks->getBlockCellBB(*block).xMin();
+          block_offset_1 = blocks->getBlockCellBB(*block).yMin();
+          block_offset_2 = blocks->getBlockCellBB(*block).zMin();
         };
     m_collision_model = std::make_shared<CollisionModel>(std::move(obj));
   }
@@ -449,8 +454,7 @@ public:
     if (is_boundary)    // is info available locally
       if (*is_boundary) // is the node a boundary
         return get_node_velocity_at_boundary(node);
-    auto const bc =
-        get_block_and_cell(node, consider_ghosts, m_blocks, n_ghost_layers());
+    auto const bc = get_block_and_cell(lattice(), node, consider_ghosts);
     if (!bc)
       return {};
     auto const &vel_field =
@@ -461,7 +465,7 @@ public:
   }
   bool set_node_velocity(const Utils::Vector3i &node,
                          const Utils::Vector3d &v) override {
-    auto bc = get_block_and_cell(node, false, m_blocks, n_ghost_layers());
+    auto bc = get_block_and_cell(lattice(), node, false);
     if (!bc)
       return false;
     // We have to set both, the pdf and the stored velocity field
@@ -479,9 +483,9 @@ public:
   boost::optional<Utils::Vector3d>
   get_velocity_at_pos(const Utils::Vector3d &pos,
                       bool consider_points_in_halo = false) const override {
-    if (!consider_points_in_halo and !pos_in_local_domain(pos))
+    if (!consider_points_in_halo and !m_lattice->pos_in_local_domain(pos))
       return {};
-    if (consider_points_in_halo and !pos_in_local_halo(pos))
+    if (consider_points_in_halo and !m_lattice->pos_in_local_halo(pos))
       return {};
     Utils::Vector3d v{0.0, 0.0, 0.0};
     interpolate_bspline_at_pos(
@@ -503,9 +507,9 @@ public:
   boost::optional<double> get_interpolated_density_at_pos(
       const Utils::Vector3d &pos,
       bool consider_points_in_halo = false) const override {
-    if (!consider_points_in_halo and !pos_in_local_domain(pos))
+    if (!consider_points_in_halo and !m_lattice->pos_in_local_domain(pos))
       return {};
-    if (consider_points_in_halo and !pos_in_local_halo(pos))
+    if (consider_points_in_halo and !m_lattice->pos_in_local_halo(pos))
       return {};
     double dens = 0.0;
     interpolate_bspline_at_pos(
@@ -526,12 +530,11 @@ public:
   // Local force
   bool add_force_at_pos(const Utils::Vector3d &pos,
                         const Utils::Vector3d &force) override {
-    if (!pos_in_local_halo(pos))
+    if (!m_lattice->pos_in_local_halo(pos))
       return false;
     auto force_at_node = [this, force](const std::array<int, 3> node,
                                        double weight) {
-      auto const bc = get_block_and_cell(to_vector3i(node), true, m_blocks,
-                                         n_ghost_layers());
+      auto const bc = get_block_and_cell(lattice(), to_vector3i(node), true);
       if (bc) {
         auto force_field = (*bc).block->template getData<VectorField>(
             m_force_to_be_applied_id);
@@ -545,7 +548,7 @@ public:
 
   boost::optional<Utils::Vector3d>
   get_node_force_to_be_applied(const Utils::Vector3i &node) const override {
-    auto const bc = get_block_and_cell(node, true, m_blocks, n_ghost_layers());
+    auto const bc = get_block_and_cell(lattice(), node, true);
     if (!bc)
       return {};
 
@@ -558,7 +561,7 @@ public:
 
   bool set_node_last_applied_force(Utils::Vector3i const &node,
                                    Utils::Vector3d const &force) override {
-    auto bc = get_block_and_cell(node, false, m_blocks, n_ghost_layers());
+    auto bc = get_block_and_cell(lattice(), node, false);
     if (!bc)
       return false;
 
@@ -574,8 +577,7 @@ public:
   boost::optional<Utils::Vector3d>
   get_node_last_applied_force(const Utils::Vector3i &node,
                               bool consider_ghosts = false) const override {
-    auto const bc =
-        get_block_and_cell(node, consider_ghosts, m_blocks, n_ghost_layers());
+    auto const bc = get_block_and_cell(lattice(), node, consider_ghosts);
     if (!bc)
       return {};
 
@@ -587,9 +589,9 @@ public:
   }
 
   // Population
-  bool set_node_pop(const Utils::Vector3i &node,
+  bool set_node_pop(Utils::Vector3i const &node,
                     std::vector<double> const &population) override {
-    auto bc = get_block_and_cell(node, false, m_blocks, n_ghost_layers());
+    auto bc = get_block_and_cell(lattice(), node, false);
     if (!bc)
       return false;
 
@@ -604,7 +606,7 @@ public:
 
   boost::optional<std::vector<double>>
   get_node_pop(const Utils::Vector3i &node) const override {
-    auto bc = get_block_and_cell(node, false, m_blocks, n_ghost_layers());
+    auto bc = get_block_and_cell(lattice(), node, false);
     if (!bc)
       return {boost::none};
 
@@ -619,7 +621,7 @@ public:
 
   // Density
   bool set_node_density(const Utils::Vector3i &node, double density) override {
-    auto bc = get_block_and_cell(node, false, m_blocks, n_ghost_layers());
+    auto bc = get_block_and_cell(lattice(), node, false);
     if (!bc)
       return false;
 
@@ -632,7 +634,7 @@ public:
 
   boost::optional<double>
   get_node_density(const Utils::Vector3i &node) const override {
-    auto bc = get_block_and_cell(node, false, m_blocks, n_ghost_layers());
+    auto bc = get_block_and_cell(lattice(), node, false);
     if (!bc)
       return {boost::none};
 
@@ -642,7 +644,7 @@ public:
 
   boost::optional<Utils::Vector3d>
   get_node_velocity_at_boundary(const Utils::Vector3i &node) const override {
-    auto bc = get_block_and_cell(node, true, m_blocks, n_ghost_layers());
+    auto bc = get_block_and_cell(lattice(), node, true);
     if (!bc or !m_boundary->node_is_boundary(*bc))
       return {boost::none};
 
@@ -652,7 +654,7 @@ public:
   bool set_node_velocity_at_boundary(const Utils::Vector3i &node,
                                      const Utils::Vector3d &v,
                                      bool reallocate) override {
-    auto bc = get_block_and_cell(node, true, m_blocks, n_ghost_layers());
+    auto bc = get_block_and_cell(lattice(), node, true);
     if (!bc)
       return false;
 
@@ -666,8 +668,7 @@ public:
 
   boost::optional<Utils::Vector3d>
   get_node_boundary_force(const Utils::Vector3i &node) const override {
-    auto bc = get_block_and_cell(node, true, m_blocks,
-                                 n_ghost_layers()); // including ghosts
+    auto bc = get_block_and_cell(lattice(), node, true); // including ghosts
     if (!bc or !m_boundary->node_is_boundary(*bc))
       return {boost::none};
 
@@ -676,7 +677,7 @@ public:
 
   bool remove_node_from_boundary(const Utils::Vector3i &node,
                                  bool reallocate) override {
-    auto bc = get_block_and_cell(node, true, m_blocks, n_ghost_layers());
+    auto bc = get_block_and_cell(lattice(), node, true);
     if (!bc)
       return false;
 
@@ -691,8 +692,7 @@ public:
   boost::optional<bool>
   get_node_is_boundary(const Utils::Vector3i &node,
                        bool consider_ghosts = false) const override {
-    auto bc =
-        get_block_and_cell(node, consider_ghosts, m_blocks, n_ghost_layers());
+    auto bc = get_block_and_cell(lattice(), node, consider_ghosts);
     if (!bc)
       return {boost::none};
 
@@ -708,7 +708,7 @@ public:
       std::vector<int> const &raster_flat,
       std::vector<double> const &slip_velocity_flat) override {
     // reshape grids
-    auto const &grid_size = m_grid_dimensions;
+    auto const grid_size = lattice().get_grid_dimensions();
     auto const n_grid_points = Utils::product(grid_size);
     assert(raster_flat.size() == n_grid_points);
     assert(slip_velocity_flat.size() == 3 * n_grid_points or
@@ -731,7 +731,8 @@ public:
         slip_velocity_vectors.data(), grid_size);
     boost::const_multi_array_ref<int, 3> raster(raster_flat.data(), grid_size);
 
-    for (auto block = m_blocks->begin(); block != m_blocks->end(); ++block) {
+    auto const &blocks = lattice().get_blocks();
+    for (auto block = blocks->begin(); block != blocks->end(); ++block) {
       // lattice constant is 1
       auto const left = block->getAABB().min();
       auto const off_i = int_c(left[0]);
@@ -740,7 +741,8 @@ public:
 
       // Get field data which knows about the indices
       // In the loop, x,y,z are in block-local coordinates
-      auto const ghosts = static_cast<int>(m_n_ghost_layers);
+      auto const n_ghost_layers = lattice().get_ghost_layers();
+      auto const ghosts = static_cast<int>(n_ghost_layers);
       auto pdf_field = block->template getData<PdfField>(m_pdf_field_id);
       for (int i = -ghosts; i < int_c(pdf_field->xSize() + ghosts); ++i) {
         for (int j = -ghosts; j < int_c(pdf_field->ySize() + ghosts); ++j) {
@@ -748,8 +750,7 @@ public:
             Utils::Vector3i const node{{off_i + i, off_j + j, off_k + k}};
             auto const idx = (node + grid_size) % grid_size;
             if (raster(idx)) {
-              auto const bc =
-                  get_block_and_cell(node, true, m_blocks, m_n_ghost_layers);
+              auto const bc = get_block_and_cell(lattice(), node, true);
               auto const &vel = slip_velocity(idx);
               m_boundary->set_node_velocity_at_boundary(node, vel, *bc);
             }
@@ -764,15 +765,15 @@ public:
   void update_boundary_from_list(std::vector<int> const &nodes_flat,
                                  std::vector<double> const &vel_flat) override {
     // reshape grids
-    auto const &grid_size = m_grid_dimensions;
+    auto const grid_size = lattice().get_grid_dimensions();
     auto const n_grid_points = Utils::product(grid_size);
+    auto const n_ghost_layers = lattice().get_ghost_layers();
     assert(nodes_flat.size() == vel_flat.size());
     assert(nodes_flat.size() % 3u == 0);
     for (std::size_t i = 0; i < nodes_flat.size(); i += 3) {
       auto const node = Utils::Vector3i(&nodes_flat[i], &nodes_flat[i + 3]);
       auto const vel = Utils::Vector3d(&vel_flat[i], &vel_flat[i + 3]);
-      auto const bc =
-          get_block_and_cell(node, true, m_blocks, m_n_ghost_layers);
+      auto const bc = get_block_and_cell(lattice(), node, true);
       if (bc) {
         m_boundary->set_node_velocity_at_boundary(node, vel, *bc);
       }
@@ -783,7 +784,8 @@ public:
   // Pressure tensor
   boost::optional<Utils::Vector6d>
   get_node_pressure_tensor(const Utils::Vector3i &node) const override {
-    auto bc = get_block_and_cell(node, false, m_blocks, n_ghost_layers());
+    auto const n_ghost_layers = lattice().get_ghost_layers();
+    auto bc = get_block_and_cell(lattice(), node, false);
     if (!bc)
       return {boost::none};
     return to_vector6d(getPressureTensor(*bc));
@@ -791,12 +793,12 @@ public:
 
   // Global momentum
   Utils::Vector3d get_momentum() const override {
+    auto const &blocks = lattice().get_blocks();
     Vector3<FloatType> mom;
-    for (auto block_it = m_blocks->begin(); block_it != m_blocks->end();
-         ++block_it) {
-      auto pdf_field = block_it->template getData<PdfField>(m_pdf_field_id);
-      auto force_field = block_it->template getData<VectorField>(
-          m_last_applied_force_field_id);
+    for (auto block = blocks->begin(); block != blocks->end(); ++block) {
+      auto pdf_field = block->template getData<PdfField>(m_pdf_field_id);
+      auto force_field =
+          block->template getData<VectorField>(m_last_applied_force_field_id);
       Vector3<FloatType> local_v;
       WALBERLA_FOR_ALL_CELLS_XYZ(pdf_field, {
         FloatType local_dens =
@@ -829,45 +831,16 @@ public:
     cm->time_step_ = counter;
   }
 
-  // Grid, domain, halo
-  int n_ghost_layers() const override {
-    return static_cast<int>(m_n_ghost_layers);
-  }
-  Utils::Vector3i get_grid_dimensions() const override {
-    return m_grid_dimensions;
-  }
-  std::pair<Utils::Vector3d, Utils::Vector3d>
-  get_local_domain() const override {
-    // We only have one block per mpi rank
-    assert(++(m_blocks->begin()) == m_blocks->end());
-
-    auto const ab = m_blocks->begin()->getAABB();
-    return {to_vector3d(ab.min()), to_vector3d(ab.max())};
-  }
-
-  bool node_in_local_domain(const Utils::Vector3i &node) const override {
-    // Note: Lattice constant =1, cell centers offset by .5
-    return get_block_and_cell(node, false, m_blocks, n_ghost_layers()) !=
-           boost::none;
-  }
-  bool node_in_local_halo(const Utils::Vector3i &node) const override {
-    return get_block_and_cell(node, true, m_blocks, n_ghost_layers()) !=
-           boost::none;
-  }
-  bool pos_in_local_domain(const Utils::Vector3d &pos) const override {
-    return get_block(pos, false, m_blocks, n_ghost_layers()) != nullptr;
-  }
-  bool pos_in_local_halo(const Utils::Vector3d &pos) const override {
-    return get_block(pos, true, m_blocks, n_ghost_layers()) != nullptr;
-  }
+  LatticeWalberla const &lattice() const override { return *m_lattice; }
 
   std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>>
   node_indices_positions(bool include_ghosts = false) const override {
     int ghost_offset = 0;
     if (include_ghosts)
-      ghost_offset = static_cast<int>(m_n_ghost_layers);
+      ghost_offset = lattice().get_ghost_layers();
+    auto const &blocks = lattice().get_blocks();
     std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>> res;
-    for (auto block = m_blocks->begin(); block != m_blocks->end(); ++block) {
+    for (auto block = blocks->begin(); block != blocks->end(); ++block) {
       auto left = block->getAABB().min();
       // Lattice constant is 1, node centers are offset by .5
       Utils::Vector3d pos_offset =
@@ -904,10 +877,11 @@ public:
     return m_force_to_be_applied_id;
   };
 
-  void create_vtk(unsigned delta_N, unsigned initial_count,
-                  unsigned flag_observables, std::string const &identifier,
-                  std::string const &base_folder,
-                  std::string const &prefix) override {
+  std::shared_ptr<VTKHandle> create_vtk(int delta_N, int initial_count,
+                                        int flag_observables,
+                                        std::string const &identifier,
+                                        std::string const &base_folder,
+                                        std::string const &prefix) override {
     // VTKOuput object must be unique
     std::stringstream unique_identifier;
     unique_identifier << base_folder << "/" << identifier;
@@ -918,37 +892,41 @@ public:
     }
 
     // instantiate VTKOutput object
-    unsigned const write_freq = (delta_N) ? static_cast<unsigned>(delta_N) : 1u;
+    auto const &blocks = lattice().get_blocks();
+    auto const write_freq = (delta_N) ? static_cast<unsigned int>(delta_N) : 1u;
     auto pdf_field_vtk = vtk::createVTKOutput_BlockData(
-        m_blocks, identifier, uint_c(write_freq), uint_c(0), false, base_folder,
+        blocks, identifier, uint_c(write_freq), uint_c(0), false, base_folder,
         prefix, true, true, true, true, uint_c(initial_count));
     field::FlagFieldCellFilter<FlagField> fluid_filter(m_flag_field_id);
     fluid_filter.addFlag(Boundary_flag);
     pdf_field_vtk->addCellExclusionFilter(fluid_filter);
 
     // add writers
-    if (static_cast<unsigned>(OutputVTK::density) & flag_observables) {
+    if (flag_observables & static_cast<int>(OutputVTK::density)) {
       pdf_field_vtk->addCellDataWriter(
           make_shared<lbm::DensityVTKWriter<LBWalberlaImpl, float>>(
               m_pdf_field_id, "DensityFromPDF"));
     }
-    if (static_cast<unsigned>(OutputVTK::velocity_vector) & flag_observables) {
+    if (flag_observables & static_cast<int>(OutputVTK::velocity_vector)) {
       pdf_field_vtk->addCellDataWriter(
           make_shared<field::VTKWriter<VectorField, float>>(
               m_velocity_field_id, "VelocityFromVelocityField"));
     }
-    if (static_cast<unsigned>(OutputVTK::pressure_tensor) & flag_observables) {
+    if (flag_observables & static_cast<int>(OutputVTK::pressure_tensor)) {
       pdf_field_vtk->addCellDataWriter(
           make_shared<lbm::PressureTensorVTKWriter<LBWalberlaImpl, float>>(
               m_pdf_field_id, "PressureTensorFromPDF"));
     }
 
     // register object
+    auto vtk_handle =
+        std::make_shared<VTKHandle>(pdf_field_vtk, initial_count, true);
     if (delta_N) {
-      m_vtk_auto[vtk_uid] = {pdf_field_vtk, true};
+      m_vtk_auto[vtk_uid] = vtk_handle;
     } else {
-      m_vtk_manual[vtk_uid] = pdf_field_vtk;
+      m_vtk_manual[vtk_uid] = vtk_handle;
     }
+    return vtk_handle;
   }
 
   /** Manually call a VTK callback */
@@ -959,18 +937,20 @@ public:
     if (m_vtk_manual.find(vtk_uid) == m_vtk_manual.end()) {
       throw vtk_runtime_error(vtk_uid, "doesn't exist");
     }
-    vtk::writeFiles(m_vtk_manual[vtk_uid])();
+    auto &vtk_handle = m_vtk_manual[vtk_uid];
+    vtk::writeFiles(vtk_handle->ptr)();
+    vtk_handle->execution_count++;
   }
 
   /** Activate or deactivate a VTK callback */
-  void switch_vtk(std::string const &vtk_uid, int status) override {
+  void switch_vtk(std::string const &vtk_uid, bool status) override {
     if (m_vtk_manual.find(vtk_uid) != m_vtk_manual.end()) {
       throw vtk_runtime_error(vtk_uid, "is a manual observable");
     }
     if (m_vtk_auto.find(vtk_uid) == m_vtk_auto.end()) {
       throw vtk_runtime_error(vtk_uid, "doesn't exist");
     }
-    m_vtk_auto[vtk_uid].second = status;
+    m_vtk_auto[vtk_uid]->enabled = status;
   }
 
   ~LBWalberlaImpl() override = default;

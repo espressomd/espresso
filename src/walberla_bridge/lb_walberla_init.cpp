@@ -23,13 +23,15 @@
 #include "LBWalberlaImpl.hpp"
 #include "LatticeWalberla.hpp"
 
-#include "core/mpi/Environment.h"
+#include <core/mpi/Environment.h>
 
 #include <utils/Vector.hpp>
 
 #include <cmath>
+#include <limits>
 #include <memory>
 #include <stdexcept>
+#include <string>
 
 void walberla_mpi_init() {
   int argc = 0;
@@ -38,10 +40,9 @@ void walberla_mpi_init() {
       walberla::mpi::Environment(argc, argv);
 }
 
-std::shared_ptr<LBWalberlaBase> new_lb_walberla(LatticeWalberla const &lattice,
-                                                double viscosity,
-                                                double density,
-                                                bool single_precision) {
+std::shared_ptr<LBWalberlaBase>
+new_lb_walberla(std::shared_ptr<LatticeWalberla> const &lattice,
+                double viscosity, double density, bool single_precision) {
   if (single_precision)
     return std::make_shared<walberla::LBWalberlaImpl<float>>(lattice, viscosity,
                                                              density);

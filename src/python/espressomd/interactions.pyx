@@ -1672,38 +1672,39 @@ class BondedInteraction(ScriptInterfaceHelper):
 
     def __init__(self, *args, **kwargs):
         if len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], dict):
+            # this branch is only visited by checkpointing constructor #2
             kwargs = args[0]
             args = []
 
-        # Interaction id as argument
-        if len(args) == 1 and is_valid_type(args[0], int):
-            bond_id = args[0]
-
-            # Check if the bond type in ESPResSo core matches this class
-            if get_bonded_interaction_type_from_es_core(
-                    bond_id) != self.type_number():
-                raise Exception(
-                    "The bond with this id is not defined as a " + self.type_name() + " bond in the ESPResSo core.")
-
-            super().__init__(bond_id=bond_id)
-            self._bond_id = bond_id
-
-            # Load the parameters currently set in the ESPResSo core
-            self._ctor_params = self._get_params_from_es_core()
-
-        # Or have we been called with keyword args describing the interaction
-        elif len(args) == 0:
-            params = self.get_default_params()
-            params.update(kwargs)
-            self.validate_params(params)
-            super().__init__(*args, **params)
-            self._check_keys(params.keys(), check_required=True)
-            self._ctor_params = params
-            self._bond_id = -1
-
+        if not 'sip' in kwargs:
+            if len(args) == 1 and is_valid_type(args[0], int):
+                # create a new script interface object for a bond that already
+                # exists in the core via bond_id (checkpointing constructor #1)
+                bond_id = args[0]
+                # Check if the bond type in ESPResSo core matches this class
+                if get_bonded_interaction_type_from_es_core(
+                        bond_id) != self.type_number():
+                    raise Exception(
+                        f"The bond with this id is not defined as a "
+                        f"{self.type_name()} bond in the ESPResSo core.")
+                super().__init__(bond_id=bond_id)
+                self._bond_id = bond_id
+                self._ctor_params = self._get_params_from_es_core()
+            else:
+                # create a bond from bond parameters
+                params = self.get_default_params()
+                params.update(kwargs)
+                self.validate_params(params)
+                super().__init__(*args, **params)
+                self._check_keys(params.keys(), check_required=True)
+                self._ctor_params = params
+                self._bond_id = -1
         else:
-            raise Exception(
-                "The constructor has to be called either with a bond id (as integer), or with a set of keyword arguments describing a new interaction")
+            # create a new bond based on a bond in the script interface
+            # (checkpointing constructor #2 or BondedInteractions getter)
+            super().__init__(**kwargs)
+            self._bond_id = -1
+            self._ctor_params = self._get_params_from_es_core()
 
     def _check_keys(self, keys, check_required=False):
         def err_msg(key_set):
@@ -1722,8 +1723,10 @@ class BondedInteraction(ScriptInterfaceHelper):
 
     def __reduce__(self):
         if self._bond_id != -1:
+            # checkpointing constructor #1
             return (self.__class__, (self._bond_id,))
         else:
+            # checkpointing constructor #2
             return (self.__class__, (self._ctor_params,))
 
     def __setattr__(self, attr, value):
@@ -1735,7 +1738,7 @@ class BondedInteraction(ScriptInterfaceHelper):
 
     @params.setter
     def params(self, p):
-        raise Exception("Bonds are immutable.")
+        raise RuntimeError("Bond parameters are immutable.")
 
     def validate_params(self, params):
         """Check that parameters are valid.
@@ -1911,6 +1914,7 @@ class HarmonicBond(BondedInteraction):
 
 if ELECTROSTATICS:
 
+    @script_interface_register
     class BondedCoulomb(BondedInteraction):
 
         """
@@ -1971,6 +1975,7 @@ if ELECTROSTATICS:
             return {}
 
 
+@script_interface_register
 class ThermalizedBond(BondedInteraction):
 
     """
@@ -2100,6 +2105,7 @@ IF THOLE:
 
 IF BOND_CONSTRAINT == 1:
 
+    @script_interface_register
     class RigidBond(BondedInteraction):
 
         """
@@ -2142,6 +2148,7 @@ ELSE:
         name = "RIGID"
 
 
+@script_interface_register
 class Dihedral(BondedInteraction):
 
     """
@@ -2223,6 +2230,7 @@ IF TABULATED:
             """
             return {}
 
+    @script_interface_register
     class TabulatedDistance(_TabulatedBase):
 
         """
@@ -2256,6 +2264,7 @@ IF TABULATED:
             """
             return "TABULATED_DISTANCE"
 
+    @script_interface_register
     class TabulatedAngle(_TabulatedBase):
 
         """
@@ -2298,6 +2307,7 @@ IF TABULATED:
                 raise ValueError(f"Tabulated angle expects forces/energies "
                                  f"within the range [0, pi], got {phi}")
 
+    @script_interface_register
     class TabulatedDihedral(_TabulatedBase):
 
         """
@@ -2419,6 +2429,7 @@ IF TABULATED:
                 return True
 
 
+@script_interface_register
 class Virtual(BondedInteraction):
 
     """
@@ -2446,6 +2457,7 @@ class Virtual(BondedInteraction):
         return {}
 
 
+@script_interface_register
 class AngleHarmonic(BondedInteraction):
 
     """
@@ -2478,6 +2490,7 @@ class AngleHarmonic(BondedInteraction):
         return {}
 
 
+@script_interface_register
 class AngleCosine(BondedInteraction):
 
     """
@@ -2510,6 +2523,7 @@ class AngleCosine(BondedInteraction):
         return {}
 
 
+@script_interface_register
 class AngleCossquare(BondedInteraction):
 
     """
@@ -2542,6 +2556,7 @@ class AngleCossquare(BondedInteraction):
         return {}
 
 
+@script_interface_register
 class IBM_Triel(BondedInteraction):
 
     """
@@ -2600,6 +2615,7 @@ class IBM_Triel(BondedInteraction):
              "elasticLaw": self.elasticLaw}
 
 
+@script_interface_register
 class IBM_Tribend(BondedInteraction):
 
     """
@@ -2650,6 +2666,7 @@ class IBM_Tribend(BondedInteraction):
         return {"kb": self.kb, "theta0": self.theta0}
 
 
+@script_interface_register
 class IBM_VolCons(BondedInteraction):
 
     """
@@ -2694,6 +2711,7 @@ class IBM_VolCons(BondedInteraction):
         return immersed_boundaries.get_current_volume(self.softID)
 
 
+@script_interface_register
 class OifGlobalForces(BondedInteraction):
 
     """
@@ -2733,6 +2751,7 @@ class OifGlobalForces(BondedInteraction):
         return {}
 
 
+@script_interface_register
 class OifLocalForces(BondedInteraction):
 
     """
@@ -2781,6 +2800,7 @@ class OifLocalForces(BondedInteraction):
         return {}
 
 
+@script_interface_register
 class QuarticBond(BondedInteraction):
 
     """
@@ -2866,15 +2886,6 @@ class BondedInteractions(ScriptObjectRegistry):
     _so_name = "Interactions::BondedInteractions"
     _so_creation_policy = "GLOBAL"
 
-    def __init__(self, *args, **kwargs):
-        if args:
-            params, (_unpickle_so_class, (_so_name, bytestring)) = args
-            assert _so_name == self._so_name
-            self = _unpickle_so_class(_so_name, bytestring)
-            self.__setstate__(params)
-        else:
-            super().__init__(**kwargs)
-
     def add(self, *args, **kwargs):
         """
         Add a bond to the list.
@@ -2924,13 +2935,17 @@ class BondedInteractions(ScriptObjectRegistry):
             raise ValueError(
                 "Index to BondedInteractions[] has to be an integer referring to a bond id")
 
+        if self.call_method('has_bond', bond_id=bond_id):
+            bond_obj = self.call_method('get_bond', bond_id=bond_id)
+            bond_obj._bond_id = bond_id
+            return bond_obj
+
         # Find out the type of the interaction from ESPResSo
         bond_type = get_bonded_interaction_type_from_es_core(bond_id)
 
         # Check if the bonded interaction exists in ESPResSo core
         if bond_type == BONDED_IA_NONE:
-            raise ValueError(
-                f"The bonded interaction with the id {bond_id} is not yet defined.")
+            raise ValueError(f"The bond with id {bond_id} is not yet defined.")
 
         # Find the appropriate class representing such a bond
         bond_class = bonded_interaction_classes[bond_type]
@@ -2986,7 +3001,7 @@ class BondedInteractions(ScriptObjectRegistry):
         return bond_id
 
     def __len__(self):
-        return bonded_ia_params_size()
+        return self.call_method('get_size')
 
     # Support iteration over active bonded interactions
     def __iter__(self):
@@ -2995,8 +3010,9 @@ class BondedInteractions(ScriptObjectRegistry):
                 yield self[bond_id]
 
     def __reduce__(self):
-        so_reduce = super().__reduce__()
-        return (self.__class__, (self.__getstate__(), so_reduce))
+        so_callback, (so_name, so_bytestring) = super().__reduce__()
+        return (_restore_bonded_interactions,
+                (so_callback, (so_name, so_bytestring), self.__getstate__()))
 
     def __getstate__(self):
         params = {}
@@ -3012,3 +3028,9 @@ class BondedInteractions(ScriptObjectRegistry):
         for bond_id, (bond_params, bond_type) in params.items():
             self[bond_id] = bonded_interaction_classes[bond_type](
                 **bond_params)
+
+
+def _restore_bonded_interactions(so_callback, so_callback_args, state):
+    so = so_callback(*so_callback_args)
+    so.__setstate__(state)
+    return so

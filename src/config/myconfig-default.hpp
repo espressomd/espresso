@@ -18,13 +18,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-/* This is the default myconfig.hpp-file. If no other myconfig-file is
-   found, this file is used.
 
-   DO NOT MODIFY THIS FILE! It should be modified *only* by the
-   maintainers of ESPResSo, as it has a profound impact on many users,
-   in particular newbies.
-*/
+/*
+ * This is the default myconfig.hpp file.
+ * When users don't supply a myconfig.hpp file, this file is used.
+ *
+ * DO NOT MODIFY THIS FILE! It should be modified *only* by the
+ * maintainers of ESPResSo, as it has a profound impact on many users.
+ */
 
 // Geometry, equation of motion, thermostat/barostat
 #define ROTATION
@@ -42,18 +43,15 @@
 #ifdef CUDA
 #define MMM1D_GPU
 #endif
-
 #define DIPOLES
 
 // Active matter
 #define ENGINE
 
-// Hydrodynamics
-#define LB_BOUNDARIES
-
 // Force/energy calculation
 #define EXCLUSIONS
 
+// Long-range interactions
 #define TABULATED
 #define LENNARD_JONES
 #define LENNARD_JONES_GENERIC

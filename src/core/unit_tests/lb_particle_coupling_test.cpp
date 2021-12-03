@@ -111,7 +111,7 @@ void add_lb_actor_local(double kT) {
   lb_params = std::make_shared<LBWalberlaParams>(params.agrid, params.tau);
   lb_lattice = std::make_shared<LatticeWalberla>(params.grid_dimensions,
                                                  node_grid, n_ghost_layers);
-  lb_fluid = init_lb_walberla(*lb_lattice, *lb_params, params.viscosity,
+  lb_fluid = init_lb_walberla(lb_lattice, *lb_params, params.viscosity,
                               params.density, params.kT, params.seed, false);
   activate_lb_walberla(lb_fluid, lb_params);
 }
@@ -233,7 +233,7 @@ BOOST_DATA_TEST_CASE(drag_force, bdata::make(kTs), kT) {
   mpi_call_all(espresso::set_lb_kT_local, kT);
   Particle p{};
   p.m.v = {-2.5, 1.5, 2};
-  p.r.p = lb_walberla()->get_local_domain().first;
+  p.r.p = lb_walberla()->lattice().get_local_domain().first;
   lb_lbcoupling_set_gamma(0.2);
   Utils::Vector3d drift_offset{-1, 1, 1};
 
@@ -248,7 +248,7 @@ BOOST_DATA_TEST_CASE(drag_force, bdata::make(kTs), kT) {
 #ifdef ENGINE
 BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
   mpi_call_all(espresso::set_lb_kT_local, kT);
-  auto const first_lb_node = lb_walberla()->get_local_domain().first;
+  auto const first_lb_node = lb_walberla()->lattice().get_local_domain().first;
   Particle p{};
   p.p.swim.swimming = true;
   p.p.swim.f_swim = 2.;
@@ -309,7 +309,7 @@ BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
 BOOST_DATA_TEST_CASE(particle_coupling, bdata::make(kTs), kT) {
   mpi_call_all(espresso::set_lb_kT_local, kT);
   lb_lbcoupling_set_rng_state(17);
-  auto const first_lb_node = lb_walberla()->get_local_domain().first;
+  auto const first_lb_node = lb_walberla()->lattice().get_local_domain().first;
   auto const gamma = 0.2;
   auto const noise =
       (kT > 0.) ? std::sqrt(24. * gamma * kT / params.time_step) : 0.0;
@@ -324,7 +324,7 @@ BOOST_DATA_TEST_CASE(particle_coupling, bdata::make(kTs), kT) {
   expected += gamma * p.p.swim.v_swim * p.r.calc_director();
 #endif
 #ifdef LB_ELECTROHYDRODYNAMICS
-  p.p.mu_E = Utils::Vector3d{-2, 1.5, 1};
+  p.p.mu_E = Utils::Vector3d{-2., 1.5, 1.};
   expected += gamma * p.p.mu_E;
 #endif
   p.r.p = first_lb_node + Utils::Vector3d::broadcast(0.5);
@@ -354,7 +354,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
                        bdata::make(kTs), kT) {
   mpi_call_all(espresso::set_lb_kT_local, kT);
   lb_lbcoupling_set_rng_state(17);
-  auto const first_lb_node = lb_walberla()->get_local_domain().first;
+  auto const first_lb_node = lb_walberla()->lattice().get_local_domain().first;
   auto const gamma = 0.2;
   auto const noise = std::sqrt(24. * gamma * kT / params.time_step *
                                Utils::sqr(params.agrid / params.tau));
@@ -485,8 +485,8 @@ bool test_lb_domain_mismatch_local() {
   auto const n_ghost_layers = 1u;
   auto const params = LBWalberlaParams(0.5, 0.01);
   ::node_grid = node_grid_reversed;
-  auto const lattice = LatticeWalberla(Utils::Vector3i{12, 12, 12},
-                                       node_grid_reversed, n_ghost_layers);
+  auto const lattice = std::make_shared<LatticeWalberla>(
+      Utils::Vector3i{12, 12, 12}, node_grid_reversed, n_ghost_layers);
   auto const ptr = init_lb_walberla(lattice, params, 1.0, 1.0, 0.0, 0, false);
   ::node_grid = node_grid_original;
   if (world.rank() == 0) {
@@ -505,7 +505,8 @@ REGISTER_CALLBACK_MAIN_RANK(test_lb_domain_mismatch_local)
 
 bool test_init_lb_walberla_nullptr_local() {
   auto const n_ghost_layers = 0u;
-  auto const lattice = LatticeWalberla(node_grid, node_grid, n_ghost_layers);
+  auto const lattice =
+      std::make_shared<LatticeWalberla>(node_grid, node_grid, n_ghost_layers);
   auto const params = LBWalberlaParams(0.5, 0.01);
   auto const ptr = init_lb_walberla(lattice, params, 1.0, 1.0, 0.0, 0, false);
   return ptr == nullptr;

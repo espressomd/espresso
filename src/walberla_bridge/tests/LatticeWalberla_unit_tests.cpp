@@ -57,8 +57,7 @@ BOOST_DATA_TEST_CASE(domain_and_halo, bdata::xrange(3u), n_ghost_layers) {
       LatticeWalberla(params.grid_dimensions, mpi_shape, n_ghost_layers);
   auto const [my_left, my_right] = lattice.get_local_domain();
 
-  for (auto const &n :
-       all_nodes_incl_ghosts(params.grid_dimensions, n_ghost_layers)) {
+  for (auto const &n : all_nodes_incl_ghosts(lattice)) {
     auto const pos = n + Vector3d::broadcast(.5);
     int is_local = 0;
     // Nodes in local domain

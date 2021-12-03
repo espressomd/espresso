@@ -37,7 +37,6 @@
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
-#include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "immersed_boundaries.hpp"
 #include "integrate.hpp"
@@ -61,8 +60,8 @@
 
 /** whether the thermostat has to be reinitialized before integration */
 static bool reinit_thermo = true;
-static int reinit_electrostatics = false;
-static int reinit_magnetostatics = false;
+static bool reinit_electrostatics = false;
+static bool reinit_magnetostatics = false;
 
 #if defined(OPEN_MPI) &&                                                       \
     (OMPI_MAJOR_VERSION == 2 && OMPI_MINOR_VERSION <= 1 ||                     \
@@ -223,13 +222,6 @@ void on_short_range_ia_change() {
 
 void on_constraint_change() { recalc_forces = true; }
 
-void on_lbboundary_change() {
-#if defined(LB_BOUNDARIES)
-  LBBoundaries::lb_init_boundaries();
-  on_lb_boundary_conditions_change();
-#endif
-}
-
 void on_lb_boundary_conditions_change() { recalc_forces = true; }
 
 void on_boxl_change(bool skip_method_adaption) {
@@ -249,9 +241,6 @@ void on_boxl_change(bool skip_method_adaption) {
 #endif
 
     lb_lbfluid_init();
-#ifdef LB_BOUNDARIES
-    LBBoundaries::lb_init_boundaries();
-#endif
   }
 }
 

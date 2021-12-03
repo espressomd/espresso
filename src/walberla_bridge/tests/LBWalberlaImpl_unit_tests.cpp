@@ -31,6 +31,7 @@
 #include "tests_common.hpp"
 
 #include <LBWalberlaBase.hpp>
+#include <VTKHandle.hpp>
 #include <lb_walberla_init.hpp>
 
 #include <utils/Vector.hpp>
@@ -53,17 +54,16 @@ using Utils::Vector3i;
 namespace bdata = boost::unit_test::data;
 
 LBTestParameters params; // populated in main()
-Vector3i mpi_shape;      // populated in main
 
 BOOST_DATA_TEST_CASE(dimensions, bdata::make(all_lbs()), lb_generator) {
   using boost::test_tools::per_element;
-  auto lb = lb_generator(mpi_shape, params);
+  auto lb = lb_generator(params);
   auto constexpr zero = Vector3i{0, 0, 0};
 
-  auto const grid_dim = lb->get_grid_dimensions();
+  auto const grid_dim = lb->lattice().get_grid_dimensions();
   BOOST_TEST(grid_dim == params.grid_dimensions, per_element());
 
-  auto const [my_left, my_right] = lb->get_local_domain();
+  auto const [my_left, my_right] = lb->lattice().get_local_domain();
   auto const my_size = my_right - my_left;
   BOOST_TEST(my_size > zero, per_element());
   BOOST_TEST(my_left >= zero, per_element());
@@ -71,19 +71,18 @@ BOOST_DATA_TEST_CASE(dimensions, bdata::make(all_lbs()), lb_generator) {
 }
 
 BOOST_DATA_TEST_CASE(set_viscosity, bdata::make(all_lbs()), lb_generator) {
-  auto lb = lb_generator(mpi_shape, params);
+  auto lb = lb_generator(params);
   double new_viscosity = 2.0;
   lb->set_viscosity(new_viscosity);
   BOOST_CHECK_CLOSE(lb->get_viscosity(), new_viscosity, 1E-11);
 }
 
 BOOST_DATA_TEST_CASE(initial_state, bdata::make(all_lbs()), lb_generator) {
-  auto lb = lb_generator(mpi_shape, params);
-  for (auto const &node :
-       local_nodes_incl_ghosts(lb->get_local_domain(), lb->n_ghost_layers())) {
-    bool const consider_ghosts = !lb->node_in_local_domain(node);
+  auto lb = lb_generator(params);
+  for (auto const &node : local_nodes_incl_ghosts(lb->lattice())) {
+    bool const consider_ghosts = !lb->lattice().node_in_local_domain(node);
     BOOST_CHECK(!(*lb->get_node_is_boundary(node, consider_ghosts)));
-    if (lb->node_in_local_domain(node)) {
+    if (lb->lattice().node_in_local_domain(node)) {
       BOOST_CHECK((*lb->get_node_force_to_be_applied(node)) == Vector3d{});
       BOOST_CHECK((*lb->get_node_last_applied_force(node)) == Vector3d{});
       BOOST_CHECK_CLOSE((*lb->get_node_density(node)), params.density, 1E-10);
@@ -97,22 +96,24 @@ BOOST_DATA_TEST_CASE(initial_state, bdata::make(all_lbs()), lb_generator) {
 
 BOOST_DATA_TEST_CASE(kT_unthermalized, bdata::make(unthermalized_lbs()),
                      lb_generator) {
-  auto lb = lb_generator(mpi_shape, params);
+  auto lb = lb_generator(params);
   BOOST_CHECK_EQUAL(lb->get_kT(), 0.0);
 }
 
 BOOST_DATA_TEST_CASE(kT_thermalized, bdata::make(thermalized_lbs()),
                      lb_generator) {
-  auto lb = lb_generator(mpi_shape, params);
+  auto lb = lb_generator(params);
   BOOST_CHECK_EQUAL(lb->get_kT(), params.kT);
 }
 
 BOOST_DATA_TEST_CASE(per_node_boundary, bdata::make(all_lbs()), lb_generator) {
+  auto lb = lb_generator(params);
   auto const vel = Vector3d{{0.2, 3.8, 4.2}};
-  auto lb = lb_generator(mpi_shape, params);
+  auto const n_ghost_layers =
+      static_cast<int>(lb->lattice().get_ghost_layers());
   for (auto const &node : std::vector<Vector3i>{
-           {-lb->n_ghost_layers(), 0, 0}, {0, 0, 0}, {0, 1, 2}, {9, 9, 9}}) {
-    if (lb->node_in_local_halo(node)) {
+           {-n_ghost_layers, 0, 0}, {0, 0, 0}, {0, 1, 2}, {9, 9, 9}}) {
+    if (lb->lattice().node_in_local_halo(node)) {
       {
         auto const res = lb->get_node_is_boundary(node, true);
         // Did we get a value?
@@ -153,23 +154,24 @@ BOOST_DATA_TEST_CASE(per_node_boundary, bdata::make(all_lbs()), lb_generator) {
   }
 
   lb->clear_boundaries();
-  for (auto const &node :
-       local_nodes_incl_ghosts(lb->get_local_domain(), lb->n_ghost_layers())) {
+  for (auto const &node : local_nodes_incl_ghosts(lb->lattice())) {
     BOOST_CHECK(!(*lb->get_node_is_boundary(node, true)));
   }
 }
 
 BOOST_DATA_TEST_CASE(update_boundary_from_shape, bdata::make(all_lbs()),
                      lb_generator) {
+  auto lb = lb_generator(params);
+  auto const n_ghost_layers =
+      static_cast<int>(lb->lattice().get_ghost_layers());
   auto const vel = Vector3d{{0.2, 3.8, 4.2}};
-  auto lb = lb_generator(mpi_shape, params);
 
   auto const vec3to4 = [](Utils::Vector<int, 3> const &d, int v) {
     return Utils::Vector<int, 4>{{d[0], d[1], d[2], v}};
   };
 
   auto const nodes = std::vector<Vector3i>{
-      {-lb->n_ghost_layers(), 0, 0}, {0, 0, 0}, {0, 1, 2}, {9, 9, 9}};
+      {-n_ghost_layers, 0, 0}, {0, 0, 0}, {0, 1, 2}, {9, 9, 9}};
   // set up boundary
   {
     auto const n_grid_points = Utils::product(params.grid_dimensions);
@@ -191,7 +193,7 @@ BOOST_DATA_TEST_CASE(update_boundary_from_shape, bdata::make(all_lbs()),
   }
 
   for (auto const &node : nodes) {
-    if (lb->node_in_local_halo(node)) {
+    if (lb->lattice().node_in_local_halo(node)) {
       {
         auto const res = lb->get_node_is_boundary(node, true);
         // Did we get a value?
@@ -214,19 +216,20 @@ BOOST_DATA_TEST_CASE(update_boundary_from_shape, bdata::make(all_lbs()),
 
   lb->clear_boundaries();
   lb->ghost_communication();
-  for (auto const &node :
-       local_nodes_incl_ghosts(lb->get_local_domain(), lb->n_ghost_layers())) {
+  for (auto const &node : local_nodes_incl_ghosts(lb->lattice())) {
     BOOST_CHECK(!(*lb->get_node_is_boundary(node, true)));
   }
 }
 
 BOOST_DATA_TEST_CASE(update_boundary_from_list, bdata::make(all_lbs()),
                      lb_generator) {
+  auto lb = lb_generator(params);
+  auto const n_ghost_layers =
+      static_cast<int>(lb->lattice().get_ghost_layers());
   auto const vel = Vector3d{{0.2, 3.8, 4.2}};
-  auto lb = lb_generator(mpi_shape, params);
 
   auto const nodes = std::vector<Vector3i>{
-      {-lb->n_ghost_layers(), 0, 0}, {0, 0, 0}, {0, 1, 2}, {9, 9, 9}};
+      {-n_ghost_layers, 0, 0}, {0, 0, 0}, {0, 1, 2}, {9, 9, 9}};
   // set up boundary
   {
     std::vector<double> velocities_flat;
@@ -241,7 +244,7 @@ BOOST_DATA_TEST_CASE(update_boundary_from_list, bdata::make(all_lbs()),
   }
 
   for (auto const &node : nodes) {
-    if (lb->node_in_local_halo(node)) {
+    if (lb->lattice().node_in_local_halo(node)) {
       {
         auto const res = lb->get_node_is_boundary(node, true);
         // Did we get a value?
@@ -264,45 +267,43 @@ BOOST_DATA_TEST_CASE(update_boundary_from_list, bdata::make(all_lbs()),
 
   lb->clear_boundaries();
   lb->ghost_communication();
-  for (auto const &node :
-       local_nodes_incl_ghosts(lb->get_local_domain(), lb->n_ghost_layers())) {
+  for (auto const &node : local_nodes_incl_ghosts(lb->lattice())) {
     BOOST_CHECK(!(*lb->get_node_is_boundary(node, true)));
   }
 }
 
 BOOST_DATA_TEST_CASE(domain_and_halo, bdata::make(all_lbs()), lb_generator) {
-  auto lb = lb_generator(mpi_shape, params);
-  auto const n_ghost_layers = lb->n_ghost_layers();
-  auto const [my_left, my_right] = lb->get_local_domain();
+  auto lb = lb_generator(params);
+  auto const n_ghost_layers = lb->lattice().get_ghost_layers();
+  auto const [my_left, my_right] = lb->lattice().get_local_domain();
 
-  for (auto const &n :
-       all_nodes_incl_ghosts(params.grid_dimensions, n_ghost_layers)) {
+  for (auto const &n : all_nodes_incl_ghosts(lb->lattice())) {
     auto const pos = n + Vector3d::broadcast(.5);
     int is_local = 0;
     // Nodes in local domain
     if (Vector3d(n) >= my_left and Vector3d(n) < my_right) {
-      BOOST_CHECK(lb->node_in_local_domain(n));
-      BOOST_CHECK(lb->node_in_local_halo(n));
+      BOOST_CHECK(lb->lattice().node_in_local_domain(n));
+      BOOST_CHECK(lb->lattice().node_in_local_halo(n));
 
-      BOOST_CHECK(lb->pos_in_local_domain(pos));
-      BOOST_CHECK(lb->pos_in_local_halo(pos));
+      BOOST_CHECK(lb->lattice().pos_in_local_domain(pos));
+      BOOST_CHECK(lb->lattice().pos_in_local_halo(pos));
       is_local = 1;
     } else {
       // in local halo?
       if ((n + Vector3d::broadcast(n_ghost_layers)) >= my_left and
           (n - Vector3d::broadcast(n_ghost_layers)) < my_right) {
-        BOOST_CHECK(!lb->node_in_local_domain(n));
-        BOOST_CHECK(lb->node_in_local_halo(n));
+        BOOST_CHECK(!lb->lattice().node_in_local_domain(n));
+        BOOST_CHECK(lb->lattice().node_in_local_halo(n));
 
-        BOOST_CHECK(!lb->pos_in_local_domain(pos));
-        BOOST_CHECK(lb->pos_in_local_halo(pos));
+        BOOST_CHECK(!lb->lattice().pos_in_local_domain(pos));
+        BOOST_CHECK(lb->lattice().pos_in_local_halo(pos));
       } else {
         // neither in domain nor in halo
-        BOOST_CHECK(!lb->node_in_local_domain(n));
-        BOOST_CHECK(!lb->node_in_local_halo(n));
+        BOOST_CHECK(!lb->lattice().node_in_local_domain(n));
+        BOOST_CHECK(!lb->lattice().node_in_local_halo(n));
 
-        BOOST_CHECK(!lb->pos_in_local_domain(pos));
-        BOOST_CHECK(!lb->pos_in_local_halo(pos));
+        BOOST_CHECK(!lb->lattice().pos_in_local_domain(pos));
+        BOOST_CHECK(!lb->lattice().pos_in_local_halo(pos));
       }
     }
 
@@ -330,8 +331,7 @@ auto fold_node(Vector3i n) {
 
 BOOST_DATA_TEST_CASE(velocity_at_node_and_pos, bdata::make(all_lbs()),
                      lb_generator) {
-  auto lb = lb_generator(mpi_shape, params);
-  auto const n_ghost_layers = lb->n_ghost_layers();
+  auto lb = lb_generator(params);
 
   // Values
   auto n_pos = [](Vector3i const &n) { return n + Vector3d::broadcast(.5); };
@@ -341,9 +341,8 @@ BOOST_DATA_TEST_CASE(velocity_at_node_and_pos, bdata::make(all_lbs()),
   };
 
   // Assign velocities
-  for (auto const &node :
-       all_nodes_incl_ghosts(params.grid_dimensions, n_ghost_layers)) {
-    if (lb->node_in_local_domain(node)) {
+  for (auto const &node : all_nodes_incl_ghosts(lb->lattice())) {
+    if (lb->lattice().node_in_local_domain(node)) {
       BOOST_CHECK(lb->set_node_velocity(node, n_vel(node)));
     } else {
       // Check that access to node velocity is not possible
@@ -354,11 +353,10 @@ BOOST_DATA_TEST_CASE(velocity_at_node_and_pos, bdata::make(all_lbs()),
   lb->ghost_communication();
 
   // check velocities
-  for (auto const &node :
-       all_nodes_incl_ghosts(params.grid_dimensions, n_ghost_layers)) {
+  for (auto const &node : all_nodes_incl_ghosts(lb->lattice())) {
     auto constexpr eps = 1E-8;
-    if (lb->node_in_local_halo(node)) {
-      bool const consider_ghosts = !lb->node_in_local_domain(node);
+    if (lb->lattice().node_in_local_halo(node)) {
+      bool const consider_ghosts = !lb->lattice().node_in_local_domain(node);
       auto res = lb->get_node_velocity(node, consider_ghosts);
       BOOST_CHECK(res);                                    // value available
       BOOST_CHECK_SMALL((*res - n_vel(node)).norm(), eps); // value correct?
@@ -377,8 +375,7 @@ BOOST_DATA_TEST_CASE(velocity_at_node_and_pos, bdata::make(all_lbs()),
 
 BOOST_DATA_TEST_CASE(interpolated_density_at_pos, bdata::make(all_lbs()),
                      lb_generator) {
-  auto lb = lb_generator(mpi_shape, params);
-  auto const n_ghost_layers = lb->n_ghost_layers();
+  auto lb = lb_generator(params);
 
   // Values
   auto n_pos = [](Vector3i const &n) { return n + Vector3d::broadcast(.5); };
@@ -388,9 +385,8 @@ BOOST_DATA_TEST_CASE(interpolated_density_at_pos, bdata::make(all_lbs()),
   };
 
   // Assign densities
-  for (auto const &node :
-       all_nodes_incl_ghosts(params.grid_dimensions, n_ghost_layers)) {
-    if (lb->node_in_local_domain(node)) {
+  for (auto const &node : all_nodes_incl_ghosts(lb->lattice())) {
+    if (lb->lattice().node_in_local_domain(node)) {
       BOOST_CHECK(lb->set_node_density(node, n_dens(node)));
     } else {
       // Check that access to node density is not possible
@@ -401,11 +397,10 @@ BOOST_DATA_TEST_CASE(interpolated_density_at_pos, bdata::make(all_lbs()),
   lb->ghost_communication();
 
   // check densities
-  for (auto const &node :
-       all_nodes_incl_ghosts(params.grid_dimensions, n_ghost_layers)) {
+  for (auto const &node : all_nodes_incl_ghosts(lb->lattice())) {
     auto constexpr eps = 1E-8;
-    if (lb->node_in_local_halo(node)) {
-      if (lb->node_in_local_domain(node)) {
+    if (lb->lattice().node_in_local_halo(node)) {
+      if (lb->lattice().node_in_local_domain(node)) {
         auto res = lb->get_node_density(node);
         BOOST_CHECK(res);                            // value available
         BOOST_CHECK_SMALL(*res - n_dens(node), eps); // value correct?
@@ -432,15 +427,15 @@ BOOST_DATA_TEST_CASE(interpolated_density_at_pos, bdata::make(all_lbs()),
 }
 
 BOOST_DATA_TEST_CASE(total_momentum, bdata::make(all_lbs()), lb_generator) {
-  auto lb = lb_generator(mpi_shape, params);
+  auto lb = lb_generator(params);
   auto const n1 = Vector3i{{1, 2, 3}};
   auto const n2 = Vector3i{{9, 2, 10}};
   auto const v1 = Vector3d{{1.5, 2.5, -2.2}};
   auto const v2 = Vector3d{{-.5, 3.5, -.2}};
-  if (lb->node_in_local_domain(n1)) {
+  if (lb->lattice().node_in_local_domain(n1)) {
     lb->set_node_velocity(n1, v1);
   }
-  if (lb->node_in_local_domain(n2)) {
+  if (lb->lattice().node_in_local_domain(n2)) {
     lb->set_node_velocity(n2, v2);
   }
 
@@ -454,13 +449,13 @@ BOOST_DATA_TEST_CASE(total_momentum, bdata::make(all_lbs()), lb_generator) {
 
 BOOST_DATA_TEST_CASE(forces_interpolation, bdata::make(all_lbs()),
                      lb_generator) {
-  auto lb = lb_generator(mpi_shape, params);
+  auto lb = lb_generator(params);
 
   // todo: check a less symmetrical situation, where the force is applied not
   // in the middle between the nodes
 
-  for (Vector3i n : all_nodes_incl_ghosts(params.grid_dimensions, 1)) {
-    if (lb->node_in_local_halo(n)) {
+  for (Vector3i n : all_nodes_incl_ghosts(lb->lattice())) {
+    if (lb->lattice().node_in_local_halo(n)) {
       auto const pos = 1. * n; // Mid point between nodes
       auto const f = Vector3d{{1., 2., -3.5}};
       lb->add_force_at_pos(pos, f);
@@ -469,7 +464,7 @@ BOOST_DATA_TEST_CASE(forces_interpolation, bdata::make(all_lbs()),
         for (int y : {0, 1})
           for (int z : {0, 1}) {
             auto const check_node = Vector3i{{n[0] - x, n[1] - y, n[2] - z}};
-            if (lb->node_in_local_halo(check_node)) {
+            if (lb->lattice().node_in_local_halo(check_node)) {
               auto const res = lb->get_node_force_to_be_applied(check_node);
               BOOST_CHECK_SMALL(((*res) - f / 8.0).norm(), 1E-10);
             }
@@ -482,7 +477,7 @@ BOOST_DATA_TEST_CASE(forces_interpolation, bdata::make(all_lbs()),
 
 BOOST_DATA_TEST_CASE(forces_book_keeping, bdata::make(all_lbs()),
                      lb_generator) {
-  auto lb = lb_generator(mpi_shape, params);
+  auto lb = lb_generator(params);
 
   // Forces added go to force_to_be_applied. After integration, they should be
   // in last_applied_force, where they are used for velocity calculation
@@ -495,7 +490,7 @@ BOOST_DATA_TEST_CASE(forces_book_keeping, bdata::make(all_lbs()),
 
   for (auto n : {origin, middle, right}) {
     // Add force to node position
-    if (lb->node_in_local_domain(n)) {
+    if (lb->lattice().node_in_local_domain(n)) {
       lb->add_force_at_pos(n + Vector3d::broadcast(.5), f);
       BOOST_CHECK_SMALL((*(lb->get_node_force_to_be_applied(n)) - f).norm(),
                         1E-10);
@@ -504,7 +499,7 @@ BOOST_DATA_TEST_CASE(forces_book_keeping, bdata::make(all_lbs()),
     // Check nodes incl some of the ghosts
     for (auto cn : {n, n + params.grid_dimensions, n - params.grid_dimensions,
                     n + Vector3i{{params.grid_dimensions[0], 0, 0}}}) {
-      if (lb->node_in_local_halo(cn)) {
+      if (lb->lattice().node_in_local_halo(cn)) {
         BOOST_CHECK_SMALL(
             (*(lb->get_node_last_applied_force(cn, true)) - f).norm(), 1E-10);
         BOOST_CHECK_SMALL((*(lb->get_node_force_to_be_applied(cn))).norm(),
@@ -514,7 +509,7 @@ BOOST_DATA_TEST_CASE(forces_book_keeping, bdata::make(all_lbs()),
     lb->integrate();
     for (auto cn : {n, n + params.grid_dimensions, n - params.grid_dimensions,
                     n + Vector3i{{params.grid_dimensions[0], 0, 0}}}) {
-      if (lb->node_in_local_halo(cn)) {
+      if (lb->lattice().node_in_local_halo(cn)) {
         BOOST_CHECK_SMALL((*(lb->get_node_last_applied_force(cn, true))).norm(),
                           1E-10);
         BOOST_CHECK_SMALL((*(lb->get_node_force_to_be_applied(cn))).norm(),
@@ -525,7 +520,7 @@ BOOST_DATA_TEST_CASE(forces_book_keeping, bdata::make(all_lbs()),
 }
 
 BOOST_DATA_TEST_CASE(force_in_corner, bdata::make(all_lbs()), lb_generator) {
-  auto lb = lb_generator(mpi_shape, params);
+  auto lb = lb_generator(params);
   boost::mpi::communicator world;
 
   // Add forces in all box corners. If domain boundaries are treated correctly
@@ -574,7 +569,7 @@ BOOST_DATA_TEST_CASE(force_in_corner, bdata::make(all_lbs()), lb_generator) {
 BOOST_DATA_TEST_CASE(vtk_exceptions,
                      bdata::make(LbGeneratorVector{unthermalized_lbs()[0]}),
                      lb_generator) {
-  auto lb = lb_generator(mpi_shape, params);
+  auto lb = lb_generator(params);
   auto const flag =
       static_cast<std::underlying_type_t<OutputVTK>>(OutputVTK::density);
   // cannot create the same observable twice
@@ -593,19 +588,23 @@ BOOST_DATA_TEST_CASE(vtk_exceptions,
 }
 
 int main(int argc, char **argv) {
-  MPI_Init(&argc, &argv);
   int n_nodes;
+  Vector3i mpi_shape{};
 
+  MPI_Init(&argc, &argv);
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
   MPI_Dims_create(n_nodes, 3, mpi_shape.data());
+  walberla_mpi_init();
 
-  params.viscosity = 0.003;
+  params.seed = 0u;
   params.kT = 1.3E-4;
+  params.viscosity = 0.003;
   params.density = 1.4;
   params.grid_dimensions = Vector3i{12, 12, 18};
   params.box_dimensions = Vector3d{12, 12, 18};
+  params.lattice =
+      std::make_shared<LatticeWalberla>(params.grid_dimensions, mpi_shape, 1u);
 
-  walberla_mpi_init();
   auto const res = boost::unit_test::unit_test_main(init_unit_test, argc, argv);
   MPI_Finalize();
   return res;

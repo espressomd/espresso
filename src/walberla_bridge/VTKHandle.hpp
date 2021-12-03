@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 The ESPResSo project
+ * Copyright (C) 2020-2021 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -16,20 +16,28 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#pragma once
 
-#ifndef SCRIPT_INTERFACE_LBBOUNDARIES_INITIALIZE_HPP
-#define SCRIPT_INTERFACE_LBBOUNDARIES_INITIALIZE_HPP
+#include <memory>
+#include <utility>
 
-#include <script_interface/ObjectHandle.hpp>
+namespace walberla::vtk {
+// forward declare
+class VTKOutput;
+} // namespace walberla::vtk
 
-#include <utils/Factory.hpp>
+/** @brief Handle to a VTK object */
+struct VTKHandle {
+  VTKHandle(std::shared_ptr<walberla::vtk::VTKOutput> sp, int ec, bool en)
+      : ptr(std::move(sp)), execution_count(ec), enabled(en) {}
+  std::shared_ptr<walberla::vtk::VTKOutput> ptr;
+  int execution_count;
+  bool enabled;
+};
 
-namespace ScriptInterface {
-namespace LBBoundaries {
-
-void initialize(Utils::Factory<ObjectHandle> *om);
-
-} /* namespace LBBoundaries */
-} /* namespace ScriptInterface */
-
-#endif
+/** @brief LB statistics to write to VTK files */
+enum class OutputVTK : int {
+  density = 1 << 0,
+  velocity_vector = 1 << 1,
+  pressure_tensor = 1 << 2,
+};
