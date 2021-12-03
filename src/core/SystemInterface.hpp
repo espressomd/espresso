@@ -27,11 +27,8 @@
 
 class SystemInterface {
 public:
-  SystemInterface()
-      : m_needsRGpu(false), m_needsQGpu(false), m_needsFGpu(false),
-        m_needsDipGpu(false), m_needsTorqueGpu(false){};
-  typedef Utils::Vector3d Vector3;
-  typedef double Real;
+  SystemInterface() = default;
+  virtual ~SystemInterface() = default;
 
   virtual void init() = 0;
   virtual void update() = 0;
@@ -39,61 +36,32 @@ public:
   virtual float *rGpuBegin() { return nullptr; };
   virtual float *rGpuEnd() { return nullptr; };
   virtual bool hasRGpu() { return false; };
-  virtual bool requestRGpu() {
-    m_needsRGpu = hasRGpu();
-    return m_needsRGpu;
-  }
+  virtual bool requestRGpu() { return false; }
 
   virtual float *dipGpuBegin() { return nullptr; };
   virtual float *dipGpuEnd() { return nullptr; };
   virtual bool hasDipGpu() { return false; };
-  virtual bool requestDipGpu() {
-    m_needsDipGpu = hasDipGpu();
-    return m_needsDipGpu;
-  }
+  virtual bool requestDipGpu() { return false; }
 
   virtual float *torqueGpuBegin() { return nullptr; };
   virtual float *torqueGpuEnd() { return nullptr; };
   virtual bool hasTorqueGpu() { return false; };
-  virtual bool requestTorqueGpu() {
-    m_needsTorqueGpu = hasTorqueGpu();
-    return m_needsTorqueGpu;
-  }
+  virtual bool requestTorqueGpu() { return false; }
 
   virtual float *qGpuBegin() { return nullptr; };
   virtual float *qGpuEnd() { return nullptr; };
   virtual bool hasQGpu() { return false; };
-  virtual bool requestQGpu() {
-    m_needsQGpu = hasQGpu();
-    return m_needsQGpu;
-  }
+  virtual bool requestQGpu() { return false; }
 
   virtual float *fGpuBegin() { return nullptr; };
   virtual float *fGpuEnd() { return nullptr; };
   virtual bool hasFGpu() { return false; };
-  virtual bool requestFGpu() {
-    m_needsFGpu = hasFGpu();
-    return m_needsFGpu;
-  }
+  virtual bool requestFGpu() { return false; }
 
   virtual float *eGpu() { return nullptr; };
 
   virtual std::size_t npart_gpu() const { return 0; };
-  virtual Vector3 box() const = 0;
-
-  virtual bool needsRGpu() { return m_needsRGpu; };
-  virtual bool needsDipGpu() { return m_needsRGpu; };
-  virtual bool needsQGpu() { return m_needsQGpu; };
-  virtual bool needsFGpu() { return m_needsFGpu; };
-  virtual bool needsTorqueGpu() { return m_needsTorqueGpu; };
-  virtual ~SystemInterface() = default;
-
-protected:
-  bool m_needsRGpu;
-  bool m_needsQGpu;
-  bool m_needsFGpu;
-  bool m_needsDipGpu;
-  bool m_needsTorqueGpu;
+  virtual Utils::Vector3d box() const = 0;
 };
 
 #endif

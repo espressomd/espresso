@@ -29,6 +29,9 @@
 
 class EspressoSystemInterface : public SystemInterface {
 public:
+  EspressoSystemInterface() = default;
+  ~EspressoSystemInterface() override = default;
+
   static EspressoSystemInterface &Instance() {
     if (!m_instance)
       m_instance = new EspressoSystemInterface;
@@ -138,12 +141,6 @@ public:
 
 protected:
   static EspressoSystemInterface *m_instance;
-  EspressoSystemInterface()
-      : m_gpu(false), m_r_gpu_begin(nullptr), m_r_gpu_end(nullptr),
-        m_dip_gpu_begin(nullptr), m_dip_gpu_end(nullptr),
-        m_q_gpu_begin(nullptr), m_q_gpu_end(nullptr),
-        m_needsParticleStructGpu(false), m_splitParticleStructGpu(false){};
-  ~EspressoSystemInterface() override = default;
 
   void gatherParticles();
   void split_particle_struct();
@@ -156,22 +153,29 @@ protected:
     }
   };
   void reallocDeviceMemory(std::size_t n);
+
+private:
+  std::size_t m_gpu_npart = 0;
+  bool m_gpu = false;
+
+  float *m_r_gpu_begin = nullptr;
+  float *m_r_gpu_end = nullptr;
+
+  float *m_dip_gpu_begin = nullptr;
+  float *m_dip_gpu_end = nullptr;
+
+  float *m_q_gpu_begin = nullptr;
+  float *m_q_gpu_end = nullptr;
+
+  bool m_needsParticleStructGpu = false;
+  bool m_splitParticleStructGpu = false;
+
+  bool m_needsRGpu = false;
+  bool m_needsQGpu = false;
+  bool m_needsFGpu = false;
+  bool m_needsDipGpu = false;
+  bool m_needsTorqueGpu = false;
 #endif
-
-  std::size_t m_gpu_npart;
-  bool m_gpu;
-
-  float *m_r_gpu_begin;
-  float *m_r_gpu_end;
-
-  float *m_dip_gpu_begin;
-  float *m_dip_gpu_end;
-
-  float *m_q_gpu_begin;
-  float *m_q_gpu_end;
-
-  bool m_needsParticleStructGpu;
-  bool m_splitParticleStructGpu;
 };
 
 #endif
