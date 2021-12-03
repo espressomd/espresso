@@ -1,6 +1,7 @@
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
+import espressomd.EKSpecies
 import numpy as np
 import scipy.optimize
 
