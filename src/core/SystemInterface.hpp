@@ -25,6 +25,32 @@
 
 #include <cstddef>
 
+/**
+ * Public interface for the ESPResSo system and device memory management.
+ *
+ * This interface is responsible for device memory management and memory
+ * layout conversion (AoS to SoA conversion). On the CPU, particle data
+ * is stored in an Array of Structures (AoS). On the GPU, some algorithms
+ * have better performance with a Structure of Arrays (SoA). When data
+ * is synchronized between host and device memory, particle objects are
+ * copied to device memory in the form of an AoS. A few particle properties
+ * are further copied ("split") into a SoA by the split callback.
+ *
+ * This interface provides getters in the form <tt>xGpuBegin()</tt> and
+ * <tt>xGpuEnd()</tt> (with @c x a particle property, e.g. @c r for position)
+ * that return pointers to device memory for each array in the SoA.
+ * To register a new particle property in the split callback, call the
+ * corresponding <tt>requestXGpu()</tt> method, with @c X the uppercase
+ * version of the particle property @c x. It is currently impossible to
+ * undo this action.
+ *
+ * Since properties in the @ref Particle struct depend on the config file,
+ * it is necessary to provide a means to check if it is even possible to
+ * carry out the split. This is achieved by the <tt>hasXGpu()</tt> methods.
+ * The same value is returned from <tt>requestXGpu()</tt> and it needs to
+ * be checked at the call site to throw an error. This class won't throw
+ * exceptions.
+ */
 class SystemInterface {
 public:
   SystemInterface() = default;

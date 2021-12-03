@@ -16,6 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+/**
+ * @file
+ * CUDA kernels to convert the particles AoS to a SoA on the device.
+ */
 
 #include "EspressoSystemInterface.hpp"
 #include "cuda_interface.hpp"
@@ -29,9 +33,6 @@
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
 #endif
-
-// These functions will split the particle data structure into individual arrays
-// for each property
 
 // Position and charge
 __global__ void split_kernel_rq(CUDA_particle_data *particles, float *r,

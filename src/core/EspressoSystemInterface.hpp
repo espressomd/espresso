@@ -27,6 +27,16 @@
 
 #include <cstddef>
 
+/**
+ * @brief CUDA implementation of @ref SystemInterface.
+ *
+ * When data is synchronized between host and device memory, a subset
+ * of the @ref Particle struct is copied from each particle on the host
+ * to the corresponding @ref CUDA_particle_data struct on the device via
+ * @ref EspressoSystemInterface::gatherParticles(). Once the transfer is
+ * complete, the particle AoS on the device is copied (or "split") to
+ * a SoA via @ref EspressoSystemInterface::split_particle_struct().
+ */
 class EspressoSystemInterface : public SystemInterface {
 public:
   EspressoSystemInterface() = default;
