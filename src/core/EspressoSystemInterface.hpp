@@ -71,17 +71,6 @@ public:
     return m_needsDipGpu;
   };
 #endif
-  float *vGpuBegin() override { return m_v_gpu_begin; };
-  float *vGpuEnd() override { return m_v_gpu_end; };
-  bool hasVGpu() override { return true; };
-  bool requestVGpu() override {
-    m_needsVGpu = hasVGpu();
-    m_splitParticleStructGpu |= m_needsVGpu;
-    m_gpu |= m_needsVGpu;
-    if (m_gpu)
-      enableParticleCommunication();
-    return m_needsVGpu;
-  };
 
 #ifdef ELECTROSTATICS
   float *qGpuBegin() override { return m_q_gpu_begin; };
@@ -96,18 +85,6 @@ public:
     return m_needsQGpu;
   };
 #endif
-
-  float *directorGpuBegin() override { return m_director_gpu_begin; };
-  float *directorGpuEnd() override { return m_director_gpu_end; };
-  bool hasDirectorGpu() override { return true; };
-  bool requestDirectorGpu() override {
-    m_needsDirectorGpu = hasDirectorGpu();
-    m_splitParticleStructGpu |= m_needsDirectorGpu;
-    m_gpu |= m_needsDirectorGpu;
-    if (m_gpu)
-      enableParticleCommunication();
-    return m_needsDirectorGpu;
-  };
 
   bool requestParticleStructGpu() {
     m_needsParticleStructGpu = true;
@@ -169,10 +146,8 @@ protected:
   EspressoSystemInterface()
       : m_gpu(false), m_r_gpu_begin(nullptr), m_r_gpu_end(nullptr),
         m_dip_gpu_begin(nullptr), m_dip_gpu_end(nullptr),
-        m_v_gpu_begin(nullptr), m_v_gpu_end(nullptr), m_q_gpu_begin(nullptr),
-        m_q_gpu_end(nullptr), m_director_gpu_begin(nullptr),
-        m_director_gpu_end(nullptr), m_needsParticleStructGpu(false),
-        m_splitParticleStructGpu(false){};
+        m_q_gpu_begin(nullptr), m_q_gpu_end(nullptr),
+        m_needsParticleStructGpu(false), m_splitParticleStructGpu(false){};
   ~EspressoSystemInterface() override = default;
 
   void gatherParticles();
@@ -197,14 +172,8 @@ protected:
   float *m_dip_gpu_begin;
   float *m_dip_gpu_end;
 
-  float *m_v_gpu_begin;
-  float *m_v_gpu_end;
-
   float *m_q_gpu_begin;
   float *m_q_gpu_end;
-
-  float *m_director_gpu_begin;
-  float *m_director_gpu_end;
 
   bool m_needsParticleStructGpu;
   bool m_splitParticleStructGpu;

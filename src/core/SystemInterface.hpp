@@ -30,9 +30,8 @@
 class SystemInterface {
 public:
   SystemInterface()
-      : m_needsRGpu(false), m_needsVGpu(false), m_needsQGpu(false),
-        m_needsDirectorGpu(false), m_needsFGpu(false), m_needsDipGpu(false),
-        m_needsTorqueGpu(false){};
+      : m_needsRGpu(false), m_needsQGpu(false), m_needsFGpu(false),
+        m_needsDipGpu(false), m_needsTorqueGpu(false){};
   typedef Utils::Vector3d Vector3;
   typedef double Real;
 
@@ -63,14 +62,6 @@ public:
     return m_needsTorqueGpu;
   }
 
-  virtual float *vGpuBegin() { return nullptr; };
-  virtual float *vGpuEnd() { return nullptr; };
-  virtual bool hasVGpu() { return false; };
-  virtual bool requestVGpu() {
-    m_needsVGpu = hasVGpu();
-    return m_needsVGpu;
-  }
-
   virtual float *qGpuBegin() { return nullptr; };
   virtual float *qGpuEnd() { return nullptr; };
   virtual bool hasQGpu() { return false; };
@@ -88,30 +79,19 @@ public:
     return m_needsFGpu;
   }
 
-  virtual float *directorGpuBegin() { return nullptr; };
-  virtual float *directorGpuEnd() { return nullptr; };
-  virtual bool hasDirectorGpu() { return false; };
-  virtual bool requestDirectorGpu() {
-    m_needsDirectorGpu = hasDirectorGpu();
-    return m_needsDirectorGpu;
-  }
-
   virtual std::size_t npart_gpu() const { return 0; };
   virtual Vector3 box() const = 0;
 
   virtual bool needsRGpu() { return m_needsRGpu; };
   virtual bool needsDipGpu() { return m_needsRGpu; };
   virtual bool needsQGpu() { return m_needsQGpu; };
-  virtual bool needsDirectorGpu() { return m_needsDirectorGpu; };
   virtual bool needsFGpu() { return m_needsFGpu; };
   virtual bool needsTorqueGpu() { return m_needsTorqueGpu; };
   virtual ~SystemInterface() = default;
 
 protected:
   bool m_needsRGpu;
-  bool m_needsVGpu;
   bool m_needsQGpu;
-  bool m_needsDirectorGpu;
   bool m_needsFGpu;
   bool m_needsDipGpu;
   bool m_needsTorqueGpu;
