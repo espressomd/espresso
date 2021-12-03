@@ -4,6 +4,7 @@
 #include <boost/optional.hpp>
 #include <string>
 
+#include "BlockAndCell.hpp"
 #include "utils/Vector.hpp"
 
 #include "blockforest/StructuredBlockForest.h"
@@ -84,8 +85,7 @@ public:
 
   [[nodiscard]] virtual walberla::BlockDataID get_density_id() const = 0;
 
-  [[nodiscard]] virtual std::shared_ptr<LatticeWalberla>
-  get_lattice() const = 0;
+  [[nodiscard]] virtual LatticeWalberla &get_lattice() const = 0;
   /** @brief Create a VTK observable.
    *
    *  @param delta_N          Write frequency, if 0 write a single frame,

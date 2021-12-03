@@ -76,7 +76,7 @@ public:
           },
           [this]() { return m_ekinstance->get_friction_coupling(); }},
          {"shape", AutoParameter::read_only, [this]() {
-            return m_ekinstance->get_lattice()->get_grid_dimensions();
+            return m_ekinstance->get_lattice().get_grid_dimensions();
           }}});
   }
 

@@ -12,6 +12,7 @@
 #include "lbm/lattice_model/D3Q27.h"
 #include "timeloop/SweepTimeloop.h"
 
+#include "BlockAndCell.hpp"
 #include "EKinWalberlaBase.hpp"
 #include "LatticeWalberla.hpp"
 #include "walberla_utils.hpp"
@@ -310,8 +311,7 @@ public:
   // Density
   bool set_node_density(const Utils::Vector3i &node,
                         FloatType density) override {
-    auto bc = get_block_and_cell(node, false, m_lattice->get_blocks(),
-                                 m_lattice->get_ghost_layers());
+    auto bc = get_block_and_cell(get_lattice(), node, false);
     if (!bc)
       return false;
 
@@ -324,8 +324,7 @@ public:
 
   [[nodiscard]] boost::optional<FloatType>
   get_node_density(const Utils::Vector3i &node) const override {
-    auto bc = get_block_and_cell(node, false, m_lattice->get_blocks(),
-                                 m_lattice->get_ghost_layers());
+    auto bc = get_block_and_cell(get_lattice(), node, false);
 
     if (!bc)
       return {boost::none};
@@ -343,8 +342,7 @@ public:
 
   [[nodiscard]] bool
   set_node_noflux_boundary(const Utils::Vector3i &node) override {
-    auto bc = get_block_and_cell(node, true, m_lattice->get_blocks(),
-                                 m_lattice->get_ghost_layers());
+    auto bc = get_block_and_cell(get_lattice(), node, true);
     if (!bc)
       return false;
 
@@ -357,8 +355,7 @@ public:
 
   [[nodiscard]] bool
   remove_node_from_boundary(const Utils::Vector3i &node) override {
-    auto bc = get_block_and_cell(node, true, m_lattice->get_blocks(),
-                                 m_lattice->get_ghost_layers());
+    auto bc = get_block_and_cell(get_lattice(), node, true);
     if (!bc)
       return false;
 
@@ -372,8 +369,7 @@ public:
   [[nodiscard]] boost::optional<bool>
   get_node_is_boundary(const Utils::Vector3i &node,
                        bool consider_ghosts = false) const override {
-    auto bc = get_block_and_cell(node, consider_ghosts, m_lattice->get_blocks(),
-                                 m_lattice->get_ghost_layers());
+    auto bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc)
       return {boost::none};
 
@@ -412,8 +408,8 @@ public:
     throw std::runtime_error("The LB does not use a random number generator");
   };
 
-  [[nodiscard]] std::shared_ptr<LatticeWalberla> get_lattice() const override {
-    return m_lattice;
+  [[nodiscard]] LatticeWalberla &get_lattice() const override {
+    return *m_lattice;
   };
 
   // Grid, domain, halo
