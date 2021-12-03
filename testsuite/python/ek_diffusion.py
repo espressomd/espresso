@@ -2,7 +2,6 @@ import unittest as ut
 import unittest_decorators as utx
 import espressomd
 import numpy as np
-import espressomd.walberla
 import scipy.optimize
 
 
@@ -27,14 +26,14 @@ class EKDiffusion(ut.TestCase):
         Testing EK for simple diffusion of a point droplet
         """
 
-        espressomd.walberla.WalberlaBlockForest(
-            box_size=self.system.box_l, ghost_layers=1, agrid=self.AGRID)
+        lattice = espressomd.lb.LatticeWalberla(
+            box_size=self.system.box_l, n_ghost_layers=1, agrid=self.AGRID)
 
-        ekspecies = espressomd.EKSpecies.EKSpecies(
-            density=0.0, kT=0.0, diffusion=self.DIFFUSION_COEFFICIENT, valency=0.0,
-            advection=False, friction_coupling=False, ext_efield=[0, 0, 0])
+        ekspecies = espressomd.EKSpecies.EKSpecies(lattice=lattice,
+                                                   density=0.0, kT=0.0, diffusion=self.DIFFUSION_COEFFICIENT, valency=0.0,
+                                                   advection=False, friction_coupling=False, ext_efield=[0, 0, 0])
 
-        eksolver = espressomd.EKSpecies.EKNone()
+        eksolver = espressomd.EKSpecies.EKNone(lattice=lattice)
 
         self.system.ekcontainer.add(ekspecies, tau=1.0, solver=eksolver)
 

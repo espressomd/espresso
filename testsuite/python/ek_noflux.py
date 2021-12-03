@@ -2,7 +2,6 @@ import unittest as ut
 import unittest_decorators as utx
 import espressomd
 import numpy as np
-import espressomd.walberla
 import espressomd.ekboundaries
 import espressomd.shapes
 
@@ -25,7 +24,7 @@ class EKNoFlux(ut.TestCase):
         Testing the EK noflux boundaries to not leak density outside of a sphere.
         """
 
-        espressomd.walberla.WalberlaBlockForest(
+        espressomd.lb.LatticeWalberla(
             box_size=self.system.box_l, ghost_layers=1, agrid=self.AGRID)
 
         ekspecies = espressomd.EKSpecies.EKSpecies(
