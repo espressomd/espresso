@@ -54,7 +54,9 @@ template <class SpanLike> std::size_t byte_size(SpanLike const &v) {
 
 /** struct for particle force */
 static device_vector<float> particle_forces_device;
+#ifdef ROTATION
 static device_vector<float> particle_torques_device;
+#endif
 
 /** struct for particle position and velocity */
 static device_vector<CUDA_particle_data> particle_data_device;
@@ -63,9 +65,8 @@ static CUDA_energy *energy_device = nullptr;
 
 pinned_vector<CUDA_particle_data> particle_data_host;
 pinned_vector<float> particle_forces_host;
-CUDA_energy energy_host;
-
 pinned_vector<float> particle_torques_host;
+CUDA_energy energy_host;
 
 cudaStream_t stream[1];
 
@@ -151,10 +152,12 @@ CUDA_global_part_vars *gpu_get_global_particle_vars_pointer_host() {
 float *gpu_get_particle_force_pointer() {
   return raw_data_pointer(particle_forces_device);
 }
-CUDA_energy *gpu_get_energy_pointer() { return energy_device; }
+#ifdef ROTATION
 float *gpu_get_particle_torque_pointer() {
   return raw_data_pointer(particle_torques_device);
 }
+#endif
+CUDA_energy *gpu_get_energy_pointer() { return energy_device; }
 
 void copy_part_data_to_gpu(ParticleRange particles) {
   if (global_part_vars_host.communication_enabled == 1) {

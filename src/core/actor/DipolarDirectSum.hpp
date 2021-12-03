@@ -82,6 +82,6 @@ private:
 void activate_dipolar_direct_sum_gpu();
 void deactivate_dipolar_direct_sum_gpu();
 
-#endif
+#endif // DIPOLAR_DIRECT_SUM
 
-#endif
+#endif // ACTOR_DIPOLARDIRECTSUM_HPP

@@ -58,6 +58,7 @@ public:
       enableParticleCommunication();
     return m_needsRGpu;
   };
+
 #ifdef DIPOLES
   float *dipGpuBegin() override { return m_dip_gpu_begin; };
   float *dipGpuEnd() override { return m_dip_gpu_end; };
@@ -98,17 +99,6 @@ public:
   float *fGpuEnd() override {
     return gpu_get_particle_force_pointer() + 3 * m_gpu_npart;
   };
-  float *eGpu() override {
-    // cast pointer to struct of floats to array of floats
-    // https://stackoverflow.com/a/29278260
-    return reinterpret_cast<float *>(gpu_get_energy_pointer());
-  };
-  float *torqueGpuBegin() override {
-    return gpu_get_particle_torque_pointer();
-  };
-  float *torqueGpuEnd() override {
-    return gpu_get_particle_torque_pointer() + 3 * m_gpu_npart;
-  };
   bool hasFGpu() override { return true; };
   bool requestFGpu() override {
     m_needsFGpu = hasFGpu();
@@ -119,6 +109,12 @@ public:
   };
 
 #ifdef ROTATION
+  float *torqueGpuBegin() override {
+    return gpu_get_particle_torque_pointer();
+  };
+  float *torqueGpuEnd() override {
+    return gpu_get_particle_torque_pointer() + 3 * m_gpu_npart;
+  };
   bool hasTorqueGpu() override { return true; };
   bool requestTorqueGpu() override {
     m_needsTorqueGpu = hasTorqueGpu();
@@ -128,6 +124,12 @@ public:
     return m_needsTorqueGpu;
   };
 #endif
+
+  float *eGpu() override {
+    // cast pointer to struct of floats to array of floats
+    // https://stackoverflow.com/a/29278260
+    return reinterpret_cast<float *>(gpu_get_energy_pointer());
+  };
 
 #endif // ifdef CUDA
 
@@ -178,7 +180,5 @@ protected:
   bool m_needsParticleStructGpu;
   bool m_splitParticleStructGpu;
 };
-
-/********************************************************************************************/
 
 #endif

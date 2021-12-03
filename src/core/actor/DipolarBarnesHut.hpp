@@ -98,6 +98,6 @@ private:
 void activate_dipolar_barnes_hut(float epssq, float itolsq);
 void deactivate_dipolar_barnes_hut();
 
-#endif
-
 #endif // DIPOLAR_BARNES_HUT
+
+#endif // ACTOR_DIPOLARBARNESHUT_HPP

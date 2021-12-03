@@ -54,25 +54,23 @@ struct CUDA_particle_data {
   CUDA_ParticleParametersSwimming swim;
 #endif
 
-  /** particle position given from md part*/
   Vector3f p;
 
-  /** particle id */
   int identity;
+
 #ifdef VIRTUAL_SITES
   bool is_virtual;
 #else
   static constexpr const bool is_virtual = false;
 #endif
 
-  /** particle momentum struct velocity p.m->v*/
   Vector3f v;
 
 #ifdef ROTATION
   Vector3f director;
 #endif
 
-#if defined(LB_ELECTROHYDRODYNAMICS) && defined(CUDA)
+#ifdef LB_ELECTROHYDRODYNAMICS
   Vector3f mu_E;
 #endif
 
@@ -116,7 +114,6 @@ float *gpu_get_particle_torque_pointer();
 #endif
 
 CUDA_energy *gpu_get_energy_pointer();
-float *gpu_get_particle_torque_pointer();
 void gpu_init_particle_comm();
 
 void cuda_mpi_get_particles(

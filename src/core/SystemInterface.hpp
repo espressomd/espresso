@@ -25,8 +25,6 @@
 
 #include <cstddef>
 
-/** @todo: Turn needsXY in getter/setter **/
-
 class SystemInterface {
 public:
   SystemInterface()
@@ -72,12 +70,13 @@ public:
 
   virtual float *fGpuBegin() { return nullptr; };
   virtual float *fGpuEnd() { return nullptr; };
-  virtual float *eGpu() { return nullptr; };
   virtual bool hasFGpu() { return false; };
   virtual bool requestFGpu() {
     m_needsFGpu = hasFGpu();
     return m_needsFGpu;
   }
+
+  virtual float *eGpu() { return nullptr; };
 
   virtual std::size_t npart_gpu() const { return 0; };
   virtual Vector3 box() const = 0;

@@ -25,13 +25,9 @@
 
 #include <utils/Vector.hpp>
 
-/* Initialize instance pointer */
 EspressoSystemInterface *EspressoSystemInterface::m_instance = nullptr;
 
-/********************************************************************************************/
-
 void EspressoSystemInterface::gatherParticles() {
-// get particles from other nodes
 #ifdef CUDA
   if (m_gpu) {
     if (gpu_get_global_particle_vars_pointer_host()->communication_enabled) {

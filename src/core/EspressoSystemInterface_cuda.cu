@@ -113,12 +113,14 @@ void EspressoSystemInterface::reallocDeviceMemory(std::size_t n) {
     m_dip_gpu_end = m_dip_gpu_begin + 3 * n;
   }
 #endif
+#ifdef ELECTROSTATICS
   if (m_needsQGpu && ((n != m_gpu_npart) || (m_q_gpu_begin == nullptr))) {
     if (m_q_gpu_begin != nullptr)
       cuda_safe_mem(cudaFree(m_q_gpu_begin));
     cuda_safe_mem(cudaMalloc(&m_q_gpu_begin, 3 * n * sizeof(float)));
     m_q_gpu_end = m_q_gpu_begin + 3 * n;
   }
+#endif
 
   m_gpu_npart = n;
 }
@@ -135,16 +137,15 @@ void EspressoSystemInterface::split_particle_struct() {
   if (m_needsQGpu && m_needsRGpu)
     split_kernel_rq<<<dim3(grid), dim3(block), 0, nullptr>>>(
         device_particles.data(), m_r_gpu_begin, m_q_gpu_begin, n);
-  if (m_needsQGpu && !m_needsRGpu)
+  else if (m_needsQGpu)
     split_kernel_q<<<dim3(grid), dim3(block), 0, nullptr>>>(
         device_particles.data(), m_q_gpu_begin, n);
-  if (!m_needsQGpu && m_needsRGpu)
+  else if (m_needsRGpu)
     split_kernel_r<<<dim3(grid), dim3(block), 0, nullptr>>>(
         device_particles.data(), m_r_gpu_begin, n);
 #ifdef DIPOLES
   if (m_needsDipGpu)
     split_kernel_dip<<<dim3(grid), dim3(block), 0, nullptr>>>(
         device_particles.data(), m_dip_gpu_begin, n);
-
 #endif
 }
