@@ -33,11 +33,7 @@
 
 class DipolarBarnesHut : public Actor {
 public:
-  DipolarBarnesHut(SystemInterface &s, float epssq, float itolsq) {
-    m_k = static_cast<float>(dipole.prefactor);
-    m_epssq = epssq;
-    m_itolsq = itolsq;
-    setBHPrecision(&m_epssq, &m_itolsq);
+  DipolarBarnesHut(SystemInterface &s) {
     if (!s.requestFGpu())
       runtimeErrorMsg() << "DipolarBarnesHut needs access to forces on GPU!";
 
@@ -51,6 +47,15 @@ public:
       runtimeErrorMsg() << "DipolarBarnesHut needs access to dipoles on GPU!";
   };
 
+  ~DipolarBarnesHut() override { deallocBH(&m_bh_data); }
+
+  void set_params(float epssq, float itolsq) {
+    m_k = static_cast<float>(dipole.prefactor);
+    m_epssq = epssq;
+    m_itolsq = itolsq;
+    setBHPrecision(m_epssq, m_itolsq);
+  }
+
   void computeForces(SystemInterface &s) override {
     try {
       allocBHmemCopy(static_cast<int>(s.npart_gpu()), &m_bh_data);
@@ -59,7 +64,7 @@ public:
       return;
     }
 
-    fillConstantPointers(s.rGpuBegin(), s.dipGpuBegin(), m_bh_data);
+    fill_bh_data(s.rGpuBegin(), s.dipGpuBegin(), &m_bh_data);
     initBHgpu(m_bh_data.blocks);
     buildBoxBH(m_bh_data.blocks);
     buildTreeBH(m_bh_data.blocks);
@@ -77,7 +82,7 @@ public:
       return;
     }
 
-    fillConstantPointers(s.rGpuBegin(), s.dipGpuBegin(), m_bh_data);
+    fill_bh_data(s.rGpuBegin(), s.dipGpuBegin(), &m_bh_data);
     initBHgpu(m_bh_data.blocks);
     buildBoxBH(m_bh_data.blocks);
     buildTreeBH(m_bh_data.blocks);
@@ -89,17 +94,18 @@ public:
     }
   };
 
+  void activate();
+  void deactivate();
+
 private:
   float m_k;
   float m_epssq;
   float m_itolsq;
+  /// Container for pointers to device memory.
   BHData m_bh_data = {0,       0,       0,       nullptr, nullptr,
                       nullptr, nullptr, nullptr, nullptr, nullptr,
                       nullptr, nullptr, nullptr, nullptr};
 };
-
-void activate_dipolar_barnes_hut(float epssq, float itolsq);
-void deactivate_dipolar_barnes_hut();
 
 #endif // DIPOLAR_BARNES_HUT
 

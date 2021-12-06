@@ -19,6 +19,14 @@ from libcpp cimport bool
 
 include "myconfig.pxi"
 
+cdef extern from "SystemInterface.hpp":
+    cdef cppclass SystemInterface:
+        pass
+cdef extern from "EspressoSystemInterface.hpp":
+    cdef cppclass EspressoSystemInterface(SystemInterface):
+        @staticmethod
+        EspressoSystemInterface & Instance()
+
 IF DIPOLES == 1:
     cdef extern from "electrostatics_magnetostatics/common.hpp":
         void mpi_bcast_coulomb_params()
@@ -49,13 +57,19 @@ IF DIPOLES == 1:
 
     IF(CUDA == 1) and (ROTATION == 1):
         cdef extern from "actor/DipolarDirectSum.hpp":
-            void activate_dipolar_direct_sum_gpu()
-            void deactivate_dipolar_direct_sum_gpu()
+            cdef cppclass DipolarDirectSum:
+                DipolarDirectSum(SystemInterface & s)
+                void set_params()
+                void activate()
+                void deactivate()
 
     IF(DIPOLAR_BARNES_HUT == 1):
         cdef extern from "actor/DipolarBarnesHut.hpp":
-            void activate_dipolar_barnes_hut(float epssq, float itolsq)
-            void deactivate_dipolar_barnes_hut()
+            cdef cppclass DipolarBarnesHut:
+                DipolarBarnesHut(SystemInterface & s)
+                void set_params(float epssq, float itolsq)
+                void activate()
+                void deactivate()
 
 IF DP3M == 1:
     from p3m_common cimport P3MParameters

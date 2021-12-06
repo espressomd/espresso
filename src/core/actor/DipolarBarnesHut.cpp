@@ -23,33 +23,26 @@
 
 #include "DipolarBarnesHut.hpp"
 
-#include "EspressoSystemInterface.hpp"
 #include "actor/ActorList.hpp"
 #include "electrostatics_magnetostatics/common.hpp"
 #include "energy.hpp"
 #include "forces.hpp"
 
-#include <memory>
-
-static std::unique_ptr<DipolarBarnesHut> dipolarBarnesHut;
-
-void activate_dipolar_barnes_hut(float epssq, float itolsq) {
+void DipolarBarnesHut::activate() {
   // also necessary on 1 CPU or GPU, does more than just broadcasting
   dipole.method = DIPOLAR_BH_GPU;
   mpi_bcast_coulomb_params();
 
-  dipolarBarnesHut = std::make_unique<DipolarBarnesHut>(
-      EspressoSystemInterface::Instance(), epssq, itolsq);
-  forceActors.push_back(dipolarBarnesHut.get());
-  energyActors.push_back(dipolarBarnesHut.get());
+  forceActors.push_back(this);
+  energyActors.push_back(this);
 }
 
-void deactivate_dipolar_barnes_hut() {
-  if (dipolarBarnesHut) {
-    forceActors.remove(dipolarBarnesHut.get());
-    energyActors.remove(dipolarBarnesHut.get());
-    dipolarBarnesHut.reset();
-  }
+void DipolarBarnesHut::deactivate() {
+  dipole.method = DIPOLAR_NONE;
+  mpi_bcast_coulomb_params();
+
+  forceActors.remove(this);
+  energyActors.remove(this);
 }
 
 #endif

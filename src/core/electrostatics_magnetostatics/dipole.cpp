@@ -23,8 +23,6 @@
 
 #include "electrostatics_magnetostatics/dipole.hpp"
 
-#include "actor/DipolarBarnesHut.hpp"
-#include "actor/DipolarDirectSum.hpp"
 #include "electrostatics_magnetostatics/common.hpp"
 #include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
@@ -295,19 +293,7 @@ void set_Dprefactor(double prefactor) {
   mpi_bcast_coulomb_params();
 }
 
-void set_method_local(DipolarInteraction method) {
-#ifdef DIPOLAR_DIRECT_SUM
-  if ((dipole.method == DIPOLAR_DS_GPU) && (method != DIPOLAR_DS_GPU)) {
-    deactivate_dipolar_direct_sum_gpu();
-  }
-#endif
-#ifdef DIPOLAR_BARNES_HUT
-  if ((dipole.method == DIPOLAR_BH_GPU) && (method != DIPOLAR_BH_GPU)) {
-    deactivate_dipolar_barnes_hut();
-  }
-#endif // DIPOLAR_ BARNES_HUT
-  dipole.method = method;
-}
+void set_method_local(DipolarInteraction method) { dipole.method = method; }
 
 } // namespace Dipole
 #endif // DIPOLES

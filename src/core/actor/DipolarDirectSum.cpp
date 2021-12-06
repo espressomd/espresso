@@ -23,32 +23,25 @@
 
 #include "DipolarDirectSum.hpp"
 
-#include "EspressoSystemInterface.hpp"
 #include "electrostatics_magnetostatics/common.hpp"
 #include "energy.hpp"
 #include "forces.hpp"
 
-#include <memory>
-
-static std::unique_ptr<DipolarDirectSum> dipolarDirectSum;
-
-void activate_dipolar_direct_sum_gpu() {
+void DipolarDirectSum::activate() {
   // also necessary on 1 CPU or GPU, does more than just broadcasting
   dipole.method = DIPOLAR_DS_GPU;
   mpi_bcast_coulomb_params();
 
-  dipolarDirectSum =
-      std::make_unique<DipolarDirectSum>(EspressoSystemInterface::Instance());
-  forceActors.push_back(dipolarDirectSum.get());
-  energyActors.push_back(dipolarDirectSum.get());
+  forceActors.push_back(this);
+  energyActors.push_back(this);
 }
 
-void deactivate_dipolar_direct_sum_gpu() {
-  if (dipolarDirectSum) {
-    forceActors.remove(dipolarDirectSum.get());
-    energyActors.remove(dipolarDirectSum.get());
-    dipolarDirectSum.reset();
-  }
+void DipolarDirectSum::deactivate() {
+  dipole.method = DIPOLAR_NONE;
+  mpi_bcast_coulomb_params();
+
+  forceActors.remove(this);
+  energyActors.remove(this);
 }
 
 #endif

@@ -16,6 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+from libcpp.memory cimport shared_ptr, make_shared
+from cython.operator cimport dereference
+
 include "myconfig.pxi"
 from .actors cimport Actor
 IF SCAFACOS == 1:
@@ -324,6 +327,11 @@ IF DIPOLES == 1:
                 Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`)
 
             """
+            cdef shared_ptr[DipolarDirectSum] sip
+
+            def __cinit__(self):
+                self.sip = make_shared[DipolarDirectSum](
+                    EspressoSystemInterface.Instance())
 
             def default_params(self):
                 return {}
@@ -339,14 +347,15 @@ IF DIPOLES == 1:
 
             def _activate_method(self):
                 self._set_params_in_es_core()
+                dereference(self.sip).activate()
 
             def _deactivate_method(self):
                 super()._deactivate_method()
-                deactivate_dipolar_direct_sum_gpu()
+                dereference(self.sip).deactivate()
 
             def _set_params_in_es_core(self):
                 self.set_magnetostatics_prefactor()
-                activate_dipolar_direct_sum_gpu()
+                dereference(self.sip).set_params()
 
     IF(DIPOLAR_BARNES_HUT == 1):
         cdef class DipolarBarnesHutGpu(MagnetostaticInteraction):
@@ -358,6 +367,11 @@ IF DIPOLES == 1:
             TODO: If the system has periodic boundaries, the minimum image
             convention is applied.
             """
+            cdef shared_ptr[DipolarBarnesHut] sip
+
+            def __cinit__(self):
+                self.sip = make_shared[DipolarBarnesHut](
+                    EspressoSystemInterface.Instance())
 
             def default_params(self):
                 return {"epssq": 100.0,
@@ -374,12 +388,13 @@ IF DIPOLES == 1:
 
             def _activate_method(self):
                 self._set_params_in_es_core()
+                dereference(self.sip).activate()
 
             def _deactivate_method(self):
                 super()._deactivate_method()
-                deactivate_dipolar_barnes_hut()
+                dereference(self.sip).deactivate()
 
             def _set_params_in_es_core(self):
                 self.set_magnetostatics_prefactor()
-                activate_dipolar_barnes_hut(
+                dereference(self.sip).set_params(
                     self._params["epssq"], self._params["itolsq"])
