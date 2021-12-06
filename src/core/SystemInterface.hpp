@@ -60,27 +60,22 @@ public:
   virtual void update() = 0;
 
   virtual float *rGpuBegin() { return nullptr; };
-  virtual float *rGpuEnd() { return nullptr; };
   virtual bool hasRGpu() { return false; };
   virtual bool requestRGpu() { return false; }
 
   virtual float *dipGpuBegin() { return nullptr; };
-  virtual float *dipGpuEnd() { return nullptr; };
   virtual bool hasDipGpu() { return false; };
   virtual bool requestDipGpu() { return false; }
 
   virtual float *torqueGpuBegin() { return nullptr; };
-  virtual float *torqueGpuEnd() { return nullptr; };
   virtual bool hasTorqueGpu() { return false; };
   virtual bool requestTorqueGpu() { return false; }
 
   virtual float *qGpuBegin() { return nullptr; };
-  virtual float *qGpuEnd() { return nullptr; };
   virtual bool hasQGpu() { return false; };
   virtual bool requestQGpu() { return false; }
 
   virtual float *fGpuBegin() { return nullptr; };
-  virtual float *fGpuEnd() { return nullptr; };
   virtual bool hasFGpu() { return false; };
   virtual bool requestFGpu() { return false; }
 

@@ -54,7 +54,6 @@ public:
 
 #ifdef CUDA
   float *rGpuBegin() override { return m_r_gpu_begin; };
-  float *rGpuEnd() override { return m_r_gpu_end; };
   bool hasRGpu() override { return true; };
   bool requestRGpu() override {
     m_needsRGpu = hasRGpu();
@@ -67,7 +66,6 @@ public:
 
 #ifdef DIPOLES
   float *dipGpuBegin() override { return m_dip_gpu_begin; };
-  float *dipGpuEnd() override { return m_dip_gpu_end; };
   bool hasDipGpu() override { return true; };
   bool requestDipGpu() override {
     m_needsDipGpu = hasDipGpu();
@@ -81,7 +79,6 @@ public:
 
 #ifdef ELECTROSTATICS
   float *qGpuBegin() override { return m_q_gpu_begin; };
-  float *qGpuEnd() override { return m_q_gpu_end; };
   bool hasQGpu() override { return true; };
   bool requestQGpu() override {
     m_needsQGpu = hasQGpu();
@@ -102,9 +99,6 @@ public:
   };
 
   float *fGpuBegin() override { return gpu_get_particle_force_pointer(); };
-  float *fGpuEnd() override {
-    return gpu_get_particle_force_pointer() + 3 * m_gpu_npart;
-  };
   bool hasFGpu() override { return true; };
   bool requestFGpu() override {
     m_needsFGpu = hasFGpu();
@@ -117,9 +111,6 @@ public:
 #ifdef ROTATION
   float *torqueGpuBegin() override {
     return gpu_get_particle_torque_pointer();
-  };
-  float *torqueGpuEnd() override {
-    return gpu_get_particle_torque_pointer() + 3 * m_gpu_npart;
   };
   bool hasTorqueGpu() override { return true; };
   bool requestTorqueGpu() override {
@@ -169,13 +160,8 @@ private:
   bool m_gpu = false;
 
   float *m_r_gpu_begin = nullptr;
-  float *m_r_gpu_end = nullptr;
-
   float *m_dip_gpu_begin = nullptr;
-  float *m_dip_gpu_end = nullptr;
-
   float *m_q_gpu_begin = nullptr;
-  float *m_q_gpu_end = nullptr;
 
   bool m_needsParticleStructGpu = false;
   bool m_splitParticleStructGpu = false;

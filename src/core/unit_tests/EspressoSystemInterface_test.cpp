@@ -42,15 +42,10 @@ auto &system = EspressoSystemInterface::Instance();
 inline void check_uninitialized_device_pointers() {
   BOOST_CHECK_EQUAL(espresso::system.eGpu(), nullptr);
   BOOST_CHECK_EQUAL(espresso::system.rGpuBegin(), nullptr);
-  BOOST_CHECK_EQUAL(espresso::system.rGpuEnd(), nullptr);
   BOOST_CHECK_EQUAL(espresso::system.dipGpuBegin(), nullptr);
-  BOOST_CHECK_EQUAL(espresso::system.dipGpuEnd(), nullptr);
   BOOST_CHECK_EQUAL(espresso::system.fGpuBegin(), nullptr);
-  BOOST_CHECK_EQUAL(espresso::system.fGpuEnd(), nullptr);
   BOOST_CHECK_EQUAL(espresso::system.torqueGpuBegin(), nullptr);
-  BOOST_CHECK_EQUAL(espresso::system.torqueGpuEnd(), nullptr);
   BOOST_CHECK_EQUAL(espresso::system.qGpuBegin(), nullptr);
-  BOOST_CHECK_EQUAL(espresso::system.qGpuEnd(), nullptr);
 }
 
 #ifdef CUDA
@@ -103,18 +98,12 @@ BOOST_AUTO_TEST_CASE(check_with_gpu, *boost::unit_test::precondition(has_gpu)) {
   BOOST_TEST(espresso::system.requestRGpu());
   espresso::system.update();
   BOOST_TEST(espresso::system.rGpuBegin() != nullptr);
-  BOOST_TEST(espresso::system.rGpuEnd() != nullptr);
-  BOOST_CHECK_EQUAL(espresso::system.rGpuEnd() - espresso::system.rGpuBegin(),
-                    3);
 
   // check force split
   BOOST_TEST(espresso::system.hasFGpu());
   BOOST_TEST(espresso::system.requestFGpu());
   espresso::system.update();
   BOOST_TEST(espresso::system.fGpuBegin() != nullptr);
-  BOOST_TEST(espresso::system.fGpuEnd() != nullptr);
-  BOOST_CHECK_EQUAL(espresso::system.fGpuEnd() - espresso::system.fGpuBegin(),
-                    3);
 
   // check torque split
   BOOST_CHECK_EQUAL(espresso::system.hasTorqueGpu(), has_feature_rotation);
@@ -122,9 +111,6 @@ BOOST_AUTO_TEST_CASE(check_with_gpu, *boost::unit_test::precondition(has_gpu)) {
 #ifdef ROTATION
   espresso::system.update();
   BOOST_TEST(espresso::system.torqueGpuBegin() != nullptr);
-  BOOST_TEST(espresso::system.torqueGpuEnd() != nullptr);
-  BOOST_CHECK_EQUAL(
-      espresso::system.torqueGpuEnd() - espresso::system.torqueGpuBegin(), 3);
 #endif
 
   // check charge split
@@ -133,9 +119,6 @@ BOOST_AUTO_TEST_CASE(check_with_gpu, *boost::unit_test::precondition(has_gpu)) {
 #ifdef ELECTROSTATICS
   espresso::system.update();
   BOOST_TEST(espresso::system.qGpuBegin() != nullptr);
-  BOOST_TEST(espresso::system.qGpuEnd() != nullptr);
-  BOOST_CHECK_EQUAL(espresso::system.qGpuEnd() - espresso::system.qGpuBegin(),
-                    3);
 #endif
 
   // check dipole split
@@ -144,28 +127,12 @@ BOOST_AUTO_TEST_CASE(check_with_gpu, *boost::unit_test::precondition(has_gpu)) {
 #ifdef DIPOLES
   espresso::system.update();
   BOOST_TEST(espresso::system.dipGpuBegin() != nullptr);
-  BOOST_TEST(espresso::system.dipGpuEnd() != nullptr);
-  BOOST_CHECK_EQUAL(
-      espresso::system.dipGpuEnd() - espresso::system.dipGpuBegin(), 3);
 #endif
 
   // clear device memory
   remove_particle(pid);
   espresso::system.update();
   BOOST_CHECK_EQUAL(espresso::system.npart_gpu(), 0);
-  BOOST_CHECK_EQUAL(espresso::system.rGpuBegin(), espresso::system.rGpuEnd());
-  BOOST_CHECK_EQUAL(espresso::system.fGpuBegin(), espresso::system.fGpuEnd());
-#ifdef ELECTROSTATICS
-  BOOST_CHECK_EQUAL(espresso::system.qGpuBegin(), espresso::system.qGpuEnd());
-#endif
-#ifdef DIPOLES
-  BOOST_CHECK_EQUAL(espresso::system.dipGpuBegin(),
-                    espresso::system.dipGpuEnd());
-#endif
-#ifdef ROTATION
-  BOOST_CHECK_EQUAL(espresso::system.torqueGpuBegin(),
-                    espresso::system.torqueGpuEnd());
-#endif
 }
 
 #else // CUDA

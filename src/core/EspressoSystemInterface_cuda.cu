@@ -104,14 +104,12 @@ void EspressoSystemInterface::reallocDeviceMemory(std::size_t n) {
     if (m_r_gpu_begin != nullptr)
       cuda_safe_mem(cudaFree(m_r_gpu_begin));
     cuda_safe_mem(cudaMalloc(&m_r_gpu_begin, 3 * n * sizeof(float)));
-    m_r_gpu_end = m_r_gpu_begin + 3 * n;
   }
 #ifdef DIPOLES
   if (m_needsDipGpu && ((n != m_gpu_npart) || (m_dip_gpu_begin == nullptr))) {
     if (m_dip_gpu_begin != nullptr)
       cuda_safe_mem(cudaFree(m_dip_gpu_begin));
     cuda_safe_mem(cudaMalloc(&m_dip_gpu_begin, 3 * n * sizeof(float)));
-    m_dip_gpu_end = m_dip_gpu_begin + 3 * n;
   }
 #endif
 #ifdef ELECTROSTATICS
@@ -119,7 +117,6 @@ void EspressoSystemInterface::reallocDeviceMemory(std::size_t n) {
     if (m_q_gpu_begin != nullptr)
       cuda_safe_mem(cudaFree(m_q_gpu_begin));
     cuda_safe_mem(cudaMalloc(&m_q_gpu_begin, 3 * n * sizeof(float)));
-    m_q_gpu_end = m_q_gpu_begin + 3 * n;
   }
 #endif
 
