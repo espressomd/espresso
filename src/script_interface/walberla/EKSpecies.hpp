@@ -98,7 +98,7 @@ public:
       return none;
     }
     if (method == "is_boundary") {
-      return mpi_return_one_rank(m_ekinstance->get_node_is_boundary(
+      return mpi_return_one_rank(m_ekinstance->get_node_is_flux_boundary(
           get_value<Utils::Vector3i>(parameters, "position"), false));
     }
     return none;

@@ -47,13 +47,32 @@ public:
   get_node_density(const Utils::Vector3i &node) const = 0;
 
   [[nodiscard]] virtual bool
-  set_node_noflux_boundary(const Utils::Vector3i &node) = 0;
-
-  virtual bool remove_node_from_boundary(const Utils::Vector3i &node) = 0;
+  set_node_flux_boundary(const Utils::Vector3i &node,
+                         const Utils::Vector3d &flux) = 0;
+  virtual bool remove_node_from_flux_boundary(const Utils::Vector3i &node) = 0;
+  [[nodiscard]] virtual bool
+  set_node_density_boundary(const Utils::Vector3i &node, double density) = 0;
+  virtual bool
+  remove_node_from_density_boundary(const Utils::Vector3i &node) = 0;
   [[nodiscard]] virtual boost::optional<bool>
-  get_node_is_boundary(const Utils::Vector3i &node,
-                       bool consider_ghosts = false) const = 0;
-  virtual void clear_boundaries() = 0;
+  get_node_is_flux_boundary(const Utils::Vector3i &node,
+                            bool consider_ghosts = false) const = 0;
+  [[nodiscard]] virtual boost::optional<bool>
+  get_node_is_density_boundary(const Utils::Vector3i &node,
+                               bool consider_ghosts = false) const = 0;
+  virtual void clear_flux_boundaries() = 0;
+  virtual void clear_density_boundaries() = 0;
+
+  virtual void update_flux_boundary_from_shape(std::vector<int> const &,
+                                               std::vector<double> const &) = 0;
+  virtual void update_flux_boundary_from_list(std::vector<int> const &,
+                                              std::vector<double> const &) = 0;
+  virtual void
+  update_density_boundary_from_shape(std::vector<int> const &,
+                                     std::vector<double> const &) = 0;
+  virtual void
+  update_density_boundary_from_list(std::vector<int> const &,
+                                    std::vector<double> const &) = 0;
 
   // Global parameters
   void set_diffusion(FloatType diffusion) noexcept { m_diffusion = diffusion; }
@@ -98,22 +117,22 @@ public:
    *  @param base_folder      Path to the VTK folder
    *  @param prefix           Prefix of the VTK files
    */
-  virtual void create_vtk(unsigned delta_N, unsigned initial_count,
-                          unsigned flag_observables,
-                          std::string const &identifier,
-                          std::string const &base_folder,
-                          std::string const &prefix) = 0;
-  /** @brief Write a VTK observable to disk.
-   *
-   *  @param vtk_uid          Name of the VTK object
-   */
-  virtual void write_vtk(std::string const &vtk_uid) = 0;
-  /** @brief Toggle a VTK observable on/off.
-   *
-   *  @param vtk_uid          Name of the VTK object
-   *  @param status           1 to switch on, 0 to switch off
-   */
-  virtual void switch_vtk(std::string const &vtk_uid, int status) = 0;
+  //  virtual void create_vtk(unsigned delta_N, unsigned initial_count,
+  //                          unsigned flag_observables,
+  //                          std::string const &identifier,
+  //                          std::string const &base_folder,
+  //                          std::string const &prefix) = 0;
+  //  /** @brief Write a VTK observable to disk.
+  //   *
+  //   *  @param vtk_uid          Name of the VTK object
+  //   */
+  //  virtual void write_vtk(std::string const &vtk_uid) = 0;
+  //  /** @brief Toggle a VTK observable on/off.
+  //   *
+  //   *  @param vtk_uid          Name of the VTK object
+  //   *  @param status           1 to switch on, 0 to switch off
+  //   */
+  //  virtual void switch_vtk(std::string const &vtk_uid, int status) = 0;
 
   /** @brief return a pairs of global node index and node center position */
   virtual std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>>

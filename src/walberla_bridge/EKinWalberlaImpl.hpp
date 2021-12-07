@@ -2,7 +2,6 @@
 #define ESPRESSO_EKINWALBERLAIMPL_HPP
 
 #include "blockforest/communication/UniformBufferedScheme.h"
-#include "boundary/BoundaryHandling.h"
 #include "field/AddToStorage.h"
 #include "field/FlagField.h"
 #include "field/GhostLayerField.h"
@@ -21,16 +20,56 @@
 #include "generated_kernels/ContinuityKernel.h"
 #include "generated_kernels/DiffusiveFluxKernel.h"
 #include "generated_kernels/DiffusiveFluxKernelWithElectrostatic.h"
+#include "generated_kernels/Dirichlet.h"
+#include "generated_kernels/FixedFlux.h"
 #include "generated_kernels/FrictionCouplingKernel.h"
-#include "generated_kernels/NoFlux.h"
 
+#include <boost/multi_array/multi_array_ref.hpp>
 #include <memory>
+
+#include "BoundaryHandling.hpp"
 
 namespace walberla {
 
-// Flags marking fluid and boundaries
-const FlagUID domain_flag("domain");
-const FlagUID noflux_flag("noflux");
+std::vector<Utils::Vector3d>
+fill_3D_vector_array(const Utils::Vector3i &grid_size,
+                     const std::vector<double> &vec_flat) {
+  auto const n_grid_points = Utils::product(grid_size);
+  assert(vec_flat.size() == 3 * n_grid_points or vec_flat.size() == 3);
+  std::vector<Utils::Vector3d> output_vector;
+
+  auto const vec_begin = std::begin(vec_flat);
+  auto const vec_end = std::end(vec_flat);
+  if (vec_flat.size() == 3) {
+    auto const uniform_vector = Utils::Vector3d(vec_begin, vec_end);
+    output_vector.assign(n_grid_points, uniform_vector);
+  } else {
+    output_vector.reserve(n_grid_points);
+    for (auto it = vec_begin; it < vec_end; it += 3) {
+      output_vector.emplace_back(Utils::Vector3d(it, it + 3));
+    }
+  }
+
+  return output_vector;
+}
+
+std::vector<double> fill_3D_scalar_array(const Utils::Vector3i &grid_size,
+                                         const std::vector<double> &vec_flat) {
+  auto const n_grid_points = Utils::product(grid_size);
+  assert(vec_flat.size() == n_grid_points or vec_flat.size() == 1);
+  std::vector<double> output_vector;
+
+  auto const vel_begin = std::begin(output_vector);
+  auto const vel_end = std::end(output_vector);
+  if (vec_flat.size() == 1) {
+    auto const uniform_value = vec_flat[0];
+    output_vector.assign(n_grid_points, uniform_value);
+  } else {
+    output_vector.assign(vel_begin, vel_end);
+  }
+
+  return output_vector;
+}
 
 /** Class that runs and controls the LB on WaLBerla
  */
@@ -49,6 +88,12 @@ protected:
   using EKinWalberlaBase<FloatType>::get_advection;
   using EKinWalberlaBase<FloatType>::get_friction_coupling;
 
+  // TODO: boundary handling for Density!
+  using BoundaryModelDensity =
+      BoundaryHandling<FloatType, pystencils::Dirichlet>;
+  using BoundaryModelFlux =
+      BoundaryHandling<Vector3<FloatType>, pystencils::FixedFlux>;
+
   /** VTK writers that are executed automatically */
   std::map<std::string, std::pair<std::shared_ptr<vtk::VTKOutput>, bool>>
       m_vtk_auto;
@@ -58,16 +103,18 @@ protected:
   // Block data access handles
   BlockDataID m_density_field_id;
   BlockDataID m_density_field_flattened_id;
-  BlockDataID m_flag_field_id;
 
   BlockDataID m_flux_field_id;
   BlockDataID m_flux_field_flattened_id;
 
+  BlockDataID m_flag_field_density_id;
+  BlockDataID m_flag_field_flux_id;
+
   /** Block forest */
   std::shared_ptr<LatticeWalberla> m_lattice;
 
-  std::unique_ptr<pystencils::NoFlux> m_noflux;
-  bool m_noflux_dirty = false;
+  std::unique_ptr<BoundaryModelDensity> m_boundary_density;
+  std::unique_ptr<BoundaryModelFlux> m_boundary_flux;
 
   std::unique_ptr<pystencils::ContinuityKernel> m_continuity;
 
@@ -76,6 +123,18 @@ protected:
   // std::shared_ptr<ResetForce<PdfField, VectorField>> m_reset_force;
 
   [[nodiscard]] size_t stencil_size() const override { return FluxCount; }
+
+  void reset_density_boundary_handling() {
+    auto const &blocks = get_lattice().get_blocks();
+    m_boundary_density = std::make_unique<BoundaryModelDensity>(
+        blocks, m_density_field_id, m_flag_field_density_id);
+  }
+
+  void reset_flux_boundary_handling() {
+    auto const &blocks = get_lattice().get_blocks();
+    m_boundary_flux = std::make_unique<BoundaryModelFlux>(
+        blocks, m_flux_field_id, m_flag_field_flux_id);
+  }
 
   // Boundary handling
   // TODO: Boundary Handling for density and fluxes
@@ -133,26 +192,19 @@ public:
         field::addFlattenedShallowCopyToStorage<FluxField>(
             m_lattice->get_blocks(), m_flux_field_id, "flattened flux field");
 
-    m_noflux = std::make_unique<pystencils::NoFlux>(m_lattice->get_blocks(),
-                                                    m_flux_field_flattened_id);
-
     m_continuity = std::make_unique<pystencils::ContinuityKernel>(
         m_flux_field_flattened_id, m_density_field_flattened_id);
 
-    // Init and register flag field (domain/boundary)
-    m_flag_field_id = field::addFlagFieldToStorage<FlagField>(
-        m_lattice->get_blocks(), "flag field", m_lattice->get_ghost_layers());
+    // Init boundary related stuff
+    m_flag_field_density_id = field::addFlagFieldToStorage<FlagField>(
+        m_lattice->get_blocks(), "flag field density",
+        m_lattice->get_ghost_layers());
+    reset_density_boundary_handling();
 
-    for (auto block = m_lattice->get_blocks()->begin();
-         block != m_lattice->get_blocks()->end(); ++block) {
-      auto *flagField = block->template getData<FlagField>(m_flag_field_id);
-
-      flagField->registerFlag(domain_flag);
-      flagField->registerFlag(noflux_flag);
-    }
-
-    // set domain flag everywhere
-    clear_boundaries();
+    m_flag_field_flux_id = field::addFlagFieldToStorage<FlagField>(
+        m_lattice->get_blocks(), "flag field flux",
+        m_lattice->get_ghost_layers());
+    reset_flux_boundary_handling();
 
     // m_noflux = pystencils::NoFlux(m_lattice,
     // m_flux_field_flattened_id);
@@ -196,9 +248,9 @@ public:
 
 private:
   inline void kernel_noflux() {
-    for (auto &block : *m_lattice->get_blocks()) {
-      (*m_noflux).run(&block);
-    }
+    //    for (auto &block : *m_lattice->get_blocks()) {
+    //      (*m_noflux).run(&block);
+    //    }
   }
 
   inline void kernel_continuity() {
@@ -252,11 +304,6 @@ public:
   void integrate(const std::size_t &potential_id,
                  const std::size_t &velocity_id,
                  const std::size_t &force_id) override {
-    if (m_noflux_dirty) {
-      boundary_noflux_update();
-      m_noflux_dirty = false;
-    }
-
     // early-breakout, has to be removed when reactions are included
     if (get_diffusion() == 0.)
       return;
@@ -335,71 +382,205 @@ public:
     return {density_field->get((*bc).cell)};
   };
 
-  void boundary_noflux_update() {
-    m_noflux.get()->template fillFromFlagField<FlagField>(
-        m_lattice->get_blocks(), m_flag_field_id, noflux_flag, domain_flag);
+  void clear_flux_boundaries() override { reset_flux_boundary_handling(); }
+  void clear_density_boundaries() override {
+    reset_density_boundary_handling();
   }
 
-  [[nodiscard]] bool
-  set_node_noflux_boundary(const Utils::Vector3i &node) override {
+  bool set_node_flux_boundary(const Utils::Vector3i &node,
+                              const Utils::Vector3d &flux) override {
     auto bc = get_block_and_cell(get_lattice(), node, true);
     if (!bc)
       return false;
 
-    auto *flagField = (*bc).block->template getData<FlagField>(m_flag_field_id);
-    flagField->addFlag((*bc).cell, flagField->getFlag(noflux_flag));
+    m_boundary_flux->set_node_value_at_boundary(node, flux, *bc);
 
-    m_noflux_dirty = true;
-    return true;
-  }
+    reallocate_flux_boundary_field();
 
-  [[nodiscard]] bool
-  remove_node_from_boundary(const Utils::Vector3i &node) override {
-    auto bc = get_block_and_cell(get_lattice(), node, true);
-    if (!bc)
-      return false;
-
-    auto *flagField = (*bc).block->template getData<FlagField>(m_flag_field_id);
-    flagField->removeFlag((*bc).cell, flagField->getFlag(noflux_flag));
-
-    m_noflux_dirty = true;
     return true;
   };
 
-  [[nodiscard]] boost::optional<bool>
-  get_node_is_boundary(const Utils::Vector3i &node,
-                       bool consider_ghosts = false) const override {
+  bool remove_node_from_flux_boundary(const Utils::Vector3i &node) override {
+    auto bc = get_block_and_cell(get_lattice(), node, true);
+    if (!bc)
+      return false;
+
+    m_boundary_flux->remove_node_from_boundary(node, *bc);
+
+    reallocate_flux_boundary_field();
+
+    return true;
+  }
+
+  bool set_node_density_boundary(const Utils::Vector3i &node,
+                                 double density) override {
+    auto bc = get_block_and_cell(get_lattice(), node, true);
+    if (!bc)
+      return false;
+
+    m_boundary_density->set_node_value_at_boundary(node, density, *bc);
+
+    reallocate_density_boundary_field();
+
+    return true;
+  }
+
+  bool remove_node_from_density_boundary(const Utils::Vector3i &node) override {
+    auto bc = get_block_and_cell(get_lattice(), node, true);
+    if (!bc)
+      return false;
+
+    m_boundary_density->remove_node_from_boundary(node, *bc);
+
+    reallocate_density_boundary_field();
+
+    return true;
+  }
+
+  boost::optional<bool>
+  get_node_is_flux_boundary(const Utils::Vector3i &node,
+                            bool consider_ghosts) const override {
     auto bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc)
       return {boost::none};
 
-    auto *flagField = (*bc).block->template getData<FlagField>(m_flag_field_id);
-    // TODO: this has to be adapted when other BCs are added
-    return {flagField->isPartOfMaskSet((*bc).cell,
-                                       flagField->getFlag(noflux_flag))};
-  };
+    return {m_boundary_flux->node_is_boundary(*bc)};
+  }
 
-  void clear_boundaries() override {
-    const CellInterval &domain_bb_in_global_cell_coordinates =
-        m_lattice->get_blocks()->getCellBBFromAABB(
-            m_lattice->get_blocks()->begin()->getAABB().getExtended(
-                FloatType(m_lattice->get_ghost_layers())));
-    for (auto block = m_lattice->get_blocks()->begin();
-         block != m_lattice->get_blocks()->end(); ++block) {
+  boost::optional<bool>
+  get_node_is_density_boundary(const Utils::Vector3i &node,
+                               bool consider_ghosts) const override {
+    auto bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
+    if (!bc)
+      return {boost::none};
 
-      auto *flagField = block->template getData<FlagField>(m_flag_field_id);
+    return {m_boundary_density->node_is_boundary(*bc)};
+  }
 
-      CellInterval domain_bb(domain_bb_in_global_cell_coordinates);
-      m_lattice->get_blocks()->transformGlobalToBlockLocalCellInterval(
-          domain_bb, *block);
+  void update_flux_boundary_from_shape(
+      const std::vector<int> &raster_flat,
+      const std::vector<double> &flux_flat) override {
+    // reshape grids
+    auto const grid_size = get_lattice().get_grid_dimensions();
+    std::vector<Utils::Vector3d> flux_vectors =
+        fill_3D_vector_array(grid_size, flux_flat);
+    boost::const_multi_array_ref<Utils::Vector3d, 3> fluxes(flux_vectors.data(),
+                                                            grid_size);
+    boost::const_multi_array_ref<int, 3> raster(raster_flat.data(), grid_size);
 
-      for (auto cell : domain_bb) {
-        flagField->addFlag(cell, flagField->getFlag(domain_flag));
+    auto const &blocks = get_lattice().get_blocks();
+    for (auto block = blocks->begin(); block != blocks->end(); ++block) {
+      // lattice constant is 1
+      auto const left = block->getAABB().min();
+      auto const off_i = int_c(left[0]);
+      auto const off_j = int_c(left[1]);
+      auto const off_k = int_c(left[2]);
+
+      // Get field data which knows about the indices
+      // In the loop, x,y,z are in block-local coordinates
+      auto const n_ghost_layers = get_lattice().get_ghost_layers();
+      auto const ghosts = static_cast<int>(n_ghost_layers);
+      auto density_field =
+          block->template getData<DensityField>(m_density_field_id);
+      for (int i = -ghosts; i < int_c(density_field->xSize() + ghosts); ++i) {
+        for (int j = -ghosts; j < int_c(density_field->ySize() + ghosts); ++j) {
+          for (int k = -ghosts; k < int_c(density_field->zSize() + ghosts);
+               ++k) {
+            Utils::Vector3i const node{{off_i + i, off_j + j, off_k + k}};
+            auto const idx = (node + grid_size) % grid_size;
+            if (raster(idx)) {
+              auto const bc = get_block_and_cell(get_lattice(), node, true);
+              auto const &vel = fluxes(idx);
+              m_boundary_flux->set_node_value_at_boundary(node, vel, *bc);
+            }
+          }
+        }
       }
     }
+    reallocate_flux_boundary_field();
+  }
 
-    m_noflux_dirty = true;
-  };
+  void
+  update_flux_boundary_from_list(std::vector<int> const &nodes_flat,
+                                 std::vector<double> const &vel_flat) override {
+    assert(nodes_flat.size() == vel_flat.size());
+    assert(nodes_flat.size() % 3u == 0);
+    for (std::size_t i = 0; i < nodes_flat.size(); i += 3) {
+      auto const node = Utils::Vector3i(&nodes_flat[i], &nodes_flat[i + 3]);
+      auto const vel = Utils::Vector3d(&vel_flat[i], &vel_flat[i + 3]);
+      auto const bc = get_block_and_cell(get_lattice(), node, true);
+      if (bc) {
+        m_boundary_flux->set_node_value_at_boundary(node, vel, *bc);
+      }
+    }
+    reallocate_flux_boundary_field();
+  }
+
+  void update_density_boundary_from_shape(
+      const std::vector<int> &raster_flat,
+      const std::vector<double> &density_flat) override {
+    // reshape grids
+    auto const grid_size = get_lattice().get_grid_dimensions();
+    std::vector<double> density_vector =
+        fill_3D_scalar_array(grid_size, density_flat);
+    boost::const_multi_array_ref<double, 3> densities(density_vector.data(),
+                                                      grid_size);
+    boost::const_multi_array_ref<int, 3> raster(raster_flat.data(), grid_size);
+
+    auto const &blocks = get_lattice().get_blocks();
+    for (auto block = blocks->begin(); block != blocks->end(); ++block) {
+      // lattice constant is 1
+      auto const left = block->getAABB().min();
+      auto const off_i = int_c(left[0]);
+      auto const off_j = int_c(left[1]);
+      auto const off_k = int_c(left[2]);
+
+      // Get field data which knows about the indices
+      // In the loop, x,y,z are in block-local coordinates
+      auto const n_ghost_layers = get_lattice().get_ghost_layers();
+      auto const ghosts = static_cast<int>(n_ghost_layers);
+      auto density_field =
+          block->template getData<DensityField>(m_density_field_id);
+      for (int i = -ghosts; i < int_c(density_field->xSize() + ghosts); ++i) {
+        for (int j = -ghosts; j < int_c(density_field->ySize() + ghosts); ++j) {
+          for (int k = -ghosts; k < int_c(density_field->zSize() + ghosts);
+               ++k) {
+            Utils::Vector3i const node{{off_i + i, off_j + j, off_k + k}};
+            auto const idx = (node + grid_size) % grid_size;
+            if (raster(idx)) {
+              auto const bc = get_block_and_cell(get_lattice(), node, true);
+              auto const &val = densities(idx);
+              m_boundary_density->set_node_value_at_boundary(node, val, *bc);
+            }
+          }
+        }
+      }
+    }
+    reallocate_density_boundary_field();
+  }
+
+  void update_density_boundary_from_list(
+      std::vector<int> const &nodes_flat,
+      std::vector<double> const &density_flat) override {
+    assert(nodes_flat.size() == vel_flat.size());
+    assert(nodes_flat.size() % 3u == 0);
+    for (std::size_t i = 0; i < nodes_flat.size(); i += 1) {
+      auto const node =
+          Utils::Vector3i(&nodes_flat[3 * i], &nodes_flat[3 * i + 3]);
+      auto const val = density_flat[i];
+      auto const bc = get_block_and_cell(get_lattice(), node, true);
+      if (bc) {
+        m_boundary_density->set_node_value_at_boundary(node, val, *bc);
+      }
+    }
+    reallocate_density_boundary_field();
+  }
+
+  void reallocate_flux_boundary_field() { m_boundary_flux->boundary_update(); }
+
+  void reallocate_density_boundary_field() {
+    m_boundary_density->boundary_update();
+  }
 
   [[nodiscard]] uint64_t get_rng_state() const override {
     throw std::runtime_error("The LB does not use a random number generator");
@@ -451,70 +632,31 @@ public:
     return res;
   };
 
-  void create_vtk(unsigned delta_N, unsigned initial_count,
-                  unsigned flag_observables, std::string const &identifier,
-                  std::string const &base_folder,
-                  std::string const &prefix) override {
-    // VTKOuput object must be unique
-    std::stringstream unique_identifier;
-    unique_identifier << base_folder << "/" << identifier;
-    std::string const vtk_uid = unique_identifier.str();
-    if (m_vtk_auto.find(vtk_uid) != m_vtk_auto.end() or
-        m_vtk_manual.find(vtk_uid) != m_vtk_manual.end()) {
-      throw std::runtime_error("VTKOutput object " + vtk_uid +
-                               " already exists");
-    }
-
-    // instantiate VTKOutput object
-    unsigned const write_freq = (delta_N) ? static_cast<unsigned>(delta_N) : 1u;
-    auto vtk_writer = vtk::createVTKOutput_BlockData(
-        m_lattice->get_blocks(), identifier, uint_c(write_freq), uint_c(0),
-        false, base_folder, prefix, true, true, true, true,
-        uint_c(initial_count));
-    field::FlagFieldCellFilter<FlagField> domain_filter(m_flag_field_id);
-    domain_filter.addFlag(domain_flag);
-    vtk_writer->addCellInclusionFilter(domain_filter);
-
-    // add writers
-    if (static_cast<unsigned>(EKOutputVTK::density) & flag_observables) {
-      vtk_writer->addCellDataWriter(
-          make_shared<field::VTKWriter<DensityField, float>>(m_density_field_id,
-                                                             "EKDensity"));
-    }
-
-    // register object
-    if (delta_N) {
-      m_vtk_auto[vtk_uid] = {vtk_writer, true};
-    } else {
-      m_vtk_manual[vtk_uid] = vtk_writer;
-    }
-  }
-
-  /** Manually call a VTK callback */
-  void write_vtk(std::string const &vtk_uid) override {
-    if (m_vtk_auto.find(vtk_uid) != m_vtk_auto.end()) {
-      throw std::runtime_error("VTKOutput object " + vtk_uid +
-                               " is an automatic observable");
-    }
-    if (m_vtk_manual.find(vtk_uid) == m_vtk_manual.end()) {
-      throw std::runtime_error("VTKOutput object " + vtk_uid +
-                               " doesn't exist");
-    }
-    vtk::writeFiles(m_vtk_manual[vtk_uid])();
-  }
-
-  /** Activate or deactivate a VTK callback */
-  void switch_vtk(std::string const &vtk_uid, int status) override {
-    if (m_vtk_manual.find(vtk_uid) != m_vtk_manual.end()) {
-      throw std::runtime_error("VTKOutput object " + vtk_uid +
-                               " is a manual observable");
-    }
-    if (m_vtk_auto.find(vtk_uid) == m_vtk_auto.end()) {
-      throw std::runtime_error("VTKOutput object " + vtk_uid +
-                               " doesn't exist");
-    }
-    m_vtk_auto[vtk_uid].second = status;
-  }
+  //  /** Manually call a VTK callback */
+  //  void write_vtk(std::string const &vtk_uid) override {
+  //    if (m_vtk_auto.find(vtk_uid) != m_vtk_auto.end()) {
+  //      throw std::runtime_error("VTKOutput object " + vtk_uid +
+  //                               " is an automatic observable");
+  //    }
+  //    if (m_vtk_manual.find(vtk_uid) == m_vtk_manual.end()) {
+  //      throw std::runtime_error("VTKOutput object " + vtk_uid +
+  //                               " doesn't exist");
+  //    }
+  //    vtk::writeFiles(m_vtk_manual[vtk_uid])();
+  //  }
+  //
+  //  /** Activate or deactivate a VTK callback */
+  //  void switch_vtk(std::string const &vtk_uid, int status) override {
+  //    if (m_vtk_manual.find(vtk_uid) != m_vtk_manual.end()) {
+  //      throw std::runtime_error("VTKOutput object " + vtk_uid +
+  //                               " is a manual observable");
+  //    }
+  //    if (m_vtk_auto.find(vtk_uid) == m_vtk_auto.end()) {
+  //      throw std::runtime_error("VTKOutput object " + vtk_uid +
+  //                               " doesn't exist");
+  //    }
+  //    m_vtk_auto[vtk_uid].second = status;
+  //  }
 
   ~EKinWalberlaImpl() override = default;
 };
