@@ -101,6 +101,30 @@ public:
       return mpi_return_one_rank(m_ekinstance->get_node_is_flux_boundary(
           get_value<Utils::Vector3i>(parameters, "position"), false));
     }
+    if (method == "update_flux_boundary_from_shape") {
+      m_ekinstance->update_flux_boundary_from_shape(
+          get_value<std::Vector<int>>(parameters, "raster_view"),
+          get_value<std::Vector<double>>(parameters, "value_view"));
+      return none;
+    }
+    if (method == "update_density_boundary_from_shape") {
+      m_ekinstance->update_density_boundary_from_shape(
+          get_value<std::Vector<int>>(parameters, "raster_view"),
+          get_value<std::Vector<double>>(parameters, "value_view"));
+      return none;
+    }
+    if (method == "update_flux_boundary_from_list") {
+      m_ekinstance->update_flux_boundary_from_list(
+          get_value<std::Vector<int>>(parameters, "nodes_view"),
+          get_value<std::Vector<double>>(parameters, "value_view"));
+      return none;
+    }
+    if (method == "update_density_boundary_from_list") {
+      m_ekinstance->update_density_boundary_from_list(
+          get_value<std::Vector<int>>(parameters, "nodes_view"),
+          get_value<std::Vector<double>>(parameters, "value_view"));
+      return none;
+    }
     return none;
   }
 

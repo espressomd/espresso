@@ -166,7 +166,10 @@ class EKRoutines:
             value_flat, dtype=np.double)
         cdef int[::1] raster_view = np.ascontiguousarray(
             mask_flat, dtype=np.int32)
-        self.species.call_method("ek_update_boundary_from_shape", raster_view, value_view)
+        if issubclass(boundary_type, FluxBoundary):
+            self.species.call_method("update_flux_boundary_from_shape", raster_view, value_view)
+        if issubclass(boundary_type, DensityBoundary):
+            self.species.call_method("update_density_boundary_from_shape", raster_view, value_view)
 
     def add_boundary_from_list(self, nodes,
                                value, boundary_type):
@@ -217,7 +220,10 @@ class EKRoutines:
             value.reshape((-1,)), dtype=np.double)
         cdef int[::1] nodes_view = np.ascontiguousarray(
             nodes.reshape((-1,)), dtype=np.int32)
-        self.species.call_method("ek_update_boundary_from_list", nodes_view, value_view)
+        if issubclass(boundary_type, FluxBoundary):
+            self.species.call_method("update_flux_boundary_from_list", nodes_view, value_view)
+        if issubclass(boundary_type, DensityBoundary):
+            self.species.call_method("update_density_boundary_from_list", nodes_view, value_view)
 
     def get_nodes_in_shape(self, shape):
         """Provides a generator for iterating over all ek nodes inside the given shape"""
