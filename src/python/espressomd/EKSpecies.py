@@ -74,6 +74,27 @@ class EKSpecies(ScriptInterfaceHelper):
             raise Exception(
                 f"{key} is not a valid key. Should be a point on the nodegrid e.g. ek[0,0,0], or a slice")
 
+class FluxBoundary:
+    """
+    Holds flux information for the flux boundary
+    condition at a single node.
+    """
+
+    def __init__(self, flux):
+        check_type_or_throw_except(
+            flux, 3, float, "FluxBoundary flux must be three floats")
+        self.flux = flux
+
+class DensityBoundary:
+    """
+    Holds density information for the density boundary
+    condition at a single node.
+    """
+
+    def __init__(self, density):
+        check_type_or_throw_except(
+            density, 1, float, "FluxBoundary flux must be one float")
+        self.density = density
 
 class EKRoutines:
     def __init__(self, species, node):
@@ -98,6 +119,126 @@ class EKRoutines:
     @property
     def is_boundary(self):
         return self.species.call_method("is_boundary", position=self.node)
+
+    def clear_boundaries(self):
+        """
+        Remove boundary conditions.
+        """
+        self.species.call_method("clear_boundary")
+
+    def add_boundary_from_shape(self, shape,
+                                value, boundary_type):
+        """
+        Set boundary conditions from a shape.
+
+        Parameters
+        ----------
+        shape : :obj:`espressomd.shapes.Shape`
+            Shape to rasterize.
+        value : 
+        boundary_type : 
+            Type of the boundary condition.
+        """
+        if not ( issubclass(boundary_type, FluxBoundary) or issubclass(boundary_type, DensityBoundary)):
+            raise ValueError(
+                "boundary_type must be a subclass of FluxBoundary or DensityBoundary")
+
+        value = np.array(velocity, dtype=float)
+        utils.check_type_or_throw_except(
+            shape, 1, Shape, "expected an espressomd.shapes.Shape")
+        if issubclass(boundary_type, FluxBoundary):
+            if np.shape(value) not in [(3,), tuple(self.shape) + (3,)]:
+                raise ValueError(
+                    f'Cannot process flux value grid of shape {np.shape(value)}')
+        if issubclass(boundary_type, DensityBoundary):
+            if np.shape(value) not in [(1,), tuple(self.shape) + (1,)]:
+                raise ValueError(
+                    f'Cannot process density grid of shape {np.shape(value)}')
+
+# TODO unit conversion
+#        value *= 
+        value_flat = value.reshape((-1,))
+        mask_flat = shape.call_method('rasterize', grid_size=self.shape,
+                                      grid_spacing=self._params['agrid'],
+                                      grid_offset=0.5)
+
+        cdef double[::1] value_view = np.ascontiguousarray(
+            value_flat, dtype=np.double)
+        cdef int[::1] raster_view = np.ascontiguousarray(
+            mask_flat, dtype=np.int32)
+        self.species.call_method("ek_update_boundary_from_shape", raster_view, value_view)
+
+    def add_boundary_from_list(self, nodes,
+                               value, boundary_type):
+        """
+        Set boundary conditions from a list of node indices.
+
+        Parameters
+        ----------
+        nodes : (N, 3) array_like of :obj:`int`
+            List of node indices to update. If they were originally not
+            boundary nodes, they will become boundary nodes.
+        velocity : (
+        boundary_type : 
+            Type of the boundary condition.
+        """
+        if not ( issubclass(boundary_type, FluxBoundary) or issubclass(boundary_type, DensityBoundary)):
+            raise ValueError(
+                "boundary_type must be a subclass of FluxBoundary or DensityBoundary")
+
+        nodes = np.array(nodes, dtype=int)
+        value = np.array(velocity, dtype=float)
+        if issubclass(boundary_type, FluxBoundary):
+            array_length = 3
+            if np.shape(value) not in [(3,), tuple(self.shape) + (3,)]:
+                raise ValueError(
+                    f'Cannot process flux value grid of shape {np.shape(value)}')
+        if issubclass(boundary_type, DensityBoundary):
+            array_length = 1
+            if np.shape(value) not in [(1,), tuple(self.shape) + (1,)]:
+                raise ValueError(
+                    f'Cannot process density grid of shape {np.shape(value)}')
+
+        if value.shape == (array_length,):
+            value = np.tile(value, (nodes.shape[0], 1))
+        elif nodes.shape != value.shape:
+            raise ValueError(
+                f'Node indices and velocities must have the same shape, got {nodes.shape} and {velocity.shape}')
+
+        # range checks
+        if np.any(np.logical_or(np.max(nodes, axis=0) >= self.shape,
+                                np.min(nodes, axis=0) < 0)):
+            raise ValueError(
+                f'Node indices must be in the range (0, 0, 0) to {self.shape}')
+
+# TODO unit conversion
+#        value *= 
+        cdef double[::1] value_view = np.ascontiguousarray(
+            value.reshape((-1,)), dtype=np.double)
+        cdef int[::1] nodes_view = np.ascontiguousarray(
+            nodes.reshape((-1,)), dtype=np.int32)
+        self.species.call_method("ek_update_boundary_from_list", nodes_view, value_view)
+
+    def get_nodes_in_shape(self, shape):
+        """Provides a generator for iterating over all ek nodes inside the given shape"""
+        utils.check_type_or_throw_except(
+            shape, 1, Shape, "expected a espressomd.shapes.Shape")
+        ek_shape = self.shape
+        idxs = itertools.product(
+            range(ek_shape[0]), range(ek_shape[1]), range(ek_shape[2]))
+        for idx in idxs:
+            pos = (np.asarray(idx) + 0.5) * self._params['agrid']
+            if shape.is_inside(position=pos):
+                yield self[idx]
+
+    def get_shape_bitmask(self, shape):
+        """Create a bitmask for the given shape."""
+        utils.check_type_or_throw_except(
+            shape, 1, Shape, "expected a espressomd.shapes.Shape")
+        mask_flat = shape.call_method('rasterize', grid_size=self.shape,
+                                      grid_spacing=self._params['agrid'],
+                                      grid_offset=0.5)
+        return np.reshape(mask_flat, self.shape).astype(type(True))
 
 
 class EKSlice:
