@@ -364,8 +364,8 @@ public:
   void clear_resort_particles() { m_resort_particles = Cells::RESORT_NONE; }
 
   /**
-   * @brief Check whether a particle has moved further than the skin,
-   * thus requiring a resort.
+   * @brief Check whether a particle has moved further than half the skin
+   * since the last Verlet list update, thus requiring a resort.
    * @param particles Particles to check
    * @param skin Skin
    * @return Whether a resort is needed.
