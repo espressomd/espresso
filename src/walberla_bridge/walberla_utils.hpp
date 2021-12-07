@@ -30,6 +30,23 @@
 
 namespace walberla {
 
+template <typename T, typename U = T> inline U es2walberla(T v) { return U{v}; }
+template <> inline Vector3<float> es2walberla(const Utils::Vector3d v) {
+  return Vector3<float>{numeric_cast<float>(v[0]), numeric_cast<float>(v[1]),
+                        numeric_cast<float>(v[2])};
+}
+template <> inline Vector3<double> es2walberla(const Utils::Vector3d v) {
+  return Vector3<double>{v[0], v[1], v[2]};
+}
+
+template <typename T> inline T walberla2es(T v) { return v; }
+inline Utils::Vector3d walberla2es(const Vector3<float> v) {
+  return Utils::Vector3d{double_c(v[0]), double_c(v[1]), double_c(v[2])};
+}
+inline Utils::Vector3d walberla2es(const Vector3<double> v) {
+  return Utils::Vector3d{v[0], v[1], v[2]};
+}
+
 // Vector conversion helpers
 inline Utils::Vector3d to_vector3d(const Vector3<float> v) {
   return Utils::Vector3d{double_c(v[0]), double_c(v[1]), double_c(v[2])};
