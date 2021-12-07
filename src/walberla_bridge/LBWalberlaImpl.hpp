@@ -52,6 +52,8 @@
 #include "LBWalberlaBase.hpp"
 #include "LatticeWalberla.hpp"
 #include "ResetForce.hpp"
+#include "generated_kernels/Dynamic_UBB_double_precision.h"
+#include "generated_kernels/Dynamic_UBB_single_precision.h"
 #include "generated_kernels/InitialPDFsSetterDoublePrecision.h"
 #include "generated_kernels/InitialPDFsSetterSinglePrecision.h"
 #include "generated_kernels/StreamSweepDoublePrecision.h"
@@ -126,6 +128,13 @@ template <> struct KernelTrait<float> {
   using StreamSweep = pystencils::StreamSweepSinglePrecision;
   using InitialPDFsSetter = pystencils::InitialPDFsSetterSinglePrecision;
 };
+
+template <typename FT> struct BoundaryHandlingTrait {
+  using Dynamic_UBB = lbm::Dynamic_UBB_double_precision;
+};
+template <> struct BoundaryHandlingTrait<float> {
+  using Dynamic_UBB = lbm::Dynamic_UBB_single_precision;
+};
 } // namespace detail
 
 /** Class that runs and controls the LB on WaLBerla
@@ -142,7 +151,9 @@ class LBWalberlaImpl : public LBWalberlaBase {
   using StreamSweep = typename detail::KernelTrait<FloatType>::StreamSweep;
   using InitialPDFsSetter =
       typename detail::KernelTrait<FloatType>::InitialPDFsSetter;
-  using BoundaryModel = BoundaryHandling<FloatType>;
+  using BoundaryModel = BoundaryHandling<
+      Vector3<FloatType>,
+      typename detail::BoundaryHandlingTrait<FloatType>::Dynamic_UBB>;
 
 protected:
   using CollisionModel =
@@ -648,7 +659,7 @@ public:
     if (!bc or !m_boundary->node_is_boundary(*bc))
       return {boost::none};
 
-    return {m_boundary->get_node_velocity_at_boundary(node)};
+    return {m_boundary->get_node_value_at_boundary(node)};
   }
 
   bool set_node_velocity_at_boundary(const Utils::Vector3i &node,
@@ -658,9 +669,9 @@ public:
     if (!bc)
       return false;
 
-    m_boundary->set_node_velocity_at_boundary(node, v, *bc);
+    m_boundary->set_node_value_at_boundary(node, v, *bc);
     if (reallocate) {
-      m_boundary->ubb_update();
+      m_boundary->boundary_update();
     }
 
     return true;
@@ -683,7 +694,7 @@ public:
 
     m_boundary->remove_node_from_boundary(node, *bc);
     if (reallocate) {
-      m_boundary->ubb_update();
+      m_boundary->boundary_update();
     }
 
     return true;
@@ -699,7 +710,7 @@ public:
     return {m_boundary->node_is_boundary(*bc)};
   }
 
-  void reallocate_ubb_field() override { m_boundary->ubb_update(); }
+  void reallocate_ubb_field() override { m_boundary->boundary_update(); }
 
   void clear_boundaries() override { reset_boundary_handling(); }
 
@@ -752,7 +763,7 @@ public:
             if (raster(idx)) {
               auto const bc = get_block_and_cell(lattice(), node, true);
               auto const &vel = slip_velocity(idx);
-              m_boundary->set_node_velocity_at_boundary(node, vel, *bc);
+              m_boundary->set_node_value_at_boundary(node, vel, *bc);
             }
           }
         }
@@ -775,7 +786,7 @@ public:
       auto const vel = Utils::Vector3d(&vel_flat[i], &vel_flat[i + 3]);
       auto const bc = get_block_and_cell(lattice(), node, true);
       if (bc) {
-        m_boundary->set_node_velocity_at_boundary(node, vel, *bc);
+        m_boundary->set_node_value_at_boundary(node, vel, *bc);
       }
     }
     reallocate_ubb_field();

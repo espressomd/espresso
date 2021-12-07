@@ -24,9 +24,6 @@
 #include "BlockAndCell.hpp"
 #include "walberla_utils.hpp"
 
-#include "generated_kernels/Dynamic_UBB_double_precision.h"
-#include "generated_kernels/Dynamic_UBB_single_precision.h"
-
 #include <utils/Vector.hpp>
 
 #include <cassert>
@@ -40,72 +37,56 @@ namespace walberla {
 /// Flag for domain cells, i.e. all cells
 const FlagUID Domain_flag("domain");
 /// Flag for boundary cells
-const FlagUID Boundary_flag("velocity bounce back");
+const FlagUID Boundary_flag("boundary");
 
-namespace detail {
-template <typename FT> struct BoundaryHandlingTrait {
-  using Dynamic_UBB = lbm::Dynamic_UBB_double_precision;
-};
-template <> struct BoundaryHandlingTrait<float> {
-  using Dynamic_UBB = lbm::Dynamic_UBB_single_precision;
-};
-} // namespace detail
-
-/** Velocity boundary conditions sweep. */
-template <typename FloatType> class BoundaryHandling {
-
-  using Dynamic_UBB =
-      typename detail::BoundaryHandlingTrait<FloatType>::Dynamic_UBB;
-
-  /** Container for the map between cells and velocities. */
-  class DynamicVelocityCallback {
+template <typename T, typename BoundaryClass> class BoundaryHandling {
+  /** Container for the map between cells and values. */
+  class DynamicValueCallback {
   public:
-    DynamicVelocityCallback() {
-      m_velocity_boundary =
-          std::make_shared<std::unordered_map<Cell, Vector3<FloatType>>>();
+    DynamicValueCallback() {
+      m_value_boundary = std::make_shared<std::unordered_map<Cell, T>>();
     }
 
-    Vector3<FloatType> operator()(
+    [[nodiscard]] T operator()(
         Cell const &local,
         std::shared_ptr<blockforest::StructuredBlockForest> const &blocks,
         IBlock &block) const {
       Cell global;
       blocks->transformBlockLocalToGlobalCell(global, block, local);
-      return get_velocity(global);
+      return get_value(global);
     }
 
-    void set_node_boundary_velocity(Utils::Vector3i const &node,
-                                    Utils::Vector3d const &vel) {
+    template <typename U>
+    void set_node_boundary_value(Utils::Vector3i const &node, U const &val) {
       auto const global = Cell(node[0], node[1], node[2]);
-      (*m_velocity_boundary)[global] = to_vector3<FloatType>(vel);
+      (*m_value_boundary)[global] = es2walberla<U, T>(val);
     }
 
-    void unset_node_boundary_velocity(Utils::Vector3i const &node) {
+    void unset_node_boundary_value(Utils::Vector3i const &node) {
       auto const global = Cell(node[0], node[1], node[2]);
-      assert(m_velocity_boundary->count(global));
-      m_velocity_boundary->erase(global);
+      assert(m_value_boundary->count(global));
+      m_value_boundary->erase(global);
     }
 
-    Utils::Vector3d
-    get_node_boundary_velocity(Utils::Vector3i const &node) const {
+    [[nodiscard]] auto
+    get_node_boundary_value(Utils::Vector3i const &node) const {
       auto const global = Cell(node[0], node[1], node[2]);
-      return to_vector3d(get_velocity(global));
+      return walberla2es(get_value(global));
     }
 
   private:
-    std::shared_ptr<std::unordered_map<Cell, Vector3<FloatType>>>
-        m_velocity_boundary;
-    static constexpr Vector3<FloatType> no_slip{0, 0, 0};
+    std::shared_ptr<std::unordered_map<Cell, T>> m_value_boundary;
+    static constexpr T default_value{};
 
-    Vector3<FloatType> get_velocity(Cell const &cell) const {
-      if (m_velocity_boundary->count(cell) == 0) {
-        return no_slip;
+    [[nodiscard]] T get_value(Cell const &cell) const {
+      if (m_value_boundary->count(cell) == 0) {
+        return default_value;
       }
-      return m_velocity_boundary->at(cell);
+      return m_value_boundary->at(cell);
     }
   };
 
-  inline auto get_flag_field_and_flag(IBlock *block) const {
+  [[nodiscard]] inline auto get_flag_field_and_flag(IBlock *block) const {
     auto const flag_field = block->template getData<FlagField>(m_flag_field_id);
     auto const boundary_flag = flag_field->getFlag(Boundary_flag);
     return std::make_tuple(flag_field, boundary_flag);
@@ -115,9 +96,9 @@ public:
   using FlagField = field::FlagField<uint8_t>;
 
   BoundaryHandling(std::shared_ptr<StructuredBlockForest> blocks,
-                   BlockDataID pdf_field_id, BlockDataID flag_field_id)
-      : m_blocks(std::move(blocks)), m_pdf_field_id(pdf_field_id),
-        m_flag_field_id(flag_field_id), m_callback(DynamicVelocityCallback()) {
+                   BlockDataID value_field_id, BlockDataID flag_field_id)
+      : m_blocks(std::move(blocks)), m_value_field_id(value_field_id),
+        m_flag_field_id(flag_field_id), m_callback(DynamicValueCallback()) {
     // reinitialize the flag field
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b) {
       flag_reset_kernel(&*b);
@@ -125,48 +106,48 @@ public:
     // instantiate the boundary sweep
     std::function callback = m_callback;
     m_boundary =
-        std::make_shared<Dynamic_UBB>(m_blocks, m_pdf_field_id, callback);
+        std::make_shared<BoundaryClass>(m_blocks, m_value_field_id, callback);
   }
 
   void operator()(IBlock *block) { (*m_boundary)(block); }
 
-  bool node_is_boundary(BlockAndCell const &bc) const {
+  [[nodiscard]] bool node_is_boundary(BlockAndCell const &bc) const {
     auto [flag_field, boundary_flag] = get_flag_field_and_flag(bc.block);
     return flag_field->isFlagSet(bc.cell, boundary_flag);
   }
 
-  Utils::Vector3d
-  get_node_velocity_at_boundary(const Utils::Vector3i &node) const {
-    return m_callback.get_node_boundary_velocity(node);
+  [[nodiscard]] auto
+  get_node_value_at_boundary(const Utils::Vector3i &node) const {
+    return m_callback.get_node_boundary_value(node);
   }
 
-  void set_node_velocity_at_boundary(Utils::Vector3i const &node,
-                                     Utils::Vector3d const &v,
-                                     BlockAndCell const &bc) {
+  template <typename U>
+  void set_node_value_at_boundary(Utils::Vector3i const &node, U const &v,
+                                  BlockAndCell const &bc) {
     auto [flag_field, boundary_flag] = get_flag_field_and_flag(bc.block);
-    m_callback.set_node_boundary_velocity(node, v);
+    m_callback.set_node_boundary_value(node, v);
     flag_field->addFlag(bc.cell, boundary_flag);
   }
 
   void remove_node_from_boundary(Utils::Vector3i const &node,
                                  BlockAndCell const &bc) {
     auto [flag_field, boundary_flag] = get_flag_field_and_flag(bc.block);
-    m_callback.unset_node_boundary_velocity(node);
+    m_callback.unset_node_boundary_value(node);
     flag_field->removeFlag(bc.cell, boundary_flag);
   }
 
-  /** Assign velocity boundary conditions to boundary cells. */
-  void ubb_update() {
+  /** Assign boundary conditions to boundary cells. */
+  void boundary_update() {
     m_boundary->template fillFromFlagField<FlagField>(
         m_blocks, m_flag_field_id, Boundary_flag, Domain_flag);
   }
 
 private:
   std::shared_ptr<StructuredBlockForest> m_blocks;
-  BlockDataID m_pdf_field_id;
+  BlockDataID m_value_field_id;
   BlockDataID m_flag_field_id;
-  DynamicVelocityCallback m_callback;
-  std::shared_ptr<Dynamic_UBB> m_boundary;
+  DynamicValueCallback m_callback;
+  std::shared_ptr<BoundaryClass> m_boundary;
 
   /** Register flags and set all cells to @ref Domain_flag. */
   void flag_reset_kernel(IBlock *const block) {
