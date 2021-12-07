@@ -58,7 +58,7 @@ class CoulombMixedPeriodicity(ut.TestCase):
 
         # Force
         force_diff = np.linalg.norm(
-            self.system.part[:].f - self.forces, axis=1)
+            self.system.part.all().f - self.forces, axis=1)
         self.assertLessEqual(
             np.mean(force_diff), self.tolerance_force,
             "Absolute force difference too large for method " + method_name)

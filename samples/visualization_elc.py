@@ -46,13 +46,12 @@ visualizer = espressomd.visualization.openGLLive(
 
 system.time_step = 0.02
 system.cell_system.skin = 0.4
-system.periodicity = [1, 1, 1]
+system.periodicity = 3 * [True]
 
 qion = 1
 for i in range(300):
     rpos = np.random.random(3) * box_l
-    system.part.add(pos=rpos, type=0, q=qion)
-    qion *= -1
+    system.part.add(pos=rpos, type=0, q=(-1)**i * qion)
 
 system.constraints.add(shape=espressomd.shapes.Wall(
     dist=0, normal=[0, 0, 1]), particle_type=1)

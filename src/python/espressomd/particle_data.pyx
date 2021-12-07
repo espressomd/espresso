@@ -1565,7 +1565,7 @@ cdef class _ParticleSliceImpl:
         pl = ParticleList()
         for i in self.id_selection:
             if pl.exists(i):
-                res += f"{pl[i]}, "
+                res += f"{pl.by_id(i)}, "
         # Remove final comma
         return f"ParticleSlice([{res[:-2]}])"
 
@@ -1658,20 +1658,28 @@ class ParticleSlice(_ParticleSliceImpl):
 
 cdef class ParticleList:
     """
-    Provides access to the particles via ``[i]``, where ``i`` is the particle
-    id. Returns a :class:`espressomd.particle_data.ParticleHandle` object.
+    Provides access to the particles.
 
     """
 
-    # Retrieve a particle
+    def by_id(self, id):
+        """
+        Access a particle by its integer id.
+        """
+        return ParticleHandle(id)
 
-    def __getitem__(self, key):
-        # Single particle id results in a ParticleHandle, everything else
-        # in a ParticleSlice
-        if is_valid_type(key, int):
-            return ParticleHandle(key)
-        else:
-            return ParticleSlice(key)
+    def by_ids(self, ids):
+        """
+        Get a slice of particles by their integer ids.
+        """
+        return ParticleSlice(ids)
+
+    def all(self):
+        """
+        Get a slice containing all particles.
+        """
+        all_ids = get_particle_ids()
+        return self.by_ids(all_ids)
 
     # __getstate__ and __setstate__ define the pickle interaction
     def __getstate__(self):
@@ -1709,7 +1717,7 @@ cdef class ParticleList:
             self._place_new_particle(params[particle_number])
         IF EXCLUSIONS:
             for pid in exclusions:
-                self[pid].exclusions = exclusions[pid]
+                self.by_id(pid).exclusions = exclusions[pid]
 
     def __len__(self):
         return get_n_part()
@@ -1787,7 +1795,7 @@ dip is sufficient as the length of the vector defines the scalar dipole moment."
 Setting dip overwrites the rotation of the particle around the dipole axis. \
 Set quat and scalar dipole moment (dipm) instead.")
 
-        # The ParticleList[]-getter ist not valid yet, as the particle
+        # The ParticleList can not be used yet, as the particle
         # doesn't yet exist. Hence, the setting of position has to be
         # done here. the code is from the pos:property of ParticleHandle
         check_type_or_throw_except(
@@ -1801,9 +1809,9 @@ Set quat and scalar dipole moment (dipm) instead.")
         del P["id"]
 
         if P != {}:
-            self[pid].update(P)
+            self.by_id(pid).update(P)
 
-        return self[pid]
+        return self.by_id(pid)
 
     def _place_new_particles(self, Ps):
         # Check if all entries have the same length
@@ -1826,14 +1834,14 @@ Set quat and scalar dipole moment (dipm) instead.")
             self._place_new_particle(P)
 
         # Return slice of added particles
-        return self[Ps["id"]]
+        return self.by_ids(Ps["id"])
 
     # Iteration over all existing particles
     def __iter__(self):
         ids = get_particle_ids()
 
         for i in ids:
-            yield self[i]
+            yield self.by_id(i)
 
     def exists(self, idx):
         if is_valid_type(idx, int):
@@ -1954,7 +1962,7 @@ Set quat and scalar dipole moment (dipm) instead.")
 
         for i in ids:
             for j in ids[i + 1:]:
-                yield (self[i], self[j])
+                yield (self.by_id(i), self.by_id(j))
 
     def select(self, *args, **kwargs):
         """Generates a particle slice by filtering particles via a user-defined criterion

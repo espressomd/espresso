@@ -125,7 +125,7 @@ class DPDThermostat(ut.TestCase):
         system.integrator.run(0)
 
         # Outside of both cutoffs, forces should be 0
-        for f in system.part[:].f:
+        for f in system.part.all().f:
             np.testing.assert_array_equal(np.copy(f), [0., 0., 0.])
 
         # Only trans
@@ -167,7 +167,7 @@ class DPDThermostat(ut.TestCase):
         system.integrator.run(0)
 
         # Outside of both cutoffs, forces should be 0
-        for f in system.part[:].f:
+        for f in system.part.all().f:
             np.testing.assert_array_equal(np.copy(f), [0., 0., 0.])
 
         # Only trans
@@ -221,7 +221,7 @@ class DPDThermostat(ut.TestCase):
         p1 = system.part.add(pos=[3, 5, 5], type=0, v=v)
 
         # Outside of both cutoffs, forces should be 0
-        for f in system.part[:].f:
+        for f in system.part.all().f:
             np.testing.assert_array_equal(np.copy(f), [0., 0., 0.])
 
         # Place the particle at different positions to test the parabolic
@@ -347,13 +347,13 @@ class DPDThermostat(ut.TestCase):
             trans_weight_function=1, trans_gamma=gamma / 2.0, trans_r_cut=r_cut)
 
         pos = system.box_l * np.random.random((n_part, 3))
-        system.part.add(pos=pos)
+        partcls = system.part.add(pos=pos)
         system.integrator.run(10)
 
         for kT in [0., 2.]:
             system.thermostat.set_dpd(kT=kT, seed=3)
             # run 1 integration step to get velocities
-            system.part[:].v = np.zeros((n_part, 3))
+            partcls.v = np.zeros((n_part, 3))
             system.integrator.run(steps=1)
 
             pairs = system.part.pairs()
@@ -383,18 +383,18 @@ class DPDThermostat(ut.TestCase):
 
         system = self.system
         system.thermostat.set_dpd(kT=1.3, seed=42)
-        system.part.add(pos=((0, 0, 0), (0.1, 0.1, 0.1), (0.1, 0, 0)),
-                        mass=(1, 2, 3))
+        partcls = system.part.add(pos=((0, 0, 0), (0.1, 0.1, 0.1), (0.1, 0, 0)),
+                                  mass=(1, 2, 3))
 
         system.non_bonded_inter[0, 0].dpd.set_params(
             weight_function=1, gamma=gamma, r_cut=r_cut,
             trans_weight_function=1, trans_gamma=gamma / 2.0, trans_r_cut=r_cut)
-        momentum = np.matmul(system.part[:].v.T, system.part[:].mass)
+        momentum = np.matmul(partcls.v.T, partcls.mass)
         for _ in range(10):
             system.integrator.run(25)
-            np.testing.assert_almost_equal(np.sum(system.part[:].f), 3 * [0.])
+            np.testing.assert_almost_equal(np.sum(partcls.f), 3 * [0.])
             np.testing.assert_allclose(
-                np.matmul(system.part[:].v.T, system.part[:].mass), momentum, atol=1E-12)
+                np.matmul(partcls.v.T, partcls.mass), momentum, atol=1E-12)
 
 
 if __name__ == "__main__":

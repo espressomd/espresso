@@ -60,7 +60,7 @@ for direction in np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]):
                         type=ParticleTypes.BRANCH.value)
         system.part.add(pos=center - (n + 1) * direction,
                         type=ParticleTypes.BRANCH.value)
-
+all_partcls = system.part.all()
 
 center_of_mass = system.analysis.center_of_mass(
     p_type=ParticleTypes.BRANCH.value)
@@ -68,12 +68,12 @@ print("Center of mass:", center_of_mass)
 
 # if using multiple nodes, we need to change min_global_cut to the largest
 # separation
-max_inter = np.max(np.linalg.norm(system.part[:].pos - center_of_mass, axis=1))
+max_inter = np.max(np.linalg.norm(all_partcls.pos - center_of_mass, axis=1))
 system.min_global_cut = max_inter
 
 
 principal_moments, principal_axes = espressomd.rotation.diagonalized_inertia_tensor(
-    system.part[:].pos, system.part[:].mass)
+    all_partcls.pos, all_partcls.mass)
 # in this simple case, the cluster has principal axes aligned with the box
 print(f"Principal moments: {principal_moments}")
 print(f"Principal axes tensor:\n{principal_axes}")
@@ -94,7 +94,7 @@ for p in system.part:
 
 
 principal_moments, principal_axes = espressomd.rotation.diagonalized_inertia_tensor(
-    system.part[:].pos, system.part[:].mass)
+    all_partcls.pos, all_partcls.mass)
 # after rotating the whole object the principal axes changed
 print("After rotating:")
 print(f"Principal moments: {principal_moments}")

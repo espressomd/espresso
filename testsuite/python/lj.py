@@ -47,8 +47,9 @@ class LennardJonesTest(ut.TestCase):
         self.system.part.add(pos=self.pos)
 
     def check(self):
-        f_diff = np.linalg.norm(self.system.part[:].f - self.forces, axis=1)
-        max_deviation = np.max(np.abs(self.system.part[:].f - self.forces))
+        all_partcls = self.system.part.all()
+        f_diff = np.linalg.norm(all_partcls.f - self.forces, axis=1)
+        max_deviation = np.max(np.abs(all_partcls.f - self.forces))
         self.assertLess(np.mean(f_diff), 1e-7)
         self.assertLess(max_deviation, 1e-5)
 

@@ -59,7 +59,7 @@ system.part.add(pos=[7, 0, 0], rotation=[1, 1, 1])
 gravity = espressomd.constraints.Gravity(g=[0, -1, 0])
 system.constraints.add(gravity)
 
-obs = espressomd.observables.ParticlePositions(ids=system.part[:].id)
+obs = espressomd.observables.ParticlePositions(ids=system.part.all().id)
 acc = espressomd.accumulators.TimeSeries(obs=obs, delta_N=1)
 system.auto_update_accumulators.add(acc)
 acc.update()

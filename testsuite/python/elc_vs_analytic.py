@@ -83,7 +83,7 @@ class ELC_vs_analytic(ut.TestCase):
             elc_results, analytic_results, rtol=0, atol=self.check_accuracy)
 
     def scan(self):
-        p1, p2 = self.system.part[:]
+        p1, p2 = self.system.part.all()
         result_array = np.empty((len(self.q), len(self.zPos), 2))
         for chargeIndex, charge in enumerate(self.q):
             p1.q = charge

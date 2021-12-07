@@ -266,7 +266,7 @@ while n < bubbles_n:
         new_part.remove()
         n -= 1
 
-p_bubbles = np.where(system.part[:].type == bubble_type)[0]
+p_bubbles = system.part.select(type=bubble_type)
 
 # TEMP CHANGE PARTICLES
 bpos = [np.random.random() * (pore_xl - snake_head_sigma * 4) +
@@ -291,7 +291,7 @@ system.integrator.set_steepest_descent(f_max=100, gamma=30.0,
                                        max_displacement=0.01)
 system.integrator.run(10000)
 system.integrator.set_vv()
-p_startpos = system.part[:].pos
+p_startpos = system.part.all().pos
 
 # THERMOSTAT
 system.thermostat.set_langevin(kT=temperature, gamma=gamma, seed=42)
@@ -344,7 +344,7 @@ def set_particle_force():
 
 
 def restart():
-    system.part[:].pos = p_startpos
+    system.part.all().pos = p_startpos
     system.galilei.kill_particle_motion()
     system.galilei.kill_particle_forces()
 
@@ -358,7 +358,7 @@ def explode():
     if not exploding:
         exploding = True
         expl_time = time.time()
-        for p in system.part[p_bubbles]:
+        for p in p_bubbles:
             dv = p.pos - p_head.pos
             lv = np.linalg.norm(dv)
             if lv < expl_range:
@@ -478,14 +478,14 @@ def main():
                 temp_r -= dtemp
                 if temp_r < 0:
                     temp_r = 0.0
-                for p in system.part[p_bubbles]:
+                for p in p_bubbles:
                     if p.pos[0] > pore_xr:
                         p.v = [0, 0, 0]
             else:
                 temp_l -= dtemp
                 if temp_l < 0:
                     temp_l = 0.0
-                for p in system.part[p_bubbles]:
+                for p in p_bubbles:
                     if p.pos[0] < pore_xl:
                         p.v = [0, 0, 0]
 

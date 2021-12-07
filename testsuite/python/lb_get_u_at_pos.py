@@ -77,7 +77,7 @@ class TestLBGetUAtPos(ut.TestCase):
         numpy.testing.assert_allclose(
             self.interpolated_vels[:-1],
             self.lb_fluid.get_interpolated_fluid_velocity_at_positions(
-                self.system.part[:].pos, False)[:-1],
+                self.system.part.all().pos, False)[:-1],
             atol=1e-4)
 
 

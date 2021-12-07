@@ -489,7 +489,7 @@ class Mesh:
             new_part_id = len(self.system.part)
             self.system.part.add(
                 pos=tmp_pos, type=particle_type, mass=particle_mass, mol_id=particle_type)
-            new_part = self.system.part[new_part_id]
+            new_part = self.system.part.by_id(new_part_id)
             new_part_point = PartPoint(new_part, len(mesh.points), new_part_id)
             mesh.points.append(new_part_point)
         for edge in self.edges:

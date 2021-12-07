@@ -50,12 +50,13 @@ class TestMDAnalysis(ut.TestCase):
     system.bonded_inter.add(bond)
     system.bonded_inter.add(angle)
     system.bonded_inter.add(dihe)
-    system.part[1].add_bond((bond, 0))
-    system.part[3].add_bond((angle, 2, 4))
-    system.part[6].add_bond((dihe, 5, 7, 8))
+    system.part.by_id(1).add_bond((bond, 0))
+    system.part.by_id(3).add_bond((angle, 2, 4))
+    system.part.by_id(6).add_bond((dihe, 5, 7, 8))
 
     def test_universe(self):
         system = self.system
+        partcls = system.part.all()
         eos = espressomd.MDA_ESP.Stream(system)
         u = mda.Universe(eos.topology, eos.trajectory)
         # check atoms
@@ -63,13 +64,13 @@ class TestMDAnalysis(ut.TestCase):
         np.testing.assert_equal(u.atoms.ids, np.arange(10) + 1)
         np.testing.assert_equal(u.atoms.types, 5 * ['T0', 'T1'])
         np.testing.assert_almost_equal(
-            u.atoms.charges, system.part[:].q, decimal=6)
+            u.atoms.charges, partcls.q, decimal=6)
         np.testing.assert_almost_equal(
-            u.atoms.positions, system.part[:].pos, decimal=6)
+            u.atoms.positions, partcls.pos, decimal=6)
         np.testing.assert_almost_equal(
-            u.atoms.velocities, system.part[:].v, decimal=6)
+            u.atoms.velocities, partcls.v, decimal=6)
         np.testing.assert_almost_equal(
-            u.atoms.forces, system.part[:].f, decimal=6)
+            u.atoms.forces, partcls.f, decimal=6)
         # check bonds
         self.assertEqual(len(u.bonds), 1)
         self.assertEqual(len(u.angles), 1)

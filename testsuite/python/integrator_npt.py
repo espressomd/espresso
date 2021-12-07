@@ -114,7 +114,7 @@ class IntegratorNPT(ut.TestCase):
         # the core state is unchanged
         system.integrator.run(1)
         np.testing.assert_allclose(
-            np.copy(system.part[:].pos),
+            np.copy(system.part.all().pos),
             positions_start + np.array([[-1.2e-3, 0, 0], [1.2e-3, 0, 0]]))
 
     def run_with_p3m(self, p3m, **npt_kwargs):
@@ -122,11 +122,13 @@ class IntegratorNPT(ut.TestCase):
         np.random.seed(42)
         # set up particles
         system.box_l = [6] * 3
-        system.part.add(pos=np.random.uniform(0, system.box_l[0], (11, 3)))
+        partcl = system.part.add(
+            pos=np.random.uniform(
+                0, system.box_l[0], (11, 3)))
         if espressomd.has_features("P3M"):
-            system.part[:].q = np.sign(np.arange(-5, 6))
+            partcl.q = np.sign(np.arange(-5, 6))
         if espressomd.has_features("DP3M"):
-            system.part[:].dip = tests_common.random_dipoles(11)
+            partcl.dip = tests_common.random_dipoles(11)
         system.non_bonded_inter[0, 0].lennard_jones.set_params(
             epsilon=1, sigma=1, cutoff=2**(1 / 6), shift=0.25)
         system.integrator.set_steepest_descent(

@@ -40,10 +40,11 @@ class NSquare(ut.TestCase):
         n_part_avg = n_part // n_nodes
 
         # Add the particles on node 0, so that they have to be resorted
-        self.system.part.add(pos=n_part * [(0, 0, 0)], type=n_part * [1])
+        partcls = self.system.part.add(
+            pos=n_part * [(0, 0, 0)], type=n_part * [1])
 
         # And now change their positions
-        self.system.part[:].pos = self.system.box_l * \
+        partcls.pos = self.system.box_l * \
             np.random.random((n_part, 3))
 
         # Add an interacting particle in a corner of the box
@@ -67,7 +68,7 @@ class NSquare(ut.TestCase):
         # Check that we can still access all the particles
         # This basically checks if part_node and local_particles
         # are still in a valid state after the particle exchange
-        self.assertEqual(sum(self.system.part[:].type), n_part)
+        self.assertEqual(sum(partcls.type), n_part)
 
         # Check that the system is still valid
         if espressomd.has_features(['LENNARD_JONES']):

@@ -51,7 +51,7 @@ class RdfTest(ut.TestCase):
         r_bins = 50
         r_min = 0.5 * dx
         r_max = r_bins * dx
-        obs = espressomd.observables.RDF(ids1=system.part[:].id, min_r=r_min,
+        obs = espressomd.observables.RDF(ids1=system.part.all().id, min_r=r_min,
                                          max_r=r_max, n_r_bins=r_bins)
         rdf = obs.calculate()
         r = obs.bin_centers()
@@ -72,12 +72,13 @@ class RdfTest(ut.TestCase):
         for i in range(n_part):
             system.part.add(
                 pos=[i * dx, 0.5 * system.box_l[1], 0.5 * system.box_l[2]], type=(i % 2))
+        partcls = system.part.all()
 
         r_bins = 50
         r_min = 0.5 * dx
         r_max = r_bins * dx
-        obs = espressomd.observables.RDF(ids1=system.part[:].id[0::2],
-                                         ids2=system.part[:].id[1::2],
+        obs = espressomd.observables.RDF(ids1=partcls.id[0::2],
+                                         ids2=partcls.id[1::2],
                                          min_r=r_min, max_r=r_max,
                                          n_r_bins=r_bins)
         rdf01 = obs.calculate()
@@ -93,8 +94,8 @@ class RdfTest(ut.TestCase):
         np.testing.assert_allclose(parts_in_bin[1::2], 0.0)
 
         # Check symmetry
-        obs = espressomd.observables.RDF(ids1=system.part[:].id[1::2],
-                                         ids2=system.part[:].id[0::2],
+        obs = espressomd.observables.RDF(ids1=partcls.id[1::2],
+                                         ids2=partcls.id[0::2],
                                          min_r=r_min, max_r=r_max,
                                          n_r_bins=r_bins)
         rdf10 = obs.calculate()
@@ -104,9 +105,9 @@ class RdfTest(ut.TestCase):
     def test_rdf_interface(self):
         # test setters and getters
         system = self.system
-        system.part.add(pos=4 * [(0, 0, 0)], type=[0, 1, 0, 1])
-        pids1 = system.part[:].id[0::2]
-        pids2 = system.part[:].id[1::2]
+        partcls = system.part.add(pos=4 * [(0, 0, 0)], type=[0, 1, 0, 1])
+        pids1 = partcls.id[0::2]
+        pids2 = partcls.id[1::2]
         params = {
             'ids1': pids1,
             'ids2': pids2,
@@ -117,8 +118,8 @@ class RdfTest(ut.TestCase):
         # check pids
         np.testing.assert_array_equal(np.copy(observable.ids1), pids1)
         np.testing.assert_array_equal(np.copy(observable.ids2), pids2)
-        new_pids1 = [system.part[:].id[0]]
-        new_pids2 = [system.part[:].id[1]]
+        new_pids1 = [partcls.id[0]]
+        new_pids2 = [partcls.id[1]]
         observable = espressomd.observables.RDF(
             **{**params, 'ids1': new_pids1, 'ids2': new_pids2})
         np.testing.assert_array_equal(np.copy(observable.ids1), new_pids1)
