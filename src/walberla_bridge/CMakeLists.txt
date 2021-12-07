@@ -28,7 +28,9 @@ set(WalberlaBridgeCodegen_SRC
     generated_kernels/NoFlux.cpp
     generated_kernels/AdvectiveFluxKernel.cpp
     generated_kernels/FrictionCouplingKernel.cpp
-    generated_kernels/DiffusiveFluxKernelWithElectrostatic.cpp)
+    generated_kernels/DiffusiveFluxKernelWithElectrostatic.cpp
+    generated_kernels/FixedFlux.cpp
+    generated_kernels/Dirichlet.cpp)
 if(WALBERLA_USE_AVX)
   list(APPEND WalberlaBridgeCodegen_SRC
        generated_kernels/CollideSweepSinglePrecisionAVX.cpp
