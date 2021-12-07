@@ -2,7 +2,6 @@ import unittest as ut
 import unittest_decorators as utx
 import espressomd
 import numpy as np
-import espressomd.walberla
 import espressomd.shapes
 import scipy.optimize
 
@@ -41,30 +40,30 @@ class EKEOF(ut.TestCase):
 
         density = 0.0006
 
-        espressomd.walberla.WalberlaBlockForest(
-            box_size=self.system.box_l, ghost_layers=1, agrid=self.AGRID)
+        lattice = espressomd.lb.LatticeWalberla(
+            box_size=self.system.box_l, n_ghost_layers=1, agrid=self.AGRID)
 
-        ekspecies = espressomd.EKSpecies.EKSpecies(
-            density=density, kT=kT, diffusion=self.DIFFUSION_COEFFICIENT, valency=valency,
-            advection=True, friction_coupling=True, ext_efield=external_electric_field)
-        ekwallcharge = espressomd.EKSpecies.EKSpecies(
-            density=0.0, kT=kT, diffusion=0.0, valency=-valency, advection=False, friction_coupling=False, ext_efield=[0, 0, 0])
+        ekspecies = espressomd.EKSpecies.EKSpecies(lattice=lattice,
+                                                   density=density, kT=kT, diffusion=self.DIFFUSION_COEFFICIENT, valency=valency,
+                                                   advection=True, friction_coupling=True, ext_efield=external_electric_field)
+        ekwallcharge = espressomd.EKSpecies.EKSpecies(lattice=lattice,
+                                                      density=0.0, kT=kT, diffusion=0.0, valency=-valency, advection=False, friction_coupling=False, ext_efield=[0, 0, 0])
 
-        eksolver = espressomd.EKSpecies.EKFFT(permittivity=eps0 * epsR)
+        eksolver = espressomd.EKSpecies.EKFFT(
+            lattice=lattice, permittivity=eps0 * epsR)
         self.system.ekcontainer.add(ekspecies, tau=1.0, solver=eksolver)
         self.system.ekcontainer.add(ekwallcharge)
 
-        lb_fluid = espressomd.lb.LBFluidWalberla(
-            agrid=self.AGRID, dens=1.0, visc=visc, tau=1.0)
+        lb_fluid = espressomd.lb.LBFluidWalberla(lattice=lattice,
+                                                 agrid=self.AGRID, density=1.0, viscosity=visc, tau=1.0)
         self.system.actors.add(lb_fluid)
 
         wall_bot = espressomd.shapes.Wall(normal=[1, 0, 0], dist=offset)
         wall_top = espressomd.shapes.Wall(
             normal=[-1, 0, 0], dist=-self.BOX_L[0] + offset)
         for obj in (wall_bot, wall_top):
-            self.system.ekboundaries.add(
-                espressomd.ekboundaries.EKBoundary(
-                    shape=obj))
+            ekspecies.add_boundary_from_shape(
+                obj, [0.0, 0.0, 0.0], espressomd.EKSpecies.FluxBoundary)
             lb_fluid.add_boundary_from_shape(obj, [0.0, 0.0, 0.0])
 
         ekspecies[0, :, :].density = 0.0

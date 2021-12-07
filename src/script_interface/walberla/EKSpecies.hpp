@@ -36,10 +36,10 @@ template <typename T> T mpi_return_one_rank(const boost::optional<T> &val) {
 class EKSpecies : public AutoParameters<EKinWalberlaBase<double>> {
 public:
   void do_construct(VariantMap const &args) override {
+    m_lattice = get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice");
     m_ekinstance = std::make_shared<::walberla::EKinWalberlaImpl<13, double>>(
-        get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice")->lattice(),
-        get_value<double>(args, "diffusion"), get_value<double>(args, "kT"),
-        get_value<double>(args, "valency"),
+        m_lattice->lattice(), get_value<double>(args, "diffusion"),
+        get_value<double>(args, "kT"), get_value<double>(args, "valency"),
         get_value<Utils::Vector3d>(args, "ext_efield"),
         get_value<double>(args, "density"), get_value<bool>(args, "advection"),
         get_value<bool>(args, "friction_coupling"));
@@ -75,9 +75,12 @@ public:
             m_ekinstance->set_friction_coupling(get_value<bool>(v));
           },
           [this]() { return m_ekinstance->get_friction_coupling(); }},
-         {"shape", AutoParameter::read_only, [this]() {
+         {"shape", AutoParameter::read_only,
+          [this]() {
             return m_ekinstance->get_lattice().get_grid_dimensions();
-          }}});
+          }},
+         {"lattice", AutoParameter::read_only,
+          [this]() { return m_lattice; }}});
   }
 
   [[nodiscard]] std::shared_ptr<EKinWalberlaBase<double>> get_ekinstance() {
@@ -103,26 +106,26 @@ public:
     }
     if (method == "update_flux_boundary_from_shape") {
       m_ekinstance->update_flux_boundary_from_shape(
-          get_value<std::Vector<int>>(parameters, "raster_view"),
-          get_value<std::Vector<double>>(parameters, "value_view"));
+          get_value<std::vector<int>>(parameters, "raster_view"),
+          get_value<std::vector<double>>(parameters, "value_view"));
       return none;
     }
     if (method == "update_density_boundary_from_shape") {
       m_ekinstance->update_density_boundary_from_shape(
-          get_value<std::Vector<int>>(parameters, "raster_view"),
-          get_value<std::Vector<double>>(parameters, "value_view"));
+          get_value<std::vector<int>>(parameters, "raster_view"),
+          get_value<std::vector<double>>(parameters, "value_view"));
       return none;
     }
     if (method == "update_flux_boundary_from_list") {
       m_ekinstance->update_flux_boundary_from_list(
-          get_value<std::Vector<int>>(parameters, "nodes_view"),
-          get_value<std::Vector<double>>(parameters, "value_view"));
+          get_value<std::vector<int>>(parameters, "nodes_view"),
+          get_value<std::vector<double>>(parameters, "value_view"));
       return none;
     }
     if (method == "update_density_boundary_from_list") {
       m_ekinstance->update_density_boundary_from_list(
-          get_value<std::Vector<int>>(parameters, "nodes_view"),
-          get_value<std::Vector<double>>(parameters, "value_view"));
+          get_value<std::vector<int>>(parameters, "nodes_view"),
+          get_value<std::vector<double>>(parameters, "value_view"));
       return none;
     }
     return none;
@@ -131,6 +134,8 @@ public:
 private:
   /* The actual constraint */
   std::shared_ptr<EKinWalberlaBase<double>> m_ekinstance;
+
+  std::shared_ptr<LatticeWalberla> m_lattice;
 };
 } // namespace ScriptInterface::walberla
 

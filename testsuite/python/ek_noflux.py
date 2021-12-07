@@ -2,7 +2,6 @@ import unittest as ut
 import unittest_decorators as utx
 import espressomd
 import numpy as np
-import espressomd.ekboundaries
 import espressomd.shapes
 
 
@@ -24,14 +23,14 @@ class EKNoFlux(ut.TestCase):
         Testing the EK noflux boundaries to not leak density outside of a sphere.
         """
 
-        espressomd.lb.LatticeWalberla(
-            box_size=self.system.box_l, ghost_layers=1, agrid=self.AGRID)
+        lattice = espressomd.lb.LatticeWalberla(
+            box_size=self.system.box_l, n_ghost_layers=1, agrid=self.AGRID)
 
-        ekspecies = espressomd.EKSpecies.EKSpecies(
-            density=0.0, kT=0.0, diffusion=self.DIFFUSION_COEFFICIENT, valency=0.0,
-            advection=False, friction_coupling=False, ext_efield=[0, 0, 0])
+        ekspecies = espressomd.EKSpecies.EKSpecies(lattice=lattice,
+                                                   density=0.0, kT=0.0, diffusion=self.DIFFUSION_COEFFICIENT, valency=0.0,
+                                                   advection=False, friction_coupling=False, ext_efield=[0, 0, 0])
 
-        eksolver = espressomd.EKSpecies.EKNone()
+        eksolver = espressomd.EKSpecies.EKNone(lattice=lattice)
 
         self.system.ekcontainer.add(ekspecies, tau=1.0, solver=eksolver)
 
@@ -39,12 +38,12 @@ class EKNoFlux(ut.TestCase):
 
         ekspecies[center[0], center[1], center[2]].density = self.DENSITY
 
-        sphere = espressomd.ekboundaries.EKBoundary(
-            shape=espressomd.shapes.Sphere(
-                center=self.system.box_l / 2,
-                radius=self.RADIUS,
-                direction=-1))
-        self.system.ekboundaries.add(sphere)
+        sphere = espressomd.shapes.Sphere(
+            center=self.system.box_l / 2,
+            radius=self.RADIUS,
+            direction=-1)
+        ekspecies.add_boundary_from_shape(
+            sphere, [0, 0, 0], espressomd.EKSpecies.FluxBoundary)
 
         positions = np.empty((*self.system.box_l.astype(np.int), 3))
         positions[..., 2], positions[..., 1], positions[..., 0] = np.meshgrid(
