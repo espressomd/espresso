@@ -182,21 +182,21 @@ particles>` over all particles::
 
 Internally, each particle is automatically assigned a unique numerical id by |es|.
 Note that in principle it is possible to explicitly set this particle id (if not in use already) on particle creation.
-Using the id in square brackets, the respective particle can be accessed from the particle list::
+Using the id, the respective particle can be accessed from the particle list::
 
     >>> system.part.add(id=3, pos=[2.1, 1.2, 3.3], type=0)
-    >>> system.part[3].pos = [1.0, 1.0, 2.0]
-    >>> print(system.part[3])
+    >>> system.part.by_id(3).pos = [1.0, 1.0, 2.0]
+    >>> print(system.part.by_id(3).pos)
     [1.0, 1.0, 2.0]
 
 For larger simulation setups, explicit handling of numerical ids can quickly
 become confusing and is thus error-prone. We therefore highly recommend using
 :class:`~espressomd.particle_data.ParticleHandle` instead wherever possible.
 
-:ref:`Properties of several particles<Interacting with groups of particles>`
-can be accessed by using Python slices: ::
+:ref:`Properties of all particles<Interacting with groups of particles>`
+can be accessed via: ::
 
-    positions = system.part[:].pos
+    positions = system.part.all().pos
 
 .. rubric:: Interactions
 
