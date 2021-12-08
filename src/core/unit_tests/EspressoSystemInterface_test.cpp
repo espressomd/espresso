@@ -68,20 +68,6 @@ BOOST_AUTO_TEST_CASE(check_with_gpu, *boost::unit_test::precondition(has_gpu)) {
   check_uninitialized_device_pointers();
   BOOST_CHECK_EQUAL(espresso::system.npart_gpu(), 0);
 
-  // features compiled in
-  auto has_feature_rotation = false;
-  auto has_feature_electrostatics = false;
-  auto has_feature_dipoles = false;
-#ifdef ROTATION
-  has_feature_rotation = true;
-#endif
-#ifdef ELECTROSTATICS
-  has_feature_electrostatics = true;
-#endif
-#ifdef DIPOLES
-  has_feature_dipoles = true;
-#endif
-
   auto const pid = 1;
   place_particle(pid, {0., 0., 0.});
   set_particle_type(pid, 0);
@@ -89,44 +75,53 @@ BOOST_AUTO_TEST_CASE(check_with_gpu, *boost::unit_test::precondition(has_gpu)) {
   BOOST_CHECK_EQUAL(espresso::system.npart_gpu(), 0);
   espresso::system.update();
   BOOST_CHECK_EQUAL(espresso::system.npart_gpu(), 0);
-  BOOST_TEST(espresso::system.requestParticleStructGpu());
+  espresso::system.requestParticleStructGpu();
   espresso::system.update();
   BOOST_CHECK_EQUAL(espresso::system.npart_gpu(), 1);
 
   // check position split
   BOOST_TEST(espresso::system.hasRGpu());
-  BOOST_TEST(espresso::system.requestRGpu());
+  espresso::system.requestRGpu();
   espresso::system.update();
   BOOST_TEST(espresso::system.rGpuBegin() != nullptr);
 
   // check force split
   BOOST_TEST(espresso::system.hasFGpu());
-  BOOST_TEST(espresso::system.requestFGpu());
+  espresso::system.requestFGpu();
   espresso::system.update();
   BOOST_TEST(espresso::system.fGpuBegin() != nullptr);
 
   // check torque split
-  BOOST_CHECK_EQUAL(espresso::system.hasTorqueGpu(), has_feature_rotation);
-  BOOST_CHECK_EQUAL(espresso::system.requestTorqueGpu(), has_feature_rotation);
 #ifdef ROTATION
+  BOOST_CHECK(espresso::system.hasTorqueGpu());
+  espresso::system.requestTorqueGpu();
   espresso::system.update();
   BOOST_TEST(espresso::system.torqueGpuBegin() != nullptr);
+#else
+  BOOST_CHECK(!espresso::system.hasTorqueGpu());
+  BOOST_CHECK_THROW(espresso::system.requestTorqueGpu(), std::runtime_error);
 #endif
 
   // check charge split
-  BOOST_CHECK_EQUAL(espresso::system.hasQGpu(), has_feature_electrostatics);
-  BOOST_CHECK_EQUAL(espresso::system.requestQGpu(), has_feature_electrostatics);
 #ifdef ELECTROSTATICS
+  BOOST_CHECK(espresso::system.hasQGpu());
+  espresso::system.requestQGpu();
   espresso::system.update();
   BOOST_TEST(espresso::system.qGpuBegin() != nullptr);
+#else
+  BOOST_CHECK(!espresso::system.hasQGpu());
+  BOOST_CHECK_THROW(espresso::system.requestQGpu(), std::runtime_error);
 #endif
 
   // check dipole split
-  BOOST_CHECK_EQUAL(espresso::system.hasDipGpu(), has_feature_dipoles);
-  BOOST_CHECK_EQUAL(espresso::system.requestDipGpu(), has_feature_dipoles);
 #ifdef DIPOLES
+  BOOST_CHECK(espresso::system.hasDipGpu());
+  espresso::system.requestDipGpu();
   espresso::system.update();
   BOOST_TEST(espresso::system.dipGpuBegin() != nullptr);
+#else
+  BOOST_CHECK(!espresso::system.hasDipGpu());
+  BOOST_CHECK_THROW(espresso::system.requestDipGpu(), std::runtime_error);
 #endif
 
   // clear device memory
@@ -141,15 +136,15 @@ BOOST_AUTO_TEST_CASE(check_without_cuda) {
   check_uninitialized_device_pointers();
   BOOST_CHECK_EQUAL(espresso::system.npart_gpu(), 0);
   BOOST_TEST(!espresso::system.hasRGpu());
-  BOOST_TEST(!espresso::system.requestRGpu());
   BOOST_TEST(!espresso::system.hasDipGpu());
-  BOOST_TEST(!espresso::system.requestDipGpu());
   BOOST_TEST(!espresso::system.hasFGpu());
-  BOOST_TEST(!espresso::system.requestFGpu());
   BOOST_TEST(!espresso::system.hasTorqueGpu());
-  BOOST_TEST(!espresso::system.requestTorqueGpu());
   BOOST_TEST(!espresso::system.hasQGpu());
-  BOOST_TEST(!espresso::system.requestQGpu());
+  BOOST_CHECK_THROW(espresso::system.requestRGpu(), std::runtime_error);
+  BOOST_CHECK_THROW(espresso::system.requestDipGpu(), std::runtime_error);
+  BOOST_CHECK_THROW(espresso::system.requestFGpu(), std::runtime_error);
+  BOOST_CHECK_THROW(espresso::system.requestTorqueGpu(), std::runtime_error);
+  BOOST_CHECK_THROW(espresso::system.requestQGpu(), std::runtime_error);
 }
 
 #endif // CUDA

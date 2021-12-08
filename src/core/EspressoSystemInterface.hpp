@@ -55,57 +55,52 @@ public:
 #ifdef CUDA
   float *rGpuBegin() override { return m_r_gpu_begin; };
   bool hasRGpu() override { return true; };
-  bool requestRGpu() override {
+  void requestRGpu() override {
     m_needsRGpu = hasRGpu();
     m_splitParticleStructGpu |= m_needsRGpu;
     m_gpu |= m_needsRGpu;
     if (m_gpu)
       enableParticleCommunication();
-    return m_needsRGpu;
   };
 
 #ifdef DIPOLES
   float *dipGpuBegin() override { return m_dip_gpu_begin; };
   bool hasDipGpu() override { return true; };
-  bool requestDipGpu() override {
+  void requestDipGpu() override {
     m_needsDipGpu = hasDipGpu();
     m_splitParticleStructGpu |= m_needsRGpu;
     m_gpu |= m_needsRGpu;
     if (m_gpu)
       enableParticleCommunication();
-    return m_needsDipGpu;
   };
 #endif
 
 #ifdef ELECTROSTATICS
   float *qGpuBegin() override { return m_q_gpu_begin; };
   bool hasQGpu() override { return true; };
-  bool requestQGpu() override {
+  void requestQGpu() override {
     m_needsQGpu = hasQGpu();
     m_splitParticleStructGpu |= m_needsQGpu;
     m_gpu |= m_needsQGpu;
     if (m_gpu)
       enableParticleCommunication();
-    return m_needsQGpu;
   };
 #endif
 
-  bool requestParticleStructGpu() {
+  void requestParticleStructGpu() {
     m_needsParticleStructGpu = true;
     m_gpu |= m_needsParticleStructGpu;
     if (m_gpu)
       enableParticleCommunication();
-    return true;
   };
 
   float *fGpuBegin() override { return gpu_get_particle_force_pointer(); };
   bool hasFGpu() override { return true; };
-  bool requestFGpu() override {
+  void requestFGpu() override {
     m_needsFGpu = hasFGpu();
     m_gpu |= m_needsFGpu;
     if (m_gpu)
       enableParticleCommunication();
-    return m_needsFGpu;
   };
 
 #ifdef ROTATION
@@ -113,12 +108,11 @@ public:
     return gpu_get_particle_torque_pointer();
   };
   bool hasTorqueGpu() override { return true; };
-  bool requestTorqueGpu() override {
+  void requestTorqueGpu() override {
     m_needsTorqueGpu = hasTorqueGpu();
     m_gpu |= m_needsTorqueGpu;
     if (m_gpu)
       enableParticleCommunication();
-    return m_needsTorqueGpu;
   };
 #endif
 

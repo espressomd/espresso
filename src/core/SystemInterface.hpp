@@ -24,6 +24,8 @@
 #include <utils/Vector.hpp>
 
 #include <cstddef>
+#include <stdexcept>
+#include <string>
 
 /**
  * Public interface for the ESPResSo system and device memory management.
@@ -46,10 +48,11 @@
  *
  * Since properties in the @ref Particle struct depend on the config file,
  * it is necessary to provide a means to check if it is even possible to
- * carry out the split. This is achieved by the <tt>hasXGpu()</tt> methods.
- * The same value is returned from <tt>requestXGpu()</tt> and it needs to
- * be checked at the call site to throw an error. This class won't throw
- * exceptions.
+ * carry out the split. This is achieved by the <tt>hasXGpu()</tt> methods,
+ * whose return value must be checked at the call site to raise a runtime
+ * error. This is important in MPI callbacks, since they have limited support
+ * for standard exceptions. Methods <tt>requestXGpu()</tt> will throw an
+ * exception if the particle property cannot be split on device memory.
  */
 class SystemInterface {
 public:
@@ -61,28 +64,43 @@ public:
 
   virtual float *rGpuBegin() { return nullptr; };
   virtual bool hasRGpu() { return false; };
-  virtual bool requestRGpu() { return false; }
+  virtual void requestRGpu() {
+    throw std::runtime_error(error_message("positions"));
+  }
 
   virtual float *dipGpuBegin() { return nullptr; };
   virtual bool hasDipGpu() { return false; };
-  virtual bool requestDipGpu() { return false; }
+  virtual void requestDipGpu() {
+    throw std::runtime_error(error_message("dipoles"));
+  }
 
   virtual float *torqueGpuBegin() { return nullptr; };
   virtual bool hasTorqueGpu() { return false; };
-  virtual bool requestTorqueGpu() { return false; }
+  virtual void requestTorqueGpu() {
+    throw std::runtime_error(error_message("torques"));
+  }
 
   virtual float *qGpuBegin() { return nullptr; };
   virtual bool hasQGpu() { return false; };
-  virtual bool requestQGpu() { return false; }
+  virtual void requestQGpu() {
+    throw std::runtime_error(error_message("charges"));
+  }
 
   virtual float *fGpuBegin() { return nullptr; };
   virtual bool hasFGpu() { return false; };
-  virtual bool requestFGpu() { return false; }
+  virtual void requestFGpu() {
+    throw std::runtime_error(error_message("forces"));
+  }
 
   virtual float *eGpu() { return nullptr; };
 
   virtual std::size_t npart_gpu() const { return 0; };
   virtual Utils::Vector3d box() const = 0;
+
+private:
+  std::string error_message(std::string property) const {
+    return "No GPU available or particle " + property + " not compiled in.";
+  }
 };
 
 #endif

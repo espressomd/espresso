@@ -44,7 +44,7 @@ IF DIPOLES == 1:
     IF(CUDA == 1) and (ROTATION == 1):
         cdef extern from "actor/DipolarDirectSum.hpp":
             cdef cppclass DipolarDirectSum:
-                DipolarDirectSum(SystemInterface & s)
+                DipolarDirectSum(SystemInterface & s) except +
                 void set_params()
                 void activate()
                 void deactivate()
@@ -52,7 +52,7 @@ IF DIPOLES == 1:
     IF(DIPOLAR_BARNES_HUT == 1):
         cdef extern from "actor/DipolarBarnesHut.hpp":
             cdef cppclass DipolarBarnesHut:
-                DipolarBarnesHut(SystemInterface & s)
+                DipolarBarnesHut(SystemInterface & s) except +
                 void set_params(float epssq, float itolsq)
                 void activate()
                 void deactivate()

@@ -35,17 +35,10 @@
 #include "forces.hpp"
 
 DipolarBarnesHut::DipolarBarnesHut(SystemInterface &s) {
-  if (!s.requestFGpu())
-    runtimeErrorMsg() << "DipolarBarnesHut needs access to forces on GPU!";
-
-  if (!s.requestTorqueGpu())
-    runtimeErrorMsg() << "DipolarBarnesHut needs access to torques on GPU!";
-
-  if (!s.requestRGpu())
-    runtimeErrorMsg() << "DipolarBarnesHut needs access to positions on GPU!";
-
-  if (!s.requestDipGpu())
-    runtimeErrorMsg() << "DipolarBarnesHut needs access to dipoles on GPU!";
+  s.requestFGpu();
+  s.requestTorqueGpu();
+  s.requestRGpu();
+  s.requestDipGpu();
 }
 
 void DipolarBarnesHut::activate() {

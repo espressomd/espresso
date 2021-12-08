@@ -30,22 +30,14 @@
 #include "SystemInterface.hpp"
 #include "cuda_interface.hpp"
 #include "energy.hpp"
-#include "errorhandling.hpp"
 #include "forces.hpp"
 #include "grid.hpp"
 
 DipolarDirectSum::DipolarDirectSum(SystemInterface &s) {
-  if (!s.requestFGpu())
-    runtimeErrorMsg() << "DipolarDirectSum needs access to forces on GPU!";
-
-  if (!s.requestTorqueGpu())
-    runtimeErrorMsg() << "DipolarDirectSum needs access to torques on GPU!";
-
-  if (!s.requestRGpu())
-    runtimeErrorMsg() << "DipolarDirectSum needs access to positions on GPU!";
-
-  if (!s.requestDipGpu())
-    runtimeErrorMsg() << "DipolarDirectSum needs access to dipoles on GPU!";
+  s.requestFGpu();
+  s.requestTorqueGpu();
+  s.requestRGpu();
+  s.requestDipGpu();
 }
 
 void DipolarDirectSum::activate() {
