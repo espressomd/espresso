@@ -29,7 +29,6 @@
 
 #include "cuda_init.hpp"
 #include "cuda_utils.cuh"
-#include "errorhandling.hpp"
 
 #include <thrust/device_ptr.h>
 #include <thrust/reduce.h>

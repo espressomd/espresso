@@ -22,11 +22,31 @@
 #ifdef DIPOLAR_BARNES_HUT
 
 #include "DipolarBarnesHut.hpp"
+#include "DipolarBarnesHut_cuda.cuh"
 
-#include "actor/ActorList.hpp"
 #include "electrostatics_magnetostatics/common.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
+
+#include "SystemInterface.hpp"
+#include "cuda_interface.hpp"
+#include "cuda_utils.hpp"
 #include "energy.hpp"
+#include "errorhandling.hpp"
 #include "forces.hpp"
+
+DipolarBarnesHut::DipolarBarnesHut(SystemInterface &s) {
+  if (!s.requestFGpu())
+    runtimeErrorMsg() << "DipolarBarnesHut needs access to forces on GPU!";
+
+  if (!s.requestTorqueGpu())
+    runtimeErrorMsg() << "DipolarBarnesHut needs access to torques on GPU!";
+
+  if (!s.requestRGpu())
+    runtimeErrorMsg() << "DipolarBarnesHut needs access to positions on GPU!";
+
+  if (!s.requestDipGpu())
+    runtimeErrorMsg() << "DipolarBarnesHut needs access to dipoles on GPU!";
+}
 
 void DipolarBarnesHut::activate() {
   // also necessary on 1 CPU or GPU, does more than just broadcasting
@@ -43,6 +63,52 @@ void DipolarBarnesHut::deactivate() {
 
   forceActors.remove(this);
   energyActors.remove(this);
+}
+
+void DipolarBarnesHut::set_params(float epssq, float itolsq) {
+  m_prefactor = static_cast<float>(dipole.prefactor);
+  m_epssq = epssq;
+  m_itolsq = itolsq;
+  setBHPrecision(m_epssq, m_itolsq);
+}
+
+void DipolarBarnesHut::computeForces(SystemInterface &s) {
+  try {
+    allocBHmemCopy(static_cast<int>(s.npart_gpu()), &m_bh_data);
+  } catch (cuda_runtime_error const &err) {
+    runtimeErrorMsg() << "DipolarBarnesHut: " << err.what();
+    return;
+  }
+
+  fill_bh_data(s.rGpuBegin(), s.dipGpuBegin(), &m_bh_data);
+  initBHgpu(m_bh_data.blocks);
+  buildBoxBH(m_bh_data.blocks);
+  buildTreeBH(m_bh_data.blocks);
+  summarizeBH(m_bh_data.blocks);
+  sortBH(m_bh_data.blocks);
+  if (forceBH(&m_bh_data, m_prefactor, s.fGpuBegin(), s.torqueGpuBegin())) {
+    runtimeErrorMsg() << "kernels encountered a functional error";
+  }
+}
+
+void DipolarBarnesHut::computeEnergy(SystemInterface &s) {
+  try {
+    allocBHmemCopy(static_cast<int>(s.npart_gpu()), &m_bh_data);
+  } catch (cuda_runtime_error const &err) {
+    runtimeErrorMsg() << "DipolarBarnesHut: " << err.what();
+    return;
+  }
+
+  fill_bh_data(s.rGpuBegin(), s.dipGpuBegin(), &m_bh_data);
+  initBHgpu(m_bh_data.blocks);
+  buildBoxBH(m_bh_data.blocks);
+  buildTreeBH(m_bh_data.blocks);
+  summarizeBH(m_bh_data.blocks);
+  sortBH(m_bh_data.blocks);
+  auto energy = reinterpret_cast<CUDA_energy *>(s.eGpu());
+  if (energyBH(&m_bh_data, m_prefactor, &(energy->dipolar))) {
+    runtimeErrorMsg() << "kernels encountered a functional error";
+  }
 }
 
 #endif

@@ -21,6 +21,8 @@
 
 #ifdef DIPOLAR_DIRECT_SUM
 
+#include "DipolarDirectSum_cuda.cuh"
+
 #include "cuda_utils.cuh"
 
 #include <thrust/device_ptr.h>

@@ -16,33 +16,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ACTOR_DIPOLARDIRECTSUM_HPP
-#define ACTOR_DIPOLARDIRECTSUM_HPP
+
+#ifndef DIPOLARDIRECTSUM_CUH_
+#define DIPOLARDIRECTSUM_CUH_
 
 #include "config.hpp"
 
 #ifdef DIPOLAR_DIRECT_SUM
 
-#include "Actor.hpp"
-#include "SystemInterface.hpp"
-
-class DipolarDirectSum : public Actor {
-public:
-  DipolarDirectSum(SystemInterface &s);
-  ~DipolarDirectSum() override = default;
-
-  void set_params();
-
-  void computeForces(SystemInterface &s) override;
-  void computeEnergy(SystemInterface &s) override;
-
-  void activate();
-  void deactivate();
-
-private:
-  float m_prefactor;
-};
+void DipolarDirectSum_kernel_wrapper_energy(float k, unsigned int n, float *pos,
+                                            float *dip, float box_l[3],
+                                            int periodic[3], float *E);
+void DipolarDirectSum_kernel_wrapper_force(float k, unsigned int n, float *pos,
+                                           float *dip, float *f, float *torque,
+                                           float box_l[3], int periodic[3]);
 
 #endif // DIPOLAR_DIRECT_SUM
 
-#endif // ACTOR_DIPOLARDIRECTSUM_HPP
+#endif /* DIPOLARDIRECTSUM_CUH_ */

@@ -28,13 +28,26 @@
 
 #include <stdexcept>
 
-void Mmm1dgpuForce::sanity_checks() {
+Mmm1dgpuForce::Mmm1dgpuForce(SystemInterface &s) {
+  // interface sanity checks
+  if (!s.requestFGpu())
+    throw std::runtime_error("Mmm1dgpuForce needs access to forces on GPU!");
+
+  if (!s.requestRGpu())
+    throw std::runtime_error("Mmm1dgpuForce needs access to positions on GPU!");
+
+  if (!s.requestQGpu())
+    throw std::runtime_error("Mmm1dgpuForce needs access to charges on GPU!");
+
+  // system sanity checks
   if (box_geo.periodic(0) || box_geo.periodic(1) || !box_geo.periodic(2)) {
     throw std::runtime_error("MMM1D requires periodicity (0, 0, 1)");
   }
   if (cell_structure.decomposition_type() != CELL_STRUCTURE_NSQUARE) {
     throw std::runtime_error("MMM1D requires the N-square cellsystem");
   }
+
+  modpsi_init();
 }
 
 void Mmm1dgpuForce::activate() {
