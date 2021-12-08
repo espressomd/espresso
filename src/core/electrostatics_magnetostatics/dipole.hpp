@@ -86,8 +86,11 @@ void bcast_params(const boost::mpi::communicator &comm);
 
 /** @brief Set the dipolar prefactor */
 void set_Dprefactor(double prefactor);
+/** @brief Get the dipolar prefactor */
+double get_Dprefactor();
 
 void set_method_local(DipolarInteraction method);
+void disable_method_local();
 } // namespace Dipole
 #else  // DIPOLES
 namespace Dipole {

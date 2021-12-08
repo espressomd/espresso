@@ -78,7 +78,7 @@ bool sanity_checks() {
       mdlc_sanity_checks();
       // fall through
     case DIPOLAR_DS:
-      mdds_sanity_checks(mdds_n_replica);
+      mdds_sanity_checks();
       break;
     default:
       break;
@@ -287,13 +287,15 @@ void set_Dprefactor(double prefactor) {
   if (prefactor < 0.0) {
     throw std::invalid_argument("Dipolar prefactor has to be >= 0");
   }
-
   dipole.prefactor = prefactor;
-
   mpi_bcast_coulomb_params();
 }
 
+double get_Dprefactor() { return dipole.prefactor; }
+
 void set_method_local(DipolarInteraction method) { dipole.method = method; }
+
+void disable_method_local() { dipole.method = DIPOLAR_NONE; }
 
 } // namespace Dipole
 #endif // DIPOLES

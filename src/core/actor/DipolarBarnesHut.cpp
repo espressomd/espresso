@@ -49,7 +49,6 @@ DipolarBarnesHut::DipolarBarnesHut(SystemInterface &s) {
 }
 
 void DipolarBarnesHut::activate() {
-  // also necessary on 1 CPU or GPU, does more than just broadcasting
   dipole.method = DIPOLAR_BH_GPU;
   mpi_bcast_coulomb_params();
 

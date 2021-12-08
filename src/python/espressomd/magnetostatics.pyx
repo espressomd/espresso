@@ -45,6 +45,13 @@ IF DIPOLES == 1:
             if not self._params["prefactor"] >= 0:
                 raise ValueError("prefactor should be a positive float")
 
+        def get_magnetostatics_prefactor(self):
+            """
+            Get the magnetostatics prefactor
+
+            """
+            return get_Dprefactor()
+
         def set_magnetostatics_prefactor(self):
             """
             Set the magnetostatics prefactor
@@ -54,12 +61,9 @@ IF DIPOLES == 1:
             # also necessary on 1 CPU or GPU, does more than just broadcasting
             mpi_bcast_coulomb_params()
 
-        def _get_active_method_from_es_core(self):
-            return dipole.method
-
         def _deactivate_method(self):
             set_Dprefactor(0.0)
-            dipole.method = DIPOLAR_NONE
+            disable_method_local()
             mpi_bcast_coulomb_params()
 
 IF DP3M == 1:
@@ -148,7 +152,7 @@ IF DP3M == 1:
         def _get_params_from_es_core(self):
             params = {}
             params.update(dp3m.params)
-            params["prefactor"] = dipole.prefactor
+            params["prefactor"] = self.get_magnetostatics_prefactor()
             params["tune"] = self._params["tune"]
             params["timings"] = self._params["timings"]
             return params
@@ -220,7 +224,7 @@ IF DIPOLES == 1:
             return ("prefactor",)
 
         def _get_params_from_es_core(self):
-            return {"prefactor": dipole.prefactor}
+            return {"prefactor": self.get_magnetostatics_prefactor()}
 
         def _activate_method(self):
             self._set_params_in_es_core()
@@ -258,7 +262,8 @@ IF DIPOLES == 1:
             return ("prefactor", "n_replica")
 
         def _get_params_from_es_core(self):
-            return {"prefactor": dipole.prefactor, "n_replica": mdds_n_replica}
+            return {"prefactor": self.get_magnetostatics_prefactor(),
+                    "n_replica": mdds_get_n_replica()}
 
         def _activate_method(self):
             self._set_params_in_es_core()
@@ -296,13 +301,12 @@ IF DIPOLES == 1:
                 Actor.__init__(self, *args, **kwargs)
 
             def _activate_method(self):
-                set_Dprefactor(self._params["prefactor"])
+                self.set_magnetostatics_prefactor()
                 self._set_params_in_es_core()
 
             def _deactivate_method(self):
-                dipole.method = DIPOLAR_NONE
                 scafacos.free_handle(self.dipolar)
-                mpi_bcast_coulomb_params()
+                super()._deactivate_method()
 
             def default_params(self):
                 return {}
@@ -343,7 +347,7 @@ IF DIPOLES == 1:
                 return ("prefactor",)
 
             def _get_params_from_es_core(self):
-                return {"prefactor": dipole.prefactor}
+                return {"prefactor": self.get_magnetostatics_prefactor()}
 
             def _activate_method(self):
                 self._set_params_in_es_core()
@@ -384,7 +388,7 @@ IF DIPOLES == 1:
                 return ("prefactor", "epssq", "itolsq")
 
             def _get_params_from_es_core(self):
-                return {"prefactor": dipole.prefactor}
+                return {"prefactor": self.get_magnetostatics_prefactor()}
 
             def _activate_method(self):
                 self._set_params_in_es_core()

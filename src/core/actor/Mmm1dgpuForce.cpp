@@ -21,6 +21,10 @@
 #ifdef MMM1D_GPU
 
 #include "actor/Mmm1dgpuForce.hpp"
+
+#include "electrostatics_magnetostatics/common.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
+
 #include "cells.hpp"
 #include "energy.hpp"
 #include "forces.hpp"
@@ -51,11 +55,17 @@ Mmm1dgpuForce::Mmm1dgpuForce(SystemInterface &s) {
 }
 
 void Mmm1dgpuForce::activate() {
+  coulomb.method = COULOMB_MMM1D_GPU;
+  mpi_bcast_coulomb_params();
+
   forceActors.push_back(this);
   energyActors.push_back(this);
 }
 
 void Mmm1dgpuForce::deactivate() {
+  coulomb.method = COULOMB_NONE;
+  mpi_bcast_coulomb_params();
+
   forceActors.remove(this);
   energyActors.remove(this);
 }
