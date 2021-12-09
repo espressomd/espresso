@@ -1035,28 +1035,6 @@ __device__ void calc_values_from_m(Utils::Array<float, 19> const &mode_single,
   pi_out = stress_from_stress_modes(stress_modes(d_v_single, mode_single));
 }
 
-/** Calculate temperature of the fluid kernel
- *  @param[out] cpu_jsquared  Result
- *  @param[in]  n_a           Local node residing in array a
- *  @param[out] number_of_non_boundary_nodes  Local node residing in array a
- */
-__global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared,
-                            int *number_of_non_boundary_nodes) {
-  Utils::Array<float, 4> mode;
-  float jsquared = 0.0f;
-  unsigned int index = blockIdx.y * gridDim.x * blockDim.x +
-                       blockDim.x * blockIdx.x + threadIdx.x;
-
-  if (index < para->number_of_nodes) {
-    if (!n_a.boundary[index]) {
-      calc_mass_and_momentum_mode(mode, n_a, index);
-      jsquared = mode[1] * mode[1] + mode[2] * mode[2] + mode[3] * mode[3];
-      atomicAdd(cpu_jsquared, jsquared);
-      atomicAdd(number_of_non_boundary_nodes, 1);
-    }
-  }
-}
-
 /** Interpolation kernel.
  *  See @cite duenweg09a
  *  @param u Distance to grid point in units of agrid

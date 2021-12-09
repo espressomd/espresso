@@ -280,17 +280,6 @@ __global__ void ResetLBForces_Kernel(LB_node_force_density_gpu node_f,
   }
 }
 
-/** Call a kernel to reset the forces on the LB nodes to the external force. */
-void IBM_ResetLBForces_GPU() {
-  if (this_node == 0) {
-    dim3 dim_grid =
-        calculate_dim_grid(lbpar_gpu.number_of_nodes, 4, threads_per_block);
-
-    KERNELCALL(ResetLBForces_Kernel, dim_grid, threads_per_block, node_f,
-               para_gpu);
-  }
-}
-
 /** Transfer particle forces into the LB fluid.
  *  Called from @ref integrate.
  *  This must be the first CUDA-IBM function to be called because it also does
