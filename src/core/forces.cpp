@@ -156,7 +156,7 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
                                          ghost_particles, time_step);
 
 #ifdef CUDA
-  copy_forces_from_GPU(particles);
+  copy_forces_from_GPU(particles, this_node);
 #endif
 
 // VIRTUAL_SITES distribute forces

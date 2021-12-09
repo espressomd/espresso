@@ -31,7 +31,7 @@ void EspressoSystemInterface::gatherParticles() {
 #ifdef CUDA
   if (m_gpu) {
     if (gpu_get_global_particle_vars_pointer_host()->communication_enabled) {
-      copy_part_data_to_gpu(cell_structure.local_particles());
+      copy_part_data_to_gpu(cell_structure.local_particles(), this_node);
       reallocDeviceMemory(gpu_get_particle_pointer().size());
       if (m_splitParticleStructGpu && (this_node == 0))
         split_particle_struct();
@@ -44,7 +44,7 @@ void EspressoSystemInterface::gatherParticles() {
 void EspressoSystemInterface::enableParticleCommunication() {
   if (m_gpu) {
     if (!gpu_get_global_particle_vars_pointer_host()->communication_enabled) {
-      gpu_init_particle_comm();
+      gpu_init_particle_comm(this_node);
       cuda_bcast_global_part_params();
       reallocDeviceMemory(gpu_get_particle_pointer().size());
     }

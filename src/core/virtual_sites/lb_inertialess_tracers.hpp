@@ -29,9 +29,9 @@
 #include "ParticleRange.hpp"
 
 void IBM_UpdateParticlePositions(ParticleRange const &particles,
-                                 double time_step);
+                                 double time_step, int this_node);
 void IBM_ForcesIntoFluid_CPU();
-void IBM_ForcesIntoFluid_GPU(ParticleRange const &particles);
+void IBM_ForcesIntoFluid_GPU(ParticleRange const &particles, int this_node);
 
 #endif // VIRTUAL_SITES_INERTIALESS_TRACERS
 #endif

@@ -59,8 +59,6 @@
 #include <cstdlib>
 #include <vector>
 
-extern int this_node;
-
 /** struct for hydrodynamic fields: this is for internal use
  *  (i.e. stores values in LB units) and should not be used for
  *  printing values
@@ -2151,8 +2149,6 @@ void lb_init_boundaries_GPU(std::size_t host_n_lb_boundaries,
                             int *host_boundary_node_list,
                             int *host_boundary_index_list,
                             float *host_lb_boundary_velocity) {
-  if (this_node != 0)
-    return;
 
   float *boundary_velocity = nullptr;
   int *boundary_node_list = nullptr;

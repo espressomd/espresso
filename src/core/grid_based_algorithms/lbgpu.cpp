@@ -164,7 +164,7 @@ void lb_init_gpu() {
 
   lb_init_GPU(lbpar_gpu);
 
-  gpu_init_particle_comm();
+  gpu_init_particle_comm(this_node);
   cuda_bcast_global_part_params();
 }
 
