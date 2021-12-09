@@ -18,7 +18,11 @@ The following needs to be in the Python path:
 ## Example
 
 ```sh
-export PYTHONPATH=$HOME/pystencils:$HOME/lbmpy:$HOME/es/build-walberla/_deps/walberla-src/python/
-python3 generate_lb_kernels.py
-maintainer/format/clang-format.sh -i <GENERATED_FILES>
+export VERSION=0.4.3
+export DEPS="${HOME}/walberla_deps"
+export PYTHONPATH="${DEPS}/${VERSION}/lbmpy:${DEPS}/${VERSION}/pystencils:${DEPS}/devel/walberla/python/"
+python3 $(git rev-parse --show-toplevel)/maintainer/walberla_kernels/generate_lb_kernels.py
+python3 $(git rev-parse --show-toplevel)/maintainer/walberla_kernels/generate_lb_kernels.py --single-precision
+$(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.{cpp,h}
+mv *.{cpp,h} $(git rev-parse --show-toplevel)/src/walberla_bridge/generated_kernels/
 ```
