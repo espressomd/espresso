@@ -48,6 +48,7 @@ private:
   BHData m_bh_data = {0,       0,       0,       nullptr, nullptr,
                       nullptr, nullptr, nullptr, nullptr, nullptr,
                       nullptr, nullptr, nullptr, nullptr};
+  int initialize_data_structure(SystemInterface &s);
 };
 
 #endif // DIPOLAR_BARNES_HUT

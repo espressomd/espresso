@@ -64,12 +64,12 @@ void DipolarBarnesHut::set_params(float epssq, float itolsq) {
   setBHPrecision(m_epssq, m_itolsq);
 }
 
-void DipolarBarnesHut::computeForces(SystemInterface &s) {
+int DipolarBarnesHut::initialize_data_structure(SystemInterface &s) {
   try {
     allocBHmemCopy(static_cast<int>(s.npart_gpu()), &m_bh_data);
   } catch (cuda_runtime_error const &err) {
     runtimeErrorMsg() << "DipolarBarnesHut: " << err.what();
-    return;
+    return ES_ERROR;
   }
 
   fill_bh_data(s.rGpuBegin(), s.dipGpuBegin(), &m_bh_data);
@@ -78,28 +78,24 @@ void DipolarBarnesHut::computeForces(SystemInterface &s) {
   buildTreeBH(m_bh_data.blocks);
   summarizeBH(m_bh_data.blocks);
   sortBH(m_bh_data.blocks);
-  if (forceBH(&m_bh_data, m_prefactor, s.fGpuBegin(), s.torqueGpuBegin())) {
-    runtimeErrorMsg() << "kernels encountered a functional error";
+
+  return ES_OK;
+}
+
+void DipolarBarnesHut::computeForces(SystemInterface &s) {
+  if (initialize_data_structure(s) == ES_OK) {
+    if (forceBH(&m_bh_data, m_prefactor, s.fGpuBegin(), s.torqueGpuBegin())) {
+      runtimeErrorMsg() << "kernels encountered a functional error";
+    }
   }
 }
 
 void DipolarBarnesHut::computeEnergy(SystemInterface &s) {
-  try {
-    allocBHmemCopy(static_cast<int>(s.npart_gpu()), &m_bh_data);
-  } catch (cuda_runtime_error const &err) {
-    runtimeErrorMsg() << "DipolarBarnesHut: " << err.what();
-    return;
-  }
-
-  fill_bh_data(s.rGpuBegin(), s.dipGpuBegin(), &m_bh_data);
-  initBHgpu(m_bh_data.blocks);
-  buildBoxBH(m_bh_data.blocks);
-  buildTreeBH(m_bh_data.blocks);
-  summarizeBH(m_bh_data.blocks);
-  sortBH(m_bh_data.blocks);
-  auto energy = reinterpret_cast<CUDA_energy *>(s.eGpu());
-  if (energyBH(&m_bh_data, m_prefactor, &(energy->dipolar))) {
-    runtimeErrorMsg() << "kernels encountered a functional error";
+  if (initialize_data_structure(s) == ES_OK) {
+    auto energy = reinterpret_cast<CUDA_energy *>(s.eGpu());
+    if (energyBH(&m_bh_data, m_prefactor, &(energy->dipolar))) {
+      runtimeErrorMsg() << "kernels encountered a functional error";
+    }
   }
 }
 
