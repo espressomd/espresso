@@ -40,6 +40,18 @@ void EspressoSystemInterface::gatherParticles() {
 #endif
 }
 
+#ifdef CUDA
+void EspressoSystemInterface::enableParticleCommunication() {
+  if (m_gpu) {
+    if (!gpu_get_global_particle_vars_pointer_host()->communication_enabled) {
+      gpu_init_particle_comm();
+      cuda_bcast_global_part_params();
+      reallocDeviceMemory(gpu_get_particle_pointer().size());
+    }
+  }
+}
+#endif
+
 void EspressoSystemInterface::init() { gatherParticles(); }
 
 void EspressoSystemInterface::update() { gatherParticles(); }

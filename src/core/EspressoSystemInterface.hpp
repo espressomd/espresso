@@ -59,8 +59,7 @@ public:
     m_needsRGpu = hasRGpu();
     m_splitParticleStructGpu |= m_needsRGpu;
     m_gpu |= m_needsRGpu;
-    if (m_gpu)
-      enableParticleCommunication();
+    enableParticleCommunication();
   };
 
 #ifdef DIPOLES
@@ -70,8 +69,7 @@ public:
     m_needsDipGpu = hasDipGpu();
     m_splitParticleStructGpu |= m_needsRGpu;
     m_gpu |= m_needsRGpu;
-    if (m_gpu)
-      enableParticleCommunication();
+    enableParticleCommunication();
   };
 #endif
 
@@ -82,16 +80,14 @@ public:
     m_needsQGpu = hasQGpu();
     m_splitParticleStructGpu |= m_needsQGpu;
     m_gpu |= m_needsQGpu;
-    if (m_gpu)
-      enableParticleCommunication();
+    enableParticleCommunication();
   };
 #endif
 
   void requestParticleStructGpu() {
     m_needsParticleStructGpu = true;
     m_gpu |= m_needsParticleStructGpu;
-    if (m_gpu)
-      enableParticleCommunication();
+    enableParticleCommunication();
   };
 
   float *fGpuBegin() override { return gpu_get_particle_force_pointer(); };
@@ -99,8 +95,7 @@ public:
   void requestFGpu() override {
     m_needsFGpu = hasFGpu();
     m_gpu |= m_needsFGpu;
-    if (m_gpu)
-      enableParticleCommunication();
+    enableParticleCommunication();
   };
 
 #ifdef ROTATION
@@ -111,8 +106,7 @@ public:
   void requestTorqueGpu() override {
     m_needsTorqueGpu = hasTorqueGpu();
     m_gpu |= m_needsTorqueGpu;
-    if (m_gpu)
-      enableParticleCommunication();
+    enableParticleCommunication();
   };
 #endif
 
@@ -140,13 +134,7 @@ protected:
   void gatherParticles();
   void split_particle_struct();
 #ifdef CUDA
-  void enableParticleCommunication() {
-    if (!gpu_get_global_particle_vars_pointer_host()->communication_enabled) {
-      gpu_init_particle_comm();
-      cuda_bcast_global_part_params();
-      reallocDeviceMemory(gpu_get_particle_pointer().size());
-    }
-  };
+  void enableParticleCommunication();
   void reallocDeviceMemory(std::size_t n);
 
 private:
