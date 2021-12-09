@@ -60,11 +60,6 @@ void check_tau_time_step_consistency(double tau, double time_step);
 void lb_lbfluid_sanity_checks(double time_step);
 
 /**
- * @brief Set the LB density for a single node.
- */
-void lb_lbnode_set_density(const Utils::Vector3i &ind, double density);
-
-/**
  * @brief Set the LB fluid velocity for a single node.
  */
 void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
@@ -75,18 +70,6 @@ void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
  */
 void lb_lbnode_set_velocity_at_boundary(const Utils::Vector3i &ind,
                                         const Utils::Vector3d &u);
-
-/**
- * @brief Set the LB fluid populations for a single node.
- */
-void lb_lbnode_set_pop(const Utils::Vector3i &ind,
-                       const std::vector<double> &pop);
-
-/**
- * @brief Set force applied on an lb node during the previous integration step
- */
-void lb_lbnode_set_last_applied_force(const Utils::Vector3i &ind,
-                                      const Utils::Vector3d &force);
 
 /**
  * @brief Get the LB time step.
@@ -109,42 +92,16 @@ double lb_lbfluid_get_kT();
 double lb_lbfluid_get_lattice_speed();
 
 /**
- * @brief Get the LB fluid density for a single node.
- */
-double lb_lbnode_get_density(const Utils::Vector3i &ind);
-
-/**
- * @brief Get the LB fluid velocity for a single node.
- */
-const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind);
-
-/**
  * @brief Get the LB fluid velocity for a single node.
  */
 const Utils::Vector3d
 lb_lbnode_get_velocity_at_boundary(const Utils::Vector3i &ind);
-
-/**
- * @brief Get the LB fluid pressure tensor for a single node.
- */
-const Utils::Vector6d lb_lbnode_get_pressure_tensor(const Utils::Vector3i &ind);
-
-/**
- * @brief Get force applied on an lb node during the previous integration step
- */
-const Utils::Vector3d
-lb_lbnode_get_last_applied_force(const Utils::Vector3i &ind);
 
 /** @brief Calculate the average pressure tensor of all nodes by accumulating
  *  over all nodes and dividing by the number of nodes.
  *  Returns the lower triangle of the LB pressure tensor.
  */
 const Utils::Vector6d lb_lbfluid_get_pressure_tensor();
-
-/**
- * @brief Get the LB fluid boundary bool for a single node.
- */
-bool lb_lbnode_is_boundary(const Utils::Vector3i &ind);
 
 /**
  * @brief Clear boundaries
@@ -165,19 +122,9 @@ void lb_lbfluid_update_boundary_from_list(std::vector<int> const &nodes_flat,
                                           std::vector<double> const &vel_flat);
 
 /**
- * @brief Get the LB fluid velocity for a single node.
- */
-const Utils::Vector3d lb_lbnode_get_boundary_force(const Utils::Vector3i &ind);
-
-/**
  * @brief Remove single node from boundary
  */
 void lb_lbnode_remove_from_boundary(const Utils::Vector3i &ind);
-
-/**
- * @brief Get the LB fluid populations for a single node.
- */
-const std::vector<double> lb_lbnode_get_pop(const Utils::Vector3i &ind);
 
 void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary);
 void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary);

@@ -351,26 +351,6 @@ bool lb_lbnode_is_index_valid(Utils::Vector3i const &ind) {
   return ind < limit && ind >= Utils::Vector3i{};
 }
 
-double lb_lbnode_get_density(const Utils::Vector3i &ind) {
-#ifdef LB_WALBERLA
-  if (lattice_switch == ActiveLB::WALBERLA) {
-    return ::Communication::mpiCallbacks().call(
-        ::Communication::Result::one_rank, Walberla::get_node_density, ind);
-  }
-#endif
-  throw NoLBActive();
-}
-
-const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind) {
-#ifdef LB_WALBERLA
-  if (lattice_switch == ActiveLB::WALBERLA) {
-    return ::Communication::mpiCallbacks().call(
-        ::Communication::Result::one_rank, Walberla::get_node_velocity, ind);
-  }
-#endif
-  throw NoLBActive();
-}
-
 const Utils::Vector3d
 lb_lbnode_get_velocity_at_boundary(const Utils::Vector3i &ind) {
 #ifdef LB_WALBERLA
@@ -380,19 +360,6 @@ lb_lbnode_get_velocity_at_boundary(const Utils::Vector3i &ind) {
         Walberla::get_node_velocity_at_boundary, ind);
   }
 #endif
-  throw NoLBActive();
-}
-
-const Utils::Vector3d
-lb_lbnode_get_last_applied_force(const Utils::Vector3i &ind) {
-#ifdef LB_WALBERLA
-  if (lattice_switch == ActiveLB::WALBERLA) {
-    return ::Communication::mpiCallbacks().call(
-        ::Communication::Result::one_rank,
-        Walberla::get_node_last_applied_force, ind);
-  }
-#endif
-
   throw NoLBActive();
 }
 
@@ -407,21 +374,6 @@ inline void walberla_off_diagonal_correction(Utils::Vector6d &tensor) {
 }
 #endif
 
-const Utils::Vector6d
-lb_lbnode_get_pressure_tensor(const Utils::Vector3i &ind) {
-#ifdef LB_WALBERLA
-  if (lattice_switch == ActiveLB::WALBERLA) {
-    Utils::Vector6d tensor = ::Communication::mpiCallbacks().call(
-        ::Communication::Result::one_rank, Walberla::get_node_pressure_tensor,
-        ind);
-
-    walberla_off_diagonal_correction(tensor);
-    return tensor;
-  }
-#endif
-  throw NoLBActive();
-}
-
 Utils::Vector6d lb_lbfluid_get_pressure_tensor_local() {
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
@@ -431,7 +383,8 @@ Utils::Vector6d lb_lbfluid_get_pressure_tensor_local() {
       for (int j = 0; j < gridsize[1]; j++) {
         for (int k = 0; k < gridsize[2]; k++) {
           const Utils::Vector3i node{{i, j, k}};
-          auto const node_tensor = Walberla::get_node_pressure_tensor(node);
+          auto const node_tensor =
+              lb_walberla()->get_node_pressure_tensor(node);
           if (node_tensor) {
             tensor += *node_tensor;
           }
@@ -459,27 +412,6 @@ const Utils::Vector6d lb_lbfluid_get_pressure_tensor() {
 
     walberla_off_diagonal_correction(tensor);
     return tensor;
-  }
-#endif
-  throw NoLBActive();
-}
-
-bool lb_lbnode_is_boundary(const Utils::Vector3i &ind) {
-#ifdef LB_WALBERLA
-  if (lattice_switch == ActiveLB::WALBERLA) {
-    return ::Communication::mpiCallbacks().call(
-        ::Communication::Result::one_rank, Walberla::get_node_is_boundary, ind);
-  }
-#endif
-  throw NoLBActive();
-}
-
-const Utils::Vector3d lb_lbnode_get_boundary_force(const Utils::Vector3i &ind) {
-#ifdef LB_WALBERLA
-  if (lattice_switch == ActiveLB::WALBERLA) {
-    return ::Communication::mpiCallbacks().call(
-        ::Communication::Result::one_rank, Walberla::get_node_boundary_force,
-        ind);
   }
 #endif
   throw NoLBActive();
@@ -531,70 +463,12 @@ void lb_lbfluid_update_boundary_from_list(std::vector<int> const &nodes_flat,
   }
 }
 
-const std::vector<double> lb_lbnode_get_pop(const Utils::Vector3i &ind) {
-#ifdef LB_WALBERLA
-  if (lattice_switch == ActiveLB::WALBERLA) {
-    return ::Communication::mpiCallbacks().call(
-        ::Communication::Result::one_rank, Walberla::get_node_pop, ind);
-  }
-#endif
-  throw NoLBActive();
-}
-
-void lb_lbnode_set_density(const Utils::Vector3i &ind, double p_density) {
-#ifdef LB_WALBERLA
-  if (lattice_switch == ActiveLB::WALBERLA) {
-    ::Communication::mpiCallbacks().call_all(Walberla::set_node_density, ind,
-                                             p_density);
-  } else
-#endif
-  {
-    throw NoLBActive();
-  }
-}
-
-void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
-                            const Utils::Vector3d &u) {
-  if (lattice_switch == ActiveLB::WALBERLA) {
-#ifdef LB_WALBERLA
-    ::Communication::mpiCallbacks().call_all(Walberla::set_node_velocity, ind,
-                                             u);
-#endif
-  } else {
-    throw NoLBActive();
-  }
-}
-
 void lb_lbnode_set_velocity_at_boundary(const Utils::Vector3i &ind,
                                         const Utils::Vector3d &u) {
   if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
     ::Communication::mpiCallbacks().call_all(
         Walberla::set_node_velocity_at_boundary, ind, u);
-#endif
-  } else {
-    throw NoLBActive();
-  }
-}
-
-void lb_lbnode_set_last_applied_force(const Utils::Vector3i &ind,
-                                      const Utils::Vector3d &f) {
-  if (lattice_switch == ActiveLB::WALBERLA) {
-#ifdef LB_WALBERLA
-    ::Communication::mpiCallbacks().call_all(
-        Walberla::set_node_last_applied_force, ind, f);
-#endif
-  } else {
-    throw NoLBActive();
-  }
-}
-
-void lb_lbnode_set_pop(const Utils::Vector3i &ind,
-                       const std::vector<double> &p_pop) {
-  if (lattice_switch == ActiveLB::WALBERLA) {
-#ifdef LB_WALBERLA
-    ::Communication::mpiCallbacks().call_all(Walberla::set_node_pop, ind,
-                                             p_pop);
 #endif
   } else {
     throw NoLBActive();

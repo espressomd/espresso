@@ -108,7 +108,7 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
                 if any(isinstance(item, slice) for item in key):
                     return LBSlice(key, self.shape)
                 else:
-                    return LBFluidRoutines(np.array(key))
+                    return LBFluidRoutines(key=np.array(key))
         else:
             raise Exception(
                 "%s is not a valid key. Should be a point on the nodegrid e.g. lbf[0,0,0], or a slice" % key)
@@ -659,15 +659,6 @@ cdef class LBFluidRoutines:
         def __get__(self):
             return (self.node[0], self.node[1], self.node[2])
 
-    property velocity:
-        def __get__(self):
-            return python_lbnode_get_velocity(self.node)
-
-        def __set__(self, value):
-            utils.check_type_or_throw_except(
-                value, 3, float, "velocity has to be 3 floats")
-            python_lbnode_set_velocity(self.node, make_Vector3d(value))
-
     property boundary:
         def __get__(self):
             """
@@ -679,8 +670,7 @@ cdef class LBFluidRoutines:
                 If the node is not a boundary node
             """
 
-            is_boundary = lb_lbnode_is_boundary(self.node)
-            if is_boundary:
+            if self.is_boundary:
                 vel = python_lbnode_get_velocity_at_boundary(self.node)
                 return VelocityBounceBack(vel)
             return None
@@ -705,58 +695,7 @@ cdef class LBFluidRoutines:
                 raise ValueError(
                     "value must be an instance of VelocityBounceBack or None")
 
-    property boundary_force:
-        def __get__(self):
-            return python_lbnode_get_boundary_force(self.node)
-
-        def __set__(self, val):
-            raise NotImplementedError(
-                "The boundary force can only be read, never set.")
-
-    property density:
-        def __get__(self):
-            return python_lbnode_get_density(self.node)
-
-        def __set__(self, value):
-            python_lbnode_set_density(self.node, value)
-
-    property pressure_tensor:
-        def __get__(self):
-            tensor = python_lbnode_get_pressure_tensor(self.node)
-            return utils.array_locked(tensor)
-
-        def __set__(self, value):
-            raise NotImplementedError
-
-    property population:
-        def __get__(self):
-            cdef vector[double] pop
-            pop = lb_lbnode_get_pop(self.node)
-            return utils.array_locked(
-                create_nparray_from_double_array(pop.data(), pop.size()))
-
-        def __set__(self, population):
-            cdef vector[double] _population
-            _population.resize(len(population))
-            for i in range(len(population)):
-                _population[i] = population[i]
-            lb_lbnode_set_pop(self.node, _population)
-
-    property is_boundary:
-        def __get__(self):
-            return lb_lbnode_is_boundary(self.node)
-
-        def __set__(self, value):
-            raise NotImplementedError
-
-    property last_applied_force:
-        def __get__(self):
-            return python_lbnode_get_last_applied_force(self.node)
-
-        def __set__(self, force):
-            python_lbnode_set_last_applied_force(
-                self.node, make_Vector3d(force))
-
+    
     def __eq__(self, obj1):
         index_1 = np.array(self.index)
         index_2 = np.array(obj1.index)
@@ -858,8 +797,7 @@ def _add_lb_slice_properties():
         return lb_slice.get_values(*indices, attribute)
 
     for attribute_name in dir(LBFluidRoutines):
-        if attribute_name in dir(LBSlice) or not isinstance(
-                getattr(LBFluidRoutines, attribute_name), type(LBFluidRoutines.density)):
+        if attribute_name in dir(LBSlice):
             continue
 
         # synthesize a new property

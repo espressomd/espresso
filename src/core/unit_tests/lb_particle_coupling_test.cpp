@@ -524,18 +524,6 @@ BOOST_AUTO_TEST_CASE(exceptions, *utf::precondition(if_head_node())) {
     BOOST_CHECK_THROW(lb_lbfluid_get_agrid(), exception);
     BOOST_CHECK_THROW(lb_lbfluid_get_tau(), exception);
     BOOST_CHECK_THROW(lb_lbfluid_get_kT(), exception);
-    BOOST_CHECK_THROW(lb_lbnode_set_density({}, {}), exception);
-    BOOST_CHECK_THROW(lb_lbnode_get_density({}), exception);
-    BOOST_CHECK_THROW(lb_lbnode_set_velocity({}, {}), exception);
-    BOOST_CHECK_THROW(lb_lbnode_get_velocity({}), exception);
-    BOOST_CHECK_THROW(lb_lbnode_set_pop({}, {}), exception);
-    BOOST_CHECK_THROW(lb_lbnode_get_pop({}), exception);
-    BOOST_CHECK_THROW(lb_lbnode_set_velocity_at_boundary({}, {}), exception);
-    BOOST_CHECK_THROW(lb_lbnode_get_velocity_at_boundary({}), exception);
-    BOOST_CHECK_THROW(lb_lbnode_set_last_applied_force({}, {}), exception);
-    BOOST_CHECK_THROW(lb_lbnode_get_last_applied_force({}), exception);
-    BOOST_CHECK_THROW(lb_lbnode_get_pressure_tensor({}), exception);
-    BOOST_CHECK_THROW(lb_lbnode_get_boundary_force({}), exception);
     // coupling, interpolation, boundaries
     BOOST_CHECK_THROW(lb_lbcoupling_get_rng_state(), std::runtime_error);
     BOOST_CHECK_THROW(lb_lbcoupling_set_rng_state(0ul), std::runtime_error);
