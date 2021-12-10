@@ -36,6 +36,7 @@
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/constants.hpp>
 #include <utils/math/int_pow.hpp>
 
 #include <memory>
@@ -49,6 +50,7 @@ namespace ScriptInterface::walberla {
 class FluidNodeWalberla : public AutoParameters<FluidNodeWalberla> {
   std::shared_ptr<::LBWalberlaBase> m_lb_fluid;
   Utils::Vector3i m_index;
+  Utils::Vector3i m_grid_size;
   double m_conv_dens;
   double m_conv_press;
   double m_conv_force;
@@ -131,9 +133,9 @@ public:
       auto const &lb_params = lb_walberla_params();
       auto const tau = lb_params->get_tau();
       auto const agrid = lb_params->get_agrid();
-      auto const grid_size = m_lb_fluid->lattice().get_grid_dimensions();
+      m_grid_size = m_lb_fluid->lattice().get_grid_dimensions();
       m_index = get_value<Utils::Vector3i>(params, "index");
-      if (not(m_index < grid_size and m_index >= Utils::Vector3i{})) {
+      if (not(is_index_valid(m_index))) {
         throw std::out_of_range("Index error");
       }
       m_conv_dens = Utils::int_pow<3>(agrid);
@@ -144,6 +146,27 @@ public:
       runtimeErrorMsg() << "LatticeWalberla failed: " << e.what();
       m_lb_fluid.reset();
     }
+  }
+
+  Variant do_call_method(std::string const &name,
+                         VariantMap const &params) override {
+    if (name == "override_index") {
+      // this hidden feature is used to iterate a LB slice without
+      // rebuilding a FluidNodeWalberla for each node in the slice
+      auto const index = get_value<Utils::Vector3i>(params, "index");
+      if (not(is_index_valid(index))) {
+        return ES_ERROR;
+      }
+      m_index = index;
+      return ES_OK;
+    }
+
+    return {};
+  }
+
+private:
+  inline bool is_index_valid(Utils::Vector3i const &index) const {
+    return index < m_grid_size and index >= Utils::Vector3i{};
   }
 };
 } // namespace ScriptInterface::walberla

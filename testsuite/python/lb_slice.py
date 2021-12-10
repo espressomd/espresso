@@ -123,6 +123,20 @@ class LBSliceTest(ut.TestCase):
             np.copy(lb_fluid[:, :, 0].last_applied_force),
             10 * [10 * [[[1, 2, 3]]]])
 
+        # access out of bounds
+        i = lb_fluid.shape[2] + 10
+        lb_slice = lb_fluid[1, 2, i:i + 10]
+        self.assertEqual(lb_slice.density.shape, (0,))
+        self.assertIsInstance(lb_slice.density.dtype, object)
+        self.assertEqual(list(lb_slice.x_indices), [1])
+        self.assertEqual(list(lb_slice.y_indices), [2])
+        self.assertEqual(list(lb_slice.z_indices), [])
+        np.testing.assert_array_equal(
+            np.copy(lb_fluid[1, 2, 8:i].index),
+            np.copy(lb_fluid[1, 2, 8:].index))
+        with self.assertRaisesRegex(AttributeError, "Cannot set properties of an empty LBSlice"):
+            lb_slice.density = [1., 2., 3.]
+
     def test_iterator(self):
         lbslice_handle = self.lb_fluid[:, :, :]
         # arrange node indices using class methods

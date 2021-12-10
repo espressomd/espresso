@@ -766,13 +766,16 @@ class LBSlice:
         if 0 in dimensions:
             return np.empty(0, dtype=type(None))
 
-        shape_res = np.shape(getattr(node, attr))
-        res = np.zeros((*dimensions, *shape_res))
+        res = getattr(node, attr)
+        shape_res = np.shape(res)
+        dtype = res.dtype if isinstance(res, np.ndarray) else type(res)
+        res = np.zeros((*dimensions, *shape_res), dtype=dtype)
         for i, x in enumerate(self.x_indices):
             for j, y in enumerate(self.y_indices):
                 for k, z in enumerate(self.z_indices):
-                    res[i, j, k] = getattr(LBFluidNode(
-                        index=np.array([x, y, z])), attr)
+                    err = node.call_method("override_index", index=[x, y, z])
+                    assert err == 0
+                    res[i, j, k] = getattr(node, attr)
         if shape_res == (1,):
             res = np.squeeze(res, axis=-1)
         return utils.array_locked(res)
@@ -804,8 +807,9 @@ class LBSlice:
         for i, x in enumerate(self.x_indices):
             for j, y in enumerate(self.y_indices):
                 for k, z in enumerate(self.z_indices):
-                    setattr(LBFluidNode(
-                        index=np.array([x, y, z])), attr, value[i, j, k])
+                    err = node.call_method("override_index", index=[x, y, z])
+                    assert err == 0
+                    setattr(node, attr, value[i, j, k])
 
     def __iter__(self):
         indices = [(x, y, z) for (x, y, z) in itertools.product(

@@ -247,13 +247,27 @@ class LBTest:
     def test_grid_index(self):
         lbf = self.lb_class(**self.params, **self.lb_params)
         self.system.actors.add(lbf)
+        # access out of bounds
         out_of_bounds = int(max(self.system.box_l) / self.params['agrid']) + 1
-        with self.assertRaises(Exception):
+        error_msg = 'LBFluidNode instantiation failed: ERROR: LatticeWalberla failed: Index error'
+        with self.assertRaisesRegex(Exception, error_msg):
             lbf[out_of_bounds, 0, 0].velocity
-        with self.assertRaises(Exception):
+        with self.assertRaisesRegex(Exception, error_msg):
             lbf[0, out_of_bounds, 0].velocity
-        with self.assertRaises(Exception):
+        with self.assertRaisesRegex(Exception, error_msg):
             lbf[0, 0, out_of_bounds].velocity
+        # node index
+        node = lbf[1, 2, 3]
+        with self.assertRaisesRegex(RuntimeError, "Property 'index' is read-only"):
+            node.index = [2, 4, 6]
+        np.testing.assert_array_equal(np.copy(node.index), [1, 2, 3])
+        retval = node.call_method('override_index', index=[2, 4, 6])
+        self.assertEqual(retval, 0)
+        np.testing.assert_array_equal(np.copy(node.index), [2, 4, 6])
+        retval = node.call_method(
+            'override_index', index=[0, 0, out_of_bounds])
+        self.assertEqual(retval, 1)
+        np.testing.assert_array_equal(np.copy(node.index), [2, 4, 6])
 
     def test_incompatible_agrid(self):
         """
