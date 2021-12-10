@@ -217,8 +217,6 @@ public:
   using PdfField = GhostLayerField<FloatType, Stencil::Size>;
   using Lattice_T = LatticeWalberla::Lattice_T;
 
-  using Lattice_T = LatticeWalberla::Lattice_T;
-
 private:
   FloatType getDensity(const BlockAndCell &bc) const {
     auto pdf_field = bc.block->template getData<PdfField>(m_pdf_field_id);
@@ -461,7 +459,7 @@ public:
     (*m_pdf_streaming_communication)();
     // Handle boundaries
     integrate_boundaries(blocks);
-    (*m_pdf_communication)();
+    (*m_pdf_streaming_communication)();
     // LB stream
     integrate_stream(blocks);
     // Refresh ghost layers
