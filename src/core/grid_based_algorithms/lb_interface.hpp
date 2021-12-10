@@ -66,12 +66,6 @@ void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
                             const Utils::Vector3d &u);
 
 /**
- * @brief Set the LB fluid velocity for a single boundary node.
- */
-void lb_lbnode_set_velocity_at_boundary(const Utils::Vector3i &ind,
-                                        const Utils::Vector3d &u);
-
-/**
  * @brief Get the LB time step.
  */
 double lb_lbfluid_get_tau();
@@ -90,12 +84,6 @@ double lb_lbfluid_get_kT();
  * @brief Get the lattice speed (agrid/tau).
  */
 double lb_lbfluid_get_lattice_speed();
-
-/**
- * @brief Get the LB fluid velocity for a single node.
- */
-const Utils::Vector3d
-lb_lbnode_get_velocity_at_boundary(const Utils::Vector3i &ind);
 
 /** @brief Calculate the average pressure tensor of all nodes by accumulating
  *  over all nodes and dividing by the number of nodes.
@@ -121,18 +109,8 @@ void lb_lbfluid_update_boundary_from_shape(
 void lb_lbfluid_update_boundary_from_list(std::vector<int> const &nodes_flat,
                                           std::vector<double> const &vel_flat);
 
-/**
- * @brief Remove single node from boundary
- */
-void lb_lbnode_remove_from_boundary(const Utils::Vector3i &ind);
-
 void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary);
 void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary);
-
-/**
- * @brief Checks whether the given node index is within the LB lattice.
- */
-bool lb_lbnode_is_index_valid(const Utils::Vector3i &ind);
 
 /**
  * @brief returns the shape of the LB fluid lattice

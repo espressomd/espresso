@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef SCRIPT_INTERFACE_WALBERLA_FLUIDWALBERLA_HPP
-#define SCRIPT_INTERFACE_WALBERLA_FLUIDWALBERLA_HPP
+#ifndef SCRIPT_INTERFACE_WALBERLA_FLUID_ROUTINES_WALBERLA_HPP
+#define SCRIPT_INTERFACE_WALBERLA_FLUID_ROUTINES_WALBERLA_HPP
 
 #include "config.hpp"
 
@@ -25,11 +25,11 @@
 
 #include <walberla_bridge/LBWalberlaBase.hpp>
 
-#include "LatticeWalberla.hpp"
-
 #include "core/communication.hpp"
+#include "core/errorhandling.hpp"
 #include "core/grid_based_algorithms/lb_interface.hpp"
 #include "core/grid_based_algorithms/lb_walberla_instance.hpp"
+#include "core/grid_based_algorithms/lb_walberla_interface.hpp"
 #include "core/integrate.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
@@ -39,192 +39,113 @@
 #include <utils/math/int_pow.hpp>
 
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <tuple>
+#include <vector>
 
 namespace ScriptInterface::walberla {
 
 class LBFluidRoutinesWalberla : public AutoParameters<LBFluidRoutinesWalberla> {
   std::shared_ptr<::LBWalberlaBase> m_lb_fluid;
-  std::shared_ptr<::LBWalberlaParams> m_lb_params;
-  bool m_is_single_precision;
-  bool m_is_active;
-  double m_conv_visc;
-  double m_conv_temp;
+  Utils::Vector3i m_index;
   double m_conv_dens;
   double m_conv_press;
   double m_conv_force;
-  Utils::Vector3d m_ind;
-  std::tuple<double, double, double, int, Utils::Vector3d> m_ctor_params;
+  double m_conv_velocity;
 
 public:
   LBFluidRoutinesWalberla() {
-    add_parameters({
-        {"is_single_precision", AutoParameter::read_only,
-         [this]() {
-      return m_is_single_precision; }},
-        {"is_active", AutoParameter::read_only,
-         [this]() {
-      return m_is_active; }},
-        {"is_initialized", AutoParameter::read_only,
-         [this]() {
-      return m_lb_fluid != nullptr; }},
-        {"agrid", AutoParameter::read_only,
-         [this]() {
-      return m_lb_params->get_agrid(); }},
-        {"tau", AutoParameter::read_only,
-         [this]() {
-      return m_lb_params->get_tau(); }},
-        {"shape", AutoParameter::read_only,
-         [this]() {
-      return (m_lb_fluid) ? m_lb_fluid->lattice().get_grid_dimensions()
-                          : Utils::Vector3i::broadcast(-1);
-         }},
-        {"kT", AutoParameter::read_only,
-         [this]() {
-      return std::get<2>(m_ctor_params) / m_conv_temp; }},
-        {"seed", AutoParameter::read_only,
-         [this]() {
-      return std::get<3>(m_ctor_params); }},
-        {"rng_state",
-         [this](const Variant &v) {
-      try {
-        if (m_lb_fluid)
-          m_lb_fluid->set_rng_state(static_cast<uint64_t>(get_value<int>(v)));
-        else
-          throw std::runtime_error(
-              "Cannot set 'rng_state' before walberla is initialized");
-      } catch (const std::exception &e) {
-        if (this_node == 0) {
-          throw;
-        }
-      }
-         },
-         [this]() {
-      try {
-        if (m_lb_fluid)
-          return static_cast<int>(m_lb_fluid->get_rng_state());
-        else
-          throw std::runtime_error(
-              "Cannot get 'rng_state' before walberla is initialized");
-      } catch (const std::exception &e) {
-        if (this_node == 0) {
-          throw;
-        }
-      }
-      return -1;
-         }},
+    add_parameters(
+        {{"_index", AutoParameter::read_only, [this]() { return (m_index); }},
          {"velocity",
-        [this](const Variant &v) {
-      auto const velocity = get_value<double>(v) * m_conv_velocity_set;
-      Walberla::mpi_set_node_velocity(m_ind, velocity);
-        },
-        [this]() {
-      return Walberla::mpi_get_node_velocity(m_ind) * m_conv_velocity_get;
-        }},
-        {"density",
-         [this](const Variant &v) {
-      auto const density = get_value<double>(v) * m_conv_dens_set;
-      Walberla::mpi_set_node_density(m_ind, density);
-         },
-         [this]() {
-      return Walberla::mpi_get_node_density(m_ind) * m_conv_dens_get;
-         }},
-        {"population",
-         [this](const Variant &v) {
-      auto const population = get_value<std::vector<double>>(v);
-      Walberla::mpi_set_node_pop(m_ind, population);
-         },
-         [this]() {
-      return Walberla::mpi_get_node_pop(m_ind); }},
-        {"is_boundary", AutoParameter::read_only
-        [this]() {
-          return Walberla::mpi_get_node_is_boundary(m_ind);
+          [this](const Variant &v) {
+            auto const velocity =
+                get_value<Utils::Vector3d>(v) * m_conv_velocity;
+            Walberla::mpi_set_node_velocity(m_index, velocity);
+          },
+          [this]() {
+            return Walberla::mpi_get_node_velocity(m_index) / m_conv_velocity;
+          }},
+         {"velocity_at_boundary",
+          [this](const Variant &v) {
+            if (is_none(v)) {
+              Walberla::mpi_remove_node_from_boundary(m_index);
+            } else {
+              auto const velocity =
+                  get_value<Utils::Vector3d>(v) * m_conv_velocity;
+              Walberla::mpi_set_node_velocity_at_boundary(m_index, velocity);
+            }
+          },
+          [this]() {
+            if (Walberla::mpi_get_node_is_boundary(m_index)) {
+              return Variant{
+                  Walberla::mpi_get_node_velocity_at_boundary(m_index) /
+                  m_conv_velocity};
+            } else {
+              return Variant{None{}};
+            }
+          }},
+         {"density",
+          [this](const Variant &v) {
+            auto const density = get_value<double>(v) * m_conv_dens;
+            Walberla::mpi_set_node_density(m_index, density);
+          },
+          [this]() {
+            return Walberla::mpi_get_node_density(m_index) / m_conv_dens;
+          }},
+         {"_population",
+          [this](const Variant &v) {
+            auto const population = get_value<std::vector<double>>(v);
+            Walberla::mpi_set_node_pop(m_index, population);
+          },
+          [this]() { return Walberla::mpi_get_node_pop(m_index); }},
+         {"is_boundary", AutoParameter::read_only,
+          [this]() { return Walberla::mpi_get_node_is_boundary(m_index); }},
+         {"boundary_force", AutoParameter::read_only,
+          [this]() {
+            return Walberla::mpi_get_node_boundary_force(m_index) /
+                   m_conv_force;
+          }},
+         {"_pressure_tensor", AutoParameter::read_only,
+          [this]() {
+            return Walberla::mpi_get_node_pressure_tensor(m_index) /
+                   m_conv_press;
+          }},
+         {"last_applied_force",
+          [this](const Variant &v) {
+            auto const last_applied_force =
+                get_value<Utils::Vector3d>(v) * m_conv_force;
+            Walberla::mpi_set_node_last_applied_force(m_index,
+                                                      last_applied_force);
+          },
+          [this]() {
+            return Walberla::mpi_get_node_last_applied_force(m_index) /
+                   m_conv_force;
+          }}});
   }
-},
-    {"viscosity",
-     [this](const Variant &v) {
-       auto const visc = m_conv_visc * get_value<double>(v);
-       if (m_lb_fluid)
-         m_lb_fluid->set_viscosity(visc);
-       else
-         std::get<0>(m_ctor_params) = visc;
-     },
-     [this]() {
-       return ((m_lb_fluid) ? m_lb_fluid->get_viscosity()
-                            : std::get<0>(m_ctor_params)) /
-              m_conv_visc;
-     }},
-    {"ext_force_density",
-     [this](const Variant &v) {
-       auto const ext_f = m_conv_force * get_value<Utils::Vector3d>(v);
-       if (m_lb_fluid)
-         m_lb_fluid->set_external_force(ext_f);
-       else
-         std::get<4>(m_ctor_params) = ext_f;
-     },
-     [this]() {
-       return ((m_lb_fluid) ? m_lb_fluid->get_external_force()
-                            : std::get<4>(m_ctor_params)) /
-              m_conv_force;
-     }},
-    {"boundary_force", AutoParameter::read_only,
-     [this]() {
-       return Walberla::mpi_get_node_boundary_force(m_ind) *
-              m_conv_boundary_force_get;
-     }},
-    {"pressure_tensor",
-     AutoParameter::read_only[this](){
-         return Walberla::mpi_get_node_pressure_tensor(m_ind) * m_conv_press;
-}
-}
-,
-    {"last_applied_force",
-     [this](const Variant &v) {
-       auto const last_applied_force =
-           get_value<double>(v) * m_conv_last_applied_force_set;
-       Walberla::mpi_set_node_last_applied_force(m_ind, last_applied_force);
-     },
-     [this]() {
-       return Walberla::mpi_get_node_last_applied_force(m_ind) *
-              m_conv_last_applied_force_get;
-     }},
-} // namespace ScriptInterface::walberla
-);
-}
 
-void do_construct(VariantMap const &params) override {
-  // construction of the LB object is deferred until the first
-  // activation, because the box length and MD time step can change
-  // freely when the LB object is not active yet
-
-  m_ind = get_value<double>(params, "key");
-
-  auto const tau = get_value<double>(params, "tau");
-  auto const agrid = get_value<double>(params, "agrid");
-  m_conv_visc = Utils::int_pow<1>(tau) / Utils::int_pow<2>(agrid);
-  m_conv_temp = Utils::int_pow<2>(tau) / Utils::int_pow<2>(agrid);
-  m_conv_dens_set = Utils::int_pow<3>(agrid);
-  m_conv_dens_get = 1 / m_conv_dens_set m_conv_velocity_set =
-                        Utils::int_pow<1>(tau) / Utils::int_pow<1>(agrid);
-  m_conv_dens = Utils::int_pow<3>(agrid);
-  m_conv_press = Utils::int_pow<1>(agrid) * Utils::int_pow<2>(tau);
-  m_conv_force = Utils::int_pow<2>(agrid) * Utils::int_pow<2>(tau);
-  m_conv_velocity_set = Utils::int_pow<1>(tau) / Utils::int_pow<1>(agrid);
-  m_conv_velocity_get = 1 / m_conv_velocity_set;
-  m_conv_last_applied_force_set =
-      Utils::int_pow<2>(tau) / Utils::int_pow<1>(agrid);
-  m_conv_last_applied_force_get = 1 / m_conv_last_applied_force_set;
-  m_lb_params = std::make_shared<::LBWalberlaParams>(agrid, tau);
-  m_ctor_params = {m_conv_visc * get_value<double>(params, "viscosity"),
-                   m_conv_temp * get_value<double>(params, "kT"),
-                   get_value<int>(params, "seed"),
-                   m_conv_force *
-                       get_value<Utils::Vector3d>(params, "ext_force_density")};
-  m_is_active = false;
-  m_is_single_precision = get_value<bool>(params, "single_precision");
-}
-
+  void do_construct(VariantMap const &params) override {
+    try {
+      m_lb_fluid = lb_walberla();
+      auto const &lb_params = lb_walberla_params();
+      auto const tau = lb_params->get_tau();
+      auto const agrid = lb_params->get_agrid();
+      auto const grid_size = m_lb_fluid->lattice().get_grid_dimensions();
+      m_index = get_value<Utils::Vector3i>(params, "index");
+      if (not(m_index < grid_size and m_index >= Utils::Vector3i{})) {
+        throw std::out_of_range("Index error");
+      }
+      m_conv_dens = Utils::int_pow<3>(agrid);
+      m_conv_press = Utils::int_pow<1>(agrid) * Utils::int_pow<2>(tau);
+      m_conv_force = Utils::int_pow<2>(tau) / Utils::int_pow<1>(agrid);
+      m_conv_velocity = Utils::int_pow<1>(tau) / Utils::int_pow<1>(agrid);
+    } catch (const std::exception &e) {
+      runtimeErrorMsg() << "LatticeWalberla failed: " << e.what();
+      m_lb_fluid.reset();
+    }
+  }
+};
 } // namespace ScriptInterface::walberla
 
 #endif // LB_WALBERLA

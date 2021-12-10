@@ -29,9 +29,6 @@ from .utils cimport Vector6d
 from .utils cimport make_array_locked
 
 
-cdef class LBFluidRoutines:
-    cdef Vector3i node
-
 ##############################################
 #
 # extern functions and structs
@@ -45,9 +42,6 @@ cdef extern from "grid_based_algorithms/lb_interface.hpp":
     void lb_lbfluid_save_checkpoint(string filename, bool binary) except +
     void lb_lbfluid_load_checkpoint(string filename, bool binary) except +
     Vector6d lb_lbfluid_get_pressure_tensor() except +
-    bool lb_lbnode_is_index_valid(const Vector3i & ind) except +
-    const Vector3d lb_lbnode_get_velocity_at_boundary(const Vector3i & ind) except +
-    void lb_lbnode_set_velocity_at_boundary(const Vector3i & ind, const Vector3d & u) except +
     void lb_lbnode_remove_from_boundary(const Vector3i & ind) except +
     void lb_lbfluid_clear_boundaries() except +
     void lb_lbfluid_update_boundary_from_shape(const vector[int] & raster,
@@ -85,19 +79,9 @@ cdef inline python_lbfluid_get_pressure_tensor(double agrid, double tau) except 
             [p_tensor[1], p_tensor[2], p_tensor[4]],
             [p_tensor[3], p_tensor[4], p_tensor[5]]]
 
-cdef inline python_lbnode_set_velocity_at_boundary(Vector3i node, Vector3d velocity) except +:
-    cdef double inv_lattice_speed = 1.0 / lb_lbfluid_get_lattice_speed()
-    cdef Vector3d c_velocity = velocity * inv_lattice_speed
-    lb_lbnode_set_velocity_at_boundary(node, c_velocity)
-
 cdef inline python_lbnode_get_interpolated_velocity(Vector3d pos) except +:
     cdef Vector3d c_velocity = lb_lbfluid_get_interpolated_velocity(pos)
     return make_array_locked(c_velocity * lb_lbfluid_get_lattice_speed())
-
-cdef inline python_lbnode_get_velocity_at_boundary(Vector3i node) except +:
-    cdef Vector3d c_velocity = lb_lbnode_get_velocity_at_boundary(node)
-    cdef double lattice_speed = lb_lbfluid_get_lattice_speed()
-    return make_array_locked(c_velocity * lattice_speed)
 
 cdef inline python_lb_lbfluid_update_boundary_from_shape(int[:] raster_view, double[:] vel_view) except +:
     cdef vector[int] raster

@@ -54,7 +54,7 @@ class LBSliceTest(ut.TestCase):
         output_vel = lb_fluid[:-1, :-1, :-1].velocity
         np.testing.assert_array_almost_equal(input_vel, np.copy(output_vel))
 
-        with self.assertRaisesRegex(ValueError, r"Input-dimensions of velocity array \(9, 9, 9, 2\) does not match slice dimensions \(9, 9, 9, 3\)"):
+        with self.assertRaisesRegex(ValueError, r"Input-dimensions of 'velocity' array \(9, 9, 9, 2\) does not match slice dimensions \(9, 9, 9, 3\)"):
             lb_fluid[:-1, :-1, :-1].velocity = input_vel[:, :, :, :2]
 
         # velocity broadcast
@@ -79,7 +79,7 @@ class LBSliceTest(ut.TestCase):
         output_pop = lb_fluid[:, :, :].population
         np.testing.assert_array_almost_equal(input_pop, np.copy(output_pop))
 
-        with self.assertRaisesRegex(ValueError, r"Input-dimensions of population array \(10, 10, 10, 5\) does not match slice dimensions \(10, 10, 10, 19\)"):
+        with self.assertRaisesRegex(ValueError, r"Input-dimensions of 'population' array \(10, 10, 10, 5\) does not match slice dimensions \(10, 10, 10, 19\)"):
             lb_fluid[:, :, :].population = input_pop[:, :, :, :5]
 
         # TODO Walberla: uncomment this block when pressure tensor is available
@@ -99,7 +99,7 @@ class LBSliceTest(ut.TestCase):
         np.testing.assert_array_almost_equal(
             output_index_shape, should_index_shape)
 
-        with self.assertRaisesRegex(AttributeError, "attribute 'index' of 'espressomd.lb.LBFluidRoutines' objects is not writable"):
+        with self.assertRaisesRegex(RuntimeError, "Property 'index' is read-only"):
             lb_fluid[1, 1:5, 6:].index = np.zeros(output_index_shape)
 
         # is_boundary on test slice [1:, 1:, 1:]
@@ -108,7 +108,7 @@ class LBSliceTest(ut.TestCase):
         np.testing.assert_array_almost_equal(
             output_boundary_shape, should_boundary_shape)
 
-        with self.assertRaises(NotImplementedError):
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'is_boundary' is read-only"):
             lb_fluid[1:, 1:, 1:].is_boundary = np.zeros(should_boundary_shape)
 
         # last_applied_force on test slice [:-1, :-1, -1]

@@ -39,6 +39,7 @@
 #include <utils/math/int_pow.hpp>
 
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <tuple>
 
@@ -53,7 +54,7 @@ class FluidWalberla : public AutoParameters<FluidWalberla> {
   double m_conv_temp;
   double m_conv_dens;
   double m_conv_press;
-  double m_conv_force;
+  double m_conv_force_dens;
   std::tuple<double, double, double, int, Utils::Vector3d> m_ctor_params;
 
 public:
@@ -128,7 +129,7 @@ public:
          }},
         {"ext_force_density",
          [this](const Variant &v) {
-           auto const ext_f = m_conv_force * get_value<Utils::Vector3d>(v);
+           auto const ext_f = m_conv_force_dens * get_value<Utils::Vector3d>(v);
            if (m_lb_fluid)
              m_lb_fluid->set_external_force(ext_f);
            else
@@ -137,7 +138,7 @@ public:
          [this]() {
            return ((m_lb_fluid) ? m_lb_fluid->get_external_force()
                                 : std::get<4>(m_ctor_params)) /
-                  m_conv_force;
+                  m_conv_force_dens;
          }},
     });
   }
@@ -152,14 +153,14 @@ public:
     m_conv_temp = Utils::int_pow<2>(tau) / Utils::int_pow<2>(agrid);
     m_conv_dens = Utils::int_pow<3>(agrid);
     m_conv_press = Utils::int_pow<1>(agrid) * Utils::int_pow<2>(tau);
-    m_conv_force = Utils::int_pow<2>(agrid) * Utils::int_pow<2>(tau);
+    m_conv_force_dens = Utils::int_pow<2>(agrid) * Utils::int_pow<2>(tau);
     m_lb_params = std::make_shared<::LBWalberlaParams>(agrid, tau);
-    m_ctor_params = {
-        m_conv_visc * get_value<double>(params, "viscosity"),
-        m_conv_dens * get_value<double>(params, "density"),
-        m_conv_temp * get_value<double>(params, "kT"),
-        get_value<int>(params, "seed"),
-        m_conv_force * get_value<Utils::Vector3d>(params, "ext_force_density")};
+    m_ctor_params = {m_conv_visc * get_value<double>(params, "viscosity"),
+                     m_conv_dens * get_value<double>(params, "density"),
+                     m_conv_temp * get_value<double>(params, "kT"),
+                     get_value<int>(params, "seed"),
+                     m_conv_force_dens * get_value<Utils::Vector3d>(
+                                             params, "ext_force_density")};
     m_is_active = false;
     m_is_single_precision = get_value<bool>(params, "single_precision");
   }

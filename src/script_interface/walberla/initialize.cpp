@@ -22,6 +22,7 @@
 
 #include "FluidWalberla.hpp"
 #include "LBFluidRoutinesWalberla.hpp"
+#include "LatticeWalberla.hpp"
 #include "VTKHandle.hpp"
 
 #include <script_interface/ObjectHandle.hpp>
@@ -33,7 +34,7 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<LatticeWalberla>("walberla::LatticeWalberla");
   om->register_new<FluidWalberla>("walberla::FluidWalberla");
   om->register_new<VTKHandle>("walberla::VTKHandle");
-  om->register_new<FluidWalberla>("walberla::LBFluidRoutinesWalberla");
+  om->register_new<LBFluidRoutinesWalberla>("walberla::LBFluidRoutinesWalberla");
 }
 
 } // namespace ScriptInterface::walberla

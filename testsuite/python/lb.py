@@ -161,11 +161,11 @@ class LBTest:
             node.last_applied_force = [1, 1, 1]
         with self.assertRaises(RuntimeError):
             node.pressure_tensor
-        with self.assertRaises(NotImplementedError):
+        with self.assertRaises(RuntimeError):
             node.pressure_tensor = np.eye(3, 3)
         with self.assertRaises(RuntimeError):
             node.is_boundary
-        with self.assertRaises(NotImplementedError):
+        with self.assertRaises(RuntimeError):
             node.is_boundary = 1
         with self.assertRaises(RuntimeError):
             node.population
@@ -248,11 +248,11 @@ class LBTest:
         lbf = self.lb_class(**self.params, **self.lb_params)
         self.system.actors.add(lbf)
         out_of_bounds = int(max(self.system.box_l) / self.params['agrid']) + 1
-        with self.assertRaises(ValueError):
+        with self.assertRaises(Exception):
             lbf[out_of_bounds, 0, 0].velocity
-        with self.assertRaises(ValueError):
+        with self.assertRaises(Exception):
             lbf[0, out_of_bounds, 0].velocity
-        with self.assertRaises(ValueError):
+        with self.assertRaises(Exception):
             lbf[0, 0, out_of_bounds].velocity
 
     def test_incompatible_agrid(self):

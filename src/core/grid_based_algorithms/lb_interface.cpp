@@ -346,23 +346,6 @@ Utils::Vector3i lb_lbfluid_get_shape() {
   throw NoLBActive();
 }
 
-bool lb_lbnode_is_index_valid(Utils::Vector3i const &ind) {
-  auto const limit = lb_lbfluid_get_shape();
-  return ind < limit && ind >= Utils::Vector3i{};
-}
-
-const Utils::Vector3d
-lb_lbnode_get_velocity_at_boundary(const Utils::Vector3i &ind) {
-#ifdef LB_WALBERLA
-  if (lattice_switch == ActiveLB::WALBERLA) {
-    return ::Communication::mpiCallbacks().call(
-        ::Communication::Result::one_rank,
-        Walberla::get_node_velocity_at_boundary, ind);
-  }
-#endif
-  throw NoLBActive();
-}
-
 #ifdef LB_WALBERLA
 /** Revert the correction done by waLBerla on off-diagonal terms. */
 inline void walberla_off_diagonal_correction(Utils::Vector6d &tensor) {
@@ -377,14 +360,14 @@ inline void walberla_off_diagonal_correction(Utils::Vector6d &tensor) {
 Utils::Vector6d lb_lbfluid_get_pressure_tensor_local() {
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
-    auto const gridsize = lb_walberla()->lattice().get_grid_dimensions();
+    auto const &lb = lb_walberla();
+    auto const gridsize = lb->lattice().get_grid_dimensions();
     Utils::Vector6d tensor{};
     for (int i = 0; i < gridsize[0]; i++) {
       for (int j = 0; j < gridsize[1]; j++) {
         for (int k = 0; k < gridsize[2]; k++) {
           const Utils::Vector3i node{{i, j, k}};
-          auto const node_tensor =
-              lb_walberla()->get_node_pressure_tensor(node);
+          auto const node_tensor = lb->get_node_pressure_tensor(node);
           if (node_tensor) {
             tensor += *node_tensor;
           }
@@ -417,17 +400,6 @@ const Utils::Vector6d lb_lbfluid_get_pressure_tensor() {
   throw NoLBActive();
 }
 
-void lb_lbnode_remove_from_boundary(const Utils::Vector3i &ind) {
-  if (lattice_switch == ActiveLB::WALBERLA) {
-#ifdef LB_WALBERLA
-    ::Communication::mpiCallbacks().call_all(
-        Walberla::remove_node_from_boundary, ind);
-#endif
-  } else {
-    throw NoLBActive();
-  }
-}
-
 void lb_lbfluid_clear_boundaries() {
   if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
@@ -457,18 +429,6 @@ void lb_lbfluid_update_boundary_from_list(std::vector<int> const &nodes_flat,
 #ifdef LB_WALBERLA
     ::Communication::mpiCallbacks().call_all(
         Walberla::update_boundary_from_list, nodes_flat, vel_flat);
-#endif
-  } else {
-    throw NoLBActive();
-  }
-}
-
-void lb_lbnode_set_velocity_at_boundary(const Utils::Vector3i &ind,
-                                        const Utils::Vector3d &u) {
-  if (lattice_switch == ActiveLB::WALBERLA) {
-#ifdef LB_WALBERLA
-    ::Communication::mpiCallbacks().call_all(
-        Walberla::set_node_velocity_at_boundary, ind, u);
 #endif
   } else {
     throw NoLBActive();
