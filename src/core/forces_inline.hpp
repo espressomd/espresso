@@ -26,6 +26,7 @@
 #include "forces.hpp"
 
 #include "bonded_interactions/bonded_interaction_data.hpp"
+#include "bonded_interactions/thermalized_bond_kernel.hpp"
 #include "immersed_boundary/ibm_tribend.hpp"
 #include "immersed_boundary/ibm_triel.hpp"
 #include "nonbonded_interactions/bmhtf-nacl.hpp"
@@ -61,11 +62,10 @@
 #endif
 
 #include "Particle.hpp"
+#include "bond_error.hpp"
 #include "errorhandling.hpp"
 #include "exclusions.hpp"
-#include "rotation.hpp"
 #include "thermostat.hpp"
-#include "thermostats/langevin_inline.hpp"
 
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
@@ -74,55 +74,6 @@
 #include <boost/variant.hpp>
 
 #include <tuple>
-
-/** Initialize the forces for a ghost particle */
-inline ParticleForce init_ghost_force(Particle const &) { return {}; }
-
-/** External particle forces */
-inline ParticleForce external_force(Particle const &p) {
-  ParticleForce f = {};
-
-#ifdef EXTERNAL_FORCES
-  f.f += p.p.ext_force;
-#ifdef ROTATION
-  f.torque += p.p.ext_torque;
-#endif
-#endif
-
-#ifdef ENGINE
-  // apply a swimming force in the direction of
-  // the particle's orientation axis
-  if (p.p.swim.swimming) {
-    f.f += p.p.swim.f_swim * p.r.calc_director();
-  }
-#endif
-
-  return f;
-}
-
-inline ParticleForce thermostat_force(Particle const &p, double time_step,
-                                      double kT) {
-  extern LangevinThermostat langevin;
-  if (!(thermo_switch & THERMO_LANGEVIN)) {
-    return {};
-  }
-
-#ifdef ROTATION
-  return {friction_thermo_langevin(langevin, p, time_step, kT),
-          p.p.rotation ? convert_vector_body_to_space(
-                             p, friction_thermo_langevin_rotation(
-                                    langevin, p, time_step, kT))
-                       : Utils::Vector3d{}};
-#else
-  return friction_thermo_langevin(langevin, p, time_step, kT);
-#endif
-}
-
-/** Initialize the forces for a real particle */
-inline ParticleForce init_local_particle_force(Particle const &part,
-                                               double time_step, double kT) {
-  return thermostat_force(part, time_step, kT) + external_force(part);
-}
 
 inline ParticleForce calc_non_bonded_pair_force(Particle const &p1,
                                                 Particle const &p2,
