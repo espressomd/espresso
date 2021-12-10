@@ -248,7 +248,7 @@ class LBTest:
         lbf = self.lb_class(**self.params, **self.lb_params)
         self.system.actors.add(lbf)
         # access out of bounds
-        out_of_bounds = int(max(self.system.box_l) / self.params['agrid']) + 1
+        out_of_bounds = max(lbf.shape) + 1
         error_msg = 'LBFluidNode instantiation failed: ERROR: LatticeWalberla failed: Index error'
         with self.assertRaisesRegex(Exception, error_msg):
             lbf[out_of_bounds, 0, 0].velocity

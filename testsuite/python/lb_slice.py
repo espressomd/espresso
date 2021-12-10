@@ -83,15 +83,15 @@ class LBSliceTest(ut.TestCase):
             lb_fluid[:, :, :].population = input_pop[:, :, :, :5]
 
         # TODO Walberla: uncomment this block when pressure tensor is available
-#        # pressure tensor on test slice [3, 6, 2:5]
-#        output_pressure_shape = lb_fluid[3, 6, 2:5].pressure_tensor.shape
-#        should_pressure_shape = (1, 1, 3, 3, 3)
-#        np.testing.assert_array_almost_equal(
-#            output_pressure_shape, should_pressure_shape)
+        # pressure tensor on test slice [3, 6, 2:5]
+        output_pressure_shape = lb_fluid[3, 6, 2:5].pressure_tensor.shape
+        should_pressure_shape = (1, 1, 3, 3, 3)
+        np.testing.assert_array_almost_equal(
+            output_pressure_shape, should_pressure_shape)
 
-#        with self.assertRaises(NotImplementedError):
-#            lb_fluid[3, 6, 2:5].pressure_tensor = np.zeros(
-#                should_pressure_shape)
+        with self.assertRaisesRegex(RuntimeError, "Property 'pressure_tensor' is read-only"):
+            lb_fluid[3, 6, 2:5].pressure_tensor = np.zeros(
+                should_pressure_shape)
 
         # index on test slice [1, 1:5, 6:]
         output_index_shape = lb_fluid[1, 1:5, 6:].index.shape
