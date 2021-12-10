@@ -46,7 +46,7 @@
 
 namespace ScriptInterface::walberla {
 
-class LBFluidRoutinesWalberla : public AutoParameters<LBFluidRoutinesWalberla> {
+class FluidNodeWalberla : public AutoParameters<FluidNodeWalberla> {
   std::shared_ptr<::LBWalberlaBase> m_lb_fluid;
   Utils::Vector3i m_index;
   double m_conv_dens;
@@ -55,7 +55,7 @@ class LBFluidRoutinesWalberla : public AutoParameters<LBFluidRoutinesWalberla> {
   double m_conv_velocity;
 
 public:
-  LBFluidRoutinesWalberla() {
+  FluidNodeWalberla() {
     add_parameters(
         {{"_index", AutoParameter::read_only, [this]() { return (m_index); }},
          {"velocity",

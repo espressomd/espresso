@@ -108,7 +108,7 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
                 if any(isinstance(item, slice) for item in key):
                     return LBSlice(key, self.shape)
                 else:
-                    return LBFluidRoutines(index=np.array(key))
+                    return LBFluidNode(index=np.array(key))
         else:
             raise Exception(
                 "%s is not a valid key. Should be a point on the nodegrid e.g. lbf[0,0,0], or a slice" % key)
@@ -645,8 +645,8 @@ ELSE:
 
 
 @script_interface_register
-class LBFluidRoutines(ScriptInterfaceHelper):
-    _so_name = "walberla::LBFluidRoutinesWalberla"
+class LBFluidNode(ScriptInterfaceHelper):
+    _so_name = "walberla::FluidNodeWalberla"
     _so_creation_policy = "LOCAL"
 
     def required_keys(self):
@@ -663,7 +663,7 @@ class LBFluidRoutines(ScriptInterfaceHelper):
                     f"At least the following keys have to be given as keyword arguments: {self.required_keys()}")
             self.validate_params(kwargs)
             super().__init__(*args, **kwargs)
-            utils.handle_errors("LBFluidRoutines instantiation failed")
+            utils.handle_errors("LBFluidNode instantiation failed")
         else:
             super().__init__(**kwargs)
 
@@ -753,7 +753,7 @@ class LBSlice:
         return x_indices, y_indices, z_indices
 
     def __getattr__(self, attr):
-        node = LBFluidRoutines(index=np.array([0, 0, 0]))
+        node = LBFluidNode(index=np.array([0, 0, 0]))
         if not hasattr(node, attr):
             if attr in self.__dict__:
                 return self.__dict__[attr]
@@ -771,14 +771,14 @@ class LBSlice:
         for i, x in enumerate(self.x_indices):
             for j, y in enumerate(self.y_indices):
                 for k, z in enumerate(self.z_indices):
-                    res[i, j, k] = getattr(LBFluidRoutines(
+                    res[i, j, k] = getattr(LBFluidNode(
                         index=np.array([x, y, z])), attr)
         if shape_res == (1,):
             res = np.squeeze(res, axis=-1)
         return utils.array_locked(res)
 
     def __setattr__(self, attr, value):
-        node = LBFluidRoutines(index=np.array([0, 0, 0]))
+        node = LBFluidNode(index=np.array([0, 0, 0]))
         if not hasattr(node, attr):
             self.__dict__[attr] = value
             return
@@ -804,13 +804,13 @@ class LBSlice:
         for i, x in enumerate(self.x_indices):
             for j, y in enumerate(self.y_indices):
                 for k, z in enumerate(self.z_indices):
-                    setattr(LBFluidRoutines(
+                    setattr(LBFluidNode(
                         index=np.array([x, y, z])), attr, value[i, j, k])
 
     def __iter__(self):
         indices = [(x, y, z) for (x, y, z) in itertools.product(
             self.x_indices, self.y_indices, self.z_indices)]
-        return (LBFluidRoutines(index=np.array(index)) for index in indices)
+        return (LBFluidNode(index=np.array(index)) for index in indices)
 
 
 def edge_detection(boundary_mask, periodicity):
