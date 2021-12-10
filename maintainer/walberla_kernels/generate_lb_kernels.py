@@ -24,7 +24,7 @@ import argparse
 
 import sympy as sp
 import pystencils as ps
-from lbmpy.creationfunctions import create_lb_collision_rule, create_mrt_orthogonal, create_srt
+from lbmpy.creationfunctions import create_lb_collision_rule, create_mrt_orthogonal
 import lbmpy.forcemodels
 from pystencils_walberla import CodeGeneration, codegen
 
@@ -41,7 +41,6 @@ from lbmpy.macroscopic_value_kernels import macroscopic_values_setter, macroscop
 
 import lees_edwards
 from pystencils.data_types import TypedSymbol
-
 # for collide-push from lbmpy.fieldaccess import StreamPushTwoFieldsAccessor
 
 from lbmpy.advanced_streaming.indexing import NeighbourOffsetArrays
@@ -409,24 +408,17 @@ with PatchedCodeGeneration() as ctx:
 
     u_p = lees_edwards.velocity_shift(points_up, points_down)
 
-    #u_p = lees_edwards.velocity_shift()
-    #velocity_field = ps.fields("velocity(3): [3D]", layout='fzyx')
+    le_config = lbmpy.LBMConfig(stencil=stencil, method=lbmpy.Method.SRT, relaxation_rate=sp.Symbol("omega_shear"), compressible=True,
+                                velocity_input=fields["velocity"].center_vector +
+                                sp.Matrix([u_p, 0, 0]),
+                                force_model=lbmpy.ForceModel.GUO,
+                                force=force_field.center_vector, kernel_type='collide_only')
+    lbm_opt = lbmpy.LBMOptimisation(symbolic_field=fields["pdfs"])
+    le_collision_rule_unthermalized = lbmpy.create_lb_update_rule(
+        lbm_config=le_config,
+        lbm_optimisation=lbm_opt)
 
-    # LB Method definition
-    le_method = create_srt(
-        stencil=stencil,
-        compressible=True,
-        relaxation_rate=sp.Symbol("omega_bulk"),
-        force_model=lbmpy.forcemodels.Guo(force_field.center_vector)
-    )
-
-    le_collision_rule_unthermalized = create_lb_collision_rule(
-        le_method,
-        velocity_input=fields['velocity'].center_vector +
-        sp.Matrix([u_p, 0, 0]),
-        optimization={'cse_global': True}
-    )
-    lees_edwards.modify_method(
+    le_collision_rule_unthermalized = lees_edwards.modify_method(
         le_collision_rule_unthermalized,
         0,
         1,
@@ -434,14 +426,14 @@ with PatchedCodeGeneration() as ctx:
         points_down)
     generate_collision_sweep(
         ctx,
-        le_method,
+        le_config,
         le_collision_rule_unthermalized,
         f"CollideSweep{precision_prefix}LeesEdwards",
         {}
     )
     generate_collision_sweep(
         ctx,
-        le_method,
+        le_config,
         le_collision_rule_unthermalized,
         f"CollideSweep{precision_prefix}LeesEdwardsAVX",
         {"cpu_vectorize_info": cpu_vectorize_info}

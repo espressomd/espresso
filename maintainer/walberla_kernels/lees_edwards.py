@@ -1,8 +1,6 @@
 from pystencils.astnodes import LoopOverCoordinate
 #from pystencils.field import fields
 from pystencils.data_types import type_all_numbers
-from pystencils.data_types import TypedSymbol
-from pystencils import Assignment
 
 #from lbmpy.creationfunctions import create_lb_update_rule, create_mrt_orthogonal, force_model_from_string
 #from lbmpy.stencils import get_stencil
@@ -13,6 +11,7 @@ from pystencils import Assignment
 #import relaxation_rates
 
 import sympy as sp
+from pystencils import Assignment
 
 
 def velocity_shift(points_up, points_down):
@@ -33,10 +32,8 @@ def velocity_shift(points_up, points_down):
     return u_p
 
 
-def modify_method(collision, shear_dir, shear_dir_normal, points_up, points_down):
-    #points_up = TypedSymbol('points_up', bool)
-    #points_down = TypedSymbol('points_down', bool)
-
+def modify_method(collision, shear_dir, shear_dir_normal,
+                  points_up, points_down):
     to_insert = [s.lhs for s in collision.subexpressions
                  if collision.method.first_order_equilibrium_moment_symbols[shear_dir]
                  in s.free_symbols]
@@ -45,9 +42,9 @@ def modify_method(collision, shear_dir, shear_dir_normal, points_up, points_down
     ma = []
     for a, c in zip(collision.main_assignments, collision.method.stencil):
         if c[shear_dir_normal] == -1:
-            b = (True, False)
-        elif c[shear_dir_normal] == 1:
             b = (False, True)
+        elif c[shear_dir_normal] == 1:
+            b = (True, False)
         else:
             b = (False, False)
         a = Assignment(a.lhs, a.rhs.replace(points_down, b[0]))

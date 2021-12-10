@@ -182,8 +182,6 @@ private:
 
     void operator()(LeesEdwardsCollisionModel &cm, IBlock *b) {
       // cm.shear_velocity_ = m_lees_edwards_sweep->get_shear_velocity();
-      cm.points_up_ = m_lees_edwards_sweep->points_up(b);
-      cm.points_down_ = m_lees_edwards_sweep->points_down(b);
       cm(b);
     }
 
@@ -474,10 +472,13 @@ public:
     integrate_boundaries(blocks);
     // LB stream
     integrate_stream(blocks);
+
+    update_velocity_field_from_pdf(blocks);
     // LB collide
     integrate_collide(blocks);
 
     update_velocity_field_from_pdf(blocks);
+
     // Refresh ghost layers
     (*m_full_communication)();
   }
@@ -549,7 +550,7 @@ public:
     // a few values are initialized to 0 or false, will be updated later
     auto obj =
         LeesEdwardsCollisionModel(m_last_applied_force_field_id, m_pdf_field_id,
-                                  m_velocity_field_id, omega, false, false);
+                                  m_velocity_field_id, omega);
     m_collision_model = std::make_shared<CollisionModel>(std::move(obj));
     // auto *cm = boost::get<LeesEdwardsCollisionModel>(&*m_collision_model);
     // cm->grid_size_ = int64_t(shear_plane_size);

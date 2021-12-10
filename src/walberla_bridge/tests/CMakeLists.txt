@@ -53,3 +53,9 @@ unit_test(NAME kernels_unit_tests SRC kernels_unit_tests.cpp
           ${WALBERLA_LIBS})
 target_include_directories(kernels_unit_tests PRIVATE ${WALBERLA_INCLUDE_DIRS}
                                                    ${walberla_BINARY_DIR}/src)
+unit_test(NAME LBWalberlaImpl_lees_edwards_test SRC LBWalberlaImpl_lees_edwards.cpp
+          DEPENDS WalberlaBridge cxx_walberla_interface EspressoUtils
+          Boost::mpi ${WALBERLA_LIBS})
+target_include_directories(LBWalberlaImpl_lees_edwards_test PRIVATE ${WALBERLA_INCLUDE_DIRS}
+                                                   ${walberla_BINARY_DIR}/src)
+
