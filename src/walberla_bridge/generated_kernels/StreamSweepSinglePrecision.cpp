@@ -1,6 +1,6 @@
 // kernel generated with pystencils v0.4.3+12.g29e0e84, lbmpy v0.4.3+2.g0e17e61,
 // lbmpy_walberla/pystencils_walberla from commit
-// 55e6cf598e7e55f496ffaecd40bde632de76930e
+// 08f04ef64f95609b47838db85862033a1600afa1
 
 //======================================================================================================================
 //
@@ -323,8 +323,8 @@ static FUNC_PREFIX void streamsweepsingleprecision_streamsweepsingleprecision(
 
 void StreamSweepSinglePrecision::run(IBlock *block) {
   auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
-  auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
   auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
+  auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
   field::GhostLayerField<float, 19> *pdfs_tmp;
   {
     // Getting temporary field pdfs_tmp
@@ -402,8 +402,8 @@ void StreamSweepSinglePrecision::runOnCellInterval(
     return;
 
   auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
-  auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
   auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
+  auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
   field::GhostLayerField<float, 19> *pdfs_tmp;
   {
     // Getting temporary field pdfs_tmp

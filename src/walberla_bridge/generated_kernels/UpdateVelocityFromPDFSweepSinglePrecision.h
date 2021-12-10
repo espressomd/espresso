@@ -15,7 +15,7 @@
 //  You should have received a copy of the GNU General Public License along
 //  with waLBerla (see COPYING.txt). If not, see <http://www.gnu.org/licenses/>.
 //
-//! \\file CollideSweepSinglePrecision.h
+//! \\file UpdateVelocityFromPDFSweepSinglePrecision.h
 //! \\author pystencils
 //======================================================================================================================
 
@@ -49,11 +49,11 @@ namespace walberla {
 namespace pystencils {
 
 
-class CollideSweepSinglePrecision
+class UpdateVelocityFromPDFSweepSinglePrecision
 {
 public:
-    CollideSweepSinglePrecision( BlockDataID forceID_, BlockDataID pdfsID_, float omega_bulk, float omega_even, float omega_odd, float omega_shear )
-        : forceID(forceID_), pdfsID(pdfsID_), omega_bulk_(omega_bulk), omega_even_(omega_even), omega_odd_(omega_odd), omega_shear_(omega_shear)
+    UpdateVelocityFromPDFSweepSinglePrecision( BlockDataID forceID_, BlockDataID pdfsID_, BlockDataID velocityID_ )
+        : forceID(forceID_), pdfsID(pdfsID_), velocityID(velocityID_)
     {};
 
     
@@ -69,14 +69,14 @@ public:
     }
     
 
-    static std::function<void (IBlock *)> getSweep(const shared_ptr<CollideSweepSinglePrecision> & kernel)
+    static std::function<void (IBlock *)> getSweep(const shared_ptr<UpdateVelocityFromPDFSweepSinglePrecision> & kernel)
     {
         return [kernel] 
                (IBlock * b) 
                { kernel->run(b); };
     }
 
-    static std::function<void (IBlock*)> getSweepOnCellInterval(const shared_ptr<CollideSweepSinglePrecision> & kernel, const shared_ptr<StructuredBlockStorage> & blocks, const CellInterval & globalCellInterval, cell_idx_t ghostLayers=1)
+    static std::function<void (IBlock*)> getSweepOnCellInterval(const shared_ptr<UpdateVelocityFromPDFSweepSinglePrecision> & kernel, const shared_ptr<StructuredBlockStorage> & blocks, const CellInterval & globalCellInterval, cell_idx_t ghostLayers=1)
     {
         return [kernel, blocks, globalCellInterval, ghostLayers]
                (IBlock * b) 
@@ -100,10 +100,7 @@ public:
 
     BlockDataID forceID;
     BlockDataID pdfsID;
-    float omega_bulk_;
-    float omega_even_;
-    float omega_odd_;
-    float omega_shear_;
+    BlockDataID velocityID;
 
 };
 

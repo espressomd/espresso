@@ -58,6 +58,8 @@
 #include "generated_kernels/InitialPDFsSetterSinglePrecision.h"
 #include "generated_kernels/StreamSweepDoublePrecision.h"
 #include "generated_kernels/StreamSweepSinglePrecision.h"
+#include "generated_kernels/UpdateVelocityFromPDFSweepDoublePrecision.h"
+#include "generated_kernels/UpdateVelocityFromPDFSweepSinglePrecision.h"
 #include "generated_kernels/macroscopic_values_accessors_double_precision.h"
 #include "generated_kernels/macroscopic_values_accessors_single_precision.h"
 #include "vtk_writers.hpp"
@@ -110,15 +112,19 @@ template <typename FT = double> struct KernelTrait {
       pystencils::CollideSweepDoublePrecisionThermalizedAVX;
   using UnthermalizedCollisionModel =
       pystencils::CollideSweepDoublePrecisionAVX;
-  using LeesEdwardsCollisionModel = pystencils::CollideSweepDoublePrecisionLeesEdwardsAVX;
+  using LeesEdwardsCollisionModel =
+      pystencils::CollideSweepDoublePrecisionLeesEdwardsAVX;
 #else
   using ThermalizedCollisionModel =
       pystencils::CollideSweepDoublePrecisionThermalized;
   using UnthermalizedCollisionModel = pystencils::CollideSweepDoublePrecision;
-  using LeesEdwardsCollisionModel = pystencils::CollideSweepDoublePrecisionLeesEdwards;
+  using LeesEdwardsCollisionModel =
+      pystencils::CollideSweepDoublePrecisionLeesEdwards;
 #endif
   using StreamSweep = pystencils::StreamSweepDoublePrecision;
   using InitialPDFsSetter = pystencils::InitialPDFsSetterDoublePrecision;
+  using UpdateVelocityFromPDFSweep =
+      pystencils::UpdateVelocityFromPDFSweepDoublePrecision;
 };
 template <> struct KernelTrait<float> {
 #ifdef __AVX2__
@@ -126,15 +132,19 @@ template <> struct KernelTrait<float> {
       pystencils::CollideSweepSinglePrecisionThermalizedAVX;
   using UnthermalizedCollisionModel =
       pystencils::CollideSweepSinglePrecisionAVX;
-  using LeesEdwardsCollisionModel = pystencils::CollideSweepSinglePrecisionLeesEdwardsAVX;
+  using LeesEdwardsCollisionModel =
+      pystencils::CollideSweepSinglePrecisionLeesEdwardsAVX;
 #else
   using ThermalizedCollisionModel =
       pystencils::CollideSweepSinglePrecisionThermalized;
   using UnthermalizedCollisionModel = pystencils::CollideSweepSinglePrecision;
-  using LeesEdwardsCollisionModel = pystencils::CollideSweepSinglePrecisionLeesEdwards;
+  using LeesEdwardsCollisionModel =
+      pystencils::CollideSweepSinglePrecisionLeesEdwards;
 #endif
   using StreamSweep = pystencils::StreamSweepSinglePrecision;
   using InitialPDFsSetter = pystencils::InitialPDFsSetterSinglePrecision;
+  using UpdateVelocityFromPDFSweep =
+      pystencils::UpdateVelocityFromPDFSweepSinglePrecision;
 };
 } // namespace detail
 
@@ -154,6 +164,8 @@ class LBWalberlaImpl : public LBWalberlaBase {
   using StreamSweep = typename detail::KernelTrait<FloatType>::StreamSweep;
   using InitialPDFsSetter =
       typename detail::KernelTrait<FloatType>::InitialPDFsSetter;
+  using UpdateVelocityFromPDFSweep =
+      typename detail::KernelTrait<FloatType>::UpdateVelocityFromPDFSweep;
   using BoundaryModel = BoundaryHandling<FloatType>;
 
 protected:
@@ -169,7 +181,7 @@ private:
     void operator()(ThermalizedCollisionModel &cm, IBlock *b) { cm(b); }
 
     void operator()(LeesEdwardsCollisionModel &cm, IBlock *b) {
-      //cm.shear_velocity_ = m_lees_edwards_sweep->get_shear_velocity();
+      // cm.shear_velocity_ = m_lees_edwards_sweep->get_shear_velocity();
       cm.points_up_ = m_lees_edwards_sweep->points_up(b);
       cm.points_down_ = m_lees_edwards_sweep->points_down(b);
       cm(b);
@@ -203,6 +215,8 @@ public:
   using VectorField = GhostLayerField<FloatType, 3u>;
   using FlagField = typename BoundaryModel::FlagField;
   using PdfField = GhostLayerField<FloatType, Stencil::Size>;
+  using Lattice_T = LatticeWalberla::Lattice_T;
+
   using Lattice_T = LatticeWalberla::Lattice_T;
 
 private:
@@ -306,6 +320,7 @@ protected:
 
   // Stream sweep
   std::shared_ptr<StreamSweep> m_stream;
+  std::shared_ptr<UpdateVelocityFromPDFSweep> m_update_velocity_field_from_pdfs;
 
   // Collision sweep
   std::shared_ptr<CollisionModel> m_collision_model;
@@ -400,11 +415,24 @@ public:
         m_last_applied_force_field_id, m_pdf_field_id, m_velocity_field_id);
     set_collision_model();
 
+    m_update_velocity_field_from_pdfs =
+        std::make_shared<UpdateVelocityFromPDFSweep>(
+            m_last_applied_force_field_id, m_pdf_field_id, m_velocity_field_id);
+
     // Synchronize ghost layers
     (*m_full_communication)();
   }
 
-private:
+  inline void integrate_stream(std::shared_ptr<Lattice_T> const &blocks) {
+    for (auto b = blocks->begin(); b != blocks->end(); ++b)
+      (*m_stream)(&*b);
+  };
+
+  inline void
+  update_velocity_field_from_pdf(std::shared_ptr<Lattice_T> const &blocks) {
+    for (auto b = blocks->begin(); b != blocks->end(); ++b)
+      (*m_update_velocity_field_from_pdfs)(&*b);
+  }
   inline void integrate_collide(std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       boost::apply_visitor(run_collide_sweep, *m_collision_model,
@@ -414,29 +442,14 @@ private:
     }
   }
 
-  inline void integrate_stream(std::shared_ptr<Lattice_T> const &blocks) {
-    for (auto b = blocks->begin(); b != blocks->end(); ++b)
-      (*m_stream)(&*b);
-  }
-
-  inline void integrate_boundaries(std::shared_ptr<Lattice_T> const &blocks) {
-    for (auto b = blocks->begin(); b != blocks->end(); ++b)
-      (*m_boundary)(&*b);
-  }
-
   inline void integrate_reset_force(std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_reset_force)(&*b);
   }
 
-  inline void integrate_vtk_writers() {
-    for (auto it = m_vtk_auto.begin(); it != m_vtk_auto.end(); ++it) {
-      auto &vtk_handle = it->second;
-      if (vtk_handle->enabled) {
-        vtk::writeFiles(vtk_handle->ptr)();
-        vtk_handle->execution_count++;
-      }
-    }
+  inline void integrate_boundaries(std::shared_ptr<Lattice_T> const &blocks) {
+    for (auto b = blocks->begin(); b != blocks->end(); ++b)
+      (*m_boundary)(&*b);
   }
 
   void integrate_push_scheme() {
@@ -448,6 +461,7 @@ private:
     (*m_pdf_streaming_communication)();
     // Handle boundaries
     integrate_boundaries(blocks);
+    (*m_pdf_communication)();
     // LB stream
     integrate_stream(blocks);
     // Refresh ghost layers
@@ -462,10 +476,21 @@ private:
     integrate_boundaries(blocks);
     // LB stream
     integrate_stream(blocks);
-    // Refresh ghost layers
-    (*m_full_communication)();
     // LB collide
     integrate_collide(blocks);
+
+    update_velocity_field_from_pdf(blocks);
+    // Refresh ghost layers
+    (*m_full_communication)();
+  }
+  inline void integrate_vtk_writers() {
+    for (auto it = m_vtk_auto.begin(); it != m_vtk_auto.end(); ++it) {
+      auto &vtk_handle = it->second;
+      if (vtk_handle->enabled) {
+        vtk::writeFiles(vtk_handle->ptr)();
+        vtk_handle->execution_count++;
+      }
+    }
   }
 
 public:
@@ -475,7 +500,6 @@ public:
     } else {
       integrate_push_scheme();
     }
-
     // Handle VTK writers
     integrate_vtk_writers();
   }
@@ -525,12 +549,12 @@ public:
     auto const omega = shear_mode_relaxation_rate();
     auto const omega_odd = odd_mode_relaxation_rate(omega);
     // a few values are initialized to 0 or false, will be updated later
-    auto obj = LeesEdwardsCollisionModel(
-        m_last_applied_force_field_id, m_pdf_field_id, m_velocity_field_id,
-        omega, false, false);
+    auto obj =
+        LeesEdwardsCollisionModel(m_last_applied_force_field_id, m_pdf_field_id,
+                                  m_velocity_field_id, omega, false, false);
     m_collision_model = std::make_shared<CollisionModel>(std::move(obj));
-    //auto *cm = boost::get<LeesEdwardsCollisionModel>(&*m_collision_model);
-    //cm->grid_size_ = int64_t(shear_plane_size);
+    // auto *cm = boost::get<LeesEdwardsCollisionModel>(&*m_collision_model);
+    // cm->grid_size_ = int64_t(shear_plane_size);
   }
 
   void set_viscosity(double viscosity) override {
