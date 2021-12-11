@@ -286,8 +286,8 @@ initialpdfssetterdoubleprecision_initialpdfssetterdoubleprecision(
 
 void InitialPDFsSetterDoublePrecision::run(IBlock *block) {
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
-  auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
   auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
+  auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
 
   auto &rho_0 = this->rho_0_;
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(force->nrOfGhostLayers()));
@@ -345,8 +345,8 @@ void InitialPDFsSetterDoublePrecision::runOnCellInterval(
     return;
 
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
-  auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
   auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
+  auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
 
   auto &rho_0 = this->rho_0_;
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(force->nrOfGhostLayers()));

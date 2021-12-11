@@ -416,7 +416,16 @@ public:
             m_last_applied_force_field_id, m_pdf_field_id, m_velocity_field_id);
 
     // Synchronize ghost layers
-    (*m_full_communication)();
+    (*m_full_communication).communicate();
+  }
+
+  inline void integrate_collide(std::shared_ptr<Lattice_T> const &blocks) {
+    for (auto b = blocks->begin(); b != blocks->end(); ++b)
+      boost::apply_visitor(run_collide_sweep, *m_collision_model,
+                           boost::variant<IBlock *>(&*b));
+    if (auto *cm = boost::get<ThermalizedCollisionModel>(&*m_collision_model)) {
+      cm->time_step_++;
+    }
   }
 
   inline void integrate_stream(std::shared_ptr<Lattice_T> const &blocks) {
@@ -429,23 +438,24 @@ public:
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_update_velocity_field_from_pdfs)(&*b);
   }
-  inline void integrate_collide(std::shared_ptr<Lattice_T> const &blocks) {
+
+  inline void integrate_boundaries(std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
-      boost::apply_visitor(run_collide_sweep, *m_collision_model,
-                           boost::variant<IBlock *>(&*b));
-    if (auto *cm = boost::get<ThermalizedCollisionModel>(&*m_collision_model)) {
-      cm->time_step_++;
-    }
+      (*m_boundary)(&*b);
   }
 
   inline void integrate_reset_force(std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_reset_force)(&*b);
   }
-
-  inline void integrate_boundaries(std::shared_ptr<Lattice_T> const &blocks) {
-    for (auto b = blocks->begin(); b != blocks->end(); ++b)
-      (*m_boundary)(&*b);
+  inline void integrate_vtk_writers() {
+    for (auto it = m_vtk_auto.begin(); it != m_vtk_auto.end(); ++it) {
+      auto &vtk_handle = it->second;
+      if (vtk_handle->enabled) {
+        vtk::writeFiles(vtk_handle->ptr)();
+        vtk_handle->execution_count++;
+      }
+    }
   }
 
   void integrate_push_scheme() {
@@ -454,14 +464,14 @@ public:
     integrate_reset_force(blocks);
     // LB collide
     integrate_collide(blocks);
-    (*m_pdf_streaming_communication)();
     // Handle boundaries
     integrate_boundaries(blocks);
-    (*m_pdf_streaming_communication)();
+    (*m_pdf_streaming_communication).communicate();
     // LB stream
     integrate_stream(blocks);
+    update_velocity_field_from_pdf(blocks);
     // Refresh ghost layers
-    (*m_full_communication)();
+    (*m_full_communication).communicate();
   }
 
   void integrate_pull_scheme() {
@@ -478,16 +488,7 @@ public:
     integrate_collide(blocks);
 
     // Refresh ghost layers
-    (*m_full_communication)();
-  }
-  inline void integrate_vtk_writers() {
-    for (auto it = m_vtk_auto.begin(); it != m_vtk_auto.end(); ++it) {
-      auto &vtk_handle = it->second;
-      if (vtk_handle->enabled) {
-        vtk::writeFiles(vtk_handle->ptr)();
-        vtk_handle->execution_count++;
-      }
-    }
+    (*m_full_communication).communicate();
   }
 
 public:
@@ -501,7 +502,7 @@ public:
     integrate_vtk_writers();
   }
 
-  void ghost_communication() override { (*m_full_communication)(); }
+  void ghost_communication() override { (*m_full_communication).communicate(); }
 
   void set_collision_model() override {
     auto const omega = shear_mode_relaxation_rate();

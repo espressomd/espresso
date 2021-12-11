@@ -293,8 +293,8 @@ initialpdfssettersingleprecision_initialpdfssettersingleprecision(
 } // namespace internal_b8085d63d6b7e842485134abbac511e8
 
 void InitialPDFsSetterSinglePrecision::run(IBlock *block) {
-  auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
   auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
+  auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
   auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
 
   auto &rho_0 = this->rho_0_;
@@ -352,8 +352,8 @@ void InitialPDFsSetterSinglePrecision::runOnCellInterval(
   if (ci.empty())
     return;
 
-  auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
   auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
+  auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
   auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
 
   auto &rho_0 = this->rho_0_;

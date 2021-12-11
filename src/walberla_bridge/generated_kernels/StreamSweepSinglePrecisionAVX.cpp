@@ -519,8 +519,8 @@ streamsweepsingleprecisionavx_streamsweepsingleprecisionavx(
 } // namespace internal_5e7ed0276adbfbb1ac4789ac0a0f54c4
 
 void StreamSweepSinglePrecisionAVX::run(IBlock *block) {
-  auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
   auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
+  auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
   auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
   field::GhostLayerField<float, 19> *pdfs_tmp;
   {
@@ -593,8 +593,8 @@ void StreamSweepSinglePrecisionAVX::runOnCellInterval(
   if (ci.empty())
     return;
 
-  auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
   auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
+  auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
   auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
   field::GhostLayerField<float, 19> *pdfs_tmp;
   {

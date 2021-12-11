@@ -219,30 +219,30 @@ updatevelocityfrompdfsweepsingleprecision_updatevelocityfrompdfsweepsingleprecis
 } // namespace internal_5bc8ae7b61d5e7dd0cac9df61b0fb69a
 
 void UpdateVelocityFromPDFSweepSinglePrecision::run(IBlock *block) {
-  auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
   auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
+  auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
   auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
 
-  WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(force->nrOfGhostLayers()));
-  float *RESTRICT const _data_force = force->dataAt(0, 0, 0, 0);
+  WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(force->nrOfGhostLayers()));
+  float *RESTRICT const _data_force = force->dataAt(-1, -1, -1, 0);
   WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx);
-  WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(pdfs->nrOfGhostLayers()));
-  float *RESTRICT const _data_pdfs = pdfs->dataAt(0, 0, 0, 0);
+  WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(pdfs->nrOfGhostLayers()));
+  float *RESTRICT const _data_pdfs = pdfs->dataAt(-1, -1, -1, 0);
   WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
-  WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(velocity->nrOfGhostLayers()));
-  float *RESTRICT _data_velocity = velocity->dataAt(0, 0, 0, 0);
+  WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(velocity->nrOfGhostLayers()));
+  float *RESTRICT _data_velocity = velocity->dataAt(-1, -1, -1, 0);
   WALBERLA_ASSERT_EQUAL(velocity->layout(), field::fzyx);
   WALBERLA_ASSERT_GREATER_EQUAL(force->xSizeWithGhostLayer(),
-                                int64_t(cell_idx_c(force->xSize()) + 0));
-  const int64_t _size_force_0 = int64_t(cell_idx_c(force->xSize()) + 0);
+                                int64_t(cell_idx_c(force->xSize()) + 2));
+  const int64_t _size_force_0 = int64_t(cell_idx_c(force->xSize()) + 2);
   WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx);
   WALBERLA_ASSERT_GREATER_EQUAL(force->ySizeWithGhostLayer(),
-                                int64_t(cell_idx_c(force->ySize()) + 0));
-  const int64_t _size_force_1 = int64_t(cell_idx_c(force->ySize()) + 0);
+                                int64_t(cell_idx_c(force->ySize()) + 2));
+  const int64_t _size_force_1 = int64_t(cell_idx_c(force->ySize()) + 2);
   WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx);
   WALBERLA_ASSERT_GREATER_EQUAL(force->zSizeWithGhostLayer(),
-                                int64_t(cell_idx_c(force->zSize()) + 0));
-  const int64_t _size_force_2 = int64_t(cell_idx_c(force->zSize()) + 0);
+                                int64_t(cell_idx_c(force->zSize()) + 2));
+  const int64_t _size_force_2 = int64_t(cell_idx_c(force->zSize()) + 2);
   WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx);
   const int64_t _stride_force_0 = int64_t(force->xStride());
   const int64_t _stride_force_1 = int64_t(force->yStride());
@@ -277,8 +277,8 @@ void UpdateVelocityFromPDFSweepSinglePrecision::runOnCellInterval(
   if (ci.empty())
     return;
 
-  auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
   auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
+  auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
   auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
 
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(force->nrOfGhostLayers()));
