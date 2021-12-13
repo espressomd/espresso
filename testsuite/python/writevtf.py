@@ -55,9 +55,10 @@ class CommonTests(ut.TestCase):
 
     system.bonded_inter.add(
         espressomd.interactions.FeneBond(k=1., d_r_max=10.0))
-    system.part[0].add_bond((0, 1))
-    system.part[0].add_bond((0, 2))
-    system.part[0].add_bond((0, 3))
+    p0 = system.part.by_id(0)
+    p0.add_bond((0, 1))
+    p0.add_bond((0, 2))
+    p0.add_bond((0, 3))
 
     system.integrator.run(steps=0)
 
@@ -101,10 +102,9 @@ class CommonTests(ut.TestCase):
     def test_vtf_pid_map(self):
         system = self.system
         types = self.types_to_write
-        if types == 'all':
-            ids = system.part[:].id
-        else:
-            ids = system.part[:].id[np.isin(system.part[:].type, types)]
+        ids = system.part.all().id
+        if types != 'all':
+            ids = ids[np.isin(system.part.all().type, types)]
         mapping_ref = dict(zip(ids, range(len(ids))))
         mapping = espressomd.io.writer.vtf.vtf_pid_map(system, types=types)
         self.assertEqual(mapping, mapping_ref)

@@ -55,7 +55,7 @@ class ElectrostaticInteractionsTests:
         self.system.actors.clear()
 
     def test_forces(self):
-        measured_f = np.copy(self.system.part[:].f)
+        measured_f = np.copy(self.system.part.all().f)
         np.testing.assert_allclose(measured_f, self.forces_target,
                                    atol=self.allowed_error)
 

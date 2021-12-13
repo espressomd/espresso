@@ -45,7 +45,7 @@ class PairCriteria(ut.TestCase):
 
         # Decisions
         # Periodic system. Particles in range via minimum image convention
-        self.system.periodicity = (1, 1, 1)
+        self.system.periodicity = 3 * [True]
         self.assertTrue(dc.decide(self.p1, self.p2))
         self.assertTrue(dc.decide(self.p1.id, self.p2.id))
 
@@ -101,13 +101,13 @@ class PairCriteria(ut.TestCase):
         self.assertTrue(not bc.decide(self.p1.id, self.p2.id))
 
         # Add bond. Then the criterion should match
-        self.system.part[self.p1.id].bonds = ((bt, self.p2.id),)
+        self.p1.bonds = ((bt, self.p2.id),)
         self.assertTrue(bc.decide(self.p1, self.p2))
         self.assertTrue(bc.decide(self.p1.id, self.p2.id))
 
         # Place bond on the 2nd particle. The criterion should still match
-        self.system.part[self.p1.id].bonds = ()
-        self.system.part[self.p2.id].bonds = ((bt, self.p1.id),)
+        self.p1.bonds = ()
+        self.p2.bonds = ((bt, self.p1.id),)
         self.assertTrue(bc.decide(self.p1, self.p2))
         self.assertTrue(bc.decide(self.p1.id, self.p2.id))
 

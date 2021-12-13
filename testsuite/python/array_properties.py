@@ -99,7 +99,7 @@ class ArrayPropertyTest(ArrayCommon):
     system.box_l = [12.0, 12.0, 12.0]
     system.time_step = 0.01
     system.cell_system.skin = 0.01
-    system.part.add(pos=[0, 0, 0])
+    partcl = system.part.add(pos=[0, 0, 0])
 
     def setUp(self):
         self.system.box_l = [12.0, 12.0, 12.0]
@@ -112,77 +112,77 @@ class ArrayPropertyTest(ArrayCommon):
         self.assertTrue(cpy.flags.writeable)
 
     def test_common(self):
-        self.assert_operator_usage_raises(self.system.part[0].pos)
-        self.assert_operator_usage_raises(self.system.part[0].v)
-        self.assert_operator_usage_raises(self.system.part[0].f)
-        self.assert_operator_usage_raises(self.system.part[0].pos_folded)
+        self.assert_operator_usage_raises(self.partcl.pos)
+        self.assert_operator_usage_raises(self.partcl.v)
+        self.assert_operator_usage_raises(self.partcl.f)
+        self.assert_operator_usage_raises(self.partcl.pos_folded)
 
         self.assert_operator_usage_raises(self.system.box_l)
 
-        check_array_writable(self.system.part[0].pos)
-        check_array_writable(self.system.part[0].v)
-        check_array_writable(self.system.part[0].f)
+        check_array_writable(self.partcl.pos)
+        check_array_writable(self.partcl.v)
+        check_array_writable(self.partcl.f)
         check_array_writable(self.system.box_l)
 
-        self.assert_copy_is_writable(self.system.part[0].pos)
-        self.assert_copy_is_writable(self.system.part[0].v)
-        self.assert_copy_is_writable(self.system.part[0].f)
-        self.assert_copy_is_writable(self.system.part[0].pos_folded)
+        self.assert_copy_is_writable(self.partcl.pos)
+        self.assert_copy_is_writable(self.partcl.v)
+        self.assert_copy_is_writable(self.partcl.f)
+        self.assert_copy_is_writable(self.partcl.pos_folded)
 
         self.assert_copy_is_writable(self.system.box_l)
 
     @utx.skipIfMissingFeatures(["ROTATION"])
     def test_rotation(self):
-        self.assert_operator_usage_raises(self.system.part[0].omega_lab)
-        self.assert_operator_usage_raises(self.system.part[0].quat)
-        self.assert_operator_usage_raises(self.system.part[0].rotation)
-        self.assert_operator_usage_raises(self.system.part[0].omega_body)
-        self.assert_operator_usage_raises(self.system.part[0].torque_lab)
+        self.assert_operator_usage_raises(self.partcl.omega_lab)
+        self.assert_operator_usage_raises(self.partcl.quat)
+        self.assert_operator_usage_raises(self.partcl.rotation)
+        self.assert_operator_usage_raises(self.partcl.omega_body)
+        self.assert_operator_usage_raises(self.partcl.torque_lab)
         if espressomd.has_features("EXTERNAL_FORCES"):
-            self.assert_operator_usage_raises(self.system.part[0].ext_torque)
+            self.assert_operator_usage_raises(self.partcl.ext_torque)
 
-        check_array_writable(self.system.part[0].quat)
-        check_array_writable(self.system.part[0].omega_lab)
-        check_array_writable(self.system.part[0].rotation)
-        check_array_writable(self.system.part[0].omega_body)
-        check_array_writable(self.system.part[0].torque_lab)
+        check_array_writable(self.partcl.quat)
+        check_array_writable(self.partcl.omega_lab)
+        check_array_writable(self.partcl.rotation)
+        check_array_writable(self.partcl.omega_body)
+        check_array_writable(self.partcl.torque_lab)
 
         if espressomd.has_features("EXTERNAL_FORCES"):
-            check_array_writable(self.system.part[0].ext_torque)
+            check_array_writable(self.partcl.ext_torque)
 
-        self.assert_copy_is_writable(self.system.part[0].omega_lab)
-        self.assert_copy_is_writable(self.system.part[0].quat)
-        self.assert_copy_is_writable(self.system.part[0].rotation)
-        self.assert_copy_is_writable(self.system.part[0].omega_body)
-        self.assert_copy_is_writable(self.system.part[0].torque_lab)
+        self.assert_copy_is_writable(self.partcl.omega_lab)
+        self.assert_copy_is_writable(self.partcl.quat)
+        self.assert_copy_is_writable(self.partcl.rotation)
+        self.assert_copy_is_writable(self.partcl.omega_body)
+        self.assert_copy_is_writable(self.partcl.torque_lab)
         if espressomd.has_features("EXTERNAL_FORCES"):
-            self.assert_copy_is_writable(self.system.part[0].ext_torque)
+            self.assert_copy_is_writable(self.partcl.ext_torque)
 
     @utx.skipIfMissingFeatures(["ROTATIONAL_INERTIA"])
     def test_rotational_inertia(self):
-        self.assert_operator_usage_raises(self.system.part[0].rinertia)
-        check_array_writable(self.system.part[0].rinertia)
-        self.assert_copy_is_writable(self.system.part[0].rinertia)
+        self.assert_operator_usage_raises(self.partcl.rinertia)
+        check_array_writable(self.partcl.rinertia)
+        self.assert_copy_is_writable(self.partcl.rinertia)
 
     @utx.skipIfMissingFeatures(["EXTERNAL_FORCES"])
     def test_external_forces(self):
-        self.assert_operator_usage_raises(self.system.part[0].ext_force)
-        self.assert_operator_usage_raises(self.system.part[0].fix)
+        self.assert_operator_usage_raises(self.partcl.ext_force)
+        self.assert_operator_usage_raises(self.partcl.fix)
 
-        check_array_writable(self.system.part[0].ext_force)
-        check_array_writable(self.system.part[0].fix)
+        check_array_writable(self.partcl.ext_force)
+        check_array_writable(self.partcl.fix)
 
-        self.assert_copy_is_writable(self.system.part[0].ext_force)
-        self.assert_copy_is_writable(self.system.part[0].fix)
+        self.assert_copy_is_writable(self.partcl.ext_force)
+        self.assert_copy_is_writable(self.partcl.fix)
 
     @utx.skipIfMissingFeatures(["ROTATION", "THERMOSTAT_PER_PARTICLE",
                                 "PARTICLE_ANISOTROPY"])
     def test_rot_aniso(self):
-        self.assert_operator_usage_raises(self.system.part[0].gamma_rot)
+        self.assert_operator_usage_raises(self.partcl.gamma_rot)
 
-        check_array_writable(self.system.part[0].gamma_rot)
+        check_array_writable(self.partcl.gamma_rot)
 
-        self.assert_copy_is_writable(self.system.part[0].gamma_rot)
+        self.assert_copy_is_writable(self.partcl.gamma_rot)
 
     def test_lb(self):
         lbf = espressomd.lb.LBFluid(agrid=0.5, dens=1, visc=1, tau=0.01)
@@ -196,23 +196,23 @@ class ArrayPropertyTest(ArrayCommon):
     @utx.skipIfMissingFeatures(["THERMOSTAT_PER_PARTICLE",
                                 "PARTICLE_ANISOTROPY"])
     def test_thermostat_per_particle_aniso(self):
-        self.assert_operator_usage_raises(self.system.part[0].gamma)
+        self.assert_operator_usage_raises(self.partcl.gamma)
 
-        check_array_writable(self.system.part[0].gamma)
+        check_array_writable(self.partcl.gamma)
 
-        self.assert_copy_is_writable(self.system.part[0].gamma)
+        self.assert_copy_is_writable(self.partcl.gamma)
 
     @utx.skipIfMissingFeatures(["DIPOLES"])
     def test_dipoles(self):
-        self.assert_operator_usage_raises(self.system.part[0].dip)
+        self.assert_operator_usage_raises(self.partcl.dip)
 
-        check_array_writable(self.system.part[0].dip)
+        check_array_writable(self.partcl.dip)
 
-        self.assert_copy_is_writable(self.system.part[0].dip)
+        self.assert_copy_is_writable(self.partcl.dip)
 
     @utx.skipIfMissingFeatures(["EXCLUSIONS"])
     def test_exclusions(self):
-        self.assert_operator_usage_raises(self.system.part[0].exclusions)
+        self.assert_operator_usage_raises(self.partcl.exclusions)
 
     def test_partial_periodic(self):
         self.assert_operator_usage_raises(self.system.periodicity)

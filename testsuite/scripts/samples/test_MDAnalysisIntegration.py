@@ -36,18 +36,19 @@ class Sample(ut.TestCase):
 
     def test_universe(self):
         system = self.system
+        partcls = system.part.all()
         u = sample.u
         self.assertEqual(len(u.atoms), 10)
         np.testing.assert_equal(u.atoms.ids, np.arange(10) + 1)
         np.testing.assert_equal(u.atoms.types, sorted(5 * ['T0', 'T1']))
         np.testing.assert_almost_equal(
-            u.atoms.charges, system.part[:].q, decimal=6)
+            u.atoms.charges, partcls.q, decimal=6)
         np.testing.assert_almost_equal(
-            u.atoms.positions, system.part[:].pos, decimal=6)
+            u.atoms.positions, partcls.pos, decimal=6)
         np.testing.assert_almost_equal(
-            u.atoms.velocities, system.part[:].v, decimal=6)
+            u.atoms.velocities, partcls.v, decimal=6)
         np.testing.assert_almost_equal(
-            u.atoms.forces, system.part[:].f, decimal=6)
+            u.atoms.forces, partcls.f, decimal=6)
 
 
 if __name__ == "__main__":

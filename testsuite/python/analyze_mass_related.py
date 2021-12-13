@@ -44,14 +44,15 @@ class AnalyzeMassRelated(ut.TestCase):
         if espressomd.has_features("VIRTUAL_SITES"):
             cls.system.part.add(
                 pos=np.random.random((10, 3)) * cls.box_l, type=[0] * 10, virtual=[True] * 10)
-        cls.system.part[:].v = np.random.random(
-            (len(cls.system.part), 3)) + 0.1
+        all_partcls = cls.system.part.all()
+        all_partcls.v = np.random.random(
+            (len(all_partcls), 3)) + 0.1
         if espressomd.has_features("MASS"):
-            cls.system.part[:].mass = 0.5 + \
-                np.random.random(len(cls.system.part))
+            all_partcls.mass = 0.5 + \
+                np.random.random(len(all_partcls))
 
     def i_tensor(self, ids):
-        pslice = self.system.part[ids]
+        pslice = self.system.part.by_ids(ids)
 
         I = np.zeros((3, 3))
 

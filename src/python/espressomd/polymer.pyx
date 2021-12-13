@@ -289,12 +289,12 @@ def setup_diamond_polymer(system=None, bond=None, MPC=0,
                 # add bonds along the chain
                 if not no_bonds:
                     if j == 1:
-                        system.part[node_ids[start_node]].add_bond(
+                        system.part.by_id(node_ids[start_node]).add_bond(
                             (bond, current_id))
                     else:
-                        system.part[current_id].add_bond(
+                        system.part.by_id(current_id).add_bond(
                             (bond, current_id - 1))
                     if j == MPC:
-                        system.part[node_ids[end_node]].add_bond(
+                        system.part.by_id(node_ids[end_node]).add_bond(
                             (bond, current_id))
                 current_id += 1

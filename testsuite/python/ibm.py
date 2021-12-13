@@ -85,7 +85,7 @@ class IBM(ut.TestCase):
         p0.add_bond((tribend, p1, p2, p3))
 
         # twist
-        system.part[:].pos = system.part[:].pos + np.random.random((4, 3))
+        system.part.all().pos = system.part.all().pos + np.random.random((4, 3))
 
         # Perform integration
         system.integrator.run(200)
@@ -109,6 +109,7 @@ class IBM(ut.TestCase):
         p3 = system.part.add(pos=[1, 4, 4])
         p4 = system.part.add(pos=[1, 4, 5])
         p5 = system.part.add(pos=[1, 5, 5])
+        all_partcls = system.part.all()
 
         # Add triel for 3-5
         tri = espressomd.interactions.IBM_Triel(
@@ -117,7 +118,7 @@ class IBM(ut.TestCase):
         system.bonded_inter.add(tri)
         p3.add_bond((tri, p4, p5))
 
-        system.part[:].pos = system.part[:].pos + np.array((
+        all_partcls.pos = all_partcls.pos + np.array((
             (0, 0, 0), (1, -.2, .3), (1, 1, 1),
             (0, 0, 0), (1, -.2, .3), (1, 1, 1)))
 
@@ -145,7 +146,7 @@ class IBM(ut.TestCase):
         positions = positions[:4] + positions[6:] + positions[4:6]
         positions = np.array(positions) - 0.5
         mesh_center_ref = np.copy(system.box_l) / 2.
-        system.part.add(pos=positions + mesh_center_ref)
+        partcls = system.part.add(pos=positions + mesh_center_ref)
 
         # Divide the cube. All triangle normals must point inside the mesh.
         # Use the right hand rule to determine the order of the indices.
@@ -161,7 +162,7 @@ class IBM(ut.TestCase):
             bond = espressomd.interactions.IBM_Triel(
                 ind1=id3, ind2=id2, ind3=id1, elasticLaw="Skalak", k1=0., k2=0., maxDist=3)
             system.bonded_inter.add(bond)
-            system.part[id1].add_bond((bond, id2, id3))
+            system.part.by_id(id1).add_bond((bond, id2, id3))
 
         # Add volume conservation force.
         KAPPA_V = 0.01
@@ -176,10 +177,10 @@ class IBM(ut.TestCase):
         self.assertAlmostEqual(volCons.current_volume(), 1., delta=1e-10)
 
         # The restorative force is zero at the moment.
-        np.testing.assert_almost_equal(np.copy(self.system.part[:].f), 0.)
+        np.testing.assert_almost_equal(np.copy(partcls.f), 0.)
 
         # Double the cube dimensions. The volume increases by a factor of 8.
-        system.part[:].pos = 2. * positions + mesh_center_ref
+        partcls.pos = 2. * positions + mesh_center_ref
         system.integrator.run(0, recalc_forces=True)
         self.assertAlmostEqual(volCons.current_volume(), 8., delta=1e-10)
 
@@ -188,7 +189,7 @@ class IBM(ut.TestCase):
             [(1, 2, 2), (2, 1, -2), (2, -1, 1), (1, -2, -1),
              (-1, -2, 2), (-2, -1, -2), (-2, 1, 1), (-1, 2, -1)])
         np.testing.assert_almost_equal(
-            np.copy(self.system.part[:].f), ref_forces)
+            np.copy(partcls.f), ref_forces)
 
         # IBM doesn't implement energy and pressure kernels.
         energy = self.system.analysis.energy()
@@ -209,10 +210,10 @@ class IBM(ut.TestCase):
             self.assertLess(current_volume, previous_volume)
             self.assertGreater(volume_diff, volume_diff_ref)
             previous_volume = current_volume
-            mesh_center = np.mean(self.system.part[:].pos, axis=0)
+            mesh_center = np.mean(partcls.pos, axis=0)
             np.testing.assert_allclose(mesh_center, mesh_center_ref, rtol=1e-3)
         # Halve the cube dimensions. The volume decreases by a factor of 8.
-        system.part[:].pos = 0.5 * positions + mesh_center_ref
+        partcls.pos = 0.5 * positions + mesh_center_ref
         system.integrator.run(0, recalc_forces=True)
         self.assertAlmostEqual(volCons.current_volume(), 1. / 8., delta=1e-10)
 
@@ -229,7 +230,7 @@ class IBM(ut.TestCase):
             self.assertGreater(current_volume, previous_volume)
             self.assertGreater(volume_diff, volume_diff_ref)
             previous_volume = current_volume
-            mesh_center = np.mean(self.system.part[:].pos, axis=0)
+            mesh_center = np.mean(partcls.pos, axis=0)
             np.testing.assert_allclose(mesh_center, mesh_center_ref, rtol=1e-3)
 
 

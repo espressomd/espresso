@@ -41,7 +41,7 @@ Note that alternatively to particle handles, the particle's ids can be
 used to setup bonded interactions. For example, to create a bond between the
 particles with the ids 12 and 43::
 
-    system.part[12].add_bond((fene, 43))
+    system.part.by_id(12).add_bond((fene, 43))
 
 .. _Distance-dependent bonds:
 
@@ -492,7 +492,7 @@ where ``softID`` identifies the soft particle and ``kappaV`` is a volumetric
 spring constant. Note that this ``volCons`` bond does not have a bond partner.
 It is added to a particle as follows::
 
-    system.part[0].add_bond((volCons,))
+    system.part.by_id(0).add_bond((volCons,))
 
 The comma is needed to create a tuple containing a single item.
 

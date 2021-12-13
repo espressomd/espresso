@@ -31,5 +31,5 @@ def WriteVTK(system, outFile):
         fp.write(f"POINTS {numPoints} floats\n")
 
         # points, positions
-        for i in range(0, len(system.part)):
-            fp.write(f"{' '.join(map(str, system.part[i].pos_folded))}\n")
+        for p in system.part:
+            fp.write(f"{' '.join(map(str, p.pos_folded))}\n")

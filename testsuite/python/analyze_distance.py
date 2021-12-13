@@ -35,7 +35,7 @@ class AnalyzeDistance(ut.TestCase):
 
     # python version of the espresso core function
     def min_dist(self):
-        r = np.array(self.system.part[:].pos)
+        r = np.array(self.system.part.all().pos)
         # this generates indices for all i<j combinations
         ij = np.triu_indices(len(r), k=1)
         r_ij = np.fabs(r[ij[0]] - r[ij[1]])
@@ -47,7 +47,7 @@ class AnalyzeDistance(ut.TestCase):
 
     # python version of the espresso core function
     def nbhood(self, pos, r_catch):
-        dist = np.fabs(np.array(self.system.part[:].pos) - pos)
+        dist = np.fabs(np.array(self.system.part.all().pos) - pos)
         # check smaller distances via PBC
         dist = np.where(
             dist > 0.5 * self.system.box_l, self.system.box_l - dist, dist)
@@ -56,27 +56,27 @@ class AnalyzeDistance(ut.TestCase):
 
     # python version of the espresso core function, using pos
     def dist_to_pos(self, pos):
-        dist = np.fabs(self.system.part[:].pos - pos)
+        dist = np.fabs(self.system.part.all().pos - pos)
         # check smaller distances via PBC
         dist = np.where(
             dist > 0.5 * self.system.box_l, self.system.box_l - dist, dist)
-        dist = np.sum(dist**2, axis=-1)
-        return np.sqrt(np.min(dist))
+        dist = np.linalg.norm(dist, axis=-1)
+        return np.min(dist)
 
     # python version of the espresso core function, using id
     def dist_to_id(self, id):
         dist = np.fabs(
-            np.delete(self.system.part[:].pos, id, axis=0) - self.system.part[id].pos)
+            np.delete(self.system.part.all().pos, id, axis=0) - self.system.part.by_id(id).pos)
         # check smaller distances via PBC
         dist = np.where(
             dist > 0.5 * self.system.box_l, self.system.box_l - dist, dist)
-        dist = np.sum(dist**2, axis=1)
-        return np.sqrt(np.min(dist))
+        dist = np.linalg.norm(dist, axis=1)
+        return np.min(dist)
 
     def test_min_dist(self):
         # try five times
         for _ in range(5):
-            self.system.part[:].pos = np.random.random(
+            self.system.part.all().pos = np.random.random(
                 (len(self.system.part), 3)) * BOX_L
             self.assertAlmostEqual(self.system.analysis.min_dist(),
                                    self.min_dist(),
@@ -89,7 +89,7 @@ class AnalyzeDistance(ut.TestCase):
     def test_nbhood(self):
         # try five times
         for i in range(1, 10, 2):
-            self.system.part[:].pos = np.random.random(
+            self.system.part.all().pos = np.random.random(
                 (len(self.system.part), 3)) * BOX_L
             np.testing.assert_allclose(
                 self.system.analysis.nbhood([i, i, i], i * 2),
@@ -99,7 +99,7 @@ class AnalyzeDistance(ut.TestCase):
         parts = self.system.part
         # try five times
         for i in range(5):
-            self.system.part[:].pos = np.random.random(
+            self.system.part.all().pos = np.random.random(
                 (len(self.system.part), 3)) * BOX_L
             self.assertAlmostEqual(
                 np.min([self.system.distance([i, i, i], p.pos)
@@ -114,16 +114,17 @@ class AnalyzeDistance(ut.TestCase):
         parts = self.system.part
         # try five times
         for i in range(5):
-            self.system.part[:].pos = np.random.random(
+            part_i = parts.by_id(i)
+            self.system.part.all().pos = np.random.random(
                 (len(self.system.part), 3)) * BOX_L
             self.assertAlmostEqual(
-                np.min([self.system.distance(parts[i], p.pos)
+                np.min([self.system.distance(part_i, p.pos)
                         for p in parts if p.id != i]),
                 self.dist_to_id(i), delta=1e-10)
             self.assertEqual(
-                np.min([self.system.distance(parts[i], p.pos)
+                np.min([self.system.distance(part_i, p.pos)
                         for p in parts if p.id != i]),
-                np.min([self.system.distance(p.pos, parts[i]) for p in parts if p.id != i]))
+                np.min([self.system.distance(p.pos, part_i) for p in parts if p.id != i]))
 
 
 if __name__ == "__main__":

@@ -43,12 +43,13 @@ class ComFixed(ut.TestCase):
             v = 3 * [0.]
             # Make sure that id and type gaps work correctly
             system.part.add(id=2 * i, pos=r, v=v, type=2 * (i % 2))
+        partcls = system.part.all()
 
         if espressomd.has_features(["MASS"]):
             # Avoid masses too small for the time step
-            system.part[:].mass = 2. * (0.1 + np.random.random(100))
+            partcls.mass = 2. * (0.1 + np.random.random(100))
 
-        com_0 = self.com(system.part[:])
+        com_0 = self.com(partcls)
 
         system.comfixed.types = [0, 2]
 
@@ -56,7 +57,7 @@ class ComFixed(ut.TestCase):
         self.assertEqual(system.comfixed.types, [2, 0])
 
         for i in range(10):
-            com_i = self.com(system.part[:])
+            com_i = self.com(partcls)
 
             for j in range(3):
                 self.assertAlmostEqual(com_0[j], com_i[j], places=10)

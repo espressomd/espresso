@@ -127,7 +127,7 @@ class CheckpointTest(ut.TestCase):
             np.copy(system.periodicity), self.ref_periodicity)
 
     def test_part(self):
-        p1, p2 = system.part[0:2]
+        p1, p2 = system.part.by_ids([0, 1])
         np.testing.assert_allclose(np.copy(p1.pos), np.array([1.0, 2.0, 3.0]))
         np.testing.assert_allclose(np.copy(p2.pos), np.array([1.0, 1.0, 2.0]))
         np.testing.assert_allclose(np.copy(p1.f), particle_force0)
@@ -139,7 +139,7 @@ class CheckpointTest(ut.TestCase):
         experience the force from a harmonic bond. The thermostat friction
         is negligible compared to the harmonic bond strength.
         '''
-        p3, p4 = system.part[3:5]
+        p3, p4 = system.part.by_ids([3, 4])
         np.testing.assert_allclose(np.copy(p3.pos), system.box_l / 2. - 1.)
         np.testing.assert_allclose(np.copy(p4.pos), system.box_l / 2. + 1.)
         np.testing.assert_allclose(np.copy(p3.f), -np.copy(p4.f), rtol=1e-4)
@@ -153,7 +153,7 @@ class CheckpointTest(ut.TestCase):
         experience the force from a shape-based constraint. The thermostat
         friction is negligible compared to the LJ force.
         '''
-        p3, p4 = system.part[3:5]
+        p3, p4 = system.part.by_ids([3, 4])
         old_force = np.copy(p3.f)
         system.constraints.remove(system.constraints[0])
         system.integrator.run(0, recalc_forces=True)
@@ -312,17 +312,18 @@ class CheckpointTest(ut.TestCase):
         bond_ids = system.bonded_inter.call_method('get_bond_ids')
         self.assertEqual(len(bond_ids), len(system.bonded_inter))
         # check bonded interactions
-        state = system.part[1].bonds[0][0].params
+        partcl_1 = system.part.by_id(1)
+        state = partcl_1.bonds[0][0].params
         reference = {'r_0': 0.0, 'k': 1.0, 'r_cut': 0.0}
         self.assertEqual(state, reference)
-        state = system.part[1].bonds[0][0].params
+        state = partcl_1.bonds[0][0].params
         self.assertEqual(state, reference)
         if 'THERM.LB' not in modes:
-            state = system.part[1].bonds[1][0].params
+            state = partcl_1.bonds[1][0].params
             reference = {'temp_com': 0., 'gamma_com': 0., 'temp_distance': 0.2,
                          'gamma_distance': 0.5, 'r_cut': 2.0, 'seed': 51}
             self.assertEqual(state, reference)
-            state = system.part[1].bonds[1][0].params
+            state = partcl_1.bonds[1][0].params
             self.assertEqual(state, reference)
         # immersed boundary bonds
         self.assertEqual(
@@ -359,7 +360,7 @@ class CheckpointTest(ut.TestCase):
 
     @utx.skipIfMissingFeatures(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE'])
     def test_virtual_sites(self):
-        self.assertTrue(system.part[1].virtual)
+        self.assertTrue(system.part.by_id(1).virtual)
         self.assertIsInstance(
             system.virtual_sites,
             espressomd.virtual_sites.VirtualSitesRelative)
@@ -492,9 +493,9 @@ class CheckpointTest(ut.TestCase):
 
     @utx.skipIfMissingFeatures('EXCLUSIONS')
     def test_exclusions(self):
-        self.assertEqual(list(system.part[0].exclusions), [2])
-        self.assertEqual(list(system.part[1].exclusions), [2])
-        self.assertEqual(list(system.part[2].exclusions), [0, 1])
+        self.assertEqual(list(system.part.by_id(0).exclusions), [2])
+        self.assertEqual(list(system.part.by_id(1).exclusions), [2])
+        self.assertEqual(list(system.part.by_id(2).exclusions), [0, 1])
 
     @ut.skipIf(not LB or not (espressomd.has_features("LB_BOUNDARIES")
                               or espressomd.has_features("LB_BOUNDARIES_GPU")), "Missing features")

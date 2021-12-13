@@ -60,7 +60,7 @@ class AnalyzeGyration(ut.TestCase):
         res = self.system.analysis.gyration_tensor(
             p_type=[self.type_stick, self.type_cube])
         rg = self.system.analysis.calc_rg(
-            chain_start=0, number_of_chains=1, chain_length=len(self.system.part[:]))[0]
+            chain_start=0, number_of_chains=1, chain_length=len(self.system.part.all()))[0]
         # check eigenvectors
         np.testing.assert_allclose(
             np.abs(res['eva0'][1]), [0., 0., 1.], atol=1e-6)
