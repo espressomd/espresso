@@ -49,8 +49,6 @@ Utils::Vector3d get_momentum();
 boost::optional<Utils::Vector3d> get_velocity_at_pos(Utils::Vector3d pos);
 boost::optional<double> get_interpolated_density_at_pos(Utils::Vector3d pos);
 
-void add_force_at_pos(Utils::Vector3d pos, Utils::Vector3d f);
-
 inline void walberla_off_diagonal_correction(Utils::Vector6d &tensor,
                                              double visc) {
   auto const revert_factor = visc / (visc + 1.0 / 6.0);

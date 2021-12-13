@@ -28,6 +28,7 @@
 #include "LatticeWalberla.hpp"
 
 #include "core/communication.hpp"
+#include "core/grid.hpp"
 #include "core/grid_based_algorithms/lb_interface.hpp"
 #include "core/grid_based_algorithms/lb_walberla_instance.hpp"
 #include "core/integrate.hpp"
@@ -50,10 +51,13 @@ class FluidWalberla : public AutoParameters<FluidWalberla> {
   std::shared_ptr<::LBWalberlaParams> m_lb_params;
   bool m_is_single_precision;
   bool m_is_active;
+  double m_conv_dist;
   double m_conv_visc;
   double m_conv_temp;
   double m_conv_dens;
+  double m_conv_speed;
   double m_conv_press;
+  double m_conv_force;
   double m_conv_force_dens;
   std::tuple<double, double, double, int, Utils::Vector3d> m_ctor_params;
 
@@ -149,11 +153,14 @@ public:
     // freely when the LB object is not active yet
     auto const tau = get_value<double>(params, "tau");
     auto const agrid = get_value<double>(params, "agrid");
+    m_conv_dist = 1. / agrid;
     m_conv_visc = Utils::int_pow<1>(tau) / Utils::int_pow<2>(agrid);
     m_conv_temp = Utils::int_pow<2>(tau) / Utils::int_pow<2>(agrid);
     m_conv_dens = Utils::int_pow<3>(agrid);
-    m_conv_press = Utils::int_pow<1>(agrid) * Utils::int_pow<2>(tau);
-    m_conv_force_dens = Utils::int_pow<2>(agrid) * Utils::int_pow<2>(tau);
+    m_conv_speed = Utils::int_pow<1>(tau) / Utils::int_pow<1>(agrid);
+    m_conv_press = Utils::int_pow<2>(tau) * Utils::int_pow<1>(agrid);
+    m_conv_force = Utils::int_pow<2>(tau) / Utils::int_pow<1>(agrid);
+    m_conv_force_dens = Utils::int_pow<2>(tau) * Utils::int_pow<2>(agrid);
     m_lb_params = std::make_shared<::LBWalberlaParams>(agrid, tau);
     m_ctor_params = {m_conv_visc * get_value<double>(params, "viscosity"),
                      m_conv_dens * get_value<double>(params, "density"),
@@ -185,6 +192,25 @@ public:
     if (name == "deactivate") {
       deactivate_lb_walberla();
       m_is_active = false;
+    }
+    if (name == "add_force_at_pos") {
+      auto const pos = get_value<Utils::Vector3d>(params, "pos");
+      auto const f = get_value<Utils::Vector3d>(params, "force");
+      auto const folded_pos = folded_position(pos, box_geo);
+      m_lb_fluid->add_force_at_pos(folded_pos * m_conv_dist, f * m_conv_force);
+    }
+    if (name == "get_interpolated_velocity") {
+      auto const pos = get_value<Utils::Vector3d>(params, "pos");
+      return lb_lbfluid_get_interpolated_velocity(pos) / m_conv_speed;
+    }
+    if (name == "get_pressure_tensor") {
+      if (context()->is_head_node()) {
+        auto const lower_tri = lb_lbfluid_get_pressure_tensor() / m_conv_press;
+        return std::vector<Variant>{
+            std::vector<double>{lower_tri[0], lower_tri[1], lower_tri[3]},
+            std::vector<double>{lower_tri[1], lower_tri[2], lower_tri[4]},
+            std::vector<double>{lower_tri[3], lower_tri[4], lower_tri[5]}};
+      }
     }
 
     return {};

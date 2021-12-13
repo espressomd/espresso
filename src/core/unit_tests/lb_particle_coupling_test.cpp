@@ -130,6 +130,21 @@ REGISTER_CALLBACK(remove_lb_actor_local)
 REGISTER_CALLBACK(cells_update_ghosts_local)
 } // namespace espresso
 
+const Utils::Vector3d
+lb_lbfluid_get_force_to_be_applied(const Utils::Vector3d &pos) {
+  auto const agrid = espresso::lb_params->get_agrid();
+  auto const ind = Utils::Vector3i{static_cast<int>(pos[0] / agrid),
+                                   static_cast<int>(pos[1] / agrid),
+                                   static_cast<int>(pos[2] / agrid)};
+  auto const res = espresso::lb_fluid->get_node_force_to_be_applied(ind);
+  if (!res) {
+    std::cout << this_node << ": position: [" << pos << "]\n";
+    throw std::runtime_error(
+        "Force to be applied could not be obtained from Walberla");
+  }
+  return *res;
+}
+
 /** Decorator to run a unit test only on the head node. */
 struct if_head_node {
   boost::test_tools::assertion_result operator()(utf::test_unit_id) {
@@ -534,10 +549,7 @@ BOOST_AUTO_TEST_CASE(exceptions, *utf::precondition(if_head_node())) {
     BOOST_CHECK_THROW(lb_lbinterpolation_add_force_density({}, {}),
                       std::runtime_error);
     BOOST_CHECK_THROW(lb_lbfluid_get_interpolated_velocity({}), exception);
-    BOOST_CHECK_THROW(lb_lbfluid_get_force_to_be_applied({}), exception);
-    BOOST_CHECK_THROW(lb_lbfluid_add_force_at_pos({}, {}), exception);
     BOOST_CHECK_THROW(lb_lbfluid_get_interpolated_density({}), exception);
-    BOOST_CHECK_THROW(lb_lbfluid_get_shape(), exception);
     BOOST_CHECK_THROW(lb_lbfluid_clear_boundaries(), exception);
     BOOST_CHECK_THROW(lb_lbfluid_update_boundary_from_list({}, {}), exception);
     BOOST_CHECK_THROW(lb_lbfluid_update_boundary_from_shape({}, {}), exception);

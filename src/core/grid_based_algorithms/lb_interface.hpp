@@ -117,11 +117,6 @@ void lb_lbfluid_update_boundary_from_list(std::vector<int> const &nodes_flat,
 void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary);
 void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary);
 
-/**
- * @brief returns the shape of the LB fluid lattice
- */
-Utils::Vector3i lb_lbfluid_get_shape();
-
 Utils::Vector3d lb_lbfluid_calc_fluid_momentum();
 
 /**
@@ -138,22 +133,5 @@ lb_lbfluid_get_interpolated_velocity(const Utils::Vector3d &pos);
  * @retval interpolated fluid density.
  */
 double lb_lbfluid_get_interpolated_density(const Utils::Vector3d &pos);
-
-/**
- * @brief Calculates the interpolated force to be applied on the master process.
- * @param pos Position at which the force is to be calculated.
- * @retval interpolated force to be applied.
- */
-const Utils::Vector3d
-lb_lbfluid_get_force_to_be_applied(const Utils::Vector3d &pos);
-
-/**
- * @brief Distributes a force at a position which will be applied during
- *        the next integration loop
- * @param pos Position at which the force is beeing applied.
- * @param f   The force vector that is beeing applied.
- */
-void lb_lbfluid_add_force_at_pos(const Utils::Vector3d &pos,
-                                 const Utils::Vector3d &f);
 
 #endif

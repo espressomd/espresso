@@ -333,15 +333,6 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
   }
 }
 
-Utils::Vector3i lb_lbfluid_get_shape() {
-#ifdef LB_WALBERLA
-  if (lattice_switch == ActiveLB::WALBERLA) {
-    return lb_walberla()->lattice().get_grid_dimensions();
-  }
-#endif
-  throw NoLBActive();
-}
-
 Utils::Vector6d lb_lbfluid_get_pressure_tensor_local() {
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
@@ -377,8 +368,7 @@ const Utils::Vector6d lb_lbfluid_get_pressure_tensor() {
     auto tensor = ::Communication::mpiCallbacks().call(
         ::Communication::Result::reduction, std::plus<Utils::Vector6d>(),
         lb_lbfluid_get_pressure_tensor_local);
-    tensor /= static_cast<double>(number_of_nodes);
-
+    tensor *= 1. / static_cast<double>(number_of_nodes);
     Walberla::walberla_off_diagonal_correction(tensor, visc);
     return tensor;
   }
@@ -448,39 +438,6 @@ lb_lbfluid_get_interpolated_velocity(const Utils::Vector3d &pos) {
 #endif
   }
   throw NoLBActive();
-}
-
-const Utils::Vector3d
-lb_lbfluid_get_force_to_be_applied(const Utils::Vector3d &pos) {
-  if (lattice_switch == ActiveLB::WALBERLA) {
-#ifdef LB_WALBERLA
-    auto const agrid = lb_lbfluid_get_agrid();
-    auto const ind = Utils::Vector3i{static_cast<int>(pos[0] / agrid),
-                                     static_cast<int>(pos[1] / agrid),
-                                     static_cast<int>(pos[2] / agrid)};
-    auto const res = lb_walberla()->get_node_force_to_be_applied(ind);
-    if (!res) {
-      std::cout << this_node << ": position: [" << pos << "]\n";
-      throw std::runtime_error(
-          "Force to be applied could not be obtained from Walberla");
-    }
-    return *res;
-#endif
-  }
-  throw NoLBActive();
-}
-
-void lb_lbfluid_add_force_at_pos(const Utils::Vector3d &pos,
-                                 const Utils::Vector3d &f) {
-  if (lattice_switch == ActiveLB::WALBERLA) {
-#ifdef LB_WALBERLA
-    auto const folded_pos = folded_position(pos, box_geo);
-    ::Communication::mpiCallbacks().call_all(
-        Walberla::add_force_at_pos, folded_pos / lb_lbfluid_get_agrid(), f);
-#endif
-  } else {
-    throw NoLBActive();
-  }
 }
 
 double lb_lbfluid_get_interpolated_density(const Utils::Vector3d &pos) {

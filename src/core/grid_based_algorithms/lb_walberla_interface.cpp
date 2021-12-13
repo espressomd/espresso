@@ -116,11 +116,5 @@ boost::optional<double> get_interpolated_density_at_pos(Utils::Vector3d pos) {
 
 REGISTER_CALLBACK_ONE_RANK(get_interpolated_density_at_pos)
 
-void add_force_at_pos(Utils::Vector3d pos, Utils::Vector3d f) {
-  lb_walberla()->add_force_at_pos(pos, f);
-}
-
-REGISTER_CALLBACK(add_force_at_pos)
-
 } // namespace Walberla
 #endif
