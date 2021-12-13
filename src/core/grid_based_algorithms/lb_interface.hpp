@@ -24,6 +24,7 @@
 #include <utils/Vector.hpp>
 
 #include <cstdint>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -32,6 +33,10 @@ enum class ActiveLB : int { NONE, WALBERLA };
 
 /** @brief Switch determining the type of lattice dynamics. */
 extern ActiveLB lattice_switch;
+
+struct NoLBActive : public std::exception {
+  const char *what() const noexcept override { return "LB not activated"; }
+};
 
 /**
  * @brief Propagate the LB fluid.

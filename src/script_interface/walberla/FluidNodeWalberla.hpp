@@ -25,7 +25,6 @@
 
 #include <walberla_bridge/LBWalberlaBase.hpp>
 
-#include "core/communication.hpp"
 #include "core/errorhandling.hpp"
 #include "core/grid_based_algorithms/lb_interface.hpp"
 #include "core/grid_based_algorithms/lb_walberla_instance.hpp"
@@ -42,8 +41,6 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
-#include <tuple>
-#include <vector>
 
 namespace ScriptInterface::walberla {
 
@@ -57,75 +54,7 @@ class FluidNodeWalberla : public AutoParameters<FluidNodeWalberla> {
   double m_conv_velocity;
 
 public:
-  FluidNodeWalberla() {
-    add_parameters(
-        {{"_index", AutoParameter::read_only, [this]() { return (m_index); }},
-         {"velocity",
-          [this](const Variant &v) {
-            auto const velocity =
-                get_value<Utils::Vector3d>(v) * m_conv_velocity;
-            Walberla::mpi_set_node_velocity(m_index, velocity);
-          },
-          [this]() {
-            return Walberla::mpi_get_node_velocity(m_index) / m_conv_velocity;
-          }},
-         {"velocity_at_boundary",
-          [this](const Variant &v) {
-            if (is_none(v)) {
-              Walberla::mpi_remove_node_from_boundary(m_index);
-            } else {
-              auto const velocity =
-                  get_value<Utils::Vector3d>(v) * m_conv_velocity;
-              Walberla::mpi_set_node_velocity_at_boundary(m_index, velocity);
-            }
-          },
-          [this]() {
-            if (Walberla::mpi_get_node_is_boundary(m_index)) {
-              return Variant{
-                  Walberla::mpi_get_node_velocity_at_boundary(m_index) /
-                  m_conv_velocity};
-            } else {
-              return Variant{None{}};
-            }
-          }},
-         {"density",
-          [this](const Variant &v) {
-            auto const density = get_value<double>(v) * m_conv_dens;
-            Walberla::mpi_set_node_density(m_index, density);
-          },
-          [this]() {
-            return Walberla::mpi_get_node_density(m_index) / m_conv_dens;
-          }},
-         {"_population",
-          [this](const Variant &v) {
-            auto const population = get_value<std::vector<double>>(v);
-            Walberla::mpi_set_node_pop(m_index, population);
-          },
-          [this]() { return Walberla::mpi_get_node_pop(m_index); }},
-         {"is_boundary", AutoParameter::read_only,
-          [this]() { return Walberla::mpi_get_node_is_boundary(m_index); }},
-         {"boundary_force", AutoParameter::read_only,
-          [this]() {
-            return Walberla::mpi_get_node_boundary_force(m_index) /
-                   m_conv_force;
-          }},
-         {"_pressure_tensor", AutoParameter::read_only,
-          [this]() {
-            return Walberla::mpi_get_node_pressure_tensor(m_index) /
-                   m_conv_press;
-          }},
-         {"last_applied_force",
-          [this](const Variant &v) {
-            auto const last_applied_force =
-                get_value<Utils::Vector3d>(v) * m_conv_force;
-            Walberla::mpi_set_node_last_applied_force(m_index,
-                                                      last_applied_force);
-          },
-          [this]() {
-            return Walberla::mpi_get_node_last_applied_force(m_index) /
-                   m_conv_force;
-          }}});
-  }
+  FluidNodeWalberla();
 
   void do_construct(VariantMap const &params) override {
     try {

@@ -539,7 +539,6 @@ BOOST_AUTO_TEST_CASE(exceptions, *utf::precondition(if_head_node())) {
     BOOST_CHECK_THROW(lb_lbfluid_get_interpolated_density({}), exception);
     BOOST_CHECK_THROW(lb_lbfluid_get_shape(), exception);
     BOOST_CHECK_THROW(lb_lbfluid_clear_boundaries(), exception);
-    BOOST_CHECK_THROW(lb_lbnode_remove_from_boundary({}), exception);
     BOOST_CHECK_THROW(lb_lbfluid_update_boundary_from_list({}, {}), exception);
     BOOST_CHECK_THROW(lb_lbfluid_update_boundary_from_shape({}, {}), exception);
     BOOST_CHECK_THROW(lb_lbfluid_calc_fluid_momentum(), exception);

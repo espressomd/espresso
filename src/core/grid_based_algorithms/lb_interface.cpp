@@ -49,10 +49,6 @@
 
 ActiveLB lattice_switch = ActiveLB::NONE;
 
-struct NoLBActive : public std::exception {
-  const char *what() const noexcept override { return "LB not activated"; }
-};
-
 void lb_lbfluid_init() {}
 
 void lb_lbfluid_propagate() {
@@ -346,17 +342,6 @@ Utils::Vector3i lb_lbfluid_get_shape() {
   throw NoLBActive();
 }
 
-#ifdef LB_WALBERLA
-/** Revert the correction done by waLBerla on off-diagonal terms. */
-inline void walberla_off_diagonal_correction(Utils::Vector6d &tensor) {
-  auto const visc = lb_walberla()->get_viscosity();
-  auto const revert_factor = visc / (visc + 1.0 / 6.0);
-  tensor[1] *= revert_factor;
-  tensor[3] *= revert_factor;
-  tensor[4] *= revert_factor;
-}
-#endif
-
 Utils::Vector6d lb_lbfluid_get_pressure_tensor_local() {
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
@@ -386,6 +371,7 @@ REGISTER_CALLBACK_REDUCTION(lb_lbfluid_get_pressure_tensor_local,
 const Utils::Vector6d lb_lbfluid_get_pressure_tensor() {
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
+    auto const visc = lb_walberla()->get_viscosity();
     auto const gridsize = lb_walberla()->lattice().get_grid_dimensions();
     auto const number_of_nodes = gridsize[0] * gridsize[1] * gridsize[2];
     auto tensor = ::Communication::mpiCallbacks().call(
@@ -393,7 +379,7 @@ const Utils::Vector6d lb_lbfluid_get_pressure_tensor() {
         lb_lbfluid_get_pressure_tensor_local);
     tensor /= static_cast<double>(number_of_nodes);
 
-    walberla_off_diagonal_correction(tensor);
+    Walberla::walberla_off_diagonal_correction(tensor, visc);
     return tensor;
   }
 #endif

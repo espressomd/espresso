@@ -33,30 +33,12 @@
 
 namespace Walberla {
 
-Utils::Vector3d mpi_get_node_velocity(Utils::Vector3i const &ind);
-Utils::Vector3d mpi_get_node_velocity_at_boundary(Utils::Vector3i const &ind);
-Utils::Vector3d mpi_get_node_last_applied_force(Utils::Vector3i const &ind);
-double mpi_get_node_density(Utils::Vector3i const &ind);
-bool mpi_get_node_is_boundary(Utils::Vector3i const &ind);
 void clear_boundaries();
 void update_boundary_from_shape(std::vector<int> const &raster_flat,
                                 std::vector<double> const &slip_velocity_flat);
 void update_boundary_from_list(std::vector<int> const &nodes_flat,
                                std::vector<double> const &vel_flat);
-Utils::Vector3d mpi_get_node_boundary_force(Utils::Vector3i const &ind);
-void mpi_remove_node_from_boundary(Utils::Vector3i const &ind);
-std::vector<double> mpi_get_node_pop(Utils::Vector3i const &ind);
-Utils::Vector6d mpi_get_node_pressure_tensor(Utils::Vector3i const &ind);
 
-void mpi_set_node_last_applied_force(Utils::Vector3i const &ind,
-                                     Utils::Vector3d const &f);
-void mpi_set_node_velocity(Utils::Vector3i const &ind,
-                           Utils::Vector3d const &u);
-void mpi_set_node_velocity_at_boundary(Utils::Vector3i const &ind,
-                                       Utils::Vector3d const &u);
-void mpi_set_node_density(Utils::Vector3i const &ind, double density);
-void mpi_set_node_pop(Utils::Vector3i const &ind,
-                      std::vector<double> const &pop);
 void set_node_from_checkpoint(Utils::Vector3i ind, LBWalberlaNodeState cpt);
 boost::optional<LBWalberlaNodeState> get_node_checkpoint(Utils::Vector3i ind);
 void do_reallocate_ubb_field();
@@ -68,6 +50,14 @@ boost::optional<Utils::Vector3d> get_velocity_at_pos(Utils::Vector3d pos);
 boost::optional<double> get_interpolated_density_at_pos(Utils::Vector3d pos);
 
 void add_force_at_pos(Utils::Vector3d pos, Utils::Vector3d f);
+
+inline void walberla_off_diagonal_correction(Utils::Vector6d &tensor,
+                                             double visc) {
+  auto const revert_factor = visc / (visc + 1.0 / 6.0);
+  tensor[1] *= revert_factor;
+  tensor[3] *= revert_factor;
+  tensor[4] *= revert_factor;
+}
 
 } // namespace Walberla
 #endif
