@@ -28,6 +28,7 @@ class EspressoSystemStandAlone {
 public:
   EspressoSystemStandAlone(int argc, char **argv);
   void set_box_l(Utils::Vector3d const &box_l) const;
+  void set_node_grid(Utils::Vector3i const &node_grid) const;
   void set_time_step(double time_step) const;
   void set_skin(double new_skin) const;
 
