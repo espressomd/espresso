@@ -200,8 +200,10 @@ public:
       m_lb_fluid->add_force_at_pos(folded_pos * m_conv_dist, f * m_conv_force);
     }
     if (name == "get_interpolated_velocity") {
-      auto const pos = get_value<Utils::Vector3d>(params, "pos");
-      return lb_lbfluid_get_interpolated_velocity(pos) / m_conv_speed;
+      if (context()->is_head_node()) {
+        auto const pos = get_value<Utils::Vector3d>(params, "pos");
+        return lb_lbfluid_get_interpolated_velocity(pos) / m_conv_speed;
+      }
     }
     if (name == "get_pressure_tensor") {
       if (context()->is_head_node()) {

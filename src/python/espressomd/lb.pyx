@@ -239,7 +239,7 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
             The LB fluid velocity at ``pos``.
 
         """
-        return self.call_method('get_interpolated_velocity', pos)
+        return self.call_method('get_interpolated_velocity', pos=pos)
 
     def add_force_at_pos(self, pos, force):
         """Adds a force to the fluid at given position

@@ -144,6 +144,7 @@ class LBTest:
         self.system.actors.add(lbf)
         node = lbf[0, 0, 0]
         self.system.actors.remove(lbf)
+        lbf = None
         with self.assertRaises(RuntimeError):
             node.density
         with self.assertRaises(RuntimeError):
@@ -256,7 +257,7 @@ class LBTest:
         self.system.actors.add(lbf)
         # access out of bounds
         out_of_bounds = max(lbf.shape) + 1
-        error_msg = 'LBFluidNode instantiation failed: ERROR: LatticeWalberla failed: Index error'
+        error_msg = 'Index error'
         with self.assertRaisesRegex(Exception, error_msg):
             lbf[out_of_bounds, 0, 0].velocity
         with self.assertRaisesRegex(Exception, error_msg):
