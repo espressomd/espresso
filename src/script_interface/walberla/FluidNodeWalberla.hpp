@@ -25,8 +25,6 @@
 
 #include <walberla_bridge/LBWalberlaBase.hpp>
 
-#include "FluidWalberla.hpp"
-
 #include "core/errorhandling.hpp"
 #include "core/grid_based_algorithms/lb_interface.hpp"
 #include "core/grid_based_algorithms/lb_walberla_instance.hpp"
@@ -47,7 +45,7 @@
 namespace ScriptInterface::walberla {
 
 class FluidNodeWalberla : public AutoParameters<FluidNodeWalberla> {
-  std::weak_ptr<::LBWalberlaBase> m_lb_fluid;
+  std::shared_ptr<::LBWalberlaBase> m_lb_fluid;
   Utils::Vector3i m_index;
   Utils::Vector3i m_grid_size;
   double m_conv_dens;
@@ -55,35 +53,16 @@ class FluidNodeWalberla : public AutoParameters<FluidNodeWalberla> {
   double m_conv_force;
   double m_conv_velocity;
 
-  std::shared_ptr<LBWalberlaBase> get_lb_fluid() {
-    auto lb_walberla_instance_handle = m_lb_fluid.lock();
-    if (!lb_walberla_instance_handle) {
-      throw std::runtime_error(
-          "Attempted access to uninitialized LBWalberla instance.");
-    }
-    return lb_walberla_instance_handle;
-  }
-
 public:
   FluidNodeWalberla();
 
   void do_construct(VariantMap const &params) override {
     try {
-      std::shared_ptr<LBWalberlaBase> lb_fluid;
-      if (params.count("lb_fluid")) {
-        m_lb_fluid =
-            get_value<std::shared_ptr<FluidWalberla>>(params, "lb_fluid")
-                ->lb_fluid();
-        lb_fluid = get_lb_fluid();
-      } else {
-        lb_fluid = ::lb_walberla();
-        m_lb_fluid = std::weak_ptr<LBWalberlaBase>{lb_fluid};
-      }
-      // TODO WALBERLA: pass agrid and tau as ctor arguments
+      m_lb_fluid = ::lb_walberla();
       auto const &lb_params = ::lb_walberla_params();
       auto const tau = lb_params->get_tau();
       auto const agrid = lb_params->get_agrid();
-      m_grid_size = lb_fluid->lattice().get_grid_dimensions();
+      m_grid_size = m_lb_fluid->lattice().get_grid_dimensions();
       m_index = get_value<Utils::Vector3i>(params, "index");
       if (not(is_index_valid(m_index))) {
         throw std::out_of_range("Index error");
@@ -92,10 +71,9 @@ public:
       m_conv_press = Utils::int_pow<1>(agrid) * Utils::int_pow<2>(tau);
       m_conv_force = Utils::int_pow<2>(tau) / Utils::int_pow<1>(agrid);
       m_conv_velocity = Utils::int_pow<1>(tau) / Utils::int_pow<1>(agrid);
-    } catch (std::exception const &err) {
-      if (context()->is_head_node()) {
-        throw;
-      }
+    } catch (const std::exception &e) {
+      runtimeErrorMsg() << "LatticeWalberla failed: " << e.what();
+      m_lb_fluid.reset();
     }
   }
 
