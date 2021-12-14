@@ -115,7 +115,8 @@ FluidNodeWalberla::FluidNodeWalberla() {
         },
         [this]() {
           if (lattice_switch == ActiveLB::WALBERLA) {
-            assert(m_lb_fluid.lock() and m_lb_fluid.lock().get() == ::lb_walberla().get());
+            assert(m_lb_fluid.lock() and
+                   m_lb_fluid.lock().get() == ::lb_walberla().get());
             auto const result = ::Communication::mpiCallbacks().call(
                 ::Communication::Result::one_rank,
                 Walberla::mpi_get_node_velocity_local, m_index);
@@ -142,7 +143,8 @@ FluidNodeWalberla::FluidNodeWalberla() {
         },
         [this]() {
           if (lattice_switch == ActiveLB::WALBERLA) {
-            assert(m_lb_fluid.lock() and m_lb_fluid.lock().get() == ::lb_walberla().get());
+            assert(m_lb_fluid.lock() and
+                   m_lb_fluid.lock().get() == ::lb_walberla().get());
             auto const is_boundary = ::Communication::mpiCallbacks().call(
                 ::Communication::Result::one_rank,
                 Walberla::mpi_get_node_is_boundary_local, m_index);
@@ -169,7 +171,8 @@ FluidNodeWalberla::FluidNodeWalberla() {
         },
         [this]() {
           if (lattice_switch == ActiveLB::WALBERLA) {
-            assert(m_lb_fluid.lock() and m_lb_fluid.lock().get() == ::lb_walberla().get());
+            assert(m_lb_fluid.lock() and
+                   m_lb_fluid.lock().get() == ::lb_walberla().get());
             auto const result = ::Communication::mpiCallbacks().call(
                 ::Communication::Result::one_rank,
                 Walberla::mpi_get_node_density_local, m_index);
@@ -191,7 +194,8 @@ FluidNodeWalberla::FluidNodeWalberla() {
         },
         [this]() {
           if (lattice_switch == ActiveLB::WALBERLA) {
-            assert(m_lb_fluid.lock() and m_lb_fluid.lock().get() == ::lb_walberla().get());
+            assert(m_lb_fluid.lock() and
+                   m_lb_fluid.lock().get() == ::lb_walberla().get());
             auto const result = ::Communication::mpiCallbacks().call(
                 ::Communication::Result::one_rank,
                 Walberla::mpi_get_node_pop_local, m_index);
@@ -204,7 +208,8 @@ FluidNodeWalberla::FluidNodeWalberla() {
        {"is_boundary", AutoParameter::read_only,
         [this]() {
           if (lattice_switch == ActiveLB::WALBERLA) {
-            assert(m_lb_fluid.lock() and m_lb_fluid.lock().get() == ::lb_walberla().get());
+            assert(m_lb_fluid.lock() and
+                   m_lb_fluid.lock().get() == ::lb_walberla().get());
             auto const result = ::Communication::mpiCallbacks().call(
                 ::Communication::Result::one_rank,
                 Walberla::mpi_get_node_is_boundary_local, m_index);
@@ -217,7 +222,8 @@ FluidNodeWalberla::FluidNodeWalberla() {
        {"boundary_force", AutoParameter::read_only,
         [this]() {
           if (lattice_switch == ActiveLB::WALBERLA) {
-            assert(m_lb_fluid.lock() and m_lb_fluid.lock().get() == ::lb_walberla().get());
+            assert(m_lb_fluid.lock() and
+                   m_lb_fluid.lock().get() == ::lb_walberla().get());
             auto const result = ::Communication::mpiCallbacks().call(
                 ::Communication::Result::one_rank,
                 Walberla::mpi_get_node_boundary_force_local, m_index);
@@ -255,7 +261,8 @@ FluidNodeWalberla::FluidNodeWalberla() {
         },
         [this]() {
           if (lattice_switch == ActiveLB::WALBERLA) {
-            assert(m_lb_fluid.lock() and m_lb_fluid.lock().get() == ::lb_walberla().get());
+            assert(m_lb_fluid.lock() and
+                   m_lb_fluid.lock().get() == ::lb_walberla().get());
             auto const result = ::Communication::mpiCallbacks().call(
                 ::Communication::Result::one_rank,
                 Walberla::mpi_get_node_last_applied_force_local, m_index);

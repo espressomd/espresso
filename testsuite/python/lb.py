@@ -205,8 +205,11 @@ class LBTest:
         np.testing.assert_allclose(
             np.copy(lbf.pressure_tensor), obs_pressure_tensor, atol=1E-10)
 
-        self.assertIsInstance(lbf[0, 0, 0].pressure_tensor, espressomd.utils.array_locked)
-        self.assertIsInstance(lbf.pressure_tensor, espressomd.utils.array_locked)
+        self.assertIsInstance(
+            lbf[0, 0, 0].pressure_tensor, espressomd.utils.array_locked)
+        self.assertIsInstance(
+            lbf.pressure_tensor,
+            espressomd.utils.array_locked)
 
     def test_lb_node_set_get(self):
         lbf = self.lb_class(kT=0.0, ext_force_density=[0, 0, 0], **self.params,

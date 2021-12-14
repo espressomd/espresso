@@ -472,7 +472,7 @@ IF LB_WALBERLA:
         # failing: the walberla::FluidWalberla script interface object doesn't
         # expire even when the LBFluidWalberla is removed from the actors list
         # and the last python variable holding a reference to it is deleted.
-        #_so_bind_methods = (
+        # _so_bind_methods = (
         #    "add_force_at_pos",
         #    "get_interpolated_velocity",
         #    "get_pressure_tensor")

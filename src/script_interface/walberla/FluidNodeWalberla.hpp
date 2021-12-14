@@ -92,7 +92,7 @@ public:
       m_conv_press = Utils::int_pow<1>(agrid) * Utils::int_pow<2>(tau);
       m_conv_force = Utils::int_pow<2>(tau) / Utils::int_pow<1>(agrid);
       m_conv_velocity = Utils::int_pow<1>(tau) / Utils::int_pow<1>(agrid);
-      } catch (std::exception const &err) {
+    } catch (std::exception const &err) {
       if (context()->is_head_node()) {
         throw;
       }
