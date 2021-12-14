@@ -37,6 +37,7 @@
 #include <boost/optional.hpp>
 #include <boost/serialization/vector.hpp>
 
+#include <cassert>
 #include <vector>
 
 namespace Walberla {
@@ -104,16 +105,17 @@ FluidNodeWalberla::FluidNodeWalberla() {
       {{"_index", AutoParameter::read_only, [this]() { return (m_index); }},
        {"velocity",
         [this](const Variant &v) {
-          if (lattice_switch == ActiveLB::WALBERLA) {
+          if (auto lb_fluid = m_lb_fluid.lock()) {
             auto const u = get_value<Utils::Vector3d>(v) * m_conv_velocity;
-            m_lb_fluid->set_node_velocity(m_index, u);
-            m_lb_fluid->ghost_communication();
+            lb_fluid->set_node_velocity(m_index, u);
+            lb_fluid->ghost_communication();
           } else if (context()->is_head_node()) {
             throw NoLBActive();
           }
         },
         [this]() {
           if (lattice_switch == ActiveLB::WALBERLA) {
+            assert(m_lb_fluid.lock() and m_lb_fluid.lock().get() == ::lb_walberla().get());
             auto const result = ::Communication::mpiCallbacks().call(
                 ::Communication::Result::one_rank,
                 Walberla::mpi_get_node_velocity_local, m_index);
@@ -125,14 +127,14 @@ FluidNodeWalberla::FluidNodeWalberla() {
         }},
        {"velocity_at_boundary",
         [this](const Variant &v) {
-          if (lattice_switch == ActiveLB::WALBERLA) {
+          if (auto lb_fluid = m_lb_fluid.lock()) {
             if (is_none(v)) {
-              m_lb_fluid->remove_node_from_boundary(m_index, true);
-              m_lb_fluid->ghost_communication();
+              lb_fluid->remove_node_from_boundary(m_index, true);
+              lb_fluid->ghost_communication();
             } else {
               auto const u = get_value<Utils::Vector3d>(v) * m_conv_velocity;
-              m_lb_fluid->set_node_velocity_at_boundary(m_index, u, true);
-              m_lb_fluid->ghost_communication();
+              lb_fluid->set_node_velocity_at_boundary(m_index, u, true);
+              lb_fluid->ghost_communication();
             }
           } else if (context()->is_head_node()) {
             throw NoLBActive();
@@ -140,6 +142,7 @@ FluidNodeWalberla::FluidNodeWalberla() {
         },
         [this]() {
           if (lattice_switch == ActiveLB::WALBERLA) {
+            assert(m_lb_fluid.lock() and m_lb_fluid.lock().get() == ::lb_walberla().get());
             auto const is_boundary = ::Communication::mpiCallbacks().call(
                 ::Communication::Result::one_rank,
                 Walberla::mpi_get_node_is_boundary_local, m_index);
@@ -156,16 +159,17 @@ FluidNodeWalberla::FluidNodeWalberla() {
         }},
        {"density",
         [this](const Variant &v) {
-          if (lattice_switch == ActiveLB::WALBERLA) {
+          if (auto lb_fluid = m_lb_fluid.lock()) {
             auto const density = get_value<double>(v) * m_conv_dens;
-            m_lb_fluid->set_node_density(m_index, density);
-            m_lb_fluid->ghost_communication();
+            lb_fluid->set_node_density(m_index, density);
+            lb_fluid->ghost_communication();
           } else if (context()->is_head_node()) {
             throw NoLBActive();
           }
         },
         [this]() {
           if (lattice_switch == ActiveLB::WALBERLA) {
+            assert(m_lb_fluid.lock() and m_lb_fluid.lock().get() == ::lb_walberla().get());
             auto const result = ::Communication::mpiCallbacks().call(
                 ::Communication::Result::one_rank,
                 Walberla::mpi_get_node_density_local, m_index);
@@ -177,16 +181,17 @@ FluidNodeWalberla::FluidNodeWalberla() {
         }},
        {"_population",
         [this](const Variant &v) {
-          if (lattice_switch == ActiveLB::WALBERLA) {
+          if (auto lb_fluid = m_lb_fluid.lock()) {
             auto const population = get_value<std::vector<double>>(v);
-            m_lb_fluid->set_node_pop(m_index, population);
-            m_lb_fluid->ghost_communication();
+            lb_fluid->set_node_pop(m_index, population);
+            lb_fluid->ghost_communication();
           } else if (context()->is_head_node()) {
             throw NoLBActive();
           }
         },
         [this]() {
           if (lattice_switch == ActiveLB::WALBERLA) {
+            assert(m_lb_fluid.lock() and m_lb_fluid.lock().get() == ::lb_walberla().get());
             auto const result = ::Communication::mpiCallbacks().call(
                 ::Communication::Result::one_rank,
                 Walberla::mpi_get_node_pop_local, m_index);
@@ -199,6 +204,7 @@ FluidNodeWalberla::FluidNodeWalberla() {
        {"is_boundary", AutoParameter::read_only,
         [this]() {
           if (lattice_switch == ActiveLB::WALBERLA) {
+            assert(m_lb_fluid.lock() and m_lb_fluid.lock().get() == ::lb_walberla().get());
             auto const result = ::Communication::mpiCallbacks().call(
                 ::Communication::Result::one_rank,
                 Walberla::mpi_get_node_is_boundary_local, m_index);
@@ -211,6 +217,7 @@ FluidNodeWalberla::FluidNodeWalberla() {
        {"boundary_force", AutoParameter::read_only,
         [this]() {
           if (lattice_switch == ActiveLB::WALBERLA) {
+            assert(m_lb_fluid.lock() and m_lb_fluid.lock().get() == ::lb_walberla().get());
             auto const result = ::Communication::mpiCallbacks().call(
                 ::Communication::Result::one_rank,
                 Walberla::mpi_get_node_boundary_force_local, m_index);
@@ -223,7 +230,9 @@ FluidNodeWalberla::FluidNodeWalberla() {
        {"_pressure_tensor", AutoParameter::read_only,
         [this]() {
           if (lattice_switch == ActiveLB::WALBERLA) {
-            auto const visc = m_lb_fluid->get_viscosity();
+            auto lb_fluid = m_lb_fluid.lock();
+            assert(lb_fluid.get() == ::lb_walberla().get());
+            auto const visc = lb_fluid->get_viscosity();
             auto tensor = ::Communication::mpiCallbacks().call(
                 ::Communication::Result::one_rank,
                 Walberla::mpi_get_node_pressure_tensor_local, m_index);
@@ -236,16 +245,17 @@ FluidNodeWalberla::FluidNodeWalberla() {
         }},
        {"last_applied_force",
         [this](const Variant &v) {
-          if (lattice_switch == ActiveLB::WALBERLA) {
+          if (auto lb_fluid = m_lb_fluid.lock()) {
             auto const f = get_value<Utils::Vector3d>(v) * m_conv_force;
-            m_lb_fluid->set_node_last_applied_force(m_index, f);
-            m_lb_fluid->ghost_communication();
+            lb_fluid->set_node_last_applied_force(m_index, f);
+            lb_fluid->ghost_communication();
           } else if (context()->is_head_node()) {
             throw NoLBActive();
           }
         },
         [this]() {
           if (lattice_switch == ActiveLB::WALBERLA) {
+            assert(m_lb_fluid.lock() and m_lb_fluid.lock().get() == ::lb_walberla().get());
             auto const result = ::Communication::mpiCallbacks().call(
                 ::Communication::Result::one_rank,
                 Walberla::mpi_get_node_last_applied_force_local, m_index);

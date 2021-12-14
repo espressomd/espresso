@@ -26,7 +26,6 @@
 #include <walberla_bridge/LBWalberlaBase.hpp>
 #include <walberla_bridge/VTKHandle.hpp>
 
-#include "core/communication.hpp"
 #include "core/grid_based_algorithms/lb_walberla_instance.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
@@ -134,7 +133,7 @@ public:
         lb_fluid->switch_vtk(get_vtk_uid(), false);
       }
     } catch (std::exception const &err) {
-      if (this_node == 0) {
+      if (context()->is_head_node()) {
         throw;
       }
     }
@@ -165,7 +164,7 @@ public:
         get_lb_fluid()->write_vtk(get_vtk_uid());
       }
     } catch (std::exception const &err) {
-      if (this_node == 0) {
+      if (context()->is_head_node()) {
         throw;
       }
     }
