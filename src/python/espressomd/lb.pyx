@@ -225,6 +225,35 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
 
         return self._params
 
+    def get_interpolated_velocity(self, pos):
+        """Get LB fluid velocity at specified position.
+
+        Parameters
+        ----------
+        pos : (3,) array_like of :obj:`float`
+            The position at which velocity is requested.
+
+        Returns
+        -------
+        v : (3,) array_like :obj:`float`
+            The LB fluid velocity at ``pos``.
+
+        """
+        return self.call_method('get_interpolated_velocity', pos)
+
+    def add_force_at_pos(self, pos, force):
+        """Adds a force to the fluid at given position
+
+        Parameters
+        ----------
+        pos : (3,) array_like of :obj:`float`
+              The position at which the force will be added.
+        force : (3,) array_like of :obj:`float`
+              The force vector which will be distributed at the position.
+
+        """
+        return self.call_method('add_force_at_pos', pos=pos, force=force)
+
     def save_checkpoint(self, path, binary):
         '''
         Write LB node populations to a file.
@@ -244,7 +273,8 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
 
     @property
     def pressure_tensor(self):
-        return utils.array_locked(self.get_pressure_tensor())
+        tensor = self.call_method('get_pressure_tensor')
+        return utils.array_locked(tensor)
 
     @pressure_tensor.setter
     def pressure_tensor(self, value):
@@ -435,22 +465,17 @@ IF LB_WALBERLA:
         Initialize the lattice-Boltzmann method for hydrodynamic flow using waLBerla.
         See :class:`HydrodynamicInteraction` for the list of parameters.
 
-        Methods
-        ----------
-        add_force_at_pos(pos, force)
-            Adds a force to the fluid at given position.
-        get_interpolated_velocity(pos)
-            Get the LB fluid velocity at specified position.
-        get_pressure_tensor()
-            Get the LB fluid pressure tensor.
-
         """
         _so_name = "walberla::FluidWalberla"
         _so_creation_policy = "GLOBAL"
-        _so_bind_methods = (
-            "add_force_at_pos",
-            "get_interpolated_velocity",
-            "get_pressure_tensor")
+        # TODO WALBERLA: here we cannot use _so_bind_methods without lb_vtk.py
+        # failing: the walberla::FluidWalberla script interface object doesn't
+        # expire even when the LBFluidWalberla is removed from the actors list
+        # and the last python variable holding a reference to it is deleted.
+        #_so_bind_methods = (
+        #    "add_force_at_pos",
+        #    "get_interpolated_velocity",
+        #    "get_pressure_tensor")
 
         def _set_params_in_es_core(self):
             pass
