@@ -20,7 +20,7 @@ import sympy as sp
 streaming_pattern = "pull"
 accessor = get_accessor(streaming_pattern, Timestep.BOTH)
 
-omega = 1.0  # relaxation rate of first component
+omega = sp.Symbol('omega')  # relaxation rate of first component
 shear_velocity = 0.1  # shear velocity
 shear_dir = 0  # direction of shear flow
 shear_dir_normal = 1  # direction normal to shear plane, for interpolation
@@ -63,6 +63,7 @@ for s in to_insert:
     collision = collision.new_with_inserted_subexpression(s)
 ma = []
 for a, c in zip(collision.main_assignments, collision.method.stencil):
+    print(a, c)
     if c[2] == -1:
         b = (False, True)
     elif c[2] == 1:

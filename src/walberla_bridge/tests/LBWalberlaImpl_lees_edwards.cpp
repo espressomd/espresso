@@ -56,7 +56,7 @@ namespace bdata = boost::unit_test::data;
 Vector3i mpi_shape{};
 BOOST_AUTO_TEST_CASE(test_lees_edwards) {
   double density = 1;
-  double viscosity = 1. / 7.;
+  double viscosity = 1. / 6.;
   auto lattice =
       std::make_shared<LatticeWalberla>(Vector3i{8, 64, 8}, mpi_shape, 1);
   auto lb = walberla::LBWalberlaImpl<double>(lattice, viscosity, density);

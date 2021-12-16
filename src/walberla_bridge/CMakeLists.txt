@@ -24,7 +24,9 @@ set(WalberlaBridgeCodegen_SRC
     generated_kernels/Dynamic_UBB_single_precision.cpp
     generated_kernels/Dynamic_UBB_double_precision.cpp
     generated_kernels/UpdateVelocityFromPDFSweepDoublePrecision.cpp
-    generated_kernels/UpdateVelocityFromPDFSweepSinglePrecision.cpp)
+    generated_kernels/UpdateVelocityFromPDFSweepSinglePrecision.cpp
+    generated_kernels/LeesEdwards_Collision.cpp
+    )
 if(WALBERLA_USE_AVX)
   list(APPEND WalberlaBridgeCodegen_SRC
        generated_kernels/CollideSweepSinglePrecisionAVX.cpp

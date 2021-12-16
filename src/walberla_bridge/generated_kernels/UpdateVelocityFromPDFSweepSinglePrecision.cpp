@@ -219,9 +219,9 @@ updatevelocityfrompdfsweepsingleprecision_updatevelocityfrompdfsweepsingleprecis
 } // namespace internal_5bc8ae7b61d5e7dd0cac9df61b0fb69a
 
 void UpdateVelocityFromPDFSweepSinglePrecision::run(IBlock *block) {
-  auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
-  auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
   auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
+  auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
+  auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
 
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(force->nrOfGhostLayers()));
   float *RESTRICT const _data_force = force->dataAt(-1, -1, -1, 0);
@@ -277,9 +277,9 @@ void UpdateVelocityFromPDFSweepSinglePrecision::runOnCellInterval(
   if (ci.empty())
     return;
 
-  auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
-  auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
   auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
+  auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
+  auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
 
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(force->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(force->nrOfGhostLayers()));

@@ -80,6 +80,7 @@
 #include "generated_kernels/CollideSweepSinglePrecisionLeesEdwards.h"
 #include "generated_kernels/CollideSweepSinglePrecisionThermalized.h"
 #endif
+#include "generated_kernels/LeesEdwards_Collision.h"
 
 #include <utils/Vector.hpp>
 #include <utils/interpolation/bspline_3d.hpp>
@@ -112,14 +113,12 @@ template <typename FT = double> struct KernelTrait {
       pystencils::CollideSweepDoublePrecisionThermalizedAVX;
   using UnthermalizedCollisionModel =
       pystencils::CollideSweepDoublePrecisionAVX;
-  using LeesEdwardsCollisionModel =
-      pystencils::CollideSweepDoublePrecisionLeesEdwardsAVX;
+  using LeesEdwardsCollisionModel = pystencils::LeesEdwards_Collision;
 #else
   using ThermalizedCollisionModel =
       pystencils::CollideSweepDoublePrecisionThermalized;
   using UnthermalizedCollisionModel = pystencils::CollideSweepDoublePrecision;
-  using LeesEdwardsCollisionModel =
-      pystencils::CollideSweepDoublePrecisionLeesEdwards;
+  using LeesEdwardsCollisionModel = pystencils::LeesEdwards_Collision;
 #endif
   using StreamSweep = pystencils::StreamSweepDoublePrecision;
   using InitialPDFsSetter = pystencils::InitialPDFsSetterDoublePrecision;
