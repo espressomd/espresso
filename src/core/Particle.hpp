@@ -92,6 +92,33 @@ struct ParticleProperties {
   /** particle type, used for non-bonded interactions. */
   int type = 0;
 
+#ifdef VIRTUAL_SITES
+  /** is particle virtual */
+  bool is_virtual = false;
+#else  // VIRTUAL_SITES
+  static constexpr bool is_virtual = false;
+#endif // VIRTUAL_SITES
+
+  /** bitfield for the particle axes of rotation */
+#ifdef ROTATION
+  uint8_t rotation = ROTATION_FIXED;
+#else
+  static constexpr uint8_t rotation = ROTATION_FIXED;
+#endif
+
+#ifdef EXTERNAL_FORCES
+  /** Flag for fixed particle coordinates.
+   *  Values:
+   *  - 0: no fixed coordinates
+   *  - 2: fix translation along the x axis
+   *  - 4: fix translation along the y axis
+   *  - 8: fix translation along the z axis
+   */
+  uint8_t ext_flag = 0;
+#else  // EXTERNAL_FORCES
+  static constexpr const uint8_t ext_flag = 0; // no fixed coordinates
+#endif // EXTERNAL_FORCES
+
   /** particle mass */
 #ifdef MASS
   double mass = 1.0;
@@ -104,13 +131,6 @@ struct ParticleProperties {
   Utils::Vector3d rinertia = {1., 1., 1.};
 #else
   static constexpr Utils::Vector3d rinertia = {1., 1., 1.};
-#endif
-
-  /** bitfield for the particle axes of rotation */
-#ifdef ROTATION
-  uint8_t rotation = ROTATION_FIXED;
-#else
-  static constexpr uint8_t rotation = ROTATION_FIXED;
 #endif
 
   /** charge. */
@@ -131,8 +151,6 @@ struct ParticleProperties {
 #endif
 
 #ifdef VIRTUAL_SITES
-  /** is particle virtual */
-  bool is_virtual = false;
 #ifdef VIRTUAL_SITES_RELATIVE
   /** The following properties define, with respect to which real particle a
    *  virtual site is placed and at what distance. The relative orientation of
@@ -157,8 +175,6 @@ struct ParticleProperties {
     }
   } vs_relative;
 #endif // VIRTUAL_SITES_RELATIVE
-#else  // VIRTUAL_SITES
-  static constexpr bool is_virtual = false;
 #endif // VIRTUAL_SITES
 
 #ifdef THERMOSTAT_PER_PARTICLE
@@ -179,22 +195,12 @@ struct ParticleProperties {
 #endif // THERMOSTAT_PER_PARTICLE
 
 #ifdef EXTERNAL_FORCES
-  /** Flag for fixed particle coordinates.
-   *  Values:
-   *  - 0: no fixed coordinates
-   *  - 2: fix translation along the x axis
-   *  - 4: fix translation along the y axis
-   *  - 8: fix translation along the z axis
-   */
-  uint8_t ext_flag = 0;
   /** External force. */
   Utils::Vector3d ext_force = {0, 0, 0};
 #ifdef ROTATION
   /** External torque. */
   Utils::Vector3d ext_torque = {0, 0, 0};
-#endif
-#else  // EXTERNAL_FORCES
-  static constexpr const uint8_t ext_flag = 0; // no fixed coordinates
+#endif // ROTATION
 #endif // EXTERNAL_FORCES
 
 #ifdef ENGINE
@@ -355,10 +361,10 @@ struct ParticleMomentum {
 struct ParticleLocal {
   /** is particle a ghost particle. */
   bool ghost = false;
-  /** position from the last Verlet list update. */
-  Utils::Vector3d p_old = {0, 0, 0};
   /** index of the simulation box image where the particle really sits. */
   Utils::Vector3i i = {0, 0, 0};
+  /** position from the last Verlet list update. */
+  Utils::Vector3d p_old = {0, 0, 0};
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
     ar &ghost;

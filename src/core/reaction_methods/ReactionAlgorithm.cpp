@@ -159,9 +159,8 @@ void ReactionAlgorithm::append_particle_property_of_random_particle(
     int type, std::vector<StoredParticleProperty> &list_of_particles) {
   int random_index_in_type_map = i_random(number_of_particles_with_type(type));
   int p_id = get_random_p_id(type, random_index_in_type_map);
-  StoredParticleProperty property_of_part = {p_id, charges_of_types[type],
-                                             type};
-  list_of_particles.push_back(property_of_part);
+  StoredParticleProperty properties = {p_id, type, charges_of_types[type]};
+  list_of_particles.push_back(properties);
 }
 
 /**
