@@ -322,9 +322,9 @@ static FUNC_PREFIX void streamsweepsingleprecision_streamsweepsingleprecision(
 } // namespace internal_streamsweepsingleprecision_streamsweepsingleprecision
 
 void StreamSweepSinglePrecision::run(IBlock *block) {
-  auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
   auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
   auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
+  auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
   field::GhostLayerField<float, 19> *pdfs_tmp;
   {
     // Getting temporary field pdfs_tmp
@@ -401,9 +401,9 @@ void StreamSweepSinglePrecision::runOnCellInterval(
   if (ci.empty())
     return;
 
-  auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
   auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
   auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
+  auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
   field::GhostLayerField<float, 19> *pdfs_tmp;
   {
     // Getting temporary field pdfs_tmp

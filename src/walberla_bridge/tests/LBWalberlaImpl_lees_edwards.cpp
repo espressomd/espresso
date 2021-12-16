@@ -55,22 +55,27 @@ namespace bdata = boost::unit_test::data;
 
 Vector3i mpi_shape{};
 BOOST_AUTO_TEST_CASE(test_lees_edwards) {
+  double density = 1;
+  double viscosity = 1. / 7.;
   auto lattice =
-      std::make_shared<LatticeWalberla>(Vector3i{64, 64, 64}, mpi_shape, 1);
-  auto lb = walberla::LBWalberlaImpl<double>(lattice, 0.001, 1);
+      std::make_shared<LatticeWalberla>(Vector3i{8, 64, 8}, mpi_shape, 1);
+  auto lb = walberla::LBWalberlaImpl<double>(lattice, viscosity, density);
   double v0 = 0.064;
   lb.set_collision_model(LeesEdwardsPack(
       0, 1, [&]() { return 0.0; }, [&]() { return v0; }));
-  for (int i = 0; i < 2500; i++) {
+  for (int i = 0; i < 22000; i++) {
     lb.integrate();
-    for (int j : {-1, 0, 1, 2, 3, 4, 5, 63, 64}) {
-      std::cout << (*(lb.get_node_velocity(Vector3i{32, j, 32}, true)))[0]
-                << " ";
+    if (i % 100 == 0) {
+      for (int j : {-1, 0, 1, 2, 3, 4, 5, 63, 64}) {
+        std::cout << (*(lb.get_node_velocity(Vector3i{4, j, 4}, true)))[0]
+                  << " ";
+      }
+
+      std::cout << std::endl;
     }
-    std::cout << std::endl;
   }
   for (int i = -1; i <= 64; i++)
-    std::cout << (*(lb.get_node_velocity(Vector3i{32, i, 32}, true)))[0]
+    std::cout << (*(lb.get_node_velocity(Vector3i{4, i, 4}, true)))[0]
               << std::endl;
 }
 

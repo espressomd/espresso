@@ -42,9 +42,9 @@ def modify_method(collision, shear_dir, shear_dir_normal,
     ma = []
     for a, c in zip(collision.main_assignments, collision.method.stencil):
         if c[shear_dir_normal] == -1:
-            b = (False, True)
-        elif c[shear_dir_normal] == 1:
             b = (True, False)
+        elif c[shear_dir_normal] == 1:
+            b = (False, True)
         else:
             b = (False, False)
         a = Assignment(a.lhs, a.rhs.replace(points_down, b[0]))
