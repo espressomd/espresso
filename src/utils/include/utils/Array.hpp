@@ -23,12 +23,14 @@
 #include "get.hpp"
 
 #include <boost/serialization/access.hpp>
+#include <boost/serialization/array_wrapper.hpp>
 
 #include <cassert>
 #include <cstddef>
 #include <iterator>
 #include <ostream>
 #include <stdexcept>
+
 namespace Utils {
 
 namespace detail {
@@ -40,7 +42,7 @@ private:
   friend boost::serialization::access;
   template <typename Archive>
   void serialize(Archive &ar, const unsigned int /* version */) {
-    ar &m_data;
+    ar &(boost::serialization::make_array(m_data, N));
   }
 };
 
