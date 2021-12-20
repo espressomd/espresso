@@ -45,6 +45,7 @@
 namespace ScriptInterface::walberla {
 
 class FluidNodeWalberla : public AutoParameters<FluidNodeWalberla> {
+  // TODO WALBERLA: revert commit 2f0c490b8e1bb4ab3e to use a weak_ptr
   std::shared_ptr<::LBWalberlaBase> m_lb_fluid;
   Utils::Vector3i m_index;
   Utils::Vector3i m_grid_size;
