@@ -18,23 +18,12 @@
 #
 include "myconfig.pxi"
 import os
-import cython
 import itertools
-import functools
 import numpy as np
 cimport numpy as np
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 from .shapes import Shape
-from . cimport cuda_init
-from . import cuda_init
 from . import utils
-from .utils import is_valid_type, to_char_pointer, check_type_or_throw_except
-from .utils cimport Vector3i
-from .utils cimport Vector3d
-from .utils cimport Vector6d
-from .utils cimport make_array_locked
-from .utils cimport make_Vector3d
-from .utils cimport create_nparray_from_double_array
 
 
 class VelocityBounceBack:
@@ -44,7 +33,7 @@ class VelocityBounceBack:
     """
 
     def __init__(self, velocity):
-        check_type_or_throw_except(
+        utils.check_type_or_throw_except(
             velocity, 3, float, "VelocityBounceBack velocity must be three floats")
         self.velocity = velocity
 
