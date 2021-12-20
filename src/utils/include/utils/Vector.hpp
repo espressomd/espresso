@@ -500,4 +500,7 @@ template <typename T> struct deduce_vec<Utils::Vector<T, 3>, 3> {
 
 } // namespace qvm
 } // namespace boost
+
+UTILS_ARRAY_BOOST_CLASS(Utils::Vector, N, object_serializable)
+
 #endif
