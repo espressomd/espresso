@@ -19,9 +19,12 @@
 #ifndef UTILS_SERIALIZATION_ARRAY_HPP
 #define UTILS_SERIALIZATION_ARRAY_HPP
 
+#include <boost/mpl/greater.hpp>
 #include <boost/mpl/int.hpp>
 #include <boost/mpl/integral_c_tag.hpp>
 #include <boost/serialization/level.hpp>
+#include <boost/serialization/tracking.hpp>
+#include <boost/serialization/tracking_enum.hpp>
 
 #include <cstddef>
 
@@ -45,6 +48,28 @@
     typedef mpl::int_<ImplementationLevel> type;                               \
     BOOST_STATIC_CONSTANT(int,                                                 \
                           value = implementation_level_impl::type::value);     \
+  };                                                                           \
+  } /* namespace serialization */                                              \
+  } /* namespace boost */
+
+/**
+ * @brief Redefinition of @c BOOST_CLASS_TRACKING for array types.
+ * @tparam Container            Template template type of the array
+ * @tparam N                    N if @p Container uses std::size_t N, else 0
+ * @tparam TrackingLevel        Tracking level
+ */
+#define UTILS_ARRAY_BOOST_TRACK(Container, N, TrackingLevel)                   \
+  namespace boost {                                                            \
+  namespace serialization {                                                    \
+  UTILS_ARRAY_TEMPLATE_T_##N struct tracking_level<                            \
+      UTILS_ARRAY_CONTAINER_T_##N(Container)> {                                \
+    typedef mpl::integral_c_tag tag;                                           \
+    typedef mpl::int_<TrackingLevel> type;                                     \
+    BOOST_STATIC_CONSTANT(int, value = tracking_level::type::value);           \
+    BOOST_STATIC_ASSERT(                                                       \
+        (mpl::greater<                                                         \
+            implementation_level<UTILS_ARRAY_CONTAINER_T_##N(Container)>,      \
+            mpl::int_<primitive_type>>::value));                               \
   };                                                                           \
   } /* namespace serialization */                                              \
   } /* namespace boost */
