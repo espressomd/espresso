@@ -33,7 +33,6 @@
 
 namespace Walberla {
 
-void clear_boundaries();
 void update_boundary_from_shape(std::vector<int> const &raster_flat,
                                 std::vector<double> const &slip_velocity_flat);
 void update_boundary_from_list(std::vector<int> const &nodes_flat,

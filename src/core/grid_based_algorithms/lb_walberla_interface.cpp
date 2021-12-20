@@ -38,14 +38,6 @@
 
 namespace Walberla {
 
-void clear_boundaries() {
-  lb_walberla()->clear_boundaries();
-  lb_walberla()->ghost_communication();
-  on_lb_boundary_conditions_change();
-}
-
-REGISTER_CALLBACK(clear_boundaries)
-
 void update_boundary_from_shape(std::vector<int> const &raster_flat,
                                 std::vector<double> const &slip_velocity_flat) {
   lb_walberla()->update_boundary_from_shape(raster_flat, slip_velocity_flat);

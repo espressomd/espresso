@@ -152,16 +152,6 @@ const Utils::Vector6d lb_lbfluid_get_pressure_tensor() {
   throw NoLBActive();
 }
 
-void lb_lbfluid_clear_boundaries() {
-  if (lattice_switch == ActiveLB::WALBERLA) {
-#ifdef LB_WALBERLA
-    ::Communication::mpiCallbacks().call_all(Walberla::clear_boundaries);
-#endif
-  } else {
-    throw NoLBActive();
-  }
-}
-
 void lb_lbfluid_update_boundary_from_shape(
     std::vector<int> const &raster_flat,
     std::vector<double> const &slip_velocity_flat) {

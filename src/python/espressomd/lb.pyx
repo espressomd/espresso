@@ -487,7 +487,7 @@ IF LB_WALBERLA:
             """
             Remove boundary conditions.
             """
-            lb_lbfluid_clear_boundaries()
+            self.call_method('clear_boundaries')
 
         def add_boundary_from_shape(self, shape,
                                     velocity=np.zeros(3, dtype=float),

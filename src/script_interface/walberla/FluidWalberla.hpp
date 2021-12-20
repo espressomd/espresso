@@ -28,6 +28,7 @@
 #include "LatticeWalberla.hpp"
 
 #include "core/communication.hpp"
+#include "core/event.hpp"
 #include "core/grid.hpp"
 #include "core/grid_based_algorithms/lb_interface.hpp"
 #include "core/grid_based_algorithms/lb_walberla_instance.hpp"
@@ -223,6 +224,11 @@ public:
       auto const path = get_value<std::string>(params, "path");
       auto const binary = get_value<bool>(params, "binary");
       save_checkpoint(path, binary);
+    }
+    if (name == "clear_boundaries") {
+      m_lb_fluid->clear_boundaries();
+      m_lb_fluid->ghost_communication();
+      on_lb_boundary_conditions_change();
     }
 
     return {};

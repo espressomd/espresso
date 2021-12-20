@@ -96,11 +96,6 @@ double lb_lbfluid_get_lattice_speed();
 const Utils::Vector6d lb_lbfluid_get_pressure_tensor();
 
 /**
- * @brief Clear boundaries
- */
-void lb_lbfluid_clear_boundaries();
-
-/**
  * @brief Add a boundary.
  */
 void lb_lbfluid_update_boundary_from_shape(
