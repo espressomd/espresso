@@ -39,9 +39,6 @@ void update_boundary_from_shape(std::vector<int> const &raster_flat,
 void update_boundary_from_list(std::vector<int> const &nodes_flat,
                                std::vector<double> const &vel_flat);
 
-void set_node_from_checkpoint(Utils::Vector3i ind, LBWalberlaNodeState cpt);
-boost::optional<LBWalberlaNodeState> get_node_checkpoint(Utils::Vector3i ind);
-
 Utils::Vector3d get_momentum();
 
 boost::optional<Utils::Vector3d> get_velocity_at_pos(Utils::Vector3d pos);

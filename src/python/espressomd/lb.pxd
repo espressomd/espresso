@@ -20,7 +20,6 @@ include "myconfig.pxi"
 
 from libcpp cimport bool
 from libcpp.vector cimport vector
-from libcpp.string cimport string
 from libc cimport stdint
 
 from .utils cimport Vector3i
@@ -29,8 +28,6 @@ cdef extern from "grid_based_algorithms/lb_interface.hpp":
 
     double lb_lbfluid_get_tau() except +
     double lb_lbfluid_get_agrid() except +
-    void lb_lbfluid_save_checkpoint(string filename, bool binary) except +
-    void lb_lbfluid_load_checkpoint(string filename, bool binary) except +
     void lb_lbnode_remove_from_boundary(const Vector3i & ind) except +
     void lb_lbfluid_clear_boundaries() except +
     void lb_lbfluid_update_boundary_from_shape(const vector[int] & raster,
