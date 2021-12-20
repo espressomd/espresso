@@ -166,6 +166,7 @@ no_rotation:
   tags:
     - docker
     - linux
+    - numa
 
 ubuntu:wo-dependencies:
   <<: *global_job_definition
@@ -182,6 +183,7 @@ ubuntu:wo-dependencies:
   tags:
     - docker
     - linux
+    - numa
 
 ### Builds with different distributions
 
@@ -199,6 +201,7 @@ debian:10:
   tags:
     - docker
     - linux
+    - numa
 
 fedora:34:
   <<: *global_job_definition
@@ -214,6 +217,7 @@ fedora:34:
   tags:
     - docker
     - linux
+    - numa
 
 ### Builds with CUDA
 
@@ -240,6 +244,7 @@ clang-sanitizer:
     - docker
     - linux
     - cuda
+    - numa
 
 fast_math:
   <<: *global_job_definition
@@ -283,6 +288,7 @@ cuda11-maxset:
     - docker
     - linux
     - cuda
+    - numa
 
 cuda10-maxset:
   <<: *global_job_definition
@@ -467,6 +473,7 @@ empty:
     - docker
     - linux
     - cuda
+    - numa
 
 check_sphinx:
   <<: *global_job_definition
@@ -490,6 +497,7 @@ check_sphinx:
     - docker
     - linux
     - cuda
+    - numa
 
 run_tutorials:
   <<: *global_job_definition
@@ -536,6 +544,7 @@ run_doxygen:
   tags:
     - docker
     - linux
+    - numa
 
 check_cuda_maxset_no_gpu:
   <<: *global_job_definition
