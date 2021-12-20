@@ -256,20 +256,17 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
 
     def save_checkpoint(self, path, binary):
         '''
-        Write LB node populations to a file.
-        Boundary information is not written to the file.
+        Write LB node populations and boundaries to a file.
         '''
         tmp_path = path + ".__tmp__"
-        lb_lbfluid_save_checkpoint(utils.to_char_pointer(tmp_path), binary)
+        self.call_method('save_checkpoint', path=tmp_path, binary=type(True)(binary))
         os.rename(tmp_path, path)
 
     def load_checkpoint(self, path, binary):
         '''
-        Load LB node populations from a file.
-        Boundary information is not available in the file. The boundary
-        information of the grid will be set to zero.
+        Load LB node populations and boundaries from a file.
         '''
-        lb_lbfluid_load_checkpoint(utils.to_char_pointer(path), binary)
+        return self.call_method('load_checkpoint', path=path, binary=type(True)(binary))
 
     @property
     def pressure_tensor(self):

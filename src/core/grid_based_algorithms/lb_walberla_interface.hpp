@@ -41,8 +41,6 @@ void update_boundary_from_list(std::vector<int> const &nodes_flat,
 
 void set_node_from_checkpoint(Utils::Vector3i ind, LBWalberlaNodeState cpt);
 boost::optional<LBWalberlaNodeState> get_node_checkpoint(Utils::Vector3i ind);
-void do_reallocate_ubb_field();
-void do_ghost_communication();
 
 Utils::Vector3d get_momentum();
 

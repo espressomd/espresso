@@ -25,7 +25,6 @@
 
 #include <cstdint>
 #include <stdexcept>
-#include <string>
 #include <vector>
 
 /** @brief LB implementation currently active. */
@@ -113,9 +112,6 @@ void lb_lbfluid_update_boundary_from_shape(
  */
 void lb_lbfluid_update_boundary_from_list(std::vector<int> const &nodes_flat,
                                           std::vector<double> const &vel_flat);
-
-void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary);
-void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary);
 
 Utils::Vector3d lb_lbfluid_calc_fluid_momentum();
 

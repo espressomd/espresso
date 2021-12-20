@@ -356,7 +356,7 @@ class TestCheckpointLB(ut.TestCase):
             invalid_path = os.path.join(dirname, 'unknown_dir', filename)
             lbf.save_checkpoint(invalid_path, cpt_mode)
         system.actors.remove(lbf)
-        with self.assertRaisesRegex(RuntimeError, 'one needs to have already initialized the LB fluid'):
+        with self.assertRaisesRegex(RuntimeError, 'Attempted access to uninitialized LBWalberla instance'):
             lbf.load_checkpoint(lbf_cpt_path, cpt_mode)
 
         # read the valid LB checkpoint file

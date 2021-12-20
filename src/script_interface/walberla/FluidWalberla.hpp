@@ -46,6 +46,9 @@
 
 namespace ScriptInterface::walberla {
 
+void load_checkpoint(const std::string &filename, bool binary);
+void save_checkpoint(const std::string &filename, bool binary);
+
 class FluidWalberla : public AutoParameters<FluidWalberla> {
   std::shared_ptr<::LBWalberlaBase> m_lb_fluid;
   std::shared_ptr<::LBWalberlaParams> m_lb_params;
@@ -212,6 +215,20 @@ public:
             std::vector<double>{lower_tri[0], lower_tri[1], lower_tri[3]},
             std::vector<double>{lower_tri[1], lower_tri[2], lower_tri[4]},
             std::vector<double>{lower_tri[3], lower_tri[4], lower_tri[5]}};
+      }
+    }
+    if (name == "load_checkpoint") {
+      if (context()->is_head_node()) {
+        auto const path = get_value<std::string>(params, "path");
+        auto const binary = get_value<bool>(params, "binary");
+        load_checkpoint(path, binary);
+      }
+    }
+    if (name == "save_checkpoint") {
+      if (context()->is_head_node()) {
+        auto const path = get_value<std::string>(params, "path");
+        auto const binary = get_value<bool>(params, "binary");
+        save_checkpoint(path, binary);
       }
     }
 

@@ -62,44 +62,6 @@ void update_boundary_from_list(std::vector<int> const &nodes_flat,
 
 REGISTER_CALLBACK(update_boundary_from_list)
 
-void set_node_from_checkpoint(Utils::Vector3i ind, LBWalberlaNodeState cpt) {
-  lb_walberla()->set_node_pop(ind, cpt.populations);
-  lb_walberla()->set_node_last_applied_force(ind, cpt.last_applied_force);
-  if (cpt.is_boundary) {
-    lb_walberla()->set_node_velocity_at_boundary(ind, cpt.slip_velocity, false);
-  }
-}
-
-REGISTER_CALLBACK(set_node_from_checkpoint)
-
-boost::optional<LBWalberlaNodeState> get_node_checkpoint(Utils::Vector3i ind) {
-  auto const pop = lb_walberla()->get_node_pop(ind);
-  auto const laf = lb_walberla()->get_node_last_applied_force(ind);
-  auto const lbb = lb_walberla()->get_node_is_boundary(ind);
-  auto const vbb = lb_walberla()->get_node_velocity_at_boundary(ind);
-  if (pop and laf and lbb and ((*lbb) ? vbb.has_value() : true)) {
-    LBWalberlaNodeState cpnode;
-    cpnode.populations = *pop;
-    cpnode.last_applied_force = *laf;
-    cpnode.is_boundary = *lbb;
-    if (*lbb) {
-      cpnode.slip_velocity = *vbb;
-    }
-    return cpnode;
-  }
-  return {boost::none};
-}
-
-REGISTER_CALLBACK_ONE_RANK(get_node_checkpoint)
-
-void do_reallocate_ubb_field() { lb_walberla()->reallocate_ubb_field(); }
-
-REGISTER_CALLBACK(do_reallocate_ubb_field)
-
-void do_ghost_communication() { lb_walberla()->ghost_communication(); }
-
-REGISTER_CALLBACK(do_ghost_communication)
-
 Utils::Vector3d get_momentum() { return lb_walberla()->get_momentum(); }
 
 REGISTER_CALLBACK_REDUCTION(get_momentum, std::plus<>())
