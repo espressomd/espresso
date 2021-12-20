@@ -55,7 +55,7 @@ automatically. Alternatively, you can assign an id manually when adding them to 
 The id provides an alternative way to access particles in the system. To
 retrieve the handle of the particle with id ``INDEX``, call::
 
-    p = system.part[<INDEX>]
+    p = system.part.by_id(<INDEX>)
 
 .. _Accessing particle properties:
 
@@ -134,11 +134,11 @@ Exclusions do not apply to the short range part of electrostatics and magnetosta
 
 To create exclusions for particles pairs 0 and 1::
 
-    system.part[0].add_exclusion(1)
+    system.part.by_id(0).add_exclusion(1)
 
 To delete the exclusion::
 
-    system.part[0].delete_exclusion(1)
+    system.part.by_id(0).delete_exclusion(1)
 
 See :attr:`espressomd.particle_data.ParticleHandle.exclusions`
 
@@ -346,30 +346,19 @@ to retrieve a particle slice:
   When adding several particles at once, a particle slice is returned instead
   of a particle handle.
 
-- By slicing :py:attr:`espressomd.system.System.part`
+- By calling :meth:`espressomd.particle_data.ParticleList.by_ids`
 
-  The :class:`~espressomd.particle_data.ParticleList` supports slicing
-  similarly to lists and NumPy arrays, however with the distinction that
-  particle slices can have gaps.
+  It is also possible to get a slice containing particles of specific ids, e.g.::
 
-  Using a colon returns a slice containing all particles::
-
-      print(system.part[:])
-
-  To access particles with ids ranging from 0 to 9, use::
-
-      system.part[0:10]
-
-  Note that, like in other cases in Python, the lower bound is inclusive and
-  the upper bound is non-inclusive. The length of the slice does not have to
-  be 10, it can be for example 2 if there are only 2 particles in the system
-  with an id between 0 and 9.
-
-  It is also possible to get a slice containing particles of specific ids::
-
-      system.part[[1, 4, 3]]
+      system.part.by_ids([1, 4, 3])
 
   would contain the particles with ids 1, 4, and 3 in that specific order.
+  
+- By calling :meth:`espressomd.particle_data.ParticleList.all`
+
+  You can get a slice containing all particles using::
+
+      system.part.all()
 
 - By calling :meth:`espressomd.particle_data.ParticleList.select`
 
@@ -381,7 +370,7 @@ to retrieve a particle slice:
 Properties of particle slices can be accessed just like with single particles.
 A list of all values is returned::
 
-    print(system.part[:].q)
+    print(system.part.all().q)
 
 A particle slice can be iterated over, see :ref:`Iterating over particles and pairs of particles`.
 
@@ -389,27 +378,27 @@ Setting properties of slices can be done by
 
 - supplying a *single value* that is assigned to each entry of the slice, e.g.::
 
-      system.part[0:10].ext_force = [1, 0, 0]
+      system.part.by_ids(range(10)).ext_force = [1, 0, 0]
 
 - supplying an *array of values* that matches the length of the slice which sets each entry individually, e.g.::
 
-      system.part[0:3].ext_force = [[1, 0, 0], [2, 0, 0], [3, 0, 0]]
+      system.partby_ids(range(3)).ext_force = [[1, 0, 0], [2, 0, 0], [3, 0, 0]]
 
 For list properties that have no fixed length like ``exclusions`` or ``bonds``, some care has to be taken.
 There, *single value* assignment also accepts lists/tuples just like setting the property of an individual particle. For example::
 
-    system.part[0].exclusions = [1, 2]
+    system.part.by_id(0).exclusions = [1, 2]
 
 would both exclude short-range interactions of the particle pairs ``0 <-> 1`` and ``0 <-> 2``.
 Similarly, a list can also be assigned to each entry of the slice::
 
-    system.part[2:4].exclusions = [0, 1]
+    system.part.by_ids(range(2,4)).exclusions = [0, 1]
 
 This would exclude interactions between ``2 <-> 0``, ``2 <-> 1``, ``3 <-> 0`` and ``3 <-> 1``.
 Now when it is desired to supply an *array of values* with individual values for each slice entry, the distinction can no longer be done
 by the length of the input, as slice length and input length can be equal. Here, the nesting level of the input is the distinctive criterion::
 
-    system.part[2:4].exclusions = [[0, 1], [0, 1]]
+    system.part.by_ids(range(2,4)).exclusions = [[0, 1], [0, 1]]
 
 The above code snippet would lead to the same exclusions as the one before.
 The same accounts for the ``bonds`` property by interchanging the integer entries of the exclusion list with

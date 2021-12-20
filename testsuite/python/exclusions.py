@@ -34,37 +34,37 @@ class Exclusions(ut.TestCase):
         self.system.time_step = 0.01
 
     def test_add_remove(self):
-        self.system.part.add(id=0, pos=[0, 0, 0])
+        p0 = self.system.part.add(id=0, pos=[0, 0, 0])
         self.system.part.add(id=1, pos=[0, 0, 0])
         self.system.part.add(id=2, pos=[0, 0, 0])
 
-        self.system.part[0].add_exclusion(1)
-        self.system.part[0].add_exclusion(2)
-        self.assertEqual(list(self.system.part[0].exclusions), [1, 2])
-        self.system.part[0].delete_exclusion(1)
-        self.assertEqual(list(self.system.part[0].exclusions), [2])
-        self.system.part[0].delete_exclusion(2)
-        self.assertEqual(list(self.system.part[0].exclusions), [])
+        p0.add_exclusion(1)
+        p0.add_exclusion(2)
+        self.assertEqual(list(p0.exclusions), [1, 2])
+        p0.delete_exclusion(1)
+        self.assertEqual(list(p0.exclusions), [2])
+        p0.delete_exclusion(2)
+        self.assertEqual(list(p0.exclusions), [])
 
     def test_transfer(self):
-        self.system.part.add(id=0, pos=[0, 0, 0], v=[1., 1., 1])
+        p0 = self.system.part.add(id=0, pos=[0, 0, 0], v=[1., 1., 1])
         self.system.part.add(id=1, pos=[0, 0, 0])
         self.system.part.add(id=2, pos=[0, 0, 0])
         self.system.part.add(id=3, pos=[0, 0, 0])
 
-        self.system.part[0].exclusions = [1, 2, 3]
+        p0.exclusions = [1, 2, 3]
 
         for _ in range(15):
             self.system.integrator.run(100)
-            self.assertEqual(list(self.system.part[0].exclusions), [1, 2, 3])
+            self.assertEqual(list(p0.exclusions), [1, 2, 3])
 
     @utx.skipIfMissingFeatures(['LENNARD_JONES'])
     def test_particle_property(self):
         self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
             epsilon=1., sigma=2., cutoff=1.5, shift=0.0)
 
-        self.system.part.add(id=0, pos=[0, 0, 0], type=0)
-        self.system.part.add(id=1, pos=[1, 0, 0], type=0)
+        p0 = self.system.part.add(id=0, pos=[0, 0, 0], type=0)
+        p1 = self.system.part.add(id=1, pos=[1, 0, 0], type=0)
 
         pair_energy = self.system.analysis.energy()['total']
         self.assertGreater(pair_energy, 0.)
@@ -73,62 +73,62 @@ class Exclusions(ut.TestCase):
         self.assertGreater(pair_pressure, 0.)
 
         self.system.integrator.run(0)
-        pair_force = self.system.part[0].f[0]
+        pair_force = p0.f[0]
         self.assertGreater(abs(pair_force), 0.)
-        self.assertAlmostEqual(self.system.part[1].f[0], -pair_force, places=7)
+        self.assertAlmostEqual(p1.f[0], -pair_force, places=7)
 
-        self.system.part.add(id=2, pos=[2, 0, 0], type=0)
+        p2 = self.system.part.add(id=2, pos=[2, 0, 0], type=0)
         self.system.integrator.run(0)
         self.assertAlmostEqual(self.system.analysis.energy()['total'],
                                2 * pair_energy)
         self.assertAlmostEqual(self.system.analysis.pressure()['total'],
                                2 * pair_pressure)
-        self.assertAlmostEqual(self.system.part[2].f[0], -pair_force, places=7)
+        self.assertAlmostEqual(p2.f[0], -pair_force, places=7)
 
-        self.system.part[1].exclusions = [0, 2]
+        p1.exclusions = [0, 2]
         self.system.integrator.run(0)
         self.assertAlmostEqual(self.system.analysis.energy()['total'], 0)
         self.assertAlmostEqual(self.system.analysis.pressure()['total'], 0)
-        self.assertAlmostEqual(self.system.part[0].f[0], 0, places=7)
-        self.assertAlmostEqual(self.system.part[1].f[0], 0, places=7)
-        self.assertAlmostEqual(self.system.part[2].f[0], 0, places=7)
+        self.assertAlmostEqual(p0.f[0], 0, places=7)
+        self.assertAlmostEqual(p1.f[0], 0, places=7)
+        self.assertAlmostEqual(p2.f[0], 0, places=7)
 
-        self.system.part[1].exclusions = [0]
+        p1.exclusions = [0]
         self.assertAlmostEqual(
             self.system.analysis.energy()['total'],
             pair_energy)
         self.assertAlmostEqual(self.system.analysis.pressure()['total'],
                                pair_pressure)
         self.system.integrator.run(0)
-        self.assertAlmostEqual(self.system.part[0].f[0], 0, places=7)
-        self.assertAlmostEqual(self.system.part[1].f[0], pair_force, places=7)
-        self.assertAlmostEqual(self.system.part[2].f[0], -pair_force, places=7)
+        self.assertAlmostEqual(p0.f[0], 0, places=7)
+        self.assertAlmostEqual(p1.f[0], pair_force, places=7)
+        self.assertAlmostEqual(p2.f[0], -pair_force, places=7)
 
-        self.system.part[1].exclusions = []
+        p1.exclusions = []
         self.assertAlmostEqual(self.system.analysis.energy()['total'],
                                2 * pair_energy)
         self.assertAlmostEqual(self.system.analysis.pressure()['total'],
                                2 * pair_pressure)
         self.system.integrator.run(0)
-        self.assertAlmostEqual(self.system.part[0].f[0], pair_force, places=7)
-        self.assertAlmostEqual(self.system.part[1].f[0], 0, places=7)
-        self.assertAlmostEqual(self.system.part[2].f[0], -pair_force, places=7)
+        self.assertAlmostEqual(p0.f[0], pair_force, places=7)
+        self.assertAlmostEqual(p1.f[0], 0, places=7)
+        self.assertAlmostEqual(p2.f[0], -pair_force, places=7)
 
-        self.system.part[1].exclusions = [0]
+        p1.exclusions = [0]
         self.assertAlmostEqual(
             self.system.analysis.energy()['total'],
             pair_energy)
         self.assertAlmostEqual(self.system.analysis.pressure()['total'],
                                pair_pressure)
         self.system.integrator.run(0)
-        self.assertAlmostEqual(self.system.part[0].f[0], 0, places=7)
-        self.assertAlmostEqual(self.system.part[1].f[0], pair_force, places=7)
-        self.assertAlmostEqual(self.system.part[2].f[0], -pair_force, places=7)
+        self.assertAlmostEqual(p0.f[0], 0, places=7)
+        self.assertAlmostEqual(p1.f[0], pair_force, places=7)
+        self.assertAlmostEqual(p2.f[0], -pair_force, places=7)
 
     @utx.skipIfMissingFeatures(['P3M'])
     def test_electrostatics_not_excluded(self):
-        self.system.part.add(id=0, pos=[0, 0, 0], type=0, q=+1.)
-        self.system.part.add(id=1, pos=[1, 0, 0], type=0, q=-1.)
+        p0 = self.system.part.add(id=0, pos=[0, 0, 0], type=0, q=+1.)
+        p1 = self.system.part.add(id=1, pos=[1, 0, 0], type=0, q=-1.)
 
         # Small alpha means large short-range contribution
         p3m = espressomd.electrostatics.P3M(
@@ -141,18 +141,18 @@ class Exclusions(ut.TestCase):
         self.assertGreater(abs(pair_energy), 0.)
 
         self.system.integrator.run(0)
-        pair_force = self.system.part[0].f[0]
+        pair_force = p0.f[0]
         self.assertGreater(abs(pair_force), 0.)
-        self.assertAlmostEqual(self.system.part[1].f[0], -pair_force, places=7)
+        self.assertAlmostEqual(p1.f[0], -pair_force, places=7)
 
         pair_pressure = self.system.analysis.pressure()[('coulomb', 0)]
         self.assertGreater(abs(pair_pressure), 0.)
 
-        self.system.part[0].exclusions = [1]
+        p0.exclusions = [1]
         # Force and energy should not be changed by the exclusion
         self.system.integrator.run(0)
-        self.assertAlmostEqual(self.system.part[0].f[0], pair_force, places=7)
-        self.assertAlmostEqual(self.system.part[1].f[0], -pair_force, places=7)
+        self.assertAlmostEqual(p0.f[0], pair_force, places=7)
+        self.assertAlmostEqual(p1.f[0], -pair_force, places=7)
         self.assertAlmostEqual(self.system.analysis.energy()[('coulomb', 0)],
                                pair_energy, places=7)
         self.assertAlmostEqual(self.system.analysis.pressure()[('coulomb', 0)],

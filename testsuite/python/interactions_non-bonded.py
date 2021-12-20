@@ -344,7 +344,7 @@ class InteractionsNonBondedTest(ut.TestCase):
 
         setup_system(gb_params)
 
-        p1, p2 = self.system.part[:]
+        p1, p2 = self.system.part.all()
 
         delta = 1.0e-6
 
@@ -405,7 +405,7 @@ class InteractionsNonBondedTest(ut.TestCase):
 
         getattr(self.system.non_bonded_inter[0, 0], name).set_params(
             **parameters)
-        p0, p1 = self.system.part[:]
+        p0, p1 = self.system.part.all()
         p1.pos = p0.pos + self.step * n_initial_steps
 
         force_parameters = parameters.copy()

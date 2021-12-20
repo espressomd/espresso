@@ -32,7 +32,7 @@ class ScafacosInterface(ut.TestCase):
     system = espressomd.System(box_l=3 * [5])
     system.time_step = 0.01
     system.cell_system.skin = 0.5
-    system.periodicity = [1, 1, 1]
+    system.periodicity = 3 * [True]
 
     def tearDown(self):
         self.system.part.clear()
@@ -153,8 +153,8 @@ class ScafacosInterface(ut.TestCase):
         system.integrator.run(0, recalc_forces=True)
         ref_E_coulomb = system.analysis.energy()["coulomb"]
         ref_E_dipoles = system.analysis.energy()["dipolar"]
-        ref_forces = np.copy(system.part[:].f)
-        ref_torques = np.copy(system.part[:].torque_lab)
+        ref_forces = np.copy(system.part.all().f)
+        ref_torques = np.copy(system.part.all().torque_lab)
 
         system.actors.clear()
 
@@ -197,8 +197,8 @@ class ScafacosInterface(ut.TestCase):
         system.integrator.run(0, recalc_forces=True)
         ref_E_coulomb = system.analysis.energy()["coulomb"]
         ref_E_dipoles = system.analysis.energy()["dipolar"]
-        ref_forces = np.copy(system.part[:].f)
-        ref_torques = np.copy(system.part[:].torque_lab)
+        ref_forces = np.copy(system.part.all().f)
+        ref_torques = np.copy(system.part.all().torque_lab)
 
         system.actors.clear()
 

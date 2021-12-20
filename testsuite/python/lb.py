@@ -430,7 +430,7 @@ class LBTest:
 
         system.part.add(pos=np.random.random((1000, 3)) * system.box_l)
         if espressomd.has_features("MASS"):
-            system.part[:].mass = 0.1 + np.random.random(len(system.part))
+            system.part.all().mass = 0.1 + np.random.random(len(system.part))
 
         lbf = self.lb_class(kT=self.params['temp'], seed=4, **self.params,
                             **self.lb_params)
@@ -440,7 +440,7 @@ class LBTest:
 
         for _ in range(20):
             system.integrator.run(1)
-            particle_force = np.sum(system.part[:].f, axis=0)
+            particle_force = np.sum(system.part.all().f, axis=0)
             fluid_force = np.sum(
                 np.array([n.last_applied_force for n in lbf.nodes()]), axis=0)
             np.testing.assert_allclose(

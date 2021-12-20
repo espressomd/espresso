@@ -84,7 +84,7 @@ class LBThermostatCommon(thermostats_common.ThermostatsCommon):
             if i % 10 == 0:
                 fluid_temps.append(
                     np.average([n.density * n.velocity**2 for n in self.lbf.nodes()]) * node_volume)
-            v_particles[i] = self.system.part[:].v
+            v_particles[i] = self.system.part.all().v
         fluid_temp = np.average(fluid_temps)
 
         np.testing.assert_allclose(np.average(v_particles), 0, atol=0.033)

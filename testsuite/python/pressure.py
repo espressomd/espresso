@@ -126,8 +126,9 @@ class PressureLJ(ut.TestCase):
         p2.v = [27.0, 23.0, 17.0]
         p3.v = [13.0, 11.0, 19.0]
 
-        pos = system.part[:].pos
-        vel = system.part[:].v
+        partcls = system.part.all()
+        pos = partcls.pos
+        vel = partcls.v
 
         sim_pressure_tensor = system.analysis.pressure_tensor()
         sim_pressure_tensor_kinetic = np.copy(sim_pressure_tensor['kinetic'])

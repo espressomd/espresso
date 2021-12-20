@@ -56,6 +56,13 @@ void EspressoSystemStandAlone::set_box_l(Utils::Vector3d const &box_l) const {
   mpi_set_box_length(box_l);
 }
 
+void EspressoSystemStandAlone::set_node_grid(
+    Utils::Vector3i const &node_grid) const {
+  if (!head_node)
+    return;
+  mpi_set_node_grid(node_grid);
+}
+
 void EspressoSystemStandAlone::set_time_step(double time_step) const {
   if (!head_node)
     return;

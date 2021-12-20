@@ -453,9 +453,8 @@ def main_loop():
 
         new_box = np.ones(3) * controls.volume**(1. / 3.)
         if np.any(np.array(system.box_l) != new_box):
-            for i in range(len(system.part)):
-                system.part[i].pos = system.part[i].pos * \
-                    new_box / system.box_l[0]
+            for p in system.part:
+                p.pos *= new_box / system.box_l[0]
             print("volume changed")
             system.force_cap = lj_cap
         system.box_l = new_box
@@ -468,7 +467,7 @@ def main_loop():
         system.force_cap = lj_cap
     elif new_part < len(system.part):
         for i in range(new_part, len(system.part)):
-            system.part[i].remove()
+            system.part.by_id(i).remove()
         print("particles removed")
 
     plt1_x_data = plot1.get_xdata()

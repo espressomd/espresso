@@ -38,15 +38,17 @@ class InteractionsAngleBondTest(ut.TestCase):
         self.system.cell_system.skin = 0.4
         self.system.time_step = .1
 
-        p0 = self.system.part.add(pos=self.start_pos, type=0)
-        p1 = self.system.part.add(pos=self.start_pos + self.rel_pos, type=0)
-        self.system.part.add(pos=self.start_pos + self.rel_pos, type=0)
+        self.p0 = self.system.part.add(pos=self.start_pos, type=0)
+        self.p1 = self.system.part.add(
+            pos=self.start_pos + self.rel_pos, type=0)
+        self.p2 = self.system.part.add(
+            pos=self.start_pos + self.rel_pos, type=0)
 
         # Add a pair bond to make sure that doesn't cause trouble
         harmonic_bond = espressomd.interactions.HarmonicBond(k=0, r_0=0)
         self.system.bonded_inter.add(harmonic_bond)
         self.harmonic_bond = harmonic_bond
-        p1.add_bond((harmonic_bond, p0))
+        self.p1.add_bond((harmonic_bond, self.p0))
 
     def tearDown(self):
         self.system.part.clear()
@@ -84,15 +86,14 @@ class InteractionsAngleBondTest(ut.TestCase):
 
     def run_test(self, bond_instance, force_func, energy_func, phi0):
         self.system.bonded_inter.add(bond_instance)
-        p0, p1, p2 = self.system.part[:]
         # Add bond angle
-        p0.add_bond((bond_instance, 1, 2))
+        self.p0.add_bond((bond_instance, 1, 2))
         # Add an extra (strength 0) pair bond, which should change nothing
-        p0.add_bond((self.harmonic_bond, 1))
+        self.p0.add_bond((self.harmonic_bond, 1))
 
         d_phi = np.pi / self.N
         for i in range(1, self.N):  # avoid corner cases at phi = 0 or phi = pi
-            p2.pos = self.start_pos + \
+            self.p2.pos = self.start_pos + \
                 self.rotate_vector(self.rel_pos, self.axis, i * d_phi)
             self.system.integrator.run(recalc_forces=True, steps=0)
 
@@ -104,17 +105,19 @@ class InteractionsAngleBondTest(ut.TestCase):
 
             f_ref = force_func(i * d_phi)
             phi_diff = i * d_phi - phi0
-            for p, sign in [[p1, -1], [p2, +1]]:
+            for p, sign in [[self.p1, -1], [self.p2, +1]]:
                 # Check that force is perpendicular
                 self.assertAlmostEqual(
-                    np.dot(p.f, self.system.distance_vec(p0, p)), 0,
+                    np.dot(p.f, self.system.distance_vec(self.p0, p)), 0,
                     delta=1E-12, msg="The force is not perpendicular")
                 # Check that force has correct magnitude
                 self.assertAlmostEqual(np.linalg.norm(p.f), np.abs(
-                    f_ref) / self.system.distance(p0, p), delta=1E-11)
+                    f_ref) / self.system.distance(self.p0, p), delta=1E-11)
                 # Check that force decreases the quantity abs(phi - phi0)
                 if np.abs(phi_diff) > 1E-12:  # sign undefined for phi = phi0
-                    force_axis = np.cross(self.system.distance_vec(p, p0), p.f)
+                    force_axis = np.cross(
+                        self.system.distance_vec(
+                            p, self.p0), p.f)
                     self.assertEqual(
                         np.sign(phi_diff),
                         np.sign(sign * np.dot(force_axis, self.axis)),
@@ -122,7 +125,7 @@ class InteractionsAngleBondTest(ut.TestCase):
 
             # Total force =0?
             np.testing.assert_allclose(
-                np.sum(np.copy(self.system.part[:].f), 0), [0, 0, 0], atol=1E-12)
+                np.sum(np.copy(self.system.part.all().f), 0), [0, 0, 0], atol=1E-12)
 
             # No pressure (isotropic compression preserves angles)
             self.assertAlmostEqual(
@@ -138,16 +141,16 @@ class InteractionsAngleBondTest(ut.TestCase):
             # and r_p2 =r_p1 +r_{p1,p2} and r_p3 =r_p1 +r_{p1,p3}
             # P_ij =1/V (F_p2 r_{p1,p2} + F_p3 r_{p1,p3})
             p_tensor_expected = \
-                np.outer(p1.f, self.system.distance_vec(p0, p1)) \
-                + np.outer(p2.f, self.system.distance_vec(p0, p2))
+                np.outer(self.p1.f, self.system.distance_vec(self.p0, self.p1)) \
+                + np.outer(self.p2.f, self.system.distance_vec(self.p0, self.p2))
             p_tensor_expected /= self.system.volume()
             np.testing.assert_allclose(
                 self.system.analysis.pressure_tensor()["bonded"],
                 p_tensor_expected, atol=1E-12)
 
         # Remove bonds
-        p0.delete_bond((bond_instance, 1, 2))
-        p0.delete_bond((self.harmonic_bond, 1))
+        self.p0.delete_bond((bond_instance, 1, 2))
+        self.p0.delete_bond((self.harmonic_bond, 1))
 
     def test_angle_harmonic(self):
         ah_bend = 1.

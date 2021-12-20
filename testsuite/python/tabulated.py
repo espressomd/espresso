@@ -46,9 +46,9 @@ class TabulatedTest(ut.TestCase):
         self.system.part.clear()
 
     def check(self):
-        p0, p1 = self.system.part[:]
+        p0, p1 = self.system.part.all()
         # Below cutoff
-        np.testing.assert_allclose(np.copy(self.system.part[:].f), 0.0)
+        np.testing.assert_allclose(np.copy(self.system.part.all().f), 0.0)
 
         for z in np.linspace(0, self.max_ - self.min_, 200, endpoint=False):
             p1.pos = [5., 5., 6. + z]
@@ -86,7 +86,7 @@ class TabulatedTest(ut.TestCase):
         self.assertAlmostEqual(tb.params['min'], self.min_)
         self.assertAlmostEqual(tb.params['max'], self.max_)
 
-        p0, p1 = self.system.part[:]
+        p0, p1 = self.system.part.all()
         p0.add_bond((tb, p1))
         self.check()
 

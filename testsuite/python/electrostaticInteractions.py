@@ -32,8 +32,8 @@ class ElectrostaticInteractionsTests(ut.TestCase):
     def setUp(self):
         self.system.time_step = 0.01
 
-        self.system.part.add(pos=(9.0, 2.0, 2.0), q=1)
-        self.system.part.add(pos=(11.0, 2.0, 2.0), q=-1)
+        self.p0 = self.system.part.add(pos=(9.0, 2.0, 2.0), q=1)
+        self.p1 = self.system.part.add(pos=(11.0, 2.0, 2.0), q=-1)
 
     def tearDown(self):
         self.system.part.clear()
@@ -41,7 +41,7 @@ class ElectrostaticInteractionsTests(ut.TestCase):
 
     def calc_dh_potential(self, r, dh_params):
         kT = 1.0
-        q1, q2 = self.system.part[:].q
+        q1, q2 = self.system.part.all().q
         u = np.zeros_like(r)
         # r<r_cut
         i = np.where(r < dh_params['r_cut'])[0]
@@ -54,7 +54,7 @@ class ElectrostaticInteractionsTests(ut.TestCase):
 
         kT = 1.0
 
-        q1, q2 = self.system.part[:].q
+        q1, q2 = self.system.part.all().q
         epsilon1 = rf_params['epsilon1']
         epsilon2 = rf_params['epsilon2']
         kappa = rf_params['kappa']
@@ -77,8 +77,7 @@ class ElectrostaticInteractionsTests(ut.TestCase):
     def test_p3m(self):
         prefactor = 1.1
         box_vol = self.system.volume()
-        p1, p2 = self.system.part[:]
-        dip = np.copy(p1.q * p1.pos + p2.q * p2.pos)
+        dip = np.copy(self.p0.q * self.p0.pos + self.p1.q * self.p1.pos)
         p3m_params = {'accuracy': 1e-7,
                       'mesh': [22, 22, 22],
                       'cao': 7,
@@ -98,12 +97,12 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         p3m_energy = self.system.analysis.energy()['coulomb']
         tol = 1e-5
         np.testing.assert_allclose(p3m_energy, ref_energy, atol=tol)
-        np.testing.assert_allclose(np.copy(p1.f), ref_force1, atol=tol)
-        np.testing.assert_allclose(np.copy(p2.f), ref_force2, atol=tol)
+        np.testing.assert_allclose(np.copy(self.p0.f), ref_force1, atol=tol)
+        np.testing.assert_allclose(np.copy(self.p1.f), ref_force2, atol=tol)
 
         # keep current values as reference to check for P3M dipole correction
         ref_energy_metallic = self.system.analysis.energy()['coulomb']
-        ref_forces_metallic = np.copy(self.system.part[:].f)
+        ref_forces_metallic = np.copy(self.system.part.all().f)
         self.system.actors.remove(p3m)
 
         # check non-metallic case
@@ -111,14 +110,15 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         for epsilon in np.power(10., np.arange(-4, 5)):
             dipole_correction = 4 * np.pi / box_vol / (1 + 2 * epsilon)
             energy_correction = dipole_correction * np.linalg.norm(dip)**2
-            forces_correction = np.outer([p1.q, p2.q], dipole_correction * dip)
+            forces_correction = np.outer(
+                [self.p0.q, self.p1.q], dipole_correction * dip)
             ref_energy = ref_energy_metallic + prefactor * energy_correction
             ref_forces = ref_forces_metallic - prefactor * forces_correction
             p3m = espressomd.electrostatics.P3M(
                 prefactor=prefactor, epsilon=epsilon, tune=False, **p3m_params)
             self.system.actors.add(p3m)
             self.system.integrator.run(0, recalc_forces=True)
-            p3m_forces = np.array([p1.f, p2.f])
+            p3m_forces = np.array([self.p0.f, self.p1.f])
             p3m_energy = self.system.analysis.energy()['coulomb']
             np.testing.assert_allclose(p3m_energy, ref_energy, atol=tol)
             np.testing.assert_allclose(p3m_forces, ref_forces, atol=tol)
@@ -145,12 +145,11 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         u_dh_core = np.zeros_like(r)
         f_dh_core = np.zeros_like(r)
 
-        p1, p2 = self.system.part[:]
         for i, ri in enumerate(r):
-            p2.pos = p1.pos + [ri, 0, 0]
+            self.p1.pos = self.p0.pos + [ri, 0, 0]
             self.system.integrator.run(0)
             u_dh_core[i] = self.system.analysis.energy()['coulomb']
-            f_dh_core[i] = p1.f[0]
+            f_dh_core[i] = self.p0.f[0]
 
         np.testing.assert_allclose(u_dh_core, u_dh, atol=1e-7)
         np.testing.assert_allclose(f_dh_core, -f_dh, atol=1e-2)
@@ -172,10 +171,10 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         f_dh_core = np.zeros_like(r)
 
         for i, ri in enumerate(r):
-            self.system.part[1].pos = self.system.part[0].pos + [ri, 0, 0]
+            self.p1.pos = self.p0.pos + [ri, 0, 0]
             self.system.integrator.run(0)
             u_dh_core[i] = self.system.analysis.energy()['coulomb']
-            f_dh_core[i] = self.system.part[0].f[0]
+            f_dh_core[i] = self.p0.f[0]
 
         np.testing.assert_allclose(u_dh_core, u_dh, atol=1e-7)
         np.testing.assert_allclose(f_dh_core, -f_dh, atol=1e-7)
@@ -225,12 +224,11 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         u_rf_core = np.zeros_like(r)
         f_rf_core = np.zeros_like(r)
 
-        p1, p2 = self.system.part[:]
         for i, ri in enumerate(r):
-            p2.pos = p1.pos + [ri, 0, 0]
+            self.p1.pos = self.p0.pos + [ri, 0, 0]
             self.system.integrator.run(0)
             u_rf_core[i] = self.system.analysis.energy()['coulomb']
-            f_rf_core[i] = p1.f[0]
+            f_rf_core[i] = self.p0.f[0]
 
         np.testing.assert_allclose(u_rf_core, u_rf, atol=1e-7)
         np.testing.assert_allclose(f_rf_core, -f_rf, atol=1e-2)

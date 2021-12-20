@@ -83,7 +83,7 @@ class InteractionsBondedTest(ut.TestCase):
         coulomb_k = 1
         q1 = 1
         q2 = -1
-        p1, p2 = self.system.part[:]
+        p1, p2 = self.system.part.all()
         p1.q = q1
         p2.q = q2
         self.run_test(
@@ -98,7 +98,7 @@ class InteractionsBondedTest(ut.TestCase):
         # interactions
         q1 = 1.2
         q2 = -q1
-        p1, p2 = self.system.part[:]
+        p1, p2 = self.system.part.all()
         p1.q = q1
         p2.q = q2
         r_cut = 2
@@ -143,7 +143,7 @@ class InteractionsBondedTest(ut.TestCase):
     def run_test(self, bond_instance, force_func, energy_func, min_dist,
                  cutoff, test_breakage=False):
         self.system.bonded_inter.add(bond_instance)
-        p1, p2 = self.system.part[:]
+        p1, p2 = self.system.part.all()
         p1.bonds = ((bond_instance, p2),)
 
         # n+1 steps from min_dist to cut, then we remove the cut, because that

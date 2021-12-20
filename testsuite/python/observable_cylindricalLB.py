@@ -138,7 +138,7 @@ class CylindricalLBObservableCommon:
                 [0.5]),
             dtype=int)
         self.system.part.add(pos=pos_aligned, v=vel_aligned)
-        self.params['ids'] = self.system.part[:].id
+        self.params['ids'] = self.system.part.all().id
 
         for node, vel in zip(node_aligned, vel_aligned):
             self.lbf[node].velocity = vel

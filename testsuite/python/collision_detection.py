@@ -80,13 +80,13 @@ class CollisionDetection(ut.TestCase):
         system.collision_detection.set_params(mode="off")
 
         system.part.clear()
-        system.part.add(pos=(0, 0, 0), id=0)
-        system.part.add(pos=(0.1, 0, 0), id=1)
-        system.part.add(pos=(0.1, 0.3, 0), id=2)
+        p0 = system.part.add(pos=(0, 0, 0), id=0)
+        p1 = system.part.add(pos=(0.1, 0, 0), id=1)
+        p2 = system.part.add(pos=(0.1, 0.3, 0), id=2)
         system.integrator.run(1)
-        self.assertEqual(system.part[0].bonds, ())
-        self.assertEqual(system.part[1].bonds, ())
-        self.assertEqual(system.part[2].bonds, ())
+        self.assertEqual(p0.bonds, ())
+        self.assertEqual(p1.bonds, ())
+        self.assertEqual(p2.bonds, ())
 
         # Check that it cannot be activated
         system.collision_detection.set_params(
@@ -96,14 +96,14 @@ class CollisionDetection(ut.TestCase):
         bond0 = ((system.bonded_inter[0], 1),)
         bond1 = ((system.bonded_inter[0], 0),)
         self.assertTrue(
-            system.part[0].bonds == bond0 or system.part[1].bonds == bond1)
-        self.assertEqual(system.part[2].bonds, ())
+            p0.bonds == bond0 or p1.bonds == bond1)
+        self.assertEqual(p2.bonds, ())
 
         # Check that no additional bonds appear
         system.integrator.run(1)
         self.assertTrue(
-            system.part[0].bonds == bond0 or system.part[1].bonds == bond1)
-        self.assertEqual(system.part[2].bonds, ())
+            p0.bonds == bond0 or p1.bonds == bond1)
+        self.assertEqual(p2.bonds, ())
 
         # Check turning it off
         system.collision_detection.set_params(mode="off")
@@ -140,7 +140,7 @@ class CollisionDetection(ut.TestCase):
         # Check that nothing explodes when the particles are moved.
         # In particular for parallel simulations
         system.thermostat.set_langevin(kT=0, gamma=0.01, seed=42)
-        system.part[:].v = [0.05, 0.01, 0.15]
+        system.part.all().v = [0.05, 0.01, 0.15]
         system.integrator.run(3000)
         self.verify_state_after_bind_at_poc(expected_np)
 
@@ -165,19 +165,19 @@ class CollisionDetection(ut.TestCase):
             # Bond type
             self.assertEqual(p.bonds[0][0], self.H2)
             # get partner
-            p2 = system.part[p.bonds[0][1]]
+            p2 = system.part.by_id(p.bonds[0][1])
             # Is that really a vs
             self.assertTrue(p2.virtual)
             # Get base particles
-            base_p1 = system.part[p.vs_relative[0]]
-            base_p2 = system.part[p2.vs_relative[0]]
+            base_p1 = system.part.by_id(p.vs_relative[0])
+            base_p2 = system.part.by_id(p2.vs_relative[0])
             # Take note of accounted-for particles
             for _p in p, p2, base_p1, base_p2:
                 parts_not_accounted_for.remove(_p.id)
             self.verify_bind_at_poc_pair(base_p1, base_p2, p, p2)
         # Check particle that did not take part in collision.
         self.assertEqual(len(parts_not_accounted_for), 1)
-        p = system.part[parts_not_accounted_for[0]]
+        p = system.part.by_id(parts_not_accounted_for[0])
         self.assertFalse(p.virtual)
         self.assertEqual(p.bonds, ())
         parts_not_accounted_for.remove(p.id)
@@ -216,7 +216,7 @@ class CollisionDetection(ut.TestCase):
                 dist_centers = np.copy(p2.pos - p1.pos)
             else:
                 dist_centers = p1.pos - p2.pos
-            expected_pos = system.part[rel_to].pos_folded + \
+            expected_pos = system.part.by_id(rel_to).pos_folded + \
                 system.collision_detection.vs_placement * dist_centers
             dist = expected_pos - p.pos_folded
             dist -= np.round(dist / system.box_l) * system.box_l
@@ -318,8 +318,8 @@ class CollisionDetection(ut.TestCase):
         for vs_pair in vs_pairs:
             # Get corresponding non-virtual particles
             base_particles = tuple(sorted(
-                [system.part[vs_pair[0]].vs_relative[0],
-                 system.part[vs_pair[1]].vs_relative[0]]))
+                [system.part.by_id(vs_pair[0]).vs_relative[0],
+                 system.part.by_id(vs_pair[1]).vs_relative[0]]))
 
             # Is there a corresponding bond?
             self.assertIn(base_particles, bonds)
@@ -366,7 +366,7 @@ class CollisionDetection(ut.TestCase):
         # Check that nothing explodes, when the particles are moved.
         # In particular for parallel simulations
         system.thermostat.set_langevin(kT=0, gamma=0.01, seed=42)
-        system.part[:].v = [0.05, 0.01, 0.15]
+        system.part.all().v = [0.05, 0.01, 0.15]
         system.integrator.run(3000)
         self.verify_state_after_glue_to_surface(expected_np)
 
@@ -387,7 +387,7 @@ class CollisionDetection(ut.TestCase):
             self.assertEqual(p.bonds, ())
 
             # Get base particles
-            base_p = system.part[p.vs_relative[0]]
+            base_p = system.part.by_id(p.vs_relative[0])
 
             # Get bound particle
             # There is a bond between the base particle and the bound particle
@@ -396,7 +396,7 @@ class CollisionDetection(ut.TestCase):
             p2 = None
             if len(base_p.bonds) == 1:
                 self.assertEqual(base_p.bonds[0][0], self.H)
-                p2 = system.part[base_p.bonds[0][1]]
+                p2 = system.part.by_id(base_p.bonds[0][1])
             else:
                 # We need to go through all particles to find it
                 for candidate in system.part:
@@ -414,7 +414,7 @@ class CollisionDetection(ut.TestCase):
             self.verify_glue_to_surface_pair(base_p, p, p2)
         # Check particle that did not take part in collision.
         self.assertEqual(len(parts_not_accounted_for), 1)
-        p = system.part[parts_not_accounted_for[0]]
+        p = system.part.by_id(parts_not_accounted_for[0])
         self.assertFalse(p.virtual)
         self.assertEqual(p.type, self.other_type)
         self.assertEqual(p.bonds, ())
@@ -546,16 +546,16 @@ class CollisionDetection(ut.TestCase):
                     # Bonds to virtual sites:
                     if bond[0] == self.H2:
                         self.assertEqual(
-                            system.part[bond[1]].type,
+                            system.part.by_id(bond[1]).type,
                             self.part_type_vs)
                     else:
                         self.assertEqual(
-                            system.part[bond[1]].type,
+                            system.part.by_id(bond[1]).type,
                             self.part_type_to_attach_vs_to)
                 elif p.type == self.part_type_to_attach_vs_to:
                     self.assertEqual(bond[0], self.H)
                     self.assertEqual(
-                        system.part[bond[1]].type,
+                        system.part.by_id(bond[1]).type,
                         self.part_type_after_glueing)
                 else:
                     raise Exception(
@@ -639,7 +639,7 @@ class CollisionDetection(ut.TestCase):
         system.integrator.run(1, recalc_forces=True)
         self.verify_triangle_binding(cutoff, system.bonded_inter[2], res)
         system.cell_system.set_n_square()
-        system.part[:].bonds = ()
+        system.part.all().bonds = ()
         system.integrator.run(1, recalc_forces=True)
         self.verify_triangle_binding(cutoff, system.bonded_inter[2], res)
         system.time_step = self.time_step
@@ -653,7 +653,8 @@ class CollisionDetection(ut.TestCase):
         expected_pairs = []
         for i in range(n):
             for j in range(i + 1, n, 1):
-                if system.distance(system.part[i], system.part[j]) <= distance:
+                if system.distance(system.part.by_id(i),
+                                   system.part.by_id(j)) <= distance:
                     expected_pairs.append((i, j))
 
         # Find triangles
@@ -664,9 +665,7 @@ class CollisionDetection(ut.TestCase):
             for j in range(i + 1, n, 1):
                 for k in range(j + 1, n, 1):
                     # Ref to particles
-                    p_i = system.part[i]
-                    p_j = system.part[j]
-                    p_k = system.part[k]
+                    p_i, p_j, p_k = system.part.by_ids([i, j, k])
 
                     # Normalized distance vectors
                     d_ij = np.copy(p_j.pos - p_i.pos)
@@ -700,7 +699,7 @@ class CollisionDetection(ut.TestCase):
         found_pairs = []
         found_angle_bonds = []
         for i in range(n):
-            for b in system.part[i].bonds:
+            for b in system.part.by_id(i).bonds:
                 if len(b) == 2:
                     self.assertEqual(b[0]._bond_id, self.H._bond_id)
                     found_pairs.append(tuple(sorted((i, b[1]))))

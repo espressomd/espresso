@@ -49,10 +49,10 @@ class TestLB:
 
     def test_mass_momentum_thermostat(self):
         self.n_col_part = 100
-        self.system.part.add(pos=np.random.random(
+        partcls = self.system.part.add(pos=np.random.random(
             (self.n_col_part, 3)) * self.system.box_l[0])
         if espressomd.has_features("MASS"):
-            self.system.part[:].mass = 0.1 + np.random.random(
+            partcls.mass = 0.1 + np.random.random(
                 len(self.system.part))
 
         self.system.thermostat.turn_off()
@@ -110,7 +110,7 @@ class TestLB:
             # check momentum conservation
             momentum = self.system.analysis.linear_momentum()
             f_2_correction = np.sum(
-                self.system.part[:].f,
+                self.system.part.all().f,
                 axis=0) * self.system.time_step
 
             np.testing.assert_allclose(momentum + f_2_correction, self.tot_mom,

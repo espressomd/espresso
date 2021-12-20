@@ -73,7 +73,7 @@ Some variables like or are no longer directly available as attributes.
 In these cases they can be easily derived from the corresponding Python
 objects like::
 
-    n_part = len(system.part[:].pos)
+    n_part = len(system.part)
 
 or by calling the corresponding ``get_state()`` methods like::
 

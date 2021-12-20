@@ -43,8 +43,14 @@ class TestThole(ut.TestCase):
     def setUp(self):
         self.system.time_step = 0.01
         self.system.cell_system.skin = 0.4
-        self.system.part.add(pos=[0, 0, 0], type=0, fix=[1, 1, 1], q=self.q1)
-        self.system.part.add(pos=[2, 0, 0], type=0, fix=[1, 1, 1], q=self.q2)
+        self.p0 = self.system.part.add(
+            pos=[
+                0, 0, 0], type=0, fix=[
+                1, 1, 1], q=self.q1)
+        self.p1 = self.system.part.add(
+            pos=[
+                2, 0, 0], type=0, fix=[
+                1, 1, 1], q=self.q2)
 
         p3m = espressomd.electrostatics.P3M(
             prefactor=COULOMB_PREFACTOR, accuracy=1e-6, mesh=3 * [52], cao=4)
@@ -59,7 +65,7 @@ class TestThole(ut.TestCase):
         ns = 100
         for i in range(1, ns):
             x = 20.0 * i / ns
-            self.system.part[1].pos = [x, 0, 0]
+            self.p1.pos = [x, 0, 0]
             self.system.integrator.run(0)
 
             sd = x * self.thole_s
@@ -74,7 +80,7 @@ class TestThole(ut.TestCase):
 
             E = self.system.analysis.energy()
             E_tot = E["total"]
-            res_dForce.append(self.system.part[1].f[0] - F_calc)
+            res_dForce.append(self.p1.f[0] - F_calc)
             res_dEnergy.append(E_tot - E_calc)
 
         for f in res_dForce:

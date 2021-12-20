@@ -79,23 +79,23 @@ class ThermostatsCommon:
         system = self.system
 
         # Place particles
-        system.part.add(pos=np.random.random((N, 3)))
+        partcls = system.part.add(pos=np.random.random((N, 3)))
 
         # Enable rotation if compiled in
         if espressomd.has_features("ROTATION"):
-            system.part[:].rotation = [1, 1, 1]
+            partcls.rotation = 3 * [True]
 
         # Warmup
         system.integrator.run(20)
 
         vel_obs = espressomd.observables.ParticleVelocities(
-            ids=system.part[:].id)
+            ids=partcls.id)
         vel_acc = espressomd.accumulators.TimeSeries(obs=vel_obs)
         system.auto_update_accumulators.add(vel_acc)
 
         if espressomd.has_features("ROTATION"):
             omega_obs = espressomd.observables.ParticleBodyAngularVelocities(
-                ids=system.part[:].id)
+                ids=partcls.id)
             omega_acc = espressomd.accumulators.TimeSeries(obs=omega_obs)
             system.auto_update_accumulators.add(omega_acc)
 
@@ -104,9 +104,9 @@ class ThermostatsCommon:
         omega_stored = np.zeros((steps, N, 3))
         for i in range(steps):
             system.integrator.run(1, recalc_forces=recalc_forces)
-            v_stored[i] = system.part[:].v
+            v_stored[i] = partcls.v
             if espressomd.has_features("ROTATION"):
-                omega_stored[i] = system.part[:].omega_body
+                omega_stored[i] = partcls.omega_body
 
         vel = vel_acc.time_series().reshape((-1, 3))
         self.check_velocity_distribution(vel, v_minmax, n_bins, error_tol, kT)
@@ -140,26 +140,26 @@ class ThermostatsCommon:
             Error tolerance.
         """
         system = self.system
-        system.part.add(pos=np.random.random((N, 3)))
+        partcls = system.part.add(pos=np.random.random((N, 3)))
         if espressomd.has_features("ROTATION"):
-            system.part[:].rotation = [1, 1, 1]
+            partcls.rotation = [1, 1, 1]
 
         if espressomd.has_features("PARTICLE_ANISOTROPY"):
             gamma_local = 3 * [gamma_local]
 
         # Set different gamma on 2nd half of particles
-        system.part[N // 2:].gamma = gamma_local
+        system.part.by_ids(range(N // 2, N)).gamma = gamma_local
 
         system.integrator.run(50)
 
         vel_obs = espressomd.observables.ParticleVelocities(
-            ids=system.part[:].id)
+            ids=partcls.id)
         vel_acc = espressomd.accumulators.TimeSeries(obs=vel_obs)
         system.auto_update_accumulators.add(vel_acc)
 
         if espressomd.has_features("ROTATION"):
             omega_obs = espressomd.observables.ParticleBodyAngularVelocities(
-                ids=system.part[:].id)
+                ids=partcls.id)
             omega_acc = espressomd.accumulators.TimeSeries(obs=omega_obs)
             system.auto_update_accumulators.add(omega_acc)
 
@@ -186,14 +186,15 @@ class ThermostatsCommon:
         """
 
         system = self.system
+        partcls = system.part.all()
         vel_obs = espressomd.observables.ParticleVelocities(
-            ids=system.part[:].id)
+            ids=partcls.id)
         vel_series = espressomd.accumulators.TimeSeries(obs=vel_obs)
         system.auto_update_accumulators.add(vel_series)
         if espressomd.has_features("ROTATION"):
-            system.part[:].rotation = (1, 1, 1)
+            partcls.rotation = 3 * [True]
             omega_obs = espressomd.observables.ParticleBodyAngularVelocities(
-                ids=system.part[:].id)
+                ids=partcls.id)
             omega_series = espressomd.accumulators.TimeSeries(obs=omega_obs)
             system.auto_update_accumulators.add(omega_series)
 
