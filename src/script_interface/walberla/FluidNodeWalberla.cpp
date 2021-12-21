@@ -118,10 +118,8 @@ FluidNodeWalberla::FluidNodeWalberla() {
                 ::Communication::Result::one_rank,
                 Walberla::mpi_get_node_velocity_local, m_index);
             return Variant{result / m_conv_velocity};
-          } else if (context()->is_head_node()) {
-            throw NoLBActive();
           }
-          return Variant{None{}};
+          throw NoLBActive();
         }},
        {"velocity_at_boundary",
         [this](const Variant &v) {
@@ -149,10 +147,9 @@ FluidNodeWalberla::FluidNodeWalberla() {
                   Walberla::mpi_get_node_velocity_at_boundary_local, m_index);
               return Variant{u * (1. / m_conv_velocity)};
             }
-          } else if (context()->is_head_node()) {
-            throw NoLBActive();
+            return Variant{None{}};
           }
-          return Variant{None{}};
+          throw NoLBActive();
         }},
        {"density",
         [this](const Variant &v) {
@@ -170,10 +167,8 @@ FluidNodeWalberla::FluidNodeWalberla() {
                 ::Communication::Result::one_rank,
                 Walberla::mpi_get_node_density_local, m_index);
             return Variant{result / m_conv_dens};
-          } else if (context()->is_head_node()) {
-            throw NoLBActive();
           }
-          return Variant{None{}};
+          throw NoLBActive();
         }},
        {"_population",
         [this](const Variant &v) {
@@ -191,10 +186,8 @@ FluidNodeWalberla::FluidNodeWalberla() {
                 ::Communication::Result::one_rank,
                 Walberla::mpi_get_node_pop_local, m_index);
             return Variant{result};
-          } else if (context()->is_head_node()) {
-            throw NoLBActive();
           }
-          return Variant{None{}};
+          throw NoLBActive();
         }},
        {"is_boundary", AutoParameter::read_only,
         [this]() {
@@ -203,10 +196,8 @@ FluidNodeWalberla::FluidNodeWalberla() {
                 ::Communication::Result::one_rank,
                 Walberla::mpi_get_node_is_boundary_local, m_index);
             return Variant{result};
-          } else if (context()->is_head_node()) {
-            throw NoLBActive();
           }
-          return Variant{None{}};
+          throw NoLBActive();
         }},
        {"boundary_force", AutoParameter::read_only,
         [this]() {
@@ -215,10 +206,8 @@ FluidNodeWalberla::FluidNodeWalberla() {
                 ::Communication::Result::one_rank,
                 Walberla::mpi_get_node_boundary_force_local, m_index);
             return Variant{result * (1. / m_conv_force)};
-          } else if (context()->is_head_node()) {
-            throw NoLBActive();
           }
-          return Variant{None{}};
+          throw NoLBActive();
         }},
        {"_pressure_tensor", AutoParameter::read_only,
         [this]() {
@@ -229,10 +218,8 @@ FluidNodeWalberla::FluidNodeWalberla() {
                 Walberla::mpi_get_node_pressure_tensor_local, m_index);
             Walberla::walberla_off_diagonal_correction(tensor, visc);
             return Variant{tensor * (1. / m_conv_press)};
-          } else if (context()->is_head_node()) {
-            throw NoLBActive();
           }
-          return Variant{None{}};
+          throw NoLBActive();
         }},
        {"last_applied_force",
         [this](const Variant &v) {
@@ -250,10 +237,8 @@ FluidNodeWalberla::FluidNodeWalberla() {
                 ::Communication::Result::one_rank,
                 Walberla::mpi_get_node_last_applied_force_local, m_index);
             return Variant{result * (1. / m_conv_force)};
-          } else if (context()->is_head_node()) {
-            throw NoLBActive();
           }
-          return Variant{None{}};
+          throw NoLBActive();
         }}});
 }
 
