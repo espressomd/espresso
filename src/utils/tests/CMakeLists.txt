@@ -78,6 +78,8 @@ unit_test(NAME gatherv_test SRC gatherv_test.cpp DEPENDS EspressoUtils
           Boost::mpi MPI::MPI_CXX NUM_PROC 3)
 unit_test(NAME sendrecv_test SRC sendrecv_test.cpp DEPENDS EspressoUtils
           Boost::mpi MPI::MPI_CXX EspressoUtils NUM_PROC 3)
+unit_test(NAME serialization_test SRC serialization_test.cpp DEPENDS
+          EspressoUtils Boost::serialization Boost::mpi MPI::MPI_CXX NUM_PROC 1)
 unit_test(NAME matrix_test SRC matrix_test.cpp DEPENDS EspressoUtils
           Boost::serialization NUM_PROC 1)
 unit_test(NAME orthonormal_vec_test SRC orthonormal_vec_test.cpp DEPENDS
