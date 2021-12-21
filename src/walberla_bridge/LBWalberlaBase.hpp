@@ -183,9 +183,6 @@ public:
    */
   virtual void switch_vtk(std::string const &vtk_uid, bool status) = 0;
 
-  /** @brief return a pairs of global node index and node center position */
-  virtual std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>>
-  node_indices_positions(bool include_ghosts) const = 0;
   virtual ~LBWalberlaBase() = default;
 };
 
