@@ -1,4 +1,6 @@
-// kernel generated with pystencils v0.4.3+12.g29e0e84, lbmpy v0.4.3+2.g0e17e61, lbmpy_walberla/pystencils_walberla from commit 08f04ef64f95609b47838db85862033a1600afa1
+// kernel generated with pystencils v0.4.4, lbmpy v0.4.4,
+// lbmpy_walberla/pystencils_walberla from commit
+// 88f85eb7a979f81d68e76009811aeed53ec3014e
 
 //======================================================================================================================
 //
@@ -22,14 +24,12 @@
 #pragma once
 #include "core/DataTypes.h"
 
-#include "field/GhostLayerField.h"
-#include "field/SwapableCompare.h"
 #include "domain_decomposition/BlockDataID.h"
 #include "domain_decomposition/IBlock.h"
 #include "domain_decomposition/StructuredBlockStorage.h"
+#include "field/GhostLayerField.h"
+#include "field/SwapableCompare.h"
 #include <set>
-
-
 
 #ifdef __GNUC__
 #define RESTRICT __restrict__
@@ -39,84 +39,77 @@
 #define RESTRICT
 #endif
 
-#if ( defined WALBERLA_CXX_COMPILER_IS_GNU ) || ( defined WALBERLA_CXX_COMPILER_IS_CLANG )
-#   pragma GCC diagnostic push
-#   pragma GCC diagnostic ignored "-Wunused-parameter"
-#   pragma GCC diagnostic ignored "-Wreorder"
+#if (defined WALBERLA_CXX_COMPILER_IS_GNU) ||                                  \
+    (defined WALBERLA_CXX_COMPILER_IS_CLANG)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wreorder"
 #endif
 
 namespace walberla {
 namespace pystencils {
 
-
-class StreamSweepSinglePrecisionAVX
-{
+class StreamSweepSinglePrecisionAVX {
 public:
-    StreamSweepSinglePrecisionAVX( BlockDataID forceID_, BlockDataID pdfsID_, BlockDataID velocityID_ )
-        : forceID(forceID_), pdfsID(pdfsID_), velocityID(velocityID_)
-    {};
+  StreamSweepSinglePrecisionAVX(BlockDataID forceID_, BlockDataID pdfsID_,
+                                BlockDataID velocityID_)
+      : forceID(forceID_), pdfsID(pdfsID_), velocityID(velocityID_){};
 
-    
-    ~StreamSweepSinglePrecisionAVX() {  
-        for(auto p: cache_pdfs_) {
-            delete p;
-        }
-     }
-
-
-    void run(IBlock * block);
-    
-    void runOnCellInterval(const shared_ptr<StructuredBlockStorage> & blocks, const CellInterval & globalCellInterval, cell_idx_t ghostLayers, IBlock * block);
-
-    
-    void operator() (IBlock * block)
-    {
-        run(block);
+  ~StreamSweepSinglePrecisionAVX() {
+    for (auto p : cache_pdfs_) {
+      delete p;
     }
-    
+  }
 
-    static std::function<void (IBlock *)> getSweep(const shared_ptr<StreamSweepSinglePrecisionAVX> & kernel)
-    {
-        return [kernel] 
-               (IBlock * b) 
-               { kernel->run(b); };
-    }
+  void run(IBlock *block);
 
-    static std::function<void (IBlock*)> getSweepOnCellInterval(const shared_ptr<StreamSweepSinglePrecisionAVX> & kernel, const shared_ptr<StructuredBlockStorage> & blocks, const CellInterval & globalCellInterval, cell_idx_t ghostLayers=1)
-    {
-        return [kernel, blocks, globalCellInterval, ghostLayers]
-               (IBlock * b) 
-               { kernel->runOnCellInterval(blocks, globalCellInterval, ghostLayers, b); };
-    }
+  void runOnCellInterval(const shared_ptr<StructuredBlockStorage> &blocks,
+                         const CellInterval &globalCellInterval,
+                         cell_idx_t ghostLayers, IBlock *block);
 
-    std::function<void (IBlock *)> getSweep()
-    {
-        return [this] 
-               (IBlock * b) 
-               { this->run(b); };
-    }
+  void operator()(IBlock *block) { run(block); }
 
-    std::function<void (IBlock *)> getSweepOnCellInterval(const shared_ptr<StructuredBlockStorage> & blocks, const CellInterval & globalCellInterval, cell_idx_t ghostLayers=1)
-    {
-        return [this, blocks, globalCellInterval, ghostLayers]
-               (IBlock * b) 
-               { this->runOnCellInterval(blocks, globalCellInterval, ghostLayers, b); };
-    }
+  static std::function<void(IBlock *)>
+  getSweep(const shared_ptr<StreamSweepSinglePrecisionAVX> &kernel) {
+    return [kernel](IBlock *b) { kernel->run(b); };
+  }
 
+  static std::function<void(IBlock *)> getSweepOnCellInterval(
+      const shared_ptr<StreamSweepSinglePrecisionAVX> &kernel,
+      const shared_ptr<StructuredBlockStorage> &blocks,
+      const CellInterval &globalCellInterval, cell_idx_t ghostLayers = 1) {
+    return [kernel, blocks, globalCellInterval, ghostLayers](IBlock *b) {
+      kernel->runOnCellInterval(blocks, globalCellInterval, ghostLayers, b);
+    };
+  }
 
-    BlockDataID forceID;
-    BlockDataID pdfsID;
-    BlockDataID velocityID;
+  std::function<void(IBlock *)> getSweep() {
+    return [this](IBlock *b) { this->run(b); };
+  }
 
-    private: std::set< field::GhostLayerField<float, 19> *, field::SwapableCompare< field::GhostLayerField<float, 19> * > > cache_pdfs_;
+  std::function<void(IBlock *)>
+  getSweepOnCellInterval(const shared_ptr<StructuredBlockStorage> &blocks,
+                         const CellInterval &globalCellInterval,
+                         cell_idx_t ghostLayers = 1) {
+    return [this, blocks, globalCellInterval, ghostLayers](IBlock *b) {
+      this->runOnCellInterval(blocks, globalCellInterval, ghostLayers, b);
+    };
+  }
 
+  BlockDataID forceID;
+  BlockDataID pdfsID;
+  BlockDataID velocityID;
+
+private:
+  std::set<field::GhostLayerField<float, 19> *,
+           field::SwapableCompare<field::GhostLayerField<float, 19> *>>
+      cache_pdfs_;
 };
-
 
 } // namespace pystencils
 } // namespace walberla
 
-
-#if ( defined WALBERLA_CXX_COMPILER_IS_GNU ) || ( defined WALBERLA_CXX_COMPILER_IS_CLANG )
-#   pragma GCC diagnostic pop
+#if (defined WALBERLA_CXX_COMPILER_IS_GNU) ||                                  \
+    (defined WALBERLA_CXX_COMPILER_IS_CLANG)
+#pragma GCC diagnostic pop
 #endif

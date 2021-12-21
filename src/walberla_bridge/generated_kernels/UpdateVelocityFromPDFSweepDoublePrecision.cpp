@@ -1,6 +1,6 @@
-// kernel generated with pystencils v0.4.3+12.g29e0e84, lbmpy v0.4.3+2.g0e17e61,
+// kernel generated with pystencils v0.4.4, lbmpy v0.4.4,
 // lbmpy_walberla/pystencils_walberla from commit
-// 08f04ef64f95609b47838db85862033a1600afa1
+// 88f85eb7a979f81d68e76009811aeed53ec3014e
 
 //======================================================================================================================
 //
@@ -189,7 +189,8 @@ updatevelocityfrompdfsweepdoubleprecision_updatevelocityfrompdfsweepdoubleprecis
              _data_pdfs_20_37_10[_stride_pdfs_0 * ctr_0] -
              _data_pdfs_20_39_10[_stride_pdfs_0 * ctr_0]) /
                 rho +
-            0.5 * _data_force_20_30_10[_stride_force_0 * ctr_0] / rho;
+            0.50000000000000000 *
+                _data_force_20_30_10[_stride_force_0 * ctr_0] / rho;
         const double u_1 =
             (vel1Term - _data_pdfs_20_310_10[_stride_pdfs_0 * ctr_0] -
              _data_pdfs_20_312_10[_stride_pdfs_0 * ctr_0] -
@@ -198,7 +199,8 @@ updatevelocityfrompdfsweepdoubleprecision_updatevelocityfrompdfsweepdoubleprecis
              _data_pdfs_20_38_10[_stride_pdfs_0 * ctr_0] -
              _data_pdfs_20_39_10[_stride_pdfs_0 * ctr_0]) /
                 rho +
-            0.5 * _data_force_20_31_10[_stride_force_0 * ctr_0] / rho;
+            0.50000000000000000 *
+                _data_force_20_31_10[_stride_force_0 * ctr_0] / rho;
         const double u_2 =
             (vel2Term + _data_pdfs_20_311_10[_stride_pdfs_0 * ctr_0] +
              _data_pdfs_20_314_10[_stride_pdfs_0 * ctr_0] -
@@ -208,7 +210,8 @@ updatevelocityfrompdfsweepdoubleprecision_updatevelocityfrompdfsweepdoubleprecis
              _data_pdfs_20_318_10[_stride_pdfs_0 * ctr_0] -
              _data_pdfs_20_36_10[_stride_pdfs_0 * ctr_0]) /
                 rho +
-            0.5 * _data_force_20_32_10[_stride_force_0 * ctr_0] / rho;
+            0.50000000000000000 *
+                _data_force_20_32_10[_stride_force_0 * ctr_0] / rho;
         _data_velocity_20_30_10[_stride_velocity_0 * ctr_0] = u_0;
         _data_velocity_20_31_10[_stride_velocity_0 * ctr_0] = u_1;
         _data_velocity_20_32_10[_stride_velocity_0 * ctr_0] = u_2;
@@ -219,8 +222,8 @@ updatevelocityfrompdfsweepdoubleprecision_updatevelocityfrompdfsweepdoubleprecis
 } // namespace internal_b5bebbe175f5e59c79da5a69f4fc1e07
 
 void UpdateVelocityFromPDFSweepDoublePrecision::run(IBlock *block) {
-  auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
   auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
+  auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
   auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
 
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(force->nrOfGhostLayers()));
@@ -277,8 +280,8 @@ void UpdateVelocityFromPDFSweepDoublePrecision::runOnCellInterval(
   if (ci.empty())
     return;
 
-  auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
   auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
+  auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
   auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
 
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(force->nrOfGhostLayers()));
