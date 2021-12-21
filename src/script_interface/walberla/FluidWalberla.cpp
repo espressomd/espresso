@@ -222,20 +222,15 @@ void FluidWalberla::save_checkpoint(std::string const &filename, bool binary) {
         }
       }
     }
-  } catch (std::ios_base::failure const &fail) {
+  } catch (std::exception const &error) {
     if (context()->is_head_node()) {
       boost::mpi::broadcast(comm_cart, failure, 0);
       cpfile->stream.close();
-      throw std::runtime_error(err_msg + "could not write data to " + filename);
-    }
-    return;
-  } catch (std::runtime_error const &fail) {
-    if (context()->is_head_node()) {
-      boost::mpi::broadcast(comm_cart, failure, 0);
-      cpfile->stream.close();
+      if (dynamic_cast<std::ios_base::failure const *>(&error)) {
+        throw std::runtime_error(err_msg + "could not write to " + filename);
+      }
       throw;
     }
-    return;
   }
 }
 
