@@ -56,8 +56,24 @@ FluidWalberla::get_node_checkpoint(Utils::Vector3i ind) {
   return {boost::none};
 }
 
-void FluidWalberla::load_checkpoint(std::string const &filename, bool binary) {
+/** Inject code for unit tests. */
+inline void unit_test_handle(int mode) {
+  switch (mode) {
+  case static_cast<int>(CptMode::ascii):
+  case static_cast<int>(CptMode::binary):
+    return;
+  case static_cast<int>(CptMode::unit_test_runtime_error):
+    throw std::runtime_error("unit test error");
+  case static_cast<int>(CptMode::unit_test_ios_failure):
+    throw std::ios_base::failure("unit test error");
+  default:
+    throw std::domain_error("Unknown mode " + std::to_string(mode));
+  }
+}
+
+void FluidWalberla::load_checkpoint(std::string const &filename, int mode) {
   auto const err_msg = std::string("Error while reading LB checkpoint: ");
+  auto const binary = mode == static_cast<int>(CptMode::binary);
 
   // open file and set exceptions
   LBCheckpointFile cpfile(filename, std::ios_base::in, binary);
@@ -151,8 +167,11 @@ void FluidWalberla::load_checkpoint(std::string const &filename, bool binary) {
   }
 }
 
-void FluidWalberla::save_checkpoint(std::string const &filename, bool binary) {
+void FluidWalberla::save_checkpoint(std::string const &filename, int mode) {
   auto const err_msg = std::string("Error while writing LB checkpoint: ");
+  auto const binary = mode == static_cast<int>(CptMode::binary);
+  auto const unit_test_mode = (mode != static_cast<int>(CptMode::ascii)) and
+                              (mode != static_cast<int>(CptMode::binary));
   bool failure = false;
 
   // open file and set exceptions
@@ -183,6 +202,7 @@ void FluidWalberla::save_checkpoint(std::string const &filename, bool binary) {
     if (context()->is_head_node()) {
       cpfile->write(grid_size);
       cpfile->write(pop_size);
+      unit_test_handle(mode);
     }
 
     LBWalberlaNodeState cpnode;
@@ -191,24 +211,24 @@ void FluidWalberla::save_checkpoint(std::string const &filename, bool binary) {
         for (int k = 0; k < grid_size[2]; k++) {
           auto const ind = Utils::Vector3i{{i, j, k}};
           auto const result = get_node_checkpoint(ind);
-          assert(1 == boost::mpi::all_reduce(comm_cart,
-                                             static_cast<int>(!!result),
-                                             std::plus<>()) &&
-                 "Incorrect number of return values");
+          if (!unit_test_mode) {
+            assert(1 == boost::mpi::all_reduce(comm_cart,
+                                               static_cast<int>(!!result),
+                                               std::plus<>()) &&
+                   "Incorrect number of return values");
+          }
           if (context()->is_head_node()) {
             if (result) {
               cpnode = *result;
             } else {
               comm_cart.recv(boost::mpi::any_source, 42, cpnode);
             }
-            failure = true;
             cpfile->write(cpnode.populations);
             cpfile->write(cpnode.last_applied_force);
             cpfile->write(cpnode.is_boundary);
             if (cpnode.is_boundary) {
               cpfile->write(cpnode.slip_velocity);
             }
-            failure = false;
             boost::mpi::broadcast(comm_cart, failure, 0);
           } else {
             if (result) {
@@ -224,6 +244,7 @@ void FluidWalberla::save_checkpoint(std::string const &filename, bool binary) {
     }
   } catch (std::exception const &error) {
     if (context()->is_head_node()) {
+      failure = true;
       boost::mpi::broadcast(comm_cart, failure, 0);
       cpfile->stream.close();
       if (dynamic_cast<std::ios_base::failure const *>(&error)) {

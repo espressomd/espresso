@@ -249,7 +249,7 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
         """
         tmp_path = path + ".__tmp__"
         self.call_method(
-            'save_checkpoint', path=tmp_path, binary=type(True)(binary))
+            'save_checkpoint', path=tmp_path, mode=int(binary))
         os.rename(tmp_path, path)
 
     def load_checkpoint(self, path, binary):
@@ -257,7 +257,7 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
         Load LB node populations and boundary conditions from a file.
         """
         return self.call_method(
-            'load_checkpoint', path=path, binary=type(True)(binary))
+            'load_checkpoint', path=path, mode=int(binary))
 
     @property
     def pressure_tensor(self):

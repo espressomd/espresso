@@ -47,6 +47,13 @@
 
 namespace ScriptInterface::walberla {
 
+enum class CptMode : int {
+  ascii = 0,
+  binary = 1,
+  unit_test_runtime_error = -1,
+  unit_test_ios_failure = -2
+};
+
 class FluidWalberla : public AutoParameters<FluidWalberla> {
   std::shared_ptr<::LBWalberlaBase> m_lb_fluid;
   std::shared_ptr<::LBWalberlaParams> m_lb_params;
@@ -217,13 +224,13 @@ public:
     }
     if (name == "load_checkpoint") {
       auto const path = get_value<std::string>(params, "path");
-      auto const binary = get_value<bool>(params, "binary");
-      load_checkpoint(path, binary);
+      auto const mode = get_value<int>(params, "mode");
+      load_checkpoint(path, mode);
     }
     if (name == "save_checkpoint") {
       auto const path = get_value<std::string>(params, "path");
-      auto const binary = get_value<bool>(params, "binary");
-      save_checkpoint(path, binary);
+      auto const mode = get_value<int>(params, "mode");
+      save_checkpoint(path, mode);
     }
     if (name == "clear_boundaries") {
       m_lb_fluid->clear_boundaries();
@@ -241,8 +248,8 @@ public:
   std::weak_ptr<::LBWalberlaParams> lb_params() { return m_lb_params; }
 
 private:
-  void load_checkpoint(std::string const &filename, bool binary);
-  void save_checkpoint(std::string const &filename, bool binary);
+  void load_checkpoint(std::string const &filename, int mode);
+  void save_checkpoint(std::string const &filename, int mode);
   boost::optional<LBWalberlaNodeState> get_node_checkpoint(Utils::Vector3i ind);
 };
 
