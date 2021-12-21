@@ -474,6 +474,7 @@ if(WITH_WALBERLA)
         walberla::boundary walberla::core walberla::domain_decomposition
         walberla::field walberla::lbm walberla::timeloop walberla::vtk)
     # TODO WALBERLA: remove -lmpi_cxx -lmpi (required to find symbol MPI::Datatype::Free() in VTK code) and -lstdc++fs
+    # Note: -lmpi_cxx only exists in OpenMPI, remove that dependency for MPICH
     if(NOT CMAKE_CXX_COMPILER_ID MATCHES "AppleClang")
       set(WALBERLA_LIBS ${WALBERLA_LIBS} stdc++fs -lmpi_cxx -lmpi)
     endif()
