@@ -685,10 +685,12 @@ class openGLLive():
             # DRAG PARTICLES
             if self.specs['drag_enabled']:
                 if self.trigger_set_particle_drag and self.drag_id != -1:
-                    self.system.part.by_id(self.drag_id).ext_force = self.dragExtForce
+                    self.system.part.by_id(
+                        self.drag_id).ext_force = self.dragExtForce
                     self.trigger_set_particle_drag = False
                 elif self.trigger_reset_particle_drag and self.drag_id != -1:
-                    self.system.part.by_id(self.drag_id).ext_force = self.extForceOld
+                    self.system.part.by_id(
+                        self.drag_id).ext_force = self.extForceOld
                     self.trigger_reset_particle_drag = False
                     self.drag_id = -1
 
