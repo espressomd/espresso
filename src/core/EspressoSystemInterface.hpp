@@ -111,7 +111,7 @@ public:
 #endif
 
   float *eGpu() override {
-    // cast pointer to struct of floats to array of floats
+    // cast pointer from struct of floats to array of floats
     // https://stackoverflow.com/a/29278260
     return reinterpret_cast<float *>(gpu_get_energy_pointer());
   };
