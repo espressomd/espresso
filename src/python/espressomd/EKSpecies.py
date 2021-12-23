@@ -238,7 +238,7 @@ class DensityBoundary:
 
     def __init__(self, density):
         utils.check_type_or_throw_except(
-            density, 1, float, "FluxBoundary flux must be one float")
+            density, 1, float, "DensityBoundary flux must be one float")
         self.density = density
 
 
