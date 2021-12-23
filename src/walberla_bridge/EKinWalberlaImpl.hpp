@@ -247,10 +247,16 @@ public:
   void ghost_communication() override { (*m_full_communication)(); };
 
 private:
-  inline void kernel_noflux() {
-    //    for (auto &block : *m_lattice->get_blocks()) {
-    //      (*m_noflux).run(&block);
-    //    }
+  inline void kernel_boundary_density() {
+    for (auto &block : *m_lattice->get_blocks()) {
+      (*m_boundary_density)(&block);
+    }
+  }
+
+  inline void kernel_boundary_flux() {
+    for (auto &block : *m_lattice->get_blocks()) {
+      (*m_boundary_flux)(&block);
+    }
   }
 
   inline void kernel_continuity() {
@@ -308,6 +314,8 @@ public:
     if (get_diffusion() == 0.)
       return;
 
+    kernel_boundary_density();
+
     if (get_valency() != 0.) {
       if (potential_id == BlockDataID{}) {
         throw std::runtime_error("Walberla EK: electrostatic potential enabled "
@@ -320,7 +328,7 @@ public:
     }
 
     kernel_migration();
-    kernel_noflux();
+    kernel_boundary_flux();
     // friction coupling
     if (get_friction_coupling()) {
       if (force_id == BlockDataID{}) {
