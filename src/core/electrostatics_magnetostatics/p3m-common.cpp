@@ -24,6 +24,7 @@
 #include "p3m-common.hpp"
 
 #if defined(P3M) || defined(DP3M)
+#include "communication.hpp"
 #include "errorhandling.hpp"
 
 #include <utils/Vector.hpp>
@@ -32,9 +33,6 @@
 
 #include <cmath>
 #include <cstdio>
-
-/* For debug messages */
-extern int this_node;
 
 void p3m_add_block(double const *in, double *out, int const start[3],
                    int const size[3], int const dim[3]) {

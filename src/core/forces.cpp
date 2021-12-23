@@ -27,6 +27,7 @@
 
 #include "EspressoSystemInterface.hpp"
 
+#include "cells.hpp"
 #include "collision.hpp"
 #include "comfixed_global.hpp"
 #include "communication.hpp"
@@ -45,7 +46,10 @@
 #include "nonbonded_interactions/VerletCriterion.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
+#include "rotation.hpp"
 #include "short_range_loop.hpp"
+#include "thermostat.hpp"
+#include "thermostats/langevin_inline.hpp"
 #include "virtual_sites.hpp"
 
 #include <profiler/profiler.hpp>
@@ -54,7 +58,58 @@
 
 ActorList forceActors;
 
-void init_forces(const ParticleRange &particles, double time_step, double kT) {
+/** Initialize the forces for a ghost particle */
+inline ParticleForce init_ghost_force(Particle const &) { return {}; }
+
+/** External particle forces */
+inline ParticleForce external_force(Particle const &p) {
+  ParticleForce f = {};
+
+#ifdef EXTERNAL_FORCES
+  f.f += p.p.ext_force;
+#ifdef ROTATION
+  f.torque += p.p.ext_torque;
+#endif
+#endif
+
+#ifdef ENGINE
+  // apply a swimming force in the direction of
+  // the particle's orientation axis
+  if (p.p.swim.swimming) {
+    f.f += p.p.swim.f_swim * p.r.calc_director();
+  }
+#endif
+
+  return f;
+}
+
+inline ParticleForce thermostat_force(Particle const &p, double time_step,
+                                      double kT) {
+  extern LangevinThermostat langevin;
+  if (!(thermo_switch & THERMO_LANGEVIN)) {
+    return {};
+  }
+
+#ifdef ROTATION
+  return {friction_thermo_langevin(langevin, p, time_step, kT),
+          p.p.rotation ? convert_vector_body_to_space(
+                             p, friction_thermo_langevin_rotation(
+                                    langevin, p, time_step, kT))
+                       : Utils::Vector3d{}};
+#else
+  return friction_thermo_langevin(langevin, p, time_step, kT);
+#endif
+}
+
+/** Initialize the forces for a real particle */
+inline ParticleForce init_real_particle_force(Particle const &p,
+                                              double time_step, double kT) {
+  return thermostat_force(p, time_step, kT) + external_force(p);
+}
+
+static void init_forces(const ParticleRange &particles,
+                        const ParticleRange &ghost_particles, double time_step,
+                        double kT) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
   /* The force initialization depends on the used thermostat and the
      thermodynamic ensemble */
@@ -68,13 +123,13 @@ void init_forces(const ParticleRange &particles, double time_step, double kT) {
      set torque to zero for all and rescale quaternions
   */
   for (auto &p : particles) {
-    p.f = init_local_particle_force(p, time_step, kT);
+    p.f = init_real_particle_force(p, time_step, kT);
   }
 
   /* initialize ghost forces with zero
      set torque to zero for all and rescale quaternions
   */
-  for (auto &p : cell_structure.ghost_particles()) {
+  for (auto &p : ghost_particles) {
     p.f = init_ghost_force(p);
   }
 }
@@ -88,7 +143,8 @@ void init_forces_ghosts(const ParticleRange &particles) {
 void force_calc(CellStructure &cell_structure, double time_step, double kT) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
-  espressoSystemInterface.update();
+  auto &espresso_system = EspressoSystemInterface::Instance();
+  espresso_system.update();
 
 #ifdef COLLISION_DETECTION
   prepare_local_collision_queue();
@@ -97,14 +153,14 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
   auto particles = cell_structure.local_particles();
   auto ghost_particles = cell_structure.ghost_particles();
 #ifdef ELECTROSTATICS
-  icc_iteration(particles, cell_structure.ghost_particles());
+  icc_iteration(cell_structure, particles, ghost_particles);
 #endif
-  init_forces(particles, time_step, kT);
+  init_forces(particles, ghost_particles, time_step, kT);
 
   for (auto &forceActor : forceActors) {
-    forceActor->computeForces(espressoSystemInterface);
+    forceActor->computeForces(espresso_system);
 #ifdef ROTATION
-    forceActor->computeTorques(espressoSystemInterface);
+    forceActor->computeTorques(espresso_system);
 #endif
   }
 
@@ -155,7 +211,7 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
                                          ghost_particles, time_step);
 
 #ifdef CUDA
-  copy_forces_from_GPU(particles);
+  copy_forces_from_GPU(particles, this_node);
 #endif
 
 // VIRTUAL_SITES distribute forces

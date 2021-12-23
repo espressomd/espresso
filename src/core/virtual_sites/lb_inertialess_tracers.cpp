@@ -91,13 +91,13 @@ void IBM_ForcesIntoFluid_CPU() {
  *  Called from the integration loop right after the LB update.
  */
 void IBM_UpdateParticlePositions(ParticleRange const &particles,
-                                 double time_step) {
+                                 double time_step, int this_node) {
   // Get velocities
   if (lattice_switch == ActiveLB::CPU)
     ParticleVelocitiesFromLB_CPU();
 #ifdef CUDA
   if (lattice_switch == ActiveLB::GPU)
-    ParticleVelocitiesFromLB_GPU(particles);
+    ParticleVelocitiesFromLB_GPU(particles, this_node);
 #endif
 
   // Euler integrator

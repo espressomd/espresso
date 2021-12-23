@@ -28,14 +28,11 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "serialization/CUDA_particle_data.hpp"
 
+#include <utils/Vector.hpp>
 #include <utils/mpi/gather_buffer.hpp>
 #include <utils/mpi/scatter_buffer.hpp>
 
 #include <vector>
-
-/* TODO: We should only transfer data for enabled methods,
-         not for those that are barely compiled in. (fw)
-*/
 
 static void pack_particles(ParticleRange particles,
                            CUDA_particle_data *buffer) {
@@ -45,19 +42,17 @@ static void pack_particles(ParticleRange particles,
   for (auto const &part : particles) {
     buffer[i].p = static_cast<Vector3f>(folded_position(part.r.p, box_geo));
 
-#ifdef CUDA
     buffer[i].identity = part.p.identity;
     buffer[i].v = static_cast<Vector3f>(part.m.v);
 #ifdef VIRTUAL_SITES
     buffer[i].is_virtual = part.p.is_virtual;
-#endif
 #endif
 
 #ifdef DIPOLES
     buffer[i].dip = static_cast<Vector3f>(part.calc_dip());
 #endif
 
-#if defined(LB_ELECTROHYDRODYNAMICS) && defined(CUDA)
+#ifdef LB_ELECTROHYDRODYNAMICS
     buffer[i].mu_E = static_cast<Vector3f>(part.p.mu_E);
 #endif
 
@@ -140,25 +135,19 @@ void cuda_mpi_send_forces(const ParticleRange &particles,
   if (this_node > 0) {
     static std::vector<float> buffer_forces;
     static std::vector<float> buffer_torques;
-    /* Alloc buffer */
-    buffer_forces.resize(n_elements);
 
+    buffer_forces.resize(n_elements);
     Utils::Mpi::scatter_buffer(buffer_forces.data(), n_elements, comm_cart);
 #ifdef ROTATION
-    /* Alloc buffer */
     buffer_torques.resize(n_elements);
-
     Utils::Mpi::scatter_buffer(buffer_torques.data(), n_elements, comm_cart);
 #endif
-
     add_forces_and_torques(particles, buffer_forces, buffer_torques);
   } else {
-    /* Scatter forces */
     Utils::Mpi::scatter_buffer(host_forces.data(), n_elements, comm_cart);
 #ifdef ROTATION
     Utils::Mpi::scatter_buffer(host_torques.data(), n_elements, comm_cart);
 #endif
-
     add_forces_and_torques(particles, host_forces, host_torques);
   }
 }
@@ -166,7 +155,7 @@ void cuda_mpi_send_forces(const ParticleRange &particles,
 static void cuda_bcast_global_part_params_local() {
   MPI_Bcast(gpu_get_global_particle_vars_pointer_host(),
             sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
-  espressoSystemInterface.requestParticleStructGpu();
+  EspressoSystemInterface::Instance().requestParticleStructGpu();
 }
 
 REGISTER_CALLBACK(cuda_bcast_global_part_params_local)

@@ -39,9 +39,6 @@
 
 #include <cstddef>
 
-// To avoid including communication.hpp
-extern int this_node;
-
 // Other functions for internal use
 void InitCUDA_IBM(std::size_t numParticles);
 
@@ -280,23 +277,12 @@ __global__ void ResetLBForces_Kernel(LB_node_force_density_gpu node_f,
   }
 }
 
-/** Call a kernel to reset the forces on the LB nodes to the external force. */
-void IBM_ResetLBForces_GPU() {
-  if (this_node == 0) {
-    dim3 dim_grid =
-        calculate_dim_grid(lbpar_gpu.number_of_nodes, 4, threads_per_block);
-
-    KERNELCALL(ResetLBForces_Kernel, dim_grid, threads_per_block, node_f,
-               para_gpu);
-  }
-}
-
 /** Transfer particle forces into the LB fluid.
  *  Called from @ref integrate.
  *  This must be the first CUDA-IBM function to be called because it also does
  *  some initialization.
  */
-void IBM_ForcesIntoFluid_GPU(ParticleRange const &particles) {
+void IBM_ForcesIntoFluid_GPU(ParticleRange const &particles, int this_node) {
   // This function does
   // (1) Gather forces from all particles via MPI
   // (2) Copy forces to the GPU
@@ -305,8 +291,9 @@ void IBM_ForcesIntoFluid_GPU(ParticleRange const &particles) {
   auto const numParticles = gpu_get_particle_pointer().size();
 
   // Storage only needed on head node
-  if (IBM_ParticleDataInput_host.empty() || !IBM_initialized ||
-      numParticles != IBM_numParticlesCache)
+  if (this_node == 0 &&
+      (IBM_ParticleDataInput_host.empty() || !IBM_initialized ||
+       numParticles != IBM_numParticlesCache))
     InitCUDA_IBM(numParticles);
 
   // We gather particle positions and forces from all nodes
@@ -331,70 +318,65 @@ void IBM_ForcesIntoFluid_GPU(ParticleRange const &particles) {
 
 void InitCUDA_IBM(std::size_t const numParticles) {
 
-  // GPU only on head node
-  if (this_node == 0) {
+  // Check if we have to delete
+  if (!IBM_ParticleDataInput_host.empty()) {
+    IBM_ParticleDataInput_host.clear();
+    IBM_ParticleDataOutput_host.clear();
+    cuda_safe_mem(cudaFree(IBM_ParticleDataInput_device));
+    cuda_safe_mem(cudaFree(IBM_ParticleDataOutput_device));
+    cuda_safe_mem(cudaFree(lb_boundary_velocity_IBM));
+  }
 
-    // Check if we have to delete
-    if (!IBM_ParticleDataInput_host.empty()) {
-      IBM_ParticleDataInput_host.clear();
-      IBM_ParticleDataOutput_host.clear();
-      cuda_safe_mem(cudaFree(IBM_ParticleDataInput_device));
-      cuda_safe_mem(cudaFree(IBM_ParticleDataOutput_device));
-      cuda_safe_mem(cudaFree(lb_boundary_velocity_IBM));
-    }
+  // Back and forth communication of positions and velocities
+  IBM_ParticleDataInput_host.resize(numParticles);
+  IBM_ParticleDataOutput_host.resize(numParticles);
+  cuda_safe_mem(cudaMalloc((void **)&IBM_ParticleDataInput_device,
+                           numParticles * sizeof(IBM_CUDA_ParticleDataInput)));
+  cuda_safe_mem(cudaMalloc((void **)&IBM_ParticleDataOutput_device,
+                           numParticles * sizeof(IBM_CUDA_ParticleDataOutput)));
 
-    // Back and forth communication of positions and velocities
-    IBM_ParticleDataInput_host.resize(numParticles);
-    IBM_ParticleDataOutput_host.resize(numParticles);
-    cuda_safe_mem(
-        cudaMalloc((void **)&IBM_ParticleDataInput_device,
-                   numParticles * sizeof(IBM_CUDA_ParticleDataInput)));
-    cuda_safe_mem(
-        cudaMalloc((void **)&IBM_ParticleDataOutput_device,
-                   numParticles * sizeof(IBM_CUDA_ParticleDataOutput)));
+  // Use LB parameters
+  lb_get_para_pointer(&para_gpu);
 
-    // Use LB parameters
-    lb_get_para_pointer(&para_gpu);
-
-    // Copy boundary velocities to the GPU
-    // First put them into correct format
+  // Copy boundary velocities to the GPU
+  // First put them into correct format
 #ifdef LB_BOUNDARIES_GPU
-    auto *host_lb_boundary_velocity =
-        new float[3 * (LBBoundaries::lbboundaries.size() + 1)];
+  auto *host_lb_boundary_velocity =
+      new float[3 * (LBBoundaries::lbboundaries.size() + 1)];
 
-    for (int n = 0; n < LBBoundaries::lbboundaries.size(); n++) {
-      host_lb_boundary_velocity[3 * n + 0] =
-          static_cast<float>(LBBoundaries::lbboundaries[n]->velocity()[0]);
-      host_lb_boundary_velocity[3 * n + 1] =
-          static_cast<float>(LBBoundaries::lbboundaries[n]->velocity()[1]);
-      host_lb_boundary_velocity[3 * n + 2] =
-          static_cast<float>(LBBoundaries::lbboundaries[n]->velocity()[2]);
-    }
+  for (int n = 0; n < LBBoundaries::lbboundaries.size(); n++) {
+    host_lb_boundary_velocity[3 * n + 0] =
+        static_cast<float>(LBBoundaries::lbboundaries[n]->velocity()[0]);
+    host_lb_boundary_velocity[3 * n + 1] =
+        static_cast<float>(LBBoundaries::lbboundaries[n]->velocity()[1]);
+    host_lb_boundary_velocity[3 * n + 2] =
+        static_cast<float>(LBBoundaries::lbboundaries[n]->velocity()[2]);
+  }
 
-    host_lb_boundary_velocity[3 * LBBoundaries::lbboundaries.size() + 0] = 0.0f;
-    host_lb_boundary_velocity[3 * LBBoundaries::lbboundaries.size() + 1] = 0.0f;
-    host_lb_boundary_velocity[3 * LBBoundaries::lbboundaries.size() + 2] = 0.0f;
+  host_lb_boundary_velocity[3 * LBBoundaries::lbboundaries.size() + 0] = 0.0f;
+  host_lb_boundary_velocity[3 * LBBoundaries::lbboundaries.size() + 1] = 0.0f;
+  host_lb_boundary_velocity[3 * LBBoundaries::lbboundaries.size() + 2] = 0.0f;
 
-    cuda_safe_mem(
-        cudaMalloc((void **)&lb_boundary_velocity_IBM,
-                   3 * LBBoundaries::lbboundaries.size() * sizeof(float)));
-    cuda_safe_mem(
-        cudaMemcpy(lb_boundary_velocity_IBM, host_lb_boundary_velocity,
-                   3 * LBBoundaries::lbboundaries.size() * sizeof(float),
-                   cudaMemcpyHostToDevice));
+  cuda_safe_mem(
+      cudaMalloc((void **)&lb_boundary_velocity_IBM,
+                 3 * LBBoundaries::lbboundaries.size() * sizeof(float)));
+  cuda_safe_mem(
+      cudaMemcpy(lb_boundary_velocity_IBM, host_lb_boundary_velocity,
+                 3 * LBBoundaries::lbboundaries.size() * sizeof(float),
+                 cudaMemcpyHostToDevice));
 
-    delete[] host_lb_boundary_velocity;
+  delete[] host_lb_boundary_velocity;
 #endif
 
-    IBM_numParticlesCache = numParticles;
-    IBM_initialized = true;
-  }
+  IBM_numParticlesCache = numParticles;
+  IBM_initialized = true;
 }
 
 /** Call a kernel function to interpolate the velocity at each IBM particle's
  *  position. Store velocity in the particle data structure.
  */
-void ParticleVelocitiesFromLB_GPU(ParticleRange const &particles) {
+void ParticleVelocitiesFromLB_GPU(ParticleRange const &particles,
+                                  int this_node) {
   // This function performs three steps:
   // (1) interpolate velocities on GPU
   // (2) transfer velocities back to CPU

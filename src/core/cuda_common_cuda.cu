@@ -36,8 +36,6 @@
 #include <cstddef>
 #include <cstdio>
 
-extern int this_node;
-
 template <class T>
 using device_vector = thrust::device_vector<T, CudaDeviceAllocator<T>>;
 
@@ -54,7 +52,9 @@ template <class SpanLike> std::size_t byte_size(SpanLike const &v) {
 
 /** struct for particle force */
 static device_vector<float> particle_forces_device;
+#ifdef ROTATION
 static device_vector<float> particle_torques_device;
+#endif
 
 /** struct for particle position and velocity */
 static device_vector<CUDA_particle_data> particle_data_device;
@@ -63,9 +63,8 @@ static CUDA_energy *energy_device = nullptr;
 
 pinned_vector<CUDA_particle_data> particle_data_host;
 pinned_vector<float> particle_forces_host;
-CUDA_energy energy_host;
-
 pinned_vector<float> particle_torques_host;
+CUDA_energy energy_host;
 
 cudaStream_t stream[1];
 
@@ -75,10 +74,10 @@ void cuda_check_errors_exit(const dim3 &block, const dim3 &grid,
   cudaError_t CU_err = cudaGetLastError();
   if (CU_err != cudaSuccess) {
     fprintf(stderr,
-            "%d: error \"%s\" calling %s with dim %d %d %d, grid %d %d "
+            "error \"%s\" calling %s with dim %d %d %d, grid %d %d "
             "%d in %s:%u\n",
-            this_node, cudaGetErrorString(CU_err), function, block.x, block.y,
-            block.z, grid.x, grid.y, grid.z, file, line);
+            cudaGetErrorString(CU_err), function, block.x, block.y, block.z,
+            grid.x, grid.y, grid.z, file, line);
     errexit();
   }
 }
@@ -130,22 +129,10 @@ void resize_buffers(std::size_t number_of_particles) {
  *    sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart)` (when executed
  *    on all nodes)
  */
-void gpu_init_particle_comm() {
+void gpu_init_particle_comm(int this_node) {
   if (this_node == 0 && global_part_vars_host.communication_enabled == 0) {
     try {
-      if (cuda_get_n_gpus() == 0) {
-        fprintf(stderr, "ERROR: No GPU was found.\n");
-        errexit();
-      }
-      auto const devID = cuda_get_device();
-      auto const compute_capability = cuda_check_gpu_compute_capability(devID);
-      auto const communication_test = cuda_test_device_access();
-      if (compute_capability != ES_OK or communication_test != ES_OK) {
-        fprintf(stderr,
-                "ERROR: CUDA device %i is not capable of running ESPResSo.\n",
-                devID);
-        errexit();
-      }
+      cuda_check_device();
     } catch (cuda_runtime_error const &err) {
       fprintf(stderr, "ERROR: %s\n", err.what());
       errexit();
@@ -163,12 +150,14 @@ CUDA_global_part_vars *gpu_get_global_particle_vars_pointer_host() {
 float *gpu_get_particle_force_pointer() {
   return raw_data_pointer(particle_forces_device);
 }
-CUDA_energy *gpu_get_energy_pointer() { return energy_device; }
+#ifdef ROTATION
 float *gpu_get_particle_torque_pointer() {
   return raw_data_pointer(particle_torques_device);
 }
+#endif
+CUDA_energy *gpu_get_energy_pointer() { return energy_device; }
 
-void copy_part_data_to_gpu(ParticleRange particles) {
+void copy_part_data_to_gpu(ParticleRange particles, int this_node) {
   if (global_part_vars_host.communication_enabled == 1) {
     cuda_mpi_get_particles(particles, particle_data_host);
 
@@ -191,7 +180,7 @@ void copy_part_data_to_gpu(ParticleRange particles) {
 
 /** setup and call kernel to copy particle forces to host
  */
-void copy_forces_from_GPU(ParticleRange &particles) {
+void copy_forces_from_GPU(ParticleRange &particles, int this_node) {
   if (global_part_vars_host.communication_enabled == 1) {
     /* Copy result from device memory to host memory*/
     if (this_node == 0 && (not particle_forces_device.empty())) {

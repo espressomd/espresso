@@ -62,7 +62,7 @@ void dawaanr_set_params();
 */
 
 /** Sanity checks for the magnetic dipolar direct sum. */
-void mdds_sanity_checks(int n_replica);
+void mdds_sanity_checks();
 
 /** Core of the method: here you compute all the magnetic forces, torques and
  *  the energy for the whole system using direct sum
@@ -76,7 +76,7 @@ double magnetic_dipolar_direct_sum_calculations(bool force_flag,
  */
 void mdds_set_params(int n_replica);
 
-extern int mdds_n_replica;
+int mdds_get_n_replica();
 
 #endif /*of ifdef DIPOLES  */
 #endif /* of ifndef  MAG_NON_P3M_H */

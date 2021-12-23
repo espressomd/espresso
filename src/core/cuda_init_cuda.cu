@@ -25,6 +25,7 @@
 #include <utils/constants.hpp>
 
 #include <cstring>
+#include <string>
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
@@ -116,6 +117,19 @@ int cuda_test_device_access() {
     return ES_ERROR;
   }
   return ES_OK;
+}
+
+void cuda_check_device() {
+  if (cuda_get_n_gpus() == 0) {
+    throw cuda_runtime_error("No GPU was found.");
+  }
+  auto const devID = cuda_get_device();
+  auto const compute_capability = cuda_check_gpu_compute_capability(devID);
+  auto const communication_test = cuda_test_device_access();
+  if (compute_capability != ES_OK or communication_test != ES_OK) {
+    throw cuda_runtime_error("CUDA device " + std::to_string(devID) +
+                             " is not capable of running ESPResSo.");
+  }
 }
 
 #endif /* defined(CUDA) */

@@ -16,6 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+/**
+ * @file
+ * CUDA kernels to convert the particles AoS to a SoA on the device.
+ */
 
 #include "EspressoSystemInterface.hpp"
 #include "cuda_interface.hpp"
@@ -29,9 +33,6 @@
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
 #endif
-
-// These functions will split the particle data structure into individual arrays
-// for each property
 
 // Position and charge
 __global__ void split_kernel_rq(CUDA_particle_data *particles, float *r,
@@ -80,24 +81,6 @@ __global__ void split_kernel_r(CUDA_particle_data *particles, float *r,
   r[idx + 2] = p.p[2];
 }
 
-#ifdef CUDA
-// Velocity
-__global__ void split_kernel_v(CUDA_particle_data *particles, float *v,
-                               unsigned int n) {
-  auto idx = blockDim.x * blockIdx.x + threadIdx.x;
-  if (idx >= n)
-    return;
-
-  CUDA_particle_data p = particles[idx];
-
-  idx *= 3;
-
-  v[idx + 0] = p.v[0];
-  v[idx + 1] = p.v[1];
-  v[idx + 2] = p.v[2];
-}
-#endif
-
 #ifdef DIPOLES
 // Dipole moment
 __global__ void split_kernel_dip(CUDA_particle_data *particles, float *dip,
@@ -116,59 +99,26 @@ __global__ void split_kernel_dip(CUDA_particle_data *particles, float *dip,
 }
 #endif
 
-__global__ void split_kernel_director(CUDA_particle_data *particles,
-                                      float *director, unsigned int n) {
-#ifdef ROTATION
-  auto idx = blockDim.x * blockIdx.x + threadIdx.x;
-  if (idx >= n)
-    return;
-
-  CUDA_particle_data p = particles[idx];
-
-  idx *= 3;
-
-  director[idx + 0] = p.director[0];
-  director[idx + 1] = p.director[1];
-  director[idx + 2] = p.director[2];
-#endif
-}
-
 void EspressoSystemInterface::reallocDeviceMemory(std::size_t n) {
   if (m_needsRGpu && ((n != m_gpu_npart) || (m_r_gpu_begin == nullptr))) {
     if (m_r_gpu_begin != nullptr)
       cuda_safe_mem(cudaFree(m_r_gpu_begin));
     cuda_safe_mem(cudaMalloc(&m_r_gpu_begin, 3 * n * sizeof(float)));
-    m_r_gpu_end = m_r_gpu_begin + 3 * n;
   }
 #ifdef DIPOLES
   if (m_needsDipGpu && ((n != m_gpu_npart) || (m_dip_gpu_begin == nullptr))) {
     if (m_dip_gpu_begin != nullptr)
       cuda_safe_mem(cudaFree(m_dip_gpu_begin));
     cuda_safe_mem(cudaMalloc(&m_dip_gpu_begin, 3 * n * sizeof(float)));
-    m_dip_gpu_end = m_dip_gpu_begin + 3 * n;
   }
 #endif
-  if (m_needsVGpu && ((n != m_gpu_npart) || (m_v_gpu_begin == nullptr))) {
-    if (m_v_gpu_begin != nullptr)
-      cuda_safe_mem(cudaFree(m_v_gpu_begin));
-    cuda_safe_mem(cudaMalloc(&m_v_gpu_begin, 3 * n * sizeof(float)));
-    m_v_gpu_end = m_v_gpu_begin + 3 * n;
-  }
-
+#ifdef ELECTROSTATICS
   if (m_needsQGpu && ((n != m_gpu_npart) || (m_q_gpu_begin == nullptr))) {
     if (m_q_gpu_begin != nullptr)
       cuda_safe_mem(cudaFree(m_q_gpu_begin));
     cuda_safe_mem(cudaMalloc(&m_q_gpu_begin, 3 * n * sizeof(float)));
-    m_q_gpu_end = m_q_gpu_begin + 3 * n;
   }
-
-  if (m_needsDirectorGpu &&
-      ((n != m_gpu_npart) || (m_director_gpu_begin == nullptr))) {
-    if (m_director_gpu_begin != nullptr)
-      cuda_safe_mem(cudaFree(m_director_gpu_begin));
-    cuda_safe_mem(cudaMalloc(&m_director_gpu_begin, 3 * n * sizeof(float)));
-    m_director_gpu_end = m_director_gpu_begin + 3 * n;
-  }
+#endif
 
   m_gpu_npart = n;
 }
@@ -185,25 +135,15 @@ void EspressoSystemInterface::split_particle_struct() {
   if (m_needsQGpu && m_needsRGpu)
     split_kernel_rq<<<dim3(grid), dim3(block), 0, nullptr>>>(
         device_particles.data(), m_r_gpu_begin, m_q_gpu_begin, n);
-  if (m_needsQGpu && !m_needsRGpu)
+  else if (m_needsQGpu)
     split_kernel_q<<<dim3(grid), dim3(block), 0, nullptr>>>(
         device_particles.data(), m_q_gpu_begin, n);
-  if (!m_needsQGpu && m_needsRGpu)
+  else if (m_needsRGpu)
     split_kernel_r<<<dim3(grid), dim3(block), 0, nullptr>>>(
         device_particles.data(), m_r_gpu_begin, n);
-#ifdef CUDA
-  if (m_needsVGpu)
-    split_kernel_v<<<dim3(grid), dim3(block), 0, nullptr>>>(
-        device_particles.data(), m_v_gpu_begin, n);
-#endif
 #ifdef DIPOLES
   if (m_needsDipGpu)
     split_kernel_dip<<<dim3(grid), dim3(block), 0, nullptr>>>(
         device_particles.data(), m_dip_gpu_begin, n);
-
 #endif
-
-  if (m_needsDirectorGpu)
-    split_kernel_director<<<dim3(grid), dim3(block), 0, nullptr>>>(
-        device_particles.data(), m_director_gpu_begin, n);
 }

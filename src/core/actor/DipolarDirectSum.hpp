@@ -25,67 +25,24 @@
 
 #include "Actor.hpp"
 #include "SystemInterface.hpp"
-#include "cuda_interface.hpp"
-#include "electrostatics_magnetostatics/dipole.hpp"
-#include "errorhandling.hpp"
-#include "grid.hpp"
-
-#include <memory>
-
-void DipolarDirectSum_kernel_wrapper_energy(float k, int n, float *pos,
-                                            float *dip, float box_l[3],
-                                            int periodic[3], float *E);
-void DipolarDirectSum_kernel_wrapper_force(float k, int n, float *pos,
-                                           float *dip, float *f, float *torque,
-                                           float box_l[3], int periodic[3]);
 
 class DipolarDirectSum : public Actor {
 public:
-  DipolarDirectSum(SystemInterface &s) {
+  DipolarDirectSum(SystemInterface &s);
+  ~DipolarDirectSum() override = default;
 
-    k = static_cast<float>(dipole.prefactor);
+  void set_params();
 
-    if (!s.requestFGpu())
-      runtimeErrorMsg() << "DipolarDirectSum needs access to forces on GPU!";
+  void computeForces(SystemInterface &s) override;
+  void computeEnergy(SystemInterface &s) override;
 
-    if (!s.requestRGpu())
-      runtimeErrorMsg() << "DipolarDirectSum needs access to positions on GPU!";
-
-    if (!s.requestDipGpu())
-      runtimeErrorMsg() << "DipolarDirectSum needs access to dipoles on GPU!";
-  };
-  void computeForces(SystemInterface &s) override {
-    float box[3];
-    int per[3];
-    for (int i = 0; i < 3; i++) {
-      box[i] = static_cast<float>(s.box()[i]);
-      per[i] = (box_geo.periodic(i));
-    }
-    DipolarDirectSum_kernel_wrapper_force(
-        k, static_cast<int>(s.npart_gpu()), s.rGpuBegin(), s.dipGpuBegin(),
-        s.fGpuBegin(), s.torqueGpuBegin(), box, per);
-  };
-  void computeEnergy(SystemInterface &s) override {
-    float box[3];
-    int per[3];
-    for (int i = 0; i < 3; i++) {
-      box[i] = static_cast<float>(s.box()[i]);
-      per[i] = (box_geo.periodic(i));
-    }
-    DipolarDirectSum_kernel_wrapper_energy(
-        k, static_cast<int>(s.npart_gpu()), s.rGpuBegin(), s.dipGpuBegin(), box,
-        per, &(reinterpret_cast<CUDA_energy *>(s.eGpu())->dipolar));
-  };
+  void activate();
+  void deactivate();
 
 private:
-  float k;
+  float m_prefactor;
 };
 
-void activate_dipolar_direct_sum_gpu();
-void deactivate_dipolar_direct_sum_gpu();
+#endif // DIPOLAR_DIRECT_SUM
 
-extern std::unique_ptr<DipolarDirectSum> dipolarDirectSum;
-
-#endif
-
-#endif
+#endif // ACTOR_DIPOLARDIRECTSUM_HPP

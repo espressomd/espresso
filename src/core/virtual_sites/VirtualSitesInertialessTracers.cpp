@@ -21,6 +21,7 @@
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 #include "VirtualSitesInertialessTracers.hpp"
 #include "cells.hpp"
+#include "communication.hpp"
 #include "errorhandling.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "virtual_sites/lb_inertialess_tracers.hpp"
@@ -34,7 +35,7 @@ void VirtualSitesInertialessTracers::after_force_calc() {
   }
 #ifdef CUDA
   if (lattice_switch == ActiveLB::GPU) {
-    IBM_ForcesIntoFluid_GPU(cell_structure.local_particles());
+    IBM_ForcesIntoFluid_GPU(cell_structure.local_particles(), this_node);
     return;
   }
 #endif
@@ -49,7 +50,8 @@ void VirtualSitesInertialessTracers::after_force_calc() {
 
 void VirtualSitesInertialessTracers::after_lb_propagation(double time_step) {
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-  IBM_UpdateParticlePositions(cell_structure.local_particles(), time_step);
-#endif // VS inertialess tracers
+  IBM_UpdateParticlePositions(cell_structure.local_particles(), time_step,
+                              this_node);
+#endif
 }
 #endif
