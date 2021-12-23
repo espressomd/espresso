@@ -173,7 +173,7 @@ public:
             if ( isFlagSet( it.neighbor(0, 0, 0 , 0 ), boundaryFlag ) )
             {
                 auto element = IndexInfo(it.x(), it.y(),  it.z(),  0 );
-                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x(), it.y(), it.z()), blocks, *block);
+                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x() + 0, it.y() + 0, it.z() + 0), blocks, *block);
                 element.flux_0 = InitialisatonAdditionalData[0];
                 element.flux_1 = InitialisatonAdditionalData[1];
                 element.flux_2 = InitialisatonAdditionalData[2];
@@ -187,7 +187,7 @@ public:
             if ( isFlagSet( it.neighbor(0, 1, 0 , 0 ), boundaryFlag ) )
             {
                 auto element = IndexInfo(it.x(), it.y(),  it.z(),  1 );
-                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x(), it.y(), it.z()), blocks, *block);
+                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x() + 0, it.y() + 1, it.z() + 0), blocks, *block);
                 element.flux_0 = InitialisatonAdditionalData[0];
                 element.flux_1 = InitialisatonAdditionalData[1];
                 element.flux_2 = InitialisatonAdditionalData[2];
@@ -201,7 +201,7 @@ public:
             if ( isFlagSet( it.neighbor(0, -1, 0 , 0 ), boundaryFlag ) )
             {
                 auto element = IndexInfo(it.x(), it.y(),  it.z(),  2 );
-                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x(), it.y(), it.z()), blocks, *block);
+                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x() + 0, it.y() + -1, it.z() + 0), blocks, *block);
                 element.flux_0 = InitialisatonAdditionalData[0];
                 element.flux_1 = InitialisatonAdditionalData[1];
                 element.flux_2 = InitialisatonAdditionalData[2];
@@ -215,7 +215,7 @@ public:
             if ( isFlagSet( it.neighbor(-1, 0, 0 , 0 ), boundaryFlag ) )
             {
                 auto element = IndexInfo(it.x(), it.y(),  it.z(),  3 );
-                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x(), it.y(), it.z()), blocks, *block);
+                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x() + -1, it.y() + 0, it.z() + 0), blocks, *block);
                 element.flux_0 = InitialisatonAdditionalData[0];
                 element.flux_1 = InitialisatonAdditionalData[1];
                 element.flux_2 = InitialisatonAdditionalData[2];
@@ -229,7 +229,7 @@ public:
             if ( isFlagSet( it.neighbor(1, 0, 0 , 0 ), boundaryFlag ) )
             {
                 auto element = IndexInfo(it.x(), it.y(),  it.z(),  4 );
-                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x(), it.y(), it.z()), blocks, *block);
+                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x() + 1, it.y() + 0, it.z() + 0), blocks, *block);
                 element.flux_0 = InitialisatonAdditionalData[0];
                 element.flux_1 = InitialisatonAdditionalData[1];
                 element.flux_2 = InitialisatonAdditionalData[2];
@@ -243,7 +243,7 @@ public:
             if ( isFlagSet( it.neighbor(0, 0, 1 , 0 ), boundaryFlag ) )
             {
                 auto element = IndexInfo(it.x(), it.y(),  it.z(),  5 );
-                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x(), it.y(), it.z()), blocks, *block);
+                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x() + 0, it.y() + 0, it.z() + 1), blocks, *block);
                 element.flux_0 = InitialisatonAdditionalData[0];
                 element.flux_1 = InitialisatonAdditionalData[1];
                 element.flux_2 = InitialisatonAdditionalData[2];
@@ -257,7 +257,7 @@ public:
             if ( isFlagSet( it.neighbor(0, 0, -1 , 0 ), boundaryFlag ) )
             {
                 auto element = IndexInfo(it.x(), it.y(),  it.z(),  6 );
-                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x(), it.y(), it.z()), blocks, *block);
+                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x() + 0, it.y() + 0, it.z() + -1), blocks, *block);
                 element.flux_0 = InitialisatonAdditionalData[0];
                 element.flux_1 = InitialisatonAdditionalData[1];
                 element.flux_2 = InitialisatonAdditionalData[2];
@@ -271,7 +271,7 @@ public:
             if ( isFlagSet( it.neighbor(-1, 1, 0 , 0 ), boundaryFlag ) )
             {
                 auto element = IndexInfo(it.x(), it.y(),  it.z(),  7 );
-                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x(), it.y(), it.z()), blocks, *block);
+                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x() + -1, it.y() + 1, it.z() + 0), blocks, *block);
                 element.flux_0 = InitialisatonAdditionalData[0];
                 element.flux_1 = InitialisatonAdditionalData[1];
                 element.flux_2 = InitialisatonAdditionalData[2];
@@ -285,7 +285,7 @@ public:
             if ( isFlagSet( it.neighbor(1, 1, 0 , 0 ), boundaryFlag ) )
             {
                 auto element = IndexInfo(it.x(), it.y(),  it.z(),  8 );
-                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x(), it.y(), it.z()), blocks, *block);
+                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x() + 1, it.y() + 1, it.z() + 0), blocks, *block);
                 element.flux_0 = InitialisatonAdditionalData[0];
                 element.flux_1 = InitialisatonAdditionalData[1];
                 element.flux_2 = InitialisatonAdditionalData[2];
@@ -299,7 +299,7 @@ public:
             if ( isFlagSet( it.neighbor(-1, -1, 0 , 0 ), boundaryFlag ) )
             {
                 auto element = IndexInfo(it.x(), it.y(),  it.z(),  9 );
-                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x(), it.y(), it.z()), blocks, *block);
+                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x() + -1, it.y() + -1, it.z() + 0), blocks, *block);
                 element.flux_0 = InitialisatonAdditionalData[0];
                 element.flux_1 = InitialisatonAdditionalData[1];
                 element.flux_2 = InitialisatonAdditionalData[2];
@@ -313,7 +313,7 @@ public:
             if ( isFlagSet( it.neighbor(1, -1, 0 , 0 ), boundaryFlag ) )
             {
                 auto element = IndexInfo(it.x(), it.y(),  it.z(),  10 );
-                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x(), it.y(), it.z()), blocks, *block);
+                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x() + 1, it.y() + -1, it.z() + 0), blocks, *block);
                 element.flux_0 = InitialisatonAdditionalData[0];
                 element.flux_1 = InitialisatonAdditionalData[1];
                 element.flux_2 = InitialisatonAdditionalData[2];
@@ -327,7 +327,7 @@ public:
             if ( isFlagSet( it.neighbor(0, 1, 1 , 0 ), boundaryFlag ) )
             {
                 auto element = IndexInfo(it.x(), it.y(),  it.z(),  11 );
-                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x(), it.y(), it.z()), blocks, *block);
+                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x() + 0, it.y() + 1, it.z() + 1), blocks, *block);
                 element.flux_0 = InitialisatonAdditionalData[0];
                 element.flux_1 = InitialisatonAdditionalData[1];
                 element.flux_2 = InitialisatonAdditionalData[2];
@@ -341,7 +341,7 @@ public:
             if ( isFlagSet( it.neighbor(0, -1, 1 , 0 ), boundaryFlag ) )
             {
                 auto element = IndexInfo(it.x(), it.y(),  it.z(),  12 );
-                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x(), it.y(), it.z()), blocks, *block);
+                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x() + 0, it.y() + -1, it.z() + 1), blocks, *block);
                 element.flux_0 = InitialisatonAdditionalData[0];
                 element.flux_1 = InitialisatonAdditionalData[1];
                 element.flux_2 = InitialisatonAdditionalData[2];
@@ -355,7 +355,7 @@ public:
             if ( isFlagSet( it.neighbor(-1, 0, 1 , 0 ), boundaryFlag ) )
             {
                 auto element = IndexInfo(it.x(), it.y(),  it.z(),  13 );
-                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x(), it.y(), it.z()), blocks, *block);
+                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x() + -1, it.y() + 0, it.z() + 1), blocks, *block);
                 element.flux_0 = InitialisatonAdditionalData[0];
                 element.flux_1 = InitialisatonAdditionalData[1];
                 element.flux_2 = InitialisatonAdditionalData[2];
@@ -369,7 +369,7 @@ public:
             if ( isFlagSet( it.neighbor(1, 0, 1 , 0 ), boundaryFlag ) )
             {
                 auto element = IndexInfo(it.x(), it.y(),  it.z(),  14 );
-                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x(), it.y(), it.z()), blocks, *block);
+                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x() + 1, it.y() + 0, it.z() + 1), blocks, *block);
                 element.flux_0 = InitialisatonAdditionalData[0];
                 element.flux_1 = InitialisatonAdditionalData[1];
                 element.flux_2 = InitialisatonAdditionalData[2];
@@ -383,7 +383,7 @@ public:
             if ( isFlagSet( it.neighbor(0, 1, -1 , 0 ), boundaryFlag ) )
             {
                 auto element = IndexInfo(it.x(), it.y(),  it.z(),  15 );
-                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x(), it.y(), it.z()), blocks, *block);
+                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x() + 0, it.y() + 1, it.z() + -1), blocks, *block);
                 element.flux_0 = InitialisatonAdditionalData[0];
                 element.flux_1 = InitialisatonAdditionalData[1];
                 element.flux_2 = InitialisatonAdditionalData[2];
@@ -397,7 +397,7 @@ public:
             if ( isFlagSet( it.neighbor(0, -1, -1 , 0 ), boundaryFlag ) )
             {
                 auto element = IndexInfo(it.x(), it.y(),  it.z(),  16 );
-                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x(), it.y(), it.z()), blocks, *block);
+                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x() + 0, it.y() + -1, it.z() + -1), blocks, *block);
                 element.flux_0 = InitialisatonAdditionalData[0];
                 element.flux_1 = InitialisatonAdditionalData[1];
                 element.flux_2 = InitialisatonAdditionalData[2];
@@ -411,7 +411,7 @@ public:
             if ( isFlagSet( it.neighbor(-1, 0, -1 , 0 ), boundaryFlag ) )
             {
                 auto element = IndexInfo(it.x(), it.y(),  it.z(),  17 );
-                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x(), it.y(), it.z()), blocks, *block);
+                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x() + -1, it.y() + 0, it.z() + -1), blocks, *block);
                 element.flux_0 = InitialisatonAdditionalData[0];
                 element.flux_1 = InitialisatonAdditionalData[1];
                 element.flux_2 = InitialisatonAdditionalData[2];
@@ -425,7 +425,119 @@ public:
             if ( isFlagSet( it.neighbor(1, 0, -1 , 0 ), boundaryFlag ) )
             {
                 auto element = IndexInfo(it.x(), it.y(),  it.z(),  18 );
-                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x(), it.y(), it.z()), blocks, *block);
+                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x() + 1, it.y() + 0, it.z() + -1), blocks, *block);
+                element.flux_0 = InitialisatonAdditionalData[0];
+                element.flux_1 = InitialisatonAdditionalData[1];
+                element.flux_2 = InitialisatonAdditionalData[2];
+                indexVectorAll.push_back( element );
+                if( inner.contains( it.x(), it.y(), it.z() ) )
+                    indexVectorInner.push_back( element );
+                else
+                    indexVectorOuter.push_back( element );
+            }
+            
+            if ( isFlagSet( it.neighbor(1, 1, 1 , 0 ), boundaryFlag ) )
+            {
+                auto element = IndexInfo(it.x(), it.y(),  it.z(),  19 );
+                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x() + 1, it.y() + 1, it.z() + 1), blocks, *block);
+                element.flux_0 = InitialisatonAdditionalData[0];
+                element.flux_1 = InitialisatonAdditionalData[1];
+                element.flux_2 = InitialisatonAdditionalData[2];
+                indexVectorAll.push_back( element );
+                if( inner.contains( it.x(), it.y(), it.z() ) )
+                    indexVectorInner.push_back( element );
+                else
+                    indexVectorOuter.push_back( element );
+            }
+            
+            if ( isFlagSet( it.neighbor(-1, 1, 1 , 0 ), boundaryFlag ) )
+            {
+                auto element = IndexInfo(it.x(), it.y(),  it.z(),  20 );
+                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x() + -1, it.y() + 1, it.z() + 1), blocks, *block);
+                element.flux_0 = InitialisatonAdditionalData[0];
+                element.flux_1 = InitialisatonAdditionalData[1];
+                element.flux_2 = InitialisatonAdditionalData[2];
+                indexVectorAll.push_back( element );
+                if( inner.contains( it.x(), it.y(), it.z() ) )
+                    indexVectorInner.push_back( element );
+                else
+                    indexVectorOuter.push_back( element );
+            }
+            
+            if ( isFlagSet( it.neighbor(1, -1, 1 , 0 ), boundaryFlag ) )
+            {
+                auto element = IndexInfo(it.x(), it.y(),  it.z(),  21 );
+                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x() + 1, it.y() + -1, it.z() + 1), blocks, *block);
+                element.flux_0 = InitialisatonAdditionalData[0];
+                element.flux_1 = InitialisatonAdditionalData[1];
+                element.flux_2 = InitialisatonAdditionalData[2];
+                indexVectorAll.push_back( element );
+                if( inner.contains( it.x(), it.y(), it.z() ) )
+                    indexVectorInner.push_back( element );
+                else
+                    indexVectorOuter.push_back( element );
+            }
+            
+            if ( isFlagSet( it.neighbor(-1, -1, 1 , 0 ), boundaryFlag ) )
+            {
+                auto element = IndexInfo(it.x(), it.y(),  it.z(),  22 );
+                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x() + -1, it.y() + -1, it.z() + 1), blocks, *block);
+                element.flux_0 = InitialisatonAdditionalData[0];
+                element.flux_1 = InitialisatonAdditionalData[1];
+                element.flux_2 = InitialisatonAdditionalData[2];
+                indexVectorAll.push_back( element );
+                if( inner.contains( it.x(), it.y(), it.z() ) )
+                    indexVectorInner.push_back( element );
+                else
+                    indexVectorOuter.push_back( element );
+            }
+            
+            if ( isFlagSet( it.neighbor(1, 1, -1 , 0 ), boundaryFlag ) )
+            {
+                auto element = IndexInfo(it.x(), it.y(),  it.z(),  23 );
+                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x() + 1, it.y() + 1, it.z() + -1), blocks, *block);
+                element.flux_0 = InitialisatonAdditionalData[0];
+                element.flux_1 = InitialisatonAdditionalData[1];
+                element.flux_2 = InitialisatonAdditionalData[2];
+                indexVectorAll.push_back( element );
+                if( inner.contains( it.x(), it.y(), it.z() ) )
+                    indexVectorInner.push_back( element );
+                else
+                    indexVectorOuter.push_back( element );
+            }
+            
+            if ( isFlagSet( it.neighbor(-1, 1, -1 , 0 ), boundaryFlag ) )
+            {
+                auto element = IndexInfo(it.x(), it.y(),  it.z(),  24 );
+                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x() + -1, it.y() + 1, it.z() + -1), blocks, *block);
+                element.flux_0 = InitialisatonAdditionalData[0];
+                element.flux_1 = InitialisatonAdditionalData[1];
+                element.flux_2 = InitialisatonAdditionalData[2];
+                indexVectorAll.push_back( element );
+                if( inner.contains( it.x(), it.y(), it.z() ) )
+                    indexVectorInner.push_back( element );
+                else
+                    indexVectorOuter.push_back( element );
+            }
+            
+            if ( isFlagSet( it.neighbor(1, -1, -1 , 0 ), boundaryFlag ) )
+            {
+                auto element = IndexInfo(it.x(), it.y(),  it.z(),  25 );
+                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x() + 1, it.y() + -1, it.z() + -1), blocks, *block);
+                element.flux_0 = InitialisatonAdditionalData[0];
+                element.flux_1 = InitialisatonAdditionalData[1];
+                element.flux_2 = InitialisatonAdditionalData[2];
+                indexVectorAll.push_back( element );
+                if( inner.contains( it.x(), it.y(), it.z() ) )
+                    indexVectorInner.push_back( element );
+                else
+                    indexVectorOuter.push_back( element );
+            }
+            
+            if ( isFlagSet( it.neighbor(-1, -1, -1 , 0 ), boundaryFlag ) )
+            {
+                auto element = IndexInfo(it.x(), it.y(),  it.z(),  26 );
+                Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x() + -1, it.y() + -1, it.z() + -1), blocks, *block);
                 element.flux_0 = InitialisatonAdditionalData[0];
                 element.flux_1 = InitialisatonAdditionalData[1];
                 element.flux_2 = InitialisatonAdditionalData[2];
