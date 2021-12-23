@@ -38,8 +38,7 @@ system.time_step = 0.00001
 system.cell_system.skin = 3.0
 
 N = 50
-for i in range(N):
-    system.part.add(pos=[0, 0, 0])
+partcls = system.part.add(pos=N * [[0, 0, 0]])
 
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
@@ -47,9 +46,9 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 
 def spin():
-    system.part[:].pos = [[box_l * 0.5, box_l * (i + 1) / (N + 2), box_l * 0.5]
-                          for i in range(N)]
-    system.part[:].v = [
+    partcls.pos = [[box_l * 0.5, box_l * (i + 1) / (N + 2), box_l * 0.5]
+                   for i in range(N)]
+    partcls.v = [
         [np.sin(10.0 * i / N) * 20, 0, np.cos(10.0 * i / N) * 20] for i in range(N)]
 
 

@@ -42,14 +42,14 @@ class DPDThermostat(ut.TestCase, thermostats_common.ThermostatsCommon):
         self.system.integrator.set_vv()
 
     def check_total_zero(self):
-        v_total = np.sum(self.system.part[:].v, axis=0)
+        v_total = np.sum(self.system.part.all().v, axis=0)
         np.testing.assert_allclose(v_total, np.zeros(3), atol=1e-11)
 
     def single(self, with_langevin=False):
         """Test velocity distribution of a dpd fluid with a single type."""
         N = 500
         system = self.system
-        system.part.add(pos=system.box_l * np.random.random((N, 3)))
+        partcls = system.part.add(pos=system.box_l * np.random.random((N, 3)))
         kT = 2.3
         gamma = 1.5
         if with_langevin:
@@ -63,7 +63,7 @@ class DPDThermostat(ut.TestCase, thermostats_common.ThermostatsCommon):
         v_stored = np.zeros((loops, N, 3))
         for i in range(loops):
             system.integrator.run(10)
-            v_stored[i] = system.part[:].v
+            v_stored[i] = partcls.v
         v_minmax = 5
         bins = 5
         error_tol = 0.01
@@ -104,7 +104,7 @@ class DPDThermostat(ut.TestCase, thermostats_common.ThermostatsCommon):
         v_stored = np.zeros((loops, N, 3))
         for i in range(loops):
             system.integrator.run(10)
-            v_stored[i] = system.part[:].v
+            v_stored[i] = system.part.all().v
         v_minmax = 5
         bins = 5
         error_tol = 0.01
@@ -116,7 +116,7 @@ class DPDThermostat(ut.TestCase, thermostats_common.ThermostatsCommon):
         N = 200
         system = self.system
         system.time_step = 0.01
-        system.part.add(pos=system.box_l * np.random.random((N, 3)))
+        partcls = system.part.add(pos=system.box_l * np.random.random((N, 3)))
         kT = 2.3
         gamma = 1.5
         system.thermostat.set_dpd(kT=kT, seed=42)
@@ -129,12 +129,12 @@ class DPDThermostat(ut.TestCase, thermostats_common.ThermostatsCommon):
         system.thermostat.turn_off()
 
         # Reset velocities
-        system.part[:].v = [1., 2., 3.]
+        partcls.v = [1., 2., 3.]
 
         system.integrator.run(10)
 
         # Check that there was neither noise nor friction
-        for v in system.part[:].v:
+        for v in partcls.v:
             for i in range(3):
                 self.assertEqual(v[i], float(i + 1))
 
@@ -142,7 +142,7 @@ class DPDThermostat(ut.TestCase, thermostats_common.ThermostatsCommon):
         system.thermostat.set_dpd(kT=kT, seed=42)
 
         # Reset velocities for faster convergence
-        system.part[:].v = [0., 0., 0.]
+        partcls.v = [0., 0., 0.]
 
         # Equilibrate
         system.integrator.run(250)
@@ -151,7 +151,7 @@ class DPDThermostat(ut.TestCase, thermostats_common.ThermostatsCommon):
         v_stored = np.zeros((loops, N, 3))
         for i in range(loops):
             system.integrator.run(10)
-            v_stored[i] = system.part[:].v
+            v_stored[i] = partcls.v
         v_minmax = 5
         bins = 5
         error_tol = 0.012

@@ -62,7 +62,7 @@ class CoulombCloudWall(ut.TestCase):
         # Compare forces and energy now in the system to stored ones
 
         # Force
-        force_diff = np.linalg.norm(self.system.part[:].f / prefactor - self.forces,
+        force_diff = np.linalg.norm(self.system.part.all().f / prefactor - self.forces,
                                     axis=1)
         self.assertLess(
             np.mean(force_diff), self.tolerance,

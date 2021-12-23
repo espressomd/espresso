@@ -75,8 +75,8 @@ class DDSGPUTest(ut.TestCase):
             self.system.actors.add(dds_cpu)
             self.system.integrator.run(steps=0, recalc_forces=True)
 
-            dawaanr_f = np.copy(self.system.part[:].f)
-            dawaanr_t = np.copy(self.system.part[:].torque_lab)
+            dawaanr_f = np.copy(self.system.part.all().f)
+            dawaanr_t = np.copy(self.system.part.all().torque_lab)
             dawaanr_e = self.system.analysis.energy()["total"]
 
             del dds_cpu
@@ -89,8 +89,8 @@ class DDSGPUTest(ut.TestCase):
             self.system.actors.add(dds_gpu)
             self.system.integrator.run(steps=0, recalc_forces=True)
 
-            ddsgpu_f = np.copy(self.system.part[:].f)
-            ddsgpu_t = np.copy(self.system.part[:].torque_lab)
+            ddsgpu_f = np.copy(self.system.part.all().f)
+            ddsgpu_t = np.copy(self.system.part.all().torque_lab)
             ddsgpu_e = self.system.analysis.energy()["total"]
 
             # compare

@@ -58,7 +58,7 @@ class TimeSeriesTest(ut.TestCase):
         positions = np.copy(system.box_l) * np.random.random((10, N_PART, 3))
 
         for pos in positions:
-            system.part[:].pos = pos
+            system.part.all().pos = pos
             acc.update()
 
         self.assertEqual(acc.get_params()['obs'], obs)

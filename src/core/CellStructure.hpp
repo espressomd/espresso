@@ -34,6 +34,8 @@
 #include "bond_error.hpp"
 #include "ghosts.hpp"
 
+#include <utils/math/sqr.hpp>
+
 #include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/container/static_vector.hpp>
 #include <boost/iterator/indirect_iterator.hpp>
@@ -360,6 +362,20 @@ public:
    * @brief Set the resort level to sorted.
    */
   void clear_resort_particles() { m_resort_particles = Cells::RESORT_NONE; }
+
+  /**
+   * @brief Check whether a particle has moved further than half the skin
+   * since the last Verlet list update, thus requiring a resort.
+   * @param particles Particles to check
+   * @param skin Skin
+   * @return Whether a resort is needed.
+   */
+  bool check_resort_required(ParticleRange const &particles, double skin) {
+    auto const lim = Utils::sqr(skin / 2.);
+    return std::any_of(
+        particles.begin(), particles.end(),
+        [lim](const auto &p) { return ((p.r.p - p.l.p_old).norm2() > lim); });
+  }
 
   /**
    * @brief Synchronize number of ghosts.

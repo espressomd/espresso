@@ -85,7 +85,7 @@ class DiamondPolymer(ut.TestCase):
         np.testing.assert_allclose(self.charged_mono.q,
                                    len(self.charged_mono) * [self.diamond_params['val_cM']])
         # particle id
-        self.assertGreaterEqual(min(self.system.part[:].id),
+        self.assertGreaterEqual(min(self.system.part.all().id),
                                 self.diamond_params['start_id'])
 
     def test_bonds(self):
@@ -109,9 +109,10 @@ class DiamondPolymer(ut.TestCase):
         test that all particles in the polymer are connected by pushing one particle
         """
 
-        self.system.part[self.diamond_params['start_id']].ext_force = 3 * [2]
+        self.system.part.by_id(
+            self.diamond_params['start_id']).ext_force = 3 * [2]
         self.system.integrator.run(200)
-        vels = np.linalg.norm(self.system.part[:].v, axis=1)
+        vels = np.linalg.norm(self.system.part.all().v, axis=1)
         self.assertGreater(np.min(vels), 1e-6)
 
     def test_geometry(self):

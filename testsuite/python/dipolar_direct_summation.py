@@ -51,8 +51,8 @@ class dds(ut.TestCase):
 
         system.integrator.run(steps=0, recalc_forces=True)
         ref_e = system.analysis.energy()["dipolar"]
-        ref_f = np.copy(system.part[:].f)
-        ref_t = np.copy(system.part[:].torque_lab)
+        ref_f = np.copy(self.particles.f)
+        ref_t = np.copy(self.particles.torque_lab)
 
         system.actors.clear()
 
@@ -66,8 +66,8 @@ class dds(ut.TestCase):
 
         system.integrator.run(steps=0, recalc_forces=True)
         ref_e = system.analysis.energy()["dipolar"]
-        ref_f = np.copy(system.part[:].f)
-        ref_t = np.copy(system.part[:].torque_lab)
+        ref_f = np.copy(self.particles.f)
+        ref_t = np.copy(self.particles.torque_lab)
 
         system.actors.clear()
 
@@ -82,8 +82,8 @@ class dds(ut.TestCase):
 
         system.integrator.run(steps=0, recalc_forces=True)
         ref_e = system.analysis.energy()["dipolar"]
-        ref_f = np.copy(system.part[:].f)
-        ref_t = np.copy(system.part[:].torque_lab)
+        ref_f = np.copy(self.particles.f)
+        ref_t = np.copy(self.particles.torque_lab)
 
         system.actors.clear()
 
@@ -101,8 +101,8 @@ class dds(ut.TestCase):
 
         system.integrator.run(0, recalc_forces=True)
         ref_e = system.analysis.energy()["dipolar"]
-        ref_f = np.copy(system.part[:].f)
-        ref_t = np.copy(system.part[:].torque_lab)
+        ref_f = np.copy(self.particles.f)
+        ref_t = np.copy(self.particles.torque_lab)
 
         system.actors.clear()
 
@@ -131,8 +131,8 @@ class dds(ut.TestCase):
         dipole_modulus = 1.3
         part_pos = np.random.random((N, 3)) * system.box_l
         part_dip = dipole_modulus * tests_common.random_dipoles(N)
-        particles = system.part.add(pos=part_pos, dip=part_dip,
-                                    rotation=N * [(1, 1, 1)])
+        self.particles = system.part.add(pos=part_pos, dip=part_dip,
+                                         rotation=N * [(1, 1, 1)])
 
         # minimize system
         system.non_bonded_inter[0, 0].lennard_jones.set_params(
@@ -154,8 +154,8 @@ class dds(ut.TestCase):
         np.save(
             filepath_arrays,
             np.hstack(
-                (particles.pos_folded,
-                 particles.dip,
+                (self.particles.pos_folded,
+                 self.particles.dip,
                  ref_f,
                  ref_t)),
             allow_pickle=False)
@@ -171,7 +171,8 @@ class dds(ut.TestCase):
         ref_f = array_data[:, 6:9]
         ref_t = array_data[:, 9:12]
 
-        system.part.add(pos=pos, dip=dip, rotation=[[1, 1, 1]] * len(pos))
+        self.particles = system.part.add(
+            pos=pos, dip=dip, rotation=[[1, 1, 1]] * len(pos))
         dds_e, dds_f, dds_t = method_func()
         self.assertAlmostEqual(dds_e, ref_e, delta=energy_tol)
         np.testing.assert_allclose(dds_f, ref_f, atol=force_tol)

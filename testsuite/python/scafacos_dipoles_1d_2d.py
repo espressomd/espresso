@@ -76,7 +76,7 @@ class Scafacos1d2d(ut.TestCase):
             data = np.genfromtxt(tests_common.abspath(
                 file_prefix + "_reference_data_forces_torques.dat"))
             s.part.add(pos=data[:, 1:4], dip=data[:, 4:7])
-            s.part[:].rotation = (1, 1, 1)
+            s.part.all().rotation = 3 * [True]
 
             if dim == 2:
                 scafacos = espressomd.magnetostatics.Scafacos(
@@ -122,8 +122,8 @@ class Scafacos1d2d(ut.TestCase):
 
             # Calculate errors
 
-            err_f = self.vector_error(s.part[:].f, data[:, 7:10])
-            err_t = self.vector_error(s.part[:].torque_lab, data[:, 10:13])
+            err_f = self.vector_error(s.part.all().f, data[:, 7:10])
+            err_t = self.vector_error(s.part.all().torque_lab, data[:, 10:13])
             err_e = s.analysis.energy()["dipolar"] - ref_E
 
             tol_f = 2E-3

@@ -54,7 +54,7 @@ class VirtualSites(ut.TestCase):
         vs_r = vs.vs_relative
 
         # Get related particle
-        rel = self.system.part[vs_r[0]]
+        rel = self.system.part.by_id(vs_r[0])
 
         # Distance
         d = self.system.distance(rel, vs)
@@ -190,8 +190,7 @@ class VirtualSites(ut.TestCase):
             f2 = np.array((3, 4, 5))
             f3 = np.array((-4, 5, 6))
             # Add forces to vs
-            p2 = system.part[2]
-            p3 = system.part[3]
+            p2, p3 = system.part.by_ids([2, 3])
             p2.ext_force = f2
             p3.ext_force = f3
             system.integrator.run(0)
@@ -240,22 +239,24 @@ class VirtualSites(ut.TestCase):
         # For n spheres, n/2 dumbells.
         for i in range(n // 2):
             # Type=1, i.e., no lj ia for the center of mass particles
-            system.part.add(
-                rotation=(1, 1, 1), id=3 * i, pos=np.random.random(3) * l, type=1,
+            p3i = system.part.add(
+                rotation=3 * [True], id=3 * i, pos=np.random.random(3) * l, type=1,
                 omega_lab=0.3 * np.random.random(3), v=np.random.random(3))
             # lj spheres
-            system.part.add(rotation=(1, 1, 1), id=3 * i + 1,
-                            pos=system.part[3 * i].pos +
-                            system.part[3 * i].director / 2.,
-                            type=0)
-            system.part.add(rotation=(1, 1, 1), id=3 * i + 2,
-                            pos=system.part[3 * i].pos -
-                            system.part[3 * i].director / 2.,
-                            type=0)
-            system.part[3 * i + 1].vs_auto_relate_to(3 * i)
-            self.verify_vs(system.part[3 * i + 1], verify_velocity=False)
-            system.part[3 * i + 2].vs_auto_relate_to(3 * i)
-            self.verify_vs(system.part[3 * i + 2], verify_velocity=False)
+            p3ip1 = system.part.add(rotation=3 * [True],
+                                    id=3 * i + 1,
+                                    pos=p3i.pos +
+                                    p3i.director / 2.,
+                                    type=0)
+            p3ip2 = system.part.add(rotation=3 * [True],
+                                    id=3 * i + 2,
+                                    pos=p3i.pos -
+                                    p3i.director / 2.,
+                                    type=0)
+            p3ip1.vs_auto_relate_to(p3i.id)
+            self.verify_vs(p3ip1, verify_velocity=False)
+            p3ip2.vs_auto_relate_to(p3i.id)
+            self.verify_vs(p3ip2, verify_velocity=False)
         system.integrator.run(0, recalc_forces=True)
         # interactions
         system.non_bonded_inter[0, 0].lennard_jones.set_params(
@@ -277,8 +278,8 @@ class VirtualSites(ut.TestCase):
             system.integrator.run(2)
             # Check the virtual sites config,pos and vel of the lj spheres
             for j in range(int(n / 2)):
-                self.verify_vs(system.part[3 * j + 1])
-                self.verify_vs(system.part[3 * j + 2])
+                self.verify_vs(system.part.by_id(3 * j + 1))
+                self.verify_vs(system.part.by_id(3 * j + 2))
 
             # Verify lj forces on the particles. The non-virtual particles are
             # skipped because the forces on them originate from the vss and not
@@ -288,7 +289,8 @@ class VirtualSites(ut.TestCase):
         # Test applying changes
         enegry_pre_change = system.analysis.energy()['total']
         pressure_pre_change = system.analysis.pressure()['total']
-        system.part[0].pos = system.part[0].pos + (2.2, -1.4, 4.2)
+        p0 = system.part.by_id(0)
+        p0.pos = p0.pos + (2.2, -1.4, 4.2)
         enegry_post_change = system.analysis.energy()['total']
         pressure_post_change = system.analysis.pressure()['total']
         self.assertNotAlmostEqual(enegry_pre_change, enegry_post_change)

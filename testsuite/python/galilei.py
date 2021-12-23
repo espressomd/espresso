@@ -28,15 +28,15 @@ class Galilei(ut.TestCase):
 
     def setUp(self):
         N_PART = 500
-        self.system.part.add(
+        self.partcls = self.system.part.add(
             pos=self.system.box_l * np.random.random((N_PART, 3)),
             v=-5. + 10. * np.random.random((N_PART, 3)),
             f=np.random.random((N_PART, 3)))
         if espressomd.has_features("MASS"):
-            self.system.part[:].mass = 42. * np.random.random((N_PART,))
+            self.partcls.mass = 42. * np.random.random((N_PART,))
         if espressomd.has_features("ROTATION"):
-            self.system.part[:].omega_lab = -2. - np.random.random((N_PART, 3))
-            self.system.part[:].torque_lab = - \
+            self.partcls.omega_lab = -2. - np.random.random((N_PART, 3))
+            self.partcls.torque_lab = - \
                 2. - np.random.random((N_PART, 3))
 
     def tearDown(self):
@@ -46,34 +46,34 @@ class Galilei(ut.TestCase):
         g = espressomd.galilei.GalileiTransform()
         g.kill_particle_motion()
 
-        np.testing.assert_array_equal(np.copy(self.system.part[:].v), 0)
+        np.testing.assert_array_equal(np.copy(self.partcls.v), 0)
 
         if espressomd.has_features("ROTATION"):
             np.testing.assert_array_less(
-                np.copy(self.system.part[:].omega_lab), 0)
+                np.copy(self.partcls.omega_lab), 0)
 
             g.kill_particle_motion(rotation=True)
 
             np.testing.assert_array_equal(
-                np.copy(self.system.part[:].omega_lab), 0)
+                np.copy(self.partcls.omega_lab), 0)
 
     def test_kill_particle_forces(self):
         g = espressomd.galilei.GalileiTransform()
         g.kill_particle_forces()
 
-        np.testing.assert_array_equal(np.copy(self.system.part[:].f), 0)
+        np.testing.assert_array_equal(np.copy(self.partcls.f), 0)
 
         if espressomd.has_features("ROTATION"):
             np.testing.assert_array_less(
-                np.copy(self.system.part[:].torque_lab), 0)
+                np.copy(self.partcls.torque_lab), 0)
 
             g.kill_particle_forces(torque=True)
 
             np.testing.assert_array_equal(
-                np.copy(self.system.part[:].torque_lab), 0)
+                np.copy(self.partcls.torque_lab), 0)
 
     def test_cms(self):
-        parts = self.system.part[:]
+        parts = self.partcls
         g = espressomd.galilei.GalileiTransform()
 
         total_mass = np.sum(parts.mass)
@@ -83,7 +83,7 @@ class Galilei(ut.TestCase):
         np.testing.assert_allclose(np.copy(g.system_CMS()), com)
 
     def test_cms_velocity(self):
-        parts = self.system.part[:]
+        parts = self.partcls
         g = espressomd.galilei.GalileiTransform()
         total_mass = np.sum(parts.mass)
         com_v = np.sum(

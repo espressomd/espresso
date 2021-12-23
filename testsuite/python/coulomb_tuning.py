@@ -50,7 +50,7 @@ class CoulombCloudWallTune(ut.TestCase):
     def compare(self, method_name):
         # Compare forces now in the system to stored ones
         difference = np.linalg.norm(
-            self.system.part[:].f - self.forces, axis=1)
+            self.system.part.all().f - self.forces, axis=1)
         self.assertLessEqual(
             np.mean(difference), self.tolerance,
             "Absolute force difference too large for method " + method_name)

@@ -153,7 +153,8 @@ void VirtualSitesRelative::update() const {
   cell_structure.ghosts_update(Cells::DATA_PART_POSITION |
                                Cells::DATA_PART_MOMENTUM);
 
-  for (auto &p : cell_structure.local_particles()) {
+  auto const particles = cell_structure.local_particles();
+  for (auto &p : particles) {
     if (!p.p.is_virtual)
       continue;
 
@@ -169,10 +170,11 @@ void VirtualSitesRelative::update() const {
 
     if (get_have_quaternion())
       p.r.quat = orientation(p_ref, p.p.vs_relative);
+  }
 
-    if ((p.r.p - p.l.p_old).norm2() > Utils::sqr(0.5 * skin))
-      cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
-  } // namespace
+  if (cell_structure.check_resort_required(particles, skin)) {
+    cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
+  }
 }
 
 // Distribute forces that have accumulated on virtual particles to the

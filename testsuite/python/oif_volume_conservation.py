@@ -46,27 +46,26 @@ class OifVolumeConservation(ut.TestCase):
         cell0 = oif.OifCell(
             cell_type=cell_type, particle_type=0, origin=[5.0, 5.0, 5.0])
         self.assertEqual(system.max_oif_objects, 1)
-        # cell0.output_vtk_pos_folded(file_name="cell0_0.vtk")
+        partcls = system.part.all()
 
         # fluid
-
         diameter_init = cell0.diameter()
         print(f"initial diameter = {diameter_init}")
 
         # OIF object is being stretched by factor 1.5
-        system.part[:].pos = (system.part[:].pos - 5) * 1.5 + 5
+        partcls.pos = (partcls.pos - 5) * 1.5 + 5
 
         diameter_stretched = cell0.diameter()
         print(f"stretched diameter = {diameter_stretched}")
 
         # Apply non-isotropic deformation
-        system.part[:].pos = system.part[:].pos * np.array((0.96, 1.05, 1.02))
+        partcls.pos = partcls.pos * np.array((0.96, 1.05, 1.02))
 
         # Test that restoring forces net to zero and don't produce a torque
         system.integrator.run(1)
         np.testing.assert_allclose(
             np.sum(
-                system.part[:].f, axis=0), [
+                partcls.f, axis=0), [
                 0., 0., 0.], atol=1E-12)
 
         total_torque = np.zeros(3)

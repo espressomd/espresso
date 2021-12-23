@@ -66,7 +66,8 @@ class RandomPairTest(ut.TestCase):
         pairs = []
         parts = self.system.part
         for p in self.all_pairs:
-            if self.system.distance(parts[p[0]], parts[p[1]]) <= dist:
+            if self.system.distance(parts.by_id(
+                    p[0]), parts.by_id(p[1])) <= dist:
                 pairs.append(p)
         return set(pairs)
 

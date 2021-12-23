@@ -258,7 +258,7 @@ force/torque observable used in the custom convergence criterion. Since these
 two properties can be cast to boolean values, they can be used as masks to
 remove forces/torques that are ignored by the integrator::
 
-    particles = system.part[:]
+    particles = system.part.all()
     max_force = np.max(np.linalg.norm(particles.f * np.logical_not(particles.fix), axis=1))
     max_torque = np.max(np.linalg.norm(particles.torque_lab * np.logical_not(particles.rotation), axis=1))
 
@@ -273,7 +273,7 @@ The correct forces need to be re-calculated after running the integration::
     p2 = system.part.add(pos=[0, 0, 0.1], type=1)
     p2.vs_auto_relate_to(p1)
     system.integrator.set_steepest_descent(f_max=800, gamma=1.0, max_displacement=0.01)
-    while convergence_criterion(system.part[:].f):
+    while convergence_criterion(system.part.all().f):
         system.integrator.run(10)
         system.integrator.run(0, recalc_forces=True)  # re-calculate forces from virtual sites
     system.integrator.set_vv()

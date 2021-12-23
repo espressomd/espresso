@@ -45,7 +45,7 @@ class ThermalizedBond(ut.TestCase, thermostats_common.ThermostatsCommon):
         """Test for COM thermalization."""
 
         N = 200
-        N2 = int(N / 2)
+        N_half = int(N / 2)
         self.system.part.clear()
         self.system.time_step = 0.02
         self.system.periodicity = [0, 0, 0]
@@ -53,9 +53,13 @@ class ThermalizedBond(ut.TestCase, thermostats_common.ThermostatsCommon):
         m1 = 1.0
         m2 = 10.0
         # Place particles
-        for i in range(0, N, 2):
-            self.system.part.add(pos=np.random.random(3), mass=m1)
-            self.system.part.add(pos=np.random.random(3), mass=m2)
+
+        partcls_m1 = self.system.part.add(
+            pos=np.random.random(
+                (N_half, 3)), mass=N_half * [m1])
+        partcls_m2 = self.system.part.add(
+            pos=np.random.random(
+                (N_half, 3)), mass=N_half * [m2])
 
         t_dist = 0
         g_dist = 0
@@ -67,7 +71,7 @@ class ThermalizedBond(ut.TestCase, thermostats_common.ThermostatsCommon):
             gamma_distance=g_dist, r_cut=2.0, seed=55)
         self.system.bonded_inter.add(thermalized_dist_bond)
 
-        for p1, p2 in zip(self.system.part[::2], self.system.part[1::2]):
+        for p1, p2 in zip(partcls_m1, partcls_m2):
             p1.add_bond((thermalized_dist_bond, p2))
 
         # Warmup
@@ -75,13 +79,13 @@ class ThermalizedBond(ut.TestCase, thermostats_common.ThermostatsCommon):
 
         # Sampling
         loops = 150
-        v_stored = np.zeros((N2 * loops, 3))
+        v_stored = np.zeros((N_half * loops, 3))
         for i in range(loops):
             self.system.integrator.run(5)
             v_com = 1.0 / \
                 (m1 + m2) * \
-                (m1 * self.system.part[::2].v + m2 * self.system.part[1::2].v)
-            v_stored[i * N2:(i + 1) * N2, :] = v_com
+                (m1 * partcls_m1.v + m2 * partcls_m2.v)
+            v_stored[i * N_half:(i + 1) * N_half, :] = v_com
 
         v_minmax = 5
         bins = 50
@@ -93,7 +97,7 @@ class ThermalizedBond(ut.TestCase, thermostats_common.ThermostatsCommon):
         """Test for dist thermalization."""
 
         N = 100
-        N2 = int(N / 2)
+        N_half = int(N / 2)
         self.system.part.clear()
         self.system.time_step = 0.02
         self.system.periodicity = [1, 1, 1]
@@ -101,9 +105,12 @@ class ThermalizedBond(ut.TestCase, thermostats_common.ThermostatsCommon):
         m1 = 1.0
         m2 = 10.0
         # Place particles
-        for i in range(0, N, 2):
-            self.system.part.add(pos=np.random.random(3), mass=m1)
-            self.system.part.add(pos=np.random.random(3), mass=m2)
+        partcls_m1 = self.system.part.add(
+            pos=np.random.random(
+                (N_half, 3)), mass=N_half * [m1])
+        partcls_m2 = self.system.part.add(
+            pos=np.random.random(
+                (N_half, 3)), mass=N_half * [m2])
 
         t_dist = 2.0
         g_dist = 4.0
@@ -115,7 +122,7 @@ class ThermalizedBond(ut.TestCase, thermostats_common.ThermostatsCommon):
             gamma_distance=g_dist, r_cut=9, seed=51)
         self.system.bonded_inter.add(thermalized_dist_bond)
 
-        for p1, p2 in zip(self.system.part[::2], self.system.part[1::2]):
+        for p1, p2 in zip(partcls_m1, partcls_m2):
             p1.add_bond((thermalized_dist_bond, p2))
 
         # Warmup
@@ -123,11 +130,11 @@ class ThermalizedBond(ut.TestCase, thermostats_common.ThermostatsCommon):
 
         # Sampling
         loops = 150
-        v_stored = np.zeros((N2 * loops, 3))
+        v_stored = np.zeros((N_half * loops, 3))
         for i in range(loops):
             self.system.integrator.run(5)
-            v_dist = self.system.part[1::2].v - self.system.part[::2].v
-            v_stored[i * N2:(i + 1) * N2, :] = v_dist
+            v_dist = partcls_m2.v - partcls_m1.v
+            v_stored[i * N_half:(i + 1) * N_half, :] = v_dist
 
         v_minmax = 5
         bins = 50

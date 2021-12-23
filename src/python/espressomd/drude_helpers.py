@@ -232,8 +232,8 @@ class DrudeHelpers:
 
         for drude_id in self.drude_id_list:
             core_id = self.core_id_from_drude_id[drude_id]
-            pd = system.part[drude_id]
-            pc = system.part[core_id]
+            pd = system.part.by_id(drude_id)
+            pc = system.part.by_id(core_id)
             bond = self.drude_dict[pd.type]["subtr_sr_bonds_drude-core"]
             pc.add_bond((bond, drude_id))
             if verbose:

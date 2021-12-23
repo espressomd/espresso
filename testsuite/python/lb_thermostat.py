@@ -66,7 +66,7 @@ class LBThermostatCommon(thermostats_common.ThermostatsCommon):
         v_stored = np.zeros((loops, N, 3))
         for i in range(loops):
             self.system.integrator.run(3)
-            v_stored[i] = self.system.part[:].v
+            v_stored[i] = self.system.part.all().v
         minmax = 5
         n_bins = 7
         error_tol = 0.01

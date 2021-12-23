@@ -43,8 +43,8 @@ class BH_DDS_gpu_multCPU_test(ut.TestCase):
         pf_dds_gpu = 3.524
         ratio_dawaanr_bh_gpu = pf_dds_gpu / pf_bh_gpu
         l = 15
-        self.system.box_l = [l, l, l]
-        self.system.periodicity = [0, 0, 0]
+        self.system.box_l = 3 * [l]
+        self.system.periodicity = 3 * [False]
         self.system.time_step = 1E-4
         self.system.cell_system.skin = 0.1
 
@@ -80,8 +80,8 @@ class BH_DDS_gpu_multCPU_test(ut.TestCase):
             self.system.actors.add(dds_gpu)
             self.system.integrator.run(steps=0, recalc_forces=True)
 
-            dawaanr_f = np.copy(self.system.part[:].f)
-            dawaanr_t = np.copy(self.system.part[:].torque_lab)
+            dawaanr_f = np.copy(self.system.part.all().f)
+            dawaanr_t = np.copy(self.system.part.all().torque_lab)
             dawaanr_e = self.system.analysis.energy()["total"]
 
             del dds_gpu
@@ -93,8 +93,8 @@ class BH_DDS_gpu_multCPU_test(ut.TestCase):
             self.system.actors.add(bh_gpu)
             self.system.integrator.run(steps=0, recalc_forces=True)
 
-            bhgpu_f = np.copy(self.system.part[:].f)
-            bhgpu_t = np.copy(self.system.part[:].torque_lab)
+            bhgpu_f = np.copy(self.system.part.all().f)
+            bhgpu_t = np.copy(self.system.part.all().torque_lab)
             bhgpu_e = self.system.analysis.energy()["total"]
 
             # compare
