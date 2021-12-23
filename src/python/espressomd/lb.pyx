@@ -18,23 +18,12 @@
 #
 include "myconfig.pxi"
 import os
-import cython
 import itertools
-import functools
 import numpy as np
 cimport numpy as np
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 from .shapes import Shape
-from . cimport cuda_init
-from . import cuda_init
 from . import utils
-from .utils import is_valid_type, to_char_pointer, check_type_or_throw_except
-from .utils cimport Vector3i
-from .utils cimport Vector3d
-from .utils cimport Vector6d
-from .utils cimport make_array_locked
-from .utils cimport make_Vector3d
-from .utils cimport create_nparray_from_double_array
 
 
 class VelocityBounceBack:
@@ -44,7 +33,7 @@ class VelocityBounceBack:
     """
 
     def __init__(self, velocity):
-        check_type_or_throw_except(
+        utils.check_type_or_throw_except(
             velocity, 3, float, "VelocityBounceBack velocity must be three floats")
         self.velocity = velocity
 
@@ -108,7 +97,7 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
                 if any(isinstance(item, slice) for item in key):
                     return LBSlice(key, self.shape)
                 else:
-                    return LBFluidRoutines(np.array(key))
+                    return LBFluidNode(index=np.array(key))
         else:
             raise Exception(
                 "%s is not a valid key. Should be a point on the nodegrid e.g. lbf[0,0,0], or a slice" % key)
@@ -239,7 +228,7 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
             The LB fluid velocity at ``pos``.
 
         """
-        return python_lbnode_get_interpolated_velocity(make_Vector3d(pos))
+        return self.call_method('get_interpolated_velocity', pos=pos)
 
     def add_force_at_pos(self, pos, force):
         """Adds a force to the fluid at given position
@@ -252,28 +241,27 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
               The force vector which will be distributed at the position.
 
         """
-        lb_lbfluid_add_force_at_pos(make_Vector3d(pos), make_Vector3d(force))
+        return self.call_method('add_force_at_pos', pos=pos, force=force)
 
     def save_checkpoint(self, path, binary):
-        '''
-        Write LB node populations to a file.
-        Boundary information is not written to the file.
-        '''
+        """
+        Write LB node populations and boundary conditions to a file.
+        """
         tmp_path = path + ".__tmp__"
-        lb_lbfluid_save_checkpoint(utils.to_char_pointer(tmp_path), binary)
+        self.call_method(
+            'save_checkpoint', path=tmp_path, mode=int(binary))
         os.rename(tmp_path, path)
 
     def load_checkpoint(self, path, binary):
-        '''
-        Load LB node populations from a file.
-        Boundary information is not available in the file. The boundary
-        information of the grid will be set to zero.
-        '''
-        lb_lbfluid_load_checkpoint(utils.to_char_pointer(path), binary)
+        """
+        Load LB node populations and boundary conditions from a file.
+        """
+        return self.call_method(
+            'load_checkpoint', path=path, mode=int(binary))
 
     @property
     def pressure_tensor(self):
-        tensor = python_lbfluid_get_pressure_tensor(self.agrid, self.tau)
+        tensor = self.call_method('get_pressure_tensor')
         return utils.array_locked(tensor)
 
     @pressure_tensor.setter
@@ -464,9 +452,18 @@ IF LB_WALBERLA:
         """
         Initialize the lattice-Boltzmann method for hydrodynamic flow using waLBerla.
         See :class:`HydrodynamicInteraction` for the list of parameters.
+
         """
         _so_name = "walberla::FluidWalberla"
         _so_creation_policy = "GLOBAL"
+        # TODO WALBERLA: here we cannot use _so_bind_methods without lb_vtk.py
+        # failing: the walberla::FluidWalberla script interface object doesn't
+        # expire even when the LBFluidWalberla is removed from the actors list
+        # and the last python variable holding a reference to it is deleted.
+        # _so_bind_methods = (
+        #    "add_force_at_pos",
+        #    "get_interpolated_velocity",
+        #    "get_pressure_tensor")
 
         def _set_params_in_es_core(self):
             pass
@@ -490,7 +487,7 @@ IF LB_WALBERLA:
             """
             Remove boundary conditions.
             """
-            lb_lbfluid_clear_boundaries()
+            self.call_method('clear_boundaries')
 
         def add_boundary_from_shape(self, shape,
                                     velocity=np.zeros(3, dtype=float),
@@ -644,118 +641,92 @@ ELSE:
             raise NotImplementedError("Feature not compiled in")
 
 
-cdef class LBFluidRoutines:
+@script_interface_register
+class LBFluidNode(ScriptInterfaceHelper):
+    _so_name = "walberla::FluidNodeWalberla"
+    _so_creation_policy = "GLOBAL"
 
-    def __init__(self, key):
+    def required_keys(self):
+        return {'index'}
+
+    def validate_params(self, params):
         utils.check_type_or_throw_except(
-            key, 3, int, "The index of an lb fluid node consists of three integers.")
-        self.node[0] = key[0]
-        self.node[1] = key[1]
-        self.node[2] = key[2]
-        if not lb_lbnode_is_index_valid(self.node):
-            raise ValueError("LB node index out of bounds")
+            params['index'], 3, int, "The index of an lb fluid node consists of three integers.")
 
-    property index:
-        def __get__(self):
-            return (self.node[0], self.node[1], self.node[2])
-
-    property velocity:
-        def __get__(self):
-            return python_lbnode_get_velocity(self.node)
-
-        def __set__(self, value):
-            utils.check_type_or_throw_except(
-                value, 3, float, "velocity has to be 3 floats")
-            python_lbnode_set_velocity(self.node, make_Vector3d(value))
-
-    property boundary:
-        def __get__(self):
-            """
-            Returns
-            -------
-            :class:`~espressomd.lb.VelocityBounceBack`
-                If the node is a boundary node
-            None
-                If the node is not a boundary node
-            """
-
-            is_boundary = lb_lbnode_is_boundary(self.node)
-            if is_boundary:
-                vel = python_lbnode_get_velocity_at_boundary(self.node)
-                return VelocityBounceBack(vel)
-            return None
-
-        def __set__(self, value):
-            """
-            Parameters
-            ----------
-            value : :class:`~espressomd.lb.VelocityBounceBack` or None
-                If value is :class:`~espressomd.lb.VelocityBounceBack`,
-                set the node to be a boundary node with the specified velocity.
-                If value is ``None``, the node will become a fluid node.
-            """
-
-            if isinstance(value, VelocityBounceBack):
-                HydrodynamicInteraction._check_mach_limit(value.velocity)
-                python_lbnode_set_velocity_at_boundary(
-                    self.node, make_Vector3d(value.velocity))
-            elif value is None:
-                lb_lbnode_remove_from_boundary(self.node)
-            else:
+    def __init__(self, *args, **kwargs):
+        if 'sip' not in kwargs:
+            if not self.required_keys().issubset(kwargs):
                 raise ValueError(
-                    "value must be an instance of VelocityBounceBack or None")
+                    f"At least the following keys have to be given as keyword arguments: {self.required_keys()}")
+            self.validate_params(kwargs)
+            super().__init__(*args, **kwargs)
+            utils.handle_errors("LBFluidNode instantiation failed")
+        else:
+            super().__init__(**kwargs)
 
-    property boundary_force:
-        def __get__(self):
-            return python_lbnode_get_boundary_force(self.node)
+    @property
+    def index(self):
+        return tuple(self._index)
 
-        def __set__(self, val):
-            raise NotImplementedError(
-                "The boundary force can only be read, never set.")
+    @index.setter
+    def index(self, value):
+        raise RuntimeError("Property 'index' is read-only.")
 
-    property density:
-        def __get__(self):
-            return python_lbnode_get_density(self.node)
+    @property
+    def population(self):
+        return utils.array_locked(self._population)
 
-        def __set__(self, value):
-            python_lbnode_set_density(self.node, value)
+    @population.setter
+    def population(self, value):
+        self._population = value
 
-    property pressure_tensor:
-        def __get__(self):
-            tensor = python_lbnode_get_pressure_tensor(self.node)
-            return utils.array_locked(tensor)
+    @property
+    def pressure_tensor(self):
+        p_tensor = self._pressure_tensor
+        p_tensor = [[p_tensor[0], p_tensor[1], p_tensor[3]],
+                    [p_tensor[1], p_tensor[2], p_tensor[4]],
+                    [p_tensor[3], p_tensor[4], p_tensor[5]]]
+        return utils.array_locked(p_tensor)
 
-        def __set__(self, value):
-            raise NotImplementedError
+    @pressure_tensor.setter
+    def pressure_tensor(self, value):
+        raise RuntimeError("Property 'pressure_tensor' is read-only.")
 
-    property population:
-        def __get__(self):
-            cdef vector[double] pop
-            pop = lb_lbnode_get_pop(self.node)
-            return utils.array_locked(
-                create_nparray_from_double_array(pop.data(), pop.size()))
+    @property
+    def boundary(self):
+        """
+        Returns
+        -------
+        :class:`~espressomd.lb.VelocityBounceBack`
+            If the node is a boundary node
+        None
+            If the node is not a boundary node
+        """
 
-        def __set__(self, population):
-            cdef vector[double] _population
-            _population.resize(len(population))
-            for i in range(len(population)):
-                _population[i] = population[i]
-            lb_lbnode_set_pop(self.node, _population)
+        velocity = self.velocity_at_boundary
+        if velocity is not None:
+            return VelocityBounceBack(velocity)
+        return None
 
-    property is_boundary:
-        def __get__(self):
-            return lb_lbnode_is_boundary(self.node)
+    @boundary.setter
+    def boundary(self, value):
+        """
+        Parameters
+        ----------
+        value : :class:`~espressomd.lb.VelocityBounceBack` or None
+            If value is :class:`~espressomd.lb.VelocityBounceBack`,
+            set the node to be a boundary node with the specified velocity.
+            If value is ``None``, the node will become a fluid node.
+        """
 
-        def __set__(self, value):
-            raise NotImplementedError
-
-    property last_applied_force:
-        def __get__(self):
-            return python_lbnode_get_last_applied_force(self.node)
-
-        def __set__(self, force):
-            python_lbnode_set_last_applied_force(
-                self.node, make_Vector3d(force))
+        if isinstance(value, VelocityBounceBack):
+            HydrodynamicInteraction._check_mach_limit(value.velocity)
+            self.velocity_at_boundary = value.velocity
+        elif value is None:
+            self.velocity_at_boundary = None
+        else:
+            raise ValueError(
+                "value must be an instance of VelocityBounceBack or None")
 
     def __eq__(self, obj1):
         index_1 = np.array(self.index)
@@ -778,100 +749,69 @@ class LBSlice:
         z_indices = np.atleast_1d(np.arange(shape_z)[key[2]])
         return x_indices, y_indices, z_indices
 
-    def get_values(self, x_indices, y_indices, z_indices, prop_name):
-        shape_res = np.shape(
-            getattr(LBFluidRoutines(np.array([0, 0, 0])), prop_name))
-        res = np.zeros(
-            (x_indices.size,
-             y_indices.size,
-             z_indices.size,
-             *shape_res))
-        for i, x in enumerate(x_indices):
-            for j, y in enumerate(y_indices):
-                for k, z in enumerate(z_indices):
-                    res[i, j, k] = getattr(LBFluidRoutines(
-                        np.array([x, y, z])), prop_name)
+    def __getattr__(self, attr):
+        node = LBFluidNode(index=np.array([0, 0, 0]))
+        if not hasattr(node, attr):
+            if attr in self.__dict__:
+                return self.__dict__[attr]
+            raise AttributeError(
+                f"Object '{self.__class__.__name__}' has no attribute '{attr}'")
+
+        dimensions = [self.x_indices.size,
+                      self.y_indices.size,
+                      self.z_indices.size]
+        if 0 in dimensions:
+            return np.empty(0, dtype=type(None))
+
+        res = getattr(node, attr)
+        shape_res = np.shape(res)
+        dtype = res.dtype if isinstance(res, np.ndarray) else type(res)
+        res = np.zeros((*dimensions, *shape_res), dtype=dtype)
+        for i, x in enumerate(self.x_indices):
+            for j, y in enumerate(self.y_indices):
+                for k, z in enumerate(self.z_indices):
+                    err = node.call_method("override_index", index=[x, y, z])
+                    assert err == 0
+                    res[i, j, k] = getattr(node, attr)
         if shape_res == (1,):
             res = np.squeeze(res, axis=-1)
         return utils.array_locked(res)
 
-    def set_values(self, x_indices, y_indices, z_indices, prop_name, value):
-        for i, x in enumerate(x_indices):
-            for j, y in enumerate(y_indices):
-                for k, z in enumerate(z_indices):
-                    setattr(LBFluidRoutines(
-                        np.array([x, y, z])), prop_name, value[i, j, k])
+    def __setattr__(self, attr, value):
+        node = LBFluidNode(index=np.array([0, 0, 0]))
+        if not hasattr(node, attr):
+            self.__dict__[attr] = value
+            return
 
-    def __iter__(self):
-        indices = [(x, y, z) for (x, y, z) in itertools.product(
-            self.x_indices, self.y_indices, self.z_indices)]
-        return (LBFluidRoutines(np.array(index)) for index in indices)
-
-
-def _add_lb_slice_properties():
-    """
-    Automatically add all of LBFluidRoutines's properties to LBSlice.
-
-    """
-
-    def set_attribute(lb_slice, value, attribute):
-        """
-        Setter function that sets attribute on every member of lb_slice.
-        If values contains only one element, all members are set to it.
-
-        """
-
-        indices = [lb_slice.x_indices, lb_slice.y_indices, lb_slice.z_indices]
-        N = [len(x) for x in indices]
-
-        if N[0] * N[1] * N[2] == 0:
+        dimensions = [self.x_indices.size,
+                      self.y_indices.size,
+                      self.z_indices.size]
+        if 0 in dimensions:
             raise AttributeError("Cannot set properties of an empty LBSlice")
 
         value = np.copy(value)
-        attribute_shape = lb_slice.get_values(
-            *np.zeros((3, 1), dtype=int), attribute).shape[3:]
-        target_shape = (*N, *attribute_shape)
+        shape_res = np.shape(getattr(node, attr))
+        target_shape = (*dimensions, *shape_res)
 
         # broadcast if only one element was provided
-        if value.shape == attribute_shape:
+        if value.shape == shape_res:
             value = np.ones(target_shape) * value
 
         if value.shape != target_shape:
             raise ValueError(
-                f"Input-dimensions of {attribute} array {value.shape} does not match slice dimensions {target_shape}.")
+                f"Input-dimensions of '{attr}' array {value.shape} does not match slice dimensions {target_shape}.")
 
-        lb_slice.set_values(*indices, attribute, value)
+        for i, x in enumerate(self.x_indices):
+            for j, y in enumerate(self.y_indices):
+                for k, z in enumerate(self.z_indices):
+                    err = node.call_method("override_index", index=[x, y, z])
+                    assert err == 0
+                    setattr(node, attr, value[i, j, k])
 
-    def get_attribute(lb_slice, attribute):
-        """
-        Getter function that copies attribute from every member of
-        lb_slice into an array (if possible).
-
-        """
-
-        indices = [lb_slice.x_indices, lb_slice.y_indices, lb_slice.z_indices]
-        N = [len(x) for x in indices]
-
-        if N[0] * N[1] * N[2] == 0:
-            return np.empty(0, dtype=type(None))
-
-        return lb_slice.get_values(*indices, attribute)
-
-    for attribute_name in dir(LBFluidRoutines):
-        if attribute_name in dir(LBSlice) or not isinstance(
-                getattr(LBFluidRoutines, attribute_name), type(LBFluidRoutines.density)):
-            continue
-
-        # synthesize a new property
-        new_property = property(
-            functools.partial(get_attribute, attribute=attribute_name),
-            functools.partial(set_attribute, attribute=attribute_name),
-            doc=getattr(LBFluidRoutines, attribute_name).__doc__ or f'{attribute_name} for a slice')
-        # attach the property to LBSlice
-        setattr(LBSlice, attribute_name, new_property)
-
-
-_add_lb_slice_properties()
+    def __iter__(self):
+        indices = [(x, y, z) for (x, y, z) in itertools.product(
+            self.x_indices, self.y_indices, self.z_indices)]
+        return (LBFluidNode(index=np.array(index)) for index in indices)
 
 
 def edge_detection(boundary_mask, periodicity):

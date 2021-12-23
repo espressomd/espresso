@@ -27,12 +27,11 @@ import espressomd.magnetostatic_extensions
 
 @utx.skipIfMissingFeatures(["DP3M"])
 class MagnetostaticsP3M(ut.TestCase):
-    system = espressomd.System(box_l=[10., 10., 10.])
+    system = espressomd.System(box_l=3 * [10.])
 
     def setUp(self):
-        self.system.box_l = [10., 10., 10.]
-        self.system.part.add(pos=[4.0, 2.0, 2.0], dip=(1.3, 2.1, -6.0))
-        self.system.part.add(pos=[6.0, 2.0, 2.0], dip=(7.3, 6.1, -4.0))
+        self.partcls = self.system.part.add(pos=[[4.0, 2.0, 2.0], [6.0, 2.0, 2.0]],
+                                            dip=[(1.3, 2.1, -6.0), (7.3, 6.1, -4.0)])
 
     def tearDown(self):
         self.system.part.clear()
@@ -48,7 +47,7 @@ class MagnetostaticsP3M(ut.TestCase):
         self.system.time_step = 0.01
         prefactor = 1.1
         box_vol = self.system.volume()
-        p1, p2 = self.system.part[:]
+        p1, p2 = self.partcls
         dip = np.copy(p1.dip + p2.dip)
         dp3m_params = {'accuracy': 1e-6,
                        'mesh': [49, 49, 49],
@@ -82,7 +81,7 @@ class MagnetostaticsP3M(ut.TestCase):
 
         # keep current values as reference to check for DP3M dipole correction
         ref_dp3m_energy_metallic = self.system.analysis.energy()['dipolar']
-        ref_dp3m_forces_metallic = np.copy(self.system.part[:].f)
+        ref_dp3m_forces_metallic = np.copy(self.partcls.f)
         ref_dp3m_torque_metallic = np.array([
             p1.convert_vector_space_to_body(p1.torque_lab),
             p2.convert_vector_space_to_body(p2.torque_lab)])
@@ -94,8 +93,8 @@ class MagnetostaticsP3M(ut.TestCase):
         # keep current values as reference to check for MDLC dipole correction
         self.system.integrator.run(0, recalc_forces=True)
         ref_mdlc_energy_metallic = self.system.analysis.energy()['dipolar']
-        ref_mdlc_forces_metallic = np.copy(self.system.part[:].f)
-        ref_mdlc_torque_metallic = np.copy(self.system.part[:].torque_lab)
+        ref_mdlc_forces_metallic = np.copy(self.partcls.f)
+        ref_mdlc_torque_metallic = np.copy(self.partcls.torque_lab)
         self.system.actors.clear()
 
         # check non-metallic case
@@ -111,7 +110,7 @@ class MagnetostaticsP3M(ut.TestCase):
                 prefactor=prefactor, epsilon=epsilon, tune=False, **dp3m_params)
             self.system.actors.add(dp3m)
             self.system.integrator.run(0, recalc_forces=True)
-            dp3m_forces = np.copy(self.system.part[:].f)
+            dp3m_forces = np.copy(self.partcls.f)
             dp3m_torque = np.array([
                 p1.convert_vector_space_to_body(p1.torque_lab),
                 p2.convert_vector_space_to_body(p2.torque_lab)])
@@ -127,8 +126,8 @@ class MagnetostaticsP3M(ut.TestCase):
             mdlc = espressomd.magnetostatic_extensions.DLC(**mdlc_params)
             self.system.actors.add(mdlc)
             self.system.integrator.run(0, recalc_forces=True)
-            mdlc_forces = np.copy(self.system.part[:].f)
-            mdlc_torque = np.copy(self.system.part[:].torque_lab)
+            mdlc_forces = np.copy(self.partcls.f)
+            mdlc_torque = np.copy(self.partcls.torque_lab)
             mdlc_energy = self.system.analysis.energy()['dipolar']
             np.testing.assert_allclose(mdlc_forces, ref_mdlc_forces, atol=tol)
             np.testing.assert_allclose(mdlc_torque, ref_mdlc_torque, atol=tol)

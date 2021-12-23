@@ -58,6 +58,8 @@
 #include "generated_kernels/InitialPDFsSetterSinglePrecision.h"
 #include "generated_kernels/StreamSweepDoublePrecision.h"
 #include "generated_kernels/StreamSweepSinglePrecision.h"
+#include "generated_kernels/UpdateVelocityFromPDFSweepDoublePrecision.h"
+#include "generated_kernels/UpdateVelocityFromPDFSweepSinglePrecision.h"
 #include "generated_kernels/macroscopic_values_accessors_double_precision.h"
 #include "generated_kernels/macroscopic_values_accessors_single_precision.h"
 #include "vtk_writers.hpp"
@@ -113,6 +115,8 @@ template <typename FT = double> struct KernelTrait {
 #endif
   using StreamSweep = pystencils::StreamSweepDoublePrecision;
   using InitialPDFsSetter = pystencils::InitialPDFsSetterDoublePrecision;
+  using UpdateVelocityFromPDFSweep =
+      pystencils::UpdateVelocityFromPDFSweepDoublePrecision;
 };
 template <> struct KernelTrait<float> {
 #ifdef __AVX2__
@@ -127,6 +131,8 @@ template <> struct KernelTrait<float> {
 #endif
   using StreamSweep = pystencils::StreamSweepSinglePrecision;
   using InitialPDFsSetter = pystencils::InitialPDFsSetterSinglePrecision;
+  using UpdateVelocityFromPDFSweep =
+      pystencils::UpdateVelocityFromPDFSweepSinglePrecision;
 };
 
 template <typename FT> struct BoundaryHandlingTrait {
@@ -151,6 +157,8 @@ class LBWalberlaImpl : public LBWalberlaBase {
   using StreamSweep = typename detail::KernelTrait<FloatType>::StreamSweep;
   using InitialPDFsSetter =
       typename detail::KernelTrait<FloatType>::InitialPDFsSetter;
+  using UpdateVelocityFromPDFSweep =
+      typename detail::KernelTrait<FloatType>::UpdateVelocityFromPDFSweep;
   using BoundaryModel = BoundaryHandling<
       Vector3<FloatType>,
       typename detail::BoundaryHandlingTrait<FloatType>::Dynamic_UBB>;
@@ -190,6 +198,8 @@ public:
   using VectorField = GhostLayerField<FloatType, 3u>;
   using FlagField = typename BoundaryModel::FlagField;
   using PdfField = GhostLayerField<FloatType, Stencil::Size>;
+
+  using Lattice_T = LatticeWalberla::Lattice_T;
 
 private:
   FloatType getDensity(const BlockAndCell &bc) const {
@@ -292,6 +302,7 @@ protected:
 
   // Stream sweep
   std::shared_ptr<StreamSweep> m_stream;
+  std::shared_ptr<UpdateVelocityFromPDFSweep> m_update_velocity_field_from_pdfs;
 
   // Collision sweep
   std::shared_ptr<CollisionModel> m_collision_model;
@@ -383,33 +394,73 @@ public:
         m_last_applied_force_field_id, m_pdf_field_id, m_velocity_field_id);
     set_collision_model();
 
+    m_update_velocity_field_from_pdfs =
+        std::make_shared<UpdateVelocityFromPDFSweep>(
+            m_last_applied_force_field_id, m_pdf_field_id, m_velocity_field_id);
+
     // Synchronize ghost layers
     (*m_full_communication)();
   }
 
-  void integrate() override {
-    auto const &blocks = lattice().get_blocks();
-    // Reset force fields
+  inline void integrate_stream(std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
-      (*m_reset_force)(&*b);
-    // LB collide
+      (*m_stream)(&*b);
+  };
+
+  inline void
+  update_velocity_field_from_pdf(std::shared_ptr<Lattice_T> const &blocks) {
+    for (auto b = blocks->begin(); b != blocks->end(); ++b)
+      (*m_update_velocity_field_from_pdfs)(&*b);
+  }
+  inline void integrate_collide(std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       boost::apply_visitor(run_collide_sweep, *m_collision_model,
                            boost::variant<IBlock *>(&*b));
     if (auto *cm = boost::get<ThermalizedCollisionModel>(&*m_collision_model)) {
       cm->time_step_++;
     }
-    (*m_pdf_streaming_communication)();
-    // Handle boundaries
+  }
+  inline void integrate_reset_force(std::shared_ptr<Lattice_T> const &blocks) {
+    for (auto b = blocks->begin(); b != blocks->end(); ++b)
+      (*m_reset_force)(&*b);
+  }
+
+  inline void integrate_boundaries(std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_boundary)(&*b);
+  }
+
+  void integrate_push_scheme() {
+    auto const &blocks = lattice().get_blocks();
+    // Reset force fields
+    integrate_reset_force(blocks);
+    // LB collide
+    integrate_collide(blocks);
+    (*m_pdf_streaming_communication)();
+    // Handle boundaries
+    integrate_boundaries(blocks);
     // LB stream
-    for (auto b = blocks->begin(); b != blocks->end(); ++b)
-      (*m_stream)(&*b);
+    integrate_stream(blocks);
     // Refresh ghost layers
     (*m_full_communication)();
+  }
 
-    // Handle VTK writers
+  void integrate_pull_scheme() {
+    auto const &blocks = lattice().get_blocks();
+    // Reset force fields
+    integrate_reset_force(blocks);
+    // Handle boundaries
+    integrate_boundaries(blocks);
+    // LB stream
+    integrate_stream(blocks);
+    // LB collide
+    integrate_collide(blocks);
+
+    update_velocity_field_from_pdf(blocks);
+    // Refresh ghost layers
+    (*m_full_communication)();
+  }
+  inline void integrate_vtk_writers() {
     for (auto it = m_vtk_auto.begin(); it != m_vtk_auto.end(); ++it) {
       auto &vtk_handle = it->second;
       if (vtk_handle->enabled) {
@@ -417,6 +468,14 @@ public:
         vtk_handle->execution_count++;
       }
     }
+  }
+
+public:
+  void integrate() override {
+    integrate_push_scheme();
+
+    // Handle VTK writers
+    integrate_vtk_writers();
   }
 
   void ghost_communication() override { (*m_full_communication)(); }

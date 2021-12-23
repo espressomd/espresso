@@ -20,6 +20,7 @@
 
 #ifdef LB_WALBERLA
 
+#include "FluidNodeWalberla.hpp"
 #include "FluidWalberla.hpp"
 #include "LatticeWalberla.hpp"
 #include "VTKHandle.hpp"
@@ -38,6 +39,7 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<LatticeWalberla>("walberla::LatticeWalberla");
   om->register_new<FluidWalberla>("walberla::FluidWalberla");
   om->register_new<VTKHandle>("walberla::VTKHandle");
+  om->register_new<FluidNodeWalberla>("walberla::FluidNodeWalberla");
 
   om->register_new<EKContainer>("walberla::EKContainer");
   om->register_new<EKSpecies>("walberla::EKSpecies");

@@ -23,6 +23,8 @@ set(WalberlaBridgeCodegen_SRC
     generated_kernels/InitialPDFsSetterDoublePrecision.cpp
     generated_kernels/Dynamic_UBB_single_precision.cpp
     generated_kernels/Dynamic_UBB_double_precision.cpp
+    generated_kernels/UpdateVelocityFromPDFSweepDoublePrecision.cpp
+    generated_kernels/UpdateVelocityFromPDFSweepSinglePrecision.cpp
     generated_kernels/DiffusiveFluxKernel.cpp
     generated_kernels/ContinuityKernel.cpp
     generated_kernels/NoFlux.cpp
@@ -31,6 +33,7 @@ set(WalberlaBridgeCodegen_SRC
     generated_kernels/DiffusiveFluxKernelWithElectrostatic.cpp
     generated_kernels/FixedFlux.cpp
     generated_kernels/Dirichlet.cpp)
+
 if(WALBERLA_USE_AVX)
   list(APPEND WalberlaBridgeCodegen_SRC
        generated_kernels/CollideSweepSinglePrecisionAVX.cpp

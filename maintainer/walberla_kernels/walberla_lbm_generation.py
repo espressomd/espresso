@@ -112,5 +112,5 @@ def generate_macroscopic_values_accessors(gen_context, lb_method, filename):
         content = content.replace('lm.force_->', 'force_field.')
         # patch for floating point accuracy
         if is_float:
-            content = re.sub(r'0\.5(?=[^\df])', '0.5f', content)
+            content = re.sub(r'0\.50+(?=[^\df])', '0.5f', content)
         f.write(content)

@@ -121,7 +121,7 @@ class InteractionsBondedTest(ut.TestCase):
 
     # Test Dihedral Angle
     def test_dihedral(self):
-        p0, p1, p2, p3 = self.system.part[:]
+        p0, p1, p2, p3 = self.system.part.all()
 
         dh_k = 1
         dh_phase = np.pi / 6
@@ -161,7 +161,7 @@ class InteractionsBondedTest(ut.TestCase):
     # Test Tabulated Dihedral Angle
     @utx.skipIfMissingFeatures(["TABULATED"])
     def test_tabulated_dihedral(self):
-        p0, p1, p2, p3 = self.system.part[:]
+        p0, p1, p2, p3 = self.system.part.all()
 
         N = 111
         d_phi = 2 * np.pi / N

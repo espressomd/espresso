@@ -20,55 +20,21 @@ include "myconfig.pxi"
 
 from libcpp cimport bool
 from libcpp.vector cimport vector
-from libcpp.string cimport string
 from libc cimport stdint
 
-from .utils cimport Vector3d
 from .utils cimport Vector3i
-from .utils cimport Vector6d
-from .utils cimport make_array_locked
-
-
-cdef class LBFluidRoutines:
-    cdef Vector3i node
-
-##############################################
-#
-# extern functions and structs
-#
-##############################################
 
 cdef extern from "grid_based_algorithms/lb_interface.hpp":
 
     double lb_lbfluid_get_tau() except +
     double lb_lbfluid_get_agrid() except +
-    void lb_lbfluid_save_checkpoint(string filename, bool binary) except +
-    void lb_lbfluid_load_checkpoint(string filename, bool binary) except +
-    Vector6d lb_lbfluid_get_pressure_tensor() except +
-    bool lb_lbnode_is_index_valid(const Vector3i & ind) except +
-    const Vector3d lb_lbnode_get_velocity(const Vector3i & ind) except +
-    const Vector3d lb_lbnode_get_velocity_at_boundary(const Vector3i & ind) except +
-    const Vector3d lb_lbnode_get_boundary_force(const Vector3i & ind) except +
-    const Vector3d lb_lbnode_get_last_applied_force(const Vector3i & ind) except +
-    void lb_lbnode_set_velocity(const Vector3i & ind, const Vector3d & u) except +
-    void lb_lbnode_set_velocity_at_boundary(const Vector3i & ind, const Vector3d & u) except +
-    void lb_lbnode_set_last_applied_force(const Vector3i & ind, const Vector3d & f) except +
-    double lb_lbnode_get_density(const Vector3i & ind) except +
-    void lb_lbnode_set_density(const Vector3i & ind, double density) except +
-    const Vector6d lb_lbnode_get_pressure_tensor(const Vector3i & ind) except +
-    const vector[double] lb_lbnode_get_pop(const Vector3i & ind) except +
-    void lb_lbnode_set_pop(const Vector3i & ind, const vector[double] & populations) except +
-    bool lb_lbnode_is_boundary(const Vector3i & ind) except +
     void lb_lbnode_remove_from_boundary(const Vector3i & ind) except +
-    void lb_lbfluid_clear_boundaries() except +
     void lb_lbfluid_update_boundary_from_shape(const vector[int] & raster,
                                                const vector[double] & vel) except +
     void lb_lbfluid_update_boundary_from_list(const vector[int] & nodes_flat,
                                               const vector[double] & vel_flat) except +
     double lb_lbfluid_get_kT() except +
     double lb_lbfluid_get_lattice_speed() except +
-    const Vector3d lb_lbfluid_get_interpolated_velocity(const Vector3d & p) except +
-    void lb_lbfluid_add_force_at_pos(const Vector3d & p, const Vector3d & f) except +
 
 cdef extern from "grid_based_algorithms/lb_particle_coupling.hpp":
     void lb_lbcoupling_set_rng_state(stdint.uint64_t) except +
@@ -77,79 +43,6 @@ cdef extern from "grid_based_algorithms/lb_particle_coupling.hpp":
     double lb_lbcoupling_get_gamma() except +
     bool lb_lbcoupling_is_seed_required() except +
     void mpi_bcast_lb_particle_coupling()
-
-
-##############################################
-#
-# Wrapper-functions to handle unit conversions
-#
-##############################################
-
-cdef inline python_lbfluid_get_gamma() except +:
-    return lb_lbcoupling_get_gamma()
-
-cdef inline python_lbfluid_get_pressure_tensor(double agrid, double tau) except +:
-    cdef Vector6d c_tensor = lb_lbfluid_get_pressure_tensor()
-    cdef double unit_conversion = 1.0 / (agrid * tau**2)
-    cdef Vector6d p_tensor = c_tensor * unit_conversion
-    return [[p_tensor[0], p_tensor[1], p_tensor[3]],
-            [p_tensor[1], p_tensor[2], p_tensor[4]],
-            [p_tensor[3], p_tensor[4], p_tensor[5]]]
-
-cdef inline python_lbnode_set_velocity(Vector3i node, Vector3d velocity) except +:
-    lb_lbnode_set_velocity(node, velocity / lb_lbfluid_get_lattice_speed())
-
-cdef inline python_lbnode_set_velocity_at_boundary(Vector3i node, Vector3d velocity) except +:
-    cdef double inv_lattice_speed = 1.0 / lb_lbfluid_get_lattice_speed()
-    cdef Vector3d c_velocity = velocity * inv_lattice_speed
-    lb_lbnode_set_velocity_at_boundary(node, c_velocity)
-
-cdef inline python_lbnode_get_velocity(Vector3i node) except +:
-    cdef Vector3d c_velocity = lb_lbnode_get_velocity(node)
-    return make_array_locked(c_velocity * lb_lbfluid_get_lattice_speed())
-
-cdef inline python_lbnode_get_interpolated_velocity(Vector3d pos) except +:
-    cdef Vector3d c_velocity = lb_lbfluid_get_interpolated_velocity(pos)
-    return make_array_locked(c_velocity * lb_lbfluid_get_lattice_speed())
-
-cdef inline python_lbnode_set_last_applied_force(Vector3i node, Vector3d force) except +:
-    cdef double unit_conversion = lb_lbfluid_get_tau()**2 / lb_lbfluid_get_agrid()
-    cdef Vector3d c_f = force * unit_conversion
-    lb_lbnode_set_last_applied_force(node, c_f)
-
-cdef inline python_lbnode_get_velocity_at_boundary(Vector3i node) except +:
-    cdef Vector3d c_velocity = lb_lbnode_get_velocity_at_boundary(node)
-    cdef double lattice_speed = lb_lbfluid_get_lattice_speed()
-    return make_array_locked(c_velocity * lattice_speed)
-
-cdef inline python_lbnode_get_boundary_force(Vector3i node) except +:
-    cdef Vector3d force = lb_lbnode_get_boundary_force(node)
-    cdef double unit_conversion = lb_lbfluid_get_agrid() / lb_lbfluid_get_tau()**2
-    return make_array_locked(force * unit_conversion)
-
-cdef inline python_lbnode_get_last_applied_force(Vector3i node) except +:
-    cdef Vector3d c_f = lb_lbnode_get_last_applied_force(node)
-    cdef double unit_conversion = lb_lbfluid_get_agrid() / lb_lbfluid_get_tau()**2
-    return make_array_locked(c_f * unit_conversion)
-
-cdef inline python_lbnode_set_density(Vector3i node, double density) except +:
-    cdef double agrid = lb_lbfluid_get_agrid()
-    lb_lbnode_set_density(node, density * agrid**3)
-
-cdef inline python_lbnode_get_density(Vector3i node) except +:
-    cdef double c_density = lb_lbnode_get_density(node)
-    cdef double agrid = lb_lbfluid_get_agrid()
-    return c_density / agrid**3
-
-cdef inline python_lbnode_get_pressure_tensor(Vector3i node) except +:
-    cdef Vector6d c_tensor = lb_lbnode_get_pressure_tensor(node)
-    cdef double tau = lb_lbfluid_get_tau()
-    cdef double agrid = lb_lbfluid_get_agrid()
-    cdef double unit_conversion = 1.0 / (tau**2 * agrid)
-    cdef Vector6d p_tensor = c_tensor * unit_conversion
-    return [[p_tensor[0], p_tensor[1], p_tensor[3]],
-            [p_tensor[1], p_tensor[2], p_tensor[4]],
-            [p_tensor[3], p_tensor[4], p_tensor[5]]]
 
 cdef inline python_lb_lbfluid_update_boundary_from_shape(int[:] raster_view, double[:] vel_view) except +:
     cdef vector[int] raster

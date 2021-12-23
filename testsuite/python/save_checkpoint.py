@@ -355,9 +355,17 @@ class TestCheckpointLB(ut.TestCase):
             dirname, filename = os.path.split(lbf_cpt_path)
             invalid_path = os.path.join(dirname, 'unknown_dir', filename)
             lbf.save_checkpoint(invalid_path, cpt_mode)
+        with self.assertRaisesRegex(RuntimeError, 'unit test error'):
+            lbf.save_checkpoint(checkpoint.checkpoint_dir + "/lb_err.cpt", -1)
+        with self.assertRaisesRegex(RuntimeError, 'could not write to'):
+            lbf.save_checkpoint(checkpoint.checkpoint_dir + "/lb_err.cpt", -2)
+        with self.assertRaisesRegex(ValueError, 'Unknown mode -3'):
+            lbf.save_checkpoint(checkpoint.checkpoint_dir + "/lb_err.cpt", -3)
+        with self.assertRaisesRegex(ValueError, 'Unknown mode 2'):
+            lbf.save_checkpoint(checkpoint.checkpoint_dir + "/lb_err.cpt", 2)
+
+        # deactivate LB actor
         system.actors.remove(lbf)
-        with self.assertRaisesRegex(RuntimeError, 'one needs to have already initialized the LB fluid'):
-            lbf.load_checkpoint(lbf_cpt_path, cpt_mode)
 
         # read the valid LB checkpoint file
         with open(lbf_cpt_path, "rb") as f:

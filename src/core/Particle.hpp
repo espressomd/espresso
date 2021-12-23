@@ -355,7 +355,7 @@ struct ParticleMomentum {
 struct ParticleLocal {
   /** is particle a ghost particle. */
   bool ghost = false;
-  /** position in the last time step before last Verlet list update. */
+  /** position from the last Verlet list update. */
   Utils::Vector3d p_old = {0, 0, 0};
   /** index of the simulation box image where the particle really sits. */
   Utils::Vector3i i = {0, 0, 0};

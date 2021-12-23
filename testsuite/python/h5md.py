@@ -57,20 +57,20 @@ class H5mdTests(ut.TestCase):
     system.time_step = 0.01
 
     for i in range(N_PART):
-        system.part.add(id=i, pos=np.array(3 * [i], dtype=float),
-                        v=np.array([1.0, 2.0, 3.0]), type=23)
+        p = system.part.add(id=i, pos=np.array(3 * [i], dtype=float),
+                            v=np.array([1.0, 2.0, 3.0]), type=23)
         if espressomd.has_features(['MASS']):
-            system.part[i].mass = 2.3
+            p.mass = 2.3
         if espressomd.has_features(['EXTERNAL_FORCES']):
-            system.part[i].ext_force = [0.1, 0.2, 0.3]
+            p.ext_force = [0.1, 0.2, 0.3]
         if espressomd.has_features(['ELECTROSTATICS']):
-            system.part[i].q = i
+            p.q = i
 
     vb = espressomd.interactions.Virtual()
     system.bonded_inter.add(vb)
 
     for i in range(N_PART - 1):
-        system.part[i].add_bond((vb, i + 1))
+        system.part.by_id(i).add_bond((vb, i + 1))
 
     system.integrator.run(steps=0)
     system.time = 12.3

@@ -612,7 +612,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
             theta = 2. * i / float(N) * np.pi
             for r in radii:
                 pos = r * np.array([np.cos(theta), 0, np.sin(theta)])
-                system.part[0].pos = pos + self.box_l / 2.0
+                p.pos = pos + self.box_l / 2.0
                 system.integrator.run(recalc_forces=True, steps=0)
                 energy = system.analysis.energy()
                 self.assertAlmostEqual(energy["total"], np.abs(10. - r))

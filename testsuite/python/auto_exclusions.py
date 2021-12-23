@@ -38,21 +38,21 @@ class AutoExclusions(ut.TestCase):
             s.part.add(id=i, pos=[0, 0, 0])
 
         for i in range(9):
-            s.part[i].add_bond((bond, i + 1))
+            s.part.by_id(i).add_bond((bond, i + 1))
 
         s.auto_exclusions(1)
 
         for p in range(1, 9):
-            excl = s.part[p].exclusions
+            excl = s.part.by_id(p).exclusions
             self.assertEqual(len(excl), 2)
             self.assertIn(p - 1, excl)
             self.assertIn(p + 1, excl)
 
-        excl = s.part[0].exclusions
+        excl = s.part.by_id(0).exclusions
         self.assertEqual(len(excl), 1)
         self.assertIn(1, excl)
 
-        excl = s.part[9].exclusions
+        excl = s.part.by_id(9).exclusions
         self.assertEqual(len(excl), 1)
         self.assertIn(8, excl)
 
@@ -65,12 +65,12 @@ class AutoExclusions(ut.TestCase):
             s.part.add(id=i, pos=[0, 0, 0])
 
         for i in range(10):
-            s.part[i].add_bond((bond, (i + 1) % 10))
+            s.part.by_id(i).add_bond((bond, (i + 1) % 10))
 
         s.auto_exclusions(2)
 
         for p in range(10):
-            excl = s.part[p].exclusions
+            excl = s.part.by_id(p).exclusions
             self.assertEqual(len(excl), 4)
             for i in range(1, 3):
                 self.assertIn((p - i) % 10, excl)

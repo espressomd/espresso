@@ -30,7 +30,6 @@ class LBFluidPressureTensor : public Observable {
 public:
   std::vector<std::size_t> shape() const override { return {3, 3}; }
   std::vector<double> operator()() const override {
-
     auto const unit_conversion =
         1. / (lb_lbfluid_get_agrid() * pow(lb_lbfluid_get_tau(), 2));
     auto const lower_triangle =

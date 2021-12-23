@@ -151,13 +151,13 @@ class ThermoTest(ut.TestCase):
         for i in range(n):
             for k in range(2):
                 ind = i + k * n
-                self.system.part.add(
+                partcl = self.system.part.add(
                     rotation=(1, 1, 1), pos=(0.0, 0.0, 0.0), id=ind)
-                self.system.part[ind].v = [1.0, 1.0, 1.0]
+                partcl.v = [1.0, 1.0, 1.0]
                 if espressomd.has_features("ROTATION"):
-                    self.system.part[ind].omega_body = [1.0, 1.0, 1.0]
-                self.system.part[ind].mass = self.mass
-                self.system.part[ind].rinertia = self.J
+                    partcl.omega_body = [1.0, 1.0, 1.0]
+                partcl.mass = self.mass
+                partcl.rinertia = self.J
 
     def fluctuation_dissipation_param_setup(self, n):
         """
@@ -214,7 +214,7 @@ class ThermoTest(ut.TestCase):
                 part_pos = np.random.random(3) * box
                 part_v = [0.0, 0.0, 0.0]
                 part_omega_body = [0.0, 0.0, 0.0]
-                self.system.part.add(
+                partcl = self.system.part.add(
                     rotation=(1, 1, 1),
                     id=ind,
                     mass=self.mass,
@@ -222,7 +222,7 @@ class ThermoTest(ut.TestCase):
                     pos=part_pos,
                     v=part_v)
                 if espressomd.has_features("ROTATION"):
-                    self.system.part[ind].omega_body = part_omega_body
+                    partcl.omega_body = part_omega_body
 
     def check_dissipation(self, n):
         """
@@ -247,13 +247,13 @@ class ThermoTest(ut.TestCase):
                         # Hence, only isotropic gamma_tran_p_validate could be
                         # tested here.
                         self.assertAlmostEqual(
-                            self.system.part[ind].v[j],
+                            self.system.part.by_id(ind).v[j],
                             math.exp(- self.gamma_tran_p_validate[k, j]
                                      * self.system.time / self.mass),
                             delta=tol)
                         if espressomd.has_features("ROTATION"):
                             self.assertAlmostEqual(
-                                self.system.part[ind].omega_body[j],
+                                self.system.part.by_id(ind).omega_body[j],
                                 math.exp(- self.gamma_rot_p_validate[k, j]
                                          * self.system.time / self.J[j]),
                                 delta=tol)
@@ -288,7 +288,7 @@ class ThermoTest(ut.TestCase):
         for p in range(n):
             for k in range(2):
                 ind = p + k * n
-                pos0[ind, :] = self.system.part[ind].pos
+                pos0[ind, :] = self.system.part.by_id(ind).pos
         dt0 = self.mass / self.gamma_tran_p_validate
 
         loops = 10
@@ -302,11 +302,12 @@ class ThermoTest(ut.TestCase):
             for p in range(n):
                 for k in range(2):
                     ind = p + k * n
-                    v = self.system.part[ind].v
+                    partcl = self.system.part.by_id(ind)
+                    v = partcl.v
                     if espressomd.has_features("ROTATION"):
-                        o = self.system.part[ind].omega_body
+                        o = partcl.omega_body
                         o2[k, :] = o2[k, :] + np.power(o[:], 2)
-                    pos = self.system.part[ind].pos
+                    pos = partcl.pos
                     v2[k, :] = v2[k, :] + np.power(v[:], 2)
                     dr2[k, :] = np.power((pos[:] - pos0[ind, :]), 2)
                     dt = (int_steps * (i + 1) + therm_steps) * \
@@ -380,9 +381,10 @@ class ThermoTest(ut.TestCase):
             self.gamma_rot_p_validate[k, :] = self.gamma_rot_p[k, :]
             for i in range(n):
                 ind = i + k * n
-                self.system.part[ind].gamma = self.gamma_tran_p[k, :]
+                partcl = self.system.part.by_id(ind)
+                partcl.gamma = self.gamma_tran_p[k, :]
                 if espressomd.has_features("ROTATION"):
-                    self.system.part[ind].gamma_rot = self.gamma_rot_p[k, :]
+                    partcl.gamma_rot = self.gamma_rot_p[k, :]
 
     def set_diffusivity_tran(self):
         """

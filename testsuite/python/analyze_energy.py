@@ -53,7 +53,7 @@ class AnalyzeEnergy(ut.TestCase):
         self.system.part.clear()
 
     def test_kinetic(self):
-        p0, p1 = self.system.part[:]
+        p0, p1 = self.system.part.all()
         p0.pos = [1, 2, 2]
         p1.pos = [5, 2, 2]
         # single moving particle
@@ -73,7 +73,7 @@ class AnalyzeEnergy(ut.TestCase):
         self.assertAlmostEqual(energy["non_bonded"], 0., delta=1e-7)
 
     def test_non_bonded(self):
-        p0, p1 = self.system.part[:]
+        p0, p1 = self.system.part.all()
         p0.pos = [1, 2, 2]
         p1.pos = [2, 2, 2]
         energy = self.system.analysis.energy()
@@ -95,7 +95,7 @@ class AnalyzeEnergy(ut.TestCase):
                                + energy["non_bonded", 1, 1], energy["total"], delta=1e-7)
 
     def test_bonded(self):
-        p0, p1 = self.system.part[:]
+        p0, p1 = self.system.part.all()
         p0.pos = [1, 2, 2]
         p1.pos = [3, 2, 2]
         # single bond
@@ -122,7 +122,7 @@ class AnalyzeEnergy(ut.TestCase):
         self.assertAlmostEqual(energy["non_bonded"], 0., delta=1e-7)
 
     def test_all(self):
-        p0, p1 = self.system.part[:]
+        p0, p1 = self.system.part.all()
         p0.pos = [1, 2, 2]
         p1.pos = [2, 2, 2]
         p0.v = [3, 4, 5]
@@ -153,7 +153,7 @@ class AnalyzeEnergy(ut.TestCase):
 
     @utx.skipIfMissingFeatures(["ELECTROSTATICS", "P3M"])
     def test_electrostatics(self):
-        p0, p1 = self.system.part[:]
+        p0, p1 = self.system.part.all()
         p0.pos = [1, 2, 2]
         p1.pos = [3, 2, 2]
         p0.q = 1

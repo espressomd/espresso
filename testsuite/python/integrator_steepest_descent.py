@@ -55,12 +55,12 @@ class IntegratorSteepestDescent(ut.TestCase):
         self.system.integrator.set_vv()
 
     def test_relaxation_integrator(self):
-        self.system.part.add(
+        partcls = self.system.part.add(
             pos=np.random.random((self.n_part, 3)) * self.system.box_l)
         if self.test_rotation:
-            self.system.part[:].dip = np.random.random((self.n_part, 3))
-            self.system.part[:].dipm = 1
-            self.system.part[:].rotation = (1, 1, 1)
+            partcls.dip = np.random.random((self.n_part, 3))
+            partcls.dipm = 1
+            partcls.rotation = 3 * [True]
 
         self.assertNotAlmostEqual(
             self.system.analysis.energy()["total"], 0, places=10)
@@ -74,9 +74,9 @@ class IntegratorSteepestDescent(ut.TestCase):
         # Check
         self.assertAlmostEqual(
             self.system.analysis.energy()["total"], 0, places=10)
-        np.testing.assert_allclose(np.copy(self.system.part[:].f), 0.)
+        np.testing.assert_allclose(np.copy(partcls.f), 0.)
         if self.test_rotation:
-            np.testing.assert_allclose(np.copy(self.system.part[:].dip),
+            np.testing.assert_allclose(np.copy(partcls.dip),
                                        self.n_part * [(-1, 0, 0)], atol=1E-9)
 
     def test_integration(self):
@@ -86,47 +86,49 @@ class IntegratorSteepestDescent(ut.TestCase):
         sd_params = {"f_max": 1e-6, "gamma": 0.1, "max_displacement": max_disp}
         self.system.integrator.set_steepest_descent(**sd_params)
         # no displacement for 0 steps
-        positions = np.copy(self.system.part[:].pos)
+        partcls = self.system.part.all()
+        positions = np.copy(partcls.pos)
         steps = self.system.integrator.run(0)
-        np.testing.assert_allclose(np.copy(self.system.part[:].pos), positions)
-        np.testing.assert_allclose(np.copy(self.system.part[:].v), 0.)
-        np.testing.assert_allclose(self.system.part[:].f[:, 0:2], 0.)
-        self.assertAlmostEqual(np.sum(self.system.part[:].f[:, 2]), 0.)
-        self.assertLess(self.system.part[:].f[0, 2], -1.)
+        np.testing.assert_allclose(np.copy(partcls.pos), positions)
+        np.testing.assert_allclose(np.copy(partcls.v), 0.)
+        np.testing.assert_allclose(partcls.f[:, 0:2], 0.)
+        self.assertAlmostEqual(np.sum(partcls.f[:, 2]), 0.)
+        self.assertLess(partcls.f[0, 2], -1.)
         self.assertEqual(steps, 0)
         # displacement = max_disp for 1 step
         positions[:, 2] += [-max_disp, max_disp]
         steps = self.system.integrator.run(1)
-        np.testing.assert_allclose(np.copy(self.system.part[:].pos), positions)
-        np.testing.assert_allclose(np.copy(self.system.part[:].v), 0.)
-        np.testing.assert_allclose(np.copy(self.system.part[:].f), 0.)
+        np.testing.assert_allclose(np.copy(partcls.pos), positions)
+        np.testing.assert_allclose(np.copy(partcls.v), 0.)
+        np.testing.assert_allclose(np.copy(partcls.f), 0.)
         self.assertEqual(steps, 1)
         # no displacement after convergence
         steps = self.system.integrator.run(1)
-        np.testing.assert_allclose(np.copy(self.system.part[:].pos), positions)
-        np.testing.assert_allclose(np.copy(self.system.part[:].v), 0.)
-        np.testing.assert_allclose(np.copy(self.system.part[:].f), 0.)
+        np.testing.assert_allclose(np.copy(partcls.pos), positions)
+        np.testing.assert_allclose(np.copy(partcls.v), 0.)
+        np.testing.assert_allclose(np.copy(partcls.f), 0.)
         self.assertEqual(steps, 0)
         # never converges, even when the system is in an energy minimum,
         # because f_max = 0.
         sd_params["f_max"] = 0.0
         self.system.integrator.set_steepest_descent(**sd_params)
         steps = self.system.integrator.run(10)
-        np.testing.assert_allclose(np.copy(self.system.part[:].pos), positions)
-        np.testing.assert_allclose(np.copy(self.system.part[:].v), 0.)
-        np.testing.assert_allclose(np.copy(self.system.part[:].f), 0.)
+        np.testing.assert_allclose(np.copy(partcls.pos), positions)
+        np.testing.assert_allclose(np.copy(partcls.v), 0.)
+        np.testing.assert_allclose(np.copy(partcls.f), 0.)
         self.assertEqual(steps, 10)
 
     def test_rescaling(self):
         self.system.part.add(pos=[5., 5., 4.9], type=0)
         self.system.part.add(pos=[5., 5., 5.1], type=0)
+        partcls = self.system.part.all()
 
         self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
             epsilon=self.lj_eps, sigma=self.lj_sig,
             cutoff=self.lj_cut, shift="auto")
 
         self.system.integrator.run(0)
-        f_old = np.copy(self.system.part[:].f)
+        f_old = np.copy(partcls.f)
 
         # No-op, because gamma = 0.
         sd_params = {"f_max": 0.0, "gamma": 0.0, "max_displacement": 0.001}
@@ -134,7 +136,7 @@ class IntegratorSteepestDescent(ut.TestCase):
         self.system.integrator.set_steepest_descent(**sd_params)
         self.system.integrator.run(1)
 
-        np.testing.assert_allclose(f_old, np.copy(self.system.part[:].f))
+        np.testing.assert_allclose(f_old, np.copy(partcls.f))
 
     def test_integrator_exceptions(self):
         # invalid parameters should throw exceptions
@@ -154,12 +156,12 @@ class IntegratorSteepestDescent(ut.TestCase):
         sd_params = {"f_max": 0, "gamma": 1, "max_displacement": 0.01}
         positions_start = np.array([[0, 0, 0], [1., 0, 0]])
         positions_ref = np.array([[-0.01, 0, 0], [1.01, 0, 0]])
-        system.part.add(pos=positions_start)
+        partcls = system.part.add(pos=positions_start)
         system.integrator.set_steepest_descent(**sd_params)
 
         # get the positions after one step with the chosen parameters
         system.integrator.run(1)
-        positions_ref = np.copy(system.part[:].pos)
+        positions_ref = np.copy(partcls.pos)
 
         # resetting the SD integrator with incorrect values doesn't leave the
         # system in an undefined state (the old parameters aren't overwritten)
@@ -173,9 +175,9 @@ class IntegratorSteepestDescent(ut.TestCase):
             system.integrator.set_steepest_descent(
                 f_max=0, gamma=1, max_displacement=-1)
         # the core state is unchanged
-        system.part[:].pos = positions_start
+        partcls.pos = positions_start
         system.integrator.run(1)
-        np.testing.assert_allclose(np.copy(system.part[:].pos), positions_ref)
+        np.testing.assert_allclose(np.copy(partcls.pos), positions_ref)
 
         # setting another integrator with incorrect values doesn't leave the
         # system in an undefined state (the old integrator is still active)
@@ -193,15 +195,15 @@ class IntegratorSteepestDescent(ut.TestCase):
                 params["max_displacement"],
                 sd_params["max_displacement"])
             # the core state is unchanged
-            system.part[:].pos = positions_start
+            partcls.pos = positions_start
             system.integrator.run(1)
             np.testing.assert_allclose(
-                np.copy(system.part[:].pos), positions_ref)
+                np.copy(partcls.pos), positions_ref)
 
         # setting the SD integrator with incorrect values doesn't leave the
         # system in an undefined state (the old integrator is still active)
         system.integrator.set_vv()
-        system.part[:].pos = positions_start
+        partcls.pos = positions_start
         with self.assertRaises(RuntimeError):
             system.integrator.set_steepest_descent(
                 f_max=0, gamma=1, max_displacement=-1)
@@ -211,7 +213,7 @@ class IntegratorSteepestDescent(ut.TestCase):
         # the core state is unchanged
         system.integrator.run(1)
         np.testing.assert_allclose(
-            np.copy(system.part[:].pos),
+            np.copy(partcls.pos),
             positions_start + np.array([[-1.2e-3, 0, 0], [1.2e-3, 0, 0]]))
 
 

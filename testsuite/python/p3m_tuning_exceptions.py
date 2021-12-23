@@ -242,7 +242,7 @@ class P3M_tuning_test(ut.TestCase):
         with self.assertRaisesRegex(ValueError, "maxPWerror must be > 0"):
             self.system.actors.add(solver_elc)
 
-        self.system.part[0].q = -2
+        self.system.part.by_id(0).q = -2
 
         self.system.actors.clear()
         solver_elc = espressomd.electrostatics.ELC(
@@ -258,7 +258,7 @@ class P3M_tuning_test(ut.TestCase):
         with self.assertRaisesRegex(RuntimeError, "ELC does not work for non-neutral systems and non-metallic dielectric contrast"):
             self.system.actors.add(solver_elc)
 
-        self.system.part[0].q = -1
+        self.system.part.by_id(0).q = -1
 
         self.system.actors.clear()
         solver_elc = espressomd.electrostatics.ELC(

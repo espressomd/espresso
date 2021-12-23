@@ -111,8 +111,9 @@ system.part.add(pos=np.random.random((N_IONS, 3)) * system.box_l,
                 q=np.resize((1, -1), N_IONS),
                 type=np.resize((1, 2), N_IONS))
 
-logging.info(f"particle types: {system.part[:].type}\n")
-logging.info(f"total charge: {np.sum(system.part[:].q)}")
+all_partcls = system.part.all()
+logging.info(f"particle types: {all_partcls.type}\n")
+logging.info(f"total charge: {np.sum(all_partcls.q)}")
 
 # warm-up integration
 ###############################################################
@@ -138,8 +139,8 @@ system.actors.add(p3m)
 # apply external force (external electric field)
 #############################################################
 n_part = len(system.part)
-system.part[:].ext_force = np.dstack(
-    (system.part[:].q * np.ones(n_part) * E_FIELD, np.zeros(n_part), np.zeros(n_part)))[0]
+all_partcls.ext_force = np.dstack(
+    (all_partcls.q * np.ones(n_part) * E_FIELD, np.zeros(n_part), np.zeros(n_part)))[0]
 
 # equilibration
 #############################################################
@@ -169,7 +170,7 @@ for i in range(N_SAMPLES):
     if i % 100 == 0:
         logging.info(f"\rsampling: {i:4d}")
     system.integrator.run(N_INT_STEPS)
-    pos[i] = system.part[:N_MONOMERS].pos
+    pos[i] = system.part.by_ids(range(N_MONOMERS)).pos
 
 logging.info("\nsampling finished!\n")
 

@@ -1,4 +1,4 @@
-// kernel generated with pystencils v0.4.3, lbmpy v0.4.3,
+// kernel generated with pystencils v0.4.4, lbmpy v0.4.4,
 // lbmpy_walberla/pystencils_walberla from commit
 // 88f85eb7a979f81d68e76009811aeed53ec3014e
 
@@ -280,21 +280,24 @@ static FUNC_PREFIX void streamsweepdoubleprecision_streamsweepdoubleprecision(
         const double rho = streamed_0 + streamed_16 + streamed_17 + streamed_2 +
                            streamed_3 + streamed_6 + streamed_9 + vel0Term +
                            vel1Term + vel2Term;
-        const double u_0 =
-            (-streamed_13 - streamed_17 - streamed_3 - streamed_7 - streamed_9 +
-             vel0Term) /
-                rho +
-            0.5 * _data_force_20_30_10[_stride_force_0 * ctr_0] / rho;
-        const double u_1 =
-            (-streamed_10 - streamed_12 - streamed_16 - streamed_2 +
-             streamed_8 - streamed_9 + vel1Term) /
-                rho +
-            0.5 * _data_force_20_31_10[_stride_force_0 * ctr_0] / rho;
+        const double u_0 = (-streamed_13 - streamed_17 - streamed_3 -
+                            streamed_7 - streamed_9 + vel0Term) /
+                               rho +
+                           0.50000000000000000 *
+                               _data_force_20_30_10[_stride_force_0 * ctr_0] /
+                               rho;
+        const double u_1 = (-streamed_10 - streamed_12 - streamed_16 -
+                            streamed_2 + streamed_8 - streamed_9 + vel1Term) /
+                               rho +
+                           0.50000000000000000 *
+                               _data_force_20_31_10[_stride_force_0 * ctr_0] /
+                               rho;
         const double u_2 =
             (streamed_11 + streamed_14 - streamed_15 - streamed_16 -
              streamed_17 - streamed_18 - streamed_6 + vel2Term) /
                 rho +
-            0.5 * _data_force_20_32_10[_stride_force_0 * ctr_0] / rho;
+            0.50000000000000000 *
+                _data_force_20_32_10[_stride_force_0 * ctr_0] / rho;
         _data_velocity_20_30_10[_stride_velocity_0 * ctr_0] = u_0;
         _data_velocity_20_31_10[_stride_velocity_0 * ctr_0] = u_1;
         _data_velocity_20_32_10[_stride_velocity_0 * ctr_0] = u_2;
@@ -324,9 +327,9 @@ static FUNC_PREFIX void streamsweepdoubleprecision_streamsweepdoubleprecision(
 } // namespace internal_streamsweepdoubleprecision_streamsweepdoubleprecision
 
 void StreamSweepDoublePrecision::run(IBlock *block) {
-  auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
   auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
+  auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
   field::GhostLayerField<double, 19> *pdfs_tmp;
   {
     // Getting temporary field pdfs_tmp
@@ -403,9 +406,9 @@ void StreamSweepDoublePrecision::runOnCellInterval(
   if (ci.empty())
     return;
 
-  auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
   auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
+  auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
   field::GhostLayerField<double, 19> *pdfs_tmp;
   {
     // Getting temporary field pdfs_tmp

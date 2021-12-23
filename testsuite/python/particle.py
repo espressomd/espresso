@@ -43,7 +43,7 @@ class ParticleProperties(ut.TestCase):
 
     def setUp(self):
         if not self.system.part.exists(self.pid):
-            self.system.part.add(id=self.pid, pos=(0, 0, 0))
+            self.partcl = self.system.part.add(id=self.pid, pos=(0, 0, 0))
 
     def tearDown(self):
         self.system.part.clear()
@@ -62,9 +62,9 @@ class ParticleProperties(ut.TestCase):
             # This code is run at the execution of the generated function.
             # It will use the state of the variables in the outer function,
             # which was there, when the outer function was called
-            setattr(self.system.part[self.pid], propName, value)
+            setattr(self.partcl, propName, value)
             np.testing.assert_allclose(
-                np.array(getattr(self.system.part[self.pid], propName)), value,
+                np.array(getattr(self.partcl, propName)), value,
                 err_msg=propName + ": value set and value gotten back differ.",
                 atol=self.tol)
 
@@ -84,8 +84,8 @@ class ParticleProperties(ut.TestCase):
             # This code is run at the execution of the generated function.
             # It will use the state of the variables in the outer function,
             # which was there, when the outer function was called
-            setattr(self.system.part[self.pid], propName, value)
-            self.assertEqual(getattr(self.system.part[self.pid], propName),
+            setattr(self.partcl, propName, value)
+            self.assertEqual(getattr(self.partcl, propName),
                              value, propName + ": value set and value gotten back differ.")
 
         return func
@@ -129,9 +129,9 @@ class ParticleProperties(ut.TestCase):
             sample_vector_normalized = sample_vector / \
                 np.linalg.norm(sample_vector)
 
-            setattr(self.system.part[self.pid], "director", sample_vector)
+            setattr(self.partcl, "director", sample_vector)
             np.testing.assert_allclose(
-                np.array(getattr(self.system.part[self.pid], "director")),
+                np.array(getattr(self.partcl, "director")),
                 sample_vector_normalized
             )
 
@@ -141,9 +141,9 @@ class ParticleProperties(ut.TestCase):
                     "gamma", np.array([2., 9., 0.23]))
 
                 def test_gamma_single(self):
-                    self.system.part[self.pid].gamma = 17.4
+                    self.partcl.gamma = 17.4
                     np.testing.assert_array_equal(
-                        np.copy(self.system.part[self.pid].gamma),
+                        np.copy(self.partcl.gamma),
                         np.array([17.4, 17.4, 17.4]),
                         "gamma: value set and value gotten back differ.")
             else:
@@ -154,9 +154,9 @@ class ParticleProperties(ut.TestCase):
                     "gamma_rot", np.array([5., 10., 0.33]))
 
                 def test_gamma_rot_single(self):
-                    self.system.part[self.pid].gamma_rot = 15.4
+                    self.partcl.gamma_rot = 15.4
                     np.testing.assert_array_equal(
-                        np.copy(self.system.part[self.pid].gamma_rot),
+                        np.copy(self.partcl.gamma_rot),
                         np.array([15.4, 15.4, 15.4]),
                         "gamma_rot: value set and value gotten back differ.")
             else:
@@ -185,12 +185,12 @@ class ParticleProperties(ut.TestCase):
     if espressomd.has_features(["VIRTUAL_SITES_RELATIVE"]):
         def test_yy_vs_relative(self):
             self.system.part.add(id=0, pos=(0, 0, 0))
-            self.system.part.add(id=1, pos=(0, 0, 0))
-            self.system.part[1].vs_relative = (0, 5.0, (0.5, -0.5, -0.5, -0.5))
-            self.system.part[1].vs_quat = [1, 2, 3, 4]
+            p1 = self.system.part.add(id=1, pos=(0, 0, 0))
+            p1.vs_relative = (0, 5.0, (0.5, -0.5, -0.5, -0.5))
+            p1.vs_quat = [1, 2, 3, 4]
             np.testing.assert_array_equal(
-                self.system.part[1].vs_quat, [1, 2, 3, 4])
-            res = self.system.part[1].vs_relative
+                p1.vs_quat, [1, 2, 3, 4])
+            res = p1.vs_relative
             self.assertEqual(res[0], 0, "vs_relative: " + res.__str__())
             self.assertEqual(res[1], 5.0, "vs_relative: " + res.__str__())
             np.testing.assert_allclose(
@@ -198,13 +198,13 @@ class ParticleProperties(ut.TestCase):
                 err_msg="vs_relative: " + res.__str__(), atol=self.tol)
             # check exceptions
             with self.assertRaisesRegex(ValueError, "needs input in the form"):
-                self.system.part[1].vs_relative = (0, 5.0)
+                p1.vs_relative = (0, 5.0)
             with self.assertRaisesRegex(ValueError, "particle id has to be given as an int"):
-                self.system.part[1].vs_relative = ('0', 5.0, (1, 0, 0, 0))
+                p1.vs_relative = ('0', 5.0, (1, 0, 0, 0))
             with self.assertRaisesRegex(ValueError, "distance has to be given as a float"):
-                self.system.part[1].vs_relative = (0, '5', (1, 0, 0, 0))
+                p1.vs_relative = (0, '5', (1, 0, 0, 0))
             with self.assertRaisesRegex(ValueError, "quaternion has to be given as a tuple of 4 floats"):
-                self.system.part[1].vs_relative = (0, 5.0, (1, 0, 0))
+                p1.vs_relative = (0, 5.0, (1, 0, 0))
 
     @utx.skipIfMissingFeatures("DIPOLES")
     def test_contradicting_properties_dip_dipm(self):
@@ -260,20 +260,20 @@ class ParticleProperties(ut.TestCase):
 
         pos = 1.5 * s.box_l
 
-        s.part.add(pos=pos)
+        p = s.part.add(pos=pos)
 
-        np.testing.assert_equal(np.copy(s.part[0].image_box), [1, 1, 1])
+        np.testing.assert_equal(np.copy(p.image_box), [1, 1, 1])
 
     def test_accessing_invalid_id_raises(self):
         self.system.part.clear()
-        handle_to_non_existing_particle = self.system.part[42]
+        handle_to_non_existing_particle = self.system.part.by_id(42)
         with self.assertRaises(RuntimeError):
             handle_to_non_existing_particle.id
 
     def test_parallel_property_setters(self):
         s = self.system
         s.part.clear()
-        s.part.add(pos=s.box_l * np.random.random((100, 3)))
+        partcls = s.part.add(pos=s.box_l * np.random.random((100, 3)))
 
         # Copy individual properties of particle 0
         print(
@@ -282,21 +282,21 @@ class ParticleProperties(ut.TestCase):
             # Uncomment to identify guilty property
             # print( p)
 
-            assert hasattr(s.part[0], p), \
+            assert hasattr(s.part.by_id(0), p), \
                 "Inconsistency between ParticleHandle and particle_data.particle_attributes"
             try:
-                setattr(s.part[:], p, getattr(s.part[0], p))
+                setattr(partcls, p, getattr(s.part.by_id(0), p))
             except AttributeError:
                 print("Skipping read-only", p)
             # Cause a different mpi callback to uncover deadlock immediately
-            _ = getattr(s.part[:], p)
+            _ = getattr(partcls, p)
 
     def test_remove_particle(self):
         """Tests that if a particle is removed,
         it no longer exists and bonds to the removed particle are
         also removed."""
 
-        p1 = self.system.part[self.pid]
+        p1 = self.system.part.by_id(self.pid)
         p2 = self.system.part.add(pos=p1.pos, bonds=[(self.f1, p1.id)])
 
         p1.remove()
@@ -306,7 +306,7 @@ class ParticleProperties(ut.TestCase):
     def test_bonds(self):
         """Tests bond addition and removal."""
 
-        p1 = self.system.part[self.pid]
+        p1 = self.system.part.by_id(self.pid)
         p2 = self.system.part.add(pos=p1.pos)
         inactive_bond = espressomd.interactions.FeneBond(k=1, d_r_max=2)
         p2.add_bond([self.f1, p1])
@@ -329,17 +329,17 @@ class ParticleProperties(ut.TestCase):
             p2.delete_bond((self.f1, 'p1'))
 
     def test_zz_remove_all(self):
-        for pid in self.system.part[:].id:
-            self.system.part[pid].remove()
+        for p in self.system.part.all():
+            p.remove()
         self.system.part.add(
             pos=np.random.random((100, 3)) * self.system.box_l,
             id=np.arange(100, dtype=int))
-        ids = self.system.part[:].id
+        ids = self.system.part.all().id
         np.random.shuffle(ids)
         for pid in ids:
-            self.system.part[pid].remove()
+            self.system.part.by_id(pid).remove()
         with self.assertRaises(Exception):
-            self.system.part[17].remove()
+            self.system.part.by_id(17).remove()
 
     def test_coord_fold_corner_cases(self):
         system = self.system
@@ -381,11 +381,12 @@ class ParticleProperties(ut.TestCase):
 
         # Empty slice
         system.part.clear()
-        self.assertEqual(len(system.part[:]), 0)
-        self.assertEqual(len(system.part[:].pos), 0)
-        self.assertEqual(len(system.part[:].id), 0)
+        all_partcls_empty = system.part.all()
+        self.assertEqual(len(all_partcls_empty), 0)
+        self.assertEqual(len(all_partcls_empty), 0)
+        self.assertEqual(len(all_partcls_empty), 0)
         with self.assertRaises(AttributeError):
-            system.part[:].pos = ((1, 2, 3,),)
+            all_partcls_empty.pos = ((1, 2, 3,),)
 
         # Slice containing particles
         ids = [1, 4, 6, 3, 8, 9]
@@ -393,34 +394,30 @@ class ParticleProperties(ut.TestCase):
         system.part.add(id=ids, pos=pos)
 
         # All particles
-        self.assertEqual(len(system.part[:]), len(ids))
-        np.testing.assert_equal(system.part[:].id, sorted(ids))
-        np.testing.assert_equal(system.part[:].pos, pos[np.argsort(ids)])
+        all_partcls = system.part.all()
+        self.assertEqual(len(all_partcls), len(ids))
+        np.testing.assert_equal(all_partcls.id, sorted(ids))
+        np.testing.assert_equal(all_partcls.pos, pos[np.argsort(ids)])
 
         # Access via slicing
-        np.testing.assert_equal(system.part[4:9].id,
+        np.testing.assert_equal(system.part.by_ids(range(4, 9)).id,
                                 [i for i in sorted(ids) if i >= 4 and i < 9])
-        np.testing.assert_equal(system.part[9:4:-1].id,
+        np.testing.assert_equal(system.part.by_ids(range(9, 4, -1)).id,
                                 [i for i in sorted(ids, key=lambda i:-i) if i > 4 and i <= 9])
-        # Check that negative start and end on slices are not accepted
-        with self.assertRaises(IndexError):
-            system.part[-1:]
-        with self.assertRaises(IndexError):
-            system.part[:-1]
 
         # Setting particle properties on a slice
-        system.part[:5].pos = 0, 0, 0
-        np.testing.assert_equal(system.part[:].pos,
+        system.part.by_ids(range(5)).pos = 0, 0, 0
+        np.testing.assert_equal(system.part.all().pos,
                                 [pos[i] if ids[i] >= 5 else [0, 0, 0] for i in np.argsort(ids)])
 
         # Slice access via explicit list of ids
-        np.testing.assert_equal(system.part[ids[1:4]].id, ids[1:4])
+        np.testing.assert_equal(system.part.by_ids(ids[1:4]).id, ids[1:4])
         # Check that ids passed in an explicit list must exist
         with self.assertRaises(IndexError):
-            system.part[99, 3]
+            system.part.by_ids([99, 3])
         # Check that wrong types are not accepted
         with self.assertRaises(TypeError):
-            system.part[[ids[0], 1.2]]
+            system.part.by_ids([[ids[0], 1.2]])
 
     def test_to_dict(self):
         self.system.part.clear()

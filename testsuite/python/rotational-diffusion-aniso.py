@@ -56,10 +56,10 @@ class RotDiffAniso(ut.TestCase):
 
     def add_particles(self):
         positions = np.random.random((self.n_part, 3)) * self.system.box_l[0]
-        self.system.part.add(pos=positions, rotation=self.n_part * [(1, 1, 1)],
-                             rinertia=self.n_part * [self.J])
+        self.partcls = self.system.part.add(pos=positions, rotation=self.n_part * [(1, 1, 1)],
+                                            rinertia=self.n_part * [self.J])
         if espressomd.has_features("ROTATION"):
-            self.system.part[:].omega_body = [0.0, 0.0, 0.0]
+            self.partcls.omega_body = [0.0, 0.0, 0.0]
 
     def set_anisotropic_param(self):
         """
@@ -142,7 +142,7 @@ class RotDiffAniso(ut.TestCase):
         # The body angular velocity is rotated now, but there is only the
         # thermal velocity, hence, this does not impact the test and its
         # physical context.
-        self.system.part[:].quat = [1.0, 0.0, 0.0, 0.0]
+        self.partcls.quat = [1.0, 0.0, 0.0, 0.0]
         # Average direction cosines
         # Diagonal ones:
         dcosjj_validate = np.zeros((3))

@@ -25,7 +25,6 @@
 #include "config.hpp"
 
 #include "ParticleRange.hpp"
-#include "cells.hpp"
 #include "integrate.hpp"
 #include "rotation.hpp"
 #include "thermostat.hpp"
@@ -43,9 +42,6 @@ inline void brownian_dynamics_propagator(BrownianThermostat const &brownian,
       p.m.v = bd_drag_vel(brownian.gamma, p);
       p.r.p += bd_random_walk(brownian, p, time_step, kT);
       p.m.v += bd_random_walk_vel(brownian, p);
-      /* Verlet criterion check */
-      if ((p.r.p - p.l.p_old).norm2() > Utils::sqr(0.5 * skin))
-        cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
     }
 #ifdef ROTATION
     if (!p.p.rotation)

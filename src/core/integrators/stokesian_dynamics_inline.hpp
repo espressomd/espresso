@@ -22,20 +22,14 @@
 #include "config.hpp"
 
 #ifdef STOKESIAN_DYNAMICS
-#include "CellStructure.hpp"
 #include "ParticleRange.hpp"
-#include "cells.hpp"
 #include "communication.hpp"
 #include "integrate.hpp"
 #include "rotation.hpp"
 #include "stokesian_dynamics/sd_interface.hpp"
 
-#include <utils/Vector.hpp>
-#include <utils/math/sqr.hpp>
-
 inline void stokesian_dynamics_propagate_vel_pos(const ParticleRange &particles,
                                                  double time_step) {
-  auto const skin2 = Utils::sqr(0.5 * skin);
 
   // Compute new (translational and rotational) velocities
   propagate_vel_pos_sd(particles, comm_cart, time_step);
@@ -46,15 +40,11 @@ inline void stokesian_dynamics_propagate_vel_pos(const ParticleRange &particles,
     p.r.p += p.m.v * time_step;
 
     // Perform rotation
-    double norm = p.m.omega.norm();
+    auto const norm = p.m.omega.norm();
     if (norm != 0) {
-      Utils::Vector3d omega_unit = (1 / norm) * p.m.omega;
+      auto const omega_unit = (1. / norm) * p.m.omega;
       local_rotate_particle(p, omega_unit, norm * time_step);
     }
-
-    // Verlet criterion check
-    if ((p.r.p - p.l.p_old).norm2() > skin2)
-      cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
   }
 }
 

@@ -28,7 +28,7 @@ import numpy as np
 import unittest as ut
 import random
 import os
-import argparse
+import dataclasses
 
 # Number of particles
 npart = 10
@@ -38,6 +38,15 @@ nbonds = 100
 filename = "testdata.mpiio"
 exts = ["head", "pref", "id", "type", "pos", "vel", "boff", "bond"]
 filenames = [filename + "." + ext for ext in exts]
+
+
+@dataclasses.dataclass
+class MockParticle:
+    id: int
+    type: int
+    pos: np.ndarray
+    v: np.ndarray
+    bonds: list
 
 
 def clean_files():
@@ -54,16 +63,15 @@ def randint_different_from(a, b, n):
     return r
 
 
-def random_particles():
+def get_random_mock_particles():
     """Returns a list of random particle descriptions."""
     parts = []
     for i in range(npart):
-        p = argparse.Namespace()
-        p.id = i
-        p.type = random.randint(0, 100)
-        p.pos = np.random.rand(3)
-        p.v = np.random.rand(3)
-        p.bonds = []
+        p = MockParticle(id=i,
+                         type=random.randint(0, 100),
+                         pos=np.random.rand(3),
+                         v=np.random.rand(3),
+                         bonds=[])
         # Up to 20 bonds; otherwise this test will take ages
         for _ in range(random.randint(0, 20)):
             btype = random.randint(0, nbonds - 1)
@@ -90,16 +98,16 @@ class MPIIOTest(ut.TestCase):
     for i in range(nbonds):
         system.bonded_inter[i] = espressomd.interactions.AngleHarmonic(
             bend=i, phi0=i)
-    test_particles = random_particles()
+    test_mock_particles = get_random_mock_particles()
 
     def setUp(self):
-        """Sets up a system from test_particles and prepares environment
+        """Sets up a system from test_mock_particles and prepares environment
         for the tests."""
         clean_files()  # Prior call might not have completed successfully
-        for p in self.test_particles:
+        for p in self.test_mock_particles:
             self.system.part.add(id=p.id, type=p.type, pos=p.pos, v=p.v)
             for b in p.bonds:
-                self.system.part[p.id].add_bond(b)
+                self.system.part.by_id(p.id).add_bond(b)
 
     def tearDown(self):
         clean_files()
@@ -112,7 +120,7 @@ class MPIIOTest(ut.TestCase):
     def check_sample_system(self):
         """Checks the particles in the ESPResSo system "self.s" against the
         true values in "self.test_particles"."""
-        for p, q in zip(self.system.part, self.test_particles):
+        for p, q in zip(self.system.part, self.test_mock_particles):
             self.assertEqual(p.id, q.id)
             self.assertEqual(p.type, q.type)
             np.testing.assert_array_equal(np.copy(p.pos), q.pos)

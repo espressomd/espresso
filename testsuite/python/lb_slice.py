@@ -54,7 +54,7 @@ class LBSliceTest(ut.TestCase):
         output_vel = lb_fluid[:-1, :-1, :-1].velocity
         np.testing.assert_array_almost_equal(input_vel, np.copy(output_vel))
 
-        with self.assertRaisesRegex(ValueError, r"Input-dimensions of velocity array \(9, 9, 9, 2\) does not match slice dimensions \(9, 9, 9, 3\)"):
+        with self.assertRaisesRegex(ValueError, r"Input-dimensions of 'velocity' array \(9, 9, 9, 2\) does not match slice dimensions \(9, 9, 9, 3\)"):
             lb_fluid[:-1, :-1, :-1].velocity = input_vel[:, :, :, :2]
 
         # velocity broadcast
@@ -79,19 +79,19 @@ class LBSliceTest(ut.TestCase):
         output_pop = lb_fluid[:, :, :].population
         np.testing.assert_array_almost_equal(input_pop, np.copy(output_pop))
 
-        with self.assertRaisesRegex(ValueError, r"Input-dimensions of population array \(10, 10, 10, 5\) does not match slice dimensions \(10, 10, 10, 19\)"):
+        with self.assertRaisesRegex(ValueError, r"Input-dimensions of 'population' array \(10, 10, 10, 5\) does not match slice dimensions \(10, 10, 10, 19\)"):
             lb_fluid[:, :, :].population = input_pop[:, :, :, :5]
 
         # TODO Walberla: uncomment this block when pressure tensor is available
-#        # pressure tensor on test slice [3, 6, 2:5]
-#        output_pressure_shape = lb_fluid[3, 6, 2:5].pressure_tensor.shape
-#        should_pressure_shape = (1, 1, 3, 3, 3)
-#        np.testing.assert_array_almost_equal(
-#            output_pressure_shape, should_pressure_shape)
+        # pressure tensor on test slice [3, 6, 2:5]
+        output_pressure_shape = lb_fluid[3, 6, 2:5].pressure_tensor.shape
+        should_pressure_shape = (1, 1, 3, 3, 3)
+        np.testing.assert_array_almost_equal(
+            output_pressure_shape, should_pressure_shape)
 
-#        with self.assertRaises(NotImplementedError):
-#            lb_fluid[3, 6, 2:5].pressure_tensor = np.zeros(
-#                should_pressure_shape)
+        with self.assertRaisesRegex(RuntimeError, "Property 'pressure_tensor' is read-only"):
+            lb_fluid[3, 6, 2:5].pressure_tensor = np.zeros(
+                should_pressure_shape)
 
         # index on test slice [1, 1:5, 6:]
         output_index_shape = lb_fluid[1, 1:5, 6:].index.shape
@@ -99,7 +99,7 @@ class LBSliceTest(ut.TestCase):
         np.testing.assert_array_almost_equal(
             output_index_shape, should_index_shape)
 
-        with self.assertRaisesRegex(AttributeError, "attribute 'index' of 'espressomd.lb.LBFluidRoutines' objects is not writable"):
+        with self.assertRaisesRegex(RuntimeError, "Property 'index' is read-only"):
             lb_fluid[1, 1:5, 6:].index = np.zeros(output_index_shape)
 
         # is_boundary on test slice [1:, 1:, 1:]
@@ -108,7 +108,7 @@ class LBSliceTest(ut.TestCase):
         np.testing.assert_array_almost_equal(
             output_boundary_shape, should_boundary_shape)
 
-        with self.assertRaises(NotImplementedError):
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'is_boundary' is read-only"):
             lb_fluid[1:, 1:, 1:].is_boundary = np.zeros(should_boundary_shape)
 
         # last_applied_force on test slice [:-1, :-1, -1]
@@ -122,6 +122,20 @@ class LBSliceTest(ut.TestCase):
         np.testing.assert_array_almost_equal(
             np.copy(lb_fluid[:, :, 0].last_applied_force),
             10 * [10 * [[[1, 2, 3]]]])
+
+        # access out of bounds
+        i = lb_fluid.shape[2] + 10
+        lb_slice = lb_fluid[1, 2, i:i + 10]
+        self.assertEqual(lb_slice.density.shape, (0,))
+        self.assertIsInstance(lb_slice.density.dtype, object)
+        self.assertEqual(list(lb_slice.x_indices), [1])
+        self.assertEqual(list(lb_slice.y_indices), [2])
+        self.assertEqual(list(lb_slice.z_indices), [])
+        np.testing.assert_array_equal(
+            np.copy(lb_fluid[1, 2, 8:i].index),
+            np.copy(lb_fluid[1, 2, 8:].index))
+        with self.assertRaisesRegex(AttributeError, "Cannot set properties of an empty LBSlice"):
+            lb_slice.density = [1., 2., 3.]
 
     def test_iterator(self):
         lbslice_handle = self.lb_fluid[:, :, :]

@@ -48,4 +48,4 @@ def AddSoft(system, comX, comY, comZ, k1, k2):
                 ind1=id1, ind2=id2, ind3=id3, elasticLaw="Skalak", maxDist=5,
                 k1=k1, k2=k2)
             system.bonded_inter.add(tri)
-            system.part[id1].add_bond((tri, id2, id3))
+            system.part.by_id(id1).add_bond((tri, id2, id3))
