@@ -502,7 +502,7 @@ class openGLLive():
             self.system_info['Actors'].append('None')
 
         # COLLECT ALL TYPES FROM PARTICLES AND CONSTRAINTS
-        all_types = set(self.system.part[:].type)
+        all_types = set(self.system.part.all().type)
         constraint_types = []
         for c in self.system.constraints[:]:
             constraint_types.append(c.get_parameter('particle_type'))
@@ -685,10 +685,12 @@ class openGLLive():
             # DRAG PARTICLES
             if self.specs['drag_enabled']:
                 if self.trigger_set_particle_drag and self.drag_id != -1:
-                    self.system.part[self.drag_id].ext_force = self.dragExtForce
+                    self.system.part.by_id(
+                        self.drag_id).ext_force = self.dragExtForce
                     self.trigger_set_particle_drag = False
                 elif self.trigger_reset_particle_drag and self.drag_id != -1:
-                    self.system.part[self.drag_id].ext_force = self.extForceOld
+                    self.system.part.by_id(
+                        self.drag_id).ext_force = self.extForceOld
                     self.trigger_reset_particle_drag = False
                     self.drag_id = -1
 
@@ -713,31 +715,31 @@ class openGLLive():
     # GET THE PARTICLE DATA
     def _update_particles(self):
 
-        self.particles['pos'] = self.system.part[:].pos_folded
-        self.particles['type'] = self.system.part[:].type
+        self.particles['pos'] = self.system.part.all().pos_folded
+        self.particles['type'] = self.system.part.all().type
 
         if self.has_particle_data['velocity']:
-            self.particles['velocity'] = self.system.part[:].v
+            self.particles['velocity'] = self.system.part.all().v
 
         if self.has_particle_data['force']:
-            self.particles['force'] = self.system.part[:].f
+            self.particles['force'] = self.system.part.all().f
 
         if self.has_particle_data['ext_force']:
-            self.particles['ext_force'] = self.system.part[:].ext_force
+            self.particles['ext_force'] = self.system.part.all().ext_force
 
         if self.has_particle_data['charge']:
-            self.particles['charge'] = self.system.part[:].q
+            self.particles['charge'] = self.system.part.all().q
 
         if self.has_particle_data['director']:
-            self.particles['director'] = self.system.part[:].director
+            self.particles['director'] = self.system.part.all().director
 
         if self.has_particle_data['node']:
-            self.particles['node'] = self.system.part[:].node
+            self.particles['node'] = self.system.part.all().node
 
         if self.info_id != -1:
             for attr in self.particle_attributes:
                 self.highlighted_particle[attr] = getattr(
-                    self.system.part[self.info_id], attr)
+                    self.system.part.by_id(self.info_id), attr)
 
     def _update_lb_velocity_plane(self):
         if self.lb_is_cpu:
