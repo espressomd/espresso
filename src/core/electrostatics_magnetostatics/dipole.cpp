@@ -23,8 +23,6 @@
 
 #include "electrostatics_magnetostatics/dipole.hpp"
 
-#include "actor/DipolarBarnesHut.hpp"
-#include "actor/DipolarDirectSum.hpp"
 #include "electrostatics_magnetostatics/common.hpp"
 #include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
@@ -80,7 +78,7 @@ bool sanity_checks() {
       mdlc_sanity_checks();
       // fall through
     case DIPOLAR_DS:
-      mdds_sanity_checks(mdds_n_replica);
+      mdds_sanity_checks();
       break;
     default:
       break;
@@ -289,25 +287,15 @@ void set_Dprefactor(double prefactor) {
   if (prefactor < 0.0) {
     throw std::invalid_argument("Dipolar prefactor has to be >= 0");
   }
-
   dipole.prefactor = prefactor;
-
   mpi_bcast_coulomb_params();
 }
 
-void set_method_local(DipolarInteraction method) {
-#ifdef DIPOLAR_DIRECT_SUM
-  if ((dipole.method == DIPOLAR_DS_GPU) && (method != DIPOLAR_DS_GPU)) {
-    deactivate_dipolar_direct_sum_gpu();
-  }
-#endif
-#ifdef DIPOLAR_BARNES_HUT
-  if ((dipole.method == DIPOLAR_BH_GPU) && (method != DIPOLAR_BH_GPU)) {
-    deactivate_dipolar_barnes_hut();
-  }
-#endif // DIPOLAR_ BARNES_HUT
-  dipole.method = method;
-}
+double get_Dprefactor() { return dipole.prefactor; }
+
+void set_method_local(DipolarInteraction method) { dipole.method = method; }
+
+void disable_method_local() { dipole.method = DIPOLAR_NONE; }
 
 } // namespace Dipole
 #endif // DIPOLES

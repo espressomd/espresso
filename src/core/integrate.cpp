@@ -35,6 +35,7 @@
 
 #include "ParticleRange.hpp"
 #include "accumulators.hpp"
+#include "bonded_interactions/rigid_bond.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
 #include "communication.hpp"

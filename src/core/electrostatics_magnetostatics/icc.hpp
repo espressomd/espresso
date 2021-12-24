@@ -48,10 +48,11 @@
 
 #if defined(ELECTROSTATICS)
 
-#include <ParticleRange.hpp>
+#include "CellStructure.hpp"
+#include "ParticleRange.hpp"
+
 #include <utils/Vector.hpp>
 
-#include <algorithm>
 #include <vector>
 
 /** ICC data structure */
@@ -104,7 +105,8 @@ extern icc_struct icc_cfg;
 /** The main iterative scheme, where the surface element charges are calculated
  *  self-consistently.
  */
-void icc_iteration(const ParticleRange &particles,
+void icc_iteration(CellStructure &cell_structure,
+                   const ParticleRange &particles,
                    const ParticleRange &ghost_particles);
 
 /** Perform ICC initialization.

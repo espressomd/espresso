@@ -21,6 +21,7 @@
 
 #include "Particle.hpp"
 #include "energy_inline.hpp"
+#include "grid.hpp"
 #include "particle_data.hpp"
 
 #include <stdexcept>

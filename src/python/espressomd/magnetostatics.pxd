@@ -19,43 +19,43 @@ from libcpp cimport bool
 
 include "myconfig.pxi"
 
+cdef extern from "SystemInterface.hpp":
+    cdef cppclass SystemInterface:
+        pass
+cdef extern from "EspressoSystemInterface.hpp":
+    cdef cppclass EspressoSystemInterface(SystemInterface):
+        @staticmethod
+        EspressoSystemInterface & Instance()
+
 IF DIPOLES == 1:
     cdef extern from "electrostatics_magnetostatics/common.hpp":
         void mpi_bcast_coulomb_params()
 
-    cdef extern from "electrostatics_magnetostatics/dipole.hpp":
-        ctypedef enum DipolarInteraction:
-            DIPOLAR_NONE = 0,
-            DIPOLAR_P3M,
-            DIPOLAR_MDLC_P3M,
-            DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA,
-            DIPOLAR_DS,
-            DIPOLAR_MDLC_DS,
-            DIPOLAR_SCAFACOS
-
-        ctypedef struct Dipole_parameters:
-            double prefactor
-            DipolarInteraction method
-
-        cdef extern Dipole_parameters dipole
-
     cdef extern from "electrostatics_magnetostatics/dipole.hpp" namespace "Dipole":
         void set_Dprefactor(double prefactor) except +
+        double get_Dprefactor()
+        void disable_method_local()
 
     cdef extern from "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp":
         void dawaanr_set_params() except +
         void mdds_set_params(int n_replica) except +
-        int mdds_n_replica
+        int mdds_get_n_replica()
 
     IF(CUDA == 1) and (ROTATION == 1):
         cdef extern from "actor/DipolarDirectSum.hpp":
-            void activate_dipolar_direct_sum_gpu()
-            void deactivate_dipolar_direct_sum_gpu()
+            cdef cppclass DipolarDirectSum:
+                DipolarDirectSum(SystemInterface & s) except +
+                void set_params()
+                void activate()
+                void deactivate()
 
     IF(DIPOLAR_BARNES_HUT == 1):
         cdef extern from "actor/DipolarBarnesHut.hpp":
-            void activate_dipolar_barnes_hut(float epssq, float itolsq)
-            void deactivate_dipolar_barnes_hut()
+            cdef cppclass DipolarBarnesHut:
+                DipolarBarnesHut(SystemInterface & s) except +
+                void set_params(float epssq, float itolsq)
+                void activate()
+                void deactivate()
 
 IF DP3M == 1:
     from p3m_common cimport P3MParameters

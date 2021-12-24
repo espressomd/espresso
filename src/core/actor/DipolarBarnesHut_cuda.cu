@@ -29,14 +29,14 @@
 
 #include "cuda_init.hpp"
 #include "cuda_utils.cuh"
-#include "errorhandling.hpp"
 
 #include <thrust/device_ptr.h>
 #include <thrust/reduce.h>
 
 #include <cuda.h>
 
-#define IND (blockDim.x * blockIdx.x + threadIdx.x)
+#include <algorithm>
+#include <cstdio>
 
 // Method performance/accuracy parameters
 __constant__ float epssqd[1], itolsqd[1];
@@ -73,8 +73,7 @@ __device__ void dds_sumReduction_BH(float *input, float *sum) {
 /******************************************************************************/
 
 __global__ void initializationKernel() {
-  int ind;
-  ind = IND;
+  auto const ind = blockDim.x * blockIdx.x + threadIdx.x;
   if (ind == 0) {
     *bhpara->err = 0;
     *bhpara->max_lps = 0;
@@ -88,13 +87,11 @@ __global__ void initializationKernel() {
 /******************************************************************************/
 
 __global__ __launch_bounds__(THREADS1, FACTOR1) void boundingBoxKernel() {
-  int i, j, k, l, t, inc, n_blocks;
-  float val;
   // min/max positions per the thread:
   float minp[3], maxp[3];
   // min/max positions per block:
   __shared__ float smin[3 * THREADS1], smax[3 * THREADS1];
-  for (l = 0; l < 3; l++) {
+  for (int l = 0; l < 3; l++) {
     minp[l] = maxp[l] = bhpara->r[l];
   }
 
@@ -104,24 +101,24 @@ __global__ __launch_bounds__(THREADS1, FACTOR1) void boundingBoxKernel() {
   // inc = [number of blocks: gridDim.x] * [THREADS1 per block within given
   // kernel]. Hence, this approach could handle an infinite number of bodies
   // (particles)
-  i = static_cast<int>(threadIdx.x);
-  inc = THREADS1 * gridDim.x;
+  auto i = static_cast<int>(threadIdx.x);
+  int const inc = THREADS1 * static_cast<int>(gridDim.x);
   // j is an absolute index of the particle.
   // It is shifted over a count of the passed block threads behind: blockIdx.x *
   // THREADS1. NOTE: this loop is extrema search among all particles of the
   // given thread in the present block. However, one is not among all threads of
   // this block.
-  for (j = i + static_cast<int>(blockIdx.x) * THREADS1; j < bhpara->nbodies;
-       j += inc)
-    for (l = 0; l < 3; l++) {
-      val = bhpara->r[3 * j + l];
+  for (auto j = i + static_cast<int>(blockIdx.x) * THREADS1;
+       j < bhpara->nbodies; j += inc)
+    for (int l = 0; l < 3; l++) {
+      auto const val = bhpara->r[3 * j + l];
       minp[l] = min(minp[l], val);
       maxp[l] = max(maxp[l], val);
     }
 
   // For a start point of a reduction in the given block shared memory
   // of the i-th thread extrema:
-  for (l = 0; l < 3; l++) {
+  for (int l = 0; l < 3; l++) {
     smin[3 * i + l] = minp[l];
     smax[3 * i + l] = maxp[l];
   }
@@ -133,11 +130,11 @@ __global__ __launch_bounds__(THREADS1, FACTOR1) void boundingBoxKernel() {
   // the thread with a lower index will operate longer and
   // final result (here: the shared memory extrema)
   // is flowing down towards zero thread.
-  for (t = THREADS1 / 2; t > 0; t /= 2) {
+  for (int t = THREADS1 / 2; t > 0; t /= 2) {
     __syncthreads();
     if (i < t) {
-      k = i + t;
-      for (l = 0; l < 3; l++) {
+      auto k = i + t;
+      for (int l = 0; l < 3; l++) {
         smin[3 * i + l] = minp[l] = min(minp[l], smin[3 * k + l]);
         smax[3 * i + l] = maxp[l] = max(maxp[l], smax[3 * k + l]);
         // very last minp/maxp assignment will be made by zero thread (i == 0)
@@ -150,8 +147,8 @@ __global__ __launch_bounds__(THREADS1, FACTOR1) void boundingBoxKernel() {
   // and other per-block operations.
   if (i == 0) {
     // per k-th block
-    k = static_cast<int>(blockIdx.x);
-    for (l = 0; l < 3; l++) {
+    auto k = static_cast<int>(blockIdx.x);
+    for (int l = 0; l < 3; l++) {
       // global memory storage of the per-block extrema
       bhpara->minp[3 * k + l] = minp[l];
       bhpara->maxp[3 * k + l] = maxp[l];
@@ -159,19 +156,19 @@ __global__ __launch_bounds__(THREADS1, FACTOR1) void boundingBoxKernel() {
       // contain de facto already reduced (see above) shared extrema smin/smax
     }
 
-    n_blocks = static_cast<int>(gridDim.x) - 1;
+    auto const n_blocks = static_cast<int>(gridDim.x) - 1;
     // The block increment is performing by its zero thread.
     if (n_blocks == atomicInc((unsigned int *)&blkcntd, n_blocks)) {
       // I'm the (randomly) last block, so combine all other blocks' results
       // over the index j:
-      for (j = 0; j <= n_blocks; j++)
-        for (l = 0; l < 3; l++) {
-          minp[l] = min(minp[l], bhpara->minp[3 * j + l]);
-          maxp[l] = max(maxp[l], bhpara->maxp[3 * j + l]);
+      for (int im = 0; im <= n_blocks; im++)
+        for (int l = 0; l < 3; l++) {
+          minp[l] = min(minp[l], bhpara->minp[3 * im + l]);
+          maxp[l] = max(maxp[l], bhpara->maxp[3 * im + l]);
         }
 
       // Compute 'radius':
-      val = max(maxp[0] - minp[0], maxp[1] - minp[1]);
+      auto const val = max(maxp[0] - minp[0], maxp[1] - minp[1]);
       radiusd = max(val, maxp[2] - minp[2]) * 0.5f;
 
       // NOTE: now the extrema are global.
@@ -190,7 +187,7 @@ __global__ __launch_bounds__(THREADS1, FACTOR1) void boundingBoxKernel() {
       bhpara->start[k] = 0;
       // Position of the root node should be in the center of just defined BH
       // box:
-      for (l = 0; l < 3; l++)
+      for (int l = 0; l < 3; l++)
         bhpara->r[3 * k + l] = (minp[l] + maxp[l]) * 0.5f;
       // Init further tree building octo- meaning their absence at the
       // beginning:
@@ -205,32 +202,31 @@ __global__ __launch_bounds__(THREADS1, FACTOR1) void boundingBoxKernel() {
 /******************************************************************************/
 
 __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
-  int i, j, k, l, depth, localmaxdepth, skip, inc, lps;
+  int j, depth;
   float r;
   float pos[3];
   float p[3];
-  int ch, n, cell, locked, patch;
-  float radius;
+  int n;
   float root[3];
 
   // Radius is determined in boundingBoxKernel
-  radius = radiusd;
+  auto const radius = radiusd;
   // The root node has been created at the end of the boundingBoxKernel.
   // Cache the root data:
-  for (l = 0; l < 3; l++)
+  for (int l = 0; l < 3; l++)
     root[l] = bhpara->r[3 * bhpara->nnodes + l];
   // Maximum tree depth within the given thread.
-  localmaxdepth = 1;
+  int localmaxdepth = 1;
   // Skip the branch following and start from the root.
-  skip = 1;
+  int skip = 1;
   // Number of loops for the threads sync algorithm
-  lps = 0;
+  int lps = 0;
   // Increment to move among the bodies assigned to the given thread.
   // Hence, one should step over all other threads in GPU with
   // a quantity of blockDim.x * gridDim.x.
-  inc = static_cast<int>(blockDim.x * gridDim.x);
+  auto const inc = static_cast<int>(blockDim.x * gridDim.x);
   // Just a regular 1D GPU index
-  i = static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x);
+  auto i = static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x);
 
   // Iterate over all bodies assigned to thread.
   while (i < bhpara->nbodies) {
@@ -238,7 +234,7 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
       // New body, so start traversing at root. Skip it further.
       skip = 0;
       // Particle position corresponding to the given thread and block:
-      for (l = 0; l < 3; l++)
+      for (int l = 0; l < 3; l++)
         p[l] = bhpara->r[3 * i + l];
       // Let's start a moving via the tree from the root node 8 * nbodiesd:
       n = bhpara->nnodes;
@@ -247,14 +243,14 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
       // Determine which child to follow.
       // j=0..7 determines the octant in a binary representations
       j = 0;
-      for (l = 0; l < 3; l++)
+      for (int l = 0; l < 3; l++)
         if (root[l] < p[l])
           j += static_cast<int>(pow(2, l));
     }
 
     // Follow path to leaf cell. Should not happen at the first iteration of
     // this loop.
-    ch = bhpara->child[n * 8 + j];
+    int ch = bhpara->child[n * 8 + j];
 
     // Global memory writing related threads sync
     if (lps++ > THREADS2) {
@@ -280,7 +276,7 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
       j = 0;
       // Determine which child octant to follow based on body coordinates.
       // j=0..7 determines the octant in a binary representations.
-      for (l = 0; l < 3; l++)
+      for (int l = 0; l < 3; l++)
         if (bhpara->r[3 * n + l] < p[l])
           j += static_cast<int>(pow(2, l));
       ch = bhpara->child[n * 8 + j];
@@ -288,7 +284,7 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
     // Now we are deep enough in the tree, passed all levels of cells and
     // reached the body (particle).
     if (ch != -2) { // Skip if child pointer is locked (-2) and try again later.
-      locked = n * 8 + j;
+      int const locked = n * 8 + j;
       // Try to lock and iterate towards next body:
       if (ch == atomicCAS((int *)&bhpara->child[locked], ch, -2)) {
         // If we are here then child[locked] was equal to "ch" and now is
@@ -309,7 +305,7 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
           // If -1 (i.e. no child index) then just insert a new body
           bhpara->child[locked] = i;
         } else {
-          patch = -1;
+          int patch = -1;
           // There already is a body and/or cell(s) in this position.
           // We should start from a loop of the deepest child cell
           // determination. Then, we need to create new cells and to distribute
@@ -321,7 +317,7 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
             // nbodiesd nodes. These lists will be correctly handled by the
             // sortKernel later.
             depth++;
-            cell = atomicSub((int *)&bottomd, 1) - 1;
+            int const cell = atomicSub((int *)&bottomd, 1) - 1;
             if (cell <= bhpara->nbodies) {
               // This should not happen. A cell cannot have such index. Error.
               *bhpara->err = 1;
@@ -336,7 +332,7 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
             // within above "while (ch >= nbodiesd)" loop.
             // The new cell will be placed below relatively the center of
             // corresponding j-th octant:
-            for (l = 0; l < 3; l++)
+            for (int l = 0; l < 3; l++)
               pos[l] = static_cast<float>((j >> l) & 1) * r;
             // Note, that negative octants correspond to pos[l] == 0 and
             // positive octants correspond to pos[l] == r.
@@ -369,12 +365,12 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
             // need to add -r to obtain -r and r for negative and positive
             // octants. Now, the child (cell) octants centers are deriving from
             // the parent (n) octant center:
-            for (l = 0; l < 3; l++)
+            for (int l = 0; l < 3; l++)
               pos[l] = bhpara->r[3 * cell + l] =
                   bhpara->r[3 * n + l] - r + pos[l];
 
             // By default, the new cell has no children in all k-th octants:
-            for (k = 0; k < 8; k++)
+            for (int k = 0; k < 8; k++)
               bhpara->child[cell * 8 + k] = -1;
 
             // This condition should always be true cause "patch" is -1 at the
@@ -387,7 +383,7 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
             // pos[l] already contains the child cell coordinates.
             // Let's assign "child" then. First the octant should be selected:
             j = 0;
-            for (l = 0; l < 3; l++)
+            for (int l = 0; l < 3; l++)
               if (pos[l] < bhpara->r[3 * ch + l])
                 j += static_cast<int>(pow(2, l));
             // New element just appeared in the chain of cells. Hence, that what
@@ -403,7 +399,7 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
             __threadfence();
             // Let's handle the particle position (p[l]) corresponding to the
             // given thread and block against new octant cell (pos[l]):
-            for (l = 0; l < 3; l++)
+            for (int l = 0; l < 3; l++)
               if (pos[l] < p[l])
                 j += static_cast<int>(pow(2, l));
 
@@ -452,8 +448,7 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
 /******************************************************************************/
 
 __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
-  int i, j, k, l, im, ch, inc, missing, missing_max, cnt, bottom, lps;
-  int iteration, repeat_flag;
+  int i, j, cnt;
   // the node "mass" and its count respectively:
   float m, cm;
   // position of equivalent total dipole and its magnitude:
@@ -465,25 +460,26 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
   // no children by default:
   for (i = 0; i < 8; i++)
     child[i * THREADS3 + threadIdx.x] = -1;
-  bottom = bottomd;
+  auto const bottom = bottomd;
   // Increment towards other particles assigned to the given thread:
-  inc = static_cast<int>(blockDim.x * gridDim.x);
+  auto const inc = static_cast<int>(blockDim.x * gridDim.x);
   // Nodes iteration "k" should start from the "bottomd" level of the cells,
   // which is a minimal index of the last created cell.
   // Starting "k" value should be aligned using the warp size
   // according to the designed threads performance.
   // k = (bottom & (-WARPSIZE)) + threadIdx.x + blockIdx.x * blockDim.x;
-  k = bottom + static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x);
+  auto k = bottom + static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x);
   // Threads below the bottom line could proceed to their next cells.
   // if (k < bottom) k += inc;
 
   // Assume no missing children:
-  missing = 0;
-  iteration = 0;
-  repeat_flag = 0;
+  int missing = 0;
+  int missing_max = 0;
+  int iteration = 0;
+  int repeat_flag = 0;
   __syncthreads(); // throttle
   // threads sync related
-  lps = 0;
+  int lps = 0;
   // Iterate over all cells (not particles) assigned to the thread:
   while (k <= bhpara->nnodes) {
     if (lps++ > THREADS3) {
@@ -495,14 +491,14 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
       if (missing == 0) {
         // New cell, so initialize:
         cm = 0.0f;
-        for (l = 0; l < 3; l++) {
+        for (int l = 0; l < 3; l++) {
           p[l] = 0.0f;
           u[l] = 0.0f;
         }
         cnt = 0;
         j = 0;
         for (i = 0; i < 8; i++) {
-          ch = bhpara->child[k * 8 + i];
+          auto const ch = bhpara->child[k * 8 + i];
           if (ch >= 0) {
             if (i != j) {
               // Move child to front (needed later for a speed only).
@@ -535,7 +531,7 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
               }
               // add child's contribution
               cm += m;
-              for (l = 0; l < 3; l++) {
+              for (int l = 0; l < 3; l++) {
                 p[l] += bhpara->r[3 * ch + l] * m;
                 u[l] += bhpara->u[3 * ch + l];
               }
@@ -551,9 +547,9 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
       //__syncthreads();    // throttle
 
       if (missing != 0) {
-        for (im = 0; im < missing_max; im++) {
+        for (int im = 0; im < missing_max; im++) {
           // poll missing child
-          ch = child[im * THREADS3 + threadIdx.x];
+          auto const ch = child[im * THREADS3 + threadIdx.x];
           if (ch >= 0) {
             m = bhpara->mass[ch];
             // Is a child the particle? Only particles have non-negative mass
@@ -570,7 +566,7 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
               }
               // add child's contribution
               cm += m;
-              for (l = 0; l < 3; l++) {
+              for (int l = 0; l < 3; l++) {
                 p[l] += bhpara->r[3 * ch + l] * m;
                 u[l] += bhpara->u[3 * ch + l];
               }
@@ -591,7 +587,7 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
         // all children are ready, so store computed information
         bhpara->count[k] = cnt;
         m = 1.0f / cm;
-        for (l = 0; l < 3; l++) {
+        for (int l = 0; l < 3; l++) {
           bhpara->r[3 * k + l] = p[l] * m;
           bhpara->u[3 * k + l] = u[l];
         }
@@ -630,23 +626,21 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
 // same octant cells) together, and these grouped bodies are crucial to speed up
 // forceCalculationKernel and energyCalculationKernel
 __global__ __launch_bounds__(THREADS4, FACTOR4) void sortKernel() {
-  int i, k, ch, dec, start, bottom, lps;
-
-  bottom = bottomd;
-  dec = static_cast<int>(blockDim.x * gridDim.x);
+  auto const bottom = bottomd;
+  auto const dec = static_cast<int>(blockDim.x * gridDim.x);
   // Start from the end of the nnodesd == 8 * nbodiesd.
   // Reverse order is required now cause octant cells which are more close
   // to the root have a larger count of entities inside (countd[k]).
   // Particles should be sorted over all entities count in the tree array
   // representation made by treeBuildingKernel.
-  k = bhpara->nnodes + 1 - dec +
-      static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x);
+  int k = bhpara->nnodes + 1 - dec +
+          static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x);
   // threads sync related
-  lps = 0;
+  int lps = 0;
 
   // iterate over all cells assigned to thread
   while (k >= bottom) {
-    start = bhpara->start[k];
+    int start = bhpara->start[k];
     // Threads sync related
     if (lps++ > THREADS4) {
       *bhpara->max_lps = lps;
@@ -655,8 +649,8 @@ __global__ __launch_bounds__(THREADS4, FACTOR4) void sortKernel() {
     // Let's start from the root which has only startd=0 defined
     // in boundingBoxKernel. All other bodies and cells have -1.
     if (start >= 0) {
-      for (i = 0; i < 8; i++) {
-        ch = bhpara->child[k * 8 + i];
+      for (int i = 0; i < 8; i++) {
+        int const ch = bhpara->child[k * 8 + i];
         if (ch >= bhpara->nbodies) {
           // child is a cell
           bhpara->start[ch] = start;  // set start ID of child
@@ -687,8 +681,7 @@ __global__ __launch_bounds__(THREADS4, FACTOR4) void sortKernel() {
 
 __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
     float pf, float *force, float *torque) {
-  int i, j, k, l, n, depth, base, sbase, diff, t;
-  float tmp;
+  int i, t;
   // dr is a distance between particles.
   // f,h, and N are a target force, field, and torque respectively.
   // u and uc are dipole moments of two particles.
@@ -701,11 +694,9 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
   __shared__ int pos[MAXDEPTH * THREADS5 / WARPSIZE],
       node[MAXDEPTH * THREADS5 / WARPSIZE];
   __shared__ float dq[MAXDEPTH * THREADS5 / WARPSIZE];
-  float b, b2, d1, dd5;
-  float bb2d7, umd5;
 
   // Zero thread of the block initialize shared data for all warps.
-  if (0 == threadIdx.x) {
+  if (threadIdx.x == 0) {
     // Precompute values that depend only on tree level.
     // The method's parameters (a trade-off accuracy/performance)
     // which determine that the
@@ -718,8 +709,7 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
     // and the cell depending on a cell level.
     // Original tree box edge (2*radiusd) should be divided *0.5
     // as much as the tree depth takes place.
-    tmp = radiusd;
-    dq[0] = tmp * tmp * *itolsqd;
+    dq[0] = radiusd * radiusd * *itolsqd;
     for (i = 1; i < maxdepthd; i++) {
       dq[i] = dq[i - 1] * 0.25f;
       dq[i - 1] += *epssqd;
@@ -738,15 +728,15 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
   // Only maximal Barnes-Hut tree depth is allowed.
   if (maxdepthd <= MAXDEPTH) {
     // How many warps are behind the current thread (?):
-    base = static_cast<int>(threadIdx.x) / WARPSIZE;
+    auto const base = static_cast<int>(threadIdx.x) / WARPSIZE;
     // Figure out first thread in each warp (lane 0):
-    sbase = base * WARPSIZE;
+    auto const sbase = base * WARPSIZE;
     // Initial stack index is its MAXDEPTH portion start for the given warp
     // count base:
-    j = base * MAXDEPTH;
+    auto const j = base * MAXDEPTH;
 
     // How far the thread is from the warp beginning (?):
-    diff = static_cast<int>(threadIdx.x) - sbase;
+    auto const diff = static_cast<int>(threadIdx.x) - sbase;
     // Make multiple copies to avoid index calculations later:
     if (diff < MAXDEPTH) {
       // Each thread copies its own dq[] element to a part of
@@ -756,12 +746,12 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
     __syncthreads();
 
     // Iterate over all bodies assigned to thread:
-    for (k = static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x);
+    for (auto k = static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x);
          k < bhpara->nbodies; k += static_cast<int>(blockDim.x * gridDim.x)) {
       // Sorted body indexes assigned to me:
       i = bhpara->sort[k]; // get permuted/sorted index
       // Cache the particle position info:
-      for (l = 0; l < 3; l++) {
+      for (int l = 0; l < 3; l++) {
         u[l] = bhpara->u[3 * i + l];
         h[l] = 0.0f;
         f[l] = 0.0f;
@@ -772,7 +762,7 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
       // Hence, we should start from the root node (whole Barnes-Hut cube).
       // Initialize iteration stack, i.e., push root node onto stack.
       // Let's start from zero octant.
-      depth = j;
+      auto depth = j;
       if (sbase == threadIdx.x) {
         node[j] = bhpara->nnodes;
         pos[j] = 0;
@@ -783,7 +773,7 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
         // Hence, there are still some children to consider.
         while ((t = pos[depth]) < 8) {
           // Node on top of stack has more children to process:
-          n = bhpara->child[node[depth] * 8 + t]; // load child pointer
+          auto const n = bhpara->child[node[depth] * 8 + t]; // child pointer
           if (sbase == threadIdx.x) {
             // I'm the first thread in the warp.
             // Let me check for the current depth level of the tree
@@ -795,8 +785,8 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
           // There is a child (octant cell) with a dipole moment uxd[3 * n + l]
           // and the center position bhpara->r[3 * n + l]:
           if (n >= 0) {
-            tmp = 0.0f; // compute distance squared
-            for (l = 0; l < 3; l++) {
+            auto tmp = 0.0f; // compute distance squared
+            for (int l = 0; l < 3; l++) {
               dr[l] = -bhpara->r[3 * n + l] + bhpara->r[3 * i + l];
               tmp += dr[l] * dr[l];
             }
@@ -828,12 +818,12 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
 #endif
               if (n != i) {
 
-                d1 = sqrtf(tmp /*, 0.5f*/);
-                dd5 = __fdividef(1.0f, tmp * tmp * d1);
-                b = 0.0f;
-                b2 = 0.0f;
-                umd5 = 0.0f;
-                for (l = 0; l < 3; l++) {
+                auto const d1 = sqrtf(tmp /*, 0.5f*/);
+                auto const dd5 = __fdividef(1.0f, tmp * tmp * d1);
+                auto b = 0.0f;
+                auto b2 = 0.0f;
+                auto umd5 = 0.0f;
+                for (int l = 0; l < 3; l++) {
                   uc[l] = bhpara->u[3 * n + l];
                   b += uc[l] * dr[l];
                   b2 += u[l] * dr[l];
@@ -841,9 +831,9 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
                 }
                 umd5 *= -3.0f * dd5;
 
-                bb2d7 = 15.0f * b * b2 * __fdividef(dd5, tmp);
+                auto const bb2d7 = 15.0f * b * b2 * __fdividef(dd5, tmp);
 
-                for (l = 0; l < 3; l++) {
+                for (int l = 0; l < 3; l++) {
                   h[l] += (b * 3.0f * dr[l] - tmp * uc[l]) * dd5;
                   f[l] += -dr[l] * (umd5 + bb2d7) +
                           3.0f * (b * u[l] + b2 * uc[l]) * dd5;
@@ -877,7 +867,7 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
       N[1] = u[2] * h[0] - u[0] * h[2];
       N[2] = u[0] * h[1] - u[1] * h[0];
 
-      for (l = 0; l < 3; l++) {
+      for (int l = 0; l < 3; l++) {
         if (f[l] != f[l] || h[l] != h[l]) { // nan
           printf("Force Kernel: NAN in particle[%d]\n", i);
           printf("x = %f, y = %f, z = %f,\n", bhpara->u[3 * i + 0],
@@ -893,8 +883,7 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
 }
 
 /******************************************************************************/
-/*** compute energy
- * ************************************************************/
+/*** compute energy ***********************************************************/
 /******************************************************************************/
 
 __global__ __launch_bounds__(THREADS5, FACTOR5) void energyCalculationKernel(
@@ -902,8 +891,7 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void energyCalculationKernel(
   // NOTE: the algorithm of this kernel is almost identical to
   // forceCalculationKernel. See comments there.
 
-  int i, j, k, l, n, depth, base, sbase, diff, t;
-  float tmp;
+  int i, n, t;
   float dr[3], h[3], u[3], uc[3];
   __shared__ int pos[MAXDEPTH * THREADS5 / WARPSIZE],
       node[MAXDEPTH * THREADS5 / WARPSIZE];
@@ -911,12 +899,9 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void energyCalculationKernel(
   float sum = 0.0;
   extern __shared__ float res[];
 
-  float b, d1, dd5;
-
-  if (0 == threadIdx.x) {
-    tmp = radiusd;
+  if (threadIdx.x == 0) {
     // precompute values that depend only on tree level
-    dq[0] = tmp * tmp * *itolsqd;
+    dq[0] = radiusd * radiusd * *itolsqd;
     for (i = 1; i < maxdepthd; i++) {
       dq[i] = dq[i - 1] * 0.25f;
       dq[i - 1] += *epssqd;
@@ -931,11 +916,11 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void energyCalculationKernel(
 
   if (maxdepthd <= MAXDEPTH) {
     // figure out first thread in each warp (lane 0)
-    base = static_cast<int>(threadIdx.x) / WARPSIZE;
-    sbase = base * WARPSIZE;
-    j = base * MAXDEPTH;
+    auto const base = static_cast<int>(threadIdx.x) / WARPSIZE;
+    auto const sbase = base * WARPSIZE;
+    auto const j = base * MAXDEPTH;
 
-    diff = static_cast<int>(threadIdx.x) - sbase;
+    auto const diff = static_cast<int>(threadIdx.x) - sbase;
     // make multiple copies to avoid index calculations later
     if (diff < MAXDEPTH) {
       dq[diff + j] = dq[diff];
@@ -943,17 +928,17 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void energyCalculationKernel(
     __syncthreads();
 
     // iterate over all bodies assigned to thread
-    for (k = static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x);
+    for (auto k = static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x);
          k < bhpara->nbodies; k += static_cast<int>(blockDim.x * gridDim.x)) {
       i = bhpara->sort[k]; // get permuted/sorted index
       // cache position info
-      for (l = 0; l < 3; l++) {
+      for (int l = 0; l < 3; l++) {
         u[l] = bhpara->u[3 * i + l];
         h[l] = 0.0f;
       }
 
       // initialize iteration stack, i.e., push root node onto stack
-      depth = j;
+      auto depth = j;
       if (sbase == threadIdx.x) {
         node[j] = bhpara->nnodes;
         pos[j] = 0;
@@ -970,8 +955,8 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void energyCalculationKernel(
           }
           __threadfence_block();
           if (n >= 0) {
-            tmp = 0.0f;
-            for (l = 0; l < 3; l++) {
+            auto tmp = 0.0f;
+            for (int l = 0; l < 3; l++) {
               dr[l] = -bhpara->r[3 * n + l] + bhpara->r[3 * i + l];
               tmp += dr[l] * dr[l];
             }
@@ -988,15 +973,15 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void energyCalculationKernel(
                                     // is far enough away (or is a body)
 #endif
               if (n != i) {
-                d1 = sqrtf(tmp /*, 0.5f*/);
-                dd5 = __fdividef(1.0f, tmp * tmp * d1);
-                b = 0.0f;
-                for (l = 0; l < 3; l++) {
+                auto const d1 = sqrtf(tmp /*, 0.5f*/);
+                auto const dd5 = __fdividef(1.0f, tmp * tmp * d1);
+                auto b = 0.0f;
+                for (int l = 0; l < 3; l++) {
                   uc[l] = bhpara->u[3 * n + l];
                   b += uc[l] * dr[l];
                 }
 
-                for (l = 0; l < 3; l++)
+                for (int l = 0; l < 3; l++)
                   h[l] += (b * 3.0f * dr[l] - tmp * uc[l]) * dd5;
               }
             } else {
@@ -1016,7 +1001,7 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void energyCalculationKernel(
         depth--; // done with this level
       }
 
-      for (l = 0; l < 3; l++) {
+      for (int l = 0; l < 3; l++) {
         sum += -u[l] * h[l];
         if (h[l] != h[l]) { // nan
           printf("Energy Kernel: NAN in particle[%d]\n", i);
@@ -1162,16 +1147,38 @@ int energyBH(BHData *bh_data, float k, float *E) {
   return error_code;
 }
 
-// Function to set the BH method parameters.
-void setBHPrecision(float *epssq, float *itolsq) {
-  cuda_safe_mem(cudaMemcpyToSymbol(epssqd, epssq, sizeof(float), 0,
+void setBHPrecision(float epssq, float itolsq) {
+  cuda_safe_mem(cudaMemcpyToSymbol(epssqd, &epssq, sizeof(float), 0,
                                    cudaMemcpyHostToDevice));
-  cuda_safe_mem(cudaMemcpyToSymbol(itolsqd, itolsq, sizeof(float), 0,
+  cuda_safe_mem(cudaMemcpyToSymbol(itolsqd, &itolsq, sizeof(float), 0,
                                    cudaMemcpyHostToDevice));
 }
 
-// An allocation of the GPU device memory and an initialization where it is
-// needed.
+void deallocBH(BHData *bh_data) {
+  cuda_safe_mem(cudaFree(bh_data->err));
+  cuda_safe_mem(cudaFree(bh_data->max_lps));
+  cuda_safe_mem(cudaFree(bh_data->child));
+  cuda_safe_mem(cudaFree(bh_data->count));
+  cuda_safe_mem(cudaFree(bh_data->start));
+  cuda_safe_mem(cudaFree(bh_data->sort));
+  cuda_safe_mem(cudaFree(bh_data->mass));
+  cuda_safe_mem(cudaFree(bh_data->maxp));
+  cuda_safe_mem(cudaFree(bh_data->minp));
+  cuda_safe_mem(cudaFree(bh_data->r));
+  cuda_safe_mem(cudaFree(bh_data->u));
+  bh_data->err = nullptr;
+  bh_data->max_lps = nullptr;
+  bh_data->child = nullptr;
+  bh_data->count = nullptr;
+  bh_data->start = nullptr;
+  bh_data->sort = nullptr;
+  bh_data->mass = nullptr;
+  bh_data->maxp = nullptr;
+  bh_data->minp = nullptr;
+  bh_data->r = nullptr;
+  bh_data->u = nullptr;
+}
+
 void allocBHmemCopy(int nbodies, BHData *bh_data) {
   if (bh_data->nbodies == nbodies)
     return;
@@ -1186,43 +1193,36 @@ void allocBHmemCopy(int nbodies, BHData *bh_data) {
   // cubic boxes hence, 8 nodes per particle is a theoretical octree limit:
   bh_data->nnodes = bh_data->nbodies * 8;
 
-  int n_total_threads = 1024 * bh_data->blocks;
+  int const n_total_threads = 1024 * bh_data->blocks;
   if (bh_data->nnodes < n_total_threads)
     bh_data->nnodes = n_total_threads;
   else
     bh_data->nnodes = (bh_data->nnodes / n_total_threads) * n_total_threads;
 
-  if (bh_data->err != nullptr)
-    cuda_safe_mem(cudaFree(bh_data->err));
+  cuda_safe_mem(cudaFree(bh_data->err));
   cuda_safe_mem(cudaMalloc((void **)&(bh_data->err), sizeof(int)));
 
-  if (bh_data->max_lps != nullptr)
-    cuda_safe_mem(cudaFree(bh_data->max_lps));
+  cuda_safe_mem(cudaFree(bh_data->max_lps));
   cuda_safe_mem(cudaMalloc((void **)&(bh_data->max_lps), sizeof(int)));
 
-  if (bh_data->child != nullptr)
-    cuda_safe_mem(cudaFree(bh_data->child));
+  cuda_safe_mem(cudaFree(bh_data->child));
   cuda_safe_mem(cudaMalloc((void **)&(bh_data->child),
                            sizeof(int) * (bh_data->nnodes + 1) * 8));
 
-  if (bh_data->count != nullptr)
-    cuda_safe_mem(cudaFree(bh_data->count));
+  cuda_safe_mem(cudaFree(bh_data->count));
   cuda_safe_mem(cudaMalloc((void **)&(bh_data->count),
                            sizeof(int) * (bh_data->nnodes + 1)));
 
-  if (bh_data->start != nullptr)
-    cuda_safe_mem(cudaFree(bh_data->start));
+  cuda_safe_mem(cudaFree(bh_data->start));
   cuda_safe_mem(cudaMalloc((void **)&(bh_data->start),
                            sizeof(int) * (bh_data->nnodes + 1)));
 
-  if (bh_data->sort != nullptr)
-    cuda_safe_mem(cudaFree(bh_data->sort));
+  cuda_safe_mem(cudaFree(bh_data->sort));
   cuda_safe_mem(cudaMalloc((void **)&(bh_data->sort),
                            sizeof(int) * (bh_data->nnodes + 1)));
 
   // Weight coefficients of m_bhnnodes nodes: both particles and octant cells
-  if (bh_data->mass != nullptr)
-    cuda_safe_mem(cudaFree(bh_data->mass));
+  cuda_safe_mem(cudaFree(bh_data->mass));
   cuda_safe_mem(cudaMalloc((void **)&(bh_data->mass),
                            sizeof(float) * (bh_data->nnodes + 1)));
 
@@ -1240,39 +1240,32 @@ void allocBHmemCopy(int nbodies, BHData *bh_data) {
   // are the octree box dynamical spatial constraints
   // this array is updating per each block at each interaction calculation
   // within the boundingBoxKernel
-  if (bh_data->maxp != nullptr)
-    cuda_safe_mem(cudaFree(bh_data->maxp));
+  cuda_safe_mem(cudaFree(bh_data->maxp));
   cuda_safe_mem(cudaMalloc((void **)&(bh_data->maxp),
                            sizeof(float) * bh_data->blocks * FACTOR1 * 3));
   // (min[3*i], min[3*i+1], min[3*i+2])
   // are the octree box dynamical spatial constraints
   // this array is updating per each block at each interaction calculation
   // within the boundingBoxKernel
-  if (bh_data->minp != nullptr)
-    cuda_safe_mem(cudaFree(bh_data->minp));
+  cuda_safe_mem(cudaFree(bh_data->minp));
   cuda_safe_mem(cudaMalloc((void **)&(bh_data->minp),
                            sizeof(float) * bh_data->blocks * FACTOR1 * 3));
 
-  if (bh_data->r != nullptr)
-    cuda_safe_mem(cudaFree(bh_data->r));
+  cuda_safe_mem(cudaFree(bh_data->r));
   cuda_safe_mem(
       cudaMalloc(&(bh_data->r), 3 * (bh_data->nnodes + 1) * sizeof(float)));
 
-  if (bh_data->u != nullptr)
-    cuda_safe_mem(cudaFree(bh_data->u));
+  cuda_safe_mem(cudaFree(bh_data->u));
   cuda_safe_mem(
       cudaMalloc(&(bh_data->u), 3 * (bh_data->nnodes + 1) * sizeof(float)));
 }
 
-// Populating of array pointers allocated in GPU device before.
-// Copy the particle data to the Barnes-Hut related arrays.
-void fillConstantPointers(float *r, float *dip, BHData bh_data) {
-  cuda_safe_mem(cudaMemcpyToSymbol(bhpara, &bh_data, sizeof(BHData), 0,
+void fill_bh_data(float const *r, float const *dip, BHData const *bh_data) {
+  auto const size = 3 * bh_data->nbodies * sizeof(float);
+  cuda_safe_mem(cudaMemcpyToSymbol(bhpara, bh_data, sizeof(BHData), 0,
                                    cudaMemcpyHostToDevice));
-  cuda_safe_mem(cudaMemcpy(bh_data.r, r, 3 * bh_data.nbodies * sizeof(float),
-                           cudaMemcpyDeviceToDevice));
-  cuda_safe_mem(cudaMemcpy(bh_data.u, dip, 3 * bh_data.nbodies * sizeof(float),
-                           cudaMemcpyDeviceToDevice));
+  cuda_safe_mem(cudaMemcpy(bh_data->r, r, size, cudaMemcpyDeviceToDevice));
+  cuda_safe_mem(cudaMemcpy(bh_data->u, dip, size, cudaMemcpyDeviceToDevice));
 }
 
 #endif // BARNES_HUT
