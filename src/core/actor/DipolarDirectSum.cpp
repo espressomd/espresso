@@ -22,33 +22,68 @@
 #ifdef DIPOLAR_DIRECT_SUM
 
 #include "DipolarDirectSum.hpp"
+#include "DipolarDirectSum_cuda.cuh"
 
-#include "EspressoSystemInterface.hpp"
 #include "electrostatics_magnetostatics/common.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
+
+#include "SystemInterface.hpp"
+#include "cuda_interface.hpp"
 #include "energy.hpp"
 #include "forces.hpp"
+#include "grid.hpp"
 
-#include <memory>
+DipolarDirectSum::DipolarDirectSum(SystemInterface &s) {
+  s.requestFGpu();
+  s.requestTorqueGpu();
+  s.requestRGpu();
+  s.requestDipGpu();
+}
 
-std::unique_ptr<DipolarDirectSum> dipolarDirectSum;
-
-void activate_dipolar_direct_sum_gpu() {
+void DipolarDirectSum::activate() {
   // also necessary on 1 CPU or GPU, does more than just broadcasting
   dipole.method = DIPOLAR_DS_GPU;
   mpi_bcast_coulomb_params();
 
-  dipolarDirectSum =
-      std::make_unique<DipolarDirectSum>(espressoSystemInterface);
-  forceActors.push_back(dipolarDirectSum.get());
-  energyActors.push_back(dipolarDirectSum.get());
+  forceActors.push_back(this);
+  energyActors.push_back(this);
 }
 
-void deactivate_dipolar_direct_sum_gpu() {
-  if (dipolarDirectSum) {
-    forceActors.remove(dipolarDirectSum.get());
-    energyActors.remove(dipolarDirectSum.get());
-    dipolarDirectSum.reset();
+void DipolarDirectSum::deactivate() {
+  dipole.method = DIPOLAR_NONE;
+  mpi_bcast_coulomb_params();
+
+  forceActors.remove(this);
+  energyActors.remove(this);
+}
+
+void DipolarDirectSum::set_params() {
+  m_prefactor = static_cast<float>(dipole.prefactor);
+}
+
+void DipolarDirectSum::computeForces(SystemInterface &s) {
+  float box[3];
+  int per[3];
+  for (int i = 0; i < 3; i++) {
+    box[i] = static_cast<float>(s.box()[i]);
+    per[i] = box_geo.periodic(i);
   }
+  DipolarDirectSum_kernel_wrapper_force(
+      m_prefactor, static_cast<unsigned>(s.npart_gpu()), s.rGpuBegin(),
+      s.dipGpuBegin(), s.fGpuBegin(), s.torqueGpuBegin(), box, per);
+}
+
+void DipolarDirectSum::computeEnergy(SystemInterface &s) {
+  float box[3];
+  int per[3];
+  for (int i = 0; i < 3; i++) {
+    box[i] = static_cast<float>(s.box()[i]);
+    per[i] = box_geo.periodic(i);
+  }
+  auto energy = reinterpret_cast<CUDA_energy *>(s.eGpu());
+  DipolarDirectSum_kernel_wrapper_energy(
+      m_prefactor, static_cast<unsigned>(s.npart_gpu()), s.rGpuBegin(),
+      s.dipGpuBegin(), box, per, &(energy->dipolar));
 }
 
 #endif

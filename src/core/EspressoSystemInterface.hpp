@@ -20,15 +20,28 @@
 #define ESPRESSOSYSTEMINTERFACE_H
 
 #include "SystemInterface.hpp"
+#include "config.hpp"
 #include "cuda_interface.hpp"
+
+#include <utils/Vector.hpp>
 
 #include <cstddef>
 
-/* Syntactic sugar */
-#define espressoSystemInterface EspressoSystemInterface::Instance()
-
+/**
+ * @brief CUDA implementation of @ref SystemInterface.
+ *
+ * When data is synchronized between host and device memory, a subset
+ * of the @ref Particle struct is copied from each particle on the host
+ * to the corresponding @ref CUDA_particle_data struct on the device via
+ * @ref EspressoSystemInterface::gatherParticles(). Once the transfer is
+ * complete, the particle AoS on the device is copied (or "split") to
+ * a SoA via @ref EspressoSystemInterface::split_particle_struct().
+ */
 class EspressoSystemInterface : public SystemInterface {
 public:
+  EspressoSystemInterface() = default;
+  ~EspressoSystemInterface() override = default;
+
   static EspressoSystemInterface &Instance() {
     if (!m_instance)
       m_instance = new EspressoSystemInterface;
@@ -36,119 +49,72 @@ public:
     return *m_instance;
   };
 
-  static EspressoSystemInterface *_Instance() {
-    if (!m_instance)
-      m_instance = new EspressoSystemInterface;
-
-    return m_instance;
-  };
-
   void init() override;
   void update() override;
 
 #ifdef CUDA
   float *rGpuBegin() override { return m_r_gpu_begin; };
-  float *rGpuEnd() override { return m_r_gpu_end; };
   bool hasRGpu() override { return true; };
-  bool requestRGpu() override {
+  void requestRGpu() override {
     m_needsRGpu = hasRGpu();
     m_splitParticleStructGpu |= m_needsRGpu;
     m_gpu |= m_needsRGpu;
-    if (m_gpu)
-      enableParticleCommunication();
-    return m_needsRGpu;
+    enableParticleCommunication();
   };
+
 #ifdef DIPOLES
   float *dipGpuBegin() override { return m_dip_gpu_begin; };
-  float *dipGpuEnd() override { return m_dip_gpu_end; };
   bool hasDipGpu() override { return true; };
-  bool requestDipGpu() override {
+  void requestDipGpu() override {
     m_needsDipGpu = hasDipGpu();
     m_splitParticleStructGpu |= m_needsRGpu;
     m_gpu |= m_needsRGpu;
-    if (m_gpu)
-      enableParticleCommunication();
-    return m_needsDipGpu;
+    enableParticleCommunication();
   };
 #endif
-  float *vGpuBegin() override { return m_v_gpu_begin; };
-  float *vGpuEnd() override { return m_v_gpu_end; };
-  bool hasVGpu() override { return true; };
-  bool requestVGpu() override {
-    m_needsVGpu = hasVGpu();
-    m_splitParticleStructGpu |= m_needsVGpu;
-    m_gpu |= m_needsVGpu;
-    if (m_gpu)
-      enableParticleCommunication();
-    return m_needsVGpu;
-  };
 
+#ifdef ELECTROSTATICS
   float *qGpuBegin() override { return m_q_gpu_begin; };
-  float *qGpuEnd() override { return m_q_gpu_end; };
   bool hasQGpu() override { return true; };
-  bool requestQGpu() override {
+  void requestQGpu() override {
     m_needsQGpu = hasQGpu();
     m_splitParticleStructGpu |= m_needsQGpu;
     m_gpu |= m_needsQGpu;
-    if (m_gpu)
-      enableParticleCommunication();
-    return m_needsQGpu;
+    enableParticleCommunication();
   };
+#endif
 
-  float *directorGpuBegin() override { return m_director_gpu_begin; };
-  float *directorGpuEnd() override { return m_director_gpu_end; };
-  bool hasDirectorGpu() override { return true; };
-  bool requestDirectorGpu() override {
-    m_needsDirectorGpu = hasDirectorGpu();
-    m_splitParticleStructGpu |= m_needsDirectorGpu;
-    m_gpu |= m_needsDirectorGpu;
-    if (m_gpu)
-      enableParticleCommunication();
-    return m_needsDirectorGpu;
-  };
-
-  bool requestParticleStructGpu() {
+  void requestParticleStructGpu() {
     m_needsParticleStructGpu = true;
     m_gpu |= m_needsParticleStructGpu;
-    if (m_gpu)
-      enableParticleCommunication();
-    return true;
+    enableParticleCommunication();
   };
 
   float *fGpuBegin() override { return gpu_get_particle_force_pointer(); };
-  float *fGpuEnd() override {
-    return gpu_get_particle_force_pointer() + 3 * m_gpu_npart;
-  };
-  float *eGpu() override {
-    // cast pointer to struct of floats to array of floats
-    // https://stackoverflow.com/a/29278260
-    return reinterpret_cast<float *>(gpu_get_energy_pointer());
-  };
-  float *torqueGpuBegin() override {
-    return gpu_get_particle_torque_pointer();
-  };
-  float *torqueGpuEnd() override {
-    return gpu_get_particle_torque_pointer() + 3 * m_gpu_npart;
-  };
   bool hasFGpu() override { return true; };
-  bool requestFGpu() override {
+  void requestFGpu() override {
     m_needsFGpu = hasFGpu();
     m_gpu |= m_needsFGpu;
-    if (m_gpu)
-      enableParticleCommunication();
-    return m_needsFGpu;
+    enableParticleCommunication();
   };
 
 #ifdef ROTATION
+  float *torqueGpuBegin() override {
+    return gpu_get_particle_torque_pointer();
+  };
   bool hasTorqueGpu() override { return true; };
-  bool requestTorqueGpu() override {
+  void requestTorqueGpu() override {
     m_needsTorqueGpu = hasTorqueGpu();
     m_gpu |= m_needsTorqueGpu;
-    if (m_gpu)
-      enableParticleCommunication();
-    return m_needsTorqueGpu;
+    enableParticleCommunication();
   };
 #endif
+
+  float *eGpu() override {
+    // cast pointer from struct of floats to array of floats
+    // https://stackoverflow.com/a/29278260
+    return reinterpret_cast<float *>(gpu_get_energy_pointer());
+  };
 
 #endif // ifdef CUDA
 
@@ -164,50 +130,30 @@ public:
 
 protected:
   static EspressoSystemInterface *m_instance;
-  EspressoSystemInterface()
-      : m_gpu(false), m_r_gpu_begin(nullptr), m_r_gpu_end(nullptr),
-        m_dip_gpu_begin(nullptr), m_dip_gpu_end(nullptr),
-        m_v_gpu_begin(nullptr), m_v_gpu_end(nullptr), m_q_gpu_begin(nullptr),
-        m_q_gpu_end(nullptr), m_director_gpu_begin(nullptr),
-        m_director_gpu_end(nullptr), m_needsParticleStructGpu(false),
-        m_splitParticleStructGpu(false){};
-  ~EspressoSystemInterface() override = default;
 
   void gatherParticles();
   void split_particle_struct();
 #ifdef CUDA
-  void enableParticleCommunication() {
-    if (!gpu_get_global_particle_vars_pointer_host()->communication_enabled) {
-      gpu_init_particle_comm();
-      cuda_bcast_global_part_params();
-      reallocDeviceMemory(gpu_get_particle_pointer().size());
-    }
-  };
+  void enableParticleCommunication();
   void reallocDeviceMemory(std::size_t n);
+
+private:
+  std::size_t m_gpu_npart = 0;
+  bool m_gpu = false;
+
+  float *m_r_gpu_begin = nullptr;
+  float *m_dip_gpu_begin = nullptr;
+  float *m_q_gpu_begin = nullptr;
+
+  bool m_needsParticleStructGpu = false;
+  bool m_splitParticleStructGpu = false;
+
+  bool m_needsRGpu = false;
+  bool m_needsQGpu = false;
+  bool m_needsFGpu = false;
+  bool m_needsDipGpu = false;
+  bool m_needsTorqueGpu = false;
 #endif
-
-  std::size_t m_gpu_npart;
-  bool m_gpu;
-
-  float *m_r_gpu_begin;
-  float *m_r_gpu_end;
-
-  float *m_dip_gpu_begin;
-  float *m_dip_gpu_end;
-
-  float *m_v_gpu_begin;
-  float *m_v_gpu_end;
-
-  float *m_q_gpu_begin;
-  float *m_q_gpu_end;
-
-  float *m_director_gpu_begin;
-  float *m_director_gpu_end;
-
-  bool m_needsParticleStructGpu;
-  bool m_splitParticleStructGpu;
 };
-
-/********************************************************************************************/
 
 #endif

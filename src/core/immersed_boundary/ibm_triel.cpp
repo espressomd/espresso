@@ -27,8 +27,8 @@
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 
-#include <cmath>
-#include <cstdio>
+#include <boost/optional.hpp>
+
 #include <tuple>
 
 namespace {

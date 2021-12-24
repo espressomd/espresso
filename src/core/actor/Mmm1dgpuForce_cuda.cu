@@ -86,7 +86,7 @@ __device__ float dev_mod_psi_odd(int n, float x) {
                  static_cast<int>(device_linModPsi_lengths[2 * n + 1]), x * x);
 }
 
-int modpsi_init() {
+void Mmm1dgpuForce::modpsi_init() {
   create_mod_psi_up_to(modpsi_order);
 
   // linearized array on host
@@ -129,31 +129,6 @@ int modpsi_init() {
     auto const n_modPsi = static_cast<int>(modPsi.size() >> 1);
     cuda_safe_mem(cudaMemcpyToSymbol(device_n_modPsi, &n_modPsi, sizeof(int)));
   }
-
-  return 0;
-}
-
-Mmm1dgpuForce::Mmm1dgpuForce(SystemInterface &s, float _coulomb_prefactor,
-                             float _maxPWerror, float _far_switch_radius,
-                             int _bessel_cutoff)
-    : numThreads(64), host_boxz(0), host_npart(0), need_tune(true), pairs(-1),
-      dev_forcePairs(nullptr), dev_energyBlocks(nullptr),
-      coulomb_prefactor(_coulomb_prefactor), maxPWerror(_maxPWerror),
-      far_switch_radius(_far_switch_radius), bessel_cutoff(_bessel_cutoff) {
-  // interface sanity checks
-  if (!s.requestFGpu())
-    throw std::runtime_error("Mmm1dgpuForce needs access to forces on GPU!");
-
-  if (!s.requestRGpu())
-    throw std::runtime_error("Mmm1dgpuForce needs access to positions on GPU!");
-
-  if (!s.requestQGpu())
-    throw std::runtime_error("Mmm1dgpuForce needs access to charges on GPU!");
-
-  // system sanity checks
-  sanity_checks();
-
-  modpsi_init();
 }
 
 void Mmm1dgpuForce::setup(SystemInterface &s) {
@@ -312,7 +287,7 @@ void Mmm1dgpuForce::tune(SystemInterface &s, float _maxPWerror,
 
 void Mmm1dgpuForce::set_params(float _boxz, float _coulomb_prefactor,
                                float _maxPWerror, float _far_switch_radius,
-                               int _bessel_cutoff, bool manual) {
+                               int _bessel_cutoff) {
   if (_boxz > 0 && _far_switch_radius > _boxz) {
     throw std::runtime_error(
         "switching radius must not be larger than box length");
@@ -323,11 +298,6 @@ void Mmm1dgpuForce::set_params(float _boxz, float _coulomb_prefactor,
     // double colons are needed to access the constant memory variables because
     // they are file globals and we have identically named class variables
     cudaSetDevice(d);
-    if (manual) // tuning needs to be performed again
-    {
-      far_switch_radius = _far_switch_radius;
-      bessel_cutoff = _bessel_cutoff;
-    }
     if (_far_switch_radius >= 0) {
       mmm1d_params.far_switch_radius_2 = _far_switch_radius_2;
       cuda_safe_mem(cudaMemcpyToSymbol(::far_switch_radius_2,

@@ -46,6 +46,7 @@
 #include <cufft.h>
 
 #include <cstddef>
+#include <cstdio>
 #include <fstream>
 #include <iostream>
 #include <limits>

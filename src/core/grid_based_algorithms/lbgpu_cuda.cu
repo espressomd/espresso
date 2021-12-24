@@ -59,8 +59,6 @@
 #include <cstdlib>
 #include <vector>
 
-extern int this_node;
-
 /** struct for hydrodynamic fields: this is for internal use
  *  (i.e. stores values in LB units) and should not be used for
  *  printing values
@@ -1033,28 +1031,6 @@ __device__ void calc_values_from_m(Utils::Array<float, 19> const &mode_single,
   // We immediately average pre- and post-collision.
   // Transform the stress tensor components according to the mode_singles.
   pi_out = stress_from_stress_modes(stress_modes(d_v_single, mode_single));
-}
-
-/** Calculate temperature of the fluid kernel
- *  @param[out] cpu_jsquared  Result
- *  @param[in]  n_a           Local node residing in array a
- *  @param[out] number_of_non_boundary_nodes  Local node residing in array a
- */
-__global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared,
-                            int *number_of_non_boundary_nodes) {
-  Utils::Array<float, 4> mode;
-  float jsquared = 0.0f;
-  unsigned int index = blockIdx.y * gridDim.x * blockDim.x +
-                       blockDim.x * blockIdx.x + threadIdx.x;
-
-  if (index < para->number_of_nodes) {
-    if (!n_a.boundary[index]) {
-      calc_mass_and_momentum_mode(mode, n_a, index);
-      jsquared = mode[1] * mode[1] + mode[2] * mode[2] + mode[3] * mode[3];
-      atomicAdd(cpu_jsquared, jsquared);
-      atomicAdd(number_of_non_boundary_nodes, 1);
-    }
-  }
 }
 
 /** Interpolation kernel.
@@ -2173,8 +2149,6 @@ void lb_init_boundaries_GPU(std::size_t host_n_lb_boundaries,
                             int *host_boundary_node_list,
                             int *host_boundary_index_list,
                             float *host_lb_boundary_velocity) {
-  if (this_node != 0)
-    return;
 
   float *boundary_velocity = nullptr;
   int *boundary_node_list = nullptr;

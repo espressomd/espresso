@@ -160,7 +160,7 @@ void deactivate() {
 }
 
 void update_dependent_particles() {
-  icc_iteration(cell_structure.local_particles(),
+  icc_iteration(cell_structure, cell_structure.local_particles(),
                 cell_structure.ghost_particles());
 }
 

@@ -25,6 +25,10 @@
 
 #include "CellStructure.hpp"
 #include "Particle.hpp"
+#include "ParticleRange.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
+#include "bonded_interactions/rigid_bond.hpp"
+#include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"

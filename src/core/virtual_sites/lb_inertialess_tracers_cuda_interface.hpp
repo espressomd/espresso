@@ -38,7 +38,8 @@
 void IBM_cuda_mpi_send_velocities(ParticleRange const &particles);
 void IBM_cuda_mpi_get_particles(ParticleRange const &particles);
 
-void ParticleVelocitiesFromLB_GPU(ParticleRange const &particles);
+void ParticleVelocitiesFromLB_GPU(ParticleRange const &particles,
+                                  int this_node);
 
 // ******** data types for CUDA and MPI communication ******
 struct IBM_CUDA_ParticleDataInput {

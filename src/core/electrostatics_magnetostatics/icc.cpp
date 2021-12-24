@@ -32,6 +32,7 @@
 
 #include "icc.hpp"
 
+#include "CellStructure.hpp"
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
 #include "cells.hpp"
@@ -46,6 +47,7 @@
 
 #include <mpi.h>
 
+#include <algorithm>
 #include <cmath>
 #include <cstdlib>
 #include <stdexcept>
@@ -54,16 +56,14 @@
 
 icc_struct icc_cfg;
 
-void init_forces_icc(const ParticleRange &particles,
-                     const ParticleRange &ghosts_particles);
-
 /** Calculate the electrostatic forces between source charges (= real charges)
  *  and wall charges. For each electrostatic method, the proper functions
  *  for short- and long-range parts are called. Long-range parts are calculated
  *  directly, short-range parts need helper functions according to the particle
  *  data organisation. This is a modified version of \ref force_calc.
  */
-void force_calc_icc(const ParticleRange &particles,
+void force_calc_icc(CellStructure &cell_structure,
+                    const ParticleRange &particles,
                     const ParticleRange &ghost_particles);
 
 /** Variant of @ref add_non_bonded_pair_force where only %Coulomb
@@ -81,7 +81,9 @@ inline void add_non_bonded_pair_force_icc(Particle &p1, Particle &p2,
   p2.f.f += std::get<2>(forces);
 #endif
 }
-void icc_iteration(const ParticleRange &particles,
+
+void icc_iteration(CellStructure &cell_structure,
+                   const ParticleRange &particles,
                    const ParticleRange &ghost_particles) {
   if (icc_cfg.n_icc == 0)
     return;
@@ -96,8 +98,8 @@ void icc_iteration(const ParticleRange &particles,
   for (int j = 0; j < icc_cfg.num_iteration; j++) {
     double charge_density_max = 0.;
 
-    force_calc_icc(particles, ghost_particles); /* Calculate electrostatic
-                            forces (SR+LR) excluding source source interaction*/
+    // calculate electrostatic forces (SR+LR) excluding self-interactions
+    force_calc_icc(cell_structure, particles, ghost_particles);
     cell_structure.ghosts_reduce_forces();
 
     double diff = 0;
@@ -177,28 +179,24 @@ void icc_iteration(const ParticleRange &particles,
   on_particle_charge_change();
 }
 
-void force_calc_icc(const ParticleRange &particles,
+void force_calc_icc(CellStructure &cell_structure,
+                    const ParticleRange &particles,
                     const ParticleRange &ghost_particles) {
-  init_forces_icc(particles, ghost_particles);
+  // reset forces
+  for (auto &p : particles) {
+    p.f.f = {};
+  }
+  for (auto &p : ghost_particles) {
+    p.f.f = {};
+  }
 
+  // calc ICC forces
   cell_structure.non_bonded_loop(
       [](Particle &p1, Particle &p2, Distance const &d) {
-        /* calc non-bonded interactions */
         add_non_bonded_pair_force_icc(p1, p2, d.vec21, sqrt(d.dist2), d.dist2);
       });
 
   Coulomb::calc_long_range_force(particles);
-}
-
-void init_forces_icc(const ParticleRange &particles,
-                     const ParticleRange &ghosts_particles) {
-  for (auto &p : particles) {
-    p.f.f = {};
-  }
-
-  for (auto &p : ghosts_particles) {
-    p.f.f = {};
-  }
 }
 
 void mpi_icc_init_local(const icc_struct &icc_cfg_) {

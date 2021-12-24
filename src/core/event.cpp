@@ -56,8 +56,6 @@
 
 #include <utils/mpi/all_compare.hpp>
 
-#include <cstdio>
-
 #include <mpi.h>
 
 /** whether the thermostat has to be reinitialized before integration */

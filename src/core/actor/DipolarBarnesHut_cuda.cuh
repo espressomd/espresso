@@ -83,16 +83,21 @@ struct BHData {
 /// Maximal depth of the Barnes-Hut tree branching.
 #define MAXDEPTH 32
 
-/// Function to set the Barnes-Hut parameters.
-void setBHPrecision(float *epssq, float *itolsq);
+/// Barnes-Hut parameters setter.
+void setBHPrecision(float epssq, float itolsq);
 
 /// An allocation of the GPU device memory and an initialization where it is
 /// needed.
 void allocBHmemCopy(int nbodies, BHData *bh_data);
 
-/// Populating of array pointers allocated in GPU device before.
-/// Copy the particle data to the Barnes-Hut related arrays.
-void fillConstantPointers(float *r, float *dip, BHData bh_data);
+/// A deallocation of the GPU device memory.
+void deallocBH(BHData *bh_data);
+
+/// Copy Barnes-Hut data to @ref bhpara and copy particle data.
+/// @param r       device particle positions to copy
+/// @param dip     device particle dipoles to copy
+/// @param bh_data Barnes-Hut container
+void fill_bh_data(float const *r, float const *dip, BHData const *bh_data);
 
 /// Barnes-Hut CUDA initialization.
 void initBHgpu(int blocks);

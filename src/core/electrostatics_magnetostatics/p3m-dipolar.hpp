@@ -280,12 +280,6 @@ inline double dp3m_pair_energy(Particle const &p1, Particle const &p2,
 
   auto const C_r = (3 * B_r + 2 * alpsq * coeff * exp_adist2) * dist2i;
 
-  /*
-    printf("(%4i %4i) pair energy = %f (B_r=%15.12f C_r=%15.12f)\n",
-    p1.p.identity,p2.p.identity,fac1*(mimj*B_r-mir*mjr*C_r),B_r,C_r);
-  */
-
-  /* old line return fac1 * ( mimj*B_r - mir*mjr * C_r );*/
   return dipole.prefactor * (mimj * B_r - mir * mjr * C_r);
 }
 

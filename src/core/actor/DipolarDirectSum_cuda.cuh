@@ -16,22 +16,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-/// \file
-/// \brief Main of the Bayreuth Immersed-Boundary implementation
 
-#ifndef VIRTUAL_SITES_LB_INERTIALESS_TRACERS_HPP
-#define VIRTUAL_SITES_LB_INERTIALESS_TRACERS_HPP
+#ifndef DIPOLARDIRECTSUM_CUH_
+#define DIPOLARDIRECTSUM_CUH_
 
 #include "config.hpp"
 
-#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
+#ifdef DIPOLAR_DIRECT_SUM
 
-#include "ParticleRange.hpp"
+void DipolarDirectSum_kernel_wrapper_energy(float k, unsigned int n, float *pos,
+                                            float *dip, float box_l[3],
+                                            int periodic[3], float *E);
+void DipolarDirectSum_kernel_wrapper_force(float k, unsigned int n, float *pos,
+                                           float *dip, float *f, float *torque,
+                                           float box_l[3], int periodic[3]);
 
-void IBM_UpdateParticlePositions(ParticleRange const &particles,
-                                 double time_step, int this_node);
-void IBM_ForcesIntoFluid_CPU();
-void IBM_ForcesIntoFluid_GPU(ParticleRange const &particles, int this_node);
+#endif // DIPOLAR_DIRECT_SUM
 
-#endif // VIRTUAL_SITES_INERTIALESS_TRACERS
-#endif
+#endif /* DIPOLARDIRECTSUM_CUH_ */
