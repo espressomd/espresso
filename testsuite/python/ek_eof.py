@@ -51,8 +51,11 @@ class EKEOF(ut.TestCase):
 
         eksolver = espressomd.EKSpecies.EKFFT(
             lattice=lattice, permittivity=eps0 * epsR)
-        self.system.ekcontainer.add(ekspecies, tau=1.0, solver=eksolver)
+        self.system.ekcontainer.add(ekspecies)
         self.system.ekcontainer.add(ekwallcharge)
+
+        self.system.ekcontainer.tau = 1.0
+        self.system.ekcontainer.solver = eksolver
 
         lb_fluid = espressomd.lb.LBFluidWalberla(lattice=lattice,
                                                  agrid=self.AGRID, density=1.0, viscosity=visc, tau=1.0)

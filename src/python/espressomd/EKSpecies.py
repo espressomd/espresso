@@ -25,22 +25,26 @@ class EKNone(ScriptObjectRegistry):
 class EKContainer(ScriptObjectRegistry):
     _so_name = "walberla::EKContainer"
 
-    def add(self, ekspecies, tau=None, solver=None):
+    @property
+    def tau(self):
+        return self.call_method("get_tau")
+
+    @tau.setter
+    def tau(self, tau):
+        self.call_method("set_tau", tau=tau)
+
+    @property
+    def solver(self):
+        raise NotImplementedError(
+            "PoissonSolver object property is not implemented")
+
+    @solver.setter
+    def solver(self, solver):
+        self.call_method("set_poissonsolver", object=solver)
+
+    def add(self, ekspecies):
         if not isinstance(ekspecies, EKSpecies):
             raise TypeError("EKSpecies object is not of correct type.")
-
-        if tau is not None:
-            self.call_method("set_tau", tau=tau)
-        elif self.call_method("get_tau") <= 0:
-            # check that tau is already non-zero
-            raise RuntimeError(
-                "EK timestep is not already set. Please provide a tau.")
-
-        if solver is not None:
-            self.call_method("set_poissonsolver", object=solver)
-        elif not self.call_method("is_poissonsolver_set"):
-            raise RuntimeError(
-                "EK solver is not already set. Please provide a solver.")
 
         self.call_method("add", object=ekspecies)
 
@@ -51,13 +55,6 @@ class EKContainer(ScriptObjectRegistry):
 
     def clear(self):
         self.call_method("clear")
-
-    # setting timestep with @property does not work for some reason
-    def get_tau(self):
-        return self.call_method("get_tau")
-
-    def set_tau(self, tau):
-        self.call_method("set_tau", tau=tau)
 
 
 @script_interface_register
