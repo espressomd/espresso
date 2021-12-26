@@ -202,7 +202,7 @@ cdef extern from "rotation.hpp":
     Vector3d convert_vector_space_to_body(const particle & p, const Vector3d & v)
     void rotate_particle(int pid, const Vector3d & axis, double angle)
 
-cdef extern from "rattle.hpp":
+cdef extern from "bonded_interactions/rigid_bond.hpp":
     extern int n_rigidbonds
 
 cdef class ParticleHandle:

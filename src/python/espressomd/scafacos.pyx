@@ -98,7 +98,7 @@ IF SCAFACOS == 1:
             # Re-add the prefactor to the parameter set
             if self.dipolar:
                 IF DIPOLES == 1:
-                    res["prefactor"] = magnetostatics.dipole.prefactor
+                    res["prefactor"] = magnetostatics.get_Dprefactor()
                 pass
             else:
                 IF ELECTROSTATICS == 1:

@@ -903,42 +903,6 @@ public:
 
   LatticeWalberla const &lattice() const override { return *m_lattice; }
 
-  std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>>
-  node_indices_positions(bool include_ghosts = false) const override {
-    int ghost_offset = 0;
-    if (include_ghosts)
-      ghost_offset = lattice().get_ghost_layers();
-    auto const &blocks = lattice().get_blocks();
-    std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>> res;
-    for (auto block = blocks->begin(); block != blocks->end(); ++block) {
-      auto left = block->getAABB().min();
-      // Lattice constant is 1, node centers are offset by .5
-      Utils::Vector3d pos_offset =
-          to_vector3d(left) + Utils::Vector3d::broadcast(.5);
-
-      // Lattice constant is 1, so cast left corner position to ints
-      Utils::Vector3i index_offset =
-          Utils::Vector3i{int(left[0]), int(left[1]), int(left[2])};
-
-      // Get field data which knows about the indices
-      // In the loop, x,y,z are in block-local coordinates
-      auto pdf_field = block->template getData<PdfField>(m_pdf_field_id);
-      for (int x = -ghost_offset; x < int(pdf_field->xSize()) + ghost_offset;
-           x++) {
-        for (int y = -ghost_offset; y < int(pdf_field->ySize()) + ghost_offset;
-             y++) {
-          for (int z = -ghost_offset;
-               z < int(pdf_field->zSize()) + ghost_offset; z++) {
-            res.push_back({index_offset + Utils::Vector3i{x, y, z},
-                           pos_offset + Utils::Vector3d{double(x), double(y),
-                                                        double(z)}});
-          }
-        }
-      }
-    }
-    return res;
-  }
-
   [[nodiscard]] std::size_t get_velocity_field_id() const override {
     return m_velocity_field_id;
   }

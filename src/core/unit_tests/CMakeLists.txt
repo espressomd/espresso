@@ -27,6 +27,8 @@ unit_test(NAME RuntimeErrorCollector_test SRC RuntimeErrorCollector_test.cpp
 unit_test(NAME EspressoSystemStandAlone_test SRC
           EspressoSystemStandAlone_test.cpp DEPENDS EspressoCore Boost::mpi
           MPI::MPI_CXX NUM_PROC 2)
+unit_test(NAME EspressoSystemInterface_test SRC
+          EspressoSystemInterface_test.cpp DEPENDS EspressoCore Boost::mpi)
 unit_test(NAME MpiCallbacks_test SRC MpiCallbacks_test.cpp DEPENDS
           EspressoUtils Boost::mpi MPI::MPI_CXX NUM_PROC 2)
 unit_test(NAME ParticleIterator_test SRC ParticleIterator_test.cpp DEPENDS

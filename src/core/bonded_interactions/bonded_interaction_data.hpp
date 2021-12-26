@@ -39,7 +39,6 @@
 #include "object-in-fluid/oif_global_forces_params.hpp"
 #include "object-in-fluid/oif_local_forces.hpp"
 #include "quartic.hpp"
-#include "rattle.hpp"
 #include "rigid_bond.hpp"
 #include "thermalized_bond.hpp"
 
