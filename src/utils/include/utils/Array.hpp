@@ -212,8 +212,10 @@ auto get(Array<T, N> const &a) -> std::enable_if_t<(I < N), const T &> {
 
 } // namespace Utils
 
+UTILS_ARRAY_BOOST_MPI_T(Utils::detail::Storage, N)
 UTILS_ARRAY_BOOST_CLASS(Utils::detail::Storage, N, object_serializable)
 UTILS_ARRAY_BOOST_TRACK(Utils::detail::Storage, N, track_never)
+UTILS_ARRAY_BOOST_MPI_T(Utils::Array, N)
 UTILS_ARRAY_BOOST_CLASS(Utils::Array, N, object_serializable)
 UTILS_ARRAY_BOOST_TRACK(Utils::Array, N, track_never)
 

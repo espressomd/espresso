@@ -239,6 +239,27 @@ BOOST_AUTO_TEST_CASE(text_archive_test) {
   BOOST_TEST(buffer_vector == buffer_storage, boost::test_tools::per_element());
 }
 
+template <template <class> class Trait> void constexpr assert_has_trait() {
+  struct S {};
+  // arrays of standard types have the trait
+  static_assert(Trait<Utils::detail::Storage<int, 2>>::value, "");
+  static_assert(Trait<Utils::Array<int, 2>>::value, "");
+  static_assert(Trait<Utils::Vector<int, 2>>::value, "");
+  static_assert(Trait<Utils::Vector3i>::value, "");
+  static_assert(Trait<Utils::Vector3d>::value, "");
+  // arrays of non-standard types don't have the trait
+  static_assert(!Trait<S>::value, "");
+  static_assert(!Trait<Utils::detail::Storage<S, 2>>::value, "");
+  static_assert(!Trait<Utils::Array<S, 2>>::value, "");
+  static_assert(!Trait<Utils::Vector<S, 2>>::value, "");
+}
+
+BOOST_AUTO_TEST_CASE(serialization_traits_test) {
+  // arrays of MPI datatypes can be serialized as MPI datatypes, but
+  // arrays of custom datatypes cannot be serialized as MPI datatypes
+  assert_has_trait<boost::mpi::is_mpi_datatype>();
+}
+
 int main(int argc, char **argv) {
   boost::mpi::environment mpi_env(argc, argv);
 

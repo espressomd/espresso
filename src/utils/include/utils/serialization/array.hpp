@@ -19,6 +19,7 @@
 #ifndef UTILS_SERIALIZATION_ARRAY_HPP
 #define UTILS_SERIALIZATION_ARRAY_HPP
 
+#include <boost/mpl/bool_fwd.hpp>
 #include <boost/mpl/greater.hpp>
 #include <boost/mpl/int.hpp>
 #include <boost/mpl/integral_c_tag.hpp>
@@ -32,6 +33,26 @@
 #define UTILS_ARRAY_TEMPLATE_T_0 template <typename T>
 #define UTILS_ARRAY_CONTAINER_T_N(Container) Container<T, N>
 #define UTILS_ARRAY_CONTAINER_T_0(Container) Container<T>
+
+// forward declare
+namespace boost {
+namespace mpi {
+template <typename T> struct is_mpi_datatype;
+} /* namespace mpi */
+} /* namespace boost */
+
+/**
+ * @brief Mark array types as MPI data types.
+ * @tparam Container            Template template type of the array
+ * @tparam N                    N if @p Container uses std::size_t N, else 0
+ */
+#define UTILS_ARRAY_BOOST_MPI_T(Container, N)                                  \
+  namespace boost {                                                            \
+  namespace mpi {                                                              \
+  UTILS_ARRAY_TEMPLATE_T_##N struct is_mpi_datatype<                           \
+      UTILS_ARRAY_CONTAINER_T_##N(Container)> : public is_mpi_datatype<T> {};  \
+  } /* namespace mpi */                                                        \
+  } /* namespace boost */
 
 /**
  * @brief Redefinition of @c BOOST_CLASS_IMPLEMENTATION for array types.
