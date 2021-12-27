@@ -258,6 +258,9 @@ BOOST_AUTO_TEST_CASE(serialization_traits_test) {
   // arrays of MPI datatypes can be serialized as MPI datatypes, but
   // arrays of custom datatypes cannot be serialized as MPI datatypes
   assert_has_trait<boost::mpi::is_mpi_datatype>();
+  // arrays of bitwise serializable MPI datatypes are bitwise serializable,
+  // but arrays of custom datatypes are not bitwise serializable
+  assert_has_trait<boost::serialization::is_bitwise_serializable>();
 }
 
 int main(int argc, char **argv) {

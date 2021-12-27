@@ -23,6 +23,7 @@
 #include <boost/mpl/greater.hpp>
 #include <boost/mpl/int.hpp>
 #include <boost/mpl/integral_c_tag.hpp>
+#include <boost/serialization/is_bitwise_serializable.hpp>
 #include <boost/serialization/level.hpp>
 #include <boost/serialization/tracking.hpp>
 #include <boost/serialization/tracking_enum.hpp>
@@ -52,6 +53,20 @@ template <typename T> struct is_mpi_datatype;
   UTILS_ARRAY_TEMPLATE_T_##N struct is_mpi_datatype<                           \
       UTILS_ARRAY_CONTAINER_T_##N(Container)> : public is_mpi_datatype<T> {};  \
   } /* namespace mpi */                                                        \
+  } /* namespace boost */
+
+/**
+ * @brief Mark array types as MPI bitwise serializable.
+ * @tparam Container            Template template type of the array
+ * @tparam N                    N if @p Container uses std::size_t N, else 0
+ */
+#define UTILS_ARRAY_BOOST_BIT_S(Container, N)                                  \
+  namespace boost {                                                            \
+  namespace serialization {                                                    \
+  UTILS_ARRAY_TEMPLATE_T_##N struct is_bitwise_serializable<                   \
+      UTILS_ARRAY_CONTAINER_T_##N(Container)>                                  \
+      : public is_bitwise_serializable<T> {};                                  \
+  } /* namespace serialization */                                              \
   } /* namespace boost */
 
 /**

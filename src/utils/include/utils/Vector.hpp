@@ -502,6 +502,7 @@ template <typename T> struct deduce_vec<Utils::Vector<T, 3>, 3> {
 } // namespace boost
 
 UTILS_ARRAY_BOOST_MPI_T(Utils::Vector, N)
+UTILS_ARRAY_BOOST_BIT_S(Utils::Vector, N)
 UTILS_ARRAY_BOOST_CLASS(Utils::Vector, N, object_serializable)
 UTILS_ARRAY_BOOST_TRACK(Utils::Vector, N, track_never)
 
