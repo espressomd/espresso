@@ -33,6 +33,7 @@
 
 #include <utils/Array.hpp>
 #include <utils/Vector.hpp>
+#include <utils/quaternion.hpp>
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
@@ -74,9 +75,14 @@ auto make_container() {
   return Container<Testing::T, Testing::N>{};
 }
 
+template <template <typename> class Container> auto make_container() {
+  return Container<Testing::T>{};
+}
+
 /** Initialize an array with reference values. */
-template <template <typename, std::size_t> class A, typename T, std::size_t N>
-void constexpr init_container(A<T, N> &array) {
+template <template <typename, std::size_t...> class A, typename T,
+          std::size_t... N>
+void constexpr init_container(A<T, N...> &array) {
   for (std::size_t i = 0; i < Testing::N; ++i) {
     array[i] = Testing::values[i];
   }
@@ -90,14 +96,20 @@ void constexpr init_container(Utils::detail::Storage<T, N> &array) {
 }
 
 /** Convert an array to a container type that provides method @c operator[] */
-template <template <typename, std::size_t> class A, typename T, std::size_t N>
-auto constexpr testable_container(A<T, N> const &array) {
+template <template <typename, std::size_t...> class A, typename T,
+          std::size_t... N>
+auto constexpr testable_container(A<T, N...> const &array) {
   return array;
 }
 
 template <typename T, std::size_t N>
 auto constexpr testable_container(Utils::detail::Storage<T, N> const &s) {
   return Utils::Array<T, N>{s};
+}
+
+template <typename T>
+auto constexpr testable_container(Utils::Quaternion<T> const &s) {
+  return s.m_data;
 }
 
 /** Convert a string buffer to a string vector. */
@@ -125,7 +137,7 @@ auto to_vector(boost::mpi::packed_archive const &buffer_in) {
  *  the original array remains untouched. Return the string representation
  *  of the serialization buffer.
  */
-template <template <typename, std::size_t> class Container>
+template <template <typename, std::size_t...> class Container>
 auto create_text_archive() {
   std::stringstream buffer;
   auto values_send = Testing::make_container<Container>();
@@ -148,7 +160,7 @@ auto create_text_archive() {
  *  the original array remains untouched. Return the bytestring representation
  *  of the serialization buffer.
  */
-template <template <typename, std::size_t> class Container>
+template <template <typename, std::size_t...> class Container>
 auto create_mpi_archive(boost::mpi::communicator const &comm) {
   boost::mpi::packed_archive buffer;
   auto values_send = Testing::make_container<Container>();
@@ -226,17 +238,21 @@ BOOST_AUTO_TEST_CASE(mpi_archive_test) {
   auto const buffer_array = create_mpi_archive<Utils::Array>(comm);
   auto const buffer_vector = create_mpi_archive<Utils::Vector>(comm);
   auto const buffer_storage = create_mpi_archive<Utils::detail::Storage>(comm);
+  auto const buffer_quat = create_mpi_archive<Utils::Quaternion>(comm);
   BOOST_TEST(buffer_array == buffer_ref, boost::test_tools::per_element());
   BOOST_TEST(buffer_vector == buffer_ref, boost::test_tools::per_element());
   BOOST_TEST(buffer_storage == buffer_ref, boost::test_tools::per_element());
+  BOOST_TEST(buffer_quat == buffer_ref, boost::test_tools::per_element());
 }
 
 BOOST_AUTO_TEST_CASE(text_archive_test) {
   auto const buffer_array = create_text_archive<Utils::Array>();
   auto const buffer_vector = create_text_archive<Utils::Vector>();
   auto const buffer_storage = create_text_archive<Utils::detail::Storage>();
+  auto const buffer_quat = create_text_archive<Utils::Quaternion>();
   BOOST_TEST(buffer_array == buffer_storage, boost::test_tools::per_element());
   BOOST_TEST(buffer_vector == buffer_storage, boost::test_tools::per_element());
+  BOOST_TEST(buffer_quat == buffer_storage, boost::test_tools::per_element());
 }
 
 template <template <class> class Trait> void constexpr assert_has_trait() {
@@ -247,11 +263,13 @@ template <template <class> class Trait> void constexpr assert_has_trait() {
   static_assert(Trait<Utils::Vector<int, 2>>::value, "");
   static_assert(Trait<Utils::Vector3i>::value, "");
   static_assert(Trait<Utils::Vector3d>::value, "");
+  static_assert(Trait<Utils::Quaternion<float>>::value, "");
   // arrays of non-standard types don't have the trait
   static_assert(!Trait<S>::value, "");
   static_assert(!Trait<Utils::detail::Storage<S, 2>>::value, "");
   static_assert(!Trait<Utils::Array<S, 2>>::value, "");
   static_assert(!Trait<Utils::Vector<S, 2>>::value, "");
+  static_assert(!Trait<Utils::Quaternion<S>>::value, "");
 }
 
 BOOST_AUTO_TEST_CASE(serialization_traits_test) {

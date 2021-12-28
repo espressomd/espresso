@@ -27,7 +27,10 @@
 #include <boost/qvm/quat_operations.hpp>
 #include <boost/qvm/quat_traits.hpp>
 #include <boost/qvm/quat_vec_operations.hpp>
+
 #include <boost/serialization/array.hpp>
+#include <boost/serialization/is_bitwise_serializable.hpp>
+#include <boost/serialization/level.hpp>
 
 #include "utils/Array.hpp"
 #include "utils/Vector.hpp"
@@ -222,5 +225,12 @@ struct deduce_quat2<Utils::Quaternion<T>, Utils::Quaternion<U>> {
 };
 
 } // namespace qvm
+
 } // namespace boost
+
+UTILS_ARRAY_BOOST_MPI_T(Utils::Quaternion, 0)
+UTILS_ARRAY_BOOST_BIT_S(Utils::Quaternion, 0)
+UTILS_ARRAY_BOOST_CLASS(Utils::Quaternion, 0, object_serializable)
+UTILS_ARRAY_BOOST_TRACK(Utils::Quaternion, 0, track_never)
+
 #endif // SRC_UTILS_INCLUDE_UTILS_QUATERNION_HPP
