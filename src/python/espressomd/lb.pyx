@@ -670,19 +670,27 @@ class LBFluidNode(ScriptInterfaceHelper):
 
     @index.setter
     def index(self, value):
-        raise RuntimeError("Property 'index' is read-only.")
+        raise RuntimeError("Parameter 'index' is read-only.")
+
+    @property
+    def density(self):
+        return self.call_method('get_density')
+
+    @density.setter
+    def density(self, value):
+        self.call_method('set_density', value=value)
 
     @property
     def population(self):
-        return utils.array_locked(self._population)
+        return utils.array_locked(self.call_method('get_population'))
 
     @population.setter
     def population(self, value):
-        self._population = value
+        self.call_method('set_population', value=value)
 
     @property
     def pressure_tensor(self):
-        p_tensor = self._pressure_tensor
+        p_tensor = self.call_method('get_pressure_tensor')
         p_tensor = [[p_tensor[0], p_tensor[1], p_tensor[3]],
                     [p_tensor[1], p_tensor[2], p_tensor[4]],
                     [p_tensor[3], p_tensor[4], p_tensor[5]]]
@@ -691,6 +699,14 @@ class LBFluidNode(ScriptInterfaceHelper):
     @pressure_tensor.setter
     def pressure_tensor(self, value):
         raise RuntimeError("Property 'pressure_tensor' is read-only.")
+
+    @property
+    def is_boundary(self):
+        return self.call_method('get_is_boundary')
+
+    @is_boundary.setter
+    def is_boundary(self, value):
+        raise RuntimeError("Property 'is_boundary' is read-only.")
 
     @property
     def boundary(self):
@@ -703,7 +719,7 @@ class LBFluidNode(ScriptInterfaceHelper):
             If the node is not a boundary node
         """
 
-        velocity = self.velocity_at_boundary
+        velocity = self.call_method('get_velocity_at_boundary')
         if velocity is not None:
             return VelocityBounceBack(velocity)
         return None
@@ -721,12 +737,36 @@ class LBFluidNode(ScriptInterfaceHelper):
 
         if isinstance(value, VelocityBounceBack):
             HydrodynamicInteraction._check_mach_limit(value.velocity)
-            self.velocity_at_boundary = value.velocity
+            self.call_method('set_velocity_at_boundary', value=value.velocity)
         elif value is None:
-            self.velocity_at_boundary = None
+            self.call_method('set_velocity_at_boundary', value=None)
         else:
             raise ValueError(
                 "value must be an instance of VelocityBounceBack or None")
+
+    @property
+    def boundary_force(self):
+        return self.call_method('get_boundary_force')
+
+    @boundary_force.setter
+    def boundary_force(self, value):
+        raise RuntimeError("Property 'boundary_force' is read-only.")
+
+    @property
+    def velocity(self):
+        return self.call_method('get_velocity')
+
+    @velocity.setter
+    def velocity(self, value):
+        self.call_method('set_velocity', value=value)
+
+    @property
+    def last_applied_force(self):
+        return self.call_method('get_last_applied_force')
+
+    @last_applied_force.setter
+    def last_applied_force(self, value):
+        self.call_method('set_last_applied_force', value=value)
 
     def __eq__(self, obj1):
         index_1 = np.array(self.index)

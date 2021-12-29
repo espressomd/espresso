@@ -129,7 +129,6 @@ class LBTest:
 
     def test_raise_if_not_active(self):
         lbf = self.lb_class(**self.params, **self.lb_params)
-
         # check exceptions from LB actor
         with self.assertRaisesRegex(RuntimeError, "Cannot set 'rng_state' before walberla is initialized"):
             lbf.rng_state = 5
@@ -140,39 +139,23 @@ class LBTest:
         with self.assertRaisesRegex(RuntimeError, "LB not activated"):
             lbf.get_interpolated_velocity(pos=[0, 0, 0])
 
-        # check exceptions from LB node
+    def test_node_exceptions(self):
+        lbf = self.lb_class(**self.params, **self.lb_params)
         self.system.actors.add(lbf)
         node = lbf[0, 0, 0]
-        self.system.actors.remove(lbf)
-        lbf = None
-        with self.assertRaises(RuntimeError):
-            node.density
-        with self.assertRaises(RuntimeError):
-            node.density = 1.
-        with self.assertRaises(RuntimeError):
-            node.velocity
-        with self.assertRaises(RuntimeError):
-            node.velocity = [1, 1, 1]
-        with self.assertRaises(RuntimeError):
-            node.boundary_force
-        with self.assertRaises(RuntimeError):
-            node.boundary
-        with self.assertRaises(RuntimeError):
-            node.last_applied_force
-        with self.assertRaises(RuntimeError):
-            node.last_applied_force = [1, 1, 1]
-        with self.assertRaises(RuntimeError):
-            node.pressure_tensor
-        with self.assertRaises(RuntimeError):
+        # check exceptions from LB node
+        with self.assertRaisesRegex(RuntimeError, "Property 'boundary_force' is read-only"):
+            node.boundary_force = [1, 2, 3]
+        with self.assertRaisesRegex(RuntimeError, "Property 'pressure_tensor' is read-only"):
             node.pressure_tensor = np.eye(3, 3)
-        with self.assertRaises(RuntimeError):
-            node.is_boundary
-        with self.assertRaises(RuntimeError):
-            node.is_boundary = 1
-        with self.assertRaises(RuntimeError):
-            node.population
-        with self.assertRaises(RuntimeError):
-            node.population = np.zeros(19)
+        with self.assertRaisesRegex(RuntimeError, "Property 'is_boundary' is read-only"):
+            node.is_boundary = True
+        # check property types
+        array_locked = espressomd.utils.array_locked
+        self.assertIsInstance(node.pressure_tensor, array_locked)
+        # self.assertIsInstance(node.boundary_force, array_locked) # TODO
+        self.assertIsInstance(node.velocity, array_locked)
+        self.assertIsInstance(node.last_applied_force, array_locked)
 
     def test_pressure_tensor_observable(self):
         """
@@ -266,7 +249,7 @@ class LBTest:
             lbf[0, 0, out_of_bounds].velocity
         # node index
         node = lbf[1, 2, 3]
-        with self.assertRaisesRegex(RuntimeError, "Property 'index' is read-only"):
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'index' is read-only"):
             node.index = [2, 4, 6]
         np.testing.assert_array_equal(np.copy(node.index), [1, 2, 3])
         retval = node.call_method('override_index', index=[2, 4, 6])
