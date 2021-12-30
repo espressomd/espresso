@@ -22,13 +22,6 @@ IF NPT:
     from .thermostat cimport nptiso
 from . cimport utils
 from .lb import HydrodynamicInteraction
-from .lb cimport lb_lbcoupling_set_gamma
-from .lb cimport lb_lbcoupling_get_gamma
-from .lb cimport lb_lbcoupling_set_rng_state
-from .lb cimport lb_lbcoupling_get_rng_state
-from .lb cimport lb_lbcoupling_is_seed_required
-from .lb cimport mpi_bcast_lb_particle_coupling
-from .lb cimport lb_lbfluid_get_kT
 
 
 def AssertThermostatType(*allowedthermostats):
