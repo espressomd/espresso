@@ -152,31 +152,6 @@ const Utils::Vector6d lb_lbfluid_get_pressure_tensor() {
   throw NoLBActive();
 }
 
-void lb_lbfluid_update_boundary_from_shape(
-    std::vector<int> const &raster_flat,
-    std::vector<double> const &slip_velocity_flat) {
-  if (lattice_switch == ActiveLB::WALBERLA) {
-#ifdef LB_WALBERLA
-    ::Communication::mpiCallbacks().call_all(
-        Walberla::update_boundary_from_shape, raster_flat, slip_velocity_flat);
-#endif
-  } else {
-    throw NoLBActive();
-  }
-}
-
-void lb_lbfluid_update_boundary_from_list(std::vector<int> const &nodes_flat,
-                                          std::vector<double> const &vel_flat) {
-  if (lattice_switch == ActiveLB::WALBERLA) {
-#ifdef LB_WALBERLA
-    ::Communication::mpiCallbacks().call_all(
-        Walberla::update_boundary_from_list, nodes_flat, vel_flat);
-#endif
-  } else {
-    throw NoLBActive();
-  }
-}
-
 ActiveLB lb_lbfluid_get_lattice_switch() { return lattice_switch; }
 
 Utils::Vector3d lb_lbfluid_calc_fluid_momentum() {

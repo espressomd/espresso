@@ -24,6 +24,7 @@
 #ifdef LB_WALBERLA
 
 #include <walberla_bridge/LBWalberlaBase.hpp>
+#include <walberla_bridge/LBWalberlaNodeState.hpp>
 
 #include "LatticeWalberla.hpp"
 
@@ -236,6 +237,18 @@ public:
       m_lb_fluid->clear_boundaries();
       m_lb_fluid->ghost_communication();
       on_lb_boundary_conditions_change();
+    }
+    if (name == "add_boundary_from_shape") {
+      m_lb_fluid->update_boundary_from_shape(
+          get_value<std::vector<int>>(params, "raster"),
+          get_value<std::vector<double>>(params, "velocity"));
+    }
+    if (name == "add_boundary_from_list") {
+      m_lb_fluid->update_boundary_from_list(
+          get_value<std::vector<int>>(params, "nodes"),
+          get_value<std::vector<double>>(params, "velocity"));
+    } else if (name == "get_lattice_speed") {
+      return 1. / m_conv_speed;
     }
 
     return {};

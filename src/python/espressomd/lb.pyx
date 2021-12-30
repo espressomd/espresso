@@ -21,7 +21,7 @@ import os
 import itertools
 import numpy as np
 cimport numpy as np
-from .script_interface import ScriptInterfaceHelper, script_interface_register
+from .script_interface import ScriptInterfaceHelper, script_interface_register, array_variant
 from .shapes import Shape
 from . import utils
 
@@ -190,10 +190,9 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
 
     @classmethod
     def _check_mach_limit(cls, velocities):
-        lattice_vel = lb_lbfluid_get_lattice_speed()
         vel_max = cls.mach_limit(cls)
         velocities = np.reshape(velocities, (-1, 3))
-        if np.any(np.linalg.norm(velocities, axis=1) > vel_max * lattice_vel):
+        if np.any(np.linalg.norm(velocities, axis=1) > vel_max):
             speed_of_sound = 1. / np.sqrt(3.)
             mach_number = vel_max / speed_of_sound
             raise ValueError(f'Slip velocity exceeds Mach {mach_number:.2f}')
@@ -517,21 +516,20 @@ IF LB_WALBERLA:
                     f'Cannot process velocity grid of shape {np.shape(velocity)}')
 
             # range checks
+            lattice_speed = self.call_method('get_lattice_speed')
             velocity = np.array(velocity, dtype=float).reshape((-1, 3))
+            velocity *= 1. / lattice_speed
             self._check_mach_limit(velocity)
 
-            velocity *= 1. / lb_lbfluid_get_lattice_speed()
             velocity_flat = velocity.reshape((-1,))
             mask_flat = shape.call_method('rasterize', grid_size=self.shape,
                                           grid_spacing=self._params['agrid'],
                                           grid_offset=0.5)
 
-            cdef double[::1] velocity_view = np.ascontiguousarray(
-                velocity_flat, dtype=np.double)
-            cdef int[::1] raster_view = np.ascontiguousarray(
-                mask_flat, dtype=np.int32)
-            python_lb_lbfluid_update_boundary_from_shape(
-                raster_view, velocity_view)
+            self.call_method(
+                'add_boundary_from_shape',
+                raster=array_variant(mask_flat),
+                velocity=array_variant(velocity_flat))
 
         def add_boundary_from_list(self, nodes,
                                    velocity=np.zeros(3, dtype=float),
@@ -567,19 +565,16 @@ IF LB_WALBERLA:
                     f'Node indices and velocities must have the same shape, got {nodes.shape} and {velocity.shape}')
 
             # range checks
+            lattice_speed = self.call_method('get_lattice_speed')
+            velocity *= 1. / lattice_speed
             self._check_mach_limit(velocity)
             if np.any(np.logical_or(np.max(nodes, axis=0) >= self.shape,
                                     np.min(nodes, axis=0) < 0)):
                 raise ValueError(
                     f'Node indices must be in the range (0, 0, 0) to {self.shape}')
 
-            velocity *= 1. / lb_lbfluid_get_lattice_speed()
-            cdef double[::1] velocity_view = np.ascontiguousarray(
-                velocity.reshape((-1,)), dtype=np.double)
-            cdef int[::1] nodes_view = np.ascontiguousarray(
-                nodes.reshape((-1,)), dtype=np.int32)
-            python_lb_lbfluid_update_boundary_from_list(
-                nodes_view, velocity_view)
+            self.call_method('add_boundary_from_list', nodes=array_variant(
+                nodes.reshape((-1,))), velocity=array_variant(velocity.reshape((-1,))))
 
         def get_nodes_in_shape(self, shape):
             """Provides a generator for iterating over all lb nodes inside the given shape"""
@@ -736,7 +731,9 @@ class LBFluidNode(ScriptInterfaceHelper):
         """
 
         if isinstance(value, VelocityBounceBack):
-            HydrodynamicInteraction._check_mach_limit(value.velocity)
+            lattice_speed = self.call_method('get_lattice_speed')
+            HydrodynamicInteraction._check_mach_limit(
+                np.array(value.velocity) / lattice_speed)
             self.call_method('set_velocity_at_boundary', value=value.velocity)
         elif value is None:
             self.call_method('set_velocity_at_boundary', value=None)

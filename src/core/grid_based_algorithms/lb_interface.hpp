@@ -95,19 +95,6 @@ double lb_lbfluid_get_lattice_speed();
  */
 const Utils::Vector6d lb_lbfluid_get_pressure_tensor();
 
-/**
- * @brief Add a boundary.
- */
-void lb_lbfluid_update_boundary_from_shape(
-    std::vector<int> const &raster_flat,
-    std::vector<double> const &slip_velocity_flat);
-
-/**
- * @brief Update a boundary slip velocity.
- */
-void lb_lbfluid_update_boundary_from_list(std::vector<int> const &nodes_flat,
-                                          std::vector<double> const &vel_flat);
-
 Utils::Vector3d lb_lbfluid_calc_fluid_momentum();
 
 /**

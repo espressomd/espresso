@@ -162,6 +162,8 @@ public:
     } else if (name == "get_last_applied_force") {
       auto result = m_lb_fluid->get_node_last_applied_force(m_index);
       return main_rank_reduce(result, m_conv_force);
+    } else if (name == "get_lattice_speed") {
+      return 1. / m_conv_velocity;
     }
 
     return {};

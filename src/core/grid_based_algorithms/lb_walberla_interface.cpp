@@ -22,37 +22,16 @@
 
 #include "MpiCallbacks.hpp"
 #include "communication.hpp"
-#include "event.hpp"
 #include "lb_interface.hpp"
 #include "lb_walberla_instance.hpp"
-
-#include <LBWalberlaNodeState.hpp>
 
 #include <utils/Vector.hpp>
 
 #include <boost/optional.hpp>
-#include <boost/serialization/vector.hpp>
 
 #include <functional>
-#include <vector>
 
 namespace Walberla {
-
-void update_boundary_from_shape(std::vector<int> const &raster_flat,
-                                std::vector<double> const &slip_velocity_flat) {
-  lb_walberla()->update_boundary_from_shape(raster_flat, slip_velocity_flat);
-  on_lb_boundary_conditions_change();
-}
-
-REGISTER_CALLBACK(update_boundary_from_shape)
-
-void update_boundary_from_list(std::vector<int> const &nodes_flat,
-                               std::vector<double> const &vel_flat) {
-  lb_walberla()->update_boundary_from_list(nodes_flat, vel_flat);
-  on_lb_boundary_conditions_change();
-}
-
-REGISTER_CALLBACK(update_boundary_from_list)
 
 Utils::Vector3d get_momentum() { return lb_walberla()->get_momentum(); }
 
