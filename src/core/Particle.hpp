@@ -27,6 +27,8 @@
 #include <utils/math/quaternion.hpp>
 #include <utils/quaternion.hpp>
 
+#include <boost/serialization/is_bitwise_serializable.hpp>
+#include <boost/serialization/level.hpp>
 #include <boost/serialization/vector.hpp>
 
 #include <cstdint>
@@ -150,7 +152,6 @@ struct ParticleProperties {
   double dipm = 0.;
 #endif
 
-#ifdef VIRTUAL_SITES
 #ifdef VIRTUAL_SITES_RELATIVE
   /** The following properties define, with respect to which real particle a
    *  virtual site is placed and at what distance. The relative orientation of
@@ -175,7 +176,6 @@ struct ParticleProperties {
     }
   } vs_relative;
 #endif // VIRTUAL_SITES_RELATIVE
-#endif // VIRTUAL_SITES
 
 #ifdef THERMOSTAT_PER_PARTICLE
 /** Friction coefficient for translation */
@@ -470,5 +470,33 @@ private:
 #endif
   }
 };
+
+BOOST_CLASS_IMPLEMENTATION(Particle, object_serializable)
+BOOST_CLASS_IMPLEMENTATION(ParticleParametersSwimming, object_serializable)
+BOOST_CLASS_IMPLEMENTATION(ParticleProperties, object_serializable)
+BOOST_CLASS_IMPLEMENTATION(ParticlePosition, object_serializable)
+BOOST_CLASS_IMPLEMENTATION(ParticleMomentum, object_serializable)
+BOOST_CLASS_IMPLEMENTATION(ParticleForce, object_serializable)
+BOOST_CLASS_IMPLEMENTATION(ParticleLocal, object_serializable)
+#ifdef BOND_CONSTRAINT
+BOOST_CLASS_IMPLEMENTATION(ParticleRattle, object_serializable)
+#endif
+#ifdef VIRTUAL_SITES_RELATIVE
+BOOST_CLASS_IMPLEMENTATION(decltype(ParticleProperties::vs_relative),
+                           object_serializable)
+#endif
+
+BOOST_IS_BITWISE_SERIALIZABLE(ParticleParametersSwimming)
+BOOST_IS_BITWISE_SERIALIZABLE(ParticleProperties)
+BOOST_IS_BITWISE_SERIALIZABLE(ParticlePosition)
+BOOST_IS_BITWISE_SERIALIZABLE(ParticleMomentum)
+BOOST_IS_BITWISE_SERIALIZABLE(ParticleForce)
+BOOST_IS_BITWISE_SERIALIZABLE(ParticleLocal)
+#ifdef BOND_CONSTRAINT
+BOOST_IS_BITWISE_SERIALIZABLE(ParticleRattle)
+#endif
+#ifdef VIRTUAL_SITES_RELATIVE
+BOOST_IS_BITWISE_SERIALIZABLE(decltype(ParticleProperties::vs_relative))
+#endif
 
 #endif
