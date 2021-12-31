@@ -111,7 +111,7 @@ public:
       auto result = m_lb_fluid->get_node_is_boundary(m_index);
       bool is_boundary = (result) ? *result : false;
       is_boundary =
-          boost::mpi::all_reduce(comm_cart, is_boundary, std::logical_or());
+          boost::mpi::all_reduce(comm_cart, is_boundary, std::logical_or<>());
       if (is_boundary) {
         auto result = m_lb_fluid->get_node_velocity_at_boundary(m_index);
         return main_rank_reduce(result, m_conv_velocity);
