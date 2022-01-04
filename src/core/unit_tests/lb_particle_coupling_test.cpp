@@ -550,8 +550,6 @@ BOOST_AUTO_TEST_CASE(exceptions, *utf::precondition(if_head_node())) {
                       std::runtime_error);
     BOOST_CHECK_THROW(lb_lbfluid_get_interpolated_velocity({}), exception);
     BOOST_CHECK_THROW(lb_lbfluid_get_interpolated_density({}), exception);
-    BOOST_CHECK_THROW(lb_lbfluid_update_boundary_from_list({}, {}), exception);
-    BOOST_CHECK_THROW(lb_lbfluid_update_boundary_from_shape({}, {}), exception);
     BOOST_CHECK_THROW(lb_lbfluid_calc_fluid_momentum(), exception);
   }
 

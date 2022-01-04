@@ -99,7 +99,7 @@ class LBSliceTest(ut.TestCase):
         np.testing.assert_array_almost_equal(
             output_index_shape, should_index_shape)
 
-        with self.assertRaisesRegex(RuntimeError, "Property 'index' is read-only"):
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'index' is read-only"):
             lb_fluid[1, 1:5, 6:].index = np.zeros(output_index_shape)
 
         # is_boundary on test slice [1:, 1:, 1:]
@@ -108,7 +108,7 @@ class LBSliceTest(ut.TestCase):
         np.testing.assert_array_almost_equal(
             output_boundary_shape, should_boundary_shape)
 
-        with self.assertRaisesRegex(RuntimeError, "Parameter 'is_boundary' is read-only"):
+        with self.assertRaisesRegex(RuntimeError, "Property 'is_boundary' is read-only"):
             lb_fluid[1:, 1:, 1:].is_boundary = np.zeros(should_boundary_shape)
 
         # last_applied_force on test slice [:-1, :-1, -1]
