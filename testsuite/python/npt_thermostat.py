@@ -112,6 +112,36 @@ class NPTThermostat(ut.TestCase):
         self.assertTrue(np.all(np.not_equal(force4, force5)))
         self.assertTrue(np.all(np.not_equal(boxl4, boxl5)))
 
+    def test_02__direction(self):
+        """Test for NpT constrained in one direction."""
+
+        system = self.system
+
+        ref_force_dir = [75.3778877, 35.1267878, 21.5026612]
+        ref_boxl_dir = [0.7669542, 0.7809505, 0.719799]
+
+        for n in range(3):
+            system.box_l = [1., 1., 1.]
+            system.time_step = 0.01
+            vel2force = system.time_step / 2.
+            p = system.part.add(pos=[0., 0., 0.], v=np.roll([1., 2., 3.], n))
+            direction = np.roll([True, False, False], n)
+            ref_boxl = np.roll([ref_boxl_dir[n], 1., 1.], n)
+            ref_force_rng = np.roll([ref_force_dir[n], 0., 0.], n)
+            ref_force = np.copy(p.v) / vel2force
+            system.thermostat.set_npt(kT=1.0, gamma0=2.0, gammav=0.04, seed=42)
+            system.integrator.set_isotropic_npt(ext_pressure=2.0, piston=0.01,
+                                                direction=direction)
+            system.integrator.run(0, recalc_forces=True)
+            force0 = np.copy(p.v) / vel2force
+            system.integrator.run(1, recalc_forces=True)
+            force1 = np.copy(p.v) / vel2force
+            boxl1 = np.copy(system.box_l)
+            np.testing.assert_almost_equal(force0, ref_force)
+            np.testing.assert_almost_equal(force1, ref_force + ref_force_rng)
+            np.testing.assert_almost_equal(boxl1, ref_boxl)
+            self.tearDown()
+
     @utx.skipIfMissingFeatures("VIRTUAL_SITES")
     def test_07__virtual(self):
         system = self.system
