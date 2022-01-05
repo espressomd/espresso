@@ -45,6 +45,7 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<EKSpecies>("walberla::EKSpecies");
   om->register_new<EKFFT>("walberla::EKFFT");
   om->register_new<EKNone>("walberla::None");
+  om->register_new<EKVTKHandle>("walberla::EKVTKHandle");
 }
 
 } // namespace ScriptInterface::walberla

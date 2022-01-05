@@ -1,12 +1,17 @@
 from __future__ import print_function, absolute_import
+
+import os
+
 from .script_interface import ScriptObjectRegistry, ScriptInterfaceHelper, script_interface_register
 import numpy as np
 import functools
 import itertools
 
 from . import utils
+from .__init__ import has_features
 
 from .shapes import Shape
+from .lb import VTKRegistry
 
 
 @script_interface_register
@@ -93,6 +98,9 @@ class EKSpecies(ScriptInterfaceHelper):
                 or issubclass(boundary_type, DensityBoundary)):
             raise ValueError(
                 "boundary_type must be a subclass of FluxBoundary or DensityBoundary")
+
+        if not hasattr(value, "__iter__"):
+            value = (value, )
 
         value = np.array(value, dtype=float)
         utils.check_type_or_throw_except(
@@ -237,6 +245,117 @@ class DensityBoundary:
         utils.check_type_or_throw_except(
             density, 1, float, "DensityBoundary flux must be one float")
         self.density = density
+
+
+if has_features("LB_WALBERLA"):
+    _ek_vtk_registry = VTKRegistry()
+
+
+@script_interface_register
+class EKVTKOutput(ScriptInterfaceHelper):
+    """
+    Create a VTK writer.
+
+    Files are written to ``<base_folder>/<identifier>/<prefix>_*.vtu``.
+    Summary is written to ``<base_folder>/<identifier>.pvd``.
+
+    Manual VTK callbacks can be called at any time to take a snapshot
+    of the current state of the EK species.
+
+    Automatic VTK callbacks can be disabled at any time and re-enabled later.
+    Please note that the internal VTK counter is no longer incremented when
+    an automatic callback is disabled, which means the number of EK steps
+    between two frames will not always be an integer multiple of ``delta_N``.
+
+    Parameters
+    ----------
+    identifier : :obj:`str`
+        Name of the VTK writer.
+    observables : :obj:`list`, \{'density',\}
+        List of observables to write to the VTK files.
+    delta_N : :obj:`int`
+        Write frequency. If this value is 0 (default), the object is a
+        manual VTK callback that must be triggered manually. Otherwise,
+        it is an automatic callback that is added to the time loop and
+        writes every ``delta_N`` EK steps.
+    base_folder : :obj:`str` (optional), default is 'vtk_out'
+        Path to the output VTK folder.
+    prefix : :obj:`str` (optional), default is 'simulation_step'
+        Prefix for VTK files.
+
+    """
+    _so_name = "walberla::EKVTKHandle"
+    _so_creation_policy = "GLOBAL"
+    _so_bind_methods = ("enable", "disable", "write")
+
+    def __init__(self, *args, **kwargs):
+        if not has_features("LB_WALBERLA"):
+            raise NotImplementedError("Feature LB_WALBERLA not compiled in")
+        if 'sip' not in kwargs:
+            params = self.default_params()
+            params.update(kwargs)
+            if isinstance(params['observables'], str):
+                params['observables'] = [params['observables']]
+            self.validate_params(params)
+            super().__init__(*args, **params)
+            utils.handle_errors(
+                f"{self.__class__.__name__} initialization failed")
+        else:
+            super().__init__(**kwargs)
+        _ek_vtk_registry._register_vtk_object(self)
+
+    def validate_params(self, params):
+        if not self.required_keys().issubset(params):
+            raise ValueError(
+                f"At least the following keys have to be given as keyword arguments: {sorted(self.required_keys())}")
+        if not self.valid_observables().issuperset(params['observables']):
+            raise ValueError(
+                f"Only the following VTK observables are supported: {sorted(self.valid_observables())}, got {params['observables']}")
+        if not isinstance(params['species'], EKSpecies):
+            raise ValueError("'species' must be an EKSpecies")
+        utils.check_type_or_throw_except(
+            params['delta_N'], 1, int, "'delta_N' must be 1 integer")
+        if params['delta_N'] < 0:
+            raise ValueError("'delta_N' must be a positive integer")
+        utils.check_type_or_throw_except(
+            params['base_folder'], 1, str, "'base_folder' must be a string")
+        utils.check_type_or_throw_except(
+            params['identifier'], 1, str, "'identifier' must be a string")
+        if os.path.sep in params['identifier']:
+            raise ValueError(
+                "'identifier' must be a string, not a filepath")
+        vtk_uid = os.path.join(params['base_folder'],
+                               params['identifier'])
+        vtk_path = os.path.abspath(vtk_uid)
+        if vtk_path in _ek_vtk_registry.collisions:
+            raise RuntimeError(
+                f"VTK object '{vtk_uid}' would overwrite files written "
+                f"by VTK object '{_ek_vtk_registry.collisions[vtk_path]}'")
+        params['vtk_uid'] = vtk_uid
+
+    def valid_observables(self):
+        return {'density', }
+
+    def valid_keys(self):
+        return {'species', 'delta_N', 'execution_count', 'observables',
+                'identifier', 'base_folder', 'prefix', 'enabled'}
+
+    def required_keys(self):
+        return self.valid_keys() - self.default_params().keys()
+
+    def default_params(self):
+        return {'delta_N': 0, 'enabled': True, 'execution_count': 0,
+                'base_folder': 'vtk_out', 'prefix': 'simulation_step'}
+
+    def __repr__(self):
+        class_id = f"{self.__class__.__module__}.{self.__class__.__name__}"
+        if self.delta_N:
+            write_when = f"every {self.delta_N} EK steps"
+            if not self.enabled:
+                write_when += " (disabled)"
+        else:
+            write_when = "on demand"
+        return f"<{class_id}: write to '{self.vtk_uid}' {write_when}>"
 
 
 class EKRoutines:

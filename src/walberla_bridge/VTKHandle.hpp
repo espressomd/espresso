@@ -41,3 +41,8 @@ enum class OutputVTK : int {
   velocity_vector = 1 << 1,
   pressure_tensor = 1 << 2,
 };
+
+/** @brief EK statistics to write to VTK files */
+enum class EKOutputVTK : int {
+  density = 1 << 0,
+};

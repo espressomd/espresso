@@ -94,11 +94,11 @@ protected:
   using BoundaryModelFlux =
       BoundaryHandling<Vector3<FloatType>, pystencils::FixedFlux>;
 
+protected:
   /** VTK writers that are executed automatically */
-  std::map<std::string, std::pair<std::shared_ptr<vtk::VTKOutput>, bool>>
-      m_vtk_auto;
+  std::map<std::string, std::shared_ptr<VTKHandle>> m_vtk_auto;
   /** VTK writers that are executed manually */
-  std::map<std::string, std::shared_ptr<vtk::VTKOutput>> m_vtk_manual;
+  std::map<std::string, std::shared_ptr<VTKHandle>> m_vtk_manual;
 
   // Block data access handles
   BlockDataID m_density_field_id;
@@ -135,36 +135,6 @@ protected:
     m_boundary_flux = std::make_unique<BoundaryModelFlux>(
         blocks, m_flux_field_id, m_flag_field_flux_id);
   }
-
-  // Boundary handling
-  // TODO: Boundary Handling for density and fluxes
-  //  class BoundaryHandling {
-  //  public:
-  //    BoundaryHandling(const BlockDataID &flag_field_id,
-  //                     const BlockDataID &flux_field_id)
-  //        : m_flag_field_id(flag_field_id), m_flux_field_id(flux_field_id) {}
-  //
-  //    Boundaries *operator()(IBlock *const block) {
-  //
-  //      auto *flag_field = block->template
-  //      getData<FlagField>(m_flag_field_id); auto *pdf_field = block->template
-  //      getData<FluxField>(m_flux_field_id);
-  //
-  //      const auto domain = flag_field->flagExists(domain_flag)
-  //                              ? flag_field->getFlag(domain_flag)
-  //                              : flag_field->registerFlag(domain_flag);
-  //
-  //      pystencils::NoFlux noflux(block, m_flux_field_id);
-  //
-  //      return new Boundaries(
-  //          "boundary handling", flag_field, fluid,
-  //          UBB("velocity bounce back", UBB_flag, pdf_field, nullptr));
-  //    }
-  //
-  //  private:
-  //    const BlockDataID m_flag_field_id;
-  //    const BlockDataID m_flux_field_id;
-  //  };
 
   using FullCommunicator = blockforest::communication::UniformBufferedScheme<
       typename stencil::D3Q27>;
@@ -206,39 +176,11 @@ public:
         m_lattice->get_ghost_layers());
     reset_flux_boundary_handling();
 
-    // m_noflux = pystencils::NoFlux(m_lattice,
-    // m_flux_field_flattened_id);
-
-    // TODO: boundary handlings
-    // Register boundary handling
-    //    m_boundary_handling_id =
-    //        m_blockforest->get_blocks()->addBlockData<Boundaries>(
-    //            LBBoundaryHandling(m_flag_field_id, m_pdf_field_id),
-    //            "boundary handling");
-    //    clear_boundaries();
-
     m_full_communication =
         std::make_shared<FullCommunicator>(m_lattice->get_blocks());
     m_full_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<DensityField>>(
             m_density_field_id));
-
-    // reset flux field
-    // diffusive flux + migrative flux + output friction force if field is
-    // provided... add advective flux continuum update
-
-    //    m_time_loop->add() << timeloop::Sweep(makeSharedSweep(m_reset_force),
-    //                                          "Reset force fields");
-    //    m_time_loop->add() << timeloop::Sweep(collide, "LB collide")
-    //                       << timeloop::AfterFunction(
-    //                           *m_pdf_streaming_communication,
-    //                           "communication");
-    //    m_time_loop->add() << timeloop::Sweep(
-    //        Boundaries::getBlockSweep(m_boundary_handling_id), "boundary
-    //        handling");
-    //    m_time_loop->add() << timeloop::Sweep(stream, "LB stream")
-    //                       << timeloop::AfterFunction(*m_full_communication,
-    //                                                  "communication");
 
     // Synchronize ghost layers
     (*m_full_communication)();
@@ -353,11 +295,18 @@ public:
     ghost_communication();
 
     // Handle VTK writers
-    for (const auto &it : m_vtk_auto) {
-      if (it.second.second)
-        vtk::writeFiles(it.second.first)();
-    }
+    integrate_vtk_writers();
   };
+
+  inline void integrate_vtk_writers() {
+    for (const auto &it : m_vtk_auto) {
+      auto &vtk_handle = it.second;
+      if (vtk_handle->enabled) {
+        vtk::writeFiles(vtk_handle->ptr)();
+        vtk_handle->execution_count++;
+      }
+    }
+  }
 
   [[nodiscard]] walberla::BlockDataID get_density_id() const override {
     return m_density_field_id;
@@ -640,31 +589,78 @@ public:
     return res;
   };
 
-  //  /** Manually call a VTK callback */
-  //  void write_vtk(std::string const &vtk_uid) override {
-  //    if (m_vtk_auto.find(vtk_uid) != m_vtk_auto.end()) {
-  //      throw std::runtime_error("VTKOutput object " + vtk_uid +
-  //                               " is an automatic observable");
-  //    }
-  //    if (m_vtk_manual.find(vtk_uid) == m_vtk_manual.end()) {
-  //      throw std::runtime_error("VTKOutput object " + vtk_uid +
-  //                               " doesn't exist");
-  //    }
-  //    vtk::writeFiles(m_vtk_manual[vtk_uid])();
-  //  }
-  //
-  //  /** Activate or deactivate a VTK callback */
-  //  void switch_vtk(std::string const &vtk_uid, int status) override {
-  //    if (m_vtk_manual.find(vtk_uid) != m_vtk_manual.end()) {
-  //      throw std::runtime_error("VTKOutput object " + vtk_uid +
-  //                               " is a manual observable");
-  //    }
-  //    if (m_vtk_auto.find(vtk_uid) == m_vtk_auto.end()) {
-  //      throw std::runtime_error("VTKOutput object " + vtk_uid +
-  //                               " doesn't exist");
-  //    }
-  //    m_vtk_auto[vtk_uid].second = status;
-  //  }
+  class vtk_runtime_error : public std::runtime_error {
+  public:
+    explicit vtk_runtime_error(std::string const &vtk_uid,
+                               std::string const &reason)
+        : std::runtime_error("EKVTKOutput object '" + vtk_uid + "' " + reason) {
+    }
+  };
+
+  [[nodiscard]] std::shared_ptr<VTKHandle>
+  create_vtk(int delta_N, int initial_count, int flag_observables,
+             std::string const &identifier, std::string const &base_folder,
+             std::string const &prefix) override {
+    // VTKOutput object must be unique
+    std::stringstream unique_identifier;
+    unique_identifier << base_folder << "/" << identifier;
+    std::string const vtk_uid = unique_identifier.str();
+    if (m_vtk_auto.find(vtk_uid) != m_vtk_auto.end() or
+        m_vtk_manual.find(vtk_uid) != m_vtk_manual.end()) {
+      throw vtk_runtime_error(vtk_uid, "already exists");
+    }
+
+    // instantiate VTKOutput object
+    auto const &blocks = get_lattice().get_blocks();
+    auto const write_freq = (delta_N) ? static_cast<unsigned int>(delta_N) : 1u;
+    auto density_field_vtk = vtk::createVTKOutput_BlockData(
+        blocks, identifier, uint_c(write_freq), uint_c(0), false, base_folder,
+        prefix, true, true, true, true, uint_c(initial_count));
+    field::FlagFieldCellFilter<FlagField> fluid_filter(m_flag_field_density_id);
+    fluid_filter.addFlag(Boundary_flag);
+    density_field_vtk->addCellExclusionFilter(fluid_filter);
+
+    // add writers
+    if (flag_observables & static_cast<int>(EKOutputVTK::density)) {
+      density_field_vtk->addCellDataWriter(
+          make_shared<field::VTKWriter<DensityField, float>>(m_density_field_id,
+                                                             "density"));
+    }
+
+    // register object
+    auto vtk_handle =
+        std::make_shared<VTKHandle>(density_field_vtk, initial_count, true);
+    if (delta_N) {
+      m_vtk_auto[vtk_uid] = vtk_handle;
+    } else {
+      m_vtk_manual[vtk_uid] = vtk_handle;
+    }
+    return vtk_handle;
+  }
+
+  /** Manually call a VTK callback */
+  void write_vtk(std::string const &vtk_uid) override {
+    if (m_vtk_auto.find(vtk_uid) != m_vtk_auto.end()) {
+      throw vtk_runtime_error(vtk_uid, "is an automatic observable");
+    }
+    if (m_vtk_manual.find(vtk_uid) == m_vtk_manual.end()) {
+      throw vtk_runtime_error(vtk_uid, "doesn't exist");
+    }
+    auto &vtk_handle = m_vtk_manual[vtk_uid];
+    vtk::writeFiles(vtk_handle->ptr)();
+    vtk_handle->execution_count++;
+  }
+
+  /** Activate or deactivate a VTK callback */
+  void switch_vtk(std::string const &vtk_uid, bool status) override {
+    if (m_vtk_manual.find(vtk_uid) != m_vtk_manual.end()) {
+      throw vtk_runtime_error(vtk_uid, "is a manual observable");
+    }
+    if (m_vtk_auto.find(vtk_uid) == m_vtk_auto.end()) {
+      throw vtk_runtime_error(vtk_uid, "doesn't exist");
+    }
+    m_vtk_auto[vtk_uid]->enabled = status;
+  }
 
   ~EKinWalberlaImpl() override = default;
 };

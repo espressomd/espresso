@@ -23,11 +23,13 @@
 
 #ifdef LB_WALBERLA
 
+#include <walberla_bridge/EKinWalberlaBase.hpp>
 #include <walberla_bridge/LBWalberlaBase.hpp>
 #include <walberla_bridge/VTKHandle.hpp>
 
 #include "core/grid_based_algorithms/lb_walberla_instance.hpp"
 
+#include "EKSpecies.hpp"
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 
@@ -169,6 +171,109 @@ public:
       }
     }
 
+    return {};
+  }
+};
+
+class EKVTKHandle : public AutoParameters<::VTKHandle> {
+  std::shared_ptr<::VTKHandle> m_vtk_handle;
+  std::shared_ptr<EKinWalberlaBase<double>> m_ekinstance;
+  int m_delta_N;
+  int m_flag_obs;
+  std::string m_identifier;
+  std::string m_base_folder;
+  std::string m_prefix;
+
+  [[nodiscard]] auto get_vtk_uid() const {
+    return m_base_folder + '/' + m_identifier;
+  }
+
+  [[nodiscard]] std::shared_ptr<EKinWalberlaBase<double>> get_ekinstance() {
+    return m_ekinstance;
+  }
+
+public:
+  EKVTKHandle() {
+    constexpr auto read_only = AutoParameter::read_only;
+    add_parameters({
+        {"enabled", read_only, [this]() { return m_vtk_handle->enabled; }},
+        {"delta_N", read_only, [this]() { return m_delta_N; }},
+        {"flag_obs", read_only, [this]() { return m_flag_obs; }},
+        {"vtk_uid", read_only, [this]() { return get_vtk_uid(); }},
+        {"identifier", read_only, [this]() { return m_identifier; }},
+        {"base_folder", read_only, [this]() { return m_base_folder; }},
+        {"prefix", read_only, [this]() { return m_prefix; }},
+        {"observables", read_only,
+         [this]() {
+           std::vector<Variant> observables;
+           if (m_flag_obs & static_cast<int>(EKOutputVTK::density)) {
+             observables.emplace_back(std::string("density"));
+           }
+           return observables;
+         }},
+        {"execution_count", read_only,
+         [this]() { return m_vtk_handle->execution_count; }},
+    });
+  }
+
+  void do_construct(VariantMap const &params) override {
+    if (params.count("flag_obs")) {
+      // object built from a checkpoint
+      m_flag_obs = get_value<int>(params, "flag_obs");
+      // TODO WALBERLA: here we assume all VTK objects belong to the
+      // same LB actor, which should always be the case (users cannot
+      // create multiple actors with different VTK objects, unless
+      // the system is checkpointed multiple times)
+    } else {
+      // object built by the user
+      m_flag_obs = 0;
+      auto vec = get_value<std::vector<Variant>>(params, "observables");
+      for (auto const &variant : vec) {
+        auto const observable = boost::get<std::string>(variant);
+        if (observable == "density")
+          m_flag_obs |= static_cast<int>(EKOutputVTK::density);
+      }
+    }
+    m_delta_N = get_value<int>(params, "delta_N");
+    m_identifier = get_value<std::string>(params, "identifier");
+    m_base_folder = get_value<std::string>(params, "base_folder");
+    m_prefix = get_value<std::string>(params, "prefix");
+    auto const execution_count = get_value<int>(params, "execution_count");
+
+    m_ekinstance = get_value<std::shared_ptr<EKSpecies>>(params, "species")
+                       ->get_ekinstance();
+
+    m_vtk_handle =
+        get_ekinstance()->create_vtk(m_delta_N, execution_count, m_flag_obs,
+                                     m_identifier, m_base_folder, m_prefix);
+    if (m_delta_N and not get_value<bool>(params, "enabled")) {
+      get_ekinstance()->switch_vtk(get_vtk_uid(), false);
+    }
+  }
+
+  Variant do_call_method(std::string const &name,
+                         VariantMap const &params) override {
+    if (name == "enable") {
+      if (m_delta_N == 0) {
+        throw std::runtime_error("Manual VTK callbacks cannot be enabled");
+      }
+      get_ekinstance()->switch_vtk(get_vtk_uid(), true);
+    }
+
+    if (name == "disable") {
+      if (m_delta_N == 0) {
+        throw std::runtime_error("Manual VTK callbacks cannot be disabled");
+      }
+      get_ekinstance()->switch_vtk(get_vtk_uid(), false);
+    }
+
+    if (name == "write") {
+      if (m_delta_N) {
+        throw std::runtime_error("Automatic VTK callbacks cannot be "
+                                 "triggered manually");
+      }
+      get_ekinstance()->write_vtk(get_vtk_uid());
+    }
     return {};
   }
 };
