@@ -21,7 +21,8 @@
 
 #include "Observable_stat.hpp"
 #include "Particle.hpp"
-#include "energy.hpp"
+
+#include <utils/Vector.hpp>
 
 namespace Constraints {
 class Constraint {

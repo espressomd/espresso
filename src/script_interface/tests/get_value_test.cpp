@@ -23,6 +23,7 @@
 
 #include "script_interface/get_value.hpp"
 
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
