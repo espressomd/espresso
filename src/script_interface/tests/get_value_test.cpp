@@ -21,6 +21,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
+#include "script_interface/ObjectHandle.hpp"
 #include "script_interface/get_value.hpp"
 
 #include <memory>
@@ -111,7 +112,45 @@ BOOST_AUTO_TEST_CASE(get_map_value) {
   std::unordered_map<int, double> const map = get_map<int, double>(map_variant);
   BOOST_CHECK_EQUAL(map.at(1), 1.5);
   BOOST_CHECK_EQUAL(map.at(2), 2.5);
+}
 
-  std::unordered_map<int, Variant> const mixed{{1, 1}, {2, std::string("2")}};
-  BOOST_CHECK_THROW((get_map<int, double>(mixed)), std::exception);
+BOOST_AUTO_TEST_CASE(exceptions) {
+  using ScriptInterface::get_map;
+  using ScriptInterface::get_value;
+  using ScriptInterface::Variant;
+
+  using so_ptr_t = std::shared_ptr<ScriptInterface::ObjectHandle>;
+
+  auto const so_obj = so_ptr_t();
+  auto const so_ptr_tn = Utils::demangle<so_ptr_t>();
+
+  {
+    auto const predicate = [](std::string const &type, std::string const &why) {
+      auto const message = "Provided argument of type " + type + " is " + why;
+      return [=](std::exception const &ex) { return ex.what() == message; };
+    };
+    auto const so_variant = Variant(so_obj);
+    BOOST_CHECK_EXCEPTION((get_value<so_ptr_t>(so_variant)), std::exception,
+                          predicate(so_ptr_tn, "a null pointer"));
+    BOOST_CHECK_EXCEPTION((get_value<int>(so_variant)), std::exception,
+                          predicate(so_ptr_tn, "not convertible to int"));
+  }
+  {
+    auto const predicate = [](std::string const &why, std::string const &type) {
+      auto const context = "raised during the creation of a std::unordered_map";
+      auto const message = why + " (" + context + "<int, " + type + ", ";
+      return [=](std::exception const &ex) {
+        return std::string(ex.what()).find(message) != std::string::npos;
+      };
+    };
+    auto const so_map = std::unordered_map<int, Variant>{{1, so_obj}};
+    BOOST_CHECK_EXCEPTION((get_map<int, so_ptr_t>(so_map)), std::exception,
+                          predicate("is a null pointer", so_ptr_tn));
+    BOOST_CHECK_EXCEPTION((get_map<int, int>(so_map)), std::exception,
+                          predicate("is not convertible to int", "int"));
+  }
+  {
+    std::unordered_map<int, Variant> const mixed{{1, 1}, {2, std::string("2")}};
+    BOOST_CHECK_THROW((get_map<int, double>(mixed)), std::exception);
+  }
 }
