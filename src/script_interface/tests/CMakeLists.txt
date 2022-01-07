@@ -26,12 +26,12 @@ unit_test(NAME AutoParameters_test SRC AutoParameters_test.cpp DEPENDS
 unit_test(NAME AutoParameter_test SRC AutoParameter_test.cpp DEPENDS
           ScriptInterface)
 unit_test(NAME Variant_test SRC Variant_test.cpp DEPENDS ScriptInterface)
-unit_test(NAME get_value SRC get_value_test.cpp DEPENDS ScriptInterface)
+unit_test(NAME get_value_test SRC get_value_test.cpp DEPENDS ScriptInterface)
 unit_test(NAME None_test SRC None_test.cpp DEPENDS ScriptInterface)
 unit_test(NAME LocalContext_test SRC LocalContext_test.cpp DEPENDS
           ScriptInterface)
 unit_test(NAME GlobalContext_test SRC GlobalContext_test.cpp DEPENDS
-          ScriptInterface)
+          ScriptInterface Boost::mpi MPI::MPI_CXX NUM_PROC 2)
 unit_test(NAME Exception_test SRC Exception_test.cpp DEPENDS ScriptInterface)
 unit_test(NAME packed_variant_test SRC packed_variant_test.cpp DEPENDS
           ScriptInterface)

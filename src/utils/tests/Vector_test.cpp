@@ -25,8 +25,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "utils/Vector.hpp"
-using Utils::Vector;
+#include <utils/Vector.hpp>
 
 #include <boost/range/numeric.hpp>
 
@@ -40,6 +39,8 @@ using Utils::Vector;
 #include <stdexcept>
 #include <type_traits>
 #include <vector>
+
+using Utils::Vector;
 
 /* Number of nontrivial Baxter permutations of length 2n-1. (A001185) */
 #define TEST_NUMBERS                                                           \
@@ -226,7 +227,7 @@ BOOST_AUTO_TEST_CASE(decay_to_scalar_test) {
 
     static_assert(std::is_same<int, decayed_t>::value, "");
   }
-
+  BOOST_TEST_PASSPOINT();
   {
     using original_t = Utils::Vector3i;
     using decayed_t = typename Utils::decay_to_scalar<original_t>::type;
@@ -270,12 +271,38 @@ BOOST_AUTO_TEST_CASE(conversion) {
   using Utils::Vector3d;
   using Utils::Vector3f;
 
-  auto const orig = Vector3d{1., 2., 3.};
-  auto const result = static_cast<Vector3f>(orig);
+  /* The Vector class has a user-defined conversion method,
+   * however static_cast() will not use it. Instead, the
+   * range-based constructor is called. */
 
-  BOOST_CHECK_EQUAL(result[0], static_cast<float>(orig[0]));
-  BOOST_CHECK_EQUAL(result[1], static_cast<float>(orig[1]));
-  BOOST_CHECK_EQUAL(result[2], static_cast<float>(orig[2]));
+  auto const orig = Vector3d{1., 2., 3.};
+  auto const expected =
+      Vector3f{static_cast<float>(orig[0]), static_cast<float>(orig[1]),
+               static_cast<float>(orig[2])};
+
+  // check range-based conversion
+  {
+    auto const result = static_cast<Vector3f>(orig);
+    BOOST_TEST(result == expected);
+  }
+
+  // check cast operator
+  {
+    auto const result = orig.operator Utils::Vector3f();
+    BOOST_TEST(result == expected);
+  }
+
+  // check vector conversion
+  {
+    auto const result = Utils::Vector3d{static_cast<std::vector<double>>(orig)};
+    BOOST_TEST(result == orig);
+  }
+
+  // check vector conversion
+  {
+    auto const result = Utils::Vector3d{orig.as_vector()};
+    BOOST_TEST(result == orig);
+  }
 }
 
 BOOST_AUTO_TEST_CASE(vector_product_test) {
@@ -343,4 +370,5 @@ BOOST_AUTO_TEST_CASE(type_deduction) {
           typename boost::qvm::deduce_vec<Utils::Vector<double, 3>, 3>::type,
           Utils::Vector<double, 3>>::value,
       "");
+  BOOST_TEST_PASSPOINT();
 }

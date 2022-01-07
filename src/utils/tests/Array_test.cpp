@@ -39,6 +39,7 @@ using Utils::Array;
 BOOST_AUTO_TEST_CASE(const_expr_ctor) {
   static_assert(4 == Array<int, 4>().size(), "");
   static_assert(4 == Array<int, 4>().max_size(), "");
+  BOOST_TEST_PASSPOINT();
 }
 
 BOOST_AUTO_TEST_CASE(array_ctor) {
@@ -54,30 +55,37 @@ BOOST_AUTO_TEST_CASE(array_ctor) {
 BOOST_AUTO_TEST_CASE(iterators) {
   auto a = Array<int, 4>{{1, 2, 3, 4}};
 
-  BOOST_CHECK(*(a.begin()) == 1);
-  BOOST_CHECK(*(a.cbegin()) == 1);
-  BOOST_CHECK(*(a.end() - 1) == 4);
-  BOOST_CHECK(*(a.cend() - 1) == 4);
+  BOOST_CHECK_EQUAL(*(a.begin()), 1);
+  BOOST_CHECK_EQUAL(*(a.cbegin()), 1);
+  BOOST_CHECK_EQUAL(*(a.end() - 1), 4);
+  BOOST_CHECK_EQUAL(*(a.cend() - 1), 4);
 }
 
 BOOST_AUTO_TEST_CASE(element_access) {
   auto a = Array<int, 5>{{5, 6, 7, 8, 9}};
+  auto const &b = a;
 
   int c = 5;
+  int j = 0;
   for (int i : a) {
-    BOOST_CHECK(i == c);
-    BOOST_CHECK(i == c);
+    BOOST_CHECK_EQUAL(i, c);
+    BOOST_CHECK_EQUAL(a[j], c);
+    BOOST_CHECK_EQUAL(b[j], c);
+    BOOST_CHECK_EQUAL(a.at(j), c);
+    BOOST_CHECK_EQUAL(b.at(j), c);
     ++c;
+    ++j;
   }
 
   BOOST_CHECK_THROW(a.at(a.size()), std::out_of_range);
+  BOOST_CHECK_THROW(b.at(b.size()), std::out_of_range);
 }
 
 BOOST_AUTO_TEST_CASE(fill) {
   Array<int, 10> a{};
   a.fill(10);
   for (int i : a) {
-    BOOST_CHECK(i == 10);
+    BOOST_CHECK_EQUAL(i, 10);
   }
 }
 
@@ -86,6 +94,7 @@ BOOST_AUTO_TEST_CASE(broadcast) {
   static_assert(a[0] == 5, "");
   static_assert(a[1] == 5, "");
   static_assert(a[2] == 5, "");
+  BOOST_TEST_PASSPOINT();
 }
 
 BOOST_AUTO_TEST_CASE(serialization) {

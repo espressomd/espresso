@@ -89,6 +89,7 @@ struct LogHandle : public ObjectHandle {
 BOOST_AUTO_TEST_CASE(non_copyable) {
   static_assert(!std::is_copy_constructible<ObjectHandle>::value, "");
   static_assert(!std::is_copy_assignable<ObjectHandle>::value, "");
+  BOOST_TEST_PASSPOINT();
 }
 
 /*
@@ -165,12 +166,14 @@ struct LogContext : public Context {
 
   bool is_head_node() const override { return true; };
 };
+} // namespace Testing
 
 /*
  * Check that Objecthandle::set_parameter does
  * notify the context.
  */
 BOOST_AUTO_TEST_CASE(notify_set_parameter_) {
+  using namespace Testing;
   auto log_ctx = std::make_shared<Testing::LogContext>();
 
   auto o = log_ctx->make_shared({}, {});
@@ -192,6 +195,7 @@ BOOST_AUTO_TEST_CASE(notify_set_parameter_) {
  * notify the context.
  */
 BOOST_AUTO_TEST_CASE(notify_call_method_) {
+  using namespace Testing;
   auto log_ctx = std::make_shared<Testing::LogContext>();
 
   auto o = log_ctx->make_shared({}, {});
@@ -205,4 +209,14 @@ BOOST_AUTO_TEST_CASE(notify_call_method_) {
   BOOST_CHECK((boost::get<MockCall::CallMethod>(log_entry.second) ==
                MockCall::CallMethod{&name, &params}));
 }
-} // namespace Testing
+
+/*
+ * Check basic interface.
+ */
+BOOST_AUTO_TEST_CASE(interface_) {
+  using namespace Testing;
+  auto log_ctx = std::make_shared<Testing::LogContext>();
+  auto o = log_ctx->make_shared({}, {});
+  BOOST_CHECK(log_ctx->is_head_node());
+  BOOST_CHECK_EQUAL(log_ctx->name(o.get()), "Dummy");
+}

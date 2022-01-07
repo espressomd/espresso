@@ -57,6 +57,7 @@ BOOST_AUTO_TEST_CASE(histogram) {
               std::vector<double>{{10.0, 10.0}});
   BOOST_CHECK((hist.get_histogram())[0] == 11.0);
   BOOST_CHECK((hist.get_histogram())[1] == 11.0);
+  // Check exceptions
   BOOST_CHECK_THROW(hist.update(std::vector<double>{{1.0, 5.0, 3.0}}),
                     std::invalid_argument);
   BOOST_CHECK_THROW(hist.update(std::vector<double>{{0.0, 0.0}},
@@ -97,6 +98,7 @@ BOOST_AUTO_TEST_CASE(cylindrical_histogram) {
   BOOST_CHECK((hist.get_histogram())[0] == 11.0);
   BOOST_CHECK((hist.get_histogram())[1] == 11.0);
   BOOST_CHECK((hist.get_histogram())[2] == 11.0);
+  // Check exceptions
   BOOST_CHECK_THROW(hist.update(std::vector<double>{{1.0, pi}}),
                     std::invalid_argument);
   BOOST_CHECK_THROW(hist.update(std::vector<double>{{0.0, 0.0, 0.0}},
