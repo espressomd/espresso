@@ -39,3 +39,5 @@ unit_test(NAME ObjectList_test SRC ObjectList_test.cpp DEPENDS ScriptInterface)
 unit_test(NAME ObjectMap_test SRC ObjectMap_test.cpp DEPENDS ScriptInterface)
 unit_test(NAME Accumulators_test SRC Accumulators_test.cpp DEPENDS
           ScriptInterface)
+unit_test(NAME Constraints_test SRC Constraints_test.cpp DEPENDS
+          ScriptInterface)
