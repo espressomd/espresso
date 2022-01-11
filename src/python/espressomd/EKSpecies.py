@@ -144,7 +144,7 @@ class EKSpecies(ScriptInterfaceHelper):
         nodes : (N, 3) array_like of :obj:`int`
             List of node indices to update. If they were originally not
             boundary nodes, they will become boundary nodes.
-        velocity : (
+        value : (
         boundary_type :
             Type of the boundary condition.
         """
@@ -153,8 +153,11 @@ class EKSpecies(ScriptInterfaceHelper):
             raise ValueError(
                 "boundary_type must be a subclass of FluxBoundary or DensityBoundary")
 
-        nodes = np.array(nodes, dtype=int)
+        if not hasattr(value, "__iter__"):
+            value = (value, )
+
         value = np.array(value, dtype=float)
+        nodes = np.array(nodes, dtype=int)
         if issubclass(boundary_type, FluxBoundary):
             array_length = 3
             if np.shape(value) not in [(3,), tuple(self.shape) + (3,)]:
