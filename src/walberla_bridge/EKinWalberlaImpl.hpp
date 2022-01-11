@@ -414,6 +414,17 @@ public:
     return {m_boundary_density->node_is_boundary(*bc)};
   }
 
+  boost::optional<bool>
+  get_node_is_boundary(const Utils::Vector3i &node,
+                       bool consider_ghosts = false) const override {
+    auto bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
+    if (!bc)
+      return {boost::none};
+
+    return {m_boundary_density->node_is_boundary(*bc) or
+            m_boundary_flux->node_is_boundary(*bc)};
+  };
+
   void update_flux_boundary_from_shape(
       const std::vector<int> &raster_flat,
       const std::vector<double> &flux_flat) override {

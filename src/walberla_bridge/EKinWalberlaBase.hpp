@@ -61,6 +61,9 @@ public:
   [[nodiscard]] virtual boost::optional<bool>
   get_node_is_density_boundary(const Utils::Vector3i &node,
                                bool consider_ghosts = false) const = 0;
+  [[nodiscard]] virtual boost::optional<bool>
+  get_node_is_boundary(const Utils::Vector3i &node,
+                       bool consider_ghosts = false) const = 0;
   virtual void clear_flux_boundaries() = 0;
   virtual void clear_density_boundaries() = 0;
 
