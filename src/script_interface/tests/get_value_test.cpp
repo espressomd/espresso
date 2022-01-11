@@ -25,6 +25,7 @@
 #include "script_interface/get_value.hpp"
 
 #include <memory>
+#include <regex>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -169,10 +170,12 @@ BOOST_AUTO_TEST_CASE(exceptions) {
   }
   {
     auto const predicate = [](std::string const &why, std::string const &type) {
-      auto const context = "raised during the creation of a std::unordered_map";
-      auto const message = why + " (" + context + "<int, " + type + ", ";
+      auto const msg = "during the creation of a std::(__1::)?unordered_map";
+      auto const pattern = why + " \\(raised " + msg + "<int, " + type + ", ";
       return [=](std::exception const &ex) {
-        return std::string(ex.what()).find(message) != std::string::npos;
+        std::string const what = ex.what();
+        std::smatch match;
+        return std::regex_search(what, match, std::regex(pattern));
       };
     };
     auto const so_map = std::unordered_map<int, Variant>{{1, so_obj}};
