@@ -94,10 +94,10 @@ class TestLB:
             fluid_temp = 0.0
 
             # Go over lb lattice
-            for lb_node in self.lbf.nodes():
-                dens = lb_node.density
-                fluid_mass += dens
-                fluid_temp += np.sum(lb_node.velocity**2) * dens
+            nodes_dens = self.lbf[:, :, :].density
+            nodes_vel = np.sum(np.square(self.lbf[:, :, :].velocity), axis=3)
+            fluid_mass += np.sum(nodes_dens)
+            fluid_temp += np.sum(np.multiply(nodes_dens, nodes_vel))
 
             # Normalize
             fluid_mass /= np.product(self.lbf.shape)

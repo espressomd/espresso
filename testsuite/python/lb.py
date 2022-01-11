@@ -175,12 +175,8 @@ class LBTest:
         system.actors.add(lbf)
         system.thermostat.set_lb(LB_fluid=lbf, seed=1)
         system.integrator.run(10)
-        pressure_tensor = np.zeros((3, 3))
-        agrid = self.params["agrid"]
-        for n in lbf.nodes():
-            pressure_tensor += n.pressure_tensor
-
-        pressure_tensor /= system.volume() / agrid**3
+        pressure_tensor = np.copy(
+            np.mean(lbf[:, :, :].pressure_tensor, axis=(0, 1, 2)))
 
         obs = espressomd.observables.LBFluidPressureTensor()
         obs_pressure_tensor = obs.calculate()
@@ -321,8 +317,7 @@ class LBTest:
             LB_fluid=lbf, seed=3, gamma=self.params['friction'])
 
         # Random velocities
-        for n in lbf.nodes():
-            n.velocity = np.random.random(3) - .5
+        lbf[:, :, :].velocity = np.random.random((*lbf.shape, 3))
         # Test several particle positions
         for pos in ([0, 0, 0], self.system.box_l, self.system.box_l / 2,
                     self.system.box_l / 2 - self.params['agrid'] / 2):
@@ -360,8 +355,7 @@ class LBTest:
             LB_fluid=lbf, seed=3, gamma=self.params['friction'])
 
         # Random velocities
-        for n in lbf.nodes():
-            n.velocity = np.random.random(3) - .5
+        lbf[:, :, :].velocity = np.random.random((*lbf.shape, 3))
         # Test several particle positions
         agrid = self.params['agrid']
         offset = -0.99 * np.array((agrid, agrid, agrid))
@@ -424,8 +418,8 @@ class LBTest:
         for _ in range(20):
             system.integrator.run(1)
             particle_force = np.sum(system.part.all().f, axis=0)
-            fluid_force = np.sum(
-                np.array([n.last_applied_force for n in lbf.nodes()]), axis=0)
+            fluid_force = np.copy(
+                np.sum(lbf[:, :, :].last_applied_force, axis=(0, 1, 2)))
             np.testing.assert_allclose(
                 particle_force, -fluid_force, rtol=self.rtol)
 
@@ -445,7 +439,7 @@ class LBTest:
 
         # the force should be split equally across the 8 nearest vertices
         n_couplings = 0
-        for n in lbf.nodes():
+        for n in lbf[:, :, :]:
             if np.sum(np.abs(n.last_applied_force)):
                 fluid_force = np.copy(n.last_applied_force)
                 np.testing.assert_allclose(fluid_force, force / 8.)
@@ -476,10 +470,9 @@ class LBTest:
             rtol=rtol)
 
         # Check node velocities
-        for n in lbf.nodes():
+        for node_velocity in lbf[:, :, :].velocity.reshape((-1, 3)):
             np.testing.assert_allclose(
-                np.copy(n.velocity), fluid_velocity, atol=1E-6,
-                err_msg=f"Fluid node velocity not as expected on node {n.index}")
+                node_velocity, fluid_velocity, atol=1E-6)
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_unequal_time_step(self):

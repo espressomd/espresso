@@ -263,14 +263,6 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
     def pressure_tensor(self, value):
         raise RuntimeError(f"Property 'pressure_tensor' is read-only")
 
-    def nodes(self):
-        """Provides a generator for iterating over all lb nodes"""
-
-        shape = self.shape
-        for i, j, k in itertools.product(
-                range(shape[0]), range(shape[1]), range(shape[2])):
-            yield self[i, j, k]
-
 
 class VTKRegistry:
 
@@ -845,9 +837,8 @@ class LBSlice:
                     setattr(node, attr, value[i, j, k])
 
     def __iter__(self):
-        indices = [(x, y, z) for (x, y, z) in itertools.product(
-            self.x_indices, self.y_indices, self.z_indices)]
-        return (LBFluidNode(index=np.array(index)) for index in indices)
+        return (LBFluidNode(index=np.array(index)) for index
+                in itertools.product(self.x_indices, self.y_indices, self.z_indices))
 
 
 def edge_detection(boundary_mask, periodicity):
