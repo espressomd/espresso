@@ -19,6 +19,7 @@
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
+import tests_common
 import numpy as np
 
 
@@ -112,35 +113,32 @@ class NPTThermostat(ut.TestCase):
         self.assertTrue(np.all(np.not_equal(force4, force5)))
         self.assertTrue(np.all(np.not_equal(boxl4, boxl5)))
 
+    @utx.skipIfMissingFeatures("WCA")
     def test_02__direction(self):
         """Test for NpT constrained in one direction."""
 
-        system = self.system
+        data = np.genfromtxt(tests_common.abspath("data/npt_lj_system.data"))
+        ref_box_l = 1.01 * np.max(data[:, 0:3])
 
-        ref_force_dir = [75.3778877, 35.1267878, 21.5026612]
-        ref_boxl_dir = [0.7669542, 0.7809505, 0.719799]
+        system = self.system
+        system.box_l = 3 * [ref_box_l]
+        system.part.add(pos=data[:, 0:3], type=len(data) * [2])
+        system.non_bonded_inter[2, 2].wca.set_params(epsilon=1., sigma=1.)
+        system.time_step = 0.01
 
         for n in range(3):
-            system.box_l = [1., 1., 1.]
-            system.time_step = 0.01
-            vel2force = system.time_step / 2.
-            p = system.part.add(pos=[0., 0., 0.], v=np.roll([1., 2., 3.], n))
             direction = np.roll([True, False, False], n)
-            ref_boxl = np.roll([ref_boxl_dir[n], 1., 1.], n)
-            ref_force_rng = np.roll([ref_force_dir[n], 0., 0.], n)
-            ref_force = np.copy(p.v) / vel2force
-            system.thermostat.set_npt(kT=1.0, gamma0=2.0, gammav=0.04, seed=42)
-            system.integrator.set_isotropic_npt(ext_pressure=2.0, piston=0.01,
+            system.box_l = 3 * [ref_box_l]
+            system.part.all().pos = data[:, 0:3]
+            system.part.all().v = data[:, 3:6]
+            system.thermostat.set_npt(kT=1.0, gamma0=2, gammav=0.004, seed=42)
+            system.integrator.set_isotropic_npt(ext_pressure=2.0, piston=0.0001,
                                                 direction=direction)
-            system.integrator.run(0, recalc_forces=True)
-            force0 = np.copy(p.v) / vel2force
-            system.integrator.run(1, recalc_forces=True)
-            force1 = np.copy(p.v) / vel2force
-            boxl1 = np.copy(system.box_l)
-            np.testing.assert_almost_equal(force0, ref_force)
-            np.testing.assert_almost_equal(force1, ref_force + ref_force_rng)
-            np.testing.assert_almost_equal(boxl1, ref_boxl)
-            self.tearDown()
+            system.integrator.run(20)
+            box_l_rel = np.copy(system.box_l) / ref_box_l
+            box_l_rel_ref = np.roll([np.max(box_l_rel), 1., 1.], n)
+            np.testing.assert_allclose(box_l_rel, box_l_rel_ref, atol=1e-10)
+            self.assertGreater(np.max(box_l_rel), 2)
 
     @utx.skipIfMissingFeatures("VIRTUAL_SITES")
     def test_07__virtual(self):
