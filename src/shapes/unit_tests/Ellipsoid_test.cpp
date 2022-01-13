@@ -30,10 +30,18 @@
 #include <utils/constants.hpp>
 
 #include <cmath>
-#include <cstdlib>
+#include <limits>
 
-bool check_distance_function(const Shapes::Shape &s) {
-  double semiaxes[3] = {3.1, 2.2, 1.3};
+BOOST_AUTO_TEST_CASE(dist_function) {
+  // multiply by 100 because BOOST_REQUIRE_CLOSE takes a percentage tolerance
+  auto constexpr tol = std::numeric_limits<double>::epsilon() * 100;
+  double const semiaxes[3] = {3.1, 2.2, 1.3};
+
+  Shapes::Ellipsoid e;
+  e.set_semiaxis_a(semiaxes[0]);
+  e.set_semiaxis_b(semiaxes[1]);
+  e.set_semiaxis_c(semiaxes[2]);
+  auto const &s = e; // const handle
 
   int N = 100;
   for (int i = 0; i < N; i++) {
@@ -51,8 +59,7 @@ bool check_distance_function(const Shapes::Shape &s) {
 
       /* check that points on ellipsoid yield zero distance */
       s.calculate_dist(pos, d, dist);
-      if (std::abs(d) > 1e-12)
-        return false;
+      BOOST_REQUIRE_SMALL(d, tol);
 
       /* pos outside of surface */
       for (int dim = 0; dim < 3; dim++)
@@ -60,19 +67,7 @@ bool check_distance_function(const Shapes::Shape &s) {
       s.calculate_dist(pos, d, dist);
 
       /* trivial test */
-      if ((dist.norm2() - d * d) > 1e-12)
-        return false;
+      BOOST_REQUIRE_CLOSE(dist.norm2(), d * d, tol);
     }
   }
-
-  return true;
-}
-
-BOOST_AUTO_TEST_CASE(dist_function) {
-  Shapes::Ellipsoid e;
-  e.set_semiaxis_a(3.1);
-  e.set_semiaxis_b(2.2);
-  e.set_semiaxis_c(1.3);
-
-  BOOST_CHECK(check_distance_function(e));
 }

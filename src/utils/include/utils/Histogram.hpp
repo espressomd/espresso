@@ -25,6 +25,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <functional>
@@ -150,11 +151,9 @@ private:
    * \param pos     Position to check.
    */
   bool check_limits(Span<const U> pos) const {
-    if (pos.size() != M) {
-      throw std::invalid_argument("Wrong dimensions for the coordinates");
-    }
+    assert(pos.size() == M);
     bool within_range = true;
-    for (std::size_t i = 0; i < pos.size(); ++i) {
+    for (std::size_t i = 0; i < M; ++i) {
       if (pos[i] < m_limits[i].first or pos[i] >= m_limits[i].second)
         within_range = false;
     }

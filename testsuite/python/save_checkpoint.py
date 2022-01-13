@@ -179,7 +179,7 @@ if 'LB.OFF' in modes:
     # set integrator
     if 'INT.NPT' in modes and espressomd.has_features('NPT'):
         system.integrator.set_isotropic_npt(ext_pressure=2.0, piston=0.01,
-                                            direction=[1, 0, 0])
+                                            direction=[True, False, False])
     elif 'INT.SD' in modes:
         system.integrator.set_steepest_descent(f_max=2.0, gamma=0.1,
                                                max_displacement=0.01)

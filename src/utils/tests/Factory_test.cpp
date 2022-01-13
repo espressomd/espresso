@@ -29,6 +29,7 @@
 
 #include "utils/Factory.hpp"
 
+#include <stdexcept>
 #include <string>
 
 struct TestClass {
@@ -74,6 +75,9 @@ BOOST_AUTO_TEST_CASE(type_name) {
 
   /* Make an object */
   auto o = factory.make(derived_class_name);
-
+  o->method();
   BOOST_CHECK_EQUAL(factory.type_name(*o.get()), derived_class_name);
+
+  /* Make an unknown object */
+  BOOST_CHECK_THROW(factory.make("unknown"), std::domain_error);
 }

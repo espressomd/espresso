@@ -22,11 +22,13 @@
 #ifndef SCRIPT_INTERFACE_CYL_TRANSFORM_PARAMS_HPP
 #define SCRIPT_INTERFACE_CYL_TRANSFORM_PARAMS_HPP
 
+#include "script_interface/auto_parameters/AutoParameters.hpp"
+#include "script_interface/get_value.hpp"
+
+#include <utils/math/cylindrical_transformation_parameters.hpp>
+
+#include <memory>
 #include <stdexcept>
-
-#include "script_interface/ScriptInterface.hpp"
-
-#include "utils/math/cylindrical_transformation_parameters.hpp"
 
 namespace ScriptInterface {
 

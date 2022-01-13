@@ -32,7 +32,6 @@
 
 #include "CellStructure.hpp"
 #include "ParticleRange.hpp"
-#include "actor/Actor.hpp"
 #include "actor/ActorList.hpp"
 
 #include <utils/Vector.hpp>

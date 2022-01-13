@@ -29,11 +29,8 @@
 
 #include <utils/index.hpp>
 
-#include <MpiCallbacks.hpp>
 #include <algorithm>
 #include <cassert>
-#include <communication.hpp>
-#include <event.hpp>
 #include <string>
 #include <vector>
 

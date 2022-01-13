@@ -165,4 +165,5 @@ BOOST_AUTO_TEST_CASE(type_deduction) {
                                                      Quaternion<int>>::type,
                    Quaternion<double>>::value,
       "");
+  BOOST_TEST_PASSPOINT();
 }
