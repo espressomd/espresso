@@ -275,7 +275,7 @@ struct IA_parameters {
 #endif
 };
 
-extern std::vector<IA_parameters> ia_params;
+extern std::vector<IA_parameters> nonbonded_ia_params;
 
 /** Maximal particle type seen so far. */
 extern int max_seen_particle_type;
@@ -306,8 +306,8 @@ inline IA_parameters *get_ia_param(int i, int j) {
   assert(i >= 0 && i < max_seen_particle_type);
   assert(j >= 0 && j < max_seen_particle_type);
 
-  return &ia_params[Utils::upper_triangular(std::min(i, j), std::max(i, j),
-                                            max_seen_particle_type)];
+  return &nonbonded_ia_params[Utils::upper_triangular(
+      std::min(i, j), std::max(i, j), max_seen_particle_type)];
 }
 
 /** Get interaction parameters between particle types i and j.

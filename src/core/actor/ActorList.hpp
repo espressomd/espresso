@@ -20,6 +20,7 @@
 #define _ACTOR_ACTORLIST_HPP
 
 #include "Actor.hpp"
+
 #include <vector>
 
 class ActorList : public std::vector<Actor *> {

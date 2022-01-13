@@ -411,9 +411,9 @@ private:
   static auto &static_callbacks() {
     static std::vector<
         std::pair<void (*)(), std::unique_ptr<detail::callback_concept_t>>>
-        m_callbacks;
+        callbacks;
 
-    return m_callbacks;
+    return callbacks;
   }
 
 public:

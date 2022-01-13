@@ -526,7 +526,7 @@ void setup_PoQ(std::size_t index, double omega,
 
   clear_vec(lclimge, size);
   clear_vec(gblcblk, size);
-  auto &sc_cache = (axis == PoQ::P) ? scxcache : scycache;
+  auto const &sc_cache = (axis == PoQ::P) ? scxcache : scycache;
 
   std::size_t ic = 0;
   auto const o = (index - 1) * particles.size();

@@ -97,7 +97,6 @@ void tune_skin(double min_skin, double max_skin, double tol, int int_steps,
 
   double a = min_skin;
   double b = max_skin;
-  double time_a, time_b;
 
   /* The maximal skin is the remainder from the required cutoff to
    * the maximal range that can be supported by the cell system, but
@@ -111,10 +110,10 @@ void tune_skin(double min_skin, double max_skin, double tol, int int_steps,
 
   while (fabs(a - b) > tol) {
     mpi_set_skin(a);
-    time_a = time_calc(int_steps);
+    auto const time_a = time_calc(int_steps);
 
     mpi_set_skin(b);
-    time_b = time_calc(int_steps);
+    auto const time_b = time_calc(int_steps);
 
     if (time_a > time_b) {
       a = 0.5 * (a + b);

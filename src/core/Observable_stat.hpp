@@ -64,10 +64,8 @@ public:
 
   /** Rescale values */
   void rescale(double volume) {
-    auto const factor = 1. / volume;
-    for (auto &e : m_data) {
-      e *= factor;
-    }
+    auto const fac = 1. / volume;
+    boost::transform(m_data, m_data.begin(), [fac](auto e) { return e * fac; });
   }
 
   /** Contribution from linear and angular kinetic energy (accumulated). */

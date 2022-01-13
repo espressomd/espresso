@@ -62,6 +62,12 @@
 #include <utility>
 #include <vector>
 
+static bool type_list_enable;
+static std::unordered_map<int, std::unordered_set<int>> particle_type_map;
+
+void remove_id_from_map(int part_id, int type);
+void add_id_to_type_map(int part_id, int type);
+
 namespace {
 /**
  * @brief A generic particle update.
@@ -381,14 +387,6 @@ template <typename T, T ParticleProperties::*m>
 void mpi_update_particle_property(int id, const T &value) {
   mpi_update_particle<ParticleProperties, &Particle::p, T, m>(id, value);
 }
-
-/************************************************
- * variables
- ************************************************/
-bool type_list_enable;
-std::unordered_map<int, std::unordered_set<int>> particle_type_map{};
-void remove_id_from_map(int part_id, int type);
-void add_id_to_type_map(int part_id, int type);
 
 /**
  * @brief id -> rank

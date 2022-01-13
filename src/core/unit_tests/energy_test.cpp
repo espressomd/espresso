@@ -24,19 +24,22 @@
 #include "energy_inline.hpp"
 
 BOOST_AUTO_TEST_CASE(translational_kinetic_energy_) {
-
-  Particle p;
-#ifdef MASS
-  p.p.mass = 2.;
-#endif
-  p.m.v = {3., 4., 5.};
-
-  auto const expected = 0.5 * p.p.mass * p.m.v.norm2();
-  BOOST_TEST(translational_kinetic_energy(p) == expected);
-
-/* virtual */
-#ifdef VIRTUAL_SITES
+  // real particle
   {
+    Particle p;
+#ifdef MASS
+    p.p.mass = 2.;
+#endif
+    p.m.v = {3., 4., 5.};
+
+    auto const expected = 0.5 * p.p.mass * p.m.v.norm2();
+    BOOST_TEST(translational_kinetic_energy(p) == expected);
+  }
+
+  // virtual particle
+  {
+#ifdef VIRTUAL_SITES
+
     Particle p;
 #ifdef MASS
     p.p.mass = 2.;
@@ -46,8 +49,8 @@ BOOST_AUTO_TEST_CASE(translational_kinetic_energy_) {
 
     auto const expected = 0.;
     BOOST_TEST(translational_kinetic_energy(p) == expected);
-  }
 #endif
+  }
 }
 
 BOOST_AUTO_TEST_CASE(rotational_kinetic_energy_) {

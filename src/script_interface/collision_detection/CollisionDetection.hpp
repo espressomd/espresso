@@ -63,7 +63,7 @@ public:
                          const VariantMap &params) override {
     if (name == "validate") {
       return validate_collision_parameters();
-    };
+    }
     return none;
   };
 };

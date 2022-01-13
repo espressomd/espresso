@@ -324,17 +324,21 @@ void Correlator::update() {
 
   // Let's find out how far we have to go back in the hierarchy to make space
   // for the new value
-  int i = 0;
-  while (true) {
-    if (((t - ((m_tau_lin + 1) * ((1 << (i + 1)) - 1) + 1)) % (1 << (i + 1)) ==
-         0)) {
-      if (i < (m_hierarchy_depth - 1) && n_vals[i] > m_tau_lin) {
-        highest_level_to_compress += 1;
-        i++;
-      } else
+  {
+    auto const max_depth = m_hierarchy_depth - 1;
+    int i = 0;
+    while (true) {
+      if (i >= max_depth or n_vals[i] <= m_tau_lin) {
         break;
-    } else
-      break;
+      }
+      auto const modulo = 1 << (i + 1);
+      auto const remainder = (t - (m_tau_lin + 1) * (modulo - 1) - 1) % modulo;
+      if (remainder != 0) {
+        break;
+      }
+      highest_level_to_compress += 1;
+      i++;
+    }
   }
 
   // Now we know we must make space on the levels 0..highest_level_to_compress
@@ -426,24 +430,19 @@ int Correlator::finalize() {
 
     while (vals_ll) {
       // Check, if we will want to push the value from the lowest level
-      int highest_level_to_compress = -1;
-      if (vals_ll % 2) {
-        highest_level_to_compress = ll;
-      }
+      auto highest_level_to_compress = (vals_ll % 2) ? ll : -1;
 
-      int i = ll + 1; // lowest level for which we have to check for compression
       // Let's find out how far we have to go back in the hierarchy to make
       // space for the new value
-      while (highest_level_to_compress > -1) {
-        if (n_vals[i] % 2) {
-          if (i < (m_hierarchy_depth - 1) && n_vals[i] > m_tau_lin) {
-            highest_level_to_compress += 1;
-            i++;
-          } else {
+      {
+        auto const max_depth = m_hierarchy_depth - 1;
+        int i = ll + 1; // lowest level for which to check for compression
+        while (highest_level_to_compress > -1) {
+          if (i >= max_depth or n_vals[i] % 2 == 0 or n_vals[i] <= m_tau_lin) {
             break;
           }
-        } else {
-          break;
+          highest_level_to_compress += 1;
+          i++;
         }
       }
       vals_ll -= 1;

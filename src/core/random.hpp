@@ -166,11 +166,13 @@ auto noise_gaussian(uint64_t counter, uint32_t seed, int key1, int key2 = 0) {
   // sin/cos are evaluated simultaneously by gcc or separately by Clang
   Utils::VectorXd<N> noise{};
   constexpr double two_pi = 2.0 * Utils::pi();
-  auto const modulo = sqrt(-2.0 * log(u[0]));
-  auto const angle = two_pi * u[1];
-  noise[0] = modulo * cos(angle);
-  if (N > 1) {
-    noise[1] = modulo * sin(angle);
+  {
+    auto const modulo = sqrt(-2.0 * log(u[0]));
+    auto const angle = two_pi * u[1];
+    noise[0] = modulo * cos(angle);
+    if (N > 1) {
+      noise[1] = modulo * sin(angle);
+    }
   }
   if (N > 2) {
     auto const modulo = sqrt(-2.0 * log(u[2]));

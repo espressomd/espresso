@@ -136,10 +136,6 @@ enum : unsigned {
   GHOSTTRANS_BONDS = 128u
 };
 
-/** \name Data Types */
-/************************************************************/
-/**@{*/
-
 struct GhostCommunication {
   /** Communication type. */
   int type;
@@ -167,17 +163,9 @@ struct GhostCommunicator {
   std::vector<GhostCommunication> communications;
 };
 
-/**@}*/
-
-/** \name Exported Functions */
-/************************************************************/
-/**@{*/
-
 /**
  * @brief Do a ghost communication with caller specified data parts.
  */
 void ghost_communicator(const GhostCommunicator &gcr, unsigned int data_parts);
-
-/**@}*/
 
 #endif

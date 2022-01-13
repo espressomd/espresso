@@ -230,7 +230,7 @@ calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
     }
 #endif
 #ifdef BOND_CONSTRAINT
-    if (auto const *iap = boost::get<RigidBond>(&iaparams)) {
+    if (boost::get<RigidBond>(&iaparams)) {
       return boost::optional<double>(0);
     }
 #endif
@@ -239,7 +239,7 @@ calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
       return iap->energy(dx);
     }
 #endif
-    if (auto const *iap = boost::get<VirtualBond>(&iaparams)) {
+    if (boost::get<VirtualBond>(&iaparams)) {
       return boost::optional<double>(0);
     }
     throw BondUnknownTypeError();
@@ -257,7 +257,7 @@ calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
     if (auto const *iap = boost::get<TabulatedAngleBond>(&iaparams)) {
       return iap->energy(p1.r.p, p2->r.p, p3->r.p);
     }
-    if (auto const *iap = boost::get<IBMTriel>(&iaparams)) {
+    if (boost::get<IBMTriel>(&iaparams)) {
       runtimeWarningMsg() << "Unsupported bond type " +
                                  std::to_string(iaparams.which()) +
                                  " in energy calculation.";
@@ -272,7 +272,7 @@ calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
     if (auto const *iap = boost::get<TabulatedDihedralBond>(&iaparams)) {
       return iap->energy(p2->r.p, p1.r.p, p3->r.p, p4->r.p);
     }
-    if (auto const *iap = boost::get<IBMTribend>(&iaparams)) {
+    if (boost::get<IBMTribend>(&iaparams)) {
       runtimeWarningMsg() << "Unsupported bond type " +
                                  std::to_string(iaparams.which()) +
                                  " in energy calculation.";

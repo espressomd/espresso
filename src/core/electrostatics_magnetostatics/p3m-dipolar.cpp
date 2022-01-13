@@ -380,7 +380,7 @@ template <std::size_t cao> struct AssignForces {
 
 double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
                                const ParticleRange &particles) {
-  int i, d, d_rs, ind, j[3];
+  int i, ind, j[3];
   /* k-space energy */
   double k_space_energy_dip = 0.0;
   double tmp0, tmp1;
@@ -508,8 +508,8 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
       }
 
       /* Force component loop */
-      for (d = 0; d < 3; d++) {
-        d_rs = (d + dp3m.ks_pnum) % 3;
+      for (int d = 0; d < 3; d++) {
+        auto const d_rs = (d + dp3m.ks_pnum) % 3;
         ind = 0;
         for (j[0] = 0; j[0] < dp3m.fft.plan[3].new_mesh[0]; j[0]++) {
           for (j[1] = 0; j[1] < dp3m.fft.plan[3].new_mesh[1]; j[1]++) {
@@ -576,8 +576,8 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
       }
 
       /* Force component loop */
-      for (d = 0; d < 3; d++) { /* direction in k-space: */
-        d_rs = (d + dp3m.ks_pnum) % 3;
+      for (int d = 0; d < 3; d++) { /* direction in k-space: */
+        auto const d_rs = (d + dp3m.ks_pnum) % 3;
         ind = 0;
         for (j[0] = 0; j[0] < dp3m.fft.plan[3].new_mesh[0];
              j[0]++) { // j[0]=n_y
