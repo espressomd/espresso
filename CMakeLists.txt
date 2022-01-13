@@ -77,6 +77,7 @@ option(WITH_STOKESIAN_DYNAMICS "Build with Stokesian Dynamics" OFF)
 option(WITH_BENCHMARKS "Enable benchmarks" OFF)
 option(WITH_VALGRIND_INSTRUMENTATION
        "Build with valgrind instrumentation markers" OFF)
+option(WITH_CPPCHECK "Run Cppcheck during compilation" OFF)
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   option(WITH_CLANG_TIDY "Run Clang-Tidy during compilation" OFF)
 endif()
@@ -419,6 +420,19 @@ target_link_libraries(cxx_interface INTERFACE coverage_interface)
 if(WITH_CLANG_TIDY)
   find_package(ClangTidy "${CMAKE_CXX_COMPILER_VERSION}" EXACT REQUIRED)
   set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE};--extra-arg=--cuda-host-only")
+endif()
+
+if(WITH_CPPCHECK)
+  find_program(CMAKE_CXX_CPPCHECK NAMES cppcheck)
+  if(NOT CMAKE_CXX_CPPCHECK)
+    message(FATAL_ERROR "Could not find the program cppcheck.")
+  endif()
+  list(APPEND CMAKE_CXX_CPPCHECK "--enable=all"
+       "--std=c++${CMAKE_CXX_STANDARD}" "--quiet" "--inline-suppr"
+       "--suppressions-list=${CMAKE_CURRENT_SOURCE_DIR}/.cppcheck")
+  if(WARNINGS_ARE_ERRORS)
+    list(APPEND CMAKE_CXX_CPPCHECK "--error-exitcode=2")
+  endif()
 endif()
 
 #
