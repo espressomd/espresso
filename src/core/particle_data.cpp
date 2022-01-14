@@ -62,6 +62,7 @@
 #include <utility>
 #include <vector>
 
+constexpr auto some_tag = 42;
 static bool type_list_enable;
 static std::unordered_map<int, std::unordered_set<int>> particle_type_map;
 
@@ -332,7 +333,7 @@ struct UpdateVisitor : public boost::static_visitor<void> {
 void mpi_send_update_message_local(int node, int id) {
   if (node == comm_cart.rank()) {
     UpdateMessage msg{};
-    comm_cart.recv(0, SOME_TAG, msg);
+    comm_cart.recv(0, some_tag, msg);
     boost::apply_visitor(UpdateVisitor{id}, msg);
   }
 
@@ -368,7 +369,7 @@ void mpi_send_update_message(int id, const UpdateMessage &msg) {
    * message to the target, otherwise we
    * can just apply the update directly. */
   if (pnode != comm_cart.rank()) {
-    comm_cart.send(pnode, SOME_TAG, msg);
+    comm_cart.send(pnode, some_tag, msg);
   } else {
     boost::apply_visitor(UpdateVisitor{id}, msg);
   }
@@ -415,7 +416,7 @@ static void mpi_who_has_local() {
                  sendbuf.begin(),
                  [](Particle const &p) { return p.p.identity; });
 
-  MPI_Send(sendbuf.data(), n_part, MPI_INT, 0, SOME_TAG, comm_cart);
+  MPI_Send(sendbuf.data(), n_part, MPI_INT, 0, some_tag, comm_cart);
 }
 
 REGISTER_CALLBACK(mpi_who_has_local)
@@ -439,7 +440,7 @@ void mpi_who_has() {
 
     } else if (n_parts[pnode] > 0) {
       pdata.resize(n_parts[pnode]);
-      MPI_Recv(pdata.data(), n_parts[pnode], MPI_INT, pnode, SOME_TAG,
+      MPI_Recv(pdata.data(), n_parts[pnode], MPI_INT, pnode, some_tag,
                comm_cart, MPI_STATUS_IGNORE);
       for (int i = 0; i < n_parts[pnode]; i++)
         particle_node[pdata[i]] = pnode;
@@ -662,7 +663,7 @@ int mpi_place_new_particle(int p_id, const Utils::Vector3d &pos) {
 void mpi_place_particle_local(int pnode, int p_id) {
   if (pnode == this_node) {
     Utils::Vector3d pos;
-    comm_cart.recv(0, SOME_TAG, pos);
+    comm_cart.recv(0, some_tag, pos);
     local_place_particle(p_id, pos, 0);
   }
 
@@ -684,7 +685,7 @@ void mpi_place_particle(int node, int p_id, const Utils::Vector3d &pos) {
   if (node == this_node)
     local_place_particle(p_id, pos, 0);
   else {
-    comm_cart.send(node, SOME_TAG, pos);
+    comm_cart.send(node, some_tag, pos);
   }
 
   cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
@@ -991,7 +992,7 @@ void local_rescale_particles(int dir, double scale) {
 
 static void mpi_rescale_particles_local(int dir) {
   double scale = 0.0;
-  MPI_Recv(&scale, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+  MPI_Recv(&scale, 1, MPI_DOUBLE, 0, some_tag, comm_cart, MPI_STATUS_IGNORE);
   local_rescale_particles(dir, scale);
   on_particle_change();
 }
@@ -1004,7 +1005,7 @@ void mpi_rescale_particles(int dir, double scale) {
     if (pnode == this_node) {
       local_rescale_particles(dir, scale);
     } else {
-      MPI_Send(&scale, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+      MPI_Send(&scale, 1, MPI_DOUBLE, pnode, some_tag, comm_cart);
     }
   }
   on_particle_change();

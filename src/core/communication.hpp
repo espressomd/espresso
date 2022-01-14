@@ -58,13 +58,6 @@ extern int n_nodes;
 /** The communicator */
 extern boost::mpi::communicator comm_cart;
 
-/**
- * Default MPI tag used by callbacks.
- */
-#ifndef SOME_TAG
-#define SOME_TAG 42
-#endif
-
 namespace Communication {
 /**
  * @brief Returns a reference to the global callback class instance.
