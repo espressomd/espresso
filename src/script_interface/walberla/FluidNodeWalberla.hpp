@@ -25,6 +25,8 @@
 
 #include <walberla_bridge/LBWalberlaBase.hpp>
 
+#include "FluidWalberla.hpp"
+
 #include "core/communication.hpp"
 #include "core/errorhandling.hpp"
 #include "core/grid_based_algorithms/lb_interface.hpp"
@@ -43,6 +45,7 @@
 #include <boost/optional.hpp>
 #include <boost/serialization/vector.hpp>
 
+#include <cassert>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -67,8 +70,12 @@ public:
 
   void do_construct(VariantMap const &params) override {
     try {
-      m_lb_fluid = ::lb_walberla();
-      auto const &lb_params = ::lb_walberla_params();
+      auto const lb_sip =
+          get_value<std::shared_ptr<FluidWalberla>>(params, "lb_sip");
+      m_lb_fluid = lb_sip->lb_fluid().lock();
+      assert(m_lb_fluid);
+      auto const &lb_params = lb_sip->lb_params().lock();
+      assert(lb_params);
       auto const tau = lb_params->get_tau();
       auto const agrid = lb_params->get_agrid();
       m_grid_size = m_lb_fluid->lattice().get_grid_dimensions();
@@ -81,7 +88,7 @@ public:
       m_conv_force = Utils::int_pow<2>(tau) / Utils::int_pow<1>(agrid);
       m_conv_velocity = Utils::int_pow<1>(tau) / Utils::int_pow<1>(agrid);
     } catch (const std::exception &e) {
-      runtimeErrorMsg() << "LatticeWalberla failed: " << e.what();
+      runtimeErrorMsg() << "FluidNodeWalberla failed: " << e.what();
       m_lb_fluid.reset();
     }
   }

@@ -1,3 +1,4 @@
+#
 # Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -14,6 +15,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
@@ -45,9 +48,7 @@ class LBTest:
               'agrid': 0.5,
               'density': 0.85,
               'viscosity': 3.0,
-              'friction': 2.0,
-              'temp': 1.5,
-              'gamma': 1.5}
+              'friction': 2.0}
 
     system.periodicity = [1, 1, 1]
     system.time_step = params['time_step']
@@ -61,13 +62,33 @@ class LBTest:
         self.system.time_step = self.params['time_step']
 
     def test_properties(self):
+        # inactive actor
         lbf = self.lb_class(kT=1.0, seed=42, **self.params, **self.lb_params)
-        # check property getters work before the object is initialized
-        self.assertAlmostEqual(lbf.tau, self.system.time_step, delta=self.atol)
-        self.assertAlmostEqual(
-            lbf.agrid,
-            self.params['agrid'],
-            delta=self.atol)
+        self.assertFalse(lbf.is_active)
+        self.check_properties(lbf)
+
+        # activated actor
+        lbf = self.lb_class(kT=1.0, seed=42, **self.params, **self.lb_params)
+        self.system.actors.add(lbf)
+        self.system.thermostat.set_lb(LB_fluid=lbf, seed=1)
+        self.assertTrue(lbf.is_active)
+        self.check_properties(lbf)
+        self.system.actors.remove(lbf)
+
+        # deactivated actor
+        lbf = self.lb_class(kT=1.0, seed=42, **self.params, **self.lb_params)
+        self.system.actors.add(lbf)
+        self.system.thermostat.set_lb(LB_fluid=lbf, seed=1)
+        self.system.actors.remove(lbf)
+        self.assertFalse(lbf.is_active)
+        self.check_properties(lbf)
+
+    def check_properties(self, lbf):
+        agrid = self.params['agrid']
+        tau = self.system.time_step
+        # check LB object
+        self.assertAlmostEqual(lbf.tau, tau, delta=self.atol)
+        self.assertAlmostEqual(lbf.agrid, agrid, delta=self.atol)
         self.assertAlmostEqual(lbf.viscosity, 3., delta=self.atol)
         self.assertAlmostEqual(lbf.density, 0.85, delta=self.atol)
         self.assertAlmostEqual(lbf.kT, 1.0, delta=self.atol)
@@ -75,36 +96,27 @@ class LBTest:
         self.assertEqual(
             lbf.is_single_precision,
             self.lb_params['single_precision'])
-        self.assertFalse(lbf.is_active)
         np.testing.assert_allclose(
             np.copy(lbf.ext_force_density), [0., 0., 0.], atol=self.atol)
-        # check property setters work before the object is initialized
         lbf.viscosity = 2.
         self.assertAlmostEqual(lbf.viscosity, 2., delta=self.atol)
         ext_f = [0.01, 0.02, 0.03]
         lbf.ext_force_density = ext_f
         np.testing.assert_allclose(
             np.copy(lbf.ext_force_density), ext_f, atol=self.atol)
-        # check property getters/setters work after the object is initialized
-        self.system.actors.add(lbf)
-        self.system.thermostat.set_lb(LB_fluid=lbf, seed=1)
         self.assertEqual(lbf.rng_state, 0)
         self.system.integrator.run(1)
-        self.assertEqual(lbf.rng_state, 1)
+        self.assertEqual(lbf.rng_state, int(lbf.is_active))
         lbf.rng_state = 56
         self.system.integrator.run(1)
-        self.assertEqual(lbf.rng_state, 57)
-        self.assertAlmostEqual(lbf.tau, self.system.time_step, delta=self.atol)
-        self.assertAlmostEqual(
-            lbf.agrid,
-            self.params['agrid'],
-            delta=self.atol)
+        self.assertEqual(lbf.rng_state, 56 + int(lbf.is_active))
+        self.assertAlmostEqual(lbf.tau, tau, delta=self.atol)
+        self.assertAlmostEqual(lbf.agrid, agrid, delta=self.atol)
         self.assertAlmostEqual(lbf.kT, 1.0, delta=self.atol)
         self.assertEqual(lbf.seed, 42)
         self.assertEqual(
             lbf.is_single_precision,
             self.lb_params['single_precision'])
-        self.assertTrue(lbf.is_active)
         lbf.viscosity = 3.
         self.assertAlmostEqual(lbf.viscosity, 3., delta=self.atol)
         ext_force_density = [0.02, 0.05, 0.07]
@@ -130,14 +142,24 @@ class LBTest:
     def test_raise_if_not_active(self):
         lbf = self.lb_class(**self.params, **self.lb_params)
         # check exceptions from LB actor
-        with self.assertRaisesRegex(RuntimeError, "Cannot set 'rng_state' before walberla is initialized"):
-            lbf.rng_state = 5
-        with self.assertRaisesRegex(RuntimeError, "Cannot get 'rng_state' before walberla is initialized"):
-            lbf.rng_state
         with self.assertRaisesRegex(RuntimeError, "LB not activated"):
             lbf.pressure_tensor
         with self.assertRaisesRegex(RuntimeError, "LB not activated"):
             lbf.get_interpolated_velocity(pos=[0, 0, 0])
+
+    def test_ctor_exceptions(self):
+        lattice = espressomd.lb.LatticeWalberla(
+            agrid=2 * self.params['agrid'], n_ghost_layers=1)
+        with self.assertRaisesRegex(ValueError, "cannot provide both 'lattice' and 'agrid'"):
+            self.lb_class(lattice=lattice, **self.params, **self.lb_params)
+        with self.assertRaisesRegex(ValueError, "density must be a strictly positive number"):
+            params = self.params.copy()
+            params['density'] = 0.
+            self.lb_class(**params, **self.lb_params)
+        with self.assertRaisesRegex(ValueError, "kT must be a positive number"):
+            params = self.params.copy()
+            params['kT'] = -1e-12
+            self.lb_class(**params, **self.lb_params)
 
     def test_node_exceptions(self):
         lbf = self.lb_class(**self.params, **self.lb_params)
@@ -261,17 +283,12 @@ class LBTest:
         LB lattice initialization must raise an exception when either box_l or
         local_box_l aren't integer multiples of agrid.
         """
-        lbf = self.lb_class(
-            viscosity=self.params['viscosity'],
-            density=self.params['density'],
-            agrid=self.params['agrid'] + 1e-6,
-            tau=self.system.time_step,
-            ext_force_density=[0, 0, 0],
-            **self.lb_params)
         print("\nTesting LB error messages:", file=sys.stderr)
         sys.stderr.flush()
         with self.assertRaises(Exception):
-            self.system.actors.add(lbf)
+            params = self.params.copy()
+            params['agrid'] += 1e-6
+            self.lb_class(**params, **self.lb_params)
         print("End of LB error messages", file=sys.stderr)
         sys.stderr.flush()
 
@@ -409,8 +426,7 @@ class LBTest:
         if espressomd.has_features("MASS"):
             system.part.all().mass = 0.1 + np.random.random(len(system.part))
 
-        lbf = self.lb_class(kT=self.params['temp'], seed=4, **self.params,
-                            **self.lb_params)
+        lbf = self.lb_class(kT=1.5, seed=4, **self.params, **self.lb_params)
         system.actors.add(lbf)
         system.thermostat.set_lb(
             LB_fluid=lbf, seed=3, gamma=self.params['friction'])

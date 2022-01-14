@@ -128,9 +128,9 @@ class LBSliceTest(ut.TestCase):
         lb_slice = lb_fluid[1, 2, i:i + 10]
         self.assertEqual(lb_slice.density.shape, (0,))
         self.assertIsInstance(lb_slice.density.dtype, object)
-        self.assertEqual(list(lb_slice.x_indices), [1])
-        self.assertEqual(list(lb_slice.y_indices), [2])
-        self.assertEqual(list(lb_slice.z_indices), [])
+        self.assertEqual(list(lb_slice.indices[0]), [1])
+        self.assertEqual(list(lb_slice.indices[1]), [2])
+        self.assertEqual(list(lb_slice.indices[2]), [])
         np.testing.assert_array_equal(
             np.copy(lb_fluid[1, 2, 8:i].index),
             np.copy(lb_fluid[1, 2, 8:].index))
@@ -140,15 +140,12 @@ class LBSliceTest(ut.TestCase):
     def test_iterator(self):
         lbslice_handle = self.lb_fluid[:, :, :]
         # arrange node indices using class methods
-        i_handle, j_handle, k_handle = lbslice_handle.x_indices, lbslice_handle.y_indices, lbslice_handle.z_indices
-        arranged_indices = [
-            (x, y, z) for (
-                x, y, z) in itertools.product(
-                i_handle, j_handle, k_handle)]
+        arranged_indices = list(itertools.product(*lbslice_handle.indices))
         # arrange node indices using __iter__() enforced conversion
-        iterator_indices = [x.index for x in lbslice_handle]
+        iterator_indices = [node.index for node in lbslice_handle]
         # check the results correspond pairwise. order is implicitly preserved.
-        # uses __eq()__ method form LBFluidRoutines()
+        np.testing.assert_array_equal(arranged_indices, iterator_indices)
+        # use __eq()__ method form LBFluidRoutines()
         assert all([x == y for x, y in zip(
             arranged_indices, iterator_indices)])
 

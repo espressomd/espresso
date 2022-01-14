@@ -37,21 +37,18 @@ class VelocityBounceBack:
         self.velocity = velocity
 
 
-def _construct(cls, params):
-    obj = cls(**params)
-    obj._params = params
-    return obj
-
-
 class HydrodynamicInteraction(ScriptInterfaceHelper):
     """
     Base class for LB implementations.
 
     Parameters
     ----------
+    lattice :
+        Lattice object. If not provided, a default one can be constructed
+        using the ``agrid`` parameter.
     agrid : :obj:`float`
         Lattice constant. The box size in every direction must be an integer
-        multiple of ``agrid``.
+        multiple of ``agrid``. Cannot be provided together with ``lattice``
     tau : :obj:`float`
         LB time step, must be an integer multiple of the MD time step.
     density : :obj:`float`
@@ -68,38 +65,8 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
         Required for a thermalized fluid. Must be positive.
     """
 
-    def __init__(self, *args, **kwargs):
-        if 'sip' not in kwargs:
-            if not self.required_keys().issubset(kwargs):
-                raise ValueError(
-                    f"At least the following keys have to be given as keyword arguments: {self.required_keys()}")
-            params = self.default_params()
-            params.update(kwargs)
-            self.validate_params(params)
-            super().__init__(*args, **params)
-            utils.handle_errors(
-                "HydrodynamicInteraction initialization failed")
-            self._params = {k: params.get(k) for k in self.valid_keys()}
-        else:
-            super().__init__(**kwargs)
-
-    def _lb_init(self):
-        raise Exception(
-            "Subclasses of HydrodynamicInteraction must define the _lb_init() method.")
-
-    def __reduce__(self):
-        return _construct, (self.__class__, self._params), None
-
     def __getitem__(self, key):
-        if isinstance(key, (tuple, list, np.ndarray)):
-            if len(key) == 3:
-                if any(isinstance(item, slice) for item in key):
-                    return LBSlice(key, self.shape)
-                else:
-                    return LBFluidNode(index=np.array(key))
-        else:
-            raise Exception(
-                "%s is not a valid key. Should be a point on the nodegrid e.g. lbf[0,0,0], or a slice" % key)
+        raise NotImplementedError("Derived classes must implement this method")
 
     def __str__(self):
         return f"{self.__class__.__name__}({self.get_params()})"
@@ -111,7 +78,6 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
         self._deactivate_method()
 
     def _activate_method(self):
-        self._lb_init()
         self.call_method('activate')
         utils.handle_errors("HydrodynamicInteraction activation failed")
 
@@ -130,13 +96,16 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
 
     def validate_params(self, params):
         for key in ('agrid', 'tau', 'density', 'viscosity'):
+            if key not in params or key not in self.valid_keys():
+                continue
             utils.check_type_or_throw_except(
                 params[key], 1, float, f'{key} must be a number')
             if params[key] <= 0.:
                 raise ValueError(f'{key} must be a strictly positive number')
-
         utils.check_type_or_throw_except(
             params['kT'], 1, float, 'kT must be a number')
+        if params['kT'] < 0.:
+            raise ValueError('kT must be a positive number')
         if params['kT'] > 0.:
             utils.check_type_or_throw_except(
                 params['seed'], 1, int, 'seed must be a number')
@@ -150,17 +119,11 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
                 "lattice", "kT", "seed"}
 
     def required_keys(self):
-        return {"density", "agrid", "viscosity", "tau"}
+        return {"lattice", "density", "viscosity", "tau"}
 
     def default_params(self):
-        return {"agrid": -1.0,
-                "density": -1.0,
-                "ext_force_density": [0.0, 0.0, 0.0],
-                "viscosity": -1.0,
-                "tau": -1.0,
-                "lattice": None,
-                "seed": 0,
-                "kT": 0.}
+        return {"lattice": None, "seed": 0, "kT": 0.,
+                "ext_force_density": [0.0, 0.0, 0.0]}
 
     def mach_limit(self):
         """
@@ -449,7 +412,9 @@ class LatticeWalberla(ScriptInterfaceHelper):
 class LBFluidWalberla(HydrodynamicInteraction):
     """
     Initialize the lattice-Boltzmann method for hydrodynamic flow using waLBerla.
-    See :class:`HydrodynamicInteraction` for the list of parameters.
+    See :class:`HydrodynamicInteraction` for the list of parameters. If argument
+    ``lattice`` is not provided, one will be default constructed if an argument
+    ``agrid`` is provided.
 
     """
     _so_name = "walberla::FluidWalberla"
@@ -466,25 +431,72 @@ class LBFluidWalberla(HydrodynamicInteraction):
     def __init__(self, *args, **kwargs):
         if not has_features("LB_WALBERLA"):
             raise NotImplementedError("Feature LB_WALBERLA not compiled in")
-        super().__init__(*args, **kwargs)
+
+        if 'sip' not in kwargs:
+            params = self.default_params()
+            params.update(kwargs)
+            self.validate_params(params)
+            self._check_required_arguments(params)
+            super().__init__(*args, **params)
+            utils.handle_errors(
+                "HydrodynamicInteraction initialization failed")
+            self._params = {k: params.get(k) for k in self.valid_keys()}
+            self._params['agrid'] = self.agrid
+            self._lattice_default_constructed = kwargs.get('lattice') is None
+        else:
+            super().__init__(**kwargs)
+
+    @classmethod
+    def _construct_from_cpt(cls, params):
+        del params['agrid']
+        lattice = params.pop('lattice')
+        params['lattice'] = LatticeWalberla(
+            agrid=lattice.agrid,
+            n_ghost_layers=lattice.n_ghost_layers)
+        obj = cls(**params)
+        obj._params = params
+        return obj
+
+    def __reduce__(self):
+        return self._construct_from_cpt, (self._params,), None
+
+    def validate_params(self, params):
+        super().validate_params(params)
+
+        # construct default lattice if necessary
+        if params.get('lattice') is None:
+            if 'agrid' not in params:
+                raise ValueError('missing argument "lattice" or "agrid"')
+            params['lattice'] = LatticeWalberla(
+                agrid=params.pop('agrid'), n_ghost_layers=1)
+        elif 'agrid' in params:
+            raise ValueError("cannot provide both 'lattice' and 'agrid'")
+
+        # check required keys
+        if not self.required_keys().issubset(params):
+            raise ValueError(
+                f"At least the following keys have to be given as keyword arguments: {self.required_keys()}")
 
     def _set_params_in_es_core(self):
         pass
-
-    def _lb_init(self):
-        if not self.is_initialized:
-            if self._params.get('lattice') is None:
-                self._params['lattice'] = LatticeWalberla(
-                    agrid=self._params['agrid'], n_ghost_layers=1)
-            self.call_method('instantiate', **self._params)
-            utils.handle_errors(
-                "HydrodynamicInteraction instantiation failed")
 
     def default_params(self):
         return {"single_precision": False, **super().default_params()}
 
     def valid_keys(self):
         return {"single_precision", *super().valid_keys()}
+
+    def __getitem__(self, key):
+        if isinstance(key, (tuple, list, np.ndarray)) and len(key) == 3:
+            if any(isinstance(item, slice) for item in key):
+                return LBFluidSliceWalberla(
+                    lb_sip=self, lb_range=key, node_grid=self.shape)
+            else:
+                return LBFluidNodeWalberla(lb_sip=self, index=np.array(key))
+
+        raise Exception(
+            f"{key} is not a valid index. Should be a point on the "
+            "nodegrid e.g. lbf[0,0,0], or a slice e.g. lbf[:,0,0]")
 
     def clear_boundaries(self):
         """
@@ -619,6 +631,7 @@ class LBFluidWalberlaGPU(HydrodynamicInteraction):
 
     """
 
+    # pylint: disable=unused-argument
     def __init__(self, *args, **kwargs):
         if not has_features("CUDA"):
             raise NotImplementedError("Feature CUDA not compiled in")
@@ -628,12 +641,12 @@ class LBFluidWalberlaGPU(HydrodynamicInteraction):
 
 
 @script_interface_register
-class LBFluidNode(ScriptInterfaceHelper):
+class LBFluidNodeWalberla(ScriptInterfaceHelper):
     _so_name = "walberla::FluidNodeWalberla"
     _so_creation_policy = "GLOBAL"
 
     def required_keys(self):
-        return {'index'}
+        return {'lb_sip', 'index'}
 
     def validate_params(self, params):
         utils.check_type_or_throw_except(
@@ -765,39 +778,48 @@ class LBFluidNode(ScriptInterfaceHelper):
         return hash(self.index)
 
 
-class LBSlice:
+class LBFluidSliceWalberla:
 
-    def __init__(self, key, shape):
-        self.x_indices, self.y_indices, self.z_indices = self.get_indices(
-            key, shape[0], shape[1], shape[2])
+    def required_keys(self):
+        return {'lb_sip', 'lb_range', 'node_grid'}
 
-    def get_indices(self, key, shape_x, shape_y, shape_z):
-        x_indices = np.atleast_1d(np.arange(shape_x)[key[0]])
-        y_indices = np.atleast_1d(np.arange(shape_y)[key[1]])
-        z_indices = np.atleast_1d(np.arange(shape_z)[key[2]])
-        return x_indices, y_indices, z_indices
+    # pylint: disable=unused-argument
+    def __init__(self, *args, **kwargs):
+        if 'sip' not in kwargs:
+            if not self.required_keys().issubset(kwargs):
+                raise ValueError(
+                    f"At least the following keys have to be given as keyword arguments: {self.required_keys()}")
+            lb_range = kwargs['lb_range']
+            node_grid = kwargs['node_grid']
+            self.indices = [np.atleast_1d(np.arange(node_grid[i])[lb_range[i]])
+                            for i in range(3)]
+            self.dimensions = [ind.size for ind in self.indices]
+            self._lb_sip = kwargs['lb_sip']
+            self._node = LBFluidNodeWalberla(lb_sip=self._lb_sip,
+                                             index=[0, 0, 0])
+        else:
+            super().__init__(**kwargs)
 
     def __getattr__(self, attr):
-        node = LBFluidNode(index=np.array([0, 0, 0]))
-        if not hasattr(node, attr):
+        node = self.__dict__.get('_node')
+        if node is None or not hasattr(node, attr):
             if attr in self.__dict__:
                 return self.__dict__[attr]
             raise AttributeError(
                 f"Object '{self.__class__.__name__}' has no attribute '{attr}'")
 
-        dimensions = [self.x_indices.size,
-                      self.y_indices.size,
-                      self.z_indices.size]
-        if 0 in dimensions:
+        if 0 in self.dimensions:
             return np.empty(0, dtype=type(None))
 
         res = getattr(node, attr)
         shape_res = np.shape(res)
         dtype = res.dtype if isinstance(res, np.ndarray) else type(res)
-        res = np.zeros((*dimensions, *shape_res), dtype=dtype)
-        for i, x in enumerate(self.x_indices):
-            for j, y in enumerate(self.y_indices):
-                for k, z in enumerate(self.z_indices):
+        res = np.zeros((*self.dimensions, *shape_res), dtype=dtype)
+
+        indices = self.indices
+        for i, x in enumerate(indices[0]):
+            for j, y in enumerate(indices[1]):
+                for k, z in enumerate(indices[2]):
                     err = node.call_method("override_index", index=[x, y, z])
                     assert err == 0
                     res[i, j, k] = getattr(node, attr)
@@ -806,20 +828,16 @@ class LBSlice:
         return utils.array_locked(res)
 
     def __setattr__(self, attr, value):
-        node = LBFluidNode(index=np.array([0, 0, 0]))
-        if not hasattr(node, attr):
+        node = self.__dict__.get('_node')
+        if node is None or not hasattr(node, attr):
             self.__dict__[attr] = value
             return
-
-        dimensions = [self.x_indices.size,
-                      self.y_indices.size,
-                      self.z_indices.size]
-        if 0 in dimensions:
+        elif 0 in self.dimensions:
             raise AttributeError("Cannot set properties of an empty LBSlice")
 
         value = np.copy(value)
         shape_res = np.shape(getattr(node, attr))
-        target_shape = (*dimensions, *shape_res)
+        target_shape = (*self.dimensions, *shape_res)
 
         # broadcast if only one element was provided
         if value.shape == shape_res:
@@ -829,16 +847,17 @@ class LBSlice:
             raise ValueError(
                 f"Input-dimensions of '{attr}' array {value.shape} does not match slice dimensions {target_shape}.")
 
-        for i, x in enumerate(self.x_indices):
-            for j, y in enumerate(self.y_indices):
-                for k, z in enumerate(self.z_indices):
+        indices = self.indices
+        for i, x in enumerate(indices[0]):
+            for j, y in enumerate(indices[1]):
+                for k, z in enumerate(indices[2]):
                     err = node.call_method("override_index", index=[x, y, z])
                     assert err == 0
                     setattr(node, attr, value[i, j, k])
 
     def __iter__(self):
-        return (LBFluidNode(index=np.array(index)) for index
-                in itertools.product(self.x_indices, self.y_indices, self.z_indices))
+        return (LBFluidNodeWalberla(lb_sip=self._lb_sip, index=np.array(index))
+                for index in itertools.product(*self.indices))
 
 
 def edge_detection(boundary_mask, periodicity):
