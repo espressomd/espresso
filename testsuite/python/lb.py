@@ -172,6 +172,10 @@ class LBTest:
             node.pressure_tensor = np.eye(3, 3)
         with self.assertRaisesRegex(RuntimeError, "Property 'is_boundary' is read-only"):
             node.is_boundary = True
+        with self.assertRaisesRegex(NotImplementedError, 'Cannot serialize LB fluid node objects'):
+            node.__reduce__()
+        with self.assertRaisesRegex(NotImplementedError, 'Cannot serialize LB fluid slice objects'):
+            lbf[0, 0, 0:2].__reduce__()
         # check property types
         array_locked = espressomd.utils.array_locked
         self.assertIsInstance(node.pressure_tensor, array_locked)

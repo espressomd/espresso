@@ -663,6 +663,9 @@ class LBFluidNodeWalberla(ScriptInterfaceHelper):
         else:
             super().__init__(**kwargs)
 
+    def __reduce__(self):
+        raise NotImplementedError('Cannot serialize LB fluid node objects')
+
     @property
     def index(self):
         return tuple(self._index)
@@ -799,6 +802,9 @@ class LBFluidSliceWalberla:
                                              index=[0, 0, 0])
         else:
             super().__init__(**kwargs)
+
+    def __reduce__(self):
+        raise NotImplementedError('Cannot serialize LB fluid slice objects')
 
     def __getattr__(self, attr):
         node = self.__dict__.get('_node')
