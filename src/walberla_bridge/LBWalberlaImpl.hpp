@@ -552,8 +552,7 @@ public:
           // Nodes with zero weight might not be accessible, because they can be
           // outside ghost layers
           if (weight != 0) {
-            auto res = get_node_velocity(
-                Utils::Vector3i{{node[0], node[1], node[2]}}, true);
+            auto const res = get_node_velocity(Utils::Vector3i(node), true);
             if (!res) {
               throw interpolation_illegal_access("velocity", pos, node, weight);
             }

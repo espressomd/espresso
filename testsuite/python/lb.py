@@ -139,14 +139,6 @@ class LBTest:
             with self.assertRaisesRegex(RuntimeError, f"(Parameter|Property) '{key}' is read-only"):
                 setattr(lbf, key, 0)
 
-    def test_raise_if_not_active(self):
-        lbf = self.lb_class(**self.params, **self.lb_params)
-        # check exceptions from LB actor
-        with self.assertRaisesRegex(RuntimeError, "LB not activated"):
-            lbf.pressure_tensor
-        with self.assertRaisesRegex(RuntimeError, "LB not activated"):
-            lbf.get_interpolated_velocity(pos=[0, 0, 0])
-
     def test_ctor_exceptions(self):
         lattice = espressomd.lb.LatticeWalberla(
             agrid=2 * self.params['agrid'], n_ghost_layers=1)

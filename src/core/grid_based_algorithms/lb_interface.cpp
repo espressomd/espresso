@@ -20,6 +20,7 @@
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_walberla_instance.hpp"
 #include "grid_based_algorithms/lb_walberla_interface.hpp"
+#include "grid_based_algorithms/lb_walberla_kernels.hpp"
 
 #include "BoxGeometry.hpp"
 #include "MpiCallbacks.hpp"
@@ -110,26 +111,13 @@ double lb_lbfluid_get_lattice_speed() {
 }
 
 Utils::Vector6d lb_lbfluid_get_pressure_tensor_local() {
+  Utils::Vector6d tensor;
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
-    auto const &lb = lb_walberla();
-    auto const gridsize = lb->lattice().get_grid_dimensions();
-    Utils::Vector6d tensor{};
-    for (int i = 0; i < gridsize[0]; i++) {
-      for (int j = 0; j < gridsize[1]; j++) {
-        for (int k = 0; k < gridsize[2]; k++) {
-          const Utils::Vector3i node{{i, j, k}};
-          auto const node_tensor = lb->get_node_pressure_tensor(node);
-          if (node_tensor) {
-            tensor += *node_tensor;
-          }
-        }
-      }
-    }
-    return tensor;
+    tensor = Walberla::average_pressure_tensor_local(*lb_walberla());
   }
 #endif
-  return {};
+  return tensor;
 }
 
 REGISTER_CALLBACK_REDUCTION(lb_lbfluid_get_pressure_tensor_local,
@@ -138,15 +126,9 @@ REGISTER_CALLBACK_REDUCTION(lb_lbfluid_get_pressure_tensor_local,
 const Utils::Vector6d lb_lbfluid_get_pressure_tensor() {
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
-    auto const visc = lb_walberla()->get_viscosity();
-    auto const gridsize = lb_walberla()->lattice().get_grid_dimensions();
-    auto const number_of_nodes = gridsize[0] * gridsize[1] * gridsize[2];
-    auto tensor = ::Communication::mpiCallbacks().call(
+    return ::Communication::mpiCallbacks().call(
         ::Communication::Result::reduction, std::plus<Utils::Vector6d>(),
         lb_lbfluid_get_pressure_tensor_local);
-    tensor *= 1. / static_cast<double>(number_of_nodes);
-    Walberla::walberla_off_diagonal_correction(tensor, visc);
-    return tensor;
   }
 #endif
   throw NoLBActive();

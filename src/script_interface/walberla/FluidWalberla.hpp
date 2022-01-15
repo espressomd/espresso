@@ -31,7 +31,6 @@
 #include "core/communication.hpp"
 #include "core/event.hpp"
 #include "core/grid.hpp"
-#include "core/grid_based_algorithms/lb_interface.hpp"
 #include "core/grid_based_algorithms/lb_walberla_instance.hpp"
 #include "core/integrate.hpp"
 
@@ -40,6 +39,8 @@
 
 #include <utils/Vector.hpp>
 #include <utils/math/int_pow.hpp>
+
+#include <boost/optional.hpp>
 
 #include <memory>
 #include <stdexcept>
@@ -174,19 +175,11 @@ public:
       m_lb_fluid->add_force_at_pos(folded_pos * m_conv_dist, f * m_conv_force);
     }
     if (name == "get_interpolated_velocity") {
-      if (context()->is_head_node()) {
-        auto const pos = get_value<Utils::Vector3d>(params, "pos");
-        return lb_lbfluid_get_interpolated_velocity(pos) / m_conv_speed;
-      }
+      auto const pos = get_value<Utils::Vector3d>(params, "pos");
+      return get_interpolated_velocity(pos);
     }
     if (name == "get_pressure_tensor") {
-      if (context()->is_head_node()) {
-        auto const lower_tri = lb_lbfluid_get_pressure_tensor() / m_conv_press;
-        return std::vector<Variant>{
-            std::vector<double>{lower_tri[0], lower_tri[1], lower_tri[3]},
-            std::vector<double>{lower_tri[1], lower_tri[2], lower_tri[4]},
-            std::vector<double>{lower_tri[3], lower_tri[4], lower_tri[5]}};
-      }
+      return get_average_pressure_tensor();
     }
     if (name == "load_checkpoint") {
       auto const path = get_value<std::string>(params, "path");
@@ -228,7 +221,10 @@ public:
 private:
   void load_checkpoint(std::string const &filename, int mode);
   void save_checkpoint(std::string const &filename, int mode);
-  boost::optional<LBWalberlaNodeState> get_node_checkpoint(Utils::Vector3i ind);
+  boost::optional<LBWalberlaNodeState>
+  get_node_checkpoint(Utils::Vector3i const &ind) const;
+  std::vector<Variant> get_average_pressure_tensor() const;
+  Variant get_interpolated_velocity(Utils::Vector3d const &pos) const;
 };
 
 } // namespace ScriptInterface::walberla

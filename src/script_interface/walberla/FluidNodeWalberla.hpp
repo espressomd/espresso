@@ -26,10 +26,10 @@
 #include <walberla_bridge/LBWalberlaBase.hpp>
 
 #include "FluidWalberla.hpp"
+#include "optional_reduction.hpp"
 
 #include "core/communication.hpp"
 #include "core/errorhandling.hpp"
-#include "core/grid_based_algorithms/lb_interface.hpp"
 #include "core/grid_based_algorithms/lb_walberla_instance.hpp"
 #include "core/grid_based_algorithms/lb_walberla_interface.hpp"
 #include "core/integrate.hpp"
@@ -80,7 +80,7 @@ public:
       auto const agrid = lb_params->get_agrid();
       m_grid_size = m_lb_fluid->lattice().get_grid_dimensions();
       m_index = get_value<Utils::Vector3i>(params, "index");
-      if (not(is_index_valid(m_index))) {
+      if (not is_index_valid(m_index)) {
         throw std::out_of_range("Index error");
       }
       m_conv_dens = Utils::int_pow<3>(agrid);
@@ -99,7 +99,7 @@ public:
       // this hidden feature is used to iterate a LB slice without
       // rebuilding a FluidNodeWalberla for each node in the slice
       auto const index = get_value<Utils::Vector3i>(params, "index");
-      if (not(is_index_valid(index))) {
+      if (not is_index_valid(index)) {
         return ES_ERROR;
       }
       m_index = index;
@@ -121,7 +121,7 @@ public:
           boost::mpi::all_reduce(comm_cart, is_boundary, std::logical_or<>());
       if (is_boundary) {
         auto result = m_lb_fluid->get_node_velocity_at_boundary(m_index);
-        return main_rank_reduce(result, m_conv_velocity);
+        return optional_reduction_with_conversion(result, m_conv_velocity);
       }
       return Variant{None{}};
     } else if (name == "set_velocity") {
@@ -131,30 +131,30 @@ public:
       m_lb_fluid->ghost_communication();
     } else if (name == "get_velocity") {
       auto result = m_lb_fluid->get_node_velocity(m_index);
-      return main_rank_reduce(result, m_conv_velocity);
+      return optional_reduction_with_conversion(result, m_conv_velocity);
     } else if (name == "set_density") {
       auto const dens = get_value<double>(params, "value");
       m_lb_fluid->set_node_density(m_index, dens * m_conv_dens);
       m_lb_fluid->ghost_communication();
     } else if (name == "get_density") {
       auto result = m_lb_fluid->get_node_density(m_index);
-      return main_rank_reduce(result, m_conv_dens);
+      return optional_reduction_with_conversion(result, m_conv_dens);
     } else if (name == "set_population") {
       auto const pop = get_value<std::vector<double>>(params, "value");
       m_lb_fluid->set_node_pop(m_index, pop);
       m_lb_fluid->ghost_communication();
     } else if (name == "get_population") {
       auto result = m_lb_fluid->get_node_pop(m_index);
-      return main_rank_reduce(result, None{});
+      return optional_reduction_with_conversion(result);
     } else if (name == "get_is_boundary") {
       auto result = m_lb_fluid->get_node_is_boundary(m_index);
-      return main_rank_reduce(result, None{});
+      return optional_reduction_with_conversion(result);
     } else if (name == "get_boundary_force") {
       auto result = m_lb_fluid->get_node_boundary_force(m_index);
-      return main_rank_reduce(result, m_conv_force);
+      return optional_reduction_with_conversion(result, m_conv_force);
     } else if (name == "get_pressure_tensor") {
       auto result = m_lb_fluid->get_node_pressure_tensor(m_index);
-      auto variant = main_rank_reduce(result, m_conv_press);
+      auto variant = optional_reduction_with_conversion(result, m_conv_press);
       if (context()->is_head_node()) {
         auto const visc = m_lb_fluid->get_viscosity();
         auto tensor = get_value<Utils::Vector6d>(variant);
@@ -168,7 +168,7 @@ public:
       m_lb_fluid->ghost_communication();
     } else if (name == "get_last_applied_force") {
       auto result = m_lb_fluid->get_node_last_applied_force(m_index);
-      return main_rank_reduce(result, m_conv_force);
+      return optional_reduction_with_conversion(result, m_conv_force);
     } else if (name == "get_lattice_speed") {
       return 1. / m_conv_velocity;
     }
@@ -179,28 +179,6 @@ public:
 private:
   inline bool is_index_valid(Utils::Vector3i const &index) const {
     return index < m_grid_size and index >= Utils::Vector3i{};
-  }
-
-  template <typename T, typename Conversion>
-  Variant main_rank_reduce(boost::optional<T> &result, Conversion conversion) {
-    assert(1 == boost::mpi::all_reduce(comm_cart, static_cast<int>(!!result),
-                                       std::plus<>()) &&
-           "Incorrect number of return values");
-    if (context()->is_head_node()) {
-      if (!result) {
-        T value{};
-        comm_cart.recv(boost::mpi::any_source, 42, value);
-        result = std::move(value);
-      }
-      if constexpr (std::is_same_v<Conversion, None>) {
-        return Variant{*result};
-      } else {
-        return Variant{*result * (1. / conversion)};
-      }
-    } else if (result) {
-      comm_cart.send(0, 42, *result);
-    }
-    return {};
   }
 };
 } // namespace ScriptInterface::walberla

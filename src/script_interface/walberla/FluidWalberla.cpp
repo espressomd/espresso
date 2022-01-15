@@ -24,11 +24,20 @@
 
 #include "FluidWalberla.hpp"
 #include "LatticeWalberla.hpp"
+#include "optional_reduction.hpp"
 
+#include "core/BoxGeometry.hpp"
 #include "core/communication.hpp"
+#include "core/grid.hpp"
 #include "core/grid_based_algorithms/LBCheckpointFile.hpp"
+#include "core/grid_based_algorithms/lb_walberla_kernels.hpp"
 
 #include <utils/Vector.hpp>
+
+#include <boost/mpi.hpp>
+#include <boost/mpi/collectives/all_reduce.hpp>
+#include <boost/mpi/collectives/reduce.hpp>
+#include <boost/optional.hpp>
 
 #include <memory>
 #include <sstream>
@@ -38,7 +47,7 @@
 namespace ScriptInterface::walberla {
 
 boost::optional<LBWalberlaNodeState>
-FluidWalberla::get_node_checkpoint(Utils::Vector3i ind) {
+FluidWalberla::get_node_checkpoint(Utils::Vector3i const &ind) const {
   auto const pop = lb_walberla()->get_node_pop(ind);
   auto const laf = lb_walberla()->get_node_last_applied_force(ind);
   auto const lbb = lb_walberla()->get_node_is_boundary(ind);
@@ -253,6 +262,24 @@ void FluidWalberla::save_checkpoint(std::string const &filename, int mode) {
       throw;
     }
   }
+}
+
+std::vector<Variant> FluidWalberla::get_average_pressure_tensor() const {
+  auto const local = Walberla::average_pressure_tensor_local(*m_lb_fluid);
+  Utils::Vector6d lower_tri{};
+  boost::mpi::reduce(comm_cart, local, lower_tri, std::plus<>(), 0);
+  lower_tri /= m_conv_press;
+  return std::vector<Variant>{
+      std::vector<double>{lower_tri[0], lower_tri[1], lower_tri[3]},
+      std::vector<double>{lower_tri[1], lower_tri[2], lower_tri[4]},
+      std::vector<double>{lower_tri[3], lower_tri[4], lower_tri[5]}};
+}
+
+Variant
+FluidWalberla::get_interpolated_velocity(Utils::Vector3d const &pos) const {
+  auto const lb_pos = folded_position(pos, box_geo) * m_conv_dist;
+  auto result = m_lb_fluid->get_velocity_at_pos(lb_pos);
+  return optional_reduction_with_conversion(result, m_conv_speed);
 }
 
 } // namespace ScriptInterface::walberla
