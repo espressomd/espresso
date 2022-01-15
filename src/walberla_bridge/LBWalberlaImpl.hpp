@@ -575,7 +575,7 @@ public:
           // Nodes with zero weight might not be accessible, because they can be
           // outside ghost layers
           if (weight != 0) {
-            auto const res = get_node_density(Utils::Vector3i(node));
+            auto const res = get_node_density(Utils::Vector3i(node), true);
             if (!res) {
               throw interpolation_illegal_access("density", pos, node, weight);
             }
@@ -691,8 +691,9 @@ public:
   }
 
   boost::optional<double>
-  get_node_density(const Utils::Vector3i &node) const override {
-    auto bc = get_block_and_cell(lattice(), node, false);
+  get_node_density(const Utils::Vector3i &node,
+                   bool consider_ghosts = false) const override {
+    auto bc = get_block_and_cell(lattice(), node, consider_ghosts);
     if (!bc)
       return {boost::none};
 

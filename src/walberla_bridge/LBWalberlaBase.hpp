@@ -89,7 +89,8 @@ public:
   virtual bool set_node_density(const Utils::Vector3i &node,
                                 double density) = 0;
   virtual boost::optional<double>
-  get_node_density(const Utils::Vector3i &node) const = 0;
+  get_node_density(const Utils::Vector3i &node,
+                   bool consider_ghosts = false) const = 0;
 
   /** @brief Get velocity for node with velocity boundary condition */
   virtual boost::optional<Utils::Vector3d>
