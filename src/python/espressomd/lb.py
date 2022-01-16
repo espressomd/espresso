@@ -745,7 +745,7 @@ class LBFluidNodeWalberla(ScriptInterfaceHelper):
         elif value is None:
             self.call_method('set_velocity_at_boundary', value=None)
         else:
-            raise ValueError(
+            raise TypeError(
                 "value must be an instance of VelocityBounceBack or None")
 
     @property
@@ -817,49 +817,58 @@ class LBFluidSliceWalberla:
         if 0 in self.dimensions:
             return np.empty(0, dtype=type(None))
 
-        res = getattr(node, attr)
-        shape_res = np.shape(res)
-        dtype = res.dtype if isinstance(res, np.ndarray) else type(res)
-        res = np.zeros((*self.dimensions, *shape_res), dtype=dtype)
+        value = getattr(node, attr)
+        shape_val = np.shape(value)
+        dtype = value.dtype if isinstance(value, np.ndarray) else type(value)
+        np_gen = np.zeros if dtype in (int, float, bool) else np.empty
+        value_grid = np_gen((*self.dimensions, *shape_val), dtype=dtype)
 
-        indices = self.indices
-        for i, x in enumerate(indices[0]):
-            for j, y in enumerate(indices[1]):
-                for k, z in enumerate(indices[2]):
-                    err = node.call_method("override_index", index=[x, y, z])
-                    assert err == 0
-                    res[i, j, k] = getattr(node, attr)
-        if shape_res == (1,):
-            res = np.squeeze(res, axis=-1)
-        return utils.array_locked(res)
+        indices = itertools.product(*map(enumerate, self.indices))
+        for (i, x), (j, y), (k, z) in indices:
+            err = node.call_method('override_index', index=[x, y, z])
+            assert err == 0
+            value_grid[i, j, k] = getattr(node, attr)
 
-    def __setattr__(self, attr, value):
+        if shape_val == (1,):
+            value_grid = np.squeeze(value_grid, axis=-1)
+        return utils.array_locked(value_grid)
+
+    def __setattr__(self, attr, values):
         node = self.__dict__.get('_node')
         if node is None or not hasattr(node, attr):
-            self.__dict__[attr] = value
+            self.__dict__[attr] = values
             return
         elif 0 in self.dimensions:
             raise AttributeError("Cannot set properties of an empty LBSlice")
 
-        value = np.copy(value)
-        shape_res = np.shape(getattr(node, attr))
-        target_shape = (*self.dimensions, *shape_res)
+        values = np.copy(values)
+        shape_val = np.shape(getattr(node, attr))
+        target_shape = (*self.dimensions, *shape_val)
 
         # broadcast if only one element was provided
-        if value.shape == shape_res:
-            value = np.ones(target_shape) * value
+        if values.shape == shape_val:
+            values = np.full(target_shape, values)
 
-        if value.shape != target_shape:
+        if values.shape != target_shape:
             raise ValueError(
-                f"Input-dimensions of '{attr}' array {value.shape} does not match slice dimensions {target_shape}.")
+                f"Input-dimensions of '{attr}' array {values.shape} does not match slice dimensions {target_shape}.")
 
-        indices = self.indices
-        for i, x in enumerate(indices[0]):
-            for j, y in enumerate(indices[1]):
-                for k, z in enumerate(indices[2]):
-                    err = node.call_method("override_index", index=[x, y, z])
-                    assert err == 0
-                    setattr(node, attr, value[i, j, k])
+        # Mach checks
+        if attr == 'boundary':
+            lattice_speed = node.call_method('get_lattice_speed')
+            for value in values.flatten():
+                if isinstance(value, VelocityBounceBack):
+                    HydrodynamicInteraction._check_mach_limit(
+                        np.array(value.velocity) / lattice_speed)
+                elif value is not None:
+                    raise TypeError(
+                        "values must be instances of VelocityBounceBack or None")
+
+        indices = itertools.product(*map(enumerate, self.indices))
+        for (i, x), (j, y), (k, z) in indices:
+            err = node.call_method('override_index', index=[x, y, z])
+            assert err == 0
+            setattr(node, attr, values[i, j, k])
 
     def __iter__(self):
         return (LBFluidNodeWalberla(lb_sip=self._lb_sip, index=np.array(index))

@@ -131,6 +131,15 @@ class LBTest:
             lbf[0, 0, 0].velocity = [1, 2]
         with self.assertRaises(Exception):
             lbf[0, 1].velocity = [1, 2, 3]
+        node = lbf[0, 0, 0]
+        self.assertIsNone(node.boundary)
+        vbb_ref = espressomd.lb.VelocityBounceBack([1e-6, 2e-6, 3e-6])
+        node.boundary = vbb_ref
+        np.testing.assert_allclose(
+            np.copy(node.boundary.velocity), np.copy(vbb_ref.velocity),
+            atol=self.atol)
+        with self.assertRaisesRegex(TypeError, "value must be an instance of VelocityBounceBack or None"):
+            node.boundary = vbb_ref.velocity
 
     def test_raise_if_read_only(self):
         lbf = self.lb_class(**self.params, **self.lb_params)
