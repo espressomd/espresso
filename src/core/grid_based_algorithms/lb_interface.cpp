@@ -19,8 +19,6 @@
 
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_walberla_instance.hpp"
-#include "grid_based_algorithms/lb_walberla_interface.hpp"
-#include "grid_based_algorithms/lb_walberla_kernels.hpp"
 
 #include "BoxGeometry.hpp"
 #include "MpiCallbacks.hpp"
@@ -31,6 +29,7 @@
 
 #include <utils/Vector.hpp>
 
+#include <boost/optional.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/vector.hpp>
 
@@ -42,6 +41,8 @@
 #include <vector>
 
 ActiveLB lattice_switch = ActiveLB::NONE;
+
+ActiveLB lb_lbfluid_get_lattice_switch() { return lattice_switch; }
 
 void lb_lbfluid_init() {}
 
@@ -110,44 +111,56 @@ double lb_lbfluid_get_lattice_speed() {
   return lb_lbfluid_get_agrid() / lb_lbfluid_get_tau();
 }
 
-Utils::Vector6d lb_lbfluid_get_pressure_tensor_local() {
-  Utils::Vector6d tensor;
 #ifdef LB_WALBERLA
-  if (lattice_switch == ActiveLB::WALBERLA) {
-    tensor = Walberla::average_pressure_tensor_local(*lb_walberla());
-  }
-#endif
-  return tensor;
+namespace Walberla {
+
+static Utils::Vector3d get_momentum() { return lb_walberla()->get_momentum(); }
+
+REGISTER_CALLBACK_REDUCTION(get_momentum, std::plus<>())
+
+static boost::optional<Utils::Vector3d>
+get_velocity_at_pos(Utils::Vector3d pos) {
+  return lb_walberla()->get_velocity_at_pos(pos);
 }
 
-REGISTER_CALLBACK_REDUCTION(lb_lbfluid_get_pressure_tensor_local,
-                            std::plus<Utils::Vector6d>())
+REGISTER_CALLBACK_ONE_RANK(get_velocity_at_pos)
+
+static boost::optional<double>
+get_interpolated_density_at_pos(Utils::Vector3d pos) {
+  return lb_walberla()->get_interpolated_density_at_pos(pos);
+}
+
+REGISTER_CALLBACK_ONE_RANK(get_interpolated_density_at_pos)
+
+static Utils::Vector6d get_pressure_tensor() {
+  return lb_walberla()->get_pressure_tensor();
+}
+
+REGISTER_CALLBACK_REDUCTION(get_pressure_tensor, std::plus<Utils::Vector6d>())
+
+} // namespace Walberla
+#endif // LB_WALBERLA
 
 const Utils::Vector6d lb_lbfluid_get_pressure_tensor() {
-#ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
+#ifdef LB_WALBERLA
     return ::Communication::mpiCallbacks().call(
         ::Communication::Result::reduction, std::plus<Utils::Vector6d>(),
-        lb_lbfluid_get_pressure_tensor_local);
-  }
+        Walberla::get_pressure_tensor);
 #endif
+  }
   throw NoLBActive();
 }
 
-ActiveLB lb_lbfluid_get_lattice_switch() { return lattice_switch; }
-
 Utils::Vector3d lb_lbfluid_calc_fluid_momentum() {
-  Utils::Vector3d fluid_momentum{};
   if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
-    fluid_momentum = ::Communication::mpiCallbacks().call(
+    return ::Communication::mpiCallbacks().call(
         ::Communication::Result::Reduction(), std::plus<>(),
         Walberla::get_momentum);
 #endif
-  } else
-    throw NoLBActive();
-
-  return fluid_momentum;
+  }
+  throw NoLBActive();
 }
 
 const Utils::Vector3d

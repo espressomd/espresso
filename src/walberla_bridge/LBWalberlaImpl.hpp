@@ -237,6 +237,14 @@ private:
     return pressureTensor;
   }
 
+  inline void pressure_tensor_correction(Utils::Vector6d &tensor) const {
+    auto const visc = get_viscosity();
+    auto const revert_factor = visc / (visc + 1.0 / 6.0);
+    tensor[1] *= revert_factor;
+    tensor[3] *= revert_factor;
+    tensor[4] *= revert_factor;
+  }
+
   class interpolation_illegal_access : public std::runtime_error {
   public:
     explicit interpolation_illegal_access(std::string const &field,
@@ -847,7 +855,28 @@ public:
     auto bc = get_block_and_cell(lattice(), node, false);
     if (!bc)
       return {boost::none};
-    return to_vector6d(getPressureTensor(*bc));
+    auto tensor = to_vector6d(getPressureTensor(*bc));
+    pressure_tensor_correction(tensor);
+    return tensor;
+  }
+
+  // Global pressure tensor
+  Utils::Vector6d get_pressure_tensor() const override {
+    auto const &blocks = lattice().get_blocks();
+    Utils::Vector6d tensor{};
+    for (auto block = blocks->begin(); block != blocks->end(); ++block) {
+      auto pdf_field = block->template getData<PdfField>(m_pdf_field_id);
+      WALBERLA_FOR_ALL_CELLS_XYZ(pdf_field, {
+        Matrix3<FloatType> local_p;
+        lbm::accessor::PressureTensor::get(local_p, *pdf_field, x, y, z);
+        tensor += to_vector6d(local_p);
+      });
+    }
+    auto const grid_size = lattice().get_grid_dimensions();
+    auto const number_of_nodes = Utils::product(grid_size);
+    tensor *= 1. / static_cast<double>(number_of_nodes);
+    pressure_tensor_correction(tensor);
+    return tensor;
   }
 
   // Global momentum
@@ -867,6 +896,7 @@ public:
     }
     return to_vector3d(mom);
   }
+
   // Global external force
   void set_external_force(const Utils::Vector3d &ext_force) override {
     m_reset_force->set_ext_force(ext_force);

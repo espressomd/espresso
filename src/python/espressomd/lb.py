@@ -692,11 +692,8 @@ class LBFluidNodeWalberla(ScriptInterfaceHelper):
 
     @property
     def pressure_tensor(self):
-        p_tensor = self.call_method('get_pressure_tensor')
-        p_tensor = [[p_tensor[0], p_tensor[1], p_tensor[3]],
-                    [p_tensor[1], p_tensor[2], p_tensor[4]],
-                    [p_tensor[3], p_tensor[4], p_tensor[5]]]
-        return utils.array_locked(p_tensor)
+        tensor = self.call_method('get_pressure_tensor')
+        return utils.array_locked(tensor)
 
     @pressure_tensor.setter
     def pressure_tensor(self, value):

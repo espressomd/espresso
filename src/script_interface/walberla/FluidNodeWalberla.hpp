@@ -30,9 +30,6 @@
 
 #include "core/communication.hpp"
 #include "core/errorhandling.hpp"
-#include "core/grid_based_algorithms/lb_walberla_instance.hpp"
-#include "core/grid_based_algorithms/lb_walberla_interface.hpp"
-#include "core/integrate.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
@@ -40,6 +37,7 @@
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/math/int_pow.hpp>
+#include <utils/matrix.hpp>
 
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/optional.hpp>
@@ -154,12 +152,13 @@ public:
       return optional_reduction_with_conversion(result, m_conv_force);
     } else if (name == "get_pressure_tensor") {
       auto result = m_lb_fluid->get_node_pressure_tensor(m_index);
-      auto variant = optional_reduction_with_conversion(result, m_conv_press);
+      auto const tri = optional_reduction_with_conversion(result, m_conv_press);
       if (context()->is_head_node()) {
-        auto const visc = m_lb_fluid->get_viscosity();
-        auto tensor = get_value<Utils::Vector6d>(variant);
-        Walberla::walberla_off_diagonal_correction(tensor, visc);
-        return Variant{tensor};
+        auto const tensor =
+            Utils::tril_to_symmetric_mat(get_value<Utils::Vector6d>(tri));
+        return std::vector<Variant>{tensor.row<0>().as_vector(),
+                                    tensor.row<1>().as_vector(),
+                                    tensor.row<2>().as_vector()};
       }
       return {};
     } else if (name == "set_last_applied_force") {

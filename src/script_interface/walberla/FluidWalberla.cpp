@@ -30,9 +30,9 @@
 #include "core/communication.hpp"
 #include "core/grid.hpp"
 #include "core/grid_based_algorithms/LBCheckpointFile.hpp"
-#include "core/grid_based_algorithms/lb_walberla_kernels.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/matrix.hpp>
 
 #include <boost/mpi.hpp>
 #include <boost/mpi/collectives/all_reduce.hpp>
@@ -265,14 +265,14 @@ void FluidWalberla::save_checkpoint(std::string const &filename, int mode) {
 }
 
 std::vector<Variant> FluidWalberla::get_average_pressure_tensor() const {
-  auto const local = Walberla::average_pressure_tensor_local(*m_lb_fluid);
+  auto const local = m_lb_fluid->get_pressure_tensor();
   Utils::Vector6d lower_tri{};
   boost::mpi::reduce(comm_cart, local, lower_tri, std::plus<>(), 0);
   lower_tri /= m_conv_press;
-  return std::vector<Variant>{
-      std::vector<double>{lower_tri[0], lower_tri[1], lower_tri[3]},
-      std::vector<double>{lower_tri[1], lower_tri[2], lower_tri[4]},
-      std::vector<double>{lower_tri[3], lower_tri[4], lower_tri[5]}};
+  auto const tensor = Utils::tril_to_symmetric_mat(lower_tri);
+  return std::vector<Variant>{tensor.row<0>().as_vector(),
+                              tensor.row<1>().as_vector(),
+                              tensor.row<2>().as_vector()};
 }
 
 Variant

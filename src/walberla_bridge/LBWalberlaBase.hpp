@@ -134,6 +134,9 @@ public:
   virtual boost::optional<Utils::Vector6d>
   get_node_pressure_tensor(const Utils::Vector3i &node) const = 0;
 
+  /** @brief Calculate average pressure tensor of the local domain */
+  virtual Utils::Vector6d get_pressure_tensor() const = 0;
+
   /** @brief Calculate momentum summed over all nodes on the MPI rank */
   virtual Utils::Vector3d get_momentum() const = 0;
 
