@@ -94,21 +94,12 @@ public:
              m_lb_fluid->set_rng_state(
                  static_cast<uint64_t>(get_value<int>(v)));
            } catch (const std::exception &e) {
-             if (this_node == 0) {
+             if (context()->is_head_node()) {
                throw;
              }
            }
          },
-         [this]() {
-           try {
-             return static_cast<int>(m_lb_fluid->get_rng_state());
-           } catch (const std::exception &e) {
-             if (this_node == 0) {
-               throw;
-             }
-           }
-           return -1;
-         }},
+         [this]() { return static_cast<int>(m_lb_fluid->get_rng_state()); }},
         {"density", AutoParameter::read_only,
          [this]() { return m_lb_fluid->get_density() / m_conv_dens; }},
         {"viscosity",

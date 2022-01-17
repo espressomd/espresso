@@ -135,27 +135,32 @@ public:
       m_lb_fluid->set_node_density(m_index, dens * m_conv_dens);
       m_lb_fluid->ghost_communication();
     } else if (name == "get_density") {
-      auto result = m_lb_fluid->get_node_density(m_index);
+      auto const result = m_lb_fluid->get_node_density(m_index);
       return optional_reduction_with_conversion(result, m_conv_dens);
     } else if (name == "set_population") {
       auto const pop = get_value<std::vector<double>>(params, "value");
       m_lb_fluid->set_node_pop(m_index, pop);
       m_lb_fluid->ghost_communication();
     } else if (name == "get_population") {
-      auto result = m_lb_fluid->get_node_pop(m_index);
+      auto const result = m_lb_fluid->get_node_pop(m_index);
       return optional_reduction_with_conversion(result);
     } else if (name == "get_is_boundary") {
-      auto result = m_lb_fluid->get_node_is_boundary(m_index);
+      auto const result = m_lb_fluid->get_node_is_boundary(m_index);
       return optional_reduction_with_conversion(result);
     } else if (name == "get_boundary_force") {
-      auto result = m_lb_fluid->get_node_boundary_force(m_index);
+      auto const result = m_lb_fluid->get_node_boundary_force(m_index);
       return optional_reduction_with_conversion(result, m_conv_force);
     } else if (name == "get_pressure_tensor") {
-      auto result = m_lb_fluid->get_node_pressure_tensor(m_index);
-      auto const tri = optional_reduction_with_conversion(result, m_conv_press);
+      auto const result = m_lb_fluid->get_node_pressure_tensor(m_index);
+      auto value = boost::optional<std::vector<double>>{};
+      if (result) {
+        value = (*result / m_conv_press).as_vector();
+      }
+      auto const variant = optional_reduction_with_conversion(value);
       if (context()->is_head_node()) {
-        auto const tensor =
-            Utils::tril_to_symmetric_mat(get_value<Utils::Vector6d>(tri));
+        auto const vec = get_value<std::vector<double>>(variant);
+        auto tensor = Utils::Matrix<double, 3, 3>{};
+        std::copy(vec.begin(), vec.end(), tensor.m_data.begin());
         return std::vector<Variant>{tensor.row<0>().as_vector(),
                                     tensor.row<1>().as_vector(),
                                     tensor.row<2>().as_vector()};
@@ -166,7 +171,7 @@ public:
       m_lb_fluid->set_node_last_applied_force(m_index, f * m_conv_force);
       m_lb_fluid->ghost_communication();
     } else if (name == "get_last_applied_force") {
-      auto result = m_lb_fluid->get_node_last_applied_force(m_index);
+      auto const result = m_lb_fluid->get_node_last_applied_force(m_index);
       return optional_reduction_with_conversion(result, m_conv_force);
     } else if (name == "get_lattice_speed") {
       return 1. / m_conv_velocity;

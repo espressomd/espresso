@@ -131,11 +131,11 @@ public:
   virtual void set_collision_model(double kT, unsigned int seed) = 0;
 
   // Pressure tensor
-  virtual boost::optional<Utils::Vector6d>
+  virtual boost::optional<Utils::VectorXd<9>>
   get_node_pressure_tensor(const Utils::Vector3i &node) const = 0;
 
   /** @brief Calculate average pressure tensor of the local domain */
-  virtual Utils::Vector6d get_pressure_tensor() const = 0;
+  virtual Utils::VectorXd<9> get_pressure_tensor() const = 0;
 
   /** @brief Calculate momentum summed over all nodes on the MPI rank */
   virtual Utils::Vector3d get_momentum() const = 0;
