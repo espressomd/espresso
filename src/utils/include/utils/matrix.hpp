@@ -22,7 +22,6 @@
 #include "utils/Array.hpp"
 #include "utils/Vector.hpp"
 #include "utils/flatten.hpp"
-#include "utils/index.hpp"
 
 #include <algorithm>
 #include <array>
@@ -75,25 +74,16 @@ template <typename T, std::size_t Rows, std::size_t Cols> struct Matrix {
 
   container m_data;
 
-private:
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive &ar, const unsigned int version) {
     ar &m_data;
   }
 
-  constexpr void copy_init(T const *first, T const *last) {
-    auto it = m_data.begin();
-    while (first != last) {
-      *it++ = *first++;
-    }
-  }
-
-public:
-  constexpr Matrix() : m_data({}) {}
-  constexpr Matrix(std::initializer_list<T> init_list) {
+  Matrix() = default;
+  Matrix(std::initializer_list<T> init_list) {
     assert(init_list.size() == Rows * Cols);
-    copy_init(init_list.begin(), init_list.end());
+    std::copy(init_list.begin(), init_list.end(), begin());
   }
   Matrix(std::initializer_list<std::initializer_list<T>> init_list) {
     assert(init_list.size() == Rows);
@@ -241,85 +231,6 @@ Matrix<T, Rows, Cols> identity_mat() {
   static_assert(Rows == Cols,
                 "Identity matrix only defined for square matrices.");
   return boost::qvm::identity_mat<T, Rows>();
-}
-
-enum class TriangularMatrix { UPPER, LOWER };
-
-namespace detail {
-
-template <typename T, TriangularMatrix U, std::size_t N, std::size_t M,
-          std::enable_if_t<U == TriangularMatrix::UPPER, bool> = true>
-constexpr Matrix<T, N, N> symmetric_mat(Array<T, M> const &triangle) {
-  Matrix<T, N, N> mat{};
-  for (std::size_t i = 0; i < N; ++i) {
-    for (std::size_t j = i; j < N; ++j) {
-      auto const v = triangle[upper_triangular(i, j, N)];
-      mat(i, j) = v;
-      mat(j, i) = v;
-    }
-  }
-  return mat;
-}
-
-template <typename T, TriangularMatrix L, std::size_t N, std::size_t M,
-          std::enable_if_t<L == TriangularMatrix::LOWER, bool> = true>
-constexpr Matrix<T, N, N> symmetric_mat(Array<T, M> const &triangle) {
-  Matrix<T, N, N> mat{};
-  for (std::size_t i = 0; i < N; ++i) {
-    for (std::size_t j = 0; j <= i; ++j) {
-      auto const v = triangle[lower_triangular(i, j, N)];
-      mat(i, j) = v;
-      mat(j, i) = v;
-    }
-  }
-  return mat;
-}
-
-template <typename T, TriangularMatrix U, std::size_t, std::size_t,
-          std::enable_if_t<U == TriangularMatrix::UPPER, bool> = true>
-constexpr auto symmetric_mat(Array<T, 6> const &triangle) {
-  return Matrix<T, 3, 3>({triangle[0], triangle[1], triangle[2], triangle[1],
-                          triangle[3], triangle[4], triangle[2], triangle[4],
-                          triangle[5]});
-}
-
-template <typename T, TriangularMatrix L, std::size_t, std::size_t,
-          std::enable_if_t<L == TriangularMatrix::LOWER, bool> = true>
-constexpr auto symmetric_mat(Array<T, 6> const &triangle) {
-  return Matrix<T, 3, 3>({triangle[0], triangle[1], triangle[3], triangle[1],
-                          triangle[2], triangle[4], triangle[3], triangle[4],
-                          triangle[5]});
-}
-
-template <typename T, TriangularMatrix, std::size_t, std::size_t>
-constexpr auto symmetric_mat(Array<T, 0> const &triangle) {
-  return Matrix<T, 0, 0>{};
-}
-
-template <std::size_t M> constexpr std::size_t triangle_to_square() {
-  static_assert(M <= 55ul, "limited to matrices of size 10");
-  for (std::size_t N = 0; N < 10; ++N) {
-    if ((N * N + N) / std::size_t{2} == M) {
-      return N;
-    }
-  }
-  return 0ul;
-}
-
-} // namespace detail
-
-template <typename T, std::size_t M>
-constexpr auto triu_to_symmetric_mat(Array<T, M> const &triangle) {
-  auto constexpr N = detail::triangle_to_square<M>();
-  static_assert(M == 0ul or N != 0ul, "invalid triangular matrix length");
-  return detail::symmetric_mat<T, TriangularMatrix::UPPER, N, M>(triangle);
-}
-
-template <typename T, std::size_t M>
-constexpr auto tril_to_symmetric_mat(Array<T, M> const &triangle) {
-  auto constexpr N = detail::triangle_to_square<M>();
-  static_assert(M == 0ul or N != 0ul, "invalid triangular matrix length");
-  return detail::symmetric_mat<T, TriangularMatrix::LOWER, N, M>(triangle);
 }
 
 } // namespace Utils
