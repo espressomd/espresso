@@ -57,7 +57,7 @@
 
 #include "Observable_stat.hpp"
 #include "Particle.hpp"
-#include "cells.hpp"
+#include "bond_error.hpp"
 #include "errorhandling.hpp"
 #include "exclusions.hpp"
 

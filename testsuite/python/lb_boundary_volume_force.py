@@ -20,7 +20,6 @@ import numpy as np
 
 import espressomd.lb
 import espressomd.shapes
-import tests_common
 
 AGRID = 0.5
 EXT_FORCE = np.array([-.01, 0.02, 0.03])
@@ -62,7 +61,8 @@ class LBBoundaryForceCommon:
         wall_shape2 = espressomd.shapes.Wall(
             normal=[-1, 0, 0], dist=-(self.system.box_l[0] - AGRID))
 
-        fluid_nodes = tests_common.count_fluid_nodes(self.lbf)
+        fluid_nodes = np.sum(np.logical_not(
+            self.lbf[:, :, :].is_boundary).astype(int))
         self.lbf.add_boundary_from_shape(wall_shape1)
         self.lbf.add_boundary_from_shape(wall_shape2)
 

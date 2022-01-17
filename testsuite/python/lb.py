@@ -1,3 +1,4 @@
+#
 # Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -14,6 +15,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
@@ -21,6 +24,7 @@ import itertools
 
 import espressomd
 import espressomd.lb
+import espressomd.utils
 import espressomd.observables
 import sys
 import tests_common
@@ -44,9 +48,7 @@ class LBTest:
               'agrid': 0.5,
               'density': 0.85,
               'viscosity': 3.0,
-              'friction': 2.0,
-              'temp': 1.5,
-              'gamma': 1.5}
+              'friction': 2.0}
 
     system.periodicity = [1, 1, 1]
     system.time_step = params['time_step']
@@ -60,13 +62,33 @@ class LBTest:
         self.system.time_step = self.params['time_step']
 
     def test_properties(self):
+        # inactive actor
         lbf = self.lb_class(kT=1.0, seed=42, **self.params, **self.lb_params)
-        # check property getters work before the object is initialized
-        self.assertAlmostEqual(lbf.tau, self.system.time_step, delta=self.atol)
-        self.assertAlmostEqual(
-            lbf.agrid,
-            self.params['agrid'],
-            delta=self.atol)
+        self.assertFalse(lbf.is_active)
+        self.check_properties(lbf)
+
+        # activated actor
+        lbf = self.lb_class(kT=1.0, seed=42, **self.params, **self.lb_params)
+        self.system.actors.add(lbf)
+        self.system.thermostat.set_lb(LB_fluid=lbf, seed=1)
+        self.assertTrue(lbf.is_active)
+        self.check_properties(lbf)
+        self.system.actors.remove(lbf)
+
+        # deactivated actor
+        lbf = self.lb_class(kT=1.0, seed=42, **self.params, **self.lb_params)
+        self.system.actors.add(lbf)
+        self.system.thermostat.set_lb(LB_fluid=lbf, seed=1)
+        self.system.actors.remove(lbf)
+        self.assertFalse(lbf.is_active)
+        self.check_properties(lbf)
+
+    def check_properties(self, lbf):
+        agrid = self.params['agrid']
+        tau = self.system.time_step
+        # check LB object
+        self.assertAlmostEqual(lbf.tau, tau, delta=self.atol)
+        self.assertAlmostEqual(lbf.agrid, agrid, delta=self.atol)
         self.assertAlmostEqual(lbf.viscosity, 3., delta=self.atol)
         self.assertAlmostEqual(lbf.density, 0.85, delta=self.atol)
         self.assertAlmostEqual(lbf.kT, 1.0, delta=self.atol)
@@ -74,36 +96,27 @@ class LBTest:
         self.assertEqual(
             lbf.is_single_precision,
             self.lb_params['single_precision'])
-        self.assertFalse(lbf.is_active)
         np.testing.assert_allclose(
             np.copy(lbf.ext_force_density), [0., 0., 0.], atol=self.atol)
-        # check property setters work before the object is initialized
         lbf.viscosity = 2.
         self.assertAlmostEqual(lbf.viscosity, 2., delta=self.atol)
         ext_f = [0.01, 0.02, 0.03]
         lbf.ext_force_density = ext_f
         np.testing.assert_allclose(
             np.copy(lbf.ext_force_density), ext_f, atol=self.atol)
-        # check property getters/setters work after the object is initialized
-        self.system.actors.add(lbf)
-        self.system.thermostat.set_lb(LB_fluid=lbf, seed=1)
         self.assertEqual(lbf.rng_state, 0)
         self.system.integrator.run(1)
-        self.assertEqual(lbf.rng_state, 1)
+        self.assertEqual(lbf.rng_state, int(lbf.is_active))
         lbf.rng_state = 56
         self.system.integrator.run(1)
-        self.assertEqual(lbf.rng_state, 57)
-        self.assertAlmostEqual(lbf.tau, self.system.time_step, delta=self.atol)
-        self.assertAlmostEqual(
-            lbf.agrid,
-            self.params['agrid'],
-            delta=self.atol)
+        self.assertEqual(lbf.rng_state, 56 + int(lbf.is_active))
+        self.assertAlmostEqual(lbf.tau, tau, delta=self.atol)
+        self.assertAlmostEqual(lbf.agrid, agrid, delta=self.atol)
         self.assertAlmostEqual(lbf.kT, 1.0, delta=self.atol)
         self.assertEqual(lbf.seed, 42)
         self.assertEqual(
             lbf.is_single_precision,
             self.lb_params['single_precision'])
-        self.assertTrue(lbf.is_active)
         lbf.viscosity = 3.
         self.assertAlmostEqual(lbf.viscosity, 3., delta=self.atol)
         ext_force_density = [0.02, 0.05, 0.07]
@@ -118,6 +131,15 @@ class LBTest:
             lbf[0, 0, 0].velocity = [1, 2]
         with self.assertRaises(Exception):
             lbf[0, 1].velocity = [1, 2, 3]
+        node = lbf[0, 0, 0]
+        self.assertIsNone(node.boundary)
+        vbb_ref = espressomd.lb.VelocityBounceBack([1e-6, 2e-6, 3e-6])
+        node.boundary = vbb_ref
+        np.testing.assert_allclose(
+            np.copy(node.boundary.velocity), np.copy(vbb_ref.velocity),
+            atol=self.atol)
+        with self.assertRaisesRegex(TypeError, "value must be an instance of VelocityBounceBack or None"):
+            node.boundary = vbb_ref.velocity
 
     def test_raise_if_read_only(self):
         lbf = self.lb_class(**self.params, **self.lb_params)
@@ -126,51 +148,41 @@ class LBTest:
             with self.assertRaisesRegex(RuntimeError, f"(Parameter|Property) '{key}' is read-only"):
                 setattr(lbf, key, 0)
 
-    def test_raise_if_not_active(self):
+    def test_ctor_exceptions(self):
+        lattice = espressomd.lb.LatticeWalberla(
+            agrid=2 * self.params['agrid'], n_ghost_layers=1)
+        with self.assertRaisesRegex(ValueError, "cannot provide both 'lattice' and 'agrid'"):
+            self.lb_class(lattice=lattice, **self.params, **self.lb_params)
+        with self.assertRaisesRegex(ValueError, "density must be a strictly positive number"):
+            params = self.params.copy()
+            params['density'] = 0.
+            self.lb_class(**params, **self.lb_params)
+        with self.assertRaisesRegex(ValueError, "kT must be a positive number"):
+            params = self.params.copy()
+            params['kT'] = -1e-12
+            self.lb_class(**params, **self.lb_params)
+
+    def test_node_exceptions(self):
         lbf = self.lb_class(**self.params, **self.lb_params)
-
-        # check exceptions from LB actor
-        with self.assertRaisesRegex(RuntimeError, "Cannot set 'rng_state' before walberla is initialized"):
-            lbf.rng_state = 5
-        with self.assertRaisesRegex(RuntimeError, "Cannot get 'rng_state' before walberla is initialized"):
-            lbf.rng_state
-        with self.assertRaisesRegex(RuntimeError, "LB not activated"):
-            lbf.pressure_tensor
-        with self.assertRaisesRegex(RuntimeError, "LB not activated"):
-            lbf.get_interpolated_velocity([0, 0, 0])
-
-        # check exceptions from LB node
         self.system.actors.add(lbf)
         node = lbf[0, 0, 0]
-        self.system.actors.remove(lbf)
-        with self.assertRaises(RuntimeError):
-            node.density
-        with self.assertRaises(RuntimeError):
-            node.density = 1.
-        with self.assertRaises(RuntimeError):
-            node.velocity
-        with self.assertRaises(RuntimeError):
-            node.velocity = [1, 1, 1]
-        with self.assertRaises(RuntimeError):
-            node.boundary_force
-        with self.assertRaises(RuntimeError):
-            node.boundary
-        with self.assertRaises(RuntimeError):
-            node.last_applied_force
-        with self.assertRaises(RuntimeError):
-            node.last_applied_force = [1, 1, 1]
-        with self.assertRaises(RuntimeError):
-            node.pressure_tensor
-        with self.assertRaises(NotImplementedError):
+        # check exceptions from LB node
+        with self.assertRaisesRegex(RuntimeError, "Property 'boundary_force' is read-only"):
+            node.boundary_force = [1, 2, 3]
+        with self.assertRaisesRegex(RuntimeError, "Property 'pressure_tensor' is read-only"):
             node.pressure_tensor = np.eye(3, 3)
-        with self.assertRaises(RuntimeError):
-            node.is_boundary
-        with self.assertRaises(NotImplementedError):
-            node.is_boundary = 1
-        with self.assertRaises(RuntimeError):
-            node.population
-        with self.assertRaises(RuntimeError):
-            node.population = np.zeros(19)
+        with self.assertRaisesRegex(RuntimeError, "Property 'is_boundary' is read-only"):
+            node.is_boundary = True
+        with self.assertRaisesRegex(NotImplementedError, 'Cannot serialize LB fluid node objects'):
+            node.__reduce__()
+        with self.assertRaisesRegex(NotImplementedError, 'Cannot serialize LB fluid slice objects'):
+            lbf[0, 0, 0:2].__reduce__()
+        # check property types
+        array_locked = espressomd.utils.array_locked
+        self.assertIsInstance(node.pressure_tensor, array_locked)
+        # self.assertIsInstance(node.boundary_force, array_locked) # TODO
+        self.assertIsInstance(node.velocity, array_locked)
+        self.assertIsInstance(node.last_applied_force, array_locked)
 
     def test_pressure_tensor_observable(self):
         """
@@ -190,12 +202,8 @@ class LBTest:
         system.actors.add(lbf)
         system.thermostat.set_lb(LB_fluid=lbf, seed=1)
         system.integrator.run(10)
-        pressure_tensor = np.zeros((3, 3))
-        agrid = self.params["agrid"]
-        for n in lbf.nodes():
-            pressure_tensor += n.pressure_tensor
-
-        pressure_tensor /= system.volume() / agrid**3
+        pressure_tensor = np.copy(
+            np.mean(lbf[:, :, :].pressure_tensor, axis=(0, 1, 2)))
 
         obs = espressomd.observables.LBFluidPressureTensor()
         obs_pressure_tensor = obs.calculate()
@@ -203,6 +211,12 @@ class LBTest:
             pressure_tensor, obs_pressure_tensor, atol=1E-7)
         np.testing.assert_allclose(
             np.copy(lbf.pressure_tensor), obs_pressure_tensor, atol=1E-10)
+
+        self.assertIsInstance(
+            lbf[0, 0, 0].pressure_tensor, espressomd.utils.array_locked)
+        self.assertIsInstance(
+            lbf.pressure_tensor,
+            espressomd.utils.array_locked)
 
     def test_lb_node_set_get(self):
         lbf = self.lb_class(kT=0.0, ext_force_density=[0, 0, 0], **self.params,
@@ -247,30 +261,39 @@ class LBTest:
     def test_grid_index(self):
         lbf = self.lb_class(**self.params, **self.lb_params)
         self.system.actors.add(lbf)
-        out_of_bounds = int(max(self.system.box_l) / self.params['agrid']) + 1
-        with self.assertRaises(ValueError):
+        # access out of bounds
+        out_of_bounds = max(lbf.shape) + 1
+        error_msg = 'Index error'
+        with self.assertRaisesRegex(Exception, error_msg):
             lbf[out_of_bounds, 0, 0].velocity
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(Exception, error_msg):
             lbf[0, out_of_bounds, 0].velocity
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(Exception, error_msg):
             lbf[0, 0, out_of_bounds].velocity
+        # node index
+        node = lbf[1, 2, 3]
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'index' is read-only"):
+            node.index = [2, 4, 6]
+        np.testing.assert_array_equal(np.copy(node.index), [1, 2, 3])
+        retval = node.call_method('override_index', index=[2, 4, 6])
+        self.assertEqual(retval, 0)
+        np.testing.assert_array_equal(np.copy(node.index), [2, 4, 6])
+        retval = node.call_method(
+            'override_index', index=[0, 0, out_of_bounds])
+        self.assertEqual(retval, 1)
+        np.testing.assert_array_equal(np.copy(node.index), [2, 4, 6])
 
     def test_incompatible_agrid(self):
         """
         LB lattice initialization must raise an exception when either box_l or
         local_box_l aren't integer multiples of agrid.
         """
-        lbf = self.lb_class(
-            viscosity=self.params['viscosity'],
-            density=self.params['density'],
-            agrid=self.params['agrid'] + 1e-6,
-            tau=self.system.time_step,
-            ext_force_density=[0, 0, 0],
-            **self.lb_params)
         print("\nTesting LB error messages:", file=sys.stderr)
         sys.stderr.flush()
         with self.assertRaises(Exception):
-            self.system.actors.add(lbf)
+            params = self.params.copy()
+            params['agrid'] += 1e-6
+            self.lb_class(**params, **self.lb_params)
         print("End of LB error messages", file=sys.stderr)
         sys.stderr.flush()
 
@@ -316,8 +339,7 @@ class LBTest:
             LB_fluid=lbf, seed=3, gamma=self.params['friction'])
 
         # Random velocities
-        for n in lbf.nodes():
-            n.velocity = np.random.random(3) - .5
+        lbf[:, :, :].velocity = np.random.random((*lbf.shape, 3))
         # Test several particle positions
         for pos in ([0, 0, 0], self.system.box_l, self.system.box_l / 2,
                     self.system.box_l / 2 - self.params['agrid'] / 2):
@@ -327,7 +349,7 @@ class LBTest:
             # In the first time step after a system change, LB coupling forces
             # are ignored. Hence, the coupling position is shifted
             coupling_pos = p.pos + self.system.time_step * p.v
-            v_fluid = lbf.get_interpolated_velocity(coupling_pos)
+            v_fluid = lbf.get_interpolated_velocity(pos=coupling_pos)
             # Nodes to which forces will be interpolated
             lb_nodes = tests_common.get_lb_nodes_around_pos(coupling_pos, lbf)
 
@@ -355,8 +377,7 @@ class LBTest:
             LB_fluid=lbf, seed=3, gamma=self.params['friction'])
 
         # Random velocities
-        for n in lbf.nodes():
-            n.velocity = np.random.random(3) - .5
+        lbf[:, :, :].velocity = np.random.random((*lbf.shape, 3))
         # Test several particle positions
         agrid = self.params['agrid']
         offset = -0.99 * np.array((agrid, agrid, agrid))
@@ -372,8 +393,8 @@ class LBTest:
             coupling_pos1 = p1.pos + self.system.time_step * p1.v
             coupling_pos2 = p2.pos + self.system.time_step * p2.v
 
-            v_fluid1 = lbf.get_interpolated_velocity(coupling_pos1)
-            v_fluid2 = lbf.get_interpolated_velocity(coupling_pos2)
+            v_fluid1 = lbf.get_interpolated_velocity(pos=coupling_pos1)
+            v_fluid2 = lbf.get_interpolated_velocity(pos=coupling_pos2)
             # Nodes to which forces will be interpolated
             lb_nodes1 = tests_common.get_lb_nodes_around_pos(
                 coupling_pos1, lbf)
@@ -408,19 +429,18 @@ class LBTest:
 
         system.part.add(pos=np.random.random((1000, 3)) * system.box_l)
         if espressomd.has_features("MASS"):
-            system.part[:].mass = 0.1 + np.random.random(len(system.part))
+            system.part.all().mass = 0.1 + np.random.random(len(system.part))
 
-        lbf = self.lb_class(kT=self.params['temp'], seed=4, **self.params,
-                            **self.lb_params)
+        lbf = self.lb_class(kT=1.5, seed=4, **self.params, **self.lb_params)
         system.actors.add(lbf)
         system.thermostat.set_lb(
             LB_fluid=lbf, seed=3, gamma=self.params['friction'])
 
         for _ in range(20):
             system.integrator.run(1)
-            particle_force = np.sum(system.part[:].f, axis=0)
-            fluid_force = np.sum(
-                np.array([n.last_applied_force for n in lbf.nodes()]), axis=0)
+            particle_force = np.sum(system.part.all().f, axis=0)
+            fluid_force = np.copy(
+                np.sum(lbf[:, :, :].last_applied_force, axis=(0, 1, 2)))
             np.testing.assert_allclose(
                 particle_force, -fluid_force, rtol=self.rtol)
 
@@ -430,19 +450,17 @@ class LBTest:
         self.system.actors.add(lbf)
         self.system.thermostat.set_lb(
             LB_fluid=lbf, seed=3, gamma=self.params['friction'])
-        lattice_speed = lbf.agrid / lbf.tau
 
         position = np.array([1., 2., 3.])
         position_lb_units = position / lbf.agrid
         force = np.array([4., -5., 6.])
-        force_lb_units = force / lattice_speed * self.system.time_step
-        lbf.add_force_at_pos(position, force_lb_units)
+        lbf.add_force_at_pos(pos=position, force=force)
 
         self.system.integrator.run(1)
 
         # the force should be split equally across the 8 nearest vertices
         n_couplings = 0
-        for n in lbf.nodes():
+        for n in lbf[:, :, :]:
             if np.sum(np.abs(n.last_applied_force)):
                 fluid_force = np.copy(n.last_applied_force)
                 np.testing.assert_allclose(fluid_force, force / 8.)
@@ -479,30 +497,37 @@ class LBTest:
             rtol=rtol)
 
         # Check node velocities
-        for n in lbf.nodes():
-            print(np.array(n.velocity) / fluid_velocity)
-            # WALBERLA todo
-            # np.testing.assert_allclose(
-            #    np.copy(n.velocity), fluid_velocity, atol=1E-6,
-            # err_msg=f"Fluid node velocity not as expected on node {n.index}")
+<< << << < HEAD
+for n in lbf.nodes():
+    print(np.array(n.velocity) / fluid_velocity)
+    # WALBERLA todo
+    # np.testing.assert_allclose(
+    #    np.copy(n.velocity), fluid_velocity, atol=1E-6,
+    # err_msg=f"Fluid node velocity not as expected on node {n.index}")
+== == == =
+for node_velocity in lbf[:, :, :].velocity.reshape((-1, 3)):
+    np.testing.assert_allclose(
+        node_velocity, fluid_velocity, atol=1E-6)
+>>>>>> > 79115df888adc1e9b78d6233674695c70fb452e8
 
-    @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
-    def test_unequal_time_step(self):
-        """
+
+@utx.skipIfMissingFeatures("EXTERNAL_FORCES")
+def test_unequal_time_step(self):
+    """
         Checks that LB tau can only be an integer multiple of the MD time_step
         and that different time steps don't affect the physics of a system
         where particles don't move.
 
         """
-        p = self.system.part.add(pos=[0.1, 0.2, 0.3], fix=[1, 1, 1])
-        base_params = {}
-        base_params.update(
-            ext_force_density=[2.3, 1.2, 0.1],
-            viscosity=self.params['viscosity'],
-            density=self.params['density'],
-            agrid=self.params['agrid'])
+    p = self.system.part.add(pos=[0.1, 0.2, 0.3], fix=[1, 1, 1])
+     base_params = {}
+      base_params.update(
+           ext_force_density=[2.3, 1.2, 0.1],
+           viscosity=self.params['viscosity'],
+           density=self.params['density'],
+           agrid=self.params['agrid'])
 
-        def params_with_tau(tau):
+       def params_with_tau(tau):
             params = base_params.copy()
             params.update(tau=tau)
             return params
@@ -515,7 +540,7 @@ class LBTest:
         self.system.integrator.run(
             int(round(sim_time / self.system.time_step)))
         probe_pos = np.array(self.system.box_l) / 2.
-        v1 = np.copy(lbf.get_interpolated_velocity(probe_pos))
+        v1 = np.copy(lbf.get_interpolated_velocity(pos=probe_pos))
         f1 = np.copy(p.f)
         self.system.actors.clear()
         # get fresh LBfluid and change time steps
@@ -542,12 +567,12 @@ class LBTest:
             self.system.time_step = 0.8 * lbf.get_params()["tau"]
         self.system.actors.clear()
         self.system.time_step = 0.5 * self.params['time_step']
-        self.system.actors.add(
-            self.lb_class(**params_with_tau(self.system.time_step),
-                          **self.lb_params))
+        lbf = self.lb_class(**params_with_tau(self.system.time_step),
+                            **self.lb_params)
+        self.system.actors.add(lbf)
         self.system.integrator.run(
             int(round(sim_time / self.system.time_step)))
-        v2 = np.copy(lbf.get_interpolated_velocity(probe_pos))
+        v2 = np.copy(lbf.get_interpolated_velocity(pos=probe_pos))
         f2 = np.copy(p.f)
         np.testing.assert_allclose(v1, v2, rtol=1e-2)
         np.testing.assert_allclose(f1, f2, rtol=1e-2)

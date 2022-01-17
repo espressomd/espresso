@@ -29,7 +29,7 @@ class ProfileObservablesTest(ut.TestCase):
     system.part.add(pos=[4.0, 4.0, 6.0], v=[0.0, 0.0, 1.0])
     system.part.add(pos=[4.0, 4.0, 6.0], v=[0.0, 0.0, 1.0])
     bin_volume = 5.0**3
-    kwargs = {'ids': list(system.part[:].id),
+    kwargs = {'ids': list(system.part.all().id),
               'n_x_bins': 2,
               'n_y_bins': 3,
               'n_z_bins': 4,
@@ -47,7 +47,7 @@ class ProfileObservablesTest(ut.TestCase):
         obs_bin_edges = density_profile.bin_edges()
         obs_bin_centers = density_profile.bin_centers()
         np_hist, np_edges = tests_common.get_histogram(
-            np.copy(self.system.part[:].pos), self.kwargs, 'cartesian',
+            np.copy(self.system.part.all().pos), self.kwargs, 'cartesian',
             normed=True)
         np_hist *= len(self.system.part)
         np.testing.assert_array_almost_equal(obs_data, np_hist)
@@ -69,7 +69,7 @@ class ProfileObservablesTest(ut.TestCase):
     def test_force_density_profile(self):
         density_profile = espressomd.observables.ForceDensityProfile(
             **self.kwargs)
-        self.system.part[:].ext_force = [0.0, 0.0, 1.0]
+        self.system.part.all().ext_force = [0.0, 0.0, 1.0]
         self.system.integrator.run(0)
         obs_data = density_profile.calculate()
         np.testing.assert_array_equal(
@@ -91,7 +91,7 @@ class ProfileObservablesTest(ut.TestCase):
 
     def test_pid_profile_interface(self):
         # test setters and getters
-        params = {'ids': list(self.system.part[:].id),
+        params = {'ids': list(self.system.part.all().id),
                   'n_x_bins': 4,
                   'n_y_bins': 6,
                   'n_z_bins': 8,

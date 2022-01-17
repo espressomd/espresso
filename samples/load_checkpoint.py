@@ -55,7 +55,7 @@ print(
 
 # test "system.part"
 print("\n### system.part test ###")
-print(f"system.part[:].pos = {system.part[:].pos}")
+print(f"system.part.all().pos = {system.part.all().pos}")
 
 # test "system.thermostat"
 print("\n### system.thermostat test ###")

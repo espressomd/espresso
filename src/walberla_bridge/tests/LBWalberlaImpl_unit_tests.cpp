@@ -371,6 +371,18 @@ BOOST_DATA_TEST_CASE(velocity_at_node_and_pos, bdata::make(all_lbs()),
       BOOST_CHECK(!lb->get_velocity_at_pos(n_pos(node), true));
     }
   }
+
+  {
+    // check interpolation works for edge cases (box corners)
+    auto const [low_corner, up_corner] = params.lattice->get_local_domain();
+    BOOST_CHECK(lb->get_velocity_at_pos(low_corner));
+    BOOST_CHECK(lb->get_velocity_at_pos(up_corner - Vector3d::broadcast(1e-6)));
+    // check interpolation fails outside local domain
+    auto const pos_outside_domain =
+        low_corner - Utils::Vector3d::broadcast(0.6);
+    BOOST_CHECK_THROW(lb->get_velocity_at_pos(pos_outside_domain, true),
+                      std::runtime_error);
+  }
 }
 
 BOOST_DATA_TEST_CASE(interpolated_density_at_pos, bdata::make(all_lbs()),
@@ -412,17 +424,26 @@ BOOST_DATA_TEST_CASE(interpolated_density_at_pos, bdata::make(all_lbs()),
       } else {
         BOOST_CHECK(!lb->get_node_density(node));
         BOOST_CHECK(!lb->get_interpolated_density_at_pos(n_pos(node), false));
-        if (node == Vector3i{-1, -1, -1}) {
-          BOOST_CHECK_THROW(
-              lb->get_interpolated_density_at_pos(n_pos(node), true),
-              std::runtime_error);
-        }
       }
     } else {
       // Check that access to node density is not possible
       BOOST_CHECK(!lb->get_node_density(node));
       BOOST_CHECK(!lb->get_interpolated_density_at_pos(n_pos(node), true));
     }
+  }
+
+  {
+    // check interpolation works for edge cases (box corners)
+    auto const [low_corner, up_corner] = params.lattice->get_local_domain();
+    BOOST_CHECK(lb->get_interpolated_density_at_pos(low_corner));
+    BOOST_CHECK(lb->get_interpolated_density_at_pos(up_corner -
+                                                    Vector3d::broadcast(1e-6)));
+    // check interpolation fails outside local domain
+    auto const pos_outside_domain =
+        low_corner - Utils::Vector3d::broadcast(0.6);
+    BOOST_CHECK_THROW(
+        lb->get_interpolated_density_at_pos(pos_outside_domain, true),
+        std::runtime_error);
   }
 }
 

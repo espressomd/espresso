@@ -70,8 +70,8 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         # Particles
         data = np.genfromtxt(
             tests_common.abspath("data/mdlc_reference_data_forces_torques.dat"))
-        s.part.add(pos=data[:, 1:4], dip=data[:, 4:7])
-        s.part[:].rotation = (1, 1, 1)
+        partcls = s.part.add(pos=data[:, 1:4], dip=data[:, 4:7])
+        partcls.rotation = 3 * [True]
 
         p3m = espressomd.magnetostatics.DipolarP3M(
             prefactor=DIPOLAR_PREFACTOR, mesh=32, accuracy=1E-4)
@@ -81,9 +81,9 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         s.actors.add(dlc)
         s.integrator.run(0)
         err_f = self.vector_error(
-            s.part[:].f, data[:, 7:10] * DIPOLAR_PREFACTOR)
+            partcls.f, data[:, 7:10] * DIPOLAR_PREFACTOR)
         err_t = self.vector_error(
-            s.part[:].torque_lab, data[:, 10:13] * DIPOLAR_PREFACTOR)
+            partcls.torque_lab, data[:, 10:13] * DIPOLAR_PREFACTOR)
         err_e = s.analysis.energy()["dipolar"] - ref_E
 
         tol_f = 2E-3
@@ -96,7 +96,8 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
 
         # Check if error is thrown when particles enter the MDLC gap
         # positive direction
-        s.part[0].pos = [
+        p0 = s.part.by_id(0)
+        p0.pos = [
             s.box_l[0] / 2,
             s.box_l[1] / 2,
             s.box_l[2] - gap_size / 2]
@@ -105,7 +106,7 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         with self.assertRaises(Exception):
             self.integrator.run(2)
         # negative direction
-        s.part[0].pos = [s.box_l[0] / 2, s.box_l[1] / 2, -gap_size / 2]
+        p0.pos = [s.box_l[0] / 2, s.box_l[1] / 2, -gap_size / 2]
         with self.assertRaises(Exception):
             self.system.analysis.energy()
         with self.assertRaises(Exception):
@@ -126,8 +127,8 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         # Particles
         data = np.genfromtxt(
             tests_common.abspath("data/p3m_magnetostatics_system.data"))
-        s.part.add(pos=data[:, 1:4], dip=data[:, 4:7])
-        s.part[:].rotation = (1, 1, 1)
+        partcls = s.part.add(pos=data[:, 1:4], dip=data[:, 4:7])
+        partcls.rotation = 3 * [True]
 
         p3m = espressomd.magnetostatics.DipolarP3M(
             prefactor=DIPOLAR_PREFACTOR, mesh=32, accuracy=1E-6, epsilon="metallic")
@@ -136,9 +137,9 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         expected = np.genfromtxt(
             tests_common.abspath("data/p3m_magnetostatics_expected.data"))[:, 1:]
         err_f = self.vector_error(
-            s.part[:].f, expected[:, 0:3] * DIPOLAR_PREFACTOR)
+            partcls.f, expected[:, 0:3] * DIPOLAR_PREFACTOR)
         err_t = self.vector_error(
-            s.part[:].torque_lab, expected[:, 3:6] * DIPOLAR_PREFACTOR)
+            partcls.torque_lab, expected[:, 3:6] * DIPOLAR_PREFACTOR)
         ref_E = 5.570 * DIPOLAR_PREFACTOR
         err_e = s.analysis.energy()["dipolar"] - ref_E
 
@@ -166,8 +167,8 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         # Particles
         data = np.genfromtxt(
             tests_common.abspath("data/p3m_magnetostatics_system.data"))
-        s.part.add(pos=data[:, 1:4], dip=data[:, 4:7])
-        s.part[:].rotation = (1, 1, 1)
+        partcls = s.part.add(pos=data[:, 1:4], dip=data[:, 4:7])
+        partcls.rotation = 3 * [True]
 
         scafacos = espressomd.magnetostatics.Scafacos(
             prefactor=DIPOLAR_PREFACTOR,
@@ -187,9 +188,9 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         expected = np.genfromtxt(
             tests_common.abspath("data/p3m_magnetostatics_expected.data"))[:, 1:]
         err_f = self.vector_error(
-            s.part[:].f, expected[:, 0:3] * DIPOLAR_PREFACTOR)
+            partcls.f, expected[:, 0:3] * DIPOLAR_PREFACTOR)
         err_t = self.vector_error(
-            s.part[:].torque_lab, expected[:, 3:6] * DIPOLAR_PREFACTOR)
+            partcls.torque_lab, expected[:, 3:6] * DIPOLAR_PREFACTOR)
         ref_E = 5.570 * DIPOLAR_PREFACTOR
         err_e = s.analysis.energy()["dipolar"] - ref_E
 

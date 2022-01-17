@@ -30,11 +30,12 @@
  *  Implementation in forces.cpp.
  */
 
+#include "CellStructure.hpp"
+#include "ParticleRange.hpp"
 #include "actor/Actor.hpp"
 #include "actor/ActorList.hpp"
-#include "bonded_interactions/bonded_interaction_data.hpp"
-#include "cells.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+
+#include <utils/Vector.hpp>
 
 extern ActorList forceActors;
 

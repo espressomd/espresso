@@ -57,11 +57,12 @@ static std::shared_ptr<Observable_stat> calculate_energy_local() {
   clear_energy_on_GPU();
 #endif
 
-  EspressoSystemInterface::Instance().update();
+  auto &espresso_system = EspressoSystemInterface::Instance();
+  espresso_system.update();
 
   // Compute the energies from the energyActors
   for (auto &energyActor : energyActors)
-    energyActor->computeEnergy(espressoSystemInterface);
+    energyActor->computeEnergy(espresso_system);
 
   on_observable_calc();
 

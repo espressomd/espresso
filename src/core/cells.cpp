@@ -216,13 +216,8 @@ REGISTER_CALLBACK(cells_re_init)
 void mpi_bcast_cell_structure(int cs) { mpi_call_all(cells_re_init, cs); }
 
 void check_resort_particles() {
-  const double skin2 = Utils::sqr(skin / 2.0);
-
-  auto const level = (std::any_of(cell_structure.local_particles().begin(),
-                                  cell_structure.local_particles().end(),
-                                  [&skin2](Particle const &p) {
-                                    return (p.r.p - p.l.p_old).norm2() > skin2;
-                                  }))
+  auto const level = (cell_structure.check_resort_required(
+                         cell_structure.local_particles(), skin))
                          ? Cells::RESORT_LOCAL
                          : Cells::RESORT_NONE;
 

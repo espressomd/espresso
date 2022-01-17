@@ -90,7 +90,8 @@ public:
   virtual bool set_node_density(const Utils::Vector3i &node,
                                 double density) = 0;
   virtual boost::optional<double>
-  get_node_density(const Utils::Vector3i &node) const = 0;
+  get_node_density(const Utils::Vector3i &node,
+                   bool consider_ghosts = false) const = 0;
 
   /** @brief Get velocity for node with velocity boundary condition */
   virtual boost::optional<Utils::Vector3d>
@@ -135,6 +136,9 @@ public:
   // Pressure tensor
   virtual boost::optional<Utils::Vector6d>
   get_node_pressure_tensor(const Utils::Vector3i &node) const = 0;
+
+  /** @brief Calculate average pressure tensor of the local domain */
+  virtual Utils::Vector6d get_pressure_tensor() const = 0;
 
   /** @brief Calculate momentum summed over all nodes on the MPI rank */
   virtual Utils::Vector3d get_momentum() const = 0;
@@ -186,9 +190,6 @@ public:
    */
   virtual void switch_vtk(std::string const &vtk_uid, bool status) = 0;
 
-  /** @brief return a pairs of global node index and node center position */
-  virtual std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>>
-  node_indices_positions(bool include_ghosts) const = 0;
   virtual ~LBWalberlaBase() = default;
 };
 

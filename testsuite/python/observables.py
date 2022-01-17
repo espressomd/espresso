@@ -24,44 +24,45 @@ import espressomd.observables
 
 def calc_com_x(system, x, id_list):
     """Mass-weighted average, skipping virtual sites"""
-    masses = system.part[id_list].mass
+    partcls = system.part.by_ids(id_list)
+    masses = partcls.mass
 
     # Filter out virtual particles by using mass=0 for them
-    virtual = system.part[id_list].virtual
+    virtual = partcls.virtual
     masses[np.nonzero(virtual)] = 0.
 
-    return np.average(getattr(system.part[id_list], x), weights=masses, axis=0)
+    return np.average(getattr(partcls, x), weights=masses, axis=0)
 
 
 class Observables(ut.TestCase):
     N_PART = 200
     # Handle for espresso system
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
-    system.part.add(
+    partcls = system.part.add(
         id=np.arange(3, 3 + 2 * N_PART, 2),
         pos=np.random.random((N_PART, 3)) * system.box_l,
         v=np.random.random((N_PART, 3)) * 3.2 - 1,
         f=np.random.random((N_PART, 3)))
 
     if espressomd.has_features(["MASS"]):
-        system.part[:].mass = np.random.random(N_PART)
+        partcls.mass = np.random.random(N_PART)
 
     if espressomd.has_features(["DIPOLES"]):
-        system.part[:].dip = np.random.random((N_PART, 3)) - .3
+        partcls.dip = np.random.random((N_PART, 3)) - .3
 
     if espressomd.has_features(["ROTATION"]):
-        system.part[:].omega_body = np.random.random((N_PART, 3)) - .5
-        system.part[:].torque_lab = np.random.random((N_PART, 3)) - .5
-        system.part[:].quat = np.random.random((N_PART, 4))
+        partcls.omega_body = np.random.random((N_PART, 3)) - .5
+        partcls.torque_lab = np.random.random((N_PART, 3)) - .5
+        partcls.quat = np.random.random((N_PART, 4))
 
     if espressomd.has_features("DIPOLES"):
-        system.part[:].dipm = np.random.random(N_PART) + 2
+        partcls.dipm = np.random.random(N_PART) + 2
 
     if espressomd.has_features("ELECTROSTATICS"):
-        system.part[:].q = np.random.random(N_PART)
+        partcls.q = np.random.random(N_PART)
 
     if espressomd.has_features("VIRTUAL_SITES"):
-        p = system.part[system.part[:].id[8]]
+        p = system.part.by_id(partcls.id[8])
         p.virtual = True
 
     def generate_test_for_pid_observable(
@@ -80,7 +81,7 @@ class Observables(ut.TestCase):
             # Randomly pick a subset of the particles
             id_list = sorted(
                 np.random.choice(
-                    self.system.part[:].id,
+                    self.system.part.all().id,
                     size=int(
                         self.N_PART * .9),
                     replace=False))
@@ -90,10 +91,10 @@ class Observables(ut.TestCase):
             # Get data from particles
             if pprop_name == "f":
                 for p_id in id_list:
-                    if self.system.part[p_id].virtual:
+                    if self.system.part.by_id(p_id).virtual:
                         id_list.remove(p_id)
 
-            part_data = getattr(self.system.part[id_list], pprop_name)
+            part_data = getattr(self.system.part.by_ids(id_list), pprop_name)
 
             # Reshape and aggregate to linear array
             if len(part_data.shape) > 1:
@@ -147,7 +148,7 @@ class Observables(ut.TestCase):
     @utx.skipIfMissingFeatures(['ROTATION'])
     def test_particle_body_velocities(self):
         obs = espressomd.observables.ParticleBodyVelocities(
-            ids=self.system.part[:].id)
+            ids=self.system.part.all().id)
         obs_data = obs.calculate()
         part_data = np.array([p.convert_vector_space_to_body(p.v)
                               for p in self.system.part])
@@ -188,9 +189,9 @@ class Observables(ut.TestCase):
 
     @utx.skipIfMissingFeatures('ELECTROSTATICS')
     def test_dipolemoment(self):
-        obs = espressomd.observables.DipoleMoment(ids=self.system.part[:].id)
+        obs = espressomd.observables.DipoleMoment(ids=self.partcls.id)
         obs_data = obs.calculate()
-        part_data = self.system.part[:].q.dot(self.system.part[:].pos)
+        part_data = self.partcls.q.dot(self.partcls.pos)
         self.assertEqual(obs_data.shape, part_data.shape)
         np.testing.assert_array_almost_equal(
             obs_data, part_data, err_msg="Data did not agree for observable 'DipoleMoment'", decimal=9)
@@ -198,7 +199,7 @@ class Observables(ut.TestCase):
     def test_com_force(self):
         id_list = sorted(
             np.random.choice(
-                self.system.part[:].id,
+                self.partcls.id,
                 size=int(
                     self.N_PART * .9),
                 replace=False))

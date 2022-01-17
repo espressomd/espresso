@@ -89,7 +89,7 @@ def verify_lj_forces(system, tolerance, ids_to_skip=()):
 
     # Initialize dict with expected forces
     f_expected = {}
-    for pid in system.part[:].id:
+    for pid in system.part.all().id:
         f_expected[pid] = np.zeros(3)
 
     # Cache some stuff to speed up pair loop
@@ -98,7 +98,7 @@ def verify_lj_forces(system, tolerance, ids_to_skip=()):
     non_bonded_inter = system.non_bonded_inter
     # LJ parameters
     lj_params = {}
-    all_types = np.unique(system.part[:].type)
+    all_types = np.unique(system.part.all().type)
     for i in all_types:
         for j in all_types:
             lj_params[i, j] = non_bonded_inter[i, j].lennard_jones.get_params()
@@ -598,17 +598,6 @@ def gay_berne_potential(r_ij, u_i, u_j, epsilon_0, sigma_0, mu, nu, k_1, k_2):
     rr = np.linalg.norm((np.linalg.norm(r_ij) - sigma + sigma_0) / sigma_0)
 
     return 4. * epsilon * (rr**-12 - rr**-6)
-
-
-def count_fluid_nodes(lbf):
-    """Counts the non-boundary nodes in the passed lb fluid instance."""
-
-    fluid_nodes = 0
-    for n in lbf.nodes():
-        if not n.is_boundary:
-            fluid_nodes += 1
-
-    return fluid_nodes
 
 
 def fold_index(idx, shape):

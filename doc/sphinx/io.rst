@@ -442,7 +442,7 @@ To read a PDB file containing a single frame::
     # create particles and add bonds between them
     system.part.add(pos=np.array(chainA.positions, dtype=float))
     for i in range(0, len(chainA) - 1):
-        system.part[i].add_bond((system.bonded_inter[0], system.part[i + 1].id))
+        system.part.by_id(i).add_bond((system.bonded_inter[0], i + 1))
     # visualize protein in 3D
     import espressomd.visualization
     visualizer = espressomd.visualization.openGLLive(system, bond_type_radius=[0.2])

@@ -35,6 +35,7 @@
 
 #include "ParticleRange.hpp"
 #include "accumulators.hpp"
+#include "bonded_interactions/rigid_bond.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
 #include "communication.hpp"
@@ -134,17 +135,24 @@ void integrator_sanity_checks() {
   }
 }
 
+static void resort_particles_if_needed(ParticleRange &particles) {
+  if (cell_structure.check_resort_required(particles, skin)) {
+    cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
+  }
+}
+
 /** @brief Calls the hook for propagation kernels before the force calculation
  *  @return whether or not to stop the integration loop early.
  */
 bool integrator_step_1(ParticleRange &particles) {
+  bool early_exit = false;
   switch (integ_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
-    if (steepest_descent_step(particles))
-      return true; // early exit
+    early_exit = steepest_descent_step(particles);
     break;
   case INTEG_METHOD_NVT:
     velocity_verlet_step_1(particles, time_step);
+    resort_particles_if_needed(particles);
     break;
 #ifdef NPT
   case INTEG_METHOD_NPT_ISO:
@@ -158,12 +166,13 @@ bool integrator_step_1(ParticleRange &particles) {
 #ifdef STOKESIAN_DYNAMICS
   case INTEG_METHOD_SD:
     stokesian_dynamics_step_1(particles, time_step);
+    resort_particles_if_needed(particles);
     break;
 #endif // STOKESIAN_DYNAMICS
   default:
     throw std::runtime_error("Unknown value for integ_switch");
   }
-  return false;
+  return early_exit;
 }
 
 /** Calls the hook of the propagation kernels after force calculation */
@@ -183,6 +192,7 @@ void integrator_step_2(ParticleRange &particles, double kT) {
   case INTEG_METHOD_BD:
     // the Ermak-McCammon's Brownian Dynamics requires a single step
     brownian_dynamics_propagator(brownian, particles, time_step, kT);
+    resort_particles_if_needed(particles);
     break;
 #ifdef STOKESIAN_DYNAMICS
   case INTEG_METHOD_SD:

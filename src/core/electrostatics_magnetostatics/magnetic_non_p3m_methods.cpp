@@ -137,15 +137,19 @@ double dawaanr_calculations(bool force_flag, bool energy_flag,
    =============================================================================
 */
 
-int mdds_n_replica = 0;
+static int mdds_n_replica = 0;
 
-void mdds_sanity_checks(int n_replica) {
+int mdds_get_n_replica() { return mdds_n_replica; }
+
+void sanity_checks(int n_replica) {
   if (box_geo.periodic(0) and box_geo.periodic(1) and box_geo.periodic(2) and
       n_replica == 0) {
     throw std::runtime_error("Dipolar direct sum with replica does not "
                              "support a periodic system with zero replica.");
   }
 }
+
+void mdds_sanity_checks() { sanity_checks(mdds_n_replica); }
 
 double
 magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
@@ -320,7 +324,7 @@ void mdds_set_params(int n_replica) {
   if (n_replica < 0) {
     throw std::runtime_error("Dipolar direct sum requires n_replica >= 0.");
   }
-  mdds_sanity_checks(n_replica);
+  sanity_checks(n_replica);
   if (n_replica == 0) {
     fprintf(stderr, "Careful: the number of extra replicas to take into "
                     "account during the direct sum calculation is zero\n");

@@ -50,7 +50,7 @@ class SwimmerTest(ut.TestCase):
 
         p0 = system.part.add(pos=pos_0, swimming={"v_swim": v_swim})
         p1 = system.part.add(pos=pos_1, swimming={"f_swim": f_swim})
-        system.part[:].rotation = (1, 1, 1)
+        system.part.all().rotation = (1, 1, 1)
 
         system.thermostat.set_langevin(kT=temp, gamma=gamma, seed=42)
 

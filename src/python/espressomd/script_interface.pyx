@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import numpy as np
-from .utils import to_char_pointer, to_str, handle_errors
+from .utils import array_locked, to_char_pointer, to_str, handle_errors
 from .utils cimport Vector3d, make_array_locked
 cimport cpython.object
 
@@ -184,12 +184,31 @@ cdef class PScriptInterface:
 
         return odict
 
+
+class array_variant(np.ndarray):
+
+    """
+    Returns a numpy.ndarray that will be serialized as a ``std::vector``.
+
+    """
+
+    def __new__(cls, input_array):
+        obj = np.asarray(input_array).view(cls)
+        return obj
+
+
 cdef Variant python_object_to_variant(value) except +:
     """Convert Python objects to C++ Variant objects."""
 
     cdef vector[Variant] vec
+    cdef vector[int] vec_int
+    cdef vector[double] vec_double
     cdef unordered_map[int, Variant] vmap
     cdef PObjectRef oref
+    cdef int[::1] view_int
+    cdef int * data_int
+    cdef double[::1] view_double
+    cdef double * data_double
 
     if value is None:
         return Variant()
@@ -207,6 +226,16 @@ cdef Variant python_object_to_variant(value) except +:
                     f"No conversion from type dict_item([({type(k).__name__}, {type(v).__name__})]) to Variant[std::unordered_map<int, Variant>]")
             vmap[k] = python_object_to_variant(v)
         return make_variant[unordered_map[int, Variant]](vmap)
+    elif isinstance(value, array_variant) and np.issubdtype(value.dtype, np.signedinteger):
+        view_int = np.ascontiguousarray(value, dtype=np.int32)
+        data_int = &view_int[0]
+        vec_int.assign(data_int, data_int + len(view_int))
+        return make_variant[vector[int]](vec_int)
+    elif isinstance(value, array_variant) and np.issubdtype(value.dtype, np.floating):
+        view_double = np.ascontiguousarray(value, dtype=np.float64)
+        data_double = &view_double[0]
+        vec_double.assign(data_double, data_double + len(view_double))
+        return make_variant[vector[double]](vec_double)
     elif hasattr(value, '__iter__') and type(value) != str:
         for e in value:
             vec.push_back(python_object_to_variant(e))
@@ -352,6 +381,12 @@ class ScriptInterfaceHelper(PScriptInterface):
     def define_bound_methods(self):
         for method_name in self._so_bind_methods:
             setattr(self, method_name, self.generate_caller(method_name))
+
+    def _check_required_arguments(self, params):
+        if not self.required_keys().issubset(params):
+            raise ValueError(
+                "At least the following keys have to be given as keyword "
+                f"arguments: {self.required_keys()}, got {set(params.keys())}")
 
 
 class ScriptObjectRegistry(ScriptInterfaceHelper):

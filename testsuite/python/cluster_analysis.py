@@ -134,12 +134,12 @@ class ClusterAnalysis(ut.TestCase):
 
         # Longest distance
         ref_dist = self.system.distance(
-            self.system.part[0], self.system.part[len(self.system.part) - 1])
+            self.system.part.by_id(0), self.system.part.by_id(len(self.system.part) - 1))
         self.assertAlmostEqual(c.longest_distance(), ref_dist, delta=1E-8)
 
         # Radius of gyration
         rg = 0.
-        com_particle = self.system.part[len(self.system.part) // 2]
+        com_particle = self.system.part.by_id(len(self.system.part) // 2)
         for p in c.particles():
             rg += self.system.distance(p, com_particle)**2
         rg /= len(self.system.part)
@@ -187,7 +187,7 @@ class ClusterAnalysis(ut.TestCase):
         # Check particle to cluster id mapping, once by ParticleHandle, once by
         # id
         self.assertEqual(self.cs.cid_for_particle(
-            self.system.part[0]), self.cs.cluster_ids()[0])
+            self.system.part.by_id(0)), self.cs.cluster_ids()[0])
         self.assertEqual(self.cs.cid_for_particle(1), self.cs.cluster_ids()[0])
 
         # Unknown method should return None

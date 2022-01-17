@@ -23,17 +23,15 @@
 #include "cuda_interface.hpp"
 #include "grid.hpp"
 
-/* Initialize instance pointer */
+#include <utils/Vector.hpp>
+
 EspressoSystemInterface *EspressoSystemInterface::m_instance = nullptr;
 
-/********************************************************************************************/
-
 void EspressoSystemInterface::gatherParticles() {
-// get particles from other nodes
 #ifdef CUDA
   if (m_gpu) {
     if (gpu_get_global_particle_vars_pointer_host()->communication_enabled) {
-      copy_part_data_to_gpu(cell_structure.local_particles());
+      copy_part_data_to_gpu(cell_structure.local_particles(), this_node);
       reallocDeviceMemory(gpu_get_particle_pointer().size());
       if (m_splitParticleStructGpu && (this_node == 0))
         split_particle_struct();
@@ -41,6 +39,18 @@ void EspressoSystemInterface::gatherParticles() {
   }
 #endif
 }
+
+#ifdef CUDA
+void EspressoSystemInterface::enableParticleCommunication() {
+  if (m_gpu) {
+    if (!gpu_get_global_particle_vars_pointer_host()->communication_enabled) {
+      gpu_init_particle_comm(this_node);
+      cuda_bcast_global_part_params();
+      reallocDeviceMemory(gpu_get_particle_pointer().size());
+    }
+  }
+}
+#endif
 
 void EspressoSystemInterface::init() { gatherParticles(); }
 

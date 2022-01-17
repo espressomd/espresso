@@ -34,8 +34,13 @@
 #include "bond_error.hpp"
 #include "ghosts.hpp"
 
+<<<<<<< HEAD
 #include "utils/math/sqr.hpp"
-#include <boost/algorithm/cxx11/any_of.hpp>
+=======
+#include <utils/math/sqr.hpp>
+
+>>>>>>> 79115df888adc1e9b78d6233674695c70fb452e8
+    #include < boost / algorithm / cxx11 / any_of.hpp>
 #include <boost/container/static_vector.hpp>
 #include <boost/iterator/indirect_iterator.hpp>
 #include <boost/range/algorithm/find_if.hpp>
@@ -47,7 +52,7 @@
 #include <utility>
 #include <vector>
 
-extern BoxGeometry box_geo;
+                                           extern BoxGeometry box_geo;
 
 /** Cell Structure */
 enum CellStructureType : int {
@@ -376,6 +381,20 @@ public:
   bool check_resort_required(const ParticleRange &particles, double skin,
                              const Utils::Vector3d &additional_offset) {
     double lim = Utils::sqr(skin / 2) - additional_offset.norm2();
+    return std::any_of(
+        particles.begin(), particles.end(),
+        [lim](const auto &p) { return ((p.r.p - p.l.p_old).norm2() > lim); });
+  }
+
+  /**
+   * @brief Check whether a particle has moved further than half the skin
+   * since the last Verlet list update, thus requiring a resort.
+   * @param particles Particles to check
+   * @param skin Skin
+   * @return Whether a resort is needed.
+   */
+  bool check_resort_required(ParticleRange const &particles, double skin) {
+    auto const lim = Utils::sqr(skin / 2.);
     return std::any_of(
         particles.begin(), particles.end(),
         [lim](const auto &p) { return ((p.r.p - p.l.p_old).norm2() > lim); });

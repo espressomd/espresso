@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+from libcpp.memory cimport shared_ptr, make_shared
 from cython.operator cimport dereference
 include "myconfig.pxi"
 from .actors cimport Actor
@@ -634,21 +635,12 @@ IF ELECTROSTATICS and MMM1D_GPU:
         tune : :obj:`bool`, optional
             Specify whether to automatically tune or not. Defaults to ``True``.
         """
-        cdef Mmm1dgpuForce * thisptr
+        cdef shared_ptr[Mmm1dgpuForce] sip
         cdef EspressoSystemInterface * interface
-        cdef char * log
-        cdef int resp
 
         def __cinit__(self):
-            self.interface = EspressoSystemInterface._Instance()
-            default_params = self.default_params()
-            self.thisptr = new Mmm1dgpuForce(dereference(self.interface), 0.0, default_params["maxPWerror"])
-            self.interface.update()
-            self.interface.requestRGpu()
-            dereference(self.thisptr).activate()
-
-        def __dealloc__(self):
-            del self.thisptr
+            self.interface = &EspressoSystemInterface.Instance()
+            self.sip = make_shared[Mmm1dgpuForce](dereference(self.interface))
 
         def validate_params(self):
             default_params = self.default_params()
@@ -686,27 +678,28 @@ IF ELECTROSTATICS and MMM1D_GPU:
             set_prefactor(self._params["prefactor"])
             default_params = self.default_params()
 
-            self.thisptr.set_params(
+            dereference(self.sip).set_params(
                 < float > box_geo.length()[2], < float > coulomb.prefactor,
                 self._params["maxPWerror"], self._params["far_switch_radius"],
                 self._params["bessel_cutoff"])
 
         def _tune(self):
-            self.thisptr.setup(dereference(self.interface))
-            self.thisptr.tune(
+            dereference(self.sip).setup(dereference(self.interface))
+            dereference(self.sip).tune(
                 dereference(self.interface), self._params["maxPWerror"],
                 self._params["far_switch_radius"], self._params["bessel_cutoff"])
 
         def _activate_method(self):
             check_neutrality(self._params)
             self._set_params_in_es_core()
+            dereference(self.sip).activate()
             coulomb.method = COULOMB_MMM1D_GPU
             if self._params["tune"]:
                 self._tune()
             self._set_params_in_es_core()
 
         def _deactivate_method(self):
-            dereference(self.thisptr).deactivate()
+            dereference(self.sip).deactivate()
 
 IF ELECTROSTATICS:
     IF SCAFACOS == 1:

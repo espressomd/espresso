@@ -92,6 +92,13 @@ int cuda_get_device();
  */
 int cuda_test_device_access();
 
+/**
+ * Check that a device is available, that its compute capability
+ * is sufficient for ESPResSo, and that data can be written to
+ * and read from it. Otherwise, throw an exception.
+ */
+void cuda_check_device();
+
 /** Gather unique list of CUDA devices on all nodes.
  *  @return vector of device properties.
  */

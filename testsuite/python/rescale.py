@@ -33,7 +33,11 @@ class RescaleTest(ut.TestCase):
     def setUp(self):
         N = 100
         self.system.box_l = 3 * [10]
-        self.system.part.add(pos=self.system.box_l * np.random.random((N, 3)))
+        self.partcls = self.system.part.add(
+            pos=self.system.box_l * np.random.random((N, 3)))
+
+    def tearDown(self):
+        self.system.part.clear()
 
     def test_iso(self):
         """Test 'isotropic' case (dir="xyz").
@@ -41,9 +45,9 @@ class RescaleTest(ut.TestCase):
         scale = 1.3
         new_box_l = scale * self.system.box_l[0]
 
-        old_pos = self.system.part[:].pos
+        old_pos = self.partcls.pos
         self.system.change_volume_and_rescale_particles(new_box_l)
-        new_pos = self.system.part[:].pos
+        new_pos = self.partcls.pos
 
         max_diff = np.max(np.abs(new_pos / old_pos - scale))
         self.assertAlmostEqual(0., max_diff, places=10)
@@ -54,9 +58,9 @@ class RescaleTest(ut.TestCase):
         scale = 0.7
         new_box_l = scale * self.system.box_l[dir]
 
-        old_pos = self.system.part[:].pos
+        old_pos = self.partcls.pos
         self.system.change_volume_and_rescale_particles(new_box_l, dir=dir)
-        new_pos = self.system.part[:].pos
+        new_pos = self.partcls.pos
 
         for i in range(3):
             if i == dir:

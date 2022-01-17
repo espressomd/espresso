@@ -111,8 +111,10 @@ class LBBoundaryVelocityTest(ut.TestCase):
         v_boundary = [0.02, 0.01, 0.03]
         bound_cond = espressomd.lb.VelocityBounceBack(v_boundary)
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             self.lb_fluid[1, 2, 3].boundary = 17
+        with self.assertRaises(TypeError):
+            self.lb_fluid[1, 2, 3].boundary = np.array([1, 2, 3])
 
         self.lb_fluid[1, 2, 3].boundary = bound_cond
         np.testing.assert_array_almost_equal(

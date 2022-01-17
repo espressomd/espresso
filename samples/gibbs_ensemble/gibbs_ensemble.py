@@ -61,7 +61,8 @@ class Client(Process):
 
     @property
     def density(self):
-        return len(self.system.part[:].id) / float(np.prod(self.system.box_l))
+        return len(self.system.part.all().id) / \
+            float(np.prod(self.system.box_l))
 
     @property
     def energy(self):
@@ -76,12 +77,12 @@ class Client(Process):
 
     def send_info(self):
         self.pipe.send([MessageID.INFO, self.system.box_l[0],
-                        len(self.system.part[:].id)])
+                        len(self.system.part.all().id)])
 
     def move_particle(self, DX_MAX):
         """ Move random particle inside the box """
-        random_particle_id = np.random.choice(self.system.part[:].id)
-        self.old_particle = self.system.part[random_particle_id]
+        random_particle_id = np.random.choice(self.system.part.all().id)
+        self.old_particle = self.system.part.by_id(random_particle_id)
         self.old_pos = self.old_particle.pos
         self.old_particle.pos = self.old_pos + \
             (0.5 - np.random.random(size=3)) * DX_MAX
@@ -105,9 +106,10 @@ class Client(Process):
 
     def remove_particle(self):
         """ Remove a random particle """
-        random_particle_id = np.random.choice(self.system.part[:].id)
-        self.old_particle = self.system.part[random_particle_id].to_dict()
-        self.system.part[self.old_particle["id"]].remove()
+        random_particle_id = np.random.choice(self.system.part.all().id)
+        self.old_particle = self.system.part.by_id(
+            random_particle_id).to_dict()
+        self.system.part.by_id(self.old_particle["id"]).remove()
         self.send_energy()
 
     def revert_remove_particle(self):

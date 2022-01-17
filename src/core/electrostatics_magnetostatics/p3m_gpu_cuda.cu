@@ -51,7 +51,6 @@
 
 #include "electrostatics_magnetostatics/p3m_gpu.hpp"
 
-#include "BoxGeometry.hpp"
 #include "EspressoSystemInterface.hpp"
 #include "cuda_interface.hpp"
 #include "cuda_utils.cuh"
@@ -75,8 +74,6 @@
 
 using Utils::int_pow;
 using Utils::sqr;
-
-extern BoxGeometry box_geo;
 
 struct P3MGpuData {
   /** Charge mesh */
@@ -115,7 +112,7 @@ struct p3m_gpu_fft_plans_t {
   cufftHandle back_plan;
 } p3m_gpu_fft_plans;
 
-static char p3m_gpu_data_initialized = 0;
+static bool p3m_gpu_data_initialized = false;
 
 template <int cao>
 __device__ void static Aliasing_sums_ik(const P3MGpuData p, int NX, int NY,
@@ -152,7 +149,7 @@ __device__ void static Aliasing_sums_ik(const P3MGpuData p, int NX, int NY,
         NM2 = sqr(NMX * Leni[0]) + sqr(NMY * Leni[1]) + sqr(NMZ * Leni[2]);
         *Nenner += S3;
 
-        TE = exp(-sqr(Utils::pi<float>() / (p.alpha)) * NM2);
+        TE = exp(-sqr(Utils::pi<REAL_TYPE>() / (p.alpha)) * NM2);
         zwi = S3 * TE / NM2;
         Zaehler[0] += NMX * zwi * Leni[0];
         Zaehler[1] += NMY * zwi * Leni[1];
@@ -184,9 +181,9 @@ __global__ void calculate_influence_function_device(const P3MGpuData p) {
 
   if (((NX == 0) && (NY == 0) && (NZ == 0)) ||
       ((NX % (p.mesh[0] / 2) == 0) && (NY % (p.mesh[1] / 2) == 0) &&
-       (NZ % (p.mesh[2] / 2) == 0)))
-    p.G_hat[ind] = 0.0;
-  else {
+       (NZ % (p.mesh[2] / 2) == 0))) {
+    p.G_hat[ind] = 0;
+  } else {
     Aliasing_sums_ik<cao>(p, NX, NY, NZ, Zaehler, &Nenner);
 
     Dnx = static_cast<REAL_TYPE>((NX > p.mesh[0] / 2) ? NX - p.mesh[0] : NX);
@@ -197,7 +194,7 @@ __global__ void calculate_influence_function_device(const P3MGpuData p) {
           Dnz * Zaehler[2] * Leni[2];
     zwi /= ((sqr(Dnx * Leni[0]) + sqr(Dny * Leni[1]) + sqr(Dnz * Leni[2])) *
             sqr(Nenner));
-    p.G_hat[ind] = 2.0f * zwi / Utils::pi<float>();
+    p.G_hat[ind] = 2 * zwi / Utils::pi<REAL_TYPE>();
   }
 }
 
@@ -229,10 +226,10 @@ __global__ void apply_diff_op(const P3MGpuData p) {
                                           static_cast<int>(blockIdx.y),
                                           static_cast<int>(threadIdx.x));
 
-  auto const nx = static_cast<int>(
-      (blockIdx.x > p.mesh[0] / 2) ? blockIdx.x - p.mesh[0] : blockIdx.x);
-  auto const ny = static_cast<int>(
-      (blockIdx.y > p.mesh[1] / 2) ? blockIdx.y - p.mesh[1] : blockIdx.y);
+  auto const bidx = static_cast<int>(blockIdx.x);
+  auto const bidy = static_cast<int>(blockIdx.y);
+  auto const nx = (bidx > p.mesh[0] / 2) ? bidx - p.mesh[0] : bidx;
+  auto const ny = (bidy > p.mesh[1] / 2) ? bidy - p.mesh[1] : bidy;
   auto const nz = static_cast<int>(threadIdx.x);
 
   const FFT_TYPE_COMPLEX meshw = p.charge_mesh[linear_index];
@@ -277,11 +274,12 @@ template <int cao, bool shared>
 __global__ void assign_charge_kernel(const CUDA_particle_data *const pdata,
                                      const P3MGpuData par,
                                      const int parts_per_block) {
-  const int part_in_block = threadIdx.x / cao;
-  const int cao_id_x = threadIdx.x - part_in_block * cao;
+  auto const part_in_block = static_cast<int>(threadIdx.x) / cao;
+  auto const cao_id_x = static_cast<int>(threadIdx.x) - part_in_block * cao;
   /* id of the particle */
-  int id =
-      parts_per_block * (blockIdx.x * gridDim.y + blockIdx.y) + part_in_block;
+  auto const id =
+      parts_per_block * static_cast<int>(blockIdx.x * gridDim.y + blockIdx.y) +
+      part_in_block;
   if (id >= par.n_part)
     return;
   /* position relative to the closest gird point */
@@ -313,31 +311,32 @@ __global__ void assign_charge_kernel(const CUDA_particle_data *const pdata,
   extern __shared__ float weights[];
 
   if (shared) {
+    auto const offset = static_cast<unsigned>(cao * part_in_block);
     if ((threadIdx.y < 3) && (threadIdx.z == 0)) {
-      weights[3 * cao * part_in_block + 3 * cao_id_x + threadIdx.y] =
+      weights[3 * offset + 3 * static_cast<unsigned>(cao_id_x) + threadIdx.y] =
           Utils::bspline<cao>(cao_id_x, m_pos[threadIdx.y]);
     }
 
     __syncthreads();
 
-    atomicAdd(&(charge_mesh[ind]),
-              weights[3 * cao * part_in_block + 3 * cao_id_x + 0] *
-                  weights[3 * cao * part_in_block + 3 * threadIdx.y + 1] *
-                  weights[3 * cao * part_in_block + 3 * threadIdx.z + 2] * p.q);
+    auto const c =
+        weights[3 * offset + 3 * static_cast<unsigned>(cao_id_x) + 0] *
+        weights[3 * offset + 3 * threadIdx.y + 1] *
+        weights[3 * offset + 3 * threadIdx.z + 2] * p.q;
+    atomicAdd(&(charge_mesh[ind]), c);
 
   } else {
-    atomicAdd(&(charge_mesh[ind]),
-              Utils::bspline<cao>(cao_id_x, m_pos[0]) *
-                  Utils::bspline<cao>(threadIdx.y, m_pos[1]) *
-                  Utils::bspline<cao>(threadIdx.z, m_pos[2]) * p.q);
+    auto const c =
+        Utils::bspline<cao>(cao_id_x, m_pos[0]) *
+        Utils::bspline<cao>(static_cast<int>(threadIdx.y), m_pos[1]) *
+        Utils::bspline<cao>(static_cast<int>(threadIdx.z), m_pos[2]) * p.q;
+    atomicAdd(&(charge_mesh[ind]), c);
   }
 }
 
 void assign_charges(const CUDA_particle_data *const pdata, const P3MGpuData p) {
-  dim3 grid, block;
-  grid.z = 1;
-  const int cao3 = p.cao * p.cao * p.cao;
-  const int cao = p.cao;
+  auto const cao = p.cao;
+  auto const cao3 = int_pow<3>(cao);
   int parts_per_block = 1, n_blocks = 1;
 
   while ((parts_per_block + 1) * cao3 <= 1024) {
@@ -348,20 +347,19 @@ void assign_charges(const CUDA_particle_data *const pdata, const P3MGpuData p) {
   else
     n_blocks = p.n_part / parts_per_block + 1;
 
-  grid.x = n_blocks;
-  grid.y = 1;
+  dim3 block(static_cast<unsigned>(parts_per_block * cao),
+             static_cast<unsigned>(cao), static_cast<unsigned>(cao));
+  dim3 grid(static_cast<unsigned>(n_blocks), 1u, 1u);
   while (grid.x > 65536) {
     grid.y++;
-    if ((n_blocks % grid.y) == 0)
-      grid.x = std::max<int>(1, n_blocks / grid.y);
+    if ((static_cast<unsigned>(n_blocks) % grid.y) == 0)
+      grid.x = std::max<unsigned>(1u, static_cast<unsigned>(n_blocks) / grid.y);
     else
-      grid.x = n_blocks / grid.y + 1;
+      grid.x = static_cast<unsigned>(n_blocks) / grid.y + 1;
   }
 
-  block.x = parts_per_block * cao;
-  block.y = cao;
-  block.z = cao;
-
+  auto const data_length =
+      3 * static_cast<std::size_t>(parts_per_block * cao) * sizeof(REAL_TYPE);
   switch (cao) {
   case 1:
     (assign_charge_kernel<1, false>)<<<dim3(grid), dim3(block), 0, nullptr>>>(
@@ -373,32 +371,27 @@ void assign_charges(const CUDA_particle_data *const pdata, const P3MGpuData p) {
     break;
   case 3:
     (assign_charge_kernel<
-        3, true>)<<<dim3(grid), dim3(block),
-                    3 * parts_per_block * cao * sizeof(REAL_TYPE), nullptr>>>(
+        3, true>)<<<dim3(grid), dim3(block), data_length, nullptr>>>(
         pdata, p, parts_per_block);
     break;
   case 4:
     (assign_charge_kernel<
-        4, true>)<<<dim3(grid), dim3(block),
-                    3 * parts_per_block * cao * sizeof(REAL_TYPE), nullptr>>>(
+        4, true>)<<<dim3(grid), dim3(block), data_length, nullptr>>>(
         pdata, p, parts_per_block);
     break;
   case 5:
     (assign_charge_kernel<
-        5, true>)<<<dim3(grid), dim3(block),
-                    3 * parts_per_block * cao * sizeof(REAL_TYPE), nullptr>>>(
+        5, true>)<<<dim3(grid), dim3(block), data_length, nullptr>>>(
         pdata, p, parts_per_block);
     break;
   case 6:
     (assign_charge_kernel<
-        6, true>)<<<dim3(grid), dim3(block),
-                    3 * parts_per_block * cao * sizeof(REAL_TYPE), nullptr>>>(
+        6, true>)<<<dim3(grid), dim3(block), data_length, nullptr>>>(
         pdata, p, parts_per_block);
     break;
   case 7:
     (assign_charge_kernel<
-        7, true>)<<<dim3(grid), dim3(block),
-                    3 * parts_per_block * cao * sizeof(REAL_TYPE), nullptr>>>(
+        7, true>)<<<dim3(grid), dim3(block), data_length, nullptr>>>(
         pdata, p, parts_per_block);
     break;
   default:
@@ -412,11 +405,12 @@ __global__ void assign_forces_kernel(const CUDA_particle_data *const pdata,
                                      const P3MGpuData par,
                                      float *lb_particle_force_gpu,
                                      REAL_TYPE prefactor, int parts_per_block) {
-  const int part_in_block = threadIdx.x / cao;
-  const int cao_id_x = threadIdx.x - part_in_block * cao;
+  auto const part_in_block = static_cast<int>(threadIdx.x) / cao;
+  auto const cao_id_x = static_cast<int>(threadIdx.x) - part_in_block * cao;
   /* id of the particle */
-  int id =
-      parts_per_block * (blockIdx.x * gridDim.y + blockIdx.y) + part_in_block;
+  auto const id =
+      parts_per_block * static_cast<int>(blockIdx.x * gridDim.y + blockIdx.y) +
+      part_in_block;
   if (id >= par.n_part)
     return;
   /* position relative to the closest grid point */
@@ -448,20 +442,22 @@ __global__ void assign_forces_kernel(const CUDA_particle_data *const pdata,
   extern __shared__ float weights[];
 
   if (shared) {
+    auto const offset = static_cast<unsigned>(cao * part_in_block);
     if ((threadIdx.y < 3) && (threadIdx.z == 0)) {
-      weights[3 * cao * part_in_block + 3 * cao_id_x + threadIdx.y] =
+      weights[3 * offset + 3 * static_cast<unsigned>(cao_id_x) + threadIdx.y] =
           Utils::bspline<cao>(cao_id_x, m_pos[threadIdx.y]);
     }
 
     __syncthreads();
 
-    c = -prefactor * weights[3 * cao * part_in_block + 3 * cao_id_x + 0] *
-        weights[3 * cao * part_in_block + 3 * threadIdx.y + 1] *
-        weights[3 * cao * part_in_block + 3 * threadIdx.z + 2] * p.q;
+    c = -prefactor *
+        weights[3 * offset + 3 * static_cast<unsigned>(cao_id_x) + 0] *
+        weights[3 * offset + 3 * threadIdx.y + 1] *
+        weights[3 * offset + 3 * threadIdx.z + 2] * p.q;
   } else {
     c = -prefactor * Utils::bspline<cao>(cao_id_x, m_pos[0]) *
-        Utils::bspline<cao>(threadIdx.y, m_pos[1]) *
-        Utils::bspline<cao>(threadIdx.z, m_pos[2]) * p.q;
+        Utils::bspline<cao>(static_cast<int>(threadIdx.y), m_pos[1]) *
+        Utils::bspline<cao>(static_cast<int>(threadIdx.z), m_pos[2]) * p.q;
   }
 
   const REAL_TYPE *force_mesh_x = (REAL_TYPE *)par.force_mesh_x;
@@ -475,11 +471,8 @@ __global__ void assign_forces_kernel(const CUDA_particle_data *const pdata,
 
 void assign_forces(const CUDA_particle_data *const pdata, const P3MGpuData p,
                    float *lb_particle_force_gpu, REAL_TYPE prefactor) {
-  dim3 grid, block;
-  grid.z = 1;
-
-  const int cao = p.cao;
-  const int cao3 = cao * cao * cao;
+  auto const cao = p.cao;
+  auto const cao3 = int_pow<3>(cao);
   int parts_per_block = 1, n_blocks = 1;
 
   while ((parts_per_block + 1) * cao3 <= 1024) {
@@ -491,22 +484,21 @@ void assign_forces(const CUDA_particle_data *const pdata, const P3MGpuData p,
   else
     n_blocks = p3m_gpu_data.n_part / parts_per_block + 1;
 
-  grid.x = n_blocks;
-  grid.y = 1;
+  dim3 block(static_cast<unsigned>(parts_per_block * cao),
+             static_cast<unsigned>(cao), static_cast<unsigned>(cao));
+  dim3 grid(static_cast<unsigned>(n_blocks), 1u, 1u);
   while (grid.x > 65536) {
     grid.y++;
-    if ((n_blocks % grid.y) == 0)
-      grid.x = std::max<int>(1, n_blocks / grid.y);
+    if ((static_cast<unsigned>(n_blocks) % grid.y) == 0)
+      grid.x = std::max<unsigned>(1u, static_cast<unsigned>(n_blocks) / grid.y);
     else
-      grid.x = n_blocks / grid.y + 1;
+      grid.x = static_cast<unsigned>(n_blocks) / grid.y + 1;
   }
-
-  block.x = parts_per_block * cao;
-  block.y = cao;
-  block.z = cao;
 
   /* Switch for assignment templates, the shared version only is faster for cao
    * > 2 */
+  auto const data_length =
+      3 * static_cast<std::size_t>(parts_per_block * cao) * sizeof(float);
   switch (cao) {
   case 1:
     (assign_forces_kernel<1, false>)<<<dim3(grid), dim3(block), 0, nullptr>>>(
@@ -518,32 +510,27 @@ void assign_forces(const CUDA_particle_data *const pdata, const P3MGpuData p,
     break;
   case 3:
     (assign_forces_kernel<
-        3, true>)<<<dim3(grid), dim3(block),
-                    3 * parts_per_block * cao * sizeof(float), nullptr>>>(
+        3, true>)<<<dim3(grid), dim3(block), data_length, nullptr>>>(
         pdata, p, lb_particle_force_gpu, prefactor, parts_per_block);
     break;
   case 4:
     (assign_forces_kernel<
-        4, true>)<<<dim3(grid), dim3(block),
-                    3 * parts_per_block * cao * sizeof(float), nullptr>>>(
+        4, true>)<<<dim3(grid), dim3(block), data_length, nullptr>>>(
         pdata, p, lb_particle_force_gpu, prefactor, parts_per_block);
     break;
   case 5:
     (assign_forces_kernel<
-        5, true>)<<<dim3(grid), dim3(block),
-                    3 * parts_per_block * cao * sizeof(float), nullptr>>>(
+        5, true>)<<<dim3(grid), dim3(block), data_length, nullptr>>>(
         pdata, p, lb_particle_force_gpu, prefactor, parts_per_block);
     break;
   case 6:
     (assign_forces_kernel<
-        6, true>)<<<dim3(grid), dim3(block),
-                    3 * parts_per_block * cao * sizeof(float), nullptr>>>(
+        6, true>)<<<dim3(grid), dim3(block), data_length, nullptr>>>(
         pdata, p, lb_particle_force_gpu, prefactor, parts_per_block);
     break;
   case 7:
     (assign_forces_kernel<
-        7, true>)<<<dim3(grid), dim3(block),
-                    3 * parts_per_block * cao * sizeof(float), nullptr>>>(
+        7, true>)<<<dim3(grid), dim3(block), data_length, nullptr>>>(
         pdata, p, lb_particle_force_gpu, prefactor, parts_per_block);
     break;
   default:
@@ -562,36 +549,37 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
   if (mesh[0] == -1 && mesh[1] == -1 && mesh[2] == -1)
     throw std::runtime_error("P3M: invalid mesh size");
 
-  espressoSystemInterface.requestParticleStructGpu();
+  auto &espresso_system = EspressoSystemInterface::Instance();
+  espresso_system.requestParticleStructGpu();
 
-  bool reinit_if = false, mesh_changed = false;
-  p3m_gpu_data.n_part = gpu_get_particle_pointer().size();
+  bool do_reinit = false, mesh_changed = false;
+  p3m_gpu_data.n_part = static_cast<int>(gpu_get_particle_pointer().size());
 
-  if ((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.alpha != alpha)) {
+  if (!p3m_gpu_data_initialized || p3m_gpu_data.alpha != alpha) {
     p3m_gpu_data.alpha = static_cast<REAL_TYPE>(alpha);
-    reinit_if = true;
+    do_reinit = true;
   }
 
-  if ((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.cao != cao)) {
+  if (!p3m_gpu_data_initialized || p3m_gpu_data.cao != cao) {
     p3m_gpu_data.cao = cao;
     // NOLINTNEXTLINE(bugprone-integer-division)
     p3m_gpu_data.pos_shift = static_cast<REAL_TYPE>((p3m_gpu_data.cao - 1) / 2);
-    reinit_if = true;
+    do_reinit = true;
   }
 
-  if ((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.mesh[0] != mesh[0]) ||
+  if (!p3m_gpu_data_initialized || (p3m_gpu_data.mesh[0] != mesh[0]) ||
       (p3m_gpu_data.mesh[1] != mesh[1]) || (p3m_gpu_data.mesh[2] != mesh[2])) {
     std::copy(mesh, mesh + 3, p3m_gpu_data.mesh);
     mesh_changed = true;
-    reinit_if = true;
+    do_reinit = true;
   }
 
-  auto const box_l = box_geo.length();
+  auto const box_l = espresso_system.box();
 
-  if ((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.box[0] != box_l[0]) ||
+  if (!p3m_gpu_data_initialized || (p3m_gpu_data.box[0] != box_l[0]) ||
       (p3m_gpu_data.box[1] != box_l[1]) || (p3m_gpu_data.box[2] != box_l[2])) {
     std::copy(box_l.begin(), box_l.end(), p3m_gpu_data.box);
-    reinit_if = true;
+    do_reinit = true;
   }
 
   p3m_gpu_data.mesh_z_padded = (mesh[2] / 2 + 1) * 2;
@@ -602,7 +590,7 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
         static_cast<REAL_TYPE>(p3m_gpu_data.mesh[i]) / p3m_gpu_data.box[i];
   }
 
-  if ((p3m_gpu_data_initialized == 1) && mesh_changed) {
+  if (p3m_gpu_data_initialized && mesh_changed) {
     cuda_safe_mem(cudaFree(p3m_gpu_data.charge_mesh));
     p3m_gpu_data.charge_mesh = nullptr;
     cuda_safe_mem(cudaFree(p3m_gpu_data.force_mesh_x));
@@ -617,22 +605,20 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
     cufftDestroy(p3m_gpu_fft_plans.forw_plan);
     cufftDestroy(p3m_gpu_fft_plans.back_plan);
 
-    p3m_gpu_data_initialized = 0;
+    p3m_gpu_data_initialized = false;
   }
 
-  if ((p3m_gpu_data_initialized == 0) && (p3m_gpu_data.mesh_size > 0)) {
+  if (!p3m_gpu_data_initialized && p3m_gpu_data.mesh_size > 0) {
     /* Size of the complex mesh Nx * Ny * ( Nz / 2 + 1 ) */
-    const int cmesh_size = p3m_gpu_data.mesh[0] * p3m_gpu_data.mesh[1] *
-                           (p3m_gpu_data.mesh[2] / 2 + 1);
-
-    cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.charge_mesh),
-                             cmesh_size * sizeof(FFT_TYPE_COMPLEX)));
-    cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.force_mesh_x),
-                             cmesh_size * sizeof(FFT_TYPE_COMPLEX)));
-    cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.force_mesh_y),
-                             cmesh_size * sizeof(FFT_TYPE_COMPLEX)));
-    cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.force_mesh_z),
-                             cmesh_size * sizeof(FFT_TYPE_COMPLEX)));
+    auto const cmesh_size =
+        static_cast<std::size_t>(p3m_gpu_data.mesh[0]) *
+        static_cast<std::size_t>(p3m_gpu_data.mesh[1]) *
+        static_cast<std::size_t>(p3m_gpu_data.mesh[2] / 2 + 1);
+    auto const mesh_len = cmesh_size * sizeof(FFT_TYPE_COMPLEX);
+    cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.charge_mesh), mesh_len));
+    cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.force_mesh_x), mesh_len));
+    cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.force_mesh_y), mesh_len));
+    cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.force_mesh_z), mesh_len));
     cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.G_hat),
                              cmesh_size * sizeof(REAL_TYPE)));
 
@@ -644,15 +630,14 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
     }
   }
 
-  if ((reinit_if || (p3m_gpu_data_initialized == 0)) &&
-      (p3m_gpu_data.mesh_size > 0)) {
+  if ((do_reinit or !p3m_gpu_data_initialized) && p3m_gpu_data.mesh_size > 0) {
     dim3 grid(1, 1, 1);
     dim3 block(1, 1, 1);
-    block.x = 512 / mesh[0] + 1;
-    block.y = mesh[1];
+    block.x = static_cast<unsigned>(512 / mesh[0] + 1);
+    block.y = static_cast<unsigned>(mesh[1]);
     block.z = 1;
-    grid.x = mesh[0] / block.x + 1;
-    grid.z = mesh[2] / 2 + 1;
+    grid.x = static_cast<unsigned>(mesh[0]) / block.x + 1;
+    grid.z = static_cast<unsigned>(mesh[2]) / 2 + 1;
 
     switch (p3m_gpu_data.cao) {
     case 1:
@@ -686,7 +671,7 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
     }
   }
   if (p3m_gpu_data.mesh_size > 0)
-    p3m_gpu_data_initialized = 1;
+    p3m_gpu_data_initialized = true;
 }
 
 /**
@@ -695,22 +680,23 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
 void p3m_gpu_add_farfield_force() {
   auto device_particles = gpu_get_particle_pointer();
   CUDA_particle_data *lb_particle_gpu = device_particles.data();
-  p3m_gpu_data.n_part = device_particles.size();
+  p3m_gpu_data.n_part = static_cast<int>(device_particles.size());
 
   float *lb_particle_force_gpu = gpu_get_particle_force_pointer();
 
   if (p3m_gpu_data.n_part == 0)
     return;
 
-  dim3 gridConv(p3m_gpu_data.mesh[0], p3m_gpu_data.mesh[1], 1);
-  dim3 threadsConv(p3m_gpu_data.mesh[2] / 2 + 1, 1, 1);
+  dim3 gridConv(static_cast<unsigned>(p3m_gpu_data.mesh[0]),
+                static_cast<unsigned>(p3m_gpu_data.mesh[1]), 1u);
+  dim3 threadsConv(static_cast<unsigned>(p3m_gpu_data.mesh[2] / 2 + 1), 1u, 1u);
 
-  auto prefactor =
-      REAL_TYPE(coulomb.prefactor / (p3m_gpu_data.box[0] * p3m_gpu_data.box[1] *
-                                     p3m_gpu_data.box[2] * 2.0));
+  auto const volume = Utils::product(Utils::Vector3d(p3m_gpu_data.box));
+  auto const prefactor = REAL_TYPE(coulomb.prefactor / (volume * 2.0));
 
   cuda_safe_mem(cudaMemset(p3m_gpu_data.charge_mesh, 0,
-                           p3m_gpu_data.mesh_size * sizeof(REAL_TYPE)));
+                           static_cast<std::size_t>(p3m_gpu_data.mesh_size) *
+                               sizeof(REAL_TYPE)));
 
   /* Interpolate the charges to the mesh */
   assign_charges(lb_particle_gpu, p3m_gpu_data);

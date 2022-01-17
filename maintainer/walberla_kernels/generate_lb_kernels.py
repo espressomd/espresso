@@ -249,7 +249,7 @@ def check_dependencies():
     import pystencils
     import lbmpy
     SpecifierSet = setuptools.version.pkg_resources.packaging.specifiers.SpecifierSet
-    for module, requirement in [(pystencils, '==0.4.4'), (lbmpy, '==0.4.3')]:
+    for module, requirement in [(pystencils, '==0.4.4'), (lbmpy, '==0.4.4')]:
         assert SpecifierSet(requirement).contains(module.__version__), \
             f"{module.__name__} version {module.__version__} doesn't match requirement {requirement}"
 

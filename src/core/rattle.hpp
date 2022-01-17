@@ -27,12 +27,11 @@
  *  For more information see \ref rattle.cpp.
  */
 
-#include "bonded_interactions/bonded_interaction_data.hpp"
-#include "bonded_interactions/rigid_bond.hpp"
-#include "cells.hpp"
 #include "config.hpp"
 
 #ifdef BOND_CONSTRAINT
+
+#include "CellStructure.hpp"
 
 /** Transfer the current particle positions from @ref ParticlePosition::p
  *  "Particle::r::p" to @ref ParticlePosition::p_last_timestep

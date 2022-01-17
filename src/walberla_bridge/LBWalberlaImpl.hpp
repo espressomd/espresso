@@ -262,6 +262,14 @@ private:
     return pressureTensor;
   }
 
+  inline void pressure_tensor_correction(Utils::Vector6d &tensor) const {
+    auto const visc = get_viscosity();
+    auto const revert_factor = visc / (visc + 1.0 / 6.0);
+    tensor[1] *= revert_factor;
+    tensor[3] *= revert_factor;
+    tensor[4] *= revert_factor;
+  }
+
   class interpolation_illegal_access : public std::runtime_error {
   public:
     explicit interpolation_illegal_access(std::string const &field,
@@ -611,8 +619,7 @@ public:
           // Nodes with zero weight might not be accessible, because they can be
           // outside ghost layers
           if (weight != 0) {
-            auto res = get_node_velocity(
-                Utils::Vector3i{{node[0], node[1], node[2]}}, true);
+            auto const res = get_node_velocity(Utils::Vector3i(node), true);
             if (!res) {
               throw interpolation_illegal_access("velocity", pos, node, weight);
             }
@@ -635,7 +642,7 @@ public:
           // Nodes with zero weight might not be accessible, because they can be
           // outside ghost layers
           if (weight != 0) {
-            auto const res = get_node_density(Utils::Vector3i(node));
+            auto const res = get_node_density(Utils::Vector3i(node), true);
             if (!res) {
               throw interpolation_illegal_access("density", pos, node, weight);
             }
@@ -751,8 +758,9 @@ public:
   }
 
   boost::optional<double>
-  get_node_density(const Utils::Vector3i &node) const override {
-    auto bc = get_block_and_cell(lattice(), node, false);
+  get_node_density(const Utils::Vector3i &node,
+                   bool consider_ghosts = false) const override {
+    auto bc = get_block_and_cell(lattice(), node, consider_ghosts);
     if (!bc)
       return {boost::none};
 
@@ -906,7 +914,28 @@ public:
     auto bc = get_block_and_cell(lattice(), node, false);
     if (!bc)
       return {boost::none};
-    return to_vector6d(getPressureTensor(*bc));
+    auto tensor = to_vector6d(getPressureTensor(*bc));
+    pressure_tensor_correction(tensor);
+    return tensor;
+  }
+
+  // Global pressure tensor
+  Utils::Vector6d get_pressure_tensor() const override {
+    auto const &blocks = lattice().get_blocks();
+    Utils::Vector6d tensor{};
+    for (auto block = blocks->begin(); block != blocks->end(); ++block) {
+      auto pdf_field = block->template getData<PdfField>(m_pdf_field_id);
+      WALBERLA_FOR_ALL_CELLS_XYZ(pdf_field, {
+        Matrix3<FloatType> local_p;
+        lbm::accessor::PressureTensor::get(local_p, *pdf_field, x, y, z);
+        tensor += to_vector6d(local_p);
+      });
+    }
+    auto const grid_size = lattice().get_grid_dimensions();
+    auto const number_of_nodes = Utils::product(grid_size);
+    tensor *= 1. / static_cast<double>(number_of_nodes);
+    pressure_tensor_correction(tensor);
+    return tensor;
   }
 
   // Global momentum
@@ -926,6 +955,7 @@ public:
     }
     return to_vector3d(mom);
   }
+
   // Global external force
   void set_external_force(const Utils::Vector3d &ext_force) override {
     m_reset_force->set_ext_force(ext_force);
@@ -950,42 +980,6 @@ public:
   }
 
   LatticeWalberla const &lattice() const override { return *m_lattice; }
-
-  std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>>
-  node_indices_positions(bool include_ghosts = false) const override {
-    int ghost_offset = 0;
-    if (include_ghosts)
-      ghost_offset = lattice().get_ghost_layers();
-    auto const &blocks = lattice().get_blocks();
-    std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>> res;
-    for (auto block = blocks->begin(); block != blocks->end(); ++block) {
-      auto left = block->getAABB().min();
-      // Lattice constant is 1, node centers are offset by .5
-      Utils::Vector3d pos_offset =
-          to_vector3d(left) + Utils::Vector3d::broadcast(.5);
-
-      // Lattice constant is 1, so cast left corner position to ints
-      Utils::Vector3i index_offset =
-          Utils::Vector3i{int(left[0]), int(left[1]), int(left[2])};
-
-      // Get field data which knows about the indices
-      // In the loop, x,y,z are in block-local coordinates
-      auto pdf_field = block->template getData<PdfField>(m_pdf_field_id);
-      for (int x = -ghost_offset; x < int(pdf_field->xSize()) + ghost_offset;
-           x++) {
-        for (int y = -ghost_offset; y < int(pdf_field->ySize()) + ghost_offset;
-             y++) {
-          for (int z = -ghost_offset;
-               z < int(pdf_field->zSize()) + ghost_offset; z++) {
-            res.push_back({index_offset + Utils::Vector3i{x, y, z},
-                           pos_offset + Utils::Vector3d{double(x), double(y),
-                                                        double(z)}});
-          }
-        }
-      }
-    }
-    return res;
-  }
 
   std::shared_ptr<VTKHandle> create_vtk(int delta_N, int initial_count,
                                         int flag_observables,

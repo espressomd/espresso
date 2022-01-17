@@ -78,8 +78,7 @@ class VirtualSitesTracersCommon:
         self.system.virtual_sites = espressomd.virtual_sites.VirtualSitesInertialessTracers()
 
         # Random velocities
-        for n in self.lbf.nodes():
-            n.velocity = np.random.random(3) - .5
+        self.lbf[:, :, :].velocity = np.random.random((*self.lbf.shape, 3))
         force = [1, -2, 3]
         # Test several particle positions
         for pos in [[3, 2, 1], [0, 0, 0],
@@ -98,7 +97,9 @@ class VirtualSitesTracersCommon:
                 np.zeros((len(lb_nodes), 3)))
             self.system.integrator.run(1)
 
-            v_fluid = np.copy(self.lbf.get_interpolated_velocity(coupling_pos))
+            v_fluid = np.copy(
+                self.lbf.get_interpolated_velocity(
+                    pos=coupling_pos))
 
             # Check particle velocity
             np.testing.assert_allclose(np.copy(p.v), v_fluid)
@@ -138,7 +139,8 @@ class VirtualSitesTracersCommon:
         for _ in range(2):
             system.integrator.run(100)
             # compute expected position
-            dist = self.lbf.get_interpolated_velocity(p.pos)[0] * system.time
+            dist = self.lbf.get_interpolated_velocity(pos=p.pos)[
+                0] * system.time
             self.assertAlmostEqual(p.pos[0] / dist, 1, delta=0.001)
 
     def test_zz_without_lb(self):

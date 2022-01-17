@@ -79,8 +79,8 @@ class BHGPUTest(ut.TestCase):
             self.system.actors.add(dds_cpu)
             self.system.integrator.run(steps=0, recalc_forces=True)
 
-            dawaanr_f = np.copy(self.system.part[:].f)
-            dawaanr_t = np.copy(self.system.part[:].torque_lab)
+            dawaanr_f = np.copy(self.system.part.all().f)
+            dawaanr_t = np.copy(self.system.part.all().torque_lab)
             dawaanr_e = self.system.analysis.energy()["total"]
 
             del dds_cpu
@@ -92,8 +92,8 @@ class BHGPUTest(ut.TestCase):
             self.system.actors.add(bh_gpu)
             self.system.integrator.run(steps=0, recalc_forces=True)
 
-            bhgpu_f = np.copy(self.system.part[:].f)
-            bhgpu_t = np.copy(self.system.part[:].torque_lab)
+            bhgpu_f = np.copy(self.system.part.all().f)
+            bhgpu_t = np.copy(self.system.part.all().torque_lab)
             bhgpu_e = self.system.analysis.energy()["total"]
 
             # compare

@@ -16,6 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+from libcpp.memory cimport shared_ptr, make_shared
+from cython.operator cimport dereference
+
 include "myconfig.pxi"
 from .actors cimport Actor
 IF SCAFACOS == 1:
@@ -42,6 +45,13 @@ IF DIPOLES == 1:
             if not self._params["prefactor"] >= 0:
                 raise ValueError("prefactor should be a positive float")
 
+        def get_magnetostatics_prefactor(self):
+            """
+            Get the magnetostatics prefactor
+
+            """
+            return get_Dprefactor()
+
         def set_magnetostatics_prefactor(self):
             """
             Set the magnetostatics prefactor
@@ -51,12 +61,9 @@ IF DIPOLES == 1:
             # also necessary on 1 CPU or GPU, does more than just broadcasting
             mpi_bcast_coulomb_params()
 
-        def _get_active_method_from_es_core(self):
-            return dipole.method
-
         def _deactivate_method(self):
             set_Dprefactor(0.0)
-            dipole.method = DIPOLAR_NONE
+            disable_method_local()
             mpi_bcast_coulomb_params()
 
 IF DP3M == 1:
@@ -145,7 +152,7 @@ IF DP3M == 1:
         def _get_params_from_es_core(self):
             params = {}
             params.update(dp3m.params)
-            params["prefactor"] = dipole.prefactor
+            params["prefactor"] = self.get_magnetostatics_prefactor()
             params["tune"] = self._params["tune"]
             params["timings"] = self._params["timings"]
             return params
@@ -217,7 +224,7 @@ IF DIPOLES == 1:
             return ("prefactor",)
 
         def _get_params_from_es_core(self):
-            return {"prefactor": dipole.prefactor}
+            return {"prefactor": self.get_magnetostatics_prefactor()}
 
         def _activate_method(self):
             self._set_params_in_es_core()
@@ -255,7 +262,8 @@ IF DIPOLES == 1:
             return ("prefactor", "n_replica")
 
         def _get_params_from_es_core(self):
-            return {"prefactor": dipole.prefactor, "n_replica": mdds_n_replica}
+            return {"prefactor": self.get_magnetostatics_prefactor(),
+                    "n_replica": mdds_get_n_replica()}
 
         def _activate_method(self):
             self._set_params_in_es_core()
@@ -293,13 +301,12 @@ IF DIPOLES == 1:
                 Actor.__init__(self, *args, **kwargs)
 
             def _activate_method(self):
-                set_Dprefactor(self._params["prefactor"])
+                self.set_magnetostatics_prefactor()
                 self._set_params_in_es_core()
 
             def _deactivate_method(self):
-                dipole.method = DIPOLAR_NONE
                 scafacos.free_handle(self.dipolar)
-                mpi_bcast_coulomb_params()
+                super()._deactivate_method()
 
             def default_params(self):
                 return {}
@@ -324,6 +331,11 @@ IF DIPOLES == 1:
                 Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`)
 
             """
+            cdef shared_ptr[DipolarDirectSum] sip
+
+            def __cinit__(self):
+                self.sip = make_shared[DipolarDirectSum](
+                    EspressoSystemInterface.Instance())
 
             def default_params(self):
                 return {}
@@ -335,18 +347,19 @@ IF DIPOLES == 1:
                 return ("prefactor",)
 
             def _get_params_from_es_core(self):
-                return {"prefactor": dipole.prefactor}
+                return {"prefactor": self.get_magnetostatics_prefactor()}
 
             def _activate_method(self):
                 self._set_params_in_es_core()
+                dereference(self.sip).activate()
 
             def _deactivate_method(self):
                 super()._deactivate_method()
-                deactivate_dipolar_direct_sum_gpu()
+                dereference(self.sip).deactivate()
 
             def _set_params_in_es_core(self):
                 self.set_magnetostatics_prefactor()
-                activate_dipolar_direct_sum_gpu()
+                dereference(self.sip).set_params()
 
     IF(DIPOLAR_BARNES_HUT == 1):
         cdef class DipolarBarnesHutGpu(MagnetostaticInteraction):
@@ -358,6 +371,11 @@ IF DIPOLES == 1:
             TODO: If the system has periodic boundaries, the minimum image
             convention is applied.
             """
+            cdef shared_ptr[DipolarBarnesHut] sip
+
+            def __cinit__(self):
+                self.sip = make_shared[DipolarBarnesHut](
+                    EspressoSystemInterface.Instance())
 
             def default_params(self):
                 return {"epssq": 100.0,
@@ -370,16 +388,17 @@ IF DIPOLES == 1:
                 return ("prefactor", "epssq", "itolsq")
 
             def _get_params_from_es_core(self):
-                return {"prefactor": dipole.prefactor}
+                return {"prefactor": self.get_magnetostatics_prefactor()}
 
             def _activate_method(self):
                 self._set_params_in_es_core()
+                dereference(self.sip).activate()
 
             def _deactivate_method(self):
                 super()._deactivate_method()
-                deactivate_dipolar_barnes_hut()
+                dereference(self.sip).deactivate()
 
             def _set_params_in_es_core(self):
                 self.set_magnetostatics_prefactor()
-                activate_dipolar_barnes_hut(
+                dereference(self.sip).set_params(
                     self._params["epssq"], self._params["itolsq"])
