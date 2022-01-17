@@ -103,7 +103,7 @@ BOOST_DATA_TEST_CASE(velocity_interpolation_bspline, bdata::make(all_lbs()),
 
   // make sure the lattice constant is commensurate with the box dimensions
   assert(params.grid_dimensions[0] % 3 == 0 and
-         params.grid_dimensions[2] % 3 == 0 and
+         params.grid_dimensions[1] % 3 == 0 and
          params.grid_dimensions[2] % 3 == 0);
 
   // set node velocities on a simple cubic lattice
