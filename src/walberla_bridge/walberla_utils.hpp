@@ -26,8 +26,6 @@
 #include <utils/Vector.hpp>
 #include <utils/interpolation/bspline_3d.hpp>
 
-#include <array>
-
 namespace walberla {
 
 // Vector conversion helpers
@@ -43,13 +41,6 @@ inline Vector3<FloatType> to_vector3(Utils::Vector3d const &v) {
                             numeric_cast<FloatType>(v[1]),
                             numeric_cast<FloatType>(v[2])};
 }
-inline Utils::Vector6d to_vector6d(Matrix3<double> const &m) {
-  return {m[0], m[3], m[4], m[6], m[7], m[8]};
-}
-inline Utils::Vector6d to_vector6d(Matrix3<float> const &m) {
-  return {double_c(m[0]), double_c(m[3]), double_c(m[4]),
-          double_c(m[6]), double_c(m[7]), double_c(m[8])};
-}
 inline Utils::VectorXd<9> to_vector9d(Matrix3<double> const &m) {
   return {m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8]};
 }
@@ -57,9 +48,6 @@ inline Utils::VectorXd<9> to_vector9d(Matrix3<float> const &m) {
   return {double_c(m[0]), double_c(m[1]), double_c(m[2]),
           double_c(m[3]), double_c(m[4]), double_c(m[5]),
           double_c(m[6]), double_c(m[7]), double_c(m[8])};
-}
-inline Utils::Vector3i to_vector3i(std::array<int, 3> const &v) {
-  return {v[0], v[1], v[2]};
 }
 
 template <typename Function>
