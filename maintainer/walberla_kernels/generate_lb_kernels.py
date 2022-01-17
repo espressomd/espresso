@@ -40,7 +40,6 @@ from lbmpy.updatekernels import create_lbm_kernel, create_stream_pull_with_outpu
 from lbmpy.macroscopic_value_kernels import macroscopic_values_setter, macroscopic_values_getter
 
 import lees_edwards
-from pystencils.data_types import TypedSymbol
 # for collide-push from lbmpy.fieldaccess import StreamPushTwoFieldsAccessor
 
 from lbmpy.advanced_streaming.indexing import NeighbourOffsetArrays
@@ -250,7 +249,7 @@ def check_dependencies():
     import pystencils
     import lbmpy
     SpecifierSet = setuptools.version.pkg_resources.packaging.specifiers.SpecifierSet
-    for module, requirement in [(pystencils, '==0.4.3'), (lbmpy, '==0.4.3')]:
+    for module, requirement in [(pystencils, '==0.4.4'), (lbmpy, '==0.4.3')]:
         assert SpecifierSet(requirement).contains(module.__version__), \
             f"{module.__name__} version {module.__version__} doesn't match requirement {requirement}"
 
@@ -403,14 +402,7 @@ with PatchedCodeGeneration() as ctx:
 
     # generate unthermalized Lees-Edwards collision rule
 
-    points_up = TypedSymbol('points_up', bool)
-    points_down = TypedSymbol('points_down', bool)
-
-    u_p = lees_edwards.velocity_shift(points_up, points_down)
-
-    le_config = lbmpy.LBMConfig(stencil=stencil, method=lbmpy.Method.SRT, relaxation_rate=sp.Symbol("omega_shear"), compressible=True,
-                                velocity_input=fields["velocity"].center_vector +
-                                sp.Matrix([u_p, 0, 0]),
+    le_config = lbmpy.LBMConfig(stencil=stencil, method=lbmpy.Method.TRT, relaxation_rate=sp.Symbol("omega_shear"), compressible=True,
                                 force_model=lbmpy.ForceModel.GUO,
                                 force=force_field.center_vector, kernel_type='collide_only')
     lbm_opt = lbmpy.LBMOptimisation(symbolic_field=fields["pdfs"])
@@ -418,12 +410,9 @@ with PatchedCodeGeneration() as ctx:
         lbm_config=le_config,
         lbm_optimisation=lbm_opt)
 
-    le_collision_rule_unthermalized = lees_edwards.modify_method(
+    le_collision_rule_unthermalized = lees_edwards.add_lees_edwards_to_collision(
         le_collision_rule_unthermalized,
-        0,
-        1,
-        points_up,
-        points_down)
+        fields["pdfs"], stencil, 1)  # shear_dir_normal y
     generate_collision_sweep(
         ctx,
         le_config,

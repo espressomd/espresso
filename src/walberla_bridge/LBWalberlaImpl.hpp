@@ -80,7 +80,6 @@
 #include "generated_kernels/CollideSweepSinglePrecisionLeesEdwards.h"
 #include "generated_kernels/CollideSweepSinglePrecisionThermalized.h"
 #endif
-#include "generated_kernels/LeesEdwards_Collision.h"
 
 #include <utils/Vector.hpp>
 #include <utils/interpolation/bspline_3d.hpp>
@@ -113,12 +112,14 @@ template <typename FT = double> struct KernelTrait {
       pystencils::CollideSweepDoublePrecisionThermalizedAVX;
   using UnthermalizedCollisionModel =
       pystencils::CollideSweepDoublePrecisionAVX;
-  using LeesEdwardsCollisionModel = pystencils::LeesEdwards_Collision;
+  using LeesEdwardsCollisionModel =
+      pystencils::CollideSweepDoublePrecisionLeesEdwardsAVX;
 #else
   using ThermalizedCollisionModel =
       pystencils::CollideSweepDoublePrecisionThermalized;
   using UnthermalizedCollisionModel = pystencils::CollideSweepDoublePrecision;
-  using LeesEdwardsCollisionModel = pystencils::LeesEdwards_Collision;
+  using LeesEdwardsCollisionModel =
+      pystencils::CollideSweepDoublePrecisionLeesEdwards;
 #endif
   using StreamSweep = pystencils::StreamSweepDoublePrecision;
   using InitialPDFsSetter = pystencils::InitialPDFsSetterDoublePrecision;
@@ -536,9 +537,10 @@ public:
       throw std::runtime_error(
           "Lees-Edwards LB doesn't support thermalization");
     }
-    auto const shear_plane_size =
-        Utils::product(lattice().get_grid_dimensions()) /
+    int shear_normal_grid =
         lattice().get_grid_dimensions()[lees_edwards_pack.shear_plane_normal];
+    auto const shear_plane_size =
+        Utils::product(lattice().get_grid_dimensions()) / shear_normal_grid;
     m_lees_edwards_sweep = std::make_shared<LeesEdwardsUpdate>(
         lattice().get_blocks(), m_pdf_field_id, m_pdf_tmp_field_id,
         lattice().get_ghost_layers(), std::move(lees_edwards_pack));
@@ -546,9 +548,9 @@ public:
     auto const omega = shear_mode_relaxation_rate();
     auto const omega_odd = odd_mode_relaxation_rate(omega);
     // a few values are initialized to 0 or false, will be updated later
-    auto obj =
-        LeesEdwardsCollisionModel(m_last_applied_force_field_id, m_pdf_field_id,
-                                  m_velocity_field_id, omega);
+    auto obj = LeesEdwardsCollisionModel(
+        m_last_applied_force_field_id, m_pdf_field_id, shear_normal_grid, omega,
+        lees_edwards_pack.get_shear_velocity());
     m_collision_model = std::make_shared<CollisionModel>(std::move(obj));
     // auto *cm = boost::get<LeesEdwardsCollisionModel>(&*m_collision_model);
     // cm->grid_size_ = int64_t(shear_plane_size);

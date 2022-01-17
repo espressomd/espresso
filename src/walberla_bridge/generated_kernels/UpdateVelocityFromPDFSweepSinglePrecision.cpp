@@ -1,6 +1,5 @@
-// kernel generated with pystencils v0.4.3+4.g30da657, lbmpy v0.4.3+2.g0e17e61,
-// lbmpy_walberla/pystencils_walberla from commit
-// 88f85eb7a979f81d68e76009811aeed53ec3014e
+// kernel generated with pystencils v0.4.4, lbmpy v0.4.3+6.g13df23c,
+// lbmpy_walberla/pystencils_walberla from commit ref: refs/heads/le_ghost_vel
 
 //======================================================================================================================
 //
@@ -189,7 +188,8 @@ updatevelocityfrompdfsweepsingleprecision_updatevelocityfrompdfsweepsingleprecis
              _data_pdfs_20_37_10[_stride_pdfs_0 * ctr_0] -
              _data_pdfs_20_39_10[_stride_pdfs_0 * ctr_0]) /
                 rho +
-            0.5f * _data_force_20_30_10[_stride_force_0 * ctr_0] / rho;
+            0.50000000000000000f *
+                _data_force_20_30_10[_stride_force_0 * ctr_0] / rho;
         const float u_1 =
             (vel1Term - _data_pdfs_20_310_10[_stride_pdfs_0 * ctr_0] -
              _data_pdfs_20_312_10[_stride_pdfs_0 * ctr_0] -
@@ -198,7 +198,8 @@ updatevelocityfrompdfsweepsingleprecision_updatevelocityfrompdfsweepsingleprecis
              _data_pdfs_20_38_10[_stride_pdfs_0 * ctr_0] -
              _data_pdfs_20_39_10[_stride_pdfs_0 * ctr_0]) /
                 rho +
-            0.5f * _data_force_20_31_10[_stride_force_0 * ctr_0] / rho;
+            0.50000000000000000f *
+                _data_force_20_31_10[_stride_force_0 * ctr_0] / rho;
         const float u_2 =
             (vel2Term + _data_pdfs_20_311_10[_stride_pdfs_0 * ctr_0] +
              _data_pdfs_20_314_10[_stride_pdfs_0 * ctr_0] -
@@ -208,7 +209,8 @@ updatevelocityfrompdfsweepsingleprecision_updatevelocityfrompdfsweepsingleprecis
              _data_pdfs_20_318_10[_stride_pdfs_0 * ctr_0] -
              _data_pdfs_20_36_10[_stride_pdfs_0 * ctr_0]) /
                 rho +
-            0.5f * _data_force_20_32_10[_stride_force_0 * ctr_0] / rho;
+            0.50000000000000000f *
+                _data_force_20_32_10[_stride_force_0 * ctr_0] / rho;
         _data_velocity_20_30_10[_stride_velocity_0 * ctr_0] = u_0;
         _data_velocity_20_31_10[_stride_velocity_0 * ctr_0] = u_1;
         _data_velocity_20_32_10[_stride_velocity_0 * ctr_0] = u_2;
@@ -219,9 +221,9 @@ updatevelocityfrompdfsweepsingleprecision_updatevelocityfrompdfsweepsingleprecis
 } // namespace internal_5bc8ae7b61d5e7dd0cac9df61b0fb69a
 
 void UpdateVelocityFromPDFSweepSinglePrecision::run(IBlock *block) {
-  auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
   auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
   auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
+  auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
 
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(force->nrOfGhostLayers()));
   float *RESTRICT const _data_force = force->dataAt(-1, -1, -1, 0);
@@ -277,9 +279,9 @@ void UpdateVelocityFromPDFSweepSinglePrecision::runOnCellInterval(
   if (ci.empty())
     return;
 
-  auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
   auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
   auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
+  auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
 
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(force->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(force->nrOfGhostLayers()));

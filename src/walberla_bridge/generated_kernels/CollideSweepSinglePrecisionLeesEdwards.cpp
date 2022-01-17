@@ -1,6 +1,5 @@
-// kernel generated with pystencils v0.4.3+4.g30da657, lbmpy v0.4.3+2.g0e17e61,
-// lbmpy_walberla/pystencils_walberla from commit
-// 88f85eb7a979f81d68e76009811aeed53ec3014e
+// kernel generated with pystencils v0.4.4, lbmpy v0.4.3+6.g13df23c,
+// lbmpy_walberla/pystencils_walberla from commit ref: refs/heads/le_ghost_vel
 
 //======================================================================================================================
 //
@@ -53,601 +52,627 @@ namespace internal_ab1f3bc3368574afb482da84ccb58898 {
 static FUNC_PREFIX void
 collidesweepsingleprecisionleesedwards_collidesweepsingleprecisionleesedwards(
     float *RESTRICT const _data_force, float *RESTRICT _data_pdfs,
-    float *RESTRICT const _data_velocity, int64_t const _size_force_0,
-    int64_t const _size_force_1, int64_t const _size_force_2,
-    int64_t const _stride_force_0, int64_t const _stride_force_1,
-    int64_t const _stride_force_2, int64_t const _stride_force_3,
-    int64_t const _stride_pdfs_0, int64_t const _stride_pdfs_1,
-    int64_t const _stride_pdfs_2, int64_t const _stride_pdfs_3,
-    int64_t const _stride_velocity_0, int64_t const _stride_velocity_1,
-    int64_t const _stride_velocity_2, int64_t const _stride_velocity_3,
-    float omega_shear) {
+    int64_t const _size_force_0, int64_t const _size_force_1,
+    int64_t const _size_force_2, int64_t const _stride_force_0,
+    int64_t const _stride_force_1, int64_t const _stride_force_2,
+    int64_t const _stride_force_3, int64_t const _stride_pdfs_0,
+    int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
+    int64_t const _stride_pdfs_3, float grid_size, float omega_shear,
+    float v_s) {
+  const float xi_0 = 1 / (omega_shear * -0.25000000000000000f + 2.0f);
+  const float rr_0 = xi_0 * (omega_shear * -2.0f + 4.0f);
   for (int64_t ctr_2 = 0; ctr_2 < _size_force_2; ctr_2 += 1) {
-    float *RESTRICT _data_velocity_20_31 =
-        _data_velocity + _stride_velocity_2 * ctr_2 + _stride_velocity_3;
-    float *RESTRICT _data_pdfs_20_35 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 5 * _stride_pdfs_3;
-    float *RESTRICT _data_pdfs_20_313 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 13 * _stride_pdfs_3;
-    float *RESTRICT _data_pdfs_20_311 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 11 * _stride_pdfs_3;
-    float *RESTRICT _data_pdfs_20_317 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 17 * _stride_pdfs_3;
-    float *RESTRICT _data_pdfs_20_37 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 7 * _stride_pdfs_3;
-    float *RESTRICT _data_pdfs_20_31 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + _stride_pdfs_3;
-    float *RESTRICT _data_pdfs_20_34 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 4 * _stride_pdfs_3;
-    float *RESTRICT _data_pdfs_20_314 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 14 * _stride_pdfs_3;
-    float *RESTRICT _data_pdfs_20_315 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 15 * _stride_pdfs_3;
-    float *RESTRICT _data_force_20_30 = _data_force + _stride_force_2 * ctr_2;
-    float *RESTRICT _data_pdfs_20_36 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 6 * _stride_pdfs_3;
-    float *RESTRICT _data_velocity_20_32 =
-        _data_velocity + _stride_velocity_2 * ctr_2 + 2 * _stride_velocity_3;
-    float *RESTRICT _data_pdfs_20_30 = _data_pdfs + _stride_pdfs_2 * ctr_2;
-    float *RESTRICT _data_velocity_20_30 =
-        _data_velocity + _stride_velocity_2 * ctr_2;
-    float *RESTRICT _data_pdfs_20_32 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 2 * _stride_pdfs_3;
-    float *RESTRICT _data_pdfs_20_38 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 8 * _stride_pdfs_3;
-    float *RESTRICT _data_force_20_31 =
-        _data_force + _stride_force_2 * ctr_2 + _stride_force_3;
-    float *RESTRICT _data_pdfs_20_33 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 3 * _stride_pdfs_3;
-    float *RESTRICT _data_pdfs_20_312 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 12 * _stride_pdfs_3;
-    float *RESTRICT _data_pdfs_20_316 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 16 * _stride_pdfs_3;
-    float *RESTRICT _data_force_20_32 =
-        _data_force + _stride_force_2 * ctr_2 + 2 * _stride_force_3;
-    float *RESTRICT _data_pdfs_20_310 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 10 * _stride_pdfs_3;
-    float *RESTRICT _data_pdfs_20_39 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 9 * _stride_pdfs_3;
     float *RESTRICT _data_pdfs_20_318 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 18 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_20_37 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 7 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_20_34 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 4 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_20_31 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_20_32 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 2 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_20_35 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 5 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_20_36 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 6 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_20_38 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 8 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_20_311 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 11 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_20_30 = _data_pdfs + _stride_pdfs_2 * ctr_2;
+    float *RESTRICT _data_pdfs_20_313 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 13 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_20_33 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 3 * _stride_pdfs_3;
+    float *RESTRICT _data_force_20_30 = _data_force + _stride_force_2 * ctr_2;
+    float *RESTRICT _data_force_20_31 =
+        _data_force + _stride_force_2 * ctr_2 + _stride_force_3;
+    float *RESTRICT _data_pdfs_20_314 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 14 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_20_316 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 16 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_20_39 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 9 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_20_317 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 17 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_20_312 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 12 * _stride_pdfs_3;
+    float *RESTRICT _data_force_20_32 =
+        _data_force + _stride_force_2 * ctr_2 + 2 * _stride_force_3;
+    float *RESTRICT _data_pdfs_20_315 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 15 * _stride_pdfs_3;
+    float *RESTRICT _data_pdfs_20_310 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 10 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_force_1; ctr_1 += 1) {
-      float *RESTRICT _data_velocity_20_31_10 =
-          _stride_velocity_1 * ctr_1 + _data_velocity_20_31;
-      float *RESTRICT _data_pdfs_20_35_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_35;
-      float *RESTRICT _data_pdfs_20_313_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_313;
-      float *RESTRICT _data_pdfs_20_311_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_311;
-      float *RESTRICT _data_pdfs_20_317_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_317;
-      float *RESTRICT _data_pdfs_20_37_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_37;
-      float *RESTRICT _data_pdfs_20_31_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_31;
-      float *RESTRICT _data_pdfs_20_34_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_34;
-      float *RESTRICT _data_pdfs_20_314_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_314;
-      float *RESTRICT _data_pdfs_20_315_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_315;
-      float *RESTRICT _data_force_20_30_10 =
-          _stride_force_1 * ctr_1 + _data_force_20_30;
-      float *RESTRICT _data_pdfs_20_36_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_36;
-      float *RESTRICT _data_velocity_20_32_10 =
-          _stride_velocity_1 * ctr_1 + _data_velocity_20_32;
-      float *RESTRICT _data_pdfs_20_30_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_30;
-      float *RESTRICT _data_velocity_20_30_10 =
-          _stride_velocity_1 * ctr_1 + _data_velocity_20_30;
-      float *RESTRICT _data_pdfs_20_32_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_32;
-      float *RESTRICT _data_pdfs_20_38_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_38;
-      float *RESTRICT _data_force_20_31_10 =
-          _stride_force_1 * ctr_1 + _data_force_20_31;
-      float *RESTRICT _data_pdfs_20_33_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_33;
-      float *RESTRICT _data_pdfs_20_312_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_312;
-      float *RESTRICT _data_pdfs_20_316_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_316;
-      float *RESTRICT _data_force_20_32_10 =
-          _stride_force_1 * ctr_1 + _data_force_20_32;
-      float *RESTRICT _data_pdfs_20_310_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_310;
-      float *RESTRICT _data_pdfs_20_39_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_39;
       float *RESTRICT _data_pdfs_20_318_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_20_318;
+      float *RESTRICT _data_pdfs_20_37_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_37;
+      float *RESTRICT _data_pdfs_20_34_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_34;
+      float *RESTRICT _data_pdfs_20_31_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_31;
+      float *RESTRICT _data_pdfs_20_32_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_32;
+      float *RESTRICT _data_pdfs_20_35_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_35;
+      float *RESTRICT _data_pdfs_20_36_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_36;
+      float *RESTRICT _data_pdfs_20_38_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_38;
+      float *RESTRICT _data_pdfs_20_311_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_311;
+      float *RESTRICT _data_pdfs_20_30_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_30;
+      float *RESTRICT _data_pdfs_20_313_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_313;
+      float *RESTRICT _data_pdfs_20_33_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_33;
+      float *RESTRICT _data_force_20_30_10 =
+          _stride_force_1 * ctr_1 + _data_force_20_30;
+      float *RESTRICT _data_force_20_31_10 =
+          _stride_force_1 * ctr_1 + _data_force_20_31;
+      float *RESTRICT _data_pdfs_20_314_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_314;
+      float *RESTRICT _data_pdfs_20_316_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_316;
+      float *RESTRICT _data_pdfs_20_39_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_39;
+      float *RESTRICT _data_pdfs_20_317_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_317;
+      float *RESTRICT _data_pdfs_20_312_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_312;
+      float *RESTRICT _data_force_20_32_10 =
+          _stride_force_1 * ctr_1 + _data_force_20_32;
+      float *RESTRICT _data_pdfs_20_315_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_315;
+      float *RESTRICT _data_pdfs_20_310_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_310;
       for (int64_t ctr_0 = 0; ctr_0 < _size_force_0; ctr_0 += 1) {
-        const float xi_26 = _data_velocity_20_31_10[_stride_velocity_0 * ctr_0];
-        const float xi_27 = _data_pdfs_20_35_10[_stride_pdfs_0 * ctr_0];
-        const float xi_28 = _data_pdfs_20_313_10[_stride_pdfs_0 * ctr_0];
-        const float xi_29 = _data_pdfs_20_311_10[_stride_pdfs_0 * ctr_0];
-        const float xi_30 = _data_pdfs_20_317_10[_stride_pdfs_0 * ctr_0];
-        const float xi_31 = _data_pdfs_20_37_10[_stride_pdfs_0 * ctr_0];
-        const float xi_32 = _data_pdfs_20_31_10[_stride_pdfs_0 * ctr_0];
-        const float xi_33 = _data_pdfs_20_34_10[_stride_pdfs_0 * ctr_0];
-        const float xi_34 = _data_pdfs_20_314_10[_stride_pdfs_0 * ctr_0];
-        const float xi_35 = _data_pdfs_20_315_10[_stride_pdfs_0 * ctr_0];
-        const float xi_36 = _data_force_20_30_10[_stride_force_0 * ctr_0];
-        const float xi_37 = _data_pdfs_20_36_10[_stride_pdfs_0 * ctr_0];
-        const float xi_38 = _data_velocity_20_32_10[_stride_velocity_0 * ctr_0];
-        const float xi_39 = _data_pdfs_20_30_10[_stride_pdfs_0 * ctr_0];
-        const float xi_40 = _data_velocity_20_30_10[_stride_velocity_0 * ctr_0];
-        const float xi_41 = _data_pdfs_20_32_10[_stride_pdfs_0 * ctr_0];
-        const float xi_42 = _data_pdfs_20_38_10[_stride_pdfs_0 * ctr_0];
-        const float xi_43 = _data_force_20_31_10[_stride_force_0 * ctr_0];
-        const float xi_44 = _data_pdfs_20_33_10[_stride_pdfs_0 * ctr_0];
-        const float xi_45 = _data_pdfs_20_312_10[_stride_pdfs_0 * ctr_0];
-        const float xi_46 = _data_pdfs_20_316_10[_stride_pdfs_0 * ctr_0];
-        const float xi_47 = _data_force_20_32_10[_stride_force_0 * ctr_0];
-        const float xi_48 = _data_pdfs_20_310_10[_stride_pdfs_0 * ctr_0];
-        const float xi_49 = _data_pdfs_20_39_10[_stride_pdfs_0 * ctr_0];
-        const float xi_50 = _data_pdfs_20_318_10[_stride_pdfs_0 * ctr_0];
-        const float xi_1 = xi_26;
-        const float xi_2 = xi_27;
-        const float xi_3 = xi_28;
-        const float xi_4 = xi_30;
-        const float xi_5 = xi_31;
-        const float xi_6 = xi_29;
-        const float xi_7 = xi_32;
-        const float xi_8 = xi_33;
-        const float xi_9 = xi_34;
-        const float xi_10 = xi_35;
-        const float xi_11 = xi_37;
-        const float xi_12 = xi_36;
-        const float xi_13 = xi_38;
-        const float xi_14 = xi_39;
-        const float xi_15 = xi_40;
-        const float xi_16 = xi_41;
-        const float xi_17 = xi_42;
-        const float xi_18 = xi_43;
-        const float xi_19 = xi_44;
-        const float xi_20 = xi_45;
-        const float xi_21 = xi_46;
-        const float xi_22 = xi_47;
-        const float xi_23 = xi_48;
-        const float xi_24 = xi_49;
-        const float xi_25 = xi_50;
-        const float rho = xi_10 + xi_11 + xi_14 + xi_16 + xi_17 + xi_19 + xi_2 +
-                          xi_20 + xi_21 + xi_23 + xi_24 + xi_25 + xi_3 + xi_4 +
-                          xi_5 + xi_6 + xi_7 + xi_8 + xi_9;
-        const float u1Pu2 = xi_1 + xi_13;
-        const float u1Mu2 = xi_1 - xi_13;
+        const float xi_25 = _data_pdfs_20_318_10[_stride_pdfs_0 * ctr_0];
+        const float xi_26 = _data_pdfs_20_37_10[_stride_pdfs_0 * ctr_0];
+        const float xi_27 = _data_pdfs_20_34_10[_stride_pdfs_0 * ctr_0];
+        const float xi_28 = _data_pdfs_20_31_10[_stride_pdfs_0 * ctr_0];
+        const float xi_29 = _data_pdfs_20_32_10[_stride_pdfs_0 * ctr_0];
+        const float xi_30 = _data_pdfs_20_35_10[_stride_pdfs_0 * ctr_0];
+        const float xi_31 = _data_pdfs_20_36_10[_stride_pdfs_0 * ctr_0];
+        const float xi_32 = _data_pdfs_20_38_10[_stride_pdfs_0 * ctr_0];
+        const float xi_33 = _data_pdfs_20_311_10[_stride_pdfs_0 * ctr_0];
+        const float xi_34 = _data_pdfs_20_30_10[_stride_pdfs_0 * ctr_0];
+        const float xi_35 = _data_pdfs_20_313_10[_stride_pdfs_0 * ctr_0];
+        const float xi_36 = _data_pdfs_20_33_10[_stride_pdfs_0 * ctr_0];
+        const float xi_37 = _data_force_20_30_10[_stride_force_0 * ctr_0];
+        const float xi_38 = _data_force_20_31_10[_stride_force_0 * ctr_0];
+        const float xi_39 = _data_pdfs_20_314_10[_stride_pdfs_0 * ctr_0];
+        const float xi_40 = _data_pdfs_20_316_10[_stride_pdfs_0 * ctr_0];
+        const float xi_41 = _data_pdfs_20_39_10[_stride_pdfs_0 * ctr_0];
+        const float xi_42 = _data_pdfs_20_317_10[_stride_pdfs_0 * ctr_0];
+        const float xi_43 = _data_pdfs_20_312_10[_stride_pdfs_0 * ctr_0];
+        const float xi_44 = _data_force_20_32_10[_stride_force_0 * ctr_0];
+        const float xi_45 = _data_pdfs_20_315_10[_stride_pdfs_0 * ctr_0];
+        const float xi_46 = _data_pdfs_20_310_10[_stride_pdfs_0 * ctr_0];
+        const float xi_3 = xi_25;
+        const float xi_4 = xi_26;
+        const float xi_5 = xi_27;
+        const float xi_6 = xi_28;
+        const float xi_7 = xi_29;
+        const float xi_8 = xi_30;
+        const float xi_9 = xi_31;
+        const float xi_10 = xi_32;
+        const float xi_11 = xi_33;
+        const float xi_12 = xi_35;
+        const float xi_13 = xi_34;
+        const float xi_14 = xi_36;
+        const float xi_15 = xi_37;
+        const float xi_16 = xi_38;
+        const float xi_17 = xi_39;
+        const float xi_18 = xi_40;
+        const float xi_19 = xi_41;
+        const float xi_20 = xi_42;
+        const float xi_21 = xi_43;
+        const float xi_22 = xi_44;
+        const float xi_23 = xi_45;
+        const float xi_24 = xi_46;
+        const float vel0Term = xi_10 + xi_17 + xi_24 + xi_3 + xi_5;
+        const float vel1Term = xi_11 + xi_23 + xi_4 + xi_6;
+        const float vel2Term = xi_12 + xi_21 + xi_8;
+        const float rho = vel0Term + vel1Term + vel2Term + xi_13 + xi_14 +
+                          xi_18 + xi_19 + xi_20 + xi_7 + xi_9;
+        const float xi_1 = 1 / (rho);
+        const float u_0 =
+            xi_1 * xi_15 * 0.50000000000000000f +
+            xi_1 * (vel0Term - xi_12 - xi_14 - xi_19 - xi_20 - xi_4);
+        const float u_1 =
+            xi_1 * xi_16 * 0.50000000000000000f +
+            xi_1 * (vel1Term + xi_10 - xi_18 - xi_19 - xi_21 - xi_24 - xi_7);
+        const float u_2 = xi_1 * xi_22 * 0.50000000000000000f +
+                          xi_1 * (vel2Term + xi_11 + xi_17 - xi_18 - xi_20 -
+                                  xi_23 - xi_3 - xi_9);
+        const float forceTerm_0 =
+            omega_shear * u_0 * xi_15 * 0.50000000000000000f +
+            omega_shear * u_1 * xi_16 * 0.50000000000000000f +
+            omega_shear * u_2 * xi_22 * 0.50000000000000000f - u_0 * xi_15 -
+            u_1 * xi_16 - u_2 * xi_22;
+        const float forceTerm_1 =
+            omega_shear * u_0 * xi_15 * 0.083333333333333333f +
+            omega_shear * u_1 * xi_16 * -0.16666666666666667f +
+            omega_shear * u_2 * xi_22 * 0.083333333333333333f +
+            rr_0 * xi_16 * -0.083333333333333333f +
+            u_0 * xi_15 * -0.16666666666666667f +
+            u_1 * xi_16 * 0.33333333333333333f +
+            u_2 * xi_22 * -0.16666666666666667f + xi_16 * 0.16666666666666667f;
+        const float forceTerm_2 =
+            omega_shear * u_0 * xi_15 * 0.083333333333333333f +
+            omega_shear * u_1 * xi_16 * -0.16666666666666667f +
+            omega_shear * u_2 * xi_22 * 0.083333333333333333f +
+            rr_0 * xi_16 * 0.083333333333333333f +
+            u_0 * xi_15 * -0.16666666666666667f +
+            u_1 * xi_16 * 0.33333333333333333f +
+            u_2 * xi_22 * -0.16666666666666667f + xi_16 * -0.16666666666666667f;
+        const float forceTerm_3 =
+            omega_shear * u_0 * xi_15 * -0.16666666666666667f +
+            omega_shear * u_1 * xi_16 * 0.083333333333333333f +
+            omega_shear * u_2 * xi_22 * 0.083333333333333333f +
+            rr_0 * xi_15 * 0.083333333333333333f +
+            u_0 * xi_15 * 0.33333333333333333f +
+            u_1 * xi_16 * -0.16666666666666667f +
+            u_2 * xi_22 * -0.16666666666666667f + xi_15 * -0.16666666666666667f;
+        const float forceTerm_4 =
+            omega_shear * u_0 * xi_15 * -0.16666666666666667f +
+            omega_shear * u_1 * xi_16 * 0.083333333333333333f +
+            omega_shear * u_2 * xi_22 * 0.083333333333333333f +
+            rr_0 * xi_15 * -0.083333333333333333f +
+            u_0 * xi_15 * 0.33333333333333333f +
+            u_1 * xi_16 * -0.16666666666666667f +
+            u_2 * xi_22 * -0.16666666666666667f + xi_15 * 0.16666666666666667f;
+        const float forceTerm_5 =
+            omega_shear * u_0 * xi_15 * 0.083333333333333333f +
+            omega_shear * u_1 * xi_16 * 0.083333333333333333f +
+            omega_shear * u_2 * xi_22 * -0.16666666666666667f +
+            rr_0 * xi_22 * -0.083333333333333333f +
+            u_0 * xi_15 * -0.16666666666666667f +
+            u_1 * xi_16 * -0.16666666666666667f +
+            u_2 * xi_22 * 0.33333333333333333f + xi_22 * 0.16666666666666667f;
+        const float forceTerm_6 =
+            omega_shear * u_0 * xi_15 * 0.083333333333333333f +
+            omega_shear * u_1 * xi_16 * 0.083333333333333333f +
+            omega_shear * u_2 * xi_22 * -0.16666666666666667f +
+            rr_0 * xi_22 * 0.083333333333333333f +
+            u_0 * xi_15 * -0.16666666666666667f +
+            u_1 * xi_16 * -0.16666666666666667f +
+            u_2 * xi_22 * 0.33333333333333333f + xi_22 * -0.16666666666666667f;
+        const float forceTerm_7 =
+            omega_shear * u_0 * xi_15 * -0.083333333333333333f +
+            omega_shear * u_0 * xi_16 * 0.12500000000000000f +
+            omega_shear * u_1 * xi_15 * 0.12500000000000000f +
+            omega_shear * u_1 * xi_16 * -0.083333333333333333f +
+            omega_shear * u_2 * xi_22 * 0.041666666666666667f +
+            rr_0 * xi_15 * 0.041666666666666667f +
+            rr_0 * xi_16 * -0.041666666666666667f +
+            u_0 * xi_15 * 0.16666666666666667f +
+            u_0 * xi_16 * -0.25000000000000000f +
+            u_1 * xi_15 * -0.25000000000000000f +
+            u_1 * xi_16 * 0.16666666666666667f +
+            u_2 * xi_22 * -0.083333333333333333f +
+            xi_15 * -0.083333333333333333f + xi_16 * 0.083333333333333333f;
+        const float forceTerm_8 =
+            omega_shear * u_0 * xi_15 * -0.083333333333333333f +
+            omega_shear * u_0 * xi_16 * -0.12500000000000000f +
+            omega_shear * u_1 * xi_15 * -0.12500000000000000f +
+            omega_shear * u_1 * xi_16 * -0.083333333333333333f +
+            omega_shear * u_2 * xi_22 * 0.041666666666666667f +
+            rr_0 * xi_15 * -0.041666666666666667f +
+            rr_0 * xi_16 * -0.041666666666666667f +
+            u_0 * xi_15 * 0.16666666666666667f +
+            u_0 * xi_16 * 0.25000000000000000f +
+            u_1 * xi_15 * 0.25000000000000000f +
+            u_1 * xi_16 * 0.16666666666666667f +
+            u_2 * xi_22 * -0.083333333333333333f +
+            xi_15 * 0.083333333333333333f + xi_16 * 0.083333333333333333f;
+        const float forceTerm_9 =
+            omega_shear * u_0 * xi_15 * -0.083333333333333333f +
+            omega_shear * u_0 * xi_16 * -0.12500000000000000f +
+            omega_shear * u_1 * xi_15 * -0.12500000000000000f +
+            omega_shear * u_1 * xi_16 * -0.083333333333333333f +
+            omega_shear * u_2 * xi_22 * 0.041666666666666667f +
+            rr_0 * xi_15 * 0.041666666666666667f +
+            rr_0 * xi_16 * 0.041666666666666667f +
+            u_0 * xi_15 * 0.16666666666666667f +
+            u_0 * xi_16 * 0.25000000000000000f +
+            u_1 * xi_15 * 0.25000000000000000f +
+            u_1 * xi_16 * 0.16666666666666667f +
+            u_2 * xi_22 * -0.083333333333333333f +
+            xi_15 * -0.083333333333333333f + xi_16 * -0.083333333333333333f;
+        const float forceTerm_10 =
+            omega_shear * u_0 * xi_15 * -0.083333333333333333f +
+            omega_shear * u_0 * xi_16 * 0.12500000000000000f +
+            omega_shear * u_1 * xi_15 * 0.12500000000000000f +
+            omega_shear * u_1 * xi_16 * -0.083333333333333333f +
+            omega_shear * u_2 * xi_22 * 0.041666666666666667f +
+            rr_0 * xi_15 * -0.041666666666666667f +
+            rr_0 * xi_16 * 0.041666666666666667f +
+            u_0 * xi_15 * 0.16666666666666667f +
+            u_0 * xi_16 * -0.25000000000000000f +
+            u_1 * xi_15 * -0.25000000000000000f +
+            u_1 * xi_16 * 0.16666666666666667f +
+            u_2 * xi_22 * -0.083333333333333333f +
+            xi_15 * 0.083333333333333333f + xi_16 * -0.083333333333333333f;
+        const float forceTerm_11 =
+            omega_shear * u_0 * xi_15 * 0.041666666666666667f +
+            omega_shear * u_1 * xi_16 * -0.083333333333333333f +
+            omega_shear * u_1 * xi_22 * -0.12500000000000000f +
+            omega_shear * u_2 * xi_16 * -0.12500000000000000f +
+            omega_shear * u_2 * xi_22 * -0.083333333333333333f +
+            rr_0 * xi_16 * -0.041666666666666667f +
+            rr_0 * xi_22 * -0.041666666666666667f +
+            u_0 * xi_15 * -0.083333333333333333f +
+            u_1 * xi_16 * 0.16666666666666667f +
+            u_1 * xi_22 * 0.25000000000000000f +
+            u_2 * xi_16 * 0.25000000000000000f +
+            u_2 * xi_22 * 0.16666666666666667f + xi_16 * 0.083333333333333333f +
+            xi_22 * 0.083333333333333333f;
+        const float forceTerm_12 =
+            omega_shear * u_0 * xi_15 * 0.041666666666666667f +
+            omega_shear * u_1 * xi_16 * -0.083333333333333333f +
+            omega_shear * u_1 * xi_22 * 0.12500000000000000f +
+            omega_shear * u_2 * xi_16 * 0.12500000000000000f +
+            omega_shear * u_2 * xi_22 * -0.083333333333333333f +
+            rr_0 * xi_16 * 0.041666666666666667f +
+            rr_0 * xi_22 * -0.041666666666666667f +
+            u_0 * xi_15 * -0.083333333333333333f +
+            u_1 * xi_16 * 0.16666666666666667f +
+            u_1 * xi_22 * -0.25000000000000000f +
+            u_2 * xi_16 * -0.25000000000000000f +
+            u_2 * xi_22 * 0.16666666666666667f +
+            xi_16 * -0.083333333333333333f + xi_22 * 0.083333333333333333f;
+        const float forceTerm_13 =
+            omega_shear * u_0 * xi_15 * -0.083333333333333333f +
+            omega_shear * u_0 * xi_22 * 0.12500000000000000f +
+            omega_shear * u_1 * xi_16 * 0.041666666666666667f +
+            omega_shear * u_2 * xi_15 * 0.12500000000000000f +
+            omega_shear * u_2 * xi_22 * -0.083333333333333333f +
+            rr_0 * xi_15 * 0.041666666666666667f +
+            rr_0 * xi_22 * -0.041666666666666667f +
+            u_0 * xi_15 * 0.16666666666666667f +
+            u_0 * xi_22 * -0.25000000000000000f +
+            u_1 * xi_16 * -0.083333333333333333f +
+            u_2 * xi_15 * -0.25000000000000000f +
+            u_2 * xi_22 * 0.16666666666666667f +
+            xi_15 * -0.083333333333333333f + xi_22 * 0.083333333333333333f;
+        const float forceTerm_14 =
+            omega_shear * u_0 * xi_15 * -0.083333333333333333f +
+            omega_shear * u_0 * xi_22 * -0.12500000000000000f +
+            omega_shear * u_1 * xi_16 * 0.041666666666666667f +
+            omega_shear * u_2 * xi_15 * -0.12500000000000000f +
+            omega_shear * u_2 * xi_22 * -0.083333333333333333f +
+            rr_0 * xi_15 * -0.041666666666666667f +
+            rr_0 * xi_22 * -0.041666666666666667f +
+            u_0 * xi_15 * 0.16666666666666667f +
+            u_0 * xi_22 * 0.25000000000000000f +
+            u_1 * xi_16 * -0.083333333333333333f +
+            u_2 * xi_15 * 0.25000000000000000f +
+            u_2 * xi_22 * 0.16666666666666667f + xi_15 * 0.083333333333333333f +
+            xi_22 * 0.083333333333333333f;
+        const float forceTerm_15 =
+            omega_shear * u_0 * xi_15 * 0.041666666666666667f +
+            omega_shear * u_1 * xi_16 * -0.083333333333333333f +
+            omega_shear * u_1 * xi_22 * 0.12500000000000000f +
+            omega_shear * u_2 * xi_16 * 0.12500000000000000f +
+            omega_shear * u_2 * xi_22 * -0.083333333333333333f +
+            rr_0 * xi_16 * -0.041666666666666667f +
+            rr_0 * xi_22 * 0.041666666666666667f +
+            u_0 * xi_15 * -0.083333333333333333f +
+            u_1 * xi_16 * 0.16666666666666667f +
+            u_1 * xi_22 * -0.25000000000000000f +
+            u_2 * xi_16 * -0.25000000000000000f +
+            u_2 * xi_22 * 0.16666666666666667f + xi_16 * 0.083333333333333333f +
+            xi_22 * -0.083333333333333333f;
+        const float forceTerm_16 =
+            omega_shear * u_0 * xi_15 * 0.041666666666666667f +
+            omega_shear * u_1 * xi_16 * -0.083333333333333333f +
+            omega_shear * u_1 * xi_22 * -0.12500000000000000f +
+            omega_shear * u_2 * xi_16 * -0.12500000000000000f +
+            omega_shear * u_2 * xi_22 * -0.083333333333333333f +
+            rr_0 * xi_16 * 0.041666666666666667f +
+            rr_0 * xi_22 * 0.041666666666666667f +
+            u_0 * xi_15 * -0.083333333333333333f +
+            u_1 * xi_16 * 0.16666666666666667f +
+            u_1 * xi_22 * 0.25000000000000000f +
+            u_2 * xi_16 * 0.25000000000000000f +
+            u_2 * xi_22 * 0.16666666666666667f +
+            xi_16 * -0.083333333333333333f + xi_22 * -0.083333333333333333f;
+        const float forceTerm_17 =
+            omega_shear * u_0 * xi_15 * -0.083333333333333333f +
+            omega_shear * u_0 * xi_22 * -0.12500000000000000f +
+            omega_shear * u_1 * xi_16 * 0.041666666666666667f +
+            omega_shear * u_2 * xi_15 * -0.12500000000000000f +
+            omega_shear * u_2 * xi_22 * -0.083333333333333333f +
+            rr_0 * xi_15 * 0.041666666666666667f +
+            rr_0 * xi_22 * 0.041666666666666667f +
+            u_0 * xi_15 * 0.16666666666666667f +
+            u_0 * xi_22 * 0.25000000000000000f +
+            u_1 * xi_16 * -0.083333333333333333f +
+            u_2 * xi_15 * 0.25000000000000000f +
+            u_2 * xi_22 * 0.16666666666666667f +
+            xi_15 * -0.083333333333333333f + xi_22 * -0.083333333333333333f;
+        const float forceTerm_18 =
+            omega_shear * u_0 * xi_15 * -0.083333333333333333f +
+            omega_shear * u_0 * xi_22 * 0.12500000000000000f +
+            omega_shear * u_1 * xi_16 * 0.041666666666666667f +
+            omega_shear * u_2 * xi_15 * 0.12500000000000000f +
+            omega_shear * u_2 * xi_22 * -0.083333333333333333f +
+            rr_0 * xi_15 * -0.041666666666666667f +
+            rr_0 * xi_22 * 0.041666666666666667f +
+            u_0 * xi_15 * 0.16666666666666667f +
+            u_0 * xi_22 * -0.25000000000000000f +
+            u_1 * xi_16 * -0.083333333333333333f +
+            u_2 * xi_15 * -0.25000000000000000f +
+            u_2 * xi_22 * 0.16666666666666667f + xi_15 * 0.083333333333333333f +
+            xi_22 * -0.083333333333333333f;
+        const float u0Mu1 = u_0 - u_1;
+        const float u0Pu1 = u_0 + u_1;
+        const float u1Pu2 = u_1 + u_2;
+        const float u1Mu2 = u_1 - u_2;
+        const float u0Mu2 = u_0 - u_2;
+        const float u0Pu2 = u_0 + u_2;
+        const float f_eq_common =
+            -rho * (u_0 * u_0) - rho * (u_1 * u_1) - rho * (u_2 * u_2) + rho;
         _data_pdfs_20_30_10[_stride_pdfs_0 * ctr_0] =
-            omega_shear * (rho * (xi_1 * xi_1) * -0.333333333333333f +
-                           rho * (xi_13 * xi_13) * -0.333333333333333f +
-                           rho * (xi_15 * xi_15) * -0.333333333333333f +
-                           rho * 0.333333333333333f - xi_14) +
-            xi_14 +
-            (omega_shear * -0.5f + 1.0f) *
-                (-xi_1 * xi_18 - xi_12 * xi_15 - xi_13 * xi_22);
+            forceTerm_0 +
+            omega_shear * (f_eq_common * 0.33333333333333333f - xi_13) + xi_13;
         _data_pdfs_20_31_10[_stride_pdfs_0 * ctr_0] =
+            forceTerm_1 +
             omega_shear *
-                (rho * (xi_1 * xi_1) * -0.166666666666667f +
-                 rho * (xi_13 * xi_13) * -0.166666666666667f +
-                 rho * (xi_15 * xi_15) * -0.166666666666667f +
-                 rho * ((xi_1 * xi_1) * 0.333333333333333f +
-                        xi_1 * 0.166666666666667f - 0.111111111111111f) +
-                 rho * 0.166666666666667f - xi_7) +
-            xi_7 +
-            (omega_shear * -0.5f + 1.0f) *
-                (xi_12 * xi_15 * -0.166666666666667f +
-                 xi_13 * xi_22 * -0.166666666666667f +
-                 xi_18 * (xi_1 * 2.0f + 1.0f) * 0.166666666666667f);
-        _data_pdfs_20_32_10[_stride_pdfs_0 * ctr_0] =
-            omega_shear *
-                (rho * (xi_1 * xi_1) * -0.166666666666667f +
-                 rho * (xi_13 * xi_13) * -0.166666666666667f +
-                 rho * (xi_15 * xi_15) * -0.166666666666667f +
-                 rho * ((xi_1 * xi_1) * 0.333333333333333f +
-                        xi_1 * -0.166666666666667f - 0.111111111111111f) +
-                 rho * 0.166666666666667f - xi_16) +
-            xi_16 +
-            (omega_shear * -0.5f + 1.0f) *
-                (xi_12 * xi_15 * -0.166666666666667f +
-                 xi_13 * xi_22 * -0.166666666666667f +
-                 xi_18 * (xi_1 * 2.0f - 1.0f) * 0.166666666666667f);
-        _data_pdfs_20_33_10[_stride_pdfs_0 * ctr_0] =
-            omega_shear *
-                (rho * (xi_1 * xi_1) * -0.166666666666667f +
-                 rho * (xi_13 * xi_13) * -0.166666666666667f +
-                 rho * (xi_15 * xi_15) * -0.166666666666667f +
-                 rho * ((xi_15 * xi_15) * 0.333333333333333f +
-                        xi_15 * -0.166666666666667f - 0.111111111111111f) +
-                 rho * 0.166666666666667f - xi_19) +
-            xi_19 +
-            (omega_shear * -0.5f + 1.0f) *
-                (xi_1 * xi_18 * -0.166666666666667f +
-                 xi_12 * (xi_15 * 2.0f - 1.0f) * 0.166666666666667f +
-                 xi_13 * xi_22 * -0.166666666666667f);
-        _data_pdfs_20_34_10[_stride_pdfs_0 * ctr_0] =
-            omega_shear *
-                (rho * (xi_1 * xi_1) * -0.166666666666667f +
-                 rho * (xi_13 * xi_13) * -0.166666666666667f +
-                 rho * (xi_15 * xi_15) * -0.166666666666667f +
-                 rho * ((xi_15 * xi_15) * 0.333333333333333f +
-                        xi_15 * 0.166666666666667f - 0.111111111111111f) +
-                 rho * 0.166666666666667f - xi_8) +
-            xi_8 +
-            (omega_shear * -0.5f + 1.0f) *
-                (xi_1 * xi_18 * -0.166666666666667f +
-                 xi_12 * (xi_15 * 2.0f + 1.0f) * 0.166666666666667f +
-                 xi_13 * xi_22 * -0.166666666666667f);
-        _data_pdfs_20_35_10[_stride_pdfs_0 * ctr_0] =
-            omega_shear *
-                (rho * (xi_1 * xi_1) * -0.166666666666667f +
-                 rho * (xi_13 * xi_13) * -0.166666666666667f +
-                 rho *
-                     ((xi_15 + ((ctr_1 >= 63) ? (-1.0f) : (0.0f)) *
-                                   0.050000000000000003f) *
-                      (xi_15 + ((ctr_1 >= 63) ? (-1.0f) : (0.0f)) *
-                                   0.050000000000000003f)) *
-                     -0.166666666666667f +
-                 rho * ((xi_13 * xi_13) * 0.333333333333333f +
-                        xi_13 * 0.166666666666667f - 0.111111111111111f) +
-                 rho * 0.166666666666667f - xi_2) +
-            xi_2 +
-            (omega_shear * -0.5f + 1.0f) *
-                (xi_1 * xi_18 * -0.166666666666667f +
-                 xi_12 *
-                     (xi_15 + ((ctr_1 >= 63) ? (-1.0f) : (0.0f)) *
-                                  0.050000000000000003f) *
-                     -0.166666666666667f +
-                 xi_22 * (xi_13 * 2.0f + 1.0f) * 0.166666666666667f);
-        _data_pdfs_20_36_10[_stride_pdfs_0 * ctr_0] =
-            omega_shear *
-                (rho * (xi_1 * xi_1) * -0.166666666666667f +
-                 rho * (xi_13 * xi_13) * -0.166666666666667f +
-                 rho *
-                     ((xi_15 + ((ctr_1 <= 0) ? (1.0f) : (0.0f)) *
-                                   0.050000000000000003f) *
-                      (xi_15 + ((ctr_1 <= 0) ? (1.0f) : (0.0f)) *
-                                   0.050000000000000003f)) *
-                     -0.166666666666667f +
-                 rho * ((xi_13 * xi_13) * 0.333333333333333f +
-                        xi_13 * -0.166666666666667f - 0.111111111111111f) +
-                 rho * 0.166666666666667f - xi_11) +
-            xi_11 +
-            (omega_shear * -0.5f + 1.0f) *
-                (xi_1 * xi_18 * -0.166666666666667f +
-                 xi_12 *
-                     (xi_15 + ((ctr_1 <= 0) ? (1.0f) : (0.0f)) *
-                                  0.050000000000000003f) *
-                     -0.166666666666667f +
-                 xi_22 * (xi_13 * 2.0f - 1.0f) * 0.166666666666667f);
-        _data_pdfs_20_37_10[_stride_pdfs_0 * ctr_0] =
-            omega_shear * (rho * (xi_1 * xi_1) * -0.0416666666666667f +
-                           rho * (xi_13 * xi_13) * -0.0416666666666667f +
-                           rho * (xi_15 * xi_15) * -0.0416666666666667f +
-                           rho * (xi_1 * 0.0833333333333333f +
-                                  (xi_13 * xi_13) * 0.0416666666666667f +
-                                  xi_15 * -0.0833333333333333f +
-                                  ((-xi_1 + xi_15) * (-xi_1 + xi_15)) * 0.125f -
-                                  0.0138888888888889f) +
-                           rho * 0.0416666666666667f - xi_5) +
-            xi_5 +
-            (omega_shear * -0.5f + 1.0f) *
-                (xi_12 * (xi_1 * 3.0f + xi_15 * -2.0f + 1.0f) *
-                     -0.0833333333333333f +
-                 xi_13 * xi_22 * -0.0833333333333333f +
-                 xi_18 * (xi_1 * 2.0f + xi_15 * -3.0f + 1.0f) *
-                     0.0833333333333333f);
-        _data_pdfs_20_38_10[_stride_pdfs_0 * ctr_0] =
-            omega_shear * (rho * (xi_1 * xi_1) * -0.0416666666666667f +
-                           rho * (xi_13 * xi_13) * -0.0416666666666667f +
-                           rho * (xi_15 * xi_15) * -0.0416666666666667f +
-                           rho * (xi_1 * 0.0833333333333333f +
-                                  (xi_13 * xi_13) * 0.0416666666666667f +
-                                  xi_15 * 0.0833333333333333f +
-                                  ((xi_1 + xi_15) * (xi_1 + xi_15)) * 0.125f -
-                                  0.0138888888888889f) +
-                           rho * 0.0416666666666667f - xi_17) +
-            xi_17 +
-            (omega_shear * -0.5f + 1.0f) *
-                (xi_12 * (xi_1 * 3.0f + xi_15 * 2.0f + 1.0f) *
-                     0.0833333333333333f +
-                 xi_13 * xi_22 * -0.0833333333333333f +
-                 xi_18 * (xi_1 * 2.0f + xi_15 * 3.0f + 1.0f) *
-                     0.0833333333333333f);
-        _data_pdfs_20_39_10[_stride_pdfs_0 * ctr_0] =
-            omega_shear * (rho * (xi_1 * xi_1) * -0.0416666666666667f +
-                           rho * (xi_13 * xi_13) * -0.0416666666666667f +
-                           rho * (xi_15 * xi_15) * -0.0416666666666667f +
-                           rho * (xi_1 * -0.0833333333333333f +
-                                  (xi_13 * xi_13) * 0.0416666666666667f +
-                                  xi_15 * -0.0833333333333333f +
-                                  ((xi_1 + xi_15) * (xi_1 + xi_15)) * 0.125f -
-                                  0.0138888888888889f) +
-                           rho * 0.0416666666666667f - xi_24) +
-            xi_24 +
-            (omega_shear * -0.5f + 1.0f) *
-                (xi_12 * (xi_1 * 3.0f + xi_15 * 2.0f - 1.0f) *
-                     0.0833333333333333f +
-                 xi_13 * xi_22 * -0.0833333333333333f +
-                 xi_18 * (xi_1 * 2.0f + xi_15 * 3.0f - 1.0f) *
-                     0.0833333333333333f);
-        _data_pdfs_20_310_10[_stride_pdfs_0 * ctr_0] =
-            omega_shear * (rho * (xi_1 * xi_1) * -0.0416666666666667f +
-                           rho * (xi_13 * xi_13) * -0.0416666666666667f +
-                           rho * (xi_15 * xi_15) * -0.0416666666666667f +
-                           rho * (xi_1 * -0.0833333333333333f +
-                                  (xi_13 * xi_13) * 0.0416666666666667f +
-                                  xi_15 * 0.0833333333333333f +
-                                  ((-xi_1 + xi_15) * (-xi_1 + xi_15)) * 0.125f -
-                                  0.0138888888888889f) +
-                           rho * 0.0416666666666667f - xi_23) +
-            xi_23 +
-            (omega_shear * -0.5f + 1.0f) *
-                (xi_12 * (xi_1 * -3.0f + xi_15 * 2.0f + 1.0f) *
-                     0.0833333333333333f +
-                 xi_13 * xi_22 * -0.0833333333333333f +
-                 xi_18 * (xi_1 * -2.0f + xi_15 * 3.0f + 1.0f) *
-                     -0.0833333333333333f);
-        _data_pdfs_20_311_10[_stride_pdfs_0 * ctr_0] =
-            omega_shear *
-                (rho * (xi_1 * xi_1) * -0.0416666666666667f +
-                 rho * (xi_13 * xi_13) * -0.0416666666666667f +
-                 rho *
-                     ((xi_15 + ((ctr_1 >= 63) ? (-1.0f) : (0.0f)) *
-                                   0.050000000000000003f) *
-                      (xi_15 + ((ctr_1 >= 63) ? (-1.0f) : (0.0f)) *
-                                   0.050000000000000003f)) *
-                     -0.0416666666666667f +
-                 rho * ((u1Pu2 * u1Pu2) * 0.125f + u1Pu2 * 0.0833333333333333f +
-                        ((xi_15 + ((ctr_1 >= 63) ? (-1.0f) : (0.0f)) *
-                                      0.050000000000000003f) *
-                         (xi_15 + ((ctr_1 >= 63) ? (-1.0f) : (0.0f)) *
-                                      0.050000000000000003f)) *
-                            0.0416666666666667f -
-                        0.0138888888888889f) +
-                 rho * 0.0416666666666667f - xi_6) +
+                (f_eq_common * 0.16666666666666667f +
+                 rho * ((u_1 * u_1) * 0.33333333333333333f -
+                        0.11111111111111111f) +
+                 xi_6 * -0.50000000000000000f + xi_7 * -0.50000000000000000f) +
+            rr_0 *
+                (rho * u_1 * 0.16666666666666667f +
+                 xi_6 * -0.50000000000000000f + xi_7 * 0.50000000000000000f) +
             xi_6 +
-            (omega_shear * -0.5f + 1.0f) *
-                (xi_12 *
-                     (xi_15 + ((ctr_1 >= 63) ? (-1.0f) : (0.0f)) *
-                                  0.050000000000000003f) *
-                     -0.0833333333333333f +
-                 xi_18 * (xi_1 * 2.0f + xi_13 * 3.0f + 1.0f) *
-                     0.0833333333333333f +
-                 xi_22 * (xi_1 * 3.0f + xi_13 * 2.0f + 1.0f) *
-                     0.0833333333333333f);
-        _data_pdfs_20_312_10[_stride_pdfs_0 * ctr_0] =
-            omega_shear * (rho * (xi_1 * xi_1) * -0.0416666666666667f +
-                           rho * (xi_13 * xi_13) * -0.0416666666666667f +
-                           rho *
-                               ((xi_15 + ((ctr_1 >= 63) ? (-1.0f) : (0.0f)) *
-                                             0.050000000000000003f) *
-                                (xi_15 + ((ctr_1 >= 63) ? (-1.0f) : (0.0f)) *
-                                             0.050000000000000003f)) *
-                               -0.0416666666666667f +
-                           rho * ((u1Mu2 * u1Mu2) * 0.125f +
-                                  u1Mu2 * -0.0833333333333333f +
-                                  ((xi_15 + ((ctr_1 >= 63) ? (-1.0f) : (0.0f)) *
-                                                0.050000000000000003f) *
-                                   (xi_15 + ((ctr_1 >= 63) ? (-1.0f) : (0.0f)) *
-                                                0.050000000000000003f)) *
-                                      0.0416666666666667f -
-                                  0.0138888888888889f) +
-                           rho * 0.0416666666666667f - xi_20) +
-            xi_20 +
-            (omega_shear * -0.5f + 1.0f) *
-                (xi_12 *
-                     (xi_15 + ((ctr_1 >= 63) ? (-1.0f) : (0.0f)) *
-                                  0.050000000000000003f) *
-                     -0.0833333333333333f +
-                 xi_18 * (xi_1 * -2.0f + xi_13 * 3.0f + 1.0f) *
-                     -0.0833333333333333f +
-                 xi_22 * (xi_1 * -3.0f + xi_13 * 2.0f + 1.0f) *
-                     0.0833333333333333f);
-        _data_pdfs_20_313_10[_stride_pdfs_0 * ctr_0] =
-            omega_shear * (rho * (xi_1 * xi_1) * -0.0416666666666667f +
-                           rho * (xi_13 * xi_13) * -0.0416666666666667f +
-                           rho *
-                               ((xi_15 + ((ctr_1 >= 63) ? (-1.0f) : (0.0f)) *
-                                             0.050000000000000003f) *
-                                (xi_15 + ((ctr_1 >= 63) ? (-1.0f) : (0.0f)) *
-                                             0.050000000000000003f)) *
-                               -0.0416666666666667f +
-                           rho * ((xi_1 * xi_1) * 0.0416666666666667f +
-                                  xi_13 * 0.0833333333333333f +
-                                  xi_15 * -0.0833333333333333f +
-                                  ((-xi_13 + xi_15 +
-                                    ((ctr_1 >= 63) ? (-1.0f) : (0.0f)) *
-                                        0.050000000000000003f) *
-                                   (-xi_13 + xi_15 +
-                                    ((ctr_1 >= 63) ? (-1.0f) : (0.0f)) *
-                                        0.050000000000000003f)) *
-                                      0.125f +
-                                  ((ctr_1 >= 63) ? (-1.0f) : (0.0f)) *
-                                      -0.0041666666666666666f -
-                                  0.0138888888888889f) +
-                           rho * 0.0416666666666667f - xi_3) +
-            xi_3 +
-            (omega_shear * -0.5f + 1.0f) *
-                (xi_1 * xi_18 * -0.0833333333333333f +
-                 xi_12 *
-                     (xi_13 * 3.0f + xi_15 * -2.0f +
-                      ((ctr_1 >= 63) ? (-1.0f) : (0.0f)) *
-                          -0.10000000000000001f +
-                      1.0f) *
-                     -0.0833333333333333f +
-                 xi_22 *
-                     (xi_13 * 2.0f + xi_15 * -3.0f +
-                      ((ctr_1 >= 63) ? (-1.0f) : (0.0f)) *
-                          -0.15000000000000002f +
-                      1.0f) *
-                     0.0833333333333333f);
-        _data_pdfs_20_314_10[_stride_pdfs_0 * ctr_0] =
-            omega_shear * (rho * (xi_1 * xi_1) * -0.0416666666666667f +
-                           rho * (xi_13 * xi_13) * -0.0416666666666667f +
-                           rho *
-                               ((xi_15 + ((ctr_1 >= 63) ? (-1.0f) : (0.0f)) *
-                                             0.050000000000000003f) *
-                                (xi_15 + ((ctr_1 >= 63) ? (-1.0f) : (0.0f)) *
-                                             0.050000000000000003f)) *
-                               -0.0416666666666667f +
-                           rho * ((xi_1 * xi_1) * 0.0416666666666667f +
-                                  xi_13 * 0.0833333333333333f +
-                                  xi_15 * 0.0833333333333333f +
-                                  ((xi_13 + xi_15 +
-                                    ((ctr_1 >= 63) ? (-1.0f) : (0.0f)) *
-                                        0.050000000000000003f) *
-                                   (xi_13 + xi_15 +
-                                    ((ctr_1 >= 63) ? (-1.0f) : (0.0f)) *
-                                        0.050000000000000003f)) *
-                                      0.125f +
-                                  ((ctr_1 >= 63) ? (-1.0f) : (0.0f)) *
-                                      0.0041666666666666666f -
-                                  0.0138888888888889f) +
-                           rho * 0.0416666666666667f - xi_9) +
-            xi_9 +
-            (omega_shear * -0.5f + 1.0f) *
-                (xi_1 * xi_18 * -0.0833333333333333f +
-                 xi_12 *
-                     (xi_13 * 3.0f + xi_15 * 2.0f +
-                      ((ctr_1 >= 63) ? (-1.0f) : (0.0f)) *
-                          0.10000000000000001f +
-                      1.0f) *
-                     0.0833333333333333f +
-                 xi_22 *
-                     (xi_13 * 2.0f + xi_15 * 3.0f +
-                      ((ctr_1 >= 63) ? (-1.0f) : (0.0f)) *
-                          0.15000000000000002f +
-                      1.0f) *
-                     0.0833333333333333f);
-        _data_pdfs_20_315_10[_stride_pdfs_0 * ctr_0] =
+            ((-1 <= ctr_1 - grid_size)
+                 ? (rho * v_s * (u_0 * 2.0f + v_s) * 0.16666666666666667f)
+                 : (0.0f));
+        _data_pdfs_20_32_10[_stride_pdfs_0 * ctr_0] =
+            forceTerm_2 +
             omega_shear *
-                (rho * (xi_1 * xi_1) * -0.0416666666666667f +
-                 rho * (xi_13 * xi_13) * -0.0416666666666667f +
-                 rho *
-                     ((xi_15 + ((ctr_1 <= 0) ? (1.0f) : (0.0f)) *
-                                   0.050000000000000003f) *
-                      (xi_15 + ((ctr_1 <= 0) ? (1.0f) : (0.0f)) *
-                                   0.050000000000000003f)) *
-                     -0.0416666666666667f +
-                 rho * ((u1Mu2 * u1Mu2) * 0.125f + u1Mu2 * 0.0833333333333333f +
-                        ((xi_15 + ((ctr_1 <= 0) ? (1.0f) : (0.0f)) *
-                                      0.050000000000000003f) *
-                         (xi_15 + ((ctr_1 <= 0) ? (1.0f) : (0.0f)) *
-                                      0.050000000000000003f)) *
-                            0.0416666666666667f -
-                        0.0138888888888889f) +
-                 rho * 0.0416666666666667f - xi_10) +
-            xi_10 +
-            (omega_shear * -0.5f + 1.0f) *
-                (xi_12 *
-                     (xi_15 + ((ctr_1 <= 0) ? (1.0f) : (0.0f)) *
-                                  0.050000000000000003f) *
-                     -0.0833333333333333f +
-                 xi_18 * (xi_1 * 2.0f + xi_13 * -3.0f + 1.0f) *
-                     0.0833333333333333f +
-                 xi_22 * (xi_1 * 3.0f + xi_13 * -2.0f + 1.0f) *
-                     -0.0833333333333333f);
-        _data_pdfs_20_316_10[_stride_pdfs_0 * ctr_0] =
-            omega_shear * (rho * (xi_1 * xi_1) * -0.0416666666666667f +
-                           rho * (xi_13 * xi_13) * -0.0416666666666667f +
-                           rho *
-                               ((xi_15 + ((ctr_1 <= 0) ? (1.0f) : (0.0f)) *
-                                             0.050000000000000003f) *
-                                (xi_15 + ((ctr_1 <= 0) ? (1.0f) : (0.0f)) *
-                                             0.050000000000000003f)) *
-                               -0.0416666666666667f +
-                           rho * ((u1Pu2 * u1Pu2) * 0.125f +
-                                  u1Pu2 * -0.0833333333333333f +
-                                  ((xi_15 + ((ctr_1 <= 0) ? (1.0f) : (0.0f)) *
-                                                0.050000000000000003f) *
-                                   (xi_15 + ((ctr_1 <= 0) ? (1.0f) : (0.0f)) *
-                                                0.050000000000000003f)) *
-                                      0.0416666666666667f -
-                                  0.0138888888888889f) +
-                           rho * 0.0416666666666667f - xi_21) +
-            xi_21 +
-            (omega_shear * -0.5f + 1.0f) *
-                (xi_12 *
-                     (xi_15 + ((ctr_1 <= 0) ? (1.0f) : (0.0f)) *
-                                  0.050000000000000003f) *
-                     -0.0833333333333333f +
-                 xi_18 * (xi_1 * 2.0f + xi_13 * 3.0f - 1.0f) *
-                     0.0833333333333333f +
-                 xi_22 * (xi_1 * 3.0f + xi_13 * 2.0f - 1.0f) *
-                     0.0833333333333333f);
-        _data_pdfs_20_317_10[_stride_pdfs_0 * ctr_0] =
-            omega_shear * (rho * (xi_1 * xi_1) * -0.0416666666666667f +
-                           rho * (xi_13 * xi_13) * -0.0416666666666667f +
-                           rho *
-                               ((xi_15 + ((ctr_1 <= 0) ? (1.0f) : (0.0f)) *
-                                             0.050000000000000003f) *
-                                (xi_15 + ((ctr_1 <= 0) ? (1.0f) : (0.0f)) *
-                                             0.050000000000000003f)) *
-                               -0.0416666666666667f +
-                           rho * ((xi_1 * xi_1) * 0.0416666666666667f +
-                                  xi_13 * -0.0833333333333333f +
-                                  xi_15 * -0.0833333333333333f +
-                                  ((xi_13 + xi_15 +
-                                    ((ctr_1 <= 0) ? (1.0f) : (0.0f)) *
-                                        0.050000000000000003f) *
-                                   (xi_13 + xi_15 +
-                                    ((ctr_1 <= 0) ? (1.0f) : (0.0f)) *
-                                        0.050000000000000003f)) *
-                                      0.125f +
-                                  ((ctr_1 <= 0) ? (1.0f) : (0.0f)) *
-                                      -0.0041666666666666666f -
-                                  0.0138888888888889f) +
-                           rho * 0.0416666666666667f - xi_4) +
+                (f_eq_common * 0.16666666666666667f +
+                 rho * ((u_1 * u_1) * 0.33333333333333333f -
+                        0.11111111111111111f) +
+                 xi_6 * -0.50000000000000000f + xi_7 * -0.50000000000000000f) +
+            rr_0 *
+                (rho * u_1 * -0.16666666666666667f +
+                 xi_6 * 0.50000000000000000f + xi_7 * -0.50000000000000000f) +
+            xi_7 +
+            ((ctr_1 <= 0)
+                 ? (rho * v_s * (u_0 * -2.0f + v_s) * 0.16666666666666667f)
+                 : (0.0f));
+        _data_pdfs_20_33_10[_stride_pdfs_0 * ctr_0] =
+            forceTerm_3 +
+            omega_shear *
+                (f_eq_common * 0.16666666666666667f +
+                 rho * ((u_0 * u_0) * 0.33333333333333333f -
+                        0.11111111111111111f) +
+                 xi_14 * -0.50000000000000000f + xi_5 * -0.50000000000000000f) +
+            rr_0 *
+                (rho * u_0 * -0.16666666666666667f +
+                 xi_14 * -0.50000000000000000f + xi_5 * 0.50000000000000000f) +
+            xi_14;
+        _data_pdfs_20_34_10[_stride_pdfs_0 * ctr_0] =
+            forceTerm_4 +
+            omega_shear *
+                (f_eq_common * 0.16666666666666667f +
+                 rho * ((u_0 * u_0) * 0.33333333333333333f -
+                        0.11111111111111111f) +
+                 xi_14 * -0.50000000000000000f + xi_5 * -0.50000000000000000f) +
+            rr_0 *
+                (rho * u_0 * 0.16666666666666667f +
+                 xi_14 * 0.50000000000000000f + xi_5 * -0.50000000000000000f) +
+            xi_5;
+        _data_pdfs_20_35_10[_stride_pdfs_0 * ctr_0] =
+            forceTerm_5 +
+            omega_shear *
+                (f_eq_common * 0.16666666666666667f +
+                 rho * ((u_2 * u_2) * 0.33333333333333333f -
+                        0.11111111111111111f) +
+                 xi_8 * -0.50000000000000000f + xi_9 * -0.50000000000000000f) +
+            rr_0 *
+                (rho * u_2 * 0.16666666666666667f +
+                 xi_8 * -0.50000000000000000f + xi_9 * 0.50000000000000000f) +
+            xi_8;
+        _data_pdfs_20_36_10[_stride_pdfs_0 * ctr_0] =
+            forceTerm_6 +
+            omega_shear *
+                (f_eq_common * 0.16666666666666667f +
+                 rho * ((u_2 * u_2) * 0.33333333333333333f -
+                        0.11111111111111111f) +
+                 xi_8 * -0.50000000000000000f + xi_9 * -0.50000000000000000f) +
+            rr_0 *
+                (rho * u_2 * -0.16666666666666667f +
+                 xi_8 * 0.50000000000000000f + xi_9 * -0.50000000000000000f) +
+            xi_9;
+        _data_pdfs_20_37_10[_stride_pdfs_0 * ctr_0] =
+            forceTerm_7 +
+            omega_shear *
+                (f_eq_common * 0.041666666666666667f +
+                 rho * ((u0Mu1 * u0Mu1) * 0.12500000000000000f +
+                        (u_2 * u_2) * 0.041666666666666667f -
+                        0.013888888888888889f) +
+                 xi_24 * -0.50000000000000000f + xi_4 * -0.50000000000000000f) +
+            rr_0 *
+                (rho * u0Mu1 * -0.083333333333333333f +
+                 xi_24 * 0.50000000000000000f + xi_4 * -0.50000000000000000f) +
             xi_4 +
-            (omega_shear * -0.5f + 1.0f) *
-                (xi_1 * xi_18 * -0.0833333333333333f +
-                 xi_12 *
-                     (xi_13 * 3.0f + xi_15 * 2.0f +
-                      ((ctr_1 <= 0) ? (1.0f) : (0.0f)) * 0.10000000000000001f -
-                      1.0f) *
-                     0.0833333333333333f +
-                 xi_22 *
-                     (xi_13 * 2.0f + xi_15 * 3.0f +
-                      ((ctr_1 <= 0) ? (1.0f) : (0.0f)) * 0.15000000000000002f -
-                      1.0f) *
-                     0.0833333333333333f);
+            ((-1 <= ctr_1 - grid_size)
+                 ? (rho * v_s * (u_0 * -2.0f + u_1 * 3.0f - v_s + 1.0f) *
+                    0.083333333333333333f)
+                 : (0.0f));
+        _data_pdfs_20_38_10[_stride_pdfs_0 * ctr_0] =
+            forceTerm_8 +
+            omega_shear * (f_eq_common * 0.041666666666666667f +
+                           rho * ((u0Pu1 * u0Pu1) * 0.12500000000000000f +
+                                  (u_2 * u_2) * 0.041666666666666667f -
+                                  0.013888888888888889f) +
+                           xi_10 * -0.50000000000000000f +
+                           xi_19 * -0.50000000000000000f) +
+            rr_0 *
+                (rho * u0Pu1 * 0.083333333333333333f +
+                 xi_10 * -0.50000000000000000f + xi_19 * 0.50000000000000000f) +
+            xi_10 +
+            ((-1 <= ctr_1 - grid_size)
+                 ? (rho * v_s * (u_0 * 2.0f + u_1 * 3.0f + v_s + 1.0f) *
+                    -0.083333333333333333f)
+                 : (0.0f));
+        _data_pdfs_20_39_10[_stride_pdfs_0 * ctr_0] =
+            forceTerm_9 +
+            omega_shear * (f_eq_common * 0.041666666666666667f +
+                           rho * ((u0Pu1 * u0Pu1) * 0.12500000000000000f +
+                                  (u_2 * u_2) * 0.041666666666666667f -
+                                  0.013888888888888889f) +
+                           xi_10 * -0.50000000000000000f +
+                           xi_19 * -0.50000000000000000f) +
+            rr_0 *
+                (rho * u0Pu1 * -0.083333333333333333f +
+                 xi_10 * 0.50000000000000000f + xi_19 * -0.50000000000000000f) +
+            xi_19 +
+            ((ctr_1 <= 0)
+                 ? (rho * v_s * (u_0 * 2.0f + u_1 * 3.0f - v_s - 1.0f) *
+                    0.083333333333333333f)
+                 : (0.0f));
+        _data_pdfs_20_310_10[_stride_pdfs_0 * ctr_0] =
+            forceTerm_10 +
+            omega_shear *
+                (f_eq_common * 0.041666666666666667f +
+                 rho * ((u0Mu1 * u0Mu1) * 0.12500000000000000f +
+                        (u_2 * u_2) * 0.041666666666666667f -
+                        0.013888888888888889f) +
+                 xi_24 * -0.50000000000000000f + xi_4 * -0.50000000000000000f) +
+            rr_0 *
+                (rho * u0Mu1 * 0.083333333333333333f +
+                 xi_24 * -0.50000000000000000f + xi_4 * 0.50000000000000000f) +
+            xi_24 +
+            ((ctr_1 <= 0)
+                 ? (rho * v_s * (u_0 * 2.0f + u_1 * -3.0f - v_s + 1.0f) *
+                    0.083333333333333333f)
+                 : (0.0f));
+        _data_pdfs_20_311_10[_stride_pdfs_0 * ctr_0] =
+            forceTerm_11 +
+            omega_shear * (f_eq_common * 0.041666666666666667f +
+                           rho * ((u1Pu2 * u1Pu2) * 0.12500000000000000f +
+                                  (u_0 * u_0) * 0.041666666666666667f -
+                                  0.013888888888888889f) +
+                           xi_11 * -0.50000000000000000f +
+                           xi_18 * -0.50000000000000000f) +
+            rr_0 *
+                (rho * u1Pu2 * 0.083333333333333333f +
+                 xi_11 * -0.50000000000000000f + xi_18 * 0.50000000000000000f) +
+            xi_11;
+        _data_pdfs_20_312_10[_stride_pdfs_0 * ctr_0] =
+            forceTerm_12 +
+            omega_shear * (f_eq_common * 0.041666666666666667f +
+                           rho * ((u1Mu2 * u1Mu2) * 0.12500000000000000f +
+                                  (u_0 * u_0) * 0.041666666666666667f -
+                                  0.013888888888888889f) +
+                           xi_21 * -0.50000000000000000f +
+                           xi_23 * -0.50000000000000000f) +
+            rr_0 *
+                (rho * u1Mu2 * -0.083333333333333333f +
+                 xi_21 * -0.50000000000000000f + xi_23 * 0.50000000000000000f) +
+            xi_21;
+        _data_pdfs_20_313_10[_stride_pdfs_0 * ctr_0] =
+            forceTerm_13 +
+            omega_shear *
+                (f_eq_common * 0.041666666666666667f +
+                 rho * ((u0Mu2 * u0Mu2) * 0.12500000000000000f +
+                        (u_1 * u_1) * 0.041666666666666667f -
+                        0.013888888888888889f) +
+                 xi_12 * -0.50000000000000000f + xi_3 * -0.50000000000000000f) +
+            rr_0 *
+                (rho * u0Mu2 * -0.083333333333333333f +
+                 xi_12 * -0.50000000000000000f + xi_3 * 0.50000000000000000f) +
+            xi_12;
+        _data_pdfs_20_314_10[_stride_pdfs_0 * ctr_0] =
+            forceTerm_14 +
+            omega_shear * (f_eq_common * 0.041666666666666667f +
+                           rho * ((u0Pu2 * u0Pu2) * 0.12500000000000000f +
+                                  (u_1 * u_1) * 0.041666666666666667f -
+                                  0.013888888888888889f) +
+                           xi_17 * -0.50000000000000000f +
+                           xi_20 * -0.50000000000000000f) +
+            rr_0 *
+                (rho * u0Pu2 * 0.083333333333333333f +
+                 xi_17 * -0.50000000000000000f + xi_20 * 0.50000000000000000f) +
+            xi_17;
+        _data_pdfs_20_315_10[_stride_pdfs_0 * ctr_0] =
+            forceTerm_15 +
+            omega_shear * (f_eq_common * 0.041666666666666667f +
+                           rho * ((u1Mu2 * u1Mu2) * 0.12500000000000000f +
+                                  (u_0 * u_0) * 0.041666666666666667f -
+                                  0.013888888888888889f) +
+                           xi_21 * -0.50000000000000000f +
+                           xi_23 * -0.50000000000000000f) +
+            rr_0 *
+                (rho * u1Mu2 * 0.083333333333333333f +
+                 xi_21 * 0.50000000000000000f + xi_23 * -0.50000000000000000f) +
+            xi_23;
+        _data_pdfs_20_316_10[_stride_pdfs_0 * ctr_0] =
+            forceTerm_16 +
+            omega_shear * (f_eq_common * 0.041666666666666667f +
+                           rho * ((u1Pu2 * u1Pu2) * 0.12500000000000000f +
+                                  (u_0 * u_0) * 0.041666666666666667f -
+                                  0.013888888888888889f) +
+                           xi_11 * -0.50000000000000000f +
+                           xi_18 * -0.50000000000000000f) +
+            rr_0 *
+                (rho * u1Pu2 * -0.083333333333333333f +
+                 xi_11 * 0.50000000000000000f + xi_18 * -0.50000000000000000f) +
+            xi_18;
+        _data_pdfs_20_317_10[_stride_pdfs_0 * ctr_0] =
+            forceTerm_17 +
+            omega_shear * (f_eq_common * 0.041666666666666667f +
+                           rho * ((u0Pu2 * u0Pu2) * 0.12500000000000000f +
+                                  (u_1 * u_1) * 0.041666666666666667f -
+                                  0.013888888888888889f) +
+                           xi_17 * -0.50000000000000000f +
+                           xi_20 * -0.50000000000000000f) +
+            rr_0 *
+                (rho * u0Pu2 * -0.083333333333333333f +
+                 xi_17 * 0.50000000000000000f + xi_20 * -0.50000000000000000f) +
+            xi_20;
         _data_pdfs_20_318_10[_stride_pdfs_0 * ctr_0] =
-            omega_shear * (rho * (xi_1 * xi_1) * -0.0416666666666667f +
-                           rho * (xi_13 * xi_13) * -0.0416666666666667f +
-                           rho *
-                               ((xi_15 + ((ctr_1 <= 0) ? (1.0f) : (0.0f)) *
-                                             0.050000000000000003f) *
-                                (xi_15 + ((ctr_1 <= 0) ? (1.0f) : (0.0f)) *
-                                             0.050000000000000003f)) *
-                               -0.0416666666666667f +
-                           rho * ((xi_1 * xi_1) * 0.0416666666666667f +
-                                  xi_13 * -0.0833333333333333f +
-                                  xi_15 * 0.0833333333333333f +
-                                  ((-xi_13 + xi_15 +
-                                    ((ctr_1 <= 0) ? (1.0f) : (0.0f)) *
-                                        0.050000000000000003f) *
-                                   (-xi_13 + xi_15 +
-                                    ((ctr_1 <= 0) ? (1.0f) : (0.0f)) *
-                                        0.050000000000000003f)) *
-                                      0.125f +
-                                  ((ctr_1 <= 0) ? (1.0f) : (0.0f)) *
-                                      0.0041666666666666666f -
-                                  0.0138888888888889f) +
-                           rho * 0.0416666666666667f - xi_25) +
-            xi_25 +
-            (omega_shear * -0.5f + 1.0f) *
-                (xi_1 * xi_18 * -0.0833333333333333f +
-                 xi_12 *
-                     (xi_13 * -3.0f + xi_15 * 2.0f +
-                      ((ctr_1 <= 0) ? (1.0f) : (0.0f)) * 0.10000000000000001f +
-                      1.0f) *
-                     0.0833333333333333f +
-                 xi_22 *
-                     (xi_13 * -2.0f + xi_15 * 3.0f +
-                      ((ctr_1 <= 0) ? (1.0f) : (0.0f)) * 0.15000000000000002f +
-                      1.0f) *
-                     -0.0833333333333333f);
+            forceTerm_18 +
+            omega_shear *
+                (f_eq_common * 0.041666666666666667f +
+                 rho * ((u0Mu2 * u0Mu2) * 0.12500000000000000f +
+                        (u_1 * u_1) * 0.041666666666666667f -
+                        0.013888888888888889f) +
+                 xi_12 * -0.50000000000000000f + xi_3 * -0.50000000000000000f) +
+            rr_0 *
+                (rho * u0Mu2 * 0.083333333333333333f +
+                 xi_12 * 0.50000000000000000f + xi_3 * -0.50000000000000000f) +
+            xi_3;
       }
     }
   }
@@ -655,20 +680,18 @@ collidesweepsingleprecisionleesedwards_collidesweepsingleprecisionleesedwards(
 } // namespace internal_ab1f3bc3368574afb482da84ccb58898
 
 void CollideSweepSinglePrecisionLeesEdwards::run(IBlock *block) {
-  auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
   auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
   auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
 
   auto &omega_shear = this->omega_shear_;
+  auto &grid_size = this->grid_size_;
+  auto &v_s = this->v_s_;
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(force->nrOfGhostLayers()));
   float *RESTRICT const _data_force = force->dataAt(0, 0, 0, 0);
   WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx);
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(pdfs->nrOfGhostLayers()));
   float *RESTRICT _data_pdfs = pdfs->dataAt(0, 0, 0, 0);
   WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
-  WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(velocity->nrOfGhostLayers()));
-  float *RESTRICT const _data_velocity = velocity->dataAt(0, 0, 0, 0);
-  WALBERLA_ASSERT_EQUAL(velocity->layout(), field::fzyx);
   WALBERLA_ASSERT_GREATER_EQUAL(force->xSizeWithGhostLayer(),
                                 int64_t(cell_idx_c(force->xSize()) + 0));
   const int64_t _size_force_0 = int64_t(cell_idx_c(force->xSize()) + 0);
@@ -689,17 +712,12 @@ void CollideSweepSinglePrecisionLeesEdwards::run(IBlock *block) {
   const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
   const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
   const int64_t _stride_pdfs_3 = int64_t(1 * int64_t(pdfs->fStride()));
-  const int64_t _stride_velocity_0 = int64_t(velocity->xStride());
-  const int64_t _stride_velocity_1 = int64_t(velocity->yStride());
-  const int64_t _stride_velocity_2 = int64_t(velocity->zStride());
-  const int64_t _stride_velocity_3 = int64_t(1 * int64_t(velocity->fStride()));
   internal_ab1f3bc3368574afb482da84ccb58898::
       collidesweepsingleprecisionleesedwards_collidesweepsingleprecisionleesedwards(
-          _data_force, _data_pdfs, _data_velocity, _size_force_0, _size_force_1,
-          _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2,
-          _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2,
-          _stride_pdfs_3, _stride_velocity_0, _stride_velocity_1,
-          _stride_velocity_2, _stride_velocity_3, omega_shear);
+          _data_force, _data_pdfs, _size_force_0, _size_force_1, _size_force_2,
+          _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3,
+          _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3,
+          grid_size, omega_shear, v_s);
 }
 
 void CollideSweepSinglePrecisionLeesEdwards::runOnCellInterval(
@@ -714,11 +732,12 @@ void CollideSweepSinglePrecisionLeesEdwards::runOnCellInterval(
   if (ci.empty())
     return;
 
-  auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
   auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
   auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
 
   auto &omega_shear = this->omega_shear_;
+  auto &grid_size = this->grid_size_;
+  auto &v_s = this->v_s_;
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(force->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(force->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(force->nrOfGhostLayers()));
@@ -730,12 +749,6 @@ void CollideSweepSinglePrecisionLeesEdwards::runOnCellInterval(
   WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()));
   float *RESTRICT _data_pdfs = pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
   WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
-  WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(velocity->nrOfGhostLayers()));
-  WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(velocity->nrOfGhostLayers()));
-  WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(velocity->nrOfGhostLayers()));
-  float *RESTRICT const _data_velocity =
-      velocity->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-  WALBERLA_ASSERT_EQUAL(velocity->layout(), field::fzyx);
   WALBERLA_ASSERT_GREATER_EQUAL(force->xSizeWithGhostLayer(),
                                 int64_t(cell_idx_c(ci.xSize()) + 0));
   const int64_t _size_force_0 = int64_t(cell_idx_c(ci.xSize()) + 0);
@@ -756,17 +769,12 @@ void CollideSweepSinglePrecisionLeesEdwards::runOnCellInterval(
   const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
   const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
   const int64_t _stride_pdfs_3 = int64_t(1 * int64_t(pdfs->fStride()));
-  const int64_t _stride_velocity_0 = int64_t(velocity->xStride());
-  const int64_t _stride_velocity_1 = int64_t(velocity->yStride());
-  const int64_t _stride_velocity_2 = int64_t(velocity->zStride());
-  const int64_t _stride_velocity_3 = int64_t(1 * int64_t(velocity->fStride()));
   internal_ab1f3bc3368574afb482da84ccb58898::
       collidesweepsingleprecisionleesedwards_collidesweepsingleprecisionleesedwards(
-          _data_force, _data_pdfs, _data_velocity, _size_force_0, _size_force_1,
-          _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2,
-          _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2,
-          _stride_pdfs_3, _stride_velocity_0, _stride_velocity_1,
-          _stride_velocity_2, _stride_velocity_3, omega_shear);
+          _data_force, _data_pdfs, _size_force_0, _size_force_1, _size_force_2,
+          _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3,
+          _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3,
+          grid_size, omega_shear, v_s);
 }
 
 } // namespace pystencils

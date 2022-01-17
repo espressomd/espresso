@@ -1,4 +1,4 @@
-// kernel generated with pystencils v0.4.3+4.g30da657, lbmpy v0.4.3+2.g0e17e61, lbmpy_walberla/pystencils_walberla from commit 88f85eb7a979f81d68e76009811aeed53ec3014e
+// kernel generated with pystencils v0.4.4, lbmpy v0.4.3+6.g13df23c, lbmpy_walberla/pystencils_walberla from commit ref: refs/heads/le_ghost_vel
 
 //======================================================================================================================
 //
@@ -52,8 +52,8 @@ namespace pystencils {
 class CollideSweepDoublePrecisionLeesEdwardsAVX
 {
 public:
-    CollideSweepDoublePrecisionLeesEdwardsAVX( BlockDataID forceID_, BlockDataID pdfsID_, BlockDataID velocityID_, double omega_shear )
-        : forceID(forceID_), pdfsID(pdfsID_), velocityID(velocityID_), omega_shear_(omega_shear)
+    CollideSweepDoublePrecisionLeesEdwardsAVX( BlockDataID forceID_, BlockDataID pdfsID_, double grid_size, double omega_shear, double v_s )
+        : forceID(forceID_), pdfsID(pdfsID_), grid_size_(grid_size), omega_shear_(omega_shear), v_s_(v_s)
     {};
 
     
@@ -100,8 +100,9 @@ public:
 
     BlockDataID forceID;
     BlockDataID pdfsID;
-    BlockDataID velocityID;
+    double grid_size_;
     double omega_shear_;
+    double v_s_;
 
 };
 
