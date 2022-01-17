@@ -147,6 +147,9 @@ class BondedInteractions(ut.TestCase):
                 .format(bondClass(**params).type_name(), bondId, outParamsRef, outParams))
             self.parameterKeys(outBond)
 
+            # check no-op
+            self.assertIsNone(outBond.call_method('unknown'))
+
         return func
 
     test_fene = generateTestForBondParams(

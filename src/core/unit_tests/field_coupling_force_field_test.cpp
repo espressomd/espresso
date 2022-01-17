@@ -65,10 +65,13 @@ BOOST_AUTO_TEST_CASE(BindCoupling_test) {
   {
     auto const id = Id<true>{};
     auto const bc = make_bind_coupling(id, Particle{});
-    const int x = 5;
+    auto const x = 5;
 
+    BOOST_CHECK(id.count == 0);
     BOOST_CHECK(5 == bc(5));
     BOOST_CHECK(id.count == 1);
+    BOOST_CHECK(x == bc(x));
+    BOOST_CHECK(id.count == 2);
   }
 }
 
@@ -114,6 +117,7 @@ BOOST_AUTO_TEST_CASE(ForceField_test) {
       ForceField<Id<true>, DummyVectorField>(Id<true>{}, DummyVectorField{});
   const Utils::Vector3d x{1., 2., 3.};
 
+  BOOST_CHECK(0 == ff.coupling().count);
   BOOST_CHECK((9. * x) == ff.force(5, x, 9.));
   BOOST_CHECK(1 == ff.coupling().count);
 }
@@ -131,6 +135,7 @@ BOOST_AUTO_TEST_CASE(PotentialField_test) {
   auto pf = PotentialField<Id<true>, DummyScalarField>(Id<true>{},
                                                        DummyScalarField{});
   const Utils::Vector3d x{1., 2., 3.};
+  BOOST_CHECK(0 == pf.coupling().count);
 
   BOOST_CHECK((2. * x.norm()) == pf.energy(5, x, 2.));
   BOOST_CHECK(1 == pf.coupling().count);

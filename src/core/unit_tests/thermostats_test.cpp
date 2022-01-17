@@ -341,3 +341,15 @@ BOOST_AUTO_TEST_CASE(test_npt_iso_randomness) {
   }
 }
 #endif // NPT
+
+BOOST_AUTO_TEST_CASE(test_predicate) {
+  std::vector<std::vector<double>> const correlation = {{1., 0.}, {0., 1.}};
+  auto const is_true = correlation_almost_equal(correlation, 0, 0, 1., 1e-10);
+  auto const is_false = correlation_almost_equal(correlation, 0, 1, 1., 1e-10);
+  BOOST_REQUIRE(is_true);
+  BOOST_REQUIRE(!is_false);
+  BOOST_CHECK_EQUAL(is_true.message(), "");
+  BOOST_CHECK_EQUAL(is_false.message(),
+                    "The correlation coefficient M[0][1]{0} "
+                    "differs from 1 by 1 (> 1e-10)");
+}

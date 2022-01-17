@@ -21,6 +21,7 @@ import espressomd.lb
 import espressomd.shapes
 import espressomd.lbboundaries
 import itertools
+import numpy as np
 
 
 class LBBoundariesBase:
@@ -66,6 +67,12 @@ class LBBoundariesBase:
 
         lbb.add(espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
         self.assertEqual(lbb.size(), 2)
+
+    def test_getters(self):
+        boundary = espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1)
+        self.system.lbboundaries.add(boundary)
+        np.testing.assert_equal(np.copy(boundary.get_force()), [0., 0., 0.])
+        self.assertIsNone(boundary.call_method('unknown'))
 
     def test_empty(self):
         lbb = self.system.lbboundaries
