@@ -181,6 +181,9 @@ template <> struct get_value_helper<std::unordered_map<int, Variant>, void> {
   }
 };
 
+/** Custom error for a conversion that fails when the value is a nullptr. */
+class bad_get_nullptr : public boost::bad_get {};
+
 /* This allows direct retrieval of a shared_ptr to the object from
  * an ObjectRef variant. If the type is a derived type, the type is
  * also checked.
@@ -193,7 +196,7 @@ struct get_value_helper<
   std::shared_ptr<T> operator()(Variant const &v) const {
     auto so_ptr = boost::get<ObjectRef>(v);
     if (!so_ptr) {
-      throw boost::bad_get{};
+      throw bad_get_nullptr{};
     }
 
     auto t_ptr = std::dynamic_pointer_cast<T>(so_ptr);
@@ -205,6 +208,32 @@ struct get_value_helper<
     throw boost::bad_get{};
   }
 };
+
+/**
+ * @brief Re-throw a @c boost::bad_get exception wrapped in an @ref Exception.
+ * Write a custom error message for invalid conversions due to type mismatch
+ * and due to nullptr values, possibly with context information if the variant
+ * is in a container.
+ * @tparam T     Type which the variant was supposed to convert to
+ * @tparam U     Type of the container the variant is contained in
+ */
+template <typename T, typename U = void>
+inline void handle_bad_get(Variant const &v) {
+  using Utils::demangle;
+  auto const what = "Provided argument of type " + type_label(v);
+  auto const context =
+      (std::is_void<U>::value)
+          ? ""
+          : " (raised during the creation of a " + demangle<U>() + ")";
+  try {
+    throw;
+  } catch (bad_get_nullptr const &) {
+    throw Exception(what + " is a null pointer" + context);
+  } catch (boost::bad_get const &) {
+    throw Exception(what + " is not convertible to " + demangle<T>() + context);
+  }
+}
+
 } // namespace detail
 
 /**
@@ -219,9 +248,9 @@ struct get_value_helper<
 template <typename T> T get_value(Variant const &v) {
   try {
     return detail::get_value_helper<T>{}(v);
-  } catch (const boost::bad_get &) {
-    throw Exception("Provided argument of type " + detail::type_label(v) +
-                    " is not convertible to " + Utils::demangle<T>());
+  } catch (...) {
+    detail::handle_bad_get<T>(v);
+    throw;
   }
 }
 
@@ -233,12 +262,9 @@ std::unordered_map<K, V> get_map(std::unordered_map<K, Variant> const &v) {
     for (; it != v.end(); ++it) {
       ret.insert({it->first, detail::get_value_helper<V>{}(it->second)});
     }
-  } catch (const boost::bad_get &) {
-    throw Exception("Provided map value of type " +
-                    detail::type_label(it->second) + " is not convertible to " +
-                    Utils::demangle<V>() +
-                    " (raised during the creation of a " +
-                    Utils::demangle<std::unordered_map<K, V>>() + ")");
+  } catch (...) {
+    detail::handle_bad_get<V, std::unordered_map<K, V>>(v);
+    throw;
   }
   return ret;
 }

@@ -136,7 +136,7 @@ static Utils::VectorXd<9> get_pressure_tensor() {
   return lb_walberla()->get_pressure_tensor();
 }
 
-REGISTER_CALLBACK_REDUCTION(get_pressure_tensor, std::plus<Utils::VectorXd<9>>())
+REGISTER_CALLBACK_REDUCTION(get_pressure_tensor, std::plus<>())
 
 } // namespace Walberla
 #endif // LB_WALBERLA
@@ -145,7 +145,7 @@ const Utils::VectorXd<9> lb_lbfluid_get_pressure_tensor() {
   if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
     return ::Communication::mpiCallbacks().call(
-        ::Communication::Result::reduction, std::plus<Utils::VectorXd<9>>(),
+        ::Communication::Result::reduction, std::plus<>(),
         Walberla::get_pressure_tensor);
 #endif
   }

@@ -24,7 +24,7 @@
 
 #include <type_traits>
 
-#include "ContextManager.hpp"
+#include "Context.hpp"
 #include "ObjectHandle.hpp"
 #include "Variant.hpp"
 #include "auto_parameters/AutoParameters.hpp"

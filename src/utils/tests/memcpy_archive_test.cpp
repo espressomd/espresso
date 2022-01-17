@@ -60,11 +60,8 @@ struct is_statically_serializable<boost::optional<T>>
 
 BOOST_AUTO_TEST_CASE(packing_size_test) {
   BOOST_CHECK_EQUAL(Utils::MemcpyIArchive::packing_size<int>(), sizeof(int));
-
-  {
-    BOOST_CHECK_EQUAL(Utils::MemcpyIArchive::packing_size<NonTrivial>(),
-                      Utils::MemcpyIArchive::packing_size<OpVec>());
-  }
+  BOOST_CHECK_EQUAL(Utils::MemcpyIArchive::packing_size<NonTrivial>(),
+                    Utils::MemcpyIArchive::packing_size<OpVec>());
 }
 
 BOOST_AUTO_TEST_CASE(type_traits) {
@@ -75,9 +72,11 @@ BOOST_AUTO_TEST_CASE(type_traits) {
   static_assert(Utils::is_statically_serializable<OpVec>::value, "");
   static_assert(not Utils::detail::use_memcpy<OpVec>::value, "");
   static_assert(Utils::detail::use_serialize<OpVec>::value, "");
+
+  BOOST_TEST_PASSPOINT();
 }
 
-BOOST_AUTO_TEST_CASE(skiping_and_position) {
+BOOST_AUTO_TEST_CASE(skipping_and_position) {
   std::array<char, 10> buf;
 
   auto ar = Utils::MemcpyOArchive(Utils::make_span(buf));
@@ -91,9 +90,13 @@ BOOST_AUTO_TEST_CASE(memcpy_processing) {
   std::array<char, 10> buf;
 
   auto const test_number = 5;
-  auto oa = Utils::MemcpyOArchive(Utils::make_span(buf));
-  oa << test_number;
-  BOOST_CHECK_EQUAL(oa.bytes_written(), sizeof(test_number));
+
+  {
+    auto oa = Utils::MemcpyOArchive(Utils::make_span(buf));
+    oa << test_number;
+    BOOST_CHECK_EQUAL(oa.bytes_written(), sizeof(test_number));
+    BOOST_CHECK_EQUAL(oa.get_library_version(), 4);
+  }
 
   {
     auto ia = Utils::MemcpyIArchive(Utils::make_span(buf));
@@ -101,6 +104,7 @@ BOOST_AUTO_TEST_CASE(memcpy_processing) {
     ia >> out;
     BOOST_CHECK_EQUAL(out, test_number);
     BOOST_CHECK_EQUAL(ia.bytes_read(), sizeof(test_number));
+    BOOST_CHECK_EQUAL(ia.get_library_version(), 4);
   }
 }
 

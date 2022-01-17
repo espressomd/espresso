@@ -26,6 +26,7 @@
 #include "fields.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
+#include "script_interface/constraints/Constraint.hpp"
 
 #include "core/constraints/Constraint.hpp"
 #include "core/constraints/ExternalField.hpp"

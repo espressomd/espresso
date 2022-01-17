@@ -90,6 +90,7 @@ BOOST_AUTO_TEST_CASE(type_deduction) {
                                            Utils::Vector<double, 2>, 2>::type,
                    Utils::Vector<double, 2>>::value,
       "");
+  BOOST_TEST_PASSPOINT();
 }
 
 BOOST_AUTO_TEST_CASE(matrix_matrix) {

@@ -30,4 +30,5 @@
 BOOST_AUTO_TEST_CASE(size_in_bits) {
   static_assert(CHAR_BIT == Utils::size_in_bits<char>::value, "");
   static_assert(CHAR_BIT * sizeof(int) == Utils::size_in_bits<int>::value, "");
+  BOOST_TEST_PASSPOINT();
 }

@@ -23,7 +23,10 @@
 #define SCRIPT_INTERFACE_CYLINDER_WALL_HPP
 
 #include "Shape.hpp"
+
 #include <shapes/Cylinder.hpp>
+
+#include <memory>
 
 namespace ScriptInterface {
 namespace Shapes {

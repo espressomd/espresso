@@ -34,6 +34,7 @@ BOOST_AUTO_TEST_CASE(ctor) {
   static_assert(
       std::is_constructible<ScriptInterface::Exception, const char *>::value,
       "");
+  BOOST_TEST_PASSPOINT();
 }
 
 BOOST_AUTO_TEST_CASE(what_) {

@@ -32,59 +32,43 @@
 #include <boost/mpi.hpp>
 
 #include <algorithm>
-#include <functional>
 #include <vector>
-
-int main(int argc, char **argv) {
-  boost::mpi::environment mpi_env(argc, argv);
-
-  return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
-}
-
-namespace Testing {
-
-void reduce_and_check(const boost::mpi::communicator &comm, bool local_value) {
-  if (comm.rank() == 0) {
-    bool total = true;
-    boost::mpi::reduce(comm, local_value, total, std::logical_and<bool>(), 0);
-    BOOST_CHECK(total);
-  } else {
-    boost::mpi::reduce(comm, local_value, std::logical_and<bool>(), 0);
-  }
-}
-} // namespace Testing
 
 using ErrorHandling::RuntimeError;
 using ErrorHandling::RuntimeErrorCollector;
+using ErrorLevel = ErrorHandling::RuntimeError::ErrorLevel;
 
 BOOST_AUTO_TEST_CASE(count) {
   boost::mpi::communicator world;
 
   RuntimeErrorCollector rec(world);
 
-  Testing::reduce_and_check(world, rec.count() == 0);
+  BOOST_REQUIRE_EQUAL(rec.count(), 0);
+  world.barrier();
 
   /* MPI guarantees that size >= 1 and rank 0 exists. */
-  if (world.rank() == (world.size() - 1)) {
+  auto const rank_of_error = world.size() - 1;
+  if (world.rank() == rank_of_error) {
     rec.error("Test_error", "Test_functions", "Test_file", 42);
   }
-
-  Testing::reduce_and_check(world, rec.count() == 1);
-
+  world.barrier();
+  BOOST_REQUIRE_EQUAL(rec.count(), 1);
+  world.barrier();
   rec.warning("Test_error", "Test_functions", "Test_file", 42);
-
-  Testing::reduce_and_check(world, rec.count() == world.size() + 1);
+  world.barrier();
+  BOOST_REQUIRE_EQUAL(rec.count(), world.size() + 1);
 
   /* There should now be one error and world.size() warnings */
-  Testing::reduce_and_check(world,
-                            rec.count(RuntimeError::ErrorLevel::ERROR) == 1);
-  /* All messages are at least WARNING or higher. */
-  {
-    /* Beware of the execution order */
-    int total = rec.count();
-    Testing::reduce_and_check(
-        world, rec.count(RuntimeError::ErrorLevel::WARNING) == total);
-  }
+  auto const n_local_errors = static_cast<int>(world.rank() == rank_of_error);
+  auto const n_local_warnings = n_local_errors + 1;
+  BOOST_REQUIRE_EQUAL(rec.count(ErrorLevel::ERROR), n_local_errors);
+  BOOST_REQUIRE_EQUAL(rec.count(ErrorLevel::WARNING), n_local_warnings);
+
+  /* Clear list of errors */
+  world.barrier();
+  rec.clear();
+  world.barrier();
+  BOOST_REQUIRE_EQUAL(rec.count(), 0);
 }
 
 /*
@@ -100,10 +84,11 @@ BOOST_AUTO_TEST_CASE(gather) {
 
   rec.error("Test_error", "Test_functions", "Test_file", world.rank());
   rec.warning("Test_error", "Test_functions", "Test_file", world.rank());
+  world.barrier();
 
   if (world.rank() == 0) {
     /* Gathered error messages */
-    auto results = rec.gather();
+    auto const results = rec.gather();
     /* Track how many messages we have seen from which node. */
     std::vector<int> present(world.size());
 
@@ -115,18 +100,24 @@ BOOST_AUTO_TEST_CASE(gather) {
     BOOST_CHECK(std::all_of(present.begin(), present.end(),
                             [](int i) { return i == 2; }));
     /* Count warnings, should be world.rank() many */
-    BOOST_CHECK(std::count_if(
-                    results.begin(), results.end(), [](const RuntimeError &e) {
-                      return e.level() == RuntimeError::ErrorLevel::WARNING;
-                    }) == world.size());
+    BOOST_CHECK(std::count_if(results.begin(), results.end(),
+                              [](const RuntimeError &e) {
+                                return e.level() == ErrorLevel::WARNING;
+                              }) == world.size());
     /* Count errors, should be world.rank() many */
-    BOOST_CHECK(std::count_if(
-                    results.begin(), results.end(), [](const RuntimeError &e) {
-                      return e.level() == RuntimeError::ErrorLevel::ERROR;
-                    }) == world.size());
+    BOOST_CHECK(std::count_if(results.begin(), results.end(),
+                              [](const RuntimeError &e) {
+                                return e.level() == ErrorLevel::ERROR;
+                              }) == world.size());
   } else {
     rec.gather_local();
   }
 
-  Testing::reduce_and_check(world, rec.count() == 0);
+  BOOST_REQUIRE_EQUAL(rec.count(), 0);
+}
+
+int main(int argc, char **argv) {
+  boost::mpi::environment mpi_env(argc, argv);
+
+  return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }

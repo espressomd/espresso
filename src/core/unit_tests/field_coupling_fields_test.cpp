@@ -49,6 +49,7 @@ BOOST_AUTO_TEST_CASE(jacobian_type_test) {
   static_assert(
       is_same<jacobian_type<double, 2>, Utils::Matrix<double, 2, 3>>::value,
       "");
+  BOOST_TEST_PASSPOINT();
 }
 
 BOOST_AUTO_TEST_CASE(constant_scalar_field) {

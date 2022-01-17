@@ -205,8 +205,9 @@ template <class T> auto bspline(int i, T x, int k) {
 }
 
 /** @brief Derivative of the B-spline. */
-template <int order, typename T = double> inline T bspline_d(int i, T x) {
-  static_assert(order <= 7, "");
+template <int order, typename T = double>
+DEVICE_QUALIFIER auto bspline_d(int i, T x)
+    -> std::enable_if_t<(order > 0) && (order <= 7), T> {
   DEVICE_ASSERT(i < order);
   DEVICE_ASSERT(x >= T(-0.5));
   DEVICE_ASSERT(x <= T(0.5));
@@ -318,7 +319,8 @@ template <int order, typename T = double> inline T bspline_d(int i, T x) {
     }
   }
 
-  throw std::runtime_error("Internal interpolation error.");
+  DEVICE_THROW(std::runtime_error("Internal interpolation error."));
+  return T{};
 }
 } // namespace Utils
 
