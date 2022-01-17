@@ -191,10 +191,10 @@ class LBTest:
 
         """
         system = self.system
-        self.n_col_part = 1000
+        n_col_part = 1000
         system.part.add(
-            pos=np.random.random((self.n_col_part, 3)) * self.system.box_l[0],
-            v=np.random.random((self.n_col_part, 3)))
+            pos=np.random.random((n_col_part, 3)) * self.system.box_l[0],
+            v=np.random.random((n_col_part, 3)))
         system.thermostat.turn_off()
 
         lbf = self.lb_class(kT=1., seed=1, ext_force_density=[0, 0, 0],
@@ -219,6 +219,9 @@ class LBTest:
         self.assertIsInstance(
             lbf.pressure_tensor,
             espressomd.utils.array_locked)
+        system.actors.remove(lbf)
+        with self.assertRaisesRegex(RuntimeError, 'LB not activated'):
+            obs.calculate()
 
     def test_lb_node_set_get(self):
         lbf = self.lb_class(kT=0.0, ext_force_density=[0, 0, 0], **self.params,
