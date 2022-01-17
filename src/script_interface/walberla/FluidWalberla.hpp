@@ -133,6 +133,7 @@ public:
     m_conv_force = Utils::int_pow<2>(tau) / Utils::int_pow<1>(agrid);
     m_conv_force_dens = Utils::int_pow<2>(tau) * Utils::int_pow<2>(agrid);
     m_lb_params = std::make_shared<::LBWalberlaParams>(agrid, tau);
+    m_is_active = false;
     m_seed = get_value<int>(params, "seed");
     auto const lb_lattice = lb_lattice_si->lattice();
     auto const lb_visc = m_conv_visc * get_value<double>(params, "viscosity");
@@ -143,8 +144,9 @@ public:
     m_is_single_precision = get_value<bool>(params, "single_precision");
     m_lb_fluid = init_lb_walberla(lb_lattice, *m_lb_params, lb_visc, lb_dens,
                                   lb_temp, m_seed, m_is_single_precision);
-    m_lb_fluid->set_external_force(ext_f);
-    m_is_active = false;
+    if (m_lb_fluid) {
+      m_lb_fluid->set_external_force(ext_f);
+    }
   }
 
   Variant do_call_method(std::string const &name,
