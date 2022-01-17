@@ -549,16 +549,16 @@ public:
         lattice().get_grid_dimensions()[lees_edwards_pack.shear_plane_normal];
     auto const shear_plane_size =
         Utils::product(lattice().get_grid_dimensions()) / shear_normal_grid;
+    auto const shear_vel = FloatType_c(lees_edwards_pack.get_shear_velocity());
     m_lees_edwards_sweep = std::make_shared<LeesEdwardsUpdate>(
         lattice().get_blocks(), m_pdf_field_id, m_pdf_tmp_field_id,
         lattice().get_ghost_layers(), std::move(lees_edwards_pack));
     run_collide_sweep.m_lees_edwards_sweep = m_lees_edwards_sweep;
     auto const omega = shear_mode_relaxation_rate();
     auto const omega_odd = odd_mode_relaxation_rate(omega);
-    // a few values are initialized to 0 or false, will be updated later
     auto obj = LeesEdwardsCollisionModel(
-        m_last_applied_force_field_id, m_pdf_field_id, shear_normal_grid, omega,
-        lees_edwards_pack.get_shear_velocity());
+        m_last_applied_force_field_id, m_pdf_field_id,
+        FloatType_c(shear_normal_grid), omega, shear_vel);
     m_collision_model = std::make_shared<CollisionModel>(std::move(obj));
     // auto *cm = boost::get<LeesEdwardsCollisionModel>(&*m_collision_model);
     // cm->grid_size_ = int64_t(shear_plane_size);
