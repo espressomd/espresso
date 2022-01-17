@@ -62,81 +62,6 @@ BOOST_AUTO_TEST_CASE(identity_matrix) {
   BOOST_CHECK((id_mat(1, 0) == 0));
 }
 
-namespace Testing {
-
-const Utils::Matrix<int, 4, 4> symmetric_matrix = {1, 2, 4, 6, 2, 3, 5, 8,
-                                                   4, 5, 7, 9, 6, 8, 9, 0};
-
-template <std::size_t N>
-void check_matrix(Utils::Matrix<int, N, N> const &mat) {
-  static_assert(N <= 4u, "");
-  auto const shape = mat.shape();
-  BOOST_CHECK_EQUAL(shape.first, N);
-  BOOST_CHECK_EQUAL(shape.second, N);
-  for (std::size_t i = 0; i < N; ++i) {
-    for (std::size_t j = 0; j < N; ++j) {
-      BOOST_CHECK_EQUAL((mat(i, j)), (symmetric_matrix(i, j)));
-    }
-  }
-}
-
-template <> void check_matrix(Utils::Matrix<int, 0, 0> const &mat) {
-  auto const shape = mat.shape();
-  BOOST_CHECK_EQUAL(shape.first, 0u);
-  BOOST_CHECK_EQUAL(shape.second, 0u);
-}
-
-} // namespace Testing
-
-BOOST_AUTO_TEST_CASE(upper_triangular_to_symmetric_matrix) {
-  // 0x0 case
-  {
-    auto constexpr tri = Utils::Array<int, 0>{};
-    auto const mat_u = Utils::triu_to_symmetric_mat(tri);
-    auto const mat_l = Utils::tril_to_symmetric_mat(tri);
-    Testing::check_matrix(mat_u);
-    Testing::check_matrix(mat_l);
-  }
-
-  // 1x1 case
-  {
-    auto constexpr tri = Utils::Vector<int, 1>{1};
-    auto const mat_u = Utils::triu_to_symmetric_mat(tri);
-    auto const mat_l = Utils::tril_to_symmetric_mat(tri);
-    Testing::check_matrix(mat_u);
-    Testing::check_matrix(mat_l);
-  }
-
-  // 2x2 case
-  {
-    auto constexpr tri = Utils::Vector<int, 3>{1, 2, 3};
-    auto const mat_u = Utils::triu_to_symmetric_mat(tri);
-    auto const mat_l = Utils::tril_to_symmetric_mat(tri);
-    Testing::check_matrix(mat_u);
-    Testing::check_matrix(mat_l);
-  }
-
-  // 3x3 case
-  {
-    auto constexpr tri_u = Utils::Vector<int, 6>{1, 2, 4, 3, 5, 7};
-    auto constexpr tri_l = Utils::Vector<int, 6>{1, 2, 3, 4, 5, 7};
-    auto const mat_u = Utils::triu_to_symmetric_mat(tri_u);
-    auto const mat_l = Utils::tril_to_symmetric_mat(tri_l);
-    Testing::check_matrix(mat_u);
-    Testing::check_matrix(mat_l);
-  }
-
-  // 4x4 case
-  {
-    auto constexpr tri_u = Utils::Vector<int, 10>{1, 2, 4, 6, 3, 5, 8, 7, 9, 0};
-    auto constexpr tri_l = Utils::Vector<int, 10>{1, 2, 3, 4, 5, 7, 6, 8, 9, 0};
-    auto const mat_u = Utils::triu_to_symmetric_mat(tri_u);
-    auto const mat_l = Utils::tril_to_symmetric_mat(tri_l);
-    Testing::check_matrix(mat_u);
-    Testing::check_matrix(mat_l);
-  }
-}
-
 BOOST_AUTO_TEST_CASE(matrix_serialization) {
   Utils::Matrix<int, 2, 2> mat2{{8, 2}, {3, 4}};
 
@@ -165,6 +90,7 @@ BOOST_AUTO_TEST_CASE(type_deduction) {
                                            Utils::Vector<double, 2>, 2>::type,
                    Utils::Vector<double, 2>>::value,
       "");
+  BOOST_TEST_PASSPOINT();
 }
 
 BOOST_AUTO_TEST_CASE(matrix_matrix) {

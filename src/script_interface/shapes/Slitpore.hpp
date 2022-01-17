@@ -23,7 +23,10 @@
 #define SCRIPT_INTERFACE_SHAPES_SLITPORE_HPP
 
 #include "script_interface/shapes/Shape.hpp"
+
 #include <shapes/Slitpore.hpp>
+
+#include <memory>
 
 namespace ScriptInterface {
 namespace Shapes {

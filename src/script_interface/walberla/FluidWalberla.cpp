@@ -266,10 +266,11 @@ void FluidWalberla::save_checkpoint(std::string const &filename, int mode) {
 
 std::vector<Variant> FluidWalberla::get_average_pressure_tensor() const {
   auto const local = m_lb_fluid->get_pressure_tensor();
-  Utils::Vector6d lower_tri{};
-  boost::mpi::reduce(comm_cart, local, lower_tri, std::plus<>(), 0);
-  lower_tri /= m_conv_press;
-  auto const tensor = Utils::tril_to_symmetric_mat(lower_tri);
+  Utils::VectorXd<9> tensor_flat{};
+  boost::mpi::reduce(comm_cart, local, tensor_flat, std::plus<>(), 0);
+  tensor_flat /= m_conv_press;
+  auto tensor = Utils::Matrix<double, 3, 3>{};
+  std::copy(tensor_flat.begin(), tensor_flat.end(), tensor.m_data.begin());
   return std::vector<Variant>{tensor.row<0>().as_vector(),
                               tensor.row<1>().as_vector(),
                               tensor.row<2>().as_vector()};

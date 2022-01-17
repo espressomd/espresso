@@ -132,20 +132,20 @@ get_interpolated_density_at_pos(Utils::Vector3d pos) {
 
 REGISTER_CALLBACK_ONE_RANK(get_interpolated_density_at_pos)
 
-static Utils::Vector6d get_pressure_tensor() {
+static Utils::VectorXd<9> get_pressure_tensor() {
   return lb_walberla()->get_pressure_tensor();
 }
 
-REGISTER_CALLBACK_REDUCTION(get_pressure_tensor, std::plus<Utils::Vector6d>())
+REGISTER_CALLBACK_REDUCTION(get_pressure_tensor, std::plus<>())
 
 } // namespace Walberla
 #endif // LB_WALBERLA
 
-const Utils::Vector6d lb_lbfluid_get_pressure_tensor() {
+const Utils::VectorXd<9> lb_lbfluid_get_pressure_tensor() {
   if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
     return ::Communication::mpiCallbacks().call(
-        ::Communication::Result::reduction, std::plus<Utils::Vector6d>(),
+        ::Communication::Result::reduction, std::plus<>(),
         Walberla::get_pressure_tensor);
 #endif
   }

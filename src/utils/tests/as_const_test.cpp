@@ -29,6 +29,7 @@ BOOST_AUTO_TEST_CASE(non_const) {
   using actual = decltype(as_const(std::declval<volatile int &>()));
 
   static_assert(std::is_same<actual, expected>::value, "");
+  BOOST_TEST_PASSPOINT();
 }
 
 BOOST_AUTO_TEST_CASE(const_) {
@@ -36,6 +37,7 @@ BOOST_AUTO_TEST_CASE(const_) {
   using actual = decltype(as_const(std::declval<const volatile int &>()));
 
   static_assert(std::is_same<actual, expected>::value, "");
+  BOOST_TEST_PASSPOINT();
 }
 
 BOOST_AUTO_TEST_CASE(value) {

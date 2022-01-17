@@ -93,7 +93,7 @@ double lb_lbfluid_get_lattice_speed();
  *  over all nodes and dividing by the number of nodes.
  *  Returns the lower triangle of the LB pressure tensor.
  */
-const Utils::Vector6d lb_lbfluid_get_pressure_tensor();
+const Utils::VectorXd<9> lb_lbfluid_get_pressure_tensor();
 
 Utils::Vector3d lb_lbfluid_calc_fluid_momentum();
 

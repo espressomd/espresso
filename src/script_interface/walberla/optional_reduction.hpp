@@ -30,6 +30,7 @@
 
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/optional.hpp>
+#include <boost/serialization/vector.hpp>
 
 #include <cassert>
 #include <functional>
@@ -41,30 +42,32 @@ namespace ScriptInterface::walberla {
 /**
  * @brief Reduction of an optional value with unit conversion.
  *
- * @param result       optional value to reduce in-place on main rank
+ * @param result       optional value to reduce on main rank
  * @param conversion   unit conversion
  *
  * @return Reduced optional wrapped in a variant (on head node) or empty
  *         variant (on worker nodes)
  */
 template <typename T, bool Conversion = true>
-Variant optional_reduction_with_conversion(boost::optional<T> &result,
+Variant optional_reduction_with_conversion(boost::optional<T> const &result,
                                            double conversion) {
   assert(1 == boost::mpi::all_reduce(comm_cart, static_cast<int>(!!result),
                                      std::plus<>()) &&
          "Incorrect number of return values");
-  if (comm_cart.rank() == 0) {
-    T value;
-    if (!result) {
-      comm_cart.recv(boost::mpi::any_source, 42, value);
-    } else {
-      value = *result;
-    }
-    if constexpr (!Conversion) {
-      return Variant{value};
-    } else {
+  auto const conversion_handler = [conversion](T const &value) {
+    if constexpr (Conversion) {
       return Variant{value * (1. / conversion)};
+    } else {
+      return Variant{value};
     }
+  };
+  if (comm_cart.rank() == 0) {
+    if (result) {
+      return conversion_handler(*result);
+    }
+    T value;
+    comm_cart.recv(boost::mpi::any_source, 42, value);
+    return conversion_handler(value);
   } else if (result) {
     comm_cart.send(0, 42, *result);
   }
@@ -72,7 +75,7 @@ Variant optional_reduction_with_conversion(boost::optional<T> &result,
 }
 
 template <typename T>
-Variant optional_reduction_with_conversion(boost::optional<T> &result) {
+Variant optional_reduction_with_conversion(boost::optional<T> const &result) {
   return optional_reduction_with_conversion<T, false>(result, -1.);
 }
 

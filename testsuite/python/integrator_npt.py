@@ -51,10 +51,10 @@ class IntegratorNPT(ut.TestCase):
             self.system.integrator.set_isotropic_npt(ext_pressure=1, piston=-1)
         with self.assertRaises(RuntimeError):
             self.system.integrator.set_isotropic_npt(
-                ext_pressure=1, piston=1, direction=[0, 0, 0])
+                ext_pressure=1, piston=1, direction=[False, False, False])
         with self.assertRaises(Exception):
             self.system.integrator.set_isotropic_npt(
-                ext_pressure=1, piston=1, direction=[1, 0])
+                ext_pressure=1, piston=1, direction=[True, False])
 
     def test_integrator_recovery(self):
         # the system is still in a valid state after a failure
@@ -151,7 +151,8 @@ class IntegratorNPT(ut.TestCase):
             prefactor=1.0, accuracy=1e-2, mesh=3 * [36], cao=7, r_cut=1.0,
             alpha=2.995, tune=False)
         with self.assertRaisesRegex(RuntimeError, 'If magnetostatics is being used you must use the cubic box NpT'):
-            self.run_with_p3m(dp3m, cubic_box=False, direction=(0, 1, 1))
+            self.run_with_p3m(
+                dp3m, cubic_box=False, direction=(False, True, True))
         self.tearDown()
         try:
             self.run_with_p3m(dp3m)
@@ -166,7 +167,8 @@ class IntegratorNPT(ut.TestCase):
             prefactor=1.0, accuracy=1e-2, mesh=3 * [8], cao=3, r_cut=0.36,
             alpha=5.35, tune=False)
         with self.assertRaisesRegex(RuntimeError, 'If electrostatics is being used you must use the cubic box NpT'):
-            self.run_with_p3m(p3m, cubic_box=False, direction=(0, 1, 1))
+            self.run_with_p3m(
+                p3m, cubic_box=False, direction=(False, True, True))
         self.tearDown()
         try:
             self.run_with_p3m(p3m)

@@ -23,7 +23,6 @@
 #include "grid_based_algorithms/lb_interface.hpp"
 
 #include <utils/math/sqr.hpp>
-#include <utils/matrix.hpp>
 
 #include <cstddef>
 #include <vector>
@@ -35,9 +34,8 @@ public:
   std::vector<double> operator()() const override {
     auto const unit_conversion =
         1. / (lb_lbfluid_get_agrid() * Utils::sqr(lb_lbfluid_get_tau()));
-    auto const lower_tri = lb_lbfluid_get_pressure_tensor() * unit_conversion;
-    auto const tensor = Utils::tril_to_symmetric_mat(lower_tri);
-    return {tensor.begin(), tensor.end()};
+    auto const tensor = lb_lbfluid_get_pressure_tensor() * unit_conversion;
+    return tensor.as_vector();
   }
 };
 

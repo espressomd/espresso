@@ -208,9 +208,11 @@ class LBTest:
         obs = espressomd.observables.LBFluidPressureTensor()
         obs_pressure_tensor = obs.calculate()
         np.testing.assert_allclose(
-            pressure_tensor, obs_pressure_tensor, atol=1E-7)
+            pressure_tensor, obs_pressure_tensor,
+            atol=self.atol, rtol=self.rtol)
         np.testing.assert_allclose(
-            np.copy(lbf.pressure_tensor), obs_pressure_tensor, atol=1E-10)
+            np.copy(lbf.pressure_tensor), obs_pressure_tensor,
+            atol=1e-12, rtol=1e-12)
 
         self.assertIsInstance(
             lbf[0, 0, 0].pressure_tensor, espressomd.utils.array_locked)

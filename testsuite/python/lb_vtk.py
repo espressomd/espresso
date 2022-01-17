@@ -114,10 +114,14 @@ class LBWrite:
 
         # write VTK files
         vtk_obs = ['density', 'velocity_vector', 'pressure_tensor']
-        self.lbf.add_vtk_writer(label_vtk_continuous, vtk_obs, delta_N=1)
+        lb_vtk = self.lbf.add_vtk_writer(
+            label_vtk_continuous, vtk_obs, delta_N=1)
+        lb_vtk.disable()
+        lb_vtk.enable()
         self.system.integrator.run(n_steps)
         lb_vtk = self.lbf.add_vtk_writer(label_vtk_end, vtk_obs, delta_N=0)
         lb_vtk.write()
+        self.assertEqual(sorted(lb_vtk.observables), sorted(vtk_obs))
 
         # check VTK files exist
         for filepath in filepaths:

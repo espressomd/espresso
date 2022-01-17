@@ -54,17 +54,18 @@ public:
              const char *file, int line);
 
   /**
-   * \brief Return the number of all flying messages.
+   * \brief Get the number of all flying messages on all nodes.
    *
    * @return Total number of messages.
    */
   int count() const;
 
   /**
-   * \brief Number of Messages that have at least level level.
+   * \brief Get the number of messages that have at least severity
+   * @p level on this node.
    *
    * @param level Severity filter.
-   * @return Number of Messages that have at least level.
+   * @return Number of messages that match the filter.
    */
   int count(RuntimeError::ErrorLevel level);
 

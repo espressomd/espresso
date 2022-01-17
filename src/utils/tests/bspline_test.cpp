@@ -26,6 +26,7 @@
 #include <boost/mpl/list.hpp>
 
 #include <array>
+#include <stdexcept>
 
 template <typename T, T... values>
 using integer_list = boost::mpl::list<boost::mpl::integral_c<T, values>...>;
@@ -82,4 +83,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(bspline_derivatives, T, test_bspline_orders) {
       BOOST_CHECK_SMALL(d_val - d_ref, tol);
     }
   }
+}
+
+BOOST_AUTO_TEST_CASE(exceptions) {
+  BOOST_CHECK_THROW((Utils::bspline<2, double>(-100, 0.)), std::runtime_error);
+  BOOST_CHECK_THROW((Utils::bspline_d<2, float>(-1, 0.f)), std::runtime_error);
 }
