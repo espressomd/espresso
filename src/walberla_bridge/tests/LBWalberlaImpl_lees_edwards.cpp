@@ -52,6 +52,7 @@ using Utils::Vector3d;
 using Utils::Vector3i;
 
 namespace bdata = boost::unit_test::data;
+constexpr const double v0 = 0.064;
 
 Vector3i mpi_shape{};
 BOOST_AUTO_TEST_CASE(test_lees_edwards) {
@@ -60,9 +61,9 @@ BOOST_AUTO_TEST_CASE(test_lees_edwards) {
   auto lattice =
       std::make_shared<LatticeWalberla>(Vector3i{8, 64, 8}, mpi_shape, 1);
   auto lb = walberla::LBWalberlaImpl<double>(lattice, viscosity, density);
-  double v0 = 0.064;
-  lb.set_collision_model(LeesEdwardsPack(
-      0, 1, [&]() { return 0.0; }, [&]() { return v0; }));
+  auto le_pack = LeesEdwardsPack(
+      0, 1, [&]() { return 0.0; }, [=]() { return v0; });
+  lb.set_collision_model(std::move(le_pack));
   for (int i = 0; i < 22000; i++) {
     lb.integrate();
     if (i % 100 == 0) {

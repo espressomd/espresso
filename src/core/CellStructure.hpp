@@ -34,13 +34,9 @@
 #include "bond_error.hpp"
 #include "ghosts.hpp"
 
-<<<<<<< HEAD
 #include "utils/math/sqr.hpp"
-=======
-#include <utils/math/sqr.hpp>
 
->>>>>>> 79115df888adc1e9b78d6233674695c70fb452e8
-    #include < boost / algorithm / cxx11 / any_of.hpp>
+#include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/container/static_vector.hpp>
 #include <boost/iterator/indirect_iterator.hpp>
 #include <boost/range/algorithm/find_if.hpp>
@@ -52,7 +48,7 @@
 #include <utility>
 #include <vector>
 
-                                           extern BoxGeometry box_geo;
+extern BoxGeometry box_geo;
 
 /** Cell Structure */
 enum CellStructureType : int {
