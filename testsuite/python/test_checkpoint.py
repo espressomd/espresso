@@ -329,7 +329,9 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(
             ibm_volcons_bond.params, {'softID': 15, 'kappaV': 0.01})
         if 'DP3M.CPU' not in modes:
-            self.assertEqual(ibm_tribend_bond.params, {'kb': 2., 'theta0': 0.})
+            self.assertEqual(
+                ibm_tribend_bond.params,
+                {'kb': 2., 'theta0': 0., 'refShape': 'Initial'})
         self.assertEqual(
             ibm_triel_bond.params,
             {'k1': 1.1, 'k2': 1.2, 'maxDist': 1.6, 'elasticLaw': 'NeoHookean'})
