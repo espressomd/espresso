@@ -323,7 +323,6 @@ target_compile_options(
             # disable warnings from -Wextra
             -Wno-sign-compare
             -Wno-unused-function
-            -Wno-unused-variable
             -Wno-unused-parameter
             -Wno-missing-braces
             $<$<CXX_COMPILER_ID:GNU>:-Wno-clobbered>

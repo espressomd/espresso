@@ -192,7 +192,7 @@ inline void add_non_bonded_pair_energy(Particle const &p1, Particle const &p2,
 #ifdef ELECTROSTATICS
   if (!obs_energy.coulomb.empty())
     obs_energy.coulomb[0] +=
-        Coulomb::pair_energy(p1, p2, p1.p.q * p2.p.q, d, dist, dist2);
+        Coulomb::pair_energy(p1, p2, p1.p.q * p2.p.q, d, dist);
 #endif
 
 #ifdef DIPOLES

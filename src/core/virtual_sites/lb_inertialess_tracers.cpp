@@ -48,7 +48,6 @@ bool *isHaloCache = nullptr;
 
 namespace {
 bool in_local_domain(Utils::Vector3d const &pos) {
-  auto const lblattice = lb_lbfluid_get_lattice();
   auto const my_left = local_geo.my_left();
   auto const my_right = local_geo.my_right();
 

@@ -82,9 +82,8 @@ inline boost::optional<double>
 BondedCoulombSR::energy(Particle const &p1, Particle const &p2,
                         Utils::Vector3d const &dx) const {
 #ifdef ELECTROSTATICS
-  auto const dist2 = dx.norm2();
-  auto const dist = sqrt(dist2);
-  return Coulomb::pair_energy(p1, p2, q1q2, dx, dist, dist2);
+  auto const dist = dx.norm();
+  return Coulomb::pair_energy(p1, p2, q1q2, dx, dist);
 #else
   return .0;
 #endif

@@ -69,7 +69,7 @@ void add_mmm1d_coulomb_pair_force(double chpref, Utils::Vector3d const &d,
                                   double r, Utils::Vector3d &force);
 
 double mmm1d_coulomb_pair_energy(double q1q2, Utils::Vector3d const &d,
-                                 double r2, double r);
+                                 double r);
 
 /** Tuning of the parameters which are not set by the user. Tune either the
  *  @ref MMM1DParameters::far_switch_radius_2 "switching radius" or the

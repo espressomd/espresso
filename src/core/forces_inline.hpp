@@ -343,7 +343,7 @@ calc_bonded_three_body_force(Bonded_IA_Parameters const &iaparams,
 inline bool add_bonded_three_body_force(Bonded_IA_Parameters const &iaparams,
                                         Particle &p1, Particle &p2,
                                         Particle &p3) {
-  if (auto const *iap = boost::get<OifGlobalForcesBond>(&iaparams)) {
+  if (boost::get<OifGlobalForcesBond>(&iaparams)) {
     return false;
   }
   auto const result = calc_bonded_three_body_force(iaparams, p1, p2, p3);

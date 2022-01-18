@@ -70,8 +70,8 @@ void force_calc_icc(CellStructure &cell_structure,
  *  contributions are calculated
  */
 inline void add_non_bonded_pair_force_icc(Particle &p1, Particle &p2,
-                                          Utils::Vector3d const &d, double dist,
-                                          double dist2) {
+                                          Utils::Vector3d const &d,
+                                          double dist) {
   auto forces = Coulomb::pair_force(p1, p2, d, dist);
 
   p1.f.f += std::get<0>(forces);
@@ -193,7 +193,7 @@ void force_calc_icc(CellStructure &cell_structure,
   // calc ICC forces
   cell_structure.non_bonded_loop(
       [](Particle &p1, Particle &p2, Distance const &d) {
-        add_non_bonded_pair_force_icc(p1, p2, d.vec21, sqrt(d.dist2), d.dist2);
+        add_non_bonded_pair_force_icc(p1, p2, d.vec21, sqrt(d.dist2));
       });
 
   Coulomb::calc_long_range_force(particles);

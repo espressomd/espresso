@@ -115,9 +115,8 @@ static void dp3m_calc_influence_function_energy();
  */
 static void dp3m_compute_constants_energy_dipolar();
 
-static double dp3m_k_space_error(double box_size, double prefac, int mesh,
-                                 int cao, int n_c_part, double sum_q2,
-                                 double alpha_L);
+static double dp3m_k_space_error(double box_size, int mesh, int cao,
+                                 int n_c_part, double sum_q2, double alpha_L);
 /**@}*/
 
 /** Compute the dipolar surface terms */
@@ -128,8 +127,8 @@ static double calc_surface_term(bool force_flag, bool energy_flag,
 /************************************************************/
 /**@{*/
 
-double dp3m_real_space_error(double box_size, double prefac, double r_cut_iL,
-                             int n_c_part, double sum_q2, double alpha_L);
+double dp3m_real_space_error(double box_size, double r_cut_iL, int n_c_part,
+                             double sum_q2, double alpha_L);
 static void dp3m_tune_aliasing_sums(int nx, int ny, int nz, int mesh,
                                     double mesh_i, int cao, double alpha_L_i,
                                     double *alias1, double *alias2);
@@ -137,9 +136,9 @@ static void dp3m_tune_aliasing_sums(int nx, int ny, int nz, int mesh,
 /** Compute the value of alpha through a bisection method.
  *  Based on eq. (33) @cite wang01a.
  */
-double dp3m_rtbisection(double box_size, double prefac, double r_cut_iL,
-                        int n_c_part, double sum_q2, double x1, double x2,
-                        double xacc, double tuned_accuracy);
+double dp3m_rtbisection(double box_size, double r_cut_iL, int n_c_part,
+                        double sum_q2, double x1, double x2, double xacc,
+                        double tuned_accuracy);
 
 /**@}*/
 
@@ -748,16 +747,15 @@ double dp3m_get_accuracy(int mesh, int cao, double r_cut_iL, double *_alpha_L,
 
   // Alpha cannot be zero in the dipolar case because real_space formula breaks
   // down
-  rs_err =
-      dp3m_real_space_error(box_geo.length()[0], dipole.prefactor, r_cut_iL,
-                            dp3m.sum_dip_part, dp3m.sum_mu2, 0.001);
+  rs_err = dp3m_real_space_error(box_geo.length()[0], r_cut_iL,
+                                 dp3m.sum_dip_part, dp3m.sum_mu2, 0.001);
 
   if (Utils::sqrt_2() * rs_err > dp3m.params.accuracy) {
     /* assume rs_err = ks_err -> rs_err = accuracy/sqrt(2.0) -> alpha_L */
-    alpha_L = dp3m_rtbisection(
-        box_geo.length()[0], dipole.prefactor, r_cut_iL, dp3m.sum_dip_part,
-        dp3m.sum_mu2, 0.0001 * box_geo.length()[0], 5.0 * box_geo.length()[0],
-        0.0001, dp3m.params.accuracy);
+    alpha_L = dp3m_rtbisection(box_geo.length()[0], r_cut_iL, dp3m.sum_dip_part,
+                               dp3m.sum_mu2, 0.0001 * box_geo.length()[0],
+                               5.0 * box_geo.length()[0], 0.0001,
+                               dp3m.params.accuracy);
     if (alpha_L == -DP3M_RTBISECTION_ERROR) {
       *_rs_err = -1;
       *_ks_err = -1;
@@ -774,11 +772,10 @@ double dp3m_get_accuracy(int mesh, int cao, double r_cut_iL, double *_alpha_L,
   *_alpha_L = alpha_L;
   /* calculate real space and k-space error for this alpha_L */
 
-  rs_err =
-      dp3m_real_space_error(box_geo.length()[0], dipole.prefactor, r_cut_iL,
-                            dp3m.sum_dip_part, dp3m.sum_mu2, alpha_L);
-  ks_err = dp3m_k_space_error(box_geo.length()[0], dipole.prefactor, mesh, cao,
-                              dp3m.sum_dip_part, dp3m.sum_mu2, alpha_L);
+  rs_err = dp3m_real_space_error(box_geo.length()[0], r_cut_iL,
+                                 dp3m.sum_dip_part, dp3m.sum_mu2, alpha_L);
+  ks_err = dp3m_k_space_error(box_geo.length()[0], mesh, cao, dp3m.sum_dip_part,
+                              dp3m.sum_mu2, alpha_L);
 
   *_rs_err = rs_err;
   *_ks_err = ks_err;
@@ -1246,9 +1243,8 @@ void dp3m_count_magnetic_particles() {
 REGISTER_CALLBACK(dp3m_count_magnetic_particles)
 
 /** Calculate the k-space error of dipolar-P3M */
-static double dp3m_k_space_error(double box_size, double prefac, int mesh,
-                                 int cao, int n_c_part, double sum_q2,
-                                 double alpha_L) {
+static double dp3m_k_space_error(double box_size, int mesh, int cao,
+                                 int n_c_part, double sum_q2, double alpha_L) {
   double he_q = 0.0;
   auto const mesh_i = 1. / mesh;
   auto const alpha_L_i = 1. / alpha_L;
@@ -1313,8 +1309,8 @@ void dp3m_tune_aliasing_sums(int nx, int ny, int nz, int mesh, double mesh_i,
  *  Please note that in this more refined approach we don't use
  *  eq. (37), but eq. (33) which maintains all the powers in alpha.
  */
-double dp3m_real_space_error(double box_size, double prefac, double r_cut_iL,
-                             int n_c_part, double sum_q2, double alpha_L) {
+double dp3m_real_space_error(double box_size, double r_cut_iL, int n_c_part,
+                             double sum_q2, double alpha_L) {
   double d_error_f, d_cc, d_dc, d_rcut2, d_con;
   double d_a2, d_c, d_RCUT;
 
@@ -1346,18 +1342,18 @@ double dp3m_real_space_error(double box_size, double prefac, double r_cut_iL,
  *  known to lie between x1 and x2. The root, returned as rtbis, will be
  *  refined until its accuracy is \f$\pm\f$ @p xacc.
  */
-double dp3m_rtbisection(double box_size, double prefac, double r_cut_iL,
-                        int n_c_part, double sum_q2, double x1, double x2,
-                        double xacc, double tuned_accuracy) {
+double dp3m_rtbisection(double box_size, double r_cut_iL, int n_c_part,
+                        double sum_q2, double x1, double x2, double xacc,
+                        double tuned_accuracy) {
   constexpr int JJ_RTBIS_MAX = 40;
 
   auto const constant = tuned_accuracy / Utils::sqrt_2();
 
   auto const f1 =
-      dp3m_real_space_error(box_size, prefac, r_cut_iL, n_c_part, sum_q2, x1) -
+      dp3m_real_space_error(box_size, r_cut_iL, n_c_part, sum_q2, x1) -
       constant;
   auto const f2 =
-      dp3m_real_space_error(box_size, prefac, r_cut_iL, n_c_part, sum_q2, x2) -
+      dp3m_real_space_error(box_size, r_cut_iL, n_c_part, sum_q2, x2) -
       constant;
   if (f1 * f2 >= 0.0) {
     runtimeErrorMsg()
@@ -1369,9 +1365,9 @@ double dp3m_rtbisection(double box_size, double prefac, double r_cut_iL,
   double rtb = f1 < 0.0 ? (dx = x2 - x1, x1) : (dx = x1 - x2, x2);
   for (int j = 1; j <= JJ_RTBIS_MAX; j++) {
     auto const xmid = rtb + (dx *= 0.5);
-    auto const fmid = dp3m_real_space_error(box_size, prefac, r_cut_iL,
-                                            n_c_part, sum_q2, xmid) -
-                      constant;
+    auto const fmid =
+        dp3m_real_space_error(box_size, r_cut_iL, n_c_part, sum_q2, xmid) -
+        constant;
     if (fmid <= 0.0)
       rtb = xmid;
     if (fabs(dx) < xacc || fmid == 0.0)

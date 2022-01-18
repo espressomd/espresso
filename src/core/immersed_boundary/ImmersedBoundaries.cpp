@@ -104,7 +104,6 @@ void ImmersedBoundaries::calc_volumes(CellStructure &cs) {
   // Loop over all particles on local node
   cs.bond_loop([&tempVol](Particle &p1, int bond_id,
                           Utils::Span<Particle *> partners) {
-    auto const &iaparams = *bonded_ia_params.at(bond_id);
     auto vol_cons_params = vol_cons_parameters(p1);
 
     if (vol_cons_params &&

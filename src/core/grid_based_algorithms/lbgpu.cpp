@@ -76,14 +76,10 @@ LB_parameters_gpu lbpar_gpu = {
     // number_of_boundnodes
     0,
 #endif
-    // calc_val
-    1,
     // external_force
     0,
     // ext_force
     {0.0, 0.0, 0.0},
-    // reinit
-    0,
     // Thermal energy
     0.0};
 
@@ -99,7 +95,6 @@ void lb_reinit_fluid_gpu() {
   if (lbpar_gpu.number_of_nodes != 0) {
     lb_reinit_GPU(&lbpar_gpu);
     lb_reinit_extern_nodeforce_GPU(&lbpar_gpu);
-    lbpar_gpu.reinit = 1;
   }
 }
 

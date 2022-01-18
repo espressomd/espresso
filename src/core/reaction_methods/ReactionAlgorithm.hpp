@@ -125,8 +125,7 @@ protected:
   std::vector<std::pair<int, Utils::Vector3d>>
   generate_new_particle_positions(int type, int n_particles);
   void
-  restore_properties(std::vector<StoredParticleProperty> const &property_list,
-                     int number_of_saved_properties);
+  restore_properties(std::vector<StoredParticleProperty> const &property_list);
 
   /**
    * @brief draws a random integer from the uniform distribution in the range

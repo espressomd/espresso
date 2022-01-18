@@ -35,7 +35,7 @@
 
 BOOST_AUTO_TEST_CASE(test_noise_statistics) {
   constexpr std::size_t const sample_size = 60'000;
-  constexpr std::size_t const x = 0, y = 1, z = 2;
+  constexpr std::size_t const x = 0, y = 1;
   constexpr double const tol = 1e-12;
 
   double value = 1;

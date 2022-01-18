@@ -1221,7 +1221,6 @@ velocity_interpolation(LB_nodes_gpu n_a, float const *particle_position,
  *  @param[in,out] particle_force  Particle force
  *  @param[in]  part_index         Particle id / thread id
  *  @param[out] node_index         Node index around (8) particle
- *  @param[in]  d_v                Local device values
  *  @param[in]  flag_cs            Determine if we are at the centre (0,
  *                                 typical) or at the source (1, swimmer only)
  *  @param[in]  philox_counter     Philox counter
@@ -1235,8 +1234,8 @@ __device__ void calc_viscous_force(
     LB_nodes_gpu n_a, Utils::Array<float, no_of_neighbours> &delta,
     CUDA_particle_data *particle_data, float *particle_force,
     unsigned int part_index, float *delta_j,
-    Utils::Array<unsigned int, no_of_neighbours> &node_index, LB_rho_v_gpu *d_v,
-    bool flag_cs, uint64_t philox_counter, float friction, float time_step) {
+    Utils::Array<unsigned int, no_of_neighbours> &node_index, bool flag_cs,
+    uint64_t philox_counter, float friction, float time_step) {
   auto const flag_cs_float = static_cast<float>(flag_cs);
   // Zero out workspace
 #pragma unroll
@@ -1264,7 +1263,7 @@ __device__ void calc_viscous_force(
 
 #ifdef ENGINE
   // First calculate interpolated velocity for dipole source,
-  // such that we don't overwrite mode, d_v, etc. for the rest of the function
+  // such that we don't overwrite mode, etc. for the rest of the function
   float direction = float(particle_data[part_index].swim.push_pull) *
                     particle_data[part_index].swim.dipole_length;
   // Extrapolate position by dipole length if we are at the centre of the
@@ -1863,7 +1862,6 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
  *  @param[in,out]  particle_data   Particle position and velocity
  *  @param[in,out]  particle_force  Particle force
  *  @param[out] node_f              Local node force
- *  @param[in]  d_v                 Local device values
  *  @param[in]  couple_virtual      If true, virtual particles are also coupled
  *  @param[in]  philox_counter      Philox counter
  *  @param[in]  friction            Friction constant for the particle coupling
@@ -1872,11 +1870,12 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
  *                                  interpolation
  */
 template <std::size_t no_of_neighbours>
-__global__ void calc_fluid_particle_ia(
-    LB_nodes_gpu n_a, Utils::Span<CUDA_particle_data> particle_data,
-    float *particle_force, LB_node_force_density_gpu node_f, LB_rho_v_gpu *d_v,
-    bool couple_virtual, uint64_t philox_counter, float friction,
-    float time_step) {
+__global__ void
+calc_fluid_particle_ia(LB_nodes_gpu n_a,
+                       Utils::Span<CUDA_particle_data> particle_data,
+                       float *particle_force, LB_node_force_density_gpu node_f,
+                       bool couple_virtual, uint64_t philox_counter,
+                       float friction, float time_step) {
 
   unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x +
                             blockDim.x * blockIdx.x + threadIdx.x;
@@ -1892,15 +1891,14 @@ __global__ void calc_fluid_particle_ia(
        * force that acts back onto the fluid. */
       calc_viscous_force<no_of_neighbours>(
           n_a, delta, particle_data.data(), particle_force, part_index, delta_j,
-          node_index, d_v, false, philox_counter, friction, time_step);
+          node_index, false, philox_counter, friction, time_step);
       calc_node_force<no_of_neighbours>(delta, delta_j, node_index, node_f);
 
 #ifdef ENGINE
       if (particle_data[part_index].swim.swimming) {
         calc_viscous_force<no_of_neighbours>(
             n_a, delta, particle_data.data(), particle_force, part_index,
-            delta_j, node_index, d_v, true, philox_counter, friction,
-            time_step);
+            delta_j, node_index, true, philox_counter, friction, time_step);
         calc_node_force<no_of_neighbours>(delta, delta_j, node_index, node_f);
       }
 #endif
@@ -1982,8 +1980,8 @@ __global__ void lb_print_node(unsigned int single_nodeindex,
   }
 }
 
-__global__ void momentum(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v,
-                         LB_node_force_density_gpu node_f, float *sum) {
+__global__ void momentum(LB_nodes_gpu n_a, LB_node_force_density_gpu node_f,
+                         float *sum) {
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x +
                        blockDim.x * blockIdx.x + threadIdx.x;
 
@@ -2039,10 +2037,6 @@ void lb_get_boundary_force_pointer(float **pointer_address) {
 #ifdef LB_BOUNDARIES_GPU
   *pointer_address = lb_boundary_force;
 #endif
-}
-
-void lb_get_device_values_pointer(LB_rho_v_gpu **pointer_address) {
-  *pointer_address = device_rho_v;
 }
 
 /** Initialization for the lb gpu fluid called from host
@@ -2231,16 +2225,15 @@ void lb_calc_particle_lattice_ia_gpu(bool couple_virtual, double friction,
     assert(rng_counter_coupling_gpu);
     KERNELCALL(calc_fluid_particle_ia<no_of_neighbours>, dim_grid,
                threads_per_block, *current_nodes, device_particles,
-               gpu_get_particle_force_pointer(), node_f, device_rho_v,
-               couple_virtual, rng_counter_coupling_gpu->value(),
-               static_cast<float>(friction), static_cast<float>(time_step));
+               gpu_get_particle_force_pointer(), node_f, couple_virtual,
+               rng_counter_coupling_gpu->value(), static_cast<float>(friction),
+               static_cast<float>(time_step));
   } else {
     // We use a dummy value for the RNG counter if no temperature is set.
     KERNELCALL(calc_fluid_particle_ia<no_of_neighbours>, dim_grid,
                threads_per_block, *current_nodes, device_particles,
-               gpu_get_particle_force_pointer(), node_f, device_rho_v,
-               couple_virtual, 0, static_cast<float>(friction),
-               static_cast<float>(time_step));
+               gpu_get_particle_force_pointer(), node_f, couple_virtual, 0,
+               static_cast<float>(friction), static_cast<float>(time_step));
   }
 }
 template void lb_calc_particle_lattice_ia_gpu<8>(bool couple_virtual,
@@ -2343,8 +2336,8 @@ void lb_calc_fluid_momentum_GPU(double *host_mom) {
   dim3 dim_grid =
       calculate_dim_grid(lbpar_gpu.number_of_nodes, 4, threads_per_block);
 
-  KERNELCALL(momentum, dim_grid, threads_per_block, *current_nodes,
-             device_rho_v, node_f, tot_momentum);
+  KERNELCALL(momentum, dim_grid, threads_per_block, *current_nodes, node_f,
+             tot_momentum);
 
   cuda_safe_mem(cudaMemcpy(host_momentum, tot_momentum, 3 * sizeof(float),
                            cudaMemcpyDeviceToHost));

@@ -250,8 +250,7 @@ ReactionAlgorithm::make_reaction_attempt(
  * when a reaction attempt is rejected.
  */
 void ReactionAlgorithm::restore_properties(
-    std::vector<StoredParticleProperty> const &property_list,
-    const int number_of_saved_properties) {
+    std::vector<StoredParticleProperty> const &property_list) {
   // this function restores all properties of all particles provided in the
   // property list, the format of the property list is (p_id,charge,type)
   // repeated for each particle that occurs in that list
@@ -303,9 +302,6 @@ void ReactionAlgorithm::generic_oneway_reaction(
   std::vector<int> p_ids_created_particles;
   std::vector<StoredParticleProperty> hidden_particles_properties;
   std::vector<StoredParticleProperty> changed_particles_properties;
-  // save p_id, charge and type of the reactant particle, only thing we
-  // need to hide the particle and recover it
-  const int number_of_saved_properties = 3;
 
   std::tie(changed_particles_properties, p_ids_created_particles,
            hidden_particles_properties) =
@@ -353,10 +349,9 @@ void ReactionAlgorithm::generic_oneway_reaction(
       delete_particle(p_ids_created_particle);
     }
     // 2) restore previously hidden reactant particles
-    restore_properties(hidden_particles_properties, number_of_saved_properties);
+    restore_properties(hidden_particles_properties);
     // 3) restore previously changed reactant particles
-    restore_properties(changed_particles_properties,
-                       number_of_saved_properties);
+    restore_properties(changed_particles_properties);
   }
 }
 

@@ -1100,8 +1100,6 @@ void lb_lbnode_set_pop(const Utils::Vector3i &ind,
   }
 }
 
-const Lattice &lb_lbfluid_get_lattice() { return lblattice; }
-
 ActiveLB lb_lbfluid_get_lattice_switch() { return lattice_switch; }
 
 static void mpi_lb_lbfluid_calc_fluid_momentum_local() {

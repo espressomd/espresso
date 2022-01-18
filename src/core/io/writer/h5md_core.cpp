@@ -188,8 +188,7 @@ void File::load_file(const std::string &file_path) {
   load_datasets();
 }
 
-void write_box(const BoxGeometry &geometry, const h5xx::file &h5md_file,
-               h5xx::dataset &dataset) {
+static void write_box(const BoxGeometry &geometry, h5xx::dataset &dataset) {
   auto const extents = static_cast<h5xx::dataspace>(dataset).extents();
   extend_dataset(dataset, Vector2hs{1, 0});
   h5xx::write_dataset(dataset, geometry.length(),
@@ -304,7 +303,7 @@ void write_td_particle_property(hsize_t prefix, hsize_t n_part_global,
 
 void File::write(const ParticleRange &particles, double time, int step,
                  BoxGeometry const &geometry) {
-  write_box(geometry, m_h5md_file, datasets["particles/atoms/box/edges/value"]);
+  write_box(geometry, datasets["particles/atoms/box/edges/value"]);
   write_connectivity(particles);
 
   int const n_part_local = particles.size();

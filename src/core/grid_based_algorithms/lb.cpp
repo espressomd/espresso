@@ -190,15 +190,15 @@ HaloCommunicator update_halo_comm = HaloCommunicator(0);
 
 /**
  * @brief Initialize fluid nodes.
- * @param[out] fields         Vector containing the fluid nodes
+ * @param[out] lb_fields      Vector containing the fluid nodes
  * @param[in]  lb_parameters  Parameters for the LB
  * @param[in]  lb_lattice     Lattice instance
  */
-void lb_initialize_fields(std::vector<LB_FluidNode> &fields,
+void lb_initialize_fields(std::vector<LB_FluidNode> &lb_fields,
                           LB_Parameters const &lb_parameters,
                           Lattice const &lb_lattice) {
-  fields.resize(lb_lattice.halo_grid_volume);
-  for (auto &field : fields) {
+  lb_fields.resize(lb_lattice.halo_grid_volume);
+  for (auto &field : lb_fields) {
     field.force_density = lb_parameters.ext_force_density;
 #ifdef LB_BOUNDARIES
     field.boundary = false;
@@ -273,7 +273,7 @@ void lb_reinit_fluid(std::vector<LB_FluidNode> &lb_fields,
                      Lattice const &lb_lattice,
                      LB_Parameters const &lb_parameters) {
   lb_set_equilibrium_populations(lb_lattice, lb_parameters);
-  lb_initialize_fields(lbfields, lb_parameters, lb_lattice);
+  lb_initialize_fields(lb_fields, lb_parameters, lb_lattice);
 }
 
 void lb_reinit_parameters(LB_Parameters &lb_parameters) {

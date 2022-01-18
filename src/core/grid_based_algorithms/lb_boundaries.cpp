@@ -231,8 +231,6 @@ void lb_init_boundaries() {
 #endif /* defined (CUDA) && defined (LB_BOUNDARIES_GPU) */
   } else if (lattice_switch == ActiveLB::CPU) {
 #if defined(LB_BOUNDARIES)
-    auto const lblattice = lb_lbfluid_get_lattice();
-
     boost::for_each(lbfields, [](auto &f) { f.boundary = 0; });
 
     auto const node_pos = calc_node_pos(comm_cart);
