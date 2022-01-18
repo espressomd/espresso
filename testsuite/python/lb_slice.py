@@ -82,11 +82,10 @@ class LBSliceTest(ut.TestCase):
         with self.assertRaisesRegex(ValueError, r"Input-dimensions of 'population' array \(10, 10, 10, 5\) does not match slice dimensions \(10, 10, 10, 19\)"):
             lb_fluid[:, :, :].population = input_pop[:, :, :, :5]
 
-        # TODO Walberla: uncomment this block when pressure tensor is available
         # pressure tensor on test slice [3, 6, 2:5]
         output_pressure_shape = lb_fluid[3, 6, 2:5].pressure_tensor.shape
         should_pressure_shape = (1, 1, 3, 3, 3)
-        np.testing.assert_array_almost_equal(
+        np.testing.assert_array_equal(
             output_pressure_shape, should_pressure_shape)
 
         with self.assertRaisesRegex(RuntimeError, "Property 'pressure_tensor' is read-only"):
@@ -96,16 +95,34 @@ class LBSliceTest(ut.TestCase):
         # index on test slice [1, 1:5, 6:]
         output_index_shape = lb_fluid[1, 1:5, 6:].index.shape
         should_index_shape = (1, 4, 4, 3)
-        np.testing.assert_array_almost_equal(
+        np.testing.assert_array_equal(
             output_index_shape, should_index_shape)
 
         with self.assertRaisesRegex(RuntimeError, "Parameter 'index' is read-only"):
             lb_fluid[1, 1:5, 6:].index = np.zeros(output_index_shape)
 
+        # boundary velocity on test slice [1:, 1:, 1:]
+        output_boundary_shape = lb_fluid[1:, 1:, 1:].boundary.shape
+        should_boundary_shape = (9, 9, 9)
+        np.testing.assert_array_equal(
+            output_boundary_shape, should_boundary_shape)
+
+        with self.assertRaisesRegex(TypeError, "values must be instances of VelocityBounceBack or None"):
+            lb_fluid[1:, 1:, 1:].boundary = np.zeros(should_boundary_shape)
+
+        vbb_ref = espressomd.lb.VelocityBounceBack([1e-6, 2e-6, 3e-6])
+        lb_fluid[1:2, 1:, 0].boundary = vbb_ref
+        lb_fluid[1:2, 2:, 0].boundary = None
+        for vbb in lb_fluid[1:2, 1, 0].boundary.flatten():
+            np.testing.assert_array_almost_equal(
+                vbb.velocity, vbb_ref.velocity)
+        for vbb in lb_fluid[1:2, 2, 0:2].boundary.flatten():
+            self.assertIsNone(vbb)
+
         # is_boundary on test slice [1:, 1:, 1:]
         output_boundary_shape = lb_fluid[1:, 1:, 1:].is_boundary.shape
         should_boundary_shape = (9, 9, 9)
-        np.testing.assert_array_almost_equal(
+        np.testing.assert_array_equal(
             output_boundary_shape, should_boundary_shape)
 
         with self.assertRaisesRegex(RuntimeError, "Property 'is_boundary' is read-only"):
@@ -128,9 +145,9 @@ class LBSliceTest(ut.TestCase):
         lb_slice = lb_fluid[1, 2, i:i + 10]
         self.assertEqual(lb_slice.density.shape, (0,))
         self.assertIsInstance(lb_slice.density.dtype, object)
-        self.assertEqual(list(lb_slice.x_indices), [1])
-        self.assertEqual(list(lb_slice.y_indices), [2])
-        self.assertEqual(list(lb_slice.z_indices), [])
+        self.assertEqual(list(lb_slice.indices[0]), [1])
+        self.assertEqual(list(lb_slice.indices[1]), [2])
+        self.assertEqual(list(lb_slice.indices[2]), [])
         np.testing.assert_array_equal(
             np.copy(lb_fluid[1, 2, 8:i].index),
             np.copy(lb_fluid[1, 2, 8:].index))
@@ -140,15 +157,12 @@ class LBSliceTest(ut.TestCase):
     def test_iterator(self):
         lbslice_handle = self.lb_fluid[:, :, :]
         # arrange node indices using class methods
-        i_handle, j_handle, k_handle = lbslice_handle.x_indices, lbslice_handle.y_indices, lbslice_handle.z_indices
-        arranged_indices = [
-            (x, y, z) for (
-                x, y, z) in itertools.product(
-                i_handle, j_handle, k_handle)]
+        arranged_indices = list(itertools.product(*lbslice_handle.indices))
         # arrange node indices using __iter__() enforced conversion
-        iterator_indices = [x.index for x in lbslice_handle]
+        iterator_indices = [node.index for node in lbslice_handle]
         # check the results correspond pairwise. order is implicitly preserved.
-        # uses __eq()__ method form LBFluidRoutines()
+        np.testing.assert_array_equal(arranged_indices, iterator_indices)
+        # use __eq()__ method form LBFluidRoutines()
         assert all([x == y for x, y in zip(
             arranged_indices, iterator_indices)])
 

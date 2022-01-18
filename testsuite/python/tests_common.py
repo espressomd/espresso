@@ -600,17 +600,6 @@ def gay_berne_potential(r_ij, u_i, u_j, epsilon_0, sigma_0, mu, nu, k_1, k_2):
     return 4. * epsilon * (rr**-12 - rr**-6)
 
 
-def count_fluid_nodes(lbf):
-    """Counts the non-boundary nodes in the passed lb fluid instance."""
-
-    fluid_nodes = 0
-    for n in lbf.nodes():
-        if not n.is_boundary:
-            fluid_nodes += 1
-
-    return fluid_nodes
-
-
 def fold_index(idx, shape):
     """Fold index into the range 0<x<shape"""
 

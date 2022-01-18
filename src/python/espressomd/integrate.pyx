@@ -380,7 +380,7 @@ IF NPT:
             check_type_or_throw_except(
                 self._params["piston"], 1, float, "piston must be a float")
             check_type_or_throw_except(
-                self._params["direction"], 3, int, "direction must be an array-like of 3 bools")
+                self._params["direction"], 3, bool, "direction must be an array-like of 3 bools")
             check_type_or_throw_except(
                 self._params["cubic_box"], 1, int, "cubic_box must be a bool")
 

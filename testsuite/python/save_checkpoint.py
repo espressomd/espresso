@@ -160,7 +160,7 @@ if 'LB.OFF' in modes:
     # set integrator
     if 'INT.NPT' in modes and espressomd.has_features('NPT'):
         system.integrator.set_isotropic_npt(ext_pressure=2.0, piston=0.01,
-                                            direction=[1, 0, 0])
+                                            direction=[True, False, False])
     elif 'INT.SD' in modes:
         system.integrator.set_steepest_descent(f_max=2.0, gamma=0.1,
                                                max_displacement=0.01)
@@ -287,22 +287,17 @@ if espressomd.has_features('SCAFACOS_DIPOLES') and 'SCAFACOS' in modes \
             "p2nfft_alpha": "0.37"}))
 
 if LB_implementation:
-    m = np.pi / 12
-    nx = int(np.round(system.box_l[0] / lbf.get_params()["agrid"]))
-    ny = int(np.round(system.box_l[1] / lbf.get_params()["agrid"]))
-    nz = int(np.round(system.box_l[2] / lbf.get_params()["agrid"]))
     # Create a 3D grid with deterministic values to fill the LB fluid lattice
+    m = np.pi / 12
     grid_3D = np.fromfunction(
         lambda i, j, k: np.cos(i * m) * np.cos(j * m) * np.cos(k * m),
-        (nx, ny, nz), dtype=float)
-    for i in range(nx):
-        for j in range(ny):
-            for k in range(nz):
-                lbf[i, j, k].population = grid_3D[i, j, k] * np.arange(1, 20)
-                lbf[i, j, k].last_applied_force = grid_3D[i, j, k] * \
-                    np.arange(1, 4)
-    cpt_mode = int("@TEST_BINARY@")
+        lbf.shape, dtype=float)
+    lbf[:, :, :].population = np.einsum(
+        'abc,d->abcd', grid_3D, np.arange(1, 20))
+    lbf[:, :, :].last_applied_force = np.einsum(
+        'abc,d->abcd', grid_3D, np.arange(1, 4))
     # save LB checkpoint file
+    cpt_mode = int("@TEST_BINARY@")
     lbf_cpt_path = checkpoint.checkpoint_dir + "/lb.cpt"
     lbf.save_checkpoint(lbf_cpt_path, cpt_mode)
 

@@ -23,6 +23,7 @@ import itertools
 
 import espressomd
 import espressomd.observables
+import espressomd.constraints
 import espressomd.shapes
 
 
@@ -40,6 +41,7 @@ class DPDThermostat(ut.TestCase):
 
     def tearDown(self):
         self.system.part.clear()
+        self.system.constraints.clear()
         self.system.thermostat.turn_off()
         self.system.integrator.set_vv()
 
@@ -275,22 +277,23 @@ class DPDThermostat(ut.TestCase):
     def test_constraint(self):
         system = self.system
 
-        system.constraints.add(shape=espressomd.shapes.Wall(
-            dist=0, normal=[1, 0, 0]), particle_type=0, particle_velocity=[1, 2, 3])
+        dpd_vel = [1., 2., 3.]
+        wall = espressomd.shapes.Wall(dist=1., normal=[1., 0., 0.])
+        system.constraints.add(shape=wall, penetrable=True, particle_type=0,
+                               particle_velocity=dpd_vel)
 
         system.thermostat.set_dpd(kT=0.0, seed=42)
         system.non_bonded_inter[0, 0].dpd.set_params(
             weight_function=0, gamma=1., r_cut=1.0,
             trans_weight_function=0, trans_gamma=1., trans_r_cut=1.0)
 
-        p = system.part.add(pos=[0.5, 0, 0], type=0, v=[0, 0, 0])
-
+        p1 = system.part.add(pos=[0.5, 0., 0.], type=0)
+        p2 = system.part.add(pos=[1.5, 0., 0.], type=0)
+        p3 = system.part.add(pos=[1.0, 0., 0.], type=0)
         system.integrator.run(0)
-
-        np.testing.assert_array_almost_equal(np.copy(p.f), [1., 2., 3.])
-
-        for c in system.constraints:
-            system.constraints.remove(c)
+        np.testing.assert_array_almost_equal(np.copy(p1.f), dpd_vel)
+        np.testing.assert_array_almost_equal(np.copy(p2.f), dpd_vel)
+        np.testing.assert_array_almost_equal(np.copy(p3.f), 0.)
 
     def test_dpd_stress(self):
 

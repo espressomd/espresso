@@ -33,6 +33,7 @@ BOOST_AUTO_TEST_CASE(types) {
   using cache_type = Cache<int, char>;
   static_assert(std::is_same<cache_type::key_type, int>::value, "");
   static_assert(std::is_same<cache_type::value_type, const char *>::value, "");
+  BOOST_TEST_PASSPOINT();
 }
 
 BOOST_AUTO_TEST_CASE(get_value) {
@@ -41,15 +42,15 @@ BOOST_AUTO_TEST_CASE(get_value) {
     cache.put(41, 42);
     cache.put(42, 43);
     BOOST_REQUIRE(cache.get(41));
-    BOOST_CHECK(42 == *cache.get(41));
+    BOOST_CHECK_EQUAL(*cache.get(41), 42);
     BOOST_REQUIRE(cache.get(42));
-    BOOST_CHECK(43 == *cache.get(42));
+    BOOST_CHECK_EQUAL(*cache.get(42), 43);
   }
 
   {
     Cache<int, char> cache;
-    BOOST_CHECK(nullptr == cache.get(123));
-    BOOST_CHECK(nullptr == cache.get(11));
+    BOOST_CHECK_EQUAL(cache.get(123), nullptr);
+    BOOST_CHECK_EQUAL(cache.get(11), nullptr);
   }
 }
 
@@ -81,9 +82,21 @@ BOOST_AUTO_TEST_CASE(invalidate) {
 }
 
 BOOST_AUTO_TEST_CASE(put) {
-  Cache<int, char> cache;
+  {
+    Cache<int, char> cache;
+    cache.put(0, 2);
+    BOOST_CHECK(cache.has(0));
+  }
 
-  cache.put(0, 2);
+  {
+    Cache<int, char> cache;
+    std::vector<int> const keys = {1, 2, 3};
+    std::vector<char> const values = {0, 1, 2};
+    cache.put(keys.begin(), keys.end(), values.begin());
+    BOOST_CHECK(cache.has(1));
+    BOOST_CHECK(cache.has(2));
+    BOOST_CHECK(cache.has(3));
+  }
 }
 
 BOOST_AUTO_TEST_CASE(max_size) {
@@ -105,7 +118,7 @@ BOOST_AUTO_TEST_CASE(max_size) {
   {
     const Cache<int, int>::size_type max_size = 1000;
     Cache<int, int> cache(max_size);
-    BOOST_CHECK(max_size == cache.max_size());
+    BOOST_CHECK_EQUAL(cache.max_size(), max_size);
   }
 
   {
@@ -116,7 +129,28 @@ BOOST_AUTO_TEST_CASE(max_size) {
       cache.put(i, 11);
     }
 
-    BOOST_CHECK(max_size == cache.size());
+    BOOST_CHECK_EQUAL(cache.size(), max_size);
+  }
+
+  {
+    // Cache::drop_random_element() should work when cache is empty
+    Cache<int, int> cache(0);
+
+    for (int i = 0; i < 10; i++) {
+      cache.put(i, 11);
+    }
+
+    BOOST_CHECK_EQUAL(cache.size(), 1);
+  }
+
+  {
+    Cache<int, int> cache(0);
+
+    std::vector<int> const keys = {1, 2, 3};
+    std::vector<int> const values = {0, 1, 2};
+    cache.put(keys.begin(), keys.end(), values.begin());
+
+    BOOST_CHECK_EQUAL(cache.size(), 0);
   }
 }
 

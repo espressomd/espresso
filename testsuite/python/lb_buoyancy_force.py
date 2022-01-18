@@ -21,8 +21,6 @@ import unittest as ut
 import unittest_decorators as utx
 import numpy as np
 
-import tests_common
-
 # Define the LB Parameters
 TIME_STEP = 0.01
 AGRID = 0.5
@@ -92,7 +90,8 @@ class LBBuoyancy:
         for b in self.lbf.boundary:
             boundary_force += b.get_force()
 
-        fluid_nodes = tests_common.count_fluid_nodes(self.lbf)
+        fluid_nodes = np.sum(np.logical_not(
+            self.lbf[:, :, :].is_boundary).astype(int))
         fluid_volume = fluid_nodes * AGRID**3
         applied_force = fluid_volume * np.array(LB_PARAMS['ext_force_density'])
 

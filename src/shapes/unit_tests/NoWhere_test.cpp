@@ -30,8 +30,10 @@
 
 #include <limits>
 
-bool dist_is_always_inf(const Shapes::Shape &s) {
+BOOST_AUTO_TEST_CASE(dist_function) {
   constexpr auto infinity = std::numeric_limits<double>::infinity();
+
+  Shapes::NoWhere const s;
 
   Utils::Vector3d const positions[2] = {
       {0.0, 1.0, 2.0},
@@ -43,22 +45,10 @@ bool dist_is_always_inf(const Shapes::Shape &s) {
     double d;
 
     s.calculate_dist(pos, d, dist);
-    if (d != infinity) {
-      return false;
-    }
+    BOOST_CHECK_EQUAL(d, infinity);
 
     for (auto xyz : dist) {
-      if (xyz != infinity) {
-        return false;
-      }
+      BOOST_CHECK_EQUAL(xyz, infinity);
     }
   }
-
-  return true;
-}
-
-BOOST_AUTO_TEST_CASE(dist_function) {
-  Shapes::NoWhere nw;
-
-  BOOST_CHECK(dist_is_always_inf(nw));
 }

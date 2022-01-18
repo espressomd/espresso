@@ -78,8 +78,7 @@ class VirtualSitesTracersCommon:
         self.system.virtual_sites = espressomd.virtual_sites.VirtualSitesInertialessTracers()
 
         # Random velocities
-        for n in self.lbf.nodes():
-            n.velocity = np.random.random(3) - .5
+        self.lbf[:, :, :].velocity = np.random.random((*self.lbf.shape, 3))
         force = [1, -2, 3]
         # Test several particle positions
         for pos in [[3, 2, 1], [0, 0, 0],

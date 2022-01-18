@@ -248,6 +248,14 @@ private:
     return pressureTensor;
   }
 
+  inline void pressure_tensor_correction(Matrix3<FloatType> &tensor) const {
+    auto const visc = m_viscosity;
+    auto const revert_factor = visc / (visc + FloatType{1} / FloatType{6});
+    for (auto const i : {1, 2, 3, 5, 6, 7}) {
+      tensor[i] *= revert_factor;
+    }
+  }
+
   class interpolation_illegal_access : public std::runtime_error {
   public:
     explicit interpolation_illegal_access(std::string const &field,
@@ -563,8 +571,7 @@ public:
           // Nodes with zero weight might not be accessible, because they can be
           // outside ghost layers
           if (weight != 0) {
-            auto res = get_node_velocity(
-                Utils::Vector3i{{node[0], node[1], node[2]}}, true);
+            auto const res = get_node_velocity(Utils::Vector3i(node), true);
             if (!res) {
               throw interpolation_illegal_access("velocity", pos, node, weight);
             }
@@ -587,7 +594,7 @@ public:
           // Nodes with zero weight might not be accessible, because they can be
           // outside ghost layers
           if (weight != 0) {
-            auto const res = get_node_density(Utils::Vector3i(node));
+            auto const res = get_node_density(Utils::Vector3i(node), true);
             if (!res) {
               throw interpolation_illegal_access("density", pos, node, weight);
             }
@@ -604,7 +611,8 @@ public:
       return false;
     auto force_at_node = [this, force](const std::array<int, 3> node,
                                        double weight) {
-      auto const bc = get_block_and_cell(lattice(), to_vector3i(node), true);
+      auto const bc =
+          get_block_and_cell(lattice(), Utils::Vector3i(node), true);
       if (bc) {
         auto force_field = (*bc).block->template getData<VectorField>(
             m_force_to_be_applied_id);
@@ -703,8 +711,9 @@ public:
   }
 
   boost::optional<double>
-  get_node_density(const Utils::Vector3i &node) const override {
-    auto bc = get_block_and_cell(lattice(), node, false);
+  get_node_density(const Utils::Vector3i &node,
+                   bool consider_ghosts = false) const override {
+    auto bc = get_block_and_cell(lattice(), node, consider_ghosts);
     if (!bc)
       return {boost::none};
 
@@ -835,9 +844,6 @@ public:
   void update_boundary_from_list(std::vector<int> const &nodes_flat,
                                  std::vector<double> const &vel_flat) override {
     // reshape grids
-    auto const grid_size = lattice().get_grid_dimensions();
-    auto const n_grid_points = Utils::product(grid_size);
-    auto const n_ghost_layers = lattice().get_ghost_layers();
     assert(nodes_flat.size() == vel_flat.size());
     assert(nodes_flat.size() % 3u == 0);
     for (std::size_t i = 0; i < nodes_flat.size(); i += 3) {
@@ -852,13 +858,32 @@ public:
   }
 
   // Pressure tensor
-  boost::optional<Utils::Vector6d>
+  boost::optional<Utils::VectorXd<9>>
   get_node_pressure_tensor(const Utils::Vector3i &node) const override {
-    auto const n_ghost_layers = lattice().get_ghost_layers();
     auto bc = get_block_and_cell(lattice(), node, false);
     if (!bc)
       return {boost::none};
-    return to_vector6d(getPressureTensor(*bc));
+    auto tensor = getPressureTensor(*bc);
+    pressure_tensor_correction(tensor);
+    return to_vector9d(tensor);
+  }
+
+  // Global pressure tensor
+  Utils::VectorXd<9> get_pressure_tensor() const override {
+    auto const &blocks = lattice().get_blocks();
+    Matrix3<FloatType> tensor(FloatType{0});
+    for (auto block = blocks->begin(); block != blocks->end(); ++block) {
+      auto pdf_field = block->template getData<PdfField>(m_pdf_field_id);
+      WALBERLA_FOR_ALL_CELLS_XYZ(pdf_field, {
+        Matrix3<FloatType> local_p;
+        lbm::accessor::PressureTensor::get(local_p, *pdf_field, x, y, z);
+        tensor += local_p;
+      });
+    }
+    auto const grid_size = lattice().get_grid_dimensions();
+    auto const number_of_nodes = Utils::product(grid_size);
+    pressure_tensor_correction(tensor);
+    return to_vector9d(tensor) * (1. / static_cast<double>(number_of_nodes));
   }
 
   // Global momentum
@@ -878,6 +903,7 @@ public:
     }
     return to_vector3d(mom);
   }
+
   // Global external force
   void set_external_force(const Utils::Vector3d &ext_force) override {
     m_reset_force->set_ext_force(ext_force);

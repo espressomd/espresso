@@ -582,7 +582,7 @@ BOOST_AUTO_TEST_CASE(exceptions, *utf::precondition(if_head_node())) {
     auto const what_ref = std::string("MPI rank 0: left ESPResSo: [0, 0, 0], "
                                       "left waLBerla: [0, 0, 0]");
     for (auto const &error : error_queue) {
-      auto const error_what = error_queue[0].what().substr(1, what_ref.size());
+      auto const error_what = error.what().substr(1, what_ref.size());
       BOOST_CHECK_EQUAL(error_what, what_ref);
     }
   }

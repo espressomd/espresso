@@ -382,6 +382,12 @@ class ScriptInterfaceHelper(PScriptInterface):
         for method_name in self._so_bind_methods:
             setattr(self, method_name, self.generate_caller(method_name))
 
+    def _check_required_arguments(self, params):
+        if not self.required_keys().issubset(params):
+            raise ValueError(
+                "At least the following keys have to be given as keyword "
+                f"arguments: {self.required_keys()}, got {set(params.keys())}")
+
 
 class ScriptObjectRegistry(ScriptInterfaceHelper):
     """

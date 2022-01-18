@@ -23,7 +23,10 @@
 #define SCRIPT_INTERFACE_SHAPES_SPHEROCYLINDER_HPP
 
 #include "Shape.hpp"
+
 #include <shapes/SpheroCylinder.hpp>
+
+#include <memory>
 
 namespace ScriptInterface {
 namespace Shapes {

@@ -31,7 +31,6 @@
 #include "core/communication.hpp"
 #include "core/event.hpp"
 #include "core/grid.hpp"
-#include "core/grid_based_algorithms/lb_interface.hpp"
 #include "core/grid_based_algorithms/lb_walberla_instance.hpp"
 #include "core/integrate.hpp"
 
@@ -41,10 +40,11 @@
 #include <utils/Vector.hpp>
 #include <utils/math/int_pow.hpp>
 
+#include <boost/optional.hpp>
+
 #include <memory>
 #include <stdexcept>
 #include <string>
-#include <tuple>
 
 namespace ScriptInterface::walberla {
 
@@ -68,7 +68,7 @@ class FluidWalberla : public AutoParameters<FluidWalberla> {
   double m_conv_press;
   double m_conv_force;
   double m_conv_force_dens;
-  std::tuple<double, double, double, int, Utils::Vector3d> m_ctor_params;
+  int m_seed;
 
 public:
   FluidWalberla() {
@@ -77,91 +77,51 @@ public:
          [this]() { return m_is_single_precision; }},
         {"is_active", AutoParameter::read_only,
          [this]() { return m_is_active; }},
-        {"is_initialized", AutoParameter::read_only,
-         [this]() { return m_lb_fluid != nullptr; }},
         {"agrid", AutoParameter::read_only,
          [this]() { return m_lb_params->get_agrid(); }},
         {"tau", AutoParameter::read_only,
          [this]() { return m_lb_params->get_tau(); }},
         {"shape", AutoParameter::read_only,
-         [this]() {
-           return (m_lb_fluid) ? m_lb_fluid->lattice().get_grid_dimensions()
-                               : Utils::Vector3i::broadcast(-1);
-         }},
+         [this]() { return m_lb_fluid->lattice().get_grid_dimensions(); }},
         {"kT", AutoParameter::read_only,
-         [this]() { return std::get<2>(m_ctor_params) / m_conv_temp; }},
-        {"seed", AutoParameter::read_only,
-         [this]() { return std::get<3>(m_ctor_params); }},
+         [this]() { return m_lb_fluid->get_kT() / m_conv_temp; }},
+        {"seed", AutoParameter::read_only, [this]() { return m_seed; }},
         {"rng_state",
          [this](const Variant &v) {
            try {
-             if (m_lb_fluid)
-               m_lb_fluid->set_rng_state(
-                   static_cast<uint64_t>(get_value<int>(v)));
-             else
-               throw std::runtime_error(
-                   "Cannot set 'rng_state' before walberla is initialized");
+             m_lb_fluid->set_rng_state(
+                 static_cast<uint64_t>(get_value<int>(v)));
            } catch (const std::exception &e) {
-             if (this_node == 0) {
+             if (context()->is_head_node()) {
                throw;
              }
            }
          },
-         [this]() {
-           try {
-             if (m_lb_fluid)
-               return static_cast<int>(m_lb_fluid->get_rng_state());
-             else
-               throw std::runtime_error(
-                   "Cannot get 'rng_state' before walberla is initialized");
-           } catch (const std::exception &e) {
-             if (this_node == 0) {
-               throw;
-             }
-           }
-           return -1;
-         }},
+         [this]() { return static_cast<int>(m_lb_fluid->get_rng_state()); }},
         {"density", AutoParameter::read_only,
-         [this]() {
-           return ((m_lb_fluid) ? m_lb_fluid->get_density()
-                                : std::get<1>(m_ctor_params)) /
-                  m_conv_dens;
-         }},
+         [this]() { return m_lb_fluid->get_density() / m_conv_dens; }},
         {"viscosity",
          [this](const Variant &v) {
            auto const visc = m_conv_visc * get_value<double>(v);
-           if (m_lb_fluid)
-             m_lb_fluid->set_viscosity(visc);
-           else
-             std::get<0>(m_ctor_params) = visc;
+           m_lb_fluid->set_viscosity(visc);
          },
-         [this]() {
-           return ((m_lb_fluid) ? m_lb_fluid->get_viscosity()
-                                : std::get<0>(m_ctor_params)) /
-                  m_conv_visc;
-         }},
+         [this]() { return m_lb_fluid->get_viscosity() / m_conv_visc; }},
         {"ext_force_density",
          [this](const Variant &v) {
            auto const ext_f = m_conv_force_dens * get_value<Utils::Vector3d>(v);
-           if (m_lb_fluid)
-             m_lb_fluid->set_external_force(ext_f);
-           else
-             std::get<4>(m_ctor_params) = ext_f;
+           m_lb_fluid->set_external_force(ext_f);
          },
          [this]() {
-           return ((m_lb_fluid) ? m_lb_fluid->get_external_force()
-                                : std::get<4>(m_ctor_params)) /
-                  m_conv_force_dens;
+           return m_lb_fluid->get_external_force() / m_conv_force_dens;
          }},
     });
   }
 
   void do_construct(VariantMap const &params) override {
-    // construction of the LB object is deferred until the first
-    // activation, because the box length and MD time step can change
-    // freely when the LB object is not active yet
+    auto const lb_lattice_si =
+        get_value<std::shared_ptr<LatticeWalberla>>(params, "lattice");
     auto const tau = get_value<double>(params, "tau");
-    auto const agrid = get_value<double>(params, "agrid");
+    auto const agrid = get_value<double>(lb_lattice_si->get_parameter("agrid"));
     m_conv_dist = 1. / agrid;
     m_conv_visc = Utils::int_pow<1>(tau) / Utils::int_pow<2>(agrid);
     m_conv_temp = Utils::int_pow<2>(tau) / Utils::int_pow<2>(agrid);
@@ -171,27 +131,24 @@ public:
     m_conv_force = Utils::int_pow<2>(tau) / Utils::int_pow<1>(agrid);
     m_conv_force_dens = Utils::int_pow<2>(tau) * Utils::int_pow<2>(agrid);
     m_lb_params = std::make_shared<::LBWalberlaParams>(agrid, tau);
-    m_ctor_params = {m_conv_visc * get_value<double>(params, "viscosity"),
-                     m_conv_dens * get_value<double>(params, "density"),
-                     m_conv_temp * get_value<double>(params, "kT"),
-                     get_value<int>(params, "seed"),
-                     m_conv_force_dens * get_value<Utils::Vector3d>(
-                                             params, "ext_force_density")};
     m_is_active = false;
+    m_seed = get_value<int>(params, "seed");
+    auto const lb_lattice = lb_lattice_si->lattice();
+    auto const lb_visc = m_conv_visc * get_value<double>(params, "viscosity");
+    auto const lb_dens = m_conv_dens * get_value<double>(params, "density");
+    auto const lb_temp = m_conv_temp * get_value<double>(params, "kT");
+    auto const ext_f = m_conv_force_dens *
+                       get_value<Utils::Vector3d>(params, "ext_force_density");
     m_is_single_precision = get_value<bool>(params, "single_precision");
+    m_lb_fluid = init_lb_walberla(lb_lattice, *m_lb_params, lb_visc, lb_dens,
+                                  lb_temp, m_seed, m_is_single_precision);
+    if (m_lb_fluid) {
+      m_lb_fluid->set_external_force(ext_f);
+    }
   }
 
   Variant do_call_method(std::string const &name,
                          VariantMap const &params) override {
-    if (name == "instantiate") {
-      auto const [lb_visc, lb_dens, lb_kT, lb_seed, ext_f] = m_ctor_params;
-      auto const lb_lattice =
-          get_value<std::shared_ptr<LatticeWalberla>>(params, "lattice")
-              ->lattice();
-      m_lb_fluid = init_lb_walberla(lb_lattice, *m_lb_params, lb_visc, lb_dens,
-                                    lb_kT, lb_seed, m_is_single_precision);
-      m_lb_fluid->set_external_force(ext_f);
-    }
     if (name == "activate") {
       auto const fail = activate_lb_walberla(m_lb_fluid, m_lb_params);
       if (not fail) {
@@ -209,19 +166,11 @@ public:
       m_lb_fluid->add_force_at_pos(folded_pos * m_conv_dist, f * m_conv_force);
     }
     if (name == "get_interpolated_velocity") {
-      if (context()->is_head_node()) {
-        auto const pos = get_value<Utils::Vector3d>(params, "pos");
-        return lb_lbfluid_get_interpolated_velocity(pos) / m_conv_speed;
-      }
+      auto const pos = get_value<Utils::Vector3d>(params, "pos");
+      return get_interpolated_velocity(pos);
     }
     if (name == "get_pressure_tensor") {
-      if (context()->is_head_node()) {
-        auto const lower_tri = lb_lbfluid_get_pressure_tensor() / m_conv_press;
-        return std::vector<Variant>{
-            std::vector<double>{lower_tri[0], lower_tri[1], lower_tri[3]},
-            std::vector<double>{lower_tri[1], lower_tri[2], lower_tri[4]},
-            std::vector<double>{lower_tri[3], lower_tri[4], lower_tri[5]}};
-      }
+      return get_average_pressure_tensor();
     }
     if (name == "load_checkpoint") {
       auto const path = get_value<std::string>(params, "path");
@@ -263,7 +212,10 @@ public:
 private:
   void load_checkpoint(std::string const &filename, int mode);
   void save_checkpoint(std::string const &filename, int mode);
-  boost::optional<LBWalberlaNodeState> get_node_checkpoint(Utils::Vector3i ind);
+  boost::optional<LBWalberlaNodeState>
+  get_node_checkpoint(Utils::Vector3i const &ind) const;
+  std::vector<Variant> get_average_pressure_tensor() const;
+  Variant get_interpolated_velocity(Utils::Vector3d const &pos) const;
 };
 
 } // namespace ScriptInterface::walberla

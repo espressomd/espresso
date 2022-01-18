@@ -23,7 +23,7 @@ include(unit_test)
 unit_test(NAME RuntimeError_test SRC RuntimeError_test.cpp DEPENDS
           Boost::serialization)
 unit_test(NAME RuntimeErrorCollector_test SRC RuntimeErrorCollector_test.cpp
-          DEPENDS EspressoCore Boost::mpi MPI::MPI_CXX)
+          DEPENDS EspressoCore Boost::mpi MPI::MPI_CXX NUM_PROC 2)
 unit_test(NAME EspressoSystemStandAlone_test SRC
           EspressoSystemStandAlone_test.cpp DEPENDS EspressoCore Boost::mpi
           MPI::MPI_CXX NUM_PROC 2)
