@@ -44,6 +44,7 @@
 #include <cmath>
 #include <functional>
 #include <iostream>
+#include <math.h>
 #include <memory>
 #include <vector>
 
@@ -54,30 +55,41 @@ using Utils::Vector3i;
 namespace bdata = boost::unit_test::data;
 constexpr const double v0 = 0.064;
 
+double u_expected(double x, double t, double nu, double v_0, double h,
+                  int k_max = 100) {
+  double u = x / h - 0.5;
+  for (int k = 1; k <= k_max; k++) {
+    u += 1.0 / (M_PI * k) * exp(-4 * M_PI * M_PI * nu * k * k / (h * h) * t) *
+         sin(2 * M_PI / h * k * x);
+  }
+  return v_0 * u;
+}
 Vector3i mpi_shape{};
 BOOST_AUTO_TEST_CASE(test_lees_edwards) {
   double density = 1;
-  double viscosity = 1. / 6.;
+  double viscosity = 0.5;
   auto lattice =
       std::make_shared<LatticeWalberla>(Vector3i{8, 64, 8}, mpi_shape, 1);
   auto lb = walberla::LBWalberlaImpl<double>(lattice, viscosity, density);
   auto le_pack = LeesEdwardsPack(
       0, 1, [&]() { return 0.0; }, [=]() { return v0; });
   lb.set_collision_model(std::move(le_pack));
-  for (int i = 0; i < 22000; i++) {
+  for (int i = 0; i < 200; i++) {
     lb.integrate();
-    if (i % 100 == 0) {
-      for (int j : {-1, 0, 1, 2, 3, 4, 5, 63, 64}) {
-        std::cout << (*(lb.get_node_velocity(Vector3i{4, j, 4}, true)))[0]
-                  << " ";
-      }
-
-      std::cout << std::endl;
+    if (i < lattice->get_grid_dimensions()[1] / 2)
+      continue;
+    for (double y : {0.5, 5.5, 6.5, 7.5, 14.0, 14.5,
+                     0.23 * lattice->get_grid_dimensions()[1],
+                     0.7 * lattice->get_grid_dimensions()[1],
+                     lattice->get_grid_dimensions()[1] * 1.0}) {
+      auto u = lb.get_velocity_at_pos(Vector3d{4, y, 4}, true);
+      auto expected =
+          u_expected(y, i, viscosity, v0, lattice->get_grid_dimensions()[1]);
+      std::cout << y << " " << *u << " " << expected << std::endl;
     }
+
+    std::cout << std::endl;
   }
-  for (int i = -1; i <= 64; i++)
-    std::cout << (*(lb.get_node_velocity(Vector3i{4, i, 4}, true)))[0]
-              << std::endl;
 }
 
 int main(int argc, char **argv) {
