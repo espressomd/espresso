@@ -2507,7 +2507,7 @@ struct lb_lbfluid_mass_of_particle {
 #else
     return 1.;
 #endif
-  };
+  }
 };
 
 /** Set the populations of a specific node on the GPU

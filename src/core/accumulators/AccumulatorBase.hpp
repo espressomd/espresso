@@ -26,8 +26,8 @@ namespace Accumulators {
 
 class AccumulatorBase {
 public:
-  explicit AccumulatorBase(int delta_N = 1) : m_delta_N(delta_N){};
-  int &delta_N() { return m_delta_N; };
+  explicit AccumulatorBase(int delta_N = 1) : m_delta_N(delta_N) {}
+  int &delta_N() { return m_delta_N; }
   virtual ~AccumulatorBase() = default;
 
   virtual void update() = 0;

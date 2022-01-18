@@ -32,11 +32,11 @@ namespace VirtualSites {
 
 class VirtualSitesOff : public VirtualSites {
 public:
-  VirtualSitesOff() : m_virtual_sites(new ::VirtualSitesOff()){};
+  VirtualSitesOff() : m_virtual_sites(new ::VirtualSitesOff()) {}
   /** Vs implementation we are wrapping */
   std::shared_ptr<::VirtualSites> virtual_sites() override {
     return m_virtual_sites;
-  };
+  }
 
 private:
   std::shared_ptr<::VirtualSitesOff> m_virtual_sites;

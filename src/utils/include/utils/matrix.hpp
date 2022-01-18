@@ -127,24 +127,24 @@ template <typename T, std::size_t Rows, std::size_t Cols> struct Matrix {
    * @brief Iterator access (non const).
    * @return Returns an iterator to the first element of the matrix.
    */
-  constexpr iterator begin() noexcept { return m_data.begin(); };
+  constexpr iterator begin() noexcept { return m_data.begin(); }
   /**
    * @brief Iterator access (const).
    * @return Returns an iterator to the first element of the matrix.
    */
-  constexpr const_iterator begin() const noexcept { return m_data.begin(); };
+  constexpr const_iterator begin() const noexcept { return m_data.begin(); }
   /**
    * @brief Iterator access (non const).
    * @return Returns an iterator to the element following the last element of
    * the matrix.
    */
-  constexpr iterator end() noexcept { return m_data.end(); };
+  constexpr iterator end() noexcept { return m_data.end(); }
   /**
    * @brief Iterator access (non const).
    * @return Returns an iterator to the element following the last element of
    * the matrix.
    */
-  constexpr const_iterator end() const noexcept { return m_data.end(); };
+  constexpr const_iterator end() const noexcept { return m_data.end(); }
   /**
    * @brief Retrieve an entire matrix row.
    * @tparam R The row index.

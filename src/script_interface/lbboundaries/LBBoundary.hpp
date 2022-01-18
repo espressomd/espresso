@@ -47,7 +47,7 @@ public:
 
             if (m_shape) {
               m_lbboundary->set_shape(m_shape->shape());
-            };
+            }
           },
           [this]() { return m_shape; }}});
 #ifdef EK_BOUNDARIES

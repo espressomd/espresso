@@ -103,7 +103,7 @@ struct HaloInfo {
  *  parallelization scheme */
 class HaloCommunicator {
 public:
-  HaloCommunicator(int num) : num(num){};
+  HaloCommunicator(int num) : num(num) {}
 
   int num; /**< number of halo communications in the scheme */
 

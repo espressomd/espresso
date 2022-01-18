@@ -65,7 +65,7 @@ public:
       return validate_collision_parameters();
     }
     return none;
-  };
+  }
 };
 
 } /* namespace CollisionDetection */

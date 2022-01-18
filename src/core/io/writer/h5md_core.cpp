@@ -267,7 +267,7 @@ template <std::size_t rank> struct slice_info {};
 template <> struct slice_info<3> {
   static auto extent(hsize_t n_part_diff) {
     return Vector3hs{1, n_part_diff, 0};
-  };
+  }
   static constexpr auto count() { return Vector3hs{1, 1, 3}; }
   static auto offset(hsize_t n_time_steps, hsize_t prefix) {
     return Vector3hs{n_time_steps, prefix, 0};
@@ -275,7 +275,7 @@ template <> struct slice_info<3> {
 };
 
 template <> struct slice_info<2> {
-  static auto extent(hsize_t n_part_diff) { return Vector2hs{1, n_part_diff}; };
+  static auto extent(hsize_t n_part_diff) { return Vector2hs{1, n_part_diff}; }
   static constexpr auto count() { return Vector2hs{1, 1}; }
   static auto offset(hsize_t n_time_steps, hsize_t prefix) {
     return Vector2hs{n_time_steps, prefix};

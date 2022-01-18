@@ -48,7 +48,7 @@ class Collision_parameters {
 public:
   Collision_parameters()
       : mode(COLLISION_MODE_OFF), distance(0.), distance2(0.), bond_centers(-1),
-        bond_vs(-1), bond_three_particles(-1){};
+        bond_vs(-1), bond_three_particles(-1) {}
 
   /// collision handling mode, a combination of constants COLLISION_MODE_*
   int mode;

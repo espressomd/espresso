@@ -52,7 +52,7 @@ class DistanceCriterion : public PairCriterion {
 public:
   bool decide(const Particle &p1, const Particle &p2) const override {
     return box_geo.get_mi_vector(p1.r.p, p2.r.p).norm() <= m_cut_off;
-  };
+  }
   double get_cut_off() { return m_cut_off; }
   void set_cut_off(double c) { m_cut_off = c; }
 
@@ -73,7 +73,7 @@ public:
 
     return (calc_non_bonded_pair_energy(p1, p2, ia_params, vec21,
                                         dist_betw_part)) >= m_cut_off;
-  };
+  }
   double get_cut_off() { return m_cut_off; }
   void set_cut_off(double c) { m_cut_off = c; }
 
@@ -87,8 +87,8 @@ public:
   bool decide(const Particle &p1, const Particle &p2) const override {
     return pair_bond_exists_on(p1.bonds(), p2.identity(), m_bond_type) ||
            pair_bond_exists_on(p2.bonds(), p1.identity(), m_bond_type);
-  };
-  int get_bond_type() { return m_bond_type; };
+  }
+  int get_bond_type() { return m_bond_type; }
   void set_bond_type(int t) { m_bond_type = t; }
 
 private:

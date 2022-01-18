@@ -193,7 +193,7 @@ struct LogContext : public Context {
     return "Dummy";
   }
 
-  bool is_head_node() const override { return true; };
+  bool is_head_node() const override { return true; }
 };
 } // namespace Testing
 

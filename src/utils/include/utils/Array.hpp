@@ -50,7 +50,7 @@ struct ArrayFormatterStream {
   std::ostream &stream;
   char const *separator;
   ArrayFormatterStream(std::ostream &s, char const *sep)
-      : stream(s), separator(sep){};
+      : stream(s), separator(sep) {}
 };
 
 struct ArrayFormatter {
@@ -120,27 +120,27 @@ template <typename T, std::size_t N> struct Array {
 
   DEVICE_QUALIFIER constexpr iterator begin() noexcept {
     return &m_storage.m_data[0];
-  };
+  }
 
   DEVICE_QUALIFIER constexpr const_iterator begin() const noexcept {
     return &m_storage.m_data[0];
-  };
+  }
 
   DEVICE_QUALIFIER constexpr const_iterator cbegin() const noexcept {
     return &m_storage.m_data[0];
-  };
+  }
 
   DEVICE_QUALIFIER constexpr iterator end() noexcept {
     return &m_storage.m_data[N];
-  };
+  }
 
   DEVICE_QUALIFIER constexpr const_iterator end() const noexcept {
     return &m_storage.m_data[N];
-  };
+  }
 
   DEVICE_QUALIFIER constexpr const_iterator cend() const noexcept {
     return &m_storage.m_data[N];
-  };
+  }
 
   DEVICE_QUALIFIER constexpr bool empty() const noexcept { return size() == 0; }
 
