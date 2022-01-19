@@ -471,6 +471,9 @@ int map_3don2d_grid(int const g3d[3], int g2d[3], int mult[3]) {
 
 /** Calculate most square 2D grid. */
 void calc_2d_grid(int n, int grid[3]) {
+  grid[0] = n;
+  grid[1] = 1;
+  grid[2] = 1;
   for (auto i = static_cast<int>(std::sqrt(n)); i >= 1; i--) {
     if (n % i == 0) {
       grid[0] = n / i;
