@@ -78,12 +78,12 @@ auto philox_4_uint64s(uint64_t counter, uint32_t seed, int key1, int key2 = 0) {
   using ctr_type = rng_type::ctr_type;
   using key_type = rng_type::key_type;
 
-  const ctr_type c{counter};
+  const ctr_type c{{counter, 0u, 0u, 0u}};
 
   auto const id1 = static_cast<uint32_t>(key1);
   auto const id2 = static_cast<uint32_t>(key2);
-  const key_type k{Utils::u32_to_u64(id1, id2),
-                   Utils::u32_to_u64(static_cast<uint32_t>(salt), seed)};
+  const key_type k{{Utils::u32_to_u64(id1, id2),
+                    Utils::u32_to_u64(static_cast<uint32_t>(salt), seed)}};
 
   return rng_type{}(c, k);
 }

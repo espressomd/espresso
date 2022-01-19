@@ -36,7 +36,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(bspline_normalization, T, test_bspline_orders) {
   // check that B-splines are normalized
   constexpr auto order = T::value;
   constexpr auto tol = 1e-10;
-  constexpr std::array<double, 5> x_values{-0.49999, 0.25, 0., 0.25, 0.49999};
+  constexpr std::array<double, 5> x_values{{-0.49999, 0.25, 0., 0.25, 0.49999}};
 
   for (auto const x : x_values) {
     double sum = 0;
@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(bspline_symmetry, T, test_bspline_orders) {
   constexpr auto order = T::value;
   constexpr auto order_mid = (order % 2 == 0) ? order / 2 : (order + 1) / 2;
   constexpr auto tol = 1e-10;
-  constexpr std::array<double, 3> x_values{-0.49999, 0.25, 0.1};
+  constexpr std::array<double, 3> x_values{{-0.49999, 0.25, 0.1}};
 
   for (int i = 0; i < order_mid; ++i) {
     for (auto const x : x_values) {
@@ -67,7 +67,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(bspline_derivatives, T, test_bspline_orders) {
   // check that B-splines derivatives are correct
   constexpr auto order = T::value;
   constexpr auto tol = 1e-8;
-  constexpr std::array<double, 5> x_values{-0.49999, 0.25, 0., 0.25, 0.49999};
+  constexpr std::array<double, 5> x_values{{-0.49999, 0.25, 0., 0.25, 0.49999}};
 
   // approximate a derivative using the two-point central difference formula
   auto bspline_d_approx = [](int i, double x, int order) {

@@ -198,7 +198,8 @@ static void write_box(const BoxGeometry &geometry, h5xx::dataset &dataset) {
 void write_attributes(const std::string &espresso_version,
                       h5xx::file &h5md_file) {
   auto h5md_group = h5xx::group(h5md_file, "h5md");
-  h5xx::write_attribute(h5md_group, "version", boost::array<hsize_t, 2>{1, 1});
+  h5xx::write_attribute(h5md_group, "version",
+                        boost::array<hsize_t, 2>{{1, 1}});
   auto h5md_creator_group = h5xx::group(h5md_group, "creator");
   h5xx::write_attribute(h5md_creator_group, "name", "ESPResSo");
   h5xx::write_attribute(h5md_creator_group, "version", espresso_version);

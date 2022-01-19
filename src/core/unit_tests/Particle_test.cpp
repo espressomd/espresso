@@ -63,7 +63,7 @@ BOOST_AUTO_TEST_CASE(serialization) {
   auto p = Particle();
 
   auto const bond_id = 5;
-  auto const bond_partners = std::array<const int, 3>{12, 13, 14};
+  auto const bond_partners = std::array<const int, 3>{{12, 13, 14}};
 
   std::vector<int> el = {5, 6, 7, 8};
 

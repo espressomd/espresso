@@ -227,9 +227,9 @@ BOOST_AUTO_TEST_CASE(test_noise_statistics) {
   auto const correlation = std::get<3>(noise_statistics(
       [&p1, &p2, &thermostat]() -> std::array<VariantVectorXd, 3> {
         thermostat.rng_increment();
-        return {friction_thermo_langevin(thermostat, p1, time_step, kT),
-                -friction_thermo_langevin(thermostat, p1, time_step, kT),
-                friction_thermo_langevin(thermostat, p2, time_step, kT)};
+        return {{friction_thermo_langevin(thermostat, p1, time_step, kT),
+                 -friction_thermo_langevin(thermostat, p1, time_step, kT),
+                 friction_thermo_langevin(thermostat, p2, time_step, kT)}};
       },
       sample_size));
   for (std::size_t i = 0; i < correlation.size(); ++i) {
@@ -263,14 +263,14 @@ BOOST_AUTO_TEST_CASE(test_brownian_randomness) {
   auto const correlation = std::get<3>(noise_statistics(
       [&p, &thermostat]() -> std::array<VariantVectorXd, N> {
         thermostat.rng_increment();
-        return {
+        return {{
             bd_random_walk(thermostat, p, time_step, kT),
             bd_random_walk_vel(thermostat, p),
 #ifdef ROTATION
             bd_random_walk_rot(thermostat, p, time_step, kT),
             bd_random_walk_vel_rot(thermostat, p),
 #endif
-        };
+        }};
       },
       sample_size));
   for (std::size_t i = 0; i < correlation.size(); ++i) {
@@ -295,12 +295,12 @@ BOOST_AUTO_TEST_CASE(test_langevin_randomness) {
   auto const correlation = std::get<3>(noise_statistics(
       [&p, &thermostat]() -> std::array<VariantVectorXd, N> {
         thermostat.rng_increment();
-        return {
+        return {{
             friction_thermo_langevin(thermostat, p, time_step, kT),
 #ifdef ROTATION
             friction_thermo_langevin_rotation(thermostat, p, time_step, kT),
 #endif
-        };
+        }};
       },
       sample_size));
   for (std::size_t i = 0; i < correlation.size(); ++i) {
@@ -327,11 +327,11 @@ BOOST_AUTO_TEST_CASE(test_npt_iso_randomness) {
   auto const correlation = std::get<3>(noise_statistics(
       [&p, &thermostat]() -> std::array<VariantVectorXd, 3> {
         thermostat.rng_increment();
-        return {
+        return {{
             friction_therm0_nptiso<1>(thermostat, p.m.v, 0),
             friction_therm0_nptiso<2>(thermostat, p.m.v, 0),
             friction_thermV_nptiso(thermostat, 1.5),
-        };
+        }};
       },
       sample_size));
   for (std::size_t i = 0; i < correlation.size(); ++i) {

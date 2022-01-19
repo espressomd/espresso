@@ -390,9 +390,9 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
   if (dp3m.sum_mu2 > 0) {
     /* Gather information for FFT grid inside the nodes domain (inner local
      * mesh) and perform forward 3D FFT (Charge Assignment Mesh). */
-    std::array<double *, 3> meshes = {dp3m.rs_mesh_dip[0].data(),
-                                      dp3m.rs_mesh_dip[1].data(),
-                                      dp3m.rs_mesh_dip[2].data()};
+    std::array<double *, 3> meshes = {{dp3m.rs_mesh_dip[0].data(),
+                                       dp3m.rs_mesh_dip[1].data(),
+                                       dp3m.rs_mesh_dip[2].data()}};
 
     dp3m.sm.gather_grid(Utils::make_span(meshes), comm_cart,
                         dp3m.local_mesh.dim);
@@ -613,9 +613,9 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
         fft_perform_back(dp3m.rs_mesh_dip[2].data(), false, dp3m.fft,
                          comm_cart);
         /* redistribute force component mesh */
-        std::array<double *, 3> meshes = {dp3m.rs_mesh_dip[0].data(),
-                                          dp3m.rs_mesh_dip[1].data(),
-                                          dp3m.rs_mesh_dip[2].data()};
+        std::array<double *, 3> meshes = {{dp3m.rs_mesh_dip[0].data(),
+                                           dp3m.rs_mesh_dip[1].data(),
+                                           dp3m.rs_mesh_dip[2].data()}};
 
         dp3m.sm.spread_grid(Utils::make_span(meshes), comm_cart,
                             dp3m.local_mesh.dim);

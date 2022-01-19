@@ -64,12 +64,8 @@ LB_parameters_gpu lbpar_gpu = {
     -1.0,
     // tau
     -1.0,
-    // dim_x;
-    0,
-    // dim_y;
-    0,
-    // dim_z;
-    0,
+    // dim
+    {{{0, 0, 0}}},
     // number_of_nodes
     0,
 #ifdef LB_BOUNDARIES_GPU
@@ -79,7 +75,7 @@ LB_parameters_gpu lbpar_gpu = {
     // external_force
     0,
     // ext_force
-    {0.0, 0.0, 0.0},
+    {{{0.0, 0.0, 0.0}}},
     // Thermal energy
     0.0};
 

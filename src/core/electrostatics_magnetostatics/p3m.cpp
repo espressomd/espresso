@@ -532,7 +532,7 @@ double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
 
     {
       std::array<double *, 3> E_fields = {
-          p3m.E_mesh[0].data(), p3m.E_mesh[1].data(), p3m.E_mesh[2].data()};
+          {p3m.E_mesh[0].data(), p3m.E_mesh[1].data(), p3m.E_mesh[2].data()}};
       /* redistribute force component mesh */
       p3m.sm.spread_grid(Utils::make_span(E_fields), comm_cart,
                          p3m.local_mesh.dim);

@@ -34,7 +34,7 @@ BOOST_AUTO_TEST_CASE(flatten_) {
 
   /* not nested */
   {
-    const std::array<int, 4> in = {1, 2, 3, 4};
+    const std::array<int, 4> in = {{1, 2, 3, 4}};
     std::array<int, 4> out{};
     flatten(in, out.begin());
     BOOST_CHECK_EQUAL_COLLECTIONS(in.begin(), in.end(), out.begin(), out.end());
@@ -42,22 +42,22 @@ BOOST_AUTO_TEST_CASE(flatten_) {
 
   /* nested */
   {
-    const std::array<std::array<int, 2>, 2> in{{{1, 2}, {3, 4}}};
+    const std::array<std::array<int, 2>, 2> in{{{{1, 2}}, {{3, 4}}}};
     std::array<int, 4> out{};
     flatten(in, out.begin());
 
-    const std::array<int, 4> expected = {1, 2, 3, 4};
+    const std::array<int, 4> expected = {{1, 2, 3, 4}};
     BOOST_CHECK_EQUAL_COLLECTIONS(expected.begin(), expected.end(), out.begin(),
                                   out.end());
   }
   {
-    const std::vector<int> in = {1, 2, 3, 4};
+    const std::vector<int> in = {{1, 2, 3, 4}};
     std::vector<int> out;
     flatten(in, std::back_inserter(out));
     BOOST_CHECK_EQUAL_COLLECTIONS(in.begin(), in.end(), out.begin(), out.end());
   }
   {
-    const std::vector<int> in = {1, 2, 3, 4};
+    const std::vector<int> in = {{1, 2, 3, 4}};
     std::list<int> out;
     flatten(in, std::front_inserter(out));
     BOOST_CHECK_EQUAL_COLLECTIONS(in.rbegin(), in.rend(), out.begin(),

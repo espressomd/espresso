@@ -43,9 +43,9 @@ public:
                       double max_z, bool allow_empty_bins = false)
       : ProfileObservable(n_x_bins, n_y_bins, n_z_bins, min_x, max_x, min_y,
                           max_y, min_z, max_z),
-        sampling_delta{sampling_delta_x, sampling_delta_y, sampling_delta_z},
-        sampling_offset{sampling_offset_x, sampling_offset_y,
-                        sampling_offset_z},
+        sampling_delta{{sampling_delta_x, sampling_delta_y, sampling_delta_z}},
+        sampling_offset{
+            {sampling_offset_x, sampling_offset_y, sampling_offset_z}},
         allow_empty_bins(allow_empty_bins) {
     if (sampling_delta[0] <= 0.)
       throw std::domain_error("sampling_delta_x has to be > 0");

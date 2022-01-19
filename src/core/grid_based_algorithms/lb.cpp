@@ -714,16 +714,9 @@ std::array<T, 19> lb_calc_n_from_m(const std::array<T, 19> &modes) {
 Utils::Vector19d lb_get_population_from_density_momentum_density_stress(
     double density, Utils::Vector3d const &momentum_density,
     Utils::Vector6d const &stress) {
-  std::array<double, 19> modes{density,
-                               momentum_density[0],
-                               momentum_density[1],
-                               momentum_density[2],
-                               stress[0],
-                               stress[1],
-                               stress[2],
-                               stress[3],
-                               stress[4],
-                               stress[5]};
+  std::array<double, 19> modes{
+      {density, momentum_density[0], momentum_density[1], momentum_density[2],
+       stress[0], stress[1], stress[2], stress[3], stress[4], stress[5]}};
 
   return Utils::Vector19d{lb_calc_n_from_m(modes)};
 }
@@ -845,18 +838,18 @@ std::array<T, 19> lb_apply_forces(const std::array<T, 19> &modes,
       Utils::Vector3d{modes[1], modes[2], modes[3]} + T{0.5} * f / density;
 
   auto const C = std::array<T, 6>{
-      (1. + lb_parameters.gamma_shear) * u[0] * f[0] +
-          1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) *
-              (u * f),
-      1. / 2. * (1. + lb_parameters.gamma_shear) * (u[0] * f[1] + u[1] * f[0]),
-      (1. + lb_parameters.gamma_shear) * u[1] * f[1] +
-          1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) *
-              (u * f),
-      1. / 2. * (1. + lb_parameters.gamma_shear) * (u[0] * f[2] + u[2] * f[0]),
-      1. / 2. * (1. + lb_parameters.gamma_shear) * (u[1] * f[2] + u[2] * f[1]),
-      (1. + lb_parameters.gamma_shear) * u[2] * f[2] +
-          1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) *
-              (u * f)};
+      {(1. + lb_parameters.gamma_shear) * u[0] * f[0] +
+           1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) *
+               (u * f),
+       1. / 2. * (1. + lb_parameters.gamma_shear) * (u[0] * f[1] + u[1] * f[0]),
+       (1. + lb_parameters.gamma_shear) * u[1] * f[1] +
+           1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) *
+               (u * f),
+       1. / 2. * (1. + lb_parameters.gamma_shear) * (u[0] * f[2] + u[2] * f[0]),
+       1. / 2. * (1. + lb_parameters.gamma_shear) * (u[1] * f[2] + u[2] * f[1]),
+       (1. + lb_parameters.gamma_shear) * u[2] * f[2] +
+           1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) *
+               (u * f)}};
 
   return {{modes[0],
            /* update momentum modes */

@@ -205,7 +205,7 @@ namespace detail {
  *  \ldots, -1\right) @f$.
  */
 std::array<std::vector<int>, 3> inline calc_meshift(
-    std::array<int, 3> const &mesh_size, bool zero_out_midpoint = false) {
+    int const mesh_size[3], bool zero_out_midpoint = false) {
   std::array<std::vector<int>, 3> ret{};
 
   for (std::size_t i = 0; i < 3; i++) {

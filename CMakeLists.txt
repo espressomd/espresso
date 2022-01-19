@@ -324,7 +324,6 @@ target_compile_options(
             -Wno-sign-compare
             -Wno-unused-function
             -Wno-unused-parameter
-            -Wno-missing-braces
             $<$<CXX_COMPILER_ID:GNU>:-Wno-clobbered>
             $<$<CXX_COMPILER_ID:Intel>:-wd592>)
 
