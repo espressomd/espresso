@@ -127,18 +127,22 @@ include(MyConfig)
 
 include(CheckCXXSourceCompiles)
 
-set(__PRETTYFUNC__ __func__)
-foreach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
+# cross-platform macro to print the function name in error messages
+set(PRETTY_FUNCTION_EXTENSION __func__)
+
+# search for a supported compiler extension that prints the function
+# name as well as its list of arguments, return type and namespace
+foreach(func_name __PRETTY_FUNCTION__ __FUNCSIG__ __FUNCTION__)
   check_cxx_source_compiles(
     "
      #include <string>
      int main() { std::string(${func_name}); }
      " result${func_name})
   if(result${func_name})
-    set(__PRETTYFUNC__ ${func_name})
+    set(PRETTY_FUNCTION_EXTENSION ${func_name})
     break()
   endif(result${func_name})
-endforeach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
+endforeach()
 
 #
 # Libraries
