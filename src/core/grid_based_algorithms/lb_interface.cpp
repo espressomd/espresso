@@ -144,6 +144,11 @@ static Utils::VectorXd<9> get_pressure_tensor() {
 
 REGISTER_CALLBACK_REDUCTION(get_pressure_tensor, std::plus<>())
 
+std::size_t get_velocity_field_id() {
+  return lb_walberla()->get_velocity_field_id();
+}
+std::size_t get_force_field_id() { return lb_walberla()->get_force_field_id(); }
+
 } // namespace Walberla
 #endif // LB_WALBERLA
 

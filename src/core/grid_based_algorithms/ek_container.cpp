@@ -1,6 +1,6 @@
 #include "ek_container.hpp"
 
-#include "lb_walberla_interface.hpp"
+#include "lb_interface.hpp"
 
 #include "errorhandling.hpp"
 

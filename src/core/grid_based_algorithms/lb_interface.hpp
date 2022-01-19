@@ -116,4 +116,17 @@ lb_lbfluid_get_interpolated_velocity(const Utils::Vector3d &pos);
  */
 double lb_lbfluid_get_interpolated_density(const Utils::Vector3d &pos);
 
+namespace Walberla {
+/**
+ * @brief Access the ID of the velocity field
+ * @return velocity field id
+ */
+std::size_t get_velocity_field_id();
+
+/**
+ * @brief Access the ID of the force field
+ * @return force field id
+ */
+std::size_t get_force_field_id();
+} // namespace Walberla
 #endif
