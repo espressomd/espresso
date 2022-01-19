@@ -52,20 +52,21 @@ class EKNoFlux(ut.TestCase):
             *map(lambda x: np.arange(0, x) - x / 2, self.system.box_l))
         positions += 0.5
 
-        mask = np.linalg.norm(positions, axis=-1) < self.RADIUS
-
         self.system.integrator.run(self.TIME)
 
         simulated_density = np.copy(ekspecies[:, :, :].density)
 
-        # check that the density is conserved
+        # check that the density is conserved globally
         np.testing.assert_almost_equal(
             np.sum(simulated_density), self.DENSITY, 10)
-        if np.any(simulated_density < 0.):
-            self.fail("EK density array contains negative densities!")
 
-        # check that nothing leaked outside
-        np.testing.assert_equal(simulated_density[~mask], 0.)
+        domain_density = simulated_density[np.logical_not(
+            ekspecies[:, :, :].is_boundary)]
+        # check that the density is kept constant inside the sphere
+        np.testing.assert_almost_equal(
+            np.sum(domain_density), self.DENSITY, 10)
+        np.testing.assert_array_less(
+            0., domain_density, "EK density array contains negative densities!")
 
 
 if __name__ == "__main__":
