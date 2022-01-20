@@ -310,7 +310,7 @@ protected:
   BlockDataID m_force_to_be_applied_id;
 
   BlockDataID m_velocity_field_id;
-  BlockDataID m_velocity_tmp_field_id;
+  BlockDataID m_vec_tmp_field_id;
 
   using FullCommunicator = blockforest::communication::UniformBufferedScheme<
       typename stencil::D3Q27>;
@@ -332,6 +332,10 @@ protected:
       m_lees_edwards_pdf_interpol_sweep;
   std::shared_ptr<InterpolateAndShiftAtBoundary<VectorField>>
       m_lees_edwards_vel_interpol_sweep;
+  std::shared_ptr<InterpolateAndShiftAtBoundary<VectorField>>
+      m_lees_edwards_last_applied_force_interpol_sweep;
+  std::shared_ptr<InterpolateAndShiftAtBoundary<VectorField>>
+      m_lees_edwards_force_to_be_applied_backwards_interpol_sweep;
 
   // Collision sweep
   std::shared_ptr<CollisionModel> m_collision_model;
@@ -368,7 +372,7 @@ public:
         blocks, "force field", FloatType{0}, field::fzyx, n_ghost_layers);
     m_velocity_field_id = field::addToStorage<VectorField>(
         blocks, "velocity field", FloatType{0}, field::fzyx, n_ghost_layers);
-    m_velocity_tmp_field_id = field::addToStorage<VectorField>(
+    m_vec_tmp_field_id = field::addToStorage<VectorField>(
         blocks, "velocity field", FloatType{0}, field::fzyx, n_ghost_layers);
 
     // Init and register pdf field
@@ -467,6 +471,16 @@ public:
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_lees_edwards_vel_interpol_sweep)(&*b);
   }
+  inline void apply_lees_edwards_last_applied_force_interpolation(
+      std::shared_ptr<Lattice_T> const &blocks) {
+    for (auto b = blocks->begin(); b != blocks->end(); ++b)
+      (*m_lees_edwards_last_applied_force_interpol_sweep)(&*b);
+  }
+  inline void apply_lees_edwards_force_to_be_applied_backwards_interpolation(
+      std::shared_ptr<Lattice_T> const &blocks) {
+    for (auto b = blocks->begin(); b != blocks->end(); ++b)
+      (*m_lees_edwards_force_to_be_applied_backwards_interpol_sweep)(&*b);
+  }
   inline void integrate_boundaries(std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_boundary)(&*b);
@@ -504,6 +518,9 @@ public:
 
   void integrate_pull_scheme() {
     auto const &blocks = lattice().get_blocks();
+    if (lees_edwards_bc()) {
+      apply_lees_edwards_force_to_be_applied_backwards_interpolation(blocks);
+    }
     // Reset force fields
     integrate_reset_force(blocks);
     // Handle boundaries
@@ -519,6 +536,7 @@ public:
     if (lees_edwards_bc()) {
       apply_lees_edwards_pdf_interpolation(blocks);
       apply_lees_edwards_vel_interpolation_and_shift(blocks);
+      apply_lees_edwards_last_applied_force_interpolation(blocks);
     };
   }
 
@@ -581,12 +599,27 @@ public:
             lees_edwards_pack.get_pos_offset);
     m_lees_edwards_vel_interpol_sweep =
         std::make_shared<InterpolateAndShiftAtBoundary<VectorField>>(
-            lattice().get_blocks(), m_velocity_field_id,
-            m_velocity_tmp_field_id, lattice().get_ghost_layers(),
-            lees_edwards_pack.shear_direction,
+            lattice().get_blocks(), m_velocity_field_id, m_vec_tmp_field_id,
+            lattice().get_ghost_layers(), lees_edwards_pack.shear_direction,
             lees_edwards_pack.shear_plane_normal,
             lees_edwards_pack.get_pos_offset,
             lees_edwards_pack.get_shear_velocity);
+    m_lees_edwards_last_applied_force_interpol_sweep =
+        std::make_shared<InterpolateAndShiftAtBoundary<VectorField>>(
+            lattice().get_blocks(), m_last_applied_force_field_id,
+            m_vec_tmp_field_id, lattice().get_ghost_layers(),
+            lees_edwards_pack.shear_direction,
+            lees_edwards_pack.shear_plane_normal,
+            lees_edwards_pack.get_pos_offset);
+    m_lees_edwards_force_to_be_applied_backwards_interpol_sweep =
+        std::make_shared<InterpolateAndShiftAtBoundary<VectorField>>(
+            lattice().get_blocks(), m_force_to_be_applied_id,
+            m_vec_tmp_field_id, lattice().get_ghost_layers(),
+            lees_edwards_pack.shear_direction,
+            lees_edwards_pack.shear_plane_normal, [&lees_edwards_pack]() {
+              return -1.0 * lees_edwards_pack.get_pos_offset();
+            });
+
     auto const omega = shear_mode_relaxation_rate();
     auto const omega_odd = odd_mode_relaxation_rate(omega);
     auto obj =
