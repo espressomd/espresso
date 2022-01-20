@@ -241,7 +241,7 @@ def generate_update_vel_sweep(lb_method):
 #        compile_macroscopic_values_getter(lb_method, ["velocity"], field_layout="fzyx")
     codegen.generate_sweep(ctx, 
                            "UpdateVelocityFromPDFSweep" + precision_prefix, 
-                           update_vel_from_pdf_kernel, ghost_layers_to_include=1) 
+                           update_vel_from_pdf_kernel, ghost_layers_to_include=0) 
 
 
 def check_dependencies():

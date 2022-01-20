@@ -1,4 +1,4 @@
-// kernel generated with pystencils v0.4.4, lbmpy v0.4.3+6.g13df23c,
+// kernel generated with pystencils v0.4.4, lbmpy v0.4.4,
 // lbmpy_walberla/pystencils_walberla from commit ref: refs/heads/le_ghost_vel
 
 //======================================================================================================================
@@ -326,9 +326,9 @@ static FUNC_PREFIX void streamsweepdoubleprecision_streamsweepdoubleprecision(
 } // namespace internal_streamsweepdoubleprecision_streamsweepdoubleprecision
 
 void StreamSweepDoublePrecision::run(IBlock *block) {
-  auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
-  auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
+  auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
+  auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
   field::GhostLayerField<double, 19> *pdfs_tmp;
   {
     // Getting temporary field pdfs_tmp
@@ -405,9 +405,9 @@ void StreamSweepDoublePrecision::runOnCellInterval(
   if (ci.empty())
     return;
 
-  auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
-  auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
+  auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
+  auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
   field::GhostLayerField<double, 19> *pdfs_tmp;
   {
     // Getting temporary field pdfs_tmp

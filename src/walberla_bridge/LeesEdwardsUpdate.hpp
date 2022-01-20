@@ -48,9 +48,11 @@ class LeesEdwardsUpdate {
 public:
   LeesEdwardsUpdate(std::shared_ptr<StructuredBlockForest> blocks,
                     BlockDataID pdf_field_id, BlockDataID pdf_tmp_field_id,
+                    BlockDataID vel_field_id, BlockDataID vel_tmp_field,
                     unsigned int n_ghost_layers, LeesEdwardsPack &&le_pack)
       : m_blocks(std::move(blocks)), m_pdf_field_id(pdf_field_id),
-        m_pdf_tmp_field_id(pdf_tmp_field_id), m_n_ghost_layers(n_ghost_layers),
+        m_pdf_tmp_field_id(pdf_tmp_field_id), m_vel_field_id(vel_field_id),
+        m_vel_tmp_field_id(vel_field_id), m_n_ghost_layers(n_ghost_layers),
         m_shear_direction(uint_c(le_pack.shear_direction)),
         m_shear_plane_normal(uint_c(le_pack.shear_plane_normal)),
         m_get_pos_offset(std::move(le_pack.get_pos_offset)),
@@ -72,6 +74,7 @@ public:
   }
   typedef stencil::D3Q19 Stencil;
   using PdfField = GhostLayerField<real_t, Stencil::Size>;
+  using VelField = GhostLayerField<real_t, 3>;
 
   bool points_up(IBlock const *block) const {
     return m_blocks->atDomainMaxBorder(m_shear_plane_normal, *block);
@@ -85,13 +88,13 @@ public:
 
   void operator()(IBlock *block) {
     if (points_down(block))
-      kernel(block, m_slab_min);
+      kernel(block, m_slab_min, -1);
     if (points_up(block))
-      kernel(block, m_slab_max);
+      kernel(block, m_slab_max, +1);
   }
 
 private:
-  void kernel(IBlock *block, stencil::Direction slab_dir) {
+  void kernel(IBlock *block, stencil::Direction slab_dir, int vel_shift_pref) {
     // setup lengths
     assert(m_blocks->getNumberOfCells(*block, m_shear_plane_normal) >= 2u);
     auto const dir = m_shear_direction;
@@ -103,6 +106,9 @@ private:
     // setup slab
     auto pdf_field = block->template getData<PdfField>(m_pdf_field_id);
     auto pdf_tmp_field = block->template getData<PdfField>(m_pdf_tmp_field_id);
+
+    auto vel_field = block->template getData<VelField>(m_pdf_field_id);
+    auto vel_tmp_field = block->template getData<VelField>(m_pdf_tmp_field_id);
     CellInterval ci;
     pdf_field->getGhostRegion(slab_dir, ci, cell_idx_t{1}, true);
 
@@ -118,13 +124,20 @@ private:
         pdf_tmp_field->get(*cell, q) =
             pdf_field->get(source1, q) * (1 - weight) +
             pdf_field->get(source2, q) * weight;
+        vel_tmp_field->get(*cell, q) =
+            vel_field->get(source1, q) * (1 - weight) +
+            vel_field->get(source2, q) * weight;
       }
+      vel_tmp_field->get(*cell, static_cast<uint_t>(m_shear_direction)) +=
+          vel_shift_pref * get_shear_velocity();
     }
 
     // swap
     for (auto cell = ci.begin(); cell != ci.end(); ++cell) {
-      for (uint_t q = 0; q < Stencil::Q; ++q)
+      for (uint_t q = 0; q < Stencil::Q; ++q) {
         pdf_field->get(*cell, q) = pdf_tmp_field->get(*cell, q);
+        vel_field->get(*cell, q) = vel_tmp_field->get(*cell, q);
+      }
     }
   }
 
@@ -132,6 +145,8 @@ private:
   std::shared_ptr<StructuredBlockForest> m_blocks;
   BlockDataID m_pdf_field_id;
   BlockDataID m_pdf_tmp_field_id;
+  BlockDataID m_vel_field_id;
+  BlockDataID m_vel_tmp_field_id;
   unsigned int m_n_ghost_layers;
   unsigned int m_shear_direction;
   unsigned int m_shear_plane_normal;

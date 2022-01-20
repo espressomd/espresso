@@ -237,9 +237,9 @@ namespace DensityAndVelocity
         auto z = it.z();
 
         const float rho = rho_in;
-        const float u_0 = -0.50000000000000000*force_field.get(x,y,z,0)/rho_in + u[0];
-        const float u_1 = -0.50000000000000000*force_field.get(x,y,z,1)/rho_in + u[1];
-        const float u_2 = -0.50000000000000000*force_field.get(x,y,z,2)/rho_in + u[2];
+        const float u_0 = -0.5f*force_field.get(x,y,z,0)/rho_in + u[0];
+        const float u_1 = -0.5f*force_field.get(x,y,z,1)/rho_in + u[1];
+        const float u_2 = -0.5f*force_field.get(x,y,z,2)/rho_in + u[2];
 
         Equilibrium::set(it, Vector3<float>(u_0, u_1, u_2), rho);
     }
@@ -251,9 +251,9 @@ namespace DensityAndVelocity
               const float rho_in = float(1.0) )
     {
         const float rho = rho_in;
-        const float u_0 = -0.50000000000000000*force_field.get(x,y,z,0)/rho_in + u[0];
-        const float u_1 = -0.50000000000000000*force_field.get(x,y,z,1)/rho_in + u[1];
-        const float u_2 = -0.50000000000000000*force_field.get(x,y,z,2)/rho_in + u[2];
+        const float u_0 = -0.5f*force_field.get(x,y,z,0)/rho_in + u[0];
+        const float u_1 = -0.5f*force_field.get(x,y,z,1)/rho_in + u[1];
+        const float u_2 = -0.5f*force_field.get(x,y,z,2)/rho_in + u[2];
 
         Equilibrium::set(pdf, x, y, z, Vector3<float>(u_0, u_1, u_2), rho );
     }
@@ -275,9 +275,9 @@ namespace DensityAndVelocityRange
             const auto y = cellIt.y();
             const auto z = cellIt.z();
             const float rho = rho_in;
-            const float u_0 = -0.50000000000000000*force_field.get(x,y,z,0)/rho_in + u[0];
-            const float u_1 = -0.50000000000000000*force_field.get(x,y,z,1)/rho_in + u[1];
-            const float u_2 = -0.50000000000000000*force_field.get(x,y,z,2)/rho_in + u[2];
+            const float u_0 = -0.5f*force_field.get(x,y,z,0)/rho_in + u[0];
+            const float u_1 = -0.5f*force_field.get(x,y,z,1)/rho_in + u[1];
+            const float u_2 = -0.5f*force_field.get(x,y,z,2)/rho_in + u[2];
 
             Equilibrium::set(cellIt, Vector3<float>(u_0, u_1, u_2), rho);
         }
@@ -320,9 +320,9 @@ namespace DensityAndMomentumDensity
         const float vel1Term = f_1 + f_11 + f_15 + f_7;
         const float vel2Term = f_12 + f_13 + f_5;
         const float rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term + vel1Term + vel2Term;
-        const float md_0 = -f_13 - f_17 - f_3 - f_7 - f_9 + (0.50000000000000000)*force_field.get(x,y,z,0) + vel0Term;
-        const float md_1 = -f_10 - f_12 - f_16 - f_2 + f_8 - f_9 + (0.50000000000000000)*force_field.get(x,y,z,1) + vel1Term;
-        const float md_2 = f_11 + f_14 - f_15 - f_16 - f_17 - f_18 - f_6 + (0.50000000000000000)*force_field.get(x,y,z,2) + vel2Term;
+        const float md_0 = -f_13 - f_17 - f_3 - f_7 - f_9 + (0.5f)*force_field.get(x,y,z,0) + vel0Term;
+        const float md_1 = -f_10 - f_12 - f_16 - f_2 + f_8 - f_9 + (0.5f)*force_field.get(x,y,z,1) + vel1Term;
+        const float md_2 = f_11 + f_14 - f_15 - f_16 - f_17 - f_18 - f_6 + (0.5f)*force_field.get(x,y,z,2) + vel2Term;
         momentumDensity[0] = md_0;
         momentumDensity[1] = md_1;
         momentumDensity[2] = md_2;
@@ -360,9 +360,9 @@ namespace DensityAndMomentumDensity
         const float vel1Term = f_1 + f_11 + f_15 + f_7;
         const float vel2Term = f_12 + f_13 + f_5;
         const float rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term + vel1Term + vel2Term;
-        const float md_0 = -f_13 - f_17 - f_3 - f_7 - f_9 + (0.50000000000000000)*force_field.get(x,y,z,0) + vel0Term;
-        const float md_1 = -f_10 - f_12 - f_16 - f_2 + f_8 - f_9 + (0.50000000000000000)*force_field.get(x,y,z,1) + vel1Term;
-        const float md_2 = f_11 + f_14 - f_15 - f_16 - f_17 - f_18 - f_6 + (0.50000000000000000)*force_field.get(x,y,z,2) + vel2Term;
+        const float md_0 = -f_13 - f_17 - f_3 - f_7 - f_9 + (0.5f)*force_field.get(x,y,z,0) + vel0Term;
+        const float md_1 = -f_10 - f_12 - f_16 - f_2 + f_8 - f_9 + (0.5f)*force_field.get(x,y,z,1) + vel1Term;
+        const float md_2 = f_11 + f_14 - f_15 - f_16 - f_17 - f_18 - f_6 + (0.5f)*force_field.get(x,y,z,2) + vel2Term;
         momentumDensity[0] = md_0;
         momentumDensity[1] = md_1;
         momentumDensity[2] = md_2;
@@ -406,9 +406,9 @@ namespace MomentumDensity
         const float vel1Term = f_1 + f_11 + f_15 + f_7;
         const float vel2Term = f_12 + f_13 + f_5;
         const float rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term + vel1Term + vel2Term;
-        const float md_0 = -f_13 - f_17 - f_3 - f_7 - f_9 + (0.50000000000000000)*force_field.get(x,y,z,0) + vel0Term;
-        const float md_1 = -f_10 - f_12 - f_16 - f_2 + f_8 - f_9 + (0.50000000000000000)*force_field.get(x,y,z,1) + vel1Term;
-        const float md_2 = f_11 + f_14 - f_15 - f_16 - f_17 - f_18 - f_6 + (0.50000000000000000)*force_field.get(x,y,z,2) + vel2Term;
+        const float md_0 = -f_13 - f_17 - f_3 - f_7 - f_9 + (0.5f)*force_field.get(x,y,z,0) + vel0Term;
+        const float md_1 = -f_10 - f_12 - f_16 - f_2 + f_8 - f_9 + (0.5f)*force_field.get(x,y,z,1) + vel1Term;
+        const float md_2 = f_11 + f_14 - f_15 - f_16 - f_17 - f_18 - f_6 + (0.5f)*force_field.get(x,y,z,2) + vel2Term;
         momentumDensity[0] = md_0;
         momentumDensity[1] = md_1;
         momentumDensity[2] = md_2;
@@ -445,9 +445,9 @@ namespace MomentumDensity
         const float vel1Term = f_1 + f_11 + f_15 + f_7;
         const float vel2Term = f_12 + f_13 + f_5;
         const float rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term + vel1Term + vel2Term;
-        const float md_0 = -f_13 - f_17 - f_3 - f_7 - f_9 + (0.50000000000000000)*force_field.get(x,y,z,0) + vel0Term;
-        const float md_1 = -f_10 - f_12 - f_16 - f_2 + f_8 - f_9 + (0.50000000000000000)*force_field.get(x,y,z,1) + vel1Term;
-        const float md_2 = f_11 + f_14 - f_15 - f_16 - f_17 - f_18 - f_6 + (0.50000000000000000)*force_field.get(x,y,z,2) + vel2Term;
+        const float md_0 = -f_13 - f_17 - f_3 - f_7 - f_9 + (0.5f)*force_field.get(x,y,z,0) + vel0Term;
+        const float md_1 = -f_10 - f_12 - f_16 - f_2 + f_8 - f_9 + (0.5f)*force_field.get(x,y,z,1) + vel1Term;
+        const float md_2 = f_11 + f_14 - f_15 - f_16 - f_17 - f_18 - f_6 + (0.5f)*force_field.get(x,y,z,2) + vel2Term;
         momentumDensity[0] = md_0;
         momentumDensity[1] = md_1;
         momentumDensity[2] = md_2;

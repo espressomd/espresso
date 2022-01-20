@@ -49,10 +49,10 @@
 
 #include "BlockAndCell.hpp"
 #include "BoundaryHandling.hpp"
+#include "InterpolateAndShiftAtBoundary.hpp"
 #include "LBWalberlaBase.hpp"
 #include "LatticeWalberla.hpp"
 #include "LeesEdwardsPack.hpp"
-#include "LeesEdwardsUpdate.hpp"
 #include "ResetForce.hpp"
 #include "generated_kernels/InitialPDFsSetterDoublePrecision.h"
 #include "generated_kernels/InitialPDFsSetterSinglePrecision.h"
@@ -168,6 +168,11 @@ class LBWalberlaImpl : public LBWalberlaBase {
       typename detail::KernelTrait<FloatType>::UpdateVelocityFromPDFSweep;
   using BoundaryModel = BoundaryHandling<FloatType>;
 
+public:
+  typedef stencil::D3Q19 Stencil;
+  using PdfField = GhostLayerField<FloatType, Stencil::Size>;
+  using VectorField = GhostLayerField<FloatType, 3u>;
+
 protected:
   using CollisionModel =
       boost::variant<UnthermalizedCollisionModel, ThermalizedCollisionModel,
@@ -184,8 +189,6 @@ private:
       // cm.shear_velocity_ = m_lees_edwards_sweep->get_shear_velocity();
       cm(b);
     }
-
-    std::shared_ptr<LeesEdwardsUpdate> m_lees_edwards_sweep;
 
   } run_collide_sweep;
 
@@ -209,10 +212,7 @@ private:
 
 public:
   // Type definitions
-  typedef stencil::D3Q19 Stencil;
-  using VectorField = GhostLayerField<FloatType, 3u>;
   using FlagField = typename BoundaryModel::FlagField;
-  using PdfField = GhostLayerField<FloatType, Stencil::Size>;
   using Lattice_T = LatticeWalberla::Lattice_T;
 
 private:
@@ -310,6 +310,7 @@ protected:
   BlockDataID m_force_to_be_applied_id;
 
   BlockDataID m_velocity_field_id;
+  BlockDataID m_velocity_tmp_field_id;
 
   using FullCommunicator = blockforest::communication::UniformBufferedScheme<
       typename stencil::D3Q27>;
@@ -326,6 +327,12 @@ protected:
   std::shared_ptr<StreamSweep> m_stream;
   std::shared_ptr<UpdateVelocityFromPDFSweep> m_update_velocity_field_from_pdfs;
 
+  // Lees Edwards boundary interpolation
+  std::shared_ptr<InterpolateAndShiftAtBoundary<PdfField>>
+      m_lees_edwards_pdf_interpol_sweep;
+  std::shared_ptr<InterpolateAndShiftAtBoundary<VectorField>>
+      m_lees_edwards_vel_interpol_sweep;
+
   // Collision sweep
   std::shared_ptr<CollisionModel> m_collision_model;
 
@@ -334,9 +341,6 @@ protected:
 
   // lattice
   std::shared_ptr<LatticeWalberla> m_lattice;
-
-  // Lees-Edwards sweep
-  std::shared_ptr<LeesEdwardsUpdate> m_lees_edwards_sweep;
 
   std::size_t stencil_size() const override {
     return static_cast<std::size_t>(Stencil::Size);
@@ -363,6 +367,8 @@ public:
     m_force_to_be_applied_id = field::addToStorage<VectorField>(
         blocks, "force field", FloatType{0}, field::fzyx, n_ghost_layers);
     m_velocity_field_id = field::addToStorage<VectorField>(
+        blocks, "velocity field", FloatType{0}, field::fzyx, n_ghost_layers);
+    m_velocity_tmp_field_id = field::addToStorage<VectorField>(
         blocks, "velocity field", FloatType{0}, field::fzyx, n_ghost_layers);
 
     // Init and register pdf field
@@ -427,6 +433,10 @@ public:
     (*m_full_communication).communicate();
   }
 
+  bool lees_edwards_bc() {
+    return boost::get<LeesEdwardsCollisionModel>(&*m_collision_model);
+  };
+
   inline void integrate_collide(std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       boost::apply_visitor(run_collide_sweep, *m_collision_model,
@@ -447,6 +457,16 @@ public:
       (*m_update_velocity_field_from_pdfs)(&*b);
   }
 
+  inline void apply_lees_edwards_pdf_interpolation(
+      std::shared_ptr<Lattice_T> const &blocks) {
+    for (auto b = blocks->begin(); b != blocks->end(); ++b)
+      (*m_lees_edwards_pdf_interpol_sweep)(&*b);
+  }
+  inline void apply_lees_edwards_vel_interpolation_and_shift(
+      std::shared_ptr<Lattice_T> const &blocks) {
+    for (auto b = blocks->begin(); b != blocks->end(); ++b)
+      (*m_lees_edwards_vel_interpol_sweep)(&*b);
+  }
   inline void integrate_boundaries(std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_boundary)(&*b);
@@ -491,17 +511,20 @@ public:
     // LB stream
     integrate_stream(blocks);
 
-    update_velocity_field_from_pdf(blocks);
     // LB collide
     integrate_collide(blocks);
 
     // Refresh ghost layers
     (*m_full_communication).communicate();
+    if (lees_edwards_bc()) {
+      apply_lees_edwards_pdf_interpolation(blocks);
+      apply_lees_edwards_vel_interpolation_and_shift(blocks);
+    };
   }
 
 public:
   void integrate() override {
-    if (boost::get<LeesEdwardsCollisionModel>(&*m_collision_model)) {
+    if (lees_edwards_bc()) {
       integrate_pull_scheme();
     } else {
       integrate_push_scheme();
@@ -550,15 +573,25 @@ public:
     auto const shear_plane_size =
         Utils::product(lattice().get_grid_dimensions()) / shear_normal_grid;
     auto const shear_vel = FloatType_c(lees_edwards_pack.get_shear_velocity());
-    m_lees_edwards_sweep = std::make_shared<LeesEdwardsUpdate>(
-        lattice().get_blocks(), m_pdf_field_id, m_pdf_tmp_field_id,
-        lattice().get_ghost_layers(), std::move(lees_edwards_pack));
-    run_collide_sweep.m_lees_edwards_sweep = m_lees_edwards_sweep;
+    m_lees_edwards_pdf_interpol_sweep =
+        std::make_shared<InterpolateAndShiftAtBoundary<PdfField>>(
+            lattice().get_blocks(), m_pdf_field_id, m_pdf_tmp_field_id,
+            lattice().get_ghost_layers(), lees_edwards_pack.shear_direction,
+            lees_edwards_pack.shear_plane_normal,
+            lees_edwards_pack.get_pos_offset);
+    m_lees_edwards_vel_interpol_sweep =
+        std::make_shared<InterpolateAndShiftAtBoundary<VectorField>>(
+            lattice().get_blocks(), m_velocity_field_id,
+            m_velocity_tmp_field_id, lattice().get_ghost_layers(),
+            lees_edwards_pack.shear_direction,
+            lees_edwards_pack.shear_plane_normal,
+            lees_edwards_pack.get_pos_offset,
+            lees_edwards_pack.get_shear_velocity);
     auto const omega = shear_mode_relaxation_rate();
     auto const omega_odd = odd_mode_relaxation_rate(omega);
-    auto obj = LeesEdwardsCollisionModel(
-        m_last_applied_force_field_id, m_pdf_field_id,
-        FloatType_c(shear_normal_grid), omega, shear_vel);
+    auto obj =
+        LeesEdwardsCollisionModel(m_last_applied_force_field_id, m_pdf_field_id,
+                                  FloatType_c(64), omega, shear_vel);
     m_collision_model = std::make_shared<CollisionModel>(std::move(obj));
     // auto *cm = boost::get<LeesEdwardsCollisionModel>(&*m_collision_model);
     // cm->grid_size_ = int64_t(shear_plane_size);

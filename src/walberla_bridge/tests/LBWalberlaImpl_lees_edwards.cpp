@@ -67,7 +67,7 @@ double u_expected(double x, double t, double nu, double v_0, double h,
 Vector3i mpi_shape{};
 BOOST_AUTO_TEST_CASE(test_lees_edwards) {
   double density = 1;
-  double viscosity = 0.5;
+  double viscosity = 1. / 7.;
   auto lattice =
       std::make_shared<LatticeWalberla>(Vector3i{8, 64, 8}, mpi_shape, 1);
   auto lb = walberla::LBWalberlaImpl<double>(lattice, viscosity, density);
@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(test_lees_edwards) {
     lb.integrate();
     if (i < lattice->get_grid_dimensions()[1] / 2)
       continue;
-    for (double y : {0.5, 5.5, 6.5, 7.5, 14.0, 14.5,
+    for (double y : {-0.5, 0., 0.5, 5.5, 6.5, 7.5, 14.0, 14.5,
                      0.23 * lattice->get_grid_dimensions()[1],
                      0.7 * lattice->get_grid_dimensions()[1],
                      lattice->get_grid_dimensions()[1] * 1.0}) {
