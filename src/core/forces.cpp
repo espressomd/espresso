@@ -27,6 +27,7 @@
 
 #include "EspressoSystemInterface.hpp"
 
+#include "bond_breakage.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
 #include "comfixed_global.hpp"
@@ -149,7 +150,7 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
 #ifdef COLLISION_DETECTION
   prepare_local_collision_queue();
 #endif
-
+  BondBreakage::clear_queue();
   auto particles = cell_structure.local_particles();
   auto ghost_particles = cell_structure.ghost_particles();
 #ifdef ELECTROSTATICS

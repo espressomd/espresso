@@ -44,6 +44,7 @@ if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
 from .comfixed import ComFixed
 from .utils cimport check_type_or_throw_except
 from .utils import handle_errors, array_locked
+from .bond_breakage import BreakageSpecs
 IF VIRTUAL_SITES:
     from .virtual_sites import ActiveVirtualSitesHandle, VirtualSitesOff
 
@@ -143,6 +144,8 @@ cdef class System:
         """:class:`espressomd.actors.Actors`"""
         analysis
         """:class:`espressomd.analyze.Analysis`"""
+        bond_breakage
+        """:class:`espressomd.bond_breakage.BreakageSpecs`"""
         galilei
         """:class:`espressomd.galilei.GalileiTransform`"""
         integrator
@@ -182,6 +185,7 @@ cdef class System:
             self.auto_update_accumulators = AutoUpdateAccumulators()
             self.bonded_inter = interactions.BondedInteractions()
             self.cell_system = CellSystem()
+            self.bond_breakage = BreakageSpecs()
             IF COLLISION_DETECTION == 1:
                 self.collision_detection = CollisionDetection()
             self.comfixed = ComFixed()
@@ -226,6 +230,7 @@ cdef class System:
             odict['lbboundaries'] = System.__getattribute__(
                 self, "lbboundaries")
         odict['thermostat'] = System.__getattribute__(self, "thermostat")
+        odict['bond_breakage'] = System.__getattribute__(self, "bond_breakage")
         IF COLLISION_DETECTION:
             odict['collision_detection'] = System.__getattribute__(
                 self, "collision_detection")

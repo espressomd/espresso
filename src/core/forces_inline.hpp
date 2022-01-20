@@ -25,6 +25,7 @@
 
 #include "forces.hpp"
 
+#include "bond_breakage.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "bonded_interactions/thermalized_bond_kernel.hpp"
 #include "immersed_boundary/ibm_tribend.hpp"
@@ -403,6 +404,15 @@ inline bool add_bonded_four_body_force(Bonded_IA_Parameters const &iaparams,
 
 inline bool add_bonded_force(Particle &p1, int bond_id,
                              Utils::Span<Particle *> partners) {
+
+  // Consider for bond breakage
+  if (partners.size() == 1) {
+    auto d = box_geo.get_mi_vector(p1.r.p, partners[0]->r.p).norm();
+    if (BondBreakage::check_and_handle_breakage(
+            p1.p.identity, partners[0]->p.identity, bond_id, d))
+      return false;
+  }
+
   auto const &iaparams = *bonded_ia_params.at(bond_id);
 
   switch (number_of_partners(iaparams)) {
