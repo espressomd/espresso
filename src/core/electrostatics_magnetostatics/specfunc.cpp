@@ -247,25 +247,25 @@ double hzeta(double s, double q) {
 }
 
 double K0(double x) {
-  double c, I0;
   if (x <= 2.0) {
-    c = evaluateAsChebychevSeriesAt(bk0_cs, 0.5 * x * x - 1.0);
-    I0 = evaluateAsChebychevSeriesAt(bi0_cs, x * x / 4.5 - 1.0);
-    return (-log(x) + Utils::ln_2()) * I0 + c;
+    auto const c = evaluateAsChebychevSeriesAt(bk0_cs, 0.5 * x * x - 1.0);
+    auto const i0 = evaluateAsChebychevSeriesAt(bi0_cs, x * x / 4.5 - 1.0);
+    return (-log(x) + Utils::ln_2()) * i0 + c;
   }
-  c = (x <= 8.0) ? evaluateAsChebychevSeriesAt(ak0_cs, (16.0 / x - 5.0) / 3.0)
+  auto const c =
+      (x <= 8.0) ? evaluateAsChebychevSeriesAt(ak0_cs, (16.0 / x - 5.0) / 3.0)
                  : evaluateAsChebychevSeriesAt(ak02_cs, 16.0 / x - 1.0);
   return exp(-x) * c / sqrt(x);
 }
 
 double K1(double x) {
-  double c, I1;
   if (x <= 2.0) {
-    c = evaluateAsChebychevSeriesAt(bk1_cs, 0.5 * x * x - 1.0);
-    I1 = x * evaluateAsChebychevSeriesAt(bi1_cs, x * x / 4.5 - 1.0);
-    return (log(x) - Utils::ln_2()) * I1 + c / x;
+    auto const c = evaluateAsChebychevSeriesAt(bk1_cs, 0.5 * x * x - 1.0);
+    auto const i1 = x * evaluateAsChebychevSeriesAt(bi1_cs, x * x / 4.5 - 1.0);
+    return (log(x) - Utils::ln_2()) * i1 + c / x;
   }
-  c = (x <= 8.0) ? evaluateAsChebychevSeriesAt(ak1_cs, (16.0 / x - 5.0) / 3.0)
+  auto const c =
+      (x <= 8.0) ? evaluateAsChebychevSeriesAt(ak1_cs, (16.0 / x - 5.0) / 3.0)
                  : evaluateAsChebychevSeriesAt(ak12_cs, 16.0 / x - 1.0);
   return exp(-x) * c / sqrt(x);
 }
@@ -405,15 +405,15 @@ double LPK1(double x) {
 std::pair<double, double> LPK01(double x) {
   if (x >= 27.) {
     auto const tmp = .5 * exp(-x) / sqrt(x);
-    auto const K0 = tmp * ak0_cs[0];
-    auto const K1 = tmp * ak1_cs[0];
-    return {K0, K1};
+    auto const k0 = tmp * ak0_cs[0];
+    auto const k1 = tmp * ak1_cs[0];
+    return {k0, k1};
   }
   if (x >= 23.) {
     auto const tmp = exp(-x) / sqrt(x), xx = (16. / 3.) / x - 5. / 3.;
-    auto const K0 = tmp * (xx * ak0_cs[1] + 0.5 * ak0_cs[0]);
-    auto const K1 = tmp * (xx * ak1_cs[1] + 0.5 * ak1_cs[0]);
-    return {K0, K1};
+    auto const k0 = tmp * (xx * ak0_cs[1] + 0.5 * ak0_cs[0]);
+    auto const k1 = tmp * (xx * ak1_cs[1] + 0.5 * ak1_cs[0]);
+    return {k0, k1};
   }
   if (x > 2) {
     int j = ak01_orders[((int)x) - 2];
@@ -440,9 +440,9 @@ std::pair<double, double> LPK01(double x) {
       dd1 = tmp1;
     }
     auto const tmp = exp(-x) / sqrt(x);
-    auto const K0 = tmp * (0.5 * (s0[0] + x2 * d0) - dd0);
-    auto const K1 = tmp * (0.5 * (s1[0] + x2 * d1) - dd1);
-    return {K0, K1};
+    auto const k0 = tmp * (0.5 * (s0[0] + x2 * d0) - dd0);
+    auto const k1 = tmp * (0.5 * (s1[0] + x2 * d1) - dd1);
+    return {k0, k1};
   }
   /* x <= 2 */
   {
@@ -461,8 +461,8 @@ std::pair<double, double> LPK01(double x) {
       dd1 = tmp1;
     }
     auto const tmp = log(x) - Utils::ln_2();
-    auto K0 = -tmp * (0.5 * (bi0_cs[0] + x2 * d0) - dd0);
-    auto K1 = x * tmp * (0.5 * (bi1_cs[0] + x2 * d1) - dd1);
+    auto k0 = -tmp * (0.5 * (bi0_cs[0] + x2 * d0) - dd0);
+    auto k1 = x * tmp * (0.5 * (bi1_cs[0] + x2 * d1) - dd1);
 
     /* K0/K1 correction */
     j = 9;
@@ -478,8 +478,8 @@ std::pair<double, double> LPK01(double x) {
       dd0 = tmp0;
       dd1 = tmp1;
     }
-    K0 += (0.5 * (x2 * d0 + bk0_cs[0]) - dd0);
-    K1 += (0.5 * (x2 * d1 + bk1_cs[0]) - dd1) / x;
-    return {K0, K1};
+    k0 += (0.5 * (x2 * d0 + bk0_cs[0]) - dd0);
+    k1 += (0.5 * (x2 * d1 + bk1_cs[0]) - dd1) / x;
+    return {k0, k1};
   }
 }

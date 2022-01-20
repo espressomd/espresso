@@ -160,19 +160,19 @@ EKParameters ek_parameters = {
     nullptr,
 #endif
     // rho
-    {nullptr},
+    {},
     // species_index
     {-1},
     // density
-    {0.0},
+    {},
     // D
-    {0.0},
+    {},
     // d
-    {0.0},
+    {},
     // valency
-    {0.0},
+    {},
     // ext_force_density
-    {0.0},
+    {},
     // node_is_catalyst
     nullptr,
 };
@@ -2250,9 +2250,9 @@ int ek_init() {
         ek_parameters.bulk_viscosity * time_step / Utils::sqr(lbpar_gpu.agrid);
 
     lbpar_gpu.external_force_density =
-        ek_parameters.lb_ext_force_density[0] != 0 ||
-        ek_parameters.lb_ext_force_density[1] != 0 ||
-        ek_parameters.lb_ext_force_density[2] != 0;
+        ek_parameters.lb_ext_force_density[0] != 0.f ||
+        ek_parameters.lb_ext_force_density[1] != 0.f ||
+        ek_parameters.lb_ext_force_density[2] != 0.f;
     lbpar_gpu.ext_force_density =
         Utils::Vector3f(ek_parameters.lb_ext_force_density) *
         Utils::sqr(lbpar_gpu.agrid * time_step);
@@ -3616,8 +3616,8 @@ void ek_print_lbpar() {
   printf("    unsigned int dim_y = %d;\n", lbpar_gpu.dim[1]);
   printf("    unsigned int dim_z = %d;\n", lbpar_gpu.dim[2]);
   printf("    unsigned int number_of_nodes = %d;\n", lbpar_gpu.number_of_nodes);
-  printf("    int external_force_density = %d;\n",
-         lbpar_gpu.external_force_density);
+  printf("    bool external_force_density = %d;\n",
+         static_cast<int>(lbpar_gpu.external_force_density));
   printf("    float ext_force_density[3] = {%f, %f, %f};\n",
          lbpar_gpu.ext_force_density[0], lbpar_gpu.ext_force_density[1],
          lbpar_gpu.ext_force_density[2]);

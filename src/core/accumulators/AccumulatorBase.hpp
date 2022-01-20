@@ -27,8 +27,9 @@ namespace Accumulators {
 class AccumulatorBase {
 public:
   explicit AccumulatorBase(int delta_N = 1) : m_delta_N(delta_N) {}
-  int &delta_N() { return m_delta_N; }
   virtual ~AccumulatorBase() = default;
+
+  int &delta_N() { return m_delta_N; }
 
   virtual void update() = 0;
   /** Dimensions needed to reshape the flat array returned by the accumulator */

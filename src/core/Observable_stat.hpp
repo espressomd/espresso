@@ -56,8 +56,8 @@ public:
     if (m_chunk_size == 1)
       return boost::accumulate(m_data, acc);
 
-    for (auto it = m_data.begin() + column; it < m_data.end();
-         it += m_chunk_size)
+    for (auto it = m_data.begin() + static_cast<std::ptrdiff_t>(column);
+         it < m_data.end(); it += static_cast<std::ptrdiff_t>(m_chunk_size))
       acc += *it;
     return acc;
   }
@@ -88,7 +88,7 @@ public:
   /** Get contribution from a bonded interaction */
   Utils::Span<double> bonded_contribution(int bond_id) const {
     auto const offset = m_chunk_size * static_cast<std::size_t>(bond_id);
-    return Utils::Span<double>(bonded.data() + offset, m_chunk_size);
+    return {bonded.data() + offset, m_chunk_size};
   }
 
   void add_non_bonded_contribution(int type1, int type2,

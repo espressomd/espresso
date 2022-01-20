@@ -47,11 +47,13 @@
 #include <utils/uniform.hpp>
 
 #include <Random123/philox.h>
+#include <boost/mpi/collectives/reduce.hpp>
 #include <boost/multi_array.hpp>
 #include <boost/optional.hpp>
 #include <boost/range/numeric.hpp>
-#include <mpi.h>
 #include <profiler/profiler.hpp>
+
+#include <mpi.h>
 
 #include <algorithm>
 #include <array>
@@ -1329,21 +1331,21 @@ void lb_calc_fluid_momentum(double *result, const LB_Parameters &lb_parameters,
   }
 
   momentum *= lb_parameters.agrid / lb_parameters.tau;
-  MPI_Reduce(momentum.data(), result, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+  boost::mpi::reduce(comm_cart, momentum.data(), 3, result, std::plus<>(), 0);
 }
 
 void lb_collect_boundary_forces(double *result) {
 #ifdef LB_BOUNDARIES
-  int n_lb_boundaries = LBBoundaries::lbboundaries.size();
-  std::vector<double> boundary_forces(3 * n_lb_boundaries);
-  int i = 0;
+  auto const lbb_data_len = 3 * LBBoundaries::lbboundaries.size();
+  std::vector<double> boundary_forces(lbb_data_len);
+  std::size_t i = 0;
   for (auto it = LBBoundaries::lbboundaries.begin();
        it != LBBoundaries::lbboundaries.end(); ++it, i++)
-    for (int j = 0; j < 3; j++)
+    for (std::size_t j = 0; j < 3; j++)
       boundary_forces[3 * i + j] = (**it).force()[j];
 
-  MPI_Reduce(boundary_forces.data(), result, 3 * n_lb_boundaries, MPI_DOUBLE,
-             MPI_SUM, 0, comm_cart);
+  boost::mpi::reduce(comm_cart, boundary_forces.data(),
+                     static_cast<int>(lbb_data_len), result, std::plus<>(), 0);
 #endif
 }
 

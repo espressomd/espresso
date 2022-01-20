@@ -38,11 +38,8 @@ using Cell = Testing::Cell<Particle>;
 
 std::vector<std::unique_ptr<Cell>> make_cells(std::size_t n) {
   std::vector<std::unique_ptr<Cell>> cells(n);
-
-  for (auto &c : cells) {
-    c = std::make_unique<Cell>();
-  }
-
+  std::generate(cells.begin(), cells.end(),
+                []() { return std::make_unique<Cell>(); });
   return cells;
 }
 

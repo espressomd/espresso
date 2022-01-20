@@ -74,12 +74,13 @@ template <typename T, std::size_t Rows, std::size_t Cols> struct Matrix {
 
   container m_data;
 
+private:
   friend class boost::serialization::access;
-  template <class Archive>
-  void serialize(Archive &ar, const unsigned int version) {
+  template <class Archive> void serialize(Archive &ar, const unsigned int) {
     ar &m_data;
   }
 
+public:
   Matrix() = default;
   Matrix(std::initializer_list<T> init_list) {
     assert(init_list.size() == Rows * Cols);

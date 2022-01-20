@@ -33,14 +33,17 @@ public:
   using PidObservable::PidObservable;
 
   std::vector<double>
-  evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles,
-           const ParticleObservables::traits<Particle> &traits) const override {
+  evaluate(ParticleReferenceRange particles,
+           const ParticleObservables::traits<Particle> &) const override {
     std::vector<double> res(n_values());
 #ifdef ROTATION
-    for (std::size_t i = 0; i < particles.size(); i++) {
-      res[3 * i + 0] = particles[i].get().m.omega[0];
-      res[3 * i + 1] = particles[i].get().m.omega[1];
-      res[3 * i + 2] = particles[i].get().m.omega[2];
+    std::size_t i = 0;
+    for (auto const &p : particles) {
+      auto const &omega = p.get().m.omega;
+      res[3 * i + 0] = omega[0];
+      res[3 * i + 1] = omega[1];
+      res[3 * i + 2] = omega[2];
+      i++;
     }
 #endif
     return res;

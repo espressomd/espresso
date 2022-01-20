@@ -68,10 +68,8 @@ public:
   void calculate_sampling_positions() {
     auto const lim = limits();
     sampling_positions.clear();
-    assert(sampling_delta[0] > 0. and sampling_delta[1] > 0. and
-           sampling_delta[2] > 0.);
-    assert(sampling_offset[0] >= 0. and sampling_offset[1] >= 0. and
-           sampling_offset[2] >= 0.);
+    assert(Utils::Vector3d(sampling_delta) > Utils::Vector3d::broadcast(0.));
+    assert(Utils::Vector3d(sampling_offset) >= Utils::Vector3d::broadcast(0.));
     const auto n_samples_x = static_cast<std::size_t>(
         std::rint((lim[0].second - lim[0].first) / sampling_delta[0]));
     const auto n_samples_y = static_cast<std::size_t>(

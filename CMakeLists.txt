@@ -130,8 +130,8 @@ include(CheckCXXSourceCompiles)
 # cross-platform macro to print the function name in error messages
 set(PRETTY_FUNCTION_EXTENSION __func__)
 
-# search for a supported compiler extension that prints the function
-# name as well as its list of arguments, return type and namespace
+# search for a supported compiler extension that prints the function name as
+# well as its list of arguments, return type and namespace
 foreach(func_name __PRETTY_FUNCTION__ __FUNCSIG__ __FUNCTION__)
   check_cxx_source_compiles(
     "

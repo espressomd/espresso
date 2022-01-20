@@ -55,8 +55,9 @@ struct LB_parameters_gpu {
   float gamma_shear;
   /** relaxation rate of bulk modes */
   float gamma_bulk;
-  /**      */
+  /** relaxation rate of odd modes */
   float gamma_odd;
+  /** relaxation rate of even modes */
   float gamma_even;
   /** flag determining whether gamma_shear, gamma_odd, and gamma_even are
    *  calculated from gamma_shear in such a way to yield a TRT LB with minimized
@@ -81,7 +82,7 @@ struct LB_parameters_gpu {
   unsigned int number_of_boundnodes;
 #endif
 
-  int external_force_density;
+  bool external_force_density;
 
   Utils::Array<float, 3> ext_force_density;
 

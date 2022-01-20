@@ -73,7 +73,7 @@ double ShapeBasedConstraint::min_dist(const ParticleRange &particles) {
 
 ParticleForce ShapeBasedConstraint::force(Particle const &p,
                                           Utils::Vector3d const &folded_pos,
-                                          double t) {
+                                          double) {
   ParticleForce pf{};
   IA_parameters const &ia_params = *get_ia_param(p.p.type, part_rep.p.type);
 

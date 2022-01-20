@@ -85,7 +85,7 @@ BondedCoulombSR::energy(Particle const &p1, Particle const &p2,
   auto const dist = dx.norm();
   return Coulomb::pair_energy(p1, p2, q1q2, dx, dist);
 #else
-  return .0;
+  return 0.;
 #endif
 }
 

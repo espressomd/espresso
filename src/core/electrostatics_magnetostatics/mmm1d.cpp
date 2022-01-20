@@ -270,7 +270,7 @@ void add_mmm1d_coulomb_pair_force(double chpref, Utils::Vector3d const &d,
 double mmm1d_coulomb_pair_energy(double const chpref, Utils::Vector3d const &d,
                                  double r) {
   if (chpref == 0)
-    return 0;
+    return 0.;
 
   constexpr auto c_2pi = 2 * Utils::pi();
   auto const n_modPsi = static_cast<int>(modPsi.size() >> 1);

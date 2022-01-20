@@ -2221,7 +2221,7 @@ void lb_calc_particle_lattice_ia_gpu(bool couple_virtual, double friction,
 
   dim3 dim_grid = calculate_dim_grid(
       static_cast<unsigned>(device_particles.size()), 4, threads_per_block);
-  if (lbpar_gpu.kT > 0.0) {
+  if (lbpar_gpu.kT > 0.f) {
     assert(rng_counter_coupling_gpu);
     KERNELCALL(calc_fluid_particle_ia<no_of_neighbours>, dim_grid,
                threads_per_block, *current_nodes, device_particles,
@@ -2343,9 +2343,10 @@ void lb_calc_fluid_momentum_GPU(double *host_mom) {
                            cudaMemcpyDeviceToHost));
 
   cudaFree(tot_momentum);
-  host_mom[0] = (double)(host_momentum[0] * lbpar_gpu.agrid / lbpar_gpu.tau);
-  host_mom[1] = (double)(host_momentum[1] * lbpar_gpu.agrid / lbpar_gpu.tau);
-  host_mom[2] = (double)(host_momentum[2] * lbpar_gpu.agrid / lbpar_gpu.tau);
+  auto const lattice_speed = lbpar_gpu.agrid / lbpar_gpu.tau;
+  host_mom[0] = static_cast<double>(host_momentum[0] * lattice_speed);
+  host_mom[1] = static_cast<double>(host_momentum[1] * lattice_speed);
+  host_mom[2] = static_cast<double>(host_momentum[2] * lattice_speed);
 }
 
 /** Setup and call kernel for getting macroscopic fluid values of all nodes
@@ -2505,7 +2506,7 @@ struct lb_lbfluid_mass_of_particle {
 #ifdef MASS
     return particle.mass;
 #else
-    return 1.;
+    return 1.f;
 #endif
   }
 };

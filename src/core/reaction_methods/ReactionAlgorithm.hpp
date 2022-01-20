@@ -141,10 +141,10 @@ protected:
   all_reactant_particles_exist(SingleReaction const &current_reaction) const;
 
 protected:
-  virtual double calculate_acceptance_probability(
-      SingleReaction const &current_reaction, double E_pot_old,
-      double E_pot_new, std::map<int, int> const &old_particle_numbers) const {
-    return -10;
+  virtual double
+  calculate_acceptance_probability(SingleReaction const &, double, double,
+                                   std::map<int, int> const &) const {
+    return -10.;
   }
 
 private:

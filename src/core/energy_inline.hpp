@@ -204,7 +204,7 @@ inline void add_non_bonded_pair_energy(Particle const &p1, Particle const &p2,
 inline boost::optional<double>
 calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
                    Utils::Span<Particle *> partners) {
-  auto const n_partners = partners.size();
+  auto const n_partners = static_cast<int>(partners.size());
 
   auto p2 = (n_partners > 0) ? partners[0] : nullptr;
   auto p3 = (n_partners > 1) ? partners[1] : nullptr;

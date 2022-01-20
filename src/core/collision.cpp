@@ -412,7 +412,7 @@ void bind_at_poc_create_bond_between_vs(const int current_vs_pid,
 void glue_to_surface_bind_part_to_vs(const Particle *const p1,
                                      const Particle *const p2,
                                      const int vs_pid_plus_one,
-                                     const CollisionPair &c) {
+                                     const CollisionPair &) {
   // Create bond between the virtual particles
   const int bondG[] = {vs_pid_plus_one - 1};
 

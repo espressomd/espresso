@@ -528,7 +528,6 @@ void ReactionAlgorithm::move_particle(int p_id, Utils::Vector3d const &new_pos,
 std::vector<std::pair<int, Utils::Vector3d>>
 ReactionAlgorithm::generate_new_particle_positions(int type, int n_particles) {
 
-  std::vector<int> p_id_s_changed_particles;
   std::vector<std::pair<int, Utils::Vector3d>> old_positions;
   old_positions.reserve(n_particles);
 

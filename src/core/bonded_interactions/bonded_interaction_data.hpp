@@ -67,8 +67,7 @@ struct NoneBond {
 
 private:
   friend boost::serialization::access;
-  template <typename Archive>
-  void serialize(Archive &ar, long int /* version */) {}
+  template <typename Archive> void serialize(Archive &, long int) {}
 };
 
 /** Interaction type for virtual bonds */
@@ -78,8 +77,7 @@ struct VirtualBond {
 
 private:
   friend boost::serialization::access;
-  template <typename Archive>
-  void serialize(Archive &ar, long int /* version */) {}
+  template <typename Archive> void serialize(Archive &, long int) {}
 };
 
 /** Visitor to get the number of bound partners from the bond parameter

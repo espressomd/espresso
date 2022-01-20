@@ -90,7 +90,8 @@ private:
 
   /* Keep a reference to the shape */
   std::shared_ptr<Shapes::Shape> m_shape;
-}; // class LBBoundary
+};
+
 } // namespace LBBoundaries
 } /* namespace ScriptInterface */
 #endif

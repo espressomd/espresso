@@ -183,22 +183,20 @@ using UpdateForceMessage = boost::variant
  * @brief Delete specific bond.
  */
 struct RemoveBond {
-    std::vector<int> bond;
+  std::vector<int> bond;
 
-    void operator()(Particle &p) const {
-      assert(not bond.empty());
-      auto const view = BondView(bond.front(), {bond.data() + 1, bond.size() - 1});
-      auto it = boost::find(p.bonds(), view);
+  void operator()(Particle &p) const {
+    assert(not bond.empty());
+    auto const view = BondView(bond.front(), {bond.data() + 1, bond.size() - 1});
+    auto it = boost::find(p.bonds(), view);
 
-      if(it != p.bonds().end()) {
-       p.bonds().erase(it);
-      }
+    if (it != p.bonds().end()) {
+     p.bonds().erase(it);
     }
+  }
 
-    template<class Archive>
-            void serialize(Archive &ar, long int) {
-        ar & bond;
-    }
+  template <class Archive>
+  void serialize(Archive &ar, long int) { ar & bond; }
 };
 
 
@@ -206,28 +204,25 @@ struct RemoveBond {
  * @brief Delete all bonds.
  */
 struct RemoveBonds {
-    void operator()(Particle &p) const {
-      p.bonds().clear();
-    }
+  void operator()(Particle &p) const { p.bonds().clear(); }
 
-    template<class Archive>
-    void serialize(Archive &ar, long int) {
-    }
+  template<class Archive>
+  void serialize(Archive &, long int) {}
 };
 
 struct AddBond {
-    std::vector<int> bond;
+  std::vector<int> bond;
 
-    void operator()(Particle &p) const {
-      auto const view = BondView(bond.at(0), {bond.data() + 1, bond.size() - 1});
+  void operator()(Particle &p) const {
+    auto const view = BondView(bond.at(0), {bond.data() + 1, bond.size() - 1});
 
-      p.bonds().insert(view);
-    }
+    p.bonds().insert(view);
+  }
 
-    template<class Archive>
-    void serialize(Archive &ar, long int) {
-        ar & bond;
-    }
+  template<class Archive>
+  void serialize(Archive &ar, long int) {
+    ar & bond;
+  }
 };
 
 using UpdateBondMessage = boost::variant
@@ -238,17 +233,17 @@ using UpdateBondMessage = boost::variant
 
 #ifdef ROTATION
 struct UpdateOrientation {
-    Utils::Vector3d axis;
-    double angle;
+  Utils::Vector3d axis;
+  double angle;
 
-    void operator()(Particle &p) const {
-        local_rotate_particle(p, axis, angle);
-    }
+  void operator()(Particle &p) const {
+    local_rotate_particle(p, axis, angle);
+  }
 
-    template<class Archive>
-    void serialize(Archive &ar, long int) {
-        ar & axis & angle;
-    }
+  template<class Archive>
+  void serialize(Archive &ar, long int) {
+      ar & axis & angle;
+  }
 };
 #endif
 
@@ -528,7 +523,8 @@ static void mpi_get_particles_local() {
     return *cell_structure.get_local_particle(id);
   });
 
-  Utils::Mpi::gatherv(comm_cart, parts.data(), parts.size(), 0);
+  Utils::Mpi::gatherv(comm_cart, parts.data(), static_cast<int>(parts.size()),
+                      0);
 }
 
 REGISTER_CALLBACK(mpi_get_particles_local)
@@ -578,8 +574,8 @@ std::vector<Particle> mpi_get_particles(Utils::Span<const int> ids) {
       node_ids.cbegin(), node_ids.cend(), node_sizes.begin(),
       [](std::vector<int> const &ids) { return static_cast<int>(ids.size()); });
 
-  Utils::Mpi::gatherv(comm_cart, parts.data(), parts.size(), parts.data(),
-                      node_sizes.data(), 0);
+  Utils::Mpi::gatherv(comm_cart, parts.data(), static_cast<int>(parts.size()),
+                      parts.data(), node_sizes.data(), 0);
 
   return parts;
 }

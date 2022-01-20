@@ -25,7 +25,6 @@
 
 #include "field_coupling/detail/Base.hpp"
 #include "field_coupling/detail/BindCoupling.hpp"
-using namespace FieldCoupling;
 
 #include <utils/Vector.hpp>
 
@@ -67,11 +66,11 @@ BOOST_AUTO_TEST_CASE(BindCoupling_test) {
     auto const bc = make_bind_coupling(id, Particle{});
     auto const x = 5;
 
-    BOOST_CHECK(id.count == 0);
-    BOOST_CHECK(5 == bc(5));
-    BOOST_CHECK(id.count == 1);
-    BOOST_CHECK(x == bc(x));
-    BOOST_CHECK(id.count == 2);
+    BOOST_CHECK_EQUAL(id.count, 0);
+    BOOST_CHECK_EQUAL(bc(5), 5);
+    BOOST_CHECK_EQUAL(id.count, 1);
+    BOOST_CHECK_EQUAL(bc(x), x);
+    BOOST_CHECK_EQUAL(id.count, 2);
   }
 }
 
@@ -96,13 +95,13 @@ BOOST_AUTO_TEST_CASE(FieldBase_test) {
 
   /* ctor copy */
   {
-    int c = 1;
-    int f = 2;
+    auto const c = 1;
+    auto const f = 2;
 
     auto base = Base<int, int>(c, f);
 
-    BOOST_CHECK(1 == base.coupling());
-    BOOST_CHECK(2 == base.field());
+    BOOST_CHECK_EQUAL(base.coupling(), c);
+    BOOST_CHECK_EQUAL(base.field(), f);
   }
 }
 
@@ -113,13 +112,14 @@ struct DummyVectorField {
 };
 
 BOOST_AUTO_TEST_CASE(ForceField_test) {
+  using FieldCoupling::ForceField;
   auto ff =
       ForceField<Id<true>, DummyVectorField>(Id<true>{}, DummyVectorField{});
-  const Utils::Vector3d x{1., 2., 3.};
+  auto const x = Utils::Vector3d{1., 2., 3.};
 
-  BOOST_CHECK(0 == ff.coupling().count);
-  BOOST_CHECK((9. * x) == ff.force(5, x, 9.));
-  BOOST_CHECK(1 == ff.coupling().count);
+  BOOST_CHECK_EQUAL(ff.coupling().count, 0);
+  BOOST_CHECK_EQUAL(ff.force(5, x, 9.), 9. * x);
+  BOOST_CHECK_EQUAL(ff.coupling().count, 1);
 }
 
 struct DummyScalarField {
@@ -132,14 +132,15 @@ struct DummyScalarField {
 };
 
 BOOST_AUTO_TEST_CASE(PotentialField_test) {
+  using FieldCoupling::PotentialField;
   auto pf = PotentialField<Id<true>, DummyScalarField>(Id<true>{},
                                                        DummyScalarField{});
-  const Utils::Vector3d x{1., 2., 3.};
-  BOOST_CHECK(0 == pf.coupling().count);
+  auto const x = Utils::Vector3d{1., 2., 3.};
+  BOOST_CHECK_EQUAL(pf.coupling().count, 0);
 
-  BOOST_CHECK((2. * x.norm()) == pf.energy(5, x, 2.));
-  BOOST_CHECK(1 == pf.coupling().count);
+  BOOST_CHECK_EQUAL(pf.energy(5, x, 2.), 2. * x.norm());
+  BOOST_CHECK_EQUAL(pf.coupling().count, 1);
 
-  BOOST_CHECK(-(3. * x) == pf.force(5, x, 0));
-  BOOST_CHECK(2 == pf.coupling().count);
+  BOOST_CHECK_EQUAL(pf.force(5, x, 0), -3. * x);
+  BOOST_CHECK_EQUAL(pf.coupling().count, 2);
 }

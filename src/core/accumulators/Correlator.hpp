@@ -195,7 +195,7 @@ public:
     return shape;
   }
   std::vector<int> get_samples_sizes() const {
-    return std::vector<int>(n_sweeps.begin(), n_sweeps.end());
+    return {n_sweeps.begin(), n_sweeps.end()};
   }
   std::vector<double> get_lag_times() const;
 
@@ -250,9 +250,9 @@ private:
   /// number of correlation sweeps at a particular value of tau
   std::vector<std::size_t> n_sweeps;
   /// number of data values already present at a particular value of tau
-  std::vector<unsigned> n_vals;
+  std::vector<long> n_vals;
   /// index of the newest entry in each hierarchy level
-  std::vector<std::size_t> newest;
+  std::vector<long> newest;
 
   std::vector<double> A_accumulated_average; ///< all A values are added up here
   std::vector<double> B_accumulated_average; ///< all B values are added up here

@@ -171,15 +171,15 @@ BOOST_AUTO_TEST_CASE(algebraic_operators) {
   BOOST_CHECK(((v1 * 2) == Utils::Vector3i{2, 4, 6}));
 
   {
-    Utils::Vector3i v1{2, 4, 6};
-    auto v2 = 2 * v1;
-    BOOST_CHECK(v2 == (v1 *= 2));
+    Utils::Vector3i v3{2, 4, 6};
+    auto v4 = 2 * v3;
+    BOOST_CHECK(v4 == (v3 *= 2));
   }
 
   {
-    Utils::Vector3i v1{2, 4, 6};
-    auto v2 = v1 / 2;
-    BOOST_CHECK(v2 == (v1 /= 2));
+    Utils::Vector3i v3{2, 4, 6};
+    auto v4 = v3 / 2;
+    BOOST_CHECK(v4 == (v3 /= 2));
   }
 
   BOOST_CHECK((sqrt(Utils::Vector3d{1., 2., 3.}) ==
@@ -187,14 +187,14 @@ BOOST_AUTO_TEST_CASE(algebraic_operators) {
 
   /* modulo */
   {
-    Utils::Vector3i v1{2, 7, 8};
-    Utils::Vector3i v2{1, 2, 3};
+    Utils::Vector3i v3{2, 7, 8};
+    Utils::Vector3i v4{1, 2, 3};
 
-    auto const res = v1 % v2;
+    auto const res = v3 % v4;
 
-    BOOST_CHECK_EQUAL(res[0], v1[0] % v2[0]);
-    BOOST_CHECK_EQUAL(res[1], v1[1] % v2[1]);
-    BOOST_CHECK_EQUAL(res[2], v1[2] % v2[2]);
+    BOOST_CHECK_EQUAL(res[0], v3[0] % v4[0]);
+    BOOST_CHECK_EQUAL(res[1], v3[1] % v4[1]);
+    BOOST_CHECK_EQUAL(res[2], v3[2] % v4[2]);
   }
 }
 
