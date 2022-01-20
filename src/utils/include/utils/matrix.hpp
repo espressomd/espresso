@@ -19,6 +19,13 @@
 #ifndef SRC_UTILS_INCLUDE_UTILS_MATRIX_HPP
 #define SRC_UTILS_INCLUDE_UTILS_MATRIX_HPP
 
+/**
+ * @file
+ *
+ * @brief Matrix implementation and trait types
+ * for boost qvm interoperability.
+ */
+
 #include "utils/Array.hpp"
 #include "utils/Vector.hpp"
 #include "utils/flatten.hpp"
@@ -46,13 +53,6 @@
 #include <boost/qvm/mat.hpp>
 #include <boost/qvm/mat_access.hpp>
 #include <boost/qvm/mat_traits.hpp>
-
-/**
- * @file matrix.hpp
- *
- * @brief This file contains a matrix implementation and the trait types needed
- * for the boost qvm interoperability.
- */
 
 namespace Utils {
 
@@ -300,5 +300,4 @@ struct deduce_mat2<Utils::Matrix<T, 3, 3>, Utils::Matrix<U, 3, 3>, 3, 3> {
 
 } // namespace qvm
 } // namespace boost
-
-#endif
+#endif // SRC_UTILS_INCLUDE_UTILS_MATRIX_HPP

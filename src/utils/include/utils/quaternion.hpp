@@ -19,6 +19,13 @@
 #ifndef SRC_UTILS_INCLUDE_UTILS_QUATERNION_HPP
 #define SRC_UTILS_INCLUDE_UTILS_QUATERNION_HPP
 
+/**
+ * @file
+ *
+ * @brief Quaternion implementation and trait types
+ * for boost qvm interoperability.
+ */
+
 #include <boost/qvm/deduce_quat.hpp>
 #include <boost/qvm/deduce_scalar.hpp>
 #include <boost/qvm/deduce_vec.hpp>
@@ -37,13 +44,6 @@
 #include <cstddef>
 #include <type_traits>
 
-/**
- * @file quaternion.hpp
- *
- * @brief This file contains a matrix implementation and the trait types needed
- * for the boost qvm interoperability.
- */
-
 namespace Utils {
 
 /**
@@ -58,11 +58,14 @@ template <typename T> struct Quaternion {
   using value_type = typename container::value_type;
   using reference = typename container::reference;
 
+private:
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive &ar, const unsigned int version) {
     ar &m_data;
   }
+
+public:
   /**
    * @brief Normalize the quaternion in place.
    */

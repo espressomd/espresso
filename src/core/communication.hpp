@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _COMMUNICATION_HPP
-#define _COMMUNICATION_HPP
+#ifndef CORE_COMMUNICATION_HPP
+#define CORE_COMMUNICATION_HPP
 /** \file
  *  This file contains the asynchronous MPI communication.
  *

@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _THOLE_H
-#define _THOLE_H
+#ifndef CORE_NB_IA_THOLE_HPP
+#define CORE_NB_IA_THOLE_HPP
 /** \file
  *  Routines to calculate the Thole damping potential between particle pairs.
  *  See @cite thole81a.
@@ -84,5 +84,5 @@ inline double thole_pair_energy(Particle const &p1, Particle const &p2,
   }
   return 0.0;
 }
-#endif
+#endif // THOLE
 #endif

@@ -22,11 +22,16 @@
 #ifndef SCRIPT_INTERFACE_VIRTUAL_SITES_VIRTUAL_SITES_RELATIVE_HPP
 #define SCRIPT_INTERFACE_VIRTUAL_SITES_VIRTUAL_SITES_RELATIVE_HPP
 
-#include "VirtualSites.hpp"
 #include "config.hpp"
-#include "core/virtual_sites/VirtualSitesRelative.hpp"
 
 #ifdef VIRTUAL_SITES_RELATIVE
+
+#include "VirtualSites.hpp"
+
+#include "core/virtual_sites/VirtualSitesRelative.hpp"
+
+#include <memory>
+
 namespace ScriptInterface {
 namespace VirtualSites {
 
@@ -44,5 +49,5 @@ private:
 
 } /* namespace VirtualSites */
 } /* namespace ScriptInterface */
-#endif
+#endif // VIRTUAL_SITES_RELATIVE
 #endif

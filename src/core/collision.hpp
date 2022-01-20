@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _COLLISION_H
-#define _COLLISION_H
+#ifndef CORE_COLLISION_HPP
+#define CORE_COLLISION_HPP
 
 #include "config.hpp"
 
@@ -154,7 +154,7 @@ inline void detect_collision(Particle const &p1, Particle const &p2,
   queue_collision(p1.p.identity, p2.p.identity);
 }
 
-#endif
+#endif // COLLISION_DETECTION
 
 inline double collision_detection_cutoff() {
 #ifdef COLLISION_DETECTION

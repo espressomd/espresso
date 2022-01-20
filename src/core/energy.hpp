@@ -18,14 +18,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef CORE_ENERGY_HPP
+#define CORE_ENERGY_HPP
 /** \file
  *  Energy calculation.
  *
  *  Implementation in energy.cpp.
  */
-
-#ifndef _ENERGY_H
-#define _ENERGY_H
 
 #include "Observable_stat.hpp"
 #include "actor/ActorList.hpp"

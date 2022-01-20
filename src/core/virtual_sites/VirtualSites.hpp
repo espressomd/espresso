@@ -32,6 +32,8 @@
  *  - update virtual sites
  */
 
+#include <config.hpp>
+
 #ifdef VIRTUAL_SITES
 #include <utils/Vector.hpp>
 #include <utils/matrix.hpp>

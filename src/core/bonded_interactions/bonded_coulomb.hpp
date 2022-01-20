@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _BONDED_COULOMB_HPP
-#define _BONDED_COULOMB_HPP
+#ifndef CORE_BN_IA_BONDED_COULOMB_HPP
+#define CORE_BN_IA_BONDED_COULOMB_HPP
 /** \file
  *  Routines to calculate the bonded Coulomb potential between
  *  particle pairs.

@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _ACTOR_ACTOR_HPP
-#define _ACTOR_ACTOR_HPP
+#ifndef CORE_ACTOR_ACTOR_HPP
+#define CORE_ACTOR_ACTOR_HPP
 
 #include "SystemInterface.hpp"
 
@@ -33,4 +33,4 @@ public:
   virtual ~Actor() = default;
 };
 
-#endif /* _ACTOR_ACTOR_HPP */
+#endif /* CORE_ACTOR_ACTOR_HPP */

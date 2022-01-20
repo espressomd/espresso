@@ -22,10 +22,15 @@
 #ifndef SCRIPT_INTERFACE_VIRTUAL_SITES_VIRTUAL_SITES_OFF_HPP
 #define SCRIPT_INTERFACE_VIRTUAL_SITES_VIRTUAL_SITES_OFF_HPP
 
-#include "VirtualSites.hpp"
 #include "config.hpp"
-#include "core/virtual_sites/VirtualSitesOff.hpp"
+
 #ifdef VIRTUAL_SITES
+
+#include "VirtualSites.hpp"
+
+#include "core/virtual_sites/VirtualSitesOff.hpp"
+
+#include <memory>
 
 namespace ScriptInterface {
 namespace VirtualSites {
@@ -44,5 +49,5 @@ private:
 
 } /* namespace VirtualSites */
 } /* namespace ScriptInterface */
-#endif
+#endif // VIRTUAL_SITES
 #endif

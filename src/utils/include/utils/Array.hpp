@@ -16,8 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef UTILS_ARRAY_HPP
-#define UTILS_ARRAY_HPP
+#ifndef SRC_UTILS_INCLUDE_UTILS_ARRAY_HPP
+#define SRC_UTILS_INCLUDE_UTILS_ARRAY_HPP
+
+/**
+ * @file
+ *
+ * @brief Array implementation with CUDA support.
+ */
 
 #include "device_qualifier.hpp"
 #include "get.hpp"
@@ -29,8 +35,8 @@
 #include <iterator>
 #include <ostream>
 #include <stdexcept>
-namespace Utils {
 
+namespace Utils {
 namespace detail {
 
 template <typename T, std::size_t N> struct Storage {
@@ -208,4 +214,4 @@ auto get(Array<T, N> const &a) -> std::enable_if_t<(I < N), const T &> {
 }
 
 } // namespace Utils
-#endif
+#endif // SRC_UTILS_INCLUDE_UTILS_ARRAY_HPP

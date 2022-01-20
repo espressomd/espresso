@@ -18,8 +18,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _FORCES_INLINE_HPP
-#define _FORCES_INLINE_HPP
+#ifndef CORE_FORCES_INLINE_HPP
+#define CORE_FORCES_INLINE_HPP
+/** \file
+ *  Force calculation.
+ */
 
 #include "config.hpp"
 
@@ -421,4 +424,4 @@ inline bool add_bonded_force(Particle &p1, int bond_id,
   }
 }
 
-#endif
+#endif // CORE_FORCES_INLINE_HPP

@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _VERLETCRITERION_HPP
-#define _VERLETCRITERION_HPP
+#ifndef CORE_NB_IA_VERLETCRITERION_HPP
+#define CORE_NB_IA_VERLETCRITERION_HPP
 
 #include "Particle.hpp"
 #include "config.hpp"

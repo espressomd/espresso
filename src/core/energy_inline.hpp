@@ -18,11 +18,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef CORE_ENERGY_INLINE_HPP
+#define CORE_ENERGY_INLINE_HPP
 /** \file
- *  Implementation of the energy calculation.
+ *  Energy calculation.
  */
-#ifndef ENERGY_INLINE_HPP
-#define ENERGY_INLINE_HPP
 
 #include "config.hpp"
 
@@ -314,4 +314,4 @@ inline double calc_kinetic_energy(Particle const &p) {
   return translational_kinetic_energy(p) + rotational_kinetic_energy(p);
 }
 
-#endif // ENERGY_INLINE_HPP
+#endif // CORE_ENERGY_INLINE_HPP

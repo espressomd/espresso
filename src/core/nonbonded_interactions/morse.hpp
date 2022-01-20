@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _MORSE_H
-#define _MORSE_H
+#ifndef CORE_NB_IA_MORSE_HPP
+#define CORE_NB_IA_MORSE_HPP
 
 /** \file
  *  Routines to calculate the Morse potential between particle pairs.
@@ -65,4 +65,4 @@ inline double morse_pair_energy(IA_parameters const &ia_params, double dist) {
 }
 
 #endif /* ifdef MORSE */
-#endif /* ifdef _MORSE_H */
+#endif /* ifdef CORE_NB_IA_MORSE_HPP */

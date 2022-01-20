@@ -22,12 +22,12 @@
 #ifndef ESPRESSO_SCRIPTINTERFACE_MPIIO_HPP
 #define ESPRESSO_SCRIPTINTERFACE_MPIIO_HPP
 
-#include "config.hpp"
-#include "io/mpiio/mpiio.hpp"
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 #include "script_interface/get_value.hpp"
-#include <core/cells.hpp>
+
+#include "core/cells.hpp"
+#include "core/io/mpiio/mpiio.hpp"
 
 #include <string>
 

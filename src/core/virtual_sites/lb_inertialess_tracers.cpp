@@ -34,6 +34,7 @@
 #include "integrate.hpp"
 #include "lb_inertialess_tracers_cuda_interface.hpp"
 
+#include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <cstddef>

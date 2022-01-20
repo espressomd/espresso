@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _FENE_HPP
-#define _FENE_HPP
+#ifndef CORE_BN_IA_FENE_HPP
+#define CORE_BN_IA_FENE_HPP
 /** \file
  *  Routines to calculate the FENE potential between particle pairs.
  *

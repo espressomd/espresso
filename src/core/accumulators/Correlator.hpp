@@ -16,6 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef CORE_ACCUMULATORS_CORRELATOR_HPP
+#define CORE_ACCUMULATORS_CORRELATOR_HPP
 /** @file
  *
  * This module computes correlations (and other two time averages) on
@@ -97,8 +99,6 @@
  *  the topology concept
  * - Write a destructor
  */
-#ifndef _STATISTICS_CORRELATION_H
-#define _STATISTICS_CORRELATION_H
 
 #include "AccumulatorBase.hpp"
 #include "integrate.hpp"

@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _BONDED_COULOMB_SR_HPP
-#define _BONDED_COULOMB_SR_HPP
+#ifndef CORE_BN_IA_BONDED_COULOMB_SR_HPP
+#define CORE_BN_IA_BONDED_COULOMB_SR_HPP
 /** \file
  *  Routines to calculate the short-range part of the bonded Coulomb potential
  *  between particle pairs. Can be used to subtract certain intramolecular

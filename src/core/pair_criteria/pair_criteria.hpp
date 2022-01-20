@@ -24,8 +24,6 @@
 #include "grid.hpp"
 #include "particle_data.hpp"
 
-#include <stdexcept>
-
 namespace PairCriteria {
 /** @brief Criterion which provides a true/false for a pair of particles */
 class PairCriterion {

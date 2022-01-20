@@ -18,15 +18,19 @@
  */
 #ifndef ALGORITHMS_HPP
 #define ALGORITHMS_HPP
+
+/**
+ * @file
+ *
+ * Generic algorithms for the calculation of particle
+ * property derived observables.
+ */
+
 #include <algorithm>
 #include <numeric>
 #include <utility>
 #include <vector>
 
-/** @file algorithms.hpp
- * This file contains generic algorithms for the calculation of particle
- * property derived observables.
- */
 namespace ParticleObservables {
 namespace detail {
 struct One {

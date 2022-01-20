@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _BONDED_INTERACTION_DATA_HPP
-#define _BONDED_INTERACTION_DATA_HPP
+#ifndef CORE_BN_IA_BONDED_INTERACTION_DATA_HPP
+#define CORE_BN_IA_BONDED_INTERACTION_DATA_HPP
 /** @file
  *  Data structures for bonded interactions.
  *  For more information on how to add new interactions, see @ref bondedIA_new.

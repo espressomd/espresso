@@ -18,15 +18,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef CORE_GRID_BASED_ALGORITHMS_HALO_HPP
+#define CORE_GRID_BASED_ALGORITHMS_HALO_HPP
 /** \file
  *
  * Halo scheme for parallelization of lattice algorithms.
  * Header file for \ref halo.cpp.
  *
  */
-
-#ifndef _HALO_HPP
-#define _HALO_HPP
 
 #include "grid_based_algorithms/lattice.hpp"
 
@@ -133,4 +132,4 @@ void release_halo_communication(HaloCommunicator &hc);
  */
 void halo_communication(const HaloCommunicator &hc, char *base);
 
-#endif /* HALO_H */
+#endif /* CORE_GRID_BASED_ALGORITHMS_HALO_HPP */

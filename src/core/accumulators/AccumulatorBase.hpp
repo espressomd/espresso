@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_ACCUMULATORS_ACCUMULATORBASE
-#define CORE_ACCUMULATORS_ACCUMULATORBASE
+#ifndef CORE_ACCUMULATORS_ACCUMULATOR_BASE_HPP
+#define CORE_ACCUMULATORS_ACCUMULATOR_BASE_HPP
 
 #include <cstddef>
 #include <vector>

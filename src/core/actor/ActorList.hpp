@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _ACTOR_ACTORLIST_HPP
-#define _ACTOR_ACTORLIST_HPP
+#ifndef CORE_ACTOR_ACTORLIST_HPP
+#define CORE_ACTOR_ACTORLIST_HPP
 
 #include "Actor.hpp"
 
@@ -29,4 +29,4 @@ public:
   void remove(Actor *actor);
 };
 
-#endif /* _ACTOR_ACTORLIST_HPP */
+#endif /* CORE_ACTOR_ACTORLIST_HPP */

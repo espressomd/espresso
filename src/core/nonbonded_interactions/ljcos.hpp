@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _LJCOS_H
-#define _LJCOS_H
+#ifndef CORE_NB_IA_LJCOS_HPP
+#define CORE_NB_IA_LJCOS_HPP
 /** \file
  *  Routines to calculate the Lennard-Jones+cosine potential between
  *  particle pairs.
@@ -81,5 +81,5 @@ inline double ljcos_pair_energy(IA_parameters const &ia_params, double dist) {
   return 0.0;
 }
 
-#endif
+#endif // LJCOS
 #endif

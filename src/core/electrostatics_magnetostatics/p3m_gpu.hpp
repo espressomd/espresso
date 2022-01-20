@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _P3M_GPU_H
-#define _P3M_GPU_H
+#ifndef CORE_ELECTROSTATICS_MAGNETOSTATICS_P3M_GPU_HPP
+#define CORE_ELECTROSTATICS_MAGNETOSTATICS_P3M_GPU_HPP
 /** \file
  *  P3M electrostatics on GPU.
  *
@@ -27,4 +27,4 @@
 void p3m_gpu_init(int cao, const int mesh[3], double alpha);
 void p3m_gpu_add_farfield_force();
 
-#endif /* _P3M_GPU_H */
+#endif /* CORE_ELECTROSTATICS_MAGNETOSTATICS_P3M_GPU_HPP */

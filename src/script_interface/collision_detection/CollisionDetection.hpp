@@ -24,12 +24,13 @@
 
 #include "config.hpp"
 
-#include "core/collision.hpp"
+#ifdef COLLISION_DETECTION
+
 #include "script_interface/ScriptInterface.hpp"
 
-#include <string>
+#include "core/collision.hpp"
 
-#ifdef COLLISION_DETECTION
+#include <string>
 
 namespace ScriptInterface {
 namespace CollisionDetection {
