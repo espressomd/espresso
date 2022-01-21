@@ -168,11 +168,6 @@ class LBWalberlaImpl : public LBWalberlaBase {
       typename detail::KernelTrait<FloatType>::UpdateVelocityFromPDFSweep;
   using BoundaryModel = BoundaryHandling<FloatType>;
 
-public:
-  typedef stencil::D3Q19 Stencil;
-  using PdfField = GhostLayerField<FloatType, Stencil::Size>;
-  using VectorField = GhostLayerField<FloatType, 3u>;
-
 protected:
   using CollisionModel =
       boost::variant<UnthermalizedCollisionModel, ThermalizedCollisionModel,
@@ -212,6 +207,9 @@ private:
 
 public:
   // Type definitions
+  typedef stencil::D3Q19 Stencil;
+  using PdfField = GhostLayerField<FloatType, Stencil::Size>;
+  using VectorField = GhostLayerField<FloatType, 3u>;
   using FlagField = typename BoundaryModel::FlagField;
   using Lattice_T = LatticeWalberla::Lattice_T;
 
@@ -329,13 +327,13 @@ protected:
 
   // Lees Edwards boundary interpolation
   std::unique_ptr<LeesEdwardsPack> m_lees_edwards_callbacks;
-  std::shared_ptr<InterpolateAndShiftAtBoundary<PdfField>>
+  std::shared_ptr<InterpolateAndShiftAtBoundary<PdfField, FloatType>>
       m_lees_edwards_pdf_interpol_sweep;
-  std::shared_ptr<InterpolateAndShiftAtBoundary<VectorField>>
+  std::shared_ptr<InterpolateAndShiftAtBoundary<VectorField, FloatType>>
       m_lees_edwards_vel_interpol_sweep;
-  std::shared_ptr<InterpolateAndShiftAtBoundary<VectorField>>
+  std::shared_ptr<InterpolateAndShiftAtBoundary<VectorField, FloatType>>
       m_lees_edwards_last_applied_force_interpol_sweep;
-  std::shared_ptr<InterpolateAndShiftAtBoundary<VectorField>>
+  std::shared_ptr<InterpolateAndShiftAtBoundary<VectorField, FloatType>>
       m_lees_edwards_force_to_be_applied_backwards_interpol_sweep;
 
   // Collision sweep
@@ -441,7 +439,7 @@ public:
 private:
   bool lees_edwards_bc() {
     return boost::get<LeesEdwardsCollisionModel>(&*m_collision_model);
-  };
+  }
 
   inline void integrate_collide(std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
@@ -455,7 +453,7 @@ private:
   inline void integrate_stream(std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_stream)(&*b);
-  };
+  }
 
   inline void
   update_velocity_field_from_pdf(std::shared_ptr<Lattice_T> const &blocks) {
@@ -602,23 +600,23 @@ public:
     m_collision_model = std::make_shared<CollisionModel>(std::move(obj));
     m_lees_edwards_callbacks = std::move(lees_edwards_pack);
     m_lees_edwards_pdf_interpol_sweep =
-        std::make_shared<InterpolateAndShiftAtBoundary<PdfField>>(
+        std::make_shared<InterpolateAndShiftAtBoundary<PdfField, FloatType>>(
             lattice().get_blocks(), m_pdf_field_id, m_pdf_tmp_field_id,
             lattice().get_ghost_layers(), shear_direction, shear_plane_normal,
             m_lees_edwards_callbacks->get_pos_offset);
     m_lees_edwards_vel_interpol_sweep =
-        std::make_shared<InterpolateAndShiftAtBoundary<VectorField>>(
+        std::make_shared<InterpolateAndShiftAtBoundary<VectorField, FloatType>>(
             lattice().get_blocks(), m_velocity_field_id, m_vec_tmp_field_id,
             lattice().get_ghost_layers(), shear_direction, shear_plane_normal,
             m_lees_edwards_callbacks->get_pos_offset,
             m_lees_edwards_callbacks->get_shear_velocity);
     m_lees_edwards_last_applied_force_interpol_sweep =
-        std::make_shared<InterpolateAndShiftAtBoundary<VectorField>>(
+        std::make_shared<InterpolateAndShiftAtBoundary<VectorField, FloatType>>(
             lattice().get_blocks(), m_last_applied_force_field_id,
             m_vec_tmp_field_id, lattice().get_ghost_layers(), shear_direction,
             shear_plane_normal, m_lees_edwards_callbacks->get_pos_offset);
     m_lees_edwards_force_to_be_applied_backwards_interpol_sweep =
-        std::make_shared<InterpolateAndShiftAtBoundary<VectorField>>(
+        std::make_shared<InterpolateAndShiftAtBoundary<VectorField, FloatType>>(
             lattice().get_blocks(), m_force_to_be_applied_id,
             m_vec_tmp_field_id, lattice().get_ghost_layers(), shear_direction,
             shear_plane_normal, [this]() {
@@ -630,9 +628,13 @@ public:
     m_viscosity = FloatType_c(viscosity);
   }
 
-  double get_viscosity() const override { return m_viscosity; }
+  double get_viscosity() const override {
+    return numeric_cast<double>(m_viscosity);
+  }
 
-  double get_density() const override { return m_density; }
+  double get_density() const override {
+    return numeric_cast<double>(m_density);
+  }
 
   // Velocity
   boost::optional<Utils::Vector3d>
@@ -1026,7 +1028,7 @@ public:
     return m_reset_force->get_ext_force();
   }
 
-  double get_kT() const override { return m_kT; }
+  double get_kT() const override { return numeric_cast<double>(m_kT); }
 
   uint64_t get_rng_state() const override {
     auto const *cm = boost::get<ThermalizedCollisionModel>(&*m_collision_model);
