@@ -187,7 +187,6 @@ public:
   using VectorField = GhostLayerField<FloatType, 3u>;
   using FlagField = typename BoundaryModel::FlagField;
   using PdfField = GhostLayerField<FloatType, Stencil::Size>;
-
   using Lattice_T = LatticeWalberla::Lattice_T;
 
 private:
@@ -410,6 +409,7 @@ private:
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_update_velocity_field_from_pdfs)(&*b);
   }
+
   inline void integrate_collide(std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       boost::apply_visitor(run_collide_sweep, *m_collision_model,
@@ -418,6 +418,7 @@ private:
       cm->time_step_++;
     }
   }
+
   inline void integrate_reset_force(std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_reset_force)(&*b);
@@ -458,6 +459,7 @@ private:
     // Refresh ghost layers
     (*m_full_communication)();
   }
+
   inline void integrate_vtk_writers() {
     for (auto it = m_vtk_auto.begin(); it != m_vtk_auto.end(); ++it) {
       auto &vtk_handle = it->second;
@@ -776,7 +778,6 @@ public:
 
   void clear_boundaries() override { reset_boundary_handling(); }
 
-  /** @brief Update boundary conditions from a rasterized shape. */
   void update_boundary_from_shape(
       std::vector<int> const &raster_flat,
       std::vector<double> const &slip_velocity_flat) override {
@@ -834,7 +835,6 @@ public:
     reallocate_ubb_field();
   }
 
-  /** @brief Update boundary conditions from a list of nodes. */
   void update_boundary_from_list(std::vector<int> const &nodes_flat,
                                  std::vector<double> const &vel_flat) override {
     // reshape grids
@@ -975,7 +975,6 @@ public:
     return vtk_handle;
   }
 
-  /** Manually call a VTK callback */
   void write_vtk(std::string const &vtk_uid) override {
     if (m_vtk_auto.find(vtk_uid) != m_vtk_auto.end()) {
       throw vtk_runtime_error(vtk_uid, "is an automatic observable");
@@ -988,7 +987,6 @@ public:
     vtk_handle->execution_count++;
   }
 
-  /** Activate or deactivate a VTK callback */
   void switch_vtk(std::string const &vtk_uid, bool status) override {
     if (m_vtk_manual.find(vtk_uid) != m_vtk_manual.end()) {
       throw vtk_runtime_error(vtk_uid, "is a manual observable");
