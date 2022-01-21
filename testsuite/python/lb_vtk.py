@@ -213,6 +213,16 @@ class LBWrite:
         with self.assertRaisesRegex(RuntimeError, 'Attempted access to uninitialized LBWalberla instance'):
             vtk_expired.write()
 
+        # cannot use VTK when there are no LB objects available
+        label_unavailable = f'test_lb_vtk_{self.lb_vtk_id}_unavailable_lbf'
+
+        class VTKOutputWithoutLbfluid(espressomd.lb.VTKOutput):
+            def validate_params(self, params):
+                pass
+        with self.assertRaisesRegex(RuntimeError, 'Attempted access to uninitialized LBWalberla instance'):
+            VTKOutputWithoutLbfluid(identifier=label_unavailable,
+                                    observables=['density'])
+
 
 @skipIfMissingPythonPackage
 @utx.skipIfMissingFeatures("LB_WALBERLA")

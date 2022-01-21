@@ -31,6 +31,14 @@
 #include "integrate.hpp"
 #include "particle_data.hpp"
 
+static bool lb_active_check() {
+  if (lattice_switch == ActiveLB::NONE) {
+    runtimeErrorMsg() << "LB needs to be active for inertialess tracers.";
+    return false;
+  }
+  return true;
+}
+
 void VirtualSitesInertialessTracers::after_force_calc(double time_step) {
   auto const to_lb_units =
       (lattice_switch == ActiveLB::NONE) ? 0. : 1. / lb_lbfluid_get_agrid();
@@ -44,8 +52,7 @@ void VirtualSitesInertialessTracers::after_force_calc(double time_step) {
   for (auto &p : cell_structure.local_particles()) {
     if (!p.p.is_virtual)
       continue;
-    if (lattice_switch == ActiveLB::NONE) {
-      runtimeErrorMsg() << "LB needs to be active for inertialess tracers.";
+    if (!lb_active_check()) {
       return;
     }
     if (in_local_halo(p.r.p)) {
@@ -55,8 +62,7 @@ void VirtualSitesInertialessTracers::after_force_calc(double time_step) {
   for (auto const &p : cell_structure.ghost_particles()) {
     if (!p.p.is_virtual)
       continue;
-    if (lattice_switch == ActiveLB::NONE) {
-      runtimeErrorMsg() << "LB needs to be active for inertialess tracers.";
+    if (!lb_active_check()) {
       return;
     }
     if (in_local_halo(p.r.p)) {
@@ -76,8 +82,7 @@ void VirtualSitesInertialessTracers::after_lb_propagation(double time_step) {
   for (auto &p : cell_structure.local_particles()) {
     if (!p.p.is_virtual)
       continue;
-    if (lattice_switch == ActiveLB::NONE) {
-      runtimeErrorMsg() << "LB needs to be active for inertialess tracers.";
+    if (!lb_active_check()) {
       return;
     }
     p.m.v = lb_lbinterpolation_get_interpolated_velocity(p.r.p) * to_md_units;
