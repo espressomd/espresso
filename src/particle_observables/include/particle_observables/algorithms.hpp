@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ALGORITHMS_HPP
-#define ALGORITHMS_HPP
+#ifndef SRC_PARTICLE_OBSERVABLES_ALGORITHMS_HPP
+#define SRC_PARTICLE_OBSERVABLES_ALGORITHMS_HPP
 
 /**
  * @file
@@ -98,4 +98,4 @@ template <class ValueOp> struct Map {
   }
 };
 } // namespace ParticleObservables
-#endif // ALGORITHMS_HPP
+#endif // SRC_PARTICLE_OBSERVABLES_ALGORITHMS_HPP

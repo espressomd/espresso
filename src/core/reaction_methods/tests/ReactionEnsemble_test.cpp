@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE(ReactionEnsemble_test) {
     using ReactionEnsemble::generic_oneway_reaction;
     using ReactionEnsemble::ReactionEnsemble;
   };
-  constexpr double tol = 100 * std::numeric_limits<double>::epsilon();
+  auto constexpr tol = 100 * std::numeric_limits<double>::epsilon();
 
   // check basic interface
   {

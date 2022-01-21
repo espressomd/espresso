@@ -69,8 +69,6 @@
 #include <functional>
 #include <stdexcept>
 
-using Utils::sinc;
-
 p3m_data_struct p3m;
 
 /** \name Private Functions */
@@ -1218,6 +1216,7 @@ double p3m_k_space_error(double prefac, const int mesh[3], int cao,
 void p3m_tune_aliasing_sums(int nx, int ny, int nz, const int mesh[3],
                             const double mesh_i[3], int cao, double alpha_L_i,
                             double *alias1, double *alias2) {
+  using Utils::sinc;
 
   auto const factor1 = Utils::sqr(Utils::pi() * alpha_L_i);
 
