@@ -69,8 +69,8 @@ BOOST_DATA_TEST_CASE(force_interpolation_bspline, bdata::make(all_lbs()),
       lb->add_force_at_pos(pos, f);
       // Check neighboring nodes for bspline weights
       Vector3d sum{};
-      for (int x : {0, 1})
-        for (int y : {0, 1})
+      for (int x : {0, 1}) {
+        for (int y : {0, 1}) {
           for (int z : {0, 1}) {
             Vector3i const check_node{{n[0] - x, n[1] - y, n[2] - z}};
             if (lb->lattice().node_in_local_halo(check_node)) {
@@ -78,6 +78,8 @@ BOOST_DATA_TEST_CASE(force_interpolation_bspline, bdata::make(all_lbs()),
               sum += *res;
             }
           }
+        }
+      }
       BOOST_CHECK_SMALL((sum - f).norm(), 1E-10);
       // Apply counter force to clear force field
       lb->add_force_at_pos(pos, -f);
@@ -88,7 +90,6 @@ BOOST_DATA_TEST_CASE(force_interpolation_bspline, bdata::make(all_lbs()),
 BOOST_DATA_TEST_CASE(velocity_interpolation_bspline, bdata::make(all_lbs()),
                      lb_generator) {
   auto lb = lb_generator(params);
-  auto const n_ghost_layers = lb->lattice().get_ghost_layers();
 
   /* Check linear interpolation of the velocity. LB cells can couple
    * to particles that are at most 1 agrid away from the cell mid point.
@@ -103,7 +104,7 @@ BOOST_DATA_TEST_CASE(velocity_interpolation_bspline, bdata::make(all_lbs()),
 
   // make sure the lattice constant is commensurate with the box dimensions
   assert(params.grid_dimensions[0] % 3 == 0 and
-         params.grid_dimensions[2] % 3 == 0 and
+         params.grid_dimensions[1] % 3 == 0 and
          params.grid_dimensions[2] % 3 == 0);
 
   // set node velocities on a simple cubic lattice
@@ -118,8 +119,8 @@ BOOST_DATA_TEST_CASE(velocity_interpolation_bspline, bdata::make(all_lbs()),
 
   lb->ghost_communication();
 
-  for (double x = 0.0; x < params.box_dimensions[0]; x += 0.3)
-    for (double y = 0.1; y < params.box_dimensions[1]; y += 0.3)
+  for (double x = 0.0; x < params.box_dimensions[0]; x += 0.3) {
+    for (double y = 0.1; y < params.box_dimensions[1]; y += 0.3) {
       for (double z = 0.2; z < params.box_dimensions[2]; z += 0.3) {
         Vector3d const pos{x, y, z};
         if (lb->lattice().pos_in_local_domain(pos)) {
@@ -133,6 +134,8 @@ BOOST_DATA_TEST_CASE(velocity_interpolation_bspline, bdata::make(all_lbs()),
           BOOST_CHECK_SMALL((*res - ref).norm(), 1E-10);
         }
       }
+    }
+  }
 }
 
 // TODO: check last applied force on a ghost node, i.e. when two forces

@@ -497,7 +497,7 @@ class LBTest:
             rtol *= 10.
         # Walberla todo: The factor 1.5 can go, once f/2 correction is back
         np.testing.assert_allclose(
-            np.array(self.system.analysis.linear_momentum()),
+            np.copy(self.system.analysis.linear_momentum()),
             fluid_velocity * self.params['density'] * self.system.volume(),
             rtol=rtol)
 

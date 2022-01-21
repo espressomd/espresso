@@ -450,6 +450,7 @@ private:
     }
   }
 
+private:
   inline void integrate_stream(std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_stream)(&*b);
@@ -956,9 +957,6 @@ public:
   void update_boundary_from_list(std::vector<int> const &nodes_flat,
                                  std::vector<double> const &vel_flat) override {
     // reshape grids
-    auto const grid_size = lattice().get_grid_dimensions();
-    auto const n_grid_points = Utils::product(grid_size);
-    auto const n_ghost_layers = lattice().get_ghost_layers();
     assert(nodes_flat.size() == vel_flat.size());
     assert(nodes_flat.size() % 3u == 0);
     for (std::size_t i = 0; i < nodes_flat.size(); i += 3) {
@@ -975,7 +973,6 @@ public:
   // Pressure tensor
   boost::optional<Utils::VectorXd<9>>
   get_node_pressure_tensor(const Utils::Vector3i &node) const override {
-    auto const n_ghost_layers = lattice().get_ghost_layers();
     auto bc = get_block_and_cell(lattice(), node, false);
     if (!bc)
       return {boost::none};

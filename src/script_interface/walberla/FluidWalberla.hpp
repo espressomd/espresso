@@ -77,8 +77,6 @@ public:
          [this]() { return m_is_single_precision; }},
         {"is_active", AutoParameter::read_only,
          [this]() { return m_is_active; }},
-        {"is_initialized", AutoParameter::read_only,
-         [this]() { return m_lb_fluid != nullptr; }},
         {"agrid", AutoParameter::read_only,
          [this]() { return m_lb_params->get_agrid(); }},
         {"tau", AutoParameter::read_only,
