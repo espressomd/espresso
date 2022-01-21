@@ -437,8 +437,15 @@ public:
   }
 
 private:
-  bool lees_edwards_bc() {
-    return boost::get<LeesEdwardsCollisionModel>(&*m_collision_model);
+  inline void integrate_stream(std::shared_ptr<Lattice_T> const &blocks) {
+    for (auto b = blocks->begin(); b != blocks->end(); ++b)
+      (*m_stream)(&*b);
+  }
+
+  inline void
+  update_velocity_field_from_pdf(std::shared_ptr<Lattice_T> const &blocks) {
+    for (auto b = blocks->begin(); b != blocks->end(); ++b)
+      (*m_update_velocity_field_from_pdfs)(&*b);
   }
 
   inline void integrate_collide(std::shared_ptr<Lattice_T> const &blocks) {
@@ -450,16 +457,8 @@ private:
     }
   }
 
-private:
-  inline void integrate_stream(std::shared_ptr<Lattice_T> const &blocks) {
-    for (auto b = blocks->begin(); b != blocks->end(); ++b)
-      (*m_stream)(&*b);
-  }
-
-  inline void
-  update_velocity_field_from_pdf(std::shared_ptr<Lattice_T> const &blocks) {
-    for (auto b = blocks->begin(); b != blocks->end(); ++b)
-      (*m_update_velocity_field_from_pdfs)(&*b);
+  bool lees_edwards_bc() {
+    return boost::get<LeesEdwardsCollisionModel>(&*m_collision_model);
   }
 
   inline void apply_lees_edwards_pdf_interpolation(
@@ -482,24 +481,15 @@ private:
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_lees_edwards_force_to_be_applied_backwards_interpol_sweep)(&*b);
   }
-  inline void integrate_boundaries(std::shared_ptr<Lattice_T> const &blocks) {
-    for (auto b = blocks->begin(); b != blocks->end(); ++b)
-      (*m_boundary)(&*b);
-  }
 
   inline void integrate_reset_force(std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_reset_force)(&*b);
   }
 
-  inline void integrate_vtk_writers() {
-    for (auto it = m_vtk_auto.begin(); it != m_vtk_auto.end(); ++it) {
-      auto &vtk_handle = it->second;
-      if (vtk_handle->enabled) {
-        vtk::writeFiles(vtk_handle->ptr)();
-        vtk_handle->execution_count++;
-      }
-    }
+  inline void integrate_boundaries(std::shared_ptr<Lattice_T> const &blocks) {
+    for (auto b = blocks->begin(); b != blocks->end(); ++b)
+      (*m_boundary)(&*b);
   }
 
   void integrate_push_scheme() {
@@ -529,7 +519,6 @@ private:
     integrate_boundaries(blocks);
     // LB stream
     integrate_stream(blocks);
-
     // LB collide
     integrate_collide(blocks);
 
@@ -539,7 +528,17 @@ private:
       apply_lees_edwards_pdf_interpolation(blocks);
       apply_lees_edwards_vel_interpolation_and_shift(blocks);
       apply_lees_edwards_last_applied_force_interpolation(blocks);
-    };
+    }
+  }
+
+  inline void integrate_vtk_writers() {
+    for (auto it = m_vtk_auto.begin(); it != m_vtk_auto.end(); ++it) {
+      auto &vtk_handle = it->second;
+      if (vtk_handle->enabled) {
+        vtk::writeFiles(vtk_handle->ptr)();
+        vtk_handle->execution_count++;
+      }
+    }
   }
 
 public:
@@ -895,7 +894,6 @@ public:
 
   void clear_boundaries() override { reset_boundary_handling(); }
 
-  /** @brief Update boundary conditions from a rasterized shape. */
   void update_boundary_from_shape(
       std::vector<int> const &raster_flat,
       std::vector<double> const &slip_velocity_flat) override {
@@ -953,7 +951,6 @@ public:
     reallocate_ubb_field();
   }
 
-  /** @brief Update boundary conditions from a list of nodes. */
   void update_boundary_from_list(std::vector<int> const &nodes_flat,
                                  std::vector<double> const &vel_flat) override {
     // reshape grids
@@ -1094,7 +1091,6 @@ public:
     return vtk_handle;
   }
 
-  /** Manually call a VTK callback */
   void write_vtk(std::string const &vtk_uid) override {
     if (m_vtk_auto.find(vtk_uid) != m_vtk_auto.end()) {
       throw vtk_runtime_error(vtk_uid, "is an automatic observable");
@@ -1107,7 +1103,6 @@ public:
     vtk_handle->execution_count++;
   }
 
-  /** Activate or deactivate a VTK callback */
   void switch_vtk(std::string const &vtk_uid, bool status) override {
     if (m_vtk_manual.find(vtk_uid) != m_vtk_manual.end()) {
       throw vtk_runtime_error(vtk_uid, "is a manual observable");
