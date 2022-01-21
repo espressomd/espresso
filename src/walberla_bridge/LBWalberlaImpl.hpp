@@ -328,6 +328,7 @@ protected:
   std::shared_ptr<UpdateVelocityFromPDFSweep> m_update_velocity_field_from_pdfs;
 
   // Lees Edwards boundary interpolation
+  std::unique_ptr<LeesEdwardsPack> m_lees_edwards_callbacks;
   std::shared_ptr<InterpolateAndShiftAtBoundary<PdfField>>
       m_lees_edwards_pdf_interpol_sweep;
   std::shared_ptr<InterpolateAndShiftAtBoundary<VectorField>>
@@ -581,53 +582,46 @@ public:
     m_collision_model = std::make_shared<CollisionModel>(std::move(obj));
   }
 
-  void set_collision_model(LeesEdwardsPack &&lees_edwards_pack) override {
+  void set_collision_model(
+      std::unique_ptr<LeesEdwardsPack> &&lees_edwards_pack) override {
     if (m_kT != 0.) {
       throw std::runtime_error(
           "Lees-Edwards LB doesn't support thermalization");
     }
-    int shear_normal_grid =
-        lattice().get_grid_dimensions()[lees_edwards_pack.shear_plane_normal];
-    auto const shear_plane_size =
-        Utils::product(lattice().get_grid_dimensions()) / shear_normal_grid;
-    auto const shear_vel = FloatType_c(lees_edwards_pack.get_shear_velocity());
-    m_lees_edwards_pdf_interpol_sweep =
-        std::make_shared<InterpolateAndShiftAtBoundary<PdfField>>(
-            lattice().get_blocks(), m_pdf_field_id, m_pdf_tmp_field_id,
-            lattice().get_ghost_layers(), lees_edwards_pack.shear_direction,
-            lees_edwards_pack.shear_plane_normal,
-            lees_edwards_pack.get_pos_offset);
-    m_lees_edwards_vel_interpol_sweep =
-        std::make_shared<InterpolateAndShiftAtBoundary<VectorField>>(
-            lattice().get_blocks(), m_velocity_field_id, m_vec_tmp_field_id,
-            lattice().get_ghost_layers(), lees_edwards_pack.shear_direction,
-            lees_edwards_pack.shear_plane_normal,
-            lees_edwards_pack.get_pos_offset,
-            lees_edwards_pack.get_shear_velocity);
-    m_lees_edwards_last_applied_force_interpol_sweep =
-        std::make_shared<InterpolateAndShiftAtBoundary<VectorField>>(
-            lattice().get_blocks(), m_last_applied_force_field_id,
-            m_vec_tmp_field_id, lattice().get_ghost_layers(),
-            lees_edwards_pack.shear_direction,
-            lees_edwards_pack.shear_plane_normal,
-            lees_edwards_pack.get_pos_offset);
-    m_lees_edwards_force_to_be_applied_backwards_interpol_sweep =
-        std::make_shared<InterpolateAndShiftAtBoundary<VectorField>>(
-            lattice().get_blocks(), m_force_to_be_applied_id,
-            m_vec_tmp_field_id, lattice().get_ghost_layers(),
-            lees_edwards_pack.shear_direction,
-            lees_edwards_pack.shear_plane_normal, [&lees_edwards_pack]() {
-              return -1.0 * lees_edwards_pack.get_pos_offset();
-            });
 
+    auto const shear_direction = lees_edwards_pack->shear_direction;
+    auto const shear_plane_normal = lees_edwards_pack->shear_plane_normal;
+    auto const shear_vel = FloatType_c(lees_edwards_pack->get_shear_velocity());
     auto const omega = shear_mode_relaxation_rate();
     auto const omega_odd = odd_mode_relaxation_rate(omega);
     auto obj =
         LeesEdwardsCollisionModel(m_last_applied_force_field_id, m_pdf_field_id,
                                   FloatType_c(64), omega, shear_vel);
     m_collision_model = std::make_shared<CollisionModel>(std::move(obj));
-    // auto *cm = boost::get<LeesEdwardsCollisionModel>(&*m_collision_model);
-    // cm->grid_size_ = int64_t(shear_plane_size);
+    m_lees_edwards_callbacks = std::move(lees_edwards_pack);
+    m_lees_edwards_pdf_interpol_sweep =
+        std::make_shared<InterpolateAndShiftAtBoundary<PdfField>>(
+            lattice().get_blocks(), m_pdf_field_id, m_pdf_tmp_field_id,
+            lattice().get_ghost_layers(), shear_direction, shear_plane_normal,
+            m_lees_edwards_callbacks->get_pos_offset);
+    m_lees_edwards_vel_interpol_sweep =
+        std::make_shared<InterpolateAndShiftAtBoundary<VectorField>>(
+            lattice().get_blocks(), m_velocity_field_id, m_vec_tmp_field_id,
+            lattice().get_ghost_layers(), shear_direction, shear_plane_normal,
+            m_lees_edwards_callbacks->get_pos_offset,
+            m_lees_edwards_callbacks->get_shear_velocity);
+    m_lees_edwards_last_applied_force_interpol_sweep =
+        std::make_shared<InterpolateAndShiftAtBoundary<VectorField>>(
+            lattice().get_blocks(), m_last_applied_force_field_id,
+            m_vec_tmp_field_id, lattice().get_ghost_layers(), shear_direction,
+            shear_plane_normal, m_lees_edwards_callbacks->get_pos_offset);
+    m_lees_edwards_force_to_be_applied_backwards_interpol_sweep =
+        std::make_shared<InterpolateAndShiftAtBoundary<VectorField>>(
+            lattice().get_blocks(), m_force_to_be_applied_id,
+            m_vec_tmp_field_id, lattice().get_ghost_layers(), shear_direction,
+            shear_plane_normal, [this]() {
+              return -1.0 * m_lees_edwards_callbacks->get_pos_offset();
+            });
   }
 
   void set_viscosity(double viscosity) override {

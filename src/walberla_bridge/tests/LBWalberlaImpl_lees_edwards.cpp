@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_CASE(test_lees_edwards) {
   auto lattice =
       std::make_shared<LatticeWalberla>(Vector3i{8, 64, 8}, mpi_shape, 1);
   auto lb = walberla::LBWalberlaImpl<double>(lattice, viscosity, density);
-  auto le_pack = LeesEdwardsPack(
+  auto le_pack = std::make_unique<LeesEdwardsPack>(
       0, 1, [&]() { return 0.0; }, [=]() { return v0; });
   lb.set_collision_model(std::move(le_pack));
   for (int i = 0; i < 200; i++) {

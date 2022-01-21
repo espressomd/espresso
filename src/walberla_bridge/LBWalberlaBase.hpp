@@ -131,7 +131,8 @@ public:
 
   virtual void set_collision_model(double kT, unsigned int seed) = 0;
 
-  virtual void set_collision_model(LeesEdwardsPack &&lees_edwards_pack) = 0;
+  virtual void
+  set_collision_model(std::unique_ptr<LeesEdwardsPack> &&lees_edwards_pack) = 0;
 
   // Pressure tensor
   virtual boost::optional<Utils::VectorXd<9>>
