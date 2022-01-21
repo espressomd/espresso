@@ -438,6 +438,7 @@ public:
     (*m_full_communication).communicate();
   }
 
+private:
   bool lees_edwards_bc() {
     return boost::get<LeesEdwardsCollisionModel>(&*m_collision_model);
   };
@@ -491,6 +492,7 @@ public:
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_reset_force)(&*b);
   }
+
   inline void integrate_vtk_writers() {
     for (auto it = m_vtk_auto.begin(); it != m_vtk_auto.end(); ++it) {
       auto &vtk_handle = it->second;

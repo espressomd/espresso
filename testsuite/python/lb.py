@@ -191,10 +191,10 @@ class LBTest:
 
         """
         system = self.system
-        self.n_col_part = 1000
+        n_col_part = 1000
         system.part.add(
-            pos=np.random.random((self.n_col_part, 3)) * self.system.box_l[0],
-            v=np.random.random((self.n_col_part, 3)))
+            pos=np.random.random((n_col_part, 3)) * self.system.box_l[0],
+            v=np.random.random((n_col_part, 3)))
         system.thermostat.turn_off()
 
         lbf = self.lb_class(kT=1., seed=1, ext_force_density=[0, 0, 0],
@@ -219,6 +219,9 @@ class LBTest:
         self.assertIsInstance(
             lbf.pressure_tensor,
             espressomd.utils.array_locked)
+        system.actors.remove(lbf)
+        with self.assertRaisesRegex(RuntimeError, 'LB not activated'):
+            obs.calculate()
 
     def test_lb_node_set_get(self):
         lbf = self.lb_class(kT=0.0, ext_force_density=[0, 0, 0], **self.params,
@@ -484,7 +487,7 @@ class LBTest:
         # Walberla TODO: 0.5 needs t obe added to time step once f/2
         # correciotni sback
         fluid_velocity = np.array(ext_force_density) * self.system.time_step * (
-            n_time_steps + .5) / self.params['density']
+            n_time_steps + 0.5) / self.params['density']
         # Chck global linear momentum = density * volume * velocity
         rtol = self.rtol
         ratio = self.system.analysis.linear_momentum() \
@@ -499,37 +502,27 @@ class LBTest:
             rtol=rtol)
 
         # Check node velocities
-<< << << < HEAD
-for n in lbf.nodes():
-    print(np.array(n.velocity) / fluid_velocity)
-    # WALBERLA todo
-    # np.testing.assert_allclose(
-    #    np.copy(n.velocity), fluid_velocity, atol=1E-6,
-    # err_msg=f"Fluid node velocity not as expected on node {n.index}")
-== == == =
-for node_velocity in lbf[:, :, :].velocity.reshape((-1, 3)):
-    np.testing.assert_allclose(
-        node_velocity, fluid_velocity, atol=1E-6)
->>>>>> > 79115df888adc1e9b78d6233674695c70fb452e8
+        for node_velocity in lbf[:, :, :].velocity.reshape((-1, 3)):
+            np.testing.assert_allclose(
+                node_velocity, fluid_velocity, atol=1E-6)
 
-
-@utx.skipIfMissingFeatures("EXTERNAL_FORCES")
-def test_unequal_time_step(self):
-    """
+    @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
+    def test_unequal_time_step(self):
+        """
         Checks that LB tau can only be an integer multiple of the MD time_step
         and that different time steps don't affect the physics of a system
         where particles don't move.
 
         """
-    p = self.system.part.add(pos=[0.1, 0.2, 0.3], fix=[1, 1, 1])
-     base_params = {}
-      base_params.update(
-           ext_force_density=[2.3, 1.2, 0.1],
-           viscosity=self.params['viscosity'],
-           density=self.params['density'],
-           agrid=self.params['agrid'])
+        p = self.system.part.add(pos=[0.1, 0.2, 0.3], fix=[1, 1, 1])
+        base_params = {}
+        base_params.update(
+            ext_force_density=[2.3, 1.2, 0.1],
+            viscosity=self.params['viscosity'],
+            density=self.params['density'],
+            agrid=self.params['agrid'])
 
-       def params_with_tau(tau):
+        def params_with_tau(tau):
             params = base_params.copy()
             params.update(tau=tau)
             return params

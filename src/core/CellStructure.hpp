@@ -34,7 +34,7 @@
 #include "bond_error.hpp"
 #include "ghosts.hpp"
 
-#include "utils/math/sqr.hpp"
+#include <utils/math/sqr.hpp>
 
 #include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/container/static_vector.hpp>
