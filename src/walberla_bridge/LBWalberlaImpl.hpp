@@ -399,10 +399,11 @@ public:
     (*m_full_communication)();
   }
 
+private:
   inline void integrate_stream(std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_stream)(&*b);
-  };
+  }
 
   inline void
   update_velocity_field_from_pdf(std::shared_ptr<Lattice_T> const &blocks) {
@@ -509,9 +510,13 @@ public:
     m_viscosity = FloatType_c(viscosity);
   }
 
-  double get_viscosity() const override { return m_viscosity; }
+  double get_viscosity() const override {
+    return numeric_cast<double>(m_viscosity);
+  }
 
-  double get_density() const override { return m_density; }
+  double get_density() const override {
+    return numeric_cast<double>(m_density);
+  }
 
   // Velocity
   boost::optional<Utils::Vector3d>
@@ -901,7 +906,7 @@ public:
     return m_reset_force->get_ext_force();
   }
 
-  double get_kT() const override { return m_kT; }
+  double get_kT() const override { return numeric_cast<double>(m_kT); }
 
   uint64_t get_rng_state() const override {
     auto const *cm = boost::get<ThermalizedCollisionModel>(&*m_collision_model);
