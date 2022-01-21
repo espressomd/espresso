@@ -1,5 +1,28 @@
+/*
+ * Copyright (C) 2021-2022 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef LEES_EDWARDS_PROTOCOL_HPP
 #define LEES_EDWARDS_PROTOCOL_HPP
+
+/**
+ * @file
+ * Lees-Edwards functors for linear shear and oscillatory shear.
+ */
 
 #include "integrate.hpp"
 
@@ -8,10 +31,6 @@
 #include <boost/variant.hpp>
 
 #include <cmath>
-
-/** \file lees_edwards.hpp
- *
- */
 
 namespace LeesEdwards {
 
@@ -37,7 +56,7 @@ struct LinearShear {
   double m_time_0;
 };
 
-/** Lees-Edwards protocol for osciallatory shearing */
+/** Lees-Edwards protocol for oscillatory shearing */
 struct OscillatoryShear {
   OscillatoryShear() : m_amplitude{0}, m_omega{0}, m_time_0{0} {}
   OscillatoryShear(double amplitude, double omega, double time_0)

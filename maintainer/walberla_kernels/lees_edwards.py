@@ -16,29 +16,29 @@ def velocity_offset_eqs(method, pdfs, shear_dir_normal, stencil):
     """
     dim = len(stencil[0])
 
-    # Placeholders indicating a populatino flows up or down.
+    # Placeholders indicating a population flows up or down.
     # Will be replaced later using the component of the stencil direction
     # along the shear_dir_normal.
     points_up = sp.Symbol('points_up')
     points_down = sp.Symbol('points_down')
 
-    # Symbol for the coordinate inex within the field,
+    # Symbol for the coordinate index within the field,
     # used to identify boundary layers
     counters = [LoopOverCoordinate.get_loop_counter_symbol(
         i) for i in range(dim)]
 
     grid_size = sp.Symbol("grid_size", dtype=int)  # in shear_normal_dir
 
-    # +,-1 for upper/lwer boundary layers, 0 otherwise. 
+    # +,-1 for upper/lower boundary layers, 0 otherwise.
     # Based on symbolic counters defined above. Only becomes
-    # non-zero if the corresponding points_up/down falgs
+    # non-zero if the corresponding points_up/down flags
     # are engaged (which is only done for out-flowing populations)
     layer_prefactor = sp.Piecewise((-1, sp.And(type_all_numbers(counters[1] <= 0, 'int'), points_down)),
                                    (1,
                                     sp.And(type_all_numbers(counters[1] >= grid_size - 1,
                                                             'int'),
                                            points_up)),
-                                   (0, True)) 
+                                   (0, True))
 
     # Start with an equilibrium distribution for a given density and velocity
     delta_pdf_eqs = macroscopic_values_setter(
@@ -48,9 +48,9 @@ def velocity_offset_eqs(method, pdfs, shear_dir_normal, stencil):
     # Replace the assignments of (rho,u) by (rho, u+v) - (rho,u)
     ma = []
     for a, c in zip(delta_pdf_eqs.main_assignments, method.stencil):
-        # Determine direction of the stencil component in the 
+        # Determine direction of the stencil component in the
         # shear_dir_normal
-        if c[shear_dir_normal] == 1: 
+        if c[shear_dir_normal] == 1:
             up = True
             down = False
         elif c[shear_dir_normal] == -1:
@@ -72,7 +72,7 @@ def velocity_offset_eqs(method, pdfs, shear_dir_normal, stencil):
         # Only engage if the population is outflowing. See layer_prefactor
         rhs = rhs.replace(points_up, up)
         rhs = rhs.replace(points_down, down)
-        new_a = Assignment(a.lhs, rhs) 
+        new_a = Assignment(a.lhs, rhs)
 
         ma.append(new_a)
         print(c, ma[-1])
@@ -81,7 +81,7 @@ def velocity_offset_eqs(method, pdfs, shear_dir_normal, stencil):
     return delta_pdf_eqs.main_assignments
 
 
-def add_lees_edwards_to_collision(collision, pdfs, stencil, shear_dir_normal): 
+def add_lees_edwards_to_collision(collision, pdfs, stencil, shear_dir_normal):
     # Get population shift for outflowing populations at the boundaries
     offset = velocity_offset_eqs(
         collision.method,
