@@ -147,16 +147,16 @@ void MMM1D_set_params(double switch_rad, double maxPWerror) {
   mpi_bcast_coulomb_params();
 }
 
-int MMM1D_sanity_checks() {
+bool MMM1D_sanity_checks() {
   if (box_geo.periodic(0) || box_geo.periodic(1) || !box_geo.periodic(2)) {
     runtimeErrorMsg() << "MMM1D requires periodicity (0, 0, 1)";
-    return ES_ERROR;
+    return true;
   }
   if (cell_structure.decomposition_type() != CELL_STRUCTURE_NSQUARE) {
     runtimeErrorMsg() << "MMM1D requires the N-square cellsystem";
-    return ES_ERROR;
+    return true;
   }
-  return ES_OK;
+  return false;
 }
 
 int MMM1D_init() {

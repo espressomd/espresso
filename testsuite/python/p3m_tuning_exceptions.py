@@ -19,6 +19,7 @@
 import espressomd
 import unittest as ut
 import unittest_decorators as utx
+import itertools
 
 
 class P3M_tuning_test(ut.TestCase):
@@ -195,6 +196,26 @@ class P3M_tuning_test(ut.TestCase):
 
         self.check_invalid_params(espressomd.electrostatics.P3M)
 
+        # set up a valid actor
+        solver = espressomd.electrostatics.P3M(
+            prefactor=2, accuracy=0.1, cao=2, r_cut=3.18, mesh=8)
+        self.system.actors.add(solver)
+
+        # check periodicity exceptions
+        for periodicity in itertools.product(range(2), range(2), range(2)):
+            if periodicity == (1, 1, 1):
+                continue
+            with self.assertRaisesRegex(Exception, r"P3M requires periodicity \(1, 1, 1\)"):
+                self.system.periodicity = periodicity
+        self.system.periodicity = (1, 1, 1)
+
+        # check cell system exceptions
+        with self.assertRaisesRegex(Exception, "P3M requires the domain decomposition cell system"):
+            self.system.cell_system.set_n_square()
+            self.system.analysis.energy()
+        self.system.cell_system.set_domain_decomposition()
+        self.system.actors.clear()
+
     @utx.skipIfMissingGPU()
     @utx.skipIfMissingFeatures("P3M")
     def test_04_invalid_params_p3m_gpu(self):
@@ -214,6 +235,35 @@ class P3M_tuning_test(ut.TestCase):
         self.add_magnetic_particles()
 
         self.check_invalid_params(espressomd.magnetostatics.DipolarP3M)
+
+        # check bisection exception
+        self.system.periodicity = (0, 0, 0)
+        with self.assertRaisesRegex(Exception, r"Root must be bracketed for bisection in dp3m_rtbisection"):
+            solver = espressomd.magnetostatics.DipolarP3M(
+                prefactor=2, accuracy=0.1)
+            self.system.actors.add(solver)
+        self.system.periodicity = (1, 1, 1)
+        self.system.actors.clear()
+
+        # set up a valid actor
+        solver = espressomd.magnetostatics.DipolarP3M(
+            prefactor=2, accuracy=0.1, cao=1, r_cut=3.28125, mesh=5)
+        self.system.actors.add(solver)
+
+        # check periodicity and cell system exceptions
+        for periodicity in itertools.product(range(2), range(2), range(2)):
+            if periodicity == (1, 1, 1):
+                continue
+            with self.assertRaisesRegex(Exception, r"dipolar P3M requires periodicity \(1, 1, 1\)"):
+                self.system.periodicity = periodicity
+        self.system.periodicity = (1, 1, 1)
+
+        # check cell system exceptions
+        with self.assertRaisesRegex(Exception, "dipolar P3M requires the domain decomposition cell system"):
+            self.system.cell_system.set_n_square()
+            self.system.analysis.energy()
+        self.system.cell_system.set_domain_decomposition()
+        self.system.actors.clear()
 
     @utx.skipIfMissingFeatures("P3M")
     def test_04_invalid_params_p3m_elc_cpu(self):
@@ -321,6 +371,12 @@ class P3M_tuning_test(ut.TestCase):
         solver_mdlc = espressomd.magnetostatic_extensions.DLC(
             gap_size=1, maxPWerror=0)
         with self.assertRaisesRegex(ValueError, "maxPWerror must be > 0"):
+            self.system.actors.add(solver_mdlc)
+        self.system.actors.remove(solver_mdlc)
+
+        solver_mdlc = espressomd.magnetostatic_extensions.DLC(
+            gap_size=1, maxPWerror=1e-30)
+        with self.assertRaisesRegex(RuntimeError, "MDLC tuning failed: unable to find a proper cut-off for the given accuracy"):
             self.system.actors.add(solver_mdlc)
         self.system.actors.remove(solver_mdlc)
 

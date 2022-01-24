@@ -71,8 +71,7 @@ bool sanity_checks() {
       mdlc_sanity_checks();
       // fall through
     case DIPOLAR_P3M:
-      if (dp3m_sanity_checks(node_grid))
-        failed = true;
+      failed |= dp3m_sanity_checks(node_grid);
       break;
     case DIPOLAR_MDLC_DS:
       mdlc_sanity_checks();

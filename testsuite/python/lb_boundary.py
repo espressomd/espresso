@@ -70,6 +70,8 @@ class LBBoundariesBase:
 
     def test_getters(self):
         boundary = espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1)
+        with self.assertRaisesRegex(RuntimeError, "You probably tried to get the force of an lbboundary that was not added to system.lbboundaries"):
+            boundary.get_force()
         self.system.lbboundaries.add(boundary)
         np.testing.assert_equal(np.copy(boundary.get_force()), [0., 0., 0.])
         self.assertIsNone(boundary.call_method('unknown'))

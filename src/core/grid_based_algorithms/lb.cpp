@@ -969,17 +969,26 @@ void lb_integrate() {
 #endif
 }
 
-/***********************************************************************/
-/** \name Coupling part */
-/***********************************************************************/
-/**@{*/
 #ifdef ADDITIONAL_CHECKS
-template <class T> int compare_buffers(T const &buff_a, T const &buff_b) {
+int compare_buffers(std::array<double, D3Q19::n_vel> const &buff_a,
+                    std::array<double, D3Q19::n_vel> const &buff_b) {
   if (buff_a != buff_b) {
     runtimeErrorMsg() << "Halo buffers are not identical";
     return ES_ERROR;
   }
   return ES_OK;
+}
+
+void log_buffer_diff(std::ostream &out, int dir, Lattice::index_t index, int x,
+                     int y, int z) {
+  out << "buffers differ in dir=" << dir << " at node index=" << index;
+  if (x != -1)
+    out << " x=" << x;
+  if (y != -1)
+    out << " y=" << y;
+  if (z != -1)
+    out << " z=" << z;
+  out << "\n";
 }
 
 /** Check consistency of the halo regions.
@@ -1018,8 +1027,7 @@ void lb_check_halo_regions(const LB_Fluid &lb_fluid,
           for (i = 0; i < D3Q19::n_vel; i++)
             r_buffer[i] = lb_fluid[i][index];
           if (compare_buffers(s_buffer, r_buffer)) {
-            std::cerr << "buffers differ in dir=" << 0 << " at index=" << index
-                      << " y=" << y << " z=" << z << "\n";
+            log_buffer_diff(std::cerr, 0, index, -1, y, z);
           }
         }
 
@@ -1042,8 +1050,7 @@ void lb_check_halo_regions(const LB_Fluid &lb_fluid,
           for (i = 0; i < D3Q19::n_vel; i++)
             r_buffer[i] = lb_fluid[i][index];
           if (compare_buffers(s_buffer, r_buffer)) {
-            std::cerr << "buffers differ in dir=0 at index=" << index
-                      << " y=" << y << " z=" << z << "\n";
+            log_buffer_diff(std::cerr, 0, index, -1, y, z);
           }
         }
       }
@@ -1073,8 +1080,7 @@ void lb_check_halo_regions(const LB_Fluid &lb_fluid,
           for (i = 0; i < D3Q19::n_vel; i++)
             r_buffer[i] = lb_fluid[i][index];
           if (compare_buffers(s_buffer, r_buffer)) {
-            std::cerr << "buffers differ in dir=1 at index=" << index
-                      << " x=" << x << " z=" << z << "\n";
+            log_buffer_diff(std::cerr, 1, index, x, -1, z);
           }
         }
       }
@@ -1098,8 +1104,7 @@ void lb_check_halo_regions(const LB_Fluid &lb_fluid,
           for (i = 0; i < D3Q19::n_vel; i++)
             r_buffer[i] = lb_fluid[i][index];
           if (compare_buffers(s_buffer, r_buffer)) {
-            std::cerr << "buffers differ in dir=1 at index=" << index
-                      << " x=" << x << " z=" << z << "\n";
+            log_buffer_diff(std::cerr, 1, index, x, -1, z);
           }
         }
       }
@@ -1129,9 +1134,7 @@ void lb_check_halo_regions(const LB_Fluid &lb_fluid,
           for (i = 0; i < D3Q19::n_vel; i++)
             r_buffer[i] = lb_fluid[i][index];
           if (compare_buffers(s_buffer, r_buffer)) {
-            std::cerr << "buffers differ in dir=2 at index=" << index
-                      << " x=" << x << " y=" << y << " z=" << lb_lattice.grid[2]
-                      << "\n";
+            log_buffer_diff(std::cerr, 2, index, x, y, lb_lattice.grid[2]);
           }
         }
       }
@@ -1157,8 +1160,7 @@ void lb_check_halo_regions(const LB_Fluid &lb_fluid,
           for (i = 0; i < D3Q19::n_vel; i++)
             r_buffer[i] = lb_fluid[i][index];
           if (compare_buffers(s_buffer, r_buffer)) {
-            std::cerr << "buffers differ in dir=2 at index=" << index
-                      << " x=" << x << " y=" << y << "\n";
+            log_buffer_diff(std::cerr, 2, index, x, y, -1);
           }
         }
       }
@@ -1348,5 +1350,3 @@ void lb_collect_boundary_forces(double *result) {
                      static_cast<int>(lbb_data_len), result, std::plus<>(), 0);
 #endif
 }
-
-/**@}*/

@@ -1417,13 +1417,13 @@ bool dp3m_sanity_checks(const Utils::Vector3i &grid) {
   bool ret = false;
 
   if (!box_geo.periodic(0) || !box_geo.periodic(1) || !box_geo.periodic(2)) {
-    runtimeErrorMsg() << "dipolar P3M requires periodicity 1 1 1";
+    runtimeErrorMsg() << "dipolar P3M requires periodicity (1, 1, 1)";
     ret = true;
   }
 
   if (cell_structure.decomposition_type() != CELL_STRUCTURE_DOMDEC) {
-    runtimeErrorMsg() << "dipolar P3M at present requires the domain "
-                         "decomposition cell system";
+    runtimeErrorMsg() << "dipolar P3M requires the domain decomposition "
+                         "cell system";
     ret = true;
   }
 
@@ -1439,8 +1439,7 @@ bool dp3m_sanity_checks(const Utils::Vector3i &grid) {
     ret = true;
   }
 
-  if (dp3m_sanity_checks_boxl())
-    ret = true;
+  ret |= dp3m_sanity_checks_boxl();
 
   if (dp3m.params.mesh[0] == 0) {
     runtimeErrorMsg() << "dipolar P3M_init: mesh size is not yet set";

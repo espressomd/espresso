@@ -60,7 +60,7 @@ extern MMM1DParameters mmm1d_params;
 void MMM1D_set_params(double switch_rad, double maxPWerror);
 
 /// check that MMM1D can run with the current parameters
-int MMM1D_sanity_checks();
+bool MMM1D_sanity_checks();
 
 /// initialize the MMM1D constants
 int MMM1D_init();

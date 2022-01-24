@@ -88,8 +88,7 @@ bool sanity_checks() {
   bool failed = false;
   switch (coulomb.method) {
   case COULOMB_MMM1D:
-    if (MMM1D_sanity_checks())
-      failed = true;
+    failed |= MMM1D_sanity_checks();
     break;
 #ifdef P3M
   case COULOMB_ELC_P3M:
@@ -102,8 +101,7 @@ bool sanity_checks() {
     // fall through
   case COULOMB_P3M_GPU:
   case COULOMB_P3M:
-    if (p3m_sanity_checks())
-      failed = true;
+    failed |= p3m_sanity_checks();
     break;
 #endif
   default:

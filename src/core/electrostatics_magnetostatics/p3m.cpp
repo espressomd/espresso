@@ -1282,13 +1282,12 @@ bool p3m_sanity_checks_system(const Utils::Vector3i &grid) {
   bool ret = false;
 
   if (!box_geo.periodic(0) || !box_geo.periodic(1) || !box_geo.periodic(2)) {
-    runtimeErrorMsg() << "P3M requires periodicity 1 1 1";
+    runtimeErrorMsg() << "P3M requires periodicity (1, 1, 1)";
     ret = true;
   }
 
   if (cell_structure.decomposition_type() != CELL_STRUCTURE_DOMDEC) {
-    runtimeErrorMsg()
-        << "P3M at present requires the domain decomposition cell system";
+    runtimeErrorMsg() << "P3M requires the domain decomposition cell system";
     ret = true;
   }
 

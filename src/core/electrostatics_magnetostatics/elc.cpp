@@ -186,12 +186,10 @@ void distribute(std::size_t size) {
  */
 inline void check_gap_elc(const Particle &p) {
   if (p.p.q != 0) {
-    if (p.r.p[2] < 0)
+    auto const z = p.r.p[2];
+    if (z < 0. or z > elc_params.h) {
       runtimeErrorMsg() << "Particle " << p.p.identity << " entered ELC gap "
-                        << "region by " << (p.r.p[2]);
-    else if (p.r.p[2] > elc_params.h) {
-      runtimeErrorMsg() << "Particle " << p.p.identity << " entered ELC gap "
-                        << "region by " << (p.r.p[2] - elc_params.h);
+                        << "region by " << ((z < 0.) ? z : z - elc_params.h);
     }
   }
 }
