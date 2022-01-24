@@ -148,6 +148,7 @@ maxset-walberla-avx:
     - docker
     - linux
     - numa-deactivated
+  when: manual
 
 no_rotation:
   <<: *global_job_definition
