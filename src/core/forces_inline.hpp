@@ -279,12 +279,17 @@ calc_bond_pair_force(Particle const &p1, Particle const &p2,
     return iap->force(dx);
   }
 #endif
+#ifdef BOND_CONSTRAINT
+  if (boost::get<RigidBond>(&iaparams)) {
+    return Utils::Vector3d{};
+  }
+#endif
 #ifdef TABULATED
   if (auto const *iap = boost::get<TabulatedDistanceBond>(&iaparams)) {
     return iap->force(dx);
   }
 #endif
-  if (boost::get<VirtualBond>(&iaparams) || boost::get<RigidBond>(&iaparams)) {
+  if (boost::get<VirtualBond>(&iaparams)) {
     return Utils::Vector3d{};
   }
   throw BondUnknownTypeError();

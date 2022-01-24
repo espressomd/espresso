@@ -231,7 +231,7 @@ calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
 #endif
 #ifdef BOND_CONSTRAINT
     if (boost::get<RigidBond>(&iaparams)) {
-      return boost::optional<double>(0);
+      return {0.};
     }
 #endif
 #ifdef TABULATED
@@ -240,7 +240,7 @@ calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
     }
 #endif
     if (boost::get<VirtualBond>(&iaparams)) {
-      return boost::optional<double>(0);
+      return {0.};
     }
     throw BondUnknownTypeError();
   } // 1 partner
