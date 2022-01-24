@@ -141,6 +141,24 @@ foreach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
   endif(result${func_name})
 endforeach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
 
+include(CheckCXXCompilerFlag)
+
+if(WITH_WALBERLA AND WALBERLA_USE_AVX)
+  check_cxx_compiler_flag("-mavx2" compiler_has_avx_flag)
+  set(CMAKE_REQUIRED_FLAGS_BACKUP "${CMAKE_REQUIRED_FLAGS}")
+  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -mavx2")
+  check_cxx_source_compiles(
+      "#include <immintrin.h>
+       __m256  xi_s = _mm256_set_ps(0.f, 1.f, 2.f, 3.f, 4.f, 5.f, 6.f, 7.f);
+       __m256d xi_d = _mm256_set_pd(0.0, 1.0, 2.0, 3.0);
+       int main() {}
+      " compiler_has_avx_support)
+  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS_BACKUP}")
+  if((NOT compiler_has_avx_flag) OR (NOT compiler_has_avx_support))
+    message(FATAL_ERROR "Compiler ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION} doesn't support AVX2 on this CPU architecture")
+  endif()
+endif()
+
 #
 # Libraries
 #
