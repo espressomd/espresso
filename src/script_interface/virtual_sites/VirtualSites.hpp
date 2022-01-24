@@ -23,15 +23,18 @@
 #define SCRIPT_INTERFACE_VIRTUAL_SITES_VIRTUAL_SITES_HPP
 
 #include "config.hpp"
-#include "core/virtual_sites.hpp"
+
+#ifdef VIRTUAL_SITES
+
 #include "script_interface/auto_parameters/AutoParameters.hpp"
+
+#include "core/virtual_sites.hpp"
 
 #include <memory>
 
 namespace ScriptInterface {
 namespace VirtualSites {
 
-#ifdef VIRTUAL_SITES
 class VirtualSites : public AutoParameters<VirtualSites> {
 public:
   VirtualSites() {
@@ -46,8 +49,7 @@ public:
   virtual std::shared_ptr<::VirtualSites> virtual_sites() = 0;
 };
 
-#endif
-
 } /* namespace VirtualSites */
 } /* namespace ScriptInterface */
+#endif // VIRTUAL_SITES
 #endif

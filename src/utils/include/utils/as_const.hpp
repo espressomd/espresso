@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_UTILS_AS_CONST_HPP
-#define CORE_UTILS_AS_CONST_HPP
+#ifndef UTILS_AS_CONST_HPP
+#define UTILS_AS_CONST_HPP
 
 #include <type_traits>
 

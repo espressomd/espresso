@@ -18,12 +18,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef CORE_IO_MPIIO_MPIIO_HPP
+#define CORE_IO_MPIIO_MPIIO_HPP
+
 /** \file
  *  Implements binary output using MPI-IO.
  */
-
-#ifndef _MPIIO_HPP
-#define _MPIIO_HPP
 
 #include "ParticleRange.hpp"
 namespace Mpiio {

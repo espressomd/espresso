@@ -226,9 +226,6 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
 
     // measure energies
     auto const obs_energy = calculate_energy();
-    auto const &p1 = get_particle_data(pid1);
-    auto const &p2 = get_particle_data(pid2);
-    auto const &p3 = get_particle_data(pid3);
     auto const none_energy = 0.0;
     auto const harm_energy = 0.5 * harm_bond.k * Utils::sqr(harm_bond.r - dist);
     auto const fene_energy =

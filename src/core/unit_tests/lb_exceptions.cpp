@@ -21,6 +21,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
+#include "grid_based_algorithms/lb.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_interpolation.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
@@ -84,4 +85,16 @@ BOOST_AUTO_TEST_CASE(exceptions) {
   BOOST_CHECK_THROW(lb_lbfluid_get_interpolated_density({}), std::exception);
   ::lattice_switch = ActiveLB::NONE;
   mpi_set_interpolation_order_local(InterpolationOrder::linear);
+#ifdef ADDITIONAL_CHECKS
+  {
+    std::stringstream stream_xy{};
+    log_buffer_diff(stream_xy, 0, 1, 2, 3, -1);
+    BOOST_CHECK_EQUAL(stream_xy.str(),
+                      "buffers differ in dir=0 at node index=1 x=2 y=3\n");
+    std::stringstream stream_xyz{};
+    log_buffer_diff(stream_xyz, 0, 1, 2, 3, 4);
+    BOOST_CHECK_EQUAL(stream_xyz.str(),
+                      "buffers differ in dir=0 at node index=1 x=2 y=3 z=4\n");
+  }
+#endif // ADDITIONAL_CHECKS
 }

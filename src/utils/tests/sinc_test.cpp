@@ -24,15 +24,13 @@
 #include <cmath>
 #include <cstdlib>
 
-using Utils::sinc;
-
-BOOST_AUTO_TEST_CASE(zero) { BOOST_CHECK(1.0 == sinc(0.0)); }
+BOOST_AUTO_TEST_CASE(zero) { BOOST_CHECK_EQUAL(Utils::sinc(0.0), 1.0); }
 
 BOOST_AUTO_TEST_CASE(approx) {
   for (double x = 0.001; x <= 0.11; x += 0.01) {
-    auto const approx = sinc(x);
+    auto const approx = Utils::sinc(x);
     auto const pi_x = boost::math::constants::pi<double>() * x;
     auto const exact = std::sin(pi_x) / (pi_x);
-    BOOST_CHECK(std::abs(approx - exact) <= 1e-13);
+    BOOST_CHECK_SMALL(approx - exact, 1e-13);
   }
 }

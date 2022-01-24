@@ -47,11 +47,13 @@
 #include <utils/uniform.hpp>
 
 #include <Random123/philox.h>
+#include <boost/mpi/collectives/reduce.hpp>
 #include <boost/multi_array.hpp>
 #include <boost/optional.hpp>
 #include <boost/range/numeric.hpp>
-#include <mpi.h>
 #include <profiler/profiler.hpp>
+
+#include <mpi.h>
 
 #include <algorithm>
 #include <array>
@@ -190,15 +192,15 @@ HaloCommunicator update_halo_comm = HaloCommunicator(0);
 
 /**
  * @brief Initialize fluid nodes.
- * @param[out] fields         Vector containing the fluid nodes
+ * @param[out] lb_fields      Vector containing the fluid nodes
  * @param[in]  lb_parameters  Parameters for the LB
  * @param[in]  lb_lattice     Lattice instance
  */
-void lb_initialize_fields(std::vector<LB_FluidNode> &fields,
+void lb_initialize_fields(std::vector<LB_FluidNode> &lb_fields,
                           LB_Parameters const &lb_parameters,
                           Lattice const &lb_lattice) {
-  fields.resize(lb_lattice.halo_grid_volume);
-  for (auto &field : fields) {
+  lb_fields.resize(lb_lattice.halo_grid_volume);
+  for (auto &field : lb_fields) {
     field.force_density = lb_parameters.ext_force_density;
 #ifdef LB_BOUNDARIES
     field.boundary = false;
@@ -273,7 +275,7 @@ void lb_reinit_fluid(std::vector<LB_FluidNode> &lb_fields,
                      Lattice const &lb_lattice,
                      LB_Parameters const &lb_parameters) {
   lb_set_equilibrium_populations(lb_lattice, lb_parameters);
-  lb_initialize_fields(lbfields, lb_parameters, lb_lattice);
+  lb_initialize_fields(lb_fields, lb_parameters, lb_lattice);
 }
 
 void lb_reinit_parameters(LB_Parameters &lb_parameters) {
@@ -714,16 +716,9 @@ std::array<T, 19> lb_calc_n_from_m(const std::array<T, 19> &modes) {
 Utils::Vector19d lb_get_population_from_density_momentum_density_stress(
     double density, Utils::Vector3d const &momentum_density,
     Utils::Vector6d const &stress) {
-  std::array<double, 19> modes{density,
-                               momentum_density[0],
-                               momentum_density[1],
-                               momentum_density[2],
-                               stress[0],
-                               stress[1],
-                               stress[2],
-                               stress[3],
-                               stress[4],
-                               stress[5]};
+  std::array<double, 19> modes{
+      {density, momentum_density[0], momentum_density[1], momentum_density[2],
+       stress[0], stress[1], stress[2], stress[3], stress[4], stress[5]}};
 
   return Utils::Vector19d{lb_calc_n_from_m(modes)};
 }
@@ -845,18 +840,18 @@ std::array<T, 19> lb_apply_forces(const std::array<T, 19> &modes,
       Utils::Vector3d{modes[1], modes[2], modes[3]} + T{0.5} * f / density;
 
   auto const C = std::array<T, 6>{
-      (1. + lb_parameters.gamma_shear) * u[0] * f[0] +
-          1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) *
-              (u * f),
-      1. / 2. * (1. + lb_parameters.gamma_shear) * (u[0] * f[1] + u[1] * f[0]),
-      (1. + lb_parameters.gamma_shear) * u[1] * f[1] +
-          1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) *
-              (u * f),
-      1. / 2. * (1. + lb_parameters.gamma_shear) * (u[0] * f[2] + u[2] * f[0]),
-      1. / 2. * (1. + lb_parameters.gamma_shear) * (u[1] * f[2] + u[2] * f[1]),
-      (1. + lb_parameters.gamma_shear) * u[2] * f[2] +
-          1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) *
-              (u * f)};
+      {(1. + lb_parameters.gamma_shear) * u[0] * f[0] +
+           1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) *
+               (u * f),
+       1. / 2. * (1. + lb_parameters.gamma_shear) * (u[0] * f[1] + u[1] * f[0]),
+       (1. + lb_parameters.gamma_shear) * u[1] * f[1] +
+           1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) *
+               (u * f),
+       1. / 2. * (1. + lb_parameters.gamma_shear) * (u[0] * f[2] + u[2] * f[0]),
+       1. / 2. * (1. + lb_parameters.gamma_shear) * (u[1] * f[2] + u[2] * f[1]),
+       (1. + lb_parameters.gamma_shear) * u[2] * f[2] +
+           1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) *
+               (u * f)}};
 
   return {{modes[0],
            /* update momentum modes */
@@ -974,17 +969,26 @@ void lb_integrate() {
 #endif
 }
 
-/***********************************************************************/
-/** \name Coupling part */
-/***********************************************************************/
-/**@{*/
 #ifdef ADDITIONAL_CHECKS
-template <class T> int compare_buffers(T const &buff_a, T const &buff_b) {
+int compare_buffers(std::array<double, D3Q19::n_vel> const &buff_a,
+                    std::array<double, D3Q19::n_vel> const &buff_b) {
   if (buff_a != buff_b) {
     runtimeErrorMsg() << "Halo buffers are not identical";
     return ES_ERROR;
   }
   return ES_OK;
+}
+
+void log_buffer_diff(std::ostream &out, int dir, Lattice::index_t index, int x,
+                     int y, int z) {
+  out << "buffers differ in dir=" << dir << " at node index=" << index;
+  if (x != -1)
+    out << " x=" << x;
+  if (y != -1)
+    out << " y=" << y;
+  if (z != -1)
+    out << " z=" << z;
+  out << "\n";
 }
 
 /** Check consistency of the halo regions.
@@ -1023,8 +1027,7 @@ void lb_check_halo_regions(const LB_Fluid &lb_fluid,
           for (i = 0; i < D3Q19::n_vel; i++)
             r_buffer[i] = lb_fluid[i][index];
           if (compare_buffers(s_buffer, r_buffer)) {
-            std::cerr << "buffers differ in dir=" << 0 << " at index=" << index
-                      << " y=" << y << " z=" << z << "\n";
+            log_buffer_diff(std::cerr, 0, index, -1, y, z);
           }
         }
 
@@ -1047,8 +1050,7 @@ void lb_check_halo_regions(const LB_Fluid &lb_fluid,
           for (i = 0; i < D3Q19::n_vel; i++)
             r_buffer[i] = lb_fluid[i][index];
           if (compare_buffers(s_buffer, r_buffer)) {
-            std::cerr << "buffers differ in dir=0 at index=" << index
-                      << " y=" << y << " z=" << z << "\n";
+            log_buffer_diff(std::cerr, 0, index, -1, y, z);
           }
         }
       }
@@ -1078,8 +1080,7 @@ void lb_check_halo_regions(const LB_Fluid &lb_fluid,
           for (i = 0; i < D3Q19::n_vel; i++)
             r_buffer[i] = lb_fluid[i][index];
           if (compare_buffers(s_buffer, r_buffer)) {
-            std::cerr << "buffers differ in dir=1 at index=" << index
-                      << " x=" << x << " z=" << z << "\n";
+            log_buffer_diff(std::cerr, 1, index, x, -1, z);
           }
         }
       }
@@ -1103,8 +1104,7 @@ void lb_check_halo_regions(const LB_Fluid &lb_fluid,
           for (i = 0; i < D3Q19::n_vel; i++)
             r_buffer[i] = lb_fluid[i][index];
           if (compare_buffers(s_buffer, r_buffer)) {
-            std::cerr << "buffers differ in dir=1 at index=" << index
-                      << " x=" << x << " z=" << z << "\n";
+            log_buffer_diff(std::cerr, 1, index, x, -1, z);
           }
         }
       }
@@ -1134,9 +1134,7 @@ void lb_check_halo_regions(const LB_Fluid &lb_fluid,
           for (i = 0; i < D3Q19::n_vel; i++)
             r_buffer[i] = lb_fluid[i][index];
           if (compare_buffers(s_buffer, r_buffer)) {
-            std::cerr << "buffers differ in dir=2 at index=" << index
-                      << " x=" << x << " y=" << y << " z=" << lb_lattice.grid[2]
-                      << "\n";
+            log_buffer_diff(std::cerr, 2, index, x, y, lb_lattice.grid[2]);
           }
         }
       }
@@ -1162,8 +1160,7 @@ void lb_check_halo_regions(const LB_Fluid &lb_fluid,
           for (i = 0; i < D3Q19::n_vel; i++)
             r_buffer[i] = lb_fluid[i][index];
           if (compare_buffers(s_buffer, r_buffer)) {
-            std::cerr << "buffers differ in dir=2 at index=" << index
-                      << " x=" << x << " y=" << y << "\n";
+            log_buffer_diff(std::cerr, 2, index, x, y, -1);
           }
         }
       }
@@ -1336,22 +1333,20 @@ void lb_calc_fluid_momentum(double *result, const LB_Parameters &lb_parameters,
   }
 
   momentum *= lb_parameters.agrid / lb_parameters.tau;
-  MPI_Reduce(momentum.data(), result, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+  boost::mpi::reduce(comm_cart, momentum.data(), 3, result, std::plus<>(), 0);
 }
 
 void lb_collect_boundary_forces(double *result) {
 #ifdef LB_BOUNDARIES
-  int n_lb_boundaries = LBBoundaries::lbboundaries.size();
-  std::vector<double> boundary_forces(3 * n_lb_boundaries);
-  int i = 0;
+  auto const lbb_data_len = 3 * LBBoundaries::lbboundaries.size();
+  std::vector<double> boundary_forces(lbb_data_len);
+  std::size_t i = 0;
   for (auto it = LBBoundaries::lbboundaries.begin();
        it != LBBoundaries::lbboundaries.end(); ++it, i++)
-    for (int j = 0; j < 3; j++)
+    for (std::size_t j = 0; j < 3; j++)
       boundary_forces[3 * i + j] = (**it).force()[j];
 
-  MPI_Reduce(boundary_forces.data(), result, 3 * n_lb_boundaries, MPI_DOUBLE,
-             MPI_SUM, 0, comm_cart);
+  boost::mpi::reduce(comm_cart, boundary_forces.data(),
+                     static_cast<int>(lbb_data_len), result, std::plus<>(), 0);
 #endif
 }
-
-/**@}*/

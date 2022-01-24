@@ -19,6 +19,13 @@
 #ifndef SRC_UTILS_INCLUDE_UTILS_MATRIX_HPP
 #define SRC_UTILS_INCLUDE_UTILS_MATRIX_HPP
 
+/**
+ * @file
+ *
+ * @brief Matrix implementation and trait types
+ * for boost qvm interoperability.
+ */
+
 #include "utils/Array.hpp"
 #include "utils/Vector.hpp"
 #include "utils/flatten.hpp"
@@ -47,13 +54,6 @@
 #include <boost/qvm/mat_access.hpp>
 #include <boost/qvm/mat_traits.hpp>
 
-/**
- * @file matrix.hpp
- *
- * @brief This file contains a matrix implementation and the trait types needed
- * for the boost qvm interoperability.
- */
-
 namespace Utils {
 
 /**
@@ -74,12 +74,13 @@ template <typename T, std::size_t Rows, std::size_t Cols> struct Matrix {
 
   container m_data;
 
+private:
   friend class boost::serialization::access;
-  template <class Archive>
-  void serialize(Archive &ar, const unsigned int version) {
+  template <class Archive> void serialize(Archive &ar, const unsigned int) {
     ar &m_data;
   }
 
+public:
   Matrix() = default;
   Matrix(std::initializer_list<T> init_list) {
     assert(init_list.size() == Rows * Cols);
@@ -127,24 +128,24 @@ template <typename T, std::size_t Rows, std::size_t Cols> struct Matrix {
    * @brief Iterator access (non const).
    * @return Returns an iterator to the first element of the matrix.
    */
-  constexpr iterator begin() noexcept { return m_data.begin(); };
+  constexpr iterator begin() noexcept { return m_data.begin(); }
   /**
    * @brief Iterator access (const).
    * @return Returns an iterator to the first element of the matrix.
    */
-  constexpr const_iterator begin() const noexcept { return m_data.begin(); };
+  constexpr const_iterator begin() const noexcept { return m_data.begin(); }
   /**
    * @brief Iterator access (non const).
    * @return Returns an iterator to the element following the last element of
    * the matrix.
    */
-  constexpr iterator end() noexcept { return m_data.end(); };
+  constexpr iterator end() noexcept { return m_data.end(); }
   /**
    * @brief Iterator access (non const).
    * @return Returns an iterator to the element following the last element of
    * the matrix.
    */
-  constexpr const_iterator end() const noexcept { return m_data.end(); };
+  constexpr const_iterator end() const noexcept { return m_data.end(); }
   /**
    * @brief Retrieve an entire matrix row.
    * @tparam R The row index.
@@ -300,5 +301,4 @@ struct deduce_mat2<Utils::Matrix<T, 3, 3>, Utils::Matrix<U, 3, 3>, 3, 3> {
 
 } // namespace qvm
 } // namespace boost
-
-#endif
+#endif // SRC_UTILS_INCLUDE_UTILS_MATRIX_HPP

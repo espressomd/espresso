@@ -55,8 +55,9 @@ struct LB_parameters_gpu {
   float gamma_shear;
   /** relaxation rate of bulk modes */
   float gamma_bulk;
-  /**      */
+  /** relaxation rate of odd modes */
   float gamma_odd;
+  /** relaxation rate of even modes */
   float gamma_even;
   /** flag determining whether gamma_shear, gamma_odd, and gamma_even are
    *  calculated from gamma_shear in such a way to yield a TRT LB with minimized
@@ -80,14 +81,11 @@ struct LB_parameters_gpu {
 #ifdef LB_BOUNDARIES_GPU
   unsigned int number_of_boundnodes;
 #endif
-  /** to calculate and print out physical values */
-  int calc_val;
 
-  int external_force_density;
+  bool external_force_density;
 
   Utils::Array<float, 3> ext_force_density;
 
-  unsigned int reinit;
   // Thermal energy
   float kT;
 };
@@ -147,7 +145,6 @@ struct LB_rho_v_gpu {
 };
 void lb_GPU_sanity_checks();
 
-void lb_get_device_values_pointer(LB_rho_v_gpu **pointer_address);
 void lb_get_boundary_force_pointer(float **pointer_address);
 void lb_get_para_pointer(LB_parameters_gpu **pointer_address);
 
@@ -222,7 +219,7 @@ uint64_t lb_coupling_get_rng_state_gpu();
 void lb_coupling_set_rng_state_gpu(uint64_t counter);
 
 /** Calculate the node index from its coordinates */
-inline unsigned int calculate_node_index(LB_parameters_gpu const &lbpar,
+inline unsigned int calculate_node_index(LB_parameters_gpu const &lbpar_gpu,
                                          Utils::Vector3i const &coord) {
   return static_cast<unsigned>(
       Utils::get_linear_index(coord, Utils::Vector3i(lbpar_gpu.dim)));

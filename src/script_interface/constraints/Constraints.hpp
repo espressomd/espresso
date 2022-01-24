@@ -37,7 +37,7 @@ class Constraints : public ObjectList<Constraint> {
   }
   void remove_in_core(std::shared_ptr<Constraint> const &obj_ptr) override {
     ::Constraints::constraints.remove(obj_ptr->constraint());
-  };
+  }
 };
 } /* namespace Constraints */
 } /* namespace ScriptInterface */

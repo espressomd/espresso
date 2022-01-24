@@ -55,12 +55,10 @@ DLC_struct dlc_params = {1e100, 0., 0., false, 0.};
  */
 inline void check_gap_mdlc(const Particle &p) {
   if (p.p.dipm != 0.0) {
-    if (p.r.p[2] < 0.0)
+    auto const z = p.r.p[2];
+    if (z < 0.0 or z > dlc_params.h) {
       runtimeErrorMsg() << "Particle " << p.p.identity << " entered MDLC gap "
-                        << "region by " << (p.r.p[2]);
-    else if (p.r.p[2] > dlc_params.h) {
-      runtimeErrorMsg() << "Particle " << p.p.identity << " entered MDLC gap "
-                        << "region by " << (p.r.p[2] - dlc_params.h);
+                        << "region by " << z - ((z < 0.) ? 0. : dlc_params.h);
     }
   }
 }

@@ -101,7 +101,7 @@ static void set_velocities(ParticleRange const &particles,
  *  nodes. Analogous to @ref cuda_mpi_send_forces.
  */
 void IBM_cuda_mpi_send_velocities(ParticleRange const &particles) {
-  auto const n_part = particles.size();
+  auto const n_part = static_cast<int>(particles.size());
 
   if (this_node > 0) {
     static std::vector<IBM_CUDA_ParticleDataOutput> buffer;

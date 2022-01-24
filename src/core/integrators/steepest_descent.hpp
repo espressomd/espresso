@@ -19,8 +19,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __STEEPEST_DESCENT_HPP
-#define __STEEPEST_DESCENT_HPP
+#ifndef CORE_INTEGRATORS_STEEPEST_DESCENT_HPP
+#define CORE_INTEGRATORS_STEEPEST_DESCENT_HPP
 
 #include "ParticleRange.hpp"
 
@@ -64,4 +64,4 @@ void steepest_descent_init(double f_max, double gamma, double max_displacement);
  */
 bool steepest_descent_step(const ParticleRange &particles);
 
-#endif /* __STEEPEST_DESCENT_HPP */
+#endif /* CORE_INTEGRATORS_STEEPEST_DESCENT_HPP */

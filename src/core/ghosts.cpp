@@ -132,7 +132,7 @@ static void prepare_send_buffer(CommBuf &send_buffer,
   /* put in data */
   for (auto part_list : ghost_comm.part_lists) {
     if (data_parts & GHOSTTRANS_PARTNUM) {
-      int np = part_list->size();
+      int np = static_cast<int>(part_list->size());
       archiver << np;
     } else {
       for (Particle &part : *part_list) {
@@ -276,7 +276,7 @@ static void cell_cell_transfer(const GhostCommunication &ghost_comm,
     auto *dst_list = ghost_comm.part_lists[pl + offset];
 
     if (data_parts & GHOSTTRANS_PARTNUM) {
-      prepare_ghost_cell(dst_list, src_list->size());
+      prepare_ghost_cell(dst_list, static_cast<int>(src_list->size()));
     } else {
       auto const &src_part = *src_list;
       auto &dst_part = *dst_list;
@@ -390,21 +390,23 @@ void ghost_communicator(const GhostCommunicator &gcr, unsigned int data_parts) {
     // (which consists of already serialized data).
     switch (comm_type) {
     case GHOST_RECV:
-      comm.recv(node, REQ_GHOST_SEND, recv_buffer.data(), recv_buffer.size());
+      comm.recv(node, REQ_GHOST_SEND, recv_buffer.data(),
+                static_cast<int>(recv_buffer.size()));
       comm.recv(node, REQ_GHOST_SEND, recv_buffer.bonds());
       break;
     case GHOST_SEND:
-      comm.send(node, REQ_GHOST_SEND, send_buffer.data(), send_buffer.size());
+      comm.send(node, REQ_GHOST_SEND, send_buffer.data(),
+                static_cast<int>(send_buffer.size()));
       comm.send(node, REQ_GHOST_SEND, send_buffer.bonds());
       break;
     case GHOST_BCST:
       if (node == comm.rank()) {
-        boost::mpi::broadcast(comm, send_buffer.data(), send_buffer.size(),
-                              node);
+        boost::mpi::broadcast(comm, send_buffer.data(),
+                              static_cast<int>(send_buffer.size()), node);
         boost::mpi::broadcast(comm, send_buffer.bonds(), node);
       } else {
-        boost::mpi::broadcast(comm, recv_buffer.data(), recv_buffer.size(),
-                              node);
+        boost::mpi::broadcast(comm, recv_buffer.data(),
+                              static_cast<int>(recv_buffer.size()), node);
         boost::mpi::broadcast(comm, recv_buffer.bonds(), node);
       }
       break;

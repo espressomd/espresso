@@ -31,6 +31,7 @@
 #include <memory>
 #include <string>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace ScriptInterface {
@@ -108,7 +109,6 @@ protected:
     if (method == "get_elements") {
       std::vector<Variant> ret;
       ret.reserve(m_elements.size());
-
       for (auto const &e : m_elements)
         ret.emplace_back(e);
 

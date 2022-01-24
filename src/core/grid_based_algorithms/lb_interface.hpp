@@ -67,11 +67,6 @@ uint64_t lb_lbfluid_get_rng_state();
 void lb_lbfluid_set_rng_state(uint64_t counter);
 
 /**
- * @brief Return the instance of the Lattice within the LB method.
- */
-const Lattice &lb_lbfluid_get_lattice();
-
-/**
  * @brief Get the global variable @ref lattice_switch.
  */
 ActiveLB lb_lbfluid_get_lattice_switch();

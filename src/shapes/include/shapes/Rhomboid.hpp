@@ -19,8 +19,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __RHOMBOID_HPP
-#define __RHOMBOID_HPP
+#ifndef SRC_SHAPES_RHOMBOID_HPP
+#define SRC_SHAPES_RHOMBOID_HPP
 
 #include "Shape.hpp"
 #include <utils/Vector.hpp>

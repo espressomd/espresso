@@ -46,7 +46,9 @@ class InteractionsBondedTest(ut.TestCase):
         self.system.part.add(pos=self.start_pos, type=0)
 
     def tearDown(self):
+        self.system.actors.clear()
         self.system.part.clear()
+        self.system.bonded_inter.clear()
 
     # Test Harmonic Bond
     def test_harmonic(self):
@@ -77,6 +79,33 @@ class InteractionsBondedTest(ut.TestCase):
                       lambda r: tests_common.fene_potential(
                           scalar_r=r, k=fene_k, d_r_max=fene_d_r_max, r_0=fene_r_0),
                       0.01, fene_r_0 + fene_d_r_max, True)
+
+    def test_virtual_bond(self):
+        # add sentinel harmonic bond, otherwise short-range loop is skipped
+        hb = espressomd.interactions.HarmonicBond(k=1., r_0=0.1, r_cut=0.5)
+        vb = espressomd.interactions.Virtual()
+        self.system.bonded_inter.add(hb)
+        self.system.bonded_inter.add(vb)
+        p1, p2 = self.system.part.all()
+        p1.add_bond((vb, p2))
+
+        self.system.integrator.run(steps=0, recalc_forces=True)
+        self.assertEqual(self.system.analysis.energy()["total"], 0.)
+        np.testing.assert_allclose(np.copy(p1.f), 0., atol=1e-12, rtol=0)
+        np.testing.assert_allclose(np.copy(p2.f), 0., atol=1e-12, rtol=0)
+
+    @utx.skipIfMissingFeatures(["BOND_CONSTRAINT"])
+    def test_rigid_bond(self):
+        rb = espressomd.interactions.RigidBond(r=1.0, ptol=0.1, vtol=0.1)
+        self.system.bonded_inter.add(rb)
+        p1, p2 = self.system.part.all()
+        p2.pos = p1.pos + np.array([1.0, 0., 0.])
+        p1.add_bond((rb, p2))
+
+        self.system.integrator.run(steps=0, recalc_forces=True)
+        self.assertEqual(self.system.analysis.energy()["total"], 0.)
+        np.testing.assert_allclose(np.copy(p1.f), 0., atol=1e-12, rtol=0)
+        np.testing.assert_allclose(np.copy(p2.f), 0., atol=1e-12, rtol=0)
 
     @utx.skipIfMissingFeatures(["ELECTROSTATICS"])
     def test_coulomb(self):

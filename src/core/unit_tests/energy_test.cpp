@@ -21,22 +21,28 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
+#include "Particle.hpp"
 #include "energy_inline.hpp"
 
+#include "utils/Vector.hpp"
+
 BOOST_AUTO_TEST_CASE(translational_kinetic_energy_) {
-
-  Particle p;
-#ifdef MASS
-  p.p.mass = 2.;
-#endif
-  p.m.v = {3., 4., 5.};
-
-  auto const expected = 0.5 * p.p.mass * p.m.v.norm2();
-  BOOST_TEST(translational_kinetic_energy(p) == expected);
-
-/* virtual */
-#ifdef VIRTUAL_SITES
+  // real particle
   {
+    Particle p;
+#ifdef MASS
+    p.p.mass = 2.;
+#endif
+    p.m.v = {3., 4., 5.};
+
+    auto const expected = 0.5 * p.p.mass * p.m.v.norm2();
+    BOOST_CHECK_EQUAL(translational_kinetic_energy(p), expected);
+  }
+
+  // virtual particle
+  {
+#ifdef VIRTUAL_SITES
+
     Particle p;
 #ifdef MASS
     p.p.mass = 2.;
@@ -45,13 +51,13 @@ BOOST_AUTO_TEST_CASE(translational_kinetic_energy_) {
     p.m.v = {3., 4., 5.};
 
     auto const expected = 0.;
-    BOOST_TEST(translational_kinetic_energy(p) == expected);
-  }
+    BOOST_CHECK_EQUAL(translational_kinetic_energy(p), expected);
 #endif
+  }
 }
 
 BOOST_AUTO_TEST_CASE(rotational_kinetic_energy_) {
-  BOOST_TEST(rotational_kinetic_energy(Particle{}) == 0.);
+  BOOST_CHECK_EQUAL(rotational_kinetic_energy(Particle{}), 0.);
 
 #ifdef ROTATION
   {
@@ -61,7 +67,7 @@ BOOST_AUTO_TEST_CASE(rotational_kinetic_energy_) {
 
     auto const expected =
         0.5 * (hadamard_product(p.m.omega, p.m.omega) * p.p.rinertia);
-    BOOST_TEST(rotational_kinetic_energy(p) == expected);
+    BOOST_CHECK_EQUAL(rotational_kinetic_energy(p), expected);
   }
 #endif
 }
@@ -80,5 +86,5 @@ BOOST_AUTO_TEST_CASE(kinetic_energy_) {
 
   auto const expected =
       translational_kinetic_energy(p) + rotational_kinetic_energy(p);
-  BOOST_TEST(calc_kinetic_energy(p) == expected);
+  BOOST_CHECK_EQUAL(calc_kinetic_energy(p), expected);
 }

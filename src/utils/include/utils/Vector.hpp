@@ -16,9 +16,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef SRC_UTILS_INCLUDE_UTILS_VECTOR_HPP
+#define SRC_UTILS_INCLUDE_UTILS_VECTOR_HPP
 
-#ifndef VECTOR_HPP
-#define VECTOR_HPP
+/**
+ * @file
+ *
+ * @brief Vector implementation and trait types
+ * for boost qvm interoperability.
+ */
 
 #include <boost/qvm/deduce_vec.hpp>
 #include <boost/qvm/vec_traits.hpp>
@@ -500,4 +506,4 @@ template <typename T> struct deduce_vec<Utils::Vector<T, 3>, 3> {
 
 } // namespace qvm
 } // namespace boost
-#endif
+#endif // SRC_UTILS_INCLUDE_UTILS_VECTOR_HPP

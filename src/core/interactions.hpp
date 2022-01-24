@@ -21,8 +21,8 @@
 /** \file
  *  This file contains the asynchronous MPI communication for interactions.
  */
-#ifndef _INTERACTIONS_HPP
-#define _INTERACTIONS_HPP
+#ifndef CORE_INTERACTIONS_HPP
+#define CORE_INTERACTIONS_HPP
 
 /** Calculate the maximal cutoff of all interactions. */
 double maximal_cutoff();

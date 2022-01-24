@@ -62,6 +62,13 @@
 #include <utility>
 #include <vector>
 
+constexpr auto some_tag = 42;
+static bool type_list_enable;
+static std::unordered_map<int, std::unordered_set<int>> particle_type_map;
+
+void remove_id_from_map(int part_id, int type);
+void add_id_to_type_map(int part_id, int type);
+
 namespace {
 /**
  * @brief A generic particle update.
@@ -176,22 +183,20 @@ using UpdateForceMessage = boost::variant
  * @brief Delete specific bond.
  */
 struct RemoveBond {
-    std::vector<int> bond;
+  std::vector<int> bond;
 
-    void operator()(Particle &p) const {
-      assert(not bond.empty());
-      auto const view = BondView(bond.front(), {bond.data() + 1, bond.size() - 1});
-      auto it = boost::find(p.bonds(), view);
+  void operator()(Particle &p) const {
+    assert(not bond.empty());
+    auto const view = BondView(bond.front(), {bond.data() + 1, bond.size() - 1});
+    auto it = boost::find(p.bonds(), view);
 
-      if(it != p.bonds().end()) {
-       p.bonds().erase(it);
-      }
+    if (it != p.bonds().end()) {
+     p.bonds().erase(it);
     }
+  }
 
-    template<class Archive>
-            void serialize(Archive &ar, long int) {
-        ar & bond;
-    }
+  template <class Archive>
+  void serialize(Archive &ar, long int) { ar & bond; }
 };
 
 
@@ -199,28 +204,25 @@ struct RemoveBond {
  * @brief Delete all bonds.
  */
 struct RemoveBonds {
-    void operator()(Particle &p) const {
-      p.bonds().clear();
-    }
+  void operator()(Particle &p) const { p.bonds().clear(); }
 
-    template<class Archive>
-    void serialize(Archive &ar, long int) {
-    }
+  template<class Archive>
+  void serialize(Archive &, long int) {}
 };
 
 struct AddBond {
-    std::vector<int> bond;
+  std::vector<int> bond;
 
-    void operator()(Particle &p) const {
-      auto const view = BondView(bond.at(0), {bond.data() + 1, bond.size() - 1});
+  void operator()(Particle &p) const {
+    auto const view = BondView(bond.at(0), {bond.data() + 1, bond.size() - 1});
 
-      p.bonds().insert(view);
-    }
+    p.bonds().insert(view);
+  }
 
-    template<class Archive>
-    void serialize(Archive &ar, long int) {
-        ar & bond;
-    }
+  template<class Archive>
+  void serialize(Archive &ar, long int) {
+    ar & bond;
+  }
 };
 
 using UpdateBondMessage = boost::variant
@@ -231,17 +233,17 @@ using UpdateBondMessage = boost::variant
 
 #ifdef ROTATION
 struct UpdateOrientation {
-    Utils::Vector3d axis;
-    double angle;
+  Utils::Vector3d axis;
+  double angle;
 
-    void operator()(Particle &p) const {
-        local_rotate_particle(p, axis, angle);
-    }
+  void operator()(Particle &p) const {
+    local_rotate_particle(p, axis, angle);
+  }
 
-    template<class Archive>
-    void serialize(Archive &ar, long int) {
-        ar & axis & angle;
-    }
+  template<class Archive>
+  void serialize(Archive &ar, long int) {
+      ar & axis & angle;
+  }
 };
 #endif
 
@@ -326,7 +328,7 @@ struct UpdateVisitor : public boost::static_visitor<void> {
 void mpi_send_update_message_local(int node, int id) {
   if (node == comm_cart.rank()) {
     UpdateMessage msg{};
-    comm_cart.recv(0, SOME_TAG, msg);
+    comm_cart.recv(0, some_tag, msg);
     boost::apply_visitor(UpdateVisitor{id}, msg);
   }
 
@@ -362,7 +364,7 @@ void mpi_send_update_message(int id, const UpdateMessage &msg) {
    * message to the target, otherwise we
    * can just apply the update directly. */
   if (pnode != comm_cart.rank()) {
-    comm_cart.send(pnode, SOME_TAG, msg);
+    comm_cart.send(pnode, some_tag, msg);
   } else {
     boost::apply_visitor(UpdateVisitor{id}, msg);
   }
@@ -381,14 +383,6 @@ template <typename T, T ParticleProperties::*m>
 void mpi_update_particle_property(int id, const T &value) {
   mpi_update_particle<ParticleProperties, &Particle::p, T, m>(id, value);
 }
-
-/************************************************
- * variables
- ************************************************/
-bool type_list_enable;
-std::unordered_map<int, std::unordered_set<int>> particle_type_map{};
-void remove_id_from_map(int part_id, int type);
-void add_id_to_type_map(int part_id, int type);
 
 /**
  * @brief id -> rank
@@ -417,7 +411,7 @@ static void mpi_who_has_local() {
                  sendbuf.begin(),
                  [](Particle const &p) { return p.p.identity; });
 
-  MPI_Send(sendbuf.data(), n_part, MPI_INT, 0, SOME_TAG, comm_cart);
+  MPI_Send(sendbuf.data(), n_part, MPI_INT, 0, some_tag, comm_cart);
 }
 
 REGISTER_CALLBACK(mpi_who_has_local)
@@ -441,7 +435,7 @@ void mpi_who_has() {
 
     } else if (n_parts[pnode] > 0) {
       pdata.resize(n_parts[pnode]);
-      MPI_Recv(pdata.data(), n_parts[pnode], MPI_INT, pnode, SOME_TAG,
+      MPI_Recv(pdata.data(), n_parts[pnode], MPI_INT, pnode, some_tag,
                comm_cart, MPI_STATUS_IGNORE);
       for (int i = 0; i < n_parts[pnode]; i++)
         particle_node[pdata[i]] = pnode;
@@ -529,7 +523,8 @@ static void mpi_get_particles_local() {
     return *cell_structure.get_local_particle(id);
   });
 
-  Utils::Mpi::gatherv(comm_cart, parts.data(), parts.size(), 0);
+  Utils::Mpi::gatherv(comm_cart, parts.data(), static_cast<int>(parts.size()),
+                      0);
 }
 
 REGISTER_CALLBACK(mpi_get_particles_local)
@@ -579,8 +574,8 @@ std::vector<Particle> mpi_get_particles(Utils::Span<const int> ids) {
       node_ids.cbegin(), node_ids.cend(), node_sizes.begin(),
       [](std::vector<int> const &ids) { return static_cast<int>(ids.size()); });
 
-  Utils::Mpi::gatherv(comm_cart, parts.data(), parts.size(), parts.data(),
-                      node_sizes.data(), 0);
+  Utils::Mpi::gatherv(comm_cart, parts.data(), static_cast<int>(parts.size()),
+                      parts.data(), node_sizes.data(), 0);
 
   return parts;
 }
@@ -664,7 +659,7 @@ int mpi_place_new_particle(int p_id, const Utils::Vector3d &pos) {
 void mpi_place_particle_local(int pnode, int p_id) {
   if (pnode == this_node) {
     Utils::Vector3d pos;
-    comm_cart.recv(0, SOME_TAG, pos);
+    comm_cart.recv(0, some_tag, pos);
     local_place_particle(p_id, pos, 0);
   }
 
@@ -686,7 +681,7 @@ void mpi_place_particle(int node, int p_id, const Utils::Vector3d &pos) {
   if (node == this_node)
     local_place_particle(p_id, pos, 0);
   else {
-    comm_cart.send(node, SOME_TAG, pos);
+    comm_cart.send(node, some_tag, pos);
   }
 
   cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
@@ -993,7 +988,7 @@ void local_rescale_particles(int dir, double scale) {
 
 static void mpi_rescale_particles_local(int dir) {
   double scale = 0.0;
-  MPI_Recv(&scale, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+  MPI_Recv(&scale, 1, MPI_DOUBLE, 0, some_tag, comm_cart, MPI_STATUS_IGNORE);
   local_rescale_particles(dir, scale);
   on_particle_change();
 }
@@ -1006,7 +1001,7 @@ void mpi_rescale_particles(int dir, double scale) {
     if (pnode == this_node) {
       local_rescale_particles(dir, scale);
     } else {
-      MPI_Send(&scale, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+      MPI_Send(&scale, 1, MPI_DOUBLE, pnode, some_tag, comm_cart);
     }
   }
   on_particle_change();

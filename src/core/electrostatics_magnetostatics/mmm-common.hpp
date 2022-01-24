@@ -27,8 +27,8 @@
  *  directly from @cite abramowitz65a. For details, see @cite arnold02a.
  */
 
-#ifndef MMM_COMMON_H
-#define MMM_COMMON_H
+#ifndef CORE_ELECTROSTATICS_MAGNETOSTATICS_MMM_COMMON_HPP
+#define CORE_ELECTROSTATICS_MAGNETOSTATICS_MMM_COMMON_HPP
 
 #include "mmm-modpsi.hpp"
 

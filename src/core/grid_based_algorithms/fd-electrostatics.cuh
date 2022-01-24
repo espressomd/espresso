@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _FD_ELECTROSTATICS_HPP
-#define _FD_ELECTROSTATICS_HPP
+#ifndef CORE_GRID_BASED_ALGORITHMS_FD_ELECTROSTATICS_HPP
+#define CORE_GRID_BASED_ALGORITHMS_FD_ELECTROSTATICS_HPP
 
 #include <cufft.h>
 

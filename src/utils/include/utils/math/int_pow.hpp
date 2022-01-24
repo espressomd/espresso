@@ -47,7 +47,7 @@ template <class T> struct int_pow_impl<T, 1> {
 };
 
 template <class T> struct int_pow_impl<T, 0> {
-  DEVICE_QUALIFIER constexpr T operator()(T x) const { return T{1}; }
+  DEVICE_QUALIFIER constexpr T operator()(T) const { return T{1}; }
 };
 } // namespace detail
 

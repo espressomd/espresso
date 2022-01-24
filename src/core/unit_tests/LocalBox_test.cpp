@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(constructors) {
   {
     Utils::Vector<double, 3> const lower_corner = {1., 2., 3.};
     Utils::Vector<double, 3> const local_box_length = {4., 5., 6.};
-    Utils::Array<int, 6> const boundaries = {-1, 0, 1, 1, 0, -1};
+    Utils::Array<int, 6> const boundaries = {{{-1, 0, 1, 1, 0, -1}}};
 
     auto const box =
         LocalBox<double>(lower_corner, local_box_length, boundaries);

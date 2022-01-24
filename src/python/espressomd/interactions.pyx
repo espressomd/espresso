@@ -2663,7 +2663,8 @@ class IBM_Tribend(BondedInteraction):
         return {"refShape": "Flat"}
 
     def _get_params_from_es_core(self):
-        return {"kb": self.kb, "theta0": self.theta0}
+        return {"kb": self.kb, "theta0": self.theta0,
+                "refShape": self.refShape}
 
 
 @script_interface_register
