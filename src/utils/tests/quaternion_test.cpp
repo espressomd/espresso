@@ -34,9 +34,9 @@ constexpr int x = 2;
 constexpr int y = 3;
 constexpr int z = 4;
 
-Utils::Quaternion<int> scalar_quat{w, 0, 0, 0};
-Utils::Quaternion<int> full_quat{w, x, y, z};
-Utils::Quaternion<int> vector_quat{0, x, y, z};
+Utils::Quaternion<int> scalar_quat{{{{w, 0, 0, 0}}}};
+Utils::Quaternion<int> full_quat{{{{w, x, y, z}}}};
+Utils::Quaternion<int> vector_quat{{{{0, x, y, z}}}};
 
 BOOST_AUTO_TEST_CASE(multiply_quaternions) {
   /* identities */
@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE(multiply_quaternions) {
               -vector_quat.norm2() * Utils::Quaternion<int>::identity());
 
   /* other */
-  Utils::Quaternion<int> const reference_quat{{-4, -20, -30, -40}};
+  Utils::Quaternion<int> const reference_quat{{{{-4, -20, -30, -40}}}};
   BOOST_CHECK(full_quat * full_quat == reference_quat);
 }
 
@@ -79,13 +79,13 @@ BOOST_AUTO_TEST_CASE(convert_director_to_quaternion) {
 #define CHECK_QUAT(input, ref)                                                 \
   BOOST_CHECK_LE((convert_director_to_quaternion(input) - (ref)).norm2(), eps);
   /* identities */
-  CHECK_QUAT((Vector3d{{0, 0, 0}}), (Quat{{1, 0, 0, 0}}));
-  CHECK_QUAT((Vector3d{{0, 0, +1}}), (Quat{{1, 0, 0, 0}}));
-  CHECK_QUAT((Vector3d{{0, 0, -1}}), (Quat{{0, -1, 0, 0}}));
-  CHECK_QUAT((Vector3d{{+1, 0, 0}}), (Quat{{+1, -1, +1, -1}} / 2.));
-  CHECK_QUAT((Vector3d{{-1, 0, 0}}), (Quat{{-1, +1, +1, -1}} / 2.));
-  CHECK_QUAT((Vector3d{{0, +1, 0}}), (Quat{{+1, -1, 0, 0}} * cos_pi_4));
-  CHECK_QUAT((Vector3d{{0, -1, 0}}), (Quat{{0, 0, +1, -1}} * cos_pi_4));
+  CHECK_QUAT((Vector3d{{0, 0, 0}}), (Quat{{{{1, 0, 0, 0}}}}));
+  CHECK_QUAT((Vector3d{{0, 0, +1}}), (Quat{{{{1, 0, 0, 0}}}}));
+  CHECK_QUAT((Vector3d{{0, 0, -1}}), (Quat{{{{0, -1, 0, 0}}}}));
+  CHECK_QUAT((Vector3d{{+1, 0, 0}}), (Quat{{{{+1, -1, +1, -1}}}} / 2.));
+  CHECK_QUAT((Vector3d{{-1, 0, 0}}), (Quat{{{{-1, +1, +1, -1}}}} / 2.));
+  CHECK_QUAT((Vector3d{{0, +1, 0}}), (Quat{{{{+1, -1, 0, 0}}}} * cos_pi_4));
+  CHECK_QUAT((Vector3d{{0, -1, 0}}), (Quat{{{{0, 0, +1, -1}}}} * cos_pi_4));
   /* self-consistency */
   using Utils::convert_quaternion_to_director;
   for (int i = -2; i < 3; ++i) {
@@ -108,18 +108,18 @@ BOOST_AUTO_TEST_CASE(convert_director_to_quaternion) {
 }
 
 BOOST_AUTO_TEST_CASE(quat_type) {
-  Utils::Quaternion<double> test{1, 2, 3, 4};
+  Utils::Quaternion<double> test{{{{1, 2, 3, 4}}}};
   BOOST_CHECK(test[0] == 1);
   test.normalize();
   BOOST_CHECK_LE(test.norm() - 1.0, std::numeric_limits<double>::epsilon());
   BOOST_CHECK((Utils::Quaternion<int>::identity() ==
-               Utils::Quaternion<int>{1, 0, 0, 0}));
-  BOOST_CHECK(
-      (Utils::Quaternion<int>::zero() == Utils::Quaternion<int>{0, 0, 0, 0}));
-  BOOST_CHECK((Utils::Quaternion<double>{1, 0, 0, 0} ==
-               Utils::Quaternion<double>{2, 0, 0, 0}.normalized()));
+               Utils::Quaternion<int>{{{{1, 0, 0, 0}}}}));
+  BOOST_CHECK((Utils::Quaternion<int>::zero() ==
+               Utils::Quaternion<int>{{{{0, 0, 0, 0}}}}));
+  BOOST_CHECK((Utils::Quaternion<double>{{{{1, 0, 0, 0}}}} ==
+               Utils::Quaternion<double>{{{{2, 0, 0, 0}}}}.normalized()));
   BOOST_CHECK_SMALL(
-      (Utils::Quaternion<double>{2, 1, 3, 4}.normalized().norm() - 1.0),
+      (Utils::Quaternion<double>{{{{2, 1, 3, 4}}}}.normalized().norm() - 1.0),
       std::numeric_limits<double>::epsilon());
 }
 

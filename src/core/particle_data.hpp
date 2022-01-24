@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _PARTICLE_DATA_H
-#define _PARTICLE_DATA_H
+#ifndef CORE_PARTICLE_DATA_HPP
+#define CORE_PARTICLE_DATA_HPP
 /** \file
  *  Particles and particle lists.
  *

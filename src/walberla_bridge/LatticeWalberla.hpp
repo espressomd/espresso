@@ -48,7 +48,7 @@ public:
                   unsigned int n_ghost_layers);
 
   // Grid, domain, halo
-  [[nodiscard]] auto get_ghost_layers() const { return m_n_ghost_layers; };
+  [[nodiscard]] auto get_ghost_layers() const { return m_n_ghost_layers; }
   [[nodiscard]] auto get_grid_dimensions() const { return m_grid_dimensions; }
   [[nodiscard]] auto get_blocks() const { return m_blocks; }
   [[nodiscard]] std::pair<Utils::Vector3d, Utils::Vector3d>

@@ -21,6 +21,7 @@
 
 #include "Particle.hpp"
 #include "PidObservable.hpp"
+
 #include <cstddef>
 #include <vector>
 
@@ -36,12 +37,15 @@ public:
 
   std::vector<double>
   evaluate(ParticleReferenceRange particles,
-           const ParticleObservables::traits<Particle> &traits) const override {
+           const ParticleObservables::traits<Particle> &) const override {
     std::vector<double> res(n_values());
-    for (std::size_t i = 0; i < particles.size(); i++) {
-      res[3 * i + 0] = particles[i].get().f.f[0];
-      res[3 * i + 1] = particles[i].get().f.f[1];
-      res[3 * i + 2] = particles[i].get().f.f[2];
+    std::size_t i = 0;
+    for (auto const &p : particles) {
+      auto const &f = p.get().f.f;
+      res[3 * i + 0] = f[0];
+      res[3 * i + 1] = f[1];
+      res[3 * i + 2] = f[2];
+      i++;
     }
     return res;
   };

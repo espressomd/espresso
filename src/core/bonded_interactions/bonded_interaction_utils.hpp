@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _BONDED_INTERACTION_UTILS_HPP
-#define _BONDED_INTERACTION_UTILS_HPP
+#ifndef CORE_BN_IA_BONDED_INTERACTION_UTILS_HPP
+#define CORE_BN_IA_BONDED_INTERACTION_UTILS_HPP
 
 #include "bonded_interaction_data.hpp"
 

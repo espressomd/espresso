@@ -276,7 +276,7 @@ void calc_structurefactor(PartCfg &partCfg, std::vector<int> const &p_types,
   if (order < 1)
     throw std::domain_error("order has to be a strictly positive number");
 
-  auto const order_sq = order * order;
+  auto const order_sq = Utils::sqr(static_cast<std::size_t>(order));
   std::vector<double> ff(2 * order_sq + 1);
   auto const twoPI_L = 2 * Utils::pi() * box_geo.length_inv()[0];
 
@@ -284,7 +284,7 @@ void calc_structurefactor(PartCfg &partCfg, std::vector<int> const &p_types,
     for (int j = -order; j <= order; j++) {
       for (int k = -order; k <= order; k++) {
         auto const n = i * i + j * j + k * k;
-        if ((n <= order_sq) && (n >= 1)) {
+        if ((static_cast<std::size_t>(n) <= order_sq) && (n >= 1)) {
           double C_sum = 0.0, S_sum = 0.0;
           for (auto const &p : partCfg) {
             for (int t : p_types) {
@@ -311,7 +311,7 @@ void calc_structurefactor(PartCfg &partCfg, std::vector<int> const &p_types,
   }
 
   int length = 0;
-  for (int qi = 0; qi < order_sq; qi++) {
+  for (std::size_t qi = 0; qi < order_sq; qi++) {
     if (ff[2 * qi + 1] != 0) {
       ff[2 * qi] /= static_cast<double>(n_particles) * ff[2 * qi + 1];
       length++;
@@ -322,9 +322,9 @@ void calc_structurefactor(PartCfg &partCfg, std::vector<int> const &p_types,
   intensities.resize(length);
 
   int cnt = 0;
-  for (int i = 0; i < order_sq; i++) {
+  for (std::size_t i = 0; i < order_sq; i++) {
     if (ff[2 * i + 1] != 0) {
-      wavevectors[cnt] = twoPI_L * sqrt(i + 1);
+      wavevectors[cnt] = twoPI_L * sqrt(static_cast<long>(i + 1));
       intensities[cnt] = ff[2 * i];
       cnt++;
     }

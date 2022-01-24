@@ -38,7 +38,7 @@ public:
   using CylindricalPidProfileObservable::CylindricalPidProfileObservable;
 
   std::vector<double>
-  evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles,
+  evaluate(ParticleReferenceRange particles,
            const ParticleObservables::traits<Particle> &traits) const override {
     Utils::CylindricalHistogram<double, 3> histogram(n_bins(), limits());
 

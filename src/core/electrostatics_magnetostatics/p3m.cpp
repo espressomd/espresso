@@ -69,8 +69,6 @@
 #include <functional>
 #include <stdexcept>
 
-using Utils::sinc;
-
 p3m_data_struct p3m;
 
 /** \name Private Functions */
@@ -532,7 +530,7 @@ double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
 
     {
       std::array<double *, 3> E_fields = {
-          p3m.E_mesh[0].data(), p3m.E_mesh[1].data(), p3m.E_mesh[2].data()};
+          {p3m.E_mesh[0].data(), p3m.E_mesh[1].data(), p3m.E_mesh[2].data()}};
       /* redistribute force component mesh */
       p3m.sm.spread_grid(Utils::make_span(E_fields), comm_cart,
                          p3m.local_mesh.dim);
@@ -1218,6 +1216,7 @@ double p3m_k_space_error(double prefac, const int mesh[3], int cao,
 void p3m_tune_aliasing_sums(int nx, int ny, int nz, const int mesh[3],
                             const double mesh_i[3], int cao, double alpha_L_i,
                             double *alias1, double *alias2) {
+  using Utils::sinc;
 
   auto const factor1 = Utils::sqr(Utils::pi() * alpha_L_i);
 
@@ -1283,13 +1282,12 @@ bool p3m_sanity_checks_system(const Utils::Vector3i &grid) {
   bool ret = false;
 
   if (!box_geo.periodic(0) || !box_geo.periodic(1) || !box_geo.periodic(2)) {
-    runtimeErrorMsg() << "P3M requires periodicity 1 1 1";
+    runtimeErrorMsg() << "P3M requires periodicity (1, 1, 1)";
     ret = true;
   }
 
   if (cell_structure.decomposition_type() != CELL_STRUCTURE_DOMDEC) {
-    runtimeErrorMsg()
-        << "P3M at present requires the domain decomposition cell system";
+    runtimeErrorMsg() << "P3M requires the domain decomposition cell system";
     ret = true;
   }
 

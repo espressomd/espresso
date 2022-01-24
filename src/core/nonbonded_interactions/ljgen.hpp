@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _LJGEN_H
-#define _LJGEN_H
+#ifndef CORE_NB_IA_LJGEN_HPP
+#define CORE_NB_IA_LJGEN_HPP
 
 /** \file
  *  Routines to calculate the generalized Lennard-Jones potential between
@@ -111,7 +111,5 @@ inline double ljgen_pair_energy(IA_parameters const &ia_params, double dist) {
   return 0.0;
 }
 
-#endif
-
-/* LJGEN_H */
-#endif
+#endif // LENNARD_JONES_GENERIC
+#endif // CORE_NB_IA_LJGEN_HPP

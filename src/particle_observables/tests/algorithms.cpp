@@ -23,6 +23,8 @@
 #include <particle_observables/algorithms.hpp>
 
 #include <algorithm>
+#include <cstddef>
+#include <limits>
 #include <numeric>
 #include <vector>
 
@@ -38,34 +40,61 @@ struct One {
 struct PlusOne {
   template <class Particle> auto operator()(Particle const &p) { return p + 1; }
 };
+
+template <typename T>
+T average(std::vector<T> const &value, std::size_t denominator) {
+  auto const sum = std::accumulate(value.begin(), value.end(), T{0});
+  return static_cast<T>(sum) / static_cast<T>(denominator);
+}
+
 } // namespace Testing
 
-BOOST_AUTO_TEST_CASE(algorithms) {
-  std::vector<int> values{1, 2, 3, 4};
+BOOST_AUTO_TEST_CASE(algorithms_integer) {
+  std::vector<int> const values{1, 2, 3, 4};
   {
     auto const res = WeightedAverage<Testing::Identity, Testing::One>()(values);
-    BOOST_CHECK(res == std::accumulate(values.begin(), values.end(), 0) /
-                           values.size());
+    BOOST_CHECK_EQUAL(res, Testing::average(values, values.size()));
   }
   {
     auto const res =
         WeightedAverage<Testing::Identity, Testing::PlusOne>()(values);
-    BOOST_CHECK(res == (1 * 2 + 2 * 3 + 3 * 4 + 4 * 5) / 14);
-    auto const res2 =
-        WeightedSum<Testing::Identity, Testing::PlusOne>()(values);
-    BOOST_CHECK(res2 == (1 * 2 + 2 * 3 + 3 * 4 + 4 * 5));
+    BOOST_CHECK_EQUAL(res, (1 * 2 + 2 * 3 + 3 * 4 + 4 * 5) / 14);
+  }
+  {
+    auto const res = WeightedSum<Testing::Identity, Testing::PlusOne>()(values);
+    BOOST_CHECK_EQUAL(res, (1 * 2 + 2 * 3 + 3 * 4 + 4 * 5));
   }
   {
     auto const res = Average<Testing::Identity>()(values);
-    BOOST_CHECK(res == std::accumulate(values.begin(), values.end(), 0) /
-                           values.size());
+    BOOST_CHECK_EQUAL(res, Testing::average(values, values.size()));
   }
   {
     auto const res = Sum<Testing::Identity>{}(values);
-    BOOST_CHECK(res == std::accumulate(values.begin(), values.end(), 0));
+    BOOST_CHECK_EQUAL(res, Testing::average(values, 1u));
   }
   {
     auto const res = Map<Testing::Identity>{}(values);
-    BOOST_CHECK(res == values);
+    BOOST_TEST(res == values);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(algorithms_double) {
+  auto constexpr tol = 100 * std::numeric_limits<double>::epsilon();
+  std::vector<double> const values{1., 2., 3., 4.};
+  {
+    auto const res = WeightedAverage<Testing::Identity, Testing::One>()(values);
+    BOOST_CHECK_CLOSE(res, Testing::average(values, values.size()), tol);
+  }
+  {
+    auto const res = Average<Testing::Identity>()(values);
+    BOOST_CHECK_EQUAL(res, Testing::average(values, values.size()));
+  }
+  {
+    auto const res = Sum<Testing::Identity>{}(values);
+    BOOST_CHECK_EQUAL(res, Testing::average(values, 1u));
+  }
+  {
+    auto const res = Map<Testing::Identity>{}(values);
+    BOOST_TEST(res == values);
   }
 }

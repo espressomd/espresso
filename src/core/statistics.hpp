@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _STATISTICS_H
-#define _STATISTICS_H
+#ifndef CORE_STATISTICS_HPP
+#define CORE_STATISTICS_HPP
 /** \file
  *  Statistical tools to analyze simulations.
  *

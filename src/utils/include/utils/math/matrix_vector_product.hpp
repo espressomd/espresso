@@ -34,7 +34,7 @@ template <int c, typename T> struct mul {
 };
 
 template <typename T> struct mul<0, T> {
-  constexpr T operator()(const T a) const { return T{}; }
+  constexpr T operator()(const T) const { return T{}; }
 };
 
 template <typename T> struct mul<1, T> {

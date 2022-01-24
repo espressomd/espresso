@@ -14,6 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import numpy as np
 import unittest as ut
 import espressomd.math
@@ -44,10 +45,8 @@ class TestMath(ut.TestCase):
             center=3 * [42], axis=[0, 1, 0], orientation=[1, 0, 0])
         self.check_orthonormality(ctp_full.axis, ctp_full.orientation)
 
-        with self.assertRaises(Exception):
-            ctp_only_center = espressomd.math.CylindricalTransformationParameters(
-                center=3 * [42])
-            ctp_only_center.axis = 3 * [3]
+        with self.assertRaises(RuntimeError):
+            espressomd.math.CylindricalTransformationParameters(center=3 * [4])
 
 
 if __name__ == "__main__":
