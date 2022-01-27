@@ -315,3 +315,21 @@ def requires_experimental_features(reason):
     ELSE:
         # Return original class
         return lambda x: x
+
+
+def check_required_keys(required_keys, obtained_keys):
+    a = required_keys
+    b = obtained_keys
+    if not set(a).issubset(b):
+        raise ValueError(
+            "The following keys have to be given as keyword arguments: "
+            f"{sorted(a)}, got {sorted(b)} (missing {sorted(a - b)})")
+
+
+def check_valid_keys(valid_keys, obtained_keys):
+    a = valid_keys
+    b = obtained_keys
+    if not set(b).issubset(a):
+        raise ValueError(
+            "Only the following keys can be given as keyword arguments: "
+            f"{sorted(a)}, got {sorted(b)} (unknown {sorted(b - a)})")

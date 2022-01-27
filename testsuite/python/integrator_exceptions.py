@@ -65,6 +65,11 @@ class Integrator_test(ut.TestCase):
             self.system.integrator.run(0)
 
     def test_steepest_descent_integrator(self):
+        with self.assertRaisesRegex(ValueError, r"The following keys have to be given as keyword arguments: "
+                                                r"\['f_max', 'gamma', 'max_displacement'\], got "
+                                                r"\['f_max', 'gamma', 'max_d'\] \(missing \['max_displacement'\]\)"):
+            self.system.integrator.set_steepest_descent(
+                f_max=0, gamma=0.1, max_d=5)
         self.system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
         self.system.integrator.set_steepest_descent(
             f_max=0, gamma=0.1, max_displacement=0.1)

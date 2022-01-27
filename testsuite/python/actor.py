@@ -44,10 +44,10 @@ class TestActor(espressomd.actors.Actor):
         self._core_args = self._params
 
     def valid_keys(self):
-        return "a", "b", "c"
+        return {"a", "b", "c"}
 
     def required_keys(self):
-        return "a", "c"
+        return {"a", "c"}
 
     def default_params(self):
         return {"a": False, "b": False, "c": False}
@@ -107,6 +107,21 @@ class ActorTest(ut.TestCase):
         self.assertEqual(params["a"], True)
         self.assertEqual(params["b"], False)
         self.assertEqual(params["c"], True)
+
+    def test_exception(self):
+        error_msg_valid = (r"Only the following keys can be given as keyword arguments: "
+                           r"\['a', 'b', 'c'\], got \['a', 'c', 'd'\] \(unknown \['d'\]\)")
+        error_msg_required = (r"The following keys have to be given as keyword arguments: "
+                              r"\['a', 'c'\], got \['a'\] \(missing \['c'\]\)")
+        with self.assertRaisesRegex(ValueError, error_msg_valid):
+            TestActor(a=True, c=True, d=True)
+        with self.assertRaisesRegex(ValueError, error_msg_required):
+            TestActor(a=True)
+        valid_actor = TestActor(a=True, c=True)
+        with self.assertRaisesRegex(ValueError, error_msg_valid):
+            valid_actor.set_params(a=True, c=True, d=True)
+        with self.assertRaisesRegex(ValueError, error_msg_required):
+            valid_actor.set_params(a=True)
 
 
 class ActorsTest(ut.TestCase):
