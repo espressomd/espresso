@@ -91,14 +91,11 @@ class TestLBWrite:
         Check VTK files. Keep in mind VTK files are written with
         float precision.
         '''
-        x_offset = 0
-        shape = [12, 14, 16]
         self.lbf.add_boundary_from_shape(
             espressomd.shapes.Wall(normal=[1, 0, 0], dist=1.5))
         self.lbf.add_boundary_from_shape(
             espressomd.shapes.Wall(normal=[-1, 0, 0], dist=-10.5))
-        x_offset = 2
-        shape[0] -= x_offset * 2
+        shape = [4, 14, 16]
 
         n_steps = 100
         lb_steps = int(np.floor(n_steps * self.lbf.tau))
@@ -161,23 +158,16 @@ class TestLBWrite:
                                        last_frame_outputs[1][i], atol=1e-10)
 
         # check VTK values match node values in the final time step
-        node_density = np.zeros(shape)
-        node_velocity = np.zeros(shape + [3])
-        node_pressure = np.zeros(shape + [3, 3])
         tau = self.lbf.tau
-        for i in range(shape[0]):
-            for j in range(shape[1]):
-                for k in range(shape[2]):
-                    node = self.lbf[i + x_offset, j, k]
-                    node_density[i, j, k] = node.density
-                    node_velocity[i, j, k] = node.velocity * tau
-                    node_pressure[i, j, k] = node.pressure_tensor * tau**2
+        lb_density = np.copy(self.lbf[2:-2, :, :].density)
+        lb_velocity = np.copy(self.lbf[2:-2, :, :].velocity) * tau
+        lb_pressure = np.copy(self.lbf[2:-2, :, :].pressure_tensor) * tau**2
 
         for vtk_density, vtk_velocity, vtk_pressure in last_frame_outputs:
-            np.testing.assert_allclose(vtk_density, node_density, rtol=5e-7)
-            np.testing.assert_allclose(vtk_velocity, node_velocity, rtol=5e-7)
+            np.testing.assert_allclose(vtk_density, lb_density, rtol=5e-7)
+            np.testing.assert_allclose(vtk_velocity, lb_velocity, rtol=5e-7)
             # TODO WALBERLA mismatch in off-diagonal terms
-            np.testing.assert_allclose(vtk_pressure, node_pressure, atol=1e-3)
+            np.testing.assert_allclose(vtk_pressure, lb_pressure, atol=1e-3)
 
         self.cleanup_vtk_files(filepaths)
 
