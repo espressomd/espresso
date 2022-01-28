@@ -581,9 +581,9 @@ void lb_lbfluid_print_vtk_velocity(const std::string &filename,
 #ifdef CUDA
     host_values.resize(lbpar_gpu.number_of_nodes);
     lb_get_values_GPU(host_values.data());
-    auto const box_l_x = lb_lbfluid_get_shape()[0];
-    vtk_writer("lbfluid_gpu", [box_l_x](Utils::Vector3i const &pos) {
-      auto const j = box_l_x * box_l_x * pos[2] + box_l_x * pos[1] + pos[0];
+    auto const box_l = lb_lbfluid_get_shape();
+    vtk_writer("lbfluid_gpu", [&box_l](Utils::Vector3i const &pos) {
+      auto const j = box_l[0] * box_l[1] * pos[2] + box_l[0] * pos[1] + pos[0];
       return Utils::Vector3d{host_values[j].v};
     });
 #endif //  CUDA
