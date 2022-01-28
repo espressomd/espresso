@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _P3M_COMMON_H
-#define _P3M_COMMON_H
+#ifndef CORE_ELECTROSTATICS_MAGNETOSTATICS_P3M_COMMON_HPP
+#define CORE_ELECTROSTATICS_MAGNETOSTATICS_P3M_COMMON_HPP
 /** \file
  *  Common functions for dipolar and charge P3M.
  *
@@ -205,7 +205,7 @@ namespace detail {
  *  \ldots, -1\right) @f$.
  */
 std::array<std::vector<int>, 3> inline calc_meshift(
-    std::array<int, 3> const &mesh_size, bool zero_out_midpoint = false) {
+    int const mesh_size[3], bool zero_out_midpoint = false) {
   std::array<std::vector<int>, 3> ret{};
 
   for (std::size_t i = 0; i < 3; i++) {
@@ -223,4 +223,4 @@ std::array<std::vector<int>, 3> inline calc_meshift(
 }
 } // namespace detail
 
-#endif /* _P3M_COMMON_H */
+#endif /* CORE_ELECTROSTATICS_MAGNETOSTATICS_P3M_COMMON_HPP */

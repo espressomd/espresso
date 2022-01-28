@@ -37,13 +37,15 @@ void check_distance_function(Shapes::Sphere &s) {
   auto const tol = std::numeric_limits<double>::epsilon() * 100;
 
   s.rad() = 1.0;
-
   pos = {0., 0., 0.};
   s.calculate_dist(pos, dist, vec);
-  double always_pos_dist = -s.direction() * dist;
-  BOOST_REQUIRE_GE(always_pos_dist, 0.0);
-  BOOST_REQUIRE_CLOSE(always_pos_dist, s.rad(), tol);
-  BOOST_REQUIRE_CLOSE(always_pos_dist, vec.norm(), tol);
+
+  {
+    double always_pos_dist = -s.direction() * dist;
+    BOOST_REQUIRE_GE(always_pos_dist, 0.0);
+    BOOST_REQUIRE_CLOSE(always_pos_dist, s.rad(), tol);
+    BOOST_REQUIRE_CLOSE(always_pos_dist, vec.norm(), tol);
+  }
 
   for (int i = 0; i < 3; ++i) {
     pos[i] = 1.0;

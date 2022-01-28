@@ -23,9 +23,10 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "utils/statistics/RunningAverage.hpp"
-
 #include "random_sequence.hpp"
+
+#include <utils/math/sqr.hpp>
+#include <utils/statistics/RunningAverage.hpp>
 
 #include <cmath>
 #include <cstddef>
@@ -80,9 +81,8 @@ BOOST_AUTO_TEST_CASE(simple_variance_check) {
 }
 
 BOOST_AUTO_TEST_CASE(mean_and_variance) {
+  auto constexpr sample_size = sizeof(RandomSequence::values) / sizeof(double);
   Utils::Statistics::RunningAverage<double> running_average;
-  const std::size_t sample_size =
-      sizeof(RandomSequence::values) / sizeof(double);
 
   for (auto const &val : RandomSequence::values) {
     running_average.add_sample(val);
@@ -91,18 +91,19 @@ BOOST_AUTO_TEST_CASE(mean_and_variance) {
   BOOST_CHECK(running_average.n() == sample_size);
 
   /* Directly calculate the mean from the data */
-  const double m_mean = std::accumulate(std::begin(RandomSequence::values),
-                                        std::end(RandomSequence::values), 0.0) /
-                        sample_size;
+  const double mean = std::accumulate(std::begin(RandomSequence::values),
+                                      std::end(RandomSequence::values), 0.0) /
+                      sample_size;
 
-  BOOST_CHECK(std::fabs(running_average.avg() - m_mean) <= 1e-12);
+  BOOST_CHECK_SMALL((running_average.avg() - mean), 1e-12);
 
   /* Directly calculate the variance from the data */
-  double m_var = 0.0;
-  for (auto const &val : RandomSequence::values) {
-    m_var += (val - m_mean) * (val - m_mean);
-  }
-  m_var /= sample_size;
+  auto const var = std::accumulate(std::begin(RandomSequence::values),
+                                   std::end(RandomSequence::values), 0.0,
+                                   [=](double acc, double val) {
+                                     return acc + Utils::sqr(val - mean);
+                                   }) /
+                   sample_size;
 
-  BOOST_CHECK(std::fabs(running_average.var() - m_var) <= 1e-12);
+  BOOST_CHECK_SMALL((running_average.var() - var), 1e-12);
 }

@@ -37,7 +37,7 @@ BOOST_AUTO_TEST_CASE(for_each_) {
 
   /* l-value reference tuple */
   {
-    auto a = std::array<int, 3>{2, 3, 5};
+    auto a = std::array<int, 3>{{2, 3, 5}};
 
     for_each(
         [i = 0, a](int &e) mutable {
@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE(for_each_) {
 BOOST_AUTO_TEST_CASE(apply_) {
   /* constexpr */
   {
-    static_assert(Utils::apply(std::plus<>(), std::array<int, 2>{3, 8}) == 11,
+    static_assert(Utils::apply(std::plus<>(), std::array<int, 2>{{3, 8}}) == 11,
                   "");
   }
 
@@ -117,14 +117,14 @@ BOOST_AUTO_TEST_CASE(apply_) {
 BOOST_AUTO_TEST_CASE(find_if_) {
   {
     auto const result = Utils::find_if([](int e) { return e == 2; },
-                                       std::array<int, 4>{1, 2, 3, 4},
+                                       std::array<int, 4>{{1, 2, 3, 4}},
                                        [](int e) { BOOST_CHECK_EQUAL(e, 2); });
     BOOST_CHECK(result);
   }
 
   {
     auto const result = Utils::find_if([](int e) { return e == 5; },
-                                       std::array<int, 4>{1, 2, 3, 4},
+                                       std::array<int, 4>{{1, 2, 3, 4}},
                                        [](int e) { BOOST_CHECK(false); });
     BOOST_CHECK(not result);
   }

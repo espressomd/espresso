@@ -60,7 +60,7 @@ extern MMM1DParameters mmm1d_params;
 void MMM1D_set_params(double switch_rad, double maxPWerror);
 
 /// check that MMM1D can run with the current parameters
-int MMM1D_sanity_checks();
+bool MMM1D_sanity_checks();
 
 /// initialize the MMM1D constants
 int MMM1D_init();
@@ -69,7 +69,7 @@ void add_mmm1d_coulomb_pair_force(double chpref, Utils::Vector3d const &d,
                                   double r, Utils::Vector3d &force);
 
 double mmm1d_coulomb_pair_energy(double q1q2, Utils::Vector3d const &d,
-                                 double r2, double r);
+                                 double r);
 
 /** Tuning of the parameters which are not set by the user. Tune either the
  *  @ref MMM1DParameters::far_switch_radius_2 "switching radius" or the

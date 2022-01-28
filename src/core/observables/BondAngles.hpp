@@ -25,6 +25,8 @@
 
 #include <utils/Vector.hpp>
 
+#include <boost/algorithm/clamp.hpp>
+
 #include <cassert>
 #include <cmath>
 #include <cstddef>
@@ -47,7 +49,7 @@ public:
   }
 
   std::vector<double>
-  evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles,
+  evaluate(ParticleReferenceRange particles,
            const ParticleObservables::traits<Particle> &traits) const override {
     std::vector<double> res(n_values());
     auto v1 = box_geo.get_mi_vector(traits.position(particles[1]),
@@ -56,13 +58,9 @@ public:
     for (std::size_t i = 0, end = n_values(); i < end; i++) {
       auto v2 = box_geo.get_mi_vector(traits.position(particles[i + 2]),
                                       traits.position(particles[i + 1]));
-      auto n2 = v2.norm();
-      auto cosine = (v1 * v2) / (n1 * n2);
-      // sanitize cosine value
-      if (cosine > TINY_COS_VALUE)
-        cosine = TINY_COS_VALUE;
-      else if (cosine < -TINY_COS_VALUE)
-        cosine = -TINY_COS_VALUE;
+      auto const n2 = v2.norm();
+      auto const cosine = boost::algorithm::clamp(
+          (v1 * v2) / (n1 * n2), -TINY_COS_VALUE, TINY_COS_VALUE);
       /* to reduce computational time, after calculating an angle ijk, the
        * vector r_ij takes the value r_jk, but to orient it correctly, it has
        * to be multiplied -1; it's cheaper to do this operation on a double

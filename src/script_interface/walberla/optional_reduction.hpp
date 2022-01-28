@@ -40,7 +40,7 @@
 namespace ScriptInterface::walberla {
 
 /**
- * @brief Reduction of an optional value with unit conversion.
+ * @brief Reduction of an optional with unit conversion.
  *
  * @param result       optional value to reduce on main rank
  * @param conversion   unit conversion

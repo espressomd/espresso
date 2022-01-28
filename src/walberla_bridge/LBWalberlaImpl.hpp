@@ -241,6 +241,11 @@ private:
     return rho;
   }
 
+  auto get_velocity_field_ptr(const IBlock *block) const {
+    return block->template uncheckedFastGetData<VectorField>(
+        m_velocity_field_id);
+  };
+
   void setDensityAndVelocity(const BlockAndCell &bc,
                              Vector3<FloatType> const &velocity,
                              FloatType rho) {
@@ -647,8 +652,7 @@ public:
     auto const bc = get_block_and_cell(lattice(), node, consider_ghosts);
     if (!bc)
       return {};
-    auto const &vel_field =
-        (*bc).block->template getData<VectorField>(m_velocity_field_id);
+    auto const vel_field = get_velocity_field_ptr(bc->block);
     return Utils::Vector3d{double_c(vel_field->get((*bc).cell, uint_t(0u))),
                            double_c(vel_field->get((*bc).cell, uint_t(1u))),
                            double_c(vel_field->get((*bc).cell, uint_t(2u)))};
@@ -726,8 +730,9 @@ public:
       auto const bc =
           get_block_and_cell(lattice(), Utils::Vector3i(node), true);
       if (bc) {
-        auto force_field = (*bc).block->template getData<VectorField>(
-            m_force_to_be_applied_id);
+        auto force_field =
+            (*bc).block->template uncheckedFastGetData<VectorField>(
+                m_force_to_be_applied_id);
         for (int i : {0, 1, 2})
           force_field->get((*bc).cell, i) += FloatType_c(force[i] * weight);
       }

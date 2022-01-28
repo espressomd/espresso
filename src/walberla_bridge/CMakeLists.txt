@@ -49,7 +49,7 @@ set(WalberlaBridge_SRC ${WalberlaBridgeCodegen_SRC} lb_walberla_init.cpp
 
 add_library(cxx_walberla_interface INTERFACE)
 if(WALBERLA_USE_AVX)
-  target_compile_options(cxx_walberla_interface INTERFACE -mavx2)
+  target_link_libraries(cxx_walberla_interface INTERFACE cxx_avx2_interface)
 endif(WALBERLA_USE_AVX)
 
 add_library(WalberlaBridge SHARED ${WalberlaBridge_SRC})

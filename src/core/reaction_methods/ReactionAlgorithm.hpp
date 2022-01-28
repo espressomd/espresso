@@ -125,8 +125,7 @@ protected:
   std::vector<std::pair<int, Utils::Vector3d>>
   generate_new_particle_positions(int type, int n_particles);
   void
-  restore_properties(std::vector<StoredParticleProperty> const &property_list,
-                     int number_of_saved_properties);
+  restore_properties(std::vector<StoredParticleProperty> const &property_list);
 
   /**
    * @brief draws a random integer from the uniform distribution in the range
@@ -142,10 +141,10 @@ protected:
   all_reactant_particles_exist(SingleReaction const &current_reaction) const;
 
 protected:
-  virtual double calculate_acceptance_probability(
-      SingleReaction const &current_reaction, double E_pot_old,
-      double E_pot_new, std::map<int, int> const &old_particle_numbers) const {
-    return -10;
+  virtual double
+  calculate_acceptance_probability(SingleReaction const &, double, double,
+                                   std::map<int, int> const &) const {
+    return -10.;
   }
 
 private:

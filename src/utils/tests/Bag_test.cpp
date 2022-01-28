@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE(constructor_) {
 BOOST_AUTO_TEST_CASE(insert_) {
   /* Copy insert */
   {
-    auto const elements = std::array<int, 3>{1, 2, 3};
+    auto const elements = std::array<int, 3>{{1, 2, 3}};
     auto bag = Utils::Bag<int>();
 
     /* Elements can be inserted into the bag */
@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE(insert_) {
 }
 
 BOOST_AUTO_TEST_CASE(erase_) {
-  auto const elements = std::array<int, 3>{1, 2, 3};
+  auto const elements = std::array<int, 3>{{1, 2, 3}};
 
   {
     /* Given a bag with elements */
@@ -126,7 +126,7 @@ BOOST_AUTO_TEST_CASE(erase_) {
 }
 
 BOOST_AUTO_TEST_CASE(size_) {
-  auto const elements = std::array<int, 5>{1, 2, 3, 5, 6};
+  auto const elements = std::array<int, 5>{{1, 2, 3, 5, 6}};
 
   /* Given a bag with elements */
   auto bag = Utils::Bag<int>();
@@ -139,7 +139,7 @@ BOOST_AUTO_TEST_CASE(size_) {
 }
 
 BOOST_AUTO_TEST_CASE(iterator_range_) {
-  auto const elements = std::array<int, 5>{1, 2, 3, 5, 6};
+  auto const elements = std::array<int, 5>{{1, 2, 3, 5, 6}};
 
   /* Given a bag with elements */
   auto bag = Utils::Bag<int>();
@@ -192,7 +192,7 @@ BOOST_AUTO_TEST_CASE(reserve_) {
 }
 
 BOOST_AUTO_TEST_CASE(resize_) {
-  auto const elements = std::array<int, 5>{1, 2, 3, 5, 6};
+  auto const elements = std::array<int, 5>{{1, 2, 3, 5, 6}};
 
   /* Given a bag with elements */
   auto bag = Utils::Bag<int>();
@@ -212,8 +212,8 @@ BOOST_AUTO_TEST_CASE(resize_) {
 }
 
 BOOST_AUTO_TEST_CASE(swap_) {
-  auto const elements1 = std::array<int, 5>{1, 2, 3};
-  auto const elements2 = std::array<int, 5>{1, 2, 3};
+  auto const elements1 = std::array<int, 5>{{1, 2, 3}};
+  auto const elements2 = std::array<int, 5>{{1, 2, 3}};
 
   /* Given two bags with elements */
   auto bag1 = Utils::Bag<int>();
@@ -242,7 +242,7 @@ BOOST_AUTO_TEST_CASE(swap_) {
 }
 
 BOOST_AUTO_TEST_CASE(serialize_) {
-  auto const elements = std::array<int, 5>{1, 2, 3, 5, 6};
+  auto const elements = std::array<int, 5>{{1, 2, 3, 5, 6}};
 
   /* Given a bag with elements */
   auto bag = Utils::Bag<int>();

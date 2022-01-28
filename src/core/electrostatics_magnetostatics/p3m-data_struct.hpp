@@ -49,8 +49,7 @@ struct p3m_data_struct_base {
    *  i.e. the prefactor @f$ 2i\pi/L @f$ is missing!
    */
   void calc_differential_operator() {
-    d_op = detail::calc_meshift(
-        {params.mesh[0], params.mesh[1], params.mesh[2]}, true);
+    d_op = detail::calc_meshift(params.mesh, true);
   }
 };
 

@@ -30,12 +30,9 @@
 #include <utility>
 #include <vector>
 
-using boost::mpi::all_reduce;
-using boost::mpi::communicator;
-
 namespace ErrorHandling {
 
-RuntimeErrorCollector::RuntimeErrorCollector(communicator comm)
+RuntimeErrorCollector::RuntimeErrorCollector(boost::mpi::communicator comm)
     : m_comm(std::move(comm)) {}
 
 RuntimeErrorCollector::~RuntimeErrorCollector() {
@@ -99,18 +96,14 @@ void RuntimeErrorCollector::error(const std::ostringstream &mstr,
 }
 
 int RuntimeErrorCollector::count() const {
-  int totalMessages;
-  const int numMessages = m_errors.size();
-
-  all_reduce(m_comm, numMessages, totalMessages, std::plus<int>());
-
-  return totalMessages;
+  return boost::mpi::all_reduce(m_comm, static_cast<int>(m_errors.size()),
+                                std::plus<>());
 }
 
 int RuntimeErrorCollector::count(RuntimeError::ErrorLevel level) {
-  return std::count_if(
+  return static_cast<int>(std::count_if(
       m_errors.begin(), m_errors.end(),
-      [level](const RuntimeError &e) { return e.level() >= level; });
+      [level](const RuntimeError &e) { return e.level() >= level; }));
 }
 
 void RuntimeErrorCollector::clear() { m_errors.clear(); }

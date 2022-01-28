@@ -54,7 +54,5 @@ inline void stokesian_dynamics_step_1(const ParticleRange &particles,
   increment_sim_time(time_step);
 }
 
-inline void stokesian_dynamics_step_2(const ParticleRange &particles) {}
-
 #endif // STOKESIAN_DYNAMICS
 #endif

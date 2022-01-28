@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _ACCUMULATORS_ACCUMULATOR_H
-#define _ACCUMULATORS_ACCUMULATOR_H
+#ifndef CORE_ACCUMULATORS_MEAN_VARIANCE_CALCULATOR_HPP
+#define CORE_ACCUMULATORS_MEAN_VARIANCE_CALCULATOR_HPP
 
 #include "AccumulatorBase.hpp"
 #include "observables/Observable.hpp"

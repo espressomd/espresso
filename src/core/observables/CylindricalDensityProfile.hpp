@@ -35,11 +35,11 @@ class CylindricalDensityProfile : public CylindricalPidProfileObservable {
 public:
   using CylindricalPidProfileObservable::CylindricalPidProfileObservable;
   std::vector<double>
-  evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles,
+  evaluate(ParticleReferenceRange particles,
            const ParticleObservables::traits<Particle> &traits) const override {
     Utils::CylindricalHistogram<double, 1> histogram(n_bins(), limits());
 
-    for (auto p : particles) {
+    for (auto const &p : particles) {
       histogram.update(Utils::transform_coordinate_cartesian_to_cylinder(
           folded_position(traits.position(p), box_geo) -
               transform_params->center(),

@@ -36,28 +36,33 @@ BOOST_AUTO_TEST_CASE(get_cylindrical_sampling_positions_test) {
   auto const max_phi = Utils::pi();
   auto const min_z = 0.0;
   auto const max_z = 10.0;
-  auto const n_r_bins = 10;
-  auto const n_phi_bins = 10;
-  auto const n_z_bins = 10;
+  auto const n_r_bins = std::size_t{10};
+  auto const n_phi_bins = std::size_t{11};
+  auto const n_z_bins = std::size_t{12};
   auto const sampling_density = 2.;
+
   auto const sampling_positions = Utils::get_cylindrical_sampling_positions(
       std::make_pair(min_r, max_r), std::make_pair(min_phi, max_phi),
       std::make_pair(min_z, max_z), n_r_bins, n_phi_bins, n_z_bins,
       sampling_density);
-  std::array<std::pair<double, double>, 3> limits{
+
+  std::array<std::size_t, 3> const n_bins{{n_r_bins, n_phi_bins, n_z_bins}};
+  std::array<std::pair<double, double>, 3> const limits{
       {std::make_pair(min_r, max_r), std::make_pair(min_phi, max_phi),
        std::make_pair(min_z, max_z)}};
-  std::array<std::size_t, 3> n_bins{{static_cast<std::size_t>(n_r_bins),
-                                     static_cast<std::size_t>(n_phi_bins),
-                                     static_cast<std::size_t>(n_z_bins)}};
+
   Utils::CylindricalHistogram<double, 3> histogram(n_bins, limits);
   for (auto const &p : sampling_positions) {
     histogram.update(p);
   }
+
   auto const tot_count = histogram.get_tot_count();
-  std::array<std::size_t, 3> const dimensions{{n_r_bins, n_phi_bins, n_z_bins}};
-  std::array<std::size_t, 3> index{};
   for (auto const &c : tot_count) {
     BOOST_CHECK(c > 0);
+  }
+  for (std::size_t i = 0; i < 3; ++i) {
+    BOOST_CHECK_EQUAL(histogram.get_n_bins()[i], n_bins[i]);
+    BOOST_CHECK_EQUAL(histogram.get_limits()[i].first, limits[i].first);
+    BOOST_CHECK_EQUAL(histogram.get_limits()[i].second, limits[i].second);
   }
 }
