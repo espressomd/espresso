@@ -524,18 +524,6 @@ void assign_prefetches(GhostCommunicator &comm) {
   }
 }
 
-/* Calc the ghost shift vector for dim dir in direction lr */
-Utils::Vector3d shift(BoxGeometry const &box, LocalBox<double> const &local_box,
-                      int dir, int lr) {
-  Utils::Vector3d ret{};
-
-  /* Shift is non-zero only in periodic directions, if we are at the box
-   * boundary */
-  ret[dir] = box.periodic(dir) * local_box.boundary()[2 * dir + lr] *
-             box.length()[dir];
-
-  return ret;
-}
 } // namespace
 
 GhostCommunicator DomainDecomposition::prepare_comm() {
@@ -585,8 +573,6 @@ GhostCommunicator DomainDecomposition::prepare_comm() {
         /* Buffer has to contain Send and Recv cells -> factor 2 */
         ghost_comm.communications[cnt].part_lists.resize(2 * n_comm_cells[dir]);
         /* prepare folding of ghost positions */
-        ghost_comm.communications[cnt].shift =
-            shift(m_box, m_local_box, dir, lr);
 
         /* fill send ghost_comm cells */
         lc[dir] = hc[dir] = 1 + lr * (cell_grid[dir] - 1);
@@ -611,8 +597,6 @@ GhostCommunicator DomainDecomposition::prepare_comm() {
             ghost_comm.communications[cnt].node = node_neighbors[2 * dir + lr];
             ghost_comm.communications[cnt].part_lists.resize(n_comm_cells[dir]);
             /* prepare folding of ghost positions */
-            ghost_comm.communications[cnt].shift =
-                shift(m_box, m_local_box, dir, lr);
 
             lc[dir] = hc[dir] = 1 + lr * (cell_grid[dir] - 1);
 
