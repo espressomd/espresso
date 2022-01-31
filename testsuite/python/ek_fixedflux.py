@@ -11,7 +11,7 @@ class EKFixedFlux(ut.TestCase):
     AGRID = 1.0
     DENSITY = 1
     DIFFUSION_COEFFICIENT = 0.1
-    TIME = 50
+    TIME = 1
 
     INFLOW_FLUX = 0.1
 
@@ -40,27 +40,31 @@ class EKFixedFlux(ut.TestCase):
 
         ekspecies[1:-1, 1:-1, 1:-1].density = self.DENSITY
 
-        offset = 1.0
-        # set NoFlux boundary condition on every wall except in +z-direction
-        wall_params = [(offset, [1, 0, 0]),
-                       (offset, [0, 1, 0]),
-                       (offset, [0, 0, 1]),
-                       (-(self.BOX_L - offset), [-1, 0, 0]),
-                       (-(self.BOX_L - offset), [0, -1, 0])]
-        for dist, normal in wall_params:
-            wall = espressomd.shapes.Wall(dist=dist, normal=normal)
-            ekspecies.add_boundary_from_shape(
-                wall, [0, 0, 0], espressomd.EKSpecies.FluxBoundary)
+        ekspecies[:, :, 0].flux_boundary = espressomd.EKSpecies.FluxBoundary([
+            0, 0, 0])
+        ekspecies[:, :, -
+                  1].flux_boundary = espressomd.EKSpecies.FluxBoundary([0, 0, 0])
+        ekspecies[:, 0, :].flux_boundary = espressomd.EKSpecies.FluxBoundary([
+            0, 0, 0])
+        ekspecies[:, -1,
+                  :].flux_boundary = espressomd.EKSpecies.FluxBoundary([0, 0, 0])
+        ekspecies[0, :, :].flux_boundary = espressomd.EKSpecies.FluxBoundary([
+            0, 0, 0])
+        ekspecies[-1, :,
+                  :].flux_boundary = espressomd.EKSpecies.FluxBoundary([0, 0, 0])
 
         # set fixed flux in +z-direction
-        wall = espressomd.shapes.Wall(
-            dist=-(self.BOX_L - offset), normal=[0, 0, -1])
-
-        ekspecies.add_boundary_from_shape(
-            wall, [0, 0, self.INFLOW_FLUX], espressomd.EKSpecies.FluxBoundary)
+        ekspecies[:, :, 4].flux_boundary = espressomd.EKSpecies.FluxBoundary(
+            [0, 0, -self.INFLOW_FLUX])
+        additional_center_flux = 3 * self.INFLOW_FLUX
+        ekspecies[int(self.BOX_L //
+                      2), int(self.BOX_L //
+                              2), 4].flux_boundary = espressomd.EKSpecies.FluxBoundary([0, 0, -
+                                                                                        self.INFLOW_FLUX -
+                                                                                        additional_center_flux])
 
         # check density before integration
-        expected_initial_density = self.DENSITY * (self.BOX_L - 2 * offset)**3
+        expected_initial_density = self.DENSITY * (self.BOX_L - 2)**3
 
         np.testing.assert_almost_equal(actual=np.sum(
             ekspecies[1:-1, 1:-1, 1:-1].density), desired=expected_initial_density)
@@ -68,8 +72,9 @@ class EKFixedFlux(ut.TestCase):
         self.system.integrator.run(self.TIME)
 
         # check that density has pushed into domain
+        inflow_area = (ekspecies.shape[0] - 2) * (ekspecies.shape[1] - 2)
         expected_end_density = expected_initial_density + \
-            self.INFLOW_FLUX * (self.BOX_L - 2 * offset)**2 * self.TIME
+            (self.INFLOW_FLUX * inflow_area + additional_center_flux) * self.TIME
 
         np.testing.assert_almost_equal(actual=np.sum(
             ekspecies[1:-1, 1:-1, 1:-1].density), desired=expected_end_density)
