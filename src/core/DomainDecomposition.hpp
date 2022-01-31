@@ -96,7 +96,7 @@ public:
   }
   GhostCommunicator const &collect_ghost_force_comm() const override {
     return m_collect_ghost_force_comm;
-  };
+  }
 
   Utils::Span<Cell *> local_cells() override {
     return Utils::make_span(m_local_cells);

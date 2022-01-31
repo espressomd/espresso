@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _P3M_MAGNETOSTATICS_H
-#define _P3M_MAGNETOSTATICS_H
+#ifndef CORE_ELECTROSTATICS_MAGNETOSTATICS_P3M_DIPOLAR_HPP
+#define CORE_ELECTROSTATICS_MAGNETOSTATICS_P3M_DIPOLAR_HPP
 /** \file
  *  P3M algorithm for long range magnetic dipole-dipole interaction.
  *
@@ -284,4 +284,4 @@ inline double dp3m_pair_energy(Particle const &p1, Particle const &p2,
 }
 
 #endif /* DP3M */
-#endif /* _P3M_DIPOLES_H */
+#endif /* CORE_ELECTROSTATICS_MAGNETOSTATICS_P3M_DIPOLAR_HPP */

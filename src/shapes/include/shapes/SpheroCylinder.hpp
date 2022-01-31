@@ -19,8 +19,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __SPHEROCYLINDER_HPP
-#define __SPHEROCYLINDER_HPP
+#ifndef SRC_SHAPES_SPHEROCYLINDER_HPP
+#define SRC_SHAPES_SPHEROCYLINDER_HPP
 
 #include "Shape.hpp"
 #include <utils/Vector.hpp>

@@ -198,7 +198,6 @@ public:
   using VectorField = GhostLayerField<FloatType, 3u>;
   using FlagField = typename BoundaryModel::FlagField;
   using PdfField = GhostLayerField<FloatType, Stencil::Size>;
-
   using Lattice_T = LatticeWalberla::Lattice_T;
 
 private:
@@ -228,6 +227,11 @@ private:
     velocity *= invRho;
     return rho;
   }
+
+  auto get_velocity_field_ptr(const IBlock *block) const {
+    return block->template uncheckedFastGetData<VectorField>(
+        m_velocity_field_id);
+  };
 
   void setDensityAndVelocity(const BlockAndCell &bc,
                              Vector3<FloatType> const &velocity,
@@ -410,16 +414,18 @@ public:
     (*m_full_communication)();
   }
 
+private:
   inline void integrate_stream(std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_stream)(&*b);
-  };
+  }
 
   inline void
   update_velocity_field_from_pdf(std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_update_velocity_field_from_pdfs)(&*b);
   }
+
   inline void integrate_collide(std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       boost::apply_visitor(run_collide_sweep, *m_collision_model,
@@ -428,6 +434,7 @@ public:
       cm->time_step_++;
     }
   }
+
   inline void integrate_reset_force(std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_reset_force)(&*b);
@@ -468,6 +475,7 @@ public:
     // Refresh ghost layers
     (*m_full_communication)();
   }
+
   inline void integrate_vtk_writers() {
     for (auto it = m_vtk_auto.begin(); it != m_vtk_auto.end(); ++it) {
       auto &vtk_handle = it->second;
@@ -520,9 +528,13 @@ public:
     m_viscosity = FloatType_c(viscosity);
   }
 
-  double get_viscosity() const override { return m_viscosity; }
+  double get_viscosity() const override {
+    return numeric_cast<double>(m_viscosity);
+  }
 
-  double get_density() const override { return m_density; }
+  double get_density() const override {
+    return numeric_cast<double>(m_density);
+  }
 
   // Velocity
   boost::optional<Utils::Vector3d>
@@ -535,8 +547,7 @@ public:
     auto const bc = get_block_and_cell(lattice(), node, consider_ghosts);
     if (!bc)
       return {};
-    auto const &vel_field =
-        (*bc).block->template getData<VectorField>(m_velocity_field_id);
+    auto const vel_field = get_velocity_field_ptr(bc->block);
     return Utils::Vector3d{double_c(vel_field->get((*bc).cell, uint_t(0u))),
                            double_c(vel_field->get((*bc).cell, uint_t(1u))),
                            double_c(vel_field->get((*bc).cell, uint_t(2u)))};
@@ -614,8 +625,9 @@ public:
       auto const bc =
           get_block_and_cell(lattice(), Utils::Vector3i(node), true);
       if (bc) {
-        auto force_field = (*bc).block->template getData<VectorField>(
-            m_force_to_be_applied_id);
+        auto force_field =
+            (*bc).block->template uncheckedFastGetData<VectorField>(
+                m_force_to_be_applied_id);
         for (int i : {0, 1, 2})
           force_field->get((*bc).cell, i) += FloatType_c(force[i] * weight);
       }
@@ -782,7 +794,6 @@ public:
 
   void clear_boundaries() override { reset_boundary_handling(); }
 
-  /** @brief Update boundary conditions from a rasterized shape. */
   void update_boundary_from_shape(
       std::vector<int> const &raster_flat,
       std::vector<double> const &slip_velocity_flat) override {
@@ -840,7 +851,6 @@ public:
     reallocate_ubb_field();
   }
 
-  /** @brief Update boundary conditions from a list of nodes. */
   void update_boundary_from_list(std::vector<int> const &nodes_flat,
                                  std::vector<double> const &vel_flat) override {
     // reshape grids
@@ -912,7 +922,7 @@ public:
     return m_reset_force->get_ext_force();
   }
 
-  double get_kT() const override { return m_kT; }
+  double get_kT() const override { return numeric_cast<double>(m_kT); }
 
   uint64_t get_rng_state() const override {
     auto const *cm = boost::get<ThermalizedCollisionModel>(&*m_collision_model);
@@ -989,7 +999,6 @@ public:
     return vtk_handle;
   }
 
-  /** Manually call a VTK callback */
   void write_vtk(std::string const &vtk_uid) override {
     if (m_vtk_auto.find(vtk_uid) != m_vtk_auto.end()) {
       throw vtk_runtime_error(vtk_uid, "is an automatic observable");
@@ -1002,7 +1011,6 @@ public:
     vtk_handle->execution_count++;
   }
 
-  /** Activate or deactivate a VTK callback */
   void switch_vtk(std::string const &vtk_uid, bool status) override {
     if (m_vtk_manual.find(vtk_uid) != m_vtk_manual.end()) {
       throw vtk_runtime_error(vtk_uid, "is a manual observable");

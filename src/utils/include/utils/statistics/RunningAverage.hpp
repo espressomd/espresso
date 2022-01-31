@@ -19,8 +19,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __RUNING_AVERAGE_HPP
-#define __RUNING_AVERAGE_HPP
+#ifndef STATISTICS_RUNING_AVERAGE_HPP
+#define STATISTICS_RUNING_AVERAGE_HPP
 
 #include <algorithm>
 #include <cmath>

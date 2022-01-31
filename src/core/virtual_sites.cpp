@@ -99,20 +99,20 @@ calculate_vs_relate_to_params(Particle const &p_current,
         Utils::convert_director_to_quaternion(d);
 
     // Define quaternion as described above
-    quat =
-        Utils::Quaternion<double>{Utils::dot(p_relate_to.r.quat, quat_director),
-                                  -quat_director[0] * p_relate_to.r.quat[1] +
-                                      quat_director[1] * p_relate_to.r.quat[0] +
-                                      quat_director[2] * p_relate_to.r.quat[3] -
-                                      quat_director[3] * p_relate_to.r.quat[2],
-                                  p_relate_to.r.quat[1] * quat_director[3] +
-                                      p_relate_to.r.quat[0] * quat_director[2] -
-                                      p_relate_to.r.quat[3] * quat_director[1] -
-                                      p_relate_to.r.quat[2] * quat_director[0],
-                                  quat_director[3] * p_relate_to.r.quat[0] -
-                                      p_relate_to.r.quat[3] * quat_director[0] +
-                                      p_relate_to.r.quat[2] * quat_director[1] -
-                                      p_relate_to.r.quat[1] * quat_director[2]};
+    quat = Utils::Quaternion<double>{
+        {{{Utils::dot(p_relate_to.r.quat, quat_director),
+           -quat_director[0] * p_relate_to.r.quat[1] +
+               quat_director[1] * p_relate_to.r.quat[0] +
+               quat_director[2] * p_relate_to.r.quat[3] -
+               quat_director[3] * p_relate_to.r.quat[2],
+           p_relate_to.r.quat[1] * quat_director[3] +
+               p_relate_to.r.quat[0] * quat_director[2] -
+               p_relate_to.r.quat[3] * quat_director[1] -
+               p_relate_to.r.quat[2] * quat_director[0],
+           quat_director[3] * p_relate_to.r.quat[0] -
+               p_relate_to.r.quat[3] * quat_director[0] +
+               p_relate_to.r.quat[2] * quat_director[1] -
+               p_relate_to.r.quat[1] * quat_director[2]}}}};
     quat /= p_relate_to.r.quat.norm2();
 
     // Verify result

@@ -53,7 +53,7 @@ public:
                            get_value<std::shared_ptr<Shapes::Shape>>(value);
                        if (m_shape) {
                          m_constraint->set_shape(m_shape->shape());
-                       };
+                       }
                      },
                      [this]() { return m_shape; }},
                     {"particle_velocity", m_constraint->velocity()}});

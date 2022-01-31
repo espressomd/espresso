@@ -59,8 +59,7 @@ RuntimeErrorStream _runtimeMessageStream(RuntimeError::ErrorLevel level,
                                          const std::string &file,
                                          const int line,
                                          const std::string &function) {
-  return RuntimeErrorStream(*runtimeErrorCollector, level, file, line,
-                            function);
+  return {*runtimeErrorCollector, level, file, line, function};
 }
 
 void mpi_gather_runtime_errors_local() {

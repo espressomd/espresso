@@ -153,6 +153,7 @@ public:
    */
   void update_particle_index(int id, Particle *p) {
     assert(id >= 0);
+    // cppcheck-suppress assertWithSideEffect
     assert(not p or id == p->identity());
 
     if (id >= m_particle_index.size())

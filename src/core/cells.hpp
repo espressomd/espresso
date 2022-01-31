@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _CELLS_H
-#define _CELLS_H
+#ifndef CORE_CELLS_HPP
+#define CORE_CELLS_HPP
 /** \file
  *  This file contains everything related to the global cell structure / cell
  *  system.
@@ -133,7 +133,7 @@ public:
   PairInfo(int _id1, int _id2, Utils::Vector3d _pos1, Utils::Vector3d _pos2,
            Utils::Vector3d _vec21, int _node)
       : id1(_id1), id2(_id2), pos1(_pos1), pos2(_pos2), vec21(_vec21),
-        node(_node){};
+        node(_node) {}
   int id1;
   int id2;
   Utils::Vector3d pos1;

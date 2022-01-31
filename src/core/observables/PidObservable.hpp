@@ -113,7 +113,7 @@ public:
 
   std::vector<double>
   evaluate(ParticleReferenceRange particles,
-           const ParticleObservables::traits<Particle> &traits) const override {
+           const ParticleObservables::traits<Particle> &) const override {
     std::vector<double> res;
     Utils::flatten(ObsType{}(particles), std::back_inserter(res));
     return res;

@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _GHOSTS_H
-#define _GHOSTS_H
+#ifndef CORE_GHOSTS_HPP
+#define CORE_GHOSTS_HPP
 /** \file
  *  Ghost particles and particle exchange.
  *
@@ -136,10 +136,6 @@ enum : unsigned {
   GHOSTTRANS_BONDS = 128u
 };
 
-/** \name Data Types */
-/************************************************************/
-/**@{*/
-
 struct GhostCommunication {
   /** Communication type. */
   int type;
@@ -167,17 +163,9 @@ struct GhostCommunicator {
   std::vector<GhostCommunication> communications;
 };
 
-/**@}*/
-
-/** \name Exported Functions */
-/************************************************************/
-/**@{*/
-
 /**
  * @brief Do a ghost communication with caller specified data parts.
  */
 void ghost_communicator(const GhostCommunicator &gcr, unsigned int data_parts);
-
-/**@}*/
 
 #endif

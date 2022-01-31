@@ -59,6 +59,7 @@ namespace utf = boost::unit_test;
 #include <cmath>
 #include <limits>
 #include <memory>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -138,9 +139,10 @@ lb_lbfluid_get_force_to_be_applied(const Utils::Vector3d &pos) {
                                    static_cast<int>(pos[2] / agrid)};
   auto const res = espresso::lb_fluid->get_node_force_to_be_applied(ind);
   if (!res) {
-    std::cout << this_node << ": position: [" << pos << "]\n";
-    throw std::runtime_error(
-        "Force to be applied could not be obtained from Walberla");
+    std::stringstream what;
+    what << "Force to be applied could not be obtained from Walberla "
+         << "on MPI rank " << this_node << ": position = [" << pos << "]";
+    throw std::runtime_error(what.str());
   }
   return *res;
 }
@@ -539,6 +541,9 @@ BOOST_AUTO_TEST_CASE(exceptions, *utf::precondition(if_head_node())) {
     BOOST_CHECK_THROW(lb_lbfluid_get_agrid(), exception);
     BOOST_CHECK_THROW(lb_lbfluid_get_tau(), exception);
     BOOST_CHECK_THROW(lb_lbfluid_get_kT(), exception);
+    BOOST_CHECK_THROW(lb_lbfluid_get_pressure_tensor(), exception);
+    BOOST_CHECK_THROW(lb_lbfluid_get_force_to_be_applied({-10., -10., -10.}),
+                      std::runtime_error);
     // coupling, interpolation, boundaries
     BOOST_CHECK_THROW(lb_lbcoupling_get_rng_state(), std::runtime_error);
     BOOST_CHECK_THROW(lb_lbcoupling_set_rng_state(0ul), std::runtime_error);

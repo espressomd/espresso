@@ -29,10 +29,11 @@
 
 BOOST_AUTO_TEST_CASE(calc_meshift_false) {
   std::array<std::vector<int>, 3> const ref = {
-      std::vector<int>{0}, std::vector<int>{0, 1, -2, -1},
-      std::vector<int>{0, 1, 2, 3, -3, -2, -1}};
+      {std::vector<int>{0}, std::vector<int>{0, 1, -2, -1},
+       std::vector<int>{0, 1, 2, 3, -3, -2, -1}}};
 
-  auto const val = detail::calc_meshift({1, 4, 7}, false);
+  int const mesh[3] = {1, 4, 7};
+  auto const val = detail::calc_meshift(mesh, false);
 
   for (std::size_t i = 0; i < 3; ++i) {
     for (std::size_t j = 0; j < ref[i].size(); ++j) {
@@ -43,10 +44,11 @@ BOOST_AUTO_TEST_CASE(calc_meshift_false) {
 
 BOOST_AUTO_TEST_CASE(calc_meshift_true) {
   std::array<std::vector<int>, 3> const ref = {
-      std::vector<int>{0}, std::vector<int>{0, 1, 0, -1},
-      std::vector<int>{0, 1, 2, 0, -3, -2, -1}};
+      {std::vector<int>{0}, std::vector<int>{0, 1, 0, -1},
+       std::vector<int>{0, 1, 2, 0, -3, -2, -1}}};
 
-  auto const val = detail::calc_meshift({1, 4, 7}, true);
+  int const mesh[3] = {1, 4, 7};
+  auto const val = detail::calc_meshift(mesh, true);
 
   for (std::size_t i = 0; i < 3; ++i) {
     for (std::size_t j = 0; j < ref[i].size(); ++j) {

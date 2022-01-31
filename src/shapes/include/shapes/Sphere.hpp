@@ -19,8 +19,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __SPHERE_HPP
-#define __SPHERE_HPP
+#ifndef SRC_SHAPES_SPHERE_HPP
+#define SRC_SHAPES_SPHERE_HPP
 
 #include "Shape.hpp"
 #include <utils/Vector.hpp>

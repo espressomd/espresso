@@ -57,7 +57,7 @@ Quaternion<T> convert_director_to_quaternion(Vector<T, 3> const &d) {
 
   // null vectors cannot be converted to quaternions
   if (dm < std::numeric_limits<T>::epsilon()) {
-    return {1, 0, 0, 0};
+    return {{{{1, 0, 0, 0}}}};
   }
 
   // Calculate angles
@@ -83,8 +83,8 @@ Quaternion<T> convert_director_to_quaternion(Vector<T, 3> const &d) {
   auto const sin_theta2 = std::sin(theta2);
   auto const cos_phi2 = std::cos(phi2);
   auto const sin_phi2 = std::sin(phi2);
-  return {cos_theta2 * cos_phi2, -sin_theta2 * cos_phi2, -sin_theta2 * sin_phi2,
-          cos_theta2 * sin_phi2};
+  return {{{{cos_theta2 * cos_phi2, -sin_theta2 * cos_phi2,
+             -sin_theta2 * sin_phi2, cos_theta2 * sin_phi2}}}};
 }
 
 } // namespace Utils

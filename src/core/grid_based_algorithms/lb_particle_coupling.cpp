@@ -187,15 +187,12 @@ bool in_box(Vector<T, N> const &pos, Box<T, N> const &box) {
  * @brief Check if a position is within the local box + halo.
  *
  * @param pos Position to check
- * @param local_box Geometry to check
  * @param halo Halo
  *
  * @return True iff the point is inside of the box up to halo.
  */
-template <class T>
-bool in_local_domain(Vector<T, 3> const &pos, LocalBox<T> const &local_box,
-                     T const &halo = {}) {
-  auto const halo_vec = Vector<T, 3>::broadcast(halo);
+inline bool in_local_domain(Vector3d const &pos, double halo = 0.) {
+  auto const halo_vec = Vector3d::broadcast(halo);
 
   return in_box(
       pos, {local_geo.my_left() - halo_vec, local_geo.my_right() + halo_vec});
@@ -204,7 +201,7 @@ bool in_local_domain(Vector<T, 3> const &pos, LocalBox<T> const &local_box,
 bool in_local_halo(Vector3d const &pos) {
   auto const halo = 0.5 * lb_lbfluid_get_agrid();
 
-  return in_local_domain(pos, local_geo, halo);
+  return in_local_domain(pos, halo);
 }
 
 #ifdef ENGINE
@@ -264,7 +261,7 @@ void couple_particle(Particle &p, bool couple_virtual, double noise_amplitude,
                                                      p.identity(), rng_counter);
     auto const coupling_force = drag_force + random_force;
     add_md_force(p.r.p, coupling_force, time_step);
-    if (in_local_domain(p.r.p, local_geo) or (not has_ghosts)) {
+    if (in_local_domain(p.r.p) or not has_ghosts) {
       /* Particle is in our LB volume, so this node
        * is responsible to adding its force */
       p.f.f += coupling_force;

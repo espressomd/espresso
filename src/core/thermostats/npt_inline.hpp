@@ -49,16 +49,13 @@ friction_therm0_nptiso(IsotropicNptThermostat const &npt_iso,
   static_assert(step == 1 or step == 2, "NPT only has 2 integration steps");
   constexpr auto const salt =
       (step == 1) ? RNGSalt::NPTISO0_HALF_STEP1 : RNGSalt::NPTISO0_HALF_STEP2;
-  if (thermo_switch & THERMO_NPT_ISO) {
-    if (npt_iso.pref_noise_0 > 0.0) {
-      return npt_iso.pref_rescale_0 * vel +
-             npt_iso.pref_noise_0 *
-                 Random::noise_uniform<salt>(npt_iso.rng_counter(),
-                                             npt_iso.rng_seed(), p_identity);
-    }
-    return npt_iso.pref_rescale_0 * vel;
+  if (npt_iso.pref_noise_0 > 0.0) {
+    return npt_iso.pref_rescale_0 * vel +
+           npt_iso.pref_noise_0 *
+               Random::noise_uniform<salt>(npt_iso.rng_counter(),
+                                           npt_iso.rng_seed(), p_identity);
   }
-  return {};
+  return npt_iso.pref_rescale_0 * vel;
 }
 
 /** Add p_diff-dependent noise and friction for NpT-sims to \ref
@@ -66,16 +63,13 @@ friction_therm0_nptiso(IsotropicNptThermostat const &npt_iso,
  */
 inline double friction_thermV_nptiso(IsotropicNptThermostat const &npt_iso,
                                      double p_diff) {
-  if (thermo_switch & THERMO_NPT_ISO) {
-    if (npt_iso.pref_noise_V > 0.0) {
-      return npt_iso.pref_rescale_V * p_diff +
-             npt_iso.pref_noise_V *
-                 Random::noise_uniform<RNGSalt::NPTISOV, 1>(
-                     npt_iso.rng_counter(), npt_iso.rng_seed(), 0);
-    }
-    return npt_iso.pref_rescale_V * p_diff;
+  if (npt_iso.pref_noise_V > 0.0) {
+    return npt_iso.pref_rescale_V * p_diff +
+           npt_iso.pref_noise_V *
+               Random::noise_uniform<RNGSalt::NPTISOV, 1>(
+                   npt_iso.rng_counter(), npt_iso.rng_seed(), 0);
   }
-  return 0.0;
+  return npt_iso.pref_rescale_V * p_diff;
 }
 
 #endif // NPT

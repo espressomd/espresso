@@ -61,6 +61,7 @@ class CollisionDetection(ut.TestCase):
     def test_00_interface_and_defaults(self):
         # Is it off by default
         self.assertEqual(self.system.collision_detection.mode, "off")
+
         # Make sure params cannot be set individually
         with self.assertRaises(Exception):
             self.system.collision_detection.mode = "bind_centers"
@@ -69,6 +70,7 @@ class CollisionDetection(ut.TestCase):
         for unknown_mode in (0, "unknown"):
             with self.assertRaisesRegex(Exception, "Mode not handled"):
                 self.system.collision_detection.set_params(mode=unknown_mode)
+        self.assertIsNone(self.system.collision_detection.call_method("none"))
 
         # That should work
         self.system.collision_detection.set_params(mode="off")

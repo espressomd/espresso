@@ -14,11 +14,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import espressomd
+import espressomd.lb
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
-import espressomd
-import espressomd.lb
 import tests_common
 
 
@@ -32,6 +33,7 @@ class SwimmerTest():
                  'kT': 0,
                  'tau': system.time_step}
     gamma = 0.3
+    n_nodes = system.cell_system.get_state()['n_nodes']
 
     def add_all_types_of_swimmers(
             self,
@@ -71,7 +73,7 @@ class SwimmerTest():
 
     def setUp(self):
         self.set_cellsystem()
-        self.lbf = self.lb_class(**self.LB_params)
+        self.lbf = self.lb_class(**self.LB_params, **self.lb_params)
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=self.gamma)
 
@@ -91,6 +93,9 @@ class SwimmerTest():
         """friction as well as 'active' forces apply to particles
         and to the fluid, so total momentum is conserved
         """
+        if self.lbf.get_params().get('single_precision', False):
+            self.skipTest('Momentum is not conserved on single precision')
+
         self.add_all_types_of_swimmers(rotation=False)
 
         # Comments by Christoph Lohrmann from #3514:
@@ -175,14 +180,16 @@ class SwimmerTest():
             sw_source_forces = np.array(
                 [n.last_applied_force for n in sw_source_nodes])
             np.testing.assert_allclose(
-                np.sum(sw_source_forces, axis=0), -f_swim * np.array(sw.director), atol=1E-10)
+                np.sum(sw_source_forces, axis=0),
+                -f_swim * np.array(sw.director), atol=self.tol)
 
 
 @utx.skipIfMissingFeatures(
     ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "LB_WALBERLA"])
-class SwimmerTestDomDecWALBERLA(SwimmerTest, ut.TestCase):
+class SwimmerTestDomDecWalberla(SwimmerTest, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': False}
     tol = 1e-10
 
     def set_cellsystem(self):
@@ -191,16 +198,14 @@ class SwimmerTestDomDecWALBERLA(SwimmerTest, ut.TestCase):
 
 @utx.skipIfMissingFeatures(
     ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "LB_WALBERLA"])
-class SwimmerTestNSquareWALBERLA(SwimmerTest, ut.TestCase):
+class SwimmerTestDomDecWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': True}
     tol = 1e-10
 
     def set_cellsystem(self):
-        if any(self.system.cell_system.node_grid > 1):
-            self.skipTest(
-                "N Square and LB not compatible on more than one core")
-        self.system.cell_system.set_n_square()
+        self.system.cell_system.set_domain_decomposition()
 
 
 if __name__ == "__main__":

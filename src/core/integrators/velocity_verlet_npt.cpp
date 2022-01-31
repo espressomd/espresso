@@ -45,7 +45,6 @@
 
 void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles,
                                              double time_step) {
-  extern IsotropicNptThermostat npt_iso;
   nptiso.p_vel = {};
 
   for (auto &p : particles) {
@@ -69,7 +68,6 @@ void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles,
 
 /** Scale and communicate instantaneous NpT pressure */
 void velocity_verlet_npt_finalize_p_inst(double time_step) {
-  extern IsotropicNptThermostat npt_iso;
   /* finalize derivation of p_inst */
   nptiso.p_inst = 0.0;
   for (int i = 0; i < 3; i++) {
@@ -105,7 +103,6 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles,
               pow(nptiso.volume, 2.0 / nptiso.dimension);
     nptiso.volume += nptiso.inv_piston * nptiso.p_diff * 0.5 * time_step;
     if (nptiso.volume < 0.0) {
-
       runtimeErrorMsg()
           << "your choice of piston= " << nptiso.piston << ", dt= " << time_step
           << ", p_diff= " << nptiso.p_diff
@@ -163,7 +160,6 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles,
 
 void velocity_verlet_npt_propagate_vel(const ParticleRange &particles,
                                        double time_step) {
-  extern IsotropicNptThermostat npt_iso;
   nptiso.p_vel = {};
 
   for (auto &p : particles) {

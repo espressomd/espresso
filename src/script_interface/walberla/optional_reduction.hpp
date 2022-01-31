@@ -40,7 +40,7 @@
 namespace ScriptInterface::walberla {
 
 /**
- * @brief Reduction of an optional value with unit conversion.
+ * @brief Reduction of an optional with unit conversion.
  *
  * @param result       optional value to reduce on main rank
  * @param conversion   unit conversion
@@ -54,7 +54,7 @@ Variant optional_reduction_with_conversion(boost::optional<T> const &result,
   assert(1 == boost::mpi::all_reduce(comm_cart, static_cast<int>(!!result),
                                      std::plus<>()) &&
          "Incorrect number of return values");
-  auto const conversion_handler = [conversion](T const &value) {
+  auto const conversion_handler = [=](T const &value) {
     if constexpr (Conversion) {
       return Variant{value * (1. / conversion)};
     } else {

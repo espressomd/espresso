@@ -49,6 +49,7 @@ std::vector<Vector3d> get_cylindrical_sampling_positions(
     std::pair<double, double> const &phi_limits,
     std::pair<double, double> const &z_limits, std::size_t n_r_bins,
     std::size_t n_phi_bins, std::size_t n_z_bins, double sampling_density) {
+  auto constexpr endpoint = false;
   auto const delta_r =
       (r_limits.second - r_limits.first) / static_cast<double>(n_r_bins);
   auto const delta_phi =
@@ -58,22 +59,20 @@ std::vector<Vector3d> get_cylindrical_sampling_positions(
   // azimuthal angle per bin such that we fulfill the sampling density
   // requirement.
   auto const smallest_bin_volume =
-      pi() * Utils::sqr(r_limits.first + delta_r) * delta_phi / (2.0 * pi());
+      Utils::sqr(r_limits.first + delta_r) * delta_phi / 2.;
   auto const min_n_samples =
       std::max(n_z_bins, static_cast<std::size_t>(std::round(
                              smallest_bin_volume * sampling_density)));
   auto const delta_z =
       (z_limits.second - z_limits.first) / static_cast<double>(min_n_samples);
 
-  auto const r_range =
-      make_lin_space(r_limits.first + .5 * delta_r, r_limits.second, n_r_bins,
-                     /* endpoint */ false);
+  auto const r_range = make_lin_space(r_limits.first + .5 * delta_r,
+                                      r_limits.second, n_r_bins, endpoint);
   auto const phi_range =
       make_lin_space(phi_limits.first + .5 * delta_phi, phi_limits.second,
-                     n_phi_bins, /* endpoint */ false);
-  auto const z_range =
-      make_lin_space(z_limits.first + .5 * delta_z, z_limits.second,
-                     min_n_samples, /* endpoint */ false);
+                     n_phi_bins, endpoint);
+  auto const z_range = make_lin_space(z_limits.first + .5 * delta_z,
+                                      z_limits.second, min_n_samples, endpoint);
 
   // Create the sampling positions for the innermost bin.
   std::vector<Vector3d> sampling_positions;
@@ -84,17 +83,10 @@ std::vector<Vector3d> get_cylindrical_sampling_positions(
   }
 
   // Scale the number of samples for larger bins
-  auto arc_length = [delta_phi, delta_r](int r_bin) {
-    return delta_phi * (r_bin + 1) * delta_r;
-  };
-  auto n_phi_samples = [arc_length](int r_bin) {
-    return arc_length(r_bin) / arc_length(0);
-  };
-  auto phis = [n_phi_samples, n_phi_bins, phi_limits](int r_bin) {
+  auto phis = [n_phi_bins, phi_limits](long r_bin) {
     auto const phis_range = make_lin_space(
         phi_limits.first, phi_limits.second,
-        n_phi_bins * static_cast<std::size_t>(std::round(n_phi_samples(r_bin))),
-        /*endpoint */ false);
+        n_phi_bins * (static_cast<std::size_t>(r_bin) + 1), endpoint);
     return phis_range;
   };
   // Calculate the sampling positions

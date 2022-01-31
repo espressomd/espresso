@@ -360,7 +360,7 @@ void coldet_do_three_particle_bond(Particle &p, Particle const &p1,
       collision_params.bond_three_particles);
 
   // Create the bond
-  const std::array<int, 2> bondT = {p1.p.identity, p2.p.identity};
+  const std::array<int, 2> bondT = {{p1.p.identity, p2.p.identity}};
   p.bonds().insert({bond_id, bondT});
 }
 
@@ -412,7 +412,7 @@ void bind_at_poc_create_bond_between_vs(const int current_vs_pid,
 void glue_to_surface_bind_part_to_vs(const Particle *const p1,
                                      const Particle *const p2,
                                      const int vs_pid_plus_one,
-                                     const CollisionPair &c) {
+                                     const CollisionPair &) {
   // Create bond between the virtual particles
   const int bondG[] = {vs_pid_plus_one - 1};
 

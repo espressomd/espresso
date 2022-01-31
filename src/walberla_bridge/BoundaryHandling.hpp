@@ -87,7 +87,8 @@ template <typename T, typename BoundaryClass> class BoundaryHandling {
   };
 
   [[nodiscard]] inline auto get_flag_field_and_flag(IBlock *block) const {
-    auto const flag_field = block->template getData<FlagField>(m_flag_field_id);
+    auto const flag_field =
+        block->template uncheckedFastGetData<FlagField>(m_flag_field_id);
     auto const boundary_flag = flag_field->getFlag(Boundary_flag);
     return std::make_tuple(flag_field, boundary_flag);
   }

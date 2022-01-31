@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _CUDA_UTILS_CUH
-#define _CUDA_UTILS_CUH
+#ifndef CORE_CUDA_UTILS_CUH
+#define CORE_CUDA_UTILS_CUH
 
 #if !defined(__CUDACC__)
 #error Do not include CUDA headers in normal C++-code!!!

@@ -74,11 +74,13 @@ option(WITH_HDF5 "Build with HDF5 support" OFF)
 option(WITH_TESTS "Enable tests" ON)
 option(WITH_SCAFACOS "Build with ScaFaCoS support" OFF)
 option(WITH_STOKESIAN_DYNAMICS "Build with Stokesian Dynamics" OFF)
+option(WITH_WALBERLA "Build with WALBERLA Lattice-Boltzmann support" OFF)
+option(WALBERLA_USE_AVX
+       "Build WALBERLA Lattice-Boltzmann with AVX vectorization" OFF)
 option(WITH_BENCHMARKS "Enable benchmarks" OFF)
 option(WITH_VALGRIND_INSTRUMENTATION
        "Build with valgrind instrumentation markers" OFF)
-option(WITH_WALBERLA "Build with WALBERLA Lattice-Boltzmann support" OFF)
-option(WALBERLA_USE_AVX "Build WALBERLA Lattice-Boltzmann with AVX vectorization" OFF)
+option(WITH_CPPCHECK "Run Cppcheck during compilation" OFF)
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   option(WITH_CLANG_TIDY "Run Clang-Tidy during compilation" OFF)
 endif()
@@ -128,18 +130,80 @@ include(MyConfig)
 
 include(CheckCXXSourceCompiles)
 
-set(__PRETTYFUNC__ __func__)
-foreach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
+# cross-platform macro to print the function name in error messages
+set(PRETTY_FUNCTION_EXTENSION __func__)
+
+# search for a supported compiler extension that prints the function name as
+# well as its list of arguments, return type and namespace
+foreach(func_name __PRETTY_FUNCTION__ __FUNCSIG__ __FUNCTION__)
   check_cxx_source_compiles(
     "
      #include <string>
      int main() { std::string(${func_name}); }
      " result${func_name})
   if(result${func_name})
-    set(__PRETTYFUNC__ ${func_name})
+    set(PRETTY_FUNCTION_EXTENSION ${func_name})
     break()
   endif(result${func_name})
-endforeach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
+endforeach()
+
+#
+# AVX2 support
+#
+
+include(CheckCXXCompilerFlag)
+
+add_library(cxx_avx2_interface INTERFACE)
+
+function(enable_avx2_support)
+  set(compiler_avx2_flag "")
+  foreach(flag_name "-mavx2" "/arch:AVX2")
+    string(REGEX REPLACE "[^0-9A-Za-z_]" "_" flag_variable "${flag_name}")
+    check_cxx_compiler_flag("${flag_name}"
+                            compiler_has_${flag_variable}_flag_result)
+    if(compiler_has_${flag_variable}_flag_result)
+      set(compiler_avx2_flag "${flag_name}")
+      target_compile_options(cxx_avx2_interface
+                             INTERFACE "${compiler_avx2_flag}")
+      break()
+    endif()
+  endforeach()
+  if(compiler_avx2_flag STREQUAL "")
+    message(
+      FATAL_ERROR
+        "${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION} doesn't support AVX2-specific compiler flags."
+    )
+  endif()
+  if(NOT compiler_avx2_flag STREQUAL "/arch:AVX2")
+    execute_process(
+      COMMAND ${CMAKE_CXX_COMPILER} -march=native -E -v - INPUT_FILE /dev/null
+      OUTPUT_VARIABLE march_native_output_string
+      ERROR_VARIABLE march_native_output_string)
+    if(NOT "${march_native_output_string}" MATCHES
+       "[ \n](\\+avx2|-mavx2|-D__AVX2__)[ \n]")
+      message(
+        FATAL_ERROR
+          "AVX2 not supported on this CPU architecture according to ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}. While ESPResSo will still compile, you will get SIGILL crashes when calling AVX functions."
+      )
+    endif()
+  endif()
+  set(CMAKE_REQUIRED_FLAGS_BACKUP "${CMAKE_REQUIRED_FLAGS}")
+  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${compiler_avx2_flag}")
+  check_cxx_source_compiles(
+    "#include <immintrin.h>
+       __m256i xi_i = _mm256_set_epi32(1, 2, 3, 4, 5, 6, 7, 8);
+       __m256  xi_s = _mm256_set_ps(0.f, 1.f, 2.f, 3.f, 4.f, 5.f, 6.f, 7.f);
+       __m256d xi_d = _mm256_set_pd(0.0, 1.0, 2.0, 3.0);
+       int main() {}
+      " compiler_has_avx2_support)
+  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS_BACKUP}")
+  if(NOT compiler_has_avx2_support)
+    message(
+      FATAL_ERROR
+        "Cannot execute a simple AVX2 program compiled by ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}."
+    )
+  endif()
+endfunction()
 
 #
 # Libraries
@@ -324,9 +388,7 @@ target_compile_options(
             # disable warnings from -Wextra
             -Wno-sign-compare
             -Wno-unused-function
-            -Wno-unused-variable
             -Wno-unused-parameter
-            -Wno-missing-braces
             $<$<CXX_COMPILER_ID:GNU>:-Wno-clobbered>
             $<$<CXX_COMPILER_ID:Intel>:-wd592>)
 
@@ -423,6 +485,19 @@ if(WITH_CLANG_TIDY)
   set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE};--extra-arg=--cuda-host-only")
 endif()
 
+if(WITH_CPPCHECK)
+  find_program(CMAKE_CXX_CPPCHECK NAMES cppcheck)
+  if(NOT CMAKE_CXX_CPPCHECK)
+    message(FATAL_ERROR "Could not find the program cppcheck.")
+  endif()
+  list(APPEND CMAKE_CXX_CPPCHECK "--enable=all"
+       "--std=c++${CMAKE_CXX_STANDARD}" "--quiet" "--inline-suppr"
+       "--suppressions-list=${CMAKE_CURRENT_SOURCE_DIR}/.cppcheck")
+  if(WARNINGS_ARE_ERRORS)
+    list(APPEND CMAKE_CXX_CPPCHECK "--error-exitcode=2")
+  endif()
+endif()
+
 #
 # Testing
 #
@@ -480,6 +555,9 @@ if(WITH_WALBERLA)
     if(NOT CMAKE_CXX_COMPILER_ID MATCHES "AppleClang")
       set(WALBERLA_LIBS ${WALBERLA_LIBS} stdc++fs -lmpi_cxx -lmpi -lpfft -lfftw3_mpi)
     endif()
+  endif()
+  if(WALBERLA_USE_AVX)
+    enable_avx2_support()
   endif()
 endif(WITH_WALBERLA)
 

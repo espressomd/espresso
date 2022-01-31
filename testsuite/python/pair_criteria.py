@@ -57,6 +57,11 @@ class PairCriteria(ut.TestCase):
         self.assertTrue(not dc.decide(self.p1, self.p2))
         self.assertTrue(not dc.decide(self.p1.id, self.p2.id))
 
+    def test_distance_crit_exceptions(self):
+        dc = espressomd.pair_criteria.DistanceCriterion(cut_off=0.1)
+        with self.assertRaises(RuntimeError):
+            dc.call_method("unknown")
+
     @utx.skipIfMissingFeatures("LENNARD_JONES")
     def test_energy_crit(self):
         # Setup purely repulsive lj

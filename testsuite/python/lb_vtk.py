@@ -35,8 +35,8 @@ import espressomd.lb
 import espressomd.shapes
 
 
-class LBWrite:
-    system = espressomd.System(box_l=3 * [16])
+class TestLBWrite:
+    system = espressomd.System(box_l=[12, 14, 16])
     system.time_step = 0.01
     system.cell_system.skin = 0.4
 
@@ -92,13 +92,13 @@ class LBWrite:
         float precision.
         '''
         x_offset = 0
-        shape = [16, 16, 16]
+        shape = [12, 14, 16]
         self.lbf.add_boundary_from_shape(
             espressomd.shapes.Wall(normal=[1, 0, 0], dist=1.5))
         self.lbf.add_boundary_from_shape(
-            espressomd.shapes.Wall(normal=[-1, 0, 0], dist=-14.5))
+            espressomd.shapes.Wall(normal=[-1, 0, 0], dist=-10.5))
         x_offset = 2
-        shape[0] = 12
+        shape[0] -= x_offset * 2
 
         n_steps = 100
         lb_steps = int(np.floor(n_steps * self.lbf.tau))
@@ -213,10 +213,20 @@ class LBWrite:
         with self.assertRaisesRegex(RuntimeError, 'Attempted access to uninitialized LBWalberla instance'):
             vtk_expired.write()
 
+        # cannot use VTK when there are no LB objects available
+        label_unavailable = f'test_lb_vtk_{self.lb_vtk_id}_unavailable_lbf'
+
+        class VTKOutputWithoutLbfluid(espressomd.lb.VTKOutput):
+            def validate_params(self, params):
+                pass
+        with self.assertRaisesRegex(RuntimeError, 'Attempted access to uninitialized LBWalberla instance'):
+            VTKOutputWithoutLbfluid(identifier=label_unavailable,
+                                    observables=['density'])
+
 
 @skipIfMissingPythonPackage
 @utx.skipIfMissingFeatures("LB_WALBERLA")
-class LBWalberlaWrite(LBWrite, ut.TestCase):
+class LBWalberlaWrite(TestLBWrite, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {'single_precision': False}
     lb_vtk_id = 'double_precision'
@@ -224,7 +234,7 @@ class LBWalberlaWrite(LBWrite, ut.TestCase):
 
 @skipIfMissingPythonPackage
 @utx.skipIfMissingFeatures("LB_WALBERLA")
-class LBWalberlaWriteSinglePrecision(LBWrite, ut.TestCase):
+class LBWalberlaWriteSinglePrecision(TestLBWrite, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {'single_precision': True}
     lb_vtk_id = 'single_precision'

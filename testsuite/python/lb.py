@@ -127,7 +127,7 @@ class LBTest:
         lbf[0, 0, 0].velocity = [1, 2, 3]
         np.testing.assert_allclose(
             np.copy(lbf[0, 0, 0].velocity), [1, 2, 3], atol=self.atol)
-        with self.assertRaises(Exception):
+        with self.assertRaises(RuntimeError):
             lbf[0, 0, 0].velocity = [1, 2]
         with self.assertRaises(Exception):
             lbf[0, 1].velocity = [1, 2, 3]
@@ -491,7 +491,7 @@ class LBTest:
         if hasattr(lbf, 'is_single_precision') and lbf.is_single_precision:
             rtol *= 10.
         np.testing.assert_allclose(
-            self.system.analysis.linear_momentum(),
+            np.copy(self.system.analysis.linear_momentum()),
             fluid_velocity * self.params['density'] * self.system.volume(),
             rtol=rtol)
 
@@ -548,12 +548,11 @@ class LBTest:
             self.lb_class(**params_with_tau(self.system.time_step),
                           **self.lb_params))
 
-        with self.assertRaises(Exception):
-            self.system.time_step = 2. * lbf.get_params()["tau"]
-            self.system.integrator.run(1)
-
-        with self.assertRaises(Exception):
+        with self.assertRaisesRegex(ValueError, r"LB tau \(0\.0100[0-9]+\) must be >= MD time_step \(0\.0200[0-9]+\)"):
+            self.system.time_step = 2.0 * lbf.get_params()["tau"]
+        with self.assertRaisesRegex(ValueError, r"LB tau \(0\.0100[0-9]+\) must be an integer multiple of the MD time_step \(0\.0080[0-9]+\)"):
             self.system.time_step = 0.8 * lbf.get_params()["tau"]
+
         self.system.actors.clear()
         self.system.time_step = 0.5 * self.params['time_step']
         lbf = self.lb_class(**params_with_tau(self.system.time_step),
