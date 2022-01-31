@@ -477,7 +477,6 @@ void DomainDecomposition::init_cell_interactions() {
           auto cell = &cells.at(
               get_linear_index(local_index(neighbor), ghost_cell_grid));
           if (ind2 > ind1) {
-            std::cout << o << m << n << neighbor << std::endl;
             red_neighbors.push_back(cell);
           } else {
             black_neighbors.push_back(cell);
