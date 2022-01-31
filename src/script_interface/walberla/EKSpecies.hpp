@@ -104,6 +104,29 @@ public:
       return mpi_return_one_rank(m_ekinstance->get_node_is_boundary(
           get_value<Utils::Vector3i>(parameters, "position"), false));
     }
+    if (method == "set_node_flux_boundary") {
+      m_ekinstance->set_node_flux_boundary(
+          get_value<Utils::Vector3i>(parameters, "position"),
+          get_value<Utils::Vector3d>(parameters, "flux"));
+      return none;
+    }
+    if (method == "remove_node_flux_boundary") {
+      m_ekinstance->remove_node_from_flux_boundary(
+          get_value<Utils::Vector3i>(parameters, "position"));
+      return none;
+    }
+    if (method == "get_node_flux_at_boundary") {
+      const auto index = get_value<Utils::Vector3i>(parameters, "position");
+      const auto result = m_ekinstance->get_node_is_flux_boundary(index);
+      bool is_boundary = (result) ? *result : false;
+      is_boundary =
+          boost::mpi::all_reduce(comm_cart, is_boundary, std::logical_or<>());
+      if (is_boundary) {
+        return mpi_return_one_rank(
+            m_ekinstance->get_node_flux_at_boundary(index));
+      }
+      return Variant{None{}};
+    }
     if (method == "update_flux_boundary_from_shape") {
       m_ekinstance->update_flux_boundary_from_shape(
           get_value<std::vector<int>>(parameters, "raster_view"),

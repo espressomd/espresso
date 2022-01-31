@@ -50,7 +50,10 @@ public:
   [[nodiscard]] virtual bool
   set_node_flux_boundary(const Utils::Vector3i &node,
                          const Utils::Vector3d &flux) = 0;
-  virtual bool remove_node_from_flux_boundary(const Utils::Vector3i &node) = 0;
+  [[nodiscard]] virtual boost::optional<Utils::Vector3d>
+  get_node_flux_at_boundary(const Utils::Vector3i &node) const = 0;
+  [[nodiscard]] virtual bool
+  remove_node_from_flux_boundary(const Utils::Vector3i &node) = 0;
   [[nodiscard]] virtual bool
   set_node_density_boundary(const Utils::Vector3i &node, double density) = 0;
   virtual bool

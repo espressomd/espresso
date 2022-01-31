@@ -4,7 +4,6 @@ import os
 
 from .script_interface import ScriptObjectRegistry, ScriptInterfaceHelper, script_interface_register
 import numpy as np
-import functools
 import itertools
 
 from . import utils
@@ -385,105 +384,103 @@ class EKRoutines:
     def is_boundary(self):
         return self.species.call_method("is_boundary", position=self.node)
 
+    @property
+    def flux_boundary(self):
+        flux = self.species.call_method(
+            "get_node_flux_at_boundary", position=self.node)
+
+        if flux is not None:
+            return FluxBoundary(flux)
+        return None
+
+    @flux_boundary.setter
+    def flux_boundary(self, flux):
+        """
+        Parameters
+        ----------
+        flux : :class:`~espressomd.EKSpecies.FluxBoundary` or None
+            If flux is :class:`~espressomd.EkSpecies.FluxBoundary`,
+            set the node to be a boundary node with the specified flux.
+            If flux is ``None``, the node will become a domain node.
+        """
+
+        if isinstance(flux, FluxBoundary):
+            self.species.call_method(
+                'set_node_flux_boundary',
+                position=self.node,
+                flux=flux.flux)
+        elif flux is None:
+            self.species.call_method(
+                'remove_node_flux_boundary',
+                position=self.node)
+        else:
+            raise ValueError(
+                "value must be an instance of FluxBoundary or None")
+
 
 class EKSlice:
     def __init__(self, species, key, shape):
-        self.species = species
-        self.x_indices, self.y_indices, self.z_indices = self.get_indices(
-            key, shape[0], shape[1], shape[2])
+        self._species = species
+        self.indices = [
+            np.atleast_1d(
+                np.arange(
+                    shape[i])[
+                    key[i]]) for i in range(3)]
+        self.dimensions = [ind.size for ind in self.indices]
 
-    def get_indices(self, key, shape_x, shape_y, shape_z):
-        x_indices = np.atleast_1d(np.arange(shape_x)[key[0]])
-        y_indices = np.atleast_1d(np.arange(shape_y)[key[1]])
-        z_indices = np.atleast_1d(np.arange(shape_z)[key[2]])
-        return x_indices, y_indices, z_indices
+        self._node = EKRoutines(species=species, node=[0, 0, 0])
 
-    def get_values(self, x_indices, y_indices, z_indices, prop_name):
-        shape_res = np.shape(
-            getattr(EKRoutines(self.species, np.array([0, 0, 0])), prop_name))
-        res = np.zeros(
-            (x_indices.size,
-             y_indices.size,
-             z_indices.size,
-             *shape_res))
-        for i, x in enumerate(x_indices):
-            for j, y in enumerate(y_indices):
-                for k, z in enumerate(z_indices):
-                    res[i, j, k] = getattr(EKRoutines(self.species,
-                                                      np.array([x, y, z])), prop_name)
-        if shape_res == (1,):
-            return np.squeeze(res, axis=-1)
-        return res
+    def __getattr__(self, attr):
+        node = self.__dict__.get("_node")
+        if node is None or not hasattr(node, attr):
+            if attr in self.__dict__:
+                return self.__dict__[attr]
+            raise AttributeError(
+                f"Object '{self.__class__.__name__}' has no attribute '{attr}'")
 
-    def set_values(self, x_indices, y_indices, z_indices, prop_name, value):
-        for i, x in enumerate(x_indices):
-            for j, y in enumerate(y_indices):
-                for k, z in enumerate(z_indices):
-                    setattr(EKRoutines(self.species,
-                                       np.array([x, y, z])), prop_name, value[i, j, k])
-
-
-def _add_ek_slice_properties():
-    """
-    Automatically add all of EKRoutines's properties to EKSlice.
-
-    """
-
-    def set_attribute(ek_slice, value, attribute):
-        """
-        Setter function that sets attribute on every member of lb_slice.
-        If values contains only one element, all members are set to it.
-
-        """
-
-        indices = [ek_slice.x_indices, ek_slice.y_indices, ek_slice.z_indices]
-        N = [len(x) for x in indices]
-
-        if N[0] * N[1] * N[2] == 0:
-            raise AttributeError("Cannot set properties of an empty LBSlice")
-
-        value = np.copy(value)
-        attribute_shape = ek_slice.get_values(
-            *np.zeros((3, 1), dtype=int), attribute).shape[3:]
-        target_shape = (*N, *attribute_shape)
-
-        # broadcast if only one element was provided
-        if value.shape == attribute_shape:
-            value = np.ones(target_shape) * value
-
-        if value.shape != target_shape:
-            raise ValueError(
-                f"Input-dimensions of {attribute} array {value.shape} does not match slice dimensions {target_shape}.")
-
-        ek_slice.set_values(*indices, attribute, value)
-
-    def get_attribute(ek_slice, attribute):
-        """
-        Getter function that copies attribute from every member of
-        ek_slice into an array (if possible).
-
-        """
-
-        indices = [ek_slice.x_indices, ek_slice.y_indices, ek_slice.z_indices]
-        N = [len(x) for x in indices]
-
-        if N[0] * N[1] * N[2] == 0:
+        if 0 in self.dimensions:
             return np.empty(0, dtype=type(None))
 
-        return ek_slice.get_values(*indices, attribute)
+        value = getattr(node, attr)
+        shape_val = np.shape(value)
+        dtype = value.dtype if isinstance(value, np.ndarray) else type(value)
+        np_gen = np.zeros if dtype in (int, float, bool) else np.empty
+        value_grid = np_gen((*self.dimensions, *shape_val), dtype=dtype)
 
-    for attribute_name in dir(EKRoutines):
-        if attribute_name in dir(EKSlice) or not isinstance(
-                getattr(EKRoutines, attribute_name), type(EKRoutines.density)):
-            continue
+        indices = itertools.product(*map(enumerate, self.indices))
+        for (i, x), (j, y), (k, z) in indices:
+            node.node = [x, y, z]
+            value_grid[i, j, k] = getattr(node, attr)
 
-        # synthesize a new property
-        new_property = property(
-            functools.partial(get_attribute, attribute=attribute_name),
-            functools.partial(set_attribute, attribute=attribute_name),
-            doc=getattr(EKRoutines, attribute_name).__doc__ or f'{attribute_name} for a slice')
-        # attach the property to LBSlice
-        setattr(EKSlice, attribute_name, new_property)
+        if shape_val == (1,):
+            value_grid = np.squeeze(value_grid, axis=-1)
+        return utils.array_locked(value_grid)
 
+    def __setattr__(self, attr, values):
+        node = self.__dict__.get('_node')
+        if node is None or not hasattr(node, attr):
+            self.__dict__[attr] = values
+            return
+        elif 0 in self.dimensions:
+            raise AttributeError("Cannot set properties of an empty LBSlice")
 
-_add_ek_slice_properties()
+        values = np.copy(values)
+        shape_val = np.shape(getattr(node, attr))
+        target_shape = (*self.dimensions, *shape_val)
+
+        # broadcast if only one element was provided
+        if values.shape == shape_val:
+            values = np.full(target_shape, values)
+
+        if values.shape != target_shape:
+            raise ValueError(
+                f"Input-dimensions of '{attr}' array {values.shape} does not match slice dimensions {target_shape}.")
+
+        indices = itertools.product(*map(enumerate, self.indices))
+        for (i, x), (j, y), (k, z) in indices:
+            node.node = [x, y, z]
+            setattr(node, attr, values[i, j, k])
+
+    def __iter__(self):
+        return (EKRoutines(species=self._species, node=np.array(index))
+                for index in itertools.product(*self.indices))

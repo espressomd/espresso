@@ -357,6 +357,15 @@ public:
     return true;
   };
 
+  [[nodiscard]] boost::optional<Utils::Vector3d>
+  get_node_flux_at_boundary(const Utils::Vector3i &node) const override {
+    auto bc = get_block_and_cell(get_lattice(), node, true);
+    if (!bc or !m_boundary_flux->node_is_boundary(*bc))
+      return {boost::none};
+
+    return {m_boundary_flux->get_node_value_at_boundary(node)};
+  }
+
   bool remove_node_from_flux_boundary(const Utils::Vector3i &node) override {
     auto bc = get_block_and_cell(get_lattice(), node, true);
     if (!bc)
