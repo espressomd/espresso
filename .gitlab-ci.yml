@@ -488,7 +488,7 @@ run_doxygen:
     - docker
     - linux
 
-check_cuda_maxset_no_gpu:
+maxset_no_gpu:
   <<: *global_job_definition
   stage: additional_checks
   when: on_success
@@ -502,7 +502,7 @@ check_cuda_maxset_no_gpu:
     - docker
     - linux
 
-check_with_odd_no_of_processors:
+maxset_3_cores:
   <<: *global_job_definition
   stage: additional_checks
   when: on_success
