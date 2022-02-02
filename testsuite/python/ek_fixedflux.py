@@ -11,7 +11,7 @@ class EKFixedFlux(ut.TestCase):
     AGRID = 1.0
     DENSITY = 1
     DIFFUSION_COEFFICIENT = 0.1
-    TIME = 1
+    TIME = 10
 
     INFLOW_FLUX = 0.1
 
