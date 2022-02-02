@@ -394,34 +394,24 @@ IF ELECTROKINETICS:
         def __init__(self, **kwargs):
             Species.py_number_of_species += 1
             self.id = Species.py_number_of_species
+            utils.check_required_keys(self.required_keys(), kwargs.keys())
+            utils.check_valid_keys(self.valid_keys(), kwargs.keys())
             self._params = self.default_params()
-
-            # Check if all required keys are given
-            for k in self.required_keys():
-                if k not in kwargs:
-                    raise ValueError(
-                        "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__() + " got " + kwargs.__str__())
-                self._params[k] = kwargs[k]
-
-            for k in kwargs:
-                if k in self.valid_keys():
-                    self._params[k] = kwargs[k]
-                else:
-                    raise KeyError(f"{k} is not a valid key")
+            self._params.update(kwargs)
 
         def valid_keys(self):
             """
             Returns the valid keys for the species.
 
             """
-            return "density", "D", "valency", "ext_force_density"
+            return {"density", "D", "valency", "ext_force_density"}
 
         def required_keys(self):
             """
             Returns the required keys for the species.
 
             """
-            return ["density", "D", "valency"]
+            return {"density", "D", "valency"}
 
         def default_params(self):
             """
