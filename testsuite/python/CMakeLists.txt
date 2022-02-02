@@ -23,12 +23,14 @@ function(PYTHON_TEST)
   endif()
 
   if(EXISTS ${MPIEXEC})
+    set_mpiexec_tmpdir("${TEST_NAME}")
     add_test(
       NAME ${TEST_NAME}
       COMMAND
         ${MPIEXEC} ${MPIEXEC_OVERSUBSCRIBE} ${MPIEXEC_NUMPROC_FLAG}
-        ${TEST_NUM_PROC} ${MPIEXEC_PREFLAGS} ${CMAKE_BINARY_DIR}/pypresso
-        ${PYPRESSO_OPTIONS} ${TEST_FILE} ${MPIEXEC_POSTFLAGS})
+        ${TEST_NUM_PROC} ${MPIEXEC_PREFLAGS} ${MPIEXEC_TMPDIR}
+        ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS} ${TEST_FILE}
+        ${MPIEXEC_POSTFLAGS})
   else()
     add_test(${TEST_NAME} ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
              ${TEST_FILE})

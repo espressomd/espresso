@@ -16,10 +16,11 @@ function(UNIT_TEST)
     if(${TEST_NUM_PROC} GREATER ${TEST_NP})
       set(TEST_NUM_PROC ${TEST_NP})
     endif()
-
+    set_mpiexec_tmpdir("${TEST_NAME}")
     add_test(${TEST_NAME} ${MPIEXEC} ${MPIEXEC_OVERSUBSCRIBE}
              ${MPIEXEC_NUMPROC_FLAG} ${TEST_NUM_PROC} ${MPIEXEC_PREFLAGS}
-             ${CMAKE_CURRENT_BINARY_DIR}/${TEST_NAME} ${MPIEXEC_POSTFLAGS})
+             ${MPIEXEC_TMPDIR} ${CMAKE_CURRENT_BINARY_DIR}/${TEST_NAME}
+             ${MPIEXEC_POSTFLAGS})
   else()
     add_test(${TEST_NAME} ${TEST_NAME})
   endif()
