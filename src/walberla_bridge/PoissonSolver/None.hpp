@@ -12,8 +12,6 @@ template <typename FloatType = double>
 class None : public PoissonSolver<FloatType> {
 private:
   using PS = PoissonSolver<FloatType>;
-  using typename PS::PotentialField;
-  using PoissonSolver<FloatType>::m_potential_field_id;
 
 public:
   explicit None(std::shared_ptr<LatticeWalberla> lattice)
@@ -22,10 +20,6 @@ public:
   void reset_charge_field() override {}
 
   void add_charge_to_field(const BlockDataID &id, FloatType valency) override {}
-
-  [[nodiscard]] BlockDataID get_potential_field_id() override {
-    return m_potential_field_id;
-  }
 
   void solve() override {}
 };

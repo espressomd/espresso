@@ -20,9 +20,9 @@ template <typename FloatType = double>
 class FFT : public PoissonSolver<FloatType> {
 private:
   using PS = PoissonSolver<FloatType>;
+  using PS::get_potential_field_id;
   using PS::ghost_communication;
   using PS::m_lattice;
-  using PS::m_potential_field_id;
   using typename PS::ChargeField;
   using typename PS::PotentialField;
 
@@ -37,8 +37,6 @@ public:
 
   void reset_charge_field() override;
   void add_charge_to_field(const BlockDataID &id, FloatType valency) override;
-
-  [[nodiscard]] BlockDataID get_potential_field_id() override;
 
   void solve() override;
 };

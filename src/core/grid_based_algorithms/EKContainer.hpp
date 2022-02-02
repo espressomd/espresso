@@ -74,8 +74,7 @@ public:
 
   void solve_poisson() const { m_poissonsolver->solve(); }
 
-  [[nodiscard]] walberla::domain_decomposition::BlockDataID
-  get_potential_field_id() const {
+  [[nodiscard]] std::size_t get_potential_field_id() const {
     return m_poissonsolver->get_potential_field_id();
   }
 };

@@ -18,10 +18,9 @@ protected:
 
 private:
   FloatType m_permittivity;
-
-protected:
   BlockDataID m_potential_field_id;
 
+protected:
   using PotentialField = GhostLayerField<FloatType, 1>;
   using ChargeField = GhostLayerField<FloatType, 1>;
 
@@ -47,7 +46,9 @@ public:
   virtual void reset_charge_field() = 0;
   virtual void add_charge_to_field(const BlockDataID &id,
                                    FloatType valency) = 0;
-  virtual BlockDataID get_potential_field_id() = 0;
+  [[nodiscard]] std::size_t get_potential_field_id() {
+    return m_potential_field_id;
+  }
 
   void set_permittivity(FloatType permittivity) {
     m_permittivity = permittivity;

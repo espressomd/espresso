@@ -31,14 +31,20 @@ FFT<FloatType>::FFT(std::shared_ptr<LatticeWalberla> lattice,
            real_c(dim[0] * dim[1] * dim[2]);
   };
 
+  const auto potential_id =
+      domain_decomposition::BlockDataID(get_potential_field_id());
+
   m_ft = std::make_shared<fft::FourierTransform<PotentialField>>(
-      m_blocks, m_potential_field_id, greens);
+      m_blocks, potential_id, greens);
 }
 
 template <typename FloatType> void FFT<FloatType>::reset_charge_field() {
   // the FFT-solver re-uses the potential field for the charge
+  const auto potential_id =
+      domain_decomposition::BlockDataID(get_potential_field_id());
+
   for (auto &block : *m_lattice->get_blocks()) {
-    auto field = block.template getData<PotentialField>(m_potential_field_id);
+    auto field = block.template getData<PotentialField>(potential_id);
     WALBERLA_FOR_ALL_CELLS_XYZ(field, field->get(x, y, z) = 0.;)
   }
 }
@@ -48,19 +54,15 @@ void FFT<FloatType>::add_charge_to_field(const BlockDataID &id,
                                          FloatType valency) {
   auto const factor = valency / get_permittivity();
   // the FFT-solver re-uses the potential field for the charge
+  const auto charge_id =
+      domain_decomposition::BlockDataID(get_potential_field_id());
   for (auto &block : *m_lattice->get_blocks()) {
-    auto charge_field =
-        block.template getData<PotentialField>(m_potential_field_id);
+    auto charge_field = block.template getData<PotentialField>(charge_id);
     auto density_field = block.template getData<ChargeField>(id);
     WALBERLA_FOR_ALL_CELLS_XYZ(charge_field,
                                charge_field->get(x, y, z) +=
                                factor * density_field->get(x, y, z);)
   }
-}
-
-template <typename FloatType>
-BlockDataID FFT<FloatType>::get_potential_field_id() {
-  return PS::m_potential_field_id;
 }
 
 template <typename FloatType> void FFT<FloatType>::solve() {
