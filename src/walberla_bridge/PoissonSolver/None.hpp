@@ -4,9 +4,6 @@
 #include "LatticeWalberla.hpp"
 #include "PoissonSolver.hpp"
 
-#include "field/AddToStorage.h"
-#include "field/GhostLayerField.h"
-
 namespace walberla {
 template <typename FloatType = double>
 class None : public PoissonSolver<FloatType> {
