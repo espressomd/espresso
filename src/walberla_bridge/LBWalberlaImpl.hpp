@@ -724,8 +724,8 @@ public:
 
   boost::optional<Utils::Vector3d>
   get_node_velocity_at_boundary(const Utils::Vector3i &node) const override {
-    auto bc = get_block_and_cell(lattice(), node, true);
-    if (!bc or !m_boundary->node_is_boundary(*bc))
+    auto const bc = get_block_and_cell(lattice(), node, true);
+    if (!bc or !m_boundary->node_is_boundary(node))
       return {boost::none};
 
     return {m_boundary->get_node_velocity_at_boundary(node)};
@@ -748,8 +748,8 @@ public:
 
   boost::optional<Utils::Vector3d>
   get_node_boundary_force(const Utils::Vector3i &node) const override {
-    auto bc = get_block_and_cell(lattice(), node, true); // including ghosts
-    if (!bc or !m_boundary->node_is_boundary(*bc))
+    auto const bc = get_block_and_cell(lattice(), node, true); // including ghosts
+    if (!bc or !m_boundary->node_is_boundary(node))
       return {boost::none};
 
     return get_node_last_applied_force(node, true);
@@ -772,11 +772,11 @@ public:
   boost::optional<bool>
   get_node_is_boundary(const Utils::Vector3i &node,
                        bool consider_ghosts = false) const override {
-    auto bc = get_block_and_cell(lattice(), node, consider_ghosts);
+    auto const bc = get_block_and_cell(lattice(), node, consider_ghosts);
     if (!bc)
       return {boost::none};
 
-    return {m_boundary->node_is_boundary(*bc)};
+    return {m_boundary->node_is_boundary(node)};
   }
 
   void reallocate_ubb_field() override { m_boundary->ubb_update(); }

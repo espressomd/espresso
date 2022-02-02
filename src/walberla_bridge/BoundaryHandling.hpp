@@ -92,6 +92,11 @@ template <typename FloatType> class BoundaryHandling {
       return to_vector3d(get_velocity(global));
     }
 
+    bool node_is_boundary(Utils::Vector3i const &node) const {
+      auto const global = Cell(node[0], node[1], node[2]);
+      return m_velocity_boundary->count(global) != 0;
+    }
+
   private:
     std::shared_ptr<std::unordered_map<Cell, Vector3<FloatType>>>
         m_velocity_boundary;
@@ -131,9 +136,8 @@ public:
 
   void operator()(IBlock *block) { (*m_boundary)(block); }
 
-  bool node_is_boundary(BlockAndCell const &bc) const {
-    auto [flag_field, boundary_flag] = get_flag_field_and_flag(bc.block);
-    return flag_field->isFlagSet(bc.cell, boundary_flag);
+  bool node_is_boundary(Utils::Vector3i const &node) const {
+    return m_callback.node_is_boundary(node);
   }
 
   Utils::Vector3d
