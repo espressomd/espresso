@@ -21,8 +21,6 @@ private:
 
 protected:
   BlockDataID m_potential_field_id;
-  // TODO: check that this is necessary
-  BlockDataID m_potential_field_flattened_id;
 
   using PotentialField = GhostLayerField<FloatType, 1>;
   using ChargeField = GhostLayerField<FloatType, 1>;
@@ -38,10 +36,6 @@ public:
     m_potential_field_id = field::addToStorage<PotentialField>(
         m_lattice->get_blocks(), "potential field", 0.0, field::fzyx,
         m_lattice->get_ghost_layers());
-    m_potential_field_flattened_id =
-        field::addFlattenedShallowCopyToStorage<PotentialField>(
-            m_lattice->get_blocks(), m_potential_field_id,
-            "flattened potential field");
 
     m_full_communication =
         std::make_shared<FullCommunicator>(m_lattice->get_blocks());
