@@ -68,7 +68,7 @@ public:
   void set_tau(double tau) { m_tau = tau; }
 
   void reset_charge() const { m_poissonsolver->reset_charge_field(); }
-  void add_charge(const walberla::BlockDataID &id, double valency) const {
+  void add_charge(const std::size_t &id, double valency) const {
     m_poissonsolver->add_charge_to_field(id, valency);
   }
 

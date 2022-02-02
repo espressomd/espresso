@@ -50,15 +50,16 @@ template <typename FloatType> void FFT<FloatType>::reset_charge_field() {
 }
 
 template <typename FloatType>
-void FFT<FloatType>::add_charge_to_field(const BlockDataID &id,
+void FFT<FloatType>::add_charge_to_field(const std::size_t &id,
                                          FloatType valency) {
   auto const factor = valency / get_permittivity();
   // the FFT-solver re-uses the potential field for the charge
   const auto charge_id =
       domain_decomposition::BlockDataID(get_potential_field_id());
+  const auto density_id = domain_decomposition::BlockDataID(id);
   for (auto &block : *m_lattice->get_blocks()) {
     auto charge_field = block.template getData<PotentialField>(charge_id);
-    auto density_field = block.template getData<ChargeField>(id);
+    auto density_field = block.template getData<ChargeField>(density_id);
     WALBERLA_FOR_ALL_CELLS_XYZ(charge_field,
                                charge_field->get(x, y, z) +=
                                factor * density_field->get(x, y, z);)

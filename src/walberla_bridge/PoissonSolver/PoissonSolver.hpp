@@ -44,7 +44,7 @@ public:
   }
 
   virtual void reset_charge_field() = 0;
-  virtual void add_charge_to_field(const BlockDataID &id,
+  virtual void add_charge_to_field(const std::size_t &id,
                                    FloatType valency) = 0;
   [[nodiscard]] std::size_t get_potential_field_id() {
     return m_potential_field_id;

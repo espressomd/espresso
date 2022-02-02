@@ -308,7 +308,7 @@ public:
     }
   }
 
-  [[nodiscard]] walberla::BlockDataID get_density_id() const override {
+  [[nodiscard]] std::size_t get_density_id() const override {
     return m_density_field_id;
   }
 

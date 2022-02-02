@@ -36,7 +36,7 @@ public:
   using PS::set_permittivity;
 
   void reset_charge_field() override;
-  void add_charge_to_field(const BlockDataID &id, FloatType valency) override;
+  void add_charge_to_field(const std::size_t &id, FloatType valency) override;
 
   void solve() override;
 };
