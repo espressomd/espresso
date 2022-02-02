@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import unittest as ut
+import unittest_decorators as utx
 import tests_common
 
 import espressomd
@@ -155,6 +156,27 @@ class Non_bonded_interactionsTests(ut.TestCase):
             {"eps": 1.0, "sig": 1.0, "cut": 4.0, "k1": 3.0,
              "k2": 5.0, "mu": 2.0, "nu": 1.0},
             "gay_berne")
+
+    @utx.skipIfMissingFeatures("LENNARD_JONES")
+    def test_exceptions(self):
+        err_msg_required = (r"The following keys have to be given as keyword arguments: "
+                            r"\['cutoff', 'epsilon', 'shift', 'sigma'\], got "
+                            r"\['epsilon', 'sigma'\] \(missing \['cutoff', 'shift'\]\)")
+        err_msg_valid = (r"Only the following keys can be given as keyword arguments: "
+                         r"\['cutoff', 'epsilon', 'min', 'offset', 'shift', 'sigma'\], got "
+                         r"\['cutoff', 'epsilon', 'shift', 'sigma', 'unknown'\] \(unknown \['unknown'\]\)")
+        with self.assertRaisesRegex(ValueError, err_msg_required):
+            espressomd.interactions.LennardJonesInteraction(
+                epsilon=1., sigma=2.)
+        with self.assertRaisesRegex(ValueError, err_msg_required):
+            self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
+                epsilon=1., sigma=2.)
+        with self.assertRaisesRegex(ValueError, err_msg_valid):
+            espressomd.interactions.LennardJonesInteraction(
+                epsilon=1., sigma=2., cutoff=3., shift=4., unknown=5.)
+        with self.assertRaisesRegex(ValueError, err_msg_valid):
+            self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
+                epsilon=1., sigma=2., cutoff=3., shift=4., unknown=5.)
 
 
 if __name__ == "__main__":
