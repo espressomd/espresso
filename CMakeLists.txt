@@ -275,6 +275,15 @@ endif(WITH_VALGRIND_INSTRUMENTATION)
 #
 
 find_package(MPI 3.0 REQUIRED)
+find_package(MpiexecBackend)
+
+# OpenMPI checks the number of processes against the number of CPUs
+if("${MPIEXEC_BACKEND_NAME}" STREQUAL "OpenMPI" AND "${MPIEXEC_BACKEND_VERSION}"
+                                                    VERSION_GREATER_EQUAL 2.0.0)
+  set(MPIEXEC_OVERSUBSCRIBE "-oversubscribe")
+else()
+  set(MPIEXEC_OVERSUBSCRIBE "")
+endif()
 
 #
 # Boost

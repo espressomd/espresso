@@ -1,17 +1,3 @@
-if(EXISTS ${MPIEXEC})
-  # OpenMPI 2.0 and higher checks the number of processes against the number of
-  # CPUs
-  execute_process(
-    COMMAND ${MPIEXEC} --version RESULT_VARIABLE mpi_version_result
-    OUTPUT_VARIABLE mpi_version_output ERROR_VARIABLE mpi_version_output)
-  if(mpi_version_result EQUAL 0 AND mpi_version_output MATCHES
-                                    "\\(Open(RTE| MPI)\\) ([2-9]\\.|1[0-9])")
-    set(MPIEXEC_OVERSUBSCRIBE "-oversubscribe")
-  else()
-    set(MPIEXEC_OVERSUBSCRIBE "")
-  endif()
-endif()
-
 # unit_test function
 function(UNIT_TEST)
   cmake_parse_arguments(TEST "" "NAME;NUM_PROC" "SRC;DEPENDS" ${ARGN})
