@@ -82,7 +82,9 @@ surface_nodes = espressomd.lb.edge_detection(
     lb_fluid.get_shape_bitmask(cylinder_in), system.periodicity)
 tangents = espressomd.lb.calc_cylinder_tangential_vectors(
     cylinder_in.center, lb_fluid.agrid, 0.5, surface_nodes)
-lb_fluid.add_boundary_from_list(surface_nodes, velocity_magnitude * tangents)
+for node, tangent in zip(surface_nodes, tangents):
+    lb_fluid[node].boundary = espressomd.lb.VelocityBounceBack(
+        velocity_magnitude * tangent)
 
 if args.visualizer:
     import espressomd.visualization_opengl
