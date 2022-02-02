@@ -31,10 +31,6 @@ public:
     return m_fftinstance;
   }
 
-  [[nodiscard]] std::shared_ptr<::walberla::FFT<double>> get_fftinstance() {
-    return m_fftinstance;
-  }
-
 private:
   /* The actual instance */
   std::shared_ptr<::walberla::FFT<double>> m_fftinstance;

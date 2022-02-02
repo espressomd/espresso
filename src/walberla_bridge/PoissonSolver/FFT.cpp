@@ -3,12 +3,12 @@
 #include "LatticeWalberla.hpp"
 #include "PoissonSolver.hpp"
 
-#include "utils/constants.hpp"
+#include <utils/constants.hpp>
 
-#include "field/GhostLayerField.h"
+#include <field/GhostLayerField.h>
 
-#include "blockforest/StructuredBlockForest.h"
-#include "fft/Fft.h"
+#include <blockforest/StructuredBlockForest.h>
+#include <fft/Fft.h>
 
 namespace walberla {
 
@@ -31,7 +31,7 @@ FFT<FloatType>::FFT(std::shared_ptr<LatticeWalberla> lattice,
            real_c(dim[0] * dim[1] * dim[2]);
   };
 
-  m_ft = std::make_unique<fft::FourierTransform<PotentialField>>(
+  m_ft = std::make_shared<fft::FourierTransform<PotentialField>>(
       m_blocks, m_potential_field_id, greens);
 }
 
@@ -69,6 +69,5 @@ template <typename FloatType> void FFT<FloatType>::solve() {
 }
 
 // explicit template instatiation
-template class FFT<float>;
 template class FFT<double>;
 } // namespace walberla

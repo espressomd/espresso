@@ -26,10 +26,7 @@ private:
   using typename PS::ChargeField;
   using typename PS::PotentialField;
 
-  std::unique_ptr<fft::FourierTransform<PotentialField>> m_ft;
-
-  // TODO: figure out how to pass this to the fourier-transformation without
-  //       taking partial-ownership of the BlockForest...
+  std::shared_ptr<fft::FourierTransform<PotentialField>> m_ft;
   std::shared_ptr<blockforest::StructuredBlockForest> m_blocks;
 
 public:
@@ -41,9 +38,9 @@ public:
   void reset_charge_field() override;
   void add_charge_to_field(const BlockDataID &id, FloatType valency) override;
 
-  [[nodiscard]] BlockDataID get_potential_field_id();
+  [[nodiscard]] BlockDataID get_potential_field_id() override;
 
-  void solve();
+  void solve() override;
 };
 } // namespace walberla
 
