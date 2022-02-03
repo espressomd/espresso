@@ -302,8 +302,6 @@ void calc_long_range_force(const ParticleRange &particles) {
   default:
     break;
   }
-
-  /* Add fields from EK if enabled */
 }
 
 double calc_energy_long_range(const ParticleRange &particles) {

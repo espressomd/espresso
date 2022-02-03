@@ -22,7 +22,8 @@ import importlib_wrapper
 import numpy as np
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@SAMPLES_DIR@/lb_planar_couette.py", time_breakpoints=[500])
+    "@SAMPLES_DIR@/lb_planar_couette.py", time_breakpoints=[500],
+    pos_breakpoints=64)
 
 
 @skipIfMissingFeatures

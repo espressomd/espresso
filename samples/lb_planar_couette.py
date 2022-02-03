@@ -81,11 +81,12 @@ system.actors.add(lbf)
 
 # sampling
 time_breakpoints = [50, 200, 500, 2000]
+pos_breakpoints = 256
 for steps in time_breakpoints:
     steps -= int(system.time) - 1
     system.integrator.run(steps)
     time = system.time - 1.
-    position_ref = np.linspace(0.5, 63.5, 256)
+    position_ref = np.linspace(0.5, 63.5, pos_breakpoints)
     position_lbf = np.linspace(0.5, 63.5, 64)
     velocity_ref = analytical(position_ref, time, nu, v, h, k_max)
     velocity_lbf = np.copy(lbf[5, :, 0].velocity[:, :, :, 0].reshape([-1]))

@@ -114,24 +114,16 @@ public:
   virtual boost::optional<Utils::Vector3d>
   get_node_velocity_at_boundary(const Utils::Vector3i &node) const = 0;
 
-  /** @brief Set node velocity boundary conditions.
-   *  For batch processing, use @p reallocate = false and call
-   *  @ref reallocate_ubb_field at the end (useful for e.g. LB boundaries).
-   */
+  /** @brief Set node velocity boundary conditions. */
   virtual bool set_node_velocity_at_boundary(const Utils::Vector3i &node,
-                                             const Utils::Vector3d &v,
-                                             bool reallocate) = 0;
+                                             const Utils::Vector3d &v) = 0;
 
   /** @brief Get (stored) force applied on node due to boundary condition. */
   virtual boost::optional<Utils::Vector3d>
   get_node_boundary_force(const Utils::Vector3i &node) const = 0;
 
-  /** @brief Remove a node from the boundaries.
-   *  For batch processing, use @p reallocate = false and call
-   *  @ref reallocate_ubb_field at the end (useful for e.g. LB boundaries).
-   */
-  virtual bool remove_node_from_boundary(const Utils::Vector3i &node,
-                                         bool reallocate) = 0;
+  /** @brief Remove a node from the boundaries. */
+  virtual bool remove_node_from_boundary(const Utils::Vector3i &node) = 0;
 
   /** @brief Check if node has velocity boundary conditions. */
   virtual boost::optional<bool>
@@ -147,10 +139,6 @@ public:
   /** @brief Update boundary conditions from a rasterized shape. */
   virtual void update_boundary_from_shape(std::vector<int> const &,
                                           std::vector<double> const &) = 0;
-
-  /** @brief Update boundary conditions from a list of nodes. */
-  virtual void update_boundary_from_list(std::vector<int> const &,
-                                         std::vector<double> const &) = 0;
 
   /** @brief Configure an unthermalized collision model. */
   virtual void set_collision_model() = 0;

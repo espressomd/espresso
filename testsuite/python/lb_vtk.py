@@ -95,7 +95,7 @@ class TestLBWrite:
             espressomd.shapes.Wall(normal=[1, 0, 0], dist=1.5))
         self.lbf.add_boundary_from_shape(
             espressomd.shapes.Wall(normal=[-1, 0, 0], dist=-10.5))
-        shape = [4, 14, 16]
+        shape = [8, 14, 16]
 
         n_steps = 100
         lb_steps = int(np.floor(n_steps * self.lbf.tau))

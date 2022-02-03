@@ -19,6 +19,7 @@
 
 include "myconfig.pxi"
 from . cimport polymer
+from . import utils
 import numpy as np
 from .system import System
 from .interactions import BondedInteraction
@@ -130,17 +131,9 @@ def linear_polymer_positions(**kwargs):
 
     required_keys = ["n_polymers", "beads_per_chain", "bond_length", "seed"]
 
-    for k in kwargs:
-        if k not in valid_keys:
-            raise ValueError(f"Unknown parameter '{k}'")
-        params[k] = kwargs[k]
-
-    for k in required_keys:
-        if k not in kwargs:
-            print(k)
-            raise ValueError(
-                "At least the following keys have to be given as keyword arguments: " + required_keys.__str__())
-
+    utils.check_required_keys(required_keys, kwargs.keys())
+    utils.check_valid_keys(valid_keys, kwargs.keys())
+    params.update(kwargs)
     validate_params(params, default_params)
 
     cdef vector[Vector3d] start_positions
