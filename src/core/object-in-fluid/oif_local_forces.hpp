@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _OBJECT_IN_FLUID_OIF_LOCAL_FORCES_H
-#define _OBJECT_IN_FLUID_OIF_LOCAL_FORCES_H
+#ifndef CORE_OBJECT_IN_FLUID_OIF_LOCAL_FORCES_HPP
+#define CORE_OBJECT_IN_FLUID_OIF_LOCAL_FORCES_HPP
 
 /** \file
  *  Routines to calculate the OIF local forces for a particle quadruple

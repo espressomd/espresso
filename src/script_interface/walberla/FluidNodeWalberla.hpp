@@ -104,12 +104,12 @@ public:
       return ES_OK;
     } else if (name == "set_velocity_at_boundary") {
       if (is_none(params.at("value"))) {
-        m_lb_fluid->remove_node_from_boundary(m_index, true);
+        m_lb_fluid->remove_node_from_boundary(m_index);
         m_lb_fluid->ghost_communication();
       } else {
         auto const u =
             get_value<Utils::Vector3d>(params, "value") * m_conv_velocity;
-        m_lb_fluid->set_node_velocity_at_boundary(m_index, u, true);
+        m_lb_fluid->set_node_velocity_at_boundary(m_index, u);
         m_lb_fluid->ghost_communication();
       }
     } else if (name == "get_velocity_at_boundary") {

@@ -26,8 +26,8 @@
  *  see MMM in general. The ELC method works together with any three-dimensional
  *  method, for example \ref p3m.hpp "P3M", with metallic boundary conditions.
  */
-#ifndef _ELC_H
-#define _ELC_H
+#ifndef CORE_ELECTROSTATICS_MAGNETOSTATICS_ELC_HPP
+#define CORE_ELECTROSTATICS_MAGNETOSTATICS_ELC_HPP
 
 #include "config.hpp"
 

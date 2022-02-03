@@ -148,7 +148,6 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
   boost::mpi::communicator world;
 
   auto const box_l = 8.;
-  auto const box_center = box_l / 2.;
   espresso::system->set_box_l(Utils::Vector3d::broadcast(box_l));
   espresso::system->set_node_grid(node_grid);
 

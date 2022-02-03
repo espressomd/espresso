@@ -44,7 +44,8 @@ namespace walberla {
  *   restriction on the ordering of the node_grid may be lifted in the
  *   distant future, when our FFT algorithm is replaced by a new one.
  */
-template <class FieldType> class InterpolateAndShiftAtBoundary {
+template <class FieldType, typename FloatType>
+class InterpolateAndShiftAtBoundary {
 public:
   InterpolateAndShiftAtBoundary(
       std::shared_ptr<StructuredBlockForest> blocks, BlockDataID field_id,
@@ -53,7 +54,7 @@ public:
       std::function<double()> get_pos_offset,
       std::function<double()> get_shift = []() { return 0.0; })
       : m_blocks(std::move(blocks)), m_field_id(field_id),
-        m_tmp_field_id(tmp_field_id), m_n_ghost_layers(n_ghost_layers),
+        m_tmp_field_id(tmp_field_id), m_n_ghost_layers(uint_c(n_ghost_layers)),
         m_shear_direction(uint_c(shear_direction)),
         m_shear_plane_normal(uint_c(shear_plane_normal)),
         m_get_pos_offset(std::move(get_pos_offset)),
@@ -83,7 +84,11 @@ public:
     return m_blocks->atDomainMinBorder(m_shear_plane_normal, *block);
   }
 
-  double get_shift() const { return m_get_shift(); }
+  FloatType get_pos_offset() const {
+    return numeric_cast<FloatType>(m_get_pos_offset());
+  }
+
+  FloatType get_shift() const { return numeric_cast<FloatType>(m_get_shift()); }
 
   void operator()(IBlock *block) {
     if (points_down(block))
@@ -98,9 +103,8 @@ private:
     assert(m_blocks->getNumberOfCells(*block, m_shear_plane_normal) >= 2u);
     auto const dir = m_shear_direction;
     auto const dim = cell_idx_c(m_blocks->getNumberOfCells(*block, dir));
-    auto const length = real_c(dim);
-    auto offset = real_c(m_get_pos_offset());
-    auto const weight = fmod(offset + length, real_t{1});
+    auto const length = numeric_cast<FloatType>(dim);
+    auto const weight = std::fmod(get_pos_offset() + length, FloatType{1});
 
     // setup slab
     auto field = block->template getData<FieldType>(m_field_id);
@@ -110,19 +114,23 @@ private:
     field->getGhostRegion(slab_dir, ci, cell_idx_t{1}, true);
 
     // shift
-    offset *= real_c((slab_dir == m_slab_max) ? -1 : 1);
+    auto const shift = get_shift();
+    auto const offset =
+        get_pos_offset() *
+        ((slab_dir == m_slab_max) ? FloatType{-1} : FloatType{1});
     for (auto cell = ci.begin(); cell != ci.end(); ++cell) {
       Cell source1 = *cell;
       Cell source2 = *cell;
-      source1[dir] = cell_idx_c(floor(source1[dir] + offset + length)) % dim;
-      source2[dir] = cell_idx_c(ceil(source2[dir] + offset + length)) % dim;
+      source1[dir] =
+          cell_idx_c(std::floor(source1[dir] + offset + length)) % dim;
+      source2[dir] =
+          cell_idx_c(std::ceil(source2[dir] + offset + length)) % dim;
 
       for (uint_t q = 0; q < FieldType::F_SIZE; ++q) {
         tmp_field->get(*cell, q) = field->get(source1, q) * (1 - weight) +
                                    field->get(source2, q) * weight;
       }
-      tmp_field->get(*cell, static_cast<uint_t>(m_shear_direction)) +=
-          vel_shift_pref * get_shift();
+      tmp_field->get(*cell, m_shear_direction) += vel_shift_pref * shift;
     }
 
     // swap
@@ -137,9 +145,9 @@ private:
   std::shared_ptr<StructuredBlockForest> m_blocks;
   BlockDataID m_field_id;
   BlockDataID m_tmp_field_id;
-  unsigned int m_n_ghost_layers;
-  unsigned int m_shear_direction;
-  unsigned int m_shear_plane_normal;
+  uint_t m_n_ghost_layers;
+  uint_t m_shear_direction;
+  uint_t m_shear_plane_normal;
   std::function<double()> m_get_pos_offset;
   std::function<double()> m_get_shift;
   stencil::Direction m_slab_min;

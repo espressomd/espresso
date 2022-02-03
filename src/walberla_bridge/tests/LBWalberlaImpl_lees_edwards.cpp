@@ -71,23 +71,20 @@ BOOST_AUTO_TEST_CASE(test_lees_edwards) {
   auto lattice =
       std::make_shared<LatticeWalberla>(Vector3i{8, 64, 8}, mpi_shape, 1);
   auto lb = walberla::LBWalberlaImpl<double>(lattice, viscosity, density);
-  auto le_pack = LeesEdwardsPack(
-      0, 1, [&]() { return 0.0; }, [=]() { return v0; });
+  auto le_pack = std::make_unique<LeesEdwardsPack>(
+      0, 1, []() { return 0.0; }, [=]() { return v0; });
   lb.set_collision_model(std::move(le_pack));
+  auto const grid_size_y = lattice->get_grid_dimensions()[1];
   for (int i = 0; i < 200; i++) {
     lb.integrate();
-    if (i < lattice->get_grid_dimensions()[1] / 2)
+    if (i < grid_size_y / 2.)
       continue;
     for (double y : {-0.5, 0., 0.5, 5.5, 6.5, 7.5, 14.0, 14.5,
-                     0.23 * lattice->get_grid_dimensions()[1],
-                     0.7 * lattice->get_grid_dimensions()[1],
-                     lattice->get_grid_dimensions()[1] * 1.0}) {
+                     0.23 * grid_size_y, 0.7 * grid_size_y, 1. * grid_size_y}) {
       auto u = lb.get_velocity_at_pos(Vector3d{4, y, 4}, true);
-      auto expected =
-          u_expected(y, i, viscosity, v0, lattice->get_grid_dimensions()[1]);
+      auto expected = u_expected(y, i, viscosity, v0, grid_size_y);
       std::cout << y << " " << *u << " " << expected << std::endl;
     }
-
     std::cout << std::endl;
   }
 }

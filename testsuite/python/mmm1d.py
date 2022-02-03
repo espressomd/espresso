@@ -45,6 +45,7 @@ class ElectrostaticInteractionsTests:
 
     def setUp(self):
         self.system.periodicity = [0, 0, 1]
+        self.system.cell_system.set_n_square()
         self.system.part.add(pos=self.p_pos, q=self.p_q)
         self.mmm1d = self.MMM1D(prefactor=1.0, maxPWerror=1e-20)
         self.system.actors.add(self.mmm1d)
@@ -109,6 +110,13 @@ class ElectrostaticInteractionsTests:
                 mmm1d = self.MMM1D(prefactor=1.0, maxPWerror=1e-2)
                 self.system.actors.add(mmm1d)
             self.system.periodicity = (0, 0, 1)
+            self.system.actors.clear()
+        if self.MMM1D is espressomd.electrostatics.MMM1D:
+            with self.assertRaisesRegex(Exception, "MMM1D requires the N-square cellsystem"):
+                mmm1d = self.MMM1D(prefactor=1.0, maxPWerror=1e-2)
+                self.system.cell_system.set_domain_decomposition()
+                self.system.actors.add(mmm1d)
+            self.system.cell_system.set_n_square()
             self.system.actors.clear()
 
 

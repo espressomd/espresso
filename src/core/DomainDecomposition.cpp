@@ -235,11 +235,10 @@ void DomainDecomposition::resort(bool global,
 }
 
 void DomainDecomposition::mark_cells() {
-  int cnt_c = 0;
-
   m_local_cells.clear();
   m_ghost_cells.clear();
 
+  int cnt_c = 0;
   for (int o = 0; o < ghost_cell_grid[2]; o++)
     for (int n = 0; n < ghost_cell_grid[1]; n++)
       for (int m = 0; m < ghost_cell_grid[0]; m++) {
@@ -250,6 +249,7 @@ void DomainDecomposition::mark_cells() {
           m_ghost_cells.push_back(&cells.at(cnt_c++));
       }
 }
+
 void DomainDecomposition::fill_comm_cell_lists(ParticleList **part_lists,
                                                const Utils::Vector3i &lc,
                                                const Utils::Vector3i &hc) {
@@ -286,42 +286,37 @@ void DomainDecomposition::create_cell_grid(double range) {
   auto const cart_info = Utils::Mpi::cart_get<3>(m_comm);
 
   int n_local_cells;
-  double cell_range[3];
-
-  /* initialize */
-  cell_range[0] = cell_range[1] = cell_range[2] = range;
-
-  /* Min num cells can not be smaller than calc_processor_min_num_cells. */
-  int min_num_cells = calc_processor_min_num_cells();
+  auto cell_range = Utils::Vector3d::broadcast(range);
+  auto const min_num_cells = calc_processor_min_num_cells();
 
   if (range <= 0.) {
     /* this is the non-interacting case */
     auto const cells_per_dir =
-        static_cast<int>(std::ceil(std::pow(min_num_cells, 1. / 3.)));
+        static_cast<int>(std::ceil(std::cbrt(min_num_cells)));
 
     cell_grid = Utils::Vector3i::broadcast(cells_per_dir);
     n_local_cells = Utils::product(cell_grid);
   } else {
     /* Calculate initial cell grid */
-    double volume = m_local_box.length()[0];
-    for (int i = 1; i < 3; i++)
-      volume *= m_local_box.length()[i];
-    double scale = pow(DomainDecomposition::max_num_cells / volume, 1. / 3.);
+    auto const &local_box_l = m_local_box.length();
+    auto const volume = Utils::product(local_box_l);
+    auto const scale = std::cbrt(DomainDecomposition::max_num_cells / volume);
+
     for (int i = 0; i < 3; i++) {
       /* this is at least 1 */
-      cell_grid[i] = (int)ceil(m_local_box.length()[i] * scale);
-      cell_range[i] = m_local_box.length()[i] / cell_grid[i];
+      cell_grid[i] = static_cast<int>(std::ceil(local_box_l[i] * scale));
+      cell_range[i] = local_box_l[i] / static_cast<double>(cell_grid[i]);
 
       if (cell_range[i] < range) {
         /* ok, too many cells for this direction, set to minimum */
-        cell_grid[i] = (int)floor(m_local_box.length()[i] / range);
+        cell_grid[i] = static_cast<int>(std::floor(local_box_l[i] / range));
         if (cell_grid[i] < 1) {
-          runtimeErrorMsg() << "interaction range " << range << " in direction "
-                            << i << " is larger than the local box size "
-                            << m_local_box.length()[i];
+          runtimeErrorMsg()
+              << "interaction range " << range << " in direction " << i
+              << " is larger than the local box size " << local_box_l[i];
           cell_grid[i] = 1;
         }
-        cell_range[i] = m_local_box.length()[i] / cell_grid[i];
+        cell_range[i] = local_box_l[i] / static_cast<double>(cell_grid[i]);
       }
     }
 
@@ -360,9 +355,8 @@ void DomainDecomposition::create_cell_grid(double range) {
     }
   }
 
-  /* quit program if unsuccessful */
   if (n_local_cells > DomainDecomposition::max_num_cells) {
-    runtimeErrorMsg() << "no suitable cell grid found ";
+    runtimeErrorMsg() << "no suitable cell grid found";
   }
 
   auto const node_pos = cart_info.coords;

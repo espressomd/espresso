@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _LJ_H
-#define _LJ_H
+#ifndef CORE_NB_IA_LJ_HPP
+#define CORE_NB_IA_LJ_HPP
 
 #include "config.hpp"
 

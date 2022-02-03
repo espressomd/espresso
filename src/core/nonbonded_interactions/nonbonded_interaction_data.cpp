@@ -49,7 +49,7 @@
  * variables
  *****************************************/
 int max_seen_particle_type = 0;
-std::vector<IA_parameters> ia_params;
+std::vector<IA_parameters> nonbonded_ia_params;
 
 double min_global_cut = INACTIVE_CUTOFF;
 
@@ -71,23 +71,23 @@ static void mpi_realloc_ia_params_local(int new_size) {
     }
 
   max_seen_particle_type = new_size;
-  std::swap(ia_params, new_params);
+  std::swap(nonbonded_ia_params, new_params);
 }
 
 REGISTER_CALLBACK(mpi_realloc_ia_params_local)
 
-/** Increase the size of the @ref ia_params vector. */
+/** Increase the size of the @ref nonbonded_ia_params vector. */
 inline void mpi_realloc_ia_params(int new_size) {
   mpi_call_all(mpi_realloc_ia_params_local, new_size);
 }
 
 static void mpi_bcast_all_ia_params_local() {
-  boost::mpi::broadcast(comm_cart, ia_params, 0);
+  boost::mpi::broadcast(comm_cart, nonbonded_ia_params, 0);
 }
 
 REGISTER_CALLBACK(mpi_bcast_all_ia_params_local)
 
-/** Broadcast @ref ia_params to all nodes. */
+/** Broadcast @ref nonbonded_ia_params to all nodes. */
 inline void mpi_bcast_all_ia_params() {
   mpi_call_all(mpi_bcast_all_ia_params_local);
 }
@@ -100,7 +100,7 @@ IA_parameters *get_ia_param_safe(int i, int j) {
 std::string ia_params_get_state() {
   std::stringstream out;
   boost::archive::binary_oarchive oa(out);
-  oa << ia_params;
+  oa << nonbonded_ia_params;
   oa << max_seen_particle_type;
   return out.str();
 }
@@ -110,8 +110,8 @@ void ia_params_set_state(std::string const &state) {
   iostreams::array_source src(state.data(), state.size());
   iostreams::stream<iostreams::array_source> ss(src);
   boost::archive::binary_iarchive ia(ss);
-  ia_params.clear();
-  ia >> ia_params;
+  nonbonded_ia_params.clear();
+  ia >> nonbonded_ia_params;
   ia >> max_seen_particle_type;
   mpi_realloc_ia_params(max_seen_particle_type);
   mpi_bcast_all_ia_params();
@@ -202,7 +202,7 @@ static double recalc_maximal_cutoff(const IA_parameters &data) {
 double maximal_cutoff_nonbonded() {
   auto max_cut_nonbonded = INACTIVE_CUTOFF;
 
-  for (auto &data : ia_params) {
+  for (auto &data : nonbonded_ia_params) {
     data.max_cut = recalc_maximal_cutoff(data);
     max_cut_nonbonded = std::max(max_cut_nonbonded, data.max_cut);
   }
@@ -211,7 +211,7 @@ double maximal_cutoff_nonbonded() {
 }
 
 void reset_ia_params() {
-  boost::fill(ia_params, IA_parameters{});
+  boost::fill(nonbonded_ia_params, IA_parameters{});
   mpi_bcast_all_ia_params();
 }
 

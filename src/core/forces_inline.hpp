@@ -18,8 +18,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _FORCES_INLINE_HPP
-#define _FORCES_INLINE_HPP
+#ifndef CORE_FORCES_INLINE_HPP
+#define CORE_FORCES_INLINE_HPP
+/** \file
+ *  Force calculation.
+ */
 
 #include "config.hpp"
 
@@ -276,12 +279,17 @@ calc_bond_pair_force(Particle const &p1, Particle const &p2,
     return iap->force(dx);
   }
 #endif
+#ifdef BOND_CONSTRAINT
+  if (boost::get<RigidBond>(&iaparams)) {
+    return Utils::Vector3d{};
+  }
+#endif
 #ifdef TABULATED
   if (auto const *iap = boost::get<TabulatedDistanceBond>(&iaparams)) {
     return iap->force(dx);
   }
 #endif
-  if (boost::get<VirtualBond>(&iaparams) || boost::get<RigidBond>(&iaparams)) {
+  if (boost::get<VirtualBond>(&iaparams)) {
     return Utils::Vector3d{};
   }
   throw BondUnknownTypeError();
@@ -343,7 +351,7 @@ calc_bonded_three_body_force(Bonded_IA_Parameters const &iaparams,
 inline bool add_bonded_three_body_force(Bonded_IA_Parameters const &iaparams,
                                         Particle &p1, Particle &p2,
                                         Particle &p3) {
-  if (auto const *iap = boost::get<OifGlobalForcesBond>(&iaparams)) {
+  if (boost::get<OifGlobalForcesBond>(&iaparams)) {
     return false;
   }
   auto const result = calc_bonded_three_body_force(iaparams, p1, p2, p3);
@@ -421,4 +429,4 @@ inline bool add_bonded_force(Particle &p1, int bond_id,
   }
 }
 
-#endif
+#endif // CORE_FORCES_INLINE_HPP

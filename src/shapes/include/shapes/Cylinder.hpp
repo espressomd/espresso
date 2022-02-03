@@ -19,8 +19,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __CYLINDER_HPP
-#define __CYLINDER_HPP
+#ifndef SRC_SHAPES_CYLINDER_HPP
+#define SRC_SHAPES_CYLINDER_HPP
 
 #include "Shape.hpp"
 

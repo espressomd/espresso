@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _HARMONIC_HPP
-#define _HARMONIC_HPP
+#ifndef CORE_BN_IA_HARMONIC_HPP
+#define CORE_BN_IA_HARMONIC_HPP
 /** \file
  *  Routines to calculate the harmonic bond potential between particle pairs.
  */

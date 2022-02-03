@@ -78,7 +78,7 @@ public:
         };
 
         IndexVectors() = default;
-        bool operator==(IndexVectors & other) { return other.cpuVectors_ == cpuVectors_; }
+        bool operator==(const IndexVectors & other) const { return other.cpuVectors_ == cpuVectors_; }
 
         CpuIndexVector & indexVector(Type t) { return cpuVectors_[t]; }
         IndexInfo * pointerCpu(Type t)  { return &(cpuVectors_[t][0]); }

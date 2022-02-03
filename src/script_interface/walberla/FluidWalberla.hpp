@@ -77,8 +77,6 @@ public:
          [this]() { return m_is_single_precision; }},
         {"is_active", AutoParameter::read_only,
          [this]() { return m_is_active; }},
-        {"is_initialized", AutoParameter::read_only,
-         [this]() { return m_lb_fluid != nullptr; }},
         {"agrid", AutoParameter::read_only,
          [this]() { return m_lb_params->get_agrid(); }},
         {"tau", AutoParameter::read_only,
@@ -194,11 +192,7 @@ public:
           get_value<std::vector<int>>(params, "raster"),
           get_value<std::vector<double>>(params, "velocity"));
     }
-    if (name == "add_boundary_from_list") {
-      m_lb_fluid->update_boundary_from_list(
-          get_value<std::vector<int>>(params, "nodes"),
-          get_value<std::vector<double>>(params, "velocity"));
-    } else if (name == "get_lattice_speed") {
+    if (name == "get_lattice_speed") {
       return 1. / m_conv_speed;
     }
 

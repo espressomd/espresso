@@ -1,3 +1,21 @@
+#
+# Copyright (C) 2021-2022 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 import espressomd
 from espressomd.interactions import HarmonicBond
 import espressomd.lees_edwards as lees_edwards
@@ -116,16 +134,16 @@ class LeesEdwards(ut.TestCase):
     def test_boundary_crossing(self):
         """A particle crosses the upper and lower boundary to test if position
         and velocity are updated correctly."""
-#
+
         system = self.system
         system.part.clear()
-#
+
         # Set up a one particle system and check the position offset after crossing the boundary
         # Test for upper boundary
-#
+
         dir = [0, 1, 2]
-        system.lees_edwards.protocol = lin_protocol 
-#
+        system.lees_edwards.protocol = lin_protocol
+
         for sheardir in dir:
             for shear_plane_normal in dir:
                 if sheardir == shear_plane_normal: continue
@@ -133,18 +151,18 @@ class LeesEdwards(ut.TestCase):
                 system.lees_edwards.shear_plane_normal = shear_plane_normal
 
                 shear_axis = axis(sheardir)
-#
+
                 pos = system.box_l - 0.01
                 vel = np.array([1, 1, 1])
                 p = system.part.add(pos=pos, v=vel)
-#
+
                 system.time = 0.0
                 expected_pos = (pos + vel * system.time_step -
-                                system.lees_edwards.pos_offset * shear_axis) 
+                                system.lees_edwards.pos_offset * shear_axis)
                 expected_delta_vel = -params_lin['shear_velocity'] * shear_axis
-#
+
                 system.integrator.run(1)
-#
+
                 np.testing.assert_almost_equal(p.v, vel + expected_delta_vel)
                 np.testing.assert_almost_equal(p.pos, expected_pos)
 
@@ -208,15 +226,15 @@ class LeesEdwards(ut.TestCase):
     def test_distance_vel_diff(self):
         """check distance and velocity difference calculation across LE boundary
         """
-        \
+
         system = self.system
         system.time = 0.0
         system.part.clear()
         system.lees_edwards.protocol = lin_protocol
         epsilon = 0.01
-#
+
         dir = [0, 1, 2]
-#
+
         for sheardir in dir:
             for shear_plane_normal in dir:
                 if sheardir != shear_plane_normal:
@@ -232,15 +250,14 @@ class LeesEdwards(ut.TestCase):
                         pos=system.box_l - epsilon, v=np.random.random(3), fix=[1] * 3)
                     r_euclid = -2 * np.array([epsilon] * 3)
 
-#
-                    # check distance 
+                    # check distance
                     np.testing.assert_allclose(
                         system.distance_vec(p1, p2), r_euclid + system.lees_edwards.pos_offset * shear_axis)
                     np.testing.assert_allclose(
                         np.copy(system.distance_vec(p1, p2)),
                         -np.copy(system.distance_vec(p2, p1)))
 
-                    # Ceck velocity difference
+                    # Check velocity difference
                     np.testing.assert_allclose(
                         system.velocity_difference(p1, p2),
                         p2.v - p1.v - system.lees_edwards.shear_velocity * shear_axis)
@@ -249,15 +266,15 @@ class LeesEdwards(ut.TestCase):
         """We place two particles crossing a boundary and connect them with an unbonded
            and bonded interaction. We test with the resulting stress tensor if the offset
            is included properly"""
-#
+
         system = self.system
         system.time = 0.0
         system.part.clear()
         system.lees_edwards.protocol = lin_protocol
         epsilon = 0.01
-#
+
         dir = [0, 1, 2]
-#
+
         for sheardir in dir:
             for shear_plane_normal in dir:
                 if sheardir != shear_plane_normal:
@@ -270,7 +287,6 @@ class LeesEdwards(ut.TestCase):
                     p2 = system.part.add(
                         pos=system.box_l - epsilon, fix=[1] * 3)
 
-#
                     # check bonded interaction
                     k_bond = 2.1
                     r_cut = 1.5
@@ -293,7 +309,7 @@ class LeesEdwards(ut.TestCase):
                     np.testing.assert_almost_equal(
                         system.analysis.energy()["bonded"],
                         1 / 2 * k_bond * system.distance(p1, p2)**2)
-                    p1.bonds = [] 
+                    p1.bonds = []
 
                     # Check non bonded interaction
                     k_non_bonded = 3.2
@@ -321,7 +337,7 @@ class LeesEdwards(ut.TestCase):
                     system.part.clear()
 
     def test_virt_sites(self):
-        """Tests placement and force transfer for virtual sites across Le 
+        """Tests placement and force transfer for virtual sites across LE
         boundaries. """
         system = self.system
         system.part.clear()
@@ -445,7 +461,7 @@ class LeesEdwards(ut.TestCase):
         system = self.system
         system.cell_system.set_n_square(use_verlet_lists=False)
         # Parameters
-        n = 100 
+        n = 100
         phi = 0.4
         sigma = 1.
         eps = 1
@@ -458,12 +474,12 @@ class LeesEdwards(ut.TestCase):
         system.box_l = l, l, l
         system.lees_edwards.protocol = None
         system.part.clear()
-#
+
         system.time_step = 0.01
         system.thermostat.turn_off()
 
         system.part.add(pos=np.random.random((n, 3)) * l)
-# #
+
         # interactions
         system.non_bonded_inter[0, 0].lennard_jones.set_params(
             epsilon=eps, sigma=sigma, cutoff=cut, shift="auto")
@@ -476,10 +492,11 @@ class LeesEdwards(ut.TestCase):
         system.integrator.set_vv()
 
     def test_z5_lj(self):
-        #         """Simulates an LJ liquid under linear shear and verifies forces. This is to make sure that no pairs
-        #            get lost or are outdated in the short range loop.
-        # To have deterministic forces, velocity capping is used rather than a
-        # thermostat."""
+        """
+        Simulates an LJ liquid under linear shear and verifies forces. This is to
+        make sure that no pairs get lost or are outdated in the short range loop.
+        To have deterministic forces, velocity capping is used rather than a
+        thermostat."""
         system = self.system
         self.setup_lj_liquid()
         system.time = 0
@@ -490,7 +507,7 @@ class LeesEdwards(ut.TestCase):
         system.integrator.run(1, recalc_forces=True)
         check_non_bonded_loop_trace(system)
 
-        # Rwind the clock to get back the EL offset applied during force calc
+        # Rewind the clock to get back the LE offset applied during force calc
         system.time = system.time - system.time_step
         verify_lj_forces(system, 1E-7)
 

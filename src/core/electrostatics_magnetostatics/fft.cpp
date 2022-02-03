@@ -421,15 +421,12 @@ void back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b,
  *  that they are multiples of the 3D grid dimensions.
  *  \param g3d      3D grid.
  *  \param g2d      2D grid.
- *  \param mult     factors between 3D and 2D grid dimensions
  *  \return         index of the row direction [0,1,2].
  */
-int map_3don2d_grid(int const g3d[3], int g2d[3], int mult[3]) {
+int map_3don2d_grid(int const g3d[3], int g2d[3]) {
   int row_dir = -1;
   /* trivial case */
   if (g3d[2] == 1) {
-    for (int i = 0; i < 3; i++)
-      mult[i] = 1;
     return 2;
   }
   if (g2d[0] % g3d[0] == 0) {
@@ -464,13 +461,14 @@ int map_3don2d_grid(int const g3d[3], int g2d[3], int mult[3]) {
       g2d[0] = 1;
     }
   }
-  for (int i = 0; i < 3; i++)
-    mult[i] = g2d[i] / g3d[i];
   return row_dir;
 }
 
 /** Calculate most square 2D grid. */
 void calc_2d_grid(int n, int grid[3]) {
+  grid[0] = n;
+  grid[1] = 1;
+  grid[2] = 1;
   for (auto i = static_cast<int>(std::sqrt(n)); i >= 1; i--) {
     if (n % i == 0) {
       grid[0] = n / i;
@@ -486,9 +484,6 @@ int fft_init(const Utils::Vector3i &ca_mesh_dim, int const *ca_mesh_margin,
              int const *global_mesh_dim, double const *global_mesh_off,
              int &ks_pnum, fft_data_struct &fft, const Utils::Vector3i &grid,
              const boost::mpi::communicator &comm) {
-  int i, j;
-  /* helpers */
-  int mult[3];
 
   int n_grid[4][3];         /* The four node grids. */
   int my_pos[4][3];         /* The position of comm.rank() in the node grids. */
@@ -500,18 +495,18 @@ int fft_init(const Utils::Vector3i &ca_mesh_dim, int const *ca_mesh_margin,
 
   fft.max_comm_size = 0;
   fft.max_mesh_size = 0;
-  for (i = 0; i < 4; i++) {
+  for (int i = 0; i < 4; i++) {
     n_id[i].resize(1 * comm.size());
     n_pos[i].resize(3 * comm.size());
   }
 
   /* === node grids === */
   /* real space node grid (n_grid[0]) */
-  for (i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {
     n_grid[0][i] = grid[i];
     my_pos[0][i] = node_pos[i];
   }
-  for (i = 0; i < comm.size(); i++) {
+  for (int i = 0; i < comm.size(); i++) {
     MPI_Cart_coords(comm, i, 3, &(n_pos[0][3 * i + 0]));
     auto const lin_ind = get_linear_index(
         n_pos[0][3 * i + 0], n_pos[0][3 * i + 1], n_pos[0][3 * i + 2],
@@ -522,11 +517,11 @@ int fft_init(const Utils::Vector3i &ca_mesh_dim, int const *ca_mesh_margin,
   /* FFT node grids (n_grid[1 - 3]) */
   calc_2d_grid(comm.size(), n_grid[1]);
   /* resort n_grid[1] dimensions if necessary */
-  fft.plan[1].row_dir = map_3don2d_grid(n_grid[0], n_grid[1], mult);
+  fft.plan[1].row_dir = map_3don2d_grid(n_grid[0], n_grid[1]);
   fft.plan[0].n_permute = 0;
-  for (i = 1; i < 4; i++)
+  for (int i = 1; i < 4; i++)
     fft.plan[i].n_permute = (fft.plan[1].row_dir + i) % 3;
-  for (i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {
     n_grid[2][i] = n_grid[1][(i + 1) % 3];
     n_grid[3][i] = n_grid[1][(i + 2) % 3];
   }
@@ -535,10 +530,10 @@ int fft_init(const Utils::Vector3i &ca_mesh_dim, int const *ca_mesh_margin,
 
   /* === communication groups === */
   /* copy local mesh off real space charge assignment grid */
-  for (i = 0; i < 3; i++)
+  for (int i = 0; i < 3; i++)
     fft.plan[0].new_mesh[i] = ca_mesh_dim[i];
 
-  for (i = 1; i < 4; i++) {
+  for (int i = 1; i < 4; i++) {
     using Utils::make_span;
     auto group = find_comm_groups(
         {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
@@ -574,7 +569,7 @@ int fft_init(const Utils::Vector3i &ca_mesh_dim, int const *ca_mesh_margin,
     fft.plan[i].n_ffts = fft.plan[i].new_mesh[0] * fft.plan[i].new_mesh[1];
 
     /* === send/recv block specifications === */
-    for (j = 0; j < fft.plan[i].group.size(); j++) {
+    for (int j = 0; j < fft.plan[i].group.size(); j++) {
       /* send block: comm.rank() to comm-group-node i (identity: node) */
       int node = fft.plan[i].group[j];
       fft.plan[i].send_size[j] = calc_send_block(
@@ -605,13 +600,13 @@ int fft_init(const Utils::Vector3i &ca_mesh_dim, int const *ca_mesh_margin,
         fft.max_comm_size = fft.plan[i].recv_size[j];
     }
 
-    for (j = 0; j < 3; j++)
+    for (int j = 0; j < 3; j++)
       fft.plan[i].old_mesh[j] = fft.plan[i - 1].new_mesh[j];
-    if (i == 1)
+    if (i == 1) {
       fft.plan[i].element = 1;
-    else {
+    } else {
       fft.plan[i].element = 2;
-      for (j = 0; j < fft.plan[i].group.size(); j++) {
+      for (int j = 0; j < fft.plan[i].group.size(); j++) {
         fft.plan[i].send_size[j] *= 2;
         fft.plan[i].recv_size[j] *= 2;
       }
@@ -621,12 +616,12 @@ int fft_init(const Utils::Vector3i &ca_mesh_dim, int const *ca_mesh_margin,
   /* Factor 2 for complex fields */
   fft.max_comm_size *= 2;
   fft.max_mesh_size = Utils::product(ca_mesh_dim);
-  for (i = 1; i < 4; i++)
+  for (int i = 1; i < 4; i++)
     if (2 * fft.plan[i].new_size > fft.max_mesh_size)
       fft.max_mesh_size = 2 * fft.plan[i].new_size;
 
   /* === pack function === */
-  for (i = 1; i < 4; i++) {
+  for (int i = 1; i < 4; i++) {
     fft.plan[i].pack_function = pack_block_permute2;
   }
   ks_pnum = 6;
@@ -644,7 +639,7 @@ int fft_init(const Utils::Vector3i &ca_mesh_dim, int const *ca_mesh_margin,
   auto *c_data = (fftw_complex *)(fft.data_buf.data());
 
   /* === FFT Routines (Using FFTW / RFFTW package)=== */
-  for (i = 1; i < 4; i++) {
+  for (int i = 1; i < 4; i++) {
     fft.plan[i].dir = FFTW_FORWARD;
     /* FFT plan creation.*/
 
@@ -658,7 +653,7 @@ int fft_init(const Utils::Vector3i &ca_mesh_dim, int const *ca_mesh_margin,
 
   /* === The BACK Direction === */
   /* this is needed because slightly different functions are used */
-  for (i = 1; i < 4; i++) {
+  for (int i = 1; i < 4; i++) {
     fft.back[i].dir = FFTW_BACKWARD;
 
     if (fft.init_tag)

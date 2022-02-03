@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __TORUS_HPP
-#define __TORUS_HPP
+#ifndef SRC_SHAPES_TORUS_HPP
+#define SRC_SHAPES_TORUS_HPP
 
 #include "Shape.hpp"
 #include <utils/Vector.hpp>

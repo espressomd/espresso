@@ -18,11 +18,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef CORE_ENERGY_INLINE_HPP
+#define CORE_ENERGY_INLINE_HPP
 /** \file
- *  Implementation of the energy calculation.
+ *  Energy calculation.
  */
-#ifndef ENERGY_INLINE_HPP
-#define ENERGY_INLINE_HPP
 
 #include "config.hpp"
 
@@ -192,7 +192,7 @@ inline void add_non_bonded_pair_energy(Particle const &p1, Particle const &p2,
 #ifdef ELECTROSTATICS
   if (!obs_energy.coulomb.empty())
     obs_energy.coulomb[0] +=
-        Coulomb::pair_energy(p1, p2, p1.p.q * p2.p.q, d, dist, dist2);
+        Coulomb::pair_energy(p1, p2, p1.p.q * p2.p.q, d, dist);
 #endif
 
 #ifdef DIPOLES
@@ -204,7 +204,7 @@ inline void add_non_bonded_pair_energy(Particle const &p1, Particle const &p2,
 inline boost::optional<double>
 calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
                    Utils::Span<Particle *> partners) {
-  auto const n_partners = partners.size();
+  auto const n_partners = static_cast<int>(partners.size());
 
   auto p2 = (n_partners > 0) ? partners[0] : nullptr;
   auto p3 = (n_partners > 1) ? partners[1] : nullptr;
@@ -230,8 +230,8 @@ calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
     }
 #endif
 #ifdef BOND_CONSTRAINT
-    if (auto const *iap = boost::get<RigidBond>(&iaparams)) {
-      return boost::optional<double>(0);
+    if (boost::get<RigidBond>(&iaparams)) {
+      return {0.};
     }
 #endif
 #ifdef TABULATED
@@ -239,8 +239,8 @@ calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
       return iap->energy(dx);
     }
 #endif
-    if (auto const *iap = boost::get<VirtualBond>(&iaparams)) {
-      return boost::optional<double>(0);
+    if (boost::get<VirtualBond>(&iaparams)) {
+      return {0.};
     }
     throw BondUnknownTypeError();
   } // 1 partner
@@ -257,7 +257,7 @@ calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
     if (auto const *iap = boost::get<TabulatedAngleBond>(&iaparams)) {
       return iap->energy(p1.r.p, p2->r.p, p3->r.p);
     }
-    if (auto const *iap = boost::get<IBMTriel>(&iaparams)) {
+    if (boost::get<IBMTriel>(&iaparams)) {
       runtimeWarningMsg() << "Unsupported bond type " +
                                  std::to_string(iaparams.which()) +
                                  " in energy calculation.";
@@ -272,7 +272,7 @@ calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
     if (auto const *iap = boost::get<TabulatedDihedralBond>(&iaparams)) {
       return iap->energy(p2->r.p, p1.r.p, p3->r.p, p4->r.p);
     }
-    if (auto const *iap = boost::get<IBMTribend>(&iaparams)) {
+    if (boost::get<IBMTribend>(&iaparams)) {
       runtimeWarningMsg() << "Unsupported bond type " +
                                  std::to_string(iaparams.which()) +
                                  " in energy calculation.";
@@ -314,4 +314,4 @@ inline double calc_kinetic_energy(Particle const &p) {
   return translational_kinetic_energy(p) + rotational_kinetic_energy(p);
 }
 
-#endif // ENERGY_INLINE_HPP
+#endif // CORE_ENERGY_INLINE_HPP

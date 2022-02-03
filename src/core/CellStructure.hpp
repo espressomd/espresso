@@ -34,7 +34,7 @@
 #include "bond_error.hpp"
 #include "ghosts.hpp"
 
-#include "utils/math/sqr.hpp"
+#include <utils/math/sqr.hpp>
 
 #include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/container/static_vector.hpp>
@@ -155,6 +155,7 @@ public:
    */
   void update_particle_index(int id, Particle *p) {
     assert(id >= 0);
+    // cppcheck-suppress assertWithSideEffect
     assert(not p or id == p->identity());
 
     if (id >= m_particle_index.size())

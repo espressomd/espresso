@@ -168,11 +168,6 @@ class LBWalberlaImpl : public LBWalberlaBase {
       typename detail::KernelTrait<FloatType>::UpdateVelocityFromPDFSweep;
   using BoundaryModel = BoundaryHandling<FloatType>;
 
-public:
-  typedef stencil::D3Q19 Stencil;
-  using PdfField = GhostLayerField<FloatType, Stencil::Size>;
-  using VectorField = GhostLayerField<FloatType, 3u>;
-
 protected:
   using CollisionModel =
       boost::variant<UnthermalizedCollisionModel, ThermalizedCollisionModel,
@@ -212,6 +207,9 @@ private:
 
 public:
   // Type definitions
+  typedef stencil::D3Q19 Stencil;
+  using PdfField = GhostLayerField<FloatType, Stencil::Size>;
+  using VectorField = GhostLayerField<FloatType, 3u>;
   using FlagField = typename BoundaryModel::FlagField;
   using Lattice_T = LatticeWalberla::Lattice_T;
 
@@ -242,6 +240,11 @@ private:
     velocity *= invRho;
     return rho;
   }
+
+  auto get_velocity_field_ptr(const IBlock *block) const {
+    return block->template uncheckedFastGetData<VectorField>(
+        m_velocity_field_id);
+  };
 
   void setDensityAndVelocity(const BlockAndCell &bc,
                              Vector3<FloatType> const &velocity,
@@ -328,13 +331,14 @@ protected:
   std::shared_ptr<UpdateVelocityFromPDFSweep> m_update_velocity_field_from_pdfs;
 
   // Lees Edwards boundary interpolation
-  std::shared_ptr<InterpolateAndShiftAtBoundary<PdfField>>
+  std::unique_ptr<LeesEdwardsPack> m_lees_edwards_callbacks;
+  std::shared_ptr<InterpolateAndShiftAtBoundary<PdfField, FloatType>>
       m_lees_edwards_pdf_interpol_sweep;
-  std::shared_ptr<InterpolateAndShiftAtBoundary<VectorField>>
+  std::shared_ptr<InterpolateAndShiftAtBoundary<VectorField, FloatType>>
       m_lees_edwards_vel_interpol_sweep;
-  std::shared_ptr<InterpolateAndShiftAtBoundary<VectorField>>
+  std::shared_ptr<InterpolateAndShiftAtBoundary<VectorField, FloatType>>
       m_lees_edwards_last_applied_force_interpol_sweep;
-  std::shared_ptr<InterpolateAndShiftAtBoundary<VectorField>>
+  std::shared_ptr<InterpolateAndShiftAtBoundary<VectorField, FloatType>>
       m_lees_edwards_force_to_be_applied_backwards_interpol_sweep;
 
   // Collision sweep
@@ -437,9 +441,17 @@ public:
     (*m_full_communication).communicate();
   }
 
-  bool lees_edwards_bc() {
-    return boost::get<LeesEdwardsCollisionModel>(&*m_collision_model);
-  };
+private:
+  inline void integrate_stream(std::shared_ptr<Lattice_T> const &blocks) {
+    for (auto b = blocks->begin(); b != blocks->end(); ++b)
+      (*m_stream)(&*b);
+  }
+
+  inline void
+  update_velocity_field_from_pdf(std::shared_ptr<Lattice_T> const &blocks) {
+    for (auto b = blocks->begin(); b != blocks->end(); ++b)
+      (*m_update_velocity_field_from_pdfs)(&*b);
+  }
 
   inline void integrate_collide(std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
@@ -450,15 +462,8 @@ public:
     }
   }
 
-  inline void integrate_stream(std::shared_ptr<Lattice_T> const &blocks) {
-    for (auto b = blocks->begin(); b != blocks->end(); ++b)
-      (*m_stream)(&*b);
-  };
-
-  inline void
-  update_velocity_field_from_pdf(std::shared_ptr<Lattice_T> const &blocks) {
-    for (auto b = blocks->begin(); b != blocks->end(); ++b)
-      (*m_update_velocity_field_from_pdfs)(&*b);
+  bool lees_edwards_bc() {
+    return boost::get<LeesEdwardsCollisionModel>(&*m_collision_model);
   }
 
   inline void apply_lees_edwards_pdf_interpolation(
@@ -481,23 +486,15 @@ public:
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_lees_edwards_force_to_be_applied_backwards_interpol_sweep)(&*b);
   }
-  inline void integrate_boundaries(std::shared_ptr<Lattice_T> const &blocks) {
-    for (auto b = blocks->begin(); b != blocks->end(); ++b)
-      (*m_boundary)(&*b);
-  }
 
   inline void integrate_reset_force(std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_reset_force)(&*b);
   }
-  inline void integrate_vtk_writers() {
-    for (auto it = m_vtk_auto.begin(); it != m_vtk_auto.end(); ++it) {
-      auto &vtk_handle = it->second;
-      if (vtk_handle->enabled) {
-        vtk::writeFiles(vtk_handle->ptr)();
-        vtk_handle->execution_count++;
-      }
-    }
+
+  inline void integrate_boundaries(std::shared_ptr<Lattice_T> const &blocks) {
+    for (auto b = blocks->begin(); b != blocks->end(); ++b)
+      (*m_boundary)(&*b);
   }
 
   void integrate_push_scheme() {
@@ -527,7 +524,6 @@ public:
     integrate_boundaries(blocks);
     // LB stream
     integrate_stream(blocks);
-
     // LB collide
     integrate_collide(blocks);
 
@@ -537,11 +533,22 @@ public:
       apply_lees_edwards_pdf_interpolation(blocks);
       apply_lees_edwards_vel_interpolation_and_shift(blocks);
       apply_lees_edwards_last_applied_force_interpolation(blocks);
-    };
+    }
+  }
+
+  inline void integrate_vtk_writers() {
+    for (auto it = m_vtk_auto.begin(); it != m_vtk_auto.end(); ++it) {
+      auto &vtk_handle = it->second;
+      if (vtk_handle->enabled) {
+        vtk::writeFiles(vtk_handle->ptr)();
+        vtk_handle->execution_count++;
+      }
+    }
   }
 
 public:
   void integrate() override {
+    reallocate_ubb_field();
     if (lees_edwards_bc()) {
       integrate_pull_scheme();
     } else {
@@ -581,62 +588,58 @@ public:
     m_collision_model = std::make_shared<CollisionModel>(std::move(obj));
   }
 
-  void set_collision_model(LeesEdwardsPack &&lees_edwards_pack) override {
+  void set_collision_model(
+      std::unique_ptr<LeesEdwardsPack> &&lees_edwards_pack) override {
     if (m_kT != 0.) {
       throw std::runtime_error(
           "Lees-Edwards LB doesn't support thermalization");
     }
-    int shear_normal_grid =
-        lattice().get_grid_dimensions()[lees_edwards_pack.shear_plane_normal];
-    auto const shear_plane_size =
-        Utils::product(lattice().get_grid_dimensions()) / shear_normal_grid;
-    auto const shear_vel = FloatType_c(lees_edwards_pack.get_shear_velocity());
-    m_lees_edwards_pdf_interpol_sweep =
-        std::make_shared<InterpolateAndShiftAtBoundary<PdfField>>(
-            lattice().get_blocks(), m_pdf_field_id, m_pdf_tmp_field_id,
-            lattice().get_ghost_layers(), lees_edwards_pack.shear_direction,
-            lees_edwards_pack.shear_plane_normal,
-            lees_edwards_pack.get_pos_offset);
-    m_lees_edwards_vel_interpol_sweep =
-        std::make_shared<InterpolateAndShiftAtBoundary<VectorField>>(
-            lattice().get_blocks(), m_velocity_field_id, m_vec_tmp_field_id,
-            lattice().get_ghost_layers(), lees_edwards_pack.shear_direction,
-            lees_edwards_pack.shear_plane_normal,
-            lees_edwards_pack.get_pos_offset,
-            lees_edwards_pack.get_shear_velocity);
-    m_lees_edwards_last_applied_force_interpol_sweep =
-        std::make_shared<InterpolateAndShiftAtBoundary<VectorField>>(
-            lattice().get_blocks(), m_last_applied_force_field_id,
-            m_vec_tmp_field_id, lattice().get_ghost_layers(),
-            lees_edwards_pack.shear_direction,
-            lees_edwards_pack.shear_plane_normal,
-            lees_edwards_pack.get_pos_offset);
-    m_lees_edwards_force_to_be_applied_backwards_interpol_sweep =
-        std::make_shared<InterpolateAndShiftAtBoundary<VectorField>>(
-            lattice().get_blocks(), m_force_to_be_applied_id,
-            m_vec_tmp_field_id, lattice().get_ghost_layers(),
-            lees_edwards_pack.shear_direction,
-            lees_edwards_pack.shear_plane_normal, [&lees_edwards_pack]() {
-              return -1.0 * lees_edwards_pack.get_pos_offset();
-            });
 
+    auto const shear_direction = lees_edwards_pack->shear_direction;
+    auto const shear_plane_normal = lees_edwards_pack->shear_plane_normal;
+    auto const shear_vel = FloatType_c(lees_edwards_pack->get_shear_velocity());
     auto const omega = shear_mode_relaxation_rate();
-    auto const omega_odd = odd_mode_relaxation_rate(omega);
     auto obj =
         LeesEdwardsCollisionModel(m_last_applied_force_field_id, m_pdf_field_id,
                                   FloatType_c(64), omega, shear_vel);
     m_collision_model = std::make_shared<CollisionModel>(std::move(obj));
-    // auto *cm = boost::get<LeesEdwardsCollisionModel>(&*m_collision_model);
-    // cm->grid_size_ = int64_t(shear_plane_size);
+    m_lees_edwards_callbacks = std::move(lees_edwards_pack);
+    m_lees_edwards_pdf_interpol_sweep =
+        std::make_shared<InterpolateAndShiftAtBoundary<PdfField, FloatType>>(
+            lattice().get_blocks(), m_pdf_field_id, m_pdf_tmp_field_id,
+            lattice().get_ghost_layers(), shear_direction, shear_plane_normal,
+            m_lees_edwards_callbacks->get_pos_offset);
+    m_lees_edwards_vel_interpol_sweep =
+        std::make_shared<InterpolateAndShiftAtBoundary<VectorField, FloatType>>(
+            lattice().get_blocks(), m_velocity_field_id, m_vec_tmp_field_id,
+            lattice().get_ghost_layers(), shear_direction, shear_plane_normal,
+            m_lees_edwards_callbacks->get_pos_offset,
+            m_lees_edwards_callbacks->get_shear_velocity);
+    m_lees_edwards_last_applied_force_interpol_sweep =
+        std::make_shared<InterpolateAndShiftAtBoundary<VectorField, FloatType>>(
+            lattice().get_blocks(), m_last_applied_force_field_id,
+            m_vec_tmp_field_id, lattice().get_ghost_layers(), shear_direction,
+            shear_plane_normal, m_lees_edwards_callbacks->get_pos_offset);
+    m_lees_edwards_force_to_be_applied_backwards_interpol_sweep =
+        std::make_shared<InterpolateAndShiftAtBoundary<VectorField, FloatType>>(
+            lattice().get_blocks(), m_force_to_be_applied_id,
+            m_vec_tmp_field_id, lattice().get_ghost_layers(), shear_direction,
+            shear_plane_normal, [this]() {
+              return -1.0 * m_lees_edwards_callbacks->get_pos_offset();
+            });
   }
 
   void set_viscosity(double viscosity) override {
     m_viscosity = FloatType_c(viscosity);
   }
 
-  double get_viscosity() const override { return m_viscosity; }
+  double get_viscosity() const override {
+    return numeric_cast<double>(m_viscosity);
+  }
 
-  double get_density() const override { return m_density; }
+  double get_density() const override {
+    return numeric_cast<double>(m_density);
+  }
 
   // Velocity
   boost::optional<Utils::Vector3d>
@@ -649,8 +652,7 @@ public:
     auto const bc = get_block_and_cell(lattice(), node, consider_ghosts);
     if (!bc)
       return {};
-    auto const &vel_field =
-        (*bc).block->template getData<VectorField>(m_velocity_field_id);
+    auto const vel_field = get_velocity_field_ptr(bc->block);
     return Utils::Vector3d{double_c(vel_field->get((*bc).cell, uint_t(0u))),
                            double_c(vel_field->get((*bc).cell, uint_t(1u))),
                            double_c(vel_field->get((*bc).cell, uint_t(2u)))};
@@ -728,8 +730,9 @@ public:
       auto const bc =
           get_block_and_cell(lattice(), Utils::Vector3i(node), true);
       if (bc) {
-        auto force_field = (*bc).block->template getData<VectorField>(
-            m_force_to_be_applied_id);
+        auto force_field =
+            (*bc).block->template uncheckedFastGetData<VectorField>(
+                m_force_to_be_applied_id);
         for (int i : {0, 1, 2})
           force_field->get((*bc).cell, i) += FloatType_c(force[i] * weight);
       }
@@ -837,47 +840,39 @@ public:
 
   boost::optional<Utils::Vector3d>
   get_node_velocity_at_boundary(const Utils::Vector3i &node) const override {
-    auto bc = get_block_and_cell(lattice(), node, true);
-    if (!bc or !m_boundary->node_is_boundary(*bc))
+    auto const bc = get_block_and_cell(lattice(), node, true);
+    if (!bc or !m_boundary->node_is_boundary(node))
       return {boost::none};
 
     return {m_boundary->get_node_velocity_at_boundary(node)};
   }
 
   bool set_node_velocity_at_boundary(const Utils::Vector3i &node,
-                                     const Utils::Vector3d &v,
-                                     bool reallocate) override {
+                                     const Utils::Vector3d &v) override {
     auto bc = get_block_and_cell(lattice(), node, true);
     if (!bc)
       return false;
 
     m_boundary->set_node_velocity_at_boundary(node, v, *bc);
-    if (reallocate) {
-      m_boundary->ubb_update();
-    }
 
     return true;
   }
 
   boost::optional<Utils::Vector3d>
   get_node_boundary_force(const Utils::Vector3i &node) const override {
-    auto bc = get_block_and_cell(lattice(), node, true); // including ghosts
-    if (!bc or !m_boundary->node_is_boundary(*bc))
+    auto const bc = get_block_and_cell(lattice(), node, true);
+    if (!bc or !m_boundary->node_is_boundary(node))
       return {boost::none};
 
     return get_node_last_applied_force(node, true);
   }
 
-  bool remove_node_from_boundary(const Utils::Vector3i &node,
-                                 bool reallocate) override {
+  bool remove_node_from_boundary(const Utils::Vector3i &node) override {
     auto bc = get_block_and_cell(lattice(), node, true);
     if (!bc)
       return false;
 
     m_boundary->remove_node_from_boundary(node, *bc);
-    if (reallocate) {
-      m_boundary->ubb_update();
-    }
 
     return true;
   }
@@ -885,18 +880,17 @@ public:
   boost::optional<bool>
   get_node_is_boundary(const Utils::Vector3i &node,
                        bool consider_ghosts = false) const override {
-    auto bc = get_block_and_cell(lattice(), node, consider_ghosts);
+    auto const bc = get_block_and_cell(lattice(), node, consider_ghosts);
     if (!bc)
       return {boost::none};
 
-    return {m_boundary->node_is_boundary(*bc)};
+    return {m_boundary->node_is_boundary(node)};
   }
 
   void reallocate_ubb_field() override { m_boundary->ubb_update(); }
 
   void clear_boundaries() override { reset_boundary_handling(); }
 
-  /** @brief Update boundary conditions from a rasterized shape. */
   void update_boundary_from_shape(
       std::vector<int> const &raster_flat,
       std::vector<double> const &slip_velocity_flat) override {
@@ -951,33 +945,11 @@ public:
         }
       }
     }
-    reallocate_ubb_field();
-  }
-
-  /** @brief Update boundary conditions from a list of nodes. */
-  void update_boundary_from_list(std::vector<int> const &nodes_flat,
-                                 std::vector<double> const &vel_flat) override {
-    // reshape grids
-    auto const grid_size = lattice().get_grid_dimensions();
-    auto const n_grid_points = Utils::product(grid_size);
-    auto const n_ghost_layers = lattice().get_ghost_layers();
-    assert(nodes_flat.size() == vel_flat.size());
-    assert(nodes_flat.size() % 3u == 0);
-    for (std::size_t i = 0; i < nodes_flat.size(); i += 3) {
-      auto const node = Utils::Vector3i(&nodes_flat[i], &nodes_flat[i + 3]);
-      auto const vel = Utils::Vector3d(&vel_flat[i], &vel_flat[i + 3]);
-      auto const bc = get_block_and_cell(lattice(), node, true);
-      if (bc) {
-        m_boundary->set_node_velocity_at_boundary(node, vel, *bc);
-      }
-    }
-    reallocate_ubb_field();
   }
 
   // Pressure tensor
   boost::optional<Utils::VectorXd<9>>
   get_node_pressure_tensor(const Utils::Vector3i &node) const override {
-    auto const n_ghost_layers = lattice().get_ghost_layers();
     auto bc = get_block_and_cell(lattice(), node, false);
     if (!bc)
       return {boost::none};
@@ -1030,7 +1002,7 @@ public:
     return m_reset_force->get_ext_force();
   }
 
-  double get_kT() const override { return m_kT; }
+  double get_kT() const override { return numeric_cast<double>(m_kT); }
 
   uint64_t get_rng_state() const override {
     auto const *cm = boost::get<ThermalizedCollisionModel>(&*m_collision_model);
@@ -1099,7 +1071,6 @@ public:
     return vtk_handle;
   }
 
-  /** Manually call a VTK callback */
   void write_vtk(std::string const &vtk_uid) override {
     if (m_vtk_auto.find(vtk_uid) != m_vtk_auto.end()) {
       throw vtk_runtime_error(vtk_uid, "is an automatic observable");
@@ -1112,7 +1083,6 @@ public:
     vtk_handle->execution_count++;
   }
 
-  /** Activate or deactivate a VTK callback */
   void switch_vtk(std::string const &vtk_uid, bool status) override {
     if (m_vtk_manual.find(vtk_uid) != m_vtk_manual.end()) {
       throw vtk_runtime_error(vtk_uid, "is a manual observable");

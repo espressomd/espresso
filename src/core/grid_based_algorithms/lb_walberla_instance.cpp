@@ -134,7 +134,7 @@ init_lb_walberla(std::shared_ptr<LatticeWalberla> const &lb_lattice,
       lb_ptr->set_collision_model(kT, seed);
     if (auto active_protocol = lees_edwards_active_protocol.lock()) {
       auto const &le_bc = box_geo.clees_edwards_bc();
-      auto lees_edwards_object = LeesEdwardsPack(
+      auto lees_edwards_object = std::make_unique<LeesEdwardsPack>(
           le_bc.shear_direction, le_bc.shear_plane_normal,
           [active_protocol]() {
             return get_pos_offset(get_sim_time(), *active_protocol);

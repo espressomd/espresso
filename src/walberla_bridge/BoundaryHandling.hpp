@@ -92,6 +92,11 @@ template <typename FloatType> class BoundaryHandling {
       return to_vector3d(get_velocity(global));
     }
 
+    bool node_is_boundary(Utils::Vector3i const &node) const {
+      auto const global = Cell(node[0], node[1], node[2]);
+      return m_velocity_boundary->count(global) != 0;
+    }
+
   private:
     std::shared_ptr<std::unordered_map<Cell, Vector3<FloatType>>>
         m_velocity_boundary;
@@ -106,7 +111,8 @@ template <typename FloatType> class BoundaryHandling {
   };
 
   inline auto get_flag_field_and_flag(IBlock *block) const {
-    auto const flag_field = block->template getData<FlagField>(m_flag_field_id);
+    auto const flag_field =
+        block->template uncheckedFastGetData<FlagField>(m_flag_field_id);
     auto const boundary_flag = flag_field->getFlag(Boundary_flag);
     return std::make_tuple(flag_field, boundary_flag);
   }
@@ -117,7 +123,8 @@ public:
   BoundaryHandling(std::shared_ptr<StructuredBlockForest> blocks,
                    BlockDataID pdf_field_id, BlockDataID flag_field_id)
       : m_blocks(std::move(blocks)), m_pdf_field_id(pdf_field_id),
-        m_flag_field_id(flag_field_id), m_callback(DynamicVelocityCallback()) {
+        m_flag_field_id(flag_field_id), m_callback(DynamicVelocityCallback()),
+        m_pending_changes(false) {
     // reinitialize the flag field
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b) {
       flag_reset_kernel(&*b);
@@ -130,9 +137,8 @@ public:
 
   void operator()(IBlock *block) { (*m_boundary)(block); }
 
-  bool node_is_boundary(BlockAndCell const &bc) const {
-    auto [flag_field, boundary_flag] = get_flag_field_and_flag(bc.block);
-    return flag_field->isFlagSet(bc.cell, boundary_flag);
+  bool node_is_boundary(Utils::Vector3i const &node) const {
+    return m_callback.node_is_boundary(node);
   }
 
   Utils::Vector3d
@@ -146,6 +152,7 @@ public:
     auto [flag_field, boundary_flag] = get_flag_field_and_flag(bc.block);
     m_callback.set_node_boundary_velocity(node, v);
     flag_field->addFlag(bc.cell, boundary_flag);
+    m_pending_changes = true;
   }
 
   void remove_node_from_boundary(Utils::Vector3i const &node,
@@ -153,12 +160,16 @@ public:
     auto [flag_field, boundary_flag] = get_flag_field_and_flag(bc.block);
     m_callback.unset_node_boundary_velocity(node);
     flag_field->removeFlag(bc.cell, boundary_flag);
+    m_pending_changes = true;
   }
 
   /** Assign velocity boundary conditions to boundary cells. */
   void ubb_update() {
-    m_boundary->template fillFromFlagField<FlagField>(
-        m_blocks, m_flag_field_id, Boundary_flag, Domain_flag);
+    if (m_pending_changes) {
+      m_boundary->template fillFromFlagField<FlagField>(
+          m_blocks, m_flag_field_id, Boundary_flag, Domain_flag);
+      m_pending_changes = false;
+    }
   }
 
 private:
@@ -167,6 +178,7 @@ private:
   BlockDataID m_flag_field_id;
   DynamicVelocityCallback m_callback;
   std::shared_ptr<Dynamic_UBB> m_boundary;
+  bool m_pending_changes;
 
   /** Register flags and set all cells to @ref Domain_flag. */
   void flag_reset_kernel(IBlock *const block) {

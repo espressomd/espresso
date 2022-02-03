@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _CUDA_UTILS_HPP
-#define _CUDA_UTILS_HPP
+#ifndef CORE_CUDA_UTILS_HPP
+#define CORE_CUDA_UTILS_HPP
 
 #include "config.hpp"
 
