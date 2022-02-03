@@ -142,7 +142,7 @@ python_test(FILE brownian_dynamics.py MAX_NUM_PROC 1)
 python_test(FILE brownian_dynamics_stats.py MAX_NUM_PROC 1 LABELS long)
 python_test(FILE lees_edwards.py MAX_NUM_PROC 1)
 python_test(FILE lb_lees_edwards.py MAX_NUM_PROC 1)
-# python_test(FILE lb_couette_flow.py MAX_NUM_PROC 1) # TODO WALBERLA
+python_test(FILE lb_planar_couette.py MAX_NUM_PROC 1)
 python_test(FILE nsquare.py MAX_NUM_PROC 4)
 python_test(FILE virtual_sites_relative.py MAX_NUM_PROC 2)
 python_test(FILE virtual_sites_tracers_walberla.py MAX_NUM_PROC 1)
