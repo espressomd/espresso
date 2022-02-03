@@ -507,7 +507,7 @@ class LeesEdwards(ut.TestCase):
         system.integrator.run(1, recalc_forces=True)
         check_non_bonded_loop_trace(system)
 
-        # Rwind the clock to get back the EL offset applied during force calc
+        # Rewind the clock to get back the LE offset applied during force calc
         system.time = system.time - system.time_step
         verify_lj_forces(system, 1E-7)
 

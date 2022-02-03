@@ -598,7 +598,6 @@ public:
     auto const shear_plane_normal = lees_edwards_pack->shear_plane_normal;
     auto const shear_vel = FloatType_c(lees_edwards_pack->get_shear_velocity());
     auto const omega = shear_mode_relaxation_rate();
-    auto const omega_odd = odd_mode_relaxation_rate(omega);
     auto obj =
         LeesEdwardsCollisionModel(m_last_applied_force_field_id, m_pdf_field_id,
                                   FloatType_c(64), omega, shear_vel);

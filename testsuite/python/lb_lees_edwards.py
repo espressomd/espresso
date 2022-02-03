@@ -187,16 +187,15 @@ class LBLeesEdwards(ut.TestCase):
                 for profile in sample_lb_velocities(lbf):
                     check_profile(profile, stencil, ('S', 'N'), ('W', 'E'))
 
+        # East and West are sheared vertically
+        with LEContextManager('y', 'x', le_offset):
+            stencil = {'E~': (0, 8 - le_offset),
+                       'W~': (16, 8 + le_offset),
+                       **stencil_D2Q8}
+            with LBContextManager() as lbf:
+                for profile in sample_lb_velocities(lbf):
+                    check_profile(profile, stencil, ('W', 'E'), ('S', 'N'))
 
-#        # East and West are sheared vertically
-#        with LEContextManager('y', 'x', le_offset):
-#            stencil = {'E~': (0, 8 - le_offset),
-#                       'W~': (16, 8 + le_offset),
-#                       **stencil_D2Q8}
-#            with LBContextManager() as lbf:
-#                for profile in sample_lb_velocities(lbf):
-#                    check_profile(profile, stencil, ('W', 'E'), ('S', 'N'))
-#
-#
+
 if __name__ == "__main__":
     ut.main()

@@ -84,7 +84,7 @@ class LBCouetteFlow:
         # Read data from nodes
         X = np.arange(0, box_l) + 0.5
 
-        # TODO finish test case for comparisson
+        # TODO finish test case for comparison
         v_measured =
 
         p.testing.assert_allclose(v_measured, v_expected, atol=1e-5)
