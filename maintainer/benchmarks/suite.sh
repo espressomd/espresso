@@ -51,7 +51,7 @@ cd "${build_dir}"
 # check for unstaged changes
 if [ -n "$(git status --porcelain -- ${directories})" ]; then
   echo "fatal: you have unstaged changes, please commit or stash them:"
-  git diff-index --name-only HEAD -- ${directories}
+  git status --porcelain -- ${directories}
   exit 1
 fi
 
