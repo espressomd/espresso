@@ -44,6 +44,11 @@ public:
 
   void set_order(FloatType order) { m_order = order; }
   [[nodiscard]] FloatType get_order() const { return m_order; }
+
+  void set_species(std::shared_ptr<EKinWalberlaBase<FloatType>> ekspecies) {
+    m_ekspecies = std::move(ekspecies);
+  }
+  [[nodiscard]] auto get_species() const { return m_ekspecies; }
 };
 
 template <typename FloatType> class EKReaction {
