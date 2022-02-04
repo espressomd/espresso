@@ -82,7 +82,7 @@ class RandomPairTest(ut.TestCase):
         self.assertEqual(n2_pairs ^ set(cs_pairs), set())
 
     def check_dd(self, n2_pairs):
-        self.system.cell_system.set_domain_decomposition()
+        self.system.cell_system.set_regular_decomposition()
         self.check_pairs(n2_pairs)
 
     def check_n_squared(self, n2_pairs):

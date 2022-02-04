@@ -50,8 +50,8 @@
 
 /** Cell Structure */
 enum CellStructureType : int {
-  /** cell structure domain decomposition */
-  CELL_STRUCTURE_DOMDEC = 1,
+  /** cell structure regular decomposition */
+  CELL_STRUCTURE_REGULAR = 1,
   /** cell structure n square */
   CELL_STRUCTURE_NSQUARE = 2
 };
@@ -503,16 +503,16 @@ public:
                               BoxGeometry const &box);
 
   /**
-   * @brief Set the particle decomposition to DomainDecomposition.
+   * @brief Set the particle decomposition to RegularDecomposition.
    *
    * @param comm Cartesian communicator to use.
    * @param range Interaction range.
    * @param box Box Geometry
    * @param local_geo Geometry of the local box.
    */
-  void set_domain_decomposition(boost::mpi::communicator const &comm,
-                                double range, BoxGeometry const &box,
-                                LocalBox<double> const &local_geo);
+  void set_regular_decomposition(boost::mpi::communicator const &comm,
+                                 double range, BoxGeometry const &box,
+                                 LocalBox<double> const &local_geo);
 
 public:
   template <class BondKernel> void bond_loop(BondKernel const &bond_kernel) {

@@ -1421,8 +1421,8 @@ bool dp3m_sanity_checks(const Utils::Vector3i &grid) {
     ret = true;
   }
 
-  if (cell_structure.decomposition_type() != CELL_STRUCTURE_DOMDEC) {
-    runtimeErrorMsg() << "dipolar P3M requires the domain decomposition "
+  if (cell_structure.decomposition_type() != CELL_STRUCTURE_REGULAR) {
+    runtimeErrorMsg() << "dipolar P3M requires the regular decomposition "
                          "cell system";
     ret = true;
   }

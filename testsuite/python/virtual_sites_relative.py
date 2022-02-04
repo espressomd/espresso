@@ -307,9 +307,9 @@ class VirtualSites(ut.TestCase):
         system.cell_system.skin = 0.4
         system.cell_system.set_n_square(use_verlet_lists=True)
         self.run_test_lj()
-        system.cell_system.set_domain_decomposition(use_verlet_lists=True)
+        system.cell_system.set_regular_decomposition(use_verlet_lists=True)
         self.run_test_lj()
-        system.cell_system.set_domain_decomposition(use_verlet_lists=False)
+        system.cell_system.set_regular_decomposition(use_verlet_lists=False)
         self.run_test_lj()
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")

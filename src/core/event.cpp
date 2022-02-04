@@ -89,8 +89,8 @@ void on_program_start() {
 
   init_node_grid();
 
-  /* initially go for domain decomposition */
-  cells_re_init(CELL_STRUCTURE_DOMDEC);
+  /* initially go for regular decomposition */
+  cells_re_init(CELL_STRUCTURE_REGULAR);
 
   if (this_node == 0) {
     /* make sure interaction 0<->0 always exists */

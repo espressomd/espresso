@@ -22,7 +22,7 @@
 #include "CellStructure.hpp"
 
 #include "AtomDecomposition.hpp"
-#include "DomainDecomposition.hpp"
+#include "RegularDecomposition.hpp"
 
 #include <utils/contains.hpp>
 
@@ -246,10 +246,10 @@ void CellStructure::set_atom_decomposition(boost::mpi::communicator const &comm,
   m_type = CELL_STRUCTURE_NSQUARE;
 }
 
-void CellStructure::set_domain_decomposition(
+void CellStructure::set_regular_decomposition(
     boost::mpi::communicator const &comm, double range, BoxGeometry const &box,
     LocalBox<double> const &local_geo) {
   set_particle_decomposition(
-      std::make_unique<DomainDecomposition>(comm, range, box, local_geo));
-  m_type = CELL_STRUCTURE_DOMDEC;
+      std::make_unique<RegularDecomposition>(comm, range, box, local_geo));
+  m_type = CELL_STRUCTURE_REGULAR;
 }

@@ -120,21 +120,21 @@ Details about the cell system can be obtained by :meth:`espressomd.system.System
 * ``type``            The current type of the cell system.
 * ``verlet_reuse``    Average number of integration steps the Verlet list is re-used.
 
-.. _Domain decomposition:
+.. _Regular decomposition:
 
-Domain decomposition
-~~~~~~~~~~~~~~~~~~~~
+Regular decomposition
+~~~~~~~~~~~~~~~~~~~~~
 
-Invoking :py:meth:`~espressomd.cellsystem.CellSystem.set_domain_decomposition`
-selects the domain decomposition cell scheme, using Verlet lists
+Invoking :py:meth:`~espressomd.cellsystem.CellSystem.set_regular_decomposition`
+selects the regular decomposition cell scheme, using Verlet lists
 for the calculation of the interactions. If you specify ``use_verlet_lists=False``, only the
-domain decomposition is used, but not the Verlet lists. ::
+regular decomposition is used, but not the Verlet lists. ::
 
     system = espressomd.System(box_l=[1, 1, 1])
 
-    system.cell_system.set_domain_decomposition(use_verlet_lists=True)
+    system.cell_system.set_regular_decomposition(use_verlet_lists=True)
 
-The domain decomposition cellsystem is the default system and suits most
+The regular decomposition cellsystem is the default system and suits most
 applications with short ranged interactions. The particles are divided
 up spatially into small compartments, the cells, such that the cell size
 is larger than the maximal interaction range. In this case interactions

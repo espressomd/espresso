@@ -19,7 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "DomainDecomposition.hpp"
+#include "RegularDecomposition.hpp"
 
 #include "RuntimeErrorStream.hpp"
 #include "errorhandling.hpp"
@@ -45,7 +45,7 @@
 /** Returns pointer to the cell which corresponds to the position if the
  *  position is in the nodes spatial domain otherwise a nullptr pointer.
  */
-Cell *DomainDecomposition::position_to_cell(const Utils::Vector3d &pos) {
+Cell *RegularDecomposition::position_to_cell(const Utils::Vector3d &pos) {
   Utils::Vector3i cpos;
 
   for (int i = 0; i < 3; i++) {
@@ -76,7 +76,7 @@ Cell *DomainDecomposition::position_to_cell(const Utils::Vector3d &pos) {
   return &(cells.at(ind));
 }
 
-void DomainDecomposition::move_if_local(
+void RegularDecomposition::move_if_local(
     ParticleList &src, ParticleList &rest,
     std::vector<ParticleChange> &modified_cells) {
   for (auto &part : src) {
@@ -93,10 +93,10 @@ void DomainDecomposition::move_if_local(
   src.clear();
 }
 
-void DomainDecomposition::move_left_or_right(ParticleList &src,
-                                             ParticleList &left,
-                                             ParticleList &right,
-                                             int dir) const {
+void RegularDecomposition::move_left_or_right(ParticleList &src,
+                                              ParticleList &left,
+                                              ParticleList &right,
+                                              int dir) const {
   for (auto it = src.begin(); it != src.end();) {
     if ((m_box.get_mi_coord(it->r.p[dir], m_local_box.my_left()[dir], dir) <
          0.0) and
@@ -115,7 +115,7 @@ void DomainDecomposition::move_left_or_right(ParticleList &src,
   }
 }
 
-void DomainDecomposition::exchange_neighbors(
+void RegularDecomposition::exchange_neighbors(
     ParticleList &pl, std::vector<ParticleChange> &modified_cells) {
   auto const node_neighbors = Utils::Mpi::cart_neighbors<3>(m_comm);
   static ParticleList send_buf_l, send_buf_r, recv_buf_l, recv_buf_r;
@@ -168,8 +168,8 @@ void fold_and_reset(Particle &p, BoxGeometry const &box_geo) {
 }
 } // namespace
 
-void DomainDecomposition::resort(bool global,
-                                 std::vector<ParticleChange> &diff) {
+void RegularDecomposition::resort(bool global,
+                                  std::vector<ParticleChange> &diff) {
   ParticleList displaced_parts;
 
   for (auto &c : local_cells()) {
@@ -234,7 +234,7 @@ void DomainDecomposition::resort(bool global,
   }
 }
 
-void DomainDecomposition::mark_cells() {
+void RegularDecomposition::mark_cells() {
   m_local_cells.clear();
   m_ghost_cells.clear();
 
@@ -250,9 +250,9 @@ void DomainDecomposition::mark_cells() {
       }
 }
 
-void DomainDecomposition::fill_comm_cell_lists(ParticleList **part_lists,
-                                               const Utils::Vector3i &lc,
-                                               const Utils::Vector3i &hc) {
+void RegularDecomposition::fill_comm_cell_lists(ParticleList **part_lists,
+                                                const Utils::Vector3i &lc,
+                                                const Utils::Vector3i &hc) {
   for (int o = lc[0]; o <= hc[0]; o++)
     for (int n = lc[1]; n <= hc[1]; n++)
       for (int m = lc[2]; m <= hc[2]; m++) {
@@ -261,7 +261,7 @@ void DomainDecomposition::fill_comm_cell_lists(ParticleList **part_lists,
         *part_lists++ = &(cells.at(i).particles());
       }
 }
-Utils::Vector3d DomainDecomposition::max_cutoff() const {
+Utils::Vector3d RegularDecomposition::max_cutoff() const {
   auto dir_max_range = [this](int i) {
     return std::min(0.5 * m_box.length()[i], m_local_box.length()[i]);
   };
@@ -269,8 +269,8 @@ Utils::Vector3d DomainDecomposition::max_cutoff() const {
   return {dir_max_range(0), dir_max_range(1), dir_max_range(2)};
 }
 
-Utils::Vector3d DomainDecomposition::max_range() const { return cell_size; }
-int DomainDecomposition::calc_processor_min_num_cells() const {
+Utils::Vector3d RegularDecomposition::max_range() const { return cell_size; }
+int RegularDecomposition::calc_processor_min_num_cells() const {
   /* the minimal number of cells can be lower if there are at least two nodes
      serving a direction,
      since this also ensures that the cell size is at most half the box
@@ -282,7 +282,7 @@ int DomainDecomposition::calc_processor_min_num_cells() const {
                            });
 }
 
-void DomainDecomposition::create_cell_grid(double range) {
+void RegularDecomposition::create_cell_grid(double range) {
   auto const cart_info = Utils::Mpi::cart_get<3>(m_comm);
 
   int n_local_cells;
@@ -300,7 +300,7 @@ void DomainDecomposition::create_cell_grid(double range) {
     /* Calculate initial cell grid */
     auto const &local_box_l = m_local_box.length();
     auto const volume = Utils::product(local_box_l);
-    auto const scale = std::cbrt(DomainDecomposition::max_num_cells / volume);
+    auto const scale = std::cbrt(RegularDecomposition::max_num_cells / volume);
 
     for (int i = 0; i < 3; i++) {
       /* this is at least 1 */
@@ -328,7 +328,7 @@ void DomainDecomposition::create_cell_grid(double range) {
       n_local_cells = Utils::product(cell_grid);
 
       /* done */
-      if (n_local_cells <= DomainDecomposition::max_num_cells)
+      if (n_local_cells <= RegularDecomposition::max_num_cells)
         break;
 
       /* find coordinate with the smallest cell range */
@@ -355,7 +355,7 @@ void DomainDecomposition::create_cell_grid(double range) {
     }
   }
 
-  if (n_local_cells > DomainDecomposition::max_num_cells) {
+  if (n_local_cells > RegularDecomposition::max_num_cells) {
     runtimeErrorMsg() << "no suitable cell grid found";
   }
 
@@ -378,7 +378,7 @@ void DomainDecomposition::create_cell_grid(double range) {
   m_ghost_cells.resize(new_cells - n_local_cells);
 }
 
-void DomainDecomposition::init_cell_interactions() {
+void RegularDecomposition::init_cell_interactions() {
   /* loop all local cells */
   for (int o = 1; o < cell_grid[2] + 1; o++)
     for (int n = 1; n < cell_grid[1] + 1; n++)
@@ -457,7 +457,7 @@ Utils::Vector3d shift(BoxGeometry const &box, LocalBox<double> const &local_box,
 }
 } // namespace
 
-GhostCommunicator DomainDecomposition::prepare_comm() {
+GhostCommunicator RegularDecomposition::prepare_comm() {
   int dir, lr, i, cnt, n_comm_cells[3];
   Utils::Vector3i lc{}, hc{}, done{};
 
@@ -560,12 +560,12 @@ GhostCommunicator DomainDecomposition::prepare_comm() {
   return ghost_comm;
 }
 
-DomainDecomposition::DomainDecomposition(boost::mpi::communicator comm,
-                                         double range,
-                                         const BoxGeometry &box_geo,
-                                         const LocalBox<double> &local_geo)
+RegularDecomposition::RegularDecomposition(boost::mpi::communicator comm,
+                                           double range,
+                                           const BoxGeometry &box_geo,
+                                           const LocalBox<double> &local_geo)
     : m_comm(std::move(comm)), m_box(box_geo), m_local_box(local_geo) {
-  /* set up new domain decomposition cell structure */
+  /* set up new regular decomposition cell structure */
   create_cell_grid(range);
 
   /* setup cell neighbors */
