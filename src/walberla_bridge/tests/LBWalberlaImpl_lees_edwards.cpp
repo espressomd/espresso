@@ -65,7 +65,7 @@ double u_expected(double x, double t, double nu, double v_0, double h,
   return v_0 * u;
 }
 Vector3i mpi_shape{};
-BOOST_AUTO_TEST_CASE(test_lees_edwards) {
+BOOST_AUTO_TEST_CASE(test_transient_shear) {
   double density = 1;
   double viscosity = 1. / 7.;
   auto lattice =
@@ -79,11 +79,12 @@ BOOST_AUTO_TEST_CASE(test_lees_edwards) {
     lb.integrate();
     if (i < grid_size_y / 2.)
       continue;
-    for (double y : {-0.5, 0., 0.5, 5.5, 6.5, 7.5, 14.0, 14.5,
-                     0.23 * grid_size_y, 0.7 * grid_size_y, 1. * grid_size_y}) {
+    for (double y :
+         {0., 0.13 * grid_size_y, 0.7 * grid_size_y, 1. * grid_size_y}) {
       auto u = lb.get_velocity_at_pos(Vector3d{4, y, 4}, true);
       auto expected = u_expected(y, i, viscosity, v0, grid_size_y);
-      std::cout << y << " " << *u << " " << expected << std::endl;
+      std::cout << y << " " << expected << " " << (*u)[0] << std::endl;
+      BOOST_CHECK_SMALL((*u)[0] - expected, 3E-5);
     }
     std::cout << std::endl;
   }
