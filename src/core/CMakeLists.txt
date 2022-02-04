@@ -28,6 +28,7 @@ set(EspressoCore_SRC
     rotate_system.cpp
     rotation.cpp
     Observable_stat.cpp
+    RegularDecomposition.cpp
     RuntimeErrorCollector.cpp
     RuntimeError.cpp
     RuntimeErrorStream.cpp
@@ -41,8 +42,7 @@ set(EspressoCore_SRC
     CellStructure.cpp
     PartCfg.cpp
     AtomDecomposition.cpp
-    EspressoSystemStandAlone.cpp
-    DomainDecomposition.cpp)
+    EspressoSystemStandAlone.cpp)
 
 if(CUDA)
   set(EspressoCuda_SRC

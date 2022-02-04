@@ -27,7 +27,7 @@ how they are distributed onto the processor nodes and how they are
 organized on each of them. Moreover a cell system also defines
 procedures to efficiently calculate the force, energy and pressure for
 the short ranged interactions, since these can be heavily optimized
-depending on the cell system. For example, the domain decomposition
+depending on the cell system. For example, the regular decomposition
 cellsystem allows an order N interactions evaluation.
 
 Technically, a cell is organized as a dynamically growing array, not as
@@ -41,7 +41,7 @@ without direct knowledge of the currently used cell system. Only the
 force, energy and pressure loops are implemented separately for each
 cell model as explained above.
 
-The domain decomposition or link cell algorithm is implemented such
+The regular decomposition or link cell algorithm is implemented such
 that the cells equal the cells, i.e. each cell is a separate particle
 list. For an example let us assume that the simulation box has size
 :math:`20\times 20\times 20` and that we assign 2 processors to the
@@ -108,7 +108,7 @@ memory organization of |es|, the particles are accessed in a virtually
 linear order. Because the force calculation goes through the cells in a
 linear fashion, all accesses to a single cell occur close in time, for
 the force calculation of the cell itself as well as for its neighbors.
-Using the domain decomposition cell scheme, two cell layers have to be
+Using the regular decomposition cell scheme, two cell layers have to be
 kept in the processor cache. For 10000 particles and a typical cell grid
 size of 20, these two cell layers consume roughly 200 KBytes, which
 nearly fits into the L2 cache. Therefore every cell has to be read from

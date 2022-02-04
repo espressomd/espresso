@@ -29,8 +29,8 @@
  *  (regardless if they reside on the same or different nodes)
  *  interact with each other. The following cell systems are implemented:
  *
- *  - domain decomposition: The simulation box is divided spatially
- *    into cells (see \ref DomainDecomposition.hpp). This is suitable for
+ *  - regular decomposition: The simulation box is divided spatially
+ *    into cells (see \ref RegularDecomposition.hpp). This is suitable for
  *    short range interactions.
  *  - nsquare: The particles are distributed equally on all nodes
  *    regardless their spatial position (see \ref AtomDecomposition.hpp).
@@ -40,8 +40,8 @@
 
 #include "Cell.hpp"
 #include "CellStructure.hpp"
-#include "DomainDecomposition.hpp"
 #include "Particle.hpp"
+#include "RegularDecomposition.hpp"
 
 #include <utility>
 #include <vector>
@@ -121,11 +121,11 @@ std::vector<int> mpi_resort_particles(int global_flag);
 Cell *find_current_cell(const Particle &p);
 
 /**
- * @brief Return a pointer to the global DomainDecomposition.
+ * @brief Return a pointer to the global RegularDecomposition.
  *
  * @return Pointer to the decomposition if it is set, nullptr otherwise.
  */
-const DomainDecomposition *get_domain_decomposition();
+const RegularDecomposition *get_regular_decomposition();
 
 class PairInfo {
 public:

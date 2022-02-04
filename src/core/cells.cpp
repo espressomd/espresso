@@ -34,8 +34,8 @@
 #include "integrate.hpp"
 #include "particle_data.hpp"
 
-#include "DomainDecomposition.hpp"
 #include "ParticleDecomposition.hpp"
+#include "RegularDecomposition.hpp"
 
 #include <utils/as_const.hpp>
 #include <utils/math/sqr.hpp>
@@ -197,9 +197,9 @@ std::vector<int> mpi_resort_particles(int global_flag) {
 
 void cells_re_init(int new_cs) {
   switch (new_cs) {
-  case CELL_STRUCTURE_DOMDEC:
-    cell_structure.set_domain_decomposition(comm_cart, interaction_range(),
-                                            box_geo, local_geo);
+  case CELL_STRUCTURE_REGULAR:
+    cell_structure.set_regular_decomposition(comm_cart, interaction_range(),
+                                             box_geo, local_geo);
     break;
   case CELL_STRUCTURE_NSQUARE:
     cell_structure.set_atom_decomposition(comm_cart, box_geo);
@@ -263,8 +263,8 @@ Cell *find_current_cell(const Particle &p) {
   return cell_structure.find_current_cell(p);
 }
 
-const DomainDecomposition *get_domain_decomposition() {
-  return &dynamic_cast<const DomainDecomposition &>(
+const RegularDecomposition *get_regular_decomposition() {
+  return &dynamic_cast<const RegularDecomposition &>(
       Utils::as_const(cell_structure).decomposition());
 }
 

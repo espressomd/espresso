@@ -63,7 +63,7 @@ using Utils::permute_ifield;
 namespace {
 /** This ugly function does the bookkeeping: which nodes have to
  *  communicate to each other, when you change the node grid.
- *  Changing the domain decomposition requires communication. This
+ *  Changing the regular decomposition requires communication. This
  *  function finds (hopefully) the best way to do this. As input it
  *  needs the two grids (@p grid1, @p grid2) and a linear list (@p node_list1)
  *  with the node identities for @p grid1. The linear list (@p node_list2)
@@ -415,8 +415,8 @@ void back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b,
 }
 
 /** Calculate 'best' mapping between a 2D and 3D grid.
- *  Required for the communication from 3D domain decomposition
- *  to 2D row decomposition.
+ *  Required for the communication from 3D regular domain
+ *  decomposition to 2D regular row decomposition.
  *  The dimensions of the 2D grid are resorted, if necessary, in a way
  *  that they are multiples of the 3D grid dimensions.
  *  \param g3d      3D grid.
