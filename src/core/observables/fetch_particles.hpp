@@ -52,8 +52,8 @@ inline std::vector<Particle> fetch_particles(std::vector<int> const &ids) {
       particles.push_back(get_particle_data(id));
 
       auto &p = particles.back();
-      p.r.p += image_shift(p.l.i, box_geo.length());
-      p.l.i = {};
+      p.pos() += image_shift(p.image_box(), box_geo.length());
+      p.image_box() = {};
     }
 
     offset += this_size;

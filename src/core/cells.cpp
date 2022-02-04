@@ -70,7 +70,7 @@ std::vector<std::pair<int, int>> get_pairs_filtered(double const distance,
                                                Particle const &p2,
                                                Distance const &d) {
     if (d.dist2 < cutoff2 and filter(p1) and filter(p2))
-      ret.emplace_back(p1.p.identity, p2.p.identity);
+      ret.emplace_back(p1.id(), p2.id());
   };
 
   cell_structure.non_bonded_loop(pair_kernel);
@@ -102,7 +102,7 @@ std::vector<PairInfo> non_bonded_loop_trace() {
   std::vector<PairInfo> ret;
   auto pair_kernel = [&ret](Particle const &p1, Particle const &p2,
                             Distance const &d) {
-    ret.emplace_back(p1.p.identity, p2.p.identity, p1.r.p, p2.r.p, d.vec21,
+    ret.emplace_back(p1.id(), p2.id(), p1.pos(), p2.pos(), d.vec21,
                      comm_cart.rank());
   };
 
@@ -124,7 +124,7 @@ static auto mpi_get_pairs_of_types_local(double const distance,
                                          std::vector<int> const &types) {
   auto pairs = get_pairs_filtered(distance, [types](Particle const &p) {
     return std::any_of(types.begin(), types.end(),
-                       [p](int const type) { return p.p.type == type; });
+                       [p](int const type) { return p.type() == type; });
   });
   Utils::Mpi::gather_buffer(pairs, comm_cart);
   return pairs;
@@ -246,7 +246,7 @@ void cells_update_ghosts(unsigned data_parts) {
     /* Add the ghost particles to the index if we don't already
      * have them. */
     for (auto &part : cell_structure.ghost_particles()) {
-      if (cell_structure.get_local_particle(part.p.identity) == nullptr) {
+      if (cell_structure.get_local_particle(part.id()) == nullptr) {
         cell_structure.update_particle_index(part.identity(), &part);
       }
     }

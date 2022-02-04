@@ -72,8 +72,8 @@ void IBM_ForcesIntoFluid_CPU() {
   for (auto &p : cell_structure.ghost_particles()) {
     // for ghost particles we have to check if they lie
     // in the range of the local lattice nodes
-    if (in_local_domain(p.r.p)) {
-      if (p.p.is_virtual)
+    if (in_local_domain(p.pos())) {
+      if (p.is_virtual())
         CoupleIBMParticleToFluid(p);
     }
   }
@@ -95,19 +95,13 @@ void IBM_UpdateParticlePositions(ParticleRange const &particles,
 
   // Euler integrator
   for (auto &p : particles) {
-    if (p.p.is_virtual) {
+    if (p.is_virtual()) {
+      for (int axis = 0; axis < 2; axis++) {
 #ifdef EXTERNAL_FORCES
-      if (!(p.p.ext_flag & 2))
+        if (not p.is_fixed_along(axis))
 #endif
-        p.r.p[0] += p.m.v[0] * time_step;
-#ifdef EXTERNAL_FORCES
-      if (!(p.p.ext_flag & 4))
-#endif
-        p.r.p[1] += p.m.v[1] * time_step;
-#ifdef EXTERNAL_FORCES
-      if (!(p.p.ext_flag & 8))
-#endif
-        p.r.p[2] += p.m.v[2] * time_step;
+          p.pos()[axis] += p.v()[axis] * time_step;
+      }
     }
   }
 
@@ -119,12 +113,12 @@ void IBM_UpdateParticlePositions(ParticleRange const &particles,
 /** Put the momentum of a given particle into the LB fluid. */
 void CoupleIBMParticleToFluid(Particle const &p) {
   // Convert units from MD to LB
-  auto const delta_j = p.f.f * Utils::int_pow<4>(lbpar.tau) / lbpar.agrid;
+  auto const delta_j = p.force() * Utils::int_pow<4>(lbpar.tau) / lbpar.agrid;
 
   // Get indices and weights of affected nodes using discrete delta function
   Utils::Vector<std::size_t, 8> node_index{};
   Utils::Vector6d delta{};
-  lblattice.map_position_to_lattice(p.r.p, node_index, delta);
+  lblattice.map_position_to_lattice(p.pos(), node_index, delta);
 
   // Loop over all affected nodes
   for (int z = 0; z < 2; z++) {
@@ -256,10 +250,10 @@ void ParticleVelocitiesFromLB_CPU() {
   // Here all contributions are included: velocity, external force and
   // particle force.
   for (auto &p : cell_structure.local_particles()) {
-    if (p.p.is_virtual) {
+    if (p.is_virtual()) {
       // Get interpolated velocity and store in the force (!) field
       // for later communication (see below)
-      p.f.f = GetIBMInterpolatedVelocity<true>(p.r.p);
+      p.force() = GetIBMInterpolatedVelocity<true>(p.pos());
     }
   }
 
@@ -269,19 +263,19 @@ void ParticleVelocitiesFromLB_CPU() {
     // This criterion include the halo on the left, but excludes the halo on
     // the right
     // Try if we have to use *1.5 on the right
-    if (in_local_domain(p.r.p)) {
-      if (p.p.is_virtual) {
+    if (in_local_domain(p.pos())) {
+      if (p.is_virtual()) {
         // The force stemming from the ghost particle (for
         // communication, see below)
-        p.f.f = GetIBMInterpolatedVelocity<false>(p.r.p);
+        p.force() = GetIBMInterpolatedVelocity<false>(p.pos());
       } else {
         // Reset, necessary because we add all forces below. Also needs to
         // be done for real particles!
-        p.f.f = {};
+        p.force() = {};
       }
     } else {
       // Reset, necessary because we add all forces below
-      p.f.f = {};
+      p.force() = {};
     }
   }
 
@@ -299,8 +293,8 @@ void ParticleVelocitiesFromLB_CPU() {
 
   // Transfer to velocity field
   for (auto &p : cell_structure.local_particles()) {
-    if (p.p.is_virtual) {
-      p.m.v = p.f.f;
+    if (p.is_virtual()) {
+      p.v() = p.force();
     }
   }
 }

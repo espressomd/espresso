@@ -148,24 +148,24 @@ Utils::Vector3d lb_viscous_coupling(Particle const &p,
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation (eq. (11) @cite ahlrichs99a) */
   auto const interpolated_u =
-      lb_lbinterpolation_get_interpolated_velocity(p.r.p) *
+      lb_lbinterpolation_get_interpolated_velocity(p.pos()) *
       lb_lbfluid_get_lattice_speed();
 
   Utils::Vector3d v_drift = interpolated_u;
 #ifdef ENGINE
-  if (p.p.swim.swimming) {
-    v_drift += p.p.swim.v_swim * p.r.calc_director();
+  if (p.swimming().swimming) {
+    v_drift += p.swimming().v_swim * p.r.calc_director();
   }
 #endif
 
 #ifdef LB_ELECTROHYDRODYNAMICS
-  v_drift += p.p.mu_E;
+  v_drift += p.mu_E();
 #endif
 
   /* calculate viscous force (eq. (9) @cite ahlrichs99a) */
-  auto const force = -lb_lbcoupling_get_gamma() * (p.m.v - v_drift) + f_random;
+  auto const force = -lb_lbcoupling_get_gamma() * (p.v() - v_drift) + f_random;
 
-  add_md_force(p.r.p, force, time_step);
+  add_md_force(p.pos(), force, time_step);
 
   return force;
 }
@@ -225,18 +225,18 @@ bool in_local_halo(Vector3d const &pos) {
 
 #ifdef ENGINE
 void add_swimmer_force(Particle const &p, double time_step) {
-  if (p.p.swim.swimming) {
+  if (p.swimming().swimming) {
     // calculate source position
     const double direction =
-        double(p.p.swim.push_pull) * p.p.swim.dipole_length;
+        double(p.swimming().push_pull) * p.swimming().dipole_length;
     auto const director = p.r.calc_director();
-    auto const source_position = p.r.p + direction * director;
+    auto const source_position = p.pos() + direction * director;
 
     if (not in_local_halo(source_position)) {
       return;
     }
 
-    add_md_force(source_position, p.p.swim.f_swim * director, time_step);
+    add_md_force(source_position, p.swimming().f_swim * director, time_step);
   }
 }
 #endif
@@ -290,20 +290,20 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
         };
 
         auto couple_particle = [&](Particle &p) -> void {
-          if (p.p.is_virtual and !couple_virtual)
+          if (p.is_virtual() and !couple_virtual)
             return;
 
           /* Particle is in our LB volume, so this node
            * is responsible to adding its force */
-          if (in_local_domain(p.r.p)) {
+          if (in_local_domain(p.pos())) {
             auto const force = lb_viscous_coupling(
                 p, noise_amplitude * f_random(p.identity()), time_step);
             /* add force to the particle */
-            p.f.f += force;
+            p.force() += force;
             /* Particle is not in our domain, but adds to the force
              * density in our domain, only calculate contribution to
              * the LB force density. */
-          } else if (in_local_halo(p.r.p)) {
+          } else if (in_local_halo(p.pos())) {
             lb_viscous_coupling(p, noise_amplitude * f_random(p.identity()),
                                 time_step);
           }
