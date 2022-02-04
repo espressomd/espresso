@@ -195,7 +195,7 @@ void integrator_step_2(ParticleRange &particles, double kT) {
     break;
 #ifdef STOKESIAN_DYNAMICS
   case INTEG_METHOD_SD:
-    stokesian_dynamics_step_2(particles);
+    // Nothing
     break;
 #endif // STOKESIAN_DYNAMICS
   default:

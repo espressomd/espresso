@@ -85,8 +85,8 @@ std::vector<double> scalar_product(std::vector<double> const &A,
         "Error in scalar product: The vector sizes do not match");
   }
 
-  return std::vector<double>(
-      1, std::inner_product(A.begin(), A.end(), B.begin(), 0.0));
+  auto const result = std::inner_product(A.begin(), A.end(), B.begin(), 0.0);
+  return {result};
 }
 
 std::vector<double> componentwise_product(std::vector<double> const &A,
@@ -284,7 +284,7 @@ void Correlator::initialize() {
 
   auto const n_result = n_values();
   n_sweeps = std::vector<std::size_t>(n_result, 0);
-  n_vals = std::vector<unsigned int>(m_hierarchy_depth, 0);
+  n_vals = std::vector<long>(m_hierarchy_depth, 0);
 
   result.resize(std::array<std::size_t, 2>{{n_result, m_dim_corr}});
 
@@ -295,7 +295,7 @@ void Correlator::initialize() {
     }
   }
 
-  newest = std::vector<std::size_t>(m_hierarchy_depth, m_tau_lin);
+  newest = std::vector<long>(m_hierarchy_depth, m_tau_lin);
 
   tau.resize(n_result);
   for (int i = 0; i < m_tau_lin + 1; i++) {
@@ -324,17 +324,21 @@ void Correlator::update() {
 
   // Let's find out how far we have to go back in the hierarchy to make space
   // for the new value
-  int i = 0;
-  while (true) {
-    if (((t - ((m_tau_lin + 1) * ((1 << (i + 1)) - 1) + 1)) % (1 << (i + 1)) ==
-         0)) {
-      if (i < (m_hierarchy_depth - 1) && n_vals[i] > m_tau_lin) {
-        highest_level_to_compress += 1;
-        i++;
-      } else
+  {
+    auto const max_depth = m_hierarchy_depth - 1;
+    int i = 0;
+    while (true) {
+      if (i >= max_depth or n_vals[i] <= m_tau_lin) {
         break;
-    } else
-      break;
+      }
+      auto const modulo = 1 << (i + 1);
+      auto const remainder = (t - (m_tau_lin + 1) * (modulo - 1) - 1) % modulo;
+      if (remainder != 0) {
+        break;
+      }
+      highest_level_to_compress += 1;
+      i++;
+    }
   }
 
   // Now we know we must make space on the levels 0..highest_level_to_compress
@@ -374,7 +378,7 @@ void Correlator::update() {
   }
 
   // Now update the lowest level correlation estimates
-  for (unsigned j = 0; j < min(m_tau_lin + 1, n_vals[0]); j++) {
+  for (long j = 0; j < min(m_tau_lin + 1, n_vals[0]); j++) {
     auto const index_new = newest[0];
     auto const index_old = (newest[0] - j + m_tau_lin + 1) % (m_tau_lin + 1);
     auto const temp =
@@ -388,8 +392,8 @@ void Correlator::update() {
   }
   // Now for the higher ones
   for (int i = 1; i < highest_level_to_compress + 2; i++) {
-    for (unsigned j = (m_tau_lin + 1) / 2 + 1;
-         j < min(m_tau_lin + 1, n_vals[i]); j++) {
+    for (long j = (m_tau_lin + 1) / 2 + 1; j < min(m_tau_lin + 1, n_vals[i]);
+         j++) {
       auto const index_new = newest[i];
       auto const index_old = (newest[i] - j + m_tau_lin + 1) % (m_tau_lin + 1);
       auto const index_res =
@@ -418,32 +422,27 @@ int Correlator::finalize() {
   finalized = true;
 
   for (int ll = 0; ll < m_hierarchy_depth - 1; ll++) {
-    int vals_ll; // number of values remaining in the lowest level
+    long vals_ll; // number of values remaining in the lowest level
     if (n_vals[ll] > m_tau_lin + 1)
-      vals_ll = m_tau_lin + static_cast<int>(n_vals[ll]) % 2;
+      vals_ll = m_tau_lin + n_vals[ll] % 2;
     else
       vals_ll = n_vals[ll];
 
     while (vals_ll) {
       // Check, if we will want to push the value from the lowest level
-      int highest_level_to_compress = -1;
-      if (vals_ll % 2) {
-        highest_level_to_compress = ll;
-      }
+      auto highest_level_to_compress = (vals_ll % 2) ? ll : -1;
 
-      int i = ll + 1; // lowest level for which we have to check for compression
       // Let's find out how far we have to go back in the hierarchy to make
       // space for the new value
-      while (highest_level_to_compress > -1) {
-        if (n_vals[i] % 2) {
-          if (i < (m_hierarchy_depth - 1) && n_vals[i] > m_tau_lin) {
-            highest_level_to_compress += 1;
-            i++;
-          } else {
+      {
+        auto const max_depth = m_hierarchy_depth - 1;
+        int i = ll + 1; // lowest level for which to check for compression
+        while (highest_level_to_compress > -1) {
+          if (i >= max_depth or n_vals[i] % 2 == 0 or n_vals[i] <= m_tau_lin) {
             break;
           }
-        } else {
-          break;
+          highest_level_to_compress += 1;
+          i++;
         }
       }
       vals_ll -= 1;
@@ -467,8 +466,8 @@ int Correlator::finalize() {
 
       // We only need to update correlation estimates for the higher levels
       for (int i = ll + 1; i < highest_level_to_compress + 2; i++) {
-        for (int j = (m_tau_lin + 1) / 2 + 1; j < min(m_tau_lin + 1, n_vals[i]);
-             j++) {
+        for (long j = (m_tau_lin + 1) / 2 + 1;
+             j < min(m_tau_lin + 1, n_vals[i]); j++) {
           auto const index_new = newest[i];
           auto const index_old =
               (newest[i] - j + m_tau_lin + 1) % (m_tau_lin + 1);

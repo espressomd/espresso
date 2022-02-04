@@ -121,10 +121,6 @@ class LBInterpolation:
             self.lbf.add_boundary_from_shape(shape, vbb.velocity)
         self.assertIsNone(self.lbf[0, 0, 0].boundary)
 
-        with self.assertRaisesRegex(ValueError, error_msg):
-            self.lbf.add_boundary_from_list([[0, 0, 0]], vbb.velocity)
-        self.assertIsNone(self.lbf[0, 0, 0].boundary)
-
 
 @utx.skipIfMissingFeatures(['LB_WALBERLA'])
 class LBInterpolationWalberla(LBInterpolation, ut.TestCase):

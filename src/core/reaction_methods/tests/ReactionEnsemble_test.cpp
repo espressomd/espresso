@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE(ReactionEnsemble_test) {
     using ReactionEnsemble::generic_oneway_reaction;
     using ReactionEnsemble::ReactionEnsemble;
   };
-  constexpr double tol = 100 * std::numeric_limits<double>::epsilon();
+  auto constexpr tol = 100 * std::numeric_limits<double>::epsilon();
 
   // check basic interface
   {
@@ -75,7 +75,6 @@ BOOST_AUTO_TEST_CASE(ReactionEnsemble_test) {
     SingleReaction const reaction(2., {type_A}, {1}, {type_B, type_C}, {3, 4});
 
     // check acceptance probability
-    constexpr auto g = factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i;
     for (int i = 0; i < 3; ++i) {
       for (int j = 0; j < 3; ++j) {
         for (int k = 0; k < 3; ++k) {

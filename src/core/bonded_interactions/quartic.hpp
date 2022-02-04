@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _QUARTIC_HPP
-#define _QUARTIC_HPP
+#ifndef CORE_BN_IA_QUARTIC_HPP
+#define CORE_BN_IA_QUARTIC_HPP
 /** \file
  *  Routines to calculate the quartic potential between particle pairs.
  */

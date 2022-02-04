@@ -50,8 +50,8 @@ void bspline_3d(const Vector3d &pos, const Kernel &kernel,
   const auto block = detail::ll_and_dist<order>(pos, grid_spacing, offset);
 
   /* Precalc weights that are used multiple times. */
-  std::array<double, order> w_y;
-  std::array<double, order> w_z;
+  std::array<double, order> w_y{};
+  std::array<double, order> w_z{};
   for (int i = 0; i < order; i++) {
     w_y[i] = bspline<order>(i, block.distance[1]);
     w_z[i] = bspline<order>(i, block.distance[2]);

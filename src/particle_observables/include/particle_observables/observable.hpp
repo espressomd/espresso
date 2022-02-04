@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef INCLUDE_OBSERVABLES_OBSERVABLE_HPP
-#define INCLUDE_OBSERVABLES_OBSERVABLE_HPP
+#ifndef SRC_PARTICLE_OBSERVABLES_OBSERVABLE_HPP
+#define SRC_PARTICLE_OBSERVABLES_OBSERVABLE_HPP
 
 #include "algorithms.hpp"
 #include "properties.hpp"
@@ -54,4 +54,4 @@ using Positions = Map<Position>;
 using Velocities = Map<Velocity>;
 } // namespace ParticleObservables
 
-#endif // INCLUDE_OBSERVABLES_OBSERVABLE_HPP
+#endif // SRC_PARTICLE_OBSERVABLES_OBSERVABLE_HPP

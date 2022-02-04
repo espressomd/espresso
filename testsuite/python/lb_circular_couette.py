@@ -93,7 +93,9 @@ class LBCircularCouetteCommon:
             lb_fluid.get_shape_bitmask(cyl1), system.periodicity)
         tangents = espressomd.lb.calc_cylinder_tangential_vectors(
             cyl1.center, AGRID, 0.5, surface_nodes)
-        lb_fluid.add_boundary_from_list(surface_nodes, slip_vel * tangents)
+        for node, tangent in zip(surface_nodes, tangents):
+            lb_fluid[node].boundary = espressomd.lb.VelocityBounceBack(
+                slip_vel * tangent)
 
         # add observable for the fluid velocity in cylindrical coordinates
         cyl_transform_params = espressomd.math.CylindricalTransformationParameters(

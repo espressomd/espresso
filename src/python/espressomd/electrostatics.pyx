@@ -25,6 +25,7 @@ import numpy as np
 IF SCAFACOS == 1:
     from .scafacos import ScafacosConnector
     from . cimport scafacos
+from . import utils
 from .utils import is_valid_type, check_type_or_throw_except, handle_errors
 from .analyze cimport partCfg, PartCfg
 from .particle_data cimport particle
@@ -64,13 +65,9 @@ IF ELECTROSTATICS == 1:
             deactivate_method()
             handle_errors("Coulomb method deactivation")
 
-        def tune(self, **tune_params_subset):
-            if tune_params_subset is not None:
-                if all(k in self.valid_keys() for k in tune_params_subset):
-                    self._params.update(tune_params_subset)
-                else:
-                    raise ValueError(
-                        "Invalid parameter given to tune function.")
+        def tune(self, **tune_params):
+            utils.check_valid_keys(self.valid_keys(), tune_params.keys())
+            self._params.update(tune_params)
             self._tune()
 
 
@@ -95,10 +92,10 @@ IF ELECTROSTATICS:
             pass
 
         def valid_keys(self):
-            return ["prefactor", "kappa", "r_cut", "check_neutrality"]
+            return {"prefactor", "kappa", "r_cut", "check_neutrality"}
 
         def required_keys(self):
-            return ["prefactor", "kappa", "r_cut"]
+            return {"prefactor", "kappa", "r_cut"}
 
         def _set_params_in_es_core(self):
             set_prefactor(self._params["prefactor"])
@@ -144,11 +141,11 @@ IF ELECTROSTATICS:
             pass
 
         def valid_keys(self):
-            return ["prefactor", "kappa", "epsilon1", "epsilon2", "r_cut",
-                    "check_neutrality"]
+            return {"prefactor", "kappa", "epsilon1", "epsilon2", "r_cut",
+                    "check_neutrality"}
 
         def required_keys(self):
-            return ["prefactor", "kappa", "epsilon1", "epsilon2", "r_cut"]
+            return {"prefactor", "kappa", "epsilon1", "epsilon2", "r_cut"}
 
         def _set_params_in_es_core(self):
             set_prefactor(self._params["prefactor"])
@@ -190,12 +187,12 @@ IF P3M == 1:
                 mesh[i] = pmesh[i]
 
         def valid_keys(self):
-            return ["mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut",
+            return {"mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut",
                     "prefactor", "tune", "check_neutrality", "timings",
-                    "verbose", "mesh_off"]
+                    "verbose", "mesh_off"}
 
         def required_keys(self):
-            return ["prefactor", "accuracy"]
+            return {"prefactor", "accuracy"}
 
         def default_params(self):
             return {"cao": 0,
@@ -477,12 +474,12 @@ IF P3M == 1:
                 "neutralize has to be a bool")
 
         def valid_keys(self):
-            return ["p3m_actor", "maxPWerror", "gap_size", "far_cut",
+            return {"p3m_actor", "maxPWerror", "gap_size", "far_cut",
                     "neutralize", "delta_mid_top", "delta_mid_bot",
-                    "const_pot", "pot_diff", "check_neutrality"]
+                    "const_pot", "pot_diff", "check_neutrality"}
 
         def required_keys(self):
-            return ["p3m_actor", "maxPWerror", "gap_size"]
+            return {"p3m_actor", "maxPWerror", "gap_size"}
 
         def default_params(self):
             return {"maxPWerror": -1,
@@ -576,12 +573,12 @@ IF ELECTROSTATICS:
                     "verbose": True}
 
         def valid_keys(self):
-            return ["prefactor", "maxPWerror", "far_switch_radius",
+            return {"prefactor", "maxPWerror", "far_switch_radius",
                     "bessel_cutoff", "tune", "check_neutrality", "timings",
-                    "verbose"]
+                    "verbose"}
 
         def required_keys(self):
-            return ["prefactor", "maxPWerror"]
+            return {"prefactor", "maxPWerror"}
 
         def _get_params_from_es_core(self):
             params = {}
@@ -662,11 +659,11 @@ IF ELECTROSTATICS and MMM1D_GPU:
                     "check_neutrality": True}
 
         def valid_keys(self):
-            return ["prefactor", "maxPWerror", "far_switch_radius",
-                    "bessel_cutoff", "tune", "check_neutrality"]
+            return {"prefactor", "maxPWerror", "far_switch_radius",
+                    "bessel_cutoff", "tune", "check_neutrality"}
 
         def required_keys(self):
-            return ["prefactor", "maxPWerror"]
+            return {"prefactor", "maxPWerror"}
 
         def _get_params_from_es_core(self):
             params = {}

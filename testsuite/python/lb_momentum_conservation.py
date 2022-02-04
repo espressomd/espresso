@@ -16,10 +16,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import espressomd
+import espressomd.lb
 import unittest as ut
-
 import unittest_decorators as utx
-
 import numpy as np
 
 # Define the LB parameters
@@ -36,7 +35,7 @@ LB_PARAMS = {'agrid': AGRID,
              'density': DENS,
              'viscosity': KVISC,
              'tau': TIME_STEP,
-             'ext_force_density': [-.7 * F, .9 * F, .8 * F]}
+             'ext_force_density': np.array([-.7 * F, .9 * F, .8 * F])}
 
 
 class TestLBMomentumConservation:
@@ -50,8 +49,10 @@ class TestLBMomentumConservation:
     system = espressomd.System(box_l=[GRID_SIZE * AGRID] * 3)
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.01
+    n_nodes = system.cell_system.get_state()['n_nodes']
 
     def setUp(self):
+        self.set_cellsystem()
         self.lbf = self.lb_class(**LB_PARAMS, **self.lb_params)
 
     def tearDown(self):
@@ -59,7 +60,7 @@ class TestLBMomentumConservation:
         self.system.thermostat.turn_off()
         self.system.part.clear()
 
-    def check(self):
+    def test(self):
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=GAMMA, seed=1)
         np.testing.assert_allclose(
@@ -70,8 +71,7 @@ class TestLBMomentumConservation:
         np.testing.assert_allclose(
             self.system.analysis.linear_momentum(), [0., 0., 0.], atol=1E-12)
 
-        ext_fluid_force = self.system.volume() * np.array(
-            LB_PARAMS['ext_force_density'])
+        ext_fluid_force = self.system.volume() * LB_PARAMS['ext_force_density']
 
         p = self.system.part.add(
             pos=self.system.box_l / 2, ext_force=-ext_fluid_force, v=[.2, .4, .6])
@@ -94,30 +94,27 @@ class TestLBMomentumConservation:
         self.assertGreater(max(np.abs(p.v)) * self.system.time,
                            self.system.box_l[0])
 
-    def test_dom_dec(self):
-        self.system.cell_system.set_domain_decomposition()
-        self.check()
-
-    def test_n_square(self):
-        if self.system.cell_system.get_state()["n_nodes"] > 1:
-            self.skipTest(
-                "LB only works with domain decomposition for more than 1 MPI rank")
-        self.system.cell_system.set_n_square()
-        self.check()
-
 
 @utx.skipIfMissingFeatures(['LB_WALBERLA', 'EXTERNAL_FORCES'])
 class TestLBMomentumConservationWalberla(
         TestLBMomentumConservation, ut.TestCase):
+
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {'single_precision': False}
+
+    def set_cellsystem(self):
+        self.system.cell_system.set_domain_decomposition()
 
 
 @utx.skipIfMissingFeatures(['LB_WALBERLA', 'EXTERNAL_FORCES'])
 class TestLBMomentumConservationWalberlaSinglePrecision(
         TestLBMomentumConservation, ut.TestCase):
+
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {'single_precision': True}
+
+    def set_cellsystem(self):
+        self.system.cell_system.set_domain_decomposition()
 
 
 if __name__ == "__main__":

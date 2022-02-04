@@ -28,10 +28,10 @@
 
 #ifdef ELECTROSTATICS
 
-#define _P3M_GPU_FLOAT
-//#define _P3M_GPU_REAL_DOUBLE
+#define P3M_GPU_FLOAT
+//#define P3M_GPU_REAL_DOUBLE
 
-#ifdef _P3M_GPU_FLOAT
+#ifdef P3M_GPU_FLOAT
 #define REAL_TYPE float
 #define FFT_TYPE_COMPLEX cufftComplex
 #define FFT_FORW_FFT cufftExecR2C
@@ -40,7 +40,7 @@
 #define FFT_PLAN_BACK_FLAG CUFFT_C2R
 #endif
 
-#ifdef _P3M_GPU_REAL_DOUBLE
+#ifdef P3M_GPU_REAL_DOUBLE
 #define REAL_TYPE double
 #define FFT_TYPE_COMPLEX cufftDoubleComplex
 #define FFT_FORW_FFT cufftExecD2Z
@@ -198,7 +198,7 @@ __global__ void calculate_influence_function_device(const P3MGpuData p) {
   }
 }
 
-#ifdef _P3M_GPU_REAL_DOUBLE
+#ifdef P3M_GPU_REAL_DOUBLE
 __device__ double atomicAdd(double *address, double val) {
   unsigned long long int *address_as_ull = (unsigned long long int *)address;
   unsigned long long int old = *address_as_ull, assumed;

@@ -25,7 +25,9 @@
 
 #define PACKAGE_NAME "${PROJECT_NAME}"
 
-#define __PRETTYFUNC__ @__PRETTYFUNC__@
-
-
-
+/**
+ * @brief Compiler-specific macro containing the demangled name
+ * of the function in the current scope. When the current compiler
+ * doesn't provide such an extension, defaults to @c __func__.
+ */
+#define PRETTY_FUNCTION_EXTENSION @PRETTY_FUNCTION_EXTENSION@

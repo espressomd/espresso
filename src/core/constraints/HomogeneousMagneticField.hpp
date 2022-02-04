@@ -41,7 +41,7 @@ public:
   ParticleForce force(const Particle &p, const Utils::Vector3d &,
                       double) override;
 
-  bool fits_in_box(Utils::Vector3d const &box) const override { return true; }
+  bool fits_in_box(Utils::Vector3d const &) const override { return true; }
 
 private:
   Utils::Vector3d m_field;

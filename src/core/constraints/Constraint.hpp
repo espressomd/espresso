@@ -54,7 +54,7 @@ public:
    */
   virtual bool fits_in_box(Utils::Vector3d const &box) const = 0;
 
-  virtual void reset_force(){};
+  virtual void reset_force() {}
 
   virtual ~Constraint() = default;
 };

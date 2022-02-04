@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _COLLISION_H
-#define _COLLISION_H
+#ifndef CORE_COLLISION_HPP
+#define CORE_COLLISION_HPP
 
 #include "config.hpp"
 
@@ -48,7 +48,7 @@ class Collision_parameters {
 public:
   Collision_parameters()
       : mode(COLLISION_MODE_OFF), distance(0.), distance2(0.), bond_centers(-1),
-        bond_vs(-1), bond_three_particles(-1){};
+        bond_vs(-1), bond_three_particles(-1) {}
 
   /// collision handling mode, a combination of constants COLLISION_MODE_*
   int mode;
@@ -154,7 +154,7 @@ inline void detect_collision(Particle const &p1, Particle const &p2,
   queue_collision(p1.p.identity, p2.p.identity);
 }
 
-#endif
+#endif // COLLISION_DETECTION
 
 inline double collision_detection_cutoff() {
 #ifdef COLLISION_DETECTION

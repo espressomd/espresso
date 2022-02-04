@@ -98,7 +98,7 @@ public:
   virtual Utils::Vector3d box() const = 0;
 
 private:
-  std::string error_message(std::string property) const {
+  std::string error_message(std::string const &property) const {
     return "No GPU available or particle " + property + " not compiled in.";
   }
 };

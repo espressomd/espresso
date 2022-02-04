@@ -49,12 +49,8 @@ class TestLattice(ut.TestCase):
             obj.agrid = 2.
         with self.assertRaisesRegex(RuntimeError, "Parameter 'n_ghost_layers' is read-only"):
             obj.n_ghost_layers = 2
-        with self.assertRaisesRegex(ValueError, 'At least the following keys'):
-            LatticeWalberla()
-        with self.assertRaisesRegex(ValueError, 'At least the following keys'):
+        with self.assertRaisesRegex(ValueError, 'The following keys have to be given as keyword arguments'):
             LatticeWalberla(agrid=1.)
-        with self.assertRaisesRegex(ValueError, 'At least the following keys'):
-            LatticeWalberla(n_ghost_layers=1)
         with self.assertRaises(ValueError):
             LatticeWalberla(agrid=1., n_ghost_layers=-1)
         with self.assertRaises(ValueError):

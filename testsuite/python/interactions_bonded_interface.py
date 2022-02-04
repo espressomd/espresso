@@ -147,6 +147,9 @@ class BondedInteractions(ut.TestCase):
                 .format(bondClass(**params).type_name(), bondId, outParamsRef, outParams))
             self.parameterKeys(outBond)
 
+            # check no-op
+            self.assertIsNone(outBond.call_method('unknown'))
+
         return func
 
     test_fene = generateTestForBondParams(
@@ -250,6 +253,10 @@ class BondedInteractions(ut.TestCase):
         # sanity checks during bond construction
         with self.assertRaisesRegex(RuntimeError, "Parameter 'r_0' is missing"):
             espressomd.interactions.HarmonicBond(k=1.)
+        with self.assertRaisesRegex(ValueError, r"Only the following keys can be given as keyword arguments: "
+                                                r"\['k', 'r_0', 'r_cut'\], got \['k', 'r_0', 'rcut'\] "
+                                                r"\(unknown \['rcut'\]\)"):
+            espressomd.interactions.HarmonicBond(k=1., r_0=1., rcut=2.)
         with self.assertRaisesRegex(ValueError, "Unknown refShape: 'Unknown'"):
             espressomd.interactions.IBM_Tribend(
                 ind1=0, ind2=1, ind3=2, ind4=3, kb=1.1, refShape='Unknown')

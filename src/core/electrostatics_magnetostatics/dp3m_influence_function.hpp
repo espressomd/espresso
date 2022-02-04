@@ -123,10 +123,8 @@ std::vector<double> grid_influence_function(P3MParameters const &params,
   double fak1 = Utils::int_pow<3>(static_cast<double>(params.mesh[0])) * 2.0 /
                 Utils::sqr(box_l[0]);
 
-  auto const shifts =
-      detail::calc_meshift({params.mesh[0], params.mesh[1], params.mesh[2]});
-  auto const d_ops = detail::calc_meshift(
-      {params.mesh[0], params.mesh[1], params.mesh[2]}, true);
+  auto const shifts = detail::calc_meshift(params.mesh, false);
+  auto const d_ops = detail::calc_meshift(params.mesh, true);
 
   Utils::Vector3i n{};
   for (n[0] = n_start[0]; n[0] < n_end[0]; n[0]++) {
@@ -192,10 +190,8 @@ double grid_influence_function_self_energy(P3MParameters const &params,
                                            std::vector<double> const &g) {
   auto const size = n_end - n_start;
 
-  auto const shifts =
-      detail::calc_meshift({params.mesh[0], params.mesh[1], params.mesh[2]});
-  auto const d_ops = detail::calc_meshift(
-      {params.mesh[0], params.mesh[1], params.mesh[2]}, true);
+  auto const shifts = detail::calc_meshift(params.mesh, false);
+  auto const d_ops = detail::calc_meshift(params.mesh, true);
 
   double energy = 0.0;
   Utils::Vector3i n{};

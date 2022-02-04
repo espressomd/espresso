@@ -310,9 +310,8 @@ class VTKOutput(ScriptInterfaceHelper):
         _vtk_registry._register_vtk_object(self)
 
     def validate_params(self, params):
-        if not self.required_keys().issubset(params):
-            raise ValueError(
-                f"At least the following keys have to be given as keyword arguments: {sorted(self.required_keys())}")
+        utils.check_required_keys(self.required_keys(), params.keys())
+        utils.check_valid_keys(self.valid_keys(), params.keys())
         if not self.valid_observables().issuperset(params['observables']):
             raise ValueError(
                 f"Only the following VTK observables are supported: {sorted(self.valid_observables())}, got {params['observables']}")
@@ -376,9 +375,6 @@ class LatticeWalberla(ScriptInterfaceHelper):
             raise NotImplementedError("Feature LB_WALBERLA not compiled in")
 
         if 'sip' not in kwargs:
-            if not self.required_keys().issubset(kwargs):
-                raise ValueError(
-                    f"At least the following keys have to be given as keyword arguments: {self.required_keys()}")
             params = self.default_params()
             params.update(kwargs)
             self.validate_params(params)
@@ -389,6 +385,8 @@ class LatticeWalberla(ScriptInterfaceHelper):
             super().__init__(**kwargs)
 
     def validate_params(self, params):
+        utils.check_required_keys(self.required_keys(), params.keys())
+        utils.check_valid_keys(self.valid_keys(), params.keys())
         utils.check_type_or_throw_except(
             params['agrid'], 1, float, 'agrid must be a real number')
         utils.check_type_or_throw_except(
@@ -436,7 +434,6 @@ class LBFluidWalberla(HydrodynamicInteraction):
             params = self.default_params()
             params.update(kwargs)
             self.validate_params(params)
-            self._check_required_arguments(params)
             super().__init__(*args, **params)
             utils.handle_errors(
                 "HydrodynamicInteraction initialization failed")
@@ -472,10 +469,8 @@ class LBFluidWalberla(HydrodynamicInteraction):
         elif 'agrid' in params:
             raise ValueError("cannot provide both 'lattice' and 'agrid'")
 
-        # check required keys
-        if not self.required_keys().issubset(params):
-            raise ValueError(
-                f"At least the following keys have to be given as keyword arguments: {self.required_keys()}")
+        utils.check_required_keys(self.required_keys(), params.keys())
+        utils.check_valid_keys(self.valid_keys(), params.keys())
 
     def _set_params_in_es_core(self):
         pass
@@ -649,14 +644,12 @@ class LBFluidNodeWalberla(ScriptInterfaceHelper):
         return {'lb_sip', 'index'}
 
     def validate_params(self, params):
+        utils.check_required_keys(self.required_keys(), params.keys())
         utils.check_type_or_throw_except(
             params['index'], 3, int, "The index of an lb fluid node consists of three integers.")
 
     def __init__(self, *args, **kwargs):
         if 'sip' not in kwargs:
-            if not self.required_keys().issubset(kwargs):
-                raise ValueError(
-                    f"At least the following keys have to be given as keyword arguments: {self.required_keys()}")
             self.validate_params(kwargs)
             super().__init__(*args, **kwargs)
             utils.handle_errors("LBFluidNode instantiation failed")
@@ -786,9 +779,7 @@ class LBFluidSliceWalberla:
     # pylint: disable=unused-argument
     def __init__(self, *args, **kwargs):
         if 'sip' not in kwargs:
-            if not self.required_keys().issubset(kwargs):
-                raise ValueError(
-                    f"At least the following keys have to be given as keyword arguments: {self.required_keys()}")
+            utils.check_required_keys(self.required_keys(), kwargs.keys())
             lb_range = kwargs['lb_range']
             node_grid = kwargs['node_grid']
             self.indices = [np.atleast_1d(np.arange(node_grid[i])[lb_range[i]])

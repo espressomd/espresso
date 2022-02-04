@@ -45,9 +45,11 @@
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 
-#include <mpi.h>
+#include <boost/mpi/collectives/all_reduce.hpp>
+#include <boost/mpi/operations.hpp>
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <cstdlib>
 #include <stdexcept>
@@ -70,8 +72,8 @@ void force_calc_icc(CellStructure &cell_structure,
  *  contributions are calculated
  */
 inline void add_non_bonded_pair_force_icc(Particle &p1, Particle &p2,
-                                          Utils::Vector3d const &d, double dist,
-                                          double dist2) {
+                                          Utils::Vector3d const &d,
+                                          double dist) {
   auto forces = Coulomb::pair_force(p1, p2, d, dist);
 
   p1.f.f += std::get<0>(forces);
@@ -193,7 +195,7 @@ void force_calc_icc(CellStructure &cell_structure,
   // calc ICC forces
   cell_structure.non_bonded_loop(
       [](Particle &p1, Particle &p2, Distance const &d) {
-        add_non_bonded_pair_force_icc(p1, p2, d.vec21, sqrt(d.dist2), d.dist2);
+        add_non_bonded_pair_force_icc(p1, p2, d.vec21, sqrt(d.dist2));
       });
 
   Coulomb::calc_long_range_force(particles);
@@ -220,9 +222,6 @@ void icc_set_params(int n_icc, double convergence, double relaxation,
                     int first_id, double eps_out, std::vector<double> &areas,
                     std::vector<double> &e_in, std::vector<double> &sigma,
                     std::vector<Utils::Vector3d> &normals) {
-  if (n_icc < 0)
-    throw std::runtime_error("ICC: invalid number of particles. " +
-                             std::to_string(n_icc));
   if (convergence <= 0)
     throw std::runtime_error("ICC: invalid convergence value. " +
                              std::to_string(convergence));
@@ -238,14 +237,12 @@ void icc_set_params(int n_icc, double convergence, double relaxation,
   if (eps_out <= 0)
     throw std::runtime_error("ICC: invalid eps_out. " +
                              std::to_string(eps_out));
-  if (areas.size() != n_icc)
-    throw std::runtime_error("ICC: invalid areas vector.");
-  if (e_in.size() != n_icc)
-    throw std::runtime_error("ICC: invalid e_in vector.");
-  if (sigma.size() != n_icc)
-    throw std::runtime_error("ICC: invalid sigma vector.");
-  if (normals.size() != n_icc)
-    throw std::runtime_error("ICC: invalid normals vector.");
+
+  assert(n_icc >= 0);
+  assert(areas.size() == n_icc);
+  assert(e_in.size() == n_icc);
+  assert(sigma.size() == n_icc);
+  assert(normals.size() == n_icc);
 
   icc_cfg.n_icc = n_icc;
   icc_cfg.convergence = convergence;

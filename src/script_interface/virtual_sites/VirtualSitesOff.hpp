@@ -22,21 +22,26 @@
 #ifndef SCRIPT_INTERFACE_VIRTUAL_SITES_VIRTUAL_SITES_OFF_HPP
 #define SCRIPT_INTERFACE_VIRTUAL_SITES_VIRTUAL_SITES_OFF_HPP
 
-#include "VirtualSites.hpp"
 #include "config.hpp"
-#include "core/virtual_sites/VirtualSitesOff.hpp"
+
 #ifdef VIRTUAL_SITES
+
+#include "VirtualSites.hpp"
+
+#include "core/virtual_sites/VirtualSitesOff.hpp"
+
+#include <memory>
 
 namespace ScriptInterface {
 namespace VirtualSites {
 
 class VirtualSitesOff : public VirtualSites {
 public:
-  VirtualSitesOff() : m_virtual_sites(new ::VirtualSitesOff()){};
+  VirtualSitesOff() : m_virtual_sites(new ::VirtualSitesOff()) {}
   /** Vs implementation we are wrapping */
   std::shared_ptr<::VirtualSites> virtual_sites() override {
     return m_virtual_sites;
-  };
+  }
 
 private:
   std::shared_ptr<::VirtualSitesOff> m_virtual_sites;
@@ -44,5 +49,5 @@ private:
 
 } /* namespace VirtualSites */
 } /* namespace ScriptInterface */
-#endif
+#endif // VIRTUAL_SITES
 #endif
