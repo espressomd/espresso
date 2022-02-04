@@ -43,15 +43,14 @@ class LBTest:
     """
     system = espressomd.System(box_l=3 * [6.0])
     np.random.seed(1)
-    params = {'time_step': 0.01,
-              'tau': 0.01,
+    gamma = 2.0
+    params = {'tau': 0.01,
               'agrid': 0.5,
               'density': 0.85,
-              'viscosity': 3.0,
-              'friction': 2.0}
+              'viscosity': 3.0}
 
     system.periodicity = [1, 1, 1]
-    system.time_step = params['time_step']
+    system.time_step = params['tau']
     system.cell_system.skin = 1.0
     interpolation = False
 
@@ -59,7 +58,7 @@ class LBTest:
         self.system.actors.clear()
         self.system.part.clear()
         self.system.thermostat.turn_off()
-        self.system.time_step = self.params['time_step']
+        self.system.time_step = self.params['tau']
 
     def test_properties(self):
         # inactive actor
@@ -340,8 +339,7 @@ class LBTest:
     def test_viscous_coupling(self):
         lbf = self.lb_class(**self.params, **self.lb_params)
         self.system.actors.add(lbf)
-        self.system.thermostat.set_lb(
-            LB_fluid=lbf, seed=3, gamma=self.params['friction'])
+        self.system.thermostat.set_lb(LB_fluid=lbf, seed=3, gamma=self.gamma)
 
         # Random velocities
         lbf[:, :, :].velocity = np.random.random((*lbf.shape, 3))
@@ -361,7 +359,7 @@ class LBTest:
             self.system.integrator.run(1)
             # Check friction force
             np.testing.assert_allclose(
-                np.copy(p.f), -self.params['friction'] * (v_part - v_fluid), atol=1E-10)
+                np.copy(p.f), -self.gamma * (v_part - v_fluid), atol=1E-10)
 
             # check particle/fluid force balance
             applied_forces = np.array([n.last_applied_force for n in lb_nodes])
@@ -378,8 +376,7 @@ class LBTest:
     def test_viscous_coupling_pairs(self):
         lbf = self.lb_class(**self.params, **self.lb_params)
         self.system.actors.add(lbf)
-        self.system.thermostat.set_lb(
-            LB_fluid=lbf, seed=3, gamma=self.params['friction'])
+        self.system.thermostat.set_lb(LB_fluid=lbf, seed=3, gamma=self.gamma)
 
         # Random velocities
         lbf[:, :, :].velocity = np.random.random((*lbf.shape, 3))
@@ -411,9 +408,9 @@ class LBTest:
             self.system.integrator.run(1)
             # Check friction force
             np.testing.assert_allclose(
-                np.copy(p1.f), -self.params['friction'] * (v_part1 - v_fluid1), atol=1E-10)
+                np.copy(p1.f), -self.gamma * (v_part1 - v_fluid1), atol=1E-10)
             np.testing.assert_allclose(
-                np.copy(p2.f), -self.params['friction'] * (v_part2 - v_fluid2), atol=1E-10)
+                np.copy(p2.f), -self.gamma * (v_part2 - v_fluid2), atol=1E-10)
 
             # check particle/fluid force balance
             applied_forces = np.array(
@@ -438,8 +435,7 @@ class LBTest:
 
         lbf = self.lb_class(kT=1.5, seed=4, **self.params, **self.lb_params)
         system.actors.add(lbf)
-        system.thermostat.set_lb(
-            LB_fluid=lbf, seed=3, gamma=self.params['friction'])
+        system.thermostat.set_lb(LB_fluid=lbf, seed=3, gamma=self.gamma)
 
         for _ in range(20):
             system.integrator.run(1)
@@ -453,8 +449,7 @@ class LBTest:
         lbf = self.lb_class(**self.params, **self.lb_params)
 
         self.system.actors.add(lbf)
-        self.system.thermostat.set_lb(
-            LB_fluid=lbf, seed=3, gamma=self.params['friction'])
+        self.system.thermostat.set_lb(LB_fluid=lbf, seed=3, gamma=self.gamma)
 
         position = np.array([1., 2., 3.])
         position_lb_units = position / lbf.agrid
@@ -523,7 +518,7 @@ class LBTest:
 
         lbf = self.lb_class(**params_with_tau(self.system.time_step),
                             **self.lb_params)
-        sim_time = 100 * self.params['time_step']
+        sim_time = 100 * self.params['tau']
         self.system.actors.add(lbf)
         self.system.thermostat.set_lb(LB_fluid=lbf, gamma=0.1)
         self.system.integrator.run(
@@ -554,7 +549,7 @@ class LBTest:
             self.system.time_step = 0.8 * lbf.get_params()["tau"]
 
         self.system.actors.clear()
-        self.system.time_step = 0.5 * self.params['time_step']
+        self.system.time_step = 0.5 * self.params['tau']
         lbf = self.lb_class(**params_with_tau(self.system.time_step),
                             **self.lb_params)
         self.system.actors.add(lbf)

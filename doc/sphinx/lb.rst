@@ -328,46 +328,6 @@ One can set (or update) the slip velocity of individual nodes::
     # remove boundary conditions
     lbf[0, 0, 0].boundary = None
 
-Please note that setting individual boundary nodes in this way can be slow
-in a for loop, because each assigment to ``lbf[i, j, k].boundary`` results
-in a complete reconstruction of the boundary field. For batch processing,
-prefer using :meth:`lbf.add_boundary_from_list()
-<espressomd.lb.LBFluidWalberla.add_boundary_from_list>`.
-
-.. _Batch per-node boundary conditions:
-
-Batch per-node boundary conditions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Alternatively, one can set up a boundary (or update an existing one) by
-providing a list of nodes and a list of velocities of the same dimensions::
-
-    import espressomd.lb
-    import espressomd.shapes
-    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
-    system.cell_system.skin = 0.1
-    system.time_step = 0.01
-    lbf = espressomd.lb.LBFluidWalberla(agrid=0.5, density=1.0, viscosity=1.0, tau=0.01)
-    system.actors.add(lbf)
-    velocity_magnitude = 0.01
-    # set up a static cylinder
-    cylinder = espressomd.shapes.Cylinder(
-        center=[5., 5., 5.], axis=[0, 0, 1], length=3 * system.box_l[2],
-        radius=8.1 * lbf.agrid, direction=1)
-    # mark nodes inside cylinder as boundaries
-    lbf.add_boundary_from_list(lbf.get_nodes_in_shape(cylinder))
-    # update surface nodes with a tangential slip velocity
-    surface_nodes = espressomd.lb.edge_detection(
-        lbf.get_shape_bitmask(cylinder), system.periodicity)
-    tangents = espressomd.lb.calc_cylinder_tangential_vectors(
-        cylinder.center, lbf.agrid, 0.5, surface_nodes)
-    lbf.add_boundary_from_list(surface_nodes, velocity_magnitude * tangents)
-    # remove boundary conditions
-    lbf.clear_boundaries()
-
-See the script :file:`samples/lb_circular_couette.py` for how to set up a
-complete LB simulation with slip velocities at the surface of a cylinder.
-
 .. _Shape-based boundary conditions:
 
 Shape-based boundary conditions

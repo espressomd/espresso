@@ -136,8 +136,8 @@ void FluidWalberla::load_checkpoint(std::string const &filename, int mode) {
           m_lb_fluid->set_node_last_applied_force(ind,
                                                   cpnode.last_applied_force);
           if (cpnode.is_boundary) {
-            m_lb_fluid->set_node_velocity_at_boundary(ind, cpnode.slip_velocity,
-                                                      false);
+            m_lb_fluid->set_node_velocity_at_boundary(ind,
+                                                      cpnode.slip_velocity);
           }
         }
       }

@@ -22,6 +22,7 @@ cimport cpython.object
 import collections
 
 include "myconfig.pxi"
+from . import utils
 from .utils import is_valid_type
 from .utils cimport check_type_or_throw_except
 from .script_interface import ScriptObjectRegistry, ScriptInterfaceHelper, script_interface_register
@@ -56,16 +57,11 @@ cdef class NonBondedInteraction:
 
         # Or have we been called with keyword args describing the interaction
         elif len(args) == 0:
+            utils.check_required_keys(self.required_keys(), kwargs.keys())
+            utils.check_valid_keys(self.valid_keys(), kwargs.keys())
             # Initialize default values
             self._params = self.default_params()
             self._part_types = [-1, -1]
-
-            # Check if all required keys are given
-            for k in self.required_keys():
-                if k not in kwargs:
-                    raise ValueError(
-                        "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__())
-
             self._params.update(kwargs)
             self.validate_params()
         else:
@@ -111,18 +107,12 @@ cdef class NonBondedInteraction:
 
         """
         # Check, if any key was passed, which is not known
-        for k in p.keys():
-            if k not in self.valid_keys():
-                raise ValueError(
-                    "Only the following keys are supported: " + self.valid_keys().__str__())
+        utils.check_valid_keys(self.valid_keys(), p.keys())
 
         # When an interaction is newly activated, all required keys must be
         # given
         if not self.is_active():
-            for k in self.required_keys():
-                if k not in p:
-                    raise ValueError(
-                        "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__())
+            utils.check_required_keys(self.required_keys(), p.keys())
 
         # If this instance refers to an interaction defined in the ESPResSo core,
         # load the parameters from there
@@ -1696,7 +1686,7 @@ class BondedInteraction(ScriptInterfaceHelper):
                 params.update(kwargs)
                 self.validate_params(params)
                 super().__init__(*args, **params)
-                self._check_keys(params.keys(), check_required=True)
+                utils.check_valid_keys(self.valid_keys(), kwargs.keys())
                 self._ctor_params = params
                 self._bond_id = -1
         else:
@@ -1705,21 +1695,6 @@ class BondedInteraction(ScriptInterfaceHelper):
             super().__init__(**kwargs)
             self._bond_id = -1
             self._ctor_params = self._get_params_from_es_core()
-
-    def _check_keys(self, keys, check_required=False):
-        def err_msg(key_set):
-            return f'{{{", ".join(key_set)}}}'
-
-        if check_required:
-            for required_key in self.required_keys():
-                if required_key not in keys:
-                    raise ValueError(
-                        f"At least the following keys have to be given as keyword arguments: {err_msg(self.required_keys())}")
-
-        for key in keys:
-            if key not in self.valid_keys():
-                raise ValueError(
-                    f"Key '{key}' invalid! Only the following keys are supported: {err_msg(self.valid_keys())}")
 
     def __reduce__(self):
         if self._bond_id != -1:

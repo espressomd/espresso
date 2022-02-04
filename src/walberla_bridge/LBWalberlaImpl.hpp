@@ -488,6 +488,7 @@ private:
 
 public:
   void integrate() override {
+    reallocate_ubb_field();
     integrate_push_scheme();
 
     // Handle VTK writers
@@ -735,47 +736,39 @@ public:
 
   boost::optional<Utils::Vector3d>
   get_node_velocity_at_boundary(const Utils::Vector3i &node) const override {
-    auto bc = get_block_and_cell(lattice(), node, true);
-    if (!bc or !m_boundary->node_is_boundary(*bc))
+    auto const bc = get_block_and_cell(lattice(), node, true);
+    if (!bc or !m_boundary->node_is_boundary(node))
       return {boost::none};
 
     return {m_boundary->get_node_value_at_boundary(node)};
   }
 
   bool set_node_velocity_at_boundary(const Utils::Vector3i &node,
-                                     const Utils::Vector3d &v,
-                                     bool reallocate) override {
+                                     const Utils::Vector3d &v) override {
     auto bc = get_block_and_cell(lattice(), node, true);
     if (!bc)
       return false;
 
     m_boundary->set_node_value_at_boundary(node, v, *bc);
-    if (reallocate) {
-      m_boundary->boundary_update();
-    }
 
     return true;
   }
 
   boost::optional<Utils::Vector3d>
   get_node_boundary_force(const Utils::Vector3i &node) const override {
-    auto bc = get_block_and_cell(lattice(), node, true); // including ghosts
-    if (!bc or !m_boundary->node_is_boundary(*bc))
+    auto const bc = get_block_and_cell(lattice(), node, true);
+    if (!bc or !m_boundary->node_is_boundary(node))
       return {boost::none};
 
     return get_node_last_applied_force(node, true);
   }
 
-  bool remove_node_from_boundary(const Utils::Vector3i &node,
-                                 bool reallocate) override {
+  bool remove_node_from_boundary(const Utils::Vector3i &node) override {
     auto bc = get_block_and_cell(lattice(), node, true);
     if (!bc)
       return false;
 
     m_boundary->remove_node_from_boundary(node, *bc);
-    if (reallocate) {
-      m_boundary->boundary_update();
-    }
 
     return true;
   }
@@ -783,11 +776,11 @@ public:
   boost::optional<bool>
   get_node_is_boundary(const Utils::Vector3i &node,
                        bool consider_ghosts = false) const override {
-    auto bc = get_block_and_cell(lattice(), node, consider_ghosts);
+    auto const bc = get_block_and_cell(lattice(), node, consider_ghosts);
     if (!bc)
       return {boost::none};
 
-    return {m_boundary->node_is_boundary(*bc)};
+    return {m_boundary->node_is_boundary(node)};
   }
 
   void reallocate_ubb_field() override { m_boundary->boundary_update(); }
@@ -848,23 +841,6 @@ public:
         }
       }
     }
-    reallocate_ubb_field();
-  }
-
-  void update_boundary_from_list(std::vector<int> const &nodes_flat,
-                                 std::vector<double> const &vel_flat) override {
-    // reshape grids
-    assert(nodes_flat.size() == vel_flat.size());
-    assert(nodes_flat.size() % 3u == 0);
-    for (std::size_t i = 0; i < nodes_flat.size(); i += 3) {
-      auto const node = Utils::Vector3i(&nodes_flat[i], &nodes_flat[i + 3]);
-      auto const vel = Utils::Vector3d(&vel_flat[i], &vel_flat[i + 3]);
-      auto const bc = get_block_and_cell(lattice(), node, true);
-      if (bc) {
-        m_boundary->set_node_value_at_boundary(node, vel, *bc);
-      }
-    }
-    reallocate_ubb_field();
   }
 
   // Pressure tensor

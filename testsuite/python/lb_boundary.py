@@ -19,12 +19,11 @@ import unittest_decorators as utx
 import espressomd
 import espressomd.lb
 import espressomd.shapes
-import itertools
 import numpy as np
 
 
 class LBBoundariesBase:
-    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system = espressomd.System(box_l=[10.0, 5.0, 5.0])
     system.cell_system.skin = 0.1
 
     wall_shape1 = espressomd.shapes.Wall(normal=[1., 0., 0.], dist=2.5)
@@ -39,24 +38,18 @@ class LBBoundariesBase:
         self.system.actors.clear()
 
     def check_boundary_flags(self, slip_velocity1, slip_velocity2):
-        rng = range(20)
-
-        for i in itertools.product(range(0, 5), rng, rng):
-            self.assertTrue(self.lbf[i].is_boundary)
-            np.testing.assert_allclose(
-                np.copy(self.lbf[i].velocity), slip_velocity1)
-
-        for i in itertools.product(range(5, 15), rng, rng):
-            self.assertFalse(self.lbf[i].is_boundary)
-
-        for i in itertools.product(range(15, 20), rng, rng):
-            self.assertTrue(self.lbf[i].is_boundary)
-            np.testing.assert_allclose(
-                np.copy(self.lbf[i].velocity), slip_velocity2)
-
+        lbb1 = self.lbf[:5, :, :]
+        lbb2 = self.lbf[15:, :, :]
+        lbb3 = self.lbf[5:15, :, :]
+        np.testing.assert_equal(np.copy(lbb1.is_boundary), True)
+        np.testing.assert_equal(np.copy(lbb2.is_boundary), True)
+        np.testing.assert_equal(np.copy(lbb3.is_boundary), False)
+        np.testing.assert_allclose(np.copy(lbb1.velocity),
+                                   np.tile(slip_velocity1, [5, 10, 10, 1]))
+        np.testing.assert_allclose(np.copy(lbb2.velocity),
+                                   np.tile(slip_velocity2, [5, 10, 10, 1]))
         self.lbf.clear_boundaries()
-        for i in itertools.product(rng, rng, rng):
-            self.assertFalse(self.lbf[i].is_boundary)
+        np.testing.assert_equal(np.copy(self.lbf[:, :, :].is_boundary), False)
 
     def test_boundary_flags(self):
         slip_velocity1 = 1e-3 * np.array([1., 2., 3.])
@@ -64,17 +57,6 @@ class LBBoundariesBase:
         self.lbf.add_boundary_from_shape(self.wall_shape1, slip_velocity1)
         self.lbf.add_boundary_from_shape(self.wall_shape2, slip_velocity2)
         self.check_boundary_flags(slip_velocity1, slip_velocity2)
-
-        new_slip_velocity1 = 1e-3 * np.array([-1., 0., 1.])
-        new_slip_velocity2 = 1e-3 * np.array([-2., 2., 2.])
-        bitmask1 = self.lbf.get_shape_bitmask(self.wall_shape1)
-        bitmask2 = self.lbf.get_shape_bitmask(self.wall_shape2)
-        nodes1 = np.array(np.nonzero(bitmask1)).T
-        nodes2 = np.array(np.nonzero(bitmask2)).T
-        self.lbf.add_boundary_from_list(nodes1, new_slip_velocity1)
-        self.lbf.add_boundary_from_list(
-            nodes2, len(nodes2) * [new_slip_velocity2])
-        self.check_boundary_flags(new_slip_velocity1, new_slip_velocity2)
 
     def test_union(self):
         union = espressomd.shapes.Union()

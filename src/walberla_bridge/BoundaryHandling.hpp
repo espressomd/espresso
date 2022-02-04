@@ -74,6 +74,11 @@ template <typename T, typename BoundaryClass> class BoundaryHandling {
       return walberla2es(get_value(global));
     }
 
+    bool node_is_boundary(Utils::Vector3i const &node) const {
+      auto const global = Cell(node[0], node[1], node[2]);
+      return m_value_boundary->count(global) != 0;
+    }
+
   private:
     std::shared_ptr<std::unordered_map<Cell, T>> m_value_boundary;
     static constexpr T default_value{};
@@ -99,7 +104,8 @@ public:
   BoundaryHandling(std::shared_ptr<StructuredBlockForest> blocks,
                    BlockDataID value_field_id, BlockDataID flag_field_id)
       : m_blocks(std::move(blocks)), m_value_field_id(value_field_id),
-        m_flag_field_id(flag_field_id), m_callback(DynamicValueCallback()) {
+        m_flag_field_id(flag_field_id), m_callback(DynamicValueCallback()),
+        m_pending_changes(false) {
     // reinitialize the flag field
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b) {
       flag_reset_kernel(&*b);
@@ -112,9 +118,8 @@ public:
 
   void operator()(IBlock *block) { (*m_boundary)(block); }
 
-  [[nodiscard]] bool node_is_boundary(BlockAndCell const &bc) const {
-    auto [flag_field, boundary_flag] = get_flag_field_and_flag(bc.block);
-    return flag_field->isFlagSet(bc.cell, boundary_flag);
+  [[nodiscard]] bool node_is_boundary(Utils::Vector3i const &node) const {
+    return m_callback.node_is_boundary(node);
   }
 
   [[nodiscard]] auto
@@ -130,6 +135,7 @@ public:
     m_callback.set_node_boundary_value(node, v);
     flag_field->addFlag(bc.cell, boundary_flag);
     flag_field->removeFlag(bc.cell, domain_flag);
+    m_pending_changes = true;
   }
 
   void remove_node_from_boundary(Utils::Vector3i const &node,
@@ -139,12 +145,16 @@ public:
     m_callback.unset_node_boundary_value(node);
     flag_field->removeFlag(bc.cell, boundary_flag);
     flag_field->addFlag(bc.cell, domain_flag);
+    m_pending_changes = true;
   }
 
   /** Assign boundary conditions to boundary cells. */
   void boundary_update() {
-    m_boundary->template fillFromFlagField<FlagField>(
-        m_blocks, m_flag_field_id, Boundary_flag, Domain_flag);
+    if (m_pending_changes) {
+      m_boundary->template fillFromFlagField<FlagField>(
+          m_blocks, m_flag_field_id, Boundary_flag, Domain_flag);
+      m_pending_changes = false;
+    }
   }
 
 private:
@@ -153,6 +163,7 @@ private:
   BlockDataID m_flag_field_id;
   DynamicValueCallback m_callback;
   std::shared_ptr<BoundaryClass> m_boundary;
+  bool m_pending_changes;
 
   /** Register flags and set all cells to @ref Domain_flag. */
   void flag_reset_kernel(IBlock *const block) {

@@ -72,8 +72,10 @@ for i, j in itertools.product(range(2), range(2)):
         lb_fluid.get_shape_bitmask(cyl), system.periodicity)
     tangents = espressomd.lb.calc_cylinder_tangential_vectors(
         cyl.center, lb_fluid.agrid, 0.5, surface_nodes)
-    velocity = 0.01 * (1 if (i + j) % 2 == 0 else -1)
-    lb_fluid.add_boundary_from_list(surface_nodes, velocity * tangents)
+    direction = 1 if (i + j) % 2 == 0 else -1
+    for node, tangent in zip(surface_nodes, tangents):
+        vbb = espressomd.lb.VelocityBounceBack(0.01 * direction * tangent)
+        lb_fluid[node].boundary = vbb
 
 # the system needs to be fully symmetric
 mask = np.copy(lb_fluid[:, :, :].is_boundary.astype(int))

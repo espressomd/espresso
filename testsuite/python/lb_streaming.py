@@ -30,7 +30,6 @@ Tests for the streaming of populations of the LB algorithm.
 AGRID = 0.5
 TAU = 0.1
 VISC = 1e18
-BULK_VISC = VISC
 VELOCITY_VECTORS = np.array([
     [0, 0, 0],
     [0, 1, 0],
@@ -76,11 +75,8 @@ REFERENCE_POPULATIONS = np.array([
 LB_PARAMETERS = {
     'agrid': AGRID,
     'viscosity': VISC,
-    'bulk_visc': BULK_VISC,
     'tau': TAU,
     'density': 1.0,
-    'gamma_odd': 1.0,
-    'gamma_even': 1.0
 }
 
 

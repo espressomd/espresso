@@ -164,10 +164,17 @@ class ek_charged_plate(ut.TestCase):
                 negative_ions[i, j, 30].density = 0.0
 
         # Test error when trying to change ekin parameters after initialisation
-        ek._params.update({'agrid': 3,
-                           'T': 0.01})
         with self.assertRaises(RuntimeError):
+            ek._params.update({'agrid': 3, 'T': 0.01})
             ek._set_params_in_es_core()
+
+        # Check errors from the constructor
+        with self.assertRaisesRegex(ValueError, r"The following keys have to be given as keyword arguments: "
+                                                r"\[.+\], got \[.+\] \(missing \['D'\]\)"):
+            espressomd.electrokinetics.Species(density=0, valency=1)
+        with self.assertRaisesRegex(ValueError, r"Only the following keys can be given as keyword arguments: "
+                                                r"\[.+\], got \[.+\] \(unknown \['U'\]\)"):
+            espressomd.electrokinetics.Species(density=0, valency=1, D=0, U=1)
 
 
 if __name__ == "__main__":

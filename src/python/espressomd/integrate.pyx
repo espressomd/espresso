@@ -20,6 +20,7 @@ from cpython.exc cimport PyErr_CheckSignals, PyErr_SetInterrupt
 include "myconfig.pxi"
 from .utils cimport check_type_or_throw_except
 from .utils import handle_errors
+from . import utils
 from . cimport integrate
 
 cdef class IntegratorHandle:
@@ -158,13 +159,7 @@ cdef class Integrator:
         return self.__getstate__()
 
     def __init__(self, *args, **kwargs):
-
-        # Check if all required keys are given
-        for k in self.required_keys():
-            if k not in kwargs:
-                raise ValueError(
-                    "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__())
-
+        utils.check_required_keys(self.required_keys(), kwargs.keys())
         self._params = self.default_params()
         self._params.update(kwargs)
         self.validate_params()
@@ -322,13 +317,13 @@ cdef class VelocityVerlet(Integrator):
         """All parameters that can be set.
 
         """
-        return {}
+        return set()
 
     def required_keys(self):
         """Parameters that have to be set.
 
         """
-        return {}
+        return set()
 
     def validate_params(self):
         return True
@@ -411,13 +406,13 @@ cdef class BrownianDynamics(Integrator):
         """All parameters that can be set.
 
         """
-        return {}
+        return set()
 
     def required_keys(self):
         """Parameters that have to be set.
 
         """
-        return {}
+        return set()
 
     def validate_params(self):
         return True
