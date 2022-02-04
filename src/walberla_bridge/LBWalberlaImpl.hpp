@@ -503,9 +503,9 @@ private:
     integrate_reset_force(blocks);
     // LB collide
     integrate_collide(blocks);
+    (*m_pdf_streaming_communication).communicate();
     // Handle boundaries
     integrate_boundaries(blocks);
-    (*m_pdf_streaming_communication).communicate();
     // LB stream
     integrate_stream(blocks);
     update_velocity_field_from_pdf(blocks);
