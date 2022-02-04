@@ -432,3 +432,23 @@ class EKReactant(ScriptObjectRegistry):
 class EKReaction(ScriptObjectRegistry):
     _so_name = "walberla::EKReaction"
     _so_creation_policy = "GLOBAL"
+
+
+@script_interface_register
+class EKReactions(ScriptObjectRegistry):
+    _so_name = "walberla::EKReactions"
+    _so_creation_policy = "GLOBAL"
+
+    def add(self, reaction):
+        if not isinstance(reaction, EKReaction):
+            raise TypeError("reaction object is not of correct type.")
+
+        self.call_method("add", object=reaction)
+
+        return reaction
+
+    def remove(self, reaction):
+        self.call_method("remove", object=reaction)
+
+    def clear(self):
+        self.call_method("clear")

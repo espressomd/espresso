@@ -41,7 +41,7 @@ from .accumulators import AutoUpdateAccumulators
 IF LB_WALBERLA:
     from . import lb
 IF EK_WALBERLA:
-    from .EKSpecies import EKContainer
+    from .EKSpecies import EKContainer, EKReactions
 from .comfixed import ComFixed
 from .utils cimport check_type_or_throw_except
 from .utils import handle_errors, array_locked
@@ -87,7 +87,7 @@ cdef class _Globals:
             mpi_set_box_length(make_Vector3d(_box_l))
 
         def __get__(self):
-            return make_array_locked(< Vector3d > box_geo.length())
+            return make_array_locked( < Vector3d > box_geo.length())
 
     property periodicity:
         """
@@ -154,6 +154,8 @@ cdef class System:
         """:class:`espressomd.constraints.Constraints`"""
         ekcontainer
         """:class:`espressomd.EKSpecies.EKContainer`"""
+        ekreactions
+        """:class:`espressomd.EKSpecies.EKReactions`"""
         collision_detection
         """:class:`espressomd.collision_detection.CollisionDetection`"""
         cuda_init_handle
@@ -190,6 +192,7 @@ cdef class System:
             self.galilei = GalileiTransform()
             IF EK_WALBERLA:
                 self.ekcontainer = EKContainer()
+                self.ekreactions = EKReactions()
             self.non_bonded_inter = interactions.NonBondedInteractions()
             self.part = particle_data.ParticleList()
             self.thermostat = Thermostat()
@@ -226,6 +229,8 @@ cdef class System:
         IF EK_WALBERLA:
             odict['ekcontainer'] = System.__getattribute__(
                 self, "ekcontainer")
+            odict['ekreactions'] = System.__getattribute__(
+                self, "ekreactions")
         odict['integrator'] = System.__getattribute__(self, "integrator")
         odict['thermostat'] = System.__getattribute__(self, "thermostat")
         IF LB_WALBERLA:
