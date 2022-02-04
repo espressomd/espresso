@@ -248,10 +248,18 @@ private:
 
   inline void kernel_migration() {}
 
+  inline void updated_boundary_fields() {
+    m_boundary_flux->boundary_update();
+    m_boundary_density->boundary_update();
+  }
+
 public:
   void integrate(const std::size_t &potential_id,
                  const std::size_t &velocity_id,
                  const std::size_t &force_id) override {
+
+    updated_boundary_fields();
+
     // early-breakout, has to be removed when reactions are included
     if (get_diffusion() == 0.)
       return;
@@ -352,15 +360,13 @@ public:
 
     m_boundary_flux->set_node_value_at_boundary(node, flux, *bc);
 
-    reallocate_flux_boundary_field();
-
     return true;
   };
 
   [[nodiscard]] boost::optional<Utils::Vector3d>
   get_node_flux_at_boundary(const Utils::Vector3i &node) const override {
-    auto bc = get_block_and_cell(get_lattice(), node, true);
-    if (!bc or !m_boundary_flux->node_is_boundary(*bc))
+    auto const bc = get_block_and_cell(get_lattice(), node, true);
+    if (!bc or !m_boundary_flux->node_is_boundary(node))
       return {boost::none};
 
     return {m_boundary_flux->get_node_value_at_boundary(node)};
@@ -373,8 +379,6 @@ public:
 
     m_boundary_flux->remove_node_from_boundary(node, *bc);
 
-    reallocate_flux_boundary_field();
-
     return true;
   }
 
@@ -386,8 +390,6 @@ public:
 
     m_boundary_density->set_node_value_at_boundary(node, density, *bc);
 
-    reallocate_density_boundary_field();
-
     return true;
   }
 
@@ -397,8 +399,6 @@ public:
       return false;
 
     m_boundary_density->remove_node_from_boundary(node, *bc);
-
-    reallocate_density_boundary_field();
 
     return true;
   }
@@ -410,7 +410,7 @@ public:
     if (!bc)
       return {boost::none};
 
-    return {m_boundary_flux->node_is_boundary(*bc)};
+    return {m_boundary_flux->node_is_boundary(node)};
   }
 
   boost::optional<bool>
@@ -420,7 +420,7 @@ public:
     if (!bc)
       return {boost::none};
 
-    return {m_boundary_density->node_is_boundary(*bc)};
+    return {m_boundary_density->node_is_boundary(node)};
   }
 
   boost::optional<bool>
@@ -430,8 +430,8 @@ public:
     if (!bc)
       return {boost::none};
 
-    return {m_boundary_density->node_is_boundary(*bc) or
-            m_boundary_flux->node_is_boundary(*bc)};
+    return {m_boundary_density->node_is_boundary(node) or
+            m_boundary_flux->node_is_boundary(node)};
   };
 
   void update_flux_boundary_from_shape(

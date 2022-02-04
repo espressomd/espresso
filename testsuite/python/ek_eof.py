@@ -41,7 +41,7 @@ class EKEOF(ut.TestCase):
         density = 0.0006
 
         lattice = espressomd.lb.LatticeWalberla(
-            box_size=self.system.box_l, n_ghost_layers=1, agrid=self.AGRID)
+            n_ghost_layers=1, agrid=self.AGRID)
 
         ekspecies = espressomd.EKSpecies.EKSpecies(lattice=lattice,
                                                    density=density, kT=kT, diffusion=self.DIFFUSION_COEFFICIENT, valency=valency,

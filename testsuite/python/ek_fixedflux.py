@@ -25,7 +25,7 @@ class EKFixedFlux(ut.TestCase):
         """
 
         lattice = espressomd.lb.LatticeWalberla(
-            box_size=self.system.box_l, n_ghost_layers=1, agrid=self.AGRID)
+            n_ghost_layers=1, agrid=self.AGRID)
 
         ekspecies = espressomd.EKSpecies.EKSpecies(lattice=lattice,
                                                    density=0.0, kT=0.0, diffusion=self.DIFFUSION_COEFFICIENT,

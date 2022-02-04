@@ -139,18 +139,6 @@ public:
           get_value<std::vector<double>>(parameters, "value_view"));
       return none;
     }
-    if (method == "update_flux_boundary_from_list") {
-      m_ekinstance->update_flux_boundary_from_list(
-          get_value<std::vector<int>>(parameters, "nodes_view"),
-          get_value<std::vector<double>>(parameters, "value_view"));
-      return none;
-    }
-    if (method == "update_density_boundary_from_list") {
-      m_ekinstance->update_density_boundary_from_list(
-          get_value<std::vector<int>>(parameters, "nodes_view"),
-          get_value<std::vector<double>>(parameters, "value_view"));
-      return none;
-    }
     return none;
   }
 
