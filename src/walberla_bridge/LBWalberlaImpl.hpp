@@ -613,8 +613,9 @@ public:
         std::make_shared<InterpolateAndShiftAtBoundary<VectorField, FloatType>>(
             lattice().get_blocks(), m_velocity_field_id, m_vec_tmp_field_id,
             lattice().get_ghost_layers(), shear_direction, shear_plane_normal,
-            m_lees_edwards_callbacks->get_pos_offset,
-            m_lees_edwards_callbacks->get_shear_velocity);
+            m_lees_edwards_callbacks->get_pos_offset, [this]() {
+              return -m_lees_edwards_callbacks->get_shear_velocity();
+            });
     m_lees_edwards_last_applied_force_interpol_sweep =
         std::make_shared<InterpolateAndShiftAtBoundary<VectorField, FloatType>>(
             lattice().get_blocks(), m_last_applied_force_field_id,
