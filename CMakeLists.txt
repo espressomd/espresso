@@ -33,7 +33,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # C++ standard
 enable_language(CXX)
-set(CMAKE_CXX_STANDARD 14 CACHE STRING "C++ standard to be used")
+set(CMAKE_CXX_STANDARD 17 CACHE STRING "C++ standard to be used")
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -212,7 +212,7 @@ endfunction()
 # CUDA compiler
 if(WITH_CUDA)
   set(CMAKE_CUDA_STANDARD ${CMAKE_CXX_STANDARD})
-  set(MINIMAL_CUDA_VERSION 10.0)
+  set(MINIMAL_CUDA_VERSION 11.0)
   option_enum(varname "WITH_CUDA_COMPILER" help_text "CUDA compiler"
               default_value "nvcc" possible_values "nvcc;clang")
   if(WITH_CUDA_COMPILER STREQUAL "nvcc")
@@ -542,6 +542,12 @@ if(WITH_WALBERLA)
     set(WALBERLA_BUILD_SHOWCASES off CACHE BOOL "")
     set(WALBERLA_BUILD_DOC off CACHE BOOL "")
     set(CMAKE_POSITION_INDEPENDENT_CODE on CACHE BOOL "")
+    if (WITH_CUDA)
+      set(WALBERLA_BUILD_WITH_CUDA "on"  CACHE BOOL "")
+      if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
+        set(CMAKE_CUDA_ARCHITECTURES 75)
+      endif()
+    endif()
     add_subdirectory("${walberla_SOURCE_DIR}" "${walberla_BINARY_DIR}")
     set(LB_WALBERLA 1)
     set(WALBERLA_LIBS
