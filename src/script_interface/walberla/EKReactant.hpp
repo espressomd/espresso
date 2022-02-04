@@ -33,6 +33,10 @@ public:
                      [this]() { return m_ekreactant->get_stoech_coeff(); }}});
   }
 
+  [[nodiscard]] std::shared_ptr<::walberla::EKReactant<double>> get_instance() {
+    return m_ekreactant;
+  }
+
 private:
   /* The actual instance */
   std::shared_ptr<::walberla::EKReactant<double>> m_ekreactant;

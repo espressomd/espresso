@@ -53,8 +53,16 @@ public:
 
 template <typename FloatType> class EKReaction {
 private:
-  std::vector<EKReactant<FloatType>> m_reactants;
+  std::vector<std::shared_ptr<EKReactant<FloatType>>> m_reactants;
   FloatType m_coefficient;
+
+public:
+  EKReaction(std::vector<std::shared_ptr<EKReactant<FloatType>>> reactants,
+             FloatType coefficient)
+      : m_reactants(std::move(reactants)), m_coefficient(coefficient) {}
+
+  void set_coefficient(FloatType coefficient) { m_coefficient = coefficient; }
+  [[nodiscard]] FloatType get_coefficient() const { return m_coefficient; }
 };
 } // namespace walberla
 #endif // ESPRESSO_EKREACTIONS_HPP

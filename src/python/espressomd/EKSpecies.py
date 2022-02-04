@@ -426,3 +426,9 @@ class EKSlice:
 class EKReactant(ScriptObjectRegistry):
     _so_name = "walberla::EKReactant"
     _so_creation_policy = "GLOBAL"
+
+
+@script_interface_register
+class EKReaction(ScriptObjectRegistry):
+    _so_name = "walberla::EKReaction"
+    _so_creation_policy = "GLOBAL"
