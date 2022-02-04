@@ -58,8 +58,6 @@
 #include "generated_kernels/InitialPDFsSetterSinglePrecision.h"
 #include "generated_kernels/StreamSweepDoublePrecision.h"
 #include "generated_kernels/StreamSweepSinglePrecision.h"
-#include "generated_kernels/UpdateVelocityFromPDFSweepDoublePrecision.h"
-#include "generated_kernels/UpdateVelocityFromPDFSweepSinglePrecision.h"
 #include "generated_kernels/macroscopic_values_accessors_double_precision.h"
 #include "generated_kernels/macroscopic_values_accessors_single_precision.h"
 #include "vtk_writers.hpp"
@@ -123,8 +121,6 @@ template <typename FT = double> struct KernelTrait {
 #endif
   using StreamSweep = pystencils::StreamSweepDoublePrecision;
   using InitialPDFsSetter = pystencils::InitialPDFsSetterDoublePrecision;
-  using UpdateVelocityFromPDFSweep =
-      pystencils::UpdateVelocityFromPDFSweepDoublePrecision;
 };
 template <> struct KernelTrait<float> {
 #ifdef __AVX2__
@@ -143,8 +139,6 @@ template <> struct KernelTrait<float> {
 #endif
   using StreamSweep = pystencils::StreamSweepSinglePrecision;
   using InitialPDFsSetter = pystencils::InitialPDFsSetterSinglePrecision;
-  using UpdateVelocityFromPDFSweep =
-      pystencils::UpdateVelocityFromPDFSweepSinglePrecision;
 };
 } // namespace detail
 
@@ -164,8 +158,6 @@ class LBWalberlaImpl : public LBWalberlaBase {
   using StreamSweep = typename detail::KernelTrait<FloatType>::StreamSweep;
   using InitialPDFsSetter =
       typename detail::KernelTrait<FloatType>::InitialPDFsSetter;
-  using UpdateVelocityFromPDFSweep =
-      typename detail::KernelTrait<FloatType>::UpdateVelocityFromPDFSweep;
   using BoundaryModel = BoundaryHandling<FloatType>;
 
 protected:
@@ -328,7 +320,6 @@ protected:
 
   // Stream sweep
   std::shared_ptr<StreamSweep> m_stream;
-  std::shared_ptr<UpdateVelocityFromPDFSweep> m_update_velocity_field_from_pdfs;
 
   // Lees Edwards boundary interpolation
   std::unique_ptr<LeesEdwardsPack> m_lees_edwards_callbacks;
@@ -433,10 +424,6 @@ public:
         m_last_applied_force_field_id, m_pdf_field_id, m_velocity_field_id);
     set_collision_model();
 
-    m_update_velocity_field_from_pdfs =
-        std::make_shared<UpdateVelocityFromPDFSweep>(
-            m_last_applied_force_field_id, m_pdf_field_id, m_velocity_field_id);
-
     // Synchronize ghost layers
     (*m_full_communication).communicate();
   }
@@ -445,12 +432,6 @@ private:
   inline void integrate_stream(std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_stream)(&*b);
-  }
-
-  inline void
-  update_velocity_field_from_pdf(std::shared_ptr<Lattice_T> const &blocks) {
-    for (auto b = blocks->begin(); b != blocks->end(); ++b)
-      (*m_update_velocity_field_from_pdfs)(&*b);
   }
 
   inline void integrate_collide(std::shared_ptr<Lattice_T> const &blocks) {
@@ -508,7 +489,6 @@ private:
     integrate_boundaries(blocks);
     // LB stream
     integrate_stream(blocks);
-    update_velocity_field_from_pdf(blocks);
     // Refresh ghost layers
     (*m_full_communication).communicate();
   }

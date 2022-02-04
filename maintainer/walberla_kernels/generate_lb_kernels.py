@@ -37,7 +37,7 @@ import relaxation_rates
 from lbmpy.fieldaccess import CollideOnlyInplaceAccessor
 from lbmpy.stencils import get_stencil
 from lbmpy.updatekernels import create_lbm_kernel, create_stream_pull_with_output_kernel
-from lbmpy.macroscopic_value_kernels import macroscopic_values_setter, macroscopic_values_getter
+from lbmpy.macroscopic_value_kernels import macroscopic_values_setter
 
 import lees_edwards
 # for collide-push from lbmpy.fieldaccess import StreamPushTwoFieldsAccessor
@@ -234,16 +234,6 @@ def generate_setters(lb_method):
     return pdfs_setter
 
 
-def generate_update_vel_sweep(lb_method):
-    fields = generate_fields(ctx, lb_method.stencil)
-    update_vel_from_pdf_kernel = macroscopic_values_getter(
-        lb_method, None, fields["velocity"], fields["pdfs"])
-#        compile_macroscopic_values_getter(lb_method, ["velocity"], field_layout="fzyx")
-    codegen.generate_sweep(ctx, 
-                           "UpdateVelocityFromPDFSweep" + precision_prefix, 
-                           update_vel_from_pdf_kernel, ghost_layers_to_include=0)
-
-
 def check_dependencies():
     import setuptools
     import pystencils
@@ -376,8 +366,6 @@ with PatchedCodeGeneration() as ctx:
         ctx,
         f"InitialPDFsSetter{precision_prefix}",
         pdfs_setter)
-
-    generate_update_vel_sweep(method)
 
     # generate unthermalized collision rule
     collision_rule_unthermalized = create_lb_collision_rule(
