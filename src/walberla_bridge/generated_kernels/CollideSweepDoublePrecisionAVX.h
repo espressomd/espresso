@@ -1,4 +1,6 @@
-// kernel generated with pystencils v0.4.4, lbmpy v0.4.4, lbmpy_walberla/pystencils_walberla from commit ref: refs/heads/le_ghost_vel
+// kernel generated with pystencils v0.4.4, lbmpy v0.4.4,
+// lbmpy_walberla/pystencils_walberla from commit
+// 88f85eb7a979f81d68e76009811aeed53ec3014e
 
 //======================================================================================================================
 //
@@ -22,14 +24,12 @@
 #pragma once
 #include "core/DataTypes.h"
 
-#include "field/GhostLayerField.h"
-#include "field/SwapableCompare.h"
 #include "domain_decomposition/BlockDataID.h"
 #include "domain_decomposition/IBlock.h"
 #include "domain_decomposition/StructuredBlockStorage.h"
+#include "field/GhostLayerField.h"
+#include "field/SwapableCompare.h"
 #include <set>
-
-
 
 #ifdef __GNUC__
 #define RESTRICT __restrict__
@@ -39,79 +39,72 @@
 #define RESTRICT
 #endif
 
-#if ( defined WALBERLA_CXX_COMPILER_IS_GNU ) || ( defined WALBERLA_CXX_COMPILER_IS_CLANG )
-#   pragma GCC diagnostic push
-#   pragma GCC diagnostic ignored "-Wunused-parameter"
-#   pragma GCC diagnostic ignored "-Wreorder"
+#if (defined WALBERLA_CXX_COMPILER_IS_GNU) ||                                  \
+    (defined WALBERLA_CXX_COMPILER_IS_CLANG)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wreorder"
 #endif
 
 namespace walberla {
 namespace pystencils {
 
-
-class CollideSweepDoublePrecisionAVX
-{
+class CollideSweepDoublePrecisionAVX {
 public:
-    CollideSweepDoublePrecisionAVX( BlockDataID forceID_, BlockDataID pdfsID_, double omega_bulk, double omega_even, double omega_odd, double omega_shear )
-        : forceID(forceID_), pdfsID(pdfsID_), omega_bulk_(omega_bulk), omega_even_(omega_even), omega_odd_(omega_odd), omega_shear_(omega_shear)
-    {};
+  CollideSweepDoublePrecisionAVX(BlockDataID forceID_, BlockDataID pdfsID_,
+                                 double omega_bulk, double omega_even,
+                                 double omega_odd, double omega_shear)
+      : forceID(forceID_), pdfsID(pdfsID_), omega_bulk_(omega_bulk),
+        omega_even_(omega_even), omega_odd_(omega_odd),
+        omega_shear_(omega_shear){};
 
-    
+  void run(IBlock *block);
 
-    void run(IBlock * block);
-    
-    void runOnCellInterval(const shared_ptr<StructuredBlockStorage> & blocks, const CellInterval & globalCellInterval, cell_idx_t ghostLayers, IBlock * block);
+  void runOnCellInterval(const shared_ptr<StructuredBlockStorage> &blocks,
+                         const CellInterval &globalCellInterval,
+                         cell_idx_t ghostLayers, IBlock *block);
 
-    
-    void operator() (IBlock * block)
-    {
-        run(block);
-    }
-    
+  void operator()(IBlock *block) { run(block); }
 
-    static std::function<void (IBlock *)> getSweep(const shared_ptr<CollideSweepDoublePrecisionAVX> & kernel)
-    {
-        return [kernel] 
-               (IBlock * b) 
-               { kernel->run(b); };
-    }
+  static std::function<void(IBlock *)>
+  getSweep(const shared_ptr<CollideSweepDoublePrecisionAVX> &kernel) {
+    return [kernel](IBlock *b) { kernel->run(b); };
+  }
 
-    static std::function<void (IBlock*)> getSweepOnCellInterval(const shared_ptr<CollideSweepDoublePrecisionAVX> & kernel, const shared_ptr<StructuredBlockStorage> & blocks, const CellInterval & globalCellInterval, cell_idx_t ghostLayers=1)
-    {
-        return [kernel, blocks, globalCellInterval, ghostLayers]
-               (IBlock * b) 
-               { kernel->runOnCellInterval(blocks, globalCellInterval, ghostLayers, b); };
-    }
+  static std::function<void(IBlock *)> getSweepOnCellInterval(
+      const shared_ptr<CollideSweepDoublePrecisionAVX> &kernel,
+      const shared_ptr<StructuredBlockStorage> &blocks,
+      const CellInterval &globalCellInterval, cell_idx_t ghostLayers = 1) {
+    return [kernel, blocks, globalCellInterval, ghostLayers](IBlock *b) {
+      kernel->runOnCellInterval(blocks, globalCellInterval, ghostLayers, b);
+    };
+  }
 
-    std::function<void (IBlock *)> getSweep()
-    {
-        return [this] 
-               (IBlock * b) 
-               { this->run(b); };
-    }
+  std::function<void(IBlock *)> getSweep() {
+    return [this](IBlock *b) { this->run(b); };
+  }
 
-    std::function<void (IBlock *)> getSweepOnCellInterval(const shared_ptr<StructuredBlockStorage> & blocks, const CellInterval & globalCellInterval, cell_idx_t ghostLayers=1)
-    {
-        return [this, blocks, globalCellInterval, ghostLayers]
-               (IBlock * b) 
-               { this->runOnCellInterval(blocks, globalCellInterval, ghostLayers, b); };
-    }
+  std::function<void(IBlock *)>
+  getSweepOnCellInterval(const shared_ptr<StructuredBlockStorage> &blocks,
+                         const CellInterval &globalCellInterval,
+                         cell_idx_t ghostLayers = 1) {
+    return [this, blocks, globalCellInterval, ghostLayers](IBlock *b) {
+      this->runOnCellInterval(blocks, globalCellInterval, ghostLayers, b);
+    };
+  }
 
-
-    BlockDataID forceID;
-    BlockDataID pdfsID;
-    double omega_bulk_;
-    double omega_even_;
-    double omega_odd_;
-    double omega_shear_;
-
+  BlockDataID forceID;
+  BlockDataID pdfsID;
+  double omega_bulk_;
+  double omega_even_;
+  double omega_odd_;
+  double omega_shear_;
 };
-
 
 } // namespace pystencils
 } // namespace walberla
 
-
-#if ( defined WALBERLA_CXX_COMPILER_IS_GNU ) || ( defined WALBERLA_CXX_COMPILER_IS_CLANG )
-#   pragma GCC diagnostic pop
+#if (defined WALBERLA_CXX_COMPILER_IS_GNU) ||                                  \
+    (defined WALBERLA_CXX_COMPILER_IS_CLANG)
+#pragma GCC diagnostic pop
 #endif
