@@ -420,3 +420,9 @@ class EKSlice:
     def __iter__(self):
         return (EKRoutines(species=self._species, node=np.array(index))
                 for index in itertools.product(*self.indices))
+
+
+@script_interface_register
+class EKReactant(ScriptObjectRegistry):
+    _so_name = "walberla::EKReactant"
+    _so_creation_policy = "GLOBAL"

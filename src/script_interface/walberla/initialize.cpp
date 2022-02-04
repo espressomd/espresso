@@ -33,6 +33,8 @@
 #include "EKNone.hpp"
 #include "EKSpecies.hpp"
 
+#include "EKReactant.hpp"
+
 namespace ScriptInterface::walberla {
 
 void initialize(Utils::Factory<ObjectHandle> *om) {
@@ -46,6 +48,8 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<EKFFT>("walberla::EKFFT");
   om->register_new<EKNone>("walberla::None");
   om->register_new<EKVTKHandle>("walberla::EKVTKHandle");
+
+  om->register_new<EKReactant>("walberla::EKReactant");
 }
 
 } // namespace ScriptInterface::walberla
