@@ -29,7 +29,7 @@ espressomd.assert_features(required_features)
 
 box = [40, 40, 40]
 system = espressomd.System(box_l=box)
-system.cell_system.set_domain_decomposition(use_verlet_lists=True)
+system.cell_system.set_regular_decomposition(use_verlet_lists=True)
 visualizer = espressomd.visualization_opengl.openGLLive(
     system, background_color=[1, 1, 1], drag_enabled=True, drag_force=10)
 

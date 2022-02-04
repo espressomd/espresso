@@ -60,7 +60,7 @@ class ThermoTest(ut.TestCase):
     @classmethod
     def setUpClass(cls):
         np.random.seed(seed=15)
-        cls.system.cell_system.set_domain_decomposition(use_verlet_lists=True)
+        cls.system.cell_system.set_regular_decomposition(use_verlet_lists=True)
         cls.system.cell_system.skin = 5.0
 
     def setUp(self):

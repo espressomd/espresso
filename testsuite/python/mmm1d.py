@@ -114,7 +114,7 @@ class ElectrostaticInteractionsTests:
         if self.MMM1D is espressomd.electrostatics.MMM1D:
             with self.assertRaisesRegex(Exception, "MMM1D requires the N-square cellsystem"):
                 mmm1d = self.MMM1D(prefactor=1.0, maxPWerror=1e-2)
-                self.system.cell_system.set_domain_decomposition()
+                self.system.cell_system.set_regular_decomposition()
                 self.system.actors.add(mmm1d)
             self.system.cell_system.set_n_square()
             self.system.actors.clear()

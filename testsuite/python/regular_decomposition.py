@@ -23,12 +23,12 @@ import numpy as np
 np.random.seed(42)
 
 
-class DomainDecomposition(ut.TestCase):
+class RegularDecomposition(ut.TestCase):
     system = espressomd.System(box_l=3 * [50.0])
     original_node_grid = tuple(system.cell_system.node_grid)
 
     def setUp(self):
-        self.system.cell_system.set_domain_decomposition(
+        self.system.cell_system.set_regular_decomposition(
             use_verlet_lists=False)
         self.system.cell_system.node_grid = self.original_node_grid
         self.system.time_step = 1e-3

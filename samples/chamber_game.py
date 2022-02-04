@@ -156,7 +156,7 @@ if has_pygame:
 # CELLSYSTEM
 
 system.cell_system.skin = 3.0
-system.cell_system.set_domain_decomposition(use_verlet_lists=False)
+system.cell_system.set_regular_decomposition(use_verlet_lists=False)
 
 # BONDS
 
