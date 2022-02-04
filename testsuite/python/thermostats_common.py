@@ -43,7 +43,7 @@ class ThermostatsCommon:
                 vel[:, i], range=(-minmax, minmax), bins=n_bins, density=False)
             data = hist[0] / float(vel.shape[0])
             bins = hist[1]
-            expected = [] 
+            expected = []
             for j in range(n_bins):
                 expected.append(single_component_maxwell(
                     bins[j], bins[j + 1], kT))
