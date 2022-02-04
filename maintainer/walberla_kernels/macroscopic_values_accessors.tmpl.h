@@ -1,3 +1,5 @@
+// kernel generated with pystencils v0.4.4+2.g825be1d, lbmpy v0.4.4, lbmpy_walberla/pystencils_walberla from commit 2527a5f799da52b4e5293a05ed691fc35bf7122b
+
 //======================================================================================================================
 //
 //  This file is part of waLBerla. waLBerla is free software: you can
