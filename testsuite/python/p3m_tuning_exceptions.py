@@ -210,10 +210,10 @@ class P3M_tuning_test(ut.TestCase):
         self.system.periodicity = (1, 1, 1)
 
         # check cell system exceptions
-        with self.assertRaisesRegex(Exception, "P3M requires the domain decomposition cell system"):
+        with self.assertRaisesRegex(Exception, "P3M requires the regular decomposition cell system"):
             self.system.cell_system.set_n_square()
             self.system.analysis.energy()
-        self.system.cell_system.set_domain_decomposition()
+        self.system.cell_system.set_regular_decomposition()
         self.system.actors.clear()
 
     @utx.skipIfMissingGPU()
@@ -259,10 +259,10 @@ class P3M_tuning_test(ut.TestCase):
         self.system.periodicity = (1, 1, 1)
 
         # check cell system exceptions
-        with self.assertRaisesRegex(Exception, "dipolar P3M requires the domain decomposition cell system"):
+        with self.assertRaisesRegex(Exception, "dipolar P3M requires the regular decomposition cell system"):
             self.system.cell_system.set_n_square()
             self.system.analysis.energy()
-        self.system.cell_system.set_domain_decomposition()
+        self.system.cell_system.set_regular_decomposition()
         self.system.actors.clear()
 
     @utx.skipIfMissingFeatures("P3M")

@@ -42,7 +42,7 @@ visualizer = espressomd.visualization_opengl.openGLLive(
     draw_cells=True)
 
 system.time_step = 0.0005
-system.cell_system.set_domain_decomposition(use_verlet_lists=True)
+system.cell_system.set_regular_decomposition(use_verlet_lists=True)
 system.cell_system.skin = 0.4
 #system.cell_system.node_grid = [i, j, k]
 

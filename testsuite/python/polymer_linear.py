@@ -16,7 +16,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
 import numpy as np
-import random
 import espressomd
 import espressomd.polymer
 import espressomd.shapes
@@ -34,7 +33,7 @@ class LinearPolymerPositions(ut.TestCase):
     """
 
     box_l = 15
-    seed = random.randint(0, 1000)
+    seed = 42
 
     system = espressomd.System(box_l=[box_l, box_l, box_l])
 
@@ -128,6 +127,7 @@ class LinearPolymerPositions(ut.TestCase):
         num_poly = 90
         num_mono = 25
         bond_length = 0.83
+        np.random.seed(seed=self.seed)
         start_positions = np.random.random((num_poly, 3)) * self.box_l
 
         # make sure that incorrect size leads to error

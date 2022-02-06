@@ -637,7 +637,7 @@ class CollisionDetection(ut.TestCase):
 
         system.part.add(id=4, pos=e)
         system.part.add(id=1, pos=b)
-        system.cell_system.set_domain_decomposition()
+        system.cell_system.set_regular_decomposition()
         system.integrator.run(1, recalc_forces=True)
         self.verify_triangle_binding(cutoff, system.bonded_inter[2], res)
         system.cell_system.set_n_square()

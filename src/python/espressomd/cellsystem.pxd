@@ -36,7 +36,7 @@ cdef extern from "communication.hpp":
     int n_nodes
 
 cdef extern from "cells.hpp":
-    int CELL_STRUCTURE_DOMDEC
+    int CELL_STRUCTURE_REGULAR
     int CELL_STRUCTURE_NSQUARE
 
     ctypedef struct CellStructure:
@@ -45,7 +45,7 @@ cdef extern from "cells.hpp":
 
     CellStructure cell_structure
 
-    const DomainDecomposition * get_domain_decomposition()
+    const RegularDecomposition * get_regular_decomposition()
 
     vector[pair[int, int]] mpi_get_pairs(double distance) except +
     vector[pair[int, int]] mpi_get_pairs_of_types(double distance, vector[int] types) except +
@@ -62,8 +62,8 @@ cdef extern from "integrate.hpp":
     void mpi_set_skin(double skin)
     double get_verlet_reuse()
 
-cdef extern from "DomainDecomposition.hpp":
-    cppclass  DomainDecomposition:
+cdef extern from "RegularDecomposition.hpp":
+    cppclass RegularDecomposition:
         Vector3i cell_grid
         double cell_size[3]
 
