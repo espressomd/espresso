@@ -13,7 +13,7 @@ function(PYTHON_TEST)
   set(TEST_FILE ${TEST_FILE_CONFIGURED})
 
   if(NOT DEFINED TEST_MAX_NUM_PROC)
-    set(TEST_MAX_NUM_PROC ${TEST_NP})
+    set(TEST_MAX_NUM_PROC 1)
   endif()
 
   if(${TEST_MAX_NUM_PROC} GREATER ${TEST_NP})
@@ -23,12 +23,14 @@ function(PYTHON_TEST)
   endif()
 
   if(EXISTS ${MPIEXEC})
+    set_mpiexec_tmpdir("${TEST_NAME}")
     add_test(
       NAME ${TEST_NAME}
       COMMAND
         ${MPIEXEC} ${MPIEXEC_OVERSUBSCRIBE} ${MPIEXEC_NUMPROC_FLAG}
-        ${TEST_NUM_PROC} ${MPIEXEC_PREFLAGS} ${CMAKE_BINARY_DIR}/pypresso
-        ${PYPRESSO_OPTIONS} ${TEST_FILE} ${MPIEXEC_POSTFLAGS})
+        ${TEST_NUM_PROC} ${MPIEXEC_PREFLAGS} ${MPIEXEC_TMPDIR}
+        ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS} ${TEST_FILE}
+        ${MPIEXEC_POSTFLAGS})
   else()
     add_test(${TEST_NAME} ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
              ${TEST_FILE})
@@ -98,7 +100,7 @@ python_test(FILE dds-and-bh-gpu.py MAX_NUM_PROC 4 LABELS gpu)
 python_test(FILE electrostaticInteractions.py MAX_NUM_PROC 2)
 python_test(FILE engine_langevin.py MAX_NUM_PROC 4)
 python_test(FILE engine_lb.py MAX_NUM_PROC 2 LABELS gpu)
-python_test(FILE experimental_decorator.py)
+python_test(FILE experimental_decorator.py MAX_NUM_PROC 1)
 python_test(FILE icc.py MAX_NUM_PROC 4)
 python_test(FILE mass-and-rinertia_per_particle.py MAX_NUM_PROC 2 LABELS long)
 python_test(FILE integrate.py MAX_NUM_PROC 4)
@@ -221,7 +223,7 @@ python_test(FILE mpiio.py MAX_NUM_PROC 4)
 python_test(FILE gpu_availability.py MAX_NUM_PROC 2 LABELS gpu)
 python_test(FILE features.py MAX_NUM_PROC 1)
 python_test(FILE decorators.py MAX_NUM_PROC 1)
-python_test(FILE galilei.py MAX_NUM_PROC 32)
+python_test(FILE galilei.py MAX_NUM_PROC 4)
 python_test(FILE linear_momentum.py MAX_NUM_PROC 4)
 python_test(FILE linear_momentum_lb.py MAX_NUM_PROC 2 LABELS gpu)
 python_test(FILE mmm1d.py MAX_NUM_PROC 2)

@@ -98,6 +98,7 @@ endif()
 option(WARNINGS_ARE_ERRORS "Treat warnings as errors during compilation" OFF)
 option(WITH_CCACHE "Use ccache compiler invocation." OFF)
 option(WITH_PROFILER "Enable profiler annotations." OFF)
+option(INSIDE_DOCKER "Enable when running inside Docker." OFF)
 set(TEST_TIMEOUT "300" CACHE STRING
                              "Timeout in seconds for each testsuite test")
 
@@ -275,6 +276,32 @@ endif(WITH_VALGRIND_INSTRUMENTATION)
 #
 
 find_package(MPI 3.0 REQUIRED)
+find_package(MpiexecBackend)
+
+# OpenMPI checks the number of processes against the number of CPUs
+if("${MPIEXEC_BACKEND_NAME}" STREQUAL "OpenMPI" AND "${MPIEXEC_BACKEND_VERSION}"
+                                                    VERSION_GREATER_EQUAL 2.0.0)
+  set(MPIEXEC_OVERSUBSCRIBE "-oversubscribe")
+else()
+  set(MPIEXEC_OVERSUBSCRIBE "")
+endif()
+
+# OpenMPI cannot run two jobs in parallel in a Docker container, because the
+# same base folder is used to store the process ids of multiple jobs. Since the
+# base folder is deleted upon completion of a job, other jobs will fail when
+# attempting to create subdirectories in the base folder.
+# https://github.com/open-mpi/ompi/issues/8510
+if("${MPIEXEC_BACKEND_NAME}" STREQUAL "OpenMPI" AND INSIDE_DOCKER)
+  cmake_host_system_information(RESULT hostname QUERY HOSTNAME)
+  function(set_mpiexec_tmpdir)
+    set(MPIEXEC_TMPDIR --mca orte_tmpdir_base
+                       "/tmp/ompi.${hostname}.$ENV{USER}.${ARGV0}" PARENT_SCOPE)
+  endfunction()
+else()
+  function(set_mpiexec_tmpdir)
+    set(MPIEXEC_TMPDIR "" PARENT_SCOPE)
+  endfunction()
+endif()
 
 #
 # Boost
