@@ -26,6 +26,7 @@
  */
 
 #include "ParticleRange.hpp"
+
 namespace Mpiio {
 
 /** Constants which indicate what to output. To indicate the output of
@@ -33,6 +34,7 @@ namespace Mpiio {
  *
  */
 enum MPIIOOutputFields : unsigned int {
+  MPIIO_OUT_NON = 0u,
   MPIIO_OUT_POS = 1u,
   MPIIO_OUT_VEL = 2u,
   MPIIO_OUT_TYP = 4u,
@@ -42,20 +44,20 @@ enum MPIIOOutputFields : unsigned int {
 /** Parallel binary output using MPI-IO. To be called by all MPI
  * processes. Aborts ESPResSo if an error occurs.
  *
- * \param filename A null-terminated filename prefix.
+ * \param prefix Filepath prefix.
  * \param fields Output specifier which fields to dump.
  * \param particles range of particles to serialize.
  */
-void mpi_mpiio_common_write(const char *filename, unsigned fields,
+void mpi_mpiio_common_write(const std::string &prefix, unsigned fields,
                             const ParticleRange &particles);
 
 /** Parallel binary input using MPI-IO. To be called by all MPI
  * processes. Aborts ESPResSo if an error occurs.
  *
- * \param filename A null-terminated filename prefix.
+ * \param prefix Filepath prefix.
  * \param fields Specifier which fields to read.
  */
-void mpi_mpiio_common_read(const char *filename, unsigned fields);
+void mpi_mpiio_common_read(const std::string &prefix, unsigned fields);
 
 } // namespace Mpiio
 

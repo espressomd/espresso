@@ -31,8 +31,6 @@
 
 #include <string>
 
-#define field_value(use, v) ((use) ? (v) : 0u)
-
 namespace ScriptInterface {
 namespace MPIIO {
 
@@ -43,22 +41,22 @@ public:
   Variant do_call_method(const std::string &name,
                          const VariantMap &parameters) override {
 
-    auto pref = get_value<std::string>(parameters.at("prefix"));
+    auto prefix = get_value<std::string>(parameters.at("prefix"));
     auto pos = get_value<bool>(parameters.at("pos"));
     auto vel = get_value<bool>(parameters.at("vel"));
     auto typ = get_value<bool>(parameters.at("typ"));
-    auto bond = get_value<bool>(parameters.at("bond"));
+    auto bnd = get_value<bool>(parameters.at("bond"));
 
-    unsigned v = field_value(pos, Mpiio::MPIIO_OUT_POS) |
-                 field_value(vel, Mpiio::MPIIO_OUT_VEL) |
-                 field_value(typ, Mpiio::MPIIO_OUT_TYP) |
-                 field_value(bond, Mpiio::MPIIO_OUT_BND);
+    auto const fields = ((pos) ? Mpiio::MPIIO_OUT_POS : Mpiio::MPIIO_OUT_NON) |
+                        ((vel) ? Mpiio::MPIIO_OUT_VEL : Mpiio::MPIIO_OUT_NON) |
+                        ((typ) ? Mpiio::MPIIO_OUT_TYP : Mpiio::MPIIO_OUT_NON) |
+                        ((bnd) ? Mpiio::MPIIO_OUT_BND : Mpiio::MPIIO_OUT_NON);
 
     if (name == "write")
-      Mpiio::mpi_mpiio_common_write(pref.c_str(), v,
+      Mpiio::mpi_mpiio_common_write(prefix, fields,
                                     cell_structure.local_particles());
     else if (name == "read")
-      Mpiio::mpi_mpiio_common_read(pref.c_str(), v);
+      Mpiio::mpi_mpiio_common_read(prefix, fields);
 
     return {};
   }
