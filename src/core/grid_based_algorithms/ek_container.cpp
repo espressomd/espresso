@@ -4,6 +4,8 @@
 
 #include "errorhandling.hpp"
 
+#include "ek_reactions.hpp"
+
 namespace EK {
 EKContainer<EKinWalberlaBase<double>> ek_container;
 
@@ -56,5 +58,7 @@ void propagate() {
                     runtimeErrorMsg() << e.what();
                   };
                 });
+
+  EK::perform_reactions();
 }
 } // namespace EK

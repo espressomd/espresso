@@ -1,5 +1,5 @@
-#ifndef ESPRESSO_EKREACTIONS_HPP
-#define ESPRESSO_EKREACTIONS_HPP
+#ifndef ESPRESSO_EKREACTION_HPP
+#define ESPRESSO_EKREACTION_HPP
 
 #include "EKinWalberlaBase.hpp"
 #include "LatticeWalberla.hpp"
@@ -7,23 +7,6 @@
 #include <memory>
 
 namespace walberla {
-
-void EKReactions(std::shared_ptr<LatticeWalberla> &lattice, double coeff,
-                 std::size_t density_field_id, double order) {
-  //    auto blocks = lattice->get_blocks();
-  //
-  //    const auto density_id = BlockDataID(density_field_id);
-
-  // TODO: generate a kernel for this
-  //    auto kernel = pystencils::DiffusiveFluxKernelWithElectrostatic(
-  //            get_diffusion(), m_flux_field_flattened_id,
-  //            BlockDataID(potential_id), m_density_field_flattened_id,
-  //            ext_field[0], ext_field[1], ext_field[2], get_kT(),
-  //            get_valency());
-  //    for (auto &block : *blocks) {
-  //      kernel.run(&block);
-  //    }
-}
 
 template <typename FloatType> class EKReactant {
 private:
@@ -63,6 +46,13 @@ public:
 
   void set_coefficient(FloatType coefficient) { m_coefficient = coefficient; }
   [[nodiscard]] FloatType get_coefficient() const { return m_coefficient; }
+
+  void perform_reaction() const {
+    // needs blockforest
+    // coefficients
+    // density field
+    // order
+  }
 };
 } // namespace walberla
-#endif // ESPRESSO_EKREACTIONS_HPP
+#endif // ESPRESSO_EKREACTION_HPP

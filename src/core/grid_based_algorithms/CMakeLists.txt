@@ -4,4 +4,5 @@ target_sources(
           ${CMAKE_CURRENT_SOURCE_DIR}/lb_interpolation.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/lb_particle_coupling.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/lb_walberla_instance.cpp
-          ${CMAKE_CURRENT_SOURCE_DIR}/ek_container.cpp)
+          ${CMAKE_CURRENT_SOURCE_DIR}/ek_container.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/ek_reactions.cpp)

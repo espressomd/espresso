@@ -6,7 +6,7 @@
 
 #include "EKReactant.hpp"
 
-#include "walberla_bridge/EKReactions.hpp"
+#include "walberla_bridge/EKReaction.hpp"
 
 #include <memory>
 
@@ -33,6 +33,8 @@ public:
                      },
                      [this]() { return m_ekreaction->get_coefficient(); }}});
   }
+
+  [[nodiscard]] auto get_instance() const { return m_ekreaction; }
 
 private:
   /* The actual instance */
