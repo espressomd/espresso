@@ -282,6 +282,8 @@ int integrate(int n_steps, int reuse_forces) {
     if (box_geo.type() == BoxType::LEES_EDWARDS) {
       offset = LeesEdwards::verlet_list_offset(box_geo);
     }
+
+    particles = cell_structure.local_particles();
     if (cell_structure.check_resort_required(particles, skin, offset)) {
       cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
     }
