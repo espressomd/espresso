@@ -18,7 +18,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-/** \file
+/** @file
  *
  * Concerning the file layouts.
  * - Scalar arrays are written like this:
@@ -91,14 +91,16 @@ static void fatal_error() {
   errexit();
 }
 
-/** Dumps arr of size len starting from prefix pref of type T using
- * MPI_T as MPI datatype. Beware, that T and MPI_T have to match!
+/**
+ * @brief Dump data @p arr of size @p len starting from prefix @p pref
+ * of type @p T using @p MPI_T as MPI datatype. Beware, that @p T and
+ * @p MPI_T have to match!
  *
- * \param fn The file name to dump to. Must not exist already
- * \param arr The array to dump
- * \param len The number of elements to dump
- * \param pref The prefix for this process
- * \param MPI_T The MPI_Datatype corresponding to the template parameter T.
+ * @param fn The file name to write to (must not already exist!)
+ * @param arr The array to dump
+ * @param len The number of elements to dump
+ * @param pref The prefix for this process
+ * @param MPI_T The MPI datatype corresponding to the template parameter @p T
  */
 template <typename T>
 static void mpiio_dump_array(const std::string &fn, T *arr, std::size_t len,
@@ -129,12 +131,12 @@ static void mpiio_dump_array(const std::string &fn, T *arr, std::size_t len,
   }
 }
 
-/** Dumps some generic infos like the dumped fields and info to process
- *  the bond information offline (without ESPResSo). To be called by the
- *  head node only.
+/**
+ * @brief Dump the fields and bond information.
+ * To be called by the head node only.
  *
- * \param fn The filename to write to
- * \param fields The dumped fields
+ * @param fn The filename to write to
+ * @param fields The dumped fields
  */
 static void dump_info(const std::string &fn, unsigned fields) {
   FILE *f = fopen(fn.c_str(), "wb");
@@ -252,13 +254,13 @@ void mpi_mpiio_common_write(const std::string &prefix, unsigned fields,
   }
 }
 
-/** Get the number of elements in a file by its file size and
- *  elem_sz. I.e. query the file size using stat(2) and divide it by
- *  elem_sz.
+/**
+ * @brief Get the number of elements in a file by its file size and @p elem_sz.
+ * I.e. query the file size using stat(2) and divide it by @p elem_sz.
  *
- * \param fn The filename
- * \param elem_sz Sizeof a single element
- * \return The number of elements stored binary in the file
+ * @param fn The filename
+ * @param elem_sz Size of a single element
+ * @return The number of elements stored in the file
  */
 static int get_num_elem(const std::string &fn, std::size_t elem_sz) {
   // Could also be done via MPI_File_open, MPI_File_get_size,
@@ -273,9 +275,16 @@ static int get_num_elem(const std::string &fn, std::size_t elem_sz) {
   return static_cast<int>(st.st_size / elem_sz);
 }
 
-/** Reads a previously dumped array of size len starting from prefix
- *  pref of type T using MPI_T as MPI datatype. Beware, that T and MPI_T
- *  have to match!
+/**
+ * @brief Read a previously dumped array of size @p len starting from prefix
+ * @p pref of type @p T using @p MPI_T as MPI datatype. Beware, that
+ * @p T and @p MPI_T have to match!
+ *
+ * @param fn The file name to read from
+ * @param arr The array to populate
+ * @param len The number of elements to read
+ * @param pref The prefix for this process
+ * @param MPI_T The MPI datatype corresponding to the template parameter @p T
  */
 template <typename T>
 static void mpiio_read_array(const std::string &fn, T *arr, std::size_t len,
@@ -306,22 +315,23 @@ static void mpiio_read_array(const std::string &fn, T *arr, std::size_t len,
   }
 }
 
-/** Read the header file and return the first value.
- *  To be called by all processes.
+/**
+ * @brief Read the header file and return the first value.
+ * To be called by all processes.
  *
- * \param fn Filename of the head file
- * \param rank The rank of the current process in MPI_COMM_WORLD
+ * @param fn Filename of the head file
+ * @param rank The rank of the current process in @c MPI_COMM_WORLD
  */
 static unsigned read_head(const std::string &fn, int rank) {
   unsigned n_fields = 0u;
   FILE *f = nullptr;
   if (rank == 0) {
     if (!(f = fopen(fn.c_str(), "rb"))) {
-      fprintf(stderr, "MPI-IO: Could not open %s.head.\n", fn.c_str());
+      fprintf(stderr, "MPI-IO: Could not open \"%s\".\n", fn.c_str());
       fatal_error();
     }
     if (fread(static_cast<void *>(&n_fields), sizeof(unsigned), 1, f) != 1) {
-      fprintf(stderr, "MPI-IO: Read on %s.head failed.\n", fn.c_str());
+      fprintf(stderr, "MPI-IO: Read on \"%s\" failed.\n", fn.c_str());
       fatal_error();
     }
   }
@@ -332,13 +342,14 @@ static unsigned read_head(const std::string &fn, int rank) {
   return n_fields;
 }
 
-/** Reads the pref file.
- *  Needs to be called by all processes.
+/**
+ * @brief Read the pref file.
+ * Needs to be called by all processes.
  *
- * \param fn The file name of the prefs file
- * \param rank The rank of the current process in MPI_COMM_WORLD
- * \param size The size of MPI_COMM_WORLD
- * \param nglobalpart The global amount of particles
+ * @param fn The file name of the prefs file
+ * @param rank The rank of the current process in @c MPI_COMM_WORLD
+ * @param size The size of @c MPI_COMM_WORLD
+ * @param nglobalpart The global amount of particles
  * @return The prefix and the local number of particles.
  */
 static std::tuple<int, int> read_prefs(const std::string &fn, int rank,

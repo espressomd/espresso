@@ -216,14 +216,16 @@ capabilities. The usage is quite simple:
 
 .. code:: python
 
-    import espressomd.io.mppiio
+    import espressomd
+    import espressomd.io
     system = espressomd.System(box_l=[1, 1, 1])
     # ... add particles here
-    espressomd.io.mppiio.mpiio.write("/tmp/mydata", positions=True, velocities=True, types=True, bonds=True)
+    mpiio = espressomd.io.mpiio.mpiio
+    mpiio.write("/tmp/mydata", positions=True, velocities=True, types=True, bonds=True)
 
-Here, :file:`/tmp/mydata` is the prefix used for several files. The call will output
-particle positions, velocities, types and their bonds to the following files in
-folder :file:`/tmp`:
+Here, :file:`/tmp/mydata` is the prefix used to generate several files.
+The call will output particle positions, velocities, types and their bonds
+to the following files in folder :file:`/tmp`:
 
 - :file:`mydata.head`
 - :file:`mydata.id`
@@ -235,11 +237,25 @@ folder :file:`/tmp`:
 - :file:`mydata.bond`
 
 Depending on the chosen output, not all of these files might be created.
-To read these in again, simply call :meth:`espressomd.io.mpiio.Mpiio.read`. It has the same signature as
-:meth:`espressomd.io.mpiio.Mpiio.write`.
+To read these in again, simply call :meth:`espressomd.io.mpiio.Mpiio.read`.
+It has the same signature as :meth:`espressomd.io.mpiio.Mpiio.write`.
+When writing files, make sure the prefix hasn't been used before
+(e.g. by a different simulation script), otherwise the write operation
+will fail to avoid accidentally overwriting pre-existing data. Likewise,
+reading incomplete data (or complete data but with the wrong number of MPI
+ranks) will throw an error.
 
-*WARNING*: Do not attempt to read these binary files on a machine with a different
-architecture!
+*WARNING*: Do not attempt to read these binary files on a machine
+with a different architecture! This will read malformed data without
+necessarily throwing an error.
+
+In case of read failure or write failure, the simulation will halt.
+On 1 MPI rank, the simulation will halt with a python runtime error.
+This exception can be recovered from; in case of a write operation,
+any written file must be deleted before attempting to write again
+(since the prefix argument must be unique). On more than 1 MPI rank,
+the simulation will halt with a call to ``MPI_Abort`` and will send
+the ``SIGABRT`` signal.
 
 .. _Writing VTF files:
 
