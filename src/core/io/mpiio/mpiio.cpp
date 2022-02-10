@@ -69,6 +69,7 @@
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
+#include <sstream>
 #include <string>
 #include <sys/stat.h>
 #include <tuple>
@@ -81,14 +82,52 @@ namespace Mpiio {
  * @brief Fatal error handler.
  * On 1 MPI rank the error is recoverable and an exception is thrown.
  * On more than 1 MPI rank the error is not recoverable.
+ * @param msg          Custom error message
+ * @param fn           File path
+ * @param extra        Extra context
  */
-static void fatal_error() {
+static bool fatal_error(char const *msg, std::string const &fn = "",
+                        std::string const &extra = "") {
+  std::stringstream what;
+  what << "MPI-IO Error: " << msg;
+  if (not fn.empty()) {
+    what << " \"" << fn << "\"";
+  }
+  if (not extra.empty()) {
+    what << " :" << extra;
+  }
   int size;
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   if (size == 1) {
-    throw std::runtime_error("");
+    throw std::runtime_error(what.str());
   }
+  fprintf(stderr, "%s\n", what.str().c_str());
   errexit();
+  return false;
+}
+
+/**
+ * @brief Fatal error handler that closes an open file and queries the
+ * message associated with an MPI error code.
+ * On 1 MPI rank the error is recoverable and an exception is thrown.
+ * On more than 1 MPI rank the error is not recoverable.
+ * @param msg          Custom error message
+ * @param fn           File path
+ * @param fp           File handle
+ * @param errnum       MPI error code
+ */
+static bool fatal_error(char const *msg, std::string const &fn, MPI_File *fp,
+                        int errnum) {
+  // get MPI error message
+  char buf[MPI_MAX_ERROR_STRING];
+  int buf_len;
+  MPI_Error_string(errnum, buf, &buf_len);
+  buf[buf_len] = '\0';
+  // close file handle if open
+  if (fp) {
+    MPI_File_close(fp);
+  }
+  return fatal_error(msg, fn, buf);
 }
 
 /**
@@ -113,22 +152,13 @@ static void mpiio_dump_array(const std::string &fn, T *arr, std::size_t len,
                       MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_EXCL,
                       MPI_INFO_NULL, &f);
   if (ret) {
-    char buf[MPI_MAX_ERROR_STRING];
-    int buf_len;
-    MPI_Error_string(ret, buf, &buf_len);
-    buf[buf_len] = '\0';
-    fprintf(stderr, "MPI-IO Error: Could not open file \"%s\": %s\n",
-            fn.c_str(), buf);
-    fatal_error();
+    fatal_error("Could not open file", fn, &f, ret);
   }
   ret = MPI_File_set_view(f, pref * sizeof(T), MPI_T, MPI_T,
                           const_cast<char *>("native"), MPI_INFO_NULL);
   ret |= MPI_File_write_all(f, arr, len, MPI_T, MPI_STATUS_IGNORE);
+  static_cast<void>(ret and fatal_error("Could not write file", fn, &f, ret));
   MPI_File_close(&f);
-  if (ret) {
-    fprintf(stderr, "MPI-IO Error: Could not write file \"%s\".\n", fn.c_str());
-    fatal_error();
-  }
 }
 
 /**
@@ -141,12 +171,10 @@ static void mpiio_dump_array(const std::string &fn, T *arr, std::size_t len,
 static void dump_info(const std::string &fn, unsigned fields) {
   FILE *f = fopen(fn.c_str(), "wb");
   if (!f) {
-    fprintf(stderr, "MPI-IO Error: Could not open %s for writing.\n",
-            fn.c_str());
-    fatal_error();
+    fatal_error("Could not open file", fn);
   }
   static std::vector<int> npartners;
-  int success = (fwrite(&fields, sizeof(fields), 1, f) == 1);
+  bool success = (fwrite(&fields, sizeof(fields), 1, f) == 1);
   // Pack the necessary information of bonded_ia_params:
   // The number of partners. This is needed to interpret the bond IntList.
   if (bonded_ia_params.size() > npartners.size())
@@ -162,10 +190,7 @@ static void dump_info(const std::string &fn, unsigned fields) {
       success && (fwrite(npartners.data(), sizeof(int), bonded_ia_params.size(),
                          f) == bonded_ia_params.size());
   fclose(f);
-  if (!success) {
-    fprintf(stderr, "MPI-IO Error: Failed to write %s.\n", fn.c_str());
-    fatal_error();
-  }
+  static_cast<void>(success or fatal_error("Could not write file", fn));
 }
 
 void mpi_mpiio_common_write(const std::string &prefix, unsigned fields,
@@ -268,9 +293,8 @@ static int get_num_elem(const std::string &fn, std::size_t elem_sz) {
   struct stat st;
   errno = 0;
   if (stat(fn.c_str(), &st) != 0) {
-    fprintf(stderr, "MPI-IO Input Error: Could not get file size of %s: %s\n",
-            fn.c_str(), strerror(errno));
-    fatal_error();
+    auto const reason = strerror(errno);
+    fatal_error("Could not get file size of", fn, reason);
   }
   return static_cast<int>(st.st_size / elem_sz);
 }
@@ -294,25 +318,16 @@ static void mpiio_read_array(const std::string &fn, T *arr, std::size_t len,
 
   ret = MPI_File_open(MPI_COMM_WORLD, const_cast<char *>(fn.c_str()),
                       MPI_MODE_RDONLY, MPI_INFO_NULL, &f);
-
   if (ret) {
-    char buf[MPI_MAX_ERROR_STRING];
-    int buf_len;
-    MPI_Error_string(ret, buf, &buf_len);
-    buf[buf_len] = '\0';
-    fprintf(stderr, "MPI-IO Error: Could not open file \"%s\": %s\n",
-            fn.c_str(), buf);
-    fatal_error();
+    fatal_error("Could not open file", fn, &f, ret);
   }
+
   ret = MPI_File_set_view(f, pref * sizeof(T), MPI_T, MPI_T,
                           const_cast<char *>("native"), MPI_INFO_NULL);
 
   ret |= MPI_File_read_all(f, arr, len, MPI_T, MPI_STATUS_IGNORE);
+  static_cast<void>(ret and fatal_error("Could not read file", fn, &f, ret));
   MPI_File_close(&f);
-  if (ret) {
-    fprintf(stderr, "MPI-IO Error: Could not read file \"%s\".\n", fn.c_str());
-    fatal_error();
-  }
 }
 
 /**
@@ -326,14 +341,10 @@ static unsigned read_head(const std::string &fn, int rank) {
   unsigned n_fields = 0u;
   FILE *f = nullptr;
   if (rank == 0) {
-    if (!(f = fopen(fn.c_str(), "rb"))) {
-      fprintf(stderr, "MPI-IO: Could not open \"%s\".\n", fn.c_str());
-      fatal_error();
-    }
-    if (fread(static_cast<void *>(&n_fields), sizeof(unsigned), 1, f) != 1) {
-      fprintf(stderr, "MPI-IO: Read on \"%s\" failed.\n", fn.c_str());
-      fatal_error();
-    }
+    f = fopen(fn.c_str(), "rb");
+    static_cast<void>(not f and fatal_error("Could not open file", fn));
+    auto const n = fread(static_cast<void *>(&n_fields), sizeof n_fields, 1, f);
+    static_cast<void>((n == 1) or fatal_error("Could not read file", fn));
   }
   MPI_Bcast(&n_fields, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
   if (f) {
@@ -378,9 +389,8 @@ void mpi_mpiio_common_read(const std::string &prefix, unsigned fields) {
   auto const nglobalpart = get_num_elem(prefix + ".id", sizeof(int));
 
   if (rank == 0 && nproc != size) {
-    fprintf(stderr, "MPI-IO Error: Trying to read a file with a different COMM "
-                    "size than at point of writing.\n");
-    fatal_error();
+    fatal_error("Trying to read a file with a different COMM "
+                "size than at point of writing.");
   }
 
   // 1.head on head node:
@@ -388,9 +398,7 @@ void mpi_mpiio_common_read(const std::string &prefix, unsigned fields) {
   // Compare this var to the current fields.
   auto const avail_fields = read_head(prefix + ".head", rank);
   if (rank == 0 && (fields & avail_fields) != fields) {
-    fprintf(stderr,
-            "MPI-IO Error: Requesting to read fields which were not dumped.\n");
-    fatal_error();
+    fatal_error("Requesting to read fields which were not dumped.");
   }
 
   // 1.pref on all nodes:

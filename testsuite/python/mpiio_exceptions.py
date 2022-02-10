@@ -89,51 +89,51 @@ class MPIIOTest(ut.TestCase):
 
         # exception when the metadata cannot be written
         path, fn = generator.create('head', read_only=True)
-        with self.assertRaises(RuntimeError):
+        with self.assertRaisesRegex(RuntimeError, f'Could not open file "{fn}"'):
             mpiio.write(path, types=True)
 
         # exception when the payload cannot be written
         path, fn = generator.create('pref', read_only=True)
-        with self.assertRaises(RuntimeError):
+        with self.assertRaisesRegex(RuntimeError, f'Could not open file "{fn}"'):
             mpiio.write(path, types=True)
 
         # exception when calculating the size of a non-existent file
         path, _ = generator.create(read_only=True)
         fn = f'{path}.pref'
-        with self.assertRaises(RuntimeError):
+        with self.assertRaisesRegex(RuntimeError, f'Could not get file size of "{fn}"'):
             mpiio.read(path, types=True)
 
         # exception when the MPI world size differs for reading and writing
         # (empty .pref file -> data was written with MPI world size of 0)
         path, _ = generator.create('id', 'pref', read_only=True)
-        with self.assertRaises(RuntimeError):
+        with self.assertRaisesRegex(RuntimeError, f'Trying to read a file with a different COMM size than at point of writing'):
             mpiio.read(path, types=True)
 
         # exception when the particle types don't exist
         path, _ = generator.create(
             'pref', 'id', 'head', read_only=False, from_ref=path_ref)
         fn = f'{path}.type'
-        with self.assertRaises(RuntimeError):
+        with self.assertRaisesRegex(RuntimeError, f'Could not open file "{fn}"'):
             mpiio.read(path, types=True)
 
         # exception when the metadata doesn't exist
         path, _ = generator.create(
             'id', 'pref', read_only=False, from_ref=path_ref)
         fn = f'{path}.head'
-        with self.assertRaises(RuntimeError):
+        with self.assertRaisesRegex(RuntimeError, f'Could not open file "{fn}"'):
             mpiio.read(path, types=True)
 
         # exception when the metadata is empty
         with open(fn, 'wb'):
             pass
-        with self.assertRaises(RuntimeError):
+        with self.assertRaisesRegex(RuntimeError, f'Could not read file "{fn}"'):
             mpiio.read(path, types=True)
 
         # exception when reading data that was not written to disk
         # (empty .pref file -> data was written with MPI world size of 0)
         path, _ = generator.create(
             'id', 'pref', 'head', read_only=False, from_ref=path_ref)
-        with self.assertRaises(RuntimeError):
+        with self.assertRaisesRegex(RuntimeError, f'Requesting to read fields which were not dumped'):
             mpiio.read(path, types=True, bonds=True)
 
 
