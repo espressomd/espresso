@@ -25,6 +25,7 @@
 #include "AtomDecomposition.hpp"
 #include "BoxGeometry.hpp"
 #include "Cell.hpp"
+#include "CellStructureType.hpp"
 #include "LocalBox.hpp"
 #include "Particle.hpp"
 #include "ParticleDecomposition.hpp"
@@ -47,14 +48,6 @@
 #include <memory>
 #include <utility>
 #include <vector>
-
-/** Cell Structure */
-enum CellStructureType : int {
-  /** cell structure regular decomposition */
-  CELL_STRUCTURE_REGULAR = 1,
-  /** cell structure n square */
-  CELL_STRUCTURE_NSQUARE = 2
-};
 
 namespace Cells {
 enum Resort : unsigned {
@@ -132,7 +125,7 @@ private:
   std::unique_ptr<ParticleDecomposition> m_decomposition =
       std::make_unique<AtomDecomposition>();
   /** Active type in m_decomposition */
-  int m_type = CELL_STRUCTURE_NSQUARE;
+  CellStructureType m_type = CellStructureType::CELL_STRUCTURE_NSQUARE;
   /** One of @ref Cells::Resort, announces the level of resort needed.
    */
   unsigned m_resort_particles = Cells::RESORT_NONE;
@@ -247,7 +240,7 @@ public:
   }
 
 public:
-  int decomposition_type() const { return m_type; }
+  CellStructureType decomposition_type() const { return m_type; }
 
   /** Maximal cutoff supported by current cell system. */
   Utils::Vector3d max_cutoff() const;

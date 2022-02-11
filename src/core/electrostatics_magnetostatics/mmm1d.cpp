@@ -35,6 +35,7 @@
 #include "electrostatics_magnetostatics/mmm-common.hpp"
 #include "electrostatics_magnetostatics/mmm-modpsi.hpp"
 
+#include "CellStructureType.hpp"
 #include "cells.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
@@ -152,7 +153,8 @@ bool MMM1D_sanity_checks() {
     runtimeErrorMsg() << "MMM1D requires periodicity (0, 0, 1)";
     return true;
   }
-  if (cell_structure.decomposition_type() != CELL_STRUCTURE_NSQUARE) {
+  if (cell_structure.decomposition_type() !=
+      CellStructureType::CELL_STRUCTURE_NSQUARE) {
     runtimeErrorMsg() << "MMM1D requires the N-square cellsystem";
     return true;
   }

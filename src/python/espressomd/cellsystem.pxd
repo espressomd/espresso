@@ -35,12 +35,14 @@ cdef extern from "cells.hpp":
 cdef extern from "communication.hpp":
     int n_nodes
 
-cdef extern from "cells.hpp":
-    int CELL_STRUCTURE_REGULAR
-    int CELL_STRUCTURE_NSQUARE
+cdef extern from "CellStructureType.hpp":
+    ctypedef enum CellStructureType:
+        CELL_STRUCTURE_REGULAR "CellStructureType::CELL_STRUCTURE_REGULAR"
+        CELL_STRUCTURE_NSQUARE "CellStructureType::CELL_STRUCTURE_NSQUARE"
 
+cdef extern from "cells.hpp":
     ctypedef struct CellStructure:
-        int decomposition_type()
+        CellStructureType decomposition_type()
         bool use_verlet_list
 
     CellStructure cell_structure

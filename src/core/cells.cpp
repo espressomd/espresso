@@ -195,13 +195,13 @@ std::vector<int> mpi_resort_particles(int global_flag) {
   return n_parts;
 }
 
-void cells_re_init(int new_cs) {
+void cells_re_init(CellStructureType new_cs) {
   switch (new_cs) {
-  case CELL_STRUCTURE_REGULAR:
+  case CellStructureType::CELL_STRUCTURE_REGULAR:
     cell_structure.set_regular_decomposition(comm_cart, interaction_range(),
                                              box_geo, local_geo);
     break;
-  case CELL_STRUCTURE_NSQUARE:
+  case CellStructureType::CELL_STRUCTURE_NSQUARE:
     cell_structure.set_atom_decomposition(comm_cart, box_geo);
     break;
   default:
@@ -213,7 +213,9 @@ void cells_re_init(int new_cs) {
 
 REGISTER_CALLBACK(cells_re_init)
 
-void mpi_bcast_cell_structure(int cs) { mpi_call_all(cells_re_init, cs); }
+void mpi_bcast_cell_structure(CellStructureType cs) {
+  mpi_call_all(cells_re_init, cs);
+}
 
 void check_resort_particles() {
   auto const level = (cell_structure.check_resort_required(

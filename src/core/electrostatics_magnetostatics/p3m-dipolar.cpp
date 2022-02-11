@@ -45,6 +45,7 @@
 #include "electrostatics_magnetostatics/p3m_interpolation.hpp"
 #include "electrostatics_magnetostatics/p3m_send_mesh.hpp"
 
+#include "CellStructureType.hpp"
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
 #include "cells.hpp"
@@ -1421,7 +1422,8 @@ bool dp3m_sanity_checks(const Utils::Vector3i &grid) {
     ret = true;
   }
 
-  if (cell_structure.decomposition_type() != CELL_STRUCTURE_REGULAR) {
+  if (cell_structure.decomposition_type() !=
+      CellStructureType::CELL_STRUCTURE_REGULAR) {
     runtimeErrorMsg() << "dipolar P3M requires the regular decomposition "
                          "cell system";
     ret = true;
