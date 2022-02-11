@@ -159,7 +159,7 @@ class MPIIOTest(ut.TestCase):
             'velocities': True,
             'bonds': True}
         prefix = self.generate_prefix(self.id())
-        mpiio = espressomd.io.mpiio.mpiio
+        mpiio = espressomd.io.mpiio.Mpiio()
 
         self.add_particles()
         mpiio.write(prefix, **fields)
@@ -171,7 +171,7 @@ class MPIIOTest(ut.TestCase):
 
     def test_mpiio_without_positions(self):
         prefix = self.generate_prefix(self.id())
-        mpiio = espressomd.io.mpiio.mpiio
+        mpiio = espressomd.io.mpiio.Mpiio()
         self.add_particles()
         mpiio.write(prefix, types=True, positions=False)
         self.system.part.clear()
@@ -180,15 +180,45 @@ class MPIIOTest(ut.TestCase):
 
     def test_mpiio_without_types(self):
         prefix = self.generate_prefix(self.id())
-        mpiio = espressomd.io.mpiio.mpiio
+        mpiio = espressomd.io.mpiio.Mpiio()
         self.add_particles()
         mpiio.write(prefix, types=False, positions=True)
         self.system.part.clear()
         mpiio.read(prefix, types=False, positions=True)
         self.check_sample_system(types=False, positions=True)
 
+    def test_mpiio_multiple_instances(self):
+        fields1 = {
+            'types': True,
+            'positions': True,
+            'velocities': True,
+            'bonds': True}
+        fields2 = {
+            'types': True,
+            'positions': True,
+            'velocities': False,
+            'bonds': False}
+        prefix1 = self.generate_prefix(self.id()) + '.1'
+        prefix2 = self.generate_prefix(self.id()) + '.2'
+        mpiio1 = espressomd.io.mpiio.Mpiio()
+        mpiio2 = espressomd.io.mpiio.Mpiio()
+
+        self.add_particles()
+        mpiio1.write(prefix1, **fields1)
+        mpiio2.write(prefix2, **fields2)
+        self.check_files_exist(prefix1, **fields1)
+        self.check_files_exist(prefix2, **fields2)
+
+        self.system.part.clear()
+        mpiio1.read(prefix1, **fields1)
+        self.check_sample_system(**fields1)
+
+        self.system.part.clear()
+        mpiio2.read(prefix2, **fields2)
+        self.check_sample_system(**fields2)
+
     def test_mpiio_exceptions(self):
-        mpiio = espressomd.io.mpiio.mpiio
+        mpiio = espressomd.io.mpiio.Mpiio()
         prefix = self.generate_prefix(self.id())
         msg_prefix = "Need to supply output prefix via the 'prefix' argument."
         with self.assertRaisesRegex(ValueError, msg_prefix):
