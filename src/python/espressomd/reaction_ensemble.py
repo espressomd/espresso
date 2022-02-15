@@ -298,8 +298,8 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
         Parameters
         ----------
         gamma : :obj:`float`
-            Equilibrium constant of the reaction in simulation units, :math:`\\gamma` (see the User
-            guide, section 16.7.1. for the definition and further details).
+            Equilibrium constant :math:`\\Gamma` of the reaction in simulation
+            units (see section :ref:`Reaction Ensemble` for its definition).
         reactant_types : list of :obj:`int`
             List of particle types of reactants in the reaction.
         reactant_coefficients : list of :obj:`int`
@@ -397,6 +397,11 @@ class ConstantpHEnsemble(ReactionAlgorithm):
     When adding an acid-base reaction, the acid and base particle types
     are always assumed to be at index 0 of the lists passed to arguments
     ``reactant_types`` and ``product_types``.
+
+    Attributes
+    ----------
+    constant_pH : :obj:`float`
+        Constant pH value.
 
     """
     _so_name = "ReactionMethods::ConstantpHEnsemble"
