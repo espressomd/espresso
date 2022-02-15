@@ -36,6 +36,7 @@
 #include "lbboundaries/initialize.hpp"
 #include "mpiio/initialize.hpp"
 #include "observables/initialize.hpp"
+#include "reaction_methods/initialize.hpp"
 #include "virtual_sites/initialize.hpp"
 
 namespace ScriptInterface {
@@ -54,6 +55,7 @@ void initialize(Utils::Factory<ObjectHandle> *f) {
   VirtualSites::initialize(f);
   MPIIO::initialize(f);
   CollisionDetection::initialize(f);
+  ReactionMethods::initialize(f);
 
   f->register_new<ComFixed>("ComFixed");
   f->register_new<CylindricalTransformationParameters>(
