@@ -19,35 +19,44 @@
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
+import numpy as np
+import espressomd.interactions
 from espressomd.bond_breakage import BreakageSpec
 from espressomd.interactions import HarmonicBond
 
 
+class BondBreakageCommon:
+    system = espressomd.System(box_l=[10] * 3)
+    system.cell_system.skin = 0.4
+    system.time_step = 0.01
+    system.min_global_cut = 2
+
+
 @utx.skipIfMissingFeatures("VIRTUAL_SITES_RELATIVE")
-class BondBreakage(ut.TestCase):
+class BondBreakage(BondBreakageCommon, ut.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        system = cls.system = espressomd.System(box_l=[10] * 3)
-        system.cell_system.skin = 0.4
-        system.time_step = 0.01
-        system.min_global_cut = 2
+        pos1 = cls.system.box_l / 2 - 0.5
+        pos2 = cls.system.box_l / 2 + 0.5
+        cls.p1 = cls.system.part.add(pos=pos1)
+        cls.p2 = cls.system.part.add(pos=pos2)
 
-        pos1 = system.box_l / 2 - 0.5
-        pos2 = system.box_l / 2 + 0.5
-        cls.p1 = system.part.add(pos=pos1)
-        cls.p2 = system.part.add(pos=pos2)
-
-        cls.p1v = system.part.add(pos=pos1)
+        cls.p1v = cls.system.part.add(pos=pos1)
         cls.p1v.vs_auto_relate_to(cls.p1)
 
-        cls.p2v = system.part.add(pos=pos2)
+        cls.p2v = cls.system.part.add(pos=pos2)
         cls.p2v.vs_auto_relate_to(cls.p2)
 
         cls.h1 = HarmonicBond(k=1, r_0=0)
         cls.h2 = HarmonicBond(k=1, r_0=0)
-        system.bonded_inter.add(cls.h1)
-        system.bonded_inter.add(cls.h2)
+        cls.system.bonded_inter.add(cls.h1)
+        cls.system.bonded_inter.add(cls.h2)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.system.part.clear()
+        cls.system.bonded_inter.clear()
 
     def tearDown(self):
         self.system.bond_breakage.clear()
@@ -146,6 +155,140 @@ class BondBreakage(ut.TestCase):
         self.p1v.bonds = [(self.h1, self.p2v)]
         with self.assertRaisesRegex(Exception, "The REVERT_BIND_AT_POINT_OF_COLLISION bond breakage action has to be configured for the bond on the virtual site"):
             system.integrator.run(1)
+
+
+@utx.skipIfMissingFeatures("LENNARD_JONES")
+class NetworkBreakage(BondBreakageCommon, ut.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.system.box_l = 3 * [20]
+        cls.system.min_global_cut = 0.6
+        cls.system.time_step = 0.01
+        cls.system.cell_system.skin = 0.4
+
+    def setUp(self):
+
+        box_vol = self.system.box_l[0]**3.
+        phi = 0.4
+
+        r = 1.
+        solid_vol = phi * box_vol
+        part_vol = 4 / 3 * np.pi * r**3
+        part_num = int(solid_vol / part_vol)
+
+        np.random.seed(seed=678)
+        for i in range(part_num):
+            pos = np.random.rand(3) * self.system.box_l[0]
+            self.system.part.add(pos=pos)
+
+        self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
+            sigma=1., epsilon=1., cutoff=2**(1 / 6), shift='auto')
+        self.system.integrator.set_steepest_descent(f_max=0,
+                                                    gamma=0.1,
+                                                    max_displacement=0.1)
+        self.system.integrator.run(100)
+        self.system.integrator.set_vv()
+
+        for i in range(part_num):
+            self.system.part.by_id(i).fix = [1, 1, 1]
+
+        self.system.thermostat.set_langevin(kT=0.0, gamma=1.0, seed=41)
+
+    def tearDown(self):
+        self.system.part.clear()
+        self.system.bonded_inter.clear()
+        self.system.thermostat.turn_off()
+
+    def test_center_bonds(self):
+
+        harm = espressomd.interactions.HarmonicBond(k=1.0, r_0=0.0, r_cut=5)
+        self.system.bonded_inter.add(harm)
+
+        crit = 2**(1 / 6) * 2.
+
+        self.system.collision_detection.set_params(mode="bind_centers",
+                                                   distance=2**(1 / 6) * 2.2, bond_centers=harm)
+        self.system.integrator.run(1)
+
+        self.system.collision_detection.set_params(mode="off")
+        self.system.bond_breakage[harm._bond_id] = BreakageSpec(
+            breakage_length=crit, action_type=1)
+        self.system.integrator.run(1)
+
+        bonds_dist = 0
+        pairs = self.system.cell_system.get_pairs(crit, types=[0])
+        for pair in pairs:
+            dist = self.system.distance(
+                self.system.part.by_id(pair[0]),
+                self.system.part.by_id(pair[1]))
+            if dist <= crit:
+                bonds_dist += 1
+
+        bonds_count = 0
+        for pair in pairs:
+            num_bonds = len(self.system.part.by_id(pair[0]).bonds)
+            for i in range(num_bonds):
+                if self.system.part.by_id(pair[0]).bonds[i][1] == pair[1]:
+                    bonds_count += 1
+            num_bonds = len(self.system.part.by_id(pair[1]).bonds)
+            for i in range(num_bonds):
+                if self.system.part.by_id(pair[1]).bonds[i][1] == pair[0]:
+                    bonds_count += 1
+
+        np.testing.assert_equal(bonds_dist, bonds_count)
+
+    @utx.skipIfMissingFeatures("VIRTUAL_SITES_RELATIVE")
+    def test_vs_bonds(self):
+
+        harm = espressomd.interactions.HarmonicBond(k=1.0, r_0=0.0, r_cut=5)
+        virt = espressomd.interactions.Virtual()
+        self.system.bonded_inter.add(harm)
+        self.system.bonded_inter.add(virt)
+
+        crit = 2**(1 / 6) * 1.5
+        crit_vs = 2**(1 / 6) * 1 / 3 * 1.2
+
+        self.system.collision_detection.set_params(mode="bind_at_point_of_collision",
+                                                   distance=crit, bond_centers=virt, bond_vs=harm,
+                                                   part_type_vs=1, vs_placement=1 / 3)
+        self.system.integrator.run(1)
+
+        self.system.collision_detection.set_params(mode="off")
+        self.system.bond_breakage[harm._bond_id] = BreakageSpec(
+            breakage_length=crit_vs, action_type=2)
+        self.system.integrator.run(1)
+
+        bonds_dist = 0
+        pairs = self.system.cell_system.get_pairs(
+            2**(1 / 6) * 2 / 3, types=[1])
+
+        for pair in pairs:
+            r1 = self.system.part.by_id(pair[0]).vs_relative[0]
+            r2 = self.system.part.by_id(pair[1]).vs_relative[0]
+            dist = self.system.distance(
+                self.system.part.by_id(r1),
+                self.system.part.by_id(r2))
+            dist_vs = self.system.distance(
+                self.system.part.by_id(pair[0]),
+                self.system.part.by_id(pair[1]))
+            if dist_vs <= crit_vs:
+                if dist <= crit:
+                    if dist > 0.0:
+                        bonds_dist += 1
+
+        bonds_count = 0
+        for pair in pairs:
+            num_bonds = len(self.system.part.by_id(pair[0]).bonds)
+            for i in range(num_bonds):
+                if self.system.part.by_id(pair[0]).bonds[i][1] == pair[1]:
+                    bonds_count += 1
+            num_bonds = len(self.system.part.by_id(pair[1]).bonds)
+            for i in range(num_bonds):
+                if self.system.part.by_id(pair[1]).bonds[i][1] == pair[0]:
+                    bonds_count += 1
+
+        np.testing.assert_equal(bonds_dist, bonds_count)
 
 
 if __name__ == "__main__":
