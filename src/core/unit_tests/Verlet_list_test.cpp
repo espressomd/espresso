@@ -124,11 +124,11 @@ struct : public IntegratorHelper {
 } // namespace Testing
 
 inline double get_dist_from_last_verlet_update(Particle const &p) {
-  return (p.r.p - p.l.p_old).norm();
+  return (p.pos() - p.pos_at_last_verlet_update()).norm();
 }
 
 inline double get_dist_from_pair(Particle const &p1, Particle const &p2) {
-  return (p1.r.p - p2.r.p).norm();
+  return (p1.pos() - p2.pos()).norm();
 }
 
 auto const node_grids = std::vector<Utils::Vector3i>{{4, 1, 1}, {2, 2, 1}};
@@ -206,10 +206,10 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
       mpi_integrate(1, 0);
       auto const &p1 = get_particle_data(pid1);
       auto const &p2 = get_particle_data(pid2);
-      BOOST_CHECK_CLOSE(p1.f.f[0] - p1.p.ext_force[0], 480., 1e-9);
-      BOOST_CHECK_CLOSE(p1.f.f[1], 0., tol);
-      BOOST_CHECK_CLOSE(p1.f.f[2], 0., tol);
-      BOOST_TEST(p1.f.f - p1.p.ext_force == -p2.f.f,
+      BOOST_CHECK_CLOSE(p1.force()[0] - p1.ext_force()[0], 480., 1e-9);
+      BOOST_CHECK_CLOSE(p1.force()[1], 0., tol);
+      BOOST_CHECK_CLOSE(p1.force()[2], 0., tol);
+      BOOST_TEST(p1.force() - p1.ext_force() == -p2.force(),
                  boost::test_tools::per_element());
       BOOST_CHECK_LT(get_dist_from_last_verlet_update(p1), skin / 2.);
     }
