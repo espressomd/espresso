@@ -24,16 +24,16 @@ set(WalberlaBridgeCodegen_SRC
     generated_kernels/Dynamic_UBB_single_precision.cpp
     generated_kernels/Dynamic_UBB_double_precision.cpp
     generated_kernels/UpdateVelocityFromPDFSweepDoublePrecision.cpp
-    generated_kernels/UpdateVelocityFromPDFSweepSinglePrecision.cpp
-    generated_kernels/DiffusiveFluxKernel.cpp
-    generated_kernels/ContinuityKernel.cpp
-    generated_kernels/AdvectiveFluxKernel.cpp
-    generated_kernels/FrictionCouplingKernel.cpp
-    generated_kernels/DiffusiveFluxKernelWithElectrostatic.cpp)
+    generated_kernels/UpdateVelocityFromPDFSweepSinglePrecision.cpp)
 
 set(WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN generated_kernels/electrokinetics)
 
 set(WalberlaBridgeElectrokineticsCodegen_SRC
+    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/DiffusiveFluxKernel.cpp
+    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/ContinuityKernel.cpp
+    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/AdvectiveFluxKernel.cpp
+    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/FrictionCouplingKernel.cpp
+    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/DiffusiveFluxKernelWithElectrostatic.cpp
     ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/boundary_conditions/NoFlux.cpp
     ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/boundary_conditions/FixedFlux.cpp
     ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/boundary_conditions/Dirichlet.cpp

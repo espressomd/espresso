@@ -16,11 +16,11 @@
 #include "LatticeWalberla.hpp"
 #include "walberla_utils.hpp"
 
-#include "generated_kernels/AdvectiveFluxKernel.h"
-#include "generated_kernels/ContinuityKernel.h"
-#include "generated_kernels/DiffusiveFluxKernel.h"
-#include "generated_kernels/DiffusiveFluxKernelWithElectrostatic.h"
-#include "generated_kernels/FrictionCouplingKernel.h"
+#include "generated_kernels/electrokinetics/AdvectiveFluxKernel.h"
+#include "generated_kernels/electrokinetics/ContinuityKernel.h"
+#include "generated_kernels/electrokinetics/DiffusiveFluxKernel.h"
+#include "generated_kernels/electrokinetics/DiffusiveFluxKernelWithElectrostatic.h"
+#include "generated_kernels/electrokinetics/FrictionCouplingKernel.h"
 #include "generated_kernels/electrokinetics/boundary_conditions/Dirichlet.h"
 #include "generated_kernels/electrokinetics/boundary_conditions/FixedFlux.h"
 
