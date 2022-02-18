@@ -36,7 +36,8 @@ namespace ReactionMethods {
  */
 class ReactionEnsemble : public ReactionAlgorithm {
 public:
-  ReactionEnsemble(int seed) : ReactionAlgorithm(seed) {}
+  ReactionEnsemble(int seed, double kT, double exclusion_radius)
+      : ReactionAlgorithm(seed, kT, exclusion_radius) {}
 
 protected:
   double calculate_acceptance_probability(

@@ -116,7 +116,7 @@ system.setup_type_map([0, 1, 2])
 
 # Set the hidden particle type to the lowest possible number to speed
 # up the simulation
-widom.set_non_interacting_type(max(types) + 1)
+widom.set_non_interacting_type(type=max(types) + 1)
 
 particle_insertion_potential_energy_samples = []
 
@@ -126,7 +126,7 @@ n_samples_per_iteration = 100
 for i in range(n_iterations):
     for _ in range(n_samples_per_iteration):
         particle_insertion_potential_energy_samples.append(
-            widom.calculate_particle_insertion_potential_energy(0))
+            widom.calculate_particle_insertion_potential_energy(reaction_id=insertion_reaction_id))
     system.integrator.run(steps=500)
 
     if i % 20 == 0:

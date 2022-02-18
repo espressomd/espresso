@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2021 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -16,23 +16,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef REACTION_METHODS_WIDOM_INSERTION_HPP
-#define REACTION_METHODS_WIDOM_INSERTION_HPP
 
-#include "ReactionAlgorithm.hpp"
+#include "initialize.hpp"
 
-#include <utility>
+#include "SingleReaction.hpp"
 
+#include "ConstantpHEnsemble.hpp"
+#include "ReactionEnsemble.hpp"
+#include "WidomInsertion.hpp"
+
+#include "script_interface/ScriptInterface.hpp"
+
+namespace ScriptInterface {
 namespace ReactionMethods {
-
-/** Widom insertion method */
-class WidomInsertion : public ReactionAlgorithm {
-public:
-  WidomInsertion(int seed, double kT, double exclusion_radius)
-      : ReactionAlgorithm(seed, kT, exclusion_radius) {}
-  double calculate_particle_insertion_potential_energy(
-      SingleReaction &current_reaction);
-};
-
+void initialize(Utils::Factory<ObjectHandle> *om) {
+  om->register_new<SingleReaction>("ReactionMethods::SingleReaction");
+  om->register_new<WidomInsertion>("ReactionMethods::WidomInsertion");
+  om->register_new<ReactionEnsemble>("ReactionMethods::ReactionEnsemble");
+  om->register_new<ConstantpHEnsemble>("ReactionMethods::ConstantpHEnsemble");
+}
 } // namespace ReactionMethods
-#endif
+} // namespace ScriptInterface

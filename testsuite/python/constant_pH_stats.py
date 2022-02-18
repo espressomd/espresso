@@ -52,7 +52,7 @@ class ReactionEnsembleTest(ut.TestCase):
     system.cell_system.skin = 0.4
     system.time_step = 0.01
     RE = espressomd.reaction_ensemble.ConstantpHEnsemble(
-        kT=1.0, exclusion_radius=1, seed=44)
+        kT=1.0, exclusion_radius=1, seed=44, constant_pH=pH)
 
     @classmethod
     def setUpClass(cls):
@@ -65,7 +65,6 @@ class ReactionEnsembleTest(ut.TestCase):
             reactant_types=[cls.types["HA"]],
             product_types=[cls.types["A-"], cls.types["H+"]],
             default_charges=cls.charges_dict)
-        cls.RE.constant_pH = cls.pH
 
     @classmethod
     def ideal_alpha(cls, pH):
@@ -79,18 +78,18 @@ class ReactionEnsembleTest(ut.TestCase):
 
         # Set the hidden particle type to the lowest possible number to speed
         # up the simulation
-        RE.set_non_interacting_type(max(types.values()) + 1)
+        RE.set_non_interacting_type(type=max(types.values()) + 1)
 
         # chemical warmup - get close to chemical equilibrium before we start
         # sampling
-        RE.reaction(40 * N0)
+        RE.reaction(reaction_steps=40 * N0)
 
         average_NH = 0.0
         average_NHA = 0.0
         average_NA = 0.0
         num_samples = 1000
         for _ in range(num_samples):
-            RE.reaction(10)
+            RE.reaction(reaction_steps=10)
             average_NH += system.number_of_particles(type=types["H+"])
             average_NHA += system.number_of_particles(type=types["HA"])
             average_NA += system.number_of_particles(type=types["A-"])

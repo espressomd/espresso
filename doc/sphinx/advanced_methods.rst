@@ -1707,7 +1707,7 @@ In the *forward* reaction, the appropriate number of reactants (given by
 :math:`\nu_i`) is removed from the system, and the concomitant number of
 products is inserted into the system. In the *backward* reaction,
 reactants and products exchange their roles. The acceptance probability
-:math:`P^{\xi}` for move from state :math:`o` to :math:`n` reaction
+:math:`P^{\xi}` for a move from state :math:`o` to :math:`n` in the reaction
 ensemble is given by the criterion :cite:`smith94c`
 
 .. math::
@@ -1718,10 +1718,11 @@ ensemble is given by the criterion :cite:`smith94c`
 
 where :math:`\Delta E=E_\mathrm{new}-E_\mathrm{old}` is the change in potential energy,
 :math:`V` is the simulation box volume,
-and :math:`\beta=1/k_\mathrm{B}T`.
-The extent of reaction, :math:`\xi=1` for the forward, and
+:math:`\beta=1/k_\mathrm{B}T` is the Boltzmann factor, and
+:math:`\xi` is the extent of reaction, with :math:`\xi=1` for the forward and
 :math:`\xi=-1` for the backward direction.
-The parameter :math:`\Gamma` proportional to the reaction constant. It is defined as
+
+:math:`\Gamma` is proportional to the reaction constant. It is defined as
 
 .. math::
 
