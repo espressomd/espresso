@@ -60,5 +60,9 @@ void propagate() {
                 });
 
   EK::perform_reactions();
+
+  for (auto const &species : ek_container) {
+    species->ghost_communication();
+  }
 }
 } // namespace EK

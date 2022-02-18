@@ -5,6 +5,7 @@
 #include "script_interface/auto_parameters/AutoParameter.hpp"
 
 #include "EKReactant.hpp"
+#include "LatticeWalberla.hpp"
 
 #include "walberla_bridge/EKReaction.hpp"
 
@@ -14,6 +15,9 @@ namespace ScriptInterface::walberla {
 class EKReaction : public AutoParameters<::walberla::EKReaction<double>> {
 public:
   void do_construct(VariantMap const &args) override {
+
+    auto lattice =
+        get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice")->lattice();
 
     auto reactant = get_value<std::vector<Variant>>(args, "reactants");
     std::vector<std::shared_ptr<::walberla::EKReactant<double>>> output(
@@ -25,7 +29,7 @@ public:
                    get_instance);
 
     m_ekreaction = std::make_shared<::walberla::EKReaction<double>>(
-        output, get_value<double>(args, "coefficient"));
+        lattice, output, get_value<double>(args, "coefficient"));
 
     add_parameters({{"coefficient",
                      [this](Variant const &v) {

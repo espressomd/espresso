@@ -260,7 +260,6 @@ public:
 
     updated_boundary_fields();
 
-    // early-breakout, has to be removed when reactions are included
     if (get_diffusion() == 0.)
       return;
 
@@ -300,7 +299,8 @@ public:
       kernel_advection(velocity_id);
     }
     kernel_continuity();
-    ghost_communication();
+    // is not necessary when reactions are done
+    //    ghost_communication();
 
     // Handle VTK writers
     integrate_vtk_writers();

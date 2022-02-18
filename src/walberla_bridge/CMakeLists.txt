@@ -34,6 +34,17 @@ set(WalberlaBridgeCodegen_SRC
     generated_kernels/FixedFlux.cpp
     generated_kernels/Dirichlet.cpp)
 
+set(WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN generated_kernels/electrokinetics)
+
+set(WalberlaBridgeElectrokineticsCodegen_SRC
+    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/reactions/ReactionKernel_1.cpp
+    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/reactions/ReactionKernel_2.cpp
+    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/reactions/ReactionKernel_3.cpp
+    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/reactions/ReactionKernel_4.cpp
+    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/reactions/ReactionKernel_5.cpp)
+
+unset(WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN)
+
 if(WALBERLA_USE_AVX)
   list(APPEND WalberlaBridgeCodegen_SRC
        generated_kernels/CollideSweepSinglePrecisionAVX.cpp
@@ -48,7 +59,7 @@ else()
        generated_kernels/CollideSweepDoublePrecisionThermalized.cpp)
 endif()
 set(WalberlaBridge_SRC ${WalberlaBridgeCodegen_SRC} lb_walberla_init.cpp
-                       LatticeWalberla.cpp PoissonSolver/FFT.cpp)
+                       LatticeWalberla.cpp PoissonSolver/FFT.cpp ${WalberlaBridgeElectrokineticsCodegen_SRC})
 
 add_library(cxx_walberla_interface INTERFACE)
 if(WALBERLA_USE_AVX)
