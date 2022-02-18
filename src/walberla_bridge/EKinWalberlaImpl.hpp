@@ -20,9 +20,9 @@
 #include "generated_kernels/ContinuityKernel.h"
 #include "generated_kernels/DiffusiveFluxKernel.h"
 #include "generated_kernels/DiffusiveFluxKernelWithElectrostatic.h"
-#include "generated_kernels/Dirichlet.h"
-#include "generated_kernels/FixedFlux.h"
 #include "generated_kernels/FrictionCouplingKernel.h"
+#include "generated_kernels/electrokinetics/boundary_conditions/Dirichlet.h"
+#include "generated_kernels/electrokinetics/boundary_conditions/FixedFlux.h"
 
 #include <boost/multi_array/multi_array_ref.hpp>
 #include <memory>
