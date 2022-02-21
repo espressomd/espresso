@@ -58,9 +58,9 @@ double mindist(PartCfg &partCfg, const std::vector<int> &set1,
   for (auto jt = partCfg.begin(); jt != partCfg.end(); ++jt) {
     /* check which sets particle j belongs to (bit 0: set1, bit1: set2) */
     auto in_set = 0u;
-    if (set1.empty() || contains(set1, jt->p.type))
+    if (set1.empty() || contains(set1, jt->type()))
       in_set = 1u;
-    if (set2.empty() || contains(set2, jt->p.type))
+    if (set2.empty() || contains(set2, jt->type()))
       in_set |= 2u;
     if (in_set == 0)
       continue;
@@ -68,10 +68,10 @@ double mindist(PartCfg &partCfg, const std::vector<int> &set1,
     for (auto it = std::next(jt); it != partCfg.end(); ++it)
       /* accept a pair if particle j is in set1 and particle i in set2 or vice
        * versa. */
-      if (((in_set & 1u) && (set2.empty() || contains(set2, it->p.type))) ||
-          ((in_set & 2u) && (set1.empty() || contains(set1, it->p.type))))
-        mindist2 =
-            std::min(mindist2, box_geo.get_mi_vector(jt->r.p, it->r.p).norm2());
+      if (((in_set & 1u) && (set2.empty() || contains(set2, it->type()))) ||
+          ((in_set & 2u) && (set1.empty() || contains(set1, it->type()))))
+        mindist2 = std::min(
+            mindist2, box_geo.get_mi_vector(jt->pos(), it->pos()).norm2());
   }
 
   return std::sqrt(mindist2);
@@ -82,7 +82,7 @@ static Utils::Vector3d mpi_particle_momentum_local() {
   auto const momentum =
       std::accumulate(particles.begin(), particles.end(), Utils::Vector3d{},
                       [](Utils::Vector3d &m, Particle const &p) {
-                        return m + p.p.mass * p.m.v;
+                        return m + p.mass() * p.v();
                       });
 
   return momentum;
@@ -110,10 +110,10 @@ Utils::Vector3d centerofmass(PartCfg &partCfg, int type) {
   double mass = 0.0;
 
   for (auto const &p : partCfg) {
-    if ((p.p.type == type) || (type == -1))
-      if (not p.p.is_virtual) {
-        com += p.r.p * p.p.mass;
-        mass += p.p.mass;
+    if ((p.type() == type) || (type == -1))
+      if (not p.is_virtual()) {
+        com += p.pos() * p.mass();
+        mass += p.mass();
       }
   }
   com /= mass;
@@ -124,9 +124,9 @@ Utils::Vector3d angularmomentum(PartCfg &partCfg, int type) {
   Utils::Vector3d am{};
 
   for (auto const &p : partCfg) {
-    if ((p.p.type == type) || (type == -1))
-      if (not p.p.is_virtual) {
-        am += p.p.mass * vector_product(p.r.p, p.m.v);
+    if ((p.type() == type) || (type == -1))
+      if (not p.is_virtual()) {
+        am += p.mass() * vector_product(p.pos(), p.v());
       }
   }
   return am;
@@ -143,10 +143,10 @@ void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix) {
 
   auto const com = centerofmass(partCfg, type);
   for (auto const &p : partCfg) {
-    if (type == p.p.type and (not p.p.is_virtual)) {
+    if (type == p.type() and (not p.is_virtual())) {
       count++;
-      p1 = p.r.p - com;
-      massi = p.p.mass;
+      p1 = p.pos() - com;
+      massi = p.mass();
       MofImatrix[0] += massi * (p1[1] * p1[1] + p1[2] * p1[2]);
       MofImatrix[4] += massi * (p1[0] * p1[0] + p1[2] * p1[2]);
       MofImatrix[8] += massi * (p1[0] * p1[0] + p1[1] * p1[1]);
@@ -172,16 +172,16 @@ std::vector<int> nbhood(PartCfg &partCfg, const Utils::Vector3d &pos,
 
   for (auto const &p : partCfg) {
     if ((planedims[0] + planedims[1] + planedims[2]) == 3) {
-      d = box_geo.get_mi_vector(pt, p.r.p);
+      d = box_geo.get_mi_vector(pt, p.pos());
     } else {
       /* Calculate the in plane distance */
       for (int j = 0; j < 3; j++) {
-        d[j] = planedims[j] * (p.r.p[j] - pt[j]);
+        d[j] = planedims[j] * (p.pos()[j] - pt[j]);
       }
     }
 
     if (d.norm2() < r2) {
-      ids.push_back(p.p.identity);
+      ids.push_back(p.id());
     }
   }
 
@@ -192,8 +192,9 @@ double distto(PartCfg &partCfg, const Utils::Vector3d &pos, int pid) {
   auto mindist = std::numeric_limits<double>::infinity();
 
   for (auto const &part : partCfg) {
-    if (pid != part.p.identity) {
-      auto const d = box_geo.get_mi_vector({pos[0], pos[1], pos[2]}, part.r.p);
+    if (pid != part.id()) {
+      auto const d =
+          box_geo.get_mi_vector({pos[0], pos[1], pos[2]}, part.pos());
       mindist = std::min(mindist, d.norm2());
     }
   }
@@ -222,15 +223,15 @@ void calc_part_distribution(PartCfg &partCfg, std::vector<int> const &p1_types,
   /* particle loop: p1_types */
   for (auto const &p1 : partCfg) {
     for (int t1 : p1_types) {
-      if (p1.p.type == t1) {
+      if (p1.type() == t1) {
         min_dist2 = start_dist2;
         /* particle loop: p2_types */
         for (auto const &p2 : partCfg) {
           if (p1 != p2) {
             for (int t2 : p2_types) {
-              if (p2.p.type == t2) {
+              if (p2.type() == t2) {
                 auto const act_dist2 =
-                    box_geo.get_mi_vector(p1.r.p, p2.r.p).norm2();
+                    box_geo.get_mi_vector(p1.pos(), p2.pos()).norm2();
                 if (act_dist2 < min_dist2) {
                   min_dist2 = act_dist2;
                 }
@@ -285,8 +286,9 @@ void calc_structurefactor(PartCfg &partCfg, std::vector<int> const &p_types,
           double C_sum = 0.0, S_sum = 0.0;
           for (auto const &p : partCfg) {
             for (int t : p_types) {
-              if (p.p.type == t) {
-                auto const qr = twoPI_L * (Utils::Vector3i{{i, j, k}} * p.r.p);
+              if (p.type() == t) {
+                auto const qr =
+                    twoPI_L * (Utils::Vector3i{{i, j, k}} * p.pos());
                 C_sum += cos(qr);
                 S_sum += sin(qr);
               }
@@ -302,7 +304,7 @@ void calc_structurefactor(PartCfg &partCfg, std::vector<int> const &p_types,
   long n_particles = 0l;
   for (auto const &p : partCfg) {
     for (int t : p_types) {
-      if (p.p.type == t)
+      if (p.type() == t)
         n_particles++;
     }
   }

@@ -15,8 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import numpy as np
-from .utils import to_char_pointer, to_str, handle_errors
-from .utils cimport Vector3d, make_array_locked
+from .utils import to_char_pointer, to_str, handle_errors, array_locked
+from .utils cimport Vector2d, Vector3d, Vector4d, make_array_locked
 cimport cpython.object
 
 from libcpp.memory cimport make_shared
@@ -229,6 +229,8 @@ cdef variant_to_python_object(const Variant & value) except +:
     cdef vector[Variant] vec
     cdef unordered_map[int, Variant] vmap
     cdef shared_ptr[ObjectHandle] ptr
+    cdef Vector2d vec2d
+    cdef Vector4d vec4d
     if is_none(value):
         return None
     if is_type[bool](value):
@@ -243,8 +245,14 @@ cdef variant_to_python_object(const Variant & value) except +:
         return get_value[vector[int]](value)
     if is_type[vector[double]](value):
         return get_value[vector[double]](value)
+    if is_type[Vector4d](value):
+        vec4d = get_value[Vector4d](value)
+        return array_locked([vec4d[0], vec4d[1], vec4d[2], vec4d[3]])
     if is_type[Vector3d](value):
         return make_array_locked(get_value[Vector3d](value))
+    if is_type[Vector2d](value):
+        vec2d = get_value[Vector2d](value)
+        return array_locked([vec2d[0], vec2d[1]])
     if is_type[shared_ptr[ObjectHandle]](value):
         # Get the id and build a corresponding object
         ptr = get_value[shared_ptr[ObjectHandle]](value)

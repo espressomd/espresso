@@ -49,7 +49,7 @@ public:
 class DistanceCriterion : public PairCriterion {
 public:
   bool decide(const Particle &p1, const Particle &p2) const override {
-    return box_geo.get_mi_vector(p1.r.p, p2.r.p).norm() <= m_cut_off;
+    return box_geo.get_mi_vector(p1.pos(), p2.pos()).norm() <= m_cut_off;
   }
   double get_cut_off() { return m_cut_off; }
   void set_cut_off(double c) { m_cut_off = c; }
@@ -63,11 +63,11 @@ class EnergyCriterion : public PairCriterion {
 public:
   bool decide(const Particle &p1, const Particle &p2) const override {
     // Distance between particles
-    auto const vec21 = box_geo.get_mi_vector(p1.r.p, p2.r.p);
+    auto const vec21 = box_geo.get_mi_vector(p1.pos(), p2.pos());
     const double dist_betw_part = vec21.norm();
 
     // Interaction parameters for particle types
-    IA_parameters const &ia_params = *get_ia_param(p1.p.type, p2.p.type);
+    IA_parameters const &ia_params = *get_ia_param(p1.type(), p2.type());
 
     return (calc_non_bonded_pair_energy(p1, p2, ia_params, vec21,
                                         dist_betw_part)) >= m_cut_off;

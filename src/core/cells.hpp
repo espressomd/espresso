@@ -40,6 +40,7 @@
 
 #include "Cell.hpp"
 #include "CellStructure.hpp"
+#include "CellStructureType.hpp"
 #include "Particle.hpp"
 #include "RegularDecomposition.hpp"
 
@@ -63,10 +64,10 @@ extern CellStructure cell_structure;
 /** Reinitialize the cell structures.
  *  @param new_cs The new topology to use afterwards.
  */
-void cells_re_init(int new_cs);
+void cells_re_init(CellStructureType new_cs);
 
 /** Change the cell structure on all nodes. */
-void mpi_bcast_cell_structure(int cs);
+void mpi_bcast_cell_structure(CellStructureType cs);
 
 /**
  * @brief Set @ref CellStructure::use_verlet_list
@@ -113,8 +114,8 @@ std::vector<int> mpi_resort_particles(int global_flag);
 /**
  * @brief Find the cell in which a particle is stored.
  *
- * Uses position_to_cell on p.r.p. If this is not on the node's domain,
- * uses position at last Verlet list rebuild (p.l.p_old).
+ * Uses position_to_cell on p.pos(). If this is not on the node's domain,
+ * uses position at last Verlet list rebuild (p.p_old()).
  *
  * @return pointer to the cell or nullptr if the particle is not on the node
  */

@@ -42,7 +42,7 @@ cdef class CellSystem:
 
         """
         mpi_set_use_verlet_lists(use_verlet_lists)
-        mpi_bcast_cell_structure(CELL_STRUCTURE_REGULAR)
+        mpi_bcast_cell_structure(CellStructureType.CELL_STRUCTURE_REGULAR)
 
         handle_errors("Error while initializing the cell system.")
         return True
@@ -59,14 +59,14 @@ cdef class CellSystem:
 
         """
         mpi_set_use_verlet_lists(use_verlet_lists)
-        mpi_bcast_cell_structure(CELL_STRUCTURE_NSQUARE)
+        mpi_bcast_cell_structure(CellStructureType.CELL_STRUCTURE_NSQUARE)
 
         return True
 
     def get_state(self):
         s = self.__getstate__()
 
-        if cell_structure.decomposition_type() == CELL_STRUCTURE_REGULAR:
+        if cell_structure.decomposition_type() == CellStructureType.CELL_STRUCTURE_REGULAR:
             rd = get_regular_decomposition()
             s["cell_grid"] = np.array(
                 [rd.cell_grid[0], rd.cell_grid[1], rd.cell_grid[2]])
@@ -81,9 +81,9 @@ cdef class CellSystem:
     def __getstate__(self):
         s = {"use_verlet_list": cell_structure.use_verlet_list}
 
-        if cell_structure.decomposition_type() == CELL_STRUCTURE_REGULAR:
+        if cell_structure.decomposition_type() == CellStructureType.CELL_STRUCTURE_REGULAR:
             s["type"] = "regular_decomposition"
-        if cell_structure.decomposition_type() == CELL_STRUCTURE_NSQUARE:
+        if cell_structure.decomposition_type() == CellStructureType.CELL_STRUCTURE_NSQUARE:
             s["type"] = "nsquare"
 
         s["skin"] = skin

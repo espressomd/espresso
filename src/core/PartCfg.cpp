@@ -50,8 +50,8 @@ void PartCfg::update() {
       m_parts.push_back(get_particle_data(id));
 
       auto &p = m_parts.back();
-      p.r.p += image_shift(p.l.i, box_geo.length());
-      p.l.i = {};
+      p.pos() += image_shift(p.image_box(), box_geo.length());
+      p.image_box() = {};
     }
 
     offset += this_size;

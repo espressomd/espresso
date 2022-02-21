@@ -25,7 +25,7 @@
 #include "electrostatics_magnetostatics/common.hpp"
 #include "electrostatics_magnetostatics/coulomb.hpp"
 
-#include "cells.hpp"
+#include "CellStructureType.hpp"
 #include "energy.hpp"
 #include "forces.hpp"
 #include "grid.hpp"
@@ -41,7 +41,8 @@ Mmm1dgpuForce::Mmm1dgpuForce(SystemInterface &s) {
   if (box_geo.periodic(0) || box_geo.periodic(1) || !box_geo.periodic(2)) {
     throw std::runtime_error("MMM1D requires periodicity (0, 0, 1)");
   }
-  if (cell_structure.decomposition_type() != CELL_STRUCTURE_NSQUARE) {
+  if (local_geo.cell_structure_type() !=
+      CellStructureType::CELL_STRUCTURE_NSQUARE) {
     throw std::runtime_error("MMM1D requires the N-square cellsystem");
   }
 

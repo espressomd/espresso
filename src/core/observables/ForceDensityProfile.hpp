@@ -45,7 +45,8 @@ public:
            const ParticleObservables::traits<Particle> &) const override {
     Utils::Histogram<double, 3> histogram(n_bins(), limits());
     for (auto const &p : particles) {
-      histogram.update(folded_position(p.get().r.p, box_geo), p.get().f.f);
+      histogram.update(folded_position(p.get().pos(), box_geo),
+                       p.get().force());
     }
     histogram.normalize();
     return histogram.get_histogram();

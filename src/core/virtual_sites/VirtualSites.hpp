@@ -59,7 +59,7 @@ public:
   void set_have_quaternion(const bool &have_quaternion) {
     m_have_quaternion = have_quaternion;
   }
-  bool get_have_quaternion() const { return m_have_quaternion; }
+  bool have_quaternions() const { return m_have_quaternion; }
 
 private:
   bool m_have_quaternion = false;

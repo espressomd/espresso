@@ -49,7 +49,7 @@ namespace {
 struct SD_particle_data {
   SD_particle_data() = default;
   explicit SD_particle_data(Particle const &p)
-      : type(p.p.type), pos(p.r.p), ext_force(p.f) {}
+      : type(p.type()), pos(p.pos()), ext_force(p.f) {}
 
   int type = 0;
 
@@ -93,7 +93,7 @@ void sd_update_locally(ParticleRange const &parts) {
 
   for (auto &p : parts) {
     // skip virtual particles
-    if (p.p.is_virtual) {
+    if (p.is_virtual()) {
       continue;
     }
 

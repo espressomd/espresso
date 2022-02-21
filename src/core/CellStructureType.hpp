@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2010-2020 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
  *
  * This file is part of ESPResSo.
  *
@@ -16,23 +18,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef REACTION_METHODS_WIDOM_INSERTION_HPP
-#define REACTION_METHODS_WIDOM_INSERTION_HPP
 
-#include "ReactionAlgorithm.hpp"
+#ifndef ESPRESSO_CELLSTRUCTURETYPE_HPP
+#define ESPRESSO_CELLSTRUCTURETYPE_HPP
 
-#include <utility>
-
-namespace ReactionMethods {
-
-/** Widom insertion method */
-class WidomInsertion : public ReactionAlgorithm {
-public:
-  WidomInsertion(int seed, double kT, double exclusion_radius)
-      : ReactionAlgorithm(seed, kT, exclusion_radius) {}
-  double calculate_particle_insertion_potential_energy(
-      SingleReaction &current_reaction);
+/** Cell structure */
+enum class CellStructureType : int {
+  /** cell structure regular decomposition */
+  CELL_STRUCTURE_REGULAR = 1,
+  /** cell structure n square */
+  CELL_STRUCTURE_NSQUARE = 2
 };
 
-} // namespace ReactionMethods
-#endif
+#endif // ESPRESSO_CELLSTRUCTURETYPE_HPP
