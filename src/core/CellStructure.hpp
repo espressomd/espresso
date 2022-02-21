@@ -490,22 +490,24 @@ public:
    * @brief Set the particle decomposition to AtomDecomposition.
    *
    * @param comm Communicator to use.
-   * @param box Box Geometry
+   * @param box Box Geometry.
+   * @param local_geo Geometry of the local box (holds cell structure type).
    */
   void set_atom_decomposition(boost::mpi::communicator const &comm,
-                              BoxGeometry const &box);
+                              BoxGeometry const &box,
+                              LocalBox<double> &local_geo);
 
   /**
    * @brief Set the particle decomposition to RegularDecomposition.
    *
    * @param comm Cartesian communicator to use.
    * @param range Interaction range.
-   * @param box Box Geometry
+   * @param box Box Geometry.
    * @param local_geo Geometry of the local box.
    */
   void set_regular_decomposition(boost::mpi::communicator const &comm,
                                  double range, BoxGeometry const &box,
-                                 LocalBox<double> const &local_geo);
+                                 LocalBox<double> &local_geo);
 
 public:
   template <class BondKernel> void bond_loop(BondKernel const &bond_kernel) {

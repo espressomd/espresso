@@ -1287,7 +1287,7 @@ bool p3m_sanity_checks_system(const Utils::Vector3i &grid) {
     ret = true;
   }
 
-  if (cell_structure.decomposition_type() !=
+  if (local_geo.cell_structure_type() !=
       CellStructureType::CELL_STRUCTURE_REGULAR) {
     runtimeErrorMsg() << "P3M requires the regular decomposition cell system";
     ret = true;

@@ -1422,7 +1422,7 @@ bool dp3m_sanity_checks(const Utils::Vector3i &grid) {
     ret = true;
   }
 
-  if (cell_structure.decomposition_type() !=
+  if (local_geo.cell_structure_type() !=
       CellStructureType::CELL_STRUCTURE_REGULAR) {
     runtimeErrorMsg() << "dipolar P3M requires the regular decomposition "
                          "cell system";

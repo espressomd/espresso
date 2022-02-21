@@ -87,7 +87,8 @@ LocalBox<double> regular_decomposition(const BoxGeometry &box,
     boundaries[2 * dir + 1] = -(node_pos[dir] == node_grid_par[dir] - 1);
   }
 
-  return {my_left, local_length, boundaries};
+  return {my_left, local_length, boundaries,
+          CellStructureType::CELL_STRUCTURE_REGULAR};
 }
 
 void grid_changed_box_l(const BoxGeometry &box) {

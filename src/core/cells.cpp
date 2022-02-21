@@ -202,7 +202,7 @@ void cells_re_init(CellStructureType new_cs) {
                                              box_geo, local_geo);
     break;
   case CellStructureType::CELL_STRUCTURE_NSQUARE:
-    cell_structure.set_atom_decomposition(comm_cart, box_geo);
+    cell_structure.set_atom_decomposition(comm_cart, box_geo, local_geo);
     break;
   default:
     throw std::runtime_error("Unknown cell system type");
