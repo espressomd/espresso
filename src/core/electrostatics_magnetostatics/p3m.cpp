@@ -31,6 +31,7 @@
 #include "electrostatics_magnetostatics/elc.hpp"
 #include "electrostatics_magnetostatics/p3m_influence_function.hpp"
 
+#include "CellStructureType.hpp"
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
 #include "cells.hpp"
@@ -1286,7 +1287,8 @@ bool p3m_sanity_checks_system(const Utils::Vector3i &grid) {
     ret = true;
   }
 
-  if (cell_structure.decomposition_type() != CELL_STRUCTURE_REGULAR) {
+  if (local_geo.cell_structure_type() !=
+      CellStructureType::CELL_STRUCTURE_REGULAR) {
     runtimeErrorMsg() << "P3M requires the regular decomposition cell system";
     ret = true;
   }
