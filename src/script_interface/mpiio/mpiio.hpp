@@ -19,8 +19,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SCRIPTINTERFACE_MPIIO_HPP
-#define ESPRESSO_SCRIPTINTERFACE_MPIIO_HPP
+#ifndef ESPRESSO_SCRIPT_INTERFACE_MPIIO_MPIIO_HPP
+#define ESPRESSO_SCRIPT_INTERFACE_MPIIO_MPIIO_HPP
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"

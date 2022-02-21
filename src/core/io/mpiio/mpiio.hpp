@@ -27,6 +27,8 @@
 
 #include "ParticleRange.hpp"
 
+#include <string>
+
 namespace Mpiio {
 
 /**
