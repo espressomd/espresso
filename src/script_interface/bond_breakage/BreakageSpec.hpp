@@ -35,10 +35,13 @@ public:
         {"breakage_length", m_breakage_spec->breakage_length},
         {"action_type",
          [this](const Variant &v) {
-           m_breakage_spec->action_type =
-               ::BondBreakage::ActionType(boost::get<int>(v));
+           m_breakage_spec->action_type = ::BondBreakage::ActionType{
+               m_breakage_str_to_enum.at(boost::get<std::string>(v))};
          },
-         [this]() { return Variant(int(m_breakage_spec->action_type)); }},
+         [this]() {
+           return Variant(
+               m_breakage_enum_to_str.at(m_breakage_spec->action_type));
+         }},
     });
   }
 
@@ -48,6 +51,18 @@ public:
 
 private:
   std::shared_ptr<::BondBreakage::BreakageSpec> m_breakage_spec;
+  std::unordered_map<::BondBreakage::ActionType, std::string>
+      m_breakage_enum_to_str = {
+          {::BondBreakage::ActionType::NONE, "none"},
+          {::BondBreakage::ActionType::DELETE_BOND, "revert_center_bond"},
+          {::BondBreakage::ActionType::REVERT_BIND_AT_POINT_OF_COLLISION,
+           "revert_vs_bond"}};
+  std::unordered_map<std::string, ::BondBreakage::ActionType>
+      m_breakage_str_to_enum = {
+          {"none", ::BondBreakage::ActionType::NONE},
+          {"revert_center_bond", ::BondBreakage::ActionType::DELETE_BOND},
+          {"revert_vs_bond",
+           ::BondBreakage::ActionType::REVERT_BIND_AT_POINT_OF_COLLISION}};
 };
 
 } // namespace BondBreakage
