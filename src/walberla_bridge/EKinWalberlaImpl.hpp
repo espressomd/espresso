@@ -539,7 +539,7 @@ public:
   void update_density_boundary_from_list(
       std::vector<int> const &nodes_flat,
       std::vector<double> const &density_flat) override {
-    assert(nodes_flat.size() == vel_flat.size());
+    assert(nodes_flat.size() == density_flat.size());
     assert(nodes_flat.size() % 3u == 0);
     for (std::size_t i = 0; i < nodes_flat.size(); i += 1) {
       auto const node =
