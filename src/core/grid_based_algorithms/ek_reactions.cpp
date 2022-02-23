@@ -1,7 +1,10 @@
 #include "ek_reactions.hpp"
+#include "EKReactions.hpp"
+
+#include <algorithm>
 
 namespace EK {
-EKReactions<walberla::EKReaction<double>> ek_reactions;
+EKReactions<walberla::EKReactionBase<double>> ek_reactions;
 
 void perform_reactions() {
   if (ek_reactions.empty()) {

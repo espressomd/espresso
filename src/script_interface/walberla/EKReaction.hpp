@@ -7,12 +7,13 @@
 #include "EKReactant.hpp"
 #include "LatticeWalberla.hpp"
 
-#include "walberla_bridge/EKReaction.hpp"
+#include "walberla_bridge/EKReactionBase.hpp"
+#include "walberla_bridge/EKReactionImplBulk.hpp"
 
 #include <memory>
 
 namespace ScriptInterface::walberla {
-class EKReaction : public AutoParameters<::walberla::EKReaction<double>> {
+class EKReaction : public AutoParameters<::walberla::EKReactionBase<double>> {
 public:
   void do_construct(VariantMap const &args) override {
 
@@ -28,7 +29,7 @@ public:
     std::transform(reactant.begin(), reactant.end(), output.begin(),
                    get_instance);
 
-    m_ekreaction = std::make_shared<::walberla::EKReaction<double>>(
+    m_ekreaction = std::make_shared<::walberla::EKReactionImplBulk<double>>(
         lattice, output, get_value<double>(args, "coefficient"));
 
     add_parameters({{"coefficient",
@@ -42,7 +43,7 @@ public:
 
 private:
   /* The actual instance */
-  std::shared_ptr<::walberla::EKReaction<double>> m_ekreaction;
+  std::shared_ptr<::walberla::EKReactionBase<double>> m_ekreaction;
 };
 } // namespace ScriptInterface::walberla
 

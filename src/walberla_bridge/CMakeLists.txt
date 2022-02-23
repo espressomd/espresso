@@ -59,7 +59,7 @@ else()
        generated_kernels/CollideSweepDoublePrecisionThermalized.cpp)
 endif()
 set(WalberlaBridge_SRC ${WalberlaBridgeCodegen_SRC} lb_walberla_init.cpp
-                       LatticeWalberla.cpp PoissonSolver/FFT.cpp ${WalberlaBridgeElectrokineticsCodegen_SRC})
+                       LatticeWalberla.cpp PoissonSolver/FFT.cpp ${WalberlaBridgeElectrokineticsCodegen_SRC} EKReactionImplBulk.cpp)
 
 add_library(cxx_walberla_interface INTERFACE)
 if(WALBERLA_USE_AVX)
