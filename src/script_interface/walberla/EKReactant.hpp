@@ -6,7 +6,7 @@
 
 #include "EKSpecies.hpp"
 
-#include "walberla_bridge/EKReactant.hpp"
+#include "walberla_bridge/electrokinetics/reactions/EKReactant.hpp"
 
 #include <memory>
 

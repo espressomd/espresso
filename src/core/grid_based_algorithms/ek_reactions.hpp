@@ -1,8 +1,8 @@
 #ifndef ESPRESSO_EK_REACTIONS_HPP
 #define ESPRESSO_EK_REACTIONS_HPP
 
-#include "EKReactionBase.hpp"
 #include "EKReactions.hpp"
+#include "electrokinetics/reactions/EKReactionBase.hpp"
 
 namespace EK {
 extern EKReactions<walberla::EKReactionBase<double>> ek_reactions;

@@ -28,6 +28,7 @@ set(WalberlaBridgeCodegen_SRC
 
 set(WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN generated_kernels/electrokinetics)
 
+set(WalberlaBridgeElectrokinetics_SRC)
 set(WalberlaBridgeElectrokineticsCodegen_SRC
     ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/DiffusiveFluxKernel.cpp
     ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/ContinuityKernel.cpp
@@ -36,14 +37,25 @@ set(WalberlaBridgeElectrokineticsCodegen_SRC
     ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/DiffusiveFluxKernelWithElectrostatic.cpp
     ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/boundary_conditions/NoFlux.cpp
     ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/boundary_conditions/FixedFlux.cpp
-    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/boundary_conditions/Dirichlet.cpp
-    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/reactions/ReactionKernelBulk_1.cpp
-    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/reactions/ReactionKernelBulk_2.cpp
-    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/reactions/ReactionKernelBulk_3.cpp
-    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/reactions/ReactionKernelBulk_4.cpp
-    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/reactions/ReactionKernelBulk_5.cpp)
+    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/boundary_conditions/Dirichlet.cpp)
 
 unset(WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN)
+
+# EK reactions
+set(WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS electrokinetics/reactions)
+list(APPEND WalberlaBridgeElectrokinetics_SRC
+     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS}/EKReactionImplBulk.cpp)
+
+set(WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS}/generated_kernels)
+list(APPEND WalberlaBridgeElectrokineticsCodegen_SRC
+     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelBulk_1.cpp
+     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelBulk_2.cpp
+     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelBulk_3.cpp
+     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelBulk_4.cpp
+     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelBulk_5.cpp)
+unset(WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN)
+unset(WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS)
+# EK reactions
 
 if(WALBERLA_USE_AVX)
   list(APPEND WalberlaBridgeCodegen_SRC
@@ -70,7 +82,7 @@ set(WalberlaBridgeCodegenCuda_SRC
 
 
 set(WalberlaBridge_SRC ${WalberlaBridgeCodegen_SRC} lb_walberla_init.cpp
-                       LatticeWalberla.cpp PoissonSolver/FFT.cpp ${WalberlaBridgeElectrokineticsCodegen_SRC} EKReactionImplBulk.cpp)
+                       LatticeWalberla.cpp PoissonSolver/FFT.cpp ${WalberlaBridgeElectrokineticsCodegen_SRC} ${WalberlaBridgeElectrokinetics_SRC})
 
 add_library(cxx_walberla_interface INTERFACE)
 if(WALBERLA_USE_AVX)

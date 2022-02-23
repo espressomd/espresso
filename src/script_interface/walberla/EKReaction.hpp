@@ -7,8 +7,8 @@
 #include "EKReactant.hpp"
 #include "LatticeWalberla.hpp"
 
-#include "walberla_bridge/EKReactionBase.hpp"
-#include "walberla_bridge/EKReactionImplBulk.hpp"
+#include "walberla_bridge/electrokinetics/reactions/EKReactionBase.hpp"
+#include "walberla_bridge/electrokinetics/reactions/EKReactionImplBulk.hpp"
 
 #include <memory>
 

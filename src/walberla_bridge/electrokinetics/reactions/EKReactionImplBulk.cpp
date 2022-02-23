@@ -20,11 +20,11 @@
 #include "EKReactionImplBulk.hpp"
 #include "EKReactant.hpp"
 
-#include "generated_kernels/electrokinetics/reactions/ReactionKernelBulk_1.h"
-#include "generated_kernels/electrokinetics/reactions/ReactionKernelBulk_2.h"
-#include "generated_kernels/electrokinetics/reactions/ReactionKernelBulk_3.h"
-#include "generated_kernels/electrokinetics/reactions/ReactionKernelBulk_4.h"
-#include "generated_kernels/electrokinetics/reactions/ReactionKernelBulk_5.h"
+#include "generated_kernels/ReactionKernelBulk_1.h"
+#include "generated_kernels/ReactionKernelBulk_2.h"
+#include "generated_kernels/ReactionKernelBulk_3.h"
+#include "generated_kernels/ReactionKernelBulk_4.h"
+#include "generated_kernels/ReactionKernelBulk_5.h"
 
 #include <domain_decomposition/BlockDataID.h>
 #include <memory>
