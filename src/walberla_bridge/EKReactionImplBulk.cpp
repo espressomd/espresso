@@ -20,11 +20,11 @@
 #include "EKReactionImplBulk.hpp"
 #include "EKReactant.hpp"
 
-#include "generated_kernels/electrokinetics/reactions/ReactionKernel_1.h"
-#include "generated_kernels/electrokinetics/reactions/ReactionKernel_2.h"
-#include "generated_kernels/electrokinetics/reactions/ReactionKernel_3.h"
-#include "generated_kernels/electrokinetics/reactions/ReactionKernel_4.h"
-#include "generated_kernels/electrokinetics/reactions/ReactionKernel_5.h"
+#include "generated_kernels/electrokinetics/reactions/ReactionKernelBulk_1.h"
+#include "generated_kernels/electrokinetics/reactions/ReactionKernelBulk_2.h"
+#include "generated_kernels/electrokinetics/reactions/ReactionKernelBulk_3.h"
+#include "generated_kernels/electrokinetics/reactions/ReactionKernelBulk_4.h"
+#include "generated_kernels/electrokinetics/reactions/ReactionKernelBulk_5.h"
 
 #include <domain_decomposition/BlockDataID.h>
 #include <memory>
@@ -53,7 +53,7 @@ auto get_kernel(
     const auto [density_id_0, order_0, stoech_coeff_0] =
         detail::get_reaction_details<FloatType>(reactant);
 
-    auto kernel = std::make_shared<pystencils::ReactionKernel_1>(
+    auto kernel = std::make_shared<pystencils::ReactionKernelBulk_1>(
         density_id_0, order_0, coefficient, stoech_coeff_0);
 
     return kernel->getSweep();
@@ -64,7 +64,7 @@ auto get_kernel(
     const auto [density_id_1, order_1, stoech_coeff_1] =
         detail::get_reaction_details<FloatType>(reactants[1]);
 
-    auto kernel = std::make_shared<pystencils::ReactionKernel_2>(
+    auto kernel = std::make_shared<pystencils::ReactionKernelBulk_2>(
         density_id_0, density_id_1, order_0, order_1, coefficient,
         stoech_coeff_0, stoech_coeff_1);
 
@@ -78,7 +78,7 @@ auto get_kernel(
     const auto [density_id_2, order_2, stoech_coeff_2] =
         detail::get_reaction_details<FloatType>(reactants[2]);
 
-    auto kernel = std::make_shared<pystencils::ReactionKernel_3>(
+    auto kernel = std::make_shared<pystencils::ReactionKernelBulk_3>(
         density_id_0, density_id_1, density_id_2, order_0, order_1, order_2,
         coefficient, stoech_coeff_0, stoech_coeff_1, stoech_coeff_2);
 
@@ -94,7 +94,7 @@ auto get_kernel(
     const auto [density_id_3, order_3, stoech_coeff_3] =
         detail::get_reaction_details<FloatType>(reactants[3]);
 
-    auto kernel = std::make_shared<pystencils::ReactionKernel_4>(
+    auto kernel = std::make_shared<pystencils::ReactionKernelBulk_4>(
         density_id_0, density_id_1, density_id_2, density_id_3, order_0,
         order_1, order_2, order_3, coefficient, stoech_coeff_0, stoech_coeff_1,
         stoech_coeff_2, stoech_coeff_3);
@@ -113,7 +113,7 @@ auto get_kernel(
     const auto [density_id_4, order_4, stoech_coeff_4] =
         detail::get_reaction_details<FloatType>(reactants[4]);
 
-    auto kernel = std::make_shared<pystencils::ReactionKernel_5>(
+    auto kernel = std::make_shared<pystencils::ReactionKernelBulk_5>(
         density_id_0, density_id_1, density_id_2, density_id_3, density_id_4,
         order_0, order_1, order_2, order_3, order_4, coefficient,
         stoech_coeff_0, stoech_coeff_1, stoech_coeff_2, stoech_coeff_3,

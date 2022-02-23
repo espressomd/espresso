@@ -13,7 +13,7 @@
 //  You should have received a copy of the GNU General Public License along
 //  with waLBerla (see COPYING.txt). If not, see <http://www.gnu.org/licenses/>.
 //
-//! \\file ReactionKernel_1.h
+//! \\file ReactionKernelBulk_3.h
 //! \\author pystencils
 //======================================================================================================================
 
@@ -47,11 +47,11 @@ namespace walberla {
 namespace pystencils {
 
 
-class ReactionKernel_1
+class ReactionKernelBulk_3
 {
 public:
-    ReactionKernel_1( BlockDataID rho_0ID_, double order_0, double rate_coefficient, double stoech_0 )
-        : rho_0ID(rho_0ID_), order_0_(order_0), rate_coefficient_(rate_coefficient), stoech_0_(stoech_0)
+    ReactionKernelBulk_3( BlockDataID rho_0ID_, BlockDataID rho_1ID_, BlockDataID rho_2ID_, double order_0, double order_1, double order_2, double rate_coefficient, double stoech_0, double stoech_1, double stoech_2 )
+        : rho_0ID(rho_0ID_), rho_1ID(rho_1ID_), rho_2ID(rho_2ID_), order_0_(order_0), order_1_(order_1), order_2_(order_2), rate_coefficient_(rate_coefficient), stoech_0_(stoech_0), stoech_1_(stoech_1), stoech_2_(stoech_2)
     {};
 
     
@@ -67,14 +67,14 @@ public:
     }
     
 
-    static std::function<void (IBlock *)> getSweep(const shared_ptr<ReactionKernel_1> & kernel)
+    static std::function<void (IBlock *)> getSweep(const shared_ptr<ReactionKernelBulk_3> & kernel)
     {
         return [kernel] 
                (IBlock * b) 
                { kernel->run(b); };
     }
 
-    static std::function<void (IBlock*)> getSweepOnCellInterval(const shared_ptr<ReactionKernel_1> & kernel, const shared_ptr<StructuredBlockStorage> & blocks, const CellInterval & globalCellInterval, cell_idx_t ghostLayers=1)
+    static std::function<void (IBlock*)> getSweepOnCellInterval(const shared_ptr<ReactionKernelBulk_3> & kernel, const shared_ptr<StructuredBlockStorage> & blocks, const CellInterval & globalCellInterval, cell_idx_t ghostLayers=1)
     {
         return [kernel, blocks, globalCellInterval, ghostLayers]
                (IBlock * b) 
@@ -97,9 +97,15 @@ public:
 
 
     BlockDataID rho_0ID;
+    BlockDataID rho_1ID;
+    BlockDataID rho_2ID;
     double order_0_;
+    double order_1_;
+    double order_2_;
     double rate_coefficient_;
     double stoech_0_;
+    double stoech_1_;
+    double stoech_2_;
 
 };
 

@@ -13,14 +13,14 @@
 //  You should have received a copy of the GNU General Public License along
 //  with waLBerla (see COPYING.txt). If not, see <http://www.gnu.org/licenses/>.
 //
-//! \\file ReactionKernel_1.cpp
+//! \\file ReactionKernelBulk_1.cpp
 //! \\ingroup lbm
 //! \\author lbmpy
 //======================================================================================================================
 
 #include <cmath>
 
-#include "ReactionKernel_1.h"
+#include "ReactionKernelBulk_1.h"
 #include "core/DataTypes.h"
 #include "core/Macros.h"
 
@@ -45,35 +45,30 @@ using namespace std;
 namespace walberla {
 namespace pystencils {
 
-namespace internal_reactionkernel_1_reactionkernel_1 {
-static FUNC_PREFIX void reactionkernel_1_reactionkernel_1(
+namespace internal_reactionkernelbulk_1_reactionkernelbulk_1 {
+static FUNC_PREFIX void reactionkernelbulk_1_reactionkernelbulk_1(
     double *RESTRICT _data_rho_0, int64_t const _size_rho_0_0,
     int64_t const _size_rho_0_1, int64_t const _size_rho_0_2,
     int64_t const _stride_rho_0_0, int64_t const _stride_rho_0_1,
     int64_t const _stride_rho_0_2, double order_0, double rate_coefficient,
     double stoech_0) {
-#pragma omp parallel
-  {
-#pragma omp for schedule(static)
-    for (int64_t ctr_2 = 0; ctr_2 < _size_rho_0_2; ctr_2 += 1) {
-      double *RESTRICT _data_rho_0_20 = _data_rho_0 + _stride_rho_0_2 * ctr_2;
-      for (int64_t ctr_1 = 0; ctr_1 < _size_rho_0_1; ctr_1 += 1) {
-        double *RESTRICT _data_rho_0_20_10 =
-            _stride_rho_0_1 * ctr_1 + _data_rho_0_20;
-        for (int64_t ctr_0 = 0; ctr_0 < _size_rho_0_0; ctr_0 += 1) {
-          const double local_rho_0 = _data_rho_0_20_10[_stride_rho_0_0 * ctr_0];
-          const double rate_factor =
-              pow(local_rho_0, order_0) * rate_coefficient;
-          _data_rho_0_20_10[_stride_rho_0_0 * ctr_0] =
-              local_rho_0 + rate_factor * stoech_0;
-        }
+  for (int64_t ctr_2 = 0; ctr_2 < _size_rho_0_2; ctr_2 += 1) {
+    double *RESTRICT _data_rho_0_20 = _data_rho_0 + _stride_rho_0_2 * ctr_2;
+    for (int64_t ctr_1 = 0; ctr_1 < _size_rho_0_1; ctr_1 += 1) {
+      double *RESTRICT _data_rho_0_20_10 =
+          _stride_rho_0_1 * ctr_1 + _data_rho_0_20;
+      for (int64_t ctr_0 = 0; ctr_0 < _size_rho_0_0; ctr_0 += 1) {
+        const double local_rho_0 = _data_rho_0_20_10[_stride_rho_0_0 * ctr_0];
+        const double rate_factor = pow(local_rho_0, order_0) * rate_coefficient;
+        _data_rho_0_20_10[_stride_rho_0_0 * ctr_0] =
+            local_rho_0 + rate_factor * stoech_0;
       }
     }
   }
 }
-} // namespace internal_reactionkernel_1_reactionkernel_1
+} // namespace internal_reactionkernelbulk_1_reactionkernelbulk_1
 
-void ReactionKernel_1::run(IBlock *block) {
+void ReactionKernelBulk_1::run(IBlock *block) {
   auto rho_0 = block->getData<field::GhostLayerField<double, 1>>(rho_0ID);
 
   auto &rate_coefficient = this->rate_coefficient_;
@@ -93,12 +88,14 @@ void ReactionKernel_1::run(IBlock *block) {
   const int64_t _stride_rho_0_0 = int64_t(rho_0->xStride());
   const int64_t _stride_rho_0_1 = int64_t(rho_0->yStride());
   const int64_t _stride_rho_0_2 = int64_t(rho_0->zStride());
-  internal_reactionkernel_1_reactionkernel_1::reactionkernel_1_reactionkernel_1(
-      _data_rho_0, _size_rho_0_0, _size_rho_0_1, _size_rho_0_2, _stride_rho_0_0,
-      _stride_rho_0_1, _stride_rho_0_2, order_0, rate_coefficient, stoech_0);
+  internal_reactionkernelbulk_1_reactionkernelbulk_1::
+      reactionkernelbulk_1_reactionkernelbulk_1(
+          _data_rho_0, _size_rho_0_0, _size_rho_0_1, _size_rho_0_2,
+          _stride_rho_0_0, _stride_rho_0_1, _stride_rho_0_2, order_0,
+          rate_coefficient, stoech_0);
 }
 
-void ReactionKernel_1::runOnCellInterval(
+void ReactionKernelBulk_1::runOnCellInterval(
     const shared_ptr<StructuredBlockStorage> &blocks,
     const CellInterval &globalCellInterval, cell_idx_t ghostLayers,
     IBlock *block) {
@@ -132,9 +129,11 @@ void ReactionKernel_1::runOnCellInterval(
   const int64_t _stride_rho_0_0 = int64_t(rho_0->xStride());
   const int64_t _stride_rho_0_1 = int64_t(rho_0->yStride());
   const int64_t _stride_rho_0_2 = int64_t(rho_0->zStride());
-  internal_reactionkernel_1_reactionkernel_1::reactionkernel_1_reactionkernel_1(
-      _data_rho_0, _size_rho_0_0, _size_rho_0_1, _size_rho_0_2, _stride_rho_0_0,
-      _stride_rho_0_1, _stride_rho_0_2, order_0, rate_coefficient, stoech_0);
+  internal_reactionkernelbulk_1_reactionkernelbulk_1::
+      reactionkernelbulk_1_reactionkernelbulk_1(
+          _data_rho_0, _size_rho_0_0, _size_rho_0_1, _size_rho_0_2,
+          _stride_rho_0_0, _stride_rho_0_1, _stride_rho_0_2, order_0,
+          rate_coefficient, stoech_0);
 }
 
 } // namespace pystencils

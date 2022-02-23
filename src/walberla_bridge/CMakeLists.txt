@@ -37,11 +37,11 @@ set(WalberlaBridgeElectrokineticsCodegen_SRC
     ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/boundary_conditions/NoFlux.cpp
     ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/boundary_conditions/FixedFlux.cpp
     ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/boundary_conditions/Dirichlet.cpp
-    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/reactions/ReactionKernel_1.cpp
-    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/reactions/ReactionKernel_2.cpp
-    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/reactions/ReactionKernel_3.cpp
-    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/reactions/ReactionKernel_4.cpp
-    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/reactions/ReactionKernel_5.cpp)
+    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/reactions/ReactionKernelBulk_1.cpp
+    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/reactions/ReactionKernelBulk_2.cpp
+    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/reactions/ReactionKernelBulk_3.cpp
+    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/reactions/ReactionKernelBulk_4.cpp
+    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/reactions/ReactionKernelBulk_5.cpp)
 
 unset(WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN)
 
