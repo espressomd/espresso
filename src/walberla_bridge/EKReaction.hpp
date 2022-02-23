@@ -1,6 +1,7 @@
 #ifndef ESPRESSO_EKREACTION_HPP
 #define ESPRESSO_EKREACTION_HPP
 
+#include "EKReactant.hpp"
 #include "EKinWalberlaBase.hpp"
 #include "LatticeWalberla.hpp"
 
@@ -13,32 +14,6 @@
 #include <memory>
 
 namespace walberla {
-
-template <typename FloatType> class EKReactant {
-private:
-  std::shared_ptr<EKinWalberlaBase<FloatType>> m_ekspecies;
-  FloatType m_stoech_coeff;
-  FloatType m_order;
-
-public:
-  EKReactant(std::shared_ptr<EKinWalberlaBase<FloatType>> ekspecies,
-             FloatType stoech_coeff, FloatType order)
-      : m_ekspecies(std::move(ekspecies)), m_stoech_coeff(stoech_coeff),
-        m_order(order) {}
-
-  void set_stoech_coefficient(FloatType stoech_coeff) {
-    m_stoech_coeff = stoech_coeff;
-  }
-  [[nodiscard]] FloatType get_stoech_coeff() const { return m_stoech_coeff; }
-
-  void set_order(FloatType order) { m_order = order; }
-  [[nodiscard]] FloatType get_order() const { return m_order; }
-
-  void set_species(std::shared_ptr<EKinWalberlaBase<FloatType>> ekspecies) {
-    m_ekspecies = std::move(ekspecies);
-  }
-  [[nodiscard]] auto get_species() const { return m_ekspecies; }
-};
 
 namespace detail {
 template <typename FloatType>
