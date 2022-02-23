@@ -1,6 +1,6 @@
 // kernel generated with pystencils v0.4.4, lbmpy v0.4.4,
 // lbmpy_walberla/pystencils_walberla from commit
-// 88f85eb7a979f81d68e76009811aeed53ec3014e
+// 2527a5f799da52b4e5293a05ed691fc35bf7122b
 
 //======================================================================================================================
 //
@@ -71,12 +71,12 @@ public:
     enum Type { ALL = 0, INNER = 1, OUTER = 2, NUM_TYPES = 3 };
 
     IndexVectors() = default;
-    bool operator==(IndexVectors const &other) const {
+    bool operator==(IndexVectors &other) {
       return other.cpuVectors_ == cpuVectors_;
     }
 
     CpuIndexVector &indexVector(Type t) { return cpuVectors_[t]; }
-    IndexInfo *pointerCpu(Type t) { return cpuVectors_[t].data(); }
+    IndexInfo *pointerCpu(Type t) { return &(cpuVectors_[t][0]); }
 
     void syncGPU() {}
 

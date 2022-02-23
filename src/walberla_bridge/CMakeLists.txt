@@ -58,6 +58,17 @@ else()
        generated_kernels/CollideSweepSinglePrecisionThermalized.cpp
        generated_kernels/CollideSweepDoublePrecisionThermalized.cpp)
 endif()
+set(WalberlaBridgeCodegenCuda_SRC
+    generated_kernels/CudaStreamSweepSinglePrecision.cu
+    generated_kernels/CudaStreamSweepDoublePrecision.cu
+    generated_kernels/CudaInitialPDFsSetterSinglePrecision.cu
+    generated_kernels/CudaInitialPDFsSetterDoublePrecision.cu
+    generated_kernels/CudaDynamic_UBB_single_precision.cu
+    generated_kernels/CudaDynamic_UBB_double_precision.cu
+    generated_kernels/CudaUpdateVelocityFromPDFSweepDoublePrecision.cu
+    generated_kernels/CudaUpdateVelocityFromPDFSweepSinglePrecision.cu)
+
+
 set(WalberlaBridge_SRC ${WalberlaBridgeCodegen_SRC} lb_walberla_init.cpp
                        LatticeWalberla.cpp PoissonSolver/FFT.cpp ${WalberlaBridgeElectrokineticsCodegen_SRC} EKReactionImplBulk.cpp)
 
@@ -66,7 +77,11 @@ if(WALBERLA_USE_AVX)
   target_link_libraries(cxx_walberla_interface INTERFACE cxx_avx2_interface)
 endif(WALBERLA_USE_AVX)
 
-add_library(WalberlaBridge SHARED ${WalberlaBridge_SRC})
+if(WITH_CUDA)
+  add_gpu_library(WalberlaBridge SHARED ${WalberlaBridge_SRC} ${WalberlaBridgeCodegenCuda_SRC})
+else(CUDA)
+  add_library(WalberlaBridge SHARED ${WalberlaBridge_SRC})
+endif(CUDA)
 target_link_libraries(WalberlaBridge PUBLIC MPI::MPI_CXX EspressoUtils
                       PRIVATE Boost::boost cxx_interface cxx_walberla_interface
                       ${WALBERLA_LIBS})

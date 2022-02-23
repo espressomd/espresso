@@ -39,6 +39,7 @@ from lbmpy.stencils import get_stencil
 from lbmpy.updatekernels import create_lbm_kernel, create_stream_pull_with_output_kernel
 from lbmpy.macroscopic_value_kernels import macroscopic_values_setter, macroscopic_values_getter
 
+
 # for collide-push from lbmpy.fieldaccess import StreamPushTwoFieldsAccessor
 
 from lbmpy.advanced_streaming.indexing import NeighbourOffsetArrays
@@ -47,8 +48,12 @@ from lbmpy.advanced_streaming.indexing import NeighbourOffsetArrays
 parser = argparse.ArgumentParser(description='Generate the waLBerla kernels.')
 parser.add_argument('--single-precision', action='store_true', required=False,
                     help='Use single-precision')
+parser.add_argument("--gpu", action="store_true")
 args = parser.parse_args()
 
+if args.gpu: target = ps.Target.GPU
+else: target = ps.Target.CPU 
+print(target)
 data_type_cpp = {True: 'double', False: 'float'}
 data_type_np = {True: 'float64', False: 'float32'}
 
@@ -204,7 +209,8 @@ def generate_collision_sweep(
                                    data_type=data_type_np[ctx.double_accuracy])
     collide_ast.function_name = 'kernel_collide'
     collide_ast.assumed_inner_stride_one = True
-    codegen.generate_sweep(ctx, class_name, collide_ast)
+    print(class_name, target)
+    codegen.generate_sweep(ctx, class_name, collide_ast, target=target)
 
 
 def generate_stream_sweep(ctx, lb_method, class_name, params):
@@ -219,7 +225,7 @@ def generate_stream_sweep(ctx, lb_method, class_name, params):
     stream_ast.function_name = 'kernel_stream'
     stream_ast.assumed_inner_stride_one = True
     codegen.generate_sweep(
-        ctx, class_name, stream_ast, field_swaps=[(fields['pdfs'], fields['pdfs_tmp'])])
+        ctx, class_name, stream_ast, field_swaps=[(fields['pdfs'], fields['pdfs_tmp'])], target=target)
 
 
 def generate_setters(lb_method):
@@ -239,8 +245,8 @@ def generate_update_vel_sweep(lb_method):
         lb_method, None, fields["velocity"], fields["pdfs"])
 #        compile_macroscopic_values_getter(lb_method, ["velocity"], field_layout="fzyx")
     codegen.generate_sweep(ctx, 
-                           "UpdateVelocityFromPDFSweep" + precision_prefix, 
-                           update_vel_from_pdf_kernel) 
+                           f"{target_prefix}UpdateVelocityFromPDFSweep{precision_prefix}", 
+                           update_vel_from_pdf_kernel, target=target) 
 
 
 def check_dependencies():
@@ -322,6 +328,11 @@ class PatchedCodeGeneration(CodeGeneration):
 
 with PatchedCodeGeneration() as ctx:
     ctx.double_accuracy = not args.single_precision
+    ctx.cuda = True
+    if target == ps.Target.GPU:
+        target_prefix = "Cuda"
+    else:
+        target_prefix = ""
     precision_prefix = {
         True: 'DoublePrecision',
         False: 'SinglePrecision'}[
@@ -345,8 +356,8 @@ with PatchedCodeGeneration() as ctx:
         "assume_inner_stride_one": True,
         "assume_aligned": True,
         "assume_sufficient_line_padding": False}
-    params = {"target": "cpu"}
-    params_vec = {"target": "cpu", "cpu_vectorize_info": cpu_vectorize_info}
+    params = {"target": target}
+    params_vec = {"target": target, "cpu_vectorize_info": cpu_vectorize_info}
 
     # LB Method definition
     method = create_mrt_orthogonal(
@@ -359,20 +370,21 @@ with PatchedCodeGeneration() as ctx:
     generate_stream_sweep(
         ctx,
         method,
-        f"StreamSweep{precision_prefix}",
+        f"{target_prefix}StreamSweep{precision_prefix}",
         params)
-    generate_stream_sweep(
-        ctx,
-        method,
-        f"StreamSweep{precision_prefix}AVX",
-        params_vec)
+    if target == ps.Target.CPU:
+        generate_stream_sweep(
+            ctx,
+            method,
+            f"{target_prefix}StreamSweep{precision_prefix}AVX",
+            params_vec)
 
     # generate initial densities
     pdfs_setter = generate_setters(method)
     codegen.generate_sweep(
         ctx,
-        f"InitialPDFsSetter{precision_prefix}",
-        pdfs_setter)
+        f"{target_prefix}InitialPDFsSetter{precision_prefix}",
+        pdfs_setter, target=target)
 
     generate_update_vel_sweep(method)
 
@@ -386,16 +398,17 @@ with PatchedCodeGeneration() as ctx:
         ctx,
         method,
         collision_rule_unthermalized,
-        f"CollideSweep{precision_prefix}",
-        {}
+        f"{target_prefix}CollideSweep{precision_prefix}",
+        params 
     )
-    generate_collision_sweep(
-        ctx,
-        method,
-        collision_rule_unthermalized,
-        f"CollideSweep{precision_prefix}AVX",
-        {"cpu_vectorize_info": cpu_vectorize_info}
-    )
+    if target == ps.Target.CPU:
+        generate_collision_sweep(
+            ctx,
+            method,
+            collision_rule_unthermalized,
+            f"{target_prefix}CollideSweep{precision_prefix}AVX",
+            {"cpu_vectorize_info": cpu_vectorize_info}
+        )
 
     # generate thermalized LB
     collision_rule_thermalized = create_lb_collision_rule(
@@ -412,33 +425,35 @@ with PatchedCodeGeneration() as ctx:
         ctx,
         method,
         collision_rule_thermalized,
-        f"CollideSweep{precision_prefix}Thermalized",
+        f"{target_prefix}CollideSweep{precision_prefix}Thermalized",
         params
     )
-    generate_collision_sweep(
-        ctx,
-        method,
-        collision_rule_thermalized,
-        f"CollideSweep{precision_prefix}ThermalizedAVX",
-        params_vec
-    )
+    if target == ps.Target.CPU:
+        generate_collision_sweep(
+            ctx,
+            method,
+            collision_rule_thermalized,
+            f"{target_prefix}CollideSweep{precision_prefix}ThermalizedAVX",
+            params_vec
+        )
 
     # generate accessors
-    generate_macroscopic_values_accessors(
-        ctx,
-        collision_rule_unthermalized.method,
-        f'macroscopic_values_accessors_{precision_suffix}.h')
+    if target == ps.Target.CPU:
+        generate_macroscopic_values_accessors(
+            ctx,
+            collision_rule_unthermalized.method,
+            f'{target_prefix}macroscopic_values_accessors_{precision_suffix}.h')
 
     # Boundary conditions
     ubb_dynamic = PatchedUBB(lambda *args: None, dim=3,
                              data_type=data_type_np[ctx.double_accuracy])
     ubb_data_handler = BounceBackSlipVelocityUBB(method.stencil, ubb_dynamic)
 
-    generate_boundary(ctx, f'Dynamic_UBB_{precision_suffix}', ubb_dynamic,
+    generate_boundary(ctx, f'{target_prefix}Dynamic_UBB_{precision_suffix}', ubb_dynamic,
                       method, additional_data_handler=ubb_data_handler,
-                      streaming_pattern="push")
+                      streaming_pattern="push", target=target)
 
-    with open(f'Dynamic_UBB_{precision_suffix}.h', 'r+') as f:
+    with open(f'{target_prefix}Dynamic_UBB_{precision_suffix}.h', 'r+') as f:
         content = f.read()
         f.seek(0)
         f.truncate(0)
@@ -452,10 +467,11 @@ with PatchedCodeGeneration() as ctx:
     # communication
     generate_lb_pack_info(
         ctx,
-        f'PushPackInfo{precision_prefix}',
+        f'{target_prefix}PushPackInfo{precision_prefix}',
         method.stencil,
         fields['pdfs'],
-        streaming_pattern='push'
+        streaming_pattern='push',
+        target=target
     )
 
     # Info header containing correct template definitions for stencil and field

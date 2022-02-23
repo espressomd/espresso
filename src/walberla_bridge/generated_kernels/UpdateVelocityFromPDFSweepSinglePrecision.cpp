@@ -1,6 +1,6 @@
 // kernel generated with pystencils v0.4.4, lbmpy v0.4.4,
 // lbmpy_walberla/pystencils_walberla from commit
-// 88f85eb7a979f81d68e76009811aeed53ec3014e
+// 2527a5f799da52b4e5293a05ed691fc35bf7122b
 
 //======================================================================================================================
 //
@@ -222,9 +222,9 @@ updatevelocityfrompdfsweepsingleprecision_updatevelocityfrompdfsweepsingleprecis
 } // namespace internal_5bc8ae7b61d5e7dd0cac9df61b0fb69a
 
 void UpdateVelocityFromPDFSweepSinglePrecision::run(IBlock *block) {
-  auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
   auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
   auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
+  auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
 
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(force->nrOfGhostLayers()));
   float *RESTRICT const _data_force = force->dataAt(0, 0, 0, 0);
@@ -280,9 +280,9 @@ void UpdateVelocityFromPDFSweepSinglePrecision::runOnCellInterval(
   if (ci.empty())
     return;
 
-  auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
   auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
   auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
+  auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
 
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(force->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(force->nrOfGhostLayers()));
