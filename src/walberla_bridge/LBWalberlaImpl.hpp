@@ -781,8 +781,9 @@ public:
   }
 
   boost::optional<std::vector<double>>
-  get_node_pop(const Utils::Vector3i &node) const override {
-    auto bc = get_block_and_cell(lattice(), node, false);
+  get_node_pop(const Utils::Vector3i &node,
+               bool consider_ghosts = false) const override {
+    auto bc = get_block_and_cell(lattice(), node, consider_ghosts);
     if (!bc)
       return {boost::none};
 

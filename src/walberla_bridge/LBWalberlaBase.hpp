@@ -95,7 +95,8 @@ public:
 
   /** @brief Get node populations. */
   virtual boost::optional<std::vector<double>>
-  get_node_pop(const Utils::Vector3i &node) const = 0;
+  get_node_pop(const Utils::Vector3i &node,
+               bool consider_ghosts = false) const = 0;
 
   /** @brief Set node populations. */
   virtual bool set_node_pop(const Utils::Vector3i &node,
