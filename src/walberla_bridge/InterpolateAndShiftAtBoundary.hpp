@@ -76,14 +76,6 @@ public:
   }
   typedef stencil::D3Q19 Stencil;
 
-  bool points_up(IBlock const *block) const {
-    return m_blocks->atDomainMaxBorder(m_shear_plane_normal, *block);
-  }
-
-  bool points_down(IBlock const *block) const {
-    return m_blocks->atDomainMinBorder(m_shear_plane_normal, *block);
-  }
-
   FloatType get_pos_offset() const {
     return numeric_cast<FloatType>(m_get_pos_offset());
   }
@@ -91,14 +83,12 @@ public:
   FloatType get_shift() const { return numeric_cast<FloatType>(m_get_shift()); }
 
   void operator()(IBlock *block) {
-    if (points_down(block))
-      kernel(block, m_slab_min, +1);
-    if (points_up(block))
-      kernel(block, m_slab_max, -1);
+    kernel(block, m_slab_min);
+    kernel(block, m_slab_max);
   }
 
 private:
-  void kernel(IBlock *block, stencil::Direction slab_dir, int vel_shift_pref) {
+  void kernel(IBlock *block, stencil::Direction slab_dir) {
     // setup lengths
     assert(m_blocks->getNumberOfCells(*block, m_shear_plane_normal) >= 2u);
     auto const dir = m_shear_direction;
@@ -115,9 +105,11 @@ private:
 
     // shift
     auto const shift = get_shift();
-    auto const offset =
-        get_pos_offset() *
+    // Note that the offset is applied to the nterpolation source rather than
+    // the target
+    const FloatType prefactor =
         ((slab_dir == m_slab_max) ? FloatType{-1} : FloatType{1});
+    auto const offset = get_pos_offset() * prefactor;
     for (auto cell = ci.begin(); cell != ci.end(); ++cell) {
       Cell source1 = *cell;
       Cell source2 = *cell;
@@ -130,7 +122,7 @@ private:
         tmp_field->get(*cell, q) = field->get(source1, q) * (1 - weight) +
                                    field->get(source2, q) * weight;
       }
-      tmp_field->get(*cell, m_shear_direction) += vel_shift_pref * shift;
+      tmp_field->get(*cell, m_shear_direction) -= prefactor * shift;
     }
 
     // swap

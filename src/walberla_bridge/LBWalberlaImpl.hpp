@@ -495,9 +495,9 @@ private:
 
   void integrate_pull_scheme() {
     auto const &blocks = lattice().get_blocks();
-    if (lees_edwards_bc()) {
-      apply_lees_edwards_force_to_be_applied_backwards_interpolation(blocks);
-    }
+    //    if (lees_edwards_bc()) {
+    //      apply_lees_edwards_force_to_be_applied_backwards_interpolation(blocks);
+    //    }
     // Reset force fields
     integrate_reset_force(blocks);
     // Handle boundaries
@@ -593,9 +593,8 @@ public:
         std::make_shared<InterpolateAndShiftAtBoundary<VectorField, FloatType>>(
             lattice().get_blocks(), m_velocity_field_id, m_vec_tmp_field_id,
             lattice().get_ghost_layers(), shear_direction, shear_plane_normal,
-            m_lees_edwards_callbacks->get_pos_offset, [this]() {
-              return -m_lees_edwards_callbacks->get_shear_velocity();
-            });
+            m_lees_edwards_callbacks->get_pos_offset,
+            m_lees_edwards_callbacks->get_shear_velocity);
     m_lees_edwards_last_applied_force_interpol_sweep =
         std::make_shared<InterpolateAndShiftAtBoundary<VectorField, FloatType>>(
             lattice().get_blocks(), m_last_applied_force_field_id,
