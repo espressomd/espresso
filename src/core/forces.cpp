@@ -187,8 +187,8 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
 #endif
       },
       maximal_cutoff(), maximal_cutoff_bonded(),
-      VerletCriterion{skin, interaction_range(), coulomb_cutoff, dipole_cutoff,
-                      collision_detection_cutoff()});
+      VerletCriterion<>{skin, interaction_range(), coulomb_cutoff,
+                        dipole_cutoff, collision_detection_cutoff()});
 
   Constraints::constraints.add_forces(particles, get_sim_time());
 
