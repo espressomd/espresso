@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _ACTOR_ACTOR_HPP
-#define _ACTOR_ACTOR_HPP
+#ifndef CORE_ACTOR_ACTOR_HPP
+#define CORE_ACTOR_ACTOR_HPP
 
 #include "SystemInterface.hpp"
 
@@ -27,10 +27,10 @@
  */
 class Actor {
 public:
-  virtual void computeForces(SystemInterface &s){};
-  virtual void computeTorques(SystemInterface &s){};
-  virtual void computeEnergy(SystemInterface &s){};
+  virtual void computeForces(SystemInterface &) {}
+  virtual void computeTorques(SystemInterface &) {}
+  virtual void computeEnergy(SystemInterface &) {}
   virtual ~Actor() = default;
 };
 
-#endif /* _ACTOR_ACTOR_HPP */
+#endif /* CORE_ACTOR_ACTOR_HPP */

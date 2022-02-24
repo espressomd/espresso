@@ -22,10 +22,15 @@
 #ifndef SCRIPT_INTERFACE_VIRTUAL_SITES_VIRTUAL_SITES_INERTIALESS_TRACERS_HPP
 #define SCRIPT_INTERFACE_VIRTUAL_SITES_VIRTUAL_SITES_INERTIALESS_TRACERS_HPP
 
-#include "VirtualSites.hpp"
 #include "config.hpp"
-#include "core/virtual_sites/VirtualSitesInertialessTracers.hpp"
+
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
+
+#include "VirtualSites.hpp"
+
+#include "core/virtual_sites/VirtualSitesInertialessTracers.hpp"
+
+#include <memory>
 
 namespace ScriptInterface {
 namespace VirtualSites {
@@ -33,11 +38,11 @@ namespace VirtualSites {
 class VirtualSitesInertialessTracers : public VirtualSites {
 public:
   VirtualSitesInertialessTracers()
-      : m_virtual_sites(new ::VirtualSitesInertialessTracers()){};
+      : m_virtual_sites(new ::VirtualSitesInertialessTracers()) {}
   /** Vs implementation we are wrapping */
   std::shared_ptr<::VirtualSites> virtual_sites() override {
     return m_virtual_sites;
-  };
+  }
 
 private:
   std::shared_ptr<::VirtualSitesInertialessTracers> m_virtual_sites;
@@ -45,5 +50,5 @@ private:
 
 } /* namespace VirtualSites */
 } /* namespace ScriptInterface */
-#endif
+#endif // VIRTUAL_SITES_INERTIALESS_TRACERS
 #endif

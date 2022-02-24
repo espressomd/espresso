@@ -87,12 +87,12 @@ RuntimeErrorStream _runtimeMessageStream(RuntimeError::ErrorLevel level,
 #define runtimeErrorMsg()                                                      \
   ErrorHandling::_runtimeMessageStream(                                        \
       ErrorHandling::RuntimeError::ErrorLevel::ERROR, __FILE__, __LINE__,      \
-      __PRETTYFUNC__)
+      PRETTY_FUNCTION_EXTENSION)
 
 #define runtimeWarningMsg()                                                    \
   ErrorHandling::_runtimeMessageStream(                                        \
       ErrorHandling::RuntimeError::ErrorLevel::WARNING, __FILE__, __LINE__,    \
-      __PRETTYFUNC__)
+      PRETTY_FUNCTION_EXTENSION)
 
 std::vector<RuntimeError> mpi_gather_runtime_errors();
 

@@ -16,6 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef CORE_ACCUMULATORS_CORRELATOR_HPP
+#define CORE_ACCUMULATORS_CORRELATOR_HPP
 /** @file
  *
  * This module computes correlations (and other two time averages) on
@@ -97,8 +99,6 @@
  *  the topology concept
  * - Write a destructor
  */
-#ifndef _STATISTICS_CORRELATION_H
-#define _STATISTICS_CORRELATION_H
 
 #include "AccumulatorBase.hpp"
 #include "integrate.hpp"
@@ -195,7 +195,7 @@ public:
     return shape;
   }
   std::vector<int> get_samples_sizes() const {
-    return std::vector<int>(n_sweeps.begin(), n_sweeps.end());
+    return {n_sweeps.begin(), n_sweeps.end()};
   }
   std::vector<double> get_lag_times() const;
 
@@ -250,9 +250,9 @@ private:
   /// number of correlation sweeps at a particular value of tau
   std::vector<std::size_t> n_sweeps;
   /// number of data values already present at a particular value of tau
-  std::vector<unsigned> n_vals;
+  std::vector<long> n_vals;
   /// index of the newest entry in each hierarchy level
-  std::vector<std::size_t> newest;
+  std::vector<long> newest;
 
   std::vector<double> A_accumulated_average; ///< all A values are added up here
   std::vector<double> B_accumulated_average; ///< all B values are added up here

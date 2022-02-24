@@ -14,22 +14,18 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from ..script_interface import PScriptInterface
+from ..script_interface import ScriptInterfaceHelper, script_interface_register
 
 
-class Mpiio:
+@script_interface_register
+class Mpiio(ScriptInterfaceHelper):
 
     """MPI-IO object.
 
     Used to output particle data using MPI-IO to binary files.
-
-    .. note::
-        See the :meth:`write` and :meth:`read` methods for documentation.
     """
-
-    def __init__(self):
-        self._instance = PScriptInterface(
-            "ScriptInterface::MPIIO::MPIIOScript")
+    _so_name = "ScriptInterface::MPIIO::MPIIOScript"
+    _so_creation_policy = "GLOBAL"
 
     def write(self, prefix=None, positions=False, velocities=False,
               types=False, bonds=False):
@@ -75,7 +71,7 @@ class Mpiio:
         if not positions and not velocities and not types and not bonds:
             raise ValueError("No output fields chosen.")
 
-        self._instance.call_method(
+        self.call_method(
             "write", prefix=prefix, pos=positions, vel=velocities, typ=types, bond=bonds)
 
     def read(self, prefix=None, positions=False, velocities=False,
@@ -96,8 +92,5 @@ class Mpiio:
         if not positions and not velocities and not types and not bonds:
             raise ValueError("No output fields chosen.")
 
-        self._instance.call_method(
+        self.call_method(
             "read", prefix=prefix, pos=positions, vel=velocities, typ=types, bond=bonds)
-
-
-mpiio = Mpiio()

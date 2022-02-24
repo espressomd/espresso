@@ -18,6 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef CORE_ELECTROSTATICS_MAGNETOSTATICS_DLC_DIPOLAR_HPP
+#define CORE_ELECTROSTATICS_MAGNETOSTATICS_DLC_DIPOLAR_HPP
 /** \file
  *  main header-file for MDLC (magnetic dipolar layer correction).
  *
@@ -38,13 +40,11 @@
  *  Limitations:  at this moment it is restricted to work with 1 cpu
  */
 
-#ifndef _DLC_DIPOLAR_H
-#define _DLC_DIPOLAR_H
-
 #include "config.hpp"
-#include <ParticleRange.hpp>
 
 #ifdef DIPOLES
+
+#include <ParticleRange.hpp>
 
 /** parameters for the MDLC method */
 struct DLC_struct {

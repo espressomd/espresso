@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _LJCOS2_H
-#define _LJCOS2_H
+#ifndef CORE_NB_IA_LJCOS2_HPP
+#define CORE_NB_IA_LJCOS2_HPP
 
 /** \file
  *  Routines to calculate the Lennard-Jones with cosine tail potential

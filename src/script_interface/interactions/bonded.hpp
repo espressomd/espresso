@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _SCRIPT_INTERFACE_INTERACTIONS_BONDED_HPP
-#define _SCRIPT_INTERFACE_INTERACTIONS_BONDED_HPP
+#ifndef SCRIPT_INTERFACE_INTERACTIONS_BONDED_HPP
+#define SCRIPT_INTERFACE_INTERACTIONS_BONDED_HPP
 
 /** @file
  *  Functions to interface with the core boost::variant.

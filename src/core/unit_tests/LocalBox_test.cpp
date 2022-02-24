@@ -21,6 +21,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
+#include "CellStructureType.hpp"
 #include "LocalBox.hpp"
 
 #include <utils/Array.hpp>
@@ -52,14 +53,16 @@ BOOST_AUTO_TEST_CASE(constructors) {
   {
     Utils::Vector<double, 3> const lower_corner = {1., 2., 3.};
     Utils::Vector<double, 3> const local_box_length = {4., 5., 6.};
-    Utils::Array<int, 6> const boundaries = {-1, 0, 1, 1, 0, -1};
+    Utils::Array<int, 6> const boundaries = {{{-1, 0, 1, 1, 0, -1}}};
+    CellStructureType const type = CellStructureType::CELL_STRUCTURE_REGULAR;
 
     auto const box =
-        LocalBox<double>(lower_corner, local_box_length, boundaries);
+        LocalBox<double>(lower_corner, local_box_length, boundaries, type);
 
     BOOST_CHECK(box.my_left() == lower_corner);
     BOOST_CHECK(box.length() == local_box_length);
     BOOST_CHECK(boost::equal(boundaries, box.boundary()));
+    BOOST_CHECK(box.cell_structure_type() == type);
     check_length(box);
   }
 }

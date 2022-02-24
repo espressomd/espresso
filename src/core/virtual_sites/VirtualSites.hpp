@@ -32,6 +32,8 @@
  *  - update virtual sites
  */
 
+#include <config.hpp>
+
 #ifdef VIRTUAL_SITES
 #include <utils/Vector.hpp>
 #include <utils/matrix.hpp>
@@ -49,15 +51,15 @@ public:
   /** Back-transfer forces (and torques) to non-virtual particles. */
   virtual void back_transfer_forces_and_torques() const {}
   /** @brief Called after force calculation (and before rattle/shake) */
-  virtual void after_force_calc(){};
-  virtual void after_lb_propagation(double){};
+  virtual void after_force_calc() {}
+  virtual void after_lb_propagation(double) {}
   /** @brief Pressure contribution. */
-  virtual Utils::Matrix<double, 3, 3> pressure_tensor() const { return {}; };
+  virtual Utils::Matrix<double, 3, 3> pressure_tensor() const { return {}; }
   /** @brief Enable/disable quaternion calculations for vs.*/
   void set_have_quaternion(const bool &have_quaternion) {
     m_have_quaternion = have_quaternion;
-  };
-  bool get_have_quaternion() const { return m_have_quaternion; };
+  }
+  bool have_quaternions() const { return m_have_quaternion; }
 
 private:
   bool m_have_quaternion = false;

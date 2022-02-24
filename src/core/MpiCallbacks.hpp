@@ -186,7 +186,7 @@ struct callback_ignore_t final : public callback_concept_t {
 
   template <class FRef>
   explicit callback_ignore_t(FRef &&f) : m_f(std::forward<FRef>(f)) {}
-  void operator()(boost::mpi::communicator const &comm,
+  void operator()(boost::mpi::communicator const &,
                   boost::mpi::packed_iarchive &ia) const override {
     detail::invoke<F, Args...>(m_f, ia);
   }
@@ -239,7 +239,7 @@ struct callback_main_rank_t final : public callback_concept_t {
 
   template <class FRef>
   explicit callback_main_rank_t(FRef &&f) : m_f(std::forward<FRef>(f)) {}
-  void operator()(boost::mpi::communicator const &comm,
+  void operator()(boost::mpi::communicator const &,
                   boost::mpi::packed_iarchive &ia) const override {
     (void)detail::invoke<F, Args...>(m_f, ia);
   }
@@ -411,9 +411,9 @@ private:
   static auto &static_callbacks() {
     static std::vector<
         std::pair<void (*)(), std::unique_ptr<detail::callback_concept_t>>>
-        m_callbacks;
+        callbacks;
 
-    return m_callbacks;
+    return callbacks;
   }
 
 public:

@@ -18,6 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef SRC_CORE_GRID_BASED_ALGORITHMS_LB_HPP
+#define SRC_CORE_GRID_BASED_ALGORITHMS_LB_HPP
 /** \file
  *
  *  %Lattice Boltzmann algorithm for hydrodynamic degrees of freedom.
@@ -33,9 +35,6 @@
  *
  *  Implementation in lb.cpp.
  */
-
-#ifndef LB_H
-#define LB_H
 
 #include "config.hpp"
 #include "grid_based_algorithms/lattice.hpp"
@@ -53,6 +52,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <ostream>
 #include <vector>
 
 /** Counter for the RNG */
@@ -171,11 +171,6 @@ template <std::size_t I> auto get(const LB_Fluid_Ref &lb_fluid) {
 /** Hydrodynamic fields of the fluid */
 extern std::vector<LB_FluidNode> lbfields;
 
-/************************************************************/
-/** \name Exported Functions */
-/************************************************************/
-/**@{*/
-
 /** Integrate the lattice-Boltzmann system for one time step.
  *  This function performs the collision step and the streaming step.
  *  If external force densities are present, they are applied prior to the
@@ -195,9 +190,6 @@ void lb_sanity_checks(const LB_Parameters &lb_parameters);
 void lb_set_population_from_density_momentum_density_stress(
     Lattice::index_t index, double density,
     Utils::Vector3d const &momentum_density, Utils::Vector6d const &stress);
-
-#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-#endif
 
 double lb_calc_density(std::array<double, 19> const &modes,
                        const LB_Parameters &lb_parameters);
@@ -267,6 +259,9 @@ void lb_initialize_fields(std::vector<LB_FluidNode> &fields,
                           Lattice const &lb_lattice);
 void lb_on_param_change(LBParam param);
 
-/**@}*/
+#ifdef ADDITIONAL_CHECKS
+void log_buffer_diff(std::ostream &out, int dir, Lattice::index_t index, int x,
+                     int y, int z);
+#endif // ADDITIONAL_CHECKS
 
-#endif /* _LB_H */
+#endif // SRC_CORE_GRID_BASED_ALGORITHMS_LB_HPP

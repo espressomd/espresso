@@ -1,4 +1,3 @@
-
 /*
  * Copyright (C) 2010-2019 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
@@ -189,8 +188,8 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
 #endif
       },
       maximal_cutoff(), maximal_cutoff_bonded(),
-      VerletCriterion{skin, interaction_range(), coulomb_cutoff, dipole_cutoff,
-                      collision_detection_cutoff()});
+      VerletCriterion<>{skin, interaction_range(), coulomb_cutoff,
+                        dipole_cutoff, collision_detection_cutoff()});
 
   Constraints::constraints.add_forces(particles, get_sim_time());
 

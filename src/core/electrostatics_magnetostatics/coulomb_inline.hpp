@@ -143,7 +143,7 @@ inline Utils::Matrix<double, 3, 3> pair_pressure(Particle const &p1,
 // energy_inline
 inline double pair_energy(Particle const &p1, Particle const &p2,
                           double const q1q2, Utils::Vector3d const &d,
-                          double dist, double dist2) {
+                          double dist) {
   /* real space Coulomb */
   auto E = [&]() {
     switch (coulomb.method) {
@@ -168,7 +168,7 @@ inline double pair_energy(Particle const &p1, Particle const &p2,
     case COULOMB_RF:
       return rf_coulomb_pair_energy(q1q2, dist);
     case COULOMB_MMM1D:
-      return mmm1d_coulomb_pair_energy(q1q2, d, dist2, dist);
+      return mmm1d_coulomb_pair_energy(q1q2, d, dist);
     default:
       return 0.;
     }

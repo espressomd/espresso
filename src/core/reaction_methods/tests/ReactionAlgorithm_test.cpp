@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
   constexpr double tol = 100 * std::numeric_limits<double>::epsilon();
 
   // check acceptance rate
-  ReactionAlgorithmTest r_algo(42);
+  ReactionAlgorithmTest r_algo(42, 1., 0.);
   for (int tried_moves = 1; tried_moves < 5; ++tried_moves) {
     for (int accepted_moves = 0; accepted_moves < 5; ++accepted_moves) {
       r_algo.m_tried_configurational_MC_moves = tried_moves;
@@ -87,11 +87,11 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
 
   // check reaction addition
   {
-    r_algo.add_reaction(reaction.gamma, reaction.reactant_types,
-                        reaction.reactant_coefficients, reaction.product_types,
-                        reaction.product_coefficients);
+    r_algo.add_reaction(std::make_shared<SingleReaction>(
+        reaction.gamma, reaction.reactant_types, reaction.reactant_coefficients,
+        reaction.product_types, reaction.product_coefficients));
     BOOST_REQUIRE_EQUAL(r_algo.reactions.size(), 1ul);
-    auto const &value = r_algo.reactions[0];
+    auto const &value = *r_algo.reactions[0];
     BOOST_TEST(value.reactant_types == reaction.reactant_types,
                boost::test_tools::per_element());
     BOOST_TEST(value.reactant_coefficients == reaction.reactant_coefficients,
@@ -110,12 +110,6 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
     BOOST_CHECK_EQUAL(probability, -10.);
   }
 
-  // exception if kT is negative
-  BOOST_CHECK_THROW(r_algo.check_reaction_method(), std::runtime_error);
-
-  // set kT
-  r_algo.kT = 1.;
-
 #ifdef ELECTROSTATICS
   // exception if reactant types have no charge information
   BOOST_CHECK_THROW(r_algo.check_reaction_method(), std::runtime_error);
@@ -131,16 +125,16 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
 
   // check reaction removal
   {
-    SingleReaction const new_reaction(5., {type_B}, {1}, {type_C}, {1});
-    r_algo.add_reaction(new_reaction.gamma, new_reaction.reactant_types,
-                        new_reaction.reactant_coefficients,
-                        new_reaction.product_types,
-                        new_reaction.product_coefficients);
+    auto const new_gamma = 5.;
+    auto const new_reaction = std::make_shared<SingleReaction>(
+        new_gamma, std::vector<int>{type_B}, std::vector<int>{1},
+        std::vector<int>{type_C}, std::vector<int>{1});
+    r_algo.add_reaction(new_reaction);
     BOOST_REQUIRE_EQUAL(r_algo.reactions.size(), 2ul);
-    BOOST_CHECK_EQUAL(r_algo.reactions[1].gamma, new_reaction.gamma);
+    BOOST_CHECK_EQUAL(r_algo.reactions[1]->gamma, new_gamma);
     r_algo.delete_reaction(1);
     BOOST_REQUIRE_EQUAL(r_algo.reactions.size(), 1ul);
-    BOOST_CHECK_EQUAL(r_algo.reactions[0].gamma, reaction.gamma);
+    BOOST_CHECK_EQUAL(r_algo.reactions[0]->gamma, reaction.gamma);
     r_algo.delete_reaction(0);
     BOOST_REQUIRE_EQUAL(r_algo.reactions.size(), 0ul);
   }

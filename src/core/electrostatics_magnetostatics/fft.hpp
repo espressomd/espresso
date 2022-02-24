@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _FFT_H
-#define _FFT_H
+#ifndef CORE_ELECTROSTATICS_MAGNETOSTATICS_FFT_HPP
+#define CORE_ELECTROSTATICS_MAGNETOSTATICS_FFT_HPP
 /** \file
  *
  *  Routines, row decomposition, data structures and communication for the

@@ -26,7 +26,7 @@ class LangevinThermostat(ut.TestCase):
 
     """Test Langevin Dynamics"""
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    system.cell_system.set_domain_decomposition(use_verlet_lists=True)
+    system.cell_system.set_regular_decomposition(use_verlet_lists=True)
     system.cell_system.skin = 0
     system.periodicity = [0, 0, 0]
 

@@ -171,9 +171,8 @@ draw_polymer_positions(PartCfg &partCfg, int const n_polymers,
   /* Try up to max_tries times to draw a valid position */
   auto draw_valid_monomer_position =
       [&](int p, int m) -> boost::optional<Utils::Vector3d> {
-    for (unsigned _ = 0; _ < max_tries; _++) {
+    for (unsigned i = 0; i < max_tries; i++) {
       auto const trial_pos = draw_monomer_position(p, m);
-
       if (is_valid_pos(trial_pos)) {
         return trial_pos;
       }
@@ -187,7 +186,8 @@ draw_polymer_positions(PartCfg &partCfg, int const n_polymers,
     for (int attempts_poly = 0; attempts_poly < max_tries; attempts_poly++) {
       int rejections = 0;
       while (positions[p].size() < beads_per_chain) {
-        auto pos = draw_valid_monomer_position(p, positions[p].size());
+        auto pos = draw_valid_monomer_position(
+            p, static_cast<int>(positions[p].size()));
 
         if (pos) {
           /* Move on one position */

@@ -60,7 +60,7 @@ boost::mpi::communicator cart_create(
                          (comm, dim, dims.data(), periodicity.data(),
                           static_cast<int>(reorder), &temp_comm))
 
-  return boost::mpi::communicator(temp_comm, boost::mpi::comm_take_ownership);
+  return {temp_comm, boost::mpi::comm_take_ownership};
 }
 
 /**
@@ -113,13 +113,12 @@ inline std::pair<int, int> cart_shift(boost::mpi::communicator const &comm,
 template <std::size_t dim>
 Utils::Vector<int, 2 * dim>
 cart_neighbors(const boost::mpi::communicator &comm) {
-  using std::get;
 
   Vector<int, 2 * dim> ret;
 
   for (std::size_t i = 0; i < dim; i++) {
-    ret[2 * i + 0] = get<1>(cart_shift(comm, i, -1));
-    ret[2 * i + 1] = get<1>(cart_shift(comm, i, +1));
+    ret[2 * i + 0] = std::get<1>(cart_shift(comm, static_cast<int>(i), -1));
+    ret[2 * i + 1] = std::get<1>(cart_shift(comm, static_cast<int>(i), +1));
   }
 
   return ret;

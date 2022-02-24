@@ -242,6 +242,14 @@ class ElectrostaticInteractionsTests(ut.TestCase):
                 self.system.actors.add(rf)
             self.system.actors.clear()
 
+        valid_actor = espressomd.electrostatics.ReactionField(
+            **params, prefactor=1.0)
+        with self.assertRaisesRegex(Exception, "chosen method does not support tuning"):
+            valid_actor.tune()
+        with self.assertRaisesRegex(ValueError, r"Only the following keys can be given as keyword arguments: "
+                                                r"\[.+\], got \[.+\] \(unknown \['coulomb_prefactor'\]\)"):
+            valid_actor.tune(coulomb_prefactor=1.0)
+
 
 if __name__ == "__main__":
     ut.main()

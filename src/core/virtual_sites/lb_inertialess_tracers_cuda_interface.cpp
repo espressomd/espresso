@@ -46,17 +46,17 @@ static void pack_particles(ParticleRange const &particles,
 
   int i = 0;
   for (auto const &part : particles) {
-    auto const pos = folded_position(part.r.p, box_geo);
+    auto const pos = folded_position(part.pos(), box_geo);
 
     buffer[i].pos[0] = static_cast<float>(pos[0]);
     buffer[i].pos[1] = static_cast<float>(pos[1]);
     buffer[i].pos[2] = static_cast<float>(pos[2]);
 
-    buffer[i].f[0] = static_cast<float>(part.f.f[0]);
-    buffer[i].f[1] = static_cast<float>(part.f.f[1]);
-    buffer[i].f[2] = static_cast<float>(part.f.f[2]);
+    buffer[i].f[0] = static_cast<float>(part.force()[0]);
+    buffer[i].f[1] = static_cast<float>(part.force()[1]);
+    buffer[i].f[2] = static_cast<float>(part.force()[2]);
 
-    buffer[i].is_virtual = part.p.is_virtual;
+    buffer[i].is_virtual = part.is_virtual();
 
     i++;
   }
@@ -89,9 +89,9 @@ static void set_velocities(ParticleRange const &particles,
                            std::vector<IBM_CUDA_ParticleDataOutput> &buffer) {
   int i = 0;
   for (auto &part : particles) {
-    if (part.p.is_virtual) {
+    if (part.is_virtual()) {
       for (int j = 0; j < 3; j++)
-        part.m.v[j] = static_cast<double>(buffer[i].v[j]);
+        part.v()[j] = static_cast<double>(buffer[i].v[j]);
     }
     i++;
   }
@@ -101,7 +101,7 @@ static void set_velocities(ParticleRange const &particles,
  *  nodes. Analogous to @ref cuda_mpi_send_forces.
  */
 void IBM_cuda_mpi_send_velocities(ParticleRange const &particles) {
-  auto const n_part = particles.size();
+  auto const n_part = static_cast<int>(particles.size());
 
   if (this_node > 0) {
     static std::vector<IBM_CUDA_ParticleDataOutput> buffer;

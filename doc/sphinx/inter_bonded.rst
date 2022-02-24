@@ -231,13 +231,13 @@ A virtual bond can be instantiated via
 :class:`espressomd.interactions.Virtual`::
 
     import espressomd.interactions
-    tab = espressomd.interactions.Virtual()
+    vb = espressomd.interactions.Virtual()
 
 
 This creates a virtual bond type identifier for a pair bond
 without associated potential or force. It can be used to specify topologies
 and for some analysis that rely on bonds, or for bonds that should be
-displayed in the visualization.
+displayed in the visualizer.
 
 
 

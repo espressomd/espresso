@@ -24,24 +24,18 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "utils/mpi/scatter_buffer.hpp"
+#include <utils/mpi/scatter_buffer.hpp>
 
 #include <boost/mpi.hpp>
 
 #include <algorithm>
 #include <vector>
 
-using Utils::Mpi::scatter_buffer;
-namespace mpi = boost::mpi;
-
-void check_pointer(mpi::communicator comm, int root) {
+void check_pointer(boost::mpi::communicator comm, int root) {
   std::vector<int> buf;
-
   if (comm.rank() == root) {
     auto const n = comm.size();
-    const int total_size = n * (n + 1) / 2;
-
-    std::vector<int> buf;
+    auto const total_size = n * (n + 1) / 2;
 
     for (int i = 1; i <= comm.size(); i++) {
       for (int j = 0; j < i; j++) {
@@ -64,12 +58,12 @@ void check_pointer(mpi::communicator comm, int root) {
 }
 
 BOOST_AUTO_TEST_CASE(pointer) {
-  mpi::communicator world;
+  boost::mpi::communicator world;
   check_pointer(world, 0);
 }
 
 BOOST_AUTO_TEST_CASE(pointer_root) {
-  mpi::communicator world;
+  boost::mpi::communicator world;
 
   auto root = (world.size() >= 3) ? world.size() - 2 : world.size() - 1;
   check_pointer(world, root);

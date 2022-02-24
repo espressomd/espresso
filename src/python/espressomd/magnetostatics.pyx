@@ -131,12 +131,12 @@ IF DP3M == 1:
                 raise ValueError("DipolarP3M timings must be > 0")
 
         def valid_keys(self):
-            return ["prefactor", "alpha_L", "r_cut_iL", "mesh", "mesh_off",
+            return {"prefactor", "alpha_L", "r_cut_iL", "mesh", "mesh_off",
                     "cao", "accuracy", "epsilon", "cao_cut", "a", "ai",
-                    "alpha", "r_cut", "cao3", "tune", "timings", "verbose"]
+                    "alpha", "r_cut", "cao3", "tune", "timings", "verbose"}
 
         def required_keys(self):
-            return ["accuracy", ]
+            return {"accuracy"}
 
         def default_params(self):
             return {"cao": -1,
@@ -218,10 +218,10 @@ IF DIPOLES == 1:
             return {}
 
         def required_keys(self):
-            return ()
+            return set()
 
         def valid_keys(self):
-            return ("prefactor",)
+            return {"prefactor"}
 
         def _get_params_from_es_core(self):
             return {"prefactor": self.get_magnetostatics_prefactor()}
@@ -256,10 +256,10 @@ IF DIPOLES == 1:
             return {}
 
         def required_keys(self):
-            return ("n_replica",)
+            return {"n_replica"}
 
         def valid_keys(self):
-            return ("prefactor", "n_replica")
+            return {"prefactor", "n_replica"}
 
         def _get_params_from_es_core(self):
             return {"prefactor": self.get_magnetostatics_prefactor(),
@@ -341,10 +341,10 @@ IF DIPOLES == 1:
                 return {}
 
             def required_keys(self):
-                return ()
+                return set()
 
             def valid_keys(self):
-                return ("prefactor",)
+                return {"prefactor"}
 
             def _get_params_from_es_core(self):
                 return {"prefactor": self.get_magnetostatics_prefactor()}
@@ -382,10 +382,10 @@ IF DIPOLES == 1:
                         "itolsq": 4.0}
 
             def required_keys(self):
-                return ()
+                return set()
 
             def valid_keys(self):
-                return ("prefactor", "epssq", "itolsq")
+                return {"prefactor", "epssq", "itolsq"}
 
             def _get_params_from_es_core(self):
                 return {"prefactor": self.get_magnetostatics_prefactor()}

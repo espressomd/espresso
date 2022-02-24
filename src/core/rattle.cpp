@@ -44,7 +44,7 @@
  */
 void save_old_position(const ParticleRange &particles,
                        const ParticleRange &ghost_particles) {
-  auto save_pos = [](Particle &p) { p.r.p_last_timestep = p.r.p; };
+  auto save_pos = [](Particle &p) { p.pos_last_time_step() = p.pos(); };
 
   boost::for_each(particles, save_pos);
   boost::for_each(ghost_particles, save_pos);
@@ -58,7 +58,7 @@ void save_old_position(const ParticleRange &particles,
  */
 static void init_correction_vector(const ParticleRange &particles,
                                    const ParticleRange &ghost_particles) {
-  auto reset_force = [](Particle &p) { p.rattle.correction.fill(0); };
+  auto reset_force = [](Particle &p) { p.rattle_params().correction.fill(0); };
 
   boost::for_each(particles, reset_force);
   boost::for_each(ghost_particles, reset_force);
@@ -74,19 +74,19 @@ static void init_correction_vector(const ParticleRange &particles,
  */
 static bool calculate_positional_correction(RigidBond const &ia_params,
                                             Particle &p1, Particle &p2) {
-  auto const r_ij = box_geo.get_mi_vector(p1.r.p, p2.r.p);
+  auto const r_ij = box_geo.get_mi_vector(p1.pos(), p2.pos());
   auto const r_ij2 = r_ij.norm2();
 
   if (std::abs(1.0 - r_ij2 / ia_params.d2) > ia_params.p_tol) {
     auto const r_ij_t =
-        box_geo.get_mi_vector(p1.r.p_last_timestep, p2.r.p_last_timestep);
+        box_geo.get_mi_vector(p1.pos_last_time_step(), p2.pos_last_time_step());
     auto const r_ij_dot = r_ij_t * r_ij;
     auto const G =
-        0.50 * (ia_params.d2 - r_ij2) / r_ij_dot / (p1.p.mass + p2.p.mass);
+        0.50 * (ia_params.d2 - r_ij2) / r_ij_dot / (p1.mass() + p2.mass());
 
     auto const pos_corr = G * r_ij_t;
-    p1.rattle.correction += pos_corr * p2.p.mass;
-    p2.rattle.correction -= pos_corr * p1.p.mass;
+    p1.rattle_params().correction += pos_corr * p2.mass();
+    p2.rattle_params().correction -= pos_corr * p1.mass();
 
     return true;
   }
@@ -128,8 +128,8 @@ static bool compute_correction_vector(CellStructure &cs, Kernel kernel) {
  */
 static void apply_positional_correction(const ParticleRange &particles) {
   boost::for_each(particles, [](Particle &p) {
-    p.r.p += p.rattle.correction;
-    p.m.v += p.rattle.correction;
+    p.pos() += p.rattle_params().correction;
+    p.v() += p.rattle_params().correction;
   });
 }
 
@@ -177,17 +177,17 @@ void correct_position_shake(CellStructure &cs) {
  */
 static bool calculate_velocity_correction(RigidBond const &ia_params,
                                           Particle &p1, Particle &p2) {
-  auto const v_ij = p1.m.v - p2.m.v;
-  auto const r_ij = box_geo.get_mi_vector(p1.r.p, p2.r.p);
+  auto const v_ij = p1.v() - p2.v();
+  auto const r_ij = box_geo.get_mi_vector(p1.pos(), p2.pos());
 
   auto const v_proj = v_ij * r_ij;
   if (std::abs(v_proj) > ia_params.v_tol) {
-    auto const K = v_proj / ia_params.d2 / (p1.p.mass + p2.p.mass);
+    auto const K = v_proj / ia_params.d2 / (p1.mass() + p2.mass());
 
     auto const vel_corr = K * r_ij;
 
-    p1.rattle.correction -= vel_corr * p2.p.mass;
-    p2.rattle.correction += vel_corr * p1.p.mass;
+    p1.rattle_params().correction -= vel_corr * p2.mass();
+    p2.rattle_params().correction += vel_corr * p1.mass();
 
     return true;
   }
@@ -201,7 +201,8 @@ static bool calculate_velocity_correction(RigidBond const &ia_params,
  * @param particles particle range
  */
 static void apply_velocity_correction(const ParticleRange &particles) {
-  boost::for_each(particles, [](Particle &p) { p.m.v += p.rattle.correction; });
+  boost::for_each(particles,
+                  [](Particle &p) { p.v() += p.rattle_params().correction; });
 }
 
 void correct_velocity_shake(CellStructure &cs) {

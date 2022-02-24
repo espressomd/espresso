@@ -132,7 +132,7 @@ static void prepare_send_buffer(CommBuf &send_buffer,
   /* put in data */
   for (auto part_list : ghost_comm.part_lists) {
     if (data_parts & GHOSTTRANS_PARTNUM) {
-      int np = part_list->size();
+      int np = static_cast<int>(part_list->size());
       archiver << np;
     } else {
       for (Particle &part : *part_list) {
@@ -153,7 +153,7 @@ static void prepare_send_buffer(CommBuf &send_buffer,
         }
 #ifdef BOND_CONSTRAINT
         if (data_parts & GHOSTTRANS_RATTLE) {
-          archiver << part.rattle;
+          archiver << part.rattle_params();
         }
 #endif
         if (data_parts & GHOSTTRANS_BONDS) {
@@ -172,7 +172,7 @@ static void prepare_ghost_cell(ParticleList *cell, int size) {
 
   /* Mark particles as ghosts */
   for (auto &p : *cell) {
-    p.l.ghost = true;
+    p.set_ghost(true);
   }
 }
 
@@ -214,7 +214,7 @@ static void put_recv_buffer(CommBuf &recv_buffer,
         }
 #ifdef BOND_CONSTRAINT
         if (data_parts & GHOSTTRANS_RATTLE) {
-          archiver >> part.rattle;
+          archiver >> part.rattle_params();
         }
 #endif
       }
@@ -248,7 +248,7 @@ add_rattle_correction_from_recv_buffer(CommBuf &recv_buffer,
     for (Particle &part : *part_list) {
       ParticleRattle pr;
       archiver >> pr;
-      part.rattle += pr;
+      part.rattle_params() += pr;
     }
   }
 }
@@ -276,7 +276,7 @@ static void cell_cell_transfer(const GhostCommunication &ghost_comm,
     auto *dst_list = ghost_comm.part_lists[pl + offset];
 
     if (data_parts & GHOSTTRANS_PARTNUM) {
-      prepare_ghost_cell(dst_list, src_list->size());
+      prepare_ghost_cell(dst_list, static_cast<int>(src_list->size()));
     } else {
       auto const &src_part = *src_list;
       auto &dst_part = *dst_list;
@@ -295,7 +295,7 @@ static void cell_cell_transfer(const GhostCommunication &ghost_comm,
         if (data_parts & GHOSTTRANS_POSITION) {
           /* ok, this is not nice, but perhaps fast */
           part2.r = part1.r;
-          part2.r.p += ghost_comm.shift;
+          part2.pos() += ghost_comm.shift;
         }
         if (data_parts & GHOSTTRANS_MOMENTUM) {
           part2.m = part1.m;
@@ -304,7 +304,7 @@ static void cell_cell_transfer(const GhostCommunication &ghost_comm,
           part2.f += part1.f;
 #ifdef BOND_CONSTRAINT
         if (data_parts & GHOSTTRANS_RATTLE)
-          part2.rattle += part1.rattle;
+          part2.rattle_params() += part1.rattle_params();
 #endif
       }
     }
@@ -390,21 +390,23 @@ void ghost_communicator(const GhostCommunicator &gcr, unsigned int data_parts) {
     // (which consists of already serialized data).
     switch (comm_type) {
     case GHOST_RECV:
-      comm.recv(node, REQ_GHOST_SEND, recv_buffer.data(), recv_buffer.size());
+      comm.recv(node, REQ_GHOST_SEND, recv_buffer.data(),
+                static_cast<int>(recv_buffer.size()));
       comm.recv(node, REQ_GHOST_SEND, recv_buffer.bonds());
       break;
     case GHOST_SEND:
-      comm.send(node, REQ_GHOST_SEND, send_buffer.data(), send_buffer.size());
+      comm.send(node, REQ_GHOST_SEND, send_buffer.data(),
+                static_cast<int>(send_buffer.size()));
       comm.send(node, REQ_GHOST_SEND, send_buffer.bonds());
       break;
     case GHOST_BCST:
       if (node == comm.rank()) {
-        boost::mpi::broadcast(comm, send_buffer.data(), send_buffer.size(),
-                              node);
+        boost::mpi::broadcast(comm, send_buffer.data(),
+                              static_cast<int>(send_buffer.size()), node);
         boost::mpi::broadcast(comm, send_buffer.bonds(), node);
       } else {
-        boost::mpi::broadcast(comm, recv_buffer.data(), recv_buffer.size(),
-                              node);
+        boost::mpi::broadcast(comm, recv_buffer.data(),
+                              static_cast<int>(recv_buffer.size()), node);
         boost::mpi::broadcast(comm, recv_buffer.bonds(), node);
       }
       break;

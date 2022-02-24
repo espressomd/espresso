@@ -54,14 +54,15 @@ class LennardJonesTest(ut.TestCase):
         self.assertLess(max_deviation, 1e-5)
 
     def test_dd(self):
-        self.system.cell_system.set_domain_decomposition(
+        self.system.cell_system.set_regular_decomposition(
             use_verlet_lists=False)
         self.system.integrator.run(recalc_forces=True, steps=0)
 
         self.check()
 
     def test_dd_vl(self):
-        self.system.cell_system.set_domain_decomposition(use_verlet_lists=True)
+        self.system.cell_system.set_regular_decomposition(
+            use_verlet_lists=True)
         # Build VL and calc ia
         self.system.integrator.run(recalc_forces=True, steps=0)
 

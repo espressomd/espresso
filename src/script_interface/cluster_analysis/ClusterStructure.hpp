@@ -45,10 +45,10 @@ public:
                 get_value<std::shared_ptr<PairCriteria::PairCriterion>>(value);
             if (m_pc) {
               m_cluster_structure.set_pair_criterion(m_pc->pair_criterion());
-            };
+            }
           },
           [this]() { return m_pc; }}});
-  };
+  }
   Variant do_call_method(std::string const &method,
                          VariantMap const &parameters) override {
     if (method == "get_cluster") {

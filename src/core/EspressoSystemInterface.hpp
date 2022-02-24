@@ -47,74 +47,72 @@ public:
       m_instance = new EspressoSystemInterface;
 
     return *m_instance;
-  };
+  }
 
   void init() override;
   void update() override;
 
 #ifdef CUDA
-  float *rGpuBegin() override { return m_r_gpu_begin; };
-  bool hasRGpu() override { return true; };
+  float *rGpuBegin() override { return m_r_gpu_begin; }
+  bool hasRGpu() override { return true; }
   void requestRGpu() override {
     m_needsRGpu = hasRGpu();
     m_splitParticleStructGpu |= m_needsRGpu;
     m_gpu |= m_needsRGpu;
     enableParticleCommunication();
-  };
+  }
 
 #ifdef DIPOLES
-  float *dipGpuBegin() override { return m_dip_gpu_begin; };
-  bool hasDipGpu() override { return true; };
+  float *dipGpuBegin() override { return m_dip_gpu_begin; }
+  bool hasDipGpu() override { return true; }
   void requestDipGpu() override {
     m_needsDipGpu = hasDipGpu();
     m_splitParticleStructGpu |= m_needsRGpu;
     m_gpu |= m_needsRGpu;
     enableParticleCommunication();
-  };
+  }
 #endif
 
 #ifdef ELECTROSTATICS
-  float *qGpuBegin() override { return m_q_gpu_begin; };
-  bool hasQGpu() override { return true; };
+  float *qGpuBegin() override { return m_q_gpu_begin; }
+  bool hasQGpu() override { return true; }
   void requestQGpu() override {
     m_needsQGpu = hasQGpu();
     m_splitParticleStructGpu |= m_needsQGpu;
     m_gpu |= m_needsQGpu;
     enableParticleCommunication();
-  };
+  }
 #endif
 
   void requestParticleStructGpu() {
     m_needsParticleStructGpu = true;
     m_gpu |= m_needsParticleStructGpu;
     enableParticleCommunication();
-  };
+  }
 
-  float *fGpuBegin() override { return gpu_get_particle_force_pointer(); };
-  bool hasFGpu() override { return true; };
+  float *fGpuBegin() override { return gpu_get_particle_force_pointer(); }
+  bool hasFGpu() override { return true; }
   void requestFGpu() override {
     m_needsFGpu = hasFGpu();
     m_gpu |= m_needsFGpu;
     enableParticleCommunication();
-  };
+  }
 
 #ifdef ROTATION
-  float *torqueGpuBegin() override {
-    return gpu_get_particle_torque_pointer();
-  };
-  bool hasTorqueGpu() override { return true; };
+  float *torqueGpuBegin() override { return gpu_get_particle_torque_pointer(); }
+  bool hasTorqueGpu() override { return true; }
   void requestTorqueGpu() override {
     m_needsTorqueGpu = hasTorqueGpu();
     m_gpu |= m_needsTorqueGpu;
     enableParticleCommunication();
-  };
+  }
 #endif
 
   float *eGpu() override {
     // cast pointer from struct of floats to array of floats
     // https://stackoverflow.com/a/29278260
     return reinterpret_cast<float *>(gpu_get_energy_pointer());
-  };
+  }
 
 #endif // ifdef CUDA
 
@@ -126,7 +124,7 @@ public:
 #else
     return 0;
 #endif
-  };
+  }
 
 protected:
   static EspressoSystemInterface *m_instance;

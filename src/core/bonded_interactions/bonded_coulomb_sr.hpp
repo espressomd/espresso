@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _BONDED_COULOMB_SR_HPP
-#define _BONDED_COULOMB_SR_HPP
+#ifndef CORE_BN_IA_BONDED_COULOMB_SR_HPP
+#define CORE_BN_IA_BONDED_COULOMB_SR_HPP
 /** \file
  *  Routines to calculate the short-range part of the bonded Coulomb potential
  *  between particle pairs. Can be used to subtract certain intramolecular
@@ -82,11 +82,10 @@ inline boost::optional<double>
 BondedCoulombSR::energy(Particle const &p1, Particle const &p2,
                         Utils::Vector3d const &dx) const {
 #ifdef ELECTROSTATICS
-  auto const dist2 = dx.norm2();
-  auto const dist = sqrt(dist2);
-  return Coulomb::pair_energy(p1, p2, q1q2, dx, dist, dist2);
+  auto const dist = dx.norm();
+  return Coulomb::pair_energy(p1, p2, q1q2, dx, dist);
 #else
-  return .0;
+  return 0.;
 #endif
 }
 

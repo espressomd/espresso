@@ -51,6 +51,8 @@ unit_test(NAME Lattice_test SRC Lattice_test.cpp DEPENDS EspressoCore)
 unit_test(NAME lb_exceptions SRC lb_exceptions.cpp DEPENDS EspressoCore)
 unit_test(NAME Verlet_list_test SRC Verlet_list_test.cpp DEPENDS EspressoCore
           NUM_PROC 4)
+unit_test(NAME VerletCriterion_test SRC VerletCriterion_test.cpp DEPENDS
+          EspressoCore)
 unit_test(NAME thermostats_test SRC thermostats_test.cpp DEPENDS EspressoCore)
 unit_test(NAME random_test SRC random_test.cpp DEPENDS EspressoUtils Random123)
 unit_test(NAME BondList_test SRC BondList_test.cpp DEPENDS EspressoCore)
