@@ -199,6 +199,28 @@ struct RemoveBond {
   void serialize(Archive &ar, long int) { ar & bond; }
 };
 
+/**
+ * @brief Delete pair bonds to a specific partner
+ */
+struct RemovePairBondsTo {
+   int other_pid;
+
+    void operator()(Particle &p) const {
+      using Bond = std::vector<int>;
+      std::vector<Bond> to_delete;
+      for (auto b: p.bonds()) {
+         if (b.partner_ids().size() == 1 and b.partner_ids()[0] == other_pid)
+           to_delete.push_back(Bond{b.bond_id(),other_pid});
+      }
+      for (auto b: to_delete) {
+        RemoveBond{b}(p);
+      }
+    }
+    template<class Archive>
+            void serialize(Archive &ar, long int) {
+        ar & other_pid;
+    }
+};
 
 /**
  * @brief Delete all bonds.
@@ -324,6 +346,14 @@ struct UpdateVisitor : public boost::static_visitor<void> {
   }
 };
 } // namespace
+
+void local_remove_bond(Particle &p, std::vector<int> const &bond) {
+  RemoveBond{bond}(p);
+}
+
+void local_remove_pair_bonds_to(Particle &p, int other_pid) {
+  RemovePairBondsTo{other_pid}(p);
+}
 
 void mpi_send_update_message_local(int node, int id) {
   if (node == comm_cart.rank()) {

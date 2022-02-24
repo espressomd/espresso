@@ -299,10 +299,21 @@ void delete_particle_bond(int part, Utils::Span<const int> bond);
  */
 void delete_particle_bonds(int part);
 
+/** @brief Removs the specified bond from the particle
+ *  @param bond     The bond in the form
+ *                  <tt>{bond_id, partner_1, partner_2, ...}</tt>
+ */
+void local_remove_bond(Particle &p, std::vector<int> const &bond);
+
+/** @brief Removes all pair bonds on the particle which have the specified
+ *  particle id as partner
+ */
+void local_remove_pair_bonds_to(Particle &p, int other_pid);
+
 /** Call only on the head node: Add bond to particle.
  *  @param part     identity of principal atom of the bond.
- *  @param bond     field containing the bond type number and the
- *  identity of all bond partners (secondary atoms of the bond).
+ *  @param bond     field containing the bond type number and the identity
+ *                  of all bond partners (secondary atoms of the bond).
  */
 void add_particle_bond(int part, Utils::Span<const int> bond);
 

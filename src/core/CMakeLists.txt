@@ -1,5 +1,6 @@
 set(EspressoCore_SRC
     accumulators.cpp
+    bond_breakage.cpp
     bond_error.cpp
     cells.cpp
     collision.cpp

@@ -35,6 +35,7 @@
 
 #include "ParticleRange.hpp"
 #include "accumulators.hpp"
+#include "bond_breakage.hpp"
 #include "bonded_interactions/rigid_bond.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
@@ -325,6 +326,7 @@ int integrate(int n_steps, int reuse_forces) {
 #ifdef COLLISION_DETECTION
       handle_collisions();
 #endif
+      BondBreakage::process_queue();
     }
 
     integrated_steps++;
