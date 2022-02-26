@@ -1,4 +1,4 @@
-image: docker.pkg.github.com/espressomd/docker/ubuntu-20.04:254edd4a9c6e4d7b557be73158e400f5794e4f99
+image: ghcr.io/espressomd/docker/ubuntu-20.04:254edd4a9c6e4d7b557be73158e400f5794e4f99
 
 stages:
   - prepare
@@ -171,7 +171,7 @@ no_rotation:
 ubuntu:wo-dependencies:
   <<: *global_job_definition
   stage: build
-  image: docker.pkg.github.com/espressomd/docker/ubuntu-wo-dependencies:9ef2166b82d4c0eb258d17f5ec29f7bc39991f5d
+  image: ghcr.io/espressomd/docker/ubuntu-wo-dependencies:9ef2166b82d4c0eb258d17f5ec29f7bc39991f5d
   variables:
      myconfig: 'maxset'
      with_cuda: 'false'
@@ -190,7 +190,7 @@ ubuntu:wo-dependencies:
 debian:10:
   <<: *global_job_definition
   stage: build
-  image: docker.pkg.github.com/espressomd/docker/debian:9ef2166b82d4c0eb258d17f5ec29f7bc39991f5d
+  image: ghcr.io/espressomd/docker/debian:9ef2166b82d4c0eb258d17f5ec29f7bc39991f5d
   variables:
      with_cuda: 'false'
      myconfig: 'maxset'
@@ -206,7 +206,7 @@ debian:10:
 fedora:34:
   <<: *global_job_definition
   stage: build
-  image: docker.pkg.github.com/espressomd/docker/fedora:9ef2166b82d4c0eb258d17f5ec29f7bc39991f5d
+  image: ghcr.io/espressomd/docker/fedora:9ef2166b82d4c0eb258d17f5ec29f7bc39991f5d
   variables:
      with_cuda: 'false'
      myconfig: 'maxset'
@@ -249,7 +249,7 @@ clang-sanitizer:
 fast_math:
   <<: *global_job_definition
   stage: build
-  image: docker.pkg.github.com/espressomd/docker/cuda:9ef2166b82d4c0eb258d17f5ec29f7bc39991f5d
+  image: ghcr.io/espressomd/docker/cuda:9ef2166b82d4c0eb258d17f5ec29f7bc39991f5d
   variables:
      CC: 'gcc-9'
      CXX: 'g++-9'
@@ -270,7 +270,7 @@ fast_math:
 cuda11-maxset:
   <<: *global_job_definition
   stage: build
-  image: docker.pkg.github.com/espressomd/docker/cuda:9ef2166b82d4c0eb258d17f5ec29f7bc39991f5d
+  image: ghcr.io/espressomd/docker/cuda:9ef2166b82d4c0eb258d17f5ec29f7bc39991f5d
   variables:
      CC: 'gcc-9'
      CXX: 'g++-9'
@@ -546,7 +546,7 @@ run_doxygen:
     - linux
     - numa
 
-check_cuda_maxset_no_gpu:
+maxset_no_gpu:
   <<: *global_job_definition
   stage: additional_checks
   when: on_success
@@ -561,7 +561,7 @@ check_cuda_maxset_no_gpu:
     - linux
     - numa-deactivated
 
-check_with_odd_no_of_processors:
+maxset_3_cores:
   <<: *global_job_definition
   stage: additional_checks
   when: on_success

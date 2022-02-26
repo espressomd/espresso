@@ -344,7 +344,7 @@ class ParticleProperties(ut.TestCase):
     def test_coord_fold_corner_cases(self):
         system = self.system
         system.time_step = .5
-        system.cell_system.set_domain_decomposition(use_verlet_lists=False)
+        system.cell_system.set_regular_decomposition(use_verlet_lists=False)
         system.cell_system.skin = 0
         system.min_global_cut = 3
         system.part.clear()

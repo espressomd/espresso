@@ -55,7 +55,7 @@ int ReactionAlgorithm::do_reaction(int reaction_steps) {
   auto current_E_pot = calculate_current_potential_energy_of_system();
   for (int i = 0; i < reaction_steps; i++) {
     int reaction_id = i_random(static_cast<int>(reactions.size()));
-    generic_oneway_reaction(reactions[reaction_id], current_E_pot);
+    generic_oneway_reaction(*reactions[reaction_id], current_E_pot);
   }
   return 0;
 }
@@ -64,17 +64,12 @@ int ReactionAlgorithm::do_reaction(int reaction_steps) {
  * Adds a reaction to the reaction system
  */
 void ReactionAlgorithm::add_reaction(
-    double gamma, const std::vector<int> &reactant_types,
-    const std::vector<int> &reactant_coefficients,
-    const std::vector<int> &product_types,
-    const std::vector<int> &product_coefficients) {
-  SingleReaction new_reaction(gamma, reactant_types, reactant_coefficients,
-                              product_types, product_coefficients);
+    std::shared_ptr<SingleReaction> const &new_reaction) {
 
   // make ESPResSo count the particle numbers which take part in the reactions
-  for (int reactant_type : new_reaction.reactant_types)
+  for (int reactant_type : new_reaction->reactant_types)
     init_type_map(reactant_type);
-  for (int product_type : new_reaction.product_types)
+  for (int product_type : new_reaction->product_types)
     init_type_map(product_type);
 
   init_type_map(non_interacting_type);
@@ -91,20 +86,13 @@ void ReactionAlgorithm::check_reaction_method() const {
     throw std::runtime_error("Reaction system not initialized");
   }
 
-  if (kT < 0) {
-    throw std::runtime_error("kT cannot be negative,"
-                             "normally it should be 1.0. This will be used"
-                             "directly to calculate beta:=1/(k_B T) which"
-                             "occurs in the exp(-beta*E)\n");
-  }
-
 #ifdef ELECTROSTATICS
   // check for the existence of default charges for all types that take part in
   // the reactions
 
   for (const auto &current_reaction : reactions) {
     // check for reactants
-    for (int reactant_type : current_reaction.reactant_types) {
+    for (int reactant_type : current_reaction->reactant_types) {
       auto it = charges_of_types.find(reactant_type);
       if (it == charges_of_types.end()) {
         std::string message = std::string("Forgot to assign charge to type ") +
@@ -113,7 +101,7 @@ void ReactionAlgorithm::check_reaction_method() const {
       }
     }
     // check for products
-    for (int product_type : current_reaction.product_types) {
+    for (int product_type : current_reaction->product_types) {
       auto it = charges_of_types.find(product_type);
       if (it == charges_of_types.end()) {
         std::string message = std::string("Forgot to assign charge to type ") +
@@ -127,12 +115,9 @@ void ReactionAlgorithm::check_reaction_method() const {
 
 /**
  * Automatically sets the volume which is used by the reaction ensemble to the
- * volume of a cuboid box, if not already initialized with another value.
+ * volume of a cuboid box.
  */
-void ReactionAlgorithm::set_cuboid_reaction_ensemble_volume() {
-  if (volume < 0)
-    volume = box_geo.volume();
-}
+void ReactionAlgorithm::update_volume() { volume = box_geo.volume(); }
 
 /**
  * Checks whether all particles exist for the provided reaction.
@@ -408,7 +393,7 @@ void ReactionAlgorithm::check_exclusion_radius(int p_id) {
  * delete unbonded particles since bonds are coupled to ids. This is used to
  * avoid the id range becoming excessively huge.
  */
-int ReactionAlgorithm::delete_particle(int p_id) {
+void ReactionAlgorithm::delete_particle(int p_id) {
   auto const old_max_seen_id = get_maximal_particle_id();
   if (p_id == old_max_seen_id) {
     // last particle, just delete
@@ -430,7 +415,6 @@ int ReactionAlgorithm::delete_particle(int p_id) {
     throw std::runtime_error(
         "Particle id is greater than the max seen particle id");
   }
-  return 0;
 }
 
 void ReactionAlgorithm::set_cyl_constraint(double center_x, double center_y,

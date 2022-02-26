@@ -79,11 +79,11 @@ IBMTriel::calc_forces(Particle const &p1, Particle const &p2,
   // Calculate the current shape of the triangle (l,lp,cos(phi),sin(phi));
   // l = length between 1 and 3
   // get_mi_vector is an ESPResSo function which considers PBC
-  auto const vec2 = box_geo.get_mi_vector(p3.r.p, p1.r.p);
+  auto const vec2 = box_geo.get_mi_vector(p3.pos(), p1.pos());
   auto const l = vec2.norm();
 
   // lp = length between 1 and 2
-  auto const vec1 = box_geo.get_mi_vector(p2.r.p, p1.r.p);
+  auto const vec1 = box_geo.get_mi_vector(p2.pos(), p1.pos());
   auto const lp = vec1.norm();
 
   // Check for sanity

@@ -81,7 +81,7 @@ public:
     reset_forces();
 
     for (auto &p : particles) {
-      auto const pos = folded_position(p.r.p, box_geo);
+      auto const pos = folded_position(p.pos(), box_geo);
       ParticleForce force{};
       for (auto const &c : *this) {
         force += c->force(p, pos, t);
@@ -94,7 +94,7 @@ public:
   void add_energy(const ParticleRange &particles, double time,
                   Observable_stat &obs_energy) const {
     for (auto &p : particles) {
-      auto const pos = folded_position(p.r.p, box_geo);
+      auto const pos = folded_position(p.pos(), box_geo);
 
       for (auto const &constraint : *this) {
         constraint->add_energy(p, pos, time, obs_energy);

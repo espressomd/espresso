@@ -29,9 +29,20 @@
 
 #include <boost/serialization/vector.hpp>
 
+#include <bitset>
 #include <cstdint>
 #include <stdexcept>
 #include <vector>
+
+namespace detail {
+inline void check_axis_idx_valid(int const axis) {
+  assert(axis >= 0 and axis <= 2);
+}
+
+inline bool get_nth_bit(uint8_t const bitfield, int const bit_idx) {
+  return bitfield & (1u << bit_idx);
+}
+} // namespace detail
 
 enum : uint8_t {
   ROTATION_FIXED = 0u,
@@ -57,9 +68,9 @@ enum : uint8_t {
 struct ParticleParametersSwimming {
   /** Is the particle a swimmer. */
   bool swimming = false;
-  /** Constant velocity to relax to. */
-  double f_swim = 0.;
   /** Imposed constant force. */
+  double f_swim = 0.;
+  /** Constant velocity to relax to. */
   double v_swim = 0.;
   /** Flag for the swimming mode in a LB fluid.
    *  Values:
@@ -421,11 +432,6 @@ struct Particle { // NOLINT(bugprone-exception-escape)
 private:
   BondList bl;
 
-public:
-  auto &bonds() { return bl; }
-  auto const &bonds() const { return bl; }
-
-private:
 #ifdef EXCLUSIONS
   /** list of particles, with which this particle has no non-bonded
    *  interactions
@@ -434,21 +440,151 @@ private:
 #endif
 
 public:
-  std::vector<int> &exclusions() {
-#ifdef EXCLUSIONS
-    return el;
-#else
-    throw std::runtime_error{"Exclusions not enabled."};
-#endif
-  }
+  auto const &id() const { return p.identity; }
+  auto &id() { return p.identity; }
+  auto const &mol_id() const { return p.mol_id; }
+  auto &mol_id() { return p.mol_id; }
+  auto const &type() const { return p.type; }
+  auto &type() { return p.type; }
 
-  std::vector<int> const &exclusions() const {
-#ifdef EXCLUSIONS
-    return el;
+  auto const &bonds() const { return bl; }
+  auto &bonds() { return bl; }
+
+  auto const &pos() const { return r.p; }
+  auto &pos() { return r.p; }
+  auto const &v() const { return m.v; }
+  auto &v() { return m.v; }
+  auto const &force() const { return f.f; }
+  auto &force() { return f.f; }
+
+  bool is_ghost() const { return l.ghost; }
+  void set_ghost(bool const ghost_flag) { l.ghost = ghost_flag; }
+  auto &pos_at_last_verlet_update() { return l.p_old; }
+  auto const &pos_at_last_verlet_update() const { return l.p_old; }
+  auto const &image_box() const { return l.i; }
+  auto &image_box() { return l.i; }
+
+#ifdef MASS
+  auto const &mass() const { return p.mass; }
+  auto &mass() { return p.mass; }
 #else
-    throw std::runtime_error{"Exclusions not enabled."};
+  constexpr auto &mass() const { return p.mass; }
 #endif
+#ifdef ROTATION
+  bool can_rotate() const {
+    return can_rotate_around(0) or can_rotate_around(1) or can_rotate_around(2);
   }
+  bool can_rotate_around(int const axis) const {
+    detail::check_axis_idx_valid(axis);
+    return detail::get_nth_bit(p.rotation, axis);
+  }
+  void set_can_rotate_around(int const axis, bool const rot_flag) {
+    detail::check_axis_idx_valid(axis);
+    if (rot_flag) {
+      p.rotation |= static_cast<uint8_t>(1u << axis);
+    } else {
+      p.rotation &= static_cast<uint8_t>(~(1u << axis));
+    }
+  }
+  void set_can_rotate_all_axes() {
+    for (int axis = 0; axis <= 2; axis++) {
+      set_can_rotate_around(axis, true);
+    }
+  }
+  auto const &quat() const { return r.quat; }
+  auto &quat() { return r.quat; }
+  auto const &torque() const { return f.torque; }
+  auto &torque() { return f.torque; }
+  auto const &omega() const { return m.omega; }
+  auto &omega() { return m.omega; }
+  auto const &ext_torque() const { return p.ext_torque; }
+  auto &ext_torque() { return p.ext_torque; }
+  auto calc_director() const { return r.calc_director(); }
+#else
+  bool can_rotate() const { return false; }
+  bool can_rotate_around(int const axis) const { return false; }
+#endif
+#ifdef DIPOLES
+  auto const &dipm() const { return p.dipm; }
+  auto &dipm() { return p.dipm; }
+#endif
+#ifdef ROTATIONAL_INERTIA
+  auto const &rinertia() const { return p.rinertia; }
+  auto &rinertia() { return p.rinertia; }
+#else
+  constexpr auto &rinertia() const { return p.rinertia; }
+#endif
+#ifdef ELECTROSTATICS
+  auto const &q() const { return p.q; }
+  auto &q() { return p.q; }
+#else
+  constexpr auto &q() const { return p.q; }
+#endif
+#ifdef LB_ELECTROHYDRODYNAMICS
+  auto const &mu_E() const { return p.mu_E; }
+  auto &mu_E() { return p.mu_E; }
+#endif
+#ifdef VIRTUAL_SITES
+  bool is_virtual() const { return p.is_virtual; }
+  void set_virtual(bool const virt_flag) { p.is_virtual = virt_flag; }
+#ifdef VIRTUAL_SITES_RELATIVE
+  auto const &vs_relative() const { return p.vs_relative; }
+  auto &vs_relative() { return p.vs_relative; }
+#endif // VIRTUAL_SITES_RELATIVE
+#else
+  constexpr auto is_virtual() const { return p.is_virtual; }
+#endif
+#ifdef THERMOSTAT_PER_PARTICLE
+  auto const &gamma() const { return p.gamma; }
+  auto &gamma() { return p.gamma; }
+#ifdef ROTATION
+  auto const &gamma_rot() const { return p.gamma_rot; }
+  auto &gamma_rot() { return p.gamma_rot; }
+#endif // ROTATION
+#endif // THERMOSTAT_PER_PARTICLE
+#ifdef EXTERNAL_FORCES
+  bool has_fixed_coordinates() const {
+    return detail::get_nth_bit(p.ext_flag, 0);
+  }
+  bool is_fixed_along(int const axis) const {
+    detail::check_axis_idx_valid(axis);
+    return detail::get_nth_bit(p.ext_flag, axis + 1);
+  }
+  void set_fixed_along(int const axis, bool const fixed_flag) {
+    // set new flag
+    if (fixed_flag) {
+      p.ext_flag |= static_cast<uint8_t>(1u << (axis + 1));
+    } else {
+      p.ext_flag &= static_cast<uint8_t>(~(1u << (axis + 1)));
+    }
+    // check if any flag is set and store that in the 0th bit
+    if (p.ext_flag >> 1) {
+      p.ext_flag |= static_cast<uint8_t>(1u);
+    } else {
+      p.ext_flag &= static_cast<uint8_t>(~1u);
+    }
+  }
+  auto const &ext_force() const { return p.ext_force; }
+  auto &ext_force() { return p.ext_force; }
+
+#else  // EXTERNAL_FORCES
+  constexpr bool has_fixed_coordinates() const { return false; }
+  constexpr bool is_fixed_along(int const axis) const { return false; }
+#endif // EXTERNAL_FORCES
+#ifdef ENGINE
+  auto const &swimming() const { return p.swim; }
+  auto &swimming() { return p.swim; }
+#endif
+#ifdef BOND_CONSTRAINT
+  auto const &pos_last_time_step() const { return r.p_last_timestep; }
+  auto &pos_last_time_step() { return r.p_last_timestep; }
+  auto const &rattle_params() const { return rattle; }
+  auto &rattle_params() { return rattle; }
+#endif
+#ifdef EXCLUSIONS
+  auto const &exclusions() const { return el; }
+  auto &exclusions() { return el; }
+#endif
 
 private:
   friend boost::serialization::access;

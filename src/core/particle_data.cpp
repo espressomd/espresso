@@ -199,6 +199,28 @@ struct RemoveBond {
   void serialize(Archive &ar, long int) { ar & bond; }
 };
 
+/**
+ * @brief Delete pair bonds to a specific partner
+ */
+struct RemovePairBondsTo {
+   int other_pid;
+
+    void operator()(Particle &p) const {
+      using Bond = std::vector<int>;
+      std::vector<Bond> to_delete;
+      for (auto b: p.bonds()) {
+         if (b.partner_ids().size() == 1 and b.partner_ids()[0] == other_pid)
+           to_delete.push_back(Bond{b.bond_id(),other_pid});
+      }
+      for (auto b: to_delete) {
+        RemoveBond{b}(p);
+      }
+    }
+    template<class Archive>
+            void serialize(Archive &ar, long int) {
+        ar & other_pid;
+    }
+};
 
 /**
  * @brief Delete all bonds.
@@ -325,6 +347,14 @@ struct UpdateVisitor : public boost::static_visitor<void> {
 };
 } // namespace
 
+void local_remove_bond(Particle &p, std::vector<int> const &bond) {
+  RemoveBond{bond}(p);
+}
+
+void local_remove_pair_bonds_to(Particle &p, int other_pid) {
+  RemovePairBondsTo{other_pid}(p);
+}
+
 void mpi_send_update_message_local(int node, int id) {
   if (node == comm_cart.rank()) {
     UpdateMessage msg{};
@@ -408,8 +438,7 @@ static void mpi_who_has_local() {
   sendbuf.resize(n_part);
 
   std::transform(local_particles.begin(), local_particles.end(),
-                 sendbuf.begin(),
-                 [](Particle const &p) { return p.p.identity; });
+                 sendbuf.begin(), [](Particle const &p) { return p.id(); });
 
   MPI_Send(sendbuf.data(), n_part, MPI_INT, 0, some_tag, comm_cart);
 }
@@ -431,7 +460,7 @@ void mpi_who_has() {
   for (int pnode = 0; pnode < n_nodes; pnode++) {
     if (pnode == this_node) {
       for (auto const &p : local_particles)
-        particle_node[p.p.identity] = this_node;
+        particle_node[p.id()] = this_node;
 
     } else if (n_parts[pnode] > 0) {
       pdata.resize(n_parts[pnode]);
@@ -482,7 +511,7 @@ std::size_t fetch_cache_max_size() { return particle_fetch_cache.max_size(); }
 boost::optional<const Particle &> get_particle_data_local(int id) {
   auto p = cell_structure.get_local_particle(id);
 
-  if (p and (not p->l.ghost)) {
+  if (p and (not p->is_ghost())) {
     return *p;
   }
 
@@ -599,7 +628,7 @@ void prefetch_particle_data(Utils::Span<const int> in_ids) {
 
   /* Fetch the particles... */
   for (auto &p : mpi_get_particles(ids)) {
-    auto id = p.identity();
+    auto id = p.id();
     particle_fetch_cache.put(id, std::move(p));
   }
 }
@@ -620,16 +649,16 @@ Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new) {
 
   if (_new) {
     Particle new_part;
-    new_part.p.identity = id;
-    new_part.r.p = pp;
-    new_part.l.i = i;
+    new_part.id() = id;
+    new_part.pos() = pp;
+    new_part.image_box() = i;
 
     return cell_structure.add_local_particle(std::move(new_part));
   }
 
   auto pt = cell_structure.get_local_particle(id);
-  pt->r.p = pp;
-  pt->l.i = i;
+  pt->pos() = pp;
+  pt->image_box() = i;
 
   return pt;
 }
@@ -770,7 +799,7 @@ void set_particle_virtual(int part, bool is_virtual) {
 #ifdef VIRTUAL_SITES_RELATIVE
 void set_particle_vs_quat(int part,
                           Utils::Quaternion<double> const &vs_relative_quat) {
-  auto vs_relative = get_particle_data(part).p.vs_relative;
+  auto vs_relative = get_particle_data(part).vs_relative();
   vs_relative.quat = vs_relative_quat;
 
   mpi_update_particle_property<
@@ -815,7 +844,7 @@ void set_particle_type(int p_id, int type) {
     // check if the particle exists already and the type is changed, then remove
     // it from the list which contains it
     auto const &cur_par = get_particle_data(p_id);
-    int prev_type = cur_par.p.type;
+    int prev_type = cur_par.type();
     if (prev_type != type) {
       // particle existed before so delete it from the list
       remove_id_from_map(p_id, prev_type);
@@ -961,7 +990,7 @@ int remove_particle(int p_id) {
   auto const &cur_par = get_particle_data(p_id);
   if (type_list_enable) {
     // remove particle from its current type_list
-    int type = cur_par.p.type;
+    int type = cur_par.type();
     remove_id_from_map(p_id, type);
   }
 
@@ -979,9 +1008,9 @@ int remove_particle(int p_id) {
 void local_rescale_particles(int dir, double scale) {
   for (auto &p : cell_structure.local_particles()) {
     if (dir < 3)
-      p.r.p[dir] *= scale;
+      p.pos()[dir] *= scale;
     else {
-      p.r.p *= scale;
+      p.pos() *= scale;
     }
   }
 }
@@ -1080,7 +1109,7 @@ void auto_exclusions(int distance) {
 
   /* determine initial connectivity */
   for (auto const &part1 : partCfg()) {
-    auto const p1 = part1.p.identity;
+    auto const p1 = part1.id();
     for (auto const bond : part1.bonds()) {
       if ((bond.partner_ids().size() == 1) and (bond.partner_ids()[0] != p1)) {
         auto const p2 = bond.partner_ids()[0];
@@ -1095,7 +1124,7 @@ void auto_exclusions(int distance) {
   */
   for (int count = 1; count < distance; count++) {
     for (auto const &p : partCfg()) {
-      auto const p1 = p.identity();
+      auto const p1 = p.id();
       for (int i = 0; i < partners[p1].size(); i += 2) {
         auto const p2 = partners[p1][i];
         auto const dist1 = partners[p1][i + 1];
@@ -1139,7 +1168,7 @@ void init_type_map(int type) {
   map_for_type.clear();
   for (auto const &p : partCfg()) {
     if (p.p.type == type)
-      map_for_type.insert(p.p.identity);
+      map_for_type.insert(p.id());
   }
 }
 

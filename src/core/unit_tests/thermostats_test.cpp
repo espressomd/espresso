@@ -46,10 +46,10 @@ constexpr auto tol = 6 * 100 * std::numeric_limits<double>::epsilon();
 
 Particle particle_factory() {
   Particle p{};
-  p.p.identity = 0;
-  p.f.f = {1.0, 2.0, 3.0};
+  p.id() = 0;
+  p.force() = {1.0, 2.0, 3.0};
 #ifdef ROTATION
-  p.f.torque = 4.0 * p.f.f;
+  p.torque() = 4.0 * p.force();
 #endif
   return p;
 }
@@ -72,7 +72,7 @@ BOOST_AUTO_TEST_CASE(test_brownian_dynamics) {
   constexpr double kT = 3.0;
   auto const brownian = thermostat_factory<BrownianThermostat>(kT);
   auto const dispersion =
-      hadamard_division(particle_factory().f.f, brownian.gamma);
+      hadamard_division(particle_factory().force(), brownian.gamma);
 
   /* check translation */
   {
@@ -120,7 +120,7 @@ BOOST_AUTO_TEST_CASE(test_brownian_dynamics) {
 
 #ifdef ROTATION
   auto const dispersion_rotation =
-      hadamard_division(particle_factory().f.torque, brownian.gamma_rotation);
+      hadamard_division(particle_factory().torque(), brownian.gamma_rotation);
 
   /* check rotation */
   {
@@ -185,10 +185,10 @@ BOOST_AUTO_TEST_CASE(test_langevin_dynamics) {
   /* check translation */
   {
     auto p = particle_factory();
-    p.m.v = {1.0, 2.0, 3.0};
+    p.v() = {1.0, 2.0, 3.0};
     auto const noise = Random::noise_uniform<RNGSalt::LANGEVIN>(0, 0, 0);
     auto const pref = sqrt(prefactor_squared * langevin.gamma);
-    auto const ref = hadamard_product(-langevin.gamma, p.m.v) +
+    auto const ref = hadamard_product(-langevin.gamma, p.v()) +
                      hadamard_product(pref, noise);
     auto const out = friction_thermo_langevin(langevin, p, time_step, kT);
     BOOST_CHECK_CLOSE(out[0], ref[0], tol);
@@ -200,10 +200,10 @@ BOOST_AUTO_TEST_CASE(test_langevin_dynamics) {
   /* check rotation */
   {
     auto p = particle_factory();
-    p.m.omega = {1.0, 2.0, 3.0};
+    p.omega() = {1.0, 2.0, 3.0};
     auto const noise = Random::noise_uniform<RNGSalt::LANGEVIN_ROT>(0, 0, 0);
     auto const pref = sqrt(prefactor_squared * langevin.gamma_rotation);
-    auto const ref = hadamard_product(-langevin.gamma_rotation, p.m.omega) +
+    auto const ref = hadamard_product(-langevin.gamma_rotation, p.omega()) +
                      hadamard_product(pref, noise);
     auto const out =
         friction_thermo_langevin_rotation(langevin, p, time_step, kT);
@@ -221,8 +221,8 @@ BOOST_AUTO_TEST_CASE(test_noise_statistics) {
   auto thermostat = thermostat_factory<LangevinThermostat>(kT, time_step);
   auto p1 = particle_factory();
   auto p2 = particle_factory();
-  p1.p.identity = 0;
-  p2.p.identity = 1;
+  p1.id() = 0;
+  p2.id() = 1;
 
   auto const correlation = std::get<3>(noise_statistics(
       [&p1, &p2, &thermostat]() -> std::array<VariantVectorXd, 3> {
@@ -254,7 +254,7 @@ BOOST_AUTO_TEST_CASE(test_brownian_randomness) {
   auto thermostat = thermostat_factory<BrownianThermostat>(kT);
   auto p = particle_factory();
 #ifdef ROTATION
-  p.p.rotation = ROTATION_X | ROTATION_Y | ROTATION_Z;
+  p.set_can_rotate_all_axes();
   constexpr std::size_t N = 4;
 #else
   constexpr std::size_t N = 2;
@@ -328,8 +328,8 @@ BOOST_AUTO_TEST_CASE(test_npt_iso_randomness) {
       [&p, &thermostat]() -> std::array<VariantVectorXd, 3> {
         thermostat.rng_increment();
         return {{
-            friction_therm0_nptiso<1>(thermostat, p.m.v, 0),
-            friction_therm0_nptiso<2>(thermostat, p.m.v, 0),
+            friction_therm0_nptiso<1>(thermostat, p.v(), 0),
+            friction_therm0_nptiso<2>(thermostat, p.v(), 0),
             friction_thermV_nptiso(thermostat, 1.5),
         }};
       },

@@ -26,6 +26,7 @@
 
 #include "EspressoSystemInterface.hpp"
 
+#include "bond_breakage.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
 #include "comfixed_global.hpp"
@@ -147,7 +148,7 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
 #ifdef COLLISION_DETECTION
   prepare_local_collision_queue();
 #endif
-
+  BondBreakage::clear_queue();
   auto particles = cell_structure.local_particles();
   auto ghost_particles = cell_structure.ghost_particles();
 #ifdef ELECTROSTATICS
@@ -186,8 +187,8 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
 #endif
       },
       maximal_cutoff(), maximal_cutoff_bonded(),
-      VerletCriterion{skin, interaction_range(), coulomb_cutoff, dipole_cutoff,
-                      collision_detection_cutoff()});
+      VerletCriterion<>{skin, interaction_range(), coulomb_cutoff,
+                        dipole_cutoff, collision_detection_cutoff()});
 
   Constraints::constraints.add_forces(particles, get_sim_time());
 

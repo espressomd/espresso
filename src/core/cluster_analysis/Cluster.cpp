@@ -57,15 +57,15 @@ Cluster::center_of_mass_subcluster(std::vector<int> const &particle_ids) {
   // of the cluster is arbitrarily chosen as reference.
 
   auto const reference_position =
-      folded_position(get_particle_data(particles[0]).r.p, box_geo);
+      folded_position(get_particle_data(particles[0]).pos(), box_geo);
   double total_mass = 0.;
   for (int pid : particle_ids) {
     auto const folded_pos =
-        folded_position(get_particle_data(pid).r.p, box_geo);
+        folded_position(get_particle_data(pid).pos(), box_geo);
     auto const dist_to_reference =
         box_geo.get_mi_vector(folded_pos, reference_position);
-    com += dist_to_reference * get_particle_data(pid).p.mass;
-    total_mass += get_particle_data(pid).p.mass;
+    com += dist_to_reference * get_particle_data(pid).mass();
+    total_mass += get_particle_data(pid).mass();
   }
 
   // Normalize by number of particles
@@ -83,8 +83,8 @@ double Cluster::longest_distance() {
   for (auto a = particles.begin(); a != particles.end(); a++) {
     for (auto b = a; ++b != particles.end();) {
       auto const dist = box_geo
-                            .get_mi_vector(get_particle_data(*a).r.p,
-                                           get_particle_data(*b).r.p)
+                            .get_mi_vector(get_particle_data(*a).pos(),
+                                           get_particle_data(*b).pos())
                             .norm();
 
       // Larger than previous largest distance?
@@ -107,7 +107,7 @@ Cluster::radius_of_gyration_subcluster(std::vector<int> const &particle_ids) {
   for (auto const pid : particle_ids) {
     // calculate square length of this distance
     sum_sq_dist +=
-        box_geo.get_mi_vector(com, get_particle_data(pid).r.p).norm2();
+        box_geo.get_mi_vector(com, get_particle_data(pid).pos()).norm2();
   }
 
   return sqrt(sum_sq_dist / static_cast<double>(particle_ids.size()));
@@ -137,7 +137,7 @@ std::pair<double, double> Cluster::fractal_dimension(double dr) {
   std::vector<double> distances;
 
   for (auto const &it : particles) {
-    distances.push_back(box_geo.get_mi_vector(com, get_particle_data(it).r.p)
+    distances.push_back(box_geo.get_mi_vector(com, get_particle_data(it).pos())
                             .norm()); // add distance from the current particle
                                       // to the com in the distances vectors
   }

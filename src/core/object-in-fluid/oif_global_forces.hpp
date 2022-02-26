@@ -33,7 +33,7 @@
  *  - calculates the global area and global volume for a cell before the forces
  *    are handled
  *  - MPI synchronization with all reduce
- *  - !!! loop over particles from domain_decomposition !!!
+ *  - !!! loop over particles from regular_decomposition !!!
  */
 Utils::Vector2d calc_oif_global(int molType, CellStructure &cs);
 

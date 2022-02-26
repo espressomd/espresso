@@ -70,14 +70,13 @@ class WidomInsertionTest(ut.TestCase):
     system.cell_system.set_n_square()
     np.random.seed(69)  # make reaction code fully deterministic
     system.cell_system.skin = 0.4
-    volume = system.volume()
 
     Widom = espressomd.reaction_ensemble.WidomInsertion(
         kT=TEMPERATURE, seed=1)
 
     # Set the hidden particle type to the lowest possible number to speed
     # up the simulation
-    Widom.set_non_interacting_type(1)
+    Widom.set_non_interacting_type(type=1)
 
     def setUp(self):
         self.system.part.add(pos=0.5 * self.system.box_l, type=self.TYPE_HA)
@@ -101,7 +100,7 @@ class WidomInsertionTest(ut.TestCase):
         for _ in range(num_samples):
             # 0 for insertion reaction
             particle_insertion_potential_energy = self.Widom.calculate_particle_insertion_potential_energy(
-                0)
+                reaction_id=0)
             particle_insertion_potential_energy_samples.append(
                 particle_insertion_potential_energy)
 

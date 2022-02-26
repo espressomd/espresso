@@ -193,7 +193,7 @@ class SwimmerTestDomDecWalberla(SwimmerTest, ut.TestCase):
     tol = 1e-10
 
     def set_cellsystem(self):
-        self.system.cell_system.set_domain_decomposition()
+        self.system.cell_system.set_regular_decomposition()
 
 
 @utx.skipIfMissingFeatures(
@@ -205,7 +205,7 @@ class SwimmerTestDomDecWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
     tol = 1e-10
 
     def set_cellsystem(self):
-        self.system.cell_system.set_domain_decomposition()
+        self.system.cell_system.set_regular_decomposition()
 
 
 if __name__ == "__main__":

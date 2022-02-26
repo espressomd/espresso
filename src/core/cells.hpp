@@ -29,8 +29,8 @@
  *  (regardless if they reside on the same or different nodes)
  *  interact with each other. The following cell systems are implemented:
  *
- *  - domain decomposition: The simulation box is divided spatially
- *    into cells (see \ref DomainDecomposition.hpp). This is suitable for
+ *  - regular decomposition: The simulation box is divided spatially
+ *    into cells (see \ref RegularDecomposition.hpp). This is suitable for
  *    short range interactions.
  *  - nsquare: The particles are distributed equally on all nodes
  *    regardless their spatial position (see \ref AtomDecomposition.hpp).
@@ -40,8 +40,9 @@
 
 #include "Cell.hpp"
 #include "CellStructure.hpp"
-#include "DomainDecomposition.hpp"
+#include "CellStructureType.hpp"
 #include "Particle.hpp"
+#include "RegularDecomposition.hpp"
 
 #include <utility>
 #include <vector>
@@ -63,10 +64,10 @@ extern CellStructure cell_structure;
 /** Reinitialize the cell structures.
  *  @param new_cs The new topology to use afterwards.
  */
-void cells_re_init(int new_cs);
+void cells_re_init(CellStructureType new_cs);
 
 /** Change the cell structure on all nodes. */
-void mpi_bcast_cell_structure(int cs);
+void mpi_bcast_cell_structure(CellStructureType cs);
 
 /**
  * @brief Set @ref CellStructure::use_verlet_list
@@ -113,19 +114,19 @@ std::vector<int> mpi_resort_particles(int global_flag);
 /**
  * @brief Find the cell in which a particle is stored.
  *
- * Uses position_to_cell on p.r.p. If this is not on the node's domain,
- * uses position at last Verlet list rebuild (p.l.p_old).
+ * Uses position_to_cell on p.pos(). If this is not on the node's domain,
+ * uses position at last Verlet list rebuild (p.p_old()).
  *
  * @return pointer to the cell or nullptr if the particle is not on the node
  */
 Cell *find_current_cell(const Particle &p);
 
 /**
- * @brief Return a pointer to the global DomainDecomposition.
+ * @brief Return a pointer to the global RegularDecomposition.
  *
  * @return Pointer to the decomposition if it is set, nullptr otherwise.
  */
-const DomainDecomposition *get_domain_decomposition();
+const RegularDecomposition *get_regular_decomposition();
 
 class PairInfo {
 public:

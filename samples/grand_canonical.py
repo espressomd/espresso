@@ -99,9 +99,9 @@ system.setup_type_map([0, 1, 2])
 
 # Set the hidden particle type to the lowest possible number to speed
 # up the simulation
-RE.set_non_interacting_type(max(types) + 1)
+RE.set_non_interacting_type(type=max(types) + 1)
 
-RE.reaction(10000)
+RE.reaction(reaction_steps=10000)
 
 p3m = espressomd.electrostatics.P3M(prefactor=2.0, accuracy=1e-3)
 system.actors.add(p3m)
@@ -134,14 +134,14 @@ system.integrator.set_vv()
 system.thermostat.set_langevin(kT=temperature, gamma=.5, seed=42)
 
 # MC warmup
-RE.reaction(1000)
+RE.reaction(reaction_steps=1000)
 
 n_int_cycles = 10000
 n_int_steps = 600
 num_As = []
 deviation = None
 for i in range(n_int_cycles):
-    RE.reaction(10)
+    RE.reaction(reaction_steps=10)
     system.integrator.run(steps=n_int_steps)
     num_As.append(system.number_of_particles(type=1))
     if i > 2 and i % 50 == 0:

@@ -87,7 +87,7 @@ box_l = (n_part * 4. / 3. * np.pi * (lj_sig / 2.)**3
 # System
 #############################################################
 system.box_l = 3 * (box_l,)
-system.cell_system.set_domain_decomposition(use_verlet_lists=True)
+system.cell_system.set_regular_decomposition(use_verlet_lists=True)
 
 # Integration parameters
 #############################################################

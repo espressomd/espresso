@@ -40,8 +40,11 @@ namespace ReactionMethods {
  */
 class ConstantpHEnsemble : public ReactionAlgorithm {
 public:
-  ConstantpHEnsemble(int seed) : ReactionAlgorithm(seed) {}
-  double m_constant_pH = -10;
+  ConstantpHEnsemble(int seed, double kT, double exclusion_radius,
+                     double constant_pH)
+      : ReactionAlgorithm(seed, kT, exclusion_radius),
+        m_constant_pH(constant_pH) {}
+  double m_constant_pH;
 
 protected:
   double calculate_acceptance_probability(

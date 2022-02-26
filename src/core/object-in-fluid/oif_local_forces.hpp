@@ -118,10 +118,11 @@ OifLocalForcesBond::calc_forces(Particle const &p2, Particle const &p1,
                                 Particle const &p3, Particle const &p4) const {
 
   // first-fold-then-the-same approach
-  auto const fp2 = unfolded_position(p2.r.p, p2.l.i, box_geo.length());
-  auto const fp1 = fp2 + box_geo.get_mi_vector(p1.r.p, fp2);
-  auto const fp3 = fp2 + box_geo.get_mi_vector(p3.r.p, fp2);
-  auto const fp4 = fp2 + box_geo.get_mi_vector(p4.r.p, fp2);
+  auto const fp2 =
+      unfolded_position(p2.pos(), p2.image_box(), box_geo.length());
+  auto const fp1 = fp2 + box_geo.get_mi_vector(p1.pos(), fp2);
+  auto const fp3 = fp2 + box_geo.get_mi_vector(p3.pos(), fp2);
+  auto const fp4 = fp2 + box_geo.get_mi_vector(p4.pos(), fp2);
 
   Utils::Vector3d force1{}, force2{}, force3{}, force4{};
 
@@ -152,7 +153,7 @@ OifLocalForcesBond::calc_forces(Particle const &p2, Particle const &p1,
   if (kvisc > TINY_OIF_ELASTICITY_COEFFICIENT) { // to be implemented....
     auto const dx = fp2 - fp3;
     auto const len2 = dx.norm2();
-    auto const v_ij = p3.m.v - p2.m.v;
+    auto const v_ij = p3.v() - p2.v();
 
     // Variant A
     // Here the force is in the direction of relative velocity btw points

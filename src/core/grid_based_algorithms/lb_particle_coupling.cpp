@@ -136,12 +136,12 @@ Utils::Vector3d lb_particle_coupling_drift_vel_offset(const Particle &p) {
   Utils::Vector3d vel_offset{};
 #ifdef ENGINE
   if (p.p.swim.swimming) {
-    vel_offset += p.p.swim.v_swim * p.r.calc_director();
+    vel_offset += p.swimming().v_swim * p.calc_director();
   }
 #endif
 
 #ifdef LB_ELECTROHYDRODYNAMICS
-  vel_offset += p.p.mu_E;
+  vel_offset += p.mu_E();
 #endif
   return vel_offset;
 }
@@ -151,12 +151,12 @@ Utils::Vector3d lb_drag_force(Particle const &p,
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation (eq. (11) @cite ahlrichs99a) */
   auto const interpolated_u =
-      lb_lbinterpolation_get_interpolated_velocity(p.r.p) *
+      lb_lbinterpolation_get_interpolated_velocity(p.pos()) *
       lb_lbfluid_get_lattice_speed();
 
   Utils::Vector3d v_drift = interpolated_u + vel_offset;
   /* calculate viscous force (eq. (9) @cite ahlrichs99a) */
-  return -lb_lbcoupling_get_gamma() * (p.m.v - v_drift);
+  return -lb_lbcoupling_get_gamma() * (p.v() - v_drift);
 }
 
 using Utils::Vector;
@@ -206,13 +206,13 @@ bool in_local_halo(Vector3d const &pos) {
 
 #ifdef ENGINE
 void add_swimmer_force(Particle const &p, double time_step, bool has_ghosts) {
-  if (p.p.swim.swimming) {
+  if (p.swimming().swimming) {
     // calculate source position
-    const double direction =
-        double(p.p.swim.push_pull) * p.p.swim.dipole_length;
+    auto const magnitude = p.swimming().dipole_length;
+    auto const direction = static_cast<double>(p.swimming().push_pull);
     auto const director = p.r.calc_director();
-    auto const source_position = p.r.p + direction * director;
-    auto const force = p.p.swim.f_swim * director;
+    auto const source_position = p.pos() + direction * magnitude * director;
+    auto const force = p.swimming().f_swim * director;
 
     if (in_local_halo(source_position)) {
       add_md_force(source_position, force, time_step);
@@ -284,8 +284,8 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
   if (lattice_switch == ActiveLB::WALBERLA) {
     if (lb_particle_coupling.couple_to_md) {
-      bool has_ghosts =
-          (cell_structure.decomposition_type() == CELL_STRUCTURE_DOMDEC);
+      bool has_ghosts = (cell_structure.decomposition_type() ==
+                         CellStructureType::CELL_STRUCTURE_REGULAR);
       if (not has_ghosts) {
         if (n_nodes > 1) {
           throw std::runtime_error("LB only works with domain decomposition, "
