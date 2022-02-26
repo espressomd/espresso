@@ -33,7 +33,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # C++ standard
 enable_language(CXX)
-set(CMAKE_CXX_STANDARD 17 CACHE STRING "C++ standard to be used")
+set(CMAKE_CXX_STANDARD 14 CACHE STRING "C++ standard to be used")
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -103,6 +103,19 @@ option(WITH_CCACHE "Use ccache compiler invocation." OFF)
 option(WITH_PROFILER "Enable profiler annotations." OFF)
 set(TEST_TIMEOUT "300" CACHE STRING
                              "Timeout in seconds for each testsuite test")
+
+if(WITH_CUDA)
+  set(CMAKE_CUDA_STANDARD ${CMAKE_CXX_STANDARD})
+  set(MINIMAL_CUDA_VERSION 10.0)
+endif()
+
+if(WITH_WALBERLA)
+  set(CMAKE_CXX_STANDARD 17)
+  set(CMAKE_CUDA_STANDARD 17)
+  set(CMAKE_CUDA_STANDARD_REQUIRED TRUE)
+  set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
+  set(MINIMAL_CUDA_VERSION 11.0)
+endif()
 
 if(WITH_CCACHE)
   find_program(CCACHE ccache)
@@ -211,8 +224,6 @@ endfunction()
 
 # CUDA compiler
 if(WITH_CUDA)
-  set(CMAKE_CUDA_STANDARD ${CMAKE_CXX_STANDARD})
-  set(MINIMAL_CUDA_VERSION 11.0)
   option_enum(varname "WITH_CUDA_COMPILER" help_text "CUDA compiler"
               default_value "nvcc" possible_values "nvcc;clang")
   if(WITH_CUDA_COMPILER STREQUAL "nvcc")
@@ -521,10 +532,6 @@ endif(WITH_BENCHMARKS)
 
 # Walberla
 if(WITH_WALBERLA)
-  set(CMAKE_CXX_STANDARD 17)
-  set(CMAKE_CUDA_STANDARD 14)
-  set(CMAKE_CUDA_STANDARD_REQUIRED TRUE)
-  set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
   include(FetchContent)
   FetchContent_Declare(
     walberla
@@ -544,9 +551,9 @@ if(WITH_WALBERLA)
     set(CMAKE_POSITION_INDEPENDENT_CODE on CACHE BOOL "")
     if (WITH_CUDA)
       set(WALBERLA_BUILD_WITH_CUDA "on"  CACHE BOOL "")
-      if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
-        set(CMAKE_CUDA_ARCHITECTURES 75)
-      endif()
+#      if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
+#        set(CMAKE_CUDA_ARCHITECTURES 75)
+#      endif()
     endif()
     add_subdirectory("${walberla_SOURCE_DIR}" "${walberla_BINARY_DIR}")
     set(LB_WALBERLA 1)
