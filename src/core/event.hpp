@@ -110,10 +110,6 @@ void on_thermostat_param_change();
  */
 void on_timestep_change();
 
-/** @brief Called when the simulation time changed.
- */
-void on_simtime_change();
-
 /** @brief Called when the force cap changed.
  */
 void on_forcecap_change();

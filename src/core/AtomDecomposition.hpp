@@ -101,6 +101,8 @@ public:
     return m_box;
   }
 
+  BoxGeometry box() const override { return m_box; };
+
 private:
   /**
    * @brief Find cell for id.

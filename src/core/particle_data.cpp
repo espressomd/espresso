@@ -94,6 +94,9 @@ struct UpdateParticle {
 
 template <typename T, T ParticleProperties::*m>
 using UpdateProperty = UpdateParticle<ParticleProperties, &Particle::p, T, m>;
+
+template <typename T, T ParticleLocal::*m>
+using UpdateLocalProperty = UpdateParticle<ParticleLocal, &Particle::l, T, m>;
 template <typename T, T ParticlePosition ::*m>
 using UpdatePosition = UpdateParticle<ParticlePosition, &Particle::r, T, m>;
 template <typename T, T ParticleMomentum ::*m>
@@ -157,6 +160,9 @@ using UpdatePropertyMessage = boost::variant
 #endif
 #endif
         >;
+
+using UpdateLocalPropertyMessage = boost::variant
+        < UpdateLocalProperty<double, &ParticleLocal::lees_edwards_offset>>;
 
 using UpdatePositionMessage = boost::variant
         < UpdatePosition<Utils::Vector3d, &ParticlePosition::p>
@@ -282,7 +288,8 @@ struct UpdateOrientation {
  * variants with leaves that have such an <tt>operator()</tt> member.
  */
 using UpdateMessage = boost::variant
-        < UpdatePropertyMessage
+        < UpdateLocalPropertyMessage
+        , UpdatePropertyMessage
         , UpdatePositionMessage
         , UpdateMomentumMessage
         , UpdateForceMessage
@@ -301,6 +308,10 @@ template <typename S, S Particle::*s> struct message_type;
 
 template <> struct message_type<ParticleProperties, &Particle::p> {
   using type = UpdatePropertyMessage;
+};
+
+template <> struct message_type<ParticleLocal, &Particle::l> {
+  using type = UpdateLocalPropertyMessage;
 };
 
 template <> struct message_type<ParticlePosition, &Particle::r> {
@@ -731,6 +742,11 @@ int place_particle(int p_id, Utils::Vector3d const &pos) {
 void set_particle_v(int part, Utils::Vector3d const &v) {
   mpi_update_particle<ParticleMomentum, &Particle::m, Utils::Vector3d,
                       &ParticleMomentum::v>(part, v);
+}
+
+void set_particle_lees_edwards_offset(int part, const double v) {
+  mpi_update_particle<ParticleLocal, &Particle::l, double,
+                      &ParticleLocal::lees_edwards_offset>(part, v);
 }
 
 #ifdef ENGINE
