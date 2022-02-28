@@ -495,10 +495,6 @@ private:
 
   void integrate_pull_scheme() {
     auto const &blocks = lattice().get_blocks();
-    //    if (lees_edwards_bc()) {
-    //      apply_lees_edwards_force_to_be_applied_backwards_interpolation(blocks);
-    //    }
-    // Reset force fields
     integrate_reset_force(blocks);
     // Handle boundaries
     integrate_boundaries(blocks);
@@ -508,12 +504,7 @@ private:
     integrate_collide(blocks);
 
     // Refresh ghost layers
-    (*m_full_communication).communicate();
-    if (lees_edwards_bc()) {
-      apply_lees_edwards_pdf_interpolation(blocks);
-      apply_lees_edwards_vel_interpolation_and_shift(blocks);
-      apply_lees_edwards_last_applied_force_interpolation(blocks);
-    }
+    ghost_communication();
   }
 
   inline void integrate_vtk_writers() {
@@ -538,7 +529,15 @@ public:
     integrate_vtk_writers();
   }
 
-  void ghost_communication() override { (*m_full_communication).communicate(); }
+  void ghost_communication() override {
+    (*m_full_communication).communicate();
+    if (lees_edwards_bc()) {
+      auto const &blocks = lattice().get_blocks();
+      apply_lees_edwards_pdf_interpolation(blocks);
+      apply_lees_edwards_vel_interpolation_and_shift(blocks);
+      apply_lees_edwards_last_applied_force_interpolation(blocks);
+    }
+  }
 
   void set_collision_model() override {
     auto const omega = shear_mode_relaxation_rate();
