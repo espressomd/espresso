@@ -154,9 +154,9 @@ void set_particle_rotational_inertia(int part, Utils::Vector3d const &rinertia);
  *  degrees of freedom are integrated or not. If set to zero, the content of
  *  the torque and omega variables are meaningless
  *  @param part the particle.
- *  @param rot the degrees of freedom flag.
+ *  @param flag the degrees of freedom flag.
  */
-void set_particle_rotation(int part, int rot);
+void set_particle_rotation(int part, Utils::Vector3i const &flag);
 
 /** @brief rotate a particle around an axis
  *
@@ -461,6 +461,13 @@ inline ParticleParametersSwimming get_particle_swimming(Particle const *p) {
 #ifdef ROTATIONAL_INERTIA
 inline Utils::Vector3d get_particle_rotational_inertia(Particle const *p) {
   return p->rinertia();
+}
+#endif
+
+#ifdef ROTATION
+inline Utils::Vector3i get_particle_rotation(Particle const *p) {
+  return Utils::Vector3i{{p->can_rotate_around(0), p->can_rotate_around(1),
+                          p->can_rotate_around(2)}};
 }
 #endif
 

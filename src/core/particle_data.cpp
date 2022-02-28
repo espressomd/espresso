@@ -780,9 +780,16 @@ constexpr Utils::Vector3d ParticleProperties::rinertia;
 #endif
 
 #ifdef ROTATION
-void set_particle_rotation(int part, int rot) {
-  mpi_update_particle_property<uint8_t, &ParticleProperties::rotation>(part,
-                                                                       rot);
+void set_particle_rotation(int part, Utils::Vector3i const &flag) {
+  auto rot_flag = static_cast<uint8_t>(0u);
+  if (flag[0])
+    rot_flag |= static_cast<uint8_t>(1u);
+  if (flag[1])
+    rot_flag |= static_cast<uint8_t>(2u);
+  if (flag[2])
+    rot_flag |= static_cast<uint8_t>(4u);
+  mpi_update_particle_property<uint8_t, &ParticleProperties::rotation>(
+      part, rot_flag);
 }
 
 void rotate_particle(int part, const Utils::Vector3d &axis, double angle) {

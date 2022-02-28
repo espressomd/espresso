@@ -125,7 +125,8 @@ BOOST_AUTO_TEST_CASE(test_brownian_dynamics) {
   /* check rotation */
   {
     auto p = particle_factory();
-    p.p.rotation = ROTATION_X;
+    p.set_cannot_rotate_all_axes();
+    p.set_can_rotate_around(0, true);
     auto const phi = time_step * dispersion_rotation[0];
     auto const out = bd_drag_rot(brownian.gamma_rotation, p, time_step);
     BOOST_CHECK_CLOSE(out[0], std::cos(phi / 2), tol);
@@ -137,7 +138,7 @@ BOOST_AUTO_TEST_CASE(test_brownian_dynamics) {
   /* check rotational velocity */
   {
     auto p = particle_factory();
-    p.p.rotation = ROTATION_X | ROTATION_Y | ROTATION_Z;
+    p.set_can_rotate_all_axes();
     auto const ref = dispersion_rotation;
     auto const out = bd_drag_vel_rot(brownian.gamma_rotation, p);
     BOOST_CHECK_CLOSE(out[0], ref[0], tol);
@@ -148,7 +149,8 @@ BOOST_AUTO_TEST_CASE(test_brownian_dynamics) {
   /* check walk rotation */
   {
     auto p = particle_factory();
-    p.p.rotation = ROTATION_X;
+    p.set_cannot_rotate_all_axes();
+    p.set_can_rotate_around(0, true);
     auto const sigma = sqrt(brownian.gamma_rotation / (2.0 * kT));
     auto const noise =
         Random::noise_gaussian<RNGSalt::BROWNIAN_ROT_INC>(0, 0, 0);
@@ -163,7 +165,7 @@ BOOST_AUTO_TEST_CASE(test_brownian_dynamics) {
   /* check walk rotational velocity */
   {
     auto p = particle_factory();
-    p.p.rotation = ROTATION_X | ROTATION_Y | ROTATION_Z;
+    p.set_can_rotate_all_axes();
     auto const sigma = sqrt(kT);
     auto const noise =
         Random::noise_gaussian<RNGSalt::BROWNIAN_ROT_WALK>(0, 0, 0);

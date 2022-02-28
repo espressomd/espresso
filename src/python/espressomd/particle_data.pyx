@@ -966,39 +966,27 @@ cdef class ParticleHandle:
 
             The default is not to integrate any rotational degrees of freedom.
 
-            rotation : (3,) array_like of :obj:`int`
+            rotation : (3,) array_like of :obj:`bool`
 
             .. note::
                 This needs the feature ``ROTATION``.
 
             """
 
-            def __set__(self, _rot):
-                cdef int rot
+            def __set__(self, flag):
+                cdef Vector3i rot_flag
                 check_type_or_throw_except(
-                    _rot, 3, int, "The rotation flag has to be given as a tuple of 3 integers.")
-
-                rot = 0
-                if _rot[0]:
-                    rot += ROTATION_X
-                if _rot[1]:
-                    rot += ROTATION_Y
-                if _rot[2]:
-                    rot += ROTATION_Z
-                set_particle_rotation(self._id, rot)
+                    flag, 3, int, "Property 'rotation' has to be 3 bools.")
+                rot_flag[0] = int(flag[0])
+                rot_flag[1] = int(flag[1])
+                rot_flag[2] = int(flag[2])
+                set_particle_rotation(self._id, rot_flag)
 
             def __get__(self):
                 self.update_particle_data()
-                rot = self.particle_data.p.rotation
-
-                res = np.zeros(3, dtype=int)
-                if rot & ROTATION_X:
-                    res[0] = 1
-                if rot & ROTATION_Y:
-                    res[1] = 1
-                if rot & ROTATION_Z:
-                    res[2] = 1
-                return array_locked(res)
+                cdef Vector3i flag = get_particle_rotation(self.particle_data)
+                rot_flag = np.array([flag[0], flag[1], flag[2]], dtype=int)
+                return array_locked(rot_flag)
 
     IF EXCLUSIONS:
         property exclusions:

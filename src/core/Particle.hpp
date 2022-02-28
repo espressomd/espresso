@@ -44,13 +44,6 @@ inline bool get_nth_bit(uint8_t const bitfield, int const bit_idx) {
 }
 } // namespace detail
 
-enum : uint8_t {
-  ROTATION_FIXED = 0u,
-  ROTATION_X = 1u,
-  ROTATION_Y = 2u,
-  ROTATION_Z = 4u
-};
-
 /** Properties of a self-propelled particle. */
 struct ParticleParametersSwimming {
   /** Is the particle a swimmer. */
@@ -104,11 +97,18 @@ struct ParticleProperties {
   static constexpr Utils::Vector3d rinertia = {1., 1., 1.};
 #endif
 
-  /** bitfield for the particle axes of rotation */
 #ifdef ROTATION
-  uint8_t rotation = ROTATION_FIXED;
+  /** Bitfield for the particle axes of rotation.
+   *  Values:
+   *  - 1: allow rotation around the x axis
+   *  - 2: allow rotation around the y axis
+   *  - 4: allow rotation around the z axis
+   *  By default, the particle cannot rotate.
+   */
+  uint8_t rotation = static_cast<uint8_t>(0b000u);
 #else
-  static constexpr uint8_t rotation = ROTATION_FIXED;
+  /** Bitfield for the particle axes of rotation. Particle cannot rotate. */
+  static constexpr uint8_t rotation = static_cast<uint8_t>(0b000u);
 #endif
 
   /** charge. */
@@ -481,10 +481,9 @@ public:
       p.rotation &= static_cast<uint8_t>(~(1u << axis));
     }
   }
-  void set_can_rotate_all_axes() {
-    for (int axis = 0; axis <= 2; axis++) {
-      set_can_rotate_around(axis, true);
-    }
+  void set_can_rotate_all_axes() { p.rotation = static_cast<uint8_t>(0b111u); }
+  void set_cannot_rotate_all_axes() {
+    p.rotation = static_cast<uint8_t>(0b000u);
   }
   auto const &quat() const { return r.quat; }
   auto &quat() { return r.quat; }
