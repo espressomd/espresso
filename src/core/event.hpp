@@ -112,7 +112,7 @@ void on_timestep_change();
 
 /** @brief Called when the simulation time changed.
  */
-void on_simtime_change();
+void on_simtime_change(double time);
 
 /** @brief Called when the force cap changed.
  */

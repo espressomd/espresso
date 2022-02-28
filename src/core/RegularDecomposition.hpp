@@ -116,6 +116,7 @@ public:
   boost::optional<BoxGeometry> minimum_image_distance() const override {
     return {};
   }
+  BoxGeometry box() const override { return m_box; };
 
 private:
   /** Fill @c m_local_cells list and @c m_ghost_cells list for use with regular

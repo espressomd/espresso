@@ -33,6 +33,7 @@
 #include <utils/math/tensor_product.hpp>
 #include <utils/quaternion.hpp>
 
+#include <iostream>
 #include <stdexcept>
 
 namespace {
@@ -146,16 +147,29 @@ void VirtualSitesRelative::update() const {
 
     const Particle *p_ref = get_reference_particle(p.vs_relative());
 
-    auto const new_pos = position(*p_ref, p.vs_relative());
+    auto new_pos = position(*p_ref, p.vs_relative());
     /* The shift has to respect periodic boundaries: if the reference
      * particles is not in the same image box, we potentially avoid shifting
      * to the other side of the box. */
-    p.pos() += box_geo.get_mi_vector(new_pos, p.pos());
+    auto shift = box_geo.get_mi_vector(new_pos, p.pos());
+    p.pos() += shift;
+    Utils::Vector3i image_shift{};
+    fold_position(shift, image_shift, box_geo);
+    p.image_box() = p_ref->image_box() - image_shift;
 
     p.v() = velocity(*p_ref, p.vs_relative());
 
+    if (box_geo.type() == BoxType::LEES_EDWARDS) {
+      const auto &shear_dir = box_geo.clees_edwards_bc().shear_direction;
+      const auto &shear_normal = box_geo.clees_edwards_bc().shear_plane_normal;
+      const auto &le_vel = box_geo.lees_edwards_bc().shear_velocity;
+      Utils::Vector3i n_shifts{};
+      fold_position(new_pos, n_shifts, box_geo);
+      p.v()[shear_dir] -= n_shifts[shear_normal] * le_vel;
+    }
+
     if (have_quaternions())
-      p.quat() = p_ref->quat() * p.vs_relative().quat;
+      p.quat() = orientation(*p_ref, p.vs_relative());
   }
 
   if (cell_structure.check_resort_required(particles, skin)) {

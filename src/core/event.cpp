@@ -42,6 +42,7 @@
 #include "immersed_boundaries.hpp"
 #include "integrate.hpp"
 #include "interactions.hpp"
+#include "lees_edwards.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "partCfg_global.hpp"
@@ -309,7 +310,10 @@ void on_timestep_change() {
   on_thermostat_param_change();
 }
 
-void on_simtime_change() { recalc_forces = true; }
+void on_simtime_change(double time) {
+  recalc_forces = true;
+  LeesEdwards::on_simtime_change(box_geo, time);
+}
 
 void on_forcecap_change() { recalc_forces = true; }
 

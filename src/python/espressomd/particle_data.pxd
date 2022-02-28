@@ -60,6 +60,8 @@ cdef extern from "particle_data.hpp":
 
     ctypedef struct particle_local "ParticleLocal":
         Vector3i i
+        double lees_edwards_offset
+        int lees_edwards_flag
 
     ctypedef struct particle "Particle":
         particle_properties p

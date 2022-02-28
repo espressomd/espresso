@@ -28,6 +28,7 @@
  */
 
 #include "LatticeWalberla.hpp"
+#include "LeesEdwardsPack.hpp"
 #include "VTKHandle.hpp"
 
 #include <utils/Vector.hpp>
@@ -144,6 +145,10 @@ public:
 
   /** @brief Configure a thermalized collision model. */
   virtual void set_collision_model(double kT, unsigned int seed) = 0;
+
+  /** @brief Configure a thermalized collision model for Lees-Edwards. */
+  virtual void
+  set_collision_model(std::unique_ptr<LeesEdwardsPack> &&lees_edwards_pack) = 0;
 
   /** @brief Get node pressure tensor. */
   virtual boost::optional<Utils::VectorXd<9>>

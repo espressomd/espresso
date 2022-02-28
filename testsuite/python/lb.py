@@ -479,12 +479,18 @@ class LBTest:
         self.system.integrator.run(n_time_steps)
         # ext_force_density is a force density, therefore v = ext_force_density
         # / dens * tau * (n_time_steps + 0.5)
+        # Walberla TODO: 0.5 needs to be added to time step once f/2
+        # correction is back
         fluid_velocity = np.array(ext_force_density) * self.system.time_step * (
             n_time_steps + 0.5) / self.params['density']
         # Chck global linear momentum = density * volume * velocity
         rtol = self.rtol
+        ratio = self.system.analysis.linear_momentum() \
+            / (fluid_velocity * self.params['density'] * self.system.volume())
+        print(ratio, 1 / ratio)
         if hasattr(lbf, 'is_single_precision') and lbf.is_single_precision:
             rtol *= 10.
+        # Walberla todo: The factor 1.5 can go, once f/2 correction is back
         np.testing.assert_allclose(
             np.copy(self.system.analysis.linear_momentum()),
             fluid_velocity * self.params['density'] * self.system.volume(),

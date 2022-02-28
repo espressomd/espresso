@@ -37,9 +37,9 @@ import relaxation_rates
 from lbmpy.fieldaccess import CollideOnlyInplaceAccessor
 from lbmpy.stencils import get_stencil
 from lbmpy.updatekernels import create_lbm_kernel, create_stream_pull_with_output_kernel
-from lbmpy.macroscopic_value_kernels import macroscopic_values_setter, macroscopic_values_getter
+from lbmpy.macroscopic_value_kernels import macroscopic_values_setter
 
-
+import lees_edwards
 # for collide-push from lbmpy.fieldaccess import StreamPushTwoFieldsAccessor
 
 from lbmpy.advanced_streaming.indexing import NeighbourOffsetArrays
@@ -239,16 +239,6 @@ def generate_setters(lb_method):
     return pdfs_setter
 
 
-def generate_update_vel_sweep(lb_method):
-    fields = generate_fields(ctx, lb_method.stencil)
-    update_vel_from_pdf_kernel = macroscopic_values_getter(
-        lb_method, None, fields["velocity"], fields["pdfs"])
-#        compile_macroscopic_values_getter(lb_method, ["velocity"], field_layout="fzyx")
-    codegen.generate_sweep(ctx, 
-                           f"{target_prefix}UpdateVelocityFromPDFSweep{precision_prefix}", 
-                           update_vel_from_pdf_kernel, target=target) 
-
-
 def check_dependencies():
     import setuptools
     import pystencils
@@ -367,6 +357,8 @@ with PatchedCodeGeneration() as ctx:
         relaxation_rates=relaxation_rates.rr_getter,
         force_model=lbmpy.forcemodels.Schiller(force_field.center_vector)
     )
+
+    # generate stream kernels
     generate_stream_sweep(
         ctx,
         method,
@@ -385,8 +377,6 @@ with PatchedCodeGeneration() as ctx:
         ctx,
         f"{target_prefix}InitialPDFsSetter{precision_prefix}",
         pdfs_setter, target=target)
-
-    generate_update_vel_sweep(method)
 
     # generate unthermalized collision rule
     collision_rule_unthermalized = create_lb_collision_rule(
@@ -409,6 +399,34 @@ with PatchedCodeGeneration() as ctx:
             f"{target_prefix}CollideSweep{precision_prefix}AVX",
             {"cpu_vectorize_info": cpu_vectorize_info}
         )
+
+    # generate unthermalized Lees-Edwards collision rule
+
+    le_config = lbmpy.LBMConfig(stencil=stencil, method=lbmpy.Method.TRT, relaxation_rate=sp.Symbol("omega_shear"), compressible=True,
+                                force_model=lbmpy.ForceModel.GUO,
+                                force=force_field.center_vector, kernel_type='collide_only')
+    lbm_opt = lbmpy.LBMOptimisation(symbolic_field=fields["pdfs"])
+    le_collision_rule_unthermalized = lbmpy.create_lb_update_rule(
+        lbm_config=le_config,
+        lbm_optimisation=lbm_opt)
+
+    le_collision_rule_unthermalized = lees_edwards.add_lees_edwards_to_collision(
+        le_collision_rule_unthermalized,
+        fields["pdfs"], stencil, 1)  # shear_dir_normal y
+    generate_collision_sweep(
+        ctx,
+        le_config,
+        le_collision_rule_unthermalized,
+        f"CollideSweep{precision_prefix}LeesEdwards",
+        {}
+    )
+    generate_collision_sweep(
+        ctx,
+        le_config,
+        le_collision_rule_unthermalized,
+        f"CollideSweep{precision_prefix}LeesEdwardsAVX",
+        {"cpu_vectorize_info": cpu_vectorize_info}
+    )
 
     # generate thermalized LB
     collision_rule_thermalized = create_lb_collision_rule(

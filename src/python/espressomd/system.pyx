@@ -40,6 +40,7 @@ from .constraints import Constraints
 from .accumulators import AutoUpdateAccumulators
 IF LB_WALBERLA:
     from . import lb
+from . import lees_edwards
 from .comfixed import ComFixed
 from .utils cimport check_type_or_throw_except
 from .utils import handle_errors, array_locked
@@ -153,6 +154,8 @@ cdef class System:
         """:class:`espressomd.accumulators.AutoUpdateAccumulators`"""
         constraints
         """:class:`espressomd.constraints.Constraints`"""
+        lees_edwards
+        """:class:`espressomd.lees_edwards.LeesEdwards`"""
         collision_detection
         """:class:`espressomd.collision_detection.CollisionDetection`"""
         cuda_init_handle
@@ -188,6 +191,7 @@ cdef class System:
             IF CUDA:
                 self.cuda_init_handle = cuda_init.CudaInitHandle()
             self.galilei = GalileiTransform()
+            self.lees_edwards = lees_edwards.LeesEdwards()
             self.non_bonded_inter = interactions.NonBondedInteractions()
             self.part = particle_data.ParticleList()
             self.thermostat = Thermostat()
@@ -405,20 +409,40 @@ cdef class System:
 
         cdef Vector3d pos1
         if isinstance(p1, particle_data.ParticleHandle):
-            pos1 = make_Vector3d(p1.pos)
+            pos1 = make_Vector3d(p1.pos_folded)
         else:
             check_type_or_throw_except(
                 p1, 3, float, "p1 must be a particle or 3 floats")
             pos1 = make_Vector3d(p1)
         cdef Vector3d pos2
         if isinstance(p2, particle_data.ParticleHandle):
-            pos2 = make_Vector3d(p2.pos)
+            pos2 = make_Vector3d(p2.pos_folded)
         else:
             check_type_or_throw_except(
                 p2, 3, float, "p2 must be a particle or 3 floats")
             pos2 = make_Vector3d(p2)
 
         return make_array_locked(box_geo.get_mi_vector(pos2, pos1))
+
+    def velocity_difference(self, p1, p2):
+        """Return the velocity difference between two particles,
+        considering Lees-Edwards boundary conditions, if active
+
+        Parameters
+        ----------
+        p1 : :class:`~espressomd.particle_data.ParticleHandle`
+        p2 : :class:`~espressomd.particle_data.ParticleHandle`
+
+        """
+
+        cdef Vector3d pos1 = make_Vector3d(p1.pos_folded)
+        cdef Vector3d pos2 = make_Vector3d(p2.pos_folded)
+
+        cdef Vector3d v1 = make_Vector3d(p1.v)
+        cdef Vector3d v2 = make_Vector3d(p2.v)
+        cdef Vector3d vd = box_geo.velocity_difference(pos2, pos1, v2, v1)
+
+        return make_array_locked(vd)
 
     def rotate_system(self, **kwargs):
         """Rotate the particles in the system about the center of mass.

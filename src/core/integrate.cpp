@@ -47,6 +47,7 @@
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "interactions.hpp"
+#include "lees_edwards.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "rattle.hpp"
@@ -265,9 +266,28 @@ int integrate(int n_steps, int reuse_forces) {
       save_old_position(particles, cell_structure.ghost_particles());
 #endif
 
+    LeesEdwards::update_pos_offset(*LeesEdwards::active_protocol, box_geo,
+                                   get_sim_time());
+    LeesEdwards::update_shear_velocity(*LeesEdwards::active_protocol, box_geo,
+                                       get_sim_time());
+
     bool early_exit = integrator_step_1(particles);
     if (early_exit)
       break;
+    if (box_geo.type() == BoxType::LEES_EDWARDS) {
+      std::for_each(particles.begin(), particles.end(),
+                    [](auto &p) { LeesEdwards::push(p, box_geo, time_step); });
+    }
+
+    Utils::Vector3d offset{};
+    if (box_geo.type() == BoxType::LEES_EDWARDS) {
+      offset = LeesEdwards::verlet_list_offset(box_geo);
+    }
+
+    particles = cell_structure.local_particles();
+    if (cell_structure.check_resort_required(particles, skin, offset)) {
+      cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
+    }
 
     /* Propagate philox rng counters */
     philox_counter_increment();
@@ -298,6 +318,11 @@ int integrate(int n_steps, int reuse_forces) {
     virtual_sites()->after_force_calc(time_step);
 #endif
     integrator_step_2(particles, temperature);
+    if (box_geo.type() == BoxType::LEES_EDWARDS) {
+      std::for_each(particles.begin(), particles.end(), [](auto &p) {
+        LeesEdwards::update_offset(p, box_geo, time_step);
+      });
+    }
 #ifdef BOND_CONSTRAINT
     // SHAKE velocity updates
     if (n_rigidbonds) {
@@ -341,6 +366,10 @@ int integrate(int n_steps, int reuse_forces) {
     }
 
   } // for-loop over integration steps
+  LeesEdwards::update_pos_offset(*LeesEdwards::active_protocol, box_geo,
+                                 get_sim_time());
+  LeesEdwards::update_shear_velocity(*LeesEdwards::active_protocol, box_geo,
+                                     get_sim_time());
   ESPRESSO_PROFILER_CXX_MARK_LOOP_END(integration_loop);
 
 #ifdef VALGRIND_INSTRUMENTATION
@@ -518,7 +547,7 @@ void mpi_set_skin(double skin) { mpi_call_all(mpi_set_skin_local, skin); }
 
 void mpi_set_time_local(double time) {
   sim_time = time;
-  on_simtime_change();
+  on_simtime_change(time);
 }
 
 REGISTER_CALLBACK(mpi_set_time_local)

@@ -172,8 +172,8 @@ std::vector<PairInfo> mpi_non_bonded_loop_trace() {
   return pairs;
 }
 
-static void mpi_resort_particles_local(int global_flag) {
-  cell_structure.resort_particles(global_flag);
+static void mpi_resort_particles_local(int global_flag, int) {
+  cell_structure.resort_particles(global_flag, box_geo);
 
   boost::mpi::gather(
       comm_cart, static_cast<int>(cell_structure.local_particles().size()), 0);
@@ -182,8 +182,8 @@ static void mpi_resort_particles_local(int global_flag) {
 REGISTER_CALLBACK(mpi_resort_particles_local)
 
 std::vector<int> mpi_resort_particles(int global_flag) {
-  mpi_call(mpi_resort_particles_local, global_flag);
-  cell_structure.resort_particles(global_flag);
+  mpi_call(mpi_resort_particles_local, global_flag, 0);
+  cell_structure.resort_particles(global_flag, box_geo);
 
   clear_particle_node();
 
@@ -241,7 +241,7 @@ void cells_update_ghosts(unsigned data_parts) {
                      : CELL_NEIGHBOR_EXCHANGE;
 
     /* Resort cell system */
-    cell_structure.resort_particles(global);
+    cell_structure.resort_particles(global, box_geo);
     cell_structure.ghosts_count();
     cell_structure.ghosts_update(data_parts);
 

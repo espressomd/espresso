@@ -371,10 +371,16 @@ struct ParticleLocal {
   /** index of the simulation box image where the particle really sits. */
   Utils::Vector3i i = {0, 0, 0};
 
+  /** Accumlated applied Lees Edwards offset */
+  double lees_edwards_offset = 0;
+  short int lees_edwards_flag = 0;
+
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
     ar &ghost;
     ar &p_old;
     ar &i;
+    ar &lees_edwards_offset;
+    ar &lees_edwards_flag;
   }
 };
 

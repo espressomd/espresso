@@ -111,6 +111,8 @@ cdef class ParticleHandle:
             self.update_particle_data()
             return self._id
 
+    # The individual attributes of a particle are implemented as properties.
+
     # Particle Type
     property type:
         """
@@ -232,6 +234,32 @@ cdef class ParticleHandle:
             return array_locked([self.particle_data.l.i[0],
                                  self.particle_data.l.i[1],
                                  self.particle_data.l.i[2]])
+
+    property lees_edwards_offset:
+        """Containes the accumulated Lees-Edwards offset to reconstruct
+           continouus trajectories.
+
+        """
+
+        def __set__(self, unused):
+            pass
+
+        def __get__(self):
+            self.update_particle_data()
+            return self.particle_data.l.lees_edwards_offset
+
+    property lees_edwards_flag:
+        """Containes the accumulated Lees-Edwards flag to indicate
+           if the particle crossed the upper or lower boundary.
+
+        """
+
+        def __set__(self, unused):
+            pass
+
+        def __get__(self):
+            self.update_particle_data()
+            return self.particle_data.l.lees_edwards_flag
 
     # Velocity
     property v:
