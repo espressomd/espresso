@@ -49,17 +49,17 @@ void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles,
 
   for (auto &p : particles) {
     // Virtual sites are not propagated during integration
-    if (p.p.is_virtual)
+    if (p.is_virtual())
       continue;
-    auto const noise = friction_therm0_nptiso<2>(npt_iso, p.m.v, p.p.identity);
+    auto const noise = friction_therm0_nptiso<2>(npt_iso, p.v(), p.identity());
     for (int j = 0; j < 3; j++) {
       if (!p.is_fixed_along(j)) {
         if (nptiso.geometry & nptiso.nptgeom_dir[j]) {
-          nptiso.p_vel[j] += Utils::sqr(p.m.v[j] * time_step) * p.p.mass;
-          p.m.v[j] += (p.f.f[j] * time_step / 2.0 + noise[j]) / p.p.mass;
+          nptiso.p_vel[j] += Utils::sqr(p.v()[j] * time_step) * p.mass();
+          p.v()[j] += (p.force()[j] * time_step / 2.0 + noise[j]) / p.mass();
         } else {
           // Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt)
-          p.m.v[j] += p.f.f[j] * time_step / 2.0 / p.p.mass;
+          p.v()[j] += p.force()[j] * time_step / 2.0 / p.mass();
         }
       }
     }
@@ -120,16 +120,16 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles,
 
   /* propagate positions while rescaling positions and velocities */
   for (auto &p : particles) {
-    if (p.p.is_virtual)
+    if (p.is_virtual())
       continue;
     for (int j = 0; j < 3; j++) {
       if (!p.is_fixed_along(j)) {
         if (nptiso.geometry & nptiso.nptgeom_dir[j]) {
-          p.r.p[j] = scal[1] * (p.r.p[j] + scal[2] * p.m.v[j] * time_step);
-          p.l.p_old[j] *= scal[1];
-          p.m.v[j] *= scal[0];
+          p.pos()[j] = scal[1] * (p.pos()[j] + scal[2] * p.v()[j] * time_step);
+          p.pos_at_last_verlet_update()[j] *= scal[1];
+          p.v()[j] *= scal[0];
         } else {
-          p.r.p[j] += p.m.v[j] * time_step;
+          p.pos()[j] += p.v()[j] * time_step;
         }
       }
     }
@@ -168,19 +168,19 @@ void velocity_verlet_npt_propagate_vel(const ParticleRange &particles,
 #endif
 
     // Don't propagate translational degrees of freedom of vs
-    if (p.p.is_virtual)
+    if (p.is_virtual())
       continue;
     for (int j = 0; j < 3; j++) {
       if (!p.is_fixed_along(j)) {
         auto const noise =
-            friction_therm0_nptiso<1>(npt_iso, p.m.v, p.p.identity);
+            friction_therm0_nptiso<1>(npt_iso, p.v(), p.identity());
         if (integ_switch == INTEG_METHOD_NPT_ISO &&
             (nptiso.geometry & nptiso.nptgeom_dir[j])) {
-          p.m.v[j] += (p.f.f[j] * time_step / 2.0 + noise[j]) / p.p.mass;
-          nptiso.p_vel[j] += Utils::sqr(p.m.v[j] * time_step) * p.p.mass;
+          p.v()[j] += (p.force()[j] * time_step / 2.0 + noise[j]) / p.mass();
+          nptiso.p_vel[j] += Utils::sqr(p.v()[j] * time_step) * p.mass();
         } else {
           // Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * a(t)
-          p.m.v[j] += p.f.f[j] * time_step / 2.0 / p.p.mass;
+          p.v()[j] += p.force()[j] * time_step / 2.0 / p.mass();
         }
       }
     }

@@ -66,17 +66,17 @@ inline ParticleForce external_force(Particle const &p) {
   ParticleForce f = {};
 
 #ifdef EXTERNAL_FORCES
-  f.f += p.p.ext_force;
+  f.f += p.ext_force();
 #ifdef ROTATION
-  f.torque += p.p.ext_torque;
+  f.torque += p.ext_torque();
 #endif
 #endif
 
 #ifdef ENGINE
   // apply a swimming force in the direction of
   // the particle's orientation axis
-  if (p.p.swim.swimming) {
-    f.f += p.p.swim.f_swim * p.r.calc_director();
+  if (p.swimming().swimming) {
+    f.f += p.swimming().f_swim * p.calc_director();
   }
 #endif
 
@@ -92,10 +92,10 @@ inline ParticleForce thermostat_force(Particle const &p, double time_step,
 
 #ifdef ROTATION
   return {friction_thermo_langevin(langevin, p, time_step, kT),
-          p.p.rotation ? convert_vector_body_to_space(
-                             p, friction_thermo_langevin_rotation(
-                                    langevin, p, time_step, kT))
-                       : Utils::Vector3d{}};
+          p.can_rotate() ? convert_vector_body_to_space(
+                               p, friction_thermo_langevin_rotation(
+                                      langevin, p, time_step, kT))
+                         : Utils::Vector3d{}};
 #else
   return friction_thermo_langevin(langevin, p, time_step, kT);
 #endif

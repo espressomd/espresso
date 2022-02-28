@@ -37,12 +37,12 @@ inline void stokesian_dynamics_propagate_vel_pos(const ParticleRange &particles,
   for (auto &p : particles) {
 
     // Translate particle
-    p.r.p += p.m.v * time_step;
+    p.pos() += p.v() * time_step;
 
     // Perform rotation
-    auto const norm = p.m.omega.norm();
-    if (norm != 0) {
-      auto const omega_unit = (1. / norm) * p.m.omega;
+    auto const norm = p.omega().norm();
+    if (norm != 0.) {
+      auto const omega_unit = (1. / norm) * p.omega();
       local_rotate_particle(p, omega_unit, norm * time_step);
     }
   }

@@ -45,8 +45,8 @@ inline Utils::Vector3d bd_drag(Thermostat::GammaType const &brownian_gamma,
   Thermostat::GammaType gamma;
 
 #ifdef THERMOSTAT_PER_PARTICLE
-  if (p.p.gamma >= Thermostat::GammaType{}) {
-    gamma = p.p.gamma;
+  if (p.gamma() >= Thermostat::GammaType{}) {
+    gamma = p.gamma();
   } else
 #endif
   {
@@ -58,7 +58,7 @@ inline Utils::Vector3d bd_drag(Thermostat::GammaType const &brownian_gamma,
   auto const aniso_flag = (gamma[0] != gamma[1]) || (gamma[1] != gamma[2]);
   Utils::Vector3d delta_pos_lab;
   if (aniso_flag) {
-    auto const force_body = convert_vector_space_to_body(p, p.f.f);
+    auto const force_body = convert_vector_space_to_body(p, p.force());
     auto const delta_pos_body = hadamard_division(force_body * dt, gamma);
     delta_pos_lab = convert_vector_body_to_space(p, delta_pos_body);
   }
@@ -75,12 +75,12 @@ inline Utils::Vector3d bd_drag(Thermostat::GammaType const &brownian_gamma,
       }
     } else {
       if (!p.is_fixed_along(j)) {
-        position[j] = p.f.f[j] * dt / gamma[j];
+        position[j] = p.force()[j] * dt / gamma[j];
       }
     }
 #else
     if (!p.is_fixed_along(j)) {
-      position[j] = p.f.f[j] * dt / gamma;
+      position[j] = p.force()[j] * dt / gamma;
     }
 #endif // PARTICLE_ANISOTROPY
   }
@@ -98,8 +98,8 @@ inline Utils::Vector3d bd_drag_vel(Thermostat::GammaType const &brownian_gamma,
   Thermostat::GammaType gamma;
 
 #ifdef THERMOSTAT_PER_PARTICLE
-  if (p.p.gamma >= Thermostat::GammaType{}) {
-    gamma = p.p.gamma;
+  if (p.gamma() >= Thermostat::GammaType{}) {
+    gamma = p.gamma();
   } else
 #endif
   {
@@ -111,7 +111,7 @@ inline Utils::Vector3d bd_drag_vel(Thermostat::GammaType const &brownian_gamma,
   auto const aniso_flag = (gamma[0] != gamma[1]) || (gamma[1] != gamma[2]);
   Utils::Vector3d vel_lab;
   if (aniso_flag) {
-    auto const force_body = convert_vector_space_to_body(p, p.f.f);
+    auto const force_body = convert_vector_space_to_body(p, p.force());
     auto const vel_body = hadamard_division(force_body, gamma);
     vel_lab = convert_vector_body_to_space(p, vel_body);
   }
@@ -129,12 +129,12 @@ inline Utils::Vector3d bd_drag_vel(Thermostat::GammaType const &brownian_gamma,
       }
     } else {
       if (!p.is_fixed_along(j)) {
-        velocity[j] = p.f.f[j] / gamma[j];
+        velocity[j] = p.force()[j] / gamma[j];
       }
     }
 #else  // PARTICLE_ANISOTROPY
     if (!p.is_fixed_along(j)) {
-      velocity[j] = p.f.f[j] / gamma;
+      velocity[j] = p.force()[j] / gamma;
     }
 #endif // PARTICLE_ANISOTROPY
   }
@@ -151,15 +151,15 @@ inline Utils::Vector3d bd_drag_vel(Thermostat::GammaType const &brownian_gamma,
 inline Utils::Vector3d bd_random_walk(BrownianThermostat const &brownian,
                                       Particle const &p, double dt, double kT) {
   // skip the translation thermalizing for virtual sites unless enabled
-  if (p.p.is_virtual && !thermo_virtual)
+  if (p.is_virtual() and !thermo_virtual)
     return {};
 
   Thermostat::GammaType sigma_pos = brownian.sigma_pos;
 #ifdef THERMOSTAT_PER_PARTICLE
   // override default if particle-specific gamma
-  if (p.p.gamma >= Thermostat::GammaType{}) {
+  if (p.gamma() >= Thermostat::GammaType{}) {
     if (kT > 0.0) {
-      sigma_pos = BrownianThermostat::sigma(kT, p.p.gamma);
+      sigma_pos = BrownianThermostat::sigma(kT, p.gamma());
     } else {
       sigma_pos = Thermostat::GammaType{};
     }
@@ -170,7 +170,7 @@ inline Utils::Vector3d bd_random_walk(BrownianThermostat const &brownian,
   // magnitude defined in the second eq. (14.38), Schlick2010.
   Utils::Vector3d delta_pos_body{};
   auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_WALK>(
-      brownian.rng_counter(), brownian.rng_seed(), p.p.identity);
+      brownian.rng_counter(), brownian.rng_seed(), p.identity());
   for (int j = 0; j < 3; j++) {
     if (!p.is_fixed_along(j)) {
 #ifndef PARTICLE_ANISOTROPY
@@ -220,7 +220,7 @@ inline Utils::Vector3d bd_random_walk(BrownianThermostat const &brownian,
 inline Utils::Vector3d bd_random_walk_vel(BrownianThermostat const &brownian,
                                           Particle const &p) {
   // skip the translation thermalizing for virtual sites unless enabled
-  if (p.p.is_virtual && !thermo_virtual)
+  if (p.is_virtual() and !thermo_virtual)
     return {};
 
   auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_INC>(
@@ -235,7 +235,7 @@ inline Utils::Vector3d bd_random_walk_vel(BrownianThermostat const &brownian,
       // (14.31) of Schlick2010. A difference is the mass factor to the friction
       // tensor. The noise is Gaussian according to the convention at p. 237
       // (last paragraph), Pottier2010.
-      velocity[j] += brownian.sigma_vel * noise[j] / sqrt(p.p.mass);
+      velocity[j] += brownian.sigma_vel * noise[j] / sqrt(p.mass());
     }
   }
   return velocity;
@@ -255,8 +255,8 @@ bd_drag_rot(Thermostat::GammaType const &brownian_gamma_rotation, Particle &p,
   Thermostat::GammaType gamma;
 
 #ifdef THERMOSTAT_PER_PARTICLE
-  if (p.p.gamma_rot >= Thermostat::GammaType{}) {
-    gamma = p.p.gamma_rot;
+  if (p.gamma_rot() >= Thermostat::GammaType{}) {
+    gamma = p.gamma_rot();
   } else
 #endif
   {
@@ -268,9 +268,9 @@ bd_drag_rot(Thermostat::GammaType const &brownian_gamma_rotation, Particle &p,
     if (!p.is_fixed_along(j)) {
       // only a conservative part of the torque is used here
 #ifndef PARTICLE_ANISOTROPY
-      dphi[j] = p.f.torque[j] * dt / gamma;
+      dphi[j] = p.torque()[j] * dt / gamma;
 #else
-      dphi[j] = p.f.torque[j] * dt / gamma[j];
+      dphi[j] = p.torque()[j] * dt / gamma[j];
 #endif // PARTICLE_ANISOTROPY
     }
   }
@@ -280,7 +280,7 @@ bd_drag_rot(Thermostat::GammaType const &brownian_gamma_rotation, Particle &p,
     auto const dphi_u = dphi / dphi_m;
     return local_rotate_particle_body(p, dphi_u, dphi_m);
   }
-  return p.r.quat;
+  return p.quat();
 }
 
 /** Set the terminal angular velocity driven by the conservative torques drag.
@@ -294,8 +294,8 @@ bd_drag_vel_rot(Thermostat::GammaType const &brownian_gamma_rotation,
   Thermostat::GammaType gamma;
 
 #ifdef THERMOSTAT_PER_PARTICLE
-  if (p.p.gamma_rot >= Thermostat::GammaType{}) {
-    gamma = p.p.gamma_rot;
+  if (p.gamma_rot() >= Thermostat::GammaType{}) {
+    gamma = p.gamma_rot();
   } else
 #endif
   {
@@ -307,9 +307,9 @@ bd_drag_vel_rot(Thermostat::GammaType const &brownian_gamma_rotation,
     if (!p.is_fixed_along(j)) {
       // only conservative part of the force is used here
 #ifndef PARTICLE_ANISOTROPY
-      omega[j] = p.f.torque[j] / gamma;
+      omega[j] = p.torque()[j] / gamma;
 #else
-      omega[j] = p.f.torque[j] / gamma[j];
+      omega[j] = p.torque()[j] / gamma[j];
 #endif // PARTICLE_ANISOTROPY
     }
   }
@@ -330,9 +330,9 @@ bd_random_walk_rot(BrownianThermostat const &brownian, Particle const &p,
   Thermostat::GammaType sigma_pos = brownian.sigma_pos_rotation;
 #ifdef THERMOSTAT_PER_PARTICLE
   // override default if particle-specific gamma
-  if (p.p.gamma_rot >= Thermostat::GammaType{}) {
+  if (p.gamma_rot() >= Thermostat::GammaType{}) {
     if (kT > 0.) {
-      sigma_pos = BrownianThermostat::sigma(kT, p.p.gamma_rot);
+      sigma_pos = BrownianThermostat::sigma(kT, p.gamma_rot());
     } else {
       sigma_pos = {}; // just an indication of the infinity
     }
@@ -341,7 +341,7 @@ bd_random_walk_rot(BrownianThermostat const &brownian, Particle const &p,
 
   Utils::Vector3d dphi = {};
   auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_ROT_INC>(
-      brownian.rng_counter(), brownian.rng_seed(), p.p.identity);
+      brownian.rng_counter(), brownian.rng_seed(), p.identity());
   for (int j = 0; j < 3; j++) {
     if (!p.is_fixed_along(j)) {
 #ifndef PARTICLE_ANISOTROPY
@@ -362,7 +362,7 @@ bd_random_walk_rot(BrownianThermostat const &brownian, Particle const &p,
     auto const dphi_u = dphi / dphi_m;
     return local_rotate_particle_body(p, dphi_u, dphi_m);
   }
-  return p.r.quat;
+  return p.quat();
 }
 
 /** Determine the angular velocities: random walk part.
@@ -376,10 +376,10 @@ bd_random_walk_vel_rot(BrownianThermostat const &brownian, Particle const &p) {
 
   Utils::Vector3d domega{};
   auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_ROT_WALK>(
-      brownian.rng_counter(), brownian.rng_seed(), p.p.identity);
+      brownian.rng_counter(), brownian.rng_seed(), p.identity());
   for (int j = 0; j < 3; j++) {
     if (!p.is_fixed_along(j)) {
-      domega[j] = sigma_vel * noise[j] / sqrt(p.p.rinertia[j]);
+      domega[j] = sigma_vel * noise[j] / sqrt(p.rinertia()[j]);
     }
   }
   return mask(p.p.rotation, domega);

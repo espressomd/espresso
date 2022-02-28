@@ -65,7 +65,7 @@ void IBM_ForcesIntoFluid_CPU() {
 
   // Loop over local cells
   for (auto &p : cell_structure.local_particles()) {
-    if (p.p.is_virtual)
+    if (p.is_virtual())
       CoupleIBMParticleToFluid(p);
   }
 

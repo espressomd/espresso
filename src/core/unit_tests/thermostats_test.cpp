@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE(test_brownian_dynamics) {
     auto const p = particle_factory();
     auto const sigma = sqrt(kT);
     auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_INC>(0, 0, 0);
-    auto const ref = sigma * noise / sqrt(p.p.mass);
+    auto const ref = sigma * noise / sqrt(p.mass());
     auto const out = bd_random_walk_vel(brownian, p);
     BOOST_CHECK_CLOSE(out[0], ref[0], tol);
     BOOST_CHECK_CLOSE(out[1], ref[1], tol);

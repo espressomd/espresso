@@ -168,8 +168,8 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
       auto const ref_old_pos = ref_positions[pid].first;
       auto const ref_old_vel = ref_positions[pid].second;
       auto const &p = get_particle_data(pid);
-      auto const &new_pos = p.r.p;
-      auto const &new_vel = p.m.v;
+      auto const &new_pos = p.pos();
+      auto const &new_vel = p.v();
       BOOST_CHECK_EQUAL(item.second, ref_old_pos);
       BOOST_CHECK_GE(new_pos, Utils::Vector3d::broadcast(0.));
       BOOST_CHECK_LE(new_pos, Utils::Vector3d::broadcast(box_l));
@@ -204,7 +204,7 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
     for (auto const pid : {0, 1}) {
       auto const ref_old_pos = ref_positions[pid];
       auto const &p = get_particle_data(pid);
-      auto const &new_pos = p.r.p;
+      auto const &new_pos = p.pos();
       BOOST_CHECK_LE((new_pos - ref_old_pos).norm(), tol);
     }
     // force a MC move to be accepted by using a constant Hamiltonian
@@ -215,7 +215,7 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
     // check that only one particle moved
     for (auto const pid : {0, 1}) {
       auto const &p = get_particle_data(pid);
-      distances[pid] = (ref_positions[pid] - p.r.p).norm();
+      distances[pid] = (ref_positions[pid] - p.pos()).norm();
     }
     BOOST_CHECK_LE(std::min(distances[0], distances[1]), tol);
     BOOST_CHECK_GE(std::max(distances[0], distances[1]), 0.1);

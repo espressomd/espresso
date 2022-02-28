@@ -375,54 +375,54 @@ int number_of_particles_with_type(int type);
 
 #ifdef LB_ELECTROHYDRODYNAMICS
 inline Utils::Vector3d get_particle_mu_E(Particle const *p) {
-  return p->p.mu_E;
+  return p->mu_E();
 }
 #endif
 
 #ifdef ROTATION
 inline Utils::Vector3d get_particle_omega_body(Particle const *p) {
-  return p->m.omega;
+  return p->omega();
 }
 
 inline Utils::Vector3d get_particle_torque_body(Particle const *p) {
-  return p->f.torque;
+  return p->torque();
 }
 
 inline Utils::Quaternion<double> get_particle_quat(Particle const *p) {
-  return p->r.quat;
+  return p->quat();
 }
 #endif
 
-inline double get_particle_q(Particle const *p) { return p->p.q; }
+inline double get_particle_q(Particle const *p) { return p->q(); }
 
 #ifdef VIRTUAL_SITES
-inline bool get_particle_virtual(Particle const *p) { return p->p.is_virtual; }
+inline bool get_particle_virtual(Particle const *p) { return p->is_virtual(); }
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
 inline Utils::Quaternion<double> get_particle_vs_quat(Particle const *p) {
-  return p->p.vs_relative.quat;
+  return p->vs_relative().quat;
 }
 inline Utils::Quaternion<double> get_particle_vs_relative(Particle const *p,
                                                           int &vs_relative_to,
                                                           double &vs_distance) {
-  vs_relative_to = p->p.vs_relative.to_particle_id;
-  vs_distance = p->p.vs_relative.distance;
-  return p->p.vs_relative.rel_orientation;
+  vs_relative_to = p->vs_relative().to_particle_id;
+  vs_distance = p->vs_relative().distance;
+  return p->vs_relative().rel_orientation;
 }
 #endif
 
 #ifdef DIPOLES
-inline double get_particle_dipm(Particle const *p) { return p->p.dipm; }
+inline double get_particle_dipm(Particle const *p) { return p->dipm(); }
 #endif
 
 #ifdef EXTERNAL_FORCES
 inline Utils::Vector3d get_particle_ext_force(Particle const *p) {
-  return p->p.ext_force;
+  return p->ext_force();
 }
 #ifdef ROTATION
 inline Utils::Vector3d get_particle_ext_torque(Particle const *p) {
-  return p->p.ext_torque;
+  return p->ext_torque();
 }
 #endif
 inline Utils::Vector3i get_particle_fix(Particle const *p) {
@@ -434,19 +434,19 @@ inline Utils::Vector3i get_particle_fix(Particle const *p) {
 #ifdef THERMOSTAT_PER_PARTICLE
 #ifdef PARTICLE_ANISOTROPY
 inline Utils::Vector3d get_particle_gamma(Particle const *p) {
-  return p->p.gamma;
+  return p->gamma();
 }
 #else
-inline double get_particle_gamma(Particle const *p) { return p->p.gamma; }
+inline double get_particle_gamma(Particle const *p) { return p->gamma(); }
 #endif // PARTICLE_ANISOTROPY
 #ifdef ROTATION
 #ifdef PARTICLE_ANISOTROPY
 inline Utils::Vector3d get_particle_gamma_rot(Particle const *p) {
-  return p->p.gamma_rot;
+  return p->gamma_rot();
 }
 #else
 inline double get_particle_gamma_rot(Particle const *p) {
-  return p->p.gamma_rot;
+  return p->gamma_rot();
 }
 #endif // PARTICLE_ANISOTROPY
 #endif // ROTATION
@@ -454,13 +454,13 @@ inline double get_particle_gamma_rot(Particle const *p) {
 
 #ifdef ENGINE
 inline ParticleParametersSwimming get_particle_swimming(Particle const *p) {
-  return p->p.swim;
+  return p->swimming();
 }
 #endif
 
 #ifdef ROTATIONAL_INERTIA
 inline Utils::Vector3d get_particle_rotational_inertia(Particle const *p) {
-  return p->p.rinertia;
+  return p->rinertia();
 }
 #endif
 
