@@ -53,7 +53,7 @@ void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles,
       continue;
     auto const noise = friction_therm0_nptiso<2>(npt_iso, p.m.v, p.p.identity);
     for (int j = 0; j < 3; j++) {
-      if (!(p.p.ext_flag & COORD_FIXED(j))) {
+      if (!p.is_fixed_along(j)) {
         if (nptiso.geometry & nptiso.nptgeom_dir[j]) {
           nptiso.p_vel[j] += Utils::sqr(p.m.v[j] * time_step) * p.p.mass;
           p.m.v[j] += (p.f.f[j] * time_step / 2.0 + noise[j]) / p.p.mass;
@@ -123,7 +123,7 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles,
     if (p.p.is_virtual)
       continue;
     for (int j = 0; j < 3; j++) {
-      if (!(p.p.ext_flag & COORD_FIXED(j))) {
+      if (!p.is_fixed_along(j)) {
         if (nptiso.geometry & nptiso.nptgeom_dir[j]) {
           p.r.p[j] = scal[1] * (p.r.p[j] + scal[2] * p.m.v[j] * time_step);
           p.l.p_old[j] *= scal[1];
@@ -171,7 +171,7 @@ void velocity_verlet_npt_propagate_vel(const ParticleRange &particles,
     if (p.p.is_virtual)
       continue;
     for (int j = 0; j < 3; j++) {
-      if (!(p.p.ext_flag & COORD_FIXED(j))) {
+      if (!p.is_fixed_along(j)) {
         auto const noise =
             friction_therm0_nptiso<1>(npt_iso, p.m.v, p.p.identity);
         if (integ_switch == INTEG_METHOD_NPT_ISO &&

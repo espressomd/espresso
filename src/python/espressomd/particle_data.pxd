@@ -164,8 +164,8 @@ cdef extern from "particle_data.hpp":
         void set_particle_ext_force(int part, const Vector3d & force)
         Vector3d get_particle_ext_force(const particle * p)
 
-        void set_particle_fix(int part, stdint.uint8_t flag)
-        stdint.uint8_t get_particle_fix(const particle * p)
+        void set_particle_fix(int part, const Vector3i & flag)
+        Vector3i get_particle_fix(const particle * p)
 
     void delete_particle_bond(int part, Span[const int] bond)
     void delete_particle_bonds(int part)

@@ -44,7 +44,7 @@ inline void velocity_verlet_propagate_vel_pos(const ParticleRange &particles,
     if (p.p.is_virtual)
       continue;
     for (int j = 0; j < 3; j++) {
-      if (!(p.p.ext_flag & COORD_FIXED(j))) {
+      if (!p.is_fixed_along(j)) {
         /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5 * dt * a(t) */
         p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
 
@@ -68,7 +68,7 @@ inline void velocity_verlet_propagate_vel_final(const ParticleRange &particles,
       continue;
 
     for (int j = 0; j < 3; j++) {
-      if (!(p.p.ext_flag & COORD_FIXED(j))) {
+      if (!p.is_fixed_along(j)) {
         /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt) */
         p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
       }

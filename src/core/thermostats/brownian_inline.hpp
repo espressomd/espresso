@@ -70,25 +70,16 @@ inline Utils::Vector3d bd_drag(Thermostat::GammaType const &brownian_gamma,
     // Only a conservative part of the force is used here
 #ifdef PARTICLE_ANISOTROPY
     if (aniso_flag) {
-#ifdef EXTERNAL_FORCES
-      if (!(p.p.ext_flag & COORD_FIXED(j)))
-#endif
-      {
+      if (!p.is_fixed_along(j)) {
         position[j] = delta_pos_lab[j];
       }
     } else {
-#ifdef EXTERNAL_FORCES
-      if (!(p.p.ext_flag & COORD_FIXED(j)))
-#endif
-      {
+      if (!p.is_fixed_along(j)) {
         position[j] = p.f.f[j] * dt / gamma[j];
       }
     }
 #else
-#ifdef EXTERNAL_FORCES
-    if (!(p.p.ext_flag & COORD_FIXED(j)))
-#endif
-    {
+    if (!p.is_fixed_along(j)) {
       position[j] = p.f.f[j] * dt / gamma;
     }
 #endif // PARTICLE_ANISOTROPY
@@ -133,25 +124,16 @@ inline Utils::Vector3d bd_drag_vel(Thermostat::GammaType const &brownian_gamma,
     // here.
 #ifdef PARTICLE_ANISOTROPY
     if (aniso_flag) {
-#ifdef EXTERNAL_FORCES
-      if (!(p.p.ext_flag & COORD_FIXED(j)))
-#endif
-      {
+      if (!p.is_fixed_along(j)) {
         velocity[j] = vel_lab[j];
       }
     } else {
-#ifdef EXTERNAL_FORCES
-      if (!(p.p.ext_flag & COORD_FIXED(j)))
-#endif
-      {
+      if (!p.is_fixed_along(j)) {
         velocity[j] = p.f.f[j] / gamma[j];
       }
     }
-#else // PARTICLE_ANISOTROPY
-#ifdef EXTERNAL_FORCES
-    if (!(p.p.ext_flag & COORD_FIXED(j)))
-#endif
-    {
+#else  // PARTICLE_ANISOTROPY
+    if (!p.is_fixed_along(j)) {
       velocity[j] = p.f.f[j] / gamma;
     }
 #endif // PARTICLE_ANISOTROPY
@@ -190,10 +172,7 @@ inline Utils::Vector3d bd_random_walk(BrownianThermostat const &brownian,
   auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_WALK>(
       brownian.rng_counter(), brownian.rng_seed(), p.p.identity);
   for (int j = 0; j < 3; j++) {
-#ifdef EXTERNAL_FORCES
-    if (!(p.p.ext_flag & COORD_FIXED(j)))
-#endif
-    {
+    if (!p.is_fixed_along(j)) {
 #ifndef PARTICLE_ANISOTROPY
       if (sigma_pos > 0.0) {
         delta_pos_body[j] = sigma_pos * sqrt(dt) * noise[j];
@@ -222,10 +201,7 @@ inline Utils::Vector3d bd_random_walk(BrownianThermostat const &brownian,
 
   Utils::Vector3d position = {};
   for (int j = 0; j < 3; j++) {
-#ifdef EXTERNAL_FORCES
-    if (!(p.p.ext_flag & COORD_FIXED(j)))
-#endif
-    {
+    if (!p.is_fixed_along(j)) {
 #ifdef PARTICLE_ANISOTROPY
       position[j] += aniso_flag ? delta_pos_lab[j] : delta_pos_body[j];
 #else
@@ -251,10 +227,7 @@ inline Utils::Vector3d bd_random_walk_vel(BrownianThermostat const &brownian,
       brownian.rng_counter(), brownian.rng_seed(), p.identity());
   Utils::Vector3d velocity = {};
   for (int j = 0; j < 3; j++) {
-#ifdef EXTERNAL_FORCES
-    if (!(p.p.ext_flag & COORD_FIXED(j)))
-#endif
-    {
+    if (!p.is_fixed_along(j)) {
       // Random (heat) velocity. See eq. (10.2.16) taking into account eq.
       // (10.2.18) and (10.2.29), Pottier2010. Note, that the Pottier2010 units
       // system (see Eq. (10.1.1) there) has been adapted towards the ESPResSo
@@ -292,10 +265,7 @@ bd_drag_rot(Thermostat::GammaType const &brownian_gamma_rotation, Particle &p,
 
   Utils::Vector3d dphi = {};
   for (int j = 0; j < 3; j++) {
-#ifdef EXTERNAL_FORCES
-    if (!(p.p.ext_flag & COORD_FIXED(j)))
-#endif
-    {
+    if (!p.is_fixed_along(j)) {
       // only a conservative part of the torque is used here
 #ifndef PARTICLE_ANISOTROPY
       dphi[j] = p.f.torque[j] * dt / gamma;
@@ -334,10 +304,7 @@ bd_drag_vel_rot(Thermostat::GammaType const &brownian_gamma_rotation,
 
   Utils::Vector3d omega = {};
   for (int j = 0; j < 3; j++) {
-#ifdef EXTERNAL_FORCES
-    if (!(p.p.ext_flag & COORD_FIXED(j)))
-#endif
-    {
+    if (!p.is_fixed_along(j)) {
       // only conservative part of the force is used here
 #ifndef PARTICLE_ANISOTROPY
       omega[j] = p.f.torque[j] / gamma;
@@ -376,10 +343,7 @@ bd_random_walk_rot(BrownianThermostat const &brownian, Particle const &p,
   auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_ROT_INC>(
       brownian.rng_counter(), brownian.rng_seed(), p.p.identity);
   for (int j = 0; j < 3; j++) {
-#ifdef EXTERNAL_FORCES
-    if (!(p.p.ext_flag & COORD_FIXED(j)))
-#endif
-    {
+    if (!p.is_fixed_along(j)) {
 #ifndef PARTICLE_ANISOTROPY
       if (sigma_pos > 0.0) {
         dphi[j] = noise[j] * sigma_pos * sqrt(dt);
@@ -414,10 +378,7 @@ bd_random_walk_vel_rot(BrownianThermostat const &brownian, Particle const &p) {
   auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_ROT_WALK>(
       brownian.rng_counter(), brownian.rng_seed(), p.p.identity);
   for (int j = 0; j < 3; j++) {
-#ifdef EXTERNAL_FORCES
-    if (!(p.p.ext_flag & COORD_FIXED(j)))
-#endif
-    {
+    if (!p.is_fixed_along(j)) {
       domega[j] = sigma_vel * noise[j] / sqrt(p.p.rinertia[j]);
     }
   }

@@ -288,10 +288,10 @@ void set_particle_ext_force(int part, const Utils::Vector3d &force);
 /** Call only on the head node: set coordinate axes for which the particles
  *  motion is fixed.
  *  @param part  the particle.
- *  @param flag new value for flagged coordinate axes to be fixed
+ *  @param flag  coordinates to be fixed.
  */
-void set_particle_fix(int part, uint8_t flag);
-#endif
+void set_particle_fix(int part, Utils::Vector3i const &flag);
+#endif // EXTERNAL_FORCES
 
 /** Call only on the head node: remove bond from particle.
  *  @param part     identity of principal atom of the bond.
@@ -425,8 +425,11 @@ inline Utils::Vector3d get_particle_ext_torque(Particle const *p) {
   return p->p.ext_torque;
 }
 #endif
-inline uint8_t get_particle_fix(Particle const *p) { return p->p.ext_flag; }
-#endif
+inline Utils::Vector3i get_particle_fix(Particle const *p) {
+  return Utils::Vector3i{
+      {p->is_fixed_along(0), p->is_fixed_along(1), p->is_fixed_along(2)}};
+}
+#endif // EXTERNAL_FORCES
 
 #ifdef THERMOSTAT_PER_PARTICLE
 #ifdef PARTICLE_ANISOTROPY

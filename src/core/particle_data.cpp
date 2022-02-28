@@ -949,9 +949,16 @@ void set_particle_ext_force(int part, const Utils::Vector3d &force) {
       part, force);
 }
 
-void set_particle_fix(int part, uint8_t flag) {
-  mpi_update_particle_property<uint8_t, &ParticleProperties::ext_flag>(part,
-                                                                       flag);
+void set_particle_fix(int part, Utils::Vector3i const &flag) {
+  auto ext_flag = static_cast<uint8_t>(0u);
+  if (flag[0])
+    ext_flag |= static_cast<uint8_t>(1u);
+  if (flag[1])
+    ext_flag |= static_cast<uint8_t>(2u);
+  if (flag[2])
+    ext_flag |= static_cast<uint8_t>(4u);
+  mpi_update_particle_property<uint8_t, &ParticleProperties::ext_flag>(
+      part, ext_flag);
 }
 #endif // EXTERNAL_FORCES
 
