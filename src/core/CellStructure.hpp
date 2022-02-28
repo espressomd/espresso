@@ -133,6 +133,7 @@ private:
   unsigned m_resort_particles = Cells::RESORT_NONE;
   bool m_rebuild_verlet_list = true;
   std::vector<std::pair<Particle *, Particle *>> m_verlet_list;
+  double m_le_pos_offset_at_last_resort = 0.;
 
 public:
   bool use_verlet_list = true;
@@ -379,15 +380,24 @@ public:
   /**
    * @brief Check whether a particle has moved further than half the skin
    * since the last Verlet list update, thus requiring a resort.
-   * @param particles Particles to check
-   * @param skin Skin
+   * @param particles           Particles to check
+   * @param skin                Skin
+   * @param additional_offset   Offset which is added to the distance the
+   *                            particle has travelled when comparing to half
+   *                            the skin (e.g., for Lees-Edwards BC).
    * @return Whether a resort is needed.
    */
-  bool check_resort_required(ParticleRange const &particles, double skin) {
-    auto const lim = Utils::sqr(skin / 2.);
+  bool
+  check_resort_required(ParticleRange const &particles, double skin,
+                        Utils::Vector3d const &additional_offset = {}) const {
+    auto const lim = Utils::sqr(skin / 2.) - additional_offset.norm2();
     return std::any_of(
         particles.begin(), particles.end(),
         [lim](const auto &p) { return ((p.r.p - p.l.p_old).norm2() > lim); });
+  }
+
+  auto get_le_pos_offset_at_last_resort() const {
+    return m_le_pos_offset_at_last_resort;
   }
 
   /**
@@ -487,7 +497,7 @@ public:
   /**
    * @brief Resort particles.
    */
-  void resort_particles(int global_flag, const BoxGeometry &box);
+  void resort_particles(int global_flag, BoxGeometry const &box);
 
 private:
   /** @brief Set the particle decomposition, keeping the particles. */

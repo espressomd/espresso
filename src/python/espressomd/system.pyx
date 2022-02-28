@@ -425,8 +425,9 @@ cdef class System:
         return make_array_locked(box_geo.get_mi_vector(pos2, pos1))
 
     def velocity_difference(self, p1, p2):
-        """Return the velocity difference between two particles,
-        considering Lees-Edwards boundary conditions, if active
+        """
+        Return the velocity difference between two particles,
+        considering Lees-Edwards boundary conditions, if active.
 
         Parameters
         ----------

@@ -160,9 +160,9 @@ void VirtualSitesRelative::update() const {
     p.v() = velocity(*p_ref, p.vs_relative());
 
     if (box_geo.type() == BoxType::LEES_EDWARDS) {
-      const auto &shear_dir = box_geo.clees_edwards_bc().shear_direction;
-      const auto &shear_normal = box_geo.clees_edwards_bc().shear_plane_normal;
-      const auto &le_vel = box_geo.lees_edwards_bc().shear_velocity;
+      auto const &shear_dir = box_geo.clees_edwards_bc().shear_direction;
+      auto const &shear_normal = box_geo.clees_edwards_bc().shear_plane_normal;
+      auto const &le_vel = box_geo.lees_edwards_bc().shear_velocity;
       Utils::Vector3i n_shifts{};
       fold_position(new_pos, n_shifts, box_geo);
       p.v()[shear_dir] -= n_shifts[shear_normal] * le_vel;

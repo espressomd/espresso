@@ -1,9 +1,29 @@
-#pragma once
+/*
+ * Copyright (C) 2021-2022 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+#ifndef CORE_LEES_EDWARDS_BC_HPP
+#define CORE_LEES_EDWARDS_BC_HPP
 
-#include "utils/Vector.hpp"
-#include <iostream>
+#include <utils/Vector.hpp>
 
 #include <bitset>
+#include <cassert>
+#include <cmath>
 
 struct LeesEdwardsBC {
   double pos_offset = 0.;
@@ -18,7 +38,7 @@ struct LeesEdwardsBC {
     assert(shear_direction >= 0 and shear_direction <= 2);
     assert(shear_plane_normal >= 0 and shear_plane_normal <= 2);
 
-    Utils::Vector3d n_jumps = {};
+    Utils::Vector3d n_jumps{};
     Utils::Vector3d res = d;
 
     double n_le_crossings =
@@ -34,3 +54,5 @@ struct LeesEdwardsBC {
     return res;
   }
 };
+
+#endif

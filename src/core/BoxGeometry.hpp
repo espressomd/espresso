@@ -19,10 +19,12 @@
 #ifndef CORE_BOX_GEOMETRY_HPP
 #define CORE_BOX_GEOMETRY_HPP
 
+#include "LeesEdwardsBC.hpp"
 #include "algorithm/periodic_fold.hpp"
 #include "utils/math/sgn.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/math/sgn.hpp>
 
 #include "LeesEdwardsBC.hpp"
 #include <bitset>
@@ -71,16 +73,17 @@ template <typename T> T get_mi_coord(T a, T b, T box_length, bool periodic) {
 } // namespace detail
 
 enum class BoxType { CUBOID = 0, LEES_EDWARDS = 1 };
+
 class BoxGeometry {
 public:
   BoxGeometry() {
-    set_length(Utils::Vector3d{1, 1, 1});
+    set_length(Utils::Vector3d{1., 1., 1.});
     set_periodic(0, true);
     set_periodic(1, true);
     set_periodic(2, true);
     set_type(BoxType::CUBOID);
-  };
-  BoxGeometry(const BoxGeometry &rhs) {
+  }
+  BoxGeometry(BoxGeometry const &rhs) {
     m_type = rhs.type();
     set_length(rhs.length());
     set_periodic(0, rhs.periodic(0));
@@ -100,7 +103,7 @@ private:
   /** Half side lengths of the box */
   Utils::Vector3d m_length_half = {0.5, 0.5, 0.5};
 
-  /** Lees Edwards boundary conditions */
+  /** Lees-Edwards boundary conditions */
   LeesEdwardsBC m_lees_edwards_bc;
 
 public:
@@ -185,31 +188,28 @@ public:
   template <typename T>
   Utils::Vector<T, 3> get_mi_vector(const Utils::Vector<T, 3> &a,
                                     const Utils::Vector<T, 3> &b) const {
-    if (type() == BoxType::CUBOID) {
-      return {get_mi_coord(a[0], b[0], 0), get_mi_coord(a[1], b[1], 1),
-              get_mi_coord(a[2], b[2], 2)};
-    }
     if (type() == BoxType::LEES_EDWARDS) {
       return clees_edwards_bc().distance(a - b, length(), length_half(),
                                          length_inv(), m_periodic);
     }
-    throw std::runtime_error("Unhandled BoxType");
+    assert(type() == BoxType::CUBOID);
+    return {get_mi_coord(a[0], b[0], 0), get_mi_coord(a[1], b[1], 1),
+            get_mi_coord(a[2], b[2], 2)};
   }
 
-  BoxType type() const { return m_type; };
-  void set_type(BoxType type) { m_type = type; };
+  BoxType type() const { return m_type; }
+  void set_type(BoxType type) { m_type = type; }
 
-  LeesEdwardsBC &lees_edwards_bc() { return m_lees_edwards_bc; };
-  const LeesEdwardsBC &clees_edwards_bc() const { return m_lees_edwards_bc; };
+  LeesEdwardsBC &lees_edwards_bc() { return m_lees_edwards_bc; }
+  LeesEdwardsBC const &clees_edwards_bc() const { return m_lees_edwards_bc; }
   void set_lees_edwards_bc(LeesEdwardsBC bc) { m_lees_edwards_bc = bc; }
-  /** Calculate the velocity difference including the Lees Edwards velocity*/
+
+  /** Calculate the velocity difference including the Lees-Edwards velocity */
   Utils::Vector3d velocity_difference(Utils::Vector3d const &x,
                                       Utils::Vector3d const &y,
                                       Utils::Vector3d const &u,
                                       Utils::Vector3d const &v) const {
-
     auto ret = u - v;
-
     if (type() == BoxType::LEES_EDWARDS) {
       auto const &le = m_lees_edwards_bc;
       auto const dy = x[le.shear_plane_normal] - y[le.shear_plane_normal];

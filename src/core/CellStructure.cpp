@@ -24,6 +24,8 @@
 #include "AtomDecomposition.hpp"
 #include "CellStructureType.hpp"
 #include "RegularDecomposition.hpp"
+#include "grid.hpp"
+#include "lees_edwards.hpp"
 
 #include "lees_edwards.hpp"
 
@@ -223,7 +225,7 @@ struct UpdateParticleIndexVisitor {
 };
 } // namespace
 
-void CellStructure::resort_particles(int global_flag, const BoxGeometry &box) {
+void CellStructure::resort_particles(int global_flag, BoxGeometry const &box) {
   invalidate_ghosts();
 
   static std::vector<ParticleChange> diff;
@@ -236,7 +238,7 @@ void CellStructure::resort_particles(int global_flag, const BoxGeometry &box) {
   }
 
   m_rebuild_verlet_list = true;
-  LeesEdwards::on_resort(box);
+  m_le_pos_offset_at_last_resort = box.clees_edwards_bc().pos_offset;
 
 #ifdef ADDITIONAL_CHECKS
   check_particle_index();

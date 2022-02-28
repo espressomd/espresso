@@ -119,14 +119,6 @@ The following limitations currently apply for the collision detection:
   between virtual sites
 
 
-.. _Lees-Edwards boundary conditions:
-
-Lees-Edwards boundary conditions
---------------------------------
-
-Lees-Edwards boundary conditions are not available in the current version of |es|.
-
-
 .. _Immersed Boundary Method for soft elastic objects:
 
 Immersed Boundary Method for soft elastic objects

@@ -20,7 +20,6 @@ set(EspressoCore_SRC
     interactions.cpp
     event.cpp
     integrate.cpp
-    lees_edwards.cpp
     npt.cpp
     partCfg_global.cpp
     particle_data.cpp
