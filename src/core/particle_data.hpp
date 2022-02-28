@@ -116,6 +116,12 @@ int place_particle(int part, Utils::Vector3d const &p);
  */
 void set_particle_v(int part, Utils::Vector3d const &v);
 
+/** Call only on the head node: set particle Lees-Edwards offset.
+ *  @param part the particle.
+ *  @param v new value for Lees-Edwards offset
+ */
+void set_particle_lees_edwards_offset(int part, double v);
+
 #ifdef ENGINE
 /** Call only on the head node: set particle velocity.
  *  @param part the particle.

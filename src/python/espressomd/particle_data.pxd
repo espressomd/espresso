@@ -60,6 +60,8 @@ cdef extern from "particle_data.hpp":
 
     ctypedef struct particle_local "ParticleLocal":
         Vector3i i
+        double lees_edwards_offset
+        int lees_edwards_flag
 
     ctypedef struct particle "Particle":
         particle_properties p
@@ -86,6 +88,7 @@ cdef extern from "particle_data.hpp":
     void set_particle_v(int part, const Vector3d & v)
 
     void set_particle_f(int part, const Vector3d & f)
+    void set_particle_lees_edwards_offset(int, const double)
 
     IF ROTATION:
         void set_particle_rotation(int part, int rot)

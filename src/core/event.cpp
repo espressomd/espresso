@@ -316,8 +316,6 @@ void on_timestep_change() {
   on_thermostat_param_change();
 }
 
-void on_simtime_change() { recalc_forces = true; }
-
 void on_forcecap_change() { recalc_forces = true; }
 
 void on_nodegrid_change() {

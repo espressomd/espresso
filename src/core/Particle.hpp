@@ -371,10 +371,16 @@ struct ParticleLocal {
   /** index of the simulation box image where the particle really sits. */
   Utils::Vector3i i = {0, 0, 0};
 
+  /** Accumulated applied Lees-Edwards offset. */
+  double lees_edwards_offset = 0.;
+  short int lees_edwards_flag = 0;
+
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
     ar &ghost;
     ar &p_old;
     ar &i;
+    ar &lees_edwards_offset;
+    ar &lees_edwards_flag;
   }
 };
 
@@ -463,6 +469,10 @@ public:
   auto const &pos_at_last_verlet_update() const { return l.p_old; }
   auto const &image_box() const { return l.i; }
   auto &image_box() { return l.i; }
+  auto const &lees_edwards_offset() const { return l.lees_edwards_offset; }
+  auto &lees_edwards_offset() { return l.lees_edwards_offset; }
+  auto const &lees_edwards_flag() const { return l.lees_edwards_flag; }
+  auto &lees_edwards_flag() { return l.lees_edwards_flag; }
 
 #ifdef MASS
   auto const &mass() const { return p.mass; }

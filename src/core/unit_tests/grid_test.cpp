@@ -134,6 +134,80 @@ BOOST_AUTO_TEST_CASE(get_mi_vector_test) {
   }
 }
 
+BOOST_AUTO_TEST_CASE(lees_edwards_mi_vector) {
+  using detail::get_mi_coord;
+  using Utils::Vector3d;
+
+  Vector3d box_l = {5., 2., 3.};
+  BoxGeometry box;
+  box.set_length(box_l);
+  box.set_periodic(1, false);
+  box.set_type(BoxType::LEES_EDWARDS);
+  LeesEdwardsBC le;
+  le.shear_direction = 2;
+  le.shear_plane_normal = 0;
+  box.set_lees_edwards_bc(le);
+
+  // No pos offset -> behave like normal get_mi_vector
+  {
+    auto const a = Vector3d{5.1, 12.2, -13.4};
+    auto const b = Vector3d{-0.9, 8.8, 21.1};
+
+    auto const result = box.get_mi_vector(a, b);
+
+    for (int i = 0; i < 3; i++) {
+      auto const expected = get_mi_coord(a[i], b[i], box_l[i], box.periodic(i));
+      BOOST_CHECK_SMALL(std::abs(expected - result[i]), epsilon<double>);
+    }
+  }
+
+  // LE pos offset >0 but distance < half box length. Behave like normal
+  // get_mi_vector
+  le.pos_offset = 1.;
+  box.set_lees_edwards_bc(le);
+  {
+    auto const a = Vector3d{1.1, 12.2, -13.4};
+    auto const b = Vector3d{-0.9, 8.8, 21.1};
+
+    auto const result = box.get_mi_vector(a, b);
+
+    for (int i = 0; i < 3; i++) {
+      auto const expected = get_mi_coord(a[i], b[i], box_l[i], box.periodic(i));
+      BOOST_CHECK_SMALL(std::abs(expected - result[i]), epsilon<double>);
+    }
+  }
+  // LE pos offset and distance > box in shear plane normal direction
+  {
+    auto const a = Vector3d{1.1, 12.2, -13};
+    auto const b = Vector3d{-11, 8.8, -13};
+    auto const le_jumps = std::round((a[0] - b[0]) / box.length()[0]);
+
+    auto const result = box.get_mi_vector(a, b);
+
+    auto const expected = Vector3d{{
+        std::fmod(a[0] - b[0], box.length()[0]), a[1] - b[1],
+        a[2] - b[2] + le_jumps * le.pos_offset -
+            box.length()[2] // Manually apply minimum image convention
+    }};
+    for (int i : {0, 1, 2}) {
+      BOOST_CHECK_CLOSE(expected[i], result[i], epsilon<double>);
+    }
+  }
+
+  // Test a case where coordinate different + LE offset in shift dir > box_l/2
+  box.set_type(BoxType::LEES_EDWARDS);
+  box.set_periodic(0, true);
+  box.set_periodic(1, true);
+  box.set_periodic(2, true);
+  box.set_length(Vector3d{5, 5, 5});
+  box.lees_edwards_bc().pos_offset = 2.98;
+  box.lees_edwards_bc().shear_direction = 0;
+  box.lees_edwards_bc().shear_plane_normal = 1;
+  auto const result =
+      box.get_mi_vector(Vector3d{2.5, 1., 2.5}, Vector3d{4.52, 4., 2.5});
+  BOOST_CHECK_SMALL(std::fabs(result[0]), box.length_half()[0]);
+}
+
 BOOST_AUTO_TEST_CASE(image_shift_test) {
   Utils::Vector3i img{1, -2, 3};
   Utils::Vector3d box{1., 2., 3.};
