@@ -34,7 +34,6 @@
 #include "partCfg_global.hpp"
 #include "rotation.hpp"
 
-#include <string>
 #include <utils/Cache.hpp>
 #include <utils/constants.hpp>
 #include <utils/keys.hpp>

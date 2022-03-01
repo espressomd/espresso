@@ -29,7 +29,6 @@
 
 #include <boost/serialization/vector.hpp>
 
-#include <bitset>
 #include <cstdint>
 #include <stdexcept>
 #include <vector>

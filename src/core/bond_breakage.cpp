@@ -25,6 +25,9 @@
 #include <utils/mpi/gather_buffer.hpp>
 
 #include <boost/functional/hash.hpp>
+#include <boost/mpi.hpp>
+#include <boost/optional.hpp>
+#include <boost/serialization/access.hpp>
 #include <boost/variant.hpp>
 
 #include <cassert>

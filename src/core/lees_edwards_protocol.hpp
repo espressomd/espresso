@@ -23,6 +23,8 @@
 
 #include <boost/variant.hpp>
 
+#include <cmath>
+
 namespace LeesEdwards {
 
 // Protocols determining shear rate and positional offset as a function of time
