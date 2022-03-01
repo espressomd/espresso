@@ -180,7 +180,7 @@ void integrator_sanity_checks() {
   }
 }
 
-static void resort_particles_if_needed(ParticleRange &particles) {
+static void resort_particles_if_needed(ParticleRange const &particles) {
   auto const offset = LeesEdwards::verlet_list_offset(
       box_geo, cell_structure.get_le_pos_offset_at_last_resort());
   if (cell_structure.check_resort_required(particles, skin, offset)) {
@@ -191,7 +191,7 @@ static void resort_particles_if_needed(ParticleRange &particles) {
 /** @brief Calls the hook for propagation kernels before the force calculation
  *  @return whether or not to stop the integration loop early.
  */
-bool integrator_step_1(ParticleRange &particles) {
+static bool integrator_step_1(ParticleRange const &particles) {
   bool early_exit = false;
   switch (integ_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
@@ -221,7 +221,7 @@ bool integrator_step_1(ParticleRange &particles) {
 }
 
 /** Calls the hook of the propagation kernels after force calculation */
-void integrator_step_2(ParticleRange &particles, double kT) {
+static void integrator_step_2(ParticleRange const &particles, double kT) {
   switch (integ_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
     // Nothing
