@@ -211,7 +211,7 @@ const Utils::Vector6d
 lb_lbnode_get_pressure_tensor_neq(const Utils::Vector3i &ind);
 
 /** @brief Calculate the average pressure tensor of all nodes by accumulating
- *  over all nodes and dividing by the @ref LB_parameters_gpu::number_of_nodes.
+ *  over all nodes and dividing by the number of nodes.
  *  Returns the lower triangle of the LB pressure tensor.
  */
 const Utils::Vector6d lb_lbfluid_get_pressure_tensor();

@@ -183,6 +183,7 @@ using UpdateForceMessage = boost::variant
       , UpdateForce<Utils::Vector3d, &ParticleForce::torque>
 #endif
       >;
+// clang-format on
 
 /**
  * @brief Delete specific bond.
@@ -192,39 +193,38 @@ struct RemoveBond {
 
   void operator()(Particle &p) const {
     assert(not bond.empty());
-    auto const view = BondView(bond.front(), {bond.data() + 1, bond.size() - 1});
+    auto const view =
+        BondView(bond.front(), {bond.data() + 1, bond.size() - 1});
     auto it = boost::find(p.bonds(), view);
 
     if (it != p.bonds().end()) {
-     p.bonds().erase(it);
+      p.bonds().erase(it);
     }
   }
 
-  template <class Archive>
-  void serialize(Archive &ar, long int) { ar & bond; }
+  template <class Archive> void serialize(Archive &ar, long int) { ar &bond; }
 };
 
 /**
  * @brief Delete pair bonds to a specific partner
  */
 struct RemovePairBondsTo {
-   int other_pid;
+  int other_pid;
 
-    void operator()(Particle &p) const {
-      using Bond = std::vector<int>;
-      std::vector<Bond> to_delete;
-      for (auto b: p.bonds()) {
-         if (b.partner_ids().size() == 1 and b.partner_ids()[0] == other_pid)
-           to_delete.push_back(Bond{b.bond_id(),other_pid});
-      }
-      for (auto b: to_delete) {
-        RemoveBond{b}(p);
-      }
+  void operator()(Particle &p) const {
+    using Bond = std::vector<int>;
+    std::vector<Bond> to_delete;
+    for (auto b : p.bonds()) {
+      if (b.partner_ids().size() == 1 and b.partner_ids()[0] == other_pid)
+        to_delete.push_back(Bond{b.bond_id(), other_pid});
     }
-    template<class Archive>
-            void serialize(Archive &ar, long int) {
-        ar & other_pid;
+    for (auto b : to_delete) {
+      RemoveBond{b}(p);
     }
+  }
+  template <class Archive> void serialize(Archive &ar, long int) {
+    ar &other_pid;
+  }
 };
 
 /**
@@ -233,8 +233,7 @@ struct RemovePairBondsTo {
 struct RemoveBonds {
   void operator()(Particle &p) const { p.bonds().clear(); }
 
-  template<class Archive>
-  void serialize(Archive &, long int) {}
+  template <class Archive> void serialize(Archive &, long int) {}
 };
 
 struct AddBond {
@@ -246,34 +245,31 @@ struct AddBond {
     p.bonds().insert(view);
   }
 
-  template<class Archive>
-  void serialize(Archive &ar, long int) {
-    ar & bond;
-  }
+  template <class Archive> void serialize(Archive &ar, long int) { ar &bond; }
 };
 
+// clang-format off
 using UpdateBondMessage = boost::variant
         < RemoveBond
         , RemoveBonds
         , AddBond
         >;
+// clang-format on
 
 #ifdef ROTATION
 struct UpdateOrientation {
   Utils::Vector3d axis;
   double angle;
 
-  void operator()(Particle &p) const {
-    local_rotate_particle(p, axis, angle);
-  }
+  void operator()(Particle &p) const { local_rotate_particle(p, axis, angle); }
 
-  template<class Archive>
-  void serialize(Archive &ar, long int) {
-      ar & axis & angle;
+  template <class Archive> void serialize(Archive &ar, long int) {
+    ar &axis &angle;
   }
 };
 #endif
 
+// clang-format off
 /**
  * @brief Top-level message.
  *

@@ -67,7 +67,7 @@ public:
       return false;
 
 #ifdef ELECTROSTATICS
-    // Within real space cutoff of electrostatics and both charged
+    // Within real space cutoff of electrostatics and both are charged
     if (dist2 <= m_eff_coulomb_cut2 and p1.q() != 0. and p2.q() != 0.)
       return true;
 #endif

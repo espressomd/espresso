@@ -252,18 +252,14 @@ void integrator_step_2(ParticleRange &particles, double kT) {
 int integrate(int n_steps, int reuse_forces) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
-  /* Prepare the integrator */
+  // Prepare particle structure and run sanity checks of all active algorithms
   on_integration_start(time_step);
 
-  /* if any method vetoes (e.g. P3M not initialized), immediately bail out */
+  // If any method vetoes (e.g. P3M not initialized), immediately bail out
   if (check_runtime_errors(comm_cart))
     return 0;
 
-  /* Verlet list criterion */
-
-  /* Integration Step: Preparation for first integration step:
-   * Calculate forces F(t) as function of positions x(t) (and velocities v(t))
-   */
+  // Additional preparations for the first integration step
   if (reuse_forces == -1 || (recalc_forces && reuse_forces != 1)) {
     ESPRESSO_PROFILER_MARK_BEGIN("Initial Force Calculation");
     lb_lbcoupling_deactivate();
@@ -291,13 +287,13 @@ int integrate(int n_steps, int reuse_forces) {
   if (check_runtime_errors(comm_cart))
     return 0;
 
-  /* incremented if a Verlet update is done, aka particle resorting. */
+  // Keep track of the number of Verlet updates (i.e. particle resorts)
   int n_verlet_updates = 0;
 
 #ifdef VALGRIND_INSTRUMENTATION
   CALLGRIND_START_INSTRUMENTATION;
 #endif
-  /* Integration loop */
+  // Integration loop
   ESPRESSO_PROFILER_CXX_MARK_LOOP_BEGIN(integration_loop, "Integration loop");
   int integrated_steps = 0;
   for (int step = 0; step < n_steps; step++) {
@@ -324,12 +320,11 @@ int integrate(int n_steps, int reuse_forces) {
       resort_particles_if_needed(particles);
     }
 
-    /* Propagate philox rng counters */
+    // Propagate philox RNG counters
     philox_counter_increment();
 
 #ifdef BOND_CONSTRAINT
-    /* Correct those particle positions that participate in a rigid/constrained
-     * bond */
+    // Correct particle positions that participate in a rigid/constrained bond
     if (n_rigidbonds) {
       correct_position_shake(cell_structure);
     }
@@ -408,7 +403,7 @@ int integrate(int n_steps, int reuse_forces) {
   virtual_sites()->update();
 #endif
 
-  /* verlet list statistics */
+  // Verlet list statistics
   if (n_verlet_updates > 0)
     verlet_reuse = n_steps / (double)n_verlet_updates;
   else

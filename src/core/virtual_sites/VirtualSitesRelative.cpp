@@ -186,4 +186,4 @@ Utils::Matrix<double, 3, 3> VirtualSitesRelative::pressure_tensor() const {
 
   return pressure_tensor;
 }
-#endif
+#endif // VIRTUAL_SITES_RELATIVE
