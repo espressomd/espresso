@@ -21,7 +21,7 @@
 
 #include "BreakageSpec.hpp"
 
-#include "core/bond_breakage.hpp"
+#include "core/bond_breakage/bond_breakage.hpp"
 
 #include "script_interface/ObjectMap.hpp"
 #include "script_interface/ScriptInterface.hpp"
@@ -49,10 +49,10 @@ public:
   void insert_in_core(key_type const &key,
                       mapped_type const &obj_ptr) override {
     auto core_spec = obj_ptr->breakage_spec();
-    ::BondBreakage::breakage_specs.insert({key, core_spec});
+    ::BondBreakage::insert_spec(key, core_spec);
   }
   void erase_in_core(key_type const &key) override {
-    ::BondBreakage::breakage_specs.erase(key);
+    ::BondBreakage::erase_spec(key);
   }
 
 private:

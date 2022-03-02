@@ -22,9 +22,9 @@
 #include <boost/test/unit_test.hpp>
 
 #include "BoxGeometry.hpp"
-#include "LeesEdwardsBC.hpp"
 #include "Particle.hpp"
-#include "lees_edwards.hpp"
+#include "lees_edwards/LeesEdwardsBC.hpp"
+#include "lees_edwards/lees_edwards.hpp"
 
 #include <utils/Vector.hpp>
 

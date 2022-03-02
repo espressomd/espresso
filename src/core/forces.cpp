@@ -26,7 +26,7 @@
 
 #include "EspressoSystemInterface.hpp"
 
-#include "bond_breakage.hpp"
+#include "bond_breakage/bond_breakage.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
 #include "comfixed_global.hpp"

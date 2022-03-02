@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_LEES_EDWARDS_BC_HPP
-#define CORE_LEES_EDWARDS_BC_HPP
+#ifndef CORE_LEES_EDWARDS_LEES_EDWARDS_BC_HPP
+#define CORE_LEES_EDWARDS_LEES_EDWARDS_BC_HPP
 
 #include <utils/Vector.hpp>
 

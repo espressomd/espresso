@@ -19,8 +19,8 @@
 #ifndef CORE_BOX_GEOMETRY_HPP
 #define CORE_BOX_GEOMETRY_HPP
 
-#include "LeesEdwardsBC.hpp"
 #include "algorithm/periodic_fold.hpp"
+#include "lees_edwards/LeesEdwardsBC.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/math/sgn.hpp>

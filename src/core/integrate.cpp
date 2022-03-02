@@ -35,7 +35,7 @@
 
 #include "ParticleRange.hpp"
 #include "accumulators.hpp"
-#include "bond_breakage.hpp"
+#include "bond_breakage/bond_breakage.hpp"
 #include "bonded_interactions/rigid_bond.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
@@ -47,7 +47,7 @@
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "interactions.hpp"
-#include "lees_edwards.hpp"
+#include "lees_edwards/lees_edwards.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "rattle.hpp"

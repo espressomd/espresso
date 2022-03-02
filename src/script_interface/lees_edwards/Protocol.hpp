@@ -19,7 +19,7 @@
 #ifndef SCRIPT_INTERFACE_LEES_EDWARDS_PROTOCOL_HPP
 #define SCRIPT_INTERFACE_LEES_EDWARDS_PROTOCOL_HPP
 
-#include "core/lees_edwards.hpp"
+#include "core/lees_edwards/lees_edwards.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"

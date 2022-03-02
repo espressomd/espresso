@@ -16,7 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "bond_breakage.hpp"
+#include "bond_breakage/bond_breakage.hpp"
+#include "bond_breakage/actions.hpp"
+
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
@@ -24,73 +26,28 @@
 
 #include <utils/mpi/gather_buffer.hpp>
 
-#include <boost/functional/hash.hpp>
 #include <boost/mpi.hpp>
 #include <boost/optional.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/variant.hpp>
 
 #include <cassert>
-#include <cstddef>
 #include <memory>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 namespace BondBreakage {
 
 // Bond breakage specifications
-std::unordered_map<int, std::shared_ptr<BreakageSpec>> breakage_specs;
+static std::unordered_map<int, std::shared_ptr<BreakageSpec>> breakage_specs;
 
-// Delete Actions
-struct DeleteBond {
-  int particle_id;
-  int bond_partner_id;
-  int bond_type;
-  std::size_t hash_value() const {
-    std::size_t seed = 3875;
-    boost::hash_combine(seed, particle_id);
-    boost::hash_combine(seed, bond_partner_id);
-    boost::hash_combine(seed, bond_type);
-    return seed;
-  }
-  bool operator==(DeleteBond const &rhs) const {
-    return rhs.particle_id == particle_id and
-           rhs.bond_partner_id == bond_partner_id and
-           rhs.bond_type == bond_type;
-  }
-};
+void insert_spec(int key, std::shared_ptr<BreakageSpec> obj) {
+  breakage_specs.insert({key, std::move(obj)});
+}
 
-struct DeleteAllBonds {
-  int particle_id_1;
-  int particle_id_2;
-  std::size_t hash_value() const {
-    std::size_t seed = 75;
-    boost::hash_combine(seed, particle_id_1);
-    boost::hash_combine(seed, particle_id_2);
-    return seed;
-  }
-  bool operator==(DeleteAllBonds const &rhs) const {
-    return rhs.particle_id_1 == particle_id_1 and
-           rhs.particle_id_2 == particle_id_2;
-  }
-};
-} // namespace BondBreakage
+void erase_spec(int key) { breakage_specs.erase(key); }
 
-// Hash support for std::unordered_set
-namespace boost {
-template <> struct hash<BondBreakage::DeleteBond> {
-  std::size_t operator()(BondBreakage::DeleteBond const &t) const noexcept {
-    return t.hash_value();
-  }
-};
-template <> struct hash<BondBreakage::DeleteAllBonds> {
-  std::size_t operator()(BondBreakage::DeleteAllBonds const &t) const noexcept {
-    return t.hash_value();
-  }
-};
-} // namespace boost
-
-namespace BondBreakage {
 // Variant holding any of the actions
 using Action = boost::variant<DeleteBond, DeleteAllBonds>;
 
@@ -103,7 +60,7 @@ struct QueueEntry {
   int bond_partner_id;
   int bond_type;
 
-  /// Serialization for synchronization across mpi ranks
+  // Serialization for synchronization across mpi ranks
   friend class boost::serialization::access;
   template <typename Archive>
   void serialize(Archive &ar, const unsigned int version) {
