@@ -22,7 +22,7 @@ import setuptools
 
 import sympy as sp
 import pystencils as ps
-from pystencils_walberla import CodeGeneration, codegen
+from pystencils_walberla import codegen
 
 import lbmpy
 import lbmpy.creationfunctions
@@ -38,7 +38,7 @@ import lbmpy_espresso
 import lees_edwards
 import relaxation_rates
 import walberla_lbm_generation
-import post_process_kernels
+import code_generation_context
 
 
 parser = argparse.ArgumentParser(description='Generate the waLBerla kernels.')
@@ -152,20 +152,7 @@ def generate_setters(lb_method):
     return pdfs_setter
 
 
-post_process_kernels.adapt_pystencils()
-
-
-class PatchedCodeGeneration(CodeGeneration):
-
-    def __init__(self):
-        import sys
-        old_sys_argv = sys.argv
-        sys.argv = sys.argv[:1]
-        super().__init__()
-        sys.argv = old_sys_argv
-
-
-with PatchedCodeGeneration() as ctx:
+with code_generation_context.CodeGeneration() as ctx:
     ctx.double_accuracy = not args.single_precision
     ctx.cuda = True
     if target == ps.Target.GPU:
@@ -342,6 +329,3 @@ with PatchedCodeGeneration() as ctx:
         streaming_pattern='push',
         target=target
     )
-
-post_process_kernels.earmark_generated_kernels()
-post_process_kernels.guard_generated_kernels_clang_format()

@@ -114,3 +114,25 @@ def guard_generated_kernels_clang_format():
                                  content)
             with open(filename, 'w') as f:
                 f.write(content)
+
+
+class CodeGeneration(pystencils_walberla.CodeGeneration):
+    """
+    This is a patched version of ``CodeGeneration`` that elides parameters
+    passed to the command line when running the argument parser, and then
+    restores them. It also patches the Jinja templates and earmarks the
+    generated kernels.
+    """
+
+    def __init__(self):
+        import sys
+        old_sys_argv = sys.argv
+        sys.argv = sys.argv[:1]
+        super().__init__()
+        sys.argv = old_sys_argv
+        adapt_pystencils()
+
+    def __exit__(self, *args, **kwargs):
+        super().__exit__(*args, **kwargs)
+        earmark_generated_kernels()
+        guard_generated_kernels_clang_format()
