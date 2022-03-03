@@ -40,7 +40,6 @@ import lees_edwards
 import relaxation_rates
 import walberla_lbm_generation
 import post_process_kernels
-# for collide-push from lbmpy.fieldaccess import StreamPushTwoFieldsAccessor
 
 
 parser = argparse.ArgumentParser(description='Generate the waLBerla kernels.')
@@ -49,9 +48,10 @@ parser.add_argument('--single-precision', action='store_true', required=False,
 parser.add_argument("--gpu", action="store_true")
 args = parser.parse_args()
 
-if args.gpu: target = ps.Target.GPU
-else: target = ps.Target.CPU 
-print(target)
+if args.gpu:
+    target = ps.Target.GPU
+else:
+    target = ps.Target.CPU
 data_type_cpp = {True: 'double', False: 'float'}
 data_type_np = {True: 'float64', False: 'float32'}
 
@@ -116,7 +116,6 @@ def generate_collision_sweep(
                                    data_type=data_type_np[ctx.double_accuracy])
     collide_ast.function_name = 'kernel_collide'
     collide_ast.assumed_inner_stride_one = True
-    print(class_name, target)
     codegen.generate_sweep(ctx, class_name, collide_ast, target=target)
 
 
@@ -297,7 +296,7 @@ with PatchedCodeGeneration() as ctx:
         method,
         collision_rule_unthermalized,
         f"{target_prefix}CollideSweep{precision_prefix}",
-        params 
+        params
     )
     if target == ps.Target.CPU:
         generate_collision_sweep(
@@ -400,9 +399,6 @@ with PatchedCodeGeneration() as ctx:
         streaming_pattern='push',
         target=target
     )
-
-    # Info header containing correct template definitions for stencil and field
-    #ctx.write_file(f"InfoHeader{precision_prefix}.h", info_header)
 
 post_process_kernels.earmark_generated_kernels()
 post_process_kernels.guard_generated_kernels_clang_format()
