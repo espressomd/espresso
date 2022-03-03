@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import espressomd
+import espressomd.bond_breakage
 import espressomd.interactions
 import espressomd.lees_edwards
 import espressomd.virtual_sites
@@ -62,6 +63,8 @@ class LeesEdwards(ut.TestCase):
         system.lees_edwards.protocol = None
         if espressomd.has_features("VIRTUAL_SITES"):
             system.virtual_sites = espressomd.virtual_sites.VirtualSitesOff()
+        if espressomd.has_features("COLLISION_DETECTION"):
+            system.collision_detection.set_params(mode="off")
 
     def test_00_is_none_by_default(self):
 
@@ -473,6 +476,157 @@ class LeesEdwards(ut.TestCase):
         system.non_bonded_inter[11, 11].dpd.set_params(
             weight_function=0, gamma=0, r_cut=0,
             trans_weight_function=0, trans_gamma=0, trans_r_cut=0)
+
+    @utx.skipIfMissingFeatures(
+        ["EXTERNAL_FORCES", "VIRTUAL_SITES_RELATIVE", "COLLISION_DETECTION"])
+    def test_le_colldet(self):
+        system = self.system
+        system.min_global_cut = 1.0
+        system.time = 0
+        system.lees_edwards.protocol = espressomd.lees_edwards.LinearShear(
+            shear_velocity=-1.0, initial_pos_offset=0.0)
+        system.lees_edwards.shear_direction = 0
+        system.lees_edwards.shear_plane_normal = 1
+
+        col_part1 = system.part.add(
+            pos=(2.5, 4.5, 2.5), type=30, fix=[True, True, True])
+        col_part2 = system.part.add(
+            pos=(1.5, 0.5, 2.5), type=30, fix=[True, True, True])
+
+        harm = espressomd.interactions.HarmonicBond(k=1.0, r_0=0.0)
+        system.bonded_inter.add(harm)
+        virt = espressomd.interactions.Virtual()
+        system.bonded_inter.add(virt)
+
+        system.collision_detection.set_params(
+            mode="bind_centers", distance=1., bond_centers=harm)
+
+        # After two integration steps we should not have a bond,
+        # as the collision detection uses the distant calculation
+        # of the short range loop
+        system.integrator.run(2)
+        bond_list = col_part1.bonds + col_part2.bonds
+        np.testing.assert_array_equal(len(bond_list), 0)
+
+        # Bond should be formed on the third integration step
+        system.integrator.run(1)
+
+        # One particle should have the bond now.
+        bond_list = col_part1.bonds + col_part2.bonds
+        np.testing.assert_array_equal(len(bond_list), 1)
+
+        system.part.clear()
+        system.collision_detection.set_params(mode="off")
+
+        system.time = 0
+        system.lees_edwards.protocol = espressomd.lees_edwards.LinearShear(
+            shear_velocity=-1.0, initial_pos_offset=0.0)
+
+        system.collision_detection.set_params(
+            mode="bind_at_point_of_collision", distance=1., bond_centers=virt,
+            bond_vs=harm, part_type_vs=31, vs_placement=1 / 3)
+
+        col_part1 = system.part.add(
+            pos=(2.5, 4.5, 2.5), type=30, fix=[True, True, True])
+        col_part2 = system.part.add(
+            pos=(1.5, 0.5, 2.5), type=30, fix=[True, True, True])
+
+        system.integrator.run(2)
+        # We need the distance vector to calculate the positions of the
+        # generated VS
+
+        # No bonds present
+        bond_list = []
+        for p in system.part:
+            bond_list = np.append(p.bonds, bond_list)
+        np.testing.assert_array_equal(len(bond_list), 0)
+
+        system.integrator.run(1)
+
+        # After the collision detection, we should have four particles
+        np.testing.assert_array_equal(len(system.part), 4)
+
+        # Two bonds present
+        bond_list = []
+        for p in system.part:
+            bond_list += p.bonds
+        np.testing.assert_array_equal(len(bond_list), 2)
+
+        # We can check on the positions of the generated VS with using the
+        # distance of the particles at the time of collison (mi_vec = 1.0).
+        # With the placements parameter 1/3 we know the y-component of the
+        # generated VS. The other components are inherited from the real
+        # particles.
+        box_l = np.copy(system.box_l)
+        p_vs = system.part.select(virtual=True)
+        np.testing.assert_array_almost_equal(
+            np.minimum(np.abs(p_vs.pos[:, 0] - col_part1.pos[0]),
+                       np.abs(p_vs.pos[:, 0] - col_part2.pos[0])), 0.)
+        np.testing.assert_array_almost_equal(p_vs.pos[:, 2], col_part1.pos[2])
+        np.testing.assert_array_almost_equal(
+            np.sort(np.fmod(p_vs.pos[:, 1] + box_l[1], box_l[1])),
+            [1. / 6., box_l[1] - 1. / 6.])
+
+    @utx.skipIfMissingFeatures(["VIRTUAL_SITES_RELATIVE"])
+    def test_le_breaking_bonds(self):
+        system = self.system
+        system.min_global_cut = 1.0
+        system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
+        system.lees_edwards.protocol = espressomd.lees_edwards.LinearShear(
+            shear_velocity=-1.0, initial_pos_offset=0.0)
+        system.lees_edwards.shear_direction = 0
+        system.lees_edwards.shear_plane_normal = 1
+
+        harm = espressomd.interactions.HarmonicBond(
+            k=1.0, r_0=0.0, r_cut=np.sqrt(2.))
+        system.bonded_inter.add(harm)
+
+        p1 = system.part.add(pos=(2.5, 4.5, 2.5))
+        p2 = system.part.add(pos=(2.5, 0.5, 2.5))
+        p1.add_bond((harm, p2))
+
+        system.bond_breakage[harm] = espressomd.bond_breakage.BreakageSpec(
+            breakage_length=np.sqrt(2.), action_type="delete_bond")
+
+        system.integrator.run(3)
+
+        # Bond list should be empty
+        bond_list = []
+        for p in system.part:
+            bond_list += p.bonds
+        np.testing.assert_array_equal(len(bond_list), 0)
+
+        system.part.clear()
+
+        # Setup of particles and vs to check if the bind at point of collision
+        # will be reverted properly
+
+        harm2 = espressomd.interactions.HarmonicBond(
+            k=1.0, r_0=0.0, r_cut=np.sqrt(2.) / 2.)
+        system.bonded_inter.add(harm2)
+
+        p1 = system.part.add(pos=(2.5, 4.5, 2.5))
+        p2 = system.part.add(pos=(2.5, 0.5, 2.5))
+
+        p3 = system.part.add(pos=(2.5, 4.75, 2.5))
+        p3.vs_auto_relate_to(p1)
+        p4 = system.part.add(pos=(2.5, 0.25, 2.5))
+        p4.vs_auto_relate_to(p2)
+
+        p3.add_bond((harm2, p4))
+
+        system.bond_breakage[harm2] = espressomd.bond_breakage.BreakageSpec(
+            breakage_length=np.sqrt(2.) / 2.,
+            action_type="revert_bind_at_point_of_collision")
+
+        system.integrator.run(3)
+
+        # Check that all bonds have been removed from the system
+        # So the bond list should be empty
+        bond_list = []
+        for p in system.part:
+            bond_list += p.bonds
+        np.testing.assert_array_equal(len(bond_list), 0)
 
     def setup_lj_liquid(self):
         system = self.system
