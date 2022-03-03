@@ -21,16 +21,15 @@ import argparse
 import setuptools
 
 import sympy as sp
+
 import pystencils as ps
-from pystencils_walberla import codegen
+import pystencils_walberla
+import pystencils_espresso
 
 import lbmpy
 import lbmpy.creationfunctions
-import lbmpy.fieldaccess
 import lbmpy.forcemodels
-import lbmpy.macroscopic_value_kernels
 import lbmpy.stencils
-import lbmpy.updatekernels
 
 import lbmpy_walberla
 import lbmpy_espresso
@@ -51,105 +50,14 @@ if args.gpu:
     target = ps.Target.GPU
 else:
     target = ps.Target.CPU
-data_type_cpp = {True: 'double', False: 'float'}
-data_type_np = {True: 'float64', False: 'float32'}
+data_type_cpp = pystencils_espresso.data_type_cpp
+data_type_np = pystencils_espresso.data_type_np
 
 # Make sure we have the correct versions of the required dependencies
 SpecifierSet = setuptools.version.pkg_resources.packaging.specifiers.SpecifierSet
 for module, requirement in [(ps, '==0.4.4'), (lbmpy, '==0.4.4')]:
     assert SpecifierSet(requirement).contains(module.__version__), \
         f"{module.__name__} version {module.__version__} doesn't match requirement {requirement}"
-
-
-def generate_fields(ctx, stencil):
-    dtype = data_type_np[ctx.double_accuracy]
-    field_layout = 'fzyx'
-    q = len(stencil)
-    dim = len(stencil[0])
-
-    fields = {}
-    # Symbols for PDF (twice, due to double buffering)
-    fields['pdfs'] = ps.Field.create_generic(
-        'pdfs',
-        dim,
-        dtype,
-        index_dimensions=1,
-        layout=field_layout,
-        index_shape=(q,)
-    )
-    fields['pdfs_tmp'] = ps.Field.create_generic(
-        'pdfs_tmp',
-        dim,
-        dtype,
-        index_dimensions=1,
-        layout=field_layout,
-        index_shape=(q,)
-    )
-    fields['velocity'] = ps.Field.create_generic(
-        'velocity',
-        dim,
-        dtype,
-        index_dimensions=1,
-        layout=field_layout,
-        index_shape=(dim,)
-    )
-    fields['force'] = ps.Field.create_generic(
-        'force',
-        dim,
-        dtype,
-        index_dimensions=1,
-        layout=field_layout,
-        index_shape=(dim,)
-    )
-
-    return fields
-
-
-def generate_collision_sweep(
-        ctx, lb_method, collision_rule, class_name, params):
-
-    # Symbols for PDF (twice, due to double buffering)
-    fields = generate_fields(ctx, lb_method.stencil)
-
-    # Generate collision kernel
-    collide_update_rule = lbmpy.updatekernels.create_lbm_kernel(
-        collision_rule,
-        fields['pdfs'],
-        fields['pdfs_tmp'],
-        lbmpy.fieldaccess.CollideOnlyInplaceAccessor())
-    collide_ast = ps.create_kernel(collide_update_rule, **params,
-                                   data_type=data_type_np[ctx.double_accuracy])
-    collide_ast.function_name = 'kernel_collide'
-    collide_ast.assumed_inner_stride_one = True
-    codegen.generate_sweep(ctx, class_name, collide_ast, target=target)
-
-
-def generate_stream_sweep(ctx, lb_method, class_name, params):
-    # Symbols for PDF (twice, due to double buffering)
-    fields = generate_fields(ctx, lb_method.stencil)
-
-    # Generate stream kernel
-    stream_update_rule = lbmpy.updatekernels.create_stream_pull_with_output_kernel(
-        lb_method, fields['pdfs'], fields['pdfs_tmp'],
-        output={'velocity': fields['velocity']})
-    stream_ast = ps.create_kernel(stream_update_rule, **params,
-                                  data_type=data_type_np[ctx.double_accuracy])
-    stream_ast.function_name = 'kernel_stream'
-    stream_ast.assumed_inner_stride_one = True
-    codegen.generate_sweep(
-        ctx, class_name, stream_ast, field_swaps=[(fields['pdfs'], fields['pdfs_tmp'])], target=target)
-
-
-def generate_setters(lb_method):
-    fields = generate_fields(ctx, lb_method.stencil)
-
-    initial_rho = sp.Symbol('rho_0')
-    pdfs_setter = lbmpy.macroscopic_value_kernels.macroscopic_values_setter(
-        lb_method,
-        initial_rho,
-        fields['velocity'].center_vector,
-        fields['pdfs'].center_vector)
-    return pdfs_setter
 
 
 with code_generation_context.CodeGeneration() as ctx:
@@ -173,7 +81,7 @@ with code_generation_context.CodeGeneration() as ctx:
         ctx.double_accuracy]
     kT = sp.symbols('kT')
     stencil = lbmpy.stencils.get_stencil('D3Q19')
-    fields = generate_fields(ctx, stencil)
+    fields = pystencils_espresso.generate_fields(ctx, stencil)
     force_field = fields['force']
 
     # Vectorization parameters
@@ -195,21 +103,23 @@ with code_generation_context.CodeGeneration() as ctx:
     )
 
     # generate stream kernels
-    generate_stream_sweep(
+    pystencils_espresso.generate_stream_sweep(
         ctx,
         method,
         f"{target_prefix}StreamSweep{precision_prefix}",
-        params)
+        params,
+        target)
     if target == ps.Target.CPU:
-        generate_stream_sweep(
+        pystencils_espresso.generate_stream_sweep(
             ctx,
             method,
             f"{target_prefix}StreamSweep{precision_prefix}AVX",
-            params_vec)
+            params_vec,
+            target)
 
     # generate initial densities
-    pdfs_setter = generate_setters(method)
-    codegen.generate_sweep(
+    pdfs_setter = pystencils_espresso.generate_setters(ctx, method)
+    pystencils_walberla.codegen.generate_sweep(
         ctx,
         f"{target_prefix}InitialPDFsSetter{precision_prefix}",
         pdfs_setter, target=target)
@@ -220,27 +130,33 @@ with code_generation_context.CodeGeneration() as ctx:
         optimization={'cse_global': True,
                       'double_precision': ctx.double_accuracy}
     )
-    generate_collision_sweep(
+    pystencils_espresso.generate_collision_sweep(
         ctx,
         method,
         collision_rule_unthermalized,
         f"{target_prefix}CollideSweep{precision_prefix}",
-        params
+        params,
+        target
     )
     if target == ps.Target.CPU:
-        generate_collision_sweep(
+        pystencils_espresso.generate_collision_sweep(
             ctx,
             method,
             collision_rule_unthermalized,
             f"{target_prefix}CollideSweep{precision_prefix}AVX",
-            {"cpu_vectorize_info": cpu_vectorize_info}
+            {"cpu_vectorize_info": cpu_vectorize_info},
+            target
         )
 
     # generate unthermalized Lees-Edwards collision rule
 
-    le_config = lbmpy.LBMConfig(stencil=stencil, method=lbmpy.Method.TRT, relaxation_rate=sp.Symbol("omega_shear"), compressible=True,
+    le_config = lbmpy.LBMConfig(stencil=stencil,
+                                method=lbmpy.Method.TRT,
+                                relaxation_rate=sp.Symbol("omega_shear"),
+                                compressible=True,
                                 force_model=lbmpy.ForceModel.GUO,
-                                force=force_field.center_vector, kernel_type='collide_only')
+                                force=force_field.center_vector,
+                                kernel_type='collide_only')
     lbm_opt = lbmpy.LBMOptimisation(symbolic_field=fields["pdfs"])
     le_collision_rule_unthermalized = lbmpy.create_lb_update_rule(
         lbm_config=le_config,
@@ -249,19 +165,21 @@ with code_generation_context.CodeGeneration() as ctx:
     le_collision_rule_unthermalized = lees_edwards.add_lees_edwards_to_collision(
         le_collision_rule_unthermalized,
         fields["pdfs"], stencil, 1)  # shear_dir_normal y
-    generate_collision_sweep(
+    pystencils_espresso.generate_collision_sweep(
         ctx,
         le_config,
         le_collision_rule_unthermalized,
         f"CollideSweep{precision_prefix}LeesEdwards",
-        {}
+        {},
+        target
     )
-    generate_collision_sweep(
+    pystencils_espresso.generate_collision_sweep(
         ctx,
         le_config,
         le_collision_rule_unthermalized,
         f"CollideSweep{precision_prefix}LeesEdwardsAVX",
-        {"cpu_vectorize_info": cpu_vectorize_info}
+        {"cpu_vectorize_info": cpu_vectorize_info},
+        target
     )
 
     # generate thermalized LB
@@ -275,20 +193,22 @@ with code_generation_context.CodeGeneration() as ctx:
         optimization={'cse_global': True,
                       'double_precision': ctx.double_accuracy}
     )
-    generate_collision_sweep(
+    pystencils_espresso.generate_collision_sweep(
         ctx,
         method,
         collision_rule_thermalized,
         f"{target_prefix}CollideSweep{precision_prefix}Thermalized",
-        params
+        params,
+        target
     )
     if target == ps.Target.CPU:
-        generate_collision_sweep(
+        pystencils_espresso.generate_collision_sweep(
             ctx,
             method,
             collision_rule_thermalized,
             f"{target_prefix}CollideSweep{precision_prefix}ThermalizedAVX",
-            params_vec
+            params_vec,
+            target
         )
 
     # generate accessors
