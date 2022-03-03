@@ -18,6 +18,7 @@
 #
 
 import argparse
+import setuptools
 
 import sympy as sp
 import pystencils as ps
@@ -54,6 +55,12 @@ else:
     target = ps.Target.CPU
 data_type_cpp = {True: 'double', False: 'float'}
 data_type_np = {True: 'float64', False: 'float32'}
+
+# Make sure we have the correct versions of the required dependencies
+SpecifierSet = setuptools.version.pkg_resources.packaging.specifiers.SpecifierSet
+for module, requirement in [(ps, '==0.4.4'), (lbmpy, '==0.4.4')]:
+    assert SpecifierSet(requirement).contains(module.__version__), \
+        f"{module.__name__} version {module.__version__} doesn't match requirement {requirement}"
 
 
 def generate_fields(ctx, stencil):
@@ -147,13 +154,6 @@ def generate_setters(lb_method):
     return pdfs_setter
 
 
-def check_dependencies():
-    import setuptools
-    SpecifierSet = setuptools.version.pkg_resources.packaging.specifiers.SpecifierSet
-    for module, requirement in [(ps, '==0.4.4'), (lbmpy, '==0.4.4')]:
-        assert SpecifierSet(requirement).contains(module.__version__), \
-            f"{module.__name__} version {module.__version__} doesn't match requirement {requirement}"
-
 
 class BounceBackSlipVelocityUBB(
         lbmpy_walberla.additional_data_handler.UBBAdditionalDataHandler):
@@ -209,7 +209,6 @@ class PatchedUBB(lbmpy.boundaries.UBB):
         return out
 
 
-check_dependencies()
 post_process_kernels.adapt_pystencils()
 
 
