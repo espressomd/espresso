@@ -25,8 +25,6 @@ import pystencils as ps
 from pystencils_walberla import CodeGeneration, codegen
 
 import lbmpy
-import lbmpy.advanced_streaming.indexing
-import lbmpy.boundaries
 import lbmpy.creationfunctions
 import lbmpy.fieldaccess
 import lbmpy.forcemodels
@@ -35,7 +33,7 @@ import lbmpy.stencils
 import lbmpy.updatekernels
 
 import lbmpy_walberla
-import lbmpy_walberla.additional_data_handler
+import lbmpy_espresso
 
 import lees_edwards
 import relaxation_rates
@@ -152,61 +150,6 @@ def generate_setters(lb_method):
         fields['velocity'].center_vector,
         fields['pdfs'].center_vector)
     return pdfs_setter
-
-
-
-class BounceBackSlipVelocityUBB(
-        lbmpy_walberla.additional_data_handler.UBBAdditionalDataHandler):
-    '''
-    Dynamic UBB that implements the bounce-back method with slip velocity.
-    '''
-
-    def data_initialisation(self, direction):
-        '''
-        Modified ``indexVector`` initialiser. The "classical" dynamic UBB
-        uses the velocity callback as a velocity flow profile generator.
-        Here we use that callback as a bounce-back slip velocity generator.
-        This way, the dynamic UBB can be used to implement a LB boundary.
-        '''
-        code = super().data_initialisation(direction)
-        dirVec = self.stencil_info[direction][1]
-        token = ' = elementInitaliser(Cell(it.x(){}, it.y(){}, it.z(){}),'
-        old_initialiser = token.format('', '', '')
-        assert old_initialiser in code
-        new_initialiser = token.format(
-            '+' + str(dirVec[0]),
-            '+' + str(dirVec[1]),
-            '+' + str(dirVec[2])).replace('+-', '-')
-        return code.replace(old_initialiser, new_initialiser)
-
-
-class PatchedUBB(lbmpy.boundaries.UBB):
-    '''
-    Velocity bounce back boundary condition, enforcing specified velocity at obstacle.
-    '''
-
-    def __call__(self, f_out, f_in, dir_symbol,
-                 inv_dir, lb_method, index_field):
-        '''
-        Modify the assignments such that the source and target pdfs are swapped.
-        '''
-        assignments = super().__call__(
-            f_out, f_in, dir_symbol, inv_dir, lb_method, index_field)
-
-        assert len(assignments) > 0
-
-        out = []
-        if len(assignments) > 1:
-            out.extend(assignments[:-1])
-
-        neighbor_offset = lbmpy.advanced_streaming.indexing.NeighbourOffsetArrays.neighbour_offset(
-            dir_symbol, lb_method.stencil)
-
-        assignment = assignments[-1]
-        assert assignment.lhs.field == f_in
-        out.append(ps.Assignment(assignment.lhs.get_shifted(*neighbor_offset),
-                                 assignment.rhs - f_out(dir_symbol) + f_in(dir_symbol)))
-        return out
 
 
 post_process_kernels.adapt_pystencils()
@@ -369,9 +312,10 @@ with PatchedCodeGeneration() as ctx:
             f'{target_prefix}macroscopic_values_accessors_{precision_suffix}.h')
 
     # Boundary conditions
-    ubb_dynamic = PatchedUBB(lambda *args: None, dim=3,
-                             data_type=data_type_np[ctx.double_accuracy])
-    ubb_data_handler = BounceBackSlipVelocityUBB(method.stencil, ubb_dynamic)
+    ubb_dynamic = lbmpy_espresso.UBB(
+        lambda *args: None, dim=3, data_type=data_type_np[ctx.double_accuracy])
+    ubb_data_handler = lbmpy_espresso.BounceBackSlipVelocityUBB(
+        method.stencil, ubb_dynamic)
 
     lbmpy_walberla.generate_boundary(
         ctx, f'{target_prefix}Dynamic_UBB_{precision_suffix}', ubb_dynamic,
