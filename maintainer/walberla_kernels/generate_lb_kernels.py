@@ -17,31 +17,30 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import sys
 import argparse
 
 import sympy as sp
 import pystencils as ps
-from lbmpy.creationfunctions import create_lb_collision_rule, create_mrt_orthogonal
-import lbmpy.forcemodels
 from pystencils_walberla import CodeGeneration, codegen
 
-from lbmpy_walberla import generate_boundary, generate_lb_pack_info
-from walberla_lbm_generation import generate_macroscopic_values_accessors
-
+import lbmpy
+import lbmpy.advanced_streaming.indexing
 import lbmpy.boundaries
+import lbmpy.creationfunctions
+import lbmpy.fieldaccess
+import lbmpy.forcemodels
+import lbmpy.macroscopic_value_kernels
+import lbmpy.stencils
+import lbmpy.updatekernels
+
+import lbmpy_walberla
 import lbmpy_walberla.additional_data_handler
-import relaxation_rates
-from lbmpy.fieldaccess import CollideOnlyInplaceAccessor
-from lbmpy.stencils import get_stencil
-from lbmpy.updatekernels import create_lbm_kernel, create_stream_pull_with_output_kernel
-from lbmpy.macroscopic_value_kernels import macroscopic_values_setter
 
 import lees_edwards
+import relaxation_rates
+import walberla_lbm_generation
 import post_process_kernels
 # for collide-push from lbmpy.fieldaccess import StreamPushTwoFieldsAccessor
-
-from lbmpy.advanced_streaming.indexing import NeighbourOffsetArrays
 
 
 parser = argparse.ArgumentParser(description='Generate the waLBerla kernels.')
@@ -108,11 +107,11 @@ def generate_collision_sweep(
     fields = generate_fields(ctx, lb_method.stencil)
 
     # Generate collision kernel
-    collide_update_rule = create_lbm_kernel(
+    collide_update_rule = lbmpy.updatekernels.create_lbm_kernel(
         collision_rule,
         fields['pdfs'],
         fields['pdfs_tmp'],
-        CollideOnlyInplaceAccessor())
+        lbmpy.fieldaccess.CollideOnlyInplaceAccessor())
     collide_ast = ps.create_kernel(collide_update_rule, **params,
                                    data_type=data_type_np[ctx.double_accuracy])
     collide_ast.function_name = 'kernel_collide'
@@ -126,8 +125,9 @@ def generate_stream_sweep(ctx, lb_method, class_name, params):
     fields = generate_fields(ctx, lb_method.stencil)
 
     # Generate stream kernel
-    stream_update_rule = create_stream_pull_with_output_kernel(lb_method, fields['pdfs'], fields['pdfs_tmp'],
-                                                               output={'velocity': fields['velocity']})
+    stream_update_rule = lbmpy.updatekernels.create_stream_pull_with_output_kernel(
+        lb_method, fields['pdfs'], fields['pdfs_tmp'],
+        output={'velocity': fields['velocity']})
     stream_ast = ps.create_kernel(stream_update_rule, **params,
                                   data_type=data_type_np[ctx.double_accuracy])
     stream_ast.function_name = 'kernel_stream'
@@ -140,19 +140,18 @@ def generate_setters(lb_method):
     fields = generate_fields(ctx, lb_method.stencil)
 
     initial_rho = sp.Symbol('rho_0')
-    pdfs_setter = macroscopic_values_setter(lb_method,
-                                            initial_rho,
-                                            fields['velocity'].center_vector,
-                                            fields['pdfs'].center_vector)
+    pdfs_setter = lbmpy.macroscopic_value_kernels.macroscopic_values_setter(
+        lb_method,
+        initial_rho,
+        fields['velocity'].center_vector,
+        fields['pdfs'].center_vector)
     return pdfs_setter
 
 
 def check_dependencies():
     import setuptools
-    import pystencils
-    import lbmpy
     SpecifierSet = setuptools.version.pkg_resources.packaging.specifiers.SpecifierSet
-    for module, requirement in [(pystencils, '==0.4.4'), (lbmpy, '==0.4.4')]:
+    for module, requirement in [(ps, '==0.4.4'), (lbmpy, '==0.4.4')]:
         assert SpecifierSet(requirement).contains(module.__version__), \
             f"{module.__name__} version {module.__version__} doesn't match requirement {requirement}"
 
@@ -201,7 +200,7 @@ class PatchedUBB(lbmpy.boundaries.UBB):
         if len(assignments) > 1:
             out.extend(assignments[:-1])
 
-        neighbor_offset = NeighbourOffsetArrays.neighbour_offset(
+        neighbor_offset = lbmpy.advanced_streaming.indexing.NeighbourOffsetArrays.neighbour_offset(
             dir_symbol, lb_method.stencil)
 
         assignment = assignments[-1]
@@ -218,6 +217,7 @@ post_process_kernels.adapt_pystencils()
 class PatchedCodeGeneration(CodeGeneration):
 
     def __init__(self):
+        import sys
         old_sys_argv = sys.argv
         sys.argv = sys.argv[:1]
         super().__init__()
@@ -244,7 +244,7 @@ with PatchedCodeGeneration() as ctx:
         False: ps.rng.PhiloxFourFloats}[
         ctx.double_accuracy]
     kT = sp.symbols('kT')
-    stencil = get_stencil('D3Q19')
+    stencil = lbmpy.stencils.get_stencil('D3Q19')
     fields = generate_fields(ctx, stencil)
     force_field = fields['force']
 
@@ -258,7 +258,7 @@ with PatchedCodeGeneration() as ctx:
     params_vec = {"target": target, "cpu_vectorize_info": cpu_vectorize_info}
 
     # LB Method definition
-    method = create_mrt_orthogonal(
+    method = lbmpy.creationfunctions.create_mrt_orthogonal(
         stencil=stencil,
         compressible=True,
         weighted=True,
@@ -287,7 +287,7 @@ with PatchedCodeGeneration() as ctx:
         pdfs_setter, target=target)
 
     # generate unthermalized collision rule
-    collision_rule_unthermalized = create_lb_collision_rule(
+    collision_rule_unthermalized = lbmpy.creationfunctions.create_lb_collision_rule(
         method,
         optimization={'cse_global': True,
                       'double_precision': ctx.double_accuracy}
@@ -337,7 +337,7 @@ with PatchedCodeGeneration() as ctx:
     )
 
     # generate thermalized LB
-    collision_rule_thermalized = create_lb_collision_rule(
+    collision_rule_thermalized = lbmpy.creationfunctions.create_lb_collision_rule(
         method,
         fluctuating={
             'temperature': kT,
@@ -365,7 +365,7 @@ with PatchedCodeGeneration() as ctx:
 
     # generate accessors
     if target == ps.Target.CPU:
-        generate_macroscopic_values_accessors(
+        walberla_lbm_generation.generate_macroscopic_values_accessors(
             ctx,
             collision_rule_unthermalized.method,
             f'{target_prefix}macroscopic_values_accessors_{precision_suffix}.h')
@@ -375,9 +375,10 @@ with PatchedCodeGeneration() as ctx:
                              data_type=data_type_np[ctx.double_accuracy])
     ubb_data_handler = BounceBackSlipVelocityUBB(method.stencil, ubb_dynamic)
 
-    generate_boundary(ctx, f'{target_prefix}Dynamic_UBB_{precision_suffix}', ubb_dynamic,
-                      method, additional_data_handler=ubb_data_handler,
-                      streaming_pattern="push", target=target)
+    lbmpy_walberla.generate_boundary(
+        ctx, f'{target_prefix}Dynamic_UBB_{precision_suffix}', ubb_dynamic,
+        method, additional_data_handler=ubb_data_handler,
+        streaming_pattern="push", target=target)
 
     with open(f'{target_prefix}Dynamic_UBB_{precision_suffix}.h', 'r+') as f:
         content = f.read()
@@ -391,7 +392,7 @@ with PatchedCodeGeneration() as ctx:
         f.write(content)
 
     # communication
-    generate_lb_pack_info(
+    lbmpy_walberla.generate_lb_pack_info(
         ctx,
         f'{target_prefix}PushPackInfo{precision_prefix}',
         method.stencil,
