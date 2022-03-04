@@ -82,9 +82,13 @@ class BondBreakage(BondBreakageCommon, ut.TestCase):
         self.assertEqual(len(self.system.bond_breakage), 0)
         self.assertEqual(self.system.bond_breakage.keys(), [])
         with self.assertRaisesRegex(TypeError, "Key has to be of type int"):
-            self.system.bond_breakage[self.h1]
+            self.system.bond_breakage[None]
         with self.assertRaisesRegex(TypeError, "Key has to be of type int"):
-            self.system.bond_breakage.remove(self.h1)
+            self.system.bond_breakage[None] = None
+        with self.assertRaisesRegex(TypeError, "Key has to be of type int"):
+            self.system.bond_breakage.remove(None)
+        with self.assertRaisesRegex(ValueError, "Bond needs to be added to the system first"):
+            self.system.bond_breakage[HarmonicBond(k=1, r_0=0)]
         with self.assertRaisesRegex(RuntimeError, "Inserting breakage spec without a bond type is not permitted"):
             self.system.bond_breakage.call_method("insert", object=spec2)
 
@@ -92,7 +96,7 @@ class BondBreakage(BondBreakageCommon, ut.TestCase):
         system = self.system
 
         # Particles closer than cutoff
-        system.bond_breakage[self.h1._bond_id] = BreakageSpec(
+        system.bond_breakage[self.h1] = BreakageSpec(
             breakage_length=2, action_type="revert_center_bond")
 
         self.p1.bonds = ((self.h1, self.p2))
@@ -104,7 +108,7 @@ class BondBreakage(BondBreakageCommon, ut.TestCase):
         self.assertEqual(self.p2.bonds, ((self.h1, self.p1.id),))
 
         # Different bond type
-        system.bond_breakage[self.h1._bond_id] = BreakageSpec(
+        system.bond_breakage[self.h1] = BreakageSpec(
             breakage_length=0.2, action_type="revert_center_bond")
         self.p1.bonds = [(self.h2, self.p2)]
         self.p2.bonds = [(self.h2, self.p1)]
@@ -116,7 +120,7 @@ class BondBreakage(BondBreakageCommon, ut.TestCase):
         system = self.system
 
         # Particles closer than cutoff
-        system.bond_breakage[self.h1._bond_id] = BreakageSpec(
+        system.bond_breakage[self.h1] = BreakageSpec(
             breakage_length=0, action_type="revert_center_bond")
 
         self.p1.bonds = [(self.h1, self.p2)]
@@ -131,7 +135,7 @@ class BondBreakage(BondBreakageCommon, ut.TestCase):
         system = self.system
 
         # Particles closer than cutoff
-        system.bond_breakage[self.h1._bond_id] = BreakageSpec(
+        system.bond_breakage[self.h1] = BreakageSpec(
             breakage_length=0.5, action_type="revert_vs_bond")
 
         self.p1.bonds = [(self.h2, self.p2)]
@@ -150,7 +154,7 @@ class BondBreakage(BondBreakageCommon, ut.TestCase):
         system = self.system
 
         # Particles closer than cutoff
-        system.bond_breakage[self.h2._bond_id] = BreakageSpec(
+        system.bond_breakage[self.h2] = BreakageSpec(
             breakage_length=0.5, action_type="revert_vs_bond")
 
         self.p1.bonds = [(self.h2, self.p2)]
@@ -225,7 +229,7 @@ class NetworkBreakage(BondBreakageCommon, ut.TestCase):
         self.system.integrator.run(1)
 
         self.system.collision_detection.set_params(mode="off")
-        self.system.bond_breakage[harm._bond_id] = BreakageSpec(
+        self.system.bond_breakage[harm] = BreakageSpec(
             breakage_length=crit, action_type="revert_center_bond")
         self.system.integrator.run(1)
 
@@ -258,7 +262,7 @@ class NetworkBreakage(BondBreakageCommon, ut.TestCase):
         self.system.integrator.run(1)
 
         self.system.collision_detection.set_params(mode="off")
-        self.system.bond_breakage[harm._bond_id] = BreakageSpec(
+        self.system.bond_breakage[harm] = BreakageSpec(
             breakage_length=crit_vs, action_type="revert_vs_bond")
         self.system.integrator.run(1)
 
