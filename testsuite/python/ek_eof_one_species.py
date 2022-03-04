@@ -156,7 +156,7 @@ def bisection():
                 pntm = pnt0 + size
         else:
             sys.exit("Bisection method fails:\n"
-                     "Tuning of domain boundaries may be required.")
+                     "Tuning of regular boundaries may be required.")
     return pntm
 
 

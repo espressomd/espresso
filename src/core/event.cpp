@@ -25,6 +25,7 @@
  */
 #include "event.hpp"
 
+#include "CellStructureType.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
@@ -88,8 +89,8 @@ void on_program_start() {
 
   init_node_grid();
 
-  /* initially go for domain decomposition */
-  cells_re_init(CELL_STRUCTURE_DOMDEC);
+  /* initially go for regular decomposition */
+  cells_re_init(CellStructureType::CELL_STRUCTURE_REGULAR);
 
   if (this_node == 0) {
     /* make sure interaction 0<->0 always exists */
@@ -307,11 +308,6 @@ void on_timestep_change() {
     throw std::runtime_error("Time step change not supported by LB");
   }
   on_thermostat_param_change();
-}
-
-void on_simtime_change(double time) {
-  recalc_forces = true;
-  LeesEdwards::on_simtime_change(box_geo, time);
 }
 
 void on_forcecap_change() { recalc_forces = true; }

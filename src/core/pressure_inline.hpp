@@ -61,12 +61,12 @@ inline void add_non_bonded_pair_virials(Particle const &p1, Particle const &p2,
   if (do_nonbonded(p1, p2))
 #endif
   {
-    IA_parameters const &ia_params = *get_ia_param(p1.p.type, p2.p.type);
+    IA_parameters const &ia_params = *get_ia_param(p1.type(), p2.type());
     auto const force = calc_non_bonded_pair_force(p1, p2, ia_params, d, dist).f;
     auto const stress = tensor_product(d, force);
 
-    auto const type1 = p1.p.mol_id;
-    auto const type2 = p2.p.mol_id;
+    auto const type1 = p1.mol_id();
+    auto const type2 = p2.mol_id();
     obs_pressure.add_non_bonded_contribution(type1, type2, flatten(stress));
   }
 
@@ -95,7 +95,7 @@ inline void add_non_bonded_pair_virials(Particle const &p1, Particle const &p2,
 boost::optional<Utils::Matrix<double, 3, 3>>
 calc_bonded_virial_pressure_tensor(Bonded_IA_Parameters const &iaparams,
                                    Particle const &p1, Particle const &p2) {
-  auto const dx = box_geo.get_mi_vector(p1.r.p, p2.r.p);
+  auto const dx = box_geo.get_mi_vector(p1.pos(), p2.pos());
   auto const result = calc_bond_pair_force(p1, p2, iaparams, dx);
   if (result) {
     auto const &force = result.get();
@@ -116,8 +116,8 @@ calc_bonded_three_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
       (boost::get<TabulatedAngleBond>(&iaparams) != nullptr) ||
 #endif
       (boost::get<AngleCossquareBond>(&iaparams) != nullptr)) {
-    auto const dx21 = -box_geo.get_mi_vector(p1.r.p, p2.r.p);
-    auto const dx31 = box_geo.get_mi_vector(p3.r.p, p1.r.p);
+    auto const dx21 = -box_geo.get_mi_vector(p1.pos(), p2.pos());
+    auto const dx31 = box_geo.get_mi_vector(p3.pos(), p1.pos());
 
     auto const result = calc_bonded_three_body_force(iaparams, p1, p2, p3);
     if (result) {
@@ -160,13 +160,13 @@ calc_bonded_pressure_tensor(Bonded_IA_Parameters const &iaparams,
  */
 inline void add_kinetic_virials(Particle const &p1,
                                 Observable_stat &obs_pressure) {
-  if (p1.p.is_virtual)
+  if (p1.is_virtual())
     return;
 
   /* kinetic pressure */
   for (int k = 0; k < 3; k++)
     for (int l = 0; l < 3; l++)
-      obs_pressure.kinetic[k * 3 + l] += p1.m.v[k] * p1.m.v[l] * p1.p.mass;
+      obs_pressure.kinetic[k * 3 + l] += p1.v()[k] * p1.v()[l] * p1.mass();
 }
 
 #endif // CORE_PRESSURE_INLINE_HPP

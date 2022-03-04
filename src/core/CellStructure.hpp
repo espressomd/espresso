@@ -25,6 +25,7 @@
 #include "AtomDecomposition.hpp"
 #include "BoxGeometry.hpp"
 #include "Cell.hpp"
+#include "CellStructureType.hpp"
 #include "LocalBox.hpp"
 #include "Particle.hpp"
 #include "ParticleDecomposition.hpp"
@@ -49,14 +50,6 @@
 #include <vector>
 
 extern BoxGeometry box_geo;
-
-/** Cell Structure */
-enum CellStructureType : int {
-  /** cell structure domain decomposition */
-  CELL_STRUCTURE_DOMDEC = 1,
-  /** cell structure n square */
-  CELL_STRUCTURE_NSQUARE = 2
-};
 
 namespace Cells {
 enum Resort : unsigned {
@@ -134,12 +127,13 @@ private:
   std::unique_ptr<ParticleDecomposition> m_decomposition =
       std::make_unique<AtomDecomposition>();
   /** Active type in m_decomposition */
-  int m_type = CELL_STRUCTURE_NSQUARE;
+  CellStructureType m_type = CellStructureType::CELL_STRUCTURE_NSQUARE;
   /** One of @ref Cells::Resort, announces the level of resort needed.
    */
   unsigned m_resort_particles = Cells::RESORT_NONE;
   bool m_rebuild_verlet_list = true;
   std::vector<std::pair<Particle *, Particle *>> m_verlet_list;
+  double m_le_pos_offset_at_last_resort = 0.;
 
 public:
   bool use_verlet_list = true;
@@ -249,7 +243,7 @@ public:
   }
 
 public:
-  int decomposition_type() const { return m_type; }
+  CellStructureType decomposition_type() const { return m_type; }
 
   /** Maximal cutoff supported by current cell system. */
   Utils::Vector3d max_cutoff() const;
@@ -386,15 +380,24 @@ public:
   /**
    * @brief Check whether a particle has moved further than half the skin
    * since the last Verlet list update, thus requiring a resort.
-   * @param particles Particles to check
-   * @param skin Skin
+   * @param particles           Particles to check
+   * @param skin                Skin
+   * @param additional_offset   Offset which is added to the distance the
+   *                            particle has travelled when comparing to half
+   *                            the skin (e.g., for Lees-Edwards BC).
    * @return Whether a resort is needed.
    */
-  bool check_resort_required(ParticleRange const &particles, double skin) {
-    auto const lim = Utils::sqr(skin / 2.);
+  bool
+  check_resort_required(ParticleRange const &particles, double skin,
+                        Utils::Vector3d const &additional_offset = {}) const {
+    auto const lim = Utils::sqr(skin / 2.) - additional_offset.norm2();
     return std::any_of(
         particles.begin(), particles.end(),
         [lim](const auto &p) { return ((p.r.p - p.l.p_old).norm2() > lim); });
+  }
+
+  auto get_le_pos_offset_at_last_resort() const {
+    return m_le_pos_offset_at_last_resort;
   }
 
   /**
@@ -494,7 +497,7 @@ public:
   /**
    * @brief Resort particles.
    */
-  void resort_particles(int global_flag, const BoxGeometry &box);
+  void resort_particles(int global_flag, BoxGeometry const &box);
 
 private:
   /** @brief Set the particle decomposition, keeping the particles. */
@@ -516,22 +519,24 @@ public:
    * @brief Set the particle decomposition to AtomDecomposition.
    *
    * @param comm Communicator to use.
-   * @param box Box Geometry
+   * @param box Box Geometry.
+   * @param local_geo Geometry of the local box (holds cell structure type).
    */
   void set_atom_decomposition(boost::mpi::communicator const &comm,
-                              BoxGeometry const &box);
+                              BoxGeometry const &box,
+                              LocalBox<double> &local_geo);
 
   /**
-   * @brief Set the particle decomposition to DomainDecomposition.
+   * @brief Set the particle decomposition to RegularDecomposition.
    *
    * @param comm Cartesian communicator to use.
    * @param range Interaction range.
-   * @param box Box Geometry
+   * @param box Box Geometry.
    * @param local_geo Geometry of the local box.
    */
-  void set_domain_decomposition(boost::mpi::communicator const &comm,
-                                double range, BoxGeometry const &box,
-                                LocalBox<double> const &local_geo);
+  void set_regular_decomposition(boost::mpi::communicator const &comm,
+                                 double range, BoxGeometry const &box,
+                                 LocalBox<double> &local_geo);
 
 public:
   template <class BondKernel> void bond_loop(BondKernel const &bond_kernel) {

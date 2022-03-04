@@ -40,7 +40,7 @@ if(HDF5_FOUND)
 endif()
 sample_test(FILE test_lbf.py)
 sample_test(FILE test_lb_profile.py)
-sample_test(FILE test_lb_planar_couette.py)
+# sample_test(FILE test_lb_planar_couette.py) # TODO WALBERLA
 sample_test(FILE test_lb_circular_couette.py)
 sample_test(FILE test_lb_four_roller_mill.py)
 sample_test(FILE test_lj_liquid_distribution.py)

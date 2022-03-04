@@ -19,8 +19,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_DOMAIN_DECOMPOSITION_HPP
-#define ESPRESSO_DOMAIN_DECOMPOSITION_HPP
+#ifndef ESPRESSO_REGULAR_DECOMPOSITION_HPP
+#define ESPRESSO_REGULAR_DECOMPOSITION_HPP
 
 #include "ParticleDecomposition.hpp"
 
@@ -40,13 +40,13 @@
 #include <vector>
 
 /** @brief Structure containing the information about the cell grid used for
- * domain decomposition.
+ *  regular decomposition.
  *
  *  The domain of a node is split into a 3D cell grid with dimension
  *  cell_grid. Together with one ghost cell
  *  layer on each side the overall dimension of the ghost cell grid is
- *  ghost_cell_grid. The domain
- *  decomposition enables one the use of the linked cell algorithm
+ *  ghost_cell_grid. The regular
+ *  decomposition enables the use of the linked cell algorithm
  *  which is in turn used for setting up the Verlet list for the
  *  system. You can see a 2D graphical representation of the linked
  *  cell grid below.
@@ -65,7 +65,7 @@
  * some ghost-ghost cell interaction as well, which we do not need!
  *
  */
-struct DomainDecomposition : public ParticleDecomposition {
+struct RegularDecomposition : public ParticleDecomposition {
   /** Grid dimensions per node. */
   Utils::Vector3i cell_grid = {};
   /** Cell size. */
@@ -74,7 +74,7 @@ struct DomainDecomposition : public ParticleDecomposition {
   Utils::Vector3i cell_offset = {};
   /** linked cell grid with ghost frame. */
   Utils::Vector3i ghost_cell_grid = {};
-  /** inverse cell size = \see DomainDecomposition::cell_size ^ -1. */
+  /** inverse cell size = \see RegularDecomposition::cell_size ^ -1. */
   Utils::Vector3d inv_cell_size = {};
 
   boost::mpi::communicator m_comm;
@@ -87,9 +87,9 @@ struct DomainDecomposition : public ParticleDecomposition {
   GhostCommunicator m_collect_ghost_force_comm;
 
 public:
-  DomainDecomposition(boost::mpi::communicator comm, double range,
-                      const BoxGeometry &box_geo,
-                      const LocalBox<double> &local_geo);
+  RegularDecomposition(boost::mpi::communicator comm, double range,
+                       const BoxGeometry &box_geo,
+                       const LocalBox<double> &local_geo);
 
   GhostCommunicator const &exchange_ghosts_comm() const override {
     return m_exchange_ghosts_comm;
@@ -116,10 +116,10 @@ public:
   boost::optional<BoxGeometry> minimum_image_distance() const override {
     return {};
   }
-  BoxGeometry box() const override { return m_box; };
+  BoxGeometry box() const override { return m_box; }
 
 private:
-  /** Fill @c m_local_cells list and @c m_ghost_cells list for use with domain
+  /** Fill @c m_local_cells list and @c m_ghost_cells list for use with regular
    *  decomposition.
    */
   void mark_cells();
@@ -197,14 +197,14 @@ private:
    */
   void create_cell_grid(double range);
 
-  /** Init cell interactions for cell system domain decomposition.
+  /** Init cell interactions for cell system regular decomposition.
    *  Initializes the interacting neighbor cell list of a cell.
    *  This list of interacting neighbor cells is used by the Verlet
    *  algorithm.
    */
   void init_cell_interactions();
 
-  /** Create communicators for cell structure domain decomposition (see \ref
+  /** Create communicators for cell structure regular decomposition (see \ref
    *  GhostCommunicator).
    */
   GhostCommunicator prepare_comm();

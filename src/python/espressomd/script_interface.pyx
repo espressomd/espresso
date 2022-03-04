@@ -15,8 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import numpy as np
-from .utils import array_locked, to_char_pointer, to_str, handle_errors
-from .utils cimport Vector3d, make_array_locked
+from .utils import to_char_pointer, to_str, handle_errors, array_locked, is_valid_type
+from .utils cimport Vector2d, Vector3d, Vector4d, make_array_locked
 cimport cpython.object
 
 from libcpp.memory cimport make_shared
@@ -258,6 +258,8 @@ cdef variant_to_python_object(const Variant & value) except +:
     cdef vector[Variant] vec
     cdef unordered_map[int, Variant] vmap
     cdef shared_ptr[ObjectHandle] ptr
+    cdef Vector2d vec2d
+    cdef Vector4d vec4d
     if is_none(value):
         return None
     if is_type[bool](value):
@@ -272,8 +274,14 @@ cdef variant_to_python_object(const Variant & value) except +:
         return get_value[vector[int]](value)
     if is_type[vector[double]](value):
         return get_value[vector[double]](value)
+    if is_type[Vector4d](value):
+        vec4d = get_value[Vector4d](value)
+        return array_locked([vec4d[0], vec4d[1], vec4d[2], vec4d[3]])
     if is_type[Vector3d](value):
         return make_array_locked(get_value[Vector3d](value))
+    if is_type[Vector2d](value):
+        vec2d = get_value[Vector2d](value)
+        return array_locked([vec2d[0], vec2d[1]])
     if is_type[shared_ptr[ObjectHandle]](value):
         # Get the id and build a corresponding object
         ptr = get_value[shared_ptr[ObjectHandle]](value)
@@ -403,6 +411,87 @@ class ScriptObjectRegistry(ScriptInterfaceHelper):
 
     def __len__(self):
         return self.call_method("size")
+
+
+class ScriptObjectMap(ScriptObjectRegistry):
+
+    """
+    Represents a script interface ObjectMap (dict)-like object
+
+    Item acces via [key].
+    """
+
+    _key_type = int
+
+    def __init__(self, *args, **kwargs):
+        if args:
+            params, (_unpickle_so_class, (_so_name, bytestring)) = args
+            assert _so_name == self._so_name
+            self = _unpickle_so_class(_so_name, bytestring)
+            self.__setstate__(params)
+        else:
+            super().__init__(**kwargs)
+
+    def remove(self, key):
+        """
+        Removes the element with the given key
+        """
+        # Validate key type
+        if not is_valid_type(key, self._key_type):
+            raise ValueError(
+                f"Key has to be of type {self._key_type.__name__}")
+
+        self.call_method("erase", key=key)
+
+    def clear(self):
+        """
+        Remove all elements.
+
+        """
+        self.call_method("clear")
+
+    def _get(self, key):
+        if not is_valid_type(key, self._key_type):
+            raise ValueError(
+                f"Key has to be of type {self._key_type.__name__}")
+
+        return self.call_method("get", key=key)
+
+    def __getitem__(self, key):
+        return self._get(key)
+
+    def __setitem__(self, key, value):
+        self.call_method("insert", key=key, object=value)
+
+    def __delitem__(self, key):
+        self.remove(key)
+
+    def keys(self):
+        return self.call_method("keys")
+
+    def __iter__(self):
+        for k in self.keys(): yield k
+
+    def items(self):
+        for k in self.keys(): yield k, self[k]
+
+    @classmethod
+    def _restore_object(cls, so_callback, so_callback_args, state):
+        so = so_callback(*so_callback_args)
+        so.__setstate__(state)
+        return so
+
+    def __reduce__(self):
+        so_callback, (so_name, so_bytestring) = super().__reduce__()
+        return (ScriptObjectMap._restore_object,
+                (so_callback, (so_name, so_bytestring), self.__getstate__()))
+
+    def __getstate__(self):
+        return dict(self.items())
+
+    def __setstate__(self, params):
+        for key, val in params.items():
+            self[key] = val
 
 
 # Map from script object names to their corresponding python classes

@@ -15,6 +15,12 @@ if(EXISTS ${MPIEXEC})
   endif()
 endif()
 
+function(SET_BENCHMARK_PROPERTIES)
+  set_tests_properties(
+    ${ARGV0} PROPERTIES RUN_SERIAL TRUE SKIP_REGULAR_EXPRESSION
+                        "espressomd.FeaturesError: Missing features")
+endfunction()
+
 function(PYTHON_BENCHMARK)
   cmake_parse_arguments(
     BENCHMARK "" "FILE;RUN_WITH_MPI;MIN_NUM_PROC;MAX_NUM_PROC"
@@ -63,14 +69,14 @@ function(PYTHON_BENCHMARK)
           ${MPIEXEC} ${MPIEXEC_OVERSUBSCRIBE} ${MPIEXEC_NUMPROC_FLAG} ${nproc}
           ${MPIEXEC_PREFLAGS} ${CMAKE_BINARY_DIR}/pypresso ${BENCHMARK_FILE}
           ${BENCHMARK_ARGUMENTS} ${MPIEXEC_POSTFLAGS})
-      set_tests_properties(${BENCHMARK_TEST_NAME} PROPERTIES RUN_SERIAL TRUE)
+      set_benchmark_properties(${BENCHMARK_TEST_NAME})
     endforeach(nproc)
   else()
     set(BENCHMARK_TEST_NAME benchmark__${BENCHMARK_NAME}__serial)
     add_test(NAME ${BENCHMARK_TEST_NAME}
              COMMAND ${CMAKE_BINARY_DIR}/pypresso ${BENCHMARK_FILE}
                      ${BENCHMARK_ARGUMENTS})
-    set_tests_properties(${BENCHMARK_TEST_NAME} PROPERTIES RUN_SERIAL TRUE)
+    set_benchmark_properties(${BENCHMARK_TEST_NAME})
   endif()
 endfunction(PYTHON_BENCHMARK)
 

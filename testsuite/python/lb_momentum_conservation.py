@@ -103,7 +103,7 @@ class TestLBMomentumConservationWalberla(
     lb_params = {'single_precision': False}
 
     def set_cellsystem(self):
-        self.system.cell_system.set_domain_decomposition()
+        self.system.cell_system.set_regular_decomposition()
 
 
 @utx.skipIfMissingFeatures(['LB_WALBERLA', 'EXTERNAL_FORCES'])
@@ -114,7 +114,7 @@ class TestLBMomentumConservationWalberlaSinglePrecision(
     lb_params = {'single_precision': True}
 
     def set_cellsystem(self):
-        self.system.cell_system.set_domain_decomposition()
+        self.system.cell_system.set_regular_decomposition()
 
 
 if __name__ == "__main__":

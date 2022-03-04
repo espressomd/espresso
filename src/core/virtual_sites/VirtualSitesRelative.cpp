@@ -30,7 +30,6 @@
 
 #include <utils/Vector.hpp>
 #include <utils/math/quaternion.hpp>
-#include <utils/math/sqr.hpp>
 #include <utils/math/tensor_product.hpp>
 #include <utils/quaternion.hpp>
 
@@ -45,9 +44,9 @@ namespace {
  * @return Orientation quaternion of the virtual site.
  */
 Utils::Quaternion<double>
-orientation(Particle const *p_ref,
+orientation(const Particle &p_ref,
             const ParticleProperties::VirtualSitesRelativeParameters &vs_rel) {
-  return p_ref->r.quat * vs_rel.quat;
+  return p_ref.quat() * vs_rel.quat;
 }
 
 /**
@@ -58,7 +57,7 @@ orientation(Particle const *p_ref,
  */
 inline Utils::Vector3d connection_vector(
 
-    Particle const *p_ref,
+    Particle const &p_ref,
     const ParticleProperties::VirtualSitesRelativeParameters &vs_rel) {
   // Calculate the quaternion defining the orientation of the vector connecting
   // the virtual site and the real particle
@@ -66,7 +65,7 @@ inline Utils::Vector3d connection_vector(
   // of the real particle with the quaternion of the virtual particle, which
   // specifies the relative orientation.
   auto const director = Utils::convert_quaternion_to_director(
-                            p_ref->r.quat * vs_rel.rel_orientation)
+                            p_ref.quat() * vs_rel.rel_orientation)
                             .normalize();
 
   return vs_rel.distance * director;
@@ -79,9 +78,9 @@ inline Utils::Vector3d connection_vector(
  * @return Position of the virtual site.
  */
 Utils::Vector3d
-position(Particle const *p_ref,
+position(Particle const &p_ref,
          const ParticleProperties::VirtualSitesRelativeParameters &vs_rel) {
-  return p_ref->r.p + connection_vector(p_ref, vs_rel);
+  return p_ref.pos() + connection_vector(p_ref, vs_rel);
 }
 
 /**
@@ -91,16 +90,16 @@ position(Particle const *p_ref,
  * @return Velocity of the virtual site.
  */
 Utils::Vector3d
-velocity(const Particle *p_ref,
+velocity(const Particle &p_ref,
          const ParticleProperties::VirtualSitesRelativeParameters &vs_rel) {
   auto const d = connection_vector(p_ref, vs_rel);
 
   // Get omega of real particle in space-fixed frame
   auto const omega_space_frame =
-      convert_vector_body_to_space(*p_ref, p_ref->m.omega);
+      convert_vector_body_to_space(p_ref, p_ref.omega());
   // Obtain velocity from v=v_real particle + omega_real_particle \times
   // director
-  return vector_product(omega_space_frame, d) + p_ref->m.v;
+  return vector_product(omega_space_frame, d) + p_ref.v();
 }
 
 /**
@@ -120,19 +119,6 @@ Particle *get_reference_particle(
 }
 
 /**
- * @brief Constraint force on the real particle.
- *
- *  Calculates the force exerted by the constraint on the
- *  reference particle.
- */
-ParticleForce constraint_force(
-    const ParticleForce &f, const Particle *p_ref,
-    const ParticleProperties::VirtualSitesRelativeParameters &vs_rel) {
-  return {f.f,
-          vector_product(connection_vector(p_ref, vs_rel), f.f) + f.torque};
-}
-
-/**
  * @brief Constraint force to hold the particles at its prescribed position.
  *
  * @param f Force on the virtual site.
@@ -141,7 +127,7 @@ ParticleForce constraint_force(
  * @return Constraint force.
  */
 auto constraint_stress(
-    const Utils::Vector3d &f, const Particle *p_ref,
+    const Utils::Vector3d &f, const Particle &p_ref,
     const ParticleProperties::VirtualSitesRelativeParameters &vs_rel) {
   /* The constraint force is minus the force on the particle, make it force
    * free. The counter force is translated by the connection vector to the
@@ -156,34 +142,34 @@ void VirtualSitesRelative::update() const {
 
   auto const particles = cell_structure.local_particles();
   for (auto &p : particles) {
-    if (!p.p.is_virtual)
+    if (!p.is_virtual())
       continue;
 
-    const Particle *p_ref = get_reference_particle(p.p.vs_relative);
+    const Particle *p_ref = get_reference_particle(p.vs_relative());
 
-    auto new_pos = position(p_ref, p.p.vs_relative);
+    auto new_pos = position(*p_ref, p.vs_relative());
     /* The shift has to respect periodic boundaries: if the reference
-     * particles is not in the same image box, we potentially avoid to shift
+     * particles is not in the same image box, we potentially avoid shifting
      * to the other side of the box. */
-    auto shift = box_geo.get_mi_vector(new_pos, p.r.p);
-    p.r.p += shift;
+    auto shift = box_geo.get_mi_vector(new_pos, p.pos());
+    p.pos() += shift;
     Utils::Vector3i image_shift{};
     fold_position(shift, image_shift, box_geo);
-    p.l.i = p_ref->l.i - image_shift;
+    p.image_box() = p_ref->image_box() - image_shift;
 
-    p.m.v = velocity(p_ref, p.p.vs_relative);
+    p.v() = velocity(*p_ref, p.vs_relative());
 
     if (box_geo.type() == BoxType::LEES_EDWARDS) {
-      const auto &shear_dir = box_geo.clees_edwards_bc().shear_direction;
-      const auto &shear_normal = box_geo.clees_edwards_bc().shear_plane_normal;
-      const auto &le_vel = box_geo.lees_edwards_bc().shear_velocity;
-      Utils::Vector3i n_shifts;
+      auto const &shear_dir = box_geo.clees_edwards_bc().shear_direction;
+      auto const &shear_normal = box_geo.clees_edwards_bc().shear_plane_normal;
+      auto const &le_vel = box_geo.lees_edwards_bc().shear_velocity;
+      Utils::Vector3i n_shifts{};
       fold_position(new_pos, n_shifts, box_geo);
-      p.m.v[shear_dir] -= n_shifts[shear_normal] * le_vel;
+      p.v()[shear_dir] -= n_shifts[shear_normal] * le_vel;
     }
 
-    if (get_have_quaternion())
-      p.r.quat = orientation(p_ref, p.p.vs_relative);
+    if (have_quaternions())
+      p.quat() = orientation(*p_ref, p.vs_relative());
   }
 
   if (cell_structure.check_resort_required(particles, skin)) {
@@ -201,12 +187,16 @@ void VirtualSitesRelative::back_transfer_forces_and_torques() const {
   // Iterate over all the particles in the local cells
   for (auto &p : cell_structure.local_particles()) {
     // We only care about virtual particles
-    if (p.p.is_virtual) {
+    if (p.is_virtual()) {
       // First obtain the real particle responsible for this virtual particle:
-      Particle *p_ref = get_reference_particle(p.p.vs_relative);
+      Particle *p_ref = get_reference_particle(p.vs_relative());
 
       // Add forces and torques
-      p_ref->f += constraint_force(p.f, p_ref, p.p.vs_relative);
+      p_ref->force() += p.force();
+      p_ref->torque() +=
+          vector_product(connection_vector(*p_ref, p.vs_relative()),
+                         p.force()) +
+          p.torque();
     }
   }
 }
@@ -216,13 +206,13 @@ Utils::Matrix<double, 3, 3> VirtualSitesRelative::pressure_tensor() const {
   Utils::Matrix<double, 3, 3> pressure_tensor = {};
 
   for (auto &p : cell_structure.local_particles()) {
-    if (!p.p.is_virtual)
+    if (!p.is_virtual())
       continue;
 
     // First obtain the real particle responsible for this virtual particle:
-    const Particle *p_ref = get_reference_particle(p.p.vs_relative);
+    const Particle *p_ref = get_reference_particle(p.vs_relative());
 
-    pressure_tensor += constraint_stress(p.f.f, p_ref, p.p.vs_relative);
+    pressure_tensor += constraint_stress(p.force(), *p_ref, p.vs_relative());
   }
 
   return pressure_tensor;

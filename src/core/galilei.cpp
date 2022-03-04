@@ -41,7 +41,7 @@ void local_kill_particle_motion(int omega, const ParticleRange &particles) {
     if (omega) {
       p.m = {};
     } else {
-      p.m.v = {};
+      p.v() = {};
     }
   }
 }
@@ -52,7 +52,7 @@ void local_kill_particle_forces(int torque, const ParticleRange &particles) {
     if (torque) {
       p.f = {};
     } else {
-      p.f.f = {};
+      p.force() = {};
     }
   }
 }
@@ -62,11 +62,11 @@ std::pair<Utils::Vector3d, double> local_system_CMS() {
   return boost::accumulate(
       cell_structure.local_particles(), std::pair<Utils::Vector3d, double>{},
       [](auto sum, const Particle &p) {
-        if (not p.p.is_virtual) {
+        if (not p.is_virtual()) {
           return std::pair<Utils::Vector3d, double>{
-              sum.first +
-                  p.p.mass * unfolded_position(p.r.p, p.l.i, box_geo.length()),
-              sum.second + p.p.mass};
+              sum.first + p.mass() * unfolded_position(p.pos(), p.image_box(),
+                                                       box_geo.length()),
+              sum.second + p.mass()};
         }
         return std::pair<Utils::Vector3d, double>{sum.first, sum.second};
       });
@@ -77,9 +77,9 @@ std::pair<Utils::Vector3d, double> local_system_CMS_velocity() {
   return boost::accumulate(
       cell_structure.local_particles(), std::pair<Utils::Vector3d, double>{},
       [](auto sum, const Particle &p) {
-        if (not p.p.is_virtual) {
+        if (not p.is_virtual()) {
           return std::pair<Utils::Vector3d, double>{
-              sum.first + p.p.mass * p.m.v, sum.second + p.p.mass};
+              sum.first + p.mass() * p.v(), sum.second + p.mass()};
         }
         return std::pair<Utils::Vector3d, double>{sum.first, sum.second};
       });
@@ -88,7 +88,7 @@ std::pair<Utils::Vector3d, double> local_system_CMS_velocity() {
 /** Remove the CMS velocity */
 void local_galilei_transform(const Utils::Vector3d &cmsvel) {
   for (auto &p : cell_structure.local_particles()) {
-    p.m.v -= cmsvel;
+    p.v() -= cmsvel;
   }
 }
 

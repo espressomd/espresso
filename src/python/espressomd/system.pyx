@@ -44,6 +44,7 @@ from . import lees_edwards
 from .comfixed import ComFixed
 from .utils cimport check_type_or_throw_except
 from .utils import handle_errors, array_locked
+from .bond_breakage import BreakageSpecs
 IF VIRTUAL_SITES:
     from .virtual_sites import ActiveVirtualSitesHandle, VirtualSitesOff
 
@@ -143,6 +144,8 @@ cdef class System:
         """:class:`espressomd.actors.Actors`"""
         analysis
         """:class:`espressomd.analyze.Analysis`"""
+        bond_breakage
+        """:class:`espressomd.bond_breakage.BreakageSpecs`"""
         galilei
         """:class:`espressomd.galilei.GalileiTransform`"""
         integrator
@@ -180,6 +183,7 @@ cdef class System:
             self.auto_update_accumulators = AutoUpdateAccumulators()
             self.bonded_inter = interactions.BondedInteractions()
             self.cell_system = CellSystem()
+            self.bond_breakage = BreakageSpecs()
             IF COLLISION_DETECTION == 1:
                 self.collision_detection = CollisionDetection()
             self.comfixed = ComFixed()
@@ -217,6 +221,7 @@ cdef class System:
         odict['comfixed'] = System.__getattribute__(self, "comfixed")
         odict['constraints'] = System.__getattribute__(self, "constraints")
         odict['galilei'] = System.__getattribute__(self, "galilei")
+        odict['bond_breakage'] = System.__getattribute__(self, "bond_breakage")
         IF COLLISION_DETECTION:
             odict['collision_detection'] = System.__getattribute__(
                 self, "collision_detection")
@@ -420,8 +425,9 @@ cdef class System:
         return make_array_locked(box_geo.get_mi_vector(pos2, pos1))
 
     def velocity_difference(self, p1, p2):
-        """Return the velocity difference between two particles,
-        considering Lees-Edwards boundary conditions, if active
+        """
+        Return the velocity difference between two particles,
+        considering Lees-Edwards boundary conditions, if active.
 
         Parameters
         ----------

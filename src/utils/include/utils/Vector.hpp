@@ -447,6 +447,16 @@ auto hadamard_division(T const &a, U const &b) {
   return a / b;
 }
 
+template <typename T> Vector<T, 3> unit_vector(int i) {
+  if (i == 0)
+    return {T{1}, T{0}, T{0}};
+  if (i == 1)
+    return {T{0}, T{1}, T{0}};
+  if (i == 2)
+    return {T{0}, T{0}, T{1}};
+  throw std::domain_error("coordinate out of range");
+}
+
 /**
  * @brief Meta function to turns a Vector<1, T> into T.
  */

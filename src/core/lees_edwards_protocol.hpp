@@ -19,23 +19,15 @@
 #ifndef LEES_EDWARDS_PROTOCOL_HPP
 #define LEES_EDWARDS_PROTOCOL_HPP
 
-/**
- * @file
- * Lees-Edwards functors for linear shear and oscillatory shear.
- */
-
-#include "integrate.hpp"
-
 #include <utils/Vector.hpp>
 
 #include <boost/variant.hpp>
 
-#include <cmath>
-
 namespace LeesEdwards {
 
 // Protocols determining shear rate and positional offset as a function of time
-/** Lees Edwards protocol for un-altered periodic boundary conditions */
+
+/** Lees-Edwards protocol for un-altered periodic boundary conditions */
 struct Off {
   double shear_velocity(double time) const { return 0.; }
   double pos_offset(double time) const { return 0.; }
@@ -86,7 +78,7 @@ private:
   double m_time;
 };
 
-inline double get_pos_offset(double time, const ActiveProtocol &protocol) {
+inline double get_pos_offset(double time, ActiveProtocol const &protocol) {
   return boost::apply_visitor(PosOffsetGetter(time), protocol);
 }
 
@@ -102,8 +94,8 @@ private:
   double m_time;
 };
 
-/** Calculation of current velocity*/
-inline double get_shear_velocity(double time, const ActiveProtocol &protocol) {
+/** Calculation of current velocity */
+inline double get_shear_velocity(double time, ActiveProtocol const &protocol) {
   return boost::apply_visitor(ShearVelocityGetter(time), protocol);
 }
 

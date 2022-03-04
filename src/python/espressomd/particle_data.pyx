@@ -73,7 +73,7 @@ cdef class ParticleHandle:
         """
 
         pickle_attr = copy(particle_attributes)
-        for i in ["director", "dip", "image_box", "node"]:
+        for i in ["director", "dip", "image_box", "node", "lees_edwards_flag"]:
             if i in pickle_attr:
                 pickle_attr.remove(i)
         IF MASS == 0:
@@ -236,26 +236,23 @@ cdef class ParticleHandle:
                                  self.particle_data.l.i[2]])
 
     property lees_edwards_offset:
-        """Containes the accumulated Lees-Edwards offset to reconstruct
-           continouus trajectories.
+        """Contains the accumulated Lees-Edwards offset to reconstruct
+           continuous trajectories.
 
         """
-
-        def __set__(self, unused):
-            pass
 
         def __get__(self):
             self.update_particle_data()
             return self.particle_data.l.lees_edwards_offset
 
+        def __set__(self, value):
+            set_particle_lees_edwards_offset(self._id, value)
+
     property lees_edwards_flag:
-        """Containes the accumulated Lees-Edwards flag to indicate
+        """Contains the accumulated Lees-Edwards flag to indicate
            if the particle crossed the upper or lower boundary.
 
         """
-
-        def __set__(self, unused):
-            pass
 
         def __get__(self):
             self.update_particle_data()

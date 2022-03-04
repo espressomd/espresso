@@ -407,6 +407,17 @@ class CheckpointTest(ut.TestCase):
             bond_ids = system.bonded_inter.call_method('get_bond_ids')
             self.assertEqual(len(bond_ids), len(system.bonded_inter))
 
+    def test_bond_breakage_specs(self):
+        # check the ObjectHandle was correctly initialized (including MPI)
+        spec_ids = list(system.bond_breakage.keys())
+        self.assertEqual(len(spec_ids), 1)
+        cpt_spec = system.bond_breakage[spec_ids[0]]
+        self.assertAlmostEqual(
+            break_spec.breakage_length,
+            cpt_spec.breakage_length,
+            delta=1e-10)
+        self.assertEqual(break_spec.action_type, cpt_spec.action_type)
+
     @ut.skipIf('THERM.LB' in modes, 'LB thermostat in modes')
     @utx.skipIfMissingFeatures(['ELECTROSTATICS', 'MASS', 'ROTATION'])
     def test_drude_helpers(self):

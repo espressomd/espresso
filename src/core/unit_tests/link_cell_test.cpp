@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE(link_cell) {
     c.particles().resize(n_part_per_cell);
 
     for (auto &p : c.particles()) {
-      p.p.identity = id++;
+      p.id() = id++;
     }
   }
 
@@ -59,8 +59,8 @@ BOOST_AUTO_TEST_CASE(link_cell) {
 
   Algorithm::link_cell(cells.begin(), cells.end(),
                        [&lc_pairs](Particle const &p1, Particle const &p2) {
-                         if (p1.p.identity <= p2.p.identity)
-                           lc_pairs.emplace_back(p1.p.identity, p2.p.identity);
+                         if (p1.id() <= p2.id())
+                           lc_pairs.emplace_back(p1.id(), p2.id());
                        });
 
   BOOST_CHECK(lc_pairs.size() == (n_part * (n_part - 1) / 2));

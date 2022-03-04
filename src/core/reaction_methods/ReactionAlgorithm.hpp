@@ -28,7 +28,9 @@
 #include <utils/Vector.hpp>
 
 #include <map>
+#include <memory>
 #include <random>
+#include <stdexcept>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -45,24 +47,33 @@ struct StoredParticleProperty {
 class ReactionAlgorithm {
 
 public:
-  ReactionAlgorithm(int seed)
+  ReactionAlgorithm(int seed, double kT, double exclusion_radius)
       : m_generator(Random::mt19937(std::seed_seq({seed, seed, seed}))),
         m_normal_distribution(0.0, 1.0), m_uniform_real_distribution(0.0, 1.0) {
+    if (kT < 0.) {
+      throw std::domain_error("Invalid value for 'kT'");
+    }
+    if (exclusion_radius < 0.) {
+      throw std::domain_error("Invalid value for 'exclusion_radius'");
+    }
+    this->kT = kT;
+    this->exclusion_radius = exclusion_radius;
+    update_volume();
   }
 
   virtual ~ReactionAlgorithm() = default;
 
-  std::vector<SingleReaction> reactions;
+  std::vector<std::shared_ptr<SingleReaction>> reactions;
   std::map<int, double> charges_of_types;
-  double kT = -10.0;
+  double kT;
   /**
    * Hard sphere radius. If particles are closer than this value,
    * it is assumed that their interaction energy gets approximately
    * infinite, therefore these configurations do not contribute
    * to the partition function and ensemble averages.
    */
-  double exclusion_radius = 0.0;
-  double volume = -10.0;
+  double exclusion_radius;
+  double volume;
   int non_interacting_type = 100;
 
   int m_accepted_configurational_MC_moves = 0;
@@ -72,21 +83,30 @@ public:
            static_cast<double>(m_tried_configurational_MC_moves);
   }
 
-  void set_cuboid_reaction_ensemble_volume();
+  auto get_kT() const { return kT; }
+  auto get_exclusion_radius() const { return exclusion_radius; }
+  auto get_volume() const { return volume; }
+  void set_volume(double new_volume) {
+    if (new_volume <= 0.) {
+      throw std::domain_error("Invalid value for 'volume'");
+    }
+    volume = new_volume;
+  }
+  void update_volume();
   virtual int do_reaction(int reaction_steps);
   void check_reaction_method() const;
   void remove_constraint() { m_reaction_constraint = ReactionConstraint::NONE; }
   void set_cyl_constraint(double center_x, double center_y, double radius);
   void set_slab_constraint(double slab_start_z, double slab_end_z);
   Utils::Vector2d get_slab_constraint_parameters() const {
+    if (m_reaction_constraint != ReactionConstraint::SLAB_Z) {
+      throw std::runtime_error("no slab constraint is currently active");
+    }
     return {m_slab_start_z, m_slab_end_z};
   }
 
-  int delete_particle(int p_id);
-  void add_reaction(double gamma, const std::vector<int> &reactant_types,
-                    const std::vector<int> &reactant_coefficients,
-                    const std::vector<int> &product_types,
-                    const std::vector<int> &product_coefficients);
+  void delete_particle(int p_id);
+  void add_reaction(std::shared_ptr<SingleReaction> const &new_reaction);
   void delete_reaction(int reaction_id) {
     reactions.erase(reactions.begin() + reaction_id);
   }

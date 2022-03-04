@@ -26,7 +26,6 @@
 #include <utils/Vector.hpp>
 
 #include <cmath>
-#include <iostream>
 #include <limits>
 #include <stdexcept>
 
@@ -135,7 +134,7 @@ BOOST_AUTO_TEST_CASE(get_mi_vector_test) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(lees_edwads_mi_vector) {
+BOOST_AUTO_TEST_CASE(lees_edwards_mi_vector) {
   using detail::get_mi_coord;
   using Utils::Vector3d;
 
@@ -164,7 +163,7 @@ BOOST_AUTO_TEST_CASE(lees_edwads_mi_vector) {
 
   // LE pos offset >0 but distance < half box length. Behave like normal
   // get_mi_vector
-  le.pos_offset = 1;
+  le.pos_offset = 1.;
   box.set_lees_edwards_bc(le);
   {
     auto const a = Vector3d{1.1, 12.2, -13.4};
@@ -174,7 +173,6 @@ BOOST_AUTO_TEST_CASE(lees_edwads_mi_vector) {
 
     for (int i = 0; i < 3; i++) {
       auto const expected = get_mi_coord(a[i], b[i], box_l[i], box.periodic(i));
-
       BOOST_CHECK_SMALL(std::abs(expected - result[i]), epsilon<double>);
     }
   }
@@ -182,12 +180,12 @@ BOOST_AUTO_TEST_CASE(lees_edwads_mi_vector) {
   {
     auto const a = Vector3d{1.1, 12.2, -13};
     auto const b = Vector3d{-11, 8.8, -13};
-    double le_jumps = std::round((a[0] - b[0]) / box.length()[0]);
+    auto const le_jumps = std::round((a[0] - b[0]) / box.length()[0]);
 
     auto const result = box.get_mi_vector(a, b);
 
-    auto expected = Vector3d{{
-        fmod(a[0] - b[0], box.length()[0]), a[1] - b[1],
+    auto const expected = Vector3d{{
+        std::fmod(a[0] - b[0], box.length()[0]), a[1] - b[1],
         a[2] - b[2] + le_jumps * le.pos_offset -
             box.length()[2] // Manually apply minimum image convention
     }};
@@ -205,11 +203,9 @@ BOOST_AUTO_TEST_CASE(lees_edwads_mi_vector) {
   box.lees_edwards_bc().pos_offset = 2.98;
   box.lees_edwards_bc().shear_direction = 0;
   box.lees_edwards_bc().shear_plane_normal = 1;
-  //  auto result =  box.get_mi_vector(Vector3d{2.5, 1.,  2.5},
-  //  Vector3d{4.52, 4.,   2.5});
-  auto result =
+  auto const result =
       box.get_mi_vector(Vector3d{2.5, 1., 2.5}, Vector3d{4.52, 4., 2.5});
-  BOOST_CHECK(std::fabs(result[0]) < box.length_half()[0]);
+  BOOST_CHECK_SMALL(std::fabs(result[0]), box.length_half()[0]);
 }
 
 BOOST_AUTO_TEST_CASE(image_shift_test) {

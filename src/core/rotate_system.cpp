@@ -42,9 +42,9 @@ static void mpi_rotate_system_local(double phi, double theta, double alpha) {
   double local_mass = 0.0;
 
   for (auto const &p : particles) {
-    if (not p.p.is_virtual) {
-      local_com += p.p.mass * p.r.p;
-      local_mass += p.p.mass;
+    if (not p.is_virtual()) {
+      local_com += p.mass() * p.pos();
+      local_mass += p.mass();
     }
   }
 
@@ -62,7 +62,7 @@ static void mpi_rotate_system_local(double phi, double theta, double alpha) {
   // Rotate particle coordinates
   for (auto &p : particles) {
     // Move the center of mass of the system to the origin
-    p.r.p = com + Utils::vec_rotate(axis, alpha, p.r.p - com);
+    p.pos() = com + Utils::vec_rotate(axis, alpha, p.pos() - com);
 #ifdef ROTATION
     local_rotate_particle(p, axis, alpha);
 #endif

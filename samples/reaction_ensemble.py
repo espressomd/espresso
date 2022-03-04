@@ -90,8 +90,7 @@ if args.mode == "reaction_ensemble":
                     default_charges=charge_dict)
 elif args.mode == "constant_pH_ensemble":
     RE = espressomd.reaction_ensemble.ConstantpHEnsemble(
-        kT=1, exclusion_radius=1, seed=77)
-    RE.constant_pH = 2
+        kT=1, exclusion_radius=1, seed=77, constant_pH=2)
     RE.add_reaction(gamma=K_diss, reactant_types=[types["HA"]],
                     product_types=[types["A-"], types["H+"]],
                     default_charges=charge_dict)
@@ -105,14 +104,20 @@ system.setup_type_map(list(types.values()))
 
 # Set the hidden particle type to the lowest possible number to speed
 # up the simulation
-RE.set_non_interacting_type(max(types.values()) + 1)
+RE.set_non_interacting_type(type=max(types.values()) + 1)
 
 for i in range(10000):
-    RE.reaction()
+    RE.reaction(reaction_steps=1)
     if i % 100 == 0:
         print("HA", system.number_of_particles(type=types["HA"]),
               "A-", system.number_of_particles(type=types["A-"]),
               "H+", system.number_of_particles(type=types["H+"]))
 
-print("reaction 0 has acceptance rate: ", RE.get_acceptance_rate_reaction(0))
-print("reaction 1 has acceptance rate: ", RE.get_acceptance_rate_reaction(1))
+print(
+    "reaction 0 has acceptance rate: ",
+    RE.get_acceptance_rate_reaction(
+        reaction_id=0))
+print(
+    "reaction 1 has acceptance rate: ",
+    RE.get_acceptance_rate_reaction(
+        reaction_id=1))

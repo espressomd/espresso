@@ -34,11 +34,13 @@
 #include "ComFixed.hpp"
 #include "CylindricalTransformationParameters.hpp"
 #include "accumulators/initialize.hpp"
+#include "bond_breakage/initialize.hpp"
 #include "collision_detection/initialize.hpp"
 #include "interactions/initialize.hpp"
 #include "lees_edwards/initialize.hpp"
 #include "mpiio/initialize.hpp"
 #include "observables/initialize.hpp"
+#include "reaction_methods/initialize.hpp"
 #include "virtual_sites/initialize.hpp"
 
 namespace ScriptInterface {
@@ -49,6 +51,7 @@ void initialize(Utils::Factory<ObjectHandle> *f) {
   Writer::initialize(f);
 #endif
   Accumulators::initialize(f);
+  BondBreakage::initialize(f);
   Observables::initialize(f);
   ClusterAnalysis::initialize(f);
   Interactions::initialize(f);
@@ -57,6 +60,7 @@ void initialize(Utils::Factory<ObjectHandle> *f) {
   VirtualSites::initialize(f);
   MPIIO::initialize(f);
   CollisionDetection::initialize(f);
+  ReactionMethods::initialize(f);
 #ifdef LB_WALBERLA
   walberla::initialize(f);
 #endif

@@ -54,7 +54,7 @@ class ELC_vs_analytic(ut.TestCase):
                              q=-self.q[0])
 
         self.system.box_l = [self.box_l, self.box_l, self.box_l + self.elc_gap]
-        self.system.cell_system.set_domain_decomposition(
+        self.system.cell_system.set_regular_decomposition(
             use_verlet_lists=True)
         self.system.periodicity = [1, 1, 1]
         p3m = espressomd.electrostatics.P3M(prefactor=self.prefactor,

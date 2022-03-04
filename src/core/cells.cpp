@@ -34,8 +34,8 @@
 #include "integrate.hpp"
 #include "particle_data.hpp"
 
-#include "DomainDecomposition.hpp"
 #include "ParticleDecomposition.hpp"
+#include "RegularDecomposition.hpp"
 
 #include <utils/as_const.hpp>
 #include <utils/math/sqr.hpp>
@@ -70,7 +70,7 @@ std::vector<std::pair<int, int>> get_pairs_filtered(double const distance,
                                                Particle const &p2,
                                                Distance const &d) {
     if (d.dist2 < cutoff2 and filter(p1) and filter(p2))
-      ret.emplace_back(p1.p.identity, p2.p.identity);
+      ret.emplace_back(p1.id(), p2.id());
   };
 
   cell_structure.non_bonded_loop(pair_kernel);
@@ -102,7 +102,7 @@ std::vector<PairInfo> non_bonded_loop_trace() {
   std::vector<PairInfo> ret;
   auto pair_kernel = [&ret](Particle const &p1, Particle const &p2,
                             Distance const &d) {
-    ret.emplace_back(p1.p.identity, p2.p.identity, p1.r.p, p2.r.p, d.vec21,
+    ret.emplace_back(p1.id(), p2.id(), p1.pos(), p2.pos(), d.vec21,
                      comm_cart.rank());
   };
 
@@ -124,7 +124,7 @@ static auto mpi_get_pairs_of_types_local(double const distance,
                                          std::vector<int> const &types) {
   auto pairs = get_pairs_filtered(distance, [types](Particle const &p) {
     return std::any_of(types.begin(), types.end(),
-                       [p](int const type) { return p.p.type == type; });
+                       [p](int const type) { return p.type() == type; });
   });
   Utils::Mpi::gather_buffer(pairs, comm_cart);
   return pairs;
@@ -172,7 +172,7 @@ std::vector<PairInfo> mpi_non_bonded_loop_trace() {
   return pairs;
 }
 
-static void mpi_resort_particles_local(int global_flag, int) {
+static void mpi_resort_particles_local(int global_flag) {
   cell_structure.resort_particles(global_flag, box_geo);
 
   boost::mpi::gather(
@@ -182,7 +182,7 @@ static void mpi_resort_particles_local(int global_flag, int) {
 REGISTER_CALLBACK(mpi_resort_particles_local)
 
 std::vector<int> mpi_resort_particles(int global_flag) {
-  mpi_call(mpi_resort_particles_local, global_flag, 0);
+  mpi_call(mpi_resort_particles_local, global_flag);
   cell_structure.resort_particles(global_flag, box_geo);
 
   clear_particle_node();
@@ -195,14 +195,14 @@ std::vector<int> mpi_resort_particles(int global_flag) {
   return n_parts;
 }
 
-void cells_re_init(int new_cs) {
+void cells_re_init(CellStructureType new_cs) {
   switch (new_cs) {
-  case CELL_STRUCTURE_DOMDEC:
-    cell_structure.set_domain_decomposition(comm_cart, interaction_range(),
-                                            box_geo, local_geo);
+  case CellStructureType::CELL_STRUCTURE_REGULAR:
+    cell_structure.set_regular_decomposition(comm_cart, interaction_range(),
+                                             box_geo, local_geo);
     break;
-  case CELL_STRUCTURE_NSQUARE:
-    cell_structure.set_atom_decomposition(comm_cart, box_geo);
+  case CellStructureType::CELL_STRUCTURE_NSQUARE:
+    cell_structure.set_atom_decomposition(comm_cart, box_geo, local_geo);
     break;
   default:
     throw std::runtime_error("Unknown cell system type");
@@ -213,7 +213,9 @@ void cells_re_init(int new_cs) {
 
 REGISTER_CALLBACK(cells_re_init)
 
-void mpi_bcast_cell_structure(int cs) { mpi_call_all(cells_re_init, cs); }
+void mpi_bcast_cell_structure(CellStructureType cs) {
+  mpi_call_all(cells_re_init, cs);
+}
 
 void check_resort_particles() {
   auto const level = (cell_structure.check_resort_required(
@@ -246,7 +248,7 @@ void cells_update_ghosts(unsigned data_parts) {
     /* Add the ghost particles to the index if we don't already
      * have them. */
     for (auto &part : cell_structure.ghost_particles()) {
-      if (cell_structure.get_local_particle(part.p.identity) == nullptr) {
+      if (cell_structure.get_local_particle(part.id()) == nullptr) {
         cell_structure.update_particle_index(part.identity(), &part);
       }
     }
@@ -263,8 +265,8 @@ Cell *find_current_cell(const Particle &p) {
   return cell_structure.find_current_cell(p);
 }
 
-const DomainDecomposition *get_domain_decomposition() {
-  return &dynamic_cast<const DomainDecomposition &>(
+const RegularDecomposition *get_regular_decomposition() {
+  return &dynamic_cast<const RegularDecomposition &>(
       Utils::as_const(cell_structure).decomposition());
 }
 

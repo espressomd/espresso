@@ -1,5 +1,6 @@
 set(EspressoCore_SRC
     accumulators.cpp
+    bond_breakage.cpp
     bond_error.cpp
     cells.cpp
     collision.cpp
@@ -19,7 +20,6 @@ set(EspressoCore_SRC
     interactions.cpp
     event.cpp
     integrate.cpp
-    lees_edwards.cpp
     npt.cpp
     partCfg_global.cpp
     particle_data.cpp
@@ -29,6 +29,7 @@ set(EspressoCore_SRC
     rotate_system.cpp
     rotation.cpp
     Observable_stat.cpp
+    RegularDecomposition.cpp
     RuntimeErrorCollector.cpp
     RuntimeError.cpp
     RuntimeErrorStream.cpp
@@ -42,8 +43,7 @@ set(EspressoCore_SRC
     CellStructure.cpp
     PartCfg.cpp
     AtomDecomposition.cpp
-    EspressoSystemStandAlone.cpp
-    DomainDecomposition.cpp)
+    EspressoSystemStandAlone.cpp)
 
 if(CUDA)
   set(EspressoCuda_SRC

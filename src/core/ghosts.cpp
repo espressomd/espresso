@@ -153,7 +153,7 @@ static void prepare_send_buffer(CommBuf &send_buffer,
         }
 #ifdef BOND_CONSTRAINT
         if (data_parts & GHOSTTRANS_RATTLE) {
-          archiver << part.rattle;
+          archiver << part.rattle_params();
         }
 #endif
         if (data_parts & GHOSTTRANS_BONDS) {
@@ -172,7 +172,7 @@ static void prepare_ghost_cell(ParticleList *cell, int size) {
 
   /* Mark particles as ghosts */
   for (auto &p : *cell) {
-    p.l.ghost = true;
+    p.set_ghost(true);
   }
 }
 
@@ -214,7 +214,7 @@ static void put_recv_buffer(CommBuf &recv_buffer,
         }
 #ifdef BOND_CONSTRAINT
         if (data_parts & GHOSTTRANS_RATTLE) {
-          archiver >> part.rattle;
+          archiver >> part.rattle_params();
         }
 #endif
       }
@@ -248,7 +248,7 @@ add_rattle_correction_from_recv_buffer(CommBuf &recv_buffer,
     for (Particle &part : *part_list) {
       ParticleRattle pr;
       archiver >> pr;
-      part.rattle += pr;
+      part.rattle_params() += pr;
     }
   }
 }
@@ -295,7 +295,7 @@ static void cell_cell_transfer(const GhostCommunication &ghost_comm,
         if (data_parts & GHOSTTRANS_POSITION) {
           /* ok, this is not nice, but perhaps fast */
           part2.r = part1.r;
-          part2.r.p += ghost_comm.shift;
+          part2.pos() += ghost_comm.shift;
         }
         if (data_parts & GHOSTTRANS_MOMENTUM) {
           part2.m = part1.m;
@@ -304,7 +304,7 @@ static void cell_cell_transfer(const GhostCommunication &ghost_comm,
           part2.f += part1.f;
 #ifdef BOND_CONSTRAINT
         if (data_parts & GHOSTTRANS_RATTLE)
-          part2.rattle += part1.rattle;
+          part2.rattle_params() += part1.rattle_params();
 #endif
       }
     }

@@ -1,12 +1,33 @@
+/*
+ * Copyright (C) 2021-2022 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+#ifndef SCRIPT_INTERFACE_LEES_EDWARDS_LEES_EDWARDS_HPP
+#define SCRIPT_INTERFACE_LEES_EDWARDS_LEES_EDWARDS_HPP
 
 #include "Protocol.hpp"
-#include "cells.hpp"
-#include "config.hpp"
+
 #include "core/grid.hpp"
 #include "core/lees_edwards.hpp"
-#include "integrate.hpp"
+
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
+
+#include <memory>
 
 namespace ScriptInterface {
 namespace LeesEdwards {
@@ -19,25 +40,11 @@ public:
           [this](Variant const &value) {
             if (is_none(value)) {
               m_protocol = nullptr;
-              box_geo.lees_edwards_bc().shear_velocity = 0;
-              box_geo.lees_edwards_bc().pos_offset = 0;
-              box_geo.set_type(BoxType::CUBOID);
-              cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
+              ::LeesEdwards::unset_protocol();
               return;
             }
             m_protocol = get_value<std::shared_ptr<Protocol>>(value);
-            if (m_protocol) {
-              box_geo.set_type(BoxType::LEES_EDWARDS);
-              ::LeesEdwards::active_protocol = m_protocol->protocol();
-              ::LeesEdwards::update_pos_offset(*::LeesEdwards::active_protocol,
-                                               box_geo, get_sim_time());
-              ::LeesEdwards::update_shear_velocity(
-                  *::LeesEdwards::active_protocol, box_geo, get_sim_time());
-              cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
-            } else {
-              throw std::runtime_error(
-                  "A Lees Edwards protocol needs to be passed.");
-            }
+            ::LeesEdwards::set_protocol(m_protocol->protocol());
           },
           [this]() {
             if (m_protocol)
@@ -52,8 +59,9 @@ public:
 
 private:
   std::shared_ptr<Protocol> m_protocol;
-
-}; // Class LeesEdwards
+};
 
 } // namespace LeesEdwards
 } // namespace ScriptInterface
+
+#endif

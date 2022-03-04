@@ -155,8 +155,8 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
 
       auto const acc_value = time_series.back();
       auto const obs_value = (*obs)();
-      BOOST_TEST(obs_value == p.m.v, boost::test_tools::per_element());
-      BOOST_TEST(acc_value == p.m.v, boost::test_tools::per_element());
+      BOOST_TEST(obs_value == p.v(), boost::test_tools::per_element());
+      BOOST_TEST(acc_value == p.v(), boost::test_tools::per_element());
     }
   }
 
@@ -166,7 +166,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
     for (int i = 0; i < 5; ++i) {
       set_particle_v(pid2, {static_cast<double>(i), 0., 0.});
       auto const &p = get_particle_data(pid2);
-      auto const kinetic_energy = 0.5 * p.p.mass * p.m.v.norm2();
+      auto const kinetic_energy = 0.5 * p.mass() * p.v().norm2();
       auto const obs_energy = calculate_energy();
       BOOST_CHECK_CLOSE(obs_energy->kinetic[0], kinetic_energy, tol);
       BOOST_CHECK_CLOSE(observable_compute_energy(), kinetic_energy, tol);
@@ -253,7 +253,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
 
     // measure energies
     auto const step = 0.02;
-    auto const pos1 = get_particle_data(pid1).r.p;
+    auto const pos1 = get_particle_data(pid1).pos();
     Utils::Vector3d pos2{box_center, box_center - 0.1, 1.0};
     for (int i = 0; i < 10; ++i) {
       // move particle
@@ -292,19 +292,19 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
     auto const &p2 = get_particle_data(pid2);
     auto const &p3 = get_particle_data(pid3);
     // forces are symmetric
-    BOOST_CHECK_CLOSE(p1.f.f[0], -p2.f.f[0], tol);
-    BOOST_CHECK_CLOSE(p3.f.f[1], -p2.f.f[1], tol);
+    BOOST_CHECK_CLOSE(p1.force()[0], -p2.force()[0], tol);
+    BOOST_CHECK_CLOSE(p3.force()[1], -p2.force()[1], tol);
     // periodic image contributions to the electrostatic force are negligible
-    BOOST_CHECK_LE(std::abs(p1.f.f[1]), tol);
-    BOOST_CHECK_LE(std::abs(p1.f.f[2]), tol);
-    BOOST_CHECK_LE(std::abs(p2.f.f[2]), tol);
+    BOOST_CHECK_LE(std::abs(p1.force()[1]), tol);
+    BOOST_CHECK_LE(std::abs(p1.force()[2]), tol);
+    BOOST_CHECK_LE(std::abs(p2.force()[2]), tol);
     // zero long-range contribution for uncharged particles
-    BOOST_CHECK_EQUAL(p3.f.f[0], 0.);
-    BOOST_CHECK_EQUAL(p3.f.f[2], 0.);
+    BOOST_CHECK_EQUAL(p3.force()[0], 0.);
+    BOOST_CHECK_EQUAL(p3.force()[2], 0.);
     // velocities are not propagated
-    BOOST_CHECK_EQUAL(p1.m.v.norm(), 0.);
-    BOOST_CHECK_EQUAL(p2.m.v.norm(), 0.);
-    BOOST_CHECK_EQUAL(p3.m.v.norm(), 0.);
+    BOOST_CHECK_EQUAL(p1.v().norm(), 0.);
+    BOOST_CHECK_EQUAL(p2.v().norm(), 0.);
+    BOOST_CHECK_EQUAL(p3.v().norm(), 0.);
 
     // check integrated trajectory; the time step is chosen
     // small enough so that particles don't travel too far
@@ -316,15 +316,15 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
       std::unordered_map<int, Utils::Vector3d> expected;
       for (auto pid : pids) {
         auto p = get_particle_data(pid);
-        p.m.v += 0.5 * time_step * p.f.f / p.p.mass;
-        p.r.p += time_step * p.m.v;
-        expected[pid] = p.r.p;
+        p.v() += 0.5 * time_step * p.force() / p.p.mass;
+        p.pos() += time_step * p.v();
+        expected[pid] = p.pos();
       }
       mpi_integrate(1, 0);
       for (auto pid : pids) {
         auto const &p = get_particle_data(pid);
-        BOOST_CHECK_LE((p.r.p - expected[pid]).norm(), tol);
-        assert((p.r.p - pos_com).norm() < 0.5);
+        BOOST_CHECK_LE((p.pos() - expected[pid]).norm(), tol);
+        assert((p.pos() - pos_com).norm() < 0.5);
       }
     }
   }
