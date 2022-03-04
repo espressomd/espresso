@@ -118,6 +118,63 @@ The following limitations currently apply for the collision detection:
 * The ``"bind at point of collision"`` approach cannot handle collisions
   between virtual sites
 
+.. _Deleting bonds when particles are pulled:
+
+Deleting bonds when particles are pulled
+----------------------------------------
+
+With this feature, bonds between particles can be deleted automatically
+when a critical bond extension is reached. This is useful to simulate
+weak bonds between particles.
+
+The bond breakage action is specified for individual bonds via the system
+:attr:`~espressomd.system.System.bond_breakage` attribute.
+
+Several modes are available:
+
+* ``"revert_center_bond"``: delete a bond from the first particle
+* ``"revert_vs_bond"``: delete a virtual bond, can be used together with
+  the :ref:`collision detection<Creating bonds when particles collide>`
+  feature (configured in mode ``"bind_at_point_of_collision"``) to
+  reversibly create and delete a bond
+* ``"none"``: cancel an existing bond breakage specification
+
+Example::
+
+    import espressomd
+    import espressomd.interactions
+    import espressomd.bond_breakage
+    import numpy as np
+
+    system = espressomd.System(box_l=[10] * 3)
+    system.cell_system.skin = 0.4
+    system.time_step = 0.1
+    system.min_global_cut = 2.
+
+    h1 = espressomd.interactions.HarmonicBond(k=0.01, r_0=0.4)
+    h2 = espressomd.interactions.HarmonicBond(k=0.01, r_0=0.5)
+    system.bonded_inter.add(h1)
+    system.bonded_inter.add(h2)
+    system.bond_breakage[h1] = espressomd.bond_breakage.BreakageSpec(
+        breakage_length=0.5, action_type="revert_center_bond")
+
+    p1 = system.part.add(id=1, pos=[0.00, 0.0, 0.0], v=[0.0, 0.0, 0.0])
+    p2 = system.part.add(id=2, pos=[0.46, 0.0, 0.0], v=[0.1, 0.0, 0.0])
+    p1.add_bond((h1, p2))
+    p1.add_bond((h2, p2))
+    for i in range(3):
+        system.integrator.run(2)
+        bond_length = np.linalg.norm(system.distance_vec(p1, p2))
+        print(f"length = {bond_length:.2f}, bonds = {p1.bonds}")
+
+Output:
+
+.. code-block:: none
+
+    length = 0.48, bonds = ((<HarmonicBond({'r_0': 0.4, 'k': 0.01})>, 2), (<HarmonicBond({'r_0': 0.5, 'k': 0.01})>, 2))
+    length = 0.50, bonds = ((<HarmonicBond({'r_0': 0.4, 'k': 0.01})>, 2), (<HarmonicBond({'r_0': 0.5, 'k': 0.01})>, 2))
+    length = 0.52, bonds = ((<HarmonicBond({'r_0': 0.5, 'k': 0.01})>, 2),)
+
 
 .. _Immersed Boundary Method for soft elastic objects:
 

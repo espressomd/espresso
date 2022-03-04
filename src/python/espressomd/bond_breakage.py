@@ -22,6 +22,19 @@ from . import interactions
 
 @script_interface_register
 class BreakageSpec(ScriptInterfaceHelper):
+    """
+    Specifications for bond breakage.
+    See :ref:`Deleting bonds when particles are pulled` for more details.
+
+    Parameters
+    ----------
+    breakage_length: :obj:`float`
+        Maximal bond extension until the bond breaks.
+    action_type: :obj:`str`, \{'revert_center_bond', 'revert_vs_bond', 'none'\}
+        Action triggered when the bond reaches its maximal extension.
+
+    """
+
     _so_name = "BondBreakage::BreakageSpec"
 
 
