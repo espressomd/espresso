@@ -27,4 +27,3 @@ class BreakageSpec(ScriptInterfaceHelper):
 @script_interface_register
 class BreakageSpecs(ScriptObjectMap):
     _so_name = "BondBreakage::BreakageSpecs"
-    _key_type = int

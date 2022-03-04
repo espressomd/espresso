@@ -25,7 +25,7 @@ include "myconfig.pxi"
 from . import utils
 from .utils import is_valid_type
 from .utils cimport check_type_or_throw_except
-from .script_interface import ScriptObjectRegistry, ScriptInterfaceHelper, script_interface_register
+from .script_interface import ScriptObjectMap, ScriptInterfaceHelper, script_interface_register
 
 
 cdef class NonBondedInteraction:
@@ -2850,13 +2850,27 @@ def get_bonded_interaction_type_from_es_core(bond_id):
 
 
 @script_interface_register
-class BondedInteractions(ScriptObjectRegistry):
+class BondedInteractions(ScriptObjectMap):
 
     """
     Represents the bonded interactions list.
 
     Individual interactions can be accessed using ``BondedInteractions[i]``,
     where ``i`` is the bond id.
+
+    Methods
+    -------
+    remove():
+        Remove a bond from the list.
+        This is a noop if the bond does not exist.
+
+        Parameters
+        ----------
+        bond_id : :obj:`int`
+
+    clear()
+        Remove all bonds.
+
     """
 
     _so_name = "Interactions::BondedInteractions"
@@ -2880,36 +2894,11 @@ class BondedInteractions(ScriptObjectRegistry):
             bonded_ia = args[0]
         else:
             raise TypeError("A BondedInteraction object needs to be passed.")
-        bond_id = self._insert_bond(bonded_ia)
+        bond_id = self._insert_bond(None, bonded_ia)
         return bond_id
 
-    def remove(self, bond_id):
-        """
-        Remove a bond from the list. This is a noop if the bond does not exist.
-
-        Parameters
-        ----------
-        bond_id : :obj:`int`
-
-        """
-        # type of key must be int
-        if not is_valid_type(bond_id, int):
-            raise ValueError(
-                "Index to BondedInteractions[] has to be an integer referring to a bond id")
-
-        self.call_method("erase", key=bond_id)
-
-    def clear(self):
-        """
-        Remove all bonds.
-
-        """
-        self.call_method("clear")
-
-    def _get_bond(self, bond_id):
-        if not is_valid_type(bond_id, int):
-            raise ValueError(
-                "Index to BondedInteractions[] has to be an integer referring to a bond id")
+    def __getitem__(self, bond_id):
+        self._assert_key_type(bond_id)
 
         if self.call_method('has_bond', bond_id=bond_id):
             bond_obj = self.call_method('get_bond', bond_id=bond_id)
@@ -2930,16 +2919,10 @@ class BondedInteractions(ScriptObjectRegistry):
         # which links to the bonded interaction object
         return bond_class(bond_id)
 
-    def __getitem__(self, bond_id):
-        return self._get_bond(bond_id)
+    def __setitem__(self, bond_id, bond_obj):
+        self._insert_bond(bond_id, bond_obj)
 
-    def __setitem__(self, bond_id, value):
-        self._insert_bond(value, bond_id)
-
-    def __delitem__(self, bond_id):
-        self.remove(bond_id)
-
-    def _insert_bond(self, bond, bond_id=None):
+    def _insert_bond(self, bond_id, bond_obj):
         """
         Inserts a new bond. If a ``bond_id`` is given, the bond is inserted at
         that id. If no id is given, a new id is generated.
@@ -2950,29 +2933,26 @@ class BondedInteractions(ScriptObjectRegistry):
         """
 
         # Validate arguments
-        if bond_id is not None:
-            if not is_valid_type(bond_id, int):
-                raise ValueError(
-                    "Index to BondedInteractions[] has to be an integer referring to a bond id")
-        if not isinstance(bond, BondedInteraction):
+        if not isinstance(bond_obj, BondedInteraction):
             raise ValueError(
                 "Only subclasses of BondedInteraction can be assigned.")
 
         # Send the script interface object pointer to the core
         if bond_id is None:
-            bond_id = self.call_method("insert", object=bond)
+            bond_id = self.call_method("insert", object=bond_obj)
         else:
             # Throw error if attempting to overwrite a bond of different type
+            self._assert_key_type(bond_id)
             if self.call_method("contains", key=bond_id):
                 old_type = bonded_interaction_classes[
                     get_bonded_interaction_type_from_es_core(bond_id)]
-                if not type(bond) is old_type:
+                if not type(bond_obj) is old_type:
                     raise ValueError(
                         "Bonds can only be overwritten by bonds of equal type.")
-            self.call_method("insert", key=bond_id, object=bond)
+            self.call_method("insert", key=bond_id, object=bond_obj)
 
         # Save the bond id in the BondedInteraction instance
-        bond._bond_id = bond_id
+        bond_obj._bond_id = bond_id
 
         return bond_id
 
@@ -2984,11 +2964,6 @@ class BondedInteractions(ScriptObjectRegistry):
         for bond_id in self.call_method('get_bond_ids'):
             if get_bonded_interaction_type_from_es_core(bond_id):
                 yield self[bond_id]
-
-    def __reduce__(self):
-        so_callback, (so_name, so_bytestring) = super().__reduce__()
-        return (_restore_bonded_interactions,
-                (so_callback, (so_name, so_bytestring), self.__getstate__()))
 
     def __getstate__(self):
         params = {}
@@ -3004,9 +2979,3 @@ class BondedInteractions(ScriptObjectRegistry):
         for bond_id, (bond_params, bond_type) in params.items():
             self[bond_id] = bonded_interaction_classes[bond_type](
                 **bond_params)
-
-
-def _restore_bonded_interactions(so_callback, so_callback_args, state):
-    so = so_callback(*so_callback_args)
-    so.__setstate__(state)
-    return so

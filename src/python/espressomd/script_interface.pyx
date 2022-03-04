@@ -406,14 +406,10 @@ class ScriptObjectMap(ScriptObjectRegistry):
 
     def remove(self, key):
         """
-        Removes the element with the given key
+        Remove the element with the given key.
+        This is a noop if the key does not exist.
         """
-        # Validate key type
-        if not is_valid_type(key, self._key_type):
-            raise ValueError(
-                f"Key has to be of type {self._key_type.__name__}")
-
-        self.call_method("erase", key=key)
+        self.__delitem__(key)
 
     def clear(self):
         """
@@ -422,21 +418,17 @@ class ScriptObjectMap(ScriptObjectRegistry):
         """
         self.call_method("clear")
 
-    def _get(self, key):
-        if not is_valid_type(key, self._key_type):
-            raise ValueError(
-                f"Key has to be of type {self._key_type.__name__}")
-
+    def __getitem__(self, key):
+        self._assert_key_type(key)
         return self.call_method("get", key=key)
 
-    def __getitem__(self, key):
-        return self._get(key)
-
     def __setitem__(self, key, value):
+        self._assert_key_type(key)
         self.call_method("insert", key=key, object=value)
 
     def __delitem__(self, key):
-        self.remove(key)
+        self._assert_key_type(key)
+        self.call_method("erase", key=key)
 
     def keys(self):
         return self.call_method("keys")
@@ -446,6 +438,10 @@ class ScriptObjectMap(ScriptObjectRegistry):
 
     def items(self):
         for k in self.keys(): yield k, self[k]
+
+    def _assert_key_type(self, key):
+        if not is_valid_type(key, self._key_type):
+            raise TypeError(f"Key has to be of type {self._key_type.__name__}")
 
     @classmethod
     def _restore_object(cls, so_callback, so_callback_args, state):
