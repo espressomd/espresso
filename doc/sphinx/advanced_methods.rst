@@ -118,14 +118,14 @@ The following limitations currently apply for the collision detection:
 * The ``"bind at point of collision"`` approach cannot handle collisions
   between virtual sites
 
-.. _Deleting bonds when particles are pulled:
+.. _Deleting bonds when particles are pulled apart:
 
-Deleting bonds when particles are pulled
-----------------------------------------
+Deleting bonds when particles are pulled apart
+----------------------------------------------
 
 With this feature, bonds between particles can be deleted automatically
-when a critical bond extension is reached. This is useful to simulate
-weak bonds between particles.
+when the bond length exceeds a critical distance. This is used to model
+breakable bonds.
 
 The bond breakage action is specified for individual bonds via the system
 :attr:`~espressomd.system.System.bond_breakage` attribute.
@@ -133,10 +133,7 @@ The bond breakage action is specified for individual bonds via the system
 Several modes are available:
 
 * ``"revert_center_bond"``: delete a bond from the first particle
-* ``"revert_vs_bond"``: delete a virtual bond, can be used together with
-  the :ref:`collision detection<Creating bonds when particles collide>`
-  feature (configured in mode ``"bind_at_point_of_collision"``) to
-  reversibly create and delete a bond
+* ``"revert_vs_bond"``: delete a bond between the virtual site
 * ``"none"``: cancel an existing bond breakage specification
 
 Example::
@@ -174,6 +171,33 @@ Output:
     length = 0.48, bonds = ((<HarmonicBond({'r_0': 0.4, 'k': 0.01})>, 2), (<HarmonicBond({'r_0': 0.5, 'k': 0.01})>, 2))
     length = 0.50, bonds = ((<HarmonicBond({'r_0': 0.4, 'k': 0.01})>, 2), (<HarmonicBond({'r_0': 0.5, 'k': 0.01})>, 2))
     length = 0.52, bonds = ((<HarmonicBond({'r_0': 0.5, 'k': 0.01})>, 2),)
+
+Please note there is no special treatment for the energy released or consumed
+by bond removal. This can lead to physical inconsistencies.
+
+
+.. _Modeling reversible bonds:
+
+Modeling reversible bonds
+-------------------------
+
+The :ref:`collision detection<Creating bonds when particles collide>`
+and :ref:`bond breakage<Deleting bonds when particles are pulled apart>`
+features can be combined to model reversible bonds.
+
+Two combinations are possible:
+
+* ``"revert_center_bond"`` mode for breakable bonds together with
+  ``"bond_centers"`` mode for collision detection:
+  used to create or delete a bond between two real particles
+* ``"revert_vs_bond"`` mode for breakable bonds together with
+  ``"bind_at_point_of_collision"`` mode for collision detection:
+  used to create or delete virtual sites (the implicitly created
+  bond between the real particles isn't affected)
+
+Please note that virtual sites are not automatically removed from the
+simulation, therefore the particle number will increase. If you want to
+remove virtual sites, you need to do so manually.
 
 
 .. _Immersed Boundary Method for soft elastic objects:

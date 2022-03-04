@@ -24,7 +24,7 @@ from . import interactions
 class BreakageSpec(ScriptInterfaceHelper):
     """
     Specifications for bond breakage.
-    See :ref:`Deleting bonds when particles are pulled` for more details.
+    See :ref:`Deleting bonds when particles are pulled apart` for more details.
 
     Parameters
     ----------
