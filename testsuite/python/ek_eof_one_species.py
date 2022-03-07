@@ -63,7 +63,7 @@ params_base = dict([
 params_base['density_counterions'] = -2.0 * \
     params_base['sigma'] / params_base['width']
 
-axis = "@TEST_SUFFIX@"
+axis = "@TEST_FILE_SUFFIX@"
 params = {
     "x": dict([
         ('box_x', params_base['thickness']),

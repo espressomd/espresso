@@ -1,11 +1,14 @@
 function(PYTHON_TEST)
-  cmake_parse_arguments(TEST "" "FILE;MAX_NUM_PROC;SUFFIX"
+  cmake_parse_arguments(TEST "" "FILE;MAX_NUM_PROC;SUFFIX;FILE_SUFFIX"
                         "DEPENDS;DEPENDENCIES;LABELS" ${ARGN})
   get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
+  if(TEST_FILE_SUFFIX)
+    set(TEST_NAME "${TEST_NAME}_${TEST_FILE_SUFFIX}")
+  endif()
+  set(TEST_FILE_CONFIGURED "${CMAKE_CURRENT_BINARY_DIR}/${TEST_NAME}.py")
   if(TEST_SUFFIX)
     set(TEST_NAME "${TEST_NAME}_${TEST_SUFFIX}")
   endif()
-  set(TEST_FILE_CONFIGURED "${CMAKE_CURRENT_BINARY_DIR}/${TEST_NAME}.py")
   configure_file(${TEST_FILE} ${TEST_FILE_CONFIGURED})
   foreach(dependency IN LISTS TEST_DEPENDENCIES)
     configure_file(${dependency} ${CMAKE_CURRENT_BINARY_DIR}/${dependency})
@@ -78,10 +81,10 @@ foreach(
   endif()
   foreach(TEST_BINARY ${TEST_BINARY_LIST})
     python_test(FILE save_checkpoint.py MAX_NUM_PROC ${TEST_NPROCS} LABELS
-                ${TEST_LABELS} SUFFIX ${TEST_COMBINATION}_${TEST_BINARY})
+                ${TEST_LABELS} FILE_SUFFIX ${TEST_COMBINATION}_${TEST_BINARY})
     python_test(
       FILE test_checkpoint.py MAX_NUM_PROC ${TEST_NPROCS} LABELS ${TEST_LABELS}
-      SUFFIX ${TEST_COMBINATION}_${TEST_BINARY} DEPENDS
+      FILE_SUFFIX ${TEST_COMBINATION}_${TEST_BINARY} DEPENDS
       save_checkpoint_${TEST_COMBINATION}_${TEST_BINARY})
   endforeach(TEST_BINARY)
 endforeach(TEST_COMBINATION)
@@ -135,9 +138,9 @@ python_test(FILE lb_stokes_sphere.py MAX_NUM_PROC 4 LABELS gpu long)
 python_test(FILE lb_pressure_tensor.py MAX_NUM_PROC 1 LABELS gpu long)
 python_test(FILE ek_fluctuations.py MAX_NUM_PROC 1 LABELS gpu)
 python_test(FILE ek_charged_plate.py MAX_NUM_PROC 1 LABELS gpu)
-python_test(FILE ek_eof_one_species.py MAX_NUM_PROC 1 LABELS gpu SUFFIX x)
-python_test(FILE ek_eof_one_species.py MAX_NUM_PROC 1 LABELS gpu SUFFIX y)
-python_test(FILE ek_eof_one_species.py MAX_NUM_PROC 1 LABELS gpu SUFFIX z)
+python_test(FILE ek_eof_one_species.py MAX_NUM_PROC 1 LABELS gpu FILE_SUFFIX x)
+python_test(FILE ek_eof_one_species.py MAX_NUM_PROC 1 LABELS gpu FILE_SUFFIX y)
+python_test(FILE ek_eof_one_species.py MAX_NUM_PROC 1 LABELS gpu FILE_SUFFIX z)
 python_test(FILE exclusions.py MAX_NUM_PROC 2)
 python_test(FILE langevin_thermostat.py MAX_NUM_PROC 1)
 python_test(FILE langevin_thermostat_stats.py MAX_NUM_PROC 1 LABELS long)
