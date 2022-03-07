@@ -33,7 +33,7 @@ class LBLeesEdwardsParticleCoupling(ut.TestCase):
         system.cell_system.skin = 0.1
         system.cell_system.set_n_square()
 
-        offset = 1 
+        offset = 1
         idx = int(offset)
         system.lees_edwards.protocol = lees_edwards.LinearShear(
             shear_velocity=0.0,
@@ -50,41 +50,47 @@ class LBLeesEdwardsParticleCoupling(ut.TestCase):
 
         pos = [system.box_l[0] / 2, 0.0, system.box_l[0] / 2]
         p = system.part.add(pos=pos)
-        #system.part.add(pos=pos, fix=[1, 1, 1])
         v0 = np.array([1, 2, 3])
         mid_x = lbf.shape[0] // 2
         mid_z = lbf.shape[2] // 2
 
         upper_y = lbf.shape[1] - 1
-        nodes = [lbf[mid_x - 1, 0, mid_z], lbf[mid_x, 0, mid_z - 1], 
-                 lbf[mid_x - 1, 0, mid_z], lbf[mid_x, 0, mid_z],
-                 lbf[mid_x - 1 + idx, upper_y,
-                     mid_z], lbf[mid_x + idx, upper_y, mid_z - 1], 
-                 lbf[mid_x - 1 + idx, upper_y, mid_z], lbf[mid_x + idx, upper_y, mid_z]]
-        for n in nodes: n.velocity = v0
+        nodes = [lbf[mid_x - 1, 0, mid_z],
+                 lbf[mid_x, 0, mid_z - 1],
+                 lbf[mid_x - 1, 0, mid_z],
+                 lbf[mid_x, 0, mid_z],
+                 lbf[mid_x - 1 + idx, upper_y, mid_z],
+                 lbf[mid_x + idx, upper_y, mid_z - 1],
+                 lbf[mid_x - 1 + idx, upper_y, mid_z],
+                 lbf[mid_x + idx, upper_y, mid_z]]
+        for n in nodes:
+            n.velocity = v0
 
         system.integrator.run(1)
         lb_forces = np.array([n.last_applied_force for n in nodes])
         lb_force = np.sum(lb_forces, axis=0)
         np.testing.assert_allclose(lb_force, -np.copy(p.f))
-        for f in lb_forces: np.testing.assert_allclose(f, lb_forces[0])
+        for f in lb_forces:
+            np.testing.assert_allclose(f, lb_forces[0])
 
         lbf[:, :, :].velocity = [0, 0, 0]
 
         lower_nodes = nodes[:4]
         upper_nodes = nodes[4:]
-        for n in lower_nodes: n.velocity = v0
-        for n in upper_nodes: n.velocity = - v0
+        for n in lower_nodes:
+            n.velocity = v0
+        for n in upper_nodes:
+            n.velocity = - v0
         p.update(dict(pos=pos, v=np.zeros(3)))
         np.testing.assert_allclose(
-            lbf.get_interpolated_velocity(pos),
+            np.copy(lbf.get_interpolated_velocity(pos)),
             np.zeros(3))
         system.integrator.run(1)
         np.testing.assert_allclose(np.copy(p.pos), pos)
         np.testing.assert_allclose(np.copy(p.f), np.zeros(3))
-        for n in nodes: np.testing.assert_allclose(
-            n.last_applied_force,
-            np.zeros(3))
+        for n in nodes:
+            np.testing.assert_allclose(
+                np.copy(n.last_applied_force), np.zeros(3))
 
 
 if __name__ == '__main__':
