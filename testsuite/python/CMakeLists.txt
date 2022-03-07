@@ -1,10 +1,7 @@
 function(PYTHON_TEST)
-  cmake_parse_arguments(TEST "" "FILE;MAX_NUM_PROC;SUFFIX;FILE_SUFFIX"
-                        "DEPENDS;DEPENDENCIES;LABELS" ${ARGN})
+  cmake_parse_arguments(TEST "" "FILE;MAX_NUM_PROC;SUFFIX"
+                        "DEPENDS;DEPENDENCIES;LABELS;ARGUMENTS" ${ARGN})
   get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
-  if(TEST_FILE_SUFFIX)
-    set(TEST_NAME "${TEST_NAME}_${TEST_FILE_SUFFIX}")
-  endif()
   set(TEST_FILE_CONFIGURED "${CMAKE_CURRENT_BINARY_DIR}/${TEST_NAME}.py")
   if(TEST_SUFFIX)
     set(TEST_NAME "${TEST_NAME}_${TEST_SUFFIX}")
@@ -33,10 +30,10 @@ function(PYTHON_TEST)
         ${MPIEXEC} ${MPIEXEC_OVERSUBSCRIBE} ${MPIEXEC_NUMPROC_FLAG}
         ${TEST_NUM_PROC} ${MPIEXEC_PREFLAGS} ${MPIEXEC_TMPDIR}
         ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS} ${TEST_FILE}
-        ${MPIEXEC_POSTFLAGS})
+        ${TEST_ARGUMENTS} ${MPIEXEC_POSTFLAGS})
   else()
     add_test(${TEST_NAME} ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
-             ${TEST_FILE})
+             ${TEST_FILE} ${TEST_ARGUMENTS})
   endif()
   set_tests_properties(${TEST_NAME} PROPERTIES PROCESSORS ${TEST_NUM_PROC}
                                                DEPENDS "${TEST_DEPENDS}")
@@ -58,36 +55,45 @@ function(PYTHON_TEST)
   set(python_tests ${python_tests} ${TEST_FILE} PARENT_SCOPE)
 endfunction(PYTHON_TEST)
 
-# Checkpointing tests: semicolon-separated list of mutually-compatible features.
-# Separate features with hyphens, use a period to add an optional flag.
-foreach(
-  TEST_COMBINATION
-  lb.cpu-p3m.cpu-lj-therm.lb;lb.gpu-p3m.elc-lj-therm.lb;lb.off-therm.npt-int.npt;lb.off-int.sd;lb.off-dp3m.cpu-therm.langevin-int.nvt;lb.off-therm.dpd-int.nvt;lb.off-scafacos-therm.bd-int.bd;lb.off-therm.sdm-int.sdm;lb.cpu-p3m.cpu-lj-therm.lb-mpi.1.core
-)
-  if(${TEST_COMBINATION} MATCHES "mpi\\.1\\.core")
-    set(TEST_NPROCS 1)
-  else()
-    set(TEST_NPROCS 4)
+function(CHECKPOINT_TEST)
+  cmake_parse_arguments(TEST "" "MODES;MAX_NUM_PROC;SUFFIX" "LABELS" ${ARGN})
+  if(NOT DEFINED TEST_MAX_NUM_PROC)
+    set(TEST_MAX_NUM_PROC 4)
   endif()
-  if(${TEST_COMBINATION} MATCHES "\\.gpu")
-    set(TEST_LABELS "gpu")
+  if(TEST_SUFFIX)
+    set(TEST_ARGUMENTS "Test_suffix_${TEST_SUFFIX}__${TEST_MODES}")
+    set(TEST_SUFFIX "${TEST_MODES}_${TEST_SUFFIX}")
   else()
-    set(TEST_LABELS "")
+    set(TEST_ARGUMENTS "Test__${TEST_MODES}")
+    set(TEST_SUFFIX "${TEST_MODES}")
   endif()
-  if(${TEST_COMBINATION} MATCHES "lb\\.off")
-    set(TEST_BINARY_LIST "1")
-  else()
-    set(TEST_BINARY_LIST "1;0")
-  endif()
-  foreach(TEST_BINARY ${TEST_BINARY_LIST})
-    python_test(FILE save_checkpoint.py MAX_NUM_PROC ${TEST_NPROCS} LABELS
-                ${TEST_LABELS} FILE_SUFFIX ${TEST_COMBINATION}_${TEST_BINARY})
-    python_test(
-      FILE test_checkpoint.py MAX_NUM_PROC ${TEST_NPROCS} LABELS ${TEST_LABELS}
-      FILE_SUFFIX ${TEST_COMBINATION}_${TEST_BINARY} DEPENDS
-      save_checkpoint_${TEST_COMBINATION}_${TEST_BINARY})
-  endforeach(TEST_BINARY)
-endforeach(TEST_COMBINATION)
+  python_test(
+    FILE save_checkpoint.py MAX_NUM_PROC ${TEST_NPROCS} LABELS ${TEST_LABELS}
+    SUFFIX ${TEST_SUFFIX} ARGUMENTS "${TEST_ARGUMENTS}")
+  python_test(
+    FILE test_checkpoint.py MAX_NUM_PROC ${TEST_NPROCS} LABELS ${TEST_LABELS}
+    SUFFIX ${TEST_SUFFIX} ARGUMENTS "${TEST_ARGUMENTS}" DEPENDS
+    save_checkpoint_${TEST_SUFFIX})
+endfunction(CHECKPOINT_TEST)
+
+# Checkpoint tests run on 4 cores (can be overriden with MAX_NUM_PROC). The
+# combination of modes to activate is stored in MODES. A mode consists of a
+# feature with zero or more options; separate features with 2 underscores and
+# options with 1 underscore (options can appear in any order). For example,
+# "p3m_cpu__lb_cpu_ascii" generates modes P3M, P3M.CPU, LB, LB.CPU, LB.ASCII.
+checkpoint_test(MODES therm_lb__p3m_cpu__lj__lb_cpu_ascii SUFFIX 1_core
+                MAX_NUM_PROC 1)
+checkpoint_test(MODES therm_lb__p3m_cpu__lj__lb_cpu_ascii)
+checkpoint_test(MODES therm_lb__elc_cpu__lj__lb_cpu_binary)
+checkpoint_test(MODES therm_lb__elc_cpu__lj__lb_gpu_ascii LABELS gpu)
+checkpoint_test(MODES therm_lb__p3m_gpu__lj__lb_gpu_binary LABELS gpu)
+checkpoint_test(MODES therm_npt__int_npt)
+checkpoint_test(MODES int_sd__lj)
+checkpoint_test(MODES dp3m_cpu__therm_langevin__int_nvt)
+checkpoint_test(MODES therm_dpd__int_nvt)
+checkpoint_test(MODES scafacos__therm_bd__int_bd)
+checkpoint_test(MODES therm_sdm__int_sdm)
+
 python_test(FILE bond_breakage.py MAX_NUM_PROC 4)
 python_test(FILE cellsystem.py MAX_NUM_PROC 4)
 python_test(FILE tune_skin.py MAX_NUM_PROC 1)
@@ -138,9 +144,12 @@ python_test(FILE lb_stokes_sphere.py MAX_NUM_PROC 4 LABELS gpu long)
 python_test(FILE lb_pressure_tensor.py MAX_NUM_PROC 1 LABELS gpu long)
 python_test(FILE ek_fluctuations.py MAX_NUM_PROC 1 LABELS gpu)
 python_test(FILE ek_charged_plate.py MAX_NUM_PROC 1 LABELS gpu)
-python_test(FILE ek_eof_one_species.py MAX_NUM_PROC 1 LABELS gpu FILE_SUFFIX x)
-python_test(FILE ek_eof_one_species.py MAX_NUM_PROC 1 LABELS gpu FILE_SUFFIX y)
-python_test(FILE ek_eof_one_species.py MAX_NUM_PROC 1 LABELS gpu FILE_SUFFIX z)
+python_test(FILE ek_eof_one_species.py MAX_NUM_PROC 1 LABELS gpu SUFFIX x
+            ARGUMENTS Test__axis_x)
+python_test(FILE ek_eof_one_species.py MAX_NUM_PROC 1 LABELS gpu SUFFIX y
+            ARGUMENTS Test__axis_y)
+python_test(FILE ek_eof_one_species.py MAX_NUM_PROC 1 LABELS gpu SUFFIX z
+            ARGUMENTS Test__axis_z)
 python_test(FILE exclusions.py MAX_NUM_PROC 2)
 python_test(FILE langevin_thermostat.py MAX_NUM_PROC 1)
 python_test(FILE langevin_thermostat_stats.py MAX_NUM_PROC 1 LABELS long)
@@ -261,6 +270,9 @@ add_custom_target(
           ${CMAKE_CURRENT_BINARY_DIR}
   COMMAND
     ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/unittest_decorators.py
+    ${CMAKE_CURRENT_BINARY_DIR}
+  COMMAND
+    ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/unittest_generator.py
     ${CMAKE_CURRENT_BINARY_DIR}
   COMMAND
     ${CMAKE_COMMAND} -E copy

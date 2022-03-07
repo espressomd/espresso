@@ -17,6 +17,7 @@
 
 import unittest as ut
 import unittest_decorators as utx
+import unittest_generator as utg
 import pathlib
 
 import sys
@@ -35,6 +36,9 @@ import espressomd
 import espressomd.electrokinetics
 import espressomd.shapes
 import ek_common
+
+config = utg.TestGenerator()
+modes = config.get_modes()
 
 ##########################################################################
 #                          Set up the System                             #
@@ -63,7 +67,14 @@ params_base = dict([
 params_base['density_counterions'] = -2.0 * \
     params_base['sigma'] / params_base['width']
 
-axis = "@TEST_FILE_SUFFIX@"
+if "AXIS.X" in modes:
+    axis = "x"
+elif "AXIS.Y" in modes:
+    axis = "y"
+else:
+    assert "AXIS.Z" in modes
+    axis = "z"
+
 params = {
     "x": dict([
         ('box_x', params_base['thickness']),
@@ -459,4 +470,5 @@ class ek_eof_one_species(ut.TestCase):
 
 
 if __name__ == "__main__":
+    config.bind_test_class(ek_eof_one_species)
     ut.main()
