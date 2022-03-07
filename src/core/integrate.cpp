@@ -105,6 +105,8 @@ namespace LeesEdwards {
 /** @brief Currently active Lees-Edwards protocol. */
 static std::shared_ptr<ActiveProtocol> protocol = nullptr;
 
+std::weak_ptr<ActiveProtocol> get_protocol() { return protocol; }
+
 /**
  * @brief Update the Lees-Edwards parameters of the box geometry
  * for the current simulation time.
