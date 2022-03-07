@@ -22,7 +22,7 @@
 #include "Protocol.hpp"
 
 #include "core/grid.hpp"
-#include "core/lees_edwards.hpp"
+#include "core/lees_edwards/lees_edwards.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"

@@ -375,8 +375,9 @@ public:
                         Utils::Vector3d const &additional_offset = {}) const {
     auto const lim = Utils::sqr(skin / 2.) - additional_offset.norm2();
     return std::any_of(
-        particles.begin(), particles.end(),
-        [lim](const auto &p) { return ((p.r.p - p.l.p_old).norm2() > lim); });
+        particles.begin(), particles.end(), [lim](const auto &p) {
+          return ((p.pos() - p.pos_at_last_verlet_update()).norm2() > lim);
+        });
   }
 
   auto get_le_pos_offset_at_last_resort() const {
@@ -656,7 +657,7 @@ public:
   Cell *find_current_cell(const Particle &p) {
     assert(not get_resort_particles());
 
-    if (p.l.ghost) {
+    if (p.is_ghost()) {
       return nullptr;
     }
 

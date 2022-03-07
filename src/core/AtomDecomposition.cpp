@@ -99,9 +99,9 @@ void AtomDecomposition::mark_cells() {
 void AtomDecomposition::resort(bool global_flag,
                                std::vector<ParticleChange> &diff) {
   for (auto &p : local().particles()) {
-    fold_position(p.r.p, p.l.i, m_box);
+    fold_position(p.pos(), p.image_box(), m_box);
 
-    p.l.p_old = p.r.p;
+    p.pos_at_last_verlet_update() = p.pos();
   }
 
   /* Local updates are a NoOp for this decomposition. */

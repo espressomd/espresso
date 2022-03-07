@@ -154,7 +154,7 @@ Utils::Vector3d lb_viscous_coupling(Particle const &p,
   Utils::Vector3d v_drift = interpolated_u;
 #ifdef ENGINE
   if (p.swimming().swimming) {
-    v_drift += p.swimming().v_swim * p.r.calc_director();
+    v_drift += p.swimming().v_swim * p.calc_director();
   }
 #endif
 
@@ -229,7 +229,7 @@ void add_swimmer_force(Particle const &p, double time_step) {
     // calculate source position
     const double direction =
         double(p.swimming().push_pull) * p.swimming().dipole_length;
-    auto const director = p.r.calc_director();
+    auto const director = p.calc_director();
     auto const source_position = p.pos() + direction * director;
 
     if (not in_local_halo(source_position)) {

@@ -19,8 +19,8 @@
 #ifndef CORE_BOX_GEOMETRY_HPP
 #define CORE_BOX_GEOMETRY_HPP
 
-#include "LeesEdwardsBC.hpp"
 #include "algorithm/periodic_fold.hpp"
+#include "lees_edwards/LeesEdwardsBC.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/math/sgn.hpp>
@@ -95,9 +95,9 @@ private:
   /** Flags for all three dimensions whether pbc are applied (default). */
   std::bitset<3> m_periodic = 0b111;
   /** Side lengths of the box */
-  Utils::Vector3d m_length = {1, 1, 1};
+  Utils::Vector3d m_length = {1., 1., 1.};
   /** Inverse side lengths of the box */
-  Utils::Vector3d m_length_inv = {1, 1, 1};
+  Utils::Vector3d m_length_inv = {1., 1., 1.};
   /** Half side lengths of the box */
   Utils::Vector3d m_length_half = {0.5, 0.5, 0.5};
 

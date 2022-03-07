@@ -98,13 +98,13 @@ void sd_update_locally(ParticleRange const &parts) {
     }
 
     // Copy velocities
-    p.m.v[0] = v_sd[6 * i + 0];
-    p.m.v[1] = v_sd[6 * i + 1];
-    p.m.v[2] = v_sd[6 * i + 2];
+    p.v()[0] = v_sd[6 * i + 0];
+    p.v()[1] = v_sd[6 * i + 1];
+    p.v()[2] = v_sd[6 * i + 2];
 
-    p.m.omega[0] = v_sd[6 * i + 3];
-    p.m.omega[1] = v_sd[6 * i + 4];
-    p.m.omega[2] = v_sd[6 * i + 5];
+    p.omega()[0] = v_sd[6 * i + 3];
+    p.omega()[1] = v_sd[6 * i + 4];
+    p.omega()[2] = v_sd[6 * i + 5];
 
     i++;
   }

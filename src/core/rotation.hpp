@@ -59,13 +59,13 @@ void convert_initial_torques(const ParticleRange &particles);
 // Frame conversion routines
 inline Utils::Vector3d
 convert_vector_body_to_space(const Particle &p, const Utils::Vector3d &vec) {
-  return p.r.quat * vec;
+  return p.quat() * vec;
 }
 
 inline Utils::Vector3d convert_vector_space_to_body(const Particle &p,
                                                     const Utils::Vector3d &v) {
-  assert(p.r.quat.norm() > 0.0);
-  return rotation_matrix(p.r.quat).transposed() * v;
+  assert(p.quat().norm() > 0.0);
+  return rotation_matrix(p.quat()).transposed() * v;
 }
 
 /**
@@ -87,7 +87,7 @@ inline Utils::Vector3d convert_vector_space_to_body(const Particle &p,
  */
 template <class T>
 auto convert_body_to_space(const Particle &p, const Utils::Matrix<T, 3, 3> &A) {
-  auto const O = rotation_matrix(p.r.quat);
+  auto const O = rotation_matrix(p.quat());
   return O.transposed() * A * O;
 }
 
@@ -110,12 +110,12 @@ local_rotate_particle_body(Particle const &p,
                            const Utils::Vector3d &axis_body_frame,
                            const double phi) {
   // Rotation turned off entirely?
-  if (!p.p.rotation)
-    return p.r.quat;
+  if (!p.can_rotate())
+    return p.quat();
   if (std::abs(phi) > std::numeric_limits<double>::epsilon())
-    return p.r.quat *
+    return p.quat() *
            boost::qvm::rot_quat(mask(p.p.rotation, axis_body_frame), phi);
-  return p.r.quat;
+  return p.quat();
 }
 
 /** Rotate the particle p around the NORMALIZED axis aSpaceFrame by amount phi
@@ -126,13 +126,13 @@ inline void local_rotate_particle(Particle &p,
   if (std::abs(phi) > std::numeric_limits<double>::epsilon()) {
     // Convert rotation axis to body-fixed frame
     Utils::Vector3d axis = convert_vector_space_to_body(p, axis_space_frame);
-    p.r.quat = local_rotate_particle_body(p, axis, phi);
+    p.quat() = local_rotate_particle_body(p, axis, phi);
   }
 }
 
 inline void convert_torque_to_body_frame_apply_fix(Particle &p) {
-  auto const torque = convert_vector_space_to_body(p, p.f.torque);
-  p.f.torque = mask(p.p.rotation, torque);
+  auto const torque = convert_vector_space_to_body(p, p.torque());
+  p.torque() = mask(p.p.rotation, torque);
 }
 
 #endif // ROTATION

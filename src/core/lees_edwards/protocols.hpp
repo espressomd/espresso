@@ -16,12 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef LEES_EDWARDS_PROTOCOL_HPP
-#define LEES_EDWARDS_PROTOCOL_HPP
+#ifndef CORE_LEES_EDWARDS_PROTOCOLS_HPP
+#define CORE_LEES_EDWARDS_PROTOCOLS_HPP
 
 #include <utils/Vector.hpp>
 
 #include <boost/variant.hpp>
+
+#include <cmath>
 
 namespace LeesEdwards {
 

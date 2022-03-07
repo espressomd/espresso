@@ -45,9 +45,9 @@ void forcecap_cap(ParticleRange const &particles) {
   auto const force_cap_sq = Utils::sqr(force_cap);
 
   for (auto &p : particles) {
-    auto const force_sq = p.f.f.norm2();
+    auto const force_sq = p.force().norm2();
     if (force_sq > force_cap_sq) {
-      p.f.f *= force_cap / std::sqrt(force_sq);
+      p.force() *= force_cap / std::sqrt(force_sq);
     }
   }
 }
