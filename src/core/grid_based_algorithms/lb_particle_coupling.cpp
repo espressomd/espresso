@@ -125,8 +125,9 @@ std::vector<Utils::Vector3d> shifted_positions(Utils::Vector3d pos,
             pos_shifted[le.shear_direction] -= le.pos_offset;
         }
 
-        if (in_local_halo(pos_shifted))
+        if (in_local_halo(pos_shifted)) {
           res.push_back(pos_shifted);
+        }
       }
     }
   }

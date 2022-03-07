@@ -105,9 +105,9 @@ private:
 
     // shift
     auto const shift = get_shift();
-    // Note that the offset is applied to the nterpolation source rather than
+    // Note that the offset is applied to the interpolation source rather than
     // the target
-    const FloatType prefactor =
+    auto const prefactor =
         ((slab_dir == m_slab_max) ? FloatType{-1} : FloatType{1});
     auto const offset = get_pos_offset() * prefactor;
     for (auto cell = ci.begin(); cell != ci.end(); ++cell) {
