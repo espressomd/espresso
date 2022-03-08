@@ -279,8 +279,6 @@ add_custom_target(
     ${CMAKE_COMMAND} -E copy
     ${CMAKE_CURRENT_SOURCE_DIR}/virtual_sites_tracers_common.py
     ${CMAKE_CURRENT_BINARY_DIR}
-  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/ek_common.py
-          ${CMAKE_CURRENT_BINARY_DIR}
   COMMAND
     ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/thermostats_common.py
     ${CMAKE_CURRENT_BINARY_DIR})

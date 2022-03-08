@@ -22,12 +22,16 @@ import espressomd
 import espressomd.interactions
 import espressomd.observables
 
-import tests_common
-
 import numpy as np
 
 # allowed deviation from analytical results
 tol = 1.0e-13
+
+
+def fene_force(bond_vector, k, d_r_max, r_0):
+    r = np.linalg.norm(bond_vector)
+    return k * (r - r_0) / (r * (1 - ((r - r_0) / d_r_max)**2)) * \
+        np.array(bond_vector)
 
 
 def pressure_tensor_kinetic(vel):
@@ -260,10 +264,10 @@ class PressureFENE(ut.TestCase):
     def tearDown(self):
         system.part.clear()
 
-    def get_anal_pressure_tensor_fene(self, pos_1, pos_2, k, d_r_max, r_0):
+    def get_analytic_pressure_tensor_fene(self, pos_1, pos_2, k, d_r_max, r_0):
         tensor = np.zeros([3, 3])
         vec_r = pos_1 - pos_2
-        f = -tests_common.fene_force2(vec_r, k, d_r_max, r_0)
+        f = -fene_force(vec_r, k, d_r_max, r_0)
         tensor += np.einsum('i,j', f, vec_r) / system.volume()
         return tensor
 
@@ -302,7 +306,7 @@ class PressureFENE(ut.TestCase):
         for i in range(len(system.bonded_inter)):
             total_bonded_pressure_tensor += sim_pressure_tensor['bonded', i]
 
-        anal_pressure_tensor_fene = self.get_anal_pressure_tensor_fene(
+        anal_pressure_tensor_fene = self.get_analytic_pressure_tensor_fene(
             p0.pos, p1.pos, k, d_r_max, r_0)
         np.testing.assert_allclose(
             sim_pressure_tensor_bonded, anal_pressure_tensor_fene, atol=tol,
