@@ -6,9 +6,10 @@ function(PYTHON_TEST)
   if(TEST_SUFFIX)
     set(TEST_NAME "${TEST_NAME}_${TEST_SUFFIX}")
   endif()
-  configure_file(${TEST_FILE} ${TEST_FILE_CONFIGURED})
+  configure_file(${TEST_FILE} ${TEST_FILE_CONFIGURED} COPYONLY)
   foreach(dependency IN LISTS TEST_DEPENDENCIES)
-    configure_file(${dependency} ${CMAKE_CURRENT_BINARY_DIR}/${dependency})
+    configure_file(${dependency} ${CMAKE_CURRENT_BINARY_DIR}/${dependency}
+                   COPYONLY)
   endforeach(dependency)
   set(TEST_FILE ${TEST_FILE_CONFIGURED})
 
@@ -29,11 +30,11 @@ function(PYTHON_TEST)
       COMMAND
         ${MPIEXEC} ${MPIEXEC_OVERSUBSCRIBE} ${MPIEXEC_NUMPROC_FLAG}
         ${TEST_NUM_PROC} ${MPIEXEC_PREFLAGS} ${MPIEXEC_TMPDIR}
-        ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS} ${TEST_FILE}
-        ${TEST_ARGUMENTS} ${MPIEXEC_POSTFLAGS})
+        ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
+        ${TEST_FILE_CONFIGURED} ${TEST_ARGUMENTS} ${MPIEXEC_POSTFLAGS})
   else()
     add_test(${TEST_NAME} ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
-             ${TEST_FILE} ${TEST_ARGUMENTS})
+             ${TEST_FILE_CONFIGURED} ${TEST_ARGUMENTS})
   endif()
   set_tests_properties(${TEST_NAME} PROPERTIES PROCESSORS ${TEST_NUM_PROC}
                                                DEPENDS "${TEST_DEPENDS}")
@@ -52,7 +53,7 @@ function(PYTHON_TEST)
       ${TEST_NAME} PROPERTIES LABELS "${TEST_LABELS};parallel;parallel_odd")
   endif()
 
-  set(python_tests ${python_tests} ${TEST_FILE} PARENT_SCOPE)
+  set(python_tests ${python_tests} ${TEST_FILE_CONFIGURED} PARENT_SCOPE)
 endfunction(PYTHON_TEST)
 
 function(CHECKPOINT_TEST)
