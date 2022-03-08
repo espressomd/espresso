@@ -37,34 +37,26 @@ BOOST_AUTO_TEST_CASE(charge) {
   static_assert(Charge::is_linear, "");
 
   struct {
-    struct {
-      const double q = 1.23;
-    } p;
+    auto q() const { return 1.23; }
   } p;
 
-  BOOST_CHECK((p.p.q * 2.0) == Charge()(p, 2.0));
+  BOOST_CHECK((p.q() * 2.0) == Charge()(p, 2.0));
 }
 
 BOOST_AUTO_TEST_CASE(mass) {
   static_assert(Mass::is_linear, "");
 
   struct {
-    struct {
-      const double mass = 1.23;
-      bool is_virtual = false;
-    } p;
-
+    auto mass() const { return 1.23; }
+    auto is_virtual() const { return false; }
   } p;
 
   struct {
-    struct {
-      const double mass = 1.23;
-      bool is_virtual = true;
-    } p;
-
+    auto mass() const { return 1.23; }
+    auto is_virtual() const { return true; }
   } p_virtual;
 
-  BOOST_CHECK((p.p.mass * 2.0) == Mass()(p, 2.0));
+  BOOST_CHECK((p.mass() * 2.0) == Mass()(p, 2.0));
   BOOST_CHECK((0.0 == Mass()(p_virtual, 2.0)));
 }
 
@@ -114,13 +106,11 @@ BOOST_AUTO_TEST_CASE(viscous) {
 
   {
     struct {
-      struct {
-        const Utils::Vector3d v = {1., 2., 3.};
-      } m;
+      auto v() const { return Utils::Vector3d{{1., 2., 3.}}; }
     } p;
 
     auto const u = Utils::Vector3d{4., 5., 6.};
 
-    BOOST_CHECK((-gamma * (p.m.v - u)) == viscous_coupling(p, u));
+    BOOST_CHECK((-gamma * (p.v() - u)) == viscous_coupling(p, u));
   }
 }

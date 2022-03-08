@@ -1,6 +1,5 @@
 set(EspressoCore_SRC
     accumulators.cpp
-    bond_breakage.cpp
     bond_error.cpp
     cells.cpp
     collision.cpp
@@ -84,6 +83,7 @@ target_compile_definitions(EspressoCore PUBLIC $<$<BOOL:${H5MD}>:H5XX_USE_MPI>)
 
 add_subdirectory(accumulators)
 add_subdirectory(actor)
+add_subdirectory(bond_breakage)
 add_subdirectory(bonded_interactions)
 add_subdirectory(cluster_analysis)
 add_subdirectory(constraints)

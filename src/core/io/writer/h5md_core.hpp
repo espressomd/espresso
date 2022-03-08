@@ -89,8 +89,7 @@ public:
    * @param particles Particle range for which to write data.
    * @param time Simulation time.
    * @param step Simulation step (monotonically increasing).
-   * @param geometry A BoxGeometry instance that carries the information of the
-   * box dimensions.
+   * @param geometry The box dimensions.
    */
   void write(const ParticleRange &particles, double time, int step,
              BoxGeometry const &geometry);
@@ -192,7 +191,7 @@ private:
    */
   void write_units();
   /**
-   * @brief Create hard links for the time and step entries of time dependent
+   * @brief Create hard links for the time and step entries of time-dependent
    * datasets.
    */
   void create_hard_links();

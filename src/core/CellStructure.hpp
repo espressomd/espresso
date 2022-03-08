@@ -360,23 +360,6 @@ public:
    */
   void clear_resort_particles() { m_resort_particles = Cells::RESORT_NONE; }
 
-  /** Checks whether a particle has moved further than the skin, thus
-  requiring a resort
-
-  @param particles Particles to check
-  @param skin Skin
-  @param additional_offset Offset which is added to the distance the particle
-  has travelled when comparing to skin/2 (e.g., for Lees Edwards BC).
-
-  */
-  bool check_resort_required(const ParticleRange &particles, double skin,
-                             const Utils::Vector3d &additional_offset) {
-    double lim = Utils::sqr(skin / 2) - additional_offset.norm2();
-    return std::any_of(
-        particles.begin(), particles.end(),
-        [lim](const auto &p) { return ((p.r.p - p.l.p_old).norm2() > lim); });
-  }
-
   /**
    * @brief Check whether a particle has moved further than half the skin
    * since the last Verlet list update, thus requiring a resort.
@@ -392,8 +375,9 @@ public:
                         Utils::Vector3d const &additional_offset = {}) const {
     auto const lim = Utils::sqr(skin / 2.) - additional_offset.norm2();
     return std::any_of(
-        particles.begin(), particles.end(),
-        [lim](const auto &p) { return ((p.r.p - p.l.p_old).norm2() > lim); });
+        particles.begin(), particles.end(), [lim](const auto &p) {
+          return ((p.pos() - p.pos_at_last_verlet_update()).norm2() > lim);
+        });
   }
 
   auto get_le_pos_offset_at_last_resort() const {
@@ -673,7 +657,7 @@ public:
   Cell *find_current_cell(const Particle &p) {
     assert(not get_resort_particles());
 
-    if (p.l.ghost) {
+    if (p.is_ghost()) {
       return nullptr;
     }
 

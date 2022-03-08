@@ -316,7 +316,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
       std::unordered_map<int, Utils::Vector3d> expected;
       for (auto pid : pids) {
         auto p = get_particle_data(pid);
-        p.v() += 0.5 * time_step * p.force() / p.p.mass;
+        p.v() += 0.5 * time_step * p.force() / p.mass();
         p.pos() += time_step * p.v();
         expected[pid] = p.pos();
       }

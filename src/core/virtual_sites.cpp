@@ -151,5 +151,5 @@ void vs_relate_to(int part_num, int relate_to) {
   set_particle_virtual(part_num, true);
 }
 
-#endif
-#endif
+#endif // VIRTUAL_SITES_RELATIVE
+#endif // VIRTUAL_SITES

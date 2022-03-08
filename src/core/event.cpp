@@ -42,7 +42,6 @@
 #include "immersed_boundaries.hpp"
 #include "integrate.hpp"
 #include "interactions.hpp"
-#include "lees_edwards.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "partCfg_global.hpp"

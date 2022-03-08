@@ -37,7 +37,7 @@ bool check_charge_neutrality(ParticleRange &prange) {
   constexpr auto relative_tolerance = 2e-12;
 
   for (auto const &p : prange) {
-    auto const &q = p.p.q;
+    auto const &q = p.q();
 
     if (q != 0.0) {
       q_sum(q);

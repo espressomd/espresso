@@ -31,7 +31,6 @@ cdef extern from "cells.hpp":
         Vector3d vec21
         int node
 
-
 cdef extern from "communication.hpp":
     int n_nodes
 
@@ -51,7 +50,7 @@ cdef extern from "cells.hpp":
 
     vector[pair[int, int]] mpi_get_pairs(double distance) except +
     vector[pair[int, int]] mpi_get_pairs_of_types(double distance, vector[int] types) except +
-    vector[PairInfo] mpi_non_bonded_loop_trace() 
+    vector[PairInfo] mpi_non_bonded_loop_trace()
     vector[int] mpi_resort_particles(int global_flag)
     void mpi_bcast_cell_structure(int cs)
     void mpi_set_use_verlet_lists(bool use_verlet_lists)

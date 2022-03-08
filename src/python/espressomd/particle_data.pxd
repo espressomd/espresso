@@ -20,7 +20,6 @@
 from .utils cimport Vector4d, Vector3d, Vector3i, Span, Quaternion
 from libcpp cimport bool
 from libcpp.vector cimport vector  # import std::vector as vector
-from libc cimport stdint
 
 include "myconfig.pxi"
 
@@ -32,11 +31,6 @@ cdef extern from "particle_data.hpp":
         int bond_id()
         Span[const int] partner_ids()
 
-    # DATA STRUCTURES
-    stdint.uint8_t ROTATION_X
-    stdint.uint8_t ROTATION_Y
-    stdint.uint8_t ROTATION_Z
-
     # Note: Conditional compilation is not possible within ctypedef blocks.
     # Therefore, only member variables are imported here, which are always compiled into ESPResSo.
     # For all other properties, getter-functions have to be used on the c
@@ -46,7 +40,6 @@ cdef extern from "particle_data.hpp":
         int    mol_id
         int    type
         double mass
-        stdint.uint8_t rotation
 
     ctypedef struct particle_position "ParticlePosition":
         Vector3d p
@@ -90,9 +83,6 @@ cdef extern from "particle_data.hpp":
     void set_particle_f(int part, const Vector3d & f)
     void set_particle_lees_edwards_offset(int, const double)
 
-    IF ROTATION:
-        void set_particle_rotation(int part, int rot)
-
     IF MASS:
         void set_particle_mass(int part, double mass)
 
@@ -101,7 +91,8 @@ cdef extern from "particle_data.hpp":
         Vector3d get_particle_rotational_inertia(const particle * p)
 
     IF ROTATION:
-        void set_particle_rotation(int part, int rot)
+        void set_particle_rotation(int part, const Vector3i & flag)
+        Vector3i get_particle_rotation(const particle * p)
 
     void set_particle_q(int part, double q)
 
@@ -164,8 +155,8 @@ cdef extern from "particle_data.hpp":
         void set_particle_ext_force(int part, const Vector3d & force)
         Vector3d get_particle_ext_force(const particle * p)
 
-        void set_particle_fix(int part, stdint.uint8_t flag)
-        stdint.uint8_t get_particle_fix(const particle * p)
+        void set_particle_fix(int part, const Vector3i & flag)
+        Vector3i get_particle_fix(const particle * p)
 
     void delete_particle_bond(int part, Span[const int] bond)
     void delete_particle_bonds(int part)

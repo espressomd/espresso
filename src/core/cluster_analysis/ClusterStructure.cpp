@@ -41,7 +41,7 @@ void ClusterStructure::clear() {
 }
 
 inline bool ClusterStructure::part_of_cluster(const Particle &p) {
-  return cluster_id.find(p.p.identity) != cluster_id.end();
+  return cluster_id.find(p.identity()) != cluster_id.end();
 }
 
 // Analyze the cluster structure of the given particles

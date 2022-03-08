@@ -54,26 +54,27 @@ bool steepest_descent_step(const ParticleRange &particles) {
     // For all Cartesian coordinates
     for (int j = 0; j < 3; j++) {
       // Skip, if coordinate is fixed
-      if (!(p.p.ext_flag & COORD_FIXED(j)))
+      if (!p.is_fixed_along(j)) {
         // Skip positional increments of virtual particles
-        if (!p.p.is_virtual) {
+        if (!p.is_virtual()) {
           // Square of force on particle
-          f += Utils::sqr(p.f.f[j]);
+          f += Utils::sqr(p.force()[j]);
 
           // Positional increment, crop to maximum allowed by user
-          auto const dp = boost::algorithm::clamp(params.gamma * p.f.f[j],
+          auto const dp = boost::algorithm::clamp(params.gamma * p.force()[j],
                                                   -params.max_displacement,
                                                   params.max_displacement);
 
           // Move particle
-          p.r.p[j] += dp;
+          p.pos()[j] += dp;
         }
+      }
     }
 #ifdef ROTATION
     {
       // Rotational increment
-      auto const dq = params.gamma * p.f.torque; // Vector parallel to torque
-      auto const t = p.f.torque.norm2();
+      auto const dq = params.gamma * p.torque(); // Vector parallel to torque
+      auto const t = p.torque().norm2();
 
       // Normalize rotation axis and compute amount of rotation
       auto const l = dq.norm();

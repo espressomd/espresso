@@ -26,8 +26,8 @@
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "lb_interface.hpp"
-#include "lees_edwards.hpp"
-#include "lees_edwards_protocol.hpp"
+#include "lees_edwards/lees_edwards.hpp"
+#include "lees_edwards/protocols.hpp"
 
 #include <LBWalberlaBase.hpp>
 #include <LatticeWalberla.hpp>

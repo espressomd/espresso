@@ -67,14 +67,14 @@ public:
       return false;
 
 #ifdef ELECTROSTATICS
-    // Within real space cutoff of electrostatics and both charged
-    if ((dist2 <= m_eff_coulomb_cut2) && (p1.p.q != 0) && (p2.p.q != 0))
+    // Within real space cutoff of electrostatics and both are charged
+    if (dist2 <= m_eff_coulomb_cut2 and p1.q() != 0. and p2.q() != 0.)
       return true;
 #endif
 
 #ifdef DIPOLES
     // Within dipolar cutoff and both carry magnetic moments
-    if ((dist2 <= m_eff_dipolar_cut2) && (p1.p.dipm != 0) && (p2.p.dipm != 0))
+    if (dist2 <= m_eff_dipolar_cut2 and p1.dipm() != 0. and p2.dipm() != 0.)
       return true;
 #endif
 

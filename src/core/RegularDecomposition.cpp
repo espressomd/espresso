@@ -80,7 +80,7 @@ void RegularDecomposition::move_if_local(
     ParticleList &src, ParticleList &rest,
     std::vector<ParticleChange> &modified_cells) {
   for (auto &part : src) {
-    auto target_cell = position_to_cell(part.r.p);
+    auto target_cell = position_to_cell(part.pos());
 
     if (target_cell) {
       target_cell->particles().insert(std::move(part));
@@ -162,9 +162,9 @@ namespace {
  * @brief Fold coordinates to box and reset the old position.
  */
 void fold_and_reset(Particle &p, BoxGeometry const &box_geo) {
-  fold_position(p.r.p, p.l.i, box_geo);
+  fold_position(p.pos(), p.image_box(), box_geo);
 
-  p.l.p_old = p.r.p;
+  p.pos_at_last_verlet_update() = p.pos();
 }
 } // namespace
 

@@ -106,7 +106,7 @@ public:
   }
 
   Cell *particle_to_cell(Particle const &p) override {
-    return position_to_cell(p.r.p);
+    return position_to_cell(p.pos());
   }
 
   void resort(bool global, std::vector<ParticleChange> &diff) override;

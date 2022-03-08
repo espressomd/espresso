@@ -145,7 +145,7 @@ void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force,
 Utils::Vector3d lb_particle_coupling_drift_vel_offset(const Particle &p) {
   Utils::Vector3d vel_offset{};
 #ifdef ENGINE
-  if (p.p.swim.swimming) {
+  if (p.swimming().swimming) {
     vel_offset += p.swimming().v_swim * p.calc_director();
   }
 #endif
@@ -220,7 +220,7 @@ void add_swimmer_force(Particle const &p, double time_step, bool has_ghosts) {
     // calculate source position
     auto const magnitude = p.swimming().dipole_length;
     auto const direction = static_cast<double>(p.swimming().push_pull);
-    auto const director = p.r.calc_director();
+    auto const director = p.calc_director();
     auto const source_position = p.pos() + direction * magnitude * director;
     auto const force = p.swimming().f_swim * director;
 
@@ -255,7 +255,7 @@ void couple_particle(Particle &p, bool couple_virtual, double noise_amplitude,
                      const OptionalCounter &rng_counter, double time_step,
                      bool has_ghosts) {
 
-  if (p.p.is_virtual and not couple_virtual)
+  if (p.is_virtual() and not couple_virtual)
     return;
 
   /* Particles within one agrid of the outermost lattice point
@@ -263,24 +263,24 @@ void couple_particle(Particle &p, bool couple_virtual, double noise_amplitude,
    * interpolation on neighboring LB nodes. If the particle
    * IS in the local domain, we also add the opposing
    * force to the particle. */
-  if (in_local_halo(p.r.p)) {
+  if (in_local_halo(p.pos())) {
     auto const drag_force =
         lb_drag_force(p, lb_particle_coupling_drift_vel_offset(p));
     auto const random_force =
         noise_amplitude * lb_particle_coupling_noise(noise_amplitude > 0.0,
                                                      p.identity(), rng_counter);
     auto const coupling_force = drag_force + random_force;
-    add_md_force(p.r.p, coupling_force, time_step);
-    if (in_local_domain(p.r.p) or not has_ghosts) {
+    add_md_force(p.pos(), coupling_force, time_step);
+    if (in_local_domain(p.pos()) or not has_ghosts) {
       /* Particle is in our LB volume, so this node
        * is responsible to adding its force */
-      p.f.f += coupling_force;
+      p.force() += coupling_force;
     }
 
     if (not has_ghosts) {
       // couple positions shifted by one box length to add forces to ghost
       // layers
-      for (auto pos : shifted_positions(p.r.p, box_geo)) {
+      for (auto pos : shifted_positions(p.pos(), box_geo)) {
         add_md_force(pos, coupling_force, time_step);
       }
     }
