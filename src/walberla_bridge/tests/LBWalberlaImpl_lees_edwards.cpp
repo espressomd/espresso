@@ -83,10 +83,83 @@ BOOST_AUTO_TEST_CASE(test_transient_shear) {
          {0., 0.13 * grid_size_y, 0.7 * grid_size_y, 1. * grid_size_y}) {
       auto u = lb.get_velocity_at_pos(Vector3d{4, y, 4}, true);
       auto expected = u_expected(y, i, viscosity, v0, grid_size_y);
-      std::cout << y << " " << expected << " " << (*u)[0] << std::endl;
       BOOST_CHECK_SMALL((*u)[0] - expected, 3E-5);
     }
-    std::cout << std::endl;
+  }
+}
+
+auto setup_lb_with_offset(double offset) {
+  double density = 1;
+  double viscosity = 1. / 7.;
+  auto lattice =
+      std::make_shared<LatticeWalberla>(Vector3i{10, 10, 10}, mpi_shape, 1);
+  auto lb = std::make_shared<walberla::LBWalberlaImpl<double>>(
+      lattice, viscosity, density);
+  auto le_pack = std::make_unique<LeesEdwardsPack>(
+      0, 1, [=]() { return offset; }, []() { return 0.0; });
+  lb->set_collision_model(std::move(le_pack));
+  return lb;
+}
+
+BOOST_AUTO_TEST_CASE(test_interpolation_force) {
+  const int offset = 2;
+  auto lb = setup_lb_with_offset(offset);
+  auto const shape = lb->lattice().get_grid_dimensions();
+  const int xz = shape[0] / 2;
+  const int y_max = shape[1] - 1;
+
+  auto const force_pos = Vector3d{xz + 0.5, y_max + 0.5, xz + 0.5};
+  auto const force_node = Vector3i{xz, y_max, xz};
+  auto const f1 = Vector3d{0.3, -0.2, 0.3};
+  lb->add_force_at_pos(force_pos, f1);
+
+  lb->integrate();
+
+  auto const ghost_node = Vector3i{force_node[0] - offset, -1, force_node[2]};
+  auto const laf = *(lb->get_node_last_applied_force(ghost_node, true));
+  BOOST_CHECK_SMALL((laf - f1).norm(), 1E-10);
+}
+
+BOOST_AUTO_TEST_CASE(test_interpolation_velocity) {
+  const int offset = 2;
+  auto lb = setup_lb_with_offset(offset);
+  auto const shape = lb->lattice().get_grid_dimensions();
+  const int xz = shape[0] / 2;
+  const int y_max = shape[1] - 1;
+
+  auto const source_node = Vector3i{xz, y_max, xz};
+  auto const v = Vector3d{0.3, -0.2, 0.3};
+  lb->set_node_velocity(source_node, v);
+
+  lb->ghost_communication();
+
+  auto const ghost_node = Vector3i{source_node[0] - offset, -1, source_node[2]};
+  auto const ghost_vel = *(lb->get_node_velocity(ghost_node, true));
+  BOOST_CHECK_SMALL((ghost_vel - v).norm(), 1E-10);
+}
+
+BOOST_AUTO_TEST_CASE(test_interpolation_pdf) {
+  const int offset = 2;
+  auto lb = setup_lb_with_offset(offset);
+  auto const shape = lb->lattice().get_grid_dimensions();
+  const int xz = shape[0] / 2;
+  const int y_max = shape[1] - 1;
+
+  auto const source_node = Vector3i{xz, y_max, xz};
+
+  std::vector<double> source_pop(19);
+  double x = -1;
+  std::for_each(source_pop.begin(), source_pop.end(), [&x](auto &v) {
+    v = x;
+    x += .1;
+  });
+  lb->set_node_pop(source_node, source_pop);
+  lb->ghost_communication();
+
+  auto const ghost_node = Vector3i{source_node[0] - offset, -1, source_node[2]};
+  auto const ghost_pop = *(lb->get_node_pop(ghost_node, true));
+  for (int i = 0; i < source_pop.size(); i++) {
+    BOOST_CHECK_EQUAL(source_pop[i], ghost_pop[i]);
   }
 }
 

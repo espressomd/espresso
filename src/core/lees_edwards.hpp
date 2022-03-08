@@ -107,6 +107,9 @@ inline Utils::Vector3d verlet_list_offset(BoxGeometry const &box,
   return {};
 }
 
+/** @brief Get currently active Lees-Edwards protocol. */
+std::weak_ptr<ActiveProtocol> get_protocol();
+
 /** @brief Set a new Lees-Edwards protocol. */
 void set_protocol(std::shared_ptr<ActiveProtocol> new_protocol);
 
