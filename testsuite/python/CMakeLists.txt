@@ -43,15 +43,13 @@ function(PYTHON_TEST)
     set_tests_properties(${TEST_NAME} PROPERTIES RESOURCE_LOCK GPU)
   endif()
 
-  if(${TEST_MAX_NUM_PROC} EQUAL 1)
-    set_tests_properties(${TEST_NAME} PROPERTIES LABELS "${TEST_LABELS}")
-  elseif(${TEST_MAX_NUM_PROC} EQUAL 2)
-    set_tests_properties(${TEST_NAME} PROPERTIES LABELS
-                                                 "${TEST_LABELS};parallel")
-  else()
-    set_tests_properties(
-      ${TEST_NAME} PROPERTIES LABELS "${TEST_LABELS};parallel;parallel_odd")
+  if(${TEST_MAX_NUM_PROC} EQUAL 2)
+    list(APPEND TEST_LABELS "parallel")
   endif()
+  if(${TEST_MAX_NUM_PROC} EQUAL 3)
+    list(APPEND TEST_LABELS "parallel_odd")
+  endif()
+  set_tests_properties(${TEST_NAME} PROPERTIES LABELS "${TEST_LABELS}")
 
   set(python_tests ${python_tests} ${TEST_FILE_CONFIGURED} PARENT_SCOPE)
 endfunction(PYTHON_TEST)
