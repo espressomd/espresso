@@ -70,10 +70,22 @@ function(CHECKPOINT_TEST)
   endif()
   python_test(
     FILE save_checkpoint.py MAX_NUM_PROC ${TEST_NPROCS} LABELS ${TEST_LABELS}
-    SUFFIX ${TEST_SUFFIX} ARGUMENTS "${TEST_ARGUMENTS}")
+    SUFFIX ${TEST_SUFFIX} ARGUMENTS ${TEST_ARGUMENTS} DEPENDENCIES
+    unittest_generator.py)
   python_test(
-    FILE test_checkpoint.py MAX_NUM_PROC ${TEST_NPROCS} LABELS ${TEST_LABELS}
-    SUFFIX ${TEST_SUFFIX} ARGUMENTS "${TEST_ARGUMENTS}" DEPENDS
+    FILE
+    test_checkpoint.py
+    MAX_NUM_PROC
+    ${TEST_NPROCS}
+    LABELS
+    ${TEST_LABELS}
+    SUFFIX
+    ${TEST_SUFFIX}
+    ARGUMENTS
+    ${TEST_ARGUMENTS}
+    DEPENDENCIES
+    unittest_generator.py
+    DEPENDS
     save_checkpoint_${TEST_SUFFIX})
 endfunction(CHECKPOINT_TEST)
 
@@ -146,11 +158,11 @@ python_test(FILE lb_pressure_tensor.py MAX_NUM_PROC 1 LABELS gpu long)
 python_test(FILE ek_fluctuations.py MAX_NUM_PROC 1 LABELS gpu)
 python_test(FILE ek_charged_plate.py MAX_NUM_PROC 1 LABELS gpu)
 python_test(FILE ek_eof_one_species.py MAX_NUM_PROC 1 LABELS gpu SUFFIX x
-            ARGUMENTS Test__axis_x)
+            ARGUMENTS Test__axis_x DEPENDENCIES unittest_generator.py)
 python_test(FILE ek_eof_one_species.py MAX_NUM_PROC 1 LABELS gpu SUFFIX y
-            ARGUMENTS Test__axis_y)
+            ARGUMENTS Test__axis_y DEPENDENCIES unittest_generator.py)
 python_test(FILE ek_eof_one_species.py MAX_NUM_PROC 1 LABELS gpu SUFFIX z
-            ARGUMENTS Test__axis_z)
+            ARGUMENTS Test__axis_z DEPENDENCIES unittest_generator.py)
 python_test(FILE exclusions.py MAX_NUM_PROC 2)
 python_test(FILE langevin_thermostat.py MAX_NUM_PROC 1)
 python_test(FILE langevin_thermostat_stats.py MAX_NUM_PROC 1 LABELS long)
@@ -159,8 +171,10 @@ python_test(FILE brownian_dynamics_stats.py MAX_NUM_PROC 1 LABELS long)
 python_test(FILE lees_edwards.py MAX_NUM_PROC 4)
 python_test(FILE nsquare.py MAX_NUM_PROC 4)
 python_test(FILE virtual_sites_relative.py MAX_NUM_PROC 2)
-python_test(FILE virtual_sites_tracers.py MAX_NUM_PROC 2)
-python_test(FILE virtual_sites_tracers_gpu.py MAX_NUM_PROC 2 LABELS gpu)
+python_test(FILE virtual_sites_tracers.py MAX_NUM_PROC 2 DEPENDENCIES
+            virtual_sites_tracers_common.py)
+python_test(FILE virtual_sites_tracers_gpu.py MAX_NUM_PROC 2 LABELS gpu
+            DEPENDENCIES virtual_sites_tracers_common.py)
 python_test(FILE regular_decomposition.py MAX_NUM_PROC 4)
 python_test(FILE integrator_npt.py MAX_NUM_PROC 4)
 python_test(FILE integrator_npt_stats.py MAX_NUM_PROC 4 LABELS long)
@@ -271,13 +285,6 @@ add_custom_target(
           ${CMAKE_CURRENT_BINARY_DIR}
   COMMAND
     ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/unittest_decorators.py
-    ${CMAKE_CURRENT_BINARY_DIR}
-  COMMAND
-    ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/unittest_generator.py
-    ${CMAKE_CURRENT_BINARY_DIR}
-  COMMAND
-    ${CMAKE_COMMAND} -E copy
-    ${CMAKE_CURRENT_SOURCE_DIR}/virtual_sites_tracers_common.py
     ${CMAKE_CURRENT_BINARY_DIR}
   COMMAND
     ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/thermostats_common.py
