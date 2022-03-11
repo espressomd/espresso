@@ -23,12 +23,14 @@
 
 #include "RuntimeErrorStream.hpp"
 #include "errorhandling.hpp"
+#include "grid.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/index.hpp>
 #include <utils/mpi/cart_comm.hpp>
 #include <utils/mpi/sendrecv.hpp>
 
+#include <boost/container/flat_set.hpp>
 #include <boost/mpi/collectives.hpp>
 #include <boost/range/algorithm/reverse.hpp>
 #include <boost/range/numeric.hpp>
@@ -378,33 +380,112 @@ void RegularDecomposition::create_cell_grid(double range) {
   m_ghost_cells.resize(new_cells - n_local_cells);
 }
 
+template <class K, class Comparator> auto make_flat_set(Comparator &&comp) {
+  return boost::container::flat_set<K, std::remove_reference_t<Comparator>>(
+      std::forward<Comparator>(comp));
+}
+
 void RegularDecomposition::init_cell_interactions() {
+
+  auto const halo = Utils::Vector3i{1, 1, 1};
+  auto const cart_info = Utils::Mpi::cart_get<3>(m_comm);
+  auto const node_pos = cart_info.coords;
+  auto const global_halo_offset = hadamard_product(node_pos, cell_grid) - halo;
+  auto const global_size = hadamard_product(node_grid, cell_grid);
+
+  /* Tanslate a node local index (relative to the origin of the local grid)
+   * to a global index. */
+  auto global_index =
+      [&](Utils::Vector3i const &local_index) -> Utils::Vector3i {
+    return (global_halo_offset + local_index);
+  };
+
+  /* Linear index in the global cell grid. */
+  auto folded_linear_index = [&](Utils::Vector3i const &global_index) {
+    auto const folded_index = (global_index + global_size) % global_size;
+
+    return get_linear_index(folded_index, global_size);
+  };
+
+  /* Translate a global index into a local one */
+  auto local_index =
+      [&](Utils::Vector3i const &global_index) -> Utils::Vector3i {
+    return (global_index - global_halo_offset);
+  };
+
+  /* We only consider local cells (e.g. not halo cells), which
+   * span the range [(1,1,1), cell_grid) in local coordinates. */
+  auto const start = global_index(Utils::Vector3i{1, 1, 1});
+  auto const end = start + cell_grid;
+
   /* loop all local cells */
-  for (int o = 1; o < cell_grid[2] + 1; o++)
-    for (int n = 1; n < cell_grid[1] + 1; n++)
-      for (int m = 1; m < cell_grid[0] + 1; m++) {
+  for (int o = start[2]; o < end[2]; o++)
+    for (int n = start[1]; n < end[1]; n++)
+      for (int m = start[0]; m < end[0]; m++) {
+        /* next-nearest neighbors in every direction */
+        Utils::Vector3i lower_index = {m - 1, n - 1, o - 1};
+        Utils::Vector3i upper_index = {m + 1, n + 1, o + 1};
 
-        auto const ind1 = get_linear_index(m, n, o, ghost_cell_grid);
+        //        /* In the fully connected case, we consider all cells
+        //         * in the direction as neighbors, not only the nearest ones.
+        //         */
+        //        for (int i = 0; i < 3; i++) {
+        //          if (dd.fully_connected[i]) {
+        //            // Fully connected is only neede at the box surface
+        //            if (i==0 and (n!=start[1] or n!=end[1]-1) and (o!=start[2]
+        //            or o!=end[2]-1)) continue; if (i==1 and (m!=start[0] or
+        //            m!=end[0]-1) and (o!=start[2] or o!=end[2]-1)) continue;
+        //            if (i==2 and (m!=start[0] or m!=end[0]-1) and (n!=start[1]
+        //            or n!=end[1]-1)) continue; lower_index[i] = 0;
+        //            upper_index[i] = global_size[i] - 1;
+        //          }
+        //        }
 
-        std::vector<Cell *> red_neighbors;
-        std::vector<Cell *> black_neighbors;
+        /* In non-periodic directions, the halo needs not
+         * be considered. */
+        for (int i = 0; i < 3; i++) {
+          if (not box_geo.periodic(i)) {
+            lower_index[i] = std::max(0, lower_index[i]);
+            upper_index[i] = std::min(global_size[i] - 1, upper_index[i]);
+          }
+        }
 
-        /* loop all neighbor cells */
-        int lower_index[3] = {m - 1, n - 1, o - 1};
-        int upper_index[3] = {m + 1, n + 1, o + 1};
+        /* Unique set of neighbors, cells are compared by their linear
+         * index in the global cell grid. */
+        auto neighbors = make_flat_set<Utils::Vector3i>(
+            [&](Utils::Vector3i const &a, Utils::Vector3i const &b) {
+              return folded_linear_index(a) < folded_linear_index(b);
+            });
 
+        /* Collect neighbors */
         for (int p = lower_index[2]; p <= upper_index[2]; p++)
           for (int q = lower_index[1]; q <= upper_index[1]; q++)
             for (int r = lower_index[0]; r <= upper_index[0]; r++) {
-              auto const ind2 = get_linear_index(r, q, p, ghost_cell_grid);
-              if (ind2 > ind1) {
-                red_neighbors.push_back(&cells.at(ind2));
-              } else {
-                black_neighbors.push_back(&cells.at(ind2));
-              }
+              neighbors.insert(Utils::Vector3i{r, q, p});
             }
-        cells.at(ind1).m_neighbors =
-            Neighbors<Cell *>(red_neighbors, black_neighbors);
+
+        /* Red-black partition by global index. */
+        auto const ind1 = folded_linear_index({m, n, o});
+
+        std::vector<Cell *> red_neighbors;
+        std::vector<Cell *> black_neighbors;
+        for (auto const &neighbor : neighbors) {
+          auto const ind2 = folded_linear_index(neighbor);
+          /* Exclude cell itself */
+          if (ind1 == ind2)
+            continue;
+
+          auto cell = &cells.at(
+              get_linear_index(local_index(neighbor), ghost_cell_grid));
+          if (ind2 > ind1) {
+            red_neighbors.push_back(cell);
+          } else {
+            black_neighbors.push_back(cell);
+          }
+        }
+
+        cells[get_linear_index(local_index({m, n, o}), ghost_cell_grid)]
+            .m_neighbors = Neighbors<Cell *>(red_neighbors, black_neighbors);
       }
 }
 
@@ -443,18 +524,6 @@ void assign_prefetches(GhostCommunicator &comm) {
   }
 }
 
-/* Calc the ghost shift vector for dim dir in direction lr */
-Utils::Vector3d shift(BoxGeometry const &box, LocalBox<double> const &local_box,
-                      int dir, int lr) {
-  Utils::Vector3d ret{};
-
-  /* Shift is non-zero only in periodic directions, if we are at the box
-   * boundary */
-  ret[dir] = box.periodic(dir) * local_box.boundary()[2 * dir + lr] *
-             box.length()[dir];
-
-  return ret;
-}
 } // namespace
 
 GhostCommunicator RegularDecomposition::prepare_comm() {
@@ -503,9 +572,6 @@ GhostCommunicator RegularDecomposition::prepare_comm() {
 
         /* Buffer has to contain Send and Recv cells -> factor 2 */
         ghost_comm.communications[cnt].part_lists.resize(2 * n_comm_cells[dir]);
-        /* prepare folding of ghost positions */
-        ghost_comm.communications[cnt].shift =
-            shift(m_box, m_local_box, dir, lr);
 
         /* fill send ghost_comm cells */
         lc[dir] = hc[dir] = 1 + lr * (cell_grid[dir] - 1);
@@ -530,8 +596,6 @@ GhostCommunicator RegularDecomposition::prepare_comm() {
             ghost_comm.communications[cnt].node = node_neighbors[2 * dir + lr];
             ghost_comm.communications[cnt].part_lists.resize(n_comm_cells[dir]);
             /* prepare folding of ghost positions */
-            ghost_comm.communications[cnt].shift =
-                shift(m_box, m_local_box, dir, lr);
 
             lc[dir] = hc[dir] = 1 + lr * (cell_grid[dir] - 1);
 

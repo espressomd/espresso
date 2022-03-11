@@ -33,7 +33,7 @@ class RandomPairTest(ut.TestCase):
        repeated for all valid combinations of periodicities.
 
     """
-    system = espressomd.System(box_l=3 * [10.])
+    system = espressomd.System(box_l=[10., 15., 15.])
 
     def setUp(self):
         s = self.system
