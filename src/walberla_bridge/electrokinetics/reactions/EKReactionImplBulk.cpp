@@ -29,20 +29,10 @@
 #include <domain_decomposition/BlockDataID.h>
 #include <memory>
 
+#include "utils.hpp"
+
 namespace walberla {
-
 namespace detail {
-template <typename FloatType>
-auto get_reaction_details(
-    const std::shared_ptr<EKReactant<FloatType>> &reactant) {
-  const auto order = reactant->get_order();
-  const auto stoech_coeff = reactant->get_stoech_coeff();
-  const auto density_id =
-      walberla::BlockDataID(reactant->get_species()->get_density_id());
-
-  return std::make_tuple(density_id, order, stoech_coeff);
-}
-
 template <typename FloatType>
 auto get_kernel(
     const std::vector<std::shared_ptr<EKReactant<FloatType>>> &reactants,
