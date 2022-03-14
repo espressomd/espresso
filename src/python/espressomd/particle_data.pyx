@@ -175,7 +175,7 @@ cdef class ParticleHandle:
 
         def __get__(self):
             self.update_particle_data()
-            return make_array_locked(self.particle_data.pos())
+            return make_array_locked(unfolded_position( < Vector3d > self.particle_data.pos(), < Vector3i > self.particle_data.image_box(), box_geo.length()))
 
     property pos_folded:
         """
@@ -237,7 +237,7 @@ cdef class ParticleHandle:
 
         def __get__(self):
             self.update_particle_data()
-            return self.particle_data.l.lees_edwards_offset
+            return self.particle_data.lees_edwards_offset()
 
         def __set__(self, value):
             set_particle_lees_edwards_offset(self._id, value)
@@ -250,7 +250,7 @@ cdef class ParticleHandle:
 
         def __get__(self):
             self.update_particle_data()
-            return self.particle_data.l.lees_edwards_flag
+            return self.particle_data.lees_edwards_flag()
 
     # Velocity
     property v:
@@ -295,7 +295,6 @@ cdef class ParticleHandle:
             self.update_particle_data()
             return make_array_locked(self.particle_data.force())
 
-    # Bonds
     property bonds:
         """
         The bonds stored by this particle. Note that bonds are only stored by
@@ -322,7 +321,7 @@ cdef class ParticleHandle:
             # i.e., we delete all existing bonds
             delete_particle_bonds(self._id)
 
-            # Empty list? ony delete
+            # Empty list? only delete
             if _bonds:
                 nlvl = nesting_level(_bonds)
                 if nlvl == 1:  # Single item
@@ -336,7 +335,6 @@ cdef class ParticleHandle:
 
         def __get__(self):
             bonds = []
-
             part_bonds = get_particle_bonds(self._id)
             # Go through the bond list of the particle
             for part_bond in part_bonds:
@@ -436,7 +434,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
 
-                cdef Quaternion[double] q = get_particle_quat(self.particle_data)
+                cdef Quaternion[double] q = self.particle_data.quat()
                 return array_locked([q[0], q[1], q[2], q[3]])
 
         property director:
@@ -491,9 +489,7 @@ cdef class ParticleHandle:
 
             def __get__(self):
                 self.update_particle_data()
-                cdef Vector3d omega_body
-                omega_body = get_particle_omega_body(self.particle_data)
-                return make_array_locked(omega_body)
+                return make_array_locked(self.particle_data.omega())
 
         property torque_lab:
             """
@@ -521,7 +517,7 @@ cdef class ParticleHandle:
                 self.update_particle_data()
                 cdef Vector3d torque_body
                 cdef Vector3d torque_space
-                torque_body = get_particle_torque_body(self.particle_data)
+                torque_body = self.particle_data.torque()
                 torque_space = convert_vector_body_to_space(
                     dereference(self.particle_data), torque_body)
 
@@ -553,8 +549,7 @@ cdef class ParticleHandle:
 
             def __get__(self):
                 self.update_particle_data()
-                return make_array_locked(
-                    get_particle_rotational_inertia(self.particle_data))
+                return make_array_locked(self.particle_data.rinertia())
 
     # Charge
     property q:
@@ -575,7 +570,7 @@ cdef class ParticleHandle:
 
         def __get__(self):
             self.update_particle_data()
-            return get_particle_q(self.particle_data)
+            return self.particle_data.q()
 
     IF LB_ELECTROHYDRODYNAMICS:
         property mu_E:
@@ -600,7 +595,7 @@ cdef class ParticleHandle:
 
             def __get__(self):
                 self.update_particle_data()
-                return make_array_locked(get_particle_mu_E(self.particle_data))
+                return make_array_locked(self.particle_data.mu_E())
 
     property virtual:
         """Virtual flag.
@@ -627,14 +622,8 @@ cdef class ParticleHandle:
                         "To make a particle virtual, VIRTUAL_SITES has to be defined in myconfig.hpp")
 
         def __get__(self):
-            # Note: the pointer_to... mechanism doesn't work if virtual sites
-            # are not compiled in, because then, in the core, p.p.is_virtual
-            # is constexpr.
-            IF VIRTUAL_SITES:
-                self.update_particle_data()
-                return get_particle_virtual(self.particle_data)
-            ELSE:
-                return False
+            self.update_particle_data()
+            return self.particle_data.is_virtual()
 
     IF VIRTUAL_SITES_RELATIVE:
         property vs_quat:
@@ -765,7 +754,7 @@ cdef class ParticleHandle:
 
             def __get__(self):
                 self.update_particle_data()
-                return get_particle_dipm(self.particle_data)
+                return self.particle_data.dipm()
 
     IF EXTERNAL_FORCES:
         property ext_force:
@@ -787,7 +776,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 return make_array_locked(
-                    get_particle_ext_force(self.particle_data))
+                    self.particle_data.ext_force())
 
         property fix:
             """
@@ -843,8 +832,7 @@ cdef class ParticleHandle:
 
                 def __get__(self):
                     self.update_particle_data()
-                    return make_array_locked(
-                        get_particle_ext_torque(self.particle_data))
+                    return make_array_locked(self.particle_data.ext_torque())
 
     IF THERMOSTAT_PER_PARTICLE:
         IF PARTICLE_ANISOTROPY:
@@ -1163,7 +1151,7 @@ cdef class ParticleHandle:
                 swim = {}
                 mode = "N/A"
                 cdef particle_parameters_swimming _swim
-                _swim = get_particle_swimming(self.particle_data)
+                _swim = self.particle_data.swimming()
 
                 if _swim.push_pull == -1:
                     mode = 'pusher'

@@ -25,23 +25,26 @@ include "myconfig.pxi"
 
 from .utils cimport Span
 
+
 # Import particle data structures and setter functions from particle_data.hpp
 cdef extern from "particle_data.hpp":
     cppclass BondView:
         int bond_id()
         Span[const int] partner_ids()
 
+    ctypedef struct particle_parameters_swimming "ParticleParametersSwimming":
+        bool swimming
+        double f_swim
+        double v_swim
+        int push_pull
+        double dipole_length
+
     # Note: Conditional compilation is not possible within ctypedef blocks.
     # Therefore, only member variables are imported here, which are always compiled into ESPResSo.
     # For all other properties, getter-functions have to be used on the c
-    # level.
-
-    ctypedef struct particle_local "ParticleLocal":
-        double lees_edwards_offset
-        int lees_edwards_flag
+    # level.        
 
     ctypedef struct particle "Particle":
-        particle_local l
         vector[int] exclusions() except +
         Vector3d calc_dip()
         int type()
@@ -53,14 +56,20 @@ cdef extern from "particle_data.hpp":
         Vector3d force()
         Vector3d v()
         Vector3i image_box()
+        double lees_edwards_offset()
+        int lees_edwards_flag()
 
-    IF ENGINE:
-        ctypedef struct particle_parameters_swimming "ParticleParametersSwimming":
-            bool swimming
-            double f_swim
-            double v_swim
-            int push_pull
-            double dipole_length
+        Vector3d rinertia()
+        Vector3d mu_E()
+        double q()
+        Vector3d omega()
+        Vector3d torque()
+        Quaternion[double] quat()
+        double dipm()
+        bint is_virtual()
+        Vector3d ext_force()
+        Vector3d ext_torque()
+        particle_parameters_swimming swimming()
 
     # Setter/getter/modifier functions functions
     void prefetch_particle_data(vector[int] ids)
@@ -77,7 +86,6 @@ cdef extern from "particle_data.hpp":
 
     IF ROTATIONAL_INERTIA:
         void set_particle_rotational_inertia(int part, const Vector3d & rinertia)
-        Vector3d get_particle_rotational_inertia(const particle * p)
 
     IF ROTATION:
         void set_particle_rotation(int part, const Vector3i & flag)
@@ -87,7 +95,6 @@ cdef extern from "particle_data.hpp":
 
     IF LB_ELECTROHYDRODYNAMICS:
         void set_particle_mu_E(int part, const Vector3d & mu_E)
-        Vector3d get_particle_mu_E(const particle * p)
 
     void set_particle_type(int part, int type)
 
@@ -95,22 +102,17 @@ cdef extern from "particle_data.hpp":
 
     IF ROTATION:
         void set_particle_quat(int part, const Quaternion[double] & quat)
-        Quaternion[double] get_particle_quat(const particle * p)
         void set_particle_director(int part, const Vector3d & director)
         void set_particle_omega_lab(int part, const Vector3d & omega)
         void set_particle_omega_body(int part, const Vector3d & omega)
         void set_particle_torque_lab(int part, const Vector3d & torque)
-        Vector3d get_particle_omega_body(const particle * p)
-        Vector3d get_particle_torque_body(const particle * p)
 
     IF DIPOLES:
         void set_particle_dip(int part, const Vector3d & dip)
         void set_particle_dipm(int part, double dipm)
-        double get_particle_dipm(const particle * p)
 
     IF VIRTUAL_SITES:
         void set_particle_virtual(int part, int isVirtual)
-        bint get_particle_virtual(const particle * p)
 
     IF THERMOSTAT_PER_PARTICLE:
         IF PARTICLE_ANISOTROPY:
@@ -134,15 +136,11 @@ cdef extern from "particle_data.hpp":
         void set_particle_vs_relative(int part, int vs_relative_to, double vs_distance, const Quaternion[double] & rel_ori)
         void set_particle_vs_quat(int part, const Quaternion[double] & vs_quat)
 
-    double get_particle_q(const particle * p)
-
     IF EXTERNAL_FORCES:
         IF ROTATION:
             void set_particle_ext_torque(int part, const Vector3d & torque)
-            Vector3d get_particle_ext_torque(const particle * p)
 
         void set_particle_ext_force(int part, const Vector3d & force)
-        Vector3d get_particle_ext_force(const particle * p)
 
         void set_particle_fix(int part, const Vector3i & flag)
         Vector3i get_particle_fix(const particle * p)
@@ -157,7 +155,6 @@ cdef extern from "particle_data.hpp":
 
     IF ENGINE:
         void set_particle_swimming(int part, particle_parameters_swimming swim)
-        particle_parameters_swimming get_particle_swimming(const particle * p)
 
     int remove_particle(int part) except +
 
