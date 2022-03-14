@@ -62,14 +62,6 @@ public:
   void boundary_update();
 };
 
-// TODO:
-//  -flag field instantiation
-//  -index field instantiation (think about handling that one without the flag
-//  field) -lazy populate index field from flag field -flag field management
-//  -interface functions
-//  -perform reactions
-//  -get_kernels
-
 // explicit template instantiation
 template class EKReactionIndexed<double>;
 } // namespace walberla
