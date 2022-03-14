@@ -1,8 +1,8 @@
 #ifndef ESPRESSO_EKCONTAINER_HPP
 #define ESPRESSO_EKCONTAINER_HPP
 
-#include "PoissonSolver/FFT.hpp"
-#include "PoissonSolver/PoissonSolver.hpp"
+#include "electrokinetics/PoissonSolver/FFT.hpp"
+#include "electrokinetics/PoissonSolver/PoissonSolver.hpp"
 
 #include <algorithm>
 #include <cassert>

@@ -4,7 +4,7 @@
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameter.hpp"
 
-#include "walberla_bridge/PoissonSolver/PoissonSolver.hpp"
+#include "walberla_bridge/electrokinetics/PoissonSolver/PoissonSolver.hpp"
 
 #include <memory>
 

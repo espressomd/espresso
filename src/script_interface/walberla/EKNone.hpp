@@ -6,7 +6,7 @@
 #include "script_interface/walberla/EKPoissonSolver.hpp"
 
 #include "LatticeWalberla.hpp"
-#include "walberla_bridge/PoissonSolver/None.hpp"
+#include "walberla_bridge/electrokinetics/PoissonSolver/None.hpp"
 
 #include <memory>
 

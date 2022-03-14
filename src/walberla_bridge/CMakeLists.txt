@@ -61,7 +61,11 @@ list(APPEND WalberlaBridgeElectrokineticsCodegen_SRC
      ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelIndexed_5.cpp)
 unset(WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN)
 unset(WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS)
-# EK reactions
+# EK poisson
+set(WALBERLA_BRIDGE_ELECTROKINETICS_POISSON electrokinetics/PoissonSolver)
+list(APPEND WalberlaBridgeElectrokinetics_SRC
+        ${WALBERLA_BRIDGE_ELECTROKINETICS_POISSON}/FFT.cpp)
+unset(WALBERLA_BRIDGE_ELECTROKINETICS_POISSON)
 
 if(WALBERLA_USE_AVX)
   list(APPEND WalberlaBridgeCodegen_SRC
@@ -88,7 +92,7 @@ set(WalberlaBridgeCodegenCuda_SRC
 
 
 set(WalberlaBridge_SRC ${WalberlaBridgeCodegen_SRC} lb_walberla_init.cpp
-                       LatticeWalberla.cpp PoissonSolver/FFT.cpp ${WalberlaBridgeElectrokineticsCodegen_SRC} ${WalberlaBridgeElectrokinetics_SRC})
+                       LatticeWalberla.cpp ${WalberlaBridgeElectrokineticsCodegen_SRC} ${WalberlaBridgeElectrokinetics_SRC})
 
 add_library(cxx_walberla_interface INTERFACE)
 if(WALBERLA_USE_AVX)

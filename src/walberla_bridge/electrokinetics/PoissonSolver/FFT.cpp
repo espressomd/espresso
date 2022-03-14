@@ -16,7 +16,7 @@ template <typename FloatType>
 FFT<FloatType>::FFT(std::shared_ptr<LatticeWalberla> lattice,
                     FloatType permittivity)
     : PS(std::move(lattice), permittivity) {
-  m_blocks = m_lattice->get_blocks();
+  m_blocks = get_lattice()->get_blocks();
 
   Vector3<uint_t> dim(m_blocks->getNumberOfXCells(),
                       m_blocks->getNumberOfYCells(),
@@ -43,7 +43,7 @@ template <typename FloatType> void FFT<FloatType>::reset_charge_field() {
   const auto potential_id =
       domain_decomposition::BlockDataID(get_potential_field_id());
 
-  for (auto &block : *m_lattice->get_blocks()) {
+  for (auto &block : *get_lattice()->get_blocks()) {
     auto field = block.template getData<PotentialField>(potential_id);
     WALBERLA_FOR_ALL_CELLS_XYZ(field, field->get(x, y, z) = 0.;)
   }
@@ -57,7 +57,7 @@ void FFT<FloatType>::add_charge_to_field(const std::size_t &id,
   const auto charge_id =
       domain_decomposition::BlockDataID(get_potential_field_id());
   const auto density_id = domain_decomposition::BlockDataID(id);
-  for (auto &block : *m_lattice->get_blocks()) {
+  for (auto &block : *get_lattice()->get_blocks()) {
     auto charge_field = block.template getData<PotentialField>(charge_id);
     auto density_field = block.template getData<ChargeField>(density_id);
     WALBERLA_FOR_ALL_CELLS_XYZ(charge_field,

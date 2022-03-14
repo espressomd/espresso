@@ -20,9 +20,9 @@ template <typename FloatType = double>
 class FFT : public PoissonSolver<FloatType> {
 private:
   using PS = PoissonSolver<FloatType>;
+  using PS::get_lattice;
   using PS::get_potential_field_id;
   using PS::ghost_communication;
-  using PS::m_lattice;
   using typename PS::ChargeField;
   using typename PS::PotentialField;
 

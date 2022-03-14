@@ -16,7 +16,7 @@ public:
 
   void reset_charge_field() override {}
 
-  void add_charge_to_field(const std::size_t &id, FloatType valency) override {}
+  void add_charge_to_field(const std::size_t &id, FloatType) override {}
 
   void solve() override {}
 };

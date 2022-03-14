@@ -13,10 +13,8 @@
 
 namespace walberla {
 template <typename FloatType = double> class PoissonSolver {
-protected:
-  std::shared_ptr<LatticeWalberla> m_lattice;
-
 private:
+  std::shared_ptr<LatticeWalberla> m_lattice;
   FloatType m_permittivity;
   BlockDataID m_potential_field_id;
 
@@ -33,11 +31,11 @@ public:
                 FloatType permittivity)
       : m_lattice{std::move(lattice)}, m_permittivity{permittivity} {
     m_potential_field_id = field::addToStorage<PotentialField>(
-        m_lattice->get_blocks(), "potential field", 0.0, field::fzyx,
-        m_lattice->get_ghost_layers());
+        get_lattice()->get_blocks(), "potential field", 0.0, field::fzyx,
+        get_lattice()->get_ghost_layers());
 
     m_full_communication =
-        std::make_shared<FullCommunicator>(m_lattice->get_blocks());
+        std::make_shared<FullCommunicator>(get_lattice()->get_blocks());
     m_full_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<PotentialField>>(
             m_potential_field_id));
@@ -54,6 +52,8 @@ public:
     m_permittivity = permittivity;
   }
   [[nodiscard]] FloatType get_permittivity() const { return m_permittivity; }
+
+  [[nodiscard]] auto get_lattice() const { return m_lattice; }
 
   virtual void solve() = 0;
   void ghost_communication() { (*m_full_communication)(); };
