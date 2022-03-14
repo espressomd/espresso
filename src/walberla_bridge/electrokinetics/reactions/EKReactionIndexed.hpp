@@ -26,14 +26,16 @@
 
 #include <memory>
 
-#include <field/FlagField.h>
-
 namespace walberla {
+namespace domain_decomposition {
+// forward declaration
+class BlockDataID;
+} // namespace domain_decomposition
+
 template <typename FloatType>
 class EKReactionIndexed : public EKReactionBase<FloatType> {
 private:
   using ReactionBase = EKReactionBase<FloatType>;
-  using FlagField = walberla::FlagField<walberla::uint8_t>;
 
   domain_decomposition::BlockDataID m_flagfield_id;
   domain_decomposition::BlockDataID m_indexvector_id;

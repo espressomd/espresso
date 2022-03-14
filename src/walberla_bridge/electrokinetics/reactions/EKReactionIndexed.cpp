@@ -33,6 +33,7 @@
 
 #include "utils.hpp"
 
+#include <domain_decomposition/BlockDataID.h>
 #include <field/AddToStorage.h>
 
 namespace walberla {
@@ -43,6 +44,9 @@ const FlagUID Domain_flag("domain");
 const FlagUID Boundary_flag("boundary");
 
 namespace detail {
+// FlagField to use
+using FlagField = FlagField<uint8_t>;
+
 template <typename FloatType>
 auto get_kernel(
     const std::vector<std::shared_ptr<EKReactant<FloatType>>> &reactants,
@@ -202,7 +206,7 @@ EKReactionIndexed<FloatType>::EKReactionIndexed(
     FloatType coefficient)
     : EKReactionBase<FloatType>(lattice, reactants, coefficient),
       m_pending_changes(false) {
-  m_flagfield_id = field::addFlagFieldToStorage<FlagField>(
+  m_flagfield_id = field::addFlagFieldToStorage<detail::FlagField>(
       get_lattice()->get_blocks(), "flag field reaction",
       get_lattice()->get_ghost_layers());
 
@@ -217,7 +221,7 @@ EKReactionIndexed<FloatType>::EKReactionIndexed(
                              createIdxVector, "IndexField");
 
   for (auto &block : *get_lattice()->get_blocks()) {
-    auto flag_field = block.template getData<FlagField>(m_flagfield_id);
+    auto flag_field = block.template getData<detail::FlagField>(m_flagfield_id);
     // register flags
     flag_field->registerFlag(Domain_flag);
     flag_field->registerFlag(Boundary_flag);
@@ -251,7 +255,8 @@ void EKReactionIndexed<FloatType>::set_node_is_boundary(
     return;
 
   auto [flag_field, boundary_flag] =
-      detail::get_flag_field_and_flag<FlagField>(bc->block, get_flagfield_id());
+      detail::get_flag_field_and_flag<detail::FlagField>(bc->block,
+                                                         get_flagfield_id());
   if (is_boundary) {
     flag_field->addFlag(bc->cell, boundary_flag);
   } else {
@@ -268,7 +273,8 @@ boost::optional<bool> EKReactionIndexed<FloatType>::get_node_is_boundary(
     return {boost::none};
 
   auto [flag_field, boundary_flag] =
-      detail::get_flag_field_and_flag<FlagField>(bc->block, get_flagfield_id());
+      detail::get_flag_field_and_flag<detail::FlagField>(bc->block,
+                                                         get_flagfield_id());
   return {flag_field->isFlagSet(bc->cell, boundary_flag)};
 }
 
@@ -278,7 +284,7 @@ void EKReactionIndexed<FloatType>::boundary_update() {
   using IndexInfo = pystencils::ReactionKernelIndexed_1::IndexInfo;
 
   if (m_pending_changes) {
-    detail::fillFromFlagField<FlagField, IndexVectors, IndexInfo>(
+    detail::fillFromFlagField<detail::FlagField, IndexVectors, IndexInfo>(
         get_lattice()->get_blocks(), get_indexvector_id(), get_flagfield_id(),
         Boundary_flag, Domain_flag);
     m_pending_changes = false;
