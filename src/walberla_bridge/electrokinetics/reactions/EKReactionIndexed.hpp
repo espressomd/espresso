@@ -52,8 +52,9 @@ public:
 
   void perform_reaction() override;
 
-  void set_node_boundary(const Utils::Vector3i &node);
-  void remove_node_from_boundary(const Utils::Vector3i &node);
+  void set_node_is_boundary(const Utils::Vector3i &node, bool is_boundary);
+  [[nodiscard]] boost::optional<bool>
+  get_node_is_boundary(const Utils::Vector3i &node);
 
   [[nodiscard]] auto get_indexvector_id() const { return m_indexvector_id; }
   [[nodiscard]] auto get_flagfield_id() const { return m_flagfield_id; }

@@ -244,29 +244,32 @@ void EKReactionIndexed<FloatType>::perform_reaction() {
 }
 
 template <typename FloatType>
-void EKReactionIndexed<FloatType>::set_node_boundary(
-    const Utils::Vector3i &node) {
+void EKReactionIndexed<FloatType>::set_node_is_boundary(
+    const Utils::Vector3i &node, bool is_boundary) {
   auto bc = get_block_and_cell(*get_lattice(), node, true);
   if (!bc)
     return;
 
   auto [flag_field, boundary_flag] =
       detail::get_flag_field_and_flag<FlagField>(bc->block, get_flagfield_id());
-  flag_field->addFlag(bc->cell, boundary_flag);
+  if (is_boundary) {
+    flag_field->addFlag(bc->cell, boundary_flag);
+  } else {
+    flag_field->removeFlag(bc->cell, boundary_flag);
+  }
   m_pending_changes = true;
 }
 
 template <typename FloatType>
-void EKReactionIndexed<FloatType>::remove_node_from_boundary(
+boost::optional<bool> EKReactionIndexed<FloatType>::get_node_is_boundary(
     const Utils::Vector3i &node) {
   auto bc = get_block_and_cell(*get_lattice(), node, true);
   if (!bc)
-    return;
+    return {boost::none};
 
   auto [flag_field, boundary_flag] =
       detail::get_flag_field_and_flag<FlagField>(bc->block, get_flagfield_id());
-  flag_field->removeFlag(bc->cell, boundary_flag);
-  m_pending_changes = true;
+  return {flag_field->isFlagSet(bc->cell, boundary_flag)};
 }
 
 template <typename FloatType>

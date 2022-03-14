@@ -6,6 +6,7 @@
 
 #include "EKReactant.hpp"
 #include "LatticeWalberla.hpp"
+#include "optional_reduction.hpp"
 
 #include "walberla_bridge/electrokinetics/reactions/EKReactionBase.hpp"
 #include "walberla_bridge/electrokinetics/reactions/EKReactionImplBulk.hpp"
@@ -95,24 +96,29 @@ public:
     m_ekreaction = std::make_shared<::walberla::EKReactionIndexed<double>>(
         lattice, output, get_value<double>(args, "coefficient"));
 
-    add_parameters({{"coefficient",
-                     [this](Variant const &v) {
-                       m_ekreaction->set_coefficient(get_value<double>(v));
-                     },
-                     [this]() { return m_ekreaction->get_coefficient(); }}});
+    add_parameters(
+        {{"coefficient",
+          [this](Variant const &v) {
+            m_ekreaction->set_coefficient(get_value<double>(v));
+          },
+          [this]() { return m_ekreaction->get_coefficient(); }},
+         {"shape", AutoParameter::read_only, [this]() {
+            return m_ekreaction->get_lattice()->get_grid_dimensions();
+          }}});
   }
 
   [[nodiscard]] Variant do_call_method(std::string const &method,
                                        VariantMap const &parameters) override {
-    if (method == "add_node_to_boundary") {
-      m_ekreaction->set_node_boundary(
-          get_mapped_index(get_value<Utils::Vector3i>(parameters, "node")));
+    if (method == "set_node_is_boundary") {
+      m_ekreaction->set_node_is_boundary(
+          get_mapped_index(get_value<Utils::Vector3i>(parameters, "node")),
+          get_value<bool>(parameters, "is_boundary"));
       return none;
     }
-    if (method == "remove_node_from_boundary") {
-      m_ekreaction->remove_node_from_boundary(
+    if (method == "get_node_is_boundary") {
+      auto const result = m_ekreaction->get_node_is_boundary(
           get_mapped_index(get_value<Utils::Vector3i>(parameters, "node")));
-      return none;
+      return optional_reduction_with_conversion(result);
     }
     return none;
   }
