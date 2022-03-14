@@ -63,7 +63,7 @@ class InteractionsBondedTest(ut.TestCase):
                           scalar_r=r, k=hb_k, r_0=hb_r_0),
                       lambda r: tests_common.harmonic_potential(
                           scalar_r=r, k=hb_k, r_0=hb_r_0),
-                      0.01, hb_r_cut, True)
+                      0.01, hb_r_cut, True, test_same_pos_exception=True)
 
     # Test Fene Bond
     def test_fene(self):
@@ -78,7 +78,7 @@ class InteractionsBondedTest(ut.TestCase):
                           scalar_r=r, k=fene_k, d_r_max=fene_d_r_max, r_0=fene_r_0),
                       lambda r: tests_common.fene_potential(
                           scalar_r=r, k=fene_k, d_r_max=fene_d_r_max, r_0=fene_r_0),
-                      0.01, fene_r_0 + fene_d_r_max, True)
+                      0.01, fene_r_0 + fene_d_r_max, True, test_same_pos_exception=True)
 
     def test_virtual_bond(self):
         # add sentinel harmonic bond, otherwise short-range loop is skipped
@@ -167,10 +167,10 @@ class InteractionsBondedTest(ut.TestCase):
                           k0=quartic_k0, k1=quartic_k1, r=quartic_r, r_cut=quartic_r_cut, scalar_r=r),
                       lambda r: tests_common.quartic_potential(
                           k0=quartic_k0, k1=quartic_k1, r=quartic_r, r_cut=quartic_r_cut, scalar_r=r),
-                      0.01, quartic_r_cut, True)
+                      0.01, quartic_r_cut, True, test_same_pos_exception=True)
 
     def run_test(self, bond_instance, force_func, energy_func, min_dist,
-                 cutoff, test_breakage=False):
+                 cutoff, test_breakage=False, test_same_pos_exception=False):
         self.system.bonded_inter.add(bond_instance)
         p1, p2 = self.system.part.all()
         p1.bonds = ((bond_instance, p2),)
@@ -216,6 +216,10 @@ class InteractionsBondedTest(ut.TestCase):
         if test_breakage:
             p2.pos = p1.pos + self.axis * cutoff * 1.01
             with self.assertRaisesRegex(Exception, "Encountered errors during integrate"):
+                self.system.integrator.run(recalc_forces=True, steps=0)
+        if test_same_pos_exception:
+            p2.pos = p1.pos
+            with self.assertRaises(Exception):
                 self.system.integrator.run(recalc_forces=True, steps=0)
 
 
