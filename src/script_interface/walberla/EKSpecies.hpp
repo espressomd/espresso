@@ -10,28 +10,9 @@
 #include "walberla_bridge/EKinWalberlaBase.hpp"
 #include "walberla_bridge/EKinWalberlaImpl.hpp"
 
+#include "optional_reduction.hpp"
+
 namespace ScriptInterface::walberla {
-
-template <typename T> T mpi_return_one_rank(const boost::optional<T> &val) {
-  // on the head-rank
-  if (comm_cart.rank() == 0) {
-    // if value is already on head rank return it
-    if (!!val)
-      return *val;
-
-    // otherwise receive it from the other ranks
-    T result;
-    comm_cart.recv(boost::mpi::any_source, 42, result);
-    return result;
-  }
-
-  // if the result is on the other ranks send it to the head-rank
-  if (!!val) {
-    comm_cart.send(0, 42, *val);
-  }
-  // this is not necessary, only to silence "-Wreturn-type"
-  return T{};
-}
 
 class EKSpecies : public AutoParameters<EKinWalberlaBase<double>> {
 public:
@@ -90,7 +71,7 @@ public:
   [[nodiscard]] Variant do_call_method(std::string const &method,
                                        VariantMap const &parameters) override {
     if (method == "get_density") {
-      return mpi_return_one_rank(m_ekinstance->get_node_density(
+      return optional_reduction_with_conversion(m_ekinstance->get_node_density(
           get_value<Utils::Vector3i>(parameters, "position")));
     }
     if (method == "set_density") {
@@ -101,8 +82,9 @@ public:
       return none;
     }
     if (method == "is_boundary") {
-      return mpi_return_one_rank(m_ekinstance->get_node_is_boundary(
-          get_value<Utils::Vector3i>(parameters, "position"), false));
+      return optional_reduction_with_conversion(
+          m_ekinstance->get_node_is_boundary(
+              get_value<Utils::Vector3i>(parameters, "position"), false));
     }
     if (method == "set_node_flux_boundary") {
       m_ekinstance->set_node_flux_boundary(
@@ -122,7 +104,7 @@ public:
       is_boundary =
           boost::mpi::all_reduce(comm_cart, is_boundary, std::logical_or<>());
       if (is_boundary) {
-        return mpi_return_one_rank(
+        return optional_reduction_with_conversion(
             m_ekinstance->get_node_flux_at_boundary(index));
       }
       return Variant{None{}};
