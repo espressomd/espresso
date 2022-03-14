@@ -81,6 +81,21 @@ public:
                      [this]() { return m_ekreaction->get_coefficient(); }}});
   }
 
+  [[nodiscard]] Variant do_call_method(std::string const &method,
+                                       VariantMap const &parameters) override {
+    if (method == "add_node_to_boundary") {
+      m_ekreaction->set_node_boundary(
+          get_value<Utils::Vector3i>(parameters, "node"));
+      return none;
+    }
+    if (method == "remove_node_from_boundary") {
+      m_ekreaction->remove_node_from_boundary(
+          get_value<Utils::Vector3i>(parameters, "node"));
+      return none;
+    }
+    return none;
+  }
+
   [[nodiscard]] std::shared_ptr<::walberla::EKReactionBase<double>>
   get_instance() const override {
     return m_ekreaction;

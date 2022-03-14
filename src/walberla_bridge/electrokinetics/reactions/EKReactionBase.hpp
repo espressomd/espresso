@@ -45,7 +45,7 @@ public:
   [[nodiscard]] auto get_lattice() const { return m_lattice; }
   [[nodiscard]] auto get_reactants() const { return m_reactants; }
 
-  virtual void perform_reaction() const = 0;
+  virtual void perform_reaction() = 0;
 };
 } // namespace walberla
 

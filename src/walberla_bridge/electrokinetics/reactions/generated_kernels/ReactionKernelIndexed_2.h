@@ -145,7 +145,7 @@ public:
     void fillFromFlagField(IBlock * block, ConstBlockDataID flagFieldID,
                             FlagUID boundaryFlagUID, FlagUID domainFlagUID )
     {
-        auto * indexVectors = block->getData< IndexVectors > ( indexVectorID );
+        auto * indexVectors = block->uncheckedFastGetData< IndexVectors > ( indexVectorID );
         auto & indexVectorAll = indexVectors->indexVector(IndexVectors::ALL);
         auto & indexVectorInner = indexVectors->indexVector(IndexVectors::INNER);
         auto & indexVectorOuter = indexVectors->indexVector(IndexVectors::OUTER);

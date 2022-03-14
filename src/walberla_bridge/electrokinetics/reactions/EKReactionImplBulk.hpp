@@ -44,7 +44,7 @@ public:
   using ReactionBase::get_lattice;
   using ReactionBase::get_reactants;
 
-  void perform_reaction() const override;
+  void perform_reaction() override;
 };
 
 // explicit template instantiation

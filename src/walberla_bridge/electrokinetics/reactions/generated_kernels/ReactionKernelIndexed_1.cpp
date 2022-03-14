@@ -72,7 +72,7 @@ reactionkernelindexed_1_boundary_ReactionKernelIndexed_1(
 #endif
 
 void ReactionKernelIndexed_1::run_impl(IBlock *block, IndexVectors::Type type) {
-  auto *indexVectors = block->getData<IndexVectors>(indexVectorID);
+  auto *indexVectors = block->uncheckedFastGetData<IndexVectors>(indexVectorID);
   int64_t indexVectorSize = int64_c(indexVectors->indexVector(type).size());
   if (indexVectorSize == 0)
     return;

@@ -440,7 +440,10 @@ class EKIndexedReaction(ScriptObjectRegistry):
     _so_creation_policy = "GLOBAL"
 
     def add_node_to_index(self, node):
-        self.call_method("add_node_to_index", node=node)
+        self.call_method("add_node_to_boundary", node=node)
+
+    def remove_node_from_index(self, node):
+        self.call_method("remove_node_from_boundary", node=node)
 
 
 @script_interface_register

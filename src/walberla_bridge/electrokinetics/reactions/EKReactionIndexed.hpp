@@ -29,7 +29,6 @@
 #include <field/FlagField.h>
 
 namespace walberla {
-
 template <typename FloatType>
 class EKReactionIndexed : public EKReactionBase<FloatType> {
 private:
@@ -38,6 +37,8 @@ private:
 
   domain_decomposition::BlockDataID m_flagfield_id;
   domain_decomposition::BlockDataID m_indexvector_id;
+
+  bool m_pending_changes;
 
 public:
   EKReactionIndexed(
@@ -49,7 +50,15 @@ public:
   using ReactionBase::get_lattice;
   using ReactionBase::get_reactants;
 
-  void perform_reaction() const override;
+  void perform_reaction() override;
+
+  void set_node_boundary(const Utils::Vector3i &node);
+  void remove_node_from_boundary(const Utils::Vector3i &node);
+
+  [[nodiscard]] auto get_indexvector_id() const { return m_indexvector_id; }
+  [[nodiscard]] auto get_flagfield_id() const { return m_flagfield_id; }
+
+  void boundary_update();
 };
 
 // TODO:

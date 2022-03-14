@@ -118,7 +118,7 @@ auto get_kernel(
 } // namespace detail
 
 template <typename FloatType>
-void EKReactionImplBulk<FloatType>::perform_reaction() const {
+void EKReactionImplBulk<FloatType>::perform_reaction() {
   // TODO: if my understanding is correct:
   //  the kernels need to either run in the ghost layers and do the
   //  synchronization before or not run and do a synchronization afterwards.
