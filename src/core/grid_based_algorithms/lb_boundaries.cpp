@@ -170,10 +170,11 @@ void ek_init_boundaries() {
 /** Initialize boundary conditions for all constraints in the system. */
 void lb_init_boundaries() {
   if (lattice_switch == ActiveLB::GPU) {
-#if defined(CUDA) && defined(LB_BOUNDARIES_GPU)
     if (this_node != 0) {
       return;
     }
+#if defined(CUDA)
+#if defined(LB_BOUNDARIES_GPU)
     ek_init_boundaries();
     unsigned number_of_boundnodes = 0;
     std::vector<int> host_boundary_node_list;
@@ -228,7 +229,14 @@ void lb_init_boundaries() {
                            host_boundary_index_list.data(),
                            boundary_velocity.data());
 
-#endif /* defined (CUDA) && defined (LB_BOUNDARIES_GPU) */
+#else  // defined (LB_BOUNDARIES_GPU)
+    if (not lbboundaries.empty()) {
+      runtimeErrorMsg()
+          << "LB boundaries not empty for GPU LB but LB_BOUNDARIES_GPU not "
+             "compiled in. Activate in myconfig.hpp.";
+    }
+#endif // defined (LB_BOUNDARIES_GPU)
+#endif // defined (CUDA)
   } else if (lattice_switch == ActiveLB::CPU) {
 #if defined(LB_BOUNDARIES)
     boost::for_each(lbfields, [](auto &f) { f.boundary = 0; });
@@ -260,7 +268,13 @@ void lb_init_boundaries() {
         }
       }
     }
-#endif
+#else  // defined(LB_BOUNDARIES)
+    if (not lbboundaries.empty()) {
+      runtimeErrorMsg()
+          << "LB boundaries not empty for CPU LB but LB_BOUNDARIES not "
+             "compiled in. Activate in myconfig.hpp.";
+    }
+#endif // defined(LB_BOUNDARIES)
   }
 }
 

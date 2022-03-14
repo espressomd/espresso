@@ -27,6 +27,7 @@
  */
 
 #include "config.hpp"
+#include "errorhandling.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -84,7 +85,10 @@ FeneBond::force(Utils::Vector3d const &dx) const {
   if (len > ROUND_ERROR_PREC) {
     fac /= len;
   } else {
-    fac = 0.0;
+    if (r0 > 0.) {
+      runtimeErrorMsg() << "FENE bond: Particles have zero distance. "
+                           "This is most likely an error in the system setup.";
+    }
   }
 
   return fac * dx;
