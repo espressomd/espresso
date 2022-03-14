@@ -35,35 +35,24 @@ cdef extern from "particle_data.hpp":
     # Therefore, only member variables are imported here, which are always compiled into ESPResSo.
     # For all other properties, getter-functions have to be used on the c
     # level.
-    ctypedef struct particle_properties "ParticleProperties":
-        int    identity
-        int    mol_id
-        int    type
-        double mass
-
-    ctypedef struct particle_position "ParticlePosition":
-        Vector3d p
-        Vector3d calc_director()
-
-    ctypedef struct particle_force "ParticleForce":
-        Vector3d f
-
-    ctypedef struct particle_momentum "ParticleMomentum":
-        Vector3d v
 
     ctypedef struct particle_local "ParticleLocal":
-        Vector3i i
         double lees_edwards_offset
         int lees_edwards_flag
 
     ctypedef struct particle "Particle":
-        particle_properties p
-        particle_position r
-        particle_momentum m
-        particle_force f
         particle_local l
         vector[int] exclusions() except +
         Vector3d calc_dip()
+        int type()
+        int identity()
+        double mass()
+        int mol_id()
+        Vector3d pos()
+        Vector3d calc_director()
+        Vector3d force()
+        Vector3d v()
+        Vector3i image_box()
 
     IF ENGINE:
         ctypedef struct particle_parameters_swimming "ParticleParametersSwimming":

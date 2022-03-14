@@ -103,7 +103,7 @@ cdef class ParticleHandle:
 
         def __get__(self):
             self.update_particle_data()
-            return self._id
+            return self.particle_data.identity()
 
     # The individual attributes of a particle are implemented as properties.
 
@@ -127,7 +127,7 @@ cdef class ParticleHandle:
 
         def __get__(self):
             self.update_particle_data()
-            return self.particle_data.p.type
+            return self.particle_data.type()
 
     # Particle MolId
     property mol_id:
@@ -154,7 +154,7 @@ cdef class ParticleHandle:
 
         def __get__(self):
             self.update_particle_data()
-            return self.particle_data.p.mol_id
+            return self.particle_data.mol_id()
 
     # Position
     property pos:
@@ -175,7 +175,7 @@ cdef class ParticleHandle:
 
         def __get__(self):
             self.update_particle_data()
-            return make_array_locked(unfolded_position(< Vector3d > self.particle_data.r.p, < Vector3i > self.particle_data.l.i, box_geo.length()))
+            return make_array_locked(self.particle_data.pos())
 
     property pos_folded:
         """
@@ -213,7 +213,7 @@ cdef class ParticleHandle:
         def __get__(self):
             self.update_particle_data()
             return make_array_locked(folded_position(
-                Vector3d(self.particle_data.r.p), box_geo))
+                Vector3d(self.particle_data.pos()), box_geo))
 
     property image_box:
         """
@@ -225,9 +225,9 @@ cdef class ParticleHandle:
 
         def __get__(self):
             self.update_particle_data()
-            return array_locked([self.particle_data.l.i[0],
-                                 self.particle_data.l.i[1],
-                                 self.particle_data.l.i[2]])
+            return array_locked([self.particle_data.image_box()[0],
+                                 self.particle_data.image_box()[1],
+                                 self.particle_data.image_box()[2]])
 
     property lees_edwards_offset:
         """Contains the accumulated Lees-Edwards offset to reconstruct
@@ -271,7 +271,7 @@ cdef class ParticleHandle:
 
         def __get__(self):
             self.update_particle_data()
-            return make_array_locked(self.particle_data.m.v)
+            return make_array_locked(self.particle_data.v())
 
     # Force
     property f:
@@ -293,7 +293,7 @@ cdef class ParticleHandle:
 
         def __get__(self):
             self.update_particle_data()
-            return make_array_locked(self.particle_data.f.f)
+            return make_array_locked(self.particle_data.force())
 
     # Bonds
     property bonds:
@@ -380,7 +380,7 @@ cdef class ParticleHandle:
 
         def __get__(self):
             self.update_particle_data()
-            return self.particle_data.p.mass
+            return self.particle_data.mass()
 
     IF ROTATION:
         property omega_lab:
@@ -468,7 +468,7 @@ cdef class ParticleHandle:
 
             def __get__(self):
                 self.update_particle_data()
-                return make_array_locked(self.particle_data.r.calc_director())
+                return make_array_locked(self.particle_data.calc_director())
 
         property omega_body:
             """
@@ -627,7 +627,7 @@ cdef class ParticleHandle:
                         "To make a particle virtual, VIRTUAL_SITES has to be defined in myconfig.hpp")
 
         def __get__(self):
-            # Note: the pointoer_to... mechanism doesn't work if virtual sites
+            # Note: the pointer_to... mechanism doesn't work if virtual sites
             # are not compiled in, because then, in the core, p.p.is_virtual
             # is constexpr.
             IF VIRTUAL_SITES:
@@ -1212,7 +1212,6 @@ cdef class ParticleHandle:
         if self._id in bond[1:]:
             raise Exception(
                 f"Bond partners {bond[1:]} include the particle {self._id} itself.")
-
         add_particle_bond(self._id, make_const_span[int](bond_info, len(bond)))
 
     def delete_verified_bond(self, bond):
@@ -1263,30 +1262,25 @@ cdef class ParticleHandle:
                 "Bond needs to be a tuple or list containing bond type and partners.")
 
         bond = list(bond)
-
         # Bond type or numerical bond id
         if is_valid_type(bond[0], int):
             bond[0] = BondedInteractions()[bond[0]]
         elif not isinstance(bond[0], BondedInteraction):
             raise Exception(
                 f"1st element of Bond has to be of type BondedInteraction or int, got {type(bond[0])}.")
-
         # Check the bond is in the list of active bonded interactions
         if bond[0]._bond_id == -1:
             raise Exception(
                 "The bonded interaction has not yet been added to the list of active bonds in ESPResSo.")
-
         # Validity of the numeric id
         if not bonded_ia_params_zero_based_type(bond[0]._bond_id):
             raise ValueError(
                 f"The bond type {bond[0]._bond_id} does not exist.")
-
         # Number of partners
         expected_num_partners = bond[0].call_method('get_num_partners')
         if len(bond) - 1 != expected_num_partners:
             raise ValueError(
                 f"Bond {bond[0]} needs {expected_num_partners} partners.")
-
         # Type check on partners
         for i in range(1, len(bond)):
             if isinstance(bond[i], ParticleHandle):
@@ -1295,7 +1289,6 @@ cdef class ParticleHandle:
             elif not is_valid_type(bond[i], int):
                 raise ValueError(
                     "Bond partners have to be of type integer or ParticleHandle.")
-
         return tuple(bond)
 
     def add_bond(self, bond):
@@ -1333,7 +1326,6 @@ cdef class ParticleHandle:
         >>> p1.add_bond((0, p2))
 
         """
-
         _bond = self.normalize_and_check_bond_or_throw_exception(bond)
         if _bond in self.bonds:
             raise RuntimeError(
