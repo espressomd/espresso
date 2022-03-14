@@ -429,9 +429,18 @@ class EKReactant(ScriptObjectRegistry):
 
 
 @script_interface_register
-class EKReaction(ScriptObjectRegistry):
-    _so_name = "walberla::EKReaction"
+class EKBulkReaction(ScriptObjectRegistry):
+    _so_name = "walberla::EKBulkReaction"
     _so_creation_policy = "GLOBAL"
+
+
+@script_interface_register
+class EKIndexedReaction(ScriptObjectRegistry):
+    _so_name = "walberla::EKIndexedReaction"
+    _so_creation_policy = "GLOBAL"
+
+    def add_node_to_index(self, node):
+        self.call_method("add_node_to_index", node=node)
 
 
 @script_interface_register
@@ -440,7 +449,7 @@ class EKReactions(ScriptObjectRegistry):
     _so_creation_policy = "GLOBAL"
 
     def add(self, reaction):
-        if not isinstance(reaction, EKReaction):
+        if not isinstance(reaction, (EKBulkReaction, EKIndexedReaction)):
             raise TypeError("reaction object is not of correct type.")
 
         self.call_method("add", object=reaction)

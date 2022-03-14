@@ -52,7 +52,8 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<EKVTKHandle>("walberla::EKVTKHandle");
 
   om->register_new<EKReactant>("walberla::EKReactant");
-  om->register_new<EKReaction>("walberla::EKReaction");
+  om->register_new<EKBulkReaction>("walberla::EKBulkReaction");
+  om->register_new<EKIndexedReaction>("walberla::EKIndexedReaction");
   om->register_new<EKReactions>("walberla::EKReactions");
 }
 
