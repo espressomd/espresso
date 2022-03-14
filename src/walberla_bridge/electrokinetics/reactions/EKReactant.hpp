@@ -36,21 +36,24 @@ public:
       : m_ekspecies(std::move(ekspecies)), m_stoech_coeff(stoech_coeff),
         m_order(order) {}
 
-  void set_stoech_coefficient(FloatType stoech_coeff) {
+  void set_stoech_coefficient(FloatType stoech_coeff) noexcept {
     m_stoech_coeff = stoech_coeff;
   }
 
-  [[nodiscard]] FloatType get_stoech_coeff() const { return m_stoech_coeff; }
+  [[nodiscard]] FloatType get_stoech_coeff() const noexcept {
+    return m_stoech_coeff;
+  }
 
-  void set_order(FloatType order) { m_order = order; }
+  void set_order(FloatType order) noexcept { m_order = order; }
 
-  [[nodiscard]] FloatType get_order() const { return m_order; }
+  [[nodiscard]] FloatType get_order() const noexcept { return m_order; }
 
-  void set_species(std::shared_ptr<EKinWalberlaBase<FloatType>> ekspecies) {
+  void
+  set_species(std::shared_ptr<EKinWalberlaBase<FloatType>> ekspecies) noexcept {
     m_ekspecies = std::move(ekspecies);
   }
 
-  [[nodiscard]] auto get_species() const { return m_ekspecies; }
+  [[nodiscard]] auto get_species() const noexcept { return m_ekspecies; }
 };
 } // namespace walberla
 

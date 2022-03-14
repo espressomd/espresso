@@ -58,8 +58,12 @@ public:
   [[nodiscard]] boost::optional<bool>
   get_node_is_boundary(const Utils::Vector3i &node);
 
-  [[nodiscard]] auto get_indexvector_id() const { return m_indexvector_id; }
-  [[nodiscard]] auto get_flagfield_id() const { return m_flagfield_id; }
+  [[nodiscard]] auto get_indexvector_id() const noexcept {
+    return m_indexvector_id;
+  }
+  [[nodiscard]] auto get_flagfield_id() const noexcept {
+    return m_flagfield_id;
+  }
 
   void boundary_update();
 };

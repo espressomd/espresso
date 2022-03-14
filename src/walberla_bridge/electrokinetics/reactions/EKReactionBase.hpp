@@ -40,10 +40,14 @@ public:
       : m_reactants(std::move(reactants)), m_coefficient(coefficient),
         m_lattice(std::move(lattice)) {}
 
-  void set_coefficient(FloatType coefficient) { m_coefficient = coefficient; }
-  [[nodiscard]] FloatType get_coefficient() const { return m_coefficient; }
-  [[nodiscard]] auto get_lattice() const { return m_lattice; }
-  [[nodiscard]] auto get_reactants() const { return m_reactants; }
+  void set_coefficient(FloatType coefficient) noexcept {
+    m_coefficient = coefficient;
+  }
+  [[nodiscard]] FloatType get_coefficient() const noexcept {
+    return m_coefficient;
+  }
+  [[nodiscard]] auto get_lattice() const noexcept { return m_lattice; }
+  [[nodiscard]] auto get_reactants() const noexcept { return m_reactants; }
 
   virtual void perform_reaction() = 0;
 };
