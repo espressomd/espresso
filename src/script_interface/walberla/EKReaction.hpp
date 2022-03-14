@@ -18,6 +18,27 @@ class EKReaction : public AutoParameters<::walberla::EKReactionBase<double>> {
 public:
   [[nodiscard]] virtual std::shared_ptr<::walberla::EKReactionBase<double>>
   get_instance() const = 0;
+
+  [[nodiscard]] Utils::Vector3i
+  get_mapped_index(const Utils::Vector3i &node) const {
+    auto output = node;
+    const auto shape = get_instance()->get_lattice()->get_grid_dimensions();
+    for (auto i : {0, 1, 2}) {
+      if (node[i] < 0) {
+        output[i] = node[i] + shape[i];
+      }
+
+      if (output[i] < 0 or output[i] >= shape[i]) {
+        auto constexpr formatter = Utils::Vector3i::formatter(", ");
+        std::stringstream ss;
+        ss << "provided index [" << formatter << node
+           << "] is out of range for shape [" << formatter << shape << "]\n";
+        throw std::runtime_error(ss.str());
+      }
+    }
+
+    return output;
+  }
 };
 
 class EKBulkReaction : public EKReaction {
@@ -85,12 +106,12 @@ public:
                                        VariantMap const &parameters) override {
     if (method == "add_node_to_boundary") {
       m_ekreaction->set_node_boundary(
-          get_value<Utils::Vector3i>(parameters, "node"));
+          get_mapped_index(get_value<Utils::Vector3i>(parameters, "node")));
       return none;
     }
     if (method == "remove_node_from_boundary") {
       m_ekreaction->remove_node_from_boundary(
-          get_value<Utils::Vector3i>(parameters, "node"));
+          get_mapped_index(get_value<Utils::Vector3i>(parameters, "node")));
       return none;
     }
     return none;
