@@ -575,6 +575,9 @@ using a CMake flag (see :ref:`Options and Variables`).
 - ``STOKESIAN_DYNAMICS`` Enables the Stokesian Dynamics feature
   (see :ref:`Stokesian Dynamics`). Requires BLAS and LAPACK.
 
+- ``LOAD_BALANCING`` Enables the MD dynamic load balancing feature
+  (not yet implemented). Builds and install the kdpart and librepa libraries.
+
 
 
 .. _Configuring:

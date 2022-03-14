@@ -1,0 +1,21 @@
+--- a/kdpart.h
++++ b/kdpart.h
+@@ -140,7 +140,7 @@ struct NodeAccess {
+             std::abort();
+         }
+ 
+-        assert(false);
++        throw std::logic_error("[libkdpart] Fatal exception in local repartitioning.");
+     }
+ 
+     inline NodeAccess find_root_of_subtree(int depth) const
+--- a/Makefile
++++ b/Makefile
+@@ -5,5 +5,6 @@
+ CXX = mpic++
+ CXXFLAGS = -std=c++14 -O3 -march=native
++# flag -Wno-cast-function-type needed for GCC, see https://github.com/open-mpi/ompi/issues/5157
+-CXXFLAGS += -Wall -Wextra -pedantic
++CXXFLAGS += -Wall -Wextra -pedantic -Wno-cast-function-type
+ 
+ AR = ar

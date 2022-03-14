@@ -115,6 +115,7 @@ option(WARNINGS_ARE_ERRORS "Treat warnings as errors during compilation" OFF)
 option(WITH_CCACHE "Use ccache compiler invocation." OFF)
 option(WITH_PROFILER "Enable profiler annotations." OFF)
 option(INSIDE_DOCKER "Enable when running inside Docker." OFF)
+option(WITH_LOAD_BALANCING "Build with load balancing." OFF)
 set(TEST_TIMEOUT "300" CACHE STRING
                              "Timeout in seconds for each testsuite test")
 
@@ -137,6 +138,10 @@ set(MYCONFIG_NAME "myconfig.hpp" CACHE STRING
 
 # Check which config file to use
 include(MyConfig)
+
+if(WITH_LOAD_BALANCING)
+  set(CMAKE_CXX_STANDARD 17)
+endif()
 
 #
 # Pretty function
@@ -206,6 +211,10 @@ set(ESPRESSO_INSTALL_BINDIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}")
 
 # folder for C++ and CUDA shared objects
 set(ESPRESSO_INSTALL_LIBDIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+
+# folder for header files
+set(ESPRESSO_INSTALL_INCDIR
+    "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}")
 
 # python site-packages, can be overriden with CMake options
 if(WITH_PYTHON)
@@ -301,6 +310,55 @@ if(WITH_STOKESIAN_DYNAMICS)
                      ${stokesian_dynamics_BINARY_DIR})
   endif()
 endif(WITH_STOKESIAN_DYNAMICS)
+
+# librepa and kdpart
+if(WITH_LOAD_BALANCING)
+  include(FetchContent)
+
+  # workaround for CMake FetchContent_Declare() PATCH_COMMAND bug, see details
+  # in https://gitlab.kitware.com/cmake/cmake/-/issues/21146
+  FetchContent_Declare(
+    kdpart
+    GIT_REPOSITORY https://github.com/hirschsn/kdpart.git
+    GIT_TAG afec3688008e0519410fdb58a3a88230e31ebd5e # v1.2.1
+    PATCH_COMMAND
+      patch -p1 -sN --ignore-whitespace -i
+      ${PROJECT_SOURCE_DIR}/cmake/kdpart.patch || echo "Patch not applied!")
+  FetchContent_GetProperties(kdpart)
+  if(NOT kdpart_POPULATED)
+    FetchContent_Populate(kdpart)
+
+    # build kdpart
+    execute_process(COMMAND ${CMAKE_COMMAND} -E env CXX=${CMAKE_CXX_COMPILER}
+                            make -C ${kdpart_SOURCE_DIR})
+    # install kdpart
+    execute_process(COMMAND make -C ${kdpart_SOURCE_DIR}
+                            PREFIX=${kdpart_BINARY_DIR} install)
+  endif()
+
+  # workaround for CMake FetchContent_Declare() PATCH_COMMAND bug, see details
+  # in https://gitlab.kitware.com/cmake/cmake/-/issues/21146
+  FetchContent_Declare(
+    librepa
+    GIT_REPOSITORY https://github.com/SC-SGS/repa.git
+    GIT_TAG ff050adf2b5ba4822a6b87416f35e8dec29d6e18
+    PATCH_COMMAND
+      patch -p1 -sN --ignore-whitespace -i
+      ${PROJECT_SOURCE_DIR}/cmake/librepa.patch || echo "Patch not applied!")
+  FetchContent_GetProperties(librepa)
+  if(NOT librepa_POPULATED)
+    FetchContent_Populate(librepa)
+    set(REPA_WITH_KDPART on CACHE BOOL "")
+    set(REPA_WITH_P4EST off CACHE BOOL "")
+    set(REPA_WITH_PARMETIS off CACHE BOOL "")
+    set(REPA_WITH_TESTS off CACHE BOOL "")
+    set(REPA_WITH_COVERAGE off CACHE BOOL "")
+    set(KDPART_DIR "${kdpart_BINARY_DIR}" CACHE PATH "")
+    add_subdirectory(${librepa_SOURCE_DIR} ${librepa_BINARY_DIR})
+  endif()
+
+  set(LOAD_BALANCING 1)
+endif(WITH_LOAD_BALANCING)
 
 if(WITH_VALGRIND_INSTRUMENTATION)
   find_package(PkgConfig REQUIRED)

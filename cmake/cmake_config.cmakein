@@ -19,6 +19,8 @@
 
 #cmakedefine STOKESIAN_DYNAMICS
 
+#cmakedefine LOAD_BALANCING
+
 #cmakedefine VALGRIND_INSTRUMENTATION
 
 #define PACKAGE_NAME "${PROJECT_NAME}"

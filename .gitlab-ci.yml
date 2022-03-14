@@ -106,6 +106,7 @@ maxset:
      with_coverage: 'true'
      with_scafacos: 'true'
      with_stokesian_dynamics: 'true'
+     with_load_balancing: 'true'
      check_skip_long: 'true'
      cmake_params: '-DTEST_NP=8'
   script:
