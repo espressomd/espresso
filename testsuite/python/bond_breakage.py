@@ -64,10 +64,9 @@ class BondBreakage(BondBreakageCommon, ut.TestCase):
     def test_00_interface(self):
         self.assertEqual(len(self.system.bond_breakage), 0)
 
-        spec2 = BreakageSpec(
-            breakage_length=1.2,
-            action_type="revert_center_bond")
-        spec4 = BreakageSpec(breakage_length=0.2, action_type="revert_vs_bond")
+        spec2 = BreakageSpec(breakage_length=1.2, action_type="delete_bond")
+        spec4 = BreakageSpec(breakage_length=0.2,
+                             action_type="revert_bind_at_point_of_collision")
         self.system.bond_breakage[2] = spec2
         self.system.bond_breakage[4] = spec4
         self.assertEqual(self.system.bond_breakage[2], spec2)
@@ -97,7 +96,7 @@ class BondBreakage(BondBreakageCommon, ut.TestCase):
 
         # Particles closer than cutoff
         system.bond_breakage[self.h1] = BreakageSpec(
-            breakage_length=2, action_type="revert_center_bond")
+            breakage_length=2, action_type="delete_bond")
 
         self.p1.bonds = ((self.h1, self.p2))
         system.integrator.run(1)
@@ -109,7 +108,7 @@ class BondBreakage(BondBreakageCommon, ut.TestCase):
 
         # Different bond type
         system.bond_breakage[self.h1] = BreakageSpec(
-            breakage_length=0.2, action_type="revert_center_bond")
+            breakage_length=0.2, action_type="delete_bond")
         self.p1.bonds = [(self.h2, self.p2)]
         self.p2.bonds = [(self.h2, self.p1)]
         system.integrator.run(1)
@@ -121,7 +120,7 @@ class BondBreakage(BondBreakageCommon, ut.TestCase):
 
         # Particles closer than cutoff
         system.bond_breakage[self.h1] = BreakageSpec(
-            breakage_length=0, action_type="revert_center_bond")
+            breakage_length=0, action_type="delete_bond")
 
         self.p1.bonds = [(self.h1, self.p2)]
         system.integrator.run(1)
@@ -136,7 +135,7 @@ class BondBreakage(BondBreakageCommon, ut.TestCase):
 
         # Particles closer than cutoff
         system.bond_breakage[self.h1] = BreakageSpec(
-            breakage_length=0.5, action_type="revert_vs_bond")
+            breakage_length=0.5, action_type="revert_bind_at_point_of_collision")
 
         self.p1.bonds = [(self.h2, self.p2)]
         self.p1v.bonds = [(self.h1, self.p2v)]
@@ -155,7 +154,7 @@ class BondBreakage(BondBreakageCommon, ut.TestCase):
 
         # Particles closer than cutoff
         system.bond_breakage[self.h2] = BreakageSpec(
-            breakage_length=0.5, action_type="revert_vs_bond")
+            breakage_length=0.5, action_type="revert_bind_at_point_of_collision")
 
         self.p1.bonds = [(self.h2, self.p2)]
         self.p1v.bonds = [(self.h1, self.p2v)]
@@ -230,7 +229,7 @@ class NetworkBreakage(BondBreakageCommon, ut.TestCase):
 
         self.system.collision_detection.set_params(mode="off")
         self.system.bond_breakage[harm] = BreakageSpec(
-            breakage_length=crit, action_type="revert_center_bond")
+            breakage_length=crit, action_type="delete_bond")
         self.system.integrator.run(1)
 
         bonds_dist = 0
@@ -263,7 +262,7 @@ class NetworkBreakage(BondBreakageCommon, ut.TestCase):
 
         self.system.collision_detection.set_params(mode="off")
         self.system.bond_breakage[harm] = BreakageSpec(
-            breakage_length=crit_vs, action_type="revert_vs_bond")
+            breakage_length=crit_vs, action_type="revert_bind_at_point_of_collision")
         self.system.integrator.run(1)
 
         bonds_dist = 0

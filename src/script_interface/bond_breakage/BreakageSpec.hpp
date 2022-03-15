@@ -54,14 +54,14 @@ private:
   std::unordered_map<::BondBreakage::ActionType, std::string>
       m_breakage_enum_to_str = {
           {::BondBreakage::ActionType::NONE, "none"},
-          {::BondBreakage::ActionType::DELETE_BOND, "revert_center_bond"},
+          {::BondBreakage::ActionType::DELETE_BOND, "delete_bond"},
           {::BondBreakage::ActionType::REVERT_BIND_AT_POINT_OF_COLLISION,
-           "revert_vs_bond"}};
+           "revert_bind_at_point_of_collision"}};
   std::unordered_map<std::string, ::BondBreakage::ActionType>
       m_breakage_str_to_enum = {
           {"none", ::BondBreakage::ActionType::NONE},
-          {"revert_center_bond", ::BondBreakage::ActionType::DELETE_BOND},
-          {"revert_vs_bond",
+          {"delete_bond", ::BondBreakage::ActionType::DELETE_BOND},
+          {"revert_bind_at_point_of_collision",
            ::BondBreakage::ActionType::REVERT_BIND_AT_POINT_OF_COLLISION}};
 };
 

@@ -132,8 +132,8 @@ The bond breakage action is specified for individual bonds via the system
 
 Several modes are available:
 
-* ``"revert_center_bond"``: delete a bond from the first particle
-* ``"revert_vs_bond"``: delete a bond between the virtual site
+* ``"delete_bond"``: delete a bond from the first particle
+* ``"revert_bind_at_point_of_collision"``: delete a bond between the virtual site
 * ``"none"``: cancel an existing bond breakage specification
 
 Example::
@@ -187,17 +187,20 @@ features can be combined to model reversible bonds.
 
 Two combinations are possible:
 
-* ``"revert_center_bond"`` mode for breakable bonds together with
+* ``"delete_bond"`` mode for breakable bonds together with
   ``"bond_centers"`` mode for collision detection:
   used to create or delete a bond between two real particles
-* ``"revert_vs_bond"`` mode for breakable bonds together with
-  ``"bind_at_point_of_collision"`` mode for collision detection:
+* ``"revert_bind_at_point_of_collision"`` mode for breakable bonds together
+  with ``"bind_at_point_of_collision"`` mode for collision detection:
   used to create or delete virtual sites (the implicitly created
   bond between the real particles isn't affected)
 
 Please note that virtual sites are not automatically removed from the
 simulation, therefore the particle number will increase. If you want to
-remove virtual sites, you need to do so manually.
+remove virtual sites, you need to do so manually, either by tracking which
+virtual sites were introduced by collision detection, or by periodically
+looping over the particle list and removing virtual sites which have no
+corresponding bond.
 
 
 .. _Immersed Boundary Method for soft elastic objects:
