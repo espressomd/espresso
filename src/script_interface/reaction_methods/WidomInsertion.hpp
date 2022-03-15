@@ -41,8 +41,10 @@ public:
   }
 
   void do_construct(VariantMap const &params) override {
+    std::unordered_map<int, double> exclusion_radius_per_type;
     m_re = std::make_shared<::ReactionMethods::WidomInsertion>(
-        get_value<int>(params, "seed"), get_value<double>(params, "kT"), 0.);
+        get_value<int>(params, "seed"), get_value<double>(params, "kT"), 0.,
+        exclusion_radius_per_type);
   }
 
   Variant do_call_method(std::string const &name,

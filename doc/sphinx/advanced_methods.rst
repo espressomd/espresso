@@ -1772,6 +1772,25 @@ be converted to :math:`K_c` as
 where :math:`p^{\ominus}=1\,\mathrm{atm}` is the standard pressure.
 Consider using the python module pint for unit conversion.
 
+Coupling Reaction Methods to Molecular Dynamics
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The Monte Carlo (MC) sampling of the reaction can  be coupled with a configurational sampling using Molecular Dynamics (MD).
+For non-interacting systems this coupling is not an issue, but for interacting systems the insertion of new particles
+can lead to instabilities in the MD integration ultimately leading to a crash of the simulation.
+
+This integration instabilities can be avoided by defining a distance around the particles which already exist in the system
+where new particles will not be inserted, which is defined by the required keyword ``exclusion_range``. 
+This prevents big overlaps with the newly inserted particles, avoiding too big forces between particles, which prevents the MD integration from crashing.  
+The value of the exclusion range does not affect the limiting result and it only affects the convergence and the stability of the integration.  For interacting systems, 
+it is usually a good practice to choose the exclusion range such that it is comparable to the diameter of the particles. 
+
+If particles with significantly different sizes are present, it is desired to define a different exclusion range for each pair of particle types. This can be done by 
+defining an exclusion radius per particle type by using the optional argument ``exclusion_radius_per_type``. Then, their exclusion range is calculated using 
+the Lorentz-Berthelot combination rule, ` i.e. ` ``exclusion_range = exclusion_radius_per_type[particle_type_1] + exclusion_radius_per_type[particle_type_2]``. 
+If the exclusion radius of one particle type is not defined, the value of the parameter provided in  ``exclusion_range`` is used by default. 
+If the value in ``exclusion_radius_per_type`` is equal to 0, then the exclusion range of that particle type with any other particle is 0.
+
 .. _Grand canonical ensemble simulation using the Reaction Ensemble:
 
 Grand canonical ensemble simulation
@@ -1813,7 +1832,7 @@ As before in the Reaction Ensemble one can define multiple reactions (e.g. for a
 .. code-block:: python
 
     cpH=reaction_ensemble.ConstantpHEnsemble(
-        temperature=1, exclusion_radius=1, seed=77)
+        temperature=1, exclusion_range=1, seed=77)
     cpH.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[1],
                     product_types=[1, 2], product_coefficients=[1, 1],
                     default_charges={0: 0, 1: -1, 2: +1})

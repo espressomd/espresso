@@ -56,19 +56,24 @@ public:
   virtual std::shared_ptr<::ReactionMethods::ReactionAlgorithm> RE() = 0;
 
   ReactionAlgorithm() {
-    add_parameters({
-        {"reactions", AutoParameter::read_only,
-         [this]() {
-           std::vector<Variant> out;
-           for (auto const &e : m_reactions) {
-             out.emplace_back(e);
-           }
-           return out;
-         }},
-        {"kT", AutoParameter::read_only, [this]() { return RE()->get_kT(); }},
-        {"exclusion_radius", AutoParameter::read_only,
-         [this]() { return RE()->get_exclusion_radius(); }},
-    });
+    add_parameters(
+        {{"reactions", AutoParameter::read_only,
+          [this]() {
+            std::vector<Variant> out;
+            for (auto const &e : m_reactions) {
+              out.emplace_back(e);
+            }
+            return out;
+          }},
+         {"kT", AutoParameter::read_only, [this]() { return RE()->get_kT(); }},
+         {"exclusion_range", AutoParameter::read_only,
+          [this]() { return RE()->get_exclusion_range(); }},
+         {"exclusion_radius_per_type",
+          [this](Variant const &v) {
+            RE()->exclusion_radius_per_type = get_map<int, double>(
+                get_value<std::unordered_map<int, Variant>>(v));
+          },
+          [this]() { return make_map(RE()->exclusion_radius_per_type); }}});
   }
 
   Variant do_call_method(std::string const &name,

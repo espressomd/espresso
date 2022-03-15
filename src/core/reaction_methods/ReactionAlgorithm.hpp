@@ -32,6 +32,7 @@
 #include <random>
 #include <stdexcept>
 #include <tuple>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -47,17 +48,31 @@ struct StoredParticleProperty {
 class ReactionAlgorithm {
 
 public:
-  ReactionAlgorithm(int seed, double kT, double exclusion_radius)
+  ReactionAlgorithm(
+      int seed, double kT, double exclusion_range,
+      const std::unordered_map<int, double> &exclusion_radius_per_type)
       : m_generator(Random::mt19937(std::seed_seq({seed, seed, seed}))),
         m_normal_distribution(0.0, 1.0), m_uniform_real_distribution(0.0, 1.0) {
     if (kT < 0.) {
       throw std::domain_error("Invalid value for 'kT'");
     }
-    if (exclusion_radius < 0.) {
-      throw std::domain_error("Invalid value for 'exclusion_radius'");
+    if (exclusion_range < 0.) {
+      throw std::domain_error("Invalid value for 'exclusion_range'");
     }
     this->kT = kT;
-    this->exclusion_radius = exclusion_radius;
+    this->exclusion_range = exclusion_range;
+    for (auto const &item : exclusion_radius_per_type) {
+      auto type = item.first;
+      auto exclusion_radius = item.second;
+      if (exclusion_radius < 0) {
+        std::stringstream ss;
+        ss << "Invalid excluded_radius value for type " << type
+           << " value: " << exclusion_radius;
+        std::string error_message = ss.str();
+        throw std::domain_error(error_message);
+      }
+    }
+    this->exclusion_radius_per_type = exclusion_radius_per_type;
     update_volume();
   }
 
@@ -72,7 +87,8 @@ public:
    * infinite, therefore these configurations do not contribute
    * to the partition function and ensemble averages.
    */
-  double exclusion_radius;
+  double exclusion_range;
+  std::unordered_map<int, double> exclusion_radius_per_type;
   double volume;
   int non_interacting_type = 100;
 
@@ -84,7 +100,7 @@ public:
   }
 
   auto get_kT() const { return kT; }
-  auto get_exclusion_radius() const { return exclusion_radius; }
+  auto get_exclusion_range() const { return exclusion_range; }
   auto get_volume() const { return volume; }
   void set_volume(double new_volume) {
     if (new_volume <= 0.) {
@@ -114,7 +130,7 @@ public:
   bool do_global_mc_move_for_particles_of_type(int type,
                                                int particle_number_of_type);
 
-  bool particle_inside_exclusion_radius_touched = false;
+  bool particle_inside_exclusion_range_touched = false;
 
 protected:
   std::vector<int> m_empty_p_ids_smaller_than_max_seen_particle;
@@ -146,7 +162,6 @@ protected:
   generate_new_particle_positions(int type, int n_particles);
   void
   restore_properties(std::vector<StoredParticleProperty> const &property_list);
-
   /**
    * @brief draws a random integer from the uniform distribution in the range
    * [0,maxint-1]
@@ -178,7 +193,7 @@ private:
   void replace_particle(int p_id, int desired_type) const;
   int create_particle(int desired_type);
   void hide_particle(int p_id) const;
-  void check_exclusion_radius(int p_id);
+  void check_exclusion_range(int inserted_particle_id);
   void move_particle(int p_id, Utils::Vector3d const &new_pos,
                      double velocity_prefactor);
 

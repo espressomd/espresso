@@ -89,7 +89,7 @@ for type_1 in types:
             epsilon=wca_eps, sigma=wca_sig)
 
 RE = espressomd.reaction_ensemble.ReactionEnsemble(
-    kT=temperature, exclusion_radius=wca_sig, seed=3)
+    kT=temperature, exclusion_range=wca_sig, seed=3)
 RE.add_reaction(
     gamma=cs_bulk**2 * np.exp(excess_chemical_potential_pair / temperature),
     reactant_types=[], reactant_coefficients=[], product_types=[1, 2],
