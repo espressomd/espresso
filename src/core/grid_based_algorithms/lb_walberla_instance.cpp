@@ -134,11 +134,13 @@ init_lb_walberla(std::shared_ptr<LatticeWalberla> const &lb_lattice,
       auto const &le_bc = box_geo.clees_edwards_bc();
       auto lees_edwards_object = std::make_unique<LeesEdwardsPack>(
           le_bc.shear_direction, le_bc.shear_plane_normal,
-          [le_protocol]() {
-            return get_pos_offset(get_sim_time(), *le_protocol);
+          [le_protocol, lb_params]() {
+            return get_pos_offset(get_sim_time(), *le_protocol) / 
+                   lb_params.get_agrid();
           },
-          [le_protocol]() {
-            return get_shear_velocity(get_sim_time(), *le_protocol);
+          [le_protocol, lb_params]() {
+            return get_shear_velocity(get_sim_time(), *le_protocol) *
+                   (lb_params.get_tau() / lb_params.get_agrid());
           });
       lb_ptr->set_collision_model(std::move(lees_edwards_object));
     }
