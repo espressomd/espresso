@@ -57,7 +57,7 @@ public:
   explicit NumeratedContainer(std::initializer_list<value_type> l)
       : NumeratedContainer() {
     for (auto const &e : l) {
-      m_container.insert(e);
+      m_container[e.first] = e.second;
       /* Remove the index from the index set if it exists. */
       m_free_indices.erase(m_free_indices.find(e.first), m_free_indices.end());
     }
@@ -79,14 +79,14 @@ public:
    */
   index_type add(const T &c) {
     const index_type ind = get_index();
-    m_container.emplace(std::make_pair(ind, c));
+    m_container[ind] = c;
     return ind;
   }
 
   /** @overload */
   index_type add(T &&c) {
     const index_type ind = get_index();
-    m_container.emplace(std::make_pair(ind, std::move(c)));
+    m_container[ind] = std::move(c);
     return ind;
   }
 

@@ -188,13 +188,12 @@ std::vector<int> nbhood(PartCfg &partCfg, const Utils::Vector3d &pos,
   return ids;
 }
 
-double distto(PartCfg &partCfg, const Utils::Vector3d &pos, int pid) {
+double distto(PartCfg &partCfg, const Utils::Vector3d pos, int pid) {
   auto mindist = std::numeric_limits<double>::infinity();
 
   for (auto const &part : partCfg) {
     if (pid != part.id()) {
-      auto const d =
-          box_geo.get_mi_vector({pos[0], pos[1], pos[2]}, part.pos());
+      auto const d = box_geo.get_mi_vector(pos, part.pos());
       mindist = std::min(mindist, d.norm2());
     }
   }
