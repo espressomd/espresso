@@ -33,6 +33,7 @@
 
 #include <utils/Array.hpp>
 #include <utils/Vector.hpp>
+#include <utils/compact_vector.hpp>
 #include <utils/quaternion.hpp>
 
 #include <boost/archive/text_iarchive.hpp>
@@ -44,6 +45,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cassert>
 #include <cstddef>
 #include <functional>
 #include <sstream>
@@ -95,6 +97,14 @@ void constexpr init_container(Utils::detail::Storage<T, N> &array) {
   }
 }
 
+template <typename T>
+void constexpr init_container(Utils::compact_vector<T> &array) {
+  array.resize(Testing::N);
+  for (std::size_t i = 0; i < Testing::N; ++i) {
+    array[i] = Testing::values[i];
+  }
+}
+
 /** Convert an array to a container type that provides method @c operator[] */
 template <template <typename, std::size_t...> class A, typename T,
           std::size_t... N>
@@ -110,6 +120,16 @@ auto constexpr testable_container(Utils::detail::Storage<T, N> const &s) {
 template <typename T>
 auto constexpr testable_container(Utils::Quaternion<T> const &s) {
   return s.m_data;
+}
+
+template <typename T>
+auto constexpr testable_container(Utils::compact_vector<T> const &s) {
+  assert(s.size() == Testing::N);
+  Utils::Array<T, Testing::N> out{};
+  for (std::size_t i = 0; i < Testing::N; ++i) {
+    out[i] = s[i];
+  }
+  return out;
 }
 
 /** Convert a string buffer to a string vector. */
@@ -239,10 +259,15 @@ BOOST_AUTO_TEST_CASE(mpi_archive_test) {
   auto const buffer_vector = create_mpi_archive<Utils::Vector>(comm);
   auto const buffer_storage = create_mpi_archive<Utils::detail::Storage>(comm);
   auto const buffer_quat = create_mpi_archive<Utils::Quaternion>(comm);
+  auto buffer_cv = create_mpi_archive<Utils::compact_vector>(comm);
   BOOST_TEST(buffer_array == buffer_ref, boost::test_tools::per_element());
   BOOST_TEST(buffer_vector == buffer_ref, boost::test_tools::per_element());
   BOOST_TEST(buffer_storage == buffer_ref, boost::test_tools::per_element());
   BOOST_TEST(buffer_quat == buffer_ref, boost::test_tools::per_element());
+  BOOST_TEST(buffer_cv[0] == Testing::N);
+  buffer_cv.erase(buffer_cv.begin());
+  buffer_cv.erase(buffer_cv.begin());
+  BOOST_TEST(buffer_cv == buffer_ref, boost::test_tools::per_element());
 }
 
 BOOST_AUTO_TEST_CASE(text_archive_test) {
@@ -250,9 +275,11 @@ BOOST_AUTO_TEST_CASE(text_archive_test) {
   auto const buffer_vector = create_text_archive<Utils::Vector>();
   auto const buffer_storage = create_text_archive<Utils::detail::Storage>();
   auto const buffer_quat = create_text_archive<Utils::Quaternion>();
+  auto const buffer_cv = create_text_archive<Utils::compact_vector>();
   BOOST_TEST(buffer_array == buffer_storage, boost::test_tools::per_element());
   BOOST_TEST(buffer_vector == buffer_storage, boost::test_tools::per_element());
   BOOST_TEST(buffer_quat == buffer_storage, boost::test_tools::per_element());
+  BOOST_TEST(buffer_cv == buffer_storage, boost::test_tools::per_element());
 }
 
 template <template <class> class Trait> void constexpr assert_has_trait() {
@@ -279,6 +306,12 @@ BOOST_AUTO_TEST_CASE(serialization_traits_test) {
   // arrays of bitwise serializable MPI datatypes are bitwise serializable,
   // but arrays of custom datatypes are not bitwise serializable
   assert_has_trait<boost::serialization::is_bitwise_serializable>();
+}
+
+BOOST_AUTO_TEST_CASE(compact_vector_test) {
+  using namespace Utils;
+  static_assert(boost::mpi::is_mpi_datatype<compact_vector<int>>::value, "");
+  static_assert(sizeof(compact_vector<int>) < sizeof(std::vector<int>), "");
 }
 
 int main(int argc, char **argv) {

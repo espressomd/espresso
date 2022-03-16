@@ -27,6 +27,7 @@
 #include "config.hpp"
 
 #include <utils/Span.hpp>
+#include <utils/compact_vector.hpp>
 #include <utils/serialization/memcpy_archive.hpp>
 
 #include <boost/archive/text_iarchive.hpp>
@@ -65,12 +66,11 @@ BOOST_AUTO_TEST_CASE(serialization) {
   auto const bond_id = 5;
   auto const bond_partners = std::array<const int, 3>{12, 13, 14};
 
-  std::vector<int> el = {5, 6, 7, 8};
-
   p.p.identity = 15;
   p.bonds().insert({bond_id, bond_partners});
 #ifdef EXCLUSIONS
-  p.exclusions() = el;
+  std::vector<int> el = {5, 6, 7, 8};
+  p.exclusions() = Utils::compact_vector<int>{el.begin(), el.end()};
 #endif
 
   std::stringstream stream;
@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE(serialization) {
   BOOST_CHECK((*q.bonds().begin() == BondView{bond_id, bond_partners}));
 
 #ifdef EXCLUSIONS
-  BOOST_CHECK(q.exclusions() == el);
+  BOOST_CHECK(q.exclusions_as_vector() == el);
 #endif
 }
 

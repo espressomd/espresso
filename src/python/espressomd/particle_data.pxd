@@ -67,7 +67,8 @@ cdef extern from "particle_data.hpp":
         particle_momentum m
         particle_force f
         particle_local l
-        vector[int] exclusions() except +
+        vector[int] exclusions_as_vector() except +
+        bool has_exclusion(int pid) except +
         Vector3d calc_dip()
 
     IF ENGINE:

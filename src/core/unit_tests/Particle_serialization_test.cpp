@@ -228,7 +228,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(
     typename Checker::buffer_type buffer_ref = {
         "BondList",
 #ifdef EXCLUSIONS
-        "std::vector<int, std::allocator<int> >",
+        "Utils::compact_vector<int>",
 #endif
     };
     typename Checker::buffer_type buffer;

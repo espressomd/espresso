@@ -24,13 +24,16 @@
 #include "BondList.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/compact_vector.hpp>
 #include <utils/math/quaternion.hpp>
 #include <utils/quaternion.hpp>
 
+#include <boost/container/vector.hpp>
 #include <boost/serialization/is_bitwise_serializable.hpp>
 #include <boost/serialization/level.hpp>
 #include <boost/serialization/vector.hpp>
 
+#include <algorithm>
 #include <cstdint>
 #include <stdexcept>
 #include <vector>
@@ -436,11 +439,11 @@ private:
   /** list of particles, with which this particle has no non-bonded
    *  interactions
    */
-  std::vector<int> el;
+  Utils::compact_vector<int> el;
 #endif
 
 public:
-  std::vector<int> &exclusions() {
+  Utils::compact_vector<int> &exclusions() {
 #ifdef EXCLUSIONS
     return el;
 #else
@@ -448,13 +451,23 @@ public:
 #endif
   }
 
-  std::vector<int> const &exclusions() const {
+  Utils::compact_vector<int> const &exclusions() const {
 #ifdef EXCLUSIONS
     return el;
 #else
     throw std::runtime_error{"Exclusions not enabled."};
 #endif
   }
+
+#ifdef EXCLUSIONS
+  std::vector<int> const exclusions_as_vector() const {
+    return {el.begin(), el.end()};
+  }
+
+  bool has_exclusion(int pid) const {
+    return std::find(el.begin(), el.end(), pid) != el.end();
+  }
+#endif
 
 private:
   friend boost::serialization::access;
