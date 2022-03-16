@@ -54,10 +54,9 @@
 #include "LatticeWalberla.hpp"
 #include "LeesEdwardsPack.hpp"
 #include "ResetForce.hpp"
+#include "lb_kernels.hpp"
 #include "vtk_writers.hpp"
 #include "walberla_utils.hpp"
-#include "lb_kernels.hpp"
-
 
 #include <utils/Vector.hpp>
 #include <utils/interpolation/bspline_3d.hpp>
@@ -82,7 +81,6 @@
 #include <vector>
 
 namespace walberla {
-
 
 /** Class that runs and controls the LB on WaLBerla
  */
