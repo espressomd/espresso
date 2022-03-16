@@ -43,7 +43,7 @@ namespace BondBreakage {
 static std::unordered_map<int, std::shared_ptr<BreakageSpec>> breakage_specs;
 
 void insert_spec(int key, std::shared_ptr<BreakageSpec> obj) {
-  breakage_specs.insert({key, std::move(obj)});
+  breakage_specs[key] = std::move(obj);
 }
 
 void erase_spec(int key) { breakage_specs.erase(key); }

@@ -18,6 +18,7 @@
 # pylint: disable=undefined-variable
 import unittest as ut
 import unittest_decorators as utx
+import unittest_generator as utg
 import numpy as np
 import os
 
@@ -32,19 +33,18 @@ import espressomd.shapes
 import espressomd.constraints
 import espressomd.lb
 
-modes = {x for mode in set("@TEST_COMBINATION@".upper().split('-'))
-         for x in [mode, mode.split('.')[0]]}
-
-LB = (espressomd.has_features('LB_WALBERLA') and 'LB.ACTIVE.WALBERLA' in modes
-      or espressomd.gpu_available() and 'LB.GPU' in modes)
+config = utg.TestGenerator()
+is_gpu_available = espressomd.gpu_available()
+modes = config.get_modes()
+has_lb_mode = ('LB.WALBERLA' in modes and espressomd.has_features('LB_WALBERLA')
+               and ('LB.CPU' in modes or 'LB.GPU' in modes and is_gpu_available))
+has_p3m_mode = 'P3M.CPU' in modes or 'P3M.GPU' in modes and is_gpu_available
 
 
 class CheckpointTest(ut.TestCase):
 
     checkpoint = espressomd.checkpointing.Checkpoint(
-        checkpoint_id="mycheckpoint_@TEST_COMBINATION@_@TEST_BINARY@".replace(
-            '.', '__'),
-        checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
+        **config.get_checkpoint_params())
     checkpoint.load(0)
     n_nodes = system.cell_system.get_state()["n_nodes"]
 
@@ -65,10 +65,11 @@ class CheckpointTest(ut.TestCase):
         self.fail(
             f"system doesn't have an actor of type {actor_type.__name__}")
 
-    @ut.skipIf(not LB, "Skipping test due to missing mode.")
+    @utx.skipIfMissingFeatures('LB_WALBERLA')
+    @ut.skipIf(not has_lb_mode, "Skipping test due to missing LB feature.")
     def test_lb_fluid(self):
         lbf = self.get_active_actor_of_type(espressomd.lb.LBFluidWalberla)
-        cpt_mode = int("@TEST_BINARY@")
+        cpt_mode = 0 if 'LB.ASCII' in modes else 1
         cpt_path = self.checkpoint.checkpoint_dir + "/lb{}.cpt"
 
         # check exception mechanism with corrupted LB checkpoint files
@@ -89,7 +90,7 @@ class CheckpointTest(ut.TestCase):
 
         # load the valid LB checkpoint file
         lbf.load_checkpoint(cpt_path.format(""), cpt_mode)
-        precision = 9 if "LB.ACTIVE.WALBERLA" in modes else 5
+        precision = 9 if "LB.WALBERLA" in modes else 5
         m = np.pi / 12
         nx = lbf.shape[0]
         ny = lbf.shape[1]
@@ -142,9 +143,9 @@ class CheckpointTest(ut.TestCase):
             np.copy(lbf[:, :, :].is_boundary.astype(int)), 0)
 
     @utx.skipIfMissingFeatures('LB_WALBERLA')
-    @ut.skipIf('LB.ACTIVE.WALBERLA' not in modes, 'waLBerla LBM not in modes')
+    @ut.skipIf(not has_lb_mode, "Skipping test due to missing LB feature.")
     def test_VTK(self):
-        vtk_suffix = '@TEST_COMBINATION@_@TEST_BINARY@'
+        vtk_suffix = config.test_name
         vtk_registry = espressomd.lb._vtk_registry
         key_auto = f'vtk_out/auto_{vtk_suffix}'
         self.assertIn(key_auto, vtk_registry.map)
@@ -224,7 +225,7 @@ class CheckpointTest(ut.TestCase):
         self.assertGreater(np.linalg.norm(np.copy(p3.f) - old_force), 1e6)
 
     @utx.skipIfMissingFeatures('LB_WALBERLA')
-    @ut.skipIf('LB.ACTIVE.WALBERLA' not in modes, 'waLBerla LBM not in modes')
+    @ut.skipIf(not has_lb_mode, "Skipping test due to missing LB feature.")
     @ut.skipIf('THERM.LB' not in modes, 'LB thermostat not in modes')
     def test_thermostat_LB(self):
         thmst = system.thermostat.get_state()[0]
@@ -401,7 +402,7 @@ class CheckpointTest(ut.TestCase):
             ibm_triel_bond.params,
             {'k1': 1.1, 'k2': 1.2, 'maxDist': 1.6, 'elasticLaw': 'NeoHookean'})
         # check new bonds can be added
-        if 'LB.ACTIVE.WALBERLA' not in modes:
+        if not has_lb_mode:
             new_bond = espressomd.interactions.HarmonicBond(r_0=0.2, k=1.)
             system.bonded_inter.add(new_bond)
             bond_ids = system.bonded_inter.call_method('get_bond_ids')
@@ -489,10 +490,10 @@ class CheckpointTest(ut.TestCase):
                                            err_msg=f'for parameter {key}')
 
     @utx.skipIfMissingFeatures('P3M')
-    @ut.skipIf('P3M.CPU' not in modes,
-               "Skipping test due to missing combination.")
+    @ut.skipIf(not has_p3m_mode, "Skipping test due to missing combination.")
     def test_p3m(self):
-        actor = self.get_active_actor_of_type(espressomd.electrostatics.P3M)
+        actor = self.get_active_actor_of_type(
+            espressomd.electrostatics.ElectrostaticInteraction)
         state = actor.get_params()
         reference = {'prefactor': 1.0, 'accuracy': 0.1, 'mesh': 3 * [10],
                      'cao': 1, 'alpha': 1.0, 'r_cut': 1.0, 'tune': False,
@@ -503,8 +504,7 @@ class CheckpointTest(ut.TestCase):
                                            err_msg=f'for parameter {key}')
 
     @utx.skipIfMissingFeatures('P3M')
-    @ut.skipIf('P3M.ELC' not in modes,
-               "Skipping test due to missing combination.")
+    @ut.skipIf('ELC' not in modes, "Skipping test due to missing combination.")
     def test_elc(self):
         actor = self.get_active_actor_of_type(espressomd.electrostatics.ELC)
         elc_state = actor.get_params()
@@ -634,4 +634,5 @@ class CheckpointTest(ut.TestCase):
 
 
 if __name__ == '__main__':
+    config.bind_test_class(CheckpointTest)
     ut.main()

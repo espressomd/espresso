@@ -25,6 +25,7 @@
  */
 
 #include "config.hpp"
+#include "errorhandling.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
@@ -79,7 +80,10 @@ HarmonicBond::force(Utils::Vector3d const &dx) const {
   if (dist > ROUND_ERROR_PREC) { /* Regular case */
     fac /= dist;
   } else {
-    fac = 0;
+    if (r > 0.) {
+      runtimeErrorMsg() << "Harmonic bond: Particles have zero distance. "
+                           "This is most likely an error in the system setup.";
+    }
   }
   return fac * dx;
 }

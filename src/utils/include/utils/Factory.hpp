@@ -111,8 +111,8 @@ public:
    * @param name Given name for the type, has to be unique in this Factory<T>.
    */
   template <typename Derived> void register_new(const std::string &name) {
-    m_map.insert({name, []() { return pointer_type(new Derived()); }});
-    m_type_map.insert({typeid(Derived), name});
+    m_map[name] = []() { return pointer_type(new Derived()); };
+    m_type_map[typeid(Derived)] = name;
   }
 
   /**

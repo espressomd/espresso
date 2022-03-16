@@ -50,6 +50,3 @@ ignore:
   - "samples"
   - "maintainer"
   - "src/walberla_bridge/generated_kernels/*.cpp"
-fixes:
-  - "testsuite/python/save_checkpoint*::testsuite/python/save_checkpoint.py"
-  - "testsuite/python/test_checkpoint*::testsuite/python/test_checkpoint.py"
