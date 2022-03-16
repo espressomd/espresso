@@ -80,6 +80,7 @@ function(PYTHON_BENCHMARK)
   endif()
 endfunction(PYTHON_BENCHMARK)
 
+# TODO WALBERLA: restore the other benchmarks
 python_benchmark(FILE lb.py ARGUMENTS "--box_l=32;--single_precision")
 python_benchmark(FILE lb.py ARGUMENTS "--box_l=32")
 python_benchmark(FILE lb.py ARGUMENTS "--box_l=64;--single_precision")

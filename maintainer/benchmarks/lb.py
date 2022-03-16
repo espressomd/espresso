@@ -77,6 +77,7 @@ box_l = args.box_l
 lb_grid = box_l
 agrid = 1.
 measurement_steps = 80
+
 # System
 #############################################################
 system.box_l = 3 * (box_l,)
