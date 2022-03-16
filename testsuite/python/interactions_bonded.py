@@ -23,8 +23,54 @@ import numpy as np
 import espressomd
 import espressomd.electrostatics
 import espressomd.interactions
-import tests_common
 
+#
+# Analytical expressions for interactions
+#
+
+
+def harmonic_potential(scalar_r, k, r_0):
+    return 0.5 * k * (scalar_r - r_0)**2
+
+
+def harmonic_force(scalar_r, k, r_0):
+    return -k * (scalar_r - r_0)
+
+
+def fene_potential(scalar_r, k, d_r_max, r_0):
+    return -0.5 * k * d_r_max**2 * np.log(1 - ((scalar_r - r_0) / d_r_max)**2)
+
+
+def fene_force(scalar_r, k, d_r_max, r_0):
+    return k * (scalar_r - r_0) * d_r_max**2 / \
+        ((scalar_r - r_0)**2 - d_r_max**2)
+
+
+def coulomb_potential(scalar_r, k, q1, q2):
+    return k * q1 * q2 / scalar_r
+
+
+def coulomb_force(scalar_r, k, q1, q2):
+    return k * q1 * q2 / scalar_r**2
+
+
+def quartic_force(k0, k1, r, r_cut, scalar_r):
+    force = 0.
+    if scalar_r <= r_cut:
+        force = - k0 * (scalar_r - r) - k1 * (scalar_r - r)**3
+    return force
+
+
+def quartic_potential(k0, k1, r, r_cut, scalar_r):
+    energy = 0.
+    if scalar_r <= r_cut:
+        energy = 0.5 * k0 * (scalar_r - r)**2 + 0.25 * k1 * (scalar_r - r)**4
+    return energy
+
+
+#
+# Test case
+#
 
 class InteractionsBondedTest(ut.TestCase):
     system = espressomd.System(box_l=[17.0, 9.0, 8.0])
@@ -52,33 +98,27 @@ class InteractionsBondedTest(ut.TestCase):
 
     # Test Harmonic Bond
     def test_harmonic(self):
-        hb_k = 5
-        hb_r_0 = 1.5
-        hb_r_cut = 3.355
+        k = 5.
+        r_0 = 1.5
+        r_cut = 3.355
 
-        hb = espressomd.interactions.HarmonicBond(
-            k=hb_k, r_0=hb_r_0, r_cut=hb_r_cut)
+        hb = espressomd.interactions.HarmonicBond(k=k, r_0=r_0, r_cut=r_cut)
         self.run_test(hb,
-                      lambda r: tests_common.harmonic_force(
-                          scalar_r=r, k=hb_k, r_0=hb_r_0),
-                      lambda r: tests_common.harmonic_potential(
-                          scalar_r=r, k=hb_k, r_0=hb_r_0),
-                      0.01, hb_r_cut, True, test_same_pos_exception=True)
+                      lambda r: harmonic_force(r, k, r_0),
+                      lambda r: harmonic_potential(r, k, r_0),
+                      0.01, r_cut, True, test_same_pos_exception=True)
 
     # Test Fene Bond
     def test_fene(self):
-        fene_k = 23.15
-        fene_d_r_max = 3.355
-        fene_r_0 = 1.1
+        k = 23.15
+        d_r_max = 3.355
+        r_0 = 1.1
 
-        fene = espressomd.interactions.FeneBond(
-            k=fene_k, d_r_max=fene_d_r_max, r_0=fene_r_0)
+        fene = espressomd.interactions.FeneBond(k=k, d_r_max=d_r_max, r_0=r_0)
         self.run_test(fene,
-                      lambda r: tests_common.fene_force(
-                          scalar_r=r, k=fene_k, d_r_max=fene_d_r_max, r_0=fene_r_0),
-                      lambda r: tests_common.fene_potential(
-                          scalar_r=r, k=fene_k, d_r_max=fene_d_r_max, r_0=fene_r_0),
-                      0.01, fene_r_0 + fene_d_r_max, True, test_same_pos_exception=True)
+                      lambda r: fene_force(r, k, d_r_max, r_0),
+                      lambda r: fene_potential(r, k, d_r_max, r_0=r_0),
+                      0.01, r_0 + d_r_max, True, test_same_pos_exception=True)
 
     def test_virtual_bond(self):
         # add sentinel harmonic bond, otherwise short-range loop is skipped
@@ -109,16 +149,16 @@ class InteractionsBondedTest(ut.TestCase):
 
     @utx.skipIfMissingFeatures(["ELECTROSTATICS"])
     def test_coulomb(self):
-        coulomb_k = 1
-        q1 = 1
-        q2 = -1
+        k = 1.
+        q1 = 1.
+        q2 = -1.
         p1, p2 = self.system.part.all()
         p1.q = q1
         p2.q = q2
         self.run_test(
-            espressomd.interactions.BondedCoulomb(prefactor=coulomb_k),
-            lambda r: tests_common.coulomb_force(r, coulomb_k, q1, q2),
-            lambda r: tests_common.coulomb_potential(r, coulomb_k, q1, q2),
+            espressomd.interactions.BondedCoulomb(prefactor=k),
+            lambda r: coulomb_force(r, k, q1, q2),
+            lambda r: coulomb_potential(r, k, q1, q2),
             0.01, self.system.box_l[0] / 3)
 
     @utx.skipIfMissingFeatures(["ELECTROSTATICS"])
@@ -152,22 +192,20 @@ class InteractionsBondedTest(ut.TestCase):
         """Tests the Quartic bonded interaction by comparing the potential and
            force against the analytic values"""
 
-        quartic_k0 = 2.
-        quartic_k1 = 5.
-        quartic_r = 0.5
-        quartic_r_cut = self.system.box_l[0] / 3.
+        k0 = 2.
+        k1 = 5.
+        q_r = 0.5
+        r_cut = self.system.box_l[0] / 3.
 
-        quartic = espressomd.interactions.QuarticBond(k0=quartic_k0,
-                                                      k1=quartic_k1,
-                                                      r=quartic_r,
-                                                      r_cut=quartic_r_cut)
+        quartic = espressomd.interactions.QuarticBond(k0=k0,
+                                                      k1=k1,
+                                                      r=q_r,
+                                                      r_cut=r_cut)
 
         self.run_test(quartic,
-                      lambda r: tests_common.quartic_force(
-                          k0=quartic_k0, k1=quartic_k1, r=quartic_r, r_cut=quartic_r_cut, scalar_r=r),
-                      lambda r: tests_common.quartic_potential(
-                          k0=quartic_k0, k1=quartic_k1, r=quartic_r, r_cut=quartic_r_cut, scalar_r=r),
-                      0.01, quartic_r_cut, True, test_same_pos_exception=True)
+                      lambda r: quartic_force(k0, k1, q_r, r_cut, r),
+                      lambda r: quartic_potential(k0, k1, q_r, r_cut, r),
+                      0.01, r_cut, True, test_same_pos_exception=True)
 
     def run_test(self, bond_instance, force_func, energy_func, min_dist,
                  cutoff, test_breakage=False, test_same_pos_exception=False):
