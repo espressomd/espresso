@@ -106,7 +106,7 @@ class InteractionsBondedTest(ut.TestCase):
         self.run_test(hb,
                       lambda r: harmonic_force(r, k, r_0),
                       lambda r: harmonic_potential(r, k, r_0),
-                      0.01, r_cut, True)
+                      0.01, r_cut, True, test_same_pos_exception=True)
 
     # Test Fene Bond
     def test_fene(self):
@@ -118,7 +118,7 @@ class InteractionsBondedTest(ut.TestCase):
         self.run_test(fene,
                       lambda r: fene_force(r, k, d_r_max, r_0),
                       lambda r: fene_potential(r, k, d_r_max, r_0=r_0),
-                      0.01, r_0 + d_r_max, True)
+                      0.01, r_0 + d_r_max, True, test_same_pos_exception=True)
 
     def test_virtual_bond(self):
         # add sentinel harmonic bond, otherwise short-range loop is skipped
@@ -205,10 +205,10 @@ class InteractionsBondedTest(ut.TestCase):
         self.run_test(quartic,
                       lambda r: quartic_force(k0, k1, q_r, r_cut, r),
                       lambda r: quartic_potential(k0, k1, q_r, r_cut, r),
-                      0.01, r_cut, True)
+                      0.01, r_cut, True, test_same_pos_exception=True)
 
     def run_test(self, bond_instance, force_func, energy_func, min_dist,
-                 cutoff, test_breakage=False):
+                 cutoff, test_breakage=False, test_same_pos_exception=False):
         self.system.bonded_inter.add(bond_instance)
         p1, p2 = self.system.part.all()
         p1.bonds = ((bond_instance, p2),)
@@ -254,6 +254,10 @@ class InteractionsBondedTest(ut.TestCase):
         if test_breakage:
             p2.pos = p1.pos + self.axis * cutoff * 1.01
             with self.assertRaisesRegex(Exception, "Encountered errors during integrate"):
+                self.system.integrator.run(recalc_forces=True, steps=0)
+        if test_same_pos_exception:
+            p2.pos = p1.pos
+            with self.assertRaises(Exception):
                 self.system.integrator.run(recalc_forces=True, steps=0)
 
 

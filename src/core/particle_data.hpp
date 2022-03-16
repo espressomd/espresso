@@ -373,32 +373,6 @@ int number_of_particles_with_type(int type);
 // This is needed, because cython does not support conditional compilation
 // within a ctypedef definition
 
-#ifdef LB_ELECTROHYDRODYNAMICS
-inline Utils::Vector3d get_particle_mu_E(Particle const *p) {
-  return p->mu_E();
-}
-#endif
-
-#ifdef ROTATION
-inline Utils::Vector3d get_particle_omega_body(Particle const *p) {
-  return p->omega();
-}
-
-inline Utils::Vector3d get_particle_torque_body(Particle const *p) {
-  return p->torque();
-}
-
-inline Utils::Quaternion<double> get_particle_quat(Particle const *p) {
-  return p->quat();
-}
-#endif
-
-inline double get_particle_q(Particle const *p) { return p->q(); }
-
-#ifdef VIRTUAL_SITES
-inline bool get_particle_virtual(Particle const *p) { return p->is_virtual(); }
-#endif
-
 #ifdef VIRTUAL_SITES_RELATIVE
 inline Utils::Quaternion<double> get_particle_vs_quat(Particle const *p) {
   return p->vs_relative().quat;
@@ -412,19 +386,7 @@ inline Utils::Quaternion<double> get_particle_vs_relative(Particle const *p,
 }
 #endif
 
-#ifdef DIPOLES
-inline double get_particle_dipm(Particle const *p) { return p->dipm(); }
-#endif
-
 #ifdef EXTERNAL_FORCES
-inline Utils::Vector3d get_particle_ext_force(Particle const *p) {
-  return p->ext_force();
-}
-#ifdef ROTATION
-inline Utils::Vector3d get_particle_ext_torque(Particle const *p) {
-  return p->ext_torque();
-}
-#endif
 inline Utils::Vector3i get_particle_fix(Particle const *p) {
   return Utils::Vector3i{
       {p->is_fixed_along(0), p->is_fixed_along(1), p->is_fixed_along(2)}};
@@ -452,24 +414,12 @@ inline double get_particle_gamma_rot(Particle const *p) {
 #endif // ROTATION
 #endif // THERMOSTAT_PER_PARTICLE
 
-#ifdef ENGINE
-inline ParticleParametersSwimming get_particle_swimming(Particle const *p) {
-  return p->swimming();
-}
-#endif
-
-#ifdef ROTATIONAL_INERTIA
-inline Utils::Vector3d get_particle_rotational_inertia(Particle const *p) {
-  return p->rinertia();
-}
-#endif
-
 #ifdef ROTATION
 inline Utils::Vector3i get_particle_rotation(Particle const *p) {
   return Utils::Vector3i{{p->can_rotate_around(0), p->can_rotate_around(1),
                           p->can_rotate_around(2)}};
 }
-#endif
+#endif // ROTATION
 
 /**
  * @brief Check if particle exists.
