@@ -280,5 +280,7 @@ BOOST_AUTO_TEST_CASE(particle_bitfields) {
   BOOST_CHECK(p.can_rotate_around(0));
   BOOST_CHECK(p.can_rotate_around(1));
   BOOST_CHECK(p.can_rotate_around(2));
+  p.set_cannot_rotate_all_axes();
+  BOOST_CHECK(not p.can_rotate());
 #endif
 }
