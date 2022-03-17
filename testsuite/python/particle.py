@@ -182,29 +182,29 @@ class ParticleProperties(ut.TestCase):
 
     if espressomd.has_features(["VIRTUAL_SITES"]):
         test_virtual = generateTestForScalarProperty("virtual", 1)
-    if espressomd.has_features(["VIRTUAL_SITES_RELATIVE"]):
-        def test_yy_vs_relative(self):
-            self.system.part.add(id=0, pos=(0, 0, 0))
-            p1 = self.system.part.add(id=1, pos=(0, 0, 0))
-            p1.vs_relative = (0, 5.0, (0.5, -0.5, -0.5, -0.5))
-            p1.vs_quat = [1, 2, 3, 4]
-            np.testing.assert_array_equal(
-                p1.vs_quat, [1, 2, 3, 4])
-            res = p1.vs_relative
-            self.assertEqual(res[0], 0, "vs_relative: " + res.__str__())
-            self.assertEqual(res[1], 5.0, "vs_relative: " + res.__str__())
-            np.testing.assert_allclose(
-                res[2], np.array((0.5, -0.5, -0.5, -0.5)),
-                err_msg="vs_relative: " + res.__str__(), atol=self.tol)
-            # check exceptions
-            with self.assertRaisesRegex(ValueError, "needs input in the form"):
-                p1.vs_relative = (0, 5.0)
-            with self.assertRaisesRegex(ValueError, "particle id has to be given as an int"):
-                p1.vs_relative = ('0', 5.0, (1, 0, 0, 0))
-            with self.assertRaisesRegex(ValueError, "distance has to be given as a float"):
-                p1.vs_relative = (0, '5', (1, 0, 0, 0))
-            with self.assertRaisesRegex(ValueError, "quaternion has to be given as a tuple of 4 floats"):
-                p1.vs_relative = (0, 5.0, (1, 0, 0))
+
+    @utx.skipIfMissingFeatures(["VIRTUAL_SITES_RELATIVE"])
+    def test_vs_relative(self):
+        self.system.part.add(id=0, pos=(0, 0, 0))
+        p1 = self.system.part.add(id=1, pos=(0, 0, 0))
+        p1.vs_relative = (0, 5.0, (0.5, -0.5, -0.5, -0.5))
+        p1.vs_quat = [1, 2, 3, 4]
+        np.testing.assert_array_equal(p1.vs_quat, [1, 2, 3, 4])
+        res = p1.vs_relative
+        self.assertEqual(res[0], 0, f"vs_relative: {res}")
+        self.assertEqual(res[1], 5.0, f"vs_relative: {res}")
+        np.testing.assert_allclose(
+            res[2], np.array((0.5, -0.5, -0.5, -0.5)),
+            err_msg=f"vs_relative: {res}", atol=self.tol)
+        # check exceptions
+        with self.assertRaisesRegex(ValueError, "needs input in the form"):
+            p1.vs_relative = (0, 5.0)
+        with self.assertRaisesRegex(ValueError, "particle id has to be given as an int"):
+            p1.vs_relative = ('0', 5.0, (1, 0, 0, 0))
+        with self.assertRaisesRegex(ValueError, "distance has to be given as a float"):
+            p1.vs_relative = (0, '5', (1, 0, 0, 0))
+        with self.assertRaisesRegex(ValueError, "quaternion has to be given as a tuple of 4 floats"):
+            p1.vs_relative = (0, 5.0, (1, 0, 0))
 
     @utx.skipIfMissingFeatures("DIPOLES")
     def test_contradicting_properties_dip_dipm(self):

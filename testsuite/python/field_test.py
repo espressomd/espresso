@@ -149,11 +149,10 @@ class FieldTest(ut.TestCase):
 
     def test_potential_field(self):
         h = np.array([.2, .2, .2])
-        box = np.array([10., 10., 10.])
         scaling = 2.6
 
         field_data = espressomd.constraints.PotentialField.field_from_fn(
-            box, h, self.potential)
+            self.system.box_l, h, self.potential)
 
         F = espressomd.constraints.PotentialField(
             field=field_data,
@@ -186,10 +185,9 @@ class FieldTest(ut.TestCase):
     @utx.skipIfMissingFeatures("ELECTROSTATICS")
     def test_electric_potential_field(self):
         h = np.array([.2, .2, .2])
-        box = np.array([10., 10., 10.])
 
         field_data = espressomd.constraints.ElectricPotential.field_from_fn(
-            box, h, self.potential)
+            self.system.box_l, h, self.potential)
 
         F = espressomd.constraints.ElectricPotential(
             field=field_data, grid_spacing=h)
@@ -213,11 +211,10 @@ class FieldTest(ut.TestCase):
 
     def test_force_field(self):
         h = np.array([.8, .8, .8])
-        box = np.array([10., 10., 10.])
         scaling = 2.6
 
         field_data = espressomd.constraints.ForceField.field_from_fn(
-            box, h, self.force)
+            self.system.box_l, h, self.force)
 
         F = espressomd.constraints.ForceField(
             field=field_data,
@@ -245,11 +242,10 @@ class FieldTest(ut.TestCase):
 
     def test_flow_field(self):
         h = np.array([.8, .8, .8])
-        box = np.array([10., 10., 10.])
         gamma = 2.6
 
         field_data = espressomd.constraints.FlowField.field_from_fn(
-            box, h, self.force)
+            self.system.box_l, h, self.force)
 
         F = espressomd.constraints.FlowField(
             field=field_data,

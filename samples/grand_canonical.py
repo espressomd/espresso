@@ -38,7 +38,7 @@ import espressomd
 import espressomd.reaction_ensemble
 import espressomd.electrostatics
 
-required_features = ["P3M", "EXTERNAL_FORCES", "WCA"]
+required_features = ["P3M", "WCA"]
 espressomd.assert_features(required_features)
 
 parser = argparse.ArgumentParser(epilog=__doc__ + epilog)

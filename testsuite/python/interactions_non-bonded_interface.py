@@ -25,7 +25,12 @@ import espressomd.interactions
 
 
 class Non_bonded_interactionsTests(ut.TestCase):
-    system = espressomd.System(box_l=[20.0, 20.0, 20.0])
+    system = espressomd.System(box_l=[30.0, 30.0, 30.0])
+
+    def tearDown(self):
+        if espressomd.has_features(["LENNARD_JONES"]):
+            self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
+                epsilon=0., sigma=0., cutoff=0., shift=0.)
 
     def intersMatch(self, inType, outInter, inParams, outParams, msg_long):
         """Check, if the interaction type set and gotten back as well as the

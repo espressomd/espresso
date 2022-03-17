@@ -24,14 +24,21 @@ import numpy as np
 import tests_common
 
 
-@utx.skipIfMissingFeatures("VIRTUAL_SITES_RELATIVE")
+@utx.skipIfMissingFeatures(["VIRTUAL_SITES_RELATIVE", "LENNARD_JONES"])
 class VirtualSites(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
     np.random.seed(42)
 
+    def setUp(self):
+        self.system.box_l = [10.0, 10.0, 10.0]
+
     def tearDown(self):
         self.system.part.clear()
+        self.system.thermostat.turn_off()
+        self.system.integrator.set_vv()
+        self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
+            epsilon=0., sigma=0., cutoff=0., shift=0.)
 
     def multiply_quaternions(self, a, b):
         return np.array(
@@ -85,8 +92,10 @@ class VirtualSites(ut.TestCase):
             espressomd.virtual_sites.VirtualSitesRelative)
 
     def test_vs_quat(self):
+        self.system.time_step = 0.01
+        self.system.min_global_cut = 0.23
         # First check that quaternion of virtual particle is unchanged if
-        # have_quaterion is false.
+        # have_quaternion is false.
         self.system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative(
             have_quaternion=False)
         self.assertFalse(self.system.virtual_sites.have_quaternion)
@@ -129,20 +138,12 @@ class VirtualSites(ut.TestCase):
         # Check exceptions.
         with self.assertRaisesRegex(ValueError, "Argument of vs_auto_relate_to has to be of type ParticleHandle or int"):
             p2.vs_auto_relate_to('0')
-        try:
-            p2.vs_auto_relate_to(p1)
-        except BaseException:
-            self.fail('Failed to set a vs from a particle handle')
 
     def test_pos_vel_forces(self):
         system = self.system
         system.cell_system.skin = 0.3
         system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
-        system.box_l = [10, 10, 10]
         system.time_step = 0.004
-        system.thermostat.turn_off()
-        system.non_bonded_inter[0, 0].lennard_jones.set_params(
-            epsilon=0, sigma=0, cutoff=0, shift=0)
 
         # Check setting of min_global_cut
         system.min_global_cut = 0.23
@@ -215,7 +216,7 @@ class VirtualSites(ut.TestCase):
         system = self.system
         system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
         # Parameters
-        n = 90
+        n = 40
         phi = 0.6
         sigma = 1.
         eps = .025
@@ -295,10 +296,6 @@ class VirtualSites(ut.TestCase):
         pressure_post_change = system.analysis.pressure()['total']
         self.assertNotAlmostEqual(enegry_pre_change, enegry_post_change)
         self.assertNotAlmostEqual(pressure_pre_change, pressure_post_change)
-
-        # Turn off lj interaction
-        system.non_bonded_inter[0, 0].lennard_jones.set_params(
-            epsilon=0, sigma=0, cutoff=0, shift=0)
 
     def test_lj(self):
         """Run LJ fluid test for different cell systems."""
