@@ -380,6 +380,21 @@ except ImportError:
         linenos_out = iw.delimit_statements(source_code)
         self.assertEqual(linenos_out, linenos_exp)
 
+    def test_ipython_magics(self):
+        lines = [
+            '%matplotlib inline',
+            '%%matplotlib notebook',
+            'import matplotlib.pyplot as plt',
+            '__doc__="%matplotlib inline"',
+        ]
+        code = '\n'.join(lines)
+        code_protected = iw.protect_ipython_magics(code)
+        code_protected_ref = f'\n{code}'.replace(
+            '\n%', '\n#_IPYTHON_MAGIC_%')[1:]
+        self.assertEqual(code_protected, code_protected_ref)
+        code_deprotected = iw.deprotect_ipython_magics(code_protected)
+        self.assertEqual(code_deprotected, code)
+
 
 if __name__ == "__main__":
     ut.main()

@@ -28,6 +28,7 @@ import numpy as np
 import espressomd
 import espressomd.interactions
 import espressomd.io.writer
+import tempfile
 try:
     import h5py  # h5py has to be imported *after* espressomd (MPI)
     skipIfMissingPythonPackage = utx.no_skip
@@ -46,18 +47,15 @@ class H5mdTests(ut.TestCase):
     Test the core implementation of writing hdf5 files.
 
     """
-    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    # avoid particles to be set outside of the main box, otherwise particle
-    # positions are folded in the core when writing out and we cannot directly
-    # compare positions in the dataset and where particles were set. One would
-    # need to unfold the positions of the hdf5 file.
-    box_l = N_PART / 2.0
-    system.box_l = [box_l, box_l, box_l]
+    box_l = N_PART // 2
+    box_l = [box_l, box_l + 1, box_l + 2]
+    system = espressomd.System(box_l=box_l)
     system.cell_system.skin = 0.4
     system.time_step = 0.01
 
+    # set particles outside the main box to verify position folding
     for i in range(N_PART):
-        p = system.part.add(id=i, pos=np.array(3 * [i], dtype=float),
+        p = system.part.add(id=i, pos=np.array(3 * [i - 4], dtype=float),
                             v=np.array([1.0, 2.0, 3.0]), type=23)
         if espressomd.has_features(['MASS']):
             p.mass = 2.3
@@ -77,17 +75,17 @@ class H5mdTests(ut.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        if os.path.isfile('test.h5'):
-            os.remove('test.h5')
+        cls.temp_dir = tempfile.TemporaryDirectory()
+        cls.temp_file = os.path.join(cls.temp_dir.name, 'test.h5')
         h5_units = espressomd.io.writer.h5md.UnitSystem(
             time='ps', mass='u', length='m', charge='e')
         h5 = espressomd.io.writer.h5md.H5md(
-            file_path="test.h5", unit_system=h5_units)
+            file_path=cls.temp_file, unit_system=h5_units)
         h5.write()
         h5.write()
         h5.flush()
         h5.close()
-        cls.py_file = h5py.File("test.h5", 'r')
+        cls.py_file = h5py.File(cls.temp_file, 'r')
         cls.py_pos = cls.py_file['particles/atoms/position/value'][1]
         cls.py_img = cls.py_file['particles/atoms/image/value'][1]
         cls.py_mass = cls.py_file['particles/atoms/mass/value'][1]
@@ -102,10 +100,10 @@ class H5mdTests(ut.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        os.remove("test.h5")
+        cls.temp_dir.cleanup()
 
     def test_opening(self):
-        h5 = espressomd.io.writer.h5md.H5md(file_path="test.h5")
+        h5 = espressomd.io.writer.h5md.H5md(file_path=self.temp_file)
         h5.close()
 
     def test_box(self):
@@ -126,9 +124,10 @@ class H5mdTests(ut.TestCase):
 
     def test_pos(self):
         """Test if positions have been written properly."""
-        np.testing.assert_allclose(
-            np.array([3 * [float(i) % self.box_l] for i in range(N_PART)]),
-            np.array([x for (_, x) in sorted(zip(self.py_id, self.py_pos))]))
+        pos_ref = np.outer(np.arange(N_PART) - 4, [1, 1, 1])
+        pos_ref = np.mod(pos_ref, self.box_l)
+        pos_read = [x for (_, x) in sorted(zip(self.py_id, self.py_pos))]
+        np.testing.assert_allclose(pos_read, pos_ref)
 
     def test_time(self):
         """Test for time dataset."""
@@ -136,11 +135,10 @@ class H5mdTests(ut.TestCase):
 
     def test_img(self):
         """Test if images have been written properly."""
-        images = np.append(np.zeros((int(N_PART / 2), 3)),
-                           np.ones((int(N_PART / 2), 3)))
-        images = images.reshape(N_PART, 3)
-        np.testing.assert_allclose(
-            [x for (_, x) in sorted(zip(self.py_id, self.py_img))], images)
+        pos_ref = np.outer(np.arange(N_PART) - 4, [1, 1, 1])
+        images_ref = np.floor_divide(pos_ref, self.box_l)
+        images_read = [x for (_, x) in sorted(zip(self.py_id, self.py_img))]
+        np.testing.assert_allclose(images_read, images_ref)
 
     @utx.skipIfMissingFeatures("MASS")
     def test_mass(self):
@@ -185,22 +183,16 @@ class H5mdTests(ut.TestCase):
         self.assertEqual(data, ref)
 
     def test_units(self):
-        self.assertEqual(
-            self.py_file['particles/atoms/id/time'].attrs['unit'], b'ps')
-        self.assertEqual(
-            self.py_file['particles/atoms/position/value'].attrs['unit'], b'm')
+        def get_unit(path):
+            return self.py_file[path].attrs['unit']
+        self.assertEqual(get_unit('particles/atoms/id/time'), b'ps')
+        self.assertEqual(get_unit('particles/atoms/position/value'), b'm')
         if espressomd.has_features(['ELECTROSTATICS']):
-            self.assertEqual(
-                self.py_file['particles/atoms/charge/value'].attrs['unit'], b'e')
+            self.assertEqual(get_unit('particles/atoms/charge/value'), b'e')
         if espressomd.has_features(['MASS']):
-            self.assertEqual(
-                self.py_file['particles/atoms/mass/value'].attrs['unit'], b'u')
-        self.assertEqual(
-            self.py_file['particles/atoms/force/value'].attrs['unit'],
-            b'm u ps-2')
-        self.assertEqual(
-            self.py_file['particles/atoms/velocity/value'].attrs['unit'],
-            b'm ps-1')
+            self.assertEqual(get_unit('particles/atoms/mass/value'), b'u')
+        self.assertEqual(get_unit('particles/atoms/force/value'), b'm u ps-2')
+        self.assertEqual(get_unit('particles/atoms/velocity/value'), b'm ps-1')
 
     def test_links(self):
         time_ref = self.py_id_time
