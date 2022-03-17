@@ -80,7 +80,7 @@ RE = None
 if args.mode == "reaction_ensemble":
     RE = espressomd.reaction_ensemble.ReactionEnsemble(
         kT=1,
-        exclusion_radius=1,
+        exclusion_range=1,
         seed=77)
     RE.add_reaction(gamma=K_diss,
                     reactant_types=[types["HA"]],
@@ -90,7 +90,7 @@ if args.mode == "reaction_ensemble":
                     default_charges=charge_dict)
 elif args.mode == "constant_pH_ensemble":
     RE = espressomd.reaction_ensemble.ConstantpHEnsemble(
-        kT=1, exclusion_radius=1, seed=77, constant_pH=2)
+        kT=1, exclusion_range=1, seed=77, constant_pH=2)
     RE.add_reaction(gamma=K_diss, reactant_types=[types["HA"]],
                     product_types=[types["A-"], types["H+"]],
                     default_charges=charge_dict)
@@ -105,6 +105,7 @@ system.setup_type_map(list(types.values()))
 # Set the hidden particle type to the lowest possible number to speed
 # up the simulation
 RE.set_non_interacting_type(type=max(types.values()) + 1)
+
 
 for i in range(10000):
     RE.reaction(reaction_steps=1)

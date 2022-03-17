@@ -33,7 +33,8 @@ class ReactionMethods(ut.TestCase):
     def tearDown(self):
         self.system.part.clear()
 
-    def check_interface(self, method, kT, exclusion_radius, gamma):
+    def check_interface(self, method, kT, exclusion_range,
+                        gamma, exclusion_radius_per_type):
         def check_reaction_parameters(reactions, parameters):
             for reaction, params in zip(reactions, parameters):
                 for key in reaction.required_keys():
@@ -68,9 +69,27 @@ class ReactionMethods(ut.TestCase):
         # check getters and setters
         self.assertAlmostEqual(method.kT, kT, delta=1e-10)
         self.assertAlmostEqual(
-            method.exclusion_radius,
-            exclusion_radius,
+            method.exclusion_range,
+            exclusion_range,
             delta=1e-10)
+        if exclusion_radius_per_type:  # Avoid this test for widom method
+            self.assertEqual(
+                list(
+                    method.exclusion_radius_per_type.keys()),
+                [1])
+            self.assertAlmostEqual(
+                method.exclusion_radius_per_type[1],
+                exclusion_radius_per_type[1],
+                delta=1e-10)
+            method.exclusion_radius_per_type = {2: 0.2}
+            self.assertEqual(
+                list(
+                    method.exclusion_radius_per_type.keys()),
+                [2])
+            self.assertAlmostEqual(
+                method.exclusion_radius_per_type[2],
+                0.2,
+                delta=1e-10)
         self.assertAlmostEqual(
             method.get_volume(),
             self.system.volume(),
@@ -96,7 +115,7 @@ class ReactionMethods(ut.TestCase):
         # check status
         status = method.get_status()
         self.assertEqual(status['kT'], kT)
-        self.assertEqual(status['exclusion_radius'], exclusion_radius)
+        self.assertEqual(status['exclusion_range'], exclusion_range)
         self.assertEqual(len(status['reactions']), 2)
         for reaction_flat, params in zip(
                 status['reactions'], reaction_parameters):
@@ -148,17 +167,34 @@ class ReactionMethods(ut.TestCase):
     def test_interface(self):
         # reaction ensemble
         method = espressomd.reaction_ensemble.ReactionEnsemble(
-            kT=1.5, exclusion_radius=0.8, seed=12)
-        self.check_interface(method, kT=1.5, exclusion_radius=0.8, gamma=1.2)
+            kT=1.5, exclusion_range=0.8, seed=12, exclusion_radius_per_type={1: 0.1})
+        self.check_interface(
+            method,
+            kT=1.5,
+            exclusion_range=0.8,
+            gamma=1.2,
+            exclusion_radius_per_type={
+                1: 0.1})
 
         # constant pH ensemble
         method = espressomd.reaction_ensemble.ConstantpHEnsemble(
-            kT=1.5, exclusion_radius=0.8, seed=12, constant_pH=10)
-        self.check_interface(method, kT=1.5, exclusion_radius=0.8, gamma=1.2)
+            kT=1.5, exclusion_range=0.8, seed=12, constant_pH=10, exclusion_radius_per_type={1: 0.1})
+        self.check_interface(
+            method,
+            kT=1.5,
+            exclusion_range=0.8,
+            gamma=1.2,
+            exclusion_radius_per_type={
+                1: 0.1})
 
         # Widom insertion
         method = espressomd.reaction_ensemble.WidomInsertion(kT=1.6, seed=12)
-        self.check_interface(method, kT=1.6, exclusion_radius=0., gamma=1.)
+        self.check_interface(
+            method,
+            kT=1.6,
+            exclusion_range=0.,
+            gamma=1.,
+            exclusion_radius_per_type={})
 
     def test_exceptions(self):
         single_reaction_params = {
@@ -174,7 +210,7 @@ class ReactionMethods(ut.TestCase):
         }
         widom = espressomd.reaction_ensemble.WidomInsertion(kT=1., seed=12)
         method = espressomd.reaction_ensemble.ReactionEnsemble(
-            kT=1.5, exclusion_radius=0.8, seed=12)
+            kT=1.5, exclusion_range=0.8, seed=12, exclusion_radius_per_type={1: 0.1})
         method.add_reaction(**reaction_params)
         widom.add_reaction(**reaction_params)
 
@@ -254,19 +290,19 @@ class ReactionMethods(ut.TestCase):
                 x=1, **single_reaction_params)
         with self.assertRaisesRegex(ValueError, err_msg):
             espressomd.reaction_ensemble.ReactionEnsemble(
-                kT=1., exclusion_radius=1., seed=12, x=1)
+                kT=1., exclusion_range=1., seed=12, x=1, exclusion_radius_per_type={1: 0.1})
         with self.assertRaisesRegex(ValueError, err_msg):
             espressomd.reaction_ensemble.ConstantpHEnsemble(
-                kT=1., exclusion_radius=1., seed=12, x=1, constant_pH=2)
+                kT=1., exclusion_range=1., seed=12, x=1, constant_pH=2, exclusion_radius_per_type={1: 0.1})
         with self.assertRaisesRegex(ValueError, err_msg):
             espressomd.reaction_ensemble.WidomInsertion(
                 kT=1., seed=12, x=1)
         with self.assertRaisesRegex(ValueError, "Invalid value for 'kT'"):
             espressomd.reaction_ensemble.ReactionEnsemble(
-                kT=-1., exclusion_radius=1., seed=12)
-        with self.assertRaisesRegex(ValueError, "Invalid value for 'exclusion_radius'"):
+                kT=-1., exclusion_range=1., seed=12, exclusion_radius_per_type={1: 0.1})
+        with self.assertRaisesRegex(ValueError, "Invalid value for 'exclusion_range'"):
             espressomd.reaction_ensemble.ReactionEnsemble(
-                kT=1., exclusion_radius=-1., seed=12)
+                kT=1., exclusion_range=-1., seed=12, exclusion_radius_per_type={1: 0.1})
 
 
 if __name__ == "__main__":
