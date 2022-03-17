@@ -29,7 +29,7 @@ from .analyze cimport max_seen_particle_type
 from copy import copy
 import collections
 import functools
-from .utils import nesting_level, array_locked, is_valid_type
+from .utils import nesting_level, array_locked, is_valid_type, handle_errors
 from .utils cimport make_array_locked, make_const_span, check_type_or_throw_except
 from .utils cimport Vector3i, Vector3d, Vector4d
 from .utils cimport make_Vector3d
@@ -373,8 +373,8 @@ cdef class ParticleHandle:
                     _mass, 1, float, "Mass has to be 1 float")
                 set_particle_mass(self._id, _mass)
             ELSE:
-                raise AttributeError("You are trying to set the particle mass \
-                                     but the mass feature is not compiled in.")
+                raise AttributeError("You are trying to set the particle mass "
+                                     "but the MASS feature is not compiled in.")
 
         def __get__(self):
             self.update_particle_data()
@@ -427,6 +427,8 @@ cdef class ParticleHandle:
                 cdef Quaternion[double] q
                 check_type_or_throw_except(
                     _q, 4, float, "Quaternions has to be 4 floats.")
+                if np.linalg.norm(_q) == 0.:
+                    raise ValueError("quaternion is zero")
                 for i in range(4):
                     q[i] = _q[i]
                 set_particle_quat(self._id, q)
@@ -642,6 +644,8 @@ cdef class ParticleHandle:
             def __set__(self, q):
                 check_type_or_throw_except(
                     q, 4, float, "vs_quat has to be an array-like of length 4")
+                if np.linalg.norm(q) == 0.:
+                    raise ValueError("quaternion is zero")
                 cdef Quaternion[double] _q
                 for i in range(4):
                     _q[i] = q[i]
@@ -680,6 +684,8 @@ cdef class ParticleHandle:
                     dist, 1, float, "The distance has to be given as a float.")
                 check_type_or_throw_except(
                     quat, 4, float, "The quaternion has to be given as a tuple of 4 floats.")
+                if np.linalg.norm(quat) == 0.:
+                    raise ValueError("quaternion is zero")
                 cdef Quaternion[double] q
                 for i in range(4):
                     q[i] = quat[i]
@@ -698,7 +704,7 @@ cdef class ParticleHandle:
         def vs_auto_relate_to(self, rel_to):
             """
             Setup this particle as virtual site relative to the particle
-            in argument ``rel_to``.
+            in argument ``rel_to``. A particle cannot relate to itself.
 
             Parameters
             -----------
@@ -713,6 +719,7 @@ cdef class ParticleHandle:
             check_type_or_throw_except(
                 rel_to, 1, int, "Argument of vs_auto_relate_to has to be of type ParticleHandle or int.")
             vs_relate_to(self._id, rel_to)
+            handle_errors('vs_auto_relate_to')
 
     IF DIPOLES:
         property dip:

@@ -140,16 +140,25 @@ class VirtualSites(ut.TestCase):
         system = self.system
         system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
         system.time_step = 0.01
+        system.cell_system.skin = 0.1
+        system.min_global_cut = 0.1
+        p1 = system.part.add(pos=[0.0, 0.0, 0.0], rotation=[1, 1, 1], id=1)
         p2 = system.part.add(pos=[1.0, 1.0, 1.0], rotation=[1, 1, 1], id=2)
         p3 = system.part.add(pos=[1.0, 1.0, 1.0], rotation=[1, 1, 1], id=3)
         # relating to anything else other than a particle or id is not allowed
         with self.assertRaisesRegex(ValueError, "Argument of vs_auto_relate_to has to be of type ParticleHandle or int"):
             p2.vs_auto_relate_to('0')
+        # relating to itself is not allowed
+        with self.assertRaisesRegex(ValueError, "A virtual site cannot relate to itself"):
+            p2.vs_auto_relate_to(p2)
         # relating to a deleted particle is not allowed
         with self.assertRaisesRegex(Exception, "No real particle with id 3 for virtual site with id 2"):
             p2.vs_auto_relate_to(p3)
             p3.remove()
             system.integrator.run(0, recalc_forces=True)
+        if system.cell_system.get_state()["n_nodes"] > 1:
+            with self.assertRaisesRegex(Exception, r"The distance between virtual and non-virtual particle \([0-9\.]+\) is larger than the minimum global cutoff"):
+                p2.vs_auto_relate_to(p1)
 
     def test_pos_vel_forces(self):
         system = self.system

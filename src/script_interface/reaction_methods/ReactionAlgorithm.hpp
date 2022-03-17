@@ -70,8 +70,8 @@ public:
           [this]() { return RE()->get_exclusion_range(); }},
          {"exclusion_radius_per_type",
           [this](Variant const &v) {
-            RE()->exclusion_radius_per_type = get_map<int, double>(
-                get_value<std::unordered_map<int, Variant>>(v));
+            RE()->set_exclusion_radius_per_type(get_map<int, double>(
+                get_value<std::unordered_map<int, Variant>>(v)));
           },
           [this]() { return make_map(RE()->exclusion_radius_per_type); }}});
   }

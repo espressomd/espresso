@@ -267,6 +267,23 @@ class FieldTest(ut.TestCase):
             np.testing.assert_allclose(
                 -gamma * (p.v - f_val), np.copy(p.f), atol=1e-12)
 
+    def test_invalid_interpolated_field(self):
+        h = np.array([1., 1., 1.])
+        Field = espressomd.constraints.FlowField
+
+        grid = espressomd.constraints.FlowField.field_from_fn(
+            self.system.box_l, h, self.force)
+
+        err_msg = "Constraint not compatible with box size"
+        with self.assertRaisesRegex(RuntimeError, err_msg):
+            field = Field(field=grid[:, :, :-2], grid_spacing=h, gamma=1.)
+            self.system.constraints.add(field)
+        with self.assertRaisesRegex(RuntimeError, err_msg):
+            field = Field(field=grid[:, 2:, :], grid_spacing=h, gamma=1.)
+            self.system.constraints.add(field)
+
+        self.assertEqual(len(self.system.constraints), 0)
+
 
 if __name__ == "__main__":
     ut.main()

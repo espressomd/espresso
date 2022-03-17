@@ -72,6 +72,7 @@ class H5mdTests(ut.TestCase):
 
     system.integrator.run(steps=0)
     system.time = 12.3
+    n_nodes = system.cell_system.get_state()["n_nodes"]
 
     @classmethod
     def setUpClass(cls):
@@ -85,6 +86,7 @@ class H5mdTests(ut.TestCase):
         h5.write()
         h5.flush()
         h5.close()
+        cls.h5_params = h5.get_params()
         cls.py_file = h5py.File(cls.temp_file, 'r')
         cls.py_pos = cls.py_file['particles/atoms/position/value'][1]
         cls.py_img = cls.py_file['particles/atoms/image/value'][1]
@@ -105,6 +107,23 @@ class H5mdTests(ut.TestCase):
     def test_opening(self):
         h5 = espressomd.io.writer.h5md.H5md(file_path=self.temp_file)
         h5.close()
+
+    @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
+    def test_exceptions(self):
+        h5md = espressomd.io.writer.h5md
+        h5_units = h5md.UnitSystem(time='ps', mass='u', length='m', charge='e')
+        temp_file = os.path.join(self.temp_dir.name, 'exceptions.h5')
+        # write a non-compliant file
+        with open(temp_file, 'w') as _:
+            pass
+        with self.assertRaisesRegex(RuntimeError, 'not a valid HDF5 file'):
+            h5md.H5md(file_path=temp_file, unit_system=h5_units)
+        # write a leftover backup file
+        os.remove(temp_file)
+        with open(temp_file + '.bak', 'w') as _:
+            pass
+        with self.assertRaisesRegex(RuntimeError, 'A backup of the .h5 file exists'):
+            h5md.H5md(file_path=temp_file, unit_system=h5_units)
 
     def test_box(self):
         np.testing.assert_allclose(self.py_box, self.box_l)
@@ -193,6 +212,18 @@ class H5mdTests(ut.TestCase):
             self.assertEqual(get_unit('particles/atoms/mass/value'), b'u')
         self.assertEqual(get_unit('particles/atoms/force/value'), b'm u ps-2')
         self.assertEqual(get_unit('particles/atoms/velocity/value'), b'm ps-1')
+
+    def test_getters(self):
+        self.assertEqual(self.h5_params['file_path'], self.temp_file)
+        self.assertEqual(os.path.abspath(self.h5_params['script_path']),
+                         os.path.abspath(__file__))
+        self.assertEqual(self.h5_params['time_unit'], 'ps')
+        if espressomd.has_features(['ELECTROSTATICS']):
+            self.assertEqual(self.h5_params['charge_unit'], 'e')
+        if espressomd.has_features(['MASS']):
+            self.assertEqual(self.h5_params['mass_unit'], 'u')
+        self.assertEqual(self.h5_params['force_unit'], 'm u ps-2')
+        self.assertEqual(self.h5_params['velocity_unit'], 'm ps-1')
 
     def test_links(self):
         time_ref = self.py_id_time

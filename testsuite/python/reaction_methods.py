@@ -269,19 +269,29 @@ class ReactionMethods(ut.TestCase):
                 x=1, **single_reaction_params)
         with self.assertRaisesRegex(ValueError, err_msg):
             espressomd.reaction_ensemble.ReactionEnsemble(
-                kT=1., exclusion_range=1., seed=12, x=1, exclusion_radius_per_type={1: 0.1})
+                kT=1., exclusion_range=1., seed=12, x=1)
         with self.assertRaisesRegex(ValueError, err_msg):
             espressomd.reaction_ensemble.ConstantpHEnsemble(
-                kT=1., exclusion_range=1., seed=12, x=1, constant_pH=2, exclusion_radius_per_type={1: 0.1})
+                kT=1., exclusion_range=1., seed=12, x=1, constant_pH=2)
         with self.assertRaisesRegex(ValueError, err_msg):
             espressomd.reaction_ensemble.WidomInsertion(
                 kT=1., seed=12, x=1)
         with self.assertRaisesRegex(ValueError, "Invalid value for 'kT'"):
             espressomd.reaction_ensemble.ReactionEnsemble(
-                kT=-1., exclusion_range=1., seed=12, exclusion_radius_per_type={1: 0.1})
+                kT=-1., exclusion_range=1., seed=12)
+
+        # check invalid exclusion ranges and radii
         with self.assertRaisesRegex(ValueError, "Invalid value for 'exclusion_range'"):
             espressomd.reaction_ensemble.ReactionEnsemble(
-                kT=1., exclusion_range=-1., seed=12, exclusion_radius_per_type={1: 0.1})
+                kT=1., seed=12, exclusion_range=-1.)
+        with self.assertRaisesRegex(ValueError, "Invalid excluded_radius value for type 1: radius -0.10"):
+            espressomd.reaction_ensemble.ReactionEnsemble(
+                kT=1., seed=12, exclusion_range=1., exclusion_radius_per_type={1: -0.1})
+        method = espressomd.reaction_ensemble.ReactionEnsemble(
+            kT=1., exclusion_range=1., seed=12, exclusion_radius_per_type={1: 0.1})
+        with self.assertRaisesRegex(ValueError, "Invalid excluded_radius value for type 2: radius -0.10"):
+            method.exclusion_radius_per_type = {2: -0.1}
+        self.assertEqual(list(method.exclusion_radius_per_type.keys()), [1])
 
 
 if __name__ == "__main__":

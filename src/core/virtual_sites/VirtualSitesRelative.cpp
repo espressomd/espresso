@@ -72,9 +72,7 @@ static Utils::Vector3d velocity(Particle const &p_ref, Particle const &p_vs) {
  * @brief Get real particle tracked by a virtual site.
  *
  * @param p Virtual site.
- * @return Pointer to real particle if @p p is a virtual site,
- *         otherwise nullptr. If the real particle is not found,
- *         queue a runtime error.
+ * @return Pointer to real particle.
  */
 static Particle *get_reference_particle(Particle const &p) {
   if (!p.is_virtual()) {

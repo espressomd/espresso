@@ -126,7 +126,7 @@ cdef class CellSystem:
             pairs = mpi_get_pairs(distance)
         else:
             pairs = self._get_pairs_of_types(distance, types)
-        handle_errors("")
+        handle_errors("Error in get_pairs()")
         return pairs
 
     def _get_pairs_of_types(self, distance, types):

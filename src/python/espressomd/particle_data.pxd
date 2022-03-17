@@ -175,7 +175,7 @@ cdef extern from "particle_data.hpp":
 
 cdef extern from "virtual_sites.hpp":
     IF VIRTUAL_SITES_RELATIVE == 1:
-        void vs_relate_to(int part_num, int relate_to)
+        void vs_relate_to(int part_num, int relate_to) except +
 
 cdef extern from "rotation.hpp":
     Vector3d convert_vector_body_to_space(const particle & p, const Vector3d & v)

@@ -205,6 +205,10 @@ class ParticleProperties(ut.TestCase):
             p1.vs_relative = (0, '5', (1, 0, 0, 0))
         with self.assertRaisesRegex(ValueError, "quaternion has to be given as a tuple of 4 floats"):
             p1.vs_relative = (0, 5.0, (1, 0, 0))
+        with self.assertRaisesRegex(ValueError, "quaternion is zero"):
+            p1.vs_relative = (0, 5.0, (0, 0, 0, 0))
+        with self.assertRaisesRegex(ValueError, "quaternion is zero"):
+            p1.vs_quat = [0, 0, 0, 0]
 
     @utx.skipIfMissingFeatures("DIPOLES")
     def test_contradicting_properties_dip_dipm(self):
@@ -216,6 +220,12 @@ class ParticleProperties(ut.TestCase):
         with self.assertRaises(ValueError):
             self.system.part.add(pos=[0, 0, 0], dip=[1, 1, 1],
                                  quat=[1.0, 1.0, 1.0, 1.0])
+
+    @utx.skipIfMissingFeatures(["ROTATION"])
+    def test_invalid_quat(self):
+        system = self.system
+        with self.assertRaisesRegex(ValueError, "quaternion is zero"):
+            system.part.add(pos=[0., 0., 0.], quat=[0., 0., 0., 0.])
 
     @utx.skipIfMissingFeatures("ELECTROSTATICS")
     def test_particle_selection(self):
