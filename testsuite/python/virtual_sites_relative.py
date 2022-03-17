@@ -39,6 +39,7 @@ class VirtualSites(ut.TestCase):
         self.system.integrator.set_vv()
         self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
             epsilon=0., sigma=0., cutoff=0., shift=0.)
+        self.system.virtual_sites = espressomd.virtual_sites.VirtualSitesOff()
 
     def multiply_quaternions(self, a, b):
         return np.array(
@@ -135,9 +136,20 @@ class VirtualSites(ut.TestCase):
         self.system.integrator.run(1)
         self.assertAlmostEqual(np.dot(p1.director, p2.director), 0.0)
 
-        # Check exceptions.
+    def test_vs_exceptions(self):
+        system = self.system
+        system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
+        system.time_step = 0.01
+        p2 = system.part.add(pos=[1.0, 1.0, 1.0], rotation=[1, 1, 1], id=2)
+        p3 = system.part.add(pos=[1.0, 1.0, 1.0], rotation=[1, 1, 1], id=3)
+        # relating to anything else other than a particle or id is not allowed
         with self.assertRaisesRegex(ValueError, "Argument of vs_auto_relate_to has to be of type ParticleHandle or int"):
             p2.vs_auto_relate_to('0')
+        # relating to a deleted particle is not allowed
+        with self.assertRaisesRegex(Exception, "No real particle with id 3 for virtual site with id 2"):
+            p2.vs_auto_relate_to(p3)
+            p3.remove()
+            system.integrator.run(0, recalc_forces=True)
 
     def test_pos_vel_forces(self):
         system = self.system
