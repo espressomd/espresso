@@ -19,10 +19,14 @@
 
 #define BOOST_TEST_MODULE rotation test
 #define BOOST_TEST_DYN_LINK
+
+#include "config.hpp"
+
+#ifdef ROTATION
+
 #include <boost/test/unit_test.hpp>
 
 #include "Particle.hpp"
-#include "config.hpp"
 #include "rotation.hpp"
 
 #include <utils/Vector.hpp>
@@ -32,8 +36,6 @@
 #include <limits>
 #include <stdexcept>
 #include <tuple>
-
-#ifdef ROTATION
 
 auto constexpr tol = 5. * 100. * std::numeric_limits<double>::epsilon();
 
@@ -216,4 +218,6 @@ BOOST_AUTO_TEST_CASE(convert_dip_to_quat_test) {
   }
 }
 #endif // DIPOLES
+#else  // ROTATION
+int main(int argc, char **argv) {}
 #endif // ROTATION
