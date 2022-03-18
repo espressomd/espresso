@@ -274,11 +274,21 @@ class ParticleProperties(ut.TestCase):
 
         np.testing.assert_equal(np.copy(p.image_box), [1, 1, 1])
 
-    def test_accessing_invalid_id_raises(self):
+    def test_invalid_particle_ids_exceptions(self):
         self.system.part.clear()
         handle_to_non_existing_particle = self.system.part.by_id(42)
-        with self.assertRaises(RuntimeError):
+        with self.assertRaisesRegex(RuntimeError, "Particle node for id 42 not found"):
             handle_to_non_existing_particle.id
+        p = self.system.part.add(pos=[0., 0., 0.], id=0)
+        with self.assertRaisesRegex(RuntimeError, "Particle node for id 42 not found"):
+            p._id = 42
+            p.node
+        for i in range(1, 10):
+            with self.assertRaisesRegex(ValueError, f"Invalid particle id: {-i}"):
+                p._id = -i
+                p.node
+            with self.assertRaisesRegex(ValueError, f"Invalid particle id: {-i}"):
+                self.system.part.add(pos=[0., 0., 0.], id=-i)
 
     def test_parallel_property_setters(self):
         s = self.system

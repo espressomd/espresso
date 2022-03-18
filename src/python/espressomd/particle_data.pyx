@@ -1747,84 +1747,83 @@ cdef class ParticleList:
         # Did we get a dictionary
         if len(args) == 1:
             if hasattr(args[0], "__getitem__"):
-                P = args[0]
+                particles_dict = args[0]
         else:
-            if len(args) == 0 and len(kwargs.keys()) != 0:
-                P = kwargs
+            if len(args) == 0 and len(kwargs) != 0:
+                particles_dict = kwargs
             else:
                 raise ValueError(
                     "add() takes either a dictionary or a bunch of keyword args.")
 
         # Check for presence of pos attribute
-        if "pos" not in P:
+        if "pos" not in particles_dict:
             raise ValueError(
                 "pos attribute must be specified for new particle")
 
-        if len(np.array(P["pos"]).shape) == 2:
-            return self._place_new_particles(P)
+        if len(np.array(particles_dict["pos"]).shape) == 2:
+            return self._place_new_particles(particles_dict)
         else:
-            return self._place_new_particle(P)
+            return self._place_new_particle(particles_dict)
 
-    def _place_new_particle(self, P):
+    def _place_new_particle(self, p_dict):
         # Handling of particle id
-        if "id" not in P:
+        if "id" not in p_dict:
             # Generate particle id
-            P["id"] = get_maximal_particle_id() + 1
+            p_dict["id"] = get_maximal_particle_id() + 1
         else:
-            if particle_exists(P["id"]):
-                raise Exception(f"Particle {P['id']} already exists.")
+            if particle_exists(p_dict["id"]):
+                raise Exception(f"Particle {p_dict['id']} already exists.")
 
         # Prevent setting of contradicting attributes
         IF DIPOLES:
-            if 'dip' in P and 'dipm' in P:
+            if 'dip' in p_dict and 'dipm' in p_dict:
                 raise ValueError("Contradicting attributes: dip and dipm. Setting \
 dip is sufficient as the length of the vector defines the scalar dipole moment.")
             IF ROTATION:
-                if 'dip' in P and 'quat' in P:
+                if 'dip' in p_dict and 'quat' in p_dict:
                     raise ValueError("Contradicting attributes: dip and quat. \
 Setting dip overwrites the rotation of the particle around the dipole axis. \
 Set quat and scalar dipole moment (dipm) instead.")
 
         # The ParticleList can not be used yet, as the particle
         # doesn't yet exist. Hence, the setting of position has to be
-        # done here. the code is from the pos:property of ParticleHandle
+        # done here.
         check_type_or_throw_except(
-            P["pos"], 3, float, "Position must be 3 floats.")
-        if place_particle(P["id"], make_Vector3d(P["pos"])) == -1:
+            p_dict["pos"], 3, float, "Position must be 3 floats.")
+        error_code = place_particle(p_dict["id"], make_Vector3d(p_dict["pos"]))
+        if error_code == -1:
             raise Exception("particle could not be set.")
 
-        # Pos is taken care of
-        del P["pos"]
-        pid = P["id"]
-        del P["id"]
+        # position is taken care of
+        del p_dict["pos"]
+        pid = p_dict.pop("id")
 
-        if P != {}:
-            self.by_id(pid).update(P)
+        if p_dict != {}:
+            self.by_id(pid).update(p_dict)
 
         return self.by_id(pid)
 
-    def _place_new_particles(self, Ps):
+    def _place_new_particles(self, p_list_dict):
         # Check if all entries have the same length
-        n_parts = len(Ps["pos"])
-        if not all(np.shape(Ps[k]) and len(Ps[k]) == n_parts for k in Ps):
+        n_parts = len(p_list_dict["pos"])
+        if not all(np.shape(v) and len(v) ==
+                   n_parts for v in p_list_dict.values()):
             raise ValueError(
                 "When adding several particles at once, all lists of attributes have to have the same size")
 
         # If particle ids haven't been provided, use free ones
         # beyond the highest existing one
-        if not "id" in Ps:
+        if "id" not in p_list_dict:
             first_id = get_maximal_particle_id() + 1
-            Ps["id"] = range(first_id, first_id + n_parts)
+            p_list_dict["id"] = range(first_id, first_id + n_parts)
 
         # Place the particles
         for i in range(n_parts):
-            P = {}
-            for k in Ps:
-                P[k] = Ps[k][i]
-            self._place_new_particle(P)
+            p_dict = {k: v[i] for k, v in p_list_dict.items()}
+            self._place_new_particle(p_dict)
 
         # Return slice of added particles
-        return self.by_ids(Ps["id"])
+        return self.by_ids(p_list_dict["id"])
 
     # Iteration over all existing particles
     def __iter__(self):

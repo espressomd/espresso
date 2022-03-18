@@ -487,8 +487,9 @@ void build_particle_node() { mpi_who_has(); }
  *  @brief Get the mpi rank which owns the particle with id.
  */
 int get_particle_node(int id) {
-  if (id < 0)
-    throw std::runtime_error("Invalid particle id!");
+  if (id < 0) {
+    throw std::domain_error("Invalid particle id: " + std::to_string(id));
+  }
 
   if (particle_node.empty())
     build_particle_node();
@@ -724,6 +725,9 @@ void mpi_place_particle(int node, int p_id, const Utils::Vector3d &pos) {
 }
 
 int place_particle(int p_id, Utils::Vector3d const &pos) {
+  if (p_id < 0) {
+    throw std::domain_error("Invalid particle id: " + std::to_string(p_id));
+  }
   if (particle_exists(p_id)) {
     mpi_place_particle(get_particle_node(p_id), p_id, pos);
 

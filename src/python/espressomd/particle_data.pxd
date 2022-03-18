@@ -74,7 +74,7 @@ cdef extern from "particle_data.hpp":
     # Setter/getter/modifier functions functions
     void prefetch_particle_data(vector[int] ids)
 
-    int place_particle(int part, const Vector3d & p)
+    int place_particle(int part, const Vector3d & p) except +
 
     void set_particle_v(int part, const Vector3d & v)
 
