@@ -454,7 +454,7 @@ def main_loop():
         new_box = np.ones(3) * controls.volume**(1. / 3.)
         if np.any(np.array(system.box_l) != new_box):
             for p in system.part:
-                p.pos *= new_box / system.box_l[0]
+                p.pos = p.pos * new_box / system.box_l[0]
             print("volume changed")
             system.force_cap = lj_cap
         system.box_l = new_box
