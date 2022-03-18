@@ -142,6 +142,8 @@ class TestLBWrite:
         vtk_boundary = self.parse_vtk(
             'vtk_out/boundary.vtk', 'boundary', shape)
         np.testing.assert_equal(vtk_boundary, node_boundary.astype(int))
+        if self.system.lbboundaries is None:
+            np.testing.assert_equal(np.sum(node_boundary), 0.)
 
     def test_print(self):
         '''
