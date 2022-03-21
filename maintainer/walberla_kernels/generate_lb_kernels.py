@@ -149,7 +149,6 @@ with code_generation_context.CodeGeneration() as ctx:
         )
 
     # generate unthermalized Lees-Edwards collision rule
-
     le_config = lbmpy.LBMConfig(stencil=stencil,
                                 method=lbmpy.Method.TRT,
                                 relaxation_rate=sp.Symbol("omega_shear"),

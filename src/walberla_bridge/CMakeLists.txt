@@ -21,7 +21,6 @@ set(WalberlaBridgeCodegen_SRC
     generated_kernels/StreamSweepDoublePrecision.cpp
     generated_kernels/InitialPDFsSetterSinglePrecision.cpp
     generated_kernels/InitialPDFsSetterDoublePrecision.cpp
-    generated_kernels/LeesEdwards_Collision.cpp
     generated_kernels/Dynamic_UBB_single_precision.cpp
     generated_kernels/Dynamic_UBB_double_precision.cpp)
 if(WALBERLA_USE_AVX)
