@@ -14,7 +14,7 @@ function(PYTHON_TEST)
   set(TEST_FILE ${TEST_FILE_CONFIGURED})
 
   if(NOT DEFINED TEST_MAX_NUM_PROC)
-    set(TEST_MAX_NUM_PROC 1)
+    set(TEST_MAX_NUM_PROC 4)
   endif()
 
   if(${TEST_MAX_NUM_PROC} GREATER ${TEST_NP})
@@ -61,20 +61,20 @@ function(CHECKPOINT_TEST)
   endif()
   if(TEST_SUFFIX)
     set(TEST_ARGUMENTS "Test_suffix_${TEST_SUFFIX}__${TEST_MODES}")
-    set(TEST_SUFFIX "${TEST_MODES}_${TEST_SUFFIX}")
+    set(TEST_SUFFIX "_${TEST_MODES}_${TEST_SUFFIX}")
   else()
     set(TEST_ARGUMENTS "Test__${TEST_MODES}")
-    set(TEST_SUFFIX "${TEST_MODES}")
+    set(TEST_SUFFIX "_${TEST_MODES}")
   endif()
   python_test(
-    FILE save_checkpoint.py MAX_NUM_PROC ${TEST_NPROCS} LABELS ${TEST_LABELS}
-    SUFFIX ${TEST_SUFFIX} ARGUMENTS ${TEST_ARGUMENTS} DEPENDENCIES
-    unittest_generator.py)
+    FILE save_checkpoint.py MAX_NUM_PROC ${TEST_MAX_NUM_PROC} LABELS
+    ${TEST_LABELS} SUFFIX ${TEST_SUFFIX} ARGUMENTS ${TEST_ARGUMENTS}
+    DEPENDENCIES unittest_generator.py)
   python_test(
     FILE
     test_checkpoint.py
     MAX_NUM_PROC
-    ${TEST_NPROCS}
+    ${TEST_MAX_NUM_PROC}
     LABELS
     ${TEST_LABELS}
     SUFFIX
@@ -127,6 +127,7 @@ python_test(FILE mass-and-rinertia_per_particle.py MAX_NUM_PROC 2 LABELS long)
 python_test(FILE integrate.py MAX_NUM_PROC 4)
 python_test(FILE interactions_bond_angle.py MAX_NUM_PROC 4)
 python_test(FILE interactions_bonded_interface.py MAX_NUM_PROC 4)
+python_test(FILE interactions_bonded_interface.py MAX_NUM_PROC 1 SUFFIX 1_core)
 python_test(FILE interactions_bonded.py MAX_NUM_PROC 2)
 python_test(FILE interactions_dihedral.py MAX_NUM_PROC 4)
 python_test(FILE interactions_non-bonded_interface.py MAX_NUM_PROC 4)
@@ -264,6 +265,7 @@ python_test(FILE elc_vs_analytic.py MAX_NUM_PROC 2)
 python_test(FILE rotation.py MAX_NUM_PROC 1)
 python_test(FILE shapes.py MAX_NUM_PROC 1)
 python_test(FILE h5md.py MAX_NUM_PROC 2)
+python_test(FILE h5md.py MAX_NUM_PROC 1 SUFFIX 1_core)
 python_test(FILE mdanalysis.py MAX_NUM_PROC 2)
 python_test(FILE p3m_fft.py MAX_NUM_PROC 6)
 if(${TEST_NP} GREATER_EQUAL 8)

@@ -56,7 +56,7 @@ class TestLBWrite:
             self.system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(
                 shape=espressomd.shapes.Wall(normal=[1, 0, 0], dist=1.5)))
             self.system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(
-                shape=espressomd.shapes.Wall(normal=[-1, 0, 0], dist=-10.5)))
+                shape=espressomd.shapes.Wall(normal=[-1, 0, 0], dist=-8.5)))
         return lbf
 
     def parse_vtk(self, filepath, name, shape):
@@ -142,6 +142,8 @@ class TestLBWrite:
         vtk_boundary = self.parse_vtk(
             'vtk_out/boundary.vtk', 'boundary', shape)
         np.testing.assert_equal(vtk_boundary, node_boundary.astype(int))
+        if self.system.lbboundaries is None:
+            np.testing.assert_equal(np.sum(node_boundary), 0.)
 
     def test_print(self):
         '''

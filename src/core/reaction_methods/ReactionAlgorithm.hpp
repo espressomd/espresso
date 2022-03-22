@@ -61,18 +61,7 @@ public:
     }
     this->kT = kT;
     this->exclusion_range = exclusion_range;
-    for (auto const &item : exclusion_radius_per_type) {
-      auto type = item.first;
-      auto exclusion_radius = item.second;
-      if (exclusion_radius < 0) {
-        std::stringstream ss;
-        ss << "Invalid excluded_radius value for type " << type
-           << " value: " << exclusion_radius;
-        std::string error_message = ss.str();
-        throw std::domain_error(error_message);
-      }
-    }
-    this->exclusion_radius_per_type = exclusion_radius_per_type;
+    set_exclusion_radius_per_type(exclusion_radius_per_type);
     update_volume();
   }
 
@@ -109,6 +98,20 @@ public:
     volume = new_volume;
   }
   void update_volume();
+  void
+  set_exclusion_radius_per_type(std::unordered_map<int, double> const &map) {
+    for (auto const &item : map) {
+      auto const type = item.first;
+      auto const exclusion_radius = item.second;
+      if (exclusion_radius < 0.) {
+        throw std::domain_error("Invalid excluded_radius value for type " +
+                                std::to_string(type) + ": radius " +
+                                std::to_string(exclusion_radius));
+      }
+    }
+    exclusion_radius_per_type = map;
+  }
+
   virtual int do_reaction(int reaction_steps);
   void check_reaction_method() const;
   void remove_constraint() { m_reaction_constraint = ReactionConstraint::NONE; }

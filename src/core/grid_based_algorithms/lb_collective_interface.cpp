@@ -109,14 +109,14 @@ auto mpi_lb_get_populations(Utils::Vector3i const &index) {
 
 REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_populations)
 
-auto mpi_lb_get_boundary_flag(Utils::Vector3i const &index) {
+boost::optional<int> mpi_lb_get_boundary_flag(Utils::Vector3i const &index) {
   return detail::lb_calc(index, [&](auto index) {
 #ifdef LB_BOUNDARIES
     auto const linear_index =
         get_linear_index(lblattice.local_index(index), lblattice.halo_grid);
     return lbfields[linear_index].boundary;
 #else
-    return false;
+    return 0;
 #endif
   });
 }

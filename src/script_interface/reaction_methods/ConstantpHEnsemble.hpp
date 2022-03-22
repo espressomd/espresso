@@ -28,6 +28,7 @@
 #include "core/reaction_methods/ReactionAlgorithm.hpp"
 
 #include <memory>
+#include <unordered_map>
 
 namespace ScriptInterface {
 namespace ReactionMethods {
@@ -53,8 +54,8 @@ public:
         get_value<int>(params, "seed"), get_value<double>(params, "kT"),
         get_value<double>(params, "exclusion_range"),
         get_value<double>(params, "constant_pH"),
-        get_map<int, double>(get_value_or<std::unordered_map<int, Variant>>(
-            params, "exclusion_radius_per_type", {})));
+        get_value_or<std::unordered_map<int, double>>(
+            params, "exclusion_radius_per_type", {}));
   }
 
 private:

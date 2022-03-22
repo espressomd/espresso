@@ -130,12 +130,7 @@ protected:
     }
 
     if (method == "get_map") {
-      std::unordered_map<KeyType, Variant> ret;
-
-      for (auto const &kv : m_elements)
-        ret[kv.first] = kv.second;
-
-      return ret;
+      return make_unordered_map_of_variants(m_elements);
     }
 
     if (method == "keys") {

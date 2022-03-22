@@ -150,7 +150,7 @@ cdef class PScriptInterface:
 
         res = variant_to_python_object(
             self.sip.get().call_method(to_char_pointer(method), parameters))
-        handle_errors("")
+        handle_errors(f'while calling method {method}()')
         return res
 
     def name(self):

@@ -29,6 +29,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace ScriptInterface {
@@ -70,10 +71,13 @@ public:
           [this]() { return RE()->get_exclusion_range(); }},
          {"exclusion_radius_per_type",
           [this](Variant const &v) {
-            RE()->exclusion_radius_per_type = get_map<int, double>(
-                get_value<std::unordered_map<int, Variant>>(v));
+            RE()->set_exclusion_radius_per_type(
+                get_value<std::unordered_map<int, double>>(v));
           },
-          [this]() { return make_map(RE()->exclusion_radius_per_type); }}});
+          [this]() {
+            return make_unordered_map_of_variants(
+                RE()->exclusion_radius_per_type);
+          }}});
   }
 
   Variant do_call_method(std::string const &name,
