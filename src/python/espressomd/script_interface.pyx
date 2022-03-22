@@ -407,7 +407,7 @@ class ScriptObjectMap(ScriptObjectRegistry):
     def remove(self, key):
         """
         Remove the element with the given key.
-        This is a noop if the key does not exist.
+        This is a no-op if the key does not exist.
         """
         self.__delitem__(key)
 

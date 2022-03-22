@@ -153,7 +153,7 @@ Example::
     system.bonded_inter.add(h1)
     system.bonded_inter.add(h2)
     system.bond_breakage[h1] = espressomd.bond_breakage.BreakageSpec(
-        breakage_length=0.5, action_type="revert_center_bond")
+        breakage_length=0.5, action_type="delete_bond")
 
     p1 = system.part.add(id=1, pos=[0.00, 0.0, 0.0], v=[0.0, 0.0, 0.0])
     p2 = system.part.add(id=2, pos=[0.46, 0.0, 0.0], v=[0.1, 0.0, 0.0])
