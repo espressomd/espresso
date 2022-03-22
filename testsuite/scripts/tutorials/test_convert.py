@@ -85,11 +85,18 @@ plt.show()
             "version": ".".join(map(str, sys.version_info[:3]))}
     }
 
-    def failed_to_run(self, cmd):
-        traceback.print_exc()
-        self.fail('Could not run @CMAKE_BINARY_DIR@/pypresso '
-                  '@CMAKE_BINARY_DIR@/doc/tutorials/convert.py ' +
-                  ' '.join(cmd))
+    def run_command(self, cmd, output=None):
+        error_msg = ("Could not run @CMAKE_BINARY_DIR@/pypresso "
+                     "@CMAKE_BINARY_DIR@/doc/tutorials/convert.py "
+                     f"{' '.join(cmd)}")
+        try:
+            args = convert.parser.parse_args(cmd)
+            args.callback(args)
+        except BaseException:
+            traceback.print_exc()
+            self.fail(error_msg)
+        if output is not None:
+            self.assertTrue(os.path.isfile(output), f"{output} not created")
 
     def test_html_wrapper(self):
         f_input = '@CMAKE_CURRENT_BINARY_DIR@/test_convert_notebook.ipynb'
@@ -114,12 +121,7 @@ plt.show()
                '--scripts', f_script,
                '--substitutions', 'global_var=20',
                '--execute']
-        try:
-            args = convert.parser.parse_args(cmd)
-            args.callback(args)
-        except BaseException:
-            self.failed_to_run(cmd)
-        self.assertTrue(os.path.isfile(f_output), f_output + ' not created')
+        self.run_command(cmd, f_output)
         # read processed notebook
         with open(f_output, encoding='utf-8') as f:
             nb_output = nbformat.read(f, as_version=4)
@@ -193,12 +195,7 @@ plt.show()
                '--output', f_output,
                '--substitutions', 'global_var=20',
                '--exercise2', '--remove-empty-cells']
-        try:
-            args = convert.parser.parse_args(cmd)
-            args.callback(args)
-        except BaseException:
-            self.failed_to_run(cmd)
-        self.assertTrue(os.path.isfile(f_output), f_output + ' not created')
+        self.run_command(cmd, f_output)
         # read processed notebook
         with open(f_output, encoding='utf-8') as f:
             nb_output = nbformat.read(f, as_version=4)
@@ -246,11 +243,7 @@ plt.show()
             nbformat.write(nb, f)
         # run command and check for errors
         cmd = ['exercise2', '--to-py', f_input]
-        try:
-            args = convert.parser.parse_args(cmd)
-            args.callback(args)
-        except BaseException:
-            self.failed_to_run(cmd)
+        self.run_command(cmd, f_input)
         # read processed notebook
         with open(f_input, encoding='utf-8') as f:
             nb_output = nbformat.read(f, as_version=4)
@@ -267,11 +260,7 @@ plt.show()
         self.assertEqual(next(cells, 'EOF'), 'EOF')
         # run command and check for errors
         cmd = ['exercise2', '--to-md', f_input]
-        try:
-            args = convert.parser.parse_args(cmd)
-            args.callback(args)
-        except BaseException:
-            self.failed_to_run(cmd)
+        self.run_command(cmd, f_input)
         # read processed notebook
         with open(f_input, encoding='utf-8') as f:
             nb_output = nbformat.read(f, as_version=4)
@@ -305,11 +294,7 @@ plt.show()
             nbformat.write(nb, f)
         # run command and check for errors
         cmd = ['exercise2', '--pep8', f_input]
-        try:
-            args = convert.parser.parse_args(cmd)
-            args.callback(args)
-        except BaseException:
-            self.failed_to_run(cmd)
+        self.run_command(cmd)
         # read processed notebook
         with open(f_input, encoding='utf-8') as f:
             nb_output = nbformat.read(f, as_version=4)

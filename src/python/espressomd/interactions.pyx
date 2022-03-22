@@ -24,7 +24,7 @@ import collections
 include "myconfig.pxi"
 from . import utils
 from .utils import is_valid_type
-from .utils cimport check_type_or_throw_except
+from .utils cimport check_type_or_throw_except, handle_errors
 from .script_interface import ScriptObjectRegistry, ScriptInterfaceHelper, script_interface_register
 
 
@@ -73,9 +73,7 @@ cdef class NonBondedInteraction:
 
         """
         temp_params = self._get_params_from_es_core()
-        if self._params != temp_params:
-            return False
-        return True
+        return self._params == temp_params
 
     def get_params(self):
         """Get interaction parameters.
@@ -116,14 +114,15 @@ cdef class NonBondedInteraction:
 
         # If this instance refers to an interaction defined in the ESPResSo core,
         # load the parameters from there
+        is_valid_ia = self._part_types[0] >= 0 and self._part_types[1] >= 0
 
-        if self._part_types[0] >= 0 and self._part_types[1] >= 0:
+        if is_valid_ia:
             self._params = self._get_params_from_es_core()
 
         # Put in values given by the user
         self._params.update(p)
 
-        if self._part_types[0] >= 0 and self._part_types[1] >= 0:
+        if is_valid_ia:
             self._set_params_in_es_core()
 
         # update interaction dict when user sets interaction
@@ -136,6 +135,10 @@ cdef class NonBondedInteraction:
                 self._part_types[1]][p_key] = new_params[p_key]
         self.user_interactions[self._part_types[0]][
             self._part_types[1]]['type_name'] = self.type_name()
+
+        # defer exception (core and interface must always agree on parameters)
+        if is_valid_ia:
+            handle_errors(f'setting {self.type_name()} raised an error')
 
     def validate_params(self):
         """Check that parameters are valid.

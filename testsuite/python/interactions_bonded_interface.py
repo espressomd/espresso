@@ -279,6 +279,52 @@ class BondedInteractions(ut.TestCase):
         with self.assertRaisesRegex(ValueError, error_msg_not_yet_defined):
             self.system.bonded_inter[0]
 
+        # check cutoff exceptions
+        skin = self.system.cell_system.skin
+        box_l = self.system.box_l
+        node_grid = self.system.cell_system.node_grid
+        n_nodes = self.system.cell_system.get_state()['n_nodes']
+        max_ia_cutoff = min(box_l / node_grid) - skin * (n_nodes > 1)
+        err_msg = r"while calling method insert\(\): ERROR: "
+        if n_nodes == 1:
+            safe_cut = 0.5 * max_ia_cutoff
+            err_msg += r"number of cells 1 is smaller than minimum 8"
+        else:
+            safe_cut = 1.0 * max_ia_cutoff
+            err_msg += r"interaction range .+ in direction [0-2] is larger than the local box size"
+
+        # a bond with exactly the right cutoff can be added
+        h0 = espressomd.interactions.HarmonicBond(k=1., r_0=0., r_cut=safe_cut)
+        self.system.bonded_inter.add(h0)
+        self.assertEqual(len(self.system.bonded_inter), 1)
+        self.system.bonded_inter.clear()
+
+        # a bond with a cutoff larger than the box can be added, but throws
+        big_cut = 1.001 * safe_cut
+        h1 = espressomd.interactions.HarmonicBond(k=1., r_0=0., r_cut=big_cut)
+        with self.assertRaisesRegex(Exception, err_msg):
+            self.system.bonded_inter.add(h1)
+        self.assertEqual(len(self.system.bonded_inter), 1)
+        self.system.bonded_inter.clear()
+
+        # a dihedral halves the cutoff
+        safe_cut /= 2.
+        h2 = espressomd.interactions.HarmonicBond(k=1., r_0=0., r_cut=safe_cut)
+        self.system.bonded_inter.add(h2)
+        dihe = espressomd.interactions.Dihedral(bend=1., mult=1, phase=0.)
+        self.system.bonded_inter.add(dihe)
+        self.assertEqual(len(self.system.bonded_inter), 2)
+        self.system.bonded_inter.clear()
+
+        # a dihedral halves the cutoff, safe cutoffs become unsafe
+        half_cut = big_cut / 2.
+        h3 = espressomd.interactions.HarmonicBond(k=1., r_0=0., r_cut=half_cut)
+        self.system.bonded_inter.add(h3)
+        with self.assertRaisesRegex(Exception, err_msg):
+            self.system.bonded_inter.add(dihe)
+        self.assertEqual(len(self.system.bonded_inter), 2)
+        self.system.bonded_inter.clear()
+
 
 if __name__ == "__main__":
     ut.main()

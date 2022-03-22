@@ -52,7 +52,7 @@ class ReactionEnsembleTest(ut.TestCase):
     system.cell_system.skin = 0.4
     system.time_step = 0.01
     RE = espressomd.reaction_ensemble.ConstantpHEnsemble(
-        kT=1.0, exclusion_radius=1, seed=44, constant_pH=pH)
+        kT=1.0, exclusion_range=1, seed=44, constant_pH=pH)
 
     @classmethod
     def setUpClass(cls):

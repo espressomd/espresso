@@ -1589,20 +1589,15 @@ class openGLLive():
         self.depth = 0
 
         # LOOK FOR LB ACTOR
-        if self.specs['LB_draw_velocity_plane'] or \
-                self.specs['LB_draw_nodes'] or \
-                self.specs['LB_draw_node_boundaries']:
-            lb_types = [espressomd.lb.LBFluidWalberla]
-            for a in self.system.actors:
-                if isinstance(a, tuple(lb_types)):
-                    # if 'agrid' in pa:
-                    self.lb_params = a.get_params()
-                    self.lb = a
-                    self.lb_is_cpu = True
-                    break
+        lb_types = [espressomd.lb.LBFluidWalberla]
+        for actor in self.system.actors:
+            if isinstance(actor, tuple(lb_types)):
+                self.lb_params = actor.get_params()
+                self.lb = actor
+                self.lb_is_cpu = True
+                break
 
         if self.specs['LB_draw_velocity_plane']:
-
             if self.specs['LB_plane_axis'] == 0:
                 pn = [1.0, 0.0, 0.0]
                 self.lb_plane_b1 = [0.0, 1.0, 0.0]

@@ -53,7 +53,7 @@ class ConstantpHTest(ut.TestCase):
 
         RE = espressomd.reaction_ensemble.ConstantpHEnsemble(
             kT=1.0,
-            exclusion_radius=1,
+            exclusion_range=1,
             seed=44,
             constant_pH=pH)
         RE.add_reaction(

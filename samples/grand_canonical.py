@@ -38,7 +38,7 @@ import espressomd
 import espressomd.reaction_ensemble
 import espressomd.electrostatics
 
-required_features = ["P3M", "EXTERNAL_FORCES", "WCA"]
+required_features = ["P3M", "WCA"]
 espressomd.assert_features(required_features)
 
 parser = argparse.ArgumentParser(epilog=__doc__ + epilog)
@@ -89,7 +89,7 @@ for type_1 in types:
             epsilon=wca_eps, sigma=wca_sig)
 
 RE = espressomd.reaction_ensemble.ReactionEnsemble(
-    kT=temperature, exclusion_radius=wca_sig, seed=3)
+    kT=temperature, exclusion_range=wca_sig, seed=3)
 RE.add_reaction(
     gamma=cs_bulk**2 * np.exp(excess_chemical_potential_pair / temperature),
     reactant_types=[], reactant_coefficients=[], product_types=[1, 2],

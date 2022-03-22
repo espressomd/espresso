@@ -515,6 +515,4 @@ cdef class System:
 
         """
         check_type_or_throw_except(type, 1, int, "type must be 1 int")
-        number = number_of_particles_with_type(type)
-        handle_errors("")
-        return int(number)
+        return number_of_particles_with_type(type)

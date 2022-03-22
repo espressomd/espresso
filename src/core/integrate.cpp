@@ -61,6 +61,7 @@
 #include <boost/range/algorithm/min_element.hpp>
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <csignal>
 #include <functional>
@@ -421,6 +422,9 @@ int integrate(int n_steps, int reuse_forces) {
 
 int python_integrate(int n_steps, bool recalc_forces_par,
                      bool reuse_forces_par) {
+
+  assert(n_steps >= 0);
+
   // Override the signal handler so that the integrator obeys Ctrl+C
   SignalHandler sa(SIGINT, [](int) { ctrl_C = 1; });
 
@@ -431,12 +435,6 @@ int python_integrate(int n_steps, bool recalc_forces_par,
       runtimeErrorMsg() << "cannot reuse old forces and recalculate forces";
     }
     reuse_forces = -1;
-  }
-
-  /* go on with integrate <n_steps> */
-  if (n_steps < 0) {
-    runtimeErrorMsg() << "illegal number of steps (must be >0)";
-    return ES_ERROR;
   }
 
   /* if skin wasn't set, do an educated guess now */
@@ -554,7 +552,7 @@ REGISTER_CALLBACK(mpi_set_time_step_local)
 
 void mpi_set_time_step(double time_s) {
   if (time_s <= 0.)
-    throw std::invalid_argument("time_step must be > 0.");
+    throw std::domain_error("time_step must be > 0.");
   if (lb_lbfluid_get_lattice_switch() != ActiveLB::NONE)
     check_tau_time_step_consistency(lb_lbfluid_get_tau(), time_s);
   mpi_call_all(mpi_set_time_step_local, time_s);
