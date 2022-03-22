@@ -49,7 +49,7 @@ struct H5MD_Specification {
     bool is_link;
   };
 
-  static std::array<Dataset, 30> DATASETS;
+  static std::array<Dataset, 39> DATASETS;
 
   static bool is_compliant(std::string const &filename) {
     h5xx::file h5md_file(filename, h5xx::file::in);

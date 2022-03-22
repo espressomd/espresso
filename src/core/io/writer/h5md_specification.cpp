@@ -27,10 +27,26 @@
 namespace Writer {
 namespace H5md {
 
-std::array<H5MD_Specification::Dataset, 30> H5MD_Specification::DATASETS = {{
+std::array<H5MD_Specification::Dataset, 39> H5MD_Specification::DATASETS = {{
     {"particles/atoms/box/edges", "value", 2, H5T_NATIVE_DOUBLE, 3, false},
     {"particles/atoms/box/edges", "step", 1, H5T_NATIVE_INT, 1, true},
     {"particles/atoms/box/edges", "time", 1, H5T_NATIVE_DOUBLE, 1, true},
+    {"particles/atoms/lees_edwards/offset", "value", 2, H5T_NATIVE_DOUBLE, 1,
+     false},
+    {"particles/atoms/lees_edwards/offset", "step", 1, H5T_NATIVE_INT, 1, true},
+    {"particles/atoms/lees_edwards/offset", "time", 1, H5T_NATIVE_DOUBLE, 1,
+     true},
+    {"particles/atoms/lees_edwards/direction", "value", 2, H5T_NATIVE_INT, 1,
+     false},
+    {"particles/atoms/lees_edwards/direction", "step", 1, H5T_NATIVE_INT, 1,
+     true},
+    {"particles/atoms/lees_edwards/direction", "time", 1, H5T_NATIVE_DOUBLE, 1,
+     true},
+    {"particles/atoms/lees_edwards/normal", "value", 2, H5T_NATIVE_INT, 1,
+     false},
+    {"particles/atoms/lees_edwards/normal", "step", 1, H5T_NATIVE_INT, 1, true},
+    {"particles/atoms/lees_edwards/normal", "time", 1, H5T_NATIVE_DOUBLE, 1,
+     true},
     {"particles/atoms/mass", "value", 2, H5T_NATIVE_DOUBLE, 1, false},
     {"particles/atoms/mass", "step", 1, H5T_NATIVE_INT, 1, true},
     {"particles/atoms/mass", "time", 1, H5T_NATIVE_DOUBLE, 1, true},

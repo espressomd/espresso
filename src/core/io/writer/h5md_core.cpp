@@ -305,6 +305,31 @@ void write_td_particle_property(hsize_t prefix, hsize_t n_part_global,
 void File::write(const ParticleRange &particles, double time, int step,
                  BoxGeometry const &geometry) {
   write_box(geometry, datasets["particles/atoms/box/edges/value"]);
+  auto const &lebc = geometry.clees_edwards_bc();
+  {
+    h5xx::dataset &dataset =
+        datasets["particles/atoms/lees_edwards/offset/value"];
+    auto const extents = static_cast<h5xx::dataspace>(dataset).extents();
+    extend_dataset(dataset, Vector2hs{1, 0});
+    h5xx::write_dataset(dataset, Utils::Vector<double, 1>{lebc.pos_offset},
+                        h5xx::slice(Vector2hs{extents[0], 0}, Vector2hs{1, 1}));
+  }
+  {
+    h5xx::dataset &dataset =
+        datasets["particles/atoms/lees_edwards/direction/value"];
+    auto const extents = static_cast<h5xx::dataspace>(dataset).extents();
+    extend_dataset(dataset, Vector2hs{1, 0});
+    h5xx::write_dataset(dataset, Utils::Vector<int, 1>{lebc.shear_direction},
+                        h5xx::slice(Vector2hs{extents[0], 0}, Vector2hs{1, 1}));
+  }
+  {
+    h5xx::dataset &dataset =
+        datasets["particles/atoms/lees_edwards/normal/value"];
+    auto const extents = static_cast<h5xx::dataspace>(dataset).extents();
+    extend_dataset(dataset, Vector2hs{1, 0});
+    h5xx::write_dataset(dataset, Utils::Vector<int, 1>{lebc.shear_plane_normal},
+                        h5xx::slice(Vector2hs{extents[0], 0}, Vector2hs{1, 1}));
+  }
   write_connectivity(particles);
 
   int const n_part_local = particles.size();
