@@ -21,8 +21,10 @@
 
 #include "h5md_core.hpp"
 
+#include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "h5md_specification.hpp"
+#include "lees_edwards/LeesEdwardsBC.hpp"
 #include "version.hpp"
 
 #include <utils/Vector.hpp>
@@ -83,22 +85,28 @@ static void write_dataset(value_type const &data, h5xx::dataset &dataset,
   h5xx::write_dataset(dataset, data, h5xx::slice(offset, count));
 }
 
-void write_script(std::string const &target,
-                  boost::filesystem::path const &script_path) {
-  std::ifstream scriptfile(script_path.string());
-  std::string buffer((std::istreambuf_iterator<char>(scriptfile)),
-                     std::istreambuf_iterator<char>());
-  auto file = h5xx::file(target, h5xx::file::out);
-  auto const group = h5xx::group(file, "parameters/files");
-  h5xx::write_attribute(group, "script", buffer);
-  file.close();
+static void write_script(std::string const &target,
+                         boost::filesystem::path const &script_path) {
+  if (!script_path.empty()) {
+    std::ifstream scriptfile(script_path.string());
+    std::string buffer((std::istreambuf_iterator<char>(scriptfile)),
+                       std::istreambuf_iterator<char>());
+    auto file = h5xx::file(target, h5xx::file::out);
+    auto const group = h5xx::group(file, "parameters/files");
+    h5xx::write_attribute(group, "script", buffer);
+    file.close();
+  }
 }
 
 /* Initialize the file related variables after parameters have been set. */
 void File::init_file(std::string const &file_path) {
   m_backup_filename = file_path + ".bak";
-  boost::filesystem::path script_path(m_script_path);
-  m_absolute_script_path = boost::filesystem::canonical(script_path);
+  if (m_script_path.empty()) {
+    m_absolute_script_path = boost::filesystem::path();
+  } else {
+    boost::filesystem::path script_path(m_script_path);
+    m_absolute_script_path = boost::filesystem::canonical(script_path);
+  }
   bool file_exists = boost::filesystem::exists(file_path);
   bool backup_file_exists = boost::filesystem::exists(m_backup_filename);
   /* Perform a barrier synchronization. Otherwise one process might already
@@ -188,13 +196,6 @@ void File::load_file(const std::string &file_path) {
   load_datasets();
 }
 
-static void write_box(const BoxGeometry &geometry, h5xx::dataset &dataset) {
-  auto const extents = static_cast<h5xx::dataspace>(dataset).extents();
-  extend_dataset(dataset, Vector2hs{1, 0});
-  h5xx::write_dataset(dataset, geometry.length(),
-                      h5xx::slice(Vector2hs{extents[0], 0}, Vector2hs{1, 3}));
-}
-
 void write_attributes(const std::string &espresso_version,
                       h5xx::file &h5md_file) {
   auto h5md_group = h5xx::group(h5md_file, "h5md");
@@ -225,21 +226,22 @@ void File::write_units() {
                         m_time_unit);
 }
 
-void hard_link(h5xx::file const &file, std::string from, std::string to) {
-  if (H5Lcreate_hard(file.hid(), from.c_str(), file.hid(), to.c_str(),
-                     H5P_DEFAULT, H5P_DEFAULT) < 0) {
-    throw std::runtime_error("Error creating hard link for " + to);
-  }
-}
-
 void File::create_hard_links() {
   std::string path_step = "particles/atoms/id/step";
   std::string path_time = "particles/atoms/id/time";
   for (auto &ds : H5MD_Specification::DATASETS) {
-    if (ds.name == "step" and ds.is_link) {
-      hard_link(m_h5md_file, path_step, ds.path());
-    } else if (ds.name == "time" and ds.is_link) {
-      hard_link(m_h5md_file, path_time, ds.path());
+    if (ds.is_link) {
+      char const *from = nullptr;
+      if (ds.name == "step") {
+        from = path_step.c_str();
+      } else if (ds.name == "time") {
+        from = path_time.c_str();
+      }
+      assert(from != nullptr);
+      if (H5Lcreate_hard(m_h5md_file.hid(), from, m_h5md_file.hid(),
+                         ds.path().c_str(), H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        throw std::runtime_error("Error creating hard link for " + ds.path());
+      }
     }
   }
 }
@@ -284,6 +286,7 @@ template <> struct slice_info<2> {
 };
 
 } // namespace detail
+
 template <std::size_t dim, typename Op>
 void write_td_particle_property(hsize_t prefix, hsize_t n_part_global,
                                 ParticleRange const &particles,
@@ -302,34 +305,41 @@ void write_td_particle_property(hsize_t prefix, hsize_t n_part_global,
   }
 }
 
+static void write_box(BoxGeometry const &geometry, h5xx::dataset &dataset) {
+  auto const extents = static_cast<h5xx::dataspace>(dataset).extents();
+  extend_dataset(dataset, Vector2hs{1, 0});
+  h5xx::write_dataset(dataset, geometry.length(),
+                      h5xx::slice(Vector2hs{extents[0], 0}, Vector2hs{1, 3}));
+}
+
+static void write_le_off(LeesEdwardsBC const &lebc, h5xx::dataset &dataset) {
+  auto const extents = static_cast<h5xx::dataspace>(dataset).extents();
+  extend_dataset(dataset, Vector2hs{1, 0});
+  h5xx::write_dataset(dataset, Utils::Vector<double, 1>{lebc.pos_offset},
+                      h5xx::slice(Vector2hs{extents[0], 0}, Vector2hs{1, 1}));
+}
+
+static void write_le_dir(LeesEdwardsBC const &lebc, h5xx::dataset &dataset) {
+  auto const extents = static_cast<h5xx::dataspace>(dataset).extents();
+  extend_dataset(dataset, Vector2hs{1, 0});
+  h5xx::write_dataset(dataset, Utils::Vector<int, 1>{lebc.shear_direction},
+                      h5xx::slice(Vector2hs{extents[0], 0}, Vector2hs{1, 1}));
+}
+
+static void write_le_nrm(LeesEdwardsBC const &lebc, h5xx::dataset &dataset) {
+  auto const extents = static_cast<h5xx::dataspace>(dataset).extents();
+  extend_dataset(dataset, Vector2hs{1, 0});
+  h5xx::write_dataset(dataset, Utils::Vector<int, 1>{lebc.shear_plane_normal},
+                      h5xx::slice(Vector2hs{extents[0], 0}, Vector2hs{1, 1}));
+}
+
 void File::write(const ParticleRange &particles, double time, int step,
                  BoxGeometry const &geometry) {
-  write_box(geometry, datasets["particles/atoms/box/edges/value"]);
   auto const &lebc = geometry.lees_edwards_bc();
-  {
-    h5xx::dataset &dataset =
-        datasets["particles/atoms/lees_edwards/offset/value"];
-    auto const extents = static_cast<h5xx::dataspace>(dataset).extents();
-    extend_dataset(dataset, Vector2hs{1, 0});
-    h5xx::write_dataset(dataset, Utils::Vector<double, 1>{lebc.pos_offset},
-                        h5xx::slice(Vector2hs{extents[0], 0}, Vector2hs{1, 1}));
-  }
-  {
-    h5xx::dataset &dataset =
-        datasets["particles/atoms/lees_edwards/direction/value"];
-    auto const extents = static_cast<h5xx::dataspace>(dataset).extents();
-    extend_dataset(dataset, Vector2hs{1, 0});
-    h5xx::write_dataset(dataset, Utils::Vector<int, 1>{lebc.shear_direction},
-                        h5xx::slice(Vector2hs{extents[0], 0}, Vector2hs{1, 1}));
-  }
-  {
-    h5xx::dataset &dataset =
-        datasets["particles/atoms/lees_edwards/normal/value"];
-    auto const extents = static_cast<h5xx::dataspace>(dataset).extents();
-    extend_dataset(dataset, Vector2hs{1, 0});
-    h5xx::write_dataset(dataset, Utils::Vector<int, 1>{lebc.shear_plane_normal},
-                        h5xx::slice(Vector2hs{extents[0], 0}, Vector2hs{1, 1}));
-  }
+  write_box(geometry, datasets["particles/atoms/box/edges/value"]);
+  write_le_off(lebc, datasets["particles/atoms/lees_edwards/offset/value"]);
+  write_le_dir(lebc, datasets["particles/atoms/lees_edwards/direction/value"]);
+  write_le_nrm(lebc, datasets["particles/atoms/lees_edwards/normal/value"]);
   write_connectivity(particles);
 
   int const n_part_local = particles.size();
@@ -338,9 +348,6 @@ void File::write(const ParticleRange &particles, double time, int step,
   // calculate prefix for write of the current process
   BOOST_MPI_CHECK_RESULT(MPI_Exscan,
                          (&n_part_local, &prefix, 1, MPI_INT, MPI_SUM, m_comm));
-  auto const extents =
-      static_cast<h5xx::dataspace>(datasets["particles/atoms/id/value"])
-          .extents();
 
   auto const n_part_global =
       boost::mpi::all_reduce(m_comm, n_part_local, std::plus<int>());
@@ -348,13 +355,17 @@ void File::write(const ParticleRange &particles, double time, int step,
   write_td_particle_property<2>(
       prefix, n_part_global, particles, datasets["particles/atoms/id/value"],
       [](auto const &p) { return Utils::Vector<int, 1>{p.identity()}; });
-  write_dataset(Utils::Vector<double, 1>{time},
-                datasets["particles/atoms/id/time"], Vector1hs{1},
 
-                Vector1hs{extents[0]}, Vector1hs{1});
-  write_dataset(Utils::Vector<int, 1>{step},
-                datasets["particles/atoms/id/step"], Vector1hs{1},
-                Vector1hs{extents[0]}, Vector1hs{1});
+  {
+    h5xx::dataset &dataset = datasets["particles/atoms/id/value"];
+    auto const extents = static_cast<h5xx::dataspace>(dataset).extents();
+    write_dataset(Utils::Vector<double, 1>{time},
+                  datasets["particles/atoms/id/time"], Vector1hs{1},
+                  Vector1hs{extents[0]}, Vector1hs{1});
+    write_dataset(Utils::Vector<int, 1>{step},
+                  datasets["particles/atoms/id/step"], Vector1hs{1},
+                  Vector1hs{extents[0]}, Vector1hs{1});
+  }
 
   write_td_particle_property<2>(
       prefix, n_part_global, particles,
@@ -369,6 +380,7 @@ void File::write(const ParticleRange &particles, double time, int step,
       prefix, n_part_global, particles,
       datasets["particles/atoms/position/value"],
       [&](auto const &p) { return folded_position(p.pos(), geometry); });
+
   write_td_particle_property<3>(prefix, n_part_global, particles,
                                 datasets["particles/atoms/image/value"],
                                 [](auto const &p) { return p.image_box(); });
@@ -380,11 +392,13 @@ void File::write(const ParticleRange &particles, double time, int step,
   write_td_particle_property<3>(prefix, n_part_global, particles,
                                 datasets["particles/atoms/force/value"],
                                 [](auto const &p) { return p.force(); });
+
   write_td_particle_property<2>(
       prefix, n_part_global, particles,
       datasets["particles/atoms/charge/value"],
       [](auto const &p) { return Utils::Vector<double, 1>{p.q()}; });
 }
+
 void File::write_connectivity(const ParticleRange &particles) {
   MultiArray3i bond(boost::extents[0][0][0]);
   int particle_index = 0;
