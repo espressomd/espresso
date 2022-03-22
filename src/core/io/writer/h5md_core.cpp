@@ -305,7 +305,7 @@ void write_td_particle_property(hsize_t prefix, hsize_t n_part_global,
 void File::write(const ParticleRange &particles, double time, int step,
                  BoxGeometry const &geometry) {
   write_box(geometry, datasets["particles/atoms/box/edges/value"]);
-  auto const &lebc = geometry.clees_edwards_bc();
+  auto const &lebc = geometry.lees_edwards_bc();
   {
     h5xx::dataset &dataset =
         datasets["particles/atoms/lees_edwards/offset/value"];
