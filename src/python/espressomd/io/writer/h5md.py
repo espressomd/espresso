@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-"""Interface module for the H5md core implementation."""
 
 import sys
 
@@ -26,10 +25,10 @@ from ...__init__ import assert_features
 class UnitSystem:
     """
     Data class for writing H5MD trajectories with
-    `physical units <https://nongnu.org/h5md/modules/units.html>`_.
+    `physical units <https://nongnu.org/h5md/modules/units.html>`__.
     There are four settable units: 'mass', 'length', 'time', 'charge'.
     Units should be written as strings following the specifications defined
-    `here <https://nongnu.org/h5md/modules/units.html#unit-string>`_,
+    `here <https://nongnu.org/h5md/modules/units.html#unit-string>`__,
     e.g. ``UnitSystem(time='ps', mass='u', length='nm', charge='e')``.
     """
 
@@ -55,12 +54,12 @@ class UnitSystem:
 @script_interface_register
 class H5md(ScriptInterfaceHelper):
 
-    """H5md file object.
-
-    Used for accessing the H5MD core implementation.
+    """
+    H5md file object.
 
     .. note::
        Bonds will be written to the file automatically if they exist.
+       The pypresso script will be written in the metadata.
 
     Parameters
     ----------

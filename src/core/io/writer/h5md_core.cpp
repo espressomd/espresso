@@ -98,7 +98,7 @@ static void write_script(std::string const &target,
   }
 }
 
-/* Initialize the file related variables after parameters have been set. */
+/* Initialize the file-related variables after parameters have been set. */
 void File::init_file(std::string const &file_path) {
   m_backup_filename = file_path + ".bak";
   if (m_script_path.empty()) {
@@ -107,8 +107,8 @@ void File::init_file(std::string const &file_path) {
     boost::filesystem::path script_path(m_script_path);
     m_absolute_script_path = boost::filesystem::canonical(script_path);
   }
-  bool file_exists = boost::filesystem::exists(file_path);
-  bool backup_file_exists = boost::filesystem::exists(m_backup_filename);
+  auto const file_exists = boost::filesystem::exists(file_path);
+  auto const backup_file_exists = boost::filesystem::exists(m_backup_filename);
   /* Perform a barrier synchronization. Otherwise one process might already
    * create the file while another still checks for its existence. */
   m_comm.barrier();
@@ -118,7 +118,7 @@ void File::init_file(std::string const &file_path) {
        * If the file exists and has a valid H5MD structure, let's create a
        * backup of it. This has the advantage, that the new file can
        * just be deleted if the simulation crashes at some point and we
-       * still have a valid trajectory, we can start from.
+       * still have a valid trajectory backed up, from which we can restart.
        */
       if (m_comm.rank() == 0)
         backup_file(file_path, m_backup_filename);
