@@ -196,14 +196,13 @@ void File::load_file(const std::string &file_path) {
   load_datasets();
 }
 
-void write_attributes(const std::string &espresso_version,
-                      h5xx::file &h5md_file) {
+static void write_attributes(h5xx::file &h5md_file) {
   auto h5md_group = h5xx::group(h5md_file, "h5md");
   h5xx::write_attribute(h5md_group, "version",
                         boost::array<hsize_t, 2>{{1, 1}});
   auto h5md_creator_group = h5xx::group(h5md_group, "creator");
   h5xx::write_attribute(h5md_creator_group, "name", "ESPResSo");
-  h5xx::write_attribute(h5md_creator_group, "version", espresso_version);
+  h5xx::write_attribute(h5md_creator_group, "version", ESPRESSO_VERSION);
   auto h5md_author_group = h5xx::group(h5md_group, "author");
   h5xx::write_attribute(h5md_author_group, "name", "N/A");
   auto group = h5xx::group(h5md_file, "particles/atoms/box");
@@ -212,18 +211,34 @@ void write_attributes(const std::string &espresso_version,
 }
 
 void File::write_units() {
-  h5xx::write_attribute(datasets["particles/atoms/mass/value"], "unit",
-                        m_mass_unit);
-  h5xx::write_attribute(datasets["particles/atoms/charge/value"], "unit",
-                        m_charge_unit);
-  h5xx::write_attribute(datasets["particles/atoms/position/value"], "unit",
-                        m_length_unit);
-  h5xx::write_attribute(datasets["particles/atoms/velocity/value"], "unit",
-                        m_velocity_unit);
-  h5xx::write_attribute(datasets["particles/atoms/force/value"], "unit",
-                        m_force_unit);
-  h5xx::write_attribute(datasets["particles/atoms/id/time"], "unit",
-                        m_time_unit);
+  if (!m_mass_unit.empty()) {
+    h5xx::write_attribute(datasets["particles/atoms/mass/value"], "unit",
+                          m_mass_unit);
+  }
+  if (!m_charge_unit.empty()) {
+    h5xx::write_attribute(datasets["particles/atoms/charge/value"], "unit",
+                          m_charge_unit);
+  }
+  if (!m_length_unit.empty()) {
+    h5xx::write_attribute(datasets["particles/atoms/position/value"], "unit",
+                          m_length_unit);
+    h5xx::write_attribute(datasets["particles/atoms/box/edges/value"], "unit",
+                          m_length_unit);
+    h5xx::write_attribute(datasets["particles/atoms/lees_edwards/offset/value"],
+                          "unit", m_length_unit);
+  }
+  if (!m_velocity_unit.empty()) {
+    h5xx::write_attribute(datasets["particles/atoms/velocity/value"], "unit",
+                          m_velocity_unit);
+  }
+  if (!m_force_unit.empty()) {
+    h5xx::write_attribute(datasets["particles/atoms/force/value"], "unit",
+                          m_force_unit);
+  }
+  if (!m_time_unit.empty()) {
+    h5xx::write_attribute(datasets["particles/atoms/id/time"], "unit",
+                          m_time_unit);
+  }
 }
 
 void File::create_hard_links() {
@@ -253,7 +268,7 @@ void File::create_file(const std::string &file_path) {
   m_h5md_file = h5xx::file(file_path, m_comm, MPI_INFO_NULL, h5xx::file::out);
   create_groups();
   create_datasets();
-  write_attributes(ESPRESSO_VERSION, m_h5md_file);
+  write_attributes(m_h5md_file);
   write_units();
   create_hard_links();
 }

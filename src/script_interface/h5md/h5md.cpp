@@ -20,7 +20,9 @@
  */
 #ifndef ESPRESSO_SCRIPTINTERFACE_H5MD_CPP
 #define ESPRESSO_SCRIPTINTERFACE_H5MD_CPP
+
 #include "config.hpp"
+
 #ifdef H5MD
 
 #include "h5md.hpp"
@@ -51,5 +53,5 @@ Variant H5md::do_call_method(const std::string &name,
 } /* namespace Writer */
 } // namespace ScriptInterface
 
-#endif // ESPRESSO_H5MD_HPP
 #endif // H5MD
+#endif

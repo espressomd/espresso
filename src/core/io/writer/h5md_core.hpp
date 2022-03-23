@@ -98,49 +98,49 @@ public:
    * @brief Retrieve the path to the hdf5 file.
    * @return The path as a string.
    */
-  std::string file_path() const { return m_h5md_file.name(); }
+  auto file_path() const { return m_h5md_file.name(); }
 
   /**
    * @brief Retrieve the path to the simulation script.
    * @return The path as a string.
    */
-  std::string &script_path() { return m_script_path; }
+  auto const &script_path() const { return m_script_path; }
 
   /**
    * @brief Retrieve the set mass unit.
    * @return The unit as a string.
    */
-  std::string &mass_unit() { return m_mass_unit; }
+  auto const &mass_unit() const { return m_mass_unit; }
 
   /**
    * @brief Retrieve the set length unit.
    * @return The unit as a string.
    */
-  std::string &length_unit() { return m_length_unit; }
+  auto const &length_unit() const { return m_length_unit; }
 
   /**
    * @brief Retrieve the set time unit.
    * @return The unit as a string.
    */
-  std::string &time_unit() { return m_time_unit; }
+  auto const &time_unit() const { return m_time_unit; }
 
   /**
    * @brief Retrieve the set force unit.
    * @return The unit as a string.
    */
-  std::string &force_unit() { return m_force_unit; }
+  auto const &force_unit() const { return m_force_unit; }
 
   /**
    * @brief Retrieve the set velocity unit.
    * @return The unit as a string.
    */
-  std::string &velocity_unit() { return m_velocity_unit; }
+  auto const &velocity_unit() const { return m_velocity_unit; }
 
   /**
    * @brief Retrieve the set charge unit.
    * @return The unit as a string.
    */
-  std::string &charge_unit() { return m_charge_unit; }
+  auto const &charge_unit() const { return m_charge_unit; }
 
   /**
    * @brief Method to enforce flushing the buffer to disk.
@@ -195,6 +195,7 @@ private:
    * datasets.
    */
   void create_hard_links();
+
   std::string m_script_path;
   std::string m_mass_unit;
   std::string m_length_unit;

@@ -19,8 +19,8 @@
 
 import sys
 
-from ...script_interface import PScriptInterface  # pylint: disable=import
-from ...code_info import features
+from ...script_interface import script_interface_register, ScriptInterfaceHelper  # pylint: disable=import
+from ...__init__ import assert_features
 
 
 class UnitSystem:
@@ -52,51 +52,67 @@ class UnitSystem:
             self.velocity = ''
 
 
-if 'H5MD' not in features():
-    class H5md:
-        def __init__(self, *args, **kwargs):
-            raise RuntimeError("H5md not available.")
-else:
-    class H5md:
+@script_interface_register
+class H5md(ScriptInterfaceHelper):
 
-        """H5md file object.
+    """H5md file object.
 
-        Used for accessing the H5MD core implementation.
+    Used for accessing the H5MD core implementation.
 
-        .. note::
-           Bonds will be written to the file automatically if they exist.
+    .. note::
+       Bonds will be written to the file automatically if they exist.
 
-        Parameters
-        ----------
-        file_path : :obj:`str`
-            Path to the trajectory file.
-        unit_system : :obj:`UnitSystem`, optional
-            Physical units for the data.
+    Parameters
+    ----------
+    file_path : :obj:`str`
+        Path to the trajectory file.
+    unit_system : :obj:`UnitSystem`, optional
+        Physical units for the data.
 
-        """
+    Methods
+    -------
+    get_params()
+        Get the parameters from the script interface.
 
-        def __init__(self, file_path, unit_system=UnitSystem()):
-            self.h5md_instance = PScriptInterface(
-                "ScriptInterface::Writer::H5md", file_path=file_path, script_path=sys.argv[0],
-                mass_unit=unit_system.mass, length_unit=unit_system.length, 
-                time_unit=unit_system.time,
-                force_unit=unit_system.force,
-                velocity_unit=unit_system.velocity,
-                charge_unit=unit_system.charge
-            )
+    write()
+        Call the H5md write method.
 
-        def get_params(self):
-            """Get the parameters from the script interface."""
-            return self.h5md_instance.get_params()
+    flush()
+        Call the H5md flush method.
 
-        def write(self):
-            """Call the H5md write method."""
-            self.h5md_instance.call_method("write")
+    close()
+        Close the H5md file.
 
-        def flush(self):
-            """Call the H5md flush method."""
-            self.h5md_instance.call_method("flush")
+    Attributes
+    ----------
+    file_path: :obj:`str`
+        Path to the trajectory file.
+    script_path: :obj:`str`
+        Path to the pypresso script, or empty string for interactive sessions.
+    mass_unit: :obj:`str`
+    length_unit: :obj:`str`
+    time_unit: :obj:`str`
+    force_unit: :obj:`str`
+    velocity_unit: :obj:`str`
+    charge_unit: :obj:`str`
 
-        def close(self):
-            """Close the H5md file."""
-            self.h5md_instance.call_method("close")
+    """
+    _so_name = "ScriptInterface::Writer::H5md"
+    _so_creation_policy = "GLOBAL"
+    _so_bind_methods = ("write", "flush", "close")
+
+    def __init__(self, file_path, unit_system=UnitSystem()):
+        assert_features("H5MD")
+        super().__init__(
+            file_path=file_path,
+            script_path=sys.argv[0],
+            mass_unit=unit_system.mass,
+            length_unit=unit_system.length,
+            time_unit=unit_system.time,
+            force_unit=unit_system.force,
+            velocity_unit=unit_system.velocity,
+            charge_unit=unit_system.charge
+        )
+
+    def __reduce__(self):
+        raise RuntimeError("H5md doesn't support checkpointing")

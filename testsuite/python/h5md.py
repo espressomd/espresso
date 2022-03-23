@@ -28,6 +28,8 @@ import numpy as np
 import espressomd
 import espressomd.interactions
 import espressomd.io.writer
+import espressomd.lees_edwards
+import espressomd.version
 import tempfile
 try:
     import h5py  # h5py has to be imported *after* espressomd (MPI)
@@ -72,6 +74,10 @@ class H5mdTests(ut.TestCase):
 
     system.integrator.run(steps=0)
     system.time = 12.3
+    system.lees_edwards.shear_direction = 0
+    system.lees_edwards.shear_plane_normal = 1
+    system.lees_edwards.protocol = espressomd.lees_edwards.LinearShear(
+        shear_velocity=1.5, initial_pos_offset=0.5, time_0=-0.3)
     n_nodes = system.cell_system.get_state()["n_nodes"]
 
     @classmethod
@@ -86,6 +92,7 @@ class H5mdTests(ut.TestCase):
         h5.write()
         h5.flush()
         h5.close()
+        cls.h5_obj = h5
         cls.h5_params = h5.get_params()
         cls.py_file = h5py.File(cls.temp_file, 'r')
         cls.py_pos = cls.py_file['particles/atoms/position/value'][1]
@@ -99,9 +106,13 @@ class H5mdTests(ut.TestCase):
         cls.py_id_step = cls.py_file['particles/atoms/id/step'][1]
         cls.py_bonds = cls.py_file['connectivity/atoms/value'][1]
         cls.py_box = cls.py_file['particles/atoms/box/edges/value'][1]
+        cls.py_le_offset = cls.py_file['particles/atoms/lees_edwards/offset/value'][1]
+        cls.py_le_direction = cls.py_file['particles/atoms/lees_edwards/direction/value'][1]
+        cls.py_le_normal = cls.py_file['particles/atoms/lees_edwards/normal/value'][1]
 
     @classmethod
     def tearDownClass(cls):
+        cls.py_file.close()
         cls.temp_dir.cleanup()
 
     def test_opening(self):
@@ -124,20 +135,38 @@ class H5mdTests(ut.TestCase):
             pass
         with self.assertRaisesRegex(RuntimeError, 'A backup of the .h5 file exists'):
             h5md.H5md(file_path=temp_file, unit_system=h5_units)
+        # no checkpointing
+        with self.assertRaisesRegex(RuntimeError, "H5md doesn't support checkpointing"):
+            self.h5_obj.__reduce__()
+        # check read-only parameters
+        for key in self.h5_obj.get_params():
+            with self.assertRaisesRegex(RuntimeError, f"Parameter '{key}' is read-only"):
+                setattr(self.h5_obj, key, None)
 
     def test_box(self):
         np.testing.assert_allclose(self.py_box, self.box_l)
 
+    def test_lees_edwards(self):
+        le_bc = self.system.lees_edwards
+        protocol = le_bc.protocol
+        le_offset = protocol.initial_pos_offset + protocol.shear_velocity * (
+            self.system.time - protocol.time_0)
+        np.testing.assert_allclose(self.py_le_offset, le_offset)
+        self.assertEqual(self.py_le_direction, le_bc.shear_direction)
+        self.assertEqual(self.py_le_normal, le_bc.shear_plane_normal)
+
     def test_metadata(self):
         """Test if the H5MD metadata has been written properly."""
         self.assertEqual(self.py_file['h5md'].attrs['version'][0], 1)
-
         self.assertEqual(self.py_file['h5md'].attrs['version'][1], 1)
         self.assertIn('creator', self.py_file['h5md'])
         self.assertIn('name', self.py_file['h5md/creator'].attrs)
         self.assertIn('version', self.py_file['h5md/creator'].attrs)
         self.assertEqual(
             self.py_file['h5md/creator'].attrs['name'][:], b'ESPResSo')
+        self.assertTrue(
+            self.py_file['h5md/creator'].attrs['version'][:]
+            .startswith(espressomd.version.friendly().encode('utf-8')))
         self.assertIn('author', self.py_file['h5md'])
         self.assertIn('name', self.py_file['h5md/author'].attrs)
 
@@ -205,6 +234,9 @@ class H5mdTests(ut.TestCase):
         def get_unit(path):
             return self.py_file[path].attrs['unit']
         self.assertEqual(get_unit('particles/atoms/id/time'), b'ps')
+        self.assertEqual(
+            get_unit('particles/atoms/lees_edwards/offset/value'), b'm')
+        self.assertEqual(get_unit('particles/atoms/box/edges/value'), b'm')
         self.assertEqual(get_unit('particles/atoms/position/value'), b'm')
         if espressomd.has_features(['ELECTROSTATICS']):
             self.assertEqual(get_unit('particles/atoms/charge/value'), b'e')
