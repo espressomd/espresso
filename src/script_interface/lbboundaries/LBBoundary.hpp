@@ -35,7 +35,7 @@ namespace ScriptInterface {
 namespace LBBoundaries {
 class LBBoundary : public AutoParameters<LBBoundary> {
 public:
-  LBBoundary() : m_lbboundary(new ::LBBoundaries::LBBoundary()) {
+  LBBoundary() : m_lbboundary(std::make_shared<::LBBoundaries::LBBoundary>()) {
     add_parameters(
         {{"velocity",
           [this](Variant const &value) {

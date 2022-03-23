@@ -33,7 +33,7 @@ class Torus : public Shape {
   std::shared_ptr<::Shapes::Torus> m_torus;
 
 public:
-  Torus() : m_torus(new ::Shapes::Torus()) {
+  Torus() : m_torus(std::make_shared<::Shapes::Torus>()) {
     add_parameters(
         {{"radius", m_torus, &CoreShape::set_radius, &CoreShape::radius},
          {"tube_radius", m_torus, &CoreShape::set_tube_radius,

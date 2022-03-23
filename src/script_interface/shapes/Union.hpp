@@ -36,7 +36,7 @@ namespace Shapes {
 
 class Union : public ObjectList<Shape, Shape> {
 public:
-  Union() : m_core_shape(new ::Shapes::Union()) {}
+  Union() : m_core_shape(std::make_shared<::Shapes::Union>()) {}
 
 private:
   void add_in_core(const std::shared_ptr<Shape> &obj_ptr) override {

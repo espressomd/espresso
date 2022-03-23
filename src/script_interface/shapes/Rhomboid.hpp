@@ -33,7 +33,7 @@ namespace Shapes {
 
 class Rhomboid : public Shape {
 public:
-  Rhomboid() : m_rhomboid(new ::Shapes::Rhomboid()) {
+  Rhomboid() : m_rhomboid(std::make_shared<::Shapes::Rhomboid>()) {
     add_parameters({{"corner", m_rhomboid->pos()},
                     {"a", m_rhomboid->a()},
                     {"b", m_rhomboid->b()},
