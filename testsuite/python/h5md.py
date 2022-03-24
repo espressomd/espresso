@@ -167,9 +167,6 @@ class H5mdTests(ut.TestCase):
         h5.close()
         with self.assertRaisesRegex(RuntimeError, "The given .h5 file does not match the specifications in 'fields'."):
             h5 = espressomd.io.writer.h5md.H5md(file_path=temp_file)
-        # no checkpointing
-        with self.assertRaisesRegex(RuntimeError, "H5md doesn't support checkpointing"):
-            self.h5_obj.__reduce__()
         # check read-only parameters
         for key in self.h5_obj.get_params():
             with self.assertRaisesRegex(RuntimeError, f"Parameter '{key}' is read-only"):

@@ -155,12 +155,11 @@ an instance of :class:`espressomd.io.writer.h5md.UnitSystem` which encapsulates
 physical units for time, mass, length and electrical charge.
 
 If a file at the given filepath exists and has a valid H5MD structure,
-it will be backed up to a file with suffix ".bak". This backup file will be
-deleted when the new file is closed at the end of the simulation with
-:meth:`~espressomd.io.writer.h5md.H5md.close()`. For this reason,
-checkpointing of ``H5md`` is disabled, since reloading from a checkpoint
-would automatically back up the existing trajectory file and later delete it.
-The backed up file is not be erased if the simulation terminates unexpectedly.
+it will be backed up to a file with suffix ".bak" and loaded into
+a new file. Therefore H5MD can be used together with checkpointing.
+The backup file will be deleted when the new file is closed at the end of the
+simulation with :meth:`~espressomd.io.writer.h5md.H5md.close()`. The backup
+file is not be erased if the simulation terminates unexpectedly.
 
 To write data to the HDF5 file, simply call the method
 :meth:`~espressomd.io.writer.h5md.H5md.write` without any arguments.

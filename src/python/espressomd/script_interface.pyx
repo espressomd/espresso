@@ -306,6 +306,8 @@ def _unpickle_so_class(so_name, state):
     global _om
     so_ptr.sip = _om.get().deserialize(state)
 
+    assert so_name in _python_class_by_so_name, \
+        f"C++ class '{so_name}' is not associated to any Python class (hint: the corresponding 'import espressomd.*' may be missing)"
     so = _python_class_by_so_name[so_name](sip=so_ptr)
     so.define_bound_methods()
 

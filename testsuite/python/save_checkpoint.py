@@ -28,6 +28,7 @@ import espressomd.drude_helpers
 import espressomd.virtual_sites
 import espressomd.accumulators
 import espressomd.observables
+import espressomd.io.writer
 import espressomd.lb
 import espressomd.lbboundaries
 import espressomd.shapes
@@ -53,10 +54,8 @@ checkpoint = espressomd.checkpointing.Checkpoint(
     **config.get_checkpoint_params())
 
 # cleanup old checkpoint files
-if checkpoint.has_checkpoints():
-    for filepath in os.listdir(checkpoint.checkpoint_dir):
-        if filepath.endswith((".checkpoint", ".cpt")):
-            os.remove(os.path.join(checkpoint.checkpoint_dir, filepath))
+for filepath in os.listdir(checkpoint.checkpoint_dir):
+    os.remove(os.path.join(checkpoint.checkpoint_dir, filepath))
 
 n_nodes = system.cell_system.get_state()["n_nodes"]
 
@@ -241,6 +240,17 @@ break_spec = espressomd.bond_breakage.BreakageSpec(
     breakage_length=5., action_type="revert_center_bond")
 system.bond_breakage[strong_harmonic_bond._bond_id] = break_spec
 
+# h5md output
+if espressomd.has_features("H5MD"):
+    h5_units = espressomd.io.writer.h5md.UnitSystem(
+        time="ps", mass="u", length="m", charge="e")
+    h5 = espressomd.io.writer.h5md.H5md(
+        file_path=os.path.join(checkpoint.checkpoint_dir, "test.h5"),
+        unit_system=h5_units)
+    h5.write()
+    h5.flush()
+    h5.close()
+
 checkpoint.register("system")
 checkpoint.register("acc_mean_variance")
 checkpoint.register("acc_time_series")
@@ -249,6 +259,9 @@ checkpoint.register("ibm_volcons_bond")
 checkpoint.register("ibm_tribend_bond")
 checkpoint.register("ibm_triel_bond")
 checkpoint.register("break_spec")
+if espressomd.has_features("H5MD"):
+    checkpoint.register("h5")
+    checkpoint.register("h5_units")
 
 # calculate forces
 system.integrator.run(0)

@@ -20,6 +20,7 @@ import sys
 
 from ...script_interface import script_interface_register, ScriptInterfaceHelper  # pylint: disable=import
 from ...__init__ import assert_features
+from ... import utils
 
 
 class UnitSystem:
@@ -112,12 +113,24 @@ class H5md(ScriptInterfaceHelper):
     _so_creation_policy = "GLOBAL"
     _so_bind_methods = ("valid_fields", "write", "flush", "close")
 
-    def __init__(self, file_path, unit_system=UnitSystem(), fields="all"):
+    def __init__(self, **kwargs):
         assert_features("H5MD")
+
+        if "sip" in kwargs:
+            super().__init__(**kwargs)
+            return
+
+        params = self.default_params()
+        params.update(kwargs)
+        unit_system = params["unit_system"]
+        fields = params["fields"]
+        fields = [fields] if isinstance(fields, str) else list(fields)
+        params["fields"] = fields
+        self.validate_params(params)
         super().__init__(
-            file_path=file_path,
+            file_path=params["file_path"],
             script_path=sys.argv[0],
-            fields=[fields] if isinstance(fields, str) else list(fields),
+            fields=fields,
             mass_unit=unit_system.mass,
             length_unit=unit_system.length,
             time_unit=unit_system.time,
@@ -126,5 +139,20 @@ class H5md(ScriptInterfaceHelper):
             charge_unit=unit_system.charge
         )
 
-    def __reduce__(self):
-        raise RuntimeError("H5md doesn't support checkpointing")
+    def default_params(self):
+        return {"unit_system": UnitSystem(), "fields": "all"}
+
+    def required_keys(self):
+        return {"file_path"}
+
+    def valid_keys(self):
+        return {"file_path", "unit_system", "fields"}
+
+    def validate_params(self, params):
+        """Check validity of given parameters.
+        """
+        utils.check_type_or_throw_except(
+            params["file_path"], 1, str, "'file_path' should be a string")
+        for item in params["fields"]:
+            utils.check_type_or_throw_except(
+                item, 1, str, "'fields' should be a string or a list of strings")
