@@ -168,11 +168,15 @@ After the last write, call :meth:`~espressomd.io.writer.h5md.H5md.flush()`
 and then :meth:`~espressomd.io.writer.h5md.H5md.close()`
 to close the datasets and remove the backup file.
 
-The current implementation always writes the following properties: folded
+The current implementation writes the following properties by default: folded
 positions, periodic image count, velocities, forces, species (|es| types),
 charges and masses of the particles. While folded positions are written
 to disk, the unfolded coordinates can be reconstructed from the image count.
 The time-dependent box size and Lees-Edwards parameters are also stored.
+Some of these properties can be opted out by specifying in argument
+``fields`` the subset of fields to write to the trajectory file;
+call method :meth:`~espressomd.io.writer.h5md.H5md.valid_fields()`
+to find out which string corresponds to which field.
 
 In simulations with a varying number of particles (Monte-Carlo reactions), the
 size of the dataset will be adapted if the maximum number of particles

@@ -38,7 +38,7 @@ class UnitSystem:
         self.length = ''
         self.charge = ''
         for key, value in kwargs.items():
-            assert hasattr(self, key), 'unknown dimension ' + key
+            assert hasattr(self, key), f'unknown dimension {key}'
             setattr(self, key, value or '')
 
         if self.length and self.mass and self.time:
@@ -58,20 +58,30 @@ class H5md(ScriptInterfaceHelper):
     H5md file object.
 
     .. note::
-       Bonds will be written to the file automatically if they exist.
+       Bonds will be written to the file if they exist.
        The pypresso script will be written in the metadata.
 
     Parameters
     ----------
     file_path : :obj:`str`
-        Path to the trajectory file.
+        Path to the trajectory file, or an existing file to append data to
+        (it must have the same specifications).
     unit_system : :obj:`UnitSystem`, optional
         Physical units for the data.
+    fields : :obj:`set` or :obj:`str`, optional
+        List of fields to write to the trajectory file. Defaults to ``'all'``.
+        See :meth:`~espressomd.io.writer.h5md.H5md.valid_fields()` for the
+        list of valid fields. This list defines the H5MD specifications.
+        If the file in ``file_path`` already exists but has different
+        specifications, an exception is raised.
 
     Methods
     -------
     get_params()
         Get the parameters from the script interface.
+
+    valid_fields()
+        Get the list of valid fields.
 
     write()
         Call the H5md write method.
@@ -88,6 +98,8 @@ class H5md(ScriptInterfaceHelper):
         Path to the trajectory file.
     script_path: :obj:`str`
         Path to the pypresso script, or empty string for interactive sessions.
+    fields: :obj:`list`
+        List of fields to write to the trajectory file.
     mass_unit: :obj:`str`
     length_unit: :obj:`str`
     time_unit: :obj:`str`
@@ -98,13 +110,14 @@ class H5md(ScriptInterfaceHelper):
     """
     _so_name = "ScriptInterface::Writer::H5md"
     _so_creation_policy = "GLOBAL"
-    _so_bind_methods = ("write", "flush", "close")
+    _so_bind_methods = ("valid_fields", "write", "flush", "close")
 
-    def __init__(self, file_path, unit_system=UnitSystem()):
+    def __init__(self, file_path, unit_system=UnitSystem(), fields="all"):
         assert_features("H5MD")
         super().__init__(
             file_path=file_path,
             script_path=sys.argv[0],
+            fields=[fields] if isinstance(fields, str) else list(fields),
             mass_unit=unit_system.mass,
             length_unit=unit_system.length,
             time_unit=unit_system.time,

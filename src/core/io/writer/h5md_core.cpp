@@ -113,7 +113,7 @@ void File::init_file(std::string const &file_path) {
    * create the file while another still checks for its existence. */
   m_comm.barrier();
   if (file_exists) {
-    if (H5MD_Specification::is_compliant(file_path)) {
+    if (m_h5md_specification.is_compliant(file_path)) {
       /*
        * If the file exists and has a valid H5MD structure, let's create a
        * backup of it. This has the advantage, that the new file can
@@ -134,7 +134,7 @@ void File::init_file(std::string const &file_path) {
 }
 
 void File::load_datasets() {
-  for (auto const &d : H5MD_Specification::DATASETS) {
+  for (auto const &d : m_h5md_specification.get_datasets()) {
     if (d.is_link)
       continue;
     datasets[d.path()] = h5xx::dataset(m_h5md_file, d.path());
@@ -143,7 +143,7 @@ void File::load_datasets() {
 
 void File::create_groups() {
   h5xx::group group(m_h5md_file);
-  for (auto const &d : H5MD_Specification::DATASETS) {
+  for (auto const &d : m_h5md_specification.get_datasets()) {
     h5xx::group new_group(group, d.group);
   }
 }
@@ -179,7 +179,7 @@ static std::vector<hsize_t> create_chunk_dims(hsize_t rank, hsize_t data_dim) {
 
 void File::create_datasets() {
   namespace hps = h5xx::policy::storage;
-  for (const auto &d : H5MD_Specification::DATASETS) {
+  for (const auto &d : m_h5md_specification.get_datasets()) {
     if (d.is_link)
       continue;
     auto maxdims = std::vector<hsize_t>(d.rank, H5S_UNLIMITED);
@@ -211,40 +211,42 @@ static void write_attributes(h5xx::file &h5md_file) {
 }
 
 void File::write_units() {
-  if (!m_mass_unit.empty()) {
+  if (!mass_unit().empty() and (m_fields & H5MD_OUT_MASS)) {
     h5xx::write_attribute(datasets["particles/atoms/mass/value"], "unit",
-                          m_mass_unit);
+                          mass_unit());
   }
-  if (!m_charge_unit.empty()) {
+  if (!charge_unit().empty() and (m_fields & H5MD_OUT_CHARGE)) {
     h5xx::write_attribute(datasets["particles/atoms/charge/value"], "unit",
-                          m_charge_unit);
+                          charge_unit());
   }
-  if (!m_length_unit.empty()) {
+  if (!length_unit().empty() and (m_fields & H5MD_OUT_BOX_L)) {
     h5xx::write_attribute(datasets["particles/atoms/position/value"], "unit",
-                          m_length_unit);
+                          length_unit());
     h5xx::write_attribute(datasets["particles/atoms/box/edges/value"], "unit",
-                          m_length_unit);
+                          length_unit());
+  }
+  if (!length_unit().empty() and (m_fields & H5MD_OUT_LE_OFF)) {
     h5xx::write_attribute(datasets["particles/atoms/lees_edwards/offset/value"],
-                          "unit", m_length_unit);
+                          "unit", length_unit());
   }
-  if (!m_velocity_unit.empty()) {
+  if (!velocity_unit().empty() and (m_fields & H5MD_OUT_VEL)) {
     h5xx::write_attribute(datasets["particles/atoms/velocity/value"], "unit",
-                          m_velocity_unit);
+                          velocity_unit());
   }
-  if (!m_force_unit.empty()) {
+  if (!force_unit().empty() and (m_fields & H5MD_OUT_FORCE)) {
     h5xx::write_attribute(datasets["particles/atoms/force/value"], "unit",
-                          m_force_unit);
+                          force_unit());
   }
-  if (!m_time_unit.empty()) {
+  if (!time_unit().empty()) {
     h5xx::write_attribute(datasets["particles/atoms/id/time"], "unit",
-                          m_time_unit);
+                          time_unit());
   }
 }
 
 void File::create_hard_links() {
   std::string path_step = "particles/atoms/id/step";
   std::string path_time = "particles/atoms/id/time";
-  for (auto &ds : H5MD_Specification::DATASETS) {
+  for (auto &ds : m_h5md_specification.get_datasets()) {
     if (ds.is_link) {
       char const *from = nullptr;
       if (ds.name == "step") {
@@ -341,7 +343,7 @@ static void write_le_dir(LeesEdwardsBC const &lebc, h5xx::dataset &dataset) {
                       h5xx::slice(Vector2hs{extents[0], 0}, Vector2hs{1, 1}));
 }
 
-static void write_le_nrm(LeesEdwardsBC const &lebc, h5xx::dataset &dataset) {
+static void write_le_normal(LeesEdwardsBC const &lebc, h5xx::dataset &dataset) {
   auto const extents = static_cast<h5xx::dataspace>(dataset).extents();
   extend_dataset(dataset, Vector2hs{1, 0});
   h5xx::write_dataset(dataset, Utils::Vector<int, 1>{lebc.shear_plane_normal},
@@ -350,12 +352,21 @@ static void write_le_nrm(LeesEdwardsBC const &lebc, h5xx::dataset &dataset) {
 
 void File::write(const ParticleRange &particles, double time, int step,
                  BoxGeometry const &geometry) {
+  if (m_fields & H5MD_OUT_BOX_L) {
+    write_box(geometry, datasets["particles/atoms/box/edges/value"]);
+  }
   auto const &lebc = geometry.lees_edwards_bc();
-  write_box(geometry, datasets["particles/atoms/box/edges/value"]);
-  write_le_off(lebc, datasets["particles/atoms/lees_edwards/offset/value"]);
-  write_le_dir(lebc, datasets["particles/atoms/lees_edwards/direction/value"]);
-  write_le_nrm(lebc, datasets["particles/atoms/lees_edwards/normal/value"]);
-  write_connectivity(particles);
+  if (m_fields & H5MD_OUT_LE_OFF) {
+    write_le_off(lebc, datasets["particles/atoms/lees_edwards/offset/value"]);
+  }
+  if (m_fields & H5MD_OUT_LE_DIR) {
+    write_le_dir(lebc,
+                 datasets["particles/atoms/lees_edwards/direction/value"]);
+  }
+  if (m_fields & H5MD_OUT_LE_NORMAL) {
+    write_le_normal(lebc,
+                    datasets["particles/atoms/lees_edwards/normal/value"]);
+  }
 
   int const n_part_local = particles.size();
   // calculate count and offset
@@ -382,36 +393,48 @@ void File::write(const ParticleRange &particles, double time, int step,
                   Vector1hs{extents[0]}, Vector1hs{1});
   }
 
-  write_td_particle_property<2>(
-      prefix, n_part_global, particles,
-      datasets["particles/atoms/species/value"],
-      [](auto const &p) { return Utils::Vector<int, 1>{p.type()}; });
-
-  write_td_particle_property<2>(
-      prefix, n_part_global, particles, datasets["particles/atoms/mass/value"],
-      [](auto const &p) { return Utils::Vector<double, 1>{p.mass()}; });
-
-  write_td_particle_property<3>(
-      prefix, n_part_global, particles,
-      datasets["particles/atoms/position/value"],
-      [&](auto const &p) { return folded_position(p.pos(), geometry); });
-
-  write_td_particle_property<3>(prefix, n_part_global, particles,
-                                datasets["particles/atoms/image/value"],
-                                [](auto const &p) { return p.image_box(); });
-
-  write_td_particle_property<3>(prefix, n_part_global, particles,
-                                datasets["particles/atoms/velocity/value"],
-                                [](auto const &p) { return p.v(); });
-
-  write_td_particle_property<3>(prefix, n_part_global, particles,
-                                datasets["particles/atoms/force/value"],
-                                [](auto const &p) { return p.force(); });
-
-  write_td_particle_property<2>(
-      prefix, n_part_global, particles,
-      datasets["particles/atoms/charge/value"],
-      [](auto const &p) { return Utils::Vector<double, 1>{p.q()}; });
+  if (m_fields & H5MD_OUT_TYPE) {
+    write_td_particle_property<2>(
+        prefix, n_part_global, particles,
+        datasets["particles/atoms/species/value"],
+        [](auto const &p) { return Utils::Vector<int, 1>{p.type()}; });
+  }
+  if (m_fields & H5MD_OUT_MASS) {
+    write_td_particle_property<2>(
+        prefix, n_part_global, particles,
+        datasets["particles/atoms/mass/value"],
+        [](auto const &p) { return Utils::Vector<double, 1>{p.mass()}; });
+  }
+  if (m_fields & H5MD_OUT_POS) {
+    write_td_particle_property<3>(
+        prefix, n_part_global, particles,
+        datasets["particles/atoms/position/value"],
+        [&](auto const &p) { return folded_position(p.pos(), geometry); });
+  }
+  if (m_fields & H5MD_OUT_IMG) {
+    write_td_particle_property<3>(prefix, n_part_global, particles,
+                                  datasets["particles/atoms/image/value"],
+                                  [](auto const &p) { return p.image_box(); });
+  }
+  if (m_fields & H5MD_OUT_VEL) {
+    write_td_particle_property<3>(prefix, n_part_global, particles,
+                                  datasets["particles/atoms/velocity/value"],
+                                  [](auto const &p) { return p.v(); });
+  }
+  if (m_fields & H5MD_OUT_FORCE) {
+    write_td_particle_property<3>(prefix, n_part_global, particles,
+                                  datasets["particles/atoms/force/value"],
+                                  [](auto const &p) { return p.force(); });
+  }
+  if (m_fields & H5MD_OUT_CHARGE) {
+    write_td_particle_property<2>(
+        prefix, n_part_global, particles,
+        datasets["particles/atoms/charge/value"],
+        [](auto const &p) { return Utils::Vector<double, 1>{p.q()}; });
+  }
+  if (m_fields & H5MD_OUT_BONDS) {
+    write_connectivity(particles);
+  }
 }
 
 void File::write_connectivity(const ParticleRange &particles) {

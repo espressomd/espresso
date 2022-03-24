@@ -119,6 +119,30 @@ class H5mdTests(ut.TestCase):
         h5 = espressomd.io.writer.h5md.H5md(file_path=self.temp_file)
         h5.close()
 
+    def test_appending(self):
+        # write one frame to the file
+        temp_file = os.path.join(self.temp_dir.name, 'appending.h5')
+        h5 = espressomd.io.writer.h5md.H5md(file_path=temp_file)
+        h5.write()
+        h5.flush()
+        h5.close()
+        # append one frame to the file
+        h5 = espressomd.io.writer.h5md.H5md(file_path=temp_file)
+        h5.write()
+        h5.flush()
+        h5.close()
+        # check both frames are identical to the reference trajectory
+        with h5py.File(temp_file, 'r') as cur:
+            def predicate(cur, key):
+                np.testing.assert_allclose(cur[key], self.py_file[key])
+            for key in ('position', 'image', 'velocity', 'force',
+                        'id', 'species', 'mass', 'charge'):
+                predicate(cur, f'particles/atoms/{key}/value')
+            for key in ('offset', 'direction', 'normal'):
+                predicate(cur, f'particles/atoms/lees_edwards/{key}/value')
+            predicate(cur, f'particles/atoms/box/edges/value')
+            predicate(cur, f'connectivity/atoms/value')
+
     @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
     def test_exceptions(self):
         h5md = espressomd.io.writer.h5md
@@ -135,6 +159,14 @@ class H5mdTests(ut.TestCase):
             pass
         with self.assertRaisesRegex(RuntimeError, 'A backup of the .h5 file exists'):
             h5md.H5md(file_path=temp_file, unit_system=h5_units)
+        # open a file with different specifications
+        temp_file = os.path.join(self.temp_dir.name, 'wrong_spec.h5')
+        h5 = espressomd.io.writer.h5md.H5md(file_path=temp_file, fields=[])
+        h5.write()
+        h5.flush()
+        h5.close()
+        with self.assertRaisesRegex(RuntimeError, "The given .h5 file does not match the specifications in 'fields'."):
+            h5 = espressomd.io.writer.h5md.H5md(file_path=temp_file)
         # no checkpointing
         with self.assertRaisesRegex(RuntimeError, "H5md doesn't support checkpointing"):
             self.h5_obj.__reduce__()
@@ -142,6 +174,24 @@ class H5mdTests(ut.TestCase):
         for key in self.h5_obj.get_params():
             with self.assertRaisesRegex(RuntimeError, f"Parameter '{key}' is read-only"):
                 setattr(self.h5_obj, key, None)
+
+    def test_empty(self):
+        temp_file = os.path.join(self.temp_dir.name, 'empty.h5')
+        h5 = espressomd.io.writer.h5md.H5md(file_path=temp_file, fields=[])
+        h5.write()
+        h5.flush()
+        h5.close()
+
+        self.assertEqual(h5.fields, [])
+        with h5py.File(temp_file, 'r') as cur:
+            for key in ('position', 'image', 'velocity',
+                        'force', 'species', 'mass', 'charge'):
+                self.assertIsNone(cur.get(f'particles/atoms/{key}/value'))
+            for key in ('offset', 'direction', 'normal'):
+                self.assertIsNone(
+                    cur.get(f'particles/atoms/lees_edwards/{key}/value'))
+            self.assertIsNone(cur.get('particles/atoms/box/edges/value'))
+            self.assertIsNone(cur.get('connectivity/atoms/value'))
 
     def test_box(self):
         np.testing.assert_allclose(self.py_box, self.box_l)
@@ -249,6 +299,7 @@ class H5mdTests(ut.TestCase):
         self.assertEqual(self.h5_params['file_path'], self.temp_file)
         self.assertEqual(os.path.abspath(self.h5_params['script_path']),
                          os.path.abspath(__file__))
+        self.assertEqual(self.h5_params['fields'], ['all'])
         self.assertEqual(self.h5_params['time_unit'], 'ps')
         if espressomd.has_features(['ELECTROSTATICS']):
             self.assertEqual(self.h5_params['charge_unit'], 'e')
@@ -256,6 +307,16 @@ class H5mdTests(ut.TestCase):
             self.assertEqual(self.h5_params['mass_unit'], 'u')
         self.assertEqual(self.h5_params['force_unit'], 'm u ps-2')
         self.assertEqual(self.h5_params['velocity_unit'], 'm ps-1')
+
+    def test_static_properties(self):
+        # check list of output fields
+        valid_fields_ref = {
+            "all", "particle.type", "particle.position", "particle.image",
+            "particle.velocity", "particle.force", "particle.bonds",
+            "particle.charge", "particle.mass", "lees_edwards.offset",
+            "lees_edwards.direction", "lees_edwards.normal", "box.length",
+        }
+        self.assertEqual(set(self.h5_obj.valid_fields()), valid_fields_ref)
 
     def test_links(self):
         time_ref = self.py_id_time
