@@ -149,24 +149,36 @@ class H5mdTests(ut.TestCase):
         h5_units = h5md.UnitSystem(time='ps', mass='u', length='m', charge='e')
         temp_file = os.path.join(self.temp_dir.name, 'exceptions.h5')
         # write a non-compliant file
-        with open(temp_file, 'w') as _:
+        with open(temp_file, 'wb'):
             pass
         with self.assertRaisesRegex(RuntimeError, 'not a valid HDF5 file'):
             h5md.H5md(file_path=temp_file, unit_system=h5_units)
-        # write a leftover backup file
-        os.remove(temp_file)
-        with open(temp_file + '.bak', 'w') as _:
-            pass
+        # cannot append to a closed file with a leftover backup file
+        main_file = os.path.join(self.temp_dir.name, 'main.h5')
+        h5 = h5md.H5md(file_path=main_file)
+        h5.write()
+        h5.flush()
+        h5.close()
+        with open(main_file + '.bak', 'wb') as backup:
+            with open(main_file, 'rb') as original:
+                backup.write(original.read())
         with self.assertRaisesRegex(RuntimeError, 'A backup of the .h5 file exists'):
-            h5md.H5md(file_path=temp_file, unit_system=h5_units)
+            h5md.H5md(file_path=main_file)
+        # cannot create a new file with a leftover backup file
+        os.remove(main_file)
+        with self.assertRaisesRegex(RuntimeError, 'A backup of the .h5 file exists'):
+            h5md.H5md(file_path=main_file)
         # open a file with different specifications
         temp_file = os.path.join(self.temp_dir.name, 'wrong_spec.h5')
         h5 = espressomd.io.writer.h5md.H5md(file_path=temp_file, fields=[])
         h5.write()
         h5.flush()
         h5.close()
-        with self.assertRaisesRegex(RuntimeError, "The given .h5 file does not match the specifications in 'fields'."):
-            h5 = espressomd.io.writer.h5md.H5md(file_path=temp_file)
+        with self.assertRaisesRegex(RuntimeError, "The given .h5 file does not match the specifications in 'fields'"):
+            h5md.H5md(file_path=temp_file, fields='all')
+        # open a file with invalid specifications
+        with self.assertRaisesRegex(ValueError, "Unknown field 'lb'"):
+            h5md.H5md(file_path=temp_file, fields='lb')
         # check read-only parameters
         for key in self.h5_obj.get_params():
             with self.assertRaisesRegex(RuntimeError, f"Parameter '{key}' is read-only"):
@@ -272,10 +284,22 @@ class H5mdTests(ut.TestCase):
             self.assertEqual(bond[1], i + 1)
 
     def test_script(self):
+        assert sys.argv[0] == __file__
+        # case #1: running a pypresso script
         with open(sys.argv[0], 'r') as f:
             ref = f.read()
         data = self.py_file['parameters/files'].attrs['script'].decode('utf-8')
         self.assertEqual(data, ref)
+        # case #2: running an interactive Python session
+        temp_file = os.path.join(self.temp_dir.name, 'no_script.h5')
+        sys.argv[0] = ''
+        h5 = espressomd.io.writer.h5md.H5md(file_path=temp_file)
+        sys.argv[0] = __file__
+        h5.write()
+        h5.flush()
+        h5.close()
+        with h5py.File(temp_file, 'r') as cur:
+            self.assertIsNone(cur.get('parameters/files'))
 
     def test_units(self):
         def get_unit(path):
