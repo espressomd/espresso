@@ -97,7 +97,7 @@ Several modes are available for different types of binding.
 
         n_angle_bonds = 181  # 0 to 180 degrees in one degree steps
         for i in range(0, res, 1):
-            self.system.bonded_inter[i] = espressomd.interactions.Angle_Harmonic(
+            self.system.bonded_inter[i] = espressomd.interactions.AngleHarmonic(
                 bend=1, phi0=float(i) / (res - 1) * np.pi)
 
         # Create the bond passed to bond_centers here and add it to the system
@@ -932,13 +932,12 @@ class OifCell
     OifCell.get_origin()
     OifCell.get_origin_folded()
     OifCell.get_approx_origin()
-    OifCell.get_approx_origin_folded()
     OifCell.get_velocity()
     OifCell.set_velocity([x, y, z])
     OifCell.pos_bounds()
     OifCell.surface()
     OifCell.volume()
-    OifCell.get_diameter()
+    OifCell.diameter()
     OifCell.get_n_nodes()
     OifCell.set_force([x, y, z])
     OifCell.kill_motion()
@@ -947,8 +946,8 @@ class OifCell
     OifCell.output_vtk_pos_folded(filename.vtk)
     OifCell.append_point_data_to_vtk(filename.vtk, dataname, data, firstAppend)
     OifCell.output_raw_data(filename, rawdata)
-    OifCell.output_mesh_nodes(filename)
-    OifCell.set_mesh_nodes(filename)
+    OifCell.output_mesh_points(filename)
+    OifCell.set_mesh_points(filename)
     OifCell.elastic_forces(elasticforces, fmetric, vtkfile, rawdatafile)
     OifCell.print_info()
 
@@ -1003,8 +1002,7 @@ class OifCell
 
 | ``OifCell.volume()`` - outputs the volume of the object.
 
-| ``OifCell.get_diameter()`` - outputs the largest diameter of the
-  object.
+| ``OifCell.diameter()`` - outputs the largest diameter of the object.
 
 | ``OifCell.get_n_nodes()`` - returns the number of mesh nodes.
 
@@ -1045,14 +1043,14 @@ class OifCell
 | ``OifCell.output_raw_data``\ (*filename*, **rawdata**) - outputs the
   vector **rawdata** about the object into the *filename*.
 
-| ``OifCell.output_mesh_nodes``\ (*filename*) - outputs the positions of
+| ``OifCell.output_mesh_points``\ (*filename*) - outputs the positions of
   the mesh nodes to *filename*. In fact, this command creates a new
   *nodes.dat* file that can be used by the method
-  ``OifCell.set_mesh_nodes``\ (*nodes.dat*). The center of the object is
+  ``OifCell.set_mesh_points``\ (*nodes.dat*). The center of the object is
   located at point (0.0, 0.0, 0.0). This command is aimed to store the
   deformed shape in order to be loaded later.
 
-| ``OifCell.set_mesh_nodes``\ (*filename*) - deforms the object in such a
+| ``OifCell.set_mesh_points``\ (*filename*) - deforms the object in such a
   way that its origin stays unchanged, however the relative positions of
   the mesh points are taken from file *filename*. The *filename* should
   contain the coordinates of the mesh points with the origin location at
@@ -1969,13 +1967,18 @@ For this one has to provide the following reaction to the Widom method:
     widom.add_reaction(reactant_types=[],
     reactant_coefficients=[], product_types=[type_B],
     product_coefficients=[1], default_charges={1: 0})
-    widom.measure_excess_chemical_potential(0)
+    widom.calculate_particle_insertion_potential_energy(reaction_id=0)
 
 
 The call of ``add_reaction`` define the insertion :math:`\mathrm{\emptyset \to type_B}` (which is the 0th defined reaction).
 Multiple reactions for the insertions of different types can be added to the same ``WidomInsertion`` instance.
-Measuring the excess chemical potential using the insertion method is done via calling ``widom.measure_excess_chemical_potential(0)``.
-If another particle insertion is defined, then the excess chemical potential for this insertion can be measured by calling ``widom.measure_excess_chemical_potential(1)``.
+Measuring the excess chemical potential using the insertion method is done by
+calling ``widom.calculate_particle_insertion_potential_energy(reaction_id=0)``
+multiple times and providing the accumulated sample to
+``widom.calculate_excess_chemical_potential(particle_insertion_potential_energy_samples=samples)``.
+If another particle insertion is defined, then the excess chemical potential
+for this insertion can be measured in a similar fashion by sampling
+``widom.calculate_particle_insertion_potential_energy(reaction_id=1)``.
 Be aware that the implemented method only works for the canonical ensemble. If the numbers of particles fluctuate (i.e. in a semi grand canonical simulation) one has to adapt the formulas from which the excess chemical potential is calculated! This is not implemented. Also in a isobaric-isothermal simulation (NpT) the corresponding formulas for the excess chemical potentials need to be adapted. This is not implemented.
 
 The implementation can also deal with the simultaneous insertion of multiple particles and can therefore measure the change of excess free energy of multiple particles like e.g.:
@@ -2001,7 +2004,7 @@ For this one has to provide the following reaction to the Widom method:
     widom.add_reaction(reactant_types=[type_3],
     reactant_coefficients=[1], product_types=[type_1, type_2],
     product_coefficients=[1,1], default_charges={1: 0})
-    widom.measure_excess_chemical_potential(0)
+    widom.calculate_particle_insertion_potential_energy(reaction_id=0)
 
 Be aware that in the current implementation, for MC moves which add and remove particles, the insertion of the new particle always takes place at the position where the last particle was removed. Be sure that this is the behaviour you want to have. Otherwise implement a new function ``WidomInsertion::make_reaction_attempt`` in the core.
 

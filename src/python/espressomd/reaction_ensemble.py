@@ -476,7 +476,7 @@ class WidomInsertion(ReactionAlgorithm):
     def calculate_particle_insertion_potential_energy(self, **kwargs):
         """
         Measures the potential energy when particles are inserted in the
-        system following the reaction  provided ``reaction_id``. Please
+        system following the reaction provided in ``reaction_id``. Please
         define the insertion moves first by calling the method
         :meth:`~ReactionAlgorithm.add_reaction` (with only product types
         specified).
@@ -485,6 +485,11 @@ class WidomInsertion(ReactionAlgorithm):
         the chemical potential, it can be used to calculate it.
         For an example of such an application please check
         :file:`/samples/widom_insertion.py`.
+
+        Parameters
+        ----------
+        reaction_id : :obj:`int`
+            Reaction identifier.
         """
         # make inverse widom scheme (deletion of particles) inaccessible.
         # The deletion reactions are the odd reaction_ids

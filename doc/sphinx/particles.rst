@@ -382,7 +382,7 @@ Setting properties of slices can be done by
 
 - supplying an *array of values* that matches the length of the slice which sets each entry individually, e.g.::
 
-      system.partby_ids(range(3)).ext_force = [[1, 0, 0], [2, 0, 0], [3, 0, 0]]
+      system.part.by_ids(range(3)).ext_force = [[1, 0, 0], [2, 0, 0], [3, 0, 0]]
 
 For list properties that have no fixed length like ``exclusions`` or ``bonds``, some care has to be taken.
 There, *single value* assignment also accepts lists/tuples just like setting the property of an individual particle. For example::
