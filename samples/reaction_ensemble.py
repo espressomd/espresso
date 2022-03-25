@@ -110,15 +110,10 @@ RE.set_non_interacting_type(type=max(types.values()) + 1)
 for i in range(10000):
     RE.reaction(reaction_steps=1)
     if i % 100 == 0:
-        print("HA", system.number_of_particles(type=types["HA"]),
-              "A-", system.number_of_particles(type=types["A-"]),
-              "H+", system.number_of_particles(type=types["H+"]))
+        print(f"HA {system.number_of_particles(type=types['HA'])}",
+              f"A- {system.number_of_particles(type=types['A-'])}",
+              f"H+ {system.number_of_particles(type=types['H+'])}")
 
-print(
-    "reaction 0 has acceptance rate: ",
-    RE.get_acceptance_rate_reaction(
-        reaction_id=0))
-print(
-    "reaction 1 has acceptance rate: ",
-    RE.get_acceptance_rate_reaction(
-        reaction_id=1))
+for i in range(2):
+    print(
+        f"reaction {i} acceptance rate: {100. * RE.get_acceptance_rate_reaction(reaction_id=i):.1f}%")

@@ -107,7 +107,7 @@ p3m = espressomd.electrostatics.P3M(prefactor=2.0, accuracy=1e-3)
 system.actors.add(p3m)
 p3m_params = p3m.get_params()
 for key, value in p3m_params.items():
-    print("{} = {}".format(key, value))
+    print(f"{key} = {value}")
 
 
 # Warmup
@@ -122,11 +122,11 @@ system.integrator.set_steepest_descent(f_max=0, gamma=1e-3,
                                        max_displacement=0.01)
 i = 0
 while system.analysis.min_dist() < min_dist and i < warm_n_times:
-    print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+    print(f"minimization: {system.analysis.energy()['total']:+.2e}")
     system.integrator.run(warm_steps)
     i += 1
 
-print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+print(f"minimization: {system.analysis.energy()['total']:+.2e}")
 print()
 system.integrator.set_vv()
 
@@ -145,13 +145,13 @@ for i in range(n_int_cycles):
     system.integrator.run(steps=n_int_steps)
     num_As.append(system.number_of_particles(type=1))
     if i > 2 and i % 50 == 0:
-        print("HA", system.number_of_particles(type=0), "A-",
-              system.number_of_particles(type=1), "H+",
-              system.number_of_particles(type=2))
+        print(f"HA {system.number_of_particles(type=0)}",
+              f"A- {system.number_of_particles(type=1)}",
+              f"H+ {system.number_of_particles(type=2)}")
         concentration_in_box = np.mean(num_As) / box_l**3
         deviation = (concentration_in_box - cs_bulk) / cs_bulk * 100
-        print("average num A {:.1f} +/- {:.1f}, average concentration {:.8f}, "
-              "deviation to target concentration {:.2f}%".format(
-                  np.mean(num_As),
-                  np.sqrt(np.var(num_As, ddof=1) / len(num_As)),
-                  concentration_in_box, deviation))
+        n_A_mean = np.mean(num_As)
+        n_A_stde = 1.96 * np.std(num_As, ddof=1) / len(num_As)
+        print(f"average num A {n_A_mean:.1f} +/- {n_A_stde:.1f}, "
+              f"average concentration {concentration_in_box:.8f}, "
+              f"deviation to target concentration {deviation:.2f}%")

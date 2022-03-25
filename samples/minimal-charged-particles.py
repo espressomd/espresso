@@ -81,11 +81,11 @@ system.integrator.set_steepest_descent(f_max=0, gamma=1e-3,
                                        max_displacement=wca_sig / 100)
 i = 0
 while i < warm_n_times and system.analysis.min_dist() < min_dist:
-    print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+    print(f"minimization: {system.analysis.energy()['total']:+.2e}")
     system.integrator.run(warm_steps)
     i += 1
 
-print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+print(f"minimization: {system.analysis.energy()['total']:+.2e}")
 print()
 system.integrator.set_vv()
 

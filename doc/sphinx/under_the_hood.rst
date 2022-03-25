@@ -3,10 +3,6 @@
 Under the hood
 ==============
 
--  Implementation issues that are interesting for the user
-
--  Main loop in pseudo code (for comparison)
-
 .. _Internal particle organization:
 
 Internal particle organization
