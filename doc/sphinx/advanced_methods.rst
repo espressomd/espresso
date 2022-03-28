@@ -118,6 +118,90 @@ The following limitations currently apply for the collision detection:
 * The ``"bind at point of collision"`` approach cannot handle collisions
   between virtual sites
 
+.. _Deleting bonds when particles are pulled apart:
+
+Deleting bonds when particles are pulled apart
+----------------------------------------------
+
+With this feature, bonds between particles can be deleted automatically
+when the bond length exceeds a critical distance. This is used to model
+breakable bonds.
+
+The bond breakage action is specified for individual bonds via the system
+:attr:`~espressomd.system.System.bond_breakage` attribute.
+
+Several modes are available:
+
+* ``"delete_bond"``: delete a bond from the first particle
+* ``"revert_bind_at_point_of_collision"``: delete a bond between the virtual site
+* ``"none"``: cancel an existing bond breakage specification
+
+Example::
+
+    import espressomd
+    import espressomd.interactions
+    import espressomd.bond_breakage
+    import numpy as np
+
+    system = espressomd.System(box_l=[10] * 3)
+    system.cell_system.skin = 0.4
+    system.time_step = 0.1
+    system.min_global_cut = 2.
+
+    h1 = espressomd.interactions.HarmonicBond(k=0.01, r_0=0.4)
+    h2 = espressomd.interactions.HarmonicBond(k=0.01, r_0=0.5)
+    system.bonded_inter.add(h1)
+    system.bonded_inter.add(h2)
+    system.bond_breakage[h1] = espressomd.bond_breakage.BreakageSpec(
+        breakage_length=0.5, action_type="delete_bond")
+
+    p1 = system.part.add(id=1, pos=[0.00, 0.0, 0.0], v=[0.0, 0.0, 0.0])
+    p2 = system.part.add(id=2, pos=[0.46, 0.0, 0.0], v=[0.1, 0.0, 0.0])
+    p1.add_bond((h1, p2))
+    p1.add_bond((h2, p2))
+    for i in range(3):
+        system.integrator.run(2)
+        bond_length = np.linalg.norm(system.distance_vec(p1, p2))
+        print(f"length = {bond_length:.2f}, bonds = {p1.bonds}")
+
+Output:
+
+.. code-block:: none
+
+    length = 0.48, bonds = ((<HarmonicBond({'r_0': 0.4, 'k': 0.01})>, 2), (<HarmonicBond({'r_0': 0.5, 'k': 0.01})>, 2))
+    length = 0.50, bonds = ((<HarmonicBond({'r_0': 0.4, 'k': 0.01})>, 2), (<HarmonicBond({'r_0': 0.5, 'k': 0.01})>, 2))
+    length = 0.52, bonds = ((<HarmonicBond({'r_0': 0.5, 'k': 0.01})>, 2),)
+
+Please note there is no special treatment for the energy released or consumed
+by bond removal. This can lead to physical inconsistencies.
+
+
+.. _Modeling reversible bonds:
+
+Modeling reversible bonds
+-------------------------
+
+The :ref:`collision detection<Creating bonds when particles collide>`
+and :ref:`bond breakage<Deleting bonds when particles are pulled apart>`
+features can be combined to model reversible bonds.
+
+Two combinations are possible:
+
+* ``"delete_bond"`` mode for breakable bonds together with
+  ``"bond_centers"`` mode for collision detection:
+  used to create or delete a bond between two real particles
+* ``"revert_bind_at_point_of_collision"`` mode for breakable bonds together
+  with ``"bind_at_point_of_collision"`` mode for collision detection:
+  used to create or delete virtual sites (the implicitly created
+  bond between the real particles isn't affected)
+
+Please note that virtual sites are not automatically removed from the
+simulation, therefore the particle number will increase. If you want to
+remove virtual sites, you need to do so manually, either by tracking which
+virtual sites were introduced by collision detection, or by periodically
+looping over the particle list and removing virtual sites which have no
+corresponding bond.
+
 
 .. _Immersed Boundary Method for soft elastic objects:
 
