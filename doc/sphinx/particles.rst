@@ -511,7 +511,7 @@ Particle number counting feature
 
 .. note::
 
-    Do not use these methods with the :mod:`espressomd.collision_detection` module since the collision detection may create or delete particles without the particle number counting feature being aware of this. Therefore also the :mod:`espressomd.reaction_ensemble` module may not be used with the collision detection.
+    Do not use these methods with the :mod:`espressomd.collision_detection` module since the collision detection may create or delete particles without the particle number counting feature being aware of this. Therefore also the :mod:`espressomd.reaction_methods` module may not be used with the collision detection.
 
 
 Knowing the number of particles of a certain type in simulations where particle numbers can fluctuate is of interest.

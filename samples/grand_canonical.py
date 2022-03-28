@@ -35,7 +35,7 @@ import numpy as np
 import argparse
 
 import espressomd
-import espressomd.reaction_ensemble
+import espressomd.reaction_methods
 import espressomd.electrostatics
 
 required_features = ["P3M", "WCA"]
@@ -88,7 +88,7 @@ for type_1 in types:
         system.non_bonded_inter[type_1, type_2].wca.set_params(
             epsilon=wca_eps, sigma=wca_sig)
 
-RE = espressomd.reaction_ensemble.ReactionEnsemble(
+RE = espressomd.reaction_methods.ReactionEnsemble(
     kT=temperature, exclusion_range=wca_sig, seed=3)
 RE.add_reaction(
     gamma=cs_bulk**2 * np.exp(excess_chemical_potential_pair / temperature),

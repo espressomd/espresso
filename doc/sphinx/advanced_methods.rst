@@ -1711,7 +1711,7 @@ Monte Carlo Methods
     Particle slices returned by ``system.part`` are still iterable, but
     the indices no longer match the particle ids. For improved performance,
     you can set the type of invalidated particles with
-    :meth:`~espressomd.reaction_ensemble.ReactionAlgorithm.set_non_interacting_type`
+    :meth:`~espressomd.reaction_methods.ReactionAlgorithm.set_non_interacting_type`
     in all Reaction Ensemble classes.
 
 .. _Reaction Ensemble:
@@ -1822,9 +1822,9 @@ Multiple reactions can be added to the same instance of the reaction ensemble.
 
 An example script can be found here:
 
-* `Reaction ensemble / constant pH ensemble <https://github.com/espressomd/espresso/blob/python/samples/reaction_ensemble.py>`_
+* `Reaction ensemble / constant pH ensemble <https://github.com/espressomd/espresso/blob/python/samples/reaction_methods.py>`_
 
-For a description of the available methods, see :class:`espressomd.reaction_ensemble.ReactionEnsemble`.
+For a description of the available methods, see :class:`espressomd.reaction_methods.ReactionEnsemble`.
 
 .. _Converting tabulated reaction constants to internal units in ESPResSo:
 
@@ -1909,11 +1909,11 @@ reaction ensemble transition probabilities.
 Constant pH simulation
 ~~~~~~~~~~~~~~~~~~~~~~
 
-As before in the Reaction Ensemble one can define multiple reactions (e.g. for an ampholytic system which contains an acid and a base) in one :class:`~espressomd.reaction_ensemble.ConstantpHEnsemble` instance:
+As before in the Reaction Ensemble one can define multiple reactions (e.g. for an ampholytic system which contains an acid and a base) in one :class:`~espressomd.reaction_methods.ConstantpHEnsemble` instance:
 
 .. code-block:: python
 
-    cpH=reaction_ensemble.ConstantpHEnsemble(
+    cpH=reaction_methods.ConstantpHEnsemble(
         temperature=1, exclusion_range=1, seed=77)
     cpH.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[1],
                     product_types=[1, 2], product_coefficients=[1, 1],
@@ -1923,7 +1923,7 @@ As before in the Reaction Ensemble one can define multiple reactions (e.g. for a
 
 An example script can be found here:
 
-* `Reaction ensemble / constant pH ensemble <https://github.com/espressomd/espresso/blob/python/samples/reaction_ensemble.py>`_
+* `Reaction ensemble / constant pH ensemble <https://github.com/espressomd/espresso/blob/python/samples/reaction_methods.py>`_
 
 In the constant pH method due to Reed and Reed
 :cite:`reed92a` it is possible to set the chemical potential
@@ -1944,7 +1944,7 @@ constant :math:`K_c` for the following reaction:
 
    \mathrm{HA \rightleftharpoons\ H^+ + A^- } \,,
 
-For a description of the available methods, see :class:`espressomd.reaction_ensemble.ConstantpHEnsemble`.
+For a description of the available methods, see :class:`espressomd.reaction_methods.ConstantpHEnsemble`.
 
 
 Widom Insertion (for homogeneous systems)
@@ -1962,7 +1962,7 @@ For this one has to provide the following reaction to the Widom method:
 .. code-block:: python
 
     type_B=1
-    widom = reaction_ensemble.WidomInsertion(
+    widom = reaction_methods.WidomInsertion(
         temperature=temperature, seed=77)
     widom.add_reaction(reactant_types=[],
     reactant_coefficients=[], product_types=[type_B],
@@ -2012,5 +2012,5 @@ An example script which demonstrates the usage for measuring the pair excess che
 
 * `Widom Insertion <https://github.com/espressomd/espresso/blob/python/samples/widom_insertion.py>`_
 
-For a description of the available methods, see :class:`espressomd.reaction_ensemble.WidomInsertion`.
+For a description of the available methods, see :class:`espressomd.reaction_methods.WidomInsertion`.
 

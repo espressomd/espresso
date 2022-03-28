@@ -19,7 +19,7 @@ import unittest as ut
 import importlib_wrapper
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@SAMPLES_DIR@/reaction_ensemble.py", cmd_arguments=["--@TEST_SUFFIX@"],
+    "@SAMPLES_DIR@/reaction_methods.py", cmd_arguments=["--@TEST_SUFFIX@"],
     script_suffix="@TEST_SUFFIX@")
 
 

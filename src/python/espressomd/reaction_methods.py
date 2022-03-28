@@ -110,7 +110,7 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
         >>> import espressomd
         >>> import espressomd.shapes
         >>> import espressomd.electrostatics
-        >>> import espressomd.reaction_ensemble
+        >>> import espressomd.reaction_methods
         >>> import numpy as np
         >>> # setup a charged system
         >>> box_l = 20
@@ -130,7 +130,7 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
         >>> elc = espressomd.electrostatics.ELC(p3m_actor=p3m, maxPWerror=1.0, gap_size=elc_gap)
         >>> system.actors.add(elc)
         >>> # add constant pH method
-        >>> RE = espressomd.reaction_ensemble.ConstantpHEnsemble(kT=1, exclusion_range=1, seed=77)
+        >>> RE = espressomd.reaction_methods.ConstantpHEnsemble(kT=1, exclusion_range=1, seed=77)
         >>> RE.constant_pH = 2
         >>> RE.add_reaction(gamma=0.0088, reactant_types=[types["HA"]],
         ...                 product_types=[types["A-"], types["H+"]],
