@@ -20,6 +20,7 @@
 #define ESPRESSO_BONDLIST_HPP
 
 #include <utils/Span.hpp>
+#include <utils/compact_vector.hpp>
 
 #include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/container/vector.hpp>
@@ -84,7 +85,7 @@ public:
  */
 class BondList {
 public:
-  using storage_type = boost::container::vector<int>;
+  using storage_type = Utils::compact_vector<int>;
 
 private:
   using storage_iterator = storage_type::const_iterator;

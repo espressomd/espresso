@@ -1011,7 +1011,7 @@ cdef class ParticleHandle:
 
             def __get__(self):
                 self.update_particle_data()
-                return array_locked(self.particle_data.exclusions())
+                return array_locked(self.particle_data.exclusions_as_vector())
 
         def add_exclusion(self, _partner):
             """
@@ -1023,12 +1023,12 @@ cdef class ParticleHandle:
                 partner
 
             """
-            if _partner in self.exclusions:
-                raise Exception(
-                    f"Exclusion id {_partner} already in exclusion list of particle {self._id}")
-
             check_type_or_throw_except(
                 _partner, 1, int, "PID of partner has to be an int.")
+            self.update_particle_data()
+            if self.particle_data.has_exclusion(_partner):
+                raise Exception(
+                    f"Exclusion id {_partner} already in exclusion list of particle {self._id}")
             if self._id == _partner:
                 raise Exception(
                     "Cannot exclude of a particle with itself!\n"
@@ -1039,7 +1039,8 @@ cdef class ParticleHandle:
         def delete_exclusion(self, _partner):
             check_type_or_throw_except(
                 _partner, 1, int, "PID of partner has to be an int.")
-            if _partner not in self.exclusions:
+            self.update_particle_data()
+            if not self.particle_data.has_exclusion(_partner):
                 raise Exception(
                     f"Particle with id {_partner} is not in exclusion list.")
             if change_exclusion(self._id, _partner, 1) == 1:

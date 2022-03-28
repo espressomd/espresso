@@ -24,11 +24,16 @@
 #include "BondList.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/compact_vector.hpp>
 #include <utils/math/quaternion.hpp>
 #include <utils/quaternion.hpp>
 
+#include <boost/container/vector.hpp>
+#include <boost/serialization/is_bitwise_serializable.hpp>
+#include <boost/serialization/level.hpp>
 #include <boost/serialization/vector.hpp>
 
+#include <algorithm>
 #include <cstdint>
 #include <stdexcept>
 #include <vector>
@@ -82,6 +87,42 @@ struct ParticleProperties {
   /** particle type, used for non-bonded interactions. */
   int type = 0;
 
+#ifdef VIRTUAL_SITES
+  /** is particle virtual */
+  bool is_virtual = false;
+#else  // VIRTUAL_SITES
+  static constexpr bool is_virtual = false;
+#endif // VIRTUAL_SITES
+
+#ifdef ROTATION
+  /** Bitfield for the particle axes of rotation.
+   *  Values:
+   *  - 0: no rotation
+   *  - 1: allow rotation around the x axis
+   *  - 2: allow rotation around the y axis
+   *  - 4: allow rotation around the z axis
+   *  By default, the particle cannot rotate.
+   */
+  uint8_t rotation = static_cast<uint8_t>(0b000u);
+#else
+  /** Bitfield for the particle axes of rotation. Particle cannot rotate. */
+  static constexpr uint8_t rotation = static_cast<uint8_t>(0b000u);
+#endif
+
+#ifdef EXTERNAL_FORCES
+  /** Flag for fixed particle coordinates.
+   *  Values:
+   *  - 0: no fixed coordinates
+   *  - 1: fix translation along the x axis
+   *  - 2: fix translation along the y axis
+   *  - 4: fix translation along the z axis
+   */
+  uint8_t ext_flag = static_cast<uint8_t>(0b000u);
+#else  // EXTERNAL_FORCES
+  /** Bitfield for fixed particle coordinates. Coordinates cannot be fixed. */
+  static constexpr uint8_t ext_flag = static_cast<uint8_t>(0b000u);
+#endif // EXTERNAL_FORCES
+
   /** particle mass */
 #ifdef MASS
   double mass = 1.0;
@@ -94,20 +135,6 @@ struct ParticleProperties {
   Utils::Vector3d rinertia = {1., 1., 1.};
 #else
   static constexpr Utils::Vector3d rinertia = {1., 1., 1.};
-#endif
-
-#ifdef ROTATION
-  /** Bitfield for the particle axes of rotation.
-   *  Values:
-   *  - 1: allow rotation around the x axis
-   *  - 2: allow rotation around the y axis
-   *  - 4: allow rotation around the z axis
-   *  By default, the particle cannot rotate.
-   */
-  uint8_t rotation = static_cast<uint8_t>(0b000u);
-#else
-  /** Bitfield for the particle axes of rotation. Particle cannot rotate. */
-  static constexpr uint8_t rotation = static_cast<uint8_t>(0b000u);
 #endif
 
   /** charge. */
@@ -127,9 +154,6 @@ struct ParticleProperties {
   double dipm = 0.;
 #endif
 
-#ifdef VIRTUAL_SITES
-  /** is particle virtual */
-  bool is_virtual = false;
 #ifdef VIRTUAL_SITES_RELATIVE
   /** The following properties define, with respect to which real particle a
    *  virtual site is placed and at what distance. The relative orientation of
@@ -154,9 +178,6 @@ struct ParticleProperties {
     }
   } vs_relative;
 #endif // VIRTUAL_SITES_RELATIVE
-#else  // VIRTUAL_SITES
-  static constexpr bool is_virtual = false;
-#endif // VIRTUAL_SITES
 
 #ifdef THERMOSTAT_PER_PARTICLE
 /** Friction coefficient for translation */
@@ -176,22 +197,12 @@ struct ParticleProperties {
 #endif // THERMOSTAT_PER_PARTICLE
 
 #ifdef EXTERNAL_FORCES
-  /** Bitfield for fixed particle coordinates.
-   *  Values:
-   *  - 1: fix translation along the x axis
-   *  - 2: fix translation along the y axis
-   *  - 4: fix translation along the z axis
-   */
-  uint8_t ext_flag = static_cast<uint8_t>(0b000u);
   /** External force. */
   Utils::Vector3d ext_force = {0, 0, 0};
 #ifdef ROTATION
   /** External torque. */
   Utils::Vector3d ext_torque = {0, 0, 0};
-#endif
-#else  // EXTERNAL_FORCES
-  /** Bitfield for fixed particle coordinates. Coordinates cannot be fixed. */
-  static constexpr const uint8_t ext_flag = static_cast<uint8_t>(0b000u);
+#endif // ROTATION
 #endif // EXTERNAL_FORCES
 
 #ifdef ENGINE
@@ -352,21 +363,20 @@ struct ParticleMomentum {
 struct ParticleLocal {
   /** is particle a ghost particle. */
   bool ghost = false;
-  /** position from the last Verlet list update. */
-  Utils::Vector3d p_old = {0, 0, 0};
+  short int lees_edwards_flag = 0;
   /** index of the simulation box image where the particle really sits. */
   Utils::Vector3i i = {0, 0, 0};
-
+  /** position from the last Verlet list update. */
+  Utils::Vector3d p_old = {0, 0, 0};
   /** Accumulated applied Lees-Edwards offset. */
   double lees_edwards_offset = 0.;
-  short int lees_edwards_flag = 0;
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
     ar &ghost;
-    ar &p_old;
-    ar &i;
-    ar &lees_edwards_offset;
     ar &lees_edwards_flag;
+    ar &i;
+    ar &p_old;
+    ar &lees_edwards_offset;
   }
 };
 
@@ -428,7 +438,7 @@ private:
   /** list of particles, with which this particle has no non-bonded
    *  interactions
    */
-  std::vector<int> el;
+  Utils::compact_vector<int> el;
 #endif
 
 public:
@@ -566,9 +576,31 @@ public:
   auto const &rattle_params() const { return rattle; }
   auto &rattle_params() { return rattle; }
 #endif
+
+  Utils::compact_vector<int> &exclusions() {
 #ifdef EXCLUSIONS
-  auto const &exclusions() const { return el; }
-  auto &exclusions() { return el; }
+    return el;
+#else
+    throw std::runtime_error{"Exclusions not enabled."};
+#endif
+  }
+
+  Utils::compact_vector<int> const &exclusions() const {
+#ifdef EXCLUSIONS
+    return el;
+#else
+    throw std::runtime_error{"Exclusions not enabled."};
+#endif
+  }
+
+#ifdef EXCLUSIONS
+  std::vector<int> const exclusions_as_vector() const {
+    return {el.begin(), el.end()};
+  }
+
+  bool has_exclusion(int pid) const {
+    return std::find(el.begin(), el.end(), pid) != el.end();
+  }
 #endif
 
 private:
@@ -585,5 +617,33 @@ private:
 #endif
   }
 };
+
+BOOST_CLASS_IMPLEMENTATION(Particle, object_serializable)
+BOOST_CLASS_IMPLEMENTATION(ParticleParametersSwimming, object_serializable)
+BOOST_CLASS_IMPLEMENTATION(ParticleProperties, object_serializable)
+BOOST_CLASS_IMPLEMENTATION(ParticlePosition, object_serializable)
+BOOST_CLASS_IMPLEMENTATION(ParticleMomentum, object_serializable)
+BOOST_CLASS_IMPLEMENTATION(ParticleForce, object_serializable)
+BOOST_CLASS_IMPLEMENTATION(ParticleLocal, object_serializable)
+#ifdef BOND_CONSTRAINT
+BOOST_CLASS_IMPLEMENTATION(ParticleRattle, object_serializable)
+#endif
+#ifdef VIRTUAL_SITES_RELATIVE
+BOOST_CLASS_IMPLEMENTATION(decltype(ParticleProperties::vs_relative),
+                           object_serializable)
+#endif
+
+BOOST_IS_BITWISE_SERIALIZABLE(ParticleParametersSwimming)
+BOOST_IS_BITWISE_SERIALIZABLE(ParticleProperties)
+BOOST_IS_BITWISE_SERIALIZABLE(ParticlePosition)
+BOOST_IS_BITWISE_SERIALIZABLE(ParticleMomentum)
+BOOST_IS_BITWISE_SERIALIZABLE(ParticleForce)
+BOOST_IS_BITWISE_SERIALIZABLE(ParticleLocal)
+#ifdef BOND_CONSTRAINT
+BOOST_IS_BITWISE_SERIALIZABLE(ParticleRattle)
+#endif
+#ifdef VIRTUAL_SITES_RELATIVE
+BOOST_IS_BITWISE_SERIALIZABLE(decltype(ParticleProperties::vs_relative))
+#endif
 
 #endif

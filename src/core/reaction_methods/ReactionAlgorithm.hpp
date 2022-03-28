@@ -40,8 +40,8 @@ namespace ReactionMethods {
 
 struct StoredParticleProperty {
   int p_id;
-  double charge;
   int type;
+  double charge;
 };
 
 /** Base class for reaction ensemble methods */
