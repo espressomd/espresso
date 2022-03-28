@@ -63,8 +63,8 @@ private:
   std::shared_ptr<::Writer::H5md::File> m_h5md;
 };
 
-} /* namespace Writer */
+} // namespace Writer
 } // namespace ScriptInterface
 
-#endif // ESPRESSO_H5MD_HPP
 #endif // H5MD
+#endif

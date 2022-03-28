@@ -160,19 +160,19 @@ EKParameters ek_parameters = {
     nullptr,
 #endif
     // rho
-    {nullptr},
+    {},
     // species_index
     {-1},
     // density
-    {0.0},
+    {},
     // D
-    {0.0},
+    {},
     // d
-    {0.0},
+    {},
     // valency
-    {0.0},
+    {},
     // ext_force_density
-    {0.0},
+    {},
     // node_is_catalyst
     nullptr,
 };
@@ -193,8 +193,6 @@ extern LB_parameters_gpu lbpar_gpu;
 extern LB_node_force_density_gpu node_f, node_f_buf;
 extern LB_nodes_gpu *current_nodes;
 extern EKParameters *lb_ek_parameters;
-
-LB_rho_v_gpu *ek_lb_device_values;
 
 __device__ cufftReal ek_getNode(unsigned x, unsigned y, unsigned z) {
   auto *field =
@@ -1093,9 +1091,8 @@ __device__ void ek_diffusion_migration_lbforce_nodecentered_stencil(
 }
 
 __device__ void
-ek_add_advection_to_flux(unsigned int index, unsigned int *neighborindex,
-                         unsigned int *coord, unsigned int species_index,
-                         LB_node_force_density_gpu node_f, LB_nodes_gpu lb_node,
+ek_add_advection_to_flux(unsigned int index, unsigned int *coord,
+                         unsigned int species_index, LB_nodes_gpu lb_node,
                          LB_parameters_gpu *ek_lbparameters_gpu) {
   float dx[3];
   unsigned int di[3];
@@ -1376,7 +1373,6 @@ __global__ void ek_calculate_quantities(unsigned int species_index,
                                         LB_nodes_gpu lb_node,
                                         LB_node_force_density_gpu node_f,
                                         LB_parameters_gpu *ek_lbparameters_gpu,
-                                        LB_rho_v_gpu *d_v,
                                         uint64_t philox_counter) {
 
   unsigned int index = ek_getThreadIndex();
@@ -1479,8 +1475,8 @@ __global__ void ek_calculate_quantities(unsigned int species_index,
 
     /* advective contribution to flux */
     if (ek_parameters_gpu->advection)
-      ek_add_advection_to_flux(index, neighborindex, coord, species_index,
-                               node_f, lb_node, ek_lbparameters_gpu);
+      ek_add_advection_to_flux(index, coord, species_index, lb_node,
+                               ek_lbparameters_gpu);
 
     /* fluctuation contribution to flux */
     if (ek_parameters_gpu->fluctuations)
@@ -1643,9 +1639,7 @@ __global__ void ek_propagate_densities(unsigned int species_index) {
   }
 }
 
-__global__ void ek_apply_boundaries(unsigned int species_index,
-                                    LB_nodes_gpu lbnode,
-                                    LB_node_force_density_gpu node_f) {
+__global__ void ek_apply_boundaries(LB_nodes_gpu lbnode) {
 
   unsigned int index = ek_getThreadIndex();
   unsigned int neighborindex[22];
@@ -2140,7 +2134,7 @@ void ek_integrate() {
   for (unsigned i = 0; i < ek_parameters.number_of_species; i++) {
     KERNELCALL(ek_clear_fluxes, dim_grid, threads_per_block);
     KERNELCALL(ek_calculate_quantities, dim_grid, threads_per_block, i,
-               *current_nodes, node_f, ek_lbparameters_gpu, ek_lb_device_values,
+               *current_nodes, node_f, ek_lbparameters_gpu,
                philox_counter.value());
 
     KERNELCALL(ek_propagate_densities, dim_grid, threads_per_block, i);
@@ -2256,9 +2250,9 @@ int ek_init() {
         ek_parameters.bulk_viscosity * time_step / Utils::sqr(lbpar_gpu.agrid);
 
     lbpar_gpu.external_force_density =
-        ek_parameters.lb_ext_force_density[0] != 0 ||
-        ek_parameters.lb_ext_force_density[1] != 0 ||
-        ek_parameters.lb_ext_force_density[2] != 0;
+        ek_parameters.lb_ext_force_density[0] != 0.f ||
+        ek_parameters.lb_ext_force_density[1] != 0.f ||
+        ek_parameters.lb_ext_force_density[2] != 0.f;
     lbpar_gpu.ext_force_density =
         Utils::Vector3f(ek_parameters.lb_ext_force_density) *
         Utils::sqr(lbpar_gpu.agrid * time_step);
@@ -2303,8 +2297,6 @@ int ek_init() {
     }
 
     cuda_safe_mem(cudaMalloc((void **)&charge_gpu, sizeof(float)));
-
-    lb_get_device_values_pointer(&ek_lb_device_values);
 
     if (cudaGetLastError() != cudaSuccess) {
       fprintf(stderr, "ERROR: Failed to allocate\n");
@@ -2600,14 +2592,12 @@ int ek_node_get_flux(int species, int x, int y, int z, double *flux) {
   KERNELCALL(ek_clear_fluxes, dim_grid, threads_per_block);
   KERNELCALL(ek_calculate_quantities, dim_grid, threads_per_block,
              static_cast<unsigned>(ek_parameters.species_index[species]),
-             *current_nodes, node_f, ek_lbparameters_gpu, ek_lb_device_values,
+             *current_nodes, node_f, ek_lbparameters_gpu,
              philox_counter.value());
   reset_LB_force_densities_GPU(false);
 
 #ifdef EK_BOUNDARIES
-  KERNELCALL(ek_apply_boundaries, dim_grid, threads_per_block,
-             static_cast<unsigned>(ek_parameters.species_index[species]),
-             *current_nodes, node_f);
+  KERNELCALL(ek_apply_boundaries, dim_grid, threads_per_block, *current_nodes);
 #endif
 
   cuda_safe_mem(cudaMemcpy(fluxes.data(), ek_parameters.j,
@@ -2823,14 +2813,12 @@ int ek_print_vtk_flux(int species, char *filename) {
   KERNELCALL(ek_clear_fluxes, dim_grid, threads_per_block);
   KERNELCALL(ek_calculate_quantities, dim_grid, threads_per_block,
              static_cast<unsigned>(ek_parameters.species_index[species]),
-             *current_nodes, node_f, ek_lbparameters_gpu, ek_lb_device_values,
+             *current_nodes, node_f, ek_lbparameters_gpu,
              philox_counter.value());
   reset_LB_force_densities_GPU(false);
 
 #ifdef EK_BOUNDARIES
-  KERNELCALL(ek_apply_boundaries, dim_grid, threads_per_block,
-             static_cast<unsigned>(ek_parameters.species_index[species]),
-             *current_nodes, node_f);
+  KERNELCALL(ek_apply_boundaries, dim_grid, threads_per_block, *current_nodes);
 #endif
 
   cuda_safe_mem(cudaMemcpy(fluxes.data(), ek_parameters.j,
@@ -3052,13 +3040,12 @@ int ek_print_vtk_flux_fluc(int species, char *filename) {
   KERNELCALL(ek_clear_fluxes, dim_grid, threads_per_block);
   KERNELCALL(ek_calculate_quantities, dim_grid, threads_per_block,
              static_cast<unsigned>(ek_parameters.species_index[species]),
-             *current_nodes, node_f, ek_lbparameters_gpu, ek_lb_device_values,
+             *current_nodes, node_f, ek_lbparameters_gpu,
              philox_counter.value());
   reset_LB_force_densities_GPU(false);
 
 #ifdef EK_BOUNDARIES
-  KERNELCALL(ek_apply_boundaries, dim_grid, threads_per_block,
-             ek_parameters.species_index[species], *current_nodes, node_f);
+  KERNELCALL(ek_apply_boundaries, dim_grid, threads_per_block, *current_nodes);
 #endif
 
   cuda_safe_mem(cudaMemcpy(fluxes.data(), ek_parameters.j_fluc,
@@ -3282,14 +3269,12 @@ int ek_print_vtk_flux_link(int species, char *filename) {
   KERNELCALL(ek_clear_fluxes, dim_grid, threads_per_block);
   KERNELCALL(ek_calculate_quantities, dim_grid, threads_per_block,
              static_cast<unsigned>(ek_parameters.species_index[species]),
-             *current_nodes, node_f, ek_lbparameters_gpu, ek_lb_device_values,
+             *current_nodes, node_f, ek_lbparameters_gpu,
              philox_counter.value());
   reset_LB_force_densities_GPU(false);
 
 #ifdef EK_BOUNDARIES
-  KERNELCALL(ek_apply_boundaries, dim_grid, threads_per_block,
-             static_cast<unsigned>(ek_parameters.species_index[species]),
-             *current_nodes, node_f);
+  KERNELCALL(ek_apply_boundaries, dim_grid, threads_per_block, *current_nodes);
 #endif
 
   cuda_safe_mem(cudaMemcpy(fluxes.data(), ek_parameters.j,
@@ -3631,13 +3616,11 @@ void ek_print_lbpar() {
   printf("    unsigned int dim_y = %d;\n", lbpar_gpu.dim[1]);
   printf("    unsigned int dim_z = %d;\n", lbpar_gpu.dim[2]);
   printf("    unsigned int number_of_nodes = %d;\n", lbpar_gpu.number_of_nodes);
-  printf("    int calc_val = %d;\n", lbpar_gpu.calc_val);
-  printf("    int external_force_density = %d;\n",
-         lbpar_gpu.external_force_density);
+  printf("    bool external_force_density = %d;\n",
+         static_cast<int>(lbpar_gpu.external_force_density));
   printf("    float ext_force_density[3] = {%f, %f, %f};\n",
          lbpar_gpu.ext_force_density[0], lbpar_gpu.ext_force_density[1],
          lbpar_gpu.ext_force_density[2]);
-  printf("    unsigned int reinit = %d;\n", lbpar_gpu.reinit);
 
   printf("}\n");
 }

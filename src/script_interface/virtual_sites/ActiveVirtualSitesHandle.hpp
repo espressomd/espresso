@@ -22,13 +22,17 @@
 #ifndef SCRIPT_INTERFACE_VIRTUAL_SITES_ACTIVE_VIRTUAL_SITES_HANDLE_HPP
 #define SCRIPT_INTERFACE_VIRTUAL_SITES_ACTIVE_VIRTUAL_SITES_HANDLE_HPP
 
-#include "VirtualSites.hpp"
 #include "config.hpp"
-#include "core/virtual_sites.hpp"
-#include "errorhandling.hpp"
-#include "script_interface/auto_parameters/AutoParameters.hpp"
 
 #ifdef VIRTUAL_SITES
+
+#include "VirtualSites.hpp"
+#include "script_interface/auto_parameters/AutoParameters.hpp"
+
+#include "core/errorhandling.hpp"
+#include "core/virtual_sites.hpp"
+
+#include <memory>
 
 namespace ScriptInterface {
 namespace VirtualSites {
@@ -52,5 +56,5 @@ private:
 };
 } /* namespace VirtualSites */
 } /* namespace ScriptInterface */
-#endif
+#endif // VIRTUAL_SITES
 #endif

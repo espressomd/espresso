@@ -18,12 +18,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _QUARTIC_HPP
-#define _QUARTIC_HPP
+#ifndef CORE_BN_IA_QUARTIC_HPP
+#define CORE_BN_IA_QUARTIC_HPP
 /** \file
  *  Routines to calculate the quartic potential between particle pairs.
  */
 
+#include "errorhandling.hpp"
 #include <utils/Vector.hpp>
 #include <utils/math/int_pow.hpp>
 #include <utils/math/sqr.hpp>
@@ -73,7 +74,16 @@ QuarticBond::force(Utils::Vector3d const &dx) const {
   }
 
   auto const dr = dist - r;
-  auto const fac = (k0 * dr + k1 * Utils::int_pow<3>(dr)) / dist;
+  auto fac = (k0 * dr + k1 * Utils::int_pow<3>(dr));
+
+  if (dist > ROUND_ERROR_PREC) { /* Regular case */
+    fac /= dist;
+  } else {
+    if (r > 0.) {
+      runtimeErrorMsg() << "Quartic bond: Particles have zero distance. "
+                           "This is most likely an error in the system setup.";
+    }
+  }
   return -fac * dx;
 }
 

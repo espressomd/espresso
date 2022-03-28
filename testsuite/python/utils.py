@@ -37,8 +37,14 @@ class espresso_utils(ut.TestCase):
         with self.assertRaisesRegex(
                 ValueError, 'D -- Item 1 was of type str'):
             utils.check_type_or_throw_except([1, '2', '3'], 3, float, 'D')
+        # the following statements should not raise any exception
         try:
-            utils.check_type_or_throw_except([1, 2, 3], 3, float, 'E')
+            utils.check_type_or_throw_except([1, 2, 3], 3, float, '')
+            utils.check_type_or_throw_except(np.array([1, 2]), 2, float, '')
+            utils.check_type_or_throw_except(np.array(2 * [True]), 2, bool, '')
+            utils.check_type_or_throw_except(np.array([1, 2])[0], 1, float, '')
+            utils.check_type_or_throw_except(np.array([True])[0], 1, bool, '')
+            utils.check_type_or_throw_except(np.array(['12'])[0], 1, str, '')
         except ValueError as err:
             self.fail(f'check_type_or_throw_except raised ValueError("{err}")')
 
@@ -52,6 +58,9 @@ class espresso_utils(ut.TestCase):
         self.assertTrue(utils.is_valid_type(1.0, float))
         self.assertTrue(utils.is_valid_type(12345, int))
         self.assertTrue(utils.is_valid_type('123', str))
+        self.assertTrue(utils.is_valid_type(np.array([123.])[0], float))
+        self.assertTrue(utils.is_valid_type(np.array([1234])[0], int))
+        self.assertTrue(utils.is_valid_type(np.array([True])[0], bool))
         # numpy types
         self.assertTrue(utils.is_valid_type(
             np.array([12], dtype=int)[0], int))

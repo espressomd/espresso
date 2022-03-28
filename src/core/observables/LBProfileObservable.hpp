@@ -43,9 +43,9 @@ public:
                       double max_z, bool allow_empty_bins = false)
       : ProfileObservable(n_x_bins, n_y_bins, n_z_bins, min_x, max_x, min_y,
                           max_y, min_z, max_z),
-        sampling_delta{sampling_delta_x, sampling_delta_y, sampling_delta_z},
-        sampling_offset{sampling_offset_x, sampling_offset_y,
-                        sampling_offset_z},
+        sampling_delta{{sampling_delta_x, sampling_delta_y, sampling_delta_z}},
+        sampling_offset{
+            {sampling_offset_x, sampling_offset_y, sampling_offset_z}},
         allow_empty_bins(allow_empty_bins) {
     if (sampling_delta[0] <= 0.)
       throw std::domain_error("sampling_delta_x has to be > 0");
@@ -68,10 +68,8 @@ public:
   void calculate_sampling_positions() {
     auto const lim = limits();
     sampling_positions.clear();
-    assert(sampling_delta[0] > 0. and sampling_delta[1] > 0. and
-           sampling_delta[2] > 0.);
-    assert(sampling_offset[0] >= 0. and sampling_offset[1] >= 0. and
-           sampling_offset[2] >= 0.);
+    assert(Utils::Vector3d(sampling_delta) > Utils::Vector3d::broadcast(0.));
+    assert(Utils::Vector3d(sampling_offset) >= Utils::Vector3d::broadcast(0.));
     const auto n_samples_x = static_cast<std::size_t>(
         std::rint((lim[0].second - lim[0].first) / sampling_delta[0]));
     const auto n_samples_y = static_cast<std::size_t>(

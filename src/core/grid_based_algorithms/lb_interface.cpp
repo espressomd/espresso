@@ -45,6 +45,8 @@
 
 ActiveLB lattice_switch = ActiveLB::NONE;
 
+ActiveLB lb_lbfluid_get_lattice_switch() { return lattice_switch; }
+
 struct NoLBActive : public std::exception {
   const char *what() const noexcept override { return "LB not activated"; }
 };
@@ -352,12 +354,9 @@ void lb_lbfluid_set_ext_force_density(const Utils::Vector3d &force_density) {
     lbpar_gpu.ext_force_density[0] = static_cast<float>(force_density[0]);
     lbpar_gpu.ext_force_density[1] = static_cast<float>(force_density[1]);
     lbpar_gpu.ext_force_density[2] = static_cast<float>(force_density[2]);
-    if (force_density[0] != 0 || force_density[1] != 0 ||
-        force_density[2] != 0) {
-      lbpar_gpu.external_force_density = 1;
-    } else {
-      lbpar_gpu.external_force_density = 0;
-    }
+    lbpar_gpu.external_force_density = force_density[0] != 0. ||
+                                       force_density[1] != 0. ||
+                                       force_density[2] != 0.;
     lb_reinit_extern_nodeforce_GPU(&lbpar_gpu);
 
 #endif //  CUDA
@@ -408,7 +407,7 @@ void check_tau_time_step_consistency(double tau, double time_step) {
   auto const factor = tau / time_step;
   if (fabs(round(factor) - factor) / factor > eps)
     throw std::invalid_argument("LB tau (" + std::to_string(tau) +
-                                ") must be integer multiple of "
+                                ") must be an integer multiple of the "
                                 "MD time_step (" +
                                 std::to_string(time_step) + "). Factor is " +
                                 std::to_string(factor));
@@ -582,9 +581,9 @@ void lb_lbfluid_print_vtk_velocity(const std::string &filename,
 #ifdef CUDA
     host_values.resize(lbpar_gpu.number_of_nodes);
     lb_get_values_GPU(host_values.data());
-    auto const box_l_x = lb_lbfluid_get_shape()[0];
-    vtk_writer("lbfluid_gpu", [box_l_x](Utils::Vector3i const &pos) {
-      auto const j = box_l_x * box_l_x * pos[2] + box_l_x * pos[1] + pos[0];
+    auto const box_l = lb_lbfluid_get_shape();
+    vtk_writer("lbfluid_gpu", [&box_l](Utils::Vector3i const &pos) {
+      auto const j = box_l[0] * box_l[1] * pos[2] + box_l[0] * pos[1] + pos[0];
       return Utils::Vector3d{host_values[j].v};
     });
 #endif //  CUDA
@@ -1099,10 +1098,6 @@ void lb_lbnode_set_pop(const Utils::Vector3i &ind,
     throw NoLBActive();
   }
 }
-
-const Lattice &lb_lbfluid_get_lattice() { return lblattice; }
-
-ActiveLB lb_lbfluid_get_lattice_switch() { return lattice_switch; }
 
 static void mpi_lb_lbfluid_calc_fluid_momentum_local() {
   lb_calc_fluid_momentum(nullptr, lbpar, lbfields, lblattice);

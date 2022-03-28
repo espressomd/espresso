@@ -182,29 +182,33 @@ class ParticleProperties(ut.TestCase):
 
     if espressomd.has_features(["VIRTUAL_SITES"]):
         test_virtual = generateTestForScalarProperty("virtual", 1)
-    if espressomd.has_features(["VIRTUAL_SITES_RELATIVE"]):
-        def test_yy_vs_relative(self):
-            self.system.part.add(id=0, pos=(0, 0, 0))
-            p1 = self.system.part.add(id=1, pos=(0, 0, 0))
-            p1.vs_relative = (0, 5.0, (0.5, -0.5, -0.5, -0.5))
-            p1.vs_quat = [1, 2, 3, 4]
-            np.testing.assert_array_equal(
-                p1.vs_quat, [1, 2, 3, 4])
-            res = p1.vs_relative
-            self.assertEqual(res[0], 0, "vs_relative: " + res.__str__())
-            self.assertEqual(res[1], 5.0, "vs_relative: " + res.__str__())
-            np.testing.assert_allclose(
-                res[2], np.array((0.5, -0.5, -0.5, -0.5)),
-                err_msg="vs_relative: " + res.__str__(), atol=self.tol)
-            # check exceptions
-            with self.assertRaisesRegex(ValueError, "needs input in the form"):
-                p1.vs_relative = (0, 5.0)
-            with self.assertRaisesRegex(ValueError, "particle id has to be given as an int"):
-                p1.vs_relative = ('0', 5.0, (1, 0, 0, 0))
-            with self.assertRaisesRegex(ValueError, "distance has to be given as a float"):
-                p1.vs_relative = (0, '5', (1, 0, 0, 0))
-            with self.assertRaisesRegex(ValueError, "quaternion has to be given as a tuple of 4 floats"):
-                p1.vs_relative = (0, 5.0, (1, 0, 0))
+
+    @utx.skipIfMissingFeatures(["VIRTUAL_SITES_RELATIVE"])
+    def test_vs_relative(self):
+        self.system.part.add(id=0, pos=(0, 0, 0))
+        p1 = self.system.part.add(id=1, pos=(0, 0, 0))
+        p1.vs_relative = (0, 5.0, (0.5, -0.5, -0.5, -0.5))
+        p1.vs_quat = [1, 2, 3, 4]
+        np.testing.assert_array_equal(p1.vs_quat, [1, 2, 3, 4])
+        res = p1.vs_relative
+        self.assertEqual(res[0], 0, f"vs_relative: {res}")
+        self.assertEqual(res[1], 5.0, f"vs_relative: {res}")
+        np.testing.assert_allclose(
+            res[2], np.array((0.5, -0.5, -0.5, -0.5)),
+            err_msg=f"vs_relative: {res}", atol=self.tol)
+        # check exceptions
+        with self.assertRaisesRegex(ValueError, "needs input in the form"):
+            p1.vs_relative = (0, 5.0)
+        with self.assertRaisesRegex(ValueError, "particle id has to be given as an int"):
+            p1.vs_relative = ('0', 5.0, (1, 0, 0, 0))
+        with self.assertRaisesRegex(ValueError, "distance has to be given as a float"):
+            p1.vs_relative = (0, '5', (1, 0, 0, 0))
+        with self.assertRaisesRegex(ValueError, "quaternion has to be given as a tuple of 4 floats"):
+            p1.vs_relative = (0, 5.0, (1, 0, 0))
+        with self.assertRaisesRegex(ValueError, "quaternion is zero"):
+            p1.vs_relative = (0, 5.0, (0, 0, 0, 0))
+        with self.assertRaisesRegex(ValueError, "quaternion is zero"):
+            p1.vs_quat = [0, 0, 0, 0]
 
     @utx.skipIfMissingFeatures("DIPOLES")
     def test_contradicting_properties_dip_dipm(self):
@@ -216,6 +220,12 @@ class ParticleProperties(ut.TestCase):
         with self.assertRaises(ValueError):
             self.system.part.add(pos=[0, 0, 0], dip=[1, 1, 1],
                                  quat=[1.0, 1.0, 1.0, 1.0])
+
+    @utx.skipIfMissingFeatures(["ROTATION"])
+    def test_invalid_quat(self):
+        system = self.system
+        with self.assertRaisesRegex(ValueError, "quaternion is zero"):
+            system.part.add(pos=[0., 0., 0.], quat=[0., 0., 0., 0.])
 
     @utx.skipIfMissingFeatures("ELECTROSTATICS")
     def test_particle_selection(self):
@@ -264,11 +274,21 @@ class ParticleProperties(ut.TestCase):
 
         np.testing.assert_equal(np.copy(p.image_box), [1, 1, 1])
 
-    def test_accessing_invalid_id_raises(self):
+    def test_invalid_particle_ids_exceptions(self):
         self.system.part.clear()
         handle_to_non_existing_particle = self.system.part.by_id(42)
-        with self.assertRaises(RuntimeError):
+        with self.assertRaisesRegex(RuntimeError, "Particle node for id 42 not found"):
             handle_to_non_existing_particle.id
+        p = self.system.part.add(pos=[0., 0., 0.], id=0)
+        with self.assertRaisesRegex(RuntimeError, "Particle node for id 42 not found"):
+            p._id = 42
+            p.node
+        for i in range(1, 10):
+            with self.assertRaisesRegex(ValueError, f"Invalid particle id: {-i}"):
+                p._id = -i
+                p.node
+            with self.assertRaisesRegex(ValueError, f"Invalid particle id: {-i}"):
+                self.system.part.add(pos=[0., 0., 0.], id=-i)
 
     def test_parallel_property_setters(self):
         s = self.system
@@ -344,7 +364,7 @@ class ParticleProperties(ut.TestCase):
     def test_coord_fold_corner_cases(self):
         system = self.system
         system.time_step = .5
-        system.cell_system.set_domain_decomposition(use_verlet_lists=False)
+        system.cell_system.set_regular_decomposition(use_verlet_lists=False)
         system.cell_system.skin = 0
         system.min_global_cut = 3
         system.part.clear()

@@ -78,12 +78,12 @@ auto philox_4_uint64s(uint64_t counter, uint32_t seed, int key1, int key2 = 0) {
   using ctr_type = rng_type::ctr_type;
   using key_type = rng_type::key_type;
 
-  const ctr_type c{counter};
+  const ctr_type c{{counter, 0u, 0u, 0u}};
 
   auto const id1 = static_cast<uint32_t>(key1);
   auto const id2 = static_cast<uint32_t>(key2);
-  const key_type k{Utils::u32_to_u64(id1, id2),
-                   Utils::u32_to_u64(static_cast<uint32_t>(salt), seed)};
+  const key_type k{{Utils::u32_to_u64(id1, id2),
+                    Utils::u32_to_u64(static_cast<uint32_t>(salt), seed)}};
 
   return rng_type{}(c, k);
 }
@@ -166,11 +166,13 @@ auto noise_gaussian(uint64_t counter, uint32_t seed, int key1, int key2 = 0) {
   // sin/cos are evaluated simultaneously by gcc or separately by Clang
   Utils::VectorXd<N> noise{};
   constexpr double two_pi = 2.0 * Utils::pi();
-  auto const modulo = sqrt(-2.0 * log(u[0]));
-  auto const angle = two_pi * u[1];
-  noise[0] = modulo * cos(angle);
-  if (N > 1) {
-    noise[1] = modulo * sin(angle);
+  {
+    auto const modulo = sqrt(-2.0 * log(u[0]));
+    auto const angle = two_pi * u[1];
+    noise[0] = modulo * cos(angle);
+    if (N > 1) {
+      noise[1] = modulo * sin(angle);
+    }
   }
   if (N > 2) {
     auto const modulo = sqrt(-2.0 * log(u[2]));

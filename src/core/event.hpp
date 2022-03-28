@@ -105,14 +105,10 @@ void on_skin_change();
  */
 void on_thermostat_param_change();
 
-/** @brief Called when the timestep changed. Internally calls @ref
- * on_thermostat_param_change.
+/** @brief Called when the timestep changed.
+ *  Internally calls @ref on_thermostat_param_change.
  */
 void on_timestep_change();
-
-/** @brief Called when the simulation time changed.
- */
-void on_simtime_change();
 
 /** @brief Called when the force cap changed.
  */

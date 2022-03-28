@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _OBJECT_IN_FLUID_OIF_GLOBAL_FORCES_H
-#define _OBJECT_IN_FLUID_OIF_GLOBAL_FORCES_H
+#ifndef CORE_OBJECT_IN_FLUID_OIF_GLOBAL_FORCES_HPP
+#define CORE_OBJECT_IN_FLUID_OIF_GLOBAL_FORCES_HPP
 /** \file
  *  Routines to calculate the OIF global forces energy or/and and force
  *  for a particle triple (triangle from mesh). See @cite dupin07a.
@@ -33,7 +33,7 @@
  *  - calculates the global area and global volume for a cell before the forces
  *    are handled
  *  - MPI synchronization with all reduce
- *  - !!! loop over particles from domain_decomposition !!!
+ *  - !!! loop over particles from regular_decomposition !!!
  */
 Utils::Vector2d calc_oif_global(int molType, CellStructure &cs);
 

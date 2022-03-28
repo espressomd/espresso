@@ -76,7 +76,7 @@ class CoulombMixedPeriodicity(ut.TestCase):
         for p in self.system.part:
             assert p.pos[2] >= 0. and p.pos[2] <= 9., f'particle {p.id} in gap'
 
-        self.system.cell_system.set_domain_decomposition()
+        self.system.cell_system.set_regular_decomposition()
         self.system.cell_system.node_grid = sorted(
             self.system.cell_system.node_grid, key=lambda x: -x)
         self.system.periodicity = [1, 1, 1]
@@ -95,7 +95,7 @@ class CoulombMixedPeriodicity(ut.TestCase):
                'Skipping test: missing feature SCAFACOS or p2nfft method')
     def test_scafacos_p2nfft(self):
         self.system.periodicity = [1, 1, 0]
-        self.system.cell_system.set_domain_decomposition()
+        self.system.cell_system.set_regular_decomposition()
 
         scafacos = espressomd.electrostatics.Scafacos(
             prefactor=1,

@@ -40,12 +40,12 @@ static void pack_particles(ParticleRange particles,
 
   int i = 0;
   for (auto const &part : particles) {
-    buffer[i].p = static_cast<Vector3f>(folded_position(part.r.p, box_geo));
+    buffer[i].p = static_cast<Vector3f>(folded_position(part.pos(), box_geo));
 
-    buffer[i].identity = part.p.identity;
+    buffer[i].identity = part.id();
     buffer[i].v = static_cast<Vector3f>(part.m.v);
 #ifdef VIRTUAL_SITES
-    buffer[i].is_virtual = part.p.is_virtual;
+    buffer[i].is_virtual = part.is_virtual();
 #endif
 
 #ifdef DIPOLES
@@ -53,30 +53,30 @@ static void pack_particles(ParticleRange particles,
 #endif
 
 #ifdef LB_ELECTROHYDRODYNAMICS
-    buffer[i].mu_E = static_cast<Vector3f>(part.p.mu_E);
+    buffer[i].mu_E = static_cast<Vector3f>(part.mu_E());
 #endif
 
 #ifdef ELECTROSTATICS
-    buffer[i].q = static_cast<float>(part.p.q);
+    buffer[i].q = static_cast<float>(part.q());
 #endif
 
 #ifdef MASS
-    buffer[i].mass = static_cast<float>(part.p.mass);
+    buffer[i].mass = static_cast<float>(part.mass());
 #endif
 
 #ifdef ROTATION
-    buffer[i].director = static_cast<Vector3f>(part.r.calc_director());
+    buffer[i].director = static_cast<Vector3f>(part.calc_director());
 #endif
 
 #ifdef ENGINE
-    buffer[i].swim.v_swim = static_cast<float>(part.p.swim.v_swim);
-    buffer[i].swim.f_swim = static_cast<float>(part.p.swim.f_swim);
+    buffer[i].swim.v_swim = static_cast<float>(part.swimming().v_swim);
+    buffer[i].swim.f_swim = static_cast<float>(part.swimming().f_swim);
     buffer[i].swim.director = buffer[i].director;
 
-    buffer[i].swim.push_pull = part.p.swim.push_pull;
+    buffer[i].swim.push_pull = part.swimming().push_pull;
     buffer[i].swim.dipole_length =
-        static_cast<float>(part.p.swim.dipole_length);
-    buffer[i].swim.swimming = part.p.swim.swimming;
+        static_cast<float>(part.swimming().dipole_length);
+    buffer[i].swim.swimming = part.swimming().swimming;
 #endif
     i++;
   }
@@ -120,7 +120,7 @@ static void add_forces_and_torques(ParticleRange particles,
     for (int j = 0; j < 3; j++) {
       part.f.f[j] += forces[3 * i + j];
 #ifdef ROTATION
-      part.f.torque[j] += torques[3 * i + j];
+      part.torque()[j] += torques[3 * i + j];
 #endif
     }
     i++;

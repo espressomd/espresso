@@ -49,11 +49,11 @@ public:
   }
 
   std::vector<double>
-  evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles,
+  evaluate(ParticleReferenceRange particles,
            const ParticleObservables::traits<Particle> &traits) const override {
     auto const no_of_angles = n_values();
+    auto const no_of_bonds = no_of_angles + 1;
     std::vector<double> angles(no_of_angles);
-    auto const no_of_bonds = n_values() + 1;
     std::vector<Utils::Vector3d> bond_vectors(no_of_bonds);
     auto get_bond_vector = [&](auto index) {
       return box_geo.get_mi_vector(traits.position(particles[index + 1]),

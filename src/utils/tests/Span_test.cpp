@@ -32,6 +32,7 @@ using Utils::Span;
 
 BOOST_AUTO_TEST_CASE(const_expr_ctor) {
   static_assert(4 == Span<int>(nullptr, 4).size(), "");
+  BOOST_TEST_PASSPOINT();
 }
 
 BOOST_AUTO_TEST_CASE(array_ctor) {

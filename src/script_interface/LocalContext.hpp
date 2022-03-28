@@ -67,7 +67,7 @@ public:
     return factory().type_name(*o);
   }
 
-  bool is_head_node() const override { return m_is_head_node; };
+  bool is_head_node() const override { return m_is_head_node; }
 };
 } // namespace ScriptInterface
 

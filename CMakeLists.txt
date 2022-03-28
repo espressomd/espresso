@@ -77,6 +77,7 @@ option(WITH_STOKESIAN_DYNAMICS "Build with Stokesian Dynamics" OFF)
 option(WITH_BENCHMARKS "Enable benchmarks" OFF)
 option(WITH_VALGRIND_INSTRUMENTATION
        "Build with valgrind instrumentation markers" OFF)
+option(WITH_CPPCHECK "Run Cppcheck during compilation" OFF)
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   option(WITH_CLANG_TIDY "Run Clang-Tidy during compilation" OFF)
 endif()
@@ -97,6 +98,7 @@ endif()
 option(WARNINGS_ARE_ERRORS "Treat warnings as errors during compilation" OFF)
 option(WITH_CCACHE "Use ccache compiler invocation." OFF)
 option(WITH_PROFILER "Enable profiler annotations." OFF)
+option(INSIDE_DOCKER "Enable when running inside Docker." OFF)
 set(TEST_TIMEOUT "300" CACHE STRING
                              "Timeout in seconds for each testsuite test")
 
@@ -126,18 +128,22 @@ include(MyConfig)
 
 include(CheckCXXSourceCompiles)
 
-set(__PRETTYFUNC__ __func__)
-foreach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
+# cross-platform macro to print the function name in error messages
+set(PRETTY_FUNCTION_EXTENSION __func__)
+
+# search for a supported compiler extension that prints the function name as
+# well as its list of arguments, return type and namespace
+foreach(func_name __PRETTY_FUNCTION__ __FUNCSIG__ __FUNCTION__)
   check_cxx_source_compiles(
     "
      #include <string>
      int main() { std::string(${func_name}); }
      " result${func_name})
   if(result${func_name})
-    set(__PRETTYFUNC__ ${func_name})
+    set(PRETTY_FUNCTION_EXTENSION ${func_name})
     break()
   endif(result${func_name})
-endforeach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
+endforeach()
 
 #
 # Libraries
@@ -270,6 +276,32 @@ endif(WITH_VALGRIND_INSTRUMENTATION)
 #
 
 find_package(MPI 3.0 REQUIRED)
+find_package(MpiexecBackend)
+
+# OpenMPI checks the number of processes against the number of CPUs
+if("${MPIEXEC_BACKEND_NAME}" STREQUAL "OpenMPI" AND "${MPIEXEC_BACKEND_VERSION}"
+                                                    VERSION_GREATER_EQUAL 2.0.0)
+  set(MPIEXEC_OVERSUBSCRIBE "-oversubscribe")
+else()
+  set(MPIEXEC_OVERSUBSCRIBE "")
+endif()
+
+# OpenMPI cannot run two jobs in parallel in a Docker container, because the
+# same base folder is used to store the process ids of multiple jobs. Since the
+# base folder is deleted upon completion of a job, other jobs will fail when
+# attempting to create subdirectories in the base folder.
+# https://github.com/open-mpi/ompi/issues/8510
+if("${MPIEXEC_BACKEND_NAME}" STREQUAL "OpenMPI" AND INSIDE_DOCKER)
+  cmake_host_system_information(RESULT hostname QUERY HOSTNAME)
+  function(set_mpiexec_tmpdir)
+    set(MPIEXEC_TMPDIR --mca orte_tmpdir_base
+                       "/tmp/ompi.${hostname}.$ENV{USER}.${ARGV0}" PARENT_SCOPE)
+  endfunction()
+else()
+  function(set_mpiexec_tmpdir)
+    set(MPIEXEC_TMPDIR "" PARENT_SCOPE)
+  endfunction()
+endif()
 
 #
 # Boost
@@ -322,9 +354,7 @@ target_compile_options(
             # disable warnings from -Wextra
             -Wno-sign-compare
             -Wno-unused-function
-            -Wno-unused-variable
             -Wno-unused-parameter
-            -Wno-missing-braces
             $<$<CXX_COMPILER_ID:GNU>:-Wno-clobbered>
             $<$<CXX_COMPILER_ID:Intel>:-wd592>)
 
@@ -419,6 +449,19 @@ target_link_libraries(cxx_interface INTERFACE coverage_interface)
 if(WITH_CLANG_TIDY)
   find_package(ClangTidy "${CMAKE_CXX_COMPILER_VERSION}" EXACT REQUIRED)
   set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE};--extra-arg=--cuda-host-only")
+endif()
+
+if(WITH_CPPCHECK)
+  find_program(CMAKE_CXX_CPPCHECK NAMES cppcheck)
+  if(NOT CMAKE_CXX_CPPCHECK)
+    message(FATAL_ERROR "Could not find the program cppcheck.")
+  endif()
+  list(APPEND CMAKE_CXX_CPPCHECK "--enable=all"
+       "--std=c++${CMAKE_CXX_STANDARD}" "--quiet" "--inline-suppr"
+       "--suppressions-list=${CMAKE_CURRENT_SOURCE_DIR}/.cppcheck")
+  if(WARNINGS_ARE_ERRORS)
+    list(APPEND CMAKE_CXX_CPPCHECK "--error-exitcode=2")
+  endif()
 endif()
 
 #

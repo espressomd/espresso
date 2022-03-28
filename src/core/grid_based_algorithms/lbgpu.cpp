@@ -43,49 +43,41 @@
 
 LB_parameters_gpu lbpar_gpu = {
     // rho
-    0.0,
+    0.f,
     // mu
-    0.0,
+    0.f,
     // viscosity
-    0.0,
+    0.f,
     // gamma_shear
-    0.0,
+    0.f,
     // gamma_bulk
-    0.0,
+    0.f,
     // gamma_odd
-    0.0,
+    0.f,
     // gamma_even
-    0.0,
+    0.f,
     // is_TRT
     false,
     // bulk_viscosity
-    -1.0,
+    -1.f,
     // agrid
-    -1.0,
+    -1.f,
     // tau
-    -1.0,
-    // dim_x;
-    0,
-    // dim_y;
-    0,
-    // dim_z;
-    0,
+    -1.f,
+    // dim
+    {{{0u, 0u, 0u}}},
     // number_of_nodes
-    0,
+    0u,
 #ifdef LB_BOUNDARIES_GPU
     // number_of_boundnodes
-    0,
+    0u,
 #endif
-    // calc_val
-    1,
-    // external_force
-    0,
-    // ext_force
-    {0.0, 0.0, 0.0},
-    // reinit
-    0,
+    // external_force_density
+    false,
+    // ext_force_density
+    {{{0.f, 0.f, 0.f}}},
     // Thermal energy
-    0.0};
+    0.f};
 
 /** this is the array that stores the hydrodynamic fields for the output */
 std::vector<LB_rho_v_pi_gpu> host_values(0);
@@ -94,12 +86,10 @@ bool ek_initialized = false;
 
 /** (Re-)initialize the fluid according to the given value of rho. */
 void lb_reinit_fluid_gpu() {
-
   lb_reinit_parameters_gpu();
-  if (lbpar_gpu.number_of_nodes != 0) {
+  if (lbpar_gpu.number_of_nodes != 0u) {
     lb_reinit_GPU(&lbpar_gpu);
     lb_reinit_extern_nodeforce_GPU(&lbpar_gpu);
-    lbpar_gpu.reinit = 1;
   }
 }
 
@@ -107,15 +97,15 @@ void lb_reinit_fluid_gpu() {
  *  See @cite dunweg07a and @cite dhumieres09a.
  */
 void lb_reinit_parameters_gpu() {
-  lbpar_gpu.mu = 0.0;
+  lbpar_gpu.mu = 0.f;
 
-  if (lbpar_gpu.viscosity > 0.0 && lbpar_gpu.agrid > 0.0 &&
-      lbpar_gpu.tau > 0.0) {
+  if (lbpar_gpu.viscosity > 0.f && lbpar_gpu.agrid > 0.f &&
+      lbpar_gpu.tau > 0.f) {
     /* Eq. (80) @cite dunweg07a. */
     lbpar_gpu.gamma_shear = 1.f - 2.f / (6.f * lbpar_gpu.viscosity + 1.f);
   }
 
-  if (lbpar_gpu.bulk_viscosity > 0.0) {
+  if (lbpar_gpu.bulk_viscosity > 0.f) {
     /* Eq. (81) @cite dunweg07a. */
     lbpar_gpu.gamma_bulk = 1.f - 2.f / (9.f * lbpar_gpu.bulk_viscosity + 1.f);
   }
@@ -133,10 +123,10 @@ void lb_reinit_parameters_gpu() {
     lbpar_gpu.gamma_bulk = lbpar_gpu.gamma_shear;
     lbpar_gpu.gamma_even = lbpar_gpu.gamma_shear;
     lbpar_gpu.gamma_odd =
-        -(7.0f * lbpar_gpu.gamma_even + 1.0f) / (lbpar_gpu.gamma_even + 7.0f);
+        -(7.f * lbpar_gpu.gamma_even + 1.f) / (lbpar_gpu.gamma_even + 7.f);
   }
 
-  if (lbpar_gpu.kT > 0.0) { /* fluctuating hydrodynamics ? */
+  if (lbpar_gpu.kT > 0.f) { /* fluctuating hydrodynamics ? */
 
     /* Eq. (51) @cite dunweg07a.*/
     /* Note that the modes are not normalized as in the paper here! */
@@ -170,16 +160,16 @@ void lb_init_gpu() {
 
 void lb_GPU_sanity_checks() {
   if (this_node == 0) {
-    if (lbpar_gpu.agrid < 0.0) {
+    if (lbpar_gpu.agrid < 0.f) {
       runtimeErrorMsg() << "Lattice Boltzmann agrid not set";
     }
-    if (lbpar_gpu.tau < 0.0) {
+    if (lbpar_gpu.tau < 0.f) {
       runtimeErrorMsg() << "Lattice Boltzmann time step not set";
     }
-    if (lbpar_gpu.rho < 0.0) {
+    if (lbpar_gpu.rho < 0.f) {
       runtimeErrorMsg() << "Lattice Boltzmann fluid density not set";
     }
-    if (lbpar_gpu.viscosity < 0.0) {
+    if (lbpar_gpu.viscosity < 0.f) {
       runtimeErrorMsg() << "Lattice Boltzmann fluid viscosity not set";
     }
   }
@@ -206,10 +196,9 @@ void lb_set_agrid_gpu(double agrid) {
         return std::abs(d) < std::numeric_limits<float>::epsilon();
       });
   if (not commensurable) {
-    runtimeErrorMsg() << "Lattice spacing agrid= " << agrid
+    runtimeErrorMsg() << "Lattice spacing agrid=" << agrid
                       << " is incompatible with one of the box dimensions: "
-                      << box_geo.length()[0] << " " << box_geo.length()[1]
-                      << " " << box_geo.length()[2];
+                      << "[" << box_geo.length() << "]";
   }
   lbpar_gpu.number_of_nodes =
       std::accumulate(lbpar_gpu.dim.begin(), lbpar_gpu.dim.end(), 1u,

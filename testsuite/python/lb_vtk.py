@@ -38,7 +38,7 @@ if espressomd.has_features('LB_BOUNDARIES'):
 
 
 class TestLBWrite:
-    system = espressomd.System(box_l=3 * [16])
+    system = espressomd.System(box_l=[10, 11, 12])
     system.time_step = 0.01
     system.cell_system.skin = 0.4
 
@@ -56,7 +56,7 @@ class TestLBWrite:
             self.system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(
                 shape=espressomd.shapes.Wall(normal=[1, 0, 0], dist=1.5)))
             self.system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(
-                shape=espressomd.shapes.Wall(normal=[-1, 0, 0], dist=-14.5)))
+                shape=espressomd.shapes.Wall(normal=[-1, 0, 0], dist=-8.5)))
         return lbf
 
     def parse_vtk(self, filepath, name, shape):
@@ -85,7 +85,7 @@ class TestLBWrite:
             if os.path.exists(filepath):
                 os.remove(filepath)
 
-        shape = [16, 16, 16]
+        shape = [10, 11, 12]
         lbf = self.set_lbf()
         self.system.integrator.run(100)
 
@@ -108,7 +108,7 @@ class TestLBWrite:
             lbf.write_vtk_velocity('vtk_out/delme', [1, 1], 3 * [1])
         with self.assertRaises(ValueError):
             lbf.write_vtk_velocity('vtk_out/delme', 3 * [1], np.array([2, 3]))
-        bb1, bb2 = ([1, 2, 3], [13, 14, 15])
+        bb1, bb2 = ([1, 2, 3], [9, 10, 11])
         lbf.write_vtk_velocity('vtk_out/velocity_bb.vtk', bb1, bb2)
 
         # check VTK files exist
@@ -142,6 +142,8 @@ class TestLBWrite:
         vtk_boundary = self.parse_vtk(
             'vtk_out/boundary.vtk', 'boundary', shape)
         np.testing.assert_equal(vtk_boundary, node_boundary.astype(int))
+        if self.system.lbboundaries is None:
+            np.testing.assert_equal(np.sum(node_boundary), 0.)
 
     def test_print(self):
         '''
@@ -156,7 +158,7 @@ class TestLBWrite:
             if os.path.exists(filepath):
                 os.remove(filepath)
 
-        shape = [16, 16, 16]
+        shape = [10, 11, 12]
         lbf = self.set_lbf()
         self.system.integrator.run(100)
 
@@ -184,10 +186,10 @@ class TestLBWrite:
                     node_velocity[i, j, k] = node.velocity
                     node_boundary[i, j, k] = node.boundary
 
-        seq = np.arange(16)
-        ref_coord = np.array([np.tile(seq, 16 * 16),
-                              np.tile(np.repeat(seq, 16), 16),
-                              np.repeat(seq, 16 * 16)]).T
+        ref_coord = np.array([
+            np.tile(np.arange(shape[0]), shape[1] * shape[2]),
+            np.tile(np.repeat(np.arange(shape[1]), shape[0]), shape[2]),
+            np.repeat(np.arange(shape[2]), shape[0] * shape[1])]).T
 
         dat_velocity = np.loadtxt('vtk_out/velocity.dat')
         dat_coord = (dat_velocity[:, 0:3] - 0.5).astype(int)

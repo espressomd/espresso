@@ -122,7 +122,7 @@ if [ "${with_fast_math}" = true ]; then
 fi
 
 cmake_params="-DCMAKE_BUILD_TYPE=${build_type} -DCMAKE_CXX_STANDARD=${with_cxx_standard} -DWARNINGS_ARE_ERRORS=ON ${cmake_params}"
-cmake_params="${cmake_params} -DCMAKE_INSTALL_PREFIX=/tmp/espresso-unit-tests"
+cmake_params="${cmake_params} -DCMAKE_INSTALL_PREFIX=/tmp/espresso-unit-tests -DINSIDE_DOCKER=ON"
 cmake_params="${cmake_params} -DCTEST_ARGS=-j${check_procs} -DTEST_TIMEOUT=${test_timeout}"
 
 if [ "${make_check_benchmarks}" = true ]; then

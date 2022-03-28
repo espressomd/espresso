@@ -213,8 +213,8 @@ cdef class mayaviLive:
             if not p:
                 continue
 
-            coords[j, :] = numpy.array([p.r.p[0], p.r.p[1], p.r.p[2]])
-            t = p.p.type
+            coords[j, :] = numpy.array([p.pos()[0], p.pos()[1], p.pos()[2]])
+            t = p.type()
             types[j] = t + 1
             radii[j] = self._determine_radius(t)
 
@@ -244,8 +244,9 @@ cdef class mayaviLive:
             t = bonds[3 * n + 2]
             p1 = &get_particle_data(i)
             p2 = &get_particle_data(j)
-            bond_coords[n, :3] = numpy.array([p1.r.p[0], p1.r.p[1], p1.r.p[2]])
-            bond_coords[n, 3:6] = make_array_locked( < const Vector3d > box_geo.get_mi_vector(Vector3d(p2.r.p), Vector3d(p1.r.p)))
+            bond_coords[n, :3] = numpy.array(
+                [p1.pos()[0], p1.pos()[1], p1.pos()[2]])
+            bond_coords[n, 3:6] = make_array_locked(< const Vector3d > box_geo.get_mi_vector(Vector3d(p2.pos()), Vector3d(p1.pos())))
             bond_coords[n, 6] = t
 
         boxl = self.system.box_l

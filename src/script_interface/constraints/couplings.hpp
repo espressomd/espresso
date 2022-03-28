@@ -74,8 +74,9 @@ template <> struct coupling_parameters_impl<Scaled> {
                 AutoParameter::read_only,
                 [this_]() { return this_().default_scale(); },
             },
-            {"particle_scales", AutoParameter::read_only,
-             [this_]() { return make_map(this_().particle_scales()); }}};
+            {"particle_scales", AutoParameter::read_only, [this_]() {
+               return make_unordered_map_of_variants(this_().particle_scales());
+             }}};
   }
 };
 
@@ -90,9 +91,8 @@ template <> inline Viscous make_coupling<Viscous>(const VariantMap &params) {
 }
 
 template <> inline Scaled make_coupling<Scaled>(const VariantMap &params) {
-  auto const particle_scales = get_value_or<std::unordered_map<int, Variant>>(
-      params, "particle_scales", {});
-  return Scaled{get_map<int, double>(particle_scales),
+  return Scaled{get_value_or<std::unordered_map<int, double>>(
+                    params, "particle_scales", {}),
                 get_value<double>(params, "default_scale")};
 }
 } // namespace detail

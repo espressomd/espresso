@@ -17,6 +17,7 @@
 include "myconfig.pxi"
 from .highlander import ThereCanOnlyBeOne
 from .utils import handle_errors
+from . import utils
 
 
 cdef class Actor:
@@ -45,20 +46,10 @@ cdef class Actor:
 
     def __init__(self, *args, **kwargs):
         self._isactive = False
+        utils.check_valid_keys(self.valid_keys(), kwargs.keys())
+        utils.check_required_keys(self.required_keys(), kwargs.keys())
         self._params = self.default_params()
-
-        # Check if all required keys are given
-        for k in self.required_keys():
-            if k not in kwargs:
-                raise ValueError(
-                    "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__() + " got " + kwargs.__str__())
-            self._params[k] = kwargs[k]
-
-        for k in kwargs:
-            if k in self.valid_keys():
-                self._params[k] = kwargs[k]
-            else:
-                raise KeyError(f"{k} is not a valid key")
+        self._params.update(kwargs)
 
     def _activate(self):
         inter = self._get_interaction_type()
@@ -107,18 +98,12 @@ cdef class Actor:
     def set_params(self, **p):
         """Update the given parameters."""
         # Check if keys are valid
-        for k in p.keys():
-            if k not in self.valid_keys():
-                raise ValueError(
-                    "Only the following keys are supported: " + self.valid_keys().__str__())
+        utils.check_valid_keys(self.valid_keys(), p.keys())
 
         # When an interaction is newly activated, all required keys must be
         # given
         if not self.is_active():
-            for k in self.required_keys():
-                if k not in p:
-                    raise ValueError(
-                        "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__())
+            utils.check_required_keys(self.required_keys(), p.keys())
 
         self._params.update(p)
         # validate updated parameters

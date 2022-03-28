@@ -184,7 +184,7 @@ void Rhomboid::calculate_dist(const Utils::Vector3d &pos, double &dist,
       [=, &vec, &dist](auto op1, auto op2, Utils::Vector3d const &distance,
                        Utils::Vector3d const &axis, double const dir_dot_axis,
                        int sign) {
-        auto d = (distance)*axis;
+        auto d = distance * axis;
         if (op1(dir_dot_axis, 0)) {
           d *= -1;
         }

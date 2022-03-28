@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _INTERACTION_DATA_H
-#define _INTERACTION_DATA_H
+#ifndef CORE_NB_IA_INTERACTION_DATA_HPP
+#define CORE_NB_IA_INTERACTION_DATA_HPP
 /** \file
  *  Various procedures concerning interactions between particles.
  */
@@ -29,11 +29,8 @@
 
 #include <utils/index.hpp>
 
-#include <MpiCallbacks.hpp>
 #include <algorithm>
 #include <cassert>
-#include <communication.hpp>
-#include <event.hpp>
 #include <string>
 #include <vector>
 
@@ -278,7 +275,7 @@ struct IA_parameters {
 #endif
 };
 
-extern std::vector<IA_parameters> ia_params;
+extern std::vector<IA_parameters> nonbonded_ia_params;
 
 /** Maximal particle type seen so far. */
 extern int max_seen_particle_type;
@@ -309,8 +306,8 @@ inline IA_parameters *get_ia_param(int i, int j) {
   assert(i >= 0 && i < max_seen_particle_type);
   assert(j >= 0 && j < max_seen_particle_type);
 
-  return &ia_params[Utils::upper_triangular(std::min(i, j), std::max(i, j),
-                                            max_seen_particle_type)];
+  return &nonbonded_ia_params[Utils::upper_triangular(
+      std::min(i, j), std::max(i, j), max_seen_particle_type)];
 }
 
 /** Get interaction parameters between particle types i and j.

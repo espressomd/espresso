@@ -30,14 +30,15 @@ class CellSystem(ut.TestCase):
         self.system.cell_system.set_n_square(use_verlet_lists=False)
         s = self.system.cell_system.get_state()
         self.assertEqual([s['use_verlet_list'], s['type']], [0, "nsquare"])
-        self.system.cell_system.set_domain_decomposition(use_verlet_lists=True)
+        self.system.cell_system.set_regular_decomposition(
+            use_verlet_lists=True)
         s = self.system.cell_system.get_state()
         self.assertEqual(
-            [s['use_verlet_list'], s['type']], [1, "domain_decomposition"])
+            [s['use_verlet_list'], s['type']], [1, "regular_decomposition"])
 
     @ut.skipIf(n_nodes == 1, "Skipping test: only runs for n_nodes >= 2")
     def test_node_grid(self):
-        self.system.cell_system.set_domain_decomposition()
+        self.system.cell_system.set_regular_decomposition()
         for i in range(3):
             node_grid_ref = [1, 1, 1]
             node_grid_ref[i] = self.n_nodes

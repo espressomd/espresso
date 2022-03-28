@@ -36,7 +36,11 @@ namespace ReactionMethods {
  */
 class ReactionEnsemble : public ReactionAlgorithm {
 public:
-  ReactionEnsemble(int seed) : ReactionAlgorithm(seed) {}
+  ReactionEnsemble(
+      int seed, double kT, double exclusion_radius,
+      const std::unordered_map<int, double> &exclusion_radius_per_type)
+      : ReactionAlgorithm(seed, kT, exclusion_radius,
+                          exclusion_radius_per_type) {}
 
 protected:
   double calculate_acceptance_probability(

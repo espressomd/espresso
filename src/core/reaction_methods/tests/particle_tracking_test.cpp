@@ -32,20 +32,17 @@
 
 #include <boost/mpi.hpp>
 
-#include <limits>
 #include <memory>
 #include <stdexcept>
 
 // Check the mechanism that tracks particles of a certain type and the
 // function that selects a random particle in the pool of tracked particles.
 BOOST_FIXTURE_TEST_CASE(particle_type_map_test, ParticleFactory) {
-  constexpr double tol = 100 * std::numeric_limits<double>::epsilon();
-
   // particle properties
   int const type = 10;
   int const pid = 1;
 
-  // exception for untracked particle ids
+  // exception for untracked particle types
   BOOST_CHECK_THROW(number_of_particles_with_type(type), std::runtime_error);
 
   // exception for negative particle ids
@@ -59,6 +56,9 @@ BOOST_FIXTURE_TEST_CASE(particle_type_map_test, ParticleFactory) {
 
   // exception for random index that exceeds the number of particles
   BOOST_CHECK_THROW(get_random_p_id(type, 10), std::runtime_error);
+
+  // exception for untracked particle types
+  BOOST_CHECK_THROW(get_random_p_id(type + 1, 0), std::runtime_error);
 
   // check particle selection
   BOOST_CHECK_EQUAL(get_random_p_id(type, 0), pid);

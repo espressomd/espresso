@@ -39,6 +39,7 @@ using Utils::Array;
 BOOST_AUTO_TEST_CASE(const_expr_ctor) {
   static_assert(4 == Array<int, 4>().size(), "");
   static_assert(4 == Array<int, 4>().max_size(), "");
+  BOOST_TEST_PASSPOINT();
 }
 
 BOOST_AUTO_TEST_CASE(array_ctor) {
@@ -52,32 +53,39 @@ BOOST_AUTO_TEST_CASE(array_ctor) {
 }
 
 BOOST_AUTO_TEST_CASE(iterators) {
-  auto a = Array<int, 4>{{1, 2, 3, 4}};
+  auto a = Array<int, 4>{{{1, 2, 3, 4}}};
 
-  BOOST_CHECK(*(a.begin()) == 1);
-  BOOST_CHECK(*(a.cbegin()) == 1);
-  BOOST_CHECK(*(a.end() - 1) == 4);
-  BOOST_CHECK(*(a.cend() - 1) == 4);
+  BOOST_CHECK_EQUAL(*(a.begin()), 1);
+  BOOST_CHECK_EQUAL(*(a.cbegin()), 1);
+  BOOST_CHECK_EQUAL(*(a.end() - 1), 4);
+  BOOST_CHECK_EQUAL(*(a.cend() - 1), 4);
 }
 
 BOOST_AUTO_TEST_CASE(element_access) {
-  auto a = Array<int, 5>{{5, 6, 7, 8, 9}};
+  auto a = Array<int, 5>{{{5, 6, 7, 8, 9}}};
+  auto const &b = a;
 
   int c = 5;
+  int j = 0;
   for (int i : a) {
-    BOOST_CHECK(i == c);
-    BOOST_CHECK(i == c);
+    BOOST_CHECK_EQUAL(i, c);
+    BOOST_CHECK_EQUAL(a[j], c);
+    BOOST_CHECK_EQUAL(b[j], c);
+    BOOST_CHECK_EQUAL(a.at(j), c);
+    BOOST_CHECK_EQUAL(b.at(j), c);
     ++c;
+    ++j;
   }
 
   BOOST_CHECK_THROW(a.at(a.size()), std::out_of_range);
+  BOOST_CHECK_THROW(b.at(b.size()), std::out_of_range);
 }
 
 BOOST_AUTO_TEST_CASE(fill) {
   Array<int, 10> a{};
   a.fill(10);
   for (int i : a) {
-    BOOST_CHECK(i == 10);
+    BOOST_CHECK_EQUAL(i, 10);
   }
 }
 
@@ -86,6 +94,7 @@ BOOST_AUTO_TEST_CASE(broadcast) {
   static_assert(a[0] == 5, "");
   static_assert(a[1] == 5, "");
   static_assert(a[2] == 5, "");
+  BOOST_TEST_PASSPOINT();
 }
 
 BOOST_AUTO_TEST_CASE(serialization) {
@@ -115,12 +124,12 @@ BOOST_AUTO_TEST_CASE(tuple_protocol) {
   static_assert(std::is_same<Utils::tuple_element_t<1, A>, int>::value, "");
   static_assert(A{}.size() == Utils::tuple_size<A>::value, "");
 
-  BOOST_CHECK_EQUAL(Utils::get<1>(A{1, 2, 3, 4}), 2);
+  BOOST_CHECK_EQUAL(Utils::get<1>(A{{{1, 2, 3, 4}}}), 2);
 }
 
 BOOST_AUTO_TEST_CASE(streaming_operator) {
   {
-    auto const a = Utils::Array<int, 1>{1};
+    auto const a = Utils::Array<int, 1>{{{1}}};
 
     std::stringstream ss;
     ss << a;
@@ -129,7 +138,7 @@ BOOST_AUTO_TEST_CASE(streaming_operator) {
   }
 
   {
-    auto const a = Utils::Array<int, 3>{1, 2, 3};
+    auto const a = Utils::Array<int, 3>{{{1, 2, 3}}};
 
     std::stringstream ss;
     ss << a;
@@ -140,7 +149,7 @@ BOOST_AUTO_TEST_CASE(streaming_operator) {
 
 BOOST_AUTO_TEST_CASE(formatter_and_streaming_operator) {
   {
-    auto const a = Utils::Array<int, 1>{1};
+    auto const a = Utils::Array<int, 1>{{{1}}};
 
     std::stringstream ss;
     ss << a.formatter("xyz") << a;
@@ -149,7 +158,7 @@ BOOST_AUTO_TEST_CASE(formatter_and_streaming_operator) {
   }
 
   {
-    auto const a = Utils::Array<int, 3>{1, 2, 3};
+    auto const a = Utils::Array<int, 3>{{{1, 2, 3}}};
 
     std::stringstream ss;
     ss << a.formatter(" + ") << a;

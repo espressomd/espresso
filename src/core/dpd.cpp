@@ -58,7 +58,7 @@ using Utils::Vector3d;
  *  3. Two particle IDs (order-independent, decorrelates particles, gets rid of
  *     seed-per-node)
  */
-Vector3d dpd_noise(uint32_t pid1, uint32_t pid2) {
+Vector3d dpd_noise(int pid1, int pid2) {
   return Random::noise_uniform<RNGSalt::SALT_DPD>(
       dpd.rng_counter(), dpd.rng_seed(), (pid1 < pid2) ? pid2 : pid1,
       (pid1 < pid2) ? pid1 : pid2);
@@ -120,7 +120,7 @@ Utils::Vector3d dpd_pair_force(Particle const &p1, Particle const &p2,
     return {};
   }
 
-  auto const v21 = p1.m.v - p2.m.v;
+  auto const v21 = box_geo.velocity_difference(p1.r.p, p2.r.p, p1.m.v, p2.m.v);
   auto const noise_vec =
       (ia_params.dpd_radial.pref > 0.0 || ia_params.dpd_trans.pref > 0.0)
           ? dpd_noise(p1.p.identity, p2.p.identity)
@@ -143,7 +143,8 @@ static auto dpd_viscous_stress_local() {
   Utils::Matrix<double, 3, 3> stress{};
   cell_structure.non_bonded_loop(
       [&stress](const Particle &p1, const Particle &p2, Distance const &d) {
-        auto const v21 = p1.m.v - p2.m.v;
+        auto const v21 =
+            box_geo.velocity_difference(p1.r.p, p2.r.p, p1.m.v, p2.m.v);
 
         IA_parameters const &ia_params = *get_ia_param(p1.p.type, p2.p.type);
         auto const dist = std::sqrt(d.dist2);

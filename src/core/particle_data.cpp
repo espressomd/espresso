@@ -34,7 +34,6 @@
 #include "partCfg_global.hpp"
 #include "rotation.hpp"
 
-#include <string>
 #include <utils/Cache.hpp>
 #include <utils/constants.hpp>
 #include <utils/keys.hpp>
@@ -62,6 +61,13 @@
 #include <utility>
 #include <vector>
 
+constexpr auto some_tag = 42;
+static bool type_list_enable;
+static std::unordered_map<int, std::unordered_set<int>> particle_type_map;
+
+void remove_id_from_map(int part_id, int type);
+void add_id_to_type_map(int part_id, int type);
+
 namespace {
 /**
  * @brief A generic particle update.
@@ -87,6 +93,9 @@ struct UpdateParticle {
 
 template <typename T, T ParticleProperties::*m>
 using UpdateProperty = UpdateParticle<ParticleProperties, &Particle::p, T, m>;
+
+template <typename T, T ParticleLocal::*m>
+using UpdateLocalProperty = UpdateParticle<ParticleLocal, &Particle::l, T, m>;
 template <typename T, T ParticlePosition ::*m>
 using UpdatePosition = UpdateParticle<ParticlePosition, &Particle::r, T, m>;
 template <typename T, T ParticleMomentum ::*m>
@@ -151,6 +160,9 @@ using UpdatePropertyMessage = boost::variant
 #endif
         >;
 
+using UpdateLocalPropertyMessage = boost::variant
+        < UpdateLocalProperty<double, &ParticleLocal::lees_edwards_offset>>;
+
 using UpdatePositionMessage = boost::variant
         < UpdatePosition<Utils::Vector3d, &ParticlePosition::p>
 #ifdef ROTATION
@@ -171,80 +183,93 @@ using UpdateForceMessage = boost::variant
       , UpdateForce<Utils::Vector3d, &ParticleForce::torque>
 #endif
       >;
+// clang-format on
 
 /**
  * @brief Delete specific bond.
  */
 struct RemoveBond {
-    std::vector<int> bond;
+  std::vector<int> bond;
 
-    void operator()(Particle &p) const {
-      assert(not bond.empty());
-      auto const view = BondView(bond.front(), {bond.data() + 1, bond.size() - 1});
-      auto it = boost::find(p.bonds(), view);
+  void operator()(Particle &p) const {
+    assert(not bond.empty());
+    auto const view =
+        BondView(bond.front(), {bond.data() + 1, bond.size() - 1});
+    auto it = boost::find(p.bonds(), view);
 
-      if(it != p.bonds().end()) {
-       p.bonds().erase(it);
-      }
+    if (it != p.bonds().end()) {
+      p.bonds().erase(it);
     }
+  }
 
-    template<class Archive>
-            void serialize(Archive &ar, long int) {
-        ar & bond;
-    }
+  template <class Archive> void serialize(Archive &ar, long int) { ar &bond; }
 };
 
+/**
+ * @brief Delete pair bonds to a specific partner
+ */
+struct RemovePairBondsTo {
+  int other_pid;
+
+  void operator()(Particle &p) const {
+    using Bond = std::vector<int>;
+    std::vector<Bond> to_delete;
+    for (auto b : p.bonds()) {
+      if (b.partner_ids().size() == 1 and b.partner_ids()[0] == other_pid)
+        to_delete.push_back(Bond{b.bond_id(), other_pid});
+    }
+    for (auto b : to_delete) {
+      RemoveBond{b}(p);
+    }
+  }
+  template <class Archive> void serialize(Archive &ar, long int) {
+    ar &other_pid;
+  }
+};
 
 /**
  * @brief Delete all bonds.
  */
 struct RemoveBonds {
-    void operator()(Particle &p) const {
-      p.bonds().clear();
-    }
+  void operator()(Particle &p) const { p.bonds().clear(); }
 
-    template<class Archive>
-    void serialize(Archive &ar, long int) {
-    }
+  template <class Archive> void serialize(Archive &, long int) {}
 };
 
 struct AddBond {
-    std::vector<int> bond;
+  std::vector<int> bond;
 
-    void operator()(Particle &p) const {
-      auto const view = BondView(bond.at(0), {bond.data() + 1, bond.size() - 1});
+  void operator()(Particle &p) const {
+    auto const view = BondView(bond.at(0), {bond.data() + 1, bond.size() - 1});
 
-      p.bonds().insert(view);
-    }
+    p.bonds().insert(view);
+  }
 
-    template<class Archive>
-    void serialize(Archive &ar, long int) {
-        ar & bond;
-    }
+  template <class Archive> void serialize(Archive &ar, long int) { ar &bond; }
 };
 
+// clang-format off
 using UpdateBondMessage = boost::variant
         < RemoveBond
         , RemoveBonds
         , AddBond
         >;
+// clang-format on
 
 #ifdef ROTATION
 struct UpdateOrientation {
-    Utils::Vector3d axis;
-    double angle;
+  Utils::Vector3d axis;
+  double angle;
 
-    void operator()(Particle &p) const {
-        local_rotate_particle(p, axis, angle);
-    }
+  void operator()(Particle &p) const { local_rotate_particle(p, axis, angle); }
 
-    template<class Archive>
-    void serialize(Archive &ar, long int) {
-        ar & axis & angle;
-    }
+  template <class Archive> void serialize(Archive &ar, long int) {
+    ar &axis &angle;
+  }
 };
 #endif
 
+// clang-format off
 /**
  * @brief Top-level message.
  *
@@ -258,7 +283,8 @@ struct UpdateOrientation {
  * variants with leaves that have such an <tt>operator()</tt> member.
  */
 using UpdateMessage = boost::variant
-        < UpdatePropertyMessage
+        < UpdateLocalPropertyMessage
+        , UpdatePropertyMessage
         , UpdatePositionMessage
         , UpdateMomentumMessage
         , UpdateForceMessage
@@ -277,6 +303,10 @@ template <typename S, S Particle::*s> struct message_type;
 
 template <> struct message_type<ParticleProperties, &Particle::p> {
   using type = UpdatePropertyMessage;
+};
+
+template <> struct message_type<ParticleLocal, &Particle::l> {
+  using type = UpdateLocalPropertyMessage;
 };
 
 template <> struct message_type<ParticlePosition, &Particle::r> {
@@ -323,10 +353,18 @@ struct UpdateVisitor : public boost::static_visitor<void> {
 };
 } // namespace
 
+void local_remove_bond(Particle &p, std::vector<int> const &bond) {
+  RemoveBond{bond}(p);
+}
+
+void local_remove_pair_bonds_to(Particle &p, int other_pid) {
+  RemovePairBondsTo{other_pid}(p);
+}
+
 void mpi_send_update_message_local(int node, int id) {
   if (node == comm_cart.rank()) {
     UpdateMessage msg{};
-    comm_cart.recv(0, SOME_TAG, msg);
+    comm_cart.recv(0, some_tag, msg);
     boost::apply_visitor(UpdateVisitor{id}, msg);
   }
 
@@ -362,7 +400,7 @@ void mpi_send_update_message(int id, const UpdateMessage &msg) {
    * message to the target, otherwise we
    * can just apply the update directly. */
   if (pnode != comm_cart.rank()) {
-    comm_cart.send(pnode, SOME_TAG, msg);
+    comm_cart.send(pnode, some_tag, msg);
   } else {
     boost::apply_visitor(UpdateVisitor{id}, msg);
   }
@@ -381,14 +419,6 @@ template <typename T, T ParticleProperties::*m>
 void mpi_update_particle_property(int id, const T &value) {
   mpi_update_particle<ParticleProperties, &Particle::p, T, m>(id, value);
 }
-
-/************************************************
- * variables
- ************************************************/
-bool type_list_enable;
-std::unordered_map<int, std::unordered_set<int>> particle_type_map{};
-void remove_id_from_map(int part_id, int type);
-void add_id_to_type_map(int part_id, int type);
 
 /**
  * @brief id -> rank
@@ -414,10 +444,9 @@ static void mpi_who_has_local() {
   sendbuf.resize(n_part);
 
   std::transform(local_particles.begin(), local_particles.end(),
-                 sendbuf.begin(),
-                 [](Particle const &p) { return p.p.identity; });
+                 sendbuf.begin(), [](Particle const &p) { return p.id(); });
 
-  MPI_Send(sendbuf.data(), n_part, MPI_INT, 0, SOME_TAG, comm_cart);
+  MPI_Send(sendbuf.data(), n_part, MPI_INT, 0, some_tag, comm_cart);
 }
 
 REGISTER_CALLBACK(mpi_who_has_local)
@@ -437,11 +466,11 @@ void mpi_who_has() {
   for (int pnode = 0; pnode < n_nodes; pnode++) {
     if (pnode == this_node) {
       for (auto const &p : local_particles)
-        particle_node[p.p.identity] = this_node;
+        particle_node[p.id()] = this_node;
 
     } else if (n_parts[pnode] > 0) {
       pdata.resize(n_parts[pnode]);
-      MPI_Recv(pdata.data(), n_parts[pnode], MPI_INT, pnode, SOME_TAG,
+      MPI_Recv(pdata.data(), n_parts[pnode], MPI_INT, pnode, some_tag,
                comm_cart, MPI_STATUS_IGNORE);
       for (int i = 0; i < n_parts[pnode]; i++)
         particle_node[pdata[i]] = pnode;
@@ -458,8 +487,9 @@ void build_particle_node() { mpi_who_has(); }
  *  @brief Get the mpi rank which owns the particle with id.
  */
 int get_particle_node(int id) {
-  if (id < 0)
-    throw std::runtime_error("Invalid particle id!");
+  if (id < 0) {
+    throw std::domain_error("Invalid particle id: " + std::to_string(id));
+  }
 
   if (particle_node.empty())
     build_particle_node();
@@ -488,7 +518,7 @@ std::size_t fetch_cache_max_size() { return particle_fetch_cache.max_size(); }
 boost::optional<const Particle &> get_particle_data_local(int id) {
   auto p = cell_structure.get_local_particle(id);
 
-  if (p and (not p->l.ghost)) {
+  if (p and (not p->is_ghost())) {
     return *p;
   }
 
@@ -529,7 +559,8 @@ static void mpi_get_particles_local() {
     return *cell_structure.get_local_particle(id);
   });
 
-  Utils::Mpi::gatherv(comm_cart, parts.data(), parts.size(), 0);
+  Utils::Mpi::gatherv(comm_cart, parts.data(), static_cast<int>(parts.size()),
+                      0);
 }
 
 REGISTER_CALLBACK(mpi_get_particles_local)
@@ -579,8 +610,8 @@ std::vector<Particle> mpi_get_particles(Utils::Span<const int> ids) {
       node_ids.cbegin(), node_ids.cend(), node_sizes.begin(),
       [](std::vector<int> const &ids) { return static_cast<int>(ids.size()); });
 
-  Utils::Mpi::gatherv(comm_cart, parts.data(), parts.size(), parts.data(),
-                      node_sizes.data(), 0);
+  Utils::Mpi::gatherv(comm_cart, parts.data(), static_cast<int>(parts.size()),
+                      parts.data(), node_sizes.data(), 0);
 
   return parts;
 }
@@ -604,7 +635,7 @@ void prefetch_particle_data(Utils::Span<const int> in_ids) {
 
   /* Fetch the particles... */
   for (auto &p : mpi_get_particles(ids)) {
-    auto id = p.identity();
+    auto id = p.id();
     particle_fetch_cache.put(id, std::move(p));
   }
 }
@@ -625,16 +656,16 @@ Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new) {
 
   if (_new) {
     Particle new_part;
-    new_part.p.identity = id;
-    new_part.r.p = pp;
-    new_part.l.i = i;
+    new_part.id() = id;
+    new_part.pos() = pp;
+    new_part.image_box() = i;
 
     return cell_structure.add_local_particle(std::move(new_part));
   }
 
   auto pt = cell_structure.get_local_particle(id);
-  pt->r.p = pp;
-  pt->l.i = i;
+  pt->pos() = pp;
+  pt->image_box() = i;
 
   return pt;
 }
@@ -664,7 +695,7 @@ int mpi_place_new_particle(int p_id, const Utils::Vector3d &pos) {
 void mpi_place_particle_local(int pnode, int p_id) {
   if (pnode == this_node) {
     Utils::Vector3d pos;
-    comm_cart.recv(0, SOME_TAG, pos);
+    comm_cart.recv(0, some_tag, pos);
     local_place_particle(p_id, pos, 0);
   }
 
@@ -686,7 +717,7 @@ void mpi_place_particle(int node, int p_id, const Utils::Vector3d &pos) {
   if (node == this_node)
     local_place_particle(p_id, pos, 0);
   else {
-    comm_cart.send(node, SOME_TAG, pos);
+    comm_cart.send(node, some_tag, pos);
   }
 
   cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
@@ -694,6 +725,9 @@ void mpi_place_particle(int node, int p_id, const Utils::Vector3d &pos) {
 }
 
 int place_particle(int p_id, Utils::Vector3d const &pos) {
+  if (p_id < 0) {
+    throw std::domain_error("Invalid particle id: " + std::to_string(p_id));
+  }
   if (particle_exists(p_id)) {
     mpi_place_particle(get_particle_node(p_id), p_id, pos);
 
@@ -707,6 +741,11 @@ int place_particle(int p_id, Utils::Vector3d const &pos) {
 void set_particle_v(int part, Utils::Vector3d const &v) {
   mpi_update_particle<ParticleMomentum, &Particle::m, Utils::Vector3d,
                       &ParticleMomentum::v>(part, v);
+}
+
+void set_particle_lees_edwards_offset(int part, const double v) {
+  mpi_update_particle<ParticleLocal, &Particle::l, double,
+                      &ParticleLocal::lees_edwards_offset>(part, v);
 }
 
 #ifdef ENGINE
@@ -740,9 +779,16 @@ constexpr Utils::Vector3d ParticleProperties::rinertia;
 #endif
 
 #ifdef ROTATION
-void set_particle_rotation(int part, int rot) {
-  mpi_update_particle_property<uint8_t, &ParticleProperties::rotation>(part,
-                                                                       rot);
+void set_particle_rotation(int part, Utils::Vector3i const &flag) {
+  auto rot_flag = static_cast<uint8_t>(0u);
+  if (flag[0])
+    rot_flag |= static_cast<uint8_t>(1u);
+  if (flag[1])
+    rot_flag |= static_cast<uint8_t>(2u);
+  if (flag[2])
+    rot_flag |= static_cast<uint8_t>(4u);
+  mpi_update_particle_property<uint8_t, &ParticleProperties::rotation>(
+      part, rot_flag);
 }
 
 void rotate_particle(int part, const Utils::Vector3d &axis, double angle) {
@@ -775,7 +821,7 @@ void set_particle_virtual(int part, bool is_virtual) {
 #ifdef VIRTUAL_SITES_RELATIVE
 void set_particle_vs_quat(int part,
                           Utils::Quaternion<double> const &vs_relative_quat) {
-  auto vs_relative = get_particle_data(part).p.vs_relative;
+  auto vs_relative = get_particle_data(part).vs_relative();
   vs_relative.quat = vs_relative_quat;
 
   mpi_update_particle_property<
@@ -820,7 +866,7 @@ void set_particle_type(int p_id, int type) {
     // check if the particle exists already and the type is changed, then remove
     // it from the list which contains it
     auto const &cur_par = get_particle_data(p_id);
-    int prev_type = cur_par.p.type;
+    int prev_type = cur_par.type();
     if (prev_type != type) {
       // particle existed before so delete it from the list
       remove_id_from_map(p_id, prev_type);
@@ -909,9 +955,16 @@ void set_particle_ext_force(int part, const Utils::Vector3d &force) {
       part, force);
 }
 
-void set_particle_fix(int part, uint8_t flag) {
-  mpi_update_particle_property<uint8_t, &ParticleProperties::ext_flag>(part,
-                                                                       flag);
+void set_particle_fix(int part, Utils::Vector3i const &flag) {
+  auto ext_flag = static_cast<uint8_t>(0u);
+  if (flag[0])
+    ext_flag |= static_cast<uint8_t>(1u);
+  if (flag[1])
+    ext_flag |= static_cast<uint8_t>(2u);
+  if (flag[2])
+    ext_flag |= static_cast<uint8_t>(4u);
+  mpi_update_particle_property<uint8_t, &ParticleProperties::ext_flag>(
+      part, ext_flag);
 }
 #endif // EXTERNAL_FORCES
 
@@ -966,7 +1019,7 @@ int remove_particle(int p_id) {
   auto const &cur_par = get_particle_data(p_id);
   if (type_list_enable) {
     // remove particle from its current type_list
-    int type = cur_par.p.type;
+    int type = cur_par.type();
     remove_id_from_map(p_id, type);
   }
 
@@ -984,16 +1037,16 @@ int remove_particle(int p_id) {
 void local_rescale_particles(int dir, double scale) {
   for (auto &p : cell_structure.local_particles()) {
     if (dir < 3)
-      p.r.p[dir] *= scale;
+      p.pos()[dir] *= scale;
     else {
-      p.r.p *= scale;
+      p.pos() *= scale;
     }
   }
 }
 
 static void mpi_rescale_particles_local(int dir) {
   double scale = 0.0;
-  MPI_Recv(&scale, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+  MPI_Recv(&scale, 1, MPI_DOUBLE, 0, some_tag, comm_cart, MPI_STATUS_IGNORE);
   local_rescale_particles(dir, scale);
   on_particle_change();
 }
@@ -1006,7 +1059,7 @@ void mpi_rescale_particles(int dir, double scale) {
     if (pnode == this_node) {
       local_rescale_particles(dir, scale);
     } else {
-      MPI_Send(&scale, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+      MPI_Send(&scale, 1, MPI_DOUBLE, pnode, some_tag, comm_cart);
     }
   }
   on_particle_change();
@@ -1085,7 +1138,7 @@ void auto_exclusions(int distance) {
 
   /* determine initial connectivity */
   for (auto const &part1 : partCfg()) {
-    auto const p1 = part1.p.identity;
+    auto const p1 = part1.id();
     for (auto const bond : part1.bonds()) {
       if ((bond.partner_ids().size() == 1) and (bond.partner_ids()[0] != p1)) {
         auto const p2 = bond.partner_ids()[0];
@@ -1100,7 +1153,7 @@ void auto_exclusions(int distance) {
   */
   for (int count = 1; count < distance; count++) {
     for (auto const &p : partCfg()) {
-      auto const p1 = p.identity();
+      auto const p1 = p.id();
       for (int i = 0; i < partners[p1].size(); i += 2) {
         auto const p2 = partners[p1][i];
         auto const dist1 = partners[p1][i + 1];
@@ -1143,8 +1196,8 @@ void init_type_map(int type) {
   auto &map_for_type = particle_type_map[type];
   map_for_type.clear();
   for (auto const &p : partCfg()) {
-    if (p.p.type == type)
-      map_for_type.insert(p.p.identity);
+    if (p.type() == type)
+      map_for_type.insert(p.id());
   }
 }
 

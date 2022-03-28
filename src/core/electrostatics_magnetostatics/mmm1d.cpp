@@ -35,7 +35,7 @@
 #include "electrostatics_magnetostatics/mmm-common.hpp"
 #include "electrostatics_magnetostatics/mmm-modpsi.hpp"
 
-#include "cells.hpp"
+#include "CellStructureType.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "specfunc.hpp"
@@ -147,16 +147,17 @@ void MMM1D_set_params(double switch_rad, double maxPWerror) {
   mpi_bcast_coulomb_params();
 }
 
-int MMM1D_sanity_checks() {
+bool MMM1D_sanity_checks() {
   if (box_geo.periodic(0) || box_geo.periodic(1) || !box_geo.periodic(2)) {
     runtimeErrorMsg() << "MMM1D requires periodicity (0, 0, 1)";
-    return ES_ERROR;
+    return true;
   }
-  if (cell_structure.decomposition_type() != CELL_STRUCTURE_NSQUARE) {
+  if (local_geo.cell_structure_type() !=
+      CellStructureType::CELL_STRUCTURE_NSQUARE) {
     runtimeErrorMsg() << "MMM1D requires the N-square cellsystem";
-    return ES_ERROR;
+    return true;
   }
-  return ES_OK;
+  return false;
 }
 
 int MMM1D_init() {
@@ -268,9 +269,9 @@ void add_mmm1d_coulomb_pair_force(double chpref, Utils::Vector3d const &d,
 }
 
 double mmm1d_coulomb_pair_energy(double const chpref, Utils::Vector3d const &d,
-                                 double r2, double r) {
+                                 double r) {
   if (chpref == 0)
-    return 0;
+    return 0.;
 
   constexpr auto c_2pi = 2 * Utils::pi();
   auto const n_modPsi = static_cast<int>(modPsi.size() >> 1);

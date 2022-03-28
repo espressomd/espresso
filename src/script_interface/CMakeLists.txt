@@ -4,17 +4,20 @@ add_library(
   GlobalContext.cpp ContextManager.cpp)
 
 add_subdirectory(accumulators)
+add_subdirectory(bond_breakage)
 add_subdirectory(collision_detection)
 add_subdirectory(constraints)
 add_subdirectory(cluster_analysis)
 add_subdirectory(interactions)
 add_subdirectory(lbboundaries)
+add_subdirectory(lees_edwards)
 add_subdirectory(virtual_sites)
 add_subdirectory(observables)
 add_subdirectory(pair_criteria)
 add_subdirectory(mpiio)
 add_subdirectory(shapes)
 add_subdirectory(h5md)
+add_subdirectory(reaction_methods)
 
 install(TARGETS ScriptInterface
         LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)

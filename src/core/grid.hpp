@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _GRID_H
-#define _GRID_H
+#ifndef CORE_GRID_HPP
+#define CORE_GRID_HPP
 /** @file
  *  Domain decomposition for parallel computing.
  *

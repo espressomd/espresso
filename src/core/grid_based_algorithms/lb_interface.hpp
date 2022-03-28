@@ -67,11 +67,6 @@ uint64_t lb_lbfluid_get_rng_state();
 void lb_lbfluid_set_rng_state(uint64_t counter);
 
 /**
- * @brief Return the instance of the Lattice within the LB method.
- */
-const Lattice &lb_lbfluid_get_lattice();
-
-/**
  * @brief Get the global variable @ref lattice_switch.
  */
 ActiveLB lb_lbfluid_get_lattice_switch();
@@ -216,7 +211,7 @@ const Utils::Vector6d
 lb_lbnode_get_pressure_tensor_neq(const Utils::Vector3i &ind);
 
 /** @brief Calculate the average pressure tensor of all nodes by accumulating
- *  over all nodes and dividing by the @ref LB_parameters_gpu::number_of_nodes.
+ *  over all nodes and dividing by the number of nodes.
  *  Returns the lower triangle of the LB pressure tensor.
  */
 const Utils::Vector6d lb_lbfluid_get_pressure_tensor();

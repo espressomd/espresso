@@ -16,8 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef UTILS_ARRAY_HPP
-#define UTILS_ARRAY_HPP
+#ifndef SRC_UTILS_INCLUDE_UTILS_ARRAY_HPP
+#define SRC_UTILS_INCLUDE_UTILS_ARRAY_HPP
+
+/**
+ * @file
+ *
+ * @brief Array implementation with CUDA support.
+ */
 
 #include "device_qualifier.hpp"
 #include "get.hpp"
@@ -32,7 +38,6 @@
 #include <stdexcept>
 
 namespace Utils {
-
 namespace detail {
 
 template <typename T, std::size_t N> struct Storage {
@@ -52,7 +57,7 @@ struct ArrayFormatterStream {
   std::ostream &stream;
   char const *separator;
   ArrayFormatterStream(std::ostream &s, char const *sep)
-      : stream(s), separator(sep){};
+      : stream(s), separator(sep) {}
 };
 
 struct ArrayFormatter {
@@ -122,27 +127,27 @@ template <typename T, std::size_t N> struct Array {
 
   DEVICE_QUALIFIER constexpr iterator begin() noexcept {
     return &m_storage.m_data[0];
-  };
+  }
 
   DEVICE_QUALIFIER constexpr const_iterator begin() const noexcept {
     return &m_storage.m_data[0];
-  };
+  }
 
   DEVICE_QUALIFIER constexpr const_iterator cbegin() const noexcept {
     return &m_storage.m_data[0];
-  };
+  }
 
   DEVICE_QUALIFIER constexpr iterator end() noexcept {
     return &m_storage.m_data[N];
-  };
+  }
 
   DEVICE_QUALIFIER constexpr const_iterator end() const noexcept {
     return &m_storage.m_data[N];
-  };
+  }
 
   DEVICE_QUALIFIER constexpr const_iterator cend() const noexcept {
     return &m_storage.m_data[N];
-  };
+  }
 
   DEVICE_QUALIFIER constexpr bool empty() const noexcept { return size() == 0; }
 
@@ -151,14 +156,15 @@ template <typename T, std::size_t N> struct Array {
   DEVICE_QUALIFIER constexpr size_type max_size() const noexcept { return N; }
 
   DEVICE_QUALIFIER void fill(const value_type &value) {
-    for (size_type i = 0; i < size(); ++i)
+    for (size_type i = 0; i != size(); ++i) {
       m_storage.m_data[i] = value;
+    }
   }
 
   DEVICE_QUALIFIER static constexpr Array<T, N>
   broadcast(const value_type &value) {
     Array<T, N> ret{};
-    for (size_type i = 0; i < N; ++i) {
+    for (size_type i = 0; i != N; ++i) {
       ret[i] = value;
     }
     return ret;

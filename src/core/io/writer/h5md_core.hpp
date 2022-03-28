@@ -75,7 +75,7 @@ public:
         m_velocity_unit(std::move(velocity_unit)),
         m_charge_unit(std::move(charge_unit)), m_comm(std::move(comm)) {
     init_file(file_path);
-  };
+  }
   ~File() = default;
 
   /**
@@ -89,8 +89,7 @@ public:
    * @param particles Particle range for which to write data.
    * @param time Simulation time.
    * @param step Simulation step (monotonically increasing).
-   * @param geometry A BoxGeometry instance that carries the information of the
-   * box dimensions.
+   * @param geometry The box dimensions.
    */
   void write(const ParticleRange &particles, double time, int step,
              BoxGeometry const &geometry);
@@ -99,49 +98,49 @@ public:
    * @brief Retrieve the path to the hdf5 file.
    * @return The path as a string.
    */
-  std::string file_path() const { return m_h5md_file.name(); };
+  std::string file_path() const { return m_h5md_file.name(); }
 
   /**
    * @brief Retrieve the path to the simulation script.
    * @return The path as a string.
    */
-  std::string &script_path() { return m_script_path; };
+  std::string &script_path() { return m_script_path; }
 
   /**
    * @brief Retrieve the set mass unit.
    * @return The unit as a string.
    */
-  std::string &mass_unit() { return m_mass_unit; };
+  std::string &mass_unit() { return m_mass_unit; }
 
   /**
    * @brief Retrieve the set length unit.
    * @return The unit as a string.
    */
-  std::string &length_unit() { return m_length_unit; };
+  std::string &length_unit() { return m_length_unit; }
 
   /**
    * @brief Retrieve the set time unit.
    * @return The unit as a string.
    */
-  std::string &time_unit() { return m_time_unit; };
+  std::string &time_unit() { return m_time_unit; }
 
   /**
    * @brief Retrieve the set force unit.
    * @return The unit as a string.
    */
-  std::string &force_unit() { return m_force_unit; };
+  std::string &force_unit() { return m_force_unit; }
 
   /**
    * @brief Retrieve the set velocity unit.
    * @return The unit as a string.
    */
-  std::string &velocity_unit() { return m_velocity_unit; };
+  std::string &velocity_unit() { return m_velocity_unit; }
 
   /**
    * @brief Retrieve the set charge unit.
    * @return The unit as a string.
    */
-  std::string &charge_unit() { return m_charge_unit; };
+  std::string &charge_unit() { return m_charge_unit; }
 
   /**
    * @brief Method to enforce flushing the buffer to disk.
@@ -192,7 +191,7 @@ private:
    */
   void write_units();
   /**
-   * @brief Create hard links for the time and step entries of time dependent
+   * @brief Create hard links for the time and step entries of time-dependent
    * datasets.
    */
   void create_hard_links();
@@ -218,9 +217,8 @@ struct incompatible_h5mdfile : public std::exception {
 
 struct left_backupfile : public std::exception {
   const char *what() const noexcept override {
-    return "A backup of the .h5 file exists. This usually means \
-that either you forgot to call the 'close' method or your simulation \
-crashed.";
+    return "A backup of the .h5 file exists. This usually means that either "
+           "you forgot to call the 'close' method or your simulation crashed.";
   }
 };
 

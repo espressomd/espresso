@@ -118,13 +118,89 @@ The following limitations currently apply for the collision detection:
 * The ``"bind at point of collision"`` approach cannot handle collisions
   between virtual sites
 
+.. _Deleting bonds when particles are pulled apart:
 
-.. _Lees-Edwards boundary conditions:
+Deleting bonds when particles are pulled apart
+----------------------------------------------
 
-Lees-Edwards boundary conditions
---------------------------------
+With this feature, bonds between particles can be deleted automatically
+when the bond length exceeds a critical distance. This is used to model
+breakable bonds.
 
-Lees-Edwards boundary conditions are not available in the current version of |es|.
+The bond breakage action is specified for individual bonds via the system
+:attr:`~espressomd.system.System.bond_breakage` attribute.
+
+Several modes are available:
+
+* ``"delete_bond"``: delete a bond from the first particle
+* ``"revert_bind_at_point_of_collision"``: delete a bond between the virtual site
+* ``"none"``: cancel an existing bond breakage specification
+
+Example::
+
+    import espressomd
+    import espressomd.interactions
+    import espressomd.bond_breakage
+    import numpy as np
+
+    system = espressomd.System(box_l=[10] * 3)
+    system.cell_system.skin = 0.4
+    system.time_step = 0.1
+    system.min_global_cut = 2.
+
+    h1 = espressomd.interactions.HarmonicBond(k=0.01, r_0=0.4)
+    h2 = espressomd.interactions.HarmonicBond(k=0.01, r_0=0.5)
+    system.bonded_inter.add(h1)
+    system.bonded_inter.add(h2)
+    system.bond_breakage[h1] = espressomd.bond_breakage.BreakageSpec(
+        breakage_length=0.5, action_type="delete_bond")
+
+    p1 = system.part.add(id=1, pos=[0.00, 0.0, 0.0], v=[0.0, 0.0, 0.0])
+    p2 = system.part.add(id=2, pos=[0.46, 0.0, 0.0], v=[0.1, 0.0, 0.0])
+    p1.add_bond((h1, p2))
+    p1.add_bond((h2, p2))
+    for i in range(3):
+        system.integrator.run(2)
+        bond_length = np.linalg.norm(system.distance_vec(p1, p2))
+        print(f"length = {bond_length:.2f}, bonds = {p1.bonds}")
+
+Output:
+
+.. code-block:: none
+
+    length = 0.48, bonds = ((<HarmonicBond({'r_0': 0.4, 'k': 0.01})>, 2), (<HarmonicBond({'r_0': 0.5, 'k': 0.01})>, 2))
+    length = 0.50, bonds = ((<HarmonicBond({'r_0': 0.4, 'k': 0.01})>, 2), (<HarmonicBond({'r_0': 0.5, 'k': 0.01})>, 2))
+    length = 0.52, bonds = ((<HarmonicBond({'r_0': 0.5, 'k': 0.01})>, 2),)
+
+Please note there is no special treatment for the energy released or consumed
+by bond removal. This can lead to physical inconsistencies.
+
+
+.. _Modeling reversible bonds:
+
+Modeling reversible bonds
+-------------------------
+
+The :ref:`collision detection<Creating bonds when particles collide>`
+and :ref:`bond breakage<Deleting bonds when particles are pulled apart>`
+features can be combined to model reversible bonds.
+
+Two combinations are possible:
+
+* ``"delete_bond"`` mode for breakable bonds together with
+  ``"bond_centers"`` mode for collision detection:
+  used to create or delete a bond between two real particles
+* ``"revert_bind_at_point_of_collision"`` mode for breakable bonds together
+  with ``"bind_at_point_of_collision"`` mode for collision detection:
+  used to create or delete virtual sites (the implicitly created
+  bond between the real particles isn't affected)
+
+Please note that virtual sites are not automatically removed from the
+simulation, therefore the particle number will increase. If you want to
+remove virtual sites, you need to do so manually, either by tracking which
+virtual sites were introduced by collision detection, or by periodically
+looping over the particle list and removing virtual sites which have no
+corresponding bond.
 
 
 .. _Immersed Boundary Method for soft elastic objects:
@@ -1707,7 +1783,7 @@ In the *forward* reaction, the appropriate number of reactants (given by
 :math:`\nu_i`) is removed from the system, and the concomitant number of
 products is inserted into the system. In the *backward* reaction,
 reactants and products exchange their roles. The acceptance probability
-:math:`P^{\xi}` for move from state :math:`o` to :math:`n` reaction
+:math:`P^{\xi}` for a move from state :math:`o` to :math:`n` in the reaction
 ensemble is given by the criterion :cite:`smith94c`
 
 .. math::
@@ -1718,10 +1794,11 @@ ensemble is given by the criterion :cite:`smith94c`
 
 where :math:`\Delta E=E_\mathrm{new}-E_\mathrm{old}` is the change in potential energy,
 :math:`V` is the simulation box volume,
-and :math:`\beta=1/k_\mathrm{B}T`.
-The extent of reaction, :math:`\xi=1` for the forward, and
+:math:`\beta=1/k_\mathrm{B}T` is the Boltzmann factor, and
+:math:`\xi` is the extent of reaction, with :math:`\xi=1` for the forward and
 :math:`\xi=-1` for the backward direction.
-The parameter :math:`\Gamma` proportional to the reaction constant. It is defined as
+
+:math:`\Gamma` is proportional to the reaction constant. It is defined as
 
 .. math::
 
@@ -1779,6 +1856,25 @@ be converted to :math:`K_c` as
 where :math:`p^{\ominus}=1\,\mathrm{atm}` is the standard pressure.
 Consider using the python module pint for unit conversion.
 
+Coupling Reaction Methods to Molecular Dynamics
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The Monte Carlo (MC) sampling of the reaction can  be coupled with a configurational sampling using Molecular Dynamics (MD).
+For non-interacting systems this coupling is not an issue, but for interacting systems the insertion of new particles
+can lead to instabilities in the MD integration ultimately leading to a crash of the simulation.
+
+This integration instabilities can be avoided by defining a distance around the particles which already exist in the system
+where new particles will not be inserted, which is defined by the required keyword ``exclusion_range``. 
+This prevents big overlaps with the newly inserted particles, avoiding too big forces between particles, which prevents the MD integration from crashing.  
+The value of the exclusion range does not affect the limiting result and it only affects the convergence and the stability of the integration.  For interacting systems, 
+it is usually a good practice to choose the exclusion range such that it is comparable to the diameter of the particles. 
+
+If particles with significantly different sizes are present, it is desired to define a different exclusion range for each pair of particle types. This can be done by 
+defining an exclusion radius per particle type by using the optional argument ``exclusion_radius_per_type``. Then, their exclusion range is calculated using 
+the Lorentz-Berthelot combination rule, ` i.e. ` ``exclusion_range = exclusion_radius_per_type[particle_type_1] + exclusion_radius_per_type[particle_type_2]``. 
+If the exclusion radius of one particle type is not defined, the value of the parameter provided in  ``exclusion_range`` is used by default. 
+If the value in ``exclusion_radius_per_type`` is equal to 0, then the exclusion range of that particle type with any other particle is 0.
+
 .. _Grand canonical ensemble simulation using the Reaction Ensemble:
 
 Grand canonical ensemble simulation
@@ -1820,7 +1916,7 @@ As before in the Reaction Ensemble one can define multiple reactions (e.g. for a
 .. code-block:: python
 
     cpH=reaction_ensemble.ConstantpHEnsemble(
-        temperature=1, exclusion_radius=1, seed=77)
+        temperature=1, exclusion_range=1, seed=77)
     cpH.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[1],
                     product_types=[1, 2], product_coefficients=[1, 1],
                     default_charges={0: 0, 1: -1, 2: +1})

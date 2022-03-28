@@ -28,6 +28,7 @@ set(EspressoCore_SRC
     rotate_system.cpp
     rotation.cpp
     Observable_stat.cpp
+    RegularDecomposition.cpp
     RuntimeErrorCollector.cpp
     RuntimeError.cpp
     RuntimeErrorStream.cpp
@@ -41,8 +42,7 @@ set(EspressoCore_SRC
     CellStructure.cpp
     PartCfg.cpp
     AtomDecomposition.cpp
-    EspressoSystemStandAlone.cpp
-    DomainDecomposition.cpp)
+    EspressoSystemStandAlone.cpp)
 
 if(CUDA)
   set(EspressoCuda_SRC
@@ -89,6 +89,7 @@ target_compile_definitions(EspressoCore PUBLIC $<$<BOOL:${H5MD}>:H5XX_USE_MPI>)
 
 add_subdirectory(accumulators)
 add_subdirectory(actor)
+add_subdirectory(bond_breakage)
 add_subdirectory(bonded_interactions)
 add_subdirectory(cluster_analysis)
 add_subdirectory(constraints)

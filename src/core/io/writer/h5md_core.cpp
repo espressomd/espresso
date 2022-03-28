@@ -188,8 +188,7 @@ void File::load_file(const std::string &file_path) {
   load_datasets();
 }
 
-void write_box(const BoxGeometry &geometry, const h5xx::file &h5md_file,
-               h5xx::dataset &dataset) {
+static void write_box(const BoxGeometry &geometry, h5xx::dataset &dataset) {
   auto const extents = static_cast<h5xx::dataspace>(dataset).extents();
   extend_dataset(dataset, Vector2hs{1, 0});
   h5xx::write_dataset(dataset, geometry.length(),
@@ -199,7 +198,8 @@ void write_box(const BoxGeometry &geometry, const h5xx::file &h5md_file,
 void write_attributes(const std::string &espresso_version,
                       h5xx::file &h5md_file) {
   auto h5md_group = h5xx::group(h5md_file, "h5md");
-  h5xx::write_attribute(h5md_group, "version", boost::array<hsize_t, 2>{1, 1});
+  h5xx::write_attribute(h5md_group, "version",
+                        boost::array<hsize_t, 2>{{1, 1}});
   auto h5md_creator_group = h5xx::group(h5md_group, "creator");
   h5xx::write_attribute(h5md_creator_group, "name", "ESPResSo");
   h5xx::write_attribute(h5md_creator_group, "version", espresso_version);
@@ -268,7 +268,7 @@ template <std::size_t rank> struct slice_info {};
 template <> struct slice_info<3> {
   static auto extent(hsize_t n_part_diff) {
     return Vector3hs{1, n_part_diff, 0};
-  };
+  }
   static constexpr auto count() { return Vector3hs{1, 1, 3}; }
   static auto offset(hsize_t n_time_steps, hsize_t prefix) {
     return Vector3hs{n_time_steps, prefix, 0};
@@ -276,7 +276,7 @@ template <> struct slice_info<3> {
 };
 
 template <> struct slice_info<2> {
-  static auto extent(hsize_t n_part_diff) { return Vector2hs{1, n_part_diff}; };
+  static auto extent(hsize_t n_part_diff) { return Vector2hs{1, n_part_diff}; }
   static constexpr auto count() { return Vector2hs{1, 1}; }
   static auto offset(hsize_t n_time_steps, hsize_t prefix) {
     return Vector2hs{n_time_steps, prefix};
@@ -304,7 +304,7 @@ void write_td_particle_property(hsize_t prefix, hsize_t n_part_global,
 
 void File::write(const ParticleRange &particles, double time, int step,
                  BoxGeometry const &geometry) {
-  write_box(geometry, m_h5md_file, datasets["particles/atoms/box/edges/value"]);
+  write_box(geometry, datasets["particles/atoms/box/edges/value"]);
   write_connectivity(particles);
 
   int const n_part_local = particles.size();
@@ -322,7 +322,7 @@ void File::write(const ParticleRange &particles, double time, int step,
 
   write_td_particle_property<2>(
       prefix, n_part_global, particles, datasets["particles/atoms/id/value"],
-      [](auto const &p) { return Utils::Vector<int, 1>{p.p.identity}; });
+      [](auto const &p) { return Utils::Vector<int, 1>{p.identity()}; });
   write_dataset(Utils::Vector<double, 1>{time},
                 datasets["particles/atoms/id/time"], Vector1hs{1},
 
@@ -334,31 +334,31 @@ void File::write(const ParticleRange &particles, double time, int step,
   write_td_particle_property<2>(
       prefix, n_part_global, particles,
       datasets["particles/atoms/species/value"],
-      [](auto const &p) { return Utils::Vector<int, 1>{p.p.type}; });
+      [](auto const &p) { return Utils::Vector<int, 1>{p.type()}; });
 
   write_td_particle_property<2>(
       prefix, n_part_global, particles, datasets["particles/atoms/mass/value"],
-      [](auto const &p) { return Utils::Vector<double, 1>{p.p.mass}; });
+      [](auto const &p) { return Utils::Vector<double, 1>{p.mass()}; });
 
   write_td_particle_property<3>(
       prefix, n_part_global, particles,
       datasets["particles/atoms/position/value"],
-      [&](auto const &p) { return folded_position(p.r.p, geometry); });
+      [&](auto const &p) { return folded_position(p.pos(), geometry); });
   write_td_particle_property<3>(prefix, n_part_global, particles,
                                 datasets["particles/atoms/image/value"],
-                                [](auto const &p) { return p.l.i; });
+                                [](auto const &p) { return p.image_box(); });
 
   write_td_particle_property<3>(prefix, n_part_global, particles,
                                 datasets["particles/atoms/velocity/value"],
-                                [](auto const &p) { return p.m.v; });
+                                [](auto const &p) { return p.v(); });
 
   write_td_particle_property<3>(prefix, n_part_global, particles,
                                 datasets["particles/atoms/force/value"],
-                                [](auto const &p) { return p.f.f; });
+                                [](auto const &p) { return p.force(); });
   write_td_particle_property<2>(
       prefix, n_part_global, particles,
       datasets["particles/atoms/charge/value"],
-      [](auto const &p) { return Utils::Vector<double, 1>{p.p.q}; });
+      [](auto const &p) { return Utils::Vector<double, 1>{p.q()}; });
 }
 void File::write_connectivity(const ParticleRange &particles) {
   MultiArray3i bond(boost::extents[0][0][0]);
@@ -369,7 +369,7 @@ void File::write_connectivity(const ParticleRange &particles) {
       auto const partner_ids = b.partner_ids();
       if (partner_ids.size() == 1) {
         bond.resize(boost::extents[1][nbonds_local + 1][2]);
-        bond[0][nbonds_local][0] = p.p.identity;
+        bond[0][nbonds_local][0] = p.identity();
         bond[0][nbonds_local][1] = partner_ids[0];
         nbonds_local++;
       }

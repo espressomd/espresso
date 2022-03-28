@@ -1,4 +1,3 @@
-
 /*
  * Copyright (C) 2010-2019 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
@@ -27,6 +26,7 @@
 
 #include "EspressoSystemInterface.hpp"
 
+#include "bond_breakage/bond_breakage.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
 #include "comfixed_global.hpp"
@@ -66,17 +66,17 @@ inline ParticleForce external_force(Particle const &p) {
   ParticleForce f = {};
 
 #ifdef EXTERNAL_FORCES
-  f.f += p.p.ext_force;
+  f.f += p.ext_force();
 #ifdef ROTATION
-  f.torque += p.p.ext_torque;
+  f.torque += p.ext_torque();
 #endif
 #endif
 
 #ifdef ENGINE
   // apply a swimming force in the direction of
   // the particle's orientation axis
-  if (p.p.swim.swimming) {
-    f.f += p.p.swim.f_swim * p.r.calc_director();
+  if (p.swimming().swimming) {
+    f.f += p.swimming().f_swim * p.calc_director();
   }
 #endif
 
@@ -92,10 +92,10 @@ inline ParticleForce thermostat_force(Particle const &p, double time_step,
 
 #ifdef ROTATION
   return {friction_thermo_langevin(langevin, p, time_step, kT),
-          p.p.rotation ? convert_vector_body_to_space(
-                             p, friction_thermo_langevin_rotation(
-                                    langevin, p, time_step, kT))
-                       : Utils::Vector3d{}};
+          p.can_rotate() ? convert_vector_body_to_space(
+                               p, friction_thermo_langevin_rotation(
+                                      langevin, p, time_step, kT))
+                         : Utils::Vector3d{}};
 #else
   return friction_thermo_langevin(langevin, p, time_step, kT);
 #endif
@@ -149,7 +149,7 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
 #ifdef COLLISION_DETECTION
   prepare_local_collision_queue();
 #endif
-
+  BondBreakage::clear_queue();
   auto particles = cell_structure.local_particles();
   auto ghost_particles = cell_structure.ghost_particles();
 #ifdef ELECTROSTATICS
@@ -188,8 +188,8 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
 #endif
       },
       maximal_cutoff(), maximal_cutoff_bonded(),
-      VerletCriterion{skin, interaction_range(), coulomb_cutoff, dipole_cutoff,
-                      collision_detection_cutoff()});
+      VerletCriterion<>{skin, interaction_range(), coulomb_cutoff,
+                        dipole_cutoff, collision_detection_cutoff()});
 
   Constraints::constraints.add_forces(particles, get_sim_time());
 
@@ -238,12 +238,12 @@ void calc_long_range_forces(const ParticleRange &particles) {
   /* calculate k-space part of electrostatic interaction. */
   Coulomb::calc_long_range_force(particles);
 
-#endif /*ifdef ELECTROSTATICS */
+#endif // ELECTROSTATICS
 
 #ifdef DIPOLES
   /* calculate k-space part of the magnetostatic interaction. */
   Dipole::calc_long_range_force(particles);
-#endif /*ifdef DIPOLES */
+#endif // DIPOLES
 }
 
 #ifdef NPT

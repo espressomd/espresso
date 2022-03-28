@@ -21,11 +21,12 @@
 
 #include "config.hpp"
 
-#include "core/grid_based_algorithms/lb_interface.hpp"
-#include "core/grid_based_algorithms/lbboundaries/LBBoundary.hpp"
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 #include "script_interface/shapes/Shape.hpp"
+
+#include "core/grid_based_algorithms/lb_interface.hpp"
+#include "core/grid_based_algorithms/lbboundaries/LBBoundary.hpp"
 
 #include <memory>
 #include <string>
@@ -47,7 +48,7 @@ public:
 
             if (m_shape) {
               m_lbboundary->set_shape(m_shape->shape());
-            };
+            }
           },
           [this]() { return m_shape; }}});
 #ifdef EK_BOUNDARIES
@@ -89,7 +90,8 @@ private:
 
   /* Keep a reference to the shape */
   std::shared_ptr<Shapes::Shape> m_shape;
-}; // class LBBoundary
+};
+
 } // namespace LBBoundaries
 } /* namespace ScriptInterface */
 #endif

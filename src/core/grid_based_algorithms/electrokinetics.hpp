@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _ELECTROKINETICS_HPP
-#define _ELECTROKINETICS_HPP
+#ifndef CORE_GRID_BASED_ALGORITHMS_ELECTROKINETICS_HPP
+#define CORE_GRID_BASED_ALGORITHMS_ELECTROKINETICS_HPP
 
 #include "config.hpp"
 #include "grid_based_algorithms/lb_boundaries.hpp"
@@ -189,4 +189,4 @@ void ek_init_species_density_wallcharge(float *wallcharge_species_density,
 
 #endif /* CUDA */
 
-#endif /* ELECTROKINETICS_H */
+#endif /* CORE_GRID_BASED_ALGORITHMS_ELECTROKINETICS_HPP */

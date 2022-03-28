@@ -37,12 +37,12 @@ cpdef check_type_or_throw_except(x, n, t, msg):
                 raise ValueError(
                     msg + f" -- {len(x)} values were given but {n} were expected.")
             for i in range(len(x)):
-                if not isinstance(x[i], t):
-                    if not ((t == float and is_valid_type(x[i], int))
-                            or (t == float and issubclass(type(x[i]), np.integer))) \
-                            and not (t == int and issubclass(type(x[i]), np.integer)):
-                        raise ValueError(
-                            msg + f" -- Item {i} was of type {type(x[i]).__name__}")
+                if not (isinstance(x[i], t)
+                        or (t == float and is_valid_type(x[i], int))
+                        or (t == int and is_valid_type(x[i], int))
+                        or (t == bool and (is_valid_type(x[i], bool) or x[i] in (0, 1)))):
+                    raise ValueError(
+                        msg + f" -- Item {i} was of type {type(x[i]).__name__}")
         else:
             # if n>1, but the user passed a single value, also throw exception
             raise ValueError(
@@ -50,8 +50,10 @@ cpdef check_type_or_throw_except(x, n, t, msg):
     else:
         # N=1 and a single value
         if not isinstance(x, t):
-            if not (t == float and is_valid_type(x, int)) and not (
-                    t == int and issubclass(type(x), np.integer)):
+            if not (isinstance(x, t)
+                    or (t == float and is_valid_type(x, int))
+                    or (t == int and is_valid_type(x, int))
+                    or (t == bool and is_valid_type(x, bool))):
                 raise ValueError(msg + f" -- Got an {type(x).__name__}")
 
 
@@ -275,7 +277,7 @@ def nesting_level(obj):
 
 def is_valid_type(value, t):
     """
-    Extended checks for numpy int and float types.
+    Extended checks for numpy int, float and bool types.
 
     """
     if value is None:
@@ -288,6 +290,8 @@ def is_valid_type(value, t):
                 value, (float, np.float16, np.float32, np.float64, np.float128, np.longdouble))
         return isinstance(
             value, (float, np.float16, np.float32, np.float64, np.longdouble))
+    elif t == bool:
+        return isinstance(value, (bool, np.bool, np.bool_))
     else:
         return isinstance(value, t)
 
@@ -311,3 +315,21 @@ def requires_experimental_features(reason):
     ELSE:
         # Return original class
         return lambda x: x
+
+
+def check_required_keys(required_keys, obtained_keys):
+    a = required_keys
+    b = obtained_keys
+    if not set(a).issubset(b):
+        raise ValueError(
+            "The following keys have to be given as keyword arguments: "
+            f"{sorted(a)}, got {sorted(b)} (missing {sorted(a - b)})")
+
+
+def check_valid_keys(valid_keys, obtained_keys):
+    a = valid_keys
+    b = obtained_keys
+    if not set(b).issubset(a):
+        raise ValueError(
+            "Only the following keys can be given as keyword arguments: "
+            f"{sorted(a)}, got {sorted(b)} (unknown {sorted(b - a)})")

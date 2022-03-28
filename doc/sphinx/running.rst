@@ -198,6 +198,7 @@ Notes:
 * For the instantaneous pressure, the same limitations of applicability hold as described in :ref:`Pressure`.
 * The particle forces :math:`F` include interactions as well as a friction (:math:`\gamma^0`) and noise term (:math:`\sqrt{k_B T \gamma^0 dt} \overline{\eta}`) analogous to the terms in the :ref:`Langevin thermostat`.
 * The particle forces are only calculated in step 5 and then reused in step 1 of the next iteration. See :ref:`Velocity Verlet Algorithm` for the implications of that.
+* The NpT algorithm doesn't support :ref:`Lees-Edwards boundary conditions`.
 
 .. _Steepest descent:
 

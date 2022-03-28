@@ -25,8 +25,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "utils/Vector.hpp"
-using Utils::Vector;
+#include <utils/Vector.hpp>
 
 #include <boost/range/numeric.hpp>
 
@@ -40,6 +39,8 @@ using Utils::Vector;
 #include <stdexcept>
 #include <type_traits>
 #include <vector>
+
+using Utils::Vector;
 
 /* Number of nontrivial Baxter permutations of length 2n-1. (A001185) */
 #define TEST_NUMBERS                                                           \
@@ -102,6 +103,12 @@ BOOST_AUTO_TEST_CASE(range_constructor_test) {
 
   const Vector<int, n_test_numbers> v(test_values);
   BOOST_CHECK(std::equal(v.begin(), v.end(), test_numbers));
+}
+
+BOOST_AUTO_TEST_CASE(unit_vector_test) {
+  BOOST_CHECK((Utils::unit_vector<int>(2) == Utils::Vector3i{0, 0, 1}));
+  BOOST_CHECK_THROW(Utils::unit_vector<double>(3), std::domain_error);
+  BOOST_CHECK_THROW(Utils::unit_vector<float>(-1), std::domain_error);
 }
 
 BOOST_AUTO_TEST_CASE(test_norm2) {
@@ -170,15 +177,15 @@ BOOST_AUTO_TEST_CASE(algebraic_operators) {
   BOOST_CHECK(((v1 * 2) == Utils::Vector3i{2, 4, 6}));
 
   {
-    Utils::Vector3i v1{2, 4, 6};
-    auto v2 = 2 * v1;
-    BOOST_CHECK(v2 == (v1 *= 2));
+    Utils::Vector3i v3{2, 4, 6};
+    auto v4 = 2 * v3;
+    BOOST_CHECK(v4 == (v3 *= 2));
   }
 
   {
-    Utils::Vector3i v1{2, 4, 6};
-    auto v2 = v1 / 2;
-    BOOST_CHECK(v2 == (v1 /= 2));
+    Utils::Vector3i v3{2, 4, 6};
+    auto v4 = v3 / 2;
+    BOOST_CHECK(v4 == (v3 /= 2));
   }
 
   BOOST_CHECK((sqrt(Utils::Vector3d{1., 2., 3.}) ==
@@ -186,14 +193,14 @@ BOOST_AUTO_TEST_CASE(algebraic_operators) {
 
   /* modulo */
   {
-    Utils::Vector3i v1{2, 7, 8};
-    Utils::Vector3i v2{1, 2, 3};
+    Utils::Vector3i v3{2, 7, 8};
+    Utils::Vector3i v4{1, 2, 3};
 
-    auto const res = v1 % v2;
+    auto const res = v3 % v4;
 
-    BOOST_CHECK_EQUAL(res[0], v1[0] % v2[0]);
-    BOOST_CHECK_EQUAL(res[1], v1[1] % v2[1]);
-    BOOST_CHECK_EQUAL(res[2], v1[2] % v2[2]);
+    BOOST_CHECK_EQUAL(res[0], v3[0] % v4[0]);
+    BOOST_CHECK_EQUAL(res[1], v3[1] % v4[1]);
+    BOOST_CHECK_EQUAL(res[2], v3[2] % v4[2]);
   }
 }
 
@@ -226,7 +233,7 @@ BOOST_AUTO_TEST_CASE(decay_to_scalar_test) {
 
     static_assert(std::is_same<int, decayed_t>::value, "");
   }
-
+  BOOST_TEST_PASSPOINT();
   {
     using original_t = Utils::Vector3i;
     using decayed_t = typename Utils::decay_to_scalar<original_t>::type;
@@ -270,12 +277,38 @@ BOOST_AUTO_TEST_CASE(conversion) {
   using Utils::Vector3d;
   using Utils::Vector3f;
 
-  auto const orig = Vector3d{1., 2., 3.};
-  auto const result = static_cast<Vector3f>(orig);
+  /* The Vector class has a user-defined conversion method,
+   * however static_cast() will not use it. Instead, the
+   * range-based constructor is called. */
 
-  BOOST_CHECK_EQUAL(result[0], static_cast<float>(orig[0]));
-  BOOST_CHECK_EQUAL(result[1], static_cast<float>(orig[1]));
-  BOOST_CHECK_EQUAL(result[2], static_cast<float>(orig[2]));
+  auto const orig = Vector3d{1., 2., 3.};
+  auto const expected =
+      Vector3f{static_cast<float>(orig[0]), static_cast<float>(orig[1]),
+               static_cast<float>(orig[2])};
+
+  // check range-based conversion
+  {
+    auto const result = static_cast<Vector3f>(orig);
+    BOOST_TEST(result == expected);
+  }
+
+  // check cast operator
+  {
+    auto const result = orig.operator Utils::Vector3f();
+    BOOST_TEST(result == expected);
+  }
+
+  // check vector conversion
+  {
+    auto const result = Utils::Vector3d{static_cast<std::vector<double>>(orig)};
+    BOOST_TEST(result == orig);
+  }
+
+  // check vector conversion
+  {
+    auto const result = Utils::Vector3d{orig.as_vector()};
+    BOOST_TEST(result == orig);
+  }
 }
 
 BOOST_AUTO_TEST_CASE(vector_product_test) {
@@ -343,4 +376,5 @@ BOOST_AUTO_TEST_CASE(type_deduction) {
           typename boost::qvm::deduce_vec<Utils::Vector<double, 3>, 3>::type,
           Utils::Vector<double, 3>>::value,
       "");
+  BOOST_TEST_PASSPOINT();
 }

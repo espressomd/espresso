@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import unittest as ut
+import unittest_decorators as utx
 import tests_common
 
 import espressomd
@@ -24,7 +25,12 @@ import espressomd.interactions
 
 
 class Non_bonded_interactionsTests(ut.TestCase):
-    system = espressomd.System(box_l=[20.0, 20.0, 20.0])
+    system = espressomd.System(box_l=[30.0, 30.0, 30.0])
+
+    def tearDown(self):
+        if espressomd.has_features(["LENNARD_JONES"]):
+            self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
+                epsilon=0., sigma=0., cutoff=0., shift=0.)
 
     def intersMatch(self, inType, outInter, inParams, outParams, msg_long):
         """Check, if the interaction type set and gotten back as well as the
@@ -155,6 +161,40 @@ class Non_bonded_interactionsTests(ut.TestCase):
             {"eps": 1.0, "sig": 1.0, "cut": 4.0, "k1": 3.0,
              "k2": 5.0, "mu": 2.0, "nu": 1.0},
             "gay_berne")
+
+    @utx.skipIfMissingFeatures("LENNARD_JONES")
+    def test_exceptions(self):
+        err_msg_required = (r"The following keys have to be given as keyword arguments: "
+                            r"\['cutoff', 'epsilon', 'shift', 'sigma'\], got "
+                            r"\['epsilon', 'sigma'\] \(missing \['cutoff', 'shift'\]\)")
+        err_msg_valid = (r"Only the following keys can be given as keyword arguments: "
+                         r"\['cutoff', 'epsilon', 'min', 'offset', 'shift', 'sigma'\], got "
+                         r"\['cutoff', 'epsilon', 'shift', 'sigma', 'unknown'\] \(unknown \['unknown'\]\)")
+        with self.assertRaisesRegex(ValueError, err_msg_required):
+            espressomd.interactions.LennardJonesInteraction(
+                epsilon=1., sigma=2.)
+        with self.assertRaisesRegex(ValueError, err_msg_required):
+            self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
+                epsilon=1., sigma=2.)
+        with self.assertRaisesRegex(ValueError, err_msg_valid):
+            espressomd.interactions.LennardJonesInteraction(
+                epsilon=1., sigma=2., cutoff=3., shift=4., unknown=5.)
+        with self.assertRaisesRegex(ValueError, err_msg_valid):
+            self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
+                epsilon=1., sigma=2., cutoff=3., shift=4., unknown=5.)
+
+        skin = self.system.cell_system.skin
+        box_l = self.system.box_l
+        node_grid = self.system.cell_system.node_grid
+        n_nodes = self.system.cell_system.get_state()['n_nodes']
+        max_ia_cutoff = min(box_l / node_grid) - skin * (n_nodes > 1)
+        wrong_cutoff = 1.01 * max_ia_cutoff
+        lennard_jones = self.system.non_bonded_inter[0, 0].lennard_jones
+        with self.assertRaisesRegex(Exception, "setting LennardJones raised an error: ERROR: interaction range .+ in direction [0-2] is larger than the local box size"):
+            lennard_jones.set_params(
+                epsilon=1., sigma=1., cutoff=wrong_cutoff, shift="auto")
+        self.assertAlmostEqual(
+            lennard_jones.get_params()['cutoff'], wrong_cutoff, delta=1e-10)
 
 
 if __name__ == "__main__":

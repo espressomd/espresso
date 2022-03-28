@@ -33,9 +33,9 @@
 
 #include "CellStructure.hpp"
 
-/** Transfer the current particle positions from @ref ParticlePosition::p
- *  "Particle::r::p" to @ref ParticlePosition::p_last_timestep
- *  "Particle::r::p_last_timestep"
+/** Transfer the current particle positions from @ref Particle::pos
+ *  "Particle::pos" to @ref Particle::pos_last_time_step
+ *  "Particle::pos_last_time_step"
  */
 void save_old_position(const ParticleRange &particles,
                        const ParticleRange &ghost_particles);

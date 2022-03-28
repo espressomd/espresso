@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
   constexpr double tol = 100 * std::numeric_limits<double>::epsilon();
 
   // check acceptance rate
-  ReactionAlgorithmTest r_algo(42);
+  ReactionAlgorithmTest r_algo(42, 1., 0., {});
   for (int tried_moves = 1; tried_moves < 5; ++tried_moves) {
     for (int accepted_moves = 0; accepted_moves < 5; ++accepted_moves) {
       r_algo.m_tried_configurational_MC_moves = tried_moves;
@@ -87,11 +87,11 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
 
   // check reaction addition
   {
-    r_algo.add_reaction(reaction.gamma, reaction.reactant_types,
-                        reaction.reactant_coefficients, reaction.product_types,
-                        reaction.product_coefficients);
+    r_algo.add_reaction(std::make_shared<SingleReaction>(
+        reaction.gamma, reaction.reactant_types, reaction.reactant_coefficients,
+        reaction.product_types, reaction.product_coefficients));
     BOOST_REQUIRE_EQUAL(r_algo.reactions.size(), 1ul);
-    auto const &value = r_algo.reactions[0];
+    auto const &value = *r_algo.reactions[0];
     BOOST_TEST(value.reactant_types == reaction.reactant_types,
                boost::test_tools::per_element());
     BOOST_TEST(value.reactant_coefficients == reaction.reactant_coefficients,
@@ -110,12 +110,6 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
     BOOST_CHECK_EQUAL(probability, -10.);
   }
 
-  // exception if kT is negative
-  BOOST_CHECK_THROW(r_algo.check_reaction_method(), std::runtime_error);
-
-  // set kT
-  r_algo.kT = 1.;
-
 #ifdef ELECTROSTATICS
   // exception if reactant types have no charge information
   BOOST_CHECK_THROW(r_algo.check_reaction_method(), std::runtime_error);
@@ -131,16 +125,16 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
 
   // check reaction removal
   {
-    SingleReaction const new_reaction(5., {type_B}, {1}, {type_C}, {1});
-    r_algo.add_reaction(new_reaction.gamma, new_reaction.reactant_types,
-                        new_reaction.reactant_coefficients,
-                        new_reaction.product_types,
-                        new_reaction.product_coefficients);
+    auto const new_gamma = 5.;
+    auto const new_reaction = std::make_shared<SingleReaction>(
+        new_gamma, std::vector<int>{type_B}, std::vector<int>{1},
+        std::vector<int>{type_C}, std::vector<int>{1});
+    r_algo.add_reaction(new_reaction);
     BOOST_REQUIRE_EQUAL(r_algo.reactions.size(), 2ul);
-    BOOST_CHECK_EQUAL(r_algo.reactions[1].gamma, new_reaction.gamma);
+    BOOST_CHECK_EQUAL(r_algo.reactions[1]->gamma, new_gamma);
     r_algo.delete_reaction(1);
     BOOST_REQUIRE_EQUAL(r_algo.reactions.size(), 1ul);
-    BOOST_CHECK_EQUAL(r_algo.reactions[0].gamma, reaction.gamma);
+    BOOST_CHECK_EQUAL(r_algo.reactions[0]->gamma, reaction.gamma);
     r_algo.delete_reaction(0);
     BOOST_REQUIRE_EQUAL(r_algo.reactions.size(), 0ul);
   }
@@ -162,11 +156,11 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
     set_particle_type(0, type_A);
     set_particle_type(1, type_A);
     // update particle positions and velocities
-    BOOST_CHECK(!r_algo.particle_inside_exclusion_radius_touched);
-    r_algo.particle_inside_exclusion_radius_touched = false;
-    r_algo.exclusion_radius = box_l;
+    BOOST_CHECK(!r_algo.particle_inside_exclusion_range_touched);
+    r_algo.particle_inside_exclusion_range_touched = false;
+    r_algo.exclusion_range = box_l;
     auto const bookkeeping = r_algo.generate_new_particle_positions(0, 2);
-    BOOST_CHECK(r_algo.particle_inside_exclusion_radius_touched);
+    BOOST_CHECK(r_algo.particle_inside_exclusion_range_touched);
     // check moves and bookkeeping
     for (auto const &item : bookkeeping) {
       auto const pid = item.first;
@@ -174,8 +168,8 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
       auto const ref_old_pos = ref_positions[pid].first;
       auto const ref_old_vel = ref_positions[pid].second;
       auto const &p = get_particle_data(pid);
-      auto const &new_pos = p.r.p;
-      auto const &new_vel = p.m.v;
+      auto const &new_pos = p.pos();
+      auto const &new_vel = p.v();
       BOOST_CHECK_EQUAL(item.second, ref_old_pos);
       BOOST_CHECK_GE(new_pos, Utils::Vector3d::broadcast(0.));
       BOOST_CHECK_LE(new_pos, Utils::Vector3d::broadcast(box_l));
@@ -203,25 +197,25 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
     BOOST_REQUIRE(!r_algo.do_global_mc_move_for_particles_of_type(type_A, 0));
     // force all MC moves to be rejected by picking particles inside
     // their exclusion radius
-    r_algo.exclusion_radius = box_l;
-    r_algo.particle_inside_exclusion_radius_touched = false;
+    r_algo.exclusion_range = box_l;
+    r_algo.particle_inside_exclusion_range_touched = false;
     BOOST_REQUIRE(!r_algo.do_global_mc_move_for_particles_of_type(type_A, 2));
     // check none of the particles moved
     for (auto const pid : {0, 1}) {
       auto const ref_old_pos = ref_positions[pid];
       auto const &p = get_particle_data(pid);
-      auto const &new_pos = p.r.p;
+      auto const &new_pos = p.pos();
       BOOST_CHECK_LE((new_pos - ref_old_pos).norm(), tol);
     }
     // force a MC move to be accepted by using a constant Hamiltonian
-    r_algo.exclusion_radius = 0.;
-    r_algo.particle_inside_exclusion_radius_touched = false;
+    r_algo.exclusion_range = 0.;
+    r_algo.particle_inside_exclusion_range_touched = false;
     BOOST_REQUIRE(r_algo.do_global_mc_move_for_particles_of_type(type_A, 1));
     std::vector<double> distances(2);
     // check that only one particle moved
     for (auto const pid : {0, 1}) {
       auto const &p = get_particle_data(pid);
-      distances[pid] = (ref_positions[pid] - p.r.p).norm();
+      distances[pid] = (ref_positions[pid] - p.pos()).norm();
     }
     BOOST_CHECK_LE(std::min(distances[0], distances[1]), tol);
     BOOST_CHECK_GE(std::max(distances[0], distances[1]), 0.1);
@@ -280,6 +274,62 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
     BOOST_CHECK_THROW(r_algo.set_cyl_constraint(0.5, 1.5, 0.5), exception);
     BOOST_CHECK_THROW(r_algo.set_cyl_constraint(0.5, 0.5, -1.0), exception);
     r_algo.remove_constraint();
+  }
+
+  {
+
+    // domain error if negative exclusion_range is provided
+
+    BOOST_CHECK_THROW(ReactionAlgorithmTest r_algo(40, 1., -1, {}),
+                      std::domain_error);
+
+    // domain error if a negative value is provided in exclusion_radius_per_type
+    std::unordered_map<int, double> exclusion_radius_per_type;
+    exclusion_radius_per_type[type_A] = 1;
+    exclusion_radius_per_type[type_B] = -1;
+
+    BOOST_CHECK_THROW(
+        ReactionAlgorithmTest r_algo(40, 1., 1, exclusion_radius_per_type),
+        std::domain_error);
+
+    auto const box_l = Utils::Vector3d{1, 1, 1};
+    espresso::system->set_box_l(box_l);
+
+    // set up particle
+    place_particle(0, {0.5, 0.5, 0.5});
+    set_particle_type(0, type_A);
+    place_particle(1, {0.7, 0.7, 0.7});
+    set_particle_type(1, type_B);
+    exclusion_radius_per_type[type_A] = 0.1;
+    exclusion_radius_per_type[type_B] = 1;
+    ReactionAlgorithmTest r_algo(40, 1., 0, exclusion_radius_per_type);
+
+    // the new position will always be in the excluded range since the sum of
+    // the radii of both particle types is larger than box length. The exclusion
+    // range value should be ignored
+
+    r_algo.generate_new_particle_positions(type_B, 1);
+
+    BOOST_REQUIRE(r_algo.particle_inside_exclusion_range_touched);
+
+    // the new position will never be in the excluded range because the
+    // exclusion_radius of the particle is 0
+
+    r_algo.exclusion_radius_per_type[type_B] = 0;
+    r_algo.particle_inside_exclusion_range_touched = false;
+    r_algo.generate_new_particle_positions(type_B, 1);
+
+    BOOST_REQUIRE(!r_algo.particle_inside_exclusion_range_touched);
+    // the new position will never accepted since the value in exclusion_range
+    // will be used if the particle does not have a defined excluded radius
+
+    r_algo.exclusion_range = 1;
+    r_algo.exclusion_radius_per_type = {{type_A, 0}};
+    r_algo.generate_new_particle_positions(type_B, 1);
+
+    BOOST_REQUIRE(r_algo.particle_inside_exclusion_range_touched);
+
+    //
   }
 }
 

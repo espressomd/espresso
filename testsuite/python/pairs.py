@@ -104,13 +104,13 @@ class PairTest(ut.TestCase):
         self.run_and_check()
 
     def test_dd(self):
-        self.system.cell_system.set_domain_decomposition()
+        self.system.cell_system.set_regular_decomposition()
         self.system.periodicity = [1, 1, 1]
         self.run_and_check()
         self.check_range_exception()
 
     def test_dd_partial_z(self):
-        self.system.cell_system.set_domain_decomposition()
+        self.system.cell_system.set_regular_decomposition()
         self.system.periodicity = [1, 1, 0]
         self.run_and_check()
         self.check_range_exception()

@@ -35,6 +35,7 @@
 
 #include "ParticleRange.hpp"
 #include "accumulators.hpp"
+#include "bond_breakage/bond_breakage.hpp"
 #include "bonded_interactions/rigid_bond.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
@@ -46,6 +47,7 @@
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "interactions.hpp"
+#include "lees_edwards/lees_edwards.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "rattle.hpp"
@@ -59,10 +61,12 @@
 #include <boost/range/algorithm/min_element.hpp>
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <csignal>
 #include <functional>
 #include <stdexcept>
+#include <utility>
 
 #ifdef VALGRIND_INSTRUMENTATION
 #include <callgrind.h>
@@ -98,6 +102,47 @@ void notify_sig_int() {
 }
 } // namespace
 
+namespace LeesEdwards {
+/** @brief Currently active Lees-Edwards protocol. */
+static std::shared_ptr<ActiveProtocol> protocol = nullptr;
+
+/**
+ * @brief Update the Lees-Edwards parameters of the box geometry
+ * for the current simulation time.
+ */
+inline void update_box_params() {
+  if (box_geo.type() == BoxType::LEES_EDWARDS) {
+    assert(protocol != nullptr);
+    update_pos_offset(*protocol, box_geo, sim_time);
+    update_shear_velocity(*protocol, box_geo, sim_time);
+  }
+}
+
+void set_protocol(std::shared_ptr<ActiveProtocol> new_protocol) {
+  box_geo.set_type(BoxType::LEES_EDWARDS);
+  protocol = std::move(new_protocol);
+  LeesEdwards::update_box_params();
+  cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
+}
+
+void unset_protocol() {
+  protocol = nullptr;
+  box_geo.lees_edwards_bc().shear_velocity = 0;
+  box_geo.lees_edwards_bc().pos_offset = 0;
+  box_geo.set_type(BoxType::CUBOID);
+  cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
+}
+
+template <class Kernel> void run_kernel() {
+  if (box_geo.type() == BoxType::LEES_EDWARDS) {
+    auto const kernel = Kernel{box_geo, time_step};
+    auto const particles = cell_structure.local_particles();
+    std::for_each(particles.begin(), particles.end(),
+                  [&kernel](auto &p) { kernel(p); });
+  }
+}
+} // namespace LeesEdwards
+
 void integrator_sanity_checks() {
   if (time_step < 0.0) {
     runtimeErrorMsg() << "time_step not set";
@@ -117,6 +162,8 @@ void integrator_sanity_checks() {
   case INTEG_METHOD_NPT_ISO:
     if (thermo_switch != THERMO_OFF and thermo_switch != THERMO_NPT_ISO)
       runtimeErrorMsg() << "The NpT integrator requires the NpT thermostat";
+    if (box_geo.type() == BoxType::LEES_EDWARDS)
+      runtimeErrorMsg() << "The NpT integrator cannot use Lees-Edwards";
     break;
 #endif
   case INTEG_METHOD_BD:
@@ -134,8 +181,10 @@ void integrator_sanity_checks() {
   }
 }
 
-static void resort_particles_if_needed(ParticleRange &particles) {
-  if (cell_structure.check_resort_required(particles, skin)) {
+static void resort_particles_if_needed(ParticleRange const &particles) {
+  auto const offset = LeesEdwards::verlet_list_offset(
+      box_geo, cell_structure.get_le_pos_offset_at_last_resort());
+  if (cell_structure.check_resort_required(particles, skin, offset)) {
     cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
   }
 }
@@ -143,7 +192,7 @@ static void resort_particles_if_needed(ParticleRange &particles) {
 /** @brief Calls the hook for propagation kernels before the force calculation
  *  @return whether or not to stop the integration loop early.
  */
-bool integrator_step_1(ParticleRange &particles) {
+static bool integrator_step_1(ParticleRange const &particles) {
   bool early_exit = false;
   switch (integ_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
@@ -151,7 +200,6 @@ bool integrator_step_1(ParticleRange &particles) {
     break;
   case INTEG_METHOD_NVT:
     velocity_verlet_step_1(particles, time_step);
-    resort_particles_if_needed(particles);
     break;
 #ifdef NPT
   case INTEG_METHOD_NPT_ISO:
@@ -165,7 +213,6 @@ bool integrator_step_1(ParticleRange &particles) {
 #ifdef STOKESIAN_DYNAMICS
   case INTEG_METHOD_SD:
     stokesian_dynamics_step_1(particles, time_step);
-    resort_particles_if_needed(particles);
     break;
 #endif // STOKESIAN_DYNAMICS
   default:
@@ -175,7 +222,7 @@ bool integrator_step_1(ParticleRange &particles) {
 }
 
 /** Calls the hook of the propagation kernels after force calculation */
-void integrator_step_2(ParticleRange &particles, double kT) {
+static void integrator_step_2(ParticleRange const &particles, double kT) {
   switch (integ_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
     // Nothing
@@ -195,7 +242,7 @@ void integrator_step_2(ParticleRange &particles, double kT) {
     break;
 #ifdef STOKESIAN_DYNAMICS
   case INTEG_METHOD_SD:
-    stokesian_dynamics_step_2(particles);
+    // Nothing
     break;
 #endif // STOKESIAN_DYNAMICS
   default:
@@ -206,18 +253,14 @@ void integrator_step_2(ParticleRange &particles, double kT) {
 int integrate(int n_steps, int reuse_forces) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
-  /* Prepare the integrator */
+  // Prepare particle structure and run sanity checks of all active algorithms
   on_integration_start(time_step);
 
-  /* if any method vetoes (e.g. P3M not initialized), immediately bail out */
+  // If any method vetoes (e.g. P3M not initialized), immediately bail out
   if (check_runtime_errors(comm_cart))
     return 0;
 
-  /* Verlet list criterion */
-
-  /* Integration Step: Preparation for first integration step:
-   * Calculate forces F(t) as function of positions x(t) (and velocities v(t))
-   */
+  // Additional preparations for the first integration step
   if (reuse_forces == -1 || (recalc_forces && reuse_forces != 1)) {
     ESPRESSO_PROFILER_MARK_BEGIN("Initial Force Calculation");
     lb_lbcoupling_deactivate();
@@ -245,13 +288,13 @@ int integrate(int n_steps, int reuse_forces) {
   if (check_runtime_errors(comm_cart))
     return 0;
 
-  /* incremented if a Verlet update is done, aka particle resorting. */
+  // Keep track of the number of Verlet updates (i.e. particle resorts)
   int n_verlet_updates = 0;
 
 #ifdef VALGRIND_INSTRUMENTATION
   CALLGRIND_START_INSTRUMENTATION;
 #endif
-  /* Integration loop */
+  // Integration loop
   ESPRESSO_PROFILER_CXX_MARK_LOOP_BEGIN(integration_loop, "Integration loop");
   int integrated_steps = 0;
   for (int step = 0; step < n_steps; step++) {
@@ -264,16 +307,25 @@ int integrate(int n_steps, int reuse_forces) {
       save_old_position(particles, cell_structure.ghost_particles());
 #endif
 
+    LeesEdwards::update_box_params();
     bool early_exit = integrator_step_1(particles);
     if (early_exit)
       break;
 
-    /* Propagate philox rng counters */
+    LeesEdwards::run_kernel<LeesEdwards::Push>();
+
+#ifdef NPT
+    if (integ_switch != INTEG_METHOD_NPT_ISO)
+#endif
+    {
+      resort_particles_if_needed(particles);
+    }
+
+    // Propagate philox RNG counters
     philox_counter_increment();
 
 #ifdef BOND_CONSTRAINT
-    /* Correct those particle positions that participate in a rigid/constrained
-     * bond */
+    // Correct particle positions that participate in a rigid/constrained bond
     if (n_rigidbonds) {
       correct_position_shake(cell_structure);
     }
@@ -297,6 +349,7 @@ int integrate(int n_steps, int reuse_forces) {
     virtual_sites()->after_force_calc();
 #endif
     integrator_step_2(particles, temperature);
+    LeesEdwards::run_kernel<LeesEdwards::UpdateOffset>();
 #ifdef BOND_CONSTRAINT
     // SHAKE velocity updates
     if (n_rigidbonds) {
@@ -325,6 +378,7 @@ int integrate(int n_steps, int reuse_forces) {
 #ifdef COLLISION_DETECTION
       handle_collisions();
 #endif
+      BondBreakage::process_queue();
     }
 
     integrated_steps++;
@@ -339,6 +393,7 @@ int integrate(int n_steps, int reuse_forces) {
     }
 
   } // for-loop over integration steps
+  LeesEdwards::update_box_params();
   ESPRESSO_PROFILER_CXX_MARK_LOOP_END(integration_loop);
 
 #ifdef VALGRIND_INSTRUMENTATION
@@ -349,7 +404,7 @@ int integrate(int n_steps, int reuse_forces) {
   virtual_sites()->update();
 #endif
 
-  /* verlet list statistics */
+  // Verlet list statistics
   if (n_verlet_updates > 0)
     verlet_reuse = n_steps / (double)n_verlet_updates;
   else
@@ -365,6 +420,9 @@ int integrate(int n_steps, int reuse_forces) {
 
 int python_integrate(int n_steps, bool recalc_forces_par,
                      bool reuse_forces_par) {
+
+  assert(n_steps >= 0);
+
   // Override the signal handler so that the integrator obeys Ctrl+C
   SignalHandler sa(SIGINT, [](int) { ctrl_C = 1; });
 
@@ -375,12 +433,6 @@ int python_integrate(int n_steps, bool recalc_forces_par,
       runtimeErrorMsg() << "cannot reuse old forces and recalculate forces";
     }
     reuse_forces = -1;
-  }
-
-  /* go on with integrate <n_steps> */
-  if (n_steps < 0) {
-    runtimeErrorMsg() << "illegal number of steps (must be >0)";
-    return ES_ERROR;
   }
 
   /* if skin wasn't set, do an educated guess now */
@@ -498,7 +550,7 @@ REGISTER_CALLBACK(mpi_set_time_step_local)
 
 void mpi_set_time_step(double time_s) {
   if (time_s <= 0.)
-    throw std::invalid_argument("time_step must be > 0.");
+    throw std::domain_error("time_step must be > 0.");
   if (lb_lbfluid_get_lattice_switch() != ActiveLB::NONE)
     check_tau_time_step_consistency(lb_lbfluid_get_tau(), time_s);
   mpi_call_all(mpi_set_time_step_local, time_s);
@@ -516,7 +568,8 @@ void mpi_set_skin(double skin) { mpi_call_all(mpi_set_skin_local, skin); }
 
 void mpi_set_time_local(double time) {
   sim_time = time;
-  on_simtime_change();
+  recalc_forces = true;
+  LeesEdwards::update_box_params();
 }
 
 REGISTER_CALLBACK(mpi_set_time_local)

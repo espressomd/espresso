@@ -64,9 +64,9 @@ BOOST_AUTO_TEST_CASE(serialization) {
   auto p = Particle();
 
   auto const bond_id = 5;
-  auto const bond_partners = std::array<const int, 3>{12, 13, 14};
+  auto const bond_partners = std::array<const int, 3>{{12, 13, 14}};
 
-  p.p.identity = 15;
+  p.id() = 15;
   p.bonds().insert({bond_id, bond_partners});
 #ifdef EXCLUSIONS
   std::vector<int> el = {5, 6, 7, 8};
@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE(serialization) {
   auto q = Particle();
   in_ar >> q;
 
-  BOOST_CHECK(q.p.identity == p.p.identity);
+  BOOST_CHECK(q.id() == p.id());
   BOOST_CHECK((*q.bonds().begin() == BondView{bond_id, bond_partners}));
 
 #ifdef EXCLUSIONS
@@ -241,4 +241,46 @@ BOOST_AUTO_TEST_CASE(rattle_constructors) {
     check_particle_rattle(out, pr);
   }
 }
+#endif // BOND_CONSTRAINT
+
+BOOST_AUTO_TEST_CASE(particle_bitfields) {
+  auto p = Particle();
+
+  // check default values
+  BOOST_CHECK(not p.has_fixed_coordinates());
+  BOOST_CHECK(not p.can_rotate());
+  BOOST_CHECK(not p.is_fixed_along(1));
+  BOOST_CHECK(not p.can_rotate_around(1));
+
+  // check setting of one axis
+#ifdef EXTERNAL_FORCES
+  p.set_fixed_along(1, true);
+  BOOST_CHECK(p.is_fixed_along(1));
+  BOOST_CHECK(p.has_fixed_coordinates());
 #endif
+#ifdef ROTATION
+  p.set_can_rotate_around(1, true);
+  BOOST_CHECK(p.can_rotate_around(1));
+  BOOST_CHECK(p.can_rotate());
+#endif
+
+  // check that unsetting is properly registered
+#ifdef EXTERNAL_FORCES
+  p.set_fixed_along(1, false);
+  BOOST_CHECK(not p.has_fixed_coordinates());
+#endif
+#ifdef ROTATION
+  p.set_can_rotate_around(1, false);
+  BOOST_CHECK(not p.can_rotate());
+#endif
+
+  // check setting of all flags at once
+#ifdef ROTATION
+  p.set_can_rotate_all_axes();
+  BOOST_CHECK(p.can_rotate_around(0));
+  BOOST_CHECK(p.can_rotate_around(1));
+  BOOST_CHECK(p.can_rotate_around(2));
+  p.set_cannot_rotate_all_axes();
+  BOOST_CHECK(not p.can_rotate());
+#endif
+}

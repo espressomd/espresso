@@ -16,7 +16,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
 import numpy as np
-import random
 import espressomd
 import espressomd.polymer
 import espressomd.shapes
@@ -34,7 +33,7 @@ class LinearPolymerPositions(ut.TestCase):
     """
 
     box_l = 15
-    seed = random.randint(0, 1000)
+    seed = 42
 
     system = espressomd.System(box_l=[box_l, box_l, box_l])
 
@@ -128,6 +127,7 @@ class LinearPolymerPositions(ut.TestCase):
         num_poly = 90
         num_mono = 25
         bond_length = 0.83
+        np.random.seed(seed=self.seed)
         start_positions = np.random.random((num_poly, 3)) * self.box_l
 
         # make sure that incorrect size leads to error
@@ -198,11 +198,20 @@ class LinearPolymerPositions(ut.TestCase):
                 respect_constraints=True, seed=self.seed)
         self.system.constraints.remove(wall_constraint)
 
-    def test_failure(self):
+    def test_exceptions(self):
         """
-        Check the runtime error message.
+        Check runtime error messages.
 
         """
+        with self.assertRaisesRegex(ValueError, r"The following keys have to be given as keyword arguments: "
+                                                r"\[.+\], got \[.+\] \(missing \['seed'\]\)"):
+            espressomd.polymer.linear_polymer_positions(
+                n_polymers=1, beads_per_chain=10, bond_length=0.1)
+        with self.assertRaisesRegex(ValueError, r"Only the following keys can be given as keyword arguments: "
+                                                r"\[.+\], got \[.+\] \(unknown \['bondangle'\]\)"):
+            espressomd.polymer.linear_polymer_positions(
+                n_polymers=1, beads_per_chain=10, bond_length=0.1, seed=10,
+                bondangle=0.1)
         with self.assertRaisesRegex(Exception, 'Failed to create polymer positions.'):
             espressomd.polymer.linear_polymer_positions(
                 n_polymers=1, beads_per_chain=10,

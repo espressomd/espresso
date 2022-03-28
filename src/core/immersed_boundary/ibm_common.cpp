@@ -34,7 +34,7 @@ Utils::Vector3d get_ibm_particle_position(int pid) {
   auto *p = cell_structure.get_local_particle(pid);
   boost::optional<Particle> opt_part{boost::none};
 
-  if (p and not p->l.ghost) {
+  if (p and not p->is_ghost()) {
     opt_part = *p;
   }
   opt_part = boost::mpi::all_reduce(comm_cart, opt_part,
@@ -46,6 +46,6 @@ Utils::Vector3d get_ibm_particle_position(int pid) {
                                       return item;
                                     });
   if (opt_part)
-    return opt_part.get().r.p;
+    return opt_part.get().pos();
   throw std::runtime_error("Immersed Boundary: Particle not found");
 }

@@ -30,9 +30,9 @@ from .utils cimport Vector3i
 from .utils cimport check_type_or_throw_except, make_array_locked
 
 cdef class CellSystem:
-    def set_domain_decomposition(self, use_verlet_lists=True):
+    def set_regular_decomposition(self, use_verlet_lists=True):
         """
-        Activates domain decomposition cell system.
+        Activates regular decomposition cell system.
 
         Parameters
         ----------
@@ -42,7 +42,7 @@ cdef class CellSystem:
 
         """
         mpi_set_use_verlet_lists(use_verlet_lists)
-        mpi_bcast_cell_structure(CELL_STRUCTURE_DOMDEC)
+        mpi_bcast_cell_structure(CellStructureType.CELL_STRUCTURE_REGULAR)
 
         handle_errors("Error while initializing the cell system.")
         return True
@@ -59,19 +59,19 @@ cdef class CellSystem:
 
         """
         mpi_set_use_verlet_lists(use_verlet_lists)
-        mpi_bcast_cell_structure(CELL_STRUCTURE_NSQUARE)
+        mpi_bcast_cell_structure(CellStructureType.CELL_STRUCTURE_NSQUARE)
 
         return True
 
     def get_state(self):
         s = self.__getstate__()
 
-        if cell_structure.decomposition_type() == CELL_STRUCTURE_DOMDEC:
-            dd = get_domain_decomposition()
+        if cell_structure.decomposition_type() == CellStructureType.CELL_STRUCTURE_REGULAR:
+            rd = get_regular_decomposition()
             s["cell_grid"] = np.array(
-                [dd.cell_grid[0], dd.cell_grid[1], dd.cell_grid[2]])
+                [rd.cell_grid[0], rd.cell_grid[1], rd.cell_grid[2]])
             s["cell_size"] = np.array(
-                [dd.cell_size[0], dd.cell_size[1], dd.cell_size[2]])
+                [rd.cell_size[0], rd.cell_size[1], rd.cell_size[2]])
 
         s["verlet_reuse"] = get_verlet_reuse()
         s["n_nodes"] = n_nodes
@@ -81,9 +81,9 @@ cdef class CellSystem:
     def __getstate__(self):
         s = {"use_verlet_list": cell_structure.use_verlet_list}
 
-        if cell_structure.decomposition_type() == CELL_STRUCTURE_DOMDEC:
-            s["type"] = "domain_decomposition"
-        if cell_structure.decomposition_type() == CELL_STRUCTURE_NSQUARE:
+        if cell_structure.decomposition_type() == CellStructureType.CELL_STRUCTURE_REGULAR:
+            s["type"] = "regular_decomposition"
+        if cell_structure.decomposition_type() == CellStructureType.CELL_STRUCTURE_NSQUARE:
             s["type"] = "nsquare"
 
         s["skin"] = skin
@@ -94,8 +94,8 @@ cdef class CellSystem:
         self.skin = d['skin']
         self.node_grid = d['node_grid']
         if 'type' in d:
-            if d['type'] == "domain_decomposition":
-                self.set_domain_decomposition(
+            if d['type'] == "regular_decomposition":
+                self.set_regular_decomposition(
                     use_verlet_lists=d['use_verlet_list'])
             elif d['type'] == "nsquare":
                 self.set_n_square(use_verlet_lists=d['use_verlet_list'])
@@ -126,7 +126,7 @@ cdef class CellSystem:
             pairs = mpi_get_pairs(distance)
         else:
             pairs = self._get_pairs_of_types(distance, types)
-        handle_errors("")
+        handle_errors("Error in get_pairs()")
         return pairs
 
     def _get_pairs_of_types(self, distance, types):

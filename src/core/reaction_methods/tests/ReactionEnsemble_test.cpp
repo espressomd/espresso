@@ -46,7 +46,6 @@ namespace espresso {
 // ESPResSo system instance
 std::unique_ptr<EspressoSystemStandAlone> system;
 } // namespace espresso
-
 // Check the Monte Carlo algorithm where moves depend on the system
 // configuration and energy.
 BOOST_AUTO_TEST_CASE(ReactionEnsemble_test) {
@@ -57,13 +56,12 @@ BOOST_AUTO_TEST_CASE(ReactionEnsemble_test) {
     using ReactionEnsemble::generic_oneway_reaction;
     using ReactionEnsemble::ReactionEnsemble;
   };
-  constexpr double tol = 100 * std::numeric_limits<double>::epsilon();
+  auto constexpr tol = 100 * std::numeric_limits<double>::epsilon();
 
   // check basic interface
   {
-    ReactionEnsembleTest r_algo(42);
-    r_algo.volume = 10.;
-    r_algo.kT = 20.;
+    ReactionEnsembleTest r_algo(42, 20., 0., {});
+    r_algo.set_volume(10.);
 
     // exception if no reaction was added
     BOOST_CHECK_THROW(r_algo.check_reaction_method(), std::runtime_error);
@@ -75,7 +73,6 @@ BOOST_AUTO_TEST_CASE(ReactionEnsemble_test) {
     SingleReaction const reaction(2., {type_A}, {1}, {type_B, type_C}, {3, 4});
 
     // check acceptance probability
-    constexpr auto g = factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i;
     for (int i = 0; i < 3; ++i) {
       for (int j = 0; j < 3; ++j) {
         for (int k = 0; k < 3; ++k) {
@@ -99,10 +96,8 @@ BOOST_AUTO_TEST_CASE(ReactionEnsemble_test) {
 
   // check that the system energy is updated after a succesful reaction
   {
-    ReactionEnsembleTest test_reaction(42);
-    test_reaction.volume = 1.;
-    test_reaction.kT = 1.;
-    test_reaction.exclusion_radius = 0;
+    ReactionEnsembleTest test_reaction(42, 1., 0., {});
+    test_reaction.set_volume(1.);
 
     // create a generic identity exchange reaction D <-> E
     int const type_D = 0;

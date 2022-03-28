@@ -41,9 +41,11 @@ from .accumulators import AutoUpdateAccumulators
 if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
     from .lbboundaries import LBBoundaries
     from .ekboundaries import EKBoundaries
+from . import lees_edwards
 from .comfixed import ComFixed
 from .utils cimport check_type_or_throw_except
 from .utils import handle_errors, array_locked
+from .bond_breakage import BreakageSpecs
 IF VIRTUAL_SITES:
     from .virtual_sites import ActiveVirtualSitesHandle, VirtualSitesOff
 
@@ -143,6 +145,8 @@ cdef class System:
         """:class:`espressomd.actors.Actors`"""
         analysis
         """:class:`espressomd.analyze.Analysis`"""
+        bond_breakage
+        """:class:`espressomd.bond_breakage.BreakageSpecs`"""
         galilei
         """:class:`espressomd.galilei.GalileiTransform`"""
         integrator
@@ -155,6 +159,8 @@ cdef class System:
         """:class:`espressomd.lbboundaries.LBBoundaries`"""
         ekboundaries
         """:class:`espressomd.ekboundaries.EKBoundaries`"""
+        lees_edwards
+        """:class:`espressomd.lees_edwards.LeesEdwards`"""
         collision_detection
         """:class:`espressomd.collision_detection.CollisionDetection`"""
         cuda_init_handle
@@ -182,6 +188,7 @@ cdef class System:
             self.auto_update_accumulators = AutoUpdateAccumulators()
             self.bonded_inter = interactions.BondedInteractions()
             self.cell_system = CellSystem()
+            self.bond_breakage = BreakageSpecs()
             IF COLLISION_DETECTION == 1:
                 self.collision_detection = CollisionDetection()
             self.comfixed = ComFixed()
@@ -192,6 +199,7 @@ cdef class System:
             if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
                 self.lbboundaries = LBBoundaries()
                 self.ekboundaries = EKBoundaries()
+            self.lees_edwards = lees_edwards.LeesEdwards()
             self.non_bonded_inter = interactions.NonBondedInteractions()
             self.part = particle_data.ParticleList()
             self.thermostat = Thermostat()
@@ -226,6 +234,7 @@ cdef class System:
             odict['lbboundaries'] = System.__getattribute__(
                 self, "lbboundaries")
         odict['thermostat'] = System.__getattribute__(self, "thermostat")
+        odict['bond_breakage'] = System.__getattribute__(self, "bond_breakage")
         IF COLLISION_DETECTION:
             odict['collision_detection'] = System.__getattribute__(
                 self, "collision_detection")
@@ -396,20 +405,41 @@ cdef class System:
 
         cdef Vector3d pos1
         if isinstance(p1, particle_data.ParticleHandle):
-            pos1 = make_Vector3d(p1.pos)
+            pos1 = make_Vector3d(p1.pos_folded)
         else:
             check_type_or_throw_except(
                 p1, 3, float, "p1 must be a particle or 3 floats")
             pos1 = make_Vector3d(p1)
         cdef Vector3d pos2
         if isinstance(p2, particle_data.ParticleHandle):
-            pos2 = make_Vector3d(p2.pos)
+            pos2 = make_Vector3d(p2.pos_folded)
         else:
             check_type_or_throw_except(
                 p2, 3, float, "p2 must be a particle or 3 floats")
             pos2 = make_Vector3d(p2)
 
         return make_array_locked(box_geo.get_mi_vector(pos2, pos1))
+
+    def velocity_difference(self, p1, p2):
+        """
+        Return the velocity difference between two particles,
+        considering Lees-Edwards boundary conditions, if active.
+
+        Parameters
+        ----------
+        p1 : :class:`~espressomd.particle_data.ParticleHandle`
+        p2 : :class:`~espressomd.particle_data.ParticleHandle`
+
+        """
+
+        cdef Vector3d pos1 = make_Vector3d(p1.pos_folded)
+        cdef Vector3d pos2 = make_Vector3d(p2.pos_folded)
+
+        cdef Vector3d v1 = make_Vector3d(p1.v)
+        cdef Vector3d v2 = make_Vector3d(p2.v)
+        cdef Vector3d vd = box_geo.velocity_difference(pos2, pos1, v2, v1)
+
+        return make_array_locked(vd)
 
     def rotate_system(self, **kwargs):
         """Rotate the particles in the system about the center of mass.
@@ -481,6 +511,4 @@ cdef class System:
 
         """
         check_type_or_throw_except(type, 1, int, "type must be 1 int")
-        number = number_of_particles_with_type(type)
-        handle_errors("")
-        return int(number)
+        return number_of_particles_with_type(type)

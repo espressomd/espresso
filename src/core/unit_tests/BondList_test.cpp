@@ -33,7 +33,7 @@
 BOOST_AUTO_TEST_CASE(BondView_) {
   /* Dummy values */
   auto const id = 5;
-  auto const partners = std::array<const int, 3>{12, 13, 14};
+  auto const partners = std::array<const int, 3>{{12, 13, 14}};
 
   /* BondView can be constructed from an id and a partner range */
   auto const view = BondView{id, partners};
@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_CASE(BondView_) {
   /* Comparison ops */
   {
     auto const partners_same = partners;
-    auto const partners_different = std::array<const int, 3>{15, 16};
+    auto const partners_different = std::array<const int, 3>{{15, 16}};
 
     BOOST_CHECK((BondView{id, partners} == BondView{id, partners_same}));
     BOOST_CHECK(not(BondView{id, partners} != BondView{id, partners_same}));
@@ -90,7 +90,7 @@ BOOST_AUTO_TEST_CASE(Iterator_incement_) {
 
 BOOST_AUTO_TEST_CASE(insert_) {
   /* Dummy values */
-  auto const partners = std::array<int, 3>{1, 2, 3};
+  auto const partners = std::array<int, 3>{{1, 2, 3}};
   auto const bond1 = BondView{1, partners};
   auto const bond2 = BondView{2, partners};
 
@@ -114,7 +114,7 @@ BOOST_AUTO_TEST_CASE(insert_) {
 }
 
 BOOST_AUTO_TEST_CASE(erase_) {
-  auto const partners = std::array<int, 3>{1, 2, 3};
+  auto const partners = std::array<int, 3>{{1, 2, 3}};
   auto const bond1 = BondView{1, partners};
   auto const bond2 = BondView{2, partners};
   auto const bond3 = BondView{3, partners};
@@ -166,7 +166,7 @@ BOOST_AUTO_TEST_CASE(erase_) {
 }
 
 BOOST_AUTO_TEST_CASE(clear_) {
-  auto const partners = std::array<int, 3>{1, 2, 3};
+  auto const partners = std::array<int, 3>{{1, 2, 3}};
   auto const bond1 = BondView{1, partners};
   auto const bond2 = BondView{2, partners};
 
@@ -181,7 +181,7 @@ BOOST_AUTO_TEST_CASE(clear_) {
 }
 
 BOOST_AUTO_TEST_CASE(serialization_) {
-  auto const partners = std::array<int, 3>{4, 5, 6};
+  auto const partners = std::array<int, 3>{{4, 5, 6}};
   auto const bond1 = BondView{1, partners};
   auto const bond2 = BondView{2, partners};
 

@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _P3M_H
-#define _P3M_H
+#ifndef CORE_ELECTROSTATICS_MAGNETOSTATICS_P3M_HPP
+#define CORE_ELECTROSTATICS_MAGNETOSTATICS_P3M_HPP
 /** \file
  *  P3M algorithm for long range Coulomb interaction.
  *
@@ -242,6 +242,6 @@ inline double p3m_pair_energy(double chgfac, double dist) {
   return 0.0;
 }
 
-#endif /* of ifdef P3M */
+#endif /* P3M */
 
-#endif /*of ifndef P3M_H */
+#endif /* CORE_ELECTROSTATICS_MAGNETOSTATICS_P3M_HPP */

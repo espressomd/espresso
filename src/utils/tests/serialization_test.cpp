@@ -291,6 +291,7 @@ template <template <class> class Trait> void constexpr assert_has_trait() {
   static_assert(Trait<Utils::Vector3i>::value, "");
   static_assert(Trait<Utils::Vector3d>::value, "");
   static_assert(Trait<Utils::Quaternion<float>>::value, "");
+  BOOST_TEST_PASSPOINT();
   // arrays of non-standard types don't have the trait
   static_assert(!Trait<S>::value, "");
   static_assert(!Trait<Utils::detail::Storage<S, 2>>::value, "");
@@ -312,6 +313,7 @@ BOOST_AUTO_TEST_CASE(compact_vector_test) {
   using namespace Utils;
   static_assert(boost::mpi::is_mpi_datatype<compact_vector<int>>::value, "");
   static_assert(sizeof(compact_vector<int>) < sizeof(std::vector<int>), "");
+  BOOST_TEST_PASSPOINT();
 }
 
 int main(int argc, char **argv) {

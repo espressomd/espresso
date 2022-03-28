@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_ACCUMULATORS_ACCUMULATORBASE
-#define CORE_ACCUMULATORS_ACCUMULATORBASE
+#ifndef CORE_ACCUMULATORS_ACCUMULATOR_BASE_HPP
+#define CORE_ACCUMULATORS_ACCUMULATOR_BASE_HPP
 
 #include <cstddef>
 #include <vector>
@@ -26,9 +26,10 @@ namespace Accumulators {
 
 class AccumulatorBase {
 public:
-  explicit AccumulatorBase(int delta_N = 1) : m_delta_N(delta_N){};
-  int &delta_N() { return m_delta_N; };
+  explicit AccumulatorBase(int delta_N = 1) : m_delta_N(delta_N) {}
   virtual ~AccumulatorBase() = default;
+
+  int &delta_N() { return m_delta_N; }
 
   virtual void update() = 0;
   /** Dimensions needed to reshape the flat array returned by the accumulator */

@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _VERLETCRITERION_HPP
-#define _VERLETCRITERION_HPP
+#ifndef CORE_NB_IA_VERLETCRITERION_HPP
+#define CORE_NB_IA_VERLETCRITERION_HPP
 
 #include "Particle.hpp"
 #include "config.hpp"
@@ -28,10 +28,16 @@
 #include <utils/index.hpp>
 #include <utils/math/sqr.hpp>
 
+struct GetNonbondedCutoff {
+  auto operator()(int type_i, int type_j) const {
+    return get_ia_param(type_i, type_j)->max_cut;
+  }
+};
+
 /** Returns true if the particles are to be considered for short range
  *  interactions.
  */
-class VerletCriterion {
+template <typename CutoffGetter = GetNonbondedCutoff> class VerletCriterion {
   const double m_skin;
   const double m_eff_max_cut2;
   const double m_eff_coulomb_cut2 = 0.;
@@ -42,6 +48,7 @@ class VerletCriterion {
       return INACTIVE_CUTOFF;
     return Utils::sqr(x + m_skin);
   }
+  CutoffGetter get_nonbonded_cutoff;
 
 public:
   VerletCriterion(double skin, double max_cut, double coulomb_cut = 0.,
@@ -60,14 +67,14 @@ public:
       return false;
 
 #ifdef ELECTROSTATICS
-    // Within real space cutoff of electrostatics and both charged
-    if ((dist2 <= m_eff_coulomb_cut2) && (p1.p.q != 0) && (p2.p.q != 0))
+    // Within real space cutoff of electrostatics and both are charged
+    if (dist2 <= m_eff_coulomb_cut2 and p1.q() != 0. and p2.q() != 0.)
       return true;
 #endif
 
 #ifdef DIPOLES
     // Within dipolar cutoff and both carry magnetic moments
-    if ((dist2 <= m_eff_dipolar_cut2) && (p1.p.dipm != 0) && (p2.p.dipm != 0))
+    if (dist2 <= m_eff_dipolar_cut2 and p1.dipm() != 0. and p2.dipm() != 0.)
       return true;
 #endif
 
@@ -78,9 +85,9 @@ public:
 #endif
 
     // Within short-range distance (including dpd and the like)
-    auto const max_cut = get_ia_param(p1.p.type, p2.p.type)->max_cut;
-    return (max_cut != INACTIVE_CUTOFF) &&
-           (dist2 <= Utils::sqr(max_cut + m_skin));
+    auto const ia_cut = get_nonbonded_cutoff(p1.p.type, p2.p.type);
+    return (ia_cut != INACTIVE_CUTOFF) &&
+           (dist2 <= Utils::sqr(ia_cut + m_skin));
   }
 };
 #endif

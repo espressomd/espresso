@@ -82,7 +82,7 @@ class RandomPairTest(ut.TestCase):
         self.assertEqual(n2_pairs ^ set(cs_pairs), set())
 
     def check_dd(self, n2_pairs):
-        self.system.cell_system.set_domain_decomposition()
+        self.system.cell_system.set_regular_decomposition()
         self.check_pairs(n2_pairs)
 
     def check_n_squared(self, n2_pairs):
@@ -91,7 +91,7 @@ class RandomPairTest(ut.TestCase):
 
     def test(self):
         periods = [0, 1]
-        self.system.periodicity = True, True, True
+        self.system.periodicity = [True, True, True]
         check_non_bonded_loop_trace(self.system)
 
         for periodicity in itertools.product(periods, periods, periods):

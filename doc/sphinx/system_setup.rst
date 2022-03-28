@@ -40,6 +40,7 @@ for further calculations, you should explicitly make a copy e.g. via
   dimension non-periodic does not hinder particles from leaving the box in
   this direction. In this case for keeping particles in the simulation box
   a constraint has to be set.
+  For more details, see :ref:`Boundary conditions`.
 
 * :py:attr:`~espressomd.system.System.time_step`
 
@@ -81,6 +82,131 @@ or by calling the corresponding ``get_state()`` methods like::
     gamma = system.thermostat.get_state()[0]['gamma']
     gamma_rot = system.thermostat.get_state()[0]['gamma_rotation']
 
+.. _Boundary conditions:
+
+Boundary conditions
+-------------------
+
+.. _Periodic boundaries:
+
+Periodic boundaries
+~~~~~~~~~~~~~~~~~~~
+
+With periodic boundary conditions, particles interact with periodic
+images of all particles in the system. This is the default behavior.
+When particles cross a box boundary, their position are folded and
+their image box counter are incremented.
+
+From the Python interface, the folded position is accessed with
+:attr:`~espressomd.particle_data.ParticleHandle.pos_folded` and the image
+box counter with :attr:`~espressomd.particle_data.ParticleHandle.image_box`.
+Note that :attr:`~espressomd.particle_data.ParticleHandle.pos` gives the
+unfolded particle position.
+
+Example::
+
+    import espressomd
+    system = espressomd.System(box_l=[5.0, 5.0, 5.0], periodicity=[True, True, True])
+    system.time_step = 0.1
+    system.cell_system.skin = 0.0
+    p = system.part.add(pos=[4.9, 0.0, 0.0], v=[0.1, 0.0, 0.0])
+    system.integrator.run(20)
+    print(f"pos        = {p.pos}")
+    print(f"pos_folded = {p.pos_folded}")
+    print(f"image_box  = {p.image_box}")
+
+Output:
+
+.. code-block:: none
+
+    pos        = [5.1 0.  0. ]
+    pos_folded = [0.1 0.  0. ]
+    image_box  = [1 0 0]
+
+.. _Open boundaries:
+
+Open boundaries
+~~~~~~~~~~~~~~~
+
+With open boundaries, particles can leave the simulation box.
+What happens in this case depends on which algorithm is used.
+Some algorithms may require open boundaries,
+such as :ref:`Stokesian Dynamics`.
+
+Example::
+
+    import espressomd
+    system = espressomd.System(box_l=[5.0, 5.0, 5.0], periodicity=[False, False, False])
+    system.time_step = 0.1
+    system.cell_system.skin = 0.0
+    p = system.part.add(pos=[4.9, 0.0, 0.0], v=[0.1, 0.0, 0.0])
+    system.integrator.run(20)
+    print(f"pos        = {p.pos}")
+    print(f"pos_folded = {p.pos_folded}")
+    print(f"image_box  = {p.image_box}")
+
+Output:
+
+.. code-block:: none
+
+    pos        = [5.1 0.  0. ]
+    pos_folded = [5.1 0.  0. ]
+    image_box  = [0 0 0]
+
+.. _Lees-Edwards boundary conditions:
+
+Lees--Edwards boundary conditions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Lees--Edwards boundary conditions (LEbc) are special periodic boundary
+conditions to simulation systems under shear stress :cite:`lees72a`.
+Periodic images of particles across the shear boundary appear with a
+time-dependent position offset. When a particle crosses the shear boundary,
+it appears to the opposite side of the simulation box with a position offset
+and a shear velocity :cite:`bindgen21a`.
+
+LEbc require a fully periodic system and are configured with
+:class:`~espressomd.lees_edwards.LinearShear` and
+:class:`~espressomd.lees_edwards.OscillatoryShear`.
+To temporarily disable LEbc, use :class:`~espressomd.lees_edwards.Off`.
+To completely disable LEbc and reinitialize the box geometry, do
+``system.lees_edwards.protocol = None``.
+
+Example::
+
+    import espressomd
+    import espressomd.lees_edwards
+    system = espressomd.System(box_l=[5.0, 5.0, 5.0])
+    system.time_step = 0.1
+    system.cell_system.skin = 0.0
+    system.cell_system.set_n_square(use_verlet_lists=True)
+    le_protocol = espressomd.lees_edwards.LinearShear(
+        shear_velocity=-0.1, initial_pos_offset=0.0, time_0=-0.1)
+    system.lees_edwards.protocol = le_protocol
+    system.lees_edwards.shear_direction = 1 # shear along y-axis
+    system.lees_edwards.shear_plane_normal = 0 # shear when crossing the x-boundary
+    p = system.part.add(pos=[4.9, 0.0, 0.0], v=[0.1, 0.0, 0.0])
+    system.integrator.run(20)
+    print(f"pos        = {p.pos}")
+    print(f"pos_folded = {p.pos_folded}")
+    print(f"image_box  = {p.image_box}")
+    print(f"velocity   = {p.v}")
+
+Output:
+
+.. code-block:: none
+
+    pos        = [5.1 0.2 0. ]
+    pos_folded = [0.1 0.2 0. ]
+    image_box  = [1 0 0]
+    velocity   = [0.1 0.1 0. ]
+
+Particles inserted outside the box boundaries will be wrapped around
+using the normal periodic boundary rules, i.e. they will not be sheared,
+even though their :attr:`~espressomd.particle_data.ParticleHandle.image_box`
+is *not* zero.
+
+
 .. _Cellsystems:
 
 Cellsystems
@@ -120,21 +246,21 @@ Details about the cell system can be obtained by :meth:`espressomd.system.System
 * ``type``            The current type of the cell system.
 * ``verlet_reuse``    Average number of integration steps the Verlet list is re-used.
 
-.. _Domain decomposition:
+.. _Regular decomposition:
 
-Domain decomposition
-~~~~~~~~~~~~~~~~~~~~
+Regular decomposition
+~~~~~~~~~~~~~~~~~~~~~
 
-Invoking :py:meth:`~espressomd.cellsystem.CellSystem.set_domain_decomposition`
-selects the domain decomposition cell scheme, using Verlet lists
+Invoking :py:meth:`~espressomd.cellsystem.CellSystem.set_regular_decomposition`
+selects the regular decomposition cell scheme, using Verlet lists
 for the calculation of the interactions. If you specify ``use_verlet_lists=False``, only the
-domain decomposition is used, but not the Verlet lists. ::
+regular decomposition is used, but not the Verlet lists. ::
 
     system = espressomd.System(box_l=[1, 1, 1])
 
-    system.cell_system.set_domain_decomposition(use_verlet_lists=True)
+    system.cell_system.set_regular_decomposition(use_verlet_lists=True)
 
-The domain decomposition cellsystem is the default system and suits most
+The regular decomposition cellsystem is the default system and suits most
 applications with short ranged interactions. The particles are divided
 up spatially into small compartments, the cells, such that the cell size
 is larger than the maximal interaction range. In this case interactions

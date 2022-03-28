@@ -24,12 +24,13 @@
 
 #include "config.hpp"
 
-#include "core/collision.hpp"
+#ifdef COLLISION_DETECTION
+
 #include "script_interface/ScriptInterface.hpp"
 
-#include <string>
+#include "core/collision.hpp"
 
-#ifdef COLLISION_DETECTION
+#include <string>
 
 namespace ScriptInterface {
 namespace CollisionDetection {
@@ -63,9 +64,9 @@ public:
                          const VariantMap &params) override {
     if (name == "validate") {
       return validate_collision_parameters();
-    };
+    }
     return none;
-  };
+  }
 };
 
 } /* namespace CollisionDetection */

@@ -18,13 +18,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _HARMONIC_HPP
-#define _HARMONIC_HPP
+#ifndef CORE_BN_IA_HARMONIC_HPP
+#define CORE_BN_IA_HARMONIC_HPP
 /** \file
  *  Routines to calculate the harmonic bond potential between particle pairs.
  */
 
 #include "config.hpp"
+#include "errorhandling.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
@@ -79,7 +80,10 @@ HarmonicBond::force(Utils::Vector3d const &dx) const {
   if (dist > ROUND_ERROR_PREC) { /* Regular case */
     fac /= dist;
   } else {
-    fac = 0;
+    if (r > 0.) {
+      runtimeErrorMsg() << "Harmonic bond: Particles have zero distance. "
+                           "This is most likely an error in the system setup.";
+    }
   }
   return fac * dx;
 }
