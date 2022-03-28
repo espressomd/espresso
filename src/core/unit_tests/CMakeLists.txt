@@ -37,6 +37,8 @@ unit_test(NAME p3m_test SRC p3m_test.cpp DEPENDS EspressoUtils)
 unit_test(NAME link_cell_test SRC link_cell_test.cpp DEPENDS EspressoUtils)
 unit_test(NAME Particle_test SRC Particle_test.cpp DEPENDS EspressoUtils
           Boost::serialization)
+unit_test(NAME rotation_test SRC rotation_test.cpp DEPENDS EspressoUtils
+          EspressoCore)
 unit_test(NAME field_coupling_couplings SRC field_coupling_couplings_test.cpp
           DEPENDS EspressoUtils)
 unit_test(NAME field_coupling_fields SRC field_coupling_fields_test.cpp DEPENDS
@@ -60,3 +62,5 @@ unit_test(NAME BondList_test SRC BondList_test.cpp DEPENDS EspressoCore)
 unit_test(NAME energy_test SRC energy_test.cpp DEPENDS EspressoCore)
 unit_test(NAME bonded_interactions_map_test SRC
           bonded_interactions_map_test.cpp DEPENDS EspressoCore)
+unit_test(NAME bond_breakage_test SRC bond_breakage_test.cpp DEPENDS
+          EspressoCore)

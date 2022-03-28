@@ -17,6 +17,7 @@
 
 import unittest as ut
 import unittest_decorators as utx
+import unittest_generator as utg
 import pathlib
 
 import sys
@@ -34,7 +35,50 @@ except ImportError:
 import espressomd
 import espressomd.electrokinetics
 import espressomd.shapes
-import ek_common
+
+config = utg.TestGenerator()
+modes = config.get_modes()
+
+
+##########################################################################
+# Utility functions
+##########################################################################
+
+def solve(xi, d, bjerrum_length, sigma, valency, el_char=1.0):
+    # root finding function
+    return xi * math.tan(xi * d / 2.0) + 2.0 * math.pi * \
+        bjerrum_length * sigma / (valency * el_char)
+
+
+def density(x, xi, bjerrum_length):
+    return (xi * xi) / (2.0 * math.pi * bjerrum_length *
+                        math.cos(xi * x) * math.cos(xi * x))
+
+
+def velocity(x, xi, d, bjerrum_length, force, visc_kinematic, density_water):
+    return force * math.log(math.cos(xi * x) / math.cos(xi * d / 2.0)) / \
+        (2.0 * math.pi * bjerrum_length * visc_kinematic * density_water)
+
+
+def pressure_tensor_offdiagonal(x, xi, bjerrum_length, force):
+    # calculate the nonzero component of the pressure tensor
+    return force * xi * math.tan(xi * x) / (2.0 * math.pi * bjerrum_length)
+
+
+def hydrostatic_pressure(ek, tensor_entry, box_x, box_y, box_z, agrid):
+    """
+    Calculate the hydrostatic pressure.
+
+    Technically, the LB simulates a compressible fluid, whose pressure
+    tensor contains an additional term on the diagonal, proportional to
+    the divergence of the velocity. We neglect this contribution, which
+    creates a small error in the direction normal to the wall, which
+    should decay with the simulation time.
+    """
+    offset = ek[int(box_x / (2 * agrid)), int(box_y / (2 * agrid)),
+                int(box_z / (2 * agrid))].pressure_tensor[tensor_entry]
+    return 0.0 + offset
+
 
 ##########################################################################
 #                          Set up the System                             #
@@ -63,7 +107,14 @@ params_base = dict([
 params_base['density_counterions'] = -2.0 * \
     params_base['sigma'] / params_base['width']
 
-axis = "@TEST_SUFFIX@"
+if "AXIS.X" in modes:
+    axis = "x"
+elif "AXIS.Y" in modes:
+    axis = "y"
+else:
+    assert "AXIS.Z" in modes
+    axis = "z"
+
 params = {
     "x": dict([
         ('box_x', params_base['thickness']),
@@ -117,19 +168,19 @@ def bisection():
     # the bisection scheme
     tol = 1.0e-08
     while size > tol:
-        val0 = ek_common.solve(
+        val0 = solve(
             pnt0,
             params_base['width'],
             params_base['bjerrum_length'],
             params_base['sigma'],
             params_base['valency'])
-        val1 = ek_common.solve(
+        val1 = solve(
             pnt1,
             params_base['width'],
             params_base['bjerrum_length'],
             params_base['sigma'],
             params_base['valency'])
-        valm = ek_common.solve(
+        valm = solve(
             pntm,
             params_base['width'],
             params_base['bjerrum_length'],
@@ -254,7 +305,7 @@ class ek_eof_one_species(ut.TestCase):
                                       (2 * params_base['agrid'])), i])
                 index = np.roll(index, params['n_roll_index'])
                 measured_density = counterions[index].density
-                calculated_density = ek_common.density(
+                calculated_density = density(
                     position, self.xi, params_base['bjerrum_length'])
                 density_difference = abs(measured_density - calculated_density)
                 total_density_difference += density_difference
@@ -262,7 +313,7 @@ class ek_eof_one_species(ut.TestCase):
                 # velocity
                 measured_velocity = ek[index].velocity[int(
                     np.nonzero(params['ext_force_density'])[0])]
-                calculated_velocity = ek_common.velocity(
+                calculated_velocity = velocity(
                     position,
                     self.xi,
                     params_base['width'],
@@ -277,7 +328,7 @@ class ek_eof_one_species(ut.TestCase):
 
                 # diagonal pressure tensor
                 measured_pressure_xx = ek[index].pressure_tensor[(0, 0)]
-                calculated_pressure_xx = ek_common.hydrostatic_pressure(
+                calculated_pressure_xx = hydrostatic_pressure(
                     ek,
                     (0, 0),
                     system.box_l[params['periodic_dirs'][0]],
@@ -285,7 +336,7 @@ class ek_eof_one_species(ut.TestCase):
                     params['box_z'],
                     params_base['agrid'])
                 measured_pressure_yy = ek[index].pressure_tensor[(1, 1)]
-                calculated_pressure_yy = ek_common.hydrostatic_pressure(
+                calculated_pressure_yy = hydrostatic_pressure(
                     ek,
                     (1, 1),
                     system.box_l[params['periodic_dirs'][0]],
@@ -293,7 +344,7 @@ class ek_eof_one_species(ut.TestCase):
                     params['box_z'],
                     params_base['agrid'])
                 measured_pressure_zz = ek[index].pressure_tensor[(2, 2)]
-                calculated_pressure_zz = ek_common.hydrostatic_pressure(
+                calculated_pressure_zz = hydrostatic_pressure(
                     ek,
                     (2, 2),
                     system.box_l[params['periodic_dirs'][0]],
@@ -315,7 +366,7 @@ class ek_eof_one_species(ut.TestCase):
                 total_pressure_difference_zz = total_pressure_difference_zz + \
                     pressure_difference_zz
 
-                calculated_pressure_offdiagonal = ek_common.pressure_tensor_offdiagonal(
+                calculated_pressure_offdiagonal = pressure_tensor_offdiagonal(
                     position, self.xi, params_base['bjerrum_length'], params_base['force'])
                 # xy component pressure tensor
                 measured_pressure_xy = ek[index].pressure_tensor[(0, 1)]
@@ -459,4 +510,5 @@ class ek_eof_one_species(ut.TestCase):
 
 
 if __name__ == "__main__":
+    config.bind_test_class(ek_eof_one_species)
     ut.main()

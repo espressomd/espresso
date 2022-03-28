@@ -54,7 +54,7 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
     This class provides the base class for Reaction Algorithms like
     the Reaction Ensemble algorithm and the constant pH method.
     Initialize the reaction algorithm by setting the
-    standard pressure, temperature, and the exclusion radius.
+    standard pressure, temperature, and the exclusion range.
 
     Note: When creating particles the velocities of the new particles are set
     according the Maxwell-Boltzmann distribution. In this step the mass of the
@@ -65,16 +65,13 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
     ----------
     kT : :obj:`float`
         Thermal energy of the system in simulation units
-    exclusion_radius : :obj:`float`
-        Minimal distance from any particle, within which new particle will not
-        be inserted. This is useful to avoid integrator failures if particles
-        are too close and there is a diverging repulsive interaction, or to
-        prevent two oppositely charged particles from being placed on top of
-        each other. The Boltzmann factor :math:`\\exp(-\\beta E)` gives these
-        configurations a small contribution to the partition function,
-        therefore they can be neglected.
+    exclusion_range : :obj:`float`
+        Minimal distance from any particle, within which new particles will not
+        be inserted. 
     seed : :obj:`int`
         Initial counter value (or seed) of the Mersenne Twister RNG.
+    exclusion_radius_per_type : :obj:`dict`, optional
+         Mapping of particle types to exclusion radii.
 
     Methods
     -------
@@ -133,7 +130,7 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
         >>> elc = espressomd.electrostatics.ELC(p3m_actor=p3m, maxPWerror=1.0, gap_size=elc_gap)
         >>> system.actors.add(elc)
         >>> # add constant pH method
-        >>> RE = espressomd.reaction_ensemble.ConstantpHEnsemble(kT=1, exclusion_radius=1, seed=77)
+        >>> RE = espressomd.reaction_ensemble.ConstantpHEnsemble(kT=1, exclusion_range=1, seed=77)
         >>> RE.constant_pH = 2
         >>> RE.add_reaction(gamma=0.0088, reactant_types=[types["HA"]],
         ...                 product_types=[types["A-"], types["H+"]],
@@ -281,15 +278,18 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
                         )
 
     def __init__(self, **kwargs):
+        if 'exclusion_radius' in kwargs:
+            raise KeyError(
+                'the keyword `exclusion_radius` is obsolete. Currently, the equivalent keyword is `exclusion_range`')
         super().__init__(**kwargs)
         if not 'sip' in kwargs:
             utils.check_valid_keys(self.valid_keys(), kwargs.keys())
 
     def valid_keys(self):
-        return {"kT", "exclusion_radius", "seed"}
+        return {"kT", "exclusion_range", "seed", "exclusion_radius_per_type"}
 
     def required_keys(self):
-        return {"kT", "exclusion_radius", "seed"}
+        return {"kT", "exclusion_range", "seed"}
 
     def add_reaction(self, **kwargs):
         """
@@ -376,7 +376,7 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
             reactions_list.append(reaction)
 
         return {"reactions": reactions_list, "kT": self.kT, 
-                "exclusion_radius": self.exclusion_radius}
+                "exclusion_range": self.exclusion_range}
 
 
 @script_interface_register
@@ -408,10 +408,11 @@ class ConstantpHEnsemble(ReactionAlgorithm):
     _so_creation_policy = "LOCAL"
 
     def valid_keys(self):
-        return {"kT", "exclusion_radius", "seed", "constant_pH"}
+        return {"kT", "exclusion_range", "seed",
+                "constant_pH", "exclusion_radius_per_type"}
 
     def required_keys(self):
-        return {"kT", "exclusion_radius", "seed", "constant_pH"}
+        return {"kT", "exclusion_range", "seed", "constant_pH"}
 
     def add_reaction(self, *args, **kwargs):
         warn_msg = (

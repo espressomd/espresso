@@ -17,7 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#ifndef CORE_BOND_BREAKAGE_BOND_BREAKAGE_HPP
+#define CORE_BOND_BREAKAGE_BOND_BREAKAGE_HPP
 
 #include <memory>
 #include <unordered_map>
@@ -35,7 +36,9 @@ struct BreakageSpec {
   ActionType action_type;
 };
 
-extern std::unordered_map<int, std::shared_ptr<BreakageSpec>> breakage_specs;
+void insert_spec(int key, std::shared_ptr<BreakageSpec> obj);
+
+void erase_spec(int key);
 
 /** @brief Check if the bond between the particles should break, if yes, queue
  *  it.
@@ -48,3 +51,4 @@ void clear_queue();
 void process_queue();
 
 } // namespace BondBreakage
+#endif

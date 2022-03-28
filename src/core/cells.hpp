@@ -143,8 +143,9 @@ public:
   int node;
 };
 
-/** @brief Returns pairs of particle ids, positions and distance as seen by the
- *  non-bonded loop.
+/**
+ * @brief Returns pairs of particle ids, positions and distance as seen by the
+ * non-bonded loop.
  */
 std::vector<PairInfo> mpi_non_bonded_loop_trace();
 

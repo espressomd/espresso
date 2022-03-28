@@ -29,7 +29,6 @@
 
 #include <boost/serialization/vector.hpp>
 
-#include <bitset>
 #include <cstdint>
 #include <stdexcept>
 #include <vector>
@@ -43,26 +42,6 @@ inline bool get_nth_bit(uint8_t const bitfield, int const bit_idx) {
   return bitfield & (1u << bit_idx);
 }
 } // namespace detail
-
-enum : uint8_t {
-  ROTATION_FIXED = 0u,
-  ROTATION_X = 1u,
-  ROTATION_Y = 2u,
-  ROTATION_Z = 4u
-};
-
-#ifdef EXTERNAL_FORCES
-/** \ref ParticleProperties::ext_flag "ext_flag" value for fixed coordinate
- *  @c coord.
- */
-#define COORD_FIXED(coord) (2u << (coord))
-/** \ref ParticleProperties::ext_flag "ext_flag" mask to check whether any of
- *  the coordinates is fixed.
- */
-#define COORDS_FIX_MASK (COORD_FIXED(0) | COORD_FIXED(1) | COORD_FIXED(2))
-#else // EXTERNAL_FORCES
-#define COORD_FIXED(coord) (0)
-#endif // EXTERNAL_FORCES
 
 /** Properties of a self-propelled particle. */
 struct ParticleParametersSwimming {
@@ -117,11 +96,18 @@ struct ParticleProperties {
   static constexpr Utils::Vector3d rinertia = {1., 1., 1.};
 #endif
 
-  /** bitfield for the particle axes of rotation */
 #ifdef ROTATION
-  uint8_t rotation = ROTATION_FIXED;
+  /** Bitfield for the particle axes of rotation.
+   *  Values:
+   *  - 1: allow rotation around the x axis
+   *  - 2: allow rotation around the y axis
+   *  - 4: allow rotation around the z axis
+   *  By default, the particle cannot rotate.
+   */
+  uint8_t rotation = static_cast<uint8_t>(0b000u);
 #else
-  static constexpr uint8_t rotation = ROTATION_FIXED;
+  /** Bitfield for the particle axes of rotation. Particle cannot rotate. */
+  static constexpr uint8_t rotation = static_cast<uint8_t>(0b000u);
 #endif
 
   /** charge. */
@@ -190,14 +176,13 @@ struct ParticleProperties {
 #endif // THERMOSTAT_PER_PARTICLE
 
 #ifdef EXTERNAL_FORCES
-  /** Flag for fixed particle coordinates.
+  /** Bitfield for fixed particle coordinates.
    *  Values:
-   *  - 0: no fixed coordinates
-   *  - 2: fix translation along the x axis
-   *  - 4: fix translation along the y axis
-   *  - 8: fix translation along the z axis
+   *  - 1: fix translation along the x axis
+   *  - 2: fix translation along the y axis
+   *  - 4: fix translation along the z axis
    */
-  uint8_t ext_flag = 0;
+  uint8_t ext_flag = static_cast<uint8_t>(0b000u);
   /** External force. */
   Utils::Vector3d ext_force = {0, 0, 0};
 #ifdef ROTATION
@@ -205,7 +190,8 @@ struct ParticleProperties {
   Utils::Vector3d ext_torque = {0, 0, 0};
 #endif
 #else  // EXTERNAL_FORCES
-  static constexpr const uint8_t ext_flag = 0; // no fixed coordinates
+  /** Bitfield for fixed particle coordinates. Coordinates cannot be fixed. */
+  static constexpr const uint8_t ext_flag = static_cast<uint8_t>(0b000u);
 #endif // EXTERNAL_FORCES
 
 #ifdef ENGINE
@@ -481,9 +467,7 @@ public:
   constexpr auto &mass() const { return p.mass; }
 #endif
 #ifdef ROTATION
-  bool can_rotate() const {
-    return can_rotate_around(0) or can_rotate_around(1) or can_rotate_around(2);
-  }
+  bool can_rotate() const { return static_cast<bool>(p.rotation); }
   bool can_rotate_around(int const axis) const {
     detail::check_axis_idx_valid(axis);
     return detail::get_nth_bit(p.rotation, axis);
@@ -496,10 +480,9 @@ public:
       p.rotation &= static_cast<uint8_t>(~(1u << axis));
     }
   }
-  void set_can_rotate_all_axes() {
-    for (int axis = 0; axis <= 2; axis++) {
-      set_can_rotate_around(axis, true);
-    }
+  void set_can_rotate_all_axes() { p.rotation = static_cast<uint8_t>(0b111u); }
+  void set_cannot_rotate_all_axes() {
+    p.rotation = static_cast<uint8_t>(0b000u);
   }
   auto const &quat() const { return r.quat; }
   auto &quat() { return r.quat; }
@@ -553,25 +536,17 @@ public:
 #endif // ROTATION
 #endif // THERMOSTAT_PER_PARTICLE
 #ifdef EXTERNAL_FORCES
-  bool has_fixed_coordinates() const {
-    return detail::get_nth_bit(p.ext_flag, 0);
-  }
+  bool has_fixed_coordinates() const { return static_cast<bool>(p.ext_flag); }
   bool is_fixed_along(int const axis) const {
     detail::check_axis_idx_valid(axis);
-    return detail::get_nth_bit(p.ext_flag, axis + 1);
+    return detail::get_nth_bit(p.ext_flag, axis);
   }
   void set_fixed_along(int const axis, bool const fixed_flag) {
     // set new flag
     if (fixed_flag) {
-      p.ext_flag |= static_cast<uint8_t>(1u << (axis + 1));
+      p.ext_flag |= static_cast<uint8_t>(1u << axis);
     } else {
-      p.ext_flag &= static_cast<uint8_t>(~(1u << (axis + 1)));
-    }
-    // check if any flag is set and store that in the 0th bit
-    if (p.ext_flag >> 1) {
-      p.ext_flag |= static_cast<uint8_t>(1u);
-    } else {
-      p.ext_flag &= static_cast<uint8_t>(~1u);
+      p.ext_flag &= static_cast<uint8_t>(~(1u << axis));
     }
   }
   auto const &ext_force() const { return p.ext_force; }
@@ -579,7 +554,7 @@ public:
 
 #else  // EXTERNAL_FORCES
   constexpr bool has_fixed_coordinates() const { return false; }
-  constexpr bool is_fixed_along(int const axis) const { return false; }
+  constexpr bool is_fixed_along(int const) const { return false; }
 #endif // EXTERNAL_FORCES
 #ifdef ENGINE
   auto const &swimming() const { return p.swim; }

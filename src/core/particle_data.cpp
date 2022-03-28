@@ -34,7 +34,6 @@
 #include "partCfg_global.hpp"
 #include "rotation.hpp"
 
-#include <string>
 #include <utils/Cache.hpp>
 #include <utils/constants.hpp>
 #include <utils/keys.hpp>
@@ -184,6 +183,7 @@ using UpdateForceMessage = boost::variant
       , UpdateForce<Utils::Vector3d, &ParticleForce::torque>
 #endif
       >;
+// clang-format on
 
 /**
  * @brief Delete specific bond.
@@ -193,39 +193,38 @@ struct RemoveBond {
 
   void operator()(Particle &p) const {
     assert(not bond.empty());
-    auto const view = BondView(bond.front(), {bond.data() + 1, bond.size() - 1});
+    auto const view =
+        BondView(bond.front(), {bond.data() + 1, bond.size() - 1});
     auto it = boost::find(p.bonds(), view);
 
     if (it != p.bonds().end()) {
-     p.bonds().erase(it);
+      p.bonds().erase(it);
     }
   }
 
-  template <class Archive>
-  void serialize(Archive &ar, long int) { ar & bond; }
+  template <class Archive> void serialize(Archive &ar, long int) { ar &bond; }
 };
 
 /**
  * @brief Delete pair bonds to a specific partner
  */
 struct RemovePairBondsTo {
-   int other_pid;
+  int other_pid;
 
-    void operator()(Particle &p) const {
-      using Bond = std::vector<int>;
-      std::vector<Bond> to_delete;
-      for (auto b: p.bonds()) {
-         if (b.partner_ids().size() == 1 and b.partner_ids()[0] == other_pid)
-           to_delete.push_back(Bond{b.bond_id(),other_pid});
-      }
-      for (auto b: to_delete) {
-        RemoveBond{b}(p);
-      }
+  void operator()(Particle &p) const {
+    using Bond = std::vector<int>;
+    std::vector<Bond> to_delete;
+    for (auto b : p.bonds()) {
+      if (b.partner_ids().size() == 1 and b.partner_ids()[0] == other_pid)
+        to_delete.push_back(Bond{b.bond_id(), other_pid});
     }
-    template<class Archive>
-            void serialize(Archive &ar, long int) {
-        ar & other_pid;
+    for (auto b : to_delete) {
+      RemoveBond{b}(p);
     }
+  }
+  template <class Archive> void serialize(Archive &ar, long int) {
+    ar &other_pid;
+  }
 };
 
 /**
@@ -234,8 +233,7 @@ struct RemovePairBondsTo {
 struct RemoveBonds {
   void operator()(Particle &p) const { p.bonds().clear(); }
 
-  template<class Archive>
-  void serialize(Archive &, long int) {}
+  template <class Archive> void serialize(Archive &, long int) {}
 };
 
 struct AddBond {
@@ -247,34 +245,31 @@ struct AddBond {
     p.bonds().insert(view);
   }
 
-  template<class Archive>
-  void serialize(Archive &ar, long int) {
-    ar & bond;
-  }
+  template <class Archive> void serialize(Archive &ar, long int) { ar &bond; }
 };
 
+// clang-format off
 using UpdateBondMessage = boost::variant
         < RemoveBond
         , RemoveBonds
         , AddBond
         >;
+// clang-format on
 
 #ifdef ROTATION
 struct UpdateOrientation {
   Utils::Vector3d axis;
   double angle;
 
-  void operator()(Particle &p) const {
-    local_rotate_particle(p, axis, angle);
-  }
+  void operator()(Particle &p) const { local_rotate_particle(p, axis, angle); }
 
-  template<class Archive>
-  void serialize(Archive &ar, long int) {
-      ar & axis & angle;
+  template <class Archive> void serialize(Archive &ar, long int) {
+    ar &axis &angle;
   }
 };
 #endif
 
+// clang-format off
 /**
  * @brief Top-level message.
  *
@@ -492,8 +487,9 @@ void build_particle_node() { mpi_who_has(); }
  *  @brief Get the mpi rank which owns the particle with id.
  */
 int get_particle_node(int id) {
-  if (id < 0)
-    throw std::runtime_error("Invalid particle id!");
+  if (id < 0) {
+    throw std::domain_error("Invalid particle id: " + std::to_string(id));
+  }
 
   if (particle_node.empty())
     build_particle_node();
@@ -729,6 +725,9 @@ void mpi_place_particle(int node, int p_id, const Utils::Vector3d &pos) {
 }
 
 int place_particle(int p_id, Utils::Vector3d const &pos) {
+  if (p_id < 0) {
+    throw std::domain_error("Invalid particle id: " + std::to_string(p_id));
+  }
   if (particle_exists(p_id)) {
     mpi_place_particle(get_particle_node(p_id), p_id, pos);
 
@@ -780,9 +779,16 @@ constexpr Utils::Vector3d ParticleProperties::rinertia;
 #endif
 
 #ifdef ROTATION
-void set_particle_rotation(int part, int rot) {
-  mpi_update_particle_property<uint8_t, &ParticleProperties::rotation>(part,
-                                                                       rot);
+void set_particle_rotation(int part, Utils::Vector3i const &flag) {
+  auto rot_flag = static_cast<uint8_t>(0u);
+  if (flag[0])
+    rot_flag |= static_cast<uint8_t>(1u);
+  if (flag[1])
+    rot_flag |= static_cast<uint8_t>(2u);
+  if (flag[2])
+    rot_flag |= static_cast<uint8_t>(4u);
+  mpi_update_particle_property<uint8_t, &ParticleProperties::rotation>(
+      part, rot_flag);
 }
 
 void rotate_particle(int part, const Utils::Vector3d &axis, double angle) {
@@ -949,9 +955,16 @@ void set_particle_ext_force(int part, const Utils::Vector3d &force) {
       part, force);
 }
 
-void set_particle_fix(int part, uint8_t flag) {
-  mpi_update_particle_property<uint8_t, &ParticleProperties::ext_flag>(part,
-                                                                       flag);
+void set_particle_fix(int part, Utils::Vector3i const &flag) {
+  auto ext_flag = static_cast<uint8_t>(0u);
+  if (flag[0])
+    ext_flag |= static_cast<uint8_t>(1u);
+  if (flag[1])
+    ext_flag |= static_cast<uint8_t>(2u);
+  if (flag[2])
+    ext_flag |= static_cast<uint8_t>(4u);
+  mpi_update_particle_property<uint8_t, &ParticleProperties::ext_flag>(
+      part, ext_flag);
 }
 #endif // EXTERNAL_FORCES
 
@@ -1183,7 +1196,7 @@ void init_type_map(int type) {
   auto &map_for_type = particle_type_map[type];
   map_for_type.clear();
   for (auto const &p : partCfg()) {
-    if (p.p.type == type)
+    if (p.type() == type)
       map_for_type.insert(p.id());
   }
 }

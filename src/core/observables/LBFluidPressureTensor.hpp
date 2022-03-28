@@ -22,6 +22,8 @@
 #include "Observable.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 
+#include <utils/math/sqr.hpp>
+
 #include <cstddef>
 #include <vector>
 
@@ -30,9 +32,8 @@ class LBFluidPressureTensor : public Observable {
 public:
   std::vector<std::size_t> shape() const override { return {3, 3}; }
   std::vector<double> operator()() const override {
-
     auto const unit_conversion =
-        1. / (lb_lbfluid_get_agrid() * pow(lb_lbfluid_get_tau(), 2));
+        1. / (lb_lbfluid_get_agrid() * Utils::sqr(lb_lbfluid_get_tau()));
     auto const lower_triangle =
         lb_lbfluid_get_pressure_tensor() * unit_conversion;
     return {lower_triangle[0], lower_triangle[1], lower_triangle[3],

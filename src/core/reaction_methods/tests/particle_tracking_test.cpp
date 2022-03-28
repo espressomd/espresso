@@ -42,7 +42,7 @@ BOOST_FIXTURE_TEST_CASE(particle_type_map_test, ParticleFactory) {
   int const type = 10;
   int const pid = 1;
 
-  // exception for untracked particle ids
+  // exception for untracked particle types
   BOOST_CHECK_THROW(number_of_particles_with_type(type), std::runtime_error);
 
   // exception for negative particle ids
@@ -56,6 +56,9 @@ BOOST_FIXTURE_TEST_CASE(particle_type_map_test, ParticleFactory) {
 
   // exception for random index that exceeds the number of particles
   BOOST_CHECK_THROW(get_random_p_id(type, 10), std::runtime_error);
+
+  // exception for untracked particle types
+  BOOST_CHECK_THROW(get_random_p_id(type + 1, 0), std::runtime_error);
 
   // check particle selection
   BOOST_CHECK_EQUAL(get_random_p_id(type, 0), pid);

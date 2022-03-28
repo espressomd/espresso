@@ -35,7 +35,7 @@
 
 #include "ParticleRange.hpp"
 #include "accumulators.hpp"
-#include "bond_breakage.hpp"
+#include "bond_breakage/bond_breakage.hpp"
 #include "bonded_interactions/rigid_bond.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
@@ -47,7 +47,7 @@
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "interactions.hpp"
-#include "lees_edwards.hpp"
+#include "lees_edwards/lees_edwards.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "rattle.hpp"
@@ -61,6 +61,7 @@
 #include <boost/range/algorithm/min_element.hpp>
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <csignal>
 #include <functional>
@@ -180,7 +181,7 @@ void integrator_sanity_checks() {
   }
 }
 
-static void resort_particles_if_needed(ParticleRange &particles) {
+static void resort_particles_if_needed(ParticleRange const &particles) {
   auto const offset = LeesEdwards::verlet_list_offset(
       box_geo, cell_structure.get_le_pos_offset_at_last_resort());
   if (cell_structure.check_resort_required(particles, skin, offset)) {
@@ -191,7 +192,7 @@ static void resort_particles_if_needed(ParticleRange &particles) {
 /** @brief Calls the hook for propagation kernels before the force calculation
  *  @return whether or not to stop the integration loop early.
  */
-bool integrator_step_1(ParticleRange &particles) {
+static bool integrator_step_1(ParticleRange const &particles) {
   bool early_exit = false;
   switch (integ_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
@@ -221,7 +222,7 @@ bool integrator_step_1(ParticleRange &particles) {
 }
 
 /** Calls the hook of the propagation kernels after force calculation */
-void integrator_step_2(ParticleRange &particles, double kT) {
+static void integrator_step_2(ParticleRange const &particles, double kT) {
   switch (integ_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
     // Nothing
@@ -252,18 +253,14 @@ void integrator_step_2(ParticleRange &particles, double kT) {
 int integrate(int n_steps, int reuse_forces) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
-  /* Prepare the integrator */
+  // Prepare particle structure and run sanity checks of all active algorithms
   on_integration_start(time_step);
 
-  /* if any method vetoes (e.g. P3M not initialized), immediately bail out */
+  // If any method vetoes (e.g. P3M not initialized), immediately bail out
   if (check_runtime_errors(comm_cart))
     return 0;
 
-  /* Verlet list criterion */
-
-  /* Integration Step: Preparation for first integration step:
-   * Calculate forces F(t) as function of positions x(t) (and velocities v(t))
-   */
+  // Additional preparations for the first integration step
   if (reuse_forces == -1 || (recalc_forces && reuse_forces != 1)) {
     ESPRESSO_PROFILER_MARK_BEGIN("Initial Force Calculation");
     lb_lbcoupling_deactivate();
@@ -291,13 +288,13 @@ int integrate(int n_steps, int reuse_forces) {
   if (check_runtime_errors(comm_cart))
     return 0;
 
-  /* incremented if a Verlet update is done, aka particle resorting. */
+  // Keep track of the number of Verlet updates (i.e. particle resorts)
   int n_verlet_updates = 0;
 
 #ifdef VALGRIND_INSTRUMENTATION
   CALLGRIND_START_INSTRUMENTATION;
 #endif
-  /* Integration loop */
+  // Integration loop
   ESPRESSO_PROFILER_CXX_MARK_LOOP_BEGIN(integration_loop, "Integration loop");
   int integrated_steps = 0;
   for (int step = 0; step < n_steps; step++) {
@@ -324,12 +321,11 @@ int integrate(int n_steps, int reuse_forces) {
       resort_particles_if_needed(particles);
     }
 
-    /* Propagate philox rng counters */
+    // Propagate philox RNG counters
     philox_counter_increment();
 
 #ifdef BOND_CONSTRAINT
-    /* Correct those particle positions that participate in a rigid/constrained
-     * bond */
+    // Correct particle positions that participate in a rigid/constrained bond
     if (n_rigidbonds) {
       correct_position_shake(cell_structure);
     }
@@ -408,7 +404,7 @@ int integrate(int n_steps, int reuse_forces) {
   virtual_sites()->update();
 #endif
 
-  /* verlet list statistics */
+  // Verlet list statistics
   if (n_verlet_updates > 0)
     verlet_reuse = n_steps / (double)n_verlet_updates;
   else
@@ -424,6 +420,9 @@ int integrate(int n_steps, int reuse_forces) {
 
 int python_integrate(int n_steps, bool recalc_forces_par,
                      bool reuse_forces_par) {
+
+  assert(n_steps >= 0);
+
   // Override the signal handler so that the integrator obeys Ctrl+C
   SignalHandler sa(SIGINT, [](int) { ctrl_C = 1; });
 
@@ -434,12 +433,6 @@ int python_integrate(int n_steps, bool recalc_forces_par,
       runtimeErrorMsg() << "cannot reuse old forces and recalculate forces";
     }
     reuse_forces = -1;
-  }
-
-  /* go on with integrate <n_steps> */
-  if (n_steps < 0) {
-    runtimeErrorMsg() << "illegal number of steps (must be >0)";
-    return ES_ERROR;
   }
 
   /* if skin wasn't set, do an educated guess now */
@@ -557,7 +550,7 @@ REGISTER_CALLBACK(mpi_set_time_step_local)
 
 void mpi_set_time_step(double time_s) {
   if (time_s <= 0.)
-    throw std::invalid_argument("time_step must be > 0.");
+    throw std::domain_error("time_step must be > 0.");
   if (lb_lbfluid_get_lattice_switch() != ActiveLB::NONE)
     check_tau_time_step_consistency(lb_lbfluid_get_tau(), time_s);
   mpi_call_all(mpi_set_time_step_local, time_s);

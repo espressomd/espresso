@@ -46,6 +46,7 @@
 
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/collectives/broadcast.hpp>
+#include <boost/mpi/collectives/reduce.hpp>
 #include <boost/mpi/communicator.hpp>
 #include <boost/optional.hpp>
 #include <boost/range/algorithm/remove_if.hpp>

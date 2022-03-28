@@ -154,9 +154,9 @@ void set_particle_rotational_inertia(int part, Utils::Vector3d const &rinertia);
  *  degrees of freedom are integrated or not. If set to zero, the content of
  *  the torque and omega variables are meaningless
  *  @param part the particle.
- *  @param rot the degrees of freedom flag.
+ *  @param flag the degrees of freedom flag.
  */
-void set_particle_rotation(int part, int rot);
+void set_particle_rotation(int part, Utils::Vector3i const &flag);
 
 /** @brief rotate a particle around an axis
  *
@@ -288,10 +288,10 @@ void set_particle_ext_force(int part, const Utils::Vector3d &force);
 /** Call only on the head node: set coordinate axes for which the particles
  *  motion is fixed.
  *  @param part  the particle.
- *  @param flag new value for flagged coordinate axes to be fixed
+ *  @param flag  coordinates to be fixed.
  */
-void set_particle_fix(int part, uint8_t flag);
-#endif
+void set_particle_fix(int part, Utils::Vector3i const &flag);
+#endif // EXTERNAL_FORCES
 
 /** Call only on the head node: remove bond from particle.
  *  @param part     identity of principal atom of the bond.
@@ -373,93 +373,53 @@ int number_of_particles_with_type(int type);
 // This is needed, because cython does not support conditional compilation
 // within a ctypedef definition
 
-#ifdef LB_ELECTROHYDRODYNAMICS
-inline Utils::Vector3d get_particle_mu_E(Particle const *p) {
-  return p->p.mu_E;
-}
-#endif
-
-#ifdef ROTATION
-inline Utils::Vector3d get_particle_omega_body(Particle const *p) {
-  return p->m.omega;
-}
-
-inline Utils::Vector3d get_particle_torque_body(Particle const *p) {
-  return p->f.torque;
-}
-
-inline Utils::Quaternion<double> get_particle_quat(Particle const *p) {
-  return p->r.quat;
-}
-#endif
-
-inline double get_particle_q(Particle const *p) { return p->p.q; }
-
-#ifdef VIRTUAL_SITES
-inline bool get_particle_virtual(Particle const *p) { return p->p.is_virtual; }
-#endif
-
 #ifdef VIRTUAL_SITES_RELATIVE
 inline Utils::Quaternion<double> get_particle_vs_quat(Particle const *p) {
-  return p->p.vs_relative.quat;
+  return p->vs_relative().quat;
 }
 inline Utils::Quaternion<double> get_particle_vs_relative(Particle const *p,
                                                           int &vs_relative_to,
                                                           double &vs_distance) {
-  vs_relative_to = p->p.vs_relative.to_particle_id;
-  vs_distance = p->p.vs_relative.distance;
-  return p->p.vs_relative.rel_orientation;
+  vs_relative_to = p->vs_relative().to_particle_id;
+  vs_distance = p->vs_relative().distance;
+  return p->vs_relative().rel_orientation;
 }
-#endif
-
-#ifdef DIPOLES
-inline double get_particle_dipm(Particle const *p) { return p->p.dipm; }
 #endif
 
 #ifdef EXTERNAL_FORCES
-inline Utils::Vector3d get_particle_ext_force(Particle const *p) {
-  return p->p.ext_force;
+inline Utils::Vector3i get_particle_fix(Particle const *p) {
+  return Utils::Vector3i{
+      {p->is_fixed_along(0), p->is_fixed_along(1), p->is_fixed_along(2)}};
 }
-#ifdef ROTATION
-inline Utils::Vector3d get_particle_ext_torque(Particle const *p) {
-  return p->p.ext_torque;
-}
-#endif
-inline uint8_t get_particle_fix(Particle const *p) { return p->p.ext_flag; }
-#endif
+#endif // EXTERNAL_FORCES
 
 #ifdef THERMOSTAT_PER_PARTICLE
 #ifdef PARTICLE_ANISOTROPY
 inline Utils::Vector3d get_particle_gamma(Particle const *p) {
-  return p->p.gamma;
+  return p->gamma();
 }
 #else
-inline double get_particle_gamma(Particle const *p) { return p->p.gamma; }
+inline double get_particle_gamma(Particle const *p) { return p->gamma(); }
 #endif // PARTICLE_ANISOTROPY
 #ifdef ROTATION
 #ifdef PARTICLE_ANISOTROPY
 inline Utils::Vector3d get_particle_gamma_rot(Particle const *p) {
-  return p->p.gamma_rot;
+  return p->gamma_rot();
 }
 #else
 inline double get_particle_gamma_rot(Particle const *p) {
-  return p->p.gamma_rot;
+  return p->gamma_rot();
 }
 #endif // PARTICLE_ANISOTROPY
 #endif // ROTATION
 #endif // THERMOSTAT_PER_PARTICLE
 
-#ifdef ENGINE
-inline ParticleParametersSwimming get_particle_swimming(Particle const *p) {
-  return p->p.swim;
+#ifdef ROTATION
+inline Utils::Vector3i get_particle_rotation(Particle const *p) {
+  return Utils::Vector3i{{p->can_rotate_around(0), p->can_rotate_around(1),
+                          p->can_rotate_around(2)}};
 }
-#endif
-
-#ifdef ROTATIONAL_INERTIA
-inline Utils::Vector3d get_particle_rotational_inertia(Particle const *p) {
-  return p->p.rinertia;
-}
-#endif
+#endif // ROTATION
 
 /**
  * @brief Check if particle exists.

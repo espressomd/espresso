@@ -28,7 +28,7 @@
 
 #include "forces.hpp"
 
-#include "bond_breakage.hpp"
+#include "bond_breakage/bond_breakage.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "bonded_interactions/thermalized_bond_kernel.hpp"
 #include "immersed_boundary/ibm_tribend.hpp"

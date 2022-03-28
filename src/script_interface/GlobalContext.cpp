@@ -49,7 +49,7 @@ void GlobalContext::make_handle(ObjectId id, const std::string &name,
     ObjectRef so = m_node_local_context->make_shared(
         name, unpack(parameters, m_local_objects));
 
-    m_local_objects.emplace(std::make_pair(id, std::move(so)));
+    m_local_objects[id] = std::move(so);
   } catch (Exception const &) {
   }
 }

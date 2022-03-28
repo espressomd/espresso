@@ -28,6 +28,7 @@
 #include "core/reaction_methods/ReactionAlgorithm.hpp"
 
 #include <memory>
+#include <unordered_map>
 
 namespace ScriptInterface {
 namespace ReactionMethods {
@@ -51,8 +52,10 @@ public:
   void do_construct(VariantMap const &params) override {
     m_re = std::make_shared<::ReactionMethods::ConstantpHEnsemble>(
         get_value<int>(params, "seed"), get_value<double>(params, "kT"),
-        get_value<double>(params, "exclusion_radius"),
-        get_value<double>(params, "constant_pH"));
+        get_value<double>(params, "exclusion_range"),
+        get_value<double>(params, "constant_pH"),
+        get_value_or<std::unordered_map<int, double>>(
+            params, "exclusion_radius_per_type", {}));
   }
 
 private:

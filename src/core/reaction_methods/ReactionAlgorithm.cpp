@@ -185,7 +185,7 @@ ReactionAlgorithm::make_reaction_attempt(
                               current_reaction.reactant_coefficients[i];
            j++) {
         int p_id = create_particle(current_reaction.product_types[i]);
-        check_exclusion_radius(p_id);
+        check_exclusion_range(p_id);
         p_ids_created_particles.push_back(p_id);
       }
     } else if (current_reaction.reactant_coefficients[i] -
@@ -196,7 +196,7 @@ ReactionAlgorithm::make_reaction_attempt(
            j++) {
         append_particle_property_of_random_particle(
             current_reaction.reactant_types[i], hidden_particles_properties);
-        check_exclusion_radius(hidden_particles_properties.back().p_id);
+        check_exclusion_range(hidden_particles_properties.back().p_id);
         hide_particle(hidden_particles_properties.back().p_id);
       }
     }
@@ -213,14 +213,14 @@ ReactionAlgorithm::make_reaction_attempt(
       for (int j = 0; j < current_reaction.reactant_coefficients[i]; j++) {
         append_particle_property_of_random_particle(
             current_reaction.reactant_types[i], hidden_particles_properties);
-        check_exclusion_radius(hidden_particles_properties.back().p_id);
+        check_exclusion_range(hidden_particles_properties.back().p_id);
         hide_particle(hidden_particles_properties.back().p_id);
       }
     } else {
       // create additional product_types particles
       for (int j = 0; j < current_reaction.product_coefficients[i]; j++) {
         int p_id = create_particle(current_reaction.product_types[i]);
-        check_exclusion_radius(p_id);
+        check_exclusion_range(p_id);
         p_ids_created_particles.push_back(p_id);
       }
     }
@@ -270,7 +270,7 @@ void ReactionAlgorithm::generic_oneway_reaction(
     SingleReaction &current_reaction, double &E_pot_old) {
 
   current_reaction.tried_moves += 1;
-  particle_inside_exclusion_radius_touched = false;
+  particle_inside_exclusion_range_touched = false;
   if (!all_reactant_particles_exist(current_reaction)) {
     // makes sure, no incomplete reaction is performed -> only need to consider
     // rollback of complete reactions
@@ -292,7 +292,7 @@ void ReactionAlgorithm::generic_oneway_reaction(
            hidden_particles_properties) =
       make_reaction_attempt(current_reaction);
 
-  auto const E_pot_new = (particle_inside_exclusion_radius_touched)
+  auto const E_pot_new = (particle_inside_exclusion_range_touched)
                              ? std::numeric_limits<double>::max()
                              : calculate_current_potential_energy_of_system();
 
@@ -375,16 +375,53 @@ void ReactionAlgorithm::hide_particle(int p_id) const {
 }
 
 /**
- * Check if the modified particle is too close to neighboring particles.
+ * Check if the inserted particle is too close to neighboring particles.
  */
-void ReactionAlgorithm::check_exclusion_radius(int p_id) {
-  if (exclusion_radius == 0.) {
-    return;
+void ReactionAlgorithm::check_exclusion_range(int inserted_particle_id) {
+
+  auto const &inserted_particle = get_particle_data(inserted_particle_id);
+
+  /* Check the excluded radius of the inserted particle */
+
+  if (exclusion_radius_per_type.count(inserted_particle.type()) != 0) {
+    if (exclusion_radius_per_type[inserted_particle.type()] == 0) {
+      return;
+    }
   }
-  auto const &p = get_particle_data(p_id);
-  auto const d_min = distto(partCfg(), p.r.p, p_id);
-  if (d_min < exclusion_radius)
-    particle_inside_exclusion_radius_touched = true;
+
+  auto particle_ids = get_particle_ids();
+  /* remove the inserted particle id*/
+  particle_ids.erase(std::remove(particle_ids.begin(), particle_ids.end(),
+                                 inserted_particle_id),
+                     particle_ids.end());
+
+  /* Check  if the inserted particle within the excluded_range of any other
+   * particle*/
+  double excluded_distance;
+  for (const auto &particle_id : particle_ids) {
+    auto const &already_present_particle = get_particle_data(particle_id);
+    if (exclusion_radius_per_type.count(inserted_particle.type()) == 0 ||
+        exclusion_radius_per_type.count(inserted_particle.type()) == 0) {
+      excluded_distance = exclusion_range;
+    } else if (exclusion_radius_per_type[already_present_particle.type()] ==
+               0.) {
+      continue;
+    } else {
+      excluded_distance =
+          exclusion_radius_per_type[inserted_particle.type()] +
+          exclusion_radius_per_type[already_present_particle.type()];
+    }
+
+    auto const d_min =
+        box_geo
+            .get_mi_vector(already_present_particle.r.p, inserted_particle.r.p)
+            .norm();
+
+    if (d_min < excluded_distance) {
+      particle_inside_exclusion_range_touched = true;
+      return;
+    }
+  }
 }
 
 /**
@@ -527,12 +564,12 @@ ReactionAlgorithm::generate_new_particle_positions(int type, int n_particles) {
     drawn_pids.emplace_back(p_id);
     // store original position
     auto const &p = get_particle_data(p_id);
-    old_positions.emplace_back(std::pair<int, Utils::Vector3d>{p_id, p.r.p});
+    old_positions.emplace_back(std::pair<int, Utils::Vector3d>{p_id, p.pos()});
     // write new position
-    auto const prefactor = std::sqrt(kT / p.p.mass);
+    auto const prefactor = std::sqrt(kT / p.mass());
     auto const new_pos = get_random_position_in_box();
     move_particle(p_id, new_pos, prefactor);
-    check_exclusion_radius(p_id);
+    check_exclusion_range(p_id);
   }
 
   return old_positions;
@@ -544,7 +581,7 @@ ReactionAlgorithm::generate_new_particle_positions(int type, int n_particles) {
 bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
     int type, int particle_number_of_type_to_be_changed) {
   m_tried_configurational_MC_moves += 1;
-  particle_inside_exclusion_radius_touched = false;
+  particle_inside_exclusion_range_touched = false;
 
   int particle_number_of_type = number_of_particles_with_type(type);
   if (particle_number_of_type == 0 or
@@ -558,7 +595,7 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
   auto const original_positions = generate_new_particle_positions(
       type, particle_number_of_type_to_be_changed);
 
-  auto const E_pot_new = (particle_inside_exclusion_radius_touched)
+  auto const E_pot_new = (particle_inside_exclusion_range_touched)
                              ? std::numeric_limits<double>::max()
                              : calculate_current_potential_energy_of_system();
 

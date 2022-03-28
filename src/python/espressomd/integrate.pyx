@@ -210,11 +210,12 @@ cdef class Integrator:
 
         """
         check_type_or_throw_except(steps, 1, int, "steps must be an int")
-        assert steps >= 0, "steps has to be positive"
         check_type_or_throw_except(
             recalc_forces, 1, bool, "recalc_forces has to be a bool")
         check_type_or_throw_except(
             reuse_forces, 1, bool, "reuse_forces has to be a bool")
+        if steps < 0:
+            raise ValueError("steps must be positive")
 
         _integrate(steps, recalc_forces, reuse_forces)
 

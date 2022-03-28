@@ -51,7 +51,7 @@ class ReactionEnsembleTest(ut.TestCase):
     # the exact sequence of random numbers and does not require hard-coded
     # output values
     temperature = 1.0
-    exclusion_radius = 1.0
+    exclusion_range = 1.0
     # could be in this test for example anywhere in the range 0.000001 ... 9,
     reactant_types = [types["HA"]]
     reactant_coefficients = [1]
@@ -69,7 +69,7 @@ class ReactionEnsembleTest(ut.TestCase):
     gamma = target_alpha**2 / (1. - target_alpha) * N0 / (volume**nubar)
     RE = espressomd.reaction_ensemble.ReactionEnsemble(
         kT=temperature,
-        exclusion_radius=exclusion_radius, seed=12)
+        exclusion_range=exclusion_range, seed=12)
 
     @classmethod
     def setUpClass(cls):

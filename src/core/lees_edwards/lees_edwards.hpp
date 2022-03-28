@@ -16,12 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef LEES_EDWARDS_HPP
-#define LEES_EDWARDS_HPP
+#ifndef CORE_LEES_EDWARDS_LEES_EDWARDS_HPP
+#define CORE_LEES_EDWARDS_LEES_EDWARDS_HPP
 
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
-#include "lees_edwards_protocol.hpp"
+#include "lees_edwards/protocols.hpp"
 
 #include <cmath>
 #include <memory>

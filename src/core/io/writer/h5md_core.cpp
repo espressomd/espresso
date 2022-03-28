@@ -322,7 +322,7 @@ void File::write(const ParticleRange &particles, double time, int step,
 
   write_td_particle_property<2>(
       prefix, n_part_global, particles, datasets["particles/atoms/id/value"],
-      [](auto const &p) { return Utils::Vector<int, 1>{p.p.identity}; });
+      [](auto const &p) { return Utils::Vector<int, 1>{p.identity()}; });
   write_dataset(Utils::Vector<double, 1>{time},
                 datasets["particles/atoms/id/time"], Vector1hs{1},
 
@@ -334,31 +334,31 @@ void File::write(const ParticleRange &particles, double time, int step,
   write_td_particle_property<2>(
       prefix, n_part_global, particles,
       datasets["particles/atoms/species/value"],
-      [](auto const &p) { return Utils::Vector<int, 1>{p.p.type}; });
+      [](auto const &p) { return Utils::Vector<int, 1>{p.type()}; });
 
   write_td_particle_property<2>(
       prefix, n_part_global, particles, datasets["particles/atoms/mass/value"],
-      [](auto const &p) { return Utils::Vector<double, 1>{p.p.mass}; });
+      [](auto const &p) { return Utils::Vector<double, 1>{p.mass()}; });
 
   write_td_particle_property<3>(
       prefix, n_part_global, particles,
       datasets["particles/atoms/position/value"],
-      [&](auto const &p) { return folded_position(p.r.p, geometry); });
+      [&](auto const &p) { return folded_position(p.pos(), geometry); });
   write_td_particle_property<3>(prefix, n_part_global, particles,
                                 datasets["particles/atoms/image/value"],
-                                [](auto const &p) { return p.l.i; });
+                                [](auto const &p) { return p.image_box(); });
 
   write_td_particle_property<3>(prefix, n_part_global, particles,
                                 datasets["particles/atoms/velocity/value"],
-                                [](auto const &p) { return p.m.v; });
+                                [](auto const &p) { return p.v(); });
 
   write_td_particle_property<3>(prefix, n_part_global, particles,
                                 datasets["particles/atoms/force/value"],
-                                [](auto const &p) { return p.f.f; });
+                                [](auto const &p) { return p.force(); });
   write_td_particle_property<2>(
       prefix, n_part_global, particles,
       datasets["particles/atoms/charge/value"],
-      [](auto const &p) { return Utils::Vector<double, 1>{p.p.q}; });
+      [](auto const &p) { return Utils::Vector<double, 1>{p.q()}; });
 }
 void File::write_connectivity(const ParticleRange &particles) {
   MultiArray3i bond(boost::extents[0][0][0]);
@@ -369,7 +369,7 @@ void File::write_connectivity(const ParticleRange &particles) {
       auto const partner_ids = b.partner_ids();
       if (partner_ids.size() == 1) {
         bond.resize(boost::extents[1][nbonds_local + 1][2]);
-        bond[0][nbonds_local][0] = p.p.identity;
+        bond[0][nbonds_local][0] = p.identity();
         bond[0][nbonds_local][1] = partner_ids[0];
         nbonds_local++;
       }

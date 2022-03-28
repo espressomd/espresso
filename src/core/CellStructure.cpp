@@ -25,7 +25,7 @@
 #include "CellStructureType.hpp"
 #include "RegularDecomposition.hpp"
 #include "grid.hpp"
-#include "lees_edwards.hpp"
+#include "lees_edwards/lees_edwards.hpp"
 
 #include <utils/contains.hpp>
 

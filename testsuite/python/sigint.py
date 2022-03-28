@@ -20,14 +20,15 @@ import unittest as ut
 import signal
 import subprocess
 import time
+import sys
+import os
 
 
 class SigintTest(ut.TestCase):
 
     def setUp(self):
-        self.process = subprocess.Popen(
-            ['@CMAKE_BINARY_DIR@/pypresso',
-             '@CMAKE_CURRENT_BINARY_DIR@/sigint_child.py'])
+        script = os.path.join(os.path.dirname(__file__), 'sigint_child.py')
+        self.process = subprocess.Popen([sys.executable, script])
 
     def test_signal_handling(self):
         self.process.send_signal(signal.SIGINT)

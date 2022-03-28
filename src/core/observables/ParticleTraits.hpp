@@ -30,7 +30,7 @@ namespace ParticleObservables {
  */
 template <> struct traits<Particle> {
   auto position(Particle const &p) const { return p.pos(); }
-  auto velocity(Particle const &p) const { return p.m.v; }
+  auto velocity(Particle const &p) const { return p.v(); }
   auto mass(Particle const &p) const {
 #ifdef VIRTUAL_SITES
     // we exclude virtual particles since their mass does not have a meaning

@@ -89,8 +89,7 @@ public:
    * @param particles Particle range for which to write data.
    * @param time Simulation time.
    * @param step Simulation step (monotonically increasing).
-   * @param geometry A BoxGeometry instance that carries the information of the
-   * box dimensions.
+   * @param geometry The box dimensions.
    */
   void write(const ParticleRange &particles, double time, int step,
              BoxGeometry const &geometry);
@@ -192,7 +191,7 @@ private:
    */
   void write_units();
   /**
-   * @brief Create hard links for the time and step entries of time dependent
+   * @brief Create hard links for the time and step entries of time-dependent
    * datasets.
    */
   void create_hard_links();
@@ -218,9 +217,8 @@ struct incompatible_h5mdfile : public std::exception {
 
 struct left_backupfile : public std::exception {
   const char *what() const noexcept override {
-    return "A backup of the .h5 file exists. This usually means \
-that either you forgot to call the 'close' method or your simulation \
-crashed.";
+    return "A backup of the .h5 file exists. This usually means that either "
+           "you forgot to call the 'close' method or your simulation crashed.";
   }
 };
 

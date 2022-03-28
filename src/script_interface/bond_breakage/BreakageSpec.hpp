@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "bond_breakage.hpp"
+#include "core/bond_breakage/bond_breakage.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
 

@@ -32,7 +32,7 @@ namespace Fields {
 /**
  * @brief A plane wave.
  *
- * A time dependent plane wave, with a certain (vector-valued)
+ * A time-dependent plane wave, with a certain (vector-valued)
  * amplitude, wave vector frequency and phase.
  *
  * See https://en.wikipedia.org/wiki/Plane_wave

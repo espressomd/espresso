@@ -27,8 +27,8 @@ public:
 
   template <typename T, typename Particle>
   T operator()(const Particle &p, const T &x) const {
-    if (not p.p.is_virtual) {
-      return p.p.mass * x;
+    if (not p.is_virtual()) {
+      return p.mass() * x;
     }
     return T{};
   }

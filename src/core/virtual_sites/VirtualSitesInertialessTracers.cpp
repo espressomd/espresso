@@ -19,7 +19,9 @@
 #include "config.hpp"
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
+
 #include "VirtualSitesInertialessTracers.hpp"
+
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
