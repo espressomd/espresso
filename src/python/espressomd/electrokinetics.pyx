@@ -23,9 +23,6 @@ IF CUDA:
     from .lb cimport lb_lbfluid_set_lattice_switch
     from .lb cimport GPU
 from . import utils
-import tempfile
-import shutil
-from .utils import is_valid_type
 from .utils cimport Vector3i
 import numpy as np
 
@@ -178,16 +175,14 @@ IF ELECTROKINETICS:
             """
 
             if species is None or density is None:
-                raise ValueError("species and density has to be set.")
-            if not is_valid_type(species, int):
-                raise ValueError("species needs to be an integer.")
+                raise ValueError("species and density have to be set.")
+            utils.check_type_or_throw_except(
+                species, 1, float, "species needs to be an integer.")
             if node is None:
                 ek_set_density(species, density)
             else:
-                if not isinstance(node, (list, np.ndarray)):
-                    if len(node) != 3:
-                        raise ValueError(
-                            "node has to be an array of length 3 of integers.")
+                utils.check_type_or_throw_except(
+                    species, node, int, "node has to be an array of 3 integers")
                 ek_node_set_density(
                     species, node[0], node[1], node[2], density)
 
@@ -496,13 +491,11 @@ IF ELECTROKINETICS:
 
         property density:
             def __set__(self, value):
-                if is_valid_type(value, float) or is_valid_type(value, int):
-                    if ek_node_set_density(
-                            self.id, self.node[0], self.node[1], self.node[2], value) != 0:
-                        raise Exception("Species has not been added to EK.")
-                else:
-                    raise ValueError(
-                        "Type of property is wrong. Expected: float.")
+                utils.check_type_or_throw_except(
+                    value, 1, float, "Property 'density' has to be a float")
+                if ek_node_set_density(
+                        self.id, self.node[0], self.node[1], self.node[2], value) != 0:
+                    raise Exception("Species has not been added to EK.")
 
             def __get__(self):
                 cdef double density
