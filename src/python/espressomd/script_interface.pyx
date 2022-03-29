@@ -205,7 +205,9 @@ cdef Variant python_object_to_variant(value) except +:
         for k, v in value.items():
             if not isinstance(k, int):
                 raise TypeError(
-                    f"No conversion from type dict_item([({type(k).__name__}, {type(v).__name__})]) to Variant[std::unordered_map<int, Variant>]")
+                    f"No conversion from type "
+                    f"'dict_item([({type(k).__name__}, {type(v).__name__})])'"
+                    f" to 'Variant[std::unordered_map<int, Variant>]'")
             vmap[k] = python_object_to_variant(v)
         return make_variant[unordered_map[int, Variant]](vmap)
     elif hasattr(value, '__iter__') and type(value) != str:
@@ -222,7 +224,7 @@ cdef Variant python_object_to_variant(value) except +:
         return make_variant[double](value)
     else:
         raise TypeError(
-            f"No conversion from type {type(value).__name__} to Variant")
+            f"No conversion from type '{type(value).__name__}' to 'Variant'")
 
 cdef variant_to_python_object(const Variant & value) except +:
     """Convert C++ Variant objects to Python objects."""
