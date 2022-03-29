@@ -353,7 +353,7 @@ to retrieve a particle slice:
       system.part.by_ids([1, 4, 3])
 
   would contain the particles with ids 1, 4, and 3 in that specific order.
-  
+
 - By calling :meth:`espressomd.particle_data.ParticleList.all`
 
   You can get a slice containing all particles using::

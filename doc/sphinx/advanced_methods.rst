@@ -63,7 +63,7 @@ Several modes are available for different types of binding.
 
   * ``bond_vs`` is the bond to be added between the two virtual sites created on collision. This is either a pair-bond with an equilibrium length matching the distance between the virtual sites, or an angle bond fully stretched in its equilibrium configuration.
   * ``part_type_vs`` is the particle type assigned to the virtual sites created on collision. In nearly all cases, no non-bonded interactions should be defined for this particle type.
-  * ``vs_placement`` controls, where on the line connecting the centers of the colliding particles, the virtual sites are placed. A value of 0 means that the virtual sites are placed at the same position as the colliding particles on which they are based. A value of 0.5 will result in the virtual sites being placed ad the mid-point between the two colliding particles. A value of 1 will result the virtual site associated to the first colliding particle to be placed at the position of the second colliding particle. In most cases, 0.5, is a good choice. Then, the bond connecting the virtual sites should have an equilibrium length of zero.
+  * ``vs_placement`` controls, where on the line connecting the centers of the colliding particles, the virtual sites are placed. A value of 0 means that the virtual sites are placed at the same position as the colliding particles on which they are based. A value of 0.5 will result in the virtual sites being placed at the mid-point between the two colliding particles. A value of 1 will result the virtual site associated to the first colliding particle to be placed at the position of the second colliding particle. In most cases, 0.5, is a good choice. Then, the bond connecting the virtual sites should have an equilibrium length of zero.
 
 * ``"glue_to_surface"``: This mode is used to irreversibly attach small particles to the surface of a big particle. It is asymmetric in that several small particles can be bound to a big particle but not vice versa. The small particles can change type after collision to make them *inert*. On collision, a single virtual site is placed and related to the big particle. Then, a bond (``bond_centers``) connects the big and the small particle. A second bond (``bond_vs``) connects the virtual site and the small particle. Further required parameters are:
 
@@ -113,9 +113,9 @@ The following limitations currently apply for the collision detection:
 
 * No distinction is currently made between different particle types for the ``"bind_centers"`` method.
 
-* The ``"bind at point of collision"`` and ``"glue to surface"``  approaches require the feature ``VIRTUAL_SITES_RELATIVE`` to be activated in :file:`myconfig.hpp`.
+* The ``"bind_at_point_of_collision"`` and ``"glue_to_surface"``  approaches require the feature ``VIRTUAL_SITES_RELATIVE`` to be activated in :file:`myconfig.hpp`.
 
-* The ``"bind at point of collision"`` approach cannot handle collisions
+* The ``"bind_at_point_of_collision"`` approach cannot handle collisions
   between virtual sites
 
 .. _Deleting bonds when particles are pulled apart:
@@ -1862,15 +1862,15 @@ For non-interacting systems this coupling is not an issue, but for interacting s
 can lead to instabilities in the MD integration ultimately leading to a crash of the simulation.
 
 This integration instabilities can be avoided by defining a distance around the particles which already exist in the system
-where new particles will not be inserted, which is defined by the required keyword ``exclusion_range``. 
-This prevents big overlaps with the newly inserted particles, avoiding too big forces between particles, which prevents the MD integration from crashing.  
-The value of the exclusion range does not affect the limiting result and it only affects the convergence and the stability of the integration.  For interacting systems, 
-it is usually a good practice to choose the exclusion range such that it is comparable to the diameter of the particles. 
+where new particles will not be inserted, which is defined by the required keyword ``exclusion_range``.
+This prevents big overlaps with the newly inserted particles, avoiding too big forces between particles, which prevents the MD integration from crashing.
+The value of the exclusion range does not affect the limiting result and it only affects the convergence and the stability of the integration.  For interacting systems,
+it is usually a good practice to choose the exclusion range such that it is comparable to the diameter of the particles.
 
-If particles with significantly different sizes are present, it is desired to define a different exclusion range for each pair of particle types. This can be done by 
-defining an exclusion radius per particle type by using the optional argument ``exclusion_radius_per_type``. Then, their exclusion range is calculated using 
-the Lorentz-Berthelot combination rule, ` i.e. ` ``exclusion_range = exclusion_radius_per_type[particle_type_1] + exclusion_radius_per_type[particle_type_2]``. 
-If the exclusion radius of one particle type is not defined, the value of the parameter provided in  ``exclusion_range`` is used by default. 
+If particles with significantly different sizes are present, it is desired to define a different exclusion range for each pair of particle types. This can be done by
+defining an exclusion radius per particle type by using the optional argument ``exclusion_radius_per_type``. Then, their exclusion range is calculated using
+the Lorentz-Berthelot combination rule, *i.e.* ``exclusion_range = exclusion_radius_per_type[particle_type_1] + exclusion_radius_per_type[particle_type_2]``.
+If the exclusion radius of one particle type is not defined, the value of the parameter provided in ``exclusion_range`` is used by default.
 If the value in ``exclusion_radius_per_type`` is equal to 0, then the exclusion range of that particle type with any other particle is 0.
 
 .. _Grand canonical ensemble simulation using the Reaction Ensemble:
