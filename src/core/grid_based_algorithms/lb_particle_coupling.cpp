@@ -121,7 +121,7 @@ std::vector<Utils::Vector3d> shifted_positions(Utils::Vector3d pos,
           auto normal_shift = (pos_shifted - pos)[le.shear_plane_normal];
           if (normal_shift > std::numeric_limits<double>::epsilon())
             pos_shifted[le.shear_direction] += le.pos_offset;
-          if (normal_shift < - 1.0 * std::numeric_limits<double>::epsilon())
+          if (normal_shift < -1.0 * std::numeric_limits<double>::epsilon())
             pos_shifted[le.shear_direction] -= le.pos_offset;
         }
 
