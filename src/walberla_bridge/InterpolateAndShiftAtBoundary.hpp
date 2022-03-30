@@ -94,7 +94,8 @@ private:
     auto const dir = m_shear_direction;
     auto const dim = cell_idx_c(m_blocks->getNumberOfCells(*block, dir));
     auto const length = numeric_cast<FloatType>(dim);
-    auto const weight = std::fmod(get_pos_offset() + length, FloatType{1});
+    auto const weight =
+        std::abs(std::fmod(get_pos_offset() + length, FloatType{1}));
 
     // setup slab
     auto field = block->template getData<FieldType>(m_field_id);
@@ -113,10 +114,13 @@ private:
     for (auto cell = ci.begin(); cell != ci.end(); ++cell) {
       Cell source1 = *cell;
       Cell source2 = *cell;
-      source1[dir] =
-          cell_idx_c(std::floor(source1[dir] + offset + length)) % dim;
-      source2[dir] =
-          cell_idx_c(std::ceil(source2[dir] + offset + length)) % dim;
+      source1[dir] = cell_idx_c(std::floor(source1[dir] + offset)) % dim;
+      source1[dir] = cell_idx_c(source1[dir] + length);
+      source1[dir] = cell_idx_c(source1[dir] % dim);
+
+      source2[dir] = cell_idx_c(std::ceil(source2[dir] + offset)) % dim;
+      source2[dir] = cell_idx_c(source2[dir] + length);
+      source2[dir] = cell_idx_c(source2[dir] % dim);
 
       for (uint_t q = 0; q < FieldType::F_SIZE; ++q) {
         tmp_field->get(*cell, q) = field->get(source1, q) * (1 - weight) +
