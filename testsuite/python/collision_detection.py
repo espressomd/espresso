@@ -703,16 +703,6 @@ class CollisionDetection(ut.TestCase):
         self.assertEqual(found_pairs, expected_pairs)
         self.assertEqual(found_angle_bonds, expected_angle_bonds)
 
-    def test_zz_serialization(self):
-        self.system.collision_detection.set_params(
-            mode="bind_centers", distance=0.11, bond_centers=self.H)
-        reduce = self.system.collision_detection.__reduce__()
-        res = reduce[0](reduce[1][0])
-        self.assertEqual(res.__class__.__name__, "CollisionDetection")
-        self.assertEqual(res.mode, "bind_centers")
-        self.assertAlmostEqual(res.distance, 0.11, delta=1E-12)
-        self.assertEqual(res.bond_centers, self.H)
-
 
 if __name__ == "__main__":
     ut.main()

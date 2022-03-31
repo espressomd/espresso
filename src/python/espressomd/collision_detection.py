@@ -15,16 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from .script_interface import ScriptInterfaceHelper, script_interface_register
-from .utils import to_str
 from .interactions import BondedInteraction, BondedInteractions
-
-
-cdef extern from "collision.hpp":
-    const int COLLISION_MODE_OFF
-    const int COLLISION_MODE_BOND
-    const int COLLISION_MODE_VS
-    const int COLLISION_MODE_GLUE_TO_SURF
-    const int COLLISION_MODE_BIND_THREE_PARTICLES
 
 
 @script_interface_register
@@ -46,27 +37,18 @@ class CollisionDetection(ScriptInterfaceHelper):
 
     _so_name = "CollisionDetection::CollisionDetection"
 
-    def __init__(self, *args, **kwargs):
-        # If no mode is specified at construction, use off.
-        if "mode" not in kwargs:
-            kwargs["mode"] = "off"
+    def __init__(self, **kwargs):
+        if "sip" in kwargs:
+            super().__init__(**kwargs)
+            return
         super().__init__()
         self.set_params(**kwargs)
-
-    def validate(self):
-        """Validates the parameters of the collision detection.
-
-        This is called automatically on parameter change
-
-        """
-        return self.call_method("validate")
 
     # Do not allow setting of individual attributes
     def __setattr__(self, *args, **kwargs):
         raise Exception(
             "Please set all parameters at once via collision_detection.set_params()")
 
-    # Override to call validate after parameter update
     def set_params(self, **kwargs):
         """
         Set the parameters for the collision detection
@@ -117,109 +99,43 @@ class CollisionDetection(ScriptInterfaceHelper):
         """
 
         if "mode" not in kwargs:
-            raise Exception(
-                "Collision mode must be specified via the mode keyword argument")
-
-        # Completeness of parameter set
-        if set(kwargs.keys()) != set(self._params_for_mode(kwargs["mode"])):
-            raise Exception(
-                f"Parameter set does not match mode; {kwargs['mode']} "
-                f"requires {sorted(self._params_for_mode(kwargs['mode']))}, "
-                f"got {sorted(kwargs.keys())}")
-
-        # Mode
-        kwargs["mode"] = self._int_mode[kwargs["mode"]]
-
+            raise ValueError(
+                "Collision mode must be specified via the 'mode' argument")
         # Convert bonds to bond ids
         for name in ["bond_centers", "bond_vs", "bond_three_particle_binding"]:
             if name in kwargs:
                 if isinstance(kwargs[name], BondedInteraction):
                     kwargs[name] = kwargs[name]._bond_id
-        super().set_params(**kwargs)
-        self.validate()
+        self.call_method('instantiate', **kwargs)
 
     def get_parameter(self, name):
         """Gets a single parameter from the collision detection."""
 
-        res = super().get_parameter(name)
-        return self._convert_param(name, res)
+        value = super().get_parameter(name)
+        if name in ["bond_centers", "bond_vs", "bond_three_particle_binding"]:
+            if value == -1:  # Not defined
+                value = None
+            else:
+                value = BondedInteractions()[value]
+        return value
 
     def get_params(self):
         """Returns the parameters of the collision detection as dict.
 
         """
-        res = super().get_params()
-        for k in res.keys():
-            res[k] = self._convert_param(k, res[k])
+        params = {}
+        mode = super().get_parameter("mode")
+        for name in self.call_method("params_for_mode", mode=mode):
+            params[name] = self.get_parameter(name)
+        return params
 
-        # Filter key-value pairs according to active mode
-        return {k: res[k] for k in self._params_for_mode(res["mode"])}
-
-    def _convert_param(self, name, value):
-        """
-        Handles type conversion core -> python
-
-        Bond types: int -> BondedInteraction
-        mode: int -> string
-
-        """
-        # Py3: Cast from binary to normal string. Don't understand, why a
-        # binary string can even occur, here, but it does.
-        name = to_str(name)
-        # Convert int mode parameter to string
-        res = value
-        if name == "mode":
-            res = self._str_mode(value)
-
-        # Get bonded interaction
-        if name in ["bond_centers", "bond_vs", "bond_three_particle_binding"]:
-            if value == -1:  # Not defined
-                res = None
-            else:
-                res = BondedInteractions()[value]
-        return res
-
-    def _params_for_mode(self, mode):
-        """The parameter names expected for a given collision mode
-
-        """
-        if mode == "off":
-            return ("mode",)
-        if mode == "bind_centers":
-            return ("mode", "bond_centers", "distance")
-        if mode == "bind_at_point_of_collision":
-            return ("mode", "bond_centers", "bond_vs",
-                    "part_type_vs", "distance", "vs_placement")
-        if mode == "glue_to_surface":
-            return ("mode", "bond_centers", "bond_vs", "part_type_vs",
-                    "part_type_to_be_glued", "part_type_to_attach_vs_to",
-                    "part_type_after_glueing", "distance",
-                    "distance_glued_particle_to_vs")
-        if mode == "bind_three_particles":
-            return ("mode", "bond_centers", "distance", "bond_three_particles",
-                    "three_particle_binding_angle_resolution")
-        raise Exception("Mode not handled: " + mode.__str__())
-
-    _int_mode = {
-        "off": int(COLLISION_MODE_OFF),
-        "bind_centers": int(COLLISION_MODE_BOND),
-        "bind_at_point_of_collision": int(COLLISION_MODE_VS),
-        "glue_to_surface": int(COLLISION_MODE_GLUE_TO_SURF),
-        "bind_three_particles": int(COLLISION_MODE_BIND_THREE_PARTICLES)}
-
-    def _str_mode(self, int_mode):
-        """String mode name from int ones provided by the core
-
-        """
-        for key in self._int_mode:
-            if self._int_mode[key] == int_mode:
-                return key
-        raise Exception(f"Unknown integer collision mode {int_mode}")
-
-    # Pickle support
     def __reduce__(self):
-        return _restore_collision_detection, (self.get_params(),)
+        so_callback, so_callback_args = super().__reduce__()
+        return (CollisionDetection._restore_object,
+                (so_callback, so_callback_args, self.get_params()))
 
-
-def _restore_collision_detection(params):
-    return CollisionDetection(**params)
+    @classmethod
+    def _restore_object(cls, so_callback, so_callback_args, state):
+        so = so_callback(*so_callback_args)
+        so.set_params(**state)
+        return so

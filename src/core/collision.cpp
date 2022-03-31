@@ -103,7 +103,7 @@ static int get_bond_num_partners(int bond_id) {
   return number_of_partners(*bonded_ia_params.at(bond_id));
 }
 
-void validate_collision_parameters() {
+void Collision_parameters::initialize() {
   // If mode is OFF, no further checks
   if (collision_params.mode == COLLISION_MODE_OFF) {
     return;
