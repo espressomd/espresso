@@ -63,7 +63,16 @@ public:
   Variant do_call_method(const std::string &name,
                          const VariantMap &params) override {
     if (name == "validate") {
-      return validate_collision_parameters();
+      try {
+        validate_collision_parameters();
+        return none;
+      } catch (...) {
+        if (context()->is_head_node()) {
+          throw;
+        } else {
+          throw Exception("");
+        }
+      }
     }
     return none;
   }

@@ -104,7 +104,7 @@ void handle_collisions();
 
 /** @brief Validates collision parameters and creates particle types if needed
  */
-bool validate_collision_parameters();
+void validate_collision_parameters();
 
 /** @brief Add the collision between the given particle ids to the collision
  *  queue

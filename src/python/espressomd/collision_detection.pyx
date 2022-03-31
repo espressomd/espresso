@@ -16,7 +16,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 from .utils import to_str
-from .utils import handle_errors
 from .interactions import BondedInteraction, BondedInteractions
 
 
@@ -122,11 +121,11 @@ class CollisionDetection(ScriptInterfaceHelper):
                 "Collision mode must be specified via the mode keyword argument")
 
         # Completeness of parameter set
-        if not (set(kwargs.keys()) == set(
-                self._params_for_mode(kwargs["mode"]))):
-            raise Exception("Parameter set does not match mode. ",
-                            kwargs["mode"], "requires ",
-                            self._params_for_mode(kwargs["mode"]))
+        if set(kwargs.keys()) != set(self._params_for_mode(kwargs["mode"])):
+            raise Exception(
+                f"Parameter set does not match mode; {kwargs['mode']} "
+                f"requires {sorted(self._params_for_mode(kwargs['mode']))}, "
+                f"got {sorted(kwargs.keys())}")
 
         # Mode
         kwargs["mode"] = self._int_mode[kwargs["mode"]]
@@ -138,7 +137,6 @@ class CollisionDetection(ScriptInterfaceHelper):
                     kwargs[name] = kwargs[name]._bond_id
         super().set_params(**kwargs)
         self.validate()
-        handle_errors("Validation of collision detection failed")
 
     def get_parameter(self, name):
         """Gets a single parameter from the collision detection."""

@@ -28,7 +28,7 @@ import random
 @utx.skipIfMissingFeatures("COLLISION_DETECTION")
 class CollisionDetection(ut.TestCase):
 
-    """Tests interface and functionality of the collision detection / dynamic binding"""
+    """Tests functionality of the collision detection / dynamic binding"""
 
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     np.random.seed(seed=42)
@@ -57,24 +57,6 @@ class CollisionDetection(ut.TestCase):
         state = self.system.collision_detection.get_params()
         self.system.collision_detection.set_params(**state)
         self.assertEqual(state, self.system.collision_detection.get_params())
-
-    def test_00_interface_and_defaults(self):
-        # Is it off by default
-        self.assertEqual(self.system.collision_detection.mode, "off")
-
-        # Make sure params cannot be set individually
-        with self.assertRaises(Exception):
-            self.system.collision_detection.mode = "bind_centers"
-
-        # Verify exception throwing for unknown collision modes
-        for unknown_mode in (0, "unknown"):
-            with self.assertRaisesRegex(Exception, "Mode not handled"):
-                self.system.collision_detection.set_params(mode=unknown_mode)
-        self.assertIsNone(self.system.collision_detection.call_method("none"))
-
-        # That should work
-        self.system.collision_detection.set_params(mode="off")
-        self.assertEqual(self.system.collision_detection.mode, "off")
 
     def test_bind_centers(self):
         system = self.system
