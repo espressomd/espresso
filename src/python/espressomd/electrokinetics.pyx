@@ -34,13 +34,10 @@ IF ELECTROKINETICS:
         """
 
         def __getitem__(self, key):
-            if isinstance(key, tuple) or isinstance(
-                    key, list) or isinstance(key, np.ndarray):
-                if len(key) == 3:
-                    return ElectrokineticsRoutines(np.array(key))
-            else:
-                raise Exception(
-                    f"{key} is not a valid key. Should be a point on the nodegrid e.g. ek[0,0,0].")
+            if isinstance(key, (tuple, list, np.ndarray)) and len(key) == 3:
+                return ElectrokineticsRoutines(np.array(key))
+            raise ValueError(
+                f"{key} is not a valid key. Should be a point on the nodegrid e.g. ek[0,0,0].")
 
         def validate_params(self):
             """
@@ -105,7 +102,7 @@ IF ELECTROKINETICS:
             elif ek_parameters.stencil == 1:
                 stencil = "nodecentered"
             else:
-                raise Exception("Value of stencil could not be identified.")
+                raise RuntimeError("Value of stencil could not be identified.")
 
             if ek_parameters.fluidcoupling_ideal_contribution:
                 fluid_coupling = "friction"
@@ -213,16 +210,16 @@ IF ELECTROKINETICS:
             err = ek_neutralize_system(species.id)
 
             if err == 1:
-                raise Exception(
+                raise RuntimeError(
                     'Species used for neutralization must be added to electrokinetics')
             elif err == 2:
-                raise Exception(
+                raise RuntimeError(
                     'Species used for neutralization must be charged')
             elif err == 3:
-                raise Exception(
+                raise RuntimeError(
                     'Neutralization with specified species would result in negative density')
             elif err != 0:
-                raise Exception('Unknown error')
+                raise RuntimeError('Unknown error')
 
             self.ek_init()
 
@@ -329,10 +326,10 @@ IF ELECTROKINETICS:
 
             """
 
-            if(self._params["es_coupling"]):
+            if self._params["es_coupling"]:
                 ek_print_vtk_particle_potential(utils.to_char_pointer(path))
             else:
-                raise Exception("'es_coupling' is not active.")
+                raise RuntimeError("'es_coupling' is not active.")
 
         def save_checkpoint(self, path):
             raise RuntimeError("EK does not support checkpointing")
@@ -379,12 +376,10 @@ IF ELECTROKINETICS:
             return f"{self.__class__.__name__}({self.get_params()})"
 
         def __getitem__(self, key):
-            if isinstance(key, (tuple, list, np.ndarray)):
-                if len(key) == 3:
-                    return SpecieRoutines(np.array(key), self.id)
-            else:
-                raise Exception(
-                    f"{key} is not a valid key. Should be a point on the nodegrid e.g. species[0,0,0].")
+            if isinstance(key, (tuple, list, np.ndarray)) and len(key) == 3:
+                return SpecieRoutines(np.array(key), self.id)
+            raise ValueError(
+                f"{key} is not a valid key. Should be a point on the nodegrid e.g. species[0,0,0].")
 
         def __init__(self, **kwargs):
             Species.py_number_of_species += 1
@@ -495,12 +490,12 @@ IF ELECTROKINETICS:
                     value, 1, float, "Property 'density' has to be a float")
                 if ek_node_set_density(
                         self.id, self.node[0], self.node[1], self.node[2], value) != 0:
-                    raise Exception("Species has not been added to EK.")
+                    raise RuntimeError("Species has not been added to EK.")
 
             def __get__(self):
                 cdef double density
                 if ek_node_get_density(self.id, self.node[0], self.node[1], self.node[2], & density) != 0:
-                    raise Exception("Species has not been added to EK.")
+                    raise RuntimeError("Species has not been added to EK.")
                 return density
 
         property flux:
@@ -511,6 +506,6 @@ IF ELECTROKINETICS:
                 cdef double flux[3]
                 if ek_node_get_flux(
                         self.id, self.node[0], self.node[1], self.node[2], flux) != 0:
-                    raise Exception("Species has not been added to EK.")
+                    raise RuntimeError("Species has not been added to EK.")
 
                 return np.array([flux[0], flux[1], flux[2]])
