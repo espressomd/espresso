@@ -37,7 +37,10 @@ public:
       : m_protocol{std::make_shared<::LeesEdwards::ActiveProtocol>(
             ::LeesEdwards::OscillatoryShear())} {
     add_parameters(
-        {{"amplitude",
+        {{"initial_pos_offset",
+          boost::get<::LeesEdwards::OscillatoryShear>(*m_protocol)
+              .m_initial_pos_offset},
+         {"amplitude",
           boost::get<::LeesEdwards::OscillatoryShear>(*m_protocol).m_amplitude},
          {"omega",
           boost::get<::LeesEdwards::OscillatoryShear>(*m_protocol).m_omega},

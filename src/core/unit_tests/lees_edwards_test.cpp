@@ -132,10 +132,12 @@ BOOST_AUTO_TEST_CASE(protocol_lin) {
 
 BOOST_AUTO_TEST_CASE(protocol_osc) {
   auto const t0 = 1.2;
+  auto const x0 = 0.1;
   auto const a = 3.1;
   auto const o = 2.1;
-  auto osc = OscillatoryShear(a, o, t0);
-  BOOST_CHECK_CLOSE(get_pos_offset(3.3, osc), a * sin(o * (3.3 - t0)), tol);
+  auto osc = OscillatoryShear(x0, a, o, t0);
+  BOOST_CHECK_CLOSE(get_pos_offset(3.3, osc), x0 + a * sin(o * (3.3 - t0)),
+                    tol);
   BOOST_CHECK_CLOSE(get_shear_velocity(3.3, osc), a * o * cos(o * (3.3 - t0)),
                     tol);
 }

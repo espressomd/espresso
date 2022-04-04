@@ -75,6 +75,8 @@ class OscillatoryShear(ScriptInterfaceHelper):
 
     Parameters
     ----------
+    initial_pos_offset : :obj:`float`
+       Positional offset at the Lees--Edwards boundary at t=0.
     amplitude : :obj:`float`
        Maximum amplitude of the positional offset at the Lees--Edwards boundary.
     omega : :obj:`float`
