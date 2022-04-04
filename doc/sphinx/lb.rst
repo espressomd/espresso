@@ -264,7 +264,7 @@ LB implementations, which follow the derivation in :cite:`wagner02`.
 Note, that there is no extra python interface for the use of LEbc
 with the LB algorithm: all the necessary information is internally
 derived from the currently active LEbc protocol in
-:ref:`system.lees_edwards.protocol<espressomd.lees_edwards.LeesEdwards.protocol>`.
+``system.lees_edwards.protocol``.
 
 .. _Electrohydrodynamics:
 
