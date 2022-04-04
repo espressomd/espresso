@@ -503,10 +503,10 @@ public:
   auto const &ext_torque() const { return p.ext_torque; }
   auto &ext_torque() { return p.ext_torque; }
   auto calc_director() const { return r.calc_director(); }
-#else
+#else  // ROTATION
   bool can_rotate() const { return false; }
   bool can_rotate_around(int const axis) const { return false; }
-#endif
+#endif // ROTATION
 #ifdef DIPOLES
   auto const &dipm() const { return p.dipm; }
   auto &dipm() { return p.dipm; }

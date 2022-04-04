@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# For C-extern Analysis
 include "myconfig.pxi"
 from . cimport analyze
 from libcpp.vector cimport vector  # import std::vector as vector
@@ -25,11 +24,10 @@ cimport numpy as np
 from .grid cimport box_geo
 
 from .system import System
-from .utils import array_locked, is_valid_type, handle_errors
+from . import utils
 from .utils cimport Vector3i, Vector3d, Vector9d
 from .utils cimport make_Vector3d
 from .utils cimport make_array_locked
-from .utils cimport check_type_or_throw_except
 from .utils cimport create_nparray_from_double_array
 
 
@@ -115,12 +113,12 @@ class Analysis:
             raise ValueError("Both p1 and p2 have to be specified")
         else:
             for i in range(len(p1)):
-                if not is_valid_type(p1[i], int):
+                if not utils.is_valid_type(p1[i], int):
                     raise TypeError(
                         f"Particle types in p1 have to be of type int, got: {repr(p1[i])}")
 
             for i in range(len(p2)):
-                if not is_valid_type(p2[i], int):
+                if not utils.is_valid_type(p2[i], int):
                     raise TypeError(
                         f"Particle types in p2 have to be of type int, got: {repr(p2[i])}")
 
@@ -178,7 +176,8 @@ class Analysis:
         if p_type is None:
             raise ValueError(
                 "The p_type keyword argument must be provided (particle type)")
-        check_type_or_throw_except(p_type, 1, int, "p_type has to be an int")
+        utils.check_type_or_throw_except(
+            p_type, 1, int, "p_type has to be an int")
         if p_type < 0 or p_type >= analyze.max_seen_particle_type:
             raise ValueError(f"Particle type {p_type} does not exist!")
 
@@ -206,8 +205,8 @@ class Analysis:
 
         cdef Vector3i planedims
 
-        check_type_or_throw_except(pos, 3, float, "pos must be 3 floats")
-        check_type_or_throw_except(
+        utils.check_type_or_throw_except(pos, 3, float, "pos must be 3 floats")
+        utils.check_type_or_throw_except(
             r_catch, 1, float, "r_catch must be a float")
 
         # default 3d takes into account dist in x, y and z
@@ -257,7 +256,7 @@ class Analysis:
         """
 
         obs = analyze.get_scalar_pressure()
-        handle_errors("calculate_pressure() failed")
+        utils.handle_errors("calculate_pressure() failed")
         return obs
 
     def pressure_tensor(self):
@@ -291,14 +290,14 @@ class Analysis:
         """
 
         obs = analyze.get_pressure_tensor()
-        handle_errors("calculate_pressure() failed")
+        utils.handle_errors("calculate_pressure() failed")
         return obs
 
     IF DPD == 1:
         def dpd_stress(self):
             cdef Vector9d p
             p = dpd_stress()
-            return array_locked((
+            return utils.array_locked((
                 p[0], p[1], p[2],
                 p[3], p[4], p[5],
                 p[6], p[7], p[8])).reshape((3, 3))
@@ -342,7 +341,7 @@ class Analysis:
         """
 
         obs = analyze.get_energy()
-        handle_errors("calculate_energy() failed")
+        utils.handle_errors("calculate_energy() failed")
         return obs
 
     def calc_re(self, chain_start=None, number_of_chains=None,
@@ -454,11 +453,11 @@ class Analysis:
 
     def check_topology(self, chain_start=None, number_of_chains=None,
                        chain_length=None):
-        check_type_or_throw_except(
+        utils.check_type_or_throw_except(
             chain_start, 1, int, "chain_start=int is a required argument")
-        check_type_or_throw_except(
+        utils.check_type_or_throw_except(
             number_of_chains, 1, int, "number_of_chains=int is a required argument")
-        check_type_or_throw_except(
+        utils.check_type_or_throw_except(
             chain_length, 1, int, "chain_length=int is a required argument")
         id_min = chain_start
         id_max = chain_start + chain_length * number_of_chains
@@ -501,7 +500,7 @@ class Analysis:
 
         if sf_types is None or not hasattr(sf_types, '__iter__'):
             raise ValueError("sf_types has to be a list!")
-        check_type_or_throw_except(
+        utils.check_type_or_throw_except(
             sf_order, 1, int, "sf_order has to be an int!")
 
         cdef vector[double] wavevectors
@@ -560,7 +559,7 @@ class Analysis:
             raise ValueError("type_list_b has to be a list!")
 
         if r_max is None:
-            box_l = make_array_locked(< Vector3d > box_geo.length())
+            box_l = make_array_locked(box_geo.length())
             r_max = min(box_l) / 2
 
         assert r_min >= 0.0, "r_min was chosen too small!"
@@ -620,7 +619,7 @@ class Analysis:
            The center of mass of the system.
 
         """
-        check_type_or_throw_except(
+        utils.check_type_or_throw_except(
             p_type, 1, int, "p_type has to be an int")
 
         cdef Vector3d res = analyze.angularmomentum(analyze.partCfg(), p_type)
@@ -662,7 +661,7 @@ class Analysis:
         if not hasattr(p_type, '__iter__'):
             p_type = [p_type]
         for ptype in p_type:
-            check_type_or_throw_except(
+            utils.check_type_or_throw_except(
                 ptype, 1, int, "particle type has to be an int")
             if ptype < 0 or ptype >= analyze.max_seen_particle_type:
                 raise ValueError(f"Particle type {ptype} does not exist!")
@@ -713,7 +712,8 @@ class Analysis:
         if p_type is None:
             raise ValueError(
                 "The p_type keyword argument must be provided (particle type)")
-        check_type_or_throw_except(p_type, 1, int, "p_type has to be an int")
+        utils.check_type_or_throw_except(
+            p_type, 1, int, "p_type has to be an int")
         if p_type < 0 or p_type >= analyze.max_seen_particle_type:
             raise ValueError(f"Particle type {p_type} does not exist!")
 
@@ -755,7 +755,8 @@ class Analysis:
 
         """
 
-        check_type_or_throw_except(mode, 1, str, "mode has to be a string")
+        utils.check_type_or_throw_except(
+            mode, 1, str, "mode has to be a string")
 
         if mode == "reset":
             self._Vkappa["Vk1"] = 0.0
@@ -764,11 +765,14 @@ class Analysis:
         elif mode == "read":
             return self._Vkappa
         elif mode == "set":
-            check_type_or_throw_except(Vk1, 1, float, "Vk1 has to be a float")
+            utils.check_type_or_throw_except(
+                Vk1, 1, float, "Vk1 has to be a float")
             self._Vkappa["Vk1"] = Vk1
-            check_type_or_throw_except(Vk2, 1, float, "Vk2 has to be a float")
+            utils.check_type_or_throw_except(
+                Vk2, 1, float, "Vk2 has to be a float")
             self._Vkappa["Vk2"] = Vk2
-            check_type_or_throw_except(avk, 1, float, "avk has to be a float")
+            utils.check_type_or_throw_except(
+                avk, 1, float, "avk has to be a float")
             self._Vkappa["avk"] = avk
             if self._Vkappa["avk"] <= 0.0:
                 result = self._Vkappa["Vk1"] = self._Vkappa[

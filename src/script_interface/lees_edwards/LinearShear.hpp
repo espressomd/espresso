@@ -34,8 +34,8 @@ namespace LeesEdwards {
 class LinearShear : public Protocol {
 public:
   LinearShear()
-      : m_protocol{
-            new ::LeesEdwards::ActiveProtocol{::LeesEdwards::LinearShear()}} {
+      : m_protocol{std::make_shared<::LeesEdwards::ActiveProtocol>(
+            ::LeesEdwards::LinearShear())} {
     add_parameters(
         {{"initial_pos_offset",
           boost::get<::LeesEdwards::LinearShear>(*m_protocol)

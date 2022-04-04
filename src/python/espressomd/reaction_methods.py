@@ -110,7 +110,7 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
         >>> import espressomd
         >>> import espressomd.shapes
         >>> import espressomd.electrostatics
-        >>> import espressomd.reaction_ensemble
+        >>> import espressomd.reaction_methods
         >>> import numpy as np
         >>> # setup a charged system
         >>> box_l = 20
@@ -130,7 +130,7 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
         >>> elc = espressomd.electrostatics.ELC(p3m_actor=p3m, maxPWerror=1.0, gap_size=elc_gap)
         >>> system.actors.add(elc)
         >>> # add constant pH method
-        >>> RE = espressomd.reaction_ensemble.ConstantpHEnsemble(kT=1, exclusion_range=1, seed=77)
+        >>> RE = espressomd.reaction_methods.ConstantpHEnsemble(kT=1, exclusion_range=1, seed=77)
         >>> RE.constant_pH = 2
         >>> RE.add_reaction(gamma=0.0088, reactant_types=[types["HA"]],
         ...                 product_types=[types["A-"], types["H+"]],
@@ -476,7 +476,7 @@ class WidomInsertion(ReactionAlgorithm):
     def calculate_particle_insertion_potential_energy(self, **kwargs):
         """
         Measures the potential energy when particles are inserted in the
-        system following the reaction  provided ``reaction_id``. Please
+        system following the reaction provided in ``reaction_id``. Please
         define the insertion moves first by calling the method
         :meth:`~ReactionAlgorithm.add_reaction` (with only product types
         specified).
@@ -485,6 +485,11 @@ class WidomInsertion(ReactionAlgorithm):
         the chemical potential, it can be used to calculate it.
         For an example of such an application please check
         :file:`/samples/widom_insertion.py`.
+
+        Parameters
+        ----------
+        reaction_id : :obj:`int`
+            Reaction identifier.
         """
         # make inverse widom scheme (deletion of particles) inaccessible.
         # The deletion reactions are the odd reaction_ids

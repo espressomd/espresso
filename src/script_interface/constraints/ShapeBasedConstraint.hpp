@@ -38,7 +38,7 @@ namespace Constraints {
 class ShapeBasedConstraint : public Constraint {
 public:
   ShapeBasedConstraint()
-      : m_constraint(new ::Constraints::ShapeBasedConstraint()),
+      : m_constraint(std::make_shared<::Constraints::ShapeBasedConstraint>()),
         m_shape(nullptr) {
     add_parameters({{"only_positive", m_constraint->only_positive()},
                     {"penetrable", m_constraint->penetrable()},

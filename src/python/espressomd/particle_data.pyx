@@ -230,8 +230,11 @@ cdef class ParticleHandle:
                                  self.particle_data.image_box()[2]])
 
     property lees_edwards_offset:
-        """Contains the accumulated Lees-Edwards offset to reconstruct
-           continuous trajectories.
+        """
+        The accumulated Lees-Edwards offset.
+        Can be used to reconstruct continuous trajectories.
+
+        offset : (3,) array_like of :obj:`float`
 
         """
 
@@ -243,8 +246,9 @@ cdef class ParticleHandle:
             set_particle_lees_edwards_offset(self._id, value)
 
     property lees_edwards_flag:
-        """Contains the accumulated Lees-Edwards flag to indicate
-           if the particle crossed the upper or lower boundary.
+        """
+        The Lees-Edwards flag that indicate if the particle crossed
+        the upper or lower boundary.
 
         """
 
@@ -534,7 +538,7 @@ cdef class ParticleHandle:
 
             Sets the diagonal elements of this particles rotational inertia
             tensor. These correspond with the inertial moments along the
-            coordinate axes in the particle’s co-rotating coordinate system.
+            coordinate axes in the particle's co-rotating coordinate system.
             When the particle's quaternions are set to ``[1, 0, 0, 0,]``, the
             co-rotating and the fixed (lab) frames are co-aligned.
 

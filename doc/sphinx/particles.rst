@@ -353,7 +353,7 @@ to retrieve a particle slice:
       system.part.by_ids([1, 4, 3])
 
   would contain the particles with ids 1, 4, and 3 in that specific order.
-  
+
 - By calling :meth:`espressomd.particle_data.ParticleList.all`
 
   You can get a slice containing all particles using::
@@ -382,7 +382,7 @@ Setting properties of slices can be done by
 
 - supplying an *array of values* that matches the length of the slice which sets each entry individually, e.g.::
 
-      system.partby_ids(range(3)).ext_force = [[1, 0, 0], [2, 0, 0], [3, 0, 0]]
+      system.part.by_ids(range(3)).ext_force = [[1, 0, 0], [2, 0, 0], [3, 0, 0]]
 
 For list properties that have no fixed length like ``exclusions`` or ``bonds``, some care has to be taken.
 There, *single value* assignment also accepts lists/tuples just like setting the property of an individual particle. For example::
@@ -511,7 +511,7 @@ Particle number counting feature
 
 .. note::
 
-    Do not use these methods with the :mod:`espressomd.collision_detection` module since the collision detection may create or delete particles without the particle number counting feature being aware of this. Therefore also the :mod:`espressomd.reaction_ensemble` module may not be used with the collision detection.
+    Do not use these methods with the :mod:`espressomd.collision_detection` module since the collision detection may create or delete particles without the particle number counting feature being aware of this. Therefore also the :mod:`espressomd.reaction_methods` module may not be used with the collision detection.
 
 
 Knowing the number of particles of a certain type in simulations where particle numbers can fluctuate is of interest.

@@ -48,7 +48,7 @@ namespace Observables {
 template <class CoreObs>
 class ParamlessObservableInterface : public Observable {
 public:
-  ParamlessObservableInterface() : m_observable(new CoreObs()) {}
+  ParamlessObservableInterface() : m_observable(std::make_shared<CoreObs>()) {}
 
   std::shared_ptr<::Observables::Observable> observable() const override {
     return m_observable;

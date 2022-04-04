@@ -23,7 +23,7 @@ import unittest as ut
 import unittest_decorators as utx
 import numpy as np
 import espressomd
-import espressomd.reaction_ensemble
+import espressomd.reaction_methods
 import tests_common
 
 
@@ -71,7 +71,7 @@ class WidomInsertionTest(ut.TestCase):
     np.random.seed(69)  # make reaction code fully deterministic
     system.cell_system.skin = 0.4
 
-    Widom = espressomd.reaction_ensemble.WidomInsertion(
+    Widom = espressomd.reaction_methods.WidomInsertion(
         kT=TEMPERATURE, seed=1)
 
     # Set the hidden particle type to the lowest possible number to speed

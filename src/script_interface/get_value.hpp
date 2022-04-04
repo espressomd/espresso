@@ -276,20 +276,21 @@ template <typename T> inline void handle_bad_get(Variant const &v) {
   auto const object_symbol_name = boost::apply_visitor(type_label_visitor{}, v);
   auto const element_symbol_name = demangle_container_value_type<T>{}();
   auto const is_container = !element_symbol_name.empty();
-  auto const what = "Provided argument of type " + object_symbol_name;
+  auto const what = "Provided argument of type '" + object_symbol_name + "'";
   try {
     throw;
   } catch (bad_get_nullptr const &) {
     auto const item_error = (is_container) ? " contains a value that" : "";
     throw Exception(what + item_error + " is a null pointer");
   } catch (boost::bad_get const &) {
-    auto const non_convertible = " is not convertible to ";
+    auto const non_convertible = std::string(" is not convertible to ");
     auto item_error = std::string("");
     if (is_container) {
       item_error += " because it contains a value that";
-      item_error += non_convertible + element_symbol_name;
+      item_error += non_convertible + "'" + element_symbol_name + "'";
     }
-    throw Exception(what + non_convertible + Utils::demangle<T>() + item_error);
+    throw Exception(what + non_convertible + "'" + Utils::demangle<T>() + "'" +
+                    item_error);
   }
 }
 

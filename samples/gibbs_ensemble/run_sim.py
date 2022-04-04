@@ -34,14 +34,14 @@ of the used potential can be found in 'B. Smit, J. Chem. Phys. 96 (11), 1992,
 Phase diagrams of Lennard-Jones fluids'.
 """
 
-from multiprocessing import Pipe
+import multiprocessing
 import numpy as np
-from tqdm import tqdm
+import tqdm
 import gzip
 import pickle
 import argparse
 import logging
-from enum import Enum, unique
+import enum
 
 from gibbs_ensemble import MessageID
 from client_system import Gibbs_Client
@@ -87,8 +87,8 @@ parser.add_argument(
 args = parser.parse_args()
 
 
-@unique
-class Moves(Enum):
+@enum.unique
+class Moves(enum.Enum):
     # Particle moves
     MOVE_PARTICLE = 1
     EXCHANGE_VOLUME = 2
@@ -409,7 +409,7 @@ pipes = []
 
 # Start processes
 for i in range(NUM_OF_CLIENTS):
-    pipes.append(Pipe())
+    pipes.append(multiprocessing.Pipe())
     boxes.append(Box(f"Box0{i}",
                      pipes[i],
                      box_seeds[i],
@@ -430,7 +430,7 @@ logging.info(f"Simulation parameters:\nRandom seed: {args.seed},\tWarmup "
 logging.info("Warming up.")
 
 # Warmup
-for _ in (tqdm(range(warmup)) if not args.log else range(warmup)):
+for _ in (tqdm.tqdm(range(warmup)) if not args.log else range(warmup)):
     acceptance_flag = perform_move_particle(boxes)
     if acceptance_flag:
         num_accepted_moves[Moves.MOVE_PARTICLE] += 1
@@ -449,7 +449,7 @@ densities_box02 = []
 logging.info("Starting simulation.")
 
 # Run the simulation
-for count in (tqdm(range(steps)) if not args.log else range(steps)):
+for count in (tqdm.tqdm(range(steps)) if not args.log else range(steps)):
 
     current_move = choose_move()
 

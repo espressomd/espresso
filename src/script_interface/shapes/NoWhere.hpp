@@ -33,7 +33,7 @@ namespace Shapes {
 
 class NoWhere : public Shape {
 public:
-  NoWhere() : m_nowhere(new ::Shapes::NoWhere()) {}
+  NoWhere() : m_nowhere(std::make_shared<::Shapes::NoWhere>()) {}
 
   std::shared_ptr<::Shapes::Shape> shape() const override { return m_nowhere; }
 
