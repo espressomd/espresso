@@ -204,6 +204,8 @@ inline double TabulatedAngleBond::energy(Utils::Vector3d const &r_mid,
 
 /** Compute the four-body dihedral interaction force.
  *  This function is not tested yet.
+ *  The forces have a singularity at @f$ \phi = 0 @f$ and @f$ \phi = \pi @f$
+ *  (see @cite swope92a page 592).
  *
  *  @param[in]  r1        Position of the first particle.
  *  @param[in]  r2        Position of the second particle.
@@ -220,18 +222,18 @@ TabulatedDihedralBond::forces(Utils::Vector3d const &r1,
   /* vectors for dihedral angle calculation */
   Utils::Vector3d v12, v23, v34, v12Xv23, v23Xv34;
   double l_v12Xv23, l_v23Xv34;
-  /* dihedral angle, cosine of the dihedral angle, cosine of the bond angles */
+  /* dihedral angle, cosine of the dihedral angle */
   double phi, cos_phi;
 
   /* dihedral angle */
-  calc_dihedral_angle(r1, r2, r3, r4, v12, v23, v34, v12Xv23, &l_v12Xv23,
-                      v23Xv34, &l_v23Xv34, &cos_phi, &phi);
+  auto const angle_is_undefined =
+      calc_dihedral_angle(r1, r2, r3, r4, v12, v23, v34, v12Xv23, l_v12Xv23,
+                          v23Xv34, l_v23Xv34, cos_phi, phi);
   /* dihedral angle not defined - force zero */
-  if (phi == -1.0) {
+  if (angle_is_undefined) {
     return {};
   }
 
-  /* calculate force components (directions) */
   auto const f1 = (v23Xv34 - cos_phi * v12Xv23) / l_v12Xv23;
   auto const f4 = (v12Xv23 - cos_phi * v23Xv34) / l_v23Xv34;
 
@@ -253,6 +255,7 @@ TabulatedDihedralBond::forces(Utils::Vector3d const &r1,
 
 /** Compute the four-body dihedral interaction energy.
  *  This function is not tested yet.
+ *  The energy doesn't have any singularity if the angle phi is well-defined.
  *
  *  @param[in]  r1        Position of the first particle.
  *  @param[in]  r2        Position of the second particle.
@@ -267,8 +270,14 @@ inline boost::optional<double> TabulatedDihedralBond::energy(
   double l_v12Xv23, l_v23Xv34;
   /* dihedral angle, cosine of the dihedral angle */
   double phi, cos_phi;
-  calc_dihedral_angle(r1, r2, r3, r4, v12, v23, v34, v12Xv23, &l_v12Xv23,
-                      v23Xv34, &l_v23Xv34, &cos_phi, &phi);
+  auto const angle_is_undefined =
+      calc_dihedral_angle(r1, r2, r3, r4, v12, v23, v34, v12Xv23, l_v12Xv23,
+                          v23Xv34, l_v23Xv34, cos_phi, phi);
+  /* dihedral angle not defined - energy zero */
+  if (angle_is_undefined) {
+    return {};
+  }
+
   return pot->energy(phi);
 }
 
