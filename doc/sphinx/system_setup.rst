@@ -22,7 +22,7 @@ for further calculations, you should explicitly make a copy e.g. via
 
 * :py:attr:`~espressomd.system.System.box_l`
 
-  (float[3]) Simulation box lengths of the cuboid box used by |es|.
+  Simulation box lengths of the cuboid box used by |es|.
   Note that if you change the box length during the simulation, the folded
   particle coordinates will remain the same, i.e., the particle stay in
   the same image box, but at the same relative position in their image
@@ -31,39 +31,38 @@ for further calculations, you should explicitly make a copy e.g. via
 
 * :py:attr:`~espressomd.system.System.periodicity`
 
-  (int[3]) Specifies periodicity for the three directions. |es| can be instructed
+  Specifies periodicity for the three directions. |es| can be instructed
   to treat some dimensions as non-periodic. By default |es| assumes periodicity in
   all directions which equals setting this variable to ``[True, True, True]``.
   A dimension is specified as non-periodic via setting the periodicity
   variable for this dimension to ``False``. E.g. Periodicity only in z-direction
   is obtained by ``[False, False, True]``. Caveat: Be aware of the fact that making a
   dimension non-periodic does not hinder particles from leaving the box in
-  this direction. In this case for keeping particles in the simulation box
-  a constraint has to be set.
-  For more details, see :ref:`Boundary conditions`.
+  this direction; in this case, shape-based constraints can be used to keep
+  particles in the simulation box. For more details, see :ref:`Boundary conditions`.
 
 * :py:attr:`~espressomd.system.System.time_step`
 
-  (float) Time step for MD integration.
+  Time step for MD integration.
 
 * :py:attr:`~espressomd.system.System.time`
 
-  (float) The simulation time.
+  The simulation time.
 
 * :py:attr:`~espressomd.system.System.min_global_cut`
 
-  (float) Minimal total cutoff for real space. Effectively, this plus the
+  Minimal total cutoff for real space. Effectively, this plus the
   :py:attr:`~espressomd.cellsystem.CellSystem.skin` is the minimally possible
   cell size. |es| typically determines this value automatically, but some
   algorithms, virtual sites, require you to specify it manually.
 
 * :py:attr:`~espressomd.system.System.max_cut_bonded`
 
-  *read-only* Maximal cutoff of bonded real space interactions.
+  *read-only* Maximal cutoff of bonded interactions.
 
 * :py:attr:`~espressomd.system.System.max_cut_nonbonded`
 
-  *read-only* Maximal cutoff of bonded real space interactions.
+  *read-only* Maximal cutoff of non-bonded interactions.
 
 .. _Accessing module states:
 

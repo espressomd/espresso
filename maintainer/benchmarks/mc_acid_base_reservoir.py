@@ -23,7 +23,7 @@ import time
 import benchmarks
 import espressomd
 import espressomd.electrostatics
-import espressomd.reaction_ensemble
+import espressomd.reaction_methods
 import setuptools
 import argparse
 
@@ -228,7 +228,7 @@ system.actors.add(coulomb)
 
 # ### Set up the constant pH ensemble using the reaction ensemble module
 exclusion_range = PARTICLE_SIZE_REDUCED
-RE = espressomd.reaction_ensemble.ReactionEnsemble(
+RE = espressomd.reaction_methods.ReactionEnsemble(
     kT=KT_REDUCED,
     exclusion_range=exclusion_range,
     seed=77

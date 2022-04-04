@@ -192,11 +192,11 @@ BOOST_AUTO_TEST_CASE(check_exceptions) {
     // basic types
     auto const obj_variant = Variant{so_obj};
     auto const obj_variant_pattern = Utils::demangle<so_ptr_t>();
-    auto const what = msg_prefix + obj_variant_pattern;
+    auto const what = msg_prefix + "'" + obj_variant_pattern + "'";
     auto const predicate_nullptr =
         exception_message_predicate(what + " is a null pointer");
     auto const predicate_conversion =
-        exception_message_predicate(what + " is not convertible to int");
+        exception_message_predicate(what + " is not convertible to 'int'");
     BOOST_CHECK_EXCEPTION(get_value<so_ptr_t>(obj_variant), std::exception,
                           predicate_nullptr);
     BOOST_CHECK_EXCEPTION(get_value<int>(obj_variant), std::exception,
@@ -207,12 +207,12 @@ BOOST_AUTO_TEST_CASE(check_exceptions) {
     auto const vec_variant = Variant{std::vector<Variant>{{so_obj}}};
     auto const vec_variant_pattern =
         "std::(__1::)?vector<" + variant_name + ", .*?>";
-    auto const what = msg_prefix + vec_variant_pattern;
+    auto const what = msg_prefix + "'" + vec_variant_pattern + "'";
     auto const predicate_nullptr = exception_message_predicate(
         what + " contains a value that is a null pointer");
     auto const predicate_conversion = exception_message_predicate(
-        what + " is not convertible to std::(__1::)?vector<int, .*?> because "
-               "it contains a value that is not convertible to int");
+        what + " is not convertible to 'std::(__1::)?vector<int, .*?>' because"
+               " it contains a value that is not convertible to 'int'");
     BOOST_CHECK_EXCEPTION(get_value<std::vector<so_ptr_t>>(vec_variant),
                           std::exception, predicate_nullptr);
     BOOST_CHECK_EXCEPTION(get_value<std::vector<int>>(vec_variant),
@@ -224,13 +224,13 @@ BOOST_AUTO_TEST_CASE(check_exceptions) {
         Variant{std::unordered_map<int, Variant>{{1, so_obj}}};
     auto const map_variant_pattern =
         "std::(__1::)?unordered_map<int, " + variant_name + ", .*?>";
-    auto const what = msg_prefix + map_variant_pattern;
+    auto const what = msg_prefix + "'" + map_variant_pattern + "'";
     auto const predicate_nullptr = exception_message_predicate(
         what + " contains a value that is a null pointer");
     auto const predicate_conversion = exception_message_predicate(
         what +
-        " is not convertible to std::(__1::)?unordered_map<int, int, .*?> "
-        "because it contains a value that is not convertible to int");
+        " is not convertible to 'std::(__1::)?unordered_map<int, int, .*?>' "
+        "because it contains a value that is not convertible to 'int'");
     BOOST_CHECK_EXCEPTION(
         (get_value<std::unordered_map<int, so_ptr_t>>(map_variant)),
         std::exception, predicate_nullptr);

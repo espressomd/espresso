@@ -38,7 +38,8 @@ namespace Constraints {
 class HomogeneousMagneticField : public Constraint {
 public:
   HomogeneousMagneticField()
-      : m_constraint(new ::Constraints::HomogeneousMagneticField()) {
+      : m_constraint(
+            std::make_shared<::Constraints::HomogeneousMagneticField>()) {
     add_parameters({{"H",
                      [this](Variant const &v) {
                        m_constraint->set_H(get_value<Utils::Vector3d>(v));

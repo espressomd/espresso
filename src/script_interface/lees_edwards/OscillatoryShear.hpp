@@ -34,8 +34,8 @@ namespace LeesEdwards {
 class OscillatoryShear : public Protocol {
 public:
   OscillatoryShear()
-      : m_protocol{new ::LeesEdwards::ActiveProtocol{
-            ::LeesEdwards::OscillatoryShear()}} {
+      : m_protocol{std::make_shared<::LeesEdwards::ActiveProtocol>(
+            ::LeesEdwards::OscillatoryShear())} {
     add_parameters(
         {{"amplitude",
           boost::get<::LeesEdwards::OscillatoryShear>(*m_protocol).m_amplitude},

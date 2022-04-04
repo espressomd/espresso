@@ -48,7 +48,7 @@ for config in ${configs}; do
   echo "### ${config}" | tee -a benchmarks.log
   cp ${config} myconfig.hpp
   rm -rf src/ maintainer/
-  cmake -DWITH_BENCHMARKS=ON -DTEST_TIMEOUT=600 -DWITH_CUDA=OFF -DWITH_CCACHE=OFF ..
+  cmake -DWITH_BENCHMARKS=ON -DTEST_TIMEOUT=1200 -DWITH_CUDA=OFF -DWITH_CCACHE=OFF ..
   make -j$(nproc)
   rm -f benchmarks.csv.part
   touch benchmarks.csv.part

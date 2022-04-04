@@ -25,11 +25,8 @@ import numpy as np
 cimport numpy as np
 from libc cimport stdint
 from .actors cimport Actor
-from . cimport cuda_init
-from . import cuda_init
 from . import utils
-from .utils import array_locked, is_valid_type, check_type_or_throw_except
-from .utils cimport Vector3i, Vector3d, Vector6d, Vector19d, make_array_locked, make_Vector3d
+from .utils cimport Vector3i, Vector3d, Vector6d, Vector19d, make_Vector3d
 from .integrate cimport get_time_step
 
 
@@ -108,7 +105,7 @@ cdef class HydrodynamicInteraction(Actor):
 
         if self._params["dens"] == default_params["dens"]:
             raise Exception("LB_FLUID density not set")
-        elif not (self._params["dens"] > 0.0 and (is_valid_type(self._params["dens"], float) or is_valid_type(self._params["dens"], int))):
+        elif not (self._params["dens"] > 0.0 and (utils.is_valid_type(self._params["dens"], float) or utils.is_valid_type(self._params["dens"], int))):
             raise ValueError("Density must be a positive double")
 
         if self._params["tau"] <= 0.:
@@ -234,10 +231,10 @@ cdef class HydrodynamicInteraction(Actor):
             raise ValueError(
                 "Invalid parameter: must provide either both bb1 and bb2, or none of them")
         else:
-            check_type_or_throw_except(bb1, 3, int,
-                                       "bb1 has to be an integer list of length 3")
-            check_type_or_throw_except(bb2, 3, int,
-                                       "bb2 has to be an integer list of length 3")
+            utils.check_type_or_throw_except(
+                bb1, 3, int, "bb1 has to be an integer list of length 3")
+            utils.check_type_or_throw_except(
+                bb2, 3, int, "bb2 has to be an integer list of length 3")
             bb1_vec = bb1
             bb2_vec = bb2
             lb_lbfluid_print_vtk_velocity(
@@ -331,7 +328,7 @@ cdef class HydrodynamicInteraction(Actor):
     property pressure_tensor:
         def __get__(self):
             tensor = python_lbfluid_get_pressure_tensor(self.agrid, self.tau)
-            return array_locked(tensor)
+            return utils.array_locked(tensor)
 
         def __set__(self, value):
             raise NotImplementedError
@@ -501,7 +498,7 @@ cdef class LBFluidRoutines:
     property pressure_tensor:
         def __get__(self):
             tensor = python_lbnode_get_pressure_tensor(self.node)
-            return array_locked(tensor)
+            return utils.array_locked(tensor)
 
         def __set__(self, value):
             raise NotImplementedError
@@ -509,7 +506,7 @@ cdef class LBFluidRoutines:
     property pressure_tensor_neq:
         def __get__(self):
             tensor = python_lbnode_get_pressure_tensor_neq(self.node)
-            return array_locked(tensor)
+            return utils.array_locked(tensor)
 
         def __set__(self, value):
             raise NotImplementedError
@@ -518,26 +515,26 @@ cdef class LBFluidRoutines:
         def __get__(self):
             cdef Vector19d double_return
             double_return = lb_lbnode_get_pop(self.node)
-            return array_locked(np.array([double_return[0],
-                                          double_return[1],
-                                          double_return[2],
-                                          double_return[3],
-                                          double_return[4],
-                                          double_return[5],
-                                          double_return[6],
-                                          double_return[7],
-                                          double_return[8],
-                                          double_return[9],
-                                          double_return[10],
-                                          double_return[11],
-                                          double_return[12],
-                                          double_return[13],
-                                          double_return[14],
-                                          double_return[15],
-                                          double_return[16],
-                                          double_return[17],
-                                          double_return[18]]
-                                         ))
+            return utils.array_locked(np.array([double_return[0],
+                                                double_return[1],
+                                                double_return[2],
+                                                double_return[3],
+                                                double_return[4],
+                                                double_return[5],
+                                                double_return[6],
+                                                double_return[7],
+                                                double_return[8],
+                                                double_return[9],
+                                                double_return[10],
+                                                double_return[11],
+                                                double_return[12],
+                                                double_return[13],
+                                                double_return[14],
+                                                double_return[15],
+                                                double_return[16],
+                                                double_return[17],
+                                                double_return[18]]
+                                               ))
 
         def __set__(self, population):
             cdef Vector19d _population
@@ -588,7 +585,7 @@ class LBSlice:
                         np.array([x, y, z])), prop_name)
         if shape_res == (1,):
             res = np.squeeze(res, axis=-1)
-        return array_locked(res)
+        return utils.array_locked(res)
 
     def set_values(self, x_indices, y_indices, z_indices, prop_name, value):
         for i, x in enumerate(x_indices):

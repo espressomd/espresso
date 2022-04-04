@@ -57,6 +57,9 @@ if not args.visualizer:
 required_features = ["P3M", "LENNARD_JONES", "MASS"]
 espressomd.assert_features(required_features)
 
+# make simulation deterministic
+np.random.seed(42)
+
 # System
 #############################################################
 system = espressomd.System(box_l=[1, 1, 1])

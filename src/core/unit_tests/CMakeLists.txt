@@ -37,6 +37,8 @@ unit_test(NAME p3m_test SRC p3m_test.cpp DEPENDS EspressoUtils)
 unit_test(NAME link_cell_test SRC link_cell_test.cpp DEPENDS EspressoUtils)
 unit_test(NAME Particle_test SRC Particle_test.cpp DEPENDS EspressoUtils
           Boost::serialization)
+unit_test(NAME Particle_serialization_test SRC Particle_serialization_test.cpp
+          DEPENDS EspressoUtils Boost::serialization)
 unit_test(NAME rotation_test SRC rotation_test.cpp DEPENDS EspressoUtils
           EspressoCore)
 unit_test(NAME field_coupling_couplings SRC field_coupling_couplings_test.cpp

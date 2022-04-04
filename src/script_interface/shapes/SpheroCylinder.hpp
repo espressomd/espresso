@@ -36,7 +36,8 @@ class SpheroCylinder : public Shape {
   std::shared_ptr<::Shapes::SpheroCylinder> m_spherocylinder;
 
 public:
-  SpheroCylinder() : m_spherocylinder(new ::Shapes::SpheroCylinder()) {
+  SpheroCylinder()
+      : m_spherocylinder(std::make_shared<::Shapes::SpheroCylinder>()) {
     add_parameters(
         {{"radius", m_spherocylinder, &CoreShape::set_radius,
           &CoreShape::radius},

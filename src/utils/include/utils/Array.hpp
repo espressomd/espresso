@@ -27,6 +27,7 @@
 
 #include "device_qualifier.hpp"
 #include "get.hpp"
+#include "serialization/array.hpp"
 
 #include <boost/serialization/access.hpp>
 
@@ -215,4 +216,14 @@ auto get(Array<T, N> const &a) -> std::enable_if_t<(I < N), const T &> {
 }
 
 } // namespace Utils
-#endif // SRC_UTILS_INCLUDE_UTILS_ARRAY_HPP
+
+UTILS_ARRAY_BOOST_MPI_T(Utils::detail::Storage, N)
+UTILS_ARRAY_BOOST_BIT_S(Utils::detail::Storage, N)
+UTILS_ARRAY_BOOST_CLASS(Utils::detail::Storage, N, object_serializable)
+UTILS_ARRAY_BOOST_TRACK(Utils::detail::Storage, N, track_never)
+UTILS_ARRAY_BOOST_MPI_T(Utils::Array, N)
+UTILS_ARRAY_BOOST_BIT_S(Utils::Array, N)
+UTILS_ARRAY_BOOST_CLASS(Utils::Array, N, object_serializable)
+UTILS_ARRAY_BOOST_TRACK(Utils::Array, N, track_never)
+
+#endif

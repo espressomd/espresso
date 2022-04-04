@@ -3,10 +3,6 @@
 Under the hood
 ==============
 
--  Implementation issues that are interesting for the user
-
--  Main loop in pseudo code (for comparison)
-
 .. _Internal particle organization:
 
 Internal particle organization
@@ -52,10 +48,9 @@ coordinate, allowing for a small skin of 0.05. If one chooses only 6
 boxes in the first coordinate, the skin depth increases to 0.467. In
 this example we assume that the number of cells in the first coordinate
 was chosen to be 6 and that the cells are cubic. One would then organize
-the cells on each node in a :math:`6\times
-12\times 12` cell grid embedded at the center of a
-:math:`8\times 14 \times
-14` grid. The additional cells around the cells containing the particles
+the cells on each node in a :math:`6 \times 12 \times 12` cell grid
+embedded at the center of a :math:`8 \times 14 \times 14` grid.
+The additional cells around the cells containing the particles
 represent the ghost shell in which the information of the ghost
 particles from the neighboring nodes is stored. Therefore the particle
 information stored on each node resides in 1568 particle lists of which

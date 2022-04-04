@@ -230,8 +230,11 @@ cdef class ParticleHandle:
                                  self.particle_data.image_box()[2]])
 
     property lees_edwards_offset:
-        """Contains the accumulated Lees-Edwards offset to reconstruct
-           continuous trajectories.
+        """
+        The accumulated Lees-Edwards offset.
+        Can be used to reconstruct continuous trajectories.
+
+        offset : (3,) array_like of :obj:`float`
 
         """
 
@@ -243,8 +246,9 @@ cdef class ParticleHandle:
             set_particle_lees_edwards_offset(self._id, value)
 
     property lees_edwards_flag:
-        """Contains the accumulated Lees-Edwards flag to indicate
-           if the particle crossed the upper or lower boundary.
+        """
+        The Lees-Edwards flag that indicate if the particle crossed
+        the upper or lower boundary.
 
         """
 
@@ -534,7 +538,7 @@ cdef class ParticleHandle:
 
             Sets the diagonal elements of this particles rotational inertia
             tensor. These correspond with the inertial moments along the
-            coordinate axes in the particle’s co-rotating coordinate system.
+            coordinate axes in the particle's co-rotating coordinate system.
             When the particle's quaternions are set to ``[1, 0, 0, 0,]``, the
             co-rotating and the fixed (lab) frames are co-aligned.
 
@@ -1011,7 +1015,7 @@ cdef class ParticleHandle:
 
             def __get__(self):
                 self.update_particle_data()
-                return array_locked(self.particle_data.exclusions())
+                return array_locked(self.particle_data.exclusions_as_vector())
 
         def add_exclusion(self, _partner):
             """
@@ -1023,12 +1027,12 @@ cdef class ParticleHandle:
                 partner
 
             """
-            if _partner in self.exclusions:
-                raise Exception(
-                    f"Exclusion id {_partner} already in exclusion list of particle {self._id}")
-
             check_type_or_throw_except(
                 _partner, 1, int, "PID of partner has to be an int.")
+            self.update_particle_data()
+            if self.particle_data.has_exclusion(_partner):
+                raise Exception(
+                    f"Exclusion id {_partner} already in exclusion list of particle {self._id}")
             if self._id == _partner:
                 raise Exception(
                     "Cannot exclude of a particle with itself!\n"
@@ -1039,7 +1043,8 @@ cdef class ParticleHandle:
         def delete_exclusion(self, _partner):
             check_type_or_throw_except(
                 _partner, 1, int, "PID of partner has to be an int.")
-            if _partner not in self.exclusions:
+            self.update_particle_data()
+            if not self.particle_data.has_exclusion(_partner):
                 raise Exception(
                     f"Particle with id {_partner} is not in exclusion list.")
             if change_exclusion(self._id, _partner, 1) == 1:

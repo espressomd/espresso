@@ -1,5 +1,4 @@
-#
-# Copyright (C) 2013-2019 The ESPResSo project
+# Copyright (C) 2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -15,29 +14,18 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
-import espressomd
-import espressomd.utils
 
 import unittest as ut
+import importlib_wrapper
+
+sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
+    "@SAMPLES_DIR@/reaction_methods.py", cmd_arguments=["--@TEST_SUFFIX@"],
+    script_suffix="@TEST_SUFFIX@")
 
 
-@espressomd.utils.requires_experimental_features("because")
-class A:
-
-    def __init__(self, *args, **kwargs):
-        pass
-
-
-class RequireExperimental(ut.TestCase):
-
-    def test(self):
-
-        if espressomd.has_features("EXPERIMENTAL_FEATURES"):
-            _ = A(1, 3.0)
-        else:
-            with self.assertRaisesRegex(Exception, "because"):
-                _ = A(1, 3.0)
+@skipIfMissingFeatures
+class Sample(ut.TestCase):
+    system = sample.system
 
 
 if __name__ == "__main__":

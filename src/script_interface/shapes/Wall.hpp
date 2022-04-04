@@ -33,7 +33,7 @@ namespace Shapes {
 
 class Wall : public Shape {
 public:
-  Wall() : m_wall(new ::Shapes::Wall()) {
+  Wall() : m_wall(std::make_shared<::Shapes::Wall>()) {
     add_parameters({{"dist", m_wall->d()},
                     {"normal",
                      [this](Variant const &v) {
