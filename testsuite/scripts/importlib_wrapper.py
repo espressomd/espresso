@@ -52,23 +52,23 @@ def configure_and_import(filepath,
 
     Parameters
     ----------
-    filepath : str
+    filepath : :obj:`str`
         python script to import
-    gpu : bool
+    gpu : :obj:`bool`
         whether GPU is necessary or not
-    substitutions : function
+    substitutions : :obj:`function`
         custom text replacement operation (useful to edit out calls to the
         OpenGL or Mayavi visualizers' ``run()`` method)
-    cmd_arguments : list
+    cmd_arguments : :obj:`list`
         command line arguments, i.e. sys.argv without the script path
-    script_suffix : str
+    script_suffix : :obj:`str`
         suffix to append to the configured script (useful when a single
         module is being tested by multiple tests in parallel)
-    mock_visualizers : bool
-        if ``True``, substitute ES visualizers with `Mock()` classes in case
-        of `ImportError()` (use ``False`` if an `ImportError()` is relevant
+    mock_visualizers : :obj:`bool`
+        if ``True``, substitute ES visualizers with ``Mock`` classes in case
+        of ``ImportError`` (use ``False`` if an ``ImportError`` is relevant
         to your test)
-    move_to_script_dir : bool
+    move_to_script_dir : :obj:`bool`
         if ``True``, move to the script's directory (useful when the script
         needs to load files hardcoded as relative paths, or when files are
         generated and need cleanup); this is enabled by default
@@ -203,12 +203,12 @@ def substitute_variable_values(code, strings_as_is=False, keep_original=True,
 
     Parameters
     ----------
-    code : str
+    code : :obj:`str`
         Source code to edit.
-    strings_as_is : bool
+    strings_as_is : :obj:`bool`
         If ``True``, consider all values in \*\*parameters are strings and
         substitute them in-place without formatting by ``repr()``.
-    keep_original : bool
+    keep_original : :obj:`bool`
         Keep the original value (e.g. ``N = 10; _N__original = 1000``), helps
         with debugging.
     \*\*parameters :
@@ -569,9 +569,9 @@ class GetEspressomdVisualizerImports(ast.NodeVisitor):
 
 def mock_es_visualization(code):
     """
-    Replace ``import espressomd.visualization_<backend>`` by a ``MagicMock()``
+    Replace ``import espressomd.visualization_<backend>`` by a ``MagicMock``
     when the visualization module is unavailable, by catching the
-    ``ImportError()`` exception. Please note that ``espressomd.visualization``
+    ``ImportError`` exception. Please note that ``espressomd.visualization``
     is deferring the exception, thus requiring additional checks.
 
     Import aliases are supported, however please don't use
