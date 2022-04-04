@@ -19,6 +19,7 @@ import unittest as ut
 import importlib_wrapper as iw
 import sys
 import ast
+import pathlib
 
 
 class importlib_wrapper(ut.TestCase):
@@ -49,20 +50,21 @@ class importlib_wrapper(ut.TestCase):
     def test_set_cmd(self):
         original_sys_argv = list(sys.argv)
         sys.argv = [0, "test"]
+        path = pathlib.Path("a.py")
         # test substitutions
         str_inp = "import sys\nimport argparse"
-        str_exp = "import sys;sys.argv = ['a.py', '1', '2'];" + str_inp
-        str_out, sys_argv = iw.set_cmd(str_inp, "a.py", (1, 2))
+        str_exp = f"import sys;sys.argv = ['{path.name}', '1', '2'];" + str_inp
+        str_out, sys_argv = iw.set_cmd(str_inp, path, (1, 2))
         self.assertEqual(str_out, str_exp)
         self.assertEqual(sys_argv, [0, "test"])
         str_inp = "import argparse"
-        str_exp = "import sys;sys.argv = ['a.py', '1', '2'];" + str_inp
-        str_out, sys_argv = iw.set_cmd(str_inp, "a.py", ["1", 2])
+        str_exp = f"import sys;sys.argv = ['{path.name}', '1', '2'];" + str_inp
+        str_out, sys_argv = iw.set_cmd(str_inp, path, ["1", 2])
         self.assertEqual(str_out, str_exp)
         self.assertEqual(sys_argv, [0, "test"])
         # test exceptions
         str_inp = "import re"
-        self.assertRaises(AssertionError, iw.set_cmd, str_inp, "a.py", (1, 2))
+        self.assertRaises(AssertionError, iw.set_cmd, str_inp, path, (1, 2))
         # restore sys.argv
         sys.argv = original_sys_argv
 

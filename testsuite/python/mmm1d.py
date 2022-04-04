@@ -35,7 +35,7 @@ class ElectrostaticInteractionsTests:
     system.cell_system.set_n_square()
     system.thermostat.set_langevin(kT=0, gamma=1, seed=8)
 
-    data = np.loadtxt(tests_common.abspath("data/mmm1d_data.txt"))
+    data = np.loadtxt(tests_common.data_path("mmm1d_data.txt"))
     p_pos = data[:, 1:4]
     p_q = data[:, 4]
     forces_target = data[:, 5:8]

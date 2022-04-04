@@ -31,8 +31,8 @@ class CoulombMixedPeriodicity(ut.TestCase):
     """Test mixed periodicity electrostatics"""
 
     system = espressomd.System(box_l=[10, 10, 10])
-    data = np.genfromtxt(tests_common.abspath(
-        "data/coulomb_mixed_periodicity_system.data"))
+    data = np.genfromtxt(tests_common.data_path(
+        "coulomb_mixed_periodicity_system.data"))
 
     tolerance_force = 5E-4
     tolerance_energy = 1.8E-3

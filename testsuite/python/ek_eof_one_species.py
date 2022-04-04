@@ -19,6 +19,7 @@ import unittest as ut
 import unittest_decorators as utx
 import unittest_generator as utg
 import pathlib
+import tempfile
 
 import sys
 import math
@@ -219,7 +220,7 @@ class ek_eof_one_species(ut.TestCase):
 
     def parse_vtk(self, filepath, name, shape):
         reader = vtk.vtkStructuredPointsReader()
-        reader.SetFileName(filepath)
+        reader.SetFileName(str(filepath))
         reader.ReadAllVectorsOn()
         reader.ReadAllScalarsOn()
         reader.Update()
@@ -433,41 +434,44 @@ class ek_eof_one_species(ut.TestCase):
             map(int, np.round(self.system.box_l / params_base['agrid'])))
 
         # write VTK files
-        vtk_root = f"vtk_out/ek_eof_{axis}"
-        pathlib.Path(vtk_root).mkdir(parents=True, exist_ok=True)
-        path_vtk_boundary = f"{vtk_root}/boundary.vtk"
-        path_vtk_velocity = f"{vtk_root}/velocity.vtk"
-        path_vtk_potential = f"{vtk_root}/potential.vtk"
-        path_vtk_lbdensity = f"{vtk_root}/density.vtk"
-        path_vtk_lbforce = f"{vtk_root}/lbforce.vtk"
-        path_vtk_density = f"{vtk_root}/lbdensity.vtk"
-        path_vtk_flux = f"{vtk_root}/flux.vtk"
-        path_vtk_flux_link = f"{vtk_root}/flux_link.vtk"
-        if espressomd.has_features('EK_DEBUG'):
-            path_vtk_flux_fluc = f"{vtk_root}/flux_fluc.vtk"
-        ek.write_vtk_boundary(path_vtk_boundary)
-        ek.write_vtk_velocity(path_vtk_velocity)
-        ek.write_vtk_potential(path_vtk_potential)
-        ek.write_vtk_density(path_vtk_lbdensity)
-        ek.write_vtk_lbforce(path_vtk_lbforce)
-        counterions.write_vtk_density(path_vtk_density)
-        counterions.write_vtk_flux(path_vtk_flux)
-        if espressomd.has_features('EK_DEBUG'):
-            counterions.write_vtk_flux_fluc(path_vtk_flux_fluc)
-        counterions.write_vtk_flux_link(path_vtk_flux_link)
+        with tempfile.TemporaryDirectory() as tmp_directory:
+            path_vtk_root = pathlib.Path(tmp_directory)
+            path_vtk_root.mkdir(parents=True, exist_ok=True)
+            path_vtk_boundary = path_vtk_root / "boundary.vtk"
+            path_vtk_velocity = path_vtk_root / "velocity.vtk"
+            path_vtk_potential = path_vtk_root / "potential.vtk"
+            path_vtk_lbdensity = path_vtk_root / "density.vtk"
+            path_vtk_lbforce = path_vtk_root / "lbforce.vtk"
+            path_vtk_density = path_vtk_root / "lbdensity.vtk"
+            path_vtk_flux = path_vtk_root / "flux.vtk"
+            path_vtk_flux_link = path_vtk_root / "flux_link.vtk"
+            if espressomd.has_features('EK_DEBUG'):
+                path_vtk_flux_fluc = path_vtk_root / "flux_fluc.vtk"
+            ek.write_vtk_boundary(str(path_vtk_boundary))
+            ek.write_vtk_velocity(str(path_vtk_velocity))
+            ek.write_vtk_potential(str(path_vtk_potential))
+            ek.write_vtk_density(str(path_vtk_lbdensity))
+            ek.write_vtk_lbforce(str(path_vtk_lbforce))
+            counterions.write_vtk_density(str(path_vtk_density))
+            counterions.write_vtk_flux(str(path_vtk_flux))
+            if espressomd.has_features('EK_DEBUG'):
+                counterions.write_vtk_flux_fluc(str(path_vtk_flux_fluc))
+            counterions.write_vtk_flux_link(str(path_vtk_flux_link))
 
-        # load VTK files to check they are correctly formatted
-        get_vtk = self.parse_vtk
-        vtk_boundary = get_vtk(path_vtk_boundary, "boundary", grid_dims)
-        vtk_velocity = get_vtk(path_vtk_velocity, "velocity", grid_dims + [3])
-        vtk_potential = get_vtk(path_vtk_potential, "potential", grid_dims)
-        vtk_lbdensity = get_vtk(path_vtk_lbdensity, "density_lb", grid_dims)
-        get_vtk(path_vtk_lbforce, "lbforce", grid_dims + [3])
-        vtk_density = get_vtk(path_vtk_density, "density_1", grid_dims)
-        vtk_flux = get_vtk(path_vtk_flux, "flux_1", grid_dims + [3])
-        if espressomd.has_features('EK_DEBUG'):
-            get_vtk(path_vtk_flux_fluc, "flux_fluc_1", grid_dims + [4])
-        get_vtk(path_vtk_flux_link, "flux_link_1", grid_dims + [13])
+            # load VTK files to check they are correctly formatted
+            get_vtk = self.parse_vtk
+            vtk_boundary = get_vtk(path_vtk_boundary, "boundary", grid_dims)
+            vtk_velocity = get_vtk(
+                path_vtk_velocity, "velocity", grid_dims + [3])
+            vtk_potential = get_vtk(path_vtk_potential, "potential", grid_dims)
+            vtk_lbdensity = get_vtk(
+                path_vtk_lbdensity, "density_lb", grid_dims)
+            get_vtk(path_vtk_lbforce, "lbforce", grid_dims + [3])
+            vtk_density = get_vtk(path_vtk_density, "density_1", grid_dims)
+            vtk_flux = get_vtk(path_vtk_flux, "flux_1", grid_dims + [3])
+            if espressomd.has_features('EK_DEBUG'):
+                get_vtk(path_vtk_flux_fluc, "flux_fluc_1", grid_dims + [4])
+            get_vtk(path_vtk_flux_link, "flux_link_1", grid_dims + [13])
 
         # check VTK files against the EK grid
         species_density = np.zeros(grid_dims)
