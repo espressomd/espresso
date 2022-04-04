@@ -22,14 +22,10 @@ import sys
 import ast
 import tokenize
 import unittest
+import unittest.mock
 import importlib
 import pathlib
 import espressomd
-from unittest.mock import MagicMock
-
-
-def _id(x):
-    return x
 
 
 # global variable: if one import failed, all subsequent imports will be skipped,
@@ -82,13 +78,13 @@ def configure_and_import(filepath,
     """
     filepath = pathlib.Path(filepath).resolve()
     if skip_future_imports:
-        module = MagicMock()
+        module = unittest.mock.MagicMock()
         skipIfMissingImport = skip_future_imports_dependency(filepath)
         return module, skipIfMissingImport
     if gpu and not espressomd.gpu_available():
         skip_future_imports_dependency(filepath)
         skipIfMissingGPU = unittest.skip("gpu not available, skipping test!")
-        module = MagicMock()
+        module = unittest.mock.MagicMock()
         return module, skipIfMissingGPU
     # load original script
     code = filepath.read_text()
@@ -122,9 +118,9 @@ def configure_and_import(filepath,
     except espressomd.FeaturesError as err:
         skip_future_imports_dependency(filepath)
         skipIfMissingFeatures = unittest.skip(f"{err}, skipping test!")
-        module = MagicMock()
+        module = unittest.mock.MagicMock()
     else:
-        skipIfMissingFeatures = _id
+        def skipIfMissingFeatures(x): return x
     if cmd_arguments is not None:
         # restore original command line arguments
         sys.argv = old_sys_argv
@@ -236,8 +232,8 @@ def substitute_variable_values(code, strings_as_is=False, keep_original=True,
             if keep_original:
                 lines[lineno - 1] += "; _" + varname + "__original" + old_value
             else:
-                for lineno in range(lineno + 1, mapping[lineno]):
-                    lines[lineno - 1] = ""
+                for lineno in range(lineno, mapping[lineno]):
+                    lines[lineno] = ""
     return "\n".join(lines)
 
 
@@ -587,9 +583,9 @@ def mock_es_visualization(code):
 try:
     {0}{1}
 except ImportError:
-    from unittest.mock import MagicMock
+    import unittest.mock
     import espressomd
-    {2} = MagicMock()
+    {2} = unittest.mock.MagicMock()
 """.lstrip()
 
     def check_for_deferred_ImportError(line, alias):

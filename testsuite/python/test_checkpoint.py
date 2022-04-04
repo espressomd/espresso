@@ -20,6 +20,7 @@ import unittest as ut
 import unittest_decorators as utx
 import unittest_generator as utg
 import numpy as np
+import contextlib
 import pathlib
 
 import espressomd
@@ -33,10 +34,8 @@ import espressomd.integrate
 import espressomd.shapes
 import espressomd.constraints
 
-try:
+with contextlib.suppress(ImportError):
     import h5py  # h5py has to be imported *after* espressomd (MPI)
-except ImportError:
-    h5py = None
 
 config = utg.TestGenerator()
 is_gpu_available = espressomd.gpu_available()
@@ -69,6 +68,13 @@ class CheckpointTest(ut.TestCase):
                 return actor
         self.fail(
             f"system doesn't have an actor of type {actor_type.__name__}")
+
+    def test_get_active_actor_of_type(self):
+        if system.actors.active_actors:
+            actor = system.actors.active_actors[0]
+            self.assertEqual(self.get_active_actor_of_type(type(actor)), actor)
+        with self.assertRaisesRegex(AssertionError, "system doesn't have an actor of type Wall"):
+            self.get_active_actor_of_type(espressomd.shapes.Wall)
 
     @ut.skipIf(not has_lb_mode, "Skipping test due to missing mode.")
     def test_lb_fluid(self):
@@ -417,8 +423,7 @@ class CheckpointTest(ut.TestCase):
                 expected)
 
     @utx.skipIfMissingFeatures('H5MD')
-    @ut.skipIf(h5py is None,
-               "Skipping test due to missing python module 'h5py'.")
+    @utx.skipIfMissingModules("h5py")
     def test_h5md(self):
         # check attributes
         file_path = self.path_cpt_root / "test.h5"

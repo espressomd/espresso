@@ -46,36 +46,30 @@ class ElectrostaticInteractionsTests:
     def setUp(self):
         self.system.periodicity = [0, 0, 1]
         self.system.cell_system.set_n_square()
-        self.system.part.add(pos=self.p_pos, q=self.p_q)
-        self.mmm1d = self.MMM1D(prefactor=1.0, maxPWerror=1e-20)
-        self.system.actors.add(self.mmm1d)
-        self.system.integrator.run(steps=0)
 
     def tearDown(self):
         self.system.part.clear()
         self.system.actors.clear()
 
-    def test_forces(self):
+    def test_forces_and_energy(self):
+        self.system.part.add(pos=self.p_pos, q=self.p_q)
+        mmm1d = self.MMM1D(prefactor=1.0, maxPWerror=1e-20)
+        self.system.actors.add(mmm1d)
+        self.system.integrator.run(steps=0)
         measured_f = np.copy(self.system.part.all().f)
         np.testing.assert_allclose(measured_f, self.forces_target,
                                    atol=self.allowed_error)
-
-    def test_energy(self):
         measured_el_energy = self.system.analysis.energy()["coulomb"]
         self.assertAlmostEqual(
             measured_el_energy, self.energy_target, delta=self.allowed_error,
             msg="Measured energy deviates too much from stored result")
 
-    def test_with_analytical_result(self, prefactor=1.0, accuracy=1e-4):
-        self.system.part.clear()
-        p = self.system.part.add(pos=[0, 0, 0], q=1)
-        self.system.part.add(pos=[0, 0, 1], q=1)
-
-        self.system.integrator.run(steps=0)
+    def check_with_analytical_result(self, prefactor, accuracy):
+        p = self.system.part.by_id(0)
         f_measured = p.f
         energy_measured = self.system.analysis.energy()["total"]
-        target_energy_config = 1.00242505606 * prefactor
-        target_force_z_config = -0.99510759 * prefactor
+        target_energy_config = -1.00242505606 * prefactor
+        target_force_z_config = 0.99510759 * prefactor
 
         self.assertAlmostEqual(
             f_measured[0], 0, delta=self.allowed_error,
@@ -90,17 +84,23 @@ class ElectrostaticInteractionsTests:
             energy_measured, target_energy_config, delta=self.allowed_error,
             msg="Measured energy deviates too much from analytical result")
 
-    def test_bjerrum_length_change(self):
-        self.system.part.clear()
-        self.system.actors.clear()
-        prefactor = 2
-        mmm1d = self.MMM1D(prefactor=prefactor, maxPWerror=1e-20)
+    def test_with_analytical_result(self):
+        self.system.part.add(pos=[0, 0, 0], q=1)
+        self.system.part.add(pos=[0, 0, 1], q=-1)
+        mmm1d = self.MMM1D(prefactor=1.0, maxPWerror=1e-20)
         self.system.actors.add(mmm1d)
-        self.test_with_analytical_result(prefactor=prefactor, accuracy=0.0017)
+        self.system.integrator.run(steps=0)
+        self.check_with_analytical_result(prefactor=1.0, accuracy=0.0004)
+
+    def test_bjerrum_length_change(self):
+        self.system.part.add(pos=[0, 0, 0], q=1)
+        self.system.part.add(pos=[0, 0, 1], q=-1)
+        mmm1d = self.MMM1D(prefactor=2.0, maxPWerror=1e-20)
+        self.system.actors.add(mmm1d)
+        self.system.integrator.run(steps=0)
+        self.check_with_analytical_result(prefactor=2.0, accuracy=0.0017)
 
     def test_exceptions(self):
-        self.system.actors.clear()
-        del self.mmm1d
         # check periodicity exceptions
         for periodicity in itertools.product(range(2), range(2), range(2)):
             if periodicity == (0, 0, 1):

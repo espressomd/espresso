@@ -102,7 +102,7 @@ class ScriptInterface(ut.TestCase):
         constraint = espressomd.constraints.ShapeBasedConstraint()
         # check conversion of unsupported types
         with self.assertRaisesRegex(TypeError, "No conversion from type 'module' to 'Variant'"):
-            espressomd.constraints.ShapeBasedConstraint(unknown=ut)
+            espressomd.constraints.ShapeBasedConstraint(shape=ut)
         with self.assertRaisesRegex(TypeError, "No conversion from type 'module' to 'Variant'"):
             constraint.set_params(shape=ut)
         with self.assertRaisesRegex(TypeError, "No conversion from type 'module' to 'Variant'"):

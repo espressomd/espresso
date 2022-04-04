@@ -54,6 +54,9 @@ class Tests(ut.TestCase):
         decorator = utx.skipIfMissingModules(['numpy___', 'scipy___'])
         args = self.get_skip_reason(decorator)
         self.assertEqual(args, (err_msg + 'modules numpy___, scipy___',))
+        decorator = utx.skipIfMissingModules(['espressomd'])
+        args = self.get_skip_reason(decorator)
+        self.assertIsNone(args)
 
     def test_missing_gpu(self):
         espressomd.gpu_available = lambda: False

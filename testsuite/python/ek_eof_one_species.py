@@ -20,18 +20,15 @@ import unittest_decorators as utx
 import unittest_generator as utg
 import pathlib
 import tempfile
+import contextlib
 
 import sys
 import math
 import numpy as np
-try:
-    import vtk
-    from vtk.util import numpy_support as VN
-    skipIfMissingPythonPackage = utx.no_skip
-except ImportError:
-    skipIfMissingPythonPackage = ut.skip(
-        "Python module vtk not available, skipping test!")
 
+with contextlib.suppress(ImportError):
+    import vtk
+    import vtk.util.numpy_support
 
 import espressomd
 import espressomd.electrokinetics
@@ -214,6 +211,7 @@ def bisection():
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["ELECTROKINETICS", "EK_BOUNDARIES"])
+@utx.skipIfMissingModules("vtk")
 class ek_eof_one_species(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     xi = bisection()
@@ -228,7 +226,8 @@ class ek_eof_one_species(ut.TestCase):
         data = reader.GetOutput()
         points = data.GetPointData()
 
-        return VN.vtk_to_numpy(points.GetArray(name)).reshape(shape, order='F')
+        return vtk.util.numpy_support.vtk_to_numpy(
+            points.GetArray(name)).reshape(shape, order='F')
 
     @classmethod
     def setUpClass(cls):
@@ -426,7 +425,7 @@ class ek_eof_one_species(ut.TestCase):
         self.assertLess(total_pressure_difference_xz, 1.0e-04,
                         "Pressure accuracy xz component not achieved")
 
-    @skipIfMissingPythonPackage
+    @utx.skipIfMissingModules("vtk")
     def test_vtk(self):
         ek = self.ek
         counterions = self.counterions

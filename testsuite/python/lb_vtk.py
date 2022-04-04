@@ -21,15 +21,12 @@ import unittest_decorators as utx
 
 import pathlib
 import tempfile
+import contextlib
 import numpy as np
 
-try:
+with contextlib.suppress(ImportError):
     import vtk
-    from vtk.util import numpy_support as VN
-    skipIfMissingPythonPackage = utx.no_skip
-except ImportError:
-    skipIfMissingPythonPackage = ut.skip(
-        "Python module vtk not available, skipping test!")
+    import vtk.util.numpy_support
 
 import espressomd
 import espressomd.lb
@@ -70,7 +67,8 @@ class TestLBWrite:
         data = reader.GetOutput()
         points = data.GetPointData()
 
-        return VN.vtk_to_numpy(points.GetArray(name)).reshape(shape, order='F')
+        return vtk.util.numpy_support.vtk_to_numpy(
+            points.GetArray(name)).reshape(shape, order='F')
 
     def test_vtk(self):
         '''
@@ -136,8 +134,6 @@ class TestLBWrite:
 
             vtk_boundary = self.parse_vtk(path_vtk_boundary, 'boundary', shape)
             np.testing.assert_equal(vtk_boundary, node_boundary.astype(int))
-            if self.system.lbboundaries is None:
-                np.testing.assert_equal(np.sum(node_boundary), 0.)
 
     def test_print(self):
         '''
@@ -194,7 +190,7 @@ class TestLBWrite:
             np.testing.assert_equal(dat_bound, ref_bound)
 
 
-@skipIfMissingPythonPackage
+@utx.skipIfMissingModules("vtk")
 class TestLBWriteCPU(TestLBWrite, ut.TestCase):
 
     def setUp(self):
@@ -202,7 +198,7 @@ class TestLBWriteCPU(TestLBWrite, ut.TestCase):
 
 
 @utx.skipIfMissingGPU()
-@skipIfMissingPythonPackage
+@utx.skipIfMissingModules("vtk")
 class TestLBWriteGPU(TestLBWrite, ut.TestCase):
 
     def setUp(self):
