@@ -63,7 +63,7 @@ Several modes are available for different types of binding.
 
   * ``bond_vs`` is the bond to be added between the two virtual sites created on collision. This is either a pair-bond with an equilibrium length matching the distance between the virtual sites, or an angle bond fully stretched in its equilibrium configuration.
   * ``part_type_vs`` is the particle type assigned to the virtual sites created on collision. In nearly all cases, no non-bonded interactions should be defined for this particle type.
-  * ``vs_placement`` controls, where on the line connecting the centers of the colliding particles, the virtual sites are placed. A value of 0 means that the virtual sites are placed at the same position as the colliding particles on which they are based. A value of 0.5 will result in the virtual sites being placed ad the mid-point between the two colliding particles. A value of 1 will result the virtual site associated to the first colliding particle to be placed at the position of the second colliding particle. In most cases, 0.5, is a good choice. Then, the bond connecting the virtual sites should have an equilibrium length of zero.
+  * ``vs_placement`` controls, where on the line connecting the centers of the colliding particles, the virtual sites are placed. A value of 0 means that the virtual sites are placed at the same position as the colliding particles on which they are based. A value of 0.5 will result in the virtual sites being placed at the mid-point between the two colliding particles. A value of 1 will result the virtual site associated to the first colliding particle to be placed at the position of the second colliding particle. In most cases, 0.5, is a good choice. Then, the bond connecting the virtual sites should have an equilibrium length of zero.
 
 * ``"glue_to_surface"``: This mode is used to irreversibly attach small particles to the surface of a big particle. It is asymmetric in that several small particles can be bound to a big particle but not vice versa. The small particles can change type after collision to make them *inert*. On collision, a single virtual site is placed and related to the big particle. Then, a bond (``bond_centers``) connects the big and the small particle. A second bond (``bond_vs``) connects the virtual site and the small particle. Further required parameters are:
 
@@ -97,7 +97,7 @@ Several modes are available for different types of binding.
 
         n_angle_bonds = 181  # 0 to 180 degrees in one degree steps
         for i in range(0, res, 1):
-            self.system.bonded_inter[i] = espressomd.interactions.Angle_Harmonic(
+            self.system.bonded_inter[i] = espressomd.interactions.AngleHarmonic(
                 bend=1, phi0=float(i) / (res - 1) * np.pi)
 
         # Create the bond passed to bond_centers here and add it to the system
@@ -113,10 +113,94 @@ The following limitations currently apply for the collision detection:
 
 * No distinction is currently made between different particle types for the ``"bind_centers"`` method.
 
-* The ``"bind at point of collision"`` and ``"glue to surface"``  approaches require the feature ``VIRTUAL_SITES_RELATIVE`` to be activated in :file:`myconfig.hpp`.
+* The ``"bind_at_point_of_collision"`` and ``"glue_to_surface"``  approaches require the feature ``VIRTUAL_SITES_RELATIVE`` to be activated in :file:`myconfig.hpp`.
 
-* The ``"bind at point of collision"`` approach cannot handle collisions
+* The ``"bind_at_point_of_collision"`` approach cannot handle collisions
   between virtual sites
+
+.. _Deleting bonds when particles are pulled apart:
+
+Deleting bonds when particles are pulled apart
+----------------------------------------------
+
+With this feature, bonds between particles can be deleted automatically
+when the bond length exceeds a critical distance. This is used to model
+breakable bonds.
+
+The bond breakage action is specified for individual bonds via the system
+:attr:`~espressomd.system.System.bond_breakage` attribute.
+
+Several modes are available:
+
+* ``"delete_bond"``: delete a bond from the first particle
+* ``"revert_bind_at_point_of_collision"``: delete a bond between the virtual site
+* ``"none"``: cancel an existing bond breakage specification
+
+Example::
+
+    import espressomd
+    import espressomd.interactions
+    import espressomd.bond_breakage
+    import numpy as np
+
+    system = espressomd.System(box_l=[10] * 3)
+    system.cell_system.skin = 0.4
+    system.time_step = 0.1
+    system.min_global_cut = 2.
+
+    h1 = espressomd.interactions.HarmonicBond(k=0.01, r_0=0.4)
+    h2 = espressomd.interactions.HarmonicBond(k=0.01, r_0=0.5)
+    system.bonded_inter.add(h1)
+    system.bonded_inter.add(h2)
+    system.bond_breakage[h1] = espressomd.bond_breakage.BreakageSpec(
+        breakage_length=0.5, action_type="delete_bond")
+
+    p1 = system.part.add(id=1, pos=[0.00, 0.0, 0.0], v=[0.0, 0.0, 0.0])
+    p2 = system.part.add(id=2, pos=[0.46, 0.0, 0.0], v=[0.1, 0.0, 0.0])
+    p1.add_bond((h1, p2))
+    p1.add_bond((h2, p2))
+    for i in range(3):
+        system.integrator.run(2)
+        bond_length = np.linalg.norm(system.distance_vec(p1, p2))
+        print(f"length = {bond_length:.2f}, bonds = {p1.bonds}")
+
+Output:
+
+.. code-block:: none
+
+    length = 0.48, bonds = ((<HarmonicBond({'r_0': 0.4, 'k': 0.01})>, 2), (<HarmonicBond({'r_0': 0.5, 'k': 0.01})>, 2))
+    length = 0.50, bonds = ((<HarmonicBond({'r_0': 0.4, 'k': 0.01})>, 2), (<HarmonicBond({'r_0': 0.5, 'k': 0.01})>, 2))
+    length = 0.52, bonds = ((<HarmonicBond({'r_0': 0.5, 'k': 0.01})>, 2),)
+
+Please note there is no special treatment for the energy released or consumed
+by bond removal. This can lead to physical inconsistencies.
+
+
+.. _Modeling reversible bonds:
+
+Modeling reversible bonds
+-------------------------
+
+The :ref:`collision detection<Creating bonds when particles collide>`
+and :ref:`bond breakage<Deleting bonds when particles are pulled apart>`
+features can be combined to model reversible bonds.
+
+Two combinations are possible:
+
+* ``"delete_bond"`` mode for breakable bonds together with
+  ``"bond_centers"`` mode for collision detection:
+  used to create or delete a bond between two real particles
+* ``"revert_bind_at_point_of_collision"`` mode for breakable bonds together
+  with ``"bind_at_point_of_collision"`` mode for collision detection:
+  used to create or delete virtual sites (the implicitly created
+  bond between the real particles isn't affected)
+
+Please note that virtual sites are not automatically removed from the
+simulation, therefore the particle number will increase. If you want to
+remove virtual sites, you need to do so manually, either by tracking which
+virtual sites were introduced by collision detection, or by periodically
+looping over the particle list and removing virtual sites which have no
+corresponding bond.
 
 
 .. _Immersed Boundary Method for soft elastic objects:
@@ -845,13 +929,12 @@ class OifCell
     OifCell.get_origin()
     OifCell.get_origin_folded()
     OifCell.get_approx_origin()
-    OifCell.get_approx_origin_folded()
     OifCell.get_velocity()
     OifCell.set_velocity([x, y, z])
     OifCell.pos_bounds()
     OifCell.surface()
     OifCell.volume()
-    OifCell.get_diameter()
+    OifCell.diameter()
     OifCell.get_n_nodes()
     OifCell.set_force([x, y, z])
     OifCell.kill_motion()
@@ -860,8 +943,8 @@ class OifCell
     OifCell.output_vtk_pos_folded(filename.vtk)
     OifCell.append_point_data_to_vtk(filename.vtk, dataname, data, firstAppend)
     OifCell.output_raw_data(filename, rawdata)
-    OifCell.output_mesh_nodes(filename)
-    OifCell.set_mesh_nodes(filename)
+    OifCell.output_mesh_points(filename)
+    OifCell.set_mesh_points(filename)
     OifCell.elastic_forces(elasticforces, fmetric, vtkfile, rawdatafile)
     OifCell.print_info()
 
@@ -916,8 +999,7 @@ class OifCell
 
 | ``OifCell.volume()`` - outputs the volume of the object.
 
-| ``OifCell.get_diameter()`` - outputs the largest diameter of the
-  object.
+| ``OifCell.diameter()`` - outputs the largest diameter of the object.
 
 | ``OifCell.get_n_nodes()`` - returns the number of mesh nodes.
 
@@ -958,14 +1040,14 @@ class OifCell
 | ``OifCell.output_raw_data``\ (*filename*, **rawdata**) - outputs the
   vector **rawdata** about the object into the *filename*.
 
-| ``OifCell.output_mesh_nodes``\ (*filename*) - outputs the positions of
+| ``OifCell.output_mesh_points``\ (*filename*) - outputs the positions of
   the mesh nodes to *filename*. In fact, this command creates a new
   *nodes.dat* file that can be used by the method
-  ``OifCell.set_mesh_nodes``\ (*nodes.dat*). The center of the object is
+  ``OifCell.set_mesh_points``\ (*nodes.dat*). The center of the object is
   located at point (0.0, 0.0, 0.0). This command is aimed to store the
   deformed shape in order to be loaded later.
 
-| ``OifCell.set_mesh_nodes``\ (*filename*) - deforms the object in such a
+| ``OifCell.set_mesh_points``\ (*filename*) - deforms the object in such a
   way that its origin stays unchanged, however the relative positions of
   the mesh points are taken from file *filename*. The *filename* should
   contain the coordinates of the mesh points with the origin location at
@@ -1596,7 +1678,7 @@ Monte Carlo Methods
     Particle slices returned by ``system.part`` are still iterable, but
     the indices no longer match the particle ids. For improved performance,
     you can set the type of invalidated particles with
-    :meth:`~espressomd.reaction_ensemble.ReactionAlgorithm.set_non_interacting_type`
+    :meth:`~espressomd.reaction_methods.ReactionAlgorithm.set_non_interacting_type`
     in all Reaction Ensemble classes.
 
 .. _Reaction Ensemble:
@@ -1707,9 +1789,9 @@ Multiple reactions can be added to the same instance of the reaction ensemble.
 
 An example script can be found here:
 
-* `Reaction ensemble / constant pH ensemble <https://github.com/espressomd/espresso/blob/python/samples/reaction_ensemble.py>`_
+* `Reaction ensemble / constant pH ensemble <https://github.com/espressomd/espresso/blob/python/samples/reaction_methods.py>`_
 
-For a description of the available methods, see :class:`espressomd.reaction_ensemble.ReactionEnsemble`.
+For a description of the available methods, see :class:`espressomd.reaction_methods.ReactionEnsemble`.
 
 .. _Converting tabulated reaction constants to internal units in ESPResSo:
 
@@ -1747,15 +1829,15 @@ For non-interacting systems this coupling is not an issue, but for interacting s
 can lead to instabilities in the MD integration ultimately leading to a crash of the simulation.
 
 This integration instabilities can be avoided by defining a distance around the particles which already exist in the system
-where new particles will not be inserted, which is defined by the required keyword ``exclusion_range``. 
-This prevents big overlaps with the newly inserted particles, avoiding too big forces between particles, which prevents the MD integration from crashing.  
-The value of the exclusion range does not affect the limiting result and it only affects the convergence and the stability of the integration.  For interacting systems, 
-it is usually a good practice to choose the exclusion range such that it is comparable to the diameter of the particles. 
+where new particles will not be inserted, which is defined by the required keyword ``exclusion_range``.
+This prevents big overlaps with the newly inserted particles, avoiding too big forces between particles, which prevents the MD integration from crashing.
+The value of the exclusion range does not affect the limiting result and it only affects the convergence and the stability of the integration.  For interacting systems,
+it is usually a good practice to choose the exclusion range such that it is comparable to the diameter of the particles.
 
-If particles with significantly different sizes are present, it is desired to define a different exclusion range for each pair of particle types. This can be done by 
-defining an exclusion radius per particle type by using the optional argument ``exclusion_radius_per_type``. Then, their exclusion range is calculated using 
-the Lorentz-Berthelot combination rule, ` i.e. ` ``exclusion_range = exclusion_radius_per_type[particle_type_1] + exclusion_radius_per_type[particle_type_2]``. 
-If the exclusion radius of one particle type is not defined, the value of the parameter provided in  ``exclusion_range`` is used by default. 
+If particles with significantly different sizes are present, it is desired to define a different exclusion range for each pair of particle types. This can be done by
+defining an exclusion radius per particle type by using the optional argument ``exclusion_radius_per_type``. Then, their exclusion range is calculated using
+the Lorentz-Berthelot combination rule, *i.e.* ``exclusion_range = exclusion_radius_per_type[particle_type_1] + exclusion_radius_per_type[particle_type_2]``.
+If the exclusion radius of one particle type is not defined, the value of the parameter provided in ``exclusion_range`` is used by default.
 If the value in ``exclusion_radius_per_type`` is equal to 0, then the exclusion range of that particle type with any other particle is 0.
 
 .. _Grand canonical ensemble simulation using the Reaction Ensemble:
@@ -1794,11 +1876,11 @@ reaction ensemble transition probabilities.
 Constant pH simulation
 ~~~~~~~~~~~~~~~~~~~~~~
 
-As before in the Reaction Ensemble one can define multiple reactions (e.g. for an ampholytic system which contains an acid and a base) in one :class:`~espressomd.reaction_ensemble.ConstantpHEnsemble` instance:
+As before in the Reaction Ensemble one can define multiple reactions (e.g. for an ampholytic system which contains an acid and a base) in one :class:`~espressomd.reaction_methods.ConstantpHEnsemble` instance:
 
 .. code-block:: python
 
-    cpH=reaction_ensemble.ConstantpHEnsemble(
+    cpH=reaction_methods.ConstantpHEnsemble(
         temperature=1, exclusion_range=1, seed=77)
     cpH.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[1],
                     product_types=[1, 2], product_coefficients=[1, 1],
@@ -1808,7 +1890,7 @@ As before in the Reaction Ensemble one can define multiple reactions (e.g. for a
 
 An example script can be found here:
 
-* `Reaction ensemble / constant pH ensemble <https://github.com/espressomd/espresso/blob/python/samples/reaction_ensemble.py>`_
+* `Reaction ensemble / constant pH ensemble <https://github.com/espressomd/espresso/blob/python/samples/reaction_methods.py>`_
 
 In the constant pH method due to Reed and Reed
 :cite:`reed92a` it is possible to set the chemical potential
@@ -1829,7 +1911,7 @@ constant :math:`K_c` for the following reaction:
 
    \mathrm{HA \rightleftharpoons\ H^+ + A^- } \,,
 
-For a description of the available methods, see :class:`espressomd.reaction_ensemble.ConstantpHEnsemble`.
+For a description of the available methods, see :class:`espressomd.reaction_methods.ConstantpHEnsemble`.
 
 
 Widom Insertion (for homogeneous systems)
@@ -1847,18 +1929,23 @@ For this one has to provide the following reaction to the Widom method:
 .. code-block:: python
 
     type_B=1
-    widom = reaction_ensemble.WidomInsertion(
+    widom = reaction_methods.WidomInsertion(
         temperature=temperature, seed=77)
     widom.add_reaction(reactant_types=[],
     reactant_coefficients=[], product_types=[type_B],
     product_coefficients=[1], default_charges={1: 0})
-    widom.measure_excess_chemical_potential(0)
+    widom.calculate_particle_insertion_potential_energy(reaction_id=0)
 
 
 The call of ``add_reaction`` define the insertion :math:`\mathrm{\emptyset \to type_B}` (which is the 0th defined reaction).
 Multiple reactions for the insertions of different types can be added to the same ``WidomInsertion`` instance.
-Measuring the excess chemical potential using the insertion method is done via calling ``widom.measure_excess_chemical_potential(0)``.
-If another particle insertion is defined, then the excess chemical potential for this insertion can be measured by calling ``widom.measure_excess_chemical_potential(1)``.
+Measuring the excess chemical potential using the insertion method is done by
+calling ``widom.calculate_particle_insertion_potential_energy(reaction_id=0)``
+multiple times and providing the accumulated sample to
+``widom.calculate_excess_chemical_potential(particle_insertion_potential_energy_samples=samples)``.
+If another particle insertion is defined, then the excess chemical potential
+for this insertion can be measured in a similar fashion by sampling
+``widom.calculate_particle_insertion_potential_energy(reaction_id=1)``.
 Be aware that the implemented method only works for the canonical ensemble. If the numbers of particles fluctuate (i.e. in a semi grand canonical simulation) one has to adapt the formulas from which the excess chemical potential is calculated! This is not implemented. Also in a isobaric-isothermal simulation (NpT) the corresponding formulas for the excess chemical potentials need to be adapted. This is not implemented.
 
 The implementation can also deal with the simultaneous insertion of multiple particles and can therefore measure the change of excess free energy of multiple particles like e.g.:
@@ -1884,7 +1971,7 @@ For this one has to provide the following reaction to the Widom method:
     widom.add_reaction(reactant_types=[type_3],
     reactant_coefficients=[1], product_types=[type_1, type_2],
     product_coefficients=[1,1], default_charges={1: 0})
-    widom.measure_excess_chemical_potential(0)
+    widom.calculate_particle_insertion_potential_energy(reaction_id=0)
 
 Be aware that in the current implementation, for MC moves which add and remove particles, the insertion of the new particle always takes place at the position where the last particle was removed. Be sure that this is the behaviour you want to have. Otherwise implement a new function ``WidomInsertion::make_reaction_attempt`` in the core.
 
@@ -1892,5 +1979,5 @@ An example script which demonstrates the usage for measuring the pair excess che
 
 * `Widom Insertion <https://github.com/espressomd/espresso/blob/python/samples/widom_insertion.py>`_
 
-For a description of the available methods, see :class:`espressomd.reaction_ensemble.WidomInsertion`.
+For a description of the available methods, see :class:`espressomd.reaction_methods.WidomInsertion`.
 

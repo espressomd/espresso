@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from functools import wraps
+import functools
 include "myconfig.pxi"
 IF NPT:
     from .thermostat cimport nptiso
@@ -50,7 +50,7 @@ def AssertThermostatType(*allowedthermostats):
 
     """
     def decoratorfunction(function):
-        @wraps(function, assigned=('__name__', '__doc__'))
+        @functools.wraps(function, assigned=('__name__', '__doc__'))
         def wrapper(*args, **kwargs):
             if (not (thermo_switch in allowedthermostats) and
                     (thermo_switch != THERMO_OFF)):

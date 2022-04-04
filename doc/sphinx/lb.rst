@@ -203,19 +203,6 @@ a value that matches the length of the slice (which sets each node
 individually), or a single value that will be copied to every node
 (e.g. a scalar for density, or an array of length 3 for the velociy).
 
-.. _Removing total fluid momentum:
-
-Removing total fluid momentum
------------------------------
-
-.. note:: Only available for ``CUDA``
-
-Some simulations require the net momentum of the system to vanish. Even if the
-physics of the system fulfills this condition, numerical errors can introduce
-drift. To remove the momentum in the fluid call::
-
-    lb.remove_momentum()
-
 .. _Output for visualization:
 
 Output for visualization
@@ -252,15 +239,17 @@ positions can be exported using the VTK format (see :meth:`~espressomd.particle_
 Choosing between the GPU and CPU implementations
 ------------------------------------------------
 
-.. note:: Feature ``CUDA`` required
-
 |es| contains an implementation of the LBM for NVIDIA
 GPUs using the CUDA framework. On CUDA-supporting machines this can be
 activated by compiling with the feature ``CUDA``. Within the
-Python script, the :class:`~espressomd.lb.LBFluidWalberla` object can be substituted with the :class:`~espressomd.lb.LBFluidWalberlaGPU` object to switch from CPU based to GPU based execution. For further
+Python script, the :class:`~espressomd.lb.LBFluidWalberla` object can be substituted
+with the :class:`~espressomd.lb.LBFluidWalberlaGPU` object to switch from CPU based
+to GPU based execution. For further
 information on CUDA support see section :ref:`GPU Acceleration with CUDA`.
 
-The following minimal example demonstrates how to use the GPU implementation of the LBM in analogy to the example for the CPU given in section :ref:`Setting up a LB fluid`::
+The following minimal example demonstrates how to use the GPU implementation
+of the LBM in analogy to the example for the CPU given in section
+:ref:`Setting up a LB fluid`::
 
     import espressomd
     system = espressomd.System(box_l=[10, 20, 30])
@@ -270,7 +259,12 @@ The following minimal example demonstrates how to use the GPU implementation of 
     system.actors.add(lb)
     system.integrator.run(100)
 
-The feature ``CUDA`` allows the use of Lees-Edwards boundary conditions. Our implementation follows the paper of :cite:`wagner02`. Note, that there is no extra python interface for the use of Lees-Edwards boundary conditions with the LB algorithm. All information are rather internally derived from the set of the Lees-Edwards offset in the system class. For further information Lees-Edwards boundary conditions please refer to section :ref:`Lees-Edwards boundary conditions`
+:ref:`Lees-Edwards boundary conditions` (LEbc) are supported by both
+LB implementations, which follow the derivation in :cite:`wagner02`.
+Note, that there is no extra python interface for the use of LEbc
+with the LB algorithm: all the necessary information is internally
+derived from the currently active LEbc protocol in
+:ref:`system.lees_edwards.protocol<espressomd.lees_edwards.LeesEdwards.protocol>`.
 
 .. _Electrohydrodynamics:
 

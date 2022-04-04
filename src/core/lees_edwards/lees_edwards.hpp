@@ -34,7 +34,7 @@ protected:
 
 public:
   UpdateOffset(BoxGeometry const &box, double time_step)
-      : m_le{box.clees_edwards_bc()}, m_half_time_step{0.5 * time_step} {}
+      : m_le{box.lees_edwards_bc()}, m_half_time_step{0.5 * time_step} {}
 
   void operator()(Particle &p) const {
     p.lees_edwards_offset() -= m_half_time_step *
@@ -79,11 +79,11 @@ inline double velocity_shift(short int le_flag, BoxGeometry const &box) {
   if (box.type() != BoxType::LEES_EDWARDS)
     return 0.;
 
-  return le_flag * box.clees_edwards_bc().shear_velocity;
+  return le_flag * box.lees_edwards_bc().shear_velocity;
 }
 
 inline Utils::Vector3d shear_direction(BoxGeometry const &box) {
-  return Utils::unit_vector<double>(box.clees_edwards_bc().shear_direction);
+  return Utils::unit_vector<double>(box.lees_edwards_bc().shear_direction);
 }
 
 inline void update_pos_offset(ActiveProtocol const &protocol, BoxGeometry &box,
@@ -101,7 +101,7 @@ inline void update_shear_velocity(ActiveProtocol const &protocol,
 inline Utils::Vector3d verlet_list_offset(BoxGeometry const &box,
                                           double pos_offset_at_last_resort) {
   if (box.type() == BoxType::LEES_EDWARDS) {
-    return shear_direction(box) * std::fabs(box.clees_edwards_bc().pos_offset -
+    return shear_direction(box) * std::fabs(box.lees_edwards_bc().pos_offset -
                                             pos_offset_at_last_resort);
   }
   return {};

@@ -27,11 +27,18 @@ import espressomd.checkpointing
 import espressomd.electrostatics
 import espressomd.magnetostatics
 import espressomd.scafacos
+import espressomd.io.writer  # pylint: disable=unused-import
 import espressomd.virtual_sites
 import espressomd.integrate
 import espressomd.shapes
 import espressomd.constraints
 import espressomd.lb
+
+import os
+try:
+    import h5py  # h5py has to be imported *after* espressomd (MPI)
+except ImportError:
+    h5py = None
 
 config = utg.TestGenerator()
 is_gpu_available = espressomd.gpu_available()
@@ -473,6 +480,50 @@ class CheckpointTest(ut.TestCase):
             np.testing.assert_array_equal(
                 system.auto_update_accumulators[2].result(),
                 expected)
+
+    @utx.skipIfMissingFeatures('H5MD')
+    @ut.skipIf(h5py is None,
+               "Skipping test due to missing python module 'h5py'.")
+    def test_h5md(self):
+        # check attributes
+        file_path = os.path.join(self.checkpoint.checkpoint_dir, "test.h5")
+        script_path = os.path.join(
+            os.path.dirname(__file__), "save_checkpoint.py")
+        self.assertEqual(h5.fields, ['all'])
+        self.assertEqual(h5.script_path, script_path)
+        self.assertEqual(h5.file_path, file_path)
+
+        # write new frame
+        h5.write()
+        h5.flush()
+        h5.close()
+
+        with h5py.File(h5.file_path, 'r') as cur:
+            # compare frame #0 against frame #1
+            def predicate(cur, key):
+                np.testing.assert_allclose(cur[key][0], cur[key][1],
+                                           err_msg=f"mismatch for '{key}'")
+            # note: cannot compare forces since they are NaN in frame #1
+            for key in ('position', 'image', 'velocity',
+                        'id', 'species', 'mass', 'charge'):
+                predicate(cur, f'particles/atoms/{key}/value')
+            for key in ('offset', 'direction', 'normal'):
+                predicate(cur, f'particles/atoms/lees_edwards/{key}/value')
+            predicate(cur, 'particles/atoms/box/edges/value')
+            predicate(cur, 'connectivity/atoms/value')
+
+            # check stored physical units
+            def predicate(key, attribute):
+                self.assertEqual(cur[key].attrs['unit'],
+                                 getattr(h5_units, attribute).encode('utf-8'))
+            predicate('particles/atoms/id/time', 'time')
+            predicate('particles/atoms/lees_edwards/offset/value', 'length')
+            predicate('particles/atoms/box/edges/value', 'length')
+            predicate('particles/atoms/position/value', 'length')
+            predicate('particles/atoms/velocity/value', 'velocity')
+            predicate('particles/atoms/force/value', 'force')
+            predicate('particles/atoms/charge/value', 'charge')
+            predicate('particles/atoms/mass/value', 'mass')
 
     @utx.skipIfMissingFeatures('DP3M')
     @ut.skipIf('DP3M.CPU' not in modes,

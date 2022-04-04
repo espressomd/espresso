@@ -18,7 +18,7 @@
 #
 
 import espressomd
-import espressomd.reaction_ensemble
+import espressomd.reaction_methods
 
 import unittest as ut
 
@@ -57,7 +57,7 @@ class ReactionMethods(ut.TestCase):
             'default_charges': reaction_forward['default_charges'],
         }
 
-        if isinstance(method, espressomd.reaction_ensemble.ConstantpHEnsemble):
+        if isinstance(method, espressomd.reaction_methods.ConstantpHEnsemble):
             method.add_reaction(gamma=reaction_forward['gamma'],
                                 reactant_types=reaction_forward['reactant_types'],
                                 product_types=reaction_forward['product_types'],
@@ -72,7 +72,7 @@ class ReactionMethods(ut.TestCase):
             method.exclusion_range,
             exclusion_range,
             delta=1e-10)
-        if not isinstance(method, espressomd.reaction_ensemble.WidomInsertion):
+        if not isinstance(method, espressomd.reaction_methods.WidomInsertion):
             self.assertEqual(
                 list(method.exclusion_radius_per_type.keys()), [1])
             self.assertAlmostEqual(
@@ -91,7 +91,7 @@ class ReactionMethods(ut.TestCase):
         self.assertEqual(method.get_non_interacting_type(), 100)
         method.set_non_interacting_type(type=9)
         self.assertEqual(method.get_non_interacting_type(), 9)
-        if isinstance(method, espressomd.reaction_ensemble.ConstantpHEnsemble):
+        if isinstance(method, espressomd.reaction_methods.ConstantpHEnsemble):
             self.assertAlmostEqual(method.constant_pH, 10., delta=1e-10)
             method.constant_pH = 8.
             self.assertAlmostEqual(method.constant_pH, 8., delta=1e-10)
@@ -142,7 +142,7 @@ class ReactionMethods(ut.TestCase):
         # check particle deletion
         p1, _, p3 = self.system.part.add(
             pos=3 * [(0., 0., 0.)], type=[5, 2, 3])
-        if isinstance(method, espressomd.reaction_ensemble.WidomInsertion):
+        if isinstance(method, espressomd.reaction_methods.WidomInsertion):
             potential_energy = method.calculate_particle_insertion_potential_energy(
                 reaction_id=0)
             self.assertEqual(potential_energy, 0.)
@@ -161,17 +161,17 @@ class ReactionMethods(ut.TestCase):
                   'exclusion_radius_per_type': {1: 0.1}}
 
         # reaction ensemble
-        method = espressomd.reaction_ensemble.ReactionEnsemble(
+        method = espressomd.reaction_methods.ReactionEnsemble(
             kT=1.4, seed=12, **params)
         self.check_interface(method, kT=1.4, gamma=1.2, **params)
 
         # constant pH ensemble
-        method = espressomd.reaction_ensemble.ConstantpHEnsemble(
+        method = espressomd.reaction_methods.ConstantpHEnsemble(
             kT=1.5, seed=14, constant_pH=10, **params)
         self.check_interface(method, kT=1.5, gamma=1.2, **params)
 
         # Widom insertion
-        method = espressomd.reaction_ensemble.WidomInsertion(kT=1.6, seed=16)
+        method = espressomd.reaction_methods.WidomInsertion(kT=1.6, seed=16)
         self.check_interface(method, kT=1.6, gamma=1., exclusion_range=0.,
                              exclusion_radius_per_type={})
 
@@ -187,8 +187,8 @@ class ReactionMethods(ut.TestCase):
             'default_charges': {2: 0, 3: 0, 4: 0},
             **single_reaction_params
         }
-        widom = espressomd.reaction_ensemble.WidomInsertion(kT=1., seed=12)
-        method = espressomd.reaction_ensemble.ReactionEnsemble(
+        widom = espressomd.reaction_methods.WidomInsertion(kT=1., seed=12)
+        method = espressomd.reaction_methods.ReactionEnsemble(
             kT=1.5, exclusion_range=0.8, seed=12, exclusion_radius_per_type={1: 0.1})
         method.add_reaction(**reaction_params)
         widom.add_reaction(**reaction_params)
@@ -265,29 +265,29 @@ class ReactionMethods(ut.TestCase):
             method.call_method('unknown', x=1)
         err_msg = r"Only the following keys can be given as keyword arguments: \[.+\], got \[.+\] \(unknown \['x'\]\)"
         with self.assertRaisesRegex(ValueError, err_msg):
-            espressomd.reaction_ensemble.SingleReaction(
+            espressomd.reaction_methods.SingleReaction(
                 x=1, **single_reaction_params)
         with self.assertRaisesRegex(ValueError, err_msg):
-            espressomd.reaction_ensemble.ReactionEnsemble(
+            espressomd.reaction_methods.ReactionEnsemble(
                 kT=1., exclusion_range=1., seed=12, x=1)
         with self.assertRaisesRegex(ValueError, err_msg):
-            espressomd.reaction_ensemble.ConstantpHEnsemble(
+            espressomd.reaction_methods.ConstantpHEnsemble(
                 kT=1., exclusion_range=1., seed=12, x=1, constant_pH=2)
         with self.assertRaisesRegex(ValueError, err_msg):
-            espressomd.reaction_ensemble.WidomInsertion(
+            espressomd.reaction_methods.WidomInsertion(
                 kT=1., seed=12, x=1)
         with self.assertRaisesRegex(ValueError, "Invalid value for 'kT'"):
-            espressomd.reaction_ensemble.ReactionEnsemble(
+            espressomd.reaction_methods.ReactionEnsemble(
                 kT=-1., exclusion_range=1., seed=12)
 
         # check invalid exclusion ranges and radii
         with self.assertRaisesRegex(ValueError, "Invalid value for 'exclusion_range'"):
-            espressomd.reaction_ensemble.ReactionEnsemble(
+            espressomd.reaction_methods.ReactionEnsemble(
                 kT=1., seed=12, exclusion_range=-1.)
         with self.assertRaisesRegex(ValueError, "Invalid excluded_radius value for type 1: radius -0.10"):
-            espressomd.reaction_ensemble.ReactionEnsemble(
+            espressomd.reaction_methods.ReactionEnsemble(
                 kT=1., seed=12, exclusion_range=1., exclusion_radius_per_type={1: -0.1})
-        method = espressomd.reaction_ensemble.ReactionEnsemble(
+        method = espressomd.reaction_methods.ReactionEnsemble(
             kT=1., exclusion_range=1., seed=12, exclusion_radius_per_type={1: 0.1})
         with self.assertRaisesRegex(ValueError, "Invalid excluded_radius value for type 2: radius -0.10"):
             method.exclusion_radius_per_type = {2: -0.1}

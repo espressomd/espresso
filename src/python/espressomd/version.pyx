@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from .utils import to_str
+from . import utils
 
 
 def major():
@@ -40,14 +40,14 @@ def git_branch():
     """Git branch of the build if known, otherwise
        empty.
     """
-    return to_str(GIT_BRANCH)  # pylint: disable=undefined-variable
+    return utils.to_str(GIT_BRANCH)  # pylint: disable=undefined-variable
 
 
 def git_commit():
     """Git commit of the build if known, otherwise
        empty.
     """
-    return to_str(GIT_COMMIT_HASH)  # pylint: disable=undefined-variable
+    return utils.to_str(GIT_COMMIT_HASH)  # pylint: disable=undefined-variable
 
 
 def git_state():
@@ -56,4 +56,4 @@ def git_state():
        was not changed from :meth:`git_commit()`,
        "DIRTY" otherwise.
     """
-    return to_str(GIT_STATE)  # pylint: disable=undefined-variable
+    return utils.to_str(GIT_STATE)  # pylint: disable=undefined-variable

@@ -79,8 +79,6 @@ SCAFACOS_DIPOLES                requires SCAFACOS
 SCAFACOS_DIPOLES                implies DIPOLES
 SCAFACOS                        requires ELECTROSTATICS
 
-EXPERIMENTAL_FEATURES
-
 /* Debugging */
 ADDITIONAL_CHECKS
 

@@ -187,8 +187,8 @@ public:
   Utils::Vector<T, 3> get_mi_vector(const Utils::Vector<T, 3> &a,
                                     const Utils::Vector<T, 3> &b) const {
     if (type() == BoxType::LEES_EDWARDS) {
-      return clees_edwards_bc().distance(a - b, length(), length_half(),
-                                         length_inv(), m_periodic);
+      return lees_edwards_bc().distance(a - b, length(), length_half(),
+                                        length_inv(), m_periodic);
     }
     assert(type() == BoxType::CUBOID);
     return {get_mi_coord(a[0], b[0], 0), get_mi_coord(a[1], b[1], 1),
@@ -199,7 +199,7 @@ public:
   void set_type(BoxType type) { m_type = type; }
 
   LeesEdwardsBC &lees_edwards_bc() { return m_lees_edwards_bc; }
-  LeesEdwardsBC const &clees_edwards_bc() const { return m_lees_edwards_bc; }
+  LeesEdwardsBC const &lees_edwards_bc() const { return m_lees_edwards_bc; }
   void set_lees_edwards_bc(LeesEdwardsBC bc) { m_lees_edwards_bc = bc; }
 
   /** Calculate the velocity difference including the Lees-Edwards velocity */

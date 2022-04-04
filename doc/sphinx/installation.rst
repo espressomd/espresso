@@ -417,7 +417,7 @@ section :ref:`Isotropic non-bonded interactions`):
 
 -  ``WCA`` Enable the Weeks--Chandler--Andersen potential.
 
--  ``GAY_BERNE`` Enable the Gay--Berne potential (experimental).
+-  ``GAY_BERNE`` Enable the Gay--Berne potential.
 
 -  ``HERTZIAN`` Enable the Hertzian potential.
 
@@ -463,16 +463,6 @@ Finally, there is a flag for debugging:
       ``ELECTROSTATICS`` or ``DIPOLES``, the subset of additional checks for
       those two features are disabled if an unpatched version of OpenMPI is
       detected during compilation.
-
-
-Features marked as experimental
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Some of the above features are marked as EXPERIMENTAL. Activating these
-features can have unexpected side effects and some of them have known issues.
-If you activate any of these features, you should understand the corresponding
-source code and do extensive testing. Furthermore, it is necessary to define
-``EXPERIMENTAL_FEATURES`` in :file:`myconfig.hpp`.
 
 
 .. _External features:

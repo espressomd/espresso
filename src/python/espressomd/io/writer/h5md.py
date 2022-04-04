@@ -15,21 +15,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-"""Interface module for the H5md core implementation."""
 
 import sys
 
-from ...script_interface import PScriptInterface  # pylint: disable=import
-from ...code_info import features
+from ...script_interface import script_interface_register, ScriptInterfaceHelper  # pylint: disable=import
+from ...__init__ import assert_features
+from ... import utils
 
 
 class UnitSystem:
     """
     Data class for writing H5MD trajectories with
-    `physical units <https://nongnu.org/h5md/modules/units.html>`_.
+    `physical units <https://nongnu.org/h5md/modules/units.html>`__.
     There are four settable units: 'mass', 'length', 'time', 'charge'.
     Units should be written as strings following the specifications defined
-    `here <https://nongnu.org/h5md/modules/units.html#unit-string>`_,
+    `here <https://nongnu.org/h5md/modules/units.html#unit-string>`__,
     e.g. ``UnitSystem(time='ps', mass='u', length='nm', charge='e')``.
     """
 
@@ -39,7 +39,7 @@ class UnitSystem:
         self.length = ''
         self.charge = ''
         for key, value in kwargs.items():
-            assert hasattr(self, key), 'unknown dimension ' + key
+            assert hasattr(self, key), f'unknown dimension {key}'
             setattr(self, key, value or '')
 
         if self.length and self.mass and self.time:
@@ -52,51 +52,107 @@ class UnitSystem:
             self.velocity = ''
 
 
-if 'H5MD' not in features():
-    class H5md:
-        def __init__(self, *args, **kwargs):
-            raise RuntimeError("H5md not available.")
-else:
-    class H5md:
+@script_interface_register
+class H5md(ScriptInterfaceHelper):
 
-        """H5md file object.
+    """
+    H5md file object.
 
-        Used for accessing the H5MD core implementation.
+    .. note::
+       Bonds will be written to the file if they exist.
+       The pypresso script will be written in the metadata.
 
-        .. note::
-           Bonds will be written to the file automatically if they exist.
+    Parameters
+    ----------
+    file_path : :obj:`str`
+        Path to the trajectory file, or an existing file to append data to
+        (it must have the same specifications).
+    unit_system : :obj:`UnitSystem`, optional
+        Physical units for the data.
+    fields : :obj:`set` or :obj:`str`, optional
+        List of fields to write to the trajectory file. Defaults to ``'all'``.
+        See :meth:`~espressomd.io.writer.h5md.H5md.valid_fields()` for the
+        list of valid fields. This list defines the H5MD specifications.
+        If the file in ``file_path`` already exists but has different
+        specifications, an exception is raised.
 
-        Parameters
-        ----------
-        file_path : :obj:`str`
-            Path to the trajectory file.
-        unit_system : :obj:`UnitSystem`, optional
-            Physical units for the data.
+    Methods
+    -------
+    get_params()
+        Get the parameters from the script interface.
 
+    valid_fields()
+        Get the list of valid fields.
+
+    write()
+        Call the H5md write method.
+
+    flush()
+        Call the H5md flush method.
+
+    close()
+        Close the H5md file.
+
+    Attributes
+    ----------
+    file_path: :obj:`str`
+        Path to the trajectory file.
+    script_path: :obj:`str`
+        Path to the pypresso script, or empty string for interactive sessions.
+    fields: :obj:`list`
+        List of fields to write to the trajectory file.
+    mass_unit: :obj:`str`
+    length_unit: :obj:`str`
+    time_unit: :obj:`str`
+    force_unit: :obj:`str`
+    velocity_unit: :obj:`str`
+    charge_unit: :obj:`str`
+
+    """
+    _so_name = "ScriptInterface::Writer::H5md"
+    _so_creation_policy = "GLOBAL"
+    _so_bind_methods = ("valid_fields", "write", "flush", "close")
+
+    def __init__(self, **kwargs):
+        assert_features("H5MD")
+
+        if "sip" in kwargs:
+            super().__init__(**kwargs)
+            return
+
+        params = self.default_params()
+        params.update(kwargs)
+        unit_system = params["unit_system"]
+        fields = params["fields"]
+        fields = [fields] if isinstance(fields, str) else list(fields)
+        params["fields"] = fields
+        self.validate_params(params)
+        super().__init__(
+            file_path=params["file_path"],
+            script_path=sys.argv[0],
+            fields=fields,
+            mass_unit=unit_system.mass,
+            length_unit=unit_system.length,
+            time_unit=unit_system.time,
+            force_unit=unit_system.force,
+            velocity_unit=unit_system.velocity,
+            charge_unit=unit_system.charge
+        )
+
+    def default_params(self):
+        return {"unit_system": UnitSystem(), "fields": "all"}
+
+    def required_keys(self):
+        return {"file_path"}
+
+    def valid_keys(self):
+        return {"file_path", "unit_system", "fields"}
+
+    def validate_params(self, params):
+        """Check validity of given parameters.
         """
-
-        def __init__(self, file_path, unit_system=UnitSystem()):
-            self.h5md_instance = PScriptInterface(
-                "ScriptInterface::Writer::H5md", file_path=file_path, script_path=sys.argv[0],
-                mass_unit=unit_system.mass, length_unit=unit_system.length, 
-                time_unit=unit_system.time,
-                force_unit=unit_system.force,
-                velocity_unit=unit_system.velocity,
-                charge_unit=unit_system.charge
-            )
-
-        def get_params(self):
-            """Get the parameters from the script interface."""
-            return self.h5md_instance.get_params()
-
-        def write(self):
-            """Call the H5md write method."""
-            self.h5md_instance.call_method("write")
-
-        def flush(self):
-            """Call the H5md flush method."""
-            self.h5md_instance.call_method("flush")
-
-        def close(self):
-            """Close the H5md file."""
-            self.h5md_instance.call_method("close")
+        utils.check_type_or_throw_except(
+            params["file_path"], 1, str, "'file_path' should be a string")
+        for item in params["fields"]:
+            utils.check_type_or_throw_except(
+                item, 1, str, "'fields' should be a string or a list of strings")

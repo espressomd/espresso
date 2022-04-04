@@ -368,7 +368,7 @@ def random_dipoles(n_particles):
 
 
 def check_non_bonded_loop_trace(system):
-    """Validates that the distances used by the non-bonded loop 
+    """Validates that the distances used by the non-bonded loop
     match with the minimum image distance accessible by Python,
     checks that no pairs are lost or double-counted.
     """

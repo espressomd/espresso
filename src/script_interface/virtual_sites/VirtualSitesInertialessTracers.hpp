@@ -38,7 +38,7 @@ namespace VirtualSites {
 class VirtualSitesInertialessTracers : public VirtualSites {
 public:
   VirtualSitesInertialessTracers()
-      : m_virtual_sites(new ::VirtualSitesInertialessTracers()) {}
+      : m_virtual_sites(std::make_shared<::VirtualSitesInertialessTracers>()) {}
   /** Vs implementation we are wrapping */
   std::shared_ptr<::VirtualSites> virtual_sites() override {
     return m_virtual_sites;

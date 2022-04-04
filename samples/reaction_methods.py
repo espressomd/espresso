@@ -32,7 +32,7 @@ import numpy as np
 import argparse
 
 import espressomd
-import espressomd.reaction_ensemble
+import espressomd.reaction_methods
 
 parser = argparse.ArgumentParser(epilog=epilog)
 group = parser.add_mutually_exclusive_group()
@@ -78,7 +78,7 @@ for i in range(N0, 2 * N0):
 
 RE = None
 if args.mode == "reaction_ensemble":
-    RE = espressomd.reaction_ensemble.ReactionEnsemble(
+    RE = espressomd.reaction_methods.ReactionEnsemble(
         kT=1,
         exclusion_range=1,
         seed=77)
@@ -89,14 +89,13 @@ if args.mode == "reaction_ensemble":
                     product_coefficients=[1, 1],
                     default_charges=charge_dict)
 elif args.mode == "constant_pH_ensemble":
-    RE = espressomd.reaction_ensemble.ConstantpHEnsemble(
+    RE = espressomd.reaction_methods.ConstantpHEnsemble(
         kT=1, exclusion_range=1, seed=77, constant_pH=2)
     RE.add_reaction(gamma=K_diss, reactant_types=[types["HA"]],
                     product_types=[types["A-"], types["H+"]],
                     default_charges=charge_dict)
-else:
-    raise RuntimeError(
-        "Please provide either --reaction_ensemble or --constant_pH_ensemble as argument ")
+
+assert RE is not None, "Please choose a reaction ensemble from the command line"
 
 print(RE.get_status())
 system.setup_type_map(list(types.values()))
@@ -110,15 +109,10 @@ RE.set_non_interacting_type(type=max(types.values()) + 1)
 for i in range(10000):
     RE.reaction(reaction_steps=1)
     if i % 100 == 0:
-        print("HA", system.number_of_particles(type=types["HA"]),
-              "A-", system.number_of_particles(type=types["A-"]),
-              "H+", system.number_of_particles(type=types["H+"]))
+        print(f"HA {system.number_of_particles(type=types['HA'])}",
+              f"A- {system.number_of_particles(type=types['A-'])}",
+              f"H+ {system.number_of_particles(type=types['H+'])}")
 
-print(
-    "reaction 0 has acceptance rate: ",
-    RE.get_acceptance_rate_reaction(
-        reaction_id=0))
-print(
-    "reaction 1 has acceptance rate: ",
-    RE.get_acceptance_rate_reaction(
-        reaction_id=1))
+for i in range(2):
+    print(
+        f"reaction {i} acceptance rate: {100. * RE.get_acceptance_rate_reaction(reaction_id=i):.1f}%")

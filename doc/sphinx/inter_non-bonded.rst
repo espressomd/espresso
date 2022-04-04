@@ -161,9 +161,6 @@ Note that the prefactor 4 of the standard LJ potential is missing, so
 the normal LJ potential is recovered for :math:`b_1=b_2=4`,
 :math:`e_1=12` and :math:`e_2=6`.
 
-The net force on a particle can be capped by using force capping ``system.non_bonded_inter.set_force_cap(max)``, see
-section :ref:`Capping the force during warmup`
-
 The optional ``LJGEN_SOFTCORE`` feature activates a softcore version of
 the potential, where the following transformations apply:
 :math:`\epsilon \rightarrow \lambda \epsilon` and
@@ -202,10 +199,6 @@ types ``type1`` and ``type2``. The potential is defined by
          0
          & \mathrm{otherwise}
        \end{cases}.
-
-The net force on a particle can be capped by using
-force capping ``system.non_bonded_inter.set_force_cap(max)``, see
-section :ref:`Capping the force during warmup`
 
 .. _Lennard-Jones cosine interaction:
 

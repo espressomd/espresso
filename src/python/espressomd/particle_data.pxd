@@ -45,7 +45,6 @@ cdef extern from "particle_data.hpp":
     # level.        
 
     ctypedef struct particle "Particle":
-        vector[int] exclusions() except +
         Vector3d calc_dip()
         int type()
         int identity()
@@ -58,7 +57,6 @@ cdef extern from "particle_data.hpp":
         Vector3i image_box()
         double lees_edwards_offset()
         int lees_edwards_flag()
-
         Vector3d rinertia()
         Vector3d mu_E()
         double q()
@@ -69,6 +67,8 @@ cdef extern from "particle_data.hpp":
         bint is_virtual()
         Vector3d ext_force()
         Vector3d ext_torque()
+        vector[int] exclusions_as_vector() except +
+        bool has_exclusion(int pid) except +
         particle_parameters_swimming swimming()
 
     # Setter/getter/modifier functions functions

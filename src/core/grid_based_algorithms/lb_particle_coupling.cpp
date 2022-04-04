@@ -117,7 +117,7 @@ std::vector<Utils::Vector3d> shifted_positions(Utils::Vector3d pos,
             pos + Utils::hadamard_product(box.length(), shift);
 
         if (box_geo.type() == BoxType::LEES_EDWARDS) {
-          auto le = box_geo.clees_edwards_bc();
+          auto le = box_geo.lees_edwards_bc();
           auto normal_shift = (pos_shifted - pos)[le.shear_plane_normal];
           if (normal_shift > std::numeric_limits<double>::epsilon())
             pos_shifted[le.shear_direction] += le.pos_offset;

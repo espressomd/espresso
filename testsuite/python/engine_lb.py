@@ -208,5 +208,33 @@ class SwimmerTestDomDecWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
         self.system.cell_system.set_regular_decomposition()
 
 
+@utx.skipIfMissingFeatures(
+    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "LB_WALBERLA"])
+@ut.skipIf(SwimmerTest.n_nodes > 1,
+           "LB with N-square only works on 1 MPI rank")
+class SwimmerTestNSquareWalberla(SwimmerTest, ut.TestCase):
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': False}
+    tol = 1e-10
+
+    def set_cellsystem(self):
+        self.system.cell_system.set_n_square()
+
+
+@utx.skipIfMissingFeatures(
+    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "LB_WALBERLA"])
+@ut.skipIf(SwimmerTest.n_nodes > 1,
+           "LB with N-square only works on 1 MPI rank")
+class SwimmerTestNSquareWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': True}
+    tol = 1e-10
+
+    def set_cellsystem(self):
+        self.system.cell_system.set_n_square()
+
+
 if __name__ == "__main__":
     ut.main()

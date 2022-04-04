@@ -20,7 +20,9 @@
  */
 #ifndef ESPRESSO_SCRIPTINTERFACE_H5MD_CPP
 #define ESPRESSO_SCRIPTINTERFACE_H5MD_CPP
+
 #include "config.hpp"
+
 #ifdef H5MD
 
 #include "h5md.hpp"
@@ -45,11 +47,13 @@ Variant H5md::do_call_method(const std::string &name,
     m_h5md->flush();
   else if (name == "close")
     m_h5md->close();
+  else if (name == "valid_fields")
+    return make_vector_of_variants(m_h5md->valid_fields());
   return {};
 }
 
 } /* namespace Writer */
 } // namespace ScriptInterface
 
-#endif // ESPRESSO_H5MD_HPP
 #endif // H5MD
+#endif
