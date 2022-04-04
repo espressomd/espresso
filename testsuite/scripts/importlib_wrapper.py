@@ -90,11 +90,8 @@ def configure_and_import(filepath,
         return module, skipIfMissingGPU
     filepath = os.path.abspath(filepath)
     # load original script
-    # read in binary mode, then decode as UTF-8 to avoid this python3.5 error:
-    # UnicodeDecodeError: 'ascii' codec can't decode byte 0xc3 in position 915:
-    #                      ordinal not in range(128)
-    with open(filepath, "rb") as f:
-        code = f.read().decode(encoding="utf-8")
+    with open(filepath, "r") as f:
+        code = f.read()
     # custom substitutions
     code = substitutions(code)
     assert code.strip()
