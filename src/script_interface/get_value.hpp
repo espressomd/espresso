@@ -323,6 +323,14 @@ auto make_unordered_map_of_variants(std::unordered_map<K, V> const &v) {
   return ret;
 }
 
+template <typename T> auto make_vector_of_variants(std::vector<T> const &v) {
+  std::vector<Variant> ret;
+  for (auto const &item : v) {
+    ret.emplace_back(item);
+  }
+  return ret;
+}
+
 /**
  * @brief Get a value from a VariantMap by name, or throw
  *        if it does not exist or is not convertible to

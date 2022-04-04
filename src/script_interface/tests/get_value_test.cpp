@@ -92,6 +92,7 @@ BOOST_AUTO_TEST_CASE(static_vector) {
 
 BOOST_AUTO_TEST_CASE(heap_vector) {
   using ScriptInterface::get_value;
+  using ScriptInterface::make_vector_of_variants;
   using ScriptInterface::Variant;
 
   /* From same type */
@@ -104,6 +105,12 @@ BOOST_AUTO_TEST_CASE(heap_vector) {
     Variant v = std::vector<double>({1., 2., 3.});
     auto const expected = std::vector<double>{1., 2., 3.};
     BOOST_CHECK(get_value<std::vector<double>>(v) == expected);
+  }
+  {
+    auto const vec_dbl = std::vector<double>({1., 2., 3.});
+    auto const vec_var = make_vector_of_variants(vec_dbl);
+    auto const expected = std::vector<double>{1., 2., 3.};
+    BOOST_CHECK(get_value<std::vector<double>>(Variant{vec_var}) == expected);
   }
 
   /* Conversion applied */
