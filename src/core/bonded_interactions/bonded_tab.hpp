@@ -203,7 +203,6 @@ inline double TabulatedAngleBond::energy(Utils::Vector3d const &r_mid,
 }
 
 /** Compute the four-body dihedral interaction force.
- *  This function is not tested yet.
  *  The forces have a singularity at @f$ \phi = 0 @f$ and @f$ \phi = \pi @f$
  *  (see @cite swope92a page 592).
  *
@@ -254,7 +253,6 @@ TabulatedDihedralBond::forces(Utils::Vector3d const &r1,
 }
 
 /** Compute the four-body dihedral interaction energy.
- *  This function is not tested yet.
  *  The energy doesn't have any singularity if the angle phi is well-defined.
  *
  *  @param[in]  r1        Position of the first particle.
