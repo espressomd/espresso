@@ -105,8 +105,6 @@ class ScriptInterface(ut.TestCase):
             espressomd.constraints.ShapeBasedConstraint(shape=ut)
         with self.assertRaisesRegex(TypeError, "No conversion from type 'module' to 'Variant'"):
             constraint.set_params(shape=ut)
-        with self.assertRaisesRegex(TypeError, "No conversion from type 'module' to 'Variant'"):
-            constraint.call_method('unknown', unknown=ut)
         # check restrictions on the dict type
         with self.assertRaisesRegex(TypeError, r"No conversion from type 'dict_item\(\[\(str, int\)\]\)' to 'Variant\[std::(__1::)?unordered_map<int, Variant>\]'"):
             constraint.shape = {'1': 2}
