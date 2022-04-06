@@ -75,16 +75,16 @@ void init_type_map(int type) {
   }
 }
 
-static void remove_id_from_map(int part_id, int type) {
+static void remove_id_from_map(int p_id, int type) {
   auto it = particle_type_map.find(type);
   if (it != particle_type_map.end())
-    it->second.erase(part_id);
+    it->second.erase(p_id);
 }
 
-static void add_id_to_type_map(int part_id, int type) {
+static void add_id_to_type_map(int p_id, int type) {
   auto it = particle_type_map.find(type);
   if (it != particle_type_map.end())
-    it->second.insert(part_id);
+    it->second.insert(p_id);
 }
 
 void on_particle_type_change(int p_id, int type) {
@@ -110,8 +110,8 @@ Utils::Cache<int, Particle> particle_fetch_cache(max_cache_size);
 void invalidate_fetch_cache() { particle_fetch_cache.invalidate(); }
 std::size_t fetch_cache_max_size() { return particle_fetch_cache.max_size(); }
 
-static boost::optional<const Particle &> get_particle_data_local(int id) {
-  auto p = cell_structure.get_local_particle(id);
+static boost::optional<const Particle &> get_particle_data_local(int p_id) {
+  auto p = cell_structure.get_local_particle(p_id);
 
   if (p and (not p->is_ghost())) {
     return *p;
@@ -122,16 +122,16 @@ static boost::optional<const Particle &> get_particle_data_local(int id) {
 
 REGISTER_CALLBACK_ONE_RANK(get_particle_data_local)
 
-const Particle &get_particle_data(int part) {
-  auto const pnode = get_particle_node(part);
+const Particle &get_particle_data(int p_id) {
+  auto const pnode = get_particle_node(p_id);
 
   if (pnode == this_node) {
-    assert(cell_structure.get_local_particle(part));
-    return *cell_structure.get_local_particle(part);
+    assert(cell_structure.get_local_particle(p_id));
+    return *cell_structure.get_local_particle(p_id);
   }
 
   /* Query the cache */
-  auto const p_ptr = particle_fetch_cache.get(part);
+  auto const p_ptr = particle_fetch_cache.get(p_id);
   if (p_ptr) {
     return *p_ptr;
   }
@@ -139,8 +139,8 @@ const Particle &get_particle_data(int part) {
   /* Cache miss, fetch the particle,
    * put it into the cache and return a pointer into the cache. */
   auto const cache_ptr = particle_fetch_cache.put(
-      part, Communication::mpiCallbacks().call(Communication::Result::one_rank,
-                                               get_particle_data_local, part));
+      p_id, Communication::mpiCallbacks().call(Communication::Result::one_rank,
+                                               get_particle_data_local, p_id));
   return *cache_ptr;
 }
 
@@ -180,11 +180,11 @@ static std::vector<Particle> mpi_get_particles(Utils::Span<const int> ids) {
     per_node.clear();
   }
 
-  for (auto const &id : ids) {
-    auto const pnode = get_particle_node(id);
+  for (auto const &p_id : ids) {
+    auto const p_node = get_particle_node(p_id);
 
-    if (pnode != this_node)
-      node_ids[pnode].push_back(id);
+    if (p_node != this_node)
+      node_ids[p_node].push_back(p_id);
   }
 
   /* Distributed ids to the nodes */
@@ -195,9 +195,9 @@ static std::vector<Particle> mpi_get_particles(Utils::Span<const int> ids) {
 
   /* Copy local particles */
   std::transform(node_ids[this_node].cbegin(), node_ids[this_node].cend(),
-                 parts.begin(), [](int id) {
-                   assert(cell_structure.get_local_particle(id));
-                   return *cell_structure.get_local_particle(id);
+                 parts.begin(), [](int p_id) {
+                   assert(cell_structure.get_local_particle(p_id));
+                   return *cell_structure.get_local_particle(p_id);
                  });
 
   static std::vector<int> node_sizes(comm_cart.size());
@@ -286,19 +286,19 @@ static void mpi_who_has() {
  */
 static void build_particle_node() { mpi_who_has(); }
 
-int get_particle_node(int id) {
-  if (id < 0) {
-    throw std::domain_error("Invalid particle id: " + std::to_string(id));
+int get_particle_node(int p_id) {
+  if (p_id < 0) {
+    throw std::domain_error("Invalid particle id: " + std::to_string(p_id));
   }
 
   if (particle_node.empty())
     build_particle_node();
 
-  auto const needle = particle_node.find(id);
+  auto const needle = particle_node.find(p_id);
 
   // Check if particle has a node, if not, we assume it does not exist.
   if (needle == particle_node.end()) {
-    throw std::runtime_error("Particle node for id " + std::to_string(id) +
+    throw std::runtime_error("Particle node for id " + std::to_string(p_id) +
                              " not found!");
   }
   return needle->second;
@@ -309,27 +309,27 @@ void clear_particle_node() { particle_node.clear(); }
 /** Move a particle to a new position. If it does not exist, it is created.
  *  The position must be on the local node!
  *
- *  @param id    the identity of the particle to move
+ *  @param p_id  the identity of the particle to move
  *  @param pos   its new position
  *  @param _new  if true, the particle is allocated, else has to exists already
  *
  *  @return Pointer to the particle.
  */
-Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new) {
+Particle *local_place_particle(int p_id, const Utils::Vector3d &pos, int _new) {
   auto pp = Utils::Vector3d{pos[0], pos[1], pos[2]};
   auto i = Utils::Vector3i{};
   fold_position(pp, i, box_geo);
 
   if (_new) {
     Particle new_part;
-    new_part.id() = id;
+    new_part.id() = p_id;
     new_part.pos() = pp;
     new_part.image_box() = i;
 
     return cell_structure.add_local_particle(std::move(new_part));
   }
 
-  auto pt = cell_structure.get_local_particle(id);
+  auto pt = cell_structure.get_local_particle(p_id);
   pt->pos() = pp;
   pt->image_box() = i;
 
@@ -463,10 +463,10 @@ int number_of_particles_with_type(int type) {
   return static_cast<int>(it->second.size());
 }
 
-bool particle_exists(int part_id) {
+bool particle_exists(int p_id) {
   if (particle_node.empty())
     build_particle_node();
-  return particle_node.count(part_id);
+  return particle_node.count(p_id);
 }
 
 std::vector<int> get_particle_ids() {

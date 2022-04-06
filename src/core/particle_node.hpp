@@ -41,7 +41,7 @@
  *
  *  @param part the identity of the particle to fetch
  */
-const Particle &get_particle_data(int part);
+const Particle &get_particle_data(int p_id);
 
 /**
  * @brief Fetch a range of particle into the fetch cache.
@@ -80,9 +80,9 @@ void place_particle(int p_id, Utils::Vector3d const &pos);
 
 /** Remove particle with a given identity. Also removes all bonds to the
  *  particle.
- *  @param part     identity of the particle to remove
+ *  @param p_id     identity of the particle to remove
  */
-void remove_particle(int part);
+void remove_particle(int p_id);
 
 /** Remove all particles. */
 void remove_all_particles();
@@ -97,18 +97,18 @@ int number_of_particles_with_type(int type);
 /**
  * @brief Check if particle exists.
  *
- * @param part Id of the particle
+ * @param p_id     identity of the particle
  * @return True iff the particle exists.
  */
-bool particle_exists(int part);
+bool particle_exists(int p_id);
 
 /**
- *  @brief Get the mpi rank which owns the particle with id.
+ *  @brief Get the MPI rank which owns the a specific particle.
  *
- *  @param id Id of the particle
+ *  @param p_id     identity of the particle
  *  @return The MPI rank the particle is on.
  */
-int get_particle_node(int id);
+int get_particle_node(int p_id);
 
 /**
  * @brief Get all particle ids.

@@ -159,15 +159,15 @@ cdef extern from "particle_data.hpp":
 cdef extern from "particle_node.hpp":
     void place_particle(int p_id, const Vector3d & pos) except +
 
-    void remove_particle(int part) except +
+    void remove_particle(int p_id) except +
 
     void remove_all_particles() except +
 
-    bool particle_exists(int part)
+    bool particle_exists(int p_id)
 
-    int get_particle_node(int pid) except +
+    int get_particle_node(int p_id) except +
 
-    const particle & get_particle_data(int pid) except +
+    const particle & get_particle_data(int p_id) except +
 
     vector[int] get_particle_ids() except +
 
