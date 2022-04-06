@@ -745,15 +745,22 @@ static void check_particle_exists(int p_id) {
   }
 }
 
-void remove_particle_exclusion(int part1, int part2) {
+static void particle_exclusion_sanity_checks(int part1, int part2) {
+  if (part1 == part2) {
+    throw std::runtime_error("Particles cannot exclude themselves (id " +
+                             std::to_string(part1) + ")");
+  }
   check_particle_exists(part1);
   check_particle_exists(part2);
+}
+
+void remove_particle_exclusion(int part1, int part2) {
+  particle_exclusion_sanity_checks(part1, part2);
   mpi_call_all(mpi_remove_exclusion_local, part1, part2);
 }
 
 void add_particle_exclusion(int part1, int part2) {
-  check_particle_exists(part1);
-  check_particle_exists(part2);
+  particle_exclusion_sanity_checks(part1, part2);
   mpi_call_all(mpi_add_exclusion_local, part1, part2);
 }
 

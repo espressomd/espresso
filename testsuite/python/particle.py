@@ -210,6 +210,24 @@ class ParticleProperties(ut.TestCase):
         with self.assertRaisesRegex(ValueError, "quaternion is zero"):
             p1.vs_quat = [0, 0, 0, 0]
 
+    @utx.skipIfMissingFeatures(["EXCLUSIONS"])
+    def test_invalid_exclusions(self):
+        pid1 = self.pid
+        pid2 = self.pid + 1
+
+        p1 = self.partcl
+        with self.assertRaisesRegex(RuntimeError, rf"Particles cannot exclude themselves \(id {self.pid}\)"):
+            p1.add_exclusion(pid1)
+        with self.assertRaisesRegex(RuntimeError, f"Particle with id {pid2} not found"):
+            p1.add_exclusion(pid2)
+
+        self.system.part.add(id=pid2, pos=(0, 0, 0))
+        with self.assertRaisesRegex(RuntimeError, f"Particle with id {pid2} is not in exclusion list of particle with id {pid1}"):
+            p1.delete_exclusion(pid2)
+        with self.assertRaisesRegex(RuntimeError, f"Particle with id {pid2} is already in exclusion list of particle with id {pid1}"):
+            p1.add_exclusion(pid2)
+            p1.add_exclusion(pid2)
+
     @utx.skipIfMissingFeatures("DIPOLES")
     def test_contradicting_properties_dip_dipm(self):
         with self.assertRaises(ValueError):

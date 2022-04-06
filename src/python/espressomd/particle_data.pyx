@@ -989,24 +989,26 @@ cdef class ParticleHandle:
     IF EXCLUSIONS:
         property exclusions:
             """
-            The exclusion list of particles where nonbonded interactions are ignored.
+            The exclusion list of particles where non-bonded interactions are ignored.
 
             .. note::
                 This needs the feature ``EXCLUSIONS``.
 
+            exclusions : (N,) array_like of :obj:`int`
+
             """
 
-            def __set__(self, _partners):
+            def __set__(self, partners):
                 # Delete all
                 for e in self.exclusions:
                     self.delete_exclusion(e)
 
-                nlvl = nesting_level(_partners)
+                nlvl = nesting_level(partners)
 
                 if nlvl == 0:  # Single item
-                    self.add_exclusion(_partners)
+                    self.add_exclusion(partners)
                 elif nlvl == 1:  # List of items
-                    for partner in _partners:
+                    for partner in partners:
                         self.add_exclusion(partner)
                 else:
                     raise ValueError(
@@ -1016,36 +1018,55 @@ cdef class ParticleHandle:
                 self.update_particle_data()
                 return array_locked(self.particle_data.exclusions_as_vector())
 
-        def add_exclusion(self, _partner):
+        def add_exclusion(self, partner):
             """
-            Excluding interaction with the given partner.
+            Exclude non-bonded interactions with the given partner.
+
+            .. note::
+                This needs the feature ``EXCLUSIONS``.
 
             Parameters
             -----------
-            _partner : :obj:`int`
-                partner
+            partner : :class:`~espressomd.particle_data.ParticleHandle` or :obj:`int`
+                Particle to exclude.
 
             """
+            if isinstance(partner, ParticleHandle):
+                p_id = partner.id
+            else:
+                p_id = partner
             check_type_or_throw_except(
-                _partner, 1, int, "PID of partner has to be an int.")
+                p_id, 1, int, "Argument 'partner' has to be a ParticleHandle or int.")
             self.update_particle_data()
-            if self.particle_data.has_exclusion(_partner):
-                raise Exception(
-                    f"Exclusion id {_partner} already in exclusion list of particle {self._id}")
-            if self._id == _partner:
-                raise Exception(
-                    "Cannot exclude of a particle with itself!\n"
-                    f"->particle id {self._id}, partner {_partner}.")
-            add_particle_exclusion(self._id, _partner)
+            if self.particle_data.has_exclusion(p_id):
+                raise RuntimeError(
+                    f"Particle with id {p_id} is already in exclusion list of particle with id {self._id}")
+            add_particle_exclusion(self._id, p_id)
 
-        def delete_exclusion(self, _partner):
+        def delete_exclusion(self, partner):
+            """
+            Remove exclusion of non-bonded interactions with the given partner.
+
+            .. note::
+                This needs the feature ``EXCLUSIONS``.
+
+            Parameters
+            -----------
+            partner : :class:`~espressomd.particle_data.ParticleHandle` or :obj:`int`
+                Particle to remove from exclusions.
+
+            """
+            if isinstance(partner, ParticleHandle):
+                p_id = partner.id
+            else:
+                p_id = partner
             check_type_or_throw_except(
-                _partner, 1, int, "PID of partner has to be an int.")
+                p_id, 1, int, "Argument 'partner' has to be a ParticleHandle or int.")
             self.update_particle_data()
-            if not self.particle_data.has_exclusion(_partner):
-                raise Exception(
-                    f"Particle with id {_partner} is not in exclusion list.")
-            remove_particle_exclusion(self._id, _partner)
+            if not self.particle_data.has_exclusion(p_id):
+                raise RuntimeError(
+                    f"Particle with id {p_id} is not in exclusion list of particle with id {self._id}")
+            remove_particle_exclusion(self._id, p_id)
 
     IF ENGINE:
         property swimming:
