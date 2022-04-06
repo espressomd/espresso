@@ -306,39 +306,52 @@ int get_particle_node(int p_id) {
 
 void clear_particle_node() { particle_node.clear(); }
 
-/** Move a particle to a new position. If it does not exist, it is created.
- *  The position must be on the local node!
+/**
+ * @brief Create a new particle.
+ * The position must be on the local node!
  *
- *  @param p_id  the identity of the particle to move
- *  @param pos   its new position
- *  @param _new  if true, the particle is allocated, else has to exists already
+ * @param p_id  identity of the particle to create
+ * @param pos   position
  *
- *  @return Pointer to the particle.
+ * @return Pointer to the particle.
  */
-Particle *local_place_particle(int p_id, const Utils::Vector3d &pos, int _new) {
-  auto pp = Utils::Vector3d{pos[0], pos[1], pos[2]};
-  auto i = Utils::Vector3i{};
-  fold_position(pp, i, box_geo);
+static Particle *local_insert_particle(int p_id, const Utils::Vector3d &pos) {
+  auto folded_pos = pos;
+  auto image_box = Utils::Vector3i{};
+  fold_position(folded_pos, image_box, box_geo);
 
-  if (_new) {
-    Particle new_part;
-    new_part.id() = p_id;
-    new_part.pos() = pp;
-    new_part.image_box() = i;
+  Particle new_part;
+  new_part.id() = p_id;
+  new_part.pos() = folded_pos;
+  new_part.image_box() = image_box;
 
-    return cell_structure.add_local_particle(std::move(new_part));
-  }
+  return cell_structure.add_local_particle(std::move(new_part));
+}
+
+/**
+ * @brief Move a particle to a new position.
+ * The position must be on the local node!
+ *
+ * @param p_id  identity of the particle to move
+ * @param pos   new position
+ *
+ * @return Pointer to the particle.
+ */
+static Particle *local_move_particle(int p_id, const Utils::Vector3d &pos) {
+  auto folded_pos = pos;
+  auto image_box = Utils::Vector3i{};
+  fold_position(folded_pos, image_box, box_geo);
 
   auto pt = cell_structure.get_local_particle(p_id);
-  pt->pos() = pp;
-  pt->image_box() = i;
+  pt->pos() = folded_pos;
+  pt->image_box() = image_box;
 
   return pt;
 }
 
-static boost::optional<int> mpi_place_new_particle_local(
-    int p_id, Utils::Vector3d const &pos) {
-  auto p = local_place_particle(p_id, pos, 1);
+static boost::optional<int>
+mpi_place_new_particle_local(int p_id, Utils::Vector3d const &pos) {
+  auto p = local_insert_particle(p_id, pos);
   on_particle_change();
   if (p) {
     return comm_cart.rank();
@@ -362,7 +375,7 @@ void mpi_place_particle_local(int pnode, int p_id) {
   if (pnode == this_node) {
     Utils::Vector3d pos;
     comm_cart.recv(0, some_tag, pos);
-    local_place_particle(p_id, pos, 0);
+    local_move_particle(p_id, pos);
   }
 
   cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
@@ -381,7 +394,7 @@ static void mpi_place_particle(int node, int p_id, const Utils::Vector3d &pos) {
   mpi_call(mpi_place_particle_local, node, p_id);
 
   if (node == this_node)
-    local_place_particle(p_id, pos, 0);
+    local_move_particle(p_id, pos);
   else {
     comm_cart.send(node, some_tag, pos);
   }
@@ -402,26 +415,21 @@ void place_particle(int p_id, Utils::Vector3d const &pos) {
 }
 
 static void mpi_remove_particle_local(int p_id) {
-  if (p_id != -1) {
-    cell_structure.remove_particle(p_id);
-  } else {
-    cell_structure.remove_all_particles();
-  }
+  cell_structure.remove_particle(p_id);
   on_particle_change();
 }
 
 REGISTER_CALLBACK(mpi_remove_particle_local)
 
-/** Remove a particle.
- *  Also calls \ref on_particle_change.
- *  \param p_id  the particle to remove, use -1 to remove all particles.
- */
-static void mpi_remove_particle(int p_id) {
-  mpi_call_all(mpi_remove_particle_local, p_id);
+static void mpi_remove_all_particles_local() {
+  cell_structure.remove_all_particles();
+  on_particle_change();
 }
 
+REGISTER_CALLBACK(mpi_remove_all_particles_local)
+
 void remove_all_particles() {
-  mpi_remove_particle(-1);
+  mpi_call_all(mpi_remove_all_particles_local);
   clear_particle_node();
 }
 
@@ -434,7 +442,7 @@ void remove_particle(int p_id) {
   }
 
   particle_node[p_id] = -1;
-  mpi_remove_particle(p_id);
+  mpi_call_all(mpi_remove_particle_local, p_id);
   particle_node.erase(p_id);
 }
 

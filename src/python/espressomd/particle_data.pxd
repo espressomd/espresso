@@ -149,7 +149,8 @@ cdef extern from "particle_data.hpp":
     const vector[BondView] & get_particle_bonds(int part)
 
     IF EXCLUSIONS:
-        int change_exclusion(int part, int part2, int _delete)
+        void remove_particle_exclusion(int part1, int part2)
+        void add_particle_exclusion(int part1, int part2)
 
     IF ENGINE:
         void set_particle_swimming(int part, particle_parameters_swimming swim)

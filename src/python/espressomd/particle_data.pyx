@@ -1036,8 +1036,7 @@ cdef class ParticleHandle:
                 raise Exception(
                     "Cannot exclude of a particle with itself!\n"
                     f"->particle id {self._id}, partner {_partner}.")
-            if change_exclusion(self._id, _partner, 0) == 1:
-                raise Exception(f"Particle with id {_partner} does not exist.")
+            add_particle_exclusion(self._id, _partner)
 
         def delete_exclusion(self, _partner):
             check_type_or_throw_except(
@@ -1046,8 +1045,7 @@ cdef class ParticleHandle:
             if not self.particle_data.has_exclusion(_partner):
                 raise Exception(
                     f"Particle with id {_partner} is not in exclusion list.")
-            if change_exclusion(self._id, _partner, 1) == 1:
-                raise Exception(f"Particle with id {_partner} does not exist.")
+            remove_particle_exclusion(self._id, _partner)
 
     IF ENGINE:
         property swimming:

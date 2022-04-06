@@ -26,6 +26,7 @@
 #include "communication.hpp"
 #include "config.hpp"
 #include "event.hpp"
+#include "exclusions.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "partCfg_global.hpp"
 #include "particle_node.hpp"
@@ -42,6 +43,7 @@
 #include <boost/variant.hpp>
 
 #include <iterator>
+#include <stdexcept>
 #include <tuple>
 #include <unordered_map>
 #include <vector>
@@ -400,12 +402,6 @@ void mpi_update_particle_property(int id, const T &value) {
   mpi_update_particle<ParticleProperties, &Particle::p, T, m>(id, value);
 }
 
-void delete_exclusion(Particle *part, int part2);
-
-void add_exclusion(Particle *part, int part2);
-
-void auto_exclusion(int distance);
-
 void set_particle_v(int part, Utils::Vector3d const &v) {
   mpi_update_particle<ParticleMomentum, &Particle::m, Utils::Vector3d,
                       &ParticleMomentum::v>(part, v);
@@ -683,35 +679,41 @@ void mpi_rescale_particles(int dir, double scale) {
 }
 
 #ifdef EXCLUSIONS
-/** Locally add an exclusion to a particle.
- *  @param part1 the identity of the first exclusion partner
- *  @param part2 the identity of the second exclusion partner
- *  @param _delete if true, delete the exclusion instead of add
+/**
+ * @brief Locally remove an exclusion to a particle.
+ * @param part1 the identity of the first exclusion partner
+ * @param part2 the identity of the second exclusion partner
  */
-static void local_change_exclusion(int part1, int part2, int _delete) {
-  /* part1, if here */
-  auto part = cell_structure.get_local_particle(part1);
-  if (part) {
-    if (_delete)
-      delete_exclusion(part, part2);
-    else
-      add_exclusion(part, part2);
+static void local_remove_exclusion(int part1, int part2) {
+  auto *p1 = cell_structure.get_local_particle(part1);
+  if (p1) {
+    delete_exclusion(*p1, part2);
   }
-
-  /* part2, if here */
-  part = cell_structure.get_local_particle(part2);
-  if (part) {
-    if (_delete)
-      delete_exclusion(part, part1);
-    else
-      add_exclusion(part, part1);
+  auto *p2 = cell_structure.get_local_particle(part2);
+  if (p2) {
+    delete_exclusion(*p2, part1);
   }
 }
 
-namespace {
+/**
+ * @brief Locally add an exclusion to a particle.
+ * @param part1 the identity of the first exclusion partner
+ * @param part2 the identity of the second exclusion partner
+ */
+static void local_add_exclusion(int part1, int part2) {
+  auto *p1 = cell_structure.get_local_particle(part1);
+  if (p1) {
+    add_exclusion(*p1, part2);
+  }
+  auto *p2 = cell_structure.get_local_particle(part2);
+  if (p2) {
+    add_exclusion(*p2, part1);
+  }
+}
+
 /* keep a unique list for particle i. Particle j is only added if it is not i
    and not already in the list. */
-void add_partner(std::vector<int> &il, int i, int j, int distance) {
+static void add_partner(std::vector<int> &il, int i, int j, int distance) {
   if (j == i)
     return;
   for (int k = 0; k < il.size(); k += 2)
@@ -721,31 +723,38 @@ void add_partner(std::vector<int> &il, int i, int j, int distance) {
   il.push_back(j);
   il.push_back(distance);
 }
-} // namespace
 
-static void mpi_send_exclusion_local(int part1, int part2, int _delete) {
-  local_change_exclusion(part1, part2, _delete);
+static void mpi_remove_exclusion_local(int part1, int part2) {
+  local_remove_exclusion(part1, part2);
   on_particle_change();
 }
 
-REGISTER_CALLBACK(mpi_send_exclusion_local)
+REGISTER_CALLBACK(mpi_remove_exclusion_local)
 
-/** Send exclusions.
- *  Also calls \ref on_particle_change.
- *  \param part1    identity of first particle of the exclusion.
- *  \param part2    identity of second particle of the exclusion.
- *  \param _delete  if true, do not add the exclusion, rather delete it if found
- */
-static void mpi_send_exclusion(int part1, int part2, int _delete) {
-  mpi_call_all(mpi_send_exclusion_local, part1, part2, _delete);
+static void mpi_add_exclusion_local(int part1, int part2) {
+  local_add_exclusion(part1, part2);
+  on_particle_change();
 }
 
-int change_exclusion(int part1, int part2, int _delete) {
-  if (particle_exists(part1) && particle_exists(part2)) {
-    mpi_send_exclusion(part1, part2, _delete);
-    return ES_OK;
+REGISTER_CALLBACK(mpi_add_exclusion_local)
+
+static void check_particle_exists(int p_id) {
+  if (not particle_exists(p_id)) {
+    throw std::runtime_error("Particle with id " + std::to_string(p_id) +
+                             " not found");
   }
-  return ES_ERROR;
+}
+
+void remove_particle_exclusion(int part1, int part2) {
+  check_particle_exists(part1);
+  check_particle_exists(part2);
+  mpi_call_all(mpi_remove_exclusion_local, part1, part2);
+}
+
+void add_particle_exclusion(int part1, int part2) {
+  check_particle_exists(part1);
+  check_particle_exists(part2);
+  mpi_call_all(mpi_add_exclusion_local, part1, part2);
 }
 
 void auto_exclusions(int distance) {
@@ -800,7 +809,7 @@ void auto_exclusions(int distance) {
     auto const partner_list = kv.second;
     for (int j : partner_list)
       if (id < j)
-        change_exclusion(id, j, 0);
+        add_particle_exclusion(id, j);
   }
 }
 #endif // EXCLUSIONS

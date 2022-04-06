@@ -260,21 +260,19 @@ void add_particle_bond(int part, Utils::Span<const int> bond);
 const std::vector<BondView> &get_particle_bonds(int part);
 
 #ifdef EXCLUSIONS
-/** Call only on the head node: change particle constraints.
- *  @param part     identity of particle for which the exclusion is set.
+/** @brief Remove particle exclusion.
+ *  Call only on the head node.
+ *  @param part1    identity of particle for which the exclusion is set.
  *  @param part2    identity of particle for which the exclusion is set.
- *                  If -1, delete all exclusions.
- *  @param _delete  if true, do not add the exclusion, rather delete it if
- *                  found
- *  @retval ES_OK on success
- *  @retval ES_ERROR on failure (e.g. particles do not exist / did not have
- *          exclusion set)
  */
-int change_exclusion(int part, int part2, int _delete);
-#endif
+void remove_particle_exclusion(int part1, int part2);
 
-/** Rescale all particle positions in direction @p dir by a factor @p scale. */
-void mpi_rescale_particles(int dir, double scale);
+/** @brief Add particle exclusion.
+ *  Call only on the head node.
+ *  @param part1    identity of particle for which the exclusion is set.
+ *  @param part2    identity of particle for which the exclusion is set.
+ */
+void add_particle_exclusion(int part1, int part2);
 
 /** Automatically add the next \<distance\> neighbors in each molecule to the
  *  exclusion list.
@@ -284,6 +282,10 @@ void mpi_rescale_particles(int dir, double scale);
  *  particles, you should avoid this function and setup exclusions manually.
  */
 void auto_exclusions(int distance);
+#endif
+
+/** Rescale all particle positions in direction @p dir by a factor @p scale. */
+void mpi_rescale_particles(int dir, double scale);
 
 // The following functions are used by the python interface to obtain
 // properties of a particle, which are only compiled in in some configurations
