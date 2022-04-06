@@ -157,9 +157,9 @@ cdef extern from "particle_data.hpp":
     void remove_all_bonds_to(int part)
 
 cdef extern from "particle_node.hpp":
-    int place_particle(int part, const Vector3d & p) except +
+    void place_particle(int p_id, const Vector3d & pos) except +
 
-    int remove_particle(int part) except +
+    void remove_particle(int part) except +
 
     void remove_all_particles() except +
 

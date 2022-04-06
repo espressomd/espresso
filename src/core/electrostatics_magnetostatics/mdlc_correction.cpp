@@ -33,6 +33,7 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "particle_data.hpp"
+#include "particle_node.hpp"
 
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>

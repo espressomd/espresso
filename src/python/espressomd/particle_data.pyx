@@ -170,8 +170,7 @@ cdef class ParticleHandle:
                 raise ValueError("invalid particle position")
             check_type_or_throw_except(
                 _pos, 3, float, "Position must be 3 floats")
-            if place_particle(self._id, make_Vector3d(_pos)) == -1:
-                raise Exception("particle could not be set")
+            place_particle(self._id, make_Vector3d(_pos))
 
         def __get__(self):
             self.update_particle_data()
@@ -1188,8 +1187,7 @@ cdef class ParticleHandle:
         espressomd.particle_data.ParticleList.clear
 
         """
-        if remove_particle(self._id):
-            raise Exception("Could not remove particle.")
+        remove_particle(self._id)
         del self
 
     def add_verified_bond(self, bond):
@@ -1795,9 +1793,7 @@ Set quat and scalar dipole moment (dipm) instead.")
         # done here.
         check_type_or_throw_except(
             p_dict["pos"], 3, float, "Position must be 3 floats.")
-        error_code = place_particle(p_dict["id"], make_Vector3d(p_dict["pos"]))
-        if error_code == -1:
-            raise Exception("particle could not be set.")
+        place_particle(p_dict["id"], make_Vector3d(p_dict["pos"]))
 
         # position is taken care of
         del p_dict["pos"]

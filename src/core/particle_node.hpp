@@ -40,8 +40,6 @@
  * @brief Get particle data.
  *
  *  @param part the identity of the particle to fetch
- *  @return Pointer to copy of particle if it exists,
- *          nullptr otherwise;
  */
 const Particle &get_particle_data(int part);
 
@@ -75,21 +73,16 @@ void clear_particle_node();
 /** Call only on the head node.
  *  Move a particle to a new position.
  *  If it does not exist, it is created.
- *  @param part the identity of the particle to move
- *  @param p    its new position
- *  @retval ES_PART_OK if particle existed
- *  @retval ES_PART_CREATED if created
- *  @retval ES_PART_ERROR if id is illegal
+ *  @param p_id     identity of the particle to move (or create)
+ *  @param pos      position
  */
-int place_particle(int part, Utils::Vector3d const &p);
+void place_particle(int p_id, Utils::Vector3d const &pos);
 
 /** Remove particle with a given identity. Also removes all bonds to the
  *  particle.
  *  @param part     identity of the particle to remove
- *  @retval ES_OK on success
- *  @retval ES_ERROR if particle does not exist
  */
-int remove_particle(int part);
+void remove_particle(int part);
 
 /** Remove all particles. */
 void remove_all_particles();

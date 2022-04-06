@@ -22,7 +22,7 @@
 #include "Particle.hpp"
 #include "energy_inline.hpp"
 #include "grid.hpp"
-#include "particle_data.hpp"
+#include "particle_node.hpp"
 
 namespace PairCriteria {
 /** @brief Criterion which provides a true/false for a pair of particles */

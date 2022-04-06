@@ -42,6 +42,7 @@ namespace utf = boost::unit_test;
 #include "nonbonded_interactions/lj.hpp"
 #include "observables/ParticleVelocities.hpp"
 #include "particle_data.hpp"
+#include "particle_node.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/index.hpp>

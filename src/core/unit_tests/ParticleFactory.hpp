@@ -20,6 +20,7 @@
 #define REACTION_ENSEMBLE_TESTS_PARTICLE_FACTORY_HPP
 
 #include "particle_data.hpp"
+#include "particle_node.hpp"
 
 #include <utils/Vector.hpp>
 

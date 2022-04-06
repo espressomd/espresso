@@ -284,9 +284,11 @@ class ParticleProperties(ut.TestCase):
             p._id = 42
             p.node
         for i in range(1, 10):
+            p._id = -i
             with self.assertRaisesRegex(ValueError, f"Invalid particle id: {-i}"):
-                p._id = -i
                 p.node
+            with self.assertRaisesRegex(ValueError, f"Invalid particle id: {-i}"):
+                p.remove()
             with self.assertRaisesRegex(ValueError, f"Invalid particle id: {-i}"):
                 self.system.part.add(pos=[0., 0., 0.], id=-i)
 

@@ -28,6 +28,7 @@
 #include "event.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "partCfg_global.hpp"
+#include "particle_node.hpp"
 #include "rotation.hpp"
 
 #include <utils/Span.hpp>
@@ -39,8 +40,6 @@
 #include <boost/serialization/variant.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/variant.hpp>
-
-#include <mpi.h>
 
 #include <iterator>
 #include <tuple>
@@ -342,7 +341,7 @@ void local_remove_pair_bonds_to(Particle &p, int other_pid) {
   RemovePairBondsTo{other_pid}(p);
 }
 
-void mpi_send_update_message_local(int node, int id) {
+static void mpi_send_update_message_local(int node, int id) {
   if (node == comm_cart.rank()) {
     UpdateMessage msg{};
     comm_cart.recv(0, some_tag, msg);
@@ -372,7 +371,7 @@ REGISTER_CALLBACK(mpi_send_update_message_local)
  * @param id Id of the particle to update
  * @param msg The message
  */
-void mpi_send_update_message(int id, const UpdateMessage &msg) {
+static void mpi_send_update_message(int id, const UpdateMessage &msg) {
   auto const pnode = get_particle_node(id);
 
   mpi_call(mpi_send_update_message_local, pnode, id);
@@ -664,7 +663,7 @@ void local_rescale_particles(int dir, double scale) {
 
 static void mpi_rescale_particles_local(int dir) {
   double scale = 0.0;
-  MPI_Recv(&scale, 1, MPI_DOUBLE, 0, some_tag, comm_cart, MPI_STATUS_IGNORE);
+  comm_cart.recv(0, some_tag, scale);
   local_rescale_particles(dir, scale);
   on_particle_change();
 }
@@ -677,7 +676,7 @@ void mpi_rescale_particles(int dir, double scale) {
     if (pnode == this_node) {
       local_rescale_particles(dir, scale);
     } else {
-      MPI_Send(&scale, 1, MPI_DOUBLE, pnode, some_tag, comm_cart);
+      comm_cart.send(pnode, some_tag, scale);
     }
   }
   on_particle_change();
@@ -689,7 +688,7 @@ void mpi_rescale_particles(int dir, double scale) {
  *  @param part2 the identity of the second exclusion partner
  *  @param _delete if true, delete the exclusion instead of add
  */
-void local_change_exclusion(int part1, int part2, int _delete) {
+static void local_change_exclusion(int part1, int part2, int _delete) {
   /* part1, if here */
   auto part = cell_structure.get_local_particle(part1);
   if (part) {
@@ -724,7 +723,7 @@ void add_partner(std::vector<int> &il, int i, int j, int distance) {
 }
 } // namespace
 
-void mpi_send_exclusion_local(int part1, int part2, int _delete) {
+static void mpi_send_exclusion_local(int part1, int part2, int _delete) {
   local_change_exclusion(part1, part2, _delete);
   on_particle_change();
 }
@@ -737,7 +736,7 @@ REGISTER_CALLBACK(mpi_send_exclusion_local)
  *  \param part2    identity of second particle of the exclusion.
  *  \param _delete  if true, do not add the exclusion, rather delete it if found
  */
-void mpi_send_exclusion(int part1, int part2, int _delete) {
+static void mpi_send_exclusion(int part1, int part2, int _delete) {
   mpi_call_all(mpi_send_exclusion_local, part1, part2, _delete);
 }
 

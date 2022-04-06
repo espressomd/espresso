@@ -42,8 +42,6 @@
 #include <boost/range/algorithm/sort.hpp>
 #include <boost/range/numeric.hpp>
 
-#include <mpi.h>
-
 #include <algorithm>
 #include <iterator>
 #include <stdexcept>
@@ -53,19 +51,16 @@
 #include <utility>
 #include <vector>
 
-enum {
-  /// ok code for \ref place_particle
-  ES_PART_OK = 0,
-  /// error code for \ref place_particle
-  ES_PART_ERROR = -1,
-  /// ok code for \ref place_particle, particle is new
-  ES_PART_CREATED = 1
-};
-
 constexpr auto some_tag = 42;
+
+/** @brief Enable particle type tracking in @ref particle_type_map. */
 static bool type_list_enable;
+
+/** @brief Mapping particle types to lists of particle ids. */
 static std::unordered_map<int, std::unordered_set<int>> particle_type_map;
-std::unordered_map<int, int> particle_node;
+
+/** @brief Mapping particle ids to MPI ranks. */
+static std::unordered_map<int, int> particle_node;
 
 void init_type_map(int type) {
   type_list_enable = true;
@@ -80,13 +75,13 @@ void init_type_map(int type) {
   }
 }
 
-void remove_id_from_map(int part_id, int type) {
+static void remove_id_from_map(int part_id, int type) {
   auto it = particle_type_map.find(type);
   if (it != particle_type_map.end())
     it->second.erase(part_id);
 }
 
-void add_id_to_type_map(int part_id, int type) {
+static void add_id_to_type_map(int part_id, int type) {
   auto it = particle_type_map.find(type);
   if (it != particle_type_map.end())
     it->second.insert(part_id);
@@ -115,7 +110,7 @@ Utils::Cache<int, Particle> particle_fetch_cache(max_cache_size);
 void invalidate_fetch_cache() { particle_fetch_cache.invalidate(); }
 std::size_t fetch_cache_max_size() { return particle_fetch_cache.max_size(); }
 
-boost::optional<const Particle &> get_particle_data_local(int id) {
+static boost::optional<const Particle &> get_particle_data_local(int id) {
   auto p = cell_structure.get_local_particle(id);
 
   if (p and (not p->is_ghost())) {
@@ -174,7 +169,7 @@ REGISTER_CALLBACK(mpi_get_particles_local)
  *
  * @returns The particle list.
  */
-std::vector<Particle> mpi_get_particles(Utils::Span<const int> ids) {
+static std::vector<Particle> mpi_get_particles(Utils::Span<const int> ids) {
   mpi_call(mpi_get_particles_local);
   /* Return value */
   std::vector<Particle> parts(ids.size());
@@ -255,12 +250,12 @@ static void mpi_who_has_local() {
   std::transform(local_particles.begin(), local_particles.end(),
                  sendbuf.begin(), [](Particle const &p) { return p.id(); });
 
-  MPI_Send(sendbuf.data(), n_part, MPI_INT, 0, some_tag, comm_cart);
+  comm_cart.send(0, some_tag, sendbuf);
 }
 
 REGISTER_CALLBACK(mpi_who_has_local)
 
-void mpi_who_has() {
+static void mpi_who_has() {
   mpi_call(mpi_who_has_local);
 
   auto local_particles = cell_structure.local_particles();
@@ -279,8 +274,7 @@ void mpi_who_has() {
 
     } else if (n_parts[pnode] > 0) {
       pdata.resize(n_parts[pnode]);
-      MPI_Recv(pdata.data(), n_parts[pnode], MPI_INT, pnode, some_tag,
-               comm_cart, MPI_STATUS_IGNORE);
+      comm_cart.recv(pnode, some_tag, pdata);
       for (int i = 0; i < n_parts[pnode]; i++)
         particle_node[pdata[i]] = pnode;
     }
@@ -290,11 +284,8 @@ void mpi_who_has() {
 /**
  * @brief Rebuild the particle index.
  */
-void build_particle_node() { mpi_who_has(); }
+static void build_particle_node() { mpi_who_has(); }
 
-/**
- *  @brief Get the mpi rank which owns the particle with id.
- */
 int get_particle_node(int id) {
   if (id < 0) {
     throw std::domain_error("Invalid particle id: " + std::to_string(id));
@@ -345,8 +336,8 @@ Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new) {
   return pt;
 }
 
-boost::optional<int> mpi_place_new_particle_local(int p_id,
-                                                  Utils::Vector3d const &pos) {
+static boost::optional<int> mpi_place_new_particle_local(
+    int p_id, Utils::Vector3d const &pos) {
   auto p = local_place_particle(p_id, pos, 1);
   on_particle_change();
   if (p) {
@@ -362,7 +353,7 @@ REGISTER_CALLBACK_ONE_RANK(mpi_place_new_particle_local)
  *  \param p_id  the particle to create.
  *  \param pos   the particles position.
  */
-int mpi_place_new_particle(int p_id, const Utils::Vector3d &pos) {
+static int mpi_place_new_particle(int p_id, const Utils::Vector3d &pos) {
   return mpi_call(Communication::Result::one_rank, mpi_place_new_particle_local,
                   p_id, pos);
 }
@@ -386,7 +377,7 @@ REGISTER_CALLBACK(mpi_place_particle_local)
  *  \param p_id  the particle to move.
  *  \param pos   the particles position.
  */
-void mpi_place_particle(int node, int p_id, const Utils::Vector3d &pos) {
+static void mpi_place_particle(int node, int p_id, const Utils::Vector3d &pos) {
   mpi_call(mpi_place_particle_local, node, p_id);
 
   if (node == this_node)
@@ -399,18 +390,15 @@ void mpi_place_particle(int node, int p_id, const Utils::Vector3d &pos) {
   on_particle_change();
 }
 
-int place_particle(int p_id, Utils::Vector3d const &pos) {
+void place_particle(int p_id, Utils::Vector3d const &pos) {
   if (p_id < 0) {
     throw std::domain_error("Invalid particle id: " + std::to_string(p_id));
   }
   if (particle_exists(p_id)) {
     mpi_place_particle(get_particle_node(p_id), p_id, pos);
-
-    return ES_PART_OK;
+  } else {
+    particle_node[p_id] = mpi_place_new_particle(p_id, pos);
   }
-  particle_node[p_id] = mpi_place_new_particle(p_id, pos);
-
-  return ES_PART_CREATED;
 }
 
 static void mpi_remove_particle_local(int p_id) {
@@ -428,7 +416,7 @@ REGISTER_CALLBACK(mpi_remove_particle_local)
  *  Also calls \ref on_particle_change.
  *  \param p_id  the particle to remove, use -1 to remove all particles.
  */
-void mpi_remove_particle(int p_id) {
+static void mpi_remove_particle(int p_id) {
   mpi_call_all(mpi_remove_particle_local, p_id);
 }
 
@@ -437,7 +425,7 @@ void remove_all_particles() {
   clear_particle_node();
 }
 
-int remove_particle(int p_id) {
+void remove_particle(int p_id) {
   auto const &cur_par = get_particle_data(p_id);
   if (type_list_enable) {
     // remove particle from its current type_list
@@ -448,8 +436,6 @@ int remove_particle(int p_id) {
   particle_node[p_id] = -1;
   mpi_remove_particle(p_id);
   particle_node.erase(p_id);
-
-  return ES_OK;
 }
 
 int get_random_p_id(int type, int random_index_in_type_map) {

@@ -37,7 +37,7 @@ namespace bdata = boost::unit_test::data;
 #include "ParticleFactory.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/lj.hpp"
-#include "particle_data.hpp"
+#include "particle_node.hpp"
 #include "thermostat.hpp"
 
 #include <utils/Vector.hpp>

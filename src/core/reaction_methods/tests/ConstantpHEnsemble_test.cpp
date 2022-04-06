@@ -29,7 +29,6 @@
 #include "reaction_methods/utils.hpp"
 
 #include "communication.hpp"
-#include "particle_data.hpp"
 
 #include <boost/mpi.hpp>
 
