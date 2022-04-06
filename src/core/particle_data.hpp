@@ -21,94 +21,26 @@
 #ifndef CORE_PARTICLE_DATA_HPP
 #define CORE_PARTICLE_DATA_HPP
 /** \file
- *  Particles and particle lists.
+ *  Particles property access.
  *
- *  This file contains everything related to particle storage. If you want to
+ *  This file contains everything related to particle properties. If you want to
  *  add a new property to the particles, it is probably a good idea to modify
  *  Particle to give scripts access to that property. You always have to modify
  *  two positions: first the print section, where you should add your new
  *  data at the end, and second the read section where you have to find a nice
- *  and short name for your property to appear in the Python code. Then you
- *  just parse your part out of argc and argv.
- *
- *  Implementation in particle_data.cpp.
+ *  and short name for your property to appear in the Python code.
  */
 
 #include "config.hpp"
 
 #include "Particle.hpp"
-#include "ParticleList.hpp"
+#include "particle_node.hpp"
 
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 #include <utils/quaternion.hpp>
 
-#include <cstddef>
 #include <vector>
-
-/************************************************
- * defines
- ************************************************/
-
-enum {
-  /// ok code for \ref place_particle
-  ES_PART_OK = 0,
-  /// error code for \ref place_particle
-  ES_PART_ERROR = -1,
-  /// ok code for \ref place_particle, particle is new
-  ES_PART_CREATED = 1
-};
-
-/************************************************
- * Functions
- ************************************************/
-
-/** Invalidate \ref particle_node. This has to be done
- *  at the beginning of the integration.
- */
-void clear_particle_node();
-
-/**
- * @brief Get particle data.
- *
- *  @param part the identity of the particle to fetch
- *  @return Pointer to copy of particle if it exists,
- *          nullptr otherwise;
- */
-const Particle &get_particle_data(int part);
-
-/**
- * @brief Fetch a range of particle into the fetch cache.
- *
- *
- * If the range is larger than the cache size, only
- * the particle that fit into the cache are fetched.
- *
- * The particles have to exist, an exception it throw
- * if one of the the particles can not be found.
- *
- * @param ids Ids of the particles that should be fetched.
- */
-void prefetch_particle_data(Utils::Span<const int> ids);
-
-/** @brief Invalidate the fetch cache for get_particle_data. */
-void invalidate_fetch_cache();
-
-/** @brief Return the maximal number of particles that are
- *         kept in the fetch cache.
- */
-std::size_t fetch_cache_max_size();
-
-/** Call only on the head node.
- *  Move a particle to a new position.
- *  If it does not exist, it is created.
- *  @param part the identity of the particle to move
- *  @param p    its new position
- *  @retval ES_PART_OK if particle existed
- *  @retval ES_PART_CREATED if created
- *  @retval ES_PART_ERROR if id is illegal
- */
-int place_particle(int part, Utils::Vector3d const &p);
 
 /** Call only on the head node: set particle velocity.
  *  @param part the particle.
@@ -339,17 +271,6 @@ const std::vector<BondView> &get_particle_bonds(int part);
 int change_exclusion(int part, int part2, int _delete);
 #endif
 
-/** Remove particle with a given identity. Also removes all bonds to the
- *  particle.
- *  @param part     identity of the particle to remove
- *  @retval ES_OK on success
- *  @retval ES_ERROR if particle does not exist
- */
-int remove_particle(int part);
-
-/** Remove all particles. */
-void remove_all_particles();
-
 /** Rescale all particle positions in direction @p dir by a factor @p scale. */
 void mpi_rescale_particles(int dir, double scale);
 
@@ -361,12 +282,6 @@ void mpi_rescale_particles(int dir, double scale);
  *  particles, you should avoid this function and setup exclusions manually.
  */
 void auto_exclusions(int distance);
-
-void init_type_map(int type);
-
-/** Find a particle of given type and return its id */
-int get_random_p_id(int type, int random_index_in_type_map);
-int number_of_particles_with_type(int type);
 
 // The following functions are used by the python interface to obtain
 // properties of a particle, which are only compiled in in some configurations
@@ -420,38 +335,5 @@ inline Utils::Vector3i get_particle_rotation(Particle const *p) {
                           p->can_rotate_around(2)}};
 }
 #endif // ROTATION
-
-/**
- * @brief Check if particle exists.
- *
- * @param part Id of the particle
- * @return True iff the particle exists.
- */
-bool particle_exists(int part);
-
-/**
- *  @brief Get the mpi rank which owns the particle with id.
- *
- *  @param id Id of the particle
- *  @return The MPI rank the particle is on.
- */
-int get_particle_node(int id);
-
-/**
- * @brief Get all particle ids.
- *
- * @return Sorted ids of all existing particles.
- */
-std::vector<int> get_particle_ids();
-
-/**
- * @brief Get maximal particle id.
- */
-int get_maximal_particle_id();
-
-/**
- * @brief Get number of particles.
- */
-int get_n_part();
 
 #endif
