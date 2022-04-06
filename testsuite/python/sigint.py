@@ -21,13 +21,13 @@ import signal
 import subprocess
 import time
 import sys
-import os
+import pathlib
 
 
 class SigintTest(ut.TestCase):
 
     def setUp(self):
-        script = os.path.join(os.path.dirname(__file__), 'sigint_child.py')
+        script = str(pathlib.Path(__file__).parent / 'sigint_child.py')
         self.process = subprocess.Popen([sys.executable, script])
 
     def test_signal_handling(self):

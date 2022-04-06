@@ -170,7 +170,7 @@ if(WITH_CUDA)
   endif()
 endif(WITH_CUDA)
 
-find_package(PythonInterp 3.7 REQUIRED)
+find_package(PythonInterp 3.8 REQUIRED)
 
 if(WITH_PYTHON)
   find_package(Cython 0.29.14 REQUIRED)

@@ -22,28 +22,19 @@ import numpy as np
 
 import espressomd
 
-# Dihedral interaction needs more rigorous tests.
-# The geometry checked here is rather simple and special.
-# I also found that as the dihedral angle approaches to 0, the simulation
-# values deviate from the analytic values by roughly 10%.
-
 
 def rotate_vector(v, k, phi):
     """Rotates vector v around unit vector k by angle phi.
     Uses Rodrigues' rotation formula."""
-    vrot = v * np.cos(phi) + np.cross(k, v) * \
-        np.sin(phi) + k * np.dot(k, v) * (1.0 - np.cos(phi))
+    vrot = np.array(v) * np.cos(phi) + np.cross(k, v) * \
+        np.sin(phi) + np.array(k) * np.dot(k, v) * (1.0 - np.cos(phi))
     return vrot
 
 
-def dihedral_potential(k, phi, n, phase):
-    if phi == -1:
-        return 0
-    else:
-        return k * (1 - np.cos(n * phi - phase))
-
-
-def dihedral_force(k, n, phase, p1, p2, p3, p4):
+def dihedral_potential_and_forces(k, n, phase, p1, p2, p3, p4):
+    """
+    Calculate the potential and forces for a dihedral angle.
+    """
     v12 = p2 - p1
     v23 = p3 - p2
     v34 = p4 - p3
@@ -52,158 +43,126 @@ def dihedral_force(k, n, phase, p1, p2, p3, p4):
     l_v12Xv23 = np.linalg.norm(v12Xv23)
     v23Xv34 = np.cross(v23, v34)
     l_v23Xv34 = np.linalg.norm(v23Xv34)
-    # if dihedral angle is not defined, no forces
-    if l_v12Xv23 <= 1e-8 or l_v23Xv34 <= 1e-8:
-        return 0, 0, 0
+
+    phi = np.arctan2(np.dot(v23, np.cross(v12Xv23, v23Xv34)),
+                     np.dot(v23, v23) * np.dot(v12Xv23, v23Xv34))
+
+    f1 = (v23Xv34 - np.cos(phi) * v12Xv23) / l_v12Xv23
+    f4 = (v12Xv23 - np.cos(phi) * v23Xv34) / l_v23Xv34
+
+    v23Xf1 = np.cross(v23, f1)
+    v23Xf4 = np.cross(v23, f4)
+    v34Xf4 = np.cross(v34, f4)
+    v12Xf1 = np.cross(v12, f1)
+
+    # handle singularity near TINY_SIN_VALUE
+    if np.abs(np.sin(phi)) < 1e-10:
+        coeff = -k * n**2 * np.cos(n * phi - phase) / np.cos(phi)
     else:
-        cosphi = np.abs(np.dot(v12Xv23, v23Xv34)) / (l_v12Xv23 * l_v23Xv34)
-        phi = np.arccos(cosphi)
-        f1 = (v23Xv34 - cosphi * v12Xv23) / l_v12Xv23
-        f4 = (v12Xv23 - cosphi * v23Xv34) / l_v23Xv34
-
-        v23Xf1 = np.cross(v23, f1)
-        v23Xf4 = np.cross(v23, f4)
-        v34Xf4 = np.cross(v34, f4)
-        v12Xf1 = np.cross(v12, f1)
-
         coeff = -k * n * np.sin(n * phi - phase) / np.sin(phi)
 
-        force1 = coeff * v23Xf1
-        force2 = coeff * (v34Xf4 - v12Xf1 - v23Xf1)
-        force3 = coeff * (v12Xf1 - v23Xf4 - v34Xf4)
-        return force1, force2, force3
+    force1 = coeff * v23Xf1
+    force2 = coeff * (v34Xf4 - v12Xf1 - v23Xf1)
+    force3 = coeff * (v12Xf1 - v23Xf4 - v34Xf4)
+    force4 = coeff * v23Xf4
+    potential = k * (1 - np.cos(n * phi - phase))
+    return (potential, (force1, force2, force3, force4))
 
 
 class InteractionsBondedTest(ut.TestCase):
-    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system.cell_system.skin = 0.4
+    system.time_step = 0.1
     np.random.seed(seed=42)
-
-    box_l = 10.
-
-    start_pos = [5., 5., 5.]
-    axis = np.array([1., 0., 0.])
-    axis /= np.linalg.norm(axis)
-    rel_pos_1 = np.array([0., 1., 0.])
-    rel_pos_2 = np.array([0., 0., 1.])
-
-    def setUp(self):
-
-        self.system.box_l = [self.box_l] * 3
-        self.system.cell_system.skin = 0.4
-        self.system.time_step = .1
-
-        self.system.part.add(pos=4 * [self.start_pos], type=4 * [0])
 
     def tearDown(self):
         self.system.part.clear()
 
-    # Analytical Expression
-    def dihedral_angle(self, p1, p2, p3, p4):
-        """
-        Calculate the dihedral angle phi based on particles' position p1, p2, p3, p4.
-        """
-        v12 = p2 - p1
-        v23 = p3 - p2
-        v34 = p4 - p3
-
-        v12Xv23 = np.cross(v12, v23)
-        l_v12Xv23 = np.linalg.norm(v12Xv23)
-        v23Xv34 = np.cross(v23, v34)
-        l_v23Xv34 = np.linalg.norm(v23Xv34)
-
-        # if dihedral angle is not defined, phi := -1.
-        if l_v12Xv23 <= 1e-8 or l_v23Xv34 <= 1e-8:
-            return -1
-        else:
-            cosphi = np.abs(np.dot(v12Xv23, v23Xv34)) / (
-                l_v12Xv23 * l_v23Xv34)
-            return np.arccos(cosphi)
+    def check_values(self, E_ref, forces_ref, tol=1e-12):
+        E_sim = self.system.analysis.energy()["bonded"]
+        np.testing.assert_allclose(E_sim, E_ref, atol=tol)
+        if forces_ref:
+            f0, f1, f2, f3 = self.system.part.all().f
+            f0_ref, f1_ref, f2_ref, f3_ref = forces_ref
+            np.testing.assert_allclose(np.copy(f0), f0_ref, atol=tol)
+            np.testing.assert_allclose(np.copy(f1), f1_ref, atol=tol)
+            np.testing.assert_allclose(np.copy(f2), f2_ref, atol=tol)
+            np.testing.assert_allclose(np.copy(f3), f3_ref, atol=tol)
 
     # Test Dihedral Angle
     def test_dihedral(self):
-        p0, p1, p2, p3 = self.system.part.all()
+        axis = np.array([1., 0., 0.])
+        dh_k = 2.
+        N = 100  # even number to get singularities at phi=0 and phi=pi
+        d_phi = 2 * np.pi / N
+        for dh_n, dh_phi0_div in [(2, 3), (3, 6)]:
+            with self.subTest(multiplicity=dh_n, phi_0=f"pi / {dh_phi0_div}"):
+                dh_phi0 = np.pi / dh_phi0_div
+                dihedral = espressomd.interactions.Dihedral(
+                    bend=dh_k, mult=dh_n, phase=dh_phi0)
+                self.system.bonded_inter.add(dihedral)
+                self.system.part.clear()
+                p0, p1, p2, p3 = self.system.part.add(pos=4 * [(0., 0., 0.)])
+                p1.add_bond((dihedral, p0, p2, p3))
+                p1.pos = [5., 5., 5.]
+                p2.pos = p1.pos + [1., 0., 0.]
+                p0.pos = p1.pos + [0., 1., 0.]
 
-        dh_k = 1
-        dh_phase = np.pi / 6
-        dh_n = 1
+                for i in range(N):
+                    phi = i * d_phi
+                    p3.pos = p2.pos + rotate_vector([0., 1., 0.], axis, phi)
+                    self.system.integrator.run(recalc_forces=True, steps=0)
 
-        dh = espressomd.interactions.Dihedral(
-            bend=dh_k, mult=dh_n, phase=dh_phase)
-        self.system.bonded_inter.add(dh)
-        p1.add_bond((dh, p0, p2, p3))
-        p2.pos = p1.pos + [1, 0, 0]
+                    # Calculate expected forces and energies
+                    E_ref, forces_ref = dihedral_potential_and_forces(
+                        dh_k, dh_n, dh_phi0, p0.pos, p1.pos, p2.pos, p3.pos)
 
-        N = 111
-        d_phi = np.pi / (N * 4)
-        for i in range(N):
-            p0.pos = p1.pos + \
-                rotate_vector(self.rel_pos_1, self.axis, i * d_phi)
-            p3.pos = p2.pos + \
-                rotate_vector(self.rel_pos_2, self.axis, -i * d_phi)
-            self.system.integrator.run(recalc_forces=True, steps=0)
-
-            # Calculate energies
-            E_sim = self.system.analysis.energy()["bonded"]
-            phi = self.dihedral_angle(p0.pos, p1.pos, p2.pos, p3.pos)
-            E_ref = dihedral_potential(dh_k, phi, dh_n, dh_phase)
-
-            # Calculate forces
-            f2_sim = p1.f
-            _, f2_ref, _ = dihedral_force(dh_k, dh_n, dh_phase,
-                                          p0.pos, p1.pos, p2.pos, p3.pos)
-
-            # Check that energies match, ...
-            np.testing.assert_almost_equal(E_sim, E_ref)
-            # and has correct value.
-            f2_sim_copy = np.copy(f2_sim)
-            np.testing.assert_almost_equal(f2_sim_copy, f2_ref)
+                    self.check_values(E_ref, forces_ref)
 
     # Test Tabulated Dihedral Angle
     @utx.skipIfMissingFeatures(["TABULATED"])
     def test_tabulated_dihedral(self):
-        p0, p1, p2, p3 = self.system.part.all()
-
-        N = 111
+        axis = np.array([1., 0., 0.])
+        dh_k = 2.
+        N = 100  # even number to get singularities at phi=0 and phi=pi
         d_phi = 2 * np.pi / N
-        # tabulated values for the range [0, 2*pi]
-        tab_energy = [np.cos(i * d_phi) for i in range(N + 1)]
-        tab_force = [np.cos(i * d_phi) for i in range(N + 1)]
+        for dh_n, dh_phi0_div in [(2, 3), (3, 6)]:
+            with self.subTest(multiplicity=dh_n, phi_0=f"pi / {dh_phi0_div}"):
+                dh_phi0 = np.pi / dh_phi0_div
+                # tabulated values for the range [0, 2*pi]
+                phi = d_phi * np.arange(N + 1)
+                tab_energy = dh_k * (1. - np.cos(dh_n * phi - dh_phi0))
+                div = np.sin(phi)
+                div[0] = div[N // 2] = div[N] = 1.
+                tab_force = -dh_k * dh_n * np.sin(dh_n * phi - dh_phi0) / div
+                tab_force[0] = tab_force[N // 2] = tab_force[N] = 0.
+                dihedral_tabulated = espressomd.interactions.TabulatedDihedral(
+                    energy=tab_energy, force=tab_force)
+                self.system.bonded_inter.add(dihedral_tabulated)
+                self.system.part.clear()
+                p0, p1, p2, p3 = self.system.part.add(pos=4 * [(0., 0., 0.)])
+                p1.add_bond((dihedral_tabulated, p0, p2, p3))
+                p1.pos = [5., 5., 5.]
+                p2.pos = p1.pos + [1., 0., 0.]
+                p0.pos = p1.pos + [0., 1., 0.]
 
-        dihedral_tabulated = espressomd.interactions.TabulatedDihedral(
-            energy=tab_energy, force=tab_force)
-        self.system.bonded_inter.add(dihedral_tabulated)
-        p1.add_bond((dihedral_tabulated, p0, p2, p3))
-        p2.pos = p1.pos + [1, 0, 0]
+                # use half the angular resolution to observe interpolation
+                for i in range(2 * N - 1):
+                    phi = i * d_phi / 2.
+                    p3.pos = p2.pos + rotate_vector([0., 1., 0.], axis, phi)
+                    self.system.integrator.run(recalc_forces=True, steps=0)
 
-        # check stored parameters
-        interaction_id = len(self.system.bonded_inter) - 1
-        tabulated = self.system.bonded_inter[interaction_id]
-        np.testing.assert_allclose(tabulated.params['force'], tab_force)
-        np.testing.assert_allclose(tabulated.params['energy'], tab_energy)
-        np.testing.assert_almost_equal(tabulated.params['min'], 0.)
-        np.testing.assert_almost_equal(tabulated.params['max'], 2 * np.pi)
+                    # Calculate expected forces and energies
+                    j = i // 2
+                    if i % 2 == 0:
+                        E_ref = tab_energy[j]
+                        _, forces_ref = dihedral_potential_and_forces(
+                            dh_k, dh_n, dh_phi0, p0.pos, p1.pos, p2.pos, p3.pos)
+                    else:
+                        E_ref = (tab_energy[j] + tab_energy[j + 1]) / 2.0
+                        forces_ref = None
 
-        # measure at half the angular resolution to observe interpolation
-        for i in range(2 * N - 1):
-            # increase dihedral angle by d_phi (phi ~ 0 at i = 0)
-            p0.pos = p1.pos + \
-                rotate_vector(self.rel_pos_1, self.axis, -i * d_phi / 4)
-            p3.pos = p2.pos + \
-                rotate_vector(self.rel_pos_1, self.axis, i * d_phi / 4)
-            self.system.integrator.run(recalc_forces=True, steps=0)
-
-            # Calculate energies
-            E_sim = self.system.analysis.energy()["bonded"]
-
-            # Get tabulated values
-            j = i // 2
-            if i % 2 == 0:
-                E_ref = tab_energy[j]
-            else:
-                E_ref = (tab_energy[j] + tab_energy[j + 1]) / 2.0
-
-            # Check that energies match, ...
-            np.testing.assert_almost_equal(E_sim, E_ref)
+                    self.check_values(E_ref, forces_ref)
 
 
 if __name__ == '__main__':

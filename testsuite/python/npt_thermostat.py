@@ -117,7 +117,7 @@ class NPTThermostat(ut.TestCase):
     def test_02__direction(self):
         """Test for NpT constrained in one direction."""
 
-        data = np.genfromtxt(tests_common.abspath("data/npt_lj_system.data"))
+        data = np.genfromtxt(tests_common.data_path("npt_lj_system.data"))
         ref_box_l = 1.01 * np.max(data[:, 0:3])
 
         system = self.system

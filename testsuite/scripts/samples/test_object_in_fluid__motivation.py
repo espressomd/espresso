@@ -18,6 +18,7 @@
 import unittest as ut
 import importlib_wrapper
 import os
+import pathlib
 
 os.chdir("@SAMPLES_DIR@/object_in_fluid")
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
@@ -39,13 +40,13 @@ class Sample(ut.TestCase):
             "wallFront.vtk"]
         for i in [0, 1]:
             for j in range(sample.maxCycle):
-                basenames.append("cell{}_{}.vtk".format(i, j))
+                basenames.append(f"cell{i}_{j}.vtk")
+
         # test .vtk files exist
+        path_vtk_root = pathlib.Path("output")
         for name in basenames:
-            filepath = os.path.join("output", "sim0", name)
-            self.assertTrue(
-                os.path.isfile(filepath),
-                filepath + " not created")
+            filepath = path_vtk_root / "sim0" / name
+            self.assertTrue(filepath.is_file(), f"File {filepath} not created")
 
 
 if __name__ == "__main__":

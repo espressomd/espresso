@@ -62,19 +62,19 @@ class Scafacos1d2d(ut.TestCase):
 
             # Read reference data
             if dim == 2:
-                file_prefix = "data/mdlc"
+                file_prefix = "mdlc"
                 s.periodicity = [1, 1, 0]
             else:
                 s.periodicity = [1, 0, 0]
-                file_prefix = "data/scafacos_dipoles_1d"
+                file_prefix = "scafacos_dipoles_1d"
 
-            ref_E_path = tests_common.abspath(
-                file_prefix + "_reference_data_energy.dat")
+            ref_E_path = tests_common.data_path(
+                f"{file_prefix}_reference_data_energy.dat")
             ref_E = float(np.genfromtxt(ref_E_path))
 
             # Particles
-            data = np.genfromtxt(tests_common.abspath(
-                file_prefix + "_reference_data_forces_torques.dat"))
+            data = np.genfromtxt(tests_common.data_path(
+                f"{file_prefix}_reference_data_forces_torques.dat"))
             s.part.add(pos=data[:, 1:4], dip=data[:, 4:7])
             s.part.all().rotation = 3 * [True]
 

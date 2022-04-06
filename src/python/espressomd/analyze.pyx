@@ -374,10 +374,7 @@ class Analysis:
 
         """
         self.check_topology(chain_start, number_of_chains, chain_length)
-        re = analyze.calc_re(
-            chain_start,
-            number_of_chains,
-            chain_length)
+        re = analyze.calc_re(chain_start, number_of_chains, chain_length)
         return np.array([re[0], re[1], re[2], re[3]])
 
     def calc_rg(self, chain_start=None, number_of_chains=None,
@@ -410,10 +407,7 @@ class Analysis:
 
         """
         self.check_topology(chain_start, number_of_chains, chain_length)
-        rg = analyze.calc_rg(
-            chain_start,
-            number_of_chains,
-            chain_length)
+        rg = analyze.calc_rg(chain_start, number_of_chains, chain_length)
         return np.array([rg[0], rg[1], rg[2], rg[3]])
 
     def calc_rh(self, chain_start=None, number_of_chains=None,
@@ -445,10 +439,7 @@ class Analysis:
         """
 
         self.check_topology(chain_start, number_of_chains, chain_length)
-        rh = analyze.calc_rh(
-            chain_start,
-            number_of_chains,
-            chain_length)
+        rh = analyze.calc_rh(chain_start, number_of_chains, chain_length)
         return np.array([rh[0], rh[1]])
 
     def check_topology(self, chain_start=None, number_of_chains=None,

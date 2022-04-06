@@ -20,6 +20,8 @@ import unittest as ut
 import unittest_decorators as utx
 import unittest_generator as utg
 import numpy as np
+import contextlib
+import pathlib
 
 import espressomd
 import espressomd.checkpointing
@@ -32,11 +34,8 @@ import espressomd.integrate
 import espressomd.shapes
 import espressomd.constraints
 
-import os
-try:
+with contextlib.suppress(ImportError):
     import h5py  # h5py has to be imported *after* espressomd (MPI)
-except ImportError:
-    h5py = None
 
 config = utg.TestGenerator()
 is_gpu_available = espressomd.gpu_available()
@@ -50,6 +49,7 @@ class CheckpointTest(ut.TestCase):
     checkpoint = espressomd.checkpointing.Checkpoint(
         **config.get_checkpoint_params())
     checkpoint.load(0)
+    path_cpt_root = pathlib.Path(checkpoint.checkpoint_dir)
     n_nodes = system.cell_system.get_state()["n_nodes"]
 
     @classmethod
@@ -69,6 +69,13 @@ class CheckpointTest(ut.TestCase):
         self.fail(
             f"system doesn't have an actor of type {actor_type.__name__}")
 
+    def test_get_active_actor_of_type(self):
+        if system.actors.active_actors:
+            actor = system.actors.active_actors[0]
+            self.assertEqual(self.get_active_actor_of_type(type(actor)), actor)
+        with self.assertRaisesRegex(AssertionError, "system doesn't have an actor of type Wall"):
+            self.get_active_actor_of_type(espressomd.shapes.Wall)
+
     @ut.skipIf(not has_lb_mode, "Skipping test due to missing mode.")
     def test_lb_fluid(self):
         '''
@@ -81,7 +88,8 @@ class CheckpointTest(ut.TestCase):
         lbf = self.get_active_actor_of_type(
             espressomd.lb.HydrodynamicInteraction)
         cpt_mode = 0 if 'LB.ASCII' in modes else 1
-        cpt_path = self.checkpoint.checkpoint_dir + "/lb{}.cpt"
+        cpt_root = pathlib.Path(self.checkpoint.checkpoint_dir)
+        cpt_path = str(cpt_root / "lb") + "{}.cpt"
 
         # check exception mechanism with corrupted LB checkpoint files
         with self.assertRaisesRegex(RuntimeError, 'EOF found'):
@@ -415,16 +423,15 @@ class CheckpointTest(ut.TestCase):
                 expected)
 
     @utx.skipIfMissingFeatures('H5MD')
-    @ut.skipIf(h5py is None,
-               "Skipping test due to missing python module 'h5py'.")
+    @utx.skipIfMissingModules("h5py")
     def test_h5md(self):
         # check attributes
-        file_path = os.path.join(self.checkpoint.checkpoint_dir, "test.h5")
-        script_path = os.path.join(
-            os.path.dirname(__file__), "save_checkpoint.py")
+        file_path = self.path_cpt_root / "test.h5"
+        script_path = pathlib.Path(
+            __file__).resolve().parent / "save_checkpoint.py"
         self.assertEqual(h5.fields, ['all'])
-        self.assertEqual(h5.script_path, script_path)
-        self.assertEqual(h5.file_path, file_path)
+        self.assertEqual(h5.script_path, str(script_path))
+        self.assertEqual(h5.file_path, str(file_path))
 
         # write new frame
         h5.write()
