@@ -292,6 +292,42 @@ class ParticleProperties(ut.TestCase):
 
         np.testing.assert_equal(np.copy(p.image_box), [1, 1, 1])
 
+    def test_particle_numbering(self):
+        """
+        Instantiate particles on different nodes and check they are
+        numbered sequentially.
+        """
+        system = self.system
+        offset = system.box_l / 100.
+        # clear the cached value for largest particle id
+        system.part.clear()
+        # update the cached value to 20
+        p_id_start = self.pid + 3
+        system.part.add(pos=offset, id=p_id_start)
+        # check the cached value is updated regardless of the MPI node
+        # where particles are inserted
+        for i in range(3):
+            pos = [0., 0., 0.]
+            pos[i] = -offset[i]  # guaranteed to hit different MPI domains
+            p = self.system.part.add(pos=pos)
+            self.assertEqual(p.id, p_id_start + i + 1)
+        # removing the particle with highest id should update the cached value
+        p.remove()
+        self.assertEqual(system.part.highest_particle_id, p_id_start + 2)
+
+        # update the cached value to 32
+        p_id_start += 10
+        p0 = system.part.add(pos=offset, id=p_id_start + 0)
+        p1 = system.part.add(pos=offset, id=p_id_start + 1)
+        p2 = system.part.add(pos=offset, id=p_id_start + 2)
+        # invalidate the cache by introducing a gap at 31 and then removing 32
+        p1.remove()
+        p2.remove()
+        # the cache should now be 30
+        self.assertEqual(system.part.highest_particle_id, p0.id)
+        p3 = system.part.add(pos=offset)
+        self.assertEqual(p3.id, p0.id + 1)
+
     def test_invalid_particle_ids_exceptions(self):
         self.system.part.clear()
         handle_to_non_existing_particle = self.system.part.by_id(42)
@@ -472,7 +508,7 @@ class ParticleProperties(ut.TestCase):
     def test_update(self):
         self.system.part.clear()
         p = self.system.part.add(pos=0.5 * self.system.box_l)
-        # cannot change id
+        # cannot change id (to avoid corrupting caches in the core)
         with self.assertRaisesRegex(Exception, "Cannot change particle id."):
             p.update({'id': 1})
         # check value change

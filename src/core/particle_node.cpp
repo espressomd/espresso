@@ -62,6 +62,15 @@ static std::unordered_map<int, std::unordered_set<int>> particle_type_map;
 /** @brief Mapping particle ids to MPI ranks. */
 static std::unordered_map<int, int> particle_node;
 
+/**
+ * @brief Keep track of the largest particle id.
+ * This book-keeping variable is necessary to make particle insertion run
+ * in constant time. Traversing the @ref particle_node to find the largest
+ * particle id scales with O(N) and traversing the local cells in parallel
+ * followed by a reduction scales with O(N^2).
+ */
+static int max_seen_pid = -1;
+
 void init_type_map(int type) {
   type_list_enable = true;
   if (type < 0)
@@ -265,18 +274,22 @@ static void mpi_who_has() {
                      n_parts, 0);
 
   static std::vector<int> pdata;
+  max_seen_pid = -1;
 
   /* then fetch particle locations */
   for (int pnode = 0; pnode < n_nodes; pnode++) {
     if (pnode == this_node) {
-      for (auto const &p : local_particles)
+      for (auto const &p : local_particles) {
         particle_node[p.id()] = this_node;
-
+        max_seen_pid = std::max(max_seen_pid, p.id());
+      }
     } else if (n_parts[pnode] > 0) {
       pdata.resize(n_parts[pnode]);
       comm_cart.recv(pnode, some_tag, pdata);
-      for (int i = 0; i < n_parts[pnode]; i++)
+      for (int i = 0; i < n_parts[pnode]; i++) {
         particle_node[pdata[i]] = pnode;
+        max_seen_pid = std::max(max_seen_pid, pdata[i]);
+      }
     }
   }
 }
@@ -305,6 +318,21 @@ int get_particle_node(int p_id) {
 }
 
 void clear_particle_node() { particle_node.clear(); }
+
+/**
+ * @brief Calculate the largest particle id.
+ * Traversing the @ref particle_node to find the largest particle id
+ * scales with O(N). Consider using the cached value in @ref max_seen_pid
+ * if possible. This function is only necessary when the cached value is
+ * invalidated, for example when removing the particle which has the
+ * largest id.
+ */
+static int calculate_max_seen_id() {
+  return boost::accumulate(particle_node, -1,
+                           [](int max, const std::pair<int, int> &kv) {
+                             return std::max(max, kv.first);
+                           });
+}
 
 /**
  * @brief Create a new particle.
@@ -411,6 +439,7 @@ void place_particle(int p_id, Utils::Vector3d const &pos) {
     mpi_place_particle(get_particle_node(p_id), p_id, pos);
   } else {
     particle_node[p_id] = mpi_place_new_particle(p_id, pos);
+    max_seen_pid = std::max(max_seen_pid, p_id);
   }
 }
 
@@ -444,6 +473,15 @@ void remove_particle(int p_id) {
   particle_node[p_id] = -1;
   mpi_call_all(mpi_remove_particle_local, p_id);
   particle_node.erase(p_id);
+  if (p_id == max_seen_pid) {
+    --max_seen_pid;
+    // if there is a gap (i.e. there is no particle with id max_seen_pid - 1,
+    // then the cached value is invalidated and has to be recomputed (slow)
+    if (particle_node.count(max_seen_pid) == 0 or
+        particle_node[max_seen_pid] == -1) {
+      max_seen_pid = calculate_max_seen_id();
+    }
+  }
 }
 
 int get_random_p_id(int type, int random_index_in_type_map) {
@@ -491,10 +529,7 @@ int get_maximal_particle_id() {
   if (particle_node.empty())
     build_particle_node();
 
-  return boost::accumulate(particle_node, -1,
-                           [](int max, const std::pair<int, int> &kv) {
-                             return std::max(max, kv.first);
-                           });
+  return max_seen_pid;
 }
 
 int get_n_part() {

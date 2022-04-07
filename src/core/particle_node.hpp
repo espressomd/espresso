@@ -39,7 +39,7 @@
 /**
  * @brief Get particle data.
  *
- *  @param part the identity of the particle to fetch
+ *  @param p_id the identity of the particle to fetch
  */
 const Particle &get_particle_data(int p_id);
 
