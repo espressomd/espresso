@@ -477,22 +477,6 @@ public:
     reallocate_flux_boundary_field();
   }
 
-  void
-  update_flux_boundary_from_list(std::vector<int> const &nodes_flat,
-                                 std::vector<double> const &vel_flat) override {
-    assert(nodes_flat.size() == vel_flat.size());
-    assert(nodes_flat.size() % 3u == 0);
-    for (std::size_t i = 0; i < nodes_flat.size(); i += 3) {
-      auto const node = Utils::Vector3i(&nodes_flat[i], &nodes_flat[i + 3]);
-      auto const vel = Utils::Vector3d(&vel_flat[i], &vel_flat[i + 3]);
-      auto const bc = get_block_and_cell(get_lattice(), node, true);
-      if (bc) {
-        m_boundary_flux->set_node_value_at_boundary(node, vel, *bc);
-      }
-    }
-    reallocate_flux_boundary_field();
-  }
-
   void update_density_boundary_from_shape(
       const std::vector<int> &raster_flat,
       const std::vector<double> &density_flat) override {
@@ -531,23 +515,6 @@ public:
             }
           }
         }
-      }
-    }
-    reallocate_density_boundary_field();
-  }
-
-  void update_density_boundary_from_list(
-      std::vector<int> const &nodes_flat,
-      std::vector<double> const &density_flat) override {
-    assert(nodes_flat.size() == density_flat.size());
-    assert(nodes_flat.size() % 3u == 0);
-    for (std::size_t i = 0; i < nodes_flat.size(); i += 1) {
-      auto const node =
-          Utils::Vector3i(&nodes_flat[3 * i], &nodes_flat[3 * i + 3]);
-      auto const val = density_flat[i];
-      auto const bc = get_block_and_cell(get_lattice(), node, true);
-      if (bc) {
-        m_boundary_density->set_node_value_at_boundary(node, val, *bc);
       }
     }
     reallocate_density_boundary_field();

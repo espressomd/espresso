@@ -72,14 +72,9 @@ public:
 
   virtual void update_flux_boundary_from_shape(std::vector<int> const &,
                                                std::vector<double> const &) = 0;
-  virtual void update_flux_boundary_from_list(std::vector<int> const &,
-                                              std::vector<double> const &) = 0;
   virtual void
   update_density_boundary_from_shape(std::vector<int> const &,
                                      std::vector<double> const &) = 0;
-  virtual void
-  update_density_boundary_from_list(std::vector<int> const &,
-                                    std::vector<double> const &) = 0;
 
   // Global parameters
   void set_diffusion(FloatType diffusion) noexcept { m_diffusion = diffusion; }
