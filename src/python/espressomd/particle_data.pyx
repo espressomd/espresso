@@ -1767,9 +1767,9 @@ cdef class ParticleList:
         """
 
         # Did we get a dictionary
-        if len(args) == 1:
-            if hasattr(args[0], "__getitem__"):
-                particles_dict = args[0]
+        if len(args) == 1 and isinstance(
+                args[0], (dict, collections.OrderedDict)):
+            particles_dict = args[0]
         else:
             if len(args) == 0 and len(kwargs) != 0:
                 particles_dict = kwargs
@@ -1826,7 +1826,7 @@ Set quat and scalar dipole moment (dipm) instead.")
     def _place_new_particles(self, p_list_dict):
         # Check if all entries have the same length
         n_parts = len(p_list_dict["pos"])
-        if not all(np.shape(v) and len(v) ==
+        if not all(np.array(v, dtype=object).shape and len(v) ==
                    n_parts for v in p_list_dict.values()):
             raise ValueError(
                 "When adding several particles at once, all lists of attributes have to have the same size")

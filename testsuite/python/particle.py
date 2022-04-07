@@ -21,6 +21,7 @@ import unittest_decorators as utx
 import espressomd
 import espressomd.interactions
 import numpy as np
+import collections
 
 
 class ParticleProperties(ut.TestCase):
@@ -346,6 +347,17 @@ class ParticleProperties(ut.TestCase):
             with self.assertRaisesRegex(ValueError, f"Invalid particle id: {-i}"):
                 self.system.part.add(pos=[0., 0., 0.], id=-i)
 
+    def test_invalid_particle_creation(self):
+        err_msg = r"add\(\) takes either a dictionary or a bunch of keyword args"
+        with self.assertRaisesRegex(ValueError, err_msg):
+            self.system.part.add(1)
+        with self.assertRaisesRegex(ValueError, err_msg):
+            self.system.part.add(1, 2)
+        with self.assertRaisesRegex(ValueError, err_msg):
+            self.system.part.add(1, id=2)
+        with self.assertRaisesRegex(ValueError, err_msg):
+            self.system.part.add([1, 2])
+
     def test_parallel_property_setters(self):
         s = self.system
         s.part.clear()
@@ -502,8 +514,12 @@ class ParticleProperties(ut.TestCase):
         pp = str(p)
         pdict = p.to_dict()
         p.remove()
-        self.system.part.add(pdict)
+        p = self.system.part.add(pdict)
         self.assertEqual(str(self.system.part.select()), pp)
+        p.remove()
+        p = self.system.part.add(collections.OrderedDict(pdict))
+        self.assertEqual(str(self.system.part.select()), pp)
+        p.remove()
 
     def test_update(self):
         self.system.part.clear()
