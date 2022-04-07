@@ -56,6 +56,8 @@ public:
   remove_node_from_flux_boundary(const Utils::Vector3i &node) = 0;
   [[nodiscard]] virtual bool
   set_node_density_boundary(const Utils::Vector3i &node, double density) = 0;
+  [[nodiscard]] virtual boost::optional<FloatType>
+  get_node_density_at_boundary(const Utils::Vector3i &node) const = 0;
   virtual bool
   remove_node_from_density_boundary(const Utils::Vector3i &node) = 0;
   [[nodiscard]] virtual boost::optional<bool>

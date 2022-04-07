@@ -321,6 +321,39 @@ class EKRoutines:
         return self.species.call_method("is_boundary", position=self.node)
 
     @property
+    def density_boundary(self):
+        density = self.species.call_method(
+            "get_node_density_at_boundary", position=self.node)
+
+        if density is not None:
+            return DensityBoundary(density)
+        return None
+
+    @density_boundary.setter
+    def density_boundary(self, density):
+        """
+        Parameters
+        ----------
+        density : :class:`~espressomd.EKSpecies.DensityBoundary` or None
+            If density is :class:`~espressomd.EkSpecies.DensityBoundary`,
+            set the node to be a boundary node with the specified density.
+            If density is ``None``, the node will become a domain node.
+        """
+
+        if isinstance(density, DensityBoundary):
+            self.species.call_method(
+                'set_node_density_boundary',
+                position=self.node,
+                density=density.density)
+        elif density is None:
+            self.species.call_method(
+                'remove_node_density_boundary',
+                position=self.node)
+        else:
+            raise ValueError(
+                "density must be an instance of DensityBoundary or None")
+
+    @property
     def flux_boundary(self):
         flux = self.species.call_method(
             "get_node_flux_at_boundary", position=self.node)
@@ -351,7 +384,7 @@ class EKRoutines:
                 position=self.node)
         else:
             raise ValueError(
-                "value must be an instance of FluxBoundary or None")
+                "flux must be an instance of FluxBoundary or None")
 
 
 class EKSlice:
