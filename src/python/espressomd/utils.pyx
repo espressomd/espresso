@@ -296,27 +296,6 @@ def is_valid_type(value, t):
         return isinstance(value, t)
 
 
-def requires_experimental_features(reason):
-    """Class decorator which makes instantiation conditional on
-    ``EXPERIMENTAL_FEATURES`` being defined in myconfig.hpp."""
-
-    def exception_raiser(self, *args, **kwargs):
-        raise Exception(
-            f"Class {self.__class__.__name__} is experimental. Define "
-            "EXPERIMENTAL_FEATURES in myconfig.hpp to use it.\n"
-            f"Reason: {reason}")
-
-    def modifier(cls):
-        cls.__init__ = exception_raiser
-        return cls
-
-    IF not EXPERIMENTAL_FEATURES:
-        return modifier
-    ELSE:
-        # Return original class
-        return lambda x: x
-
-
 def check_required_keys(required_keys, obtained_keys):
     a = required_keys
     b = obtained_keys

@@ -16,12 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from collections import OrderedDict
+import collections
 import inspect
 import os
 import re
 import signal
-from .utils import is_valid_type
+from . import utils
 
 try:
     import cPickle as pickle
@@ -198,7 +198,7 @@ class Checkpoint:
 
         """
         # get attributes of registered objects
-        checkpoint_data = OrderedDict()
+        checkpoint_data = collections.OrderedDict()
         for obj_name in self.checkpoint_objects:
             checkpoint_data[obj_name] = self.__getattr_submodule(
                 self.calling_module, obj_name, None)
@@ -265,7 +265,7 @@ class Checkpoint:
 
         """
         signum = int(signum)
-        if not is_valid_type(signum, int):
+        if not utils.is_valid_type(signum, int):
             raise ValueError("Signal must be an integer number.")
 
         signals = self.read_signals()
@@ -285,7 +285,7 @@ class Checkpoint:
             Signal to be registered.
 
         """
-        if not is_valid_type(signum, int):
+        if not utils.is_valid_type(signum, int):
             raise ValueError("Signal must be an integer number.")
 
         if signum in self.checkpoint_signals:

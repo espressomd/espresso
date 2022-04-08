@@ -35,7 +35,7 @@ class StokesianDynamicsTest(ut.TestCase):
     # Digitized reference data of Figure 5b from
     # Durlofsky et al., J. Fluid Mech. 180, 21 (1987)
     # https://doi.org/10.1017/S002211208700171X
-    data = np.loadtxt(tests_common.abspath('data/dancing.txt'))
+    data = np.loadtxt(tests_common.data_path('dancing.txt'))
 
     def setUp(self):
         self.system.box_l = [10] * 3

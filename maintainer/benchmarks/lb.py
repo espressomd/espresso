@@ -72,7 +72,7 @@ n_part = n_proc * args.particles_per_core
 # volume of N spheres with radius r: N * (4/3*pi*r^3)
 box_l = (n_part * 4. / 3. * np.pi * (lj_sig / 2.)**3
          / args.volume_fraction)**(1. / 3.)
-lb_grid = int(2 * round((n_part * args.lb_sites_per_particle)**(1. / 3) / 2.))
+lb_grid = int(2 * round(np.cbrt(n_part * args.lb_sites_per_particle) / 2.))
 agrid = box_l / lb_grid
 measurement_steps = int(max(120**3 / lb_grid**3, 50))
 

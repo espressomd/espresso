@@ -19,21 +19,25 @@ import unittest as ut
 import importlib_wrapper as iw
 import sys
 import ast
+import pathlib
+import tempfile
+import espressomd
 
 
 class importlib_wrapper(ut.TestCase):
 
     def test_substitute_variable_values(self):
-        str_inp = "n_steps=5000\nnsteps == 5\n"
-        str_exp = "n_steps = 10; _n_steps__original=5000\nnsteps == 5\n"
+        str_inp = "n_steps=(\n5000)\nnsteps == 5\n"
+        str_exp = "n_steps = 10; _n_steps__original=(\n5000)\nnsteps == 5\n"
         str_out = iw.substitute_variable_values(str_inp, n_steps=10)
         self.assertEqual(str_out, str_exp)
         str_out = iw.substitute_variable_values(str_inp, n_steps='10',
                                                 strings_as_is=True)
         self.assertEqual(str_out, str_exp)
-        str_inp = "N=5000\nnsteps == 5\n"
-        str_exp = "N = 10\nnsteps == 5\n"
-        str_out = iw.substitute_variable_values(str_inp, N=10, keep_original=0)
+        str_inp = "N=(\n5000)\nnsteps == 5\n"
+        str_exp = "N = 10\n\nnsteps == 5\n"
+        str_out = iw.substitute_variable_values(str_inp, N=10,
+                                                keep_original=False)
         self.assertEqual(str_out, str_exp)
         # test exceptions
         str_inp = "n_steps=5000\nnsteps == 5\n"
@@ -49,20 +53,21 @@ class importlib_wrapper(ut.TestCase):
     def test_set_cmd(self):
         original_sys_argv = list(sys.argv)
         sys.argv = [0, "test"]
+        path = pathlib.Path("a.py")
         # test substitutions
         str_inp = "import sys\nimport argparse"
-        str_exp = "import sys;sys.argv = ['a.py', '1', '2'];" + str_inp
-        str_out, sys_argv = iw.set_cmd(str_inp, "a.py", (1, 2))
+        str_exp = f"import sys;sys.argv = ['{path.name}', '1', '2'];" + str_inp
+        str_out, sys_argv = iw.set_cmd(str_inp, path, (1, 2))
         self.assertEqual(str_out, str_exp)
         self.assertEqual(sys_argv, [0, "test"])
         str_inp = "import argparse"
-        str_exp = "import sys;sys.argv = ['a.py', '1', '2'];" + str_inp
-        str_out, sys_argv = iw.set_cmd(str_inp, "a.py", ["1", 2])
+        str_exp = f"import sys;sys.argv = ['{path.name}', '1', '2'];" + str_inp
+        str_out, sys_argv = iw.set_cmd(str_inp, path, ["1", 2])
         self.assertEqual(str_out, str_exp)
         self.assertEqual(sys_argv, [0, "test"])
         # test exceptions
         str_inp = "import re"
-        self.assertRaises(AssertionError, iw.set_cmd, str_inp, "a.py", (1, 2))
+        self.assertRaises(AssertionError, iw.set_cmd, str_inp, path, (1, 2))
         # restore sys.argv
         sys.argv = original_sys_argv
 
@@ -91,9 +96,9 @@ try:
        hasattr(espressomd.visualization.openGLLive, 'deferred_ImportError'):
         raise ImportError()
 except ImportError:
-    from unittest.mock import MagicMock
+    import unittest.mock
     import espressomd
-    espressomd.visualization = MagicMock()
+    espressomd.visualization = unittest.mock.MagicMock()
 """
         self.assertEqual(iw.mock_es_visualization(statement), expected[1:])
 
@@ -105,9 +110,9 @@ try:
        hasattr(test.openGLLive, 'deferred_ImportError'):
         raise ImportError()
 except ImportError:
-    from unittest.mock import MagicMock
+    import unittest.mock
     import espressomd
-    test = MagicMock()
+    test = unittest.mock.MagicMock()
 """
         self.assertEqual(iw.mock_es_visualization(statement), expected[1:])
 
@@ -119,18 +124,18 @@ try:
        hasattr(espressomd.visualization.openGLLive, 'deferred_ImportError'):
         raise ImportError()
 except ImportError:
-    from unittest.mock import MagicMock
+    import unittest.mock
     import espressomd
-    espressomd.visualization = MagicMock()
+    espressomd.visualization = unittest.mock.MagicMock()
 try:
     import espressomd.visualization as test
     if hasattr(test.mayaviLive, 'deferred_ImportError') or \\
        hasattr(test.openGLLive, 'deferred_ImportError'):
         raise ImportError()
 except ImportError:
-    from unittest.mock import MagicMock
+    import unittest.mock
     import espressomd
-    test = MagicMock()
+    test = unittest.mock.MagicMock()
 """
         self.assertEqual(iw.mock_es_visualization(statement), expected[1:])
 
@@ -142,9 +147,9 @@ try:
        hasattr(visualization.openGLLive, 'deferred_ImportError'):
         raise ImportError()
 except ImportError:
-    from unittest.mock import MagicMock
+    import unittest.mock
     import espressomd
-    visualization = MagicMock()
+    visualization = unittest.mock.MagicMock()
 """
         self.assertEqual(iw.mock_es_visualization(statement), expected[1:])
 
@@ -156,9 +161,9 @@ try:
        hasattr(test.openGLLive, 'deferred_ImportError'):
         raise ImportError()
 except ImportError:
-    from unittest.mock import MagicMock
+    import unittest.mock
     import espressomd
-    test = MagicMock()
+    test = unittest.mock.MagicMock()
 """
         self.assertEqual(iw.mock_es_visualization(statement), expected[1:])
 
@@ -167,9 +172,9 @@ except ImportError:
 try:
     from espressomd import visualization_mayavi
 except ImportError:
-    from unittest.mock import MagicMock
+    import unittest.mock
     import espressomd
-    visualization_mayavi = MagicMock()
+    visualization_mayavi = unittest.mock.MagicMock()
 """
         self.assertEqual(iw.mock_es_visualization(statement), expected[1:])
 
@@ -178,9 +183,9 @@ except ImportError:
 try:
     from espressomd import visualization_mayavi as test
 except ImportError:
-    from unittest.mock import MagicMock
+    import unittest.mock
     import espressomd
-    test = MagicMock()
+    test = unittest.mock.MagicMock()
 """
         self.assertEqual(iw.mock_es_visualization(statement), expected[1:])
 
@@ -189,9 +194,9 @@ except ImportError:
 try:
     from espressomd.visualization_mayavi import mayaviLive
 except ImportError:
-    from unittest.mock import MagicMock
+    import unittest.mock
     import espressomd
-    mayaviLive = MagicMock()
+    mayaviLive = unittest.mock.MagicMock()
 """
         self.assertEqual(iw.mock_es_visualization(statement), expected[1:])
 
@@ -200,9 +205,9 @@ except ImportError:
 try:
     from espressomd.visualization_mayavi import mayaviLive as test
 except ImportError:
-    from unittest.mock import MagicMock
+    import unittest.mock
     import espressomd
-    test = MagicMock()
+    test = unittest.mock.MagicMock()
 """
         self.assertEqual(iw.mock_es_visualization(statement), expected[1:])
 
@@ -211,15 +216,15 @@ except ImportError:
 try:
     from espressomd.visualization_mayavi import a as b
 except ImportError:
-    from unittest.mock import MagicMock
+    import unittest.mock
     import espressomd
-    b = MagicMock()
+    b = unittest.mock.MagicMock()
 try:
     from espressomd.visualization_mayavi import mayaviLive
 except ImportError:
-    from unittest.mock import MagicMock
+    import unittest.mock
     import espressomd
-    mayaviLive = MagicMock()
+    mayaviLive = unittest.mock.MagicMock()
 """
         self.assertEqual(iw.mock_es_visualization(statement), expected[1:])
 
@@ -230,9 +235,9 @@ try:
     if hasattr(openGLLive, 'deferred_ImportError'):
         raise openGLLive.deferred_ImportError
 except ImportError:
-    from unittest.mock import MagicMock
+    import unittest.mock
     import espressomd
-    openGLLive = MagicMock()
+    openGLLive = unittest.mock.MagicMock()
 """
         self.assertEqual(iw.mock_es_visualization(statement), expected[1:])
 
@@ -243,9 +248,9 @@ try:
     if hasattr(test, 'deferred_ImportError'):
         raise test.deferred_ImportError
 except ImportError:
-    from unittest.mock import MagicMock
+    import unittest.mock
     import espressomd
-    test = MagicMock()
+    test = unittest.mock.MagicMock()
 """
         self.assertEqual(iw.mock_es_visualization(statement), expected[1:])
 
@@ -311,6 +316,7 @@ except ImportError:
             'import espressomd.System as s1, espressomd.system.System as s2',
             'from espressomd import System as s3, electrostatics',
             'from espressomd.system import System as s4',
+            'from espressomd import system as es5',
             'sys1 = es1.System()',
             'sys2 = es1.system.System()',
             'sys3 = es2.System()',
@@ -318,6 +324,7 @@ except ImportError:
             'sys5 = s2()',
             'sys6 = s3()',
             'sys7 = s4()',
+            'sys8 = es5.System()',
             'import numpy as np',
             'import numpy.random as npr1',
             'from numpy import random as npr2',
@@ -330,13 +337,14 @@ except ImportError:
         v.visit(tree)
         # find all aliases for espressomd.system.System
         expected_es_sys_aliases = {'es1.System', 'es1.system.System',
-                                   'es2.System', 's1', 's2', 's3', 's4'}
+                                   'es2.System', 's1', 's2', 's3', 's4',
+                                   'es5.System'}
         self.assertEqual(v.es_system_aliases, expected_es_sys_aliases)
         # find all variables of type espressomd.system.System
-        expected_es_sys_objs = set(f'sys{i}' for i in range(1, 8))
+        expected_es_sys_objs = set(f'sys{i}' for i in range(1, 9))
         self.assertEqual(v.variable_system_aliases, expected_es_sys_objs)
         # find all seeds setup
-        self.assertEqual(v.numpy_seeds, [17, 18, 19])
+        self.assertEqual(v.numpy_seeds, [19, 20, 21])
         # test exceptions
         str_es_sys_list = [
             'import espressomd.System',
@@ -394,6 +402,49 @@ except ImportError:
         self.assertEqual(code_protected, code_protected_ref)
         code_deprotected = iw.deprotect_ipython_magics(code_protected)
         self.assertEqual(code_deprotected, code)
+
+    def test_configure_and_import(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path_in = pathlib.Path(temp_dir) / "sample.py"
+            path_out = pathlib.Path(temp_dir) / "sample_test_processed.py"
+            path_features = pathlib.Path(temp_dir) / "sample_impossible.py"
+
+            # test importing a simple sample
+            sys.argv.append("42")
+            sys_argv_ref = list(sys.argv)
+            path_in.write_text("""
+import sys
+from argparse import ArgumentParser
+value = 42
+argv = list(sys.argv)
+import espressomd.visualization_opengl
+""")
+            sample, _ = iw.configure_and_import(
+                path_in, move_to_script_dir=False, cmd_arguments=["TestCase"],
+                gpu=False, script_suffix="test", value=43)
+            self.assertEqual(sys.argv, sys_argv_ref)
+            self.assertEqual(sample.argv, [path_in.name, "TestCase"])
+            self.assertTrue(path_out.exists(), f"File {path_out} not found")
+            self.assertEqual(sample.value, 43)
+            self.assertIn(
+                "espressomd.visualization_opengl = unittest.mock.MagicMock()",
+                path_out.read_text())
+
+            # test importing a sample that relies on features not compiled in
+            inactive_features = espressomd.all_features() - set(espressomd.features())
+            if inactive_features:
+                path_features.write_text(f"""
+import espressomd
+espressomd.assert_features({list(inactive_features)})
+""")
+                module, _ = iw.configure_and_import(path_features)
+                self.assertIsInstance(module, ut.mock.MagicMock)
+
+                # importing a valid sample is impossible after a failed import
+                sample, _ = iw.configure_and_import(
+                    path_in, move_to_script_dir=True, script_suffix="test",
+                    cmd_arguments=["TestCase"], gpu=False, value=43)
+                self.assertIsInstance(sample, ut.mock.MagicMock)
 
 
 if __name__ == "__main__":

@@ -33,7 +33,7 @@ namespace Shapes {
 
 class Slitpore : public Shape {
 public:
-  Slitpore() : m_slitpore(new ::Shapes::Slitpore()) {
+  Slitpore() : m_slitpore(std::make_shared<::Shapes::Slitpore>()) {
     add_parameters(
         {{"pore_mouth", m_slitpore->pore_mouth()},
          {"upper_smoothing_radius", m_slitpore->upper_smoothing_radius()},

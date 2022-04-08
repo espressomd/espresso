@@ -20,7 +20,7 @@
 import unittest as ut
 import numpy as np
 import espressomd
-import espressomd.reaction_ensemble
+import espressomd.reaction_methods
 
 
 class ReactionEnsembleTest(ut.TestCase):
@@ -51,7 +51,7 @@ class ReactionEnsembleTest(ut.TestCase):
     np.random.seed(69)  # make reaction code fully deterministic
     system.cell_system.skin = 0.4
     system.time_step = 0.01
-    RE = espressomd.reaction_ensemble.ConstantpHEnsemble(
+    RE = espressomd.reaction_methods.ConstantpHEnsemble(
         kT=1.0, exclusion_range=1, seed=44, constant_pH=pH)
 
     @classmethod

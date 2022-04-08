@@ -30,7 +30,8 @@ namespace BondBreakage {
 
 class BreakageSpec : public AutoParameters<BreakageSpec> {
 public:
-  BreakageSpec() : m_breakage_spec(new ::BondBreakage::BreakageSpec) {
+  BreakageSpec()
+      : m_breakage_spec(std::make_shared<::BondBreakage::BreakageSpec>()) {
     add_parameters({
         {"breakage_length", m_breakage_spec->breakage_length},
         {"action_type",

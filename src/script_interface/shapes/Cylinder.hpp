@@ -36,7 +36,7 @@ class Cylinder : public Shape {
   std::shared_ptr<::Shapes::Cylinder> m_cylinder;
 
 public:
-  Cylinder() : m_cylinder(new ::Shapes::Cylinder()) {
+  Cylinder() : m_cylinder(std::make_shared<::Shapes::Cylinder>()) {
     add_parameters(
         {{"radius", m_cylinder, &CoreShape::set_radius, &CoreShape::radius},
          {"length", m_cylinder, &CoreShape::set_length, &CoreShape::length},

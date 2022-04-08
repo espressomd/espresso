@@ -20,20 +20,18 @@
 
 """List all tutorial files to deploy (PDF, HTML and figures)"""
 
-import os
-import glob
+import pathlib
 import lxml.html
 
-deploy_list = glob.glob('*/*.pdf')
-for filepath in glob.glob('*/*.html'):
+deploy_list = list(pathlib.Path().glob('*/*.pdf'))
+for filepath in pathlib.Path().glob('*/*.html'):
     deploy_list.append(filepath)
     # extract all figures
-    dirname = os.path.dirname(filepath)
     with open(filepath, encoding='utf-8') as f:
         html = lxml.html.parse(f)
     figures = filter(lambda src: not src.startswith('data:image'),
                      html.xpath('//img/@src'))
-    deploy_list += list(map(lambda src: os.path.join(dirname, src), figures))
+    deploy_list += list(map(lambda src: filepath.parent / src, figures))
 
 with open('deploy_list.txt', 'w') as f:
-    f.write('\n'.join(deploy_list))
+    f.write('\n'.join(map(str, deploy_list)))

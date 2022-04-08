@@ -20,7 +20,7 @@
 import unittest as ut
 import numpy as np
 import espressomd
-import espressomd.reaction_ensemble
+import espressomd.reaction_methods
 
 
 class ConstantpHTest(ut.TestCase):
@@ -51,7 +51,7 @@ class ConstantpHTest(ut.TestCase):
         system.part.add(pos=np.random.random((2 * N0, 3)) * system.box_l,
                         type=N0 * [types["A-"], types["H+"]])
 
-        RE = espressomd.reaction_ensemble.ConstantpHEnsemble(
+        RE = espressomd.reaction_methods.ConstantpHEnsemble(
             kT=1.0,
             exclusion_range=1,
             seed=44,

@@ -17,9 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import os
 import sys
 import inspect
+import pathlib
 
 
 class TestGenerator:
@@ -141,4 +141,4 @@ class TestGenerator:
         Generate parameters to instantiate an ESPResSo checkpoint file.
         """
         return {"checkpoint_id": f"checkpoint_{self.test_idx}",
-                "checkpoint_path": os.path.dirname(__file__)}
+                "checkpoint_path": str(pathlib.Path(__file__).parent)}

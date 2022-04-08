@@ -101,17 +101,20 @@ class ScriptInterface(ut.TestCase):
         """Check AutoParameters framework"""
         constraint = espressomd.constraints.ShapeBasedConstraint()
         # check conversion of unsupported types
-        with self.assertRaisesRegex(TypeError, "No conversion from type module to Variant"):
+        err_msg = "No conversion from type 'module' to 'Variant'"
+        with self.assertRaisesRegex(TypeError, err_msg):
+            espressomd.constraints.ShapeBasedConstraint(shape=ut)
+        with self.assertRaisesRegex(TypeError, err_msg):
             espressomd.constraints.ShapeBasedConstraint(unknown=ut)
-        with self.assertRaisesRegex(TypeError, "No conversion from type module to Variant"):
+        with self.assertRaisesRegex(TypeError, err_msg):
             constraint.set_params(shape=ut)
-        with self.assertRaisesRegex(TypeError, "No conversion from type module to Variant"):
+        with self.assertRaisesRegex(TypeError, err_msg):
             constraint.call_method('unknown', unknown=ut)
         # check restrictions on the dict type
-        with self.assertRaisesRegex(TypeError, r"No conversion from type dict_item\(\[\(str, int\)\]\) to Variant\[std::(__1::)?unordered_map<int, Variant>\]"):
+        with self.assertRaisesRegex(TypeError, r"No conversion from type 'dict_item\(\[\(str, int\)\]\)' to 'Variant\[std::(__1::)?unordered_map<int, Variant>\]'"):
             constraint.shape = {'1': 2}
         # check type mismatch
-        error_msg = "Provided argument of type {} is not convertible to std::(__1::)?shared_ptr<ScriptInterface::Shapes::Shape>"
+        error_msg = "Provided argument of type '{}' is not convertible to 'std::(__1::)?shared_ptr<ScriptInterface::Shapes::Shape>'"
         with self.assertRaisesRegex(RuntimeError, error_msg.format("int")):
             constraint.shape = 5
         with self.assertRaisesRegex(RuntimeError, error_msg.format("ScriptInterface::None")):

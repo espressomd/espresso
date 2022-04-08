@@ -33,7 +33,7 @@ namespace Shapes {
 
 class Sphere : public Shape {
 public:
-  Sphere() : m_sphere(new ::Shapes::Sphere()) {
+  Sphere() : m_sphere(std::make_shared<::Shapes::Sphere>()) {
     add_parameters({{"center", m_sphere->pos()},
                     {"radius", m_sphere->rad()},
                     {"direction", m_sphere->direction()}});

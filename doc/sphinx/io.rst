@@ -132,14 +132,14 @@ Writing H5MD-files
     either ``libhdf5-openmpi-dev`` for OpenMPI or ``libhdf5-mpich-dev`` for
     MPICH, but not ``libhdf5-dev`` which is the serial version.
 
-For large amounts of data it's a good idea to store it in the hdf5 (H5MD
-is based on hdf5) file format (see https://www.hdfgroup.org/ for
-details). Currently |es| supports some basic functions for writing simulation
+For long simulations, it's a good idea to store data in the hdf5 file format
+(see https://www.hdfgroup.org for details, H5MD is based on hdf5).
+Currently |es| supports some basic functions for writing simulation
 data to H5MD files. The implementation is MPI-parallelized and is capable
-of dealing with varying numbers of particles.
+of dealing with a varying number of particles.
 
-To write data in a hdf5-file according to the H5MD proposal (https://nongnu.org/h5md/),
-first an object of the class
+To write data in a hdf5-file according to the H5MD proposal
+(https://nongnu.org/h5md), first an object of the class
 :class:`espressomd.io.writer.h5md.H5md` has to be created and linked to the
 respective hdf5-file. This may, for example, look like:
 
@@ -152,56 +152,98 @@ respective hdf5-file. This may, for example, look like:
 
 An optional argument to the constructor of :class:`espressomd.io.writer.h5md.H5md` is
 an instance of :class:`espressomd.io.writer.h5md.UnitSystem` which encapsulates
-physical units for time, mass, length and electrical charge.	
+physical units for time, mass, length and electrical charge.
 
 If a file at the given filepath exists and has a valid H5MD structure,
-it will be backed up to a file with suffix ".bak". This backup file will be
-deleted when the new file is closed at the end of the simulation with
-``h5.close()``.
+it will be backed up to a file with suffix ".bak" and loaded into
+a new file. Therefore H5MD can be used together with checkpointing.
+The backup file will be deleted when the new file is closed at the end of the
+simulation with :meth:`~espressomd.io.writer.h5md.H5md.close()`. The backup
+file is not be erased if the simulation terminates unexpectedly.
 
-The current implementation always writes the following properties: positions,
-velocities, forces, species (|es| types), charges, and masses of the particles.
+To write data to the HDF5 file, simply call the method
+:meth:`~espressomd.io.writer.h5md.H5md.write` without any arguments.
+After the last write, call :meth:`~espressomd.io.writer.h5md.H5md.flush()`
+and then :meth:`~espressomd.io.writer.h5md.H5md.close()`
+to close the datasets and remove the backup file.
 
-In simulations with varying numbers of particles (MC or reactions), the
+The current implementation writes the following properties by default: folded
+positions, periodic image count, velocities, forces, species (|es| types),
+charges and masses of the particles. While folded positions are written
+to disk, the unfolded coordinates can be reconstructed from the image count.
+The time-dependent box size and Lees-Edwards parameters are also stored.
+Some of these properties can be opted out by specifying in argument
+``fields`` the subset of fields to write to the trajectory file;
+call method :meth:`~espressomd.io.writer.h5md.H5md.valid_fields()`
+to find out which string corresponds to which field.
+
+In simulations with a varying number of particles (Monte-Carlo reactions), the
 size of the dataset will be adapted if the maximum number of particles
 increases but will not be decreased. Instead a negative fill value will
-be written to the trajectory for the id. If you have a parallel
+be written to the trajectory for the id.
+
+If you have a parallel
 simulation, please keep in mind that the sequence of particles in general
 changes from timestep to timestep. Therefore you have to always use the
 dataset for the ids to track which position/velocity/force/type/mass
-entry belongs to which particle. To write data to the HDF5 file, simply
-call the method :meth:`~espressomd.io.writer.h5md.H5md.write` without any arguments.
-
-After the last write, you have to call
-:meth:`~espressomd.io.writer.h5md.H5md.close` to remove
-the backup file, close the datasets, etc.
-
-H5MD files can be read and modified with the python module h5py (for
-documentation see `h5py <https://docs.h5py.org/en/stable/>`_). For example,
-all positions stored in the file called "sample.h5" can be read using:
-
-.. code:: python
-
-    import h5py
-    h5file = h5py.File("sample.h5", 'r')
-    positions = h5file['particles/atoms/position/value']
-
-If the data was stored with `physical units
-<https://nongnu.org/h5md/modules/units.html>`_, they can be accessed with:
-
-.. code:: python
-
-    positions.attrs['unit']
-    forces = h5file['particles/atoms/force/value']
-    forces_unit = forces.attrs['unit']
-    sim_time = h5file['particles/atoms/id/time']
-    print('last frame: {:.3f} {}'.format(sim_time.value[-1], sim_time.attrs['unit'].decode('utf8')))
-
-Furthermore, the files can be inspected with the GUI tool hdfview or visually with the
-H5MD VMD plugin (see `H5MD plugin <https://github.com/h5md/VMD-h5mdplugin>`_).
+entry belongs to which particle.
 
 For an example involving physical units, see :file:`/samples/h5md.py`.
 
+.. _Reading H5MD-files:
+
+Reading H5MD-files
+------------------
+
+H5MD files can be read and sometimes modified by many tools. If the data was
+stored with `physical units <https://nongnu.org/h5md/modules/units.html>`__,
+they can be accessed by reading the group attributes. Since the data is
+written in parallel, the particles are unsorted; if particles were created
+with increasing particle id and no particle deletion occurred during the
+simulation, the coordinates can be sorted with a simply numpy operation.
+
+To read with the python module ``h5py`` (documentation:
+`HDF5 for Python <https://docs.h5py.org/en/stable>`__)::
+
+    import h5py
+    with h5py.File("sample.h5", mode='r') as h5file:
+        positions = h5file['particles/atoms/position/value']
+        positions.attrs['unit']
+        forces = h5file['particles/atoms/force/value']
+        forces_unit = forces.attrs['unit']
+        sim_time = h5file['particles/atoms/id/time']
+        print(f"last frame: {sim_time[-2]:.3f} {sim_time.attrs['unit'].decode('utf8')}")
+
+To read with the python module ``pandas`` (documentation: `HDFStore: PyTables
+<https://pandas.pydata.org/docs/reference/io.html#hdfstore-pytables-hdf5>`_)::
+
+    import pandas
+    with pandas.HDFStore("sample.h5", mode='r') as h5file:
+        positions = h5file.root.particles.atoms.position.value
+        positions.attrs['unit']
+        forces = h5file.root.particles.atoms.force.value
+        forces_unit = forces.attrs['unit']
+        sim_time = h5file.root.particles.atoms.id.time
+        print(f"last frame: {sim_time[-2]:.3f} {sim_time.attrs['unit'].decode('utf8')}")
+
+To read from the command line with
+`h5dump <https://support.hdfgroup.org/HDF5/doc/RM/Tools/h5dump.htm>`__
+(Ubuntu package ``hdf5-tools``):
+
+.. code:: sh
+
+    # show metadata only
+    h5dump --header sample.h5 | less
+    # show metadata + data
+    h5dump sample.h5 | less
+
+H5MD files can also be inspected with the GUI tool
+`HDFView <https://www.hdfgroup.org/downloads/hdfview>`__ (Ubuntu package
+``hdfview``) or visually with the H5MD VMD plugin (GitHub project
+`h5md/VMD-h5mdplugin <https://github.com/h5md/VMD-h5mdplugin>`__).
+
+For an example involving ``h5py``, coordinates resorting and reconstruction
+of the unfolded coordinates, see :file:`/samples/h5md_trajectory.py`.
 
 .. _Writing MPI-IO binary files:
 

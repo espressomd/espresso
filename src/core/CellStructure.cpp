@@ -236,7 +236,7 @@ void CellStructure::resort_particles(int global_flag, BoxGeometry const &box) {
   }
 
   m_rebuild_verlet_list = true;
-  m_le_pos_offset_at_last_resort = box.clees_edwards_bc().pos_offset;
+  m_le_pos_offset_at_last_resort = box.lees_edwards_bc().pos_offset;
 
 #ifdef ADDITIONAL_CHECKS
   check_particle_index();

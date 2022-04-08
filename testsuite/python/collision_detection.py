@@ -338,7 +338,12 @@ class CollisionDetection(ut.TestCase):
         expected_np = 3 * len(positions) + 1
 
         system.collision_detection.set_params(
-            mode="glue_to_surface", distance=0.11, distance_glued_particle_to_vs=0.02, bond_centers=self.H, bond_vs=self.H2, part_type_vs=self.part_type_vs, part_type_to_attach_vs_to=self.part_type_to_attach_vs_to, part_type_to_be_glued=self.part_type_to_be_glued, part_type_after_glueing=self.part_type_after_glueing)
+            mode="glue_to_surface", distance=0.11,
+            distance_glued_particle_to_vs=0.02, bond_centers=self.H,
+            bond_vs=self.H2, part_type_vs=self.part_type_vs,
+            part_type_to_attach_vs_to=self.part_type_to_attach_vs_to,
+            part_type_to_be_glued=self.part_type_to_be_glued,
+            part_type_after_glueing=self.part_type_after_glueing)
         self.get_state_set_state_consistency()
         system.integrator.run(1, recalc_forces=True)
         self.verify_state_after_glue_to_surface(expected_np)

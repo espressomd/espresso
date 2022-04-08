@@ -19,16 +19,14 @@
 import unittest as ut
 import unittest_decorators as utx
 
-import os
+import pathlib
+import tempfile
+import contextlib
 import numpy as np
 
-try:
+with contextlib.suppress(ImportError):
     import vtk
-    from vtk.util import numpy_support as VN
-    skipIfMissingPythonPackage = utx.no_skip
-except ImportError:
-    skipIfMissingPythonPackage = ut.skip(
-        "Python module vtk not available, skipping test!")
+    import vtk.util.numpy_support
 
 import espressomd
 import espressomd.lb
@@ -61,7 +59,7 @@ class TestLBWrite:
 
     def parse_vtk(self, filepath, name, shape):
         reader = vtk.vtkStructuredPointsReader()
-        reader.SetFileName(filepath)
+        reader.SetFileName(str(filepath))
         reader.ReadAllVectorsOn()
         reader.ReadAllScalarsOn()
         reader.Update()
@@ -69,146 +67,130 @@ class TestLBWrite:
         data = reader.GetOutput()
         points = data.GetPointData()
 
-        return VN.vtk_to_numpy(points.GetArray(name)).reshape(shape, order='F')
+        return vtk.util.numpy_support.vtk_to_numpy(
+            points.GetArray(name)).reshape(shape, order='F')
 
     def test_vtk(self):
         '''
         Check VTK files.
         '''
 
-        os.makedirs('vtk_out', exist_ok=True)
-        filepaths = ['vtk_out/boundary.vtk', 'vtk_out/velocity.vtk',
-                     'vtk_out/velocity_bb.vtk']
+        with tempfile.TemporaryDirectory() as tmp_directory:
+            path_vtk_root = pathlib.Path(tmp_directory)
+            path_vtk_boundary = path_vtk_root / 'boundary.vtk'
+            path_vtk_velocity = path_vtk_root / 'velocity.vtk'
+            path_vtk_velocity_bb = path_vtk_root / 'velocity_bb.vtk'
+            path_vtk_skip = path_vtk_root / 'skip.vtk'
+            path_vtk_invalid = path_vtk_root / 'non_existent_folder' / 'file'
 
-        # cleanup action
-        for filepath in filepaths:
-            if os.path.exists(filepath):
-                os.remove(filepath)
+            shape = [10, 11, 12]
+            lbf = self.set_lbf()
+            self.system.integrator.run(100)
 
-        shape = [10, 11, 12]
-        lbf = self.set_lbf()
-        self.system.integrator.run(100)
+            # write VTK files
+            with self.assertRaises(RuntimeError):
+                lbf.write_vtk_velocity(str(path_vtk_invalid))
+            with self.assertRaises(RuntimeError):
+                lbf.write_vtk_boundary(str(path_vtk_invalid))
+            lbf.write_vtk_boundary(str(path_vtk_boundary))
+            lbf.write_vtk_velocity(str(path_vtk_velocity))
+            with self.assertRaises(ValueError):
+                lbf.write_vtk_velocity(str(path_vtk_skip), 3 * [0], None)
+            with self.assertRaises(ValueError):
+                lbf.write_vtk_velocity(str(path_vtk_skip), None, 3 * [0])
+            with self.assertRaises(RuntimeError):
+                lbf.write_vtk_velocity(str(path_vtk_skip), [-2, 1, 1], 3 * [1])
+            with self.assertRaises(RuntimeError):
+                lbf.write_vtk_velocity(str(path_vtk_skip), 3 * [0], [1, 2, 16])
+            with self.assertRaises(ValueError):
+                lbf.write_vtk_velocity(str(path_vtk_skip), [1, 1], 3 * [1])
+            with self.assertRaises(ValueError):
+                lbf.write_vtk_velocity(
+                    str(path_vtk_skip), 3 * [1], np.array([2, 3]))
+            bb1, bb2 = ([1, 2, 3], [9, 10, 11])
+            lbf.write_vtk_velocity(str(path_vtk_velocity_bb), bb1, bb2)
 
-        # write VTK files
-        with self.assertRaises(RuntimeError):
-            lbf.write_vtk_velocity('non_existent_folder/file')
-        with self.assertRaises(RuntimeError):
-            lbf.write_vtk_boundary('non_existent_folder/file')
-        lbf.write_vtk_boundary('vtk_out/boundary.vtk')
-        lbf.write_vtk_velocity('vtk_out/velocity.vtk')
-        with self.assertRaises(ValueError):
-            lbf.write_vtk_velocity('vtk_out/delme', 3 * [0], None)
-        with self.assertRaises(ValueError):
-            lbf.write_vtk_velocity('vtk_out/delme', None, 3 * [0])
-        with self.assertRaises(RuntimeError):
-            lbf.write_vtk_velocity('vtk_out/delme', [-2, 1, 1], 3 * [1])
-        with self.assertRaises(RuntimeError):
-            lbf.write_vtk_velocity('vtk_out/delme', 3 * [0], [1, 2, 16])
-        with self.assertRaises(ValueError):
-            lbf.write_vtk_velocity('vtk_out/delme', [1, 1], 3 * [1])
-        with self.assertRaises(ValueError):
-            lbf.write_vtk_velocity('vtk_out/delme', 3 * [1], np.array([2, 3]))
-        bb1, bb2 = ([1, 2, 3], [9, 10, 11])
-        lbf.write_vtk_velocity('vtk_out/velocity_bb.vtk', bb1, bb2)
+            # check VTK values match node values
+            node_velocity = np.zeros(shape + [3])
+            node_boundary = np.zeros(shape, dtype=int)
+            for i in range(shape[0]):
+                for j in range(shape[1]):
+                    for k in range(shape[2]):
+                        node = lbf[i, j, k]
+                        node_velocity[i, j, k] = node.velocity
+                        node_boundary[i, j, k] = node.boundary
+            node_velocity_bb = node_velocity[bb1[0]:bb2[0],
+                                             bb1[1]:bb2[1],
+                                             bb1[2]:bb2[2]]
 
-        # check VTK files exist
-        for filepath in filepaths:
-            self.assertTrue(
-                os.path.exists(filepath),
-                f'VTK file "{filepath}" not written to disk')
+            vtk_velocity = self.parse_vtk(path_vtk_velocity, 'velocity',
+                                          node_velocity.shape)
+            np.testing.assert_allclose(vtk_velocity, node_velocity, atol=5e-7)
 
-        # check VTK values match node values
-        node_velocity = np.zeros(shape + [3])
-        node_boundary = np.zeros(shape, dtype=int)
-        for i in range(shape[0]):
-            for j in range(shape[1]):
-                for k in range(shape[2]):
-                    node = lbf[i, j, k]
-                    node_velocity[i, j, k] = node.velocity
-                    node_boundary[i, j, k] = node.boundary
-        node_velocity_bb = node_velocity[bb1[0]:bb2[0],
-                                         bb1[1]:bb2[1],
-                                         bb1[2]:bb2[2]]
+            vtk_velocity_bb = self.parse_vtk(path_vtk_velocity_bb, 'velocity',
+                                             node_velocity_bb.shape)
+            np.testing.assert_allclose(
+                vtk_velocity_bb, node_velocity_bb, atol=5e-7)
 
-        vtk_velocity = self.parse_vtk('vtk_out/velocity.vtk', 'velocity',
-                                      node_velocity.shape)
-        np.testing.assert_allclose(vtk_velocity, node_velocity, atol=5e-7)
-
-        vtk_velocity_bb = self.parse_vtk('vtk_out/velocity_bb.vtk', 'velocity',
-                                         node_velocity_bb.shape)
-        np.testing.assert_allclose(
-            vtk_velocity_bb, node_velocity_bb, atol=5e-7)
-
-        vtk_boundary = self.parse_vtk(
-            'vtk_out/boundary.vtk', 'boundary', shape)
-        np.testing.assert_equal(vtk_boundary, node_boundary.astype(int))
-        if self.system.lbboundaries is None:
-            np.testing.assert_equal(np.sum(node_boundary), 0.)
+            vtk_boundary = self.parse_vtk(path_vtk_boundary, 'boundary', shape)
+            np.testing.assert_equal(vtk_boundary, node_boundary.astype(int))
 
     def test_print(self):
         '''
         Check data files.
         '''
 
-        os.makedirs('vtk_out', exist_ok=True)
-        filepaths = ['vtk_out/boundary.dat', 'vtk_out/velocity.dat']
+        with tempfile.TemporaryDirectory() as tmp_directory:
+            path_dat_root = pathlib.Path(tmp_directory)
+            path_dat_boundary = path_dat_root / 'boundary.vtk'
+            path_dat_velocity = path_dat_root / 'velocity.vtk'
+            path_dat_invalid = path_dat_root / 'non_existent_folder' / 'file'
 
-        # cleanup action
-        for filepath in filepaths:
-            if os.path.exists(filepath):
-                os.remove(filepath)
+            shape = [10, 11, 12]
+            lbf = self.set_lbf()
+            self.system.integrator.run(100)
 
-        shape = [10, 11, 12]
-        lbf = self.set_lbf()
-        self.system.integrator.run(100)
+            # write data files
+            with self.assertRaises(RuntimeError):
+                lbf.write_velocity(str(path_dat_invalid))
+            with self.assertRaises(RuntimeError):
+                lbf.write_boundary(str(path_dat_invalid))
+            lbf.write_boundary(str(path_dat_boundary))
+            lbf.write_velocity(str(path_dat_velocity))
 
-        # write data files
-        with self.assertRaises(RuntimeError):
-            lbf.write_velocity('non_existent_folder/file')
-        with self.assertRaises(RuntimeError):
-            lbf.write_boundary('non_existent_folder/file')
-        lbf.write_boundary('vtk_out/boundary.dat')
-        lbf.write_velocity('vtk_out/velocity.dat')
+            # check data values match node values
+            node_velocity = np.zeros(shape + [3])
+            node_boundary = np.zeros(shape, dtype=int)
+            for i in range(shape[0]):
+                for j in range(shape[1]):
+                    for k in range(shape[2]):
+                        node = lbf[i, j, k]
+                        node_velocity[i, j, k] = node.velocity
+                        node_boundary[i, j, k] = node.boundary
 
-        # check data files exist
-        for filepath in filepaths:
-            self.assertTrue(
-                os.path.exists(filepath),
-                f'data file "{filepath}" not written to disk')
+            ref_coord = np.array([
+                np.tile(np.arange(shape[0]), shape[1] * shape[2]),
+                np.tile(np.repeat(np.arange(shape[1]), shape[0]), shape[2]),
+                np.repeat(np.arange(shape[2]), shape[0] * shape[1])]).T
 
-        # check data values match node values
-        node_velocity = np.zeros(shape + [3])
-        node_boundary = np.zeros(shape, dtype=int)
-        for i in range(shape[0]):
-            for j in range(shape[1]):
-                for k in range(shape[2]):
-                    node = lbf[i, j, k]
-                    node_velocity[i, j, k] = node.velocity
-                    node_boundary[i, j, k] = node.boundary
+            dat_velocity = np.loadtxt(path_dat_velocity)
+            dat_coord = (dat_velocity[:, 0:3] - 0.5).astype(int)
+            np.testing.assert_equal(dat_coord, ref_coord)
+            dat_vel = dat_velocity[:, 3:]
+            ref_vel = np.swapaxes(node_velocity, 0, 2).reshape((-1, 3))
+            np.testing.assert_allclose(dat_vel, ref_vel, atol=5e-7)
 
-        ref_coord = np.array([
-            np.tile(np.arange(shape[0]), shape[1] * shape[2]),
-            np.tile(np.repeat(np.arange(shape[1]), shape[0]), shape[2]),
-            np.repeat(np.arange(shape[2]), shape[0] * shape[1])]).T
-
-        dat_velocity = np.loadtxt('vtk_out/velocity.dat')
-        dat_coord = (dat_velocity[:, 0:3] - 0.5).astype(int)
-        np.testing.assert_equal(dat_coord, ref_coord)
-        dat_vel = dat_velocity[:, 3:]
-        ref_vel = np.swapaxes(node_velocity, 0, 2).reshape((-1, 3))
-        np.testing.assert_allclose(dat_vel, ref_vel, atol=5e-7)
-
-        dat_boundary = np.loadtxt('vtk_out/boundary.dat')
-        dat_coord = (dat_boundary[:, 0:3] - 0.5).astype(int)
-        np.testing.assert_equal(dat_coord, ref_coord)
-        dat_bound = dat_boundary[:, 3].astype(int)
-        ref_bound = np.swapaxes(node_boundary, 0, 2).reshape(-1)
-        if isinstance(lbf, espressomd.lb.LBFluid):
-            ref_bound = (ref_bound != 0).astype(int)
-        np.testing.assert_equal(dat_bound, ref_bound)
+            dat_boundary = np.loadtxt(path_dat_boundary)
+            dat_coord = (dat_boundary[:, 0:3] - 0.5).astype(int)
+            np.testing.assert_equal(dat_coord, ref_coord)
+            dat_bound = dat_boundary[:, 3].astype(int)
+            ref_bound = np.swapaxes(node_boundary, 0, 2).reshape(-1)
+            if isinstance(lbf, espressomd.lb.LBFluid):
+                ref_bound = (ref_bound != 0).astype(int)
+            np.testing.assert_equal(dat_bound, ref_bound)
 
 
-@skipIfMissingPythonPackage
+@utx.skipIfMissingModules("vtk")
 class TestLBWriteCPU(TestLBWrite, ut.TestCase):
 
     def setUp(self):
@@ -216,7 +198,7 @@ class TestLBWriteCPU(TestLBWrite, ut.TestCase):
 
 
 @utx.skipIfMissingGPU()
-@skipIfMissingPythonPackage
+@utx.skipIfMissingModules("vtk")
 class TestLBWriteGPU(TestLBWrite, ut.TestCase):
 
     def setUp(self):

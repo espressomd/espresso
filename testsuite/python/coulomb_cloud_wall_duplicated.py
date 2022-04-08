@@ -35,7 +35,7 @@ class CoulombCloudWall(ut.TestCase):
     system.time_step = 0.01
     system.cell_system.skin = 0.4
     data = np.genfromtxt(
-        tests_common.abspath("data/coulomb_cloud_wall_duplicated_system.data"))
+        tests_common.data_path("coulomb_cloud_wall_duplicated_system.data"))
 
     tolerance = 1E-3
 

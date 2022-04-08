@@ -44,7 +44,7 @@ class IntegratorNPT(ut.TestCase):
         system = self.system
         system.box_l = [5.86326165] * 3
 
-        data = np.genfromtxt(tests_common.abspath("data/npt_lj_system.data"))
+        data = np.genfromtxt(tests_common.data_path("npt_lj_system.data"))
         p_ext = 2.0
 
         system.part.add(pos=data[:, :3], v=data[:, 3:])

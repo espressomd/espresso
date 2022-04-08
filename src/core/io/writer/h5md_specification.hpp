@@ -18,14 +18,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_IO_WRITER_H5MD_HPP
-#define CORE_IO_WRITER_H5MD_HPP
+#ifndef CORE_IO_WRITER_H5MD_SPECIFICATION_HPP
+#define CORE_IO_WRITER_H5MD_SPECIFICATION_HPP
 
 #include <h5xx/h5xx.hpp>
 
 #include <algorithm>
-#include <array>
 #include <string>
+#include <vector>
 
 namespace Writer {
 namespace H5md {
@@ -49,21 +49,26 @@ struct H5MD_Specification {
     bool is_link;
   };
 
-  static std::array<Dataset, 30> DATASETS;
+  H5MD_Specification(unsigned int fields);
 
-  static bool is_compliant(std::string const &filename) {
+  auto const &get_datasets() const { return m_datasets; }
+
+  bool is_compliant(std::string const &filename) const {
     h5xx::file h5md_file(filename, h5xx::file::in);
 
-    auto all_groups_exist = std::all_of(
-        DATASETS.begin(), DATASETS.end(), [&h5md_file](auto const &dataset) {
-          return h5xx::exists_group(h5md_file, dataset.group);
+    auto const all_groups_exist = std::all_of(
+        m_datasets.begin(), m_datasets.end(), [&h5md_file](auto const &d) {
+          return h5xx::exists_group(h5md_file, d.group);
         });
-    auto all_datasets_exist = std::all_of(
-        DATASETS.begin(), DATASETS.end(), [&h5md_file](auto const &dataset) {
-          return h5xx::exists_dataset(h5md_file, dataset.path());
+    auto const all_datasets_exist = std::all_of(
+        m_datasets.begin(), m_datasets.end(), [&h5md_file](auto const &d) {
+          return h5xx::exists_dataset(h5md_file, d.path());
         });
     return all_groups_exist and all_datasets_exist;
   }
+
+private:
+  std::vector<Dataset> m_datasets;
 };
 
 } // namespace H5md
