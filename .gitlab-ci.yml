@@ -46,6 +46,8 @@ maxset-walberla:
      with_stokesian_dynamics: 'false'
      check_skip_long: 'true'
      check_procs: '8'
+     build_procs: '4'
+     make_check_unit_tests: 'false'
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
