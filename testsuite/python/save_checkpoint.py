@@ -17,7 +17,8 @@
 import unittest as ut
 import unittest_generator as utg
 import numpy as np
-import os
+import pathlib
+import tempfile
 
 import espressomd
 import espressomd.checkpointing
@@ -49,12 +50,10 @@ system.min_global_cut = 2.0
 system.max_oif_objects = 5
 
 # create checkpoint folder
+config.cleanup_old_checkpoint()
 checkpoint = espressomd.checkpointing.Checkpoint(
     **config.get_checkpoint_params())
-
-# cleanup old checkpoint files
-for filepath in os.listdir(checkpoint.checkpoint_dir):
-    os.remove(os.path.join(checkpoint.checkpoint_dir, filepath))
+path_cpt_root = pathlib.Path(checkpoint.checkpoint_dir)
 
 n_nodes = system.cell_system.get_state()["n_nodes"]
 
@@ -239,7 +238,7 @@ if espressomd.has_features("H5MD"):
     h5_units = espressomd.io.writer.h5md.UnitSystem(
         time="ps", mass="u", length="m", charge="e")
     h5 = espressomd.io.writer.h5md.H5md(
-        file_path=os.path.join(checkpoint.checkpoint_dir, "test.h5"),
+        file_path=str(path_cpt_root / "test.h5"),
         unit_system=h5_units)
     h5.write()
     h5.flush()
@@ -322,21 +321,19 @@ if lbf_actor:
     lbf[:, :, :].last_applied_force = np.einsum(
         'abc,d->abcd', grid_3D, np.arange(1, 4))
     # save LB checkpoint file
-    lbf_cpt_path = checkpoint.checkpoint_dir + "/lb.cpt"
-    lbf.save_checkpoint(lbf_cpt_path, lbf_cpt_mode)
-    # cleanup old VTK files
-    vtk_suffix = config.test_name
-    if checkpoint.has_checkpoints():
-        if os.path.isfile(f'vtk_out/auto_{vtk_suffix}.pvd'):
-            os.remove(f'vtk_out/auto_{vtk_suffix}.pvd')
-        if os.path.isfile(f'vtk_out/manual_{vtk_suffix}.pvd'):
-            os.remove(f'vtk_out/manual_{vtk_suffix}.pvd')
+    lbf_cpt_path = path_cpt_root / "lb.cpt"
+    lbf.save_checkpoint(str(lbf_cpt_path), lbf_cpt_mode)
     # create VTK callbacks
+    vtk_suffix = config.test_name
+    vtk_auto_id = f"auto_{vtk_suffix}"
+    vtk_manual_id = f"manual_{vtk_suffix}"
+    vtk_root = pathlib.Path("vtk_out")
+    config.recursive_unlink(vtk_root / vtk_auto_id)
+    config.recursive_unlink(vtk_root / vtk_manual_id)
     vtk_auto = lbf.add_vtk_writer(
-        f'auto_{vtk_suffix}', ('density', 'velocity_vector'), delta_N=1)
+        vtk_auto_id, ('density', 'velocity_vector'), delta_N=1)
     vtk_auto.disable()
-    vtk_manual = lbf.add_vtk_writer(
-        f'manual_{vtk_suffix}', 'density', delta_N=0)
+    vtk_manual = lbf.add_vtk_writer(vtk_manual_id, 'density', delta_N=0)
     vtk_manual.write()
 
 # save checkpoint file
@@ -349,15 +346,15 @@ class TestCheckpoint(ut.TestCase):
         '''
         Check for the presence of the checkpoint files.
         '''
-        self.assertTrue(os.path.isdir(checkpoint.checkpoint_dir),
+        self.assertTrue(path_cpt_root.is_dir(),
                         "checkpoint directory not created")
 
-        checkpoint_filepath = checkpoint.checkpoint_dir + "/0.checkpoint"
-        self.assertTrue(os.path.isfile(checkpoint_filepath),
+        checkpoint_filepath = path_cpt_root / "0.checkpoint"
+        self.assertTrue(checkpoint_filepath.is_file(),
                         "checkpoint file not created")
 
         if lbf_actor:
-            self.assertTrue(os.path.isfile(lbf_cpt_path),
+            self.assertTrue(lbf_cpt_path.is_file(),
                             "LB checkpoint file not created")
 
     @ut.skipIf(lbf_actor is None, "Skipping test due to missing mode.")
@@ -368,34 +365,33 @@ class TestCheckpoint(ut.TestCase):
         '''
 
         # check exception mechanism
+        lbf_cpt_root = lbf_cpt_path.parent
         with self.assertRaisesRegex(RuntimeError, 'could not open file'):
-            dirname, filename = os.path.split(lbf_cpt_path)
-            invalid_path = os.path.join(dirname, 'unknown_dir', filename)
-            lbf.save_checkpoint(invalid_path, lbf_cpt_mode)
+            invalid_path = lbf_cpt_root / "unknown_dir" / "lb.cpt"
+            lbf.save_checkpoint(str(invalid_path), lbf_cpt_mode)
         with self.assertRaisesRegex(RuntimeError, 'unit test error'):
-            lbf.save_checkpoint(checkpoint.checkpoint_dir + "/lb_err.cpt", -1)
+            lbf.save_checkpoint(str(lbf_cpt_root / "lb_err.cpt"), -1)
         with self.assertRaisesRegex(RuntimeError, 'could not write to'):
-            lbf.save_checkpoint(checkpoint.checkpoint_dir + "/lb_err.cpt", -2)
+            lbf.save_checkpoint(str(lbf_cpt_root / "lb_err.cpt"), -2)
         with self.assertRaisesRegex(ValueError, 'Unknown mode -3'):
-            lbf.save_checkpoint(checkpoint.checkpoint_dir + "/lb_err.cpt", -3)
+            lbf.save_checkpoint(str(lbf_cpt_root / "lb_err.cpt"), -3)
         with self.assertRaisesRegex(ValueError, 'Unknown mode 2'):
-            lbf.save_checkpoint(checkpoint.checkpoint_dir + "/lb_err.cpt", 2)
+            lbf.save_checkpoint(str(lbf_cpt_root / "lb_err.cpt"), 2)
 
         # deactivate LB actor
         system.actors.remove(lbf)
 
         # read the valid LB checkpoint file
-        with open(lbf_cpt_path, "rb") as f:
-            lbf_cpt_str = f.read()
-        cpt_path = checkpoint.checkpoint_dir + "/lb{}.cpt"
+        lbf_cpt_data = lbf_cpt_path.read_bytes()
+        cpt_path = str(path_cpt_root / "lb") + "{}.cpt"
         # write checkpoint file with missing data
         with open(cpt_path.format("-missing-data"), "wb") as f:
-            f.write(lbf_cpt_str[:len(lbf_cpt_str) // 2])
+            f.write(lbf_cpt_data[:len(lbf_cpt_data) // 2])
         # write checkpoint file with extra data
         with open(cpt_path.format("-extra-data"), "wb") as f:
-            f.write(lbf_cpt_str + lbf_cpt_str[-8:])
+            f.write(lbf_cpt_data + lbf_cpt_data[-8:])
         if lbf_cpt_mode == 0:
-            boxsize, popsize, data = lbf_cpt_str.split(b"\n", 2)
+            boxsize, popsize, data = lbf_cpt_data.split(b"\n", 2)
             # write checkpoint file with incorrectly formatted data
             with open(cpt_path.format("-wrong-format"), "wb") as f:
                 f.write(boxsize + b"\n" + popsize + b"\ntext string\n" + data)
@@ -405,6 +401,19 @@ class TestCheckpoint(ut.TestCase):
             # write checkpoint file with different population size
             with open(cpt_path.format("-wrong-popsize"), "wb") as f:
                 f.write(boxsize + b"\n" + b"2" + popsize + b"\n" + data)
+
+    def test_generator_recursive_unlink(self):
+        with tempfile.TemporaryDirectory() as tmp_directory:
+            root = pathlib.Path(tmp_directory)
+            tree = root / "level1" / "level2"
+            tree.mkdir(parents=True, exist_ok=False)
+            for dirname in root.iterdir():
+                filepath = dirname / "file"
+                filepath.write_text("")
+            config.recursive_unlink(root)
+            for path in root.iterdir():
+                self.assertTrue(path.is_dir(),
+                                f"Path '{path}' should be a folder")
 
 
 if __name__ == '__main__':

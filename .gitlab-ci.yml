@@ -21,7 +21,9 @@ stages:
   timeout: 40m
   interruptible: false
   tags:
-    - linux
+    - docker
+    - espresso
+    - no-cuda
 
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
@@ -44,7 +46,8 @@ style:
     - sh maintainer/CI/fix_style.sh
   tags:
     - docker
-    - linux
+    - espresso
+    - no-cuda
   variables:
     GIT_SUBMODULE_STRATEGY: none
   artifacts:
@@ -65,7 +68,8 @@ style_doxygen:
     - sh ../maintainer/CI/dox_warnings.sh
   tags:
     - docker
-    - linux
+    - espresso
+    - no-cuda
 
 ### Builds without CUDA
 
@@ -87,7 +91,8 @@ default:
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
-    - linux
+    - espresso
+    - no-cuda
     - numa-deactivated
 
 maxset:
@@ -108,7 +113,9 @@ maxset:
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
-    - linux
+    - espresso
+    - no-cuda
+    - numa
 
 maxset-walberla:
   <<: *global_job_definition
@@ -126,7 +133,8 @@ maxset-walberla:
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
-    - linux
+    - espresso
+    - no-cuda
     - numa-deactivated
 
 maxset-walberla-avx:
@@ -146,7 +154,8 @@ maxset-walberla-avx:
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
-    - linux
+    - espresso
+    - no-cuda
     - numa-deactivated
   when: manual
 
@@ -165,7 +174,8 @@ no_rotation:
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
-    - linux
+    - espresso
+    - no-cuda
     - numa
 
 ubuntu:wo-dependencies:
@@ -182,7 +192,8 @@ ubuntu:wo-dependencies:
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
-    - linux
+    - espresso
+    - no-cuda
     - numa
 
 ### Builds with different distributions
@@ -200,7 +211,8 @@ debian:10:
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
-    - linux
+    - espresso
+    - no-cuda
     - numa
 
 fedora:34:
@@ -216,7 +228,8 @@ fedora:34:
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
-    - linux
+    - espresso
+    - no-cuda
     - numa
 
 ### Builds with CUDA
@@ -242,7 +255,7 @@ clang-sanitizer:
   timeout: 2h
   tags:
     - docker
-    - linux
+    - espresso
     - cuda
     - numa
 
@@ -263,7 +276,7 @@ fast_math:
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
-    - linux
+    - espresso
     - cuda
   when: manual
 
@@ -286,7 +299,7 @@ cuda11-maxset:
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
-    - linux
+    - espresso
     - cuda
     - numa
 
@@ -314,7 +327,7 @@ cuda10-maxset:
     expire_in: 1 week
   tags:
     - docker
-    - linux
+    - espresso
     - cuda
     - numa-deactivated
 
@@ -341,7 +354,8 @@ tutorials-samples-maxset:
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
-    - linux
+    - espresso
+    - no-cuda
     - numa-deactivated
 
 tutorials-samples-default:
@@ -364,8 +378,9 @@ tutorials-samples-default:
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
-    - linux
+    - espresso
     - cuda
+    - numa
   only:
     - schedules
 
@@ -390,8 +405,9 @@ tutorials-samples-empty:
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
-    - linux
+    - espresso
     - cuda
+    - numa
   only:
     - schedules
 
@@ -416,7 +432,9 @@ tutorials-samples-no-gpu:
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
-    - linux
+    - espresso
+    - no-cuda
+    - numa
   only:
     - schedules
 
@@ -451,7 +469,7 @@ installation:
     - make -j2 check_tutorials
   tags:
     - docker
-    - linux
+    - espresso
     - cuda
   when: manual
 
@@ -471,7 +489,7 @@ empty:
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
-    - linux
+    - espresso
     - cuda
     - numa
 
@@ -495,7 +513,7 @@ check_sphinx:
     expire_in: 1 week
   tags:
     - docker
-    - linux
+    - espresso
     - cuda
     - numa
 
@@ -520,7 +538,7 @@ run_tutorials:
     expire_in: 1 week
   tags:
     - docker
-    - linux
+    - espresso
     - cuda
     - numa-deactivated
   only:
@@ -543,8 +561,9 @@ run_doxygen:
     expire_in: 1 week
   tags:
     - docker
-    - linux
-    - numa
+    - espresso
+    - no-cuda
+    - numa-deactivated
 
 maxset_no_gpu:
   <<: *global_job_definition
@@ -558,7 +577,8 @@ maxset_no_gpu:
     - make -t && make check
   tags:
     - docker
-    - linux
+    - espresso
+    - no-cuda
     - numa-deactivated
 
 maxset_3_cores:
@@ -573,7 +593,7 @@ maxset_3_cores:
     - make -t && make check_unit_tests && make check_python_parallel_odd
   tags:
     - docker
-    - linux
+    - espresso
     - cuda
     - numa-deactivated
 

@@ -25,16 +25,14 @@ import espressomd.interactions
 import numpy as np
 import unittest as ut
 import unittest_decorators as utx
-try:
-    import MDAnalysis as mda
+import contextlib
+
+with contextlib.suppress(ImportError):
+    import MDAnalysis
     import espressomd.MDA_ESP
-    skipIfMissingPythonPackage = utx.no_skip
-except ImportError:
-    skipIfMissingPythonPackage = ut.skip(
-        "Python module MDAnalysis not available, skipping test!")
 
 
-@skipIfMissingPythonPackage
+@utx.skipIfMissingModules("MDAnalysis")
 class TestMDAnalysis(ut.TestCase):
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     system.time_step = 0.001
@@ -58,7 +56,7 @@ class TestMDAnalysis(ut.TestCase):
         system = self.system
         partcls = system.part.all()
         eos = espressomd.MDA_ESP.Stream(system)
-        u = mda.Universe(eos.topology, eos.trajectory)
+        u = MDAnalysis.Universe(eos.topology, eos.trajectory)
         # check atoms
         self.assertEqual(len(u.atoms), 10)
         np.testing.assert_equal(u.atoms.ids, np.arange(10) + 1)

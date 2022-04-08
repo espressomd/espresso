@@ -158,7 +158,7 @@ Lees--Edwards boundary conditions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Lees--Edwards boundary conditions (LEbc) are special periodic boundary
-conditions to simulation systems under shear stress :cite:`lees72a`.
+conditions to simulate systems under shear stress :cite:`lees72a`.
 Periodic images of particles across the shear boundary appear with a
 time-dependent position offset. When a particle crosses the shear boundary,
 it appears to the opposite side of the simulation box with a position offset
@@ -227,13 +227,13 @@ The properties of the cell system can be accessed by
 
 * :py:attr:`~espressomd.cellsystem.CellSystem.node_grid`
 
-  (int[3]) 3D node grid for real space domain decomposition (optional, if
+  3D node grid for real space domain decomposition (optional, if
   unset an optimal set is chosen automatically). The domain decomposition
   can be visualized with :file:`samples/visualization_cellsystem.py`.
 
 * :py:attr:`~espressomd.cellsystem.CellSystem.skin`
 
-  (float) Skin for the Verlet list. This value has to be set, otherwise the simulation will not start.
+  Skin for the Verlet list. This value has to be set, otherwise the simulation will not start.
 
 Details about the cell system can be obtained by :meth:`espressomd.system.System.cell_system.get_state() <espressomd.cellsystem.CellSystem.get_state>`:
 

@@ -20,7 +20,8 @@ import unittest as ut
 import unittest_decorators as utx
 import unittest_generator as utg
 import numpy as np
-import os
+import contextlib
+import pathlib
 
 import espressomd
 import espressomd.checkpointing
@@ -34,11 +35,8 @@ import espressomd.shapes
 import espressomd.constraints
 import espressomd.lb
 
-import os
-try:
+with contextlib.suppress(ImportError):
     import h5py  # h5py has to be imported *after* espressomd (MPI)
-except ImportError:
-    h5py = None
 
 config = utg.TestGenerator()
 is_gpu_available = espressomd.gpu_available()
@@ -53,6 +51,7 @@ class CheckpointTest(ut.TestCase):
     checkpoint = espressomd.checkpointing.Checkpoint(
         **config.get_checkpoint_params())
     checkpoint.load(0)
+    path_cpt_root = pathlib.Path(checkpoint.checkpoint_dir)
     n_nodes = system.cell_system.get_state()["n_nodes"]
 
     @classmethod
@@ -72,12 +71,20 @@ class CheckpointTest(ut.TestCase):
         self.fail(
             f"system doesn't have an actor of type {actor_type.__name__}")
 
+    def test_get_active_actor_of_type(self):
+        if system.actors.active_actors:
+            actor = system.actors.active_actors[0]
+            self.assertEqual(self.get_active_actor_of_type(type(actor)), actor)
+        with self.assertRaisesRegex(AssertionError, "system doesn't have an actor of type Wall"):
+            self.get_active_actor_of_type(espressomd.shapes.Wall)
+
     @utx.skipIfMissingFeatures('LB_WALBERLA')
     @ut.skipIf(not has_lb_mode, "Skipping test due to missing LB feature.")
     def test_lb_fluid(self):
         lbf = self.get_active_actor_of_type(espressomd.lb.LBFluidWalberla)
         cpt_mode = 0 if 'LB.ASCII' in modes else 1
-        cpt_path = self.checkpoint.checkpoint_dir + "/lb{}.cpt"
+        cpt_root = pathlib.Path(self.checkpoint.checkpoint_dir)
+        cpt_path = str(cpt_root / "lb") + "{}.cpt"
 
         # check exception mechanism with corrupted LB checkpoint files
         with self.assertRaisesRegex(RuntimeError, 'EOF found'):
@@ -173,15 +180,16 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(set(obj.observables), {'density'})
         self.assertIn(f"write to '{key_manual}' on demand>", repr(obj))
         # check file numbering when resuming VTK write operations
-        filepath_template = key_manual + '/simulation_step_{}.vtu'
+        vtk_root = pathlib.Path("vtk_out") / f"manual_{vtk_suffix}"
+        filename = "simulation_step_{}.vtu"
         vtk_manual = espressomd.lb._vtk_registry.map[key_manual]
-        self.assertTrue(os.path.isfile(filepath_template.format(0)))
-        self.assertFalse(os.path.isfile(filepath_template.format(1)))
-        self.assertFalse(os.path.isfile(filepath_template.format(2)))
+        self.assertTrue((vtk_root / filename.format(0)).exists())
+        self.assertFalse((vtk_root / filename.format(1)).exists())
+        self.assertFalse((vtk_root / filename.format(2)).exists())
         vtk_manual.write()
-        self.assertTrue(os.path.isfile(filepath_template.format(0)))
-        self.assertTrue(os.path.isfile(filepath_template.format(1)))
-        self.assertFalse(os.path.isfile(filepath_template.format(2)))
+        self.assertTrue((vtk_root / filename.format(0)).exists())
+        self.assertTrue((vtk_root / filename.format(1)).exists())
+        self.assertFalse((vtk_root / filename.format(2)).exists())
 
     def test_system_variables(self):
         cell_system_params = system.cell_system.get_state()
@@ -482,16 +490,15 @@ class CheckpointTest(ut.TestCase):
                 expected)
 
     @utx.skipIfMissingFeatures('H5MD')
-    @ut.skipIf(h5py is None,
-               "Skipping test due to missing python module 'h5py'.")
+    @utx.skipIfMissingModules("h5py")
     def test_h5md(self):
         # check attributes
-        file_path = os.path.join(self.checkpoint.checkpoint_dir, "test.h5")
-        script_path = os.path.join(
-            os.path.dirname(__file__), "save_checkpoint.py")
+        file_path = self.path_cpt_root / "test.h5"
+        script_path = pathlib.Path(
+            __file__).resolve().parent / "save_checkpoint.py"
         self.assertEqual(h5.fields, ['all'])
-        self.assertEqual(h5.script_path, script_path)
-        self.assertEqual(h5.file_path, file_path)
+        self.assertEqual(h5.script_path, str(script_path))
+        self.assertEqual(h5.file_path, str(file_path))
 
         # write new frame
         h5.write()

@@ -185,7 +185,7 @@ cdef class System:
             self.cell_system = CellSystem()
             self.bond_breakage = BreakageSpecs()
             IF COLLISION_DETECTION == 1:
-                self.collision_detection = CollisionDetection()
+                self.collision_detection = CollisionDetection(mode="off")
             self.comfixed = ComFixed()
             self.constraints = Constraints()
             IF CUDA:

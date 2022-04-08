@@ -28,7 +28,7 @@ import random
 @utx.skipIfMissingFeatures("COLLISION_DETECTION")
 class CollisionDetection(ut.TestCase):
 
-    """Tests interface and functionality of the collision detection / dynamic binding"""
+    """Tests functionality of the collision detection / dynamic binding"""
 
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     np.random.seed(seed=42)
@@ -57,24 +57,6 @@ class CollisionDetection(ut.TestCase):
         state = self.system.collision_detection.get_params()
         self.system.collision_detection.set_params(**state)
         self.assertEqual(state, self.system.collision_detection.get_params())
-
-    def test_00_interface_and_defaults(self):
-        # Is it off by default
-        self.assertEqual(self.system.collision_detection.mode, "off")
-
-        # Make sure params cannot be set individually
-        with self.assertRaises(Exception):
-            self.system.collision_detection.mode = "bind_centers"
-
-        # Verify exception throwing for unknown collision modes
-        for unknown_mode in (0, "unknown"):
-            with self.assertRaisesRegex(Exception, "Mode not handled"):
-                self.system.collision_detection.set_params(mode=unknown_mode)
-        self.assertIsNone(self.system.collision_detection.call_method("none"))
-
-        # That should work
-        self.system.collision_detection.set_params(mode="off")
-        self.assertEqual(self.system.collision_detection.mode, "off")
 
     def test_bind_centers(self):
         system = self.system
@@ -725,16 +707,6 @@ class CollisionDetection(ut.TestCase):
         expected_angle_bonds = sorted(expected_angle_bonds)
         self.assertEqual(found_pairs, expected_pairs)
         self.assertEqual(found_angle_bonds, expected_angle_bonds)
-
-    def test_zz_serialization(self):
-        self.system.collision_detection.set_params(
-            mode="bind_centers", distance=0.11, bond_centers=self.H)
-        reduce = self.system.collision_detection.__reduce__()
-        res = reduce[0](reduce[1][0])
-        self.assertEqual(res.__class__.__name__, "CollisionDetection")
-        self.assertEqual(res.mode, "bind_centers")
-        self.assertAlmostEqual(res.distance, 0.11, delta=1E-12)
-        self.assertEqual(res.bond_centers, self.H)
 
 
 if __name__ == "__main__":

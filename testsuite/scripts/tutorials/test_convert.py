@@ -16,10 +16,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest as ut
-import os
 import sys
 import nbformat
 import traceback
+import pathlib
 
 sys.path.insert(0, '@CMAKE_BINARY_DIR@/doc/tutorials')
 import convert
@@ -96,17 +96,16 @@ plt.show()
             traceback.print_exc()
             self.fail(error_msg)
         if output is not None:
-            self.assertTrue(os.path.isfile(output), f"{output} not created")
+            self.assertTrue(output.exists(), f"File {output} not created")
 
     def test_html_wrapper(self):
-        f_input = '@CMAKE_CURRENT_BINARY_DIR@/test_convert_notebook.ipynb'
-        f_output = '@CMAKE_CURRENT_BINARY_DIR@/test_convert_notebook.run.ipynb'
-        f_script = '@CMAKE_CURRENT_BINARY_DIR@/test_convert_script.py'
+        root = pathlib.Path("@CMAKE_CURRENT_BINARY_DIR@")
+        f_input = root / "test_convert_notebook.ipynb"
+        f_output = root / "test_convert_notebook.run.ipynb"
+        f_script = root / "test_convert_script.py"
         # setup
-        if os.path.isfile(f_output):
-            os.remove(f_output)
-        with open(f_script, 'w') as f:
-            f.write('global_var = 5')
+        f_output.unlink(missing_ok=True)
+        f_script.write_text('global_var = 5')
         with open(f_input, 'w', encoding='utf-8') as f:
             nb = nbformat.v4.new_notebook(metadata=self.nb_metadata)
             cell_md = nbformat.v4.new_markdown_cell(source=self.cell_md_src)
@@ -116,9 +115,9 @@ plt.show()
             nbformat.write(nb, f)
         # run command and check for errors
         cmd = ['ci',
-               '--input', f_input,
-               '--output', f_output,
-               '--scripts', f_script,
+               '--input', str(f_input),
+               '--output', str(f_output),
+               '--scripts', str(f_script),
                '--substitutions', 'global_var=20',
                '--execute']
         self.run_command(cmd, f_output)
@@ -155,11 +154,11 @@ plt.show()
         self.assertEqual(nb_output['cells'][4]['source'], 'global_var = 20')
 
     def test_exercise2_plugin(self):
-        f_input = '@CMAKE_CURRENT_BINARY_DIR@/test_convert_exercise2.ipynb'
-        f_output = '@CMAKE_CURRENT_BINARY_DIR@/test_convert_exercise2.run.ipynb'
+        root = pathlib.Path("@CMAKE_CURRENT_BINARY_DIR@")
+        f_input = root / "test_convert_exercise2.ipynb"
+        f_output = root / "test_convert_exercise2.run.ipynb"
         # setup
-        if os.path.isfile(f_output):
-            os.remove(f_output)
+        f_output.unlink(missing_ok=True)
         with open(f_input, 'w', encoding='utf-8') as f:
             nb = nbformat.v4.new_notebook(metadata=self.nb_metadata)
             # question with 2 answers and an empty cell
@@ -191,8 +190,8 @@ plt.show()
             nbformat.write(nb, f)
         # run command and check for errors
         cmd = ['ci',
-               '--input', f_input,
-               '--output', f_output,
+               '--input', str(f_input),
+               '--output', str(f_output),
                '--substitutions', 'global_var=20',
                '--exercise2', '--remove-empty-cells']
         self.run_command(cmd, f_output)
@@ -226,7 +225,8 @@ plt.show()
         self.assertEqual(next(cells, 'EOF'), 'EOF')
 
     def test_exercise2_conversion(self):
-        f_input = '@CMAKE_CURRENT_BINARY_DIR@/test_convert_exercise2_conversion.ipynb'
+        root = pathlib.Path("@CMAKE_CURRENT_BINARY_DIR@")
+        f_input = root / "test_convert_exercise2_conversion.ipynb"
         # setup
         with open(f_input, 'w', encoding='utf-8') as f:
             nb = nbformat.v4.new_notebook(metadata=self.nb_metadata)
@@ -242,7 +242,7 @@ plt.show()
             nb['cells'].append(cell_md)
             nbformat.write(nb, f)
         # run command and check for errors
-        cmd = ['exercise2', '--to-py', f_input]
+        cmd = ['exercise2', '--to-py', str(f_input)]
         self.run_command(cmd, f_input)
         # read processed notebook
         with open(f_input, encoding='utf-8') as f:
@@ -259,7 +259,7 @@ plt.show()
         self.assertEqual(cell['metadata']['key'], 'value')
         self.assertEqual(next(cells, 'EOF'), 'EOF')
         # run command and check for errors
-        cmd = ['exercise2', '--to-md', f_input]
+        cmd = ['exercise2', '--to-md', str(f_input)]
         self.run_command(cmd, f_input)
         # read processed notebook
         with open(f_input, encoding='utf-8') as f:
@@ -278,7 +278,8 @@ plt.show()
 
     @skipIfMissingModules
     def test_exercise2_autopep8(self):
-        f_input = '@CMAKE_CURRENT_BINARY_DIR@/test_convert_exercise2_autopep8.ipynb'
+        root = pathlib.Path("@CMAKE_CURRENT_BINARY_DIR@")
+        f_input = root / "test_convert_exercise2_autopep8.ipynb"
         # setup
         with open(f_input, 'w', encoding='utf-8') as f:
             nb = nbformat.v4.new_notebook(metadata=self.nb_metadata)
@@ -293,7 +294,7 @@ plt.show()
             nb['cells'].append(cell_md)
             nbformat.write(nb, f)
         # run command and check for errors
-        cmd = ['exercise2', '--pep8', f_input]
+        cmd = ['exercise2', '--pep8', str(f_input)]
         self.run_command(cmd)
         # read processed notebook
         with open(f_input, encoding='utf-8') as f:

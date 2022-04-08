@@ -17,7 +17,7 @@
 
 import unittest as ut
 import importlib_wrapper
-import os
+import pathlib
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@SAMPLES_DIR@/ekboundaries.py", gpu=True, n_int_cycles=50)
@@ -28,13 +28,12 @@ class Sample(ut.TestCase):
     system = sample.system
 
     def test_file_generation(self):
-        # test .checkpoint files exist
+        # test .vtk files exist
+        path_vtk_root = pathlib.Path("ek")
         for basename in ["pos_dens_0.vtk", "pos_flux_0.vtk", "ekv_0.vtk",
                          "neg_dens_0.vtk", "neg_flux_0.vtk", "ekb_0.vtk"]:
-            filepath = os.path.join("ek", basename)
-            self.assertTrue(
-                os.path.isfile(filepath),
-                filepath + " not created")
+            filepath = path_vtk_root / basename
+            self.assertTrue(filepath.is_file(), f"File {filepath} not created")
 
 
 if __name__ == "__main__":

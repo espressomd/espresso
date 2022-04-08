@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import os
+import pathlib
 import numpy as np
 
 
@@ -128,8 +128,11 @@ def verify_lj_forces(system, tolerance, ids_to_skip=()):
             err_msg=f"LJ force verification failed on particle {p.id}.")
 
 
-def abspath(path):
-    return os.path.join(os.path.dirname(os.path.abspath(__file__)), path)
+def data_path(filename):
+    """
+    Resolve abosulte path to a resource.
+    """
+    return pathlib.Path(__file__).resolve().parent / "data" / filename
 
 
 def transform_pos_from_cartesian_to_polar_coordinates(pos):

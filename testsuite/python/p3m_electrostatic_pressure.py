@@ -105,10 +105,14 @@ class VirialPressureConsistency(ut.TestCase):
             max_displacement=0.01)
 
         # warmup
-        while self.system.analysis.energy()["total"] > 10 * num_part:
-            print("minimization: {:.1f}".format(
-                self.system.analysis.energy()["total"]))
+        energy = self.system.analysis.energy()["total"]
+        print(f"minimization: {energy:.1f}")
+        for _ in range(10):
             self.system.integrator.run(10)
+            energy = self.system.analysis.energy()["total"]
+            print(f"minimization: {energy:.1f}")
+            if energy < 2 * num_part:
+                break
         self.system.integrator.set_vv()
         self.system.thermostat.set_langevin(kT=self.kT, gamma=1.0, seed=41)
 
@@ -121,8 +125,9 @@ class VirialPressureConsistency(ut.TestCase):
             cao=6,
             r_cut=1.4941e-01 * self.system.box_l[0])
         self.system.actors.add(p3m)
-        print("Tune skin: {}".format(self.system.cell_system.tune_skin(
-            min_skin=0.0, max_skin=2.5, tol=0.05, int_steps=100)))
+        skin = self.system.cell_system.tune_skin(
+            min_skin=0.0, max_skin=2.5, tol=0.05, int_steps=100)
+        print(f"Tuned skin: {skin}")
 
         num_samples = 25
         pressure_via_volume_scaling = pressureViaVolumeScaling(
