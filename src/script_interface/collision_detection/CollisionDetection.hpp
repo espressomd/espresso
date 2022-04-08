@@ -78,7 +78,6 @@ public:
             assert(not mode.empty());
             return Variant{mode};
           }},
-         {"exception_on_collision", collision_params.exception_on_collision},
 
          {"bond_centers", collision_params.bond_centers},
          {"bond_vs", collision_params.bond_vs},

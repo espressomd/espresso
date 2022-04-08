@@ -64,9 +64,6 @@ public:
   /// particle type for virtual sites created on collision
   int vs_particle_type;
 
-  /** Raise exception on collision */
-  bool exception_on_collision;
-
   /// For mode "glue to surface": The distance from the particle which is to be
   /// glued to the new virtual site
   double dist_glued_part_to_vs;

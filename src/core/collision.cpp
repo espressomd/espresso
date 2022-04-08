@@ -476,15 +476,6 @@ void three_particle_binding_domain_decomposition(
 
 // Handle the collisions stored in the queue
 void handle_collisions() {
-
-  if (collision_params.exception_on_collision) {
-    for (auto &c : local_collision_queue) {
-      runtimeWarningMsg() << "Collision between particles "
-                          << std::min(c.pp1, c.pp2) << " and "
-                          << std::max(c.pp1, c.pp2);
-    }
-  }
-
   // Note that the glue to surface mode adds bonds between the centers
   // but does so later in the process. This is needed to guarantee that
   // a particle can only be glued once, even if queued twice in a single
