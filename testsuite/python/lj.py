@@ -26,7 +26,7 @@ import tests_common
 @utx.skipIfMissingFeatures(["LENNARD_JONES"])
 class LennardJonesTest(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    data = np.loadtxt(tests_common.abspath('data/lj_system.dat'))
+    data = np.loadtxt(tests_common.data_path('lj_system.dat'))
     pos = data[:, 1:4]
     forces = data[:, 4:7]
 

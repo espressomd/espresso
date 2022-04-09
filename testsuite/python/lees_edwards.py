@@ -30,8 +30,9 @@ import itertools
 
 
 np.random.seed(42)
-params_lin = {'shear_velocity': 1.2, 'initial_pos_offset': 0.1, 'time_0': 0.1}
-params_osc = {'amplitude': 2.3, 'omega': 2.51, 'time_0': -2.1}
+params_lin = {'initial_pos_offset': 0.1, 'time_0': 0.1, 'shear_velocity': 1.2}
+params_osc = {'initial_pos_offset': 0.1, 'time_0': -2.1, 'amplitude': 2.3,
+              'omega': 2.51}
 lin_protocol = espressomd.lees_edwards.LinearShear(**params_lin)
 osc_protocol = espressomd.lees_edwards.OscillatoryShear(**params_osc)
 off_protocol = espressomd.lees_edwards.Off()
@@ -113,7 +114,7 @@ class LeesEdwards(ut.TestCase):
         # check that LE offsets are recalculated on simulation time change
         for time in [0., 2.3]:
             system.time = time
-            expected_pos = params_osc['amplitude'] * \
+            expected_pos = params_osc['initial_pos_offset'] + params_osc['amplitude'] * \
                 np.sin(params_osc['omega'] * (time - params_osc['time_0']))
             expected_vel = params_osc['amplitude'] * params_osc['omega'] * \
                 np.cos(params_osc['omega'] * (time - params_osc['time_0']))
@@ -124,7 +125,7 @@ class LeesEdwards(ut.TestCase):
         # Check that time change during integration updates offsets
         system.integrator.run(1)
         time = system.time
-        expected_pos = params_osc['amplitude'] * \
+        expected_pos = params_osc['initial_pos_offset'] + params_osc['amplitude'] * \
             np.sin(params_osc['omega'] * (time - params_osc['time_0']))
         expected_vel = params_osc['amplitude'] * params_osc['omega'] * \
             np.cos(params_osc['omega'] * (time - params_osc['time_0']))

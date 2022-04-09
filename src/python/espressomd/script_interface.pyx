@@ -198,7 +198,7 @@ class array_variant(np.ndarray):
         return obj
 
 
-cdef Variant python_object_to_variant(value) except +:
+cdef Variant python_object_to_variant(value) except *:
     """Convert Python objects to C++ Variant objects."""
 
     cdef vector[Variant] vec

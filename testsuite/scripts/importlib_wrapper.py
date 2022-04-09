@@ -22,13 +22,10 @@ import sys
 import ast
 import tokenize
 import unittest
+import unittest.mock
 import importlib
+import pathlib
 import espressomd
-from unittest.mock import MagicMock
-
-
-def _id(x):
-    return x
 
 
 # global variable: if one import failed, all subsequent imports will be skipped,
@@ -40,7 +37,7 @@ def configure_and_import(filepath,
                          gpu=False,
                          substitutions=lambda x: x,
                          cmd_arguments=None,
-                         script_suffix=None,
+                         script_suffix="",
                          move_to_script_dir=True,
                          mock_visualizers=True,
                          **parameters):
@@ -55,23 +52,23 @@ def configure_and_import(filepath,
 
     Parameters
     ----------
-    filepath : str
+    filepath : :obj:`str`
         python script to import
-    gpu : bool
+    gpu : :obj:`bool`
         whether GPU is necessary or not
-    substitutions : function
+    substitutions : :obj:`function`
         custom text replacement operation (useful to edit out calls to the
         OpenGL or Mayavi visualizers' ``run()`` method)
-    cmd_arguments : list
+    cmd_arguments : :obj:`list`
         command line arguments, i.e. sys.argv without the script path
-    script_suffix : str
+    script_suffix : :obj:`str`
         suffix to append to the configured script (useful when a single
         module is being tested by multiple tests in parallel)
-    mock_visualizers : bool
-        if ``True``, substitute ES visualizers with `Mock()` classes in case
-        of `ImportError()` (use ``False`` if an `ImportError()` is relevant
+    mock_visualizers : :obj:`bool`
+        if ``True``, substitute ES visualizers with ``Mock`` classes in case
+        of ``ImportError`` (use ``False`` if an ``ImportError`` is relevant
         to your test)
-    move_to_script_dir : bool
+    move_to_script_dir : :obj:`bool`
         if ``True``, move to the script's directory (useful when the script
         needs to load files hardcoded as relative paths, or when files are
         generated and need cleanup); this is enabled by default
@@ -79,22 +76,18 @@ def configure_and_import(filepath,
         global variables to replace
 
     """
+    filepath = pathlib.Path(filepath).resolve()
     if skip_future_imports:
-        module = MagicMock()
+        module = unittest.mock.MagicMock()
         skipIfMissingImport = skip_future_imports_dependency(filepath)
         return module, skipIfMissingImport
     if gpu and not espressomd.gpu_available():
         skip_future_imports_dependency(filepath)
         skipIfMissingGPU = unittest.skip("gpu not available, skipping test!")
-        module = MagicMock()
+        module = unittest.mock.MagicMock()
         return module, skipIfMissingGPU
-    filepath = os.path.abspath(filepath)
     # load original script
-    # read in binary mode, then decode as UTF-8 to avoid this python3.5 error:
-    # UnicodeDecodeError: 'ascii' codec can't decode byte 0xc3 in position 915:
-    #                      ordinal not in range(128)
-    with open(filepath, "rb") as f:
-        code = f.read().decode(encoding="utf-8")
+    code = filepath.read_text()
     # custom substitutions
     code = substitutions(code)
     assert code.strip()
@@ -109,31 +102,25 @@ def configure_and_import(filepath,
     if mock_visualizers:
         code = mock_es_visualization(code)
     # save changes to a new file
-    if script_suffix:
-        if script_suffix[0] != "_":
-            script_suffix = "_" + script_suffix
-    else:
-        script_suffix = ""
-    script_suffix += "_processed.py"
-    output_filepath = os.path.splitext(filepath)[0] + script_suffix
-    assert os.path.isfile(output_filepath) is False, \
+    output_filepath = filepath.parent / \
+        f"{filepath.stem}_{script_suffix}_processed.py"
+    assert not output_filepath.exists(), \
         f"File {output_filepath} already processed, cannot overwrite"
-    with open(output_filepath, "wb") as f:
-        f.write(code.encode(encoding="utf-8"))
+    output_filepath.write_bytes(code.encode(encoding="utf-8"))
     # import
-    dirname, basename = os.path.split(output_filepath)
+    dirname = output_filepath.parent
     if move_to_script_dir:
         os.chdir(dirname)
-    sys.path.insert(0, dirname)
-    module_name = os.path.splitext(basename)[0]
+    sys.path.insert(0, str(dirname))
+    module_name = output_filepath.stem
     try:
         module = importlib.import_module(module_name)
     except espressomd.FeaturesError as err:
         skip_future_imports_dependency(filepath)
         skipIfMissingFeatures = unittest.skip(f"{err}, skipping test!")
-        module = MagicMock()
+        module = unittest.mock.MagicMock()
     else:
-        skipIfMissingFeatures = _id
+        def skipIfMissingFeatures(x): return x
     if cmd_arguments is not None:
         # restore original command line arguments
         sys.argv = old_sys_argv
@@ -165,7 +152,7 @@ def set_cmd(code, filepath, cmd_arguments):
     """
     assert isinstance(cmd_arguments, (list, tuple))
     sys_argv = list(map(str, cmd_arguments))
-    sys_argv.insert(0, os.path.basename(filepath))
+    sys_argv.insert(0, filepath.name)
     visitor = GetSysArgparseImports()
     visitor.visit(ast.parse(protect_ipython_magics(code)))
     assert visitor.linenos, "module sys (or argparse) is not imported"
@@ -216,12 +203,12 @@ def substitute_variable_values(code, strings_as_is=False, keep_original=True,
 
     Parameters
     ----------
-    code : str
+    code : :obj:`str`
         Source code to edit.
-    strings_as_is : bool
+    strings_as_is : :obj:`bool`
         If ``True``, consider all values in \*\*parameters are strings and
         substitute them in-place without formatting by ``repr()``.
-    keep_original : bool
+    keep_original : :obj:`bool`
         Keep the original value (e.g. ``N = 10; _N__original = 1000``), helps
         with debugging.
     \*\*parameters :
@@ -245,8 +232,8 @@ def substitute_variable_values(code, strings_as_is=False, keep_original=True,
             if keep_original:
                 lines[lineno - 1] += "; _" + varname + "__original" + old_value
             else:
-                for lineno in range(lineno + 1, mapping[lineno]):
-                    lines[lineno - 1] = ""
+                for lineno in range(lineno, mapping[lineno]):
+                    lines[lineno] = ""
     return "\n".join(lines)
 
 
@@ -582,9 +569,9 @@ class GetEspressomdVisualizerImports(ast.NodeVisitor):
 
 def mock_es_visualization(code):
     """
-    Replace ``import espressomd.visualization_<backend>`` by a ``MagicMock()``
+    Replace ``import espressomd.visualization_<backend>`` by a ``MagicMock``
     when the visualization module is unavailable, by catching the
-    ``ImportError()`` exception. Please note that ``espressomd.visualization``
+    ``ImportError`` exception. Please note that ``espressomd.visualization``
     is deferring the exception, thus requiring additional checks.
 
     Import aliases are supported, however please don't use
@@ -596,9 +583,9 @@ def mock_es_visualization(code):
 try:
     {0}{1}
 except ImportError:
-    from unittest.mock import MagicMock
+    import unittest.mock
     import espressomd
-    {2} = MagicMock()
+    {2} = unittest.mock.MagicMock()
 """.lstrip()
 
     def check_for_deferred_ImportError(line, alias):
@@ -639,7 +626,7 @@ def skip_future_imports_dependency(filepath):
     """
     global skip_future_imports
     if not skip_future_imports:
-        module_name = os.path.splitext(os.path.basename(filepath))[0]
+        module_name = filepath.stem
         assert module_name != ""
         skip_future_imports = module_name
     return unittest.skip(

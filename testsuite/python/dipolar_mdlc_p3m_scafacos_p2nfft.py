@@ -62,14 +62,14 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         particle_radius = 0.5
         box_l = np.cbrt(4 * n_particle * np.pi / (3 * rho)) * particle_radius
         s.box_l = 3 * [box_l]
-        ref_E_path = tests_common.abspath(
-            "data/mdlc_reference_data_energy.dat")
+        ref_E_path = tests_common.data_path(
+            "mdlc_reference_data_energy.dat")
         ref_E = float(np.genfromtxt(ref_E_path)) * DIPOLAR_PREFACTOR
         gap_size = 2.0
 
         # Particles
         data = np.genfromtxt(
-            tests_common.abspath("data/mdlc_reference_data_forces_torques.dat"))
+            tests_common.data_path("mdlc_reference_data_forces_torques.dat"))
         partcls = s.part.add(pos=data[:, 1:4], dip=data[:, 4:7])
         partcls.rotation = 3 * [True]
 
@@ -126,7 +126,7 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
 
         # Particles
         data = np.genfromtxt(
-            tests_common.abspath("data/p3m_magnetostatics_system.data"))
+            tests_common.data_path("p3m_magnetostatics_system.data"))
         partcls = s.part.add(pos=data[:, 1:4], dip=data[:, 4:7])
         partcls.rotation = 3 * [True]
 
@@ -135,7 +135,7 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         s.actors.add(p3m)
         s.integrator.run(0)
         expected = np.genfromtxt(
-            tests_common.abspath("data/p3m_magnetostatics_expected.data"))[:, 1:]
+            tests_common.data_path("p3m_magnetostatics_expected.data"))[:, 1:]
         err_f = self.vector_error(
             partcls.f, expected[:, 0:3] * DIPOLAR_PREFACTOR)
         err_t = self.vector_error(
@@ -166,7 +166,7 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
 
         # Particles
         data = np.genfromtxt(
-            tests_common.abspath("data/p3m_magnetostatics_system.data"))
+            tests_common.data_path("p3m_magnetostatics_system.data"))
         partcls = s.part.add(pos=data[:, 1:4], dip=data[:, 4:7])
         partcls.rotation = 3 * [True]
 
@@ -186,7 +186,7 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         s.actors.add(scafacos)
         s.integrator.run(0)
         expected = np.genfromtxt(
-            tests_common.abspath("data/p3m_magnetostatics_expected.data"))[:, 1:]
+            tests_common.data_path("p3m_magnetostatics_expected.data"))[:, 1:]
         err_f = self.vector_error(
             partcls.f, expected[:, 0:3] * DIPOLAR_PREFACTOR)
         err_t = self.vector_error(

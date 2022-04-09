@@ -19,15 +19,15 @@
 import espressomd
 import espressomd.magnetostatics
 import espressomd.magnetostatic_extensions
-import os
+import pathlib
 import numpy as np
 import unittest as ut
 import unittest_decorators as utx
 import tests_common
-OPEN_BOUNDARIES_REF_ENERGY = tests_common.abspath(
-    "data/dipolar_open_boundaries_energy.npy")
-OPEN_BOUNDARIES_REF_ARRAYS = tests_common.abspath(
-    "data/dipolar_open_boundaries_arrays.npy")
+OPEN_BOUNDARIES_REF_ENERGY = tests_common.data_path(
+    "dipolar_open_boundaries_energy.npy")
+OPEN_BOUNDARIES_REF_ARRAYS = tests_common.data_path(
+    "dipolar_open_boundaries_arrays.npy")
 
 
 @utx.skipIfMissingFeatures(["DIPOLES"])
@@ -114,12 +114,11 @@ class dds(ut.TestCase):
         filepaths = ('dipolar_direct_summation_energy.npy',
                      'dipolar_direct_summation_arrays.npy')
         for filepath in filepaths:
-            if os.path.isfile(filepath):
-                os.remove(filepath)
+            pathlib.Path(filepath).unlink(missing_ok=True)
 
         self.gen_reference_data(filepaths[0], filepaths[1])
         for filepath in filepaths:
-            self.assertTrue(os.path.isfile(filepath))
+            self.assertTrue(pathlib.Path(filepath).is_file())
 
     def gen_reference_data(self, filepath_energy=OPEN_BOUNDARIES_REF_ENERGY,
                            filepath_arrays=OPEN_BOUNDARIES_REF_ARRAYS):

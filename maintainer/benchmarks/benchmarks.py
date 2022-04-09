@@ -16,9 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import os
 import sys
 import time
+import pathlib
 import numpy as np
 
 
@@ -127,12 +127,12 @@ def write_report(filepath, n_proc, timings, n_steps, label=''):
         Label to distinguish e.g. MD from MC or LB steps.
 
     '''
-    script = os.path.basename(sys.argv[0])
+    script = pathlib.Path(sys.argv[0]).name
     cmd = " ".join(x for x in sys.argv[1:] if not x.startswith("--output"))
     avg, ci = get_average_time(timings)
     header = '"script","arguments","cores","mean","ci","nsteps","duration","label"\n'
     report = f'"{script}","{cmd}",{n_proc},{avg:.3e},{ci:.3e},{n_steps},{np.sum(timings):.1f},"{label}"\n'
-    if os.path.isfile(filepath):
+    if pathlib.Path(filepath).is_file():
         header = ''
     with open(filepath, "a") as f:
         f.write(header + report)

@@ -17,7 +17,7 @@
 
 import unittest as ut
 import importlib_wrapper
-import os
+import pathlib
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@SAMPLES_DIR@/save_checkpoint.py")
@@ -29,8 +29,8 @@ class Sample(ut.TestCase):
 
     def test_file_generation(self):
         # test .checkpoint files exist
-        filepath = os.path.join("mycheckpoint", "0.checkpoint")
-        self.assertTrue(os.path.isfile(filepath), filepath + " not created")
+        filepath = pathlib.Path("mycheckpoint") / "0.checkpoint"
+        self.assertTrue(filepath.exists(), f"File {filepath} not created")
 
 
 if __name__ == "__main__":

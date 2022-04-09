@@ -37,8 +37,9 @@ class OifVolumeConservation(ut.TestCase):
 
         # creating the template for OIF object
         cell_type = oif.OifCellType(
-            nodes_file=tests_common.abspath("data/sphere393nodes.dat"),
-            triangles_file=tests_common.abspath("data/sphere393triangles.dat"),
+            nodes_file=str(tests_common.data_path("sphere393nodes.dat")),
+            triangles_file=str(
+                tests_common.data_path("sphere393triangles.dat")),
             system=system, ks=1.0, kb=1.0, kal=1.0, kag=0.1, kv=0.1,
             check_orientation=False, resize=(3.0, 3.0, 3.0))
 

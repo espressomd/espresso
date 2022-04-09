@@ -83,7 +83,7 @@ private:
  * specified by the particle triples (p1,p2,p3) and (p2,p3,p4).
  * Vectors a, b and c are the bond vectors between consecutive particles.
  * If the a,b or b,c are parallel the dihedral angle is not defined in which
- * case the routine returns phi=-1. Calling functions should check for that
+ * case the function returns true. Calling functions should check for that.
  *
  * @param[in]  r1 , r2 , r3 , r4 Positions of the particles forming the dihedral
  * @param[out] a Vector from @p p1 to @p p2
@@ -94,14 +94,15 @@ private:
  * @param[out] bXc Vector product of b and c
  * @param[out] l_bXc |bXc|
  * @param[out] cosphi Cosine of the dihedral angle
- * @param[out] phi Dihedral angle
+ * @param[out] phi Dihedral angle in the range [0, pi]
+ * @return Whether the angle is undefined.
  */
-inline void
+inline bool
 calc_dihedral_angle(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
                     Utils::Vector3d const &r3, Utils::Vector3d const &r4,
                     Utils::Vector3d &a, Utils::Vector3d &b, Utils::Vector3d &c,
-                    Utils::Vector3d &aXb, double *l_aXb, Utils::Vector3d &bXc,
-                    double *l_bXc, double *cosphi, double *phi) {
+                    Utils::Vector3d &aXb, double &l_aXb, Utils::Vector3d &bXc,
+                    double &l_bXc, double &cosphi, double &phi) {
   a = box_geo.get_mi_vector(r2, r1);
   b = box_geo.get_mi_vector(r3, r2);
   c = box_geo.get_mi_vector(r4, r3);
@@ -111,31 +112,34 @@ calc_dihedral_angle(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
   bXc = vector_product(b, c);
 
   /* calculate the unit vectors */
-  *l_aXb = aXb.norm();
-  *l_bXc = bXc.norm();
+  l_aXb = aXb.norm();
+  l_bXc = bXc.norm();
 
   /* catch case of undefined dihedral angle */
-  if (*l_aXb <= TINY_LENGTH_VALUE || *l_bXc <= TINY_LENGTH_VALUE) {
-    *phi = -1.0;
-    *cosphi = 0;
-    return;
+  if (l_aXb <= TINY_LENGTH_VALUE || l_bXc <= TINY_LENGTH_VALUE) {
+    phi = -1.0;
+    cosphi = 0.0;
+    return true;
   }
 
-  aXb /= *l_aXb;
-  bXc /= *l_bXc;
+  aXb /= l_aXb;
+  bXc /= l_bXc;
 
-  *cosphi = aXb * bXc;
+  cosphi = aXb * bXc;
 
-  if (fabs(fabs(*cosphi) - 1) < TINY_SIN_VALUE)
-    *cosphi = std::round(*cosphi);
+  if (fabs(fabs(cosphi) - 1) < TINY_SIN_VALUE)
+    cosphi = std::round(cosphi);
 
   /* Calculate dihedral angle */
-  *phi = acos(*cosphi);
+  phi = acos(cosphi);
   if ((aXb * c) < 0.0)
-    *phi = (2.0 * Utils::pi()) - *phi;
+    phi = (2.0 * Utils::pi()) - phi;
+  return false;
 }
 
 /** Compute the four-body dihedral interaction force.
+ *  The forces have a singularity at @f$ \phi = 0 @f$ and @f$ \phi = \pi @f$
+ *  (see @cite swope92a page 592).
  *
  *  @param[in]  r1        Position of the first particle.
  *  @param[in]  r2        Position of the second particle.
@@ -152,20 +156,19 @@ DihedralBond::forces(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
   Utils::Vector3d v12, v23, v34, v12Xv23, v23Xv34;
   double l_v12Xv23, l_v23Xv34;
   /* dihedral angle, cosine of the dihedral angle */
-  double phi, cosphi, sinmphi_sinphi;
-  /* force factors */
-  double fac;
+  double phi, cos_phi, sin_mphi_over_sin_phi;
 
   /* dihedral angle */
-  calc_dihedral_angle(r1, r2, r3, r4, v12, v23, v34, v12Xv23, &l_v12Xv23,
-                      v23Xv34, &l_v23Xv34, &cosphi, &phi);
+  auto const angle_is_undefined =
+      calc_dihedral_angle(r1, r2, r3, r4, v12, v23, v34, v12Xv23, l_v12Xv23,
+                          v23Xv34, l_v23Xv34, cos_phi, phi);
   /* dihedral angle not defined - force zero */
-  if (phi == -1.0) {
+  if (angle_is_undefined) {
     return {};
   }
 
-  auto const f1 = (v23Xv34 - cosphi * v12Xv23) / l_v12Xv23;
-  auto const f4 = (v12Xv23 - cosphi * v23Xv34) / l_v23Xv34;
+  auto const f1 = (v23Xv34 - cos_phi * v12Xv23) / l_v12Xv23;
+  auto const f4 = (v12Xv23 - cos_phi * v23Xv34) / l_v23Xv34;
 
   auto const v23Xf1 = vector_product(v23, f1);
   auto const v23Xf4 = vector_product(v23, f4);
@@ -173,19 +176,17 @@ DihedralBond::forces(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
   auto const v12Xf1 = vector_product(v12, f1);
 
   /* calculate force magnitude */
-  fac = -bend * mult;
+  auto fac = -bend * mult;
 
   if (fabs(sin(phi)) < TINY_SIN_VALUE) {
-    /*(comes from taking the first term of the MacLaurin expansion of
-      sin(n*phi - phi0) and sin(phi) and then making the division).
-      The original code had a 2PI term in the cosine (cos(2PI - nPhi))
-      but I removed it because it wasn't doing anything. AnaVV*/
-    sinmphi_sinphi = mult * cos(mult * phi - phase) / cosphi;
+    /* comes from taking the first term of the MacLaurin expansion of
+     * sin(n * phi - phi0) and sin(phi) and then making the division */
+    sin_mphi_over_sin_phi = mult * cos(mult * phi - phase) / cos_phi;
   } else {
-    sinmphi_sinphi = sin(mult * phi - phase) / sin(phi);
+    sin_mphi_over_sin_phi = sin(mult * phi - phase) / sin(phi);
   }
 
-  fac *= sinmphi_sinphi;
+  fac *= sin_mphi_over_sin_phi;
 
   /* store dihedral forces */
   auto const force1 = fac * v23Xf1;
@@ -196,6 +197,7 @@ DihedralBond::forces(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
 }
 
 /** Compute the four-body dihedral interaction energy.
+ *  The energy doesn't have any singularity if the angle phi is well-defined.
  *
  *  @param[in]  r1        Position of the first particle.
  *  @param[in]  r2        Position of the second particle.
@@ -210,12 +212,13 @@ DihedralBond::energy(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
   Utils::Vector3d v12, v23, v34, v12Xv23, v23Xv34;
   double l_v12Xv23, l_v23Xv34;
   /* dihedral angle, cosine of the dihedral angle */
-  double phi, cosphi;
+  double phi, cos_phi;
 
-  calc_dihedral_angle(r1, r2, r3, r4, v12, v23, v34, v12Xv23, &l_v12Xv23,
-                      v23Xv34, &l_v23Xv34, &cosphi, &phi);
-  /* dihedral angle not defined - force zero */
-  if (phi == -1.0) {
+  auto const angle_is_undefined =
+      calc_dihedral_angle(r1, r2, r3, r4, v12, v23, v34, v12Xv23, l_v12Xv23,
+                          v23Xv34, l_v23Xv34, cos_phi, phi);
+  /* dihedral angle not defined - energy zero */
+  if (angle_is_undefined) {
     return {};
   }
 

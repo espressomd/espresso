@@ -39,7 +39,7 @@ class CoulombCloudWallTune(ut.TestCase):
         self.system.time_step = 0.01
         self.system.cell_system.skin = 0.4
 
-        data = np.load(tests_common.abspath("data/coulomb_tuning_system.npz"))
+        data = np.load(tests_common.data_path("coulomb_tuning_system.npz"))
         self.forces = data['forces']
         self.system.part.add(pos=data['pos'], q=data['charges'])
 

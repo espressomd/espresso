@@ -133,6 +133,16 @@ class AnalyzeChain(ut.TestCase):
         self.system.box_l = self.system.box_l / 2.
         all_partcls.pos = old_pos
 
+    def test_exceptions(self):
+        err_msg = """particle with id 10 does not exist
+cannot perform analysis on the range chain_start=0, number_of_chains=2, chain_length=10
+please provide a contiguous range of particle ids"""
+        analysis = self.system.analysis
+        for method in (analysis.calc_re, analysis.calc_rg, analysis.calc_rh):
+            with self.assertRaisesRegex(ValueError, err_msg):
+                method(chain_start=0, number_of_chains=self.num_poly,
+                       chain_length=2 * self.num_mono)
+
 
 if __name__ == "__main__":
     ut.main()

@@ -22,9 +22,23 @@ from .script_interface import ScriptInterfaceHelper, script_interface_register
 @script_interface_register
 class LeesEdwards(ScriptInterfaceHelper):
 
-    """Interface to the Lees-Edwards boundary conditions.
+    """
+    Interface to the :ref:`Lees-Edwards boundary conditions`.
 
-       See documentation.
+    Attributes
+    ----------
+    protocol : :obj:`object`
+        Lees--Edwards protocol.
+    shear_velocity: :obj:`float`
+        Current shear velocity.
+    pos_offset : :obj:`float`
+        Current position offset
+    shear_direction : :obj:`int`
+        Shear direction: 0 for the *x*-axis, 1 for the *y*-axis,
+        2 for the *z*-axis.
+    shear_plane_normal : :obj:`int`
+        Shear plane normal: 0 for the *x*-axis, 1 for the *y*-axis,
+        2 for the *z*-axis.
 
     """
 
@@ -34,25 +48,21 @@ class LeesEdwards(ScriptInterfaceHelper):
 @script_interface_register
 class Off(ScriptInterfaceHelper):
 
-    """Lees-Edwards protocol resulting in un-shifted boundaries."""
+    """Lees--Edwards protocol resulting in un-shifted boundaries."""
     _so_name = "LeesEdwards::Off"
 
 
 @script_interface_register
 class LinearShear(ScriptInterfaceHelper):
 
-    """Lees-Edwards protocol for linear shear.
+    """Lees--Edwards protocol for linear shear.
 
     Parameters
     ----------
-    shear_direction
-       Cartesian coordinate of the shear direction (0=x, 1=y, 2=z)
-    shear_plane_normal
-       Cartesian coordinate of the shear plane normal
-    initial_pos_offset
-       Positional offset at the Lees-Edwards boundary at t=0
-    shear_velocity
-       Shear velocity (velocity jump) across the Lees-Edwards boundary
+    initial_pos_offset : :obj:`float`
+       Positional offset at the Lees--Edwards boundary at t=0.
+    shear_velocity : :obj:`float`
+       Shear velocity (velocity jump) across the Lees--Edwards boundary.
 
     """
     _so_name = "LeesEdwards::LinearShear"
@@ -61,21 +71,18 @@ class LinearShear(ScriptInterfaceHelper):
 @script_interface_register
 class OscillatoryShear(ScriptInterfaceHelper):
 
-    """Lees-Edwards protocol for oscillatory shear.
+    """Lees--Edwards protocol for oscillatory shear.
 
     Parameters
     ----------
-    shear_direction
-       Cartesian coordinate of the shear direction (0=x, 1=y, 2=z)
-    shear_plane_normal
-       Cartesian coordinate of the shear plane normal
-    amplitude
-       Maximum amplitude of the positional offset at the Lees-Edwards boundary
-    frequency
-       Frequency of the shear
-    time_0
-       Time offset of the oscillation
-
+    initial_pos_offset : :obj:`float`
+       Positional offset at the Lees--Edwards boundary at t=0.
+    amplitude : :obj:`float`
+       Maximum amplitude of the positional offset at the Lees--Edwards boundary.
+    omega : :obj:`float`
+       Radian frequency of the oscillation.
+    time_0 : :obj:`float`
+       Time offset of the oscillation.
 
     """
     _so_name = "LeesEdwards::OscillatoryShear"

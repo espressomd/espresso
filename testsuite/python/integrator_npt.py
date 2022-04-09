@@ -154,10 +154,8 @@ class IntegratorNPT(ut.TestCase):
             self.run_with_p3m(
                 dp3m, cubic_box=False, direction=(False, True, True))
         self.tearDown()
-        try:
-            self.run_with_p3m(dp3m)
-        except Exception as err:
-            self.fail(f'integrator raised ValueError("{err}")')
+        # should not raise an exception
+        self.run_with_p3m(dp3m)
 
     @utx.skipIfMissingFeatures(["P3M"])
     def test_p3m_exception(self):
@@ -170,10 +168,8 @@ class IntegratorNPT(ut.TestCase):
             self.run_with_p3m(
                 p3m, cubic_box=False, direction=(False, True, True))
         self.tearDown()
-        try:
-            self.run_with_p3m(p3m)
-        except Exception as err:
-            self.fail(f'integrator raised ValueError("{err}")')
+        # should not raise an exception
+        self.run_with_p3m(p3m)
 
     @utx.skipIfMissingGPU()
     @utx.skipIfMissingFeatures(["P3M"])
