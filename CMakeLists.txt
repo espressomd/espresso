@@ -374,6 +374,7 @@ else()
     set(MPIEXEC_TMPDIR "" PARENT_SCOPE)
   endfunction()
 endif()
+set(MPIEXEC_PREFLAGS "-bind-to;none")
 
 #
 # Boost
