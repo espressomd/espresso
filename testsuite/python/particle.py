@@ -21,6 +21,7 @@ import unittest_decorators as utx
 import espressomd
 import espressomd.interactions
 import numpy as np
+import collections
 
 
 class ParticleProperties(ut.TestCase):
@@ -210,6 +211,24 @@ class ParticleProperties(ut.TestCase):
         with self.assertRaisesRegex(ValueError, "quaternion is zero"):
             p1.vs_quat = [0, 0, 0, 0]
 
+    @utx.skipIfMissingFeatures(["EXCLUSIONS"])
+    def test_invalid_exclusions(self):
+        pid1 = self.pid
+        pid2 = self.pid + 1
+
+        p1 = self.partcl
+        with self.assertRaisesRegex(RuntimeError, rf"Particles cannot exclude themselves \(id {self.pid}\)"):
+            p1.add_exclusion(pid1)
+        with self.assertRaisesRegex(RuntimeError, f"Particle with id {pid2} not found"):
+            p1.add_exclusion(pid2)
+
+        self.system.part.add(id=pid2, pos=(0, 0, 0))
+        with self.assertRaisesRegex(RuntimeError, f"Particle with id {pid2} is not in exclusion list of particle with id {pid1}"):
+            p1.delete_exclusion(pid2)
+        with self.assertRaisesRegex(RuntimeError, f"Particle with id {pid2} is already in exclusion list of particle with id {pid1}"):
+            p1.add_exclusion(pid2)
+            p1.add_exclusion(pid2)
+
     @utx.skipIfMissingFeatures("DIPOLES")
     def test_contradicting_properties_dip_dipm(self):
         with self.assertRaises(ValueError):
@@ -274,6 +293,42 @@ class ParticleProperties(ut.TestCase):
 
         np.testing.assert_equal(np.copy(p.image_box), [1, 1, 1])
 
+    def test_particle_numbering(self):
+        """
+        Instantiate particles on different nodes and check they are
+        numbered sequentially.
+        """
+        system = self.system
+        offset = system.box_l / 100.
+        # clear the cached value for largest particle id
+        system.part.clear()
+        # update the cached value to 20
+        p_id_start = self.pid + 3
+        system.part.add(pos=offset, id=p_id_start)
+        # check the cached value is updated regardless of the MPI node
+        # where particles are inserted
+        for i in range(3):
+            pos = [0., 0., 0.]
+            pos[i] = -offset[i]  # guaranteed to hit different MPI domains
+            p = self.system.part.add(pos=pos)
+            self.assertEqual(p.id, p_id_start + i + 1)
+        # removing the particle with highest id should update the cached value
+        p.remove()
+        self.assertEqual(system.part.highest_particle_id, p_id_start + 2)
+
+        # update the cached value to 32
+        p_id_start += 10
+        p0 = system.part.add(pos=offset, id=p_id_start + 0)
+        p1 = system.part.add(pos=offset, id=p_id_start + 1)
+        p2 = system.part.add(pos=offset, id=p_id_start + 2)
+        # invalidate the cache by introducing a gap at 31 and then removing 32
+        p1.remove()
+        p2.remove()
+        # the cache should now be 30
+        self.assertEqual(system.part.highest_particle_id, p0.id)
+        p3 = system.part.add(pos=offset)
+        self.assertEqual(p3.id, p0.id + 1)
+
     def test_invalid_particle_ids_exceptions(self):
         self.system.part.clear()
         handle_to_non_existing_particle = self.system.part.by_id(42)
@@ -284,11 +339,24 @@ class ParticleProperties(ut.TestCase):
             p._id = 42
             p.node
         for i in range(1, 10):
+            p._id = -i
             with self.assertRaisesRegex(ValueError, f"Invalid particle id: {-i}"):
-                p._id = -i
                 p.node
             with self.assertRaisesRegex(ValueError, f"Invalid particle id: {-i}"):
+                p.remove()
+            with self.assertRaisesRegex(ValueError, f"Invalid particle id: {-i}"):
                 self.system.part.add(pos=[0., 0., 0.], id=-i)
+
+    def test_invalid_particle_creation(self):
+        err_msg = r"add\(\) takes either a dictionary or a bunch of keyword args"
+        with self.assertRaisesRegex(ValueError, err_msg):
+            self.system.part.add(1)
+        with self.assertRaisesRegex(ValueError, err_msg):
+            self.system.part.add(1, 2)
+        with self.assertRaisesRegex(ValueError, err_msg):
+            self.system.part.add(1, id=2)
+        with self.assertRaisesRegex(ValueError, err_msg):
+            self.system.part.add([1, 2])
 
     def test_parallel_property_setters(self):
         s = self.system
@@ -446,13 +514,17 @@ class ParticleProperties(ut.TestCase):
         pp = str(p)
         pdict = p.to_dict()
         p.remove()
-        self.system.part.add(pdict)
+        p = self.system.part.add(pdict)
         self.assertEqual(str(self.system.part.select()), pp)
+        p.remove()
+        p = self.system.part.add(collections.OrderedDict(pdict))
+        self.assertEqual(str(self.system.part.select()), pp)
+        p.remove()
 
     def test_update(self):
         self.system.part.clear()
         p = self.system.part.add(pos=0.5 * self.system.box_l)
-        # cannot change id
+        # cannot change id (to avoid corrupting caches in the core)
         with self.assertRaisesRegex(Exception, "Cannot change particle id."):
             p.update({'id': 1})
         # check value change

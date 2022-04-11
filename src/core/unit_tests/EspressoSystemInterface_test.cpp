@@ -27,6 +27,7 @@
 #include "communication.hpp"
 #include "config.hpp"
 #include "particle_data.hpp"
+#include "particle_node.hpp"
 #include "virtual_sites.hpp"
 #include "virtual_sites/VirtualSitesOff.hpp"
 

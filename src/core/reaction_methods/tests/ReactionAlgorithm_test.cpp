@@ -31,6 +31,7 @@
 #include "Particle.hpp"
 #include "communication.hpp"
 #include "particle_data.hpp"
+#include "particle_node.hpp"
 
 #include <boost/mpi.hpp>
 

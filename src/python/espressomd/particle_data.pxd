@@ -26,8 +26,7 @@ include "myconfig.pxi"
 from .utils cimport Span
 
 
-# Import particle data structures and setter functions from particle_data.hpp
-cdef extern from "particle_data.hpp":
+cdef extern from "Particle.hpp":
     cppclass BondView:
         int bond_id()
         Span[const int] partner_ids()
@@ -71,10 +70,9 @@ cdef extern from "particle_data.hpp":
         bool has_exclusion(int pid) except +
         particle_parameters_swimming swimming()
 
+cdef extern from "particle_data.hpp":
     # Setter/getter/modifier functions functions
     void prefetch_particle_data(vector[int] ids)
-
-    int place_particle(int part, const Vector3d & p) except +
 
     void set_particle_v(int part, const Vector3d & v)
 
@@ -151,22 +149,26 @@ cdef extern from "particle_data.hpp":
     const vector[BondView] & get_particle_bonds(int part)
 
     IF EXCLUSIONS:
-        int change_exclusion(int part, int part2, int _delete)
+        void remove_particle_exclusion(int part1, int part2) except +
+        void add_particle_exclusion(int part1, int part2) except +
 
     IF ENGINE:
         void set_particle_swimming(int part, particle_parameters_swimming swim)
 
-    int remove_particle(int part) except +
+    void remove_all_bonds_to(int part)
+
+cdef extern from "particle_node.hpp":
+    void place_particle(int p_id, const Vector3d & pos) except +
+
+    void remove_particle(int p_id) except +
 
     void remove_all_particles() except +
 
-    void remove_all_bonds_to(int part)
+    bool particle_exists(int p_id)
 
-    bool particle_exists(int part)
+    int get_particle_node(int p_id) except +
 
-    int get_particle_node(int pid) except +
-
-    const particle & get_particle_data(int pid) except +
+    const particle & get_particle_data(int p_id) except +
 
     vector[int] get_particle_ids() except +
 

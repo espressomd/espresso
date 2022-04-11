@@ -32,7 +32,7 @@
 #include "event.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
-#include "particle_data.hpp"
+#include "particle_node.hpp"
 
 #include "ParticleDecomposition.hpp"
 #include "RegularDecomposition.hpp"

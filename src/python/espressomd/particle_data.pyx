@@ -170,8 +170,7 @@ cdef class ParticleHandle:
                 raise ValueError("invalid particle position")
             check_type_or_throw_except(
                 _pos, 3, float, "Position must be 3 floats")
-            if place_particle(self._id, make_Vector3d(_pos)) == -1:
-                raise Exception("particle could not be set")
+            place_particle(self._id, make_Vector3d(_pos))
 
         def __get__(self):
             self.update_particle_data()
@@ -990,24 +989,26 @@ cdef class ParticleHandle:
     IF EXCLUSIONS:
         property exclusions:
             """
-            The exclusion list of particles where nonbonded interactions are ignored.
+            The exclusion list of particles where non-bonded interactions are ignored.
 
             .. note::
                 This needs the feature ``EXCLUSIONS``.
 
+            exclusions : (N,) array_like of :obj:`int`
+
             """
 
-            def __set__(self, _partners):
+            def __set__(self, partners):
                 # Delete all
                 for e in self.exclusions:
                     self.delete_exclusion(e)
 
-                nlvl = nesting_level(_partners)
+                nlvl = nesting_level(partners)
 
                 if nlvl == 0:  # Single item
-                    self.add_exclusion(_partners)
+                    self.add_exclusion(partners)
                 elif nlvl == 1:  # List of items
-                    for partner in _partners:
+                    for partner in partners:
                         self.add_exclusion(partner)
                 else:
                     raise ValueError(
@@ -1017,38 +1018,55 @@ cdef class ParticleHandle:
                 self.update_particle_data()
                 return array_locked(self.particle_data.exclusions_as_vector())
 
-        def add_exclusion(self, _partner):
+        def add_exclusion(self, partner):
             """
-            Excluding interaction with the given partner.
+            Exclude non-bonded interactions with the given partner.
+
+            .. note::
+                This needs the feature ``EXCLUSIONS``.
 
             Parameters
             -----------
-            _partner : :obj:`int`
-                partner
+            partner : :class:`~espressomd.particle_data.ParticleHandle` or :obj:`int`
+                Particle to exclude.
 
             """
+            if isinstance(partner, ParticleHandle):
+                p_id = partner.id
+            else:
+                p_id = partner
             check_type_or_throw_except(
-                _partner, 1, int, "PID of partner has to be an int.")
+                p_id, 1, int, "Argument 'partner' has to be a ParticleHandle or int.")
             self.update_particle_data()
-            if self.particle_data.has_exclusion(_partner):
-                raise Exception(
-                    f"Exclusion id {_partner} already in exclusion list of particle {self._id}")
-            if self._id == _partner:
-                raise Exception(
-                    "Cannot exclude of a particle with itself!\n"
-                    f"->particle id {self._id}, partner {_partner}.")
-            if change_exclusion(self._id, _partner, 0) == 1:
-                raise Exception(f"Particle with id {_partner} does not exist.")
+            if self.particle_data.has_exclusion(p_id):
+                raise RuntimeError(
+                    f"Particle with id {p_id} is already in exclusion list of particle with id {self._id}")
+            add_particle_exclusion(self._id, p_id)
 
-        def delete_exclusion(self, _partner):
+        def delete_exclusion(self, partner):
+            """
+            Remove exclusion of non-bonded interactions with the given partner.
+
+            .. note::
+                This needs the feature ``EXCLUSIONS``.
+
+            Parameters
+            -----------
+            partner : :class:`~espressomd.particle_data.ParticleHandle` or :obj:`int`
+                Particle to remove from exclusions.
+
+            """
+            if isinstance(partner, ParticleHandle):
+                p_id = partner.id
+            else:
+                p_id = partner
             check_type_or_throw_except(
-                _partner, 1, int, "PID of partner has to be an int.")
+                p_id, 1, int, "Argument 'partner' has to be a ParticleHandle or int.")
             self.update_particle_data()
-            if not self.particle_data.has_exclusion(_partner):
-                raise Exception(
-                    f"Particle with id {_partner} is not in exclusion list.")
-            if change_exclusion(self._id, _partner, 1) == 1:
-                raise Exception(f"Particle with id {_partner} does not exist.")
+            if not self.particle_data.has_exclusion(p_id):
+                raise RuntimeError(
+                    f"Particle with id {p_id} is not in exclusion list of particle with id {self._id}")
+            remove_particle_exclusion(self._id, p_id)
 
     IF ENGINE:
         property swimming:
@@ -1188,8 +1206,7 @@ cdef class ParticleHandle:
         espressomd.particle_data.ParticleList.clear
 
         """
-        if remove_particle(self._id):
-            raise Exception("Could not remove particle.")
+        remove_particle(self._id)
         del self
 
     def add_verified_bond(self, bond):
@@ -1750,9 +1767,9 @@ cdef class ParticleList:
         """
 
         # Did we get a dictionary
-        if len(args) == 1:
-            if hasattr(args[0], "__getitem__"):
-                particles_dict = args[0]
+        if len(args) == 1 and isinstance(
+                args[0], (dict, collections.OrderedDict)):
+            particles_dict = args[0]
         else:
             if len(args) == 0 and len(kwargs) != 0:
                 particles_dict = kwargs
@@ -1795,9 +1812,7 @@ Set quat and scalar dipole moment (dipm) instead.")
         # done here.
         check_type_or_throw_except(
             p_dict["pos"], 3, float, "Position must be 3 floats.")
-        error_code = place_particle(p_dict["id"], make_Vector3d(p_dict["pos"]))
-        if error_code == -1:
-            raise Exception("particle could not be set.")
+        place_particle(p_dict["id"], make_Vector3d(p_dict["pos"]))
 
         # position is taken care of
         del p_dict["pos"]
@@ -1811,7 +1826,7 @@ Set quat and scalar dipole moment (dipm) instead.")
     def _place_new_particles(self, p_list_dict):
         # Check if all entries have the same length
         n_parts = len(p_list_dict["pos"])
-        if not all(np.shape(v) and len(v) ==
+        if not all(np.array(v, dtype=object).shape and len(v) ==
                    n_parts for v in p_list_dict.values()):
             raise ValueError(
                 "When adding several particles at once, all lists of attributes have to have the same size")
