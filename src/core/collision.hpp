@@ -64,9 +64,6 @@ public:
   /// particle type for virtual sites created on collision
   int vs_particle_type;
 
-  /** Raise exception on collision */
-  bool exception_on_collision;
-
   /// For mode "glue to surface": The distance from the particle which is to be
   /// glued to the new virtual site
   double dist_glued_part_to_vs;
@@ -90,6 +87,9 @@ public:
    *  0.5=in the middle between
    */
   double vs_placement;
+
+  /** @brief Validates parameters and creates particle types if needed. */
+  void initialize();
 };
 
 /// Parameters for collision detection
@@ -101,10 +101,6 @@ void prepare_local_collision_queue();
 
 /// Handle the collisions recorded in the queue
 void handle_collisions();
-
-/** @brief Validates collision parameters and creates particle types if needed
- */
-bool validate_collision_parameters();
 
 /** @brief Add the collision between the given particle ids to the collision
  *  queue

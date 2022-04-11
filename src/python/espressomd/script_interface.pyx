@@ -185,7 +185,7 @@ cdef class PScriptInterface:
 
         return odict
 
-cdef Variant python_object_to_variant(value) except +:
+cdef Variant python_object_to_variant(value) except *:
     """Convert Python objects to C++ Variant objects."""
 
     cdef vector[Variant] vec
