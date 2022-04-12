@@ -113,9 +113,14 @@ private:
     void operator()(ThermalizedCollisionModel &cm, IBlock *b) { cm(b); }
 
     void operator()(LeesEdwardsCollisionModel &cm, IBlock *b) {
-      // cm.shear_velocity_ = m_lees_edwards_sweep->get_shear_velocity();
+      cm.v_s_ = m_lees_edwards_callbacks->get_shear_velocity();
       cm(b);
     }
+    void register_lees_edwards_callbacks(std::shared_ptr<LeesEdwardsPack> lees_edwards_callbacks) {
+      m_lees_edwards_callbacks = std::move(lees_edwards_callbacks);}
+
+  private:
+    std::shared_ptr<LeesEdwardsPack> m_lees_edwards_callbacks;
 
   } run_collide_sweep;
 
@@ -262,7 +267,7 @@ protected:
   std::shared_ptr<StreamSweep> m_stream;
 
   // Lees Edwards boundary interpolation
-  std::unique_ptr<LeesEdwardsPack> m_lees_edwards_callbacks;
+  std::shared_ptr<LeesEdwardsPack> m_lees_edwards_callbacks;
   std::shared_ptr<InterpolateAndShiftAtBoundary<PdfField, FloatType>>
       m_lees_edwards_pdf_interpol_sweep;
   std::shared_ptr<InterpolateAndShiftAtBoundary<VectorField, FloatType>>
@@ -512,6 +517,7 @@ public:
     if (m_kT != 0.) {
       throw std::runtime_error(
           "Lees-Edwards LB doesn't support thermalization");
+
     }
 
     auto const shear_direction = lees_edwards_pack->shear_direction;
@@ -524,6 +530,7 @@ public:
         shear_vel);
     m_collision_model = std::make_shared<CollisionModel>(std::move(obj));
     m_lees_edwards_callbacks = std::move(lees_edwards_pack);
+    run_collide_sweep.register_lees_edwards_callbacks(m_lees_edwards_callbacks);
     m_lees_edwards_pdf_interpol_sweep =
         std::make_shared<InterpolateAndShiftAtBoundary<PdfField, FloatType>>(
             lattice().get_blocks(), m_pdf_field_id, m_pdf_tmp_field_id,
