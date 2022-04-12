@@ -177,18 +177,18 @@ public:
   void recalc_prefactors(double kT) {
     /** The heat velocity dispersion corresponds to the Gaussian noise only,
      *  which is only valid for the BD. Just a square root of kT, see (10.2.17)
-     *  and comments in 2 paragraphs afterwards, @cite Pottier2010.
+     *  and comments in 2 paragraphs afterwards, @cite pottier10a.
      */
     sigma_vel = sigma(kT);
     /** The random walk position dispersion is defined by the second eq. (14.38)
-     *  of @cite Schlick2010. Its time interval factor will be added in the
+     *  of @cite schlick10a. Its time interval factor will be added in the
      *  Brownian Dynamics functions. Its square root is the standard deviation.
      */
     sigma_pos = sigma(kT, gamma);
 #ifdef ROTATION
     /** Note: the BD thermostat assigns the brownian viscous parameters as well.
      *  They correspond to the friction tensor Z from the eq. (14.31) of
-     *  @cite Schlick2010.
+     *  @cite schlick10a.
      */
     // If gamma_rotation is not set explicitly, use the translational one.
     if (gamma_rotation < GammaType{}) {

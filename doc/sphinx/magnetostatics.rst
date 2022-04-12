@@ -56,7 +56,7 @@ This is the dipolar version of the P3M algorithm, described in :cite:`cerda08d`.
 
 Make sure that you know the relevance of the P3M parameters before using
 P3M! If you are not sure, read the following references:
-:cite:`ewald21a,hockney88,kolafa92a,deserno98a,deserno98b,deserno00e,deserno00b,cerda08d`.
+:cite:`ewald21a,hockney88a,kolafa92a,deserno98a,deserno98b,deserno00e,deserno00b,cerda08d`.
 
 Note that dipolar P3M does not work with non-cubic boxes.
 

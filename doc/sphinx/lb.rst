@@ -139,7 +139,7 @@ is available, which expects a numpy array of positions as an argument.
 
 By default, the interpolation is done linearly between the nearest 8 LB nodes,
 but for the GPU implementation also a quadratic scheme involving 27 nodes is implemented
-(see eqs. 297 and 301 in :cite:`duenweg08a`).
+(see eqs. 297 and 301 in :cite:`dunweg09a`).
 You can choose by calling
 one of::
 

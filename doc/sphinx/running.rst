@@ -586,7 +586,7 @@ Dissipative Particle Dynamics (DPD)
 The DPD thermostat adds friction and noise to the particle
 dynamics like the :ref:`Langevin thermostat`, but these
 are not applied to every particle individually but instead
-encoded in a dissipative interaction between particles :cite:`soddeman03a`.
+encoded in a dissipative interaction between particles :cite:`soddemann03a`.
 
 To realize a complete DPD fluid model in |es|, three parts are needed:
 the DPD thermostat, which controls the temperate, a dissipative interaction
@@ -640,7 +640,7 @@ To preserve momentum, an equal and opposite friction force and random force act 
 Numerically the fluid velocity is determined from the lattice-Boltzmann node velocities
 by interpolating as described in :ref:`Interpolating velocities`.
 The backcoupling of friction forces and noise to the fluid is also done by distributing those forces amongst the nearest LB nodes.
-Details for both the interpolation and the force distribution can be found in :cite:`ahlrichs99a` and :cite:`duenweg08a`.
+Details for both the interpolation and the force distribution can be found in :cite:`ahlrichs99a` and :cite:`dunweg09a`.
 
 The LB fluid can be used to thermalize particles, while also including their hydrodynamic interactions.
 The LB thermostat expects an instance of either :class:`espressomd.lb.LBFluid` or :class:`espressomd.lb.LBFluidGPU`.

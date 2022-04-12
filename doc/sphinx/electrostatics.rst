@@ -66,7 +66,7 @@ P3M requires full periodicity (1 1 1). When using a non-metallic dielectric
 constant (``epsilon != 0.0``), the box must be cubic.
 Make sure that you know the relevance of the P3M parameters before using P3M!
 If you are not sure, read the following references:
-:cite:`ewald21a,hockney88,kolafa92a,deserno98a,deserno98b,deserno00e,deserno00b,cerda08d`.
+:cite:`ewald21a,hockney88a,kolafa92a,deserno98a,deserno98b,deserno00e,deserno00b,cerda08d`.
 
 .. _Tuning Coulomb P3M:
 
@@ -101,7 +101,7 @@ where most charges are placed in one plane, one small region, or on a
 regular grid.
 
 The function employs the analytical expression of the error estimate for
-the P3M method :cite:`hockney88` and its real space error :cite:`kolafa92a` to
+the P3M method :cite:`hockney88a` and its real space error :cite:`kolafa92a` to
 obtain sets of parameters that yield the desired accuracy, then it measures how
 long it takes to compute the Coulomb interaction using these parameter sets and
 chooses the set with the shortest run time.
