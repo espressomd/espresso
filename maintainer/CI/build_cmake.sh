@@ -120,9 +120,6 @@ fi
 if [ "${with_coverage}" = true ]; then
     build_type="Coverage"
 fi
-if [ "${with_coverage}" = true ] || [ "${with_coverage_python}" = true ] ; then
-    bash <(curl -s https://codecov.io/env) 1>/dev/null 2>&1
-fi
 
 if [ "${with_fast_math}" = true ]; then
     cmake_param_protected="-DCMAKE_CXX_FLAGS=-ffast-math -fno-finite-math-only"
@@ -320,30 +317,6 @@ else
     mpiexec -n ${check_proc_particle_test} ./pypresso "${srcdir}/testsuite/python/particle.py" || exit 1
 
     end "TEST"
-fi
-
-if [ "${with_coverage}" = true ] || [ "${with_coverage_python}" = true ]; then
-    start "COVERAGE"
-    cd "${builddir}"
-    if [ "${with_coverage}" = true ]; then
-        echo "Running lcov and gcov..."
-        lcov --gcov-tool "${GCOV:-gcov}" -q --directory . --ignore-errors graph --capture --output-file coverage.info # capture coverage info
-        lcov --gcov-tool "${GCOV:-gcov}" -q --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
-        lcov --gcov-tool "${GCOV:-gcov}" -q --remove coverage.info '*/doc/*' --output-file coverage.info # filter out docs
-    fi
-    if [ "${with_coverage_python}" = true ]; then
-        echo "Running python3-coverage..."
-        python3 -m coverage combine testsuite/python testsuite/scripts/tutorials testsuite/scripts/samples testsuite/scripts/benchmarks
-        python3 -m coverage xml
-    fi
-    echo "Uploading to Codecov..."
-    codecov_opts="-X gcov -X coveragepy"
-    if [ -z "${CODECOV_TOKEN}" ]; then
-        codecov_opts="${codecov_opts} -t '${CODECOV_TOKEN}'"
-    fi
-    bash <(curl --fail --silent --show-error https://codecov.io/bash 2>./codecov_stderr) ${codecov_opts} || echo "Codecov did not collect coverage reports"
-    cat ./codecov_stderr
-    end "COVERAGE"
 fi
 
 trap : 0
