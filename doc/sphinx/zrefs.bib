@@ -1,4 +1,5 @@
 % Encoding: US-ASCII
+
 @article{ahlrichs99a,
 author = {Ahlrichs, Patrick and D\"{u}nweg, Burkhard},
 title = {Simulation of a single polymer chain in solution by combining lattice {B}oltzmann and molecular dynamics},
@@ -10,6 +11,16 @@ year = {1999},
 doi = {10.1063/1.480156}
 }
 
+@book{allen17a,
+  title={Computer simulation of liquids},
+  author={Allen, Michael P. and Tildesley, Dominic J.},
+  year={2017},
+  publisher={Oxford University Press},
+  doi={10.1093/oso/9780198803195.001.0001},
+  isbn={9780198803195},
+  edition={2nd},
+}
+
 @ARTICLE{andersen83a,
   author = {Andersen, Hans C.},
   title = {Rattle: A "Velocity" Version of the Shake Algorithm for Molecular Dynamics Calculations},
@@ -18,6 +29,17 @@ doi = {10.1063/1.480156}
   volume = {52},
   doi = {10.1016/0021-9991(83)90014-1},
   pages = {24--34}
+}
+
+@ARTICLE{arnold02a,
+  author = {Arnold, Axel and Holm, Christian},
+  title = {{MMM2D}: A fast and accurate summation method for electrostatic interactions in {2D} slab geometries},
+  journal = {Computer Physics Communications},
+  year = {2002},
+  volume = {148},
+  pages = {327--348},
+  number = {3},
+  doi = {10.1016/S0010-4655(02)00586-6},
 }
 
 @ARTICLE{arnold02b,
@@ -48,6 +70,30 @@ doi = {10.1063/1.480156}
   volume = {117},
   pages = {2503--2512},
   doi = {10.1063/1.1491954},
+}
+
+@ARTICLE{arnold05a,
+  author = {A. Arnold and C. Holm},
+  title = {{MMM1D}: {A} method for calculating electrostatic interactions in one-dimensional periodic geometries},
+  journal = {The Journal of Chemical Physics},
+  year = {2005},
+  volume = {123},
+  pages = {144103},
+  doi = {10.1063/1.2052647},
+  number = {12}
+}
+
+@INCOLLECTION{arnold13a,
+  author = {A. Arnold and O. Lenz and S. Kesselheim and R. Weeber and F. Fahrenberger and D. R\"{o}hm and P. Ko\v{s}ovan and C. Holm},
+  title = {{ESPResSo}~3.1 --- Molecular Dynamics Software for Coarse-Grained Models},
+  booktitle = {Meshfree Methods for Partial Differential Equations {VI}},
+  publisher = {Springer Berlin Heidelberg},
+  year = {2013},
+  editor = {M. Griebel and M. A. Schweitzer},
+  series = {Lecture Notes in Computational Science and Engineering},
+  pages = {1--23},
+  volume = {89},
+  doi = {10.1007/978-3-642-32979-1_1},
 }
 
 @ARTICLE{ballenegger09a,
@@ -86,6 +132,28 @@ doi = {10.1063/1.480156}
   pages = {62--67}
 }
 
+@article{brown95a,
+  title={A general pressure tensor calculation for molecular dynamics simulations},
+  author={Brown, David and Neyertz, Sylvie},
+  journal={Molecular Physics},
+  volume={84},
+  number={3},
+  pages={577--595},
+  year={1995},
+  doi={10.1080/00268979500100371},
+  publisher={Taylor \&{} Francis}
+}
+
+@Article{cerda08d,
+  title                    = {{P3M} algorithm for dipolar interactions},
+  author                   = {Cerd\`{a}, Juan J. and Ballenegger, Vincent and Lenz, Olaf and Holm, Christian},
+  journal                  = {The Journal of Chemical Physics},
+  year                     = {2008},
+  pages                    = {234104},
+  volume                   = {129},
+  doi                      = {10.1063/1.3000389},
+}
+
 @ARTICLE{cimrak12a,
 author = {Cimr\'{a}k, I. and Gusenbauer, M. and Schrefl, T.},
 title = {Modelling and simulation of processes in microfluidic devices for biomedical applications},
@@ -107,7 +175,6 @@ pages = {278--288}
   doi = {10.1016/j.cpc.2013.12.013},
   number = {3}
 }
-
 
 @article{crowl10a,
 author = {Crowl, Lindsay M. and Fogelson, Aaron L.},
@@ -141,6 +208,15 @@ doi = {10.1002/cnm.1274},
   doi = {10.1063/1.4944962},
 }
 
+@PHDTHESIS{deserno00b,
+  author = {Deserno, Markus},
+  title = {Counterion condensation for rigid linear polyelectrolytes},
+  school = {Universit\"{a}t Mainz},
+  year = {2000},
+  month = feb,
+  doi = {10.25358/openscience-1411},
+}
+
 @InProceedings{deserno00e,
   title = {How to mesh up {E}wald sums.},
   booktitle = {Molecular Dynamics on Parallel Computers},
@@ -150,15 +226,6 @@ doi = {10.1002/cnm.1274},
   editor = {Esser, R. and Grassberger, P. and Grotendorst, J. and Lewerenz, M.},
   pages = {319--320},
   doi = {10.1142/9789812793768_0023},
-}
-
-@PHDTHESIS{deserno00b,
-  author = {Deserno, Markus},
-  title = {Counterion condensation for rigid linear polyelectrolytes},
-  school = {Universit\"{a}t Mainz},
-  year = {2000},
-  month = feb,
-  doi = {10.25358/openscience-1411},
 }
 
 @ARTICLE{deserno98a,
@@ -215,28 +282,38 @@ doi = {10.1002/cnm.1274},
   doi = {10.1103/PhysRevE.75.066707},
 }
 
-@ARTICLE{limbach06a,
-  author = {H. J. Limbach and A. Arnold and B. A. Mann and C. Holm},
-  title = {{ESPResSo} -- An Extensible Simulation Package for Research on Soft Matter Systems},
-  journal = {Computer Physics Communications},
-  year = {2006},
-  volume = {174},
-  pages = {704--727},
-  number = {9},
-  doi = {10.1016/j.cpc.2005.10.005},
+@Article{durlofsky87a,
+  author  = {Durlofsky, L. and Brady, J. F. and Bossis, G.},
+  title   = {Dynamic simulation of hydrodynamically interacting particles},
+  journal = {Journal of Fluid Mechanics},
+  year    = {1987},
+  volume  = {180},
+  pages   = {21--49},
+  doi     = {10.1017/S002211208700171X},
 }
 
-@INCOLLECTION{arnold13a,
-  author = {A. Arnold and O. Lenz and S. Kesselheim and R. Weeber and F. Fahrenberger and D. R\"{o}hm and P. Ko\v{s}ovan and C. Holm},
-  title = {{ESPResSo}~3.1 --- Molecular Dynamics Software for Coarse-Grained Models},
-  booktitle = {Meshfree Methods for Partial Differential Equations {VI}},
-  publisher = {Springer Berlin Heidelberg},
-  year = {2013},
-  editor = {M. Griebel and M. A. Schweitzer},
-  series = {Lecture Notes in Computational Science and Engineering},
-  pages = {1--23},
-  volume = {89},
-  doi = {10.1007/978-3-642-32979-1_1},
+@article{ermak78a,
+  title={Brownian dynamics with hydrodynamic interactions},
+  author={Ermak, Donald L and McCammon, J Andrew},
+  journal={The Journal of Chemical Physics},
+  volume={69},
+  number={4},
+  pages={1352--1360},
+  year={1978},
+  publisher={AIP},
+  doi={10.1063/1.436761},
+}
+
+@article{essmann95a,
+  title={A smooth particle mesh {E}wald method},
+  author={Essmann, Ulrich and Perera, Lalith and Berkowitz, Max L. and Darden, Tom and Lee, Hsing and Pedersen, Lee G.},
+  journal={The Journal of Chemical Physics},
+  volume={103},
+  number={19},
+  pages={8577--8593},
+  year={1995},
+  doi={10.1063/1.470117},
+  publisher={AIP}
 }
 
 @ARTICLE{ewald21a,
@@ -301,6 +378,16 @@ pages = {203001},
   isbn      = {9780852743928},
 }
 
+@Article{hofling11a,
+  title = {Anomalous transport resolved in space and time by fluorescence correlation spectroscopy},
+  author = {Felix H\"{o}fling and Karl-Ulrich Bamberg and Thomas Franosch},
+  journal = {Soft Matter},
+  year = {2011},
+  pages = {1358},
+  volume = {7},
+  doi = {10.1039/C0SM00718H},
+}
+
 @ARTICLE{humphrey96a,
   author = {W. Humphrey and A. Dalke and K. Schulten},
   title = {{VMD}: Visual Molecular Dynamics},
@@ -309,37 +396,6 @@ pages = {203001},
   volume = {14},
   pages = {33--38},
   doi = {10.1016/0263-7855(96)00018-5},
-}
-
-@Article{lees72a,
-  author    = {Lees, A. W. and Edwards, S. F.},
-  title     = {The computer study of transport processes under extreme conditions},
-  journal   = {Journal of Physics C: Solid State Physics},
-  year      = {1972},
-  volume    = {5},
-  number    = {15},
-  doi       = {10.1088/0022-3719/5/15/006},
-}
-
-@ARTICLE{tyagi08a,
-  author = {Sandeep Tyagi and Axel Arnold and Christian Holm},
-  title = {Electrostatic layer correction with image charges: A linear scaling method to treat slab 2{D} + h systems with dielectric interfaces},
-  journal = {The Journal of Chemical Physics},
-  year = {2008},
-  volume = {129},
-  pages = {204102},
-  doi = {10.1063/1.3021064},
-  number = {20}
-}
-
-@ARTICLE{tyagi07a,
-  author = {S. Tyagi and A. Arnold and C. Holm},
-  title = {{ICMMM2D}: An accurate method to include planar dielectric interfaces via image charge summation},
-  journal = {The Journal of Chemical Physics},
-  year = {2007},
-  volume = {127},
-  doi = {10.1063/1.2790428},
-  pages = {154723}
 }
 
 @ARTICLE{kesselheim11a,
@@ -423,14 +479,25 @@ pages                      = {725--736},
 doi                        = {10.1140/epjst/e2016-60324-3}
 }
 
-@Article{rohm12a,
-  author = {Roehm, D. and Arnold, A.},
-  title = {Lattice {B}oltzmann simulations on {GPU}s with {ESPResSo}},
-  journal = {European Physical Journal Special Topics},
-  year = {2012},
-  volume = {210},
-  doi = {10.1140/epjst/e2012-01639-6},
-  pages = {89--100},
+@Article{lees72a,
+  author    = {Lees, A. W. and Edwards, S. F.},
+  title     = {The computer study of transport processes under extreme conditions},
+  journal   = {Journal of Physics C: Solid State Physics},
+  year      = {1972},
+  volume    = {5},
+  number    = {15},
+  doi       = {10.1088/0022-3719/5/15/006},
+}
+
+@ARTICLE{limbach06a,
+  author = {H. J. Limbach and A. Arnold and B. A. Mann and C. Holm},
+  title = {{ESPResSo} -- An Extensible Simulation Package for Research on Soft Matter Systems},
+  journal = {Computer Physics Communications},
+  year = {2006},
+  volume = {174},
+  pages = {704--727},
+  number = {9},
+  doi = {10.1016/j.cpc.2005.10.005},
 }
 
 @ARTICLE{magatti01a,
@@ -445,28 +512,6 @@ doi                        = {10.1140/epjst/e2016-60324-3}
   issn = {0003-6935},
 }
 
-@ARTICLE{arnold05a,
-  author = {A. Arnold and C. Holm},
-  title = {{MMM1D}: {A} method for calculating electrostatic interactions in one-dimensional periodic geometries},
-  journal = {The Journal of Chemical Physics},
-  year = {2005},
-  volume = {123},
-  pages = {144103},
-  doi = {10.1063/1.2052647},
-  number = {12}
-}
-
-@ARTICLE{arnold02a,
-  author = {Arnold, Axel and Holm, Christian},
-  title = {{MMM2D}: A fast and accurate summation method for electrostatic interactions in {2D} slab geometries},
-  journal = {Computer Physics Communications},
-  year = {2002},
-  volume = {148},
-  pages = {327--348},
-  number = {3},
-  doi = {10.1016/S0010-4655(02)00586-6},
-}
-
 @article{omelyan98a,
 author = {Omelyan, Igor P.},
 title = {On the numerical integration of motion for rigid polyatomics: The modified quaternion approach},
@@ -476,16 +521,6 @@ number = {1},
 pages = {97--103},
 year = {1998},
 doi = {10.1063/1.168642},
-}
-
-@book{allen17a,
-  title={Computer simulation of liquids},
-  author={Allen, Michael P. and Tildesley, Dominic J.},
-  year={2017},
-  publisher={Oxford University Press},
-  doi={10.1093/oso/9780198803195.001.0001},
-  isbn={9780198803195},
-  edition={2nd},
 }
 
 @Article{peskin02a,
@@ -543,6 +578,16 @@ pages = {1483--1489}
   publisher={AIP Publishing}
 }
 
+@Article{rohm12a,
+  author = {Roehm, D. and Arnold, A.},
+  title = {Lattice {B}oltzmann simulations on {GPU}s with {ESPResSo}},
+  journal = {European Physical Journal Special Topics},
+  year = {2012},
+  volume = {210},
+  doi = {10.1140/epjst/e2012-01639-6},
+  pages = {89--100},
+}
+
 @BOOK{rubinstein03a,
   title = {Polymer Physics},
   publisher = {Oxford University Press},
@@ -561,6 +606,18 @@ pages = {1483--1489}
   number = {4},
   doi = {10.1080/09500348814550731},
   issn = {0950-0340},
+}
+
+@book{schlick10a,
+address = {New York, NY},
+author = {Schlick, Tamar},
+doi = {10.1007/978-1-4419-6351-2},
+isbn = {978-1-4419-6350-5},
+publisher = {Springer New York},
+series = {Interdisciplinary Applied Mathematics},
+title = {Molecular Modeling and Simulation: {A}n Interdisciplinary Guide},
+volume = {21},
+year = {2010},
 }
 
 @ARTICLE{smith81a,
@@ -658,6 +715,27 @@ pages = {1483--1489}
   publisher={Taylor \&{} Francis Group}
 }
 
+@ARTICLE{tyagi07a,
+  author = {S. Tyagi and A. Arnold and C. Holm},
+  title = {{ICMMM2D}: An accurate method to include planar dielectric interfaces via image charge summation},
+  journal = {The Journal of Chemical Physics},
+  year = {2007},
+  volume = {127},
+  doi = {10.1063/1.2790428},
+  pages = {154723}
+}
+
+@ARTICLE{tyagi08a,
+  author = {Sandeep Tyagi and Axel Arnold and Christian Holm},
+  title = {Electrostatic layer correction with image charges: A linear scaling method to treat slab 2{D} + h systems with dielectric interfaces},
+  journal = {The Journal of Chemical Physics},
+  year = {2008},
+  volume = {129},
+  pages = {204102},
+  doi = {10.1063/1.3021064},
+  number = {20}
+}
+
 @ARTICLE{tyagi10a,
   author = {Tyagi, Sandeep and S\"{u}zen, Mehmet and Sega, Marcello and Barbosa, Marcia C. and Kantorovich, Sofia S. and Holm, Christian},
   title = {An iterative, fast, linear-scaling method for computing induced charges on arbitrary dielectric boundaries},
@@ -676,74 +754,6 @@ pages = {1483--1489}
   volume = {107},
   pages = {521--537},
   doi = {10.1023/A:1014595628808}
-}
-
-@book{schlick10a,
-address = {New York, NY},
-author = {Schlick, Tamar},
-doi = {10.1007/978-1-4419-6351-2},
-isbn = {978-1-4419-6350-5},
-publisher = {Springer New York},
-series = {Interdisciplinary Applied Mathematics},
-title = {Molecular Modeling and Simulation: {A}n Interdisciplinary Guide},
-volume = {21},
-year = {2010},
-}
-
-@article{ermak78a,
-  title={Brownian dynamics with hydrodynamic interactions},
-  author={Ermak, Donald L and McCammon, J Andrew},
-  journal={The Journal of Chemical Physics},
-  volume={69},
-  number={4},
-  pages={1352--1360},
-  year={1978},
-  publisher={AIP},
-  doi={10.1063/1.436761},
-}
-
-@Article{cerda08d,
-  title                    = {{P3M} algorithm for dipolar interactions},
-  author                   = {Cerd\`{a}, Juan J. and Ballenegger, Vincent and Lenz, Olaf and Holm, Christian},
-  journal                  = {The Journal of Chemical Physics},
-  year                     = {2008},
-  pages                    = {234104},
-  volume                   = {129},
-  doi                      = {10.1063/1.3000389},
-}
-
-@article{essmann95a,
-  title={A smooth particle mesh {E}wald method},
-  author={Essmann, Ulrich and Perera, Lalith and Berkowitz, Max L. and Darden, Tom and Lee, Hsing and Pedersen, Lee G.},
-  journal={The Journal of Chemical Physics},
-  volume={103},
-  number={19},
-  pages={8577--8593},
-  year={1995},
-  doi={10.1063/1.470117},
-  publisher={AIP}
-}
-
-@article{brown95a,
-  title={A general pressure tensor calculation for molecular dynamics simulations},
-  author={Brown, David and Neyertz, Sylvie},
-  journal={Molecular Physics},
-  volume={84},
-  number={3},
-  pages={577--595},
-  year={1995},
-  doi={10.1080/00268979500100371},
-  publisher={Taylor \&{} Francis}
-}
-
-@Article{hofling11a,
-  title = {Anomalous transport resolved in space and time by fluorescence correlation spectroscopy},
-  author = {Felix H\"{o}fling and Karl-Ulrich Bamberg and Thomas Franosch},
-  journal = {Soft Matter},
-  year = {2011},
-  pages = {1358},
-  volume = {7},
-  doi = {10.1039/C0SM00718H},
 }
 
 @Article{weik19a,
@@ -767,14 +777,4 @@ year = {2010},
   year={2015},
   doi={10.1209/0295-5075/110/24002},
   publisher={IOP Publishing}
-}
-
-@Article{durlofsky87a,
-  author  = {Durlofsky, L. and Brady, J. F. and Bossis, G.},
-  title   = {Dynamic simulation of hydrodynamically interacting particles},
-  journal = {Journal of Fluid Mechanics},
-  year    = {1987},
-  volume  = {180},
-  pages   = {21--49},
-  doi     = {10.1017/S002211208700171X},
 }
