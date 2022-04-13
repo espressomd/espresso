@@ -605,9 +605,9 @@ guidelines:
 How to cite |es|
 ^^^^^^^^^^^^^^^^
 
-Please cite :cite:`weik19a` (BibTeX key ``weik19a`` in :file:`doc/sphinx/zrefs.bib`)
+Please cite :cite:`weik19a` (BibTeX key ``weik19a`` in :file:`doc/bibliography.bib`)
 for |es| 4.0 and later, or :cite:`arnold13a` and :cite:`limbach06a`
-(BibTeX keys ``arnold13a`` and ``limbach06a`` in :file:`doc/sphinx/zrefs.bib`)
+(BibTeX keys ``arnold13a`` and ``limbach06a`` in :file:`doc/bibliography.bib`)
 for |es| 2.0 to 3.3. To find the version number, use the following command:
 
 .. code-block:: bash

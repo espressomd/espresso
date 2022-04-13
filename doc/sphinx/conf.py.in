@@ -116,7 +116,7 @@ pygments_style = 'sphinx'
 todo_include_todos = True
 
 # sphinxcontrib.bibtex options
-bibtex_bibfiles = ['zrefs.bib']
+bibtex_bibfiles = ['bibliography.bib']
 
 
 # -- Options for HTML output ----------------------------------------------

@@ -29,7 +29,7 @@ User's Guide
     under_the_hood.rst
     contributing.rst
     appendix.rst
-    zreferences.rst
+    bibliography.rst
 
 .. _Online resources:
 

@@ -20,7 +20,7 @@ lxml>=4.2.1 # to deploy tutorials
 # sphinx and its dependencies
 sphinx>=2.3.0,!=3.0.0
 sphinx-toggleprompt==0.0.5
-sphinxcontrib-bibtex>=0.3.5
+sphinxcontrib-bibtex>=2.4.1
 # jupyter dependencies
 jupyter_contrib_nbextensions==0.5.1
 tqdm>=4.30.0

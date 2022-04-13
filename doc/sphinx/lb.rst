@@ -16,7 +16,7 @@ geometries and boundary conditions are somewhat limited in comparison to
 Here we restrict the documentation to the interface. For a more detailed
 description of the method, please refer to the literature.
 
-.. note:: Please cite :cite:`arnold13a` (BibTeX key ``arnold13a`` in :file:`doc/sphinx/zrefs.bib`) if you use the LB fluid and :cite:`rohm12a` (BibTeX key ``rohm12a`` in :file:`doc/sphinx/zrefs.bib`) if you use the GPU implementation.
+.. note:: Please cite :cite:`arnold13a` (BibTeX key ``arnold13a`` in :file:`doc/bibliography.bib`) if you use the LB fluid and :cite:`rohm12a` (BibTeX key ``rohm12a`` in :file:`doc/bibliography.bib`) if you use the GPU implementation.
 
 .. _Setting up a LB fluid:
 

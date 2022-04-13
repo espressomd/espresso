@@ -247,8 +247,8 @@ If you plan to use this feature, please contact the Cell-in-fluid Research Group
 University of Zilina: ivan.cimrak@fri.uniza.sk or iveta.jancigova@fri.uniza.sk.
 
 When using this module, please cite :cite:`cimrak14a` (BibTeX key
-``cimrak14a`` in :file:`doc/sphinx/zrefs.bib`) and :cite:`cimrak12a`
-(BibTeX key ``cimrak12a`` in :file:`doc/sphinx/zrefs.bib`)
+``cimrak14a`` in :file:`doc/bibliography.bib`) and :cite:`cimrak12a`
+(BibTeX key ``cimrak12a`` in :file:`doc/bibliography.bib`)
 
 This documentation introduces the features of module Object-in-fluid (OIF).
 Even though |es| was not primarily intended to work with closed
