@@ -1,18 +1,17 @@
 find_package(Sphinx 2.3.0)
 if(SPHINX_FOUND)
   # configured documentation tools and intermediate build results
-  set(SPHINX_BASE "${CMAKE_CURRENT_BINARY_DIR}")
-  set(BINARY_BUILD_DIR "${SPHINX_BASE}/_build")
+  set(BINARY_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/_build")
   set(SPHINX_PYTHON_DIR "${CMAKE_SOURCE_DIR}/src/python/espressomd")
   # Sphinx cache with pickled ReST documents
-  set(SPHINX_CACHE_DIR "${SPHINX_BASE}/_doctrees")
+  set(SPHINX_CACHE_DIR "${CMAKE_CURRENT_BINARY_DIR}/_doctrees")
 
   # HTML output directory
-  set(SPHINX_HTML_DIR "${SPHINX_BASE}/html")
+  set(SPHINX_HTML_DIR "${CMAKE_CURRENT_BINARY_DIR}/html")
 
   # Sphinx configuration file
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/conf.py.in"
-                 "${SPHINX_BASE}/conf.py" @ONLY)
+                 "${CMAKE_CURRENT_BINARY_DIR}/conf.py" @ONLY)
 
   # Copy the figure directory to the build dir
   file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/figures
@@ -47,13 +46,14 @@ if(SPHINX_FOUND)
       "${CMAKE_CURRENT_SOURCE_DIR}/system_setup.rst"
       "${CMAKE_CURRENT_SOURCE_DIR}/under_the_hood.rst"
       "${CMAKE_CURRENT_SOURCE_DIR}/visualization.rst"
-      "${CMAKE_CURRENT_SOURCE_DIR}/zrefs.bib"
       "${CMAKE_CURRENT_SOURCE_DIR}/zreferences.rst")
 
   foreach(file ${FILE_LIST})
     get_filename_component(basename ${file} NAME)
-    configure_file(${file} ${SPHINX_BASE}/${basename} COPYONLY)
+    configure_file(${file} ${CMAKE_CURRENT_BINARY_DIR}/${basename} COPYONLY)
   endforeach()
+  configure_file(${CMAKE_SOURCE_DIR}/doc/bibliography.bib
+                 ${CMAKE_CURRENT_BINARY_DIR}/zrefs.bib COPYONLY)
 
   # Place files to be excluded from SPHINX documentation
   set(EXCLUDE "${SPHINX_PYTHON_DIR}/gen_code_info.py"
@@ -62,10 +62,10 @@ if(SPHINX_FOUND)
   add_custom_target(
     sphinx
     ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_BINARY_DIR}/samples.py"
-    COMMAND ${SPHINX_API_DOC_EXE} -f -o ${SPHINX_BASE} ${SPHINX_PYTHON_DIR}
-            ${EXCLUDE}
+    COMMAND ${SPHINX_API_DOC_EXE} -f -o ${CMAKE_CURRENT_BINARY_DIR}
+            ${SPHINX_PYTHON_DIR} ${EXCLUDE}
     COMMAND
-      ${SPHINX_EXECUTABLE} -q -W -b html -c "${SPHINX_BASE}" -d
+      ${SPHINX_EXECUTABLE} -q -W -b html -c "${CMAKE_CURRENT_BINARY_DIR}" -d
       "${SPHINX_CACHE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}" "${SPHINX_HTML_DIR}"
     DEPENDS espressomd pypresso
     COMMENT "Building HTML documentation with Sphinx.")
