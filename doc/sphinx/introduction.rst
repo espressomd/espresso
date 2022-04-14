@@ -71,7 +71,7 @@ On the other hand, flexibility of |es| stems from the employment of a scripting
 language at the steering level. Apart from the ability to modify the simulation
 and system parameters at runtime, many simple tasks which are not
 computationally critical can be implemented at this level, without even
-touching the C++-kernel. For example, simple problem-specific analysis routines
+touching the C++ kernel. For example, simple problem-specific analysis routines
 can be implemented in this way and made to interact with the simulation core.
 Another example of the program's flexibility is the possibility to integrate
 system setup, simulation and analysis in one single control script. |es|
@@ -300,7 +300,7 @@ Tutorials
 
 There are a number of tutorials that introduce the use of |es| for different
 physical systems. You can also find the tutorials and related scripts in the
-directory :file:`/doc/tutorials` or `online on GitHub <https://github.com/espressomd/espresso/blob/python/doc/tutorials/>`_.
+directory :file:`/doc/tutorials`.
 They are executed with the ``ipypresso`` script.
 
 The following tutorials are available:
@@ -316,13 +316,16 @@ The following tutorials are available:
 * :file:`electrokinetics`: Modelling electrokinetics together with hydrodynamic interactions.
 * :file:`constant_pH`: Modelling the titration of a weak acid using the constant pH method
 
+The executed notebooks with solutions and plots are periodically deployed
+online to the `GitHub Pages <https://espressomd.github.io/tutorials.html>`__.
+
 .. _Sample scripts:
 
 Sample scripts
 --------------
 
-Several scripts that can serve as usage examples can be found in the directory :file:`/samples`,
-or in the `git repository <https://github.com/espressomd/espresso/blob/python/samples/>`_.
+Several scripts that can serve as usage examples can be found in the
+directory :file:`/samples`.
 They are executed with the ``pypresso`` script.
 
 The following samples are available:

@@ -3,6 +3,12 @@
 Running a simulation
 ====================
 
+|es| is implemented as a Python module. This means that you need to write a
+python script for any task you want to perform with |es|. In this chapter,
+the basic structure of the interface will be explained. For a practical
+introduction, see the tutorials, which are also part of the
+distribution.
+
 .. _Running es:
 
 Running |es|
@@ -11,33 +17,53 @@ Running |es|
 Running a script
 ~~~~~~~~~~~~~~~~
 
-|es| is implemented as a Python module. This means that you need to write a
-python script for any task you want to perform with |es|. In this chapter,
-the basic structure of the interface will be explained. For a practical
-introduction, see the tutorials, which are also part of the
-distribution. To use |es|, you need to import the espressomd module in your
+To use |es|, you need to import the ``espressomd`` module in your
 Python script. To this end, the folder containing the python module
 needs to be in the Python search path. The module is located in the
-:file:`src/python` folder under the build directory. A convenient way to run
-python with the correct path is to use the pypresso script located in
-the build directory.
+:file:`src/python` folder under the build directory.
+
+A convenient way to run Python with the correct path is to use the
+``pypresso`` script located in the build directory:
 
 .. code-block:: bash
 
     ./pypresso simulation.py
 
 The ``pypresso`` script is just a wrapper in order to expose the |es| python
-module to the system's python interpreter by modifying the ``$PYTHONPATH``.
-Please see the following chapter :ref:`Setting up the system` describing how
-to actually write a simulation script for |es|.
+module to the system's Python interpreter by modifying the ``$PYTHONPATH``.
+If you have installed |es| from a Linux package manager that doesn't provide
+the ``pypresso`` script, you will need to modify the ``$PYTHONPATH`` and
+possibly the ``$LD_LIBRARY_PATH`` too, depending on which symbols are missing.
 
-Running an interactive notebook
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The next chapter, :ref:`Setting up the system`, will explain in more details
+how to write a simulation script for |es|. If you don't have any script,
+simply call one of the files listed in section :ref:`Sample scripts`.
 
-Running a Jupyter session requires using the ``ipypresso`` script, which
-is also located in the build directory (its name comes from the IPython
-interpreter, today known as Jupyter). To run the tutorials, you will need
-to start a Jupyter session:
+Using the console
+~~~~~~~~~~~~~~~~~
+
+Since |es| can be manipulated like any other Python module, it is possible
+to interact with it in a Python interpreter. Simply run the ``pypresso``
+script without arguments to start a Python session:
+
+.. code-block:: bash
+
+    ./pypresso
+
+Likewise, a Jupyter console can be started with the ``ipypresso`` script,
+which is also located in the build directory:
+
+.. code-block:: bash
+
+    ./ipypresso console
+
+The name comes from the IPython interpreter, today known as Jupyter.
+
+Interactive notebooks
+~~~~~~~~~~~~~~~~~~~~~
+
+To interact with Jupyter notebooks, move to the directory containing the
+tutorials and call the ``ipypresso`` script:
 
 .. code-block:: bash
 
@@ -55,6 +81,7 @@ previous code cells, as it shows which cells are out-of-date. It's also
 possible to run all cells by clicking on the "Run" drop-down menu, then on
 "Run All Below". This will change all labels to ``In [*]`` to show that the
 first one is running, while the subsequent ones are awaiting execution.
+
 You'll also see that many cells generate an output. When the output becomes
 very long, Jupyter will automatically put it in a box with a vertical scrollbar.
 The output may also contain static plots, dynamic plots and videos. It is also
@@ -145,66 +172,247 @@ command line options for the most common tools.
 
      ./pypresso --tool <args>
 
-where ``--tool`` can be any from the following table.  You can only
-use one tool at a time.
+where ``--tool`` can be any tool from the :ref:`table below <Debugging es with tools>`.
+Only one tool can be used at a time. Some tools benefit from specific build
+options, as outlined in the installation section :ref:`Troubleshooting`.
+|es| can be debugged in MPI environments, as outlined in section
+:ref:`Debugging parallel code`.
 
-+---------------------+----------------------------------------------+
-| Tool                | Effect                                       |
-+=====================+==============================================+
-| ``--gdb``           | ``gdb --args python <args>``                 |
-+---------------------+----------------------------------------------+
-| ``--lldb``          | ``lldb -- python <args>``                    |
-+---------------------+----------------------------------------------+
-| ``--valgrind``      | ``valgrind --leak-check=full python <args>`` |
-+---------------------+----------------------------------------------+
-| ``--cuda-gdb``      | ``cuda-gdb --args python <args>``            |
-+---------------------+----------------------------------------------+
-| ``--cuda-memcheck`` | ``cuda-memcheck python <args>``              |
-+---------------------+----------------------------------------------+
+.. _Debugging es with tools:
+
+.. table:: Tools for the Python wrapper to |es|.
+
+    +---------------------+----------------------------------------------+
+    | Tool                | Effect                                       |
+    +=====================+==============================================+
+    | ``--gdb``           | ``gdb --args python <args>``                 |
+    +---------------------+----------------------------------------------+
+    | ``--lldb``          | ``lldb -- python <args>``                    |
+    +---------------------+----------------------------------------------+
+    | ``--valgrind``      | ``valgrind --leak-check=full python <args>`` |
+    +---------------------+----------------------------------------------+
+    | ``--cuda-gdb``      | ``cuda-gdb --args python <args>``            |
+    +---------------------+----------------------------------------------+
+    | ``--cuda-memcheck`` | ``cuda-memcheck python <args>``              |
+    +---------------------+----------------------------------------------+
 
 
-.. _CUDA:
+.. _Parallel computing:
 
-CUDA
-----
+Parallel computing
+------------------
 
-:py:meth:`~espressomd.cuda_init.CudaInitHandle()` command can be used to choose the GPU for all subsequent
-GPU-computations. Note that due to driver limitations, the GPU cannot be
-changed anymore after the first GPU-using command has been issued, for
-example ``lbfluid``. If you do not choose the GPU manually before that,
-CUDA internally chooses one, which is normally the most powerful GPU
-available, but load-independent. ::
+Many algorithms in |es| are designed to work with multiple MPI ranks.
+However, not all algorithms benefit from MPI parallelization equally.
+Several algorithms only use MPI rank 0 (e.g. :ref:`Reaction methods <Monte Carlo Methods>`), while
+a small subset simply don't support MPI (e.g. :ref:`Dipolar direct sum`).
+|es| should work with most MPI implementations on the market;
+see the :term:`MPI installation requirements <MPI>` for details.
 
-    system = espressomd.System(box_l=[1, 1, 1])
-    dev = system.cuda_init_handle.device
-    system.cuda_init_handle.device = dev
+.. _General syntax:
 
-The first invocation in the sample above returns the id of the set graphics card, the second one sets the
-device id.
+General syntax
+~~~~~~~~~~~~~~
 
-.. _GPU Acceleration with CUDA:
+To run a simulation on several MPI ranks, for example 4, simply invoke
+the ``pypresso`` script with the following syntax:
 
-GPU Acceleration with CUDA
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. code-block:: bash
+
+    mpiexec -n 4 ./pypresso simulation.py
+
+The cell system is automatically split among the MPI ranks, and data
+is automatically gathered on the main rank, which means a regular |es|
+script can be executed in an MPI environment out-of-the-box. The number
+of MPI ranks can be accessed via the system ``n_nodes`` state property.
+The simulation box partition is controlled by the cell system
+:attr:`~espressomd.cellsystem.CellSystem.node_grid` property.
+By default, MPI ranks are assigned in decreasing order, e.g. on 6 MPI ranks
+``node_grid`` is ``[3, 2, 1]``. It is possible to re-assign the ranks by
+changing the value of the ``node_grid`` property, however a few algorithms
+(such as FFT-based electrostatic methods) only work for the default
+partitioning scheme where values must be arranged in decreasing order.
+
+::
+
+    # get the number of ranks
+    print(system.cell_system.get_state()["n_nodes"])
+    # re-assign the ranks
+    system.cell_system.node_grid = [2, 1, 3]
+    system.cell_system.node_grid = [6, 1, 1]
+
+There are alternative ways to invoke MPI on ``pypresso``, but they share
+similar options. The number after the ``-n`` option is the number of ranks,
+which needs to be inferior or equal to the number of *physical* cores on the
+workstation. Command ``nproc`` displays the number of *logical* cores on the
+workstation. For architectures that support hyperthreading, the number of
+logical cores is an integer multiple of the number of physical cores,
+usually 2. Therefore on a hyperthreaded workstation with 32 cores,
+at most 16 cores can be used without major performance loss, unless
+extra arguments are passed to the ``mpiexec`` program.
+
+On cluster computers, it might be necessary to load the MPI library with
+``module load openmpi`` or similar.
+
+.. _Performance gain:
+
+Performance gain
+~~~~~~~~~~~~~~~~
+
+Simulations executed in parallel with run faster, however the runtime
+won't decrease linearly with the number of MPI ranks. MPI-parallel
+simulations introduce several sources of overhead and latency:
+
+* overhead of serializing, communicating and deserializing data structures
+* extra calculations in the LB halo
+* extra calculations in the ghost shell
+  (see section :ref:`Internal particle organization` for more details)
+* latency due to blocking communication (i.e. a node remains idle
+  while waiting for a message from another node)
+* latency due to blocking data collection for GPU
+  (only relevant for GPU methods)
+* latency due to context switching
+* latency due to memory bandwidth
+
+While good performance can be achieved up to 32 MPI ranks, allocating more
+than 32 ranks to a simulation will not always lead to significantly improved
+run times. The performance gain is highly sensitive to the algorithms used
+by the simulation, for example GPU methods rarely benefit from more than
+8 MPI ranks. Performance is also affected by the number of features enabled
+at compile time, even when these features are not used by the simulation;
+do not hesitate to remove all features not required by the
+simulation script and rebuild |es| for optimal performance.
+
+Benchmarking is often the best way to determine the optimal number of MPI
+ranks for a given simulation setup. Please refer to the wiki chapter on
+`benchmarking <https://github.com/espressomd/espresso/wiki/Development#Benchmarking>`__
+for more details.
+
+Runtime speed-up is not the only appeal of MPI parallelization. Another
+benefit is the possibility to distribute a calculation over multiple
+compute nodes in clusters and high-performance environments, and therefore
+split the data structures over multiple machines. This becomes necessary
+when running simulations with millions of particles, as the memory
+available on a single compute node would otherwise saturate.
+
+.. _Communication model:
+
+Communication model
+~~~~~~~~~~~~~~~~~~~
+
+|es| was originally designed for the "flat" model of communication:
+each MPI rank binds to a logical CPU core. This communication model
+doesn't fully leverage shared memory on recent CPUs, such as `NUMA
+architectures <https://en.wikipedia.org/wiki/Non-uniform_memory_access>`__,
+and |es| currently doesn't support the hybrid
+MPI+\ `OpenMP <https://www.openmp.org>`__ programming model.
+
+The MPI+CUDA programming model is supported, although only one GPU can be
+used for the entire simulation. As a result, a blocking *gather* operation
+is carried out to collect data from all ranks to the main rank, and a
+blocking *scatter* operation is carried out to transfer the result of the
+GPU calculation from the main rank back to all ranks. This latency limits
+GPU-acceleration to simulations running on fewer than 8 MPI ranks.
+For more details, see section :ref:`GPU acceleration`.
+
+.. _The MPI callbacks framework:
+
+The MPI callbacks framework
+"""""""""""""""""""""""""""
+
+When starting a simulation with :math:`n` MPI ranks, |es| will internally
+use MPI rank :math:`0` as the head node (also referred to as the "main rank")
+and MPI ranks :math:`1` to :math:`n-1` as worker nodes. The Python interface
+interacts only with the head node, and the head node forwards the information
+to the worker nodes.
+
+To put it another way, all worker nodes are idle until the user calls
+a function that is designed to run in parallel,
+in which case the head node calls the corresponding core function
+and sends a request on the worker nodes to call the same core function.
+The request can be a simple collective call, or a collective call with a
+reduction if the function returns a value. The reduction can either:
+
+- combine the :math:`n` results via a mathematical operation
+  (usually a summation or a multiplication)
+- discard the result of the :math:`n-1` worker nodes; this is done when
+  all ranks return the same value, or when the calculation can only be
+  carried out on the main rank but requires data from the other ranks
+- return the result of one rank when the calculation can only be carried out
+  by a specific rank; this is achieved by returning an *optional*, which
+  contains a value on the rank that has access to the information necessary
+  to carry out the calculation, while the other :math:`n-1` ranks return
+  an empty optional
+
+For more details on this framework, please refer to the Doxygen documentation
+of the the C++ core file :file:`MpiCallbacks.hpp`.
+
+.. _Debugging parallel code:
+
+Debugging parallel code
+~~~~~~~~~~~~~~~~~~~~~~~
+
+It is possible to debug an MPI-parallel simulation script with GDB.
+Keep in mind that contrary to a textbook example MPI application, where
+all ranks execute the ``main`` function, in |es| the worker nodes are idle
+until the head node on MPI rank 0 delegates work to them. This means that
+on MPI rank > 1, break points will only have an effect in code that can be
+reached from a callback function whose pointer has been registered in the
+:ref:`MPI callbacks framework <The MPI callbacks framework>`.
+
+The following command runs a script with 2 MPI ranks and binds a terminal
+to each rank:
+
+.. code-block:: bash
+
+    mpiexec -np 2 xterm -fa 'Monospace' -fs 12 -e ./pypresso --gdb simulation.py
+
+It can also be done via ssh with X-window forwarding:
+
+.. code-block:: bash
+
+    ssh -X username@hostname
+    mpiexec -n 2 -x DISPLAY="${DISPLAY}" xterm -fa 'Monospace' -fs 12 \
+        -e ./pypresso --gdb simulation.py
+
+The same syntax is used for C++ unit tests:
+
+.. code-block:: bash
+
+    mpiexec -np 2 xterm -fa 'Monospace' -fs 12 \
+        -e gdb src/core/unit_tests/EspressoSystemStandAlone_test
+
+
+.. _GPU acceleration:
+
+GPU acceleration
+----------------
+
+.. _CUDA acceleration:
+
+CUDA acceleration
+~~~~~~~~~~~~~~~~~
 
 .. note::
     Feature ``CUDA`` required
 
-|es| is capable of GPU acceleration to speed up simulations.
-Not every simulation method is parallelizable or profits from
-GPU acceleration. Refer to :ref:`Available simulation methods`
+|es| is capable of delegating work to the GPU to speed up simulations.
+Not every simulation method profits from GPU acceleration.
+Refer to :ref:`Available simulation methods`
 to check whether your desired method can be used on the GPU.
 In order to use GPU acceleration you need a NVIDIA GPU
 and it needs to have at least compute capability 2.0.
+For more details, please refer to the installation section
+:ref:`Nvidia GPU acceleration`.
 
 For more information please check :class:`espressomd.cuda_init.CudaInitHandle`.
 
-.. _List available CUDA devices:
+.. _List available devices:
 
-List available CUDA devices
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+List available devices
+""""""""""""""""""""""
 
-If you want to list available CUDA devices, you should call
+To list available CUDA devices, call
 :meth:`espressomd.cuda_init.CudaInitHandle.list_devices`::
 
     >>> import espressomd
@@ -231,12 +439,12 @@ To get more details on the CUDA devices for each MPI node, call
                     'cores': 2,
                     'total_memory': 1014104064}}}
 
-.. _Selection of CUDA device:
+.. _Select a device:
 
-Selection of CUDA device
-~~~~~~~~~~~~~~~~~~~~~~~~
+Select a device
+"""""""""""""""
 
-When you start ``pypresso`` your first GPU should be selected.
+When you start ``pypresso``, the first GPU should be selected.
 If you wanted to use the second GPU, this can be done
 by setting :attr:`espressomd.cuda_init.CudaInitHandle.device` as follows::
 

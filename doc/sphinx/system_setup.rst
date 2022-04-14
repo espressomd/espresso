@@ -233,7 +233,7 @@ The properties of the cell system can be accessed via the system
 * :py:attr:`~espressomd.cellsystem.CellSystem.node_grid`
 
   3D node grid for real space domain decomposition (optional, if
-  unset an optimal set is chosen automatically). The domain decomposition
+  unset an optimal partition is chosen automatically). The domain decomposition
   can be visualized with :file:`samples/visualization_cellsystem.py`.
 
 * :py:attr:`~espressomd.cellsystem.CellSystem.skin`
@@ -243,12 +243,12 @@ The properties of the cell system can be accessed via the system
 Details about the cell system can be obtained by
 :meth:`get_state() <espressomd.cellsystem.CellSystem.get_state>`:
 
-* ``cell_grid``       Dimension of the inner cell grid.
-* ``cell_size``       Box-length of a cell.
-* ``local_box_l``     Local simulation box length of the nodes.
-* ``max_cut``         Maximal cutoff of real space interactions.
-* ``n_nodes``         Number of nodes.
+* ``cell_grid``       Dimension of the inner cell grid (only for regular decomposition).
+* ``cell_size``       Box-length of a cell (only for regular decomposition).
+* ``n_nodes``         Number of MPI nodes.
+* ``node_grid``       MPI domain partition.
 * ``type``            The current type of the cell system.
+* ``skin``            Verlet list skin.
 * ``verlet_reuse``    Average number of integration steps the Verlet list is re-used.
 
 .. _Regular decomposition:
@@ -276,6 +276,28 @@ Moreover, since for constant interaction range, the number of particles
 in a cell depends only on the density. The number of interactions is
 therefore of the order :math:`N` instead of order :math:`N^2` if one has to
 calculate all pair interactions.
+
+With this scheme, there must be at least two cells per direction,
+and at most 32 cells per direction for a cubic box geometry.
+The number of cells per direction depends on the interaction range cutoff
+:math:`l_{\mathrm{cut}}`, the Verlet list skin :math:`l_{\mathrm{skin}}`
+and the box length :math:`l_{\mathrm{box}}`, and is determined automatically
+by solving several equations. It can be useful to know how to estimate the
+number of cells per direction, because it limits the number of MPI ranks
+that can be allocated to an MPI-parallel simulation. As a rule of thumb,
+for a cubic box geometry the number of cells per direction is often:
+
+.. math::
+
+    \left\lfloor \frac{l_{\mathrm{box}}}{l_{\mathrm{cut}} + l_{\mathrm{skin}}} \right\rfloor
+
+For example, in a system with box length 12, LJ cutoff 2.5 and Verlet
+skin 0.4, the number of cells cannot be more than 4 in each direction.
+A runtime error will be triggered during integration when running a
+simulation with such a system and allocating more than 64 MPI ranks
+in total, or more than 4 MPI ranks per direction. In this situation,
+consider increasing the box size or decreasing the interaction cutoff
+or Verlet list skin.
 
 .. _N-squared:
 

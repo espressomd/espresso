@@ -33,33 +33,39 @@ software easily on a wide range of platforms.
 Requirements
 ------------
 
-The following tools libraries, including header files, are required to be able
-to compile and use |es|:
+The following tools and libraries, including their header files,
+are required to be able to compile and use |es|:
 
-CMake
-    The build system is based on CMake.
+.. glossary::
 
-C++ Compiler
-    C++14 capable C++ compiler (e.g., gcc 5 or later)
+    CMake
+        The build system is based on CMake.
 
-Boost
-    A number of advanced C++ features used by |es| are provided by Boost.
-    We strongly recommend to use at least Boost 1.71.
+    C++ compiler
+        The C++ core of |es| needs to be built by a C++14-capable compiler.
 
-FFTW
-    For some algorithms (P\ :math:`^3`\ M), |es| needs the FFTW library
-    version 3 or later  [5]_ for Fourier transforms, including header
-    files.
+    Boost
+        A number of advanced C++ features used by |es| are provided by Boost.
+        We strongly recommend to use at least Boost 1.71.
 
-MPI
-    Because |es| is parallelized with MPI, you need a working MPI
-    environment that implements the MPI standard version 1.2.
+    FFTW
+        For some algorithms like P\ :math:`^3`\ M, |es| needs the FFTW library
+        version 3 or later [5]_ for Fourier transforms, including header files.
 
-Python
-    |es|'s main user interface is via the Python 3 scripting interface.
+    MPI
+        An MPI library that implements the MPI standard version 1.2 is required
+        to run simulations in parallel. |es| is currently tested against
+        `Open MPI <https://www.open-mpi.org>`__ and
+        `MPICH <https://www.mpich.org>`__, with and without
+        `UCX <https://openucx.org>`__ enabled.
+        Other MPI implementations like Intel MPI should also work, although
+        they are not actively tested in |es| continuous integration.
 
-Cython
-    Cython is used for connecting the C++ core to Python.
+    Python
+        |es|'s main user interface relies on Python 3.
+
+    Cython
+        Cython is used for connecting the C++ core to Python.
 
 
 .. _Installing requirements on Ubuntu Linux:
@@ -272,7 +278,7 @@ where ``script.py`` is a ``python`` script which has to
 be written by the user. You can find some examples in the :file:`samples`
 folder of the source code directory. If you want to run in parallel, you should
 have compiled with *Open MPI*, and need to tell MPI to run in parallel. The actual
-invocation is implementation dependent, but in many cases, such as
+invocation is implementation-dependent, but in many cases, such as
 *Open MPI*, you can use
 
 .. code-block:: bash
@@ -823,6 +829,49 @@ Troubleshooting
 If you encounter issues when building |es| or running it for the first time,
 please have a look at the `Installation FAQ <https://github.com/espressomd/espresso/wiki/Installation-FAQ>`_
 on the wiki. If you still didn't find an answer, see :ref:`Community support`.
+
+Many algorithms require parameters that must be provided within valid ranges.
+Range checks are implemented to catch invalid input values and generate
+meaningful error messages, however these checks cannot always catch errors
+arising from an invalid combination of two or more features. If you encounter
+issues with a script, you can activate extra runtime checks by enabling C++
+assertions. This is achieved by updating the CMake project and rebuilding
+|es| with:
+
+.. code-block:: bash
+
+    cmake . -DCMAKE_BUILD_TYPE=RelWithAssert
+    make -j
+
+The resulting build will run slightly slower, but will produce an error
+message for common issues, such as divisions by zero, array access out
+of bounds, or square roots of negative numbers.
+
+If this still doesn't help, you can activate debug symbols to help with
+instrumentation:
+
+.. code-block:: bash
+
+    cmake . -DCMAKE_BUILD_TYPE=Debug
+    make -j
+
+The resulting build with be quite slow but will enable many debugging tools.
+For details, please refer to chapter :ref:`Debugging es`.
+
+If you are dealing with a segmentation fault or undefined behavior, and GDB
+doesn't help or is too cumbersome to use (e.g. in MPI-parallel simulations),
+you can as a last resort activate sanitizers:
+
+.. code-block:: bash
+
+    cmake . -DWITH_ASAN=ON -DWITH_UBSAN=ON -DCMAKE_BUILD_TYPE=Release
+    make -j
+
+The resulting build will be around 5 times slower that a debug build,
+but it will generate valuable reports when detecting fatal exceptions.
+For more details, please consult the online documentation of
+`UBSAN <https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html>__` and
+`ASAN <https://github.com/google/sanitizers/wiki/AddressSanitizer>`__.
 
 ____
 

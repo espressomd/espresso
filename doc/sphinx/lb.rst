@@ -261,7 +261,7 @@ activated by compiling with the feature ``CUDA``. Within the
 Python script, the :class:`~espressomd.lb.LBFluid` object can be substituted
 with the :class:`~espressomd.lb.LBFluidGPU` object to switch from CPU based
 to GPU based execution. For further
-information on CUDA support see section :ref:`GPU Acceleration with CUDA`.
+information on CUDA support see section :ref:`CUDA acceleration`.
 
 The following minimal example demonstrates how to use the GPU implementation
 of the LBM in analogy to the example for the CPU given in section
