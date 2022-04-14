@@ -113,7 +113,8 @@ private:
     void operator()(ThermalizedCollisionModel &cm, IBlock *b) { cm(b); }
 
     void operator()(LeesEdwardsCollisionModel &cm, IBlock *b) {
-      cm.v_s_ = m_lees_edwards_callbacks->get_shear_velocity();
+      cm.v_s_ = static_cast<decltype(cm.v_s_)>(
+          m_lees_edwards_callbacks->get_shear_velocity());
       cm(b);
     }
     void register_lees_edwards_callbacks(
