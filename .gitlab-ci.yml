@@ -93,7 +93,7 @@ default:
     - docker
     - espresso
     - no-cuda
-    - numa-deactivated
+    - numa
 
 maxset:
   <<: *global_job_definition
@@ -135,7 +135,7 @@ maxset-walberla:
     - docker
     - espresso
     - no-cuda
-    - numa-deactivated
+    - numa
 
 maxset-walberla-avx:
   <<: *global_job_definition
@@ -156,7 +156,7 @@ maxset-walberla-avx:
     - docker
     - espresso
     - no-cuda
-    - numa-deactivated
+    - numa
   when: manual
 
 no_rotation:
@@ -194,7 +194,6 @@ ubuntu:wo-dependencies:
     - docker
     - espresso
     - no-cuda
-    - numa
 
 ### Builds with different distributions
 
@@ -213,7 +212,6 @@ debian:10:
     - docker
     - espresso
     - no-cuda
-    - numa
 
 fedora:34:
   <<: *global_job_definition
@@ -230,7 +228,6 @@ fedora:34:
     - docker
     - espresso
     - no-cuda
-    - numa
 
 ### Builds with CUDA
 
@@ -329,7 +326,7 @@ cuda10-maxset:
     - docker
     - espresso
     - cuda
-    - numa-deactivated
+    - numa
 
 tutorials-samples-maxset:
   <<: *global_job_definition
@@ -338,7 +335,7 @@ tutorials-samples-maxset:
      CC: 'gcc-8'
      CXX: 'g++-8'
      myconfig: 'maxset'
-     with_cuda: 'false'
+     with_cuda: 'true'
      with_coverage: 'false'
      with_coverage_python: 'true'
      with_scafacos: 'true'
@@ -355,8 +352,7 @@ tutorials-samples-maxset:
   tags:
     - docker
     - espresso
-    - no-cuda
-    - numa-deactivated
+    - cuda
 
 tutorials-samples-default:
   <<: *global_job_definition
@@ -380,7 +376,6 @@ tutorials-samples-default:
     - docker
     - espresso
     - cuda
-    - numa
   only:
     - schedules
 
@@ -407,7 +402,6 @@ tutorials-samples-empty:
     - docker
     - espresso
     - cuda
-    - numa
   only:
     - schedules
 
@@ -434,7 +428,6 @@ tutorials-samples-no-gpu:
     - docker
     - espresso
     - no-cuda
-    - numa
   only:
     - schedules
 
@@ -540,7 +533,7 @@ run_tutorials:
     - docker
     - espresso
     - cuda
-    - numa-deactivated
+    - numa
   only:
     - schedules
 
@@ -563,7 +556,7 @@ run_doxygen:
     - docker
     - espresso
     - no-cuda
-    - numa-deactivated
+    - numa
 
 maxset_no_gpu:
   <<: *global_job_definition
@@ -579,7 +572,7 @@ maxset_no_gpu:
     - docker
     - espresso
     - no-cuda
-    - numa-deactivated
+    - numa
 
 maxset_3_cores:
   <<: *global_job_definition
@@ -595,7 +588,7 @@ maxset_3_cores:
     - docker
     - espresso
     - cuda
-    - numa-deactivated
+    - numa
 
 status_success:
   <<: *notification_job_definition

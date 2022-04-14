@@ -110,6 +110,7 @@ set_default_value with_walberla false
 set_default_value with_stokesian_dynamics false
 set_default_value test_timeout 300
 set_default_value hide_gpu false
+set_default_value mpiexec_preflags ""
 
 if [ "${make_check_unit_tests}" = true ] || [ "${make_check_python}" = true ] || [ "${make_check_tutorials}" = true ] || [ "${make_check_samples}" = true ] || [ "${make_check_benchmarks}" = true ]; then
     run_checks=true
@@ -160,6 +161,11 @@ fi
 
 if [ "${with_walberla}" = true ]; then
   cmake_params="${cmake_params} -DWITH_WALBERLA=ON"
+  # disable default OpenMPI CPU binding mechanism to avoid stale references to
+  # waLBerla objects when multiple LB python tests run in parallel on NUMA archs
+  mpiexec_preflags="${mpiexec_preflags:+$mpiexec_preflags;}--bind-to;none"
+  # fix runtime warnings about "Read -1, expected 70560, errno = 1"
+  mpiexec_preflags="${mpiexec_preflags:+$mpiexec_preflags;}--mca;btl_vader_single_copy_mechanism;none"
 fi
 
 if [ "${with_coverage}" = true ]; then
@@ -187,6 +193,8 @@ if [ "${with_cuda}" = true ]; then
 else
     cmake_params="-DWITH_CUDA=OFF ${cmake_params}"
 fi
+
+cmake_params="${cmake_params} -DMPIEXEC_PREFLAGS=${mpiexec_preflags}"
 
 command -v nvidia-smi && nvidia-smi || true
 if [ "${hide_gpu}" = true ]; then
