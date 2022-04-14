@@ -260,7 +260,7 @@ of the LBM in analogy to the example for the CPU given in section
     system.integrator.run(100)
 
 :ref:`Lees-Edwards boundary conditions` (LEbc) are supported by both
-LB implementations, which follow the derivation in :cite:`wagner02`.
+LB implementations, which follow the derivation in :cite:`wagner02a`.
 Note, that there is no extra python interface for the use of LEbc
 with the LB algorithm: all the necessary information is internally
 derived from the currently active LEbc protocol in
