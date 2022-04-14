@@ -116,8 +116,10 @@ private:
       cm.v_s_ = m_lees_edwards_callbacks->get_shear_velocity();
       cm(b);
     }
-    void register_lees_edwards_callbacks(std::shared_ptr<LeesEdwardsPack> lees_edwards_callbacks) {
-      m_lees_edwards_callbacks = std::move(lees_edwards_callbacks);}
+    void register_lees_edwards_callbacks(
+        std::shared_ptr<LeesEdwardsPack> lees_edwards_callbacks) {
+      m_lees_edwards_callbacks = std::move(lees_edwards_callbacks);
+    }
 
   private:
     std::shared_ptr<LeesEdwardsPack> m_lees_edwards_callbacks;
@@ -517,7 +519,6 @@ public:
     if (m_kT != 0.) {
       throw std::runtime_error(
           "Lees-Edwards LB doesn't support thermalization");
-
     }
 
     auto const shear_direction = lees_edwards_pack->shear_direction;
