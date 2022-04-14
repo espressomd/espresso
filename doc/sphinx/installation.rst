@@ -265,9 +265,9 @@ command:
 
 .. code-block:: bash
 
-    ./pypresso <SCRIPT>
+    ./pypresso script.py
 
-where ``<SCRIPT>`` is a ``python`` script which has to
+where ``script.py`` is a ``python`` script which has to
 be written by the user. You can find some examples in the :file:`samples`
 folder of the source code directory. If you want to run in parallel, you should
 have compiled with *Open MPI*, and need to tell MPI to run in parallel. The actual
@@ -276,9 +276,9 @@ invocation is implementation dependent, but in many cases, such as
 
 .. code-block:: bash
 
-    mpirun -n <N> ./pypresso <SCRIPT>
+    mpirun -n 4 ./pypresso script.py
 
-where ``<N>`` is the number of processors to be used.
+where ``4`` is the number of processors to be used.
 
 
 .. _Features:

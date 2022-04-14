@@ -256,8 +256,8 @@ selects the regular decomposition cell scheme, using Verlet lists
 for the calculation of the interactions. If you specify ``use_verlet_lists=False``, only the
 regular decomposition is used, but not the Verlet lists. ::
 
+    import espressomd
     system = espressomd.System(box_l=[1, 1, 1])
-
     system.cell_system.set_regular_decomposition(use_verlet_lists=True)
 
 The regular decomposition cellsystem is the default system and suits most
@@ -285,6 +285,7 @@ particles, giving an unfavorable computation time scaling of
 interaction in the cell model require the calculation of all pair
 interactions. ::
 
+    import espressomd
     system = espressomd.System(box_l=[1, 1, 1])
     system.cell_system.set_n_square()
 
