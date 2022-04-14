@@ -12,7 +12,7 @@ It also includes modern and efficient algorithms for treatment of
 :ref:`electrostatics` (P3M, MMM-type algorithms, constant potential
 simulations, dielectric interfaces, …), hydrodynamic interactions
 (:ref:`DPD<Dissipative Particle Dynamics (DPD)>`, :ref:`Lattice-Boltzmann`),
-and :ref:`magnetic interactions<Magnetostatics / Dipolar interactions>`, only
+and :ref:`magnetic interactions<Magnetostatics>`, only
 to name a few.  It is designed to exploit the capabilities of parallel
 computational environments.  The program is being continuously extended to keep
 the pace with current developments both in the algorithms and software.
@@ -147,7 +147,7 @@ first step, an instance of this class needs to be created. ::
 
 Note that only one instance of the System class can be created due to
 limitations in the simulation core. :ref:`Properties of the System
-class<Setting global variables in Python>` are used to access the parameters
+class<Setting global variables>` are used to access the parameters
 concerning the simulation system such as box geometry, time step or :ref:`cell-system<Cellsystems>`: ::
 
     print(f"The box dimensions are {system.box_l}")

@@ -65,7 +65,7 @@ Cython
 .. _Installing requirements on Ubuntu Linux:
 
 Installing requirements on Ubuntu Linux
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To compile |es| on Ubuntu 20.04 LTS, install the following dependencies:
 
@@ -94,6 +94,8 @@ are required:
     jupyter nbextension enable rubberband/main
     jupyter nbextension enable exercise2/main
 
+.. _Nvidia GPU acceleration:
+
 Nvidia GPU acceleration
 """""""""""""""""""""""
 
@@ -113,7 +115,7 @@ or edit the system header files as shown in the following
 .. _Installing requirements on other Linux distributions:
 
 Installing requirements on other Linux distributions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Please refer to the following Dockerfiles to find the minimum set of packages
 required to compile |es| on other Linux distributions:
@@ -124,7 +126,7 @@ required to compile |es| on other Linux distributions:
 .. _Installing requirements on Windows via WSL:
 
 Installing requirements on Windows via WSL
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To run |es| on Windows, use the Linux subsystem. For that you need to
 
@@ -136,11 +138,10 @@ To run |es| on Windows, use the Linux subsystem. For that you need to
   to set up CUDA.
 * follow the instructions for :ref:`Installing requirements on Ubuntu Linux`
 
-
 .. _Installing requirements on Mac OS X:
 
 Installing requirements on Mac OS X
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Preparation
 """""""""""
@@ -302,7 +303,7 @@ activate ``FEATURE``, add the following line to the header file:
 .. _General features:
 
 General features
-^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~
 
 -  ``ELECTROSTATICS`` This enables the use of the various electrostatics algorithms, such as P3M.
 
@@ -321,7 +322,7 @@ General features
 
    .. seealso::
 
-       :ref:`Magnetostatics / Dipolar interactions`
+       :ref:`Magnetostatics`
        :ref:`Electrostatics`
 
 -  ``SCAFACOS_DIPOLES`` This activates magnetostatics methods of ScaFaCoS.
@@ -385,7 +386,7 @@ integrator or thermostat:
 .. _Fluid dynamics and fluid structure interaction:
 
 Fluid dynamics and fluid structure interaction
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -  ``DPD`` Enables the dissipative particle dynamics thermostat and interaction.
 
@@ -408,7 +409,7 @@ Fluid dynamics and fluid structure interaction
 .. _Interaction features:
 
 Interaction features
-^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~
 
 The following switches turn on various short ranged interactions (see
 section :ref:`Isotropic non-bonded interactions`):
@@ -458,7 +459,7 @@ Some of the short-range interactions have additional features:
 .. _Debug messages:
 
 Debug messages
-^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~
 
 Finally, there is a flag for debugging:
 
@@ -478,7 +479,7 @@ Finally, there is a flag for debugging:
 .. _External features:
 
 External features
-^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~
 
 External features cannot be added to the :file:`myconfig.hpp` file by the user.
 They are added by CMake if the corresponding dependency was found on the
@@ -510,7 +511,7 @@ Configuring
 .. _myconfig.hpp\: Activating and deactivating features:
 
 :file:`myconfig.hpp`: Activating and deactivating features
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 |es| has a large number of features that can be compiled into the binary.
 However, it is not recommended to actually compile in all possible
@@ -580,7 +581,7 @@ and then in the Python interpreter:
 .. _cmake:
 
 ``cmake``
-^^^^^^^^^
+~~~~~~~~~
 
 In order to build the first step is to create a build directory in which
 cmake can be executed. In cmake, the *source directory* (that contains
@@ -617,7 +618,7 @@ Afterwards |es| can be run via calling :file:`./pypresso` from the command line.
 .. _ccmake:
 
 ``ccmake``
-^^^^^^^^^^
+~~~~~~~~~~
 
 Optionally and for easier use, the curses interface to cmake can be used
 to configure |es| interactively.
@@ -648,7 +649,7 @@ Fig. :ref:`ccmake-figure` shows the interactive ccmake UI.
 .. _Options and Variables:
 
 Options and Variables
-^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~
 
 The behavior of |es| can be controlled by means of options and variables
 in the :file:`CMakeLists.txt` file. Also options are defined there. The following
@@ -724,7 +725,7 @@ it can be disabled by adding the ``-fp-model=strict`` flag.
 .. _Configuring without a network connection:
 
 Configuring without a network connection
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Several :ref:`external features <External features>` in |es| rely on
 external libraries that are downloaded automatically by CMake. When a

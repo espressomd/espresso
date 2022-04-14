@@ -1,7 +1,7 @@
-.. _Magnetostatics / Dipolar interactions:
+.. _Magnetostatics:
 
-Magnetostatics / Dipolar interactions
-=====================================
+Magnetostatics
+==============
 
 .. _Dipolar interaction:
 

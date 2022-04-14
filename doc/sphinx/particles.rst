@@ -633,10 +633,10 @@ same time. Note that there is no real difference between ``v_swim`` and
 ``f_swim``, since the latter may always be chosen such that the same terminal
 velocity is achieved for a given friction coefficient.
 
-.. _Lattice-Boltzmann (LB) swimmers:
+.. _Lattice-Boltzmann swimmers:
 
-Lattice-Boltzmann (LB) swimmers
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Lattice-Boltzmann swimmers
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ::
 

@@ -14,7 +14,7 @@ User's Guide
     installation.rst
     system_setup.rst
     particles.rst
-    running.rst
+    integration.rst
     inter_non-bonded.rst
     inter_bonded.rst
     electrostatics.rst
@@ -39,16 +39,16 @@ Online resources
 * `Repository <https://github.com/espressomd/espresso>`_
 * `Wiki <https://github.com/espressomd/espresso/wiki>`_
 
-Python module documentation
-===========================
+Python modules
+--------------
 
 .. toctree::
-    :maxdepth: 3
+    :maxdepth: 1
 
     modules.rst
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`

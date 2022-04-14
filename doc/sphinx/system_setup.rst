@@ -3,10 +3,10 @@
 Setting up the system
 =====================
 
-.. _Setting global variables in Python:
+.. _Setting global variables:
 
-Setting global variables in Python
-----------------------------------
+Setting global variables
+------------------------
 
 The global variables in Python are controlled via the
 :class:`espressomd.system.System` class.
@@ -81,15 +81,20 @@ or by calling the corresponding ``get_state()`` methods like::
     gamma = system.thermostat.get_state()[0]['gamma']
     gamma_rot = system.thermostat.get_state()[0]['gamma_rotation']
 
+.. _Simulation box:
+
+Simulation box
+--------------
+
 .. _Boundary conditions:
 
 Boundary conditions
--------------------
+~~~~~~~~~~~~~~~~~~~
 
 .. _Periodic boundaries:
 
 Periodic boundaries
-~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^
 
 With periodic boundary conditions, particles interact with periodic
 images of all particles in the system. This is the default behavior.
@@ -125,7 +130,7 @@ Output:
 .. _Open boundaries:
 
 Open boundaries
-~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^
 
 With open boundaries, particles can leave the simulation box.
 What happens in this case depends on which algorithm is used.
@@ -155,7 +160,7 @@ Output:
 .. _Lees-Edwards boundary conditions:
 
 Lees--Edwards boundary conditions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Lees--Edwards boundary conditions (LEbc) are special periodic boundary
 conditions to simulate systems under shear stress :cite:`lees72a`.
@@ -209,7 +214,7 @@ is *not* zero.
 .. _Cellsystems:
 
 Cellsystems
------------
+~~~~~~~~~~~
 
 This section deals with the flexible particle data organization of |es|. Due
 to different needs of different algorithms, |es| is able to change the
@@ -220,7 +225,7 @@ refer to section :ref:`Internal particle organization`.
 .. _Global properties:
 
 Global properties
-~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^
 
 The properties of the cell system can be accessed via the system
 :class:`~espressomd.system.System.cell_system` attribute:
@@ -249,7 +254,7 @@ Details about the cell system can be obtained by
 .. _Regular decomposition:
 
 Regular decomposition
-~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^
 
 Invoking :py:meth:`~espressomd.cellsystem.CellSystem.set_regular_decomposition`
 selects the regular decomposition cell scheme, using Verlet lists
@@ -275,7 +280,7 @@ calculate all pair interactions.
 .. _N-squared:
 
 N-squared
-~~~~~~~~~
+^^^^^^^^^
 
 Invoking :py:meth:`~espressomd.cellsystem.CellSystem.set_n_square`
 selects the very primitive N-squared cellsystem, which calculates

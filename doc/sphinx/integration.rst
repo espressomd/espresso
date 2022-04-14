@@ -1,7 +1,7 @@
-.. _Running the simulation:
+.. _Integrators and thermostats:
 
-Running the simulation
-======================
+Integrators and thermostats
+===========================
 
 .. _Particle integration and propagation:
 
