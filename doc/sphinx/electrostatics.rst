@@ -33,7 +33,7 @@ Only one electrostatics method can be active at any time.
 
 Note that using the electrostatic interaction also requires assigning charges to
 the particles via the particle property
-:py:attr:`espressomd.particle_data.ParticleHandle.q`.
+:py:attr:`~espressomd.particle_data.ParticleHandle.q`.
 
 All solvers need a prefactor and a set of other required parameters.
 This example shows the general usage of the electrostatic method ``P3M``.

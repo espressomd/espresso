@@ -222,8 +222,8 @@ refer to section :ref:`Internal particle organization`.
 Global properties
 ~~~~~~~~~~~~~~~~~
 
-The properties of the cell system can be accessed by
-:class:`espressomd.system.System.cell_system`:
+The properties of the cell system can be accessed via the system
+:class:`~espressomd.system.System.cell_system` attribute:
 
 * :py:attr:`~espressomd.cellsystem.CellSystem.node_grid`
 
@@ -235,7 +235,8 @@ The properties of the cell system can be accessed by
 
   Skin for the Verlet list. This value has to be set, otherwise the simulation will not start.
 
-Details about the cell system can be obtained by :meth:`espressomd.system.System.cell_system.get_state() <espressomd.cellsystem.CellSystem.get_state>`:
+Details about the cell system can be obtained by
+:meth:`get_state() <espressomd.cellsystem.CellSystem.get_state>`:
 
 * ``cell_grid``       Dimension of the inner cell grid.
 * ``cell_size``       Box-length of a cell.
