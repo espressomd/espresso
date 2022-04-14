@@ -12,6 +12,7 @@ User's Guide
 
     introduction.rst
     installation.rst
+    running.rst
     system_setup.rst
     particles.rst
     integration.rst
