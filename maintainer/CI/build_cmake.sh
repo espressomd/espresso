@@ -194,7 +194,7 @@ else
     cmake_params="-DWITH_CUDA=OFF ${cmake_params}"
 fi
 
-cmake_params="${cmake_params} -DMPIEXEC_PREFLAGS=${mpiexec_preflags}"
+cmake_params="${cmake_params}${mpiexec_preflags:+ -DMPIEXEC_PREFLAGS=${mpiexec_preflags}}"
 
 command -v nvidia-smi && nvidia-smi || true
 if [ "${hide_gpu}" = true ]; then

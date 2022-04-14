@@ -128,7 +128,6 @@ maxset-walberla:
      with_scafacos: 'false'
      with_stokesian_dynamics: 'false'
      check_skip_long: 'true'
-     check_procs: '4'
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
@@ -148,7 +147,6 @@ maxset-walberla-avx:
      with_scafacos: 'false'
      with_stokesian_dynamics: 'false'
      check_skip_long: 'true'
-     check_procs: '4'
      cmake_params: '-DWALBERLA_USE_AVX=TRUE'
   script:
     - bash maintainer/CI/build_cmake.sh
