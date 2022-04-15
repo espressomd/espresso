@@ -93,32 +93,55 @@ An existing checkpoint can be loaded with::
     checkpoint.load()
 
 This will restore the state of the objects registered for checkpointing.
-The checkpointing instance itself will also be restored. I.e., the same variables will be registered for the next checkpoint and the same system signals will be caught as in the initial setup of the checkpointing.
+The checkpointing instance itself will also be restored. I.e., the same
+variables will be registered for the next checkpoint and the same system
+signals will be caught as in the initial setup of the checkpointing.
 
 Be aware of the following limitations:
 
-* Checkpointing makes use of the ``pickle`` python package. Objects will only be restored as far as they support pickling. This is the case for Python's basic data types, ``numpy`` arrays and many other objects. Still, pickling support cannot be taken for granted.
+* Checkpointing makes use of the ``pickle`` python package. Objects will only
+  be restored as far as they support pickling. This is the case for Python's
+  basic data types, ``numpy`` arrays and many other objects. Still, pickling
+  support cannot be taken for granted.
 
-* Pickling support of the :class:`espressomd.system.System` instance and contained objects such as bonded and non-bonded interactions and electrostatics methods. However, there are many more combinations of active interactions and algorithms than can be tested.
+* Pickling support of the :class:`espressomd.system.System` instance and
+  contained objects such as bonded and non-bonded interactions and
+  electrostatics methods. However, there are many more combinations
+  of active interactions and algorithms than can be tested.
 
 * Checkpointing only supports recursion on the head node. It is therefore
   impossible to checkpoint a :class:`espressomd.system.System` instance that
   contains LB boundaries, constraints, bonded interactions or auto-update
   accumulators, when the simulation is running with 2 or more MPI nodes.
 
-* The active actors, i.e., the content of ``system.actors``, are checkpointed. For lattice-Boltzmann fluids, this only includes the parameters such as the lattice constant (``agrid``). The actual flow field has to be saved separately with the lattice-Boltzmann specific methods
+* The active actors, i.e., the content of ``system.actors``, are checkpointed.
+  For lattice-Boltzmann fluids, this only includes the parameters such as the
+  lattice constant (``agrid``). The actual flow field has to be saved
+  separately with the lattice-Boltzmann specific methods
   :meth:`espressomd.lb.HydrodynamicInteraction.save_checkpoint`
-  and loaded via :meth:`espressomd.lb.HydrodynamicInteraction.load_checkpoint` after restoring the checkpoint.
+  and loaded via :meth:`espressomd.lb.HydrodynamicInteraction.load_checkpoint`
+  after restoring the checkpoint. See :ref:`LB checkpointing <Checkpointing LB>`
+  for more details. Likewise, the electrokinetic density and the species need to
+  be saved separately, as outlined in :ref:`EK checkpointing <Checkpointing EK>`.
 
-* References between Python objects are not maintained during checkpointing. For example, if an instance of a shape and an instance of a constraint containing the shape are checkpointed, these two objects are equal before checkpointing but independent copies which have the same parameters after restoring the checkpoint. Changing one will no longer affect the other.
+* References between Python objects are not maintained during checkpointing.
+  For example, if an instance of a shape and an instance of a constraint
+  containing the shape are checkpointed, these two objects are equal before
+  checkpointing but independent copies which have the same parameters after
+  restoring the checkpoint. Changing one will no longer affect the other.
 
-* The state of the cell system as well as the MPI node grid are checkpointed. Therefore, checkpoints can only be loaded, when the script runs on the same number of MPI ranks.
+* The state of the cell system as well as the MPI node grid are checkpointed.
+  Therefore, checkpoints can only be loaded, when the script runs on the same
+  number of MPI ranks.
 
 * Checkpoints are not compatible between different |es| versions.
 
-* Checkpoints may depend on the presence of other Python modules at specific versions. It may therefore not be possible to load a checkpoint in a different environment than where it was loaded.
+* Checkpoints may depend on the presence of other Python modules at specific
+  versions. It may therefore not be possible to load a checkpoint in a
+  different environment than where it was loaded.
 
-For additional methods of the checkpointing class, see :class:`espressomd.checkpointing.Checkpoint`.
+For additional methods of the checkpointing class, see
+:class:`espressomd.checkpointing.Checkpoint`.
 
 .. _Writing H5MD-files:
 

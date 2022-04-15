@@ -93,8 +93,8 @@ set up: ``agrid``, ``tau``, ``visc``, ``dens``. For the other parameters, the fo
 
 .. _Checkpointing LB:
 
-Checkpointing LB
-----------------
+Checkpointing
+-------------
 
 ::
 

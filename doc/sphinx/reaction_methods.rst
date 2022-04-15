@@ -3,18 +3,30 @@
 Reaction methods
 ================
 
-.. note::
-    The whole Reaction Ensemble module uses Monte Carlo moves which require
-    potential energies. Therefore the Reaction Ensemble requires support for
-    energy calculations for all active interactions in the simulation.
-    Please also note that Monte Carlo methods may create and delete
-    particles from the system. This process can invalidate particle ids,
-    in which case the particles are no longer numbered contiguously.
-    Particle slices returned by ``system.part`` are still iterable, but
-    the indices no longer match the particle ids. For improved performance,
-    you can set the type of invalidated particles with
-    :meth:`~espressomd.reaction_methods.ReactionAlgorithm.set_non_interacting_type`
-    in all Reaction Ensemble classes.
+This chapter describes methods for simulating chemical reaction equilibria
+using reactive particles. Chemical species are referred to by an integer value
+stored in the particle :attr:`~espressomd.particle_data.ParticleHandle.type`
+property. Chemical reactions take place by changing the value in the
+:attr:`~espressomd.particle_data.ParticleHandle.type` property via Monte Carlo
+moves using the potential energy of the system before and after the reaction
+:cite:`turner08a`.
+
+Please keep in mind the following remarks:
+
+* All reaction methods uses Monte Carlo moves which require potential energies.
+  Therefore reaction methods require support for energy calculations for all
+  active interactions in the simulation. Some algorithms do not support energy
+  calculation, e.g. :ref:`Coulomb P3M on GPU`.
+
+* When modeling reactions that do not conserve the number of particles, the
+  method has to create or delete particles from the system. This process can
+  invalidate particle ids, in which case the particles are no longer numbered
+  contiguously. Particle slices returned by ``system.part`` are still iterable,
+  but the indices no longer match the particle ids.
+
+* For improved performance, you can set the type of invalidated particles with
+  :meth:`~espressomd.reaction_methods.ReactionAlgorithm.set_non_interacting_type`
+  in all reaction method classes.
 
 Thermodynamic ensembles
 -----------------------
@@ -167,7 +179,7 @@ reaction ensemble transition probabilities.
 Constant pH
 ~~~~~~~~~~~
 
-As before in the Reaction Ensemble one can define multiple reactions (e.g. for an ampholytic system which contains an acid and a base) in one :class:`~espressomd.reaction_methods.ConstantpHEnsemble` instance:
+As before in the reaction ensemble, one can define multiple reactions (e.g. for an ampholytic system which contains an acid and a base) in one :class:`~espressomd.reaction_methods.ConstantpHEnsemble` instance:
 
 .. code-block:: python
 

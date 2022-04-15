@@ -234,6 +234,8 @@ Usage example::
     system.integrator.run(20)   # maximal number of steps
     system.integrator.set_vv()  # to switch back to velocity Verlet
 
+.. _Using a custom convergence criterion:
+
 Using a custom convergence criterion
 """"""""""""""""""""""""""""""""""""
 

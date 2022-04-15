@@ -127,6 +127,11 @@ does not work in combination with the electrostatic extensions
 :ref:`Dielectric interfaces with the ICC* algorithm <Dielectric interfaces with the ICC algorithm>`
 and :ref:`Electrostatic Layer Correction (ELC)`.
 
+The algorithm doesn't have kernels to compute energies, and will therefore
+contribute 0 to the long-range potential energy of the system. This can be
+an issue for other algorithms, such as :ref:`reaction methods <Reaction methods>`
+and :ref:`energy-based steepest descent <Using a custom convergence criterion>`.
+
 .. _Debye-Hückel potential:
 
 Debye-Hückel potential
