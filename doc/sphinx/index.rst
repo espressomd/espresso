@@ -23,10 +23,12 @@ User's Guide
     system_manipulation.rst
     constraints.rst
     lb.rst
+    ek.rst
     analysis.rst
     io.rst
     visualization.rst
     advanced_methods.rst
+    reaction_methods.rst
     under_the_hood.rst
     contributing.rst
     appendix.rst
