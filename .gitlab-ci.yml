@@ -10,6 +10,9 @@ stages:
   except:
     - staging.tmp
     - trying.tmp
+  before_script:
+    - git config --global --add safe.directory ${CI_PROJECT_DIR}
+    - git config --global --add safe.directory ${CI_PROJECT_DIR}/libs/h5xx
   timeout: 1h
   interruptible: true
 
@@ -17,6 +20,8 @@ stages:
   <<: *global_job_definition
   variables:
     GIT_SUBMODULE_STRATEGY: none
+  before_script:
+    - git config --global --add safe.directory ${CI_PROJECT_DIR}
   dependencies: []
   timeout: 40m
   interruptible: false
@@ -41,6 +46,7 @@ style:
   stage: prepare
   dependencies: []
   before_script:
+    - git config --global --add safe.directory ${CI_PROJECT_DIR}
     - git submodule deinit .
   script:
     - sh maintainer/CI/fix_style.sh
