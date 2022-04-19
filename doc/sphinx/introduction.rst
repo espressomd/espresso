@@ -608,8 +608,8 @@ guidelines:
 How to cite |es|
 ^^^^^^^^^^^^^^^^
 
-Please cite :cite:`weik19a` (BibTeX key ``weik19a`` in :file:`doc/bibliography.bib`)
-for |es| 4.0 and later, or :cite:`arnold13a` and :cite:`limbach06a`
+Please cite :cite:t:`weik19a` (BibTeX key ``weik19a`` in :file:`doc/bibliography.bib`)
+for |es| 4.0 and later, or both :cite:t:`arnold13a` and :cite:t:`limbach06a`
 (BibTeX keys ``arnold13a`` and ``limbach06a`` in :file:`doc/bibliography.bib`)
 for |es| 2.0 to 3.3. To find the version number, use the following command:
 
@@ -626,6 +626,8 @@ A complete citation would look like this:
     Simulations were carried out with ESPResSo 4.1[24] using the ICC\*
     algorithm[25].
 
+    | ____________
+
     | [24] F. Weik, R. Weeber, K. Szuttor *et al.* ESPResSo 4.0 -- an
       extensible software package for simulating soft matter systems.
       *Eur. Phys. J. Spec. Top.* **227**, 1789--1816 (2019).
@@ -639,10 +641,12 @@ You may also provide the patch level, when relevant. If you developed code
 for |es| and made it available in a publicly accessible repository, you
 should consider providing the corresponding URL, for example in a footnote:
 
-    The method was implemented for ESPResSo 4.1.4[24]. The full code is
-    available online\*.
+    The method was implemented for ESPResSo 4.1.4[24] and the source code is
+    available online\ :superscript:`note 1`.
 
-    | \* https://github.com/username/espresso/tree/implemented-algorithm
+    | ____________
+
+    | :superscript:`note 1` https://github.com/username/espresso/tree/implemented-algorithm
 
     | [24] F. Weik, R. Weeber, K. Szuttor *et al.* ESPResSo 4.0 -- an
       extensible software package for simulating soft matter systems.
