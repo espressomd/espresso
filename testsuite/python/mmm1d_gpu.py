@@ -26,6 +26,8 @@ import espressomd.electrostatics
 @utx.skipIfMissingGPU()
 class MMM1D_GPU_Test(mmm1d.ElectrostaticInteractionsTests, ut.TestCase):
 
+    allowed_error = 1e-4
+
     def setUp(self):
         self.MMM1D = espressomd.electrostatics.MMM1DGPU
         super().setUp()
