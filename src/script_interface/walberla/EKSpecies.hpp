@@ -7,8 +7,8 @@
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameter.hpp"
 
-#include "walberla_bridge/EKinWalberlaBase.hpp"
-#include "walberla_bridge/EKinWalberlaImpl.hpp"
+#include "walberla_bridge/electrokinetics/EKinWalberlaBase.hpp"
+#include "walberla_bridge/electrokinetics/EKinWalberlaImpl.hpp"
 
 #include "optional_reduction.hpp"
 

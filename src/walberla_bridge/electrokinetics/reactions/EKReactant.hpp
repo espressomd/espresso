@@ -20,7 +20,7 @@
 #ifndef ESPRESSO_SRC_WALBERLA_BRIDGE_EKREACTANT_HPP
 #define ESPRESSO_SRC_WALBERLA_BRIDGE_EKREACTANT_HPP
 
-#include "EKinWalberlaBase.hpp"
+#include "electrokinetics/EKinWalberlaBase.hpp"
 
 namespace walberla {
 

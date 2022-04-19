@@ -2,7 +2,7 @@
 #define ESPRESSO_EK_CONTAINER_HPP
 
 #include "EKContainer.hpp"
-#include "EKinWalberlaBase.hpp"
+#include "electrokinetics/EKinWalberlaBase.hpp"
 
 namespace EK {
 extern EKContainer<EKinWalberlaBase<double>> ek_container;
