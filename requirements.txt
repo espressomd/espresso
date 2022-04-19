@@ -33,4 +33,4 @@ astroid>=2.3.3
 isort>=4.3.4
 setuptools>=39.0.1
 pre-commit>=2.2.0
-cmake-format==0.6.11
+cmakelang==0.6.13
