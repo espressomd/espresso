@@ -263,8 +263,6 @@ public:
     if (get_diffusion() == 0.)
       return;
 
-    kernel_boundary_density();
-
     if (get_valency() != 0.) {
       if (potential_id == BlockDataID{}) {
         throw std::runtime_error("Walberla EK: electrostatic potential enabled "
@@ -301,6 +299,9 @@ public:
     kernel_continuity();
     // is not necessary when reactions are done
     //    ghost_communication();
+
+    // is this the expected behavior when reactions are included?
+    kernel_boundary_density();
 
     // Handle VTK writers
     integrate_vtk_writers();
