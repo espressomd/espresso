@@ -14,11 +14,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import espressomd
+import espressomd.lb
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
-import espressomd
-import espressomd.lb
 
 
 class SwimmerTest():
@@ -31,6 +32,7 @@ class SwimmerTest():
                  'kT': 0,
                  'tau': system.time_step}
     gamma = 0.3
+    n_nodes = system.cell_system.get_state()['n_nodes']
 
     def add_all_types_of_swimmers(
             self,
@@ -69,6 +71,7 @@ class SwimmerTest():
                                   "dipole_length": 0.8})
 
     def setUp(self):
+        self.set_cellsystem()
         self.lbf = self.lb_class(**self.LB_params)
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=self.gamma)
@@ -126,18 +129,24 @@ class SwimmerTest():
 
 
 @utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
-class SwimmerTestCPU(SwimmerTest, ut.TestCase):
+class SwimmerTestRegularCPU(SwimmerTest, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluid
     tol = 1e-10
 
+    def set_cellsystem(self):
+        self.system.cell_system.set_regular_decomposition()
+
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
-class SwimmerTestGPU(SwimmerTest, ut.TestCase):
+class SwimmerTestRegularGPU(SwimmerTest, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidGPU
     tol = 1e-5
+
+    def set_cellsystem(self):
+        self.system.cell_system.set_regular_decomposition()
 
 
 if __name__ == "__main__":

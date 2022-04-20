@@ -46,8 +46,10 @@ class Momentum(object):
     system = espressomd.System(box_l=[BOX_SIZE] * 3)
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.01
+    n_nodes = system.cell_system.get_state()['n_nodes']
 
     def setUp(self):
+        self.set_cellsystem()
         self.lbf = self.lb_class(**LB_PARAMS)
 
     def tearDown(self):
@@ -88,15 +90,21 @@ class Momentum(object):
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(['EXTERNAL_FORCES'])
-class LBGPUMomentum(Momentum, ut.TestCase):
+class TestLBGPUMomentumConservation(Momentum, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidGPU
 
+    def set_cellsystem(self):
+        self.system.cell_system.set_regular_decomposition()
+
 
 @utx.skipIfMissingFeatures(['EXTERNAL_FORCES'])
-class LBCPUMomentum(Momentum, ut.TestCase):
+class TestLBCPUMomentumConservation(Momentum, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluid
+
+    def set_cellsystem(self):
+        self.system.cell_system.set_regular_decomposition()
 
 
 if __name__ == "__main__":

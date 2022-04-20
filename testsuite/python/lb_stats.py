@@ -42,6 +42,7 @@ class TestLB:
     system.time_step = 0.01
     system.cell_system.skin = 1.0
     dof = 3.
+    n_nodes = system.cell_system.get_state()['n_nodes']
 
     def tearDown(self):
         self.system.actors.clear()
@@ -144,6 +145,7 @@ class TestLB:
 class TestLBCPU(TestLB, ut.TestCase):
 
     def setUp(self):
+        self.system.cell_system.set_regular_decomposition()
         self.lb_class = espressomd.lb.LBFluid
         self.params.update({"mom_prec": 1E-9, "mass_prec_per_node": 5E-8})
 
@@ -152,6 +154,7 @@ class TestLBCPU(TestLB, ut.TestCase):
 class TestLBGPU(TestLB, ut.TestCase):
 
     def setUp(self):
+        self.system.cell_system.set_regular_decomposition()
         self.lb_class = espressomd.lb.LBFluidGPU
         self.params.update({"mom_prec": 1E-3, "mass_prec_per_node": 1E-5})
 
