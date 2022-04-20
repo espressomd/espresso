@@ -190,7 +190,7 @@ cdef class System:
             self.cell_system = CellSystem()
             self.bond_breakage = BreakageSpecs()
             IF COLLISION_DETECTION == 1:
-                self.collision_detection = CollisionDetection()
+                self.collision_detection = CollisionDetection(mode="off")
             self.comfixed = ComFixed()
             self.constraints = Constraints()
             IF CUDA:
@@ -511,6 +511,4 @@ cdef class System:
 
         """
         check_type_or_throw_except(type, 1, int, "type must be 1 int")
-        number = number_of_particles_with_type(type)
-        handle_errors("")
-        return int(number)
+        return number_of_particles_with_type(type)

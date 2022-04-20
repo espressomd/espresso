@@ -26,7 +26,7 @@ import numpy as np
 import scipy.optimize
 
 import espressomd
-import espressomd.reaction_ensemble
+import espressomd.reaction_methods
 
 # System parameters
 #############################################################
@@ -81,8 +81,8 @@ for i in range(N0):
         system.part.add(pos=np.random.random(3) * system.box_l, type=type_B)
 
 # use an exclusion radius of 0 to simulate an ideal gas
-RE = espressomd.reaction_ensemble.ReactionEnsemble(
-    kT=1, exclusion_radius=0, seed=4)
+RE = espressomd.reaction_methods.ReactionEnsemble(
+    kT=1, exclusion_range=0, seed=4)
 
 
 RE.add_reaction(

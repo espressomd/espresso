@@ -93,11 +93,11 @@ act_min_dist = system.analysis.min_dist()
 i = 0
 while (system.analysis.min_dist() < min_dist or c1.min_dist()
        < min_dist or c2.min_dist() < min_dist) and i < minimize_n_times:
-    print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+    print(f"minimization: {system.analysis.energy()['total']:+.2e}")
     system.integrator.run(minimize_steps)
     i += 1
 
-print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+print(f"minimization: {system.analysis.energy()['total']:+.2e}")
 print()
 system.integrator.set_vv()
 

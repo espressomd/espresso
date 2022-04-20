@@ -110,11 +110,19 @@ public:
    * maximal size, a random element is removed before
    * putting the new one. */
   template <typename ValueRef> Value const *put(Key const &k, ValueRef &&v) {
+    auto check_for_k = true;
+
     /* If there already is a value for k, overwriting it
      * will not increase the size, so we don't have to
      * make room. */
-    if ((m_cache.size() >= m_max_size) && !has(k))
+    if ((m_cache.size() >= m_max_size) && !has(k)) {
       drop_random_element();
+      check_for_k = false;
+    }
+
+    if (check_for_k && has(k)) {
+      m_cache.erase(k);
+    }
 
     typename map_type::const_iterator it;
     std::tie(it, std::ignore) = m_cache.emplace(k, std::forward<ValueRef>(v));

@@ -36,8 +36,8 @@ class CoulombCloudWall(ut.TestCase):
     """
 
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    data = np.genfromtxt(tests_common.abspath(
-        "data/coulomb_cloud_wall_system.data"))
+    data = np.genfromtxt(tests_common.data_path(
+        "coulomb_cloud_wall_system.data"))
 
     tolerance = 1E-3
 

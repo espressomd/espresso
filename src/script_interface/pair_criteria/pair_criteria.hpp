@@ -47,7 +47,8 @@ public:
 
 class DistanceCriterion : public PairCriterion {
 public:
-  DistanceCriterion() : m_c(new ::PairCriteria::DistanceCriterion()) {
+  DistanceCriterion()
+      : m_c(std::make_shared<::PairCriteria::DistanceCriterion>()) {
     add_parameters(
         {{"cut_off",
           [this](Variant const &v) { m_c->set_cut_off(get_value<double>(v)); },
@@ -65,7 +66,7 @@ private:
 
 class EnergyCriterion : public PairCriterion {
 public:
-  EnergyCriterion() : m_c(new ::PairCriteria::EnergyCriterion()) {
+  EnergyCriterion() : m_c(std::make_shared<::PairCriteria::EnergyCriterion>()) {
     add_parameters(
         {{"cut_off",
           [this](Variant const &v) { m_c->set_cut_off(get_value<double>(v)); },
@@ -83,7 +84,7 @@ private:
 
 class BondCriterion : public PairCriterion {
 public:
-  BondCriterion() : m_c(new ::PairCriteria::BondCriterion()) {
+  BondCriterion() : m_c(std::make_shared<::PairCriteria::BondCriterion>()) {
     add_parameters(
         {{"bond_type",
           [this](Variant const &v) { m_c->set_bond_type(get_value<int>(v)); },

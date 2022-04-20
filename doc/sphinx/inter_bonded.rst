@@ -399,6 +399,9 @@ angle between the planes defined by the particle triples :math:`p_1`,
 Together with appropriate Lennard-Jones interactions, this potential can
 mimic a large number of atomic torsion potentials.
 
+Note that there is a singularity in the forces, but not in the energy, when
+:math:`\phi = 0` and :math:`\phi = \pi`.
+
 
 Tabulated dihedral potential
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -414,6 +417,8 @@ A tabulated dihedral interaction can be instantiated via
 The energy and force tables must be sampled from :math:`0` to :math:`2\pi`.
 For details of the interpolation, see :ref:`Tabulated interaction`.
 
+Note that there is a singularity in the forces, but not in the energy, when
+:math:`\phi = 0` and :math:`\phi = \pi`.
 
 .. _Immersed Boundary Method interactions:
 

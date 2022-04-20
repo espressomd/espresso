@@ -17,15 +17,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from libcpp.string cimport string
-from cython.operator cimport dereference
 cimport cpython.object
 import collections
 
 include "myconfig.pxi"
 from . import utils
-from .utils import is_valid_type
-from .utils cimport check_type_or_throw_except
-from .script_interface import ScriptObjectRegistry, ScriptInterfaceHelper, script_interface_register
+from .script_interface import ScriptObjectMap, ScriptInterfaceHelper, script_interface_register
 
 
 cdef class NonBondedInteraction:
@@ -48,8 +45,8 @@ cdef class NonBondedInteraction:
         if self.user_interactions is None:
             self.user_interactions = {}
         # Interaction id as argument
-        if len(args) == 2 and is_valid_type(
-                args[0], int) and is_valid_type(args[1], int):
+        if len(args) == 2 and utils.is_valid_type(
+                args[0], int) and utils.is_valid_type(args[1], int):
             self._part_types = args
 
             # Load the parameters currently set in the ESPResSo core
@@ -73,9 +70,7 @@ cdef class NonBondedInteraction:
 
         """
         temp_params = self._get_params_from_es_core()
-        if self._params != temp_params:
-            return False
-        return True
+        return self._params == temp_params
 
     def get_params(self):
         """Get interaction parameters.
@@ -116,14 +111,15 @@ cdef class NonBondedInteraction:
 
         # If this instance refers to an interaction defined in the ESPResSo core,
         # load the parameters from there
+        is_valid_ia = self._part_types[0] >= 0 and self._part_types[1] >= 0
 
-        if self._part_types[0] >= 0 and self._part_types[1] >= 0:
+        if is_valid_ia:
             self._params = self._get_params_from_es_core()
 
         # Put in values given by the user
         self._params.update(p)
 
-        if self._part_types[0] >= 0 and self._part_types[1] >= 0:
+        if is_valid_ia:
             self._set_params_in_es_core()
 
         # update interaction dict when user sets interaction
@@ -136,6 +132,10 @@ cdef class NonBondedInteraction:
                 self._part_types[1]][p_key] = new_params[p_key]
         self.user_interactions[self._part_types[0]][
             self._part_types[1]]['type_name'] = self.type_name()
+
+        # defer exception (core and interface must always agree on parameters)
+        if is_valid_ia:
+            utils.handle_errors(f'setting {self.type_name()} raised an error')
 
     def validate_params(self):
         """Check that parameters are valid.
@@ -1567,7 +1567,8 @@ class NonBondedInteractionHandle:
     thole = None
 
     def __init__(self, _type1, _type2):
-        if not (is_valid_type(_type1, int) and is_valid_type(_type2, int)):
+        if not (utils.is_valid_type(_type1, int)
+                and utils.is_valid_type(_type2, int)):
             raise TypeError("The particle types have to be of type integer.")
         self.type1 = _type1
         self.type2 = _type2
@@ -1623,8 +1624,8 @@ cdef class NonBondedInteractions:
         if not isinstance(key, tuple):
             raise ValueError(
                 "NonBondedInteractions[] expects two particle types as indices.")
-        if len(key) != 2 or (not is_valid_type(key[0], int)) or (
-                not is_valid_type(key[1], int)):
+        if len(key) != 2 or (not utils.is_valid_type(key[0], int)) or (
+                not utils.is_valid_type(key[1], int)):
             raise ValueError(
                 "NonBondedInteractions[] expects two particle types as indices.")
         return NonBondedInteractionHandle(key[0], key[1])
@@ -1667,7 +1668,7 @@ class BondedInteraction(ScriptInterfaceHelper):
             args = []
 
         if not 'sip' in kwargs:
-            if len(args) == 1 and is_valid_type(args[0], int):
+            if len(args) == 1 and utils.is_valid_type(args[0], int):
                 # create a new script interface object for a bond that already
                 # exists in the core via bond_id (checkpointing constructor #1)
                 bond_id = args[0]
@@ -2011,7 +2012,7 @@ class ThermalizedBond(BondedInteraction):
 
     def validate_params(self, params):
         if params["seed"] is not None:
-            check_type_or_throw_except(
+            utils.check_type_or_throw_except(
                 params["seed"], 1, int, "seed must be a positive integer")
             if params["seed"] < 0:
                 raise ValueError("seed must be a positive integer")
@@ -2156,7 +2157,7 @@ class Dihedral(BondedInteraction):
 
         """
         if params["mult"] is not None:
-            check_type_or_throw_except(
+            utils.check_type_or_throw_except(
                 params["mult"], 1, int, "mult must be a positive integer")
 
     def get_default_params(self):
@@ -2850,13 +2851,27 @@ def get_bonded_interaction_type_from_es_core(bond_id):
 
 
 @script_interface_register
-class BondedInteractions(ScriptObjectRegistry):
+class BondedInteractions(ScriptObjectMap):
 
     """
     Represents the bonded interactions list.
 
     Individual interactions can be accessed using ``BondedInteractions[i]``,
     where ``i`` is the bond id.
+
+    Methods
+    -------
+    remove():
+        Remove a bond from the list.
+        This is a no-op if the bond does not exist.
+
+        Parameters
+        ----------
+        bond_id : :obj:`int`
+
+    clear()
+        Remove all bonds.
+
     """
 
     _so_name = "Interactions::BondedInteractions"
@@ -2880,36 +2895,11 @@ class BondedInteractions(ScriptObjectRegistry):
             bonded_ia = args[0]
         else:
             raise TypeError("A BondedInteraction object needs to be passed.")
-        bond_id = self._insert_bond(bonded_ia)
+        bond_id = self._insert_bond(None, bonded_ia)
         return bond_id
 
-    def remove(self, bond_id):
-        """
-        Remove a bond from the list. This is a noop if the bond does not exist.
-
-        Parameters
-        ----------
-        bond_id : :obj:`int`
-
-        """
-        # type of key must be int
-        if not is_valid_type(bond_id, int):
-            raise ValueError(
-                "Index to BondedInteractions[] has to be an integer referring to a bond id")
-
-        self.call_method("erase", key=bond_id)
-
-    def clear(self):
-        """
-        Remove all bonds.
-
-        """
-        self.call_method("clear")
-
-    def _get_bond(self, bond_id):
-        if not is_valid_type(bond_id, int):
-            raise ValueError(
-                "Index to BondedInteractions[] has to be an integer referring to a bond id")
+    def __getitem__(self, bond_id):
+        self._assert_key_type(bond_id)
 
         if self.call_method('has_bond', bond_id=bond_id):
             bond_obj = self.call_method('get_bond', bond_id=bond_id)
@@ -2930,16 +2920,10 @@ class BondedInteractions(ScriptObjectRegistry):
         # which links to the bonded interaction object
         return bond_class(bond_id)
 
-    def __getitem__(self, bond_id):
-        return self._get_bond(bond_id)
+    def __setitem__(self, bond_id, bond_obj):
+        self._insert_bond(bond_id, bond_obj)
 
-    def __setitem__(self, bond_id, value):
-        self._insert_bond(value, bond_id)
-
-    def __delitem__(self, bond_id):
-        self.remove(bond_id)
-
-    def _insert_bond(self, bond, bond_id=None):
+    def _insert_bond(self, bond_id, bond_obj):
         """
         Inserts a new bond. If a ``bond_id`` is given, the bond is inserted at
         that id. If no id is given, a new id is generated.
@@ -2950,29 +2934,26 @@ class BondedInteractions(ScriptObjectRegistry):
         """
 
         # Validate arguments
-        if bond_id is not None:
-            if not is_valid_type(bond_id, int):
-                raise ValueError(
-                    "Index to BondedInteractions[] has to be an integer referring to a bond id")
-        if not isinstance(bond, BondedInteraction):
+        if not isinstance(bond_obj, BondedInteraction):
             raise ValueError(
                 "Only subclasses of BondedInteraction can be assigned.")
 
         # Send the script interface object pointer to the core
         if bond_id is None:
-            bond_id = self.call_method("insert", object=bond)
+            bond_id = self.call_method("insert", object=bond_obj)
         else:
             # Throw error if attempting to overwrite a bond of different type
+            self._assert_key_type(bond_id)
             if self.call_method("contains", key=bond_id):
                 old_type = bonded_interaction_classes[
                     get_bonded_interaction_type_from_es_core(bond_id)]
-                if not type(bond) is old_type:
+                if not type(bond_obj) is old_type:
                     raise ValueError(
                         "Bonds can only be overwritten by bonds of equal type.")
-            self.call_method("insert", key=bond_id, object=bond)
+            self.call_method("insert", key=bond_id, object=bond_obj)
 
         # Save the bond id in the BondedInteraction instance
-        bond._bond_id = bond_id
+        bond_obj._bond_id = bond_id
 
         return bond_id
 
@@ -2984,11 +2965,6 @@ class BondedInteractions(ScriptObjectRegistry):
         for bond_id in self.call_method('get_bond_ids'):
             if get_bonded_interaction_type_from_es_core(bond_id):
                 yield self[bond_id]
-
-    def __reduce__(self):
-        so_callback, (so_name, so_bytestring) = super().__reduce__()
-        return (_restore_bonded_interactions,
-                (so_callback, (so_name, so_bytestring), self.__getstate__()))
 
     def __getstate__(self):
         params = {}
@@ -3004,9 +2980,3 @@ class BondedInteractions(ScriptObjectRegistry):
         for bond_id, (bond_params, bond_type) in params.items():
             self[bond_id] = bonded_interaction_classes[bond_type](
                 **bond_params)
-
-
-def _restore_bonded_interactions(so_callback, so_callback_args, state):
-    so = so_callback(*so_callback_args)
-    so.__setstate__(state)
-    return so

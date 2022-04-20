@@ -27,6 +27,7 @@
 #include "config.hpp"
 
 #include <utils/Span.hpp>
+#include <utils/compact_vector.hpp>
 #include <utils/serialization/memcpy_archive.hpp>
 
 #include <boost/archive/text_iarchive.hpp>
@@ -65,12 +66,11 @@ BOOST_AUTO_TEST_CASE(serialization) {
   auto const bond_id = 5;
   auto const bond_partners = std::array<const int, 3>{{12, 13, 14}};
 
-  std::vector<int> el = {5, 6, 7, 8};
-
   p.id() = 15;
   p.bonds().insert({bond_id, bond_partners});
 #ifdef EXCLUSIONS
-  p.exclusions() = el;
+  std::vector<int> el = {5, 6, 7, 8};
+  p.exclusions() = Utils::compact_vector<int>{el.begin(), el.end()};
 #endif
 
   std::stringstream stream;
@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE(serialization) {
   BOOST_CHECK((*q.bonds().begin() == BondView{bond_id, bond_partners}));
 
 #ifdef EXCLUSIONS
-  BOOST_CHECK(q.exclusions() == el);
+  BOOST_CHECK(q.exclusions_as_vector() == el);
 #endif
 }
 
@@ -243,8 +243,6 @@ BOOST_AUTO_TEST_CASE(rattle_constructors) {
 }
 #endif // BOND_CONSTRAINT
 
-#ifdef EXTERNAL_FORCES
-#ifdef ROTATION
 BOOST_AUTO_TEST_CASE(particle_bitfields) {
   auto p = Particle();
 
@@ -255,24 +253,34 @@ BOOST_AUTO_TEST_CASE(particle_bitfields) {
   BOOST_CHECK(not p.can_rotate_around(1));
 
   // check setting of one axis
+#ifdef EXTERNAL_FORCES
   p.set_fixed_along(1, true);
-  p.set_can_rotate_around(1, true);
   BOOST_CHECK(p.is_fixed_along(1));
-  BOOST_CHECK(p.can_rotate_around(1));
   BOOST_CHECK(p.has_fixed_coordinates());
+#endif
+#ifdef ROTATION
+  p.set_can_rotate_around(1, true);
+  BOOST_CHECK(p.can_rotate_around(1));
   BOOST_CHECK(p.can_rotate());
+#endif
 
   // check that unsetting is properly registered
+#ifdef EXTERNAL_FORCES
   p.set_fixed_along(1, false);
-  p.set_can_rotate_around(1, false);
   BOOST_CHECK(not p.has_fixed_coordinates());
+#endif
+#ifdef ROTATION
+  p.set_can_rotate_around(1, false);
   BOOST_CHECK(not p.can_rotate());
+#endif
 
   // check setting of all flags at once
+#ifdef ROTATION
   p.set_can_rotate_all_axes();
   BOOST_CHECK(p.can_rotate_around(0));
   BOOST_CHECK(p.can_rotate_around(1));
   BOOST_CHECK(p.can_rotate_around(2));
+  p.set_cannot_rotate_all_axes();
+  BOOST_CHECK(not p.can_rotate());
+#endif
 }
-#endif // ROTATION
-#endif // EXTERNAL_FORCES

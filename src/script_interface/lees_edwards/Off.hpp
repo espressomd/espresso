@@ -31,7 +31,9 @@ namespace LeesEdwards {
 
 class Off : public Protocol {
 public:
-  Off() : m_protocol{new ::LeesEdwards::ActiveProtocol{::LeesEdwards::Off()}} {}
+  Off()
+      : m_protocol{std::make_shared<::LeesEdwards::ActiveProtocol>(
+            ::LeesEdwards::Off())} {}
   std::shared_ptr<::LeesEdwards::ActiveProtocol> protocol() override {
     return m_protocol;
   }

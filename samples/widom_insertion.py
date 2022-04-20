@@ -24,7 +24,7 @@ import numpy as np
 import argparse
 
 import espressomd
-import espressomd.reaction_ensemble
+import espressomd.reaction_methods
 import espressomd.electrostatics
 
 required_features = ["WCA", "P3M"]
@@ -102,7 +102,7 @@ system.integrator.set_vv()
 # activate thermostat
 system.thermostat.set_langevin(kT=temperature, gamma=1.0, seed=42)
 
-widom = espressomd.reaction_ensemble.WidomInsertion(
+widom = espressomd.reaction_methods.WidomInsertion(
     kT=temperature, seed=77)
 
 # add insertion reaction

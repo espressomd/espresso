@@ -15,8 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
+import unittest_generator as utg
 import numpy as np
-import os
+import pathlib
 
 import espressomd
 import espressomd.checkpointing
@@ -27,14 +28,15 @@ import espressomd.drude_helpers
 import espressomd.virtual_sites
 import espressomd.accumulators
 import espressomd.observables
+import espressomd.io.writer
 import espressomd.lb
 import espressomd.lbboundaries
 import espressomd.shapes
 import espressomd.constraints
 import espressomd.bond_breakage
 
-modes = {x for mode in set("@TEST_COMBINATION@".upper().split('-'))
-         for x in [mode, mode.split('.')[0]]}
+config = utg.TestGenerator()
+modes = config.get_modes()
 
 # use a box with 3 different dimensions, unless DipolarP3M is used
 system = espressomd.System(box_l=[12.0, 14.0, 16.0])
@@ -48,26 +50,25 @@ system.min_global_cut = 2.0
 system.max_oif_objects = 5
 
 # create checkpoint folder
-idx = "mycheckpoint_@TEST_COMBINATION@_@TEST_BINARY@".replace(".", "__")
 checkpoint = espressomd.checkpointing.Checkpoint(
-    checkpoint_id=idx, checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
+    **config.get_checkpoint_params())
+path_cpt_root = pathlib.Path(checkpoint.checkpoint_dir)
 
 # cleanup old checkpoint files
-if checkpoint.has_checkpoints():
-    for filepath in os.listdir(checkpoint.checkpoint_dir):
-        if filepath.endswith((".checkpoint", ".cpt")):
-            os.remove(os.path.join(checkpoint.checkpoint_dir, filepath))
+for filepath in path_cpt_root.iterdir():
+    filepath.unlink(missing_ok=True)
 
 n_nodes = system.cell_system.get_state()["n_nodes"]
 
-LB_implementation = None
+lbf_actor = None
 if 'LB.CPU' in modes:
-    LB_implementation = espressomd.lb.LBFluid
+    lbf_actor = espressomd.lb.LBFluid
 elif 'LB.GPU' in modes and espressomd.gpu_available():
-    LB_implementation = espressomd.lb.LBFluidGPU
-if LB_implementation:
-    lbf = LB_implementation(agrid=0.5, visc=1.3, dens=1.5, tau=0.01,
-                            gamma_odd=0.2, gamma_even=0.3)
+    lbf_actor = espressomd.lb.LBFluidGPU
+if lbf_actor:
+    lbf_cpt_mode = 0 if 'LB.ASCII' in modes else 1
+    lbf = lbf_actor(agrid=0.5, visc=1.3, dens=1.5, tau=0.01, gamma_odd=0.2,
+                    gamma_even=0.3)
     system.actors.add(lbf)
     if 'THERM.LB' in modes:
         system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)
@@ -96,8 +97,12 @@ if espressomd.has_features('EXCLUSIONS'):
 p3 = system.part.add(id=3, pos=system.box_l / 2.0 - 1.0, type=1)
 p4 = system.part.add(id=4, pos=system.box_l / 2.0 + 1.0, type=1)
 
-if espressomd.has_features('P3M') and 'P3M' in modes:
-    p3m = espressomd.electrostatics.P3M(
+if espressomd.has_features('P3M') and ('P3M' in modes or 'ELC' in modes):
+    if espressomd.gpu_available() and 'P3M.GPU' in modes:
+        ActorP3M = espressomd.electrostatics.P3MGPU
+    else:
+        ActorP3M = espressomd.electrostatics.P3M
+    p3m = ActorP3M(
         prefactor=1.0,
         accuracy=0.1,
         mesh=10,
@@ -106,9 +111,7 @@ if espressomd.has_features('P3M') and 'P3M' in modes:
         r_cut=1.0,
         timings=15,
         tune=False)
-    if 'P3M.CPU' in modes:
-        system.actors.add(p3m)
-    elif 'P3M.ELC' in modes:
+    if 'ELC' in modes:
         elc = espressomd.electrostatics.ELC(
             p3m_actor=p3m,
             gap_size=6.0,
@@ -116,6 +119,8 @@ if espressomd.has_features('P3M') and 'P3M' in modes:
             delta_mid_top=0.9,
             delta_mid_bot=0.1)
         system.actors.add(elc)
+    else:
+        system.actors.add(p3m)
 
 # accumulators
 obs = espressomd.observables.ParticlePositions(ids=[0, 1])
@@ -164,7 +169,7 @@ if n_nodes == 1:
         system.constraints.add(espressomd.constraints.ElectricPlaneWave(
             E0=[1., -2., 3.], k=[-.1, .2, .3], omega=5., phi=1.4))
 
-if 'LB.OFF' in modes:
+if 'LB' not in modes:
     # set thermostat
     if 'THERM.LANGEVIN' in modes:
         system.thermostat.set_langevin(kT=1.0, gamma=2.0, seed=42)
@@ -233,8 +238,19 @@ ibm_triel_bond = espressomd.interactions.IBM_Triel(
     ind1=p1.id, ind2=p2.id, ind3=p3.id, k1=1.1, k2=1.2, maxDist=1.6,
     elasticLaw="NeoHookean")
 break_spec = espressomd.bond_breakage.BreakageSpec(
-    breakage_length=5., action_type="revert_center_bond")
+    breakage_length=5., action_type="delete_bond")
 system.bond_breakage[strong_harmonic_bond._bond_id] = break_spec
+
+# h5md output
+if espressomd.has_features("H5MD"):
+    h5_units = espressomd.io.writer.h5md.UnitSystem(
+        time="ps", mass="u", length="m", charge="e")
+    h5 = espressomd.io.writer.h5md.H5md(
+        file_path=str(path_cpt_root / "test.h5"),
+        unit_system=h5_units)
+    h5.write()
+    h5.flush()
+    h5.close()
 
 checkpoint.register("system")
 checkpoint.register("acc_mean_variance")
@@ -244,6 +260,9 @@ checkpoint.register("ibm_volcons_bond")
 checkpoint.register("ibm_tribend_bond")
 checkpoint.register("ibm_triel_bond")
 checkpoint.register("break_spec")
+if espressomd.has_features("H5MD"):
+    checkpoint.register("h5")
+    checkpoint.register("h5_units")
 
 # calculate forces
 system.integrator.run(0)
@@ -296,7 +315,7 @@ if espressomd.has_features('SCAFACOS_DIPOLES') and 'SCAFACOS' in modes \
             "p2nfft_r_cut": "11",
             "p2nfft_alpha": "0.37"}))
 
-if LB_implementation:
+if lbf_actor:
     m = np.pi / 12
     nx = int(np.round(system.box_l[0] / lbf.get_params()["agrid"]))
     ny = int(np.round(system.box_l[1] / lbf.get_params()["agrid"]))
@@ -309,34 +328,33 @@ if LB_implementation:
         for j in range(ny):
             for k in range(nz):
                 lbf[i, j, k].population = grid_3D[i, j, k] * np.arange(1, 20)
-    cpt_mode = int("@TEST_BINARY@")
     # save LB checkpoint file
-    lbf_cpt_path = checkpoint.checkpoint_dir + "/lb.cpt"
-    lbf.save_checkpoint(lbf_cpt_path, cpt_mode)
+    lbf_cpt_path = path_cpt_root / "lb.cpt"
+    lbf.save_checkpoint(str(lbf_cpt_path), lbf_cpt_mode)
 
 # save checkpoint file
 checkpoint.save(0)
 
 
-class TestCheckpointLB(ut.TestCase):
+class TestCheckpoint(ut.TestCase):
 
     def test_checkpointing(self):
         '''
         Check for the presence of the checkpoint files.
         '''
-        self.assertTrue(os.path.isdir(checkpoint.checkpoint_dir),
+        self.assertTrue(path_cpt_root.is_dir(),
                         "checkpoint directory not created")
 
-        checkpoint_filepath = checkpoint.checkpoint_dir + "/0.checkpoint"
-        self.assertTrue(os.path.isfile(checkpoint_filepath),
+        checkpoint_filepath = path_cpt_root / "0.checkpoint"
+        self.assertTrue(checkpoint_filepath.is_file(),
                         "checkpoint file not created")
 
-        if LB_implementation:
-            self.assertTrue(os.path.isfile(lbf_cpt_path),
+        if lbf_actor:
+            self.assertTrue(lbf_cpt_path.is_file(),
                             "LB checkpoint file not created")
-            self.check_lb_checkpointing()
 
-    def check_lb_checkpointing(self):
+    @ut.skipIf(lbf_actor is None, "Skipping test due to missing mode.")
+    def test_lb_checkpointing_exceptions(self):
         '''
         Check the LB checkpointing exception mechanism. Write corrupted
         LB checkpoint files that will be tested in ``test_checkpoint.py``.
@@ -344,25 +362,23 @@ class TestCheckpointLB(ut.TestCase):
 
         # check exception mechanism
         with self.assertRaisesRegex(RuntimeError, 'could not open file'):
-            dirname, filename = os.path.split(lbf_cpt_path)
-            invalid_path = os.path.join(dirname, 'unknown_dir', filename)
-            lbf.save_checkpoint(invalid_path, cpt_mode)
+            invalid_path = lbf_cpt_path.parent / "unknown_dir" / "lb.cpt"
+            lbf.save_checkpoint(str(invalid_path), lbf_cpt_mode)
         system.actors.remove(lbf)
         with self.assertRaisesRegex(RuntimeError, 'one needs to have already initialized the LB fluid'):
-            lbf.load_checkpoint(lbf_cpt_path, cpt_mode)
+            lbf.load_checkpoint(str(lbf_cpt_path), lbf_cpt_mode)
 
         # read the valid LB checkpoint file
-        with open(lbf_cpt_path, "rb") as f:
-            lbf_cpt_str = f.read()
-        cpt_path = checkpoint.checkpoint_dir + "/lb{}.cpt"
+        lbf_cpt_data = lbf_cpt_path.read_bytes()
+        cpt_path = str(path_cpt_root / "lb") + "{}.cpt"
         # write checkpoint file with missing data
         with open(cpt_path.format("-missing-data"), "wb") as f:
-            f.write(lbf_cpt_str[:len(lbf_cpt_str) // 2])
+            f.write(lbf_cpt_data[:len(lbf_cpt_data) // 2])
         # write checkpoint file with extra data
         with open(cpt_path.format("-extra-data"), "wb") as f:
-            f.write(lbf_cpt_str + lbf_cpt_str[-8:])
-        if cpt_mode == 0:
-            boxsize, data = lbf_cpt_str.split(b"\n", 1)
+            f.write(lbf_cpt_data + lbf_cpt_data[-8:])
+        if lbf_cpt_mode == 0:
+            boxsize, data = lbf_cpt_data.split(b"\n", 1)
             # write checkpoint file with incorrectly formatted data
             with open(cpt_path.format("-wrong-format"), "wb") as f:
                 f.write(boxsize + b"\ntext string\n" + data)
@@ -372,4 +388,5 @@ class TestCheckpointLB(ut.TestCase):
 
 
 if __name__ == '__main__':
+    config.bind_test_class(TestCheckpoint)
     ut.main()

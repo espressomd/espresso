@@ -32,12 +32,14 @@
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
+#include "particle_node.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/math/quaternion.hpp>
 
 #include <cmath>
 #include <cstdio>
+#include <stdexcept>
 #include <tuple>
 
 namespace {
@@ -66,12 +68,10 @@ calculate_vs_relate_to_params(Particle const &p_current,
   if (dist > min_global_cut && n_nodes > 1) {
     runtimeErrorMsg()
         << "Warning: The distance between virtual and non-virtual particle ("
-        << dist << ") is\nlarger than the minimum global cutoff ("
-        << min_global_cut
-        << "). This may lead to incorrect simulations\nunder certain "
-           "conditions. Set the \"System()\" "
-           "class property \"min_global_cut\" to\nincrease the minimum "
-           "cutoff.\n";
+        << dist << ") is larger than the minimum global cutoff ("
+        << min_global_cut << "). This may lead to incorrect simulations under "
+        << "certain conditions. Adjust the property system.min_global_cut to "
+        << "increase the minimum cutoff.";
   }
 
   // Now, calculate the quaternions which specify the angle between
@@ -136,6 +136,9 @@ void local_vs_relate_to(Particle &p_current, Particle const &p_relate_to) {
 }
 
 void vs_relate_to(int part_num, int relate_to) {
+  if (part_num == relate_to) {
+    throw std::invalid_argument("A virtual site cannot relate to itself");
+  }
   // Get the data for the particle we act on and the one we want to relate
   // it to.
   auto const &p_current = get_particle_data(part_num);

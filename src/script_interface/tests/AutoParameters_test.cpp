@@ -52,16 +52,25 @@ BOOST_AUTO_TEST_CASE(basic) {
 }
 
 struct B : public A {
-  B(int i_, int j_, int k_) : A(i_, j_), k(k_) { add_parameters({{"k", k}}); }
+  B(int i_, int j_, int k_, int l_) : A(i_, j_), k(k_), l(l_) {
+    add_parameters({{"k", k}, {"i", l} /* override i accessor */});
+  }
   int k;
+  int l;
 };
 
 BOOST_AUTO_TEST_CASE(add_parameters) {
-  B b{1, 2, 3};
+  B b{1, 2, 3, 4};
+  A &a = b;
 
-  BOOST_CHECK(3 == boost::get<int>(b.get_parameter("k")));
+  BOOST_CHECK_EQUAL(a.i, 1);
+  BOOST_CHECK_EQUAL(b.i, 1);
+  BOOST_CHECK_EQUAL(boost::get<int>(b.get_parameter("j")), 2);
+  BOOST_CHECK_EQUAL(boost::get<int>(b.get_parameter("k")), 3);
+  BOOST_CHECK_EQUAL(boost::get<int>(b.get_parameter("i")), 4);
+  BOOST_CHECK_EQUAL(boost::get<int>(a.get_parameter("i")), 4);
   b.set_parameter("k", 12);
-  BOOST_CHECK(12 == boost::get<int>(b.get_parameter("k")));
+  BOOST_CHECK_EQUAL(boost::get<int>(b.get_parameter("k")), 12);
 }
 
 BOOST_AUTO_TEST_CASE(exceptions) {

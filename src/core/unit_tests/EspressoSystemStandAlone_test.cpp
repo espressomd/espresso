@@ -42,6 +42,7 @@ namespace utf = boost::unit_test;
 #include "nonbonded_interactions/lj.hpp"
 #include "observables/ParticleVelocities.hpp"
 #include "particle_data.hpp"
+#include "particle_node.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/index.hpp>
@@ -147,7 +148,6 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
     mpi_kill_particle_motion(0);
     for (int i = 0; i < 5; ++i) {
       set_particle_v(pid2, {static_cast<double>(i), 0., 0.});
-      auto const &p = get_particle_data(pid2);
 
       acc.update();
       auto const time_series = acc.time_series();
@@ -155,6 +155,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
 
       auto const acc_value = time_series.back();
       auto const obs_value = (*obs)();
+      auto const &p = get_particle_data(pid2);
       BOOST_TEST(obs_value == p.v(), boost::test_tools::per_element());
       BOOST_TEST(acc_value == p.v(), boost::test_tools::per_element());
     }

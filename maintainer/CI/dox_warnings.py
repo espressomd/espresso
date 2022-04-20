@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import re
-import os
+import pathlib
 
 # collect list of Doxygen warnings
 with open('doc/doxygen/warnings.log') as f:
@@ -38,7 +38,7 @@ if content:
     for line in content.strip().split('\n'):
         m = re.search(r'^(.+):(\d+):[\s\*]*([@\\]t?param).*\s(\S+)\s*$', line)
         filepath, lineno, paramtype, varname = m.groups()
-        ext = os.path.splitext(filepath)[1]
+        ext = pathlib.Path(filepath).suffix
         if ext.lower() not in source_code_ext:
             continue
         warning = (f'argument \'{varname}\' of {paramtype} has no description,'

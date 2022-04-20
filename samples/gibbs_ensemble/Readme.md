@@ -13,5 +13,8 @@ only allows one instance of a system in one process, the system is created using
 the `set_up_system()` function and initialized once the `run()` method in the
 `Client` class is called.
 
+As a side note: Do not trust the critical point too much as it is quite sensitive to
+the init values chosen for the fit.
+
 All equations are taken from Frenkel, Smit: *Understanding Molecular Simulation* 2002,
 doi:[10.1016/B978-0-12-267351-1.X5000-7](https://doi.org/10.1016/B978-0-12-267351-1.X5000-7).

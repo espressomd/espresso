@@ -29,7 +29,7 @@ from .analyze cimport max_seen_particle_type
 from copy import copy
 import collections
 import functools
-from .utils import nesting_level, array_locked, is_valid_type
+from .utils import nesting_level, array_locked, is_valid_type, handle_errors
 from .utils cimport make_array_locked, make_const_span, check_type_or_throw_except
 from .utils cimport Vector3i, Vector3d, Vector4d
 from .utils cimport make_Vector3d
@@ -103,7 +103,7 @@ cdef class ParticleHandle:
 
         def __get__(self):
             self.update_particle_data()
-            return self._id
+            return self.particle_data.identity()
 
     # The individual attributes of a particle are implemented as properties.
 
@@ -127,7 +127,7 @@ cdef class ParticleHandle:
 
         def __get__(self):
             self.update_particle_data()
-            return self.particle_data.p.type
+            return self.particle_data.type()
 
     # Particle MolId
     property mol_id:
@@ -154,7 +154,7 @@ cdef class ParticleHandle:
 
         def __get__(self):
             self.update_particle_data()
-            return self.particle_data.p.mol_id
+            return self.particle_data.mol_id()
 
     # Position
     property pos:
@@ -170,12 +170,11 @@ cdef class ParticleHandle:
                 raise ValueError("invalid particle position")
             check_type_or_throw_except(
                 _pos, 3, float, "Position must be 3 floats")
-            if place_particle(self._id, make_Vector3d(_pos)) == -1:
-                raise Exception("particle could not be set")
+            place_particle(self._id, make_Vector3d(_pos))
 
         def __get__(self):
             self.update_particle_data()
-            return make_array_locked(unfolded_position(< Vector3d > self.particle_data.r.p, < Vector3i > self.particle_data.l.i, box_geo.length()))
+            return make_array_locked(unfolded_position( < Vector3d > self.particle_data.pos(), < Vector3i > self.particle_data.image_box(), box_geo.length()))
 
     property pos_folded:
         """
@@ -213,7 +212,7 @@ cdef class ParticleHandle:
         def __get__(self):
             self.update_particle_data()
             return make_array_locked(folded_position(
-                Vector3d(self.particle_data.r.p), box_geo))
+                Vector3d(self.particle_data.pos()), box_geo))
 
     property image_box:
         """
@@ -225,32 +224,36 @@ cdef class ParticleHandle:
 
         def __get__(self):
             self.update_particle_data()
-            return array_locked([self.particle_data.l.i[0],
-                                 self.particle_data.l.i[1],
-                                 self.particle_data.l.i[2]])
+            return array_locked([self.particle_data.image_box()[0],
+                                 self.particle_data.image_box()[1],
+                                 self.particle_data.image_box()[2]])
 
     property lees_edwards_offset:
-        """Contains the accumulated Lees-Edwards offset to reconstruct
-           continuous trajectories.
+        """
+        The accumulated Lees-Edwards offset.
+        Can be used to reconstruct continuous trajectories.
+
+        offset : (3,) array_like of :obj:`float`
 
         """
 
         def __get__(self):
             self.update_particle_data()
-            return self.particle_data.l.lees_edwards_offset
+            return self.particle_data.lees_edwards_offset()
 
         def __set__(self, value):
             set_particle_lees_edwards_offset(self._id, value)
 
     property lees_edwards_flag:
-        """Contains the accumulated Lees-Edwards flag to indicate
-           if the particle crossed the upper or lower boundary.
+        """
+        The Lees-Edwards flag that indicate if the particle crossed
+        the upper or lower boundary.
 
         """
 
         def __get__(self):
             self.update_particle_data()
-            return self.particle_data.l.lees_edwards_flag
+            return self.particle_data.lees_edwards_flag()
 
     # Velocity
     property v:
@@ -271,7 +274,7 @@ cdef class ParticleHandle:
 
         def __get__(self):
             self.update_particle_data()
-            return make_array_locked(self.particle_data.m.v)
+            return make_array_locked(self.particle_data.v())
 
     # Force
     property f:
@@ -293,9 +296,8 @@ cdef class ParticleHandle:
 
         def __get__(self):
             self.update_particle_data()
-            return make_array_locked(self.particle_data.f.f)
+            return make_array_locked(self.particle_data.force())
 
-    # Bonds
     property bonds:
         """
         The bonds stored by this particle. Note that bonds are only stored by
@@ -322,7 +324,7 @@ cdef class ParticleHandle:
             # i.e., we delete all existing bonds
             delete_particle_bonds(self._id)
 
-            # Empty list? ony delete
+            # Empty list? only delete
             if _bonds:
                 nlvl = nesting_level(_bonds)
                 if nlvl == 1:  # Single item
@@ -336,7 +338,6 @@ cdef class ParticleHandle:
 
         def __get__(self):
             bonds = []
-
             part_bonds = get_particle_bonds(self._id)
             # Go through the bond list of the particle
             for part_bond in part_bonds:
@@ -375,12 +376,12 @@ cdef class ParticleHandle:
                     _mass, 1, float, "Mass has to be 1 float")
                 set_particle_mass(self._id, _mass)
             ELSE:
-                raise AttributeError("You are trying to set the particle mass \
-                                     but the mass feature is not compiled in.")
+                raise AttributeError("You are trying to set the particle mass "
+                                     "but the MASS feature is not compiled in.")
 
         def __get__(self):
             self.update_particle_data()
-            return self.particle_data.p.mass
+            return self.particle_data.mass()
 
     IF ROTATION:
         property omega_lab:
@@ -429,6 +430,8 @@ cdef class ParticleHandle:
                 cdef Quaternion[double] q
                 check_type_or_throw_except(
                     _q, 4, float, "Quaternions has to be 4 floats.")
+                if np.linalg.norm(_q) == 0.:
+                    raise ValueError("quaternion is zero")
                 for i in range(4):
                     q[i] = _q[i]
                 set_particle_quat(self._id, q)
@@ -436,7 +439,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
 
-                cdef Quaternion[double] q = get_particle_quat(self.particle_data)
+                cdef Quaternion[double] q = self.particle_data.quat()
                 return array_locked([q[0], q[1], q[2], q[3]])
 
         property director:
@@ -468,7 +471,7 @@ cdef class ParticleHandle:
 
             def __get__(self):
                 self.update_particle_data()
-                return make_array_locked(self.particle_data.r.calc_director())
+                return make_array_locked(self.particle_data.calc_director())
 
         property omega_body:
             """
@@ -491,9 +494,7 @@ cdef class ParticleHandle:
 
             def __get__(self):
                 self.update_particle_data()
-                cdef Vector3d omega_body
-                omega_body = get_particle_omega_body(self.particle_data)
-                return make_array_locked(omega_body)
+                return make_array_locked(self.particle_data.omega())
 
         property torque_lab:
             """
@@ -521,7 +522,7 @@ cdef class ParticleHandle:
                 self.update_particle_data()
                 cdef Vector3d torque_body
                 cdef Vector3d torque_space
-                torque_body = get_particle_torque_body(self.particle_data)
+                torque_body = self.particle_data.torque()
                 torque_space = convert_vector_body_to_space(
                     dereference(self.particle_data), torque_body)
 
@@ -536,7 +537,7 @@ cdef class ParticleHandle:
 
             Sets the diagonal elements of this particles rotational inertia
             tensor. These correspond with the inertial moments along the
-            coordinate axes in the particle’s co-rotating coordinate system.
+            coordinate axes in the particle's co-rotating coordinate system.
             When the particle's quaternions are set to ``[1, 0, 0, 0,]``, the
             co-rotating and the fixed (lab) frames are co-aligned.
 
@@ -553,8 +554,7 @@ cdef class ParticleHandle:
 
             def __get__(self):
                 self.update_particle_data()
-                return make_array_locked(
-                    get_particle_rotational_inertia(self.particle_data))
+                return make_array_locked(self.particle_data.rinertia())
 
     # Charge
     property q:
@@ -575,7 +575,7 @@ cdef class ParticleHandle:
 
         def __get__(self):
             self.update_particle_data()
-            return get_particle_q(self.particle_data)
+            return self.particle_data.q()
 
     IF LB_ELECTROHYDRODYNAMICS:
         property mu_E:
@@ -600,7 +600,7 @@ cdef class ParticleHandle:
 
             def __get__(self):
                 self.update_particle_data()
-                return make_array_locked(get_particle_mu_E(self.particle_data))
+                return make_array_locked(self.particle_data.mu_E())
 
     property virtual:
         """Virtual flag.
@@ -627,14 +627,8 @@ cdef class ParticleHandle:
                         "To make a particle virtual, VIRTUAL_SITES has to be defined in myconfig.hpp")
 
         def __get__(self):
-            # Note: the pointoer_to... mechanism doesn't work if virtual sites
-            # are not compiled in, because then, in the core, p.p.is_virtual
-            # is constexpr.
-            IF VIRTUAL_SITES:
-                self.update_particle_data()
-                return get_particle_virtual(self.particle_data)
-            ELSE:
-                return False
+            self.update_particle_data()
+            return self.particle_data.is_virtual()
 
     IF VIRTUAL_SITES_RELATIVE:
         property vs_quat:
@@ -653,6 +647,8 @@ cdef class ParticleHandle:
             def __set__(self, q):
                 check_type_or_throw_except(
                     q, 4, float, "vs_quat has to be an array-like of length 4")
+                if np.linalg.norm(q) == 0.:
+                    raise ValueError("quaternion is zero")
                 cdef Quaternion[double] _q
                 for i in range(4):
                     _q[i] = q[i]
@@ -691,6 +687,8 @@ cdef class ParticleHandle:
                     dist, 1, float, "The distance has to be given as a float.")
                 check_type_or_throw_except(
                     quat, 4, float, "The quaternion has to be given as a tuple of 4 floats.")
+                if np.linalg.norm(quat) == 0.:
+                    raise ValueError("quaternion is zero")
                 cdef Quaternion[double] q
                 for i in range(4):
                     q[i] = quat[i]
@@ -709,7 +707,7 @@ cdef class ParticleHandle:
         def vs_auto_relate_to(self, rel_to):
             """
             Setup this particle as virtual site relative to the particle
-            in argument ``rel_to``.
+            in argument ``rel_to``. A particle cannot relate to itself.
 
             Parameters
             -----------
@@ -724,6 +722,7 @@ cdef class ParticleHandle:
             check_type_or_throw_except(
                 rel_to, 1, int, "Argument of vs_auto_relate_to has to be of type ParticleHandle or int.")
             vs_relate_to(self._id, rel_to)
+            handle_errors('vs_auto_relate_to')
 
     IF DIPOLES:
         property dip:
@@ -765,7 +764,7 @@ cdef class ParticleHandle:
 
             def __get__(self):
                 self.update_particle_data()
-                return get_particle_dipm(self.particle_data)
+                return self.particle_data.dipm()
 
     IF EXTERNAL_FORCES:
         property ext_force:
@@ -787,7 +786,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 return make_array_locked(
-                    get_particle_ext_force(self.particle_data))
+                    self.particle_data.ext_force())
 
         property fix:
             """
@@ -843,8 +842,7 @@ cdef class ParticleHandle:
 
                 def __get__(self):
                     self.update_particle_data()
-                    return make_array_locked(
-                        get_particle_ext_torque(self.particle_data))
+                    return make_array_locked(self.particle_data.ext_torque())
 
     IF THERMOSTAT_PER_PARTICLE:
         IF PARTICLE_ANISOTROPY:
@@ -991,24 +989,26 @@ cdef class ParticleHandle:
     IF EXCLUSIONS:
         property exclusions:
             """
-            The exclusion list of particles where nonbonded interactions are ignored.
+            The exclusion list of particles where non-bonded interactions are ignored.
 
             .. note::
                 This needs the feature ``EXCLUSIONS``.
 
+            exclusions : (N,) array_like of :obj:`int`
+
             """
 
-            def __set__(self, _partners):
+            def __set__(self, partners):
                 # Delete all
                 for e in self.exclusions:
                     self.delete_exclusion(e)
 
-                nlvl = nesting_level(_partners)
+                nlvl = nesting_level(partners)
 
                 if nlvl == 0:  # Single item
-                    self.add_exclusion(_partners)
+                    self.add_exclusion(partners)
                 elif nlvl == 1:  # List of items
-                    for partner in _partners:
+                    for partner in partners:
                         self.add_exclusion(partner)
                 else:
                     raise ValueError(
@@ -1016,39 +1016,57 @@ cdef class ParticleHandle:
 
             def __get__(self):
                 self.update_particle_data()
-                return array_locked(self.particle_data.exclusions())
+                return array_locked(self.particle_data.exclusions_as_vector())
 
-        def add_exclusion(self, _partner):
+        def add_exclusion(self, partner):
             """
-            Excluding interaction with the given partner.
+            Exclude non-bonded interactions with the given partner.
+
+            .. note::
+                This needs the feature ``EXCLUSIONS``.
 
             Parameters
             -----------
-            _partner : :obj:`int`
-                partner
+            partner : :class:`~espressomd.particle_data.ParticleHandle` or :obj:`int`
+                Particle to exclude.
 
             """
-            if _partner in self.exclusions:
-                raise Exception(
-                    f"Exclusion id {_partner} already in exclusion list of particle {self._id}")
-
+            if isinstance(partner, ParticleHandle):
+                p_id = partner.id
+            else:
+                p_id = partner
             check_type_or_throw_except(
-                _partner, 1, int, "PID of partner has to be an int.")
-            if self._id == _partner:
-                raise Exception(
-                    "Cannot exclude of a particle with itself!\n"
-                    f"->particle id {self._id}, partner {_partner}.")
-            if change_exclusion(self._id, _partner, 0) == 1:
-                raise Exception(f"Particle with id {_partner} does not exist.")
+                p_id, 1, int, "Argument 'partner' has to be a ParticleHandle or int.")
+            self.update_particle_data()
+            if self.particle_data.has_exclusion(p_id):
+                raise RuntimeError(
+                    f"Particle with id {p_id} is already in exclusion list of particle with id {self._id}")
+            add_particle_exclusion(self._id, p_id)
 
-        def delete_exclusion(self, _partner):
+        def delete_exclusion(self, partner):
+            """
+            Remove exclusion of non-bonded interactions with the given partner.
+
+            .. note::
+                This needs the feature ``EXCLUSIONS``.
+
+            Parameters
+            -----------
+            partner : :class:`~espressomd.particle_data.ParticleHandle` or :obj:`int`
+                Particle to remove from exclusions.
+
+            """
+            if isinstance(partner, ParticleHandle):
+                p_id = partner.id
+            else:
+                p_id = partner
             check_type_or_throw_except(
-                _partner, 1, int, "PID of partner has to be an int.")
-            if _partner not in self.exclusions:
-                raise Exception(
-                    f"Particle with id {_partner} is not in exclusion list.")
-            if change_exclusion(self._id, _partner, 1) == 1:
-                raise Exception(f"Particle with id {_partner} does not exist.")
+                p_id, 1, int, "Argument 'partner' has to be a ParticleHandle or int.")
+            self.update_particle_data()
+            if not self.particle_data.has_exclusion(p_id):
+                raise RuntimeError(
+                    f"Particle with id {p_id} is not in exclusion list of particle with id {self._id}")
+            remove_particle_exclusion(self._id, p_id)
 
     IF ENGINE:
         property swimming:
@@ -1163,7 +1181,7 @@ cdef class ParticleHandle:
                 swim = {}
                 mode = "N/A"
                 cdef particle_parameters_swimming _swim
-                _swim = get_particle_swimming(self.particle_data)
+                _swim = self.particle_data.swimming()
 
                 if _swim.push_pull == -1:
                     mode = 'pusher'
@@ -1188,8 +1206,7 @@ cdef class ParticleHandle:
         espressomd.particle_data.ParticleList.clear
 
         """
-        if remove_particle(self._id):
-            raise Exception("Could not remove particle.")
+        remove_particle(self._id)
         del self
 
     def add_verified_bond(self, bond):
@@ -1212,7 +1229,6 @@ cdef class ParticleHandle:
         if self._id in bond[1:]:
             raise Exception(
                 f"Bond partners {bond[1:]} include the particle {self._id} itself.")
-
         add_particle_bond(self._id, make_const_span[int](bond_info, len(bond)))
 
     def delete_verified_bond(self, bond):
@@ -1263,30 +1279,25 @@ cdef class ParticleHandle:
                 "Bond needs to be a tuple or list containing bond type and partners.")
 
         bond = list(bond)
-
         # Bond type or numerical bond id
         if is_valid_type(bond[0], int):
             bond[0] = BondedInteractions()[bond[0]]
         elif not isinstance(bond[0], BondedInteraction):
             raise Exception(
                 f"1st element of Bond has to be of type BondedInteraction or int, got {type(bond[0])}.")
-
         # Check the bond is in the list of active bonded interactions
         if bond[0]._bond_id == -1:
             raise Exception(
                 "The bonded interaction has not yet been added to the list of active bonds in ESPResSo.")
-
         # Validity of the numeric id
         if not bonded_ia_params_zero_based_type(bond[0]._bond_id):
             raise ValueError(
                 f"The bond type {bond[0]._bond_id} does not exist.")
-
         # Number of partners
         expected_num_partners = bond[0].call_method('get_num_partners')
         if len(bond) - 1 != expected_num_partners:
             raise ValueError(
                 f"Bond {bond[0]} needs {expected_num_partners} partners.")
-
         # Type check on partners
         for i in range(1, len(bond)):
             if isinstance(bond[i], ParticleHandle):
@@ -1295,7 +1306,6 @@ cdef class ParticleHandle:
             elif not is_valid_type(bond[i], int):
                 raise ValueError(
                     "Bond partners have to be of type integer or ParticleHandle.")
-
         return tuple(bond)
 
     def add_bond(self, bond):
@@ -1333,7 +1343,6 @@ cdef class ParticleHandle:
         >>> p1.add_bond((0, p2))
 
         """
-
         _bond = self.normalize_and_check_bond_or_throw_exception(bond)
         if _bond in self.bonds:
             raise RuntimeError(
@@ -1758,86 +1767,83 @@ cdef class ParticleList:
         """
 
         # Did we get a dictionary
-        if len(args) == 1:
-            if hasattr(args[0], "__getitem__"):
-                P = args[0]
+        if len(args) == 1 and isinstance(
+                args[0], (dict, collections.OrderedDict)):
+            particles_dict = args[0]
         else:
-            if len(args) == 0 and len(kwargs.keys()) != 0:
-                P = kwargs
+            if len(args) == 0 and len(kwargs) != 0:
+                particles_dict = kwargs
             else:
                 raise ValueError(
                     "add() takes either a dictionary or a bunch of keyword args.")
 
         # Check for presence of pos attribute
-        if "pos" not in P:
+        if "pos" not in particles_dict:
             raise ValueError(
                 "pos attribute must be specified for new particle")
 
-        if len(np.array(P["pos"]).shape) == 2:
-            return self._place_new_particles(P)
+        if len(np.array(particles_dict["pos"]).shape) == 2:
+            return self._place_new_particles(particles_dict)
         else:
-            return self._place_new_particle(P)
+            return self._place_new_particle(particles_dict)
 
-    def _place_new_particle(self, P):
+    def _place_new_particle(self, p_dict):
         # Handling of particle id
-        if "id" not in P:
+        if "id" not in p_dict:
             # Generate particle id
-            P["id"] = get_maximal_particle_id() + 1
+            p_dict["id"] = get_maximal_particle_id() + 1
         else:
-            if particle_exists(P["id"]):
-                raise Exception(f"Particle {P['id']} already exists.")
+            if particle_exists(p_dict["id"]):
+                raise Exception(f"Particle {p_dict['id']} already exists.")
 
         # Prevent setting of contradicting attributes
         IF DIPOLES:
-            if 'dip' in P and 'dipm' in P:
+            if 'dip' in p_dict and 'dipm' in p_dict:
                 raise ValueError("Contradicting attributes: dip and dipm. Setting \
 dip is sufficient as the length of the vector defines the scalar dipole moment.")
             IF ROTATION:
-                if 'dip' in P and 'quat' in P:
+                if 'dip' in p_dict and 'quat' in p_dict:
                     raise ValueError("Contradicting attributes: dip and quat. \
 Setting dip overwrites the rotation of the particle around the dipole axis. \
 Set quat and scalar dipole moment (dipm) instead.")
 
         # The ParticleList can not be used yet, as the particle
         # doesn't yet exist. Hence, the setting of position has to be
-        # done here. the code is from the pos:property of ParticleHandle
+        # done here.
         check_type_or_throw_except(
-            P["pos"], 3, float, "Position must be 3 floats.")
-        if place_particle(P["id"], make_Vector3d(P["pos"])) == -1:
-            raise Exception("particle could not be set.")
+            p_dict["pos"], 3, float, "Position must be 3 floats.")
+        place_particle(p_dict["id"], make_Vector3d(p_dict["pos"]))
 
-        # Pos is taken care of
-        del P["pos"]
-        pid = P["id"]
-        del P["id"]
+        # position is taken care of
+        del p_dict["pos"]
+        pid = p_dict.pop("id")
 
-        if P != {}:
-            self.by_id(pid).update(P)
+        if p_dict != {}:
+            self.by_id(pid).update(p_dict)
 
         return self.by_id(pid)
 
-    def _place_new_particles(self, Ps):
+    def _place_new_particles(self, p_list_dict):
         # Check if all entries have the same length
-        n_parts = len(Ps["pos"])
-        if not all(np.shape(Ps[k]) and len(Ps[k]) == n_parts for k in Ps):
+        n_parts = len(p_list_dict["pos"])
+        if not all(np.array(v, dtype=object).shape and len(v) ==
+                   n_parts for v in p_list_dict.values()):
             raise ValueError(
                 "When adding several particles at once, all lists of attributes have to have the same size")
 
         # If particle ids haven't been provided, use free ones
         # beyond the highest existing one
-        if not "id" in Ps:
+        if "id" not in p_list_dict:
             first_id = get_maximal_particle_id() + 1
-            Ps["id"] = range(first_id, first_id + n_parts)
+            p_list_dict["id"] = range(first_id, first_id + n_parts)
 
         # Place the particles
         for i in range(n_parts):
-            P = {}
-            for k in Ps:
-                P[k] = Ps[k][i]
-            self._place_new_particle(P)
+            p_dict = {k: v[i] for k, v in p_list_dict.items()}
+            self._place_new_particle(p_dict)
 
         # Return slice of added particles
-        return self.by_ids(Ps["id"])
+        return self.by_ids(p_list_dict["id"])
 
     # Iteration over all existing particles
     def __iter__(self):

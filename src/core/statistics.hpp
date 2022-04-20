@@ -52,14 +52,15 @@ std::vector<int> nbhood(PartCfg &partCfg, const Utils::Vector3d &pos,
                         double r_catch, const Utils::Vector3i &planedims);
 
 /** Calculate minimal distance to point.
+ *  Note: Particle handles may be invalided!
  *  @param partCfg particle selection
- *  @param pos  point
+ *  @param pos  point (must be a copy to avoid use-after-free errors)
  *  @param pid  if a valid particle id, this particle is omitted from
  *              minimization (this is a good idea if @p pos is the
  *              position of a particle).
  *  @return the minimal distance of a particle to coordinates @p pos
  */
-double distto(PartCfg &partCfg, const Utils::Vector3d &pos, int pid = -1);
+double distto(PartCfg &partCfg, Utils::Vector3d pos, int pid = -1);
 
 /** Calculate the distribution of particles around others.
  *

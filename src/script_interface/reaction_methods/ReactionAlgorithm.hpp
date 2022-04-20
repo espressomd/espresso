@@ -29,6 +29,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace ScriptInterface {
@@ -56,19 +57,27 @@ public:
   virtual std::shared_ptr<::ReactionMethods::ReactionAlgorithm> RE() = 0;
 
   ReactionAlgorithm() {
-    add_parameters({
-        {"reactions", AutoParameter::read_only,
-         [this]() {
-           std::vector<Variant> out;
-           for (auto const &e : m_reactions) {
-             out.emplace_back(e);
-           }
-           return out;
-         }},
-        {"kT", AutoParameter::read_only, [this]() { return RE()->get_kT(); }},
-        {"exclusion_radius", AutoParameter::read_only,
-         [this]() { return RE()->get_exclusion_radius(); }},
-    });
+    add_parameters(
+        {{"reactions", AutoParameter::read_only,
+          [this]() {
+            std::vector<Variant> out;
+            for (auto const &e : m_reactions) {
+              out.emplace_back(e);
+            }
+            return out;
+          }},
+         {"kT", AutoParameter::read_only, [this]() { return RE()->get_kT(); }},
+         {"exclusion_range", AutoParameter::read_only,
+          [this]() { return RE()->get_exclusion_range(); }},
+         {"exclusion_radius_per_type",
+          [this](Variant const &v) {
+            RE()->set_exclusion_radius_per_type(
+                get_value<std::unordered_map<int, double>>(v));
+          },
+          [this]() {
+            return make_unordered_map_of_variants(
+                RE()->exclusion_radius_per_type);
+          }}});
   }
 
   Variant do_call_method(std::string const &name,

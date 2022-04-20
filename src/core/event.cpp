@@ -47,7 +47,7 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "partCfg_global.hpp"
-#include "particle_data.hpp"
+#include "particle_node.hpp"
 #include "thermostat.hpp"
 #include "virtual_sites.hpp"
 

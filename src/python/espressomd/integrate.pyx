@@ -18,8 +18,6 @@
 #
 from cpython.exc cimport PyErr_CheckSignals, PyErr_SetInterrupt
 include "myconfig.pxi"
-from .utils cimport check_type_or_throw_except
-from .utils import handle_errors
 from . import utils
 from . cimport integrate
 
@@ -209,12 +207,13 @@ cdef class Integrator:
             Reuse the forces from previous time step.
 
         """
-        check_type_or_throw_except(steps, 1, int, "steps must be an int")
-        assert steps >= 0, "steps has to be positive"
-        check_type_or_throw_except(
+        utils.check_type_or_throw_except(steps, 1, int, "steps must be an int")
+        utils.check_type_or_throw_except(
             recalc_forces, 1, bool, "recalc_forces has to be a bool")
-        check_type_or_throw_except(
+        utils.check_type_or_throw_except(
             reuse_forces, 1, bool, "reuse_forces has to be a bool")
+        if steps < 0:
+            raise ValueError("steps must be positive")
 
         _integrate(steps, recalc_forces, reuse_forces)
 
@@ -223,7 +222,7 @@ cdef class Integrator:
             integrate.set_py_interrupt = False
             PyErr_CheckSignals()
 
-        handle_errors("Encountered errors during integrate")
+        utils.handle_errors("Encountered errors during integrate")
 
 
 cdef class SteepestDescent(Integrator):
@@ -267,11 +266,11 @@ cdef class SteepestDescent(Integrator):
         return {"f_max", "gamma", "max_displacement"}
 
     def validate_params(self):
-        check_type_or_throw_except(
+        utils.check_type_or_throw_except(
             self._params["f_max"], 1, float, "f_max must be a float")
-        check_type_or_throw_except(
+        utils.check_type_or_throw_except(
             self._params["gamma"], 1, float, "gamma must be a float")
-        check_type_or_throw_except(
+        utils.check_type_or_throw_except(
             self._params["max_displacement"], 1, float, "max_displacement must be a float")
 
     def _set_params_in_es_core(self):
@@ -294,12 +293,12 @@ cdef class SteepestDescent(Integrator):
             Number of integrated steps.
 
         """
-        check_type_or_throw_except(steps, 1, int, "steps must be an int")
+        utils.check_type_or_throw_except(steps, 1, int, "steps must be an int")
         assert steps >= 0, "steps has to be positive"
 
         integrated = mpi_steepest_descent(steps)
 
-        handle_errors("Encountered errors during integrate")
+        utils.handle_errors("Encountered errors during integrate")
 
         return integrated
 
@@ -370,13 +369,13 @@ IF NPT:
             return {"ext_pressure", "piston"}
 
         def validate_params(self):
-            check_type_or_throw_except(
+            utils.check_type_or_throw_except(
                 self._params["ext_pressure"], 1, float, "ext_pressure must be a float")
-            check_type_or_throw_except(
+            utils.check_type_or_throw_except(
                 self._params["piston"], 1, float, "piston must be a float")
-            check_type_or_throw_except(
+            utils.check_type_or_throw_except(
                 self._params["direction"], 3, bool, "direction must be an array-like of 3 bools")
-            check_type_or_throw_except(
+            utils.check_type_or_throw_except(
                 self._params["cubic_box"], 1, int, "cubic_box must be a bool")
 
         def _set_params_in_es_core(self):
@@ -462,29 +461,29 @@ IF STOKESIAN_DYNAMICS:
             return {"radii", "viscosity"}
 
         def validate_params(self):
-            check_type_or_throw_except(
+            utils.check_type_or_throw_except(
                 self._params["viscosity"], 1, float,
                 "viscosity must be a number")
-            check_type_or_throw_except(
+            utils.check_type_or_throw_except(
                 self._params["radii"], 1, dict,
                 "radii must be a dictionary")
-            check_type_or_throw_except(
+            utils.check_type_or_throw_except(
                 self._params["lubrication"], 1, bool,
                 "lubrication must be a bool")
             if self._params["lubrication"]:
                 raise NotImplementedError(
                     "Stokesian Dynamics lubrication is not available yet")
-            check_type_or_throw_except(
+            utils.check_type_or_throw_except(
                 self._params["approximation_method"], 1, str,
                 "approximation_method must be a string")
             if self._params["approximation_method"].lower() not in {
                     "ft", "fts"}:
                 raise ValueError(
                     "approximation_method must be either 'ft' or 'fts'")
-            check_type_or_throw_except(
+            utils.check_type_or_throw_except(
                 self._params["self_mobility"], 1, bool,
                 "self_mobility must be a bool")
-            check_type_or_throw_except(
+            utils.check_type_or_throw_except(
                 self._params["pair_mobility"], 1, bool,
                 "pair_mobility must be a bool")
 

@@ -31,6 +31,7 @@
 #include "EspressoSystemStandAlone.hpp"
 #include "communication.hpp"
 #include "particle_data.hpp"
+#include "particle_node.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -46,7 +47,6 @@ namespace espresso {
 // ESPResSo system instance
 std::unique_ptr<EspressoSystemStandAlone> system;
 } // namespace espresso
-
 // Check the Monte Carlo algorithm where moves depend on the system
 // configuration and energy.
 BOOST_AUTO_TEST_CASE(ReactionEnsemble_test) {
@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE(ReactionEnsemble_test) {
 
   // check basic interface
   {
-    ReactionEnsembleTest r_algo(42, 20., 0.);
+    ReactionEnsembleTest r_algo(42, 20., 0., {});
     r_algo.set_volume(10.);
 
     // exception if no reaction was added
@@ -97,7 +97,7 @@ BOOST_AUTO_TEST_CASE(ReactionEnsemble_test) {
 
   // check that the system energy is updated after a succesful reaction
   {
-    ReactionEnsembleTest test_reaction(42, 1., 0.);
+    ReactionEnsembleTest test_reaction(42, 1., 0., {});
     test_reaction.set_volume(1.);
 
     // create a generic identity exchange reaction D <-> E

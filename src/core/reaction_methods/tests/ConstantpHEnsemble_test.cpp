@@ -29,7 +29,6 @@
 #include "reaction_methods/utils.hpp"
 
 #include "communication.hpp"
-#include "particle_data.hpp"
 
 #include <boost/mpi.hpp>
 
@@ -50,7 +49,7 @@ BOOST_AUTO_TEST_CASE(ConstantpHEnsemble_test) {
   };
   constexpr double tol = 100 * std::numeric_limits<double>::epsilon();
 
-  ConstantpHEnsembleTest r_algo(42, 20., 0., 1.);
+  ConstantpHEnsembleTest r_algo(42, 20., 0., 1., {});
 
   // exception if no reaction was added
   BOOST_CHECK_THROW(r_algo.check_reaction_method(), std::runtime_error);

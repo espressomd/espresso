@@ -28,7 +28,7 @@ import random
 @utx.skipIfMissingFeatures("COLLISION_DETECTION")
 class CollisionDetection(ut.TestCase):
 
-    """Tests interface and functionality of the collision detection / dynamic binding"""
+    """Tests functionality of the collision detection / dynamic binding"""
 
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     np.random.seed(seed=42)
@@ -57,24 +57,6 @@ class CollisionDetection(ut.TestCase):
         state = self.system.collision_detection.get_params()
         self.system.collision_detection.set_params(**state)
         self.assertEqual(state, self.system.collision_detection.get_params())
-
-    def test_00_interface_and_defaults(self):
-        # Is it off by default
-        self.assertEqual(self.system.collision_detection.mode, "off")
-
-        # Make sure params cannot be set individually
-        with self.assertRaises(Exception):
-            self.system.collision_detection.mode = "bind_centers"
-
-        # Verify exception throwing for unknown collision modes
-        for unknown_mode in (0, "unknown"):
-            with self.assertRaisesRegex(Exception, "Mode not handled"):
-                self.system.collision_detection.set_params(mode=unknown_mode)
-        self.assertIsNone(self.system.collision_detection.call_method("none"))
-
-        # That should work
-        self.system.collision_detection.set_params(mode="off")
-        self.assertEqual(self.system.collision_detection.mode, "off")
 
     def test_bind_centers(self):
         system = self.system
@@ -356,7 +338,12 @@ class CollisionDetection(ut.TestCase):
         expected_np = 3 * len(positions) + 1
 
         system.collision_detection.set_params(
-            mode="glue_to_surface", distance=0.11, distance_glued_particle_to_vs=0.02, bond_centers=self.H, bond_vs=self.H2, part_type_vs=self.part_type_vs, part_type_to_attach_vs_to=self.part_type_to_attach_vs_to, part_type_to_be_glued=self.part_type_to_be_glued, part_type_after_glueing=self.part_type_after_glueing)
+            mode="glue_to_surface", distance=0.11,
+            distance_glued_particle_to_vs=0.02, bond_centers=self.H,
+            bond_vs=self.H2, part_type_vs=self.part_type_vs,
+            part_type_to_attach_vs_to=self.part_type_to_attach_vs_to,
+            part_type_to_be_glued=self.part_type_to_be_glued,
+            part_type_after_glueing=self.part_type_after_glueing)
         self.get_state_set_state_consistency()
         system.integrator.run(1, recalc_forces=True)
         self.verify_state_after_glue_to_surface(expected_np)
@@ -720,16 +707,6 @@ class CollisionDetection(ut.TestCase):
         expected_angle_bonds = sorted(expected_angle_bonds)
         self.assertEqual(found_pairs, expected_pairs)
         self.assertEqual(found_angle_bonds, expected_angle_bonds)
-
-    def test_zz_serialization(self):
-        self.system.collision_detection.set_params(
-            mode="bind_centers", distance=0.11, bond_centers=self.H)
-        reduce = self.system.collision_detection.__reduce__()
-        res = reduce[0](reduce[1][0])
-        self.assertEqual(res.__class__.__name__, "CollisionDetection")
-        self.assertEqual(res.mode, "bind_centers")
-        self.assertAlmostEqual(res.distance, 0.11, delta=1E-12)
-        self.assertEqual(res.bond_centers, self.H)
 
 
 if __name__ == "__main__":

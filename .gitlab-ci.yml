@@ -1,4 +1,4 @@
-image: ghcr.io/espressomd/docker/ubuntu-20.04:254edd4a9c6e4d7b557be73158e400f5794e4f99
+image: ghcr.io/espressomd/docker/ubuntu-20.04:285fee33c6cdc3b617745a75bd28aec331a53365
 
 stages:
   - prepare
@@ -10,6 +10,9 @@ stages:
   except:
     - staging.tmp
     - trying.tmp
+  before_script:
+    - git config --global --add safe.directory ${CI_PROJECT_DIR}
+    - git config --global --add safe.directory ${CI_PROJECT_DIR}/libs/h5xx
   timeout: 1h
   interruptible: true
 
@@ -17,11 +20,15 @@ stages:
   <<: *global_job_definition
   variables:
     GIT_SUBMODULE_STRATEGY: none
+  before_script:
+    - git config --global --add safe.directory ${CI_PROJECT_DIR}
   dependencies: []
   timeout: 40m
   interruptible: false
   tags:
-    - linux
+    - docker
+    - espresso
+    - no-cuda
 
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
@@ -39,12 +46,14 @@ style:
   stage: prepare
   dependencies: []
   before_script:
+    - git config --global --add safe.directory ${CI_PROJECT_DIR}
     - git submodule deinit .
   script:
     - sh maintainer/CI/fix_style.sh
   tags:
     - docker
-    - linux
+    - espresso
+    - no-cuda
   variables:
     GIT_SUBMODULE_STRATEGY: none
   artifacts:
@@ -65,7 +74,8 @@ style_doxygen:
     - sh ../maintainer/CI/dox_warnings.sh
   tags:
     - docker
-    - linux
+    - espresso
+    - no-cuda
 
 ### Builds without CUDA
 
@@ -85,7 +95,8 @@ default:
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
-    - linux
+    - espresso
+    - no-cuda
 
 maxset:
   <<: *global_job_definition
@@ -105,7 +116,9 @@ maxset:
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
-    - linux
+    - espresso
+    - no-cuda
+    - numa
 
 no_rotation:
   <<: *global_job_definition
@@ -122,12 +135,14 @@ no_rotation:
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
-    - linux
+    - espresso
+    - no-cuda
+    - numa
 
 ubuntu:wo-dependencies:
   <<: *global_job_definition
   stage: build
-  image: ghcr.io/espressomd/docker/ubuntu-wo-dependencies:9ef2166b82d4c0eb258d17f5ec29f7bc39991f5d
+  image: ghcr.io/espressomd/docker/ubuntu-wo-dependencies:285fee33c6cdc3b617745a75bd28aec331a53365
   variables:
      myconfig: 'maxset'
      with_cuda: 'false'
@@ -138,14 +153,15 @@ ubuntu:wo-dependencies:
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
-    - linux
+    - espresso
+    - no-cuda
 
 ### Builds with different distributions
 
 debian:10:
   <<: *global_job_definition
   stage: build
-  image: ghcr.io/espressomd/docker/debian:9ef2166b82d4c0eb258d17f5ec29f7bc39991f5d
+  image: ghcr.io/espressomd/docker/debian:285fee33c6cdc3b617745a75bd28aec331a53365
   variables:
      with_cuda: 'false'
      myconfig: 'maxset'
@@ -155,12 +171,13 @@ debian:10:
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
-    - linux
+    - espresso
+    - no-cuda
 
 fedora:34:
   <<: *global_job_definition
   stage: build
-  image: ghcr.io/espressomd/docker/fedora:9ef2166b82d4c0eb258d17f5ec29f7bc39991f5d
+  image: ghcr.io/espressomd/docker/fedora:285fee33c6cdc3b617745a75bd28aec331a53365
   variables:
      with_cuda: 'false'
      myconfig: 'maxset'
@@ -170,7 +187,8 @@ fedora:34:
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
-    - linux
+    - espresso
+    - no-cuda
 
 ### Builds with CUDA
 
@@ -195,13 +213,14 @@ clang-sanitizer:
   timeout: 2h
   tags:
     - docker
-    - linux
+    - espresso
     - cuda
+    - numa
 
 fast_math:
   <<: *global_job_definition
   stage: build
-  image: ghcr.io/espressomd/docker/cuda:9ef2166b82d4c0eb258d17f5ec29f7bc39991f5d
+  image: ghcr.io/espressomd/docker/cuda:285fee33c6cdc3b617745a75bd28aec331a53365
   variables:
      CC: 'gcc-9'
      CXX: 'g++-9'
@@ -215,14 +234,14 @@ fast_math:
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
-    - linux
+    - espresso
     - cuda
   when: manual
 
 cuda11-maxset:
   <<: *global_job_definition
   stage: build
-  image: ghcr.io/espressomd/docker/cuda:9ef2166b82d4c0eb258d17f5ec29f7bc39991f5d
+  image: ghcr.io/espressomd/docker/cuda:285fee33c6cdc3b617745a75bd28aec331a53365
   variables:
      CC: 'gcc-9'
      CXX: 'g++-9'
@@ -238,8 +257,9 @@ cuda11-maxset:
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
-    - linux
+    - espresso
     - cuda
+    - numa
 
 cuda10-maxset:
   <<: *global_job_definition
@@ -263,8 +283,9 @@ cuda10-maxset:
     expire_in: 1 week
   tags:
     - docker
-    - linux
+    - espresso
     - cuda
+    - numa
 
 tutorials-samples-maxset:
   <<: *global_job_definition
@@ -287,7 +308,7 @@ tutorials-samples-maxset:
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
-    - linux
+    - espresso
     - cuda
 
 tutorials-samples-default:
@@ -310,7 +331,7 @@ tutorials-samples-default:
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
-    - linux
+    - espresso
     - cuda
   only:
     - schedules
@@ -336,7 +357,7 @@ tutorials-samples-empty:
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
-    - linux
+    - espresso
     - cuda
   only:
     - schedules
@@ -362,7 +383,8 @@ tutorials-samples-no-gpu:
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
-    - linux
+    - espresso
+    - no-cuda
   only:
     - schedules
 
@@ -397,7 +419,7 @@ installation:
     - make -j2 check_tutorials
   tags:
     - docker
-    - linux
+    - espresso
     - cuda
   when: manual
 
@@ -417,8 +439,9 @@ empty:
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
-    - linux
+    - espresso
     - cuda
+    - numa
 
 check_sphinx:
   <<: *global_job_definition
@@ -440,8 +463,9 @@ check_sphinx:
     expire_in: 1 week
   tags:
     - docker
-    - linux
+    - espresso
     - cuda
+    - numa
 
 run_tutorials:
   <<: *global_job_definition
@@ -464,8 +488,9 @@ run_tutorials:
     expire_in: 1 week
   tags:
     - docker
-    - linux
+    - espresso
     - cuda
+    - numa
   only:
     - schedules
 
@@ -486,7 +511,9 @@ run_doxygen:
     expire_in: 1 week
   tags:
     - docker
-    - linux
+    - espresso
+    - no-cuda
+    - numa
 
 maxset_no_gpu:
   <<: *global_job_definition
@@ -500,7 +527,9 @@ maxset_no_gpu:
     - make -t && make check
   tags:
     - docker
-    - linux
+    - espresso
+    - no-cuda
+    - numa
 
 maxset_3_cores:
   <<: *global_job_definition
@@ -514,8 +543,9 @@ maxset_3_cores:
     - make -t && make check_unit_tests && make check_python_parallel_odd
   tags:
     - docker
-    - linux
+    - espresso
     - cuda
+    - numa
 
 status_success:
   <<: *notification_job_definition

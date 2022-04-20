@@ -21,8 +21,10 @@
 
 #include "h5md_core.hpp"
 
+#include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "h5md_specification.hpp"
+#include "lees_edwards/LeesEdwardsBC.hpp"
 #include "version.hpp"
 
 #include <utils/Vector.hpp>
@@ -83,34 +85,40 @@ static void write_dataset(value_type const &data, h5xx::dataset &dataset,
   h5xx::write_dataset(dataset, data, h5xx::slice(offset, count));
 }
 
-void write_script(std::string const &target,
-                  boost::filesystem::path const &script_path) {
-  std::ifstream scriptfile(script_path.string());
-  std::string buffer((std::istreambuf_iterator<char>(scriptfile)),
-                     std::istreambuf_iterator<char>());
-  auto file = h5xx::file(target, h5xx::file::out);
-  auto const group = h5xx::group(file, "parameters/files");
-  h5xx::write_attribute(group, "script", buffer);
-  file.close();
+static void write_script(std::string const &target,
+                         boost::filesystem::path const &script_path) {
+  if (!script_path.empty()) {
+    std::ifstream scriptfile(script_path.string());
+    std::string buffer((std::istreambuf_iterator<char>(scriptfile)),
+                       std::istreambuf_iterator<char>());
+    auto file = h5xx::file(target, h5xx::file::out);
+    auto const group = h5xx::group(file, "parameters/files");
+    h5xx::write_attribute(group, "script", buffer);
+    file.close();
+  }
 }
 
-/* Initialize the file related variables after parameters have been set. */
+/* Initialize the file-related variables after parameters have been set. */
 void File::init_file(std::string const &file_path) {
   m_backup_filename = file_path + ".bak";
-  boost::filesystem::path script_path(m_script_path);
-  m_absolute_script_path = boost::filesystem::canonical(script_path);
-  bool file_exists = boost::filesystem::exists(file_path);
-  bool backup_file_exists = boost::filesystem::exists(m_backup_filename);
+  if (m_script_path.empty()) {
+    m_absolute_script_path = boost::filesystem::path();
+  } else {
+    boost::filesystem::path script_path(m_script_path);
+    m_absolute_script_path = boost::filesystem::canonical(script_path);
+  }
+  auto const file_exists = boost::filesystem::exists(file_path);
+  auto const backup_file_exists = boost::filesystem::exists(m_backup_filename);
   /* Perform a barrier synchronization. Otherwise one process might already
    * create the file while another still checks for its existence. */
   m_comm.barrier();
   if (file_exists) {
-    if (H5MD_Specification::is_compliant(file_path)) {
+    if (m_h5md_specification.is_compliant(file_path)) {
       /*
        * If the file exists and has a valid H5MD structure, let's create a
        * backup of it. This has the advantage, that the new file can
        * just be deleted if the simulation crashes at some point and we
-       * still have a valid trajectory, we can start from.
+       * still have a valid trajectory backed up, from which we can restart.
        */
       if (m_comm.rank() == 0)
         backup_file(file_path, m_backup_filename);
@@ -126,7 +134,7 @@ void File::init_file(std::string const &file_path) {
 }
 
 void File::load_datasets() {
-  for (auto const &d : H5MD_Specification::DATASETS) {
+  for (auto const &d : m_h5md_specification.get_datasets()) {
     if (d.is_link)
       continue;
     datasets[d.path()] = h5xx::dataset(m_h5md_file, d.path());
@@ -135,7 +143,7 @@ void File::load_datasets() {
 
 void File::create_groups() {
   h5xx::group group(m_h5md_file);
-  for (auto const &d : H5MD_Specification::DATASETS) {
+  for (auto const &d : m_h5md_specification.get_datasets()) {
     h5xx::group new_group(group, d.group);
   }
 }
@@ -171,7 +179,7 @@ static std::vector<hsize_t> create_chunk_dims(hsize_t rank, hsize_t data_dim) {
 
 void File::create_datasets() {
   namespace hps = h5xx::policy::storage;
-  for (const auto &d : H5MD_Specification::DATASETS) {
+  for (const auto &d : m_h5md_specification.get_datasets()) {
     if (d.is_link)
       continue;
     auto maxdims = std::vector<hsize_t>(d.rank, H5S_UNLIMITED);
@@ -188,21 +196,13 @@ void File::load_file(const std::string &file_path) {
   load_datasets();
 }
 
-static void write_box(const BoxGeometry &geometry, h5xx::dataset &dataset) {
-  auto const extents = static_cast<h5xx::dataspace>(dataset).extents();
-  extend_dataset(dataset, Vector2hs{1, 0});
-  h5xx::write_dataset(dataset, geometry.length(),
-                      h5xx::slice(Vector2hs{extents[0], 0}, Vector2hs{1, 3}));
-}
-
-void write_attributes(const std::string &espresso_version,
-                      h5xx::file &h5md_file) {
+static void write_attributes(h5xx::file &h5md_file) {
   auto h5md_group = h5xx::group(h5md_file, "h5md");
   h5xx::write_attribute(h5md_group, "version",
                         boost::array<hsize_t, 2>{{1, 1}});
   auto h5md_creator_group = h5xx::group(h5md_group, "creator");
   h5xx::write_attribute(h5md_creator_group, "name", "ESPResSo");
-  h5xx::write_attribute(h5md_creator_group, "version", espresso_version);
+  h5xx::write_attribute(h5md_creator_group, "version", ESPRESSO_VERSION);
   auto h5md_author_group = h5xx::group(h5md_group, "author");
   h5xx::write_attribute(h5md_author_group, "name", "N/A");
   auto group = h5xx::group(h5md_file, "particles/atoms/box");
@@ -211,35 +211,54 @@ void write_attributes(const std::string &espresso_version,
 }
 
 void File::write_units() {
-  h5xx::write_attribute(datasets["particles/atoms/mass/value"], "unit",
-                        m_mass_unit);
-  h5xx::write_attribute(datasets["particles/atoms/charge/value"], "unit",
-                        m_charge_unit);
-  h5xx::write_attribute(datasets["particles/atoms/position/value"], "unit",
-                        m_length_unit);
-  h5xx::write_attribute(datasets["particles/atoms/velocity/value"], "unit",
-                        m_velocity_unit);
-  h5xx::write_attribute(datasets["particles/atoms/force/value"], "unit",
-                        m_force_unit);
-  h5xx::write_attribute(datasets["particles/atoms/id/time"], "unit",
-                        m_time_unit);
-}
-
-void hard_link(h5xx::file const &file, std::string from, std::string to) {
-  if (H5Lcreate_hard(file.hid(), from.c_str(), file.hid(), to.c_str(),
-                     H5P_DEFAULT, H5P_DEFAULT) < 0) {
-    throw std::runtime_error("Error creating hard link for " + to);
+  if (!mass_unit().empty() and (m_fields & H5MD_OUT_MASS)) {
+    h5xx::write_attribute(datasets["particles/atoms/mass/value"], "unit",
+                          mass_unit());
+  }
+  if (!charge_unit().empty() and (m_fields & H5MD_OUT_CHARGE)) {
+    h5xx::write_attribute(datasets["particles/atoms/charge/value"], "unit",
+                          charge_unit());
+  }
+  if (!length_unit().empty() and (m_fields & H5MD_OUT_BOX_L)) {
+    h5xx::write_attribute(datasets["particles/atoms/position/value"], "unit",
+                          length_unit());
+    h5xx::write_attribute(datasets["particles/atoms/box/edges/value"], "unit",
+                          length_unit());
+  }
+  if (!length_unit().empty() and (m_fields & H5MD_OUT_LE_OFF)) {
+    h5xx::write_attribute(datasets["particles/atoms/lees_edwards/offset/value"],
+                          "unit", length_unit());
+  }
+  if (!velocity_unit().empty() and (m_fields & H5MD_OUT_VEL)) {
+    h5xx::write_attribute(datasets["particles/atoms/velocity/value"], "unit",
+                          velocity_unit());
+  }
+  if (!force_unit().empty() and (m_fields & H5MD_OUT_FORCE)) {
+    h5xx::write_attribute(datasets["particles/atoms/force/value"], "unit",
+                          force_unit());
+  }
+  if (!time_unit().empty()) {
+    h5xx::write_attribute(datasets["particles/atoms/id/time"], "unit",
+                          time_unit());
   }
 }
 
 void File::create_hard_links() {
   std::string path_step = "particles/atoms/id/step";
   std::string path_time = "particles/atoms/id/time";
-  for (auto &ds : H5MD_Specification::DATASETS) {
-    if (ds.name == "step" and ds.is_link) {
-      hard_link(m_h5md_file, path_step, ds.path());
-    } else if (ds.name == "time" and ds.is_link) {
-      hard_link(m_h5md_file, path_time, ds.path());
+  for (auto &ds : m_h5md_specification.get_datasets()) {
+    if (ds.is_link) {
+      char const *from = nullptr;
+      if (ds.name == "step") {
+        from = path_step.c_str();
+      } else if (ds.name == "time") {
+        from = path_time.c_str();
+      }
+      assert(from != nullptr);
+      if (H5Lcreate_hard(m_h5md_file.hid(), from, m_h5md_file.hid(),
+                         ds.path().c_str(), H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        throw std::runtime_error("Error creating hard link for " + ds.path());
+      }
     }
   }
 }
@@ -251,7 +270,7 @@ void File::create_file(const std::string &file_path) {
   m_h5md_file = h5xx::file(file_path, m_comm, MPI_INFO_NULL, h5xx::file::out);
   create_groups();
   create_datasets();
-  write_attributes(ESPRESSO_VERSION, m_h5md_file);
+  write_attributes(m_h5md_file);
   write_units();
   create_hard_links();
 }
@@ -284,6 +303,7 @@ template <> struct slice_info<2> {
 };
 
 } // namespace detail
+
 template <std::size_t dim, typename Op>
 void write_td_particle_property(hsize_t prefix, hsize_t n_part_global,
                                 ParticleRange const &particles,
@@ -302,10 +322,51 @@ void write_td_particle_property(hsize_t prefix, hsize_t n_part_global,
   }
 }
 
+static void write_box(BoxGeometry const &geometry, h5xx::dataset &dataset) {
+  auto const extents = static_cast<h5xx::dataspace>(dataset).extents();
+  extend_dataset(dataset, Vector2hs{1, 0});
+  h5xx::write_dataset(dataset, geometry.length(),
+                      h5xx::slice(Vector2hs{extents[0], 0}, Vector2hs{1, 3}));
+}
+
+static void write_le_off(LeesEdwardsBC const &lebc, h5xx::dataset &dataset) {
+  auto const extents = static_cast<h5xx::dataspace>(dataset).extents();
+  extend_dataset(dataset, Vector2hs{1, 0});
+  h5xx::write_dataset(dataset, Utils::Vector<double, 1>{lebc.pos_offset},
+                      h5xx::slice(Vector2hs{extents[0], 0}, Vector2hs{1, 1}));
+}
+
+static void write_le_dir(LeesEdwardsBC const &lebc, h5xx::dataset &dataset) {
+  auto const extents = static_cast<h5xx::dataspace>(dataset).extents();
+  extend_dataset(dataset, Vector2hs{1, 0});
+  h5xx::write_dataset(dataset, Utils::Vector<int, 1>{lebc.shear_direction},
+                      h5xx::slice(Vector2hs{extents[0], 0}, Vector2hs{1, 1}));
+}
+
+static void write_le_normal(LeesEdwardsBC const &lebc, h5xx::dataset &dataset) {
+  auto const extents = static_cast<h5xx::dataspace>(dataset).extents();
+  extend_dataset(dataset, Vector2hs{1, 0});
+  h5xx::write_dataset(dataset, Utils::Vector<int, 1>{lebc.shear_plane_normal},
+                      h5xx::slice(Vector2hs{extents[0], 0}, Vector2hs{1, 1}));
+}
+
 void File::write(const ParticleRange &particles, double time, int step,
                  BoxGeometry const &geometry) {
-  write_box(geometry, datasets["particles/atoms/box/edges/value"]);
-  write_connectivity(particles);
+  if (m_fields & H5MD_OUT_BOX_L) {
+    write_box(geometry, datasets["particles/atoms/box/edges/value"]);
+  }
+  auto const &lebc = geometry.lees_edwards_bc();
+  if (m_fields & H5MD_OUT_LE_OFF) {
+    write_le_off(lebc, datasets["particles/atoms/lees_edwards/offset/value"]);
+  }
+  if (m_fields & H5MD_OUT_LE_DIR) {
+    write_le_dir(lebc,
+                 datasets["particles/atoms/lees_edwards/direction/value"]);
+  }
+  if (m_fields & H5MD_OUT_LE_NORMAL) {
+    write_le_normal(lebc,
+                    datasets["particles/atoms/lees_edwards/normal/value"]);
+  }
 
   int const n_part_local = particles.size();
   // calculate count and offset
@@ -313,9 +374,6 @@ void File::write(const ParticleRange &particles, double time, int step,
   // calculate prefix for write of the current process
   BOOST_MPI_CHECK_RESULT(MPI_Exscan,
                          (&n_part_local, &prefix, 1, MPI_INT, MPI_SUM, m_comm));
-  auto const extents =
-      static_cast<h5xx::dataspace>(datasets["particles/atoms/id/value"])
-          .extents();
 
   auto const n_part_global =
       boost::mpi::all_reduce(m_comm, n_part_local, std::plus<int>());
@@ -323,43 +381,62 @@ void File::write(const ParticleRange &particles, double time, int step,
   write_td_particle_property<2>(
       prefix, n_part_global, particles, datasets["particles/atoms/id/value"],
       [](auto const &p) { return Utils::Vector<int, 1>{p.identity()}; });
-  write_dataset(Utils::Vector<double, 1>{time},
-                datasets["particles/atoms/id/time"], Vector1hs{1},
 
-                Vector1hs{extents[0]}, Vector1hs{1});
-  write_dataset(Utils::Vector<int, 1>{step},
-                datasets["particles/atoms/id/step"], Vector1hs{1},
-                Vector1hs{extents[0]}, Vector1hs{1});
+  {
+    h5xx::dataset &dataset = datasets["particles/atoms/id/value"];
+    auto const extents = static_cast<h5xx::dataspace>(dataset).extents();
+    write_dataset(Utils::Vector<double, 1>{time},
+                  datasets["particles/atoms/id/time"], Vector1hs{1},
+                  Vector1hs{extents[0]}, Vector1hs{1});
+    write_dataset(Utils::Vector<int, 1>{step},
+                  datasets["particles/atoms/id/step"], Vector1hs{1},
+                  Vector1hs{extents[0]}, Vector1hs{1});
+  }
 
-  write_td_particle_property<2>(
-      prefix, n_part_global, particles,
-      datasets["particles/atoms/species/value"],
-      [](auto const &p) { return Utils::Vector<int, 1>{p.type()}; });
-
-  write_td_particle_property<2>(
-      prefix, n_part_global, particles, datasets["particles/atoms/mass/value"],
-      [](auto const &p) { return Utils::Vector<double, 1>{p.mass()}; });
-
-  write_td_particle_property<3>(
-      prefix, n_part_global, particles,
-      datasets["particles/atoms/position/value"],
-      [&](auto const &p) { return folded_position(p.pos(), geometry); });
-  write_td_particle_property<3>(prefix, n_part_global, particles,
-                                datasets["particles/atoms/image/value"],
-                                [](auto const &p) { return p.image_box(); });
-
-  write_td_particle_property<3>(prefix, n_part_global, particles,
-                                datasets["particles/atoms/velocity/value"],
-                                [](auto const &p) { return p.v(); });
-
-  write_td_particle_property<3>(prefix, n_part_global, particles,
-                                datasets["particles/atoms/force/value"],
-                                [](auto const &p) { return p.force(); });
-  write_td_particle_property<2>(
-      prefix, n_part_global, particles,
-      datasets["particles/atoms/charge/value"],
-      [](auto const &p) { return Utils::Vector<double, 1>{p.q()}; });
+  if (m_fields & H5MD_OUT_TYPE) {
+    write_td_particle_property<2>(
+        prefix, n_part_global, particles,
+        datasets["particles/atoms/species/value"],
+        [](auto const &p) { return Utils::Vector<int, 1>{p.type()}; });
+  }
+  if (m_fields & H5MD_OUT_MASS) {
+    write_td_particle_property<2>(
+        prefix, n_part_global, particles,
+        datasets["particles/atoms/mass/value"],
+        [](auto const &p) { return Utils::Vector<double, 1>{p.mass()}; });
+  }
+  if (m_fields & H5MD_OUT_POS) {
+    write_td_particle_property<3>(
+        prefix, n_part_global, particles,
+        datasets["particles/atoms/position/value"],
+        [&](auto const &p) { return folded_position(p.pos(), geometry); });
+  }
+  if (m_fields & H5MD_OUT_IMG) {
+    write_td_particle_property<3>(prefix, n_part_global, particles,
+                                  datasets["particles/atoms/image/value"],
+                                  [](auto const &p) { return p.image_box(); });
+  }
+  if (m_fields & H5MD_OUT_VEL) {
+    write_td_particle_property<3>(prefix, n_part_global, particles,
+                                  datasets["particles/atoms/velocity/value"],
+                                  [](auto const &p) { return p.v(); });
+  }
+  if (m_fields & H5MD_OUT_FORCE) {
+    write_td_particle_property<3>(prefix, n_part_global, particles,
+                                  datasets["particles/atoms/force/value"],
+                                  [](auto const &p) { return p.force(); });
+  }
+  if (m_fields & H5MD_OUT_CHARGE) {
+    write_td_particle_property<2>(
+        prefix, n_part_global, particles,
+        datasets["particles/atoms/charge/value"],
+        [](auto const &p) { return Utils::Vector<double, 1>{p.q()}; });
+  }
+  if (m_fields & H5MD_OUT_BONDS) {
+    write_connectivity(particles);
+  }
 }
+
 void File::write_connectivity(const ParticleRange &particles) {
   MultiArray3i bond(boost::extents[0][0][0]);
   int particle_index = 0;

@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from functools import update_wrapper
+import functools
 
 
 class ThereCanOnlyBeOne(BaseException):
@@ -48,7 +48,7 @@ def highlander(klass):
     if hasattr(klass, '__init__'):
         klass.__init_orig__ = klass.__init__
         klass.__init__ = cls_init_call_orig
-        update_wrapper(cls_init_call_orig, klass.__init_orig__)
+        functools.update_wrapper(cls_init_call_orig, klass.__init_orig__)
     else:
         klass.__init__ = cls_init
 
@@ -64,7 +64,7 @@ def highlander(klass):
     if hasattr(klass, '__del__'):
         klass.__del_orig__ = klass.__del__
         klass.__del__ = cls_del_call_orig
-        update_wrapper(cls_del_call_orig, klass.__del_orig__)
+        functools.update_wrapper(cls_del_call_orig, klass.__del_orig__)
     else:
         klass.__del__ = cls_del
 

@@ -34,7 +34,7 @@ class SimplePore : public Shape {
   std::shared_ptr<::Shapes::SimplePore> m_simple_pore;
 
 public:
-  SimplePore() : m_simple_pore(new ::Shapes::SimplePore()) {
+  SimplePore() : m_simple_pore(std::make_shared<::Shapes::SimplePore>()) {
     add_parameters(
         {{"radius", m_simple_pore, &CoreShape::set_radius, &CoreShape::radius},
          {"length", m_simple_pore, &CoreShape::set_length, &CoreShape::length},

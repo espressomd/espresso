@@ -72,6 +72,12 @@ set_default_value() {
     fi
 }
 
+# the number of available processors depends on the CI runner
+if grep -q "i7-3820" /proc/cpuinfo; then
+   ci_procs=2
+else
+   ci_procs=4
+fi
 
 # handle environment variables
 set_default_value srcdir "$(pwd)"
@@ -82,7 +88,7 @@ set_default_value with_ubsan false
 set_default_value with_asan false
 set_default_value with_static_analysis false
 set_default_value myconfig "default"
-set_default_value build_procs 2
+set_default_value build_procs ${ci_procs}
 set_default_value check_procs ${build_procs}
 set_default_value check_odd_only false
 set_default_value check_gpu_only false

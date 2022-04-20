@@ -17,24 +17,66 @@
 
 import unittest as ut
 import unittest_decorators as utx
+import unittest_generator as utg
 import pathlib
+import tempfile
+import contextlib
 
 import sys
 import math
 import numpy as np
-try:
-    import vtk
-    from vtk.util import numpy_support as VN
-    skipIfMissingPythonPackage = utx.no_skip
-except ImportError:
-    skipIfMissingPythonPackage = ut.skip(
-        "Python module vtk not available, skipping test!")
 
+with contextlib.suppress(ImportError):
+    import vtk
+    import vtk.util.numpy_support
 
 import espressomd
 import espressomd.electrokinetics
 import espressomd.shapes
-import ek_common
+
+config = utg.TestGenerator()
+modes = config.get_modes()
+
+
+##########################################################################
+# Utility functions
+##########################################################################
+
+def solve(xi, d, bjerrum_length, sigma, valency, el_char=1.0):
+    # root finding function
+    return xi * math.tan(xi * d / 2.0) + 2.0 * math.pi * \
+        bjerrum_length * sigma / (valency * el_char)
+
+
+def density(x, xi, bjerrum_length):
+    return (xi * xi) / (2.0 * math.pi * bjerrum_length *
+                        math.cos(xi * x) * math.cos(xi * x))
+
+
+def velocity(x, xi, d, bjerrum_length, force, visc_kinematic, density_water):
+    return force * math.log(math.cos(xi * x) / math.cos(xi * d / 2.0)) / \
+        (2.0 * math.pi * bjerrum_length * visc_kinematic * density_water)
+
+
+def pressure_tensor_offdiagonal(x, xi, bjerrum_length, force):
+    # calculate the nonzero component of the pressure tensor
+    return force * xi * math.tan(xi * x) / (2.0 * math.pi * bjerrum_length)
+
+
+def hydrostatic_pressure(ek, tensor_entry, box_x, box_y, box_z, agrid):
+    """
+    Calculate the hydrostatic pressure.
+
+    Technically, the LB simulates a compressible fluid, whose pressure
+    tensor contains an additional term on the diagonal, proportional to
+    the divergence of the velocity. We neglect this contribution, which
+    creates a small error in the direction normal to the wall, which
+    should decay with the simulation time.
+    """
+    offset = ek[int(box_x / (2 * agrid)), int(box_y / (2 * agrid)),
+                int(box_z / (2 * agrid))].pressure_tensor[tensor_entry]
+    return 0.0 + offset
+
 
 ##########################################################################
 #                          Set up the System                             #
@@ -63,7 +105,14 @@ params_base = dict([
 params_base['density_counterions'] = -2.0 * \
     params_base['sigma'] / params_base['width']
 
-axis = "@TEST_SUFFIX@"
+if "AXIS.X" in modes:
+    axis = "x"
+elif "AXIS.Y" in modes:
+    axis = "y"
+else:
+    assert "AXIS.Z" in modes
+    axis = "z"
+
 params = {
     "x": dict([
         ('box_x', params_base['thickness']),
@@ -117,19 +166,19 @@ def bisection():
     # the bisection scheme
     tol = 1.0e-08
     while size > tol:
-        val0 = ek_common.solve(
+        val0 = solve(
             pnt0,
             params_base['width'],
             params_base['bjerrum_length'],
             params_base['sigma'],
             params_base['valency'])
-        val1 = ek_common.solve(
+        val1 = solve(
             pnt1,
             params_base['width'],
             params_base['bjerrum_length'],
             params_base['sigma'],
             params_base['valency'])
-        valm = ek_common.solve(
+        valm = solve(
             pntm,
             params_base['width'],
             params_base['bjerrum_length'],
@@ -162,13 +211,14 @@ def bisection():
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["ELECTROKINETICS", "EK_BOUNDARIES"])
+@utx.skipIfMissingModules("vtk")
 class ek_eof_one_species(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     xi = bisection()
 
     def parse_vtk(self, filepath, name, shape):
         reader = vtk.vtkStructuredPointsReader()
-        reader.SetFileName(filepath)
+        reader.SetFileName(str(filepath))
         reader.ReadAllVectorsOn()
         reader.ReadAllScalarsOn()
         reader.Update()
@@ -176,7 +226,8 @@ class ek_eof_one_species(ut.TestCase):
         data = reader.GetOutput()
         points = data.GetPointData()
 
-        return VN.vtk_to_numpy(points.GetArray(name)).reshape(shape, order='F')
+        return vtk.util.numpy_support.vtk_to_numpy(
+            points.GetArray(name)).reshape(shape, order='F')
 
     @classmethod
     def setUpClass(cls):
@@ -254,7 +305,7 @@ class ek_eof_one_species(ut.TestCase):
                                       (2 * params_base['agrid'])), i])
                 index = np.roll(index, params['n_roll_index'])
                 measured_density = counterions[index].density
-                calculated_density = ek_common.density(
+                calculated_density = density(
                     position, self.xi, params_base['bjerrum_length'])
                 density_difference = abs(measured_density - calculated_density)
                 total_density_difference += density_difference
@@ -262,7 +313,7 @@ class ek_eof_one_species(ut.TestCase):
                 # velocity
                 measured_velocity = ek[index].velocity[int(
                     np.nonzero(params['ext_force_density'])[0])]
-                calculated_velocity = ek_common.velocity(
+                calculated_velocity = velocity(
                     position,
                     self.xi,
                     params_base['width'],
@@ -277,7 +328,7 @@ class ek_eof_one_species(ut.TestCase):
 
                 # diagonal pressure tensor
                 measured_pressure_xx = ek[index].pressure_tensor[(0, 0)]
-                calculated_pressure_xx = ek_common.hydrostatic_pressure(
+                calculated_pressure_xx = hydrostatic_pressure(
                     ek,
                     (0, 0),
                     system.box_l[params['periodic_dirs'][0]],
@@ -285,7 +336,7 @@ class ek_eof_one_species(ut.TestCase):
                     params['box_z'],
                     params_base['agrid'])
                 measured_pressure_yy = ek[index].pressure_tensor[(1, 1)]
-                calculated_pressure_yy = ek_common.hydrostatic_pressure(
+                calculated_pressure_yy = hydrostatic_pressure(
                     ek,
                     (1, 1),
                     system.box_l[params['periodic_dirs'][0]],
@@ -293,7 +344,7 @@ class ek_eof_one_species(ut.TestCase):
                     params['box_z'],
                     params_base['agrid'])
                 measured_pressure_zz = ek[index].pressure_tensor[(2, 2)]
-                calculated_pressure_zz = ek_common.hydrostatic_pressure(
+                calculated_pressure_zz = hydrostatic_pressure(
                     ek,
                     (2, 2),
                     system.box_l[params['periodic_dirs'][0]],
@@ -315,7 +366,7 @@ class ek_eof_one_species(ut.TestCase):
                 total_pressure_difference_zz = total_pressure_difference_zz + \
                     pressure_difference_zz
 
-                calculated_pressure_offdiagonal = ek_common.pressure_tensor_offdiagonal(
+                calculated_pressure_offdiagonal = pressure_tensor_offdiagonal(
                     position, self.xi, params_base['bjerrum_length'], params_base['force'])
                 # xy component pressure tensor
                 measured_pressure_xy = ek[index].pressure_tensor[(0, 1)]
@@ -374,7 +425,7 @@ class ek_eof_one_species(ut.TestCase):
         self.assertLess(total_pressure_difference_xz, 1.0e-04,
                         "Pressure accuracy xz component not achieved")
 
-    @skipIfMissingPythonPackage
+    @utx.skipIfMissingModules("vtk")
     def test_vtk(self):
         ek = self.ek
         counterions = self.counterions
@@ -382,41 +433,44 @@ class ek_eof_one_species(ut.TestCase):
             map(int, np.round(self.system.box_l / params_base['agrid'])))
 
         # write VTK files
-        vtk_root = f"vtk_out/ek_eof_{axis}"
-        pathlib.Path(vtk_root).mkdir(parents=True, exist_ok=True)
-        path_vtk_boundary = f"{vtk_root}/boundary.vtk"
-        path_vtk_velocity = f"{vtk_root}/velocity.vtk"
-        path_vtk_potential = f"{vtk_root}/potential.vtk"
-        path_vtk_lbdensity = f"{vtk_root}/density.vtk"
-        path_vtk_lbforce = f"{vtk_root}/lbforce.vtk"
-        path_vtk_density = f"{vtk_root}/lbdensity.vtk"
-        path_vtk_flux = f"{vtk_root}/flux.vtk"
-        path_vtk_flux_link = f"{vtk_root}/flux_link.vtk"
-        if espressomd.has_features('EK_DEBUG'):
-            path_vtk_flux_fluc = f"{vtk_root}/flux_fluc.vtk"
-        ek.write_vtk_boundary(path_vtk_boundary)
-        ek.write_vtk_velocity(path_vtk_velocity)
-        ek.write_vtk_potential(path_vtk_potential)
-        ek.write_vtk_density(path_vtk_lbdensity)
-        ek.write_vtk_lbforce(path_vtk_lbforce)
-        counterions.write_vtk_density(path_vtk_density)
-        counterions.write_vtk_flux(path_vtk_flux)
-        if espressomd.has_features('EK_DEBUG'):
-            counterions.write_vtk_flux_fluc(path_vtk_flux_fluc)
-        counterions.write_vtk_flux_link(path_vtk_flux_link)
+        with tempfile.TemporaryDirectory() as tmp_directory:
+            path_vtk_root = pathlib.Path(tmp_directory)
+            path_vtk_root.mkdir(parents=True, exist_ok=True)
+            path_vtk_boundary = path_vtk_root / "boundary.vtk"
+            path_vtk_velocity = path_vtk_root / "velocity.vtk"
+            path_vtk_potential = path_vtk_root / "potential.vtk"
+            path_vtk_lbdensity = path_vtk_root / "density.vtk"
+            path_vtk_lbforce = path_vtk_root / "lbforce.vtk"
+            path_vtk_density = path_vtk_root / "lbdensity.vtk"
+            path_vtk_flux = path_vtk_root / "flux.vtk"
+            path_vtk_flux_link = path_vtk_root / "flux_link.vtk"
+            if espressomd.has_features('EK_DEBUG'):
+                path_vtk_flux_fluc = path_vtk_root / "flux_fluc.vtk"
+            ek.write_vtk_boundary(str(path_vtk_boundary))
+            ek.write_vtk_velocity(str(path_vtk_velocity))
+            ek.write_vtk_potential(str(path_vtk_potential))
+            ek.write_vtk_density(str(path_vtk_lbdensity))
+            ek.write_vtk_lbforce(str(path_vtk_lbforce))
+            counterions.write_vtk_density(str(path_vtk_density))
+            counterions.write_vtk_flux(str(path_vtk_flux))
+            if espressomd.has_features('EK_DEBUG'):
+                counterions.write_vtk_flux_fluc(str(path_vtk_flux_fluc))
+            counterions.write_vtk_flux_link(str(path_vtk_flux_link))
 
-        # load VTK files to check they are correctly formatted
-        get_vtk = self.parse_vtk
-        vtk_boundary = get_vtk(path_vtk_boundary, "boundary", grid_dims)
-        vtk_velocity = get_vtk(path_vtk_velocity, "velocity", grid_dims + [3])
-        vtk_potential = get_vtk(path_vtk_potential, "potential", grid_dims)
-        vtk_lbdensity = get_vtk(path_vtk_lbdensity, "density_lb", grid_dims)
-        get_vtk(path_vtk_lbforce, "lbforce", grid_dims + [3])
-        vtk_density = get_vtk(path_vtk_density, "density_1", grid_dims)
-        vtk_flux = get_vtk(path_vtk_flux, "flux_1", grid_dims + [3])
-        if espressomd.has_features('EK_DEBUG'):
-            get_vtk(path_vtk_flux_fluc, "flux_fluc_1", grid_dims + [4])
-        get_vtk(path_vtk_flux_link, "flux_link_1", grid_dims + [13])
+            # load VTK files to check they are correctly formatted
+            get_vtk = self.parse_vtk
+            vtk_boundary = get_vtk(path_vtk_boundary, "boundary", grid_dims)
+            vtk_velocity = get_vtk(
+                path_vtk_velocity, "velocity", grid_dims + [3])
+            vtk_potential = get_vtk(path_vtk_potential, "potential", grid_dims)
+            vtk_lbdensity = get_vtk(
+                path_vtk_lbdensity, "density_lb", grid_dims)
+            get_vtk(path_vtk_lbforce, "lbforce", grid_dims + [3])
+            vtk_density = get_vtk(path_vtk_density, "density_1", grid_dims)
+            vtk_flux = get_vtk(path_vtk_flux, "flux_1", grid_dims + [3])
+            if espressomd.has_features('EK_DEBUG'):
+                get_vtk(path_vtk_flux_fluc, "flux_fluc_1", grid_dims + [4])
+            get_vtk(path_vtk_flux_link, "flux_link_1", grid_dims + [13])
 
         # check VTK files against the EK grid
         species_density = np.zeros(grid_dims)
@@ -459,4 +513,5 @@ class ek_eof_one_species(ut.TestCase):
 
 
 if __name__ == "__main__":
+    config.bind_test_class(ek_eof_one_species)
     ut.main()
