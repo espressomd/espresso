@@ -13,13 +13,13 @@
 //  You should have received a copy of the GNU General Public License along
 //  with waLBerla (see COPYING.txt). If not, see <http://www.gnu.org/licenses/>.
 //
-//! \\file ReactionKernelIndexed_1.cpp
+//! \\file ReactionKernelIndexed_1_double_precision.cpp
 //! \\author pystencils
 //======================================================================================================================
 
 #include <cmath>
 
-#include "ReactionKernelIndexed_1.h"
+#include "ReactionKernelIndexed_1_double_precision.h"
 #include "core/DataTypes.h"
 #include "core/Macros.h"
 
@@ -42,9 +42,9 @@ namespace pystencils {
 #pragma diag_suppress = declared_but_not_referenced
 #endif
 
-namespace internal_reactionkernelindexed_1_boundary_ReactionKernelIndexed_1 {
+namespace internal_reactionkernelindexed_1_double_precision_boundary_ReactionKernelIndexed_1_double_precision {
 static FUNC_PREFIX void
-reactionkernelindexed_1_boundary_ReactionKernelIndexed_1(
+reactionkernelindexed_1_double_precision_boundary_ReactionKernelIndexed_1_double_precision(
     uint8_t *RESTRICT _data_indexVector, double *RESTRICT _data_rho_0,
     int64_t const _stride_rho_0_0, int64_t const _stride_rho_0_1,
     int64_t const _stride_rho_0_2, int64_t indexVectorSize, double order_0,
@@ -61,7 +61,10 @@ reactionkernelindexed_1_boundary_ReactionKernelIndexed_1(
                 _stride_rho_0_2 * z] = local_rho_0 + rate_factor * stoech_0;
   }
 }
-} // namespace internal_reactionkernelindexed_1_boundary_ReactionKernelIndexed_1
+} // namespace
+  // internal_reactionkernelindexed_1_double_precision_boundary_ReactionKernelIndexed_1_double_precision
+  // internal_reactionkernelindexed_1_double_precision_boundary_ReactionKernelIndexed_1_double_precision
+  // internal_reactionkernelindexed_1_double_precision_boundary_ReactionKernelIndexed_1_double_precision
 
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
@@ -71,7 +74,8 @@ reactionkernelindexed_1_boundary_ReactionKernelIndexed_1(
 #pragma pop
 #endif
 
-void ReactionKernelIndexed_1::run_impl(IBlock *block, IndexVectors::Type type) {
+void ReactionKernelIndexed_1_double_precision::run_impl(
+    IBlock *block, IndexVectors::Type type) {
   auto *indexVectors = block->uncheckedFastGetData<IndexVectors>(indexVectorID);
   int64_t indexVectorSize = int64_c(indexVectors->indexVector(type).size());
   if (indexVectorSize == 0)
@@ -91,22 +95,22 @@ void ReactionKernelIndexed_1::run_impl(IBlock *block, IndexVectors::Type type) {
   const int64_t _stride_rho_0_0 = int64_t(rho_0->xStride());
   const int64_t _stride_rho_0_1 = int64_t(rho_0->yStride());
   const int64_t _stride_rho_0_2 = int64_t(rho_0->zStride());
-  internal_reactionkernelindexed_1_boundary_ReactionKernelIndexed_1::
-      reactionkernelindexed_1_boundary_ReactionKernelIndexed_1(
+  internal_reactionkernelindexed_1_double_precision_boundary_ReactionKernelIndexed_1_double_precision::
+      reactionkernelindexed_1_double_precision_boundary_ReactionKernelIndexed_1_double_precision(
           _data_indexVector, _data_rho_0, _stride_rho_0_0, _stride_rho_0_1,
           _stride_rho_0_2, indexVectorSize, order_0, rate_coefficient,
           stoech_0);
 }
 
-void ReactionKernelIndexed_1::run(IBlock *block) {
+void ReactionKernelIndexed_1_double_precision::run(IBlock *block) {
   run_impl(block, IndexVectors::ALL);
 }
 
-void ReactionKernelIndexed_1::inner(IBlock *block) {
+void ReactionKernelIndexed_1_double_precision::inner(IBlock *block) {
   run_impl(block, IndexVectors::INNER);
 }
 
-void ReactionKernelIndexed_1::outer(IBlock *block) {
+void ReactionKernelIndexed_1_double_precision::outer(IBlock *block) {
   run_impl(block, IndexVectors::OUTER);
 }
 

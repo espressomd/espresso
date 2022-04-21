@@ -23,11 +23,16 @@
 #include "EKReactionBase.hpp"
 #include "LatticeWalberla.hpp"
 
-#include "generated_kernels/ReactionKernelIndexed_1.h"
-#include "generated_kernels/ReactionKernelIndexed_2.h"
-#include "generated_kernels/ReactionKernelIndexed_3.h"
-#include "generated_kernels/ReactionKernelIndexed_4.h"
-#include "generated_kernels/ReactionKernelIndexed_5.h"
+#include "generated_kernels/ReactionKernelIndexed_1_double_precision.h"
+#include "generated_kernels/ReactionKernelIndexed_1_single_precision.h"
+#include "generated_kernels/ReactionKernelIndexed_2_double_precision.h"
+#include "generated_kernels/ReactionKernelIndexed_2_single_precision.h"
+#include "generated_kernels/ReactionKernelIndexed_3_double_precision.h"
+#include "generated_kernels/ReactionKernelIndexed_3_single_precision.h"
+#include "generated_kernels/ReactionKernelIndexed_4_double_precision.h"
+#include "generated_kernels/ReactionKernelIndexed_4_single_precision.h"
+#include "generated_kernels/ReactionKernelIndexed_5_double_precision.h"
+#include "generated_kernels/ReactionKernelIndexed_5_single_precision.h"
 
 #include <memory>
 
@@ -47,18 +52,46 @@ namespace detail {
 // FlagField to use
 using FlagField = FlagField<uint8_t>;
 
+template <typename FloatType = double> struct KernelTrait {
+  using ReactionKernelIndexed_1 =
+      pystencils::ReactionKernelIndexed_1_double_precision;
+  using ReactionKernelIndexed_2 =
+      pystencils::ReactionKernelIndexed_2_double_precision;
+  using ReactionKernelIndexed_3 =
+      pystencils::ReactionKernelIndexed_3_double_precision;
+  using ReactionKernelIndexed_4 =
+      pystencils::ReactionKernelIndexed_4_double_precision;
+  using ReactionKernelIndexed_5 =
+      pystencils::ReactionKernelIndexed_5_double_precision;
+};
+template <> struct KernelTrait<float> {
+  using ReactionKernelIndexed_1 =
+      pystencils::ReactionKernelIndexed_1_single_precision;
+  using ReactionKernelIndexed_2 =
+      pystencils::ReactionKernelIndexed_2_single_precision;
+  using ReactionKernelIndexed_3 =
+      pystencils::ReactionKernelIndexed_3_single_precision;
+  using ReactionKernelIndexed_4 =
+      pystencils::ReactionKernelIndexed_4_single_precision;
+  using ReactionKernelIndexed_5 =
+      pystencils::ReactionKernelIndexed_5_single_precision;
+};
+
 template <typename FloatType>
-auto get_kernel(
-    const std::vector<std::shared_ptr<EKReactant<FloatType>>> &reactants,
-    const FloatType coefficient, const BlockDataID &indexFieldID) {
+auto get_kernel(const std::vector<std::shared_ptr<EKReactant>> &reactants,
+                const double coefficient, const BlockDataID &indexFieldID) {
+
+  const auto coeff_casted = numeric_cast<FloatType>(coefficient);
+
   switch (reactants.size()) {
   case 1: {
     const auto &reactant = reactants[0];
     const auto [density_id_0, order_0, stoech_coeff_0] =
         detail::get_reaction_details<FloatType>(reactant);
 
-    auto kernel = std::make_shared<pystencils::ReactionKernelIndexed_1>(
-        indexFieldID, density_id_0, order_0, coefficient, stoech_coeff_0);
+    auto kernel = std::make_shared<
+        typename KernelTrait<FloatType>::ReactionKernelIndexed_1>(
+        indexFieldID, density_id_0, order_0, coeff_casted, stoech_coeff_0);
 
     return kernel->getSweep();
   }
@@ -68,9 +101,10 @@ auto get_kernel(
     const auto [density_id_1, order_1, stoech_coeff_1] =
         detail::get_reaction_details<FloatType>(reactants[1]);
 
-    auto kernel = std::make_shared<pystencils::ReactionKernelIndexed_2>(
-        indexFieldID, density_id_0, density_id_1, order_0, order_1, coefficient,
-        stoech_coeff_0, stoech_coeff_1);
+    auto kernel = std::make_shared<
+        typename KernelTrait<FloatType>::ReactionKernelIndexed_2>(
+        indexFieldID, density_id_0, density_id_1, order_0, order_1,
+        coeff_casted, stoech_coeff_0, stoech_coeff_1);
 
     return kernel->getSweep();
   }
@@ -82,9 +116,10 @@ auto get_kernel(
     const auto [density_id_2, order_2, stoech_coeff_2] =
         detail::get_reaction_details<FloatType>(reactants[2]);
 
-    auto kernel = std::make_shared<pystencils::ReactionKernelIndexed_3>(
+    auto kernel = std::make_shared<
+        typename KernelTrait<FloatType>::ReactionKernelIndexed_3>(
         indexFieldID, density_id_0, density_id_1, density_id_2, order_0,
-        order_1, order_2, coefficient, stoech_coeff_0, stoech_coeff_1,
+        order_1, order_2, coeff_casted, stoech_coeff_0, stoech_coeff_1,
         stoech_coeff_2);
 
     return kernel->getSweep();
@@ -99,9 +134,10 @@ auto get_kernel(
     const auto [density_id_3, order_3, stoech_coeff_3] =
         detail::get_reaction_details<FloatType>(reactants[3]);
 
-    auto kernel = std::make_shared<pystencils::ReactionKernelIndexed_4>(
+    auto kernel = std::make_shared<
+        typename KernelTrait<FloatType>::ReactionKernelIndexed_4>(
         indexFieldID, density_id_0, density_id_1, density_id_2, density_id_3,
-        order_0, order_1, order_2, order_3, coefficient, stoech_coeff_0,
+        order_0, order_1, order_2, order_3, coeff_casted, stoech_coeff_0,
         stoech_coeff_1, stoech_coeff_2, stoech_coeff_3);
 
     return kernel->getSweep();
@@ -118,9 +154,10 @@ auto get_kernel(
     const auto [density_id_4, order_4, stoech_coeff_4] =
         detail::get_reaction_details<FloatType>(reactants[4]);
 
-    auto kernel = std::make_shared<pystencils::ReactionKernelIndexed_5>(
+    auto kernel = std::make_shared<
+        typename KernelTrait<FloatType>::ReactionKernelIndexed_5>(
         indexFieldID, density_id_0, density_id_1, density_id_2, density_id_3,
-        density_id_4, order_0, order_1, order_2, order_3, order_4, coefficient,
+        density_id_4, order_0, order_1, order_2, order_3, order_4, coeff_casted,
         stoech_coeff_0, stoech_coeff_1, stoech_coeff_2, stoech_coeff_3,
         stoech_coeff_4);
 
@@ -129,6 +166,20 @@ auto get_kernel(
   default:
     throw std::runtime_error("reactions of this size are not implemented!");
   }
+}
+
+auto get_kernel_helper(
+    const std::vector<std::shared_ptr<EKReactant>> &reactants,
+    const double coefficient, const BlockDataID &indexFieldID) {
+
+  const auto is_double_precision =
+      reactants[0]->get_species()->is_double_precision();
+
+  if (is_double_precision) {
+    return get_kernel<double>(reactants, coefficient, indexFieldID);
+  }
+
+  return get_kernel<float>(reactants, coefficient, indexFieldID);
 }
 
 template <typename FlagField>
@@ -199,18 +250,18 @@ void fillFromFlagField(const shared_ptr<StructuredBlockForest> &blocks,
 }
 } // namespace detail
 
-template <typename FloatType>
-EKReactionIndexed<FloatType>::EKReactionIndexed(
+EKReactionIndexed::EKReactionIndexed(
     std::shared_ptr<LatticeWalberla> lattice,
-    std::vector<std::shared_ptr<EKReactant<FloatType>>> reactants,
-    FloatType coefficient)
-    : EKReactionBase<FloatType>(lattice, reactants, coefficient),
+    std::vector<std::shared_ptr<EKReactant>> reactants, double coefficient)
+    : EKReactionBase(lattice, reactants, coefficient),
       m_pending_changes(false) {
   m_flagfield_id = field::addFlagFieldToStorage<detail::FlagField>(
       get_lattice()->get_blocks(), "flag field reaction",
       get_lattice()->get_ghost_layers());
 
-  using IndexVectors = pystencils::ReactionKernelIndexed_1::IndexVectors;
+  // take one IndexVector as a dummy-value
+  using IndexVectors =
+      detail::KernelTrait<double>::ReactionKernelIndexed_1::IndexVectors;
 
   auto createIdxVector = [](IBlock *const, StructuredBlockStorage *const) {
     return new IndexVectors();
@@ -235,21 +286,19 @@ EKReactionIndexed<FloatType>::EKReactionIndexed(
   }
 }
 
-template <typename FloatType>
-void EKReactionIndexed<FloatType>::perform_reaction() {
+void EKReactionIndexed::perform_reaction() {
   boundary_update();
 
-  auto kernel =
-      detail::get_kernel(get_reactants(), get_coefficient(), m_indexvector_id);
+  auto kernel = detail::get_kernel_helper(get_reactants(), get_coefficient(),
+                                          m_indexvector_id);
 
   for (auto &block : *get_lattice()->get_blocks()) {
     kernel(&block);
   }
 }
 
-template <typename FloatType>
-void EKReactionIndexed<FloatType>::set_node_is_boundary(
-    const Utils::Vector3i &node, bool is_boundary) {
+void EKReactionIndexed::set_node_is_boundary(const Utils::Vector3i &node,
+                                             bool is_boundary) {
   auto bc = get_block_and_cell(*get_lattice(), node, true);
   if (!bc)
     return;
@@ -265,9 +314,8 @@ void EKReactionIndexed<FloatType>::set_node_is_boundary(
   m_pending_changes = true;
 }
 
-template <typename FloatType>
-boost::optional<bool> EKReactionIndexed<FloatType>::get_node_is_boundary(
-    const Utils::Vector3i &node) {
+boost::optional<bool>
+EKReactionIndexed::get_node_is_boundary(const Utils::Vector3i &node) {
   auto bc = get_block_and_cell(*get_lattice(), node, true);
   if (!bc)
     return {boost::none};
@@ -278,10 +326,12 @@ boost::optional<bool> EKReactionIndexed<FloatType>::get_node_is_boundary(
   return {flag_field->isFlagSet(bc->cell, boundary_flag)};
 }
 
-template <typename FloatType>
-void EKReactionIndexed<FloatType>::boundary_update() {
-  using IndexVectors = pystencils::ReactionKernelIndexed_1::IndexVectors;
-  using IndexInfo = pystencils::ReactionKernelIndexed_1::IndexInfo;
+void EKReactionIndexed::boundary_update() {
+  // take one IndexVector/IndexInfo as a dummy-value
+  using IndexVectors =
+      detail::KernelTrait<double>::ReactionKernelIndexed_1::IndexVectors;
+  using IndexInfo =
+      detail::KernelTrait<double>::ReactionKernelIndexed_1::IndexInfo;
 
   if (m_pending_changes) {
     detail::fillFromFlagField<detail::FlagField, IndexVectors, IndexInfo>(

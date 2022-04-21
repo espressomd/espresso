@@ -24,32 +24,31 @@
 
 namespace walberla {
 
-template <typename FloatType> class EKReactant {
+class EKReactant {
 private:
-  std::shared_ptr<EKinWalberlaBase<FloatType>> m_ekspecies;
-  FloatType m_stoech_coeff;
-  FloatType m_order;
+  std::shared_ptr<EKinWalberlaBase> m_ekspecies;
+  double m_stoech_coeff;
+  double m_order;
 
 public:
-  EKReactant(std::shared_ptr<EKinWalberlaBase<FloatType>> ekspecies,
-             FloatType stoech_coeff, FloatType order)
+  EKReactant(std::shared_ptr<EKinWalberlaBase> ekspecies, double stoech_coeff,
+             double order)
       : m_ekspecies(std::move(ekspecies)), m_stoech_coeff(stoech_coeff),
         m_order(order) {}
 
-  void set_stoech_coefficient(FloatType stoech_coeff) noexcept {
+  void set_stoech_coefficient(double stoech_coeff) noexcept {
     m_stoech_coeff = stoech_coeff;
   }
 
-  [[nodiscard]] FloatType get_stoech_coeff() const noexcept {
+  [[nodiscard]] double get_stoech_coeff() const noexcept {
     return m_stoech_coeff;
   }
 
-  void set_order(FloatType order) noexcept { m_order = order; }
+  void set_order(double order) noexcept { m_order = order; }
 
-  [[nodiscard]] FloatType get_order() const noexcept { return m_order; }
+  [[nodiscard]] double get_order() const noexcept { return m_order; }
 
-  void
-  set_species(std::shared_ptr<EKinWalberlaBase<FloatType>> ekspecies) noexcept {
+  void set_species(std::shared_ptr<EKinWalberlaBase> ekspecies) noexcept {
     m_ekspecies = std::move(ekspecies);
   }
 

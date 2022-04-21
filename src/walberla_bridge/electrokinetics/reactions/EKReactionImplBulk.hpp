@@ -28,27 +28,19 @@
 
 namespace walberla {
 
-template <typename FloatType>
-class EKReactionImplBulk : public EKReactionBase<FloatType> {
-private:
-  using ReactionBase = EKReactionBase<FloatType>;
-
+class EKReactionImplBulk : public EKReactionBase {
 public:
-  EKReactionImplBulk(
-      std::shared_ptr<LatticeWalberla> lattice,
-      std::vector<std::shared_ptr<EKReactant<FloatType>>> reactants,
-      FloatType coefficient)
-      : EKReactionBase<FloatType>(lattice, reactants, coefficient) {}
+  EKReactionImplBulk(const std::shared_ptr<LatticeWalberla> &lattice,
+                     const std::vector<std::shared_ptr<EKReactant>> &reactants,
+                     double coefficient)
+      : EKReactionBase(lattice, reactants, coefficient) {}
 
-  using ReactionBase::get_coefficient;
-  using ReactionBase::get_lattice;
-  using ReactionBase::get_reactants;
+  using EKReactionBase::get_coefficient;
+  using EKReactionBase::get_lattice;
+  using EKReactionBase::get_reactants;
 
   void perform_reaction() override;
 };
-
-// explicit template instantiation
-template class EKReactionImplBulk<double>;
 } // namespace walberla
 
 #endif // ESPRESSO_SRC_WALBERLA_BRIDGE_EKREACTIONIMPLBULK_HPP

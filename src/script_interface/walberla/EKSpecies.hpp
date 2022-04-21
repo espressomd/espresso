@@ -7,23 +7,23 @@
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameter.hpp"
 
-#include "walberla_bridge/electrokinetics/EKinWalberlaBase.hpp"
-#include "walberla_bridge/electrokinetics/EKinWalberlaImpl.hpp"
+#include "walberla_bridge/electrokinetics/ek_walberla_init.hpp"
 
 #include "optional_reduction.hpp"
 
 namespace ScriptInterface::walberla {
 
-class EKSpecies : public AutoParameters<EKinWalberlaBase<double>> {
+class EKSpecies : public AutoParameters<EKinWalberlaBase> {
 public:
   void do_construct(VariantMap const &args) override {
     m_lattice = get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice");
-    m_ekinstance = std::make_shared<::walberla::EKinWalberlaImpl<13, double>>(
+    m_single_precision = get_value_or<bool>(args, "single_precision", false);
+    m_ekinstance = new_ek_walberla(
         m_lattice->lattice(), get_value<double>(args, "diffusion"),
         get_value<double>(args, "kT"), get_value<double>(args, "valency"),
         get_value<Utils::Vector3d>(args, "ext_efield"),
         get_value<double>(args, "density"), get_value<bool>(args, "advection"),
-        get_value<bool>(args, "friction_coupling"));
+        get_value<bool>(args, "friction_coupling"), m_single_precision);
 
     add_parameters(
         {{"diffusion",
@@ -56,6 +56,8 @@ public:
             m_ekinstance->set_friction_coupling(get_value<bool>(v));
           },
           [this]() { return m_ekinstance->get_friction_coupling(); }},
+         {"single_precision", AutoParameter::read_only,
+          [this]() { return m_single_precision; }},
          {"shape", AutoParameter::read_only,
           [this]() {
             return m_ekinstance->get_lattice().get_grid_dimensions();
@@ -64,7 +66,7 @@ public:
           [this]() { return m_lattice; }}});
   }
 
-  [[nodiscard]] std::shared_ptr<EKinWalberlaBase<double>> get_ekinstance() {
+  [[nodiscard]] std::shared_ptr<EKinWalberlaBase> get_ekinstance() {
     return m_ekinstance;
   }
 
@@ -149,9 +151,11 @@ public:
 
 private:
   /* The actual constraint */
-  std::shared_ptr<EKinWalberlaBase<double>> m_ekinstance;
+  std::shared_ptr<EKinWalberlaBase> m_ekinstance;
 
   std::shared_ptr<LatticeWalberla> m_lattice;
+
+  bool m_single_precision;
 };
 } // namespace ScriptInterface::walberla
 

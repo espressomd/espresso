@@ -13,13 +13,13 @@
 //  You should have received a copy of the GNU General Public License along
 //  with waLBerla (see COPYING.txt). If not, see <http://www.gnu.org/licenses/>.
 //
-//! \\file ReactionKernelIndexed_3.cpp
+//! \\file ReactionKernelIndexed_3_double_precision.cpp
 //! \\author pystencils
 //======================================================================================================================
 
 #include <cmath>
 
-#include "ReactionKernelIndexed_3.h"
+#include "ReactionKernelIndexed_3_double_precision.h"
 #include "core/DataTypes.h"
 #include "core/Macros.h"
 
@@ -42,9 +42,9 @@ namespace pystencils {
 #pragma diag_suppress = declared_but_not_referenced
 #endif
 
-namespace internal_reactionkernelindexed_3_boundary_ReactionKernelIndexed_3 {
+namespace internal_reactionkernelindexed_3_double_precision_boundary_ReactionKernelIndexed_3_double_precision {
 static FUNC_PREFIX void
-reactionkernelindexed_3_boundary_ReactionKernelIndexed_3(
+reactionkernelindexed_3_double_precision_boundary_ReactionKernelIndexed_3_double_precision(
     uint8_t *RESTRICT _data_indexVector, double *RESTRICT _data_rho_0,
     double *RESTRICT _data_rho_1, double *RESTRICT _data_rho_2,
     int64_t const _stride_rho_0_0, int64_t const _stride_rho_0_1,
@@ -78,7 +78,10 @@ reactionkernelindexed_3_boundary_ReactionKernelIndexed_3(
                 _stride_rho_2_2 * z] = local_rho_2 + rate_factor * stoech_2;
   }
 }
-} // namespace internal_reactionkernelindexed_3_boundary_ReactionKernelIndexed_3
+} // namespace
+  // internal_reactionkernelindexed_3_double_precision_boundary_ReactionKernelIndexed_3_double_precision
+  // internal_reactionkernelindexed_3_double_precision_boundary_ReactionKernelIndexed_3_double_precision
+  // internal_reactionkernelindexed_3_double_precision_boundary_ReactionKernelIndexed_3_double_precision
 
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
@@ -88,7 +91,8 @@ reactionkernelindexed_3_boundary_ReactionKernelIndexed_3(
 #pragma pop
 #endif
 
-void ReactionKernelIndexed_3::run_impl(IBlock *block, IndexVectors::Type type) {
+void ReactionKernelIndexed_3_double_precision::run_impl(
+    IBlock *block, IndexVectors::Type type) {
   auto *indexVectors = block->uncheckedFastGetData<IndexVectors>(indexVectorID);
   int64_t indexVectorSize = int64_c(indexVectors->indexVector(type).size());
   if (indexVectorSize == 0)
@@ -102,13 +106,13 @@ void ReactionKernelIndexed_3::run_impl(IBlock *block, IndexVectors::Type type) {
   auto rho_2 = block->getData<field::GhostLayerField<double, 1>>(rho_2ID);
   auto rho_1 = block->getData<field::GhostLayerField<double, 1>>(rho_1ID);
 
-  auto &stoech_2 = stoech_2_;
-  auto &stoech_1 = stoech_1_;
-  auto &order_2 = order_2_;
   auto &order_1 = order_1_;
-  auto &rate_coefficient = rate_coefficient_;
-  auto &stoech_0 = stoech_0_;
+  auto &stoech_1 = stoech_1_;
+  auto &stoech_2 = stoech_2_;
   auto &order_0 = order_0_;
+  auto &order_2 = order_2_;
+  auto &stoech_0 = stoech_0_;
+  auto &rate_coefficient = rate_coefficient_;
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_0->nrOfGhostLayers()));
   double *RESTRICT _data_rho_0 = rho_0->dataAt(0, 0, 0, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_1->nrOfGhostLayers()));
@@ -124,8 +128,8 @@ void ReactionKernelIndexed_3::run_impl(IBlock *block, IndexVectors::Type type) {
   const int64_t _stride_rho_2_0 = int64_t(rho_2->xStride());
   const int64_t _stride_rho_2_1 = int64_t(rho_2->yStride());
   const int64_t _stride_rho_2_2 = int64_t(rho_2->zStride());
-  internal_reactionkernelindexed_3_boundary_ReactionKernelIndexed_3::
-      reactionkernelindexed_3_boundary_ReactionKernelIndexed_3(
+  internal_reactionkernelindexed_3_double_precision_boundary_ReactionKernelIndexed_3_double_precision::
+      reactionkernelindexed_3_double_precision_boundary_ReactionKernelIndexed_3_double_precision(
           _data_indexVector, _data_rho_0, _data_rho_1, _data_rho_2,
           _stride_rho_0_0, _stride_rho_0_1, _stride_rho_0_2, _stride_rho_1_0,
           _stride_rho_1_1, _stride_rho_1_2, _stride_rho_2_0, _stride_rho_2_1,
@@ -133,15 +137,15 @@ void ReactionKernelIndexed_3::run_impl(IBlock *block, IndexVectors::Type type) {
           rate_coefficient, stoech_0, stoech_1, stoech_2);
 }
 
-void ReactionKernelIndexed_3::run(IBlock *block) {
+void ReactionKernelIndexed_3_double_precision::run(IBlock *block) {
   run_impl(block, IndexVectors::ALL);
 }
 
-void ReactionKernelIndexed_3::inner(IBlock *block) {
+void ReactionKernelIndexed_3_double_precision::inner(IBlock *block) {
   run_impl(block, IndexVectors::INNER);
 }
 
-void ReactionKernelIndexed_3::outer(IBlock *block) {
+void ReactionKernelIndexed_3_double_precision::outer(IBlock *block) {
   run_impl(block, IndexVectors::OUTER);
 }
 

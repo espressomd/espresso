@@ -49,16 +49,26 @@ list(APPEND WalberlaBridgeElectrokinetics_SRC
 
 set(WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS}/generated_kernels)
 list(APPEND WalberlaBridgeElectrokineticsCodegen_SRC
-     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelBulk_1.cpp
-     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelBulk_2.cpp
-     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelBulk_3.cpp
-     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelBulk_4.cpp
-     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelBulk_5.cpp
-     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelIndexed_1.cpp
-     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelIndexed_2.cpp
-     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelIndexed_3.cpp
-     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelIndexed_4.cpp
-     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelIndexed_5.cpp)
+     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelBulk_1_double_precision.cpp
+     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelBulk_2_double_precision.cpp
+     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelBulk_3_double_precision.cpp
+     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelBulk_4_double_precision.cpp
+     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelBulk_5_double_precision.cpp
+     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelBulk_1_single_precision.cpp
+     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelBulk_2_single_precision.cpp
+     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelBulk_3_single_precision.cpp
+     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelBulk_4_single_precision.cpp
+     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelBulk_5_single_precision.cpp
+     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelIndexed_1_double_precision.cpp
+     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelIndexed_2_double_precision.cpp
+     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelIndexed_3_double_precision.cpp
+     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelIndexed_4_double_precision.cpp
+     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelIndexed_5_double_precision.cpp
+     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelIndexed_1_single_precision.cpp
+     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelIndexed_2_single_precision.cpp
+     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelIndexed_3_single_precision.cpp
+     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelIndexed_4_single_precision.cpp
+     ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelIndexed_5_single_precision.cpp)
 unset(WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN)
 unset(WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS)
 # EK poisson
@@ -91,7 +101,7 @@ set(WalberlaBridgeCodegenCuda_SRC
     generated_kernels/CudaUpdateVelocityFromPDFSweepSinglePrecision.cu)
 
 
-set(WalberlaBridge_SRC ${WalberlaBridgeCodegen_SRC} lb_walberla_init.cpp
+set(WalberlaBridge_SRC ${WalberlaBridgeCodegen_SRC} lb_walberla_init.cpp electrokinetics/ek_walberla_init.cpp
                        LatticeWalberla.cpp ${WalberlaBridgeElectrokineticsCodegen_SRC} ${WalberlaBridgeElectrokinetics_SRC})
 
 add_library(cxx_walberla_interface INTERFACE)

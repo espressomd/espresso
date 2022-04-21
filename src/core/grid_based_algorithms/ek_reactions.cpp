@@ -4,7 +4,7 @@
 #include <algorithm>
 
 namespace EK {
-EKReactions<walberla::EKReactionBase<double>> ek_reactions;
+EKReactions<walberla::EKReactionBase> ek_reactions;
 
 void perform_reactions() {
   if (ek_reactions.empty()) {

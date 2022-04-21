@@ -13,7 +13,7 @@
 //  You should have received a copy of the GNU General Public License along
 //  with waLBerla (see COPYING.txt). If not, see <http://www.gnu.org/licenses/>.
 //
-//! \\file ReactionKernelIndexed_5.h
+//! \\file ReactionKernelIndexed_4_single_precision.h
 //! \\author pystencils
 //======================================================================================================================
 
@@ -44,7 +44,7 @@ namespace walberla {
 namespace pystencils {
 
 
-class ReactionKernelIndexed_5
+class ReactionKernelIndexed_4_single_precision
 {
 public:
     struct IndexInfo { 
@@ -88,17 +88,17 @@ public:
         
     };
 
-    ReactionKernelIndexed_5( const shared_ptr<StructuredBlockForest> & blocks,
-                   BlockDataID rho_0ID_, BlockDataID rho_1ID_, BlockDataID rho_2ID_, BlockDataID rho_3ID_, BlockDataID rho_4ID_, double order_0, double order_1, double order_2, double order_3, double order_4, double rate_coefficient, double stoech_0, double stoech_1, double stoech_2, double stoech_3, double stoech_4)
-        : rho_0ID(rho_0ID_), rho_1ID(rho_1ID_), rho_2ID(rho_2ID_), rho_3ID(rho_3ID_), rho_4ID(rho_4ID_), order_0_(order_0), order_1_(order_1), order_2_(order_2), order_3_(order_3), order_4_(order_4), rate_coefficient_(rate_coefficient), stoech_0_(stoech_0), stoech_1_(stoech_1), stoech_2_(stoech_2), stoech_3_(stoech_3), stoech_4_(stoech_4)
+    ReactionKernelIndexed_4_single_precision( const shared_ptr<StructuredBlockForest> & blocks,
+                   BlockDataID rho_0ID_, BlockDataID rho_1ID_, BlockDataID rho_2ID_, BlockDataID rho_3ID_, float order_0, float order_1, float order_2, float order_3, float rate_coefficient, float stoech_0, float stoech_1, float stoech_2, float stoech_3)
+        : rho_0ID(rho_0ID_), rho_1ID(rho_1ID_), rho_2ID(rho_2ID_), rho_3ID(rho_3ID_), order_0_(order_0), order_1_(order_1), order_2_(order_2), order_3_(order_3), rate_coefficient_(rate_coefficient), stoech_0_(stoech_0), stoech_1_(stoech_1), stoech_2_(stoech_2), stoech_3_(stoech_3)
     {
         auto createIdxVector = []( IBlock * const , StructuredBlockStorage * const ) { return new IndexVectors(); };
-        indexVectorID = blocks->addStructuredBlockData< IndexVectors >( createIdxVector, "IndexField_ReactionKernelIndexed_5");
+        indexVectorID = blocks->addStructuredBlockData< IndexVectors >( createIdxVector, "IndexField_ReactionKernelIndexed_4_single_precision");
     };
-
-    ReactionKernelIndexed_5( BlockDataID indexVectorID,
-                             BlockDataID rho_0ID_, BlockDataID rho_1ID_, BlockDataID rho_2ID_, BlockDataID rho_3ID_, BlockDataID rho_4ID_, double order_0, double order_1, double order_2, double order_3, double order_4, double rate_coefficient, double stoech_0, double stoech_1, double stoech_2, double stoech_3, double stoech_4)
-    : indexVectorID(indexVectorID), rho_0ID(rho_0ID_), rho_1ID(rho_1ID_), rho_2ID(rho_2ID_), rho_3ID(rho_3ID_), rho_4ID(rho_4ID_), order_0_(order_0), order_1_(order_1), order_2_(order_2), order_3_(order_3), order_4_(order_4), rate_coefficient_(rate_coefficient), stoech_0_(stoech_0), stoech_1_(stoech_1), stoech_2_(stoech_2), stoech_3_(stoech_3), stoech_4_(stoech_4) {};
+    
+    ReactionKernelIndexed_4_single_precision(BlockDataID indexVectorID_, BlockDataID rho_0ID_, BlockDataID rho_1ID_, BlockDataID rho_2ID_, BlockDataID rho_3ID_, float order_0, float order_1, float order_2, float order_3, float rate_coefficient, float stoech_0, float stoech_1, float stoech_2, float stoech_3)
+        :  indexVectorID(indexVectorID_), rho_0ID(rho_0ID_), rho_1ID(rho_1ID_), rho_2ID(rho_2ID_), rho_3ID(rho_3ID_), order_0_(order_0), order_1_(order_1), order_2_(order_2), order_3_(order_3), rate_coefficient_(rate_coefficient), stoech_0_(stoech_0), stoech_1_(stoech_1), stoech_2_(stoech_2), stoech_3_(stoech_3)
+    {};
 
     void run (IBlock * block);
 
@@ -145,7 +145,7 @@ public:
     void fillFromFlagField(IBlock * block, ConstBlockDataID flagFieldID,
                             FlagUID boundaryFlagUID, FlagUID domainFlagUID )
     {
-        auto * indexVectors = block->uncheckedFastGetData< IndexVectors > ( indexVectorID );
+        auto * indexVectors = block->getData< IndexVectors > ( indexVectorID );
         auto & indexVectorAll = indexVectors->indexVector(IndexVectors::ALL);
         auto & indexVectorInner = indexVectors->indexVector(IndexVectors::INNER);
         auto & indexVectorOuter = indexVectors->indexVector(IndexVectors::OUTER);
@@ -207,18 +207,15 @@ public:
     BlockDataID rho_1ID;
     BlockDataID rho_2ID;
     BlockDataID rho_3ID;
-    BlockDataID rho_4ID;
-    double order_0_;
-    double order_1_;
-    double order_2_;
-    double order_3_;
-    double order_4_;
-    double rate_coefficient_;
-    double stoech_0_;
-    double stoech_1_;
-    double stoech_2_;
-    double stoech_3_;
-    double stoech_4_;
+    float order_0_;
+    float order_1_;
+    float order_2_;
+    float order_3_;
+    float rate_coefficient_;
+    float stoech_0_;
+    float stoech_1_;
+    float stoech_2_;
+    float stoech_3_;
 };
 
 

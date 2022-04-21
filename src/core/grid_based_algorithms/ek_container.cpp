@@ -7,7 +7,7 @@
 #include "ek_reactions.hpp"
 
 namespace EK {
-EKContainer<EKinWalberlaBase<double>> ek_container;
+EKContainer<EKinWalberlaBase> ek_container;
 
 double get_tau() { return ek_container.get_tau(); }
 

@@ -5,7 +5,7 @@
 #include "electrokinetics/reactions/EKReactionBase.hpp"
 
 namespace EK {
-extern EKReactions<walberla::EKReactionBase<double>> ek_reactions;
+extern EKReactions<walberla::EKReactionBase> ek_reactions;
 
 void perform_reactions();
 } // namespace EK

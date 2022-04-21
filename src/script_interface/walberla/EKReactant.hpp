@@ -11,10 +11,10 @@
 #include <memory>
 
 namespace ScriptInterface::walberla {
-class EKReactant : public AutoParameters<::walberla::EKReactant<double>> {
+class EKReactant : public AutoParameters<::walberla::EKReactant> {
 public:
   void do_construct(VariantMap const &args) override {
-    m_ekreactant = std::make_shared<::walberla::EKReactant<double>>(
+    m_ekreactant = std::make_shared<::walberla::EKReactant>(
         get_value<std::shared_ptr<EKSpecies>>(args, "ekspecies")
             ->get_ekinstance(),
         get_value<double>(args, "stoech_coeff"),
@@ -33,13 +33,13 @@ public:
                      [this]() { return m_ekreactant->get_stoech_coeff(); }}});
   }
 
-  [[nodiscard]] std::shared_ptr<::walberla::EKReactant<double>> get_instance() {
+  [[nodiscard]] std::shared_ptr<::walberla::EKReactant> get_instance() {
     return m_ekreactant;
   }
 
 private:
   /* The actual instance */
-  std::shared_ptr<::walberla::EKReactant<double>> m_ekreactant;
+  std::shared_ptr<::walberla::EKReactant> m_ekreactant;
 };
 } // namespace ScriptInterface::walberla
 

@@ -13,7 +13,7 @@
 //  You should have received a copy of the GNU General Public License along
 //  with waLBerla (see COPYING.txt). If not, see <http://www.gnu.org/licenses/>.
 //
-//! \\file ReactionKernelBulk_2.h
+//! \\file ReactionKernelBulk_2_single_precision.h
 //! \\author pystencils
 //======================================================================================================================
 
@@ -47,10 +47,10 @@ namespace walberla {
 namespace pystencils {
 
 
-class ReactionKernelBulk_2
+class ReactionKernelBulk_2_single_precision
 {
 public:
-    ReactionKernelBulk_2( BlockDataID rho_0ID_, BlockDataID rho_1ID_, double order_0, double order_1, double rate_coefficient, double stoech_0, double stoech_1 )
+    ReactionKernelBulk_2_single_precision( BlockDataID rho_0ID_, BlockDataID rho_1ID_, float order_0, float order_1, float rate_coefficient, float stoech_0, float stoech_1 )
         : rho_0ID(rho_0ID_), rho_1ID(rho_1ID_), order_0_(order_0), order_1_(order_1), rate_coefficient_(rate_coefficient), stoech_0_(stoech_0), stoech_1_(stoech_1)
     {};
 
@@ -67,14 +67,14 @@ public:
     }
     
 
-    static std::function<void (IBlock *)> getSweep(const shared_ptr<ReactionKernelBulk_2> & kernel)
+    static std::function<void (IBlock *)> getSweep(const shared_ptr<ReactionKernelBulk_2_single_precision> & kernel)
     {
         return [kernel] 
                (IBlock * b) 
                { kernel->run(b); };
     }
 
-    static std::function<void (IBlock*)> getSweepOnCellInterval(const shared_ptr<ReactionKernelBulk_2> & kernel, const shared_ptr<StructuredBlockStorage> & blocks, const CellInterval & globalCellInterval, cell_idx_t ghostLayers=1)
+    static std::function<void (IBlock*)> getSweepOnCellInterval(const shared_ptr<ReactionKernelBulk_2_single_precision> & kernel, const shared_ptr<StructuredBlockStorage> & blocks, const CellInterval & globalCellInterval, cell_idx_t ghostLayers=1)
     {
         return [kernel, blocks, globalCellInterval, ghostLayers]
                (IBlock * b) 
@@ -98,11 +98,11 @@ public:
 
     BlockDataID rho_0ID;
     BlockDataID rho_1ID;
-    double order_0_;
-    double order_1_;
-    double rate_coefficient_;
-    double stoech_0_;
-    double stoech_1_;
+    float order_0_;
+    float order_1_;
+    float rate_coefficient_;
+    float stoech_0_;
+    float stoech_1_;
 
 };
 

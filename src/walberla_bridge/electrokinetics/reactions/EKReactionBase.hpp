@@ -26,24 +26,24 @@
 #include <memory>
 
 namespace walberla {
-template <typename FloatType> class EKReactionBase {
+class EKReactionBase {
 private:
-  std::vector<std::shared_ptr<EKReactant<FloatType>>> m_reactants;
-  FloatType m_coefficient;
+  std::vector<std::shared_ptr<EKReactant>> m_reactants;
+  double m_coefficient;
 
   std::shared_ptr<LatticeWalberla> m_lattice;
 
 public:
   EKReactionBase(std::shared_ptr<LatticeWalberla> lattice,
-                 std::vector<std::shared_ptr<EKReactant<FloatType>>> reactants,
-                 FloatType coefficient)
+                 std::vector<std::shared_ptr<EKReactant>> reactants,
+                 double coefficient)
       : m_reactants(std::move(reactants)), m_coefficient(coefficient),
         m_lattice(std::move(lattice)) {}
 
-  void set_coefficient(FloatType coefficient) noexcept {
+  void set_coefficient(double coefficient) noexcept {
     m_coefficient = coefficient;
   }
-  [[nodiscard]] FloatType get_coefficient() const noexcept {
+  [[nodiscard]] double get_coefficient() const noexcept {
     return m_coefficient;
   }
   [[nodiscard]] auto get_lattice() const noexcept { return m_lattice; }

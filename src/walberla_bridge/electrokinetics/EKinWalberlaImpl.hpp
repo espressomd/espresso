@@ -90,28 +90,43 @@ std::vector<double> fill_3D_scalar_array(const Utils::Vector3i &grid_size,
   return output_vector;
 }
 
+// TODO: generate everything for single-precision too
+// TODO: figure out how the boundary-handling template stuff works
+
+// template <typename FloatType> struct DensityBoundaryHandlingTrait {
+//    using Dirichlet = pystencils::Dirichlet;
+//};
+// template <> struct DensityBoundaryHandlingTrait<float> {
+//    using Dirichlet = pystencils::Dirichlet;
+//};
+
 /** Class that runs and controls the LB on WaLBerla
  */
 template <size_t FluxCount = 13, typename FloatType = double>
-class EKinWalberlaImpl : public EKinWalberlaBase<FloatType> {
+class EKinWalberlaImpl : public EKinWalberlaBase {
+  template <typename T> inline FloatType FloatType_c(T t) {
+    return numeric_cast<FloatType>(t);
+  }
+
 protected:
   // Type definitions
   using FluxField = GhostLayerField<FloatType, FluxCount>;
   using FlagField = walberla::FlagField<walberla::uint8_t>;
   using DensityField = GhostLayerField<FloatType, 1>;
 
-  using EKinWalberlaBase<FloatType>::get_diffusion;
-  using EKinWalberlaBase<FloatType>::get_kT;
-  using EKinWalberlaBase<FloatType>::get_valency;
-  using EKinWalberlaBase<FloatType>::get_ext_efield;
-  using EKinWalberlaBase<FloatType>::get_advection;
-  using EKinWalberlaBase<FloatType>::get_friction_coupling;
-
   // TODO: boundary handling for Density!
   using BoundaryModelDensity =
       BoundaryHandling<FloatType, pystencils::Dirichlet>;
   using BoundaryModelFlux =
       BoundaryHandling<Vector3<FloatType>, pystencils::FixedFlux>;
+
+private:
+  FloatType m_diffusion;
+  FloatType m_kT;
+  FloatType m_valency;
+  Utils::Vector3d m_ext_efield;
+  bool m_advection;
+  bool m_friction_coupling;
 
 protected:
   /** VTK writers that are executed automatically */
@@ -160,16 +175,16 @@ protected:
   std::shared_ptr<FullCommunicator> m_full_communication;
 
 public:
-  EKinWalberlaImpl(std::shared_ptr<LatticeWalberla> lattice,
-                   FloatType diffusion, FloatType kT, FloatType valency,
-                   Utils::Vector<FloatType, 3> ext_efield, FloatType density,
-                   bool advection, bool friction_coupling)
-      : EKinWalberlaBase<FloatType>(diffusion, kT, valency, ext_efield,
-                                    advection, friction_coupling),
+  EKinWalberlaImpl(std::shared_ptr<LatticeWalberla> lattice, double diffusion,
+                   double kT, double valency, const Utils::Vector3d &ext_efield,
+                   double density, bool advection, bool friction_coupling)
+      : m_diffusion(FloatType_c(diffusion)), m_kT(FloatType_c(kT)),
+        m_valency(FloatType_c(valency)), m_ext_efield(ext_efield),
+        m_advection(advection), m_friction_coupling(friction_coupling),
         m_lattice(std::move(lattice)) {
     m_density_field_id = field::addToStorage<DensityField>(
-        m_lattice->get_blocks(), "density field", density, field::fzyx,
-        m_lattice->get_ghost_layers());
+        m_lattice->get_blocks(), "density field", FloatType_c(density),
+        field::fzyx, m_lattice->get_ghost_layers());
     m_density_field_flattened_id =
         field::addFlattenedShallowCopyToStorage<DensityField>(
             m_lattice->get_blocks(), m_density_field_id,
@@ -205,7 +220,45 @@ public:
     (*m_full_communication)();
   };
 
-  void ghost_communication() override { (*m_full_communication)(); };
+  // Global parameters
+  [[nodiscard]] double get_diffusion() const noexcept override {
+    return m_diffusion;
+  }
+  [[nodiscard]] double get_kT() const noexcept override { return m_kT; }
+  [[nodiscard]] double get_valency() const noexcept override {
+    return m_valency;
+  }
+  [[nodiscard]] bool get_advection() const noexcept override {
+    return m_advection;
+  }
+  [[nodiscard]] bool get_friction_coupling() const noexcept override {
+    return m_friction_coupling;
+  }
+  [[nodiscard]] Utils::Vector3d get_ext_efield() const noexcept override {
+    return m_ext_efield;
+  }
+  [[nodiscard]] bool is_double_precision() const noexcept override {
+    return std::is_same<double, FloatType>::value;
+  };
+
+  void set_diffusion(double diffusion) noexcept override {
+    m_diffusion = FloatType_c(diffusion);
+  }
+  void set_kT(double kT) noexcept override { m_kT = FloatType_c(kT); }
+  void set_valency(double valency) noexcept override {
+    m_valency = FloatType_c(valency);
+  }
+  void set_advection(bool advection) noexcept override {
+    m_advection = advection;
+  }
+  void set_friction_coupling(bool friction_coupling) noexcept override {
+    m_friction_coupling = friction_coupling;
+  }
+  void set_ext_efield(const Utils::Vector3d &field) noexcept override {
+    m_ext_efield = field;
+  }
+
+  void ghost_communication() override { (*m_full_communication)(); }
 
 private:
   inline void kernel_boundary_density() {
@@ -341,20 +394,19 @@ public:
   }
 
   // Density
-  bool set_node_density(const Utils::Vector3i &node,
-                        FloatType density) override {
+  bool set_node_density(const Utils::Vector3i &node, double density) override {
     auto bc = get_block_and_cell(get_lattice(), node, false);
     if (!bc)
       return false;
 
     auto density_field =
         (*bc).block->template getData<DensityField>(m_density_field_id);
-    density_field->get((*bc).cell) = density;
+    density_field->get((*bc).cell) = FloatType_c(density);
 
     return true;
   };
 
-  [[nodiscard]] boost::optional<FloatType>
+  [[nodiscard]] boost::optional<double>
   get_node_density(const Utils::Vector3i &node) const override {
     auto bc = get_block_and_cell(get_lattice(), node, false);
 
@@ -408,12 +460,13 @@ public:
     if (!bc)
       return false;
 
-    m_boundary_density->set_node_value_at_boundary(node, density, *bc);
+    m_boundary_density->set_node_value_at_boundary(node, FloatType_c(density),
+                                                   *bc);
 
     return true;
   }
 
-  [[nodiscard]] boost::optional<FloatType>
+  [[nodiscard]] boost::optional<double>
   get_node_density_at_boundary(const Utils::Vector3i &node) const override {
     auto const bc = get_block_and_cell(get_lattice(), node, true);
     if (!bc or !m_boundary_density->node_is_boundary(node))
@@ -539,7 +592,7 @@ public:
             auto const idx = (node + grid_size) % grid_size;
             if (raster(idx)) {
               auto const bc = get_block_and_cell(get_lattice(), node, true);
-              auto const &val = densities(idx);
+              auto const &val = FloatType_c(densities(idx));
               m_boundary_density->set_node_value_at_boundary(node, val, *bc);
             }
           }

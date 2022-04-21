@@ -15,9 +15,9 @@
 #include <memory>
 
 namespace ScriptInterface::walberla {
-class EKReaction : public AutoParameters<::walberla::EKReactionBase<double>> {
+class EKReaction : public AutoParameters<::walberla::EKReactionBase> {
 public:
-  [[nodiscard]] virtual std::shared_ptr<::walberla::EKReactionBase<double>>
+  [[nodiscard]] virtual std::shared_ptr<::walberla::EKReactionBase>
   get_instance() const = 0;
 
   [[nodiscard]] Utils::Vector3i
@@ -50,7 +50,7 @@ public:
         get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice")->lattice();
 
     auto reactant = get_value<std::vector<Variant>>(args, "reactants");
-    std::vector<std::shared_ptr<::walberla::EKReactant<double>>> output(
+    std::vector<std::shared_ptr<::walberla::EKReactant>> output(
         reactant.size());
     auto get_instance = [](Variant &ekreactant) {
       return get_value<std::shared_ptr<EKReactant>>(ekreactant)->get_instance();
@@ -58,7 +58,7 @@ public:
     std::transform(reactant.begin(), reactant.end(), output.begin(),
                    get_instance);
 
-    m_ekreaction = std::make_shared<::walberla::EKReactionImplBulk<double>>(
+    m_ekreaction = std::make_shared<::walberla::EKReactionImplBulk>(
         lattice, output, get_value<double>(args, "coefficient"));
 
     add_parameters({{"coefficient",
@@ -68,13 +68,13 @@ public:
                      [this]() { return m_ekreaction->get_coefficient(); }}});
   }
 
-  [[nodiscard]] std::shared_ptr<::walberla::EKReactionBase<double>>
+  [[nodiscard]] std::shared_ptr<::walberla::EKReactionBase>
   get_instance() const override {
     return m_ekreaction;
   }
 
 private:
-  std::shared_ptr<::walberla::EKReactionImplBulk<double>> m_ekreaction;
+  std::shared_ptr<::walberla::EKReactionImplBulk> m_ekreaction;
 };
 
 class EKIndexedReaction : public EKReaction {
@@ -85,7 +85,7 @@ public:
         get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice")->lattice();
 
     auto reactant = get_value<std::vector<Variant>>(args, "reactants");
-    std::vector<std::shared_ptr<::walberla::EKReactant<double>>> output(
+    std::vector<std::shared_ptr<::walberla::EKReactant>> output(
         reactant.size());
     auto get_instance = [](Variant &ekreactant) {
       return get_value<std::shared_ptr<EKReactant>>(ekreactant)->get_instance();
@@ -93,7 +93,7 @@ public:
     std::transform(reactant.begin(), reactant.end(), output.begin(),
                    get_instance);
 
-    m_ekreaction = std::make_shared<::walberla::EKReactionIndexed<double>>(
+    m_ekreaction = std::make_shared<::walberla::EKReactionIndexed>(
         lattice, output, get_value<double>(args, "coefficient"));
 
     add_parameters(
@@ -123,13 +123,13 @@ public:
     return none;
   }
 
-  [[nodiscard]] std::shared_ptr<::walberla::EKReactionBase<double>>
+  [[nodiscard]] std::shared_ptr<::walberla::EKReactionBase>
   get_instance() const override {
     return m_ekreaction;
   }
 
 private:
-  std::shared_ptr<::walberla::EKReactionIndexed<double>> m_ekreaction;
+  std::shared_ptr<::walberla::EKReactionIndexed> m_ekreaction;
 };
 } // namespace ScriptInterface::walberla
 

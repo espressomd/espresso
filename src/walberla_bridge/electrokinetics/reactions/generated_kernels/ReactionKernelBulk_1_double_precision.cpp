@@ -13,14 +13,14 @@
 //  You should have received a copy of the GNU General Public License along
 //  with waLBerla (see COPYING.txt). If not, see <http://www.gnu.org/licenses/>.
 //
-//! \\file ReactionKernelBulk_1.cpp
+//! \\file ReactionKernelBulk_1_double_precision.cpp
 //! \\ingroup lbm
 //! \\author lbmpy
 //======================================================================================================================
 
 #include <cmath>
 
-#include "ReactionKernelBulk_1.h"
+#include "ReactionKernelBulk_1_double_precision.h"
 #include "core/DataTypes.h"
 #include "core/Macros.h"
 
@@ -45,8 +45,9 @@ using namespace std;
 namespace walberla {
 namespace pystencils {
 
-namespace internal_reactionkernelbulk_1_reactionkernelbulk_1 {
-static FUNC_PREFIX void reactionkernelbulk_1_reactionkernelbulk_1(
+namespace internal_reactionkernelbulk_1_double_precision_reactionkernelbulk_1_double_precision {
+static FUNC_PREFIX void
+reactionkernelbulk_1_double_precision_reactionkernelbulk_1_double_precision(
     double *RESTRICT _data_rho_0, int64_t const _size_rho_0_0,
     int64_t const _size_rho_0_1, int64_t const _size_rho_0_2,
     int64_t const _stride_rho_0_0, int64_t const _stride_rho_0_1,
@@ -66,14 +67,17 @@ static FUNC_PREFIX void reactionkernelbulk_1_reactionkernelbulk_1(
     }
   }
 }
-} // namespace internal_reactionkernelbulk_1_reactionkernelbulk_1
+} // namespace
+  // internal_reactionkernelbulk_1_double_precision_reactionkernelbulk_1_double_precision
+  // internal_reactionkernelbulk_1_double_precision_reactionkernelbulk_1_double_precision
+  // internal_reactionkernelbulk_1_double_precision_reactionkernelbulk_1_double_precision
 
-void ReactionKernelBulk_1::run(IBlock *block) {
+void ReactionKernelBulk_1_double_precision::run(IBlock *block) {
   auto rho_0 = block->getData<field::GhostLayerField<double, 1>>(rho_0ID);
 
   auto &rate_coefficient = this->rate_coefficient_;
-  auto &stoech_0 = this->stoech_0_;
   auto &order_0 = this->order_0_;
+  auto &stoech_0 = this->stoech_0_;
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_0->nrOfGhostLayers()));
   double *RESTRICT _data_rho_0 = rho_0->dataAt(0, 0, 0, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(rho_0->xSizeWithGhostLayer(),
@@ -88,14 +92,14 @@ void ReactionKernelBulk_1::run(IBlock *block) {
   const int64_t _stride_rho_0_0 = int64_t(rho_0->xStride());
   const int64_t _stride_rho_0_1 = int64_t(rho_0->yStride());
   const int64_t _stride_rho_0_2 = int64_t(rho_0->zStride());
-  internal_reactionkernelbulk_1_reactionkernelbulk_1::
-      reactionkernelbulk_1_reactionkernelbulk_1(
+  internal_reactionkernelbulk_1_double_precision_reactionkernelbulk_1_double_precision::
+      reactionkernelbulk_1_double_precision_reactionkernelbulk_1_double_precision(
           _data_rho_0, _size_rho_0_0, _size_rho_0_1, _size_rho_0_2,
           _stride_rho_0_0, _stride_rho_0_1, _stride_rho_0_2, order_0,
           rate_coefficient, stoech_0);
 }
 
-void ReactionKernelBulk_1::runOnCellInterval(
+void ReactionKernelBulk_1_double_precision::runOnCellInterval(
     const shared_ptr<StructuredBlockStorage> &blocks,
     const CellInterval &globalCellInterval, cell_idx_t ghostLayers,
     IBlock *block) {
@@ -110,8 +114,8 @@ void ReactionKernelBulk_1::runOnCellInterval(
   auto rho_0 = block->getData<field::GhostLayerField<double, 1>>(rho_0ID);
 
   auto &rate_coefficient = this->rate_coefficient_;
-  auto &stoech_0 = this->stoech_0_;
   auto &order_0 = this->order_0_;
+  auto &stoech_0 = this->stoech_0_;
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(rho_0->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(rho_0->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(rho_0->nrOfGhostLayers()));
@@ -129,8 +133,8 @@ void ReactionKernelBulk_1::runOnCellInterval(
   const int64_t _stride_rho_0_0 = int64_t(rho_0->xStride());
   const int64_t _stride_rho_0_1 = int64_t(rho_0->yStride());
   const int64_t _stride_rho_0_2 = int64_t(rho_0->zStride());
-  internal_reactionkernelbulk_1_reactionkernelbulk_1::
-      reactionkernelbulk_1_reactionkernelbulk_1(
+  internal_reactionkernelbulk_1_double_precision_reactionkernelbulk_1_double_precision::
+      reactionkernelbulk_1_double_precision_reactionkernelbulk_1_double_precision(
           _data_rho_0, _size_rho_0_0, _size_rho_0_1, _size_rho_0_2,
           _stride_rho_0_0, _stride_rho_0_1, _stride_rho_0_2, order_0,
           rate_coefficient, stoech_0);

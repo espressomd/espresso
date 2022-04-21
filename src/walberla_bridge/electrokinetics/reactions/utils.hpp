@@ -25,10 +25,10 @@
 
 namespace walberla::detail {
 template <typename FloatType>
-auto get_reaction_details(
-    const std::shared_ptr<EKReactant<FloatType>> &reactant) {
-  const auto order = reactant->get_order();
-  const auto stoech_coeff = reactant->get_stoech_coeff();
+auto get_reaction_details(const std::shared_ptr<EKReactant> &reactant) {
+  const auto order = numeric_cast<FloatType>(reactant->get_order());
+  const auto stoech_coeff =
+      numeric_cast<FloatType>(reactant->get_stoech_coeff());
   const auto density_id =
       walberla::BlockDataID(reactant->get_species()->get_density_id());
 

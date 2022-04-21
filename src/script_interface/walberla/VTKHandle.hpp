@@ -177,7 +177,7 @@ public:
 
 class EKVTKHandle : public AutoParameters<::VTKHandle> {
   std::shared_ptr<::VTKHandle> m_vtk_handle;
-  std::shared_ptr<EKinWalberlaBase<double>> m_ekinstance;
+  std::shared_ptr<EKinWalberlaBase> m_ekinstance;
   int m_delta_N;
   int m_flag_obs;
   std::string m_identifier;
@@ -188,7 +188,7 @@ class EKVTKHandle : public AutoParameters<::VTKHandle> {
     return m_base_folder + '/' + m_identifier;
   }
 
-  [[nodiscard]] std::shared_ptr<EKinWalberlaBase<double>> get_ekinstance() {
+  [[nodiscard]] std::shared_ptr<EKinWalberlaBase> get_ekinstance() {
     return m_ekinstance;
   }
 

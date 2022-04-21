@@ -1,3 +1,22 @@
+/*
+ * Copyright (C) 2022 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #ifndef ESPRESSO_EKINWALBERLABASE_HPP
 #define ESPRESSO_EKINWALBERLABASE_HPP
 
@@ -12,23 +31,7 @@
 
 /** Class that runs and controls the EK on WaLBerla
  */
-template <typename FloatType = double> class EKinWalberlaBase {
-private:
-  FloatType m_diffusion;
-  FloatType m_kT;
-  FloatType m_valency;
-  Utils::Vector3d m_ext_efield;
-  bool m_advection;
-  bool m_friction_coupling;
-
-protected:
-  EKinWalberlaBase(FloatType diffusion, FloatType kT, FloatType valency,
-                   Utils::Vector<FloatType, 3> ext_efield, bool advection,
-                   bool friction_coupling)
-      : m_diffusion{diffusion}, m_kT{kT}, m_valency{valency},
-        m_ext_efield{ext_efield}, m_advection{advection},
-        m_friction_coupling(friction_coupling) {}
-
+class EKinWalberlaBase {
 public:
   /** @brief Integrate EKin for one time step */
   virtual void integrate(const std::size_t &potential_id,
@@ -43,8 +46,8 @@ public:
 
   // Density
   virtual bool set_node_density(const Utils::Vector3i &node,
-                                FloatType density) = 0;
-  [[nodiscard]] virtual boost::optional<FloatType>
+                                double density) = 0;
+  [[nodiscard]] virtual boost::optional<double>
   get_node_density(const Utils::Vector3i &node) const = 0;
 
   [[nodiscard]] virtual bool
@@ -56,7 +59,7 @@ public:
   remove_node_from_flux_boundary(const Utils::Vector3i &node) = 0;
   [[nodiscard]] virtual bool
   set_node_density_boundary(const Utils::Vector3i &node, double density) = 0;
-  [[nodiscard]] virtual boost::optional<FloatType>
+  [[nodiscard]] virtual boost::optional<double>
   get_node_density_at_boundary(const Utils::Vector3i &node) const = 0;
   virtual bool
   remove_node_from_density_boundary(const Utils::Vector3i &node) = 0;
@@ -79,26 +82,20 @@ public:
                                      std::vector<double> const &) = 0;
 
   // Global parameters
-  void set_diffusion(FloatType diffusion) noexcept { m_diffusion = diffusion; }
-  [[nodiscard]] FloatType get_diffusion() const noexcept { return m_diffusion; }
-  void set_kT(FloatType kT) noexcept { m_kT = kT; }
-  [[nodiscard]] FloatType get_kT() const noexcept { return m_kT; }
-  void set_valency(FloatType valency) noexcept { m_valency = valency; }
-  [[nodiscard]] FloatType get_valency() const noexcept { return m_valency; }
-  void set_advection(bool advection) noexcept { m_advection = advection; }
-  [[nodiscard]] bool get_advection() const noexcept { return m_advection; }
-  void set_friction_coupling(bool friction_coupling) noexcept {
-    m_friction_coupling = friction_coupling;
-  }
-  [[nodiscard]] bool get_friction_coupling() const noexcept {
-    return m_friction_coupling;
-  }
-  [[nodiscard]] Utils::Vector<FloatType, 3> get_ext_efield() const noexcept {
-    return m_ext_efield;
-  }
-  void set_ext_efield(const Utils::Vector<FloatType, 3> &field) noexcept {
-    m_ext_efield = field;
-  }
+  [[nodiscard]] virtual double get_diffusion() const noexcept = 0;
+  [[nodiscard]] virtual double get_kT() const noexcept = 0;
+  [[nodiscard]] virtual double get_valency() const noexcept = 0;
+  [[nodiscard]] virtual bool get_advection() const noexcept = 0;
+  [[nodiscard]] virtual bool get_friction_coupling() const noexcept = 0;
+  [[nodiscard]] virtual Utils::Vector3d get_ext_efield() const noexcept = 0;
+  [[nodiscard]] virtual bool is_double_precision() const noexcept = 0;
+
+  virtual void set_diffusion(double diffusion) noexcept = 0;
+  virtual void set_kT(double kT) noexcept = 0;
+  virtual void set_valency(double valency) noexcept = 0;
+  virtual void set_advection(bool advection) noexcept = 0;
+  virtual void set_friction_coupling(bool friction_coupling) noexcept = 0;
+  virtual void set_ext_efield(const Utils::Vector3d &field) noexcept = 0;
 
   //* @brief Fet the rng counter for thermalized LBs */
   virtual uint64_t get_rng_state() const = 0;

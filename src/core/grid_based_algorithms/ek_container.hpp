@@ -5,7 +5,7 @@
 #include "electrokinetics/EKinWalberlaBase.hpp"
 
 namespace EK {
-extern EKContainer<EKinWalberlaBase<double>> ek_container;
+extern EKContainer<EKinWalberlaBase> ek_container;
 
 double get_tau();
 int get_steps_per_md_step(double md_timestep);

@@ -32,25 +32,21 @@ namespace domain_decomposition {
 class BlockDataID;
 } // namespace domain_decomposition
 
-template <typename FloatType>
-class EKReactionIndexed : public EKReactionBase<FloatType> {
+class EKReactionIndexed : public EKReactionBase {
 private:
-  using ReactionBase = EKReactionBase<FloatType>;
-
   domain_decomposition::BlockDataID m_flagfield_id;
   domain_decomposition::BlockDataID m_indexvector_id;
 
   bool m_pending_changes;
 
 public:
-  EKReactionIndexed(
-      std::shared_ptr<LatticeWalberla> lattice,
-      std::vector<std::shared_ptr<EKReactant<FloatType>>> reactants,
-      FloatType coefficient);
+  EKReactionIndexed(std::shared_ptr<LatticeWalberla> lattice,
+                    std::vector<std::shared_ptr<EKReactant>> reactants,
+                    double coefficient);
 
-  using ReactionBase::get_coefficient;
-  using ReactionBase::get_lattice;
-  using ReactionBase::get_reactants;
+  using EKReactionBase::get_coefficient;
+  using EKReactionBase::get_lattice;
+  using EKReactionBase::get_reactants;
 
   void perform_reaction() override;
 
@@ -68,8 +64,6 @@ public:
   void boundary_update();
 };
 
-// explicit template instantiation
-template class EKReactionIndexed<double>;
 } // namespace walberla
 
 #endif // ESPRESSO_SRC_WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_EKREACTIONINDEXED_HPP
