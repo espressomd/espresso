@@ -309,6 +309,54 @@ this node is twice as high. For 3 processors, the interactions are 0-0,
 Therefore it is highly recommended that you use N-squared only with an
 odd number of nodes, if with multiple processors at all.
 
+.. _Hybrid:
+
+Hybrid decomposition
+~~~~~~~~~~~~~~~~~~~~
+
+If for a simulation setup the interaction range is much smaller than the
+system size, use of a :ref:`Regular decomposition` leads to efficient
+scaling behavior (order :math:`N` instead of order :math:`N^2`).
+Consider a system with many small particles, e.g. a polymer solution.
+There, already the addition of one single large particle increases the maximum
+interaction range and thus the minimum cell size of the decomposition.
+Due to this larger cell size, throughout the simulation box a large number
+of non-interacting pairs of small particles is visited during the short
+range calculation. This can considerably increase the computational cost of
+the simulation.
+
+For such simulation setups, i.e. systems with a few large particles and much
+more small particles, the hybrid decomposition can be used. This hybrid
+decomposition is backed by two coupled particle decompositions which can
+be used to efficiently deal with the differently sized particles.
+Specifically that means putting the small particles into a
+:ref:`Regular decomposition`. There, the minimum cell size is limited only
+by the maximum interaction range of all particles within this decomposition.
+The few large particles are put into a :ref:`N-squared` cellsystem. Particles
+within this decomposition interact both, amongst each other and with all small
+particles in the :ref:`Regular decomposition`. The hybrid decomposition can therefore
+effectively recover the computational efficiency of the regular decomposition,
+given that only a few large particles have been added.
+
+Invoking :py:meth:`~espressomd.cellsystem.CellSystem.set_hybrid_decomposition`
+selects the hybrid decomposition. ::
+
+    system = espressomd.System(box_l=[10, 10, 10])
+    system.cell_system.set_hybrid_decomposition(n_square_types={1, 3}, cutoff_regular=1.2)
+
+Here, ``n_square_types`` is a python set containing the types of particles to
+put into the :ref:`N-squared` cellsystem, i.e. the particle types of the
+large particles. Particles with other types will by default be put into the
+:ref:`Regular decomposition`. Note that for now it is also necessary to manually set
+the maximum cutoff to consider for interactions within the
+:ref:`Regular decomposition`, i.e. the maximum interaction range among all
+small particle types. Set this via the ``cutoff_regular`` parameter.
+
+.. note::
+
+  The hybrid particle decomposition has been added to |es| only recently and
+  for now should be considered an experimental feature. If you notice some unexpected
+  behavior please let us know via github or the mailing list.
 
 .. _CUDA:
 
