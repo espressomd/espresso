@@ -19,12 +19,14 @@
 #ifndef LB_PARTICLE_COUPLING_HPP
 #define LB_PARTICLE_COUPLING_HPP
 
+#include "BoxGeometry.hpp"
 #include "OptionalCounter.hpp"
 #include "ParticleRange.hpp"
 
 #include <boost/serialization/access.hpp>
 
 #include <cstdint>
+#include <unordered_set>
 
 /** Calculate particle lattice interactions.
  *  So far, only viscous coupling with Stokesian friction is implemented.
@@ -71,5 +73,33 @@ private:
     ar &couple_to_md;
   }
 };
+
+// expose functions that are also used to couple lb_inertialess_tracers
+template <class T, std::size_t N>
+using Box = std::pair<Utils::Vector<T, N>, Utils::Vector<T, N>>;
+
+/**
+ * @brief Check if a position is in a box.
+ *
+ * The left boundary belong to the box, the
+ * right one does not. Periodic boundaries are
+ * not considered.
+ *
+ * @param pos Position to check
+ * @param box Box to check
+ *
+ * @return True iff the point is inside of the box.
+ */
+template <class T, std::size_t N>
+bool in_box(Utils::Vector<T, N> const &pos, Box<T, N> const &box) {
+  return (pos >= box.first) and (pos < box.second);
+}
+
+bool in_local_halo(Utils::Vector3d const &pos);
+std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d pos,
+                                               const BoxGeometry &box);
+bool is_ghost_for_local_particle(const Particle &p);
+bool should_be_coupled(const Particle &p,
+                       std::unordered_set<int> &coupled_ghost_particles);
 
 #endif

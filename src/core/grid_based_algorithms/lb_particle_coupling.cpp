@@ -19,6 +19,7 @@
 #include "lb_particle_coupling.hpp"
 #include "LocalBox.hpp"
 #include "Particle.hpp"
+#include "cells.hpp"
 #include "communication.hpp"
 #include "config.hpp"
 #include "errorhandling.hpp"
@@ -137,18 +138,18 @@ void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force,
  *  Section II.C. @cite ahlrichs99a
  *
  *  @param[in] p             The coupled particle.
+ *  @param[in] pos           Local position of particle or its ghost.
  *  @param[in] f_random      Additional force to be included.
- *  @param[in] time_step     MD time step.
  *
  *  @return The viscous coupling force plus @p f_random.
  */
 Utils::Vector3d lb_viscous_coupling(Particle const &p,
-                                    Utils::Vector3d const &f_random,
-                                    double time_step) {
+                                    Utils::Vector3d const &pos,
+                                    Utils::Vector3d const &f_random) {
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation (eq. (11) @cite ahlrichs99a) */
   auto const interpolated_u =
-      lb_lbinterpolation_get_interpolated_velocity(p.pos()) *
+      lb_lbinterpolation_get_interpolated_velocity(pos) *
       lb_lbfluid_get_lattice_speed();
 
   Utils::Vector3d v_drift = interpolated_u;
@@ -165,33 +166,7 @@ Utils::Vector3d lb_viscous_coupling(Particle const &p,
   /* calculate viscous force (eq. (9) @cite ahlrichs99a) */
   auto const force = -lb_lbcoupling_get_gamma() * (p.v() - v_drift) + f_random;
 
-  add_md_force(p.pos(), force, time_step);
-
   return force;
-}
-
-namespace {
-using Utils::Vector;
-using Utils::Vector3d;
-
-template <class T, std::size_t N>
-using Box = std::pair<Vector<T, N>, Vector<T, N>>;
-
-/**
- * @brief Check if a position is in a box.
- *
- * The left boundary belong to the box, the
- * right one does not. Periodic boundaries are
- * not considered.
- *
- * @param pos Position to check
- * @param box Box to check
- *
- * @return True iff the point is inside of the box.
- */
-template <class T, std::size_t N>
-bool in_box(Vector<T, N> const &pos, Box<T, N> const &box) {
-  return (pos >= box.first) and (pos < box.second);
 }
 
 /**
@@ -202,8 +177,8 @@ bool in_box(Vector<T, N> const &pos, Box<T, N> const &box) {
  *
  * @return True iff the point is inside of the box up to halo.
  */
-inline bool in_local_domain(Vector3d const &pos, double halo = 0.) {
-  auto const halo_vec = Vector3d::broadcast(halo);
+inline bool in_local_domain(Utils::Vector3d const &pos, double halo = 0.) {
+  auto const halo_vec = Utils::Vector3d::broadcast(halo);
 
   return in_box(
       pos, {local_geo.my_left() - halo_vec, local_geo.my_right() + halo_vec});
@@ -217,10 +192,57 @@ inline bool in_local_domain(Vector3d const &pos, double halo = 0.) {
  *
  * @return True iff the point is inside of the domain.
  */
-bool in_local_halo(Vector3d const &pos) {
+bool in_local_halo(Utils::Vector3d const &pos) {
   auto const halo = 0.5 * lb_lbfluid_get_agrid();
 
   return in_local_domain(pos, halo);
+}
+
+/** @brief Return a vector of positions shifted by +,- box length in each
+ ** coordinate */
+std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d pos,
+                                               const BoxGeometry &box) {
+  std::vector<Utils::Vector3d> res;
+  for (int i : {-1, 0, 1}) {
+    for (int j : {-1, 0, 1}) {
+      for (int k : {-1, 0, 1}) {
+        Utils::Vector3d shift{{double(i), double(j), double(k)}};
+        Utils::Vector3d pos_shifted =
+            pos + Utils::hadamard_product(box.length(), shift);
+        if (in_local_halo(pos_shifted)) {
+          res.push_back(pos_shifted);
+        }
+      }
+    }
+  }
+  return res;
+}
+
+/** @brief Return if locally there exists a physical particle
+ ** for a given (ghost) particle */
+bool is_ghost_for_local_particle(const Particle &p) {
+  return !cell_structure.get_local_particle(p.identity())->is_ghost();
+}
+
+/** @brief Determine if a given particle should be coupled.
+ ** In certain cases, there may be more than one ghost for the same particle.
+ ** To make sure, that these are only coupled once, ghosts' ids are stored
+ ** in an unordered_set. */
+bool should_be_coupled(const Particle &p,
+                       std::unordered_set<int> &coupled_ghost_particles) {
+  // always couple physical particles
+  if (not p.is_ghost()) {
+    return true;
+  }
+  // for ghosts check that we don't have the physical particle and
+  // that a ghost for the same particle has not yet been coupled
+  if ((not is_ghost_for_local_particle(p)) and
+      (coupled_ghost_particles.find(p.identity()) ==
+       coupled_ghost_particles.end())) {
+    coupled_ghost_particles.insert(p.identity());
+    return true;
+  }
+  return false;
 }
 
 #ifdef ENGINE
@@ -231,17 +253,16 @@ void add_swimmer_force(Particle const &p, double time_step) {
         double(p.swimming().push_pull) * p.swimming().dipole_length;
     auto const director = p.calc_director();
     auto const source_position = p.pos() + direction * director;
+    auto const force = p.swimming().f_swim * director;
 
-    if (not in_local_halo(source_position)) {
-      return;
+    // couple positions including shifts by one box length to add forces
+    // to ghost layers
+    for (auto pos : positions_in_halo(source_position, box_geo)) {
+      add_md_force(pos, force, time_step);
     }
-
-    add_md_force(source_position, p.swimming().f_swim * director, time_step);
   }
 }
 #endif
-
-} // namespace
 
 void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
                                             const ParticleRange &particles,
@@ -265,6 +286,15 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
 #endif
   } else if (lattice_switch == ActiveLB::CPU) {
     if (lb_particle_coupling.couple_to_md) {
+      bool using_regular_cell_structure =
+          (local_geo.cell_structure_type() ==
+           CellStructureType::CELL_STRUCTURE_REGULAR);
+      if (not using_regular_cell_structure) {
+        if (n_nodes > 1) {
+          throw std::runtime_error("LB only works with regular decomposition, "
+                                   "if using more than one MPI node");
+        }
+      }
       switch (lb_lbinterpolation_get_interpolation_order()) {
       case (InterpolationOrder::quadratic):
         throw std::runtime_error("The non-linear interpolation scheme is not "
@@ -293,19 +323,25 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
           if (p.is_virtual() and !couple_virtual)
             return;
 
-          /* Particle is in our LB volume, so this node
-           * is responsible to adding its force */
-          if (in_local_domain(p.pos())) {
-            auto const force = lb_viscous_coupling(
-                p, noise_amplitude * f_random(p.identity()), time_step);
-            /* add force to the particle */
-            p.force() += force;
-            /* Particle is not in our domain, but adds to the force
-             * density in our domain, only calculate contribution to
-             * the LB force density. */
-          } else if (in_local_halo(p.pos())) {
-            lb_viscous_coupling(p, noise_amplitude * f_random(p.identity()),
-                                time_step);
+          // Calculate coupling force
+          Utils::Vector3d force = {};
+          for (auto pos : positions_in_halo(p.pos(), box_geo)) {
+            if (in_local_halo(pos)) {
+              force = lb_viscous_coupling(
+                  p, pos, noise_amplitude * f_random(p.identity()));
+              break;
+            }
+          }
+
+          // couple positions including shifts by one box length to add
+          // forces to ghost layers
+          for (auto pos : positions_in_halo(p.pos(), box_geo)) {
+            if (in_local_domain(pos)) {
+              /* if the particle is in our LB volume, this node
+               * is responsible to adding its force */
+              p.force() += force;
+            }
+            add_md_force(pos, force, time_step);
           }
 
 #ifdef ENGINE
@@ -313,13 +349,19 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
 #endif
         };
 
+        std::unordered_set<int> coupled_ghost_particles;
+
         /* Couple particles ranges */
         for (auto &p : particles) {
-          couple_particle(p);
+          if (should_be_coupled(p, coupled_ghost_particles)) {
+            couple_particle(p);
+          }
         }
 
         for (auto &p : more_particles) {
-          couple_particle(p);
+          if (should_be_coupled(p, coupled_ghost_particles)) {
+            couple_particle(p);
+          }
         }
 
         break;

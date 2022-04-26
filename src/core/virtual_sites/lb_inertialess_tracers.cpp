@@ -31,6 +31,7 @@
 #include "grid_based_algorithms/lb.hpp"
 #include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
+#include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "integrate.hpp"
 #include "lb_inertialess_tracers_cuda_interface.hpp"
 
@@ -39,20 +40,13 @@
 #include <utils/math/sqr.hpp>
 
 #include <cstddef>
+#include <unordered_set>
 
-void CoupleIBMParticleToFluid(Particle const &p);
+void CoupleIBMParticleToFluid(Particle const &p, Utils::Vector3d const &pos);
 void ParticleVelocitiesFromLB_CPU();
 bool IsHalo(std::size_t indexCheck);
 
 static bool *isHaloCache = nullptr;
-
-inline bool in_local_domain(Utils::Vector3d const &pos) {
-  auto const offset = Utils::Vector3d::broadcast(0.5 * lblattice.agrid);
-  auto const my_left = local_geo.my_left();
-  auto const my_right = local_geo.my_right();
-
-  return pos >= (my_left - offset) and pos < (my_right + offset);
-}
 
 /** Put the calculated force stored on the ibm particles into the fluid by
  *  updating the @ref lbfields structure.
@@ -65,16 +59,18 @@ void IBM_ForcesIntoFluid_CPU() {
 
   // Loop over local cells
   for (auto &p : cell_structure.local_particles()) {
-    if (p.is_virtual())
-      CoupleIBMParticleToFluid(p);
+    if (p.is_virtual()) {
+      CoupleIBMParticleToFluid(p, p.pos());
+    }
   }
 
   for (auto &p : cell_structure.ghost_particles()) {
     // for ghost particles we have to check if they lie
     // in the range of the local lattice nodes
-    if (in_local_domain(p.pos())) {
-      if (p.is_virtual())
-        CoupleIBMParticleToFluid(p);
+    if (in_local_halo(p.pos())) {
+      if (p.is_virtual()) {
+        CoupleIBMParticleToFluid(p, p.pos());
+      }
     }
   }
 }
@@ -111,14 +107,14 @@ void IBM_UpdateParticlePositions(ParticleRange const &particles,
 }
 
 /** Put the momentum of a given particle into the LB fluid. */
-void CoupleIBMParticleToFluid(Particle const &p) {
+void CoupleIBMParticleToFluid(Particle const &p, Utils::Vector3d const &pos) {
   // Convert units from MD to LB
   auto const delta_j = p.force() * Utils::int_pow<4>(lbpar.tau) / lbpar.agrid;
 
   // Get indices and weights of affected nodes using discrete delta function
   Utils::Vector<std::size_t, 8> node_index{};
   Utils::Vector6d delta{};
-  lblattice.map_position_to_lattice(p.pos(), node_index, delta);
+  lblattice.map_position_to_lattice(pos, node_index, delta);
 
   // Loop over all affected nodes
   for (int z = 0; z < 2; z++) {
@@ -242,39 +238,51 @@ bool IsHalo(std::size_t indexCheck) {
   return isHaloCache[indexCheck];
 }
 
+/**
+ * @brief Check if a position is within the local box + halo.
+ *
+ * @param pos Position to check
+ * @param halo Halo
+ *
+ * @return True iff the point is inside of the box up to halo.
+ */
+inline bool in_local_domain(Utils::Vector3d const &pos, double halo = 0.) {
+  auto const halo_vec = Utils::Vector3d::broadcast(halo);
+
+  return in_box(
+      pos, {local_geo.my_left() - halo_vec, local_geo.my_right() + halo_vec});
+}
+
 /** Get particle velocities from LB and set the velocity field in the
  * particles data structure.
  */
 void ParticleVelocitiesFromLB_CPU() {
+  std::unordered_set<int> coupled_ghost_particles;
+
   // Loop over particles in local cells.
   // Here all contributions are included: velocity, external force and
   // particle force.
   for (auto &p : cell_structure.local_particles()) {
-    if (p.is_virtual()) {
-      // Get interpolated velocity and store in the force (!) field
-      // for later communication (see below)
-      p.force() = GetIBMInterpolatedVelocity<true>(p.pos());
+    if (p.is_virtual() and should_be_coupled(p, coupled_ghost_particles)) {
+      for (auto pos : positions_in_halo(p.pos(), box_geo)) {
+        if (in_local_domain(pos)) {
+          p.force() = GetIBMInterpolatedVelocity<true>(pos);
+          break;
+        }
+      }
     }
   }
-
   // Loop over particles in ghost cells
   // Here we only add the particle forces stemming from the ghosts
   for (auto &p : cell_structure.ghost_particles()) {
-    // This criterion include the halo on the left, but excludes the halo on
-    // the right
-    // Try if we have to use *1.5 on the right
-    if (in_local_domain(p.pos())) {
-      if (p.is_virtual()) {
-        // The force stemming from the ghost particle (for
-        // communication, see below)
-        p.force() = GetIBMInterpolatedVelocity<false>(p.pos());
-      } else {
-        // Reset, necessary because we add all forces below. Also needs to
-        // be done for real particles!
-        p.force() = {};
+    if (p.is_virtual() and should_be_coupled(p, coupled_ghost_particles)) {
+      for (auto pos : positions_in_halo(p.pos(), box_geo)) {
+        if (in_local_domain(pos)) {
+          p.force() = GetIBMInterpolatedVelocity<true>(pos);
+          break;
+        }
       }
     } else {
-      // Reset, necessary because we add all forces below
       p.force() = {};
     }
   }

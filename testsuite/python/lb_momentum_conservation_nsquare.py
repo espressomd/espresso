@@ -1,5 +1,4 @@
-#
-# Copyright (C) 2013-2019 The ESPResSo project
+# Copyright (C) 2010-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -15,22 +14,35 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
+
+import espressomd
+import espressomd.lb
 import unittest as ut
 import unittest_decorators as utx
-import mmm1d
-import espressomd.electrostatics
+from lb_momentum_conservation import Momentum
 
 
-@utx.skipIfMissingFeatures(["ELECTROSTATICS", "MMM1D_GPU"])
 @utx.skipIfMissingGPU()
-class MMM1D_GPU_Test(mmm1d.ElectrostaticInteractionsTests, ut.TestCase):
+@utx.skipIfMissingFeatures(['EXTERNAL_FORCES'])
+@ut.skipIf(Momentum.n_nodes > 1,
+           "LB with N-square only works on 1 MPI rank")
+class TestLBGPUMomentumConservation(Momentum, ut.TestCase):
 
-    allowed_error = 1e-4
+    lb_class = espressomd.lb.LBFluidGPU
 
-    def setUp(self):
-        self.MMM1D = espressomd.electrostatics.MMM1DGPU
-        super().setUp()
+    def set_cellsystem(self):
+        self.system.cell_system.set_n_square()
+
+
+@utx.skipIfMissingFeatures(['EXTERNAL_FORCES'])
+@ut.skipIf(Momentum.n_nodes > 1,
+           "LB with N-square only works on 1 MPI rank")
+class TestLBCPUMomentumConservation(Momentum, ut.TestCase):
+
+    lb_class = espressomd.lb.LBFluid
+
+    def set_cellsystem(self):
+        self.system.cell_system.set_n_square()
 
 
 if __name__ == "__main__":
