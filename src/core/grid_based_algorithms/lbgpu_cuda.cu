@@ -142,7 +142,7 @@ template <typename T> __device__ T xyz_to_index(T x, T y, T z) {
 __device__ void calc_m_from_n(Utils::Array<float, 19> const &populations,
                               Utils::Array<float, 19> &mode) {
   /**
-   * The following convention and equations from @cite duenweg09a are used:
+   * The following convention and equations from @cite dunweg09a are used:
    * The \f$\hat{c}_i\f$ are given by:
    *
    * \f{align*}{
@@ -1034,7 +1034,7 @@ __device__ void calc_values_from_m(Utils::Array<float, 19> const &mode_single,
 }
 
 /** Interpolation kernel.
- *  See @cite duenweg09a
+ *  See @cite dunweg09a
  *  @param u Distance to grid point in units of agrid
  *  @retval Value for the interpolation function.
  */
@@ -1044,7 +1044,7 @@ three_point_polynomial_smallerequal_than_half(float u) {
 }
 
 /** Interpolation kernel.
- *  See @cite duenweg09a
+ *  See @cite dunweg09a
  *  @param u Distance to grid point in units of agrid
  *  @retval Value for the interpolation function.
  */

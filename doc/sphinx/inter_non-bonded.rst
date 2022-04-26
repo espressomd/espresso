@@ -216,7 +216,7 @@ Lennard-Jones cosine interaction
 
 :class:`espressomd.interactions.LennardJonesCosInteraction` and
 :class:`espressomd.interactions.LennardJonesCos2Interaction` specifies
-a Lennard-Jones interaction with cosine tail :cite:`soddeman01a`
+a Lennard-Jones interaction with cosine tail :cite:`soddemann01a`
 between particles of the types ``type1`` and ``type2``. The first variant
 behaves as follows: Until the minimum of the Lennard-Jones potential
 at :math:`r_\mathrm{min} = r_\mathrm{off} + 2^{\frac{1}{6}}\sigma`, it
@@ -559,7 +559,7 @@ Both weight functions are set to zero for :math:`r_{ij}>r^\text{cut}_\parallel` 
 
 In case the ``weight_function`` 1 is selected the parameter ``k`` can be chosen. :math:`k = 1` is the
 default and recovers the linear ramp. :math:`k > 1` enhances the dissipative nature of the interaction
-and thus yields higher Schmidt numbers :cite:`yaghoubi2015a`.
+and thus yields higher Schmidt numbers :cite:`yaghoubi15a`.
 
 The random force has the properties
 
@@ -582,7 +582,7 @@ the same options are available as for :math:`w_\parallel (r_{ij})`.
 
 Note: This interaction does *not* conserve angular momentum.
 
-A more detailed description of the interaction can be found in :cite:`soddeman03a`.
+A more detailed description of the interaction can be found in :cite:`soddemann03a`.
 
 .. _Thole correction:
 

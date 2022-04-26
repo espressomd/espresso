@@ -16,7 +16,7 @@ geometries and boundary conditions are somewhat limited in comparison to
 Here we restrict the documentation to the interface. For a more detailed
 description of the method, please refer to the literature.
 
-.. note:: Please cite :cite:`arnold13a` (BibTeX key ``arnold13a`` in :file:`doc/sphinx/zrefs.bib`) if you use the LB fluid and :cite:`rohm12a` (BibTeX key ``rohm12a`` in :file:`doc/sphinx/zrefs.bib`) if you use the GPU implementation.
+.. note:: Please cite :cite:`arnold13a` (BibTeX key ``arnold13a`` in :file:`doc/bibliography.bib`) if you use the LB fluid and :cite:`rohm12a` (BibTeX key ``rohm12a`` in :file:`doc/bibliography.bib`) if you use the GPU implementation.
 
 .. _Setting up a LB fluid:
 
@@ -93,8 +93,8 @@ set up: ``agrid``, ``tau``, ``visc``, ``dens``. For the other parameters, the fo
 
 .. _Checkpointing LB:
 
-Checkpointing LB
-----------------
+Checkpointing
+-------------
 
 ::
 
@@ -139,7 +139,7 @@ is available, which expects a numpy array of positions as an argument.
 
 By default, the interpolation is done linearly between the nearest 8 LB nodes,
 but for the GPU implementation also a quadratic scheme involving 27 nodes is implemented
-(see eqs. 297 and 301 in :cite:`duenweg08a`).
+(see eqs. 297 and 301 in :cite:`dunweg09a`).
 You can choose by calling
 one of::
 
@@ -261,7 +261,7 @@ activated by compiling with the feature ``CUDA``. Within the
 Python script, the :class:`~espressomd.lb.LBFluid` object can be substituted
 with the :class:`~espressomd.lb.LBFluidGPU` object to switch from CPU based
 to GPU based execution. For further
-information on CUDA support see section :ref:`GPU Acceleration with CUDA`.
+information on CUDA support see section :ref:`CUDA acceleration`.
 
 The following minimal example demonstrates how to use the GPU implementation
 of the LBM in analogy to the example for the CPU given in section
@@ -311,8 +311,8 @@ Using shapes as lattice-Boltzmann boundary
 
 Lattice-Boltzmann boundaries are implemented in the module
 :mod:`espressomd.lbboundaries`. You might want to take a look
-at the classes :class:`espressomd.lbboundaries.LBBoundary`
-and :class:`espressomd.lbboundaries.LBBoundaries` for more information.
+at the classes :class:`~espressomd.lbboundaries.LBBoundary`
+and :class:`~espressomd.lbboundaries.LBBoundaries` for more information.
 
 Adding a shape-based boundary is straightforward::
 

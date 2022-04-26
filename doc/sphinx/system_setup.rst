@@ -3,10 +3,10 @@
 Setting up the system
 =====================
 
-.. _Setting global variables in Python:
+.. _Setting global variables:
 
-Setting global variables in Python
-----------------------------------
+Setting global variables
+------------------------
 
 The global variables in Python are controlled via the
 :class:`espressomd.system.System` class.
@@ -81,15 +81,20 @@ or by calling the corresponding ``get_state()`` methods like::
     gamma = system.thermostat.get_state()[0]['gamma']
     gamma_rot = system.thermostat.get_state()[0]['gamma_rotation']
 
+.. _Simulation box:
+
+Simulation box
+--------------
+
 .. _Boundary conditions:
 
 Boundary conditions
--------------------
+~~~~~~~~~~~~~~~~~~~
 
 .. _Periodic boundaries:
 
 Periodic boundaries
-~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^
 
 With periodic boundary conditions, particles interact with periodic
 images of all particles in the system. This is the default behavior.
@@ -125,7 +130,7 @@ Output:
 .. _Open boundaries:
 
 Open boundaries
-~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^
 
 With open boundaries, particles can leave the simulation box.
 What happens in this case depends on which algorithm is used.
@@ -155,7 +160,7 @@ Output:
 .. _Lees-Edwards boundary conditions:
 
 Lees--Edwards boundary conditions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Lees--Edwards boundary conditions (LEbc) are special periodic boundary
 conditions to simulate systems under shear stress :cite:`lees72a`.
@@ -209,7 +214,7 @@ is *not* zero.
 .. _Cellsystems:
 
 Cellsystems
------------
+~~~~~~~~~~~
 
 This section deals with the flexible particle data organization of |es|. Due
 to different needs of different algorithms, |es| is able to change the
@@ -220,43 +225,44 @@ refer to section :ref:`Internal particle organization`.
 .. _Global properties:
 
 Global properties
-~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^
 
-The properties of the cell system can be accessed by
-:class:`espressomd.system.System.cell_system`:
+The properties of the cell system can be accessed via the system
+:class:`~espressomd.system.System.cell_system` attribute:
 
 * :py:attr:`~espressomd.cellsystem.CellSystem.node_grid`
 
   3D node grid for real space domain decomposition (optional, if
-  unset an optimal set is chosen automatically). The domain decomposition
+  unset an optimal partition is chosen automatically). The domain decomposition
   can be visualized with :file:`samples/visualization_cellsystem.py`.
 
 * :py:attr:`~espressomd.cellsystem.CellSystem.skin`
 
   Skin for the Verlet list. This value has to be set, otherwise the simulation will not start.
 
-Details about the cell system can be obtained by :meth:`espressomd.system.System.cell_system.get_state() <espressomd.cellsystem.CellSystem.get_state>`:
+Details about the cell system can be obtained by
+:meth:`get_state() <espressomd.cellsystem.CellSystem.get_state>`:
 
-* ``cell_grid``       Dimension of the inner cell grid.
-* ``cell_size``       Box-length of a cell.
-* ``local_box_l``     Local simulation box length of the nodes.
-* ``max_cut``         Maximal cutoff of real space interactions.
-* ``n_nodes``         Number of nodes.
+* ``cell_grid``       Dimension of the inner cell grid (only for regular decomposition).
+* ``cell_size``       Box-length of a cell (only for regular decomposition).
+* ``n_nodes``         Number of MPI nodes.
+* ``node_grid``       MPI domain partition.
 * ``type``            The current type of the cell system.
+* ``skin``            Verlet list skin.
 * ``verlet_reuse``    Average number of integration steps the Verlet list is re-used.
 
 .. _Regular decomposition:
 
 Regular decomposition
-~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^
 
 Invoking :py:meth:`~espressomd.cellsystem.CellSystem.set_regular_decomposition`
 selects the regular decomposition cell scheme, using Verlet lists
 for the calculation of the interactions. If you specify ``use_verlet_lists=False``, only the
 regular decomposition is used, but not the Verlet lists. ::
 
+    import espressomd
     system = espressomd.System(box_l=[1, 1, 1])
-
     system.cell_system.set_regular_decomposition(use_verlet_lists=True)
 
 The regular decomposition cellsystem is the default system and suits most
@@ -271,10 +277,32 @@ in a cell depends only on the density. The number of interactions is
 therefore of the order :math:`N` instead of order :math:`N^2` if one has to
 calculate all pair interactions.
 
+With this scheme, there must be at least two cells per direction,
+and at most 32 cells per direction for a cubic box geometry.
+The number of cells per direction depends on the interaction range cutoff
+:math:`l_{\mathrm{cut}}`, the Verlet list skin :math:`l_{\mathrm{skin}}`
+and the box length :math:`l_{\mathrm{box}}`, and is determined automatically
+by solving several equations. It can be useful to know how to estimate the
+number of cells per direction, because it limits the number of MPI ranks
+that can be allocated to an MPI-parallel simulation. As a rule of thumb,
+for a cubic box geometry the number of cells per direction is often:
+
+.. math::
+
+    \left\lfloor \frac{l_{\mathrm{box}}}{l_{\mathrm{cut}} + l_{\mathrm{skin}}} \right\rfloor
+
+For example, in a system with box length 12, LJ cutoff 2.5 and Verlet
+skin 0.4, the number of cells cannot be more than 4 in each direction.
+A runtime error will be triggered during integration when running a
+simulation with such a system and allocating more than 64 MPI ranks
+in total, or more than 4 MPI ranks per direction. In this situation,
+consider increasing the box size or decreasing the interaction cutoff
+or Verlet list skin.
+
 .. _N-squared:
 
 N-squared
-~~~~~~~~~
+^^^^^^^^^
 
 Invoking :py:meth:`~espressomd.cellsystem.CellSystem.set_n_square`
 selects the very primitive N-squared cellsystem, which calculates
@@ -284,6 +312,7 @@ particles, giving an unfavorable computation time scaling of
 interaction in the cell model require the calculation of all pair
 interactions. ::
 
+    import espressomd
     system = espressomd.System(box_l=[1, 1, 1])
     system.cell_system.set_n_square()
 
@@ -308,89 +337,3 @@ this node is twice as high. For 3 processors, the interactions are 0-0,
 
 Therefore it is highly recommended that you use N-squared only with an
 odd number of nodes, if with multiple processors at all.
-
-
-.. _CUDA:
-
-CUDA
-----
-
-:py:meth:`~espressomd.cuda_init.CudaInitHandle()` command can be used to choose the GPU for all subsequent
-GPU-computations. Note that due to driver limitations, the GPU cannot be
-changed anymore after the first GPU-using command has been issued, for
-example ``lbfluid``. If you do not choose the GPU manually before that,
-CUDA internally chooses one, which is normally the most powerful GPU
-available, but load-independent. ::
-
-    system = espressomd.System(box_l=[1, 1, 1])
-    dev = system.cuda_init_handle.device
-    system.cuda_init_handle.device = dev
-
-The first invocation in the sample above returns the id of the set graphics card, the second one sets the
-device id.
-
-.. _GPU Acceleration with CUDA:
-
-GPU Acceleration with CUDA
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. note::
-    Feature ``CUDA`` required
-
-|es| is capable of GPU acceleration to speed up simulations.
-Not every simulation method is parallelizable or profits from
-GPU acceleration. Refer to :ref:`Available simulation methods`
-to check whether your desired method can be used on the GPU.
-In order to use GPU acceleration you need a NVIDIA GPU
-and it needs to have at least compute capability 2.0.
-
-For more information please check :class:`espressomd.cuda_init.CudaInitHandle`.
-
-.. _List available CUDA devices:
-
-List available CUDA devices
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-If you want to list available CUDA devices, you should call
-:meth:`espressomd.cuda_init.CudaInitHandle.list_devices`::
-
-    >>> import espressomd
-    >>> system = espressomd.System(box_l=[1, 1, 1])
-    >>> print(system.cuda_init_handle.list_devices())
-    {0: 'GeForce RTX 2080', 1: 'GeForce GT 730'}
-
-This method returns a dictionary containing
-the device id as key and the device name as its value.
-
-To get more details on the CUDA devices for each MPI node, call
-:meth:`espressomd.cuda_init.CudaInitHandle.list_devices_properties`::
-
-    >>> import pprint
-    >>> import espressomd
-    >>> system = espressomd.System(box_l=[1, 1, 1])
-    >>> pprint.pprint(system.cuda_init_handle.list_devices_properties())
-    {'seraue': {0: {'name': 'GeForce RTX 2080',
-                    'compute_capability': (7, 5),
-                    'cores': 46,
-                    'total_memory': 8370061312},
-                1: {'name': 'GeForce GT 730',
-                    'compute_capability': (3, 5),
-                    'cores': 2,
-                    'total_memory': 1014104064}}}
-
-.. _Selection of CUDA device:
-
-Selection of CUDA device
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-When you start ``pypresso`` your first GPU should be selected.
-If you wanted to use the second GPU, this can be done
-by setting :attr:`espressomd.cuda_init.CudaInitHandle.device` as follows::
-
-    >>> import espressomd
-    >>> system = espressomd.System(box_l=[1, 1, 1])
-    >>> system.cuda_init_handle.device = 1
-
-Setting a device id outside the valid range or a device
-which does not meet the minimum requirements will raise
-an exception.

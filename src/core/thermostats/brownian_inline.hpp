@@ -34,14 +34,14 @@
 #include <cmath>
 
 /** Determine position: viscous drag driven by conservative forces.
- *  From eq. (14.39) in @cite Schlick2010.
+ *  From eq. (14.39) in @cite schlick10a.
  *  @param[in]     brownian_gamma Brownian translational gamma
  *  @param[in]     p              %Particle
  *  @param[in]     dt             Time step
  */
 inline Utils::Vector3d bd_drag(Thermostat::GammaType const &brownian_gamma,
                                Particle const &p, double dt) {
-  // The friction tensor Z from the Eq. (14.31) of Schlick2010:
+  // The friction tensor Z from the Eq. (14.31) of schlick10a:
   Thermostat::GammaType gamma;
 
 #ifdef THERMOSTAT_PER_PARTICLE
@@ -66,7 +66,7 @@ inline Utils::Vector3d bd_drag(Thermostat::GammaType const &brownian_gamma,
 
   Utils::Vector3d position = {};
   for (int j = 0; j < 3; j++) {
-    // Second (deterministic) term of the Eq. (14.39) of Schlick2010.
+    // Second (deterministic) term of the Eq. (14.39) of schlick10a.
     // Only a conservative part of the force is used here
 #ifdef PARTICLE_ANISOTROPY
     if (aniso_flag) {
@@ -88,13 +88,13 @@ inline Utils::Vector3d bd_drag(Thermostat::GammaType const &brownian_gamma,
 }
 
 /** Set the terminal velocity driven by the conservative forces drag.
- *  From eq. (14.34) in @cite Schlick2010.
+ *  From eq. (14.34) in @cite schlick10a.
  *  @param[in]     brownian_gamma Brownian translational gamma
  *  @param[in]     p              %Particle
  */
 inline Utils::Vector3d bd_drag_vel(Thermostat::GammaType const &brownian_gamma,
                                    Particle const &p) {
-  // The friction tensor Z from the eq. (14.31) of Schlick2010:
+  // The friction tensor Z from the eq. (14.31) of schlick10a:
   Thermostat::GammaType gamma;
 
 #ifdef THERMOSTAT_PER_PARTICLE
@@ -119,7 +119,7 @@ inline Utils::Vector3d bd_drag_vel(Thermostat::GammaType const &brownian_gamma,
 
   Utils::Vector3d velocity = {};
   for (int j = 0; j < 3; j++) {
-    // First (deterministic) term of the eq. (14.34) of Schlick2010 taking
+    // First (deterministic) term of the eq. (14.34) of schlick10a taking
     // into account eq. (14.35). Only conservative part of the force is used
     // here.
 #ifdef PARTICLE_ANISOTROPY
@@ -142,7 +142,7 @@ inline Utils::Vector3d bd_drag_vel(Thermostat::GammaType const &brownian_gamma,
 }
 
 /** Determine the positions: random walk part.
- *  From eq. (14.37) in @cite Schlick2010.
+ *  From eq. (14.37) in @cite schlick10a.
  *  @param[in]     brownian       Parameters
  *  @param[in]     p              %Particle
  *  @param[in]     dt             Time step
@@ -167,7 +167,7 @@ inline Utils::Vector3d bd_random_walk(BrownianThermostat const &brownian,
 #endif // THERMOSTAT_PER_PARTICLE
 
   // Eq. (14.37) is factored by the Gaussian noise (12.22) with its squared
-  // magnitude defined in the second eq. (14.38), Schlick2010.
+  // magnitude defined in the second eq. (14.38), schlick10a.
   Utils::Vector3d delta_pos_body{};
   auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_WALK>(
       brownian.rng_counter(), brownian.rng_seed(), p.identity());
@@ -213,7 +213,7 @@ inline Utils::Vector3d bd_random_walk(BrownianThermostat const &brownian,
 }
 
 /** Determine the velocities: random walk part.
- *  From eq. (10.2.16) in @cite Pottier2010.
+ *  From eq. (10.2.16) in @cite pottier10a.
  *  @param[in]     brownian       Parameters
  *  @param[in]     p              %Particle
  */
@@ -229,12 +229,12 @@ inline Utils::Vector3d bd_random_walk_vel(BrownianThermostat const &brownian,
   for (int j = 0; j < 3; j++) {
     if (!p.is_fixed_along(j)) {
       // Random (heat) velocity. See eq. (10.2.16) taking into account eq.
-      // (10.2.18) and (10.2.29), Pottier2010. Note, that the Pottier2010 units
+      // (10.2.18) and (10.2.29), pottier10a. Note, that the pottier10a units
       // system (see Eq. (10.1.1) there) has been adapted towards the ESPResSo
-      // and the referenced above Schlick2010 one, which is defined by the eq.
-      // (14.31) of Schlick2010. A difference is the mass factor to the friction
+      // and the referenced above schlick10a one, which is defined by the eq.
+      // (14.31) of schlick10a. A difference is the mass factor to the friction
       // tensor. The noise is Gaussian according to the convention at p. 237
-      // (last paragraph), Pottier2010.
+      // (last paragraph), pottier10a.
       velocity[j] += brownian.sigma_vel * noise[j] / sqrt(p.mass());
     }
   }
@@ -244,7 +244,7 @@ inline Utils::Vector3d bd_random_walk_vel(BrownianThermostat const &brownian,
 #ifdef ROTATION
 
 /** Determine quaternions: viscous drag driven by conservative torques.
- *  An analogy of eq. (14.39) in @cite Schlick2010.
+ *  An analogy of eq. (14.39) in @cite schlick10a.
  *  @param[in]     brownian_gamma_rotation Brownian rotational gamma
  *  @param[in]     p              %Particle
  *  @param[in]     dt             Time step
@@ -284,7 +284,7 @@ bd_drag_rot(Thermostat::GammaType const &brownian_gamma_rotation, Particle &p,
 }
 
 /** Set the terminal angular velocity driven by the conservative torques drag.
- *  An analogy of the 1st term of eq. (14.34) in @cite Schlick2010.
+ *  An analogy of the 1st term of eq. (14.34) in @cite schlick10a.
  *  @param[in]     brownian_gamma_rotation Brownian rotational gamma
  *  @param[in]     p              %Particle
  */
@@ -317,7 +317,7 @@ bd_drag_vel_rot(Thermostat::GammaType const &brownian_gamma_rotation,
 }
 
 /** Determine the quaternions: random walk part.
- *  An analogy of eq. (14.37) in @cite Schlick2010.
+ *  An analogy of eq. (14.37) in @cite schlick10a.
  *  @param[in]     brownian       Parameters
  *  @param[in]     p              %Particle
  *  @param[in]     dt             Time step
@@ -366,7 +366,7 @@ bd_random_walk_rot(BrownianThermostat const &brownian, Particle const &p,
 }
 
 /** Determine the angular velocities: random walk part.
- *  An analogy of eq. (10.2.16) in @cite Pottier2010.
+ *  An analogy of eq. (10.2.16) in @cite pottier10a.
  *  @param[in]     brownian       Parameters
  *  @param[in]     p              %Particle
  */

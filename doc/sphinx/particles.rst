@@ -9,12 +9,12 @@ Overview of the relevant Python classes
 ---------------------------------------
 For understanding this chapter, it is helpful to be aware of the Python classes provided by |es| to interact with particles:
 
-* :class:`espressomd.particle_data.ParticleHandle` provides access to a single particle in the simulation.
-* :class:`espressomd.particle_data.ParticleList` provides access to all particles in the simulation
-* :class:`espressomd.particle_data.ParticleSlice` provides access to a subset of particles in the simulation identified by a list of ids or an instance of :class:`slice` or :class:`range`.
+* :class:`~espressomd.particle_data.ParticleHandle` provides access to a single particle in the simulation.
+* :class:`~espressomd.particle_data.ParticleList` provides access to all particles in the simulation
+* :class:`~espressomd.particle_data.ParticleSlice` provides access to a subset of particles in the simulation identified by a list of ids or an instance of :class:`slice` or :class:`range`.
 
 In almost no case have these classes to be instantiated explicitly by the user.
-Rather, access is provided via the :attr:`espressomd.system.System.part` attribute.
+Rather, access is provided via the system :attr:`~espressomd.system.System.part` attribute.
 The details are explained in the following sections.
 
 .. _Adding particles:
@@ -22,21 +22,21 @@ The details are explained in the following sections.
 Adding particles
 ----------------
 In order to add particles to the system, call
-:meth:`espressomd.particle_data.ParticleList.add`::
+:meth:`ParticleList.add() <espressomd.particle_data.ParticleList.add>`::
 
     import espressomd
-    system = espressomd.System(box_l=[1, 1, 1])
-    a_particle = system.part.add(pos=[1.0, 1.0, 1.0], type=0)
+    system = espressomd.System(box_l=[10., 10., 10.])
+    p = system.part.add(pos=[1., 1., 1.], type=0)
 
 This command adds a single particle to the system with properties given
 as arguments, and it returns an instance of
-:class:`espressomd.particle_data.ParticleHandle`, which will be used to access
+:class:`~espressomd.particle_data.ParticleHandle`, which will be used to access
 properties of the newly created particle. The ``pos`` property is required, all
 other properties are optional.
-All available particle properties are members of :class:`espressomd.particle_data.ParticleHandle`.
+All available particle properties are members of :class:`~espressomd.particle_data.ParticleHandle`.
 
-Note that the instances of :class:`espressomd.particle_data.ParticleHandle` returned by
-:meth:`espressomd.particle_data.ParticleList.add` are handles for the live particles in the
+Note that the instances of :class:`~espressomd.particle_data.ParticleHandle` returned by
+:meth:`ParticleList.add() <espressomd.particle_data.ParticleList.add>` are handles for the live particles in the
 simulation, rather than offline copies. Changing their properties will affect the simulation.
 
 It is also possible to add several particles at once::
@@ -45,48 +45,48 @@ It is also possible to add several particles at once::
     new_parts = system.part.add(pos=np.random.random((10, 3)) * box_length)
 
 If several particles are added at once, an instance of
-:class:`espressomd.particle_data.ParticleSlice` is returned.
+:class:`~espressomd.particle_data.ParticleSlice` is returned.
 
 Particles are identified via their ``id`` property. A unique id is given to them
 automatically. Alternatively, you can assign an id manually when adding them to the system::
 
-    system.part.add(pos=[1.0,2.0,3.0], id=system.part.highest_particle_id+1)
+    system.part.add(pos=[1., 2., 3.], id=system.part.highest_particle_id + 1)
 
 The id provides an alternative way to access particles in the system. To
-retrieve the handle of the particle with id ``INDEX``, call::
+retrieve the handle of the particle with id ``5``, call::
 
-    p = system.part.by_id(<INDEX>)
+    p = system.part.by_id(5)
 
 .. _Accessing particle properties:
 
 Accessing particle properties
 -----------------------------
 
-Particle properties can be accessed like a class member.
-
-To access property ``PROPERTY`` of a particle ``a_particle``::
-
-    a_particle.<PROPERTY>
+Particle properties can be accessed like any class member.
 
 For example, to print the particle's current position, call::
 
-    print(a_particle.pos)
+    print(p.pos)
 
 Similarly, the position can be set::
 
-    a_particle.pos = (1, 2.5, 3)
+    p.pos = [1., 2.5, 3.]
+
+Not all properties are writeable. For example, properties that are
+automatically derived from other properties are read-only attributes.
 
 .. _Vectorial properties:
 
 Vectorial properties
 ~~~~~~~~~~~~~~~~~~~~
 
-For vectorial particle properties, component-wise manipulation like ``a_particle.pos[0]
-= 1`` or in-place operators like ``+=`` or ``*=`` are not allowed and result in an error.
-This behavior is inherited, so the same applies to ``a`` after ``a =
-a_particle.pos``. If you want to use a vectorial property for further
+For vectorial particle properties, component-wise manipulation like
+``p.pos[0] = 1`` or in-place operators like ``+=`` or ``*=``
+are not allowed and raise an exception.
+This behavior is inherited, so the same applies to ``pos`` after
+``pos = p.pos``. If you want to use a vectorial property for further
 calculations, you should explicitly make a copy e.g. via
-``a = numpy.copy(a_particle.pos)``.
+``pos = numpy.copy(p.pos)``.
 
 .. _Deleting particles:
 
@@ -140,7 +140,8 @@ To delete the exclusion::
 
     system.part.by_id(0).delete_exclusion(1)
 
-See :attr:`espressomd.particle_data.ParticleHandle.exclusions`
+The current list of exclusions is accessible in the
+:attr:`~espressomd.particle_data.ParticleHandle.exclusions` property.
 
 
 .. _Rotational degrees of freedom and particle anisotropy:
@@ -148,51 +149,78 @@ See :attr:`espressomd.particle_data.ParticleHandle.exclusions`
 Rotational degrees of freedom and particle anisotropy
 -----------------------------------------------------
 
-When the feature ``ROTATION`` is compiled in, particles not only have a position, but also an orientation that changes with an angular velocity. A torque on a particle leads to a change in angular velocity depending on the particles rotational inertia. The property :attr:`espressomd.particle_data.ParticleHandle.rinertia` has to be specified as the three eigenvalues of the particles rotational inertia tensor.
-Even if the particle rotational inertia is isotropic, the rotation state can be important if, e.g., the particle carries a dipole or is an active particle.
+When the feature ``ROTATION`` is compiled in, particles not only have a position,
+but also an orientation that changes with an angular velocity.
+A torque on a particle leads to a change in angular velocity depending on the
+particles rotational inertia.
+The property :attr:`~espressomd.particle_data.ParticleHandle.rinertia` has to
+be specified as the three eigenvalues of the particles rotational inertia tensor.
+Even if the particle rotational inertia is isotropic, the rotation state can be
+important if, e.g., the particle carries a dipole or is an active particle.
 
 The rotational degrees of freedom are integrated using a velocity Verlet scheme.
-The implementation is based on a quaternion representation of the particle orientation and described in :cite:`omelyan98a` with quaternion components indexing made according to the formalism :math:`q = a + b\mathbf{i} + c\mathbf{j} + d\mathbf{k}` :cite:`allen17a`.
+The implementation is based on a quaternion representation of the particle
+orientation and described in :cite:`omelyan98a` with quaternion components
+indexing made according to the formalism
+:math:`q = a + b\mathbf{i} + c\mathbf{j} + d\mathbf{k}` :cite:`allen17a`.
 
 When the Langevin thermostat is enabled, the rotational degrees of freedom are also thermalized.
 
-Whether or not rotational degrees of freedom are propagated, is controlled on a per-particle and per-axis level, where the axes are the Cartesian axes of the particle in its body-fixed frame.
-It is important to note that starting from version 4.0 and unlike in earlier versions of |es|, the particles' rotation is disabled by default.
+Whether or not rotational degrees of freedom are propagated,
+is controlled on a per-particle and per-axis level, where the axes
+are the Cartesian axes of the particle in its body-fixed frame.
+It is important to note that starting from version 4.0 and unlike
+in earlier versions of |es|, the particles' rotation is disabled by default.
 In this way, just compiling in the ``ROTATION`` feature no longer changes the physics of the system.
 
-The rotation of a particle is controlled via the :attr:`espressomd.particle_data.ParticleHandle.rotation` property. E.g., the following code adds a particle with rotation enabled around the x axis of its body frame::
+The rotation of a particle is controlled via the
+:attr:`~espressomd.particle_data.ParticleHandle.rotation` property.
+E.g., the following code adds a particle with rotation enabled around the x-axis of its body frame::
 
     import espressomd
     system = espressomd.System(box_l=[1, 1, 1])
     system.part.add(pos=(0, 0, 0), rotation=(True, False, False))
 
-The rotational state of a particle is stored as a quaternion in the :attr:`espressomd.particle_data.ParticleHandle.quat` property. For a value of (1,0,0,0), the body and space frames coincide.
+The rotational state of a particle is stored as a quaternion in the
+:attr:`~espressomd.particle_data.ParticleHandle.quat` property.
+For a value of (1,0,0,0), the body and space frames coincide.
 When setting up a particle, its orientation state is by default aligned with the space frame of the box.
-If your particles have a rotational symmetry, you can set up the particle direction (the symmetry axis) using the :attr:`espressomd.particle_data.ParticleHandle.director` property.
+If your particles have a rotational symmetry, you can set up the particle direction
+(the symmetry axis) using the :attr:`~espressomd.particle_data.ParticleHandle.director` property.
 Note that then you have no control over the initial rotation angle around the symmetry axis.
-If your particles are anisotropic in all three directions, you can either set the :attr:`espressomd.particle_data.ParticleHandle.quat` attribute directly, or (recommended) set up all particle properties in the box frame and then use :attr:`espressomd.particle_data.ParticleHandle.rotate` to rotate the particle to the desired state before starting the simulation.
+If your particles are anisotropic in all three directions, you can either set
+the :attr:`~espressomd.particle_data.ParticleHandle.quat` attribute directly,
+or (recommended) set up all particle properties in the box frame and then use
+:attr:`~espressomd.particle_data.ParticleHandle.rotate` to rotate the particle
+to the desired state before starting the simulation.
 
 Notes:
 
-* The space-frame direction of the particle's z-axis in its body frame is accessible through the :attr:`espressomd.particle_data.ParticleHandle.director` property.
-* Any other vector can be converted from body to space fixed frame using the :meth:`espressomd.particle_data.ParticleHandle.convert_vector_body_to_space` method.
-* When ``DIPOLES`` are compiled in, the particles dipole moment is always co-aligned with the z-axis in the body-fixed frame.
-* Changing the particles dipole moment and director will re-orient the particle such that its z-axis in space frame is aligned parallel to the given vector. No guarantees are made for the other two axes after setting the director or the dipole moment.
+* The space-frame direction of the particle's z-axis in its body frame is accessible
+  through the :attr:`~espressomd.particle_data.ParticleHandle.director` property.
+* Any other vector can be converted from body to space fixed frame using the
+  :meth:`ParticleHandle.convert_vector_body_to_space()
+  <espressomd.particle_data.ParticleHandle.convert_vector_body_to_space>` method.
+* When ``DIPOLES`` are compiled in, the particles dipole moment is always
+  co-aligned with the z-axis in the body-fixed frame.
+* Changing the particles dipole moment and director will re-orient the particle
+  such that its z-axis in space frame is aligned parallel to the given vector.
+  No guarantees are made for the other two axes after setting the director or the dipole moment.
 
 
 The following particle properties are related to rotation:
 
-* :attr:`espressomd.particle_data.ParticleHandle.dip`
-* :attr:`espressomd.particle_data.ParticleHandle.director`
-* :attr:`espressomd.particle_data.ParticleHandle.ext_torque`
-* :attr:`espressomd.particle_data.ParticleHandle.gamma_rot`
-* :attr:`espressomd.particle_data.ParticleHandle.gamma_rot`
-* :attr:`espressomd.particle_data.ParticleHandle.omega_body`
-* :attr:`espressomd.particle_data.ParticleHandle.omega_lab`
-* :attr:`espressomd.particle_data.ParticleHandle.quat`
-* :attr:`espressomd.particle_data.ParticleHandle.rinertia`
-* :attr:`espressomd.particle_data.ParticleHandle.rotation`
-* :attr:`espressomd.particle_data.ParticleHandle.torque_lab`
+* :attr:`~espressomd.particle_data.ParticleHandle.dip`
+* :attr:`~espressomd.particle_data.ParticleHandle.director`
+* :attr:`~espressomd.particle_data.ParticleHandle.ext_torque`
+* :attr:`~espressomd.particle_data.ParticleHandle.gamma_rot`
+* :attr:`~espressomd.particle_data.ParticleHandle.gamma_rot`
+* :attr:`~espressomd.particle_data.ParticleHandle.omega_body`
+* :attr:`~espressomd.particle_data.ParticleHandle.omega_lab`
+* :attr:`~espressomd.particle_data.ParticleHandle.quat`
+* :attr:`~espressomd.particle_data.ParticleHandle.rinertia`
+* :attr:`~espressomd.particle_data.ParticleHandle.rotation`
+* :attr:`~espressomd.particle_data.ParticleHandle.torque_lab`
 
 
 .. _Virtual sites:
@@ -213,8 +241,8 @@ those particles, from which the virtual site was derived.
 
 
 There are different schemes for virtual sites, described in the
-following sections.
-To switch the active scheme, the attribute :attr:`espressomd.system.System.virtual_sites` of the system class can be used::
+following sections. To switch the active scheme, the system
+:attr:`~espressomd.system.System.virtual_sites` property can be used::
 
     import espressomd
     import espressomd.virtual_sites
@@ -224,9 +252,12 @@ To switch the active scheme, the attribute :attr:`espressomd.system.System.virtu
     # or
     system.virtual_sites = espressomd.virtual_sites.VirtualSitesOff()
 
-By default, :class:`espressomd.virtual_sites.VirtualSitesOff` is selected. This means that virtual particles are not touched during integration.
-The ``have_quaternion`` parameter determines whether the quaternion of the virtual particle is updated (useful in combination with the
-:attr:`espressomd.particle_data.ParticleHandle.vs_quat` property of the virtual particle which defines the orientation of the virtual particle
+By default, :class:`espressomd.virtual_sites.VirtualSitesOff` is selected.
+This means that virtual particles are not touched during integration.
+The ``have_quaternion`` parameter determines whether the quaternion of
+the virtual particle is updated (useful in combination with the
+:attr:`~espressomd.particle_data.ParticleHandle.vs_quat` property of the
+virtual particle which defines the orientation of the virtual particle
 in the body fixed frame of the related real particle).
 
 .. _Rigid arrangements of particles:
@@ -256,22 +287,29 @@ around the non-virtual particles center.
 
 To use this implementation of virtual sites, activate the feature
 ``VIRTUAL_SITES_RELATIVE``. Furthermore, an instance of
-:class:`espressomd.virtual_sites.VirtualSitesRelative` has to be set as the
-active virtual sites scheme (see above). To set up a virtual site,
+:class:`~espressomd.virtual_sites.VirtualSitesRelative` has to be set as the
+active virtual sites scheme (see above). To set up a virtual site:
 
-#. Place the particle to which the virtual site should be related. It
-   needs to be in the center of mass of the rigid arrangement of
-   particles you create. Let its particle id be n.
+#. Place the particle to which the virtual site should be related.
+   It needs to be in the center of mass of the rigid arrangement of
+   particles you create::
+
+       import espressomd
+       import espressomd.virtual_sites
+
+       system = espressomd.System(box_l=[10., 10., 10.])
+       system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
+       p1 = system.part.add(pos=[1., 2., 3.])
 
 #. Place a particle at the desired relative position, make it virtual
    and relate it to the first particle::
 
-       p = system.part.add(pos=(1, 2, 3))
-       p.vs_auto_relate_to(<ID>)
+       rel_offset = [1., 0., 0.]
+       p2 = system.part.add(pos=p1.pos + rel_offset)
+       p2.vs_auto_relate_to(p1)
 
-   where <ID> is the id of the central particle. This will also set the
-   :attr:`espressomd.particle_data.ParticleHandle.virtual` attribute on
-   the particle to ``True``.
+   This will set the :attr:`~espressomd.particle_data.ParticleHandle.virtual`
+   attribute on particle ``p2`` to ``True``.
 
 #. Repeat the previous step with more virtual sites, if desired.
 
@@ -285,7 +323,8 @@ Please note:
    from the non-virtual particle, the id of the non-virtual particle and
    a quaternion which defines the vector from non-virtual particle to
    virtual site in the non-virtual particles body-fixed frame. This
-   information is saved in the virtual site's :attr:`espressomd.particle_data.ParticleHandle.vs_relative` attribute.
+   information is saved in the virtual site's
+   :attr:`~espressomd.particle_data.ParticleHandle.vs_relative` attribute.
    Take care, not to overwrite it after using ``vs_auto_relate``.
 
 -  Virtual sites can not be placed relative to other virtual sites, as
@@ -294,13 +333,13 @@ Please note:
    placed in the center of mass of the rigid arrangement of particles.
 
 -  In case you know the correct quaternions, you can also setup a virtual
-   site using its :attr:`espressomd.particle_data.ParticleHandle.vs_relative`
-   and :attr:`espressomd.particle_data.ParticleHandle.virtual` attributes.
+   site using its :attr:`~espressomd.particle_data.ParticleHandle.vs_relative`
+   and :attr:`~espressomd.particle_data.ParticleHandle.virtual` attributes.
 
 -  In a simulation on more than one CPU, the effective cell size needs
    to be larger than the largest distance between a non-virtual particle
    and its associated virtual sites. To this aim, when running on more than one core,
-   you need to set the system's :attr:`espressomd.system.System.min_global_cut`
+   you need to set the system's :attr:`~espressomd.system.System.min_global_cut`
    attribute to this largest distance.
    An error is generated when this requirement is not met.
 
@@ -337,16 +376,16 @@ Please note that the velocity attribute of the virtual particles does not carry 
 Interacting with groups of particles
 ------------------------------------
 
-Groups of particles are addressed using :class:`espressomd.particle_data.ParticleSlice` objects.
+Groups of particles are addressed using :class:`~espressomd.particle_data.ParticleSlice` objects.
 Usually, these objects do not have to be instantiated by the user. There are several ways
 to retrieve a particle slice:
 
-- By calling :meth:`espressomd.particle_data.ParticleList.add`
+- By calling :meth:`ParticleList.add() <espressomd.particle_data.ParticleList.add>`
 
   When adding several particles at once, a particle slice is returned instead
   of a particle handle.
 
-- By calling :meth:`espressomd.particle_data.ParticleList.by_ids`
+- By calling :meth:`ParticleList.by_ids() <espressomd.particle_data.ParticleList.by_ids>`
 
   It is also possible to get a slice containing particles of specific ids, e.g.::
 
@@ -354,13 +393,13 @@ to retrieve a particle slice:
 
   would contain the particles with ids 1, 4, and 3 in that specific order.
 
-- By calling :meth:`espressomd.particle_data.ParticleList.all`
+- By calling :meth:`ParticleList.all() <espressomd.particle_data.ParticleList.all>`
 
   You can get a slice containing all particles using::
 
       system.part.all()
 
-- By calling :meth:`espressomd.particle_data.ParticleList.select`
+- By calling :meth:`ParticleList.select() <espressomd.particle_data.ParticleList.select>`
 
   This is useful to filter out particles with distinct properties, e.g.::
 
@@ -437,17 +476,20 @@ positions of monomers (x, y, z). A quick example of how to set up polymers::
 
     import espressomd
     import espressomd.polymer
+    import espressomd.interactions
 
     system = espressomd.System([50, 50, 50])
-    polymers = espressomd.polymer.linear_polymer_positions(n_polymers=10,
-                                                           beads_per_chain=25,
-                                                           bond_length=0.9, seed=23)
-    for polymer in polymers:
-        monomers = system.part.add(pos=polymer)
+    fene = espressomd.interactions.FeneBond(k=10, d_r_max=2)
+    system.bonded_inter.add(fene)
+    polymer_positions = espressomd.polymer.linear_polymer_positions(
+        n_polymers=10, beads_per_chain=25, bond_length=0.9, seed=23)
+
+    for positions in polymer_positions:
+        monomers = system.part.add(pos=positions)
         previous_part = None
         for part in monomers:
             if not previous_part is None:
-                part.add_bond((<BOND_TYPE>, previous_part))
+                part.add_bond((fene, previous_part))
             previous_part = part
 
 If there are constraints present in your system which you want to be taken
@@ -500,7 +542,7 @@ the charged and the uncharged chain particles can be set via keyword arguments, 
 
    Diamond-like polymer network with ``MPC=15``.
 
-For simulating compressed or stretched gels the function
+For simulating compressed or stretched gels, the function
 :meth:`espressomd.system.System.change_volume_and_rescale_particles` may be used.
 
 
@@ -511,12 +553,16 @@ Particle number counting feature
 
 .. note::
 
-    Do not use these methods with the :mod:`espressomd.collision_detection` module since the collision detection may create or delete particles without the particle number counting feature being aware of this. Therefore also the :mod:`espressomd.reaction_methods` module may not be used with the collision detection.
+    Do not use these methods with the :mod:`espressomd.collision_detection`
+    module since the collision detection may create or delete particles
+    without the particle number counting feature being aware of this.
+    Therefore the :mod:`espressomd.reaction_methods` module may not
+    be used with the collision detection.
 
 
-Knowing the number of particles of a certain type in simulations where particle numbers can fluctuate is of interest.
-Particle ids can be stored in a map for each
-individual type::
+Knowing the number of particles of a certain type in simulations where
+particle numbers can fluctuate is of interest.
+Particle ids can be stored in a map for each individual type::
 
     import espressomd
     system = espressomd.System(box_l=[1, 1, 1])
@@ -528,17 +574,25 @@ initialize the method by calling  ::
 
     system.setup_type_map([_type])
 
-After that will keep track of particle ids of that type. Keeping track of particles of a given type is not enabled by default since it requires memory.
-The keyword
-``number_of_particles`` as argument will return the number of
-particles which have the given type. For counting the number of particles of a given type you could also use :meth:`espressomd.particle_data.ParticleList.select` ::
+After that the system will keep track of particle ids of that type. Keeping
+track of particles of a given type is not enabled by default since it requires
+memory. The keyword ``number_of_particles`` as argument will return the number
+of particles which have the given type. For counting the number of particles
+of a given type you could also use
+:meth:`ParticleList.select() <espressomd.particle_data.ParticleList.select>` ::
 
     import espressomd
     system = espressomd.System(box_l=[1, 1, 1])
-    ...
-    number_of_particles = len(system.part.select(type=type))
+    system.part.add(pos=[1, 0, 0], type=0)
+    system.part.add(pos=[0, 1, 0], type=0)
+    system.part.add(pos=[0, 0, 1], type=2)
+    print(len(system.part.select(type=0)))
+    print(len(system.part.select(type=2)))
 
-However calling ``select(type=type)`` results in looping over all particles which is slow. In contrast, :meth:`espressomd.system.System.number_of_particles` directly can return the number of particles with that type.
+However calling ``select(type=type)`` results in looping over all particles,
+which is slow. In contrast, the system
+:meth:`~espressomd.system.System.number_of_particles` method can return the
+number of particles with that type.
 
 .. _Self-propelled swimmers:
 
@@ -552,7 +606,7 @@ Self-propelled swimmers
 
 .. seealso::
 
-    :class:`espressomd.particle_data.ParticleHandle.swimming`
+    :attr:`~espressomd.particle_data.ParticleHandle.swimming`
 
 .. _Langevin swimmers:
 
@@ -562,14 +616,12 @@ Langevin swimmers
 ::
 
     import espressomd
-
     system = espressomd.System(box_l=[1, 1, 1])
-
     system.part.add(pos=[1, 0, 0], swimming={'f_swim': 0.03})
 
 This enables the particle to be self-propelled in the direction determined by
 its quaternion. For setting the particle's quaternion see
-:class:`espressomd.particle_data.ParticleHandle.quat`. The self-propulsion
+:attr:`~espressomd.particle_data.ParticleHandle.quat`. The self-propulsion
 speed will relax to a constant velocity, that is specified by ``v_swim``.
 Alternatively it is possible to achieve a constant velocity by imposing a
 constant force term ``f_swim`` that is balanced by friction of a (Langevin)
@@ -581,17 +633,15 @@ same time. Note that there is no real difference between ``v_swim`` and
 ``f_swim``, since the latter may always be chosen such that the same terminal
 velocity is achieved for a given friction coefficient.
 
-.. _Lattice-Boltzmann (LB) swimmers:
+.. _Lattice-Boltzmann swimmers:
 
-Lattice-Boltzmann (LB) swimmers
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Lattice-Boltzmann swimmers
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ::
 
     import espressomd
-
     system = espressomd.System(box_l=[1, 1, 1])
-
     system.part.add(pos=[2, 0, 0], rotation=[1, 1, 1], swimming={
         'f_swim': 0.01, 'mode': 'pusher', 'dipole_length': 2.0})
 

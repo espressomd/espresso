@@ -27,11 +27,11 @@ module = importlib.import_module('jupyter_warnings')
 class Test(ut.TestCase):
 
     cell_md_src = '''
-ignored: http://espressomd.org/wordpress/documentation/
-ignored: http://espressomd.org/wordpress/unknown_folder/
+ignored: https://espressomd.org/wordpress/documentation/
+ignored: https://espressomd.org/wordpress/unknown_folder/
 valid:   https://espressomd.github.io/doc/index.html
-valid:   https://espressomd.github.io/doc/index.html#python-module-documentation
-valid:   https://espressomd.github.io/doc/index.html?highlight=highlander#python-module-documentation
+valid:   https://espressomd.github.io/doc/index.html#python-modules
+valid:   https://espressomd.github.io/doc/index.html?highlight=highlander#python-modules
 valid:   https://espressomd.github.io/doc/index.html?highlight=highlander
 invalid: https://espressomd.github.io/doc/index.html#unknown_anchor
 invalid: https://espressomd.github.io/doc/unknown_file.html
