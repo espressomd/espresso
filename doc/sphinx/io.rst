@@ -104,15 +104,17 @@ Be aware of the following limitations:
   basic data types, ``numpy`` arrays and many other objects. Still, pickling
   support cannot be taken for granted.
 
-* Pickling support of the :class:`espressomd.system.System` instance and
+* Pickling of the :class:`espressomd.system.System` instance and
   contained objects such as bonded and non-bonded interactions and
-  electrostatics methods. However, there are many more combinations
-  of active interactions and algorithms than can be tested.
+  electrostatics methods is covered by basic tests. However, not all
+  combinations of algorithms can be tested. If you encounter an issue
+  for a specific combination of features, please share your findings
+  with the |es| community.
 
 * Checkpointing only supports recursion on the head node. It is therefore
   impossible to checkpoint a :class:`espressomd.system.System` instance that
-  contains LB boundaries, constraints, bonded interactions or auto-update
-  accumulators, when the simulation is running with 2 or more MPI nodes.
+  contains LB boundaries, constraints or auto-update accumulators when the
+  simulation is running with 2 or more MPI nodes.
 
 * The active actors, i.e., the content of ``system.actors``, are checkpointed.
   For lattice-Boltzmann fluids, this only includes the parameters such as the
@@ -138,7 +140,7 @@ Be aware of the following limitations:
 
 * Checkpoints may depend on the presence of other Python modules at specific
   versions. It may therefore not be possible to load a checkpoint in a
-  different environment than where it was loaded.
+  different environment than where it was written.
 
 For additional methods of the checkpointing class, see
 :class:`espressomd.checkpointing.Checkpoint`.

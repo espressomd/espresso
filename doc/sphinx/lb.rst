@@ -311,8 +311,8 @@ Using shapes as lattice-Boltzmann boundary
 
 Lattice-Boltzmann boundaries are implemented in the module
 :mod:`espressomd.lbboundaries`. You might want to take a look
-at the classes :class:`espressomd.lbboundaries.LBBoundary`
-and :class:`espressomd.lbboundaries.LBBoundaries` for more information.
+at the classes :class:`~espressomd.lbboundaries.LBBoundary`
+and :class:`~espressomd.lbboundaries.LBBoundaries` for more information.
 
 Adding a shape-based boundary is straightforward::
 

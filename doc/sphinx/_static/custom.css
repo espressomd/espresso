@@ -26,3 +26,8 @@ div.admonition p.admonition-title {
 div.admonition p {
   display: inline;
 }
+
+/* center main text by shifting it to the left by the width of the sidebar */
+div.document {
+  padding-right: 260px;
+}

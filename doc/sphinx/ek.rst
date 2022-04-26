@@ -189,7 +189,7 @@ advective contribution to the diffusive species' fluxes. Default is
 term acting on the fluid. The former specifies the force term to be the
 sum of the species fluxes divided by their respective mobilities while
 the latter simply uses the electrostatic force density acting on all
-species. Note that this switching is only possible for the linkcentered
+species. Note that this switching is only possible for the ``"linkcentered"``
 stencil. For all other stencils, this choice is hardcoded. The default
 is ``"friction"``.
 
@@ -250,19 +250,19 @@ EK boundaries
 
 .. note:: Feature ``EK_BOUNDARIES`` required
 
-The EKBoundary command allows one to set up (internal or external) boundaries for
-the electrokinetics algorithm in much the same way as the command is
-used for the LB fluid. The major difference with the LB command is given
-by the option ``charge_density``, with which a boundary can be endowed with a volume
+The :class:`~espressomd.ekboundaries.EKBoundary` class is used to set up
+internal or external) boundaries for the electrokinetics algorithm in much
+the same way as the :class:`~espressomd.lbboundaries.LBBoundary` class is
+used for the LB fluid. The major difference with the LB class is the option
+``charge_density``, with which a boundary can be endowed with a volume
 charge density. To create a surface charge density, a combination of two
-oppositely charged boundaries, one inside the other, can be used.
-However, care should be taken to maintain the surface charge density when the value of ``agrid``
+oppositely charged boundaries, one inside the other, can be used. However,
+care should be taken to maintain the surface charge density when the value of ``agrid``
 is changed. Examples for possible shapes are wall, sphere, ellipsoid, cylinder,
-rhomboid and hollowcone. We refer to the documentation of the
+rhomboid and hollow conical frustum. We refer to the documentation of the
 :class:`espressomd.shapes` module for more possible shapes and information on
 the options associated to these shapes. In order to properly set up the
-boundaries, the ``charge_density`` and ``shape``
-must be specified.
+boundaries, the ``charge_density`` and ``shape`` must be specified.
 
 .. _Checkpointing EK:
 

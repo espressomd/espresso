@@ -175,7 +175,7 @@ In this way, just compiling in the ``ROTATION`` feature no longer changes the ph
 
 The rotation of a particle is controlled via the
 :attr:`~espressomd.particle_data.ParticleHandle.rotation` property.
-E.g., the following code adds a particle with rotation enabled around the x axis of its body frame::
+E.g., the following code adds a particle with rotation enabled around the x-axis of its body frame::
 
     import espressomd
     system = espressomd.System(box_l=[1, 1, 1])

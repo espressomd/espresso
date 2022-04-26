@@ -324,7 +324,7 @@ Stokesian Dynamics
 
 :meth:`espressomd.integrate.IntegratorHandle.set_stokesian_dynamics`
 
-The Stokesian Dynamics method allows to study the behaviour of spherical
+The Stokesian Dynamics method is used to model the behavior of spherical
 particles in a viscous fluid. It is targeted at systems with very low Reynolds
 numbers. In such systems, particles come to a rest almost immediately as soon as
 any force on them is removed. In other words, motion has no memory of the past.

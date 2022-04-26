@@ -133,7 +133,7 @@ html_theme = 'alabaster'
 # documentation.
 sans_serif_fonts = "'Lucida Grande', 'Arial', sans-serif"
 html_theme_options = {
-    'sidebar_width': '260px',
+    'sidebar_width': '260px',  # this value must be specified in custom.css too
     'page_width': '1120px',
     'body_max_width': 'auto',
     'font_family': sans_serif_fonts,

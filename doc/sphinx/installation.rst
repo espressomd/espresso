@@ -239,8 +239,6 @@ lines below (optional steps which modify the build process are commented out):
 
     mkdir build
     cd build
-    #cp myconfig-default.hpp myconfig.hpp # use the default configuration as template
-    #nano myconfig.hpp                    # edit to add/remove features as desired
     cmake ..
     #ccmake . // in order to add/remove features like ScaFaCoS or CUDA
     make
@@ -321,15 +319,12 @@ General features
 
 -  ``MMM1D_MACHINE_PREC``: This enables high-precision Bessel functions
    for MMM1D on CPU. Comes with a 60% slow-down penalty. The low-precision
-   functions are in most cases precise enough and are enabled by default.
+   functions are enabled by default and are precise enough for most applications.
 
--  ``DIPOLES`` This activates the dipole-moment property of particles; In addition,
-   the various magnetostatics algorithms, such as P3M are switched on.
+-  ``DIPOLES`` This activates the dipole-moment property of particles and switches
+   on various magnetostatics algorithms
 
-   .. seealso::
-
-       :ref:`Magnetostatics`
-       :ref:`Electrostatics`
+   .. seealso:: :ref:`Magnetostatics`
 
 -  ``SCAFACOS_DIPOLES`` This activates magnetostatics methods of ScaFaCoS.
 

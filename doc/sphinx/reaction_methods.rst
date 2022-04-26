@@ -276,11 +276,17 @@ For this one has to provide the following reaction to the Widom method:
     product_coefficients=[1,1], default_charges={1: 0})
     widom.calculate_particle_insertion_potential_energy(reaction_id=0)
 
-Be aware that in the current implementation, for MC moves which add and remove particles, the insertion of the new particle always takes place at the position where the last particle was removed. Be sure that this is the behaviour you want to have. Otherwise implement a new function ``WidomInsertion::make_reaction_attempt`` in the core.
+Be aware that in the current implementation, for MC moves which add
+and remove particles, the insertion of the new particle always takes
+place at the position where the last particle was removed. Be sure
+that this is the behavior you want to have. Otherwise implement a new
+function ``WidomInsertion::make_reaction_attempt`` in the core.
 
-An example script which demonstrates the usage for measuring the pair excess chemical potential for inserting an ion pair into a salt solution can be found here:
+An example script which demonstrates how to measure the pair excess
+chemical potential for inserting an ion pair into a salt solution
+can be found here:
 
-* `Widom Insertion <https://github.com/espressomd/espresso/blob/python/samples/widom_insertion.py>`_
+* `Widom Insertion <https://github.com/espressomd/espresso/blob/python/samples/widom_insertion.py>`__
 
 For a description of the available methods, see :class:`espressomd.reaction_methods.WidomInsertion`.
 
