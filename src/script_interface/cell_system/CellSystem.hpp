@@ -143,6 +143,7 @@ public:
         {"max_cut_nonbonded", AutoParameter::read_only,
          maximal_cutoff_nonbonded},
         {"max_cut_bonded", AutoParameter::read_only, maximal_cutoff_bonded},
+        {"interaction_range", AutoParameter::read_only, interaction_range},
     });
   }
 

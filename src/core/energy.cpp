@@ -87,7 +87,7 @@ static std::shared_ptr<Observable_stat> calculate_energy_local() {
         add_non_bonded_pair_energy(p1, p2, d.vec21, sqrt(d.dist2), d.dist2,
                                    obs_energy);
       },
-      maximal_cutoff(), maximal_cutoff_bonded());
+      maximal_cutoff(n_nodes), maximal_cutoff_bonded());
 
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */

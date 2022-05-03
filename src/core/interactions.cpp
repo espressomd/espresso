@@ -48,14 +48,18 @@ static double recalc_long_range_cutoff() {
   return max_cut_long_range;
 }
 
-double maximal_cutoff() {
+double maximal_cutoff(bool single_node) {
   auto max_cut = min_global_cut;
   auto const max_cut_long_range = recalc_long_range_cutoff();
   auto const max_cut_bonded = maximal_cutoff_bonded();
   auto const max_cut_nonbonded = maximal_cutoff_nonbonded();
 
   max_cut = std::max(max_cut, max_cut_long_range);
-  max_cut = std::max(max_cut, max_cut_bonded);
+  if (not single_node) {
+    // If there is just one node, the bonded cutoff can be omitted
+    // because bond partners are always on the local node.
+    max_cut = std::max(max_cut, max_cut_bonded);
+  }
   max_cut = std::max(max_cut, max_cut_nonbonded);
   max_cut = std::max(max_cut, collision_detection_cutoff());
 

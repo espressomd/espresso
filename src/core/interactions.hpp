@@ -25,7 +25,7 @@
 #define CORE_INTERACTIONS_HPP
 
 /** Calculate the maximal cutoff of all interactions. */
-double maximal_cutoff();
+double maximal_cutoff(bool single_node);
 
 /** Check electrostatic and magnetostatic methods are properly initialized.
  *  @return true if sanity checks failed.
