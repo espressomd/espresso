@@ -4,8 +4,9 @@ Lattice-Boltzmann
 =================
 
 For an implicit treatment of a solvent, |es| allows to couple the molecular
-dynamics simulation to a lattice-Boltzmann fluid. The lattice-Boltzmann method (LBM) is a fast, lattice-based method that, in its
-"pure" form, allows to calculate fluid flow in different boundary
+dynamics simulation to a lattice-Boltzmann fluid. The lattice-Boltzmann
+method (LBM) is a fast, lattice-based method that, in its "pure" form,
+allows to calculate fluid flow in different boundary
 conditions of arbitrarily complex geometries. Coupled to molecular
 dynamics, it allows for the computationally efficient inclusion of
 hydrodynamic interactions into the simulation. The focus of the |es| implementation
@@ -18,6 +19,11 @@ description of the method, please refer to the literature.
 
 .. note:: Please cite :cite:t:`godenschwager13a` and :cite:t:`bauer21a` (BibTeX keys ``godenschwager13a`` and ``bauer21a`` in :file:`doc/bibliography.bib`) if you use the LB fluid. When generating your own kernels with pystencils and lbmpy, please also cite :cite:t:`bauer19a` and :cite:t:`bauer21b` (BibTeX key ``bauer19a`` resp. ``bauer21b`` in :file:`doc/bibliography.bib`).
 
+.. note::
+
+    Requires external feature ``LB_WALBERLA``, enabled with the CMake option
+    ``-D WITH_WALBERLA=ON``.
+
 .. _Setting up a LB fluid:
 
 Setting up a LB fluid
@@ -26,6 +32,7 @@ Setting up a LB fluid
 The following minimal example illustrates how to use the LBM in |es|::
 
     import espressomd
+    import espressomd.lb
     system = espressomd.System(box_l=[10, 20, 30])
     system.time_step = 0.01
     system.cell_system.skin = 0.4
@@ -33,15 +40,19 @@ The following minimal example illustrates how to use the LBM in |es|::
     system.actors.add(lb)
     system.integrator.run(100)
 
-To use the GPU accelerated variant, replace line 5 in the example above by::
+To use the GPU-accelerated variant, replace line 6 in the example above by::
 
     lb = espressomd.lb.LBFluidWalberlaGPU(agrid=1.0, density=1.0, viscosity=1.0, tau=0.01)
 
-.. note:: Feature ``CUDA`` required for GPU accelerated variant
+.. note:: Feature ``CUDA`` is required for the GPU-accelerated variant
 
 To use the (much faster) GPU implementation of the LBM, use
 :class:`espressomd.lb.LBFluidWalberlaGPU` in place of :class:`espressomd.lb.LBFluidWalberla`.
-Please note that the GPU implementation uses single precision floating point operations. This decreases the accuracy of calculations compared to the CPU implementation. In particular, due to rounding errors, the fluid density decreases over time, when external forces, coupling to particles, or thermalization is used. The loss of density is on the order of :math:`10^{-12}` per time step.
+Please note that the GPU implementation uses single precision floating point operations.
+This decreases the accuracy of calculations compared to the CPU implementation.
+In particular, due to rounding errors, the fluid density decreases over time,
+when external forces, coupling to particles, or thermalization is used.
+The loss of density is on the order of :math:`10^{-12}` per time step.
 
 The command initializes the fluid with a given set of parameters. It is
 also possible to change parameters on the fly, but this will only rarely
@@ -50,7 +61,8 @@ to set up a box of a desired size. The parameter is used to set the
 lattice constant of the fluid, so the size of the box in every direction
 must be a multiple of ``agrid``.
 
-In the following, we discuss the parameters that can be supplied to the LBM in |es|. The detailed interface definition is available at :class:`espressomd.lb.LBFluidWalberla`.
+In the following, we discuss the parameters that can be supplied to the LBM in |es|.
+The detailed interface definition is available at :class:`espressomd.lb.LBFluidWalberla`.
 
 The LB scheme and the MD scheme are not synchronized: In one LB time
 step typically several MD steps are performed. This allows to speed up
@@ -62,8 +74,9 @@ in ``tau`` and so on.
 LB nodes are located at 0.5, 1.5, 2.5, etc.
 (in terms of ``agrid``). This has important implications for the location of
 hydrodynamic boundaries which are generally considered to be halfway
-between two nodes for flat, axis-aligned walls. For more complex boundary geometries, the hydrodynamic boundary location deviates from this midpoint and the deviation decays to first order in ``agrid``.
-The LBM should
+between two nodes for flat, axis-aligned walls. For more complex boundary geometries,
+the hydrodynamic boundary location deviates from this midpoint and the deviation
+decays to first order in ``agrid``. The LBM should
 *not be used as a black box*, but only after a careful check of all
 parameters that were applied.
 

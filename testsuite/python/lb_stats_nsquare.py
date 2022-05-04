@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
-# import unittest_decorators as utx
+import unittest_decorators as utx
 from lb_stats import TestLB
 
 import espressomd
@@ -24,6 +24,7 @@ import espressomd.lb
 
 @ut.skipIf(TestLB.n_nodes > 1,
            "LB with N-square only works on 1 MPI rank")
+@utx.skipIfMissingFeatures("LB_WALBERLA")
 class TestLBCPU(TestLB, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
@@ -36,6 +37,7 @@ class TestLBCPU(TestLB, ut.TestCase):
 # @utx.skipIfMissingGPU()
 # @ut.skipIf(TestLB.n_nodes > 1,
 #           "LB with N-square only works on 1 MPI rank")
+# @utx.skipIfMissingFeatures("LB_WALBERLA")
 # class TestLBGPU(TestLB, ut.TestCase):
 #
 #    lb_class = espressomd.lb.LBFluidWalberlaGPU

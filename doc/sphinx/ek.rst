@@ -141,6 +141,7 @@ Initialization
 ::
 
     import espressomd
+    import espressomd.electrokinetics
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     system.time_step = 0.0
     system.cell_system.skin = 0.4
@@ -149,20 +150,15 @@ Initialization
         stencil='linkcentered', advection=True, fluid_coupling='friction')
     system.actors.add(ek)
 
-.. note:: Features ``ELECTROKINETICS`` and ``CUDA`` required
+.. note::
+
+    Requires external feature ``LB_WALBERLA``, enabled with the CMake option
+    ``-D WITH_WALBERLA=ON``.
 
 The above is a minimal example how to initialize the LB fluid, and
 it is very similar to the lattice-Boltzmann command in set-up. We
 therefore refer the reader to Chapter :ref:`Lattice-Boltzmann` for details on the
 implementation of LB in |es| and describe only the major differences here.
-
-The first major difference with the LB implementation is that the
-electrokinetics set-up is a Graphics Processing Unit (GPU) only
-implementation. There is no Central Processing Unit (CPU) version, and
-at this time there are no plans to make a CPU version available in the
-future. To use the electrokinetics features it is therefore imperative
-that your computer contains a CUDA capable GPU which is sufficiently
-modern.
 
 To set up a proper LB fluid using this command one has to specify at
 least the following options: ``agrid``, ``lb_density``, ``viscosity``,
@@ -193,7 +189,6 @@ species. Note that this switching is only possible for the ``"linkcentered"``
 stencil. For all other stencils, this choice is hardcoded. The default
 is ``"friction"``.
 
-
 ``es_coupling`` enables the action of the electrostatic potential due to the
 electrokinetics species and charged boundaries on the MD particles. The
 forces on the particles are calculated by interpolation from the
@@ -210,59 +205,60 @@ lead to negative densities, they are modified by a smoothed Heaviside function,
 which decreases the magnitude of the fluctuation for densities close to 0.
 By default the fluctuations are turned off.
 
-.. _Diffusive species:
+..
+    .. _Diffusive species:
 
-Diffusive species
-~~~~~~~~~~~~~~~~~
-::
+    Diffusive species
+    ~~~~~~~~~~~~~~~~~
+    ::
 
-    species = electrokinetics.Species(density=density, D=D, valency=valency,
-        ext_force_density=ext_force)
+        species = electrokinetics.Species(density=density, D=D, valency=valency,
+            ext_force_density=ext_force)
 
-:class:`espressomd.electrokinetics.Species` is used to initialize a diffusive species. Here the
-options specify: the number density ``density``, the diffusion coefficient ``D``, the
-valency of the particles of that species ``valency``, and an optional external
-(electric) force which is applied to the diffusive species. As mentioned
-before, the LB density is completely decoupled from the electrokinetic
-densities. This has the advantage that greater freedom can be achieved
-in matching the internal parameters to an experimental system. Moreover,
-it is possible to choose parameters for which the LB is more stable. The species can be added to a LB fluid::
+    :class:`espressomd.electrokinetics.Species` is used to initialize a diffusive species. Here the
+    options specify: the number density ``density``, the diffusion coefficient ``D``, the
+    valency of the particles of that species ``valency``, and an optional external
+    (electric) force which is applied to the diffusive species. As mentioned
+    before, the LB density is completely decoupled from the electrokinetic
+    densities. This has the advantage that greater freedom can be achieved
+    in matching the internal parameters to an experimental system. Moreover,
+    it is possible to choose parameters for which the LB is more stable. The species can be added to a LB fluid::
 
-    ek.add_species(species)
+        ek.add_species(species)
 
-One can also add the species during the initialization step of the
-:class:`espressomd.electrokinetics.Electrokinetics` by defining the list variable ``species``::
+    One can also add the species during the initialization step of the
+    :class:`espressomd.electrokinetics.Electrokinetics` by defining the list variable ``species``::
 
-    ek = espressomd.electrokinetics.Electrokinetics(species=[species], ...)
+        ek = espressomd.electrokinetics.Electrokinetics(species=[species], ...)
 
-The variables ``density``, ``D``, and
-``valency`` must be set to properly initialize the diffusive species; the
-``ext_force_density`` is optional.
+    The variables ``density``, ``D``, and
+    ``valency`` must be set to properly initialize the diffusive species; the
+    ``ext_force_density`` is optional.
 
-.. _EK boundaries:
+    .. _EK boundaries:
 
-EK boundaries
-~~~~~~~~~~~~~
-::
+    EK boundaries
+    ~~~~~~~~~~~~~
+    ::
 
-    ek_boundary = espressomd.ekboundaries.EKBoundary(charge_density=1.0, shape=my_shape)
-    system.ekboundaries.add(ek_boundary)
+        ek_boundary = espressomd.ekboundaries.EKBoundary(charge_density=1.0, shape=my_shape)
+        system.ekboundaries.add(ek_boundary)
 
-.. note:: Feature ``EK_BOUNDARIES`` required
+    .. note:: Feature ``EK_BOUNDARIES`` required
 
-The :class:`~espressomd.ekboundaries.EKBoundary` class is used to set up
-internal or external) boundaries for the electrokinetics algorithm in much
-the same way as the :class:`~espressomd.lbboundaries.LBBoundary` class is
-used for the LB fluid. The major difference with the LB class is the option
-``charge_density``, with which a boundary can be endowed with a volume
-charge density. To create a surface charge density, a combination of two
-oppositely charged boundaries, one inside the other, can be used. However,
-care should be taken to maintain the surface charge density when the value of ``agrid``
-is changed. Examples for possible shapes are wall, sphere, ellipsoid, cylinder,
-rhomboid and hollow conical frustum. We refer to the documentation of the
-:class:`espressomd.shapes` module for more possible shapes and information on
-the options associated to these shapes. In order to properly set up the
-boundaries, the ``charge_density`` and ``shape`` must be specified.
+    The :class:`~espressomd.ekboundaries.EKBoundary` class is used to set up
+    internal or external) boundaries for the electrokinetics algorithm in much
+    the same way as the :class:`~espressomd.lbboundaries.LBBoundary` class is
+    used for the LB fluid. The major difference with the LB class is the option
+    ``charge_density``, with which a boundary can be endowed with a volume
+    charge density. To create a surface charge density, a combination of two
+    oppositely charged boundaries, one inside the other, can be used. However,
+    care should be taken to maintain the surface charge density when the value of ``agrid``
+    is changed. Examples for possible shapes are wall, sphere, ellipsoid, cylinder,
+    rhomboid and hollow conical frustum. We refer to the documentation of the
+    :class:`espressomd.shapes` module for more possible shapes and information on
+    the options associated to these shapes. In order to properly set up the
+    boundaries, the ``charge_density`` and ``shape`` must be specified.
 
 .. _Checkpointing EK:
 
@@ -285,62 +281,63 @@ via ``species``::
     species = ek.get_params()['species']
     ek.load_checkpoint(path)
 
-.. _Output:
+..
+    .. _Output:
 
-Output
-~~~~~~
+    Output
+    ~~~~~~
 
-.. _Fields:
+    .. _Fields:
 
-Fields
-""""""
+    Fields
+    """"""
 
-::
+    ::
 
-    ek.write_vtk_boundary(path)
-    ek.write_vtk_density(path)
-    ek.write_vtk_velocity(path)
-    ek.write_vtk_potential(path)
+        ek.write_vtk_boundary(path)
+        ek.write_vtk_density(path)
+        ek.write_vtk_velocity(path)
+        ek.write_vtk_potential(path)
 
-A property of the fluid field can be exported into a
-file in one go. Currently supported
-are: density, velocity, potential and boundary, which give the LB fluid density, the LB fluid velocity,
-the electrostatic potential, and the location and type of the
-boundaries, respectively. The boundaries can only be printed when the
-``EK_BOUNDARIES`` is compiled in. The output is a vtk-file, which is readable by
-visualization software such as ParaView [5]_ and Mayavi2 [6]_.
+    A property of the fluid field can be exported into a
+    file in one go. Currently supported
+    are: density, velocity, potential and boundary, which give the LB fluid density, the LB fluid velocity,
+    the electrostatic potential, and the location and type of the
+    boundaries, respectively. The boundaries can only be printed when the
+    ``EK_BOUNDARIES`` is compiled in. The output is a vtk-file, which is readable by
+    visualization software such as ParaView [5]_ and Mayavi2 [6]_.
 
-::
+    ::
 
-    species.write_vtk_flux(path)
-    species.write_vtk_density(path)
+        species.write_vtk_flux(path)
+        species.write_vtk_density(path)
 
-These commands are similar to the above. They enable the
-export of diffusive species properties, namely: ``density`` and ``flux``, which specify the
-number density and flux of species ``species``, respectively.
+    These commands are similar to the above. They enable the
+    export of diffusive species properties, namely: ``density`` and ``flux``, which specify the
+    number density and flux of species ``species``, respectively.
 
-.. _Local Quantities:
+    .. _Local Quantities:
 
-Local Quantities
-""""""""""""""""
+    Local Quantities
+    """"""""""""""""
 
-Local quantities like velocity or fluid density for single nodes can be accessed in the same way
-as for an LB fluid, see :ref:`Lattice-Boltzmann`. The only EK-specific quantity is the potential.
+    Local quantities like velocity or fluid density for single nodes can be accessed in the same way
+    as for an LB fluid, see :ref:`Lattice-Boltzmann`. The only EK-specific quantity is the potential.
 
-::
+    ::
 
-    ek[0, 0, 0].potential
-    ek[0, 0, 0].velocity
-    ek[0, 0, 0].boundary
+        ek[0, 0, 0].potential
+        ek[0, 0, 0].velocity
+        ek[0, 0, 0].boundary
 
-The local ``density`` and ``flux`` of a species can be obtained in the same fashion:
+    The local ``density`` and ``flux`` of a species can be obtained in the same fashion:
 
-::
+    ::
 
-    species[0, 0, 0].density
-    species[0, 0, 0].flux
+        species[0, 0, 0].density
+        species[0, 0, 0].flux
 
-.. [5]
-   https://www.paraview.org/
-.. [6]
-   http://code.enthought.com/projects/mayavi/
+    .. [5]
+       https://www.paraview.org/
+    .. [6]
+       http://code.enthought.com/projects/mayavi/
