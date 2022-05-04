@@ -63,7 +63,8 @@ for (filepath, lineno, warning), warning_list in raw_warnings.items():
         continue
     if re.search(r"^documented symbol [\'`][^\r\n]+\' was not declared or defined\.$",
                  warning):
-        # known bug, still exists in 1.8.17 for anonymous classes
+        # known bug, partially fixed in 1.8.16 but still exists in 1.8.17
+        # for anonymous classes
         continue
     if re.search('^no uniquely matching class member found for $', warning):
         # known bug, not fixed yet

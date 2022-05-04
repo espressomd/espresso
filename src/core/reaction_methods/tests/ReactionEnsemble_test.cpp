@@ -31,6 +31,7 @@
 #include "EspressoSystemStandAlone.hpp"
 #include "communication.hpp"
 #include "particle_data.hpp"
+#include "particle_node.hpp"
 
 #include <utils/Vector.hpp>
 

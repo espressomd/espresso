@@ -25,7 +25,7 @@
 
 #include "Particle.hpp"
 #include "grid.hpp"
-#include "particle_data.hpp"
+#include "particle_node.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>

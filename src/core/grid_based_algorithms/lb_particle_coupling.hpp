@@ -92,11 +92,10 @@ std::vector<Utils::Vector3d> shifted_positions(Utils::Vector3d pos,
 
 // internal function exposed for unit testing
 void couple_particle(Particle &p, bool couple_virtual, double noise_amplitude,
-                     const OptionalCounter &rng_counter, double time_step,
-                     bool has_ghosts);
+                     const OptionalCounter &rng_counter, double time_step);
 
 // internal function exposed for unit testing
-void add_swimmer_force(Particle const &p, double time_step, bool has_ghosts);
+void add_swimmer_force(Particle const &p, double time_step);
 
 /**
  * @brief Calculate particle drift velocity offset due to ENGINE and
@@ -110,14 +109,16 @@ void mpi_bcast_lb_particle_coupling();
  *
  *  See section II.C. @cite ahlrichs99a
  *
- *  @param[in] p           The coupled particle.
+ *  @param[in] p           The coupled particle
+ *  @param[in] shifted_pos The particle position with optional shift
  *  @param[in] vel_offset  Velocity offset to be added to interpolated LB
  *                         velocity before calculating the force
  *
  *  @return The viscous coupling force
  */
 Utils::Vector3d lb_drag_force(Particle const &p,
-                              const Utils::Vector3d &vel_offset);
+                              Utils::Vector3d const &shifted_pos,
+                              Utils::Vector3d const &vel_offset);
 
 struct LB_Particle_Coupling {
   OptionalCounter rng_counter_coupling = {};

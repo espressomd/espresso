@@ -33,7 +33,7 @@ IF EXCLUSIONS:
     cdef extern from "particle_data.hpp":
         void auto_exclusions(int distance)
 
-cdef extern from "particle_data.hpp":
+cdef extern from "particle_node.hpp":
     int init_type_map(int type) except +
     int number_of_particles_with_type(int type) except +
 

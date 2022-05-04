@@ -29,7 +29,7 @@
 #include "Particle.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
-#include "particle_data.hpp"
+#include "particle_node.hpp"
 
 #include <utils/Vector.hpp>
 

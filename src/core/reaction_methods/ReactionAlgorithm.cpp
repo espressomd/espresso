@@ -25,6 +25,7 @@
 #include "grid.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
+#include "particle_node.hpp"
 #include "statistics.hpp"
 
 #include <utils/Vector.hpp>

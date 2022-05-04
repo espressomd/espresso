@@ -21,7 +21,7 @@
 #define FETCH_PARTICLES_HPP
 
 #include "grid.hpp"
-#include "particle_data.hpp"
+#include "particle_node.hpp"
 
 #include <utils/Span.hpp>
 

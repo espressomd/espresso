@@ -85,7 +85,7 @@ grep -Prn '^[\ \t]*(?:\*?[\ \t]+)?[@\\]t?param(?:\[[in, out]+\])?[\ \t]+[a-zA-Z0
 rm -f dox_warnings_summary.log
 
 # process warnings
-"${srcdir}/maintainer/CI/dox_warnings.py" || exit 2
+python3 "${srcdir}/maintainer/CI/dox_warnings.py" || exit 2
 
 # print summary
 cat dox_warnings_summary.log

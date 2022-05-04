@@ -16,7 +16,7 @@ geometries and boundary conditions are somewhat limited in comparison to
 Here we restrict the documentation to the interface. For a more detailed
 description of the method, please refer to the literature.
 
-.. note:: Please cite :cite:`godenschwager13a` and :cite:`bauer21a` (BibTeX keys ``godenschwager13a`` and ``bauer21a`` in :file:`doc/sphinx/zrefs.bib`) if you use the LB fluid. When generating your own kernels with pystencils and lbmpy, please also cite :cite:`bauer19a` resp. and :cite:`bauer21b` (BibTeX key ``bauer19a`` resp. ``bauer21b`` in :file:`doc/sphinx/zrefs.bib`).
+.. note:: Please cite :cite:t:`godenschwager13a` and :cite:t:`bauer21a` (BibTeX keys ``godenschwager13a`` and ``bauer21a`` in :file:`doc/bibliography.bib`) if you use the LB fluid. When generating your own kernels with pystencils and lbmpy, please also cite :cite:t:`bauer19a` and :cite:t:`bauer21b` (BibTeX key ``bauer19a`` resp. ``bauer21b`` in :file:`doc/bibliography.bib`).
 
 .. _Setting up a LB fluid:
 
@@ -94,8 +94,8 @@ for double-precision kernels.
 
 .. _Checkpointing LB:
 
-Checkpointing LB
-----------------
+Checkpointing
+-------------
 
 ::
 
@@ -245,7 +245,7 @@ activated by compiling with the feature ``CUDA``. Within the
 Python script, the :class:`~espressomd.lb.LBFluidWalberla` object can be substituted
 with the :class:`~espressomd.lb.LBFluidWalberlaGPU` object to switch from CPU based
 to GPU based execution. For further
-information on CUDA support see section :ref:`GPU Acceleration with CUDA`.
+information on CUDA support see section :ref:`CUDA acceleration`.
 
 The following minimal example demonstrates how to use the GPU implementation
 of the LBM in analogy to the example for the CPU given in section

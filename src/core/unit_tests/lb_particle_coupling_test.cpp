@@ -256,7 +256,7 @@ BOOST_DATA_TEST_CASE(drag_force, bdata::make(kTs), kT) {
 
   // Drag force in quiescent fluid
   {
-    auto const observed = lb_drag_force(p, drift_offset);
+    auto const observed = lb_drag_force(p, p.pos(), drift_offset);
     const Utils::Vector3d expected{0.3, -0.1, -.2};
     BOOST_CHECK_SMALL((observed - expected).norm(), tol);
   }
@@ -280,7 +280,7 @@ BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
   // swimmer coupling
   {
     if (in_local_halo(p.pos())) {
-      add_swimmer_force(p, params.time_step, false);
+      add_swimmer_force(p, params.time_step);
     }
     if (in_local_halo(coupling_pos)) {
       auto const interpolated =
@@ -351,7 +351,7 @@ BOOST_DATA_TEST_CASE(particle_coupling, bdata::make(kTs), kT) {
   // coupling
   {
     if (in_local_halo(p.pos())) {
-      couple_particle(p, false, noise, rng, params.time_step, false);
+      couple_particle(p, false, noise, rng, params.time_step);
       BOOST_CHECK_SMALL((p.force() - expected).norm(), tol);
 
       auto const interpolated = lb_lbfluid_get_force_to_be_applied(p.pos());

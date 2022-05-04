@@ -478,7 +478,7 @@ union. The distance to the union is defined as the minimum distance to any conta
 Available options
 ^^^^^^^^^^^^^^^^^
 
-There are some options to help control the behaviour of shaped-based
+There are some options to help control the behavior of shaped-based
 constraints. Some of the options, like ``direction`` need to be specified for
 the shape :class:`espressomd.shapes`, and some options are specified for the
 constraint  :class:`espressomd.constraints.ShapeBasedConstraint`. We will

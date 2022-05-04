@@ -41,6 +41,7 @@ class TestLB:
     system.periodicity = [1, 1, 1]
     system.time_step = 0.01
     system.cell_system.skin = 0
+    n_nodes = system.cell_system.get_state()['n_nodes']
 
     def tearDown(self):
         self.system.actors.clear()
@@ -144,6 +145,9 @@ class TestLBWalberla(TestLB, ut.TestCase):
     """Test for the Walberla implementation of the LB in double-precision."""
 
     lb_class = espressomd.lb.LBFluidWalberla
+
+    def setUp(self):
+        self.system.cell_system.set_regular_decomposition()
 
 
 if __name__ == "__main__":
