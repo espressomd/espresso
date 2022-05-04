@@ -272,9 +272,9 @@ Checkpointing in the EK works quite similar to checkpointing in the LB,
 because the density is not saved within the :class:`espressomd.checkpointing`
 object. However one should keep in mind, that the EK not only saves the density
 of the species but also saves the population of the LB fluid in a separate file.
-To load a checkpoint the :class:`espressomd.electrokinetics.Electrokinetics`
+To load a checkpoint the ``espressomd.electrokinetics.Electrokinetics``
 should have the same name as in the script it was saved, but to use the species
-one need to extract them from the :class:`espressomd.electrokinetics.Electrokinetics`
+one need to extract them from the ``espressomd.electrokinetics.Electrokinetics``
 via ``species``::
 
     checkpoint.load(cpt_path)
