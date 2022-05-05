@@ -87,7 +87,7 @@ Utils::Vector3d lb_particle_coupling_noise(bool enabled, int part_id,
                                            const OptionalCounter &rng_counter);
 
 // internal function exposed for unit testing
-std::vector<Utils::Vector3d> shifted_positions(Utils::Vector3d pos,
+std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d pos,
                                                const BoxGeometry &box);
 
 // internal function exposed for unit testing

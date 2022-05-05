@@ -101,40 +101,6 @@ void lb_lbcoupling_set_rng_state(uint64_t counter) {
     throw std::runtime_error("No LB active");
 }
 
-/**
- * @brief Return a vector of positions shifted by +,- box length in each
- * coordinate.
- */
-std::vector<Utils::Vector3d> shifted_positions(Utils::Vector3d pos,
-                                               const BoxGeometry &box) {
-  std::vector<Utils::Vector3d> res;
-  for (int i : {-1, 0, 1}) {
-    for (int j : {-1, 0, 1}) {
-      for (int k : {-1, 0, 1}) {
-        if (i == 0 and j == 0 and k == 0)
-          continue;
-        Utils::Vector3d shift{{double(i), double(j), double(k)}};
-        Utils::Vector3d pos_shifted =
-            pos + Utils::hadamard_product(box.length(), shift);
-
-        if (box_geo.type() == BoxType::LEES_EDWARDS) {
-          auto le = box_geo.lees_edwards_bc();
-          auto normal_shift = (pos_shifted - pos)[le.shear_plane_normal];
-          if (normal_shift > std::numeric_limits<double>::epsilon())
-            pos_shifted[le.shear_direction] += le.pos_offset;
-          if (normal_shift < -1.0 * std::numeric_limits<double>::epsilon())
-            pos_shifted[le.shear_direction] -= le.pos_offset;
-        }
-
-        if (in_local_halo(pos_shifted)) {
-          res.push_back(pos_shifted);
-        }
-      }
-    }
-  }
-  return res;
-}
-
 void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force,
                   double time_step) {
   /* transform momentum transfer to lattice units
@@ -223,6 +189,16 @@ std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d pos,
         Utils::Vector3d shift{{double(i), double(j), double(k)}};
         Utils::Vector3d pos_shifted =
             pos + Utils::hadamard_product(box.length(), shift);
+
+        if (box_geo.type() == BoxType::LEES_EDWARDS) {
+          auto le = box_geo.lees_edwards_bc();
+          auto normal_shift = (pos_shifted - pos)[le.shear_plane_normal];
+          if (normal_shift > std::numeric_limits<double>::epsilon())
+            pos_shifted[le.shear_direction] += le.pos_offset;
+          if (normal_shift < -std::numeric_limits<double>::epsilon())
+            pos_shifted[le.shear_direction] -= le.pos_offset;
+        }
+
         if (in_local_halo(pos_shifted)) {
           res.push_back(pos_shifted);
         }

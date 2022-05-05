@@ -56,6 +56,7 @@ namespace utf = boost::unit_test;
 
 #include <boost/mpi.hpp>
 
+#include <cassert>
 #include <cmath>
 #include <limits>
 #include <memory>
@@ -415,7 +416,8 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
     // check box shifts
     {
       auto constexpr reference_shifts =
-          std::array<Utils::Vector3i, 7>{{{{0, 0, 8}},
+          std::array<Utils::Vector3i, 8>{{{{0, 0, 0}},
+                                          {{0, 0, 8}},
                                           {{0, 8, 0}},
                                           {{0, 8, 8}},
                                           {{8, 0, 0}},
@@ -424,23 +426,27 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
                                           {{8, 8, 8}}}};
       boost::mpi::communicator world;
       assert(world.size() <= 4);
-      auto const cutoff = 8 / world.size() - 1;
+      auto const cutoff = 8 / world.size();
       {
-        auto const shifts = shifted_positions({0., 0., 0.}, box_geo);
+        auto const shifts = positions_in_halo({0., 0., 0.}, box_geo);
         BOOST_REQUIRE_EQUAL(shifts.size(), cutoff);
         for (std::size_t i = 0; i < shifts.size(); ++i) {
           BOOST_REQUIRE_EQUAL(shifts[i], reference_shifts[i]);
         }
       }
       {
-        auto const shifts = shifted_positions({1., 1., 1.}, box_geo);
-        BOOST_REQUIRE_EQUAL(shifts.size(), 0);
-      }
-      {
-        auto const reference_shift = Utils::Vector3d{1., 2., 8.};
-        auto const shifts = shifted_positions({1., 2., 0.}, box_geo);
+        auto const reference_shift = Utils::Vector3d{1., 1., 1.};
+        auto const shifts = positions_in_halo({1., 1., 1.}, box_geo);
         BOOST_REQUIRE_EQUAL(shifts.size(), 1);
         BOOST_REQUIRE_EQUAL(shifts[0], reference_shift);
+      }
+      {
+        auto const reference_origin = Utils::Vector3d{1., 2., 0.};
+        auto const reference_shift = Utils::Vector3d{1., 2., 8.};
+        auto const shifts = positions_in_halo({1., 2., 0.}, box_geo);
+        BOOST_REQUIRE_EQUAL(shifts.size(), 2);
+        BOOST_REQUIRE_EQUAL(shifts[0], reference_origin);
+        BOOST_REQUIRE_EQUAL(shifts[1], reference_shift);
       }
     }
 
@@ -599,6 +605,9 @@ int main(int argc, char **argv) {
   espresso::system->set_box_l(params.box_dimensions);
   espresso::system->set_time_step(params.time_step);
   espresso::system->set_skin(params.skin);
+
+  boost::mpi::communicator world;
+  assert(world.size() <= 2);
 
   return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }
