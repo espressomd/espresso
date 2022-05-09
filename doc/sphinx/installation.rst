@@ -33,39 +33,45 @@ software easily on a wide range of platforms.
 Requirements
 ------------
 
-The following tools libraries, including header files, are required to be able
-to compile and use |es|:
+The following tools and libraries, including their header files,
+are required to be able to compile and use |es|:
 
-CMake
-    The build system is based on CMake.
+.. glossary::
 
-C++ Compiler
-    C++14 capable C++ compiler (e.g., gcc 5 or later)
+    CMake
+        The build system is based on CMake.
 
-Boost
-    A number of advanced C++ features used by |es| are provided by Boost.
-    We strongly recommend to use at least Boost 1.71.
+    C++ compiler
+        The C++ core of |es| needs to be built by a C++14-capable compiler.
 
-FFTW
-    For some algorithms (P\ :math:`^3`\ M), |es| needs the FFTW library
-    version 3 or later  [5]_ for Fourier transforms, including header
-    files.
+    Boost
+        A number of advanced C++ features used by |es| are provided by Boost.
+        We strongly recommend to use at least Boost 1.71.
 
-MPI
-    Because |es| is parallelized with MPI, you need a working MPI
-    environment that implements the MPI standard version 1.2.
+    FFTW
+        For some algorithms like P\ :math:`^3`\ M, |es| needs the FFTW library
+        version 3 or later [5]_ for Fourier transforms, including header files.
 
-Python
-    |es|'s main user interface is via the Python 3 scripting interface.
+    MPI
+        An MPI library that implements the MPI standard version 1.2 is required
+        to run simulations in parallel. |es| is currently tested against
+        `Open MPI <https://www.open-mpi.org>`__ and
+        `MPICH <https://www.mpich.org>`__, with and without
+        `UCX <https://openucx.org>`__ enabled.
+        Other MPI implementations like Intel MPI should also work, although
+        they are not actively tested in |es| continuous integration.
 
-Cython
-    Cython is used for connecting the C++ core to Python.
+    Python
+        |es|'s main user interface relies on Python 3.
+
+    Cython
+        Cython is used for connecting the C++ core to Python.
 
 
 .. _Installing requirements on Ubuntu Linux:
 
 Installing requirements on Ubuntu Linux
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To compile |es| on Ubuntu 20.04 LTS, install the following dependencies:
 
@@ -94,6 +100,8 @@ are required:
     jupyter nbextension enable rubberband/main
     jupyter nbextension enable exercise2/main
 
+.. _Nvidia GPU acceleration:
+
 Nvidia GPU acceleration
 """""""""""""""""""""""
 
@@ -113,7 +121,7 @@ or edit the system header files as shown in the following
 .. _Installing requirements on other Linux distributions:
 
 Installing requirements on other Linux distributions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Please refer to the following Dockerfiles to find the minimum set of packages
 required to compile |es| on other Linux distributions:
@@ -124,7 +132,7 @@ required to compile |es| on other Linux distributions:
 .. _Installing requirements on Windows via WSL:
 
 Installing requirements on Windows via WSL
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To run |es| on Windows, use the Linux subsystem. For that you need to
 
@@ -136,11 +144,10 @@ To run |es| on Windows, use the Linux subsystem. For that you need to
   to set up CUDA.
 * follow the instructions for :ref:`Installing requirements on Ubuntu Linux`
 
-
 .. _Installing requirements on Mac OS X:
 
 Installing requirements on Mac OS X
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Preparation
 """""""""""
@@ -232,8 +239,6 @@ lines below (optional steps which modify the build process are commented out):
 
     mkdir build
     cd build
-    #cp myconfig-default.hpp myconfig.hpp # use the default configuration as template
-    #nano myconfig.hpp                    # edit to add/remove features as desired
     cmake ..
     #ccmake . // in order to add/remove features like ScaFaCoS or CUDA
     make
@@ -265,20 +270,20 @@ command:
 
 .. code-block:: bash
 
-    ./pypresso <SCRIPT>
+    ./pypresso script.py
 
-where ``<SCRIPT>`` is a ``python`` script which has to
+where ``script.py`` is a ``python`` script which has to
 be written by the user. You can find some examples in the :file:`samples`
 folder of the source code directory. If you want to run in parallel, you should
 have compiled with *Open MPI*, and need to tell MPI to run in parallel. The actual
-invocation is implementation dependent, but in many cases, such as
+invocation is implementation-dependent, but in many cases, such as
 *Open MPI*, you can use
 
 .. code-block:: bash
 
-    mpirun -n <N> ./pypresso <SCRIPT>
+    mpirun -n 4 ./pypresso script.py
 
-where ``<N>`` is the number of processors to be used.
+where ``4`` is the number of processors to be used.
 
 
 .. _Features:
@@ -302,7 +307,7 @@ activate ``FEATURE``, add the following line to the header file:
 .. _General features:
 
 General features
-^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~
 
 -  ``ELECTROSTATICS`` This enables the use of the various electrostatics algorithms, such as P3M.
 
@@ -314,15 +319,12 @@ General features
 
 -  ``MMM1D_MACHINE_PREC``: This enables high-precision Bessel functions
    for MMM1D on CPU. Comes with a 60% slow-down penalty. The low-precision
-   functions are in most cases precise enough and are enabled by default.
+   functions are enabled by default and are precise enough for most applications.
 
--  ``DIPOLES`` This activates the dipole-moment property of particles; In addition,
-   the various magnetostatics algorithms, such as P3M are switched on.
+-  ``DIPOLES`` This activates the dipole-moment property of particles and switches
+   on various magnetostatics algorithms
 
-   .. seealso::
-
-       :ref:`Magnetostatics / Dipolar interactions`
-       :ref:`Electrostatics`
+   .. seealso:: :ref:`Magnetostatics`
 
 -  ``SCAFACOS_DIPOLES`` This activates magnetostatics methods of ScaFaCoS.
 
@@ -385,7 +387,7 @@ integrator or thermostat:
 .. _Fluid dynamics and fluid structure interaction:
 
 Fluid dynamics and fluid structure interaction
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -  ``DPD`` Enables the dissipative particle dynamics thermostat and interaction.
 
@@ -408,7 +410,7 @@ Fluid dynamics and fluid structure interaction
 .. _Interaction features:
 
 Interaction features
-^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~
 
 The following switches turn on various short ranged interactions (see
 section :ref:`Isotropic non-bonded interactions`):
@@ -458,7 +460,7 @@ Some of the short-range interactions have additional features:
 .. _Debug messages:
 
 Debug messages
-^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~
 
 Finally, there is a flag for debugging:
 
@@ -478,7 +480,7 @@ Finally, there is a flag for debugging:
 .. _External features:
 
 External features
-^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~
 
 External features cannot be added to the :file:`myconfig.hpp` file by the user.
 They are added by CMake if the corresponding dependency was found on the
@@ -510,7 +512,7 @@ Configuring
 .. _myconfig.hpp\: Activating and deactivating features:
 
 :file:`myconfig.hpp`: Activating and deactivating features
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 |es| has a large number of features that can be compiled into the binary.
 However, it is not recommended to actually compile in all possible
@@ -580,7 +582,7 @@ and then in the Python interpreter:
 .. _cmake:
 
 ``cmake``
-^^^^^^^^^
+~~~~~~~~~
 
 In order to build the first step is to create a build directory in which
 cmake can be executed. In cmake, the *source directory* (that contains
@@ -617,7 +619,7 @@ Afterwards |es| can be run via calling :file:`./pypresso` from the command line.
 .. _ccmake:
 
 ``ccmake``
-^^^^^^^^^^
+~~~~~~~~~~
 
 Optionally and for easier use, the curses interface to cmake can be used
 to configure |es| interactively.
@@ -648,7 +650,7 @@ Fig. :ref:`ccmake-figure` shows the interactive ccmake UI.
 .. _Options and Variables:
 
 Options and Variables
-^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~
 
 The behavior of |es| can be controlled by means of options and variables
 in the :file:`CMakeLists.txt` file. Also options are defined there. The following
@@ -724,7 +726,7 @@ it can be disabled by adding the ``-fp-model=strict`` flag.
 .. _Configuring without a network connection:
 
 Configuring without a network connection
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Several :ref:`external features <External features>` in |es| rely on
 external libraries that are downloaded automatically by CMake. When a
@@ -814,164 +816,6 @@ parallel compilation. ``num_jobs`` specifies the maximal number of
 concurrent jobs that will be run. Setting ``num_jobs`` to the number
 of available processors speeds up the compilation process significantly.
 
-.. _Running es:
-
-Running |es|
-------------
-
-Executing a simulation script
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-|es| is implemented as a Python module. This means that you need to write a
-python script for any task you want to perform with |es|. In this chapter,
-the basic structure of the interface will be explained. For a practical
-introduction, see the tutorials, which are also part of the
-distribution. To use |es|, you need to import the espressomd module in your
-Python script. To this end, the folder containing the python module
-needs to be in the Python search path. The module is located in the
-:file:`src/python` folder under the build directory. A convenient way to run
-python with the correct path is to use the pypresso script located in
-the build directory.
-
-.. code-block:: bash
-
-    ./pypresso simulation.py
-
-The ``pypresso`` script is just a wrapper in order to expose the |es| python
-module to the system's python interpreter by modifying the ``$PYTHONPATH``.
-Please see the following chapter :ref:`Setting up the system` describing how
-to actually write a simulation script for |es|.
-
-Running an interactive notebook
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Running a Jupyter session requires using the ``ipypresso`` script, which
-is also located in the build directory (its name comes from the IPython
-interpreter, today known as Jupyter). To run the tutorials, you will need
-to start a Jupyter session:
-
-.. code-block:: bash
-
-    cd doc/tutorials
-    ../../ipypresso notebook
-
-You may then browse through the different tutorial folders. Files whose name
-ends with extension .ipynb can be opened in the browser. Click on the Run
-button to execute the current block, or use the keyboard shortcut Shift+Enter.
-If the current block is a code block, the ``In [ ]`` label to the left will
-change to ``In [*]`` while the code is being executed, and become ``In [1]``
-once the execution has completed. The number increments itself every time a
-code cell is executed. This bookkeeping is extremely useful when modifying
-previous code cells, as it shows which cells are out-of-date. It's also
-possible to run all cells by clicking on the "Run" drop-down menu, then on
-"Run All Below". This will change all labels to ``In [*]`` to show that the
-first one is running, while the subsequent ones are awaiting execution.
-You'll also see that many cells generate an output. When the output becomes
-very long, Jupyter will automatically put it in a box with a vertical scrollbar.
-The output may also contain static plots, dynamic plots and videos. It is also
-possible to start a 3D visualizer in a new window, however closing the window
-will exit the Python interpreter and Jupyter will notify you that the current
-Python kernel stopped. If a cell takes too long to execute, you may interrupt
-it with the stop button.
-
-Solutions cells are created using the ``exercise2`` plugin from nbextensions.
-To prevent solution code cells from running when clicking on "Run All", these
-code cells need to be converted to Markdown cells and fenced with `````python``
-and ```````.
-
-To close the Jupyter session, go to the terminal where it was started and use
-the keyboard shortcut Ctrl+C twice.
-
-When starting a Jupyter session, you may see the following warning in the
-terminal:
-
-.. code-block:: none
-
-    [TerminalIPythonApp] WARNING | Subcommand `ipython notebook` is deprecated and will be removed in future versions.
-    [TerminalIPythonApp] WARNING | You likely want to use `jupyter notebook` in the future
-
-This only means |es| was compiled with IPython instead of Jupyter. If Jupyter
-is installed on your system, the notebook will automatically close IPython and
-start Jupyter. To recompile |es| with Jupyter, provide ``cmake`` with the flag
-``-DIPYTHON_EXECUTABLE=$(which jupyter)``.
-
-You can find the official Jupyter documentation at
-https://jupyter.readthedocs.io/en/latest/running.html
-
-Running inside an IDE
-^^^^^^^^^^^^^^^^^^^^^
-
-You can use an integrated development environment (IDE) to develop and run |es|
-scripts. Suitable IDEs are e.g. *Visual Studio Code* and *Spyder*. They can
-provide a workflow superior to that of a standard text editor as they offer
-useful features such as advanced code completion, debugging and analysis tools
-etc. The following example shows how to setup |es| in *Visual Studio Code* on
-Linux (tested with version 1.46.1). The process should be similar for every
-Python IDE, namely the Python interpreter needs to be replaced.
-
-The ``pypresso`` executable can be set as a custom Python interpreter inside VS
-Code. |es| scripts can then be executed just like any other python script.
-Inside VS Code, the Python extension needs to be installed. Next, click the
-gear at the bottom left and choose *Settings*. Search for
-``Default Interpreter Path`` and change the setting to the path to your
-``pypresso`` executable, e.g.
-
-.. code-block:: none
-
-    ~/espresso/build/pypresso
-
-After that, you can open scripts and execute them with the keyboard shortcut
-Ctrl+F5.
-
-Fig. :ref:`vs-code-figure` shows the VS Code interface with the interpreter
-path set to ``pypresso``.
-
-.. note:: You may need to set the path relative to your home directory, i.e. ``~/path/to/pypresso``.
-
-.. _vs-code-figure:
-
-.. figure:: figures/vs-code-settings.png
-   :alt: Visual Studio Code interface with the default interpreter path set to the ``pypresso`` executable
-   :width: 55.0%
-   :align: center
-
-   Visual Studio Code interface
-
-.. _Debugging es:
-
-Debugging |es|
---------------
-
-Exceptional situations occur in every program.  If |es| crashes with a
-segmentation fault, that means that there was a memory fault in the
-simulation core which requires running the program in a debugger.  The
-``pypresso`` executable file is actually not a program but a script
-which sets the Python path appropriately and starts the Python
-interpreter with your arguments.  Thus it is not possible to directly
-run ``pypresso`` in a debugger.  However, we provide some useful
-command line options for the most common tools.
-
-.. code-block:: bash
-
-     ./pypresso --tool <args>
-
-where ``--tool`` can be any from the following table.  You can only
-use one tool at a time.
-
-+---------------------+----------------------------------------------+
-| Tool                | Effect                                       |
-+=====================+==============================================+
-| ``--gdb``           | ``gdb --args python <args>``                 |
-+---------------------+----------------------------------------------+
-| ``--lldb``          | ``lldb -- python <args>``                    |
-+---------------------+----------------------------------------------+
-| ``--valgrind``      | ``valgrind --leak-check=full python <args>`` |
-+---------------------+----------------------------------------------+
-| ``--cuda-gdb``      | ``cuda-gdb --args python <args>``            |
-+---------------------+----------------------------------------------+
-| ``--cuda-memcheck`` | ``cuda-memcheck python <args>``              |
-+---------------------+----------------------------------------------+
-
 .. _Troubleshooting:
 
 Troubleshooting
@@ -980,6 +824,49 @@ Troubleshooting
 If you encounter issues when building |es| or running it for the first time,
 please have a look at the `Installation FAQ <https://github.com/espressomd/espresso/wiki/Installation-FAQ>`_
 on the wiki. If you still didn't find an answer, see :ref:`Community support`.
+
+Many algorithms require parameters that must be provided within valid ranges.
+Range checks are implemented to catch invalid input values and generate
+meaningful error messages, however these checks cannot always catch errors
+arising from an invalid combination of two or more features. If you encounter
+issues with a script, you can activate extra runtime checks by enabling C++
+assertions. This is achieved by updating the CMake project and rebuilding
+|es| with:
+
+.. code-block:: bash
+
+    cmake . -DCMAKE_BUILD_TYPE=RelWithAssert
+    make -j
+
+The resulting build will run slightly slower, but will produce an error
+message for common issues, such as divisions by zero, array access out
+of bounds, or square roots of negative numbers.
+
+If this still doesn't help, you can activate debug symbols to help with
+instrumentation:
+
+.. code-block:: bash
+
+    cmake . -DCMAKE_BUILD_TYPE=Debug
+    make -j
+
+The resulting build with be quite slow but will enable many debugging tools.
+For details, please refer to chapter :ref:`Debugging es`.
+
+If you are dealing with a segmentation fault or undefined behavior, and GDB
+doesn't help or is too cumbersome to use (e.g. in MPI-parallel simulations),
+you can as a last resort activate sanitizers:
+
+.. code-block:: bash
+
+    cmake . -DWITH_ASAN=ON -DWITH_UBSAN=ON -DCMAKE_BUILD_TYPE=Release
+    make -j
+
+The resulting build will be around 5 times slower that a debug build,
+but it will generate valuable reports when detecting fatal exceptions.
+For more details, please consult the online documentation of
+`UBSAN <https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html>__` and
+`ASAN <https://github.com/google/sanitizers/wiki/AddressSanitizer>`__.
 
 ____
 

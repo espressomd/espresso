@@ -81,7 +81,7 @@ class H5mdTests(ut.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.temp_dir = tempfile.TemporaryDirectory()
-        cls.temp_path = pathlib.Path(cls.temp_dir.name)
+        cls.temp_path = pathlib.Path(cls.temp_dir.name).resolve()
         cls.temp_file = cls.temp_path / 'test.h5'
         h5_units = espressomd.io.writer.h5md.UnitSystem(
             time='ps', mass='u', length='m', charge='e')

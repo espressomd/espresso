@@ -3,4 +3,4 @@
 Bibliography
 ============
 
-.. bibliography:: zrefs.bib
+.. bibliography:: bibliography.bib

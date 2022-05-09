@@ -20,7 +20,7 @@ lxml>=4.2.1 # to deploy tutorials
 # sphinx and its dependencies
 sphinx>=2.3.0,!=3.0.0
 sphinx-toggleprompt==0.0.5
-sphinxcontrib-bibtex>=0.3.5
+sphinxcontrib-bibtex>=2.4.1
 # jupyter dependencies
 jupyter_contrib_nbextensions==0.5.1
 tqdm>=4.30.0
@@ -33,4 +33,4 @@ astroid>=2.3.3
 isort>=4.3.4
 setuptools>=39.0.1
 pre-commit>=2.2.0
-cmake-format==0.6.11
+cmakelang==0.6.13

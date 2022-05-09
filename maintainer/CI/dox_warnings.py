@@ -61,9 +61,10 @@ for (filepath, lineno, warning), warning_list in raw_warnings.items():
         # defined in another group in the .cpp file; this is usually caused by
         # the "Private functions" and "Exported functions" groups in .hpp files
         continue
-    if re.search(r'^documented symbol `\S+\' was not declared or defined\.$',
+    if re.search(r"^documented symbol [\'`][^\r\n]+\' was not declared or defined\.$",
                  warning):
-        # known bug, fixed in 1.8.16
+        # known bug, partially fixed in 1.8.16 but still exists in 1.8.17
+        # for anonymous classes
         continue
     if re.search('^no uniquely matching class member found for $', warning):
         # known bug, not fixed yet

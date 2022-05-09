@@ -33,7 +33,7 @@ Only one electrostatics method can be active at any time.
 
 Note that using the electrostatic interaction also requires assigning charges to
 the particles via the particle property
-:py:attr:`espressomd.particle_data.ParticleHandle.q`.
+:py:attr:`~espressomd.particle_data.ParticleHandle.q`.
 
 All solvers need a prefactor and a set of other required parameters.
 This example shows the general usage of the electrostatic method ``P3M``.
@@ -66,7 +66,7 @@ P3M requires full periodicity (1 1 1). When using a non-metallic dielectric
 constant (``epsilon != 0.0``), the box must be cubic.
 Make sure that you know the relevance of the P3M parameters before using P3M!
 If you are not sure, read the following references:
-:cite:`ewald21a,hockney88,kolafa92a,deserno98a,deserno98b,deserno00e,deserno00b,cerda08d`.
+:cite:`ewald21a,hockney88a,kolafa92a,deserno98a,deserno98b,deserno00e,deserno00b,cerda08d`.
 
 .. _Tuning Coulomb P3M:
 
@@ -101,7 +101,7 @@ where most charges are placed in one plane, one small region, or on a
 regular grid.
 
 The function employs the analytical expression of the error estimate for
-the P3M method :cite:`hockney88` and its real space error :cite:`kolafa92a` to
+the P3M method :cite:`hockney88a` and its real space error :cite:`kolafa92a` to
 obtain sets of parameters that yield the desired accuracy, then it measures how
 long it takes to compute the Coulomb interaction using these parameter sets and
 chooses the set with the shortest run time.
@@ -126,6 +126,11 @@ with only single precision which limits the maximum precision. The algorithm
 does not work in combination with the electrostatic extensions
 :ref:`Dielectric interfaces with the ICC* algorithm <Dielectric interfaces with the ICC algorithm>`
 and :ref:`Electrostatic Layer Correction (ELC)`.
+
+The algorithm doesn't have kernels to compute energies, and will therefore
+contribute 0 to the long-range potential energy of the system. This can be
+an issue for other algorithms, such as :ref:`reaction methods <Reaction methods>`
+and :ref:`energy-based steepest descent <Using a custom convergence criterion>`.
 
 .. _Debye-Hückel potential:
 

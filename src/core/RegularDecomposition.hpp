@@ -114,7 +114,7 @@ public:
   Utils::Vector3d max_range() const override;
 
   boost::optional<BoxGeometry> minimum_image_distance() const override {
-    return {};
+    return {m_box};
   }
   BoxGeometry box() const override { return m_box; }
 

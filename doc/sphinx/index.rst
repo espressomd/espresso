@@ -12,9 +12,10 @@ User's Guide
 
     introduction.rst
     installation.rst
+    running.rst
     system_setup.rst
     particles.rst
-    running.rst
+    integration.rst
     inter_non-bonded.rst
     inter_bonded.rst
     electrostatics.rst
@@ -22,33 +23,39 @@ User's Guide
     system_manipulation.rst
     constraints.rst
     lb.rst
+    ek.rst
     analysis.rst
     io.rst
     visualization.rst
     advanced_methods.rst
+    reaction_methods.rst
     under_the_hood.rst
+    community.rst
     contributing.rst
     appendix.rst
-    zreferences.rst
+    bibliography.rst
 
 .. _Online resources:
 
 Online resources
 ----------------
 
-* `Repository <https://github.com/espressomd/espresso>`_
-* `Wiki <https://github.com/espressomd/espresso/wiki>`_
+* `GitHub repository <https://github.com/espressomd/espresso>`_
+* `GitHub discussions <https://github.com/espressomd/espresso/discussions>`_
+* `ESPResSo wiki <https://github.com/espressomd/espresso/wiki>`_
+* `Online documentation <https://espressomd.github.io/>`_
+* `Official website <https://espressomd.org/wordpress/>`_
 
-Python module documentation
-===========================
+Python modules
+--------------
 
 .. toctree::
-    :maxdepth: 3
+    :maxdepth: 1
 
     modules.rst
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`

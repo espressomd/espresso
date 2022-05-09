@@ -247,7 +247,7 @@ class Analysis:
             * ``"non_bonded_inter", <type_i>, <type_j>``: non-bonded pressure between short ranged forces between type i and j and different mol_ids
             * ``"coulomb"``: Coulomb pressure, how it is calculated depends on the method. It is equivalent to 1/3 of the trace of the Coulomb pressure tensor.
               For how the pressure tensor is calculated, see :ref:`Pressure Tensor`. The averaged value in an isotropic NVT simulation is equivalent to the average of
-              :math:`E^{coulomb}/(3V)`, see :cite:`brown95a`.
+              :math:`E^{\\mathrm{coulomb}}/(3V)`, see :cite:`brown95a`.
             * ``"coulomb", <i>``: Coulomb pressure from particle pairs (``i=0``), electrostatics solvers (``i=1``)
             * ``"dipolar"``: not implemented
             * ``"virtual_sites"``: Pressure contribution from virtual sites
@@ -260,12 +260,12 @@ class Analysis:
         return obs
 
     def pressure_tensor(self):
-        """Calculate the instantaneous pressure_tensor (in parallel). This is
+        """Calculate the instantaneous pressure tensor (in parallel). This is
         sensible in an anisotropic system. Still it assumes that the system is
-        homogeneous since the volume averaged pressure_tensor is used. Do not use
-        this pressure_tensor in an (on average) inhomogeneous system. If the
-        system is (on average inhomogeneous) then use a local pressure_tensor.
-        In order to obtain the pressure_tensor, the ensemble average needs to be
+        homogeneous since the volume-averaged pressure tensor is used. Do not use
+        this pressure tensor in an (on average) inhomogeneous system. If the
+        system is (on average inhomogeneous) then use a local pressure tensor.
+        In order to obtain the pressure tensor, the ensemble average needs to be
         calculated.
 
         Returns

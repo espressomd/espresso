@@ -16,10 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-CMAKE_FORMAT_VER=0.6.11
-python3 -m cmake_format 2>&1 > /dev/null
+CMAKE_FORMAT_VER=0.6.13
+python3 -m cmakelang.format 2>&1 > /dev/null
 if [ "$?" = "0" ]; then
-    CMAKE_FORMAT="python3 -m cmake_format"
+    CMAKE_FORMAT="python3 -m cmakelang.format"
 else
     echo "No cmake-format found."
     exit 2

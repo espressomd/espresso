@@ -341,8 +341,6 @@ def perform_particle_exchange(boxes):
     # Send moves, update num_part
     donor_box.send_data([MessageID.PART_REMOVE])
     recipient_box.send_data([MessageID.PART_ADD])
-    donor_box.num_part -= 1
-    recipient_box.num_part += 1
     [box.recv_energy() for box in boxes]
 
     # Debugging purposes
@@ -360,8 +358,8 @@ def perform_particle_exchange(boxes):
     # This is the acceptance probability if the donor_box is chosen with equal
     # probability
     acc = np.exp(
-        np.log((donor_box.num_part + 1) * recipient_box.volume /
-               (recipient_box.num_part * donor_box.volume))
+        np.log(donor_box.num_part * recipient_box.volume /
+               ((recipient_box.num_part + 1) * donor_box.volume))
         - 1. / kT * donor_box.diff_energy
         - 1. / kT * recipient_box.diff_energy)
 
@@ -373,11 +371,12 @@ def perform_particle_exchange(boxes):
         # Reject move, restore old configuration
         donor_box.send_data([MessageID.PART_REMOVE_REVERT])
         recipient_box.send_data([MessageID.PART_ADD_REVERT])
-        donor_box.num_part += 1
-        recipient_box.num_part -= 1
         donor_box.energy = donor_box.old_energy
         recipient_box.energy = recipient_box.old_energy
         return False
+
+    donor_box.num_part -= 1
+    recipient_box.num_part += 1
 
     # Debug
     logging.debug("Particle exchange accepted.")
