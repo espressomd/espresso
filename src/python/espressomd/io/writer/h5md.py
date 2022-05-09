@@ -17,6 +17,7 @@
 #
 
 import sys
+import pathlib
 
 from ...script_interface import script_interface_register, ScriptInterfaceHelper  # pylint: disable=import
 from ...__init__ import assert_features
@@ -127,9 +128,13 @@ class H5md(ScriptInterfaceHelper):
         fields = [fields] if isinstance(fields, str) else list(fields)
         params["fields"] = fields
         self.validate_params(params)
+        script_path = ""
+        if sys.argv and sys.argv[0]:
+            script_path = str(pathlib.Path(sys.argv[0]).resolve())
+        file_path = str(pathlib.Path(params["file_path"]).resolve())
         super().__init__(
-            file_path=params["file_path"],
-            script_path=sys.argv[0],
+            file_path=file_path,
+            script_path=script_path,
             fields=fields,
             mass_unit=unit_system.mass,
             length_unit=unit_system.length,
