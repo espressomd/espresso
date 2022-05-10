@@ -45,7 +45,7 @@
  * physical location, it has therefore quadratic time
  * complexity in the number of particles.
  *
- * For a more detailed discussion please see @cite plimpton1995a.
+ * For a more detailed discussion please see @cite plimpton95a.
  */
 class AtomDecomposition : public ParticleDecomposition {
   boost::mpi::communicator comm;

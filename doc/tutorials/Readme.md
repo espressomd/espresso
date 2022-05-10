@@ -116,7 +116,7 @@ cd doc/tutorials
 
 This will launch a web browser in which the notebooks for the tutorials can be
 viewed and run. For more details, please see the user guide section on
-[running ESPResSo](https://espressomd.github.io/doc/installation.html#running-es),
+[running notebooks](https://espressomd.github.io/doc/running.html#interactive-notebooks),
 which walks you through the Jupyter interface.
 
 ## Video lectures
