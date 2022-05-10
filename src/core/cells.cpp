@@ -196,17 +196,6 @@ std::vector<int> mpi_resort_particles(int global_flag) {
   return n_parts;
 }
 
-void set_regular_decomposition() {
-  cell_structure.set_regular_decomposition(comm_cart, interaction_range(),
-                                           box_geo, local_geo);
-  on_cell_structure_change();
-}
-
-void set_atom_decomposition() {
-  cell_structure.set_atom_decomposition(comm_cart, box_geo, local_geo);
-  on_cell_structure_change();
-}
-
 void set_hybrid_decomposition(std::set<int> n_square_types,
                               double cutoff_regular) {
   cell_structure.set_hybrid_decomposition(comm_cart, cutoff_regular, box_geo,
@@ -214,14 +203,8 @@ void set_hybrid_decomposition(std::set<int> n_square_types,
   on_cell_structure_change();
 }
 
-REGISTER_CALLBACK(set_regular_decomposition)
-REGISTER_CALLBACK(set_atom_decomposition)
 REGISTER_CALLBACK(set_hybrid_decomposition)
 
-void mpi_set_regular_decomposition() {
-  mpi_call_all(set_regular_decomposition);
-}
-void mpi_set_atom_decomposition() { mpi_call_all(set_atom_decomposition); }
 void mpi_set_hybrid_decomposition(std::set<int> n_square_types,
                                   double cutoff_regular) {
   mpi_call_all(set_hybrid_decomposition, n_square_types, cutoff_regular);

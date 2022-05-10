@@ -69,23 +69,11 @@ enum {
 /** Type of cell structure in use. */
 extern CellStructure cell_structure;
 
-/** Initialize cell sturcture DomainDecomposition */
-void set_regular_decomposition();
-
-/** Initialize cell structure AtomDecomposition */
-void set_atom_decomposition();
-
 /** Initialize cell structure HybridDecomposition
  *  @param n_square_types Set of particle types that will use n_square.
  */
 void set_hybrid_decomposition(std::set<int> n_square_types,
                               double cutoff_regular);
-
-/** Change cell structure to DomainDecomposition on all nodes. */
-void mpi_set_regular_decomposition();
-
-/** Change cell structure to AtomDecomposition on all nodes. */
-void mpi_set_atom_decomposition();
 
 /** Change cell structure to HybridDecomposition on all nodes.
  *  @param n_square_types Set of particle types that will use n_square.

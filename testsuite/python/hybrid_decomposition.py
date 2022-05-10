@@ -177,6 +177,10 @@ class HybridDecomposition(ut.TestCase):
             # p is a tuple with (id1, id2, pos1, pos2, vec21, mpi_node)
             # Note that system.distance_vec uses the opposite sign convention
             # as the minimum image distance in the core
+            self.assertTrue(
+                (p[0], p[1]) in py_distances or
+                (p[1], p[0]) in py_distances,
+                msg=f"Extra pair from core {p}")
             if (p[0], p[1]) in py_distances:
                 np.testing.assert_allclose(
                     np.copy(p[4]), -py_distances[p[0], p[1]])
@@ -185,14 +189,14 @@ class HybridDecomposition(ut.TestCase):
                 np.testing.assert_allclose(
                     np.copy(p[4]), py_distances[p[1], p[0]])
                 del py_distances[p[1], p[0]]
-            else:
-                raise Exception("Extra pair from core", p)
 
         # test for pairs from regular child decomposition with more than one
         # cell
         for ids, dist in py_distances.items():
-            if np.linalg.norm(dist) < cutoff_regular:
-                raise Exception("Pair not found by the core", ids)
+            self.assertGreaterEqual(
+                np.linalg.norm(dist),
+                cutoff_regular,
+                msg=f"Pair not found by the core {ids}")
 
     @utx.skipIfMissingFeatures(["LENNARD_JONES"])
     def test_against_nsquare(self):
