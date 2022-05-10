@@ -175,8 +175,8 @@ python_test(FILE lb_lees_edwards_particle_coupling.py MAX_NUM_PROC 1)
 python_test(FILE lb_planar_couette.py MAX_NUM_PROC 1)
 python_test(FILE nsquare.py MAX_NUM_PROC 4)
 python_test(FILE virtual_sites_relative.py MAX_NUM_PROC 2)
-# python_test(FILE virtual_sites_tracers_walberla.py MAX_NUM_PROC 1
-#             DEPENDENCIES virtual_sites_tracers_common.py) # TODO WALBERLA: fails since #4470
+python_test(FILE virtual_sites_tracers_walberla.py MAX_NUM_PROC 2
+            DEPENDENCIES virtual_sites_tracers_common.py)
 python_test(FILE regular_decomposition.py MAX_NUM_PROC 4)
 python_test(FILE integrator_npt.py MAX_NUM_PROC 4)
 python_test(FILE integrator_npt_stats.py MAX_NUM_PROC 4 LABELS long)

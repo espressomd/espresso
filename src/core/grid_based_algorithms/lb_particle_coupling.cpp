@@ -40,7 +40,6 @@
 #include <cmath>
 #include <cstddef>
 #include <stdexcept>
-#include <unordered_set>
 #include <utility>
 
 LB_Particle_Coupling lb_particle_coupling;

@@ -31,6 +31,7 @@
 #include <boost/serialization/optional.hpp>
 
 #include <cstdint>
+#include <unordered_set>
 #include <vector>
 
 using OptionalCounter = boost::optional<Utils::Counter<uint64_t>>;
@@ -73,6 +74,14 @@ void lb_lbcoupling_deactivate();
  * @return True iff the point is inside of the domain.
  */
 bool in_local_halo(Utils::Vector3d const &pos);
+
+/** @brief Determine if a given particle should be coupled.
+ *  In certain cases, there may be more than one ghost for the same particle.
+ *  To make sure, that these are only coupled once, ghosts' ids are stored
+ *  in an unordered_set.
+ */
+bool should_be_coupled(const Particle &p,
+                       std::unordered_set<int> &coupled_ghost_particles);
 
 /**
  * @brief Add a force to the lattice force density.
