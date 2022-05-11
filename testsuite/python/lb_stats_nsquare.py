@@ -33,8 +33,6 @@ class TestLBCPU(TestLB, ut.TestCase):
 
 
 @utx.skipIfMissingGPU()
-@ut.skipIf(TestLB.n_nodes > 1,
-           "LB with N-square only works on 1 MPI rank")
 class TestLBGPU(TestLB, ut.TestCase):
 
     def setUp(self):

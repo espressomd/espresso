@@ -27,7 +27,9 @@ enum class CellStructureType : int {
   /** cell structure regular decomposition */
   CELL_STRUCTURE_REGULAR = 1,
   /** cell structure n square */
-  CELL_STRUCTURE_NSQUARE = 2
+  CELL_STRUCTURE_NSQUARE = 2,
+  /** cell structure hybrid */
+  CELL_STRUCTURE_HYBRID = 3
 };
 
 #endif // ESPRESSO_CELLSTRUCTURETYPE_HPP

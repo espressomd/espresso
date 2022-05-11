@@ -614,8 +614,8 @@ void lb_sanity_checks(const LB_Parameters &lb_parameters) {
   if (lb_parameters.viscosity <= 0.0) {
     runtimeErrorMsg() << "Lattice Boltzmann fluid viscosity not set";
   }
-  if (local_geo.cell_structure_type() ==
-      CellStructureType::CELL_STRUCTURE_NSQUARE) {
+  if (local_geo.cell_structure_type() !=
+      CellStructureType::CELL_STRUCTURE_REGULAR) {
     if (n_nodes > 1) {
       runtimeErrorMsg() << "LB only works with regular decomposition, "
                            "if using more than one MPI node";

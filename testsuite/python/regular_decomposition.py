@@ -40,11 +40,11 @@ class RegularDecomposition(ut.TestCase):
         n_part = 2351
 
         # Add the particles on node 0, so that they have to be resorted
-        partcls = self.system.part.add(
+        particles = self.system.part.add(
             pos=n_part * [(0, 0, 0)], type=n_part * [1])
 
         # And now change their positions
-        partcls.pos = self.system.box_l * \
+        particles.pos = self.system.box_l * \
             np.random.random((n_part, 3))
 
         # Add an interacting particle in a corner of the box

@@ -14,35 +14,33 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import unittest as ut
+import unittest_decorators as utx
+from lb_stats import TestLB
 
 import espressomd
 import espressomd.lb
-import unittest as ut
-import unittest_decorators as utx
-from engine_lb import SwimmerTest
 
 
-@utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
-@ut.skipIf(SwimmerTest.n_nodes > 1,
+@ut.skipIf(TestLB.n_nodes > 1,
            "LB with N-square only works on 1 MPI rank")
-class SwimmerTestNSquareCPU(SwimmerTest, ut.TestCase):
+class TestLBCPU(TestLB, ut.TestCase):
 
-    lb_class = espressomd.lb.LBFluid
-    tol = 1e-10
-
-    def set_cellsystem(self):
-        self.system.cell_system.set_n_square()
+    def setUp(self):
+        self.system.cell_system.set_hybrid_decomposition(
+            n_square_types={0}, cutoff_regular=0)
+        self.lb_class = espressomd.lb.LBFluid
+        self.params.update({"mom_prec": 1E-9, "mass_prec_per_node": 5E-8})
 
 
 @utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
-class SwimmerTestNSquareGPU(SwimmerTest, ut.TestCase):
+class TestLBGPU(TestLB, ut.TestCase):
 
-    lb_class = espressomd.lb.LBFluidGPU
-    tol = 1e-5
-
-    def set_cellsystem(self):
-        self.system.cell_system.set_n_square()
+    def setUp(self):
+        self.system.cell_system.set_hybrid_decomposition(
+            n_square_types={1}, cutoff_regular=0)
+        self.lb_class = espressomd.lb.LBFluidGPU
+        self.params.update({"mom_prec": 1E-3, "mass_prec_per_node": 1E-5})
 
 
 if __name__ == "__main__":

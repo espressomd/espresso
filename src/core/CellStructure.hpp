@@ -26,6 +26,7 @@
 #include "BoxGeometry.hpp"
 #include "Cell.hpp"
 #include "CellStructureType.hpp"
+#include "HybridDecomposition.hpp"
 #include "LocalBox.hpp"
 #include "Particle.hpp"
 #include "ParticleDecomposition.hpp"
@@ -73,6 +74,15 @@ enum DataPart : unsigned {
   DATA_PART_BONDS = 64u /**< Particle::bonds */
 };
 } // namespace Cells
+
+/**
+ * @brief Map the data parts flags from cells to those
+ *        used internally by the ghost communication.
+ *
+ * @param data_parts data parts flags
+ * @return ghost communication flags
+ */
+unsigned map_data_parts(unsigned data_parts);
 
 namespace Cells {
 inline ParticleRange particles(Utils::Span<Cell *> cells) {
@@ -521,6 +531,20 @@ public:
   void set_regular_decomposition(boost::mpi::communicator const &comm,
                                  double range, BoxGeometry const &box,
                                  LocalBox<double> &local_geo);
+
+  /**
+   * @brief Set the particle decomposition to HybridDecomposition.
+   *
+   * @param comm Communicator to use.
+   * @param cutoff_regular Interaction cutoff_regular.
+   * @param box Box geometry.
+   * @param local_geo Geometry of the local box.
+   * @param n_square_types Particle types to put into n_square decomposition.
+   */
+  void set_hybrid_decomposition(boost::mpi::communicator const &comm,
+                                double cutoff_regular, BoxGeometry const &box,
+                                LocalBox<double> &local_geo,
+                                std::set<int> n_square_types);
 
 public:
   template <class BondKernel> void bond_loop(BondKernel const &bond_kernel) {

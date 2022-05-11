@@ -51,10 +51,12 @@ class TestLB:
 
     def test_mass_momentum_thermostat(self):
         self.n_col_part = 100
-        partcls = self.system.part.add(pos=np.random.random(
-            (self.n_col_part, 3)) * self.system.box_l[0])
+        # different types needed for lb_stats_hybrid test
+        particles = self.system.part.add(
+            type=self.n_col_part // 2 * [0, 1], pos=np.random.random(
+                (self.n_col_part, 3)) * self.system.box_l[0])
         if espressomd.has_features("MASS"):
-            partcls.mass = 0.1 + np.random.random(
+            particles.mass = 0.1 + np.random.random(
                 len(self.system.part))
 
         self.system.thermostat.turn_off()

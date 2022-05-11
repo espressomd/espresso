@@ -105,6 +105,10 @@ public:
     return Utils::make_span(m_ghost_cells);
   }
 
+  /* Getter needed for HybridDecomposition */
+  std::vector<Cell *> get_local_cells() const { return m_local_cells; }
+  std::vector<Cell *> get_ghost_cells() const { return m_ghost_cells; }
+
   Cell *particle_to_cell(Particle const &p) override {
     return position_to_cell(p.pos());
   }

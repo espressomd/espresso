@@ -193,7 +193,12 @@ void on_particle_charge_change() {
 }
 
 void on_particle_change() {
-  cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
+  if (cell_structure.decomposition_type() ==
+      CellStructureType::CELL_STRUCTURE_HYBRID) {
+    cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
+  } else {
+    cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
+  }
   reinit_electrostatics = true;
   reinit_magnetostatics = true;
   recalc_forces = true;
