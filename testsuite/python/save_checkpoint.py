@@ -34,6 +34,7 @@ import espressomd.lbboundaries
 import espressomd.shapes
 import espressomd.constraints
 import espressomd.bond_breakage
+import espressomd.reaction_methods
 
 config = utg.TestGenerator()
 modes = config.get_modes()
@@ -385,6 +386,11 @@ class TestCheckpoint(ut.TestCase):
             # write checkpoint file with different box dimensions
             with open(cpt_path.format("-wrong-boxdim"), "wb") as f:
                 f.write(b"2" + boxsize + b"\n" + data)
+
+    def test_reaction_methods_sanity_check(self):
+        with self.assertRaisesRegex(RuntimeError, "Reaction methods do not support checkpointing"):
+            widom = espressomd.reaction_methods.WidomInsertion(kT=1, seed=1)
+            widom._serialize()
 
 
 if __name__ == '__main__':

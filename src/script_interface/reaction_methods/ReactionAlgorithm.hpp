@@ -149,6 +149,10 @@ private:
     m_reactions.erase(m_reactions.begin() + reaction_id);
     RE()->delete_reaction(reaction_id);
   }
+
+  std::string get_internal_state() const override {
+    throw std::runtime_error("Reaction methods do not support checkpointing");
+  }
 };
 } /* namespace ReactionMethods */
 } /* namespace ScriptInterface */

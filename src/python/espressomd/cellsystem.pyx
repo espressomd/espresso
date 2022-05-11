@@ -120,12 +120,12 @@ cdef class CellSystem:
         return s
 
     def __getstate__(self):
-        s = {"use_verlet_list": cell_structure.use_verlet_list}
+        s = {"use_verlet_lists": type(True)(cell_structure.use_verlet_list)}
 
         if cell_structure.decomposition_type() == CellStructureType.CELL_STRUCTURE_REGULAR:
             s["type"] = "regular_decomposition"
         if cell_structure.decomposition_type() == CellStructureType.CELL_STRUCTURE_NSQUARE:
-            s["type"] = "nsquare"
+            s["type"] = "n_square"
         if cell_structure.decomposition_type() == CellStructureType.CELL_STRUCTURE_HYBRID:
             s["type"] = "hybrid_decomposition"
 
@@ -139,12 +139,12 @@ cdef class CellSystem:
         if 'type' in d:
             if d['type'] == "regular_decomposition":
                 self.set_regular_decomposition(
-                    use_verlet_lists=d['use_verlet_list'])
-            elif d['type'] == "nsquare":
-                self.set_n_square(use_verlet_lists=d['use_verlet_list'])
+                    use_verlet_lists=d['use_verlet_lists'])
+            elif d['type'] == "n_square":
+                self.set_n_square(use_verlet_lists=d['use_verlet_lists'])
             elif d['type'] == "hybrid_decomposition":
                 self.set_hybrid_decomposition(
-                    use_verlet_lists=d['use_verlet_list'])
+                    use_verlet_lists=d['use_verlet_lists'])
 
     def get_pairs(self, distance, types='all'):
         """

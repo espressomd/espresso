@@ -29,17 +29,17 @@ class CellSystem(ut.TestCase):
     def test_cell_system(self):
         self.system.cell_system.set_n_square(use_verlet_lists=False)
         s = self.system.cell_system.get_state()
-        self.assertEqual([s['use_verlet_list'], s['type']], [0, "nsquare"])
+        self.assertEqual([s['use_verlet_lists'], s['type']], [0, "n_square"])
         self.system.cell_system.set_regular_decomposition(
             use_verlet_lists=True)
         s = self.system.cell_system.get_state()
         self.assertEqual(
-            [s['use_verlet_list'], s['type']], [1, "regular_decomposition"])
+            [s['use_verlet_lists'], s['type']], [1, "regular_decomposition"])
         self.system.cell_system.set_hybrid_decomposition(
             use_verlet_lists=False, n_square_types={1, 3, 5}, cutoff_regular=1.27)
         s = self.system.cell_system.get_state()
         self.assertEqual(
-            [s['use_verlet_list'], s['type'],
+            [s['use_verlet_lists'], s['type'],
                 s['n_square_types'], s['cutoff_regular']],
             [0, "hybrid_decomposition", {1, 3, 5}, 1.27])
 

@@ -130,7 +130,7 @@ class CheckpointTest(ut.TestCase):
 
     def test_system_variables(self):
         cell_system_params = system.cell_system.get_state()
-        self.assertTrue(cell_system_params['use_verlet_list'])
+        self.assertTrue(cell_system_params['use_verlet_lists'])
         self.assertAlmostEqual(system.cell_system.skin, 0.1, delta=1E-10)
         self.assertAlmostEqual(system.time_step, 0.01, delta=1E-10)
         self.assertAlmostEqual(system.time, 1.5, delta=1E-10)
