@@ -622,7 +622,7 @@ void lb_lbfluid_print_boundary(const std::string &filename) {
     }
 #endif //  CUDA
   } else {
-    auto constexpr shift = Vector3d{0.5, 0.5, 0.5};
+    auto const shift = Vector3d{{0.5, 0.5, 0.5}};
     auto const agrid = lb_lbfluid_get_agrid();
     auto const grid_size = lb_lbfluid_get_shape();
     Utils::Vector3i pos;
@@ -667,7 +667,7 @@ void lb_lbfluid_print_velocity(const std::string &filename) {
     }
 #endif //  CUDA
   } else {
-    auto constexpr shift = Vector3d{0.5, 0.5, 0.5};
+    auto const shift = Vector3d{{0.5, 0.5, 0.5}};
     auto const agrid = lb_lbfluid_get_agrid();
     auto const grid_size = lb_lbfluid_get_shape();
     auto const lattice_speed = lb_lbfluid_get_lattice_speed();
