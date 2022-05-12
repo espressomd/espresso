@@ -17,7 +17,7 @@
 
 import collections.abc
 
-from .script_interface import ScriptInterfaceHelper, script_interface_register, ScriptObjectRegistry
+from .script_interface import ScriptInterfaceHelper, script_interface_register, ScriptObjectList
 
 
 class Shape:
@@ -254,7 +254,7 @@ class HollowConicalFrustum(Shape, ScriptInterfaceHelper):
 
 
 @script_interface_register
-class Union(Shape, ScriptObjectRegistry):
+class Union(Shape, ScriptObjectList):
     """A union of shapes.
 
     This shape represents a union of shapes where the distance to the union

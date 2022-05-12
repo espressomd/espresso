@@ -161,13 +161,13 @@ class CheckpointTest(ut.TestCase):
 
     @utx.skipIfMissingFeatures('LENNARD_JONES')
     @ut.skipIf('LJ' not in modes, "Skipping test due to missing mode.")
-    @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
     def test_shape_based_constraints_serialization(self):
         '''
         Check that particles at the interface between two MPI nodes still
         experience the force from a shape-based constraint. The thermostat
         friction is negligible compared to the LJ force.
         '''
+        self.assertGreaterEqual(len(system.constraints), 1)
         p3, p4 = system.part.by_ids([3, 4])
         old_force = np.copy(p3.f)
         system.constraints.remove(system.constraints[0])
@@ -400,27 +400,24 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_array_equal(
             acc_mean_variance.variance(),
             np.array([[0., 0.5, 2.], [0., 0., 0.]]))
-        if self.n_nodes == 1:
-            np.testing.assert_array_equal(
-                system.auto_update_accumulators[0].variance(),
-                np.array([[0., 0.5, 2.], [0., 0., 0.]]))
+        np.testing.assert_array_equal(
+            system.auto_update_accumulators[0].variance(),
+            np.array([[0., 0.5, 2.], [0., 0., 0.]]))
 
     def test_time_series(self):
         expected = [[[1, 1, 1], [1, 1, 2]], [[1, 2, 3], [1, 1, 2]]]
         np.testing.assert_array_equal(acc_time_series.time_series(), expected)
-        if self.n_nodes == 1:
-            np.testing.assert_array_equal(
-                system.auto_update_accumulators[1].time_series(),
-                expected)
+        np.testing.assert_array_equal(
+            system.auto_update_accumulators[1].time_series(),
+            expected)
 
     def test_correlator(self):
         expected = np.zeros((36, 2, 3))
         expected[0:2] = [[[1, 2.5, 5], [1, 1, 4]], [[1, 2, 3], [1, 1, 4]]]
         np.testing.assert_array_equal(acc_correlator.result(), expected)
-        if self.n_nodes == 1:
-            np.testing.assert_array_equal(
-                system.auto_update_accumulators[2].result(),
-                expected)
+        np.testing.assert_array_equal(
+            system.auto_update_accumulators[2].result(),
+            expected)
 
     @utx.skipIfMissingFeatures('H5MD')
     @utx.skipIfMissingModules("h5py")
@@ -570,7 +567,6 @@ class CheckpointTest(ut.TestCase):
     @ut.skipIf(not has_lb_mode or not (espressomd.has_features("LB_BOUNDARIES")
                                        or espressomd.has_features("LB_BOUNDARIES_GPU")),
                "Missing features")
-    @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
     def test_lb_boundaries(self):
         # check boundary objects
         self.assertEqual(len(system.lbboundaries), 2)
@@ -594,10 +590,14 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(len(system.lbboundaries), 0)
         np.testing.assert_equal(np.copy(lbf[:, :, :].boundary.astype(int)), 0)
 
-    @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
     def test_constraints(self):
-        self.assertEqual(len(system.constraints),
-                         8 - int(not espressomd.has_features("ELECTROSTATICS")))
+        n_contraints = 7
+        if self.n_nodes == 1:
+            n_contraints += 1
+        if espressomd.has_features("ELECTROSTATICS"):
+            n_contraints += 1
+        self.assertEqual(len(system.constraints), n_contraints)
+
         c = system.constraints
         ref_shape = self.ref_box_l.astype(int) + 2
 
@@ -642,13 +642,28 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_allclose(np.copy(c[6].field), np.copy(ref_vec.field),
                                    atol=1e-10)
 
+        if self.n_nodes == 1:
+            union = c[7].shape
+            self.assertIsInstance(union, espressomd.shapes.Union)
+            self.assertEqual(len(union), 2)
+            wall1, wall2 = union.call_method('get_elements')
+            self.assertIsInstance(wall1, espressomd.shapes.Wall)
+            self.assertIsInstance(wall2, espressomd.shapes.Wall)
+            np.testing.assert_allclose(np.copy(wall1.normal),
+                                       [1., 0., 0.], atol=1e-10)
+            np.testing.assert_allclose(np.copy(wall2.normal),
+                                       [0., 1., 0.], atol=1e-10)
+            np.testing.assert_allclose(wall1.dist, 0.5, atol=1e-10)
+            np.testing.assert_allclose(wall2.dist, 1.5, atol=1e-10)
+
         if espressomd.has_features("ELECTROSTATICS"):
+            wave = c[n_contraints - 1]
             self.assertIsInstance(
-                c[7], espressomd.constraints.ElectricPlaneWave)
-            np.testing.assert_allclose(np.copy(c[7].E0), [1., -2., 3.])
-            np.testing.assert_allclose(np.copy(c[7].k), [-.1, .2, .3])
-            self.assertAlmostEqual(c[7].omega, 5., delta=1E-10)
-            self.assertAlmostEqual(c[7].phi, 1.4, delta=1E-10)
+                wave, espressomd.constraints.ElectricPlaneWave)
+            np.testing.assert_allclose(np.copy(wave.E0), [1., -2., 3.])
+            np.testing.assert_allclose(np.copy(wave.k), [-.1, .2, .3])
+            self.assertAlmostEqual(wave.omega, 5., delta=1E-10)
+            self.assertAlmostEqual(wave.phi, 1.4, delta=1E-10)
 
 
 if __name__ == '__main__':
