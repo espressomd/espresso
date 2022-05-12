@@ -81,6 +81,9 @@ class AnalyzeEnergy(ut.TestCase):
         self.assertAlmostEqual(energy["kinetic"], 0., delta=1e-7)
         self.assertAlmostEqual(energy["bonded"], 0., delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 1., delta=1e-7)
+        # Test the single particle energy function
+        self.assertAlmostEqual(energy["non_bonded"], 0.5 * sum(
+            [self.system.analysis.particle_energy(p) for p in self.system.part.all()]), delta=1e-7)
         # add another pair of particles
         self.system.part.add(pos=[3, 2, 2], type=1)
         self.system.part.add(pos=[4, 2, 2], type=1)
@@ -93,6 +96,9 @@ class AnalyzeEnergy(ut.TestCase):
         self.assertAlmostEqual(energy["non_bonded", 0, 0]
                                + energy["non_bonded", 0, 1]
                                + energy["non_bonded", 1, 1], energy["total"], delta=1e-7)
+        # Test the single particle energy function
+        self.assertAlmostEqual(energy["non_bonded"], 0.5 * sum(
+            [self.system.analysis.particle_energy(p) for p in self.system.part.all()]), delta=1e-7)
 
     def test_bonded(self):
         p0, p1 = self.system.part.all()
@@ -134,6 +140,8 @@ class AnalyzeEnergy(ut.TestCase):
         self.assertAlmostEqual(energy["kinetic"], 50., delta=1e-7)
         self.assertAlmostEqual(energy["bonded"], 3. / 2., delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 1., delta=1e-7)
+        self.assertAlmostEqual(energy["non_bonded"], 0.5 * sum(
+            [self.system.analysis.particle_energy(p) for p in self.system.part.all()]), delta=1e-7)
         # two bonds
         p1.add_bond((self.harmonic, p0))
         energy = self.system.analysis.energy()
@@ -141,6 +149,8 @@ class AnalyzeEnergy(ut.TestCase):
         self.assertAlmostEqual(energy["kinetic"], 50., delta=1e-7)
         self.assertAlmostEqual(energy["bonded"], 3., delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 1., delta=1e-7)
+        self.assertAlmostEqual(energy["non_bonded"], 0.5 * sum(
+            [self.system.analysis.particle_energy(p) for p in self.system.part.all()]), delta=1e-7)
         # add another pair of particles
         self.system.part.add(pos=[1, 5, 5], type=1)
         self.system.part.add(pos=[2, 5, 5], type=1)
@@ -150,6 +160,8 @@ class AnalyzeEnergy(ut.TestCase):
         self.assertAlmostEqual(energy["kinetic"], 50., delta=1e-7)
         self.assertAlmostEqual(energy["bonded"], 3., delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 1. + 1., delta=1e-7)
+        self.assertAlmostEqual(energy["non_bonded"], 0.5 * sum(
+            [self.system.analysis.particle_energy(p) for p in self.system.part.all()]), delta=1e-7)
 
     @utx.skipIfMissingFeatures(["ELECTROSTATICS", "P3M"])
     def test_electrostatics(self):
