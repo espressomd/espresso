@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from libcpp.map cimport map
 from libcpp.unordered_map cimport unordered_map
 from libcpp.vector cimport vector
 from libcpp.string cimport string
@@ -47,8 +46,6 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
         Variant get_parameter(const string & name) except +
         void set_parameter(const string & name, const Variant & value) except +
         Variant call_method(const string & name, const VariantMap & parameters) except +
-        void set_state(map[string, Variant]) except +
-        map[string, Variant] get_state() except +
         string_ref name()
 
 cdef extern from "script_interface/ContextManager.hpp" namespace "ScriptInterface::ContextManager":

@@ -71,7 +71,8 @@ using Variant = boost::make_recursive_variant<
     None, bool, int, std::size_t, double, std::string, ObjectRef,
     Utils::Vector2d, Utils::Vector3d, Utils::Vector4d, std::vector<int>,
     std::vector<double>, std::vector<boost::recursive_variant_>,
-    std::unordered_map<int, boost::recursive_variant_>>::type;
+    std::unordered_map<int, boost::recursive_variant_>,
+    std::unordered_map<std::string, boost::recursive_variant_>>::type;
 
 using VariantMap = std::unordered_map<std::string, Variant>;
 

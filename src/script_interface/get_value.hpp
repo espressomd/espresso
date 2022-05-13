@@ -40,61 +40,86 @@ namespace ScriptInterface {
 namespace detail {
 
 /**
- * @brief Demangle the symbol of a container @c value_type or @c mapped_type.
- * Only for recursive variant container types used in @ref Variant.
- * Other container types and non-container objects return an empty string.
+ * @brief Convert a demangled symbol into a human-readable name that omits
+ * container allocators, key hashes and implementation-specific namespaces.
+ * When the data type involves the @ref Variant type, it is recursively
+ * replaced by the string "ScriptInterface::Variant".
  */
-template <typename Container> struct demangle_container_value_type {
-private:
-  template <typename T> struct is_std_vector : std::false_type {};
-  template <typename... Args>
-  struct is_std_vector<std::vector<Args...>> : std::true_type {};
+namespace demangle {
 
-  template <typename T> struct is_std_unordered_map : std::false_type {};
-  template <typename... Args>
-  struct is_std_unordered_map<std::unordered_map<Args...>> : std::true_type {};
-
-public:
-  template <typename T = Container,
-            std::enable_if_t<!is_std_vector<T>::value and
-                                 !is_std_unordered_map<T>::value,
-                             bool> = true>
-  auto operator()() const {
-    return std::string("");
+/** @brief Simplify the demangled symbol of an object. */
+template <typename T> auto simplify_symbol(T const *) {
+  auto constexpr is_string = std::is_same<T, std::string>::value;
+  auto const symbol_for_variant = Utils::demangle<Variant>();
+  auto const name_for_variant = std::string("ScriptInterface::Variant");
+  auto name = (is_string) ? std::string{"std::string"} : Utils::demangle<T>();
+  for (std::string::size_type pos{};
+       (pos = name.find(symbol_for_variant, pos)) != name.npos;
+       pos += name_for_variant.length()) {
+    name.replace(pos, symbol_for_variant.length(), name_for_variant);
   }
+  return name;
+}
 
-  template <typename T = Container,
-            std::enable_if_t<is_std_vector<T>::value, bool> = true>
-  auto operator()() const {
-    return Utils::demangle<typename T::value_type>();
+/** @overload */
+template <typename T> auto simplify_symbol(std::vector<T> const *) {
+  auto const name_val = simplify_symbol(static_cast<T *>(nullptr));
+  return "std::vector<" + name_val + ">";
+}
+
+/** @overload */
+template <typename K, typename V>
+auto simplify_symbol(std::unordered_map<K, V> const *) {
+  auto const name_key = simplify_symbol(static_cast<K *>(nullptr));
+  auto const name_val = simplify_symbol(static_cast<V *>(nullptr));
+  return "std::unordered_map<" + name_key + ", " + name_val + ">";
+}
+
+struct simplify_symbol_visitor : boost::static_visitor<std::string> {
+  template <class T> std::string operator()(const T &) const {
+    return simplify_symbol(static_cast<T *>(nullptr));
   }
+};
 
-  template <typename T = Container,
-            std::enable_if_t<is_std_unordered_map<T>::value, bool> = true>
-  auto operator()() const {
-    return Utils::demangle<typename T::mapped_type>();
+/** @brief Simplify the demangled symbol of an object wrapped in a variant. */
+inline auto simplify_symbol_variant(Variant const &v) {
+  return boost::apply_visitor(simplify_symbol_visitor{}, v);
+}
+
+/** @brief Simplify the demangled symbol of a container @c value_type. */
+template <typename T> auto simplify_symbol_containee(T const *) {
+  return std::string("");
+}
+
+/** @overload */
+template <typename T> auto simplify_symbol_containee(std::vector<T> const *) {
+  auto const name_val = simplify_symbol(static_cast<T *>(nullptr));
+  return name_val;
+}
+
+/** @overload */
+template <typename K, typename V>
+auto simplify_symbol_containee(std::unordered_map<K, V> const *) {
+  auto const name_key = simplify_symbol(static_cast<K *>(nullptr));
+  auto const name_val = simplify_symbol(static_cast<V *>(nullptr));
+  return name_key + "' or '" + name_val;
+}
+
+struct simplify_symbol_containee_visitor : boost::static_visitor<std::string> {
+  template <class T> std::string operator()(const T &) const {
+    return simplify_symbol_containee(static_cast<T *>(nullptr));
   }
 };
 
 /**
- * @brief Demangle the data type of an object wrapped inside a @ref Variant.
- * When the data type involves a recursive variant (e.g. containers), the
- * demangled symbol name is processed to replace all occurences of the
- * variant symbol name by a human-readable string "ScriptInterface::Variant".
+ * @brief Simplify the demangled symbol of a container @c value_type wrapped
+ * in a variant.
  */
-struct type_label_visitor : boost::static_visitor<std::string> {
-  template <class T> std::string operator()(const T &) const {
-    auto const symbol_for_variant = Utils::demangle<Variant>();
-    auto const name_for_variant = std::string("ScriptInterface::Variant");
-    auto symbol = Utils::demangle<T>();
-    for (std::string::size_type pos{};
-         (pos = symbol.find(symbol_for_variant, pos)) != symbol.npos;
-         pos += name_for_variant.length()) {
-      symbol.replace(pos, symbol_for_variant.length(), name_for_variant);
-    }
-    return symbol;
-  }
-};
+inline auto simplify_symbol_containee_variant(Variant const &v) {
+  return boost::apply_visitor(simplify_symbol_containee_visitor{}, v);
+}
+
+} // namespace demangle
 
 /*
  * Allows
@@ -236,6 +261,12 @@ struct get_value_helper<std::unordered_map<int, T>, void> {
     return boost::apply_visitor(GetMapOrEmpty<int, T>{}, v);
   }
 };
+template <typename T>
+struct get_value_helper<std::unordered_map<std::string, T>, void> {
+  std::unordered_map<std::string, T> operator()(Variant const &v) const {
+    return boost::apply_visitor(GetMapOrEmpty<std::string, T>{}, v);
+  }
+};
 
 /** Custom error for a conversion that fails when the value is a nullptr. */
 class bad_get_nullptr : public boost::bad_get {};
@@ -273,24 +304,27 @@ struct get_value_helper<
  * @tparam T     Which type the variant was supposed to convert to
  */
 template <typename T> inline void handle_bad_get(Variant const &v) {
-  auto const object_symbol_name = boost::apply_visitor(type_label_visitor{}, v);
-  auto const element_symbol_name = demangle_container_value_type<T>{}();
-  auto const is_container = !element_symbol_name.empty();
-  auto const what = "Provided argument of type '" + object_symbol_name + "'";
+  auto const container_name = demangle::simplify_symbol_variant(v);
+  auto const containee_name = demangle::simplify_symbol_containee_variant(v);
+  auto const expected_containee_name =
+      demangle::simplify_symbol_containee(static_cast<T *>(nullptr));
+  auto const from_container = !containee_name.empty();
+  auto const to_container = !expected_containee_name.empty();
+  auto const what = "Provided argument of type '" + container_name + "'";
   try {
     throw;
   } catch (bad_get_nullptr const &) {
-    auto const item_error = (is_container) ? " contains a value that" : "";
+    auto const item_error = (to_container) ? " contains a value that" : "";
     throw Exception(what + item_error + " is a null pointer");
   } catch (boost::bad_get const &) {
     auto const non_convertible = std::string(" is not convertible to ");
     auto item_error = std::string("");
-    if (is_container) {
+    if (from_container and to_container) {
       item_error += " because it contains a value that";
-      item_error += non_convertible + "'" + element_symbol_name + "'";
+      item_error += non_convertible + "'" + expected_containee_name + "'";
     }
-    throw Exception(what + non_convertible + "'" + Utils::demangle<T>() + "'" +
-                    item_error);
+    auto const target = demangle::simplify_symbol(static_cast<T *>(nullptr));
+    throw Exception(what + non_convertible + "'" + target + "'" + item_error);
   }
 }
 

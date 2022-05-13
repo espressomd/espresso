@@ -20,6 +20,7 @@ from .utils cimport Vector2d, Vector3d, Vector4d, make_array_locked
 cimport cpython.object
 
 from libcpp.memory cimport shared_ptr, make_shared
+from libcpp.utility cimport pair
 
 cdef shared_ptr[ContextManager] _om
 
@@ -189,7 +190,8 @@ cdef Variant python_object_to_variant(value) except *:
     """Convert Python objects to C++ Variant objects."""
 
     cdef vector[Variant] vec
-    cdef unordered_map[int, Variant] vmap
+    cdef unordered_map[int, Variant] map_int2var
+    cdef unordered_map[string, Variant] map_str2var
     cdef PObjectRef oref
 
     if value is None:
@@ -202,20 +204,28 @@ cdef Variant python_object_to_variant(value) except *:
         oref = value.get_sip()
         return make_variant(oref.sip)
     elif isinstance(value, dict):
+        if all(map(lambda x: isinstance(x, (int, np.integer)), value.keys())):
+            for key, value in value.items():
+                map_int2var[int(key)] = python_object_to_variant(value)
+            return make_variant[unordered_map[int, Variant]](map_int2var)
+        elif all(map(lambda x: isinstance(x, (str, np.str_)), value.keys())):
+            for key, value in value.items():
+                map_str2var[utils.to_char_pointer(
+                    str(key))] = python_object_to_variant(value)
+            return make_variant[unordered_map[string, Variant]](map_str2var)
         for k, v in value.items():
-            if not isinstance(k, int):
+            if not isinstance(k, (str, int, np.integer, np.str_)):
                 raise TypeError(
                     f"No conversion from type "
                     f"'dict_item([({type(k).__name__}, {type(v).__name__})])'"
-                    f" to 'Variant[std::unordered_map<int, Variant>]'")
-            vmap[k] = python_object_to_variant(v)
-        return make_variant[unordered_map[int, Variant]](vmap)
-    elif hasattr(value, '__iter__') and type(value) != str:
+                    f" to 'Variant[std::unordered_map<int, Variant>]' or"
+                    f" to 'Variant[std::unordered_map<std::string, Variant>]'")
+    elif type(value) in (str, np.str_):
+        return make_variant[string](utils.to_char_pointer(str(value)))
+    elif hasattr(value, '__iter__'):
         for e in value:
             vec.push_back(python_object_to_variant(e))
         return make_variant[vector[Variant]](vec)
-    elif type(value) == str:
-        return make_variant[string](utils.to_char_pointer(value))
     elif type(value) == type(True):
         return make_variant[bool](value)
     elif np.issubdtype(np.dtype(type(value)), np.signedinteger):
@@ -230,7 +240,10 @@ cdef variant_to_python_object(const Variant & value) except +:
     """Convert C++ Variant objects to Python objects."""
 
     cdef vector[Variant] vec
-    cdef unordered_map[int, Variant] vmap
+    cdef unordered_map[int, Variant] map_int2var
+    cdef unordered_map[string, Variant] map_str2var
+    cdef pair[int, Variant] pair_int2var
+    cdef pair[string, Variant] pair_str2var
     cdef shared_ptr[ObjectHandle] ptr
     cdef Vector2d vec2d
     cdef Vector4d vec4d
@@ -288,12 +301,24 @@ cdef variant_to_python_object(const Variant & value) except +:
             res.append(variant_to_python_object(i))
 
         return res
+
     if is_type[unordered_map[int, Variant]](value):
-        vmap = get_value[unordered_map[int, Variant]](value)
+        map_int2var = get_value[unordered_map[int, Variant]](value)
         res = {}
 
-        for kv in vmap:
-            res[kv.first] = variant_to_python_object(kv.second)
+        for pair_int2var in map_int2var:
+            res[pair_int2var.first] = variant_to_python_object(
+                pair_int2var.second)
+
+        return res
+
+    if is_type[unordered_map[string, Variant]](value):
+        map_str2var = get_value[unordered_map[string, Variant]](value)
+        res = {}
+
+        for pair_str2var in map_str2var:
+            res[utils.to_str(pair_str2var.first)] = variant_to_python_object(
+                pair_str2var.second)
 
         return res
 
