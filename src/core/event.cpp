@@ -349,7 +349,7 @@ unsigned global_ghost_flags() {
   }
 
 #ifdef COLLISION_DETECTION
-  if (collision_params.mode) {
+  if (collision_params.mode != CollisionModeType::OFF) {
     data_parts |= Cells::DATA_PART_BONDS;
   }
 #endif
