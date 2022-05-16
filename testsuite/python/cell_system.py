@@ -32,16 +32,16 @@ class CellSystem(ut.TestCase):
             "n_square": {"use_verlet_lists": False},
             "regular_decomposition": {"use_verlet_lists": True},
             "hybrid_decomposition": {"use_verlet_lists": False,
-                                     "n_square_types": {1, 3, 5},
+                                     "n_square_types": [1, 3, 5],
                                      "cutoff_regular": 1.27},
         }
         for cell_system, params_in in parameters.items():
             setter = getattr(self.system.cell_system, f"set_{cell_system}")
             setter(**params_in)
-            params_in["type"] = cell_system
-            params_out = self.system.cell_system.get_state()
+            params_in["decomposition_type"] = cell_system
+            params_out = self.system.cell_system.get_params()
             tests_common.assert_params_match(self, params_in, params_out)
-            params_out = self.system.cell_system.__getstate__()
+            params_out = self.system.cell_system.get_state()
             tests_common.assert_params_match(self, params_in, params_out)
 
     @ut.skipIf(n_nodes == 1, "Skipping test: only runs for n_nodes >= 2")
@@ -52,6 +52,21 @@ class CellSystem(ut.TestCase):
             self.system.cell_system.node_grid = node_grid_ref
             node_grid = self.system.cell_system.get_state()['node_grid']
             np.testing.assert_array_equal(node_grid, node_grid_ref)
+
+    def test_exceptions(self):
+        system = self.system
+        system.cell_system.skin = 0.1
+        with self.assertRaisesRegex(ValueError, "Parameter 'skin' must be >= 0"):
+            system.cell_system.skin = -2.
+        self.assertAlmostEqual(system.cell_system.skin, 0.1, delta=1e-12)
+
+        node_grid = system.cell_system.node_grid
+        with self.assertRaisesRegex(ValueError, "Parameter 'node_grid' must be 3 ints"):
+            system.cell_system.node_grid = [1, 2, 3, 4]
+        np.testing.assert_array_equal(system.cell_system.node_grid, node_grid)
+        with self.assertRaisesRegex(ValueError, rf"MPI world size {self.n_nodes} incompatible with new node grid \[1, 2, {self.n_nodes}\]"):
+            system.cell_system.node_grid = [1, 2, self.n_nodes]
+        np.testing.assert_array_equal(system.cell_system.node_grid, node_grid)
 
     def test_node_grid_regular(self):
         self.system.cell_system.set_regular_decomposition()

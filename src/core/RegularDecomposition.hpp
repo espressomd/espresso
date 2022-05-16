@@ -39,31 +39,30 @@
 
 #include <vector>
 
-/** @brief Structure containing the information about the cell grid used for
- *  regular decomposition.
+/**
+ * @brief Regular decomposition cell system.
  *
- *  The domain of a node is split into a 3D cell grid with dimension
- *  cell_grid. Together with one ghost cell
- *  layer on each side the overall dimension of the ghost cell grid is
- *  ghost_cell_grid. The regular
- *  decomposition enables the use of the linked cell algorithm
- *  which is in turn used for setting up the Verlet list for the
- *  system. You can see a 2D graphical representation of the linked
- *  cell grid below.
+ * The domain of a node is split into a 3D cell grid with dimension
+ * @ref RegularDecomposition::cell_grid "cell_grid". Together with one ghost
+ * cell layer on each side the overall dimension of the ghost cell grid is
+ * @ref RegularDecomposition::ghost_cell_grid "ghost_cell_grid". The regular
+ * decomposition enables the use of the linked cell algorithm
+ * which is in turn used for setting up the Verlet list for the
+ * system. You can see a 2D graphical representation of the linked
+ * cell grid below.
  *
- *  \image html  linked_cells.gif "Linked cells structure"
+ * \image html  linked_cells.gif "Linked cells structure"
  *
- *  2D representation of a linked cell grid: cell_grid =
- *  {4,4}, ghost_cell_grid = {6,6}
+ * 2D representation of a linked cell grid:
+ * <tt>cell_grid = {4,4}, ghost_cell_grid = {6,6}</tt>
  *
- * Each cell has 3^D neighbor cells. Since we deal with pair forces, it is
- * sufficient to calculate only half of the interactions (Newton's law:
+ * Each cell has @f$ 3^D @f$ neighbor cells. Since we deal with pair forces,
+ * it is sufficient to calculate only half of the interactions (Newton's law:
  * action = reaction). We have chosen the upper half e.g. all neighbor
  * cells with a higher linear index (for cell 14 they are marked in light
  * blue). Caution: This implementation needs double sided ghost
  * communication! For single sided ghost communication one would need
  * some ghost-ghost cell interaction as well, which we do not need!
- *
  */
 struct RegularDecomposition : public ParticleDecomposition {
   /** Grid dimensions per node. */
@@ -74,7 +73,7 @@ struct RegularDecomposition : public ParticleDecomposition {
   Utils::Vector3i cell_offset = {};
   /** linked cell grid with ghost frame. */
   Utils::Vector3i ghost_cell_grid = {};
-  /** inverse cell size = \see RegularDecomposition::cell_size ^ -1. */
+  /** inverse @ref RegularDecomposition::cell_size "cell_size". */
   Utils::Vector3d inv_cell_size = {};
 
   boost::mpi::communicator m_comm;

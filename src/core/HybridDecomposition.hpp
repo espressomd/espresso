@@ -40,10 +40,15 @@
 #include <utility>
 #include <vector>
 
-namespace Utils {
-using Vector2i = Vector<std::size_t, 2>;
-}
-
+/**
+ * @brief Hybrid decomposition cell system.
+ *
+ * Store particles with short-range interactions
+ * in a @ref RegularDecomposition cell system and
+ * particles with long-range interactions
+ * in a @ref AtomDecomposition (N-square) cell system.
+ * All regular cells are coupled to the N-square cells.
+ */
 class HybridDecomposition : public ParticleDecomposition {
   boost::mpi::communicator m_comm;
   BoxGeometry m_box;

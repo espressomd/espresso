@@ -224,7 +224,7 @@ struct UpdateParticleIndexVisitor {
 };
 } // namespace
 
-void CellStructure::resort_particles(int global_flag, BoxGeometry const &box) {
+void CellStructure::resort_particles(bool global_flag, BoxGeometry const &box) {
   invalidate_ghosts();
 
   static std::vector<ParticleChange> diff;

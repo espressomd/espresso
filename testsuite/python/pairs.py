@@ -78,13 +78,15 @@ class PairTest(ut.TestCase):
         self.assertSetEqual(set(pairs_by_type), set(epairs_by_type))
 
     def test_input_exceptions(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "Unknown argument types='none'"):
+            self.system.cell_system.get_pairs(0.1, types="none")
+        with self.assertRaisesRegex(ValueError, "Argument 'types' must be an iterable"):
             self.system.cell_system.get_pairs(0.1, types=3)
         # check no exception for list of length 1
         self.system.cell_system.get_pairs(0.1, types=[3])
 
     def check_range_exception(self):
-        with self.assertRaises(Exception):
+        with self.assertRaisesRegex(ValueError, "pair search distance 3.* bigger than the decomposition range"):
             self.system.cell_system.get_pairs(3.)
 
     def run_and_check(self, n_steps=100):

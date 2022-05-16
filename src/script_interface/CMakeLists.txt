@@ -5,6 +5,7 @@ add_library(
 
 add_subdirectory(accumulators)
 add_subdirectory(bond_breakage)
+add_subdirectory(cell_system)
 add_subdirectory(collision_detection)
 add_subdirectory(constraints)
 add_subdirectory(cluster_analysis)

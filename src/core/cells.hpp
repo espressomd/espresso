@@ -20,30 +20,32 @@
  */
 #ifndef CORE_CELLS_HPP
 #define CORE_CELLS_HPP
-/** \file
- *  This file contains everything related to the global cell structure / cell
- *  system.
+/**
+ * @file
+ * This file contains everything related to the global cell structure / cell
+ * system.
  *
- *  The cell system (\ref CellStructure) describes how particles are
- *  distributed on the cells and how particles of different cells
- *  (regardless if they reside on the same or different nodes)
- *  interact with each other. The following cell systems are implemented:
+ * The cell system (@ref CellStructure) describes how particles are
+ * distributed on the cells and how particles of different cells
+ * (regardless if they reside on the same or different nodes)
+ * interact with each other. The following cell systems are implemented:
  *
- *  - regular decomposition: The simulation box is divided spatially
- *    into cells (see \ref RegularDecomposition.hpp). This is suitable for
- *    short range interactions.
- *  - nsquare: The particles are distributed equally on all nodes
- *    regardless their spatial position (see \ref AtomDecomposition.hpp).
- *    This is suitable for long range interactions that cannot be treated by a
- *    special method like P3M.
- *  - hybrid decomposition: Initializes both regular decomposition and nsquare
- *    at the same time and and has is given a set of particle types
- *    n_square_types (see \ref HybridDecomposition.hpp). By default, particles
- *    will be distributed using the regular decomposition. For particles of the
- *    types defined as n_square_types the nsquare method is used. This is
- *    suitable for systems containing lots of small particles with short
- *    interaction range mixed with a few large particles with long interaction
- *    range. There, the large particles should be treated using nsquare.
+ * - regular decomposition: The simulation box is divided spatially
+ *   into cells (see @ref RegularDecomposition.hpp). This is suitable for
+ *   short-range interactions.
+ * - N-square: The particles are distributed equally on all nodes
+ *   regardless their spatial position (see @ref AtomDecomposition.hpp).
+ *   This is suitable for long-range interactions that cannot be treated
+ *   by a special method like P3M.
+ * - hybrid decomposition: Initializes both regular decomposition
+ *   and N-square at the same time and is given a set of particle types
+ *   @c n_square_types (see @ref HybridDecomposition.hpp). By default,
+ *   particles will be distributed using the regular decomposition.
+ *   For particles of the types defined as @c n_square_types the N-square
+ *   method is used. This is suitable for systems containing lots of small
+ *   particles with short-range interactions mixed with a few large
+ *   particles with long-range interactions. There, the large particles
+ *   should be treated using N-square.
  */
 
 #include "Cell.hpp"
@@ -70,41 +72,24 @@ enum {
 extern CellStructure cell_structure;
 
 /** Initialize cell structure HybridDecomposition
- *  @param n_square_types Set of particle types that will use n_square.
+ *  @param n_square_types   Types of particles to place in the N-square cells.
+ *  @param cutoff_regular   Cutoff for the regular decomposition.
  */
 void set_hybrid_decomposition(std::set<int> n_square_types,
                               double cutoff_regular);
 
-/** Change cell structure to HybridDecomposition on all nodes.
- *  @param n_square_types Set of particle types that will use n_square.
- */
-void mpi_set_hybrid_decomposition(std::set<int> n_square_types,
-                                  double cutoff_regular);
-
 /**
- * @brief Number of parts in child decompositions of a HybridDecomposition.
+ * @brief Count particles in child decompositions of a HybridDecomposition.
  *
- * Throws if called when active decomposition type is not hybrid.
- *
- * @return pair(parts_in_domain_dec, parts_in_n_square)
+ * @return Number of particles in regular decomposition resp. N-square.
  */
-std::pair<std::size_t, std::size_t> hybrid_parts_per_decomposition();
+std::pair<std::size_t, std::size_t>
+hybrid_parts_per_decomposition(HybridDecomposition const &hd);
 
 /** Reinitialize the cell structures.
  *  @param new_cs The new topology to use afterwards.
  */
 void cells_re_init(CellStructureType new_cs);
-
-/** Change the cell structure on all nodes. */
-void mpi_bcast_cell_structure(CellStructureType cs);
-
-/**
- * @brief Set @ref CellStructure::use_verlet_list
- * "cell_structure::use_verlet_list"
- *
- * @param use_verlet_lists Should Verlet lists be used?
- */
-void mpi_set_use_verlet_lists(bool use_verlet_lists);
 
 /** Update ghost information. If needed,
  *  the particles are also resorted.
@@ -116,7 +101,7 @@ void cells_update_ghosts(unsigned data_parts);
  *
  * Pairs are sorted so that first.id < second.id
  */
-std::vector<std::pair<int, int>> mpi_get_pairs(double distance);
+std::vector<std::pair<int, int>> get_pairs(double distance);
 
 /**
  * @brief Get pairs closer than @p distance if both their types are in @p types
@@ -124,21 +109,10 @@ std::vector<std::pair<int, int>> mpi_get_pairs(double distance);
  * Pairs are sorted so that first.id < second.id
  */
 std::vector<std::pair<int, int>>
-mpi_get_pairs_of_types(double distance, std::vector<int> const &types);
+get_pairs_of_types(double distance, std::vector<int> const &types);
 
 /** Check if a particle resorting is required. */
 void check_resort_particles();
-
-/**
- * @brief Resort the particles.
- *
- * This function resorts the particles on the nodes.
- *
- * @param global_flag If true a global resort is done,
- *        if false particles are only exchanges between neighbors.
- * @return The number of particles on the nodes after the resort.
- */
-std::vector<int> mpi_resort_particles(int global_flag);
 
 /**
  * @brief Find the cell in which a particle is stored.
@@ -149,20 +123,6 @@ std::vector<int> mpi_resort_particles(int global_flag);
  * @return pointer to the cell or nullptr if the particle is not on the node
  */
 Cell *find_current_cell(const Particle &p);
-
-/**
- * @brief Return a pointer to the global RegularDecomposition.
- *
- * @return Pointer to the decomposition if it is set, nullptr otherwise.
- */
-const RegularDecomposition *get_regular_decomposition();
-
-/**
- * @brief Return a pointer to the global HybridDecomposition.
- *
- * @return Pointer to the decomposition if it is set, nullptr otherwise.
- */
-const HybridDecomposition *get_hybrid_decomposition();
 
 class PairInfo {
 public:
@@ -183,6 +143,6 @@ public:
  * @brief Returns pairs of particle ids, positions and distance as seen by the
  * non-bonded loop.
  */
-std::vector<PairInfo> mpi_non_bonded_loop_trace();
+std::vector<PairInfo> non_bonded_loop_trace();
 
 #endif

@@ -491,7 +491,7 @@ public:
   /**
    * @brief Resort particles.
    */
-  void resort_particles(int global_flag, BoxGeometry const &box);
+  void resort_particles(bool global_flag, BoxGeometry const &box);
 
 private:
   /** @brief Set the particle decomposition, keeping the particles. */

@@ -62,7 +62,11 @@ energy = system.analysis.energy()
 print(f"After Minimization: E_total = {energy['total']:.2e}")
 
 print("Tune skin")
-system.cell_system.tune_skin(0.1, 4.0, 1e-1, 1000)
+system.cell_system.tune_skin(
+    min_skin=0.1,
+    max_skin=4.0,
+    tol=0.1,
+    int_steps=1000)
 print(system.cell_system.get_state())
 
 system.thermostat.set_langevin(kT=1, gamma=1, seed=42)

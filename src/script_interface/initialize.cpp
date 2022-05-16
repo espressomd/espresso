@@ -32,6 +32,7 @@
 #include "CylindricalTransformationParameters.hpp"
 #include "accumulators/initialize.hpp"
 #include "bond_breakage/initialize.hpp"
+#include "cell_system/initialize.hpp"
 #include "collision_detection/initialize.hpp"
 #include "interactions/initialize.hpp"
 #include "lbboundaries/initialize.hpp"
@@ -50,6 +51,7 @@ void initialize(Utils::Factory<ObjectHandle> *f) {
 #endif
   Accumulators::initialize(f);
   BondBreakage::initialize(f);
+  CellSystem::initialize(f);
   Observables::initialize(f);
   ClusterAnalysis::initialize(f);
   Interactions::initialize(f);
