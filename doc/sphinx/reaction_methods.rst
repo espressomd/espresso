@@ -24,6 +24,9 @@ Please keep in mind the following remarks:
   contiguously. Particle slices returned by ``system.part`` are still iterable,
   but the indices no longer match the particle ids.
 
+* Checkpointing is not supported, since the state of the Mersenne Twister
+  random number generator cannot be serialized.
+
 * For improved performance, you can set the type of invalidated particles with
   :meth:`~espressomd.reaction_methods.ReactionAlgorithm.set_non_interacting_type`
   in all reaction method classes.

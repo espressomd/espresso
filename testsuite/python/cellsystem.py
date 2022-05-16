@@ -19,6 +19,7 @@
 import unittest as ut
 import espressomd
 import numpy as np
+import tests_common
 
 
 class CellSystem(ut.TestCase):
@@ -27,21 +28,21 @@ class CellSystem(ut.TestCase):
     n_nodes = system.cell_system.get_state()['n_nodes']
 
     def test_cell_system(self):
-        self.system.cell_system.set_n_square(use_verlet_lists=False)
-        s = self.system.cell_system.get_state()
-        self.assertEqual([s['use_verlet_list'], s['type']], [0, "nsquare"])
-        self.system.cell_system.set_regular_decomposition(
-            use_verlet_lists=True)
-        s = self.system.cell_system.get_state()
-        self.assertEqual(
-            [s['use_verlet_list'], s['type']], [1, "regular_decomposition"])
-        self.system.cell_system.set_hybrid_decomposition(
-            use_verlet_lists=False, n_square_types={1, 3, 5}, cutoff_regular=1.27)
-        s = self.system.cell_system.get_state()
-        self.assertEqual(
-            [s['use_verlet_list'], s['type'],
-                s['n_square_types'], s['cutoff_regular']],
-            [0, "hybrid_decomposition", {1, 3, 5}, 1.27])
+        parameters = {
+            "n_square": {"use_verlet_lists": False},
+            "regular_decomposition": {"use_verlet_lists": True},
+            "hybrid_decomposition": {"use_verlet_lists": False,
+                                     "n_square_types": {1, 3, 5},
+                                     "cutoff_regular": 1.27},
+        }
+        for cell_system, params_in in parameters.items():
+            setter = getattr(self.system.cell_system, f"set_{cell_system}")
+            setter(**params_in)
+            params_in["type"] = cell_system
+            params_out = self.system.cell_system.get_state()
+            tests_common.assert_params_match(self, params_in, params_out)
+            params_out = self.system.cell_system.__getstate__()
+            tests_common.assert_params_match(self, params_in, params_out)
 
     @ut.skipIf(n_nodes == 1, "Skipping test: only runs for n_nodes >= 2")
     def check_node_grid(self):

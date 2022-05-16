@@ -57,7 +57,7 @@ public:
       auto p_cart = Utils::transform_coordinate_cylinder_to_cartesian(p);
       // We have to rotate the coordinates since the utils function assumes
       // z-axis symmetry.
-      constexpr Utils::Vector3d z_axis{{0.0, 0.0, 1.0}};
+      auto const z_axis = Utils::Vector3d{{0.0, 0.0, 1.0}};
       auto const theta = Utils::angle_between(z_axis, transform_params->axis());
       auto const rot_axis =
           Utils::vector_product(z_axis, transform_params->axis()).normalize();

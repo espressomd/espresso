@@ -34,6 +34,7 @@ import espressomd.lbboundaries
 import espressomd.shapes
 import espressomd.constraints
 import espressomd.bond_breakage
+import espressomd.reaction_methods
 
 config = utg.TestGenerator()
 modes = config.get_modes()
@@ -72,7 +73,7 @@ if lbf_actor:
     system.actors.add(lbf)
     if 'THERM.LB' in modes:
         system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)
-    if n_nodes == 1 and (espressomd.has_features(
+    if (espressomd.has_features(
             "LB_BOUNDARIES") or espressomd.has_features("LB_BOUNDARIES_GPU")):
         system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(
             shape=espressomd.shapes.Wall(normal=(1, 0, 0), dist=0.5), velocity=(1e-4, 1e-4, 0)))
@@ -137,37 +138,40 @@ acc_mean_variance.update()
 acc_time_series.update()
 acc_correlator.update()
 
-if n_nodes == 1:
-    system.auto_update_accumulators.add(acc_mean_variance)
-    system.auto_update_accumulators.add(acc_time_series)
-    system.auto_update_accumulators.add(acc_correlator)
+system.auto_update_accumulators.add(acc_mean_variance)
+system.auto_update_accumulators.add(acc_time_series)
+system.auto_update_accumulators.add(acc_correlator)
 
 # constraints
+system.constraints.add(shape=espressomd.shapes.Sphere(center=system.box_l / 2, radius=0.1),
+                       particle_type=17)
+system.constraints.add(
+    shape=espressomd.shapes.Wall(
+        normal=[1. / np.sqrt(3)] * 3, dist=0.5))
+system.constraints.add(espressomd.constraints.Gravity(g=[1., 2., 3.]))
+system.constraints.add(
+    espressomd.constraints.HomogeneousMagneticField(H=[1., 2., 3.]))
+system.constraints.add(
+    espressomd.constraints.HomogeneousFlowField(u=[1., 2., 3.], gamma=2.3))
+pot_field_data = espressomd.constraints.ElectricPotential.field_from_fn(
+    system.box_l, np.ones(3), lambda x: np.linalg.norm(10 * np.ones(3) - x))
+checkpoint.register("pot_field_data")
+system.constraints.add(espressomd.constraints.PotentialField(
+    field=pot_field_data, grid_spacing=np.ones(3), default_scale=1.6,
+    particle_scales={5: 6.0}))
+vec_field_data = espressomd.constraints.ForceField.field_from_fn(
+    system.box_l, np.ones(3), lambda x: 10 * np.ones(3) - x)
+checkpoint.register("vec_field_data")
+system.constraints.add(espressomd.constraints.ForceField(
+    field=vec_field_data, grid_spacing=np.ones(3), default_scale=1.4))
+union = espressomd.shapes.Union()
+union.add([espressomd.shapes.Wall(normal=[1., 0., 0.], dist=0.5),
+           espressomd.shapes.Wall(normal=[0., 1., 0.], dist=1.5)])
 if n_nodes == 1:
-    system.constraints.add(shape=espressomd.shapes.Sphere(center=system.box_l / 2, radius=0.1),
-                           particle_type=17)
-    system.constraints.add(
-        shape=espressomd.shapes.Wall(
-            normal=[1. / np.sqrt(3)] * 3, dist=0.5))
-    system.constraints.add(espressomd.constraints.Gravity(g=[1., 2., 3.]))
-    system.constraints.add(
-        espressomd.constraints.HomogeneousMagneticField(H=[1., 2., 3.]))
-    system.constraints.add(
-        espressomd.constraints.HomogeneousFlowField(u=[1., 2., 3.], gamma=2.3))
-    pot_field_data = espressomd.constraints.ElectricPotential.field_from_fn(
-        system.box_l, np.ones(3), lambda x: np.linalg.norm(10 * np.ones(3) - x))
-    checkpoint.register("pot_field_data")
-    system.constraints.add(espressomd.constraints.PotentialField(
-        field=pot_field_data, grid_spacing=np.ones(3), default_scale=1.6,
-        particle_scales={5: 6.0}))
-    vec_field_data = espressomd.constraints.ForceField.field_from_fn(
-        system.box_l, np.ones(3), lambda x: 10 * np.ones(3) - x)
-    checkpoint.register("vec_field_data")
-    system.constraints.add(espressomd.constraints.ForceField(
-        field=vec_field_data, grid_spacing=np.ones(3), default_scale=1.4))
-    if espressomd.has_features("ELECTROSTATICS"):
-        system.constraints.add(espressomd.constraints.ElectricPlaneWave(
-            E0=[1., -2., 3.], k=[-.1, .2, .3], omega=5., phi=1.4))
+    system.constraints.add(shape=union, particle_type=2)
+if espressomd.has_features("ELECTROSTATICS"):
+    system.constraints.add(espressomd.constraints.ElectricPlaneWave(
+        E0=[1., -2., 3.], k=[-.1, .2, .3], omega=5., phi=1.4))
 
 if 'LB' not in modes:
     # set thermostat
@@ -385,6 +389,11 @@ class TestCheckpoint(ut.TestCase):
             # write checkpoint file with different box dimensions
             with open(cpt_path.format("-wrong-boxdim"), "wb") as f:
                 f.write(b"2" + boxsize + b"\n" + data)
+
+    def test_reaction_methods_sanity_check(self):
+        with self.assertRaisesRegex(RuntimeError, "Reaction methods do not support checkpointing"):
+            widom = espressomd.reaction_methods.WidomInsertion(kT=1, seed=1)
+            widom._serialize()
 
 
 if __name__ == '__main__':

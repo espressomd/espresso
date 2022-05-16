@@ -89,62 +89,58 @@ cdef class CellSystem:
         return True
 
     def get_state(self):
-        s = self.__getstate__()
+        state = self.__getstate__()
 
         if cell_structure.decomposition_type() == CellStructureType.CELL_STRUCTURE_REGULAR:
             rd = get_regular_decomposition()
-            s["cell_grid"] = np.array(
+            state["cell_grid"] = np.array(
                 [rd.cell_grid[0], rd.cell_grid[1], rd.cell_grid[2]])
-            s["cell_size"] = np.array(
+            state["cell_size"] = np.array(
                 [rd.cell_size[0], rd.cell_size[1], rd.cell_size[2]])
         elif cell_structure.decomposition_type() == CellStructureType.CELL_STRUCTURE_HYBRID:
             hd = get_hybrid_decomposition()
             cell_grid = hd.get_cell_grid()
             cell_size = hd.get_cell_size()
-            s["cell_grid"] = np.array([cell_grid[d] for d in range(3)])
-            s["cell_size"] = np.array([cell_size[d] for d in range(3)])
-            s["n_square_types"] = hd.get_n_square_types()
-            s["cutoff_regular"] = hd.get_cutoff_regular()
+            state["cell_grid"] = np.array([cell_grid[d] for d in range(3)])
+            state["cell_size"] = np.array([cell_size[d] for d in range(3)])
             # manually trigger resort to make sure that particles end up
             # in their respective child decomposition before querying
             self.resort()
             n_regular, n_n_square = hybrid_parts_per_decomposition()
-            s["parts_per_decomposition"] = {
+            state["parts_per_decomposition"] = {
                 "regular": n_regular,
                 "n_square": n_n_square
             }
 
-        s["verlet_reuse"] = get_verlet_reuse()
-        s["n_nodes"] = n_nodes
+        state["verlet_reuse"] = get_verlet_reuse()
+        state["n_nodes"] = n_nodes
 
-        return s
+        return state
 
     def __getstate__(self):
-        s = {"use_verlet_list": cell_structure.use_verlet_list}
+        state = {
+            "use_verlet_lists": type(True)(cell_structure.use_verlet_list),
+            "skin": self.skin, "node_grid": self.node_grid
+        }
 
         if cell_structure.decomposition_type() == CellStructureType.CELL_STRUCTURE_REGULAR:
-            s["type"] = "regular_decomposition"
+            state["type"] = "regular_decomposition"
         if cell_structure.decomposition_type() == CellStructureType.CELL_STRUCTURE_NSQUARE:
-            s["type"] = "nsquare"
+            state["type"] = "n_square"
         if cell_structure.decomposition_type() == CellStructureType.CELL_STRUCTURE_HYBRID:
-            s["type"] = "hybrid_decomposition"
+            state["type"] = "hybrid_decomposition"
+            hd = get_hybrid_decomposition()
+            state["n_square_types"] = hd.get_n_square_types()
+            state["cutoff_regular"] = hd.get_cutoff_regular()
 
-        s["skin"] = skin
-        s["node_grid"] = np.array([node_grid[0], node_grid[1], node_grid[2]])
-        return s
+        return state
 
-    def __setstate__(self, d):
-        self.skin = d['skin']
-        self.node_grid = d['node_grid']
-        if 'type' in d:
-            if d['type'] == "regular_decomposition":
-                self.set_regular_decomposition(
-                    use_verlet_lists=d['use_verlet_list'])
-            elif d['type'] == "nsquare":
-                self.set_n_square(use_verlet_lists=d['use_verlet_list'])
-            elif d['type'] == "hybrid_decomposition":
-                self.set_hybrid_decomposition(
-                    use_verlet_lists=d['use_verlet_list'])
+    def __setstate__(self, state):
+        self.skin = state.pop("skin")
+        self.node_grid = state.pop("node_grid")
+        if "type" in state:
+            setter = getattr(self, f"set_{state.pop('type')}")
+            setter(**state)
 
     def get_pairs(self, distance, types='all'):
         """

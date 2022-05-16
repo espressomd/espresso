@@ -43,6 +43,11 @@ class LBBoundaries : public ObjectList<LBBoundary> {
     ::LBBoundaries::remove(obj_ptr->lbboundary());
 #endif
   }
+
+private:
+  // disable serialization: pickling done by the python interface
+  std::string get_internal_state() const override { return {}; }
+  void set_internal_state(std::string const &state) override {}
 };
 } /* namespace LBBoundaries */
 } /* namespace ScriptInterface */
