@@ -21,9 +21,9 @@
 
 #include "config.hpp"
 
-#include "CellStructure.hpp"
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "integrate.hpp"
 #include "rotation.hpp"
 

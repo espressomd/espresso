@@ -32,9 +32,9 @@
 
 #include "icc.hpp"
 
-#include "CellStructure.hpp"
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "electrostatics_magnetostatics/coulomb.hpp"

@@ -24,7 +24,12 @@
  *
  *  Implementation of cells.hpp.
  */
+
 #include "cells.hpp"
+
+#include "cell_system/Cell.hpp"
+#include "cell_system/CellStructure.hpp"
+#include "cell_system/CellStructureType.hpp"
 
 #include "Particle.hpp"
 #include "communication.hpp"
@@ -33,16 +38,14 @@
 #include "integrate.hpp"
 #include "particle_node.hpp"
 
-#include "ParticleDecomposition.hpp"
-#include "RegularDecomposition.hpp"
-
 #include <utils/as_const.hpp>
 #include <utils/math/sqr.hpp>
 #include <utils/mpi/gather_buffer.hpp>
 
-#include <algorithm>
 #include <boost/range/algorithm/min_element.hpp>
 #include <boost/serialization/set.hpp>
+
+#include <algorithm>
 #include <functional>
 #include <stdexcept>
 #include <utility>

@@ -19,20 +19,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "CellStructure.hpp"
+#include "cell_system/CellStructure.hpp"
 
-#include "AtomDecomposition.hpp"
-#include "CellStructureType.hpp"
-#include "HybridDecomposition.hpp"
-#include "RegularDecomposition.hpp"
+#include "cell_system/AtomDecomposition.hpp"
+#include "cell_system/HybridDecomposition.hpp"
+#include "cell_system/ParticleDecomposition.hpp"
+#include "cell_system/RegularDecomposition.hpp"
+
+#include "cell_system/CellStructureType.hpp"
 #include "grid.hpp"
 #include "lees_edwards/lees_edwards.hpp"
 
 #include <utils/contains.hpp>
 
+#include <boost/mpi/communicator.hpp>
+#include <boost/variant.hpp>
+
 #include <algorithm>
 #include <iterator>
 #include <memory>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <utility>

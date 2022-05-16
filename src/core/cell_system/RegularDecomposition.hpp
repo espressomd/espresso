@@ -19,15 +19,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_REGULAR_DECOMPOSITION_HPP
-#define ESPRESSO_REGULAR_DECOMPOSITION_HPP
+#ifndef ESPRESSO_SRC_CORE_CELL_SYSTEM_REGULAR_DECOMPOSITION_HPP
+#define ESPRESSO_SRC_CORE_CELL_SYSTEM_REGULAR_DECOMPOSITION_HPP
 
-#include "ParticleDecomposition.hpp"
+#include "cell_system/ParticleDecomposition.hpp"
+
+#include "cell_system/Cell.hpp"
 
 #include "BoxGeometry.hpp"
 #include "LocalBox.hpp"
-
-#include "Cell.hpp"
 #include "Particle.hpp"
 #include "ParticleList.hpp"
 #include "ghosts.hpp"
@@ -35,6 +35,7 @@
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
+#include <boost/mpi/communicator.hpp>
 #include <boost/optional.hpp>
 
 #include <vector>

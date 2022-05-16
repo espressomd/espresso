@@ -20,9 +20,9 @@
 #include "collision.hpp"
 
 #ifdef COLLISION_DETECTION
-#include "Cell.hpp"
 #include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
+#include "cell_system/Cell.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"

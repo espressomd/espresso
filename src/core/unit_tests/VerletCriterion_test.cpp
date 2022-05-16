@@ -21,8 +21,8 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "CellStructure.hpp"
 #include "Particle.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "config.hpp"
 #include "nonbonded_interactions/VerletCriterion.hpp"
 #include "particle_data.hpp"

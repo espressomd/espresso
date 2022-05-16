@@ -21,8 +21,8 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "CellStructureType.hpp"
 #include "LocalBox.hpp"
+#include "cell_system/CellStructureType.hpp"
 
 #include <utils/Array.hpp>
 #include <utils/Vector.hpp>

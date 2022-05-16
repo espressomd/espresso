@@ -45,9 +45,9 @@
 #include "electrostatics_magnetostatics/p3m_interpolation.hpp"
 #include "electrostatics_magnetostatics/p3m_send_mesh.hpp"
 
-#include "CellStructureType.hpp"
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
+#include "cell_system/CellStructureType.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"

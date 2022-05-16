@@ -18,8 +18,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_CELLS_HPP
-#define CORE_CELLS_HPP
+
 /**
  * @file
  * This file contains everything related to the global cell structure / cell
@@ -48,11 +47,14 @@
  *   should be treated using N-square.
  */
 
-#include "Cell.hpp"
-#include "CellStructure.hpp"
-#include "CellStructureType.hpp"
+#ifndef ESPRESSO_SRC_CORE_CELLS_HPP
+#define ESPRESSO_SRC_CORE_CELLS_HPP
+
+#include "cell_system/Cell.hpp"
+#include "cell_system/CellStructure.hpp"
+#include "cell_system/CellStructureType.hpp"
+
 #include "Particle.hpp"
-#include "RegularDecomposition.hpp"
 
 #include <utility>
 #include <vector>

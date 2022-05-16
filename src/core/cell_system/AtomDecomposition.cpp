@@ -19,7 +19,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "AtomDecomposition.hpp"
+#include "cell_system/AtomDecomposition.hpp"
+
+#include "cell_system/Cell.hpp"
 
 #include <utils/Vector.hpp>
 

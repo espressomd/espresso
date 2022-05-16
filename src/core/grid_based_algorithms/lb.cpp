@@ -29,7 +29,7 @@
 
 #include "grid_based_algorithms/lb.hpp"
 
-#include "CellStructureType.hpp"
+#include "cell_system/CellStructureType.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"

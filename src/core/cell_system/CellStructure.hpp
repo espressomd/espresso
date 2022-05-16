@@ -19,21 +19,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_CELLSTRUCTURE_HPP
-#define ESPRESSO_CELLSTRUCTURE_HPP
+#ifndef ESPRESSO_SRC_CORE_CELL_SYSTEM_CELL_STRUCTURE_HPP
+#define ESPRESSO_SRC_CORE_CELL_SYSTEM_CELL_STRUCTURE_HPP
 
-#include "AtomDecomposition.hpp"
+#include "cell_system/AtomDecomposition.hpp"
+#include "cell_system/HybridDecomposition.hpp"
+#include "cell_system/ParticleDecomposition.hpp"
+
 #include "BoxGeometry.hpp"
-#include "Cell.hpp"
-#include "CellStructureType.hpp"
-#include "HybridDecomposition.hpp"
 #include "LocalBox.hpp"
 #include "Particle.hpp"
-#include "ParticleDecomposition.hpp"
 #include "ParticleList.hpp"
 #include "ParticleRange.hpp"
 #include "algorithm/link_cell.hpp"
 #include "bond_error.hpp"
+#include "cell_system/Cell.hpp"
+#include "cell_system/CellStructureType.hpp"
 #include "ghosts.hpp"
 
 #include <utils/math/sqr.hpp>
@@ -41,12 +42,16 @@
 #include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/container/static_vector.hpp>
 #include <boost/iterator/indirect_iterator.hpp>
+#include <boost/mpi/communicator.hpp>
 #include <boost/range/algorithm/find_if.hpp>
 #include <boost/range/algorithm/transform.hpp>
 
 #include <algorithm>
 #include <cassert>
+#include <iterator>
 #include <memory>
+#include <set>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 
@@ -689,4 +694,4 @@ public:
   }
 };
 
-#endif // ESPRESSO_CELLSTRUCTURE_HPP
+#endif

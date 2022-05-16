@@ -25,8 +25,8 @@
  */
 #include "event.hpp"
 
-#include "CellStructureType.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
+#include "cell_system/CellStructureType.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
 #include "communication.hpp"

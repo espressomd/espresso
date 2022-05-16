@@ -35,7 +35,7 @@
 #include "electrostatics_magnetostatics/mmm-common.hpp"
 #include "electrostatics_magnetostatics/mmm-modpsi.hpp"
 
-#include "CellStructureType.hpp"
+#include "cell_system/CellStructureType.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "specfunc.hpp"
