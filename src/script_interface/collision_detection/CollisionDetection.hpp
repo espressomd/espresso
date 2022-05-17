@@ -102,26 +102,25 @@ public:
   Variant do_call_method(const std::string &name,
                          const VariantMap &params) override {
     if (name == "instantiate") {
-      auto collision_params_backup = ::collision_params;
-      try {
-        // check provided parameters
-        check_input_parameters(params);
-        // set parameters
-        ::collision_params = Collision_parameters();
-        for (auto const &kv : params) {
-          do_set_parameter(get_value<std::string>(kv.first), kv.second);
-        }
-        // sanitize parameters and calculate derived parameters
-        ::collision_params.initialize();
-        return none;
-      } catch (...) {
-        // restore original parameters and re-throw exception
-        ::collision_params = collision_params_backup;
-        if (context()->is_head_node()) {
+      context()->parallel_try_catch([this, &params]() {
+        auto collision_params_backup = ::collision_params;
+        try {
+          // check provided parameters
+          check_input_parameters(params);
+          // set parameters
+          ::collision_params = Collision_parameters();
+          for (auto const &kv : params) {
+            do_set_parameter(get_value<std::string>(kv.first), kv.second);
+          }
+          // sanitize parameters and calculate derived parameters
+          ::collision_params.initialize();
+          return none;
+        } catch (...) {
+          // restore original parameters and re-throw exception
+          ::collision_params = collision_params_backup;
           throw;
         }
-        throw Exception("");
-      }
+      });
     }
     if (name == "params_for_mode") {
       auto const name = get_value<std::string>(params, "mode");

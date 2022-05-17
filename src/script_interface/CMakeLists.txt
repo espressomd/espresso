@@ -1,7 +1,7 @@
 add_library(
   ScriptInterface SHARED
   initialize.cpp ObjectHandle.cpp object_container_mpi_guard.cpp
-  GlobalContext.cpp ContextManager.cpp)
+  GlobalContext.cpp ContextManager.cpp ParallelExceptionHandler.cpp)
 
 add_subdirectory(accumulators)
 add_subdirectory(bond_breakage)

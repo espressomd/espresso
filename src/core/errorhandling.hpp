@@ -72,6 +72,14 @@ int check_runtime_errors(boost::mpi::communicator const &comm);
  */
 int check_runtime_errors_local();
 
+/**
+ * @brief Flush runtime errors to standard error on the local node.
+ * This is used to clear pending runtime error messages when the
+ * call site is handling an exception that needs to be re-thrown
+ * instead of being queued as an additional runtime error message.
+ */
+void flush_runtime_errors_local();
+
 namespace ErrorHandling {
 /**
  * @brief Initialize the error collection system.

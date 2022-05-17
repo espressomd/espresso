@@ -36,7 +36,7 @@
 #include "Context.hpp"
 #include "Variant.hpp"
 
-#include "MpiCallbacks.hpp"
+#include "core/MpiCallbacks.hpp"
 
 #include <utils/Factory.hpp>
 

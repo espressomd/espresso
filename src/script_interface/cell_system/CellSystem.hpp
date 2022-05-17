@@ -85,9 +85,9 @@ public:
         {"use_verlet_lists", cell_structure.use_verlet_list},
         {"node_grid",
          [this](Variant const &v) {
-           auto const error_msg = std::string("Parameter 'node_grid'");
-           auto const vec = get_value<std::vector<int>>(v);
-           try {
+           context()->parallel_try_catch([&v]() {
+             auto const error_msg = std::string("Parameter 'node_grid'");
+             auto const vec = get_value<std::vector<int>>(v);
              if (vec.size() != 3ul) {
                throw std::invalid_argument(error_msg + " must be 3 ints");
              }
@@ -102,12 +102,7 @@ public:
              }
              ::node_grid = new_node_grid;
              on_nodegrid_change();
-           } catch (...) {
-             if (context()->is_head_node()) {
-               throw;
-             }
-             throw Exception("");
-           }
+           });
          },
          []() { return pack_vector(::node_grid); }},
         {"skin",
@@ -200,8 +195,8 @@ public:
     }
     if (name == "get_pairs") {
       std::vector<Variant> out;
-      std::vector<std::pair<int, int>> pair_list;
-      try {
+      context()->parallel_try_catch([&params, &out]() {
+        std::vector<std::pair<int, int>> pair_list;
         auto const distance = get_value<double>(params, "distance");
         if (boost::get<std::string>(&params.at("types")) != nullptr) {
           auto const key = get_value<std::string>(params, "types");
@@ -218,12 +213,7 @@ public:
                        [](std::pair<int, int> const &pair) {
                          return std::vector<int>{pair.first, pair.second};
                        });
-      } catch (std::exception const &err) {
-        if (context()->is_head_node()) {
-          throw;
-        }
-        throw Exception("");
-      }
+      });
       return out;
     }
     if (name == "non_bonded_loop_trace") {
