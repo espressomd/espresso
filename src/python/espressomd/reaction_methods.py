@@ -72,6 +72,13 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
         Initial counter value (or seed) of the Mersenne Twister RNG.
     exclusion_radius_per_type : :obj:`dict`, optional
          Mapping of particle types to exclusion radii.
+    search_algorithm : :obj:`str`
+        Pair search algorithm. Default is ``"order_n"``, which evaluates the
+        distance between the inserted particle and all other particles in the
+        system, which scales with O(N). For MPI-parallel simulations, the
+        ``"parallel"`` method is faster. The ``"parallel"`` method is not
+        recommended for simulations on 1 MPI rank, since it comes with the
+        overhead of a ghost particle update.
 
     Methods
     -------
@@ -286,7 +293,8 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
             utils.check_valid_keys(self.valid_keys(), kwargs.keys())
 
     def valid_keys(self):
-        return {"kT", "exclusion_range", "seed", "exclusion_radius_per_type"}
+        return {"kT", "exclusion_range", "seed",
+                "exclusion_radius_per_type", "search_algorithm"}
 
     def required_keys(self):
         return {"kT", "exclusion_range", "seed"}
@@ -409,7 +417,7 @@ class ConstantpHEnsemble(ReactionAlgorithm):
 
     def valid_keys(self):
         return {"kT", "exclusion_range", "seed",
-                "constant_pH", "exclusion_radius_per_type"}
+                "constant_pH", "exclusion_radius_per_type", "search_algorithm"}
 
     def required_keys(self):
         return {"kT", "exclusion_range", "seed", "constant_pH"}

@@ -40,6 +40,15 @@ public:
     return m_re;
   }
 
+  WidomInsertion() {
+    add_parameters({{"search_algorithm",
+                     [](Variant const &) {
+                       throw std::runtime_error(
+                           "No search algorithm for WidomInsertion");
+                     },
+                     []() { return none; }}});
+  }
+
   void do_construct(VariantMap const &params) override {
     m_re = std::make_shared<::ReactionMethods::WidomInsertion>(
         get_value<int>(params, "seed"), get_value<double>(params, "kT"), 0.,

@@ -50,8 +50,9 @@ class ReactionAlgorithm {
 public:
   ReactionAlgorithm(
       int seed, double kT, double exclusion_range,
-      const std::unordered_map<int, double> &exclusion_radius_per_type)
-      : m_generator(Random::mt19937(std::seed_seq({seed, seed, seed}))),
+      std::unordered_map<int, double> const &exclusion_radius_per_type)
+      : kT{kT}, exclusion_range{exclusion_range},
+        m_generator(Random::mt19937(std::seed_seq({seed, seed, seed}))),
         m_normal_distribution(0.0, 1.0), m_uniform_real_distribution(0.0, 1.0) {
     if (kT < 0.) {
       throw std::domain_error("Invalid value for 'kT'");
@@ -59,8 +60,6 @@ public:
     if (exclusion_range < 0.) {
       throw std::domain_error("Invalid value for 'exclusion_range'");
     }
-    this->kT = kT;
-    this->exclusion_range = exclusion_range;
     set_exclusion_radius_per_type(exclusion_radius_per_type);
     update_volume();
   }
@@ -100,6 +99,7 @@ public:
   void update_volume();
   void
   set_exclusion_radius_per_type(std::unordered_map<int, double> const &map) {
+    auto max_exclusion_range = exclusion_range;
     for (auto const &item : map) {
       auto const type = item.first;
       auto const exclusion_radius = item.second;
@@ -108,8 +108,11 @@ public:
                                 std::to_string(type) + ": radius " +
                                 std::to_string(exclusion_radius));
       }
+      max_exclusion_range =
+          std::max(max_exclusion_range, 2. * exclusion_radius);
     }
     exclusion_radius_per_type = map;
+    m_max_exclusion_range = max_exclusion_range;
   }
 
   virtual int do_reaction(int reaction_steps);
@@ -134,6 +137,7 @@ public:
                                                int particle_number_of_type);
 
   bool particle_inside_exclusion_range_touched = false;
+  bool neighbor_search_order_n = true;
 
 protected:
   std::vector<int> m_empty_p_ids_smaller_than_max_seen_particle;
@@ -178,7 +182,6 @@ protected:
   bool
   all_reactant_particles_exist(SingleReaction const &current_reaction) const;
 
-protected:
   virtual double
   calculate_acceptance_probability(SingleReaction const &, double, double,
                                    std::map<int, int> const &) const {
@@ -210,6 +213,7 @@ private:
   double m_cyl_y = -10.0;
   double m_slab_start_z = -10.0;
   double m_slab_end_z = -10.0;
+  double m_max_exclusion_range = 0.;
 
 protected:
   Utils::Vector3d get_random_position_in_box();

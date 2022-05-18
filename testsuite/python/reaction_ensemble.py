@@ -58,7 +58,7 @@ class ReactionEnsembleTest(ut.TestCase):
     product_types = [types["A-"], types["H+"]]
     product_coefficients = [1, 1]
     nubar = 1
-    system = espressomd.System(box_l=np.ones(3) * (N0 / c0)**(1.0 / 3.0))
+    system = espressomd.System(box_l=np.ones(3) * np.cbrt(N0 / c0))
     np.random.seed(69)  # make reaction code fully deterministic
     system.cell_system.skin = 0.4
     volume = system.volume()
@@ -68,8 +68,8 @@ class ReactionEnsembleTest(ut.TestCase):
     # degree of dissociation alpha = N_A / N_HA = N_H / N_0
     gamma = target_alpha**2 / (1. - target_alpha) * N0 / (volume**nubar)
     RE = espressomd.reaction_methods.ReactionEnsemble(
-        kT=temperature,
-        exclusion_range=exclusion_range, seed=12)
+        seed=12, kT=temperature,
+        exclusion_range=exclusion_range, search_algorithm="parallel")
 
     @classmethod
     def setUpClass(cls):
