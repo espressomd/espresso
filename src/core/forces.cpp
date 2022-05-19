@@ -183,7 +183,7 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
       [](Particle &p1, Particle &p2, Distance const &d) {
         add_non_bonded_pair_force(p1, p2, d.vec21, sqrt(d.dist2), d.dist2);
 #ifdef COLLISION_DETECTION
-        if (collision_params.mode != COLLISION_MODE_OFF)
+        if (collision_params.mode != CollisionModeType::OFF)
           detect_collision(p1, p2, d.dist2);
 #endif
       },

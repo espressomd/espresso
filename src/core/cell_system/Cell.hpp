@@ -27,7 +27,6 @@
 #include <boost/range/iterator_range.hpp>
 
 #include <algorithm>
-#include <functional>
 #include <utility>
 #include <vector>
 

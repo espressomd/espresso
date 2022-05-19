@@ -21,7 +21,7 @@
 
 #include "config.hpp"
 
-#include "CellStructure.hpp"
+#include "cell_system/CellStructure.hpp"
 
 #include <cassert>
 #include <cstddef>

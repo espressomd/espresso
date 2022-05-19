@@ -16,12 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_PARTICLE_DECOMPOSITION_HPP
-#define ESPRESSO_PARTICLE_DECOMPOSITION_HPP
+#ifndef ESPRESSO_SRC_CORE_CELL_SYSTEM_PARTICLE_DECOMPOSITION_HPP
+#define ESPRESSO_SRC_CORE_CELL_SYSTEM_PARTICLE_DECOMPOSITION_HPP
+
+#include "cell_system/Cell.hpp"
 
 #include "BoxGeometry.hpp"
-#include "Cell.hpp"
-#include "LocalBox.hpp"
 #include "ghosts.hpp"
 
 #include <utils/Span.hpp>

@@ -17,11 +17,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define BOOST_TEST_NO_MAIN
 #define BOOST_TEST_MODULE ScriptInterface::LocalContext test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
 #include "script_interface/LocalContext.hpp"
+
+#include <boost/mpi.hpp>
+#include <boost/mpi/communicator.hpp>
 
 #include <algorithm>
 #include <memory>
@@ -57,7 +61,8 @@ auto factory = []() {
 }();
 
 BOOST_AUTO_TEST_CASE(LocalContext_make_shared) {
-  auto ctx = std::make_shared<si::LocalContext>(factory, 0);
+  boost::mpi::communicator comm;
+  auto ctx = std::make_shared<si::LocalContext>(factory, comm);
 
   auto res = ctx->make_shared("Dummy", {});
   BOOST_REQUIRE(res != nullptr);
@@ -66,7 +71,8 @@ BOOST_AUTO_TEST_CASE(LocalContext_make_shared) {
 }
 
 BOOST_AUTO_TEST_CASE(LocalContext_serialization) {
-  auto ctx = std::make_shared<si::LocalContext>(factory, 0);
+  boost::mpi::communicator comm;
+  auto ctx = std::make_shared<si::LocalContext>(factory, comm);
 
   auto const serialized = [&]() {
     auto d1 = ctx->make_shared("Dummy", {});
@@ -93,4 +99,10 @@ BOOST_AUTO_TEST_CASE(LocalContext_serialization) {
     BOOST_REQUIRE(d3);
     BOOST_CHECK_EQUAL(boost::get<int>(d3->get_parameter("id")), 3);
   }
+}
+
+int main(int argc, char **argv) {
+  boost::mpi::environment mpi_env(argc, argv);
+
+  return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }

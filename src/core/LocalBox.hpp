@@ -16,10 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_LOCALBOX_HPP
-#define ESPRESSO_LOCALBOX_HPP
+#ifndef ESPRESSO_SRC_CORE_LOCALBOX_HPP
+#define ESPRESSO_SRC_CORE_LOCALBOX_HPP
 
-#include "CellStructureType.hpp"
+#include "cell_system/CellStructureType.hpp"
+
+#include <utils/Array.hpp>
 #include <utils/Vector.hpp>
 
 template <class T> class LocalBox {

@@ -19,7 +19,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "RegularDecomposition.hpp"
+#include "cell_system/RegularDecomposition.hpp"
+
+#include "cell_system/Cell.hpp"
 
 #include "RuntimeErrorStream.hpp"
 #include "errorhandling.hpp"
@@ -32,6 +34,7 @@
 
 #include <boost/container/flat_set.hpp>
 #include <boost/mpi/collectives.hpp>
+#include <boost/mpi/communicator.hpp>
 #include <boost/range/algorithm/reverse.hpp>
 #include <boost/range/numeric.hpp>
 

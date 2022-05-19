@@ -25,8 +25,8 @@
  */
 #include "event.hpp"
 
-#include "CellStructureType.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
+#include "cell_system/CellStructureType.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
 #include "communication.hpp"
@@ -349,7 +349,7 @@ unsigned global_ghost_flags() {
   }
 
 #ifdef COLLISION_DETECTION
-  if (collision_params.mode) {
+  if (collision_params.mode != CollisionModeType::OFF) {
     data_parts |= Cells::DATA_PART_BONDS;
   }
 #endif

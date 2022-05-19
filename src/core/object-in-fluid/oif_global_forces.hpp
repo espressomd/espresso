@@ -23,7 +23,7 @@
  *  for a particle triple (triangle from mesh). See @cite dupin07a.
  */
 
-#include "CellStructure.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "oif_global_forces_params.hpp"
 
 #include <utils/Vector.hpp>

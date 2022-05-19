@@ -25,7 +25,7 @@
 #include "electrostatics_magnetostatics/common.hpp"
 #include "electrostatics_magnetostatics/coulomb.hpp"
 
-#include "CellStructureType.hpp"
+#include "cell_system/CellStructureType.hpp"
 #include "energy.hpp"
 #include "forces.hpp"
 #include "grid.hpp"

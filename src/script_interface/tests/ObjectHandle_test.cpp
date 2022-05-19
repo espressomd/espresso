@@ -194,6 +194,7 @@ struct LogContext : public Context {
   }
 
   bool is_head_node() const override { return true; }
+  void parallel_try_catch(std::function<void()> const &) const override {}
 };
 } // namespace Testing
 
@@ -248,4 +249,5 @@ BOOST_AUTO_TEST_CASE(interface_) {
   auto o = log_ctx->make_shared({}, {});
   BOOST_CHECK(log_ctx->is_head_node());
   BOOST_CHECK_EQUAL(log_ctx->name(o.get()), "Dummy");
+  static_cast<void>(log_ctx->parallel_try_catch([]() {}));
 }

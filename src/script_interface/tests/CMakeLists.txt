@@ -33,6 +33,9 @@ unit_test(NAME LocalContext_test SRC LocalContext_test.cpp DEPENDS
 unit_test(NAME GlobalContext_test SRC GlobalContext_test.cpp DEPENDS
           ScriptInterface Boost::mpi MPI::MPI_CXX NUM_PROC 2)
 unit_test(NAME Exception_test SRC Exception_test.cpp DEPENDS ScriptInterface)
+unit_test(NAME ParallelExceptionHandler_test SRC
+          ParallelExceptionHandler_test.cpp DEPENDS ScriptInterface Boost::mpi
+          MPI::MPI_CXX NUM_PROC 2)
 unit_test(NAME packed_variant_test SRC packed_variant_test.cpp DEPENDS
           ScriptInterface)
 unit_test(NAME ObjectList_test SRC ObjectList_test.cpp DEPENDS ScriptInterface)

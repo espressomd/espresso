@@ -19,14 +19,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "HybridDecomposition.hpp"
+#include "cell_system/HybridDecomposition.hpp"
 
-#include "CellStructure.hpp"
+#include "cell_system/Cell.hpp"
+#include "cell_system/CellStructure.hpp"
+
+#include "BoxGeometry.hpp"
+#include "LocalBox.hpp"
 #include "event.hpp"
 
-#include <utility>
 #include <utils/Vector.hpp>
 #include <utils/mpi/sendrecv.hpp>
+
+#include <boost/mpi/communicator.hpp>
+
+#include <algorithm>
+#include <cstddef>
+#include <iterator>
+#include <set>
+#include <utility>
 
 HybridDecomposition::HybridDecomposition(boost::mpi::communicator comm,
                                          double cutoff_regular,

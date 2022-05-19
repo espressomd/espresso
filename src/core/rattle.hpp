@@ -31,7 +31,7 @@
 
 #ifdef BOND_CONSTRAINT
 
-#include "CellStructure.hpp"
+#include "cell_system/CellStructure.hpp"
 
 /** Transfer the current particle positions from @ref Particle::pos
  *  "Particle::pos" to @ref Particle::pos_last_time_step

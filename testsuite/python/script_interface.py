@@ -111,8 +111,8 @@ class ScriptInterface(ut.TestCase):
         with self.assertRaisesRegex(TypeError, err_msg):
             constraint.call_method('unknown', unknown=ut)
         # check restrictions on the dict type
-        with self.assertRaisesRegex(TypeError, r"No conversion from type 'dict_item\(\[\(str, int\)\]\)' to 'Variant\[std::(__1::)?unordered_map<int, Variant>\]'"):
-            constraint.shape = {'1': 2}
+        with self.assertRaisesRegex(TypeError, r"No conversion from type 'dict_item\(\[\(float, int\)\]\)' to 'Variant\[std::unordered_map<int, Variant>\]'"):
+            constraint.shape = {5.: 2}
         # check type mismatch
         error_msg = "Provided argument of type '{}' is not convertible to 'std::(__1::)?shared_ptr<ScriptInterface::Shapes::Shape>'"
         with self.assertRaisesRegex(RuntimeError, error_msg.format("int")):

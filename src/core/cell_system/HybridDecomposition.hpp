@@ -19,14 +19,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_HYBRID_DECOMPOSITION_HPP
-#define ESPRESSO_HYBRID_DECOMPOSITION_HPP
+#ifndef ESPRESSO_SRC_CORE_CELL_SYSTEM_HYBRID_DECOMPOSITION_HPP
+#define ESPRESSO_SRC_CORE_CELL_SYSTEM_HYBRID_DECOMPOSITION_HPP
 
-#include "AtomDecomposition.hpp"
-#include "Cell.hpp"
+#include "cell_system/AtomDecomposition.hpp"
+#include "cell_system/ParticleDecomposition.hpp"
+#include "cell_system/RegularDecomposition.hpp"
+
+#include "cell_system/Cell.hpp"
+
+#include "BoxGeometry.hpp"
+#include "LocalBox.hpp"
 #include "Particle.hpp"
-#include "ParticleDecomposition.hpp"
-#include "RegularDecomposition.hpp"
 #include "ghosts.hpp"
 #include "integrate.hpp"
 
@@ -36,14 +40,20 @@
 #include <boost/mpi/communicator.hpp>
 #include <boost/optional.hpp>
 
+#include <cstddef>
 #include <set>
 #include <utility>
 #include <vector>
 
-namespace Utils {
-using Vector2i = Vector<std::size_t, 2>;
-}
-
+/**
+ * @brief Hybrid decomposition cell system.
+ *
+ * Store particles with short-range interactions
+ * in a @ref RegularDecomposition cell system and
+ * particles with long-range interactions
+ * in a @ref AtomDecomposition (N-square) cell system.
+ * All regular cells are coupled to the N-square cells.
+ */
 class HybridDecomposition : public ParticleDecomposition {
   boost::mpi::communicator m_comm;
   BoxGeometry m_box;
@@ -122,4 +132,4 @@ public:
   Utils::Vector<std::size_t, 2> parts_per_decomposition_local() const;
 };
 
-#endif // ESPRESSO_HYBRID_DECOMPOSITION_HPP
+#endif

@@ -204,39 +204,64 @@ BOOST_AUTO_TEST_CASE(check_exceptions) {
   }
   {
     // vectors
+    auto const int_variant = Variant{1.5};
     auto const vec_variant = Variant{std::vector<Variant>{{so_obj}}};
-    auto const vec_variant_pattern =
-        "std::(__1::)?vector<" + variant_name + ", .*?>";
+    auto const vec_variant_pattern = "std::vector<" + variant_name + ">";
     auto const what = msg_prefix + "'" + vec_variant_pattern + "'";
     auto const predicate_nullptr = exception_message_predicate(
         what + " contains a value that is a null pointer");
-    auto const predicate_conversion = exception_message_predicate(
-        what + " is not convertible to 'std::(__1::)?vector<int, .*?>' because"
+    auto const predicate_conversion_containee = exception_message_predicate(
+        what + " is not convertible to 'std::vector<int>' because"
                " it contains a value that is not convertible to 'int'");
+    auto const predicate_conversion = exception_message_predicate(
+        msg_prefix + "'double' is not convertible to 'std::vector<int>'");
     BOOST_CHECK_EXCEPTION(get_value<std::vector<so_ptr_t>>(vec_variant),
                           std::exception, predicate_nullptr);
     BOOST_CHECK_EXCEPTION(get_value<std::vector<int>>(vec_variant),
+                          std::exception, predicate_conversion_containee);
+    BOOST_CHECK_EXCEPTION(get_value<std::vector<int>>(int_variant),
                           std::exception, predicate_conversion);
   }
   {
-    // unordered maps
+    // unordered maps with integral key
     auto const map_variant =
         Variant{std::unordered_map<int, Variant>{{1, so_obj}}};
     auto const map_variant_pattern =
-        "std::(__1::)?unordered_map<int, " + variant_name + ", .*?>";
+        "std::unordered_map<int, " + variant_name + ">";
     auto const what = msg_prefix + "'" + map_variant_pattern + "'";
     auto const predicate_nullptr = exception_message_predicate(
         what + " contains a value that is a null pointer");
     auto const predicate_conversion = exception_message_predicate(
         what +
-        " is not convertible to 'std::(__1::)?unordered_map<int, int, .*?>' "
-        "because it contains a value that is not convertible to 'int'");
+        " is not convertible to 'std::unordered_map<int, double>' because"
+        " it contains a value that is not convertible to 'int' or 'double'");
     BOOST_CHECK_EXCEPTION(
         (get_value<std::unordered_map<int, so_ptr_t>>(map_variant)),
         std::exception, predicate_nullptr);
     BOOST_CHECK_EXCEPTION(
-        (get_value<std::unordered_map<int, int>>(map_variant)), std::exception,
-        predicate_conversion);
+        (get_value<std::unordered_map<int, double>>(map_variant)),
+        std::exception, predicate_conversion);
+  }
+  {
+    // unordered maps with string key
+    auto const map_variant =
+        Variant{std::unordered_map<std::string, Variant>{{"key", so_obj}}};
+    auto const map_variant_pattern =
+        "std::unordered_map<std::string, " + variant_name + ">";
+    auto const what = msg_prefix + "'" + map_variant_pattern + "'";
+    auto const predicate_nullptr = exception_message_predicate(
+        what + " contains a value that is a null pointer");
+    auto const predicate_conversion = exception_message_predicate(
+        what +
+        " is not convertible to 'std::unordered_map<std::string, int>' because"
+        " it contains a value that is not convertible to 'std::string' or "
+        "'int'");
+    BOOST_CHECK_EXCEPTION(
+        (get_value<std::unordered_map<std::string, so_ptr_t>>(map_variant)),
+        std::exception, predicate_nullptr);
+    BOOST_CHECK_EXCEPTION(
+        (get_value<std::unordered_map<std::string, int>>(map_variant)),
+        std::exception, predicate_conversion);
   }
   {
     using Utils::Vector3d;
@@ -254,5 +279,8 @@ BOOST_AUTO_TEST_CASE(check_exceptions) {
                       std::exception);
     BOOST_CHECK_THROW((get_value<std::unordered_map<int, int>>(Variant{mixed})),
                       std::exception);
+    BOOST_CHECK_THROW(
+        (get_value<std::unordered_map<std::string, int>>(Variant{mixed})),
+        std::exception);
   }
 }

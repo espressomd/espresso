@@ -29,9 +29,11 @@
 
 #include "Context.hpp"
 #include "LocalContext.hpp"
-#include "MpiCallbacks.hpp"
 #include "ObjectHandle.hpp"
+#include "ParallelExceptionHandler.hpp"
 #include "packed_variant.hpp"
+
+#include "core/MpiCallbacks.hpp"
 
 #include <utils/Factory.hpp>
 
@@ -39,6 +41,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -61,7 +64,6 @@ namespace ScriptInterface {
 class GlobalContext : public Context {
   using ObjectId = std::size_t;
 
-private:
   /* Instances on this node that are managed by the
    * head node. */
   std::unordered_map<ObjectId, ObjectRef> m_local_objects;
@@ -70,7 +72,8 @@ private:
 
   bool m_is_head_node;
 
-private:
+  ParallelExceptionHandler m_parallel_exception_handler;
+
   Communication::CallbackHandle<ObjectId, const std::string &,
                                 const PackedMap &>
       cb_make_handle;
@@ -87,6 +90,7 @@ public:
                 std::shared_ptr<LocalContext> node_local_context)
       : m_local_objects(), m_node_local_context(std::move(node_local_context)),
         m_is_head_node(callbacks.comm().rank() == 0),
+        m_parallel_exception_handler(callbacks.comm()),
         cb_make_handle(&callbacks,
                        [this](ObjectId id, const std::string &name,
                               const PackedMap &parameters) {
@@ -162,6 +166,9 @@ public:
   boost::string_ref name(const ObjectHandle *o) const override;
 
   bool is_head_node() const override { return m_is_head_node; }
+  void parallel_try_catch(std::function<void()> const &cb) const override {
+    m_parallel_exception_handler.parallel_try_catch<std::exception>(cb);
+  }
 };
 } // namespace ScriptInterface
 

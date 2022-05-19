@@ -148,7 +148,8 @@ first step, an instance of this class needs to be created. ::
 Note that only one instance of the System class can be created due to
 limitations in the simulation core. :ref:`Properties of the System
 class<Setting global variables>` are used to access the parameters
-concerning the simulation system such as box geometry, time step or :ref:`cell-system<Cellsystems>`: ::
+concerning the simulation system such as box geometry, time step or
+:ref:`cell-system<Cell systems>`: ::
 
     print(f"The box dimensions are {system.box_l}")
     system.time_step = 0.01

@@ -106,7 +106,7 @@ checkpoint_test(MODES scafacos__therm_bd__int_bd)
 checkpoint_test(MODES therm_sdm__int_sdm)
 
 python_test(FILE bond_breakage.py MAX_NUM_PROC 4)
-python_test(FILE cellsystem.py MAX_NUM_PROC 4)
+python_test(FILE cell_system.py MAX_NUM_PROC 4)
 python_test(FILE tune_skin.py MAX_NUM_PROC 1)
 python_test(FILE constraint_homogeneous_magnetic_field.py MAX_NUM_PROC 4)
 python_test(FILE constraint_shape_based.py MAX_NUM_PROC 2)

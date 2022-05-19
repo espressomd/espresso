@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_BOX_GEOMETRY_HPP
-#define CORE_BOX_GEOMETRY_HPP
+#ifndef ESPRESSO_SRC_CORE_BOX_GEOMETRY_HPP
+#define ESPRESSO_SRC_CORE_BOX_GEOMETRY_HPP
 
 #include "algorithm/periodic_fold.hpp"
 #include "lees_edwards/LeesEdwardsBC.hpp"
@@ -273,4 +273,4 @@ inline Utils::Vector3d folded_position(const Utils::Vector3d &p,
   return p_folded;
 }
 
-#endif // CORE_BOX_GEOMETRY_HPP
+#endif

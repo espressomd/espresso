@@ -226,7 +226,7 @@ is automatically gathered on the main rank, which means a regular |es|
 script can be executed in an MPI environment out-of-the-box. The number
 of MPI ranks can be accessed via the system ``n_nodes`` state property.
 The simulation box partition is controlled by the cell system
-:attr:`~espressomd.cellsystem.CellSystem.node_grid` property.
+:attr:`~espressomd.cell_system.CellSystem.node_grid` property.
 By default, MPI ranks are assigned in decreasing order, e.g. on 6 MPI ranks
 ``node_grid`` is ``[3, 2, 1]``. It is possible to re-assign the ranks by
 changing the value of the ``node_grid`` property, however a few algorithms
