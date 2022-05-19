@@ -437,7 +437,7 @@ int python_integrate(int n_steps, bool recalc_forces_par,
 
   /* if skin wasn't set, do an educated guess now */
   if (!skin_set) {
-    auto const max_cut = maximal_cutoff();
+    auto const max_cut = maximal_cutoff(n_nodes);
     if (max_cut <= 0.0) {
       runtimeErrorMsg()
           << "cannot automatically determine skin, please set it manually";
@@ -529,7 +529,7 @@ void integrate_set_npt_isotropic(double ext_pressure, double piston,
 
 double interaction_range() {
   /* Consider skin only if there are actually interactions */
-  auto const max_cut = maximal_cutoff();
+  auto const max_cut = maximal_cutoff(n_nodes == 1);
   return (max_cut > 0.) ? max_cut + skin : INACTIVE_CUTOFF;
 }
 

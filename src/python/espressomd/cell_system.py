@@ -39,6 +39,10 @@ class CellSystem(ScriptInterfaceHelper):
         Maximal range from bonded interactions.
     max_cut_nonbonded : :obj:`float`
         Maximal range from non-bonded interactions.
+    interaction_range : :obj:`float`
+        Maximal interaction range from all interactions,
+        or -1 when no interactions are active (or their
+        cutoff has no impact when only 1 MPI rank is used).
 
     Methods
     -------

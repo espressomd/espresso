@@ -299,13 +299,16 @@ class BondedInteractions(ut.TestCase):
         self.assertEqual(len(self.system.bonded_inter), 1)
         self.system.bonded_inter.clear()
 
+        # On more than one node:
         # a bond with a cutoff larger than the box can be added, but throws
         big_cut = 1.001 * safe_cut
-        h1 = espressomd.interactions.HarmonicBond(k=1., r_0=0., r_cut=big_cut)
-        with self.assertRaisesRegex(Exception, err_msg):
-            self.system.bonded_inter.add(h1)
-        self.assertEqual(len(self.system.bonded_inter), 1)
-        self.system.bonded_inter.clear()
+        if n_nodes > 1:
+            h1 = espressomd.interactions.HarmonicBond(
+                k=1., r_0=0., r_cut=big_cut)
+            with self.assertRaisesRegex(Exception, err_msg):
+                self.system.bonded_inter.add(h1)
+            self.assertEqual(len(self.system.bonded_inter), 1)
+            self.system.bonded_inter.clear()
 
         # a dihedral halves the cutoff
         safe_cut /= 2.
@@ -317,13 +320,15 @@ class BondedInteractions(ut.TestCase):
         self.system.bonded_inter.clear()
 
         # a dihedral halves the cutoff, safe cutoffs become unsafe
-        half_cut = big_cut / 2.
-        h3 = espressomd.interactions.HarmonicBond(k=1., r_0=0., r_cut=half_cut)
-        self.system.bonded_inter.add(h3)
-        with self.assertRaisesRegex(Exception, err_msg):
-            self.system.bonded_inter.add(dihe)
-        self.assertEqual(len(self.system.bonded_inter), 2)
-        self.system.bonded_inter.clear()
+        if n_nodes > 1:
+            half_cut = big_cut / 2.
+            h3 = espressomd.interactions.HarmonicBond(
+                k=1., r_0=0., r_cut=half_cut)
+            self.system.bonded_inter.add(h3)
+            with self.assertRaisesRegex(Exception, err_msg):
+                self.system.bonded_inter.add(dihe)
+            self.assertEqual(len(self.system.bonded_inter), 2)
+            self.system.bonded_inter.clear()
 
 
 if __name__ == "__main__":
