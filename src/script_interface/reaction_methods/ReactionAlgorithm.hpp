@@ -67,6 +67,24 @@ public:
             return out;
           }},
          {"kT", AutoParameter::read_only, [this]() { return RE()->get_kT(); }},
+         {"search_algorithm",
+          [this](Variant const &v) {
+            auto const key = get_value<std::string>(v);
+            if (key == "order_n") {
+              RE()->neighbor_search_order_n = true;
+            } else if (key == "parallel") {
+              RE()->neighbor_search_order_n = false;
+            } else {
+              throw std::invalid_argument("Unknown search algorithm '" + key +
+                                          "'");
+            }
+          },
+          [this]() {
+            if (RE()->neighbor_search_order_n) {
+              return std::string("order_n");
+            }
+            return std::string("parallel");
+          }},
          {"exclusion_range", AutoParameter::read_only,
           [this]() { return RE()->get_exclusion_range(); }},
          {"exclusion_radius_per_type",

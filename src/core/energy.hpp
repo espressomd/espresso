@@ -42,4 +42,15 @@ double calculate_current_potential_energy_of_system();
 /** Helper function for @ref Observables::Energy. */
 double observable_compute_energy();
 
+/**
+ * @brief Compute short-range energy of a particle.
+ *
+ * Iterates through particles inside cell and neighboring cells and computes
+ * energy contribution for a specificparticle.
+ *
+ * @param pid    Particle id
+ * @return Non-bonded energy of the particle.
+ */
+double particle_short_range_energy_contribution(int pid);
+
 #endif

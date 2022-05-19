@@ -29,6 +29,7 @@ from .utils cimport Vector3i, Vector3d, Vector9d
 from .utils cimport make_Vector3d
 from .utils cimport make_array_locked
 from .utils cimport create_nparray_from_double_array
+from .particle_data cimport particle, ParticleHandle
 
 
 def autocorrelation(time_series):
@@ -343,6 +344,24 @@ class Analysis:
         obs = analyze.get_energy()
         utils.handle_errors("calculate_energy() failed")
         return obs
+
+    def particle_energy(self, particle):
+        """
+        Calculate the non-bonded energy of a single given particle.
+
+        Parameters
+        ----------
+        particle : :class:`~espressomd.particle_data.ParticleHandle`
+
+        Returns
+        -------
+        :obj: `float`
+            non-bonded energy of that particle
+
+        """
+        energy_contribution = particle_short_range_energy_contribution(
+            particle.id)
+        return energy_contribution
 
     def calc_re(self, chain_start=None, number_of_chains=None,
                 chain_length=None):

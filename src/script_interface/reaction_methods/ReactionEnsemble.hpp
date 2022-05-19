@@ -45,6 +45,9 @@ public:
         get_value<double>(params, "exclusion_range"),
         get_value_or<std::unordered_map<int, double>>(
             params, "exclusion_radius_per_type", {}));
+    do_set_parameter("search_algorithm",
+                     Variant{get_value_or<std::string>(
+                         params, "search_algorithm", "order_n")});
   }
 
 private:

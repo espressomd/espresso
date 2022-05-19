@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from . import utils
+from . import particle_data
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 
 
@@ -176,6 +177,38 @@ class CellSystem(ScriptInterfaceHelper):
             raise ValueError("Argument 'types' must be an iterable")
         pairs = self.call_method("get_pairs", distance=distance, types=types)
         return [tuple(pair) for pair in pairs]
+
+    def get_neighbors(self, particle, distance):
+        """
+        Get neighbors of a given particle up to a certain distance.
+
+        The choice of :ref:`cell systems <Cell systems>` has an impact on
+        how far the algorithm can detect particle pairs:
+
+        * N-square: no restriction on the search distance, no double counting
+          if search distance is larger than the box size
+        * regular decomposition: the search distance is bounded by half
+          the local cell geometry
+        * hybrid decomposition: not supported
+
+        Parameters
+        ----------
+        particle : :class:`~espressomd.particle_data.ParticleHandle`
+        distance : :obj:`float`
+            Pairs of particles closer than ``distance`` are found.
+
+        Returns
+        -------
+        (N,) array_like of :obj:`int`
+            The list of neighbor particles surrounding the particle
+
+        """
+        utils.check_type_or_throw_except(
+            particle, 1, particle_data.ParticleHandle, "Parameter 'particle' must be a particle")
+        utils.check_type_or_throw_except(
+            distance, 1, float, "Parameter 'distance' must be a float")
+        return self.call_method(
+            "get_neighbors", distance=distance, pid=particle.id)
 
     def non_bonded_loop_trace(self):
         pairs = self.call_method("non_bonded_loop_trace")

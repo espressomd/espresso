@@ -40,6 +40,10 @@ cdef extern from "<array>" namespace "std" nogil:
         array2() except+
         double & operator[](size_t)
 
+cdef extern from "particle_data.hpp":
+    ctypedef struct particle "Particle"
+    const particle & get_particle_data(int pid) except +
+
 cdef extern from "PartCfg.hpp":
     cppclass PartCfg:
         pass
@@ -92,6 +96,7 @@ cdef extern from "pressure.hpp":
 cdef extern from "energy.hpp":
     cdef shared_ptr[Observable_stat] calculate_energy()
     double calculate_current_potential_energy_of_system()
+    double particle_short_range_energy_contribution(int pid)
 
 cdef extern from "dpd.hpp":
     Vector9d dpd_stress()

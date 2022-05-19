@@ -34,7 +34,7 @@ class ReactionMethods(ut.TestCase):
         self.system.part.clear()
 
     def check_interface(self, method, kT, exclusion_range,
-                        gamma, exclusion_radius_per_type):
+                        gamma, exclusion_radius_per_type, search_algorithm):
         def check_reaction_parameters(reactions, parameters):
             for reaction, params in zip(reactions, parameters):
                 for key in reaction.required_keys():
@@ -72,6 +72,7 @@ class ReactionMethods(ut.TestCase):
             method.exclusion_range,
             exclusion_range,
             delta=1e-10)
+        self.assertEqual(method.search_algorithm, search_algorithm)
         if not isinstance(method, espressomd.reaction_methods.WidomInsertion):
             self.assertEqual(
                 list(method.exclusion_radius_per_type.keys()), [1])
@@ -162,18 +163,20 @@ class ReactionMethods(ut.TestCase):
 
         # reaction ensemble
         method = espressomd.reaction_methods.ReactionEnsemble(
-            kT=1.4, seed=12, **params)
-        self.check_interface(method, kT=1.4, gamma=1.2, **params)
+            kT=1.4, seed=12, search_algorithm="order_n", **params)
+        self.check_interface(method, kT=1.4, gamma=1.2,
+                             search_algorithm="order_n", **params)
 
         # constant pH ensemble
         method = espressomd.reaction_methods.ConstantpHEnsemble(
-            kT=1.5, seed=14, constant_pH=10, **params)
-        self.check_interface(method, kT=1.5, gamma=1.2, **params)
+            kT=1.5, seed=14, search_algorithm="parallel", constant_pH=10., **params)
+        self.check_interface(method, kT=1.5, gamma=1.2,
+                             search_algorithm="parallel", **params)
 
         # Widom insertion
         method = espressomd.reaction_methods.WidomInsertion(kT=1.6, seed=16)
         self.check_interface(method, kT=1.6, gamma=1., exclusion_range=0.,
-                             exclusion_radius_per_type={})
+                             exclusion_radius_per_type={}, search_algorithm=None)
 
     def test_exceptions(self):
         single_reaction_params = {
@@ -257,6 +260,8 @@ class ReactionMethods(ut.TestCase):
             method.delete_particle(p_id=0)
         with self.assertRaisesRegex(RuntimeError, "Trying to remove some non-existing particles from the system via the inverse Widom scheme"):
             widom.calculate_particle_insertion_potential_energy(reaction_id=0)
+        with self.assertRaisesRegex(RuntimeError, "No search algorithm for WidomInsertion"):
+            widom.search_algorithm = "order_n"
 
         # check other exceptions
         with self.assertRaisesRegex(ValueError, "Invalid value for 'volume'"):
@@ -287,6 +292,9 @@ class ReactionMethods(ut.TestCase):
         with self.assertRaisesRegex(ValueError, "Invalid excluded_radius value for type 1: radius -0.10"):
             espressomd.reaction_methods.ReactionEnsemble(
                 kT=1., seed=12, exclusion_range=1., exclusion_radius_per_type={1: -0.1})
+        with self.assertRaisesRegex(ValueError, "Unknown search algorithm 'unknown'"):
+            espressomd.reaction_methods.ReactionEnsemble(
+                kT=1., seed=12, exclusion_range=1., search_algorithm="unknown")
         method = espressomd.reaction_methods.ReactionEnsemble(
             kT=1., exclusion_range=1., seed=12, exclusion_radius_per_type={1: 0.1})
         with self.assertRaisesRegex(ValueError, "Invalid excluded_radius value for type 2: radius -0.10"):

@@ -33,6 +33,7 @@
 
 #include "Particle.hpp"
 #include "communication.hpp"
+#include "errorhandling.hpp"
 #include "event.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
@@ -113,7 +114,50 @@ static void search_distance_sanity_check(double const distance) {
                             std::to_string(range));
   }
 }
+static void search_neighbors_sanity_check(double const distance) {
+  search_distance_sanity_check(distance);
+  if (cell_structure.decomposition_type() ==
+      CellStructureType::CELL_STRUCTURE_HYBRID) {
+    throw std::runtime_error("Cannot search for neighbors in the hybrid "
+                             "decomposition cell system");
+  }
+}
 } // namespace detail
+
+boost::optional<std::vector<int>>
+mpi_get_short_range_neighbors_local(int const pid, double const distance,
+                                    bool run_sanity_checks) {
+
+  if (run_sanity_checks) {
+    detail::search_neighbors_sanity_check(distance);
+  }
+  on_observable_calc();
+
+  auto const p = cell_structure.get_local_particle(pid);
+  if (not p or p->is_ghost()) {
+    return {};
+  }
+
+  std::vector<int> ret;
+  auto const cutoff2 = distance * distance;
+  auto kernel = [&ret, cutoff2](Particle const &p1, Particle const &p2,
+                                Utils::Vector3d const &vec) {
+    if (vec.norm2() < cutoff2) {
+      ret.emplace_back(p2.id());
+    }
+  };
+  cell_structure.run_on_particle_short_range_neighbors(*p, kernel);
+  return ret;
+}
+
+REGISTER_CALLBACK_ONE_RANK(mpi_get_short_range_neighbors_local)
+
+std::vector<int> mpi_get_short_range_neighbors(int const pid,
+                                               double const distance) {
+  detail::search_neighbors_sanity_check(distance);
+  return mpi_call(::Communication::Result::one_rank,
+                  mpi_get_short_range_neighbors_local, pid, distance, false);
+}
 
 std::vector<std::pair<int, int>> get_pairs(double const distance) {
   detail::search_distance_sanity_check(distance);

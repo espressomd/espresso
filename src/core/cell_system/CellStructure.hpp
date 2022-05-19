@@ -692,6 +692,58 @@ public:
 
     return particle_to_cell(p);
   }
+
+  /**
+   * @brief Run kernel on all particles inside local cell and its neighbors.
+   *
+   * @param p      Particle to find cell for
+   * @param kernel Function with signature <tt>double(Particle const&,
+   *               Particle const&, Utils::Vector3d const&)</tt>
+   * @return false if cell is not found, otherwise true
+   */
+  template <class Kernel>
+  bool run_on_particle_short_range_neighbors(Particle const &p,
+                                             Kernel &kernel) {
+    auto const cell = find_current_cell(p);
+
+    if (cell == nullptr) {
+      return false;
+    }
+
+    auto const maybe_box = decomposition().minimum_image_distance();
+
+    if (maybe_box) {
+      auto const distance_function = detail::MinimalImageDistance{box_geo};
+      short_range_neighbor_loop(p, cell, kernel, distance_function);
+    } else {
+      auto const distance_function = detail::EuclidianDistance{};
+      short_range_neighbor_loop(p, cell, kernel, distance_function);
+    }
+    return true;
+  }
+
+private:
+  template <class Kernel, class DistanceFunc>
+  void short_range_neighbor_loop(Particle const &p1, Cell *const cell,
+                                 Kernel &kernel, DistanceFunc const &df) {
+    /* Iterate over particles inside cell */
+    for (auto const &p2 : cell->particles()) {
+      if (p1.id() != p2.id()) {
+        auto const vec = df(p1, p2).vec21;
+        kernel(p1, p2, vec);
+      }
+    }
+    /* Iterate over all neighbors */
+    for (auto const neighbor : cell->neighbors().all()) {
+      /* Iterate over particles in neighbors */
+      if (neighbor != cell) {
+        for (auto const &p2 : neighbor->particles()) {
+          auto const vec = df(p1, p2).vec21;
+          kernel(p1, p2, vec);
+        }
+      }
+    }
+  }
 };
 
 #endif
