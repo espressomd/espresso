@@ -141,6 +141,7 @@ Initialization
 ::
 
     import espressomd
+    import espressomd.electrokinetics
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     system.time_step = 0.0
     system.cell_system.skin = 0.4
@@ -153,7 +154,7 @@ Initialization
 
 The above is a minimal example how to initialize the LB fluid, and
 it is very similar to the lattice-Boltzmann command in set-up. We
-therefore refer the reader to Chapter :ref:`Lattice-Boltzmann` for details on the
+therefore refer the reader to chapter :ref:`Lattice-Boltzmann` for details on the
 implementation of LB in |es| and describe only the major differences here.
 
 The first major difference with the LB implementation is that the
@@ -193,7 +194,6 @@ species. Note that this switching is only possible for the ``"linkcentered"``
 stencil. For all other stencils, this choice is hardcoded. The default
 is ``"friction"``.
 
-
 ``es_coupling`` enables the action of the electrostatic potential due to the
 electrokinetics species and charged boundaries on the MD particles. The
 forces on the particles are calculated by interpolation from the
@@ -226,12 +226,14 @@ valency of the particles of that species ``valency``, and an optional external
 before, the LB density is completely decoupled from the electrokinetic
 densities. This has the advantage that greater freedom can be achieved
 in matching the internal parameters to an experimental system. Moreover,
-it is possible to choose parameters for which the LB is more stable. The species can be added to a LB fluid::
+it is possible to choose parameters for which the LB is more stable.
+The species can be added to a LB fluid::
 
     ek.add_species(species)
 
 One can also add the species during the initialization step of the
-:class:`espressomd.electrokinetics.Electrokinetics` by defining the list variable ``species``::
+:class:`~espressomd.electrokinetics.Electrokinetics` class by defining
+the list variable ``species``::
 
     ek = espressomd.electrokinetics.Electrokinetics(species=[species], ...)
 

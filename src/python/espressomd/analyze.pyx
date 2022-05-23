@@ -228,7 +228,8 @@ class Analysis:
             analyze.partCfg(), make_Vector3d(pos), r_catch, planedims)
 
     def pressure(self):
-        """Calculate the instantaneous pressure (in parallel). This is only
+        """
+        Calculate the instantaneous scalar pressure in parallel. This is only
         sensible in an isotropic system which is homogeneous (on average)! Do
         not use this in an anisotropic or inhomogeneous system. In order to
         obtain the pressure, the ensemble average needs to be calculated.
@@ -241,15 +242,25 @@ class Analysis:
             * ``"total"``: total pressure
             * ``"kinetic"``: kinetic pressure
             * ``"bonded"``: total bonded pressure
-            * ``"bonded", <bond_type>``: bonded pressure which arises from the given bond_type
+            * ``"bonded", <bond_id>``: bonded pressure from the bond
+              identified by ``bond_id``
             * ``"non_bonded"``: total non-bonded pressure
-            * ``"non_bonded", <type_i>, <type_j>``: non-bonded pressure which arises from the interactions between type_i and type_j
-            * ``"non_bonded_intra", <type_i>, <type_j>``: non-bonded pressure between short ranged forces between type i and j and with the same mol_id
-            * ``"non_bonded_inter", <type_i>, <type_j>``: non-bonded pressure between short ranged forces between type i and j and different mol_ids
-            * ``"coulomb"``: Coulomb pressure, how it is calculated depends on the method. It is equivalent to 1/3 of the trace of the Coulomb pressure tensor.
-              For how the pressure tensor is calculated, see :ref:`Pressure Tensor`. The averaged value in an isotropic NVT simulation is equivalent to the average of
+            * ``"non_bonded", <type_i>, <type_j>``: non-bonded pressure which
+              arises from the interactions between ``type_i`` and ``type_j``
+            * ``"non_bonded_intra", <type_i>, <type_j>``: non-bonded pressure
+              from short-range forces between ``type_i`` and ``type_j``
+              with the same ``mol_id``
+            * ``"non_bonded_inter", <type_i>, <type_j>``: non-bonded pressure
+              from short-range forces between ``type_i`` and ``type_j``
+              with different ``mol_id``
+            * ``"coulomb"``: Coulomb pressure, how it is calculated depends on
+              the method. It is equivalent to 1/3 of the trace of the Coulomb
+              pressure tensor. For how the pressure tensor is calculated,
+              see :ref:`Pressure Tensor`. The averaged value in an isotropic
+              NVT simulation is equivalent to the average of
               :math:`E^{\\mathrm{coulomb}}/(3V)`, see :cite:`brown95a`.
-            * ``"coulomb", <i>``: Coulomb pressure from particle pairs (``i=0``), electrostatics solvers (``i=1``)
+            * ``"coulomb", <i>``: Coulomb pressure from particle pairs
+              (``i=0``), electrostatics solvers (``i=1``)
             * ``"dipolar"``: not implemented
             * ``"virtual_sites"``: Pressure contribution from virtual sites
             * ``"external_fields"``: external fields contribution
@@ -261,7 +272,8 @@ class Analysis:
         return obs
 
     def pressure_tensor(self):
-        """Calculate the instantaneous pressure tensor (in parallel). This is
+        """
+        Calculate the instantaneous pressure tensor in parallel. This is
         sensible in an anisotropic system. Still it assumes that the system is
         homogeneous since the volume-averaged pressure tensor is used. Do not use
         this pressure tensor in an (on average) inhomogeneous system. If the
@@ -277,13 +289,21 @@ class Analysis:
             * ``"total"``: total pressure tensor
             * ``"kinetic"``: kinetic pressure tensor
             * ``"bonded"``: total bonded pressure tensor
-            * ``"bonded", <bond_type>``: bonded pressure tensor which arises from the given bond_type
+            * ``"bonded", <bond_id>``: bonded pressure tensor from the bond
+              identified by ``bond_id``
             * ``"non_bonded"``: total non-bonded pressure tensor
-            * ``"non_bonded", <type_i>, <type_j>``: non-bonded pressure tensor which arises from the interactions between type_i and type_j
-            * ``"non_bonded_intra", <type_i>, <type_j>``: non-bonded pressure tensor between short ranged forces between type i and j and with the same mol_id
-            * ``"non_bonded_inter", <type_i>, <type_j>``: non-bonded pressure tensor between short ranged forces between type i and j and different mol_ids
-            * ``"coulomb"``: Maxwell pressure tensor, how it is calculated depends on the method
-            * ``"coulomb", <i>``: Maxwell pressure tensor from particle pairs (``i=0``), electrostatics solvers (``i=1``)
+            * ``"non_bonded", <type_i>, <type_j>``: non-bonded pressure tensor
+              from short-range forces between ``type_i`` and ``type_j``
+            * ``"non_bonded_intra", <type_i>, <type_j>``: non-bonded pressure
+              tensor from short-range forces between ``type_i`` and ``type_j``
+              with the same ``mol_id``
+            * ``"non_bonded_inter", <type_i>, <type_j>``: non-bonded pressure
+              tensor from short-range forces between ``type_i`` and ``type_j``
+              with different ``mol_id``
+            * ``"coulomb"``: Maxwell pressure tensor, how it is calculated
+              depends on the method
+            * ``"coulomb", <i>``: Maxwell pressure tensor from particle pairs
+              (``i=0``), electrostatics solvers (``i=1``)
             * ``"dipolar"``: not implemented
             * ``"virtual_sites"``: pressure tensor contribution from virtual sites
             * ``"external_fields"``: external fields contribution
@@ -308,7 +328,8 @@ class Analysis:
     #
 
     def energy(self):
-        """Calculate the systems energy.
+        """
+        Calculate the system energy in parallel.
 
         Returns
         -------
@@ -318,15 +339,25 @@ class Analysis:
             * ``"total"``: total energy
             * ``"kinetic"``: linear and rotational kinetic energy
             * ``"bonded"``: total bonded energy
-            * ``"bonded", <bond_type>``: bonded energy which arises from the given bond_type
+            * ``"bonded", <bond_id>``: bonded energy from the bond
+              identified by ``bond_id``
             * ``"non_bonded"``: total non-bonded energy
-            * ``"non_bonded", <type_i>, <type_j>``: non-bonded energy which arises from the interactions between type_i and type_j
-            * ``"non_bonded_intra", <type_i>, <type_j>``: non-bonded energy between short ranged forces between type i and j and with the same mol_id
-            * ``"non_bonded_inter", <type_i>, <type_j>``: non-bonded energy between short ranged forces between type i and j and different mol_ids
-            * ``"coulomb"``: Coulomb energy, how it is calculated depends on the method
-            * ``"coulomb", <i>``: Coulomb energy from particle pairs (``i=0``), electrostatics solvers (``i=1``)
+            * ``"non_bonded", <type_i>, <type_j>``: non-bonded energy
+              from short-range interactions between ``type_i`` and ``type_j``
+            * ``"non_bonded_intra", <type_i>, <type_j>``: non-bonded energy
+              from short-range interactions between ``type_i`` and ``type_j``
+              with the same ``mol_id``
+            * ``"non_bonded_inter", <type_i>, <type_j>``: non-bonded energy
+              from short-range interactions between ``type_i`` and ``type_j``
+              with different ``mol_id``
+            * ``"coulomb"``: Coulomb energy, how it is calculated depends
+              on the method
+            * ``"coulomb", <i>``: Coulomb energy from particle pairs
+              (``i=0``), electrostatics solvers (``i=1``)
             * ``"dipolar"``: dipolar energy
-            * ``"dipolar", <i>``: dipolar energy from particle pairs and magnetic field constraints (``i=0``), magnetostatics solvers (``i=1``)
+            * ``"dipolar", <i>``: dipolar energy from particle pairs and
+              magnetic field constraints (``i=0``), magnetostatics solvers
+              (``i=1``)
             * ``"external_fields"``: external fields contribution
 
 
