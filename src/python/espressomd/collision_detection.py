@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 from .interactions import BondedInteraction, BondedInteractions
+from .__init__ import assert_features
 
 
 @script_interface_register
@@ -38,6 +39,7 @@ class CollisionDetection(ScriptInterfaceHelper):
     _so_name = "CollisionDetection::CollisionDetection"
 
     def __init__(self, **kwargs):
+        assert_features("COLLISION_DETECTION")
         if "sip" in kwargs:
             super().__init__(**kwargs)
             return

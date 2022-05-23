@@ -33,6 +33,7 @@ from .utils import nesting_level, array_locked, is_valid_type, handle_errors
 from .utils cimport make_array_locked, make_const_span, check_type_or_throw_except
 from .utils cimport Vector3i, Vector3d, Vector4d
 from .utils cimport make_Vector3d
+from .utils cimport make_Vector3i
 from .grid cimport box_geo, folded_position, unfolded_position
 
 
@@ -174,7 +175,10 @@ cdef class ParticleHandle:
 
         def __get__(self):
             self.update_particle_data()
-            return make_array_locked(unfolded_position( < Vector3d > self.particle_data.pos(), < Vector3i > self.particle_data.image_box(), box_geo.length()))
+            return make_array_locked(unfolded_position(
+                self.particle_data.pos(),
+                self.particle_data.image_box(),
+                box_geo.length()))
 
     property pos_folded:
         """
@@ -212,7 +216,7 @@ cdef class ParticleHandle:
         def __get__(self):
             self.update_particle_data()
             return make_array_locked(folded_position(
-                Vector3d(self.particle_data.pos()), box_geo))
+                self.particle_data.pos(), box_geo))
 
     property image_box:
         """
@@ -224,9 +228,8 @@ cdef class ParticleHandle:
 
         def __get__(self):
             self.update_particle_data()
-            return array_locked([self.particle_data.image_box()[0],
-                                 self.particle_data.image_box()[1],
-                                 self.particle_data.image_box()[2]])
+            cdef Vector3i image_box = self.particle_data.image_box()
+            return array_locked([image_box[0], image_box[1], image_box[2]])
 
     property lees_edwards_offset:
         """
@@ -808,13 +811,9 @@ cdef class ParticleHandle:
             """
 
             def __set__(self, flag):
-                cdef Vector3i ext_flag
                 check_type_or_throw_except(
                     flag, 3, int, "Property 'fix' has to be 3 bools.")
-                ext_flag[0] = int(flag[0])
-                ext_flag[1] = int(flag[1])
-                ext_flag[2] = int(flag[2])
-                set_particle_fix(self._id, ext_flag)
+                set_particle_fix(self._id, make_Vector3i(flag))
 
             def __get__(self):
                 self.update_particle_data()
@@ -972,13 +971,9 @@ cdef class ParticleHandle:
             """
 
             def __set__(self, flag):
-                cdef Vector3i rot_flag
                 check_type_or_throw_except(
                     flag, 3, int, "Property 'rotation' has to be 3 bools.")
-                rot_flag[0] = int(flag[0])
-                rot_flag[1] = int(flag[1])
-                rot_flag[2] = int(flag[2])
-                set_particle_rotation(self._id, rot_flag)
+                set_particle_rotation(self._id, make_Vector3i(flag))
 
             def __get__(self):
                 self.update_particle_data()

@@ -80,8 +80,10 @@ class PairTest(ut.TestCase):
     def test_input_exceptions(self):
         with self.assertRaisesRegex(ValueError, "Unknown argument types='none'"):
             self.system.cell_system.get_pairs(0.1, types="none")
-        with self.assertRaisesRegex(ValueError, "Argument 'types' must be an iterable"):
+        with self.assertRaisesRegex(RuntimeError, "Provided argument of type 'int' is not convertible to 'std::vector<int>'"):
             self.system.cell_system.get_pairs(0.1, types=3)
+        with self.assertRaisesRegex(RuntimeError, "Provided argument of type .+ because it contains a value that is not convertible to 'int'"):
+            self.system.cell_system.get_pairs(0.1, types={'3.': 6.})
         # check no exception for list of length 1
         self.system.cell_system.get_pairs(0.1, types=[3])
 

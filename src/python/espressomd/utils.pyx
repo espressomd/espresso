@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 cimport numpy as np
-cimport cython
 import numpy as np
 from libcpp.vector cimport vector
 include "myconfig.pxi"
@@ -230,6 +229,13 @@ cdef make_array_locked_vector(vector[Vector3d] v):
 
 cdef Vector3d make_Vector3d(a):
     cdef Vector3d v
+    for i, ai in enumerate(a):
+        v[i] = ai
+    return v
+
+
+cdef Vector3i make_Vector3i(a):
+    cdef Vector3i v
     for i, ai in enumerate(a):
         v[i] = ai
     return v

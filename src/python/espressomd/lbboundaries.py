@@ -25,9 +25,19 @@ if any(has_features(i) for i in ["LB_BOUNDARIES", "LB_BOUNDARIES_GPU"]):
         """
         Creates a set of lattice-Boltzmann boundaries.
 
+        Methods
+        -------
+        size()
+            Get the number of active boundaries.
+        empty()
+            Return ``True`` if there are not active boundaries.
+        clear()
+            Clear the list of boundaries.
+
         """
 
         _so_name = "LBBoundaries::LBBoundaries"
+        _so_bind_methods = ("size", "empty", "clear")
 
         def add(self, *args, **kwargs):
             """
@@ -60,21 +70,6 @@ if any(has_features(i) for i in ["LB_BOUNDARIES", "LB_BOUNDARIES_GPU"]):
             """
 
             self.call_method("remove", object=lbboundary)
-
-        def clear(self):
-            """
-            Removes all boundaries.
-
-            """
-
-            self.call_method("clear")
-
-        def size(self):
-            return self.call_method("size")
-
-        def empty(self):
-
-            return self.call_method("empty")
 
     @script_interface_register
     class LBBoundary(ScriptInterfaceHelper):

@@ -170,7 +170,7 @@ cdef class Integrator:
         """Check that parameters are valid.
 
         """
-        return True
+        pass
 
     def default_params(self):
         """Virtual method.
@@ -325,7 +325,10 @@ cdef class VelocityVerlet(Integrator):
         return set()
 
     def validate_params(self):
-        return True
+        """Check that parameters are valid.
+
+        """
+        pass
 
     def _set_params_in_es_core(self):
         integrate_set_nvt()
@@ -414,7 +417,10 @@ cdef class BrownianDynamics(Integrator):
         return set()
 
     def validate_params(self):
-        return True
+        """Check that parameters are valid.
+
+        """
+        pass
 
     def _set_params_in_es_core(self):
         integrate_set_bd()
@@ -461,6 +467,9 @@ IF STOKESIAN_DYNAMICS:
             return {"radii", "viscosity"}
 
         def validate_params(self):
+            """Check that parameters are valid.
+
+            """
             utils.check_type_or_throw_except(
                 self._params["viscosity"], 1, float,
                 "viscosity must be a number")

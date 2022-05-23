@@ -86,6 +86,7 @@ cdef class _Globals:
             if len(_box_l) != 3:
                 raise ValueError("Box length must be of length 3")
             mpi_set_box_length(make_Vector3d(_box_l))
+            handle_errors("Exception while updating the box length")
 
         def __get__(self):
             return make_array_locked(< Vector3d > box_geo.length())

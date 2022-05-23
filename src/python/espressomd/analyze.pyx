@@ -25,11 +25,8 @@ from .grid cimport box_geo
 
 from .system import System
 from . import utils
-from .utils cimport Vector3i, Vector3d, Vector9d
-from .utils cimport make_Vector3d
-from .utils cimport make_array_locked
-from .utils cimport create_nparray_from_double_array
-from .particle_data cimport particle, ParticleHandle
+from . cimport utils
+from .utils cimport Vector9d
 
 
 def autocorrelation(time_series):
@@ -204,16 +201,12 @@ class Analysis:
 
         """
 
-        cdef Vector3i planedims
-
         utils.check_type_or_throw_except(pos, 3, float, "pos must be 3 floats")
         utils.check_type_or_throw_except(
             r_catch, 1, float, "r_catch must be a float")
 
         # default 3d takes into account dist in x, y and z
-        planedims[0] = 1
-        planedims[1] = 1
-        planedims[2] = 1
+        planedims = [1, 1, 1]
         if plane == 'xy':
             planedims[2] = 0
         elif plane == 'xz':
@@ -225,7 +218,7 @@ class Analysis:
                 'Invalid argument for specifying plane, must be xy, xz, or yz plane')
 
         return analyze.nbhood(
-            analyze.partCfg(), make_Vector3d(pos), r_catch, planedims)
+            analyze.partCfg(), utils.make_Vector3d(pos), r_catch, utils.make_Vector3i(planedims))
 
     def pressure(self):
         """
@@ -316,8 +309,7 @@ class Analysis:
 
     IF DPD == 1:
         def dpd_stress(self):
-            cdef Vector9d p
-            p = dpd_stress()
+            cdef Vector9d p = dpd_stress()
             return utils.array_locked((
                 p[0], p[1], p[2],
                 p[3], p[4], p[5],
@@ -600,7 +592,7 @@ class Analysis:
             raise ValueError("type_list_b has to be a list!")
 
         if r_max is None:
-            box_l = make_array_locked(box_geo.length())
+            box_l = utils.make_array_locked(box_geo.length())
             r_max = min(box_l) / 2
 
         assert r_min >= 0.0, "r_min was chosen too small!"
@@ -616,7 +608,7 @@ class Analysis:
             analyze.partCfg(), type_list_a, type_list_b,
             r_min, r_max, r_bins, < bint > log_flag, & low, distribution.data())
 
-        np_distribution = create_nparray_from_double_array(
+        np_distribution = utils.create_nparray_from_double_array(
             distribution.data(), r_bins)
 
         if int_flag:
@@ -663,9 +655,8 @@ class Analysis:
         utils.check_type_or_throw_except(
             p_type, 1, int, "p_type has to be an int")
 
-        cdef Vector3d res = analyze.angularmomentum(analyze.partCfg(), p_type)
-
-        return np.array([res[0], res[1], res[2]])
+        return np.array(utils.make_array_locked(
+            analyze.angularmomentum(analyze.partCfg(), p_type)))
 
     #
     # gyration_tensor
