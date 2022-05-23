@@ -116,8 +116,8 @@ cdef class _Globals:
             mpi_set_min_global_cut(_min_global_cut)
 
         def __get__(self):
-            global min_global_cut
-            return min_global_cut
+            return get_min_global_cut()
+
 
 cdef class System:
     """The ESPResSo system class.

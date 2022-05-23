@@ -51,7 +51,11 @@
 int max_seen_particle_type = 0;
 std::vector<IA_parameters> nonbonded_ia_params;
 
-double min_global_cut = INACTIVE_CUTOFF;
+/** Minimal global interaction cutoff. Particles with a distance
+ *  smaller than this are guaranteed to be available on the same node
+ *  (through ghosts).
+ */
+static double min_global_cut = INACTIVE_CUTOFF;
 
 /*****************************************
  * general low-level functions
@@ -239,3 +243,5 @@ REGISTER_CALLBACK(mpi_set_min_global_cut_local)
 void mpi_set_min_global_cut(double min_global_cut) {
   mpi_call_all(mpi_set_min_global_cut_local, min_global_cut);
 }
+
+double get_min_global_cut() { return min_global_cut; }

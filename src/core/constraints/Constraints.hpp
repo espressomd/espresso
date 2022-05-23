@@ -21,7 +21,6 @@
 
 #include "Observable_stat.hpp"
 #include "grid.hpp"
-#include "statistics.hpp"
 
 #include <algorithm>
 #include <cassert>

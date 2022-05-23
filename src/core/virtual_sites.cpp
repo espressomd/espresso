@@ -56,7 +56,7 @@ void set_virtual_sites(std::shared_ptr<VirtualSites> const &v) {
 #ifdef VIRTUAL_SITES_RELATIVE
 
 /** Calculate the rotation quaternion and distance between two particles */
-inline std::tuple<Utils::Quaternion<double>, double>
+static std::tuple<Utils::Quaternion<double>, double>
 calculate_vs_relate_to_params(Particle const &p_current,
                               Particle const &p_relate_to) {
   // get the distance between the particles
@@ -65,6 +65,7 @@ calculate_vs_relate_to_params(Particle const &p_current,
   // Check if the distance between virtual and non-virtual particles is larger
   // than minimum global cutoff. If so, warn user.
   auto const dist = d.norm();
+  auto const min_global_cut = get_min_global_cut();
   if (dist > min_global_cut && n_nodes > 1) {
     runtimeErrorMsg()
         << "Warning: The distance between virtual and non-virtual particle ("

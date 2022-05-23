@@ -49,7 +49,7 @@ static double recalc_long_range_cutoff() {
 }
 
 double maximal_cutoff(bool single_node) {
-  auto max_cut = min_global_cut;
+  auto max_cut = get_min_global_cut();
   auto const max_cut_long_range = recalc_long_range_cutoff();
   auto const max_cut_bonded = maximal_cutoff_bonded();
   auto const max_cut_nonbonded = maximal_cutoff_nonbonded();
