@@ -87,7 +87,7 @@ static std::shared_ptr<Observable_stat> calculate_energy_local() {
         add_non_bonded_pair_energy(p1, p2, d.vec21, sqrt(d.dist2), d.dist2,
                                    obs_energy);
       },
-      maximal_cutoff(), maximal_cutoff_bonded());
+      maximal_cutoff(n_nodes), maximal_cutoff_bonded());
 
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
@@ -127,4 +127,37 @@ double calculate_current_potential_energy_of_system() {
 double observable_compute_energy() {
   auto const obs_energy = calculate_energy();
   return obs_energy->accumulate(0);
+}
+
+double particle_short_range_energy_contribution_local(int pid) {
+  double ret = 0.0;
+
+  if (cell_structure.get_resort_particles()) {
+    cells_update_ghosts(global_ghost_flags());
+  }
+
+  auto const p = cell_structure.get_local_particle(pid);
+
+  if (p) {
+    auto kernel = [&ret](Particle const &p, Particle const &p1,
+                         Utils::Vector3d const &vec) {
+#ifdef EXCLUSIONS
+      if (not do_nonbonded(p, p1))
+        return;
+#endif
+      auto const &ia_params = *get_ia_param(p.type(), p1.type());
+      // Add energy for current particle pair to result
+      ret += calc_non_bonded_pair_energy(p, p1, ia_params, vec, vec.norm());
+    };
+    cell_structure.run_on_particle_short_range_neighbors(*p, kernel);
+  }
+  return ret;
+}
+
+REGISTER_CALLBACK_REDUCTION(particle_short_range_energy_contribution_local,
+                            std::plus<double>())
+
+double particle_short_range_energy_contribution(int pid) {
+  return mpi_call(Communication::Result::reduction, std::plus<double>(),
+                  particle_short_range_energy_contribution_local, pid);
 }

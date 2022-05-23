@@ -23,8 +23,8 @@
 
 #include "algorithm/link_cell.hpp"
 
-#include "Cell.hpp"
 #include "Particle.hpp"
+#include "cell_system/Cell.hpp"
 
 #include <utility>
 #include <vector>

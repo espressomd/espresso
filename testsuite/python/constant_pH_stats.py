@@ -23,7 +23,7 @@ import espressomd
 import espressomd.reaction_methods
 
 
-class ReactionEnsembleTest(ut.TestCase):
+class Test(ut.TestCase):
 
     """Test the core implementation of the constant pH reaction ensemble."""
 
@@ -39,20 +39,21 @@ class ReactionEnsembleTest(ut.TestCase):
         types["A-"]: -1,
         types["H+"]: +1,
     }
-    temperature = 1.0
+    temperature = 1.
     # choose target alpha not too far from 0.5 to get good statistics in a
     # small number of steps
     pKa_minus_pH = -0.2
-    pH = 2
+    pH = 2.
     pKa = pKa_minus_pH + pH
-    Ka = 10**(-pKa)
-    box_l = (N0 / c0)**(1.0 / 3.0)
+    Ka = 10.**(-pKa)
+    box_l = np.cbrt(N0 / c0)
     system = espressomd.System(box_l=[box_l, box_l, box_l])
     np.random.seed(69)  # make reaction code fully deterministic
     system.cell_system.skin = 0.4
     system.time_step = 0.01
     RE = espressomd.reaction_methods.ConstantpHEnsemble(
-        kT=1.0, exclusion_range=1, seed=44, constant_pH=pH)
+        kT=1., exclusion_range=1., seed=44, constant_pH=pH,
+        search_algorithm="parallel")
 
     @classmethod
     def setUpClass(cls):
@@ -68,13 +69,13 @@ class ReactionEnsembleTest(ut.TestCase):
 
     @classmethod
     def ideal_alpha(cls, pH):
-        return 1.0 / (1 + 10**(cls.pKa - pH))
+        return 1. / (1. + 10.**(cls.pKa - pH))
 
     def test_ideal_titration_curve(self):
-        N0 = ReactionEnsembleTest.N0
-        types = ReactionEnsembleTest.types
-        system = ReactionEnsembleTest.system
-        RE = ReactionEnsembleTest.RE
+        RE = self.RE
+        N0 = self.N0
+        types = self.types
+        system = self.system
 
         # Set the hidden particle type to the lowest possible number to speed
         # up the simulation
@@ -100,9 +101,9 @@ class ReactionEnsembleTest(ut.TestCase):
         # note you cannot calculate the pH via -log10(<NH>/volume) in the
         # constant pH ensemble, since the volume is totally arbitrary and does
         # not influence the average number of protons
-        pH = ReactionEnsembleTest.pH
-        pKa = ReactionEnsembleTest.pKa
-        target_alpha = ReactionEnsembleTest.ideal_alpha(pH)
+        pH = self.pH
+        pKa = self.pKa
+        target_alpha = Test.ideal_alpha(pH)
         rel_error_alpha = abs(average_alpha - target_alpha) / target_alpha
         # relative error
         self.assertLess(

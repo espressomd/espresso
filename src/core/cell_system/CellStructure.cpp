@@ -19,19 +19,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "CellStructure.hpp"
+#include "cell_system/CellStructure.hpp"
 
-#include "AtomDecomposition.hpp"
-#include "CellStructureType.hpp"
-#include "RegularDecomposition.hpp"
+#include "cell_system/AtomDecomposition.hpp"
+#include "cell_system/HybridDecomposition.hpp"
+#include "cell_system/ParticleDecomposition.hpp"
+#include "cell_system/RegularDecomposition.hpp"
+
+#include "cell_system/CellStructureType.hpp"
 #include "grid.hpp"
 #include "lees_edwards/lees_edwards.hpp"
 
 #include <utils/contains.hpp>
 
+#include <boost/mpi/communicator.hpp>
+#include <boost/variant.hpp>
+
 #include <algorithm>
 #include <iterator>
 #include <memory>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -154,7 +161,7 @@ void CellStructure::remove_all_particles() {
 
 /* Map the data parts flags from cells to those used internally
  * by the ghost communication */
-static unsigned map_data_parts(unsigned data_parts) {
+unsigned map_data_parts(unsigned data_parts) {
   using namespace Cells;
 
   /* clang-format off */
@@ -223,7 +230,7 @@ struct UpdateParticleIndexVisitor {
 };
 } // namespace
 
-void CellStructure::resort_particles(int global_flag, BoxGeometry const &box) {
+void CellStructure::resort_particles(bool global_flag, BoxGeometry const &box) {
   invalidate_ghosts();
 
   static std::vector<ParticleChange> diff;
@@ -258,5 +265,15 @@ void CellStructure::set_regular_decomposition(
   set_particle_decomposition(
       std::make_unique<RegularDecomposition>(comm, range, box, local_geo));
   m_type = CellStructureType::CELL_STRUCTURE_REGULAR;
+  local_geo.set_cell_structure_type(m_type);
+}
+
+void CellStructure::set_hybrid_decomposition(
+    boost::mpi::communicator const &comm, double cutoff_regular,
+    BoxGeometry const &box, LocalBox<double> &local_geo,
+    std::set<int> n_square_types) {
+  set_particle_decomposition(std::make_unique<HybridDecomposition>(
+      comm, cutoff_regular, box, local_geo, n_square_types));
+  m_type = CellStructureType::CELL_STRUCTURE_HYBRID;
   local_geo.set_cell_structure_type(m_type);
 }

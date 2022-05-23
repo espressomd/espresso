@@ -36,11 +36,10 @@ RuntimeErrorCollector::RuntimeErrorCollector(boost::mpi::communicator comm)
     : m_comm(std::move(comm)) {}
 
 RuntimeErrorCollector::~RuntimeErrorCollector() {
-  if (!m_errors.empty())
+  if (!m_errors.empty()) {
+    /* Print remaining error messages on destruction */
     std::cerr << "There were unhandled errors.\n";
-  /* Print remaining error messages on destruction */
-  for (auto const &e : m_errors) {
-    std::cerr << e.format() << std::endl;
+    flush();
   }
 }
 
@@ -107,6 +106,13 @@ int RuntimeErrorCollector::count(RuntimeError::ErrorLevel level) {
 }
 
 void RuntimeErrorCollector::clear() { m_errors.clear(); }
+
+void RuntimeErrorCollector::flush() {
+  for (auto const &e : m_errors) {
+    std::cerr << e.format() << std::endl;
+  }
+  this->clear();
+}
 
 std::vector<RuntimeError> RuntimeErrorCollector::gather() {
   std::vector<RuntimeError> all_errors{};

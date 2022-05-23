@@ -661,7 +661,7 @@ class openGLLive():
                     self.specs['update_fps']:
                 # ES UPDATES WHEN SYSTEM HAS PROPAGATED. ALSO UPDATE ON PAUSE
                 # FOR PARTICLE INFO
-                self._update_particles()
+                self._update_particles_and_bonds()
 
                 # LB UPDATE
                 if self.specs['LB_draw_velocity_plane']:
@@ -699,10 +699,9 @@ class openGLLive():
 
     # FETCH DATA ON STARTUP
     def _initial_espresso_updates(self):
-        self._update_particles()
+        self._update_particles_and_bonds()
         if self.has_particle_data['charge']:
             self._update_charge_color_range()
-        self._update_bonds()
         if self.specs['draw_constraints']:
             self._update_constraints()
         if self.specs['draw_cells'] or self.specs['draw_nodes']:
@@ -710,34 +709,54 @@ class openGLLive():
         if self.specs['draw_cells']:
             self._update_cells()
 
-    # GET THE PARTICLE DATA
-    def _update_particles(self):
+    def _update_particles_and_bonds(self):
+        """Fetch particle data from core and put it in the data dicts
+        used by the visualizer.
 
-        self.particles['pos'] = self.system.part.all().pos_folded
-        self.particles['type'] = self.system.part.all().type
+        """
+        parts_from_core = self.system.part.all()
+        self._update_particles(parts_from_core)
+        self._update_bonds(parts_from_core)
+
+    # GET THE PARTICLE DATA
+    def _update_particles(self, particle_data):
+        """Updates particle data used for drawing particles.
+        Do not call directly but use _update_particles_and_bonds()!
+
+        """
+        self.particles['pos'] = particle_data.pos_folded
+        self.particles['type'] = particle_data.type
+        # particle ids can be discontiguous, therefore create a dict that maps
+        # particle ids to respective index in data arrays (used by
+        # _draw_bonds())
+        self.index_from_id = {
+            id: ndx for ndx, id in enumerate(
+                particle_data.id)}
 
         if self.has_particle_data['velocity']:
-            self.particles['velocity'] = self.system.part.all().v
+            self.particles['velocity'] = particle_data.v
 
         if self.has_particle_data['force']:
-            self.particles['force'] = self.system.part.all().f
+            self.particles['force'] = particle_data.f
 
         if self.has_particle_data['ext_force']:
-            self.particles['ext_force'] = self.system.part.all().ext_force
+            self.particles['ext_force'] = particle_data.ext_force
 
         if self.has_particle_data['charge']:
-            self.particles['charge'] = self.system.part.all().q
+            self.particles['charge'] = particle_data.q
 
         if self.has_particle_data['director']:
-            self.particles['director'] = self.system.part.all().director
+            self.particles['director'] = particle_data.director
 
         if self.has_particle_data['node']:
-            self.particles['node'] = self.system.part.all().node
+            self.particles['node'] = particle_data.node
 
         if self.info_id != -1:
+            # data array index of particle with id info_id
+            info_index = self.index_from_id[self.info_id]
             for attr in self.particle_attributes:
-                self.highlighted_particle[attr] = getattr(
-                    self.system.part.by_id(self.info_id), attr)
+                self.highlighted_particle[attr] = \
+                    getattr(particle_data, attr)[info_index]
 
     def _update_lb_velocity_plane(self):
         if self.lb_is_cpu:
@@ -866,20 +885,31 @@ class openGLLive():
                         self.shapes.append(Shape(*arguments))
 
     # GET THE BOND DATA, SO FAR CALLED ONCE UPON INITIALIZATION
-    def _update_bonds(self):
+    def _update_bonds(self, particle_data):
+        """Update bond data used for drawing bonds.
+        Do not call directily but use _update_particles_and_bonds()!
+
+        Updates data array self.bonds[]; structure of elements is:
+        [<id of first bond partner>,
+         <id of second bond partner>,
+         <bond type]
+
+         """
         if self.specs['draw_bonds']:
             self.bonds = []
-            for i, particle in enumerate(self.system.part):
+            for particle in particle_data:
                 for bond in particle.bonds:
-                    # b[0]: Bond, b[1:] Partners
+                    # input data:
+                    # bond[0]: bond type, bond[1:] bond partners
                     bond_type = bond[0].type_number()
                     if len(bond) == 4:
-                        self.bonds.append([i, bond[1], bond_type])
-                        self.bonds.append([i, bond[2], bond_type])
+                        self.bonds.append([particle.id, bond[1], bond_type])
+                        self.bonds.append([particle.id, bond[2], bond_type])
                         self.bonds.append([bond[2], bond[3], bond_type])
                     else:
                         for bond_partner in bond[1:]:
-                            self.bonds.append([i, bond_partner, bond_type])
+                            self.bonds.append(
+                                [particle.id, bond_partner, bond_type])
 
     def _draw_text(self, x, y, text, color,
                    font=OpenGL.GLUT.GLUT_BITMAP_9_BY_15):
@@ -1010,13 +1040,12 @@ class openGLLive():
         return radius
 
     def _draw_system_particles(self, color_by_id=False):
-        part_ids = range(len(self.particles['pos']))
         part_type = -1
         reset_material = False
 
-        for part_id in part_ids:
+        for part_id, index in self.index_from_id.items():
             part_type_last = part_type
-            part_type = int(self.particles['type'][part_id])
+            part_type = int(self.particles['type'][index])
 
             # Only change material if type/charge has changed, color_by_id or
             # material was reset by arrows
@@ -1036,23 +1065,23 @@ class openGLLive():
                 else:
                     if self.specs['particle_coloring'] == 'auto':
                         # Color auto: Charge then Type
-                        if self.has_particle_data['charge'] and self.particles['charge'][part_id] != 0:
+                        if self.has_particle_data['charge'] and self.particles['charge'][index] != 0:
                             color = self._color_by_charge(
-                                self.particles['charge'][part_id])
+                                self.particles['charge'][index])
                             reset_material = True
                         else:
                             color = self._modulo_indexing(
                                 self.specs['particle_type_colors'], part_type)
                     elif self.specs['particle_coloring'] == 'charge':
                         color = self._color_by_charge(
-                            self.particles['charge'][part_id])
+                            self.particles['charge'][index])
                         reset_material = True
                     elif self.specs['particle_coloring'] == 'type':
                         color = self._modulo_indexing(
                             self.specs['particle_type_colors'], part_type)
                     elif self.specs['particle_coloring'] == 'node':
                         color = self._modulo_indexing(
-                            self.specs['particle_type_colors'], self.particles['node'][part_id])
+                            self.specs['particle_type_colors'], self.particles['node'][index])
 
                     # Invert color of highlighted particle
                     if part_id == self.drag_id or part_id == self.info_id:
@@ -1069,7 +1098,7 @@ class openGLLive():
                     radius, self.specs['quality_particles'], self.specs['quality_particles'])
                 OpenGL.GL.glEndList()
 
-            self._redraw_sphere(self.particles['pos'][part_id])
+            self._redraw_sphere(self.particles['pos'][index])
 
             if self.has_images:
                 for imx in self.image_vectors[0]:
@@ -1078,12 +1107,12 @@ class openGLLive():
                             if imx != 0 or imy != 0 or imz != 0:
                                 offset = [imx, imy, imz] * self.system.box_l
                                 self._redraw_sphere(
-                                    self.particles['pos'][part_id] + offset)
+                                    self.particles['pos'][index] + offset)
 
             if espressomd.has_features('EXTERNAL_FORCES'):
                 if self.specs['ext_force_arrows'] or part_id == self.drag_id:
                     if any(
-                            v != 0 for v in self.particles['ext_force'][part_id]):
+                            v != 0 for v in self.particles['ext_force'][index]):
                         if part_id == self.drag_id:
                             sc = 1
                         else:
@@ -1094,8 +1123,8 @@ class openGLLive():
                                 self.specs['ext_force_arrows_type_colors'], part_type)
                             arrow_radius = self._modulo_indexing(
                                 self.specs['ext_force_arrows_type_radii'], part_type)
-                            draw_arrow(self.particles['pos'][part_id], np.array(
-                                self.particles['ext_force'][part_id]) * sc, arrow_radius, arrow_col,
+                            draw_arrow(self.particles['pos'][index], np.array(
+                                self.particles['ext_force'][index]) * sc, arrow_radius, arrow_col,
                                 self.materials['chrome'], self.specs['quality_arrows'])
                             reset_material = True
 
@@ -1124,11 +1153,12 @@ class openGLLive():
                              type_scale, type_colors, type_radii, prop):
         sc = self._modulo_indexing(type_scale, part_type)
         if sc > 0:
-            v = self.particles[prop][part_id]
+            v = self.particles[prop][self.index_from_id[part_id]]
             col = self._modulo_indexing(type_colors, part_type)
             radius = self._modulo_indexing(type_radii, part_type)
             draw_arrow(
-                self.particles['pos'][part_id], np.array(v, dtype=float) * sc,
+                self.particles['pos'][self.index_from_id[part_id]
+                                      ], np.array(v, dtype=float) * sc,
                 radius, col, self.materials['chrome'], self.specs['quality_arrows'])
 
     def _draw_bonds(self):
@@ -1139,8 +1169,14 @@ class openGLLive():
                 self.specs['bond_type_materials'], b[2])]
             radius = self._modulo_indexing(
                 self.specs['bond_type_radius'], b[2])
-            x_a = self.particles['pos'][b[0]]
-            x_b = self.particles['pos'][b[1]]
+            # if particles are deleted in the core, index_from_id might
+            # throw a KeyError -- e. g. when deleting a bond created by
+            # collision_detection (using virtual site particles)
+            try:
+                x_a = self.particles['pos'][self.index_from_id[b[0]]]
+                x_b = self.particles['pos'][self.index_from_id[b[1]]]
+            except BaseException:
+                pass
             dx = x_b - x_a
 
             if abs(dx[0]) < box_l_2[0] and abs(

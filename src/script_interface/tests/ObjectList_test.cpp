@@ -31,6 +31,7 @@
 #include "core/communication.hpp"
 
 #include <boost/mpi.hpp>
+#include <boost/mpi/communicator.hpp>
 
 #include <algorithm>
 #include <memory>
@@ -93,7 +94,8 @@ BOOST_AUTO_TEST_CASE(serialization) {
   Utils::Factory<ObjectHandle> f;
   f.register_new<ObjectHandle>("ObjectHandle");
   f.register_new<ObjectListImpl>("ObjectList");
-  auto ctx = std::make_shared<LocalContext>(f, 0);
+  boost::mpi::communicator comm;
+  auto ctx = std::make_shared<LocalContext>(f, comm);
   // A list of some elements
   auto list = std::dynamic_pointer_cast<ObjectListImpl>(
       ctx->make_shared("ObjectList", {}));

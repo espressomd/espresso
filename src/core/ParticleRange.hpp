@@ -16,11 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_PARTICLE_RANGE_HPP
-#define CORE_PARTICLE_RANGE_HPP
+#ifndef ESPRESSO_SRC_CORE_PARTICLE_RANGE_HPP
+#define ESPRESSO_SRC_CORE_PARTICLE_RANGE_HPP
 
-#include "Cell.hpp"
+#include "Particle.hpp"
 #include "ParticleIterator.hpp"
+#include "cell_system/Cell.hpp"
 
 #include <boost/range/iterator_range.hpp>
 

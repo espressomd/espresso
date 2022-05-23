@@ -20,8 +20,8 @@
 #include "oif_global_forces.hpp"
 
 #include "BoxGeometry.hpp"
-#include "CellStructure.hpp"
 #include "Particle.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
 

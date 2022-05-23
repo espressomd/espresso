@@ -30,9 +30,9 @@
  *  Implementation in forces.cpp.
  */
 
-#include "CellStructure.hpp"
 #include "ParticleRange.hpp"
 #include "actor/ActorList.hpp"
+#include "cell_system/CellStructure.hpp"
 
 #include <utils/Vector.hpp>
 

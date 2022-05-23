@@ -471,6 +471,7 @@ Union
 A meta-shape which is the union of given shapes. Note that only the regions where
 all shapes have a "positive distance" (see :ref:`Available options`) can be used for the
 union. The distance to the union is defined as the minimum distance to any contained shape.
+This shape cannot be checkpointed when multiple MPI ranks are used.
 
 
 .. _Available options:

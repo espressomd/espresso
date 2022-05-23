@@ -19,20 +19,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_CELLSTRUCTURE_HPP
-#define ESPRESSO_CELLSTRUCTURE_HPP
+#ifndef ESPRESSO_SRC_CORE_CELL_SYSTEM_CELL_STRUCTURE_HPP
+#define ESPRESSO_SRC_CORE_CELL_SYSTEM_CELL_STRUCTURE_HPP
 
-#include "AtomDecomposition.hpp"
+#include "cell_system/AtomDecomposition.hpp"
+#include "cell_system/HybridDecomposition.hpp"
+#include "cell_system/ParticleDecomposition.hpp"
+
 #include "BoxGeometry.hpp"
-#include "Cell.hpp"
-#include "CellStructureType.hpp"
 #include "LocalBox.hpp"
 #include "Particle.hpp"
-#include "ParticleDecomposition.hpp"
 #include "ParticleList.hpp"
 #include "ParticleRange.hpp"
 #include "algorithm/link_cell.hpp"
 #include "bond_error.hpp"
+#include "cell_system/Cell.hpp"
+#include "cell_system/CellStructureType.hpp"
 #include "ghosts.hpp"
 
 #include <utils/math/sqr.hpp>
@@ -40,12 +42,16 @@
 #include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/container/static_vector.hpp>
 #include <boost/iterator/indirect_iterator.hpp>
+#include <boost/mpi/communicator.hpp>
 #include <boost/range/algorithm/find_if.hpp>
 #include <boost/range/algorithm/transform.hpp>
 
 #include <algorithm>
 #include <cassert>
+#include <iterator>
 #include <memory>
+#include <set>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 
@@ -73,6 +79,15 @@ enum DataPart : unsigned {
   DATA_PART_BONDS = 64u /**< Particle::bonds */
 };
 } // namespace Cells
+
+/**
+ * @brief Map the data parts flags from cells to those
+ *        used internally by the ghost communication.
+ *
+ * @param data_parts data parts flags
+ * @return ghost communication flags
+ */
+unsigned map_data_parts(unsigned data_parts);
 
 namespace Cells {
 inline ParticleRange particles(Utils::Span<Cell *> cells) {
@@ -481,7 +496,7 @@ public:
   /**
    * @brief Resort particles.
    */
-  void resort_particles(int global_flag, BoxGeometry const &box);
+  void resort_particles(bool global_flag, BoxGeometry const &box);
 
 private:
   /** @brief Set the particle decomposition, keeping the particles. */
@@ -521,6 +536,20 @@ public:
   void set_regular_decomposition(boost::mpi::communicator const &comm,
                                  double range, BoxGeometry const &box,
                                  LocalBox<double> &local_geo);
+
+  /**
+   * @brief Set the particle decomposition to HybridDecomposition.
+   *
+   * @param comm Communicator to use.
+   * @param cutoff_regular Interaction cutoff_regular.
+   * @param box Box geometry.
+   * @param local_geo Geometry of the local box.
+   * @param n_square_types Particle types to put into n_square decomposition.
+   */
+  void set_hybrid_decomposition(boost::mpi::communicator const &comm,
+                                double cutoff_regular, BoxGeometry const &box,
+                                LocalBox<double> &local_geo,
+                                std::set<int> n_square_types);
 
 public:
   template <class BondKernel> void bond_loop(BondKernel const &bond_kernel) {
@@ -663,6 +692,58 @@ public:
 
     return particle_to_cell(p);
   }
+
+  /**
+   * @brief Run kernel on all particles inside local cell and its neighbors.
+   *
+   * @param p      Particle to find cell for
+   * @param kernel Function with signature <tt>double(Particle const&,
+   *               Particle const&, Utils::Vector3d const&)</tt>
+   * @return false if cell is not found, otherwise true
+   */
+  template <class Kernel>
+  bool run_on_particle_short_range_neighbors(Particle const &p,
+                                             Kernel &kernel) {
+    auto const cell = find_current_cell(p);
+
+    if (cell == nullptr) {
+      return false;
+    }
+
+    auto const maybe_box = decomposition().minimum_image_distance();
+
+    if (maybe_box) {
+      auto const distance_function = detail::MinimalImageDistance{box_geo};
+      short_range_neighbor_loop(p, cell, kernel, distance_function);
+    } else {
+      auto const distance_function = detail::EuclidianDistance{};
+      short_range_neighbor_loop(p, cell, kernel, distance_function);
+    }
+    return true;
+  }
+
+private:
+  template <class Kernel, class DistanceFunc>
+  void short_range_neighbor_loop(Particle const &p1, Cell *const cell,
+                                 Kernel &kernel, DistanceFunc const &df) {
+    /* Iterate over particles inside cell */
+    for (auto const &p2 : cell->particles()) {
+      if (p1.id() != p2.id()) {
+        auto const vec = df(p1, p2).vec21;
+        kernel(p1, p2, vec);
+      }
+    }
+    /* Iterate over all neighbors */
+    for (auto const neighbor : cell->neighbors().all()) {
+      /* Iterate over particles in neighbors */
+      if (neighbor != cell) {
+        for (auto const &p2 : neighbor->particles()) {
+          auto const vec = df(p1, p2).vec21;
+          kernel(p1, p2, vec);
+        }
+      }
+    }
+  }
 };
 
-#endif // ESPRESSO_CELLSTRUCTURE_HPP
+#endif

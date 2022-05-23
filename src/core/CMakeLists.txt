@@ -29,7 +29,6 @@ set(EspressoCore_SRC
     rotate_system.cpp
     rotation.cpp
     Observable_stat.cpp
-    RegularDecomposition.cpp
     RuntimeErrorCollector.cpp
     RuntimeError.cpp
     RuntimeErrorStream.cpp
@@ -40,9 +39,7 @@ set(EspressoCore_SRC
     tuning.cpp
     virtual_sites.cpp
     exclusions.cpp
-    CellStructure.cpp
     PartCfg.cpp
-    AtomDecomposition.cpp
     EspressoSystemStandAlone.cpp)
 
 if(CUDA)
@@ -86,6 +83,7 @@ add_subdirectory(accumulators)
 add_subdirectory(actor)
 add_subdirectory(bond_breakage)
 add_subdirectory(bonded_interactions)
+add_subdirectory(cell_system)
 add_subdirectory(cluster_analysis)
 add_subdirectory(constraints)
 add_subdirectory(electrostatics_magnetostatics)

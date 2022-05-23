@@ -17,7 +17,7 @@ substructures (e.g. ``ParticlePosition``, ``ParticleForce`` or
 ``ParticleProperties``), which in turn represent basic physical properties
 such as position, force or charge. The particles are organized in one or
 more particle lists on each node, called ``CellPList``. The cells are
-arranged by several possible systems, as described in :ref:`Cellsystems`.
+arranged by several possible systems, as described in :ref:`Cell systems`.
 A cell system defines a way the particles are stored in |es|, i.e.
 how they are distributed onto the processor nodes and how they are
 organized on each of them. Moreover a cell system also defines

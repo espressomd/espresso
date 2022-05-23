@@ -182,11 +182,11 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
       [](Particle &p1, Particle &p2, Distance const &d) {
         add_non_bonded_pair_force(p1, p2, d.vec21, sqrt(d.dist2), d.dist2);
 #ifdef COLLISION_DETECTION
-        if (collision_params.mode != COLLISION_MODE_OFF)
+        if (collision_params.mode != CollisionModeType::OFF)
           detect_collision(p1, p2, d.dist2);
 #endif
       },
-      maximal_cutoff(), maximal_cutoff_bonded(),
+      maximal_cutoff(n_nodes), maximal_cutoff_bonded(),
       VerletCriterion<>{skin, interaction_range(), coulomb_cutoff,
                         dipole_cutoff, collision_detection_cutoff()});
 

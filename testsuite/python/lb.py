@@ -310,7 +310,7 @@ class LBTest:
         phi = 0.05
         lj_sig = 1.0
         l = (n_part * 4. / 3. * np.pi * (lj_sig / 2.)**3 / phi)**(1. / 3.)
-        system.box_l = [l] * 3 * system.cell_system.node_grid
+        system.box_l = [l] * 3 * np.array(system.cell_system.node_grid)
         lbf = self.lb_class(agrid=l / 31, density=1, viscosity=1, kT=0,
                             tau=system.time_step, **self.lb_params)
         system.actors.add(lbf)

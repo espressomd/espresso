@@ -38,6 +38,11 @@ class Constraints : public ObjectList<Constraint> {
   void remove_in_core(std::shared_ptr<Constraint> const &obj_ptr) override {
     ::Constraints::constraints.remove(obj_ptr->constraint());
   }
+
+private:
+  // disable serialization: pickling done by the python interface
+  std::string get_internal_state() const override { return {}; }
+  void set_internal_state(std::string const &state) override {}
 };
 } /* namespace Constraints */
 } /* namespace ScriptInterface */

@@ -20,6 +20,7 @@ from .utils cimport Vector2d, Vector3d, Vector4d, make_array_locked
 cimport cpython.object
 
 from libcpp.memory cimport shared_ptr, make_shared
+from libcpp.utility cimport pair
 
 cdef shared_ptr[ContextManager] _om
 
@@ -204,7 +205,8 @@ cdef Variant python_object_to_variant(value) except *:
     cdef vector[Variant] vec
     cdef vector[int] vec_int
     cdef vector[double] vec_double
-    cdef unordered_map[int, Variant] vmap
+    cdef unordered_map[int, Variant] map_int2var
+    cdef unordered_map[string, Variant] map_str2var
     cdef PObjectRef oref
     cdef int[::1] view_int
     cdef int * data_int
@@ -221,14 +223,24 @@ cdef Variant python_object_to_variant(value) except *:
         oref = value.get_sip()
         return make_variant(oref.sip)
     elif isinstance(value, dict):
+        if all(map(lambda x: isinstance(x, (int, np.integer)), value.keys())):
+            for key, value in value.items():
+                map_int2var[int(key)] = python_object_to_variant(value)
+            return make_variant[unordered_map[int, Variant]](map_int2var)
+        elif all(map(lambda x: isinstance(x, (str, np.str_)), value.keys())):
+            for key, value in value.items():
+                map_str2var[utils.to_char_pointer(
+                    str(key))] = python_object_to_variant(value)
+            return make_variant[unordered_map[string, Variant]](map_str2var)
         for k, v in value.items():
-            if not isinstance(k, int):
+            if not isinstance(k, (str, int, np.integer, np.str_)):
                 raise TypeError(
                     f"No conversion from type "
                     f"'dict_item([({type(k).__name__}, {type(v).__name__})])'"
-                    f" to 'Variant[std::unordered_map<int, Variant>]'")
-            vmap[k] = python_object_to_variant(v)
-        return make_variant[unordered_map[int, Variant]](vmap)
+                    f" to 'Variant[std::unordered_map<int, Variant>]' or"
+                    f" to 'Variant[std::unordered_map<std::string, Variant>]'")
+    elif type(value) in (str, np.str_):
+        return make_variant[string](utils.to_char_pointer(str(value)))
     elif isinstance(value, array_variant) and np.issubdtype(value.dtype, np.signedinteger):
         view_int = np.ascontiguousarray(value, dtype=np.int32)
         data_int = &view_int[0]
@@ -239,12 +251,10 @@ cdef Variant python_object_to_variant(value) except *:
         data_double = &view_double[0]
         vec_double.assign(data_double, data_double + len(view_double))
         return make_variant[vector[double]](vec_double)
-    elif hasattr(value, '__iter__') and type(value) != str:
+    elif hasattr(value, '__iter__'):
         for e in value:
             vec.push_back(python_object_to_variant(e))
         return make_variant[vector[Variant]](vec)
-    elif type(value) == str:
-        return make_variant[string](utils.to_char_pointer(value))
     elif type(value) == type(True):
         return make_variant[bool](value)
     elif np.issubdtype(np.dtype(type(value)), np.signedinteger):
@@ -259,7 +269,10 @@ cdef variant_to_python_object(const Variant & value) except +:
     """Convert C++ Variant objects to Python objects."""
 
     cdef vector[Variant] vec
-    cdef unordered_map[int, Variant] vmap
+    cdef unordered_map[int, Variant] map_int2var
+    cdef unordered_map[string, Variant] map_str2var
+    cdef pair[int, Variant] pair_int2var
+    cdef pair[string, Variant] pair_str2var
     cdef shared_ptr[ObjectHandle] ptr
     cdef Vector2d vec2d
     cdef Vector4d vec4d
@@ -317,12 +330,24 @@ cdef variant_to_python_object(const Variant & value) except +:
             res.append(variant_to_python_object(i))
 
         return res
+
     if is_type[unordered_map[int, Variant]](value):
-        vmap = get_value[unordered_map[int, Variant]](value)
+        map_int2var = get_value[unordered_map[int, Variant]](value)
         res = {}
 
-        for kv in vmap:
-            res[kv.first] = variant_to_python_object(kv.second)
+        for pair_int2var in map_int2var:
+            res[pair_int2var.first] = variant_to_python_object(
+                pair_int2var.second)
+
+        return res
+
+    if is_type[unordered_map[string, Variant]](value):
+        map_str2var = get_value[unordered_map[string, Variant]](value)
+        res = {}
+
+        for pair_str2var in map_str2var:
+            res[utils.to_str(pair_str2var.first)] = variant_to_python_object(
+                pair_str2var.second)
 
         return res
 
@@ -396,15 +421,25 @@ class ScriptInterfaceHelper(PScriptInterface):
             setattr(self, method_name, self.generate_caller(method_name))
 
 
-class ScriptObjectRegistry(ScriptInterfaceHelper):
+class ScriptObjectList(ScriptInterfaceHelper):
     """
     Base class for container-like classes such as
     :class:`~espressomd.constraints.Constraints`. Derived classes must
     implement an ``add()`` method which adds a single item to the container.
 
-    The core class should derive from ScriptObjectRegistry or provide
-    ``"get_elements"`` and ``"size"`` as callable methods.
+    The core objects must be managed by a container derived from
+    ``ScriptInterface::ObjectList``.
+
     """
+
+    def __init__(self, *args, **kwargs):
+        if args:
+            params, (_unpickle_so_class, (_so_name, bytestring)) = args
+            assert _so_name == self._so_name
+            self = _unpickle_so_class(_so_name, bytestring)
+            self.__setstate__(params)
+        else:
+            super().__init__(**kwargs)
 
     def __getitem__(self, key):
         return self.call_method("get_elements")[key]
@@ -417,13 +452,34 @@ class ScriptObjectRegistry(ScriptInterfaceHelper):
     def __len__(self):
         return self.call_method("size")
 
+    @classmethod
+    def _restore_object(cls, so_callback, so_callback_args, state):
+        so = so_callback(*so_callback_args)
+        so.__setstate__(state)
+        return so
 
-class ScriptObjectMap(ScriptObjectRegistry):
+    def __reduce__(self):
+        so_callback, (so_name, so_bytestring) = super().__reduce__()
+        return (ScriptObjectList._restore_object,
+                (so_callback, (so_name, so_bytestring), self.__getstate__()))
 
+    def __getstate__(self):
+        return self.call_method("get_elements")
+
+    def __setstate__(self, object_list):
+        for item in object_list:
+            self.add(item)
+
+
+class ScriptObjectMap(ScriptInterfaceHelper):
     """
-    Represents a script interface ObjectMap (dict)-like object
+    Base class for container-like classes such as
+    :class:`~espressomd.interactions.BondedInteractions`. Derived classes must
+    implement an ``add()`` method which adds a single item to the container.
 
-    Item acces via [key].
+    The core objects must be managed by a container derived from
+    ``ScriptInterface::ObjectMap``.
+
     """
 
     _key_type = int
@@ -450,6 +506,9 @@ class ScriptObjectMap(ScriptObjectRegistry):
 
         """
         self.call_method("clear")
+
+    def __len__(self):
+        return self.call_method("size")
 
     def __getitem__(self, key):
         self._assert_key_type(key)

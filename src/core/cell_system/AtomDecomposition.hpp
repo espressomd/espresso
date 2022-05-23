@@ -19,11 +19,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_ATOM_DECOMPOSITION_HPP
-#define ESPRESSO_ATOM_DECOMPOSITION_HPP
+#ifndef ESPRESSO_SRC_CORE_CELL_SYSTEM_ATOM_DECOMPOSITION_HPP
+#define ESPRESSO_SRC_CORE_CELL_SYSTEM_ATOM_DECOMPOSITION_HPP
 
+#include "cell_system/ParticleDecomposition.hpp"
+
+#include "cell_system/Cell.hpp"
+
+#include "BoxGeometry.hpp"
 #include "Particle.hpp"
-#include "ParticleDecomposition.hpp"
 #include "ghosts.hpp"
 
 #include <utils/Span.hpp>
@@ -79,6 +83,10 @@ public:
   Utils::Span<Cell *> ghost_cells() override {
     return Utils::make_span(m_ghost_cells);
   }
+
+  /* Getter needed for HybridDecomposition */
+  std::vector<Cell *> get_local_cells() const { return m_local_cells; }
+  std::vector<Cell *> get_ghost_cells() const { return m_ghost_cells; }
 
   /**
    * @brief Determine which cell a particle id belongs to.

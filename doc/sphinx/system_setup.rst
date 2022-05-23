@@ -52,7 +52,7 @@ for further calculations, you should explicitly make a copy e.g. via
 * :py:attr:`~espressomd.system.System.min_global_cut`
 
   Minimal total cutoff for real space. Effectively, this plus the
-  :py:attr:`~espressomd.cellsystem.CellSystem.skin` is the minimally possible
+  :py:attr:`~espressomd.cell_system.CellSystem.skin` is the minimally possible
   cell size. |es| typically determines this value automatically, but some
   algorithms, virtual sites, require you to specify it manually.
 
@@ -211,10 +211,10 @@ even though their :attr:`~espressomd.particle_data.ParticleHandle.image_box`
 is *not* zero.
 
 
-.. _Cellsystems:
+.. _Cell systems:
 
-Cellsystems
-~~~~~~~~~~~
+Cell systems
+~~~~~~~~~~~~
 
 This section deals with the flexible particle data organization of |es|. Due
 to different needs of different algorithms, |es| is able to change the
@@ -230,18 +230,18 @@ Global properties
 The properties of the cell system can be accessed via the system
 :class:`~espressomd.system.System.cell_system` attribute:
 
-* :py:attr:`~espressomd.cellsystem.CellSystem.node_grid`
+* :py:attr:`~espressomd.cell_system.CellSystem.node_grid`
 
   3D node grid for real space domain decomposition (optional, if
   unset an optimal partition is chosen automatically). The domain decomposition
   can be visualized with :file:`samples/visualization_cellsystem.py`.
 
-* :py:attr:`~espressomd.cellsystem.CellSystem.skin`
+* :py:attr:`~espressomd.cell_system.CellSystem.skin`
 
   Skin for the Verlet list. This value has to be set, otherwise the simulation will not start.
 
 Details about the cell system can be obtained by
-:meth:`get_state() <espressomd.cellsystem.CellSystem.get_state>`:
+:meth:`get_state() <espressomd.cell_system.CellSystem.get_state>`:
 
 * ``cell_grid``       Dimension of the inner cell grid (only for regular decomposition).
 * ``cell_size``       Box-length of a cell (only for regular decomposition).
@@ -256,10 +256,10 @@ Details about the cell system can be obtained by
 Regular decomposition
 ^^^^^^^^^^^^^^^^^^^^^
 
-Invoking :py:meth:`~espressomd.cellsystem.CellSystem.set_regular_decomposition`
-selects the regular decomposition cell scheme, using Verlet lists
-for the calculation of the interactions. If you specify ``use_verlet_lists=False``, only the
-regular decomposition is used, but not the Verlet lists. ::
+Invoking :py:meth:`~espressomd.cell_system.CellSystem.set_regular_decomposition`
+selects the regular decomposition cell scheme, using Verlet lists for the
+calculation of the interactions. If you specify ``use_verlet_lists=False``,
+only the regular decomposition is used, but not the Verlet lists. ::
 
     import espressomd
     system = espressomd.System(box_l=[1, 1, 1])
@@ -304,7 +304,7 @@ or Verlet list skin.
 N-squared
 ^^^^^^^^^
 
-Invoking :py:meth:`~espressomd.cellsystem.CellSystem.set_n_square`
+Invoking :py:meth:`~espressomd.cell_system.CellSystem.set_n_square`
 selects the very primitive N-squared cellsystem, which calculates
 the interactions for all particle pairs. Therefore it loops over all
 particles, giving an unfavorable computation time scaling of
@@ -337,3 +337,53 @@ this node is twice as high. For 3 processors, the interactions are 0-0,
 
 Therefore it is highly recommended that you use N-squared only with an
 odd number of nodes, if with multiple processors at all.
+
+.. _Hybrid:
+
+Hybrid decomposition
+^^^^^^^^^^^^^^^^^^^^
+
+If for a simulation setup the interaction range is much smaller than the
+system size, use of a :ref:`Regular decomposition` leads to efficient
+scaling behavior (order :math:`N` instead of order :math:`N^2`).
+Consider a system with many small particles, e.g. a polymer solution.
+There, already the addition of one single large particle increases the maximum
+interaction range and thus the minimum cell size of the decomposition.
+Due to this larger cell size, throughout the simulation box a large number
+of non-interacting pairs of small particles is visited during the short
+range calculation. This can considerably increase the computational cost of
+the simulation.
+
+For such simulation setups, i.e. systems with a few large particles and much
+more small particles, the hybrid decomposition can be used. This hybrid
+decomposition is backed by two coupled particle decompositions which can
+be used to efficiently deal with the differently sized particles.
+Specifically that means putting the small particles into a
+:ref:`Regular decomposition`. There, the minimum cell size is limited only
+by the maximum interaction range of all particles within this decomposition.
+The few large particles are put into a :ref:`N-squared` cellsystem. Particles
+within this decomposition interact both, amongst each other and with all small
+particles in the :ref:`Regular decomposition`. The hybrid decomposition can therefore
+effectively recover the computational efficiency of the regular decomposition,
+given that only a few large particles have been added.
+
+Invoking :py:meth:`~espressomd.cell_system.CellSystem.set_hybrid_decomposition`
+selects the hybrid decomposition. ::
+
+    system = espressomd.System(box_l=[10, 10, 10])
+    system.cell_system.set_hybrid_decomposition(n_square_types={1, 3}, cutoff_regular=1.2)
+
+Here, ``n_square_types`` is a python set containing the types of particles to
+put into the :ref:`N-squared` cellsystem, i.e. the particle types of the
+large particles. Particles with other types will by default be put into the
+:ref:`Regular decomposition`. Note that for now it is also necessary to manually set
+the maximum cutoff to consider for interactions within the
+:ref:`Regular decomposition`, i.e. the maximum interaction range among all
+small particle types. Set this via the ``cutoff_regular`` parameter.
+
+.. note::
+
+  The hybrid particle decomposition has been added to |es| only recently and
+  for now should be considered an experimental feature. If you notice some unexpected
+  behavior please let us know via github or the mailing list.
+

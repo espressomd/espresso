@@ -93,7 +93,7 @@ static std::shared_ptr<Observable_stat> calculate_pressure_local() {
         add_non_bonded_pair_virials(p1, p2, d.vec21, sqrt(d.dist2),
                                     obs_pressure);
       },
-      maximal_cutoff(), maximal_cutoff_bonded());
+      maximal_cutoff(n_nodes), maximal_cutoff_bonded());
 
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */

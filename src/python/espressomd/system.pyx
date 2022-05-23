@@ -33,7 +33,7 @@ from . import cuda_init
 from . import code_info
 from .utils cimport make_array_locked, make_Vector3d, Vector3d
 from .thermostat import Thermostat
-from .cellsystem import CellSystem
+from .cell_system import CellSystem
 from .analyze import Analysis
 from .galilei import GalileiTransform
 from .constraints import Constraints
@@ -137,7 +137,7 @@ cdef class System:
         bonded_inter
         """:class:`espressomd.interactions.BondedInteractions`"""
         cell_system
-        """:class:`espressomd.cellsystem.CellSystem`"""
+        """:class:`espressomd.cell_system.CellSystem`"""
         thermostat
         """:class:`espressomd.thermostat.Thermostat`"""
         actors

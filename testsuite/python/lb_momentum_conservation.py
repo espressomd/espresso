@@ -95,8 +95,10 @@ class TestLBMomentumConservation:
                            self.system.box_l[0])
 
 
-@utx.skipIfMissingFeatures(['LB_WALBERLA', 'EXTERNAL_FORCES'])
-class TestLBMomentumConservationWalberla(
+@ut.skipIf(TestLBMomentumConservation.n_nodes == 1,
+           "LB with regular decomposition already tested with 2 MPI ranks")
+@utx.skipIfMissingFeatures(["LB_WALBERLA", "EXTERNAL_FORCES"])
+class TestLBMomentumConservationRegularWalberla(
         TestLBMomentumConservation, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
@@ -106,8 +108,10 @@ class TestLBMomentumConservationWalberla(
         self.system.cell_system.set_regular_decomposition()
 
 
-@utx.skipIfMissingFeatures(['LB_WALBERLA', 'EXTERNAL_FORCES'])
-class TestLBMomentumConservationWalberlaSinglePrecision(
+@ut.skipIf(TestLBMomentumConservation.n_nodes == 1,
+           "LB with regular decomposition already tested with 2 MPI ranks")
+@utx.skipIfMissingFeatures(["LB_WALBERLA", "EXTERNAL_FORCES"])
+class TestLBMomentumConservationRegularWalberlaSinglePrecision(
         TestLBMomentumConservation, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
@@ -115,6 +119,88 @@ class TestLBMomentumConservationWalberlaSinglePrecision(
 
     def set_cellsystem(self):
         self.system.cell_system.set_regular_decomposition()
+
+
+@ut.skipIf(TestLBMomentumConservation.n_nodes > 1,
+           "LB with N-square only works on 1 MPI rank")
+@utx.skipIfMissingFeatures(["LB_WALBERLA", "EXTERNAL_FORCES"])
+class TestLBCPUMomentumConservationHybridNSquareWalberla(
+        TestLBMomentumConservation, ut.TestCase):
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': False}
+
+    def set_cellsystem(self):
+        self.system.cell_system.set_hybrid_decomposition(
+            n_square_types={0}, cutoff_regular=1)
+
+
+@ut.skipIf(TestLBMomentumConservation.n_nodes > 1,
+           "LB with N-square only works on 1 MPI rank")
+@utx.skipIfMissingFeatures(["LB_WALBERLA", "EXTERNAL_FORCES"])
+class TestLBCPUMomentumConservationHybridNSquareWalberlaSinglePrecision(
+        TestLBMomentumConservation, ut.TestCase):
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': True}
+
+    def set_cellsystem(self):
+        self.system.cell_system.set_hybrid_decomposition(
+            n_square_types={0}, cutoff_regular=1)
+
+
+@ut.skipIf(TestLBMomentumConservation.n_nodes > 1,
+           "LB with N-square only works on 1 MPI rank")
+@utx.skipIfMissingFeatures(["LB_WALBERLA", "EXTERNAL_FORCES"])
+class TestLBCPUMomentumConservationHybridRegularWalberla(
+        TestLBMomentumConservation, ut.TestCase):
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': False}
+
+    def set_cellsystem(self):
+        self.system.cell_system.set_hybrid_decomposition(
+            n_square_types={1}, cutoff_regular=1)
+
+
+@ut.skipIf(TestLBMomentumConservation.n_nodes > 1,
+           "LB with N-square only works on 1 MPI rank")
+@utx.skipIfMissingFeatures(["LB_WALBERLA", "EXTERNAL_FORCES"])
+class TestLBCPUMomentumConservationHybridRegularWalberlaSinglePrecision(
+        TestLBMomentumConservation, ut.TestCase):
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': True}
+
+    def set_cellsystem(self):
+        self.system.cell_system.set_hybrid_decomposition(
+            n_square_types={1}, cutoff_regular=1)
+
+
+@ut.skipIf(TestLBMomentumConservation.n_nodes > 1,
+           "LB with N-square only works on 1 MPI rank")
+@utx.skipIfMissingFeatures(["LB_WALBERLA", "EXTERNAL_FORCES"])
+class TestLBMomentumConservationNSquareWalberla(
+        TestLBMomentumConservation, ut.TestCase):
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': False}
+
+    def set_cellsystem(self):
+        self.system.cell_system.set_n_square()
+
+
+@ut.skipIf(TestLBMomentumConservation.n_nodes > 1,
+           "LB with N-square only works on 1 MPI rank")
+@utx.skipIfMissingFeatures(["LB_WALBERLA", "EXTERNAL_FORCES"])
+class TestLBMomentumConservationNSquareWalberlaSinglePrecision(
+        TestLBMomentumConservation, ut.TestCase):
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': True}
+
+    def set_cellsystem(self):
+        self.system.cell_system.set_n_square()
 
 
 if __name__ == "__main__":

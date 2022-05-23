@@ -54,22 +54,23 @@ class SwimmerTest():
         pos2 = [2, 3, 5.99] if put_in_corners else [2.9, 2.5, 3]
         pos3 = [1.5, 5.99, 1] if put_in_corners else [2, 2, 2.5]
 
+        # particle type is only relevant for engine_lb_hybrid test
         system.part.add(pos=pos0, quat=minus_y, fix=3 * [fix],
                         mass=0.9, rinertia=3 * [7], rotation=3 * [rotation],
                         swimming={"mode": "pusher", "f_swim": 0.10,
-                                  "dipole_length": 0.5})
+                                  "dipole_length": 0.5}, type=1)
         system.part.add(pos=pos1, quat=plus_x, fix=3 * [fix],
                         mass=1.9, rinertia=3 * [8], rotation=3 * [rotation],
                         swimming={"mode": "pusher", "v_swim": 0.02,
-                                  "dipole_length": 0.6})
+                                  "dipole_length": 0.6}, type=0)
         system.part.add(pos=pos2, quat=plus_z, fix=3 * [fix],
                         mass=2.9, rinertia=3 * [9], rotation=3 * [rotation],
                         swimming={"mode": "puller", "f_swim": 0.08,
-                                  "dipole_length": 0.7})
+                                  "dipole_length": 0.7}, type=1)
         system.part.add(pos=pos3, quat=plus_y, fix=3 * [fix],
                         mass=3.9, rinertia=3 * [10], rotation=3 * [rotation],
                         swimming={"mode": "puller", "v_swim": 0.05,
-                                  "dipole_length": 0.8})
+                                  "dipole_length": 0.8}, type=0)
 
     def setUp(self):
         self.set_cellsystem()
@@ -234,6 +235,62 @@ class SwimmerTestNSquareWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
 
     def set_cellsystem(self):
         self.system.cell_system.set_n_square()
+
+
+@utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
+@ut.skipIf(SwimmerTest.n_nodes > 1,
+           "LB with N-square only works on 1 MPI rank")
+class SwimmerTestHybrid0CPUWalberla(SwimmerTest, ut.TestCase):
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': False}
+    tol = 1e-10
+
+    def set_cellsystem(self):
+        self.system.cell_system.set_hybrid_decomposition(
+            n_square_types={0}, cutoff_regular=1)
+
+
+@utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
+@ut.skipIf(SwimmerTest.n_nodes > 1,
+           "LB with N-square only works on 1 MPI rank")
+class SwimmerTestHybrid0CPUWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': True}
+    tol = 1e-10
+
+    def set_cellsystem(self):
+        self.system.cell_system.set_hybrid_decomposition(
+            n_square_types={0}, cutoff_regular=1)
+
+
+@utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
+@ut.skipIf(SwimmerTest.n_nodes > 1,
+           "LB with N-square only works on 1 MPI rank")
+class SwimmerTestHybrid1CPUWalberla(SwimmerTest, ut.TestCase):
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': False}
+    tol = 1e-10
+
+    def set_cellsystem(self):
+        self.system.cell_system.set_hybrid_decomposition(
+            n_square_types={1}, cutoff_regular=1)
+
+
+@utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
+@ut.skipIf(SwimmerTest.n_nodes > 1,
+           "LB with N-square only works on 1 MPI rank")
+class SwimmerTestHybrid1CPUWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': True}
+    tol = 1e-10
+
+    def set_cellsystem(self):
+        self.system.cell_system.set_hybrid_decomposition(
+            n_square_types={1}, cutoff_regular=1)
 
 
 if __name__ == "__main__":

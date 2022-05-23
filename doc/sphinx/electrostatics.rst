@@ -347,8 +347,8 @@ MMM1D is used with::
     mmm1d = espressomd.electrostatics.MMM1D(prefactor=C, maxPWerror=err)
 
 where the prefactor :math:`C` is defined in Eqn. :eq:`coulomb_prefactor`.
-MMM1D Coulomb method for systems with periodicity (0 0 1). Needs the
-N-squared cell system (see section :ref:`Cellsystems`). The first form sets parameters
+MMM1D requires for systems with periodicity (0 0 1) and the N-squared
+cell system (see section :ref:`Cell systems`). The first form sets parameters
 manually. The switch radius determines at which xy-distance the force
 calculation switches from the near to the far formula. The Bessel cutoff
 does not need to be specified as it is automatically determined from the

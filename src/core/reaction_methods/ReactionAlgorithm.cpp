@@ -21,6 +21,7 @@
 
 #include "reaction_methods/ReactionAlgorithm.hpp"
 
+#include "cells.hpp"
 #include "energy.hpp"
 #include "grid.hpp"
 #include "partCfg_global.hpp"
@@ -381,45 +382,46 @@ void ReactionAlgorithm::check_exclusion_range(int inserted_particle_id) {
 
   auto const &inserted_particle = get_particle_data(inserted_particle_id);
 
-  /* Check the excluded radius of the inserted particle */
-
+  /* Check the exclusion radius of the inserted particle */
   if (exclusion_radius_per_type.count(inserted_particle.type()) != 0) {
-    if (exclusion_radius_per_type[inserted_particle.type()] == 0) {
+    if (exclusion_radius_per_type[inserted_particle.type()] == 0.) {
       return;
     }
   }
 
-  auto particle_ids = get_particle_ids();
-  /* remove the inserted particle id*/
-  particle_ids.erase(std::remove(particle_ids.begin(), particle_ids.end(),
-                                 inserted_particle_id),
-                     particle_ids.end());
+  std::vector<int> particle_ids;
+  if (neighbor_search_order_n) {
+    particle_ids = get_particle_ids();
+    /* remove the inserted particle id */
+    particle_ids.erase(std::remove(particle_ids.begin(), particle_ids.end(),
+                                   inserted_particle_id),
+                       particle_ids.end());
+  } else {
+    particle_ids = mpi_get_short_range_neighbors(inserted_particle.identity(),
+                                                 m_max_exclusion_range);
+  }
 
-  /* Check  if the inserted particle within the excluded_range of any other
-   * particle*/
-  double excluded_distance;
-  for (const auto &particle_id : particle_ids) {
-    auto const &already_present_particle = get_particle_data(particle_id);
+  /* Check if the inserted particle within the exclusion radius of any other
+   * particle */
+  for (auto const &particle_id : particle_ids) {
+    auto const &p = get_particle_data(particle_id);
+    double excluded_distance;
     if (exclusion_radius_per_type.count(inserted_particle.type()) == 0 ||
-        exclusion_radius_per_type.count(inserted_particle.type()) == 0) {
+        exclusion_radius_per_type.count(p.type()) == 0) {
       excluded_distance = exclusion_range;
-    } else if (exclusion_radius_per_type[already_present_particle.type()] ==
-               0.) {
+    } else if (exclusion_radius_per_type[p.type()] == 0.) {
       continue;
     } else {
-      excluded_distance =
-          exclusion_radius_per_type[inserted_particle.type()] +
-          exclusion_radius_per_type[already_present_particle.type()];
+      excluded_distance = exclusion_radius_per_type[inserted_particle.type()] +
+                          exclusion_radius_per_type[p.type()];
     }
 
     auto const d_min =
-        box_geo
-            .get_mi_vector(already_present_particle.r.p, inserted_particle.r.p)
-            .norm();
+        box_geo.get_mi_vector(p.pos(), inserted_particle.pos()).norm();
 
     if (d_min < excluded_distance) {
       particle_inside_exclusion_range_touched = true;
-      return;
+      break;
     }
   }
 }

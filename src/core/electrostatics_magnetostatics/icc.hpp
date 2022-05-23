@@ -48,8 +48,8 @@
 
 #if defined(ELECTROSTATICS)
 
-#include "CellStructure.hpp"
 #include "ParticleRange.hpp"
+#include "cell_system/CellStructure.hpp"
 
 #include <utils/Vector.hpp>
 

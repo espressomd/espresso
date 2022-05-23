@@ -25,8 +25,8 @@
  */
 #include "event.hpp"
 
-#include "CellStructureType.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
+#include "cell_system/CellStructureType.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
 #include "communication.hpp"
@@ -183,7 +183,12 @@ void on_particle_charge_change() {
 }
 
 void on_particle_change() {
-  cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
+  if (cell_structure.decomposition_type() ==
+      CellStructureType::CELL_STRUCTURE_HYBRID) {
+    cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
+  } else {
+    cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
+  }
   reinit_electrostatics = true;
   reinit_magnetostatics = true;
   recalc_forces = true;
@@ -337,7 +342,7 @@ unsigned global_ghost_flags() {
   }
 
 #ifdef COLLISION_DETECTION
-  if (collision_params.mode) {
+  if (collision_params.mode != CollisionModeType::OFF) {
     data_parts |= Cells::DATA_PART_BONDS;
   }
 #endif

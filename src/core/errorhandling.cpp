@@ -62,7 +62,7 @@ RuntimeErrorStream _runtimeMessageStream(RuntimeError::ErrorLevel level,
   return {*runtimeErrorCollector, level, file, line, function};
 }
 
-void mpi_gather_runtime_errors_local() {
+static void mpi_gather_runtime_errors_local() {
   runtimeErrorCollector->gather_local();
 }
 
@@ -88,4 +88,8 @@ int check_runtime_errors_local() {
 int check_runtime_errors(boost::mpi::communicator const &comm) {
   return boost::mpi::all_reduce(comm, check_runtime_errors_local(),
                                 std::plus<int>());
+}
+
+void flush_runtime_errors_local() {
+  ErrorHandling::runtimeErrorCollector->flush();
 }

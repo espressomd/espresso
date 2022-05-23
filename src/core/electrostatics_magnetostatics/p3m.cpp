@@ -31,9 +31,9 @@
 #include "electrostatics_magnetostatics/elc.hpp"
 #include "electrostatics_magnetostatics/p3m_influence_function.hpp"
 
-#include "CellStructureType.hpp"
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
+#include "cell_system/CellStructureType.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"

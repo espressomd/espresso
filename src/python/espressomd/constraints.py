@@ -14,13 +14,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from .script_interface import ScriptObjectRegistry, ScriptInterfaceHelper, script_interface_register
+from .script_interface import ScriptObjectList, ScriptInterfaceHelper, script_interface_register
 import numpy as np
 import itertools
 
 
 @script_interface_register
-class Constraints(ScriptObjectRegistry):
+class Constraints(ScriptObjectList):
 
     """
     List of active constraints. Add a :class:`espressomd.constraints.Constraint`
