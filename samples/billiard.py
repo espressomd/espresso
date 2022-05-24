@@ -24,7 +24,7 @@ from threading import Thread
 
 import espressomd
 import espressomd.interactions
-from espressomd.visualization_opengl import openGLLive, KeyboardButtonEvent, KeyboardFireEvent
+from espressomd.visualization import openGLLive, KeyboardButtonEvent, KeyboardFireEvent
 import espressomd.shapes
 
 required_features = ["WCA", "MASS", "EXTERNAL_FORCES"]

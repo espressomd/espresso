@@ -24,7 +24,7 @@ partitioned. Only the domain of MPI rank 0 will be shown in wireframe.
 """
 
 import espressomd
-import espressomd.visualization_opengl
+import espressomd.visualization
 import numpy as np
 
 required_features = ["LENNARD_JONES"]
@@ -32,7 +32,7 @@ espressomd.assert_features(required_features)
 
 box = [40, 30, 20]
 system = espressomd.System(box_l=box)
-visualizer = espressomd.visualization_opengl.openGLLive(
+visualizer = espressomd.visualization.openGLLive(
     system,
     window_size=[800, 800],
     background_color=[0, 0, 0],

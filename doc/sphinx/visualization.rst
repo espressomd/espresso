@@ -3,34 +3,22 @@
 Online-visualization
 ====================
 
-With the python interface, |es| features two possibilities for
-online-visualization:
-
-#. Using the mlab module to drive *Mayavi, a "3D scientific data
-   visualization and plotting in Python"*. Mayavi has a user-friendly
-   GUI to specify the appearance of the output.
-   Additional requirements:
-   python module *mayavi*, VTK and wxWidgets GUI Toolkit (packages
-   *python3-vtk* and *python3-wxgtk*, for Debian/Ubuntu).
-   Note that only VTK from version 7.0.0 and higher has Python 3 support.
-
-#. A direct rendering engine based on *pyopengl*. As it is developed for |es|,
-   it supports the visualization of several specific features like constraints,
-   particle properties, the cell system, lattice-Boltzmann and more. It can be
-   adjusted with a large number of parameters to set colors, materials,
-   camera and interactive features like assigning callbacks to user input.
-   Additional requirements: python module *PyOpenGL*.
-
-Both are not meant to produce high quality renderings, but rather to
-debug your setup and equilibration process.
+|es| offers a direct rendering engine based on *pyopengl*.
+It supports several features like shape-based constraints,
+particle properties, the cell system, lattice-Boltzmann and more.
+It can be adjusted with a large number of parameters to set colors,
+materials, camera and interactive features like assigning callbacks
+to user input. It requires the Python module *PyOpenGL*.
+It is not meant to produce high quality renderings, but rather to
+debug the simulation setup and equilibration process.
 
 .. _General usage:
 
 General usage
 -------------
 
-The recommended usage of both tools is similar: Create the visualizer of
-your choice and pass it the :class:`espressomd.System() <espressomd.system.System>` object. Then write
+The recommended usage is to instantiate the visualizer and pass it the
+:class:`espressomd.System() <espressomd.system.System>` object. Then write
 your integration loop in a separate function, which is started in a
 non-blocking thread. Whenever needed, call ``update()`` to synchronize
 the renderer with your system. Finally start the blocking visualization
@@ -47,7 +35,6 @@ window with ``start()``. See the following minimal code example::
     system.part.add(pos=[1, 1, 1], v=[1, 0, 0])
     system.part.add(pos=[9, 9, 9], v=[0, 1, 0])
 
-    #visualizer = espressomd.visualization.mayaviLive(system)
     visualizer = espressomd.visualization.openGLLive(system)
 
     def main_thread():
@@ -60,67 +47,31 @@ window with ``start()``. See the following minimal code example::
     t.start()
     visualizer.start()
 
-.. _Common methods for OpenGL and Mayavi:
+.. _Setting up the visualizer:
 
-Common methods for OpenGL and Mayavi
-------------------------------------
+Setting up the visualizer
+-------------------------
 
-| :meth:`espressomd.visualization.mayaviLive.update()`
-| :meth:`espressomd.visualization.openGLLive.update()`
+:class:`espressomd.visualization.openGLLive()`
+
+The required parameter  ``system`` is the :class:`~espressomd.system.System` object.
+The optional keywords in ``**kwargs`` are used to adjust the appearance of the visualization.
+These parameters have suitable default values for most simulations.
+
+:meth:`espressomd.visualization.openGLLive.update()`
 
 ``update()`` synchronizes system and visualizer, handles keyboard events for
 openGLLive.
 
-| :meth:`espressomd.visualization.mayaviLive.start()`
-| :meth:`espressomd.visualization.openGLLive.start()`
+:meth:`espressomd.visualization.openGLLive.start()`
 
 ``start()`` starts the blocking visualizer window.
 Should be called after a separate thread containing ``update()`` has been started.
 
-| :meth:`espressomd.visualization.mayaviLive.register_callback()`
-| :meth:`espressomd.visualization.openGLLive.register_callback()`
+:meth:`espressomd.visualization.openGLLive.register_callback()`
 
 Registers the method ``callback()``, which is called every ``interval`` milliseconds. Useful for
 live plotting (see sample script :file:`/samples/visualization_ljliquid.py`).
-
-.. _Mayavi visualizer:
-
-Mayavi visualizer
------------------
-
-The Mayavi visualizer is created with the following syntax:
-
-:class:`espressomd.visualization.mayaviLive()`
-
-Required parameters:
-
-* ``system``: The :class:`espressomd.System() <espressomd.system.System>` object.
-
-Optional keywords:
-
-* ``particle_sizes``:
-    * ``"auto"`` (default): The Lennard-Jones sigma value of the self-interaction is used for the particle diameter.
-    * ``callable``: A lambda function with one argument. Internally, the numerical particle type is passed to the lambda function to determine the particle radius.
-    * ``list``: A list of particle radii, indexed by the particle type.
-
-.. _OpenGL visualizer:
-
-OpenGL visualizer
------------------
-
-:class:`espressomd.visualization.openGLLive()`
-
-The optional keywords in ``**kwargs`` are used to adjust the appearance of the visualization.
-The parameters have suitable default values for most simulations.
-
-Required parameters:
-
-* ``system``: The :class:`espressomd.System() <espressomd.system.System>` object.
-
-Optional keywords:
-
-* Have a look at the attribute list in :class:`espressomd.visualization.openGLLive()`
-
 
 .. note::
 
@@ -136,7 +87,7 @@ Optional keywords:
 Running the visualizer
 ~~~~~~~~~~~~~~~~~~~~~~
 
-| :meth:`espressomd.visualization.openGLLive.run()`
+:meth:`espressomd.visualization.openGLLive.run()`
 
 To visually debug your simulation, ``run(n)`` can be used to conveniently start
 an integration loop with ``n`` integration steps in a separate thread once the
@@ -219,7 +170,7 @@ used, which are indexed circularly by the numerical particle type::
                                                      particle_type_colors=[[1, 1, 1], [0, 0, 1]],
                                                      particle_type_materials=["steel", "bright"])
 
-Materials are stored in :attr:`espressomd.visualization_opengl.openGLLive.materials`.
+Materials are stored in :attr:`espressomd.visualization.openGLLive.materials`.
 
 .. _Visualize vectorial properties:
 
@@ -242,7 +193,7 @@ feature)::
 
     import numpy as np
     import espressomd
-    from espressomd.visualization_opengl import openGLLive, KeyboardButtonEvent, KeyboardFireEvent
+    from espressomd.visualization import openGLLive, KeyboardButtonEvent, KeyboardFireEvent
 
     box_l = 10
     system = espressomd.System(box_l=[box_l, box_l, box_l])

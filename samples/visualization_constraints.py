@@ -24,7 +24,7 @@ import argparse
 import espressomd
 import espressomd.math
 import espressomd.shapes
-import espressomd.visualization_opengl
+import espressomd.visualization
 
 parser = argparse.ArgumentParser(epilog=__doc__)
 group = parser.add_mutually_exclusive_group()
@@ -47,7 +47,7 @@ np.random.seed(seed=42)
 system.time_step = 0.0001
 system.cell_system.skin = 0.3
 
-visualizer = espressomd.visualization_opengl.openGLLive(
+visualizer = espressomd.visualization.openGLLive(
     system,
     background_color=[1, 1, 1],
     drag_enabled=True,

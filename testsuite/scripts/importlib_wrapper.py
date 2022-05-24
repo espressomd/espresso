@@ -39,14 +39,14 @@ def configure_and_import(filepath,
                          cmd_arguments=None,
                          script_suffix="",
                          move_to_script_dir=True,
-                         mock_visualizers=True,
+                         mock_visualizer=True,
                          **parameters):
     """
     Copy a Python script to a new location and alter some lines of code:
 
     - change global variables and local variables (up to 1 indentation level)
     - pass command line arguments during import to emulate shell execution
-    - disable the OpenGL/Mayavi modules if they are not compiled
+    - disable the OpenGL module if dependencies are missing
     - disable the matplotlib GUI using a text-based backend
     - temporarily move to the directory where the script is located
 
@@ -58,14 +58,14 @@ def configure_and_import(filepath,
         whether GPU is necessary or not
     substitutions : :obj:`function`
         custom text replacement operation (useful to edit out calls to the
-        OpenGL or Mayavi visualizers' ``run()`` method)
+        OpenGL visualizer's ``run()`` method)
     cmd_arguments : :obj:`list`
         command line arguments, i.e. sys.argv without the script path
     script_suffix : :obj:`str`
         suffix to append to the configured script (useful when a single
         module is being tested by multiple tests in parallel)
-    mock_visualizers : :obj:`bool`
-        if ``True``, substitute ES visualizers with ``Mock`` classes in case
+    mock_visualizer : :obj:`bool`
+        if ``True``, substitute the visualizer with a ``Mock`` class in case
         of ``ImportError`` (use ``False`` if an ``ImportError`` is relevant
         to your test)
     move_to_script_dir : :obj:`bool`
@@ -98,8 +98,8 @@ def configure_and_import(filepath,
         code, old_sys_argv = set_cmd(code, filepath, cmd_arguments)
     # disable matplotlib GUI using the Agg backend
     code = disable_matplotlib_gui(code)
-    # disable OpenGL/Mayavi GUI using MagicMock()
-    if mock_visualizers:
+    # disable OpenGL GUI in case of ImportError using MagicMock()
+    if mock_visualizer:
         code = mock_es_visualization(code)
     # save changes to a new file
     output_filepath = filepath.parent / \
@@ -525,10 +525,7 @@ class GetEspressomdVisualizerImports(ast.NodeVisitor):
     """
 
     def __init__(self):
-        self.visualizers = {
-            "visualization",
-            "visualization_opengl",
-            "visualization_mayavi"}
+        self.visualizers = {"visualization"}
         self.namespace_visualizers = {
             "espressomd." + x for x in self.visualizers}
         self.visu_items = {}
@@ -569,10 +566,9 @@ class GetEspressomdVisualizerImports(ast.NodeVisitor):
 
 def mock_es_visualization(code):
     """
-    Replace ``import espressomd.visualization_<backend>`` by a ``MagicMock``
+    Replace ``import espressomd.visualization`` by a ``MagicMock``
     when the visualization module is unavailable, by catching the
-    ``ImportError`` exception. Please note that ``espressomd.visualization``
-    is deferring the exception, thus requiring additional checks.
+    ``ImportError`` exception.
 
     Import aliases are supported, however please don't use
     ``from espressomd.visualization import *`` because it hides the namespace
@@ -581,26 +577,12 @@ def mock_es_visualization(code):
     # replacement template
     r_es_vis_mock = r"""
 try:
-    {0}{1}
+    {0}
 except ImportError:
     import unittest.mock
     import espressomd
-    {2} = unittest.mock.MagicMock()
+    {1} = unittest.mock.MagicMock()
 """.lstrip()
-
-    def check_for_deferred_ImportError(line, alias):
-        if "_opengl" not in line and "_mayavi" not in line:
-            if "openGLLive" in line or "mayaviLive" in line:
-                return f"""
-    if hasattr({alias}, 'deferred_ImportError'):
-        raise {alias}.deferred_ImportError"""
-            else:
-                return f"""
-    if hasattr({alias}.mayaviLive, 'deferred_ImportError') or \\
-       hasattr({alias}.openGLLive, 'deferred_ImportError'):
-        raise ImportError()"""
-        else:
-            return ""
 
     visitor = GetEspressomdVisualizerImports()
     visitor.visit(ast.parse(protect_ipython_magics(code)))
@@ -611,9 +593,8 @@ except ImportError:
         lines[lineno - 1] = ""
         for import_str in imports:
             alias = import_str.split()[-1]
-            checks = check_for_deferred_ImportError(import_str, alias)
             import_str_new = "\n".join(indentation + x for x in
-                                       r_es_vis_mock.format(import_str, checks, alias).split("\n"))
+                                       r_es_vis_mock.format(import_str, alias).split("\n"))
             lines[lineno - 1] += import_str_new
 
     return "\n".join(lines)

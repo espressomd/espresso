@@ -22,7 +22,7 @@ import espressomd
 import espressomd.lb
 import espressomd.shapes
 import espressomd.lbboundaries
-import espressomd.visualization_opengl
+import espressomd.visualization
 
 required_features = ["LB_BOUNDARIES"]
 espressomd.assert_features(required_features)
@@ -44,7 +44,7 @@ cylinder_shape = espressomd.shapes.Cylinder(
 cylinder_boundary = espressomd.lbboundaries.LBBoundary(shape=cylinder_shape)
 system.lbboundaries.add(cylinder_boundary)
 
-visualizer = espressomd.visualization_opengl.openGLLive(
+visualizer = espressomd.visualization.openGLLive(
     system,
     background_color=[1, 1, 1],
     camera_position=[5, 5, 25],

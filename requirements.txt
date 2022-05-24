@@ -9,11 +9,7 @@ pint>=0.10.1
 matplotlib>=3.1.2
 vtk>=7.1.1
 PyOpenGL>=3.1.0
-mayavi>=4.5.0
-pyface
 pygame>=1.9.6
-traits>=4.6.0
-traitsui>=4.5.1
 # CI-related
 requests>=2.18.4 # to post on GitHub as espresso-ci
 lxml>=4.2.1 # to deploy tutorials

@@ -32,7 +32,7 @@ import espressomd.electrostatics
 import espressomd.interactions
 import espressomd.drude_helpers
 import espressomd.virtual_sites
-import espressomd.visualization_opengl
+import espressomd.visualization
 
 required_features = ["LENNARD_JONES", "P3M", "MASS", "ROTATION",
                      "ROTATIONAL_INERTIA", "VIRTUAL_SITES_RELATIVE",
@@ -85,7 +85,7 @@ if args.visu:
     c_dru = [0, 0, 1, 1]
     c_com = [0, 0, 0, 1]
     c_cat = [0, 1, 0, 1]
-    visualizer = espressomd.visualization_opengl.openGLLive(
+    visualizer = espressomd.visualization.openGLLive(
         system,
         background_color=[1, 1, 1],
         drag_enabled=True,

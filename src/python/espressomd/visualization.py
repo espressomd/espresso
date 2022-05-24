@@ -39,7 +39,7 @@ class openGLLive():
     integrating. Modify the appearance with a list of keywords.
     Timed callbacks can be registered via the :meth:`register_callback` method
     and keyboard callbacks via :meth:`keyboard_manager.register_button()
-    <espressomd.visualization_opengl.KeyboardManager.register_button>`.
+    <espressomd.visualization.KeyboardManager.register_button>`.
 
     Parameters
     ----------
