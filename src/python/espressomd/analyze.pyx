@@ -181,7 +181,7 @@ class Analysis:
 
         return analyze.centerofmass(analyze.partCfg(), p_type)
 
-    def nbhood(self, pos=None, r_catch=None, plane='3d'):
+    def nbhood(self, pos=None, r_catch=None):
         """
         Get all particles in a defined neighborhood.
 
@@ -191,8 +191,6 @@ class Analysis:
             Reference position for the neighborhood.
         r_catch : :obj:`float`
             Radius of the region.
-        plane : :obj:`str`, \{'xy', 'xz', 'yz'\}
-            If given, ``r_catch`` is the distance to the respective plane.
 
         Returns
         -------
@@ -205,20 +203,8 @@ class Analysis:
         utils.check_type_or_throw_except(
             r_catch, 1, float, "r_catch must be a float")
 
-        # default 3d takes into account dist in x, y and z
-        planedims = [1, 1, 1]
-        if plane == 'xy':
-            planedims[2] = 0
-        elif plane == 'xz':
-            planedims[1] = 0
-        elif plane == 'yz':
-            planedims[0] = 0
-        elif plane != '3d':
-            raise ValueError(
-                'Invalid argument for specifying plane, must be xy, xz, or yz plane')
-
         return analyze.nbhood(
-            analyze.partCfg(), utils.make_Vector3d(pos), r_catch, utils.make_Vector3i(planedims))
+            analyze.partCfg(), utils.make_Vector3d(pos), r_catch)
 
     def pressure(self):
         """

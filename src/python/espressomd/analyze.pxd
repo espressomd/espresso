@@ -72,7 +72,7 @@ cdef extern from "Observable_stat.hpp":
 cdef extern from "statistics.hpp":
     cdef void calc_structurefactor(PartCfg & , const vector[int] & p_types, int order, vector[double] & wavevectors, vector[double] & intensities) except +
     cdef double mindist(PartCfg & , const vector[int] & set1, const vector[int] & set2)
-    cdef vector[int] nbhood(PartCfg & , const Vector3d & pos, double r_catch, const Vector3i & planedims)
+    cdef vector[int] nbhood(PartCfg & , const Vector3d & pos, double dist)
     cdef vector[double] calc_linear_momentum(int include_particles, int include_lbfluid)
     cdef vector[double] centerofmass(PartCfg & , int part_type)
 

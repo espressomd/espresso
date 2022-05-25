@@ -162,25 +162,13 @@ void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix) {
 }
 
 std::vector<int> nbhood(PartCfg &partCfg, const Utils::Vector3d &pos,
-                        double r_catch, const Utils::Vector3i &planedims) {
+                        double dist) {
   std::vector<int> ids;
-
-  auto const r2 = r_catch * r_catch;
-  auto const pt = Utils::Vector3d{pos[0], pos[1], pos[2]};
-
-  Utils::Vector3d d;
+  auto const dist_sq = dist * dist;
 
   for (auto const &p : partCfg) {
-    if ((planedims[0] + planedims[1] + planedims[2]) == 3) {
-      d = box_geo.get_mi_vector(pt, p.pos());
-    } else {
-      /* Calculate the in plane distance */
-      for (int j = 0; j < 3; j++) {
-        d[j] = planedims[j] * (p.pos()[j] - pt[j]);
-      }
-    }
-
-    if (d.norm2() < r2) {
+    auto const r_sq = box_geo.get_mi_vector(pos, p.pos()).norm2();
+    if (r_sq < dist_sq) {
       ids.push_back(p.id());
     }
   }
