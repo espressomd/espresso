@@ -37,7 +37,7 @@ cpdef check_type_or_throw_except(x, n, t, msg):
                     msg + f" -- {len(x)} values were given but {n} were expected.")
             for i in range(len(x)):
                 if not (isinstance(x[i], t)
-                        or (t == float and is_valid_type(x[i], int))
+                        or (t == float and (is_valid_type(x[i], int) or is_valid_type(x[i], float)))
                         or (t == int and is_valid_type(x[i], int))
                         or (t == bool and (is_valid_type(x[i], bool) or x[i] in (0, 1)))):
                     raise ValueError(
@@ -219,6 +219,7 @@ Use numpy.copy(<ESPResSo array property>) to get a writable copy."
 cdef make_array_locked(Vector3d v):
     return array_locked([v[0], v[1], v[2]])
 
+
 cdef make_array_locked_vector(vector[Vector3d] v):
     ret = np.empty((v.size(), 3))
     for i in range(v.size()):
@@ -284,18 +285,21 @@ def nesting_level(obj):
 def is_valid_type(value, t):
     """
     Extended checks for numpy int, float and bool types.
+    Handles 0-dimensional arrays.
 
     """
     if value is None:
         return False
+    if isinstance(value, np.ndarray) and value.shape == ():
+        value = value[()]
     if t == int:
         return isinstance(value, (int, np.integer))
     elif t == float:
+        float_types = [
+            float, np.float16, np.float32, np.float64, np.longdouble]
         if hasattr(np, 'float128'):
-            return isinstance(
-                value, (float, np.float16, np.float32, np.float64, np.float128, np.longdouble))
-        return isinstance(
-            value, (float, np.float16, np.float32, np.float64, np.longdouble))
+            float_types.append(np.float128)
+        return isinstance(value, tuple(float_types))
     elif t == bool:
         return isinstance(value, (bool, np.bool, np.bool_))
     else:

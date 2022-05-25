@@ -54,7 +54,7 @@ cdef class _BoxGeometry:
     """
     Wrapper class required for technical reasons only.
 
-    When reloading from a checkpoint file, the box length, periodicity and
+    When reloading from a checkpoint file, the box length, periodicity, and
     global cutoff must be set before anything else. Due to how pickling works,
     this can only be achieved by encapsulating them in a member object of the
     System class, and adding that object as the first element of the ordered
@@ -78,8 +78,8 @@ cdef class _BoxGeometry:
 
     property box_l:
         def __set__(self, box_l):
-            if len(box_l) != 3:
-                raise ValueError("Box length must be of length 3")
+            utils.check_type_or_throw_except(
+                box_l, 3, float, "box_l must be an array_like of 3 floats")
             mpi_set_box_length(utils.make_Vector3d(box_l))
             utils.handle_errors("Exception while updating the box length")
 
@@ -88,9 +88,8 @@ cdef class _BoxGeometry:
 
     property periodicity:
         def __set__(self, periodic):
-            if len(periodic) != 3:
-                raise ValueError(
-                    f"periodicity must be of length 3, got length {len(periodic)}")
+            utils.check_type_or_throw_except(
+                periodic, 3, type(True), "periodicity must be an array_like of 3 bools")
             mpi_set_periodicity(periodic[0], periodic[1], periodic[2])
             utils.handle_errors("Exception while assigning system periodicity")
 

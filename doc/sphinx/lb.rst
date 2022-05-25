@@ -99,7 +99,7 @@ are to be given in LB units.
 Before running a simulation at least the following parameters must be
 set up: ``agrid``, ``tau``, ``visc``, ``dens``. For the other parameters,
 the following are taken: ``bulk_visc=0``, ``gamma_odd=0``, ``gamma_even=0``,
-``ext_force_density=[0,0,0]``.
+``ext_force_density=[0, 0, 0]``.
 
 .. _Checkpointing LB:
 
@@ -111,10 +111,10 @@ Checkpointing
     lb.save_checkpoint(path, binary)
     lb.load_checkpoint(path, binary)
 
-The first command saves all of the LB fluid nodes' populations to an ascii
+The first command saves all of the LB fluid nodes' populations to an ASCII
 (``binary=False``) or binary (``binary=True``) format respectively.
-The load command loads the populations from a checkpoint file written with
-``lb.save_checkpoint``. In both cases ``path`` specifies the location of the
+The second command loads the LB fluid nodes' populations.
+In both cases ``path`` specifies the location of the
 checkpoint file. This is useful for restarting a simulation either on the same
 machine or a different machine. Some care should be taken when using the binary
 format as the format of doubles can depend on both the computer being used as
@@ -201,7 +201,7 @@ the selected LB grid node and allows one to access all of its properties::
     lb[x, y, z].population           # 19 LB populations (a numpy array of 19 floats, check order from the source code)
 
 All of these properties can be read and used in further calculations.
-Only the property ``population`` can be modified. The indices ``x,y,z``
+Only the property ``population`` can be modified. The indices ``x, y, z``
 are integers and enumerate the LB nodes in the three Cartesion directions,
 starting at 0. To modify ``boundary``, refer to :ref:`Setting up boundary conditions`.
 

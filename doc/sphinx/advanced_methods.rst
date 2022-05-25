@@ -45,9 +45,10 @@ Several modes are available for different types of binding.
   * ``distance`` is the distance between two particles at which the binding is triggered.
     This cutoff distance, ``1.5`` in the example above, is typically chosen slightly larger
     than the particle diameter. It is also a good choice for the equilibrium length of the bond.
-  * ``bond_centers`` is the bonded interaction (an instance of :class:`~espressomd.interactions.HarmonicBond`)
-    to be created between the particles. No guarantees are made regarding which of the two colliding
-    particles gets the bond. Once there is a bond of this type on any of the colliding particles,
+  * ``bond_centers`` is the bonded interaction to be created between the particles
+    (an instance of :class:`~espressomd.interactions.HarmonicBond` in the example above).
+    No guarantees are made regarding which of the two colliding particles gets the bond.
+    Once there is a bond of this type on any of the colliding particles,
     no further binding occurs for this pair of particles.
 
 * ``"bind_at_point_of_collision"``: this mode prevents sliding of the colliding particles at the contact.

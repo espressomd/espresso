@@ -230,7 +230,6 @@ class openGLLive():
 
     """
 
-    # MATERIALS
     materials = {
         'bright': [0.9, 1.0, 0.8, 0.4, 1.0],
         'medium': [0.6, 0.8, 0.2, 0.4, 1.0],
@@ -245,7 +244,7 @@ class openGLLive():
     }
 
     def __init__(self, system, **kwargs):
-        # DEFAULT PROPERTIES
+        # default properties
         self.specs = {
             'window_size': [800, 800],
             'name': 'ESPResSo Visualization',
@@ -360,14 +359,14 @@ class openGLLive():
             'drag_force': 3.0
         }
 
-        # OVERWRITE WITH USER PROPERTIES
+        # overwrite with user properties
         for key in kwargs:
             if key not in self.specs:
                 raise ValueError(f'{key} is no valid visualization property')
             else:
                 self.specs[key] = kwargs[key]
 
-        # DEPENDENCIES
+        # dependencies
         if not espressomd.has_features('EXTERNAL_FORCES'):
             self.specs['drag_enabled'] = False
             self.specs['ext_force_arrows'] = False
@@ -380,13 +379,13 @@ class openGLLive():
             self.specs['LB_draw_boundaries'] = False
             self.specs['LB_draw_node_boundaries'] = False
 
-        # ESPRESSO RELATED INITS THAT ARE KNOWN ONLY WHEN RUNNING THE
-        # INTEGRATION LOOP ARE CALLED ONCE IN UPDATE LOOP:
-        # CONSTRAINTS, NODE BOXES, CELL BOXES, CHARGE RANGE, BONDS
+        # ESPResSo-related inits that are known only when running the
+        # integration loop are called once in the update loop
+        # (constraints, node boxes, cell boxes, charge range, bonds)
 
-        # ESPRESSO RELATED INITS THAT ARE KNOWN ON INSTANTIATION GO HERE:
+        # ESPResSo-related inits that are known on instantiation go here:
 
-        # CONTENT OF PARTICLE DATA
+        # content of particle data
         self.has_particle_data = {
             'velocity': self.specs['velocity_arrows'],
             'force': self.specs['force_arrows'],
@@ -402,7 +401,7 @@ class openGLLive():
         self.has_particle_data['director'] = self.specs['director_arrows']
         self.has_particle_data['node'] = self.specs['particle_coloring'] == 'node'
 
-        # PARTICLE INFO OF HIGHLIGHTED PARTICLE: COLLECT PARTICLE ATTRIBUTES
+        # particle info of highlighted particle: collect particle attributes
         self.highlighted_particle = {}
         self.particle_attributes = []
         for d in dir(espressomd.particle_data.ParticleHandle):
@@ -412,7 +411,7 @@ class openGLLive():
                     self.particle_attributes.append(d)
         self.max_len_attr = max([len(a) for a in self.particle_attributes])
 
-        # FIXED COLORS FROM INVERSE BACKGROUND COLOR FOR GOOD CONTRAST
+        # fixed colors from inverse background color for good contrast
         self.inverse_bg_color = \
             np.array([1 - self.specs['background_color'][0],
                       1 - self.specs['background_color'][1],
@@ -432,19 +431,19 @@ class openGLLive():
 
         self.text_color = np.copy(self.inverse_bg_color)
 
-        # INCREASE LINE THICKNESS IF NODE/CELL BOX IS ENABLED
+        # increase line thickness if node/cell box is enabled
         self.line_width_fac = 1.0
         if self.specs['draw_nodes']:
             self.line_width_fac += 0.5
         if self.specs['draw_cells']:
             self.line_width_fac += 0.5
 
-        # HAS PERIODIC IMAGES
+        # has periodic images
         self.has_images = any(i != 0 for i in self.specs['periodic_images'])
         self.image_vectors = [
             list(range(-i, i + 1)) for i in self.specs['periodic_images']]
 
-        # INITS
+        # various inits
         self.system = system
         self.system_info = {}
 
@@ -476,7 +475,7 @@ class openGLLive():
         self.trigger_reset_particle_drag = False
         self.drag_id = -1
 
-        # LIST OF [[px,py],[string]] FOR USER DEFINED TEXT
+        # list of [(x, y), string] for user-defined text
         self.user_texts = []
 
     def update_system_info(self):
@@ -486,7 +485,7 @@ class openGLLive():
         or constraint information, in the visualizer window.
 
         """
-        # SYSTEM INFORMATION
+        # collect system information
         self.system_info = {
             'Actors': [], 'Non-bonded interactions': [],
             'Bonded interactions': [b for b in self.system.bonded_inter],
@@ -496,20 +495,20 @@ class openGLLive():
         if len(self.system_info['Bonded interactions']) == 0:
             self.system_info['Bonded interactions'].append('None')
 
-        # ACTORS
+        # collect all actors
         for a in self.system.actors:
             self.system_info['Actors'].append(str(a))
         if len(self.system_info['Actors']) == 0:
             self.system_info['Actors'].append('None')
 
-        # COLLECT ALL TYPES FROM PARTICLES AND CONSTRAINTS
+        # collect all types from particles and constraints
         all_types = set(self.system.part.all().type)
         constraint_types = []
         for c in self.system.constraints[:]:
             constraint_types.append(c.get_parameter('particle_type'))
         all_types.update(constraint_types)
 
-        # COLLECT ALL ACTIVE NON-BONDED INTERACTIONS
+        # collect all active non-bonded interactions
         all_non_bonded_inters = [
             x for x in dir(self.system.non_bonded_inter[0, 0])
             if not x.startswith('__') and x != 'type1' and x != 'type2']
@@ -524,7 +523,7 @@ class openGLLive():
         if len(self.system_info['Non-bonded interactions']) == 0:
             self.system_info['Non-bonded interactions'].append('None')
 
-        # COLLECT CONSTRAINTS
+        # collect constraints
         for c in self.system.constraints[:]:
             co = c.get_params()
             co_s = c.get_parameter('shape')
@@ -544,15 +543,15 @@ class openGLLive():
         dimensions of ``specs['window_size']`` in PNG format.
 
         """
-        # ON FIRST CALL: INIT AND CREATE BUFFERS
+        # on first call: init and create buffers
         if not self.screenshot_initialized:
             self.screenshot_initialized = True
             self._init_opengl()
 
-            # CREATE BUFFERS THAT CAN BE LARGER THAN THE SCREEN FRAME BUFFER
+            # create buffers that can be larger than the screen frame buffer
             fbo = OpenGL.GL.glGenFramebuffers(1)
             OpenGL.GL.glBindFramebuffer(OpenGL.GL.GL_FRAMEBUFFER, fbo)
-            # COLOR BUFFER
+            # color buffer
             rbo = OpenGL.GL.glGenRenderbuffers(1)
             OpenGL.GL.glBindRenderbuffer(OpenGL.GL.GL_RENDERBUFFER, rbo)
             OpenGL.GL.glRenderbufferStorage(
@@ -565,7 +564,7 @@ class openGLLive():
                 OpenGL.GL.GL_COLOR_ATTACHMENT0,
                 OpenGL.GL.GL_RENDERBUFFER,
                 rbo)
-            # DEPTH BUFFER
+            # depth buffer
             dbo = OpenGL.GL.glGenRenderbuffers(1)
             OpenGL.GL.glBindRenderbuffer(OpenGL.GL.GL_RENDERBUFFER, dbo)
             OpenGL.GL.glRenderbufferStorage(
@@ -581,17 +580,17 @@ class openGLLive():
                 self.specs['window_size'][0], self.specs['window_size'][1])
             OpenGL.GLUT.glutHideWindow()
 
-        # INIT AND UPDATE ESPRESSO
+        # initialize properties that depend on the ESPResSo system
         self._init_espresso_visualization()
         self._initial_espresso_updates()
 
-        # DRAW
+        # draw the simulation box
         OpenGL.GL.glClear(
             OpenGL.GL.GL_COLOR_BUFFER_BIT | OpenGL.GL.GL_DEPTH_BUFFER_BIT)
         OpenGL.GL.glLoadMatrixf(self.camera.modelview)
         self._draw_system()
 
-        # READ THE PIXELS
+        # read the pixels
         OpenGL.GL.glReadBuffer(OpenGL.GL.GL_COLOR_ATTACHMENT0)
         data = OpenGL.GL.glReadPixels(
             0,
@@ -601,10 +600,8 @@ class openGLLive():
             OpenGL.GL.GL_RGB,
             OpenGL.GL.GL_FLOAT)
 
-        # RESHAPE THE DATA
+        # save image
         data = np.flipud(data.reshape((data.shape[1], data.shape[0], 3)))
-
-        # SAVE TO IMAGE
         matplotlib.pyplot.imsave(path, data)
 
     def run(self, integration_steps=1):
@@ -643,7 +640,7 @@ class openGLLive():
         self._init_OpenGL_callbacks()
         self._init_timers()
 
-        # START THE BLOCKING MAIN LOOP
+        # start the blocking main loop
         self.glut_main_loop_started = True
         OpenGL.GLUT.glutMainLoop()
 
@@ -654,36 +651,36 @@ class openGLLive():
         """
         if self.glut_main_loop_started:
 
-            # UPDATE ON STARTUP
+            # update on startup
             if not self.hasParticleData:
                 self._initial_espresso_updates()
                 self.hasParticleData = True
 
-            # UPDATES
+            # updates
             refresh_time = 1. / self.specs['update_fps']
             if (time.time() - self.last_update) > refresh_time:
-                # ES UPDATES WHEN SYSTEM HAS PROPAGATED. ALSO UPDATE ON PAUSE
-                # FOR PARTICLE INFO
+                # update particle/bond data after system propagation,
+                # or on pause to display particle info
                 self._update_particles_and_bonds()
 
-                # LB UPDATE
+                # LB update
                 if self.specs['LB_draw_velocity_plane']:
                     self._update_lb_velocity_plane()
 
-                # BOX_L CHANGED
+                # box_l changed
                 if not (self.last_box_l == self.system.box_l).all():
                     self.last_box_l = np.copy(self.system.box_l)
                     self._box_size_dependence()
 
-                # KEYBOARD CALLBACKS MAY CHANGE ESPRESSO SYSTEM PROPERTIES,
-                # ONLY SAVE TO CHANGE HERE
+                # keyboard callbacks may change ESPResSo system properties,
+                # only safe to change here
                 for c in self.keyboard_manager.userCallbackStack:
                     c()
                 self.keyboard_manager.userCallbackStack = []
 
                 self.last_update = time.time()
 
-            # DRAG PARTICLES
+            # drag particles
             if self.specs['drag_enabled']:
                 if self.trigger_set_particle_drag and self.drag_id != -1:
                     self.system.part.by_id(
@@ -695,12 +692,12 @@ class openGLLive():
                     self.trigger_reset_particle_drag = False
                     self.drag_id = -1
 
-        # Escape was pressed: wait for ES to finish, then call sys exit from
-        # main thread
+        # <escape> key was pressed: wait for ESPResSo to complete current task,
+        # then call sys exit from main thread
         if self.quit_safely:
             os._exit(1)
 
-    # FETCH DATA ON STARTUP
+    # fetch data on startup
     def _initial_espresso_updates(self):
         self._update_particles_and_bonds()
         if self.has_particle_data['charge']:
@@ -721,7 +718,6 @@ class openGLLive():
         self._update_particles(parts_from_core)
         self._update_bonds(parts_from_core)
 
-    # GET THE PARTICLE DATA
     def _update_particles(self, particle_data):
         """Updates particle data used for drawing particles.
         Do not call directly but use _update_particles_and_bonds()!
@@ -819,7 +815,6 @@ class openGLLive():
                     self.node_box_origins.append(
                         np.array([i, j, k]) * self.local_box_l)
 
-    # GET THE _update_constraints DATA
     def _update_constraints(self):
         """Collect shapes and interaction type (for coloring) from constraints
         and update the list self.shapes with instances of the respective Shape
@@ -900,7 +895,6 @@ class openGLLive():
                         except KeyError:
                             self.shapes.append(Shape(*arguments))
 
-    # GET THE BOND DATA, SO FAR CALLED ONCE UPON INITIALIZATION
     def _update_bonds(self, particle_data):
         """Update bond data used for drawing bonds.
         Do not call directly but use
@@ -933,7 +927,7 @@ class openGLLive():
         for ch in text:
             OpenGL.GLUT.glutBitmapCharacter(font, ctypes.c_int(ord(ch)))
 
-    # DRAW CALLED AUTOMATICALLY FROM GLUT DISPLAY FUNC
+    # draw called automatically from GLUT display function
     def _draw_system(self):
         if self.specs['LB_draw_velocity_plane']:
             self._draw_lb_vel()
@@ -999,7 +993,7 @@ class openGLLive():
 
     def _draw_constraints(self):
 
-        # CLIP BORDERS OF SIMULATION BOX
+        # clip borders of simulation box
         for i in range(6):
             OpenGL.GL.glEnable(OpenGL.GL.GL_CLIP_PLANE0 + i)
             OpenGL.GL.glClipPlane(OpenGL.GL.GL_CLIP_PLANE0 + i,
@@ -1174,7 +1168,7 @@ class openGLLive():
             dx = x_b - x_a
 
             if np.all(np.abs(dx) < half_box_l):
-                # BOND COMPLETELY INSIDE BOX
+                # bond completely inside box
                 draw_cylinder(x_a, x_b, radius, col, mat, quality_bonds)
                 if self.has_images:
                     for imx, imy, imz in itertools.product(
@@ -1184,7 +1178,7 @@ class openGLLive():
                             draw_cylinder(x_a + offset, x_b + offset, radius,
                                           col, mat, quality_bonds)
             else:
-                # BOND CROSSES THE BOX BOUNDARIES
+                # bond crosses the box boundaries
                 d = self._cut_bond(x_a, dx)
                 if d is np.inf:
                     continue
@@ -1210,7 +1204,7 @@ class openGLLive():
         OpenGL.GL.glCallList(self.dl_sphere)
         OpenGL.GL.glPopMatrix()
 
-    # HELPER TO DRAW PERIODIC BONDS
+    # helper to draw periodic bonds
     def _cut_bond(self, x_a, dx):
         """
         Algorithm for the line-plane intersection problem. Given the unfolded
@@ -1248,7 +1242,7 @@ class openGLLive():
                 best_d = d
         return best_d
 
-    # ARROWS IN A PLANE FOR LB VELOCITIES
+    # arrows in a plane for LB velocities
     def _draw_lb_vel(self):
 
         for lb_pos, lb_vel in self.lb_plane_vel:
@@ -1260,14 +1254,14 @@ class openGLLive():
                 self.materials[self.specs['LB_arrow_material']],
                 self.specs['LB_arrow_quality'])
 
-    # USE MODULO IF THERE ARE MORE PARTICLE TYPES THAN TYPE DEFINITIONS FOR
-    # COLORS, MATERIALS ETC.
+    # use modulo if there are more particle types than type definitions for
+    # colors, materials etc.
     @staticmethod
     def _modulo_indexing(l, t):
         return l[t % len(l)]
 
-    # FADE PARTICLE CHARGE COLOR FROM WHITE (q=0) to PLUS_COLOR (q=q_max) RESP
-    # MINUS_COLOR (q=q_min)
+    # fade particle charge color from white (q=0) to plus_color (q=q_max) resp
+    # minus_color (q=q_min)
     def _color_by_charge(self, q):
         if q < 0.:
             c = q / self.min_q
@@ -1278,7 +1272,7 @@ class openGLLive():
             plus_color = self.specs['particle_charge_colors'][1]
             return (1. - c) * np.ones(3) + c * np.array(plus_color)
 
-    # ON INITIALIZATION, CHECK q_max/q_min
+    # on initialization, check q_max/q_min
     def _update_charge_color_range(self):
         if len(self.particles['charge'][:]) > 0:
             self.min_q = min(self.particles['charge'][:])
@@ -1322,13 +1316,11 @@ class openGLLive():
 
     def _draw_texts(self):
 
-        # DRAW USER TEXT
-        for ut in self.user_texts:
-            p = ut[0]
-            t = ut[1]
-            self._draw_text(p[0], p[1], t, self.text_color)
+        # draw user text
+        for (x, y), text in self.user_texts:
+            self._draw_text(x, y, text, self.text_color)
 
-        # DRAW FPS TEXT
+        # draw fps text
         if self.specs['draw_fps']:
             t = time.time()
             if t - self.fps_last > 1.0:
@@ -1341,14 +1333,14 @@ class openGLLive():
                             self.text_color)
             self.fps_count += 1
 
-        # DRAW PARTICLE INFO
+        # draw particle info
         if self.show_system_info:
             self._draw_sysinfo_dict(self.system_info)
         elif self.info_id != -1:
             self._draw_particle_dict(
                 self.highlighted_particle, self.max_len_attr)
 
-        # INDICATE SCREEN CAPTURE
+        # indicate screen capture
         if self.screenshot_captured and not self.take_screenshot:
             col = np.array(self.text_color)
             ts = time.time() - self.screenshot_capture_time
@@ -1365,10 +1357,10 @@ class openGLLive():
     def _draw_sysinfo_dict(self, sysinfo_dict):
         y = 0
         for key, value_list in sysinfo_dict.items():
-            # CATEGORY TITLE
+            # category title
             self._draw_text(10, self.specs['window_size'][1] - 10 - 15 * y,
                             f"{key}:", self.text_color)
-            # ITEM LIST
+            # item list
             for item in value_list:
                 txt = str(item)
                 n_lines = int(
@@ -1394,7 +1386,7 @@ class openGLLive():
                             txt, self.text_color)
             y += 1
 
-    # CALLED ON WINDOW POSITION/SIZE CHANGE
+    # called on window position/size change
     def _reshape_window(self, w, h):
         OpenGL.GL.glViewport(0, 0, w, h)
         OpenGL.GL.glMatrixMode(OpenGL.GL.GL_PROJECTION)
@@ -1407,9 +1399,9 @@ class openGLLive():
         self.specs['window_size'][0] = w
         self.specs['window_size'][1] = h
 
-    # INITS FOR GLUT FUNCTIONS
+    # inits for GLUT functions
     def _init_OpenGL_callbacks(self):
-        # OpenGL Callbacks
+        # OpenGL callbacks
         def display():
             if self.hasParticleData and self.glut_main_loop_started:
                 self._display_all()
@@ -1438,7 +1430,7 @@ class openGLLive():
             return
 
         def redraw_on_idle():
-            # DON'T REPOST FASTER THAN 60 FPS
+            # don't repost faster than 60 fps
             if (time.time() - self.last_draw) > 1.0 / 60.0:
                 OpenGL.GLUT.glutPostRedisplay()
                 self.last_draw = time.time()
@@ -1477,7 +1469,7 @@ class openGLLive():
 
         """
 
-        # TIMERS FOR register_callback
+        # timers for register_callback
         def dummy_timer(index):
             self.timers[index][1]()
             OpenGL.GLUT.glutTimerFunc(
@@ -1486,7 +1478,7 @@ class openGLLive():
         for index, timer in enumerate(self.timers):
             OpenGL.GLUT.glutTimerFunc(timer[0], dummy_timer, index)
 
-        # HANDLE INPUT WITH 60FPS
+        # handle input with 60 fps
         # pylint: disable=unused-argument
         def timed_handle_input(data):
             self.keyboard_manager.handle_input()
@@ -1494,7 +1486,7 @@ class openGLLive():
 
         OpenGL.GLUT.glutTimerFunc(17, timed_handle_input, -1)
 
-    # CLICKED ON PARTICLE: DRAG; CLICKED ON BACKGROUND: CAMERA
+    # click on particle: drag; click on background: change camera angle.
     def _mouse_motion(self, mouse_pos, mouse_pos_old, mouse_button_state):
 
         if self.specs['drag_enabled'] and self.drag_id != -1:
@@ -1510,7 +1502,7 @@ class openGLLive():
             self.camera.rotate_camera(mouse_pos, mouse_pos_old,
                                       mouse_button_state)
 
-    # DRAW SCENE AGAIN WITHOUT LIGHT TO IDENTIFY PARTICLE ID BY PIXEL COLOR
+    # re-draw scene without light to identify particle id by pixel color
     def _get_particle_id(self, pos):
 
         OpenGL.GL.glClearColor(0.0, 0.0, 0.0, 1.0)
@@ -1591,8 +1583,8 @@ class openGLLive():
     def _previous_particle_info(self):
         self.info_id = (self.info_id - 1) % len(self.particles['pos'])
 
-    # ESPRESSO RELATED INITS
     def _init_espresso_visualization(self):
+        # initialize properties that depend on the ESPResSo system
         self.max_q = 0.
         self.min_q = 0.
 
@@ -1649,8 +1641,8 @@ class openGLLive():
 
         self._box_size_dependence()
 
-    # BOX PLANES (NORMAL, ORIGIN) FOR PERIODIC BONDS
     def _box_size_dependence(self):
+        # initialize properties that depend on the box geometry
 
         if self.specs['draw_cells'] or self.specs['draw_nodes']:
             self._update_nodes()
@@ -1668,10 +1660,10 @@ class openGLLive():
         self.camera.center = np.array(self.system.box_l) * 0.5
         self.camera.update_modelview()
 
-    # DEFAULT CONTROLS
     def _init_controls(self):
+        # initialize mouse/keyboard event listeners
 
-        # MOUSE LOOK/ROTATE/DRAG
+        # mouse look/rotate/drag
         self.mouse_manager.register_button(MouseButtonEvent(
             None, MouseFireEvent.FreeMotion, self._mouse_motion))
 
@@ -1681,36 +1673,36 @@ class openGLLive():
         self.mouse_manager.register_button(MouseButtonEvent(
             4, MouseFireEvent.ButtonPressed, self.camera.move_forward))
 
-        # START/STOP DRAG
+        # left mouse button to start/stop drag
         if self.specs['drag_enabled']:
             self.mouse_manager.register_button(MouseButtonEvent(
                 OpenGL.GLUT.GLUT_LEFT_BUTTON, MouseFireEvent.ButtonPressed, self._set_particle_drag, True))
             self.mouse_manager.register_button(MouseButtonEvent(
                 OpenGL.GLUT.GLUT_LEFT_BUTTON, MouseFireEvent.ButtonReleased, self._reset_particle_drag, True))
 
-        # PARTICLE INFORMATION
+        # left mouse button for particle information
         self.mouse_manager.register_button(MouseButtonEvent(
             OpenGL.GLUT.GLUT_LEFT_BUTTON, MouseFireEvent.DoubleClick, self._get_particle_info, True))
 
-        # CYCLE THROUGH PARTICLES
+        # left/right arrows to cycle through particles
         self.keyboard_manager.register_button(KeyboardButtonEvent(
             OpenGL.GLUT.GLUT_KEY_LEFT, KeyboardFireEvent.Pressed, self._previous_particle_info))
         self.keyboard_manager.register_button(KeyboardButtonEvent(
             OpenGL.GLUT.GLUT_KEY_RIGHT, KeyboardFireEvent.Pressed, self._next_particle_info))
 
-        # <SPACE> PAUSE INTEGRATION THREAD
+        # <space> key to pause integration thread
         self.keyboard_manager.register_button(KeyboardButtonEvent(
             ' ', KeyboardFireEvent.Pressed, self._pause, True))
 
-        # <RETURN> TAKE SCREENSHOT
+        # <return> key to take screenshot
         self.keyboard_manager.register_button(KeyboardButtonEvent(
             '\x0d', KeyboardFireEvent.Pressed, self._trigger_screenshot, True))
 
-        # <ESCAPE> QUIT
+        # <escape> key to quit
         self.keyboard_manager.register_button(KeyboardButtonEvent(
             '\x1b', KeyboardFireEvent.Pressed, self._quit, True))
 
-        # CAMERA CONTROL VIA KEYBOARD
+        # camera control via keyboard
         self.keyboard_manager.register_button(KeyboardButtonEvent(
             'w', KeyboardFireEvent.Hold, self.camera.move_up, True))
         self.keyboard_manager.register_button(KeyboardButtonEvent(
@@ -1736,7 +1728,6 @@ class openGLLive():
         self.keyboard_manager.register_button(KeyboardButtonEvent(
             'g', KeyboardFireEvent.Hold, self.camera.move_backward, True))
 
-    # CALLED ON ESCAPE PRESSED. TRIGGERS sys.exit() after ES is done
     def _quit(self):
         self.quit_safely = True
 
@@ -1746,8 +1737,8 @@ class openGLLive():
     def _trigger_screenshot(self):
         self.take_screenshot = True
 
-    # ASYNCHRONOUS PARALLEL CALLS OF glLight CAUSES SEG FAULTS, SO ONLY CHANGE
-    # LIGHT AT CENTRAL display METHOD AND TRIGGER CHANGES
+    # asynchronous parallel calls to glLight() causes segfaults, so only change
+    # light at central display() method and trigger changes
     def _set_camera_spotlight(self):
         if self.specs['spotlight_enabled']:
             p = self.camera.cam_pos
@@ -1802,7 +1793,7 @@ class openGLLive():
         OpenGL.GL.glEnable(OpenGL.GL.GL_LINE_SMOOTH)
         OpenGL.GL.glHint(OpenGL.GL.GL_LINE_SMOOTH_HINT, OpenGL.GL.GL_NICEST)
 
-        # BAD FOR TRANSPARENT PARTICLES
+        # bad for transparent particles
         # OpenGL.GL.glEnable(OpenGL.GL.GL_CULL_FACE)
         # OpenGL.GL.glCullFace(OpenGL.GL.GL_BACK)
 
@@ -1846,7 +1837,7 @@ class openGLLive():
             1.0 / self.specs['light_size'])
         OpenGL.GL.glEnable(OpenGL.GL.GL_LIGHT0)
 
-        # LIGHT1: SPOTLIGHT ON CAMERA IN LOOK DIRECTION
+        # LIGHT1: spotlight on camera in look direction
         if self.specs['spotlight_enabled']:
             OpenGL.GL.glLightfv(
                 OpenGL.GL.GL_LIGHT1,

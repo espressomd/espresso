@@ -90,10 +90,10 @@ Particles in the neighborhood
 
 :meth:`espressomd.analyze.Analysis.nbhood`
 
-Returns a list of the particle ids that fall within a given radius of a target position.
+Returns a list of the ids of particles that fall within a given radius of a target position.
 For example, ::
 
-    idlist = system.analysis.nbhood(pos=system.box_l * 0.5, r_catch=5.0)
+    ids = system.analysis.nbhood(pos=system.box_l * 0.5, r_catch=5.0)
 
 .. _Particle distribution:
 
