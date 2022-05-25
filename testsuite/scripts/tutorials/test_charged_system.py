@@ -28,7 +28,7 @@ class Tutorial02_1(ut.TestCase):
     system = tutorial.system
 
     def test_overcharging(self):
-        """ 
+        """
         Test that adding salt leads to a positive layer around the rod
         """
 

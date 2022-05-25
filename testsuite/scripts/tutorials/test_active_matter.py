@@ -19,7 +19,7 @@ import unittest as ut
 import importlib_wrapper
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@TUTORIALS_DIR@/active_matter/active_matter.py", 
+    "@TUTORIALS_DIR@/active_matter/active_matter.py",
     gpu=True,
     ED_N_SAMPLING_STEPS=100000,
     RECT_N_SAMPLES=150,
@@ -54,4 +54,4 @@ class TestActMat(ut.TestCase):
 
 
 if __name__ == "__main__":
-    ut.main() 
+    ut.main()

@@ -262,6 +262,8 @@ def get_histogram(pos, obs_params, coord_system, **kwargs):
         Bins and bin edges.
 
     """
+    assert coord_system in ('cartesian', 'cylindrical'), \
+        f"Unknown coord system '{coord_system}'"
     if coord_system == 'cartesian':
         bins = (obs_params['n_x_bins'],
                 obs_params['n_y_bins'],
@@ -276,8 +278,6 @@ def get_histogram(pos, obs_params, coord_system, **kwargs):
         extent = [(obs_params['min_r'], obs_params['max_r']),
                   (obs_params['min_phi'], obs_params['max_phi']),
                   (obs_params['min_z'], obs_params['max_z'])]
-    else:
-        raise ValueError(f"Unknown coord system '{coord_system}'")
     return np.histogramdd(pos, bins=bins, range=extent, **kwargs)
 
 
@@ -348,7 +348,7 @@ def random_dipoles(n_particles):
     return dip
 
 
-def check_non_bonded_loop_trace(system):
+def check_non_bonded_loop_trace(ut_obj, system, cutoff=None):
     """Validates that the distances used by the non-bonded loop
     match with the minimum image distance accessible by Python,
     checks that no pairs are lost or double-counted.
@@ -358,7 +358,8 @@ def check_non_bonded_loop_trace(system):
     # format [id1, id2, pos1, pos2, vec2, mpi_node]
 
     distance_vec = system.distance_vec
-    cutoff = system.cell_system.max_cut_nonbonded
+    if cutoff is None:
+        cutoff = system.cell_system.max_cut_nonbonded
 
     # Distance for all pairs of particles obtained by Python
     py_distances = {}
@@ -367,10 +368,13 @@ def check_non_bonded_loop_trace(system):
 
     # Go through pairs found by the non-bonded loop and check distance
     for p in cs_pairs:
-        # p is a tuple with (id1,id2,pos1,pos2,vec21)
+        # p is a tuple with (id1, id2, pos1, pos2, vec21, mpi_node)
         # Note that system.distance_vec uses the opposite sign convention
         # as the minimum image distance in the core
-
+        ut_obj.assertTrue(
+            (p[0], p[1]) in py_distances or
+            (p[1], p[0]) in py_distances,
+            msg=f"Extra pair from core {p}")
         if (p[0], p[1]) in py_distances:
             np.testing.assert_allclose(
                 np.copy(p[4]), -py_distances[p[0], p[1]])
@@ -379,9 +383,7 @@ def check_non_bonded_loop_trace(system):
             np.testing.assert_allclose(
                 np.copy(p[4]), py_distances[p[1], p[0]])
             del py_distances[p[1], p[0]]
-        else:
-            raise Exception("Extra pair from core", p)
 
     for ids, dist in py_distances.items():
-        if np.linalg.norm(dist) < cutoff:
-            raise Exception("Pair not found by the core", ids)
+        ut_obj.assertGreaterEqual(np.linalg.norm(dist), cutoff,
+                                  msg=f"Pair not found by the core {ids}")

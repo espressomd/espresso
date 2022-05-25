@@ -92,7 +92,7 @@ class LBGPULinearMomentum(LinearMomentumTest, ut.TestCase):
     """Test for the GPU implementation of the LB."""
 
     lb_class = espressomd.lb.LBFluidGPU
-    atol = 1e-6
+    atol = 1e-5
 
 
 if __name__ == '__main__':

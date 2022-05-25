@@ -21,7 +21,7 @@ import espressomd
 class PairTest(ut.TestCase):
     """
     Tests the particle pair finder of the cell system.
-    It checks that particles are found if their distance is below the threshold, 
+    It checks that particles are found if their distance is below the threshold,
     no matter the type of cell system, periodicity and the image box they are in.
     Also tests that the ``types`` argument works as expected and an exception is raised
     when the distance threshold is larger than the cell size.

@@ -18,6 +18,7 @@
 #
 import unittest as ut
 import unittest_decorators as utx
+import tests_common
 import espressomd
 import itertools
 import numpy as np
@@ -155,48 +156,9 @@ class HybridDecomposition(ut.TestCase):
 
     @utx.skipIfMissingFeatures(["LENNARD_JONES"])
     def test_non_bonded_loop_trace(self):
-        """Validates that the distances used by the non-bonded loop
-        match with the minimum image distance accessible by Python,
-        checks that no pairs are lost or double-counted.
-
-        """
         self.prepare_hybrid_setup(n_part_small=50, n_part_large=50)
-        # regular cutoff used in preparation
-        cutoff_regular = 2.5
-
-        cs_pairs = self.system.cell_system.non_bonded_loop_trace()
-        distance_vec = self.system.distance_vec
-
-        # Distance for all pairs of particles obtained by Python
-        py_distances = {}
-        for p1, p2 in self.system.part.pairs():
-            py_distances[p1.id, p2.id] = np.copy(distance_vec(p1, p2))
-
-        # Go through pairs found by the non-bonded loop and check distance
-        for p in cs_pairs:
-            # p is a tuple with (id1, id2, pos1, pos2, vec21, mpi_node)
-            # Note that system.distance_vec uses the opposite sign convention
-            # as the minimum image distance in the core
-            self.assertTrue(
-                (p[0], p[1]) in py_distances or
-                (p[1], p[0]) in py_distances,
-                msg=f"Extra pair from core {p}")
-            if (p[0], p[1]) in py_distances:
-                np.testing.assert_allclose(
-                    np.copy(p[4]), -py_distances[p[0], p[1]])
-                del py_distances[p[0], p[1]]
-            elif (p[1], p[0]) in py_distances:
-                np.testing.assert_allclose(
-                    np.copy(p[4]), py_distances[p[1], p[0]])
-                del py_distances[p[1], p[0]]
-
-        # test for pairs from regular child decomposition with more than one
-        # cell
-        for ids, dist in py_distances.items():
-            self.assertGreaterEqual(
-                np.linalg.norm(dist),
-                cutoff_regular,
-                msg=f"Pair not found by the core {ids}")
+        cutoff = 2.5
+        tests_common.check_non_bonded_loop_trace(self, self.system, cutoff)
 
     @utx.skipIfMissingFeatures(["LENNARD_JONES"])
     def test_against_nsquare(self):
@@ -237,12 +199,8 @@ class HybridDecomposition(ut.TestCase):
         """
         n_parts = 3
         parts = self.system.part.add(
-            pos=np.random.random(
-                (n_parts,
-                 3)) * self.system.box_l[0],
-            type=np.random.randint(
-                2,
-                size=n_parts))
+            pos=np.random.random((n_parts, 3)) * self.system.box_l[0],
+            type=np.random.randint(2, size=n_parts))
         for ndx, types in enumerate(itertools.product([0, 1], repeat=n_parts)):
             parts.type = types
             n_square_type = ndx % 2

@@ -81,11 +81,8 @@ class Momentum(object):
             np.testing.assert_allclose(np.copy(p.v), v_final, atol=2.2E-3)
 
         # Make sure, the particle has crossed the periodic boundaries
-        self.assertGreater(
-            np.amax(
-                np.abs(v_final) *
-                self.system.time),
-            BOX_SIZE)
+        self.assertGreater(np.amax(np.abs(v_final) * self.system.time),
+                           BOX_SIZE)
 
 
 @utx.skipIfMissingGPU()
