@@ -150,5 +150,66 @@ class SwimmerTestRegularGPU(SwimmerTest, ut.TestCase):
         self.system.cell_system.set_regular_decomposition()
 
 
+@ut.skipIf(SwimmerTest.n_nodes > 1,
+           "LB with N-square only works on 1 MPI rank")
+@utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
+class SwimmerTestNSquareCPU(SwimmerTest, ut.TestCase):
+
+    lb_class = espressomd.lb.LBFluid
+    tol = 1e-10
+
+    def set_cellsystem(self):
+        self.system.cell_system.set_n_square()
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
+class SwimmerTestNSquareGPU(SwimmerTest, ut.TestCase):
+
+    lb_class = espressomd.lb.LBFluidGPU
+    tol = 1e-5
+
+    def set_cellsystem(self):
+        self.system.cell_system.set_n_square()
+
+
+@ut.skipIf(SwimmerTest.n_nodes > 1,
+           "LB with N-square only works on 1 MPI rank")
+@utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
+class SwimmerTestHybrid0CPU(SwimmerTest, ut.TestCase):
+
+    lb_class = espressomd.lb.LBFluid
+    tol = 1e-10
+
+    def set_cellsystem(self):
+        self.system.cell_system.set_hybrid_decomposition(
+            n_square_types={0}, cutoff_regular=1)
+
+
+@ut.skipIf(SwimmerTest.n_nodes > 1,
+           "LB with N-square only works on 1 MPI rank")
+@utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
+class SwimmerTestHybrid1CPU(SwimmerTest, ut.TestCase):
+
+    lb_class = espressomd.lb.LBFluid
+    tol = 1e-10
+
+    def set_cellsystem(self):
+        self.system.cell_system.set_hybrid_decomposition(
+            n_square_types={1}, cutoff_regular=1)
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
+class SwimmerTestHybrid0GPU(SwimmerTest, ut.TestCase):
+
+    lb_class = espressomd.lb.LBFluidGPU
+    tol = 1e-5
+
+    def set_cellsystem(self):
+        self.system.cell_system.set_hybrid_decomposition(
+            n_square_types={0}, cutoff_regular=1)
+
+
 if __name__ == "__main__":
     ut.main()
