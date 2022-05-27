@@ -58,10 +58,12 @@ template <typename LatticeModel_T, typename OutputType = float>
 class PressureTensorVTKWriter : public vtk::BlockCellDataWriter<OutputType, 9> {
 public:
   using PdfField_T = typename LatticeModel_T::PdfField;
+  using FloatType = typename PdfField_T::value_type;
 
-  PressureTensorVTKWriter(ConstBlockDataID const &pdf, std::string const &id)
-      : vtk::BlockCellDataWriter<OutputType, 9>(id), bdid_(pdf), pdf_(nullptr) {
-  }
+  PressureTensorVTKWriter(ConstBlockDataID const &pdf, std::string const &id,
+                          FloatType off_diag_factor)
+      : vtk::BlockCellDataWriter<OutputType, 9>(id), bdid_(pdf), pdf_(nullptr),
+        off_diag_factor_(off_diag_factor) {}
 
 protected:
   void configure() override {
@@ -74,11 +76,14 @@ protected:
     WALBERLA_ASSERT_NOT_NULLPTR(pdf_);
     Matrix3<typename PdfField_T::value_type> pressureTensor;
     lbm::accessor::PressureTensor::get(pressureTensor, *pdf_, x, y, z);
-    return numeric_cast<OutputType>(pressureTensor[f]);
+    auto const revert_factor =
+        (f == 0 or f == 4 or f == 8) ? FloatType{1} : off_diag_factor_;
+    return numeric_cast<OutputType>(revert_factor * pressureTensor[f]);
   }
 
   ConstBlockDataID const bdid_;
   PdfField_T const *pdf_;
+  FloatType const off_diag_factor_;
 };
 
 } // namespace lbm

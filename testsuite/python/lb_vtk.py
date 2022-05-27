@@ -156,12 +156,8 @@ class TestLBWrite:
                     vtk_density, lb_density, rtol=1e-10, atol=0.)
                 np.testing.assert_allclose(
                     vtk_velocity, lb_velocity, rtol=1e-7, atol=0.)
-                # TODO WALBERLA mismatch in off-diagonal terms
-                lb_magic_number = 3. / 8.
-                mask = lb_magic_number * np.ones([3, 3])
-                np.fill_diagonal(mask, 1.)
                 np.testing.assert_allclose(
-                    vtk_pressure * mask, lb_pressure, rtol=1e-7, atol=0.)
+                    vtk_pressure, lb_pressure, rtol=1e-7, atol=0.)
 
     def test_exceptions(self):
         label_invalid_obs = f'test_lb_vtk_{self.lb_vtk_id}_invalid_obs'

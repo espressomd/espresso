@@ -205,9 +205,12 @@ private:
     return pressureTensor;
   }
 
-  inline void pressure_tensor_correction(Matrix3<FloatType> &tensor) const {
-    auto const visc = m_viscosity;
-    auto const revert_factor = visc / (visc + FloatType{1} / FloatType{6});
+  FloatType pressure_tensor_correction_factor() const {
+    return m_viscosity / (m_viscosity + FloatType{1} / FloatType{6});
+  }
+
+  void pressure_tensor_correction(Matrix3<FloatType> &tensor) const {
+    auto const revert_factor = pressure_tensor_correction_factor();
     for (auto const i : {1, 2, 3, 5, 6, 7}) {
       tensor[i] *= revert_factor;
     }
@@ -987,7 +990,8 @@ public:
     if (flag_observables & static_cast<int>(OutputVTK::pressure_tensor)) {
       pdf_field_vtk->addCellDataWriter(
           make_shared<lbm::PressureTensorVTKWriter<LBWalberlaImpl, float>>(
-              m_pdf_field_id, "PressureTensorFromPDF"));
+              m_pdf_field_id, "PressureTensorFromPDF",
+              pressure_tensor_correction_factor()));
     }
 
     // register object
