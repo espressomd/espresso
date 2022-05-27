@@ -382,7 +382,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
   auto const pid = 0;
   auto const skin = params.skin;
   auto const &box_l = params.box_dimensions;
-  create_particle({box_l[0] / 2. - skin * 2., skin * 2., skin * 2.});
+  create_particle({box_l[0] / 2. - skin * 2., skin * 2., skin * 2.}, 0, 0);
 
   // sanity checks
   BOOST_REQUIRE_EQUAL(get_particle_node(pid), 0);

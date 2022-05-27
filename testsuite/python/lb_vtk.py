@@ -34,6 +34,10 @@ import espressomd.shapes
 
 
 class TestLBWrite:
+    """
+    Set up a planar Poiseuille flow and write fluid to VTK files.
+    """
+
     system = espressomd.System(box_l=[12, 14, 16])
     system.time_step = 0.01
     system.cell_system.skin = 0.4
@@ -69,8 +73,7 @@ class TestLBWrite:
 
     def test_vtk(self):
         '''
-        Check VTK files. Keep in mind VTK files are written with
-        float precision.
+        Check VTK files. Keep in mind the VTK module writes in single-precision.
         '''
         self.lbf.add_boundary_from_shape(
             espressomd.shapes.Wall(normal=[1, 0, 0], dist=1.5))
@@ -120,16 +123,16 @@ class TestLBWrite:
                     np.linalg.norm(vtk_velocity, axis=-1),
                     axis=(1, 2))
                 np.testing.assert_allclose(
-                    v_profile, v_profile[::-1], atol=5e-6)
+                    v_profile, v_profile[::-1], atol=1e-7)
 
-            # check pressure tensor is symmetric at all time steps
+            # check scalar pressure is symmetric at all time steps
             for filepath in filepaths:
-                vtk_velocity = self.parse_vtk(filepath, shape)[1]
-                v_profile = np.mean(
-                    np.linalg.norm(vtk_velocity, axis=-1),
+                vtk_pressure = self.parse_vtk(filepath, shape)[2]
+                p_profile = np.mean(
+                    np.trace(vtk_pressure, axis1=-2, axis2=-1),
                     axis=(1, 2))
                 np.testing.assert_allclose(
-                    v_profile, v_profile[::-1], atol=5e-6)
+                    p_profile, p_profile[::-1], atol=1e-6)
 
             # read VTK output of final time step
             last_frame_outputs = []
@@ -149,12 +152,16 @@ class TestLBWrite:
                 self.lbf[2:-2, :, :].pressure_tensor) * tau**2
 
             for vtk_density, vtk_velocity, vtk_pressure in last_frame_outputs:
-                np.testing.assert_allclose(vtk_density, lb_density, rtol=5e-7)
                 np.testing.assert_allclose(
-                    vtk_velocity, lb_velocity, rtol=5e-7)
+                    vtk_density, lb_density, rtol=1e-10, atol=0.)
+                np.testing.assert_allclose(
+                    vtk_velocity, lb_velocity, rtol=1e-7, atol=0.)
                 # TODO WALBERLA mismatch in off-diagonal terms
+                lb_magic_number = 3. / 8.
+                mask = lb_magic_number * np.ones([3, 3])
+                np.fill_diagonal(mask, 1.)
                 np.testing.assert_allclose(
-                    vtk_pressure, lb_pressure, atol=1e-3)
+                    vtk_pressure * mask, lb_pressure, rtol=1e-7, atol=0.)
 
     def test_exceptions(self):
         label_invalid_obs = f'test_lb_vtk_{self.lb_vtk_id}_invalid_obs'

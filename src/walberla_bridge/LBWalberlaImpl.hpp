@@ -184,7 +184,7 @@ private:
   auto get_velocity_field_ptr(const IBlock *block) const {
     return block->template uncheckedFastGetData<VectorField>(
         m_velocity_field_id);
-  };
+  }
 
   void setDensityAndVelocity(const BlockAndCell &bc,
                              Vector3<FloatType> const &velocity,
