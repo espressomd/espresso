@@ -21,7 +21,7 @@ LJ parameters and masses.
 
 import espressomd
 import espressomd.electrostatics
-import espressomd.visualization_opengl
+import espressomd.visualization
 import numpy as np
 
 required_features = ["P3M", "LENNARD_JONES", "MASS"]
@@ -30,7 +30,7 @@ espressomd.assert_features(required_features)
 box = [40, 40, 40]
 system = espressomd.System(box_l=box)
 system.cell_system.set_regular_decomposition(use_verlet_lists=True)
-visualizer = espressomd.visualization_opengl.openGLLive(
+visualizer = espressomd.visualization.openGLLive(
     system, background_color=[1, 1, 1], drag_enabled=True, drag_force=10)
 
 

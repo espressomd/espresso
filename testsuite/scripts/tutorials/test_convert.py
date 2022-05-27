@@ -61,7 +61,7 @@ import numpy as np
 import matplotlib as mpl  # split here
 import matplotlib.pyplot as plt  # don't split
 try:
-    from espressomd.visualization_opengl import openglLive
+    from espressomd.visualization import openglLive
 except ImportError:
     mpl.use('Agg')  # running in CI without graphical output
 plt.ion()
@@ -138,7 +138,7 @@ plt.show()
         # the cell should have produced a plot
         graphical_plots = True
         try:
-            from espressomd.visualization_opengl import openglLive  # pylint: disable=unused-import
+            from espressomd.visualization import openglLive  # pylint: disable=unused-import
         except ImportError:
             graphical_plots = False  # running in CI without graphical output
         if graphical_plots:

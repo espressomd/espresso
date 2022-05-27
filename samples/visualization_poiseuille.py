@@ -22,7 +22,7 @@ external force applied.
 import espressomd
 import espressomd.lb
 import espressomd.shapes
-import espressomd.visualization_opengl
+import espressomd.visualization
 import numpy as np
 
 required_features = ["LB_WALBERLA", "EXTERNAL_FORCES"]
@@ -36,7 +36,7 @@ np.random.seed(seed=42)
 system.time_step = 0.01
 system.cell_system.skin = 0.2
 
-visualizer = espressomd.visualization_opengl.openGLLive(
+visualizer = espressomd.visualization.openGLLive(
     system,
     LB_draw_boundaries=True,
     LB_draw_velocity_plane=True,

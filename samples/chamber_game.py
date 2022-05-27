@@ -29,7 +29,7 @@ import time
 
 import espressomd
 import espressomd.shapes
-from espressomd.visualization_opengl import openGLLive, KeyboardButtonEvent, KeyboardFireEvent
+from espressomd.visualization import openGLLive, KeyboardButtonEvent, KeyboardFireEvent
 
 required_features = ["LENNARD_JONES", "WCA", "MASS",
                      "EXTERNAL_FORCES", "THERMOSTAT_PER_PARTICLE"]
