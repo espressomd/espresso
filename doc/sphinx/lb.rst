@@ -4,7 +4,8 @@ Lattice-Boltzmann
 =================
 
 For an implicit treatment of a solvent, |es| allows to couple the molecular
-dynamics simulation to a lattice-Boltzmann fluid. The lattice-Boltzmann method (LBM) is a fast, lattice-based method that, in its
+dynamics simulation to a lattice-Boltzmann fluid. The lattice-Boltzmann
+method (LBM) is a fast, lattice-based method that, in its
 "pure" form, allows to calculate fluid flow in different boundary
 conditions of arbitrarily complex geometries. Coupled to molecular
 dynamics, it allows for the computationally efficient inclusion of
@@ -26,6 +27,7 @@ Setting up a LB fluid
 The following minimal example illustrates how to use the LBM in |es|::
 
     import espressomd
+    import espressomd.lb
     system = espressomd.System(box_l=[10, 20, 30])
     system.time_step = 0.01
     system.cell_system.skin = 0.4
@@ -33,15 +35,19 @@ The following minimal example illustrates how to use the LBM in |es|::
     system.actors.add(lb)
     system.integrator.run(100)
 
-To use the GPU accelerated variant, replace line 5 in the example above by::
+To use the GPU-accelerated variant, replace line 6 in the example above by::
 
     lb = espressomd.lb.LBFluidGPU(agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
 
-.. note:: Feature ``CUDA`` required for GPU accelerated variant
+.. note:: Feature ``CUDA`` required for the GPU-accelerated variant
 
 To use the (much faster) GPU implementation of the LBM, use
 :class:`espressomd.lb.LBFluidGPU` in place of :class:`espressomd.lb.LBFluid`.
-Please note that the GPU implementation uses single precision floating point operations. This decreases the accuracy of calculations compared to the CPU implementation. In particular, due to rounding errors, the fluid density decreases over time, when external forces, coupling to particles, or thermalization is used. The loss of density is on the order of :math:`10^{-12}` per time step.
+Please note that the GPU implementation uses single precision floating point operations.
+This decreases the accuracy of calculations compared to the CPU implementation.
+In particular, due to rounding errors, the fluid density decreases over time,
+when external forces, coupling to particles, or thermalization is used.
+The loss of density is on the order of :math:`10^{-12}` per time step.
 
 The command initializes the fluid with a given set of parameters. It is
 also possible to change parameters on the fly, but this will only rarely
@@ -50,7 +56,8 @@ to set up a box of a desired size. The parameter is used to set the
 lattice constant of the fluid, so the size of the box in every direction
 must be a multiple of ``agrid``.
 
-In the following, we discuss the parameters that can be supplied to the LBM in |es|. The detailed interface definition is available at :class:`espressomd.lb.LBFluid`.
+In the following, we discuss the parameters that can be supplied to the LBM in |es|.
+The detailed interface definition is available at :class:`espressomd.lb.LBFluid`.
 
 The LB scheme and the MD scheme are not synchronized: In one LB time
 step typically several MD steps are performed. This allows to speed up
@@ -62,8 +69,9 @@ in ``tau`` and so on.
 LB nodes are located at 0.5, 1.5, 2.5, etc.
 (in terms of ``agrid``). This has important implications for the location of
 hydrodynamic boundaries which are generally considered to be halfway
-between two nodes for flat, axis-aligned walls. For more complex boundary geometries, the hydrodynamic boundary location deviates from this midpoint and the deviation decays to first order in ``agrid``.
-The LBM should
+between two nodes for flat, axis-aligned walls. For more complex boundary geometries,
+the hydrodynamic boundary location deviates from this midpoint and the deviation
+decays to first order in ``agrid``. The LBM should
 *not be used as a black box*, but only after a careful check of all
 parameters that were applied.
 
@@ -89,7 +97,9 @@ expert, leave their defaults unchanged. If you do change them, note that they
 are to be given in LB units.
 
 Before running a simulation at least the following parameters must be
-set up: ``agrid``, ``tau``, ``visc``, ``dens``. For the other parameters, the following are taken: ``bulk_visc=0``, ``gamma_odd=0``, ``gamma_even=0``, ``ext_force_density=[0,0,0]``.
+set up: ``agrid``, ``tau``, ``visc``, ``dens``. For the other parameters,
+the following are taken: ``bulk_visc=0``, ``gamma_odd=0``, ``gamma_even=0``,
+``ext_force_density=[0, 0, 0]``.
 
 .. _Checkpointing LB:
 
@@ -101,10 +111,10 @@ Checkpointing
     lb.save_checkpoint(path, binary)
     lb.load_checkpoint(path, binary)
 
-The first command saves all of the LB fluid nodes' populations to an ascii
-(``binary=False``) or binary (``binary=True``) format respectively. The load command
-loads the populations from a checkpoint file written with
-``lb.save_checkpoint``. In both cases ``path`` specifies the location of the
+The first command saves all of the LB fluid nodes' populations to an ASCII
+(``binary=False``) or binary (``binary=True``) format respectively.
+The second command loads the LB fluid nodes' populations.
+In both cases ``path`` specifies the location of the
 checkpoint file. This is useful for restarting a simulation either on the same
 machine or a different machine. Some care should be taken when using the binary
 format as the format of doubles can depend on both the computer being used as
@@ -165,12 +175,13 @@ depends on the particle velocity :math:`v` and the fluid velocity :math:`u`. It 
 on the particle and the fluid (in opposite direction). Because the fluid is also affected,
 multiple particles can interact via hydrodynamic interactions. As friction in molecular systems is
 accompanied by fluctuations, the particle-fluid coupling has to be activated through
-the :ref:`LB thermostat` (See more detailed description there). A short example is::
+the :ref:`LB thermostat` (see more detailed description there). A short example is::
 
     system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1.5)
 
-where ``lbf`` is an instance of either :class:`espressomd.lb.LBFluid` or :class:`espressomd.lb.LBFluidGPU`,
-``gamma`` the friction coefficient and ``seed`` the seed for the random number generator involved
+where ``lbf`` is an instance of either :class:`~espressomd.lb.LBFluid` or
+:class:`~espressomd.lb.LBFluidGPU`, ``gamma`` the friction coefficient and
+``seed`` the seed for the random number generator involved
 in the thermalization.
 
 
@@ -179,7 +190,8 @@ in the thermalization.
 Reading and setting properties of single lattice nodes
 ------------------------------------------------------
 
-Appending three indices to the ``lb`` object returns an object that represents the selected LB grid node and allows one to access all of its properties::
+Appending three indices to the ``lb`` object returns an object that represents
+the selected LB grid node and allows one to access all of its properties::
 
     lb[x, y, z].density              # fluid density (one scalar for LB and CUDA)
     lb[x, y, z].velocity             # fluid velocity (a numpy array of three floats)
@@ -188,7 +200,10 @@ Appending three indices to the ``lb`` object returns an object that represents t
     lb[x, y, z].boundary             # flag indicating whether the node is fluid or boundary (fluid: boundary=0, boundary: boundary != 0)
     lb[x, y, z].population           # 19 LB populations (a numpy array of 19 floats, check order from the source code)
 
-All of these properties can be read and used in further calculations. Only the property ``population`` can be modified. The indices ``x,y,z`` are integers and enumerate the LB nodes in the three directions, starts with 0. To modify ``boundary``, refer to :ref:`Setting up boundary conditions`.
+All of these properties can be read and used in further calculations.
+Only the property ``population`` can be modified. The indices ``x, y, z``
+are integers and enumerate the LB nodes in the three Cartesion directions,
+starting at 0. To modify ``boundary``, refer to :ref:`Setting up boundary conditions`.
 
 Example::
 
@@ -246,8 +261,6 @@ example, executing
 will output the cross-section of the velocity field in a plane
 perpendicular to the :math:`z`-axis at :math:`z = 5` (assuming the box
 size is 10 in the :math:`x`- and :math:`y`-direction).
-
-.. If the bicomponent fluid is used, two filenames have to be supplied when exporting the density field, to save both components.
 
 
 .. _Choosing between the GPU and CPU implementations:
@@ -345,7 +358,9 @@ you could do the following::
 Setting up boundary conditions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The following example sets up a system consisting of a spherical boundary in the center of the simulation box acting as a no-slip boundary for the LB fluid that is driven by 4 walls with a slip velocity::
+The following example sets up a system consisting of a spherical boundary
+in the center of the simulation box acting as a no-slip boundary for the
+LB fluid that is driven by 4 walls with a slip velocity::
 
     import espressomd
     import espressomd.lb
@@ -385,9 +400,14 @@ The following example sets up a system consisting of a spherical boundary in the
 
     print(sphere.get_force())
 
-After integrating the system for a sufficient time to reach the steady state, the hydrodynamic drag force exerted on the sphere is evaluated.
+After integrating the system for a sufficient time to reach the steady state,
+the hydrodynamic drag force exerted on the sphere is evaluated.
 
-The LB boundaries use the same :mod:`~espressomd.shapes` objects to specify their geometry as :mod:`~espressomd.constraints` do for particles. This allows the user to quickly set up a system with boundary conditions that simultaneously act on the fluid and particles. For a complete description of all available shapes, refer to :mod:`espressomd.shapes`.
+The LB boundaries use the same :mod:`~espressomd.shapes` objects to specify
+their geometry as :mod:`~espressomd.constraints` do for particles.
+This allows the user to quickly set up a system with boundary conditions
+that simultaneously act on the fluid and particles. For a complete
+description of all available shapes, refer to :mod:`espressomd.shapes`.
 
 Intersecting boundaries are in principle possible but must be treated
 with care. In the current implementation, all nodes that are
@@ -402,12 +422,15 @@ the viscosity. This can be seen when using the sample script with a high
 viscosity.
 
 The bounce back boundary conditions permit it to set the velocity at the boundary
-to a nonzero value via the ``v`` property of an ``LBBoundary`` object. This allows to create shear flow and boundaries
+to a non-zero value via the ``v`` property of an ``LBBoundary`` object.
+This allows to create shear flow and boundaries
 moving relative to each other. The velocity boundary conditions are
 implemented according to :cite:`succi01a` eq. 12.58. Using
 this implementation as a blueprint for the boundary treatment, an
 implementation of the Ladd-Coupling should be relatively
-straightforward. The ``LBBoundary`` object furthermore possesses a property ``force``, which keeps track of the hydrodynamic drag force exerted onto the boundary by the moving fluid.
+straightforward. The ``LBBoundary`` object furthermore possesses
+a property ``force``, which keeps track of the hydrodynamic drag
+force exerted onto the boundary by the moving fluid.
 
 
 .. [1]

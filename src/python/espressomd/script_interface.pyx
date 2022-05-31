@@ -97,6 +97,7 @@ cdef class PScriptInterface:
                     policy_,
                     utils.to_char_pointer(name),
                     out_params))
+            utils.handle_errors(f"Exception during instantiation of '{name}'")
 
     def __richcmp__(a, b, op):
         cls = PScriptInterface
@@ -145,13 +146,14 @@ cdef class PScriptInterface:
             Arguments for the method.
         """
         cdef VariantMap parameters
+        cdef Variant value
 
         for name in kwargs:
             parameters[utils.to_char_pointer(name)] = python_object_to_variant(
                 kwargs[name])
 
-        res = variant_to_python_object(
-            self.sip.get().call_method(utils.to_char_pointer(method), parameters))
+        value = self.sip.get().call_method(utils.to_char_pointer(method), parameters)
+        res = variant_to_python_object(value)
         utils.handle_errors(f'while calling method {method}()')
         return res
 

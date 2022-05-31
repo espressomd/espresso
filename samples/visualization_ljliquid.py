@@ -22,7 +22,7 @@ Visualize a Lennard-Jones liquid with live plotting via matplotlib.
 
 import numpy as np
 import matplotlib.pyplot as plt
-from threading import Thread
+import threading
 import espressomd
 import espressomd.visualization
 
@@ -172,7 +172,7 @@ def update_plot():
     plt.pause(0.01)
 
 
-t = Thread(target=main_thread)
+t = threading.Thread(target=main_thread)
 t.daemon = True
 t.start()
 visualizer.register_callback(update_plot, interval=1000)

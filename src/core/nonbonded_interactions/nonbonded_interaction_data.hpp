@@ -285,12 +285,6 @@ extern int max_seen_particle_type;
  */
 double maximal_cutoff_nonbonded();
 
-/** Minimal global interaction cutoff. Particles with a distance
- *  smaller than this are guaranteed to be available on the same node
- *  (through ghosts).
- */
-extern double min_global_cut;
-
 /**
  * @brief Get interaction parameters between particle types i and j
  *
@@ -347,4 +341,6 @@ inline bool checkIfInteraction(IA_parameters const &data) {
  *  @param min_global_cut minimum global cutoff
  */
 void mpi_set_min_global_cut(double min_global_cut);
+
+double get_min_global_cut();
 #endif

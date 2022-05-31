@@ -81,16 +81,13 @@ class Momentum(object):
             np.testing.assert_allclose(np.copy(p.v), v_final, atol=2.2E-3)
 
         # Make sure, the particle has crossed the periodic boundaries
-        self.assertGreater(
-            np.amax(
-                np.abs(v_final) *
-                self.system.time),
-            BOX_SIZE)
+        self.assertGreater(np.amax(np.abs(v_final) * self.system.time),
+                           BOX_SIZE)
 
 
 @utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(['EXTERNAL_FORCES'])
-class TestLBGPUMomentumConservation(Momentum, ut.TestCase):
+@utx.skipIfMissingFeatures(["EXTERNAL_FORCES"])
+class TestRegularLBGPU(Momentum, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidGPU
 
@@ -98,13 +95,80 @@ class TestLBGPUMomentumConservation(Momentum, ut.TestCase):
         self.system.cell_system.set_regular_decomposition()
 
 
-@utx.skipIfMissingFeatures(['EXTERNAL_FORCES'])
-class TestLBCPUMomentumConservation(Momentum, ut.TestCase):
+@utx.skipIfMissingFeatures(["EXTERNAL_FORCES"])
+class TestRegularLBCPU(Momentum, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluid
 
     def set_cellsystem(self):
         self.system.cell_system.set_regular_decomposition()
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["EXTERNAL_FORCES"])
+class TestNSquareLBGPU(Momentum, ut.TestCase):
+
+    lb_class = espressomd.lb.LBFluidGPU
+
+    def set_cellsystem(self):
+        self.system.cell_system.set_n_square()
+
+
+@ut.skipIf(Momentum.n_nodes > 1,
+           "LB with N-square only works on 1 MPI rank")
+@utx.skipIfMissingFeatures(["EXTERNAL_FORCES"])
+class TestNSquareLBCPU(Momentum, ut.TestCase):
+
+    lb_class = espressomd.lb.LBFluid
+
+    def set_cellsystem(self):
+        self.system.cell_system.set_n_square()
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["EXTERNAL_FORCES"])
+class TestHybrid0LBGPU(Momentum, ut.TestCase):
+
+    lb_class = espressomd.lb.LBFluidGPU
+
+    def set_cellsystem(self):
+        self.system.cell_system.set_hybrid_decomposition(
+            n_square_types={0}, cutoff_regular=1)
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["EXTERNAL_FORCES"])
+class TestHybrid1LBGPU(Momentum, ut.TestCase):
+
+    lb_class = espressomd.lb.LBFluidGPU
+
+    def set_cellsystem(self):
+        self.system.cell_system.set_hybrid_decomposition(
+            n_square_types={1}, cutoff_regular=1)
+
+
+@ut.skipIf(Momentum.n_nodes > 1,
+           "LB with N-square only works on 1 MPI rank")
+@utx.skipIfMissingFeatures(["EXTERNAL_FORCES"])
+class TestHybrid0LBCPU(Momentum, ut.TestCase):
+
+    lb_class = espressomd.lb.LBFluid
+
+    def set_cellsystem(self):
+        self.system.cell_system.set_hybrid_decomposition(
+            n_square_types={0}, cutoff_regular=1)
+
+
+@ut.skipIf(Momentum.n_nodes > 1,
+           "LB with N-square only works on 1 MPI rank")
+@utx.skipIfMissingFeatures(["EXTERNAL_FORCES"])
+class TestHybrid1LBCPU(Momentum, ut.TestCase):
+
+    lb_class = espressomd.lb.LBFluid
+
+    def set_cellsystem(self):
+        self.system.cell_system.set_hybrid_decomposition(
+            n_square_types={1}, cutoff_regular=1)
 
 
 if __name__ == "__main__":

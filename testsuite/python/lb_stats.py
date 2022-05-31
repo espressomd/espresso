@@ -144,7 +144,7 @@ class TestLB:
             np.mean(all_temp_particle), self.params["temp"], delta=temp_prec_particle)
 
 
-class TestLBCPU(TestLB, ut.TestCase):
+class TestRegularLBCPU(TestLB, ut.TestCase):
 
     def setUp(self):
         self.system.cell_system.set_regular_decomposition()
@@ -153,10 +153,52 @@ class TestLBCPU(TestLB, ut.TestCase):
 
 
 @utx.skipIfMissingGPU()
-class TestLBGPU(TestLB, ut.TestCase):
+class TestRegularLBGPU(TestLB, ut.TestCase):
 
     def setUp(self):
         self.system.cell_system.set_regular_decomposition()
+        self.lb_class = espressomd.lb.LBFluidGPU
+        self.params.update({"mom_prec": 1E-3, "mass_prec_per_node": 1E-5})
+
+
+@ut.skipIf(TestLB.n_nodes > 1,
+           "LB with N-square only works on 1 MPI rank")
+class TestNSquareLBCPU(TestLB, ut.TestCase):
+
+    def setUp(self):
+        self.system.cell_system.set_hybrid_decomposition(
+            n_square_types={0}, cutoff_regular=0)
+        self.lb_class = espressomd.lb.LBFluid
+        self.params.update({"mom_prec": 1E-9, "mass_prec_per_node": 5E-8})
+
+
+@utx.skipIfMissingGPU()
+class TestNSquareLBGPU(TestLB, ut.TestCase):
+
+    def setUp(self):
+        self.system.cell_system.set_hybrid_decomposition(
+            n_square_types={1}, cutoff_regular=0)
+        self.lb_class = espressomd.lb.LBFluidGPU
+        self.params.update({"mom_prec": 1E-3, "mass_prec_per_node": 1E-5})
+
+
+@ut.skipIf(TestLB.n_nodes > 1,
+           "LB with N-square only works on 1 MPI rank")
+class TestHybrid0LBCPU(TestLB, ut.TestCase):
+
+    def setUp(self):
+        self.system.cell_system.set_hybrid_decomposition(
+            n_square_types={0}, cutoff_regular=0)
+        self.lb_class = espressomd.lb.LBFluid
+        self.params.update({"mom_prec": 1E-9, "mass_prec_per_node": 5E-8})
+
+
+@utx.skipIfMissingGPU()
+class TestHybrid1LBGPU(TestLB, ut.TestCase):
+
+    def setUp(self):
+        self.system.cell_system.set_hybrid_decomposition(
+            n_square_types={1}, cutoff_regular=0)
         self.lb_class = espressomd.lb.LBFluidGPU
         self.params.update({"mom_prec": 1E-3, "mass_prec_per_node": 1E-5})
 

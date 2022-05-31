@@ -26,7 +26,8 @@ cimport numpy as np
 from libc cimport stdint
 from .actors cimport Actor
 from . import utils
-from .utils cimport Vector3i, Vector3d, Vector6d, Vector19d, make_Vector3d
+from . cimport utils
+from .utils cimport Vector3i, Vector3d, Vector6d, Vector19d
 from .integrate cimport get_time_step
 
 
@@ -207,7 +208,8 @@ cdef class HydrodynamicInteraction(Actor):
             The LB fluid velocity at ``pos``.
 
         """
-        return python_lbnode_get_interpolated_velocity(make_Vector3d(pos))
+        return python_lbnode_get_interpolated_velocity(
+            utils.make_Vector3d(pos))
 
     def write_vtk_velocity(self, path, bb1=None, bb2=None):
         """Write the LB fluid velocity to a VTK file.
@@ -341,7 +343,7 @@ cdef class HydrodynamicInteraction(Actor):
         def __set__(self, ext_force_density):
             self._assert_agrid_tau_set()
             python_lbfluid_set_ext_force_density(
-                make_Vector3d(ext_force_density), self.agrid, self.tau)
+                utils.make_Vector3d(ext_force_density), self.agrid, self.tau)
 
     property density:
         def __get__(self):
@@ -469,9 +471,7 @@ cdef class LBFluidRoutines:
     def __init__(self, key):
         utils.check_type_or_throw_except(
             key, 3, int, "The index of an lb fluid node consists of three integers.")
-        self.node[0] = key[0]
-        self.node[1] = key[1]
-        self.node[2] = key[2]
+        self.node = utils.make_Vector3i(key)
         if not lb_lbnode_is_index_valid(self.node):
             raise ValueError("LB node index out of bounds")
 
@@ -486,7 +486,7 @@ cdef class LBFluidRoutines:
         def __set__(self, value):
             utils.check_type_or_throw_except(
                 value, 3, float, "velocity has to be 3 floats")
-            python_lbnode_set_velocity(self.node, make_Vector3d(value))
+            python_lbnode_set_velocity(self.node, utils.make_Vector3d(value))
 
     property density:
         def __get__(self):

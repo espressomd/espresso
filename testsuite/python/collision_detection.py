@@ -530,6 +530,12 @@ class CollisionDetection(ut.TestCase):
                 # Bond type and partner type
                 # part_type_after_glueing can have a bond to a vs or to a
                 # non_virtual particle
+                allowed_types = (self.part_type_after_glueing,
+                                 self.part_type_to_attach_vs_to)
+                self.assertIn(
+                    p.type,
+                    allowed_types,
+                    msg=f"Particle {p.id} of type {p.type} should not have bonds, yet has {p.bonds}.")
                 if p.type == self.part_type_after_glueing:
                     self.assertIn(bond[0], (self.H, self.H2))
                     # Bonds to virtual sites:
@@ -546,9 +552,6 @@ class CollisionDetection(ut.TestCase):
                     self.assertEqual(
                         system.part.by_id(bond[1]).type,
                         self.part_type_after_glueing)
-                else:
-                    raise Exception(
-                        f"Particle {p.id} of type {p.type} should not have bonds, yet has {p.bonds}.")
 
                 # Collect bonds
                 # Sort bond partners to make them unique independently of
@@ -689,6 +692,8 @@ class CollisionDetection(ut.TestCase):
         found_angle_bonds = []
         for i in range(n):
             for b in system.part.by_id(i).bonds:
+                self.assertIn(
+                    len(b), (2, 3), msg="There should only be 2- and 3-particle bonds")
                 if len(b) == 2:
                     self.assertEqual(b[0]._bond_id, self.H._bond_id)
                     found_pairs.append(tuple(sorted((i, b[1]))))
@@ -696,9 +701,6 @@ class CollisionDetection(ut.TestCase):
                     partners = sorted(b[1:])
                     found_angle_bonds.append(
                         (i, b[0]._bond_id, partners[0], partners[1]))
-                else:
-                    raise Exception(
-                        "There should be only 2- and 3-particle bonds")
 
         # The order between expected and found bonds does not always match
         # because collisions occur in random order. Sort stuff

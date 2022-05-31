@@ -25,11 +25,8 @@ from .grid cimport box_geo
 
 from .system import System
 from . import utils
-from .utils cimport Vector3i, Vector3d, Vector9d
-from .utils cimport make_Vector3d
-from .utils cimport make_array_locked
-from .utils cimport create_nparray_from_double_array
-from .particle_data cimport particle, ParticleHandle
+from . cimport utils
+from .utils cimport Vector9d
 
 
 def autocorrelation(time_series):
@@ -184,7 +181,7 @@ class Analysis:
 
         return analyze.centerofmass(analyze.partCfg(), p_type)
 
-    def nbhood(self, pos=None, r_catch=None, plane='3d'):
+    def nbhood(self, pos=None, r_catch=None):
         """
         Get all particles in a defined neighborhood.
 
@@ -194,8 +191,6 @@ class Analysis:
             Reference position for the neighborhood.
         r_catch : :obj:`float`
             Radius of the region.
-        plane : :obj:`str`, \{'xy', 'xz', 'yz'\}
-            If given, ``r_catch`` is the distance to the respective plane.
 
         Returns
         -------
@@ -204,31 +199,16 @@ class Analysis:
 
         """
 
-        cdef Vector3i planedims
-
         utils.check_type_or_throw_except(pos, 3, float, "pos must be 3 floats")
         utils.check_type_or_throw_except(
             r_catch, 1, float, "r_catch must be a float")
 
-        # default 3d takes into account dist in x, y and z
-        planedims[0] = 1
-        planedims[1] = 1
-        planedims[2] = 1
-        if plane == 'xy':
-            planedims[2] = 0
-        elif plane == 'xz':
-            planedims[1] = 0
-        elif plane == 'yz':
-            planedims[0] = 0
-        elif plane != '3d':
-            raise ValueError(
-                'Invalid argument for specifying plane, must be xy, xz, or yz plane')
-
         return analyze.nbhood(
-            analyze.partCfg(), make_Vector3d(pos), r_catch, planedims)
+            analyze.partCfg(), utils.make_Vector3d(pos), r_catch)
 
     def pressure(self):
-        """Calculate the instantaneous pressure (in parallel). This is only
+        """
+        Calculate the instantaneous scalar pressure in parallel. This is only
         sensible in an isotropic system which is homogeneous (on average)! Do
         not use this in an anisotropic or inhomogeneous system. In order to
         obtain the pressure, the ensemble average needs to be calculated.
@@ -241,15 +221,25 @@ class Analysis:
             * ``"total"``: total pressure
             * ``"kinetic"``: kinetic pressure
             * ``"bonded"``: total bonded pressure
-            * ``"bonded", <bond_type>``: bonded pressure which arises from the given bond_type
+            * ``"bonded", <bond_id>``: bonded pressure from the bond
+              identified by ``bond_id``
             * ``"non_bonded"``: total non-bonded pressure
-            * ``"non_bonded", <type_i>, <type_j>``: non-bonded pressure which arises from the interactions between type_i and type_j
-            * ``"non_bonded_intra", <type_i>, <type_j>``: non-bonded pressure between short ranged forces between type i and j and with the same mol_id
-            * ``"non_bonded_inter", <type_i>, <type_j>``: non-bonded pressure between short ranged forces between type i and j and different mol_ids
-            * ``"coulomb"``: Coulomb pressure, how it is calculated depends on the method. It is equivalent to 1/3 of the trace of the Coulomb pressure tensor.
-              For how the pressure tensor is calculated, see :ref:`Pressure Tensor`. The averaged value in an isotropic NVT simulation is equivalent to the average of
+            * ``"non_bonded", <type_i>, <type_j>``: non-bonded pressure which
+              arises from the interactions between ``type_i`` and ``type_j``
+            * ``"non_bonded_intra", <type_i>, <type_j>``: non-bonded pressure
+              from short-range forces between ``type_i`` and ``type_j``
+              with the same ``mol_id``
+            * ``"non_bonded_inter", <type_i>, <type_j>``: non-bonded pressure
+              from short-range forces between ``type_i`` and ``type_j``
+              with different ``mol_id``
+            * ``"coulomb"``: Coulomb pressure, how it is calculated depends on
+              the method. It is equivalent to 1/3 of the trace of the Coulomb
+              pressure tensor. For how the pressure tensor is calculated,
+              see :ref:`Pressure Tensor`. The averaged value in an isotropic
+              NVT simulation is equivalent to the average of
               :math:`E^{\\mathrm{coulomb}}/(3V)`, see :cite:`brown95a`.
-            * ``"coulomb", <i>``: Coulomb pressure from particle pairs (``i=0``), electrostatics solvers (``i=1``)
+            * ``"coulomb", <i>``: Coulomb pressure from particle pairs
+              (``i=0``), electrostatics solvers (``i=1``)
             * ``"dipolar"``: not implemented
             * ``"virtual_sites"``: Pressure contribution from virtual sites
             * ``"external_fields"``: external fields contribution
@@ -261,7 +251,8 @@ class Analysis:
         return obs
 
     def pressure_tensor(self):
-        """Calculate the instantaneous pressure tensor (in parallel). This is
+        """
+        Calculate the instantaneous pressure tensor in parallel. This is
         sensible in an anisotropic system. Still it assumes that the system is
         homogeneous since the volume-averaged pressure tensor is used. Do not use
         this pressure tensor in an (on average) inhomogeneous system. If the
@@ -277,13 +268,21 @@ class Analysis:
             * ``"total"``: total pressure tensor
             * ``"kinetic"``: kinetic pressure tensor
             * ``"bonded"``: total bonded pressure tensor
-            * ``"bonded", <bond_type>``: bonded pressure tensor which arises from the given bond_type
+            * ``"bonded", <bond_id>``: bonded pressure tensor from the bond
+              identified by ``bond_id``
             * ``"non_bonded"``: total non-bonded pressure tensor
-            * ``"non_bonded", <type_i>, <type_j>``: non-bonded pressure tensor which arises from the interactions between type_i and type_j
-            * ``"non_bonded_intra", <type_i>, <type_j>``: non-bonded pressure tensor between short ranged forces between type i and j and with the same mol_id
-            * ``"non_bonded_inter", <type_i>, <type_j>``: non-bonded pressure tensor between short ranged forces between type i and j and different mol_ids
-            * ``"coulomb"``: Maxwell pressure tensor, how it is calculated depends on the method
-            * ``"coulomb", <i>``: Maxwell pressure tensor from particle pairs (``i=0``), electrostatics solvers (``i=1``)
+            * ``"non_bonded", <type_i>, <type_j>``: non-bonded pressure tensor
+              from short-range forces between ``type_i`` and ``type_j``
+            * ``"non_bonded_intra", <type_i>, <type_j>``: non-bonded pressure
+              tensor from short-range forces between ``type_i`` and ``type_j``
+              with the same ``mol_id``
+            * ``"non_bonded_inter", <type_i>, <type_j>``: non-bonded pressure
+              tensor from short-range forces between ``type_i`` and ``type_j``
+              with different ``mol_id``
+            * ``"coulomb"``: Maxwell pressure tensor, how it is calculated
+              depends on the method
+            * ``"coulomb", <i>``: Maxwell pressure tensor from particle pairs
+              (``i=0``), electrostatics solvers (``i=1``)
             * ``"dipolar"``: not implemented
             * ``"virtual_sites"``: pressure tensor contribution from virtual sites
             * ``"external_fields"``: external fields contribution
@@ -296,8 +295,7 @@ class Analysis:
 
     IF DPD == 1:
         def dpd_stress(self):
-            cdef Vector9d p
-            p = dpd_stress()
+            cdef Vector9d p = dpd_stress()
             return utils.array_locked((
                 p[0], p[1], p[2],
                 p[3], p[4], p[5],
@@ -308,7 +306,8 @@ class Analysis:
     #
 
     def energy(self):
-        """Calculate the systems energy.
+        """
+        Calculate the system energy in parallel.
 
         Returns
         -------
@@ -318,15 +317,25 @@ class Analysis:
             * ``"total"``: total energy
             * ``"kinetic"``: linear and rotational kinetic energy
             * ``"bonded"``: total bonded energy
-            * ``"bonded", <bond_type>``: bonded energy which arises from the given bond_type
+            * ``"bonded", <bond_id>``: bonded energy from the bond
+              identified by ``bond_id``
             * ``"non_bonded"``: total non-bonded energy
-            * ``"non_bonded", <type_i>, <type_j>``: non-bonded energy which arises from the interactions between type_i and type_j
-            * ``"non_bonded_intra", <type_i>, <type_j>``: non-bonded energy between short ranged forces between type i and j and with the same mol_id
-            * ``"non_bonded_inter", <type_i>, <type_j>``: non-bonded energy between short ranged forces between type i and j and different mol_ids
-            * ``"coulomb"``: Coulomb energy, how it is calculated depends on the method
-            * ``"coulomb", <i>``: Coulomb energy from particle pairs (``i=0``), electrostatics solvers (``i=1``)
+            * ``"non_bonded", <type_i>, <type_j>``: non-bonded energy
+              from short-range interactions between ``type_i`` and ``type_j``
+            * ``"non_bonded_intra", <type_i>, <type_j>``: non-bonded energy
+              from short-range interactions between ``type_i`` and ``type_j``
+              with the same ``mol_id``
+            * ``"non_bonded_inter", <type_i>, <type_j>``: non-bonded energy
+              from short-range interactions between ``type_i`` and ``type_j``
+              with different ``mol_id``
+            * ``"coulomb"``: Coulomb energy, how it is calculated depends
+              on the method
+            * ``"coulomb", <i>``: Coulomb energy from particle pairs
+              (``i=0``), electrostatics solvers (``i=1``)
             * ``"dipolar"``: dipolar energy
-            * ``"dipolar", <i>``: dipolar energy from particle pairs and magnetic field constraints (``i=0``), magnetostatics solvers (``i=1``)
+            * ``"dipolar", <i>``: dipolar energy from particle pairs and
+              magnetic field constraints (``i=0``), magnetostatics solvers
+              (``i=1``)
             * ``"external_fields"``: external fields contribution
 
 
@@ -569,7 +578,7 @@ class Analysis:
             raise ValueError("type_list_b has to be a list!")
 
         if r_max is None:
-            box_l = make_array_locked(box_geo.length())
+            box_l = utils.make_array_locked(box_geo.length())
             r_max = min(box_l) / 2
 
         assert r_min >= 0.0, "r_min was chosen too small!"
@@ -585,7 +594,7 @@ class Analysis:
             analyze.partCfg(), type_list_a, type_list_b,
             r_min, r_max, r_bins, < bint > log_flag, & low, distribution.data())
 
-        np_distribution = create_nparray_from_double_array(
+        np_distribution = utils.create_nparray_from_double_array(
             distribution.data(), r_bins)
 
         if int_flag:
@@ -632,9 +641,8 @@ class Analysis:
         utils.check_type_or_throw_except(
             p_type, 1, int, "p_type has to be an int")
 
-        cdef Vector3d res = analyze.angularmomentum(analyze.partCfg(), p_type)
-
-        return np.array([res[0], res[1], res[2]])
+        return np.array(utils.make_array_locked(
+            analyze.angularmomentum(analyze.partCfg(), p_type)))
 
     #
     # gyration_tensor

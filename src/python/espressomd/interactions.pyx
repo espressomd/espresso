@@ -141,7 +141,7 @@ cdef class NonBondedInteraction:
         """Check that parameters are valid.
 
         """
-        return True
+        pass
 
     def __getattribute__(self, name):
         """Every time _set_params_in_es_core is called, the parameter dict is also updated.
@@ -223,7 +223,6 @@ IF LENNARD_JONES == 1:
                 raise ValueError("Lennard-Jones sigma has to be >=0")
             if self._params["cutoff"] < 0:
                 raise ValueError("Lennard-Jones cutoff has to be >=0")
-            return True
 
         def _get_params_from_es_core(self):
             cdef IA_parameters * ia_params
@@ -325,7 +324,6 @@ IF WCA == 1:
                 raise ValueError("WCA eps has to be >=0")
             if self._params["sigma"] < 0:
                 raise ValueError("WCA sigma has to be >=0")
-            return True
 
         def _get_params_from_es_core(self):
             cdef IA_parameters * ia_params
@@ -413,7 +411,6 @@ IF LENNARD_JONES_GENERIC == 1:
                 if self._params["lam"] < 0 or self._params["lam"] > 1:
                     raise ValueError(
                         "Generic Lennard-Jones lam has to be in the range [0,1]")
-            return True
 
         def _get_params_from_es_core(self):
             cdef IA_parameters * ia_params
@@ -554,7 +551,6 @@ IF LJCOS:
                 raise ValueError("Lennard-Jones epsilon has to be >=0")
             if self._params["sigma"] < 0:
                 raise ValueError("Lennard-Jones sigma has to be >=0")
-            return True
 
         def _get_params_from_es_core(self):
             cdef IA_parameters * ia_params
@@ -630,7 +626,6 @@ IF LJCOS2:
                 raise ValueError("Lennard-Jones sigma has to be >=0")
             if self._params["width"] < 0:
                 raise ValueError("Parameter width has to be >=0")
-            return True
 
         def _get_params_from_es_core(self):
             cdef IA_parameters * ia_params
@@ -644,7 +639,7 @@ IF LJCOS2:
                 "width": ia_params.ljcos2.w}
 
         def is_active(self):
-            return(self._params["epsilon"] > 0)
+            return (self._params["epsilon"] > 0)
 
         def set_params(self, **kwargs):
             """Set parameters for the Lennard-Jones cosine squared interaction.
@@ -703,7 +698,6 @@ IF HAT == 1:
                 raise ValueError("Hat max force has to be >=0")
             if self._params["cutoff"] < 0:
                 raise ValueError("Hat cutoff has to be >=0")
-            return True
 
         def _get_params_from_es_core(self):
             cdef IA_parameters * ia_params
@@ -756,7 +750,7 @@ IF GAY_BERNE:
             """Check that parameters are valid.
 
             """
-            return True
+            pass
 
         def _get_params_from_es_core(self):
             cdef IA_parameters * ia_params
@@ -843,7 +837,10 @@ IF DPD:
     cdef class DPDInteraction(NonBondedInteraction):
 
         def validate_params(self):
-            return True
+            """Check that parameters are valid.
+
+            """
+            pass
 
         def _get_params_from_es_core(self):
             cdef IA_parameters * ia_params
@@ -936,7 +933,6 @@ IF SMOOTH_STEP == 1:
                 raise ValueError("Smooth-step cutoff has to be >=0")
             if self._params["cap"] < 0:
                 raise ValueError("Smooth-step cap has to be >=0")
-            return True
 
         def _get_params_from_es_core(self):
             cdef IA_parameters * ia_params
@@ -1031,7 +1027,6 @@ IF BMHTF_NACL == 1:
                 raise ValueError("BMHTF d has to be >=0")
             if self._params["cutoff"] < 0:
                 raise ValueError("BMHTF cutoff has to be >=0")
-            return True
 
         def _get_params_from_es_core(self):
             cdef IA_parameters * ia_params
@@ -1124,7 +1119,6 @@ IF MORSE == 1:
                 raise ValueError("Morse offset has to be >=0")
             if self._params["cutoff"] < 0:
                 raise ValueError("Morse cutoff has to be >=0")
-            return True
 
         def _get_params_from_es_core(self):
             cdef IA_parameters * ia_params
@@ -1211,7 +1205,6 @@ IF BUCKINGHAM == 1:
                 raise ValueError("Buckingham c has to be >=0")
             if self._params["d"] < 0:
                 raise ValueError("Buckingham d has to be >=0")
-            return True
 
         def _get_params_from_es_core(self):
             cdef IA_parameters * ia_params
@@ -1308,7 +1301,6 @@ IF SOFT_SPHERE == 1:
                 raise ValueError("Soft-sphere offset has to be >=0")
             if self._params["cutoff"] < 0:
                 raise ValueError("Soft-sphere cutoff has to be >=0")
-            return True
 
         def _get_params_from_es_core(self):
             cdef IA_parameters * ia_params
@@ -1391,7 +1383,6 @@ IF HERTZIAN == 1:
                 raise ValueError("Hertzian eps a has to be >=0")
             if self._params["sig"] < 0:
                 raise ValueError("Hertzian sig has to be >=0")
-            return True
 
         def _get_params_from_es_core(self):
             cdef IA_parameters * ia_params
@@ -1469,7 +1460,6 @@ IF GAUSSIAN == 1:
                 raise ValueError("Gaussian sig has to be >=0")
             if self._params["offset"] < 0:
                 raise ValueError("Gaussian offset has to be >=0")
-            return True
 
         def _get_params_from_es_core(self):
             cdef IA_parameters * ia_params
@@ -1676,7 +1666,7 @@ class BondedInteraction(ScriptInterfaceHelper):
                 if get_bonded_interaction_type_from_es_core(
                         bond_id) != self.type_number():
                     raise Exception(
-                        f"The bond with this id is not defined as a "
+                        f"The bond with id {bond_id} is not defined as a "
                         f"{self.type_name()} bond in the ESPResSo core.")
                 super().__init__(bond_id=bond_id)
                 self._bond_id = bond_id
@@ -2026,7 +2016,7 @@ IF THOLE:
     cdef class TholeInteraction(NonBondedInteraction):
 
         def validate_params(self):
-            return True
+            pass
 
         def _get_params_from_es_core(self):
             cdef IA_parameters * ia_params
@@ -2401,8 +2391,7 @@ IF TABULATED:
             """Check if interaction is active.
 
             """
-            if self.state == 0:
-                return True
+            return (self.state == 0)
 
 
 @script_interface_register

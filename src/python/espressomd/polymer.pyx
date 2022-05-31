@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-include "myconfig.pxi"
 from . cimport polymer
 from . import utils
 import numpy as np

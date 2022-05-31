@@ -173,8 +173,6 @@ class CellSystem(ScriptInterfaceHelper):
         Exception
             If the pair search distance is greater than the cell size
         """
-        if not hasattr(types, "__getitem__"):
-            raise ValueError("Argument 'types' must be an iterable")
         pairs = self.call_method("get_pairs", distance=distance, types=types)
         return [tuple(pair) for pair in pairs]
 

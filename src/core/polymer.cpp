@@ -35,7 +35,6 @@
 #include "constraints/ShapeBasedConstraint.hpp"
 #include "grid.hpp"
 #include "random.hpp"
-#include "statistics.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
@@ -65,6 +64,23 @@ template <class RNG> static Utils::Vector3d random_unit_vector(RNG &rng) {
   v[2] = cos(phi);
   v /= v.norm();
   return v;
+}
+
+/** Calculate minimal distance to point.
+ *  Note: Particle handles may be invalidated!
+ *  @param partCfg particle selection
+ *  @param pos  point from which to check for close neighbors
+ *  @return the minimal distance of a particle to coordinates @p pos
+ */
+static double distto(PartCfg &partCfg, Utils::Vector3d const &pos) {
+  auto mindist_sq = std::numeric_limits<double>::infinity();
+
+  for (auto const &p : partCfg) {
+    auto const d = box_geo.get_mi_vector(pos, p.pos());
+    mindist_sq = std::min(mindist_sq, d.norm2());
+  }
+
+  return std::sqrt(mindist_sq);
 }
 
 /** Determines whether a given position @p pos is valid, i.e., it doesn't
@@ -103,15 +119,16 @@ is_valid_position(Utils::Vector3d const &pos,
     }
   }
 
-  if (min_distance > 0) {
+  if (min_distance > 0.) {
     // check for collision with existing particles
-    if (distto(partCfg, pos, -1) < min_distance) {
+    if (distto(partCfg, pos) < min_distance) {
       return false;
     }
 
+    auto const min_distance_sq = min_distance * min_distance;
     for (auto const &p : positions) {
       for (auto const &m : p) {
-        if (box_geo.get_mi_vector(pos, m).norm() < min_distance) {
+        if (box_geo.get_mi_vector(pos, m).norm2() < min_distance_sq) {
           return false;
         }
       }

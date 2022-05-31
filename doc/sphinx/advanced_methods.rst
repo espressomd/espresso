@@ -12,36 +12,48 @@ literature before using them.
 Creating bonds when particles collide
 -------------------------------------
 
-Please cite :cite:`arnold13a` when using dynamic bonding.
+Please cite :cite:`arnold13a` when using dynamic binding.
 
 With the help of this feature, bonds between particles can be created
 automatically during the simulation, every time two particles collide.
 This is useful for simulations of chemical reactions and irreversible
 adhesion processes. Both, sliding and non-sliding contacts can be created.
 
-The collision detection is controlled via the :attr:`espressomd.system.System.collision_detection` attribute, which is an instance of the class :class:`espressomd.collision_detection.CollisionDetection`.
+The collision detection is controlled via the system
+:attr:`~espressomd.system.System.collision_detection` attribute,
+which is an instance of the class
+:class:`~espressomd.collision_detection.CollisionDetection`.
 
 Several modes are available for different types of binding.
 
-* ``"bind_centers"``: adds a pair-bond between two particles at their first collision. By making the bonded interaction *stiff* enough, the particles can be held together after the collision. Note that the particles can still slide on each others' surface, as the pair bond is not directional. This mode is set up as follows::
+* ``"bind_centers"``: adds a pair-bond between two particles at their first collision.
+  By making the bonded interaction *stiff* enough, the particles can be held together
+  after the collision. Note that the particles can still slide on each others' surface,
+  as the pair bond is not directional. This mode is set up as follows::
 
       import espressomd
       import espressomd.interactions
 
       system = espressomd.System(box_l=[1, 1, 1])
-      bond_centers = espressomd.interactions.HarmonicBond(k=1000, r_0=<CUTOFF>)
+      bond_centers = espressomd.interactions.HarmonicBond(k=1000, r_0=1.5)
       system.bonded_inter.add(bond_centers)
-      system.collision_detection.set_params(mode="bind_centers", distance=<CUTOFF>,
+      system.collision_detection.set_params(mode="bind_centers", distance=1.5,
                                             bond_centers=bond_centers)
 
   The parameters are as follows:
 
-  * ``distance`` is the distance between two particles at which the binding is triggered. This cutoff distance, ``<CUTOFF>`` in the example above, is typically chosen slightly larger than the particle diameter. It is also a good choice for the equilibrium length of the bond.
-  * ``bond_centers`` is the bonded interaction (an instance of :class:`espressomd.interactions.HarmonicBond`) to be created between the particles. No guarantees are made regarding which of the two colliding particles gets the bond. Once there is a bond of this type on any of the colliding particles, no further binding occurs for this pair of particles.
+  * ``distance`` is the distance between two particles at which the binding is triggered.
+    This cutoff distance, ``1.5`` in the example above, is typically chosen slightly larger
+    than the particle diameter. It is also a good choice for the equilibrium length of the bond.
+  * ``bond_centers`` is the bonded interaction to be created between the particles
+    (an instance of :class:`~espressomd.interactions.HarmonicBond` in the example above).
+    No guarantees are made regarding which of the two colliding particles gets the bond.
+    Once there is a bond of this type on any of the colliding particles,
+    no further binding occurs for this pair of particles.
 
-* ``"bind_at_point_of_collision"``: this mode prevents sliding of the colliding particles at the contact. This is achieved by
-  creating two virtual sites at the point of collision. They are
-  rigidly connected to the colliding particles, respectively. A bond is
+* ``"bind_at_point_of_collision"``: this mode prevents sliding of the colliding particles at the contact.
+  This is achieved by creating two virtual sites at the point of collision.
+  They are rigidly connected to the colliding particles, respectively. A bond is
   then created between the virtual sites, or an angular bond between
   the two colliding particles and the virtual particles. In the latter case,
   the virtual particles are the centers of the angle potentials
@@ -50,8 +62,9 @@ Several modes are available for different types of binding.
   particles in the collision and its respective virtual site, a sliding
   at the contact point is no longer possible. See the documentation on
   :ref:`Rigid arrangements of particles` for details. In addition to the bond between the virtual
-  sites, the bond between the colliding particles is also created, i.e., the ``"bind_at_point_of_collision"`` mode implicitly includes the ``"bind_centers"`` mode. You
-  can either use a real bonded interaction to prevent wobbling around
+  sites, the bond between the colliding particles is also created, i.e.,
+  the ``"bind_at_point_of_collision"`` mode implicitly includes the ``"bind_centers"`` mode.
+  You can either use a real bonded interaction to prevent wobbling around
   the point of contact or you can use :class:`espressomd.interactions.Virtual` which acts as a marker, only.
   The method is setup as follows::
 
@@ -59,13 +72,30 @@ Several modes are available for different types of binding.
           distance=<CUTOFF>, bond_centers=<BOND_CENTERS>, bond_vs=<BOND_VS>,
           part_type_vs=<PART_TYPE_VS>, vs_placement=<VS_PLACEMENT>)
 
-  The parameters ``distance`` and ``bond_centers`` have the same meaning as in the ``"bind_centers"`` mode. The remaining parameters are as follows:
+  The parameters ``distance`` and ``bond_centers`` have the same meaning
+  as in the ``"bind_centers"`` mode. The remaining parameters are as follows:
 
-  * ``bond_vs`` is the bond to be added between the two virtual sites created on collision. This is either a pair-bond with an equilibrium length matching the distance between the virtual sites, or an angle bond fully stretched in its equilibrium configuration.
-  * ``part_type_vs`` is the particle type assigned to the virtual sites created on collision. In nearly all cases, no non-bonded interactions should be defined for this particle type.
-  * ``vs_placement`` controls, where on the line connecting the centers of the colliding particles, the virtual sites are placed. A value of 0 means that the virtual sites are placed at the same position as the colliding particles on which they are based. A value of 0.5 will result in the virtual sites being placed at the mid-point between the two colliding particles. A value of 1 will result the virtual site associated to the first colliding particle to be placed at the position of the second colliding particle. In most cases, 0.5, is a good choice. Then, the bond connecting the virtual sites should have an equilibrium length of zero.
+  * ``bond_vs`` is the bond to be added between the two virtual sites created on collision.
+    This is either a pair-bond with an equilibrium length matching the distance between
+    the virtual sites, or an angle bond fully stretched in its equilibrium configuration.
+  * ``part_type_vs`` is the particle type assigned to the virtual sites created on collision.
+    In nearly all cases, no non-bonded interactions should be defined for this particle type.
+  * ``vs_placement`` controls, where on the line connecting the centers of the colliding
+    particles, the virtual sites are placed. A value of 0 means that the virtual sites are
+    placed at the same position as the colliding particles on which they are based.
+    A value of 0.5 will result in the virtual sites being placed at the mid-point between
+    the two colliding particles. A value of 1 will result the virtual site associated
+    to the first colliding particle to be placed at the position of the second colliding
+    particle. In most cases, 0.5, is a good choice. Then, the bond connecting the virtual
+    sites should have an equilibrium length of zero.
 
-* ``"glue_to_surface"``: This mode is used to irreversibly attach small particles to the surface of a big particle. It is asymmetric in that several small particles can be bound to a big particle but not vice versa. The small particles can change type after collision to make them *inert*. On collision, a single virtual site is placed and related to the big particle. Then, a bond (``bond_centers``) connects the big and the small particle. A second bond (``bond_vs``) connects the virtual site and the small particle. Further required parameters are:
+* ``"glue_to_surface"``: This mode is used to irreversibly attach small particles
+  to the surface of a big particle. It is asymmetric in that several small particles
+  can be bound to a big particle but not vice versa. The small particles can change type
+  after collision to make them *inert*. On collision, a single virtual site is placed
+  and related to the big particle. Then, a bond (``bond_centers``) connects the big
+  and the small particle. A second bond (``bond_vs``) connects the virtual site and
+  the small particle. Further required parameters are:
 
   * ``part_type_to_attach_vs_to``: Type of the particle to which the virtual site is attached, i.e., the *big* particle.
   * ``part_type_to_be_glued``: Type of the particle bound to the virtual site (the *small* particle).
@@ -79,10 +109,10 @@ Several modes are available for different types of binding.
   time step, no guarantees are made with regards to which partner is selected.
   In particular, there is no guarantee that the choice is unbiased.
 
-* ``"bind_three_particles"`` allows for the creation of agglomerates which maintain their shape
-  similarly to those create by the mode ``"bind_at_point_of_collision"``. The present approach works
-  without virtual sites. Instead, for each two-particle collision, the
-  surrounding is searched for a third particle. If one is found,
+* ``"bind_three_particles"`` allows for the creation of agglomerates which maintain
+  their shape similarly to those create by the mode ``"bind_at_point_of_collision"``.
+  The present approach works without virtual sites. Instead, for each two-particle
+  collision, the surrounding is searched for a third particle. If one is found,
   angular bonds are placed to maintain the local shape.
   If all three particles are within the cutoff distance, an angle bond is added
   on each of the three particles in addition
@@ -106,14 +136,18 @@ Several modes are available for different types of binding.
             bond_centers=<BOND_CENTERS>, bond_three_particles=0,
             three_particle_binding_angle_resolution=res, distance=<CUTOFF>)
 
-  Important: The bonds for the angles are mapped via their numerical bond ids. In this example, ids from 0 to 180 are used. All other bonds required for the simulation need to be added to the system after those bonds. In particular, this applies to the bonded interaction passed via ``bond_centers``
+  Important: The bonds for the angles are mapped via their numerical bond ids.
+  In this example, ids from 0 to 180 are used. All other bonds required for
+  the simulation need to be added to the system after those bonds. In particular,
+  this applies to the bonded interaction passed via ``bond_centers``
 
 
 The following limitations currently apply for the collision detection:
 
 * No distinction is currently made between different particle types for the ``"bind_centers"`` method.
 
-* The ``"bind_at_point_of_collision"`` and ``"glue_to_surface"``  approaches require the feature ``VIRTUAL_SITES_RELATIVE`` to be activated in :file:`myconfig.hpp`.
+* The ``"bind_at_point_of_collision"`` and ``"glue_to_surface"`` approaches require
+  the feature ``VIRTUAL_SITES_RELATIVE`` to be activated in :file:`myconfig.hpp`.
 
 * The ``"bind_at_point_of_collision"`` approach cannot handle collisions
   between virtual sites
@@ -188,7 +222,7 @@ features can be combined to model reversible bonds.
 Two combinations are possible:
 
 * ``"delete_bond"`` mode for breakable bonds together with
-  ``"bond_centers"`` mode for collision detection:
+  ``"bind_centers"`` mode for collision detection:
   used to create or delete a bond between two real particles
 * ``"revert_bind_at_point_of_collision"`` mode for breakable bonds together
   with ``"bind_at_point_of_collision"`` mode for collision detection:
@@ -231,7 +265,8 @@ The immersed boundary method consists of two components, which can be used indep
 
 * :ref:`Inertialess lattice-Boltzmann tracers` implemented as virtual sites
 
-* Interactions providing the elastic forces for the particles forming the surface. These are described in :ref:`Immersed Boundary Method interactions`.
+* Interactions providing the elastic forces for the particles forming the surface.
+  These are described in :ref:`Immersed Boundary Method interactions`.
 
 For a more detailed description, see e.g. :cite:`guckenberger17a` or contact us.
 This feature probably does not work with advanced LB features such as electrokinetics.
