@@ -20,7 +20,7 @@
 #ifndef CLUSTER_ANALYSIS_CLUSTER_STRUCTURE_HPP
 #define CLUSTER_ANALYSIS_CLUSTER_STRUCTURE_HPP
 
-#include "pair_criteria/pair_criteria.hpp"
+#include "pair_criteria/PairCriterion.hpp"
 
 #include "Cluster.hpp"
 #include "Particle.hpp"

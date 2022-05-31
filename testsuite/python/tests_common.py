@@ -18,35 +18,50 @@ import pathlib
 import numpy as np
 
 
-def assert_params_match(ut_obj, inParams, outParams, msg_long=None):
+def is_float(value):
+    float_types = (float, np.float16, np.float32, np.float64, np.longdouble)
+    if hasattr(np, 'float128'):
+        float_types = float_types + (np.float128,)
+    return isinstance(value, float_types)
+
+
+def is_array(value):
+    return isinstance(value, (list, tuple, np.ndarray))
+
+
+def assert_params_match(ut_obj, inParams, outParams, msg_long=""):
     """Check if the parameters set and gotten back match.
     Only check keys present in ``inParams``.
     """
     if msg_long:
         msg_long = "\n" + msg_long
-    else:
-        msg_long = ""
 
-    for k in inParams.keys():
+    for k, value_in in inParams.items():
         ut_obj.assertIn(k, outParams)
-        if isinstance(inParams[k], float):
-            ut_obj.assertAlmostEqual(
-                outParams[k], inParams[k], delta=1E-14,
-                msg=f"Mismatching parameter {k!r}{msg_long}")
+        value_out = outParams[k]
+        msg = f"Mismatching parameter {k!r}{msg_long}"
+        if is_array(value_out) or is_array(value_in):
+            value_out = np.copy(value_out)
+            value_in = np.copy(value_in)
+            if is_float(value_in[0]) or is_float(value_out[0]):
+                np.testing.assert_allclose(
+                    value_out, value_in, atol=1e-14, err_msg=msg)
+            else:
+                np.testing.assert_array_equal(value_out, value_in, err_msg=msg)
+        elif is_float(value_in) or is_float(value_out):
+            ut_obj.assertAlmostEqual(value_out, value_in, delta=1e-14, msg=msg)
         else:
-            ut_obj.assertEqual(
-                outParams[k], inParams[k],
-                msg=f"Mismatching parameter {k!r}{msg_long}")
+            ut_obj.assertEqual(value_out, value_in, msg=msg)
 
 
-def generate_test_for_class(_system, _interClass, _params):
-    """Generates test cases for checking interaction parameters set and gotten back
-    from Es actually match. Only keys which are present in _params are checked
-    1st: Interaction parameters as dictionary, i.e., ``{"k": 1., "r_0": 0}``
-    2nd: Name of the interaction property to set (i.e. ``"P3M"``)
+def generate_test_for_actor_class(_system, _class_actor, _params):
     """
-    params = _params
-    interClass = _interClass
+    Generate a test case for an actor to verify parameters in the interface
+    and the core match.
+    Only keys which are present in ``_params`` are checked.
+    """
+    params_in = _params
+    class_actor = _class_actor
     system = _system
 
     def func(self):
@@ -54,16 +69,15 @@ def generate_test_for_class(_system, _interClass, _params):
         # It will use the state of the variables in the outer function,
         # which was there, when the outer function was called
 
-        # set Parameter
-        Inter = interClass(**params)
-        Inter.validate_params()
-        system.actors.add(Inter)
-        # Read them out again
-        outParams = Inter.get_params()
-        del system.actors[0]
+        # set parameters
+        actor = class_actor(**params_in)
+        system.actors.add(actor)
+        # read them out again
+        params_out = {key: getattr(actor, key) for key in params_in}
+        system.actors.remove(actor)
 
-        assert_params_match(self, params, outParams,
-                            f"Parameters set {params} vs. {outParams}")
+        assert_params_match(self, params_in, params_out,
+                            msg_long=f"Parameters set {params_in} vs. {params_out}")
 
     return func
 

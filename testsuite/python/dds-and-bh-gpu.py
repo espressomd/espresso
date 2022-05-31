@@ -43,10 +43,11 @@ class BH_DDS_gpu_multCPU_test(ut.TestCase):
         pf_dds_gpu = 3.524
         ratio_dawaanr_bh_gpu = pf_dds_gpu / pf_bh_gpu
         l = 15
-        self.system.box_l = 3 * [l]
-        self.system.periodicity = 3 * [False]
-        self.system.time_step = 1E-4
-        self.system.cell_system.skin = 0.1
+        system = self.system
+        system.box_l = 3 * [l]
+        system.periodicity = 3 * [False]
+        system.time_step = 1E-4
+        system.cell_system.skin = 0.1
 
         part_dip = np.zeros((3))
 
@@ -54,48 +55,56 @@ class BH_DDS_gpu_multCPU_test(ut.TestCase):
             dipole_modulus = 1.3
             part_pos = np.random.random((n, 3)) * l
             part_dip = dipole_modulus * tests_common.random_dipoles(n)
-            self.system.part.add(pos=part_pos, dip=part_dip,
-                                 v=n * [(0, 0, 0)], omega_body=n * [(0, 0, 0)])
+            system.part.add(pos=part_pos, dip=part_dip,
+                            v=n * [(0, 0, 0)], omega_body=n * [(0, 0, 0)])
 
-            self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
+            system.non_bonded_inter[0, 0].lennard_jones.set_params(
                 epsilon=10.0, sigma=0.5, cutoff=0.55, shift="auto")
-            self.system.thermostat.set_langevin(kT=0.0, gamma=10.0, seed=42)
+            system.thermostat.set_langevin(kT=0.0, gamma=10.0, seed=42)
             g = espressomd.galilei.GalileiTransform()
             g.kill_particle_motion(rotation=True)
-            self.system.integrator.set_vv()
+            system.integrator.set_vv()
 
-            self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
+            system.non_bonded_inter[0, 0].lennard_jones.set_params(
                 epsilon=0.0, sigma=0.0, cutoff=-1, shift=0.0)
 
-            self.system.cell_system.skin = 0.0
-            self.system.time_step = 0.01
-            self.system.thermostat.turn_off()
+            system.cell_system.skin = 0.0
+            system.time_step = 0.01
+            system.thermostat.turn_off()
 
             # gamma should be zero in order to avoid the noise term in force
             # and torque
-            self.system.thermostat.set_langevin(kT=1.297, gamma=0.0)
+            system.thermostat.set_langevin(kT=1.297, gamma=0.0)
 
             dds_gpu = espressomd.magnetostatics.DipolarDirectSumGpu(
                 prefactor=pf_dds_gpu)
-            self.system.actors.add(dds_gpu)
-            self.system.integrator.run(steps=0, recalc_forces=True)
+            system.actors.add(dds_gpu)
+            # check MD cell reset has no impact
+            system.box_l = system.box_l
+            system.periodicity = system.periodicity
+            system.cell_system.node_grid = system.cell_system.node_grid
+            system.integrator.run(steps=0, recalc_forces=True)
 
-            dawaanr_f = np.copy(self.system.part.all().f)
-            dawaanr_t = np.copy(self.system.part.all().torque_lab)
-            dawaanr_e = self.system.analysis.energy()["total"]
+            dawaanr_f = np.copy(system.part.all().f)
+            dawaanr_t = np.copy(system.part.all().torque_lab)
+            dawaanr_e = system.analysis.energy()["total"]
 
             del dds_gpu
-            self.system.actors.clear()
+            system.actors.clear()
 
-            self.system.integrator.run(steps=0, recalc_forces=True)
+            system.integrator.run(steps=0, recalc_forces=True)
             bh_gpu = espressomd.magnetostatics.DipolarBarnesHutGpu(
                 prefactor=pf_bh_gpu, epssq=200.0, itolsq=8.0)
-            self.system.actors.add(bh_gpu)
-            self.system.integrator.run(steps=0, recalc_forces=True)
+            system.actors.add(bh_gpu)
+            # check MD cell reset has no impact
+            system.box_l = system.box_l
+            system.periodicity = system.periodicity
+            system.cell_system.node_grid = system.cell_system.node_grid
+            system.integrator.run(steps=0, recalc_forces=True)
 
-            bhgpu_f = np.copy(self.system.part.all().f)
-            bhgpu_t = np.copy(self.system.part.all().torque_lab)
-            bhgpu_e = self.system.analysis.energy()["total"]
+            bhgpu_f = np.copy(system.part.all().f)
+            bhgpu_t = np.copy(system.part.all().torque_lab)
+            bhgpu_e = system.analysis.energy()["total"]
 
             # compare
             for i in range(n):
@@ -121,11 +130,11 @@ class BH_DDS_gpu_multCPU_test(ut.TestCase):
                 msg='Energies for dawaanr {0} and bh_gpu {1} do not match.'
                     .format(dawaanr_e, ratio_dawaanr_bh_gpu * bhgpu_e))
 
-            self.system.integrator.run(steps=0, recalc_forces=True)
+            system.integrator.run(steps=0, recalc_forces=True)
 
             del bh_gpu
-            self.system.actors.clear()
-            self.system.part.clear()
+            system.actors.clear()
+            system.part.clear()
 
 
 if __name__ == '__main__':

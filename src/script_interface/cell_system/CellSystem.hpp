@@ -91,8 +91,9 @@ public:
              if (vec.size() != 3ul) {
                throw std::invalid_argument(error_msg + " must be 3 ints");
              }
+             auto const old_node_grid = ::node_grid;
              auto const new_node_grid = Utils::Vector3i{vec.begin(), vec.end()};
-             auto const n_nodes_old = Utils::product(::node_grid);
+             auto const n_nodes_old = Utils::product(old_node_grid);
              auto const n_nodes_new = Utils::product(new_node_grid);
              if (n_nodes_new != n_nodes_old) {
                std::stringstream reason;
@@ -100,8 +101,14 @@ public:
                       << "with new node grid [" << new_node_grid << "]";
                throw std::invalid_argument(error_msg + reason.str());
              }
-             ::node_grid = new_node_grid;
-             on_nodegrid_change();
+             try {
+               ::node_grid = new_node_grid;
+               on_node_grid_change();
+             } catch (...) {
+               ::node_grid = old_node_grid;
+               on_node_grid_change();
+               throw;
+             }
            });
          },
          []() { return pack_vector(::node_grid); }},

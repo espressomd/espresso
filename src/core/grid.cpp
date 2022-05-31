@@ -160,7 +160,8 @@ void mpi_set_periodicity(bool x, bool y, bool z) {
 
 void mpi_set_node_grid_local(const Utils::Vector3i &node_grid) {
   ::node_grid = node_grid;
-  on_nodegrid_change();
+  grid_changed_n_nodes();
+  on_node_grid_change();
 }
 
 REGISTER_CALLBACK(mpi_set_node_grid_local)

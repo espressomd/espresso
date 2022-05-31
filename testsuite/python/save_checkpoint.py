@@ -21,6 +21,7 @@ import pathlib
 
 import espressomd
 import espressomd.checkpointing
+import espressomd.code_info
 import espressomd.electrostatics
 import espressomd.magnetostatics
 import espressomd.interactions
@@ -114,14 +115,16 @@ if espressomd.has_features('P3M') and ('P3M' in modes or 'ELC' in modes):
         tune=False)
     if 'ELC' in modes:
         elc = espressomd.electrostatics.ELC(
-            p3m_actor=p3m,
+            actor=p3m,
             gap_size=6.0,
             maxPWerror=0.1,
             delta_mid_top=0.9,
             delta_mid_bot=0.1)
         system.actors.add(elc)
+        elc.charge_neutrality_tolerance = 7e-12
     else:
         system.actors.add(p3m)
+        p3m.charge_neutrality_tolerance = 5e-12
 
 # accumulators
 obs = espressomd.observables.ParticlePositions(ids=[0, 1])
@@ -282,7 +285,6 @@ if espressomd.has_features('DP3M') and 'DP3M' in modes:
     dp3m = espressomd.magnetostatics.DipolarP3M(
         prefactor=1.,
         epsilon=2.,
-        mesh_off=[0.5, 0.5, 0.5],
         r_cut=2.4,
         cao=1,
         mesh=[8, 8, 8],
@@ -293,7 +295,7 @@ if espressomd.has_features('DP3M') and 'DP3M' in modes:
     system.actors.add(dp3m)
 
 if espressomd.has_features('SCAFACOS') and 'SCAFACOS' in modes \
-        and 'p3m' in espressomd.scafacos.available_methods():
+        and 'p3m' in espressomd.code_info.scafacos_methods():
     system.actors.add(espressomd.electrostatics.Scafacos(
         prefactor=0.5,
         method_name="p3m",
@@ -304,7 +306,7 @@ if espressomd.has_features('SCAFACOS') and 'SCAFACOS' in modes \
             "p3m_alpha": 2.084652}))
 
 if espressomd.has_features('SCAFACOS_DIPOLES') and 'SCAFACOS' in modes \
-        and 'p2nfft' in espressomd.scafacos.available_methods():
+        and 'p2nfft' in espressomd.code_info.scafacos_methods():
     system.actors.add(espressomd.magnetostatics.Scafacos(
         prefactor=1.2,
         method_name='p2nfft',

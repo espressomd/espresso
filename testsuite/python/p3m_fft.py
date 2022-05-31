@@ -108,7 +108,7 @@ class FFT_test(ut.TestCase):
         unsorted_node_grid = self.system.cell_system.node_grid[::-1]
         self.system.cell_system.node_grid = unsorted_node_grid
         solver = espressomd.electrostatics.P3M(prefactor=2, accuracy=1e-2)
-        with self.assertRaisesRegex(Exception, 'P3M: tuning failed: ERROR: P3M_init: node grid must be sorted, largest first'):
+        with self.assertRaisesRegex(Exception, 'node grid must be sorted, largest first'):
             self.system.actors.add(solver)
 
     @utx.skipIfMissingFeatures("DP3M")
@@ -121,7 +121,7 @@ class FFT_test(ut.TestCase):
         self.system.cell_system.node_grid = unsorted_node_grid
         solver = espressomd.magnetostatics.DipolarP3M(
             prefactor=2, accuracy=1e-2)
-        with self.assertRaisesRegex(Exception, 'P3M: tuning failed: ERROR: dipolar P3M_init: node grid must be sorted, largest first'):
+        with self.assertRaisesRegex(Exception, 'node grid must be sorted, largest first'):
             self.system.actors.add(solver)
 
 

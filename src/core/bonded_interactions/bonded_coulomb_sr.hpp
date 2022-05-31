@@ -29,13 +29,13 @@
 #include "config.hpp"
 
 #include "Particle.hpp"
-#include "electrostatics_magnetostatics/coulomb_inline.hpp"
 
 #include <utils/Vector.hpp>
 
 #include <boost/optional.hpp>
 
 #include <cmath>
+#include <functional>
 
 /** Parameters for %Coulomb bond short-range Potential */
 struct BondedCoulombSR {
@@ -48,9 +48,15 @@ struct BondedCoulombSR {
 
   BondedCoulombSR(double q1q2) { this->q1q2 = q1q2; }
 
-  boost::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;
-  boost::optional<double> energy(Particle const &p1, Particle const &p2,
-                                 Utils::Vector3d const &dx) const;
+  boost::optional<Utils::Vector3d>
+  force(Utils::Vector3d const &dx,
+        std::function<Utils::Vector3d(double, Utils::Vector3d const &,
+                                      double)> const &kernel) const;
+  boost::optional<double>
+  energy(Particle const &p1, Particle const &p2, Utils::Vector3d const &dx,
+         std::function<double(Particle const &, Particle const &, double,
+                              Utils::Vector3d const &, double)> const &kernel)
+      const;
 
 private:
   friend boost::serialization::access;
@@ -62,12 +68,14 @@ private:
 
 /** Compute the short-range bonded Coulomb pair force.
  *  @param[in]  dx        %Distance between the particles.
+ *  @param[in]  kernel    %Coulomb force kernel.
  */
-inline boost::optional<Utils::Vector3d>
-BondedCoulombSR::force(Utils::Vector3d const &dx) const {
+inline boost::optional<Utils::Vector3d> BondedCoulombSR::force(
+    Utils::Vector3d const &dx,
+    std::function<Utils::Vector3d(double, Utils::Vector3d const &,
+                                  double)> const &kernel) const {
 #ifdef ELECTROSTATICS
-  auto const dist = dx.norm();
-  return Coulomb::central_force(q1q2, dx, dist);
+  return kernel(q1q2, dx, dx.norm());
 #else
   return Utils::Vector3d{};
 #endif
@@ -77,13 +85,15 @@ BondedCoulombSR::force(Utils::Vector3d const &dx) const {
  *  @param[in]  p1        First particle.
  *  @param[in]  p2        Second particle.
  *  @param[in]  dx        %Distance between the particles.
+ *  @param[in]  kernel    %Coulomb energy kernel.
  */
-inline boost::optional<double>
-BondedCoulombSR::energy(Particle const &p1, Particle const &p2,
-                        Utils::Vector3d const &dx) const {
+inline boost::optional<double> BondedCoulombSR::energy(
+    Particle const &p1, Particle const &p2, Utils::Vector3d const &dx,
+    std::function<double(Particle const &, Particle const &, double,
+                         Utils::Vector3d const &, double)> const &kernel)
+    const {
 #ifdef ELECTROSTATICS
-  auto const dist = dx.norm();
-  return Coulomb::pair_energy(p1, p2, q1q2, dx, dist);
+  return kernel(p1, p2, q1q2, dx, dx.norm());
 #else
   return 0.;
 #endif

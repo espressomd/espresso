@@ -72,6 +72,14 @@ std::vector<RuntimeError> mpi_gather_runtime_errors() {
   m_callbacks->call(mpi_gather_runtime_errors_local);
   return runtimeErrorCollector->gather();
 }
+
+std::vector<RuntimeError> mpi_gather_runtime_errors_all(bool is_head_node) {
+  if (is_head_node) {
+    return runtimeErrorCollector->gather();
+  }
+  runtimeErrorCollector->gather_local();
+  return {};
+}
 } // namespace ErrorHandling
 
 void errexit() {

@@ -45,26 +45,50 @@ cfile.write("""
 # DO NOT EDIT MANUALLY, CHANGES WILL BE LOST
 
 include "myconfig.pxi"
+from . import utils
 
 def features():
     \"\"\"Returns list of features compiled into ESPResSo core\"\"\"
 
-    f=[]
+    f = []
 """)
 
-template = """
-    IF {0} == 1:
-        f.append("{0}")
-"""
-
 for feature in defs.allfeatures:
-    cfile.write(template.format(feature))
+    cfile.write(f"\n    IF {feature} == 1:\n        f.append(\"{feature}\")\n")
 
 cfile.write(f"""
     return sorted(f)
 
 def all_features():
     return {defs.allfeatures}
+
+
+cdef extern from "version.hpp":
+    cdef const char * ESPRESSO_BUILD_TYPE
+
+
+def build_type():
+    \"\"\"Prints the CMake build type.
+    Can be e.g. Debug, Release, RelWithAssert, RelWithDebInfo, Coverage, etc.
+    \"\"\"
+    return utils.to_str(ESPRESSO_BUILD_TYPE)  # pylint: disable=undefined-variable
+
+
+from libcpp.string cimport string
+from libcpp.vector cimport vector
+
+IF SCAFACOS:
+    cdef extern from "script_interface/scafacos/scafacos.hpp" namespace "ScriptInterface::Scafacos":
+        vector[string] available_methods()
+
+def scafacos_methods():
+    \"\"\"Lists long-range methods available in the ScaFaCoS library.\"\"\"
+    scafacos_features = []
+    IF SCAFACOS == 1:
+        method_names = available_methods()
+        for method_name in method_names:
+            scafacos_features.append(method_name.decode('ascii'))
+    return scafacos_features
 """)
 
 cfile.close()

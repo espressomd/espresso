@@ -24,20 +24,161 @@ import functools
 import numpy as np
 cimport numpy as np
 from libc cimport stdint
-from .actors cimport Actor
+from . import highlander
 from . import utils
 from . cimport utils
 from .utils cimport Vector3i, Vector3d, Vector6d, Vector19d
 from .integrate cimport get_time_step
 
 
-def _construct(cls, params):
-    obj = cls(**params)
-    obj._params = params
-    return obj
+cdef class FluidActor:
+
+    """
+    Abstract base class for interactions affecting particles in the system,
+    such as LB fluids. Derived classes must implement the interface to the
+    relevant core objects and global variables.
+    """
+
+    # Keys in active_list have to match the method name.
+    active_list = dict(HydrodynamicInteraction=False)
+
+    # __getstate__ and __setstate__ define the pickle interaction
+    def __getstate__(self):
+        odict = self._params.copy()
+        return odict
+
+    def __setstate__(self, params):
+        self._params = params
+        self._set_params_in_es_core()
+
+    def __init__(self, *args, **kwargs):
+        self._isactive = False
+        utils.check_valid_keys(self.valid_keys(), kwargs.keys())
+        utils.check_required_keys(self.required_keys(), kwargs.keys())
+        self._params = self.default_params()
+        self._params.update(kwargs)
+
+    def _activate(self):
+        inter = self._get_interaction_type()
+        if inter in FluidActor.active_list:
+            if FluidActor.active_list[inter]:
+                raise highlander.ThereCanOnlyBeOne(self.__class__.__bases__[0])
+            FluidActor.active_list[inter] = True
+
+        self.validate_params()
+        self._activate_method()
+        utils.handle_errors("Activation of an actor")
+        self._isactive = True
+
+    def _deactivate(self):
+        self._deactivate_method()
+        utils.handle_errors("Deactivation of an actor")
+        self._isactive = False
+        inter = self._get_interaction_type()
+        if inter in FluidActor.active_list:
+            if not FluidActor.active_list[inter]:
+                raise Exception(
+                    f"Class not registered in Actor.active_list: {self.__class__.__bases__[0].__name__}")
+            FluidActor.active_list[inter] = False
+
+    def is_valid(self):
+        """
+        Check if the data stored in this instance still matches the
+        corresponding data in the core.
+        """
+        temp_params = self._get_params_from_es_core()
+        if self._params != temp_params:
+            return False
+
+        # If we're still here, the instance is valid
+        return True
+
+    def get_params(self):
+        """Get interaction parameters"""
+        # If this instance refers to an actual interaction defined in the es
+        # core, load current parameters from there
+        if self.is_active():
+            update = self._get_params_from_es_core()
+            self._params.update(update)
+        return self._params
+
+    def set_params(self, **p):
+        """Update the given parameters."""
+        # Check if keys are valid
+        utils.check_valid_keys(self.valid_keys(), p.keys())
+
+        # When an interaction is newly activated, all required keys must be
+        # given
+        if not self.is_active():
+            utils.check_required_keys(self.required_keys(), p.keys())
+
+        self._params.update(p)
+        # validate updated parameters
+        self.validate_params()
+        # Put in values given by the user
+        if self.is_active():
+            self._set_params_in_es_core()
+
+    def __str__(self):
+        return f"{self.__class__.__name__}({self.get_params()})"
+
+    def _get_interaction_type(self):
+        bases = self.class_lookup(self.__class__)
+        for i in range(len(bases)):
+            if bases[i].__name__ in FluidActor.active_list:
+                return bases[i].__name__
+
+    def class_lookup(self, cls):
+        c = list(cls.__bases__)
+        for base in c:
+            c.extend(self.class_lookup(base))
+        return c
+
+    def is_active(self):
+        return self._isactive
+
+    def valid_keys(self):
+        """Virtual method."""
+        raise Exception(
+            f"Subclasses of {self._get_interaction_type()} must define the valid_keys() method.")
+
+    def required_keys(self):
+        """Virtual method."""
+        raise Exception(
+            "Subclasses of {self._get_interaction_type()} must define the required_keys() method.")
+
+    def validate_params(self):
+        """Virtual method."""
+        raise Exception(
+            "Subclasses of {self._get_interaction_type()} must define the validate_params() method.")
+
+    def _get_params_from_es_core(self):
+        """Virtual method."""
+        raise Exception(
+            "Subclasses of {self._get_interaction_type()} must define the _get_params_from_es_core() method.")
+
+    def _set_params_in_es_core(self):
+        """Virtual method."""
+        raise Exception(
+            "Subclasses of {self._get_interaction_type()} must define the _set_params_in_es_core() method.")
+
+    def default_params(self):
+        """Virtual method."""
+        raise Exception(
+            "Subclasses of {self._get_interaction_type()} must define the default_params() method.")
+
+    def _activate_method(self):
+        """Virtual method."""
+        raise Exception(
+            "Subclasses of {self._get_interaction_type()} must define the _activate_method() method.")
+
+    def _deactivate_method(self):
+        """Virtual method."""
+        raise Exception(
+            "Subclasses of {self._get_interaction_type()} must define the _deactivate_method() method.")
 
 
-cdef class HydrodynamicInteraction(Actor):
+cdef class HydrodynamicInteraction(FluidActor):
     """
     Base class for LB implementations.
 
@@ -77,8 +218,15 @@ cdef class HydrodynamicInteraction(Actor):
         raise Exception(
             "Subclasses of HydrodynamicInteraction must define the _lb_init() method.")
 
+    @classmethod
+    def _restore_object(cls, derived_cls, params):
+        obj = derived_cls(**params)
+        obj._params = params
+        return obj
+
     def __reduce__(self):
-        return _construct, (self.__class__, self._params), None
+        return (HydrodynamicInteraction._restore_object,
+                (self.__class__, self._params))
 
     def __getitem__(self, key):
         cdef Vector3i shape

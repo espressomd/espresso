@@ -27,7 +27,6 @@ import espressomd
 import espressomd.checkpointing
 import espressomd.electrostatics
 import espressomd.magnetostatics
-import espressomd.scafacos
 import espressomd.io.writer  # pylint: disable=unused-import
 import espressomd.virtual_sites
 import espressomd.integrate
@@ -481,11 +480,12 @@ class CheckpointTest(ut.TestCase):
     @ut.skipIf(not has_p3m_mode, "Skipping test due to missing combination.")
     def test_p3m(self):
         actor = self.get_active_actor_of_type(
-            espressomd.electrostatics.ElectrostaticInteraction)
+            espressomd.electrostatics._P3MBase)
         state = actor.get_params()
         reference = {'prefactor': 1.0, 'accuracy': 0.1, 'mesh': 3 * [10],
                      'cao': 1, 'alpha': 1.0, 'r_cut': 1.0, 'tune': False,
-                     'timings': 15}
+                     'timings': 15, 'check_neutrality': True,
+                     'charge_neutrality_tolerance': 1e-12}
         for key in reference:
             self.assertIn(key, state)
             np.testing.assert_almost_equal(state[key], reference[key],
@@ -496,12 +496,15 @@ class CheckpointTest(ut.TestCase):
     def test_elc(self):
         actor = self.get_active_actor_of_type(espressomd.electrostatics.ELC)
         elc_state = actor.get_params()
-        p3m_state = elc_state['p3m_actor'].get_params()
+        p3m_state = elc_state['actor'].get_params()
         p3m_reference = {'prefactor': 1.0, 'accuracy': 0.1, 'mesh': 3 * [10],
                          'cao': 1, 'alpha': 1.0, 'r_cut': 1.0, 'tune': False,
-                         'timings': 15}
+                         'timings': 15, 'check_neutrality': True,
+                         'charge_neutrality_tolerance': 7e-12}
         elc_reference = {'gap_size': 6.0, 'maxPWerror': 0.1,
-                         'delta_mid_top': 0.9, 'delta_mid_bot': 0.1}
+                         'delta_mid_top': 0.9, 'delta_mid_bot': 0.1,
+                         'check_neutrality': True,
+                         'charge_neutrality_tolerance': 5e-12}
         for key in elc_reference:
             self.assertIn(key, elc_state)
             np.testing.assert_almost_equal(elc_state[key], elc_reference[key],
@@ -511,42 +514,40 @@ class CheckpointTest(ut.TestCase):
             np.testing.assert_almost_equal(p3m_state[key], p3m_reference[key],
                                            err_msg=f'for parameter {key}')
 
-    @ut.skipIf(not espressomd.has_features('SCAFACOS') or
-               'SCAFACOS' not in modes or
-               'p3m' not in espressomd.scafacos.available_methods(),
-               "Skipping test due to missing combination or p3m method.")
-    def test_scafacos(self):
+    @utx.skipIfMissingFeatures(["SCAFACOS"])
+    @utx.skipIfMissingScafacosMethod("p3m")
+    @ut.skipIf('SCAFACOS' not in modes, "Missing combination.")
+    def test_scafacos_coulomb(self):
         actor = self.get_active_actor_of_type(
             espressomd.electrostatics.Scafacos)
         state = actor.get_params()
         reference = {'prefactor': 0.5, 'method_name': 'p3m',
                      'method_params': {
-                         'p3m_cao': '7',
-                         'p3m_r_cut': '1.0',
-                         'p3m_grid': '64',
-                         'p3m_alpha': '2.084652'}}
+                         'p3m_cao': 7,
+                         'p3m_r_cut': 1.0,
+                         'p3m_grid': 64,
+                         'p3m_alpha': 2.084652}}
         for key in reference:
             self.assertEqual(state[key], reference[key], msg=f'for {key}')
 
-    @ut.skipIf(not espressomd.has_features('SCAFACOS_DIPOLES') or
-               'SCAFACOS' not in modes or
-               'p2nfft' not in espressomd.scafacos.available_methods(),
-               "Skipping test due to missing combination or p2nfft method.")
+    @utx.skipIfMissingFeatures(["SCAFACOS_DIPOLES"])
+    @utx.skipIfMissingScafacosMethod("p2nfft")
+    @ut.skipIf('SCAFACOS' not in modes, "Missing combination.")
     def test_scafacos_dipoles(self):
         actor = self.get_active_actor_of_type(
             espressomd.magnetostatics.Scafacos)
         state = actor.get_params()
         reference = {'prefactor': 1.2, 'method_name': 'p2nfft',
                      'method_params': {
-                         "p2nfft_verbose_tuning": "0",
-                         "pnfft_N": "32,32,32",
-                         "pnfft_n": "32,32,32",
+                         "p2nfft_verbose_tuning": 0,
+                         "pnfft_N": [32, 32, 32],
+                         "pnfft_n": [32, 32, 32],
                          "pnfft_window_name": "bspline",
-                         "pnfft_m": "4",
-                         "p2nfft_ignore_tolerance": "1",
-                         "pnfft_diff_ik": "0",
-                         "p2nfft_r_cut": "11",
-                         "p2nfft_alpha": "0.37"}}
+                         "pnfft_m": 4,
+                         "p2nfft_ignore_tolerance": 1,
+                         "pnfft_diff_ik": 0,
+                         "p2nfft_r_cut": 11,
+                         "p2nfft_alpha": 0.37}}
         for key in reference:
             self.assertIn(key, state)
             self.assertEqual(state[key], reference[key], msg=f'for {key}')

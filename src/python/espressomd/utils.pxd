@@ -39,6 +39,7 @@ cdef extern from "utils/Span.hpp" namespace "Utils":
 
 cdef np.ndarray create_nparray_from_double_array(double * x, int n)
 cdef np.ndarray create_nparray_from_double_span(Span[double] x)
+cpdef check_array_type_or_throw_except(x, n, t, msg)
 cpdef check_type_or_throw_except(x, n, t, msg)
 cdef check_range_or_except(D, x, v_min, incl_min, v_max, incl_max)
 

@@ -25,6 +25,7 @@ Basic usage of the checkpointing feature. Show how to load the state of:
 """
 # pylint: disable=undefined-variable
 import espressomd
+import espressomd.electrostatics
 import espressomd.checkpointing
 
 required_features = ["P3M", "WCA"]

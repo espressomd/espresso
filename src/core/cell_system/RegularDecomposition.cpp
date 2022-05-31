@@ -353,10 +353,12 @@ void RegularDecomposition::create_cell_grid(double range) {
 
     /* sanity check */
     if (n_local_cells < min_num_cells) {
-      runtimeErrorMsg()
-          << "number of cells " << n_local_cells << " is smaller than minimum "
-          << min_num_cells
-          << " (interaction range too large or min_num_cells too large)";
+      runtimeErrorMsg() << "number of cells " << n_local_cells
+                        << " is smaller than minimum " << min_num_cells
+                        << ": either interaction range is too large for "
+                        << "the current skin (range=" << range << ", "
+                        << "half_local_box_l=[" << local_box_l / 2. << "]) "
+                        << "or min_num_cells too large";
     }
   }
 
