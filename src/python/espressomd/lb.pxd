@@ -23,14 +23,18 @@ from libcpp.vector cimport vector
 from libcpp.string cimport string
 from libc cimport stdint
 
-from .actors cimport Actor
 from .utils cimport Vector3d
 from .utils cimport Vector3i
 from .utils cimport Vector6d
 from .utils cimport Vector19d
 from .utils cimport make_array_locked
 
-cdef class HydrodynamicInteraction(Actor):
+cdef class FluidActor:
+    cdef public _isactive
+    cdef public _params
+    cdef public system
+
+cdef class HydrodynamicInteraction(FluidActor):
     pass
 
 cdef class LBFluidRoutines:

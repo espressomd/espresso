@@ -22,7 +22,6 @@
 
 import espressomd
 import espressomd.magnetostatics
-import espressomd.magnetostatic_extensions
 import numpy as np
 import unittest as ut
 import unittest_decorators as utx
@@ -73,12 +72,11 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         partcls = s.part.add(pos=data[:, 1:4], dip=data[:, 4:7])
         partcls.rotation = 3 * [True]
 
-        p3m = espressomd.magnetostatics.DipolarP3M(
+        dp3m = espressomd.magnetostatics.DipolarP3M(
             prefactor=DIPOLAR_PREFACTOR, mesh=32, accuracy=1E-4)
-        dlc = espressomd.magnetostatic_extensions.DLC(
-            maxPWerror=1E-5, gap_size=gap_size)
-        s.actors.add(p3m)
-        s.actors.add(dlc)
+        mdlc = espressomd.magnetostatics.DLC(
+            maxPWerror=1E-5, gap_size=gap_size, actor=dp3m)
+        s.actors.add(mdlc)
         s.integrator.run(0)
         err_f = self.vector_error(
             partcls.f, data[:, 7:10] * DIPOLAR_PREFACTOR)
@@ -130,9 +128,9 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         partcls = s.part.add(pos=data[:, 1:4], dip=data[:, 4:7])
         partcls.rotation = 3 * [True]
 
-        p3m = espressomd.magnetostatics.DipolarP3M(
+        dp3m = espressomd.magnetostatics.DipolarP3M(
             prefactor=DIPOLAR_PREFACTOR, mesh=32, accuracy=1E-6, epsilon="metallic")
-        s.actors.add(p3m)
+        s.actors.add(dp3m)
         s.integrator.run(0)
         expected = np.genfromtxt(
             tests_common.data_path("p3m_magnetostatics_expected.data"))[:, 1:]

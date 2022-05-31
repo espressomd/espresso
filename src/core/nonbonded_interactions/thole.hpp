@@ -33,8 +33,8 @@
 #include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "bonded_interactions/bonded_interaction_utils.hpp"
-#include "electrostatics_magnetostatics/coulomb.hpp"
-#include "electrostatics_magnetostatics/coulomb_inline.hpp"
+#include "electrostatics/coulomb.hpp"
+#include "electrostatics/coulomb_inline.hpp"
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
@@ -46,13 +46,15 @@ int thole_set_params(int part_type_a, int part_type_b, double scaling_coeff,
                      double q1q2);
 
 /** Calculate Thole force */
-inline Utils::Vector3d thole_pair_force(Particle const &p1, Particle const &p2,
-                                        IA_parameters const &ia_params,
-                                        Utils::Vector3d const &d, double dist) {
+inline Utils::Vector3d
+thole_pair_force(Particle const &p1, Particle const &p2,
+                 IA_parameters const &ia_params, Utils::Vector3d const &d,
+                 double dist,
+                 Coulomb::ShortRangeForceKernel::kernel_type const *kernel) {
   auto const thole_q1q2 = ia_params.thole.q1q2;
   auto const thole_s = ia_params.thole.scaling_coeff;
 
-  if (thole_s != 0 && thole_q1q2 != 0 &&
+  if (thole_s != 0. and thole_q1q2 != 0. and kernel != nullptr and
       !(pair_bond_enum_exists_between<ThermalizedBond>(p1, p2))) {
     // Calc damping function (see @cite thole81a)
     // S(r) = 1.0 - (1.0 + thole_s*r/2.0) * exp(-thole_s*r);
@@ -61,26 +63,28 @@ inline Utils::Vector3d thole_pair_force(Particle const &p1, Particle const &p2,
     // q1q2/r^2 can be used as a factor for the Coulomb::central_force method
     auto const sr = thole_s * dist;
     auto const dS_r = 0.5 * (2.0 - (exp(-sr) * (sr * (sr + 2.0) + 2.0)));
-    return Coulomb::central_force(thole_q1q2 * (-1. + dS_r), d, dist);
+    return (*kernel)(thole_q1q2 * (-1. + dS_r), d, dist);
   }
   return {};
 }
 
 /** Calculate Thole energy */
-inline double thole_pair_energy(Particle const &p1, Particle const &p2,
-                                IA_parameters const &ia_params,
-                                Utils::Vector3d const &d, double dist) {
+inline double
+thole_pair_energy(Particle const &p1, Particle const &p2,
+                  IA_parameters const &ia_params, Utils::Vector3d const &d,
+                  double dist,
+                  Coulomb::ShortRangeEnergyKernel::kernel_type const *kernel) {
 
   auto const thole_s = ia_params.thole.scaling_coeff;
   auto const thole_q1q2 = ia_params.thole.q1q2;
 
-  if (thole_s != 0 && thole_q1q2 != 0 &&
-      dist < Coulomb::cutoff(box_geo.length()) &&
+  if (thole_s != 0. and thole_q1q2 != 0. and kernel != nullptr and
+      dist < Coulomb::cutoff(box_geo.length()) and
       !(pair_bond_enum_exists_between<ThermalizedBond>(p1, p2))) {
     auto const sd = thole_s * dist;
     auto const S_r = 1.0 - (1.0 + sd / 2.0) * exp(-sd);
-    // Subtract p3m shortrange energy and add thole energy
-    return Coulomb::pair_energy(p1, p2, thole_q1q2 * (-1.0 + S_r), d, dist);
+    // Subtract p3m short-range energy and add thole energy
+    return (*kernel)(p1, p2, thole_q1q2 * (-1.0 + S_r), d, dist);
   }
   return 0.0;
 }

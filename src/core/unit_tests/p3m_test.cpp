@@ -21,7 +21,9 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "electrostatics_magnetostatics/p3m-common.hpp"
+#include "p3m/common.hpp"
+
+#include <utils/Vector.hpp>
 
 #include <array>
 #include <cstddef>
@@ -32,7 +34,7 @@ BOOST_AUTO_TEST_CASE(calc_meshift_false) {
       {std::vector<int>{0}, std::vector<int>{0, 1, -2, -1},
        std::vector<int>{0, 1, 2, 3, -3, -2, -1}}};
 
-  int const mesh[3] = {1, 4, 7};
+  auto const mesh = Utils::Vector3i{{1, 4, 7}};
   auto const val = detail::calc_meshift(mesh, false);
 
   for (std::size_t i = 0; i < 3; ++i) {
@@ -47,7 +49,7 @@ BOOST_AUTO_TEST_CASE(calc_meshift_true) {
       {std::vector<int>{0}, std::vector<int>{0, 1, 0, -1},
        std::vector<int>{0, 1, 2, 0, -3, -2, -1}}};
 
-  int const mesh[3] = {1, 4, 7};
+  auto const mesh = Utils::Vector3i{{1, 4, 7}};
   auto const val = detail::calc_meshift(mesh, true);
 
   for (std::size_t i = 0; i < 3; ++i) {

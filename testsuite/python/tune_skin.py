@@ -33,7 +33,7 @@ class TuneSkin(ut.TestCase):
             shift="auto")
 
     def test_fails_without_adjustment(self):
-        with self.assertRaisesRegex(Exception, r"calling method tune_skin\(\): .+ \(interaction range too large or min_num_cells too large\)"):
+        with self.assertRaisesRegex(Exception, "number of cells 2 is smaller than minimum 8: either interaction range is too large for the current skin .+ or min_num_cells too large"):
             self.system.cell_system.tune_skin(
                 min_skin=0.1,
                 max_skin=0.6,

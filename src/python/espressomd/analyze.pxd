@@ -120,7 +120,8 @@ cdef inline get_obs_contribs(Span[double] contributions,
     """
     cdef np.ndarray value
     value = create_nparray_from_double_span(contributions)
-    if contributions.size() == 9:
+    if contributions.size() >= 9:
+        assert contributions.size() % 3 == 0
         if calc_scalar_pressure:
             return np.einsum('...ii', value.reshape((-1, 3, 3))) / 3
         else:
@@ -149,8 +150,8 @@ cdef inline get_obs_contrib(Span[double] contribution,
         return value[0]
     return value
 
-cdef inline observable_stat_matrix(size_t size, cbool calc_sp):
-    if size == 9 and not calc_sp:
+cdef inline observable_stat_matrix(size_t size, cbool calc_scalar_pressure):
+    if size == 9 and not calc_scalar_pressure:
         return np.zeros((3, 3), dtype=float)
     else:
         return 0.0
@@ -196,11 +197,15 @@ cdef inline Observable_stat_to_dict(Observable_stat * obs, cbool calc_sp):
     cdef size_t n_nonbonded = <size_t > max_seen_particle_type
     cdef double[9] total
 
+    # numpy array shape
+    shape = (1,)
+    if obs_dim == 9 and not calc_sp:
+        shape = (3, 3)
+
     # Dict to store the results
     p = {}
 
     # Total contribution
-
     for i in range(obs_dim):
         total[i] = obs.accumulate(0.0, i)
     p["total"] = get_obs_contrib(Span[double](total, obs_dim), calc_sp)
@@ -244,6 +249,7 @@ cdef inline Observable_stat_to_dict(Observable_stat * obs, cbool calc_sp):
     IF ELECTROSTATICS == 1:
         cdef np.ndarray coulomb
         coulomb = get_obs_contribs(obs.coulomb, calc_sp)
+        coulomb = coulomb.reshape((-1, *shape)).squeeze()
         for i in range(coulomb.shape[0]):
             p["coulomb", i] = coulomb[i]
         p["coulomb"] = np.sum(coulomb, axis=0)
@@ -252,6 +258,7 @@ cdef inline Observable_stat_to_dict(Observable_stat * obs, cbool calc_sp):
     IF DIPOLES == 1:
         cdef np.ndarray dipolar
         dipolar = get_obs_contribs(obs.dipolar, calc_sp)
+        dipolar = dipolar.reshape((-1, *shape)).squeeze()
         for i in range(dipolar.shape[0]):
             p["dipolar", i] = dipolar[i]
         p["dipolar"] = np.sum(dipolar, axis=0)

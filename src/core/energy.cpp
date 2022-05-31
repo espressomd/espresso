@@ -27,7 +27,6 @@
 #include "communication.hpp"
 #include "constraints.hpp"
 #include "cuda_interface.hpp"
-#include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
 #include "energy_inline.hpp"
 #include "event.hpp"
 #include "forces.hpp"
@@ -37,19 +36,20 @@
 
 #include "short_range_loop.hpp"
 
-#include "electrostatics_magnetostatics/coulomb.hpp"
-#include "electrostatics_magnetostatics/dipole.hpp"
+#include "electrostatics/coulomb.hpp"
+#include "magnetostatics/dipoles.hpp"
+
+#include <utils/Span.hpp>
 
 #include <memory>
-
-ActorList energyActors;
 
 static std::shared_ptr<Observable_stat> calculate_energy_local() {
 
   auto obs_energy_ptr = std::make_shared<Observable_stat>(1);
 
-  if (long_range_interactions_sanity_checks())
+  if (long_range_interactions_sanity_checks()) {
     return obs_energy_ptr;
+  }
 
   auto &obs_energy = *obs_energy_ptr;
 
@@ -60,10 +60,6 @@ static std::shared_ptr<Observable_stat> calculate_energy_local() {
   auto &espresso_system = EspressoSystemInterface::Instance();
   espresso_system.update();
 
-  // Compute the energies from the energyActors
-  for (auto &energyActor : energyActors)
-    energyActor->computeEnergy(espresso_system);
-
   on_observable_calc();
 
   auto const local_parts = cell_structure.local_particles();
@@ -72,19 +68,26 @@ static std::shared_ptr<Observable_stat> calculate_energy_local() {
     obs_energy.kinetic[0] += calc_kinetic_energy(p);
   }
 
+  auto const coulomb_kernel = Coulomb::pair_energy_kernel();
+  auto const dipoles_kernel = Dipoles::pair_energy_kernel();
+
   short_range_loop(
-      [&obs_energy](Particle const &p1, int bond_id,
-                    Utils::Span<Particle *> partners) {
+      [&obs_energy, coulomb_kernel_ptr = coulomb_kernel.get_ptr()](
+          Particle const &p1, int bond_id, Utils::Span<Particle *> partners) {
         auto const &iaparams = *bonded_ia_params.at(bond_id);
-        auto const result = calc_bonded_energy(iaparams, p1, partners);
+        auto const result =
+            calc_bonded_energy(iaparams, p1, partners, coulomb_kernel_ptr);
         if (result) {
           obs_energy.bonded_contribution(bond_id)[0] += result.get();
           return false;
         }
         return true;
       },
-      [&obs_energy](Particle const &p1, Particle const &p2, Distance const &d) {
+      [&obs_energy, coulomb_kernel_ptr = coulomb_kernel.get_ptr(),
+       dipoles_kernel_ptr = dipoles_kernel.get_ptr()](
+          Particle const &p1, Particle const &p2, Distance const &d) {
         add_non_bonded_pair_energy(p1, p2, d.vec21, sqrt(d.dist2), d.dist2,
+                                   coulomb_kernel_ptr, dipoles_kernel_ptr,
                                    obs_energy);
       },
       maximal_cutoff(n_nodes), maximal_cutoff_bonded());
@@ -96,7 +99,7 @@ static std::shared_ptr<Observable_stat> calculate_energy_local() {
 
 #ifdef DIPOLES
   /* calculate k-space part of magnetostatic interaction. */
-  obs_energy.dipolar[1] = Dipole::calc_energy_long_range(local_parts);
+  obs_energy.dipolar[1] = Dipoles::calc_energy_long_range(local_parts);
 #endif
 
   Constraints::constraints.add_energy(local_parts, get_sim_time(), obs_energy);
@@ -136,18 +139,19 @@ double particle_short_range_energy_contribution_local(int pid) {
     cells_update_ghosts(global_ghost_flags());
   }
 
-  auto const p = cell_structure.get_local_particle(pid);
-
-  if (p) {
-    auto kernel = [&ret](Particle const &p, Particle const &p1,
-                         Utils::Vector3d const &vec) {
+  if (auto const p = cell_structure.get_local_particle(pid)) {
+    auto const coulomb_kernel = Coulomb::pair_energy_kernel();
+    auto kernel = [&ret, coulomb_kernel_ptr = coulomb_kernel.get_ptr()](
+                      Particle const &p, Particle const &p1,
+                      Utils::Vector3d const &vec) {
 #ifdef EXCLUSIONS
       if (not do_nonbonded(p, p1))
         return;
 #endif
       auto const &ia_params = *get_ia_param(p.type(), p1.type());
       // Add energy for current particle pair to result
-      ret += calc_non_bonded_pair_energy(p, p1, ia_params, vec, vec.norm());
+      ret += calc_non_bonded_pair_energy(p, p1, ia_params, vec, vec.norm(),
+                                         coulomb_kernel_ptr);
     };
     cell_structure.run_on_particle_short_range_neighbors(*p, kernel);
   }

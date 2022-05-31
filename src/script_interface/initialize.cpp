@@ -34,9 +34,11 @@
 #include "bond_breakage/initialize.hpp"
 #include "cell_system/initialize.hpp"
 #include "collision_detection/initialize.hpp"
+#include "electrostatics/initialize.hpp"
 #include "interactions/initialize.hpp"
 #include "lbboundaries/initialize.hpp"
 #include "lees_edwards/initialize.hpp"
+#include "magnetostatics/initialize.hpp"
 #include "mpiio/initialize.hpp"
 #include "observables/initialize.hpp"
 #include "reaction_methods/initialize.hpp"
@@ -54,6 +56,8 @@ void initialize(Utils::Factory<ObjectHandle> *f) {
   CellSystem::initialize(f);
   Observables::initialize(f);
   ClusterAnalysis::initialize(f);
+  Coulomb::initialize(f);
+  Dipoles::initialize(f);
   Interactions::initialize(f);
   LBBoundaries::initialize(f);
   LeesEdwards::initialize(f);

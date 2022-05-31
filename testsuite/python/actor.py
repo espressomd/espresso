@@ -23,11 +23,12 @@ Testmodule for the actor base class.
 """
 
 import unittest as ut
+import espressomd.lb
 import espressomd.actors
 import espressomd.highlander
 
 
-class TestActor(espressomd.actors.Actor):
+class TestActor(espressomd.lb.FluidActor):
 
     def __init__(self, *args, **kwargs):
         self._core_args = None

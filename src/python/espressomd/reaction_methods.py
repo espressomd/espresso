@@ -134,7 +134,7 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
         ...     system.non_bonded_inter[particle_type, types["wall"]].wca.set_params(epsilon=1.0, sigma=1.0)
         >>> # add ELC actor
         >>> p3m = espressomd.electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
-        >>> elc = espressomd.electrostatics.ELC(p3m_actor=p3m, maxPWerror=1.0, gap_size=elc_gap)
+        >>> elc = espressomd.electrostatics.ELC(actor=p3m, maxPWerror=1.0, gap_size=elc_gap)
         >>> system.actors.add(elc)
         >>> # add constant pH method
         >>> RE = espressomd.reaction_methods.ConstantpHEnsemble(kT=1, exclusion_range=1, seed=77)

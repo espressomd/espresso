@@ -137,6 +137,7 @@ void copy_part_data_to_gpu(ParticleRange particles, int this_node);
 void cuda_mpi_send_forces(const ParticleRange &particles,
                           Utils::Span<float> host_forces,
                           Utils::Span<float> host_torques);
+void cuda_bcast_global_part_params_parallel();
 void cuda_bcast_global_part_params();
 #endif /* ifdef CUDA */
 

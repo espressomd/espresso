@@ -28,11 +28,14 @@
 
 #include "forces.hpp"
 
+#include "actor/visitors.hpp"
 #include "bond_breakage/bond_breakage.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "bonded_interactions/thermalized_bond_kernel.hpp"
+#include "electrostatics/coulomb_inline.hpp"
 #include "immersed_boundary/ibm_tribend.hpp"
 #include "immersed_boundary/ibm_triel.hpp"
+#include "magnetostatics/dipoles_inline.hpp"
 #include "nonbonded_interactions/bmhtf-nacl.hpp"
 #include "nonbonded_interactions/buckingham.hpp"
 #include "nonbonded_interactions/gaussian.hpp"
@@ -53,14 +56,6 @@
 #include "object-in-fluid/oif_global_forces.hpp"
 #include "object-in-fluid/oif_local_forces.hpp"
 
-#ifdef DIPOLES
-#include "electrostatics_magnetostatics/dipole_inline.hpp"
-#endif
-
-#ifdef ELECTROSTATICS
-#include "electrostatics_magnetostatics/coulomb_inline.hpp"
-#endif
-
 #ifdef DPD
 #include "dpd.hpp"
 #endif
@@ -79,11 +74,10 @@
 
 #include <tuple>
 
-inline ParticleForce calc_non_bonded_pair_force(Particle const &p1,
-                                                Particle const &p2,
-                                                IA_parameters const &ia_params,
-                                                Utils::Vector3d const &d,
-                                                double const dist) {
+inline ParticleForce calc_non_bonded_pair_force(
+    Particle const &p1, Particle const &p2, IA_parameters const &ia_params,
+    Utils::Vector3d const &d, double const dist,
+    Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_kernel) {
 
   ParticleForce pf{};
   double force_factor = 0;
@@ -141,7 +135,7 @@ inline ParticleForce calc_non_bonded_pair_force(Particle const &p1,
 #endif
 /* Thole damping */
 #ifdef THOLE
-  pf.f += thole_pair_force(p1, p2, ia_params, d, dist);
+  pf.f += thole_pair_force(p1, p2, ia_params, d, dist, coulomb_kernel);
 #endif
 /* tabulated */
 #ifdef TABULATED
@@ -175,15 +169,21 @@ inline ParticleForce calc_opposing_force(ParticleForce const &pf,
 
 /** Calculate non-bonded forces between a pair of particles and update their
  *  forces and torques.
- *  @param[in,out] p1   particle 1.
- *  @param[in,out] p2   particle 2.
- *  @param[in] d        vector between @p p1 and @p p2.
- *  @param dist         distance between @p p1 and @p p2.
- *  @param dist2        distance squared between @p p1 and @p p2.
+ *  @param[in,out] p1      particle 1.
+ *  @param[in,out] p2      particle 2.
+ *  @param[in] d           vector between @p p1 and @p p2.
+ *  @param[in] dist        distance between @p p1 and @p p2.
+ *  @param[in] dist2       distance squared between @p p1 and @p p2.
+ *  @param[in] coulomb_kernel  %Coulomb force kernel.
+ *  @param[in] dipoles_kernel  Dipolar force kernel.
+ *  @param[in] elc_kernel      ELC force correction kernel.
  */
-inline void add_non_bonded_pair_force(Particle &p1, Particle &p2,
-                                      Utils::Vector3d const &d, double dist,
-                                      double dist2) {
+inline void add_non_bonded_pair_force(
+    Particle &p1, Particle &p2, Utils::Vector3d const &d, double dist,
+    double dist2,
+    Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_kernel,
+    Dipoles::ShortRangeForceKernel::kernel_type const *dipoles_kernel,
+    Coulomb::ShortRangeForceCorrectionsKernel::kernel_type const *elc_kernel) {
   IA_parameters const &ia_params = *get_ia_param(p1.type(), p2.type());
   ParticleForce pf{};
 
@@ -195,7 +195,8 @@ inline void add_non_bonded_pair_force(Particle &p1, Particle &p2,
 #ifdef EXCLUSIONS
     if (do_nonbonded(p1, p2))
 #endif
-      pf += calc_non_bonded_pair_force(p1, p2, ia_params, d, dist);
+      pf += calc_non_bonded_pair_force(p1, p2, ia_params, d, dist,
+                                       coulomb_kernel);
   }
 
   /***********************************************/
@@ -203,16 +204,16 @@ inline void add_non_bonded_pair_force(Particle &p1, Particle &p2,
   /***********************************************/
 
 #ifdef ELECTROSTATICS
-  {
-    auto const forces = Coulomb::pair_force(p1, p2, d, dist);
-    pf.f += std::get<0>(forces);
+  // real-space electrostatic charge-charge interaction
+  auto const q1q2 = p1.q() * p2.q();
+  if (q1q2 != 0. and coulomb_kernel != nullptr) {
+    pf.f += (*coulomb_kernel)(q1q2, d, dist);
 #ifdef P3M
-    // forces from the virtual charges
-    p1.force() += std::get<1>(forces);
-    p2.force() += std::get<2>(forces);
-#endif
+    if (elc_kernel)
+      (*elc_kernel)(p1, p2, q1q2);
+#endif // P3M
   }
-#endif
+#endif // ELECTROSTATICS
 
   /*********************************************************************/
   /* everything before this contributes to the virial pressure in NpT, */
@@ -236,12 +237,14 @@ inline void add_non_bonded_pair_force(Particle &p1, Particle &p2,
 #endif
 
   /***********************************************/
-  /* long-range magnetostatics                   */
+  /* short-range magnetostatics                  */
   /***********************************************/
 
 #ifdef DIPOLES
-  /* real space magnetic dipole-dipole */
-  pf += Dipole::pair_force(p1, p2, d, dist, dist2);
+  // real-space magnetic dipole-dipole
+  if (dipoles_kernel) {
+    pf += (*dipoles_kernel)(p1, p2, d, dist, dist2);
+  }
 #endif
 
   /***********************************************/
@@ -258,11 +261,12 @@ inline void add_non_bonded_pair_force(Particle &p1, Particle &p2,
  *  @param[in] p2          Second particle.
  *  @param[in] iaparams    Bonded parameters for the interaction.
  *  @param[in] dx          Vector between @p p1 and @p p2.
+ *  @param[in] kernel      %Coulomb force kernel.
  */
-inline boost::optional<Utils::Vector3d>
-calc_bond_pair_force(Particle const &p1, Particle const &p2,
-                     Bonded_IA_Parameters const &iaparams,
-                     Utils::Vector3d const &dx) {
+inline boost::optional<Utils::Vector3d> calc_bond_pair_force(
+    Particle const &p1, Particle const &p2,
+    Bonded_IA_Parameters const &iaparams, Utils::Vector3d const &dx,
+    Coulomb::ShortRangeForceKernel::kernel_type const *kernel) {
   if (auto const *iap = boost::get<FeneBond>(&iaparams)) {
     return iap->force(dx);
   }
@@ -277,7 +281,7 @@ calc_bond_pair_force(Particle const &p1, Particle const &p2,
     return iap->force(p1.q() * p2.q(), dx);
   }
   if (auto const *iap = boost::get<BondedCoulombSR>(&iaparams)) {
-    return iap->force(dx);
+    return iap->force(dx, *kernel);
   }
 #endif
 #ifdef BOND_CONSTRAINT
@@ -296,8 +300,9 @@ calc_bond_pair_force(Particle const &p1, Particle const &p2,
   throw BondUnknownTypeError();
 }
 
-inline bool add_bonded_two_body_force(Bonded_IA_Parameters const &iaparams,
-                                      Particle &p1, Particle &p2) {
+inline bool add_bonded_two_body_force(
+    Bonded_IA_Parameters const &iaparams, Particle &p1, Particle &p2,
+    Coulomb::ShortRangeForceKernel::kernel_type const *kernel) {
   auto const dx = box_geo.get_mi_vector(p1.pos(), p2.pos());
 
   if (auto const *iap = boost::get<ThermalizedBond>(&iaparams)) {
@@ -310,7 +315,7 @@ inline bool add_bonded_two_body_force(Bonded_IA_Parameters const &iaparams,
       return false;
     }
   } else {
-    auto result = calc_bond_pair_force(p1, p2, iaparams, dx);
+    auto result = calc_bond_pair_force(p1, p2, iaparams, dx, kernel);
     if (result) {
       p1.force() += result.get();
       p2.force() -= result.get();
@@ -410,8 +415,9 @@ inline bool add_bonded_four_body_force(Bonded_IA_Parameters const &iaparams,
   return true;
 }
 
-inline bool add_bonded_force(Particle &p1, int bond_id,
-                             Utils::Span<Particle *> partners) {
+inline bool
+add_bonded_force(Particle &p1, int bond_id, Utils::Span<Particle *> partners,
+                 Coulomb::ShortRangeForceKernel::kernel_type const *kernel) {
 
   // Consider for bond breakage
   if (partners.size() == 1) {
@@ -427,7 +433,7 @@ inline bool add_bonded_force(Particle &p1, int bond_id,
   case 0:
     return false;
   case 1:
-    return add_bonded_two_body_force(iaparams, p1, *partners[0]);
+    return add_bonded_two_body_force(iaparams, p1, *partners[0], kernel);
   case 2:
     return add_bonded_three_body_force(iaparams, p1, *partners[0],
                                        *partners[1]);

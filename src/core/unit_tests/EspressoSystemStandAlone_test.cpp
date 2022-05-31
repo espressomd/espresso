@@ -34,8 +34,8 @@ namespace utf = boost::unit_test;
 #include "bonded_interactions/fene.hpp"
 #include "bonded_interactions/harmonic.hpp"
 #include "communication.hpp"
-#include "electrostatics_magnetostatics/coulomb.hpp"
-#include "electrostatics_magnetostatics/p3m.hpp"
+#include "electrostatics/p3m.hpp"
+#include "electrostatics/registration.hpp"
 #include "energy.hpp"
 #include "galilei.hpp"
 #include "integrate.hpp"
@@ -59,6 +59,7 @@ namespace utf = boost::unit_test;
 #include <limits>
 #include <memory>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace espresso {
@@ -76,7 +77,7 @@ private:
   boost::mpi::communicator world;
 };
 
-void create_bonds_local(int harm_bond_id, int fene_bond_id) {
+static void mpi_create_bonds_local(int harm_bond_id, int fene_bond_id) {
   // set up a harmonic bond
   auto const harm_bond = HarmonicBond(200.0, 0.3, 1.0);
   auto const harm_bond_ia = std::make_shared<Bonded_IA_Parameters>(harm_bond);
@@ -87,11 +88,33 @@ void create_bonds_local(int harm_bond_id, int fene_bond_id) {
   bonded_ia_params.insert(fene_bond_id, fene_bond_ia);
 }
 
-REGISTER_CALLBACK(create_bonds_local)
+REGISTER_CALLBACK(mpi_create_bonds_local)
 
-void create_bonds(int harm_bond_id, int fene_bond_id) {
-  mpi_call_all(create_bonds_local, harm_bond_id, fene_bond_id);
+static void mpi_create_bonds(int harm_bond_id, int fene_bond_id) {
+  mpi_call_all(mpi_create_bonds_local, harm_bond_id, fene_bond_id);
 }
+
+#ifdef P3M
+static void mpi_set_tuned_p3m_local(double prefactor) {
+  auto p3m = P3MParameters{false,
+                           0.0,
+                           3.5,
+                           Utils::Vector3i::broadcast(8),
+                           Utils::Vector3d::broadcast(0.5),
+                           5,
+                           0.654,
+                           1e-3};
+  auto solver =
+      std::make_shared<CoulombP3M>(std::move(p3m), prefactor, 1, false);
+  ::Coulomb::add_actor(solver);
+}
+
+REGISTER_CALLBACK(mpi_set_tuned_p3m_local)
+
+static void mpi_set_tuned_p3m(double prefactor) {
+  mpi_call_all(mpi_set_tuned_p3m_local, prefactor);
+}
+#endif // P3M
 
 BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
                         *utf::precondition(if_head_node())) {
@@ -217,7 +240,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
     auto const harm_bond_id = 0;
     auto const none_bond_id = 1;
     auto const fene_bond_id = 2;
-    create_bonds(harm_bond_id, fene_bond_id);
+    mpi_create_bonds(harm_bond_id, fene_bond_id);
     auto const &harm_bond =
         *boost::get<HarmonicBond>(bonded_ia_params.at(harm_bond_id).get());
     auto const &fene_bond =
@@ -245,12 +268,8 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
     set_particle_q(pid2, -1.);
 
     // set up P3M
-    auto const prefactor = 2.0;
-    auto const mesh = std::vector<int>{8, 8, 8};
-    Coulomb::set_prefactor(prefactor);
-    p3m_set_eps(0.0);
-    p3m_set_params(3.5, mesh.data(), 5, 0.654, 1e-3);
-    p3m_set_mesh_offset(0.5, 0.5, 0.5);
+    auto const prefactor = 2.;
+    mpi_set_tuned_p3m(prefactor);
 
     // measure energies
     auto const step = 0.02;

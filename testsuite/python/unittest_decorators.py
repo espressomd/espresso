@@ -35,6 +35,13 @@ def skipIfMissingFeatures(*args):
     return no_skip
 
 
+def skipIfMissingScafacosMethod(method_name):
+    """Unittest skipIf decorator for missing ScaFaCoS features."""
+    if method_name not in espressomd.code_info.scafacos_methods():
+        return unittest.skip(f"ScaFaCoS method '{method_name}' not available")
+    return no_skip
+
+
 def skipIfMissingModules(*args):
     """Unittest skipIf decorator for missing Python modules."""
     if len(args) == 1 and not isinstance(

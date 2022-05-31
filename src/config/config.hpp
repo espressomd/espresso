@@ -52,13 +52,6 @@
 #ifndef P3M_BRILLOUIN
 #define P3M_BRILLOUIN 0
 #endif
-/** P3M: Maximal mesh size that will be checked. The current setting
- *  limits the memory consumption to below 1GB, which is probably
- *  reasonable for a while.
- */
-#ifndef P3M_MAX_MESH
-#define P3M_MAX_MESH 128
-#endif
 
 /** Whether to use the approximation of Abramowitz/Stegun @cite abramowitz65a
  *  @ref AS_erfc_part() for \f$\exp(d^2) \mathrm{erfc}(d)\f$,

@@ -16,7 +16,8 @@ Please keep in mind the following remarks:
 * All reaction methods uses Monte Carlo moves which require potential energies.
   Therefore reaction methods require support for energy calculations for all
   active interactions in the simulation. Some algorithms do not support energy
-  calculation, e.g. :ref:`Coulomb P3M on GPU`.
+  calculation, e.g. :ref:`OIF <Object-in-fluid>` and
+  :ref:`IBM <Immersed Boundary Method for soft elastic objects>`.
 
 * When modeling reactions that do not conserve the number of particles, the
   method has to create or delete particles from the system. This process can

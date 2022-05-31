@@ -21,10 +21,15 @@ import espressomd.electrostatics
 import espressomd.electrostatic_extensions
 import numpy as np
 
+BOX_L = 20.
+BOX_SPACE = 5.
+
 
 @utx.skipIfMissingFeatures(["ELECTROSTATICS", "EXTERNAL_FORCES"])
-class test_icc(ut.TestCase):
-    system = espressomd.System(box_l=[10, 10, 10])
+class TestICC(ut.TestCase):
+    system = espressomd.System(box_l=[BOX_L, BOX_L, BOX_L + BOX_SPACE])
+    system.cell_system.skin = 0.4
+    system.time_step = 0.01
 
     def tearDown(self):
         self.system.actors.clear()
@@ -59,62 +64,8 @@ class test_icc(ut.TestCase):
         return self.system.part.add(
             pos=positions, q=charges, fix=fix), normals, areas
 
-    def common_setup(self, kwargs, error):
-        part_slice, normals, areas = self.add_icc_particles(2, 0.01, 0)
-
-        params = {"n_icc": len(part_slice),
-                  "normals": normals,
-                  "areas": areas,
-                  "epsilons": np.ones_like(areas),
-                  "first_id": part_slice.id[0],
-                  "check_neutrality": False}
-
-        params.update(kwargs)
-
-        icc = espressomd.electrostatic_extensions.ICC(**params)
-        with self.assertRaisesRegex(Exception, error):
-            self.system.actors.add(icc)
-
-    def test_params(self):
-        params = [({"n_icc": -1}, 'ICC: invalid number of particles'),
-                  ({"first_id": -1}, 'ICC: invalid first_id'),
-                  ({"max_iterations": -1}, 'ICC: invalid max_iterations'),
-                  ({"convergence": -1}, 'ICC: invalid convergence value'),
-                  ({"relaxation": -1}, 'ICC: invalid relaxation value'),
-                  ({"relaxation": 2.1}, 'ICC: invalid relaxation value'),
-                  ({"eps_out": -1}, 'ICC: invalid eps_out'),
-                  ({"ext_field": 0}, 'A single value was given but 3 were expected'), ]
-
-        for kwargs, error in params:
-            self.common_setup(kwargs, error)
-            self.tearDown()
-
-    def test_core_params(self):
-        part_slice, normals, areas = self.add_icc_particles(5, 0.01, 0)
-
-        params = {"n_icc": len(part_slice),
-                  "normals": normals,
-                  "areas": areas,
-                  "epsilons": np.ones_like(areas),
-                  "first_id": part_slice.id[0],
-                  "check_neutrality": False}
-
-        icc = espressomd.electrostatic_extensions.ICC(**params)
-        self.system.actors.add(icc)
-
-        icc_params = icc.get_params()
-        for key, value in params.items():
-            np.testing.assert_allclose(value, np.copy(icc_params[key]))
-
     @utx.skipIfMissingFeatures(["P3M"])
     def test_dipole_system(self):
-        BOX_L = 20.
-        BOX_SPACE = 5.
-
-        self.system.box_l = [BOX_L, BOX_L, BOX_L + BOX_SPACE]
-        self.system.cell_system.skin = 0.4
-        self.system.time_step = 0.01
-
         N_ICC_SIDE_LENGTH = 10
         DIPOLE_DISTANCE = 5.0
         DIPOLE_CHARGE = 10.0
@@ -154,11 +105,11 @@ class test_icc(ut.TestCase):
                              q=-DIPOLE_CHARGE, fix=[True, True, True])
 
         p3m = espressomd.electrostatics.P3M(
-            prefactor=1, mesh=32, cao=7, accuracy=1e-5)
+            prefactor=1., mesh=32, cao=7, accuracy=1e-5)
+        p3m.charge_neutrality_tolerance = 1e-11
 
         self.system.actors.add(p3m)
         self.system.actors.add(icc)
-
         self.system.integrator.run(0)
 
         charge_lower = sum(part_slice_lower.q)

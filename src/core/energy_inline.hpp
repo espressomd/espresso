@@ -29,6 +29,8 @@
 #include "energy.hpp"
 
 #include "bonded_interactions/bonded_interaction_data.hpp"
+#include "electrostatics/coulomb_inline.hpp"
+#include "magnetostatics/dipoles_inline.hpp"
 #include "nonbonded_interactions/bmhtf-nacl.hpp"
 #include "nonbonded_interactions/buckingham.hpp"
 #include "nonbonded_interactions/gaussian.hpp"
@@ -46,14 +48,6 @@
 #include "nonbonded_interactions/soft_sphere.hpp"
 #include "nonbonded_interactions/thole.hpp"
 #include "nonbonded_interactions/wca.hpp"
-
-#ifdef ELECTROSTATICS
-#include "electrostatics_magnetostatics/coulomb_inline.hpp"
-#endif
-
-#ifdef DIPOLES
-#include "electrostatics_magnetostatics/dipole_inline.hpp"
-#endif
 
 #include "Observable_stat.hpp"
 #include "Particle.hpp"
@@ -74,13 +68,13 @@
  *  @param ia_params  the interaction parameters between the two particles
  *  @param d          vector between p1 and p2.
  *  @param dist       distance between p1 and p2.
+ *  @param coulomb_kernel   %Coulomb energy kernel.
  *  @return the short-range interaction energy between the two particles
  */
-inline double calc_non_bonded_pair_energy(Particle const &p1,
-                                          Particle const &p2,
-                                          IA_parameters const &ia_params,
-                                          Utils::Vector3d const &d,
-                                          double const dist) {
+inline double calc_non_bonded_pair_energy(
+    Particle const &p1, Particle const &p2, IA_parameters const &ia_params,
+    Utils::Vector3d const &d, double const dist,
+    Coulomb::ShortRangeEnergyKernel::kernel_type const *coulomb_kernel) {
 
   double ret = 0;
 
@@ -145,7 +139,7 @@ inline double calc_non_bonded_pair_energy(Particle const &p1,
 
 #ifdef THOLE
   /* Thole damping */
-  ret += thole_pair_energy(p1, p2, ia_params, d, dist);
+  ret += thole_pair_energy(p1, p2, ia_params, d, dist, coulomb_kernel);
 #endif
 
 #ifdef TABULATED
@@ -174,12 +168,16 @@ inline double calc_non_bonded_pair_energy(Particle const &p1,
  *  @param d         vector between p1 and p2.
  *  @param dist      distance between p1 and p2.
  *  @param dist2     distance squared between p1 and p2.
+ *  @param[in] coulomb_kernel   %Coulomb energy kernel.
+ *  @param[in] dipoles_kernel   Dipolar energy kernel.
  *  @param[in,out] obs_energy   energy observable.
  */
-inline void add_non_bonded_pair_energy(Particle const &p1, Particle const &p2,
-                                       Utils::Vector3d const &d,
-                                       double const dist, double const dist2,
-                                       Observable_stat &obs_energy) {
+inline void add_non_bonded_pair_energy(
+    Particle const &p1, Particle const &p2, Utils::Vector3d const &d,
+    double const dist, double const dist2,
+    Coulomb::ShortRangeEnergyKernel::kernel_type const *coulomb_kernel,
+    Dipoles::ShortRangeEnergyKernel::kernel_type const *dipoles_kernel,
+    Observable_stat &obs_energy) {
   IA_parameters const &ia_params = *get_ia_param(p1.type(), p2.type());
 
 #ifdef EXCLUSIONS
@@ -187,23 +185,26 @@ inline void add_non_bonded_pair_energy(Particle const &p1, Particle const &p2,
 #endif
     obs_energy.add_non_bonded_contribution(
         p1.type(), p2.type(),
-        calc_non_bonded_pair_energy(p1, p2, ia_params, d, dist));
+        calc_non_bonded_pair_energy(p1, p2, ia_params, d, dist,
+                                    coulomb_kernel));
 
 #ifdef ELECTROSTATICS
-  if (!obs_energy.coulomb.empty())
-    obs_energy.coulomb[0] +=
-        Coulomb::pair_energy(p1, p2, p1.q() * p2.q(), d, dist);
+  if (!obs_energy.coulomb.empty() and coulomb_kernel != nullptr) {
+    auto const q1q2 = p1.q() * p2.q();
+    obs_energy.coulomb[0] += (*coulomb_kernel)(p1, p2, q1q2, d, dist);
+  }
 #endif
 
 #ifdef DIPOLES
-  if (!obs_energy.dipolar.empty())
-    obs_energy.dipolar[0] += Dipole::pair_energy(p1, p2, d, dist, dist2);
+  if (!obs_energy.dipolar.empty() and dipoles_kernel != nullptr)
+    obs_energy.dipolar[0] += (*dipoles_kernel)(p1, p2, d, dist, dist2);
 #endif
 }
 
 inline boost::optional<double>
 calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
-                   Utils::Span<Particle *> partners) {
+                   Utils::Span<Particle *> partners,
+                   Coulomb::ShortRangeEnergyKernel::kernel_type const *kernel) {
   auto const n_partners = static_cast<int>(partners.size());
 
   auto p2 = (n_partners > 0) ? partners[0] : nullptr;
@@ -226,7 +227,7 @@ calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
       return iap->energy(p1.q() * p2->q(), dx);
     }
     if (auto const *iap = boost::get<BondedCoulombSR>(&iaparams)) {
-      return iap->energy(p1, *p2, dx);
+      return iap->energy(p1, *p2, dx, *kernel);
     }
 #endif
 #ifdef BOND_CONSTRAINT

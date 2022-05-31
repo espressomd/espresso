@@ -303,6 +303,9 @@ The algorithm can also be used for energy minimization::
     system.integrator.set_vv()
 
 Please note that not all features support energy calculation.
+For example :ref:`IBM <Immersed Boundary Method for soft elastic objects>`
+and :ref:`OIF <Object-in-fluid>` do not implement energy calculation for
+mesh surface deformation.
 
 .. _Brownian Dynamics:
 

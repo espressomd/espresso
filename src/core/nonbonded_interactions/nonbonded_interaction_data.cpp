@@ -24,7 +24,7 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include "communication.hpp"
-#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics/coulomb.hpp"
 #include "event.hpp"
 #include "grid.hpp"
 #include "serialization/IA_parameters.hpp"

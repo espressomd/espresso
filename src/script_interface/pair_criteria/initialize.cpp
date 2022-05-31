@@ -18,7 +18,11 @@
  */
 
 #include "initialize.hpp"
-#include "pair_criteria.hpp"
+
+#include "script_interface/pair_criteria/BondCriterion.hpp"
+#include "script_interface/pair_criteria/DistanceCriterion.hpp"
+#include "script_interface/pair_criteria/EnergyCriterion.hpp"
+#include "script_interface/pair_criteria/PairCriterion.hpp"
 
 namespace ScriptInterface {
 namespace PairCriteria {
