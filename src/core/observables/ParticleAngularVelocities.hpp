@@ -40,7 +40,7 @@ public:
 #ifdef ROTATION
     std::size_t i = 0;
     for (auto const &p : particles) {
-      auto const omega = convert_vector_body_to_space(p.get(), p.get().m.omega);
+      auto const omega = convert_vector_body_to_space(p.get(), p.get().omega());
       res[3 * i + 0] = omega[0];
       res[3 * i + 1] = omega[1];
       res[3 * i + 2] = omega[2];

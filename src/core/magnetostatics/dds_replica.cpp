@@ -88,7 +88,7 @@ DipolarDirectSumWithReplica::kernel(bool force_flag, bool energy_flag,
       mz[dip_particles] = dip[2];
 
       /* here we wish the coordinates to be folded into the primary box */
-      auto const ppos = folded_position(p.r.p, box_geo);
+      auto const ppos = folded_position(p.pos(), box_geo);
       x[dip_particles] = ppos[0];
       y[dip_particles] = ppos[1];
       z[dip_particles] = ppos[2];

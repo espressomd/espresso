@@ -116,9 +116,9 @@ void AtomDecomposition::resort(bool global_flag,
   std::vector<std::vector<Particle>> send_buf(m_comm.size());
   for (auto it = local().particles().begin();
        it != local().particles().end();) {
-    auto const target_node = id_to_rank(it->identity());
+    auto const target_node = id_to_rank(it->id());
     if (target_node != m_comm.rank()) {
-      diff.emplace_back(RemovedParticle{it->identity()});
+      diff.emplace_back(RemovedParticle{it->id()});
       send_buf.at(target_node).emplace_back(std::move(*it));
       it = local().particles().erase(it);
     } else {

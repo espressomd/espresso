@@ -170,7 +170,7 @@ inline Utils::Vector3d bd_random_walk(BrownianThermostat const &brownian,
   // magnitude defined in the second eq. (14.38), schlick10a.
   Utils::Vector3d delta_pos_body{};
   auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_WALK>(
-      brownian.rng_counter(), brownian.rng_seed(), p.identity());
+      brownian.rng_counter(), brownian.rng_seed(), p.id());
   for (int j = 0; j < 3; j++) {
     if (!p.is_fixed_along(j)) {
 #ifndef PARTICLE_ANISOTROPY
@@ -224,7 +224,7 @@ inline Utils::Vector3d bd_random_walk_vel(BrownianThermostat const &brownian,
     return {};
 
   auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_INC>(
-      brownian.rng_counter(), brownian.rng_seed(), p.identity());
+      brownian.rng_counter(), brownian.rng_seed(), p.id());
   Utils::Vector3d velocity = {};
   for (int j = 0; j < 3; j++) {
     if (!p.is_fixed_along(j)) {
@@ -274,7 +274,7 @@ bd_drag_rot(Thermostat::GammaType const &brownian_gamma_rotation, Particle &p,
 #endif // PARTICLE_ANISOTROPY
     }
   }
-  dphi = mask(p.p.rotation, dphi);
+  dphi = mask(p.rotation(), dphi);
   double dphi_m = dphi.norm();
   if (dphi_m != 0.) {
     auto const dphi_u = dphi / dphi_m;
@@ -313,7 +313,7 @@ bd_drag_vel_rot(Thermostat::GammaType const &brownian_gamma_rotation,
 #endif // PARTICLE_ANISOTROPY
     }
   }
-  return mask(p.p.rotation, omega);
+  return mask(p.rotation(), omega);
 }
 
 /** Determine the quaternions: random walk part.
@@ -341,7 +341,7 @@ bd_random_walk_rot(BrownianThermostat const &brownian, Particle const &p,
 
   Utils::Vector3d dphi = {};
   auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_ROT_INC>(
-      brownian.rng_counter(), brownian.rng_seed(), p.identity());
+      brownian.rng_counter(), brownian.rng_seed(), p.id());
   for (int j = 0; j < 3; j++) {
     if (!p.is_fixed_along(j)) {
 #ifndef PARTICLE_ANISOTROPY
@@ -355,7 +355,7 @@ bd_random_walk_rot(BrownianThermostat const &brownian, Particle const &p,
 #endif // PARTICLE_ANISOTROPY
     }
   }
-  dphi = mask(p.p.rotation, dphi);
+  dphi = mask(p.rotation(), dphi);
   // making the algorithm independent of the order of the rotations
   double dphi_m = dphi.norm();
   if (dphi_m != 0) {
@@ -376,13 +376,13 @@ bd_random_walk_vel_rot(BrownianThermostat const &brownian, Particle const &p) {
 
   Utils::Vector3d domega{};
   auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_ROT_WALK>(
-      brownian.rng_counter(), brownian.rng_seed(), p.identity());
+      brownian.rng_counter(), brownian.rng_seed(), p.id());
   for (int j = 0; j < 3; j++) {
     if (!p.is_fixed_along(j)) {
       domega[j] = sigma_vel * noise[j] / sqrt(p.rinertia()[j]);
     }
   }
-  return mask(p.p.rotation, domega);
+  return mask(p.rotation(), domega);
 }
 #endif // ROTATION
 

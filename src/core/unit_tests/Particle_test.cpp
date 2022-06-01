@@ -42,8 +42,8 @@ BOOST_AUTO_TEST_CASE(comparison) {
   {
     Particle p, q;
 
-    p.identity() = 1;
-    q.identity() = 2;
+    p.id() = 1;
+    q.id() = 2;
 
     BOOST_CHECK(p != q);
     BOOST_CHECK(not(p == q));
@@ -52,8 +52,8 @@ BOOST_AUTO_TEST_CASE(comparison) {
   {
     Particle p, q;
 
-    p.identity() = 2;
-    q.identity() = 2;
+    p.id() = 2;
+    q.id() = 2;
 
     BOOST_CHECK(not(p != q));
     BOOST_CHECK(p == q);

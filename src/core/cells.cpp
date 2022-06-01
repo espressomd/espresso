@@ -261,9 +261,9 @@ void cells_update_ghosts(unsigned data_parts) {
 
     /* Add the ghost particles to the index if we don't already
      * have them. */
-    for (auto &part : cell_structure.ghost_particles()) {
-      if (cell_structure.get_local_particle(part.id()) == nullptr) {
-        cell_structure.update_particle_index(part.identity(), &part);
+    for (auto &p : cell_structure.ghost_particles()) {
+      if (cell_structure.get_local_particle(p.id()) == nullptr) {
+        cell_structure.update_particle_index(p.id(), &p);
       }
     }
 

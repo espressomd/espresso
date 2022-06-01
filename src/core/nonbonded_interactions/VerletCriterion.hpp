@@ -85,7 +85,7 @@ public:
 #endif
 
     // Within short-range distance (including dpd and the like)
-    auto const ia_cut = get_nonbonded_cutoff(p1.p.type, p2.p.type);
+    auto const ia_cut = get_nonbonded_cutoff(p1.type(), p2.type());
     return (ia_cut != INACTIVE_CUTOFF) &&
            (dist2 <= Utils::sqr(ia_cut + m_skin));
   }

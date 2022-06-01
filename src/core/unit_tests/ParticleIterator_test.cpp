@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE(completeness) {
 
   /* Iterator over parts and count occurrence */
   for (; begin != end; ++begin) {
-    counts[begin->identity()]++;
+    counts[begin->id()]++;
   }
 
   /* Every particle should be visited exactly once. */
@@ -80,9 +80,9 @@ BOOST_AUTO_TEST_CASE(skip_empty) {
 
   auto begin = iterator(cells.begin(), cells.end());
 
-  BOOST_CHECK(begin->identity() == 0);
+  BOOST_CHECK(begin->id() == 0);
   ++begin;
-  BOOST_CHECK(begin->identity() == 1);
+  BOOST_CHECK(begin->id() == 1);
 }
 
 BOOST_AUTO_TEST_CASE(order) {
@@ -103,11 +103,11 @@ BOOST_AUTO_TEST_CASE(order) {
   std::vector<Particle> id_diff(n_cells, Particle{0});
   std::adjacent_difference(begin, end, id_diff.begin(),
                            [](Particle const &a, Particle const &b) {
-                             return Particle{a.identity() - b.identity()};
+                             return Particle{a.id() - b.id()};
                            });
 
   BOOST_CHECK(std::all_of(id_diff.begin() + 1, id_diff.end(),
-                          [](Particle const &p) { return p.identity() == 1; }));
+                          [](Particle const &p) { return p.id() == 1; }));
 }
 
 BOOST_AUTO_TEST_CASE(distance_overload) {

@@ -112,13 +112,13 @@ struct MinimalImageDistance {
   BoxGeometry const box;
 
   Distance operator()(Particle const &p1, Particle const &p2) const {
-    return Distance(box.get_mi_vector(p1.r.p, p2.r.p));
+    return Distance(box.get_mi_vector(p1.pos(), p2.pos()));
   }
 };
 
 struct EuclidianDistance {
   Distance operator()(Particle const &p1, Particle const &p2) const {
-    return Distance(p1.r.p - p2.r.p);
+    return Distance(p1.pos() - p2.pos());
   }
 };
 } // namespace detail
@@ -162,7 +162,7 @@ public:
   void update_particle_index(int id, Particle *p) {
     assert(id >= 0);
     // cppcheck-suppress assertWithSideEffect
-    assert(not p or id == p->identity());
+    assert(not p or p->id() == id);
 
     if (id >= m_particle_index.size())
       m_particle_index.resize(id + 1);
@@ -179,7 +179,7 @@ public:
    * @param p Pointer to the particle.
    */
   void update_particle_index(Particle &p) {
-    update_particle_index(p.identity(), std::addressof(p));
+    update_particle_index(p.id(), std::addressof(p));
   }
 
   /**
@@ -189,7 +189,7 @@ public:
    */
   void update_particle_index(ParticleList &pl) {
     for (auto &p : pl) {
-      update_particle_index(p.identity(), std::addressof(p));
+      update_particle_index(p.id(), std::addressof(p));
     }
   }
 
@@ -469,10 +469,10 @@ private:
             handler(p, bond.bond_id(), Utils::make_span(partners));
 
         if (bond_broken) {
-          bond_broken_error(p.identity(), partner_ids);
+          bond_broken_error(p.id(), partner_ids);
         }
       } catch (const BondResolutionError &) {
-        bond_broken_error(p.identity(), partner_ids);
+        bond_broken_error(p.id(), partner_ids);
       }
     }
   }
@@ -483,8 +483,8 @@ private:
    */
   void invalidate_ghosts() {
     for (auto const &p : ghost_particles()) {
-      if (get_local_particle(p.identity()) == &p) {
-        update_particle_index(p.identity(), nullptr);
+      if (get_local_particle(p.id()) == &p) {
+        update_particle_index(p.id(), nullptr);
       }
     }
   }

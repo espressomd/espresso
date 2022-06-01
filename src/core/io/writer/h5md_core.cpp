@@ -380,7 +380,7 @@ void File::write(const ParticleRange &particles, double time, int step,
 
   write_td_particle_property<2>(
       prefix, n_part_global, particles, datasets["particles/atoms/id/value"],
-      [](auto const &p) { return Utils::Vector<int, 1>{p.identity()}; });
+      [](auto const &p) { return Utils::Vector<int, 1>{p.id()}; });
 
   {
     h5xx::dataset &dataset = datasets["particles/atoms/id/value"];
@@ -446,7 +446,7 @@ void File::write_connectivity(const ParticleRange &particles) {
       auto const partner_ids = b.partner_ids();
       if (partner_ids.size() == 1) {
         bond.resize(boost::extents[1][nbonds_local + 1][2]);
-        bond[0][nbonds_local][0] = p.identity();
+        bond[0][nbonds_local][0] = p.id();
         bond[0][nbonds_local][1] = partner_ids[0];
         nbonds_local++;
       }

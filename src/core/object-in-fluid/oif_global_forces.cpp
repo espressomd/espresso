@@ -56,8 +56,8 @@ Utils::Vector2d calc_oif_global(int molType, CellStructure &cs) {
       // remaining neighbors fetched
       auto const p11 =
           unfolded_position(p1.pos(), p1.image_box(), box_geo.length());
-      auto const p22 = p11 + box_geo.get_mi_vector(partners[0]->r.p, p11);
-      auto const p33 = p11 + box_geo.get_mi_vector(partners[1]->r.p, p11);
+      auto const p22 = p11 + box_geo.get_mi_vector(partners[0]->pos(), p11);
+      auto const p33 = p11 + box_geo.get_mi_vector(partners[1]->pos(), p11);
 
       // unfolded positions correct
       auto const VOL_A = area_triangle(p11, p22, p33);
@@ -91,8 +91,8 @@ void add_oif_global_forces(Utils::Vector2d const &area_volume, int molType,
             bonded_ia_params.at(bond_id).get())) {
       auto const p11 =
           unfolded_position(p1.pos(), p1.image_box(), box_geo.length());
-      auto const p22 = p11 + box_geo.get_mi_vector(partners[0]->r.p, p11);
-      auto const p33 = p11 + box_geo.get_mi_vector(partners[1]->r.p, p11);
+      auto const p22 = p11 + box_geo.get_mi_vector(partners[0]->pos(), p11);
+      auto const p33 = p11 + box_geo.get_mi_vector(partners[1]->pos(), p11);
 
       // unfolded positions correct
       // starting code from volume force
@@ -120,8 +120,8 @@ void add_oif_global_forces(Utils::Vector2d const &area_volume, int molType,
                         m3_length * m3_length);
 
       p1.force() += fac * m1 + VOL_force;
-      partners[0]->f.f += fac * m2 + VOL_force;
-      partners[1]->f.f += fac * m3 + VOL_force;
+      partners[0]->force() += fac * m2 + VOL_force;
+      partners[1]->force() += fac * m3 + VOL_force;
     }
 
     return false;

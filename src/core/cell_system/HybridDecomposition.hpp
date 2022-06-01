@@ -112,7 +112,7 @@ public:
   }
 
   Cell *particle_to_cell(Particle const &p) override {
-    if (is_n_square_type(p.p.type)) {
+    if (is_n_square_type(p.type())) {
       return m_n_square.particle_to_cell(p);
     }
     return m_regular_decomposition.particle_to_cell(p);

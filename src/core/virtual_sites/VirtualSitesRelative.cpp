@@ -82,7 +82,7 @@ static Particle *get_reference_particle(Particle const &p) {
   auto p_ref_ptr = cell_structure.get_local_particle(vs_rel.to_particle_id);
   if (!p_ref_ptr) {
     runtimeErrorMsg() << "No real particle with id " << vs_rel.to_particle_id
-                      << " for virtual site with id " << p.identity();
+                      << " for virtual site with id " << p.id();
   }
   return p_ref_ptr;
 }

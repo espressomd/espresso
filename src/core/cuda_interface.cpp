@@ -43,7 +43,7 @@ static void pack_particles(ParticleRange particles,
     buffer[i].p = static_cast<Vector3f>(folded_position(part.pos(), box_geo));
 
     buffer[i].identity = part.id();
-    buffer[i].v = static_cast<Vector3f>(part.m.v);
+    buffer[i].v = static_cast<Vector3f>(part.v());
 #ifdef VIRTUAL_SITES
     buffer[i].is_virtual = part.is_virtual();
 #endif
@@ -116,11 +116,11 @@ static void add_forces_and_torques(ParticleRange particles,
                                    Utils::Span<const float> forces,
                                    Utils::Span<const float> torques) {
   int i = 0;
-  for (auto &part : particles) {
+  for (auto &p : particles) {
     for (int j = 0; j < 3; j++) {
-      part.f.f[j] += forces[3 * i + j];
+      p.force()[j] += forces[3 * i + j];
 #ifdef ROTATION
-      part.torque()[j] += torques[3 * i + j];
+      p.torque()[j] += torques[3 * i + j];
 #endif
     }
     i++;

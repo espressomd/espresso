@@ -55,7 +55,7 @@ double DipolarDirectSum::calc_dipole_dipole_ia(Particle &p1,
   auto const dip2 = p2.calc_dip();
 
   // Distance between particles
-  auto const dr = box_geo.get_mi_vector(p1.r.p, p2.r.p);
+  auto const dr = box_geo.get_mi_vector(p1.pos(), p2.pos());
 
   // Powers of distance
   auto const r2 = dr.norm2();

@@ -100,7 +100,7 @@ void HybridDecomposition::resort(bool global,
   for (auto &c : m_regular_decomposition.local_cells()) {
     for (auto it = c->particles().begin(); it != c->particles().end();) {
       /* Particle is in the right decomposition, i.e. has no n_square type */
-      if (not is_n_square_type(it->p.type)) {
+      if (not is_n_square_type(it->type())) {
         std::advance(it, 1);
         continue;
       }
@@ -109,7 +109,7 @@ void HybridDecomposition::resort(bool global,
       auto p = std::move(*it);
       it = c->particles().erase(it);
       diff.emplace_back(ModifiedList{c->particles()});
-      diff.emplace_back(RemovedParticle{p.identity()});
+      diff.emplace_back(RemovedParticle{p.id()});
 
       /* ... and insert into a n_square cell */
       auto const first_local_cell = m_n_square.get_local_cells()[0];
@@ -121,7 +121,7 @@ void HybridDecomposition::resort(bool global,
     for (auto &c : m_n_square.local_cells()) {
       for (auto it = c->particles().begin(); it != c->particles().end();) {
         /* Particle is of n_square type */
-        if (is_n_square_type(it->p.type)) {
+        if (is_n_square_type(it->type())) {
           std::advance(it, 1);
           continue;
         }
@@ -130,7 +130,7 @@ void HybridDecomposition::resort(bool global,
         auto p = std::move(*it);
         it = c->particles().erase(it);
         diff.emplace_back(ModifiedList{c->particles()});
-        diff.emplace_back(RemovedParticle{p.identity()});
+        diff.emplace_back(RemovedParticle{p.id()});
 
         /* ... and insert in regular decomposition */
         auto const target_cell = particle_to_cell(p);

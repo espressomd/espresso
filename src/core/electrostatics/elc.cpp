@@ -113,8 +113,8 @@ static std::vector<SCCache> calc_sc_cache(ParticleRange const &particles,
     auto const pref = c_2pi * u * static_cast<double>(freq);
 
     std::size_t o = (freq - 1) * n_part;
-    for (auto const &part : particles) {
-      auto const arg = pref * part.r.p[dir];
+    for (auto const &p : particles) {
+      auto const arg = pref * p.pos()[dir];
       ret[o++] = {sin(arg), cos(arg)};
     }
   }

@@ -154,8 +154,8 @@ inline double calc_non_bonded_pair_energy(
 
 #ifdef GAY_BERNE
   /* Gay-Berne */
-  ret += gb_pair_energy(p1.r.calc_director(), p2.r.calc_director(), ia_params,
-                        d, dist);
+  ret += gb_pair_energy(p1.calc_director(), p2.calc_director(), ia_params, d,
+                        dist);
 #endif
 
   return ret;

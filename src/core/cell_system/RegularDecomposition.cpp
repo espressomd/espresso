@@ -103,12 +103,12 @@ void RegularDecomposition::move_left_or_right(ParticleList &src,
                                               ParticleList &right,
                                               int dir) const {
   for (auto it = src.begin(); it != src.end();) {
-    if ((m_box.get_mi_coord(it->r.p[dir], m_local_box.my_left()[dir], dir) <
+    if ((m_box.get_mi_coord(it->pos()[dir], m_local_box.my_left()[dir], dir) <
          0.0) and
         (m_box.periodic(dir) || (m_local_box.boundary()[2 * dir] == 0))) {
       left.insert(std::move(*it));
       it = src.erase(it);
-    } else if ((m_box.get_mi_coord(it->r.p[dir], m_local_box.my_right()[dir],
+    } else if ((m_box.get_mi_coord(it->pos()[dir], m_local_box.my_right()[dir],
                                    dir) >= 0.0) and
                (m_box.periodic(dir) ||
                 (m_local_box.boundary()[2 * dir + 1] == 0))) {
@@ -195,7 +195,7 @@ void RegularDecomposition::resort(bool global,
 
       /* Particle is not local */
       if (target_cell == nullptr) {
-        diff.emplace_back(RemovedParticle{p.identity()});
+        diff.emplace_back(RemovedParticle{p.id()});
         displaced_parts.insert(std::move(p));
       }
       /* Particle belongs on this node but is in the wrong cell. */
@@ -230,7 +230,7 @@ void RegularDecomposition::resort(bool global,
     auto sort_cell = local_cells()[0];
 
     for (auto &part : displaced_parts) {
-      runtimeErrorMsg() << "Particle " << part.identity() << " moved more "
+      runtimeErrorMsg() << "Particle " << part.id() << " moved more "
                         << "than one local box length in one timestep";
       sort_cell->particles().insert(std::move(part));
 

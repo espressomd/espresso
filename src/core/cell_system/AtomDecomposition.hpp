@@ -96,7 +96,7 @@ public:
    * @return Pointer to cell or nullptr if not local.
    */
   Cell *particle_to_cell(Particle const &p) override {
-    return id_to_cell(p.identity());
+    return id_to_cell(p.id());
   }
 
   Utils::Vector3d max_cutoff() const override;

@@ -132,7 +132,7 @@ void propagate_omega_quat_particle(Particle &p, double time_step) {
   Utils::Vector3d S{}, Wd{};
 
   // Clear rotational velocity for blocked rotation axes.
-  p.omega() = Utils::mask(p.p.rotation, p.omega());
+  p.omega() = Utils::mask(p.rotation(), p.omega());
 
   define_Qdd(p, Qd, Qdd, S, Wd);
 
