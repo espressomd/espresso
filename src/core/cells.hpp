@@ -53,6 +53,7 @@
 #include "cell_system/Cell.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cell_system/CellStructureType.hpp"
+#include "cell_system/HybridDecomposition.hpp"
 
 #include "Particle.hpp"
 

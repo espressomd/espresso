@@ -53,7 +53,7 @@
 #include <vector>
 
 /** Type of cell structure in use */
-CellStructure cell_structure;
+CellStructure cell_structure{box_geo};
 
 /**
  * @brief Get pairs of particles that are closer than a distance and fulfill a

@@ -44,6 +44,9 @@
 #include <utility>
 #include <vector>
 
+CellStructure::CellStructure(BoxGeometry const &box)
+    : m_decomposition{std::make_unique<AtomDecomposition>(box)} {}
+
 void CellStructure::check_particle_index() {
   auto const max_id = get_max_local_particle_id();
 

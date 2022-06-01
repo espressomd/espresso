@@ -22,8 +22,6 @@
 #ifndef ESPRESSO_SRC_CORE_CELL_SYSTEM_CELL_STRUCTURE_HPP
 #define ESPRESSO_SRC_CORE_CELL_SYSTEM_CELL_STRUCTURE_HPP
 
-#include "cell_system/AtomDecomposition.hpp"
-#include "cell_system/HybridDecomposition.hpp"
 #include "cell_system/ParticleDecomposition.hpp"
 
 #include "BoxGeometry.hpp"
@@ -54,8 +52,6 @@
 #include <stdexcept>
 #include <utility>
 #include <vector>
-
-extern BoxGeometry box_geo;
 
 namespace Cells {
 enum Resort : unsigned {
@@ -139,8 +135,7 @@ private:
   /** The local id-to-particle index */
   std::vector<Particle *> m_particle_index;
   /** Implementation of the primary particle decomposition */
-  std::unique_ptr<ParticleDecomposition> m_decomposition =
-      std::make_unique<AtomDecomposition>();
+  std::unique_ptr<ParticleDecomposition> m_decomposition;
   /** Active type in m_decomposition */
   CellStructureType m_type = CellStructureType::CELL_STRUCTURE_NSQUARE;
   /** One of @ref Cells::Resort, announces the level of resort needed.
@@ -151,6 +146,8 @@ private:
   double m_le_pos_offset_at_last_resort = 0.;
 
 public:
+  CellStructure(BoxGeometry const &box);
+
   bool use_verlet_list = true;
 
   /**
@@ -573,7 +570,7 @@ private:
     if (maybe_box) {
       Algorithm::link_cell(
           first, last,
-          [&kernel, df = detail::MinimalImageDistance{box_geo}](
+          [&kernel, df = detail::MinimalImageDistance{decomposition().box()}](
               Particle &p1, Particle &p2) { kernel(p1, p2, df(p1, p2)); });
     } else {
       if (decomposition().box().type() != BoxType::CUBOID) {
@@ -614,7 +611,8 @@ private:
       auto const maybe_box = decomposition().minimum_image_distance();
       /* In this case the pair kernel is just run over the verlet list. */
       if (maybe_box) {
-        auto const distance_function = detail::MinimalImageDistance{box_geo};
+        auto const distance_function =
+            detail::MinimalImageDistance{decomposition().box()};
         for (auto &pair : m_verlet_list) {
           pair_kernel(*pair.first, *pair.second,
                       distance_function(*pair.first, *pair.second));
@@ -713,7 +711,8 @@ public:
     auto const maybe_box = decomposition().minimum_image_distance();
 
     if (maybe_box) {
-      auto const distance_function = detail::MinimalImageDistance{box_geo};
+      auto const distance_function =
+          detail::MinimalImageDistance{decomposition().box()};
       short_range_neighbor_loop(p, cell, kernel, distance_function);
     } else {
       auto const distance_function = detail::EuclidianDistance{};

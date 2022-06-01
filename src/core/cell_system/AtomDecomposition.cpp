@@ -139,6 +139,9 @@ void AtomDecomposition::resort(bool global_flag,
   }
 }
 
+AtomDecomposition::AtomDecomposition(BoxGeometry const &box_geo)
+    : m_box(box_geo) {}
+
 AtomDecomposition::AtomDecomposition(const boost::mpi::communicator &comm,
                                      BoxGeometry const &box_geo)
     : comm(comm), cells(comm.size()), m_box(box_geo) {

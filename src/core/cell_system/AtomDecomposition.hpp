@@ -61,10 +61,10 @@ class AtomDecomposition : public ParticleDecomposition {
   GhostCommunicator m_exchange_ghosts_comm;
   GhostCommunicator m_collect_ghost_force_comm;
 
-  BoxGeometry m_box;
+  BoxGeometry const &m_box;
 
 public:
-  AtomDecomposition() = default;
+  AtomDecomposition(BoxGeometry const &m_box);
   AtomDecomposition(boost::mpi::communicator const &comm,
                     BoxGeometry const &box_geo);
 
@@ -109,7 +109,7 @@ public:
     return m_box;
   }
 
-  BoxGeometry box() const override { return m_box; };
+  BoxGeometry const &box() const override { return m_box; };
 
 private:
   /**

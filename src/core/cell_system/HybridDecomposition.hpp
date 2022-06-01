@@ -56,7 +56,7 @@
  */
 class HybridDecomposition : public ParticleDecomposition {
   boost::mpi::communicator m_comm;
-  BoxGeometry m_box;
+  BoxGeometry const &m_box;
   double m_cutoff_regular;
   std::vector<Cell *> m_local_cells;
   std::vector<Cell *> m_ghost_cells;
@@ -127,7 +127,7 @@ public:
     return m_box;
   }
 
-  BoxGeometry box() const override { return m_box; }
+  BoxGeometry const &box() const override { return m_box; };
 
   Utils::Vector<std::size_t, 2> parts_per_decomposition_local() const;
 };
