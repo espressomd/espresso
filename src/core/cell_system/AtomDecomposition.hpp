@@ -52,7 +52,7 @@
  * For a more detailed discussion please see @cite plimpton95a.
  */
 class AtomDecomposition : public ParticleDecomposition {
-  boost::mpi::communicator comm;
+  boost::mpi::communicator m_comm;
   std::vector<Cell> cells;
 
   std::vector<Cell *> m_local_cells;
@@ -65,8 +65,7 @@ class AtomDecomposition : public ParticleDecomposition {
 
 public:
   AtomDecomposition(BoxGeometry const &m_box);
-  AtomDecomposition(boost::mpi::communicator const &comm,
-                    BoxGeometry const &box_geo);
+  AtomDecomposition(boost::mpi::communicator comm, BoxGeometry const &box_geo);
 
   void resort(bool global_flag, std::vector<ParticleChange> &diff) override;
 
@@ -75,7 +74,7 @@ public:
   }
   GhostCommunicator const &collect_ghost_force_comm() const override {
     return m_collect_ghost_force_comm;
-  };
+  }
 
   Utils::Span<Cell *> local_cells() override {
     return Utils::make_span(m_local_cells);
@@ -118,13 +117,14 @@ private:
    * @return Cell for id.
    */
   Cell *id_to_cell(int id) {
-    return (id_to_rank(id) == comm.rank()) ? std::addressof(local()) : nullptr;
+    return (id_to_rank(id) == m_comm.rank()) ? std::addressof(local())
+                                             : nullptr;
   }
 
   /**
    * @brief Get the local cell.
    */
-  Cell &local() { return cells.at(comm.rank()); }
+  Cell &local() { return cells.at(m_comm.rank()); }
 
   void configure_neighbors();
   GhostCommunicator prepare_comm();
@@ -142,7 +142,7 @@ private:
   /**
    * @brief Determine which rank owns a particle id.
    */
-  int id_to_rank(int id) const { return id % comm.size(); }
+  int id_to_rank(int id) const { return id % m_comm.size(); }
 };
 
 #endif

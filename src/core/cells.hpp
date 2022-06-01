@@ -136,7 +136,7 @@ mpi_get_short_range_neighbors_local(int pid, double distance,
  *
  * @return pointer to the cell or nullptr if the particle is not on the node
  */
-Cell *find_current_cell(const Particle &p);
+Cell *find_current_cell(Particle const &p);
 
 class PairInfo {
 public:

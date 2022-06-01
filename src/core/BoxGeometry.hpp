@@ -240,6 +240,7 @@ inline std::pair<double, int> fold_coordinate(double pos, int image_box,
 }
 
 /** @brief Fold particle coordinates to primary simulation box.
+ *  Lees-Edwards offset is ignored.
  *  @param[in,out] pos        coordinate to fold
  *  @param[in,out] image_box  image box offset
  *  @param[in] box            box parameters (side lengths, periodicity)

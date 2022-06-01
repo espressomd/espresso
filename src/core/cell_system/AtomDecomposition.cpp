@@ -29,6 +29,7 @@
 
 #include <cstddef>
 #include <limits>
+#include <utility>
 #include <vector>
 
 void AtomDecomposition::configure_neighbors() {
@@ -36,12 +37,12 @@ void AtomDecomposition::configure_neighbors() {
   std::vector<Cell *> black_neighbors;
 
   /* distribute force calculation work  */
-  for (int n = 0; n < comm.size(); n++) {
-    if (comm.rank() == n) {
+  for (int n = 0; n < m_comm.size(); n++) {
+    if (m_comm.rank() == n) {
       continue;
     }
 
-    if (n < comm.rank()) {
+    if (n < m_comm.rank()) {
       red_neighbors.push_back(&cells.at(n));
     } else {
       black_neighbors.push_back(&cells.at(n));
@@ -52,14 +53,14 @@ void AtomDecomposition::configure_neighbors() {
 }
 GhostCommunicator AtomDecomposition::prepare_comm() {
   /* no need for comm for only 1 node */
-  if (comm.size() == 1) {
-    return GhostCommunicator{comm, 0};
+  if (m_comm.size() == 1) {
+    return GhostCommunicator{m_comm, 0};
   }
 
   auto ghost_comm =
-      GhostCommunicator{comm, static_cast<std::size_t>(comm.size())};
+      GhostCommunicator{m_comm, static_cast<std::size_t>(m_comm.size())};
   /* every node has its dedicated comm step */
-  for (int n = 0; n < comm.size(); n++) {
+  for (int n = 0; n < m_comm.size(); n++) {
     ghost_comm.communications[n].part_lists.resize(1);
     ghost_comm.communications[n].part_lists[0] = &(cells.at(n).particles());
     ghost_comm.communications[n].node = n;
@@ -71,11 +72,11 @@ void AtomDecomposition::configure_comms() {
   m_exchange_ghosts_comm = prepare_comm();
   m_collect_ghost_force_comm = prepare_comm();
 
-  if (comm.size() > 1) {
-    for (int n = 0; n < comm.size(); n++) {
+  if (m_comm.size() > 1) {
+    for (int n = 0; n < m_comm.size(); n++) {
       /* use the prefetched send buffers. Node 0 transmits first and never
        * prefetches. */
-      if (comm.rank() == 0 || comm.rank() != n) {
+      if (m_comm.rank() == 0 || m_comm.rank() != n) {
         m_exchange_ghosts_comm.communications[n].type = GHOST_BCST;
       } else {
         m_exchange_ghosts_comm.communications[n].type =
@@ -84,7 +85,7 @@ void AtomDecomposition::configure_comms() {
       m_collect_ghost_force_comm.communications[n].type = GHOST_RDCE;
     }
     /* first round: all nodes except the first one prefetch their send data */
-    if (comm.rank() != 0) {
+    if (m_comm.rank() != 0) {
       m_exchange_ghosts_comm.communications[0].type |= GHOST_PREFETCH;
     }
   }
@@ -92,8 +93,8 @@ void AtomDecomposition::configure_comms() {
 void AtomDecomposition::mark_cells() {
   m_local_cells.resize(1, std::addressof(local()));
   m_ghost_cells.clear();
-  for (int n = 0; n < comm.size(); n++) {
-    if (n != comm.rank()) {
+  for (int n = 0; n < m_comm.size(); n++) {
+    if (n != m_comm.rank()) {
       m_ghost_cells.push_back(std::addressof(cells.at(n)));
     }
   }
@@ -112,11 +113,11 @@ void AtomDecomposition::resort(bool global_flag,
   }
 
   /* Sort displaced particles by the node they belong to. */
-  std::vector<std::vector<Particle>> send_buf(comm.size());
+  std::vector<std::vector<Particle>> send_buf(m_comm.size());
   for (auto it = local().particles().begin();
        it != local().particles().end();) {
     auto const target_node = id_to_rank(it->identity());
-    if (target_node != comm.rank()) {
+    if (target_node != m_comm.rank()) {
       diff.emplace_back(RemovedParticle{it->identity()});
       send_buf.at(target_node).emplace_back(std::move(*it));
       it = local().particles().erase(it);
@@ -126,8 +127,8 @@ void AtomDecomposition::resort(bool global_flag,
   }
 
   /* Exchange particles */
-  std::vector<std::vector<Particle>> recv_buf(comm.size());
-  boost::mpi::all_to_all(comm, send_buf, recv_buf);
+  std::vector<std::vector<Particle>> recv_buf(m_comm.size());
+  boost::mpi::all_to_all(m_comm, send_buf, recv_buf);
 
   diff.emplace_back(ModifiedList{local().particles()});
 
@@ -142,9 +143,9 @@ void AtomDecomposition::resort(bool global_flag,
 AtomDecomposition::AtomDecomposition(BoxGeometry const &box_geo)
     : m_box(box_geo) {}
 
-AtomDecomposition::AtomDecomposition(const boost::mpi::communicator &comm,
+AtomDecomposition::AtomDecomposition(boost::mpi::communicator comm,
                                      BoxGeometry const &box_geo)
-    : comm(comm), cells(comm.size()), m_box(box_geo) {
+    : m_comm(std::move(comm)), cells(m_comm.size()), m_box(box_geo) {
   /* create communicators */
   configure_comms();
   /* configure neighbor relations */

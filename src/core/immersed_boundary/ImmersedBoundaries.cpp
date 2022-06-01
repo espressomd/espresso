@@ -21,6 +21,7 @@
 
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
 #include "ibm_volcons.hpp"

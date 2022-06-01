@@ -86,12 +86,7 @@ cdef class FluidActor:
         Check if the data stored in this instance still matches the
         corresponding data in the core.
         """
-        temp_params = self._get_params_from_es_core()
-        if self._params != temp_params:
-            return False
-
-        # If we're still here, the instance is valid
-        return True
+        return self._params == self._get_params_from_es_core()
 
     def get_params(self):
         """Get interaction parameters"""

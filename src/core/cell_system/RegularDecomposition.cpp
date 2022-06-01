@@ -48,7 +48,7 @@
 #include <vector>
 
 /** Returns pointer to the cell which corresponds to the position if the
- *  position is in the nodes spatial domain otherwise a nullptr pointer.
+ *  position is in the node's spatial domain otherwise a nullptr.
  */
 Cell *RegularDecomposition::position_to_cell(const Utils::Vector3d &pos) {
   Utils::Vector3i cpos;
@@ -256,8 +256,8 @@ void RegularDecomposition::mark_cells() {
 }
 
 void RegularDecomposition::fill_comm_cell_lists(ParticleList **part_lists,
-                                                const Utils::Vector3i &lc,
-                                                const Utils::Vector3i &hc) {
+                                                Utils::Vector3i const &lc,
+                                                Utils::Vector3i const &hc) {
   for (int o = lc[0]; o <= hc[0]; o++)
     for (int n = lc[1]; n <= hc[1]; n++)
       for (int m = lc[2]; m <= hc[2]; m++) {
@@ -631,8 +631,8 @@ GhostCommunicator RegularDecomposition::prepare_comm() {
 
 RegularDecomposition::RegularDecomposition(boost::mpi::communicator comm,
                                            double range,
-                                           const BoxGeometry &box_geo,
-                                           const LocalBox<double> &local_geo)
+                                           BoxGeometry const &box_geo,
+                                           LocalBox<double> const &local_geo)
     : m_comm(std::move(comm)), m_box(box_geo), m_local_box(local_geo) {
   /* set up new regular decomposition cell structure */
   create_cell_grid(range);

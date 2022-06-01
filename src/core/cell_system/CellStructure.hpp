@@ -109,7 +109,7 @@ struct Distance {
 };
 namespace detail {
 struct MinimalImageDistance {
-  const BoxGeometry box;
+  BoxGeometry const box;
 
   Distance operator()(Particle const &p1, Particle const &p2) const {
     return Distance(box.get_mi_vector(p1.r.p, p2.r.p));
@@ -512,7 +512,7 @@ private:
 
 public:
   /**
-   * @brief Set the particle decomposition to AtomDecomposition.
+   * @brief Set the particle decomposition to @ref AtomDecomposition.
    *
    * @param comm Communicator to use.
    * @param box Box Geometry.
@@ -523,7 +523,7 @@ public:
                               LocalBox<double> &local_geo);
 
   /**
-   * @brief Set the particle decomposition to RegularDecomposition.
+   * @brief Set the particle decomposition to @ref RegularDecomposition.
    *
    * @param comm Cartesian communicator to use.
    * @param range Interaction range.
@@ -535,7 +535,7 @@ public:
                                  LocalBox<double> &local_geo);
 
   /**
-   * @brief Set the particle decomposition to HybridDecomposition.
+   * @brief Set the particle decomposition to @ref HybridDecomposition.
    *
    * @param comm Communicator to use.
    * @param cutoff_regular Interaction cutoff_regular.

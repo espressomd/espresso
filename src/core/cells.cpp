@@ -275,6 +275,6 @@ void cells_update_ghosts(unsigned data_parts) {
   }
 }
 
-Cell *find_current_cell(const Particle &p) {
+Cell *find_current_cell(Particle const &p) {
   return cell_structure.find_current_cell(p);
 }

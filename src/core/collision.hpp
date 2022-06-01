@@ -116,8 +116,8 @@ inline bool glue_to_surface_criterion(Particle const &p1, Particle const &p2) {
 
 /** @brief Detect (and queue) a collision between the given particles. */
 inline void detect_collision(Particle const &p1, Particle const &p2,
-                             const double &dist_betw_part2) {
-  if (dist_betw_part2 > collision_params.distance2)
+                             double const dist2) {
+  if (dist2 > collision_params.distance2)
     return;
 
   // If we are in the glue to surface mode, check that the particles

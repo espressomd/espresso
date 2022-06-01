@@ -280,7 +280,7 @@ double ElectrostaticLayerCorrection::dipole_energy(
   gblcblk[5] = 0.; // sum q_i (z_i - L/2)^2 boundary layers
   gblcblk[6] = 0.; // sum q_i z_i           primary box
 
-  for (auto &p : particles) {
+  for (auto const &p : particles) {
     check_gap(p);
     auto const q = p.q();
     auto const z = p.pos()[2];
@@ -367,7 +367,7 @@ ElectrostaticLayerCorrection::z_energy(ParticleRange const &particles) const {
   if (elc.dielectric_contrast_on) {
     if (elc.const_pot) {
       clear_vec(gblcblk, size);
-      for (auto &p : particles) {
+      for (auto const &p : particles) {
         auto const z = p.pos()[2];
         auto const q = p.q();
         gblcblk[0] += q;
@@ -385,7 +385,7 @@ ElectrostaticLayerCorrection::z_energy(ParticleRange const &particles) const {
       // metallic boundaries
       clear_vec(gblcblk, size);
       auto const h = elc.box_h;
-      for (auto &p : particles) {
+      for (auto const &p : particles) {
         auto const z = p.pos()[2];
         auto const q = p.q();
         gblcblk[0] += q;
@@ -438,7 +438,7 @@ void ElectrostaticLayerCorrection::add_z_force(
     if (elc.const_pot) {
       clear_vec(gblcblk, size);
       /* just counter the 2 pi |z| contribution stemming from P3M */
-      for (auto &p : particles) {
+      for (auto const &p : particles) {
         auto const z = p.pos()[2];
         auto const q = p.q();
         if (z < elc.space_layer)
@@ -448,7 +448,7 @@ void ElectrostaticLayerCorrection::add_z_force(
       }
     } else {
       clear_vec(gblcblk, size);
-      for (auto &p : particles) {
+      for (auto const &p : particles) {
         auto const z = p.pos()[2];
         auto const q = p.q();
         if (z < elc.space_layer) {
@@ -507,7 +507,7 @@ void setup_PoQ(elc_data const &elc, double prefactor, std::size_t index,
 
   std::size_t ic = 0;
   auto const o = (index - 1) * particles.size();
-  for (auto &p : particles) {
+  for (auto const &p : particles) {
     auto const z = p.pos()[2];
     auto const q = p.q();
     auto e = exp(omega * z);

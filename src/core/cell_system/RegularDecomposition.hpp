@@ -88,8 +88,8 @@ struct RegularDecomposition : public ParticleDecomposition {
 
 public:
   RegularDecomposition(boost::mpi::communicator comm, double range,
-                       const BoxGeometry &box_geo,
-                       const LocalBox<double> &local_geo);
+                       BoxGeometry const &box_geo,
+                       LocalBox<double> const &local_geo);
 
   GhostCommunicator const &exchange_ghosts_comm() const override {
     return m_exchange_ghosts_comm;
