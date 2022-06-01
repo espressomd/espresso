@@ -88,13 +88,17 @@ class Integrator_test(ut.TestCase):
             self.system.integrator.run(0)
         self.system.thermostat.turn_off()
         self.system.thermostat.set_npt(kT=1.0, gamma0=2., gammav=0.04, seed=42)
+        protocol = espressomd.lees_edwards.LinearShear(
+            shear_velocity=1., initial_pos_offset=0., time_0=0.)
         with self.assertRaisesRegex(Exception, self.msg + 'The NpT integrator cannot use Lees-Edwards'):
-            self.system.lees_edwards.protocol = espressomd.lees_edwards.LinearShear(
-                shear_velocity=1., initial_pos_offset=0., time_0=0.)
+            self.system.lees_edwards.set_boundary_conditions(
+                shear_direction=0, shear_plane_normal=1, protocol=protocol)
             self.system.integrator.run(0)
         with self.assertRaisesRegex(Exception, self.msg + 'The NpT integrator cannot use Lees-Edwards'):
             self.system.lees_edwards.protocol = espressomd.lees_edwards.Off()
             self.system.integrator.run(0)
+        self.system.lees_edwards.protocol = None
+        self.system.integrator.run(0)
 
     @utx.skipIfMissingFeatures("STOKESIAN_DYNAMICS")
     def test_stokesian_integrator(self):

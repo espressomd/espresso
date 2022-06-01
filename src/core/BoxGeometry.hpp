@@ -198,9 +198,18 @@ public:
   BoxType type() const { return m_type; }
   void set_type(BoxType type) { m_type = type; }
 
-  LeesEdwardsBC &lees_edwards_bc() { return m_lees_edwards_bc; }
   LeesEdwardsBC const &lees_edwards_bc() const { return m_lees_edwards_bc; }
   void set_lees_edwards_bc(LeesEdwardsBC bc) { m_lees_edwards_bc = bc; }
+
+  /**
+   * @brief Update the Lees-Edwards parameters of the box geometry
+   * for the current simulation time.
+   */
+  void lees_edwards_update(double pos_offset, double shear_velocity) {
+    assert(type() == BoxType::LEES_EDWARDS);
+    m_lees_edwards_bc.pos_offset = pos_offset;
+    m_lees_edwards_bc.shear_velocity = shear_velocity;
+  }
 
   /** Calculate the velocity difference including the Lees-Edwards velocity */
   Utils::Vector3d velocity_difference(Utils::Vector3d const &x,

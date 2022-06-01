@@ -72,10 +72,10 @@ class H5mdTests(ut.TestCase):
 
     system.integrator.run(steps=0)
     system.time = 12.3
-    system.lees_edwards.shear_direction = 0
-    system.lees_edwards.shear_plane_normal = 1
-    system.lees_edwards.protocol = espressomd.lees_edwards.LinearShear(
+    protocol = espressomd.lees_edwards.LinearShear(
         shear_velocity=1.5, initial_pos_offset=0.5, time_0=-0.3)
+    system.lees_edwards.set_boundary_conditions(
+        shear_direction=0, shear_plane_normal=1, protocol=protocol)
     n_nodes = system.cell_system.get_state()["n_nodes"]
 
     @classmethod

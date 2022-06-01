@@ -40,9 +40,21 @@ class LeesEdwards(ScriptInterfaceHelper):
         Shear plane normal: 0 for the *x*-axis, 1 for the *y*-axis,
         2 for the *z*-axis.
 
+    Methods
+    -------
+    set_boundary_conditions()
+        Set a protocol, the shear direction and shear normal.
+
+        Parameters
+        ----------
+        protocol : :obj:`object`
+        shear_direction : :obj:`int`
+        shear_plane_normal : :obj:`int`
+
     """
 
     _so_name = "LeesEdwards::LeesEdwards"
+    _so_bind_methods = ("set_boundary_conditions",)
 
 
 @script_interface_register

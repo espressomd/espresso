@@ -73,8 +73,10 @@ class LeesEdwards(ut.TestCase):
 
         # Protocol should be off by default
         self.assertIsNone(system.lees_edwards.protocol)
-        self.assertEqual(system.lees_edwards.shear_velocity, 0)
-        self.assertEqual(system.lees_edwards.pos_offset, 0)
+        self.assertEqual(system.lees_edwards.shear_direction, -1)
+        self.assertEqual(system.lees_edwards.shear_plane_normal, -1)
+        self.assertEqual(system.lees_edwards.shear_velocity, 0.)
+        self.assertEqual(system.lees_edwards.pos_offset, 0.)
 
     def test_protocols(self):
         """Test shear velocity and pos offset vs protocol and time"""
@@ -82,7 +84,8 @@ class LeesEdwards(ut.TestCase):
         # Linear shear
         system = self.system
         system.time = 3.15
-        system.lees_edwards.protocol = lin_protocol
+        system.lees_edwards.set_boundary_conditions(
+            shear_direction=0, shear_plane_normal=1, protocol=lin_protocol)
 
         # check protocol assignment
         self.assertEqual(system.lees_edwards.protocol, lin_protocol)
@@ -122,6 +125,7 @@ class LeesEdwards(ut.TestCase):
                 system.lees_edwards.shear_velocity, expected_vel)
             self.assertAlmostEqual(
                 system.lees_edwards.pos_offset, expected_pos)
+
         # Check that time change during integration updates offsets
         system.integrator.run(1)
         time = system.time
@@ -135,10 +139,44 @@ class LeesEdwards(ut.TestCase):
         self.assertAlmostEqual(
             system.lees_edwards.pos_offset, expected_pos)
 
-        # Check that LE is disabled correctly
+        # Check that LE is disabled correctly via parameter
         system.lees_edwards.protocol = None
-        self.assertEqual(system.lees_edwards.shear_velocity, 0)
-        self.assertEqual(system.lees_edwards.pos_offset, 0)
+        self.assertEqual(system.lees_edwards.shear_direction, -1)
+        self.assertEqual(system.lees_edwards.shear_plane_normal, -1)
+        self.assertEqual(system.lees_edwards.shear_velocity, 0.)
+        self.assertEqual(system.lees_edwards.pos_offset, 0.)
+
+        # Check that LE is disabled correctly via boundary conditions setter
+        system.lees_edwards.set_boundary_conditions(
+            shear_direction=0, shear_plane_normal=1, protocol=lin_protocol)
+        system.lees_edwards.set_boundary_conditions(
+            shear_direction=99, shear_plane_normal=99, protocol=None)
+        self.assertEqual(system.lees_edwards.shear_direction, -1)
+        self.assertEqual(system.lees_edwards.shear_plane_normal, -1)
+        self.assertEqual(system.lees_edwards.shear_velocity, 0.)
+        self.assertEqual(system.lees_edwards.pos_offset, 0.)
+
+        # Check that when LE is disabled, protocols can only be
+        # initialized via boundary conditions setter, because the
+        # shear direction and shear normal must be known
+        with self.assertRaisesRegex(RuntimeError, "must be initialized together with 'protocol' on first activation"):
+            system.lees_edwards.protocol = lin_protocol
+
+        # Check assertions
+        for invalid in (-2, -1, 3):
+            with self.assertRaisesRegex(ValueError, "Parameter 'shear_direction' is invalid"):
+                system.lees_edwards.set_boundary_conditions(
+                    shear_direction=invalid, shear_plane_normal=0,
+                    protocol=lin_protocol)
+            with self.assertRaisesRegex(ValueError, "Parameter 'shear_plane_normal' is invalid"):
+                system.lees_edwards.set_boundary_conditions(
+                    shear_direction=0, shear_plane_normal=invalid,
+                    protocol=lin_protocol)
+        for valid in (0, 1, 2):
+            with self.assertRaisesRegex(ValueError, "Parameters 'shear_direction' and 'shear_plane_normal' must differ"):
+                system.lees_edwards.set_boundary_conditions(
+                    shear_direction=valid, shear_plane_normal=valid,
+                    protocol=lin_protocol)
 
     def test_boundary_crossing_lin(self):
         """
@@ -148,13 +186,13 @@ class LeesEdwards(ut.TestCase):
 
         system = self.system
 
-        system.lees_edwards.protocol = lin_protocol
         box_l = np.copy(system.box_l)
         tol = 1e-10
 
         for shear_direction, shear_plane_normal in self.direction_permutations:
-            system.lees_edwards.shear_direction = shear_direction
-            system.lees_edwards.shear_plane_normal = shear_plane_normal
+            system.lees_edwards.set_boundary_conditions(
+                shear_direction=shear_direction,
+                shear_plane_normal=shear_plane_normal, protocol=lin_protocol)
 
             system.time = 0.0
             shear_axis = axis(shear_direction)
@@ -207,13 +245,13 @@ class LeesEdwards(ut.TestCase):
         """
 
         system = self.system
-        system.lees_edwards.protocol = off_protocol
         box_l = np.copy(system.box_l)
         tol = 1e-10
 
         for shear_direction, shear_plane_normal in self.direction_permutations:
-            system.lees_edwards.shear_direction = shear_direction
-            system.lees_edwards.shear_plane_normal = shear_plane_normal
+            system.lees_edwards.set_boundary_conditions(
+                shear_direction=shear_direction,
+                shear_plane_normal=shear_plane_normal, protocol=off_protocol)
 
             system.time = 0.0
             pos = box_l - 0.01
@@ -238,10 +276,10 @@ class LeesEdwards(ut.TestCase):
     def test_trajectory_reconstruction(self):
         system = self.system
 
-        system.lees_edwards.protocol = espressomd.lees_edwards.LinearShear(
+        protocol = espressomd.lees_edwards.LinearShear(
             shear_velocity=1., initial_pos_offset=0.0, time_0=0.0)
-        system.lees_edwards.shear_direction = 0
-        system.lees_edwards.shear_plane_normal = 1
+        system.lees_edwards.set_boundary_conditions(
+            shear_direction=0, shear_plane_normal=1, protocol=protocol)
 
         pos = system.box_l - 0.01
         vel = np.array([0, 1, 0])
@@ -269,15 +307,14 @@ class LeesEdwards(ut.TestCase):
         """
 
         system = self.system
-        system.lees_edwards.protocol = lin_protocol
         epsilon = 0.01
 
         for shear_direction, shear_plane_normal in self.direction_permutations:
-            system.lees_edwards.shear_direction = shear_direction
-            system.lees_edwards.shear_plane_normal = shear_plane_normal
-            shear_axis = axis(shear_direction)
+            system.lees_edwards.set_boundary_conditions(
+                shear_direction=shear_direction,
+                shear_plane_normal=shear_plane_normal, protocol=lin_protocol)
 
-            system.lees_edwards.protocol = lin_protocol
+            shear_axis = axis(shear_direction)
             p1 = system.part.add(
                 pos=[epsilon] * 3, v=np.random.random(3), fix=[True] * 3)
             p2 = system.part.add(
@@ -306,14 +343,13 @@ class LeesEdwards(ut.TestCase):
         """
 
         system = self.system
-        system.lees_edwards.protocol = lin_protocol
         epsilon = 0.01
 
         for shear_direction, shear_plane_normal in self.direction_permutations:
-            system.lees_edwards.shear_direction = shear_direction
-            system.lees_edwards.shear_plane_normal = shear_plane_normal
+            system.lees_edwards.set_boundary_conditions(
+                shear_direction=shear_direction,
+                shear_plane_normal=shear_plane_normal, protocol=lin_protocol)
 
-            system.lees_edwards.protocol = lin_protocol
             p1 = system.part.add(pos=[epsilon] * 3, fix=[True] * 3)
             p2 = system.part.add(pos=system.box_l - epsilon, fix=[True] * 3)
 
@@ -383,9 +419,8 @@ class LeesEdwards(ut.TestCase):
         p3.vs_auto_relate_to(p1)
         system.integrator.run(1)
 
-        system.lees_edwards.protocol = lin_protocol
-        system.lees_edwards.shear_direction = 0
-        system.lees_edwards.shear_plane_normal = 1
+        system.lees_edwards.set_boundary_conditions(
+            shear_direction=0, shear_plane_normal=1, protocol=lin_protocol)
         system.integrator.run(1)
         np.testing.assert_allclose(
             np.copy(system.distance_vec(p3, p2)), [0, 2, 0], atol=tol)
@@ -424,10 +459,10 @@ class LeesEdwards(ut.TestCase):
             weight_function=0, gamma=1.75, r_cut=2.,
             trans_weight_function=0, trans_gamma=1.5, trans_r_cut=2.0)
 
-        system.lees_edwards.protocol = espressomd.lees_edwards.LinearShear(
+        protocol = espressomd.lees_edwards.LinearShear(
             shear_velocity=2.0, initial_pos_offset=0.0)
-        system.lees_edwards.shear_direction = 0
-        system.lees_edwards.shear_plane_normal = 1
+        system.lees_edwards.set_boundary_conditions(
+            shear_direction=0, shear_plane_normal=1, protocol=protocol)
         p1 = system.part.add(
             pos=[2.5, 2.5, 2.5], rotation=(1, 1, 1), type=10, v=(0.0, -0.1, -0.25))
         p2 = system.part.add(pos=(2.5, 3.5, 2.5), type=11)
@@ -484,10 +519,10 @@ class LeesEdwards(ut.TestCase):
         system = self.system
         system.min_global_cut = 1.0
         system.time = 0
-        system.lees_edwards.protocol = espressomd.lees_edwards.LinearShear(
+        protocol = espressomd.lees_edwards.LinearShear(
             shear_velocity=-1.0, initial_pos_offset=0.0)
-        system.lees_edwards.shear_direction = 0
-        system.lees_edwards.shear_plane_normal = 1
+        system.lees_edwards.set_boundary_conditions(
+            shear_direction=0, shear_plane_normal=1, protocol=protocol)
 
         col_part1 = system.part.add(
             pos=(2.5, 4.5, 2.5), type=30, fix=[True, True, True])
@@ -573,10 +608,10 @@ class LeesEdwards(ut.TestCase):
         system = self.system
         system.min_global_cut = 1.0
         system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
-        system.lees_edwards.protocol = espressomd.lees_edwards.LinearShear(
+        protocol = espressomd.lees_edwards.LinearShear(
             shear_velocity=-1.0, initial_pos_offset=0.0)
-        system.lees_edwards.shear_direction = 0
-        system.lees_edwards.shear_plane_normal = 1
+        system.lees_edwards.set_boundary_conditions(
+            shear_direction=0, shear_plane_normal=1, protocol=protocol)
 
         harm = espressomd.interactions.HarmonicBond(
             k=1.0, r_0=0.0, r_cut=np.sqrt(2.))
@@ -673,10 +708,10 @@ class LeesEdwards(ut.TestCase):
         """
         system = self.system
         self.setup_lj_liquid()
-        system.lees_edwards.protocol = espressomd.lees_edwards.LinearShear(
+        protocol = espressomd.lees_edwards.LinearShear(
             shear_velocity=0.3, initial_pos_offset=0.01)
-        system.lees_edwards.shear_direction = 2
-        system.lees_edwards.shear_plane_normal = 0
+        system.lees_edwards.set_boundary_conditions(
+            shear_direction=2, shear_plane_normal=0, protocol=protocol)
         system.integrator.run(1, recalc_forces=True)
         tests_common.check_non_bonded_loop_trace(self, system)
 

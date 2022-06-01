@@ -86,18 +86,6 @@ inline Utils::Vector3d shear_direction(BoxGeometry const &box) {
   return Utils::unit_vector<double>(box.lees_edwards_bc().shear_direction);
 }
 
-inline void update_pos_offset(ActiveProtocol const &protocol, BoxGeometry &box,
-                              double time) {
-  assert(box.type() == BoxType::LEES_EDWARDS);
-  box.lees_edwards_bc().pos_offset = get_pos_offset(time, protocol);
-}
-
-inline void update_shear_velocity(ActiveProtocol const &protocol,
-                                  BoxGeometry &box, double time) {
-  assert(box.type() == BoxType::LEES_EDWARDS);
-  box.lees_edwards_bc().shear_velocity = get_shear_velocity(time, protocol);
-}
-
 inline Utils::Vector3d verlet_list_offset(BoxGeometry const &box,
                                           double pos_offset_at_last_resort) {
   if (box.type() == BoxType::LEES_EDWARDS) {

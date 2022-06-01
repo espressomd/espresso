@@ -186,9 +186,10 @@ Example::
     system.cell_system.set_n_square(use_verlet_lists=True)
     le_protocol = espressomd.lees_edwards.LinearShear(
         shear_velocity=-0.1, initial_pos_offset=0.0, time_0=-0.1)
-    system.lees_edwards.protocol = le_protocol
-    system.lees_edwards.shear_direction = 1 # shear along y-axis
-    system.lees_edwards.shear_plane_normal = 0 # shear when crossing the x-boundary
+    system.lees_edwards.set_boundary_conditions(
+        shear_direction=1, # shear along y-axis
+        shear_plane_normal=0, # shear when crossing the x-boundary
+        protocol=le_protocol)
     p = system.part.add(pos=[4.9, 0.0, 0.0], v=[0.1, 0.0, 0.0])
     system.integrator.run(20)
     print(f"pos        = {p.pos}")
@@ -209,6 +210,14 @@ Particles inserted outside the box boundaries will be wrapped around
 using the normal periodic boundary rules, i.e. they will not be sheared,
 even though their :attr:`~espressomd.particle_data.ParticleHandle.image_box`
 is *not* zero.
+
+Once a valid tuple ``(shear_direction, shear_plane_normal, protocol)`` has been
+set via :meth:`~espressomd.lees_edwards.LeesEdwards.set_boundary_conditions`,
+one can update the protocol via a simple assignment of the form
+``system.lees_edwards.protocol = new_le_protocol``, in which case
+the shear direction and shear normal are left unchanged. The method
+:meth:`~espressomd.lees_edwards.LeesEdwards.set_boundary_conditions`
+is the only way to modify the shear direction and shear normal.
 
 
 .. _Cell systems:
