@@ -20,7 +20,7 @@ constant pressure, variable volume).
 """
 
 import numpy as np
-from threading import Thread
+import threading
 
 import espressomd
 import espressomd.interactions
@@ -75,7 +75,7 @@ def main():
 
 
 # Start simulation in separate thread
-t = Thread(target=main)
+t = threading.Thread(target=main)
 t.daemon = True
 t.start()
 

@@ -32,9 +32,8 @@
 #include "comfixed_global.hpp"
 #include "communication.hpp"
 #include "constraints.hpp"
-#include "electrostatics_magnetostatics/dipole.hpp"
-#include "electrostatics_magnetostatics/icc.hpp"
-#include "electrostatics_magnetostatics/p3m_gpu.hpp"
+#include "electrostatics/icc.hpp"
+#include "electrostatics/p3m_gpu.hpp"
 #include "forcecap.hpp"
 #include "forces_inline.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
@@ -42,6 +41,7 @@
 #include "immersed_boundaries.hpp"
 #include "integrate.hpp"
 #include "interactions.hpp"
+#include "magnetostatics/dipoles.hpp"
 #include "nonbonded_interactions/VerletCriterion.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
@@ -51,11 +51,11 @@
 #include "thermostats/langevin_inline.hpp"
 #include "virtual_sites.hpp"
 
+#include <boost/variant.hpp>
+
 #include <profiler/profiler.hpp>
 
 #include <cassert>
-
-ActorList forceActors;
 
 /** Initialize the forces for a ghost particle */
 inline ParticleForce init_ghost_force(Particle const &) { return {}; }
@@ -152,18 +152,20 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
   auto particles = cell_structure.local_particles();
   auto ghost_particles = cell_structure.ghost_particles();
 #ifdef ELECTROSTATICS
-  icc_iteration(cell_structure, particles, ghost_particles);
+  if (electrostatics_extension) {
+    if (auto icc = boost::get<std::shared_ptr<ICCStar>>(
+            electrostatics_extension.get_ptr())) {
+      (**icc).iteration(cell_structure, particles, ghost_particles);
+    }
+  }
 #endif
   init_forces(particles, ghost_particles, time_step, kT);
 
-  for (auto &forceActor : forceActors) {
-    forceActor->computeForces(espresso_system);
-#ifdef ROTATION
-    forceActor->computeTorques(espresso_system);
-#endif
-  }
-
   calc_long_range_forces(particles);
+
+  auto const elc_kernel = Coulomb::pair_force_elc_kernel();
+  auto const coulomb_kernel = Coulomb::pair_force_kernel();
+  auto const dipoles_kernel = Dipoles::pair_force_kernel();
 
 #ifdef ELECTROSTATICS
   auto const coulomb_cutoff = Coulomb::cutoff(box_geo.length());
@@ -172,15 +174,23 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
 #endif
 
 #ifdef DIPOLES
-  auto const dipole_cutoff = Dipole::cutoff(box_geo.length());
+  auto const dipole_cutoff = Dipoles::cutoff(box_geo.length());
 #else
   auto const dipole_cutoff = INACTIVE_CUTOFF;
 #endif
 
   short_range_loop(
-      add_bonded_force,
-      [](Particle &p1, Particle &p2, Distance const &d) {
-        add_non_bonded_pair_force(p1, p2, d.vec21, sqrt(d.dist2), d.dist2);
+      [coulomb_kernel_ptr = coulomb_kernel.get_ptr()](
+          Particle &p1, int bond_id, Utils::Span<Particle *> partners) {
+        return add_bonded_force(p1, bond_id, partners, coulomb_kernel_ptr);
+      },
+      [coulomb_kernel_ptr = coulomb_kernel.get_ptr(),
+       dipoles_kernel_ptr = dipoles_kernel.get_ptr(),
+       elc_kernel_ptr = elc_kernel.get_ptr()](Particle &p1, Particle &p2,
+                                              Distance const &d) {
+        add_non_bonded_pair_force(p1, p2, d.vec21, sqrt(d.dist2), d.dist2,
+                                  coulomb_kernel_ptr, dipoles_kernel_ptr,
+                                  elc_kernel_ptr);
 #ifdef COLLISION_DETECTION
         if (collision_params.mode != CollisionModeType::OFF)
           detect_collision(p1, p2, d.dist2);
@@ -243,7 +253,7 @@ void calc_long_range_forces(const ParticleRange &particles) {
 
 #ifdef DIPOLES
   /* calculate k-space part of the magnetostatic interaction. */
-  Dipole::calc_long_range_force(particles);
+  Dipoles::calc_long_range_force(particles);
 #endif // DIPOLES
 }
 

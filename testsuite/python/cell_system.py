@@ -46,11 +46,12 @@ class CellSystem(ut.TestCase):
 
     @ut.skipIf(n_nodes == 1, "Skipping test: only runs for n_nodes >= 2")
     def check_node_grid(self):
+        system = self.system
         for i in range(3):
             node_grid_ref = [1, 1, 1]
             node_grid_ref[i] = self.n_nodes
-            self.system.cell_system.node_grid = node_grid_ref
-            node_grid = self.system.cell_system.get_state()['node_grid']
+            system.cell_system.node_grid = node_grid_ref
+            node_grid = system.cell_system.get_state()['node_grid']
             np.testing.assert_array_equal(node_grid, node_grid_ref)
 
     def test_exceptions(self):

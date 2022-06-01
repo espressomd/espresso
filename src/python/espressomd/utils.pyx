@@ -17,44 +17,56 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 cimport numpy as np
-cimport cython
 import numpy as np
 from libcpp.vector cimport vector
-include "myconfig.pxi"
+
+
+cdef _check_type_or_throw_except_assertion(x, t):
+    return isinstance(x, t) or (t == int and is_valid_type(x, int)) or (
+        t == float and (is_valid_type(x, int) or is_valid_type(x, float))) or (
+        t == bool and (is_valid_type(x, bool) or x in (0, 1)))
+
+
+cpdef check_array_type_or_throw_except(x, n, t, msg):
+    """
+    Check that ``x`` is of type ``t`` and that ``n`` values are given,
+    otherwise raise a ``ValueError`` with message ``msg``.
+    Integers are accepted when a float was asked for.
+
+    """
+    if not hasattr(x, "__getitem__"):
+        raise ValueError(
+            msg + f" -- A single value was given but {n} were expected.")
+    if len(x) != n:
+        raise ValueError(
+            msg + f" -- {len(x)} values were given but {n} were expected.")
+    if isinstance(x, np.ndarray):
+        value = x.dtype.type()  # default-constructed value of the same type
+        if not _check_type_or_throw_except_assertion(value, t):
+            raise ValueError(
+                msg + f" -- Array was of type {type(value).__name__}")
+        return
+    for i in range(len(x)):
+        if not _check_type_or_throw_except_assertion(x[i], t):
+            raise ValueError(
+                msg + f" -- Item {i} was of type {type(x[i]).__name__}")
+
 
 cpdef check_type_or_throw_except(x, n, t, msg):
     """
-    Checks that x is of type t and that n values are given, otherwise throws
-    ValueError with the message msg. If x is an array/list/tuple, the type
-    checking is done on the elements, and all elements are checked. Integers
-    are accepted when a float was asked for.
+    Check that ``x`` is of type ``t`` and that ``n`` values are given,
+    otherwise raise a ``ValueError`` with message ``msg``. If ``x`` is an
+    array/list/tuple, the type checking is done on the elements, and all
+    elements are checked. If ``n`` is 1, ``x`` is assumed to be a scalar.
+    Integers are accepted when a float was asked for.
 
     """
     # Check whether x is an array/list/tuple or a single value
     if n > 1:
-        if hasattr(x, "__getitem__"):
-            if len(x) != n:
-                raise ValueError(
-                    msg + f" -- {len(x)} values were given but {n} were expected.")
-            for i in range(len(x)):
-                if not (isinstance(x[i], t)
-                        or (t == float and is_valid_type(x[i], int))
-                        or (t == int and is_valid_type(x[i], int))
-                        or (t == bool and (is_valid_type(x[i], bool) or x[i] in (0, 1)))):
-                    raise ValueError(
-                        msg + f" -- Item {i} was of type {type(x[i]).__name__}")
-        else:
-            # if n>1, but the user passed a single value, also throw exception
-            raise ValueError(
-                msg + f" -- A single value was given but {n} were expected.")
+        check_array_type_or_throw_except(x, n, t, msg)
     else:
-        # N=1 and a single value
-        if not isinstance(x, t):
-            if not (isinstance(x, t)
-                    or (t == float and is_valid_type(x, int))
-                    or (t == int and is_valid_type(x, int))
-                    or (t == bool and is_valid_type(x, bool))):
-                raise ValueError(msg + f" -- Got an {type(x).__name__}")
+        if not _check_type_or_throw_except_assertion(x, t):
+            raise ValueError(msg + f" -- Got an {type(x).__name__}")
 
 
 cdef np.ndarray create_nparray_from_double_array(double * x, int len_x):
@@ -220,6 +232,7 @@ Use numpy.copy(<ESPResSo array property>) to get a writable copy."
 cdef make_array_locked(Vector3d v):
     return array_locked([v[0], v[1], v[2]])
 
+
 cdef make_array_locked_vector(vector[Vector3d] v):
     ret = np.empty((v.size(), 3))
     for i in range(v.size()):
@@ -230,6 +243,13 @@ cdef make_array_locked_vector(vector[Vector3d] v):
 
 cdef Vector3d make_Vector3d(a):
     cdef Vector3d v
+    for i, ai in enumerate(a):
+        v[i] = ai
+    return v
+
+
+cdef Vector3i make_Vector3i(a):
+    cdef Vector3i v
     for i, ai in enumerate(a):
         v[i] = ai
     return v
@@ -278,18 +298,21 @@ def nesting_level(obj):
 def is_valid_type(value, t):
     """
     Extended checks for numpy int, float and bool types.
+    Handles 0-dimensional arrays.
 
     """
     if value is None:
         return False
+    if isinstance(value, np.ndarray) and value.shape == ():
+        value = value[()]
     if t == int:
         return isinstance(value, (int, np.integer))
     elif t == float:
+        float_types = [
+            float, np.float16, np.float32, np.float64, np.longdouble]
         if hasattr(np, 'float128'):
-            return isinstance(
-                value, (float, np.float16, np.float32, np.float64, np.float128, np.longdouble))
-        return isinstance(
-            value, (float, np.float16, np.float32, np.float64, np.longdouble))
+            float_types.append(np.float128)
+        return isinstance(value, tuple(float_types))
     elif t == bool:
         return isinstance(value, (bool, np.bool, np.bool_))
     else:

@@ -1,8 +1,14 @@
-set(Scafacos_SRC Scafacos.cpp)
-add_library(Scafacos SHARED ${Scafacos_SRC})
-target_include_directories(Scafacos PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(Scafacos SYSTEM PUBLIC ${SCAFACOS_INCLUDE_DIRS})
-target_link_libraries(Scafacos PRIVATE ${SCAFACOS_LDFLAGS})
-target_link_libraries(Scafacos PUBLIC MPI::MPI_CXX PRIVATE cxx_interface)
+set(SOURCE_FILES src/Scafacos.cpp src/Coulomb.cpp src/Dipoles.cpp)
 
-install(TARGETS Scafacos DESTINATION ${PYTHON_INSTDIR}/espressomd)
+add_library(EspressoScafacos SHARED ${SOURCE_FILES})
+target_link_libraries(EspressoScafacos PRIVATE ${SCAFACOS_LDFLAGS})
+target_link_libraries(EspressoScafacos PUBLIC MPI::MPI_CXX
+                      PRIVATE cxx_interface)
+
+target_include_directories(
+  EspressoScafacos PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+                          $<INSTALL_INTERFACE:include>)
+target_include_directories(EspressoScafacos SYSTEM
+                           PUBLIC ${SCAFACOS_INCLUDE_DIRS})
+
+install(TARGETS EspressoScafacos DESTINATION ${PYTHON_INSTDIR}/espressomd)

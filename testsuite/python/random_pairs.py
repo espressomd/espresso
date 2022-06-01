@@ -19,8 +19,7 @@ import espressomd
 import numpy as np
 import itertools
 import collections
-
-from tests_common import check_non_bonded_loop_trace
+import tests_common
 
 
 class RandomPairTest(ut.TestCase):
@@ -92,7 +91,7 @@ class RandomPairTest(ut.TestCase):
     def test(self):
         periods = [0, 1]
         self.system.periodicity = [True, True, True]
-        check_non_bonded_loop_trace(self.system)
+        tests_common.check_non_bonded_loop_trace(self, self.system)
 
         for periodicity in itertools.product(periods, periods, periods):
             self.system.periodicity = periodicity

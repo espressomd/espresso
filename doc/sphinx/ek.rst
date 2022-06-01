@@ -157,7 +157,7 @@ Initialization
 
 The above is a minimal example how to initialize the LB fluid, and
 it is very similar to the lattice-Boltzmann command in set-up. We
-therefore refer the reader to Chapter :ref:`Lattice-Boltzmann` for details on the
+therefore refer the reader to chapter :ref:`Lattice-Boltzmann` for details on the
 implementation of LB in |es| and describe only the major differences here.
 
 To set up a proper LB fluid using this command one has to specify at
@@ -222,12 +222,14 @@ By default the fluctuations are turned off.
     before, the LB density is completely decoupled from the electrokinetic
     densities. This has the advantage that greater freedom can be achieved
     in matching the internal parameters to an experimental system. Moreover,
-    it is possible to choose parameters for which the LB is more stable. The species can be added to a LB fluid::
+    it is possible to choose parameters for which the LB is more stable.
+    The species can be added to a LB fluid::
 
         ek.add_species(species)
 
     One can also add the species during the initialization step of the
-    :class:`espressomd.electrokinetics.Electrokinetics` by defining the list variable ``species``::
+    :class:`~espressomd.electrokinetics.Electrokinetics` class by defining
+    the list variable ``species``::
 
         ek = espressomd.electrokinetics.Electrokinetics(species=[species], ...)
 

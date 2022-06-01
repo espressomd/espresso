@@ -19,11 +19,10 @@ import unittest_decorators as utx
 import espressomd
 import numpy as np
 import espressomd.electrostatics
+import espressomd.code_info
 
 
-@utx.skipIfMissingFeatures(["P3M"])
-class ELC_vs_analytic(ut.TestCase):
-    # Handle to espresso system
+class Test:
     box_l = 200.
     system = espressomd.System(box_l=[box_l, box_l, box_l])
     accuracy = 1e-7
@@ -34,14 +33,16 @@ class ELC_vs_analytic(ut.TestCase):
     delta_mid_bot = 39. / 41.
     distance = 1.
 
-    number_samples = 6 if '@WITH_COVERAGE@' == 'ON' else 12
     minimum_distance_to_wall = 0.1
     zPos = np.linspace(
         minimum_distance_to_wall,
         box_l - minimum_distance_to_wall - distance,
-        number_samples)
+        6 if espressomd.code_info.build_type() == "Coverage" else 12)
     q = np.arange(-5.0, 5.1, 2.5)
-    prefactor = 2.0
+
+    def tearDown(self):
+        self.system.part.clear()
+        self.system.actors.clear()
 
     def test_elc(self):
         """
@@ -57,34 +58,33 @@ class ELC_vs_analytic(ut.TestCase):
         self.system.cell_system.set_regular_decomposition(
             use_verlet_lists=True)
         self.system.periodicity = [1, 1, 1]
-        p3m = espressomd.electrostatics.P3M(prefactor=self.prefactor,
-                                            accuracy=self.accuracy,
-                                            mesh=[58, 58, 70],
-                                            cao=4)
-        elc = espressomd.electrostatics.ELC(p3m_actor=p3m,
+        prefactor = 2.0
+        p3m = self.p3m_class(prefactor=prefactor, accuracy=self.accuracy,
+                             mesh=[58, 58, 70], cao=4)
+        elc = espressomd.electrostatics.ELC(actor=p3m,
                                             gap_size=self.elc_gap,
                                             maxPWerror=self.accuracy,
                                             delta_mid_bot=self.delta_mid_bot,
                                             delta_mid_top=self.delta_mid_top)
         self.system.actors.add(elc)
 
-        elc_results = self.scan()
+        elc_forces, elc_energy = self.scan()
 
         # ANALYTIC SOLUTION
-        charge_reshaped = self.prefactor * np.square(self.q.reshape(-1, 1))
-        analytic_force = charge_reshaped * (1 / self.distance ** 2 + self.delta_mid_bot * (
+        charge_reshaped = prefactor * np.square(self.q.reshape(-1, 1))
+        analytic_forces = charge_reshaped * (1 / self.distance ** 2 + self.delta_mid_bot * (
             1 / np.square(2 * self.zPos) - 1 / np.square(2 * self.zPos + self.distance)))
         analytic_energy = charge_reshaped * (-1 / self.distance + self.delta_mid_bot * (1 / (
             4 * self.zPos) - 1 / (2 * self.zPos + self.distance) + 1 / (4 * (self.zPos + self.distance))))
 
-        analytic_results = np.dstack((analytic_force, analytic_energy))
-
-        np.testing.assert_allclose(
-            elc_results, analytic_results, rtol=0, atol=self.check_accuracy)
+        np.testing.assert_allclose(elc_energy, analytic_energy, atol=1e-4)
+        np.testing.assert_allclose(elc_forces, analytic_forces, atol=1e-4,
+                                   rtol=self.rtol)
 
     def scan(self):
         p1, p2 = self.system.part.all()
-        result_array = np.empty((len(self.q), len(self.zPos), 2))
+        elc_forces = np.empty((len(self.q), len(self.zPos)))
+        elc_energy = np.empty(elc_forces.shape)
         for chargeIndex, charge in enumerate(self.q):
             p1.q = charge
             p2.q = -charge
@@ -94,10 +94,25 @@ class ELC_vs_analytic(ut.TestCase):
                 p2.pos = [pos[0], pos[1], z + self.distance]
 
                 self.system.integrator.run(0)
-                result_array[chargeIndex, i, 0] = p1.f[2]
-                result_array[chargeIndex, i, 1] = self.system.analysis.energy()[
+                elc_forces[chargeIndex, i] = p1.f[2]
+                elc_energy[chargeIndex, i] = self.system.analysis.energy()[
                     "total"]
-        return result_array
+        return elc_forces, elc_energy
+
+
+@utx.skipIfMissingFeatures(["P3M"])
+class TestCPU(Test, ut.TestCase):
+
+    p3m_class = espressomd.electrostatics.P3M
+    rtol = 1e-7
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["P3M"])
+class TestGPU(Test, ut.TestCase):
+
+    p3m_class = espressomd.electrostatics.P3MGPU
+    rtol = 4e-6
 
 
 if __name__ == "__main__":

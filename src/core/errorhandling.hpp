@@ -102,7 +102,10 @@ RuntimeErrorStream _runtimeMessageStream(RuntimeError::ErrorLevel level,
       ErrorHandling::RuntimeError::ErrorLevel::WARNING, __FILE__, __LINE__,    \
       PRETTY_FUNCTION_EXTENSION)
 
+/** @brief Gather messages on main rank. Only call from main rank. */
 std::vector<RuntimeError> mpi_gather_runtime_errors();
+/** @brief Gather messages on main rank. Call on all ranks. */
+std::vector<RuntimeError> mpi_gather_runtime_errors_all(bool is_head_node);
 
 } // namespace ErrorHandling
 

@@ -18,7 +18,6 @@
 #
 import espressomd
 import espressomd.magnetostatics
-import espressomd.magnetostatic_extensions
 import pathlib
 import numpy as np
 import unittest as ut
@@ -48,6 +47,10 @@ class dds(ut.TestCase):
 
         dds_cpu = espressomd.magnetostatics.DipolarDirectSumGpu(prefactor=1.2)
         system.actors.add(dds_cpu)
+        # check MD cell reset has no impact
+        self.system.box_l = self.system.box_l
+        self.system.periodicity = self.system.periodicity
+        self.system.cell_system.node_grid = self.system.cell_system.node_grid
 
         system.integrator.run(steps=0, recalc_forces=True)
         ref_e = system.analysis.energy()["dipolar"]
@@ -63,6 +66,10 @@ class dds(ut.TestCase):
 
         dds_cpu = espressomd.magnetostatics.DipolarDirectSumCpu(prefactor=1.2)
         system.actors.add(dds_cpu)
+        # check MD cell reset has no impact
+        self.system.box_l = self.system.box_l
+        self.system.periodicity = self.system.periodicity
+        self.system.cell_system.node_grid = self.system.cell_system.node_grid
 
         system.integrator.run(steps=0, recalc_forces=True)
         ref_e = system.analysis.energy()["dipolar"]
@@ -79,6 +86,10 @@ class dds(ut.TestCase):
         dds_cpu = espressomd.magnetostatics.DipolarDirectSumWithReplicaCpu(
             prefactor=1.2, n_replica=0)
         system.actors.add(dds_cpu)
+        # check MD cell reset has no impact
+        self.system.box_l = self.system.box_l
+        self.system.periodicity = self.system.periodicity
+        self.system.cell_system.node_grid = self.system.cell_system.node_grid
 
         system.integrator.run(steps=0, recalc_forces=True)
         ref_e = system.analysis.energy()["dipolar"]
@@ -200,9 +211,8 @@ class dds(ut.TestCase):
             force_tol=1E-4,
             torque_tol=1E-4)
 
-    @ut.skipIf(not espressomd.has_features("SCAFACOS_DIPOLES") or
-               "direct" not in espressomd.scafacos.available_methods(),
-               "Skipping test: missing SCAFACOS_DIPOLES or 'direct' method")
+    @utx.skipIfMissingFeatures(["SCAFACOS_DIPOLES"])
+    @utx.skipIfMissingScafacosMethod("direct")
     def test_dds_scafacos(self):
         self.check_open_bc(
             self.fcs_data,

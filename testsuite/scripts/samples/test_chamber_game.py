@@ -23,7 +23,7 @@ def disable_GUI(code):
     breakpoint = "while True:"
     assert breakpoint in code
     code = code.replace(breakpoint, "for _ in range(10):", 1)
-    breakpoint = "t = Thread(target=main)"
+    breakpoint = "t = threading.Thread(target=main)"
     assert breakpoint in code
     code = code.split(breakpoint, 1)[0] + "main()"
     return code

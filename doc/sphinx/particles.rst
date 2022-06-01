@@ -68,12 +68,24 @@ For example, to print the particle's current position, call::
 
     print(p.pos)
 
+.. _Modifying particle properties:
+
+Modifying particle properties
+-----------------------------
+
 Similarly, the position can be set::
 
     p.pos = [1., 2.5, 3.]
 
 Not all properties are writeable. For example, properties that are
 automatically derived from other properties are read-only attributes.
+
+Please note that changing a particle property will not affect the ghost
+particles until after the next integration loop. This can be an issue for
+certain methods like :meth:`espressomd.system.System.distance` which use
+the old ghost information, while other methods like particle-based analysis
+tools and :meth:`espressomd.cell_system.CellSystem.get_neighbors` update the
+ghost information before calculating the observable.
 
 .. _Vectorial properties:
 

@@ -42,5 +42,5 @@ cdef extern from "object-in-fluid/oif_global_forces.hpp":
     void mpi_set_max_oif_objects(int max_oif_objects)
 
 cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
-    extern double min_global_cut
+    double get_min_global_cut()
     void mpi_set_min_global_cut(double min_global_cut)

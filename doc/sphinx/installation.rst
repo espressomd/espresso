@@ -840,8 +840,8 @@ instrumentation:
     cmake . -DCMAKE_BUILD_TYPE=Debug
     make -j
 
-The resulting build with be quite slow but will enable many debugging tools.
-For details, please refer to chapter :ref:`Debugging es`.
+The resulting build will be quite slow but will allow many debugging tools
+to be used. For details, please refer to chapter :ref:`Debugging es`.
 
 If you are dealing with a segmentation fault or undefined behavior, and GDB
 doesn't help or is too cumbersome to use (e.g. in MPI-parallel simulations),

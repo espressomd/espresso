@@ -678,7 +678,7 @@ class LeesEdwards(ut.TestCase):
         system.lees_edwards.shear_direction = 2
         system.lees_edwards.shear_plane_normal = 0
         system.integrator.run(1, recalc_forces=True)
-        tests_common.check_non_bonded_loop_trace(system)
+        tests_common.check_non_bonded_loop_trace(self, system)
 
         # Rewind the clock to get back the LE offset applied during force calc
         system.time = system.time - system.time_step
@@ -686,7 +686,7 @@ class LeesEdwards(ut.TestCase):
 
         system.thermostat.set_langevin(kT=.1, gamma=5, seed=2)
         system.integrator.run(50)
-        tests_common.check_non_bonded_loop_trace(system)
+        tests_common.check_non_bonded_loop_trace(self, system)
 
 
 if __name__ == "__main__":

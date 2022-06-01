@@ -38,6 +38,9 @@ class CoulombCloudWall(ut.TestCase):
         tests_common.data_path("coulomb_cloud_wall_duplicated_system.data"))
 
     tolerance = 1E-3
+    p3m_params = {'prefactor': 1., 'r_cut': 1.001, 'accuracy': 1e-3,
+                  'mesh': [64, 64, 128], 'mesh_off': [0.5, 0.5, 0.5],
+                  'cao': 7, 'alpha': 2.70746}
 
     # Reference energy from p3m in the tcl test case
     reference_energy = 2. * 148.94229549
@@ -74,23 +77,14 @@ class CoulombCloudWall(ut.TestCase):
     @utx.skipIfMissingFeatures("P3M")
     def test_p3m(self):
         self.system.actors.add(
-            espressomd.electrostatics.P3M(
-                prefactor=1, r_cut=1.001, accuracy=1e-3,
-                mesh=[64, 64, 128], cao=7, alpha=2.70746, tune=False))
+            espressomd.electrostatics.P3M(**self.p3m_params, tune=False))
         self.system.integrator.run(0)
         self.compare("p3m", energy=True)
 
     @utx.skipIfMissingGPU()
     def test_p3m_gpu(self):
         self.system.actors.add(
-            espressomd.electrostatics.P3MGPU(
-                prefactor=1,
-                r_cut=1.001,
-                accuracy=1e-3,
-                mesh=[64, 64, 128],
-                cao=7,
-                alpha=2.70746,
-                tune=False))
+            espressomd.electrostatics.P3MGPU(**self.p3m_params, tune=False))
         self.system.integrator.run(0)
         self.compare("p3m_gpu", energy=False)
 

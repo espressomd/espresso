@@ -25,9 +25,104 @@ Testmodule for the actor base class.
 import unittest as ut
 import espressomd.actors
 import espressomd.highlander
+import espressomd.utils as utils
 
 
-class TestActor(espressomd.actors.Actor):
+class BaseActor:
+
+    """
+    Abstract base class for interactions affecting particles in the system,
+    such as LB fluids. Derived classes must implement the interface to the
+    relevant core objects and global variables.
+    """
+
+    # Keys in active_list have to match the method name.
+    active_list = dict(HydrodynamicInteraction=False)
+
+    def __init__(self, **kwargs):
+        self._isactive = False
+        utils.check_valid_keys(self.valid_keys(), kwargs.keys())
+        utils.check_required_keys(self.required_keys(), kwargs.keys())
+        self._params = self.default_params()
+        self._params.update(kwargs)
+
+    def _activate(self):
+        inter = self._get_interaction_type()
+        if inter in BaseActor.active_list:
+            if BaseActor.active_list[inter]:
+                raise espressomd.highlander.ThereCanOnlyBeOne(
+                    self.__class__.__bases__[0])
+            BaseActor.active_list[inter] = True
+
+        self.validate_params()
+        self._activate_method()
+        utils.handle_errors("Activation of an actor")
+        self._isactive = True
+
+    def _deactivate(self):
+        self._deactivate_method()
+        utils.handle_errors("Deactivation of an actor")
+        self._isactive = False
+        inter = self._get_interaction_type()
+        if inter in BaseActor.active_list:
+            if not BaseActor.active_list[inter]:
+                raise Exception(
+                    f"Class not registered in Actor.active_list: {self.__class__.__bases__[0].__name__}")
+            BaseActor.active_list[inter] = False
+
+    def is_valid(self):
+        """
+        Check if the data stored in this instance still matches the
+        corresponding data in the core.
+        """
+        return self._params == self._get_params_from_es_core()
+
+    def get_params(self):
+        """Get interaction parameters"""
+        # If this instance refers to an actual interaction defined in the es
+        # core, load current parameters from there
+        if self.is_active():
+            update = self._get_params_from_es_core()
+            self._params.update(update)
+        return self._params
+
+    def set_params(self, **p):
+        """Update the given parameters."""
+        # Check if keys are valid
+        utils.check_valid_keys(self.valid_keys(), p.keys())
+
+        # When an interaction is newly activated, all required keys must be
+        # given
+        if not self.is_active():
+            utils.check_required_keys(self.required_keys(), p.keys())
+
+        self._params.update(p)
+        # validate updated parameters
+        self.validate_params()
+        # Put in values given by the user
+        if self.is_active():
+            self._set_params_in_es_core()
+
+    def __str__(self):
+        return f"{self.__class__.__name__}({self.get_params()})"
+
+    def _get_interaction_type(self):
+        bases = self.class_lookup(self.__class__)
+        for i in range(len(bases)):
+            if bases[i].__name__ in BaseActor.active_list:
+                return bases[i].__name__
+
+    def class_lookup(self, cls):
+        c = list(cls.__bases__)
+        for base in c:
+            c.extend(self.class_lookup(base))
+        return c
+
+    def is_active(self):
+        return self._isactive
+
+
+class TestActor(BaseActor):
 
     def __init__(self, *args, **kwargs):
         self._core_args = None
@@ -68,7 +163,6 @@ class ActorTest(ut.TestCase):
         a = TestActor(a=False, c=False)
         self.assertFalse(a.is_active())
         self.assertEqual(a.get_params(), a.default_params())
-        self.assertEqual(a.system, None)
 
     def test_params_non_active(self):
         a = TestActor(a=True, c=True)

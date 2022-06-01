@@ -18,35 +18,50 @@ import pathlib
 import numpy as np
 
 
-def assert_params_match(ut_obj, inParams, outParams, msg_long=None):
+def is_float(value):
+    float_types = (float, np.float16, np.float32, np.float64, np.longdouble)
+    if hasattr(np, 'float128'):
+        float_types = float_types + (np.float128,)
+    return isinstance(value, float_types)
+
+
+def is_array(value):
+    return isinstance(value, (list, tuple, np.ndarray))
+
+
+def assert_params_match(ut_obj, inParams, outParams, msg_long=""):
     """Check if the parameters set and gotten back match.
     Only check keys present in ``inParams``.
     """
     if msg_long:
         msg_long = "\n" + msg_long
-    else:
-        msg_long = ""
 
-    for k in inParams.keys():
+    for k, value_in in inParams.items():
         ut_obj.assertIn(k, outParams)
-        if isinstance(inParams[k], float):
-            ut_obj.assertAlmostEqual(
-                outParams[k], inParams[k], delta=1E-14,
-                msg=f"Mismatching parameter {k!r}{msg_long}")
+        value_out = outParams[k]
+        msg = f"Mismatching parameter {k!r}{msg_long}"
+        if is_array(value_out) or is_array(value_in):
+            value_out = np.copy(value_out)
+            value_in = np.copy(value_in)
+            if is_float(value_in[0]) or is_float(value_out[0]):
+                np.testing.assert_allclose(
+                    value_out, value_in, atol=1e-14, err_msg=msg)
+            else:
+                np.testing.assert_array_equal(value_out, value_in, err_msg=msg)
+        elif is_float(value_in) or is_float(value_out):
+            ut_obj.assertAlmostEqual(value_out, value_in, delta=1e-14, msg=msg)
         else:
-            ut_obj.assertEqual(
-                outParams[k], inParams[k],
-                msg=f"Mismatching parameter {k!r}{msg_long}")
+            ut_obj.assertEqual(value_out, value_in, msg=msg)
 
 
-def generate_test_for_class(_system, _interClass, _params):
-    """Generates test cases for checking interaction parameters set and gotten back
-    from Es actually match. Only keys which are present in _params are checked
-    1st: Interaction parameters as dictionary, i.e., ``{"k": 1., "r_0": 0}``
-    2nd: Name of the interaction property to set (i.e. ``"P3M"``)
+def generate_test_for_actor_class(_system, _class_actor, _params):
     """
-    params = _params
-    interClass = _interClass
+    Generate a test case for an actor to verify parameters in the interface
+    and the core match.
+    Only keys which are present in ``_params`` are checked.
+    """
+    params_in = _params
+    class_actor = _class_actor
     system = _system
 
     def func(self):
@@ -54,16 +69,15 @@ def generate_test_for_class(_system, _interClass, _params):
         # It will use the state of the variables in the outer function,
         # which was there, when the outer function was called
 
-        # set Parameter
-        Inter = interClass(**params)
-        Inter.validate_params()
-        system.actors.add(Inter)
-        # Read them out again
-        outParams = Inter.get_params()
-        del system.actors[0]
+        # set parameters
+        actor = class_actor(**params_in)
+        system.actors.add(actor)
+        # read them out again
+        params_out = {key: getattr(actor, key) for key in params_in}
+        system.actors.remove(actor)
 
-        assert_params_match(self, params, outParams,
-                            f"Parameters set {params} vs. {outParams}")
+        assert_params_match(self, params_in, params_out,
+                            msg_long=f"Parameters set {params_in} vs. {params_out}")
 
     return func
 
@@ -262,6 +276,8 @@ def get_histogram(pos, obs_params, coord_system, **kwargs):
         Bins and bin edges.
 
     """
+    assert coord_system in ('cartesian', 'cylindrical'), \
+        f"Unknown coord system '{coord_system}'"
     if coord_system == 'cartesian':
         bins = (obs_params['n_x_bins'],
                 obs_params['n_y_bins'],
@@ -276,8 +292,6 @@ def get_histogram(pos, obs_params, coord_system, **kwargs):
         extent = [(obs_params['min_r'], obs_params['max_r']),
                   (obs_params['min_phi'], obs_params['max_phi']),
                   (obs_params['min_z'], obs_params['max_z'])]
-    else:
-        raise ValueError(f"Unknown coord system '{coord_system}'")
     return np.histogramdd(pos, bins=bins, range=extent, **kwargs)
 
 
@@ -370,7 +384,7 @@ def random_dipoles(n_particles):
     return dip
 
 
-def check_non_bonded_loop_trace(system):
+def check_non_bonded_loop_trace(ut_obj, system, cutoff=None):
     """Validates that the distances used by the non-bonded loop
     match with the minimum image distance accessible by Python,
     checks that no pairs are lost or double-counted.
@@ -380,7 +394,8 @@ def check_non_bonded_loop_trace(system):
     # format [id1, id2, pos1, pos2, vec2, mpi_node]
 
     distance_vec = system.distance_vec
-    cutoff = system.cell_system.max_cut_nonbonded
+    if cutoff is None:
+        cutoff = system.cell_system.max_cut_nonbonded
 
     # Distance for all pairs of particles obtained by Python
     py_distances = {}
@@ -389,10 +404,13 @@ def check_non_bonded_loop_trace(system):
 
     # Go through pairs found by the non-bonded loop and check distance
     for p in cs_pairs:
-        # p is a tuple with (id1,id2,pos1,pos2,vec21)
+        # p is a tuple with (id1, id2, pos1, pos2, vec21, mpi_node)
         # Note that system.distance_vec uses the opposite sign convention
         # as the minimum image distance in the core
-
+        ut_obj.assertTrue(
+            (p[0], p[1]) in py_distances or
+            (p[1], p[0]) in py_distances,
+            msg=f"Extra pair from core {p}")
         if (p[0], p[1]) in py_distances:
             np.testing.assert_allclose(
                 np.copy(p[4]), -py_distances[p[0], p[1]])
@@ -401,9 +419,7 @@ def check_non_bonded_loop_trace(system):
             np.testing.assert_allclose(
                 np.copy(p[4]), py_distances[p[1], p[0]])
             del py_distances[p[1], p[0]]
-        else:
-            raise Exception("Extra pair from core", p)
 
     for ids, dist in py_distances.items():
-        if np.linalg.norm(dist) < cutoff:
-            raise Exception("Pair not found by the core", ids)
+        ut_obj.assertGreaterEqual(np.linalg.norm(dist), cutoff,
+                                  msg=f"Pair not found by the core {ids}")

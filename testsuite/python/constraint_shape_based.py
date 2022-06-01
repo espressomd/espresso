@@ -105,7 +105,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
             cyl_transform_params=ctp, r1=R1, r2=R2, thickness=D, length=LENGTH)
         for y in y_vals:
             dist = shape.calc_distance(position=[0.0, y, z(y, R1, R2, LENGTH)])
-            self.assertAlmostEqual(dist[0], -0.5 * D)  
+            self.assertAlmostEqual(dist[0], -0.5 * D)
 
         # check sign of dist
         shape = espressomd.shapes.HollowConicalFrustum(
@@ -190,12 +190,12 @@ class ShapeBasedConstraintTest(ut.TestCase):
             r2=0,
             thickness=0.,
             length=LENGTH,
-            central_angle=np.pi)      
+            central_angle=np.pi)
         # with this setup, the edges coincide with the xy angle bisectors
 
         # point inside LENGTH
         probe_pos = [LENGTH / 2., LENGTH / 2., 5]
-        d_vec_expected = np.array([0, 0, 5]) 
+        d_vec_expected = np.array([0, 0, 5])
         dist = shape.calc_distance(position=probe_pos)
         self.assertAlmostEqual(dist[0], np.linalg.norm(d_vec_expected))
         np.testing.assert_array_almost_equal(d_vec_expected, np.copy(dist[1]))

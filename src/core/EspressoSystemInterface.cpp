@@ -50,6 +50,16 @@ void EspressoSystemInterface::enableParticleCommunication() {
     }
   }
 }
+
+void EspressoSystemInterface::enableParticleCommunicationParallel() {
+  if (m_gpu) {
+    if (!gpu_get_global_particle_vars_pointer_host()->communication_enabled) {
+      gpu_init_particle_comm(this_node);
+      cuda_bcast_global_part_params_parallel();
+      reallocDeviceMemory(gpu_get_particle_pointer().size());
+    }
+  }
+}
 #endif
 
 void EspressoSystemInterface::init() { gatherParticles(); }

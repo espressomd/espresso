@@ -35,7 +35,6 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <stdexcept>
 #include <vector>
 
 namespace detail {
@@ -577,27 +576,12 @@ public:
   auto &rattle_params() { return rattle; }
 #endif
 
-  Utils::compact_vector<int> &exclusions() {
 #ifdef EXCLUSIONS
-    return el;
-#else
-    throw std::runtime_error{"Exclusions not enabled."};
-#endif
-  }
-
-  Utils::compact_vector<int> const &exclusions() const {
-#ifdef EXCLUSIONS
-    return el;
-#else
-    throw std::runtime_error{"Exclusions not enabled."};
-#endif
-  }
-
-#ifdef EXCLUSIONS
+  Utils::compact_vector<int> &exclusions() { return el; }
+  Utils::compact_vector<int> const &exclusions() const { return el; }
   std::vector<int> const exclusions_as_vector() const {
     return {el.begin(), el.end()};
   }
-
   bool has_exclusion(int pid) const {
     return std::find(el.begin(), el.end(), pid) != el.end();
   }

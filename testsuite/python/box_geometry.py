@@ -36,7 +36,7 @@ class BoxGeometry(ut.TestCase):
             # the box length should not be updated
             np.testing.assert_equal(self.box_l, np.copy(self.system.box_l))
 
-        with self.assertRaisesRegex(Exception, 'Box length must be of length 3'):
+        with self.assertRaisesRegex(ValueError, 'box_l must be an array_like of 3 floats'):
             self.system.box_l = self.box_l[:2]
 
     def test_periodicity(self):
@@ -50,7 +50,7 @@ class BoxGeometry(ut.TestCase):
         default_periodicity = (True, True, True)
         self.system.periodicity = default_periodicity
 
-        with self.assertRaisesRegex(Exception, 'periodicity must be of length 3'):
+        with self.assertRaisesRegex(ValueError, 'periodicity must be an array_like of 3 bools'):
             self.system.periodicity = (True, True)
 
         # the periodicity should not be updated

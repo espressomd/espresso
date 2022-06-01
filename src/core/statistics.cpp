@@ -53,7 +53,7 @@ double mindist(PartCfg &partCfg, const std::vector<int> &set1,
                const std::vector<int> &set2) {
   using Utils::contains;
 
-  auto mindist2 = std::numeric_limits<double>::infinity();
+  auto mindist_sq = std::numeric_limits<double>::infinity();
 
   for (auto jt = partCfg.begin(); jt != partCfg.end(); ++jt) {
     /* check which sets particle j belongs to (bit 0: set1, bit1: set2) */
@@ -70,11 +70,11 @@ double mindist(PartCfg &partCfg, const std::vector<int> &set1,
        * versa. */
       if (((in_set & 1u) && (set2.empty() || contains(set2, it->type()))) ||
           ((in_set & 2u) && (set1.empty() || contains(set1, it->type()))))
-        mindist2 = std::min(
-            mindist2, box_geo.get_mi_vector(jt->pos(), it->pos()).norm2());
+        mindist_sq = std::min(
+            mindist_sq, box_geo.get_mi_vector(jt->pos(), it->pos()).norm2());
   }
 
-  return std::sqrt(mindist2);
+  return std::sqrt(mindist_sq);
 }
 
 static Utils::Vector3d mpi_particle_momentum_local() {
@@ -165,42 +165,18 @@ void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix) {
 }
 
 std::vector<int> nbhood(PartCfg &partCfg, const Utils::Vector3d &pos,
-                        double r_catch, const Utils::Vector3i &planedims) {
+                        double dist) {
   std::vector<int> ids;
-
-  auto const r2 = r_catch * r_catch;
-  auto const pt = Utils::Vector3d{pos[0], pos[1], pos[2]};
-
-  Utils::Vector3d d;
+  auto const dist_sq = dist * dist;
 
   for (auto const &p : partCfg) {
-    if ((planedims[0] + planedims[1] + planedims[2]) == 3) {
-      d = box_geo.get_mi_vector(pt, p.pos());
-    } else {
-      /* Calculate the in plane distance */
-      for (int j = 0; j < 3; j++) {
-        d[j] = planedims[j] * (p.pos()[j] - pt[j]);
-      }
-    }
-
-    if (d.norm2() < r2) {
+    auto const r_sq = box_geo.get_mi_vector(pos, p.pos()).norm2();
+    if (r_sq < dist_sq) {
       ids.push_back(p.id());
     }
   }
 
   return ids;
-}
-
-double distto(PartCfg &partCfg, const Utils::Vector3d pos, int pid) {
-  auto mindist = std::numeric_limits<double>::infinity();
-
-  for (auto const &part : partCfg) {
-    if (pid != part.id()) {
-      auto const d = box_geo.get_mi_vector(pos, part.pos());
-      mindist = std::min(mindist, d.norm2());
-    }
-  }
-  return std::sqrt(mindist);
 }
 
 void calc_part_distribution(PartCfg &partCfg, std::vector<int> const &p1_types,

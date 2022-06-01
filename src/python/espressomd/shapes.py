@@ -260,8 +260,16 @@ class Union(Shape, ScriptObjectList):
     This shape represents a union of shapes where the distance to the union
     is defined by the smallest distance to any shape contained in the union.
 
+    Methods
+    -------
+    size()
+        Number of shapes contained in the union.
+    clear()
+        Remove all shapes from the union.
+
     """
     _so_name = "Shapes::Union"
+    _so_bind_methods = Shape._so_bind_methods + ("size", "empty", "clear")
 
     def add(self, shape):
         """
@@ -307,17 +315,3 @@ class Union(Shape, ScriptObjectList):
                 _remove(self, s)
         else:
             _remove(self, shape)
-
-    def clear(self):
-        """
-        Remove all shapes from the union.
-
-        """
-        self.call_method("clear")
-
-    def size(self):
-        """
-        Number of shapes contained in the union.
-
-        """
-        return self.call_method("size")

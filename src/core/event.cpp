@@ -34,14 +34,15 @@
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
-#include "electrostatics_magnetostatics/coulomb.hpp"
-#include "electrostatics_magnetostatics/dipole.hpp"
+#include "electrostatics/coulomb.hpp"
+#include "electrostatics/icc.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "immersed_boundaries.hpp"
 #include "integrate.hpp"
 #include "interactions.hpp"
+#include "magnetostatics/dipoles.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "partCfg_global.hpp"
@@ -49,18 +50,20 @@
 #include "thermostat.hpp"
 #include "virtual_sites.hpp"
 
-#ifdef SCAFACOS
-#include "electrostatics_magnetostatics/scafacos.hpp"
-#endif
-
 #include <utils/mpi/all_compare.hpp>
 
 #include <mpi.h>
 
 /** whether the thermostat has to be reinitialized before integration */
 static bool reinit_thermo = true;
+#ifdef ELECTROSTATICS
+/** whether electrostatics actor has to be reinitialized on observable calc */
 static bool reinit_electrostatics = false;
+#endif
+#ifdef DIPOLES
+/** whether magnetostatics actor has to be reinitialized on observable calc */
 static bool reinit_magnetostatics = false;
+#endif
 
 #if defined(OPEN_MPI) &&                                                       \
     (OMPI_MAJOR_VERSION == 2 && OMPI_MINOR_VERSION <= 1 ||                     \
@@ -106,9 +109,7 @@ void on_integration_start(double time_step) {
 #ifdef NPT
   integrator_npt_sanity_checks();
 #endif
-  if (long_range_interactions_sanity_checks()) {
-    runtimeErrorMsg() << "Long-range interactions returned an error.";
-  }
+  long_range_interactions_sanity_checks();
   lb_lbfluid_sanity_checks(time_step);
 
   /********************************************/
@@ -140,12 +141,20 @@ void on_integration_start(double time_step) {
   }
 #ifndef OPENMPI_BUG_MPI_ALLOC_MEM
 #ifdef ELECTROSTATICS
-  if (!Utils::Mpi::all_compare(comm_cart, coulomb.method))
-    runtimeErrorMsg() << "Nodes disagree about Coulomb long range method";
+  {
+    auto const &actor = electrostatics_actor;
+    if (!Utils::Mpi::all_compare(comm_cart, static_cast<bool>(actor)) or
+        (actor and !Utils::Mpi::all_compare(comm_cart, (*actor).which())))
+      runtimeErrorMsg() << "Nodes disagree about Coulomb long-range method";
+  }
 #endif
 #ifdef DIPOLES
-  if (!Utils::Mpi::all_compare(comm_cart, dipole.method))
-    runtimeErrorMsg() << "Nodes disagree about dipolar long range method";
+  {
+    auto const &actor = magnetostatics_actor;
+    if (!Utils::Mpi::all_compare(comm_cart, static_cast<bool>(actor)) or
+        (actor and !Utils::Mpi::all_compare(comm_cart, (*actor).which())))
+      runtimeErrorMsg() << "Nodes disagree about dipolar long-range method";
+  }
 #endif
 #endif
 #endif /* ADDITIONAL_CHECKS */
@@ -167,7 +176,7 @@ void on_observable_calc() {
 
 #ifdef DIPOLES
   if (reinit_magnetostatics) {
-    Dipole::on_observable_calc();
+    Dipoles::on_observable_calc();
     reinit_magnetostatics = false;
   }
 #endif /* DIPOLES */
@@ -176,7 +185,9 @@ void on_observable_calc() {
 }
 
 void on_particle_charge_change() {
+#ifdef ELECTROSTATICS
   reinit_electrostatics = true;
+#endif
 
   /* the particle information is no longer valid */
   partCfg().invalidate();
@@ -189,8 +200,12 @@ void on_particle_change() {
   } else {
     cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
   }
+#ifdef ELECTROSTATICS
   reinit_electrostatics = true;
+#endif
+#ifdef DIPOLES
   reinit_magnetostatics = true;
+#endif
   recalc_forces = true;
 
   /* the particle information is no longer valid */
@@ -200,27 +215,36 @@ void on_particle_change() {
   invalidate_fetch_cache();
 }
 
-void on_coulomb_change() {
-
+void on_coulomb_and_dipoles_change() {
 #ifdef ELECTROSTATICS
+  reinit_electrostatics = true;
   Coulomb::on_coulomb_change();
-#endif /* ELECTROSTATICS */
-
+#endif
 #ifdef DIPOLES
-  Dipole::on_coulomb_change();
-#endif /* ifdef DIPOLES */
-
-  /* all Coulomb methods have a short range part, aka near field
-     correction. Even in case of switching off, we should call this,
-     since the required cutoff might have reduced. */
+  reinit_magnetostatics = true;
+  Dipoles::on_dipoles_change();
+#endif
   on_short_range_ia_change();
+}
 
-  recalc_forces = true;
+void on_coulomb_change() {
+#ifdef ELECTROSTATICS
+  reinit_electrostatics = true;
+  Coulomb::on_coulomb_change();
+#endif
+  on_short_range_ia_change();
+}
+
+void on_dipoles_change() {
+#ifdef DIPOLES
+  reinit_magnetostatics = true;
+  Dipoles::on_dipoles_change();
+#endif
+  on_short_range_ia_change();
 }
 
 void on_short_range_ia_change() {
   cells_re_init(cell_structure.decomposition_type());
-
   recalc_forces = true;
 }
 
@@ -241,7 +265,7 @@ void on_boxl_change(bool skip_method_adaption) {
 #endif
 
 #ifdef DIPOLES
-    Dipole::on_boxl_change();
+    Dipoles::on_boxl_change();
 #endif
 
     lb_lbfluid_init();
@@ -255,12 +279,13 @@ void on_cell_structure_change() {
    * Most ES methods need to reinitialize, as they depend on skin,
    * node grid and so on. */
 #ifdef ELECTROSTATICS
-  Coulomb::init();
-#endif /* ifdef ELECTROSTATICS */
+  Coulomb::on_cell_structure_change();
+#endif
 
 #ifdef DIPOLES
-  Dipole::init();
-#endif /* ifdef DIPOLES */
+  Dipoles::on_cell_structure_change();
+#endif
+
   if (lattice_switch == ActiveLB::WALBERLA) {
     runtimeErrorMsg()
         << "LB does not currently support handling changes of the MD cell "
@@ -276,18 +301,14 @@ void on_temperature_change() {
 }
 
 void on_periodicity_change() {
-#ifdef SCAFACOS
 #ifdef ELECTROSTATICS
-  if (coulomb.method == COULOMB_SCAFACOS) {
-    Scafacos::fcs_coulomb()->update_system_params();
-  }
+  Coulomb::on_periodicity_change();
 #endif
-#ifdef SCAFACOS_DIPOLES
-  if (dipole.method == DIPOLAR_SCAFACOS) {
-    Scafacos::fcs_dipoles()->update_system_params();
-  }
+
+#ifdef DIPOLES
+  Dipoles::on_periodicity_change();
 #endif
-#endif
+
 #ifdef STOKESIAN_DYNAMICS
   if (integ_switch == INTEG_METHOD_SD) {
     if (box_geo.periodic(0) || box_geo.periodic(1) || box_geo.periodic(2))
@@ -302,7 +323,7 @@ void on_periodicity_change() {
 
 void on_skin_change() {
   cells_re_init(cell_structure.decomposition_type());
-  on_coulomb_change();
+  on_coulomb_and_dipoles_change();
 }
 
 void on_thermostat_param_change() { reinit_thermo = true; }
@@ -316,8 +337,14 @@ void on_timestep_change() {
 
 void on_forcecap_change() { recalc_forces = true; }
 
-void on_nodegrid_change() {
+void on_node_grid_change() {
   grid_changed_n_nodes();
+#ifdef ELECTROSTATICS
+  Coulomb::on_node_grid_change();
+#endif
+#ifdef DIPOLES
+  Dipoles::on_node_grid_change();
+#endif
   cells_re_init(cell_structure.decomposition_type());
 }
 
@@ -357,7 +384,7 @@ void update_dependent_particles() {
 #endif
 
 #ifdef ELECTROSTATICS
-  Coulomb::update_dependent_particles();
+  update_icc_particles();
 #endif
 
   // Here we initialize volume conservation

@@ -27,11 +27,8 @@
  */
 
 #include "Observable_stat.hpp"
-#include "actor/ActorList.hpp"
 
 #include <memory>
-
-extern ActorList energyActors;
 
 /** Parallel energy calculation. */
 std::shared_ptr<Observable_stat> calculate_energy();

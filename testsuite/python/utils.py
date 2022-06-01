@@ -70,6 +70,11 @@ class espresso_utils(ut.TestCase):
             np.array([1.], dtype=float)[0], float))
         self.assertTrue(utils.is_valid_type(
             np.array([1.], dtype=np.float64)[0], float))
+        # 0-dimensional arrays
+        self.assertTrue(utils.is_valid_type(
+            np.max(np.array([1.])), float))
+        self.assertTrue(utils.is_valid_type(
+            np.max(utils.array_locked([1])), int))
 
     def test_nesting_level(self):
         self.assertEqual(utils.nesting_level(12345), 0)

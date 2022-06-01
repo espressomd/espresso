@@ -21,93 +21,77 @@ import unittest_decorators as utx
 import numpy as np
 
 import espressomd
-import espressomd.cuda_init
 import espressomd.electrostatics
-import espressomd.scafacos
 import tests_common
 
 
 @utx.skipIfMissingFeatures(["ELECTROSTATICS"])
 class CoulombCloudWall(ut.TestCase):
 
-    """This compares p3m, p3m_gpu, scafacos_p3m and scafacos_p2nfft
-       electrostatic forces and energy against stored data.
+    """
+    Compare P3M CPU, P3M GPU and ScaFaCoS P2NFFT electrostatic forces
+    and energy against stored data.
 
     """
 
-    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system = espressomd.System(box_l=[10., 10., 10.])
     data = np.genfromtxt(tests_common.data_path(
         "coulomb_cloud_wall_system.data"))
 
     tolerance = 1E-3
+    p3m_params = {'r_cut': 1.001, 'accuracy': 1e-3,
+                  'mesh': [64, 64, 64], 'cao': 7, 'alpha': 2.70746}
 
-    # Reference energy from p3m in the tcl test case
+    # Reference energy from P3M
     reference_energy = 148.94229549
 
     def setUp(self):
-        self.system.box_l = (10, 10, 10)
         self.system.time_step = 0.01
         self.system.cell_system.skin = 0.4
 
         # Add particles to system and store reference forces in hash
         # Input format: id pos q f
         self.system.part.add(pos=self.data[:, 1:4], q=self.data[:, 4])
-        self.forces = self.data[:, 5:8]
+        self.reference_forces = self.data[:, 5:8]
 
     def tearDown(self):
         self.system.part.clear()
         self.system.actors.clear()
 
-    def compare(self, method_name, energy=True, prefactor=None):
-        # Compare forces and energy now in the system to stored ones
+    def compare(self, method_name, prefactor, force_tol, energy_tol):
+        # Compare forces and energy now in the system to reference data
+        err_msg = f"difference too large for method {method_name}"
 
         # Force
-        force_diff = np.linalg.norm(self.system.part.all().f / prefactor - self.forces,
-                                    axis=1)
-        self.assertLess(
-            np.mean(force_diff), self.tolerance,
-            msg="Absolute force difference too large for method " + method_name)
+        np.testing.assert_allclose(
+            np.copy(self.system.part.all().f) / prefactor,
+            self.reference_forces, atol=force_tol, err_msg=f"Force {err_msg}")
 
         # Energy
-        if energy:
-            self.assertAlmostEqual(
-                self.system.analysis.energy()["total"] / prefactor,
-                self.reference_energy, delta=self.tolerance,
-                msg="Absolute energy difference too large for " + method_name)
-
-    # Tests for individual methods
+        self.assertAlmostEqual(
+            self.system.analysis.energy()["total"] / prefactor,
+            self.reference_energy, delta=energy_tol,
+            msg=f"Energy {err_msg}")
 
     @utx.skipIfMissingFeatures(["P3M"])
-    def test_p3m_direct(self):
-        """
-        This checks P3M.
-
-        """
-
+    def test_p3m_cpu(self):
         self.system.actors.add(
             espressomd.electrostatics.P3M(
-                prefactor=3, r_cut=1.001, accuracy=1e-3,
-                mesh=64, cao=7, alpha=2.70746, tune=False))
+                **self.p3m_params, prefactor=3., tune=False))
         self.system.integrator.run(0)
-        self.compare("p3m", energy=True, prefactor=3)
+        self.compare("p3m", prefactor=3., force_tol=2e-3, energy_tol=1e-3)
 
     @utx.skipIfMissingGPU()
+    @utx.skipIfMissingFeatures(["P3M"])
     def test_p3m_gpu(self):
         self.system.actors.add(
             espressomd.electrostatics.P3MGPU(
-                prefactor=2.2,
-                r_cut=1.001,
-                accuracy=1e-3,
-                mesh=64,
-                cao=7,
-                alpha=2.70746,
-                tune=False))
+                **self.p3m_params, prefactor=2.2, tune=False))
         self.system.integrator.run(0)
-        self.compare("p3m_gpu", energy=False, prefactor=2.2)
+        self.compare("p3m_gpu", prefactor=2.2, force_tol=2e-3, energy_tol=1e-3)
 
-    @ut.skipIf(not espressomd.has_features("SCAFACOS")
-               or 'p2nfft' not in espressomd.scafacos.available_methods(),
-               'Skipping test: missing feature SCAFACOS or p2nfft method')
+    @utx.skipIfMissingFeatures(["SCAFACOS"])
+    @utx.skipIfMissingScafacosMethod("p2nfft")
     def test_scafacos_p2nfft(self):
         self.system.actors.add(
             espressomd.electrostatics.Scafacos(
@@ -115,7 +99,11 @@ class CoulombCloudWall(ut.TestCase):
                 method_name="p2nfft",
                 method_params={"p2nfft_r_cut": 1.001, "tolerance_field": 1E-4}))
         self.system.integrator.run(0)
-        self.compare("scafacos_p2nfft", energy=True, prefactor=2.8)
+        self.compare(
+            "scafacos_p2nfft",
+            prefactor=2.8,
+            force_tol=1e-3,
+            energy_tol=1e-3)
 
     def test_zz_deactivation(self):
         # Is the energy and force 0, if no methods active

@@ -35,14 +35,12 @@ Magnetostatic interactions are activated via the actor framework::
     system.part.add(pos=[[0, 0, 0], [1, 1, 1]],
                     rotation=2 * [(1, 1, 1)], dip=2 * [(1, 0, 0)])
 
-    direct_sum = espressomd.magnetostatics.DipolarDirectSumCpu(prefactor=1)
-    system.actors.add(direct_sum)
-    # ...
-    system.actors.remove(direct_sum)
+    actor = espressomd.magnetostatics.DipolarDirectSumCpu(prefactor=1.)
+    system.actors.add(actor)
 
-The magnetostatics algorithms for periodic boundary conditions require
-some knowledge to use them properly. Uneducated use can result in
-completely unphysical simulations.
+The list of actors can be cleared with
+:meth:`system.actors.clear() <espressomd.actors.Actors.clear>` and
+:meth:`system.actors.remove(actor) <espressomd.actors.Actors.remove>`.
 
 
 .. _Dipolar P3M:
@@ -81,7 +79,7 @@ simulation, actual force and torque errors can be significantly larger.
 Dipolar Layer Correction (DLC)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:class:`espressomd.magnetostatic_extensions.DLC`
+:class:`espressomd.magnetostatics.DLC`
 
 The dipolar layer correction (DLC) is used in conjunction with the dipolar P3M
 method to calculate dipolar interactions in a 2D-periodic system.
@@ -104,15 +102,14 @@ Usage notes:
   assumed that all dipole moment are as large as the largest of the dipoles
   in the system.
 
+* When the base solver is not a P3M method, metallic epsilon is assumed.
+
 The method is used as follows::
 
-    import espressomd.magnetostatics as magnetostatics
-    import espressomd.magnetostatic_extensions as magnetostatic_extensions
-
-    p3m = magnetostatics.DipolarP3M(prefactor=1, accuracy=1E-4)
-    dlc = magnetostatic_extensions.DLC(maxPWerror=1E-5, gap_size=2.)
-    system.actors.add(p3m)
-    system.actors.add(dlc)
+    import espressomd.magnetostatics
+    dp3m = espressomd.magnetostatics.DipolarP3M(prefactor=1, accuracy=1E-4)
+    mdlc = espressomd.magnetostatics.DLC(actor=dp3m, maxPWerror=1E-5, gap_size=2.)
+    system.actors.add(mdlc)
 
 
 .. _Dipolar direct sum:
@@ -149,9 +146,9 @@ To use the methods, create an instance of either
 system's list of active actors. The only required parameter is the Prefactor
 :eq:`dipolar_prefactor`::
 
-  import espressomd.magnetostatics
-  dds = espressomd.magnetostatics.DipolarDirectSumGpu(bjerrum_length=1)
-  system.actors.add(dds)
+    import espressomd.magnetostatics
+    dds = espressomd.magnetostatics.DipolarDirectSumGpu(prefactor=1)
+    system.actors.add(dds)
 
 For testing purposes, a variant of the dipolar direct sum is available which
 adds periodic copies to the system in periodic directions:
@@ -184,9 +181,9 @@ refer to :cite:`polyakov13a`.
 To use the method, create an instance of :class:`~espressomd.magnetostatics.DipolarBarnesHutGpu`
 and add it to the system's list of active actors::
 
-  import espressomd.magnetostatics
-  bh = espressomd.magnetostatics.DipolarBarnesHutGpu(prefactor=pf_dds_gpu, epssq=200.0, itolsq=8.0)
-  system.actors.add(bh)
+    import espressomd.magnetostatics
+    bh = espressomd.magnetostatics.DipolarBarnesHutGpu(prefactor=1., epssq=200.0, itolsq=8.0)
+    system.actors.add(bh)
 
 
 .. _ScaFaCoS magnetostatics:
@@ -199,8 +196,9 @@ ScaFaCoS magnetostatics
 |es| can use the methods from the ScaFaCoS *Scalable fast Coulomb solvers*
 library for dipoles, if the methods support dipolar calculations. The feature
 ``SCAFACOS_DIPOLES`` has to be added to :file:`myconfig.hpp` to activate this
-feature. Dipolar calculations are only included in the ``dipolar`` branch of
-the ScaFaCoS code.
+feature. Dipolar calculations are only included in the ``dipoles`` branch of
+the ScaFaCoS code. The specific methods available can be queried with
+:meth:`espressomd.electrostatics.Scafacos.get_available_methods`.
 
 To use ScaFaCoS, create an instance of :class:`~espressomd.magnetostatics.Scafacos`
 and add it to the list of active actors. Three parameters have to be specified:

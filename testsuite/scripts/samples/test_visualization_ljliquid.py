@@ -24,7 +24,7 @@ def disable_GUI(code):
     breakpoint = "visualizer.update()"
     assert breakpoint in code
     code = code.replace(breakpoint, "")
-    breakpoint = "t = Thread(target=main_thread)"
+    breakpoint = "t = threading.Thread(target=main_thread)"
     assert breakpoint in code
     code = code.split(breakpoint, 1)[0] + "main_thread()"
     return code

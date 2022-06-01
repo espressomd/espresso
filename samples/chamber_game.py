@@ -23,7 +23,7 @@ a pressure gradient that makes it harder to move particles to the chamber
 with an excess of particles.
 """
 
-from threading import Thread
+import threading
 import numpy as np
 import time
 
@@ -555,7 +555,7 @@ def main():
                 set_particle_force()
 
 
-t = Thread(target=main)
+t = threading.Thread(target=main)
 t.daemon = True
 t.start()
 visualizer.start()

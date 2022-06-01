@@ -5,8 +5,8 @@ Lattice-Boltzmann
 
 For an implicit treatment of a solvent, |es| allows to couple the molecular
 dynamics simulation to a lattice-Boltzmann fluid. The lattice-Boltzmann
-method (LBM) is a fast, lattice-based method that, in its "pure" form,
-allows to calculate fluid flow in different boundary
+method (LBM) is a fast, lattice-based method that, in its
+"pure" form, allows to calculate fluid flow in different boundary
 conditions of arbitrarily complex geometries. Coupled to molecular
 dynamics, it allows for the computationally efficient inclusion of
 hydrodynamic interactions into the simulation. The focus of the |es| implementation
@@ -44,7 +44,7 @@ To use the GPU-accelerated variant, replace line 6 in the example above by::
 
     lb = espressomd.lb.LBFluidWalberlaGPU(agrid=1.0, density=1.0, viscosity=1.0, tau=0.01)
 
-.. note:: Feature ``CUDA`` is required for the GPU-accelerated variant
+.. note:: Feature ``CUDA`` required for the GPU-accelerated variant
 
 To use the (much faster) GPU implementation of the LBM, use
 :class:`espressomd.lb.LBFluidWalberlaGPU` in place of :class:`espressomd.lb.LBFluidWalberla`.
@@ -115,10 +115,10 @@ Checkpointing
     lb.save_checkpoint(path, binary)
     lb.load_checkpoint(path, binary)
 
-The first command saves all of the LB fluid nodes' populations to an ascii
-(``binary=False``) or binary (``binary=True``) format respectively. The load command
-loads the populations from a checkpoint file written with
-``lb.save_checkpoint``. In both cases ``path`` specifies the location of the
+The first command saves all of the LB fluid nodes' populations to an ASCII
+(``binary=False``) or binary (``binary=True``) format respectively.
+The second command loads the LB fluid nodes' populations.
+In both cases ``path`` specifies the location of the
 checkpoint file. This is useful for restarting a simulation either on the same
 machine or a different machine. Some care should be taken when using the binary
 format as the format of doubles can depend on both the computer being used as
@@ -169,12 +169,13 @@ depends on the particle velocity :math:`v` and the fluid velocity :math:`u`. It 
 on the particle and the fluid (in opposite direction). Because the fluid is also affected,
 multiple particles can interact via hydrodynamic interactions. As friction in molecular systems is
 accompanied by fluctuations, the particle-fluid coupling has to be activated through
-the :ref:`LB thermostat` (See more detailed description there). A short example is::
+the :ref:`LB thermostat` (see more detailed description there). A short example is::
 
     system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1.5)
 
-where ``lbf`` is an instance of either :class:`espressomd.lb.LBFluidWalberla` or :class:`~espressomd.lb.LBFluidWalberlaGPU`,
-``gamma`` the friction coefficient and ``seed`` the seed for the random number generator involved
+where ``lbf`` is an instance of either :class:`espressomd.lb.LBFluidWalberla` or
+:class:`~espressomd.lb.LBFluidWalberlaGPU`, ``gamma`` the friction coefficient and
+``seed`` the seed for the random number generator involved
 in the thermalization.
 
 
@@ -183,7 +184,8 @@ in the thermalization.
 Reading and setting properties of single lattice nodes
 ------------------------------------------------------
 
-Appending three indices to the ``lb`` object returns an object that represents the selected LB grid node and allows one to access all of its properties::
+Appending three indices to the ``lb`` object returns an object that represents
+the selected LB grid node and allows one to access all of its properties::
 
     lb[x, y, z].density              # fluid density (one scalar for LB and CUDA)
     lb[x, y, z].velocity             # fluid velocity (a numpy array of three floats)
@@ -192,9 +194,9 @@ Appending three indices to the ``lb`` object returns an object that represents t
     lb[x, y, z].population           # 19 LB populations (a numpy array of 19 floats, check order from the source code)
 
 All of these properties can be read and used in further calculations.
-Only the property ``population`` can be modified. The indices ``x,y,z``
-are integers and enumerate the LB nodes in the three directions, start
-with 0. To modify ``is_boundary``, refer to :ref:`Setting up boundary conditions`.
+Only the property ``population`` can be modified. The indices ``x, y, z``
+are integers and enumerate the LB nodes in the three Cartesion directions,
+starting at 0. To modify ``is_boundary``, refer to :ref:`Setting up boundary conditions`.
 
 Example::
 
@@ -361,10 +363,10 @@ to ``velocity`` must be a 4D grid (the first three dimensions must match
 the LB grid shape, the fourth dimension has size 3 for the velocity).
 
 The LB boundaries use the same :mod:`~espressomd.shapes` objects to specify
-their geometry as :mod:`~espressomd.constraints` do for particles. This
-allows the user to quickly set up a system with boundary conditions that
-simultaneously act on the fluid and particles. For a complete description
-of all available shapes, refer to :mod:`espressomd.shapes`.
+their geometry as :mod:`~espressomd.constraints` do for particles.
+This allows the user to quickly set up a system with boundary conditions
+that simultaneously act on the fluid and particles. For a complete
+description of all available shapes, refer to :mod:`espressomd.shapes`.
 
 
 .. [1]
