@@ -212,9 +212,10 @@ cdef class System:
         if has_features("VIRTUAL_SITES"):
             checkpointable_properties.append("_active_virtual_sites_handle")
         checkpointable_properties += [
-            "non_bonded_inter", "bonded_inter", "cell_system", "part", "actors",
-            "analysis", "auto_update_accumulators", "comfixed", "constraints",
-            "galilei", "thermostat", "bond_breakage", "max_oif_objects"
+            "non_bonded_inter", "bonded_inter", "cell_system", "lees_edwards",
+            "part", "actors", "analysis", "auto_update_accumulators",
+            "comfixed", "constraints", "galilei", "thermostat",
+            "bond_breakage", "max_oif_objects"
         ]
         if has_features("LB_BOUNDARIES") or has_features("LB_BOUNDARIES_GPU"):
             checkpointable_properties.append("lbboundaries")

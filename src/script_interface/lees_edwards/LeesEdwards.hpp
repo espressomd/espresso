@@ -102,6 +102,12 @@ public:
     return {};
   }
 
+  void do_construct(VariantMap const &params) override {
+    if (not params.empty()) {
+      do_call_method("set_boundary_conditions", params);
+    }
+  }
+
 private:
   int get_shear_axis(VariantMap const &params, std::string name) {
     auto const value = get_value<std::string>(params, name);
