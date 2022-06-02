@@ -18,17 +18,24 @@ class EKNoFlux(ut.TestCase):
     system.time_step = 1.0
     system.cell_system.skin = 0.4
 
-    def test_diffusion(self):
+    def test_noflux(self):
+        for single_precision in (False, True):
+            with self.subTest(single_precision=single_precision):
+                self.detail_test_noflux(single_precision=single_precision)
+
+    def detail_test_noflux(self, single_precision: bool):
         """
         Testing the EK noflux boundaries to not leak density outside of a sphere.
         """
+
+        decimal_precision: int = 7 if single_precision else 10
 
         lattice = espressomd.lb.LatticeWalberla(
             n_ghost_layers=1, agrid=self.AGRID)
 
         ekspecies = espressomd.EKSpecies.EKSpecies(lattice=lattice,
                                                    density=0.0, kT=0.0, diffusion=self.DIFFUSION_COEFFICIENT, valency=0.0,
-                                                   advection=False, friction_coupling=False, ext_efield=[0, 0, 0])
+                                                   advection=False, friction_coupling=False, ext_efield=[0, 0, 0], single_precision=single_precision)
 
         eksolver = espressomd.EKSpecies.EKNone(lattice=lattice)
 
@@ -58,13 +65,13 @@ class EKNoFlux(ut.TestCase):
 
         # check that the density is conserved globally
         np.testing.assert_almost_equal(
-            np.sum(simulated_density), self.DENSITY, 10)
+            np.sum(simulated_density), self.DENSITY, decimal_precision)
 
         domain_density = simulated_density[np.logical_not(
             ekspecies[:, :, :].is_boundary)]
         # check that the density is kept constant inside the sphere
         np.testing.assert_almost_equal(
-            np.sum(domain_density), self.DENSITY, 10)
+            np.sum(domain_density), self.DENSITY, decimal_precision)
         np.testing.assert_array_less(
             0., domain_density, "EK density array contains negative densities!")
 

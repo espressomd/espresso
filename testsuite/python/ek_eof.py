@@ -18,11 +18,21 @@ class EKEOF(ut.TestCase):
     system.time_step = 1.0
     system.cell_system.skin = 0.4
 
-    def analytical_density(self, pos: np.ndarray, time: int, D: float):
+    def tearDown(self) -> None:
+        self.system.actors.clear()
+        self.system.ekcontainer.clear()
+
+    def analytical_density(pos: np.ndarray, time: int, D: float):
         return (4 * np.pi * D * time)**(-3 / 2) * \
             np.exp(-np.sum(np.square(pos), axis=-1) / (4 * D * time))
 
-    def test_eof(self):
+    def test_eof_single(self):
+        self.detail_test_eof(single_precision=True)
+
+    def test_eof_double(self):
+        self.detail_test_eof(single_precision=False)
+
+    def detail_test_eof(self, single_precision: bool):
         """
         Testing EK for the electroosmotic flow
         """
@@ -45,12 +55,12 @@ class EKEOF(ut.TestCase):
 
         ekspecies = espressomd.EKSpecies.EKSpecies(lattice=lattice,
                                                    density=density, kT=kT, diffusion=self.DIFFUSION_COEFFICIENT, valency=valency,
-                                                   advection=True, friction_coupling=True, ext_efield=external_electric_field)
+                                                   advection=True, friction_coupling=True, ext_efield=external_electric_field, single_precision=single_precision)
         ekwallcharge = espressomd.EKSpecies.EKSpecies(lattice=lattice,
-                                                      density=0.0, kT=kT, diffusion=0.0, valency=-valency, advection=False, friction_coupling=False, ext_efield=[0, 0, 0])
+                                                      density=0.0, kT=kT, diffusion=0.0, valency=-valency, advection=False, friction_coupling=False, ext_efield=[0, 0, 0], single_precision=single_precision)
 
         eksolver = espressomd.EKSpecies.EKFFT(
-            lattice=lattice, permittivity=eps0 * epsR)
+            lattice=lattice, permittivity=eps0 * epsR, single_precision=single_precision)
         self.system.ekcontainer.add(ekspecies)
         self.system.ekcontainer.add(ekwallcharge)
 
@@ -58,7 +68,7 @@ class EKEOF(ut.TestCase):
         self.system.ekcontainer.solver = eksolver
 
         lb_fluid = espressomd.lb.LBFluidWalberla(
-            lattice=lattice, density=1.0, viscosity=visc, tau=1.0)
+            lattice=lattice, density=1.0, viscosity=visc, tau=1.0, single_precision=single_precision)
         self.system.actors.add(lb_fluid)
 
         wall_bot = espressomd.shapes.Wall(normal=[1, 0, 0], dist=offset)

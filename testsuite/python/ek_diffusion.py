@@ -23,16 +23,23 @@ class EKDiffusion(ut.TestCase):
             np.exp(-np.sum(np.square(pos), axis=-1) / (4 * D * time))
 
     def test_diffusion(self):
+        for single_precision in (False, True):
+            with self.subTest(single_precision=single_precision):
+                self.detail_test_diffusion(single_precision=single_precision)
+
+    def detail_test_diffusion(self, single_precision: bool):
         """
         Testing EK for simple diffusion of a point droplet
         """
+
+        decimal_precision: int = 7 if single_precision else 10
 
         lattice = espressomd.lb.LatticeWalberla(
             n_ghost_layers=1, agrid=self.AGRID)
 
         ekspecies = espressomd.EKSpecies.EKSpecies(lattice=lattice,
                                                    density=0.0, kT=0.0, diffusion=self.DIFFUSION_COEFFICIENT, valency=0.0,
-                                                   advection=False, friction_coupling=False, ext_efield=[0, 0, 0])
+                                                   advection=False, friction_coupling=False, ext_efield=[0, 0, 0], single_precision=single_precision)
 
         eksolver = espressomd.EKSpecies.EKNone(lattice=lattice)
 
@@ -46,7 +53,7 @@ class EKDiffusion(ut.TestCase):
 
         # check that the density in the domain is what is expected
         np.testing.assert_almost_equal(
-            np.sum(ekspecies[:, :, :].density), self.DENSITY, 10)
+            np.sum(ekspecies[:, :, :].density), self.DENSITY, decimal_precision)
 
         # TODO: replace that when the blockforest is able to return the
         # dimensions
@@ -61,7 +68,7 @@ class EKDiffusion(ut.TestCase):
 
         # check that the density is conserved
         np.testing.assert_almost_equal(
-            np.sum(simulated_density), self.DENSITY, 10)
+            np.sum(simulated_density), self.DENSITY, decimal_precision)
         if np.any(simulated_density < 0.):
             self.fail("EK density array contains negative densities!")
 

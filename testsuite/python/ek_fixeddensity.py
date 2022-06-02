@@ -20,14 +20,23 @@ class EKFixedDensity(ut.TestCase):
     system.cell_system.skin = 0.4
 
     def test_constant_density_bc(self):
+        for single_precision in (False, True):
+            with self.subTest(single_precision=single_precision):
+                self.detail_test_constant_density_bc(
+                    single_precision=single_precision)
+
+    def detail_test_constant_density_bc(self, single_precision: bool):
         """ effective 1D system with linear equilibrium profile """
+
+        decimal_precision: int = 5 if single_precision else 7
+
         lattice = espressomd.lb.LatticeWalberla(
             n_ghost_layers=1, agrid=self.AGRID)
 
         ekspecies = espressomd.EKSpecies.EKSpecies(lattice=lattice,
                                                    density=0.0, kT=0.0, diffusion=self.DIFFUSION_COEFFICIENT,
                                                    valency=0.0, advection=False, friction_coupling=False,
-                                                   ext_efield=[0, 0, 0])
+                                                   ext_efield=[0, 0, 0], single_precision=single_precision)
 
         eksolver = espressomd.EKSpecies.EKNone(lattice=lattice)
 
@@ -62,11 +71,10 @@ class EKFixedDensity(ut.TestCase):
         offset = self.INLET_CONCENTRATION
         analytic_values = slope * domain_positions + offset
 
-        np.testing.assert_allclose(
+        np.testing.assert_almost_equal(
             measured_values,
             analytic_values,
-            rtol=0,
-            atol=1e-7)
+            decimal_precision)
 
 
 if __name__ == "__main__":

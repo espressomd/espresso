@@ -17,16 +17,6 @@ class EKReaction(ut.TestCase):
     system.time_step = 1.0
     system.cell_system.skin = 0.4
 
-    def analytic_product_density(
-            self, time: float, reaction_rate: float, initial_density: float) -> float:
-        return - 1 / 2 * \
-            self.analytic_educt_density(
-                time, reaction_rate, initial_density) + initial_density / 2
-
-    def analytic_educt_density(
-            self, time: float, reaction_rate: float, initial_density: float) -> float:
-        return 1 / (1 / initial_density + 2 * reaction_rate * time)
-
     def analytic_density_base(
             self, time: float, coeffs, rate_constant: float, init_density: float) -> float:
         """
@@ -44,6 +34,13 @@ class EKReaction(ut.TestCase):
                 factor * time)**(1 / (1 - order))
 
     def test_reaction(self):
+        for single_precision in (False, True):
+            with self.subTest(single_precision=single_precision):
+                self.detail_test_reaction(single_precision=single_precision)
+
+    def detail_test_reaction(self, single_precision: bool):
+
+        relative_precision: int = 1E-6 if single_precision else 1E-7
 
         lattice = espressomd.lb.LatticeWalberla(
             n_ghost_layers=1, agrid=self.AGRID)
@@ -61,7 +58,7 @@ class EKReaction(ut.TestCase):
         for coeff in stoech_coeffs:
             species = espressomd.EKSpecies.EKSpecies(lattice=lattice,
                                                      density=coeff * self.INITIAL_DENSITY, kT=0.0, diffusion=self.DIFFUSION_COEFFICIENT,
-                                                     valency=0.0, advection=False, friction_coupling=False, ext_efield=[0, 0, 0])
+                                                     valency=0.0, advection=False, friction_coupling=False, ext_efield=[0, 0, 0], single_precision=single_precision)
             self.system.ekcontainer.add(species)
             reactants.append(
                 espressomd.EKSpecies.EKReactant(
@@ -72,7 +69,7 @@ class EKReaction(ut.TestCase):
 
         ek_species_product = espressomd.EKSpecies.EKSpecies(lattice=lattice,
                                                             density=0.0, kT=0.0, diffusion=self.DIFFUSION_COEFFICIENT, valency=0.0,
-                                                            advection=False, friction_coupling=False, ext_efield=[0, 0, 0])
+                                                            advection=False, friction_coupling=False, ext_efield=[0, 0, 0], single_precision=single_precision)
         self.system.ekcontainer.add(ek_species_product)
         reactants.append(
             espressomd.EKSpecies.EKReactant(
@@ -106,7 +103,7 @@ class EKReaction(ut.TestCase):
                                                     self.analytic_density_base(self.TIME + 0.5, stoech_coeffs, reaction_rate, self.INITIAL_DENSITY))
 
         np.testing.assert_allclose(measured_educt_densities / measured_educt_densities[0],
-                                   analytic_educt_densities / analytic_educt_densities[0], rtol=1E-7, atol=0)
+                                   analytic_educt_densities / analytic_educt_densities[0], rtol=relative_precision, atol=0)
         np.testing.assert_allclose(
             measured_educt_densities,
             analytic_educt_densities,

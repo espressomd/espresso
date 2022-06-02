@@ -20,9 +20,16 @@ class EKFixedFlux(ut.TestCase):
     system.cell_system.skin = 0.4
 
     def test_inflow(self):
+        for single_precision in (False, True):
+            with self.subTest(single_precision=single_precision):
+                self.detail_test_inflow(single_precision=single_precision)
+
+    def detail_test_inflow(self, single_precision: bool):
         """
         Testing the EK fixed flux boundaries to test the fixed inflow into a non-periodic box.
         """
+
+        decimal_precision: int = 5 if single_precision else 7
 
         lattice = espressomd.lb.LatticeWalberla(
             n_ghost_layers=1, agrid=self.AGRID)
@@ -30,7 +37,7 @@ class EKFixedFlux(ut.TestCase):
         ekspecies = espressomd.EKSpecies.EKSpecies(lattice=lattice,
                                                    density=0.0, kT=0.0, diffusion=self.DIFFUSION_COEFFICIENT,
                                                    valency=0.0, advection=False, friction_coupling=False,
-                                                   ext_efield=[0, 0, 0])
+                                                   ext_efield=[0, 0, 0], single_precision=single_precision)
 
         eksolver = espressomd.EKSpecies.EKNone(lattice=lattice)
 
@@ -67,7 +74,7 @@ class EKFixedFlux(ut.TestCase):
         expected_initial_density = self.DENSITY * (self.BOX_L - 2)**3
 
         np.testing.assert_almost_equal(actual=np.sum(
-            ekspecies[1:-1, 1:-1, 1:-1].density), desired=expected_initial_density)
+            ekspecies[1:-1, 1:-1, 1:-1].density), desired=expected_initial_density, decimal=decimal_precision)
 
         self.system.integrator.run(self.TIME)
 
@@ -77,7 +84,7 @@ class EKFixedFlux(ut.TestCase):
             (self.INFLOW_FLUX * inflow_area + additional_center_flux) * self.TIME
 
         np.testing.assert_almost_equal(actual=np.sum(
-            ekspecies[1:-1, 1:-1, 1:-1].density), desired=expected_end_density)
+            ekspecies[1:-1, 1:-1, 1:-1].density), desired=expected_end_density, decimal=decimal_precision)
 
 
 if __name__ == "__main__":

@@ -35,10 +35,14 @@ class EKReaction(ut.TestCase):
                         2, int(width / agrid))
         values_a = slopes[0] * x + midvalues[0]
         values_b = -slopes[1] * x + midvalues[1]
-        print(slopes, midvalues)
         return values_a, values_b
 
     def test_reaction(self):
+        for single_precision in (False, True):
+            with self.subTest(single_precision=single_precision):
+                self.detail_test_reaction(single_precision=single_precision)
+
+    def detail_test_reaction(self, single_precision: bool):
 
         lattice = espressomd.lb.LatticeWalberla(
             n_ghost_layers=1, agrid=self.AGRID)
@@ -51,12 +55,12 @@ class EKReaction(ut.TestCase):
 
         species_A = espressomd.EKSpecies.EKSpecies(lattice=lattice,
                                                    density=self.INITIAL_DENSITIES[0], kT=0.0, diffusion=self.DIFFUSION_COEFFICIENTS[0],
-                                                   valency=0.0, advection=False, friction_coupling=False, ext_efield=[0, 0, 0])
+                                                   valency=0.0, advection=False, friction_coupling=False, ext_efield=[0, 0, 0], single_precision=single_precision)
         self.system.ekcontainer.add(species_A)
 
         species_B = espressomd.EKSpecies.EKSpecies(lattice=lattice,
                                                    density=self.INITIAL_DENSITIES[1], kT=0.0, diffusion=self.DIFFUSION_COEFFICIENTS[1],
-                                                   valency=0.0, advection=False, friction_coupling=False, ext_efield=[0, 0, 0])
+                                                   valency=0.0, advection=False, friction_coupling=False, ext_efield=[0, 0, 0], single_precision=single_precision)
         self.system.ekcontainer.add(species_B)
 
         coeffs_left = [-1.0, 1.0]
@@ -120,8 +124,6 @@ class EKReaction(ut.TestCase):
                                                                                                   self.DIFFUSION_COEFFICIENTS,
                                                                                                   self.INITIAL_DENSITIES,
                                                                                                   self.AGRID)
-        print(density_profile)
-        print(analytic_density_profile)
 
         np.testing.assert_allclose(
             density_profile,
