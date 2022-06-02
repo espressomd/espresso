@@ -35,13 +35,21 @@
 #include "LatticeWalberla.hpp"
 #include "walberla_utils.hpp"
 
-#include "generated_kernels/electrokinetics/AdvectiveFluxKernel.h"
-#include "generated_kernels/electrokinetics/ContinuityKernel.h"
-#include "generated_kernels/electrokinetics/DiffusiveFluxKernel.h"
-#include "generated_kernels/electrokinetics/DiffusiveFluxKernelWithElectrostatic.h"
-#include "generated_kernels/electrokinetics/FrictionCouplingKernel.h"
-#include "generated_kernels/electrokinetics/boundary_conditions/Dirichlet.h"
-#include "generated_kernels/electrokinetics/boundary_conditions/FixedFlux.h"
+#include "electrokinetics/generated_kernels/AdvectiveFluxKernel_double_precision.h"
+#include "electrokinetics/generated_kernels/AdvectiveFluxKernel_single_precision.h"
+#include "electrokinetics/generated_kernels/ContinuityKernel_double_precision.h"
+#include "electrokinetics/generated_kernels/ContinuityKernel_single_precision.h"
+#include "electrokinetics/generated_kernels/DiffusiveFluxKernelWithElectrostatic_double_precision.h"
+#include "electrokinetics/generated_kernels/DiffusiveFluxKernelWithElectrostatic_single_precision.h"
+#include "electrokinetics/generated_kernels/DiffusiveFluxKernel_double_precision.h"
+#include "electrokinetics/generated_kernels/DiffusiveFluxKernel_single_precision.h"
+#include "electrokinetics/generated_kernels/FrictionCouplingKernel_double_precision.h"
+#include "electrokinetics/generated_kernels/FrictionCouplingKernel_single_precision.h"
+
+#include "electrokinetics/generated_kernels/Dirichlet_double_precision.h"
+#include "electrokinetics/generated_kernels/Dirichlet_single_precision.h"
+#include "electrokinetics/generated_kernels/FixedFlux_double_precision.h"
+#include "electrokinetics/generated_kernels/FixedFlux_single_precision.h"
 
 #include <boost/multi_array/multi_array_ref.hpp>
 #include <memory>
@@ -93,12 +101,32 @@ std::vector<double> fill_3D_scalar_array(const Utils::Vector3i &grid_size,
 // TODO: generate everything for single-precision too
 // TODO: figure out how the boundary-handling template stuff works
 
-// template <typename FloatType> struct DensityBoundaryHandlingTrait {
-//    using Dirichlet = pystencils::Dirichlet;
-//};
-// template <> struct DensityBoundaryHandlingTrait<float> {
-//    using Dirichlet = pystencils::Dirichlet;
-//};
+namespace detail {
+template <typename FloatType = double> struct KernelTrait {
+  using ContinuityKernel = pystencils::ContinuityKernel_double_precision;
+  using DiffusiveFluxKernel = pystencils::DiffusiveFluxKernel_double_precision;
+  using AdvectiveFluxKernel = pystencils::AdvectiveFluxKernel_double_precision;
+  using FrictionCouplingKernel =
+      pystencils::FrictionCouplingKernel_double_precision;
+  using DiffusiveFluxKernelElectrostatic =
+      pystencils::DiffusiveFluxKernelWithElectrostatic_double_precision;
+
+  using Dirichlet = pystencils::Dirichlet_double_precision;
+  using FixedFlux = pystencils::FixedFlux_double_precision;
+};
+template <> struct KernelTrait<float> {
+  using ContinuityKernel = pystencils::ContinuityKernel_single_precision;
+  using DiffusiveFluxKernel = pystencils::DiffusiveFluxKernel_single_precision;
+  using AdvectiveFluxKernel = pystencils::AdvectiveFluxKernel_single_precision;
+  using FrictionCouplingKernel =
+      pystencils::FrictionCouplingKernel_single_precision;
+  using DiffusiveFluxKernelElectrostatic =
+      pystencils::DiffusiveFluxKernelWithElectrostatic_single_precision;
+
+  using Dirichlet = pystencils::Dirichlet_single_precision;
+  using FixedFlux = pystencils::FixedFlux_single_precision;
+};
+} // namespace detail
 
 /** Class that runs and controls the LB on WaLBerla
  */
@@ -108,17 +136,28 @@ class EKinWalberlaImpl : public EKinWalberlaBase {
     return numeric_cast<FloatType>(t);
   }
 
+  using ContinuityKernel =
+      typename detail::KernelTrait<FloatType>::ContinuityKernel;
+  using DiffusiveFluxKernel =
+      typename detail::KernelTrait<FloatType>::DiffusiveFluxKernel;
+  using AdvectiveFluxKernel =
+      typename detail::KernelTrait<FloatType>::AdvectiveFluxKernel;
+  using FrictionCouplingKernel =
+      typename detail::KernelTrait<FloatType>::FrictionCouplingKernel;
+  using DiffusiveFluxKernelElectrostatic =
+      typename detail::KernelTrait<FloatType>::DiffusiveFluxKernelElectrostatic;
+
+  using Dirichlet = typename detail::KernelTrait<FloatType>::Dirichlet;
+  using FixedFlux = typename detail::KernelTrait<FloatType>::FixedFlux;
+
 protected:
   // Type definitions
   using FluxField = GhostLayerField<FloatType, FluxCount>;
   using FlagField = walberla::FlagField<walberla::uint8_t>;
   using DensityField = GhostLayerField<FloatType, 1>;
 
-  // TODO: boundary handling for Density!
-  using BoundaryModelDensity =
-      BoundaryHandling<FloatType, pystencils::Dirichlet>;
-  using BoundaryModelFlux =
-      BoundaryHandling<Vector3<FloatType>, pystencils::FixedFlux>;
+  using BoundaryModelDensity = BoundaryHandling<FloatType, Dirichlet>;
+  using BoundaryModelFlux = BoundaryHandling<Vector3<FloatType>, FixedFlux>;
 
 private:
   FloatType m_diffusion;
@@ -150,7 +189,7 @@ protected:
   std::unique_ptr<BoundaryModelDensity> m_boundary_density;
   std::unique_ptr<BoundaryModelFlux> m_boundary_flux;
 
-  std::unique_ptr<pystencils::ContinuityKernel> m_continuity;
+  std::unique_ptr<ContinuityKernel> m_continuity;
 
   // ResetFlux + external force
   // TODO: kernel for that
@@ -196,7 +235,7 @@ public:
         field::addFlattenedShallowCopyToStorage<FluxField>(
             m_lattice->get_blocks(), m_flux_field_id, "flattened flux field");
 
-    m_continuity = std::make_unique<pystencils::ContinuityKernel>(
+    m_continuity = std::make_unique<ContinuityKernel>(
         m_flux_field_flattened_id, m_density_field_flattened_id);
 
     // Init boundary related stuff
@@ -280,9 +319,9 @@ private:
   }
 
   inline void kernel_diffusion() {
-    auto kernel = pystencils::DiffusiveFluxKernel(get_diffusion(),
-                                                  m_flux_field_flattened_id,
-                                                  m_density_field_flattened_id);
+    auto kernel = DiffusiveFluxKernel(FloatType_c(get_diffusion()),
+                                      m_flux_field_flattened_id,
+                                      m_density_field_flattened_id);
 
     for (auto &block : *m_lattice->get_blocks()) {
       kernel.run(&block);
@@ -290,18 +329,18 @@ private:
   }
 
   inline void kernel_advection(const std::size_t &velocity_id) {
-    auto kernel = pystencils::AdvectiveFluxKernel(m_flux_field_flattened_id,
-                                                  m_density_field_id,
-                                                  BlockDataID(velocity_id));
+    auto kernel =
+        AdvectiveFluxKernel(m_flux_field_flattened_id, m_density_field_id,
+                            BlockDataID(velocity_id));
     for (auto &block : *m_lattice->get_blocks()) {
       kernel.run(&block);
     }
   }
 
   inline void kernel_friction_coupling(const std::size_t &force_id) {
-    auto kernel = pystencils::FrictionCouplingKernel(
-        get_diffusion(), BlockDataID(force_id), m_flux_field_flattened_id,
-        get_kT());
+    auto kernel = FrictionCouplingKernel(
+        FloatType_c(get_diffusion()), BlockDataID(force_id),
+        m_flux_field_flattened_id, FloatType_c(get_kT()));
     for (auto &block : *m_lattice->get_blocks()) {
       kernel.run(&block);
     }
@@ -309,10 +348,12 @@ private:
 
   inline void kernel_diffusion_electrostatic(const std::size_t &potential_id) {
     const auto ext_field = get_ext_efield();
-    auto kernel = pystencils::DiffusiveFluxKernelWithElectrostatic(
-        get_diffusion(), m_flux_field_flattened_id, BlockDataID(potential_id),
-        m_density_field_flattened_id, ext_field[0], ext_field[1], ext_field[2],
-        get_kT(), get_valency());
+    auto kernel = DiffusiveFluxKernelElectrostatic(
+        FloatType_c(get_diffusion()), m_flux_field_flattened_id,
+        BlockDataID(potential_id), m_density_field_flattened_id,
+        FloatType_c(ext_field[0]), FloatType_c(ext_field[1]),
+        FloatType_c(ext_field[2]), FloatType_c(get_kT()),
+        FloatType_c(get_valency()));
     for (auto &block : *m_lattice->get_blocks()) {
       kernel.run(&block);
     }
@@ -389,7 +430,7 @@ public:
     }
   }
 
-  [[nodiscard]] std::size_t get_density_id() const override {
+  [[nodiscard]] walberla::BlockDataID get_density_id() const noexcept override {
     return m_density_field_id;
   }
 
@@ -615,7 +656,7 @@ public:
     throw std::runtime_error("The LB does not use a random number generator");
   };
 
-  [[nodiscard]] LatticeWalberla &get_lattice() const override {
+  [[nodiscard]] LatticeWalberla &get_lattice() const noexcept override {
     return *m_lattice;
   };
 

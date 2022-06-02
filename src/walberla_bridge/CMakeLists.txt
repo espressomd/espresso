@@ -26,18 +26,24 @@ set(WalberlaBridgeCodegen_SRC
     generated_kernels/UpdateVelocityFromPDFSweepDoublePrecision.cpp
     generated_kernels/UpdateVelocityFromPDFSweepSinglePrecision.cpp)
 
-set(WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN generated_kernels/electrokinetics)
+set(WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN electrokinetics/generated_kernels)
 
 set(WalberlaBridgeElectrokinetics_SRC)
 set(WalberlaBridgeElectrokineticsCodegen_SRC
-    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/DiffusiveFluxKernel.cpp
-    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/ContinuityKernel.cpp
-    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/AdvectiveFluxKernel.cpp
-    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/FrictionCouplingKernel.cpp
-    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/DiffusiveFluxKernelWithElectrostatic.cpp
-    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/boundary_conditions/NoFlux.cpp
-    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/boundary_conditions/FixedFlux.cpp
-    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/boundary_conditions/Dirichlet.cpp)
+    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/DiffusiveFluxKernel_double_precision.cpp
+    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/ContinuityKernel_double_precision.cpp
+    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/AdvectiveFluxKernel_double_precision.cpp
+    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/FrictionCouplingKernel_double_precision.cpp
+    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/DiffusiveFluxKernelWithElectrostatic_double_precision.cpp
+    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/DiffusiveFluxKernel_single_precision.cpp
+    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/ContinuityKernel_single_precision.cpp
+    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/AdvectiveFluxKernel_single_precision.cpp
+    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/FrictionCouplingKernel_single_precision.cpp
+    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/DiffusiveFluxKernelWithElectrostatic_single_precision.cpp
+    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/FixedFlux_double_precision.cpp
+    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/Dirichlet_double_precision.cpp
+    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/FixedFlux_single_precision.cpp
+    ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/Dirichlet_single_precision.cpp)
 
 unset(WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN)
 
@@ -71,11 +77,6 @@ list(APPEND WalberlaBridgeElectrokineticsCodegen_SRC
      ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelIndexed_5_single_precision.cpp)
 unset(WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN)
 unset(WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS)
-# EK poisson
-set(WALBERLA_BRIDGE_ELECTROKINETICS_POISSON electrokinetics/PoissonSolver)
-list(APPEND WalberlaBridgeElectrokinetics_SRC
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_POISSON}/FFT.cpp)
-unset(WALBERLA_BRIDGE_ELECTROKINETICS_POISSON)
 
 if(WALBERLA_USE_AVX)
   list(APPEND WalberlaBridgeCodegen_SRC

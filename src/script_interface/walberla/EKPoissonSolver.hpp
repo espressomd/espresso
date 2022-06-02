@@ -11,10 +11,10 @@
 namespace ScriptInterface {
 namespace walberla {
 
-class EKPoissonSolver
-    : public AutoParameters<::walberla::PoissonSolver<double>> {
+class EKPoissonSolver : public AutoParameters<::walberla::PoissonSolver> {
 public:
-  virtual std::shared_ptr<::walberla::PoissonSolver<double>> get_instance() = 0;
+  virtual std::shared_ptr<::walberla::PoissonSolver> get_instance() const
+      noexcept = 0;
 };
 } // namespace walberla
 } // namespace ScriptInterface

@@ -29,6 +29,11 @@
 #include "VTKHandle.hpp"
 #include "blockforest/StructuredBlockForest.h"
 
+namespace walberla::domain_decomposition {
+// forward declare
+class BlockDataID;
+} // namespace walberla::domain_decomposition
+
 /** Class that runs and controls the EK on WaLBerla
  */
 class EKinWalberlaBase {
@@ -103,9 +108,10 @@ public:
   /** @brief set the rng state of thermalized LBs */
   virtual void set_rng_state(uint64_t counter) = 0;
 
-  [[nodiscard]] virtual std::size_t get_density_id() const = 0;
+  [[nodiscard]] virtual walberla::BlockDataID get_density_id() const
+      noexcept = 0;
 
-  [[nodiscard]] virtual LatticeWalberla &get_lattice() const = 0;
+  [[nodiscard]] virtual LatticeWalberla &get_lattice() const noexcept = 0;
 
   /** @brief Create a VTK observable.
    *

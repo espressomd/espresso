@@ -5,20 +5,30 @@
 #include "PoissonSolver.hpp"
 
 namespace walberla {
-template <typename FloatType = double>
-class None : public PoissonSolver<FloatType> {
+template <typename FloatType> class None : public PoissonSolver {
 private:
-  using PS = PoissonSolver<FloatType>;
+  BlockDataID m_potential_field_id;
+
+  using PotentialField = GhostLayerField<FloatType, 1>;
 
 public:
   explicit None(std::shared_ptr<LatticeWalberla> lattice)
-      : PS(std::move(lattice), 0.0) {}
+      : PoissonSolver(std::move(lattice), 0.0) {
+    m_potential_field_id = field::addToStorage<PotentialField>(
+        get_lattice()->get_blocks(), "potential field", 0.0, field::fzyx,
+        get_lattice()->get_ghost_layers());
+  }
 
   void reset_charge_field() override {}
+  void add_charge_to_field(const BlockDataID &, double, bool) override {}
 
-  void add_charge_to_field(const std::size_t &id, FloatType) override {}
+  [[nodiscard]] domain_decomposition::BlockDataID get_potential_field_id() const
+      noexcept override {
+    return m_potential_field_id;
+  }
 
   void solve() override {}
+  void ghost_communication() override {}
 };
 } // namespace walberla
 

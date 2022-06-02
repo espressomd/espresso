@@ -28,7 +28,8 @@ void propagate() {
 
   ek_container.reset_charge();
   std::for_each(ek_container.begin(), ek_container.end(), [](auto const &ek) {
-    ek_container.add_charge(ek->get_density_id(), ek->get_valency());
+    ek_container.add_charge(ek->get_density_id(), ek->get_valency(),
+                            ek->is_double_precision());
   });
 
   ek_container.solve_poisson();

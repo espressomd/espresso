@@ -17,13 +17,14 @@ class EKSpecies : public AutoParameters<EKinWalberlaBase> {
 public:
   void do_construct(VariantMap const &args) override {
     m_lattice = get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice");
-    m_single_precision = get_value_or<bool>(args, "single_precision", false);
+    const auto single_precision =
+        get_value_or<bool>(args, "single_precision", false);
     m_ekinstance = new_ek_walberla(
         m_lattice->lattice(), get_value<double>(args, "diffusion"),
         get_value<double>(args, "kT"), get_value<double>(args, "valency"),
         get_value<Utils::Vector3d>(args, "ext_efield"),
         get_value<double>(args, "density"), get_value<bool>(args, "advection"),
-        get_value<bool>(args, "friction_coupling"), m_single_precision);
+        get_value<bool>(args, "friction_coupling"), single_precision);
 
     add_parameters(
         {{"diffusion",
@@ -57,7 +58,7 @@ public:
           },
           [this]() { return m_ekinstance->get_friction_coupling(); }},
          {"single_precision", AutoParameter::read_only,
-          [this]() { return m_single_precision; }},
+          [this]() { return not m_ekinstance->is_double_precision(); }},
          {"shape", AutoParameter::read_only,
           [this]() {
             return m_ekinstance->get_lattice().get_grid_dimensions();
@@ -154,8 +155,6 @@ private:
   std::shared_ptr<EKinWalberlaBase> m_ekinstance;
 
   std::shared_ptr<LatticeWalberla> m_lattice;
-
-  bool m_single_precision;
 };
 } // namespace ScriptInterface::walberla
 

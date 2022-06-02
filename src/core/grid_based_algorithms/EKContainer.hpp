@@ -1,7 +1,6 @@
 #ifndef ESPRESSO_EKCONTAINER_HPP
 #define ESPRESSO_EKCONTAINER_HPP
 
-#include "electrokinetics/PoissonSolver/FFT.hpp"
 #include "electrokinetics/PoissonSolver/PoissonSolver.hpp"
 
 #include <algorithm>
@@ -22,7 +21,7 @@ private:
   double m_tau{};
 
   // TODO: this could be moved to the Scriptinterface
-  std::shared_ptr<walberla::PoissonSolver<double>> m_poissonsolver;
+  std::shared_ptr<walberla::PoissonSolver> m_poissonsolver;
 
 public:
   void add(std::shared_ptr<EKSpecies> const &c) {
@@ -55,8 +54,8 @@ public:
     }
   }
 
-  void set_poissonsolver(
-      std::shared_ptr<walberla::PoissonSolver<double>> const &solver) {
+  void
+  set_poissonsolver(std::shared_ptr<walberla::PoissonSolver> const &solver) {
     m_poissonsolver = solver;
   }
 
@@ -68,13 +67,15 @@ public:
   void set_tau(double tau) { m_tau = tau; }
 
   void reset_charge() const { m_poissonsolver->reset_charge_field(); }
-  void add_charge(const std::size_t &id, double valency) const {
-    m_poissonsolver->add_charge_to_field(id, valency);
+  void add_charge(const walberla::domain_decomposition::BlockDataID &id,
+                  double valency, bool is_double_precision) const {
+    m_poissonsolver->add_charge_to_field(id, valency, is_double_precision);
   }
 
   void solve_poisson() const { m_poissonsolver->solve(); }
 
-  [[nodiscard]] std::size_t get_potential_field_id() const {
+  [[nodiscard]] walberla::domain_decomposition::BlockDataID
+  get_potential_field_id() const {
     return m_poissonsolver->get_potential_field_id();
   }
 };

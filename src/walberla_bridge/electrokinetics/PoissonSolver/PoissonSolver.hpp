@@ -1,62 +1,42 @@
 #ifndef ESPRESSO_POISSONSOLVER_HPP
 #define ESPRESSO_POISSONSOLVER_HPP
 
-#include <utility>
+#include <memory>
 
 #include "LatticeWalberla.hpp"
 
-#include "blockforest/communication/UniformBufferedScheme.h"
-#include "field/AddToStorage.h"
-#include "field/GhostLayerField.h"
-#include "field/communication/PackInfo.h"
-#include "stencil/D3Q27.h"
+// TODO: what about this here?
+#include <domain_decomposition/BlockDataID.h>
 
 namespace walberla {
-template <typename FloatType = double> class PoissonSolver {
+class PoissonSolver {
 private:
   std::shared_ptr<LatticeWalberla> m_lattice;
-  FloatType m_permittivity;
-  BlockDataID m_potential_field_id;
-
-protected:
-  using PotentialField = GhostLayerField<FloatType, 1>;
-  using ChargeField = GhostLayerField<FloatType, 1>;
-
-  using FullCommunicator = blockforest::communication::UniformBufferedScheme<
-      typename stencil::D3Q27>;
-  std::shared_ptr<FullCommunicator> m_full_communication;
+  double m_permittivity;
 
 public:
-  PoissonSolver(std::shared_ptr<LatticeWalberla> lattice,
-                FloatType permittivity)
-      : m_lattice{std::move(lattice)}, m_permittivity{permittivity} {
-    m_potential_field_id = field::addToStorage<PotentialField>(
-        get_lattice()->get_blocks(), "potential field", 0.0, field::fzyx,
-        get_lattice()->get_ghost_layers());
-
-    m_full_communication =
-        std::make_shared<FullCommunicator>(get_lattice()->get_blocks());
-    m_full_communication->addPackInfo(
-        std::make_shared<field::communication::PackInfo<PotentialField>>(
-            m_potential_field_id));
-  }
+  PoissonSolver(std::shared_ptr<LatticeWalberla> lattice, double permittivity)
+      : m_lattice(std::move(lattice)), m_permittivity(permittivity){};
 
   virtual void reset_charge_field() = 0;
-  virtual void add_charge_to_field(const std::size_t &id,
-                                   FloatType valency) = 0;
-  [[nodiscard]] std::size_t get_potential_field_id() {
-    return m_potential_field_id;
-  }
 
-  void set_permittivity(FloatType permittivity) {
+  virtual void add_charge_to_field(const domain_decomposition::BlockDataID &id,
+                                   double valency,
+                                   bool is_double_precision) = 0;
+  [[nodiscard]] virtual domain_decomposition::BlockDataID
+  get_potential_field_id() const noexcept = 0;
+
+  void set_permittivity(double permittivity) noexcept {
     m_permittivity = permittivity;
   }
-  [[nodiscard]] FloatType get_permittivity() const { return m_permittivity; }
+  [[nodiscard]] double get_permittivity() const noexcept {
+    return m_permittivity;
+  }
 
-  [[nodiscard]] auto get_lattice() const { return m_lattice; }
+  [[nodiscard]] auto get_lattice() const noexcept { return m_lattice; }
 
   virtual void solve() = 0;
-  void ghost_communication() { (*m_full_communication)(); };
+  virtual void ghost_communication() = 0;
 };
 } // namespace walberla
 
