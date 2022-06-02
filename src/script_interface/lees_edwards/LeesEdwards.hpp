@@ -70,9 +70,9 @@ public:
          {"pos_offset", AutoParameter::read_only,
           [this]() { return m_lebc.pos_offset; }},
          {"shear_direction", AutoParameter::read_only,
-          [this]() { return m_lebc.shear_direction; }},
+          [this]() { return get_shear_name(m_lebc.shear_direction); }},
          {"shear_plane_normal", AutoParameter::read_only,
-          [this]() { return m_lebc.shear_plane_normal; }}});
+          [this]() { return get_shear_name(m_lebc.shear_plane_normal); }}});
   }
 
   Variant do_call_method(std::string const &name,
@@ -86,16 +86,9 @@ public:
         }
         // check input arguments
         m_protocol = get_value<std::shared_ptr<Protocol>>(protocol);
-        auto const shear_direction = get_value<int>(params, "shear_direction");
+        auto const shear_direction = get_shear_axis(params, "shear_direction");
         auto const shear_plane_normal =
-            get_value<int>(params, "shear_plane_normal");
-        if (shear_direction < 0 or shear_direction > 2) {
-          throw std::invalid_argument("Parameter 'shear_direction' is invalid");
-        }
-        if (shear_plane_normal < 0 or shear_plane_normal > 2) {
-          throw std::invalid_argument(
-              "Parameter 'shear_plane_normal' is invalid");
-        }
+            get_shear_axis(params, "shear_plane_normal");
         if (shear_plane_normal == shear_direction) {
           throw std::invalid_argument("Parameters 'shear_direction' and "
                                       "'shear_plane_normal' must differ");
@@ -107,6 +100,34 @@ public:
       });
     }
     return {};
+  }
+
+private:
+  int get_shear_axis(VariantMap const &params, std::string name) {
+    auto const value = get_value<std::string>(params, name);
+    if (value == "x") {
+      return 0;
+    }
+    if (value == "y") {
+      return 1;
+    }
+    if (value == "z") {
+      return 2;
+    }
+    throw std::invalid_argument("Parameter '" + name + "' is invalid");
+  }
+
+  Variant get_shear_name(int axis) {
+    if (axis == 0) {
+      return {std::string("x")};
+    }
+    if (axis == 1) {
+      return {std::string("y")};
+    }
+    if (axis == 2) {
+      return {std::string("z")};
+    }
+    return {none};
   }
 };
 

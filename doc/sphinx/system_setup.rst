@@ -187,8 +187,8 @@ Example::
     le_protocol = espressomd.lees_edwards.LinearShear(
         shear_velocity=-0.1, initial_pos_offset=0.0, time_0=-0.1)
     system.lees_edwards.set_boundary_conditions(
-        shear_direction=1, # shear along y-axis
-        shear_plane_normal=0, # shear when crossing the x-boundary
+        shear_direction="y", # shear along y-axis
+        shear_plane_normal="x", # shift when crossing the x-boundary
         protocol=le_protocol)
     p = system.part.add(pos=[4.9, 0.0, 0.0], v=[0.1, 0.0, 0.0])
     system.integrator.run(20)

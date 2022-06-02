@@ -92,7 +92,7 @@ class Integrator_test(ut.TestCase):
             shear_velocity=1., initial_pos_offset=0., time_0=0.)
         with self.assertRaisesRegex(Exception, self.msg + 'The NpT integrator cannot use Lees-Edwards'):
             self.system.lees_edwards.set_boundary_conditions(
-                shear_direction=0, shear_plane_normal=1, protocol=protocol)
+                shear_direction="x", shear_plane_normal="y", protocol=protocol)
             self.system.integrator.run(0)
         with self.assertRaisesRegex(Exception, self.msg + 'The NpT integrator cannot use Lees-Edwards'):
             self.system.lees_edwards.protocol = espressomd.lees_edwards.Off()

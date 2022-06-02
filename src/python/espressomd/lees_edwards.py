@@ -24,6 +24,9 @@ class LeesEdwards(ScriptInterfaceHelper):
 
     """
     Interface to the :ref:`Lees-Edwards boundary conditions`.
+    When writing H5MD files, the shear direction and shear plane normals
+    are written as integers instead of characters, with 0 = *x*-axis,
+    1 = *y*-axis, 2 = *z*-axis.
 
     Attributes
     ----------
@@ -33,12 +36,10 @@ class LeesEdwards(ScriptInterfaceHelper):
         Current shear velocity.
     pos_offset : :obj:`float`
         Current position offset
-    shear_direction : :obj:`int`
-        Shear direction: 0 for the *x*-axis, 1 for the *y*-axis,
-        2 for the *z*-axis.
-    shear_plane_normal : :obj:`int`
-        Shear plane normal: 0 for the *x*-axis, 1 for the *y*-axis,
-        2 for the *z*-axis.
+    shear_direction : :obj:`str`, \{'x', 'y', 'z'\}
+        Shear direction.
+    shear_plane_normal : :obj:`str`, \{'x', 'y', 'z'\}
+        Shear plane normal.
 
     Methods
     -------
@@ -48,8 +49,8 @@ class LeesEdwards(ScriptInterfaceHelper):
         Parameters
         ----------
         protocol : :obj:`object`
-        shear_direction : :obj:`int`
-        shear_plane_normal : :obj:`int`
+        shear_direction : :obj:`str`, \{'x', 'y', 'z'\}
+        shear_plane_normal : :obj:`str`, \{'x', 'y', 'z'\}
 
     """
 
