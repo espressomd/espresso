@@ -129,7 +129,18 @@ public:
 
   BoxGeometry const &box() const override { return m_box; };
 
-  Utils::Vector<std::size_t, 2> parts_per_decomposition_local() const;
+  /** @brief Count particles in child regular decompositions. */
+  std::size_t count_particles_in_regular() const {
+    return count_particles(m_regular_decomposition.get_local_cells());
+  }
+
+  /** @brief Count particles in child N-square decompositions. */
+  std::size_t count_particles_in_n_square() const {
+    return count_particles(m_n_square.get_local_cells());
+  }
+
+private:
+  std::size_t count_particles(std::vector<Cell *> const &local_cells) const;
 };
 
 #endif

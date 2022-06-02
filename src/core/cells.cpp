@@ -30,6 +30,7 @@
 #include "cell_system/Cell.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cell_system/CellStructureType.hpp"
+#include "cell_system/HybridDecomposition.hpp"
 
 #include "Particle.hpp"
 #include "communication.hpp"
@@ -43,6 +44,7 @@
 #include <utils/math/sqr.hpp>
 #include <utils/mpi/gather_buffer.hpp>
 
+#include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/range/algorithm/min_element.hpp>
 #include <boost/serialization/set.hpp>
 
@@ -197,14 +199,6 @@ void set_hybrid_decomposition(std::set<int> n_square_types,
   on_cell_structure_change();
 }
 
-std::pair<std::size_t, std::size_t>
-hybrid_parts_per_decomposition(HybridDecomposition const &hd) {
-  Utils::Vector<std::size_t, 2> acc = {};
-  boost::mpi::reduce(comm_cart, hd.parts_per_decomposition_local(), acc,
-                     std::plus<>{}, 0);
-  return std::make_pair(acc[0], acc[1]);
-}
-
 void cells_re_init(CellStructureType new_cs) {
   switch (new_cs) {
   case CellStructureType::CELL_STRUCTURE_REGULAR:
@@ -217,7 +211,7 @@ void cells_re_init(CellStructureType new_cs) {
   case CellStructureType::CELL_STRUCTURE_HYBRID: {
     /* Get current HybridDecomposition to extract n_square_types */
     auto &current_hybrid_decomposition =
-        dynamic_cast<const HybridDecomposition &>(
+        dynamic_cast<HybridDecomposition const &>(
             Utils::as_const(cell_structure).decomposition());
     cell_structure.set_hybrid_decomposition(
         comm_cart, current_hybrid_decomposition.get_cutoff_regular(), box_geo,

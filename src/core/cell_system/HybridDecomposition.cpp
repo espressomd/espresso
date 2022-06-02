@@ -31,6 +31,7 @@
 #include <utils/Vector.hpp>
 #include <utils/mpi/sendrecv.hpp>
 
+#include <boost/mpi/collectives/reduce.hpp>
 #include <boost/mpi/communicator.hpp>
 
 #include <algorithm>
@@ -161,15 +162,13 @@ void HybridDecomposition::resort(bool global,
                      map_data_parts(global_ghost_flags()));
 }
 
-Utils::Vector<std::size_t, 2>
-HybridDecomposition::parts_per_decomposition_local() const {
-  std::size_t parts_in_regular = 0;
-  std::size_t parts_in_n_square = 0;
-  for (auto &c : m_regular_decomposition.get_local_cells()) {
-    parts_in_regular += c->particles().size();
+std::size_t HybridDecomposition::count_particles(
+    std::vector<Cell *> const &local_cells) const {
+  std::size_t count_local = 0;
+  std::size_t count_global = 0;
+  for (auto const &cell : local_cells) {
+    count_local += cell->particles().size();
   }
-  for (auto &c : m_n_square.get_local_cells()) {
-    parts_in_n_square += c->particles().size();
-  }
-  return {parts_in_regular, parts_in_n_square};
+  boost::mpi::reduce(m_comm, count_local, count_global, std::plus<>{}, 0);
+  return count_global;
 }
