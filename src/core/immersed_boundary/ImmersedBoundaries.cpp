@@ -21,6 +21,7 @@
 
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
 #include "ibm_volcons.hpp"
@@ -195,9 +196,9 @@ void ImmersedBoundaries::calc_volume_force(CellStructure &cs) {
       auto const nHat = n / ln;
       auto const force = -fact * A * nHat;
 
-      p1.f.f += force;
-      p2.f.f += force;
-      p3.f.f += force;
+      p1.force() += force;
+      p2.force() += force;
+      p3.force() += force;
     }
     return false;
   });

@@ -49,19 +49,19 @@ ThermalizedBond::forces(Particle const &p1, Particle const &p2,
     return {};
   }
 
-  auto const mass_tot = p1.p.mass + p2.p.mass;
+  auto const mass_tot = p1.mass() + p2.mass();
   auto const mass_tot_inv = 1.0 / mass_tot;
   auto const sqrt_mass_tot = sqrt(mass_tot);
-  auto const sqrt_mass_red = sqrt(p1.p.mass * p2.p.mass / mass_tot);
-  auto const com_vel = mass_tot_inv * (p1.p.mass * p1.m.v + p2.p.mass * p2.m.v);
-  auto const dist_vel = p2.m.v - p1.m.v;
+  auto const sqrt_mass_red = sqrt(p1.mass() * p2.mass() / mass_tot);
+  auto const com_vel = mass_tot_inv * (p1.mass() * p1.v() + p2.mass() * p2.v());
+  auto const dist_vel = p2.v() - p1.v();
 
   extern ThermalizedBondThermostat thermalized_bond;
   Utils::Vector3d force1{};
   Utils::Vector3d force2{};
   auto const noise = Random::noise_uniform<RNGSalt::THERMALIZED_BOND>(
-      thermalized_bond.rng_counter(), thermalized_bond.rng_seed(),
-      p1.p.identity, p2.p.identity);
+      thermalized_bond.rng_counter(), thermalized_bond.rng_seed(), p1.id(),
+      p2.id());
 
   for (int i = 0; i < 3; i++) {
     double force_lv_com, force_lv_dist;
@@ -82,8 +82,8 @@ ThermalizedBond::forces(Particle const &p1, Particle const &p2,
       force_lv_dist = -pref1_dist * dist_vel[i];
     }
     // Add forces
-    force1[i] = p1.p.mass * mass_tot_inv * force_lv_com - force_lv_dist;
-    force2[i] = p2.p.mass * mass_tot_inv * force_lv_com + force_lv_dist;
+    force1[i] = p1.mass() * mass_tot_inv * force_lv_com - force_lv_dist;
+    force2[i] = p2.mass() * mass_tot_inv * force_lv_com + force_lv_dist;
   }
 
   return std::make_tuple(force1, force2);

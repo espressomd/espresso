@@ -38,7 +38,7 @@ template <typename BondType>
 inline bool pair_bond_enum_exists_on(Particle const &p,
                                      Particle const &p_partner) {
   return boost::algorithm::any_of(
-      p.bonds(), [partner_id = p_partner.identity()](BondView const &bond) {
+      p.bonds(), [partner_id = p_partner.id()](BondView const &bond) {
         auto const &bond_ptr = bonded_ia_params.at(bond.bond_id());
         return (boost::get<BondType>(bond_ptr.get()) != nullptr) and
                (bond.partner_ids()[0] == partner_id);

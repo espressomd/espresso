@@ -78,7 +78,7 @@ struct RegularDecomposition : public ParticleDecomposition {
   Utils::Vector3d inv_cell_size = {};
 
   boost::mpi::communicator m_comm;
-  BoxGeometry m_box;
+  BoxGeometry const &m_box;
   LocalBox<double> m_local_box;
   std::vector<Cell> cells;
   std::vector<Cell *> m_local_cells;
@@ -88,8 +88,8 @@ struct RegularDecomposition : public ParticleDecomposition {
 
 public:
   RegularDecomposition(boost::mpi::communicator comm, double range,
-                       const BoxGeometry &box_geo,
-                       const LocalBox<double> &local_geo);
+                       BoxGeometry const &box_geo,
+                       LocalBox<double> const &local_geo);
 
   GhostCommunicator const &exchange_ghosts_comm() const override {
     return m_exchange_ghosts_comm;
@@ -120,7 +120,8 @@ public:
   boost::optional<BoxGeometry> minimum_image_distance() const override {
     return {m_box};
   }
-  BoxGeometry box() const override { return m_box; }
+
+  BoxGeometry const &box() const override { return m_box; };
 
 private:
   /** Fill @c m_local_cells list and @c m_ghost_cells list for use with regular

@@ -22,21 +22,17 @@
 #include <utils/Vector.hpp>
 
 #include <bitset>
-#include <cassert>
 #include <cmath>
 
 struct LeesEdwardsBC {
   double pos_offset = 0.;
   double shear_velocity = 0.;
-  int shear_direction = 0;
-  int shear_plane_normal = 0;
-  Utils::Vector3d distance(const Utils::Vector3d &d, const Utils::Vector3d &l,
-                           const Utils::Vector3d &hal_l,
-                           const Utils::Vector3d &l_inv,
-                           const std::bitset<3> periodic) const {
-    assert(shear_plane_normal != shear_direction);
-    assert(shear_direction >= 0 and shear_direction <= 2);
-    assert(shear_plane_normal >= 0 and shear_plane_normal <= 2);
+  int shear_direction = -1;
+  int shear_plane_normal = -1;
+  Utils::Vector3d distance(Utils::Vector3d const &d, Utils::Vector3d const &l,
+                           Utils::Vector3d const &hal_l,
+                           Utils::Vector3d const &l_inv,
+                           std::bitset<3> const periodic) const {
 
     Utils::Vector3d n_jumps{};
     Utils::Vector3d res = d;

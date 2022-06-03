@@ -191,7 +191,7 @@ void calc_part_distribution(PartCfg &partCfg, std::vector<int> const &p1_types,
   for (int i = 0; i < r_bins; i++)
     dist[i] = 0.0;
   if (log_flag)
-    inv_bin_width = (double)r_bins / (log(r_max) - log(r_min));
+    inv_bin_width = (double)r_bins / (log(r_max / r_min));
   else
     inv_bin_width = (double)r_bins / (r_max - r_min);
 
@@ -219,7 +219,7 @@ void calc_part_distribution(PartCfg &partCfg, std::vector<int> const &p1_types,
           if (min_dist >= r_min) {
             /* calculate bin index */
             if (log_flag)
-              ind = (int)((log(min_dist) - log(r_min)) * inv_bin_width);
+              ind = (int)((log(min_dist / r_min)) * inv_bin_width);
             else
               ind = (int)((min_dist - r_min) * inv_bin_width);
             if (ind >= 0 && ind < r_bins) {

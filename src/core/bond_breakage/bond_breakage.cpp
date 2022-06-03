@@ -127,10 +127,10 @@ ActionSet actions_for_breakage(QueueEntry const &e) {
     // between which the bond broke.
     auto p1 = cell_structure.get_local_particle(e.particle_id);
     auto p2 = cell_structure.get_local_particle(e.bond_partner_id);
-    if (!p1 || !p2)
+    if (not p1 or not p2)
       return {}; // particles not on this mpi rank
 
-    if (!p1->p.is_virtual || !p2->p.is_virtual) {
+    if (not p1->is_virtual() or not p2->is_virtual()) {
       runtimeErrorMsg() << "The REVERT_BIND_AT_POINT_OF_COLLISION bond "
                            "breakage action has to be configured for the "
                            "bond on the virtual site. Encountered a particle "
@@ -143,10 +143,10 @@ ActionSet actions_for_breakage(QueueEntry const &e) {
         DeleteBond{e.particle_id, e.bond_partner_id, e.bond_type},
         // Bond between base particles. We do not know, on which of the two
         // the bond is defined, since bonds are stored only on one partner
-        DeleteAllBonds{p1->p.vs_relative.to_particle_id,
-                       p2->p.vs_relative.to_particle_id},
-        DeleteAllBonds{p2->p.vs_relative.to_particle_id,
-                       p1->p.vs_relative.to_particle_id},
+        DeleteAllBonds{p1->vs_relative().to_particle_id,
+                       p2->vs_relative().to_particle_id},
+        DeleteAllBonds{p2->vs_relative().to_particle_id,
+                       p1->vs_relative().to_particle_id},
     };
   }
 #endif // VIRTUAL_SITES_RELATIVE

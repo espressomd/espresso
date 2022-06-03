@@ -31,6 +31,7 @@
 #include <utils/Vector.hpp>
 #include <utils/mpi/sendrecv.hpp>
 
+#include <boost/mpi/collectives/reduce.hpp>
 #include <boost/mpi/communicator.hpp>
 
 #include <algorithm>
@@ -41,8 +42,8 @@
 
 HybridDecomposition::HybridDecomposition(boost::mpi::communicator comm,
                                          double cutoff_regular,
-                                         const BoxGeometry &box_geo,
-                                         const LocalBox<double> &local_box,
+                                         BoxGeometry const &box_geo,
+                                         LocalBox<double> const &local_box,
                                          std::set<int> n_square_types)
     : m_comm(std::move(comm)), m_box(box_geo), m_cutoff_regular(cutoff_regular),
       m_regular_decomposition(RegularDecomposition(
@@ -100,7 +101,7 @@ void HybridDecomposition::resort(bool global,
   for (auto &c : m_regular_decomposition.local_cells()) {
     for (auto it = c->particles().begin(); it != c->particles().end();) {
       /* Particle is in the right decomposition, i.e. has no n_square type */
-      if (not is_n_square_type(it->p.type)) {
+      if (not is_n_square_type(it->type())) {
         std::advance(it, 1);
         continue;
       }
@@ -109,7 +110,7 @@ void HybridDecomposition::resort(bool global,
       auto p = std::move(*it);
       it = c->particles().erase(it);
       diff.emplace_back(ModifiedList{c->particles()});
-      diff.emplace_back(RemovedParticle{p.identity()});
+      diff.emplace_back(RemovedParticle{p.id()});
 
       /* ... and insert into a n_square cell */
       auto const first_local_cell = m_n_square.get_local_cells()[0];
@@ -121,7 +122,7 @@ void HybridDecomposition::resort(bool global,
     for (auto &c : m_n_square.local_cells()) {
       for (auto it = c->particles().begin(); it != c->particles().end();) {
         /* Particle is of n_square type */
-        if (is_n_square_type(it->p.type)) {
+        if (is_n_square_type(it->type())) {
           std::advance(it, 1);
           continue;
         }
@@ -130,7 +131,7 @@ void HybridDecomposition::resort(bool global,
         auto p = std::move(*it);
         it = c->particles().erase(it);
         diff.emplace_back(ModifiedList{c->particles()});
-        diff.emplace_back(RemovedParticle{p.identity()});
+        diff.emplace_back(RemovedParticle{p.id()});
 
         /* ... and insert in regular decomposition */
         auto const target_cell = particle_to_cell(p);
@@ -161,15 +162,13 @@ void HybridDecomposition::resort(bool global,
                      map_data_parts(global_ghost_flags()));
 }
 
-Utils::Vector<std::size_t, 2>
-HybridDecomposition::parts_per_decomposition_local() const {
-  std::size_t parts_in_regular = 0;
-  std::size_t parts_in_n_square = 0;
-  for (auto &c : m_regular_decomposition.get_local_cells()) {
-    parts_in_regular += c->particles().size();
+std::size_t HybridDecomposition::count_particles(
+    std::vector<Cell *> const &local_cells) const {
+  std::size_t count_local = 0;
+  std::size_t count_global = 0;
+  for (auto const &cell : local_cells) {
+    count_local += cell->particles().size();
   }
-  for (auto &c : m_n_square.get_local_cells()) {
-    parts_in_n_square += c->particles().size();
-  }
-  return {parts_in_regular, parts_in_n_square};
+  boost::mpi::reduce(m_comm, count_local, count_global, std::plus<>{}, 0);
+  return count_global;
 }

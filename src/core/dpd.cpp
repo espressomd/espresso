@@ -120,10 +120,11 @@ Utils::Vector3d dpd_pair_force(Particle const &p1, Particle const &p2,
     return {};
   }
 
-  auto const v21 = box_geo.velocity_difference(p1.r.p, p2.r.p, p1.m.v, p2.m.v);
+  auto const v21 =
+      box_geo.velocity_difference(p1.pos(), p2.pos(), p1.v(), p2.v());
   auto const noise_vec =
       (ia_params.dpd_radial.pref > 0.0 || ia_params.dpd_trans.pref > 0.0)
-          ? dpd_noise(p1.p.identity, p2.p.identity)
+          ? dpd_noise(p1.id(), p2.id())
           : Vector3d{};
 
   auto const f_r = dpd_pair_force(ia_params.dpd_radial, v21, dist, noise_vec);
@@ -144,9 +145,9 @@ static auto dpd_viscous_stress_local() {
   cell_structure.non_bonded_loop(
       [&stress](const Particle &p1, const Particle &p2, Distance const &d) {
         auto const v21 =
-            box_geo.velocity_difference(p1.r.p, p2.r.p, p1.m.v, p2.m.v);
+            box_geo.velocity_difference(p1.pos(), p2.pos(), p1.v(), p2.v());
 
-        IA_parameters const &ia_params = *get_ia_param(p1.p.type, p2.p.type);
+        IA_parameters const &ia_params = *get_ia_param(p1.type(), p2.type());
         auto const dist = std::sqrt(d.dist2);
 
         auto const f_r = dpd_pair_force(ia_params.dpd_radial, v21, dist, {});

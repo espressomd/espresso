@@ -25,6 +25,7 @@ import espressomd.code_info
 import espressomd.electrostatics
 import espressomd.magnetostatics
 import espressomd.interactions
+import espressomd.lees_edwards
 import espressomd.drude_helpers
 import espressomd.virtual_sites
 import espressomd.accumulators
@@ -61,6 +62,13 @@ for filepath in path_cpt_root.iterdir():
     filepath.unlink(missing_ok=True)
 
 n_nodes = system.cell_system.get_state()["n_nodes"]
+
+# Lees-Edwards boundary conditions
+if 'INT.NPT' not in modes:
+    protocol = espressomd.lees_edwards.LinearShear(
+        initial_pos_offset=0.1, time_0=0.2, shear_velocity=1.2)
+    system.lees_edwards.set_boundary_conditions(
+        shear_direction="x", shear_plane_normal="y", protocol=protocol)
 
 lbf_actor = None
 if 'LB.CPU' in modes:

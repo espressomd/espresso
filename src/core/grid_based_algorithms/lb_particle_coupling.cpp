@@ -220,7 +220,7 @@ std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d pos,
 /** @brief Return if locally there exists a physical particle
  ** for a given (ghost) particle */
 bool is_ghost_for_local_particle(const Particle &p) {
-  return !cell_structure.get_local_particle(p.identity())->is_ghost();
+  return !cell_structure.get_local_particle(p.id())->is_ghost();
 }
 
 /** @brief Determine if a given particle should be coupled.
@@ -236,9 +236,8 @@ bool should_be_coupled(const Particle &p,
   // for ghosts check that we don't have the physical particle and
   // that a ghost for the same particle has not yet been coupled
   if ((not is_ghost_for_local_particle(p)) and
-      (coupled_ghost_particles.find(p.identity()) ==
-       coupled_ghost_particles.end())) {
-    coupled_ghost_particles.insert(p.identity());
+      (coupled_ghost_particles.find(p.id()) == coupled_ghost_particles.end())) {
+    coupled_ghost_particles.insert(p.id());
     return true;
   }
   return false;
@@ -326,8 +325,8 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
           Utils::Vector3d force = {};
           for (auto pos : positions_in_halo(p.pos(), box_geo)) {
             if (in_local_halo(pos)) {
-              force = lb_viscous_coupling(
-                  p, pos, noise_amplitude * f_random(p.identity()));
+              force = lb_viscous_coupling(p, pos,
+                                          noise_amplitude * f_random(p.id()));
               break;
             }
           }

@@ -40,11 +40,10 @@ auto constexpr eps = std::numeric_limits<double>::epsilon();
 auto constexpr tol = 100. * eps;
 
 BOOST_AUTO_TEST_CASE(test_shear_direction) {
-  LeesEdwardsBC le;
-  le.shear_direction = 1;
+  LeesEdwardsBC le{0., 0., 1, 0};
   BoxGeometry box;
   box.set_lees_edwards_bc(le);
-  auto const expected_direction = Utils::Vector3d{{0, 1, 0}};
+  auto const expected_direction = Utils::Vector3d{{0., 1., 0.}};
   BOOST_CHECK_SMALL((shear_direction(box) - expected_direction).norm(), eps);
 }
 
@@ -53,10 +52,7 @@ BOOST_AUTO_TEST_CASE(test_update_offset) {
   p.image_box() = {2, 4, -1};
   p.lees_edwards_offset() = 1.5;
 
-  LeesEdwardsBC le;
-  le.shear_direction = 1;
-  le.shear_plane_normal = 2;
-  le.shear_velocity = 3.5;
+  LeesEdwardsBC le{0., 3.5, 1, 2};
   BoxGeometry box;
   box.set_lees_edwards_bc(le);
   UpdateOffset(box, 3.5)(p);
@@ -81,11 +77,7 @@ BOOST_AUTO_TEST_CASE(test_push) {
   p.image_box() = {2, 4, -1};
   p.lees_edwards_offset() = old_offset;
 
-  LeesEdwardsBC le;
-  le.shear_direction = 2;
-  le.shear_plane_normal = 1;
-  le.pos_offset = 2.5;
-  le.shear_velocity = -3.1;
+  LeesEdwardsBC le{2.5, -3.1, 2, 1};
 
   BoxGeometry box;
   box.set_type(BoxType::LEES_EDWARDS);

@@ -150,10 +150,10 @@ class Test(ut.TestCase):
         in the distance calculation.
         """
         system = self.system
-        system.lees_edwards.protocol = espressomd.lees_edwards.LinearShear(
+        protocol = espressomd.lees_edwards.LinearShear(
             initial_pos_offset=0.1, time_0=0., shear_velocity=1.0)
-        system.lees_edwards.shear_direction = 0
-        system.lees_edwards.shear_plane_normal = 2
+        system.lees_edwards.set_boundary_conditions(
+            shear_direction="x", shear_plane_normal="z", protocol=protocol)
         p1 = system.part.add(pos=[0., 0., 0.])
         p2 = system.part.add(pos=[0., 0., 0.99])
         self.assertEqual(system.cell_system.get_neighbors(p1, 0.10), [])

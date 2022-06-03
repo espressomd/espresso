@@ -605,7 +605,7 @@ class Analysis:
         r = np.zeros(r_bins)
 
         if log_flag:
-            log_fac = (float(r_max) / r_min)**(1.0 / r_bins)
+            log_fac = (r_max / r_min)**(1.0 / r_bins)
             r[0] = r_min * np.sqrt(log_fac)
             for i in xrange(1, r_bins):
                 r[i] = r[i - 1] * log_fac

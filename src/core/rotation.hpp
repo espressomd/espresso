@@ -114,7 +114,7 @@ local_rotate_particle_body(Particle const &p,
     return p.quat();
   if (std::abs(phi) > std::numeric_limits<double>::epsilon())
     return p.quat() *
-           boost::qvm::rot_quat(mask(p.p.rotation, axis_body_frame), phi);
+           boost::qvm::rot_quat(mask(p.rotation(), axis_body_frame), phi);
   return p.quat();
 }
 
@@ -132,7 +132,7 @@ inline void local_rotate_particle(Particle &p,
 
 inline void convert_torque_to_body_frame_apply_fix(Particle &p) {
   auto const torque = convert_vector_space_to_body(p, p.torque());
-  p.torque() = mask(p.p.rotation, torque);
+  p.torque() = mask(p.rotation(), torque);
 }
 
 #endif // ROTATION

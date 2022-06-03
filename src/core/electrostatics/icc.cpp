@@ -129,7 +129,7 @@ void ICCStar::iteration(CellStructure &cell_structure,
     for (auto &p : particles) {
       auto const pid = p.id();
       if (pid >= icc_cfg.first_id and pid < icc_cfg.n_icc + icc_cfg.first_id) {
-        auto const id = p.identity() - icc_cfg.first_id;
+        auto const id = p.id() - icc_cfg.first_id;
         /* the dielectric-related prefactor: */
         auto const eps_in = icc_cfg.epsilons[id];
         auto const eps_out = icc_cfg.eps_out;

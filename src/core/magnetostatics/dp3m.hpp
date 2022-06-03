@@ -179,7 +179,7 @@ struct DipolarP3M {
   inline ParticleForce pair_force(Particle const &p1, Particle const &p2,
                                   Utils::Vector3d const &d, double dist2,
                                   double dist) const {
-    if ((p1.p.dipm == 0.) || (p2.p.dipm == 0.) || dist >= dp3m.params.r_cut ||
+    if ((p1.dipm() == 0.) || (p2.dipm() == 0.) || dist >= dp3m.params.r_cut ||
         dist <= 0.)
       return {};
 
@@ -223,9 +223,9 @@ struct DipolarP3M {
     auto const torque = prefactor * (-mixmj * B_r + mixr * (mjr * C_r));
 #ifdef NPT
 #if USE_ERFC_APPROXIMATION
-    auto const fac = prefactor * p1.p.dipm * p2.p.dipm * exp_adist2;
+    auto const fac = prefactor * p1.dipm() * p2.dipm() * exp_adist2;
 #else
-    auto const fac = prefactor * p1.p.dipm * p2.p.dipm;
+    auto const fac = prefactor * p1.dipm() * p2.dipm();
 #endif
     auto const energy = fac * (mimj * B_r - mir * mjr * C_r);
     npt_add_virial_magnetic_contribution(energy);
@@ -237,7 +237,7 @@ struct DipolarP3M {
   inline double pair_energy(Particle const &p1, Particle const &p2,
                             Utils::Vector3d const &d, double dist2,
                             double dist) const {
-    if ((p1.p.dipm == 0.) || (p2.p.dipm == 0.) || dist >= dp3m.params.r_cut ||
+    if ((p1.dipm() == 0.) || (p2.dipm() == 0.) || dist >= dp3m.params.r_cut ||
         dist <= 0.)
       return {};
 

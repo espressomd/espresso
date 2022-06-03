@@ -28,7 +28,7 @@ public:
   Particle() : m_id(-1) {}
   explicit Particle(int id) : m_id(id) {}
 
-  int identity() const { return m_id; }
+  int id() const { return m_id; }
 
   int m_id;
 };
