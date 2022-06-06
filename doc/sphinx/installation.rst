@@ -131,16 +131,47 @@ To generate the Doxygen documentation, install the following packages:
 Setting up a Jupyter environment
 """"""""""""""""""""""""""""""""
 
-To run the samples and tutorials, install the following packages:
+To run the samples and tutorials, start by installing the following packages:
 
 .. code-block:: bash
 
     sudo apt install python3-matplotlib python3-pint python3-tqdm ffmpeg
     pip3 install --user 'MDAnalysis>=1.0.0,<2.0.0'
+
+The tutorials are written in the
+`Notebook Format <https://nbformat.readthedocs.io/en/latest/>`__
+version <= 4.4 and can be executed by any of these tools:
+
+* `Jupyter Notebook <https://jupyter-notebook.readthedocs.io/en/stable/notebook.html>`__
+* `JupyterLab <https://jupyterlab.readthedocs.io/en/stable/>`__
+* `IPython <https://ipython.org/>`__ (not recommended)
+
+To check whether one of them is installed, run these commands:
+
+.. code-block:: bash
+
+    jupyter notebook --version
+    jupyter lab --version
+    ipython --version
+
+If you don't have any of these tools installed and aren't sure which one
+to use, we recommend installing the historic Jupyter Notebook, since the
+|es| tutorials have been designed with the ``exercise2`` plugin in mind.
+
+To use Jupyter Notebook, install the following packages:
+
+.. code-block:: bash
+
     pip3 install --user nbformat notebook 'jupyter_contrib_nbextensions==0.5.1'
     jupyter contrib nbextension install --user
     jupyter nbextension enable rubberband/main
     jupyter nbextension enable exercise2/main
+
+Alternatively, to use JupyterLab, install the following packages:
+
+.. code-block:: bash
+
+    pip3 install --user nbformat notebook jupyterlab
 
 .. _Installing requirements on other Linux distributions:
 

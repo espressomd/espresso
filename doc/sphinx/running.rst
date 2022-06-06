@@ -72,13 +72,31 @@ in the build folder, do:
     make tutorials
 
 The tutorials contain solutions hidden with the ``exercise2`` NB extension.
+Since this extension is only available for Jupyter Notebook, JupyterLab
+users need to convert the tutorials:
+
+.. code-block:: bash
+
+    for f in doc/tutorials/*/*.ipynb; do
+      ./ipypresso doc/tutorials/convert.py exercise2 --to-jupyterlab ${f};
+    done
+
 To interact with notebooks, move to the directory containing the tutorials
-and call the ``ipypresso`` script to start a local server.
+and call the ``ipypresso`` script to start a local Jupyter session.
+
+For Jupyter Notebook and IPython users:
 
 .. code-block:: bash
 
     cd doc/tutorials
     ../../ipypresso notebook
+
+For JupyterLab users:
+
+.. code-block:: bash
+
+    cd doc/tutorials
+    ../../ipypresso lab
 
 You may then browse through the different tutorial folders. Files whose name
 ends with extension ``.ipynb`` can be opened in the browser. Click on the Run

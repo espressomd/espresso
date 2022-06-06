@@ -80,6 +80,14 @@ make tutorials
 ```
 
 The tutorials contain solutions hidden with the ``exercise2`` extension.
+Since this extension is only available for Jupyter Notebook, JupyterLab
+users need to convert the tutorials:
+
+```sh
+for f in doc/tutorials/*/*.ipynb; do
+  ./pypresso doc/tutorials/convert.py exercise2 --to-jupyterlab ${f};
+done
+```
 
 All tutorials can be viewed with their solutions
 [online](https://espressomd.github.io/doc/tutorials.html).
@@ -87,11 +95,20 @@ All tutorials can be viewed with their solutions
 ### Running the tutorials interactively
 
 To view the tutorials, first change to the tutorials directory and then run
-the `ipypresso` script from the directory into which espresso was compiled:
+the `ipypresso` script from the directory into which espresso was compiled.
+
+For Jupyter Notebook and IPython users:
 
 ```sh
 cd doc/tutorials
 ../../ipypresso notebook
+```
+
+For JupyterLab users:
+
+```sh
+cd doc/tutorials
+../../ipypresso lab
 ```
 
 This will launch a web browser in which the notebooks for the tutorials can
