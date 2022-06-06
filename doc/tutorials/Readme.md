@@ -65,46 +65,26 @@ physical systems.
 
 ## Using the tutorials
 
-For using the tutorials, you need ESPResSo running. For installation
-instructions, please see: https://espressomd.github.io/doc/installation.html
+To run the tutorials, you need ESPResSo and a Jupyter environment.
+For installation instructions, please see the user guide sections
+[Quick installation](https://espressomd.github.io/doc/installation.html#quick-installation)
+and [Setting up a Jupyter environment](https://espressomd.github.io/doc/installation.html#setting-up-a-jupyter-environment).
 
 Tutorials are available as Jupyter notebooks, i.e. they consist of a ``.ipynb``
 file which contains both the source code and the corresponding explanations.
-They can be viewed, changed and run interactively.
+They can be viewed, changed and run interactively. To generate the tutorials
+in the build folder, do:
 
-All tutorials can be viewed with their solutions at
-https://espressomd.github.io/doc/tutorials.html
+```sh
+make tutorials
+```
+
+The tutorials contain solutions hidden with the ``exercise2`` extension.
+
+All tutorials can be viewed with their solutions
+[online](https://espressomd.github.io/doc/tutorials.html).
 
 ### Running the tutorials interactively
-
-To view the tutorials, either IPython or Jupyter needs to be installed.
-To check whether one of them is installed, run:
-
-```sh
-ipython --version
-jupyter --version
-```
-
-If none is found, on Ubuntu and related platforms, IPython can be installed with:
-
-```sh
-sudo apt install ipython-notebook
-```
-
-while Jupyter (the successor of IPython) can be installed with:
-
-```sh
-pip3 install --upgrade jupyter ipython nbconvert
-```
-
-When using Jupyter, you will need extra plugins:
-
-```sh
-pip3 install --user 'jupyter_contrib_nbextensions==0.5.1'
-jupyter contrib nbextension install --user
-jupyter nbextension enable rubberband/main
-jupyter nbextension enable exercise2/main
-```
 
 To view the tutorials, first change to the tutorials directory and then run
 the `ipypresso` script from the directory into which espresso was compiled:
@@ -114,8 +94,8 @@ cd doc/tutorials
 ../../ipypresso notebook
 ```
 
-This will launch a web browser in which the notebooks for the tutorials can be
-viewed and run. For more details, please see the user guide section on
+This will launch a web browser in which the notebooks for the tutorials can
+be viewed and run. For more details, please see the user guide section on
 [running notebooks](https://espressomd.github.io/doc/running.html#interactive-notebooks),
 which walks you through the Jupyter interface.
 

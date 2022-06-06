@@ -62,8 +62,18 @@ The name comes from the IPython interpreter, today known as Jupyter.
 Interactive notebooks
 ~~~~~~~~~~~~~~~~~~~~~
 
-To interact with Jupyter notebooks, move to the directory containing the
-tutorials and call the ``ipypresso`` script:
+Tutorials are available as notebooks, i.e. they consist of a ``.ipynb``
+file which contains both the source code and the corresponding explanations.
+They can be viewed, changed and run interactively. To generate the tutorials
+in the build folder, do:
+
+.. code-block:: bash
+
+    make tutorials
+
+The tutorials contain solutions hidden with the ``exercise2`` NB extension.
+To interact with notebooks, move to the directory containing the tutorials
+and call the ``ipypresso`` script to start a local server.
 
 .. code-block:: bash
 
@@ -71,7 +81,7 @@ tutorials and call the ``ipypresso`` script:
     ../../ipypresso notebook
 
 You may then browse through the different tutorial folders. Files whose name
-ends with extension .ipynb can be opened in the browser. Click on the Run
+ends with extension ``.ipynb`` can be opened in the browser. Click on the Run
 button to execute the current block, or use the keyboard shortcut Shift+Enter.
 If the current block is a code block, the ``In [ ]`` label to the left will
 change to ``In [*]`` while the code is being executed, and become ``In [1]``
