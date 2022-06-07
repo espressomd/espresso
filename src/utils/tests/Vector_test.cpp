@@ -105,6 +105,12 @@ BOOST_AUTO_TEST_CASE(range_constructor_test) {
   BOOST_CHECK(std::equal(v.begin(), v.end(), test_numbers));
 }
 
+BOOST_AUTO_TEST_CASE(unit_vector_test) {
+  BOOST_CHECK((Utils::unit_vector<int>(2) == Utils::Vector3i{0, 0, 1}));
+  BOOST_CHECK_THROW(Utils::unit_vector<double>(3), std::domain_error);
+  BOOST_CHECK_THROW(Utils::unit_vector<float>(-1), std::domain_error);
+}
+
 BOOST_AUTO_TEST_CASE(test_norm2) {
   BOOST_CHECK(norm2<1>());
   BOOST_CHECK(norm2<2>());

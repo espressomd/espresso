@@ -41,11 +41,8 @@ class Scafacos1d2d(ut.TestCase):
         self.system.actors.clear()
         self.system.periodicity = [1, 1, 1]
 
-    def vector_error(self, a, b):
-        return np.sum(np.linalg.norm(a - b, axis=1)) / np.sqrt(a.shape[0])
-
     def test_scafacos(self):
-        s = self.system
+        system = self.system
         rho = 0.3
 
         # This is only for box size calculation. The actual particle number is
@@ -55,90 +52,88 @@ class Scafacos1d2d(ut.TestCase):
         particle_radius = 0.5
 
         box_l = np.cbrt(4 * n_particle * np.pi / (3 * rho)) * particle_radius
-        s.box_l = 3 * [box_l]
+        system.box_l = 3 * [box_l]
 
         for dim in (2, 1):
-            print("Dimension", dim)
+            with self.subTest(f"{dim} dimensions"):
+                # Read reference data
+                if dim == 2:
+                    file_prefix = "mdlc"
+                    system.periodicity = [1, 1, 0]
+                else:
+                    system.periodicity = [1, 0, 0]
+                    file_prefix = "scafacos_dipoles_1d"
 
-            # Read reference data
-            if dim == 2:
-                file_prefix = "data/mdlc"
-                s.periodicity = [1, 1, 0]
-            else:
-                s.periodicity = [1, 0, 0]
-                file_prefix = "data/scafacos_dipoles_1d"
+                ref_e_path = tests_common.data_path(
+                    f"{file_prefix}_reference_data_energy.dat")
+                ref_e = float(np.genfromtxt(ref_e_path))
 
-            ref_E_path = tests_common.abspath(
-                file_prefix + "_reference_data_energy.dat")
-            ref_E = float(np.genfromtxt(ref_E_path))
+                # Particles
+                data = np.genfromtxt(tests_common.data_path(
+                    f"{file_prefix}_reference_data_forces_torques.dat"))
+                system.part.add(pos=data[:, 1:4], dip=data[:, 4:7])
+                system.part.all().rotation = 3 * [True]
 
-            # Particles
-            data = np.genfromtxt(tests_common.abspath(
-                file_prefix + "_reference_data_forces_torques.dat"))
-            s.part.add(pos=data[:, 1:4], dip=data[:, 4:7])
-            s.part.all().rotation = 3 * [True]
+                if dim == 2:
+                    scafacos = espressomd.magnetostatics.Scafacos(
+                        prefactor=1.,
+                        method_name="p2nfft",
+                        method_params={
+                            "p2nfft_verbose_tuning": 0,
+                            "pnfft_N": "80,80,160",
+                            "pnfft_window_name": "bspline",
+                            "pnfft_m": "4",
+                            "p2nfft_ignore_tolerance": "1",
+                            "pnfft_diff_ik": "0",
+                            "p2nfft_r_cut": "6",
+                            "p2nfft_alpha": "0.8",
+                            "p2nfft_epsB": "0.05"})
+                    # change box geometry in x,y direction to ensure that
+                    # scafacos survives it
+                    system.box_l = np.array([1., 1., 1.3]) * box_l
+                else:
+                    # 1d periodic in x
+                    scafacos = espressomd.magnetostatics.Scafacos(
+                        prefactor=1.,
+                        method_name="p2nfft",
+                        method_params={
+                            "p2nfft_verbose_tuning": 1,
+                            "pnfft_N": "32,128,128",
+                            "pnfft_direct": 0,
+                            "p2nfft_r_cut": 2.855,
+                            "p2nfft_alpha": "1.5",
+                            "p2nfft_intpol_order": "-1",
+                            "p2nfft_reg_kernel_name": "ewald",
+                            "p2nfft_p": "16",
+                            "p2nfft_ignore_tolerance": "1",
+                            "pnfft_window_name": "bspline",
+                            "pnfft_m": "8",
+                            "pnfft_diff_ik": "1",
+                            "p2nfft_epsB": "0.125"})
+                    system.box_l = np.array([1., 1., 1.]) * box_l
 
-            if dim == 2:
-                scafacos = espressomd.magnetostatics.Scafacos(
-                    prefactor=1,
-                    method_name="p2nfft",
-                    method_params={
-                        "p2nfft_verbose_tuning": 0,
-                        "pnfft_N": "80,80,160",
-                        "pnfft_window_name": "bspline",
-                        "pnfft_m": "4",
-                        "p2nfft_ignore_tolerance": "1",
-                        "pnfft_diff_ik": "0",
-                        "p2nfft_r_cut": "6",
-                        "p2nfft_alpha": "0.8",
-                        "p2nfft_epsB": "0.05"})
-                s.actors.add(scafacos)
-                # change box geometry in x,y direction to ensure that
-                # scafacos survives it
-                s.box_l = np.array((1, 1, 1.3)) * box_l
+                system.actors.add(scafacos)
+                system.integrator.run(0)
 
-            else:
-                # 1d periodic in x
-                scafacos = espressomd.magnetostatics.Scafacos(
-                    prefactor=1,
-                    method_name="p2nfft",
-                    method_params={
-                        "p2nfft_verbose_tuning": 1,
-                        "pnfft_N": "32,128,128",
-                        "pnfft_direct": 0,
-                        "p2nfft_r_cut": 2.855,
-                        "p2nfft_alpha": "1.5",
-                        "p2nfft_intpol_order": "-1",
-                        "p2nfft_reg_kernel_name": "ewald",
-                        "p2nfft_p": "16",
-                        "p2nfft_ignore_tolerance": "1",
-                        "pnfft_window_name": "bspline",
-                        "pnfft_m": "8",
-                        "pnfft_diff_ik": "1",
-                        "p2nfft_epsB": "0.125"})
-                s.box_l = np.array((1, 1, 1)) * box_l
-                s.actors.add(scafacos)
-            s.integrator.run(0)
+                fcs_f = np.copy(system.part.all().f)
+                fcs_t = np.copy(system.part.all().torque_lab)
+                fcs_e = system.analysis.energy()["dipolar"]
+                ref_f = data[:, 7:10]
+                ref_t = data[:, 10:13]
 
-            # Calculate errors
+                tol_f = 1E-4
+                tol_t = 1E-3
+                tol_e = 1E-3
 
-            err_f = self.vector_error(s.part.all().f, data[:, 7:10])
-            err_t = self.vector_error(s.part.all().torque_lab, data[:, 10:13])
-            err_e = s.analysis.energy()["dipolar"] - ref_E
+                np.testing.assert_allclose(fcs_e, ref_e, atol=tol_e,
+                                           err_msg="Energy doesn't match")
+                np.testing.assert_allclose(fcs_t, ref_t, atol=tol_t,
+                                           err_msg="Torques don't match")
+                np.testing.assert_allclose(fcs_f, ref_f, atol=tol_f,
+                                           err_msg="Forces don't match")
 
-            tol_f = 2E-3
-            tol_t = 2E-3
-            tol_e = 1E-3
-
-            self.assertLessEqual(
-                abs(err_e), tol_e, "Energy difference too large")
-            self.assertLessEqual(
-                abs(err_t), tol_t, "Torque difference too large")
-            self.assertLessEqual(
-                abs(err_f), tol_f, "Force difference too large")
-
-            s.part.clear()
-            s.actors.clear()
+                system.part.clear()
+                system.actors.clear()
 
 
 if __name__ == "__main__":

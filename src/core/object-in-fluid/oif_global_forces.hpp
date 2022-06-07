@@ -23,7 +23,7 @@
  *  for a particle triple (triangle from mesh). See @cite dupin07a.
  */
 
-#include "CellStructure.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "oif_global_forces_params.hpp"
 
 #include <utils/Vector.hpp>
@@ -33,7 +33,7 @@
  *  - calculates the global area and global volume for a cell before the forces
  *    are handled
  *  - MPI synchronization with all reduce
- *  - !!! loop over particles from domain_decomposition !!!
+ *  - !!! loop over particles from regular_decomposition !!!
  */
 Utils::Vector2d calc_oif_global(int molType, CellStructure &cs);
 

@@ -124,13 +124,21 @@ protected:
       return none;
     }
 
+    if (method == "get") {
+      auto key = get_value<KeyType>(parameters.at("key"));
+      return Variant{m_elements.at(key)};
+    }
+
     if (method == "get_map") {
-      std::unordered_map<KeyType, Variant> ret;
+      return make_unordered_map_of_variants(m_elements);
+    }
 
-      for (auto const &kv : m_elements)
-        ret[kv.first] = kv.second;
-
-      return ret;
+    if (method == "keys") {
+      std::vector<Variant> res;
+      for (auto const &kv : m_elements) {
+        res.push_back(kv.first);
+      }
+      return res;
     }
 
     if (method == "clear") {

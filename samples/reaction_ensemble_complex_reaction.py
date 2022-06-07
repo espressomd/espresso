@@ -26,7 +26,7 @@ import numpy as np
 import scipy.optimize
 
 import espressomd
-import espressomd.reaction_ensemble
+import espressomd.reaction_methods
 
 # System parameters
 #############################################################
@@ -81,8 +81,8 @@ for i in range(N0):
         system.part.add(pos=np.random.random(3) * system.box_l, type=type_B)
 
 # use an exclusion radius of 0 to simulate an ideal gas
-RE = espressomd.reaction_ensemble.ReactionEnsemble(
-    kT=1, exclusion_radius=0, seed=4)
+RE = espressomd.reaction_methods.ReactionEnsemble(
+    kT=1, exclusion_range=0, seed=4)
 
 
 RE.add_reaction(
@@ -97,13 +97,13 @@ numbers = {type_A: [], type_B: [], type_C: [], type_D: [], type_E: []}
 
 # Set the hidden particle type to the lowest possible number to speed
 # up the simulation
-RE.set_non_interacting_type(max(types) + 1)
+RE.set_non_interacting_type(type=max(types) + 1)
 
 # warmup
-RE.reaction(200)
+RE.reaction(reaction_steps=200)
 
 for i in range(200):
-    RE.reaction(10)
+    RE.reaction(reaction_steps=10)
     for _type in types:
         numbers[_type].append(system.number_of_particles(type=_type))
 

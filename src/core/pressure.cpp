@@ -39,8 +39,8 @@
 
 #include "short_range_loop.hpp"
 
-#include "electrostatics_magnetostatics/coulomb.hpp"
-#include "electrostatics_magnetostatics/dipole.hpp"
+#include "electrostatics/coulomb.hpp"
+#include "magnetostatics/dipoles.hpp"
 
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
@@ -57,8 +57,9 @@ static std::shared_ptr<Observable_stat> calculate_pressure_local() {
 
   auto obs_pressure_ptr = std::make_shared<Observable_stat>(9);
 
-  if (long_range_interactions_sanity_checks())
+  if (long_range_interactions_sanity_checks()) {
     return obs_pressure_ptr;
+  }
 
   auto &obs_pressure = *obs_pressure_ptr;
 
@@ -71,11 +72,16 @@ static std::shared_ptr<Observable_stat> calculate_pressure_local() {
     add_kinetic_virials(p, obs_pressure);
   }
 
+  auto const coulomb_force_kernel = Coulomb::pair_force_kernel();
+  auto const coulomb_pressure_kernel = Coulomb::pair_pressure_kernel();
+
   short_range_loop(
-      [&obs_pressure](Particle const &p1, int bond_id,
-                      Utils::Span<Particle *> partners) {
+      [&obs_pressure,
+       coulomb_force_kernel_ptr = coulomb_force_kernel.get_ptr()](
+          Particle const &p1, int bond_id, Utils::Span<Particle *> partners) {
         auto const &iaparams = *bonded_ia_params.at(bond_id);
-        auto const result = calc_bonded_pressure_tensor(iaparams, p1, partners);
+        auto const result = calc_bonded_pressure_tensor(
+            iaparams, p1, partners, coulomb_force_kernel_ptr);
         if (result) {
           auto const &tensor = result.get();
           /* pressure tensor part */
@@ -88,12 +94,14 @@ static std::shared_ptr<Observable_stat> calculate_pressure_local() {
         }
         return true;
       },
-      [&obs_pressure](Particle const &p1, Particle const &p2,
-                      Distance const &d) {
+      [&obs_pressure, coulomb_force_kernel_ptr = coulomb_force_kernel.get_ptr(),
+       coulomb_pressure_kernel_ptr = coulomb_pressure_kernel.get_ptr()](
+          Particle const &p1, Particle const &p2, Distance const &d) {
         add_non_bonded_pair_virials(p1, p2, d.vec21, sqrt(d.dist2),
-                                    obs_pressure);
+                                    obs_pressure, coulomb_force_kernel_ptr,
+                                    coulomb_pressure_kernel_ptr);
       },
-      maximal_cutoff(), maximal_cutoff_bonded());
+      maximal_cutoff(n_nodes), maximal_cutoff_bonded());
 
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
@@ -102,7 +110,7 @@ static std::shared_ptr<Observable_stat> calculate_pressure_local() {
 #endif
 #ifdef DIPOLES
   /* calculate k-space part of magnetostatic interaction. */
-  Dipole::calc_pressure_long_range();
+  Dipoles::calc_pressure_long_range();
 #endif
 
 #ifdef VIRTUAL_SITES

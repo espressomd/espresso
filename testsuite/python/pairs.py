@@ -21,7 +21,7 @@ import espressomd
 class PairTest(ut.TestCase):
     """
     Tests the particle pair finder of the cell system.
-    It checks that particles are found if their distance is below the threshold, 
+    It checks that particles are found if their distance is below the threshold,
     no matter the type of cell system, periodicity and the image box they are in.
     Also tests that the ``types`` argument works as expected and an exception is raised
     when the distance threshold is larger than the cell size.
@@ -78,13 +78,17 @@ class PairTest(ut.TestCase):
         self.assertSetEqual(set(pairs_by_type), set(epairs_by_type))
 
     def test_input_exceptions(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "Unknown argument types='none'"):
+            self.system.cell_system.get_pairs(0.1, types="none")
+        with self.assertRaisesRegex(RuntimeError, "Provided argument of type 'int' is not convertible to 'std::vector<int>'"):
             self.system.cell_system.get_pairs(0.1, types=3)
+        with self.assertRaisesRegex(RuntimeError, "Provided argument of type .+ because it contains a value that is not convertible to 'int'"):
+            self.system.cell_system.get_pairs(0.1, types={'3.': 6.})
         # check no exception for list of length 1
         self.system.cell_system.get_pairs(0.1, types=[3])
 
     def check_range_exception(self):
-        with self.assertRaises(Exception):
+        with self.assertRaisesRegex(ValueError, "pair search distance 3.* bigger than the decomposition range"):
             self.system.cell_system.get_pairs(3.)
 
     def run_and_check(self, n_steps=100):
@@ -104,13 +108,13 @@ class PairTest(ut.TestCase):
         self.run_and_check()
 
     def test_dd(self):
-        self.system.cell_system.set_domain_decomposition()
+        self.system.cell_system.set_regular_decomposition()
         self.system.periodicity = [1, 1, 1]
         self.run_and_check()
         self.check_range_exception()
 
     def test_dd_partial_z(self):
-        self.system.cell_system.set_domain_decomposition()
+        self.system.cell_system.set_regular_decomposition()
         self.system.periodicity = [1, 1, 0]
         self.run_and_check()
         self.check_range_exception()

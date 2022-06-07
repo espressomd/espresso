@@ -20,11 +20,11 @@ ESPResSo 8Ball billiards game.
 
 import numpy as np
 import math
-from threading import Thread
+import threading
 
 import espressomd
 import espressomd.interactions
-from espressomd.visualization_opengl import openGLLive, KeyboardButtonEvent, KeyboardFireEvent
+from espressomd.visualization import openGLLive, KeyboardButtonEvent, KeyboardFireEvent
 import espressomd.shapes
 
 required_features = ["WCA", "MASS", "EXTERNAL_FORCES"]
@@ -269,7 +269,7 @@ def main():
         visualizer.update()
 
 
-t = Thread(target=main)
+t = threading.Thread(target=main)
 t.daemon = True
 t.start()
 

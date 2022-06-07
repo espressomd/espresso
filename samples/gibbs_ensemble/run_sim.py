@@ -34,14 +34,14 @@ of the used potential can be found in 'B. Smit, J. Chem. Phys. 96 (11), 1992,
 Phase diagrams of Lennard-Jones fluids'.
 """
 
-from multiprocessing import Pipe
+import multiprocessing
 import numpy as np
-from tqdm import tqdm
+import tqdm
 import gzip
 import pickle
 import argparse
 import logging
-from enum import Enum, unique
+import enum
 
 from gibbs_ensemble import MessageID
 from client_system import Gibbs_Client
@@ -87,8 +87,8 @@ parser.add_argument(
 args = parser.parse_args()
 
 
-@unique
-class Moves(Enum):
+@enum.unique
+class Moves(enum.Enum):
     # Particle moves
     MOVE_PARTICLE = 1
     EXCHANGE_VOLUME = 2
@@ -341,8 +341,6 @@ def perform_particle_exchange(boxes):
     # Send moves, update num_part
     donor_box.send_data([MessageID.PART_REMOVE])
     recipient_box.send_data([MessageID.PART_ADD])
-    donor_box.num_part -= 1
-    recipient_box.num_part += 1
     [box.recv_energy() for box in boxes]
 
     # Debugging purposes
@@ -360,8 +358,8 @@ def perform_particle_exchange(boxes):
     # This is the acceptance probability if the donor_box is chosen with equal
     # probability
     acc = np.exp(
-        np.log((donor_box.num_part + 1) * recipient_box.volume /
-               (recipient_box.num_part * donor_box.volume))
+        np.log(donor_box.num_part * recipient_box.volume /
+               ((recipient_box.num_part + 1) * donor_box.volume))
         - 1. / kT * donor_box.diff_energy
         - 1. / kT * recipient_box.diff_energy)
 
@@ -373,11 +371,12 @@ def perform_particle_exchange(boxes):
         # Reject move, restore old configuration
         donor_box.send_data([MessageID.PART_REMOVE_REVERT])
         recipient_box.send_data([MessageID.PART_ADD_REVERT])
-        donor_box.num_part += 1
-        recipient_box.num_part -= 1
         donor_box.energy = donor_box.old_energy
         recipient_box.energy = recipient_box.old_energy
         return False
+
+    donor_box.num_part -= 1
+    recipient_box.num_part += 1
 
     # Debug
     logging.debug("Particle exchange accepted.")
@@ -409,7 +408,7 @@ pipes = []
 
 # Start processes
 for i in range(NUM_OF_CLIENTS):
-    pipes.append(Pipe())
+    pipes.append(multiprocessing.Pipe())
     boxes.append(Box(f"Box0{i}",
                      pipes[i],
                      box_seeds[i],
@@ -430,7 +429,7 @@ logging.info(f"Simulation parameters:\nRandom seed: {args.seed},\tWarmup "
 logging.info("Warming up.")
 
 # Warmup
-for _ in (tqdm(range(warmup)) if not args.log else range(warmup)):
+for _ in (tqdm.tqdm(range(warmup)) if not args.log else range(warmup)):
     acceptance_flag = perform_move_particle(boxes)
     if acceptance_flag:
         num_accepted_moves[Moves.MOVE_PARTICLE] += 1
@@ -449,7 +448,7 @@ densities_box02 = []
 logging.info("Starting simulation.")
 
 # Run the simulation
-for count in (tqdm(range(steps)) if not args.log else range(steps)):
+for count in (tqdm.tqdm(range(steps)) if not args.log else range(steps)):
 
     current_move = choose_move()
 

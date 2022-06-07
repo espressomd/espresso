@@ -30,13 +30,10 @@
  *  Implementation in forces.cpp.
  */
 
-#include "CellStructure.hpp"
 #include "ParticleRange.hpp"
-#include "actor/ActorList.hpp"
+#include "cell_system/CellStructure.hpp"
 
 #include <utils/Vector.hpp>
-
-extern ActorList forceActors;
 
 /** initialize real particle forces with thermostat forces and
     ghost particle forces with zero. */

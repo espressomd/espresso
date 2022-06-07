@@ -37,6 +37,10 @@ unit_test(NAME p3m_test SRC p3m_test.cpp DEPENDS EspressoUtils)
 unit_test(NAME link_cell_test SRC link_cell_test.cpp DEPENDS EspressoUtils)
 unit_test(NAME Particle_test SRC Particle_test.cpp DEPENDS EspressoUtils
           Boost::serialization)
+unit_test(NAME Particle_serialization_test SRC Particle_serialization_test.cpp
+          DEPENDS EspressoUtils Boost::serialization)
+unit_test(NAME rotation_test SRC rotation_test.cpp DEPENDS EspressoUtils
+          EspressoCore)
 unit_test(NAME field_coupling_couplings SRC field_coupling_couplings_test.cpp
           DEPENDS EspressoUtils)
 unit_test(NAME field_coupling_fields SRC field_coupling_fields_test.cpp DEPENDS
@@ -45,10 +49,13 @@ unit_test(NAME field_coupling_force_field SRC
           field_coupling_force_field_test.cpp DEPENDS EspressoUtils)
 unit_test(NAME periodic_fold_test SRC periodic_fold_test.cpp)
 unit_test(NAME grid_test SRC grid_test.cpp DEPENDS EspressoCore)
+unit_test(NAME lees_edwards_test SRC lees_edwards_test.cpp DEPENDS EspressoCore)
 unit_test(NAME BoxGeometry_test SRC BoxGeometry_test.cpp DEPENDS EspressoCore)
 unit_test(NAME LocalBox_test SRC LocalBox_test.cpp DEPENDS EspressoCore)
 unit_test(NAME Verlet_list_test SRC Verlet_list_test.cpp DEPENDS EspressoCore
           NUM_PROC 4)
+unit_test(NAME VerletCriterion_test SRC VerletCriterion_test.cpp DEPENDS
+          EspressoCore)
 unit_test(NAME thermostats_test SRC thermostats_test.cpp DEPENDS EspressoCore)
 unit_test(NAME random_test SRC random_test.cpp DEPENDS EspressoUtils Random123)
 if(WITH_WALBERLA)
@@ -60,3 +67,5 @@ unit_test(NAME BondList_test SRC BondList_test.cpp DEPENDS EspressoCore)
 unit_test(NAME energy_test SRC energy_test.cpp DEPENDS EspressoCore)
 unit_test(NAME bonded_interactions_map_test SRC
           bonded_interactions_map_test.cpp DEPENDS EspressoCore)
+unit_test(NAME bond_breakage_test SRC bond_breakage_test.cpp DEPENDS
+          EspressoCore)

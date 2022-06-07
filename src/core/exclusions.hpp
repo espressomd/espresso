@@ -28,6 +28,7 @@
 #include <algorithm>
 
 #ifdef EXCLUSIONS
+
 /** Determine if the non-bonded interactions between @p p1 and @p p2 should be
  *  calculated.
  */
@@ -39,9 +40,10 @@ inline bool do_nonbonded(Particle const &p1, Particle const &p2) {
 }
 
 /** Remove exclusion from particle if possible */
-void delete_exclusion(Particle *part, int part2);
+void delete_exclusion(Particle &p, int p_id);
 
 /** Insert an exclusion if not already set */
-void add_exclusion(Particle *part, int part2);
-#endif
+void add_exclusion(Particle &p, int p_id);
+
+#endif // EXCLUSIONS
 #endif // ESPRESSO_EXCLUSIONS_HPP

@@ -24,34 +24,33 @@
 #include "BondList.hpp"
 #include "Particle.hpp"
 
-/** \name bits of possible modes for collision handling.
- *  The modes can be combined by or-ing together, but not all combinations are
- *  possible.
- */
-/**@{*/
-#define COLLISION_MODE_OFF 0
-/// Just create bond between centers of colliding particles
-#define COLLISION_MODE_BOND 2
-/** Create a bond between the centers of the colliding particles,
- *  plus two virtual sites at the point of collision and bind them
- *  together. This prevents the particles from sliding against each
- *  other. Requires VIRTUAL_SITES_RELATIVE and @ref COLLISION_MODE_BOND
- */
-#define COLLISION_MODE_VS 4
-/** Glue a particle to a specific spot on the surface of an other */
-#define COLLISION_MODE_GLUE_TO_SURF 8
-/// Three particle binding mode
-#define COLLISION_MODE_BIND_THREE_PARTICLES 16
-/**@}*/
+/** @brief Protocols for collision handling. */
+enum class CollisionModeType : int {
+  /** @brief Deactivate collision detection. */
+  OFF = 0,
+  /** @brief Create bond between centers of colliding particles. */
+  BIND_CENTERS = 1,
+  /**
+   * @brief Create a bond between the centers of the colliding particles,
+   * plus two virtual sites at the point of collision and bind them
+   * together. This prevents the particles from sliding against each
+   * other. Requires VIRTUAL_SITES_RELATIVE.
+   */
+  BIND_VS = 2,
+  /** @brief Glue a particle to a specific spot on another particle. */
+  GLUE_TO_SURF = 3,
+  /** @brief Three particle binding mode. */
+  BIND_THREE_PARTICLES = 4
+};
 
 class Collision_parameters {
 public:
   Collision_parameters()
-      : mode(COLLISION_MODE_OFF), distance(0.), distance2(0.), bond_centers(-1),
-        bond_vs(-1), bond_three_particles(-1) {}
+      : mode(CollisionModeType::OFF), distance(0.), distance2(0.),
+        bond_centers(-1), bond_vs(-1), bond_three_particles(-1) {}
 
-  /// collision handling mode, a combination of constants COLLISION_MODE_*
-  int mode;
+  /// collision protocol
+  CollisionModeType mode;
   /// distance at which particles are bound
   double distance;
   // Square of distance at which particle are bound
@@ -63,9 +62,6 @@ public:
   int bond_vs;
   /// particle type for virtual sites created on collision
   int vs_particle_type;
-
-  /** Raise exception on collision */
-  bool exception_on_collision;
 
   /// For mode "glue to surface": The distance from the particle which is to be
   /// glued to the new virtual site
@@ -90,6 +86,9 @@ public:
    *  0.5=in the middle between
    */
   double vs_placement;
+
+  /** @brief Validates parameters and creates particle types if needed. */
+  void initialize();
 };
 
 /// Parameters for collision detection
@@ -101,10 +100,6 @@ void prepare_local_collision_queue();
 
 /// Handle the collisions recorded in the queue
 void handle_collisions();
-
-/** @brief Validates collision parameters and creates particle types if needed
- */
-bool validate_collision_parameters();
 
 /** @brief Add the collision between the given particle ids to the collision
  *  queue
@@ -127,7 +122,7 @@ inline void detect_collision(Particle const &p1, Particle const &p2,
 
   // If we are in the glue to surface mode, check that the particles
   // are of the right type
-  if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)
+  if (collision_params.mode == CollisionModeType::GLUE_TO_SURF)
     if (!glue_to_surface_criterion(p1, p2))
       return;
 
@@ -158,7 +153,7 @@ inline void detect_collision(Particle const &p1, Particle const &p2,
 
 inline double collision_detection_cutoff() {
 #ifdef COLLISION_DETECTION
-  if (collision_params.mode)
+  if (collision_params.mode != CollisionModeType::OFF)
     return collision_params.distance;
 #endif
   return -1.;

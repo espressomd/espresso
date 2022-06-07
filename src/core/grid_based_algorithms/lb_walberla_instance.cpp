@@ -26,14 +26,18 @@
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "lb_interface.hpp"
+#include "lees_edwards/lees_edwards.hpp"
+#include "lees_edwards/protocols.hpp"
 
 #include <LBWalberlaBase.hpp>
 #include <LatticeWalberla.hpp>
+#include <LeesEdwardsPack.hpp>
 #include <lb_walberla_init.hpp>
 
 #include <utils/Vector.hpp>
 
 #include <boost/mpi/collectives/all_reduce.hpp>
+#include <boost/optional.hpp>
 
 #include <cassert>
 #include <functional>
@@ -126,6 +130,20 @@ init_lb_walberla(std::shared_ptr<LatticeWalberla> const &lb_lattice,
     lb_ptr = new_lb_walberla(lb_lattice, viscosity, density, single_precision);
     if (kT != 0.)
       lb_ptr->set_collision_model(kT, seed);
+    if (auto le_protocol = LeesEdwards::get_protocol().lock()) {
+      auto const &le_bc = box_geo.lees_edwards_bc();
+      auto lees_edwards_object = std::make_unique<LeesEdwardsPack>(
+          le_bc.shear_direction, le_bc.shear_plane_normal,
+          [le_protocol, lb_params]() {
+            return get_pos_offset(get_sim_time(), *le_protocol) /
+                   lb_params.get_agrid();
+          },
+          [le_protocol, lb_params]() {
+            return get_shear_velocity(get_sim_time(), *le_protocol) *
+                   (lb_params.get_tau() / lb_params.get_agrid());
+          });
+      lb_ptr->set_collision_model(std::move(lees_edwards_object));
+    }
   } catch (const std::exception &e) {
     runtimeErrorMsg() << "during waLBerla initialization: " << e.what();
     flag_failure = true;

@@ -18,7 +18,7 @@
  */
 
 #include "initialize.hpp"
-#include "si_mpiio.hpp"
+#include "mpiio.hpp"
 
 namespace ScriptInterface {
 namespace MPIIO {

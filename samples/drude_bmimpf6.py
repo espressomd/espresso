@@ -21,6 +21,7 @@ simulation of the ionic liquid BMIM PF6.
 
 import time
 import os
+import tqdm
 import numpy as np
 import argparse
 
@@ -31,7 +32,7 @@ import espressomd.electrostatics
 import espressomd.interactions
 import espressomd.drude_helpers
 import espressomd.virtual_sites
-import espressomd.visualization_opengl
+import espressomd.visualization
 
 required_features = ["LENNARD_JONES", "P3M", "MASS", "ROTATION",
                      "ROTATIONAL_INERTIA", "VIRTUAL_SITES_RELATIVE",
@@ -84,7 +85,7 @@ if args.visu:
     c_dru = [0, 0, 1, 1]
     c_com = [0, 0, 0, 1]
     c_cat = [0, 1, 0, 1]
-    visualizer = espressomd.visualization_opengl.openGLLive(
+    visualizer = espressomd.visualization.openGLLive(
         system,
         background_color=[1, 1, 1],
         drag_enabled=True,
@@ -226,13 +227,13 @@ for i in range(n_ionpairs):
 
 # ENERGY MINIMIZATION
 print("\n-->E minimization")
-print("Before: {:.2e}".format(system.analysis.energy()["total"]))
+print(f"Before: {system.analysis.energy()['total']:.2e}")
 n_max_steps = 100000
 system.integrator.set_steepest_descent(f_max=5.0, gamma=0.01,
                                        max_displacement=0.01)
 system.integrator.run(n_max_steps)
 system.integrator.set_vv()
-print("After: {:.2e}".format(system.analysis.energy()["total"]))
+print(f"After: {system.analysis.energy()['total']:.2e}")
 
 # THERMOSTAT
 if not args.drude:
@@ -334,17 +335,16 @@ else:
     n_int_steps = 10
     n_int_cycles = 100
 
-    for i in range(n_int_cycles):
+    for i in tqdm.tqdm(range(n_int_cycles)):
         system.integrator.run(n_int_steps)
-        print("\r{0:.0f} %".format((i + 1) * 100.0 / n_int_cycles), end='')
 
     print("\n-->Integration")
 
     n_int_steps = 1000
     n_int_cycles = int(args.walltime * 3600.0 / time_per_step / n_int_steps)
-    print("Simulating for {:.2f} h, which is {} cycles x {} steps, which is "
-          "{:.2f} ns simulation time".format(args.walltime, n_int_cycles,
-                                             n_int_steps, args.walltime * ns_per_hour))
+    print(f"Simulating for {args.walltime:.2f} h, which is {n_int_cycles} "
+          f"cycles x {n_int_steps} steps, which is "
+          f"{args.walltime * ns_per_hour:.2f} ns simulation time")
 
     n_parts_tot = len(system.part)
 
@@ -373,18 +373,15 @@ else:
 
     file_traj = open(args.path + "traj.xyz", "w")
 
-    for i in range(n_int_cycles):
+    for i in tqdm.tqdm(range(n_int_cycles)):
         system.integrator.run(n_int_steps)
 
         # XYZ TRAJECTORY
-        file_traj.write(str(n_parts_tot) + '\n')
-        file_traj.write(
-            "t(ns) = " + str(time_step_ns * i * n_int_steps) + '\n')
+        file_traj.write(f"{n_parts_tot}\n")
+        file_traj.write(f"t(ns) = {time_step_ns * i * n_int_steps}\n")
         for p in system.part:
-            file_traj.write(
-                shortTypes[p.type] + " " + ' '.join(map(str, p.pos_folded)) + '\n')
-
-        print("\r{0:.1f} %".format((i + 1) * 100.0 / n_int_cycles))
+            pos_txt = ' '.join(map(str, p.pos_folded))
+            file_traj.write(f"{shortTypes[p.type]} {pos_txt}\n")
 
     file_traj.close()
 

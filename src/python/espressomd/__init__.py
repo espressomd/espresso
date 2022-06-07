@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-#
-# Define the espressomd package
 
 # Initialize MPI, start the main loop on the worker nodes
 from . import _init
@@ -25,43 +23,55 @@ from . import _init
 from .system import System
 from .code_info import features, all_features
 from .cuda_init import gpu_available
+from . import code_info
+from . import utils
 
 
 class FeaturesError(Exception):
 
-    def __init__(self, missing_features_list):
-        message = "Missing features " + ", ".join(missing_features_list)
-        super().__init__(message)
+    def __init__(self, missing_features):
+        super().__init__(f"Missing features {', '.join(missing_features)}")
 
 
 def has_features(*args):
-    """Tests whether a list of features is a subset of the compiled-in features"""
+    """
+    Check whether a list of features is a subset of the compiled-in features.
+    """
 
-    if len(args) == 1 and not isinstance(
-            args[0], str) and hasattr(args[0], "__iter__"):
+    lvl = utils.nesting_level(args)
+    assert lvl in [1, 2], "has_features() takes strings as argument"
+    if lvl == 2:
         check_set = set(args[0])
     else:
         check_set = set(args)
 
-    if not check_set < all_features():
-        raise RuntimeError(
-            "'{}' is not a feature".format(','.join(check_set - all_features())))
+    if not check_set <= code_info.all_features():
+        unknown_features = check_set - code_info.all_features()
+        raise RuntimeError(f"unknown features {','.join(unknown_features)}")
 
-    return check_set <= set(features())
+    return check_set <= set(code_info.features())
 
 
 def missing_features(*args):
-    """Returns a list of the missing features in the argument"""
+    """
+    Return a list of the missing features in the arguments.
+    """
 
-    if len(args) == 1 and not isinstance(
-            args[0], str) and hasattr(args[0], "__iter__"):
-        return sorted(set(args[0]) - set(features()))
+    lvl = utils.nesting_level(args)
+    assert lvl in [1, 2], "missing_features() takes strings as argument"
+    if lvl == 2:
+        features = set(args[0])
+    else:
+        features = set(args)
 
-    return sorted(set(args) - set(features()))
+    return sorted(features - set(code_info.features()))
 
 
 def assert_features(*args):
-    """Raises an exception when a list of features is not a subset of the compiled-in features"""
+    """
+    Raise an exception when a list of features is not a subset of the
+    compiled-in features.
+    """
 
     if not has_features(*args):
         raise FeaturesError(missing_features(*args))

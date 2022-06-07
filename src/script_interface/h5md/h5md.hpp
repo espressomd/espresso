@@ -23,13 +23,17 @@
 #define ESPRESSO_SCRIPTINTERFACE_H5MD_HPP
 
 #include "config.hpp"
+
 #ifdef H5MD
+
 #include "io/writer/h5md_core.hpp"
+
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace ScriptInterface {
 namespace Writer {
@@ -39,6 +43,8 @@ public:
     add_parameters(
         {{"file_path", m_h5md, &::Writer::H5md::File::file_path},
          {"script_path", m_h5md, &::Writer::H5md::File::script_path},
+         {"fields", AutoParameter::read_only,
+          [this]() { return make_vector_of_variants(m_output_fields); }},
          {"mass_unit", m_h5md, &::Writer::H5md::File::mass_unit},
          {"length_unit", m_h5md, &::Writer::H5md::File::length_unit},
          {"time_unit", m_h5md, &::Writer::H5md::File::time_unit},
@@ -52,19 +58,22 @@ private:
                          const VariantMap &parameters) override;
 
   void do_construct(VariantMap const &params) override {
-    m_h5md =
-        make_shared_from_args<::Writer::H5md::File, std::string, std::string,
-                              std::string, std::string, std::string,
-                              std::string, std::string, std::string>(
-            params, "file_path", "script_path", "mass_unit", "length_unit",
-            "time_unit", "force_unit", "velocity_unit", "charge_unit");
+    m_output_fields = get_value<std::vector<std::string>>(params, "fields");
+    m_h5md = make_shared_from_args<::Writer::H5md::File, std::string,
+                                   std::string, std::vector<std::string>,
+                                   std::string, std::string, std::string,
+                                   std::string, std::string, std::string>(
+        params, "file_path", "script_path", "fields", "mass_unit",
+        "length_unit", "time_unit", "force_unit", "velocity_unit",
+        "charge_unit");
   }
 
   std::shared_ptr<::Writer::H5md::File> m_h5md;
+  std::vector<std::string> m_output_fields;
 };
 
-} /* namespace Writer */
+} // namespace Writer
 } // namespace ScriptInterface
 
-#endif // ESPRESSO_H5MD_HPP
 #endif // H5MD
+#endif

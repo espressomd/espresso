@@ -35,7 +35,7 @@ public:
   /** @brief Ids of the particles in the cluster */
   std::vector<int> particles;
   /** @brief add a particle to the cluster */
-  void add_particle(const Particle &p) { particles.push_back(p.p.identity); }
+  void add_particle(const Particle &p) { particles.push_back(p.identity()); }
   /** @brief Calculate the center of mass of the cluster */
   Utils::Vector3d
   center_of_mass_subcluster(std::vector<int> const &particle_ids);

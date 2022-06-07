@@ -66,8 +66,15 @@ void on_particle_change();
 /** called every time the charge of a particle has changed. */
 void on_particle_charge_change();
 
-/** called every time the Coulomb parameters are changed. */
+/** called every time the Coulomb parameters are changed.
+
+all Coulomb methods have a short range part, aka near field
+     correction. Even in case of switching off, we should call this,
+     since the required cutoff might have reduced.
+ */
 void on_coulomb_change();
+/** called every time the dipolar parameters are changed. */
+void on_dipoles_change();
 
 /** called every time short ranged interaction parameters are changed. */
 void on_short_range_ia_change();
@@ -110,17 +117,13 @@ void on_thermostat_param_change();
  */
 void on_timestep_change();
 
-/** @brief Called when the simulation time changed.
- */
-void on_simtime_change();
-
 /** @brief Called when the force cap changed.
  */
 void on_forcecap_change();
 
 /** @brief Called when the node_grid changed.
  */
-void on_nodegrid_change();
+void on_node_grid_change();
 
 unsigned global_ghost_flags();
 

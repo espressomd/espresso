@@ -447,6 +447,16 @@ auto hadamard_division(T const &a, U const &b) {
   return a / b;
 }
 
+template <typename T> Vector<T, 3> unit_vector(int i) {
+  if (i == 0)
+    return {T{1}, T{0}, T{0}};
+  if (i == 1)
+    return {T{0}, T{1}, T{0}};
+  if (i == 2)
+    return {T{0}, T{0}, T{1}};
+  throw std::domain_error("coordinate out of range");
+}
+
 /**
  * @brief Meta function to turns a Vector<1, T> into T.
  */
@@ -505,4 +515,10 @@ template <typename T> struct deduce_vec<Utils::Vector<T, 3>, 3> {
 
 } // namespace qvm
 } // namespace boost
-#endif // SRC_UTILS_INCLUDE_UTILS_VECTOR_HPP
+
+UTILS_ARRAY_BOOST_MPI_T(Utils::Vector, N)
+UTILS_ARRAY_BOOST_BIT_S(Utils::Vector, N)
+UTILS_ARRAY_BOOST_CLASS(Utils::Vector, N, object_serializable)
+UTILS_ARRAY_BOOST_TRACK(Utils::Vector, N, track_never)
+
+#endif

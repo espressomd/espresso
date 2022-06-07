@@ -23,13 +23,13 @@ a pressure gradient that makes it harder to move particles to the chamber
 with an excess of particles.
 """
 
-from threading import Thread
+import threading
 import numpy as np
 import time
 
 import espressomd
 import espressomd.shapes
-from espressomd.visualization_opengl import openGLLive, KeyboardButtonEvent, KeyboardFireEvent
+from espressomd.visualization import openGLLive, KeyboardButtonEvent, KeyboardFireEvent
 
 required_features = ["LENNARD_JONES", "WCA", "MASS",
                      "EXTERNAL_FORCES", "THERMOSTAT_PER_PARTICLE"]
@@ -156,7 +156,7 @@ if has_pygame:
 # CELLSYSTEM
 
 system.cell_system.skin = 3.0
-system.cell_system.set_domain_decomposition(use_verlet_lists=False)
+system.cell_system.set_regular_decomposition(use_verlet_lists=False)
 
 # BONDS
 
@@ -555,7 +555,7 @@ def main():
                 set_particle_force()
 
 
-t = Thread(target=main)
+t = threading.Thread(target=main)
 t.daemon = True
 t.start()
 visualizer.start()

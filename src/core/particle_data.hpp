@@ -21,100 +21,37 @@
 #ifndef CORE_PARTICLE_DATA_HPP
 #define CORE_PARTICLE_DATA_HPP
 /** \file
- *  Particles and particle lists.
+ *  Particles property access.
  *
- *  This file contains everything related to particle storage. If you want to
+ *  This file contains everything related to particle properties. If you want to
  *  add a new property to the particles, it is probably a good idea to modify
  *  Particle to give scripts access to that property. You always have to modify
  *  two positions: first the print section, where you should add your new
  *  data at the end, and second the read section where you have to find a nice
- *  and short name for your property to appear in the Python code. Then you
- *  just parse your part out of argc and argv.
- *
- *  Implementation in particle_data.cpp.
+ *  and short name for your property to appear in the Python code.
  */
 
 #include "config.hpp"
 
 #include "Particle.hpp"
-#include "ParticleList.hpp"
 
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 #include <utils/quaternion.hpp>
 
-#include <cstddef>
 #include <vector>
-
-/************************************************
- * defines
- ************************************************/
-
-enum {
-  /// ok code for \ref place_particle
-  ES_PART_OK = 0,
-  /// error code for \ref place_particle
-  ES_PART_ERROR = -1,
-  /// ok code for \ref place_particle, particle is new
-  ES_PART_CREATED = 1
-};
-
-/************************************************
- * Functions
- ************************************************/
-
-/** Invalidate \ref particle_node. This has to be done
- *  at the beginning of the integration.
- */
-void clear_particle_node();
-
-/**
- * @brief Get particle data.
- *
- *  @param part the identity of the particle to fetch
- *  @return Pointer to copy of particle if it exists,
- *          nullptr otherwise;
- */
-const Particle &get_particle_data(int part);
-
-/**
- * @brief Fetch a range of particle into the fetch cache.
- *
- *
- * If the range is larger than the cache size, only
- * the particle that fit into the cache are fetched.
- *
- * The particles have to exist, an exception it throw
- * if one of the the particles can not be found.
- *
- * @param ids Ids of the particles that should be fetched.
- */
-void prefetch_particle_data(Utils::Span<const int> ids);
-
-/** @brief Invalidate the fetch cache for get_particle_data. */
-void invalidate_fetch_cache();
-
-/** @brief Return the maximal number of particles that are
- *         kept in the fetch cache.
- */
-std::size_t fetch_cache_max_size();
-
-/** Call only on the head node.
- *  Move a particle to a new position.
- *  If it does not exist, it is created.
- *  @param part the identity of the particle to move
- *  @param p    its new position
- *  @retval ES_PART_OK if particle existed
- *  @retval ES_PART_CREATED if created
- *  @retval ES_PART_ERROR if id is illegal
- */
-int place_particle(int part, Utils::Vector3d const &p);
 
 /** Call only on the head node: set particle velocity.
  *  @param part the particle.
  *  @param v its new velocity.
  */
 void set_particle_v(int part, Utils::Vector3d const &v);
+
+/** Call only on the head node: set particle Lees-Edwards offset.
+ *  @param part the particle.
+ *  @param v new value for Lees-Edwards offset
+ */
+void set_particle_lees_edwards_offset(int part, double v);
 
 #ifdef ENGINE
 /** Call only on the head node: set particle velocity.
@@ -148,9 +85,9 @@ void set_particle_rotational_inertia(int part, Utils::Vector3d const &rinertia);
  *  degrees of freedom are integrated or not. If set to zero, the content of
  *  the torque and omega variables are meaningless
  *  @param part the particle.
- *  @param rot the degrees of freedom flag.
+ *  @param flag the degrees of freedom flag.
  */
-void set_particle_rotation(int part, int rot);
+void set_particle_rotation(int part, Utils::Vector3i const &flag);
 
 /** @brief rotate a particle around an axis
  *
@@ -282,10 +219,10 @@ void set_particle_ext_force(int part, const Utils::Vector3d &force);
 /** Call only on the head node: set coordinate axes for which the particles
  *  motion is fixed.
  *  @param part  the particle.
- *  @param flag new value for flagged coordinate axes to be fixed
+ *  @param flag  coordinates to be fixed.
  */
-void set_particle_fix(int part, uint8_t flag);
-#endif
+void set_particle_fix(int part, Utils::Vector3i const &flag);
+#endif // EXTERNAL_FORCES
 
 /** Call only on the head node: remove bond from particle.
  *  @param part     identity of principal atom of the bond.
@@ -299,42 +236,43 @@ void delete_particle_bond(int part, Utils::Span<const int> bond);
  */
 void delete_particle_bonds(int part);
 
+/** @brief Removes the specified bond from the particle
+ *  @param p        The particle to update
+ *  @param bond     The bond in the form
+ *                  <tt>{bond_id, partner_1, partner_2, ...}</tt>
+ */
+void local_remove_bond(Particle &p, std::vector<int> const &bond);
+
+/** @brief Removes all pair bonds on the particle which have the specified
+ *  particle id as partner
+ *  @param p         The particle to update
+ *  @param other_pid The particle id to filter for
+ */
+void local_remove_pair_bonds_to(Particle &p, int other_pid);
+
 /** Call only on the head node: Add bond to particle.
  *  @param part     identity of principal atom of the bond.
- *  @param bond     field containing the bond type number and the
- *  identity of all bond partners (secondary atoms of the bond).
+ *  @param bond     field containing the bond type number and the identity
+ *                  of all bond partners (secondary atoms of the bond).
  */
 void add_particle_bond(int part, Utils::Span<const int> bond);
 
 const std::vector<BondView> &get_particle_bonds(int part);
 
 #ifdef EXCLUSIONS
-/** Call only on the head node: change particle constraints.
- *  @param part     identity of particle for which the exclusion is set.
+/** @brief Remove particle exclusion.
+ *  Call only on the head node.
+ *  @param part1    identity of particle for which the exclusion is set.
  *  @param part2    identity of particle for which the exclusion is set.
- *                  If -1, delete all exclusions.
- *  @param _delete  if true, do not add the exclusion, rather delete it if
- *                  found
- *  @retval ES_OK on success
- *  @retval ES_ERROR on failure (e.g. particles do not exist / did not have
- *          exclusion set)
  */
-int change_exclusion(int part, int part2, int _delete);
-#endif
+void remove_particle_exclusion(int part1, int part2);
 
-/** Remove particle with a given identity. Also removes all bonds to the
- *  particle.
- *  @param part     identity of the particle to remove
- *  @retval ES_OK on success
- *  @retval ES_ERROR if particle does not exist
+/** @brief Add particle exclusion.
+ *  Call only on the head node.
+ *  @param part1    identity of particle for which the exclusion is set.
+ *  @param part2    identity of particle for which the exclusion is set.
  */
-int remove_particle(int part);
-
-/** Remove all particles. */
-void remove_all_particles();
-
-/** Rescale all particle positions in direction @p dir by a factor @p scale. */
-void mpi_rescale_particles(int dir, double scale);
+void add_particle_exclusion(int part1, int part2);
 
 /** Automatically add the next \<distance\> neighbors in each molecule to the
  *  exclusion list.
@@ -344,137 +282,62 @@ void mpi_rescale_particles(int dir, double scale);
  *  particles, you should avoid this function and setup exclusions manually.
  */
 void auto_exclusions(int distance);
+#endif
 
-void init_type_map(int type);
-
-/** Find a particle of given type and return its id */
-int get_random_p_id(int type, int random_index_in_type_map);
-int number_of_particles_with_type(int type);
+/** Rescale all particle positions in direction @p dir by a factor @p scale. */
+void mpi_rescale_particles(int dir, double scale);
 
 // The following functions are used by the python interface to obtain
 // properties of a particle, which are only compiled in in some configurations
 // This is needed, because cython does not support conditional compilation
 // within a ctypedef definition
 
-#ifdef LB_ELECTROHYDRODYNAMICS
-inline Utils::Vector3d get_particle_mu_E(Particle const *p) {
-  return p->p.mu_E;
-}
-#endif
-
-#ifdef ROTATION
-inline Utils::Vector3d get_particle_omega_body(Particle const *p) {
-  return p->m.omega;
-}
-
-inline Utils::Vector3d get_particle_torque_body(Particle const *p) {
-  return p->f.torque;
-}
-
-inline Utils::Quaternion<double> get_particle_quat(Particle const *p) {
-  return p->r.quat;
-}
-#endif
-
-inline double get_particle_q(Particle const *p) { return p->p.q; }
-
-#ifdef VIRTUAL_SITES
-inline bool get_particle_virtual(Particle const *p) { return p->p.is_virtual; }
-#endif
-
 #ifdef VIRTUAL_SITES_RELATIVE
 inline Utils::Quaternion<double> get_particle_vs_quat(Particle const *p) {
-  return p->p.vs_relative.quat;
+  return p->vs_relative().quat;
 }
 inline Utils::Quaternion<double> get_particle_vs_relative(Particle const *p,
                                                           int &vs_relative_to,
                                                           double &vs_distance) {
-  vs_relative_to = p->p.vs_relative.to_particle_id;
-  vs_distance = p->p.vs_relative.distance;
-  return p->p.vs_relative.rel_orientation;
+  vs_relative_to = p->vs_relative().to_particle_id;
+  vs_distance = p->vs_relative().distance;
+  return p->vs_relative().rel_orientation;
 }
-#endif
-
-#ifdef DIPOLES
-inline double get_particle_dipm(Particle const *p) { return p->p.dipm; }
 #endif
 
 #ifdef EXTERNAL_FORCES
-inline Utils::Vector3d get_particle_ext_force(Particle const *p) {
-  return p->p.ext_force;
+inline Utils::Vector3i get_particle_fix(Particle const *p) {
+  return Utils::Vector3i{
+      {p->is_fixed_along(0), p->is_fixed_along(1), p->is_fixed_along(2)}};
 }
-#ifdef ROTATION
-inline Utils::Vector3d get_particle_ext_torque(Particle const *p) {
-  return p->p.ext_torque;
-}
-#endif
-inline uint8_t get_particle_fix(Particle const *p) { return p->p.ext_flag; }
-#endif
+#endif // EXTERNAL_FORCES
 
 #ifdef THERMOSTAT_PER_PARTICLE
 #ifdef PARTICLE_ANISOTROPY
 inline Utils::Vector3d get_particle_gamma(Particle const *p) {
-  return p->p.gamma;
+  return p->gamma();
 }
 #else
-inline double get_particle_gamma(Particle const *p) { return p->p.gamma; }
+inline double get_particle_gamma(Particle const *p) { return p->gamma(); }
 #endif // PARTICLE_ANISOTROPY
 #ifdef ROTATION
 #ifdef PARTICLE_ANISOTROPY
 inline Utils::Vector3d get_particle_gamma_rot(Particle const *p) {
-  return p->p.gamma_rot;
+  return p->gamma_rot();
 }
 #else
 inline double get_particle_gamma_rot(Particle const *p) {
-  return p->p.gamma_rot;
+  return p->gamma_rot();
 }
 #endif // PARTICLE_ANISOTROPY
 #endif // ROTATION
 #endif // THERMOSTAT_PER_PARTICLE
 
-#ifdef ENGINE
-inline ParticleParametersSwimming get_particle_swimming(Particle const *p) {
-  return p->p.swim;
+#ifdef ROTATION
+inline Utils::Vector3i get_particle_rotation(Particle const *p) {
+  return Utils::Vector3i{{p->can_rotate_around(0), p->can_rotate_around(1),
+                          p->can_rotate_around(2)}};
 }
-#endif
-
-#ifdef ROTATIONAL_INERTIA
-inline Utils::Vector3d get_particle_rotational_inertia(Particle const *p) {
-  return p->p.rinertia;
-}
-#endif
-
-/**
- * @brief Check if particle exists.
- *
- * @param part Id of the particle
- * @return True iff the particle exists.
- */
-bool particle_exists(int part);
-
-/**
- *  @brief Get the mpi rank which owns the particle with id.
- *
- *  @param id Id of the particle
- *  @return The MPI rank the particle is on.
- */
-int get_particle_node(int id);
-
-/**
- * @brief Get all particle ids.
- *
- * @return Sorted ids of all existing particles.
- */
-std::vector<int> get_particle_ids();
-
-/**
- * @brief Get maximal particle id.
- */
-int get_maximal_particle_id();
-
-/**
- * @brief Get number of particles.
- */
-int get_n_part();
+#endif // ROTATION
 
 #endif

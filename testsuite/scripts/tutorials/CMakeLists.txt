@@ -31,13 +31,14 @@ tutorial_test(FILE test_lennard_jones.py)
 tutorial_test(FILE test_charged_system.py)
 tutorial_test(FILE test_langevin_dynamics.py)
 tutorial_test(FILE test_polymers.py SUFFIX rouse)
-tutorial_test(FILE test_polymers.py SUFFIX zimm)
+# TODO WALBERLA: simulation is too slow without GPU
+#tutorial_test(FILE test_polymers.py SUFFIX zimm LABELS gpu)
 tutorial_test(FILE test_lattice_boltzmann_poiseuille_flow.py)
 # TODO WALBERLA: simulation is too short
 # tutorial_test(FILE test_raspberry_electrophoresis.py)
 tutorial_test(FILE test_active_matter.py)
 # TODO WALBERLA: requires ekin
-# tutorial_test(FILE test_electrokinetics.py LABELS "gpu")
+# tutorial_test(FILE test_electrokinetics.py LABELS gpu)
 tutorial_test(FILE test_visualization.py)
 tutorial_test(FILE test_ferrofluid_1.py)
 tutorial_test(FILE test_ferrofluid_2.py)

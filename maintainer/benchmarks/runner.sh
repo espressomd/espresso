@@ -36,7 +36,7 @@ for config in ${configs}; do
   # add minimal features for the benchmarks to run
   sed -i '1 i\#define ELECTROSTATICS\n#define LENNARD_JONES\n#define MASS\n' "${config}"
   # remove checks
-  sed -ri "s/#define\s+ADDITIONAL_CHECKS//" "${config}"
+  sed -ri "/#define\s+ADDITIONAL_CHECKS/d" "${config}"
 done
 
 cat > benchmarks.csv << EOF
@@ -48,7 +48,7 @@ for config in ${configs}; do
   echo "### ${config}" | tee -a benchmarks.log
   cp ${config} myconfig.hpp
   rm -rf src/ maintainer/
-  cmake -DWITH_BENCHMARKS=ON -DTEST_TIMEOUT=600 -DWITH_CUDA=OFF -DWITH_CCACHE=OFF ..
+  cmake -DWITH_BENCHMARKS=ON -DTEST_TIMEOUT=1200 -DWITH_CUDA=OFF -DWITH_WALBERLA=ON -DWITH_CCACHE=OFF ..
   make -j$(nproc)
   rm -f benchmarks.csv.part
   touch benchmarks.csv.part

@@ -32,6 +32,14 @@ struct SingleReaction {
                  std::vector<int> const &reactant_coefficients,
                  std::vector<int> const &product_types,
                  std::vector<int> const &product_coefficients) {
+    if (reactant_types.size() != reactant_coefficients.size()) {
+      throw std::invalid_argument(
+          "reactants: number of types and coefficients have to match");
+    }
+    if (product_types.size() != product_coefficients.size()) {
+      throw std::invalid_argument(
+          "products: number of types and coefficients have to match");
+    }
     this->reactant_types = reactant_types;
     this->reactant_coefficients = reactant_coefficients;
     this->product_types = product_types;

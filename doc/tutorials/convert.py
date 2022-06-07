@@ -201,7 +201,7 @@ def execute_notebook(nb, src, cell_separator, notebook_filepath):
     """
     import nbconvert.preprocessors
     notebook_dirname = os.path.dirname(notebook_filepath)
-    # disable OpenGL/Mayavi GUI
+    # disable OpenGL GUI
     src_no_gui = iw.mock_es_visualization(src)
     # update notebook with new code
     set_code_cells(nb, src_no_gui.split(cell_separator))

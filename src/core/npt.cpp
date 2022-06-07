@@ -22,11 +22,11 @@
 
 #include "communication.hpp"
 #include "config.hpp"
-#include "electrostatics_magnetostatics/coulomb.hpp"
-#include "electrostatics_magnetostatics/dipole.hpp"
+#include "electrostatics/coulomb.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
 #include "integrate.hpp"
+#include "magnetostatics/dipoles.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -76,22 +76,16 @@ void mpi_bcast_nptiso_geom_barostat() {
 void integrator_npt_coulomb_dipole_sanity_checks(
     NptIsoParameters const &params) {
 #ifdef ELECTROSTATICS
-  if (params.dimension < 3 && !params.cubic_box && coulomb.prefactor > 0) {
+  if (params.dimension < 3 && !params.cubic_box && electrostatics_actor) {
     throw std::runtime_error("If electrostatics is being used you must "
                              "use the cubic box NpT.");
   }
 #endif
 
 #ifdef DIPOLES
-  if (params.dimension < 3 && !params.cubic_box && dipole.prefactor > 0) {
+  if (params.dimension < 3 && !params.cubic_box && magnetostatics_actor) {
     throw std::runtime_error("If magnetostatics is being used you must "
                              "use the cubic box NpT.");
-  }
-#endif
-
-#if defined(ELECTROSTATICS) && defined(CUDA)
-  if (coulomb.method == COULOMB_P3M_GPU) {
-    throw std::runtime_error("NpT virial cannot be calculated on P3M GPU");
   }
 #endif
 }

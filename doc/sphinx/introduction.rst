@@ -12,7 +12,7 @@ It also includes modern and efficient algorithms for treatment of
 :ref:`electrostatics` (P3M, MMM-type algorithms, constant potential
 simulations, dielectric interfaces, …), hydrodynamic interactions
 (:ref:`DPD<Dissipative Particle Dynamics (DPD)>`, :ref:`Lattice-Boltzmann`),
-and :ref:`magnetic interactions<Magnetostatics / Dipolar interactions>`, only
+and :ref:`magnetic interactions<Magnetostatics>`, only
 to name a few.  It is designed to exploit the capabilities of parallel
 computational environments.  The program is being continuously extended to keep
 the pace with current developments both in the algorithms and software.
@@ -71,7 +71,7 @@ On the other hand, flexibility of |es| stems from the employment of a scripting
 language at the steering level. Apart from the ability to modify the simulation
 and system parameters at runtime, many simple tasks which are not
 computationally critical can be implemented at this level, without even
-touching the C++-kernel. For example, simple problem-specific analysis routines
+touching the C++ kernel. For example, simple problem-specific analysis routines
 can be implemented in this way and made to interact with the simulation core.
 Another example of the program's flexibility is the possibility to integrate
 system setup, simulation and analysis in one single control script. |es|
@@ -147,8 +147,9 @@ first step, an instance of this class needs to be created. ::
 
 Note that only one instance of the System class can be created due to
 limitations in the simulation core. :ref:`Properties of the System
-class<Setting global variables in Python>` are used to access the parameters
-concerning the simulation system such as box geometry, time step or :ref:`cell-system<Cellsystems>`: ::
+class<Setting global variables>` are used to access the parameters
+concerning the simulation system such as box geometry, time step or
+:ref:`cell-system<Cell systems>`: ::
 
     print(f"The box dimensions are {system.box_l}")
     system.time_step = 0.01
@@ -300,7 +301,7 @@ Tutorials
 
 There are a number of tutorials that introduce the use of |es| for different
 physical systems. You can also find the tutorials and related scripts in the
-directory :file:`/doc/tutorials` or `online on GitHub <https://github.com/espressomd/espresso/blob/python/doc/tutorials/>`_.
+directory :file:`/doc/tutorials`.
 They are executed with the ``ipypresso`` script.
 
 The following tutorials are available:
@@ -316,13 +317,16 @@ The following tutorials are available:
 * :file:`electrokinetics`: Modelling electrokinetics together with hydrodynamic interactions.
 * :file:`constant_pH`: Modelling the titration of a weak acid using the constant pH method
 
+The executed notebooks with solutions and plots are periodically deployed
+online to the `GitHub Pages <https://espressomd.github.io/tutorials.html>`__.
+
 .. _Sample scripts:
 
 Sample scripts
 --------------
 
-Several scripts that can serve as usage examples can be found in the directory :file:`/samples`,
-or in the `git repository <https://github.com/espressomd/espresso/blob/python/samples/>`_.
+Several scripts that can serve as usage examples can be found in the
+directory :file:`/samples`.
 They are executed with the ``pypresso`` script.
 
 The following samples are available:
@@ -499,9 +503,7 @@ report so to the developers using the instructions in :ref:`Contributing`.
 +--------------------------------+------------------------+------------------+------------+
 |                              **Visualization**                                          |
 +--------------------------------+------------------------+------------------+------------+
-| Online visualisation (Mayavi)  | Good                   | Good             | No         |
-+--------------------------------+------------------------+------------------+------------+
-| Online visualisation (OpenGL)  | Good                   | Good             | No         |
+| OpenGL visualizer              | Good                   | Good             | No         |
 +--------------------------------+------------------------+------------------+------------+
 |                               **Miscellaneous**                                         |
 +--------------------------------+------------------------+------------------+------------+
@@ -605,9 +607,9 @@ guidelines:
 How to cite |es|
 ^^^^^^^^^^^^^^^^
 
-Please cite :cite:`weik19a` (BibTeX key ``weik19a`` in :file:`doc/sphinx/zrefs.bib`)
-for |es| 4.0 and later, or :cite:`arnold13a` and :cite:`limbach06a`
-(BibTeX keys ``arnold13a`` and ``limbach06a`` in :file:`doc/sphinx/zrefs.bib`)
+Please cite :cite:t:`weik19a` (BibTeX key ``weik19a`` in :file:`doc/bibliography.bib`)
+for |es| 4.0 and later, or both :cite:t:`arnold13a` and :cite:t:`limbach06a`
+(BibTeX keys ``arnold13a`` and ``limbach06a`` in :file:`doc/bibliography.bib`)
 for |es| 2.0 to 3.3. To find the version number, use the following command:
 
 .. code-block:: bash
@@ -623,6 +625,8 @@ A complete citation would look like this:
     Simulations were carried out with ESPResSo 4.1[24] using the ICC\*
     algorithm[25].
 
+    | ____________
+
     | [24] F. Weik, R. Weeber, K. Szuttor *et al.* ESPResSo 4.0 -- an
       extensible software package for simulating soft matter systems.
       *Eur. Phys. J. Spec. Top.* **227**, 1789--1816 (2019).
@@ -636,10 +640,12 @@ You may also provide the patch level, when relevant. If you developed code
 for |es| and made it available in a publicly accessible repository, you
 should consider providing the corresponding URL, for example in a footnote:
 
-    The method was implemented for ESPResSo 4.1.4[24]. The full code is
-    available online\*.
+    The method was implemented for ESPResSo 4.1.4[24] and the source code is
+    available online\ :superscript:`note 1`.
 
-    | \* https://github.com/username/espresso/tree/implemented-algorithm
+    | ____________
+
+    | :superscript:`note 1` https://github.com/username/espresso/tree/implemented-algorithm
 
     | [24] F. Weik, R. Weeber, K. Szuttor *et al.* ESPResSo 4.0 -- an
       extensible software package for simulating soft matter systems.

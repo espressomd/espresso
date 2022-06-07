@@ -14,7 +14,5 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from ...code_info import features
-if 'H5MD' in features():
-    from . import h5md
+from . import h5md
 from . import vtf

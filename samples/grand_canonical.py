@@ -35,10 +35,10 @@ import numpy as np
 import argparse
 
 import espressomd
-import espressomd.reaction_ensemble
+import espressomd.reaction_methods
 import espressomd.electrostatics
 
-required_features = ["P3M", "EXTERNAL_FORCES", "WCA"]
+required_features = ["P3M", "WCA"]
 espressomd.assert_features(required_features)
 
 parser = argparse.ArgumentParser(epilog=__doc__ + epilog)
@@ -88,8 +88,8 @@ for type_1 in types:
         system.non_bonded_inter[type_1, type_2].wca.set_params(
             epsilon=wca_eps, sigma=wca_sig)
 
-RE = espressomd.reaction_ensemble.ReactionEnsemble(
-    kT=temperature, exclusion_radius=wca_sig, seed=3)
+RE = espressomd.reaction_methods.ReactionEnsemble(
+    kT=temperature, exclusion_range=wca_sig, seed=3)
 RE.add_reaction(
     gamma=cs_bulk**2 * np.exp(excess_chemical_potential_pair / temperature),
     reactant_types=[], reactant_coefficients=[], product_types=[1, 2],
@@ -99,15 +99,15 @@ system.setup_type_map([0, 1, 2])
 
 # Set the hidden particle type to the lowest possible number to speed
 # up the simulation
-RE.set_non_interacting_type(max(types) + 1)
+RE.set_non_interacting_type(type=max(types) + 1)
 
-RE.reaction(10000)
+RE.reaction(reaction_steps=10000)
 
 p3m = espressomd.electrostatics.P3M(prefactor=2.0, accuracy=1e-3)
 system.actors.add(p3m)
 p3m_params = p3m.get_params()
 for key, value in p3m_params.items():
-    print("{} = {}".format(key, value))
+    print(f"{key} = {value}")
 
 
 # Warmup
@@ -122,11 +122,11 @@ system.integrator.set_steepest_descent(f_max=0, gamma=1e-3,
                                        max_displacement=0.01)
 i = 0
 while system.analysis.min_dist() < min_dist and i < warm_n_times:
-    print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+    print(f"minimization: {system.analysis.energy()['total']:+.2e}")
     system.integrator.run(warm_steps)
     i += 1
 
-print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+print(f"minimization: {system.analysis.energy()['total']:+.2e}")
 print()
 system.integrator.set_vv()
 
@@ -134,24 +134,24 @@ system.integrator.set_vv()
 system.thermostat.set_langevin(kT=temperature, gamma=.5, seed=42)
 
 # MC warmup
-RE.reaction(1000)
+RE.reaction(reaction_steps=1000)
 
 n_int_cycles = 10000
 n_int_steps = 600
 num_As = []
 deviation = None
 for i in range(n_int_cycles):
-    RE.reaction(10)
+    RE.reaction(reaction_steps=10)
     system.integrator.run(steps=n_int_steps)
     num_As.append(system.number_of_particles(type=1))
     if i > 2 and i % 50 == 0:
-        print("HA", system.number_of_particles(type=0), "A-",
-              system.number_of_particles(type=1), "H+",
-              system.number_of_particles(type=2))
+        print(f"HA {system.number_of_particles(type=0)}",
+              f"A- {system.number_of_particles(type=1)}",
+              f"H+ {system.number_of_particles(type=2)}")
         concentration_in_box = np.mean(num_As) / box_l**3
         deviation = (concentration_in_box - cs_bulk) / cs_bulk * 100
-        print("average num A {:.1f} +/- {:.1f}, average concentration {:.8f}, "
-              "deviation to target concentration {:.2f}%".format(
-                  np.mean(num_As),
-                  np.sqrt(np.var(num_As, ddof=1) / len(num_As)),
-                  concentration_in_box, deviation))
+        n_A_mean = np.mean(num_As)
+        n_A_stde = 1.96 * np.std(num_As, ddof=1) / len(num_As)
+        print(f"average num A {n_A_mean:.1f} +/- {n_A_stde:.1f}, "
+              f"average concentration {concentration_in_box:.8f}, "
+              f"deviation to target concentration {deviation:.2f}%")

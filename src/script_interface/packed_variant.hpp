@@ -52,10 +52,11 @@ inline ObjectId object_id(const ObjectHandle *p) {
  * all other types allowed in @ref Variant must appear here.
  */
 using PackedVariant = boost::make_recursive_variant<
-    None, bool, int, double, std::string, std::vector<int>, std::vector<double>,
-    ObjectId, std::vector<boost::recursive_variant_>, Utils::Vector2d,
-    Utils::Vector3d, Utils::Vector4d,
-    std::unordered_map<int, boost::recursive_variant_>>::type;
+    None, bool, int, std::size_t, double, std::string, ObjectId,
+    Utils::Vector2d, Utils::Vector3d, Utils::Vector4d, std::vector<int>,
+    std::vector<double>, std::vector<boost::recursive_variant_>,
+    std::unordered_map<int, boost::recursive_variant_>,
+    std::unordered_map<std::string, boost::recursive_variant_>>::type;
 
 using PackedMap = std::vector<std::pair<std::string, PackedVariant>>;
 
@@ -86,8 +87,9 @@ public:
   }
 
   /* For the map, we recurse into each element. */
-  auto operator()(const std::unordered_map<int, Variant> &map) const {
-    std::unordered_map<int, PackedVariant> ret{};
+  template <typename K>
+  auto operator()(const std::unordered_map<K, Variant> &map) const {
+    std::unordered_map<K, PackedVariant> ret{};
 
     for (auto const &it : map) {
       ret.insert({it.first, boost::apply_visitor(*this, it.second)});
@@ -134,8 +136,9 @@ struct UnpackVisitor : boost::static_visitor<Variant> {
   }
 
   /* For the map, we recurse into each element. */
-  auto operator()(const std::unordered_map<int, PackedVariant> &map) const {
-    std::unordered_map<int, Variant> ret{};
+  template <typename K>
+  auto operator()(const std::unordered_map<K, PackedVariant> &map) const {
+    std::unordered_map<K, Variant> ret{};
 
     for (auto const &it : map) {
       ret.insert({it.first, boost::apply_visitor(*this, it.second)});

@@ -41,6 +41,7 @@ class TestLB:
     system.periodicity = [1, 1, 1]
     system.time_step = 0.01
     system.cell_system.skin = 0
+    n_nodes = system.cell_system.get_state()['n_nodes']
 
     def tearDown(self):
         self.system.actors.clear()
@@ -49,10 +50,12 @@ class TestLB:
 
     def test_mass_momentum_thermostat(self):
         self.n_col_part = 100
-        partcls = self.system.part.add(pos=np.random.random(
-            (self.n_col_part, 3)) * self.system.box_l[0])
+        # different types needed for lb_stats_hybrid test
+        particles = self.system.part.add(
+            type=self.n_col_part // 2 * [0, 1], pos=np.random.random(
+                (self.n_col_part, 3)) * self.system.box_l[0])
         if espressomd.has_features("MASS"):
-            partcls.mass = 0.1 + np.random.random(
+            particles.mass = 0.1 + np.random.random(
                 len(self.system.part))
 
         self.system.thermostat.turn_off()
@@ -138,12 +141,54 @@ class TestLB:
             np.mean(all_temp_particle), self.params["temp"], delta=temp_prec_particle)
 
 
+@ut.skipIf(TestLB.n_nodes == 1,
+           "LB with regular decomposition already tested with 2 MPI ranks")
 @utx.skipIfMissingFeatures("LB_WALBERLA")
-class TestLBWalberla(TestLB, ut.TestCase):
+class TestRegularLBWalberla(TestLB, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in double-precision."""
 
     lb_class = espressomd.lb.LBFluidWalberla
+
+    def setUp(self):
+        self.system.cell_system.set_regular_decomposition()
+
+
+@ut.skipIf(TestLB.n_nodes > 1,
+           "LB with N-square only works on 1 MPI rank")
+@utx.skipIfMissingFeatures("LB_WALBERLA")
+class TestNSquareLBWalberla(TestLB, ut.TestCase):
+
+    lb_class = espressomd.lb.LBFluidWalberla
+
+    def setUp(self):
+        self.system.cell_system.set_n_square()
+
+
+@ut.skipIf(TestLB.n_nodes > 1,
+           "LB with N-square only works on 1 MPI rank")
+@utx.skipIfMissingFeatures("LB_WALBERLA")
+class TestHybrid0LBWalberla(TestLB, ut.TestCase):
+
+    lb_class = espressomd.lb.LBFluidWalberla
+
+    def setUp(self):
+        self.system.cell_system.set_hybrid_decomposition(
+            n_square_types={0}, cutoff_regular=0)
+        self.params.update({"mom_prec": 1E-9, "mass_prec_per_node": 5E-8})
+
+
+@ut.skipIf(TestLB.n_nodes > 1,
+           "LB with N-square only works on 1 MPI rank")
+@utx.skipIfMissingFeatures("LB_WALBERLA")
+class TestHybrid1LBWalberla(TestLB, ut.TestCase):
+
+    lb_class = espressomd.lb.LBFluidWalberla
+
+    def setUp(self):
+        self.system.cell_system.set_hybrid_decomposition(
+            n_square_types={1}, cutoff_regular=0)
+        self.params.update({"mom_prec": 1E-3, "mass_prec_per_node": 1E-5})
 
 
 if __name__ == "__main__":

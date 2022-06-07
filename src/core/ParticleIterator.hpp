@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_PARTICLE_ITERATOR_HPP
-#define CORE_PARTICLE_ITERATOR_HPP
+#ifndef ESPRESSO_SRC_CORE_PARTICLE_ITERATOR_HPP
+#define ESPRESSO_SRC_CORE_PARTICLE_ITERATOR_HPP
 
 #include <boost/iterator/iterator_facade.hpp>
 

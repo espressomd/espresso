@@ -72,6 +72,14 @@ int check_runtime_errors(boost::mpi::communicator const &comm);
  */
 int check_runtime_errors_local();
 
+/**
+ * @brief Flush runtime errors to standard error on the local node.
+ * This is used to clear pending runtime error messages when the
+ * call site is handling an exception that needs to be re-thrown
+ * instead of being queued as an additional runtime error message.
+ */
+void flush_runtime_errors_local();
+
 namespace ErrorHandling {
 /**
  * @brief Initialize the error collection system.
@@ -94,7 +102,10 @@ RuntimeErrorStream _runtimeMessageStream(RuntimeError::ErrorLevel level,
       ErrorHandling::RuntimeError::ErrorLevel::WARNING, __FILE__, __LINE__,    \
       PRETTY_FUNCTION_EXTENSION)
 
+/** @brief Gather messages on main rank. Only call from main rank. */
 std::vector<RuntimeError> mpi_gather_runtime_errors();
+/** @brief Gather messages on main rank. Call on all ranks. */
+std::vector<RuntimeError> mpi_gather_runtime_errors_all(bool is_head_node);
 
 } // namespace ErrorHandling
 

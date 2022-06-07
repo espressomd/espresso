@@ -90,10 +90,10 @@ Particles in the neighborhood
 
 :meth:`espressomd.analyze.Analysis.nbhood`
 
-Returns a list of the particle ids of that fall within a given radius of a target position.
+Returns a list of the ids of particles that fall within a given radius of a target position.
 For example, ::
 
-    idlist = system.analysis.nbhood(pos=system.box_l * 0.5, r_catch=5.0)
+    ids = system.analysis.nbhood(pos=system.box_l * 0.5, r_catch=5.0)
 
 .. _Particle distribution:
 
@@ -304,11 +304,12 @@ The following formula is used for the computation:
    \label{eq:Rh}
    \frac{1}{R_{\mathrm H}} = \frac{2}{N(N-1)} \sum\limits_{i=1}^{N} \sum\limits_{j<i}^{N} \frac{1}{|\vec r_i - \vec r_j|}\,,
 
-The above-mentioned formula is only valid under certain assumptions. For
-more information, see Chapter 4 and equation 4.102
-in :cite:`doi86a`.
-Note that the hydrodynamic radius is sometimes defined in a similar fashion but with a denominator of :math:`N^2` instead of :math:`N(N-1)` in the prefactor.
-Both versions are equivalent in the :math:`N\rightarrow \infty` limit but give numerically different values for finite polymers.
+The above-mentioned formula is only valid under certain assumptions.
+For more information, see chapter 4 and equation 4.102 in :cite:`doi86a`.
+Note that the hydrodynamic radius is sometimes defined in a similar fashion
+but with a denominator of :math:`N^2` instead of :math:`N(N-1)` in the prefactor.
+Both versions are equivalent in the :math:`N\rightarrow \infty` limit but give
+numerically different values for finite polymers.
 
 
 .. _Observables framework:
@@ -348,8 +349,10 @@ a reshaped numpy array.
 
 The observables can be used in parallel simulations. However,
 not all observables carry out their calculations in parallel.
-Instead, the entire particle configuration is collected on the head node, and the calculations are carried out there.
-This is only performance-relevant if the number of processor cores is large and/or interactions are calculated very frequently.
+Instead, the entire particle configuration is collected on the head node,
+and the calculations are carried out there.
+This is only performance-relevant if the number of processor cores is large
+and/or interactions are calculated very frequently.
 
 .. _Using observables:
 
@@ -409,8 +412,11 @@ or bin edges for the axes. Example::
     plt.show()
 
 Observables based on cylindrical coordinates are also available.
-They require special parameters if the cylindrical coordinate system is non-standard, e.g. if you want the origin of the cylindrical coordinates to be at a special location of the box or if you want to make use of symmetries along an axis that is not parallel to the z-axis.
-For this purpose, use :class:`espressomd.math.CylindricalTransformationParameters` to create a consistent set of the parameters needed. Example::
+They require special parameters if the cylindrical coordinate system is non-standard,
+e.g. if you want the origin of the cylindrical coordinates to be at a special location
+of the box or if you want to make use of symmetries along an axis that is not parallel to the z-axis.
+For this purpose, use :class:`espressomd.math.CylindricalTransformationParameters`
+to create a consistent set of the parameters needed. Example::
 
     import espressomd.math
 
@@ -461,7 +467,7 @@ documentation for all available observables in :mod:`espressomd.observables`.
 - Observables working on a given set of particles and returning reduced quantities:
    - :class:`~espressomd.observables.DipoleMoment`: Total electric dipole moment of the system obtained based on unfolded positions
 
-   - :class:`~espressomd.observables.MagneticDipoleMoment`: Total magnetic dipole moment of the system based on the :attr:`espressomd.particle_data.ParticleHandle.dip` property.
+   - :class:`~espressomd.observables.MagneticDipoleMoment`: Total magnetic dipole moment of the system based on the :attr:`~espressomd.particle_data.ParticleHandle.dip` property.
 
    - :class:`~espressomd.observables.ComPosition`: The system's center of mass based on unfolded coordinates
 
@@ -616,7 +622,8 @@ the script :file:`samples/observables_correlators.py`.
 Creating a correlation
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Each correlator is represented by an instance of the :class:`espressomd.accumulators.Correlator`. Please see its documentation for an explanation of the arguments that have to be passed to the constructor.
+Each correlator is represented by an instance of the :class:`espressomd.accumulators.Correlator`.
+Please see its documentation for an explanation of the arguments that have to be passed to the constructor.
 
 Correlators can be registered for automatic updating during the
 integration by adding them to :attr:`espressomd.system.System.auto_update_accumulators`.
@@ -625,11 +632,13 @@ integration by adding them to :attr:`espressomd.system.System.auto_update_accumu
 
     system.auto_update_accumulators.add(corr)
 
-Alternatively, an update can triggered by calling the ``update()`` method of the correlator instance. In that case, one has to make sure to call the update in the correct time intervals.
+Alternatively, an update can triggered by calling the ``update()`` method of the correlator instance.
+In that case, one has to make sure to call the update in the correct time intervals.
 
 
 The current on-the-fly correlation result can of a correlator can be obtained using its ``result()`` method.
-The final result (including the latest data in the buffers) is obtained using the ``finalize()`` method. After this, no further update of the correlator is possible.
+The final result (including the latest data in the buffers) is obtained using the ``finalize()`` method.
+After this, no further update of the correlator is possible.
 
 .. _Example\: Calculating a particle's diffusion coefficient:
 
@@ -759,33 +768,43 @@ discussion is presented in Ref. :cite:`ramirez10a`.
 Cluster analysis
 ----------------
 
-|es| provides support for online cluster analysis. Here, a cluster is a group of particles, such that you can get from any particle to any second particle by at least one path of neighboring particles.
-I.e., if particle B is a neighbor of particle A, particle C is a neighbor of A and particle D is a neighbor of particle B, all four particles are part of the same cluster.
-The cluster analysis is available in parallel simulations, but the analysis is carried out on the head node, only.
+|es| provides support for online cluster analysis. Here, a cluster
+is a group of particles, such that you can get from any particle
+to any second particle by at least one path of neighboring particles.
+I.e., if particle B is a neighbor of particle A, particle C is a neighbor
+of A and particle D is a neighbor of particle B, all four particles are
+part of the same cluster. The cluster analysis is available in parallel
+simulations, but the analysis is carried out on the head node, only.
 
 
-Whether or not two particles are neighbors is defined by a pair criterion. The available criteria can be found in :mod:`espressomd.pair_criteria`.
-For example, a distance criterion which will consider particles as neighbors if they are closer than 0.11 is created as follows::
+Whether or not two particles are neighbors is defined by a pair criterion.
+The available criteria can be found in :mod:`espressomd.pair_criteria`.
+For example, a distance criterion which will consider particles as neighbors
+if they are closer than 0.11 is created as follows::
 
     import espressomd.pair_criteria
     dc = espressomd.pair_criteria.DistanceCriterion(cut_off=0.11)
 
-To obtain the cluster structure of a system, an instance of :class:`espressomd.cluster_analysis.ClusterStructure` has to be created.
+To obtain the cluster structure of a system, an instance of
+:class:`espressomd.cluster_analysis.ClusterStructure` has to be created.
 To to create a cluster structure with above criterion::
 
     import espressomd.cluster_analysis
     cs = espressomd.cluster_analysis.ClusterStructure(distance_criterion=dc)
 
-In most cases, the cluster analysis is carried out by calling the :any:`espressomd.cluster_analysis.ClusterStructure.run_for_all_pairs` method. When the pair criterion is purely based on bonds,  :any:`espressomd.cluster_analysis.ClusterStructure.run_for_bonded_particles` can be used.
+In most cases, the cluster analysis is carried out by calling the
+:any:`espressomd.cluster_analysis.ClusterStructure.run_for_all_pairs` method.
+When the pair criterion is purely based on bonds,
+:any:`espressomd.cluster_analysis.ClusterStructure.run_for_bonded_particles` can be used.
 
 The results can be accessed via ClusterStructure.clusters, which is an instance of
 :any:`espressomd.cluster_analysis.Clusters`.
 
-
 Individual clusters are represented by instances of
-:any:`espressomd.cluster_analysis.Cluster`, which provides access to the particles contained in a cluster as well as per-cluster analysis routines such as radius of gyration, center of mass and longest distance.
-Note that the cluster objects do not contain copies of the particles, but refer to the particles in the simulation. Hence, the objects become outdated if the simulation system changes. On the other hand, it is possible to directly manipulate the particles contained in a cluster.
-
-
-
-
+:any:`espressomd.cluster_analysis.Cluster`, which provides access to the
+particles contained in a cluster as well as per-cluster analysis routines
+such as radius of gyration, center of mass and longest distance.
+Note that the cluster objects do not contain copies of the particles,
+but refer to the particles in the simulation. Hence, the objects become
+outdated if the simulation system changes. On the other hand, it is possible
+to directly manipulate the particles contained in a cluster.

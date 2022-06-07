@@ -33,7 +33,7 @@ Only one electrostatics method can be active at any time.
 
 Note that using the electrostatic interaction also requires assigning charges to
 the particles via the particle property
-:py:attr:`espressomd.particle_data.ParticleHandle.q`.
+:py:attr:`~espressomd.particle_data.ParticleHandle.q`.
 
 All solvers need a prefactor and a set of other required parameters.
 This example shows the general usage of the electrostatic method ``P3M``.
@@ -47,10 +47,15 @@ call a tuning function to achieve the requested accuracy::
     system = espressomd.System(box_l=[10, 10, 10])
     system.time_step = 0.01
     system.part.add(pos=[[0, 0, 0], [1, 1, 1]], q=[-1, 1])
-    solver = espressomd.electrostatics.P3M(prefactor=2, accuracy=1e-3)
+    solver = espressomd.electrostatics.P3M(prefactor=2., accuracy=1e-3)
     system.actors.add(solver)
 
 where the prefactor is defined as :math:`C` in Eqn. :eq:`coulomb_prefactor`.
+
+The list of actors can be cleared with
+:meth:`system.actors.clear() <espressomd.actors.Actors.clear>` and
+:meth:`system.actors.remove(actor) <espressomd.actors.Actors.remove>`.
+
 
 .. _Coulomb P3M:
 
@@ -66,34 +71,23 @@ P3M requires full periodicity (1 1 1). When using a non-metallic dielectric
 constant (``epsilon != 0.0``), the box must be cubic.
 Make sure that you know the relevance of the P3M parameters before using P3M!
 If you are not sure, read the following references:
-:cite:`ewald21a,hockney88,kolafa92a,deserno98a,deserno98b,deserno00e,deserno00b,cerda08d`.
+:cite:`ewald21a,hockney88a,kolafa92a,deserno98a,deserno98b,deserno00e,deserno00b,cerda08d`.
 
 .. _Tuning Coulomb P3M:
 
 Tuning Coulomb P3M
 ~~~~~~~~~~~~~~~~~~
 
-The tuning method is called when the handle of the Coulomb P3M is added to the
-actor list. At this point, the system should already contain the charged
-particles. Set parameters are fixed and not changed by the tuning algorithm.
-This can be useful to speed up the tuning during testing or if the parameters
-are already known.
-
-To prevent the automatic tuning, set the ``tune`` parameter to ``False``.
-To manually tune or retune P3M, call :meth:`espressomd.electrostatics.P3M.tune
-<espressomd.electrostatics.ElectrostaticInteraction.tune>`.
-Note, however, that this is a method the P3M object inherited from
-:attr:`espressomd.electrostatics.ElectrostaticInteraction`.
-All parameters passed to the method are fixed in the tuning routine. If not
-specified in the ``tune()`` method, the parameters ``prefactor`` and
-``accuracy`` are reused.
-
 It is not easy to calculate the various parameters of the P3M method
 such that the method provides the desired accuracy at maximum speed. To
 simplify this, it provides a function to automatically tune the algorithm.
 Note that for this function to work properly, your system should already
-contain an initial configuration of charges and the correct initial box
-size. Also note that the provided tuning algorithms works very well on
+contain an initial configuration of charges and the correct initial box size.
+The tuning method is called when the handle of the Coulomb P3M is added to
+the actor list. Some parameters can be fixed (``r_cut``, ``cao``, ``mesh``)
+to speed up the tuning if the parameters are already known.
+
+Please note that the provided tuning algorithms works very well on
 homogeneous charge distributions, but might not achieve the requested
 precision for highly inhomogeneous or symmetric systems. For example,
 because of the nature of the P3M algorithm, systems are problematic
@@ -101,12 +95,12 @@ where most charges are placed in one plane, one small region, or on a
 regular grid.
 
 The function employs the analytical expression of the error estimate for
-the P3M method :cite:`hockney88` and its real space error :cite:`kolafa92a` to
+the P3M method :cite:`hockney88a` and its real space error :cite:`kolafa92a` to
 obtain sets of parameters that yield the desired accuracy, then it measures how
 long it takes to compute the Coulomb interaction using these parameter sets and
 chooses the set with the shortest run time.
 
-After execution the tuning routines report the tested parameter sets,
+During tuning, the algorithm reports the tested parameter sets,
 the corresponding k-space and real-space errors and the timings needed
 for force calculations. In the output, the timings are given in units of
 milliseconds, length scales are in units of inverse box lengths.
@@ -118,14 +112,21 @@ Coulomb P3M on GPU
 
 :class:`espressomd.electrostatics.P3MGPU`
 
-The GPU implementation of P3M calculates the far field portion on the GPU.
-It uses the same parameters and interface functionality as the CPU version of
-the solver. It should be noted that this does not always provide significant
+The GPU implementation of P3M calculates the far field contribution to the
+forces on the GPU. The near-field contribution to the forces, as well as the
+near- and far-field contributions to the energies are calculated on the CPU.
+It uses the same parameters
+and interface functionality as the CPU version of the solver.
+It should be noted that this does not always provide significant
 increase in performance. Furthermore it computes the far field interactions
-with only single precision which limits the maximum precision. The algorithm
-does not work in combination with the electrostatic extensions
-:ref:`Dielectric interfaces with the ICC* algorithm <Dielectric interfaces with the ICC algorithm>`
-and :ref:`Electrostatic Layer Correction (ELC)`.
+with only single precision which limits the maximum precision.
+The algorithm does not work in combination with the electrostatic extension
+:ref:`Dielectric interfaces with the ICC* algorithm <Dielectric interfaces with the ICC algorithm>`.
+
+The algorithm doesn't have kernels to compute energies, and will therefore
+contribute 0 to the long-range potential energy of the system. This can be
+an issue for other algorithms, such as :ref:`reaction methods <Reaction methods>`
+and :ref:`energy-based steepest descent <Using a custom convergence criterion>`.
 
 .. _Debye-Hückel potential:
 
@@ -264,8 +265,6 @@ Electrostatic Layer Correction (ELC)
 systems. It can account for different dielectric jumps on both sides of the
 non-periodic direction. In more detail, it is a special procedure that
 converts a 3D electrostatic method to a 2D method in computational order N.
-Currently, it only supports P3M without GPU. This means,
-that you will first have to set up the P3M algorithm before using ELC.
 The periodicity has to be set to (1 1 1). *ELC* cancels the electrostatic
 contribution of the periodic replica in **z-direction**. Make sure that you
 read the papers on ELC (:cite:`arnold02c,arnold02d,tyagi08a`) before using it.
@@ -286,8 +285,14 @@ Usage notes:
 
     import espressomd.electrostatics
     p3m = espressomd.electrostatics.P3M(prefactor=1, accuracy=1e-4)
-    elc = espressomd.electrostatics.ELC(p3m_actor=p3m, gap_size=box_l * 0.2, maxPWerror=1e-3)
+    elc = espressomd.electrostatics.ELC(actor=p3m, gap_size=box_l * 0.2, maxPWerror=1e-3)
     system.actors.add(elc)
+
+Although it is technically feasible to remove ``elc`` from the list of actors
+and then to add the ``p3m`` object, it is not recommended because the P3M
+parameters are mutated by *ELC*, e.g. the ``epsilon`` is made metallic.
+It is safer to instantiate a new P3M object instead of recycling one that
+has been adapted by *ELC*.
 
 *ELC* can also be used to simulate 2D periodic systems with image charges,
 specified by dielectric contrasts on the non-periodic boundaries
@@ -298,7 +303,7 @@ simulation region (*middle*) to *bottom* (at :math:`z=0`) and from *middle* to
 are :math:`\Delta_t=\frac{\varepsilon_m-\varepsilon_t}{\varepsilon_m+\varepsilon_t}`
 and :math:`\Delta_b=\frac{\varepsilon_m-\varepsilon_b}{\varepsilon_m+\varepsilon_b}`::
 
-    elc = espressomd.electrostatics.ELC(p3m_actor=p3m, gap_size=box_l * 0.2, maxPWerror=1e-3,
+    elc = espressomd.electrostatics.ELC(actor=p3m, gap_size=box_l * 0.2, maxPWerror=1e-3,
                                         delta_mid_top=0.9, delta_mid_bot=0.1)
 
 The fully metallic case :math:`\Delta_t=\Delta_b=-1` would lead to divergence
@@ -308,7 +313,7 @@ of the forces/energies in *ELC* and is therefore only possible with the
 Toggle ``const_pot`` on to maintain a constant electric potential difference
 ``pot_diff`` between the xy-planes at :math:`z=0` and :math:`z = L_z - h`::
 
-    elc = espressomd.electrostatics.ELC(p3m_actor=p3m, gap_size=box_l * 0.2, maxPWerror=1e-3,
+    elc = espressomd.electrostatics.ELC(actor=p3m, gap_size=box_l * 0.2, maxPWerror=1e-3,
                                         const_pot=True, delta_mid_bot=100.0)
 
 This is done by countering the total dipole moment of the system with the
@@ -342,8 +347,8 @@ MMM1D is used with::
     mmm1d = espressomd.electrostatics.MMM1D(prefactor=C, maxPWerror=err)
 
 where the prefactor :math:`C` is defined in Eqn. :eq:`coulomb_prefactor`.
-MMM1D Coulomb method for systems with periodicity (0 0 1). Needs the
-N-squared cell system (see section :ref:`Cellsystems`). The first form sets parameters
+MMM1D requires for systems with periodicity (0 0 1) and the N-squared
+cell system (see section :ref:`Cell systems`). The first form sets parameters
 manually. The switch radius determines at which xy-distance the force
 calculation switches from the near to the far formula. The Bessel cutoff
 does not need to be specified as it is automatically determined from the
@@ -391,7 +396,8 @@ ScaFaCoS electrostatics
 
 |es| can use the methods from the ScaFaCoS *Scalable fast Coulomb solvers*
 library. The specific methods available depend on the compile-time options of
-the library, and can be queried using :meth:`espressomd.scafacos.available_methods`.
+the library, and can be queried with
+:meth:`espressomd.electrostatics.Scafacos.get_available_methods`.
 
 To use ScaFaCoS, create an instance of :class:`~espressomd.electrostatics.Scafacos`
 and add it to the list of active actors. Three parameters have to be specified:

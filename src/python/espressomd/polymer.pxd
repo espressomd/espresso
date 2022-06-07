@@ -17,9 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-
-include "myconfig.pxi"
-
 from libcpp.vector cimport vector
 from .utils cimport Vector3d
 from .analyze cimport PartCfg

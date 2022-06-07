@@ -28,8 +28,11 @@
 #include <utils/Vector.hpp>
 
 #include <map>
+#include <memory>
 #include <random>
+#include <stdexcept>
 #include <tuple>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -37,32 +40,44 @@ namespace ReactionMethods {
 
 struct StoredParticleProperty {
   int p_id;
-  double charge;
   int type;
+  double charge;
 };
 
 /** Base class for reaction ensemble methods */
 class ReactionAlgorithm {
 
 public:
-  ReactionAlgorithm(int seed)
-      : m_generator(Random::mt19937(std::seed_seq({seed, seed, seed}))),
+  ReactionAlgorithm(
+      int seed, double kT, double exclusion_range,
+      std::unordered_map<int, double> const &exclusion_radius_per_type)
+      : kT{kT}, exclusion_range{exclusion_range},
+        m_generator(Random::mt19937(std::seed_seq({seed, seed, seed}))),
         m_normal_distribution(0.0, 1.0), m_uniform_real_distribution(0.0, 1.0) {
+    if (kT < 0.) {
+      throw std::domain_error("Invalid value for 'kT'");
+    }
+    if (exclusion_range < 0.) {
+      throw std::domain_error("Invalid value for 'exclusion_range'");
+    }
+    set_exclusion_radius_per_type(exclusion_radius_per_type);
+    update_volume();
   }
 
   virtual ~ReactionAlgorithm() = default;
 
-  std::vector<SingleReaction> reactions;
+  std::vector<std::shared_ptr<SingleReaction>> reactions;
   std::map<int, double> charges_of_types;
-  double kT = -10.0;
+  double kT;
   /**
    * Hard sphere radius. If particles are closer than this value,
    * it is assumed that their interaction energy gets approximately
    * infinite, therefore these configurations do not contribute
    * to the partition function and ensemble averages.
    */
-  double exclusion_radius = 0.0;
-  double volume = -10.0;
+  double exclusion_range;
+  std::unordered_map<int, double> exclusion_radius_per_type;
+  double volume;
   int non_interacting_type = 100;
 
   int m_accepted_configurational_MC_moves = 0;
@@ -72,21 +87,48 @@ public:
            static_cast<double>(m_tried_configurational_MC_moves);
   }
 
-  void set_cuboid_reaction_ensemble_volume();
+  auto get_kT() const { return kT; }
+  auto get_exclusion_range() const { return exclusion_range; }
+  auto get_volume() const { return volume; }
+  void set_volume(double new_volume) {
+    if (new_volume <= 0.) {
+      throw std::domain_error("Invalid value for 'volume'");
+    }
+    volume = new_volume;
+  }
+  void update_volume();
+  void
+  set_exclusion_radius_per_type(std::unordered_map<int, double> const &map) {
+    auto max_exclusion_range = exclusion_range;
+    for (auto const &item : map) {
+      auto const type = item.first;
+      auto const exclusion_radius = item.second;
+      if (exclusion_radius < 0.) {
+        throw std::domain_error("Invalid excluded_radius value for type " +
+                                std::to_string(type) + ": radius " +
+                                std::to_string(exclusion_radius));
+      }
+      max_exclusion_range =
+          std::max(max_exclusion_range, 2. * exclusion_radius);
+    }
+    exclusion_radius_per_type = map;
+    m_max_exclusion_range = max_exclusion_range;
+  }
+
   virtual int do_reaction(int reaction_steps);
   void check_reaction_method() const;
   void remove_constraint() { m_reaction_constraint = ReactionConstraint::NONE; }
   void set_cyl_constraint(double center_x, double center_y, double radius);
   void set_slab_constraint(double slab_start_z, double slab_end_z);
   Utils::Vector2d get_slab_constraint_parameters() const {
+    if (m_reaction_constraint != ReactionConstraint::SLAB_Z) {
+      throw std::runtime_error("no slab constraint is currently active");
+    }
     return {m_slab_start_z, m_slab_end_z};
   }
 
-  int delete_particle(int p_id);
-  void add_reaction(double gamma, const std::vector<int> &reactant_types,
-                    const std::vector<int> &reactant_coefficients,
-                    const std::vector<int> &product_types,
-                    const std::vector<int> &product_coefficients);
+  void delete_particle(int p_id);
+  void add_reaction(std::shared_ptr<SingleReaction> const &new_reaction);
   void delete_reaction(int reaction_id) {
     reactions.erase(reactions.begin() + reaction_id);
   }
@@ -94,7 +136,8 @@ public:
   bool do_global_mc_move_for_particles_of_type(int type,
                                                int particle_number_of_type);
 
-  bool particle_inside_exclusion_radius_touched = false;
+  bool particle_inside_exclusion_range_touched = false;
+  bool neighbor_search_order_n = true;
 
 protected:
   std::vector<int> m_empty_p_ids_smaller_than_max_seen_particle;
@@ -126,7 +169,6 @@ protected:
   generate_new_particle_positions(int type, int n_particles);
   void
   restore_properties(std::vector<StoredParticleProperty> const &property_list);
-
   /**
    * @brief draws a random integer from the uniform distribution in the range
    * [0,maxint-1]
@@ -140,7 +182,6 @@ protected:
   bool
   all_reactant_particles_exist(SingleReaction const &current_reaction) const;
 
-protected:
   virtual double
   calculate_acceptance_probability(SingleReaction const &, double, double,
                                    std::map<int, int> const &) const {
@@ -158,7 +199,7 @@ private:
   void replace_particle(int p_id, int desired_type) const;
   int create_particle(int desired_type);
   void hide_particle(int p_id) const;
-  void check_exclusion_radius(int p_id);
+  void check_exclusion_range(int inserted_particle_id);
   void move_particle(int p_id, Utils::Vector3d const &new_pos,
                      double velocity_prefactor);
 
@@ -172,6 +213,7 @@ private:
   double m_cyl_y = -10.0;
   double m_slab_start_z = -10.0;
   double m_slab_end_z = -10.0;
+  double m_max_exclusion_range = 0.;
 
 protected:
   Utils::Vector3d get_random_position_in_box();

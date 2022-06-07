@@ -56,6 +56,7 @@ namespace utf = boost::unit_test;
 
 #include <boost/mpi.hpp>
 
+#include <cassert>
 #include <cmath>
 #include <limits>
 #include <memory>
@@ -234,13 +235,13 @@ BOOST_AUTO_TEST_CASE(drift_vel_offset) {
   BOOST_CHECK_EQUAL(lb_particle_coupling_drift_vel_offset(p).norm(), 0);
   Utils::Vector3d expected{};
 #ifdef ENGINE
-  p.p.swim.swimming = true;
-  p.p.swim.v_swim = 2.;
-  expected += p.p.swim.v_swim * p.r.calc_director();
+  p.swimming().swimming = true;
+  p.swimming().v_swim = 2.;
+  expected += p.swimming().v_swim * p.calc_director();
 #endif
 #ifdef LB_ELECTROHYDRODYNAMICS
-  p.p.mu_E = Utils::Vector3d{-2, 1.5, 1};
-  expected += p.p.mu_E;
+  p.mu_E() = Utils::Vector3d{-2, 1.5, 1};
+  expected += p.mu_E();
 #endif
   BOOST_CHECK_SMALL(
       (lb_particle_coupling_drift_vel_offset(p) - expected).norm(), tol);
@@ -249,14 +250,14 @@ BOOST_AUTO_TEST_CASE(drift_vel_offset) {
 BOOST_DATA_TEST_CASE(drag_force, bdata::make(kTs), kT) {
   mpi_call_all(espresso::set_lb_kT_local, kT);
   Particle p{};
-  p.m.v = {-2.5, 1.5, 2};
-  p.r.p = lb_walberla()->lattice().get_local_domain().first;
+  p.v() = {-2.5, 1.5, 2};
+  p.pos() = lb_walberla()->lattice().get_local_domain().first;
   lb_lbcoupling_set_gamma(0.2);
   Utils::Vector3d drift_offset{-1, 1, 1};
 
   // Drag force in quiescent fluid
   {
-    auto const observed = lb_drag_force(p, drift_offset);
+    auto const observed = lb_drag_force(p, p.pos(), drift_offset);
     const Utils::Vector3d expected{0.3, -0.1, -.2};
     BOOST_CHECK_SMALL((observed - expected).norm(), tol);
   }
@@ -267,25 +268,26 @@ BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
   mpi_call_all(espresso::set_lb_kT_local, kT);
   auto const first_lb_node = lb_walberla()->lattice().get_local_domain().first;
   Particle p{};
-  p.p.swim.swimming = true;
-  p.p.swim.f_swim = 2.;
-  p.p.swim.dipole_length = 3.;
-  p.p.swim.push_pull = 1;
-  p.r.p = first_lb_node + Utils::Vector3d::broadcast(0.5);
+  p.swimming().swimming = true;
+  p.swimming().f_swim = 2.;
+  p.swimming().dipole_length = 3.;
+  p.swimming().push_pull = 1;
+  p.pos() = first_lb_node + Utils::Vector3d::broadcast(0.5);
 
   auto const coupling_pos =
-      p.r.p + Utils::Vector3d{0., 0., p.p.swim.dipole_length / params.agrid};
+      p.pos() +
+      Utils::Vector3d{0., 0., p.swimming().dipole_length / params.agrid};
 
   // swimmer coupling
   {
-    if (in_local_halo(p.r.p)) {
-      add_swimmer_force(p, params.time_step, false);
+    if (in_local_halo(p.pos())) {
+      add_swimmer_force(p, params.time_step);
     }
     if (in_local_halo(coupling_pos)) {
       auto const interpolated =
           lb_lbfluid_get_force_to_be_applied(coupling_pos);
       auto const expected =
-          params.force_md_to_lb(Utils::Vector3d{0., 0., p.p.swim.f_swim});
+          params.force_md_to_lb(Utils::Vector3d{0., 0., p.swimming().f_swim});
 
       // interpolation happened on the expected LB cell
       BOOST_CHECK_SMALL((interpolated - expected).norm(), tol);
@@ -314,7 +316,7 @@ BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
   // remove force of the particle from the fluid
   {
     if (in_local_halo(coupling_pos)) {
-      add_md_force(coupling_pos, -Utils::Vector3d{0., 0., p.p.swim.f_swim},
+      add_md_force(coupling_pos, -Utils::Vector3d{0., 0., p.swimming().f_swim},
                    params.time_step);
       auto const reset = lb_lbfluid_get_force_to_be_applied(coupling_pos);
       BOOST_REQUIRE_SMALL(reset.norm(), tol);
@@ -335,25 +337,25 @@ BOOST_DATA_TEST_CASE(particle_coupling, bdata::make(kTs), kT) {
   Utils::Vector3d expected = noise * Random::noise_uniform<RNGSalt::PARTICLES>(
                                          rng->value(), 0, p.identity());
 #ifdef ENGINE
-  p.p.swim.swimming = true;
-  p.p.swim.v_swim = 2.;
-  p.p.swim.push_pull = 1;
-  expected += gamma * p.p.swim.v_swim * p.r.calc_director();
+  p.swimming().swimming = true;
+  p.swimming().v_swim = 2.;
+  p.swimming().push_pull = 1;
+  expected += gamma * p.swimming().v_swim * p.calc_director();
 #endif
 #ifdef LB_ELECTROHYDRODYNAMICS
-  p.p.mu_E = Utils::Vector3d{-2., 1.5, 1.};
-  expected += gamma * p.p.mu_E;
+  p.mu_E() = Utils::Vector3d{-2., 1.5, 1.};
+  expected += gamma * p.mu_E();
 #endif
-  p.r.p = first_lb_node + Utils::Vector3d::broadcast(0.5);
+  p.pos() = first_lb_node + Utils::Vector3d::broadcast(0.5);
   lb_lbcoupling_set_gamma(gamma);
 
   // coupling
   {
-    if (in_local_halo(p.r.p)) {
-      couple_particle(p, false, noise, rng, params.time_step, false);
-      BOOST_CHECK_SMALL((p.f.f - expected).norm(), tol);
+    if (in_local_halo(p.pos())) {
+      couple_particle(p, false, noise, rng, params.time_step);
+      BOOST_CHECK_SMALL((p.force() - expected).norm(), tol);
 
-      auto const interpolated = lb_lbfluid_get_force_to_be_applied(p.r.p);
+      auto const interpolated = lb_lbfluid_get_force_to_be_applied(p.pos());
       BOOST_CHECK_SMALL((interpolated - params.force_md_to_lb(expected)).norm(),
                         tol);
     }
@@ -361,8 +363,8 @@ BOOST_DATA_TEST_CASE(particle_coupling, bdata::make(kTs), kT) {
 
   // remove force of the particle from the fluid
   {
-    if (in_local_halo(p.r.p)) {
-      add_md_force(p.r.p, -expected, params.time_step);
+    if (in_local_halo(p.pos())) {
+      add_md_force(p.pos(), -expected, params.time_step);
     }
   }
 }
@@ -380,7 +382,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
   auto const pid = 0;
   auto const skin = params.skin;
   auto const &box_l = params.box_dimensions;
-  create_particle({box_l[0] / 2. - skin * 2., skin * 2., skin * 2.});
+  create_particle({box_l[0] / 2. - skin * 2., skin * 2., skin * 2.}, 0, 0);
 
   // sanity checks
   BOOST_REQUIRE_EQUAL(get_particle_node(pid), 0);
@@ -391,11 +393,11 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
       noise * Random::noise_uniform<RNGSalt::PARTICLES>(rng->value(), 0, pid);
 #ifdef ENGINE
   set_particle_swimming(pid, ParticleParametersSwimming{true, 0., 2., 1, 3.});
-  expected += gamma * p.p.swim.v_swim * p.r.calc_director();
+  expected += gamma * p.swimming().v_swim * p.calc_director();
 #endif
 #ifdef LB_ELECTROHYDRODYNAMICS
   set_particle_mu_E(pid, {-2., 1.5, 1.});
-  expected += gamma * p.p.mu_E;
+  expected += gamma * p.mu_E();
 #endif
   place_particle(pid, first_lb_node + Utils::Vector3d::broadcast(0.5));
   lb_lbcoupling_set_gamma(gamma);
@@ -414,7 +416,8 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
     // check box shifts
     {
       auto constexpr reference_shifts =
-          std::array<Utils::Vector3i, 7>{{{{0, 0, 8}},
+          std::array<Utils::Vector3i, 8>{{{{0, 0, 0}},
+                                          {{0, 0, 8}},
                                           {{0, 8, 0}},
                                           {{0, 8, 8}},
                                           {{8, 0, 0}},
@@ -423,23 +426,27 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
                                           {{8, 8, 8}}}};
       boost::mpi::communicator world;
       assert(world.size() <= 4);
-      auto const cutoff = 8 / world.size() - 1;
+      auto const cutoff = 8 / world.size();
       {
-        auto const shifts = shifted_positions({0., 0., 0.}, box_geo);
+        auto const shifts = positions_in_halo({0., 0., 0.}, box_geo);
         BOOST_REQUIRE_EQUAL(shifts.size(), cutoff);
         for (std::size_t i = 0; i < shifts.size(); ++i) {
           BOOST_REQUIRE_EQUAL(shifts[i], reference_shifts[i]);
         }
       }
       {
-        auto const shifts = shifted_positions({1., 1., 1.}, box_geo);
-        BOOST_REQUIRE_EQUAL(shifts.size(), 0);
-      }
-      {
-        auto const reference_shift = Utils::Vector3d{1., 2., 8.};
-        auto const shifts = shifted_positions({1., 2., 0.}, box_geo);
+        auto const reference_shift = Utils::Vector3d{1., 1., 1.};
+        auto const shifts = positions_in_halo({1., 1., 1.}, box_geo);
         BOOST_REQUIRE_EQUAL(shifts.size(), 1);
         BOOST_REQUIRE_EQUAL(shifts[0], reference_shift);
+      }
+      {
+        auto const reference_origin = Utils::Vector3d{1., 2., 0.};
+        auto const reference_shift = Utils::Vector3d{1., 2., 8.};
+        auto const shifts = positions_in_halo({1., 2., 0.}, box_geo);
+        BOOST_REQUIRE_EQUAL(shifts.size(), 2);
+        BOOST_REQUIRE_EQUAL(shifts[0], reference_origin);
+        BOOST_REQUIRE_EQUAL(shifts[1], reference_shift);
       }
     }
 
@@ -452,7 +459,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
       lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual, particles,
                                              ghost_particles, params.time_step);
       auto const &p = get_particle_data(pid);
-      BOOST_CHECK_EQUAL(p.f.f.norm(), 0.);
+      BOOST_CHECK_EQUAL(p.force().norm(), 0.);
     }
 
     // check with LB coupling
@@ -462,20 +469,20 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
       auto const particles = cell_structure.local_particles();
       auto const ghost_particles = cell_structure.ghost_particles();
       // get original LB force
-      auto const lb_before = lb_lbfluid_get_force_to_be_applied(p.r.p);
+      auto const lb_before = lb_lbfluid_get_force_to_be_applied(p.pos());
       // couple particle to LB
       lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual, particles,
                                              ghost_particles, params.time_step);
       // check particle force
       auto const &p = get_particle_data(pid);
-      BOOST_CHECK_SMALL((p.f.f - expected).norm(), tol);
+      BOOST_CHECK_SMALL((p.force() - expected).norm(), tol);
       // check LB force
-      auto const lb_after = lb_lbfluid_get_force_to_be_applied(p.r.p);
+      auto const lb_after = lb_lbfluid_get_force_to_be_applied(p.pos());
       auto const lb_expected = params.force_md_to_lb(expected) + lb_before;
       BOOST_CHECK_SMALL((lb_after - lb_expected).norm(), tol);
       // remove force of the particle from the fluid
       set_particle_f(pid, {});
-      add_md_force(p.r.p, -expected, params.time_step);
+      add_md_force(p.pos(), -expected, params.time_step);
     }
   }
 
@@ -598,6 +605,9 @@ int main(int argc, char **argv) {
   espresso::system->set_box_l(params.box_dimensions);
   espresso::system->set_time_step(params.time_step);
   espresso::system->set_skin(params.skin);
+
+  boost::mpi::communicator world;
+  assert(world.size() <= 2);
 
   return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }

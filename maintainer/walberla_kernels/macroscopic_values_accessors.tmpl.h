@@ -1,4 +1,5 @@
-// kernel generated with pystencils v0.4.4+2.g825be1d, lbmpy v0.4.4, lbmpy_walberla/pystencils_walberla from commit 2527a5f799da52b4e5293a05ed691fc35bf7122b
+// file extracted from the walberla lattice model
+// (python/lbmpy_walberla/templates/LatticeModel.tmpl.h)
 
 //======================================================================================================================
 //

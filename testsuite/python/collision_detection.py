@@ -28,7 +28,7 @@ import random
 @utx.skipIfMissingFeatures("COLLISION_DETECTION")
 class CollisionDetection(ut.TestCase):
 
-    """Tests interface and functionality of the collision detection / dynamic binding"""
+    """Tests functionality of the collision detection / dynamic binding"""
 
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     np.random.seed(seed=42)
@@ -57,24 +57,6 @@ class CollisionDetection(ut.TestCase):
         state = self.system.collision_detection.get_params()
         self.system.collision_detection.set_params(**state)
         self.assertEqual(state, self.system.collision_detection.get_params())
-
-    def test_00_interface_and_defaults(self):
-        # Is it off by default
-        self.assertEqual(self.system.collision_detection.mode, "off")
-
-        # Make sure params cannot be set individually
-        with self.assertRaises(Exception):
-            self.system.collision_detection.mode = "bind_centers"
-
-        # Verify exception throwing for unknown collision modes
-        for unknown_mode in (0, "unknown"):
-            with self.assertRaisesRegex(Exception, "Mode not handled"):
-                self.system.collision_detection.set_params(mode=unknown_mode)
-        self.assertIsNone(self.system.collision_detection.call_method("none"))
-
-        # That should work
-        self.system.collision_detection.set_params(mode="off")
-        self.assertEqual(self.system.collision_detection.mode, "off")
 
     def test_bind_centers(self):
         system = self.system
@@ -356,7 +338,12 @@ class CollisionDetection(ut.TestCase):
         expected_np = 3 * len(positions) + 1
 
         system.collision_detection.set_params(
-            mode="glue_to_surface", distance=0.11, distance_glued_particle_to_vs=0.02, bond_centers=self.H, bond_vs=self.H2, part_type_vs=self.part_type_vs, part_type_to_attach_vs_to=self.part_type_to_attach_vs_to, part_type_to_be_glued=self.part_type_to_be_glued, part_type_after_glueing=self.part_type_after_glueing)
+            mode="glue_to_surface", distance=0.11,
+            distance_glued_particle_to_vs=0.02, bond_centers=self.H,
+            bond_vs=self.H2, part_type_vs=self.part_type_vs,
+            part_type_to_attach_vs_to=self.part_type_to_attach_vs_to,
+            part_type_to_be_glued=self.part_type_to_be_glued,
+            part_type_after_glueing=self.part_type_after_glueing)
         self.get_state_set_state_consistency()
         system.integrator.run(1, recalc_forces=True)
         self.verify_state_after_glue_to_surface(expected_np)
@@ -543,6 +530,12 @@ class CollisionDetection(ut.TestCase):
                 # Bond type and partner type
                 # part_type_after_glueing can have a bond to a vs or to a
                 # non_virtual particle
+                allowed_types = (self.part_type_after_glueing,
+                                 self.part_type_to_attach_vs_to)
+                self.assertIn(
+                    p.type,
+                    allowed_types,
+                    msg=f"Particle {p.id} of type {p.type} should not have bonds, yet has {p.bonds}.")
                 if p.type == self.part_type_after_glueing:
                     self.assertIn(bond[0], (self.H, self.H2))
                     # Bonds to virtual sites:
@@ -559,9 +552,6 @@ class CollisionDetection(ut.TestCase):
                     self.assertEqual(
                         system.part.by_id(bond[1]).type,
                         self.part_type_after_glueing)
-                else:
-                    raise Exception(
-                        f"Particle {p.id} of type {p.type} should not have bonds, yet has {p.bonds}.")
 
                 # Collect bonds
                 # Sort bond partners to make them unique independently of
@@ -637,7 +627,7 @@ class CollisionDetection(ut.TestCase):
 
         system.part.add(id=4, pos=e)
         system.part.add(id=1, pos=b)
-        system.cell_system.set_domain_decomposition()
+        system.cell_system.set_regular_decomposition()
         system.integrator.run(1, recalc_forces=True)
         self.verify_triangle_binding(cutoff, system.bonded_inter[2], res)
         system.cell_system.set_n_square()
@@ -702,6 +692,8 @@ class CollisionDetection(ut.TestCase):
         found_angle_bonds = []
         for i in range(n):
             for b in system.part.by_id(i).bonds:
+                self.assertIn(
+                    len(b), (2, 3), msg="There should only be 2- and 3-particle bonds")
                 if len(b) == 2:
                     self.assertEqual(b[0]._bond_id, self.H._bond_id)
                     found_pairs.append(tuple(sorted((i, b[1]))))
@@ -709,9 +701,6 @@ class CollisionDetection(ut.TestCase):
                     partners = sorted(b[1:])
                     found_angle_bonds.append(
                         (i, b[0]._bond_id, partners[0], partners[1]))
-                else:
-                    raise Exception(
-                        "There should be only 2- and 3-particle bonds")
 
         # The order between expected and found bonds does not always match
         # because collisions occur in random order. Sort stuff
@@ -720,16 +709,6 @@ class CollisionDetection(ut.TestCase):
         expected_angle_bonds = sorted(expected_angle_bonds)
         self.assertEqual(found_pairs, expected_pairs)
         self.assertEqual(found_angle_bonds, expected_angle_bonds)
-
-    def test_zz_serialization(self):
-        self.system.collision_detection.set_params(
-            mode="bind_centers", distance=0.11, bond_centers=self.H)
-        reduce = self.system.collision_detection.__reduce__()
-        res = reduce[0](reduce[1][0])
-        self.assertEqual(res.__class__.__name__, "CollisionDetection")
-        self.assertEqual(res.mode, "bind_centers")
-        self.assertAlmostEqual(res.distance, 0.11, delta=1E-12)
-        self.assertEqual(res.bond_centers, self.H)
 
 
 if __name__ == "__main__":

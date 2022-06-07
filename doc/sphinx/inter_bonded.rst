@@ -258,7 +258,7 @@ This allows for a bond type having an angle-dependent potential. This potential
 is defined between three particles and depends on the angle :math:`\phi`
 between the vectors from the central particle to the two other particles.
 
-Similar to other bonded interactions, these are defined for every particle triplet and must be added to a particle (see :attr:`espressomd.particle_data.ParticleHandle.bonds`), in this case the central one.
+Similar to other bonded interactions, these are defined for every particle triplet and must be added to a particle (see property :attr:`~espressomd.particle_data.ParticleHandle.bonds`), in this case the central one.
 For example, for the schematic with particles ``p0``, ``p1`` (central particle) and ``p2`` the bond was defined using ::
 
     p1.add_bond((bond_angle, p0, p2))
@@ -399,6 +399,9 @@ angle between the planes defined by the particle triples :math:`p_1`,
 Together with appropriate Lennard-Jones interactions, this potential can
 mimic a large number of atomic torsion potentials.
 
+Note that there is a singularity in the forces, but not in the energy, when
+:math:`\phi = 0` and :math:`\phi = \pi`.
+
 
 Tabulated dihedral potential
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -414,6 +417,8 @@ A tabulated dihedral interaction can be instantiated via
 The energy and force tables must be sampled from :math:`0` to :math:`2\pi`.
 For details of the interpolation, see :ref:`Tabulated interaction`.
 
+Note that there is a singularity in the forces, but not in the energy, when
+:math:`\phi = 0` and :math:`\phi = \pi`.
 
 .. _Immersed Boundary Method interactions:
 

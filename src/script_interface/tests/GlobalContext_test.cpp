@@ -22,9 +22,10 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include <boost/mpi.hpp>
-
 #include "script_interface/GlobalContext.hpp"
+
+#include <boost/mpi.hpp>
+#include <boost/mpi/communicator.hpp>
 
 #include <algorithm>
 #include <memory>
@@ -55,9 +56,10 @@ struct Dummy : si::ObjectHandle {
 auto make_global_context(Communication::MpiCallbacks &cb) {
   Utils::Factory<si::ObjectHandle> factory;
   factory.register_new<Dummy>("Dummy");
+  boost::mpi::communicator comm;
 
   return std::make_shared<si::GlobalContext>(
-      cb, std::make_shared<si::LocalContext>(factory, 0));
+      cb, std::make_shared<si::LocalContext>(factory, comm));
 }
 
 BOOST_AUTO_TEST_CASE(GlobalContext_make_shared) {

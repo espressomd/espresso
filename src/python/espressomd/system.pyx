@@ -16,54 +16,56 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from libcpp cimport bool
 include "myconfig.pxi"
 
 import numpy as np
 import collections
 
-from .grid cimport box_geo
-from . cimport integrate
+from . import accumulators
+from . import actors
+from . import analyze
+from . import bond_breakage
+from . import cell_system
+from . import cuda_init
+from . import collision_detection
+from . import comfixed
+from . import constraints
+from . import galilei
 from . import interactions
 from . import integrate
-from .actors import Actors
-from . cimport cuda_init
+from . import lb
+from . import EKSpecies
+from . import lees_edwards
 from . import particle_data
-from . import cuda_init
-from . import code_info
-from .utils cimport make_array_locked, make_Vector3d, Vector3d
-from .thermostat import Thermostat
-from .cellsystem import CellSystem
-from .analyze import Analysis
-from .galilei import GalileiTransform
-from .constraints import Constraints
-from .accumulators import AutoUpdateAccumulators
-IF LB_WALBERLA:
-    from . import lb
-IF EK_WALBERLA:
-    from .EKSpecies import EKContainer, EKReactions
-from .comfixed import ComFixed
-from .utils cimport check_type_or_throw_except
-from .utils import handle_errors, array_locked
-IF VIRTUAL_SITES:
-    from .virtual_sites import ActiveVirtualSitesHandle, VirtualSitesOff
+from . import thermostat
+from . import virtual_sites
 
-IF COLLISION_DETECTION == 1:
-    from .collision_detection import CollisionDetection
+from .__init__ import has_features, assert_features
+from .grid cimport box_geo
+from .utils cimport Vector3d
+from . cimport utils
+from . import utils
 
 
-setable_properties = ["box_l", "min_global_cut", "periodicity", "time",
-                      "time_step", "force_cap", "max_oif_objects"]
-checkpointable_properties = ["max_oif_objects"]
-
-if VIRTUAL_SITES:
-    setable_properties.append("_active_virtual_sites_handle")
-    checkpointable_properties.append("_active_virtual_sites_handle")
+_system_created = False
 
 
-cdef bool _system_created = False
+cdef class _BoxGeometry:
+    """
+    Wrapper class required for technical reasons only.
 
-cdef class _Globals:
+    When reloading from a checkpoint file, the box length, periodicity, and
+    global cutoff must be set before anything else. Due to how pickling works,
+    this can only be achieved by encapsulating them in a member object of the
+    System class, and adding that object as the first element of the ordered
+    dict that is used during serialization. When the System class is reloaded,
+    the ordered dict is walked through and objects are deserialized in the same
+    order. Since many objects depend on the box length, the `_BoxGeometry` has
+    to be deserialized first. This guarantees the box geometry is already set
+    in the core before e.g. particles and bonds are deserialized.
+
+    """
+
     def __getstate__(self):
         return {'box_l': self.box_l,
                 'periodicity': self.periodicity,
@@ -75,48 +77,35 @@ cdef class _Globals:
         self.min_global_cut = params['min_global_cut']
 
     property box_l:
-        """
-        (3,) array_like of :obj:`float`:
-            Dimensions of the simulation box
-
-        """
-
-        def __set__(self, _box_l):
-            if len(_box_l) != 3:
-                raise ValueError("Box length must be of length 3")
-            mpi_set_box_length(make_Vector3d(_box_l))
+        def __set__(self, box_l):
+            utils.check_type_or_throw_except(
+                box_l, 3, float, "box_l must be an array_like of 3 floats")
+            mpi_set_box_length(utils.make_Vector3d(box_l))
+            utils.handle_errors("Exception while updating the box length")
 
         def __get__(self):
-            return make_array_locked( < Vector3d > box_geo.length())
+            return utils.make_array_locked(box_geo.length())
 
     property periodicity:
-        """
-        (3,) array_like of :obj:`bool`:
-            System periodicity in ``[x, y, z]``, ``False`` for no periodicity
-            in this direction, ``True`` for periodicity
-
-        """
-
-        def __set__(self, _periodic):
-            if len(_periodic) != 3:
-                raise ValueError(
-                    f"periodicity must be of length 3, got length {len(_periodic)}")
-            mpi_set_periodicity(_periodic[0], _periodic[1], _periodic[2])
-            handle_errors("Error while assigning system periodicity")
+        def __set__(self, periodic):
+            utils.check_type_or_throw_except(
+                periodic, 3, type(True), "periodicity must be an array_like of 3 bools")
+            mpi_set_periodicity(periodic[0], periodic[1], periodic[2])
+            utils.handle_errors("Exception while assigning system periodicity")
 
         def __get__(self):
             periodicity = np.empty(3, dtype=type(True))
             for i in range(3):
                 periodicity[i] = box_geo.periodic(i)
-            return array_locked(periodicity)
+            return utils.array_locked(periodicity)
 
     property min_global_cut:
-        def __set__(self, _min_global_cut):
-            mpi_set_min_global_cut(_min_global_cut)
+        def __set__(self, min_global_cut):
+            mpi_set_min_global_cut(min_global_cut)
 
         def __get__(self):
-            global min_global_cut
-            return min_global_cut
+            return get_min_global_cut()
+
 
 cdef class System:
     """The ESPResSo system class.
@@ -129,7 +118,7 @@ cdef class System:
     """
 
     cdef public:
-        _globals
+        _box_geo
         part
         """:class:`espressomd.particle_data.ParticleList`"""
         non_bonded_inter
@@ -137,13 +126,15 @@ cdef class System:
         bonded_inter
         """:class:`espressomd.interactions.BondedInteractions`"""
         cell_system
-        """:class:`espressomd.cellsystem.CellSystem`"""
+        """:class:`espressomd.cell_system.CellSystem`"""
         thermostat
         """:class:`espressomd.thermostat.Thermostat`"""
         actors
         """:class:`espressomd.actors.Actors`"""
         analysis
         """:class:`espressomd.analyze.Analysis`"""
+        bond_breakage
+        """:class:`espressomd.bond_breakage.BreakageSpecs`"""
         galilei
         """:class:`espressomd.galilei.GalileiTransform`"""
         integrator
@@ -156,6 +147,8 @@ cdef class System:
         """:class:`espressomd.EKSpecies.EKContainer`"""
         ekreactions
         """:class:`espressomd.EKSpecies.EKReactions`"""
+        lees_edwards
+        """:class:`espressomd.lees_edwards.LeesEdwards`"""
         collision_detection
         """:class:`espressomd.collision_detection.CollisionDetection`"""
         cuda_init_handle
@@ -165,91 +158,85 @@ cdef class System:
         _active_virtual_sites_handle
 
     def __init__(self, **kwargs):
-        global _system_created
-        if not _system_created:
-            if 'box_l' not in kwargs:
-                raise ValueError("Required argument box_l not provided.")
-            self._globals = _Globals()
-            self.integrator = integrate.IntegratorHandle()
-            System.__setattr__(self, "box_l", kwargs.pop("box_l"))
-            for arg in kwargs:
-                if arg in setable_properties:
-                    System.__setattr__(self, arg, kwargs.get(arg))
-                else:
-                    raise ValueError(
-                        f"Property {arg} can not be set via argument to System class.")
-            self.actors = Actors()
-            self.analysis = Analysis(self)
-            self.auto_update_accumulators = AutoUpdateAccumulators()
-            self.bonded_inter = interactions.BondedInteractions()
-            self.cell_system = CellSystem()
-            IF COLLISION_DETECTION == 1:
-                self.collision_detection = CollisionDetection()
-            self.comfixed = ComFixed()
-            self.constraints = Constraints()
-            IF CUDA:
-                self.cuda_init_handle = cuda_init.CudaInitHandle()
-            self.galilei = GalileiTransform()
-            IF EK_WALBERLA:
-                self.ekcontainer = EKContainer()
-                self.ekreactions = EKReactions()
-            self.non_bonded_inter = interactions.NonBondedInteractions()
-            self.part = particle_data.ParticleList()
-            self.thermostat = Thermostat()
-            IF VIRTUAL_SITES:
-                self._active_virtual_sites_handle = ActiveVirtualSitesHandle(
-                    implementation=VirtualSitesOff())
-            _system_created = True
-        else:
+        if _system_created:
             raise RuntimeError(
                 "You can only have one instance of the system class at a time.")
+        if 'box_l' not in kwargs:
+            raise ValueError("Required argument 'box_l' not provided.")
+
+        setable_properties = ["box_l", "min_global_cut", "periodicity", "time",
+                              "time_step", "force_cap", "max_oif_objects"]
+        if has_features("VIRTUAL_SITES"):
+            setable_properties.append("_active_virtual_sites_handle")
+
+        self._box_geo = _BoxGeometry()
+        self.integrator = integrate.IntegratorHandle()
+        System.__setattr__(self, "box_l", kwargs.pop("box_l"))
+        for arg in kwargs:
+            if arg not in setable_properties:
+                raise ValueError(
+                    f"Property '{arg}' can not be set via argument to System class.")
+            System.__setattr__(self, arg, kwargs.get(arg))
+        self.actors = actors.Actors()
+        self.analysis = analyze.Analysis(self)
+        self.auto_update_accumulators = accumulators.AutoUpdateAccumulators()
+        self.bonded_inter = interactions.BondedInteractions()
+        self.cell_system = cell_system.CellSystem()
+        self.bond_breakage = bond_breakage.BreakageSpecs()
+        if has_features("COLLISION_DETECTION"):
+            self.collision_detection = collision_detection.CollisionDetection(
+                mode="off")
+        self.comfixed = comfixed.ComFixed()
+        self.constraints = constraints.Constraints()
+        if has_features("CUDA"):
+            self.cuda_init_handle = cuda_init.CudaInitHandle()
+        if has_feature("EK_WALBERLA"):
+            self.ekcontainer = EKSpecies.EKContainer()
+            self.ekreactions = EKSpecies.EKReactions()
+        self.galilei = galilei.GalileiTransform()
+        self.lees_edwards = lees_edwards.LeesEdwards()
+        self.non_bonded_inter = interactions.NonBondedInteractions()
+        self.part = particle_data.ParticleList()
+        self.thermostat = thermostat.Thermostat()
+        if has_features("VIRTUAL_SITES"):
+            self._active_virtual_sites_handle = virtual_sites.ActiveVirtualSitesHandle(
+                implementation=virtual_sites.VirtualSitesOff())
+
+        # lock class
+        global _system_created
+        _system_created = True
 
     # __getstate__ and __setstate__ define the pickle interaction
     def __getstate__(self):
+        checkpointable_properties = ["_box_geo", "integrator"]
+        if has_features("VIRTUAL_SITES"):
+            checkpointable_properties.append("_active_virtual_sites_handle")
+        checkpointable_properties += [
+            "non_bonded_inter", "bonded_inter", "cell_system", "part",
+            "analysis", "auto_update_accumulators", "comfixed", "constraints",
+            "galilei", "bond_breakage", "max_oif_objects"
+        ]
+        if has_features("COLLISION_DETECTION"):
+            checkpointable_properties.append("collision_detection")
+        checkpointable_properties += ["actors", "thermostat"]
+        if has_features("EK_WALBERLA"):
+            checkpointable_properties += ["ekcontainer", "ekreactions"]
+
         odict = collections.OrderedDict()
-        odict['_globals'] = System.__getattribute__(self, "_globals")
-        odict['integrator'] = System.__getattribute__(self, "integrator")
-        for property_ in checkpointable_properties:
-            odict[property_] = System.__getattribute__(self, property_)
-        odict['non_bonded_inter'] = System.__getattribute__(
-            self, "non_bonded_inter")
-        odict['bonded_inter'] = System.__getattribute__(self, "bonded_inter")
-        odict['cell_system'] = System.__getattribute__(self, "cell_system")
-        odict['part'] = System.__getattribute__(self, "part")
-        odict['analysis'] = System.__getattribute__(self, "analysis")
-        odict['auto_update_accumulators'] = System.__getattribute__(
-            self, "auto_update_accumulators")
-        odict['comfixed'] = System.__getattribute__(self, "comfixed")
-        odict['constraints'] = System.__getattribute__(self, "constraints")
-        odict['galilei'] = System.__getattribute__(self, "galilei")
-        IF COLLISION_DETECTION:
-            odict['collision_detection'] = System.__getattribute__(
-                self, "collision_detection")
-        odict['actors'] = System.__getattribute__(self, "actors")
-        IF EK_WALBERLA:
-            odict['ekcontainer'] = System.__getattribute__(
-                self, "ekcontainer")
-            odict['ekreactions'] = System.__getattribute__(
-                self, "ekreactions")
-        odict['integrator'] = System.__getattribute__(self, "integrator")
-        odict['thermostat'] = System.__getattribute__(self, "thermostat")
-        IF LB_WALBERLA:
-            odict['_vtk_registry'] = lb._vtk_registry
+        for property_name in checkpointable_properties:
+            odict[property_name] = System.__getattribute__(self, property_name)
+        if has_features("LB_WALBERLA"):
+            odict["_vtk_registry"] = lb._vtk_registry
         return odict
 
     def __setstate__(self, params):
-        # MD cell geometry cannot be reset with a walberla LB actor
-        md_cell_reset = ("box_l", "min_global_cut", "periodicity", "time_step")
-        # external globals are unpickled by other modules
-        external_globals = ('_vtk_registry')
-        for property_ in params.keys():
-            if property_ in md_cell_reset:
-                continue
-            if property_ in external_globals:
-                continue
-            System.__setattr__(self, property_, params[property_])
-        IF LB_WALBERLA:
-            lb._vtk_registry = params['_vtk_registry']
+        vtk_registry = None
+        if has_features("LB_WALBERLA"):
+            vtk_registry = params.pop("_vtk_registry")
+        for property_name in params.keys():
+            System.__setattr__(self, property_name, params[property_name])
+        if has_features("LB_WALBERLA"):
+            lb._vtk_registry = vtk_registry
 
     property box_l:
         """
@@ -258,12 +245,11 @@ cdef class System:
 
         """
 
-        def __set__(self, _box_l):
-            self._globals.box_l = _box_l
-            handle_errors("Box size setup")
+        def __set__(self, value):
+            self._box_geo.box_l = value
 
         def __get__(self):
-            return self._globals.box_l
+            return self._box_geo.box_l
 
     property force_cap:
         """
@@ -287,16 +273,16 @@ cdef class System:
 
         """
 
-        def __set__(self, _periodic):
-            self._globals.periodicity = _periodic
-            handle_errors("Setting periodicity")
+        def __set__(self, value):
+            self._box_geo.periodicity = value
 
         def __get__(self):
-            return self._globals.periodicity
+            return self._box_geo.periodicity
 
     property time:
         """
-        Set the time in the simulation
+        Set the time in the simulation.
+
         """
 
         def __set__(self, double sim_time):
@@ -307,7 +293,8 @@ cdef class System:
 
     property time_step:
         """
-        Sets the time step for the integrator.
+        Set the time step for the integrator.
+
         """
 
         def __set__(self, double time_step):
@@ -325,19 +312,27 @@ cdef class System:
             return self.cell_system.max_cut_bonded
 
     property min_global_cut:
-        def __set__(self, _min_global_cut):
-            self._globals.min_global_cut = _min_global_cut
+        def __set__(self, value):
+            self._box_geo.min_global_cut = value
 
         def __get__(self):
-            return self._globals.min_global_cut
+            return self._box_geo.min_global_cut
 
-    IF VIRTUAL_SITES:
-        property virtual_sites:
-            def __set__(self, v):
-                self._active_virtual_sites_handle.implementation = v
+    property virtual_sites:
+        """
+        Set the virtual site implementation.
 
-            def __get__(self):
-                return self._active_virtual_sites_handle.implementation
+        Requires feature ``VIRTUAL_SITES``.
+
+        """
+
+        def __set__(self, v):
+            assert_features("VIRTUAL_SITES")
+            self._active_virtual_sites_handle.implementation = v
+
+        def __get__(self):
+            assert_features("VIRTUAL_SITES")
+            return self._active_virtual_sites_handle.implementation
 
     property max_oif_objects:
         """Maximum number of objects as per the object_in_fluid method.
@@ -414,20 +409,41 @@ cdef class System:
 
         cdef Vector3d pos1
         if isinstance(p1, particle_data.ParticleHandle):
-            pos1 = make_Vector3d(p1.pos)
+            pos1 = utils.make_Vector3d(p1.pos_folded)
         else:
-            check_type_or_throw_except(
+            utils.check_type_or_throw_except(
                 p1, 3, float, "p1 must be a particle or 3 floats")
-            pos1 = make_Vector3d(p1)
+            pos1 = utils.make_Vector3d(p1)
         cdef Vector3d pos2
         if isinstance(p2, particle_data.ParticleHandle):
-            pos2 = make_Vector3d(p2.pos)
+            pos2 = utils.make_Vector3d(p2.pos_folded)
         else:
-            check_type_or_throw_except(
+            utils.check_type_or_throw_except(
                 p2, 3, float, "p2 must be a particle or 3 floats")
-            pos2 = make_Vector3d(p2)
+            pos2 = utils.make_Vector3d(p2)
 
-        return make_array_locked(box_geo.get_mi_vector(pos2, pos1))
+        return utils.make_array_locked(box_geo.get_mi_vector(pos2, pos1))
+
+    def velocity_difference(self, p1, p2):
+        """
+        Return the velocity difference between two particles,
+        considering Lees-Edwards boundary conditions, if active.
+
+        Parameters
+        ----------
+        p1 : :class:`~espressomd.particle_data.ParticleHandle`
+        p2 : :class:`~espressomd.particle_data.ParticleHandle`
+
+        """
+
+        cdef Vector3d pos1 = utils.make_Vector3d(p1.pos_folded)
+        cdef Vector3d pos2 = utils.make_Vector3d(p2.pos_folded)
+
+        cdef Vector3d v1 = utils.make_Vector3d(p1.v)
+        cdef Vector3d v2 = utils.make_Vector3d(p2.v)
+        cdef Vector3d vd = box_geo.velocity_difference(pos2, pos1, v2, v1)
+
+        return utils.make_array_locked(vd)
 
     def rotate_system(self, **kwargs):
         """Rotate the particles in the system about the center of mass.
@@ -447,20 +463,24 @@ cdef class System:
         """
         mpi_rotate_system(kwargs['phi'], kwargs['theta'], kwargs['alpha'])
 
-    IF EXCLUSIONS:
-        def auto_exclusions(self, distance):
-            """Automatically adds exclusions between particles
-            that are bonded.
+    def auto_exclusions(self, distance):
+        """Automatically adds exclusions between particles
+        that are bonded.
 
-            This only considers pair bonds.
+        This only considers pair bonds.
 
-            Parameters
-            ----------
-            distance : :obj:`int`
-                Bond distance upto which the exclusions should be added.
+        Requires feature ``EXCLUSIONS``.
 
-            """
+        Parameters
+        ----------
+        distance : :obj:`int`
+            Bond distance upto which the exclusions should be added.
+
+        """
+        IF EXCLUSIONS:
             auto_exclusions(distance)
+        ELSE:
+            assert_features("EXCLUSIONS")
 
     def setup_type_map(self, type_list=None):
         """
@@ -498,7 +518,5 @@ cdef class System:
             To select which particle types are tracked, call :meth:`setup_type_map`.
 
         """
-        check_type_or_throw_except(type, 1, int, "type must be 1 int")
-        number = number_of_particles_with_type(type)
-        handle_errors("")
-        return int(number)
+        utils.check_type_or_throw_except(type, 1, int, "type must be 1 int")
+        return number_of_particles_with_type(type)

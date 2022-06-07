@@ -62,7 +62,7 @@ RuntimeErrorStream _runtimeMessageStream(RuntimeError::ErrorLevel level,
   return {*runtimeErrorCollector, level, file, line, function};
 }
 
-void mpi_gather_runtime_errors_local() {
+static void mpi_gather_runtime_errors_local() {
   runtimeErrorCollector->gather_local();
 }
 
@@ -71,6 +71,14 @@ REGISTER_CALLBACK(mpi_gather_runtime_errors_local)
 std::vector<RuntimeError> mpi_gather_runtime_errors() {
   m_callbacks->call(mpi_gather_runtime_errors_local);
   return runtimeErrorCollector->gather();
+}
+
+std::vector<RuntimeError> mpi_gather_runtime_errors_all(bool is_head_node) {
+  if (is_head_node) {
+    return runtimeErrorCollector->gather();
+  }
+  runtimeErrorCollector->gather_local();
+  return {};
 }
 } // namespace ErrorHandling
 
@@ -88,4 +96,8 @@ int check_runtime_errors_local() {
 int check_runtime_errors(boost::mpi::communicator const &comm) {
   return boost::mpi::all_reduce(comm, check_runtime_errors_local(),
                                 std::plus<int>());
+}
+
+void flush_runtime_errors_local() {
+  ErrorHandling::runtimeErrorCollector->flush();
 }

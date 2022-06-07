@@ -149,28 +149,26 @@ class ClusterAnalysis(ut.TestCase):
         # Unknown method should return None
         self.assertIsNone(c.call_method("unknown"))
 
-        # Fractal dimension calc require gsl
-        if not espressomd.has_features("GSL"):
-            print("Skipping fractal dimension tests due to missing GSL dependency")
-            return
+        # Fractal dimension calculation requires gsl
+        if espressomd.has_features("GSL"):
+            # The fractal dimension of a line should be 1
+            dr = 0.
+            self.assertAlmostEqual(
+                c.fractal_dimension(dr=dr)[0], 1, delta=0.05)
 
-        # The fractal dimension of a line should be 1
-        dr = 0.
-        self.assertAlmostEqual(c.fractal_dimension(dr=dr)[0], 1, delta=0.05)
-
-        # The fractal dimension of a disk should be close to 2
-        self.system.part.clear()
-        center = np.array((0.1, .02, 0.15))
-        for _ in range(3000):
-            r_inv, phi = np.random.random(2) * np.array((0.2, 2 * np.pi))
-            r = 1 / r_inv
-            self.system.part.add(
-                pos=center + r * np.array((np.sin(phi), np.cos(phi), 0)))
-        self.cs.clear()
-        self.cs.run_for_all_pairs()
-        cid = self.cs.cluster_ids()[0]
-        df = self.cs.clusters[cid].fractal_dimension(dr=0.001)
-        self.assertAlmostEqual(df[0], 2, delta=0.08)
+            # The fractal dimension of a disk should be close to 2
+            self.system.part.clear()
+            center = np.array((0.1, .02, 0.15))
+            for _ in range(3000):
+                r_inv, phi = np.random.random(2) * np.array((0.2, 2 * np.pi))
+                r = 1 / r_inv
+                self.system.part.add(
+                    pos=center + r * np.array((np.sin(phi), np.cos(phi), 0)))
+            self.cs.clear()
+            self.cs.run_for_all_pairs()
+            cid = self.cs.cluster_ids()[0]
+            df = self.cs.clusters[cid].fractal_dimension(dr=0.001)
+            self.assertAlmostEqual(df[0], 2, delta=0.08)
 
     def test_analysis_for_bonded_particles(self):
         self.set_two_clusters()

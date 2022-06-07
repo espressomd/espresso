@@ -31,11 +31,11 @@ BOOST_AUTO_TEST_CASE(translational_kinetic_energy_) {
   {
     Particle p;
 #ifdef MASS
-    p.p.mass = 2.;
+    p.mass() = 2.;
 #endif
-    p.m.v = {3., 4., 5.};
+    p.v() = {3., 4., 5.};
 
-    auto const expected = 0.5 * p.p.mass * p.m.v.norm2();
+    auto const expected = 0.5 * p.mass() * p.v().norm2();
     BOOST_CHECK_EQUAL(translational_kinetic_energy(p), expected);
   }
 
@@ -45,10 +45,10 @@ BOOST_AUTO_TEST_CASE(translational_kinetic_energy_) {
 
     Particle p;
 #ifdef MASS
-    p.p.mass = 2.;
+    p.mass() = 2.;
 #endif
-    p.p.is_virtual = true;
-    p.m.v = {3., 4., 5.};
+    p.set_virtual(true);
+    p.v() = {3., 4., 5.};
 
     auto const expected = 0.;
     BOOST_CHECK_EQUAL(translational_kinetic_energy(p), expected);
@@ -62,11 +62,11 @@ BOOST_AUTO_TEST_CASE(rotational_kinetic_energy_) {
 #ifdef ROTATION
   {
     Particle p;
-    p.m.omega = {1., 2., 3.};
-    p.p.rotation = 1;
+    p.omega() = {1., 2., 3.};
+    p.set_can_rotate_all_axes();
 
     auto const expected =
-        0.5 * (hadamard_product(p.m.omega, p.m.omega) * p.p.rinertia);
+        0.5 * (hadamard_product(p.omega(), p.omega()) * p.rinertia());
     BOOST_CHECK_EQUAL(rotational_kinetic_energy(p), expected);
   }
 #endif
@@ -75,13 +75,13 @@ BOOST_AUTO_TEST_CASE(rotational_kinetic_energy_) {
 BOOST_AUTO_TEST_CASE(kinetic_energy_) {
   Particle p;
 #ifdef MASS
-  p.p.mass = 2.;
+  p.mass() = 2.;
 #endif
-  p.m.v = {3., 4., 5.};
+  p.v() = {3., 4., 5.};
 
 #ifdef ROTATION
-  p.m.omega = {1., 2., 3.};
-  p.p.rotation = 1;
+  p.omega() = {1., 2., 3.};
+  p.set_can_rotate_all_axes();
 #endif
 
   auto const expected =

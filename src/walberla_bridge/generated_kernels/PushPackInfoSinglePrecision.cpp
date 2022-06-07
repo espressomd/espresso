@@ -1,6 +1,5 @@
 // kernel generated with pystencils v0.4.4, lbmpy v0.4.4,
-// lbmpy_walberla/pystencils_walberla from commit
-// 2527a5f799da52b4e5293a05ed691fc35bf7122b
+// lbmpy_walberla/pystencils_walberla from commit ref: refs/heads/le_ghost_vel
 
 #include "PushPackInfoSinglePrecision.h"
 #include "core/DataTypes.h"

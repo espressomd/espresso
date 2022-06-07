@@ -31,6 +31,7 @@
 #include <boost/serialization/optional.hpp>
 
 #include <cstdint>
+#include <unordered_set>
 #include <vector>
 
 using OptionalCounter = boost::optional<Utils::Counter<uint64_t>>;
@@ -74,6 +75,14 @@ void lb_lbcoupling_deactivate();
  */
 bool in_local_halo(Utils::Vector3d const &pos);
 
+/** @brief Determine if a given particle should be coupled.
+ *  In certain cases, there may be more than one ghost for the same particle.
+ *  To make sure, that these are only coupled once, ghosts' ids are stored
+ *  in an unordered_set.
+ */
+bool should_be_coupled(const Particle &p,
+                       std::unordered_set<int> &coupled_ghost_particles);
+
 /**
  * @brief Add a force to the lattice force density.
  * @param pos Position of the force
@@ -87,16 +96,15 @@ Utils::Vector3d lb_particle_coupling_noise(bool enabled, int part_id,
                                            const OptionalCounter &rng_counter);
 
 // internal function exposed for unit testing
-std::vector<Utils::Vector3d> shifted_positions(Utils::Vector3d pos,
+std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d pos,
                                                const BoxGeometry &box);
 
 // internal function exposed for unit testing
 void couple_particle(Particle &p, bool couple_virtual, double noise_amplitude,
-                     const OptionalCounter &rng_counter, double time_step,
-                     bool has_ghosts);
+                     const OptionalCounter &rng_counter, double time_step);
 
 // internal function exposed for unit testing
-void add_swimmer_force(Particle const &p, double time_step, bool has_ghosts);
+void add_swimmer_force(Particle const &p, double time_step);
 
 /**
  * @brief Calculate particle drift velocity offset due to ENGINE and
@@ -110,14 +118,16 @@ void mpi_bcast_lb_particle_coupling();
  *
  *  See section II.C. @cite ahlrichs99a
  *
- *  @param[in] p           The coupled particle.
+ *  @param[in] p           The coupled particle
+ *  @param[in] shifted_pos The particle position with optional shift
  *  @param[in] vel_offset  Velocity offset to be added to interpolated LB
  *                         velocity before calculating the force
  *
  *  @return The viscous coupling force
  */
 Utils::Vector3d lb_drag_force(Particle const &p,
-                              const Utils::Vector3d &vel_offset);
+                              Utils::Vector3d const &shifted_pos,
+                              Utils::Vector3d const &vel_offset);
 
 struct LB_Particle_Coupling {
   OptionalCounter rng_counter_coupling = {};

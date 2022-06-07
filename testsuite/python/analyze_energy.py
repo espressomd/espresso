@@ -51,6 +51,7 @@ class AnalyzeEnergy(ut.TestCase):
 
     def tearDown(self):
         self.system.part.clear()
+        self.system.actors.clear()
 
     def test_kinetic(self):
         p0, p1 = self.system.part.all()
@@ -81,6 +82,9 @@ class AnalyzeEnergy(ut.TestCase):
         self.assertAlmostEqual(energy["kinetic"], 0., delta=1e-7)
         self.assertAlmostEqual(energy["bonded"], 0., delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 1., delta=1e-7)
+        # Test the single particle energy function
+        self.assertAlmostEqual(energy["non_bonded"], 0.5 * sum(
+            [self.system.analysis.particle_energy(p) for p in self.system.part.all()]), delta=1e-7)
         # add another pair of particles
         self.system.part.add(pos=[3, 2, 2], type=1)
         self.system.part.add(pos=[4, 2, 2], type=1)
@@ -93,6 +97,9 @@ class AnalyzeEnergy(ut.TestCase):
         self.assertAlmostEqual(energy["non_bonded", 0, 0]
                                + energy["non_bonded", 0, 1]
                                + energy["non_bonded", 1, 1], energy["total"], delta=1e-7)
+        # Test the single particle energy function
+        self.assertAlmostEqual(energy["non_bonded"], 0.5 * sum(
+            [self.system.analysis.particle_energy(p) for p in self.system.part.all()]), delta=1e-7)
 
     def test_bonded(self):
         p0, p1 = self.system.part.all()
@@ -134,6 +141,8 @@ class AnalyzeEnergy(ut.TestCase):
         self.assertAlmostEqual(energy["kinetic"], 50., delta=1e-7)
         self.assertAlmostEqual(energy["bonded"], 3. / 2., delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 1., delta=1e-7)
+        self.assertAlmostEqual(energy["non_bonded"], 0.5 * sum(
+            [self.system.analysis.particle_energy(p) for p in self.system.part.all()]), delta=1e-7)
         # two bonds
         p1.add_bond((self.harmonic, p0))
         energy = self.system.analysis.energy()
@@ -141,6 +150,8 @@ class AnalyzeEnergy(ut.TestCase):
         self.assertAlmostEqual(energy["kinetic"], 50., delta=1e-7)
         self.assertAlmostEqual(energy["bonded"], 3., delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 1., delta=1e-7)
+        self.assertAlmostEqual(energy["non_bonded"], 0.5 * sum(
+            [self.system.analysis.particle_energy(p) for p in self.system.part.all()]), delta=1e-7)
         # add another pair of particles
         self.system.part.add(pos=[1, 5, 5], type=1)
         self.system.part.add(pos=[2, 5, 5], type=1)
@@ -150,21 +161,22 @@ class AnalyzeEnergy(ut.TestCase):
         self.assertAlmostEqual(energy["kinetic"], 50., delta=1e-7)
         self.assertAlmostEqual(energy["bonded"], 3., delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 1. + 1., delta=1e-7)
+        self.assertAlmostEqual(energy["non_bonded"], 0.5 * sum(
+            [self.system.analysis.particle_energy(p) for p in self.system.part.all()]), delta=1e-7)
 
-    @utx.skipIfMissingFeatures(["ELECTROSTATICS", "P3M"])
-    def test_electrostatics(self):
+    def check_electrostatics(self, p3m_class):
         p0, p1 = self.system.part.all()
         p0.pos = [1, 2, 2]
         p1.pos = [3, 2, 2]
         p0.q = 1
         p1.q = -1
-        p3m = espressomd.electrostatics.P3M(
+        p3m = p3m_class(
             prefactor=1.0,
-            accuracy=9.910945054074526e-08,
+            accuracy=1e-7,
             mesh=[22, 22, 22],
             cao=7,
-            r_cut=8.906249999999998,
-            alpha=0.387611049779351,
+            r_cut=8.90625,
+            alpha=0.38761105,
             tune=False)
         self.system.actors.add(p3m)
 
@@ -177,6 +189,15 @@ class AnalyzeEnergy(ut.TestCase):
         self.assertAlmostEqual(energy["bonded"], 0., delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 0, delta=1e-7)
         self.assertAlmostEqual(energy["coulomb"], u_p3m, delta=1e-5)
+
+    @utx.skipIfMissingFeatures(["P3M"])
+    def test_electrostatics_cpu(self):
+        self.check_electrostatics(espressomd.electrostatics.P3M)
+
+    @utx.skipIfMissingGPU()
+    @utx.skipIfMissingFeatures(["P3M"])
+    def test_electrostatics_gpu(self):
+        self.check_electrostatics(espressomd.electrostatics.P3MGPU)
 
 
 if __name__ == "__main__":

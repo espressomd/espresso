@@ -49,7 +49,7 @@ namespace {
 struct SD_particle_data {
   SD_particle_data() = default;
   explicit SD_particle_data(Particle const &p)
-      : type(p.p.type), pos(p.r.p), ext_force(p.f) {}
+      : type(p.type()), pos(p.pos()), ext_force(p.f) {}
 
   int type = 0;
 
@@ -93,18 +93,18 @@ void sd_update_locally(ParticleRange const &parts) {
 
   for (auto &p : parts) {
     // skip virtual particles
-    if (p.p.is_virtual) {
+    if (p.is_virtual()) {
       continue;
     }
 
     // Copy velocities
-    p.m.v[0] = v_sd[6 * i + 0];
-    p.m.v[1] = v_sd[6 * i + 1];
-    p.m.v[2] = v_sd[6 * i + 2];
+    p.v()[0] = v_sd[6 * i + 0];
+    p.v()[1] = v_sd[6 * i + 1];
+    p.v()[2] = v_sd[6 * i + 2];
 
-    p.m.omega[0] = v_sd[6 * i + 3];
-    p.m.omega[1] = v_sd[6 * i + 4];
-    p.m.omega[2] = v_sd[6 * i + 5];
+    p.omega()[0] = v_sd[6 * i + 3];
+    p.omega()[1] = v_sd[6 * i + 4];
+    p.omega()[2] = v_sd[6 * i + 5];
 
     i++;
   }

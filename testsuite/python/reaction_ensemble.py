@@ -22,7 +22,7 @@
 import unittest as ut
 import numpy as np
 import espressomd
-import espressomd.reaction_ensemble
+import espressomd.reaction_methods
 
 
 class ReactionEnsembleTest(ut.TestCase):
@@ -51,14 +51,14 @@ class ReactionEnsembleTest(ut.TestCase):
     # the exact sequence of random numbers and does not require hard-coded
     # output values
     temperature = 1.0
-    exclusion_radius = 1.0
+    exclusion_range = 1.0
     # could be in this test for example anywhere in the range 0.000001 ... 9,
     reactant_types = [types["HA"]]
     reactant_coefficients = [1]
     product_types = [types["A-"], types["H+"]]
     product_coefficients = [1, 1]
     nubar = 1
-    system = espressomd.System(box_l=np.ones(3) * (N0 / c0)**(1.0 / 3.0))
+    system = espressomd.System(box_l=np.ones(3) * np.cbrt(N0 / c0))
     np.random.seed(69)  # make reaction code fully deterministic
     system.cell_system.skin = 0.4
     volume = system.volume()
@@ -67,9 +67,9 @@ class ReactionEnsembleTest(ut.TestCase):
     # gamma = prod_i (N_i / V) = alpha^2 N0 / (1-alpha)*V**(-nubar)
     # degree of dissociation alpha = N_A / N_HA = N_H / N_0
     gamma = target_alpha**2 / (1. - target_alpha) * N0 / (volume**nubar)
-    RE = espressomd.reaction_ensemble.ReactionEnsemble(
-        kT=temperature,
-        exclusion_radius=exclusion_radius, seed=12)
+    RE = espressomd.reaction_methods.ReactionEnsemble(
+        seed=12, kT=temperature,
+        exclusion_range=exclusion_range, search_algorithm="parallel")
 
     @classmethod
     def setUpClass(cls):
@@ -83,8 +83,7 @@ class ReactionEnsembleTest(ut.TestCase):
             reactant_coefficients=cls.reactant_coefficients,
             product_types=cls.product_types,
             product_coefficients=cls.product_coefficients,
-            default_charges=cls.charge_dict,
-            check_for_electroneutrality=True)
+            default_charges=cls.charge_dict)
 
     def test_ideal_titration_curve(self):
         N0 = ReactionEnsembleTest.N0
@@ -97,18 +96,18 @@ class ReactionEnsembleTest(ut.TestCase):
 
         # Set the hidden particle type to the lowest possible number to speed
         # up the simulation
-        RE.set_non_interacting_type(max(types.values()) + 1)
+        RE.set_non_interacting_type(type=max(types.values()) + 1)
 
         # chemical warmup - get close to chemical equilibrium before we start
         # sampling
-        RE.reaction(5 * N0)
+        RE.reaction(reaction_steps=5 * N0)
 
         average_NH = 0.0
         average_NHA = 0.0
         average_NA = 0.0
         num_samples = 300
         for _ in range(num_samples):
-            RE.reaction(10)
+            RE.reaction(reaction_steps=10)
             average_NH += system.number_of_particles(type=types["H+"])
             average_NHA += system.number_of_particles(type=types["HA"])
             average_NA += system.number_of_particles(type=types["A-"])
@@ -133,84 +132,11 @@ class ReactionEnsembleTest(ut.TestCase):
             + f"  average alpha: {average_alpha:.3f}"
             + f"  target alpha: {target_alpha:.3f}"
         )
-
-    def test_reaction_system(self):
-        RE_status = ReactionEnsembleTest.RE.get_status()
-        forward_reaction = RE_status["reactions"][0]
-        for i in range(len(forward_reaction["reactant_types"])):
-            self.assertEqual(
-                ReactionEnsembleTest.reactant_types[i],
-                forward_reaction["reactant_types"][i],
-                msg="reactant type not set correctly.")
-        for i in range(len(forward_reaction["reactant_coefficients"])):
-            self.assertEqual(
-                ReactionEnsembleTest.reactant_coefficients[i],
-                forward_reaction["reactant_coefficients"][i],
-                msg="reactant coefficients not set correctly.")
-        for i in range(len(forward_reaction["product_types"])):
-            self.assertEqual(
-                ReactionEnsembleTest.product_types[i],
-                forward_reaction["product_types"][i],
-                msg="product type not set correctly.")
-        for i in range(len(forward_reaction["product_coefficients"])):
-            self.assertEqual(
-                ReactionEnsembleTest.product_coefficients[i],
-                forward_reaction["product_coefficients"][i],
-                msg="product coefficients not set correctly.")
-
-        self.assertAlmostEqual(
-            ReactionEnsembleTest.temperature,
-            RE_status["kT"],
-            places=9,
-            msg="reaction ensemble kT not set correctly.")
-        self.assertAlmostEqual(
-            ReactionEnsembleTest.exclusion_radius,
-            RE_status["exclusion_radius"],
-            places=9,
-            msg="reaction ensemble exclusion radius not set correctly.")
-
-        self.assertAlmostEqual(
-            ReactionEnsembleTest.volume,
-            ReactionEnsembleTest.RE.get_volume(),
-            places=9,
-            msg="reaction ensemble volume not set correctly.")
-
-    def test_change_reaction_constant(self):
-        RE = ReactionEnsembleTest.RE
-        new_reaction_constant = 634.0
-        RE.change_reaction_constant(0, new_reaction_constant)
-        RE_status = RE.get_status()
-        forward_reaction = RE_status["reactions"][0]
-        backward_reaction = RE_status["reactions"][1]
-        self.assertEqual(
-            new_reaction_constant,
-            forward_reaction["gamma"],
-            msg="new reaction constant was not set correctly.")
-        self.assertEqual(
-            1.0 / new_reaction_constant,
-            backward_reaction["gamma"],
-            msg="new reaction constant was not set correctly.")
-        RE.change_reaction_constant(0, ReactionEnsembleTest.gamma)
-
-    def test_delete_reaction(self):
-        RE = ReactionEnsembleTest.RE
-        RE.add_reaction(
-            gamma=1,
-            reactant_types=[5],
-            reactant_coefficients=[1],
-            product_types=[2, 3, 4],
-            product_coefficients=[1, 4, 3],
-            default_charges={5: 0, 2: 0, 3: 0, 4: 0},
-            check_for_electroneutrality=True)
-        nr_reactions_after_addition = len(RE.get_status()["reactions"])
-        RE.delete_reaction(1)
-        nr_reactions_after_deletion = len(RE.get_status()["reactions"])
-        self.assertEqual(
-            2,
-            nr_reactions_after_addition - nr_reactions_after_deletion,
-            msg="the difference in single reactions does not match,\
-            deleting a full reaction (back and forward direction)\
-            should result in deleting two single reactions.")
+        # for this setup, the acceptance rate is about 85%
+        rate0 = RE.get_acceptance_rate_reaction(reaction_id=0)
+        rate1 = RE.get_acceptance_rate_reaction(reaction_id=1)
+        self.assertAlmostEqual(rate0, 0.85, delta=0.05)
+        self.assertAlmostEqual(rate1, 0.85, delta=0.05)
 
 
 if __name__ == "__main__":

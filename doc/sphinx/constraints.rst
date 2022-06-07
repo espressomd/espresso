@@ -471,6 +471,7 @@ Union
 A meta-shape which is the union of given shapes. Note that only the regions where
 all shapes have a "positive distance" (see :ref:`Available options`) can be used for the
 union. The distance to the union is defined as the minimum distance to any contained shape.
+This shape cannot be checkpointed when multiple MPI ranks are used.
 
 
 .. _Available options:
@@ -478,7 +479,7 @@ union. The distance to the union is defined as the minimum distance to any conta
 Available options
 ^^^^^^^^^^^^^^^^^
 
-There are some options to help control the behaviour of shaped-based
+There are some options to help control the behavior of shaped-based
 constraints. Some of the options, like ``direction`` need to be specified for
 the shape :class:`espressomd.shapes`, and some options are specified for the
 constraint  :class:`espressomd.constraints.ShapeBasedConstraint`. We will

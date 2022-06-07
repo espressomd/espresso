@@ -111,20 +111,12 @@ print(f"Start with minimal distance {act_min_dist}")
 
 print("\nSCRIPT--->Create p3m\n")
 if args.mode == "gpu":
-    p3m = espressomd.electrostatics.P3MGPU(prefactor=2.0, accuracy=1e-2)
+    p3m = espressomd.electrostatics.P3MGPU(prefactor=2.0, accuracy=1e-3)
 else:
-    p3m = espressomd.electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
+    p3m = espressomd.electrostatics.P3M(prefactor=1.0, accuracy=1e-3)
 
-print("\nSCRIPT--->Add actor\n")
+print("\nSCRIPT--->Add actor (automatic tuning)\n")
 system.actors.add(p3m)
-
-print("\nSCRIPT--->P3M parameter:\n")
-p3m_params = p3m.get_params()
-for key, val in p3m_params.items():
-    print(f"{key} = {val}")
-
-print("\nSCRIPT--->Explicit tune call\n")
-p3m.tune(accuracy=1e3)
 
 print("\nSCRIPT--->P3M parameter:\n")
 p3m_params = p3m.get_params()
@@ -161,8 +153,6 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 # Just to see what else we may get from the C++ core
 import pprint
 pprint.pprint(system.cell_system.get_state(), width=1)
-# pprint.pprint(system.part.__getstate__(), width=1)
-pprint.pprint(system.__getstate__())
 
 
 #############################################################

@@ -18,30 +18,45 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_CELLS_HPP
-#define CORE_CELLS_HPP
-/** \file
- *  This file contains everything related to the global cell structure / cell
- *  system.
+
+/**
+ * @file
+ * This file contains everything related to the global cell structure / cell
+ * system.
  *
- *  The cell system (\ref CellStructure) describes how particles are
- *  distributed on the cells and how particles of different cells
- *  (regardless if they reside on the same or different nodes)
- *  interact with each other. The following cell systems are implemented:
+ * The cell system (@ref CellStructure) describes how particles are
+ * distributed on the cells and how particles of different cells
+ * (regardless if they reside on the same or different nodes)
+ * interact with each other. The following cell systems are implemented:
  *
- *  - domain decomposition: The simulation box is divided spatially
- *    into cells (see \ref DomainDecomposition.hpp). This is suitable for
- *    short range interactions.
- *  - nsquare: The particles are distributed equally on all nodes
- *    regardless their spatial position (see \ref AtomDecomposition.hpp).
- *    This is suitable for long range interactions that cannot be treated by a
- *    special method like P3M.
+ * - regular decomposition: The simulation box is divided spatially
+ *   into cells (see @ref RegularDecomposition.hpp). This is suitable for
+ *   short-range interactions.
+ * - N-square: The particles are distributed equally on all nodes
+ *   regardless their spatial position (see @ref AtomDecomposition.hpp).
+ *   This is suitable for long-range interactions that cannot be treated
+ *   by a special method like P3M.
+ * - hybrid decomposition: Initializes both regular decomposition
+ *   and N-square at the same time and is given a set of particle types
+ *   @c n_square_types (see @ref HybridDecomposition.hpp). By default,
+ *   particles will be distributed using the regular decomposition.
+ *   For particles of the types defined as @c n_square_types the N-square
+ *   method is used. This is suitable for systems containing lots of small
+ *   particles with short-range interactions mixed with a few large
+ *   particles with long-range interactions. There, the large particles
+ *   should be treated using N-square.
  */
 
-#include "Cell.hpp"
-#include "CellStructure.hpp"
-#include "DomainDecomposition.hpp"
+#ifndef ESPRESSO_SRC_CORE_CELLS_HPP
+#define ESPRESSO_SRC_CORE_CELLS_HPP
+
+#include "cell_system/Cell.hpp"
+#include "cell_system/CellStructure.hpp"
+#include "cell_system/CellStructureType.hpp"
+
 #include "Particle.hpp"
+
+#include <boost/optional.hpp>
 
 #include <utility>
 #include <vector>
@@ -60,21 +75,25 @@ enum {
 /** Type of cell structure in use. */
 extern CellStructure cell_structure;
 
+/** Initialize cell structure HybridDecomposition
+ *  @param n_square_types   Types of particles to place in the N-square cells.
+ *  @param cutoff_regular   Cutoff for the regular decomposition.
+ */
+void set_hybrid_decomposition(std::set<int> n_square_types,
+                              double cutoff_regular);
+
+/**
+ * @brief Count particles in child decompositions of a HybridDecomposition.
+ *
+ * @return Number of particles in regular decomposition resp. N-square.
+ */
+std::pair<std::size_t, std::size_t>
+hybrid_parts_per_decomposition(HybridDecomposition const &hd);
+
 /** Reinitialize the cell structures.
  *  @param new_cs The new topology to use afterwards.
  */
-void cells_re_init(int new_cs);
-
-/** Change the cell structure on all nodes. */
-void mpi_bcast_cell_structure(int cs);
-
-/**
- * @brief Set @ref CellStructure::use_verlet_list
- * "cell_structure::use_verlet_list"
- *
- * @param use_verlet_lists Should Verlet lists be used?
- */
-void mpi_set_use_verlet_lists(bool use_verlet_lists);
+void cells_re_init(CellStructureType new_cs);
 
 /** Update ghost information. If needed,
  *  the particles are also resorted.
@@ -86,7 +105,7 @@ void cells_update_ghosts(unsigned data_parts);
  *
  * Pairs are sorted so that first.id < second.id
  */
-std::vector<std::pair<int, int>> mpi_get_pairs(double distance);
+std::vector<std::pair<int, int>> get_pairs(double distance);
 
 /**
  * @brief Get pairs closer than @p distance if both their types are in @p types
@@ -94,38 +113,29 @@ std::vector<std::pair<int, int>> mpi_get_pairs(double distance);
  * Pairs are sorted so that first.id < second.id
  */
 std::vector<std::pair<int, int>>
-mpi_get_pairs_of_types(double distance, std::vector<int> const &types);
+get_pairs_of_types(double distance, std::vector<int> const &types);
 
 /** Check if a particle resorting is required. */
 void check_resort_particles();
 
 /**
- * @brief Resort the particles.
- *
- * This function resorts the particles on the nodes.
- *
- * @param global_flag If true a global resort is done,
- *        if false particles are only exchanges between neighbors.
- * @return The number of particles on the nodes after the resort.
+ * @brief Get ids of particles that are within a certain distance
+ * of another particle.
  */
-std::vector<int> mpi_resort_particles(int global_flag);
+std::vector<int> mpi_get_short_range_neighbors(int pid, double distance);
+boost::optional<std::vector<int>>
+mpi_get_short_range_neighbors_local(int pid, double distance,
+                                    bool run_sanity_checks);
 
 /**
  * @brief Find the cell in which a particle is stored.
  *
- * Uses position_to_cell on p.r.p. If this is not on the node's domain,
- * uses position at last Verlet list rebuild (p.l.p_old).
+ * Uses position_to_cell on p.pos(). If this is not on the node's domain,
+ * uses position at last Verlet list rebuild (p.p_old()).
  *
  * @return pointer to the cell or nullptr if the particle is not on the node
  */
 Cell *find_current_cell(const Particle &p);
-
-/**
- * @brief Return a pointer to the global DomainDecomposition.
- *
- * @return Pointer to the decomposition if it is set, nullptr otherwise.
- */
-const DomainDecomposition *get_domain_decomposition();
 
 class PairInfo {
 public:
@@ -142,9 +152,10 @@ public:
   int node;
 };
 
-/** @brief Returns pairs of particle ids, positions and distance as seen by the
- *  non-bonded loop.
+/**
+ * @brief Returns pairs of particle ids, positions and distance as seen by the
+ * non-bonded loop.
  */
-std::vector<PairInfo> mpi_non_bonded_loop_trace();
+std::vector<PairInfo> non_bonded_loop_trace();
 
 #endif

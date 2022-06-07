@@ -16,7 +16,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
 import numpy as np
-import random
 import espressomd
 import espressomd.polymer
 import espressomd.shapes
@@ -29,14 +28,18 @@ class LinearPolymerPositions(ut.TestCase):
     * bond lengths
     * bond angles
     * starting positions
-    * minimum distance for self avoiding walks
+    * minimum distance for self-avoiding walks
     * distance to constraints
     """
 
     box_l = 15
-    seed = random.randint(0, 1000)
+    seed = 42
 
     system = espressomd.System(box_l=[box_l, box_l, box_l])
+
+    def tearDown(self):
+        self.system.part.clear()
+        self.system.constraints.clear()
 
     def assertShape(self, positions, n_poly, n_mono):
         """
@@ -128,6 +131,7 @@ class LinearPolymerPositions(ut.TestCase):
         num_poly = 90
         num_mono = 25
         bond_length = 0.83
+        np.random.seed(seed=self.seed)
         start_positions = np.random.random((num_poly, 3)) * self.box_l
 
         # make sure that incorrect size leads to error
@@ -188,7 +192,7 @@ class LinearPolymerPositions(ut.TestCase):
             self.assertGreaterEqual(z, 0.5 * self.box_l)
 
         # assert that illegal start position raises error
-        with self.assertRaisesRegex(Exception, 'Invalid start positions.'):
+        with self.assertRaisesRegex(RuntimeError, "Invalid start positions"):
             illegal_start = np.array([[1., 1., 0.2 * self.box_l]])
             positions = espressomd.polymer.linear_polymer_positions(
                 n_polymers=1,
@@ -196,7 +200,6 @@ class LinearPolymerPositions(ut.TestCase):
                 start_positions=illegal_start,
                 bond_length=bond_length,
                 respect_constraints=True, seed=self.seed)
-        self.system.constraints.remove(wall_constraint)
 
     def test_exceptions(self):
         """
@@ -212,7 +215,15 @@ class LinearPolymerPositions(ut.TestCase):
             espressomd.polymer.linear_polymer_positions(
                 n_polymers=1, beads_per_chain=10, bond_length=0.1, seed=10,
                 bondangle=0.1)
-        with self.assertRaisesRegex(Exception, 'Failed to create polymer positions.'):
+        with self.assertRaisesRegex(RuntimeError, "Failed to create polymer positions"):
+            espressomd.polymer.linear_polymer_positions(
+                n_polymers=1, beads_per_chain=10,
+                start_positions=np.array([[0, 0, 0]]),
+                bond_length=self.box_l / 2, min_distance=self.box_l / 2.1,
+                bond_angle=np.pi, max_tries=2, seed=self.seed)
+        # check that existing particles are detected
+        with self.assertRaisesRegex(RuntimeError, "Failed to create polymer positions"):
+            self.system.part.add(pos=self.system.box_l / 2.)
             espressomd.polymer.linear_polymer_positions(
                 n_polymers=1, beads_per_chain=10,
                 start_positions=np.array([[0, 0, 0]]),

@@ -16,9 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_LOCALBOX_HPP
-#define ESPRESSO_LOCALBOX_HPP
+#ifndef ESPRESSO_SRC_CORE_LOCALBOX_HPP
+#define ESPRESSO_SRC_CORE_LOCALBOX_HPP
 
+#include "cell_system/CellStructureType.hpp"
+
+#include <utils/Array.hpp>
 #include <utils/Vector.hpp>
 
 template <class T> class LocalBox {
@@ -26,15 +29,17 @@ template <class T> class LocalBox {
   Utils::Vector<T, 3> m_lower_corner = {0, 0, 0};
   Utils::Vector<T, 3> m_upper_corner = {1, 1, 1};
   Utils::Array<int, 6> m_boundaries = {};
+  CellStructureType m_cell_structure_type;
 
 public:
   LocalBox() = default;
   LocalBox(Utils::Vector<T, 3> const &lower_corner,
            Utils::Vector<T, 3> const &local_box_length,
-           Utils::Array<int, 6> const &boundaries)
+           Utils::Array<int, 6> const &boundaries,
+           CellStructureType const cell_structure_type)
       : m_local_box_l(local_box_length), m_lower_corner(lower_corner),
         m_upper_corner(lower_corner + local_box_length),
-        m_boundaries(boundaries) {}
+        m_boundaries(boundaries), m_cell_structure_type(cell_structure_type) {}
 
   /** Left (bottom, front) corner of this nodes local box. */
   Utils::Vector<T, 3> const &my_left() const { return m_lower_corner; }
@@ -52,6 +57,16 @@ public:
    * @return Array with boundary information.
    */
   Utils::Array<int, 6> const &boundary() const { return m_boundaries; }
+
+  /** Return cell structure type. */
+  CellStructureType const &cell_structure_type() const {
+    return m_cell_structure_type;
+  }
+
+  /** Set cell structure type. */
+  void set_cell_structure_type(CellStructureType cell_structure_type) {
+    m_cell_structure_type = cell_structure_type;
+  }
 };
 
 #endif

@@ -25,7 +25,7 @@
 
 #include "Particle.hpp"
 #include "grid.hpp"
-#include "particle_data.hpp"
+#include "particle_node.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
@@ -44,8 +44,9 @@ std::array<double, 4> calc_re(int chain_start, int chain_n_chains,
         get_particle_data(chain_start + i * chain_length + chain_length - 1);
     auto const &p2 = get_particle_data(chain_start + i * chain_length);
 
-    auto const d = unfolded_position(p1.r.p, p1.l.i, box_geo.length()) -
-                   unfolded_position(p2.r.p, p2.l.i, box_geo.length());
+    auto const d =
+        unfolded_position(p1.pos(), p1.image_box(), box_geo.length()) -
+        unfolded_position(p2.pos(), p2.image_box(), box_geo.length());
     auto const norm2 = d.norm2();
     dist += sqrt(norm2);
     dist2 += norm2;
@@ -70,20 +71,21 @@ std::array<double, 4> calc_rg(int chain_start, int chain_n_chains,
     for (int j = 0; j < chain_length; j++) {
       auto const &p = get_particle_data(chain_start + i * chain_length + j);
 
-      if (p.p.is_virtual) {
+      if (p.is_virtual()) {
         throw std::runtime_error(
             "Gyration tensor is not well-defined for chains including virtual "
             "sites. Virtual sites do not have a meaningful mass.");
       }
-      r_CM += unfolded_position(p.r.p, p.l.i, box_geo.length()) * p.p.mass;
-      M += p.p.mass;
+      r_CM += unfolded_position(p.pos(), p.image_box(), box_geo.length()) *
+              p.mass();
+      M += p.mass();
     }
     r_CM /= M;
     double tmp = 0.0;
     for (int j = 0; j < chain_length; ++j) {
       auto const &p = get_particle_data(chain_start + i * chain_length + j);
       Utils::Vector3d const d =
-          unfolded_position(p.r.p, p.l.i, box_geo.length()) - r_CM;
+          unfolded_position(p.pos(), p.image_box(), box_geo.length()) - r_CM;
       tmp += d.norm2();
     }
     tmp /= static_cast<double>(chain_length);
@@ -113,8 +115,9 @@ std::array<double, 2> calc_rh(int chain_start, int chain_n_chains,
       auto const &p1 = get_particle_data(i);
       for (int j = i + 1; j < chain_start + chain_length * (p + 1); j++) {
         auto const &p2 = get_particle_data(j);
-        auto const d = unfolded_position(p1.r.p, p1.l.i, box_geo.length()) -
-                       unfolded_position(p2.r.p, p2.l.i, box_geo.length());
+        auto const d =
+            unfolded_position(p1.pos(), p1.image_box(), box_geo.length()) -
+            unfolded_position(p2.pos(), p2.image_box(), box_geo.length());
         ri += 1.0 / d.norm();
       }
     }

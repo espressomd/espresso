@@ -26,14 +26,14 @@
 
 #include "EspressoSystemInterface.hpp"
 
+#include "bond_breakage/bond_breakage.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
 #include "comfixed_global.hpp"
 #include "communication.hpp"
 #include "constraints.hpp"
-#include "electrostatics_magnetostatics/dipole.hpp"
-#include "electrostatics_magnetostatics/icc.hpp"
-#include "electrostatics_magnetostatics/p3m_gpu.hpp"
+#include "electrostatics/icc.hpp"
+#include "electrostatics/p3m_gpu.hpp"
 #include "forcecap.hpp"
 #include "forces_inline.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
@@ -41,6 +41,7 @@
 #include "immersed_boundaries.hpp"
 #include "integrate.hpp"
 #include "interactions.hpp"
+#include "magnetostatics/dipoles.hpp"
 #include "nonbonded_interactions/VerletCriterion.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
@@ -50,11 +51,11 @@
 #include "thermostats/langevin_inline.hpp"
 #include "virtual_sites.hpp"
 
+#include <boost/variant.hpp>
+
 #include <profiler/profiler.hpp>
 
 #include <cassert>
-
-ActorList forceActors;
 
 /** Initialize the forces for a ghost particle */
 inline ParticleForce init_ghost_force(Particle const &) { return {}; }
@@ -64,17 +65,17 @@ inline ParticleForce external_force(Particle const &p) {
   ParticleForce f = {};
 
 #ifdef EXTERNAL_FORCES
-  f.f += p.p.ext_force;
+  f.f += p.ext_force();
 #ifdef ROTATION
-  f.torque += p.p.ext_torque;
+  f.torque += p.ext_torque();
 #endif
 #endif
 
 #ifdef ENGINE
   // apply a swimming force in the direction of
   // the particle's orientation axis
-  if (p.p.swim.swimming) {
-    f.f += p.p.swim.f_swim * p.r.calc_director();
+  if (p.swimming().swimming) {
+    f.f += p.swimming().f_swim * p.calc_director();
   }
 #endif
 
@@ -90,10 +91,10 @@ inline ParticleForce thermostat_force(Particle const &p, double time_step,
 
 #ifdef ROTATION
   return {friction_thermo_langevin(langevin, p, time_step, kT),
-          p.p.rotation ? convert_vector_body_to_space(
-                             p, friction_thermo_langevin_rotation(
-                                    langevin, p, time_step, kT))
-                       : Utils::Vector3d{}};
+          p.can_rotate() ? convert_vector_body_to_space(
+                               p, friction_thermo_langevin_rotation(
+                                      langevin, p, time_step, kT))
+                         : Utils::Vector3d{}};
 #else
   return friction_thermo_langevin(langevin, p, time_step, kT);
 #endif
@@ -147,22 +148,24 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
 #ifdef COLLISION_DETECTION
   prepare_local_collision_queue();
 #endif
-
+  BondBreakage::clear_queue();
   auto particles = cell_structure.local_particles();
   auto ghost_particles = cell_structure.ghost_particles();
 #ifdef ELECTROSTATICS
-  icc_iteration(cell_structure, particles, ghost_particles);
+  if (electrostatics_extension) {
+    if (auto icc = boost::get<std::shared_ptr<ICCStar>>(
+            electrostatics_extension.get_ptr())) {
+      (**icc).iteration(cell_structure, particles, ghost_particles);
+    }
+  }
 #endif
   init_forces(particles, ghost_particles, time_step, kT);
 
-  for (auto &forceActor : forceActors) {
-    forceActor->computeForces(espresso_system);
-#ifdef ROTATION
-    forceActor->computeTorques(espresso_system);
-#endif
-  }
-
   calc_long_range_forces(particles);
+
+  auto const elc_kernel = Coulomb::pair_force_elc_kernel();
+  auto const coulomb_kernel = Coulomb::pair_force_kernel();
+  auto const dipoles_kernel = Dipoles::pair_force_kernel();
 
 #ifdef ELECTROSTATICS
   auto const coulomb_cutoff = Coulomb::cutoff(box_geo.length());
@@ -171,23 +174,31 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
 #endif
 
 #ifdef DIPOLES
-  auto const dipole_cutoff = Dipole::cutoff(box_geo.length());
+  auto const dipole_cutoff = Dipoles::cutoff(box_geo.length());
 #else
   auto const dipole_cutoff = INACTIVE_CUTOFF;
 #endif
 
   short_range_loop(
-      add_bonded_force,
-      [](Particle &p1, Particle &p2, Distance const &d) {
-        add_non_bonded_pair_force(p1, p2, d.vec21, sqrt(d.dist2), d.dist2);
+      [coulomb_kernel_ptr = coulomb_kernel.get_ptr()](
+          Particle &p1, int bond_id, Utils::Span<Particle *> partners) {
+        return add_bonded_force(p1, bond_id, partners, coulomb_kernel_ptr);
+      },
+      [coulomb_kernel_ptr = coulomb_kernel.get_ptr(),
+       dipoles_kernel_ptr = dipoles_kernel.get_ptr(),
+       elc_kernel_ptr = elc_kernel.get_ptr()](Particle &p1, Particle &p2,
+                                              Distance const &d) {
+        add_non_bonded_pair_force(p1, p2, d.vec21, sqrt(d.dist2), d.dist2,
+                                  coulomb_kernel_ptr, dipoles_kernel_ptr,
+                                  elc_kernel_ptr);
 #ifdef COLLISION_DETECTION
-        if (collision_params.mode != COLLISION_MODE_OFF)
+        if (collision_params.mode != CollisionModeType::OFF)
           detect_collision(p1, p2, d.dist2);
 #endif
       },
-      maximal_cutoff(), maximal_cutoff_bonded(),
-      VerletCriterion{skin, interaction_range(), coulomb_cutoff, dipole_cutoff,
-                      collision_detection_cutoff()});
+      maximal_cutoff(n_nodes), maximal_cutoff_bonded(),
+      VerletCriterion<>{skin, interaction_range(), coulomb_cutoff,
+                        dipole_cutoff, collision_detection_cutoff()});
 
   Constraints::constraints.add_forces(particles, get_sim_time());
 
@@ -238,12 +249,12 @@ void calc_long_range_forces(const ParticleRange &particles) {
   /* calculate k-space part of electrostatic interaction. */
   Coulomb::calc_long_range_force(particles);
 
-#endif /*ifdef ELECTROSTATICS */
+#endif // ELECTROSTATICS
 
 #ifdef DIPOLES
   /* calculate k-space part of the magnetostatic interaction. */
-  Dipole::calc_long_range_force(particles);
-#endif /*ifdef DIPOLES */
+  Dipoles::calc_long_range_force(particles);
+#endif // DIPOLES
 }
 
 #ifdef NPT

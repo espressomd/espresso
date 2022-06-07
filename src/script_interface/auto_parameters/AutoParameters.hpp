@@ -112,7 +112,10 @@ protected:
 
   void add_parameters(std::vector<AutoParameter> &&params) {
     for (auto const &p : params) {
-      m_parameters.emplace(std::make_pair(p.name, p));
+      if (m_parameters.count(p.name)) {
+        m_parameters.erase(p.name);
+      }
+      m_parameters.emplace(std::make_pair(p.name, std::move(p)));
     }
   }
 

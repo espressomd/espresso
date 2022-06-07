@@ -20,6 +20,7 @@
 #define REACTION_ENSEMBLE_TESTS_PARTICLE_FACTORY_HPP
 
 #include "particle_data.hpp"
+#include "particle_node.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -35,14 +36,7 @@ struct ParticleFactory {
     }
   }
 
-  void create_particle(Utils::Vector3d const &pos, int pid = -1,
-                       int type = -1) {
-    if (pid < 0) {
-      pid = get_maximal_particle_id() + 1;
-    }
-    if (type < 0) {
-      type = 0;
-    }
+  void create_particle(Utils::Vector3d const &pos, int pid, int type) {
     place_particle(pid, pos);
     set_particle_type(pid, type);
     particle_cache.emplace_back(pid);

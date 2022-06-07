@@ -20,7 +20,7 @@
 import unittest as ut
 import numpy as np
 import espressomd
-import espressomd.reaction_ensemble
+import espressomd.reaction_methods
 
 
 class ConstantpHTest(ut.TestCase):
@@ -51,28 +51,28 @@ class ConstantpHTest(ut.TestCase):
         system.part.add(pos=np.random.random((2 * N0, 3)) * system.box_l,
                         type=N0 * [types["A-"], types["H+"]])
 
-        RE = espressomd.reaction_ensemble.ConstantpHEnsemble(
+        RE = espressomd.reaction_methods.ConstantpHEnsemble(
             kT=1.0,
-            exclusion_radius=1,
-            seed=44)
+            exclusion_range=1,
+            seed=44,
+            constant_pH=pH)
         RE.add_reaction(
             gamma=10**(-pKa),
             reactant_types=[types["HA"]],
             product_types=[types["A-"], types["H+"]],
             default_charges=charges_dict)
-        RE.constant_pH = pH
 
         # Set the hidden particle type to the lowest possible number to speed
         # up the simulation
-        RE.set_non_interacting_type(max(types.values()) + 1)
+        RE.set_non_interacting_type(type=max(types.values()) + 1)
 
         # equilibration
-        RE.reaction(800)
+        RE.reaction(reaction_steps=800)
 
         # sampling
         alphas = []
         for _ in range(80):
-            RE.reaction(15)
+            RE.reaction(reaction_steps=15)
             num_H = system.number_of_particles(type=types["H+"])
             num_HA = system.number_of_particles(type=types["HA"])
             num_A = system.number_of_particles(type=types["A-"])

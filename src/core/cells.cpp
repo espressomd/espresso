@@ -24,7 +24,12 @@
  *
  *  Implementation of cells.hpp.
  */
+
 #include "cells.hpp"
+
+#include "cell_system/Cell.hpp"
+#include "cell_system/CellStructure.hpp"
+#include "cell_system/CellStructureType.hpp"
 
 #include "Particle.hpp"
 #include "communication.hpp"
@@ -32,17 +37,16 @@
 #include "event.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
-#include "particle_data.hpp"
-
-#include "DomainDecomposition.hpp"
-#include "ParticleDecomposition.hpp"
+#include "particle_node.hpp"
 
 #include <utils/as_const.hpp>
 #include <utils/math/sqr.hpp>
 #include <utils/mpi/gather_buffer.hpp>
 
-#include <algorithm>
 #include <boost/range/algorithm/min_element.hpp>
+#include <boost/serialization/set.hpp>
+
+#include <algorithm>
 #include <functional>
 #include <stdexcept>
 #include <utility>
@@ -70,7 +74,7 @@ std::vector<std::pair<int, int>> get_pairs_filtered(double const distance,
                                                Particle const &p2,
                                                Distance const &d) {
     if (d.dist2 < cutoff2 and filter(p1) and filter(p2))
-      ret.emplace_back(p1.p.identity, p2.p.identity);
+      ret.emplace_back(p1.id(), p2.id());
   };
 
   cell_structure.non_bonded_loop(pair_kernel);
@@ -98,122 +102,134 @@ void serialize(Archive &ar, PairInfo &p, const unsigned int /* version */) {
 } // namespace serialization
 } // namespace boost
 
-std::vector<PairInfo> non_bonded_loop_trace() {
-  std::vector<PairInfo> ret;
-  auto pair_kernel = [&ret](Particle const &p1, Particle const &p2,
-                            Distance const &d) {
-    ret.emplace_back(p1.p.identity, p2.p.identity, p1.r.p, p2.r.p, d.vec21,
-                     comm_cart.rank());
+namespace detail {
+static void search_distance_sanity_check(double const distance) {
+  /* get_pairs_filtered() finds pairs via the non_bonded_loop. The maximum
+   * finding range is therefore limited by the decomposition that is used.
+   */
+  auto const range = *boost::min_element(cell_structure.max_range());
+  if (distance > range) {
+    throw std::domain_error("pair search distance " + std::to_string(distance) +
+                            " bigger than the decomposition range " +
+                            std::to_string(range));
+  }
+}
+static void search_neighbors_sanity_check(double const distance) {
+  search_distance_sanity_check(distance);
+  if (cell_structure.decomposition_type() ==
+      CellStructureType::CELL_STRUCTURE_HYBRID) {
+    throw std::runtime_error("Cannot search for neighbors in the hybrid "
+                             "decomposition cell system");
+  }
+}
+} // namespace detail
+
+boost::optional<std::vector<int>>
+mpi_get_short_range_neighbors_local(int const pid, double const distance,
+                                    bool run_sanity_checks) {
+
+  if (run_sanity_checks) {
+    detail::search_neighbors_sanity_check(distance);
+  }
+  on_observable_calc();
+
+  auto const p = cell_structure.get_local_particle(pid);
+  if (not p or p->is_ghost()) {
+    return {};
+  }
+
+  std::vector<int> ret;
+  auto const cutoff2 = distance * distance;
+  auto kernel = [&ret, cutoff2](Particle const &p1, Particle const &p2,
+                                Utils::Vector3d const &vec) {
+    if (vec.norm2() < cutoff2) {
+      ret.emplace_back(p2.id());
+    }
   };
-
-  cell_structure.non_bonded_loop(pair_kernel);
-
+  cell_structure.run_on_particle_short_range_neighbors(*p, kernel);
   return ret;
 }
 
-static auto mpi_get_pairs_local(double const distance) {
+REGISTER_CALLBACK_ONE_RANK(mpi_get_short_range_neighbors_local)
+
+std::vector<int> mpi_get_short_range_neighbors(int const pid,
+                                               double const distance) {
+  detail::search_neighbors_sanity_check(distance);
+  return mpi_call(::Communication::Result::one_rank,
+                  mpi_get_short_range_neighbors_local, pid, distance, false);
+}
+
+std::vector<std::pair<int, int>> get_pairs(double const distance) {
+  detail::search_distance_sanity_check(distance);
   auto pairs =
       get_pairs_filtered(distance, [](Particle const &) { return true; });
   Utils::Mpi::gather_buffer(pairs, comm_cart);
   return pairs;
 }
 
-REGISTER_CALLBACK_MAIN_RANK(mpi_get_pairs_local)
-
-static auto mpi_get_pairs_of_types_local(double const distance,
-                                         std::vector<int> const &types) {
+std::vector<std::pair<int, int>>
+get_pairs_of_types(double const distance, std::vector<int> const &types) {
+  detail::search_distance_sanity_check(distance);
   auto pairs = get_pairs_filtered(distance, [types](Particle const &p) {
     return std::any_of(types.begin(), types.end(),
-                       [p](int const type) { return p.p.type == type; });
+                       [p](int const type) { return p.type() == type; });
   });
   Utils::Mpi::gather_buffer(pairs, comm_cart);
   return pairs;
 }
 
-REGISTER_CALLBACK_MAIN_RANK(mpi_get_pairs_of_types_local)
-
-namespace detail {
-void search_distance_sanity_check(double const distance) {
-  /* get_pairs_filtered() finds pairs via the non_bonded_loop. The maximum
-   * finding range is therefore limited by the decomposition that is used.
-   */
-  auto range = *boost::min_element(cell_structure.max_range());
-  if (distance > range) {
-    runtimeErrorMsg() << "pair search distance " << distance
-                      << " bigger than the decomposition range " << range;
-  }
-}
-} // namespace detail
-
-std::vector<std::pair<int, int>> mpi_get_pairs(double const distance) {
-  detail::search_distance_sanity_check(distance);
-  return mpi_call(::Communication::Result::main_rank, mpi_get_pairs_local,
-                  distance);
-}
-
-std::vector<std::pair<int, int>>
-mpi_get_pairs_of_types(double const distance, std::vector<int> const &types) {
-  detail::search_distance_sanity_check(distance);
-  return mpi_call(::Communication::Result::main_rank,
-                  mpi_get_pairs_of_types_local, distance, types);
-}
-
-static void non_bonded_loop_trace_local() {
-  auto pairs = non_bonded_loop_trace();
-  Utils::Mpi::gather_buffer(pairs, comm_cart);
-}
-
-REGISTER_CALLBACK(non_bonded_loop_trace_local)
-
-std::vector<PairInfo> mpi_non_bonded_loop_trace() {
-  mpi_call(non_bonded_loop_trace_local);
-  auto pairs = non_bonded_loop_trace();
+std::vector<PairInfo> non_bonded_loop_trace() {
+  std::vector<PairInfo> pairs;
+  auto pair_kernel = [&pairs](Particle const &p1, Particle const &p2,
+                              Distance const &d) {
+    pairs.emplace_back(p1.id(), p2.id(), p1.pos(), p2.pos(), d.vec21,
+                       comm_cart.rank());
+  };
+  cell_structure.non_bonded_loop(pair_kernel);
   Utils::Mpi::gather_buffer(pairs, comm_cart);
   return pairs;
 }
 
-static void mpi_resort_particles_local(int global_flag) {
-  cell_structure.resort_particles(global_flag);
-
-  boost::mpi::gather(
-      comm_cart, static_cast<int>(cell_structure.local_particles().size()), 0);
+void set_hybrid_decomposition(std::set<int> n_square_types,
+                              double cutoff_regular) {
+  cell_structure.set_hybrid_decomposition(comm_cart, cutoff_regular, box_geo,
+                                          local_geo, n_square_types);
+  on_cell_structure_change();
 }
 
-REGISTER_CALLBACK(mpi_resort_particles_local)
-
-std::vector<int> mpi_resort_particles(int global_flag) {
-  mpi_call(mpi_resort_particles_local, global_flag);
-  cell_structure.resort_particles(global_flag);
-
-  clear_particle_node();
-
-  std::vector<int> n_parts;
-  boost::mpi::gather(comm_cart,
-                     static_cast<int>(cell_structure.local_particles().size()),
-                     n_parts, 0);
-
-  return n_parts;
+std::pair<std::size_t, std::size_t>
+hybrid_parts_per_decomposition(HybridDecomposition const &hd) {
+  Utils::Vector<std::size_t, 2> acc = {};
+  boost::mpi::reduce(comm_cart, hd.parts_per_decomposition_local(), acc,
+                     std::plus<>{}, 0);
+  return std::make_pair(acc[0], acc[1]);
 }
 
-void cells_re_init(int new_cs) {
+void cells_re_init(CellStructureType new_cs) {
   switch (new_cs) {
-  case CELL_STRUCTURE_DOMDEC:
-    cell_structure.set_domain_decomposition(comm_cart, interaction_range(),
-                                            box_geo, local_geo);
+  case CellStructureType::CELL_STRUCTURE_REGULAR:
+    cell_structure.set_regular_decomposition(comm_cart, interaction_range(),
+                                             box_geo, local_geo);
     break;
-  case CELL_STRUCTURE_NSQUARE:
-    cell_structure.set_atom_decomposition(comm_cart, box_geo);
+  case CellStructureType::CELL_STRUCTURE_NSQUARE:
+    cell_structure.set_atom_decomposition(comm_cart, box_geo, local_geo);
     break;
+  case CellStructureType::CELL_STRUCTURE_HYBRID: {
+    /* Get current HybridDecomposition to extract n_square_types */
+    auto &current_hybrid_decomposition =
+        dynamic_cast<const HybridDecomposition &>(
+            Utils::as_const(cell_structure).decomposition());
+    cell_structure.set_hybrid_decomposition(
+        comm_cart, current_hybrid_decomposition.get_cutoff_regular(), box_geo,
+        local_geo, current_hybrid_decomposition.get_n_square_types());
+    break;
+  }
   default:
     throw std::runtime_error("Unknown cell system type");
   }
 
   on_cell_structure_change();
 }
-
-REGISTER_CALLBACK(cells_re_init)
-
-void mpi_bcast_cell_structure(int cs) { mpi_call_all(cells_re_init, cs); }
 
 void check_resort_particles() {
   auto const level = (cell_structure.check_resort_required(
@@ -239,14 +255,14 @@ void cells_update_ghosts(unsigned data_parts) {
                      : CELL_NEIGHBOR_EXCHANGE;
 
     /* Resort cell system */
-    cell_structure.resort_particles(global);
+    cell_structure.resort_particles(global, box_geo);
     cell_structure.ghosts_count();
     cell_structure.ghosts_update(data_parts);
 
     /* Add the ghost particles to the index if we don't already
      * have them. */
     for (auto &part : cell_structure.ghost_particles()) {
-      if (cell_structure.get_local_particle(part.p.identity) == nullptr) {
+      if (cell_structure.get_local_particle(part.id()) == nullptr) {
         cell_structure.update_particle_index(part.identity(), &part);
       }
     }
@@ -261,19 +277,4 @@ void cells_update_ghosts(unsigned data_parts) {
 
 Cell *find_current_cell(const Particle &p) {
   return cell_structure.find_current_cell(p);
-}
-
-const DomainDecomposition *get_domain_decomposition() {
-  return &dynamic_cast<const DomainDecomposition &>(
-      Utils::as_const(cell_structure).decomposition());
-}
-
-void mpi_set_use_verlet_lists_local(bool use_verlet_lists) {
-  cell_structure.use_verlet_list = use_verlet_lists;
-}
-
-REGISTER_CALLBACK(mpi_set_use_verlet_lists_local)
-
-void mpi_set_use_verlet_lists(bool use_verlet_lists) {
-  mpi_call_all(mpi_set_use_verlet_lists_local, use_verlet_lists);
 }

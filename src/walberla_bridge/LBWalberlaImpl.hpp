@@ -49,33 +49,14 @@
 
 #include "BlockAndCell.hpp"
 #include "BoundaryHandling.hpp"
+#include "InterpolateAndShiftAtBoundary.hpp"
 #include "LBWalberlaBase.hpp"
 #include "LatticeWalberla.hpp"
+#include "LeesEdwardsPack.hpp"
 #include "ResetForce.hpp"
-#include "generated_kernels/Dynamic_UBB_double_precision.h"
-#include "generated_kernels/Dynamic_UBB_single_precision.h"
-#include "generated_kernels/InitialPDFsSetterDoublePrecision.h"
-#include "generated_kernels/InitialPDFsSetterSinglePrecision.h"
-#include "generated_kernels/StreamSweepDoublePrecision.h"
-#include "generated_kernels/StreamSweepSinglePrecision.h"
-#include "generated_kernels/UpdateVelocityFromPDFSweepDoublePrecision.h"
-#include "generated_kernels/UpdateVelocityFromPDFSweepSinglePrecision.h"
-#include "generated_kernels/macroscopic_values_accessors_double_precision.h"
-#include "generated_kernels/macroscopic_values_accessors_single_precision.h"
+#include "lb_kernels.hpp"
 #include "vtk_writers.hpp"
 #include "walberla_utils.hpp"
-
-#ifdef __AVX2__
-#include "generated_kernels/CollideSweepDoublePrecisionAVX.h"
-#include "generated_kernels/CollideSweepDoublePrecisionThermalizedAVX.h"
-#include "generated_kernels/CollideSweepSinglePrecisionAVX.h"
-#include "generated_kernels/CollideSweepSinglePrecisionThermalizedAVX.h"
-#else
-#include "generated_kernels/CollideSweepDoublePrecision.h"
-#include "generated_kernels/CollideSweepDoublePrecisionThermalized.h"
-#include "generated_kernels/CollideSweepSinglePrecision.h"
-#include "generated_kernels/CollideSweepSinglePrecisionThermalized.h"
-#endif
 
 #include <utils/Vector.hpp>
 #include <utils/interpolation/bspline_3d.hpp>
@@ -101,48 +82,6 @@
 
 namespace walberla {
 
-namespace detail {
-template <typename FT = double> struct KernelTrait {
-#ifdef __AVX2__
-  using ThermalizedCollisionModel =
-      pystencils::CollideSweepDoublePrecisionThermalizedAVX;
-  using UnthermalizedCollisionModel =
-      pystencils::CollideSweepDoublePrecisionAVX;
-#else
-  using ThermalizedCollisionModel =
-      pystencils::CollideSweepDoublePrecisionThermalized;
-  using UnthermalizedCollisionModel = pystencils::CollideSweepDoublePrecision;
-#endif
-  using StreamSweep = pystencils::StreamSweepDoublePrecision;
-  using InitialPDFsSetter = pystencils::InitialPDFsSetterDoublePrecision;
-  using UpdateVelocityFromPDFSweep =
-      pystencils::UpdateVelocityFromPDFSweepDoublePrecision;
-};
-template <> struct KernelTrait<float> {
-#ifdef __AVX2__
-  using ThermalizedCollisionModel =
-      pystencils::CollideSweepSinglePrecisionThermalizedAVX;
-  using UnthermalizedCollisionModel =
-      pystencils::CollideSweepSinglePrecisionAVX;
-#else
-  using ThermalizedCollisionModel =
-      pystencils::CollideSweepSinglePrecisionThermalized;
-  using UnthermalizedCollisionModel = pystencils::CollideSweepSinglePrecision;
-#endif
-  using StreamSweep = pystencils::StreamSweepSinglePrecision;
-  using InitialPDFsSetter = pystencils::InitialPDFsSetterSinglePrecision;
-  using UpdateVelocityFromPDFSweep =
-      pystencils::UpdateVelocityFromPDFSweepSinglePrecision;
-};
-
-template <typename FT> struct BoundaryHandlingTrait {
-  using Dynamic_UBB = lbm::Dynamic_UBB_double_precision;
-};
-template <> struct BoundaryHandlingTrait<float> {
-  using Dynamic_UBB = lbm::Dynamic_UBB_single_precision;
-};
-} // namespace detail
-
 /** Class that runs and controls the LB on WaLBerla
  */
 template <typename FloatType = double>
@@ -150,6 +89,8 @@ class LBWalberlaImpl : public LBWalberlaBase {
   template <typename T> inline FloatType FloatType_c(T t) {
     return numeric_cast<FloatType>(t);
   }
+  using LeesEdwardsCollisionModel =
+      typename detail::KernelTrait<FloatType>::LeesEdwardsCollisionModel;
   using UnthermalizedCollisionModel =
       typename detail::KernelTrait<FloatType>::UnthermalizedCollisionModel;
   using ThermalizedCollisionModel =
@@ -157,20 +98,34 @@ class LBWalberlaImpl : public LBWalberlaBase {
   using StreamSweep = typename detail::KernelTrait<FloatType>::StreamSweep;
   using InitialPDFsSetter =
       typename detail::KernelTrait<FloatType>::InitialPDFsSetter;
-  using UpdateVelocityFromPDFSweep =
-      typename detail::KernelTrait<FloatType>::UpdateVelocityFromPDFSweep;
   using BoundaryModel = BoundaryHandling<
       Vector3<FloatType>,
       typename detail::BoundaryHandlingTrait<FloatType>::Dynamic_UBB>;
 
 protected:
   using CollisionModel =
-      boost::variant<UnthermalizedCollisionModel, ThermalizedCollisionModel>;
+      boost::variant<UnthermalizedCollisionModel, ThermalizedCollisionModel,
+                     LeesEdwardsCollisionModel>;
 
 private:
   class : public boost::static_visitor<> {
   public:
-    template <typename CM> void operator()(CM &cm, IBlock *b) const { cm(b); }
+    void operator()(UnthermalizedCollisionModel &cm, IBlock *b) { cm(b); }
+
+    void operator()(ThermalizedCollisionModel &cm, IBlock *b) { cm(b); }
+
+    void operator()(LeesEdwardsCollisionModel &cm, IBlock *b) {
+      cm.v_s_ = static_cast<decltype(cm.v_s_)>(
+          m_lees_edwards_callbacks->get_shear_velocity());
+      cm(b);
+    }
+    void register_lees_edwards_callbacks(
+        std::shared_ptr<LeesEdwardsPack> lees_edwards_callbacks) {
+      m_lees_edwards_callbacks = std::move(lees_edwards_callbacks);
+    }
+
+  private:
+    std::shared_ptr<LeesEdwardsPack> m_lees_edwards_callbacks;
 
   } run_collide_sweep;
 
@@ -195,9 +150,9 @@ private:
 public:
   // Type definitions
   typedef stencil::D3Q19 Stencil;
+  using PdfField = GhostLayerField<FloatType, Stencil::Size>;
   using VectorField = GhostLayerField<FloatType, 3u>;
   using FlagField = typename BoundaryModel::FlagField;
-  using PdfField = GhostLayerField<FloatType, Stencil::Size>;
   using Lattice_T = LatticeWalberla::Lattice_T;
 
 private:
@@ -231,7 +186,7 @@ private:
   auto get_velocity_field_ptr(const IBlock *block) const {
     return block->template uncheckedFastGetData<VectorField>(
         m_velocity_field_id);
-  };
+  }
 
   void setDensityAndVelocity(const BlockAndCell &bc,
                              Vector3<FloatType> const &velocity,
@@ -252,9 +207,12 @@ private:
     return pressureTensor;
   }
 
-  inline void pressure_tensor_correction(Matrix3<FloatType> &tensor) const {
-    auto const visc = m_viscosity;
-    auto const revert_factor = visc / (visc + FloatType{1} / FloatType{6});
+  FloatType pressure_tensor_correction_factor() const {
+    return m_viscosity / (m_viscosity + FloatType{1} / FloatType{6});
+  }
+
+  void pressure_tensor_correction(Matrix3<FloatType> &tensor) const {
+    auto const revert_factor = pressure_tensor_correction_factor();
     for (auto const i : {1, 2, 3, 5, 6, 7}) {
       tensor[i] *= revert_factor;
     }
@@ -300,6 +258,7 @@ protected:
   BlockDataID m_force_to_be_applied_id;
 
   BlockDataID m_velocity_field_id;
+  BlockDataID m_vec_tmp_field_id;
 
   using FullCommunicator = blockforest::communication::UniformBufferedScheme<
       typename stencil::D3Q27>;
@@ -314,7 +273,17 @@ protected:
 
   // Stream sweep
   std::shared_ptr<StreamSweep> m_stream;
-  std::shared_ptr<UpdateVelocityFromPDFSweep> m_update_velocity_field_from_pdfs;
+
+  // Lees Edwards boundary interpolation
+  std::shared_ptr<LeesEdwardsPack> m_lees_edwards_callbacks;
+  std::shared_ptr<InterpolateAndShiftAtBoundary<PdfField, FloatType>>
+      m_lees_edwards_pdf_interpol_sweep;
+  std::shared_ptr<InterpolateAndShiftAtBoundary<VectorField, FloatType>>
+      m_lees_edwards_vel_interpol_sweep;
+  std::shared_ptr<InterpolateAndShiftAtBoundary<VectorField, FloatType>>
+      m_lees_edwards_last_applied_force_interpol_sweep;
+  std::shared_ptr<InterpolateAndShiftAtBoundary<VectorField, FloatType>>
+      m_lees_edwards_force_to_be_applied_backwards_interpol_sweep;
 
   // Collision sweep
   std::shared_ptr<CollisionModel> m_collision_model;
@@ -350,6 +319,8 @@ public:
     m_force_to_be_applied_id = field::addToStorage<VectorField>(
         blocks, "force field", FloatType{0}, field::fzyx, n_ghost_layers);
     m_velocity_field_id = field::addToStorage<VectorField>(
+        blocks, "velocity field", FloatType{0}, field::fzyx, n_ghost_layers);
+    m_vec_tmp_field_id = field::addToStorage<VectorField>(
         blocks, "velocity field", FloatType{0}, field::fzyx, n_ghost_layers);
 
     // Init and register pdf field
@@ -406,24 +377,14 @@ public:
         m_last_applied_force_field_id, m_pdf_field_id, m_velocity_field_id);
     set_collision_model();
 
-    m_update_velocity_field_from_pdfs =
-        std::make_shared<UpdateVelocityFromPDFSweep>(
-            m_last_applied_force_field_id, m_pdf_field_id, m_velocity_field_id);
-
     // Synchronize ghost layers
-    (*m_full_communication)();
+    (*m_full_communication).communicate();
   }
 
 private:
   inline void integrate_stream(std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_stream)(&*b);
-  }
-
-  inline void
-  update_velocity_field_from_pdf(std::shared_ptr<Lattice_T> const &blocks) {
-    for (auto b = blocks->begin(); b != blocks->end(); ++b)
-      (*m_update_velocity_field_from_pdfs)(&*b);
   }
 
   inline void integrate_collide(std::shared_ptr<Lattice_T> const &blocks) {
@@ -433,6 +394,31 @@ private:
     if (auto *cm = boost::get<ThermalizedCollisionModel>(&*m_collision_model)) {
       cm->time_step_++;
     }
+  }
+
+  bool lees_edwards_bc() {
+    return boost::get<LeesEdwardsCollisionModel>(&*m_collision_model);
+  }
+
+  inline void apply_lees_edwards_pdf_interpolation(
+      std::shared_ptr<Lattice_T> const &blocks) {
+    for (auto b = blocks->begin(); b != blocks->end(); ++b)
+      (*m_lees_edwards_pdf_interpol_sweep)(&*b);
+  }
+  inline void apply_lees_edwards_vel_interpolation_and_shift(
+      std::shared_ptr<Lattice_T> const &blocks) {
+    for (auto b = blocks->begin(); b != blocks->end(); ++b)
+      (*m_lees_edwards_vel_interpol_sweep)(&*b);
+  }
+  inline void apply_lees_edwards_last_applied_force_interpolation(
+      std::shared_ptr<Lattice_T> const &blocks) {
+    for (auto b = blocks->begin(); b != blocks->end(); ++b)
+      (*m_lees_edwards_last_applied_force_interpol_sweep)(&*b);
+  }
+  inline void apply_lees_edwards_force_to_be_applied_backwards_interpolation(
+      std::shared_ptr<Lattice_T> const &blocks) {
+    for (auto b = blocks->begin(); b != blocks->end(); ++b)
+      (*m_lees_edwards_force_to_be_applied_backwards_interpol_sweep)(&*b);
   }
 
   inline void integrate_reset_force(std::shared_ptr<Lattice_T> const &blocks) {
@@ -451,18 +437,17 @@ private:
     integrate_reset_force(blocks);
     // LB collide
     integrate_collide(blocks);
-    (*m_pdf_streaming_communication)();
+    (*m_pdf_streaming_communication).communicate();
     // Handle boundaries
     integrate_boundaries(blocks);
     // LB stream
     integrate_stream(blocks);
     // Refresh ghost layers
-    (*m_full_communication)();
+    (*m_full_communication).communicate();
   }
 
   void integrate_pull_scheme() {
     auto const &blocks = lattice().get_blocks();
-    // Reset force fields
     integrate_reset_force(blocks);
     // Handle boundaries
     integrate_boundaries(blocks);
@@ -471,9 +456,8 @@ private:
     // LB collide
     integrate_collide(blocks);
 
-    update_velocity_field_from_pdf(blocks);
     // Refresh ghost layers
-    (*m_full_communication)();
+    ghost_communication();
   }
 
   inline void integrate_vtk_writers() {
@@ -489,13 +473,24 @@ private:
 public:
   void integrate() override {
     reallocate_ubb_field();
-    integrate_push_scheme();
-
+    if (lees_edwards_bc()) {
+      integrate_pull_scheme();
+    } else {
+      integrate_push_scheme();
+    }
     // Handle VTK writers
     integrate_vtk_writers();
   }
 
-  void ghost_communication() override { (*m_full_communication)(); }
+  void ghost_communication() override {
+    (*m_full_communication).communicate();
+    if (lees_edwards_bc()) {
+      auto const &blocks = lattice().get_blocks();
+      apply_lees_edwards_pdf_interpolation(blocks);
+      apply_lees_edwards_vel_interpolation_and_shift(blocks);
+      apply_lees_edwards_last_applied_force_interpolation(blocks);
+    }
+  }
 
   void set_collision_model() override {
     auto const omega = shear_mode_relaxation_rate();
@@ -523,6 +518,49 @@ public:
           block_offset_2 = blocks->getBlockCellBB(*block).zMin();
         };
     m_collision_model = std::make_shared<CollisionModel>(std::move(obj));
+  }
+
+  void set_collision_model(
+      std::unique_ptr<LeesEdwardsPack> &&lees_edwards_pack) override {
+    if (m_kT != 0.) {
+      throw std::runtime_error(
+          "Lees-Edwards LB doesn't support thermalization");
+    }
+
+    auto const shear_direction = lees_edwards_pack->shear_direction;
+    auto const shear_plane_normal = lees_edwards_pack->shear_plane_normal;
+    auto const shear_vel = FloatType_c(lees_edwards_pack->get_shear_velocity());
+    auto const omega = shear_mode_relaxation_rate();
+    auto obj = LeesEdwardsCollisionModel(
+        m_last_applied_force_field_id, m_pdf_field_id,
+        FloatType_c(lattice().get_grid_dimensions()[shear_plane_normal]), omega,
+        shear_vel);
+    m_collision_model = std::make_shared<CollisionModel>(std::move(obj));
+    m_lees_edwards_callbacks = std::move(lees_edwards_pack);
+    run_collide_sweep.register_lees_edwards_callbacks(m_lees_edwards_callbacks);
+    m_lees_edwards_pdf_interpol_sweep =
+        std::make_shared<InterpolateAndShiftAtBoundary<PdfField, FloatType>>(
+            lattice().get_blocks(), m_pdf_field_id, m_pdf_tmp_field_id,
+            lattice().get_ghost_layers(), shear_direction, shear_plane_normal,
+            m_lees_edwards_callbacks->get_pos_offset);
+    m_lees_edwards_vel_interpol_sweep =
+        std::make_shared<InterpolateAndShiftAtBoundary<VectorField, FloatType>>(
+            lattice().get_blocks(), m_velocity_field_id, m_vec_tmp_field_id,
+            lattice().get_ghost_layers(), shear_direction, shear_plane_normal,
+            m_lees_edwards_callbacks->get_pos_offset,
+            m_lees_edwards_callbacks->get_shear_velocity);
+    m_lees_edwards_last_applied_force_interpol_sweep =
+        std::make_shared<InterpolateAndShiftAtBoundary<VectorField, FloatType>>(
+            lattice().get_blocks(), m_last_applied_force_field_id,
+            m_vec_tmp_field_id, lattice().get_ghost_layers(), shear_direction,
+            shear_plane_normal, m_lees_edwards_callbacks->get_pos_offset);
+    m_lees_edwards_force_to_be_applied_backwards_interpol_sweep =
+        std::make_shared<InterpolateAndShiftAtBoundary<VectorField, FloatType>>(
+            lattice().get_blocks(), m_force_to_be_applied_id,
+            m_vec_tmp_field_id, lattice().get_ghost_layers(), shear_direction,
+            shear_plane_normal, [this]() {
+              return -1.0 * m_lees_edwards_callbacks->get_pos_offset();
+            });
   }
 
   void set_viscosity(double viscosity) override {
@@ -696,8 +734,9 @@ public:
   }
 
   boost::optional<std::vector<double>>
-  get_node_pop(const Utils::Vector3i &node) const override {
-    auto bc = get_block_and_cell(lattice(), node, false);
+  get_node_pop(const Utils::Vector3i &node,
+               bool consider_ghosts = false) const override {
+    auto bc = get_block_and_cell(lattice(), node, consider_ghosts);
     if (!bc)
       return {boost::none};
 
@@ -961,7 +1000,8 @@ public:
     if (flag_observables & static_cast<int>(OutputVTK::pressure_tensor)) {
       pdf_field_vtk->addCellDataWriter(
           make_shared<lbm::PressureTensorVTKWriter<LBWalberlaImpl, float>>(
-              m_pdf_field_id, "PressureTensorFromPDF"));
+              m_pdf_field_id, "PressureTensorFromPDF",
+              pressure_tensor_correction_factor()));
     }
 
     // register object

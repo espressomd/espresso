@@ -17,7 +17,7 @@
 
 import collections.abc
 
-from .script_interface import ScriptInterfaceHelper, script_interface_register, ScriptObjectRegistry
+from .script_interface import ScriptInterfaceHelper, script_interface_register, ScriptObjectList
 
 
 class Shape:
@@ -254,14 +254,22 @@ class HollowConicalFrustum(Shape, ScriptInterfaceHelper):
 
 
 @script_interface_register
-class Union(Shape, ScriptObjectRegistry):
+class Union(Shape, ScriptObjectList):
     """A union of shapes.
 
     This shape represents a union of shapes where the distance to the union
     is defined by the smallest distance to any shape contained in the union.
 
+    Methods
+    -------
+    size()
+        Number of shapes contained in the union.
+    clear()
+        Remove all shapes from the union.
+
     """
     _so_name = "Shapes::Union"
+    _so_bind_methods = Shape._so_bind_methods + ("size", "empty", "clear")
 
     def add(self, shape):
         """
@@ -307,17 +315,3 @@ class Union(Shape, ScriptObjectRegistry):
                 _remove(self, s)
         else:
             _remove(self, shape)
-
-    def clear(self):
-        """
-        Remove all shapes from the union.
-
-        """
-        self.call_method("clear")
-
-    def size(self):
-        """
-        Number of shapes contained in the union.
-
-        """
-        return self.call_method("size")

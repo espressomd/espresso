@@ -90,6 +90,12 @@ public:
     enableParticleCommunication();
   }
 
+  void requestParticleStructGpuParallel() {
+    m_needsParticleStructGpu = true;
+    m_gpu |= m_needsParticleStructGpu;
+    enableParticleCommunicationParallel();
+  }
+
   float *fGpuBegin() override { return gpu_get_particle_force_pointer(); }
   bool hasFGpu() override { return true; }
   void requestFGpu() override {
@@ -133,6 +139,7 @@ protected:
   void split_particle_struct();
 #ifdef CUDA
   void enableParticleCommunication();
+  void enableParticleCommunicationParallel();
   void reallocDeviceMemory(std::size_t n);
 
 private:

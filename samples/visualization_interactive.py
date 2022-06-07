@@ -21,7 +21,7 @@ changed via the keyboard.
 """
 
 import espressomd
-import espressomd.visualization_opengl
+import espressomd.visualization
 import numpy as np
 
 required_features = []
@@ -31,7 +31,7 @@ print("Press u/j to change temperature")
 
 box_l = 10.0
 system = espressomd.System(box_l=[box_l] * 3)
-visualizer = espressomd.visualization_opengl.openGLLive(
+visualizer = espressomd.visualization.openGLLive(
     system, drag_enabled=True, drag_force=100)
 
 system.time_step = 0.00001
@@ -81,9 +81,9 @@ def decreaseTemp():
 
 # Register button callbacks
 visualizer.keyboard_manager.register_button(
-    espressomd.visualization_opengl.KeyboardButtonEvent('u', espressomd.visualization_opengl.KeyboardFireEvent.Hold, increaseTemp))
+    espressomd.visualization.KeyboardButtonEvent('u', espressomd.visualization.KeyboardFireEvent.Hold, increaseTemp))
 visualizer.keyboard_manager.register_button(
-    espressomd.visualization_opengl.KeyboardButtonEvent('j', espressomd.visualization_opengl.KeyboardFireEvent.Hold, decreaseTemp))
+    espressomd.visualization.KeyboardButtonEvent('j', espressomd.visualization.KeyboardFireEvent.Hold, decreaseTemp))
 
 # Set initial position
 spin()

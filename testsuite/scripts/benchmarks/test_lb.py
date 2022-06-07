@@ -24,7 +24,7 @@ np.random.seed(42)
 
 benchmark, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@BENCHMARKS_DIR@/lb.py", cmd_arguments=["--particles_per_core", "80"],
-    measurement_steps=200, n_iterations=2, min_skin=0.688, max_skin=0.688)
+    measurement_steps=200, n_iterations=2)
 
 
 @skipIfMissingFeatures

@@ -21,60 +21,43 @@ import unittest as ut
 import unittest_decorators as utx
 
 import espressomd
-import espressomd.cuda_init
 import espressomd.electrostatics
 import tests_common
 
 
-@utx.skipIfMissingFeatures(["ELECTROSTATICS"])
+@utx.skipIfMissingFeatures(["P3M"])
 class CoulombCloudWallTune(ut.TestCase):
 
-    """This compares p3m, p3m_gpu electrostatic forces against stored data."""
-    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-
-    tolerance = 1E-3
+    """This compares P3M electrostatic forces against reference values."""
+    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system.time_step = 0.01
+    system.cell_system.skin = 0.4
 
     def setUp(self):
-        self.system.box_l = (10, 10, 10)
-        self.system.time_step = 0.01
-        self.system.cell_system.skin = 0.4
-
-        data = np.load(tests_common.abspath("data/coulomb_tuning_system.npz"))
-        self.forces = data['forces']
+        data = np.load(tests_common.data_path("coulomb_tuning_system.npz"))
+        self.ref_forces = data['forces']
         self.system.part.add(pos=data['pos'], q=data['charges'])
 
     def tearDown(self):
         self.system.actors.clear()
         self.system.part.clear()
 
-    def compare(self, method_name):
-        # Compare forces now in the system to stored ones
-        difference = np.linalg.norm(
-            self.system.part.all().f - self.forces, axis=1)
-        self.assertLessEqual(
-            np.mean(difference), self.tolerance,
-            "Absolute force difference too large for method " + method_name)
-
-    # Tests for individual methods
-    @utx.skipIfMissingFeatures(["P3M"])
-    def test_p3m(self):
-        # We have to add some tolerance here, because the reference
-        # system is not homogeneous
-        self.system.actors.add(
-            espressomd.electrostatics.P3M(prefactor=1., accuracy=5e-4,
-                                          tune=True))
+    def compare(self, actor):
+        self.system.actors.add(actor)
         self.system.integrator.run(0)
-        self.compare("p3m")
+        np.testing.assert_allclose(
+            np.copy(self.system.part.all().f), self.ref_forces, atol=2e-3)
+
+    def test_p3m_cpu(self):
+        actor = espressomd.electrostatics.P3M(
+            prefactor=1., accuracy=5e-4, tune=True)
+        self.compare(actor)
 
     @utx.skipIfMissingGPU()
     def test_p3m_gpu(self):
-        # We have to add some tolerance here, because the reference
-        # system is not homogeneous
-        self.system.actors.add(
-            espressomd.electrostatics.P3MGPU(prefactor=1., accuracy=5e-4,
-                                             tune=True))
-        self.system.integrator.run(0)
-        self.compare("p3m_gpu")
+        actor = espressomd.electrostatics.P3MGPU(
+            prefactor=1., accuracy=5e-4, tune=True)
+        self.compare(actor)
 
 
 if __name__ == "__main__":

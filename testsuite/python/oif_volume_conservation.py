@@ -37,8 +37,9 @@ class OifVolumeConservation(ut.TestCase):
 
         # creating the template for OIF object
         cell_type = oif.OifCellType(
-            nodes_file=tests_common.abspath("data/sphere393nodes.dat"),
-            triangles_file=tests_common.abspath("data/sphere393triangles.dat"),
+            nodes_file=str(tests_common.data_path("sphere393nodes.dat")),
+            triangles_file=str(
+                tests_common.data_path("sphere393triangles.dat")),
             system=system, ks=1.0, kb=1.0, kal=1.0, kag=0.1, kv=0.1,
             check_orientation=False, resize=(3.0, 3.0, 3.0))
 
@@ -63,11 +64,8 @@ class OifVolumeConservation(ut.TestCase):
 
         # Test that restoring forces net to zero and don't produce a torque
         system.integrator.run(1)
-        np.testing.assert_allclose(
-            np.sum(
-                partcls.f, axis=0), [
-                0., 0., 0.], atol=1E-12)
-
+        total_force = np.sum(partcls.f, axis=0)
+        np.testing.assert_allclose(total_force, [0., 0., 0.], atol=1E-12)
         total_torque = np.zeros(3)
         for p in system.part:
             total_torque += np.cross(p.pos, p.f)

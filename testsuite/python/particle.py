@@ -21,6 +21,7 @@ import unittest_decorators as utx
 import espressomd
 import espressomd.interactions
 import numpy as np
+import collections
 
 
 class ParticleProperties(ut.TestCase):
@@ -182,29 +183,51 @@ class ParticleProperties(ut.TestCase):
 
     if espressomd.has_features(["VIRTUAL_SITES"]):
         test_virtual = generateTestForScalarProperty("virtual", 1)
-    if espressomd.has_features(["VIRTUAL_SITES_RELATIVE"]):
-        def test_yy_vs_relative(self):
-            self.system.part.add(id=0, pos=(0, 0, 0))
-            p1 = self.system.part.add(id=1, pos=(0, 0, 0))
-            p1.vs_relative = (0, 5.0, (0.5, -0.5, -0.5, -0.5))
-            p1.vs_quat = [1, 2, 3, 4]
-            np.testing.assert_array_equal(
-                p1.vs_quat, [1, 2, 3, 4])
-            res = p1.vs_relative
-            self.assertEqual(res[0], 0, "vs_relative: " + res.__str__())
-            self.assertEqual(res[1], 5.0, "vs_relative: " + res.__str__())
-            np.testing.assert_allclose(
-                res[2], np.array((0.5, -0.5, -0.5, -0.5)),
-                err_msg="vs_relative: " + res.__str__(), atol=self.tol)
-            # check exceptions
-            with self.assertRaisesRegex(ValueError, "needs input in the form"):
-                p1.vs_relative = (0, 5.0)
-            with self.assertRaisesRegex(ValueError, "particle id has to be given as an int"):
-                p1.vs_relative = ('0', 5.0, (1, 0, 0, 0))
-            with self.assertRaisesRegex(ValueError, "distance has to be given as a float"):
-                p1.vs_relative = (0, '5', (1, 0, 0, 0))
-            with self.assertRaisesRegex(ValueError, "quaternion has to be given as a tuple of 4 floats"):
-                p1.vs_relative = (0, 5.0, (1, 0, 0))
+
+    @utx.skipIfMissingFeatures(["VIRTUAL_SITES_RELATIVE"])
+    def test_vs_relative(self):
+        self.system.part.add(id=0, pos=(0, 0, 0))
+        p1 = self.system.part.add(id=1, pos=(0, 0, 0))
+        p1.vs_relative = (0, 5.0, (0.5, -0.5, -0.5, -0.5))
+        p1.vs_quat = [1, 2, 3, 4]
+        np.testing.assert_array_equal(p1.vs_quat, [1, 2, 3, 4])
+        res = p1.vs_relative
+        self.assertEqual(res[0], 0, f"vs_relative: {res}")
+        self.assertEqual(res[1], 5.0, f"vs_relative: {res}")
+        np.testing.assert_allclose(
+            res[2], np.array((0.5, -0.5, -0.5, -0.5)),
+            err_msg=f"vs_relative: {res}", atol=self.tol)
+        # check exceptions
+        with self.assertRaisesRegex(ValueError, "needs input in the form"):
+            p1.vs_relative = (0, 5.0)
+        with self.assertRaisesRegex(ValueError, "particle id has to be given as an int"):
+            p1.vs_relative = ('0', 5.0, (1, 0, 0, 0))
+        with self.assertRaisesRegex(ValueError, "distance has to be given as a float"):
+            p1.vs_relative = (0, '5', (1, 0, 0, 0))
+        with self.assertRaisesRegex(ValueError, "quaternion has to be given as a tuple of 4 floats"):
+            p1.vs_relative = (0, 5.0, (1, 0, 0))
+        with self.assertRaisesRegex(ValueError, "quaternion is zero"):
+            p1.vs_relative = (0, 5.0, (0, 0, 0, 0))
+        with self.assertRaisesRegex(ValueError, "quaternion is zero"):
+            p1.vs_quat = [0, 0, 0, 0]
+
+    @utx.skipIfMissingFeatures(["EXCLUSIONS"])
+    def test_invalid_exclusions(self):
+        pid1 = self.pid
+        pid2 = self.pid + 1
+
+        p1 = self.partcl
+        with self.assertRaisesRegex(RuntimeError, rf"Particles cannot exclude themselves \(id {self.pid}\)"):
+            p1.add_exclusion(pid1)
+        with self.assertRaisesRegex(RuntimeError, f"Particle with id {pid2} not found"):
+            p1.add_exclusion(pid2)
+
+        self.system.part.add(id=pid2, pos=(0, 0, 0))
+        with self.assertRaisesRegex(RuntimeError, f"Particle with id {pid2} is not in exclusion list of particle with id {pid1}"):
+            p1.delete_exclusion(pid2)
+        with self.assertRaisesRegex(RuntimeError, f"Particle with id {pid2} is already in exclusion list of particle with id {pid1}"):
+            p1.add_exclusion(pid2)
+            p1.add_exclusion(pid2)
 
     @utx.skipIfMissingFeatures("DIPOLES")
     def test_contradicting_properties_dip_dipm(self):
@@ -216,6 +239,12 @@ class ParticleProperties(ut.TestCase):
         with self.assertRaises(ValueError):
             self.system.part.add(pos=[0, 0, 0], dip=[1, 1, 1],
                                  quat=[1.0, 1.0, 1.0, 1.0])
+
+    @utx.skipIfMissingFeatures(["ROTATION"])
+    def test_invalid_quat(self):
+        system = self.system
+        with self.assertRaisesRegex(ValueError, "quaternion is zero"):
+            system.part.add(pos=[0., 0., 0.], quat=[0., 0., 0., 0.])
 
     @utx.skipIfMissingFeatures("ELECTROSTATICS")
     def test_particle_selection(self):
@@ -264,11 +293,70 @@ class ParticleProperties(ut.TestCase):
 
         np.testing.assert_equal(np.copy(p.image_box), [1, 1, 1])
 
-    def test_accessing_invalid_id_raises(self):
+    def test_particle_numbering(self):
+        """
+        Instantiate particles on different nodes and check they are
+        numbered sequentially.
+        """
+        system = self.system
+        offset = system.box_l / 100.
+        # clear the cached value for largest particle id
+        system.part.clear()
+        # update the cached value to 20
+        p_id_start = self.pid + 3
+        system.part.add(pos=offset, id=p_id_start)
+        # check the cached value is updated regardless of the MPI node
+        # where particles are inserted
+        for i in range(3):
+            pos = [0., 0., 0.]
+            pos[i] = -offset[i]  # guaranteed to hit different MPI domains
+            p = self.system.part.add(pos=pos)
+            self.assertEqual(p.id, p_id_start + i + 1)
+        # removing the particle with highest id should update the cached value
+        p.remove()
+        self.assertEqual(system.part.highest_particle_id, p_id_start + 2)
+
+        # update the cached value to 32
+        p_id_start += 10
+        p0 = system.part.add(pos=offset, id=p_id_start + 0)
+        p1 = system.part.add(pos=offset, id=p_id_start + 1)
+        p2 = system.part.add(pos=offset, id=p_id_start + 2)
+        # invalidate the cache by introducing a gap at 31 and then removing 32
+        p1.remove()
+        p2.remove()
+        # the cache should now be 30
+        self.assertEqual(system.part.highest_particle_id, p0.id)
+        p3 = system.part.add(pos=offset)
+        self.assertEqual(p3.id, p0.id + 1)
+
+    def test_invalid_particle_ids_exceptions(self):
         self.system.part.clear()
         handle_to_non_existing_particle = self.system.part.by_id(42)
-        with self.assertRaises(RuntimeError):
+        with self.assertRaisesRegex(RuntimeError, "Particle node for id 42 not found"):
             handle_to_non_existing_particle.id
+        p = self.system.part.add(pos=[0., 0., 0.], id=0)
+        with self.assertRaisesRegex(RuntimeError, "Particle node for id 42 not found"):
+            p._id = 42
+            p.node
+        for i in range(1, 10):
+            p._id = -i
+            with self.assertRaisesRegex(ValueError, f"Invalid particle id: {-i}"):
+                p.node
+            with self.assertRaisesRegex(ValueError, f"Invalid particle id: {-i}"):
+                p.remove()
+            with self.assertRaisesRegex(ValueError, f"Invalid particle id: {-i}"):
+                self.system.part.add(pos=[0., 0., 0.], id=-i)
+
+    def test_invalid_particle_creation(self):
+        err_msg = r"add\(\) takes either a dictionary or a bunch of keyword args"
+        with self.assertRaisesRegex(ValueError, err_msg):
+            self.system.part.add(1)
+        with self.assertRaisesRegex(ValueError, err_msg):
+            self.system.part.add(1, 2)
+        with self.assertRaisesRegex(ValueError, err_msg):
+            self.system.part.add(1, id=2)
+        with self.assertRaisesRegex(ValueError, err_msg):
+            self.system.part.add([1, 2])
 
     def test_parallel_property_setters(self):
         s = self.system
@@ -344,7 +432,7 @@ class ParticleProperties(ut.TestCase):
     def test_coord_fold_corner_cases(self):
         system = self.system
         system.time_step = .5
-        system.cell_system.set_domain_decomposition(use_verlet_lists=False)
+        system.cell_system.set_regular_decomposition(use_verlet_lists=False)
         system.cell_system.skin = 0
         system.min_global_cut = 3
         system.part.clear()
@@ -426,13 +514,17 @@ class ParticleProperties(ut.TestCase):
         pp = str(p)
         pdict = p.to_dict()
         p.remove()
-        self.system.part.add(pdict)
+        p = self.system.part.add(pdict)
         self.assertEqual(str(self.system.part.select()), pp)
+        p.remove()
+        p = self.system.part.add(collections.OrderedDict(pdict))
+        self.assertEqual(str(self.system.part.select()), pp)
+        p.remove()
 
     def test_update(self):
         self.system.part.clear()
         p = self.system.part.add(pos=0.5 * self.system.box_l)
-        # cannot change id
+        # cannot change id (to avoid corrupting caches in the core)
         with self.assertRaisesRegex(Exception, "Cannot change particle id."):
             p.update({'id': 1})
         # check value change

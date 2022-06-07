@@ -20,11 +20,11 @@ constant pressure, variable volume).
 """
 
 import numpy as np
-from threading import Thread
+import threading
 
 import espressomd
 import espressomd.interactions
-import espressomd.visualization_opengl
+import espressomd.visualization
 
 required_features = ["NPT", "LENNARD_JONES"]
 espressomd.assert_features(required_features)
@@ -32,7 +32,7 @@ espressomd.assert_features(required_features)
 system = espressomd.System(box_l=3 * [10])
 np.random.seed(seed=42)
 
-visualizer = espressomd.visualization_opengl.openGLLive(
+visualizer = espressomd.visualization.openGLLive(
     system, background_color=[1, 1, 1], bond_type_radius=[0.2])
 
 system.time_step = 0.0005
@@ -75,7 +75,7 @@ def main():
 
 
 # Start simulation in separate thread
-t = Thread(target=main)
+t = threading.Thread(target=main)
 t.daemon = True
 t.start()
 

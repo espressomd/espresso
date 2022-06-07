@@ -22,21 +22,12 @@ Visualize a Lennard-Jones liquid with live plotting via matplotlib.
 
 import numpy as np
 import matplotlib.pyplot as plt
-from threading import Thread
-import argparse
+import threading
 import espressomd
 import espressomd.visualization
 
 required_features = ["LENNARD_JONES"]
 espressomd.assert_features(required_features)
-
-parser = argparse.ArgumentParser(epilog=__doc__)
-group = parser.add_mutually_exclusive_group()
-group.add_argument("--opengl", action="store_const", dest="visualizer",
-                   const="opengl", help="OpenGL visualizer", default="opengl")
-group.add_argument("--mayavi", action="store_const", dest="visualizer",
-                   const="mayavi", help="MayaVi visualizer")
-args = parser.parse_args()
 
 print("""
 =======================================================
@@ -104,11 +95,7 @@ print("Interactions:\n")
 act_min_dist = system.analysis.min_dist()
 print(f"Start with minimal distance {act_min_dist}")
 
-# Select visualizer
-if args.visualizer == "mayavi":
-    visualizer = espressomd.visualization.mayaviLive(system)
-else:
-    visualizer = espressomd.visualization.openGLLive(system)
+visualizer = espressomd.visualization.openGLLive(system)
 
 #############################################################
 #  Warmup Integration                                       #
@@ -185,7 +172,7 @@ def update_plot():
     plt.pause(0.01)
 
 
-t = Thread(target=main_thread)
+t = threading.Thread(target=main_thread)
 t.daemon = True
 t.start()
 visualizer.register_callback(update_plot, interval=1000)

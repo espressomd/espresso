@@ -19,11 +19,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_H5MD_CORE_HPP
-#define ESPRESSO_H5MD_CORE_HPP
+#ifndef CORE_IO_WRITER_H5MD_CORE_HPP
+#define CORE_IO_WRITER_H5MD_CORE_HPP
 
 #include "BoxGeometry.hpp"
 #include "ParticleRange.hpp"
+#include "h5md_specification.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -33,7 +34,7 @@
 #include <h5xx/h5xx.hpp>
 
 #include <cstddef>
-#include <exception>
+#include <stdexcept>
 #include <string>
 #include <type_traits>
 #include <unordered_map>
@@ -48,6 +49,55 @@ namespace Writer {
 namespace H5md {
 
 /**
+ * @brief Constants which indicate what to output.
+ * To indicate the output of multiple fields, OR the
+ * corresponding values.
+ */
+enum H5MDOutputFields : unsigned int {
+  H5MD_OUT_NONE = 0u,
+  H5MD_OUT_TYPE = 1u,
+  H5MD_OUT_POS = 2u,
+  H5MD_OUT_IMG = 4u,
+  H5MD_OUT_VEL = 8u,
+  H5MD_OUT_FORCE = 16u,
+  H5MD_OUT_MASS = 32u,
+  H5MD_OUT_CHARGE = 16u,
+  H5MD_OUT_BONDS = 128u,
+  H5MD_OUT_BOX_L = 256u,
+  H5MD_OUT_LE_OFF = 512u,
+  H5MD_OUT_LE_DIR = 1024u,
+  H5MD_OUT_LE_NORMAL = 2048u,
+  H5MD_OUT_ALL = 0b1111111111111111u,
+};
+
+static std::unordered_map<std::string, H5MDOutputFields> const fields_map = {
+    {"all", H5MD_OUT_ALL},
+    {"particle.type", H5MD_OUT_TYPE},
+    {"particle.position", H5MD_OUT_POS},
+    {"particle.image", H5MD_OUT_IMG},
+    {"particle.velocity", H5MD_OUT_VEL},
+    {"particle.force", H5MD_OUT_FORCE},
+    {"particle.bonds", H5MD_OUT_BONDS},
+    {"particle.charge", H5MD_OUT_CHARGE},
+    {"particle.mass", H5MD_OUT_MASS},
+    {"box.length", H5MD_OUT_BOX_L},
+    {"lees_edwards.offset", H5MD_OUT_LE_OFF},
+    {"lees_edwards.direction", H5MD_OUT_LE_DIR},
+    {"lees_edwards.normal", H5MD_OUT_LE_NORMAL},
+};
+
+inline auto fields_list_to_bitfield(std::vector<std::string> const &fields) {
+  unsigned int bitfield = H5MD_OUT_NONE;
+  for (auto const &field_name : fields) {
+    if (fields_map.count(field_name) == 0) {
+      throw std::invalid_argument("Unknown field '" + field_name + "'");
+    }
+    bitfield |= fields_map.at(field_name);
+  }
+  return bitfield;
+}
+
+/**
  * @brief Class for writing H5MD files.
  */
 class File {
@@ -56,6 +106,7 @@ public:
    * @brief Constructor of the File class.
    * @param file_path Name for the hdf5 file on disk.
    * @param script_path Path to the simulation script.
+   * @param output_fields Properties to write to disk.
    * @param mass_unit The unit for mass.
    * @param length_unit The unit for length.
    * @param time_unit The unit for time.
@@ -64,7 +115,8 @@ public:
    * @param charge_unit The unit for charge.
    * @param comm The MPI communicator.
    */
-  File(std::string file_path, std::string script_path, std::string mass_unit,
+  File(std::string file_path, std::string script_path,
+       std::vector<std::string> const &output_fields, std::string mass_unit,
        std::string length_unit, std::string time_unit, std::string force_unit,
        std::string velocity_unit, std::string charge_unit,
        boost::mpi::communicator comm = boost::mpi::communicator())
@@ -73,7 +125,9 @@ public:
         m_length_unit(std::move(length_unit)),
         m_time_unit(std::move(time_unit)), m_force_unit(std::move(force_unit)),
         m_velocity_unit(std::move(velocity_unit)),
-        m_charge_unit(std::move(charge_unit)), m_comm(std::move(comm)) {
+        m_charge_unit(std::move(charge_unit)), m_comm(std::move(comm)),
+        m_fields(fields_list_to_bitfield(output_fields)),
+        m_h5md_specification(m_fields) {
     init_file(file_path);
   }
   ~File() = default;
@@ -89,8 +143,7 @@ public:
    * @param particles Particle range for which to write data.
    * @param time Simulation time.
    * @param step Simulation step (monotonically increasing).
-   * @param geometry A BoxGeometry instance that carries the information of the
-   * box dimensions.
+   * @param geometry The box dimensions.
    */
   void write(const ParticleRange &particles, double time, int step,
              BoxGeometry const &geometry);
@@ -99,49 +152,61 @@ public:
    * @brief Retrieve the path to the hdf5 file.
    * @return The path as a string.
    */
-  std::string file_path() const { return m_h5md_file.name(); }
+  auto file_path() const { return m_h5md_file.name(); }
 
   /**
    * @brief Retrieve the path to the simulation script.
    * @return The path as a string.
    */
-  std::string &script_path() { return m_script_path; }
+  auto const &script_path() const { return m_script_path; }
 
   /**
    * @brief Retrieve the set mass unit.
    * @return The unit as a string.
    */
-  std::string &mass_unit() { return m_mass_unit; }
+  auto const &mass_unit() const { return m_mass_unit; }
 
   /**
    * @brief Retrieve the set length unit.
    * @return The unit as a string.
    */
-  std::string &length_unit() { return m_length_unit; }
+  auto const &length_unit() const { return m_length_unit; }
 
   /**
    * @brief Retrieve the set time unit.
    * @return The unit as a string.
    */
-  std::string &time_unit() { return m_time_unit; }
+  auto const &time_unit() const { return m_time_unit; }
 
   /**
    * @brief Retrieve the set force unit.
    * @return The unit as a string.
    */
-  std::string &force_unit() { return m_force_unit; }
+  auto const &force_unit() const { return m_force_unit; }
 
   /**
    * @brief Retrieve the set velocity unit.
    * @return The unit as a string.
    */
-  std::string &velocity_unit() { return m_velocity_unit; }
+  auto const &velocity_unit() const { return m_velocity_unit; }
 
   /**
    * @brief Retrieve the set charge unit.
    * @return The unit as a string.
    */
-  std::string &charge_unit() { return m_charge_unit; }
+  auto const &charge_unit() const { return m_charge_unit; }
+
+  /**
+   * @brief Build the list of valid output fields.
+   * @return The list as a vector of strings.
+   */
+  auto valid_fields() const {
+    std::vector<std::string> out = {};
+    for (auto const &kv : fields_map) {
+      out.push_back(kv.first);
+    }
+    return out;
+  }
 
   /**
    * @brief Method to enforce flushing the buffer to disk.
@@ -192,10 +257,11 @@ private:
    */
   void write_units();
   /**
-   * @brief Create hard links for the time and step entries of time dependent
+   * @brief Create hard links for the time and step entries of time-dependent
    * datasets.
    */
   void create_hard_links();
+
   std::string m_script_path;
   std::string m_mass_unit;
   std::string m_length_unit;
@@ -204,26 +270,27 @@ private:
   std::string m_velocity_unit;
   std::string m_charge_unit;
   boost::mpi::communicator m_comm;
+  unsigned int m_fields;
   std::string m_backup_filename;
   boost::filesystem::path m_absolute_script_path;
   h5xx::file m_h5md_file;
   std::unordered_map<std::string, h5xx::dataset> datasets;
+  H5MD_Specification m_h5md_specification;
 };
 
 struct incompatible_h5mdfile : public std::exception {
   const char *what() const noexcept override {
-    return "The given hdf5 file does not have a valid h5md structure!";
+    return "The given .h5 file does not match the specifications in 'fields'.";
   }
 };
 
 struct left_backupfile : public std::exception {
   const char *what() const noexcept override {
-    return "A backup of the .h5 file exists. This usually means \
-that either you forgot to call the 'close' method or your simulation \
-crashed.";
+    return "A backup of the .h5 file exists. This usually means that either "
+           "you forgot to call the 'close' method or your simulation crashed.";
   }
 };
 
 } /* namespace H5md */
 } /* namespace Writer */
-#endif /* ESPRESSO_H5MD_CORE_HPP */
+#endif

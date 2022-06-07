@@ -29,17 +29,17 @@ namespace ParticleObservables {
  * of observables independent of the particle type.
  */
 template <> struct traits<Particle> {
-  auto position(Particle const &p) const { return p.r.p; }
-  auto velocity(Particle const &p) const { return p.m.v; }
+  auto position(Particle const &p) const { return p.pos(); }
+  auto velocity(Particle const &p) const { return p.v(); }
   auto mass(Particle const &p) const {
 #ifdef VIRTUAL_SITES
     // we exclude virtual particles since their mass does not have a meaning
-    if (p.p.is_virtual)
-      return decltype(p.p.mass){};
+    if (p.is_virtual())
+      return decltype(p.mass()){};
 #endif
-    return p.p.mass;
+    return p.mass();
   }
-  auto charge(Particle const &p) const { return p.p.q; }
+  auto charge(Particle const &p) const { return p.q(); }
   auto dipole_moment(Particle const &p) const {
 #if defined(ROTATION) && defined(DIPOLES)
     return p.calc_dip();

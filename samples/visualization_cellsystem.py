@@ -24,7 +24,7 @@ partitioned. Only the domain of MPI rank 0 will be shown in wireframe.
 """
 
 import espressomd
-import espressomd.visualization_opengl
+import espressomd.visualization
 import numpy as np
 
 required_features = ["LENNARD_JONES"]
@@ -32,7 +32,7 @@ espressomd.assert_features(required_features)
 
 box = [40, 30, 20]
 system = espressomd.System(box_l=box)
-visualizer = espressomd.visualization_opengl.openGLLive(
+visualizer = espressomd.visualization.openGLLive(
     system,
     window_size=[800, 800],
     background_color=[0, 0, 0],
@@ -42,7 +42,7 @@ visualizer = espressomd.visualization_opengl.openGLLive(
     draw_cells=True)
 
 system.time_step = 0.0005
-system.cell_system.set_domain_decomposition(use_verlet_lists=True)
+system.cell_system.set_regular_decomposition(use_verlet_lists=True)
 system.cell_system.skin = 0.4
 #system.cell_system.node_grid = [i, j, k]
 
@@ -62,7 +62,11 @@ energy = system.analysis.energy()
 print(f"After Minimization: E_total = {energy['total']:.2e}")
 
 print("Tune skin")
-system.cell_system.tune_skin(0.1, 4.0, 1e-1, 1000)
+system.cell_system.tune_skin(
+    min_skin=0.1,
+    max_skin=4.0,
+    tol=0.1,
+    int_steps=1000)
 print(system.cell_system.get_state())
 
 system.thermostat.set_langevin(kT=1, gamma=1, seed=42)

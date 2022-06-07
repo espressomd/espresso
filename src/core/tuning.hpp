@@ -18,24 +18,29 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-/** \file
- *  This contains a timing loop for the force calculation.
- *
- *  Implementation in tuning.cpp.
- */
 
-#ifndef TUNING_H
-#define TUNING_H
+#ifndef ESPRESSO_SRC_CORE_TUNING_HPP
+#define ESPRESSO_SRC_CORE_TUNING_HPP
 
-/** Measure the time for some force calculations.
- *  Actually performs \ref mpi_integrate (0).
- *  This times the force calculation without
- *  propagating the system. It therefore does
- *  not include e.g. Verlet list updates.
- *  @param int_steps  Number of integration steps.
- *  @return Time per integration in milliseconds.
+#include <stdexcept>
+#include <string>
+
+class TuningFailed : public std::runtime_error {
+  std::string get_first_error() const;
+
+public:
+  TuningFailed() : std::runtime_error{get_first_error()} {}
+};
+
+/**
+ * @brief Benchmark the integration loop.
+ * Call @ref integrate() several times and measure the elapsed time
+ * without propagating the system. It therefore doesn't include e.g.
+ * Verlet list updates.
+ * @param int_steps   Number of integration steps.
+ * @return Average time per integration loop in milliseconds.
  */
-double time_force_calc(int int_steps);
+double benchmark_integration_step(int int_steps);
 
 /** Set the optimal @ref skin between @p min_skin and @p max_skin
  *  by bisection to tolerance @p tol.

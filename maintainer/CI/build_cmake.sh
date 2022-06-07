@@ -72,6 +72,12 @@ set_default_value() {
     fi
 }
 
+# the number of available processors depends on the CI runner
+if grep -q "i7-3820" /proc/cpuinfo; then
+   ci_procs=2
+else
+   ci_procs=4
+fi
 
 # handle environment variables
 set_default_value srcdir "$(pwd)"
@@ -82,7 +88,7 @@ set_default_value with_ubsan false
 set_default_value with_asan false
 set_default_value with_static_analysis false
 set_default_value myconfig "default"
-set_default_value build_procs 2
+set_default_value build_procs ${ci_procs}
 set_default_value check_procs ${build_procs}
 set_default_value check_odd_only false
 set_default_value check_gpu_only false
@@ -104,6 +110,7 @@ set_default_value with_walberla false
 set_default_value with_stokesian_dynamics false
 set_default_value test_timeout 300
 set_default_value hide_gpu false
+set_default_value mpiexec_preflags ""
 
 if [ "${make_check_unit_tests}" = true ] || [ "${make_check_python}" = true ] || [ "${make_check_tutorials}" = true ] || [ "${make_check_samples}" = true ] || [ "${make_check_benchmarks}" = true ]; then
     run_checks=true
@@ -123,7 +130,7 @@ if [ "${with_fast_math}" = true ]; then
 fi
 
 cmake_params="-DCMAKE_BUILD_TYPE=${build_type} -DCMAKE_CXX_STANDARD=${with_cxx_standard} -DWARNINGS_ARE_ERRORS=ON ${cmake_params}"
-cmake_params="${cmake_params} -DCMAKE_INSTALL_PREFIX=/tmp/espresso-unit-tests"
+cmake_params="${cmake_params} -DCMAKE_INSTALL_PREFIX=/tmp/espresso-unit-tests -DINSIDE_DOCKER=ON"
 cmake_params="${cmake_params} -DCTEST_ARGS=-j${check_procs} -DTEST_TIMEOUT=${test_timeout}"
 
 if [ "${make_check_benchmarks}" = true ]; then
@@ -154,6 +161,11 @@ fi
 
 if [ "${with_walberla}" = true ]; then
   cmake_params="${cmake_params} -DWITH_WALBERLA=ON"
+  # disable default OpenMPI CPU binding mechanism to avoid stale references to
+  # waLBerla objects when multiple LB python tests run in parallel on NUMA archs
+  mpiexec_preflags="${mpiexec_preflags:+$mpiexec_preflags;}--bind-to;none"
+  # fix runtime warnings about "Read -1, expected 70560, errno = 1"
+  mpiexec_preflags="${mpiexec_preflags:+$mpiexec_preflags;}--mca;btl_vader_single_copy_mechanism;none"
 fi
 
 if [ "${with_coverage}" = true ]; then
@@ -181,6 +193,8 @@ if [ "${with_cuda}" = true ]; then
 else
     cmake_params="-DWITH_CUDA=OFF ${cmake_params}"
 fi
+
+cmake_params="${cmake_params}${mpiexec_preflags:+ -DMPIEXEC_PREFLAGS=${mpiexec_preflags}}"
 
 command -v nvidia-smi && nvidia-smi || true
 if [ "${hide_gpu}" = true ]; then

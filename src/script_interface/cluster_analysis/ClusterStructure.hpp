@@ -26,7 +26,7 @@
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/cluster_analysis/Cluster.hpp"
-#include "script_interface/pair_criteria/pair_criteria.hpp"
+#include "script_interface/pair_criteria/PairCriterion.hpp"
 
 #include <memory>
 #include <string>

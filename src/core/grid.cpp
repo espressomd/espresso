@@ -75,7 +75,8 @@ LocalBox<double> regular_decomposition(const BoxGeometry &box,
     boundaries[2 * dir + 1] = -(node_pos[dir] == node_grid_par[dir] - 1);
   }
 
-  return {my_left, local_length, boundaries};
+  return {my_left, local_length, boundaries,
+          CellStructureType::CELL_STRUCTURE_REGULAR};
 }
 
 void grid_changed_box_l(const BoxGeometry &box) {
@@ -147,7 +148,8 @@ void mpi_set_periodicity(bool x, bool y, bool z) {
 
 void mpi_set_node_grid_local(const Utils::Vector3i &node_grid) {
   ::node_grid = node_grid;
-  on_nodegrid_change();
+  grid_changed_n_nodes();
+  on_node_grid_change();
 }
 
 REGISTER_CALLBACK(mpi_set_node_grid_local)

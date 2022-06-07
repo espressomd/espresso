@@ -1,0 +1,33 @@
+/* customization for the alabaster theme */
+
+/* color links to python objects */
+div.bodywrapper a.reference.internal code {
+  color: #355f7c;
+}
+
+/* increase spacing between Python class methods */
+dl.py.method:not(:last-child) {
+  margin-bottom: 15px;
+}
+
+/* decrease left-spacing in code blocks and notes */
+div.highlight pre {
+  padding-left: 20px;
+}
+div.admonition {
+  padding-left: 20px;
+}
+
+/* make admonitions inline */
+div.admonition p.admonition-title {
+  font-size: 18px;
+  font-weight: bold;
+}
+div.admonition p {
+  display: inline;
+}
+
+/* center main text by shifting it to the left by the width of the sidebar */
+div.document {
+  padding-right: 260px;
+}

@@ -51,7 +51,7 @@ cd "${build_dir}"
 # check for unstaged changes
 if [ -n "$(git status --porcelain -- ${directories})" ]; then
   echo "fatal: you have unstaged changes, please commit or stash them:"
-  git diff-index --name-only HEAD -- ${directories}
+  git status --porcelain -- ${directories}
   exit 1
 fi
 
@@ -70,6 +70,7 @@ EOF
 for commit in ${commits}; do
   echo "### commit ${commit}" >> benchmarks.log
   git checkout ${commit} -- ${directories}
+  rm -rf _deps # commits might rely on a different version of dependencies
   bash ../maintainer/benchmarks/runner.sh
   sed -ri "s/^/\"${commit}\",/" benchmarks.csv
   tail -n +2 benchmarks.csv >> benchmarks_suite.csv

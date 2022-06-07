@@ -15,11 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import numpy as np
-from .utils import array_locked, to_char_pointer, to_str, handle_errors
-from .utils cimport Vector3d, make_array_locked
+from . import utils
+from .utils cimport Vector2d, Vector3d, Vector4d, make_array_locked
 cimport cpython.object
 
-from libcpp.memory cimport make_shared
+from libcpp.memory cimport shared_ptr, make_shared
+from libcpp.utility cimport pair
 
 cdef shared_ptr[ContextManager] _om
 
@@ -89,13 +90,14 @@ cdef class PScriptInterface:
         else:
             global _om
             for pname in kwargs:
-                out_params[to_char_pointer(pname)] = python_object_to_variant(
+                out_params[utils.to_char_pointer(pname)] = python_object_to_variant(
                     kwargs[pname])
             self.set_sip(
                 _om.get().make_shared(
                     policy_,
-                    to_char_pointer(name),
+                    utils.to_char_pointer(name),
                     out_params))
+            utils.handle_errors(f"Exception during instantiation of '{name}'")
 
     def __richcmp__(a, b, op):
         cls = PScriptInterface
@@ -112,7 +114,8 @@ cdef class PScriptInterface:
         return self.sip.use_count()
 
     def _valid_parameters(self):
-        return [to_str(p.data()) for p in self.sip.get().valid_parameters()]
+        return [utils.to_str(p.data())
+                for p in self.sip.get().valid_parameters()]
 
     def get_sip(self):
         """
@@ -143,19 +146,20 @@ cdef class PScriptInterface:
             Arguments for the method.
         """
         cdef VariantMap parameters
+        cdef Variant value
 
         for name in kwargs:
-            parameters[to_char_pointer(name)] = python_object_to_variant(
+            parameters[utils.to_char_pointer(name)] = python_object_to_variant(
                 kwargs[name])
 
-        res = variant_to_python_object(
-            self.sip.get().call_method(to_char_pointer(method), parameters))
-        handle_errors("")
+        value = self.sip.get().call_method(utils.to_char_pointer(method), parameters)
+        res = variant_to_python_object(value)
+        utils.handle_errors(f'while calling method {method}()')
         return res
 
     def name(self):
         """Return name of the core class."""
-        return to_str(self.sip.get().name().data())
+        return utils.to_str(self.sip.get().name().data())
 
     def _serialize(self):
         global _om
@@ -168,18 +172,18 @@ cdef class PScriptInterface:
 
     def set_params(self, **kwargs):
         for name, value in kwargs.items():
-            self.sip.get().set_parameter(to_char_pointer(name),
+            self.sip.get().set_parameter(utils.to_char_pointer(name),
                                          python_object_to_variant(value))
 
     def get_parameter(self, name):
-        cdef Variant value = self.sip.get().get_parameter(to_char_pointer(name))
+        cdef Variant value = self.sip.get().get_parameter(utils.to_char_pointer(name))
         return variant_to_python_object(value)
 
     def get_params(self):
         odict = {}
 
         for pair in self.sip.get().get_parameters():
-            odict[to_str(pair.first)] = variant_to_python_object(
+            odict[utils.to_str(pair.first)] = variant_to_python_object(
                 pair.second)
 
         return odict
@@ -197,13 +201,14 @@ class array_variant(np.ndarray):
         return obj
 
 
-cdef Variant python_object_to_variant(value) except +:
+cdef Variant python_object_to_variant(value) except *:
     """Convert Python objects to C++ Variant objects."""
 
     cdef vector[Variant] vec
     cdef vector[int] vec_int
     cdef vector[double] vec_double
-    cdef unordered_map[int, Variant] vmap
+    cdef unordered_map[int, Variant] map_int2var
+    cdef unordered_map[string, Variant] map_str2var
     cdef PObjectRef oref
     cdef int[::1] view_int
     cdef int * data_int
@@ -220,12 +225,24 @@ cdef Variant python_object_to_variant(value) except +:
         oref = value.get_sip()
         return make_variant(oref.sip)
     elif isinstance(value, dict):
+        if all(map(lambda x: isinstance(x, (int, np.integer)), value.keys())):
+            for key, value in value.items():
+                map_int2var[int(key)] = python_object_to_variant(value)
+            return make_variant[unordered_map[int, Variant]](map_int2var)
+        elif all(map(lambda x: isinstance(x, (str, np.str_)), value.keys())):
+            for key, value in value.items():
+                map_str2var[utils.to_char_pointer(
+                    str(key))] = python_object_to_variant(value)
+            return make_variant[unordered_map[string, Variant]](map_str2var)
         for k, v in value.items():
-            if not isinstance(k, int):
+            if not isinstance(k, (str, int, np.integer, np.str_)):
                 raise TypeError(
-                    f"No conversion from type dict_item([({type(k).__name__}, {type(v).__name__})]) to Variant[std::unordered_map<int, Variant>]")
-            vmap[k] = python_object_to_variant(v)
-        return make_variant[unordered_map[int, Variant]](vmap)
+                    f"No conversion from type "
+                    f"'dict_item([({type(k).__name__}, {type(v).__name__})])'"
+                    f" to 'Variant[std::unordered_map<int, Variant>]' or"
+                    f" to 'Variant[std::unordered_map<std::string, Variant>]'")
+    elif type(value) in (str, np.str_):
+        return make_variant[string](utils.to_char_pointer(str(value)))
     elif isinstance(value, array_variant) and np.issubdtype(value.dtype, np.signedinteger):
         view_int = np.ascontiguousarray(value, dtype=np.int32)
         data_int = &view_int[0]
@@ -236,12 +253,10 @@ cdef Variant python_object_to_variant(value) except +:
         data_double = &view_double[0]
         vec_double.assign(data_double, data_double + len(view_double))
         return make_variant[vector[double]](vec_double)
-    elif hasattr(value, '__iter__') and type(value) != str:
+    elif hasattr(value, '__iter__'):
         for e in value:
             vec.push_back(python_object_to_variant(e))
         return make_variant[vector[Variant]](vec)
-    elif type(value) == str:
-        return make_variant[string](to_char_pointer(value))
     elif type(value) == type(True):
         return make_variant[bool](value)
     elif np.issubdtype(np.dtype(type(value)), np.signedinteger):
@@ -250,14 +265,19 @@ cdef Variant python_object_to_variant(value) except +:
         return make_variant[double](value)
     else:
         raise TypeError(
-            f"No conversion from type {type(value).__name__} to Variant")
+            f"No conversion from type '{type(value).__name__}' to 'Variant'")
 
 cdef variant_to_python_object(const Variant & value) except +:
     """Convert C++ Variant objects to Python objects."""
 
     cdef vector[Variant] vec
-    cdef unordered_map[int, Variant] vmap
+    cdef unordered_map[int, Variant] map_int2var
+    cdef unordered_map[string, Variant] map_str2var
+    cdef pair[int, Variant] pair_int2var
+    cdef pair[string, Variant] pair_str2var
     cdef shared_ptr[ObjectHandle] ptr
+    cdef Vector2d vec2d
+    cdef Vector4d vec4d
     if is_none(value):
         return None
     if is_type[bool](value):
@@ -267,19 +287,25 @@ cdef variant_to_python_object(const Variant & value) except +:
     if is_type[double](value):
         return get_value[double](value)
     if is_type[string](value):
-        return to_str(get_value[string](value))
+        return utils.to_str(get_value[string](value))
     if is_type[vector[int]](value):
         return get_value[vector[int]](value)
     if is_type[vector[double]](value):
         return get_value[vector[double]](value)
+    if is_type[Vector4d](value):
+        vec4d = get_value[Vector4d](value)
+        return utils.array_locked([vec4d[0], vec4d[1], vec4d[2], vec4d[3]])
     if is_type[Vector3d](value):
         return make_array_locked(get_value[Vector3d](value))
+    if is_type[Vector2d](value):
+        vec2d = get_value[Vector2d](value)
+        return utils.array_locked([vec2d[0], vec2d[1]])
     if is_type[shared_ptr[ObjectHandle]](value):
         # Get the id and build a corresponding object
         ptr = get_value[shared_ptr[ObjectHandle]](value)
 
         if ptr:
-            so_name = to_str(ptr.get().name().data())
+            so_name = utils.to_str(ptr.get().name().data())
             if not so_name:
                 raise Exception(
                     "Script object without name returned from the core")
@@ -306,12 +332,24 @@ cdef variant_to_python_object(const Variant & value) except +:
             res.append(variant_to_python_object(i))
 
         return res
+
     if is_type[unordered_map[int, Variant]](value):
-        vmap = get_value[unordered_map[int, Variant]](value)
+        map_int2var = get_value[unordered_map[int, Variant]](value)
         res = {}
 
-        for kv in vmap:
-            res[kv.first] = variant_to_python_object(kv.second)
+        for pair_int2var in map_int2var:
+            res[pair_int2var.first] = variant_to_python_object(
+                pair_int2var.second)
+
+        return res
+
+    if is_type[unordered_map[string, Variant]](value):
+        map_str2var = get_value[unordered_map[string, Variant]](value)
+        res = {}
+
+        for pair_str2var in map_str2var:
+            res[utils.to_str(pair_str2var.first)] = variant_to_python_object(
+                pair_str2var.second)
 
         return res
 
@@ -327,6 +365,8 @@ def _unpickle_so_class(so_name, state):
     global _om
     so_ptr.sip = _om.get().deserialize(state)
 
+    assert so_name in _python_class_by_so_name, \
+        f"C++ class '{so_name}' is not associated to any Python class (hint: the corresponding 'import espressomd.*' may be missing)"
     so = _python_class_by_so_name[so_name](sip=so_ptr)
     so.define_bound_methods()
 
@@ -383,15 +423,25 @@ class ScriptInterfaceHelper(PScriptInterface):
             setattr(self, method_name, self.generate_caller(method_name))
 
 
-class ScriptObjectRegistry(ScriptInterfaceHelper):
+class ScriptObjectList(ScriptInterfaceHelper):
     """
     Base class for container-like classes such as
     :class:`~espressomd.constraints.Constraints`. Derived classes must
     implement an ``add()`` method which adds a single item to the container.
 
-    The core class should derive from ScriptObjectRegistry or provide
-    ``"get_elements"`` and ``"size"`` as callable methods.
+    The core objects must be managed by a container derived from
+    ``ScriptInterface::ObjectList``.
+
     """
+
+    def __init__(self, *args, **kwargs):
+        if args:
+            params, (_unpickle_so_class, (_so_name, bytestring)) = args
+            assert _so_name == self._so_name
+            self = _unpickle_so_class(_so_name, bytestring)
+            self.__setstate__(params)
+        else:
+            super().__init__(**kwargs)
 
     def __getitem__(self, key):
         return self.call_method("get_elements")[key]
@@ -403,6 +453,107 @@ class ScriptObjectRegistry(ScriptInterfaceHelper):
 
     def __len__(self):
         return self.call_method("size")
+
+    @classmethod
+    def _restore_object(cls, so_callback, so_callback_args, state):
+        so = so_callback(*so_callback_args)
+        so.__setstate__(state)
+        return so
+
+    def __reduce__(self):
+        so_callback, (so_name, so_bytestring) = super().__reduce__()
+        return (ScriptObjectList._restore_object,
+                (so_callback, (so_name, so_bytestring), self.__getstate__()))
+
+    def __getstate__(self):
+        return self.call_method("get_elements")
+
+    def __setstate__(self, object_list):
+        for item in object_list:
+            self.add(item)
+
+
+class ScriptObjectMap(ScriptInterfaceHelper):
+    """
+    Base class for container-like classes such as
+    :class:`~espressomd.interactions.BondedInteractions`. Derived classes must
+    implement an ``add()`` method which adds a single item to the container.
+
+    The core objects must be managed by a container derived from
+    ``ScriptInterface::ObjectMap``.
+
+    """
+
+    _key_type = int
+
+    def __init__(self, *args, **kwargs):
+        if args:
+            params, (_unpickle_so_class, (_so_name, bytestring)) = args
+            assert _so_name == self._so_name
+            self = _unpickle_so_class(_so_name, bytestring)
+            self.__setstate__(params)
+        else:
+            super().__init__(**kwargs)
+
+    def remove(self, key):
+        """
+        Remove the element with the given key.
+        This is a no-op if the key does not exist.
+        """
+        self.__delitem__(key)
+
+    def clear(self):
+        """
+        Remove all elements.
+
+        """
+        self.call_method("clear")
+
+    def __len__(self):
+        return self.call_method("size")
+
+    def __getitem__(self, key):
+        self._assert_key_type(key)
+        return self.call_method("get", key=key)
+
+    def __setitem__(self, key, value):
+        self._assert_key_type(key)
+        self.call_method("insert", key=key, object=value)
+
+    def __delitem__(self, key):
+        self._assert_key_type(key)
+        self.call_method("erase", key=key)
+
+    def keys(self):
+        return self.call_method("keys")
+
+    def __iter__(self):
+        for k in self.keys(): yield k
+
+    def items(self):
+        for k in self.keys(): yield k, self[k]
+
+    def _assert_key_type(self, key):
+        if not utils.is_valid_type(key, self._key_type):
+            raise TypeError(f"Key has to be of type {self._key_type.__name__}")
+
+    @classmethod
+    def _restore_object(cls, so_callback, so_callback_args, state):
+        so = so_callback(*so_callback_args)
+        so.__setstate__(state)
+        return so
+
+    def __reduce__(self):
+        so_callback, (so_name, so_bytestring) = super().__reduce__()
+        return (ScriptObjectMap._restore_object,
+                (so_callback, (so_name, so_bytestring), self.__getstate__()))
+
+    def __getstate__(self):
+        return dict(self.items())
+
+    def __setstate__(self, params):
+        for key, val in params.items():
+            self[key] = val
 
 
 # Map from script object names to their corresponding python classes

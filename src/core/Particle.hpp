@@ -24,42 +24,36 @@
 #include "BondList.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/compact_vector.hpp>
 #include <utils/math/quaternion.hpp>
 #include <utils/quaternion.hpp>
 
+#include <boost/container/vector.hpp>
+#include <boost/serialization/is_bitwise_serializable.hpp>
+#include <boost/serialization/level.hpp>
 #include <boost/serialization/vector.hpp>
 
+#include <algorithm>
 #include <cstdint>
-#include <stdexcept>
 #include <vector>
 
-enum : uint8_t {
-  ROTATION_FIXED = 0u,
-  ROTATION_X = 1u,
-  ROTATION_Y = 2u,
-  ROTATION_Z = 4u
-};
+namespace detail {
+inline void check_axis_idx_valid(int const axis) {
+  assert(axis >= 0 and axis <= 2);
+}
 
-#ifdef EXTERNAL_FORCES
-/** \ref ParticleProperties::ext_flag "ext_flag" value for fixed coordinate
- *  @c coord.
- */
-#define COORD_FIXED(coord) (2u << (coord))
-/** \ref ParticleProperties::ext_flag "ext_flag" mask to check whether any of
- *  the coordinates is fixed.
- */
-#define COORDS_FIX_MASK (COORD_FIXED(0) | COORD_FIXED(1) | COORD_FIXED(2))
-#else // EXTERNAL_FORCES
-#define COORD_FIXED(coord) (0)
-#endif // EXTERNAL_FORCES
+inline bool get_nth_bit(uint8_t const bitfield, int const bit_idx) {
+  return bitfield & (1u << bit_idx);
+}
+} // namespace detail
 
 /** Properties of a self-propelled particle. */
 struct ParticleParametersSwimming {
   /** Is the particle a swimmer. */
   bool swimming = false;
-  /** Constant velocity to relax to. */
-  double f_swim = 0.;
   /** Imposed constant force. */
+  double f_swim = 0.;
+  /** Constant velocity to relax to. */
   double v_swim = 0.;
   /** Flag for the swimming mode in a LB fluid.
    *  Values:
@@ -92,6 +86,42 @@ struct ParticleProperties {
   /** particle type, used for non-bonded interactions. */
   int type = 0;
 
+#ifdef VIRTUAL_SITES
+  /** is particle virtual */
+  bool is_virtual = false;
+#else  // VIRTUAL_SITES
+  static constexpr bool is_virtual = false;
+#endif // VIRTUAL_SITES
+
+#ifdef ROTATION
+  /** Bitfield for the particle axes of rotation.
+   *  Values:
+   *  - 0: no rotation
+   *  - 1: allow rotation around the x axis
+   *  - 2: allow rotation around the y axis
+   *  - 4: allow rotation around the z axis
+   *  By default, the particle cannot rotate.
+   */
+  uint8_t rotation = static_cast<uint8_t>(0b000u);
+#else
+  /** Bitfield for the particle axes of rotation. Particle cannot rotate. */
+  static constexpr uint8_t rotation = static_cast<uint8_t>(0b000u);
+#endif
+
+#ifdef EXTERNAL_FORCES
+  /** Flag for fixed particle coordinates.
+   *  Values:
+   *  - 0: no fixed coordinates
+   *  - 1: fix translation along the x axis
+   *  - 2: fix translation along the y axis
+   *  - 4: fix translation along the z axis
+   */
+  uint8_t ext_flag = static_cast<uint8_t>(0b000u);
+#else  // EXTERNAL_FORCES
+  /** Bitfield for fixed particle coordinates. Coordinates cannot be fixed. */
+  static constexpr uint8_t ext_flag = static_cast<uint8_t>(0b000u);
+#endif // EXTERNAL_FORCES
+
   /** particle mass */
 #ifdef MASS
   double mass = 1.0;
@@ -104,13 +134,6 @@ struct ParticleProperties {
   Utils::Vector3d rinertia = {1., 1., 1.};
 #else
   static constexpr Utils::Vector3d rinertia = {1., 1., 1.};
-#endif
-
-  /** bitfield for the particle axes of rotation */
-#ifdef ROTATION
-  uint8_t rotation = ROTATION_FIXED;
-#else
-  static constexpr uint8_t rotation = ROTATION_FIXED;
 #endif
 
   /** charge. */
@@ -130,9 +153,6 @@ struct ParticleProperties {
   double dipm = 0.;
 #endif
 
-#ifdef VIRTUAL_SITES
-  /** is particle virtual */
-  bool is_virtual = false;
 #ifdef VIRTUAL_SITES_RELATIVE
   /** The following properties define, with respect to which real particle a
    *  virtual site is placed and at what distance. The relative orientation of
@@ -157,9 +177,6 @@ struct ParticleProperties {
     }
   } vs_relative;
 #endif // VIRTUAL_SITES_RELATIVE
-#else  // VIRTUAL_SITES
-  static constexpr bool is_virtual = false;
-#endif // VIRTUAL_SITES
 
 #ifdef THERMOSTAT_PER_PARTICLE
 /** Friction coefficient for translation */
@@ -179,22 +196,12 @@ struct ParticleProperties {
 #endif // THERMOSTAT_PER_PARTICLE
 
 #ifdef EXTERNAL_FORCES
-  /** Flag for fixed particle coordinates.
-   *  Values:
-   *  - 0: no fixed coordinates
-   *  - 2: fix translation along the x axis
-   *  - 4: fix translation along the y axis
-   *  - 8: fix translation along the z axis
-   */
-  uint8_t ext_flag = 0;
   /** External force. */
   Utils::Vector3d ext_force = {0, 0, 0};
 #ifdef ROTATION
   /** External torque. */
   Utils::Vector3d ext_torque = {0, 0, 0};
-#endif
-#else  // EXTERNAL_FORCES
-  static constexpr const uint8_t ext_flag = 0; // no fixed coordinates
+#endif // ROTATION
 #endif // EXTERNAL_FORCES
 
 #ifdef ENGINE
@@ -355,15 +362,20 @@ struct ParticleMomentum {
 struct ParticleLocal {
   /** is particle a ghost particle. */
   bool ghost = false;
-  /** position from the last Verlet list update. */
-  Utils::Vector3d p_old = {0, 0, 0};
+  short int lees_edwards_flag = 0;
   /** index of the simulation box image where the particle really sits. */
   Utils::Vector3i i = {0, 0, 0};
+  /** position from the last Verlet list update. */
+  Utils::Vector3d p_old = {0, 0, 0};
+  /** Accumulated applied Lees-Edwards offset. */
+  double lees_edwards_offset = 0.;
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
     ar &ghost;
-    ar &p_old;
+    ar &lees_edwards_flag;
     ar &i;
+    ar &p_old;
+    ar &lees_edwards_offset;
   }
 };
 
@@ -421,34 +433,159 @@ struct Particle { // NOLINT(bugprone-exception-escape)
 private:
   BondList bl;
 
-public:
-  auto &bonds() { return bl; }
-  auto const &bonds() const { return bl; }
-
-private:
 #ifdef EXCLUSIONS
   /** list of particles, with which this particle has no non-bonded
    *  interactions
    */
-  std::vector<int> el;
+  Utils::compact_vector<int> el;
 #endif
 
 public:
-  std::vector<int> &exclusions() {
-#ifdef EXCLUSIONS
-    return el;
-#else
-    throw std::runtime_error{"Exclusions not enabled."};
-#endif
-  }
+  auto const &id() const { return p.identity; }
+  auto &id() { return p.identity; }
+  auto const &mol_id() const { return p.mol_id; }
+  auto &mol_id() { return p.mol_id; }
+  auto const &type() const { return p.type; }
+  auto &type() { return p.type; }
 
-  std::vector<int> const &exclusions() const {
-#ifdef EXCLUSIONS
-    return el;
+  auto const &bonds() const { return bl; }
+  auto &bonds() { return bl; }
+
+  auto const &pos() const { return r.p; }
+  auto &pos() { return r.p; }
+  auto const &v() const { return m.v; }
+  auto &v() { return m.v; }
+  auto const &force() const { return f.f; }
+  auto &force() { return f.f; }
+
+  bool is_ghost() const { return l.ghost; }
+  void set_ghost(bool const ghost_flag) { l.ghost = ghost_flag; }
+  auto &pos_at_last_verlet_update() { return l.p_old; }
+  auto const &pos_at_last_verlet_update() const { return l.p_old; }
+  auto const &image_box() const { return l.i; }
+  auto &image_box() { return l.i; }
+  auto const &lees_edwards_offset() const { return l.lees_edwards_offset; }
+  auto &lees_edwards_offset() { return l.lees_edwards_offset; }
+  auto const &lees_edwards_flag() const { return l.lees_edwards_flag; }
+  auto &lees_edwards_flag() { return l.lees_edwards_flag; }
+
+#ifdef MASS
+  auto const &mass() const { return p.mass; }
+  auto &mass() { return p.mass; }
 #else
-    throw std::runtime_error{"Exclusions not enabled."};
+  constexpr auto &mass() const { return p.mass; }
 #endif
+#ifdef ROTATION
+  bool can_rotate() const { return static_cast<bool>(p.rotation); }
+  bool can_rotate_around(int const axis) const {
+    detail::check_axis_idx_valid(axis);
+    return detail::get_nth_bit(p.rotation, axis);
   }
+  void set_can_rotate_around(int const axis, bool const rot_flag) {
+    detail::check_axis_idx_valid(axis);
+    if (rot_flag) {
+      p.rotation |= static_cast<uint8_t>(1u << axis);
+    } else {
+      p.rotation &= static_cast<uint8_t>(~(1u << axis));
+    }
+  }
+  void set_can_rotate_all_axes() { p.rotation = static_cast<uint8_t>(0b111u); }
+  void set_cannot_rotate_all_axes() {
+    p.rotation = static_cast<uint8_t>(0b000u);
+  }
+  auto const &quat() const { return r.quat; }
+  auto &quat() { return r.quat; }
+  auto const &torque() const { return f.torque; }
+  auto &torque() { return f.torque; }
+  auto const &omega() const { return m.omega; }
+  auto &omega() { return m.omega; }
+  auto const &ext_torque() const { return p.ext_torque; }
+  auto &ext_torque() { return p.ext_torque; }
+  auto calc_director() const { return r.calc_director(); }
+#else  // ROTATION
+  bool can_rotate() const { return false; }
+  bool can_rotate_around(int const axis) const { return false; }
+#endif // ROTATION
+#ifdef DIPOLES
+  auto const &dipm() const { return p.dipm; }
+  auto &dipm() { return p.dipm; }
+#endif
+#ifdef ROTATIONAL_INERTIA
+  auto const &rinertia() const { return p.rinertia; }
+  auto &rinertia() { return p.rinertia; }
+#else
+  constexpr auto &rinertia() const { return p.rinertia; }
+#endif
+#ifdef ELECTROSTATICS
+  auto const &q() const { return p.q; }
+  auto &q() { return p.q; }
+#else
+  constexpr auto &q() const { return p.q; }
+#endif
+#ifdef LB_ELECTROHYDRODYNAMICS
+  auto const &mu_E() const { return p.mu_E; }
+  auto &mu_E() { return p.mu_E; }
+#endif
+#ifdef VIRTUAL_SITES
+  bool is_virtual() const { return p.is_virtual; }
+  void set_virtual(bool const virt_flag) { p.is_virtual = virt_flag; }
+#ifdef VIRTUAL_SITES_RELATIVE
+  auto const &vs_relative() const { return p.vs_relative; }
+  auto &vs_relative() { return p.vs_relative; }
+#endif // VIRTUAL_SITES_RELATIVE
+#else
+  constexpr auto is_virtual() const { return p.is_virtual; }
+#endif
+#ifdef THERMOSTAT_PER_PARTICLE
+  auto const &gamma() const { return p.gamma; }
+  auto &gamma() { return p.gamma; }
+#ifdef ROTATION
+  auto const &gamma_rot() const { return p.gamma_rot; }
+  auto &gamma_rot() { return p.gamma_rot; }
+#endif // ROTATION
+#endif // THERMOSTAT_PER_PARTICLE
+#ifdef EXTERNAL_FORCES
+  bool has_fixed_coordinates() const { return static_cast<bool>(p.ext_flag); }
+  bool is_fixed_along(int const axis) const {
+    detail::check_axis_idx_valid(axis);
+    return detail::get_nth_bit(p.ext_flag, axis);
+  }
+  void set_fixed_along(int const axis, bool const fixed_flag) {
+    // set new flag
+    if (fixed_flag) {
+      p.ext_flag |= static_cast<uint8_t>(1u << axis);
+    } else {
+      p.ext_flag &= static_cast<uint8_t>(~(1u << axis));
+    }
+  }
+  auto const &ext_force() const { return p.ext_force; }
+  auto &ext_force() { return p.ext_force; }
+
+#else  // EXTERNAL_FORCES
+  constexpr bool has_fixed_coordinates() const { return false; }
+  constexpr bool is_fixed_along(int const) const { return false; }
+#endif // EXTERNAL_FORCES
+#ifdef ENGINE
+  auto const &swimming() const { return p.swim; }
+  auto &swimming() { return p.swim; }
+#endif
+#ifdef BOND_CONSTRAINT
+  auto const &pos_last_time_step() const { return r.p_last_timestep; }
+  auto &pos_last_time_step() { return r.p_last_timestep; }
+  auto const &rattle_params() const { return rattle; }
+  auto &rattle_params() { return rattle; }
+#endif
+
+#ifdef EXCLUSIONS
+  Utils::compact_vector<int> &exclusions() { return el; }
+  Utils::compact_vector<int> const &exclusions() const { return el; }
+  std::vector<int> const exclusions_as_vector() const {
+    return {el.begin(), el.end()};
+  }
+  bool has_exclusion(int pid) const {
+    return std::find(el.begin(), el.end(), pid) != el.end();
+  }
+#endif
 
 private:
   friend boost::serialization::access;
@@ -464,5 +601,33 @@ private:
 #endif
   }
 };
+
+BOOST_CLASS_IMPLEMENTATION(Particle, object_serializable)
+BOOST_CLASS_IMPLEMENTATION(ParticleParametersSwimming, object_serializable)
+BOOST_CLASS_IMPLEMENTATION(ParticleProperties, object_serializable)
+BOOST_CLASS_IMPLEMENTATION(ParticlePosition, object_serializable)
+BOOST_CLASS_IMPLEMENTATION(ParticleMomentum, object_serializable)
+BOOST_CLASS_IMPLEMENTATION(ParticleForce, object_serializable)
+BOOST_CLASS_IMPLEMENTATION(ParticleLocal, object_serializable)
+#ifdef BOND_CONSTRAINT
+BOOST_CLASS_IMPLEMENTATION(ParticleRattle, object_serializable)
+#endif
+#ifdef VIRTUAL_SITES_RELATIVE
+BOOST_CLASS_IMPLEMENTATION(decltype(ParticleProperties::vs_relative),
+                           object_serializable)
+#endif
+
+BOOST_IS_BITWISE_SERIALIZABLE(ParticleParametersSwimming)
+BOOST_IS_BITWISE_SERIALIZABLE(ParticleProperties)
+BOOST_IS_BITWISE_SERIALIZABLE(ParticlePosition)
+BOOST_IS_BITWISE_SERIALIZABLE(ParticleMomentum)
+BOOST_IS_BITWISE_SERIALIZABLE(ParticleForce)
+BOOST_IS_BITWISE_SERIALIZABLE(ParticleLocal)
+#ifdef BOND_CONSTRAINT
+BOOST_IS_BITWISE_SERIALIZABLE(ParticleRattle)
+#endif
+#ifdef VIRTUAL_SITES_RELATIVE
+BOOST_IS_BITWISE_SERIALIZABLE(decltype(ParticleProperties::vs_relative))
+#endif
 
 #endif

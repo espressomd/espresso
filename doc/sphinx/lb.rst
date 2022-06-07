@@ -4,7 +4,8 @@ Lattice-Boltzmann
 =================
 
 For an implicit treatment of a solvent, |es| allows to couple the molecular
-dynamics simulation to a lattice-Boltzmann fluid. The lattice-Boltzmann method (LBM) is a fast, lattice-based method that, in its
+dynamics simulation to a lattice-Boltzmann fluid. The lattice-Boltzmann
+method (LBM) is a fast, lattice-based method that, in its
 "pure" form, allows to calculate fluid flow in different boundary
 conditions of arbitrarily complex geometries. Coupled to molecular
 dynamics, it allows for the computationally efficient inclusion of
@@ -16,7 +17,12 @@ geometries and boundary conditions are somewhat limited in comparison to
 Here we restrict the documentation to the interface. For a more detailed
 description of the method, please refer to the literature.
 
-.. note:: Please cite :cite:`godenschwager13a` and :cite:`bauer21a` (BibTeX keys ``godenschwager13a`` and ``bauer21a`` in :file:`doc/sphinx/zrefs.bib`) if you use the LB fluid. When generating your own kernels with pystencils and lbmpy, please also cite :cite:`bauer19a` resp. and :cite:`bauer21b` (BibTeX key ``bauer19a`` resp. ``bauer21b`` in :file:`doc/sphinx/zrefs.bib`).
+.. note:: Please cite :cite:t:`godenschwager13a` and :cite:t:`bauer21a` (BibTeX keys ``godenschwager13a`` and ``bauer21a`` in :file:`doc/bibliography.bib`) if you use the LB fluid. When generating your own kernels with pystencils and lbmpy, please also cite :cite:t:`bauer19a` and :cite:t:`bauer21b` (BibTeX key ``bauer19a`` resp. ``bauer21b`` in :file:`doc/bibliography.bib`).
+
+.. note::
+
+    Requires external feature ``LB_WALBERLA``, enabled with the CMake option
+    ``-D WITH_WALBERLA=ON``.
 
 .. _Setting up a LB fluid:
 
@@ -26,6 +32,7 @@ Setting up a LB fluid
 The following minimal example illustrates how to use the LBM in |es|::
 
     import espressomd
+    import espressomd.lb
     system = espressomd.System(box_l=[10, 20, 30])
     system.time_step = 0.01
     system.cell_system.skin = 0.4
@@ -33,15 +40,19 @@ The following minimal example illustrates how to use the LBM in |es|::
     system.actors.add(lb)
     system.integrator.run(100)
 
-To use the GPU accelerated variant, replace line 5 in the example above by::
+To use the GPU-accelerated variant, replace line 6 in the example above by::
 
     lb = espressomd.lb.LBFluidWalberlaGPU(agrid=1.0, density=1.0, viscosity=1.0, tau=0.01)
 
-.. note:: Feature ``CUDA`` required for GPU accelerated variant
+.. note:: Feature ``CUDA`` required for the GPU-accelerated variant
 
 To use the (much faster) GPU implementation of the LBM, use
 :class:`espressomd.lb.LBFluidWalberlaGPU` in place of :class:`espressomd.lb.LBFluidWalberla`.
-Please note that the GPU implementation uses single precision floating point operations. This decreases the accuracy of calculations compared to the CPU implementation. In particular, due to rounding errors, the fluid density decreases over time, when external forces, coupling to particles, or thermalization is used. The loss of density is on the order of :math:`10^{-12}` per time step.
+Please note that the GPU implementation uses single precision floating point operations.
+This decreases the accuracy of calculations compared to the CPU implementation.
+In particular, due to rounding errors, the fluid density decreases over time,
+when external forces, coupling to particles, or thermalization is used.
+The loss of density is on the order of :math:`10^{-12}` per time step.
 
 The command initializes the fluid with a given set of parameters. It is
 also possible to change parameters on the fly, but this will only rarely
@@ -50,7 +61,8 @@ to set up a box of a desired size. The parameter is used to set the
 lattice constant of the fluid, so the size of the box in every direction
 must be a multiple of ``agrid``.
 
-In the following, we discuss the parameters that can be supplied to the LBM in |es|. The detailed interface definition is available at :class:`espressomd.lb.LBFluidWalberla`.
+In the following, we discuss the parameters that can be supplied to the LBM in |es|.
+The detailed interface definition is available at :class:`espressomd.lb.LBFluidWalberla`.
 
 The LB scheme and the MD scheme are not synchronized: In one LB time
 step typically several MD steps are performed. This allows to speed up
@@ -62,8 +74,9 @@ in ``tau`` and so on.
 LB nodes are located at 0.5, 1.5, 2.5, etc.
 (in terms of ``agrid``). This has important implications for the location of
 hydrodynamic boundaries which are generally considered to be halfway
-between two nodes for flat, axis-aligned walls. For more complex boundary geometries, the hydrodynamic boundary location deviates from this midpoint and the deviation decays to first order in ``agrid``.
-The LBM should
+between two nodes for flat, axis-aligned walls. For more complex boundary geometries,
+the hydrodynamic boundary location deviates from this midpoint and the deviation
+decays to first order in ``agrid``. The LBM should
 *not be used as a black box*, but only after a careful check of all
 parameters that were applied.
 
@@ -94,18 +107,18 @@ for double-precision kernels.
 
 .. _Checkpointing LB:
 
-Checkpointing LB
-----------------
+Checkpointing
+-------------
 
 ::
 
     lb.save_checkpoint(path, binary)
     lb.load_checkpoint(path, binary)
 
-The first command saves all of the LB fluid nodes' populations to an ascii
-(``binary=False``) or binary (``binary=True``) format respectively. The load command
-loads the populations from a checkpoint file written with
-``lb.save_checkpoint``. In both cases ``path`` specifies the location of the
+The first command saves all of the LB fluid nodes' populations to an ASCII
+(``binary=False``) or binary (``binary=True``) format respectively.
+The second command loads the LB fluid nodes' populations.
+In both cases ``path`` specifies the location of the
 checkpoint file. This is useful for restarting a simulation either on the same
 machine or a different machine. Some care should be taken when using the binary
 format as the format of doubles can depend on both the computer being used as
@@ -156,12 +169,13 @@ depends on the particle velocity :math:`v` and the fluid velocity :math:`u`. It 
 on the particle and the fluid (in opposite direction). Because the fluid is also affected,
 multiple particles can interact via hydrodynamic interactions. As friction in molecular systems is
 accompanied by fluctuations, the particle-fluid coupling has to be activated through
-the :ref:`LB thermostat` (See more detailed description there). A short example is::
+the :ref:`LB thermostat` (see more detailed description there). A short example is::
 
     system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1.5)
 
-where ``lbf`` is an instance of either :class:`espressomd.lb.LBFluidWalberla` or :class:`~espressomd.lb.LBFluidWalberlaGPU`,
-``gamma`` the friction coefficient and ``seed`` the seed for the random number generator involved
+where ``lbf`` is an instance of either :class:`espressomd.lb.LBFluidWalberla` or
+:class:`~espressomd.lb.LBFluidWalberlaGPU`, ``gamma`` the friction coefficient and
+``seed`` the seed for the random number generator involved
 in the thermalization.
 
 
@@ -170,7 +184,8 @@ in the thermalization.
 Reading and setting properties of single lattice nodes
 ------------------------------------------------------
 
-Appending three indices to the ``lb`` object returns an object that represents the selected LB grid node and allows one to access all of its properties::
+Appending three indices to the ``lb`` object returns an object that represents
+the selected LB grid node and allows one to access all of its properties::
 
     lb[x, y, z].density              # fluid density (one scalar for LB and CUDA)
     lb[x, y, z].velocity             # fluid velocity (a numpy array of three floats)
@@ -179,9 +194,9 @@ Appending three indices to the ``lb`` object returns an object that represents t
     lb[x, y, z].population           # 19 LB populations (a numpy array of 19 floats, check order from the source code)
 
 All of these properties can be read and used in further calculations.
-Only the property ``population`` can be modified. The indices ``x,y,z``
-are integers and enumerate the LB nodes in the three directions, start
-with 0. To modify ``is_boundary``, refer to :ref:`Setting up boundary conditions`.
+Only the property ``population`` can be modified. The indices ``x, y, z``
+are integers and enumerate the LB nodes in the three Cartesion directions,
+starting at 0. To modify ``is_boundary``, refer to :ref:`Setting up boundary conditions`.
 
 Example::
 
@@ -202,19 +217,6 @@ these nodes with densities ranging from 1.1 to 1.4. You can set either
 a value that matches the length of the slice (which sets each node
 individually), or a single value that will be copied to every node
 (e.g. a scalar for density, or an array of length 3 for the velociy).
-
-.. _Removing total fluid momentum:
-
-Removing total fluid momentum
------------------------------
-
-.. note:: Only available for ``CUDA``
-
-Some simulations require the net momentum of the system to vanish. Even if the
-physics of the system fulfills this condition, numerical errors can introduce
-drift. To remove the momentum in the fluid call::
-
-    lb.remove_momentum()
 
 .. _Output for visualization:
 
@@ -252,15 +254,17 @@ positions can be exported using the VTK format (see :meth:`~espressomd.particle_
 Choosing between the GPU and CPU implementations
 ------------------------------------------------
 
-.. note:: Feature ``CUDA`` required
-
 |es| contains an implementation of the LBM for NVIDIA
 GPUs using the CUDA framework. On CUDA-supporting machines this can be
 activated by compiling with the feature ``CUDA``. Within the
-Python script, the :class:`~espressomd.lb.LBFluidWalberla` object can be substituted with the :class:`~espressomd.lb.LBFluidWalberlaGPU` object to switch from CPU based to GPU based execution. For further
-information on CUDA support see section :ref:`GPU Acceleration with CUDA`.
+Python script, the :class:`~espressomd.lb.LBFluidWalberla` object can be substituted
+with the :class:`~espressomd.lb.LBFluidWalberlaGPU` object to switch from CPU based
+to GPU based execution. For further
+information on CUDA support see section :ref:`CUDA acceleration`.
 
-The following minimal example demonstrates how to use the GPU implementation of the LBM in analogy to the example for the CPU given in section :ref:`Setting up a LB fluid`::
+The following minimal example demonstrates how to use the GPU implementation
+of the LBM in analogy to the example for the CPU given in section
+:ref:`Setting up a LB fluid`::
 
     import espressomd
     system = espressomd.System(box_l=[10, 20, 30])
@@ -270,7 +274,12 @@ The following minimal example demonstrates how to use the GPU implementation of 
     system.actors.add(lb)
     system.integrator.run(100)
 
-The feature ``CUDA`` allows the use of Lees-Edwards boundary conditions. Our implementation follows the paper of :cite:`wagner02`. Note, that there is no extra python interface for the use of Lees-Edwards boundary conditions with the LB algorithm. All information are rather internally derived from the set of the Lees-Edwards offset in the system class. For further information Lees-Edwards boundary conditions please refer to section :ref:`Lees-Edwards boundary conditions`
+:ref:`Lees-Edwards boundary conditions` (LEbc) are supported by both
+LB implementations, which follow the derivation in :cite:`wagner02a`.
+Note, that there is no extra python interface for the use of LEbc
+with the LB algorithm: all the necessary information is internally
+derived from the currently active LEbc protocol in
+``system.lees_edwards.protocol``.
 
 .. _Electrohydrodynamics:
 
@@ -354,10 +363,10 @@ to ``velocity`` must be a 4D grid (the first three dimensions must match
 the LB grid shape, the fourth dimension has size 3 for the velocity).
 
 The LB boundaries use the same :mod:`~espressomd.shapes` objects to specify
-their geometry as :mod:`~espressomd.constraints` do for particles. This
-allows the user to quickly set up a system with boundary conditions that
-simultaneously act on the fluid and particles. For a complete description
-of all available shapes, refer to :mod:`espressomd.shapes`.
+their geometry as :mod:`~espressomd.constraints` do for particles.
+This allows the user to quickly set up a system with boundary conditions
+that simultaneously act on the fluid and particles. For a complete
+description of all available shapes, refer to :mod:`espressomd.shapes`.
 
 
 .. [1]

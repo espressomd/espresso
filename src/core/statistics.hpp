@@ -43,23 +43,12 @@ double mindist(PartCfg &partCfg, const std::vector<int> &set1,
 /** Find all particles within a given radius @p r_catch around a position.
  *  @param partCfg    @copybrief PartCfg
  *  @param pos        position of sphere center
- *  @param r_catch    the sphere radius
- *  @param planedims  orientation of coordinate system
+ *  @param dist       the sphere radius
  *
  *  @return List of ids close to @p pos.
  */
 std::vector<int> nbhood(PartCfg &partCfg, const Utils::Vector3d &pos,
-                        double r_catch, const Utils::Vector3i &planedims);
-
-/** Calculate minimal distance to point.
- *  @param partCfg particle selection
- *  @param pos  point
- *  @param pid  if a valid particle id, this particle is omitted from
- *              minimization (this is a good idea if @p pos is the
- *              position of a particle).
- *  @return the minimal distance of a particle to coordinates @p pos
- */
-double distto(PartCfg &partCfg, const Utils::Vector3d &pos, int pid = -1);
+                        double dist);
 
 /** Calculate the distribution of particles around others.
  *

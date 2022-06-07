@@ -18,34 +18,39 @@
 # pylint: disable=undefined-variable
 import unittest as ut
 import unittest_decorators as utx
+import unittest_generator as utg
 import numpy as np
-import os
+import contextlib
+import pathlib
 
 import espressomd
 import espressomd.checkpointing
 import espressomd.electrostatics
 import espressomd.magnetostatics
-import espressomd.scafacos
+import espressomd.io.writer  # pylint: disable=unused-import
 import espressomd.virtual_sites
 import espressomd.integrate
 import espressomd.shapes
 import espressomd.constraints
 import espressomd.lb
 
-modes = {x for mode in set("@TEST_COMBINATION@".upper().split('-'))
-         for x in [mode, mode.split('.')[0]]}
+with contextlib.suppress(ImportError):
+    import h5py  # h5py has to be imported *after* espressomd (MPI)
 
-LB = (espressomd.has_features('LB_WALBERLA') and 'LB.ACTIVE.WALBERLA' in modes
-      or espressomd.gpu_available() and 'LB.GPU' in modes)
+config = utg.TestGenerator()
+is_gpu_available = espressomd.gpu_available()
+modes = config.get_modes()
+has_lb_mode = ('LB.WALBERLA' in modes and espressomd.has_features('LB_WALBERLA')
+               and ('LB.CPU' in modes or 'LB.GPU' in modes and is_gpu_available))
+has_p3m_mode = 'P3M.CPU' in modes or 'P3M.GPU' in modes and is_gpu_available
 
 
 class CheckpointTest(ut.TestCase):
 
     checkpoint = espressomd.checkpointing.Checkpoint(
-        checkpoint_id="mycheckpoint_@TEST_COMBINATION@_@TEST_BINARY@".replace(
-            '.', '__'),
-        checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
+        **config.get_checkpoint_params())
     checkpoint.load(0)
+    path_cpt_root = pathlib.Path(checkpoint.checkpoint_dir)
     n_nodes = system.cell_system.get_state()["n_nodes"]
 
     @classmethod
@@ -65,11 +70,20 @@ class CheckpointTest(ut.TestCase):
         self.fail(
             f"system doesn't have an actor of type {actor_type.__name__}")
 
-    @ut.skipIf(not LB, "Skipping test due to missing mode.")
+    def test_get_active_actor_of_type(self):
+        if system.actors.active_actors:
+            actor = system.actors.active_actors[0]
+            self.assertEqual(self.get_active_actor_of_type(type(actor)), actor)
+        with self.assertRaisesRegex(AssertionError, "system doesn't have an actor of type Wall"):
+            self.get_active_actor_of_type(espressomd.shapes.Wall)
+
+    @utx.skipIfMissingFeatures('LB_WALBERLA')
+    @ut.skipIf(not has_lb_mode, "Skipping test due to missing LB feature.")
     def test_lb_fluid(self):
         lbf = self.get_active_actor_of_type(espressomd.lb.LBFluidWalberla)
-        cpt_mode = int("@TEST_BINARY@")
-        cpt_path = self.checkpoint.checkpoint_dir + "/lb{}.cpt"
+        cpt_mode = 0 if 'LB.ASCII' in modes else 1
+        cpt_root = pathlib.Path(self.checkpoint.checkpoint_dir)
+        cpt_path = str(cpt_root / "lb") + "{}.cpt"
 
         # check exception mechanism with corrupted LB checkpoint files
         with self.assertRaisesRegex(RuntimeError, 'EOF found'):
@@ -89,7 +103,7 @@ class CheckpointTest(ut.TestCase):
 
         # load the valid LB checkpoint file
         lbf.load_checkpoint(cpt_path.format(""), cpt_mode)
-        precision = 9 if "LB.ACTIVE.WALBERLA" in modes else 5
+        precision = 9 if "LB.WALBERLA" in modes else 5
         m = np.pi / 12
         nx = lbf.shape[0]
         ny = lbf.shape[1]
@@ -142,9 +156,9 @@ class CheckpointTest(ut.TestCase):
             np.copy(lbf[:, :, :].is_boundary.astype(int)), 0)
 
     @utx.skipIfMissingFeatures('LB_WALBERLA')
-    @ut.skipIf('LB.ACTIVE.WALBERLA' not in modes, 'waLBerla LBM not in modes')
+    @ut.skipIf(not has_lb_mode, "Skipping test due to missing LB feature.")
     def test_VTK(self):
-        vtk_suffix = '@TEST_COMBINATION@_@TEST_BINARY@'
+        vtk_suffix = config.test_name
         vtk_registry = espressomd.lb._vtk_registry
         key_auto = f'vtk_out/auto_{vtk_suffix}'
         self.assertIn(key_auto, vtk_registry.map)
@@ -165,19 +179,20 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(set(obj.observables), {'density'})
         self.assertIn(f"write to '{key_manual}' on demand>", repr(obj))
         # check file numbering when resuming VTK write operations
-        filepath_template = key_manual + '/simulation_step_{}.vtu'
+        vtk_root = pathlib.Path("vtk_out") / f"manual_{vtk_suffix}"
+        filename = "simulation_step_{}.vtu"
         vtk_manual = espressomd.lb._vtk_registry.map[key_manual]
-        self.assertTrue(os.path.isfile(filepath_template.format(0)))
-        self.assertFalse(os.path.isfile(filepath_template.format(1)))
-        self.assertFalse(os.path.isfile(filepath_template.format(2)))
+        self.assertTrue((vtk_root / filename.format(0)).exists())
+        self.assertFalse((vtk_root / filename.format(1)).exists())
+        self.assertFalse((vtk_root / filename.format(2)).exists())
         vtk_manual.write()
-        self.assertTrue(os.path.isfile(filepath_template.format(0)))
-        self.assertTrue(os.path.isfile(filepath_template.format(1)))
-        self.assertFalse(os.path.isfile(filepath_template.format(2)))
+        self.assertTrue((vtk_root / filename.format(0)).exists())
+        self.assertTrue((vtk_root / filename.format(1)).exists())
+        self.assertFalse((vtk_root / filename.format(2)).exists())
 
     def test_system_variables(self):
         cell_system_params = system.cell_system.get_state()
-        self.assertTrue(cell_system_params['use_verlet_list'])
+        self.assertTrue(cell_system_params['use_verlet_lists'])
         self.assertAlmostEqual(system.cell_system.skin, 0.1, delta=1E-10)
         self.assertAlmostEqual(system.time_step, 0.01, delta=1E-10)
         self.assertAlmostEqual(system.time, 1.5, delta=1E-10)
@@ -208,13 +223,13 @@ class CheckpointTest(ut.TestCase):
 
     @utx.skipIfMissingFeatures('LENNARD_JONES')
     @ut.skipIf('LJ' not in modes, "Skipping test due to missing mode.")
-    @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
     def test_shape_based_constraints_serialization(self):
         '''
         Check that particles at the interface between two MPI nodes still
         experience the force from a shape-based constraint. The thermostat
         friction is negligible compared to the LJ force.
         '''
+        self.assertGreaterEqual(len(system.constraints), 1)
         p3, p4 = system.part.by_ids([3, 4])
         old_force = np.copy(p3.f)
         system.constraints.remove(system.constraints[0])
@@ -224,7 +239,7 @@ class CheckpointTest(ut.TestCase):
         self.assertGreater(np.linalg.norm(np.copy(p3.f) - old_force), 1e6)
 
     @utx.skipIfMissingFeatures('LB_WALBERLA')
-    @ut.skipIf('LB.ACTIVE.WALBERLA' not in modes, 'waLBerla LBM not in modes')
+    @ut.skipIf(not has_lb_mode, "Skipping test due to missing LB feature.")
     @ut.skipIf('THERM.LB' not in modes, 'LB thermostat not in modes')
     def test_thermostat_LB(self):
         thmst = system.thermostat.get_state()[0]
@@ -401,11 +416,22 @@ class CheckpointTest(ut.TestCase):
             ibm_triel_bond.params,
             {'k1': 1.1, 'k2': 1.2, 'maxDist': 1.6, 'elasticLaw': 'NeoHookean'})
         # check new bonds can be added
-        if 'LB.ACTIVE.WALBERLA' not in modes:
+        if not has_lb_mode:
             new_bond = espressomd.interactions.HarmonicBond(r_0=0.2, k=1.)
             system.bonded_inter.add(new_bond)
             bond_ids = system.bonded_inter.call_method('get_bond_ids')
             self.assertEqual(len(bond_ids), len(system.bonded_inter))
+
+    def test_bond_breakage_specs(self):
+        # check the ObjectHandle was correctly initialized (including MPI)
+        spec_ids = list(system.bond_breakage.keys())
+        self.assertEqual(len(spec_ids), 1)
+        cpt_spec = system.bond_breakage[spec_ids[0]]
+        self.assertAlmostEqual(
+            break_spec.breakage_length,
+            cpt_spec.breakage_length,
+            delta=1e-10)
+        self.assertEqual(break_spec.action_type, cpt_spec.action_type)
 
     @ut.skipIf('THERM.LB' in modes, 'LB thermostat in modes')
     @utx.skipIfMissingFeatures(['ELECTROSTATICS', 'MASS', 'ROTATION'])
@@ -440,27 +466,67 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_array_equal(
             acc_mean_variance.variance(),
             np.array([[0., 0.5, 2.], [0., 0., 0.]]))
-        if self.n_nodes == 1:
-            np.testing.assert_array_equal(
-                system.auto_update_accumulators[0].variance(),
-                np.array([[0., 0.5, 2.], [0., 0., 0.]]))
+        np.testing.assert_array_equal(
+            system.auto_update_accumulators[0].variance(),
+            np.array([[0., 0.5, 2.], [0., 0., 0.]]))
 
     def test_time_series(self):
         expected = [[[1, 1, 1], [1, 1, 2]], [[1, 2, 3], [1, 1, 2]]]
         np.testing.assert_array_equal(acc_time_series.time_series(), expected)
-        if self.n_nodes == 1:
-            np.testing.assert_array_equal(
-                system.auto_update_accumulators[1].time_series(),
-                expected)
+        np.testing.assert_array_equal(
+            system.auto_update_accumulators[1].time_series(),
+            expected)
 
     def test_correlator(self):
         expected = np.zeros((36, 2, 3))
         expected[0:2] = [[[1, 2.5, 5], [1, 1, 4]], [[1, 2, 3], [1, 1, 4]]]
         np.testing.assert_array_equal(acc_correlator.result(), expected)
-        if self.n_nodes == 1:
-            np.testing.assert_array_equal(
-                system.auto_update_accumulators[2].result(),
-                expected)
+        np.testing.assert_array_equal(
+            system.auto_update_accumulators[2].result(),
+            expected)
+
+    @utx.skipIfMissingFeatures('H5MD')
+    @utx.skipIfMissingModules("h5py")
+    def test_h5md(self):
+        # check attributes
+        file_path = self.path_cpt_root / "test.h5"
+        script_path = pathlib.Path(
+            __file__).resolve().parent / "save_checkpoint.py"
+        self.assertEqual(h5.fields, ['all'])
+        self.assertEqual(h5.script_path, str(script_path))
+        self.assertEqual(h5.file_path, str(file_path))
+
+        # write new frame
+        h5.write()
+        h5.flush()
+        h5.close()
+
+        with h5py.File(h5.file_path, 'r') as cur:
+            # compare frame #0 against frame #1
+            def predicate(cur, key):
+                np.testing.assert_allclose(cur[key][0], cur[key][1],
+                                           err_msg=f"mismatch for '{key}'")
+            # note: cannot compare forces since they are NaN in frame #1
+            for key in ('position', 'image', 'velocity',
+                        'id', 'species', 'mass', 'charge'):
+                predicate(cur, f'particles/atoms/{key}/value')
+            for key in ('offset', 'direction', 'normal'):
+                predicate(cur, f'particles/atoms/lees_edwards/{key}/value')
+            predicate(cur, 'particles/atoms/box/edges/value')
+            predicate(cur, 'connectivity/atoms/value')
+
+            # check stored physical units
+            def predicate(key, attribute):
+                self.assertEqual(cur[key].attrs['unit'],
+                                 getattr(h5_units, attribute).encode('utf-8'))
+            predicate('particles/atoms/id/time', 'time')
+            predicate('particles/atoms/lees_edwards/offset/value', 'length')
+            predicate('particles/atoms/box/edges/value', 'length')
+            predicate('particles/atoms/position/value', 'length')
+            predicate('particles/atoms/velocity/value', 'velocity')
+            predicate('particles/atoms/force/value', 'force')
+            predicate('particles/atoms/charge/value', 'charge')
+            predicate('particles/atoms/mass/value', 'mass')
 
     @utx.skipIfMissingFeatures('DP3M')
     @ut.skipIf('DP3M.CPU' not in modes,
@@ -478,31 +544,34 @@ class CheckpointTest(ut.TestCase):
                                            err_msg=f'for parameter {key}')
 
     @utx.skipIfMissingFeatures('P3M')
-    @ut.skipIf('P3M.CPU' not in modes,
-               "Skipping test due to missing combination.")
+    @ut.skipIf(not has_p3m_mode, "Skipping test due to missing combination.")
     def test_p3m(self):
-        actor = self.get_active_actor_of_type(espressomd.electrostatics.P3M)
+        actor = self.get_active_actor_of_type(
+            espressomd.electrostatics._P3MBase)
         state = actor.get_params()
         reference = {'prefactor': 1.0, 'accuracy': 0.1, 'mesh': 3 * [10],
                      'cao': 1, 'alpha': 1.0, 'r_cut': 1.0, 'tune': False,
-                     'timings': 15}
+                     'timings': 15, 'check_neutrality': True,
+                     'charge_neutrality_tolerance': 1e-12}
         for key in reference:
             self.assertIn(key, state)
             np.testing.assert_almost_equal(state[key], reference[key],
                                            err_msg=f'for parameter {key}')
 
     @utx.skipIfMissingFeatures('P3M')
-    @ut.skipIf('P3M.ELC' not in modes,
-               "Skipping test due to missing combination.")
+    @ut.skipIf('ELC' not in modes, "Skipping test due to missing combination.")
     def test_elc(self):
         actor = self.get_active_actor_of_type(espressomd.electrostatics.ELC)
         elc_state = actor.get_params()
-        p3m_state = elc_state['p3m_actor'].get_params()
+        p3m_state = elc_state['actor'].get_params()
         p3m_reference = {'prefactor': 1.0, 'accuracy': 0.1, 'mesh': 3 * [10],
                          'cao': 1, 'alpha': 1.0, 'r_cut': 1.0, 'tune': False,
-                         'timings': 15}
+                         'timings': 15, 'check_neutrality': True,
+                         'charge_neutrality_tolerance': 7e-12}
         elc_reference = {'gap_size': 2.0, 'maxPWerror': 0.1,
-                         'delta_mid_top': 0.9, 'delta_mid_bot': 0.1}
+                         'delta_mid_top': 0.9, 'delta_mid_bot': 0.1,
+                         'check_neutrality': True,
+                         'charge_neutrality_tolerance': 5e-12}
         for key in elc_reference:
             self.assertIn(key, elc_state)
             np.testing.assert_almost_equal(elc_state[key], elc_reference[key],
@@ -512,42 +581,40 @@ class CheckpointTest(ut.TestCase):
             np.testing.assert_almost_equal(p3m_state[key], p3m_reference[key],
                                            err_msg=f'for parameter {key}')
 
-    @ut.skipIf(not espressomd.has_features('SCAFACOS') or
-               'SCAFACOS' not in modes or
-               'p3m' not in espressomd.scafacos.available_methods(),
-               "Skipping test due to missing combination or p3m method.")
-    def test_scafacos(self):
+    @utx.skipIfMissingFeatures(["SCAFACOS"])
+    @utx.skipIfMissingScafacosMethod("p3m")
+    @ut.skipIf('SCAFACOS' not in modes, "Missing combination.")
+    def test_scafacos_coulomb(self):
         actor = self.get_active_actor_of_type(
             espressomd.electrostatics.Scafacos)
         state = actor.get_params()
         reference = {'prefactor': 0.5, 'method_name': 'p3m',
                      'method_params': {
-                         'p3m_cao': '7',
-                         'p3m_r_cut': '1.0',
-                         'p3m_grid': '64',
-                         'p3m_alpha': '2.320667'}}
+                         'p3m_cao': 7,
+                         'p3m_r_cut': 1.0,
+                         'p3m_grid': 64,
+                         'p3m_alpha': 2.320667}}
         for key in reference:
             self.assertEqual(state[key], reference[key], msg=f'for {key}')
 
-    @ut.skipIf(not espressomd.has_features('SCAFACOS_DIPOLES') or
-               'SCAFACOS' not in modes or
-               'p2nfft' not in espressomd.scafacos.available_methods(),
-               "Skipping test due to missing combination or p2nfft method.")
+    @utx.skipIfMissingFeatures(["SCAFACOS_DIPOLES"])
+    @utx.skipIfMissingScafacosMethod("p2nfft")
+    @ut.skipIf('SCAFACOS' not in modes, "Missing combination.")
     def test_scafacos_dipoles(self):
         actor = self.get_active_actor_of_type(
             espressomd.magnetostatics.Scafacos)
         state = actor.get_params()
         reference = {'prefactor': 1.2, 'method_name': 'p2nfft',
                      'method_params': {
-                         "p2nfft_verbose_tuning": "0",
-                         "pnfft_N": "32,32,32",
-                         "pnfft_n": "32,32,32",
+                         "p2nfft_verbose_tuning": 0,
+                         "pnfft_N": [32, 32, 32],
+                         "pnfft_n": [32, 32, 32],
                          "pnfft_window_name": "bspline",
-                         "pnfft_m": "4",
-                         "p2nfft_ignore_tolerance": "1",
-                         "pnfft_diff_ik": "0",
-                         "p2nfft_r_cut": "11",
-                         "p2nfft_alpha": "0.37"}}
+                         "pnfft_m": 4,
+                         "p2nfft_ignore_tolerance": 1,
+                         "pnfft_diff_ik": 0,
+                         "p2nfft_r_cut": 11,
+                         "p2nfft_alpha": 0.37}}
         for key in reference:
             self.assertIn(key, state)
             self.assertEqual(state[key], reference[key], msg=f'for {key}')
@@ -565,10 +632,14 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(list(system.part.by_id(1).exclusions), [2])
         self.assertEqual(list(system.part.by_id(2).exclusions), [0, 1])
 
-    @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
     def test_constraints(self):
-        self.assertEqual(len(system.constraints),
-                         8 - int(not espressomd.has_features("ELECTROSTATICS")))
+        n_contraints = 7
+        if self.n_nodes == 1:
+            n_contraints += 1
+        if espressomd.has_features("ELECTROSTATICS"):
+            n_contraints += 1
+        self.assertEqual(len(system.constraints), n_contraints)
+
         c = system.constraints
         ref_shape = self.ref_box_l.astype(int) + 2
 
@@ -613,14 +684,30 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_allclose(np.copy(c[6].field), np.copy(ref_vec.field),
                                    atol=1e-10)
 
+        if self.n_nodes == 1:
+            union = c[7].shape
+            self.assertIsInstance(union, espressomd.shapes.Union)
+            self.assertEqual(len(union), 2)
+            wall1, wall2 = union.call_method('get_elements')
+            self.assertIsInstance(wall1, espressomd.shapes.Wall)
+            self.assertIsInstance(wall2, espressomd.shapes.Wall)
+            np.testing.assert_allclose(np.copy(wall1.normal),
+                                       [1., 0., 0.], atol=1e-10)
+            np.testing.assert_allclose(np.copy(wall2.normal),
+                                       [0., 1., 0.], atol=1e-10)
+            np.testing.assert_allclose(wall1.dist, 0.5, atol=1e-10)
+            np.testing.assert_allclose(wall2.dist, 1.5, atol=1e-10)
+
         if espressomd.has_features("ELECTROSTATICS"):
+            wave = c[n_contraints - 1]
             self.assertIsInstance(
-                c[7], espressomd.constraints.ElectricPlaneWave)
-            np.testing.assert_allclose(np.copy(c[7].E0), [1., -2., 3.])
-            np.testing.assert_allclose(np.copy(c[7].k), [-.1, .2, .3])
-            self.assertAlmostEqual(c[7].omega, 5., delta=1E-10)
-            self.assertAlmostEqual(c[7].phi, 1.4, delta=1E-10)
+                wave, espressomd.constraints.ElectricPlaneWave)
+            np.testing.assert_allclose(np.copy(wave.E0), [1., -2., 3.])
+            np.testing.assert_allclose(np.copy(wave.k), [-.1, .2, .3])
+            self.assertAlmostEqual(wave.omega, 5., delta=1E-10)
+            self.assertAlmostEqual(wave.phi, 1.4, delta=1E-10)
 
 
 if __name__ == '__main__':
+    config.bind_test_class(CheckpointTest)
     ut.main()

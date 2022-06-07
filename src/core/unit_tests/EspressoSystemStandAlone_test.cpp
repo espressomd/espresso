@@ -34,14 +34,15 @@ namespace utf = boost::unit_test;
 #include "bonded_interactions/fene.hpp"
 #include "bonded_interactions/harmonic.hpp"
 #include "communication.hpp"
-#include "electrostatics_magnetostatics/coulomb.hpp"
-#include "electrostatics_magnetostatics/p3m.hpp"
+#include "electrostatics/p3m.hpp"
+#include "electrostatics/registration.hpp"
 #include "energy.hpp"
 #include "galilei.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/lj.hpp"
 #include "observables/ParticleVelocities.hpp"
 #include "particle_data.hpp"
+#include "particle_node.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/index.hpp>
@@ -58,6 +59,7 @@ namespace utf = boost::unit_test;
 #include <limits>
 #include <memory>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace espresso {
@@ -75,7 +77,7 @@ private:
   boost::mpi::communicator world;
 };
 
-void create_bonds_local(int harm_bond_id, int fene_bond_id) {
+static void mpi_create_bonds_local(int harm_bond_id, int fene_bond_id) {
   // set up a harmonic bond
   auto const harm_bond = HarmonicBond(200.0, 0.3, 1.0);
   auto const harm_bond_ia = std::make_shared<Bonded_IA_Parameters>(harm_bond);
@@ -86,11 +88,33 @@ void create_bonds_local(int harm_bond_id, int fene_bond_id) {
   bonded_ia_params.insert(fene_bond_id, fene_bond_ia);
 }
 
-REGISTER_CALLBACK(create_bonds_local)
+REGISTER_CALLBACK(mpi_create_bonds_local)
 
-void create_bonds(int harm_bond_id, int fene_bond_id) {
-  mpi_call_all(create_bonds_local, harm_bond_id, fene_bond_id);
+static void mpi_create_bonds(int harm_bond_id, int fene_bond_id) {
+  mpi_call_all(mpi_create_bonds_local, harm_bond_id, fene_bond_id);
 }
+
+#ifdef P3M
+static void mpi_set_tuned_p3m_local(double prefactor) {
+  auto p3m = P3MParameters{false,
+                           0.0,
+                           3.5,
+                           Utils::Vector3i::broadcast(8),
+                           Utils::Vector3d::broadcast(0.5),
+                           5,
+                           0.654,
+                           1e-3};
+  auto solver =
+      std::make_shared<CoulombP3M>(std::move(p3m), prefactor, 1, false);
+  ::Coulomb::add_actor(solver);
+}
+
+REGISTER_CALLBACK(mpi_set_tuned_p3m_local)
+
+static void mpi_set_tuned_p3m(double prefactor) {
+  mpi_call_all(mpi_set_tuned_p3m_local, prefactor);
+}
+#endif // P3M
 
 BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
                         *utf::precondition(if_head_node())) {
@@ -147,7 +171,6 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
     mpi_kill_particle_motion(0);
     for (int i = 0; i < 5; ++i) {
       set_particle_v(pid2, {static_cast<double>(i), 0., 0.});
-      auto const &p = get_particle_data(pid2);
 
       acc.update();
       auto const time_series = acc.time_series();
@@ -155,8 +178,9 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
 
       auto const acc_value = time_series.back();
       auto const obs_value = (*obs)();
-      BOOST_TEST(obs_value == p.m.v, boost::test_tools::per_element());
-      BOOST_TEST(acc_value == p.m.v, boost::test_tools::per_element());
+      auto const &p = get_particle_data(pid2);
+      BOOST_TEST(obs_value == p.v(), boost::test_tools::per_element());
+      BOOST_TEST(acc_value == p.v(), boost::test_tools::per_element());
     }
   }
 
@@ -166,7 +190,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
     for (int i = 0; i < 5; ++i) {
       set_particle_v(pid2, {static_cast<double>(i), 0., 0.});
       auto const &p = get_particle_data(pid2);
-      auto const kinetic_energy = 0.5 * p.p.mass * p.m.v.norm2();
+      auto const kinetic_energy = 0.5 * p.mass() * p.v().norm2();
       auto const obs_energy = calculate_energy();
       BOOST_CHECK_CLOSE(obs_energy->kinetic[0], kinetic_energy, tol);
       BOOST_CHECK_CLOSE(observable_compute_energy(), kinetic_energy, tol);
@@ -216,7 +240,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
     auto const harm_bond_id = 0;
     auto const none_bond_id = 1;
     auto const fene_bond_id = 2;
-    create_bonds(harm_bond_id, fene_bond_id);
+    mpi_create_bonds(harm_bond_id, fene_bond_id);
     auto const &harm_bond =
         *boost::get<HarmonicBond>(bonded_ia_params.at(harm_bond_id).get());
     auto const &fene_bond =
@@ -244,16 +268,12 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
     set_particle_q(pid2, -1.);
 
     // set up P3M
-    auto const prefactor = 2.0;
-    auto const mesh = std::vector<int>{8, 8, 8};
-    Coulomb::set_prefactor(prefactor);
-    p3m_set_eps(0.0);
-    p3m_set_params(3.5, mesh.data(), 5, 0.654, 1e-3);
-    p3m_set_mesh_offset(0.5, 0.5, 0.5);
+    auto const prefactor = 2.;
+    mpi_set_tuned_p3m(prefactor);
 
     // measure energies
     auto const step = 0.02;
-    auto const pos1 = get_particle_data(pid1).r.p;
+    auto const pos1 = get_particle_data(pid1).pos();
     Utils::Vector3d pos2{box_center, box_center - 0.1, 1.0};
     for (int i = 0; i < 10; ++i) {
       // move particle
@@ -292,19 +312,19 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
     auto const &p2 = get_particle_data(pid2);
     auto const &p3 = get_particle_data(pid3);
     // forces are symmetric
-    BOOST_CHECK_CLOSE(p1.f.f[0], -p2.f.f[0], tol);
-    BOOST_CHECK_CLOSE(p3.f.f[1], -p2.f.f[1], tol);
+    BOOST_CHECK_CLOSE(p1.force()[0], -p2.force()[0], tol);
+    BOOST_CHECK_CLOSE(p3.force()[1], -p2.force()[1], tol);
     // periodic image contributions to the electrostatic force are negligible
-    BOOST_CHECK_LE(std::abs(p1.f.f[1]), tol);
-    BOOST_CHECK_LE(std::abs(p1.f.f[2]), tol);
-    BOOST_CHECK_LE(std::abs(p2.f.f[2]), tol);
+    BOOST_CHECK_LE(std::abs(p1.force()[1]), tol);
+    BOOST_CHECK_LE(std::abs(p1.force()[2]), tol);
+    BOOST_CHECK_LE(std::abs(p2.force()[2]), tol);
     // zero long-range contribution for uncharged particles
-    BOOST_CHECK_EQUAL(p3.f.f[0], 0.);
-    BOOST_CHECK_EQUAL(p3.f.f[2], 0.);
+    BOOST_CHECK_EQUAL(p3.force()[0], 0.);
+    BOOST_CHECK_EQUAL(p3.force()[2], 0.);
     // velocities are not propagated
-    BOOST_CHECK_EQUAL(p1.m.v.norm(), 0.);
-    BOOST_CHECK_EQUAL(p2.m.v.norm(), 0.);
-    BOOST_CHECK_EQUAL(p3.m.v.norm(), 0.);
+    BOOST_CHECK_EQUAL(p1.v().norm(), 0.);
+    BOOST_CHECK_EQUAL(p2.v().norm(), 0.);
+    BOOST_CHECK_EQUAL(p3.v().norm(), 0.);
 
     // check integrated trajectory; the time step is chosen
     // small enough so that particles don't travel too far
@@ -316,15 +336,15 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
       std::unordered_map<int, Utils::Vector3d> expected;
       for (auto pid : pids) {
         auto p = get_particle_data(pid);
-        p.m.v += 0.5 * time_step * p.f.f / p.p.mass;
-        p.r.p += time_step * p.m.v;
-        expected[pid] = p.r.p;
+        p.v() += 0.5 * time_step * p.force() / p.mass();
+        p.pos() += time_step * p.v();
+        expected[pid] = p.pos();
       }
       mpi_integrate(1, 0);
       for (auto pid : pids) {
         auto const &p = get_particle_data(pid);
-        BOOST_CHECK_LE((p.r.p - expected[pid]).norm(), tol);
-        assert((p.r.p - pos_com).norm() < 0.5);
+        BOOST_CHECK_LE((p.pos() - expected[pid]).norm(), tol);
+        assert((p.pos() - pos_com).norm() < 0.5);
       }
     }
   }

@@ -9,18 +9,14 @@ pint>=0.10.1
 matplotlib>=3.1.2
 vtk>=7.1.1
 PyOpenGL>=3.1.0
-mayavi>=4.5.0
-pyface
 pygame>=1.9.6
-traits>=4.6.0
-traitsui>=4.5.1
 # CI-related
 requests>=2.18.4 # to post on GitHub as espresso-ci
 lxml>=4.2.1 # to deploy tutorials
 # sphinx and its dependencies
 sphinx>=2.3.0,!=3.0.0
 sphinx-toggleprompt==0.0.5
-sphinxcontrib-bibtex>=0.3.5
+sphinxcontrib-bibtex>=2.4.1
 # jupyter dependencies
 jupyter_contrib_nbextensions==0.5.1
 tqdm>=4.30.0
@@ -33,4 +29,4 @@ astroid>=2.3.3
 isort>=4.3.4
 setuptools>=39.0.1
 pre-commit>=2.2.0
-cmake-format==0.6.11
+cmakelang==0.6.13

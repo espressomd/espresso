@@ -173,6 +173,7 @@ void mpi_set_time_step(double time_step);
  *  @param skin skin value
  */
 void mpi_set_skin(double skin);
+void mpi_set_skin_local(double skin);
 
 /** @brief Set and broadcast the time
  *  @param time time

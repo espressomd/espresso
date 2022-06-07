@@ -50,6 +50,7 @@ using LbGeneratorVector = std::vector<
 // Add all LBs with kT=0 to be tested, here
 LbGeneratorVector unthermalized_lbs() {
   LbGeneratorVector lbs;
+
   // Unthermalized D3Q19 MRT
   lbs.push_back([](LBTestParameters const &params) {
     return std::make_shared<walberla::LBWalberlaImpl<>>(

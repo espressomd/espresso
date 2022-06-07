@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# For C-extern Analysis
 include "myconfig.pxi"
 from . cimport analyze
 from libcpp.vector cimport vector  # import std::vector as vector
@@ -25,12 +24,9 @@ cimport numpy as np
 from .grid cimport box_geo
 
 from .system import System
-from .utils import array_locked, is_valid_type, handle_errors
-from .utils cimport Vector3i, Vector3d, Vector9d
-from .utils cimport make_Vector3d
-from .utils cimport make_array_locked
-from .utils cimport check_type_or_throw_except
-from .utils cimport create_nparray_from_double_array
+from . import utils
+from . cimport utils
+from .utils cimport Vector9d
 
 
 def autocorrelation(time_series):
@@ -115,12 +111,12 @@ class Analysis:
             raise ValueError("Both p1 and p2 have to be specified")
         else:
             for i in range(len(p1)):
-                if not is_valid_type(p1[i], int):
+                if not utils.is_valid_type(p1[i], int):
                     raise TypeError(
                         f"Particle types in p1 have to be of type int, got: {repr(p1[i])}")
 
             for i in range(len(p2)):
-                if not is_valid_type(p2[i], int):
+                if not utils.is_valid_type(p2[i], int):
                     raise TypeError(
                         f"Particle types in p2 have to be of type int, got: {repr(p2[i])}")
 
@@ -178,13 +174,14 @@ class Analysis:
         if p_type is None:
             raise ValueError(
                 "The p_type keyword argument must be provided (particle type)")
-        check_type_or_throw_except(p_type, 1, int, "p_type has to be an int")
+        utils.check_type_or_throw_except(
+            p_type, 1, int, "p_type has to be an int")
         if p_type < 0 or p_type >= analyze.max_seen_particle_type:
             raise ValueError(f"Particle type {p_type} does not exist!")
 
         return analyze.centerofmass(analyze.partCfg(), p_type)
 
-    def nbhood(self, pos=None, r_catch=None, plane='3d'):
+    def nbhood(self, pos=None, r_catch=None):
         """
         Get all particles in a defined neighborhood.
 
@@ -194,8 +191,6 @@ class Analysis:
             Reference position for the neighborhood.
         r_catch : :obj:`float`
             Radius of the region.
-        plane : :obj:`str`, \{'xy', 'xz', 'yz'\}
-            If given, ``r_catch`` is the distance to the respective plane.
 
         Returns
         -------
@@ -204,31 +199,16 @@ class Analysis:
 
         """
 
-        cdef Vector3i planedims
-
-        check_type_or_throw_except(pos, 3, float, "pos must be 3 floats")
-        check_type_or_throw_except(
+        utils.check_type_or_throw_except(pos, 3, float, "pos must be 3 floats")
+        utils.check_type_or_throw_except(
             r_catch, 1, float, "r_catch must be a float")
 
-        # default 3d takes into account dist in x, y and z
-        planedims[0] = 1
-        planedims[1] = 1
-        planedims[2] = 1
-        if plane == 'xy':
-            planedims[2] = 0
-        elif plane == 'xz':
-            planedims[1] = 0
-        elif plane == 'yz':
-            planedims[0] = 0
-        elif plane != '3d':
-            raise ValueError(
-                'Invalid argument for specifying plane, must be xy, xz, or yz plane')
-
         return analyze.nbhood(
-            analyze.partCfg(), make_Vector3d(pos), r_catch, planedims)
+            analyze.partCfg(), utils.make_Vector3d(pos), r_catch)
 
     def pressure(self):
-        """Calculate the instantaneous pressure (in parallel). This is only
+        """
+        Calculate the instantaneous scalar pressure in parallel. This is only
         sensible in an isotropic system which is homogeneous (on average)! Do
         not use this in an anisotropic or inhomogeneous system. In order to
         obtain the pressure, the ensemble average needs to be calculated.
@@ -241,15 +221,25 @@ class Analysis:
             * ``"total"``: total pressure
             * ``"kinetic"``: kinetic pressure
             * ``"bonded"``: total bonded pressure
-            * ``"bonded", <bond_type>``: bonded pressure which arises from the given bond_type
+            * ``"bonded", <bond_id>``: bonded pressure from the bond
+              identified by ``bond_id``
             * ``"non_bonded"``: total non-bonded pressure
-            * ``"non_bonded", <type_i>, <type_j>``: non-bonded pressure which arises from the interactions between type_i and type_j
-            * ``"non_bonded_intra", <type_i>, <type_j>``: non-bonded pressure between short ranged forces between type i and j and with the same mol_id
-            * ``"non_bonded_inter", <type_i>, <type_j>``: non-bonded pressure between short ranged forces between type i and j and different mol_ids
-            * ``"coulomb"``: Coulomb pressure, how it is calculated depends on the method. It is equivalent to 1/3 of the trace of the Coulomb pressure tensor.
-              For how the pressure tensor is calculated, see :ref:`Pressure Tensor`. The averaged value in an isotropic NVT simulation is equivalent to the average of
-              :math:`E^{coulomb}/(3V)`, see :cite:`brown95a`.
-            * ``"coulomb", <i>``: Coulomb pressure from particle pairs (``i=0``), electrostatics solvers (``i=1``)
+            * ``"non_bonded", <type_i>, <type_j>``: non-bonded pressure which
+              arises from the interactions between ``type_i`` and ``type_j``
+            * ``"non_bonded_intra", <type_i>, <type_j>``: non-bonded pressure
+              from short-range forces between ``type_i`` and ``type_j``
+              with the same ``mol_id``
+            * ``"non_bonded_inter", <type_i>, <type_j>``: non-bonded pressure
+              from short-range forces between ``type_i`` and ``type_j``
+              with different ``mol_id``
+            * ``"coulomb"``: Coulomb pressure, how it is calculated depends on
+              the method. It is equivalent to 1/3 of the trace of the Coulomb
+              pressure tensor. For how the pressure tensor is calculated,
+              see :ref:`Pressure Tensor`. The averaged value in an isotropic
+              NVT simulation is equivalent to the average of
+              :math:`E^{\\mathrm{coulomb}}/(3V)`, see :cite:`brown95a`.
+            * ``"coulomb", <i>``: Coulomb pressure from particle pairs
+              (``i=0``), electrostatics solvers (``i=1``)
             * ``"dipolar"``: not implemented
             * ``"virtual_sites"``: Pressure contribution from virtual sites
             * ``"external_fields"``: external fields contribution
@@ -257,16 +247,17 @@ class Analysis:
         """
 
         obs = analyze.get_scalar_pressure()
-        handle_errors("calculate_pressure() failed")
+        utils.handle_errors("calculate_pressure() failed")
         return obs
 
     def pressure_tensor(self):
-        """Calculate the instantaneous pressure_tensor (in parallel). This is
+        """
+        Calculate the instantaneous pressure tensor in parallel. This is
         sensible in an anisotropic system. Still it assumes that the system is
-        homogeneous since the volume averaged pressure_tensor is used. Do not use
-        this pressure_tensor in an (on average) inhomogeneous system. If the
-        system is (on average inhomogeneous) then use a local pressure_tensor.
-        In order to obtain the pressure_tensor, the ensemble average needs to be
+        homogeneous since the volume-averaged pressure tensor is used. Do not use
+        this pressure tensor in an (on average) inhomogeneous system. If the
+        system is (on average inhomogeneous) then use a local pressure tensor.
+        In order to obtain the pressure tensor, the ensemble average needs to be
         calculated.
 
         Returns
@@ -277,13 +268,21 @@ class Analysis:
             * ``"total"``: total pressure tensor
             * ``"kinetic"``: kinetic pressure tensor
             * ``"bonded"``: total bonded pressure tensor
-            * ``"bonded", <bond_type>``: bonded pressure tensor which arises from the given bond_type
+            * ``"bonded", <bond_id>``: bonded pressure tensor from the bond
+              identified by ``bond_id``
             * ``"non_bonded"``: total non-bonded pressure tensor
-            * ``"non_bonded", <type_i>, <type_j>``: non-bonded pressure tensor which arises from the interactions between type_i and type_j
-            * ``"non_bonded_intra", <type_i>, <type_j>``: non-bonded pressure tensor between short ranged forces between type i and j and with the same mol_id
-            * ``"non_bonded_inter", <type_i>, <type_j>``: non-bonded pressure tensor between short ranged forces between type i and j and different mol_ids
-            * ``"coulomb"``: Maxwell pressure tensor, how it is calculated depends on the method
-            * ``"coulomb", <i>``: Maxwell pressure tensor from particle pairs (``i=0``), electrostatics solvers (``i=1``)
+            * ``"non_bonded", <type_i>, <type_j>``: non-bonded pressure tensor
+              from short-range forces between ``type_i`` and ``type_j``
+            * ``"non_bonded_intra", <type_i>, <type_j>``: non-bonded pressure
+              tensor from short-range forces between ``type_i`` and ``type_j``
+              with the same ``mol_id``
+            * ``"non_bonded_inter", <type_i>, <type_j>``: non-bonded pressure
+              tensor from short-range forces between ``type_i`` and ``type_j``
+              with different ``mol_id``
+            * ``"coulomb"``: Maxwell pressure tensor, how it is calculated
+              depends on the method
+            * ``"coulomb", <i>``: Maxwell pressure tensor from particle pairs
+              (``i=0``), electrostatics solvers (``i=1``)
             * ``"dipolar"``: not implemented
             * ``"virtual_sites"``: pressure tensor contribution from virtual sites
             * ``"external_fields"``: external fields contribution
@@ -291,14 +290,13 @@ class Analysis:
         """
 
         obs = analyze.get_pressure_tensor()
-        handle_errors("calculate_pressure() failed")
+        utils.handle_errors("calculate_pressure() failed")
         return obs
 
     IF DPD == 1:
         def dpd_stress(self):
-            cdef Vector9d p
-            p = dpd_stress()
-            return array_locked((
+            cdef Vector9d p = dpd_stress()
+            return utils.array_locked((
                 p[0], p[1], p[2],
                 p[3], p[4], p[5],
                 p[6], p[7], p[8])).reshape((3, 3))
@@ -308,7 +306,8 @@ class Analysis:
     #
 
     def energy(self):
-        """Calculate the systems energy.
+        """
+        Calculate the system energy in parallel.
 
         Returns
         -------
@@ -318,15 +317,25 @@ class Analysis:
             * ``"total"``: total energy
             * ``"kinetic"``: linear and rotational kinetic energy
             * ``"bonded"``: total bonded energy
-            * ``"bonded", <bond_type>``: bonded energy which arises from the given bond_type
+            * ``"bonded", <bond_id>``: bonded energy from the bond
+              identified by ``bond_id``
             * ``"non_bonded"``: total non-bonded energy
-            * ``"non_bonded", <type_i>, <type_j>``: non-bonded energy which arises from the interactions between type_i and type_j
-            * ``"non_bonded_intra", <type_i>, <type_j>``: non-bonded energy between short ranged forces between type i and j and with the same mol_id
-            * ``"non_bonded_inter", <type_i>, <type_j>``: non-bonded energy between short ranged forces between type i and j and different mol_ids
-            * ``"coulomb"``: Coulomb energy, how it is calculated depends on the method
-            * ``"coulomb", <i>``: Coulomb energy from particle pairs (``i=0``), electrostatics solvers (``i=1``)
+            * ``"non_bonded", <type_i>, <type_j>``: non-bonded energy
+              from short-range interactions between ``type_i`` and ``type_j``
+            * ``"non_bonded_intra", <type_i>, <type_j>``: non-bonded energy
+              from short-range interactions between ``type_i`` and ``type_j``
+              with the same ``mol_id``
+            * ``"non_bonded_inter", <type_i>, <type_j>``: non-bonded energy
+              from short-range interactions between ``type_i`` and ``type_j``
+              with different ``mol_id``
+            * ``"coulomb"``: Coulomb energy, how it is calculated depends
+              on the method
+            * ``"coulomb", <i>``: Coulomb energy from particle pairs
+              (``i=0``), electrostatics solvers (``i=1``)
             * ``"dipolar"``: dipolar energy
-            * ``"dipolar", <i>``: dipolar energy from particle pairs and magnetic field constraints (``i=0``), magnetostatics solvers (``i=1``)
+            * ``"dipolar", <i>``: dipolar energy from particle pairs and
+              magnetic field constraints (``i=0``), magnetostatics solvers
+              (``i=1``)
             * ``"external_fields"``: external fields contribution
 
 
@@ -342,8 +351,26 @@ class Analysis:
         """
 
         obs = analyze.get_energy()
-        handle_errors("calculate_energy() failed")
+        utils.handle_errors("calculate_energy() failed")
         return obs
+
+    def particle_energy(self, particle):
+        """
+        Calculate the non-bonded energy of a single given particle.
+
+        Parameters
+        ----------
+        particle : :class:`~espressomd.particle_data.ParticleHandle`
+
+        Returns
+        -------
+        :obj: `float`
+            non-bonded energy of that particle
+
+        """
+        energy_contribution = particle_short_range_energy_contribution(
+            particle.id)
+        return energy_contribution
 
     def calc_re(self, chain_start=None, number_of_chains=None,
                 chain_length=None):
@@ -375,10 +402,7 @@ class Analysis:
 
         """
         self.check_topology(chain_start, number_of_chains, chain_length)
-        re = analyze.calc_re(
-            chain_start,
-            number_of_chains,
-            chain_length)
+        re = analyze.calc_re(chain_start, number_of_chains, chain_length)
         return np.array([re[0], re[1], re[2], re[3]])
 
     def calc_rg(self, chain_start=None, number_of_chains=None,
@@ -411,10 +435,7 @@ class Analysis:
 
         """
         self.check_topology(chain_start, number_of_chains, chain_length)
-        rg = analyze.calc_rg(
-            chain_start,
-            number_of_chains,
-            chain_length)
+        rg = analyze.calc_rg(chain_start, number_of_chains, chain_length)
         return np.array([rg[0], rg[1], rg[2], rg[3]])
 
     def calc_rh(self, chain_start=None, number_of_chains=None,
@@ -446,19 +467,16 @@ class Analysis:
         """
 
         self.check_topology(chain_start, number_of_chains, chain_length)
-        rh = analyze.calc_rh(
-            chain_start,
-            number_of_chains,
-            chain_length)
+        rh = analyze.calc_rh(chain_start, number_of_chains, chain_length)
         return np.array([rh[0], rh[1]])
 
     def check_topology(self, chain_start=None, number_of_chains=None,
                        chain_length=None):
-        check_type_or_throw_except(
+        utils.check_type_or_throw_except(
             chain_start, 1, int, "chain_start=int is a required argument")
-        check_type_or_throw_except(
+        utils.check_type_or_throw_except(
             number_of_chains, 1, int, "number_of_chains=int is a required argument")
-        check_type_or_throw_except(
+        utils.check_type_or_throw_except(
             chain_length, 1, int, "chain_length=int is a required argument")
         id_min = chain_start
         id_max = chain_start + chain_length * number_of_chains
@@ -501,7 +519,7 @@ class Analysis:
 
         if sf_types is None or not hasattr(sf_types, '__iter__'):
             raise ValueError("sf_types has to be a list!")
-        check_type_or_throw_except(
+        utils.check_type_or_throw_except(
             sf_order, 1, int, "sf_order has to be an int!")
 
         cdef vector[double] wavevectors
@@ -560,7 +578,7 @@ class Analysis:
             raise ValueError("type_list_b has to be a list!")
 
         if r_max is None:
-            box_l = make_array_locked(< Vector3d > box_geo.length())
+            box_l = utils.make_array_locked(box_geo.length())
             r_max = min(box_l) / 2
 
         assert r_min >= 0.0, "r_min was chosen too small!"
@@ -576,7 +594,7 @@ class Analysis:
             analyze.partCfg(), type_list_a, type_list_b,
             r_min, r_max, r_bins, < bint > log_flag, & low, distribution.data())
 
-        np_distribution = create_nparray_from_double_array(
+        np_distribution = utils.create_nparray_from_double_array(
             distribution.data(), r_bins)
 
         if int_flag:
@@ -620,12 +638,11 @@ class Analysis:
            The center of mass of the system.
 
         """
-        check_type_or_throw_except(
+        utils.check_type_or_throw_except(
             p_type, 1, int, "p_type has to be an int")
 
-        cdef Vector3d res = analyze.angularmomentum(analyze.partCfg(), p_type)
-
-        return np.array([res[0], res[1], res[2]])
+        return np.array(utils.make_array_locked(
+            analyze.angularmomentum(analyze.partCfg(), p_type)))
 
     #
     # gyration_tensor
@@ -662,7 +679,7 @@ class Analysis:
         if not hasattr(p_type, '__iter__'):
             p_type = [p_type]
         for ptype in p_type:
-            check_type_or_throw_except(
+            utils.check_type_or_throw_except(
                 ptype, 1, int, "particle type has to be an int")
             if ptype < 0 or ptype >= analyze.max_seen_particle_type:
                 raise ValueError(f"Particle type {ptype} does not exist!")
@@ -713,7 +730,8 @@ class Analysis:
         if p_type is None:
             raise ValueError(
                 "The p_type keyword argument must be provided (particle type)")
-        check_type_or_throw_except(p_type, 1, int, "p_type has to be an int")
+        utils.check_type_or_throw_except(
+            p_type, 1, int, "p_type has to be an int")
         if p_type < 0 or p_type >= analyze.max_seen_particle_type:
             raise ValueError(f"Particle type {p_type} does not exist!")
 
@@ -755,7 +773,8 @@ class Analysis:
 
         """
 
-        check_type_or_throw_except(mode, 1, str, "mode has to be a string")
+        utils.check_type_or_throw_except(
+            mode, 1, str, "mode has to be a string")
 
         if mode == "reset":
             self._Vkappa["Vk1"] = 0.0
@@ -764,11 +783,14 @@ class Analysis:
         elif mode == "read":
             return self._Vkappa
         elif mode == "set":
-            check_type_or_throw_except(Vk1, 1, float, "Vk1 has to be a float")
+            utils.check_type_or_throw_except(
+                Vk1, 1, float, "Vk1 has to be a float")
             self._Vkappa["Vk1"] = Vk1
-            check_type_or_throw_except(Vk2, 1, float, "Vk2 has to be a float")
+            utils.check_type_or_throw_except(
+                Vk2, 1, float, "Vk2 has to be a float")
             self._Vkappa["Vk2"] = Vk2
-            check_type_or_throw_except(avk, 1, float, "avk has to be a float")
+            utils.check_type_or_throw_except(
+                avk, 1, float, "avk has to be a float")
             self._Vkappa["avk"] = avk
             if self._Vkappa["avk"] <= 0.0:
                 result = self._Vkappa["Vk1"] = self._Vkappa[

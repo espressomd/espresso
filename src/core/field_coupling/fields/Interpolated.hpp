@@ -136,9 +136,7 @@ public:
 
   bool fits_in_box(const Utils::Vector3d &box) const {
     auto const box_shape = shape();
-    const Utils::Vector3d grid_size = {m_grid_spacing[0] * box_shape[0],
-                                       m_grid_spacing[1] * box_shape[1],
-                                       m_grid_spacing[2] * box_shape[2]};
+    auto const grid_size = Utils::hadamard_product(m_grid_spacing, box_shape);
     return (m_origin < Utils::Vector3d::broadcast(0.)) &&
            ((m_origin + grid_size) >= box);
   }

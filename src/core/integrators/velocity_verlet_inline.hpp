@@ -21,9 +21,9 @@
 
 #include "config.hpp"
 
-#include "CellStructure.hpp"
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "integrate.hpp"
 #include "rotation.hpp"
 
@@ -41,16 +41,16 @@ inline void velocity_verlet_propagate_vel_pos(const ParticleRange &particles,
 #endif
 
     // Don't propagate translational degrees of freedom of vs
-    if (p.p.is_virtual)
+    if (p.is_virtual())
       continue;
     for (int j = 0; j < 3; j++) {
-      if (!(p.p.ext_flag & COORD_FIXED(j))) {
+      if (!p.is_fixed_along(j)) {
         /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5 * dt * a(t) */
-        p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
+        p.v()[j] += 0.5 * time_step * p.force()[j] / p.mass();
 
         /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
          * v(t+0.5*dt) */
-        p.r.p[j] += time_step * p.m.v[j];
+        p.pos()[j] += time_step * p.v()[j];
       }
     }
   }
@@ -64,13 +64,13 @@ inline void velocity_verlet_propagate_vel_final(const ParticleRange &particles,
 
   for (auto &p : particles) {
     // Virtual sites are not propagated during integration
-    if (p.p.is_virtual)
+    if (p.is_virtual())
       continue;
 
     for (int j = 0; j < 3; j++) {
-      if (!(p.p.ext_flag & COORD_FIXED(j))) {
+      if (!p.is_fixed_along(j)) {
         /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt) */
-        p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
+        p.v()[j] += 0.5 * time_step * p.force()[j] / p.mass();
       }
     }
   }

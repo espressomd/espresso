@@ -22,9 +22,8 @@ Generate a summary of invalid URLs found in Jupyter notebooks that are
 pointing to sections of the notebooks or to the online Sphinx documentation.
 """
 
-import os
 import sys
-import glob
+import pathlib
 
 import lxml.etree
 import nbformat
@@ -61,7 +60,7 @@ def detect_invalid_urls(nb, sphinx_root='.'):
     root = lxml.etree.fromstring(html_string, parser=html_parser)
     # process all links
     espressomd_website_root = 'https://espressomd.github.io/doc/'
-    sphinx_html_root = os.path.join(sphinx_root, 'doc', 'sphinx', 'html')
+    sphinx_html_root = pathlib.Path(sphinx_root) / 'doc' / 'sphinx' / 'html'
     broken_links = []
     for link in root.xpath('//a'):
         url = link.attrib.get('href', '')
@@ -75,15 +74,15 @@ def detect_invalid_urls(nb, sphinx_root='.'):
                 url = url.split('?', 1)[0]
             # check file exists
             basename = url.split(espressomd_website_root, 1)[1]
-            filepath = os.path.join(sphinx_html_root, basename)
-            if not os.path.isfile(filepath):
+            filepath = sphinx_html_root / basename
+            if not filepath.is_file():
                 broken_links.append(f'{url} does not exist')
                 continue
             # check anchor exists
             if anchor is not None:
                 if filepath not in sphinx_docs:
                     sphinx_docs[filepath] = lxml.etree.parse(
-                        filepath, parser=html_parser)
+                        str(filepath), parser=html_parser)
                 doc = sphinx_docs[filepath]
                 nodes = doc.xpath(f'//*[@id="{anchor}"]')
                 if not nodes:
@@ -99,14 +98,13 @@ def detect_invalid_urls(nb, sphinx_root='.'):
 
 if __name__ == '__main__':
     error_code = 0
-    for nb_filepath in sorted(glob.glob('doc/tutorials/*/*.ipynb')):
+    for nb_filepath in sorted(pathlib.Path().glob('doc/tutorials/*/*.ipynb')):
         with open(nb_filepath, encoding='utf-8') as f:
             nb = nbformat.read(f, as_version=4)
         issues = detect_invalid_urls(nb)
         if issues:
             error_code = 1
-            basename = os.path.basename(nb_filepath)
-            print(f'In notebook {basename}:', file=sys.stderr)
+            print(f'In notebook {nb_filepath.name}:', file=sys.stderr)
             for issue in issues:
                 print(f'* {issue}', file=sys.stderr)
     if not error_code:

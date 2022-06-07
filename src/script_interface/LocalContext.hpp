@@ -21,11 +21,15 @@
 
 #include "Context.hpp"
 #include "ObjectHandle.hpp"
+#include "ParallelExceptionHandler.hpp"
 
 #include <utils/Factory.hpp>
 
+#include <boost/mpi/communicator.hpp>
+
 #include <cassert>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <utility>
 
@@ -39,10 +43,13 @@ namespace ScriptInterface {
 class LocalContext : public Context {
   Utils::Factory<ObjectHandle> m_factory;
   bool m_is_head_node;
+  ParallelExceptionHandler m_parallel_exception_handler;
 
 public:
-  LocalContext(Utils::Factory<ObjectHandle> factory, int mpi_rank)
-      : m_factory(std::move(factory)), m_is_head_node(mpi_rank == 0) {}
+  LocalContext(Utils::Factory<ObjectHandle> factory,
+               boost::mpi::communicator const &comm)
+      : m_factory(std::move(factory)), m_is_head_node(comm.rank() == 0),
+        m_parallel_exception_handler(comm) {}
 
   const Utils::Factory<ObjectHandle> &factory() const { return m_factory; }
 
@@ -68,6 +75,9 @@ public:
   }
 
   bool is_head_node() const override { return m_is_head_node; }
+  void parallel_try_catch(std::function<void()> const &cb) const override {
+    m_parallel_exception_handler.parallel_try_catch<std::exception>(cb);
+  }
 };
 } // namespace ScriptInterface
 

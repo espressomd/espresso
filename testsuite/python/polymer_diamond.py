@@ -52,6 +52,7 @@ class DiamondPolymer(ut.TestCase):
                                                  bond=bond,
                                                  **self.diamond_params)
         self.system.time_step = 0.1
+        self.system.cell_system.skin = bond_length / 4
         self.node_parts = self.system.part.select(
             type=self.diamond_params['type_nodes'])
         self.charged_mono = self.system.part.select(

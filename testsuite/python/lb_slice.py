@@ -24,8 +24,8 @@ import itertools
 @utx.skipIfMissingFeatures("LB_WALBERLA")
 class LBSliceTest(ut.TestCase):
 
-    """This simple test first writes random numbers and then reads them 
-    to same slices of LB nodes and compares if the results are the same, 
+    """This simple test first writes random numbers and then reads them
+    to same slices of LB nodes and compares if the results are the same,
     shape-wise and value-wise.
     """
 

@@ -100,30 +100,6 @@ void lb_lbcoupling_set_rng_state(uint64_t counter) {
     throw std::runtime_error("No LB active");
 }
 
-/**
- * @brief Return a vector of positions shifted by +,- box length in each
- * coordinate.
- */
-std::vector<Utils::Vector3d> shifted_positions(Utils::Vector3d pos,
-                                               const BoxGeometry &box) {
-  std::vector<Utils::Vector3d> res;
-  for (int i : {-1, 0, 1}) {
-    for (int j : {-1, 0, 1}) {
-      for (int k : {-1, 0, 1}) {
-        if (i == 0 and j == 0 and k == 0)
-          continue;
-        Utils::Vector3d shift{{double(i), double(j), double(k)}};
-        Utils::Vector3d pos_shifted =
-            pos + Utils::hadamard_product(box.length(), shift);
-        if (in_local_halo(pos_shifted)) {
-          res.push_back(pos_shifted);
-        }
-      }
-    }
-  }
-  return res;
-}
-
 void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force,
                   double time_step) {
   /* transform momentum transfer to lattice units
@@ -135,36 +111,33 @@ void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force,
 Utils::Vector3d lb_particle_coupling_drift_vel_offset(const Particle &p) {
   Utils::Vector3d vel_offset{};
 #ifdef ENGINE
-  if (p.p.swim.swimming) {
-    vel_offset += p.p.swim.v_swim * p.r.calc_director();
+  if (p.swimming().swimming) {
+    vel_offset += p.swimming().v_swim * p.calc_director();
   }
 #endif
 
 #ifdef LB_ELECTROHYDRODYNAMICS
-  vel_offset += p.p.mu_E;
+  vel_offset += p.mu_E();
 #endif
   return vel_offset;
 }
 
 Utils::Vector3d lb_drag_force(Particle const &p,
-                              const Utils::Vector3d &vel_offset) {
+                              Utils::Vector3d const &shifted_pos,
+                              Utils::Vector3d const &vel_offset) {
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation (eq. (11) @cite ahlrichs99a) */
   auto const interpolated_u =
-      lb_lbinterpolation_get_interpolated_velocity(p.r.p) *
+      lb_lbinterpolation_get_interpolated_velocity(shifted_pos) *
       lb_lbfluid_get_lattice_speed();
 
   Utils::Vector3d v_drift = interpolated_u + vel_offset;
   /* calculate viscous force (eq. (9) @cite ahlrichs99a) */
-  return -lb_lbcoupling_get_gamma() * (p.m.v - v_drift);
+  return -lb_lbcoupling_get_gamma() * (p.v() - v_drift);
 }
 
-using Utils::Vector;
-using Utils::Vector3d;
-using Utils::Vector3i;
-
 template <class T, std::size_t N>
-using Box = std::pair<Vector<T, N>, Vector<T, N>>;
+using Box = std::pair<Utils::Vector<T, N>, Utils::Vector<T, N>>;
 
 /**
  * @brief Check if a position is in a box.
@@ -179,7 +152,7 @@ using Box = std::pair<Vector<T, N>, Vector<T, N>>;
  * @return True iff the point is inside of the box.
  */
 template <class T, std::size_t N>
-bool in_box(Vector<T, N> const &pos, Box<T, N> const &box) {
+bool in_box(Utils::Vector<T, N> const &pos, Box<T, N> const &box) {
   return (pos >= box.first) and (pos < box.second);
 }
 
@@ -191,38 +164,90 @@ bool in_box(Vector<T, N> const &pos, Box<T, N> const &box) {
  *
  * @return True iff the point is inside of the box up to halo.
  */
-inline bool in_local_domain(Vector3d const &pos, double halo = 0.) {
-  auto const halo_vec = Vector3d::broadcast(halo);
+inline bool in_local_domain(Utils::Vector3d const &pos, double halo = 0.) {
+  auto const halo_vec = Utils::Vector3d::broadcast(halo);
 
   return in_box(
       pos, {local_geo.my_left() - halo_vec, local_geo.my_right() + halo_vec});
 }
 
-bool in_local_halo(Vector3d const &pos) {
+bool in_local_halo(Utils::Vector3d const &pos) {
   auto const halo = 0.5 * lb_lbfluid_get_agrid();
 
   return in_local_domain(pos, halo);
 }
 
-#ifdef ENGINE
-void add_swimmer_force(Particle const &p, double time_step, bool has_ghosts) {
-  if (p.p.swim.swimming) {
-    // calculate source position
-    const double direction =
-        double(p.p.swim.push_pull) * p.p.swim.dipole_length;
-    auto const director = p.r.calc_director();
-    auto const source_position = p.r.p + direction * director;
-    auto const force = p.p.swim.f_swim * director;
+/** @brief Return a vector of positions shifted by +,- box length in each
+ ** coordinate */
+std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d pos,
+                                               const BoxGeometry &box) {
+  std::vector<Utils::Vector3d> res;
+  for (int i : {-1, 0, 1}) {
+    for (int j : {-1, 0, 1}) {
+      for (int k : {-1, 0, 1}) {
+        Utils::Vector3d shift{{double(i), double(j), double(k)}};
+        Utils::Vector3d pos_shifted =
+            pos + Utils::hadamard_product(box.length(), shift);
 
-    if (in_local_halo(source_position)) {
-      add_md_force(source_position, force, time_step);
-    }
-    if (not has_ghosts) {
-      // couple positions shifted by one box length to add forces to ghost
-      // layers
-      for (auto pos : shifted_positions(source_position, box_geo)) {
-        add_md_force(pos, force, time_step);
+        if (box_geo.type() == BoxType::LEES_EDWARDS) {
+          auto le = box_geo.lees_edwards_bc();
+          auto normal_shift = (pos_shifted - pos)[le.shear_plane_normal];
+          if (normal_shift > std::numeric_limits<double>::epsilon())
+            pos_shifted[le.shear_direction] += le.pos_offset;
+          if (normal_shift < -std::numeric_limits<double>::epsilon())
+            pos_shifted[le.shear_direction] -= le.pos_offset;
+        }
+
+        if (in_local_halo(pos_shifted)) {
+          res.push_back(pos_shifted);
+        }
       }
+    }
+  }
+  return res;
+}
+
+/** @brief Return if locally there exists a physical particle
+ ** for a given (ghost) particle */
+bool is_ghost_for_local_particle(const Particle &p) {
+  return !cell_structure.get_local_particle(p.identity())->is_ghost();
+}
+
+/** @brief Determine if a given particle should be coupled.
+ ** In certain cases, there may be more than one ghost for the same particle.
+ ** To make sure, that these are only coupled once, ghosts' ids are stored
+ ** in an unordered_set. */
+bool should_be_coupled(const Particle &p,
+                       std::unordered_set<int> &coupled_ghost_particles) {
+  // always couple physical particles
+  if (not p.is_ghost()) {
+    return true;
+  }
+  // for ghosts check that we don't have the physical particle and
+  // that a ghost for the same particle has not yet been coupled
+  if ((not is_ghost_for_local_particle(p)) and
+      (coupled_ghost_particles.find(p.identity()) ==
+       coupled_ghost_particles.end())) {
+    coupled_ghost_particles.insert(p.identity());
+    return true;
+  }
+  return false;
+}
+
+#ifdef ENGINE
+void add_swimmer_force(Particle const &p, double time_step) {
+  if (p.swimming().swimming) {
+    // calculate source position
+    auto const magnitude = p.swimming().dipole_length;
+    auto const direction = static_cast<double>(p.swimming().push_pull);
+    auto const director = p.calc_director();
+    auto const source_position = p.pos() + direction * magnitude * director;
+    auto const force = p.swimming().f_swim * director;
+
+    // couple positions including shifts by one box length to add forces
+    // to ghost layers
+    for (auto pos : positions_in_halo(source_position, box_geo)) {
+      add_md_force(pos, force, time_step);
     }
   }
 }
@@ -242,39 +267,40 @@ Utils::Vector3d lb_particle_coupling_noise(bool enabled, int part_id,
 }
 
 void couple_particle(Particle &p, bool couple_virtual, double noise_amplitude,
-                     const OptionalCounter &rng_counter, double time_step,
-                     bool has_ghosts) {
+                     const OptionalCounter &rng_counter, double time_step) {
 
-  if (p.p.is_virtual and not couple_virtual)
+  if (p.is_virtual() and not couple_virtual)
     return;
 
-  /* Particles within one agrid of the outermost lattice point
-   * of the lb domain can contribute forces to the local lb due to
-   * interpolation on neighboring LB nodes. If the particle
-   * IS in the local domain, we also add the opposing
-   * force to the particle. */
-  if (in_local_halo(p.r.p)) {
-    auto const drag_force =
-        lb_drag_force(p, lb_particle_coupling_drift_vel_offset(p));
-    auto const random_force =
-        noise_amplitude * lb_particle_coupling_noise(noise_amplitude > 0.0,
-                                                     p.identity(), rng_counter);
-    auto const coupling_force = drag_force + random_force;
-    add_md_force(p.r.p, coupling_force, time_step);
-    if (in_local_domain(p.r.p) or not has_ghosts) {
-      /* Particle is in our LB volume, so this node
-       * is responsible to adding its force */
-      p.f.f += coupling_force;
-    }
-
-    if (not has_ghosts) {
-      // couple positions shifted by one box length to add forces to ghost
-      // layers
-      for (auto pos : shifted_positions(p.r.p, box_geo)) {
-        add_md_force(pos, coupling_force, time_step);
-      }
+  // Calculate coupling force
+  Utils::Vector3d coupling_force = {};
+  for (auto pos : positions_in_halo(p.pos(), box_geo)) {
+    if (in_local_halo(pos)) {
+      auto const drag_force =
+          lb_drag_force(p, pos, lb_particle_coupling_drift_vel_offset(p));
+      auto const random_force =
+          noise_amplitude * lb_particle_coupling_noise(noise_amplitude > 0.0,
+                                                       p.identity(),
+                                                       rng_counter);
+      coupling_force = drag_force + random_force;
+      break;
     }
   }
+
+  // couple positions including shifts by one box length to add
+  // forces to ghost layers
+  for (auto pos : positions_in_halo(p.pos(), box_geo)) {
+    if (in_local_domain(pos)) {
+      /* Particle is in our LB volume, so this node
+       * is responsible to adding its force */
+      p.force() += coupling_force;
+    }
+    add_md_force(pos, coupling_force, time_step);
+  }
+
+#ifdef ENGINE
+  add_swimmer_force(p, time_step);
+#endif
 }
 
 void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
@@ -284,11 +310,12 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
   if (lattice_switch == ActiveLB::WALBERLA) {
     if (lb_particle_coupling.couple_to_md) {
-      bool has_ghosts =
-          (cell_structure.decomposition_type() == CELL_STRUCTURE_DOMDEC);
-      if (not has_ghosts) {
+      bool using_regular_cell_structure =
+          (local_geo.cell_structure_type() ==
+           CellStructureType::CELL_STRUCTURE_REGULAR);
+      if (not using_regular_cell_structure) {
         if (n_nodes > 1) {
-          throw std::runtime_error("LB only works with domain decomposition, "
+          throw std::runtime_error("LB only works with regular decomposition, "
                                    "if using more than one MPI node");
         }
       }
@@ -304,23 +331,21 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
               ? std::sqrt(12. * 2. * lb_lbcoupling_get_gamma() * kT / time_step)
               : 0.0;
 
+      std::unordered_set<int> coupled_ghost_particles;
+
       /* Couple particles ranges */
       for (auto &p : particles) {
-        couple_particle(p, couple_virtual, noise_amplitude,
-                        lb_particle_coupling.rng_counter_coupling, time_step,
-                        has_ghosts);
-#ifdef ENGINE
-        add_swimmer_force(p, time_step, has_ghosts);
-#endif
+        if (should_be_coupled(p, coupled_ghost_particles)) {
+          couple_particle(p, couple_virtual, noise_amplitude,
+                          lb_particle_coupling.rng_counter_coupling, time_step);
+        }
       }
 
       for (auto &p : more_particles) {
-        couple_particle(p, couple_virtual, noise_amplitude,
-                        lb_particle_coupling.rng_counter_coupling, time_step,
-                        has_ghosts);
-#ifdef ENGINE
-        add_swimmer_force(p, time_step, has_ghosts);
-#endif
+        if (should_be_coupled(p, coupled_ghost_particles)) {
+          couple_particle(p, couple_virtual, noise_amplitude,
+                          lb_particle_coupling.rng_counter_coupling, time_step);
+        }
       }
     }
   }

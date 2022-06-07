@@ -116,33 +116,42 @@ pygments_style = 'sphinx'
 todo_include_todos = True
 
 # sphinxcontrib.bibtex options
-bibtex_bibfiles = ['zrefs.bib']
+bibtex_bibfiles = ['bibliography.bib']
+bibtex_encoding = 'latin'
+bibtex_default_style = 'plain'
+bibtex_reference_style = 'author_year'
 
 
 # -- Options for HTML output ----------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'classic'
+html_theme = 'alabaster'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
+sans_serif_fonts = "'Lucida Grande', 'Arial', sans-serif"
 html_theme_options = {
-    "stickysidebar": "true",
-    "sidebarwidth": 320,
+    'sidebar_width': '260px',  # this value must be specified in custom.css too
+    'page_width': '1120px',
+    'body_max_width': 'auto',
+    'font_family': sans_serif_fonts,
+    'font_size': '17px',
+    'caption_font_family': sans_serif_fonts,
+    'caption_font_size': '17px',
+    'head_font_family': sans_serif_fonts,
 }
-
 
 # Add any paths that contain custom themes here, relative to this directory.
 #html_theme_path = []
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-html_title = f"{project} documentation"
+#html_title = f"{project} v{release} documentation"
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
-html_short_title = f"{project} v{release} documentation"
+#html_short_title = f"{project} v{release} documentation"
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
@@ -172,9 +181,8 @@ html_last_updated_fmt = '%b %d, %Y'
 #html_use_smartypants = True
 
 # Custom sidebar templates, maps document names to template names.
-#html_sidebars = {}
 html_sidebars = {
-    '**': ['localtoc.html','searchbox.html']
+    '**': ['localtoc.html', 'searchbox.html']
 }
 
 # Additional templates that should be rendered to pages, maps page names to
@@ -250,12 +258,12 @@ napoleon_use_param = False
 
 # Suppress warnings for features not compiled in
 # https://stackoverflow.com/questions/12206334/sphinx-autosummary-toctree-contains-reference-to-nonexisting-document-warnings
-autodoc_mock_imports = ['featuredefs', 'matplotlib', 'OpenGL', 'mayavi', 'pyface', 'tvtk', 'vtk']
+autodoc_mock_imports = ['featuredefs', 'matplotlib', 'OpenGL', 'vtk']
 
 # Add custom stylesheets
 def setup(app):
-    app.add_css_file('bibtex.css')
     app.add_css_file('blockquotes.css')
+    app.add_css_file('custom.css')
 
 
 # -- Options for Cython ---------------------------------------------------

@@ -33,7 +33,7 @@ namespace Shapes {
 
 class Ellipsoid : public Shape {
 public:
-  Ellipsoid() : m_ellipsoid(new ::Shapes::Ellipsoid()) {
+  Ellipsoid() : m_ellipsoid(std::make_shared<::Shapes::Ellipsoid>()) {
     add_parameters({{"center", m_ellipsoid->center()},
                     {"a",
                      [this](Variant const &v) {

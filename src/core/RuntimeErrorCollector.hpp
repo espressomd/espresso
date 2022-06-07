@@ -74,6 +74,11 @@ public:
    */
   void clear();
 
+  /**
+   * @brief Flush error messages to standard error.
+   */
+  void flush();
+
   std::vector<RuntimeError> gather();
   void gather_local();
 

@@ -412,7 +412,7 @@ class LBFluidWalberla(HydrodynamicInteraction):
     Initialize the lattice-Boltzmann method for hydrodynamic flow using waLBerla.
     See :class:`HydrodynamicInteraction` for the list of parameters. If argument
     ``lattice`` is not provided, one will be default constructed if an argument
-    ``agrid`` is provided.
+    ``agrid`` is provided.
 
     """
     _so_name = "walberla::FluidWalberla"

@@ -56,11 +56,11 @@ class IntegratorNPT(ut.TestCase):
             self.system.integrator.set_isotropic_npt(
                 ext_pressure=1, piston=1, direction=[True, False])
 
-    def test_integrator_recovery(self):
+    def test_00_integrator_recovery(self):
         # the system is still in a valid state after a failure
         system = self.system
         np.random.seed(42)
-        npt_params = {'ext_pressure': 0.001, 'piston': 0.001}
+        npt_params = {'ext_pressure': 0.01, 'piston': 0.001}
         system.box_l = [6] * 3
         system.part.add(pos=np.random.uniform(0, system.box_l[0], (11, 3)))
         system.non_bonded_inter[0, 0].lennard_jones.set_params(
@@ -69,7 +69,10 @@ class IntegratorNPT(ut.TestCase):
         system.integrator.set_isotropic_npt(**npt_params)
 
         # get the equilibrium box length for the chosen NpT parameters
-        system.integrator.run(2000)
+        system.integrator.run(500)
+        # catch unstable simulation early (when the DP3M test case ran first)
+        assert system.box_l[0] < 20.
+        system.integrator.run(1500)
         box_l_ref = system.box_l[0]
 
         # resetting the NpT integrator with incorrect values doesn't leave the
@@ -123,8 +126,7 @@ class IntegratorNPT(ut.TestCase):
         # set up particles
         system.box_l = [6] * 3
         partcl = system.part.add(
-            pos=np.random.uniform(
-                0, system.box_l[0], (11, 3)))
+            pos=np.random.uniform(0, system.box_l[0], (11, 3)))
         if espressomd.has_features("P3M"):
             partcl.q = np.sign(np.arange(-5, 6))
         if espressomd.has_features("DP3M"):
@@ -137,15 +139,14 @@ class IntegratorNPT(ut.TestCase):
         system.integrator.set_vv()
         # combine NpT with a P3M algorithm
         system.actors.add(p3m)
-        system.integrator.run(20)
+        system.integrator.run(10)
         system.integrator.set_isotropic_npt(ext_pressure=0.001, piston=0.001,
                                             **npt_kwargs)
         system.thermostat.set_npt(kT=1.0, gamma0=2, gammav=0.04, seed=42)
-        system.integrator.run(20)
+        system.integrator.run(10)
 
     @utx.skipIfMissingFeatures(["DP3M"])
-    def test_dp3m_exception(self):
-        # NpT is compatible with DP3M CPU (only cubic box)
+    def test_npt_dp3m_cpu(self):
         import espressomd.magnetostatics
         dp3m = espressomd.magnetostatics.DipolarP3M(
             prefactor=1.0, accuracy=1e-2, mesh=3 * [36], cao=7, r_cut=1.0,
@@ -154,14 +155,11 @@ class IntegratorNPT(ut.TestCase):
             self.run_with_p3m(
                 dp3m, cubic_box=False, direction=(False, True, True))
         self.tearDown()
-        try:
-            self.run_with_p3m(dp3m)
-        except Exception as err:
-            self.fail(f'integrator raised ValueError("{err}")')
+        # should not raise an exception
+        self.run_with_p3m(dp3m)
 
     @utx.skipIfMissingFeatures(["P3M"])
-    def test_p3m_exception(self):
-        # NpT is compatible with P3M CPU (only cubic box)
+    def test_npt_p3m_cpu(self):
         import espressomd.electrostatics
         p3m = espressomd.electrostatics.P3M(
             prefactor=1.0, accuracy=1e-2, mesh=3 * [8], cao=3, r_cut=0.36,
@@ -170,21 +168,22 @@ class IntegratorNPT(ut.TestCase):
             self.run_with_p3m(
                 p3m, cubic_box=False, direction=(False, True, True))
         self.tearDown()
-        try:
-            self.run_with_p3m(p3m)
-        except Exception as err:
-            self.fail(f'integrator raised ValueError("{err}")')
+        # should not raise an exception
+        self.run_with_p3m(p3m)
 
     @utx.skipIfMissingGPU()
     @utx.skipIfMissingFeatures(["P3M"])
-    def test_p3mgpu_exception(self):
-        # NpT is not compatible with P3M GPU (no energies)
+    def test_npt_p3m_gpu(self):
         import espressomd.electrostatics
         p3m = espressomd.electrostatics.P3MGPU(
-            prefactor=1.0, accuracy=1e-2, mesh=3 * [24], cao=2, r_cut=0.24,
-            alpha=8.26, tune=False)
-        with self.assertRaisesRegex(RuntimeError, 'NpT virial cannot be calculated on P3M GPU'):
-            self.run_with_p3m(p3m)
+            prefactor=1.0, accuracy=1e-2, mesh=3 * [8], cao=3, r_cut=0.36,
+            alpha=5.35, tune=False)
+        with self.assertRaisesRegex(RuntimeError, 'If electrostatics is being used you must use the cubic box NpT'):
+            self.run_with_p3m(
+                p3m, cubic_box=False, direction=(False, True, True))
+        self.tearDown()
+        # should not raise an exception
+        self.run_with_p3m(p3m)
 
 
 if __name__ == "__main__":

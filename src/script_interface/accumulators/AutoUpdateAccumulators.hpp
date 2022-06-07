@@ -37,6 +37,11 @@ class AutoUpdateAccumulators : public ObjectList<AccumulatorBase> {
   remove_in_core(std::shared_ptr<AccumulatorBase> const &obj_ptr) override {
     ::Accumulators::auto_update_remove(obj_ptr->accumulator().get());
   }
+
+private:
+  // disable serialization: pickling done by the python interface
+  std::string get_internal_state() const override { return {}; }
+  void set_internal_state(std::string const &state) override {}
 };
 } /* namespace Accumulators */
 } /* namespace ScriptInterface */

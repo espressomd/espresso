@@ -28,6 +28,7 @@
  */
 
 #include "LatticeWalberla.hpp"
+#include "LeesEdwardsPack.hpp"
 #include "VTKHandle.hpp"
 
 #include <utils/Vector.hpp>
@@ -94,7 +95,8 @@ public:
 
   /** @brief Get node populations. */
   virtual boost::optional<std::vector<double>>
-  get_node_pop(const Utils::Vector3i &node) const = 0;
+  get_node_pop(const Utils::Vector3i &node,
+               bool consider_ghosts = false) const = 0;
 
   /** @brief Set node populations. */
   virtual bool set_node_pop(const Utils::Vector3i &node,
@@ -144,6 +146,10 @@ public:
 
   /** @brief Configure a thermalized collision model. */
   virtual void set_collision_model(double kT, unsigned int seed) = 0;
+
+  /** @brief Configure a thermalized collision model for Lees-Edwards. */
+  virtual void
+  set_collision_model(std::unique_ptr<LeesEdwardsPack> &&lees_edwards_pack) = 0;
 
   /** @brief Get node pressure tensor. */
   virtual boost::optional<Utils::VectorXd<9>>

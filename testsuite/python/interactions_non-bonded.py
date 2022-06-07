@@ -23,6 +23,240 @@ import unittest_decorators as utx
 import tests_common
 
 
+#
+# Analytical expressions for interactions
+#
+
+
+# Lennard-Jones Cosine
+
+
+def lj_cos_potential(r, epsilon, sigma, cutoff, offset):
+    V = 0.
+    r_min = offset + np.power(2., 1. / 6.) * sigma
+    r_cut = cutoff + offset
+    if r < r_min:
+        V = tests_common.lj_potential(r, epsilon=epsilon, sigma=sigma,
+                                      cutoff=cutoff, offset=offset, shift=0.)
+    elif r < r_cut:
+        alpha = np.pi / \
+            (np.power(r_cut - offset, 2) - np.power(r_min - offset, 2))
+        beta = np.pi - np.power(r_min - offset, 2) * alpha
+        V = 0.5 * epsilon * \
+            (np.cos(alpha * np.power(r - offset, 2) + beta) - 1.)
+    return V
+
+
+def lj_cos_force(espressomd, r, epsilon, sigma, cutoff, offset):
+    f = 0.
+    r_min = offset + np.power(2., 1. / 6.) * sigma
+    r_cut = cutoff + offset
+    if r < r_min:
+        f = tests_common.lj_force(espressomd, r, epsilon=epsilon, sigma=sigma,
+                                  cutoff=cutoff, offset=offset)
+    elif r < r_cut:
+        alpha = np.pi / \
+            (np.power(r_cut - offset, 2) - np.power(r_min - offset, 2))
+        beta = np.pi - np.power(r_min - offset, 2) * alpha
+        f = (r - offset) * alpha * epsilon * \
+            np.sin(alpha * np.power(r - offset, 2) + beta)
+    return f
+
+# Lennard-Jones Cosine^2
+
+
+def lj_cos2_potential(r, epsilon, sigma, offset, width):
+    V = 0.
+    r_min = offset + np.power(2., 1. / 6.) * sigma
+    r_cut = r_min + width
+    if r < r_min:
+        V = tests_common.lj_potential(r, epsilon=epsilon, sigma=sigma,
+                                      offset=offset, cutoff=r_cut, shift=0.)
+    elif r < r_cut:
+        V = -epsilon * np.power(np.cos(np.pi /
+                                       (2. * width) * (r - r_min)), 2)
+    return V
+
+
+def lj_cos2_force(espressomd, r, epsilon, sigma, offset, width):
+    f = 0.
+    r_min = offset + np.power(2., 1. / 6.) * sigma
+    r_cut = r_min + width
+    if r < r_min:
+        f = tests_common.lj_force(espressomd, r, epsilon=epsilon, sigma=sigma,
+                                  cutoff=r_cut, offset=offset)
+    elif r < r_cut:
+        f = - np.pi * epsilon * \
+            np.sin(np.pi * (r - r_min) / width) / (2. * width)
+    return f
+
+# Smooth-Step
+
+
+def smooth_step_potential(r, eps, sig, cutoff, d, n, k0):
+    V = 0.
+    if r < cutoff:
+        V = np.power(d / r, n) + eps / \
+            (1 + np.exp(2 * k0 * (r - sig)))
+    return V
+
+
+def smooth_step_force(r, eps, sig, cutoff, d, n, k0):
+    f = 0.
+    if r < cutoff:
+        f = n * d / r**2 * np.power(d / r, n - 1) + 2 * k0 * eps * np.exp(
+            2 * k0 * (r - sig)) / (1 + np.exp(2 * k0 * (r - sig))**2)
+    return f
+
+# BMHTF
+
+
+def bmhtf_potential(r, a, b, c, d, sig, cutoff):
+    V = 0.
+    if r == cutoff:
+        V = a * np.exp(b * (sig - r)) - c * np.power(
+            r, -6) - d * np.power(r, -8)
+    if r < cutoff:
+        V = a * np.exp(b * (sig - r)) - c * np.power(
+            r, -6) - d * np.power(r, -8)
+        V -= bmhtf_potential(cutoff, a, b, c, d, sig, cutoff)
+    return V
+
+
+def bmhtf_force(r, a, b, c, d, sig, cutoff):
+    f = 0.
+    if r < cutoff:
+        f = a * b * np.exp(b * (sig - r)) - 6 * c * np.power(
+            r, -7) - 8 * d * np.power(r, -9)
+    return f
+
+# Morse
+
+
+def morse_potential(r, eps, alpha, cutoff, rmin=0):
+    V = 0.
+    if r < cutoff:
+        V = eps * (np.exp(-2. * alpha * (r - rmin)) -
+                   2 * np.exp(-alpha * (r - rmin)))
+        V -= eps * (np.exp(-2. * alpha * (cutoff - rmin)) -
+                    2 * np.exp(-alpha * (cutoff - rmin)))
+    return V
+
+
+def morse_force(r, eps, alpha, cutoff, rmin=0):
+    f = 0.
+    if r < cutoff:
+        f = 2. * np.exp((rmin - r) * alpha) * \
+            (np.exp((rmin - r) * alpha) - 1) * alpha * eps
+    return f
+
+# Buckingham
+
+
+def buckingham_potential(r, a, b, c, d, cutoff, discont, shift):
+    V = 0.
+    if r < discont:
+        m = - buckingham_force(
+            discont, a, b, c, d, cutoff, discont, shift)
+        c = buckingham_potential(
+            discont, a, b, c, d, cutoff, discont, shift) - m * discont
+        V = m * r + c
+    if (r >= discont) and (r < cutoff):
+        V = a * np.exp(- b * r) - c * np.power(
+            r, -6) - d * np.power(r, -4) + shift
+    return V
+
+
+def buckingham_force(r, a, b, c, d, cutoff, discont, shift):
+    f = 0.
+    if r < discont:
+        f = buckingham_force(
+            discont, a, b, c, d, cutoff, discont, shift)
+    if (r >= discont) and (r < cutoff):
+        f = a * b * np.exp(- b * r) - 6 * c * np.power(
+            r, -7) - 4 * d * np.power(r, -5)
+    return f
+
+# Soft-sphere
+
+
+def soft_sphere_potential(r, a, n, cutoff, offset=0):
+    V = 0.
+    if r < offset + cutoff:
+        V = a * np.power(r - offset, -n)
+    return V
+
+
+def soft_sphere_force(r, a, n, cutoff, offset=0):
+    f = 0.
+    if (r > offset) and (r < offset + cutoff):
+        f = n * a * np.power(r - offset, -(n + 1))
+    return f
+
+# Hertzian
+
+
+def hertzian_potential(r, eps, sig):
+    V = 0.
+    if r < sig:
+        V = eps * np.power(1 - r / sig, 5. / 2.)
+    return V
+
+
+def hertzian_force(r, eps, sig):
+    f = 0.
+    if r < sig:
+        f = 5. / 2. * eps / sig * np.power(1 - r / sig, 3. / 2.)
+    return f
+
+# Gaussian
+
+
+def gaussian_potential(r, eps, sig, cutoff):
+    V = 0.
+    if r < cutoff:
+        V = eps * np.exp(-np.power(r / sig, 2) / 2)
+    return V
+
+
+def gaussian_force(r, eps, sig, cutoff):
+    f = 0.
+    if r < cutoff:
+        f = eps * r / sig**2 * np.exp(-np.power(r / sig, 2) / 2)
+    return f
+
+
+def gay_berne_potential(r_ij, u_i, u_j, epsilon_0, sigma_0, mu, nu, k_1, k_2):
+    r_normed = r_ij / np.linalg.norm(r_ij)
+    r_u_i = np.dot(r_normed, u_i)
+    r_u_j = np.dot(r_normed, u_j)
+    u_i_u_j = np.dot(u_i, u_j)
+
+    chi = (k_1**2 - 1.) / (k_1**2 + 1.)
+    chi_d = (k_2**(1. / mu) - 1) / (k_2**(1. / mu) + 1)
+
+    sigma = sigma_0 \
+        / np.sqrt(
+            (1 - 0.5 * chi * (
+                (r_u_i + r_u_j)**2 / (1 + chi * u_i_u_j) +
+                (r_u_i - r_u_j)**2 / (1 - chi * u_i_u_j))))
+
+    epsilon = epsilon_0 *\
+        (1 - chi**2 * u_i_u_j**2)**(-nu / 2.) *\
+        (1 - chi_d / 2. * (
+            (r_u_i + r_u_j)**2 / (1 + chi_d * u_i_u_j) +
+            (r_u_i - r_u_j)**2 / (1 - chi_d * u_i_u_j)))**mu
+
+    rr = np.linalg.norm((np.linalg.norm(r_ij) - sigma + sigma_0) / sigma_0)
+
+    return 4. * epsilon * (rr**-12 - rr**-6)
+
+
+#
+# Test case
+#
+
+
 class InteractionsNonBondedTest(ut.TestCase):
     system = espressomd.System(box_l=3 * [10.])
     system.cell_system.skin = 0.
@@ -52,10 +286,6 @@ class InteractionsNonBondedTest(ut.TestCase):
     def assertItemsFractionAlmostEqual(self, a, b):
         for i, ai in enumerate(a):
             self.assertFractionAlmostEqual(ai, b[i])
-
-    #
-    # Tests
-    #
 
     # Test Generic Lennard-Jones Potential
     @utx.skipIfMissingFeatures("LENNARD_JONES_GENERIC")
@@ -139,8 +369,8 @@ class InteractionsNonBondedTest(ut.TestCase):
                        "sigma": 0.73,
                        "cutoff": 1.523,
                        "offset": 0.223},
-                      force_kernel=tests_common.lj_cos_force,
-                      energy_kernel=tests_common.lj_cos_potential,
+                      force_kernel=lj_cos_force,
+                      energy_kernel=lj_cos_potential,
                       n_steps=175,
                       force_kernel_needs_espressomd=True)
 
@@ -153,8 +383,8 @@ class InteractionsNonBondedTest(ut.TestCase):
                        "sigma": 0.73,
                        "width": 1.523,
                        "offset": 0.321},
-                      force_kernel=tests_common.lj_cos2_force,
-                      energy_kernel=tests_common.lj_cos2_potential,
+                      force_kernel=lj_cos2_force,
+                      energy_kernel=lj_cos2_potential,
                       n_steps=267,
                       force_kernel_needs_espressomd=True)
 
@@ -169,8 +399,8 @@ class InteractionsNonBondedTest(ut.TestCase):
                        "d": 2.52,
                        "n": 11,
                        "k0": 2.13},
-                      force_kernel=tests_common.smooth_step_force,
-                      energy_kernel=tests_common.smooth_step_potential,
+                      force_kernel=smooth_step_force,
+                      energy_kernel=smooth_step_potential,
                       n_steps=126)
 
     # Test BMHTF Potential
@@ -184,8 +414,8 @@ class InteractionsNonBondedTest(ut.TestCase):
                        "d": 3.33,
                        "sig": 0.123,
                        "cutoff": 1.253},
-                      force_kernel=tests_common.bmhtf_force,
-                      energy_kernel=tests_common.bmhtf_potential,
+                      force_kernel=bmhtf_force,
+                      energy_kernel=bmhtf_potential,
                       n_steps=126)
 
     # Test Morse Potential
@@ -197,8 +427,8 @@ class InteractionsNonBondedTest(ut.TestCase):
                        "alpha": 3.03,
                        "rmin": 0.123,
                        "cutoff": 1.253},
-                      force_kernel=tests_common.morse_force,
-                      energy_kernel=tests_common.morse_potential,
+                      force_kernel=morse_force,
+                      energy_kernel=morse_potential,
                       n_steps=126)
 
     # Test Buckingham Potential
@@ -213,8 +443,8 @@ class InteractionsNonBondedTest(ut.TestCase):
                        "discont": 1.03,
                        "cutoff": 2.253,
                        "shift": 0.133},
-                      force_kernel=tests_common.buckingham_force,
-                      energy_kernel=tests_common.buckingham_potential,
+                      force_kernel=buckingham_force,
+                      energy_kernel=buckingham_potential,
                       n_steps=226,
                       force_kernel_remove_shift=False)
 
@@ -227,8 +457,8 @@ class InteractionsNonBondedTest(ut.TestCase):
                        "n": 3.03,
                        "cutoff": 1.123,
                        "offset": 0.123},
-                      force_kernel=tests_common.soft_sphere_force,
-                      energy_kernel=tests_common.soft_sphere_potential,
+                      force_kernel=soft_sphere_force,
+                      energy_kernel=soft_sphere_potential,
                       n_steps=113,
                       n_initial_steps=12)
 
@@ -239,8 +469,8 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.run_test("hertzian",
                       {"eps": 6.92,
                        "sig": 2.432},
-                      force_kernel=tests_common.hertzian_force,
-                      energy_kernel=tests_common.hertzian_potential,
+                      force_kernel=hertzian_force,
+                      energy_kernel=hertzian_potential,
                       n_steps=244)
 
     # Test Gaussian Potential
@@ -251,8 +481,8 @@ class InteractionsNonBondedTest(ut.TestCase):
                       {"eps": 6.92,
                        "sig": 4.03,
                        "cutoff": 1.243},
-                      force_kernel=tests_common.gaussian_force,
-                      energy_kernel=tests_common.gaussian_potential,
+                      force_kernel=gaussian_force,
+                      energy_kernel=gaussian_potential,
                       n_steps=125)
 
     # Test the Gay-Berne potential and the resulting force and torque
@@ -310,10 +540,10 @@ class InteractionsNonBondedTest(ut.TestCase):
             k_1, k_2, mu, nu, sigma_0, epsilon_0, cut = gb_params
             r_cut = r * cut / np.linalg.norm(r)
 
-            E_ref = tests_common.gay_berne_potential(
+            E_ref = gay_berne_potential(
                 r, director1, director2, epsilon_0, sigma_0, mu, nu, k_1, k_2)
 
-            E_ref -= tests_common.gay_berne_potential(
+            E_ref -= gay_berne_potential(
                 r_cut, director1, director2, epsilon_0, sigma_0, mu, nu,
                 k_1, k_2)
             return E_ref

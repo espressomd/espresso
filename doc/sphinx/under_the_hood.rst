@@ -3,10 +3,6 @@
 Under the hood
 ==============
 
--  Implementation issues that are interesting for the user
-
--  Main loop in pseudo code (for comparison)
-
 .. _Internal particle organization:
 
 Internal particle organization
@@ -21,13 +17,13 @@ substructures (e.g. ``ParticlePosition``, ``ParticleForce`` or
 ``ParticleProperties``), which in turn represent basic physical properties
 such as position, force or charge. The particles are organized in one or
 more particle lists on each node, called ``CellPList``. The cells are
-arranged by several possible systems, as described in :ref:`Cellsystems`.
+arranged by several possible systems, as described in :ref:`Cell systems`.
 A cell system defines a way the particles are stored in |es|, i.e.
 how they are distributed onto the processor nodes and how they are
 organized on each of them. Moreover a cell system also defines
 procedures to efficiently calculate the force, energy and pressure for
 the short ranged interactions, since these can be heavily optimized
-depending on the cell system. For example, the domain decomposition
+depending on the cell system. For example, the regular decomposition
 cellsystem allows an order N interactions evaluation.
 
 Technically, a cell is organized as a dynamically growing array, not as
@@ -41,7 +37,7 @@ without direct knowledge of the currently used cell system. Only the
 force, energy and pressure loops are implemented separately for each
 cell model as explained above.
 
-The domain decomposition or link cell algorithm is implemented such
+The regular decomposition or link cell algorithm is implemented such
 that the cells equal the cells, i.e. each cell is a separate particle
 list. For an example let us assume that the simulation box has size
 :math:`20\times 20\times 20` and that we assign 2 processors to the
@@ -52,10 +48,9 @@ coordinate, allowing for a small skin of 0.05. If one chooses only 6
 boxes in the first coordinate, the skin depth increases to 0.467. In
 this example we assume that the number of cells in the first coordinate
 was chosen to be 6 and that the cells are cubic. One would then organize
-the cells on each node in a :math:`6\times
-12\times 12` cell grid embedded at the center of a
-:math:`8\times 14 \times
-14` grid. The additional cells around the cells containing the particles
+the cells on each node in a :math:`6 \times 12 \times 12` cell grid
+embedded at the center of a :math:`8 \times 14 \times 14` grid.
+The additional cells around the cells containing the particles
 represent the ghost shell in which the information of the ghost
 particles from the neighboring nodes is stored. Therefore the particle
 information stored on each node resides in 1568 particle lists of which
@@ -108,7 +103,7 @@ memory organization of |es|, the particles are accessed in a virtually
 linear order. Because the force calculation goes through the cells in a
 linear fashion, all accesses to a single cell occur close in time, for
 the force calculation of the cell itself as well as for its neighbors.
-Using the domain decomposition cell scheme, two cell layers have to be
+Using the regular decomposition cell scheme, two cell layers have to be
 kept in the processor cache. For 10000 particles and a typical cell grid
 size of 20, these two cell layers consume roughly 200 KBytes, which
 nearly fits into the L2 cache. Therefore every cell has to be read from

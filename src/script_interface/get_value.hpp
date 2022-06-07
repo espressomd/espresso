@@ -38,15 +38,88 @@
 
 namespace ScriptInterface {
 namespace detail {
-struct type_label_visitor : boost::static_visitor<std::string> {
+
+/**
+ * @brief Convert a demangled symbol into a human-readable name that omits
+ * container allocators, key hashes and implementation-specific namespaces.
+ * When the data type involves the @ref Variant type, it is recursively
+ * replaced by the string "ScriptInterface::Variant".
+ */
+namespace demangle {
+
+/** @brief Simplify the demangled symbol of an object. */
+template <typename T> auto simplify_symbol(T const *) {
+  auto constexpr is_string = std::is_same<T, std::string>::value;
+  auto const symbol_for_variant = Utils::demangle<Variant>();
+  auto const name_for_variant = std::string("ScriptInterface::Variant");
+  auto name = (is_string) ? std::string{"std::string"} : Utils::demangle<T>();
+  for (std::string::size_type pos{};
+       (pos = name.find(symbol_for_variant, pos)) != name.npos;
+       pos += name_for_variant.length()) {
+    name.replace(pos, symbol_for_variant.length(), name_for_variant);
+  }
+  return name;
+}
+
+/** @overload */
+template <typename T> auto simplify_symbol(std::vector<T> const *) {
+  auto const name_val = simplify_symbol(static_cast<T *>(nullptr));
+  return "std::vector<" + name_val + ">";
+}
+
+/** @overload */
+template <typename K, typename V>
+auto simplify_symbol(std::unordered_map<K, V> const *) {
+  auto const name_key = simplify_symbol(static_cast<K *>(nullptr));
+  auto const name_val = simplify_symbol(static_cast<V *>(nullptr));
+  return "std::unordered_map<" + name_key + ", " + name_val + ">";
+}
+
+struct simplify_symbol_visitor : boost::static_visitor<std::string> {
   template <class T> std::string operator()(const T &) const {
-    return Utils::demangle<T>();
+    return simplify_symbol(static_cast<T *>(nullptr));
   }
 };
 
-inline std::string type_label(const Variant &v) {
-  return boost::apply_visitor(type_label_visitor{}, v);
+/** @brief Simplify the demangled symbol of an object wrapped in a variant. */
+inline auto simplify_symbol_variant(Variant const &v) {
+  return boost::apply_visitor(simplify_symbol_visitor{}, v);
 }
+
+/** @brief Simplify the demangled symbol of a container @c value_type. */
+template <typename T> auto simplify_symbol_containee(T const *) {
+  return std::string("");
+}
+
+/** @overload */
+template <typename T> auto simplify_symbol_containee(std::vector<T> const *) {
+  auto const name_val = simplify_symbol(static_cast<T *>(nullptr));
+  return name_val;
+}
+
+/** @overload */
+template <typename K, typename V>
+auto simplify_symbol_containee(std::unordered_map<K, V> const *) {
+  auto const name_key = simplify_symbol(static_cast<K *>(nullptr));
+  auto const name_val = simplify_symbol(static_cast<V *>(nullptr));
+  return name_key + "' or '" + name_val;
+}
+
+struct simplify_symbol_containee_visitor : boost::static_visitor<std::string> {
+  template <class T> std::string operator()(const T &) const {
+    return simplify_symbol_containee(static_cast<T *>(nullptr));
+  }
+};
+
+/**
+ * @brief Simplify the demangled symbol of a container @c value_type wrapped
+ * in a variant.
+ */
+inline auto simplify_symbol_containee_variant(Variant const &v) {
+  return boost::apply_visitor(simplify_symbol_containee_visitor{}, v);
+}
+
+} // namespace demangle
 
 /*
  * Allows
@@ -137,6 +210,9 @@ struct GetVectorOrEmpty : boost::static_visitor<std::vector<T>> {
 
   /* Standard case, correct type */
   std::vector<T> operator()(std::vector<T> const &v) const { return v; }
+
+  template <typename V = T,
+            std::enable_if_t<!std::is_same<V, Variant>::value, bool> = true>
   std::vector<T> operator()(std::vector<Variant> const &vv) const {
     std::vector<T> ret(vv.size());
 
@@ -147,17 +223,10 @@ struct GetVectorOrEmpty : boost::static_visitor<std::vector<T>> {
   }
 };
 
-/* std::vector cases
- * We implicitly transform an empty vector<Variant> into an empty vector<T>. */
-template <> struct get_value_helper<std::vector<int>, void> {
-  std::vector<int> operator()(Variant const &v) const {
-    return boost::apply_visitor(GetVectorOrEmpty<int>{}, v);
-  }
-};
-
-template <> struct get_value_helper<std::vector<double>, void> {
-  std::vector<double> operator()(Variant const &v) const {
-    return boost::apply_visitor(GetVectorOrEmpty<double>{}, v);
+/* std::vector cases */
+template <typename T> struct get_value_helper<std::vector<T>, void> {
+  std::vector<T> operator()(Variant const &v) const {
+    return boost::apply_visitor(GetVectorOrEmpty<T>{}, v);
   }
 };
 
@@ -172,12 +241,30 @@ struct GetMapOrEmpty : boost::static_visitor<std::unordered_map<K, T>> {
   std::unordered_map<K, T> operator()(std::unordered_map<K, T> const &v) const {
     return v;
   }
+
+  template <typename V = T,
+            std::enable_if_t<!std::is_same<V, Variant>::value, bool> = true>
+  std::unordered_map<K, T>
+  operator()(std::unordered_map<K, Variant> const &v) const {
+    std::unordered_map<K, T> ret;
+    for (auto it = v.begin(); it != v.end(); ++it) {
+      ret.insert({it->first, get_value_helper<T>{}(it->second)});
+    }
+    return ret;
+  }
 };
 
 /* std::unordered_map cases */
-template <> struct get_value_helper<std::unordered_map<int, Variant>, void> {
-  std::unordered_map<int, Variant> operator()(Variant const &v) const {
-    return boost::apply_visitor(GetMapOrEmpty<int, Variant>{}, v);
+template <typename T>
+struct get_value_helper<std::unordered_map<int, T>, void> {
+  std::unordered_map<int, T> operator()(Variant const &v) const {
+    return boost::apply_visitor(GetMapOrEmpty<int, T>{}, v);
+  }
+};
+template <typename T>
+struct get_value_helper<std::unordered_map<std::string, T>, void> {
+  std::unordered_map<std::string, T> operator()(Variant const &v) const {
+    return boost::apply_visitor(GetMapOrEmpty<std::string, T>{}, v);
   }
 };
 
@@ -213,24 +300,31 @@ struct get_value_helper<
  * @brief Re-throw a @c boost::bad_get exception wrapped in an @ref Exception.
  * Write a custom error message for invalid conversions due to type mismatch
  * and due to nullptr values, possibly with context information if the variant
- * is in a container.
- * @tparam T     Type which the variant was supposed to convert to
- * @tparam U     Type of the container the variant is contained in
+ * is a container.
+ * @tparam T     Which type the variant was supposed to convert to
  */
-template <typename T, typename U = void>
-inline void handle_bad_get(Variant const &v) {
-  using Utils::demangle;
-  auto const what = "Provided argument of type " + type_label(v);
-  auto const context =
-      (std::is_void<U>::value)
-          ? ""
-          : " (raised during the creation of a " + demangle<U>() + ")";
+template <typename T> inline void handle_bad_get(Variant const &v) {
+  auto const container_name = demangle::simplify_symbol_variant(v);
+  auto const containee_name = demangle::simplify_symbol_containee_variant(v);
+  auto const expected_containee_name =
+      demangle::simplify_symbol_containee(static_cast<T *>(nullptr));
+  auto const from_container = !containee_name.empty();
+  auto const to_container = !expected_containee_name.empty();
+  auto const what = "Provided argument of type '" + container_name + "'";
   try {
     throw;
   } catch (bad_get_nullptr const &) {
-    throw Exception(what + " is a null pointer" + context);
+    auto const item_error = (to_container) ? " contains a value that" : "";
+    throw Exception(what + item_error + " is a null pointer");
   } catch (boost::bad_get const &) {
-    throw Exception(what + " is not convertible to " + demangle<T>() + context);
+    auto const non_convertible = std::string(" is not convertible to ");
+    auto item_error = std::string("");
+    if (from_container and to_container) {
+      item_error += " because it contains a value that";
+      item_error += non_convertible + "'" + expected_containee_name + "'";
+    }
+    auto const target = demangle::simplify_symbol(static_cast<T *>(nullptr));
+    throw Exception(what + non_convertible + "'" + target + "'" + item_error);
   }
 }
 
@@ -241,9 +335,9 @@ inline void handle_bad_get(Variant const &v) {
  *
  * This is a wrapper around boost::get that allows us to
  * customize the behavior for different types. This is
- * needed e.g. to deal with Vector types that are not
- * explicitly contained in Variant, but can easily
- * be converted.
+ * needed e.g. to deal with containers whose elements
+ * have mixed types that are implicitly convertible
+ * to a requested type.
  */
 template <typename T> T get_value(Variant const &v) {
   try {
@@ -255,25 +349,18 @@ template <typename T> T get_value(Variant const &v) {
 }
 
 template <typename K, typename V>
-std::unordered_map<K, V> get_map(std::unordered_map<K, Variant> const &v) {
-  std::unordered_map<K, V> ret;
-  auto it = v.begin();
-  try {
-    for (; it != v.end(); ++it) {
-      ret.insert({it->first, detail::get_value_helper<V>{}(it->second)});
-    }
-  } catch (...) {
-    detail::handle_bad_get<V, std::unordered_map<K, V>>(v);
-    throw;
+auto make_unordered_map_of_variants(std::unordered_map<K, V> const &v) {
+  std::unordered_map<K, Variant> ret;
+  for (auto const &it : v) {
+    ret.insert({it.first, Variant(it.second)});
   }
   return ret;
 }
 
-template <typename K, typename V>
-std::unordered_map<K, Variant> make_map(std::unordered_map<K, V> const &v) {
-  std::unordered_map<K, Variant> ret;
-  for (auto const &it : v) {
-    ret.insert({it.first, Variant(it.second)});
+template <typename T> auto make_vector_of_variants(std::vector<T> const &v) {
+  std::vector<Variant> ret;
+  for (auto const &item : v) {
+    ret.emplace_back(item);
   }
   return ret;
 }

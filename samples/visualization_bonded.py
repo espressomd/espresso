@@ -22,18 +22,9 @@ import espressomd
 import espressomd.interactions
 import espressomd.visualization
 import numpy as np
-import argparse
 
 required_features = ["LENNARD_JONES"]
 espressomd.assert_features(required_features)
-
-parser = argparse.ArgumentParser(epilog=__doc__)
-group = parser.add_mutually_exclusive_group()
-group.add_argument("--mayavi", action="store_const", dest="visualizer",
-                   const="mayavi", help="MayaVi visualizer", default="mayavi")
-group.add_argument("--opengl", action="store_const", dest="visualizer",
-                   const="opengl", help="OpenGL visualizer")
-args = parser.parse_args()
 
 box_l = 50
 n_part = 200
@@ -55,12 +46,8 @@ for i in range(n_part):
         part.add_bond((system.bonded_inter[0], previous_part))
     previous_part = part
 
-# Select visualizer
-if args.visualizer == "mayavi":
-    visualizer = espressomd.visualization.mayaviLive(system)
-else:
-    visualizer = espressomd.visualization.openGLLive(
-        system, bond_type_radius=[0.3])
+visualizer = espressomd.visualization.openGLLive(
+    system, bond_type_radius=[0.3])
 
 system.integrator.set_steepest_descent(f_max=10, gamma=50.0,
                                        max_displacement=0.2)

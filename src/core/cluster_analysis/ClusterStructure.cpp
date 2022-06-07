@@ -22,6 +22,7 @@
 #include "PartCfg.hpp"
 #include "errorhandling.hpp"
 #include "partCfg_global.hpp"
+#include "particle_node.hpp"
 
 #include <utils/for_each_pair.hpp>
 
@@ -41,7 +42,7 @@ void ClusterStructure::clear() {
 }
 
 inline bool ClusterStructure::part_of_cluster(const Particle &p) {
-  return cluster_id.find(p.p.identity) != cluster_id.end();
+  return cluster_id.find(p.identity()) != cluster_id.end();
 }
 
 // Analyze the cluster structure of the given particles

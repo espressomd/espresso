@@ -31,6 +31,8 @@
 #include "integrate.hpp"
 #include "particle_data.hpp"
 
+#include <unordered_set>
+
 static bool lb_active_check() {
   if (lattice_switch == ActiveLB::NONE) {
     runtimeErrorMsg() << "LB needs to be active for inertialess tracers.";
@@ -47,26 +49,32 @@ void VirtualSitesInertialessTracers::after_force_calc(double time_step) {
   init_forces_ghosts(cell_structure.ghost_particles());
   cells_update_ghosts(Cells::DATA_PART_FORCE);
 
+  // Set to store ghost particles (ids) that have already been coupled
+  std::unordered_set<int> coupled_ghost_particles;
   // Apply particle forces to the LB fluid at particle positions
   // For physical particles, also set particle velocity = fluid velocity
   for (auto &p : cell_structure.local_particles()) {
-    if (!p.p.is_virtual)
+    if (!p.is_virtual())
       continue;
     if (!lb_active_check()) {
       return;
     }
-    if (in_local_halo(p.r.p)) {
-      add_md_force(p.r.p * to_lb_units, -p.f.f, time_step);
+    if (should_be_coupled(p, coupled_ghost_particles)) {
+      for (auto pos : positions_in_halo(p.pos(), box_geo)) {
+        add_md_force(pos * to_lb_units, -p.force(), time_step);
+      }
     }
   }
   for (auto const &p : cell_structure.ghost_particles()) {
-    if (!p.p.is_virtual)
+    if (!p.is_virtual())
       continue;
     if (!lb_active_check()) {
       return;
     }
-    if (in_local_halo(p.r.p)) {
-      add_md_force(p.r.p * to_lb_units, -p.f.f, time_step);
+    if (should_be_coupled(p, coupled_ghost_particles)) {
+      for (auto pos : positions_in_halo(p.pos(), box_geo)) {
+        add_md_force(pos * to_lb_units, -p.force(), time_step);
+      }
     }
   }
 
@@ -80,19 +88,19 @@ void VirtualSitesInertialessTracers::after_lb_propagation(double time_step) {
 
   // Advect particles
   for (auto &p : cell_structure.local_particles()) {
-    if (!p.p.is_virtual)
+    if (!p.is_virtual())
       continue;
     if (!lb_active_check()) {
       return;
     }
-    p.m.v = lb_lbinterpolation_get_interpolated_velocity(p.r.p) * to_md_units;
+    p.v() = lb_lbinterpolation_get_interpolated_velocity(p.pos()) * to_md_units;
     for (int i = 0; i < 3; i++) {
-      if (!(p.p.ext_flag & COORD_FIXED(i))) {
-        p.r.p[i] += p.m.v[i] * time_step;
+      if (!p.is_fixed_along(i)) {
+        p.pos()[i] += p.v()[i] * time_step;
       }
     }
     // Verlet list update check
-    if ((p.r.p - p.l.p_old).norm2() > skin * skin) {
+    if ((p.pos() - p.pos_at_last_verlet_update()).norm2() > skin * skin) {
       cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
     }
   }

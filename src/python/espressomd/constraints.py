@@ -14,13 +14,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from .script_interface import ScriptObjectRegistry, ScriptInterfaceHelper, script_interface_register
+from .script_interface import ScriptObjectList, ScriptInterfaceHelper, script_interface_register
 import numpy as np
-from itertools import product
+import itertools
 
 
 @script_interface_register
-class Constraints(ScriptObjectRegistry):
+class Constraints(ScriptObjectList):
 
     """
     List of active constraints. Add a :class:`espressomd.constraints.Constraint`
@@ -291,7 +291,7 @@ class _Interpolated(Constraint):
 
         field = np.zeros((shape[0], shape[1], shape[2], codim))
 
-        for i in product(*map(range, shape)):
+        for i in itertools.product(*map(range, shape)):
             x = origin + np.array(i) * grid_spacing
             field[i] = f(x)
 

@@ -20,8 +20,8 @@
 #include "oif_global_forces.hpp"
 
 #include "BoxGeometry.hpp"
-#include "CellStructure.hpp"
 #include "Particle.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
 
@@ -48,13 +48,14 @@ Utils::Vector2d calc_oif_global(int molType, CellStructure &cs) {
   cs.bond_loop([&partArea, &VOL_partVol,
                 molType](Particle &p1, int bond_id,
                          Utils::Span<Particle *> partners) {
-    if (p1.p.mol_id != molType)
+    if (p1.mol_id() != molType)
       return false;
 
     if (boost::get<OifGlobalForcesBond>(bonded_ia_params.at(bond_id).get()) !=
         nullptr) {
       // remaining neighbors fetched
-      auto const p11 = unfolded_position(p1.r.p, p1.l.i, box_geo.length());
+      auto const p11 =
+          unfolded_position(p1.pos(), p1.image_box(), box_geo.length());
       auto const p22 = p11 + box_geo.get_mi_vector(partners[0]->r.p, p11);
       auto const p33 = p11 + box_geo.get_mi_vector(partners[1]->r.p, p11);
 
@@ -83,12 +84,13 @@ void add_oif_global_forces(Utils::Vector2d const &area_volume, int molType,
 
   cs.bond_loop([area, VOL_volume, molType](Particle &p1, int bond_id,
                                            Utils::Span<Particle *> partners) {
-    if (p1.p.mol_id != molType)
+    if (p1.mol_id() != molType)
       return false;
 
     if (auto const *iaparams = boost::get<OifGlobalForcesBond>(
             bonded_ia_params.at(bond_id).get())) {
-      auto const p11 = unfolded_position(p1.r.p, p1.l.i, box_geo.length());
+      auto const p11 =
+          unfolded_position(p1.pos(), p1.image_box(), box_geo.length());
       auto const p22 = p11 + box_geo.get_mi_vector(partners[0]->r.p, p11);
       auto const p33 = p11 + box_geo.get_mi_vector(partners[1]->r.p, p11);
 
@@ -117,7 +119,7 @@ void add_oif_global_forces(Utils::Vector2d const &area_volume, int molType,
                        (m1_length * m1_length + m2_length * m2_length +
                         m3_length * m3_length);
 
-      p1.f.f += fac * m1 + VOL_force;
+      p1.force() += fac * m1 + VOL_force;
       partners[0]->f.f += fac * m2 + VOL_force;
       partners[1]->f.f += fac * m3 + VOL_force;
     }

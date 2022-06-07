@@ -25,20 +25,23 @@
 
 #include "exclusions.hpp"
 
+#include "Particle.hpp"
+
 #include <utils/contains.hpp>
 
 #include <algorithm>
 
-void add_exclusion(Particle *part, int part2) {
-  if (Utils::contains(part->exclusions(), part2))
+void add_exclusion(Particle &p, int p_id) {
+  if (Utils::contains(p.exclusions(), p_id))
     return;
 
-  part->exclusions().push_back(part2);
+  p.exclusions().push_back(p_id);
 }
 
-void delete_exclusion(Particle *part, int part2) {
-  auto &el = part->exclusions();
+void delete_exclusion(Particle &p, int p_id) {
+  auto &el = p.exclusions();
 
-  el.erase(std::remove(el.begin(), el.end(), part2), el.end());
+  el.erase(std::remove(el.begin(), el.end(), p_id), el.end());
 }
-#endif
+
+#endif // EXCLUSIONS
