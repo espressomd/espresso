@@ -65,6 +65,15 @@ void lb_lbfluid_sanity_checks(double time_step) {
   }
 }
 
+void lb_lbfluid_lebc_sanity_checks(int shear_direction,
+                                   int shear_plane_normal) {
+  if (lattice_switch == ActiveLB::WALBERLA) {
+#ifdef LB_WALBERLA
+    lb_walberla()->check_lebc(shear_direction, shear_plane_normal);
+#endif
+  }
+}
+
 double lb_lbfluid_get_agrid() {
   if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA

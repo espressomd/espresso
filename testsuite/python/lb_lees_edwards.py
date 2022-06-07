@@ -28,6 +28,9 @@ import numpy as np
 system = espressomd.System(box_l=[17, 17, 1])
 system.cell_system.skin = 0.1
 system.time_step = 0.01
+system.lees_edwards.set_boundary_conditions(
+    shear_direction="x", shear_plane_normal="y",
+    protocol=espressomd.lees_edwards.Off())
 
 
 class LBContextManager:
@@ -260,6 +263,46 @@ class LBLeesEdwards(ut.TestCase):
                 create_impulse(lbf, stencil_D2Q8)
                 for profile in self.sample_lb_velocities(lbf):
                     self.check_profile(profile, stencil, 'WE', 'SN', tol)
+
+    def test_lebc_mismatch(self):
+        """
+        Check that MD LEbc and LB LEbc always agree.
+        """
+        err_msg = "MD and LB Lees-Edwards boundary conditions disagree"
+        # LEbc must be set before instantiating LB
+        with self.assertRaisesRegex(RuntimeError, err_msg):
+            with LBContextManager() as lbf:
+                LEContextManager('y', 'x', 1.).initialize()
+        # when a LB actor with LEbc is active, the MD LEbc shear directions
+        # are immutable
+        with LEContextManager('x', 'y', 1.):
+            with LBContextManager() as lbf:
+                with self.assertRaisesRegex(RuntimeError, err_msg):
+                    system.lees_edwards.protocol = None
+                with self.assertRaisesRegex(RuntimeError, err_msg):
+                    system.lees_edwards.set_boundary_conditions(
+                        shear_direction="z", shear_plane_normal="y",
+                        protocol=espressomd.lees_edwards.Off())
+                self.assertEqual(system.lees_edwards.shear_direction, "x")
+                self.assertEqual(system.lees_edwards.shear_plane_normal, "y")
+        # when de-activating and later re-activating a LB actor with LEbc,
+        # the MD LEbc must have the same shear directions
+        with self.assertRaisesRegex(Exception, err_msg):
+            with LEContextManager('x', 'z', 1.):
+                system.actors.add(lbf)
+        self.assertEqual(len(system.actors), 0)
+        # while LB and MD LEbc must agree on the shear directions,
+        # the offset can change
+        with LEContextManager('x', 'y', -1.):
+            system.actors.add(lbf)
+            system.actors.clear()
+        # no thermalization
+        with self.assertRaisesRegex(Exception, "Lees-Edwards LB doesn't support thermalization"):
+            with LEContextManager('x', 'y', 1.):
+                system.actors.add(espressomd.lb.LBFluidWalberla(
+                    agrid=1., density=1., viscosity=1., kT=1., seed=42,
+                    tau=system.time_step))
+        self.assertEqual(len(system.actors), 0)
 
 
 if __name__ == "__main__":

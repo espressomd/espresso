@@ -561,6 +561,16 @@ public:
             });
   }
 
+  void check_lebc(int shear_direction, int shear_plane_normal) const override {
+    if (m_lees_edwards_callbacks) {
+      if (m_lees_edwards_callbacks->shear_direction != shear_direction or
+          m_lees_edwards_callbacks->shear_plane_normal != shear_plane_normal) {
+        throw std::runtime_error(
+            "MD and LB Lees-Edwards boundary conditions disagree");
+      }
+    }
+  }
+
   void set_viscosity(double viscosity) override {
     m_viscosity = FloatType_c(viscosity);
   }
