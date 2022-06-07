@@ -41,11 +41,11 @@ public:
     // TODO: callback on_ek_change?
   }
 
-  iterator begin() { return m_ekcontainer.begin(); }
-  iterator end() { return m_ekcontainer.end(); }
-  const_iterator begin() const { return m_ekcontainer.begin(); }
-  const_iterator end() const { return m_ekcontainer.end(); }
-  [[nodiscard]] bool empty() const { return m_ekcontainer.empty(); }
+  iterator begin() noexcept { return m_ekcontainer.begin(); }
+  iterator end() noexcept { return m_ekcontainer.end(); }
+  const_iterator begin() const noexcept { return m_ekcontainer.begin(); }
+  const_iterator end() const noexcept { return m_ekcontainer.end(); }
+  [[nodiscard]] bool empty() const noexcept { return m_ekcontainer.empty(); }
 
   void on_boxl_change() const {
     if (not this->empty()) {
@@ -54,17 +54,17 @@ public:
     }
   }
 
-  void
-  set_poissonsolver(std::shared_ptr<walberla::PoissonSolver> const &solver) {
+  void set_poissonsolver(
+      std::shared_ptr<walberla::PoissonSolver> const &solver) noexcept {
     m_poissonsolver = solver;
   }
 
-  [[nodiscard]] bool is_poissonsolver_set() {
+  [[nodiscard]] bool is_poissonsolver_set() const noexcept {
     return m_poissonsolver != nullptr;
   }
 
-  [[nodiscard]] double get_tau() const { return m_tau; }
-  void set_tau(double tau) { m_tau = tau; }
+  [[nodiscard]] double get_tau() const noexcept { return m_tau; }
+  void set_tau(double tau) noexcept { m_tau = tau; }
 
   void reset_charge() const { m_poissonsolver->reset_charge_field(); }
   void add_charge(const walberla::domain_decomposition::BlockDataID &id,
