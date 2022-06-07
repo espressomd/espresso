@@ -22,14 +22,14 @@ repos:
         args: ["--ignore=E266,E402,E701,W291,W293", "--in-place", "--aggressive"]
 
 # TODO WALBERLA
-#    -   id: cmake-format
-#        name: cmake-format
-#        entry: sh maintainer/format/cmake-format.sh
-#        language: system
-#        always_run: false
-#        files: 'CMakeLists.txt'
-#        exclude: '^libs/h5xx/|^libs/Random123-1\.09/'
-#        args: ["-i"]
+    -   id: cmake-format
+        name: cmake-format
+        entry: sh maintainer/format/cmake-format.sh
+        language: system
+        always_run: false
+        files: 'CMakeLists.txt'
+        exclude: '^libs/h5xx/|^libs/Random123-1\.09/|^CMakeLists.txt|^src/walberla_bridge/|^testsuite/'
+        args: ["-i"]
 
     -   id: ex-flags
         name: executable flags
