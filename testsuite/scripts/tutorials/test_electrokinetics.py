@@ -19,12 +19,12 @@ import unittest as ut
 import importlib_wrapper as iw
 import numpy as np
 
-tutorial, skipIfMissingFeatures_simulation = iw.configure_and_import(
+tutorial, skipIfMissingFeatures = iw.configure_and_import(
     "@TUTORIALS_DIR@/electrokinetics/electrokinetics.py",
     gpu=True, integration_length=600, dt=0.5)
 
 
-@skipIfMissingFeatures_simulation
+@skipIfMissingFeatures
 class Tutorial(ut.TestCase):
     system = tutorial.system
 

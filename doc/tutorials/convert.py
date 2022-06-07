@@ -163,8 +163,8 @@ def convert_exercise2_to_markdown(nb):
 def convert_exercise2_to_jupyterlab(nb):
     """
     Walk through the notebook cells and convert exercise2 Markdown cells
-    containing fenced python code to a Jupyterlab-compatible format.
-    As of 2022, there is no equivalent of exercise2 for Jupyterlab
+    containing fenced python code to a JupyterLab-compatible format.
+    As of 2022, there is no equivalent of exercise2 for JupyterLab
     ([chart](https://jupyterlab-contrib.github.io/migrate_from_classical.html)),
     but a similar effect can be obtained with basic HTML.
 
@@ -361,7 +361,7 @@ group_exercise2 = parser_exercise2.add_mutually_exclusive_group(required=True)
 group_exercise2.add_argument('--to-md', action='store_true',
                              help='convert solution cells to Markdown')
 group_exercise2.add_argument('--to-jupyterlab', action='store_true',
-                             help='convert solution cells to Jupyterlab')
+                             help='convert solution cells to JupyterLab')
 group_exercise2.add_argument('--to-py', action='store_true',
                              help='convert solution cells to Python')
 group_exercise2.add_argument('--pep8', action='store_true',

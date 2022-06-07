@@ -78,7 +78,7 @@ users need to convert the tutorials:
 .. code-block:: bash
 
     for f in doc/tutorials/*/*.ipynb; do
-      ./ipypresso doc/tutorials/convert.py exercise2 --to-jupyterlab ${f};
+      ./pypresso doc/tutorials/convert.py exercise2 --to-jupyterlab ${f}
     done
 
 To interact with notebooks, move to the directory containing the tutorials

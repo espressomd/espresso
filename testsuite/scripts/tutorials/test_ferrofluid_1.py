@@ -38,6 +38,12 @@ class Tutorial(ut.TestCase):
                 tutorial.size_dist[0][i + 1],
                 tutorial.size_dist[0][i])
 
+        # check exponential decay in the tail
+        xdata_sim = tutorial.xdata[4:]
+        ydata_sim = tutorial.ydata[4:]
+        ydata_fit = tutorial.kernel(xdata_sim, *tutorial.popt)
+        np.testing.assert_allclose(ydata_sim, ydata_fit, atol=1.0, rtol=0.2)
+
 
 if __name__ == "__main__":
     ut.main()
