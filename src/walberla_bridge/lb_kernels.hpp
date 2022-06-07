@@ -6,6 +6,8 @@
 #include "generated_kernels/CollideSweepSinglePrecision.h"
 #include "generated_kernels/CollideSweepSinglePrecisionLeesEdwards.h"
 #include "generated_kernels/CollideSweepSinglePrecisionThermalized.h"
+#include "generated_kernels/Dynamic_UBB_double_precision.h"
+#include "generated_kernels/Dynamic_UBB_single_precision.h"
 #include "generated_kernels/InitialPDFsSetterDoublePrecision.h"
 #include "generated_kernels/InitialPDFsSetterSinglePrecision.h"
 #include "generated_kernels/StreamSweepDoublePrecision.h"
@@ -60,6 +62,13 @@ template <> struct KernelTrait<float> {
 #endif
   using StreamSweep = pystencils::StreamSweepSinglePrecision;
   using InitialPDFsSetter = pystencils::InitialPDFsSetterSinglePrecision;
+};
+
+template <typename FT> struct BoundaryHandlingTrait {
+  using Dynamic_UBB = lbm::Dynamic_UBB_double_precision;
+};
+template <> struct BoundaryHandlingTrait<float> {
+  using Dynamic_UBB = lbm::Dynamic_UBB_single_precision;
 };
 } // namespace detail
 } // namespace walberla

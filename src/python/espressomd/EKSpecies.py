@@ -2,7 +2,7 @@ from __future__ import print_function, absolute_import
 
 import os
 
-from .script_interface import ScriptObjectRegistry, ScriptInterfaceHelper, script_interface_register
+from .script_interface import ScriptObjectList, ScriptInterfaceHelper, script_interface_register
 import numpy as np
 import itertools
 
@@ -13,20 +13,18 @@ from .shapes import Shape
 from .lb import VTKRegistry
 
 
-@script_interface_register
-class EKFFT(ScriptObjectRegistry):
+class EKFFT(ScriptInterfaceHelper):
     _so_name = "walberla::EKFFT"
     _so_creation_policy = "GLOBAL"
 
 
-@script_interface_register
-class EKNone(ScriptObjectRegistry):
+class EKNone(ScriptInterfaceHelper):
     _so_name = "walberla::None"
     _so_creation_policy = "GLOBAL"
 
 
 @script_interface_register
-class EKContainer(ScriptObjectRegistry):
+class EKContainer(ScriptObjectList):
     _so_name = "walberla::EKContainer"
 
     @property
@@ -189,7 +187,6 @@ if has_features("LB_WALBERLA"):
     _ek_vtk_registry = VTKRegistry()
 
 
-@script_interface_register
 class EKVTKOutput(ScriptInterfaceHelper):
     """
     Create a VTK writer.
@@ -456,19 +453,17 @@ class EKSlice:
 
 
 @script_interface_register
-class EKReactant(ScriptObjectRegistry):
+class EKReactant(ScriptInterfaceHelper):
     _so_name = "walberla::EKReactant"
     _so_creation_policy = "GLOBAL"
 
 
-@script_interface_register
-class EKBulkReaction(ScriptObjectRegistry):
+class EKBulkReaction(ScriptInterfaceHelper):
     _so_name = "walberla::EKBulkReaction"
     _so_creation_policy = "GLOBAL"
 
 
-@script_interface_register
-class EKIndexedReaction(ScriptObjectRegistry):
+class EKIndexedReaction(ScriptInterfaceHelper):
     _so_name = "walberla::EKIndexedReaction"
     _so_creation_policy = "GLOBAL"
 
@@ -539,7 +534,7 @@ class EKIndexedReaction(ScriptObjectRegistry):
 
 
 @script_interface_register
-class EKReactions(ScriptObjectRegistry):
+class EKReactions(ScriptObjectList):
     _so_name = "walberla::EKReactions"
     _so_creation_policy = "GLOBAL"
 

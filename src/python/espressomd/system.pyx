@@ -190,7 +190,7 @@ cdef class System:
         self.constraints = constraints.Constraints()
         if has_features("CUDA"):
             self.cuda_init_handle = cuda_init.CudaInitHandle()
-        if has_feature("EK_WALBERLA"):
+        if has_features("EK_WALBERLA"):
             self.ekcontainer = EKSpecies.EKContainer()
             self.ekreactions = EKSpecies.EKReactions()
         self.galilei = galilei.GalileiTransform()
