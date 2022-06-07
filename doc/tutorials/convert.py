@@ -138,6 +138,8 @@ def convert_exercise2_to_code(nb):
                 nb['cells'][i] = nbformat.v4.new_code_cell(source=source)
                 nb['cells'][i]['metadata'] = cell['metadata']
                 nb['cells'][i]['metadata']['solution2'] = 'shown'
+                if 'id' in nb['cells'][i]:
+                    del nb['cells'][i]['id']
 
 
 def convert_exercise2_to_markdown(nb):
@@ -154,6 +156,51 @@ def convert_exercise2_to_markdown(nb):
             nb['cells'][i] = nbformat.v4.new_markdown_cell(source=content)
             nb['cells'][i]['metadata'] = cell['metadata']
             nb['cells'][i]['metadata']['solution2'] = 'hidden'
+            if 'id' in nb['cells'][i]:
+                del nb['cells'][i]['id']
+
+
+def convert_exercise2_to_jupyterlab(nb):
+    """
+    Walk through the notebook cells and convert exercise2 Markdown cells
+    containing fenced python code to a JupyterLab-compatible format.
+    As of 2022, there is no equivalent of exercise2 for JupyterLab
+    ([chart](https://jupyterlab-contrib.github.io/migrate_from_classical.html)),
+    but a similar effect can be obtained with basic HTML.
+
+    This also converts a notebook to Notebook Format 4.5. ESPResSo notebooks
+    cannot be saved in 4.5 format since both Jupyter Notebook and JupyterLab
+    overwrite the cell ids with random strings after each save, which is a
+    problem for version control. The notebooks need to be converted to the
+    4.5 format to silence JSON parser errors in JupyterLab.
+    """
+    jupyterlab_tpl = """\
+<details {0} style="margin: 0.8em 4em;">\
+<summary style="cursor: pointer; margin-left: -3em;">Show solution</summary>
+<div style="margin-bottom: 2em;"></div>
+
+{1}
+<div style="margin-top: 2em;"></div>
+</details>\
+"""
+    for i, cell in enumerate(nb['cells']):
+        # convert solution markdown cells into code cells
+        if cell['cell_type'] == 'markdown' and 'solution2' in cell['metadata'] \
+                and 'solution2_first' not in cell['metadata']:
+            lines = cell['source'].strip().split('\n')
+            shown = 'open=""' if cell['metadata']['solution2'] == 'shown' else ''
+            if lines[0].strip() == '```python' and lines[-1].strip() == '```':
+                source = jupyterlab_tpl.format(shown, '\n'.join(lines).strip())
+                nb['cells'][i] = nbformat.v4.new_markdown_cell(source=source)
+        # convert cell to notebook format 4.5
+        if 'id' not in cell:
+            cell = uuid.uuid4().hex[:8]
+
+    # change to notebook format 4.5
+    current_version = (nb['nbformat'], nb['nbformat_minor'])
+    assert current_version >= (4, 0)
+    if current_version < (4, 5):
+        nb['nbformat_minor'] = 5
 
 
 def apply_autopep8(nb):
@@ -268,16 +315,20 @@ def handle_exercise2_case(args):
 
     if args.to_md:
         convert_exercise2_to_markdown(nb)
+    elif args.to_jupyterlab:
+        convert_exercise2_to_jupyterlab(nb)
     elif args.to_py:
         convert_exercise2_to_code(nb)
     elif args.pep8:
         convert_exercise2_to_code(nb)
         apply_autopep8(nb)
         convert_exercise2_to_markdown(nb)
+    elif args.remove_empty_cells:
+        remove_empty_cells(nb)
 
     # write edited notebook
     with open(args.input, 'w', encoding='utf-8') as f:
-        nbformat.write(nb, f)
+        nbformat.write(nb, f, version=nbformat.NO_CONVERT)
 
 
 parser = argparse.ArgumentParser(description='Process Jupyter notebooks.',
@@ -309,10 +360,14 @@ parser_exercise2.add_argument('input', type=str, help='path to the Jupyter '
 group_exercise2 = parser_exercise2.add_mutually_exclusive_group(required=True)
 group_exercise2.add_argument('--to-md', action='store_true',
                              help='convert solution cells to Markdown')
+group_exercise2.add_argument('--to-jupyterlab', action='store_true',
+                             help='convert solution cells to JupyterLab')
 group_exercise2.add_argument('--to-py', action='store_true',
                              help='convert solution cells to Python')
 group_exercise2.add_argument('--pep8', action='store_true',
                              help='apply autopep8 formatting')
+group_exercise2.add_argument('--remove-empty-cells', action='store_true',
+                             help='remove empty cells')
 parser_exercise2.set_defaults(callback=handle_exercise2_case)
 
 
