@@ -42,7 +42,7 @@ void ClusterStructure::clear() {
 }
 
 inline bool ClusterStructure::part_of_cluster(const Particle &p) {
-  return cluster_id.find(p.identity()) != cluster_id.end();
+  return cluster_id.find(p.id()) != cluster_id.end();
 }
 
 // Analyze the cluster structure of the given particles
@@ -93,24 +93,24 @@ void ClusterStructure::add_pair(const Particle &p1, const Particle &p2) {
       const int cid = get_next_free_cluster_id();
 
       // assign the cluster_ids
-      cluster_id[p1.p.identity] = cid;
-      cluster_id[p2.p.identity] = cid;
+      cluster_id[p1.id()] = cid;
+      cluster_id[p2.id()] = cid;
     } else if // p2 belongs to a cluster but p1 doesn't
         (part_of_cluster(p2) && !part_of_cluster(p1)) {
       // Give p1 the same cluster id as p2
-      cluster_id[p1.p.identity] = find_id_for(cluster_id.at(p2.p.identity));
+      cluster_id[p1.id()] = find_id_for(cluster_id.at(p2.id()));
     } else if // i belongs to a cluster but j doesn't
         (part_of_cluster(p1) && !part_of_cluster(p2)) {
       // give p2 the cluster id from p1
-      cluster_id[p2.p.identity] = find_id_for(cluster_id.at(p1.p.identity));
+      cluster_id[p2.id()] = find_id_for(cluster_id.at(p1.id()));
     } else if // Both belong to different clusters
         (part_of_cluster(p1) && part_of_cluster(p2) &&
-         cluster_id.at(p1.p.identity) != cluster_id.at(p2.p.identity)) {
+         cluster_id.at(p1.id()) != cluster_id.at(p2.id())) {
       // Clusters of p1 and p2 are one and the same. Add an identity to the list
       // The higher number must be inserted as first value of the pair
       // because the substitutions later have to be done in descending order
-      const int cid1 = find_id_for(cluster_id.at(p1.p.identity));
-      const int cid2 = find_id_for(cluster_id.at(p2.p.identity));
+      const int cid1 = find_id_for(cluster_id.at(p1.id()));
+      const int cid2 = find_id_for(cluster_id.at(p2.id()));
       if (cid1 > cid2) {
         m_cluster_identities[cid1] = cid2;
       } else if (cid1 < cid2) {

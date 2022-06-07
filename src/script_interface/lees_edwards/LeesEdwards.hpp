@@ -28,11 +28,15 @@
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 
 #include <memory>
+#include <stdexcept>
 
 namespace ScriptInterface {
 namespace LeesEdwards {
 
 class LeesEdwards : public AutoParameters<LeesEdwards> {
+  std::shared_ptr<Protocol> m_protocol;
+  LeesEdwardsBC const &m_lebc = box_geo.lees_edwards_bc();
+
 public:
   LeesEdwards() : m_protocol{nullptr} {
     add_parameters(
@@ -40,9 +44,19 @@ public:
           [this](Variant const &value) {
             if (is_none(value)) {
               m_protocol = nullptr;
+              box_geo.set_lees_edwards_bc(LeesEdwardsBC{0., 0., -1, -1});
               ::LeesEdwards::unset_protocol();
               return;
             }
+            context()->parallel_try_catch([this]() {
+              if (m_lebc.shear_direction == -1 or
+                  m_lebc.shear_plane_normal == -1) {
+                throw std::runtime_error(
+                    "Parameters 'shear_plane_normal' and 'shear_direction' "
+                    "must be initialized together with 'protocol' on first "
+                    "activation via set_boundary_conditions()");
+              }
+            });
             m_protocol = get_value<std::shared_ptr<Protocol>>(value);
             ::LeesEdwards::set_protocol(m_protocol->protocol());
           },
@@ -51,14 +65,76 @@ public:
               return make_variant(m_protocol);
             return make_variant(none);
           }},
-         {"shear_velocity", box_geo.lees_edwards_bc().shear_velocity},
-         {"pos_offset", box_geo.lees_edwards_bc().pos_offset},
-         {"shear_direction", box_geo.lees_edwards_bc().shear_direction},
-         {"shear_plane_normal", box_geo.lees_edwards_bc().shear_plane_normal}});
+         {"shear_velocity", AutoParameter::read_only,
+          [this]() { return m_lebc.shear_velocity; }},
+         {"pos_offset", AutoParameter::read_only,
+          [this]() { return m_lebc.pos_offset; }},
+         {"shear_direction", AutoParameter::read_only,
+          [this]() { return get_shear_name(m_lebc.shear_direction); }},
+         {"shear_plane_normal", AutoParameter::read_only,
+          [this]() { return get_shear_name(m_lebc.shear_plane_normal); }}});
+  }
+
+  Variant do_call_method(std::string const &name,
+                         VariantMap const &params) override {
+    if (name == "set_boundary_conditions") {
+      context()->parallel_try_catch([this, &params]() {
+        auto const protocol = params.at("protocol");
+        if (is_none(protocol)) {
+          do_set_parameter("protocol", protocol);
+          return;
+        }
+        // check input arguments
+        m_protocol = get_value<std::shared_ptr<Protocol>>(protocol);
+        auto const shear_direction = get_shear_axis(params, "shear_direction");
+        auto const shear_plane_normal =
+            get_shear_axis(params, "shear_plane_normal");
+        if (shear_plane_normal == shear_direction) {
+          throw std::invalid_argument("Parameters 'shear_direction' and "
+                                      "'shear_plane_normal' must differ");
+        }
+        // update box geometry and cell structure
+        box_geo.set_lees_edwards_bc(
+            LeesEdwardsBC{0., 0., shear_direction, shear_plane_normal});
+        ::LeesEdwards::set_protocol(m_protocol->protocol());
+      });
+    }
+    return {};
+  }
+
+  void do_construct(VariantMap const &params) override {
+    if (not params.empty()) {
+      do_call_method("set_boundary_conditions", params);
+    }
   }
 
 private:
-  std::shared_ptr<Protocol> m_protocol;
+  int get_shear_axis(VariantMap const &params, std::string name) {
+    auto const value = get_value<std::string>(params, name);
+    if (value == "x") {
+      return 0;
+    }
+    if (value == "y") {
+      return 1;
+    }
+    if (value == "z") {
+      return 2;
+    }
+    throw std::invalid_argument("Parameter '" + name + "' is invalid");
+  }
+
+  Variant get_shear_name(int axis) {
+    if (axis == 0) {
+      return {std::string("x")};
+    }
+    if (axis == 1) {
+      return {std::string("y")};
+    }
+    if (axis == 2) {
+      return {std::string("z")};
+    }
+    return {none};
+  }
 };
 
 } // namespace LeesEdwards

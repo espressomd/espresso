@@ -104,7 +104,7 @@ cdef class ParticleHandle:
 
         def __get__(self):
             self.update_particle_data()
-            return self.particle_data.identity()
+            return self.particle_data.id()
 
     # The individual attributes of a particle are implemented as properties.
 

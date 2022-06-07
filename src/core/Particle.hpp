@@ -162,7 +162,7 @@ struct ParticleProperties {
    */
   struct VirtualSitesRelativeParameters {
     int to_particle_id = 0;
-    double distance = 0;
+    double distance = 0.;
     /** Relative position of the virtual site. */
     Utils::Quaternion<double> rel_orientation =
         Utils::Quaternion<double>::identity();
@@ -197,10 +197,10 @@ struct ParticleProperties {
 
 #ifdef EXTERNAL_FORCES
   /** External force. */
-  Utils::Vector3d ext_force = {0, 0, 0};
+  Utils::Vector3d ext_force = {0., 0., 0.};
 #ifdef ROTATION
   /** External torque. */
-  Utils::Vector3d ext_torque = {0, 0, 0};
+  Utils::Vector3d ext_torque = {0., 0., 0.};
 #endif // ROTATION
 #endif // EXTERNAL_FORCES
 
@@ -264,7 +264,7 @@ struct ParticleProperties {
  */
 struct ParticlePosition {
   /** periodically folded position. */
-  Utils::Vector3d p = {0, 0, 0};
+  Utils::Vector3d p = {0., 0., 0.};
 
 #ifdef ROTATION
   /** quaternion to define particle orientation */
@@ -272,7 +272,7 @@ struct ParticlePosition {
   /** unit director calculated from the quaternion */
   Utils::Vector3d calc_director() const {
     return Utils::convert_quaternion_to_director(quat);
-  };
+  }
 #endif
 
 #ifdef BOND_CONSTRAINT
@@ -366,7 +366,7 @@ struct ParticleLocal {
   /** index of the simulation box image where the particle really sits. */
   Utils::Vector3i i = {0, 0, 0};
   /** position from the last Verlet list update. */
-  Utils::Vector3d p_old = {0, 0, 0};
+  Utils::Vector3d p_old = {0., 0., 0.};
   /** Accumulated applied Lees-Edwards offset. */
   double lees_edwards_offset = 0.;
 
@@ -382,7 +382,7 @@ struct ParticleLocal {
 #ifdef BOND_CONSTRAINT
 struct ParticleRattle {
   /** position/velocity correction */
-  Utils::Vector3d correction = {0, 0, 0};
+  Utils::Vector3d correction = {0., 0., 0.};
 
   friend ParticleRattle operator+(ParticleRattle const &lhs,
                                   ParticleRattle const &rhs) {
@@ -401,36 +401,23 @@ struct ParticleRattle {
 
 /** Struct holding all information for one particle. */
 struct Particle { // NOLINT(bugprone-exception-escape)
-  int &identity() { return p.identity; }
-  int const &identity() const { return p.identity; }
-
-  bool operator==(Particle const &rhs) const {
-    return identity() == rhs.identity();
-  }
-
-  bool operator!=(Particle const &rhs) const {
-    return identity() != rhs.identity();
-  }
-
   ///
   ParticleProperties p;
   ///
   ParticlePosition r;
-#ifdef DIPOLES
-  Utils::Vector3d calc_dip() const { return r.calc_director() * p.dipm; }
-#endif
   ///
   ParticleMomentum m;
   ///
   ParticleForce f;
   ///
   ParticleLocal l;
+
+private:
 #ifdef BOND_CONSTRAINT
   ///
   ParticleRattle rattle;
 #endif
 
-private:
   BondList bl;
 
 #ifdef EXCLUSIONS
@@ -447,6 +434,10 @@ public:
   auto &mol_id() { return p.mol_id; }
   auto const &type() const { return p.type; }
   auto &type() { return p.type; }
+
+  bool operator==(Particle const &rhs) const { return id() == rhs.id(); }
+
+  bool operator!=(Particle const &rhs) const { return id() != rhs.id(); }
 
   auto const &bonds() const { return bl; }
   auto &bonds() { return bl; }
@@ -476,6 +467,7 @@ public:
   constexpr auto &mass() const { return p.mass; }
 #endif
 #ifdef ROTATION
+  auto rotation() const { return p.rotation; }
   bool can_rotate() const { return static_cast<bool>(p.rotation); }
   bool can_rotate_around(int const axis) const {
     detail::check_axis_idx_valid(axis);
@@ -509,6 +501,7 @@ public:
 #ifdef DIPOLES
   auto const &dipm() const { return p.dipm; }
   auto &dipm() { return p.dipm; }
+  auto calc_dip() const { return calc_director() * dipm(); }
 #endif
 #ifdef ROTATIONAL_INERTIA
   auto const &rinertia() const { return p.rinertia; }

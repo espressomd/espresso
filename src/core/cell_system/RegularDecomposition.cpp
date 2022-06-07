@@ -48,7 +48,7 @@
 #include <vector>
 
 /** Returns pointer to the cell which corresponds to the position if the
- *  position is in the nodes spatial domain otherwise a nullptr pointer.
+ *  position is in the node's spatial domain otherwise a nullptr.
  */
 Cell *RegularDecomposition::position_to_cell(const Utils::Vector3d &pos) {
   Utils::Vector3i cpos;
@@ -103,12 +103,12 @@ void RegularDecomposition::move_left_or_right(ParticleList &src,
                                               ParticleList &right,
                                               int dir) const {
   for (auto it = src.begin(); it != src.end();) {
-    if ((m_box.get_mi_coord(it->r.p[dir], m_local_box.my_left()[dir], dir) <
+    if ((m_box.get_mi_coord(it->pos()[dir], m_local_box.my_left()[dir], dir) <
          0.0) and
         (m_box.periodic(dir) || (m_local_box.boundary()[2 * dir] == 0))) {
       left.insert(std::move(*it));
       it = src.erase(it);
-    } else if ((m_box.get_mi_coord(it->r.p[dir], m_local_box.my_right()[dir],
+    } else if ((m_box.get_mi_coord(it->pos()[dir], m_local_box.my_right()[dir],
                                    dir) >= 0.0) and
                (m_box.periodic(dir) ||
                 (m_local_box.boundary()[2 * dir + 1] == 0))) {
@@ -195,7 +195,7 @@ void RegularDecomposition::resort(bool global,
 
       /* Particle is not local */
       if (target_cell == nullptr) {
-        diff.emplace_back(RemovedParticle{p.identity()});
+        diff.emplace_back(RemovedParticle{p.id()});
         displaced_parts.insert(std::move(p));
       }
       /* Particle belongs on this node but is in the wrong cell. */
@@ -230,7 +230,7 @@ void RegularDecomposition::resort(bool global,
     auto sort_cell = local_cells()[0];
 
     for (auto &part : displaced_parts) {
-      runtimeErrorMsg() << "Particle " << part.identity() << " moved more "
+      runtimeErrorMsg() << "Particle " << part.id() << " moved more "
                         << "than one local box length in one timestep";
       sort_cell->particles().insert(std::move(part));
 
@@ -256,8 +256,8 @@ void RegularDecomposition::mark_cells() {
 }
 
 void RegularDecomposition::fill_comm_cell_lists(ParticleList **part_lists,
-                                                const Utils::Vector3i &lc,
-                                                const Utils::Vector3i &hc) {
+                                                Utils::Vector3i const &lc,
+                                                Utils::Vector3i const &hc) {
   for (int o = lc[0]; o <= hc[0]; o++)
     for (int n = lc[1]; n <= hc[1]; n++)
       for (int m = lc[2]; m <= hc[2]; m++) {
@@ -631,8 +631,8 @@ GhostCommunicator RegularDecomposition::prepare_comm() {
 
 RegularDecomposition::RegularDecomposition(boost::mpi::communicator comm,
                                            double range,
-                                           const BoxGeometry &box_geo,
-                                           const LocalBox<double> &local_geo)
+                                           BoxGeometry const &box_geo,
+                                           LocalBox<double> const &local_geo)
     : m_comm(std::move(comm)), m_box(box_geo), m_local_box(local_geo) {
   /* set up new regular decomposition cell structure */
   create_cell_grid(range);

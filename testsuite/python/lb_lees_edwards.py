@@ -53,16 +53,15 @@ class LEContextManager:
     """
 
     def __init__(self, shear_direction, shear_plane_normal, offset):
-        mapping = {'x': 0, 'y': 1, 'z': 2}
-        self.shear_direction = mapping[shear_direction]
-        self.shear_plane_normal = mapping[shear_plane_normal]
-        self.offset = offset
+        protocol = espressomd.lees_edwards.LinearShear(
+            shear_velocity=0., initial_pos_offset=offset, time_0=0.)
+        self.initialize = lambda: system.lees_edwards.set_boundary_conditions(
+            shear_direction=shear_direction,
+            shear_plane_normal=shear_plane_normal,
+            protocol=protocol)
 
     def __enter__(self):
-        system.lees_edwards.protocol = espressomd.lees_edwards.LinearShear(
-            shear_velocity=0., initial_pos_offset=self.offset, time_0=0.)
-        system.lees_edwards.shear_direction = self.shear_direction
-        system.lees_edwards.shear_plane_normal = self.shear_plane_normal
+        self.initialize()
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
         system.lees_edwards.protocol = espressomd.lees_edwards.Off()
@@ -79,8 +78,8 @@ class LBLeesEdwards(ut.TestCase):
     """
 
     def tearDown(self):
-        system.thermostat.turn_off()
         system.actors.clear()
+        system.thermostat.turn_off()
         system.part.clear()
         system.lees_edwards.protocol = espressomd.lees_edwards.Off()
 

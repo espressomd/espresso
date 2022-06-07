@@ -73,14 +73,14 @@ class LBCouetteFlowCommon:
 
     def test_profile(self):
         system = self.system
-        h = system.box_l[system.lees_edwards.shear_direction]
+        h = system.box_l[0]
         shear_velocity = 0.05
         k_max = 100
 
-        system.lees_edwards.protocol = espressomd.lees_edwards.LinearShear(
-            shear_velocity=shear_velocity, initial_pos_offset=0.0, time_0=0.0)
-        system.lees_edwards.shear_direction = 0
-        system.lees_edwards.shear_plane_normal = 1
+        protocol = espressomd.lees_edwards.LinearShear(
+            shear_velocity=shear_velocity, initial_pos_offset=0., time_0=0.)
+        system.lees_edwards.set_boundary_conditions(
+            shear_direction="x", shear_plane_normal="y", protocol=protocol)
 
         lbf = self.lb_class(**LB_PARAMS, **self.lb_params)
         system.actors.add(lbf)

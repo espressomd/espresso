@@ -51,7 +51,7 @@ void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles,
     // Virtual sites are not propagated during integration
     if (p.is_virtual())
       continue;
-    auto const noise = friction_therm0_nptiso<2>(npt_iso, p.v(), p.identity());
+    auto const noise = friction_therm0_nptiso<2>(npt_iso, p.v(), p.id());
     for (int j = 0; j < 3; j++) {
       if (!p.is_fixed_along(j)) {
         if (nptiso.geometry & nptiso.nptgeom_dir[j]) {
@@ -172,8 +172,7 @@ void velocity_verlet_npt_propagate_vel(const ParticleRange &particles,
       continue;
     for (int j = 0; j < 3; j++) {
       if (!p.is_fixed_along(j)) {
-        auto const noise =
-            friction_therm0_nptiso<1>(npt_iso, p.v(), p.identity());
+        auto const noise = friction_therm0_nptiso<1>(npt_iso, p.v(), p.id());
         if (integ_switch == INTEG_METHOD_NPT_ISO &&
             (nptiso.geometry & nptiso.nptgeom_dir[j])) {
           p.v()[j] += (p.force()[j] * time_step / 2.0 + noise[j]) / p.mass();

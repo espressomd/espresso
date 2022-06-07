@@ -35,9 +35,9 @@ public:
            const ParticleObservables::traits<Particle> &) const override {
     Utils::Vector3d res{};
     for (auto const &p : particles) {
-      if (p.get().p.is_virtual)
+      if (p.get().is_virtual())
         continue;
-      res += p.get().f.f;
+      res += p.get().force();
     }
     return res.as_vector();
   }

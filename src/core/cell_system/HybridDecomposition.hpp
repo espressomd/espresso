@@ -56,7 +56,7 @@
  */
 class HybridDecomposition : public ParticleDecomposition {
   boost::mpi::communicator m_comm;
-  BoxGeometry m_box;
+  BoxGeometry const &m_box;
   double m_cutoff_regular;
   std::vector<Cell *> m_local_cells;
   std::vector<Cell *> m_ghost_cells;
@@ -77,8 +77,8 @@ class HybridDecomposition : public ParticleDecomposition {
 
 public:
   HybridDecomposition(boost::mpi::communicator comm, double cutoff_regular,
-                      const BoxGeometry &box_geo,
-                      const LocalBox<double> &local_box,
+                      BoxGeometry const &box_geo,
+                      LocalBox<double> const &local_box,
                       std::set<int> n_square_types);
 
   Utils::Vector3i get_cell_grid() const {
@@ -112,7 +112,7 @@ public:
   }
 
   Cell *particle_to_cell(Particle const &p) override {
-    if (is_n_square_type(p.p.type)) {
+    if (is_n_square_type(p.type())) {
       return m_n_square.particle_to_cell(p);
     }
     return m_regular_decomposition.particle_to_cell(p);
@@ -127,9 +127,20 @@ public:
     return m_box;
   }
 
-  BoxGeometry box() const override { return m_box; }
+  BoxGeometry const &box() const override { return m_box; };
 
-  Utils::Vector<std::size_t, 2> parts_per_decomposition_local() const;
+  /** @brief Count particles in child regular decompositions. */
+  std::size_t count_particles_in_regular() const {
+    return count_particles(m_regular_decomposition.get_local_cells());
+  }
+
+  /** @brief Count particles in child N-square decompositions. */
+  std::size_t count_particles_in_n_square() const {
+    return count_particles(m_n_square.get_local_cells());
+  }
+
+private:
+  std::size_t count_particles(std::vector<Cell *> const &local_cells) const;
 };
 
 #endif

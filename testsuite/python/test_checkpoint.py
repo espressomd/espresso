@@ -28,6 +28,7 @@ import espressomd.checkpointing
 import espressomd.electrostatics
 import espressomd.magnetostatics
 import espressomd.io.writer  # pylint: disable=unused-import
+import espressomd.lees_edwards
 import espressomd.virtual_sites
 import espressomd.integrate
 import espressomd.shapes
@@ -202,6 +203,17 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_allclose(np.copy(system.box_l), self.ref_box_l)
         np.testing.assert_array_equal(
             np.copy(system.periodicity), self.ref_periodicity)
+
+    @ut.skipIf('INT.NPT' in modes, 'Lees-Edwards not compatible with NPT')
+    def test_lees_edwards(self):
+        lebc = system.lees_edwards
+        protocol = lebc.protocol
+        self.assertEqual(lebc.shear_direction, "x")
+        self.assertEqual(lebc.shear_plane_normal, "y")
+        self.assertIsInstance(protocol, espressomd.lees_edwards.LinearShear)
+        self.assertAlmostEqual(protocol.initial_pos_offset, 0.1, delta=1e-10)
+        self.assertAlmostEqual(protocol.time_0, 0.2, delta=1e-10)
+        self.assertAlmostEqual(protocol.shear_velocity, 1.2, delta=1e-10)
 
     def test_part(self):
         p1, p2 = system.part.by_ids([0, 1])

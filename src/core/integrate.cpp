@@ -112,11 +112,11 @@ std::weak_ptr<ActiveProtocol> get_protocol() { return protocol; }
  * @brief Update the Lees-Edwards parameters of the box geometry
  * for the current simulation time.
  */
-inline void update_box_params() {
+static void update_box_params() {
   if (box_geo.type() == BoxType::LEES_EDWARDS) {
     assert(protocol != nullptr);
-    update_pos_offset(*protocol, box_geo, sim_time);
-    update_shear_velocity(*protocol, box_geo, sim_time);
+    box_geo.lees_edwards_update(get_pos_offset(sim_time, *protocol),
+                                get_shear_velocity(sim_time, *protocol));
   }
 }
 
@@ -124,14 +124,14 @@ void set_protocol(std::shared_ptr<ActiveProtocol> new_protocol) {
   box_geo.set_type(BoxType::LEES_EDWARDS);
   protocol = std::move(new_protocol);
   LeesEdwards::update_box_params();
+  ::recalc_forces = true;
   cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
 }
 
 void unset_protocol() {
   protocol = nullptr;
-  box_geo.lees_edwards_bc().shear_velocity = 0;
-  box_geo.lees_edwards_bc().pos_offset = 0;
   box_geo.set_type(BoxType::CUBOID);
+  ::recalc_forces = true;
   cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
 }
 

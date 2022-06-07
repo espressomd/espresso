@@ -142,7 +142,6 @@ plt.show(block=False)
 
 def main_loop():
     global energies
-    print(f"run at time={system.time:.2f}")
 
     system.integrator.run(int_steps)
     visualizer.update()

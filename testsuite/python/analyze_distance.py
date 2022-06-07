@@ -81,10 +81,14 @@ class AnalyzeDistance(ut.TestCase):
             self.assertAlmostEqual(self.system.analysis.min_dist(),
                                    self.min_dist(),
                                    delta=1e-7)
-
-    def test_min_dist_empty(self):
+        # without particles
         self.system.part.clear()
         self.assertEqual(self.system.analysis.min_dist(), float("inf"))
+        # with specific types
+        self.system.part.add(pos=[[0., 0., 0.], [1., 0., 0.], [2., 0., 0.]],
+                             type=[0, 1, 2])
+        self.assertAlmostEqual(
+            self.system.analysis.min_dist([0], [2]), 2., delta=1e-12)
 
     def test_nbhood(self):
         # try five times

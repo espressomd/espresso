@@ -22,8 +22,6 @@
 #ifndef ESPRESSO_SRC_CORE_CELL_SYSTEM_CELL_STRUCTURE_HPP
 #define ESPRESSO_SRC_CORE_CELL_SYSTEM_CELL_STRUCTURE_HPP
 
-#include "cell_system/AtomDecomposition.hpp"
-#include "cell_system/HybridDecomposition.hpp"
 #include "cell_system/ParticleDecomposition.hpp"
 
 #include "BoxGeometry.hpp"
@@ -54,8 +52,6 @@
 #include <stdexcept>
 #include <utility>
 #include <vector>
-
-extern BoxGeometry box_geo;
 
 namespace Cells {
 enum Resort : unsigned {
@@ -113,16 +109,16 @@ struct Distance {
 };
 namespace detail {
 struct MinimalImageDistance {
-  const BoxGeometry box;
+  BoxGeometry const box;
 
   Distance operator()(Particle const &p1, Particle const &p2) const {
-    return Distance(box.get_mi_vector(p1.r.p, p2.r.p));
+    return Distance(box.get_mi_vector(p1.pos(), p2.pos()));
   }
 };
 
 struct EuclidianDistance {
   Distance operator()(Particle const &p1, Particle const &p2) const {
-    return Distance(p1.r.p - p2.r.p);
+    return Distance(p1.pos() - p2.pos());
   }
 };
 } // namespace detail
@@ -139,8 +135,7 @@ private:
   /** The local id-to-particle index */
   std::vector<Particle *> m_particle_index;
   /** Implementation of the primary particle decomposition */
-  std::unique_ptr<ParticleDecomposition> m_decomposition =
-      std::make_unique<AtomDecomposition>();
+  std::unique_ptr<ParticleDecomposition> m_decomposition;
   /** Active type in m_decomposition */
   CellStructureType m_type = CellStructureType::CELL_STRUCTURE_NSQUARE;
   /** One of @ref Cells::Resort, announces the level of resort needed.
@@ -151,6 +146,8 @@ private:
   double m_le_pos_offset_at_last_resort = 0.;
 
 public:
+  CellStructure(BoxGeometry const &box);
+
   bool use_verlet_list = true;
 
   /**
@@ -165,7 +162,7 @@ public:
   void update_particle_index(int id, Particle *p) {
     assert(id >= 0);
     // cppcheck-suppress assertWithSideEffect
-    assert(not p or id == p->identity());
+    assert(not p or p->id() == id);
 
     if (id >= m_particle_index.size())
       m_particle_index.resize(id + 1);
@@ -182,7 +179,7 @@ public:
    * @param p Pointer to the particle.
    */
   void update_particle_index(Particle &p) {
-    update_particle_index(p.identity(), std::addressof(p));
+    update_particle_index(p.id(), std::addressof(p));
   }
 
   /**
@@ -192,7 +189,7 @@ public:
    */
   void update_particle_index(ParticleList &pl) {
     for (auto &p : pl) {
-      update_particle_index(p.identity(), std::addressof(p));
+      update_particle_index(p.id(), std::addressof(p));
     }
   }
 
@@ -472,10 +469,10 @@ private:
             handler(p, bond.bond_id(), Utils::make_span(partners));
 
         if (bond_broken) {
-          bond_broken_error(p.identity(), partner_ids);
+          bond_broken_error(p.id(), partner_ids);
         }
       } catch (const BondResolutionError &) {
-        bond_broken_error(p.identity(), partner_ids);
+        bond_broken_error(p.id(), partner_ids);
       }
     }
   }
@@ -486,8 +483,8 @@ private:
    */
   void invalidate_ghosts() {
     for (auto const &p : ghost_particles()) {
-      if (get_local_particle(p.identity()) == &p) {
-        update_particle_index(p.identity(), nullptr);
+      if (get_local_particle(p.id()) == &p) {
+        update_particle_index(p.id(), nullptr);
       }
     }
   }
@@ -515,7 +512,7 @@ private:
 
 public:
   /**
-   * @brief Set the particle decomposition to AtomDecomposition.
+   * @brief Set the particle decomposition to @ref AtomDecomposition.
    *
    * @param comm Communicator to use.
    * @param box Box Geometry.
@@ -526,7 +523,7 @@ public:
                               LocalBox<double> &local_geo);
 
   /**
-   * @brief Set the particle decomposition to RegularDecomposition.
+   * @brief Set the particle decomposition to @ref RegularDecomposition.
    *
    * @param comm Cartesian communicator to use.
    * @param range Interaction range.
@@ -538,7 +535,7 @@ public:
                                  LocalBox<double> &local_geo);
 
   /**
-   * @brief Set the particle decomposition to HybridDecomposition.
+   * @brief Set the particle decomposition to @ref HybridDecomposition.
    *
    * @param comm Communicator to use.
    * @param cutoff_regular Interaction cutoff_regular.
@@ -573,7 +570,7 @@ private:
     if (maybe_box) {
       Algorithm::link_cell(
           first, last,
-          [&kernel, df = detail::MinimalImageDistance{box_geo}](
+          [&kernel, df = detail::MinimalImageDistance{decomposition().box()}](
               Particle &p1, Particle &p2) { kernel(p1, p2, df(p1, p2)); });
     } else {
       if (decomposition().box().type() != BoxType::CUBOID) {
@@ -614,7 +611,8 @@ private:
       auto const maybe_box = decomposition().minimum_image_distance();
       /* In this case the pair kernel is just run over the verlet list. */
       if (maybe_box) {
-        auto const distance_function = detail::MinimalImageDistance{box_geo};
+        auto const distance_function =
+            detail::MinimalImageDistance{decomposition().box()};
         for (auto &pair : m_verlet_list) {
           pair_kernel(*pair.first, *pair.second,
                       distance_function(*pair.first, *pair.second));
@@ -713,7 +711,8 @@ public:
     auto const maybe_box = decomposition().minimum_image_distance();
 
     if (maybe_box) {
-      auto const distance_function = detail::MinimalImageDistance{box_geo};
+      auto const distance_function =
+          detail::MinimalImageDistance{decomposition().box()};
       short_range_neighbor_loop(p, cell, kernel, distance_function);
     } else {
       auto const distance_function = detail::EuclidianDistance{};

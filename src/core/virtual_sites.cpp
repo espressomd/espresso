@@ -130,7 +130,7 @@ calculate_vs_relate_to_params(Particle const &p_current,
 void local_vs_relate_to(Particle &p_current, Particle const &p_relate_to) {
   // Set the particle id of the particle we want to relate to, the distance
   // and the relative orientation
-  p_current.vs_relative().to_particle_id = p_relate_to.identity();
+  p_current.vs_relative().to_particle_id = p_relate_to.id();
   std::tie(p_current.vs_relative().rel_orientation,
            p_current.vs_relative().distance) =
       calculate_vs_relate_to_params(p_current, p_relate_to);

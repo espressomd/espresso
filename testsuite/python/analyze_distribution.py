@@ -14,69 +14,60 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
+import scipy.spatial
 import espressomd
 
 
 @utx.skipIfMissingFeatures("LENNARD_JONES")
 class AnalyzeDistributions(ut.TestCase):
-    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system = espressomd.System(box_l=[40., 40., 40.])
+    system.cell_system.set_n_square(use_verlet_lists=False)
     np.random.seed(1234)
-    num_part = 10
+    # insert particles in one octant of the box to avoid PBC images
+    system.part.add(pos=np.outer(np.random.random(10), system.box_l / 2.))
 
-    @classmethod
-    def setUpClass(cls):
-        box_l = 20.0
-        # start with a small box
-        cls.system.box_l = np.array([box_l, box_l, box_l])
-        cls.system.cell_system.set_n_square(use_verlet_lists=False)
-        cls.partcls = cls.system.part.add(
-            pos=np.outer(np.random.random(cls.num_part), cls.system.box_l))
+    def calc_min_distribution(self, bins, int_flag):
+        pos = self.system.part.all().pos
+        dmat = scipy.spatial.distance_matrix(pos, pos)
+        dmat[np.diag_indices(dmat.shape[0])] = np.inf
+        hist = np.histogram(np.min(dmat, axis=1), bins=bins, density=False)[0]
+        hist = hist / np.sum(hist)
+        if int_flag:
+            return np.cumsum(hist)
+        return hist
 
-    def calc_min_distribution(self, bins):
-        dist = []
-        for p1 in self.system.part:
-            dist.append(min(self.system.distance(p1, p2.pos)
-                            for p2 in self.system.part if p1.id != p2.id))
-        hist = np.histogram(dist, bins=bins, density=False)[0]
-        return hist / (float(np.sum(hist)))
-
-    # test system.analysis.distribution(), all the same particle types
     def test_distribution_lin(self):
-        # increase PBC to remove mirror images
-        old_pos = self.partcls.pos.copy()
-        self.system.box_l = self.system.box_l * 2.
-        self.partcls.pos = old_pos
         r_min = 0.0
-        r_max = 100.0
+        r_max = 100.
         r_bins = 100
-        bins = np.linspace(r_min, r_max, num=r_bins + 1, endpoint=True)
-        # no int flag
-        core_rdf = self.system.analysis.distribution(type_list_a=[0],
-                                                     type_list_b=[0],
-                                                     r_min=r_min,
-                                                     r_max=r_max,
-                                                     r_bins=r_bins,
-                                                     log_flag=0,
-                                                     int_flag=0)
-        # bins
-        np.testing.assert_allclose(core_rdf[0], (bins[1:] + bins[:-1]) * 0.5)
+        edges = np.linspace(r_min, r_max, num=r_bins + 1, endpoint=True)
+        ref_bins = (edges[1:] + edges[:-1]) / 2.
+        for int_flag in (0, 1):
+            ref_rdf = self.calc_min_distribution(edges, int_flag)
+            core_rdf = self.system.analysis.distribution(
+                type_list_a=[0], type_list_b=[0], r_min=r_min, r_max=r_max,
+                r_bins=r_bins, log_flag=0, int_flag=int_flag)
+            np.testing.assert_allclose(core_rdf[0], ref_bins)
+            np.testing.assert_allclose(core_rdf[1], ref_rdf)
 
-        # rdf
-        np.testing.assert_allclose(core_rdf[1],
-                                   self.calc_min_distribution(bins))
-        # with int flag
-        core_rdf = self.system.analysis.distribution(type_list_a=[0],
-                                                     type_list_b=[0],
-                                                     r_min=r_min,
-                                                     r_max=r_max,
-                                                     r_bins=r_bins,
-                                                     log_flag=0,
-                                                     int_flag=1)
-        np.testing.assert_allclose(core_rdf[1],
-                                   np.cumsum(self.calc_min_distribution(bins)))
+    def test_distribution_log(self):
+        r_min = 0.01
+        r_max = 100.
+        r_bins = 100
+        edges = np.geomspace(r_min, r_max, num=r_bins + 1)
+        for int_flag in (0, 1):
+            ref_rdf = self.calc_min_distribution(edges, int_flag)
+            core_rdf = self.system.analysis.distribution(
+                type_list_a=[0], type_list_b=[0], r_min=r_min, r_max=r_max,
+                r_bins=r_bins, log_flag=1, int_flag=int_flag)
+            ref_bins = np.geomspace(
+                core_rdf[0][0], core_rdf[0][-1], r_bins, endpoint=True)
+            np.testing.assert_allclose(core_rdf[0], ref_bins)
+            np.testing.assert_allclose(core_rdf[1], ref_rdf)
 
 
 if __name__ == "__main__":

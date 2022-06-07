@@ -44,11 +44,14 @@
 #include <utility>
 #include <vector>
 
+CellStructure::CellStructure(BoxGeometry const &box)
+    : m_decomposition{std::make_unique<AtomDecomposition>(box)} {}
+
 void CellStructure::check_particle_index() {
   auto const max_id = get_max_local_particle_id();
 
   for (auto const &p : local_particles()) {
-    auto const id = p.identity();
+    auto const id = p.id();
 
     if (id < 0 || id > max_id) {
       throw std::runtime_error("Particle id out of bounds.");
@@ -64,7 +67,7 @@ void CellStructure::check_particle_index() {
   for (int n = 0; n < get_max_local_particle_id() + 1; n++) {
     if (get_local_particle(n) != nullptr) {
       local_part_cnt++;
-      if (get_local_particle(n)->p.identity != n) {
+      if (get_local_particle(n)->id() != n) {
         throw std::runtime_error("local_particles part has corrupted id.");
       }
     }
@@ -82,7 +85,7 @@ void CellStructure::check_particle_sorting() {
     for (auto const &p : cell->particles()) {
       if (particle_to_cell(p) != cell) {
         throw std::runtime_error("misplaced particle with id " +
-                                 std::to_string(p.identity()));
+                                 std::to_string(p.id()));
       }
     }
   }
@@ -107,7 +110,7 @@ void CellStructure::remove_particle(int id) {
     auto &parts = c->particles();
 
     for (auto it = parts.begin(); it != parts.end();) {
-      if (it->identity() == id) {
+      if (it->id() == id) {
         it = parts.erase(it);
         update_particle_index(id, nullptr);
         update_particle_index(parts);
@@ -148,7 +151,7 @@ int CellStructure::get_max_local_particle_id() const {
   auto it = std::find_if(m_particle_index.rbegin(), m_particle_index.rend(),
                          [](const Particle *p) { return p != nullptr; });
 
-  return (it != m_particle_index.rend()) ? (*it)->identity() : -1;
+  return (it != m_particle_index.rend()) ? (*it)->id() : -1;
 }
 
 void CellStructure::remove_all_particles() {

@@ -43,7 +43,7 @@ public:
 
 private:
   template <typename Particle> double scale(Particle const &p) const {
-    auto const &val = m_scales.find(p.identity());
+    auto const &val = m_scales.find(p.id());
     if (val != m_scales.end())
       return val->second;
 

@@ -31,7 +31,7 @@ coverage:
       default:
         target: 96% # switch back to 'auto' when all python tests are enabled again
         enabled: yes
-        threshold: 2%
+        threshold: 3%
     changes: no
 
 parsers:
