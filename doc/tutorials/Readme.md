@@ -51,9 +51,7 @@ physical systems.
 
 * **Active matter**  
   Modelling of self-propelling particles.  
-  [Guide](active_matter/active_matter.ipynb) |
-  [Exercises](active_matter/exercises) |
-  [Solutions](active_matter/solutions)
+  [Guide](active_matter/active_matter.ipynb)
 * **Electrokinetics**  
   Modelling electrokinetics together with hydrodynamic interactions.  
   [Guide](electrokinetics/electrokinetics.ipynb)

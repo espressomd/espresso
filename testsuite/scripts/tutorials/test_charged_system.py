@@ -24,7 +24,7 @@ tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
 
 
 @skipIfMissingFeatures
-class Tutorial02_1(ut.TestCase):
+class Tutorial02(ut.TestCase):
     system = tutorial.system
 
     def test_overcharging(self):

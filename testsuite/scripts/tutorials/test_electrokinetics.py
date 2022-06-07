@@ -18,29 +18,15 @@
 import unittest as ut
 import importlib_wrapper as iw
 import numpy as np
-import sys
 
-# The tutorial and scripts need to be executed sequentially. Due to a
-# race condition in CI, configure_and_import() cannot be used on all
-# 3 imports, otherwise the following error is raised when importing
-# plot.py: "ModuleNotFoundError: No module named 'plot_processed'".
-# This bug happens at random on empty and default configurations.
-# To work around it, the eof_analytical.py script is imported
-# directly without changes using importlib.import_module().
-tutorial_simulation, skipIfMissingFeatures_simulation = iw.configure_and_import(
+tutorial, skipIfMissingFeatures_simulation = iw.configure_and_import(
     "@TUTORIALS_DIR@/electrokinetics/electrokinetics.py",
     gpu=True, integration_length=600, dt=0.5)
-sys.path.insert(0, "@TUTORIALS_DIR@/electrokinetics/scripts/")
-tutorial_analytical = iw.importlib.import_module("eof_analytical")
-tutorial_plot, skipIfMissingFeatures_plot = iw.configure_and_import(
-    "@TUTORIALS_DIR@/electrokinetics/scripts/plot.py",
-    move_to_script_dir=False)
 
 
 @skipIfMissingFeatures_simulation
-@skipIfMissingFeatures_plot
 class Tutorial(ut.TestCase):
-    system = tutorial_simulation.system
+    system = tutorial.system
 
     def normalize_two_datasets(self, a, b):
         offset = min(np.min(a), np.min(b))
@@ -52,8 +38,8 @@ class Tutorial(ut.TestCase):
 
     def test_simulation(self):
         for varname in ("density", "velocity", "pressure_xy"):
-            sim = np.array(tutorial_simulation.__dict__[varname + "_list"])
-            ana = np.array(tutorial_analytical.__dict__[varname + "_list"])
+            sim = np.array(tutorial.__dict__[varname + "_list"])
+            ana = np.array(tutorial.eof_analytical.__dict__[varname + "_list"])
             self.normalize_two_datasets(sim, ana)
             accuracy = np.max(np.abs(sim - ana))
             # expecting at most 3% deviation
