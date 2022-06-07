@@ -1,3 +1,20 @@
+#  Copyright (C) 2022 The ESPResSo project
+#
+#  This file is part of ESPResSo.
+#
+#  ESPResSo is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  ESPResSo is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
@@ -19,11 +36,14 @@ class EKFixedDensity(ut.TestCase):
     system.time_step = 1.0
     system.cell_system.skin = 0.4
 
-    def test_constant_density_bc(self):
-        for single_precision in (False, True):
-            with self.subTest(single_precision=single_precision):
-                self.detail_test_constant_density_bc(
-                    single_precision=single_precision)
+    def tearDown(self) -> None:
+        self.system.ekcontainer.clear()
+
+    def test_constant_density_bc_single(self):
+        self.detail_test_constant_density_bc(single_precision=True)
+
+    def test_constant_density_bc_double(self):
+        self.detail_test_constant_density_bc(single_precision=False)
 
     def detail_test_constant_density_bc(self, single_precision: bool):
         """ effective 1D system with linear equilibrium profile """
