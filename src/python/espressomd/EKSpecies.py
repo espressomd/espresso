@@ -17,10 +17,22 @@ class EKFFT(ScriptInterfaceHelper):
     _so_name = "walberla::EKFFT"
     _so_creation_policy = "GLOBAL"
 
+    def __init__(self, *args, **kwargs):
+        if not has_features("LB_WALBERLA"):
+            raise NotImplementedError("Feature LB_WALBERLA not compiled in")
+
+        super().__init__(*args, **kwargs)
+
 
 class EKNone(ScriptInterfaceHelper):
     _so_name = "walberla::None"
     _so_creation_policy = "GLOBAL"
+
+    def __init__(self, *args, **kwargs):
+        if not has_features("LB_WALBERLA"):
+            raise NotImplementedError("Feature LB_WALBERLA not compiled in")
+
+        super().__init__(*args, **kwargs)
 
 
 @script_interface_register
@@ -65,6 +77,12 @@ class EKSpecies(ScriptInterfaceHelper):
     """
     _so_name = "walberla::EKSpecies"
     _so_creation_policy = "GLOBAL"
+
+    def __init__(self, *args, **kwargs):
+        if not has_features("LB_WALBERLA"):
+            raise NotImplementedError("Feature LB_WALBERLA not compiled in")
+
+        super().__init__(*args, **kwargs)
 
     def __getitem__(self, key):
         if isinstance(key, (tuple, list, np.ndarray)):

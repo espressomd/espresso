@@ -1,6 +1,8 @@
 #ifndef ESPRESSO_EKCONTAINER_HPP
 #define ESPRESSO_EKCONTAINER_HPP
 
+#ifdef LB_WALBERLA
+
 #include "electrokinetics/PoissonSolver/PoissonSolver.hpp"
 
 #include <algorithm>
@@ -79,5 +81,7 @@ public:
     return m_poissonsolver->get_potential_field_id();
   }
 };
+
+#endif // LB_WALBERLA
 
 #endif // ESPRESSO_EKCONTAINER_HPP

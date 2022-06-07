@@ -6,7 +6,7 @@ import espressomd.shapes
 import scipy.optimize
 
 
-@utx.skipIfMissingFeatures(["EK_WALBERLA"])
+@utx.skipIfMissingFeatures(["LB_WALBERLA"])
 class EKEOF(ut.TestCase):
     BOX_L = [30., 6., 6.]
     AGRID = 1.0

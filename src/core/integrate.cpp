@@ -364,8 +364,8 @@ int integrate(int n_steps, int reuse_forces) {
     // propagate one-step functionalities
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
       const bool lb_active = lb_lbfluid_get_lattice_switch() != ActiveLB::NONE;
-#ifdef EK_WALBERLA
-      const bool ek_active = !EK::ek_container.empty();
+#ifdef LB_WALBERLA
+      const bool ek_active = not EK::ek_container.empty();
 #else
       constexpr bool ek_active = false;
 #endif

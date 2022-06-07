@@ -30,7 +30,7 @@
 #include <utils/mpi/cart_comm.hpp>
 
 // TODO: extract mpi-init from lb_walberla_init to separate file
-#if defined(LB_WALBERLA) || defined(EK_WALBERLA)
+#ifdef LB_WALBERLA
 #include <lb_walberla_init.hpp>
 #endif
 

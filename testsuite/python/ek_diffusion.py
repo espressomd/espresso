@@ -6,7 +6,7 @@ import numpy as np
 import scipy.optimize
 
 
-@utx.skipIfMissingFeatures(["EK_WALBERLA"])
+@utx.skipIfMissingFeatures(["LB_WALBERLA"])
 class EKDiffusion(ut.TestCase):
     BOX_L = 31.
     AGRID = 1.0
@@ -18,14 +18,19 @@ class EKDiffusion(ut.TestCase):
     system.time_step = 1.0
     system.cell_system.skin = 0.4
 
+    def tearDown(self) -> None:
+        self.system.actors.clear()
+        self.system.ekcontainer.clear()
+
     def analytical_density(self, pos: np.ndarray, time: int, D: float):
         return (4 * np.pi * D * time)**(-3 / 2) * \
             np.exp(-np.sum(np.square(pos), axis=-1) / (4 * D * time))
 
-    def test_diffusion(self):
-        for single_precision in (False, True):
-            with self.subTest(single_precision=single_precision):
-                self.detail_test_diffusion(single_precision=single_precision)
+    def test_diffusion_single(self):
+        self.detail_test_diffusion(single_precision=True)
+
+    def test_diffusion_double(self):
+        self.detail_test_diffusion(single_precision=False)
 
     def detail_test_diffusion(self, single_precision: bool):
         """
