@@ -240,13 +240,10 @@ class ActorsTest(ut.TestCase):
 
     def test_unique(self):
         # an actor can only be added once
-        actor = TestActor(a=False, c=False)
-        actor_same_type = TestActor(a=False, c=True)
+        actor = TestHydrodynamicActor(a=False, c=False)
         self.actors.add(actor)
         with self.assertRaises(espressomd.highlander.ThereCanOnlyBeOne):
             self.actors.add(actor)
-        with self.assertRaises(espressomd.highlander.ThereCanOnlyBeOne):
-            self.actors.add(actor_same_type)
         # an actor can only be removed once
         self.actors.remove(actor)
         with self.assertRaises(Exception):
