@@ -131,20 +131,16 @@ public:
   void set_node_value_at_boundary(Utils::Vector3i const &node, U const &v,
                                   BlockAndCell const &bc) {
     auto [flag_field, boundary_flag] = get_flag_field_and_flag(bc.block);
-    const auto domain_flag = flag_field->getFlag(Domain_flag);
     m_callback.set_node_boundary_value(node, v);
     flag_field->addFlag(bc.cell, boundary_flag);
-    flag_field->removeFlag(bc.cell, domain_flag);
     m_pending_changes = true;
   }
 
   void remove_node_from_boundary(Utils::Vector3i const &node,
                                  BlockAndCell const &bc) {
     auto [flag_field, boundary_flag] = get_flag_field_and_flag(bc.block);
-    const auto domain_flag = flag_field->getFlag(Domain_flag);
     m_callback.unset_node_boundary_value(node);
     flag_field->removeFlag(bc.cell, boundary_flag);
-    flag_field->addFlag(bc.cell, domain_flag);
     m_pending_changes = true;
   }
 
