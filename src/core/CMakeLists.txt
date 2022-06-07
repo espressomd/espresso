@@ -42,7 +42,7 @@ set(EspressoCore_SRC
     PartCfg.cpp
     AtomDecomposition.cpp
     EspressoSystemStandAlone.cpp
-    DomainDecomposition.cpp grid_based_algorithms/ekin_walberla_interface.hpp)
+    DomainDecomposition.cpp)
 
 if(CUDA)
   set(EspressoCuda_SRC
