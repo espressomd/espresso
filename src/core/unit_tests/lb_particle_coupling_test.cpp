@@ -335,7 +335,7 @@ BOOST_DATA_TEST_CASE(particle_coupling, bdata::make(kTs), kT) {
   auto &rng = lb_particle_coupling.rng_counter_coupling;
   Particle p{};
   Utils::Vector3d expected = noise * Random::noise_uniform<RNGSalt::PARTICLES>(
-                                         rng->value(), 0, p.identity());
+                                         rng->value(), 0, p.id());
 #ifdef ENGINE
   p.swimming().swimming = true;
   p.swimming().v_swim = 2.;
