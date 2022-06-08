@@ -397,7 +397,7 @@ void ReactionAlgorithm::check_exclusion_range(int inserted_particle_id) {
                                    inserted_particle_id),
                        particle_ids.end());
   } else {
-    particle_ids = mpi_get_short_range_neighbors(inserted_particle.identity(),
+    particle_ids = mpi_get_short_range_neighbors(inserted_particle.id(),
                                                  m_max_exclusion_range);
   }
 

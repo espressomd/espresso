@@ -212,9 +212,9 @@ cdef class System:
         if has_features("VIRTUAL_SITES"):
             checkpointable_properties.append("_active_virtual_sites_handle")
         checkpointable_properties += [
-            "non_bonded_inter", "bonded_inter", "cell_system", "part",
-            "analysis", "auto_update_accumulators", "comfixed", "constraints",
-            "galilei", "bond_breakage", "max_oif_objects"
+            "non_bonded_inter", "bonded_inter", "cell_system", "lees_edwards",
+            "part", "analysis", "auto_update_accumulators", "comfixed",
+            "constraints", "galilei", "bond_breakage", "max_oif_objects"
         ]
         if has_features("COLLISION_DETECTION"):
             checkpointable_properties.append("collision_detection")

@@ -46,7 +46,7 @@ cdef extern from "Particle.hpp":
     ctypedef struct particle "Particle":
         Vector3d calc_dip()
         int type()
-        int identity()
+        int id()
         double mass()
         int mol_id()
         Vector3d pos()

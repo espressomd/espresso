@@ -100,6 +100,8 @@ bool activate_lb_walberla(std::shared_ptr<LBWalberlaBase> lb_fluid,
   try {
     assert(::lattice_switch == ActiveLB::NONE);
     lb_sanity_checks(*lb_fluid, *lb_params, get_time_step());
+    auto const &lebc = box_geo.lees_edwards_bc();
+    lb_fluid->check_lebc(lebc.shear_direction, lebc.shear_plane_normal);
   } catch (const std::exception &e) {
     runtimeErrorMsg() << "during waLBerla activation: " << e.what();
     flag_failure = true;

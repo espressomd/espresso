@@ -143,9 +143,7 @@ BOOST_AUTO_TEST_CASE(lees_edwards_mi_vector) {
   box.set_length(box_l);
   box.set_periodic(1, false);
   box.set_type(BoxType::LEES_EDWARDS);
-  LeesEdwardsBC le;
-  le.shear_direction = 2;
-  le.shear_plane_normal = 0;
+  LeesEdwardsBC le{0., 0., 2, 0};
   box.set_lees_edwards_bc(le);
 
   // No pos offset -> behave like normal get_mi_vector
@@ -200,9 +198,7 @@ BOOST_AUTO_TEST_CASE(lees_edwards_mi_vector) {
   box.set_periodic(1, true);
   box.set_periodic(2, true);
   box.set_length(Vector3d{5, 5, 5});
-  box.lees_edwards_bc().pos_offset = 2.98;
-  box.lees_edwards_bc().shear_direction = 0;
-  box.lees_edwards_bc().shear_plane_normal = 1;
+  box.set_lees_edwards_bc(LeesEdwardsBC{2.98, 0., 0, 1});
   auto const result =
       box.get_mi_vector(Vector3d{2.5, 1., 2.5}, Vector3d{4.52, 4., 2.5});
   BOOST_CHECK_SMALL(std::fabs(result[0]), box.length_half()[0]);
@@ -220,7 +216,7 @@ BOOST_AUTO_TEST_CASE(image_shift_test) {
 }
 
 BOOST_AUTO_TEST_CASE(unfolded_position_test) {
-  Utils::Vector3d pos{5., 6, 7.};
+  Utils::Vector3d pos{5., 6., 7.};
   Utils::Vector3i img{1, -2, 3};
   Utils::Vector3d box{1., 2., 3.};
 

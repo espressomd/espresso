@@ -302,8 +302,8 @@ void coldet_do_three_particle_bond(Particle &p, Particle const &p1,
                 collision_params.three_particle_angle_resolution);
   };
   /* Check if the bond is between the particles we are currently considering */
-  auto has_same_partners = [id1 = p1.identity(),
-                            id2 = p2.identity()](BondView const &bond) {
+  auto has_same_partners = [id1 = p1.id(),
+                            id2 = p2.id()](BondView const &bond) {
     auto const partner_ids = bond.partner_ids();
 
     return ((partner_ids[0] == id1) && (partner_ids[1] == id2)) ||
@@ -354,7 +354,7 @@ void place_vs_and_relate_to_particle(const int current_vs_pid,
 
   local_vs_relate_to(*p_vs, get_part(relate_to));
 
-  p_vs->p.is_virtual = true;
+  p_vs->set_virtual(true);
   p_vs->type() = collision_params.vs_particle_type;
 }
 
@@ -558,8 +558,7 @@ void handle_collisions() {
 
           auto handle_particle = [&](Particle *p, Utils::Vector3d const &pos) {
             if (not p->is_ghost()) {
-              place_vs_and_relate_to_particle(current_vs_pid, pos,
-                                              p->identity());
+              place_vs_and_relate_to_particle(current_vs_pid, pos, p->id());
               // Particle storage locations may have changed due to
               // added particle
               p1 = cell_structure.get_local_particle(c.pp1);
@@ -618,7 +617,7 @@ void handle_collisions() {
           // Vs placement happens on the node that has p1
           if (!attach_vs_to.is_ghost()) {
             place_vs_and_relate_to_particle(current_vs_pid, pos,
-                                            attach_vs_to.identity());
+                                            attach_vs_to.id());
             // Particle storage locations may have changed due to
             // added particle
             p1 = cell_structure.get_local_particle(c.pp1);

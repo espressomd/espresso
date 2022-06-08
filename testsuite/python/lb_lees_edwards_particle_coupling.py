@@ -35,20 +35,17 @@ class LBLeesEdwardsParticleCoupling(ut.TestCase):
 
         offset = 1
         idx = int(offset)
-        system.lees_edwards.protocol = lees_edwards.LinearShear(
-            shear_velocity=0.0,
-            initial_pos_offset=offset,
-            time_0=0.0)
-
-        system.lees_edwards.shear_direction = 0
-        system.lees_edwards.shear_plane_normal = 1
+        protocol = lees_edwards.LinearShear(
+            shear_velocity=0., initial_pos_offset=offset, time_0=0.)
+        system.lees_edwards.set_boundary_conditions(
+            shear_direction="x", shear_plane_normal="y", protocol=protocol)
 
         lbf = espressomd.lb.LBFluidWalberla(
             agrid=1, density=1, viscosity=1, tau=system.time_step)
         system.actors.add(lbf)
         system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1)
 
-        pos = [system.box_l[0] / 2, 0.0, system.box_l[0] / 2]
+        pos = [system.box_l[0] / 2., 0., system.box_l[0] / 2.]
         p = system.part.add(pos=pos)
         v0 = np.array([1, 2, 3])
         mid_x = lbf.shape[0] // 2

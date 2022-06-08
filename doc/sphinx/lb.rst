@@ -178,6 +178,22 @@ where ``lbf`` is an instance of either :class:`espressomd.lb.LBFluidWalberla` or
 ``seed`` the seed for the random number generator involved
 in the thermalization.
 
+.. _LB and LEbc:
+
+LB and LEbc
+^^^^^^^^^^^
+
+:ref:`Lees-Edwards boundary conditions` (LEbc) are supported by both
+LB implementations, which follow the derivation in :cite:`wagner02a`.
+Note, that there is no extra python interface for the use of LEbc
+with the LB algorithm: all the necessary information is internally
+derived from the currently active MD LEbc protocol in
+``system.lees_edwards.protocol``.
+Therefore, the MD LEbc must be set before the LB actor is instantiated.
+Use the :class:`~espressomd.lees_edwards.Off` if the system should have
+no shearing initially; this action will initialize the shear axes, and
+when the LB actor is instantiated, the Lees-Edwards collision kernels
+will be used instead of the default ones.
 
 .. _Reading and setting properties of single lattice nodes:
 
@@ -273,13 +289,6 @@ of the LBM in analogy to the example for the CPU given in section
     lb = espressomd.lb.LBFluidWalberlaGPU(agrid=1.0, density=1.0, viscosity=1.0, tau=0.01)
     system.actors.add(lb)
     system.integrator.run(100)
-
-:ref:`Lees-Edwards boundary conditions` (LEbc) are supported by both
-LB implementations, which follow the derivation in :cite:`wagner02a`.
-Note, that there is no extra python interface for the use of LEbc
-with the LB algorithm: all the necessary information is internally
-derived from the currently active LEbc protocol in
-``system.lees_edwards.protocol``.
 
 .. _Electrohydrodynamics:
 

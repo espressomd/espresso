@@ -108,16 +108,16 @@ void queue_collision(int part1, int part2);
 
 /** @brief Check additional criteria for the glue_to_surface collision mode */
 inline bool glue_to_surface_criterion(Particle const &p1, Particle const &p2) {
-  return (((p1.p.type == collision_params.part_type_to_be_glued) &&
-           (p2.p.type == collision_params.part_type_to_attach_vs_to)) ||
-          ((p2.p.type == collision_params.part_type_to_be_glued) &&
-           (p1.p.type == collision_params.part_type_to_attach_vs_to)));
+  return (((p1.type() == collision_params.part_type_to_be_glued) &&
+           (p2.type() == collision_params.part_type_to_attach_vs_to)) ||
+          ((p2.type() == collision_params.part_type_to_be_glued) &&
+           (p1.type() == collision_params.part_type_to_attach_vs_to)));
 }
 
 /** @brief Detect (and queue) a collision between the given particles. */
 inline void detect_collision(Particle const &p1, Particle const &p2,
-                             const double &dist_betw_part2) {
-  if (dist_betw_part2 > collision_params.distance2)
+                             double const dist2) {
+  if (dist2 > collision_params.distance2)
     return;
 
   // If we are in the glue to surface mode, check that the particles
@@ -127,26 +127,24 @@ inline void detect_collision(Particle const &p1, Particle const &p2,
       return;
 
   // Ignore virtual particles
-  if ((p1.p.is_virtual) || (p2.p.is_virtual))
+  if (p1.is_virtual() or p2.is_virtual())
     return;
 
   // Check, if there's already a bond between the particles
-  if (pair_bond_exists_on(p1.bonds(), p2.identity(),
-                          collision_params.bond_centers))
+  if (pair_bond_exists_on(p1.bonds(), p2.id(), collision_params.bond_centers))
     return;
 
-  if (pair_bond_exists_on(p2.bonds(), p1.identity(),
-                          collision_params.bond_centers))
+  if (pair_bond_exists_on(p2.bonds(), p1.id(), collision_params.bond_centers))
     return;
 
   /* If we're still here, there is no previous bond between the particles,
      we have a new collision */
 
   // do not create bond between ghost particles
-  if (p1.l.ghost && p2.l.ghost) {
+  if (p1.is_ghost() and p2.is_ghost()) {
     return;
   }
-  queue_collision(p1.p.identity, p2.p.identity);
+  queue_collision(p1.id(), p2.id());
 }
 
 #endif // COLLISION_DETECTION

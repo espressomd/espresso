@@ -72,10 +72,10 @@ class H5mdTests(ut.TestCase):
 
     system.integrator.run(steps=0)
     system.time = 12.3
-    system.lees_edwards.shear_direction = 0
-    system.lees_edwards.shear_plane_normal = 1
-    system.lees_edwards.protocol = espressomd.lees_edwards.LinearShear(
+    protocol = espressomd.lees_edwards.LinearShear(
         shear_velocity=1.5, initial_pos_offset=0.5, time_0=-0.3)
+    system.lees_edwards.set_boundary_conditions(
+        shear_direction="x", shear_plane_normal="y", protocol=protocol)
     n_nodes = system.cell_system.get_state()["n_nodes"]
 
     @classmethod
@@ -209,8 +209,9 @@ class H5mdTests(ut.TestCase):
         le_offset = protocol.initial_pos_offset + protocol.shear_velocity * (
             self.system.time - protocol.time_0)
         np.testing.assert_allclose(self.py_le_offset, le_offset)
-        self.assertEqual(self.py_le_direction, le_bc.shear_direction)
-        self.assertEqual(self.py_le_normal, le_bc.shear_plane_normal)
+        conv = {0: "x", 1: "y", 2: "z"}
+        self.assertEqual(conv[self.py_le_direction[0]], le_bc.shear_direction)
+        self.assertEqual(conv[self.py_le_normal[0]], le_bc.shear_plane_normal)
 
     def test_metadata(self):
         """Test if the H5MD metadata has been written properly."""

@@ -36,8 +36,9 @@ import tempfile
 system = espressomd.System(box_l=[6, 7, 8], periodicity=[True, True, False])
 system.time_step = 0.1
 system.cell_system.skin = 0.0
-system.lees_edwards.shear_direction = 0
-system.lees_edwards.shear_plane_normal = 1
+system.lees_edwards.set_boundary_conditions(
+    shear_direction="x", shear_plane_normal="y",
+    protocol=espressomd.lees_edwards.Off())
 for i in range(12):
     p = system.part.add(pos=3 * [float(i - 4)], v=[0., 1., 0.])
 

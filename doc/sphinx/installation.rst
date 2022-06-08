@@ -88,18 +88,6 @@ Optionally the ccmake utility can be installed for easier configuration:
 
     sudo apt install cmake-curses-gui
 
-To run the tutorials and generate the documentation, additional Python packages
-are required:
-
-.. code-block:: bash
-
-    sudo apt install python3-matplotlib python3-pint python3-tqdm ipython3 jupyter-notebook
-    pip3 install --user 'jupyter_contrib_nbextensions==0.5.1' 'MDAnalysis>=1.0.0,<2.0.0' \
-                        'sphinx>=2.3.0,!=3.0.0' 'sphinxcontrib-bibtex>=0.3.5' 'sphinx-toggleprompt==0.0.5'
-    jupyter contrib nbextension install --user
-    jupyter nbextension enable rubberband/main
-    jupyter nbextension enable exercise2/main
-
 .. _Nvidia GPU acceleration:
 
 Nvidia GPU acceleration
@@ -117,6 +105,73 @@ generate compiler errors. You can either install an older version of GCC and
 select it with environment variables ``CC`` and ``CXX`` when building |es|,
 or edit the system header files as shown in the following
 `patch for Ubuntu 20.04 <https://github.com/espressomd/espresso/issues/3654#issuecomment-612165048>`_.
+
+.. _Requirements for building the documentation:
+
+Requirements for building the documentation
+"""""""""""""""""""""""""""""""""""""""""""
+
+To generate the Sphinx documentation, install the following packages:
+
+.. code-block:: bash
+
+    pip3 install --user --constraint\
+        'sphinx>=2.3.0,!=3.0.0' \
+        'sphinxcontrib-bibtex>=2.4.1' \
+        'sphinx-toggleprompt==0.0.5'
+
+To generate the Doxygen documentation, install the following packages:
+
+.. code-block:: bash
+
+    sudo apt install doxygen graphviz
+
+.. _Setting up a Jupyter environment:
+
+Setting up a Jupyter environment
+""""""""""""""""""""""""""""""""
+
+To run the samples and tutorials, start by installing the following packages:
+
+.. code-block:: bash
+
+    sudo apt install python3-matplotlib python3-pint python3-tqdm ffmpeg
+    pip3 install --user 'MDAnalysis>=1.0.0,<2.0.0'
+
+The tutorials are written in the
+`Notebook Format <https://nbformat.readthedocs.io/en/latest/>`__
+version <= 4.4 and can be executed by any of these tools:
+
+* `Jupyter Notebook <https://jupyter-notebook.readthedocs.io/en/stable/notebook.html>`__
+* `JupyterLab <https://jupyterlab.readthedocs.io/en/stable/>`__
+* `IPython <https://ipython.org/>`__ (not recommended)
+
+To check whether one of them is installed, run these commands:
+
+.. code-block:: bash
+
+    jupyter notebook --version
+    jupyter lab --version
+    ipython --version
+
+If you don't have any of these tools installed and aren't sure which one
+to use, we recommend installing the historic Jupyter Notebook, since the
+|es| tutorials have been designed with the ``exercise2`` plugin in mind.
+
+To use Jupyter Notebook, install the following packages:
+
+.. code-block:: bash
+
+    pip3 install --user nbformat notebook 'jupyter_contrib_nbextensions==0.5.1'
+    jupyter contrib nbextension install --user
+    jupyter nbextension enable rubberband/main
+    jupyter nbextension enable exercise2/main
+
+Alternatively, to use JupyterLab, install the following packages:
+
+.. code-block:: bash
+
+    pip3 install --user nbformat notebook jupyterlab
 
 .. _Installing requirements on other Linux distributions:
 
@@ -855,7 +910,7 @@ you can as a last resort activate sanitizers:
 The resulting build will be around 5 times slower that a debug build,
 but it will generate valuable reports when detecting fatal exceptions.
 For more details, please consult the online documentation of
-`UBSAN <https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html>__` and
+`UBSAN <https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html>`__ and
 `ASAN <https://github.com/google/sanitizers/wiki/AddressSanitizer>`__.
 
 ____

@@ -75,20 +75,12 @@ enum {
 /** Type of cell structure in use. */
 extern CellStructure cell_structure;
 
-/** Initialize cell structure HybridDecomposition
+/** Initialize cell structure @ref HybridDecomposition
  *  @param n_square_types   Types of particles to place in the N-square cells.
  *  @param cutoff_regular   Cutoff for the regular decomposition.
  */
 void set_hybrid_decomposition(std::set<int> n_square_types,
                               double cutoff_regular);
-
-/**
- * @brief Count particles in child decompositions of a HybridDecomposition.
- *
- * @return Number of particles in regular decomposition resp. N-square.
- */
-std::pair<std::size_t, std::size_t>
-hybrid_parts_per_decomposition(HybridDecomposition const &hd);
 
 /** Reinitialize the cell structures.
  *  @param new_cs The new topology to use afterwards.
@@ -135,7 +127,7 @@ mpi_get_short_range_neighbors_local(int pid, double distance,
  *
  * @return pointer to the cell or nullptr if the particle is not on the node
  */
-Cell *find_current_cell(const Particle &p);
+Cell *find_current_cell(Particle const &p);
 
 class PairInfo {
 public:

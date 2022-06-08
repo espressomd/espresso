@@ -421,9 +421,9 @@ add_bonded_force(Particle &p1, int bond_id, Utils::Span<Particle *> partners,
 
   // Consider for bond breakage
   if (partners.size() == 1) {
-    auto d = box_geo.get_mi_vector(p1.r.p, partners[0]->r.p).norm();
-    if (BondBreakage::check_and_handle_breakage(
-            p1.p.identity, partners[0]->p.identity, bond_id, d))
+    auto d = box_geo.get_mi_vector(p1.pos(), partners[0]->pos()).norm();
+    if (BondBreakage::check_and_handle_breakage(p1.id(), partners[0]->id(),
+                                                bond_id, d))
       return false;
   }
 

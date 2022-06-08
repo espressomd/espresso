@@ -68,6 +68,11 @@ void check_tau_time_step_consistency(double tau, double time_step);
 void lb_lbfluid_sanity_checks(double time_step);
 
 /**
+ * @brief Perform LB LEbc parameter checks.
+ */
+void lb_lbfluid_lebc_sanity_checks(int shear_direction, int shear_plane_normal);
+
+/**
  * @brief Set the LB fluid velocity for a single node.
  */
 void lb_lbnode_set_velocity(const Utils::Vector3i &ind,

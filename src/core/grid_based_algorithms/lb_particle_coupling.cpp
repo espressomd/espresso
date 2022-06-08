@@ -210,7 +210,7 @@ std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d pos,
 /** @brief Return if locally there exists a physical particle
  ** for a given (ghost) particle */
 bool is_ghost_for_local_particle(const Particle &p) {
-  return !cell_structure.get_local_particle(p.identity())->is_ghost();
+  return !cell_structure.get_local_particle(p.id())->is_ghost();
 }
 
 /** @brief Determine if a given particle should be coupled.
@@ -226,9 +226,8 @@ bool should_be_coupled(const Particle &p,
   // for ghosts check that we don't have the physical particle and
   // that a ghost for the same particle has not yet been coupled
   if ((not is_ghost_for_local_particle(p)) and
-      (coupled_ghost_particles.find(p.identity()) ==
-       coupled_ghost_particles.end())) {
-    coupled_ghost_particles.insert(p.identity());
+      (coupled_ghost_particles.find(p.id()) == coupled_ghost_particles.end())) {
+    coupled_ghost_particles.insert(p.id());
     return true;
   }
   return false;
@@ -280,8 +279,7 @@ void couple_particle(Particle &p, bool couple_virtual, double noise_amplitude,
           lb_drag_force(p, pos, lb_particle_coupling_drift_vel_offset(p));
       auto const random_force =
           noise_amplitude * lb_particle_coupling_noise(noise_amplitude > 0.0,
-                                                       p.identity(),
-                                                       rng_counter);
+                                                       p.id(), rng_counter);
       coupling_force = drag_force + random_force;
       break;
     }

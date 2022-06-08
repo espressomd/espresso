@@ -70,13 +70,6 @@ class BaseActor:
                     f"Class not registered in Actor.active_list: {self.__class__.__bases__[0].__name__}")
             BaseActor.active_list[inter] = False
 
-    def is_valid(self):
-        """
-        Check if the data stored in this instance still matches the
-        corresponding data in the core.
-        """
-        return self._params == self._get_params_from_es_core()
-
     def get_params(self):
         """Get interaction parameters"""
         # If this instance refers to an actual interaction defined in the es
@@ -102,21 +95,6 @@ class BaseActor:
         # Put in values given by the user
         if self.is_active():
             self._set_params_in_es_core()
-
-    def __str__(self):
-        return f"{self.__class__.__name__}({self.get_params()})"
-
-    def _get_interaction_type(self):
-        bases = self.class_lookup(self.__class__)
-        for i in range(len(bases)):
-            if bases[i].__name__ in BaseActor.active_list:
-                return bases[i].__name__
-
-    def class_lookup(self, cls):
-        c = list(cls.__bases__)
-        for base in c:
-            c.extend(self.class_lookup(base))
-        return c
 
     def is_active(self):
         return self._isactive
@@ -155,6 +133,15 @@ class TestActor(BaseActor):
 
     def validate_params(self):
         self._validated = True
+
+    def _get_interaction_type(self):
+        return None
+
+
+class TestHydrodynamicActor(TestActor):
+
+    def _get_interaction_type(self):
+        return "HydrodynamicInteraction"
 
 
 class ActorTest(ut.TestCase):
@@ -253,7 +240,7 @@ class ActorsTest(ut.TestCase):
 
     def test_unique(self):
         # an actor can only be added once
-        actor = TestActor(a=False, c=False)
+        actor = TestHydrodynamicActor(a=False, c=False)
         self.actors.add(actor)
         with self.assertRaises(espressomd.highlander.ThereCanOnlyBeOne):
             self.actors.add(actor)

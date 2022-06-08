@@ -44,16 +44,10 @@ set(EspressoCore_SRC
 
 if(CUDA)
   set(EspressoCuda_SRC
-      cuda_common_cuda.cu
-      cuda_init.cpp
-      cuda_init_cuda.cu
-      cuda_interface.cpp
-      CudaHostAllocator.cu
-      magnetostatics/barnes_hut_gpu_cuda.cu
-      magnetostatics/dds_gpu_cuda.cu
-      electrostatics/mmm1d_gpu_cuda.cu
-      electrostatics/p3m_gpu_cuda.cu
-      electrostatics/p3m_gpu_error_cuda.cu
+      cuda_common_cuda.cu cuda_init.cpp cuda_init_cuda.cu cuda_interface.cpp
+      CudaHostAllocator.cu magnetostatics/barnes_hut_gpu_cuda.cu
+      magnetostatics/dds_gpu_cuda.cu electrostatics/mmm1d_gpu_cuda.cu
+      electrostatics/p3m_gpu_cuda.cu electrostatics/p3m_gpu_error_cuda.cu
       EspressoSystemInterface_cuda.cu)
 
   add_gpu_library(EspressoCore SHARED ${EspressoCore_SRC} ${EspressoCuda_SRC})

@@ -29,15 +29,11 @@ class TabulatedTest(ut.TestCase):
     system.cell_system.skin = 0.4
 
     def setUp(self):
-        self.force = np.zeros((100,))
-        self.energy = np.zeros((100,))
         self.min_ = 1.
         self.max_ = 2.
-
         self.dx = (self.max_ - self.min_) / 99.
-        for i in range(0, 100):
-            self.force[i] = 5 + i * 2.3 * self.dx
-            self.energy[i] = 5 - i * 2.3 * self.dx
+        self.force = 5 + np.arange(0, 100) * 2.3 * self.dx
+        self.energy = 5 - np.arange(0, 100) * 2.3 * self.dx
 
         self.system.part.add(type=0, pos=[5., 5., 5.0])
         self.system.part.add(type=0, pos=[5., 5., 5.5])
@@ -89,6 +85,21 @@ class TabulatedTest(ut.TestCase):
         p0, p1 = self.system.part.all()
         p0.add_bond((tb, p1))
         self.check()
+
+        # make bond too short: potential becomes constant
+        for z in np.linspace(0.1, 1., 9, endpoint=False):
+            p1.pos = [5., 5., 5. + z]
+            self.system.integrator.run(0)
+            np.testing.assert_allclose(np.copy(p0.f), [0., 0., -5.])
+            np.testing.assert_allclose(np.copy(p0.f), -np.copy(p1.f))
+            self.assertAlmostEqual(self.system.analysis.energy()['total'], 5.)
+
+        # break bond
+        p1.pos = [5., 5., 6. + self.max_ + 0.1]
+        with self.assertRaisesRegex(Exception, "bond broken between particles 0, 1"):
+            self.system.analysis.energy()
+        with self.assertRaisesRegex(Exception, "bond broken between particles 0, 1"):
+            self.system.integrator.run(0)
 
 
 if __name__ == "__main__":

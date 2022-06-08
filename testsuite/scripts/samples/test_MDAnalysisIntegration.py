@@ -22,7 +22,7 @@ import numpy as np
 try:
     import MDAnalysis  # pylint: disable=unused-import
 except ImportError:
-    sample = importlib_wrapper.MagicMock()
+    sample = ut.mock.MagicMock()
     skipIfMissingFeatures = ut.skip(
         "Python module MDAnalysis not available, skipping test!")
 else:

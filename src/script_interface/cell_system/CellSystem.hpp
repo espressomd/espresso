@@ -23,6 +23,8 @@
 #include "script_interface/ScriptInterface.hpp"
 
 #include "core/bonded_interactions/bonded_interaction_data.hpp"
+#include "core/cell_system/HybridDecomposition.hpp"
+#include "core/cell_system/RegularDecomposition.hpp"
 #include "core/cells.hpp"
 #include "core/communication.hpp"
 #include "core/event.hpp"
@@ -191,11 +193,10 @@ public:
         state["cell_grid"] = pack_vector(hd.get_cell_grid());
         state["cell_size"] = Variant{hd.get_cell_size()};
         mpi_resort_particles(true); // needed to get correct particle counts
-        auto const n_particles = hybrid_parts_per_decomposition(hd);
         state["parts_per_decomposition"] =
             Variant{std::unordered_map<std::string, Variant>{
-                {"regular", n_particles.first},
-                {"n_square", n_particles.second}}};
+                {"regular", hd.count_particles_in_regular()},
+                {"n_square", hd.count_particles_in_n_square()}}};
       }
       state["verlet_reuse"] = get_verlet_reuse();
       state["n_nodes"] = ::n_nodes;
