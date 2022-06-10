@@ -29,9 +29,8 @@ coverage:
         threshold: 1%
     patch:
       default:
-        target: 96% # TODO WALBERLA: switch back to 'auto' when all python tests are enabled again
         enabled: yes
-        threshold: 3%
+        threshold: 1%
     changes: no
 
 parsers:

@@ -545,7 +545,11 @@ void increment_sim_time(double amount) { sim_time += amount; }
 
 void mpi_set_time_step_local(double dt) {
   time_step = dt;
-  on_timestep_change();
+  try {
+    on_timestep_change();
+  } catch (std::exception const &err) {
+    runtimeErrorMsg() << err.what();
+  }
 }
 
 REGISTER_CALLBACK(mpi_set_time_step_local)

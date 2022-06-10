@@ -26,6 +26,7 @@ import espressomd
 import espressomd.lb
 import espressomd.utils
 import espressomd.observables
+import espressomd.electrostatics
 import sys
 import tests_common
 
@@ -132,6 +133,7 @@ class LBTest:
             lbf[0, 1].velocity = [1, 2, 3]
         node = lbf[0, 0, 0]
         self.assertIsNone(node.boundary)
+        self.assertIsNone(node.boundary_force)
         vbb_ref = espressomd.lb.VelocityBounceBack([1e-6, 2e-6, 3e-6])
         node.boundary = vbb_ref
         np.testing.assert_allclose(
@@ -139,6 +141,9 @@ class LBTest:
             atol=self.atol)
         with self.assertRaisesRegex(TypeError, "value must be an instance of VelocityBounceBack or None"):
             node.boundary = vbb_ref.velocity
+        # TODO WALBERLA: remove next line (no-op to get code coverage) once
+        # the boundary force getter is implemented from the waLBerla side
+        self.assertEqual(len(node.boundary_force), 3)
 
     def test_raise_if_read_only(self):
         lbf = self.lb_class(**self.params, **self.lb_params)
@@ -261,6 +266,14 @@ class LBTest:
         self.system.actors.add(lbf)
         self.system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)
         self.system.thermostat.set_lb(LB_fluid=lbf, gamma=3.0)
+        actor = espressomd.electrostatics.DH(prefactor=1., kappa=1., r_cut=1.)
+        with self.assertRaisesRegex(Exception, "Temperature change not supported by LB"):
+            self.system.thermostat.turn_off()
+        with self.assertRaisesRegex(Exception, "Time step change not supported by LB"):
+            self.system.time_step /= 2.
+        with self.assertRaisesRegex(RuntimeError, "LB does not currently support handling changes of the MD cell geometry"):
+            self.system.actors.add(actor)
+        self.assertEqual(len(self.system.actors), 1)
 
     def test_grid_index(self):
         lbf = self.lb_class(**self.params, **self.lb_params)

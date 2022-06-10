@@ -51,6 +51,7 @@ cdef class IntegratorHandle:
     property time_step:
         def __set__(self, time_step):
             mpi_set_time_step(time_step)
+            utils.handle_errors("Time step change failed")
 
         def __get__(self):
             return get_time_step()

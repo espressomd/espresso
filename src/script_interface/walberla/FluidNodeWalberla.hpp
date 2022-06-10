@@ -148,8 +148,15 @@ public:
       auto const result = m_lb_fluid->get_node_is_boundary(m_index);
       return optional_reduction_with_conversion(result);
     } else if (name == "get_boundary_force") {
-      auto const result = m_lb_fluid->get_node_boundary_force(m_index);
-      return optional_reduction_with_conversion(result, m_conv_force);
+      auto result = m_lb_fluid->get_node_is_boundary(m_index);
+      bool is_boundary = (result) ? *result : false;
+      is_boundary =
+          boost::mpi::all_reduce(comm_cart, is_boundary, std::logical_or<>());
+      if (is_boundary) {
+        auto result = m_lb_fluid->get_node_boundary_force(m_index);
+        return optional_reduction_with_conversion(result, m_conv_force);
+      }
+      return Variant{None{}};
     } else if (name == "get_pressure_tensor") {
       auto const result = m_lb_fluid->get_node_pressure_tensor(m_index);
       auto value = boost::optional<std::vector<double>>{};

@@ -28,6 +28,7 @@
 #include "bonded_interactions/thermalized_bond_utils.hpp"
 #include "communication.hpp"
 #include "dpd.hpp"
+#include "errorhandling.hpp"
 #include "event.hpp"
 #include "integrate.hpp"
 #include "npt.hpp"
@@ -196,7 +197,11 @@ void mpi_set_thermo_virtual(bool thermo_virtual) {
 
 void mpi_set_temperature_local(double temperature) {
   ::temperature = temperature;
-  on_temperature_change();
+  try {
+    on_temperature_change();
+  } catch (std::exception const &err) {
+    runtimeErrorMsg() << err.what();
+  }
   on_thermostat_param_change();
 }
 
