@@ -48,4 +48,4 @@ ignore:
   - "doc/tutorials"
   - "samples"
   - "maintainer"
-  - "src/walberla_bridge/generated_kernels/*.cpp"
+  - "src/walberla_bridge/generated_kernels/*"

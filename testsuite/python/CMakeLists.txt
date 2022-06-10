@@ -98,8 +98,10 @@ checkpoint_test(MODES therm_lb__p3m_cpu__lj__lb_walberla_cpu_ascii
                 MAX_NUM_PROC 2)
 checkpoint_test(MODES therm_lb__elc_cpu__lj__lb_walberla_cpu_binary
                 MAX_NUM_PROC 2)
-# checkpoint_test(MODES therm_lb__elc_gpu__lj__lb_walberla_gpu_ascii LABELS gpu) # TODO WALBERLA
-# checkpoint_test(MODES therm_lb__p3m_gpu__lj__lb_walberla_gpu_binary LABELS gpu) # TODO WALBERLA
+checkpoint_test(MODES therm_lb__elc_gpu__lj__lb_walberla_cpu_ascii LABELS gpu
+                MAX_NUM_PROC 2) # TODO WALBERLA: use walberla_gpu
+checkpoint_test(MODES therm_lb__p3m_gpu__lj__lb_walberla_cpu_binary LABELS gpu
+                MAX_NUM_PROC 2) # TODO WALBERLA: use walberla_gpu
 checkpoint_test(MODES therm_npt__int_npt)
 checkpoint_test(MODES int_sd__lj)
 checkpoint_test(MODES dp3m_cpu__therm_langevin__int_nvt)
