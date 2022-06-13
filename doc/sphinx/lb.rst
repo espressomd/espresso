@@ -195,6 +195,10 @@ no shearing initially; this action will initialize the shear axes, and
 when the LB actor is instantiated, the Lees-Edwards collision kernels
 will be used instead of the default ones.
 
+.. note::
+
+    At the moment, LB only supports the case ``shear_plane_normal="y"``.
+
 .. _Reading and setting properties of single lattice nodes:
 
 Reading and setting properties of single lattice nodes

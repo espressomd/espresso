@@ -23,14 +23,12 @@ import espressomd.lees_edwards
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
+import itertools
 
 
 system = espressomd.System(box_l=[17, 17, 1])
 system.cell_system.skin = 0.1
 system.time_step = 0.01
-system.lees_edwards.set_boundary_conditions(
-    shear_direction="x", shear_plane_normal="y",
-    protocol=espressomd.lees_edwards.Off())
 
 
 class LBContextManager:
@@ -80,11 +78,15 @@ class LBLeesEdwards(ut.TestCase):
 
     """
 
+    def setUp(self):
+        system.lees_edwards.set_boundary_conditions(
+            shear_direction="x", shear_plane_normal="y",
+            protocol=espressomd.lees_edwards.Off())
+
     def tearDown(self):
         system.actors.clear()
         system.thermostat.turn_off()
         system.part.clear()
-        system.lees_edwards.protocol = espressomd.lees_edwards.Off()
 
     def sample_lb_velocities(self, lbf):
         profiles = []
@@ -198,14 +200,15 @@ class LBLeesEdwards(ut.TestCase):
                 for profile in self.sample_lb_velocities(lbf):
                     self.check_profile(profile, stencil, 'SN', 'WE', tol)
 
-        # East and West are sheared vertically
-        with LEContextManager('y', 'x', le_offset):
-            stencil = {'E~': (0, 8 - le_offset),
-                       'W~': (16, 8 + le_offset),
-                       **stencil_D2Q8}
-            with LBContextManager() as lbf:
-                for profile in self.sample_lb_velocities(lbf):
-                    self.check_profile(profile, stencil, 'WE', 'SN', tol)
+        # TODO WALBERLA
+#        # East and West are sheared vertically
+#        with LEContextManager('y', 'x', le_offset):
+#            stencil = {'E~': (0, 8 - le_offset),
+#                       'W~': (16, 8 + le_offset),
+#                       **stencil_D2Q8}
+#            with LBContextManager() as lbf:
+#                for profile in self.sample_lb_velocities(lbf):
+#                    self.check_profile(profile, stencil, 'WE', 'SN', tol)
 
     def test_velocity_shift_from_fluid_impulse(self):
         """
@@ -254,15 +257,16 @@ class LBLeesEdwards(ut.TestCase):
                 for profile in self.sample_lb_velocities(lbf):
                     self.check_profile(profile, stencil, 'SN', 'WE', tol)
 
-        # East and West are sheared vertically
-        with LEContextManager('y', 'x', le_offset):
-            stencil = {'E~': (1, 8 - le_offset),
-                       'W~': (15, 8 + le_offset),
-                       **stencil_D2Q8}
-            with LBContextManager() as lbf:
-                create_impulse(lbf, stencil_D2Q8)
-                for profile in self.sample_lb_velocities(lbf):
-                    self.check_profile(profile, stencil, 'WE', 'SN', tol)
+        # TODO WALBERLA
+#        # East and West are sheared vertically
+#        with LEContextManager('y', 'x', le_offset):
+#            stencil = {'E~': (1, 8 - le_offset),
+#                       'W~': (15, 8 + le_offset),
+#                       **stencil_D2Q8}
+#            with LBContextManager() as lbf:
+#                create_impulse(lbf, stencil_D2Q8)
+#                for profile in self.sample_lb_velocities(lbf):
+#                    self.check_profile(profile, stencil, 'WE', 'SN', tol)
 
     def test_lebc_mismatch(self):
         """
@@ -288,9 +292,19 @@ class LBLeesEdwards(ut.TestCase):
         # when de-activating and later re-activating a LB actor with LEbc,
         # the MD LEbc must have the same shear directions
         with self.assertRaisesRegex(Exception, err_msg):
-            with LEContextManager('x', 'z', 1.):
+            with LEContextManager('z', 'y', 1.):
                 system.actors.add(lbf)
         self.assertEqual(len(system.actors), 0)
+        # LB only implements shear_plane_normal="y"
+        err_msg = "Lees-Edwards LB only supports shear_plane_normal=\"y\""
+        for shear_dir, shear_plane_normal in itertools.product("xyz", "xz"):
+            if shear_dir != shear_plane_normal:
+                with self.assertRaisesRegex(Exception, err_msg):
+                    with LEContextManager(shear_dir, shear_plane_normal, 1.):
+                        system.actors.add(espressomd.lb.LBFluidWalberla(
+                            agrid=1., density=1., viscosity=1.,
+                            tau=system.time_step))
+                self.assertEqual(len(system.actors), 0)
         # while LB and MD LEbc must agree on the shear directions,
         # the offset can change
         with LEContextManager('x', 'y', -1.):
