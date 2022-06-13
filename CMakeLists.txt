@@ -328,22 +328,25 @@ set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTDIR}/espressomd")
 # drop 'lib' prefix from all libraries
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
 
-add_library(coverage_interface INTERFACE)
+add_library(Espresso_coverage_flags INTERFACE)
+add_library(Espresso::coverage_flags ALIAS Espresso_coverage_flags)
 if(WITH_COVERAGE)
   if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     target_compile_options(
-      coverage_interface INTERFACE -g -fprofile-instr-generate
-                                   -fcoverage-mapping)
+      Espresso_coverage_flags INTERFACE -g -fprofile-instr-generate
+                                        -fcoverage-mapping)
   else()
     target_compile_options(
-      coverage_interface INTERFACE -g --coverage -fprofile-arcs -ftest-coverage)
-    target_link_libraries(coverage_interface INTERFACE gcov)
+      Espresso_coverage_flags INTERFACE -g --coverage -fprofile-arcs
+                                        -ftest-coverage)
+    target_link_libraries(Espresso_coverage_flags INTERFACE gcov)
   endif()
 endif()
 
-add_library(cxx_interface INTERFACE)
+add_library(Espresso_cpp_flags INTERFACE)
+add_library(Espresso::cpp_flags ALIAS Espresso_cpp_flags)
 target_compile_options(
-  cxx_interface
+  Espresso_cpp_flags
   INTERFACE -Wall
             -Wextra
             $<$<BOOL:${WARNINGS_ARE_ERRORS}>:-Werror>
@@ -361,56 +364,58 @@ target_compile_options(
 # disable more warnings from -Wextra
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SYSTEM_PROCESSOR MATCHES
                                             "arm")
-  target_compile_options(cxx_interface INTERFACE -Wno-psabi)
+  target_compile_options(Espresso_cpp_flags INTERFACE -Wno-psabi)
 endif()
 if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "Intel"
    AND NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION
                                                      VERSION_LESS "7.0.0"))
-  target_compile_options(cxx_interface INTERFACE -Wno-implicit-fallthrough)
+  target_compile_options(Espresso_cpp_flags INTERFACE -Wno-implicit-fallthrough)
 endif()
 if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND NOT CMAKE_CXX_COMPILER_ID
                                                 STREQUAL "Intel")
-  target_compile_options(cxx_interface INTERFACE -Wno-unused-private-field)
+  target_compile_options(Espresso_cpp_flags INTERFACE -Wno-unused-private-field)
 endif()
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  target_compile_options(cxx_interface
+  target_compile_options(Espresso_cpp_flags
                          INTERFACE -Wno-gnu-zero-variadic-macro-arguments)
   if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "8.0.0")
-    target_compile_options(cxx_interface INTERFACE -Wimplicit-float-conversion)
+    target_compile_options(Espresso_cpp_flags
+                           INTERFACE -Wimplicit-float-conversion)
   endif()
   if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang"
      AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "11.0.0")
-    target_compile_options(cxx_interface INTERFACE -Wnon-c-typedef-for-linkage)
+    target_compile_options(Espresso_cpp_flags
+                           INTERFACE -Wnon-c-typedef-for-linkage)
   endif()
 endif()
 
 if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_VERSION
                                                VERSION_GREATER "4.8.5")
   # older GCC versions don't support -Wno-pedantic which we need in src/python
-  target_compile_options(cxx_interface INTERFACE -pedantic)
+  target_compile_options(Espresso_cpp_flags INTERFACE -pedantic)
 endif()
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION
                                             VERSION_GREATER_EQUAL "8.1.0")
-  target_compile_options(cxx_interface INTERFACE -Wno-cast-function-type)
+  target_compile_options(Espresso_cpp_flags INTERFACE -Wno-cast-function-type)
 endif()
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Intel" AND CMAKE_CXX_COMPILER_VERSION
                                               VERSION_LESS "16.0")
   # workaround for compiler crash related to decltype() and variadic template
   # usage inside Boost
-  target_compile_options(cxx_interface
+  target_compile_options(Espresso_cpp_flags
                          INTERFACE -DBOOST_NO_CXX11_VARIADIC_TEMPLATES)
 endif()
 
 # prevent 80-bit arithmetic on old Intel processors
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SIZEOF_VOID_P EQUAL 4
    AND CMAKE_SYSTEM_PROCESSOR MATCHES "[xX]86")
-  target_compile_options(cxx_interface INTERFACE -ffloat-store)
+  target_compile_options(Espresso_cpp_flags INTERFACE -ffloat-store)
 endif()
 
 # enable boost::variant with more than 20 types
 target_compile_options(
-  cxx_interface INTERFACE -DBOOST_MPL_CFG_NO_PREPROCESSED_HEADERS
-                          -DBOOST_MPL_LIMIT_LIST_SIZE=30)
+  Espresso_cpp_flags INTERFACE -DBOOST_MPL_CFG_NO_PREPROCESSED_HEADERS
+                               -DBOOST_MPL_LIMIT_LIST_SIZE=30)
 
 set(CMAKE_MACOSX_RPATH TRUE)
 
@@ -425,22 +430,22 @@ if(WITH_ASAN AND WITH_MSAN)
 endif()
 if(WITH_ASAN)
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g -O1")
-  target_compile_options(cxx_interface INTERFACE -fsanitize=address
-                                                 -fno-omit-frame-pointer)
-  target_link_libraries(cxx_interface INTERFACE -fsanitize=address)
+  target_compile_options(Espresso_cpp_flags INTERFACE -fsanitize=address
+                                                      -fno-omit-frame-pointer)
+  target_link_libraries(Espresso_cpp_flags INTERFACE -fsanitize=address)
 endif()
 if(WITH_MSAN)
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g -O1")
-  target_compile_options(cxx_interface INTERFACE -fsanitize=memory
-                                                 -fno-omit-frame-pointer)
-  target_link_libraries(cxx_interface INTERFACE -fsanitize=memory)
+  target_compile_options(Espresso_cpp_flags INTERFACE -fsanitize=memory
+                                                      -fno-omit-frame-pointer)
+  target_link_libraries(Espresso_cpp_flags INTERFACE -fsanitize=memory)
 endif()
 if(WITH_UBSAN)
-  target_compile_options(cxx_interface INTERFACE -fsanitize=undefined)
-  target_link_libraries(cxx_interface INTERFACE -fsanitize=undefined)
+  target_compile_options(Espresso_cpp_flags INTERFACE -fsanitize=undefined)
+  target_link_libraries(Espresso_cpp_flags INTERFACE -fsanitize=undefined)
 endif()
 
-target_link_libraries(cxx_interface INTERFACE coverage_interface)
+target_link_libraries(Espresso_cpp_flags INTERFACE Espresso::coverage_flags)
 
 #
 # Static analysis

@@ -1,4 +1,4 @@
-set(EspressoCore_SRC
+set(Espresso_core_SRC
     accumulators.cpp
     bond_error.cpp
     cells.cpp
@@ -42,48 +42,51 @@ set(EspressoCore_SRC
     PartCfg.cpp
     EspressoSystemStandAlone.cpp)
 
+set(Espresso_cuda_SRC
+    cuda_common_cuda.cu
+    cuda_init.cpp
+    cuda_init_cuda.cu
+    cuda_interface.cpp
+    CudaHostAllocator.cu
+    magnetostatics/barnes_hut_gpu_cuda.cu
+    magnetostatics/dds_gpu_cuda.cu
+    electrostatics/mmm1d_gpu_cuda.cu
+    electrostatics/p3m_gpu_cuda.cu
+    electrostatics/p3m_gpu_error_cuda.cu
+    EspressoSystemInterface_cuda.cu
+    grid_based_algorithms/electrokinetics_cuda.cu
+    grid_based_algorithms/lbgpu_cuda.cu
+    grid_based_algorithms/fd-electrostatics_cuda.cu
+    grid_based_algorithms/electrokinetics.cpp
+    grid_based_algorithms/lbgpu.cpp
+    virtual_sites/lb_inertialess_tracers_cuda.cu)
+
 if(CUDA)
-  set(EspressoCuda_SRC
-      cuda_common_cuda.cu
-      cuda_init.cpp
-      cuda_init_cuda.cu
-      cuda_interface.cpp
-      CudaHostAllocator.cu
-      magnetostatics/barnes_hut_gpu_cuda.cu
-      magnetostatics/dds_gpu_cuda.cu
-      electrostatics/mmm1d_gpu_cuda.cu
-      electrostatics/p3m_gpu_cuda.cu
-      electrostatics/p3m_gpu_error_cuda.cu
-      EspressoSystemInterface_cuda.cu
-      grid_based_algorithms/electrokinetics_cuda.cu
-      grid_based_algorithms/lbgpu_cuda.cu
-      grid_based_algorithms/fd-electrostatics_cuda.cu
-      grid_based_algorithms/electrokinetics.cpp
-      grid_based_algorithms/lbgpu.cpp
-      virtual_sites/lb_inertialess_tracers_cuda.cu)
+  add_gpu_library(Espresso_core SHARED ${Espresso_core_SRC}
+                  ${Espresso_cuda_SRC})
+else()
+  add_library(Espresso_core SHARED ${Espresso_core_SRC})
+endif()
+add_library(Espresso::core ALIAS Espresso_core)
 
-  add_gpu_library(EspressoCore SHARED ${EspressoCore_SRC} ${EspressoCuda_SRC})
-else(CUDA)
-  add_library(EspressoCore SHARED ${EspressoCore_SRC})
-endif(CUDA)
-
-install(TARGETS EspressoCore LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
+install(TARGETS Espresso_core LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 
 target_link_libraries(
-  EspressoCore PRIVATE EspressoConfig EspressoShapes Profiler
-                       $<$<BOOL:${SCAFACOS}>:EspressoScafacos> cxx_interface
-  PUBLIC EspressoUtils MPI::MPI_CXX Random123 EspressoParticleObservables
+  Espresso_core
+  PRIVATE Espresso::config Espresso::shapes Espresso::profiler
+          $<$<BOOL:${SCAFACOS}>:Espresso::scafacos> Espresso::cpp_flags
+  PUBLIC Espresso::utils MPI::MPI_CXX Random123 Espresso::particle_observables
          Boost::serialization Boost::mpi "$<$<BOOL:${H5MD}>:${HDF5_LIBRARIES}>"
          $<$<BOOL:${H5MD}>:Boost::filesystem> $<$<BOOL:${H5MD}>:h5xx>
-         "$<$<BOOL:${FFTW3_FOUND}>:FFTW3::FFTW3>")
+         $<$<BOOL:${FFTW3_FOUND}>:FFTW3::FFTW3>)
 
 target_include_directories(
-  EspressoCore
+  Espresso_core
   PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
          "$<$<BOOL:${H5MD}>:${CMAKE_CURRRENT_SOURCE_DIR}/io/writer>"
          "$<$<BOOL:${H5MD}>:${HDF5_INCLUDE_DIRS}>")
 
-target_compile_definitions(EspressoCore PUBLIC $<$<BOOL:${H5MD}>:H5XX_USE_MPI>)
+target_compile_definitions(Espresso_core PUBLIC $<$<BOOL:${H5MD}>:H5XX_USE_MPI>)
 
 add_subdirectory(accumulators)
 add_subdirectory(bond_breakage)
@@ -111,5 +114,5 @@ endif(WITH_TESTS)
 
 if(STOKESIAN_DYNAMICS)
   add_subdirectory(stokesian_dynamics)
-  target_link_libraries(EspressoCore PRIVATE StokesianDynamics::sd_cpu)
+  target_link_libraries(Espresso_core PRIVATE StokesianDynamics::sd_cpu)
 endif()

@@ -1,16 +1,18 @@
-set(SOURCE_FILES
-    src/HollowConicalFrustum.cpp src/Cylinder.cpp src/Ellipsoid.cpp
-    src/Rhomboid.cpp src/SimplePore.cpp src/Slitpore.cpp src/Sphere.cpp
-    src/SpheroCylinder.cpp src/Torus.cpp src/Wall.cpp)
+add_library(
+  Espresso_shapes SHARED
+  src/HollowConicalFrustum.cpp src/Cylinder.cpp src/Ellipsoid.cpp
+  src/Rhomboid.cpp src/SimplePore.cpp src/Slitpore.cpp src/Sphere.cpp
+  src/SpheroCylinder.cpp src/Torus.cpp src/Wall.cpp)
+add_library(Espresso::shapes ALIAS Espresso_shapes)
 
-add_library(EspressoShapes SHARED ${SOURCE_FILES})
-target_link_libraries(EspressoShapes PUBLIC EspressoUtils PRIVATE Boost::boost
-                                                                  cxx_interface)
+target_link_libraries(Espresso_shapes PUBLIC Espresso::utils
+                      PRIVATE Boost::boost Espresso::cpp_flags)
 target_include_directories(
-  EspressoShapes PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-                        $<INSTALL_INTERFACE:include>)
+  Espresso_shapes PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+                         $<INSTALL_INTERFACE:include>)
 
-install(TARGETS EspressoShapes LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
+install(TARGETS Espresso_shapes
+        LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 
 if(WITH_TESTS)
   add_subdirectory(unit_tests)

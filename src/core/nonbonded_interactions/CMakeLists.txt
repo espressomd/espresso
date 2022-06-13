@@ -1,5 +1,5 @@
 target_sources(
-  EspressoCore
+  Espresso_core
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/bmhtf-nacl.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/buckingham.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/gaussian.cpp

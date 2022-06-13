@@ -1,5 +1,5 @@
 target_sources(
-  EspressoCore
+  Espresso_core
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/halo.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/lattice.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/lb_boundaries.cpp
