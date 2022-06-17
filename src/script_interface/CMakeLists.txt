@@ -1,7 +1,8 @@
 add_library(
-  ScriptInterface SHARED
+  Espresso_script_interface SHARED
   initialize.cpp ObjectHandle.cpp object_container_mpi_guard.cpp
   GlobalContext.cpp ContextManager.cpp ParallelExceptionHandler.cpp)
+add_library(Espresso::script_interface ALIAS Espresso_script_interface)
 
 add_subdirectory(accumulators)
 add_subdirectory(bond_breakage)
@@ -23,14 +24,15 @@ add_subdirectory(shapes)
 add_subdirectory(h5md)
 add_subdirectory(reaction_methods)
 
-install(TARGETS ScriptInterface
+install(TARGETS Espresso_script_interface
         LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 
 target_link_libraries(
-  ScriptInterface PRIVATE EspressoConfig EspressoCore
-  PUBLIC mpiio EspressoUtils MPI::MPI_CXX EspressoShapes core_cluster_analysis
-  PRIVATE cxx_interface)
+  Espresso_script_interface PRIVATE Espresso::config Espresso::core
+  PUBLIC Espresso::utils MPI::MPI_CXX Espresso::shapes
+  PRIVATE Espresso::cpp_flags)
 
-target_include_directories(ScriptInterface PUBLIC ${CMAKE_SOURCE_DIR}/src)
+target_include_directories(Espresso_script_interface
+                           PUBLIC ${CMAKE_SOURCE_DIR}/src)
 
 add_subdirectory(tests)

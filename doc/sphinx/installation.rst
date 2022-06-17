@@ -761,12 +761,12 @@ The build type is controlled by ``-D CMAKE_BUILD_TYPE=<type>`` where
 * ``Coverage``: for code coverage
 
 Cluster users and HPC developers may be interested in manually editing the
-``cxx_interface`` variable in the top-level ``CMakeLists.txt`` file for
+``Espresso_cpp_flags`` target in the top-level ``CMakeLists.txt`` file for
 finer control over compiler flags. The variable declaration is followed
 by a series of conditionals to enable or disable compiler-specific flags.
 Compiler flags passed to CMake via the ``-DCMAKE_CXX_FLAGS`` option
 (such as ``cmake . -DCMAKE_CXX_FLAGS="-ffast-math -fno-finite-math-only"``)
-will appear in the compiler command before the flags in ``cxx_interface``,
+will appear in the compiler command before the flags in ``Espresso_cpp_flags``,
 and will therefore have lower precedence.
 
 Be aware that fast-math mode can break |es|. It is incompatible with the

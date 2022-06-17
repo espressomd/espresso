@@ -20,31 +20,37 @@
 include(unit_test)
 
 unit_test(NAME ObjectHandle_test SRC ObjectHandle_test.cpp DEPENDS
-          ScriptInterface)
+          Espresso::script_interface)
 unit_test(NAME AutoParameters_test SRC AutoParameters_test.cpp DEPENDS
-          ScriptInterface)
+          Espresso::script_interface)
 unit_test(NAME AutoParameter_test SRC AutoParameter_test.cpp DEPENDS
-          ScriptInterface)
-unit_test(NAME Variant_test SRC Variant_test.cpp DEPENDS ScriptInterface)
-unit_test(NAME get_value_test SRC get_value_test.cpp DEPENDS ScriptInterface)
-unit_test(NAME None_test SRC None_test.cpp DEPENDS ScriptInterface)
+          Espresso::script_interface)
+unit_test(NAME Variant_test SRC Variant_test.cpp DEPENDS
+          Espresso::script_interface)
+unit_test(NAME get_value_test SRC get_value_test.cpp DEPENDS
+          Espresso::script_interface)
+unit_test(NAME None_test SRC None_test.cpp DEPENDS Espresso::script_interface)
 unit_test(NAME LocalContext_test SRC LocalContext_test.cpp DEPENDS
-          ScriptInterface)
+          Espresso::script_interface)
 unit_test(NAME GlobalContext_test SRC GlobalContext_test.cpp DEPENDS
-          ScriptInterface Boost::mpi MPI::MPI_CXX NUM_PROC 2)
-unit_test(NAME Exception_test SRC Exception_test.cpp DEPENDS ScriptInterface)
+          Espresso::script_interface Boost::mpi MPI::MPI_CXX NUM_PROC 2)
+unit_test(NAME Exception_test SRC Exception_test.cpp DEPENDS
+          Espresso::script_interface)
 unit_test(NAME ParallelExceptionHandler_test SRC
-          ParallelExceptionHandler_test.cpp DEPENDS ScriptInterface Boost::mpi
-          MPI::MPI_CXX NUM_PROC 2)
+          ParallelExceptionHandler_test.cpp DEPENDS Espresso::script_interface
+          Espresso::core Boost::mpi MPI::MPI_CXX NUM_PROC 2)
 unit_test(NAME packed_variant_test SRC packed_variant_test.cpp DEPENDS
-          ScriptInterface)
-unit_test(NAME ObjectList_test SRC ObjectList_test.cpp DEPENDS ScriptInterface)
-unit_test(NAME ObjectMap_test SRC ObjectMap_test.cpp DEPENDS ScriptInterface)
+          Espresso::script_interface)
+unit_test(NAME ObjectList_test SRC ObjectList_test.cpp DEPENDS
+          Espresso::script_interface Espresso::core)
+unit_test(NAME ObjectMap_test SRC ObjectMap_test.cpp DEPENDS
+          Espresso::script_interface Espresso::core)
 unit_test(NAME serialization_mpi_guard_test SRC
-          serialization_mpi_guard_test.cpp DEPENDS ScriptInterface Boost::mpi
-          MPI::MPI_CXX NUM_PROC 2)
+          serialization_mpi_guard_test.cpp DEPENDS Espresso::script_interface
+          Boost::mpi MPI::MPI_CXX NUM_PROC 2)
 unit_test(NAME Accumulators_test SRC Accumulators_test.cpp DEPENDS
-          ScriptInterface)
+          Espresso::script_interface Espresso::core)
 unit_test(NAME Constraints_test SRC Constraints_test.cpp DEPENDS
-          ScriptInterface)
-unit_test(NAME Actors_test SRC Actors_test.cpp DEPENDS ScriptInterface)
+          Espresso::script_interface Espresso::core)
+unit_test(NAME Actors_test SRC Actors_test.cpp DEPENDS
+          Espresso::script_interface Espresso::core)
