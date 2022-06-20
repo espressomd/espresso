@@ -368,7 +368,7 @@ void File::write(const ParticleRange &particles, double time, int step,
                     datasets["particles/atoms/lees_edwards/normal/value"]);
   }
 
-  int const n_part_local = particles.size();
+  auto const n_part_local = static_cast<int>(particles.size());
   // calculate count and offset
   int prefix = 0;
   // calculate prefix for write of the current process
@@ -441,7 +441,7 @@ void File::write_connectivity(const ParticleRange &particles) {
   MultiArray3i bond(boost::extents[0][0][0]);
   int particle_index = 0;
   for (auto const &p : particles) {
-    int nbonds_local = bond.shape()[1];
+    auto nbonds_local = static_cast<decltype(bond)::index>(bond.shape()[1]);
     for (auto const b : p.bonds()) {
       auto const partner_ids = b.partner_ids();
       if (partner_ids.size() == 1) {
@@ -454,7 +454,7 @@ void File::write_connectivity(const ParticleRange &particles) {
     particle_index++;
   }
 
-  int n_bonds_local = bond.shape()[1];
+  auto const n_bonds_local = static_cast<int>(bond.shape()[1]);
   int prefix_bonds = 0;
   BOOST_MPI_CHECK_RESULT(
       MPI_Exscan, (&n_bonds_local, &prefix_bonds, 1, MPI_INT, MPI_SUM, m_comm));

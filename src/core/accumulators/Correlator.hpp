@@ -234,6 +234,8 @@ private:
   double m_tau_max;       ///< maximum time for which the correlation should be
                           ///< calculated
 
+  using multi_array_index_type = boost::multi_array<double, 2>::index;
+
   std::string compressA_name;
   std::string compressB_name;
   std::string corr_operation_name; ///< Name of the correlation operator

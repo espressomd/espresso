@@ -181,9 +181,9 @@ void lb_init_boundaries() {
     std::vector<int> host_boundary_index_list;
     std::size_t size_of_index;
 
-    for (int z = 0; z < int(lbpar_gpu.dim[2]); z++) {
-      for (int y = 0; y < int(lbpar_gpu.dim[1]); y++) {
-        for (int x = 0; x < int(lbpar_gpu.dim[0]); x++) {
+    for (unsigned z = 0; z < lbpar_gpu.dim[2]; z++) {
+      for (unsigned y = 0; y < lbpar_gpu.dim[1]; y++) {
+        for (unsigned x = 0; x < lbpar_gpu.dim[0]; x++) {
           auto const pos = static_cast<double>(lbpar_gpu.agrid) *
                            (Utils::Vector3d{1. * x, 1. * y, 1. * z} +
                             Utils::Vector3d::broadcast(0.5));
@@ -198,12 +198,10 @@ void lb_init_boundaries() {
             host_boundary_node_list.resize(size_of_index);
             host_boundary_index_list.resize(size_of_index);
             host_boundary_node_list[number_of_boundnodes] =
-                x + lbpar_gpu.dim[0] * y +
-                lbpar_gpu.dim[0] * lbpar_gpu.dim[1] * z;
-            auto const boundary_number =
-                std::distance(lbboundaries.begin(), boundary.base()) - 1;
-            host_boundary_index_list[number_of_boundnodes] =
-                boundary_number + 1;
+                static_cast<int>(x + lbpar_gpu.dim[0] * y +
+                                 lbpar_gpu.dim[0] * lbpar_gpu.dim[1] * z);
+            host_boundary_index_list[number_of_boundnodes] = static_cast<int>(
+                std::distance(lbboundaries.begin(), boundary.base()));
             number_of_boundnodes++;
           }
         }
@@ -257,10 +255,9 @@ void lb_init_boundaries() {
               [&pos](auto const lbb) { return lbb->shape().is_inside(pos); });
           auto const index = get_linear_index(x, y, z, lblattice.halo_grid);
           if (boundary != boost::rend(lbboundaries)) {
-            auto const boundary_number =
-                std::distance(lbboundaries.begin(), boundary.base()) - 1;
             auto &node = lbfields[index];
-            node.boundary = static_cast<int>(boundary_number) + 1;
+            node.boundary = static_cast<int>(
+                std::distance(lbboundaries.begin(), boundary.base()));
             node.slip_velocity = (*boundary)->velocity() * vel_conv;
           } else {
             lbfields[index].boundary = 0;

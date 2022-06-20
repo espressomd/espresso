@@ -107,7 +107,9 @@ struct Distance {
   Utils::Vector3d vec21;
   double dist2;
 };
+
 namespace detail {
+// NOLINTNEXTLINE(bugprone-exception-escape)
 struct MinimalImageDistance {
   BoxGeometry const box;
 

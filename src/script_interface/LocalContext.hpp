@@ -49,6 +49,7 @@ public:
   LocalContext(Utils::Factory<ObjectHandle> factory,
                boost::mpi::communicator const &comm)
       : m_factory(std::move(factory)), m_is_head_node(comm.rank() == 0),
+        // NOLINTNEXTLINE(bugprone-throw-keyword-missing)
         m_parallel_exception_handler(comm) {}
 
   const Utils::Factory<ObjectHandle> &factory() const { return m_factory; }

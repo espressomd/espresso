@@ -273,6 +273,8 @@ void Correlator::initialize() {
                                 compressB_name + "' for second observable");
   }
 
+  using index_type = decltype(result)::index;
+
   A.resize(std::array<int, 2>{{m_hierarchy_depth, m_tau_lin + 1}});
   std::fill_n(A.data(), A.num_elements(), std::vector<double>(dim_A, 0));
   B.resize(std::array<int, 2>{{m_hierarchy_depth, m_tau_lin + 1}});
@@ -287,11 +289,9 @@ void Correlator::initialize() {
   n_vals = std::vector<long>(m_hierarchy_depth, 0);
 
   result.resize(std::array<std::size_t, 2>{{n_result, m_dim_corr}});
-
-  for (std::size_t i = 0; i < n_result; i++) {
-    for (std::size_t j = 0; j < m_dim_corr; j++) {
-      // and initialize the values
-      result[i][j] = 0;
+  for (index_type i = 0; i < static_cast<index_type>(n_result); i++) {
+    for (index_type j = 0; j < static_cast<index_type>(m_dim_corr); j++) {
+      result[i][j] = 0.;
     }
   }
 
@@ -377,6 +377,7 @@ void Correlator::update() {
     B_accumulated_average[k] += B[0][newest[0]][k];
   }
 
+  using index_type = decltype(result)::index;
   // Now update the lowest level correlation estimates
   for (long j = 0; j < min(m_tau_lin + 1, n_vals[0]); j++) {
     auto const index_new = newest[0];
@@ -386,7 +387,7 @@ void Correlator::update() {
     assert(temp.size() == m_dim_corr);
 
     n_sweeps[j]++;
-    for (std::size_t k = 0; k < m_dim_corr; k++) {
+    for (index_type k = 0; k < static_cast<index_type>(m_dim_corr); k++) {
       result[j][k] += temp[k];
     }
   }
@@ -403,7 +404,7 @@ void Correlator::update() {
       assert(temp.size() == m_dim_corr);
 
       n_sweeps[index_res]++;
-      for (std::size_t k = 0; k < m_dim_corr; k++) {
+      for (index_type k = 0; k < static_cast<index_type>(m_dim_corr); k++) {
         result[index_res][k] += temp[k];
       }
     }
@@ -411,6 +412,7 @@ void Correlator::update() {
 }
 
 int Correlator::finalize() {
+  using index_type = decltype(result)::index;
   if (finalized) {
     throw std::runtime_error("Correlator::finalize() can only be called once.");
   }
@@ -479,7 +481,7 @@ int Correlator::finalize() {
           assert(temp.size() == m_dim_corr);
 
           n_sweeps[index_res]++;
-          for (std::size_t k = 0; k < m_dim_corr; k++) {
+          for (index_type k = 0; k < static_cast<index_type>(m_dim_corr); k++) {
             result[index_res][k] += temp[k];
           }
         }
@@ -490,14 +492,16 @@ int Correlator::finalize() {
 }
 
 std::vector<double> Correlator::get_correlation() {
+  using index_type = decltype(result)::index;
   auto const n_result = n_values();
   std::vector<double> res(n_result * m_dim_corr);
 
   for (std::size_t i = 0; i < n_result; i++) {
-    auto const index = m_dim_corr * i;
-    for (std::size_t k = 0; k < m_dim_corr; k++) {
+    auto const index = static_cast<index_type>(m_dim_corr * i);
+    for (index_type k = 0; k < static_cast<index_type>(m_dim_corr); k++) {
       if (n_sweeps[i]) {
-        res[index + k] = result[i][k] / static_cast<double>(n_sweeps[i]);
+        res[index + k] = result[static_cast<index_type>(i)][k] /
+                         static_cast<double>(n_sweeps[i]);
       }
     }
   }
