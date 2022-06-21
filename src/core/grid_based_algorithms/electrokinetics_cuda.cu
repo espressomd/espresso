@@ -3612,10 +3612,10 @@ void ek_print_lbpar() {
   printf("    float agrid = %f;\n", lbpar_gpu.agrid);
   printf("    float tau = %f;\n", lbpar_gpu.tau);
   printf("    float bulk_viscosity = %f;\n", lbpar_gpu.bulk_viscosity);
-  printf("    unsigned int dim_x = %d;\n", lbpar_gpu.dim[0]);
-  printf("    unsigned int dim_y = %d;\n", lbpar_gpu.dim[1]);
-  printf("    unsigned int dim_z = %d;\n", lbpar_gpu.dim[2]);
-  printf("    unsigned int number_of_nodes = %d;\n", lbpar_gpu.number_of_nodes);
+  printf("    unsigned int dim_x = %u;\n", lbpar_gpu.dim[0]);
+  printf("    unsigned int dim_y = %u;\n", lbpar_gpu.dim[1]);
+  printf("    unsigned int dim_z = %u;\n", lbpar_gpu.dim[2]);
+  printf("    unsigned int number_of_nodes = %u;\n", lbpar_gpu.number_of_nodes);
   printf("    bool external_force_density = %d;\n",
          static_cast<int>(lbpar_gpu.external_force_density));
   printf("    float ext_force_density[3] = {%f, %f, %f};\n",

@@ -1,4 +1,6 @@
+/*****************************************/
 /* customization for the alabaster theme */
+/*****************************************/
 
 /* color links to python objects */
 div.bodywrapper a.reference.internal code {
@@ -30,4 +32,16 @@ div.admonition p {
 /* center main text by shifting it to the left by the width of the sidebar */
 div.document {
   padding-right: 260px;
+}
+
+/*************************************/
+/* customization for the basic theme */
+/*************************************/
+
+/* remove automatic hyphenation */
+div.body p, div.body dd, div.body li, div.body blockquote {
+    -moz-hyphens: manual;
+    -ms-hyphens: manual;
+    -webkit-hyphens: manual;
+    hyphens: manual;
 }

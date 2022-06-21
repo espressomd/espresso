@@ -137,7 +137,9 @@ auto to_vector(std::stringstream &buffer_in) {
   std::vector<std::stringstream::char_type> buffer_out;
   buffer_in.seekg(0);
   while (!buffer_in.eof()) {
-    buffer_out.push_back(buffer_in.get());
+    std::stringstream::char_type c = '\0';
+    buffer_in.get(c);
+    buffer_out.push_back(c);
   }
   return buffer_out;
 }
@@ -241,7 +243,8 @@ BOOST_AUTO_TEST_CASE(serialization_level_test) {
   for (std::size_t i = 0; i < Testing::N; ++i) {
     auto constexpr N = sizeof(Testing::T);
     auto const offset = sizeof(std::size_t) + i * N;
-    auto const array_data = sorted_view<N>(buffer.begin() + offset);
+    auto const array_data =
+        sorted_view<N>(buffer.begin() + static_cast<long>(offset));
     auto const array_data_ref = std::array<Testing::Serial_T, N>{
         {static_cast<Testing::Serial_T>(Testing::values[i])}};
     BOOST_TEST(array_data == array_data_ref, boost::test_tools::per_element());

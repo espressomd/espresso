@@ -114,6 +114,7 @@ static std::shared_ptr<Observable_stat> calculate_energy_local() {
 
   obs_energy.mpi_reduce();
   return obs_energy_ptr;
+  // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks)
 }
 
 REGISTER_CALLBACK_MAIN_RANK(calculate_energy_local)

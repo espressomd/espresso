@@ -230,7 +230,11 @@ else
     fi
 fi
 
-cmake ${cmake_params} "${cmake_param_protected}" "${srcdir}" || exit 1
+if [ -z "${cmake_param_protected}" ]; then
+  cmake "${srcdir}" ${cmake_params} || exit 1
+else
+  cmake "${srcdir}" ${cmake_params} "${cmake_param_protected}" || exit 1
+fi
 end "CONFIGURE"
 
 # BUILD
