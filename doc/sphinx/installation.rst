@@ -73,14 +73,13 @@ are required to be able to compile and use |es|:
 Installing requirements on Ubuntu Linux
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To compile |es| on Ubuntu 20.04 LTS, install the following dependencies:
+To compile |es| on Ubuntu 22.04 LTS, install the following dependencies:
 
 .. code-block:: bash
 
     sudo apt install build-essential cmake cython3 python3-pip python3-numpy \
       libboost-all-dev openmpi-common fftw3-dev libhdf5-dev libhdf5-openmpi-dev \
-      python3-opengl libgsl-dev
-    pip3 install --user 'scipy>=1.4.0'
+      python3-scipy python3-opengl libgsl-dev
 
 Optionally the ccmake utility can be installed for easier configuration:
 
@@ -100,11 +99,26 @@ CUDA SDK to make use of GPU computation:
 
     sudo apt install nvidia-cuda-toolkit
 
-On Ubuntu 20.04, the default GCC compiler is too recent for nvcc, which will
+On Ubuntu 22.04, the default GCC compiler is too recent for nvcc and will fail
+to compile sources that rely on ``std::function``. You can either use GCC 10:
+
+.. code-block:: bash
+
+    CC=gcc-10 CXX=g++-10 cmake .. -D WITH_CUDA=ON
+    make -j
+
+or alternatively install Clang 12 as a replacement for nvcc and GCC:
+
+.. code-block:: bash
+
+    CC=clang-12 CXX=clang++-12 cmake .. -D WITH_CUDA=ON -D WITH_CUDA_COMPILER=clang
+    make -j
+
+On Ubuntu 20.04, the default GCC compiler is also too recent for nvcc and will
 generate compiler errors. You can either install an older version of GCC and
 select it with environment variables ``CC`` and ``CXX`` when building |es|,
 or edit the system header files as shown in the following
-`patch for Ubuntu 20.04 <https://github.com/espressomd/espresso/issues/3654#issuecomment-612165048>`_.
+`patch for Ubuntu 20.04 <https://github.com/espressomd/espresso/issues/3654#issuecomment-612165048>`__.
 
 .. _Requirements for building the documentation:
 
@@ -115,7 +129,7 @@ To generate the Sphinx documentation, install the following packages:
 
 .. code-block:: bash
 
-    pip3 install --user --constraint\
+    pip3 install --user \
         'sphinx>=2.3.0,!=3.0.0' \
         'sphinxcontrib-bibtex>=2.4.1' \
         'sphinx-toggleprompt==0.0.5'
@@ -181,8 +195,8 @@ Installing requirements on other Linux distributions
 Please refer to the following Dockerfiles to find the minimum set of packages
 required to compile |es| on other Linux distributions:
 
-* `Fedora <https://github.com/espressomd/docker/blob/master/docker/Dockerfile-fedora>`_
-* `Debian <https://github.com/espressomd/docker/blob/master/docker/Dockerfile-debian>`_
+* `Fedora <https://github.com/espressomd/docker/blob/master/docker/Dockerfile-fedora>`__
+* `Debian <https://github.com/espressomd/docker/blob/master/docker/Dockerfile-debian>`__
 
 .. _Installing requirements on Windows via WSL:
 
@@ -199,18 +213,17 @@ To run |es| on Windows, use the Linux subsystem. For that you need to
   to set up CUDA.
 * follow the instructions for :ref:`Installing requirements on Ubuntu Linux`
 
-.. _Installing requirements on Mac OS X:
+.. _Installing requirements on macOS:
 
-Installing requirements on Mac OS X
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Installing requirements on macOS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Preparation
-"""""""""""
+To build |es| on macOS 10.15 or higher, you need to install its dependencies.
+There are two possibilities for this, MacPorts and Homebrew. We strongly
+recommend Homebrew, but if you already have MacPorts installed, you can use
+that too, although we do not provide MacPorts installation instructions.
 
-To make |es| run on Mac OS X 10.9 or higher, you need to install its
-dependencies. There are two possibilities for this, MacPorts and Homebrew.
-We recommend MacPorts, but if you already have Homebrew installed, you can use
-that too. To check whether you already have one or the other installed, run the
+To check whether you already have one or the other installed, run the
 following commands:
 
 .. code-block:: bash
@@ -218,20 +231,16 @@ following commands:
     test -e /opt/local/bin/port && echo "MacPorts is installed"
     test -e /usr/local/bin/brew && echo "Homebrew is installed"
 
-If both are installed, you need to remove one of the two. To do that, run one
-of the following two commands:
-
-.. code-block:: bash
-
-    sudo port -f uninstall installed && rm -r /opt/local
-    ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall)"
-
 If Homebrew is already installed, you should resolve any problems reported by
 the command
 
 .. code-block:: bash
 
     brew doctor
+
+If you want to install Homebrew, follow the installation instructions at
+https://docs.brew.sh/Installation, but bear in mind that MacPorts and Homebrew
+may conflict with one another.
 
 If Anaconda Python or the Python from www.python.org are installed, you
 will likely not be able to run |es|. Therefore, please uninstall them
@@ -241,31 +250,6 @@ using the following commands:
 
     sudo rm -r ~/anaconda[23]
     sudo rm -r /Library/Python
-
-If you want to install MacPorts, download the installer package
-appropriate for your Mac OS X version from
-https://www.macports.org/install.php and follow their
-installation instructions.
-
-If you want to install Homebrew, follow the installation
-instructions at https://docs.brew.sh/Installation.
-
-Installing packages using MacPorts
-""""""""""""""""""""""""""""""""""
-
-Run the following commands:
-
-.. code-block:: bash
-
-    sudo port selfupdate
-    sudo port install cmake python37 py37-cython py37-numpy py37-scipy \
-      openmpi-default fftw-3 +openmpi boost +openmpi +python37 \
-      doxygen py37-opengl py37-sphinx gsl hdf5 +openmpi \
-      py37-matplotlib py37-ipython py37-jupyter
-    sudo port select --set cython cython37
-    sudo port select --set python3 python37
-    sudo port select --set mpi openmpi-mp-fortran
-
 
 Installing packages using Homebrew
 """"""""""""""""""""""""""""""""""
@@ -651,24 +635,24 @@ each variant having different activated features, and for as many
 platforms as you want.
 
 Once you've run ``ccmake``, you can list the configured variables with
-``cmake -LAH -N .. | less`` (uses a pager) or with ``ccmake ..`` and pressing
-key ``t`` to toggle the advanced mode on (uses the curses interface).
+``cmake -LAH -N . | less`` (uses a pager) or with ``ccmake ..`` and pressing
+key ``t`` to toggle the advanced mode on (uses the ``curses`` interface).
 
 **Example:**
 
 When the source directory is :file:`srcdir` (the files where unpacked to this
 directory), then the user can create a build directory :file:`build` below that
-path by calling :file:`mkdir srcdir/build`. In the build directory ``cmake`` is to be
-executed, followed by a call to make. None of the files in the source directory
+path by calling ``mkdir srcdir/build``. In the build directory ``cmake`` is to be
+executed, followed by a call to ``make``. None of the files in the source directory
 are ever modified by the build process.
 
 .. code-block:: bash
 
     cd build
     cmake ..
-    make
+    make -j
 
-Afterwards |es| can be run via calling :file:`./pypresso` from the command line.
+Afterwards |es| can be run via calling ``./pypresso`` from the command line.
 
 
 .. _ccmake:
@@ -788,7 +772,7 @@ external libraries that are downloaded automatically by CMake. When a
 network connection cannot be established due to firewall restrictions,
 the CMake logic needs editing:
 
-* ``WITH_HDF5``: when cloning |es|, the :file:`/libs/h5xx` folder will be
+* ``WITH_HDF5``: when cloning |es|, the :file:`libs/h5xx` folder will be
   a git submodule containing a :file:`.git` subfolder. To prevent CMake from
   updating this submodule with git, delete the corresponding command with:
 
@@ -800,7 +784,7 @@ the CMake logic needs editing:
   is needed for HDF5.
 
 * ``WITH_STOKESIAN_DYNAMICS``: this library is installed using `FetchContent
-  <https://cmake.org/cmake/help/latest/module/FetchContent.html>`_.
+  <https://cmake.org/cmake/help/latest/module/FetchContent.html>`__.
   The repository URL can be found in the ``GIT_REPOSITORY`` field of the
   corresponding ``FetchContent_Declare()`` command. The ``GIT_TAG`` field
   provides the commit. Clone this repository locally next to the |es|
@@ -877,7 +861,7 @@ Troubleshooting
 ---------------
 
 If you encounter issues when building |es| or running it for the first time,
-please have a look at the `Installation FAQ <https://github.com/espressomd/espresso/wiki/Installation-FAQ>`_
+please have a look at the `Installation FAQ <https://github.com/espressomd/espresso/wiki/Installation-FAQ>`__
 on the wiki. If you still didn't find an answer, see :ref:`Community support`.
 
 Many algorithms require parameters that must be provided within valid ranges.
