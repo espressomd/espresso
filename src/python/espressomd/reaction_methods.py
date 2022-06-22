@@ -223,6 +223,11 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
         particle_number_to_be_changed : :obj:`int`
             Number of particles to move, defaults to 1.
 
+        Returns
+        -------
+        :obj:`bool`
+            Whether the move was accepted.
+
     delete_particle()
         Deletes the particle of the given p_id and makes sure that the particle
         range has no holes. This function has some restrictions, as e.g. bonds
