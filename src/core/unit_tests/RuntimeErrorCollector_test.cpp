@@ -27,7 +27,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "RuntimeErrorCollector.hpp"
+#include "error_handling/RuntimeErrorCollector.hpp"
 
 #include <boost/mpi.hpp>
 

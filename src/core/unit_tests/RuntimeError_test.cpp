@@ -28,7 +28,7 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
-#include "RuntimeError.hpp"
+#include "error_handling/RuntimeError.hpp"
 
 #include <sstream>
 #include <string>

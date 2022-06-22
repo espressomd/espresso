@@ -20,7 +20,7 @@
  */
 #include "bond_error.hpp"
 
-#include "RuntimeErrorStream.hpp"
+#include "error_handling/RuntimeErrorStream.hpp"
 #include "errorhandling.hpp"
 
 #include <utils/Span.hpp>

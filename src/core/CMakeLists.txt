@@ -29,9 +29,6 @@ set(Espresso_core_SRC
     rotate_system.cpp
     rotation.cpp
     Observable_stat.cpp
-    RuntimeErrorCollector.cpp
-    RuntimeError.cpp
-    RuntimeErrorStream.cpp
     statistics_chain.cpp
     statistics.cpp
     SystemInterface.cpp
@@ -95,6 +92,7 @@ add_subdirectory(cell_system)
 add_subdirectory(cluster_analysis)
 add_subdirectory(constraints)
 add_subdirectory(electrostatics)
+add_subdirectory(error_handling)
 add_subdirectory(grid_based_algorithms)
 add_subdirectory(immersed_boundary)
 add_subdirectory(integrators)

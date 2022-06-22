@@ -16,9 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "RuntimeErrorStream.hpp"
 
-#include "RuntimeErrorCollector.hpp"
+#include "error_handling/RuntimeErrorStream.hpp"
+#include "error_handling/RuntimeErrorCollector.hpp"
 
 #include <string>
 #include <utility>

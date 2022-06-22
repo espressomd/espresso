@@ -17,11 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ERROR_HANDLING_RUNTIME_ERROR_HPP
-#define ERROR_HANDLING_RUNTIME_ERROR_HPP
+#ifndef ESPRESSO_SRC_CORE_ERROR_HANDLING_RUNTIME_ERROR_HPP
+#define ESPRESSO_SRC_CORE_ERROR_HANDLING_RUNTIME_ERROR_HPP
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/string.hpp>
+
 #include <string>
 #include <utility>
 

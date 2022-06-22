@@ -23,7 +23,7 @@
 
 #include "cell_system/Cell.hpp"
 
-#include "RuntimeErrorStream.hpp"
+#include "error_handling/RuntimeErrorStream.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
 

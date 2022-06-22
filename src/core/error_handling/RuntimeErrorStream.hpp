@@ -16,8 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ERROR_HANDLING_RUNTIME_ERROR_STREAM_HPP
-#define ERROR_HANDLING_RUNTIME_ERROR_STREAM_HPP
+
+#ifndef ESPRESSO_SRC_CORE_ERROR_HANDLING_RUNTIME_ERROR_STREAM_HPP
+#define ESPRESSO_SRC_CORE_ERROR_HANDLING_RUNTIME_ERROR_STREAM_HPP
 
 #include "RuntimeError.hpp"
 

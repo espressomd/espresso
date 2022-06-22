@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "RuntimeError.hpp"
+#include "error_handling/RuntimeError.hpp"
 
 #include <iostream>
 #include <sstream>
