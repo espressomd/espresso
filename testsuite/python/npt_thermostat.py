@@ -28,7 +28,7 @@ class NPTThermostat(ut.TestCase):
 
     """Test NpT dynamics"""
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    system.cell_system.skin = 0
+    system.cell_system.skin = 0.
     system.periodicity = [1, 1, 1]
 
     def setUp(self):
@@ -156,16 +156,18 @@ class NPTThermostat(ut.TestCase):
         self.assertTrue(np.all(np.not_equal(np.copy(physical.v), [1, 0, 0])))
 
     def test_integrator_exceptions(self):
+        system = self.system
+
         # invalid parameters should throw exceptions
         with self.assertRaises(Exception):
-            self.system.integrator.set_isotropic_npt(ext_pressure=-1, piston=1)
+            system.integrator.set_isotropic_npt(ext_pressure=-1., piston=1.)
         with self.assertRaises(Exception):
-            self.system.integrator.set_isotropic_npt(ext_pressure=1, piston=-1)
+            system.integrator.set_isotropic_npt(ext_pressure=1., piston=-1.)
         with self.assertRaises(Exception):
-            self.system.integrator.set_isotropic_npt(ext_pressure=1, piston=0)
+            system.integrator.set_isotropic_npt(ext_pressure=1., piston=0.)
         with self.assertRaises(Exception):
-            self.system.integrator.set_isotropic_npt(ext_pressure=1, piston=1,
-                                                     direction=[0, 0, 0])
+            system.integrator.set_isotropic_npt(ext_pressure=1., piston=1.,
+                                                direction=[0, 0, 0])
 
 
 if __name__ == "__main__":

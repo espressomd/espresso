@@ -22,7 +22,7 @@ import numpy as np
 import espressomd.utils as utils
 
 
-class espresso_utils(ut.TestCase):
+class Test(ut.TestCase):
 
     def test_check_type_or_throw_except(self):
         with self.assertRaisesRegex(
@@ -38,15 +38,12 @@ class espresso_utils(ut.TestCase):
                 ValueError, 'D -- Item 1 was of type str'):
             utils.check_type_or_throw_except([1, '2', '3'], 3, float, 'D')
         # the following statements should not raise any exception
-        try:
-            utils.check_type_or_throw_except([1, 2, 3], 3, float, '')
-            utils.check_type_or_throw_except(np.array([1, 2]), 2, float, '')
-            utils.check_type_or_throw_except(np.array(2 * [True]), 2, bool, '')
-            utils.check_type_or_throw_except(np.array([1, 2])[0], 1, float, '')
-            utils.check_type_or_throw_except(np.array([True])[0], 1, bool, '')
-            utils.check_type_or_throw_except(np.array(['12'])[0], 1, str, '')
-        except ValueError as err:
-            self.fail(f'check_type_or_throw_except raised ValueError("{err}")')
+        utils.check_type_or_throw_except([1, 2, 3], 3, float, '')
+        utils.check_type_or_throw_except(np.array([1, 2]), 2, float, '')
+        utils.check_type_or_throw_except(np.array(2 * [True]), 2, bool, '')
+        utils.check_type_or_throw_except(np.array([1, 2])[0], 1, float, '')
+        utils.check_type_or_throw_except(np.array([True])[0], 1, bool, '')
+        utils.check_type_or_throw_except(np.array(['12'])[0], 1, str, '')
 
     def test_is_valid_type(self):
         # basic types

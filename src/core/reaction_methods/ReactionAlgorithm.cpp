@@ -585,14 +585,14 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
   m_tried_configurational_MC_moves += 1;
   particle_inside_exclusion_range_touched = false;
 
-  int particle_number_of_type = number_of_particles_with_type(type);
+  auto const particle_number_of_type = number_of_particles_with_type(type);
   if (particle_number_of_type == 0 or
       particle_number_of_type_to_be_changed == 0) {
     // reject
     return false;
   }
 
-  const double E_pot_old = calculate_current_potential_energy_of_system();
+  auto const E_pot_old = calculate_current_potential_energy_of_system();
 
   auto const original_positions = generate_new_particle_positions(
       type, particle_number_of_type_to_be_changed);
@@ -601,7 +601,7 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
                              ? std::numeric_limits<double>::max()
                              : calculate_current_potential_energy_of_system();
 
-  double beta = 1.0 / kT;
+  auto const beta = 1.0 / kT;
 
   // Metropolis algorithm since proposal density is symmetric
   auto const bf = std::min(1.0, exp(-beta * (E_pot_new - E_pot_old)));

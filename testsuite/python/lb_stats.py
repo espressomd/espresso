@@ -101,7 +101,7 @@ class TestLB:
             for lb_node in self.lbf.nodes():
                 dens = lb_node.density
                 fluid_mass += dens
-                fluid_temp += np.sum(lb_node.velocity**2) * dens
+                fluid_temp += np.sum(np.copy(lb_node.velocity)**2) * dens
 
             # Normalize
             fluid_mass /= np.product(self.lbf.shape)
