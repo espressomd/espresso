@@ -34,7 +34,7 @@ Please keep in mind the following remarks:
 
 * Some of the functionality requires particle book-keeping. If your simulation
   script raises runtime errors about "provided particle type X is currently not
-  tracked by the system", use `system.setup_type_map(type_list=[X])
+  tracked by the system", use :meth:`system.setup_type_map(type_list=[X])
   <espressomd.system.System.setup_type_map>` where ``X`` is the particle
   type to track.
 

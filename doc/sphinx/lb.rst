@@ -207,7 +207,7 @@ the selected LB grid node and allows one to access all of its properties::
 
 All of these properties can be read and used in further calculations.
 Only the property ``population`` can be modified. The indices ``x, y, z``
-are integers and enumerate the LB nodes in the three Cartesion directions,
+are integers and enumerate the LB nodes in the three Cartesian directions,
 starting at 0. To modify ``boundary``, refer to :ref:`Setting up boundary conditions`.
 
 Example::
@@ -228,7 +228,7 @@ of nodes (0 0 0), (0 1 0), (2 0 0), (2 1 0). The second line updates
 these nodes with densities ranging from 1.1 to 1.4. You can set either
 a value that matches the length of the slice (which sets each node
 individually), or a single value that will be copied to every node
-(e.g. a scalar for density, or an array of length 3 for the velociy).
+(e.g. a scalar for density, or an array of length 3 for the velocity).
 
 .. _Output for visualization:
 

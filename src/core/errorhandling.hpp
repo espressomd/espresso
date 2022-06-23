@@ -36,7 +36,7 @@
 
 /* Forward declaration of MpiCallbacks,
  * so we don't have to include the header.
- * It depends on mpi and can not be in cuda
+ * It depends on mpi and cannot be in cuda
  * code.
  */
 namespace Communication {

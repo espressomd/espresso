@@ -598,7 +598,7 @@ class LeesEdwards(ut.TestCase):
         np.testing.assert_array_equal(len(bond_list), 2)
 
         # We can check on the positions of the generated VS with using the
-        # distance of the particles at the time of collison (mi_vec = 1.0).
+        # distance of the particles at the time of collision (mi_vec = 1.0).
         # With the placements parameter 1/3 we know the y-component of the
         # generated VS. The other components are inherited from the real
         # particles.

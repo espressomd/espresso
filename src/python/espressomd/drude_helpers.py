@@ -25,7 +25,7 @@ class DrudeHelpers:
     """
 
     def __init__(self):
-        # Dict with Drude type infos
+        # Dict with Drude type information
         self.drude_dict = {}
         # Lists with unique Drude and core types
         self.core_type_list = []

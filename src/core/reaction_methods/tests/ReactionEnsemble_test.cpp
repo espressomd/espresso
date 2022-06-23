@@ -95,7 +95,7 @@ BOOST_AUTO_TEST_CASE(ReactionEnsemble_test) {
     }
   }
 
-  // check that the system energy is updated after a succesful reaction
+  // check that the system energy is updated after a successful reaction
   {
     ReactionEnsembleTest test_reaction(42, 1., 0., {});
     test_reaction.set_volume(1.);
@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE(ReactionEnsemble_test) {
     init_type_map(type_D);
     init_type_map(type_E);
 
-    auto const gamma = 1e100; // reaction completly shifted to product creation
+    auto const gamma = 1e100; // reaction completely shifted to product creation
     ReactionMethods::SingleReaction reaction(gamma, {type_D}, {1}, {type_E},
                                              {1});
 

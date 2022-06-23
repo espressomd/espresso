@@ -24,7 +24,7 @@
 
 namespace PairCriteria {
 /**
- * @brief Criterion which retuns a true/false value for a pair of particles.
+ * @brief Criterion which returns a true/false value for a pair of particles.
  */
 class PairCriterion {
 public:

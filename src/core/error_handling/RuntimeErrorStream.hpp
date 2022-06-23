@@ -29,9 +29,7 @@ namespace ErrorHandling {
 
 class RuntimeErrorCollector;
 
-/** \brief Allows creating a runtime error messing by using the streaming
- * operator */
-
+/** @brief Create a runtime error message via the streaming operator */
 class RuntimeErrorStream {
 public:
   RuntimeErrorStream(const RuntimeErrorStream &rhs);
@@ -40,7 +38,6 @@ public:
   ~RuntimeErrorStream();
   template <typename T> RuntimeErrorStream &operator<<(T const &value) {
     m_buff << value;
-
     return *this;
   }
 
