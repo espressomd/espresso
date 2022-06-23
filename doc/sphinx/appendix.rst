@@ -152,9 +152,7 @@ formula looks like
      \frac{e^{-2\pi f_{pq}|z|}} {f_{pq}} \cos(\omega_p x)\cos(\omega_q y)
      +\\ & 2 u_x u_y\left(\sum_{q>0} \frac{e^{-2\pi f_q|z|}}{f_q}
        \cos(\omega_q y) + \sum_{p>0} \frac{e^{-2\pi f_p|z|}}{f_p}
-       \cos(\omega_p x)\right) -\\ & 2\pi u_x u_y |z| \end{array}
-
-,
+       \cos(\omega_p x)\right) -\\ & 2\pi u_x u_y |z|, \end{array}
 
 and the near formula is
 
@@ -191,7 +189,7 @@ The implementation of the near formula is relatively straight forward
 and can be treated as any short ranged force is treated using the link
 cell algorithm, here in the layered variant. The special functions in
 the formula are somewhat demanding, but for the polygamma functions
-Taylor series can be achieved, which are implemented in :file:`mmm-common.h`.
+Taylor series can be achieved, which are implemented in :file:`mmm-common.hpp`.
 The Bessel functions are calculated using a Chebychev series.
 
 The treatment of the far formula is algorithmically more complicated.
