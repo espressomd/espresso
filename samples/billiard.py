@@ -62,33 +62,64 @@ visualizer = openGLLive(
 
 
 class Billiards:
+    impulse_step_progression = 1.2
+    impulse_step_maximum = 1.5
+    impulse_step_minimum = 0.5
+    angle_step_progression = 1.1
+    angle_step_maximum = 0.2
+    angle_step_minimum = 0.02
+
     def __init__(self):
         self.stopped = True
         self.angle = np.pi * 0.5
+        self.angle_step = 0.
         self.impulse = 10.0
+        self.impulse_step = 0.
 
     def update_cueball_force(self):
-        direction = np.array([math.sin(self.angle), 0, math.cos(self.angle)])
+        direction = np.array([math.sin(self.angle), 0., math.cos(self.angle)])
         cue_ball.ext_force = self.impulse * direction
+
+    def resetAngle(self):
+        self.angle_step = 0.
 
     def decreaseAngle(self):
         if self.stopped:
-            self.angle += 0.01
+            if self.angle_step <= 0.:
+                self.angle_step = self.angle_step_minimum
+            elif self.angle_step < self.angle_step_maximum:
+                self.angle_step *= self.angle_step_progression
+            self.angle += self.angle_step
             self.update_cueball_force()
 
     def increaseAngle(self):
         if self.stopped:
-            self.angle -= 0.01
+            if self.angle_step >= 0.:
+                self.angle_step = -self.angle_step_minimum
+            elif self.angle_step > -self.angle_step_maximum:
+                self.angle_step *= self.angle_step_progression
+            self.angle += self.angle_step
             self.update_cueball_force()
+
+    def resetImpulse(self):
+        self.impulse_step = 0.
 
     def decreaseImpulse(self):
         if self.stopped:
-            self.impulse -= 0.5
+            if self.impulse_step >= 0.:
+                self.impulse_step = -self.impulse_step_minimum
+            elif self.impulse_step > -self.impulse_step_maximum:
+                self.impulse_step *= self.impulse_step_progression
+            self.impulse += self.impulse_step
             self.update_cueball_force()
 
     def increaseImpulse(self):
         if self.stopped:
-            self.impulse += 0.5
+            if self.impulse_step <= 0.:
+                self.impulse_step = self.impulse_step_minimum
+            elif self.impulse_step < self.impulse_step_maximum:
+                self.impulse_step *= self.impulse_step_progression
+            self.impulse += self.impulse_step
             self.update_cueball_force()
 
     def fire(self):
@@ -104,11 +135,19 @@ pool = Billiards()
 visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('4', KeyboardFireEvent.Hold, pool.decreaseAngle))
 visualizer.keyboard_manager.register_button(
+    KeyboardButtonEvent('4', KeyboardFireEvent.Released, pool.resetAngle))
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('6', KeyboardFireEvent.Hold, pool.increaseAngle))
+visualizer.keyboard_manager.register_button(
+    KeyboardButtonEvent('6', KeyboardFireEvent.Released, pool.resetAngle))
 visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('2', KeyboardFireEvent.Hold, pool.decreaseImpulse))
 visualizer.keyboard_manager.register_button(
+    KeyboardButtonEvent('2', KeyboardFireEvent.Released, pool.resetImpulse))
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('8', KeyboardFireEvent.Hold, pool.increaseImpulse))
+visualizer.keyboard_manager.register_button(
+    KeyboardButtonEvent('8', KeyboardFireEvent.Released, pool.resetImpulse))
 visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('5', KeyboardFireEvent.Pressed, pool.fire))
 
@@ -116,6 +155,7 @@ visualizer.keyboard_manager.register_button(
 system.time_step = 0.00008
 system.cell_system.skin = 0.4
 
+table_friction = 0.9
 table_h = 0.5
 ball_diam = 0.0572
 ball_mass = 0.17
@@ -188,7 +228,7 @@ a1 = np.array([d * math.sqrt(3) / 2.0, 0, -0.5 * d])
 a2 = np.array([d * math.sqrt(3) / 2.0, 0, 0.5 * d])
 sp = [system.box_l[0] * 0.7, ball_y,
       system.box_l[2] * 0.5 + ball_diam * 0.5]
-order = [
+order = (
     types['solid_ball'],
     types['striped_ball'],
     types['solid_ball'],
@@ -203,7 +243,8 @@ order = [
     types['striped_ball'],
     types['striped_ball'],
     types['solid_ball'],
-    types['striped_ball']]
+    types['striped_ball'],
+)
 
 n = 0
 for i in range(5):
@@ -219,7 +260,7 @@ for i in range(5):
 
 pool.update_cueball_force()
 cue_ball.fix = [True, True, True]
-system.thermostat.set_langevin(kT=0, gamma=0.8, seed=42)
+system.thermostat.set_langevin(kT=0., gamma=table_friction, seed=42)
 
 cleared_balls = [0, 0]
 
@@ -233,7 +274,6 @@ def main():
             vsum += np.linalg.norm(p.v)
 
             for h in hole_pos:
-
                 d = ((p.pos_folded[0] - h[0])**2
                      + (p.pos_folded[2] - h[2])**2)**0.5
                 if d < hole_score_rad:
