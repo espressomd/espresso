@@ -1,10 +1,13 @@
-set(SOURCE_FILES src/Scafacos.cpp src/Coulomb.cpp src/Dipoles.cpp)
-
-add_library(Espresso_scafacos SHARED ${SOURCE_FILES})
+add_library(Espresso_scafacos SHARED src/Scafacos.cpp src/Coulomb.cpp
+                                     src/Dipoles.cpp)
 add_library(Espresso::scafacos ALIAS Espresso_scafacos)
-target_link_libraries(Espresso_scafacos PRIVATE ${SCAFACOS_LDFLAGS})
+if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 10 AND INSIDE_DOCKER
+   AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS_EQUAL 11 AND WITH_COVERAGE)
+  target_link_libraries(Espresso_scafacos
+                        PRIVATE "-L/usr/lib/gcc/x86_64-linux-gnu/10")
+endif()
 target_link_libraries(Espresso_scafacos PUBLIC MPI::MPI_CXX
-                      PRIVATE Espresso::cpp_flags)
+                      PRIVATE ${SCAFACOS_LDFLAGS} Espresso::cpp_flags)
 
 target_include_directories(
   Espresso_scafacos
