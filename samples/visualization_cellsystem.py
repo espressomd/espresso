@@ -1,4 +1,5 @@
-# Copyright (C) 2010-2019 The ESPResSo project
+#
+# Copyright (C) 2010-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,6 +15,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 """
 Visualize the system cells and MPI domains. Run ESPResSo in parallel
 to color particles by node. With OpenMPI, this can be achieved using

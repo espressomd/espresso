@@ -1,4 +1,5 @@
-# Copyright (C) 2010-2019 The ESPResSo project
+#
+# Copyright (C) 2010-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,6 +15,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 """
 Set up a DPD fluid and calculate pressure as a function of the
 varying density. The fluid is thermalized using a DPD thermostat.

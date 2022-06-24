@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (C) 2018-2019 The ESPResSo project
+# Copyright (C) 2018-2022 The ESPResSo project
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
