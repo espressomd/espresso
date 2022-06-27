@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2010-2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -88,7 +88,7 @@ static Particle *get_reference_particle(Particle const &p) {
 }
 
 /**
- * @brief Constraint force to hold the particles at its prescribed position.
+ * @brief Constraint force to hold the particle at its prescribed position.
  *
  * @param p_ref Reference particle.
  * @param p_vs Virtual site.

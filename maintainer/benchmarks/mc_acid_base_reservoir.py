@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021 The ESPResSo project
+# Copyright (C) 2021-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -196,7 +196,7 @@ print(f"The system was initialized with {len(system.part)} particles")
 
 # ### Set up non-bonded-interactions
 
-# set the WCA interaction betwee all particle pairs
+# set the WCA interaction between all particle pairs
 for type_1 in TYPES.values():
     for type_2 in TYPES.values():
         if type_1 >= type_2:

@@ -1,4 +1,5 @@
-# Copyright (C) 2010-2019 The ESPResSo project
+#
+# Copyright (C) 2010-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,6 +15,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
@@ -101,7 +104,7 @@ class TestLB:
             for lb_node in self.lbf.nodes():
                 dens = lb_node.density
                 fluid_mass += dens
-                fluid_temp += np.sum(lb_node.velocity**2) * dens
+                fluid_temp += np.sum(np.copy(lb_node.velocity)**2) * dens
 
             # Normalize
             fluid_mass /= np.product(self.lbf.shape)

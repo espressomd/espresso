@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2019 The ESPResSo project
+# Copyright (C) 2010-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -25,7 +25,7 @@ class DrudeHelpers:
     """
 
     def __init__(self):
-        # Dict with Drude type infos
+        # Dict with Drude type information
         self.drude_dict = {}
         # Lists with unique Drude and core types
         self.core_type_list = []

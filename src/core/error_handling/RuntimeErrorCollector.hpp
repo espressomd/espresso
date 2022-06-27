@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2019 The ESPResSo project
+ * Copyright (C) 2014-2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,10 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ERROR_HANDLING_RUNTIMEERRORCOLLECTOR_HPP
-#define ERROR_HANDLING_RUNTIMEERRORCOLLECTOR_HPP
+#ifndef ESPRESSO_SRC_CORE_ERROR_HANDLING_RUNTIME_ERROR_COLLECTOR_HPP
+#define ESPRESSO_SRC_CORE_ERROR_HANDLING_RUNTIME_ERROR_COLLECTOR_HPP
 
-#include "RuntimeError.hpp"
+#include "error_handling/RuntimeError.hpp"
 
 #include <boost/mpi/communicator.hpp>
 

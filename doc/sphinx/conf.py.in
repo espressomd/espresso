@@ -204,7 +204,7 @@ html_show_sourcelink = False
 # If true, "Created using Sphinx" is shown in the HTML footer. Default is True.
 html_show_sphinx = False
 
-# If true, "(C) Copyright (C) 2019 The ESPResSo project" is shown
+# If true, "(C) Copyright (C) 2022 The ESPResSo project" is shown
 # in the HTML footer. Default is True.
 html_show_copyright = True
 

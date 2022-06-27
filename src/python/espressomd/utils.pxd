@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2019 The ESPResSo project
+# Copyright (C) 2013-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -43,15 +43,15 @@ cpdef check_array_type_or_throw_except(x, n, t, msg)
 cpdef check_type_or_throw_except(x, n, t, msg)
 cdef check_range_or_except(D, x, v_min, incl_min, v_max, incl_max)
 
-cdef extern from "RuntimeError.hpp" namespace "ErrorHandling::RuntimeError":
+cdef extern from "error_handling/RuntimeError.hpp" namespace "ErrorHandling::RuntimeError":
     cdef cppclass ErrorLevel:
         pass
 
-cdef extern from "RuntimeError.hpp" namespace "ErrorHandling::RuntimeError::ErrorLevel":
+cdef extern from "error_handling/RuntimeError.hpp" namespace "ErrorHandling::RuntimeError::ErrorLevel":
     cdef ErrorLevel WARNING
     cdef ErrorLevel ERROR
 
-cdef extern from "RuntimeError.hpp" namespace "ErrorHandling":
+cdef extern from "error_handling/RuntimeError.hpp" namespace "ErrorHandling":
     cdef cppclass RuntimeError:
         string format()
         void print()

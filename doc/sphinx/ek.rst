@@ -25,8 +25,8 @@ continuity, diffusion-advection, Poisson, and Navier-Stokes equations:
    \label{eq:ek-model-continuity} \frac{\partial n_k}{\partial t} & = & -\, \nabla \cdot \vec{j}_k \vphantom{\left(\frac{\partial}{\partial}\right)} ; \\
    \label{eq:ek-model-fluxes} \vec{j}_{k} & = & -D_k \nabla n_k - \nu_k \, q_k n_k\, \nabla \Phi + n_k \vec{v}_{\mathrm{fl}} \vphantom{\left(\frac{\partial}{\partial}\right)} + \sqrt{n_k}\vec{\mathcal{W}}_k; \\
    \label{eq:ek-model-poisson} \Delta \Phi & = & -4 \pi \, {l_\mathrm{B}}\, {k_\mathrm{B}T}\sum_k q_k n_k \vphantom{\left(\frac{\partial}{\partial}\right)}; \\
-   \nonumber \left(\frac{\partial \vec{v}_{\mathrm{fl}}}{\partial t} + \vec{v}_{\mathrm{fl}} \cdot \vec{\nabla} \vec{v}_{\mathrm{fl}} \right) \rho_\mathrm{fl} & = & -{k_\mathrm{B}T}\, \nabla \rho_\mathrm{fl} - q_k n_k \nabla \Phi \\
-   \label{eq:ek-model-velocity} & & +\, \eta \vec{\Delta} \vec{v}_{\mathrm{fl}} + (\eta / 3 + \eta_{\text{b}}) \nabla (\nabla \cdot \vec{v}_{\mathrm{fl}}) \vphantom{\left(\frac{\partial}{\partial}\right)} ; \\
+   \nonumber \left(\frac{\partial \vec{v}_{\mathrm{fl}}}{\partial t} + \vec{v}_{\mathrm{fl}} \cdot \nabla \vec{v}_{\mathrm{fl}} \right) \rho_\mathrm{fl} & = & -{k_\mathrm{B}T}\, \nabla \rho_\mathrm{fl} - q_k n_k \nabla \Phi \\
+   \label{eq:ek-model-velocity} & & +\, \eta \Delta \vec{v}_{\mathrm{fl}} + (\eta / 3 + \eta_{\text{b}}) \nabla (\nabla \cdot \vec{v}_{\mathrm{fl}}) \vphantom{\left(\frac{\partial}{\partial}\right)} ; \\
    \label{eq:ek-model-continuity-fl} \frac{\partial \rho_\mathrm{fl}}{\partial t} & = & -\,\nabla\cdot\left( \rho_\mathrm{fl} \vec{v}_{\mathrm{fl}} \right) \vphantom{\left(\frac{\partial}{\partial}\right)} , \end{aligned}
 
 which define relations between the following observables
@@ -138,7 +138,9 @@ Setup
 
 Initialization
 ~~~~~~~~~~~~~~
-::
+
+:class:`~espressomd.electrokinetics.Electrokinetics` is used to initialize
+the LB fluid of the EK method::
 
     import espressomd
     import espressomd.electrokinetics
@@ -152,26 +154,25 @@ Initialization
 
 .. note:: Features ``ELECTROKINETICS`` and ``CUDA`` required
 
-The above is a minimal example how to initialize the LB fluid, and
-it is very similar to the lattice-Boltzmann command in set-up. We
-therefore refer the reader to chapter :ref:`Lattice-Boltzmann` for details on the
-implementation of LB in |es| and describe only the major differences here.
+It is very similar to the lattice-Boltzmann command in set-up.
+We therefore refer the reader to chapter :ref:`Lattice-Boltzmann`
+for details on the implementation of LB in |es| and describe only
+the major differences here.
 
 The first major difference with the LB implementation is that the
-electrokinetics set-up is a Graphics Processing Unit (GPU) only
-implementation. There is no Central Processing Unit (CPU) version, and
-at this time there are no plans to make a CPU version available in the
-future. To use the electrokinetics features it is therefore imperative
-that your computer contains a CUDA capable GPU which is sufficiently
-modern.
+electrokinetics set-up is a GPU-only implementation. A CPU version
+will become available in the 4.3 line of |es|. To use the electrokinetics
+features it is therefore imperative that your computer contains
+a CUDA-capable GPU.
 
-To set up a proper LB fluid using this command one has to specify at
+To set up a proper LB fluid using this command, one has to specify at
 least the following options: ``agrid``, ``lb_density``, ``viscosity``,
 ``friction``, ``T``, and ``prefactor``. The other options can be
 used to modify the behavior of the LB fluid. Note that the command does
 not allow the user to set the time step parameter as is the case for the
-lattice-Boltzmann command, this parameter is instead taken directly from the value set for
-:attr:`espressomd.system.System.time_step`. The LB *mass density* is set independently from the
+lattice-Boltzmann command, this parameter is instead taken directly from
+the value set for :attr:`~espressomd.system.System.time_step`.
+The LB *mass density* is set independently from the
 electrokinetic *number densities*, since the LB fluid serves only as a
 medium through which hydrodynamic interactions are propagated, as will
 be explained further in the next paragraph. If no ``lb_density`` is specified, then our
@@ -186,8 +187,9 @@ thermostat that produces thermal fluctuations.
 advective contribution to the diffusive species' fluxes. Default is
 ``True``.
 
-``fluid_coupling`` can be set to ``"friction"`` or ``"estatics"``. This option determines the force
-term acting on the fluid. The former specifies the force term to be the
+``fluid_coupling`` can be set to ``"friction"`` or ``"estatics"``.
+This option determines the force term acting on the fluid.
+The former specifies the force term to be the
 sum of the species fluxes divided by their respective mobilities while
 the latter simply uses the electrostatic force density acting on all
 species. Note that this switching is only possible for the ``"linkcentered"``
@@ -210,16 +212,19 @@ lead to negative densities, they are modified by a smoothed Heaviside function,
 which decreases the magnitude of the fluctuation for densities close to 0.
 By default the fluctuations are turned off.
 
+Another difference with LB is that EK parameters are immutables,
+and the EK object cannot be checkpointed.
+
 .. _Diffusive species:
 
 Diffusive species
 ~~~~~~~~~~~~~~~~~
 ::
 
-    species = electrokinetics.Species(density=density, D=D, valency=valency,
+    species = espressomd.electrokinetics.Species(density=density, D=D, valency=valency,
         ext_force_density=ext_force)
 
-:class:`espressomd.electrokinetics.Species` is used to initialize a diffusive species. Here the
+:class:`~espressomd.electrokinetics.Species` is used to initialize a diffusive species. Here the
 options specify: the number density ``density``, the diffusion coefficient ``D``, the
 valency of the particles of that species ``valency``, and an optional external
 (electric) force which is applied to the diffusive species. As mentioned
@@ -245,19 +250,20 @@ The variables ``density``, ``D``, and
 
 EK boundaries
 ~~~~~~~~~~~~~
-::
+
+:class:`~espressomd.ekboundaries.EKBoundary` is used to set up
+internal (or external) boundaries for the electrokinetics algorithm in much
+the same way as the :class:`~espressomd.lbboundaries.LBBoundary` class is
+used for the LB fluid::
 
     ek_boundary = espressomd.ekboundaries.EKBoundary(charge_density=1.0, shape=my_shape)
     system.ekboundaries.add(ek_boundary)
 
 .. note:: Feature ``EK_BOUNDARIES`` required
 
-The :class:`~espressomd.ekboundaries.EKBoundary` class is used to set up
-internal or external) boundaries for the electrokinetics algorithm in much
-the same way as the :class:`~espressomd.lbboundaries.LBBoundary` class is
-used for the LB fluid. The major difference with the LB class is the option
-``charge_density``, with which a boundary can be endowed with a volume
-charge density. To create a surface charge density, a combination of two
+The major difference with the LB class is the option ``charge_density``,
+with which a boundary can be endowed with a volume charge density.
+To create a surface charge density, a combination of two
 oppositely charged boundaries, one inside the other, can be used. However,
 care should be taken to maintain the surface charge density when the value of ``agrid``
 is changed. Examples for possible shapes are wall, sphere, ellipsoid, cylinder,
@@ -265,27 +271,6 @@ rhomboid and hollow conical frustum. We refer to the documentation of the
 :class:`espressomd.shapes` module for more possible shapes and information on
 the options associated to these shapes. In order to properly set up the
 boundaries, the ``charge_density`` and ``shape`` must be specified.
-
-.. _Checkpointing EK:
-
-Checkpointing
-~~~~~~~~~~~~~
-::
-
-    ek.save_checkpoint(path)
-
-Checkpointing in the EK works quite similar to checkpointing in the LB,
-because the density is not saved within the :class:`espressomd.checkpointing`
-object. However one should keep in mind, that the EK not only saves the density
-of the species but also saves the population of the LB fluid in a separate file.
-To load a checkpoint the :class:`espressomd.electrokinetics.Electrokinetics`
-should have the same name as in the script it was saved, but to use the species
-one need to extract them from the :class:`espressomd.electrokinetics.Electrokinetics`
-via ``species``::
-
-    checkpoint.load(cpt_path)
-    species = ek.get_params()['species']
-    ek.load_checkpoint(path)
 
 .. _Output:
 
@@ -304,9 +289,9 @@ Fields
     ek.write_vtk_velocity(path)
     ek.write_vtk_potential(path)
 
-A property of the fluid field can be exported into a
-file in one go. Currently supported
-are: density, velocity, potential and boundary, which give the LB fluid density, the LB fluid velocity,
+A property of the fluid field can be exported into a file in one go.
+Currently supported fields are: density, velocity, potential and boundary,
+which give the LB fluid density, the LB fluid velocity,
 the electrostatic potential, and the location and type of the
 boundaries, respectively. The boundaries can only be printed when the
 ``EK_BOUNDARIES`` is compiled in. The output is a vtk-file, which is readable by
@@ -321,9 +306,9 @@ These commands are similar to the above. They enable the
 export of diffusive species properties, namely: ``density`` and ``flux``, which specify the
 number density and flux of species ``species``, respectively.
 
-.. _Local Quantities:
+.. _Local quantities:
 
-Local Quantities
+Local quantities
 """"""""""""""""
 
 Local quantities like velocity or fluid density for single nodes can be accessed in the same way

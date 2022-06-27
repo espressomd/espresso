@@ -3,13 +3,13 @@
 Lattice-Boltzmann
 =================
 
-For an implicit treatment of a solvent, |es| allows to couple the molecular
+For an implicit treatment of a solvent, |es| can couple the molecular
 dynamics simulation to a lattice-Boltzmann fluid. The lattice-Boltzmann
-method (LBM) is a fast, lattice-based method that, in its
-"pure" form, allows to calculate fluid flow in different boundary
-conditions of arbitrarily complex geometries. Coupled to molecular
-dynamics, it allows for the computationally efficient inclusion of
-hydrodynamic interactions into the simulation. The focus of the |es| implementation
+method (LBM) is a fast, lattice-based method that, in its "pure" form,
+allows to calculate fluid flow in different boundary conditions of
+arbitrarily complex geometries. Coupled to molecular dynamics,
+it allows for the computationally efficient inclusion of hydrodynamic
+interactions into the simulation. The focus of the |es| implementation
 of the LBM is, of course, the coupling to MD and therefore available
 geometries and boundary conditions are somewhat limited in comparison to
 "pure" LB codes.
@@ -17,7 +17,12 @@ geometries and boundary conditions are somewhat limited in comparison to
 Here we restrict the documentation to the interface. For a more detailed
 description of the method, please refer to the literature.
 
-.. note:: Please cite :cite:`arnold13a` (BibTeX key ``arnold13a`` in :file:`doc/bibliography.bib`) if you use the LB fluid and :cite:`rohm12a` (BibTeX key ``rohm12a`` in :file:`doc/bibliography.bib`) if you use the GPU implementation.
+.. note::
+
+    Please cite :cite:`arnold13a` (BibTeX key ``arnold13a`` in
+    :file:`doc/bibliography.bib`) if you use the LB fluid and :cite:`rohm12a`
+    (BibTeX key ``rohm12a`` in :file:`doc/bibliography.bib`) if you use
+    the GPU implementation.
 
 .. _Setting up a LB fluid:
 
@@ -42,7 +47,7 @@ To use the GPU-accelerated variant, replace line 6 in the example above by::
 .. note:: Feature ``CUDA`` required for the GPU-accelerated variant
 
 To use the (much faster) GPU implementation of the LBM, use
-:class:`espressomd.lb.LBFluidGPU` in place of :class:`espressomd.lb.LBFluid`.
+:class:`~espressomd.lb.LBFluidGPU` in place of :class:`~espressomd.lb.LBFluid`.
 Please note that the GPU implementation uses single precision floating point operations.
 This decreases the accuracy of calculations compared to the CPU implementation.
 In particular, due to rounding errors, the fluid density decreases over time,
@@ -57,7 +62,7 @@ lattice constant of the fluid, so the size of the box in every direction
 must be a multiple of ``agrid``.
 
 In the following, we discuss the parameters that can be supplied to the LBM in |es|.
-The detailed interface definition is available at :class:`espressomd.lb.LBFluid`.
+The detailed interface definition is available at :class:`~espressomd.lb.LBFluid`.
 
 The LB scheme and the MD scheme are not synchronized: In one LB time
 step typically several MD steps are performed. This allows to speed up
@@ -140,12 +145,12 @@ Interpolating velocities
 
 To get interpolated velocity values between lattice nodes, the function::
 
-    lb.get_interpolated_velocity(pos = [1.1,1.2,1.3])
+    lb.get_interpolated_velocity(pos=[1.1, 1.2, 1.3])
 
 with a single position  ``pos`` as an argument can be used.
-For the GPU fluid :class:`espressomd.lb.LBFluidGPU`
-also :py:meth:`espressomd.lb.LBFluidGPU.get_interpolated_fluid_velocity_at_positions()`
-is available, which expects a numpy array of positions as an argument.
+For the GPU fluid :class:`espressomd.lb.LBFluidGPU`, a method
+:py:meth:`~espressomd.lb.LBFluidGPU.get_interpolated_fluid_velocity_at_positions()`
+is also available, which expects a numpy array of positions as an argument.
 
 By default, the interpolation is done linearly between the nearest 8 LB nodes,
 but for the GPU implementation also a quadratic scheme involving 27 nodes is implemented
@@ -202,7 +207,7 @@ the selected LB grid node and allows one to access all of its properties::
 
 All of these properties can be read and used in further calculations.
 Only the property ``population`` can be modified. The indices ``x, y, z``
-are integers and enumerate the LB nodes in the three Cartesion directions,
+are integers and enumerate the LB nodes in the three Cartesian directions,
 starting at 0. To modify ``boundary``, refer to :ref:`Setting up boundary conditions`.
 
 Example::
@@ -223,7 +228,7 @@ of nodes (0 0 0), (0 1 0), (2 0 0), (2 1 0). The second line updates
 these nodes with densities ranging from 1.1 to 1.4. You can set either
 a value that matches the length of the slice (which sets each node
 individually), or a single value that will be copied to every node
-(e.g. a scalar for density, or an array of length 3 for the velociy).
+(e.g. a scalar for density, or an array of length 3 for the velocity).
 
 .. _Output for visualization:
 
