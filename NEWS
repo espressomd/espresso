@@ -347,14 +347,12 @@ Improved testing:
 * Fix tests that broke on i586 architectures with OpenSUSE Tumbleweed
   (#3327, #3358)
 
-
-
 ESPResSo 4.1.1
 ==============
 
-This release provides a number of corrections for Espresso 4.1.
+This release provides a number of corrections for ESPResSo 4.1.
 We recommend that this release be used for all production simulations.
-The interface is mostly unchanged between Espresso 4.1 and 4.1.1; the
+The interface is mostly unchanged between ESPResSo 4.1.0 and 4.1.1; the
 two exceptions are limited to these experimental features:
 
 * `Integrator.set_isotropic_npt()`: input value `direction=[0,0,0]`
@@ -450,25 +448,23 @@ Improved testing:
 * Add more LB tests (#2748)
 
 
+ESPResSo 4.1.0
+==============
 
-
-Espresso 4.1
-============
-
-This is a feature release, i.e., new functionality is added to Espresso.
+This is a feature release, i.e., new functionality is added to ESPResSo.
 An additional focus of this release is quality assurance and
-modernization. The testing of Espresso's functionality has been extended
+modernization. The testing of ESPResSo's functionality has been extended
 considerably. Also, sample and tutorial scripts are now automatically
 tested. Moreover, a large effort was put into modernizing the C++
 simulation core. Work has been done, e.g., on particle sorting, the MPI
 communication infrastructure, and the lattice-Boltzmann implementations.
 Electrostatic and magnetostatic methods now have a clear and common
-interface. These changes will facilitate future extensions of Espresso
+interface. These changes will facilitate future extensions of ESPResSo
 and make the code more understandable to new developers.
 
 We recommend that this release be used for all production simulations.
 No further bug fix releases will be provided for the 4.0 line, and not
-all fixes are present in Espresso 4.0.2.
+all fixes are present in ESPResSo 4.0.2.
 
 Please carefully read the detailed list of changes below before using
 this release. Issues can be reported at
@@ -478,14 +474,14 @@ https://github.com/espressomd/espresso.
 Changed requirements
 --------------------
 
-* Python 2 support has been dropped. Espresso now requires Python 3.
+* Python 2 support has been dropped. ESPResSo now requires Python 3.
   For additional information, please see
   https://github.com/espressomd/espresso/wiki/python_2_3_transition.
 
-* Espresso now needs a C++14-capable compiler, such as GCC 4.9 and later
+* ESPResSo now needs a C++14-capable compiler, such as GCC 4.9 and later
   or Clang 4 and later.
 
-* It is discouraged to use Espresso with Boost versions below 1.67.
+* It is discouraged to use ESPResSo with Boost versions below 1.67.
 
 
 Added functionality and documentation
@@ -570,7 +566,7 @@ Feature configuration at compile time
 Interface changes
 -----------------
 
-* Several parts of Espresso now use a method-specific seed for random
+* Several parts of ESPResSo now use a method-specific seed for random
   number generation. For the following individual methods a random
   number seed has to be passed using the keyword argument ``seed``:
 
@@ -701,7 +697,7 @@ Under the hood changes
 
 * Automated testing has been enhanced. It now also includes samples and
   tutorials. The overall test coverage for the simulation core has
-  increased by ~12% since Espresso 4.0.2.
+  increased by ~12% since ESPResSo 4.0.2.
 
 * The CPU LB and LB-particle coupling have been refactored.
 
@@ -734,7 +730,7 @@ Under the hood changes
 ESPResSo 4.0.2
 ==============
 
-This release provides a number of corrections for the Espresso 4.0 line.
+This release provides a number of corrections for the ESPResSo 4.0 line.
 We recommend that this release be used for all production simulations.
 Please note that a sign error in tabulated interactions was fixed.
 Simulation scripts which worked around this problem might have to be changed.
@@ -794,9 +790,9 @@ Further changes:
 ESPResSo 4.0.1
 ==============
 
-This release provides a number of corrections for Espresso 4.0.
+This release provides a number of corrections for ESPResSo 4.0.
 We recommend that this release be used for all production simulations.
-The interface has not been changed between Espresso 4.0 and 4.0.1
+The interface has not been changed between ESPResSo 4.0.0 and 4.0.1
 However, some bugs were discovered which can affect simulation results.
 Below, please find the list of changes. The numbers in brackets refer to
 ticket numbers on http://github.com/espressomd/espresso
@@ -941,8 +937,8 @@ Improved testing:
 
 
 
-ESPResSo 4.0
-============
+ESPResSo 4.0.0
+==============
 
 ESPResSo 4.0 is the first release of ESPResSo with a Python interface.
 I.e., the language in which simulation scripts are written is now Python,
@@ -980,7 +976,7 @@ New features:
 
 Visualisation
 -------------
-Espresso contains two online visualizers, one based on Mayavi, one on the OpenGl Python module.
+ESPResSo contains two online visualizers, one based on Mayavi, one on the OpenGl Python module.
 Support for online visualization in VMD has been dropped, but particle data can be stored in file formats which VMD can read (vcf/vtf, h5md).
 
 User-visible changes
@@ -990,7 +986,7 @@ User-visible changes
 * The rotational degrees of freedom of virtual sites is now integrated. Virtual sites no longer use the quaternion attributes to store their relative orientation
 * Alternatively, the orientation of the virtual site can be specified relative to that of the particle it is derived from.
 * The random number generator was changed to Mersenne Twister as implemented by C++11.
-* Espresso now depends on the Boost library including Boost-Mpi and a C++11 capable compiler
+* ESPResSo now depends on the Boost library including Boost-Mpi and a C++11 capable compiler
 * The build system is now based on CMake.
 
 Removed features
@@ -1043,8 +1039,8 @@ The numbers refer to issue numbers at http://github.com/espressomd/espresso
 * The membrane_collision interaction of the object in fluid framework may
   use an outward direction which is outdated by one time step (#2214)
 
-ESPResSo 3.3
-============
+ESPResSo 3.3.0
+==============
 
 New user-visible features
 -------------------------
@@ -1150,8 +1146,8 @@ Changes visible for developers
 
 * Generic TclAppend function
 
-ESPResSo 3.2
-============
+ESPResSo 3.2.0
+==============
 
 New user-visible features
 -------------------------
@@ -1179,7 +1175,7 @@ New user-visible features
   thermostat.
 
 * The feature GRANDCANONICAL provided functions to simplify grandcanonical
-  simulations in espresso. To that end it provides functions to find and
+  simulations in ESPResSo. To that end it provides functions to find and
   delete random particles of a certain type.
 
 * Added new feature ROTATION_PER_PARTICLE that allows to choose
@@ -1229,7 +1225,7 @@ ESPResSo 3.1.2
 ESPResSo 3.1.1
 ==============
 
-* The Espresso binary now outputs the header to STDERR instead of STDOUT.
+* The "Espresso" binary now outputs the header to STDERR instead of STDOUT.
 
 * Fixed bugs #36431, #37120, #37214, #37374, #37306, #35767.
 
@@ -1359,7 +1355,7 @@ ESPResSo 3.0.1
 * Fixed a few bugs that were never reported via the bug tracker.
 
 ESPResSo 3.0.0
-===============
+==============
 
 User-visible changes
 --------------------
@@ -1448,7 +1444,7 @@ User-visible changes
 Organizational changes
 ----------------------
 
-* The home page of ESPReSso has been relocated to
+* The home page of ESPResSo has been relocated to
 
     http://espressomd.org
 
@@ -1494,7 +1490,7 @@ Changes visible for developers
   a number of additional tests are performed
 
 * The .c/.h/.cu source files have been moved to the subdirectory
-  src/. The Espresso binary is still placed in the top-level build
+  src/. The "Espresso" binary is still placed in the top-level build
   directory. myconfig.h may be placed eitther in the src/ or top-level
   dirs.
 
@@ -1516,7 +1512,7 @@ Changes visible for developers
 For older changes to ESPResSo, see ./old/RELEASE_NOTES.
 
 ========================================================================
-Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+Copyright (C) 2010-2022 The ESPResSo project
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
