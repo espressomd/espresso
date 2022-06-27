@@ -2,6 +2,793 @@
 = ESPRESSO NEWS =
 =================
 
+ESPResSo 4.2.0
+==============
+
+This is a feature release, i.e., new functionality is added to ESPResSo.
+New thermostats, cell systems and boundary conditions have been introduced
+to simulate systems with Stokesian Dynamics, Brownian Dynamics, strongly
+inhomogeneous particle sizes or translation-invariant shear flow. The
+interface underwent (non-silent) changes, therefore scripts will have to
+be slightly adapted. Most notably, particle access by id and particle
+slices have a new syntax, and electrostatic/magnetostatic layer correction
+and reaction methods have a different setup. All errors are also now
+emitted as Python exceptions and are recoverable with minimal effort.
+
+An additional focus of this release is the simplification of both the C++ core
+and the Python script interface to facilitate future extensions of ESPResSo.
+The testing of ESPResSo's functionality has been extended considerably.
+
+We recommend that this release be used for all production simulations.
+No further bug fix releases will be provided for the 4.1 line, and not
+all fixes are present in ESPResSo 4.1.4.
+
+Please carefully read the detailed list of changes below before using this
+release. Issues can be reported at https://github.com/espressomd/espresso.
+
+Added functionality
+-------------------
+
+* `P3MGPU` now supports energy and pressure calculation via the CPU
+  kernels (#4506).
+
+* `ELC` now works with `P3MGPU` (#4506).
+
+* The LB grid now supports slicing operations (#4195) and LB slices are
+  equality comparable (#4268).
+
+* Lees-Edwards boundary conditions can be used for particle-based
+  simulations (#4457). Lattice-Boltzmann support will be added in
+  the 4.3.0 release.
+
+* The non-bonded energy of a single particle can be calculated (#4401).
+
+* The list of close neighbors of a single particle can be extracted (#4401).
+
+* Brownian Dynamics simulations can be carried out with the newly added
+  Brownian integrator and Brownian thermostat (#1842).
+
+* Stokesian Dynamics simulations can be carried out with the newly added
+  Stokesian integrator and Stokesian thermostat (#3790, #3987).
+
+* Bonded interactions can now be automatically broken when the bond length
+  exceeds a critical value (#4456). This feature can be combined with
+  collision detection to model reversible bonds (#4464).
+
+* A new cell system `HybridDecomposition` was introduced to speed up
+  simulations with inhomogeneous particle interaction ranges (#4373).
+
+* Shapes can be merged into meta-shapes (#3493, #3538).
+
+* The `HollowConicalFrustum` can now be sliced open, made thick and rotated
+  to model quarter pipes in any orientation (#4179). The main application is
+  in the construction of complex microchannel geometries via `LBBoundaries`.
+
+* A parametric weight function was added to the DPD interaction (#3570).
+
+* H5MD output files now support a unit system (#3751).
+
+* H5MD output files now support custom specifications to control which
+  particle and box properties to write to disk (#4480).
+
+* The `H5md` class is now checkpointable and usable in an interactive
+  Python session (#3751).
+
+* MDAnalysis integration now provides bond information (#3801).
+
+Changed requirements
+--------------------
+
+* The minimal version of all dependencies was increased (#3375, #3687,
+  #3878, #3984, #3994, #4115, #4312, #4337, #4489): Python 3.8, Cython
+  0.29.14, CMake 3.16, Boost 1.69, Sphinx 2.3.0, and Python packages
+  versions are pinned on versions available in the Ubuntu 20.04 repository.
+
+* CMake no longer emits a warning about the deprecated `distutils` Python
+  package, which is also no longer a requirement (#4433).
+
+* CUDA 11 support was added (#3870).
+
+* CUDA 8 and CUDA 9 support was removed (#3984).
+
+* AMD GPU support via ROCm (HCC and HIP-Clang compilers) was removed (#3966).
+
+* library `libcuda` is no longer a dependency in CUDA builds (#4095).
+
+* Installation instructions for ESPResSo on Microsoft Windows via WSL are
+  now available (#4348).
+
+* LaTeX is no longer a requirement for building the Sphinx documentation
+  and running the tutorials (#3256, #3395).
+
+Feature configuration at compile time
+-------------------------------------
+
+* GPU support is now opt-in (#3582). Pass the CMake flags `-DWITH_CUDA=ON`
+  to compile CUDA code and optionally `-DWITH_CUDA_COMPILER=<compiler>` to
+  select the CUDA compiler: NVCC (default), Clang.
+
+* Optional features HDF5, ScaFaCoS and Stokesian Dynamics are now opt-in
+  (#3735, #4112). If they are requested with their `-DWITH_<FEATURE>=ON`
+  flag and their dependencies are not found, CMake will raise an error.
+  In the older 4.1 build system, CMake would silently ignore these features
+  when their dependencies were not found, causing confusion as to what was
+  exactly compiled.
+
+* Experimental support for fast-math mode was added (#4318). Some features
+  might break depending on the compiler used to build ESPResSo. Please
+  quantify the numerical stability of your simulations before enabling
+  fast-math mode in production.
+
+* The `LANGEVIN_PER_PARTICLE` feature was renamed to
+  `THERMOSTAT_PER_PARTICLE` (#4057).
+
+* The magnetostatic extension `DLC` now depends on feature `DIPOLES`
+  instead of `DP3M`, since FFTW is not a dependency of `DLC` (#4238).
+
+* The electrostatic extension `ICC` now depends on feature `ELECTROSTATICS`
+  instead of `P3M`, since FFTW is not a dependency of `ICC` (#4238).
+
+* The `MMM1D_MACHINE_PREC` feature was added to enable Chebychev series for
+  MMM1D on CPU without the need to define the (now removed)
+  `BESSEL_MACHINE_PREC` macro (#4311).
+
+* The `EXPERIMENTAL_FEATURES` feature was removed (#4482).
+
+Improved documentation
+----------------------
+
+* Tutorials have been renamed and organized by difficulty level (#3993).
+
+* Tutorials Lennard-Jones, electrostatics, lattice-Boltzmann, raspberry
+  electrophoresis and constant-pH have been improved (#3408, #3881, #3914,
+  #3893, #4302, #4262).
+
+* Tutorial lattice-Boltzmann was split into three tutorials: polymer
+  diffusion, Brownian motion and Poiseuille flow (#4052, #4329).
+
+* The active matter tutorial was rewritten into a Jupyter notebook
+  (#3395, #4304).
+
+* An error analysis tutorial was added (#4174).
+
+* Tutorials now use the `exercise2` plugin to hide solutions (#3872);
+  since this plugin only exists for the classic Jupyter Notebook,
+  a conversion script is provided for JupyterLab users (#4522).
+
+* The user guide now includes a button on Python code samples to hide
+  terminal output and Python prompt symbols (`>>>` and `...`), so as to
+  facilitate copy-pasting examples directly in the terminal (#4386).
+
+* The user guide now uses a responsive theme for mobile/tablet users (#4504).
+
+* The user guide chapter on thermostats was moved to the chapter on
+  integrators, since they are tightly coupled (#4080).
+
+* Mentions to non-existent functions were removed from the user guide (#4482).
+
+* Scientific publications referenced in comment lines in the core have been
+  converted to BibTeX citations and integrated into Doxygen blocks to make
+  them accessible in the Doxygen HTML documentation (#3304).
+
+* The Reaction Field electrostatic method is now documented (#4218).
+
+* The H5MD feature is now better documented (#4480).
+
+* A Gibbs ensemble sample was added to simulate the exchange of particles
+  between two ESPResSo systems via the `multiprocessing` Python module (#4243).
+
+* A reaction ensemble sample was added to simulate a complex chemical
+  reaction involving 5 chemical species (#3778).
+
+Interface changes
+-----------------
+
+* The `system.set_random_state_PRNG()` method was removed (#3482).
+
+* The []-operator on `system.part` was removed (#4402). Use
+  `system.part.by_id(1)` to fetch a specific particle,
+  `system.part.by_id([1, 3])` to fetch a group of particles, or
+  `system.part.all()` to fetch all particles. This change was necessary
+  to resolve the ambiguity of particle slices containing non-contiguous
+  particle ids.
+
+* The domain decomposition cell system was renamed to regular decomposition
+  (#4442). The `system.cell_system.set_domain_decomposition()` function
+  was renamed to `system.cell_system.set_regular_decomposition()`.
+
+* Bonds are now immutable (#4350). Bonds added to the list of bonds can
+  no longer be overwritten by a bond of a different type, as it could
+  lead to undefined behavior when the number of bonded partners was
+  higher in the overwriting bond. Bonds can now be removed from the
+  list of bonds, after they have been removed from particles.
+
+* Observable parameters are now immutable (#4206, #4211).
+
+* The `Electrokinetics` actor parameters are now immutable (#4327).
+
+* The `LBFluid`, `LBFluidGPU`, `Electrokinetics` and `Species` methods
+  `print_*()` have been renamed to `write_*()` (#4049).
+
+* The `ELC` actor is no longer an electrostatics extension (#4125, #4506).
+  The `ELC` actor now takes a `P3M` or a `P3MGPU` actor as argument and
+  modifies it. Only the `ELC` actor needs to be added to the system list
+  of actors. The `ELC` actor can now be removed from the list of actors.
+
+* The `DLC` actor is no longer a magnetostatic extension (#4506). The
+  `DLC` actor now takes a magnetostatic actor as argument and modifies it.
+  Only the `DLC` actor needs to be added to the system list of actors.
+
+* The NpT thermostat now uses the Philox random number generator and
+  requires a random seed on first instantiation (#3444).
+
+* The analysis module `energy()` function now returns the lower triangle
+  of the non-bonded interaction matrix, to be consistent with `pressure()`
+  and `stress_tensor()` (#3712).
+
+* The analysis module `energy()`, `pressure()` and `pressure_tensor()`
+  functions now return only two slots for electrostatics and magnetostatics:
+  short-range contribution in the first slot and long-range contribution +
+  layer correction in the second slot (#3770).
+
+* The analysis module `pressure()` and `pressure_tensor()` functions no
+  longer provide a velocity-compensation flag to compute the pressure at
+  half the time step in NpT simulations (#3756).
+
+* The `espressomd.reaction_ensemble` module was renamed to
+  `espressomd.reaction_methods` (#4482).
+
+* The argument `temperature` in reaction methods was renamed to `kT`
+  for clarity (#4305).
+
+* All reaction methods now take keyword arguments instead of positional
+  arguments (#4451).
+
+* The constant pH method now implements a symmetric proposal probability
+  instead of an asymmetric proposal probability (#4207).
+
+* The reaction method parameter `exclusion_radius` was renamed to
+  `exclusion_range` (#4469).
+
+* Reaction method now take an optional parameter `exclusion_radius_per_type`
+  for better control of the exclusion radius in simulations involving
+  different particle sizes (#4469).
+
+* The `WidomInsertion.measure_excess_chemical_potential()` method was
+  replaced by `WidomInsertion.calculate_particle_insertion_potential_energy()`,
+  which returns the instantaneous value of the excess chemical potential
+  instead of the accumulated mean and standard error (#4374). The mean value
+  and standard error of the excess chemical potential must be now be
+  calculated by `WidomInsertion.calculate_excess_chemical_potential()`.
+
+* Reaction method constraints can now be safely changed from cylindrical
+  to slab and can be removed (#4310). They will also raise an error when
+  created with invalid parameters.
+
+* The `mpiio` global variable was removed (#4455). The MPI-IO feature is now
+  used by creating a local instance with `mpiio = espressomd.io.mpiio.Mpiio()`.
+
+* The MPI-IO feature now raises an exception from which the user can
+  recover when the simulation script runs on 1 MPI rank, instead of
+  an unrecoverable fatal error (#4455). This change is meant to help
+  debugging read/write errors in simulation scripts. On 2 or more MPI
+  ranks, exceptions still lead to a fatal error.
+
+* The `H5md` class takes new arguments during instantiation (#3785).
+
+* The `system.cell_system.get_pairs_()` method was renamed to
+  `system.cell_system.get_pairs()` and now supports filtering particle
+  pairs by type (#4035).
+
+* The polymer setup code was moved from the core to Python (#3477). The
+  `espressomd.polymer.positions()` function was renamed to
+  `espressomd.polymer.linear_polymer_positions()` and the
+  `espressomd.diamond.Diamond` class was converted to function
+  `espressomd.polymer.setup_diamond_polymer()`. For diamond polymers,
+  counter-ions must now be added manually by the user.
+
+* The particle director can be set from the Python interface (#4053).
+
+* The particle method `vs_auto_relate_to()` can take a particle as
+  argument instead of a particle id (#4058).
+
+* Particles can be serialized and deserialized in the Python interface with
+  `particle_dict = p.to_dict()` and `system.part.add(particle_dict)` (#4060).
+
+* It is no longer necessary to manually reshape the output of `Observable`
+  objects. The `Observable` classes now return multi-dimensional numpy
+  arrays and the documentation clearly indicates the shape and size of
+  the calculated data (#3560). The same applies to accumulators and
+  time series (#3578).
+
+* `Accumulator` and `Correlator` classes now return the data in suitably
+  shaped multi-dimensional numpy arrays; dependent properties such as lag
+  times and sample sizes need to be obtained separately by calling methods
+  `lag_times()` resp. `sample_sizes()` (#3848).
+
+* `Profile` observables provide methods `bin_centers()` and `bin_edges()`
+  to facilitate plotting (#3608).
+
+* The observable `ComForce` was renamed to `TotalForce`, so as to better
+  reflect what it actually calculates (#3471).
+
+* The RDF feature was removed from the analysis module and converted to
+  an Observable class (#3706). Time averages can be obtained using the
+  `TimeSeries` accumulator.
+
+* All occurrences of "Stress Tensor" in the analysis module, LB module and
+  EK module were renamed to "Pressure Tensor" to better reflect what is
+  actually calculated (#3723, #4228).
+
+* The `MeanVarianceCalculator` interface changed (#3996).
+
+* Observables now check their input parameters (#4211, #4255) and raise
+  an exception when an invalid value is detected (e.g. `min_x > max_x`
+  in profile-based observables).
+
+* Cylindrical observable classes have an extra `transform_params` argument
+  to change the orientation of the cylindrical coordinates systems and
+  control the origin of the phi angle (#4152).
+
+* Incompatible thermostat/integrator combinations raise an exception (#3880).
+
+* The `system.cuda_init_handle.list_devices()` feature is now a function,
+  and the `system.cuda_init_handle.list_devices_properties()` function
+  disabled in 4.0.0 was restored (#4095).
+
+* CUDA errors now halt the flow of the program by throwing a Python
+  exception with a clear error message (#4095).
+
+* Parameter `particle_scales` of coupling-based fields `PotentialField`
+  and `ForceField` now takes a `dict` object instead of a list of tuples
+  (#4121).
+
+* The `System` class no longer has a `globals` member (#4276). Global
+  variables are still accessible from other members of the `System` class.
+
+* Methods from the cluster analysis class `Cluster` no longer returns
+  `False` when a string passed to `call_method()` doesn't match the name
+  of a core method; instead `None` is returned (#4234).
+
+* Methods from the cluster analysis class `ClusterStructure`, integrator
+  classes and interaction classes no longer returns `True` when the
+  corresponding core method doesn't return a value; instead `None`
+  is returned (#4234, #4516).
+
+* Several parameters of the `ICC` class are no longer optional: `epsilons`,
+  `normals`, `areas`, `sigmas` (#4162).
+
+* The electrostatic actors charge neutrality check tolerance can be modified
+  via `actor.charge_neutrality_tolerance`; this is mostly relevant to actors
+  coupled to `ICC`, whose induced charges can have values spanning several
+  orders of magnitude (#4506).
+
+* Electrostatic and magnetostatic methods that support tuning now have a
+  `timings` argument to control the number of integration loops to run
+  during tuning (#4276).
+
+* The Drude helpers (global variables and free functions) have been
+  gathered into a checkpointable class `DrudeHelpers`, which now relies
+  on particle handles instead of particle ids (#4353).
+
+* ScaFaCoS integration now supports activating an electrostatics ScaFaCoS
+  actor at the same time as a magnetostatics ScaFaCoS actor (#4036).
+
+* The list of actors can no longer end up in an invalid state: updating
+  an electrostatic or magnetostatic actor with an invalid parameter now
+  automatically restores the original parameter; inserting an invalid
+  electrostatic or magnetostatic actor in the list of actors now
+  automatically removes the actor from the list of active actors,
+  even when the exception happens during tuning (#4506).
+
+* The `LBBoundaries` slip velocity check was lowered to Mach 0.35, or 0.2 in
+  LB units (#4376).
+
+* The OpenGL visualizer allows changing the radius of LB velocity arrows,
+  documents all LB-related keyword arguments, and no longer suffers from
+  a division-by-zero error that used to trigger a runtime warning for
+  fluid inside boundaries (#4376).
+
+* The `Electrokinetics` class got an optional `ext_force_density` parameter
+  for consistency with other LB implementations (#4203).
+
+* MDAnalysis integration now checks if the MDAnalysis package version is
+  supported (#4386).
+
+Removed functionality
+---------------------
+
+* The `ENGINE` shear torque calculation feature deprecated in 4.1.1 was
+  removed (#3277).
+
+* The `MEMBRANE_COLLISION` and `OifOutDirection` features were removed
+  (#3418).
+
+* The `AFFINITY` feature was removed (#3225).
+
+* The unused and untested `UMBRELLA` feature was removed (#4032, #4079).
+
+* The unused and untested `VIRTUAL_SITES_COM` feature was removed (#3250).
+
+* The unused and untested `EK_DOUBLE_PREC` feature was removed (#4192).
+
+* The unused and untested MD metadynamics feature was removed (#3563).
+
+* The unused and untested `Stomatocyte` shape was removed (#3730).
+
+* The `PdbParser` feature deprecated in 4.1.1 was removed (#3257).
+
+* The incorrectly implemented and untested `HarmonicDumbbellBond`
+  interaction was removed (#3974, #4079).
+
+* The layered cell system was removed (#3512).
+
+* The unused Wang-Landau reaction ensemble algorithm was removed (#4288).
+
+* The reaction ensemble tutorial deprecated in 4.1.1 was removed (#3256).
+
+* The per-particle temperature feature was removed (#4057).
+
+* The `Current` observable was removed in favor of the `FluxDensityProfile`
+  observable (#3973).
+
+* The incorrectly implemented analysis function `cylindrical_average` was
+  removed in favor of the `CylindricalDensityProfile` observable (#3470).
+
+* The `minimize_energy` member of the `System` class was removed (#3390,
+  #3891). The steepest descent algorithm is now a regular integrator that
+  is set up via the `system.integrator.set_steepest_descent()` method.
+
+* The MMM2D electrostatics feature was removed (#3340). Electrostatics in
+  slab geometries can still be achieved by ELC, with significantly better
+  performance.
+
+* The dipolar direct sum with replica method is now disabled on periodic
+  systems with zero replica, as it does not apply minimum image convention
+  (#4061).
+
+* The analysis module `min_dist2()` function was removed and the `dist_to()`
+  function was merged into `system.distance_vec()` (#3586).
+
+* The analysis module `nbhood()` function slab search mode was removed
+  (#4516) since it was incorrect (all ESPResSo versions were affected).
+
+* The number of cells for the link cell algorithm can no longer be
+  constrained to a range of values (#3701).
+
+* The global Mersenne Twister RNG was removed (#3482). All thermostats
+  are now Philox-based. Local Mersenne Twister RNGs are still used in
+  the linear polymer position generator (now with proper warmup) and
+  in the `ReactionAlgorithm` class.
+
+* It is no longer possible to checkpoint an ESPResSo system instance that
+  contains `Union` shape-based constraints when the simulation is running
+  with 2 or more MPI ranks. An error will be raised (#4287, #4510).
+
+* It is no longer possible to checkpoint an `Electrokinetics` instance (#4327).
+
+* The unmaintained `lj-demo.py` sample was removed (#4482).
+
+* The unmaintained `mayaviLive` visualizer was removed (#4515).
+
+Improved testing
+----------------
+
+* The C++ core of ESPResSo is covered by unit tests and integration tests
+  at 98% coverage (#4426, #4479, #4489).
+
+* The structure factor code is tested against simple lattices (#4205).
+
+* The MMM1D GPU code is tested (#4064).
+
+* The reaction method core classes are unit tested (#4164).
+
+Performance enhancements
+------------------------
+
+* The `Particle` memory footprint was reduced and the MPI serialization
+  code was improved (#4414). The structure size is now 584 bytes instead
+  of 640 bytes on maxset configuration (10% reduction). All substructures
+  in `Particle` are bitwise serializable and dynamic vectors are compact
+  vectors. The performance gain is about 9% for a LJ liquid on both maxset
+  and empty configurations, for both 1 000 and 10 000 particles per core.
+
+* Particle creation happens in constant time instead instead of monotonically
+  increasing with the number of particles already in the system (#4493).
+
+* When only one MPI rank is used, the maximum cutoff of bonded interactions
+  is ignored when initializing the cell properties, since the bond partners
+  are always accessible on the same node, regardless of the cell size; if
+  the system also doesn't have short-range interactions, the short-range
+  loop is skipped (#4452).
+
+* The `ReactionAlgorithm::do_reaction()` function used by reaction methods
+  now caches the potential energy of the system and only updates it after
+  a successful reaction trial move (#4374).
+
+* Reaction methods can delegate the particle neighbor search to the cell
+  system when evaluating the exclusion range of inserted particles (#4401).
+  This leads to better performance only on 2 or more MPI ranks.
+
+Bug fixes
+---------
+
+* The `transform_vector_cartesian_to_cylinder()` now calculates the correct
+  phi angle (#4094). The bug was present since ESPResSo 4.0.0 and affected
+  observables `CylindricalVelocityProfile`, `CylindricalFluxDensityProfile`,
+  `CylindricalLBVelocityProfile`, `CylindricalLBVelocityProfileAtParticlePositions`,
+  `CylindricalLBFluxDensityProfileAtParticlePositions`.
+
+* Several memory leaks were fixed in the `TabulatedBond` interactions
+  (#3961), electrostatics and magnetostatics tuning functions (#4069),
+  lattice-Boltzmann code (#4108) and Barnes-Hut code (#4404).
+
+* The `system.actors.clear()` method was broken and would only remove half
+  of the actors since 4.0.0. This is now fixed (#4037).
+
+* The `ClusterStructure` feature did not properly handle box periodicity
+  since 4.0.0 and would under rare circumstances calculate a center of mass
+  to be outside a fully periodic simulation, and would incorrectly fold
+  coordinates in aperiodic systems. This is now fixed (#4363).
+
+* Adding a LB thermostat when any other thermostat was already active would
+  silently fail since 4.0.0. This is now fixed (#4116).
+
+* Setting the NpT or steepest descent integrators with incorrect parameters
+  no longer leaves the system in an undefined state (#4026).
+
+* The OpenGL visualizer had a tendency to slow down after pausing and
+  resuming the simulation, or freezing when using the steepest descent
+  integrator. This was due to a race condition between two threads that
+  has been fixed (#4040).
+
+* The OpenGL visualizer no longer raises an exception when activating the
+  `LB_draw_boundaries` option without any other `LB_draw_*` option (#4479).
+
+* The OpenGL visualizer now correctly updates bond information when the
+  collision detection and bond breakage features are used (#4502).
+
+* It is no longer possible to accidentally set a non-cubic NpT integrator
+  with P3M (#4165).
+
+* The NpT integrator used to work with `P3MGPU` even though it didn't
+  implement long-range energy calculation and therefore couldn't contribute
+  to the virial; now the long-range energy is calculated and added to the
+  virial (#4026, #4506).
+
+* Illegal LB node access is now properly caught by exceptions (#3978).
+
+* EK node access no longer accepts floating-point values for node indices
+  (#4228), and always requires exactly three integers (#4482).
+
+* Accessing the flux property of EK species no longer throws an error
+  (#4106).
+
+* Accessing the `boundary` field of LB nodes from a `LBFluid` actor when
+  `LB_BOUNDARIES` is not compiled in now returns 0 instead of a random
+  integer (#4479).
+
+* The LB grid in the GPU implementation is now automatically resized when
+  the simulation box size changes (#4191).
+
+* The LB code now throws an error when adding a LB boundary to the
+  `LBFluid` actor when `LB_BOUNDARIES` is not compiled in, or to the
+  `LBFluidGPU` actor when `LB_BOUNDARIES_GPU` is not compiled in (#4472).
+
+* The lattice-Boltzmann Python interface no longer ignores runtime errors,
+  nor converts them to cryptic system errors (#4355).
+
+* The script interface no longer silently ignores runtime errors when
+  converting Python objects to C++ data types (#4387, #4492).
+
+* The system now throws an error when a non-bonded interaction cutoff is
+  too large for the local box size in MPI-parallel simulations; in older
+  releases the error was queued and deferred to the integration loop (#4479).
+
+* The system now throws an error when a virtual site tracks a real particle
+  too far away for the local box size in MPI-parallel simulations; in older
+  releases the error was queued and deferred to the integration loop (#4479).
+
+* It is no longer possible for a virtual site to track itself (#4479).
+
+* It is no longer possible for a particle to exclude itself (#4493).
+
+* It is no longer possible to accidentally add the same bond twice on the
+  same particles (#4058).
+
+* Fatal errors triggered by stale references in virtual sites, invalid
+  particle ids and null quaternions have become runtime exceptions (#4479).
+
+* Virtual sites now contribute to the rotational kinetic energy of the
+  system (#4198).
+
+* Particle creation no longer raises `numpy.VisibleDeprecationWarning`
+  (#4493).
+
+* The EK feature now generates VTK files that are compliant with the VTK 2.0
+  standard (#4106).
+
+* The `ELC` and `DLC` actors now throw an error when a particle enters the
+  gap region (#4051).
+
+* The `ELC` actor is now updated when the box size changes in the
+  z-direction (#4231).
+
+* The `DLC` actor now raises an exception when tuning fails instead of
+  causing a fatal error (#4238).
+
+* The `MMM1D` actor now raises an exception for incorrect periodicity or
+  cell system instead of causing a segfault (#4064).
+
+* The `DipolarP3M` checkpointing mechanism was fixed (#3879).
+
+* The `DipolarP3M` method now recalculates the energy correction when the
+  box length changes (#4506).
+
+* P3M-based actors now sanitize the user-provided `alpha` and `accuracy`
+  parameters and no longer allow constraining the `alpha` parameter during
+  tuning (`alpha` was always derived from the other parameters at the end
+  of tuning) (#4118).
+
+* A buffer overflow in the `DipolarP3M` tuning function lead to random
+  failures during tuning, this is now fixed (#3879).
+
+* A buffer overflow in the LB code could lead to incorrect results in grids
+  of size 9x9x9 or larger with open boundaries, this is now fixed (#4078).
+
+* Providing incorrect parameters to the ScaFaCoS actors no longer cause
+  ESPResSo to crash (#4068).
+
+* FENE, harmonic and quartic bonds now throw an error when the bond length
+  is zero and the equilibrium bond length is non-zero, since the direction
+  of the force cannot be determined (#4471).
+
+* Immutable parameters `default_scale`, `particle_scales` and `gamma` of
+  coupling-based fields `PotentialField`, `ForceField`, `FlowField` and
+  `HomogeneousFlowField` now throw an error when an attempt is made to
+  change their value via the class setter, instead of silently ignoring
+  the new value (#4121).
+
+* The `CylindricalLBFluxDensityProfileAtParticlePositions` observable now
+  measures the correct quantity (#4152).
+
+* The Boost 1.74 bug was patched (#3978).
+
+* A bug involving an access out of bounds was fixed in the structure factor
+  code (#4205).
+
+* A bug in the collision detection feature that lead to a harmless warning
+  being printed to the terminal upon collision was fixed (#4484).
+
+* Calling `collision_detection.set_params()` with invalid arguments no
+  longer leaves the collision detection feature in an indeterminate state;
+  the previous state is automatically rolled back (#4484).
+
+* Setting the collision detection mode `glue_to_surface` or
+  `bind_at_point_of_collision` when feature `VIRTUAL_SITES_RELATIVE`
+  is not compiled in now generates the correct error message (#4484).
+
+* Passing a particle chain-based observable object (`ParticleDistances`,
+  `BondAngles`, `BondDihedrals`, `CosPersistenceAngles`) that doesn't have
+  enough particle ids for the calculation (e.g. only 1 particle id when 2
+  are needed for the bond distance calculation) to a `Correlator` object
+  no longer causes a memory overflow (#4255).
+
+* Calculating the energy of the system when an IBM object is present no
+  longer terminates ESPResSo, instead a warning is issued (#4286).
+
+* The `Sphere` shape no longer returns NaN values in the distance vector
+  for particles located exactly in its center (#4384).
+
+* Runtime errors raised when the maximal bonded interaction range becomes
+  larger than the simulation box are no longer ignored when dihedral bonds
+  are added to the list of interactions (#4383).
+
+* Runtime errors about incorrectly initialized electrostatic/magnetostatic
+  methods are no longer silently ignored at integration start (#4383).
+
+* Runtime errors about incorrectly initialized GPU dipolar direct sum and
+  Barnes-Hut are no longer silently ignored when the actors are instantiated
+  (#4404).
+
+* A bug that could potentially lead to stale references in the script
+  interface was fixed (#4476).
+
+* `TabulatedNonBonded.is_active()` now returns `False` instead of `None`
+  when the interaction is inactive (#3586).
+
+Under the hood changes
+----------------------
+
+* The Python code is now checked with Pylint to prevent the introduction
+  of unused code and dangerous anti-patterns (#3293, #3203).
+
+* The CMakeLists.txt files are now formatted automatically with
+  `cmake-format` (#3622).
+
+* The Python code and C++ code were checked with LGTM to detect and fix
+  coding errors and anti-patterns (#3851, #3856, #4300).
+
+* Compiler warnings and diagnostics from GCC 11, 12, from Clang 10, 12, 13, 14
+  and from Intel 19.0.4 were addressed (#4084, #4426, #4510, #4526).
+
+* The `Particle` struct was moved to a dedicated header file `Particle.hpp`
+  to improve separation of concerns in the core (#3251, #3164).
+
+* The `Observable_stat` structs were moved to a dedicated header file
+  `Observable_stat.hpp` and decoupled from the pressure/energy/coulomb/dipolar
+  frameworks (#3712) and made stateless (#3723).
+
+* Observables based on particle ids have been rewritten using particle traits
+  to decouple the `Particle` struct from `Observable` classes (#3667).
+
+* The Python `Integrator` class was split into multiple classes, one for each
+  integrator, with a structure similar to actor and interaction classes
+  (#3390). This layout better reflects the structure of integrators in
+  the core and will make it easier to include new integrators in the future.
+  This change doesn't break the API.
+
+* The ghost communication infrastructure was simplified (#3216, #3399).
+
+* The LB coupling for the regular decomposition scheme was rewritten (#4470).
+
+* Thermostats are now fully object-oriented in the core to reduce code
+  duplication (#3438, #3444, #3461).
+
+* Bonded interactions are now fully object-oriented in the core to
+  facilitate the development of new interactions (#4161).
+
+* Bonded interactions are now communicated between MPI processes
+  automatically and transparently by the script interface (#4350).
+
+* The custom `MpiCallbacks` framework has been simplified and the callbacks
+  made more homogeneous (#4383).
+
+* The custom `MpiCallbacks` framework is being progressively replaced by
+  `boost::mpi` communication (#4506, #4511).
+
+* The `local_particles` global variable is no longer accessible directly
+  (#3501).
+
+* The Python tests now use specialized assertions to generate more helpful
+  error messages (#3419).
+
+* The tutorial tests were simplified using AST to parse Jupyter notebooks
+  (#3408).
+
+* The CMake logic for tutorials has been simplified (#3408, #3486).
+
+* The Cython interface was thoroughly cleaned up from unused imports
+  (#3496, #3510).
+
+* The `ScriptInterface` framework was rewritten (#3794).
+
+* The `ScriptInterface` framework is now the preferred way to implement
+  new features. Existing features were converted to `ScriptInterface`
+  objects: bonded interactions (#4350), bond breakage (#4464), collision
+  detection (#4484), reaction methods (#4451), MPI-IO (#4455), H5MD (#4480),
+  cell system (#4511), actors, scafacos, electrostatics and magnetostatics
+  (#4506). The corresponding Cython files were converted to Python files.
+
+* It is now possible to extend the list of available specifications in the
+  H5MD feature at the C++ level (#4480).
+
+* The duplicated functions between `P3M` and `DipolarP3M` were factored out
+  (#3879).
+
+* Statistical tests are no longer executed in coverage and sanitizers
+  builds (#3999).
+
+* The `Utils::Mpi::gather_buffer()` function was fixed (#4075). The bug
+  didn't affect ESPResSo.
+
+* Parameters can be passed to CTest at configuration time via the new
+  `CTEST_ARGS` CMake option (#3862). This replaces the deprecated and
+  non-portable `ARGS` Makefile variable expansion.
+
+* A superfluous and non-portable CMake `target_compile_options()` statement
+  was removed (#3852).
+
 ESPResSo 4.1.4
 ==============
 
