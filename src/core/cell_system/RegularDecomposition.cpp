@@ -431,21 +431,6 @@ void RegularDecomposition::init_cell_interactions() {
         Utils::Vector3i lower_index = {m - 1, n - 1, o - 1};
         Utils::Vector3i upper_index = {m + 1, n + 1, o + 1};
 
-        //        /* In the fully connected case, we consider all cells
-        //         * in the direction as neighbors, not only the nearest ones.
-        //         */
-        //        for (int i = 0; i < 3; i++) {
-        //          if (dd.fully_connected[i]) {
-        //            // Fully connected is only needed at the box surface
-        //            if (i==0 and (n!=start[1] or n!=end[1]-1) and (o!=start[2]
-        //            or o!=end[2]-1)) continue; if (i==1 and (m!=start[0] or
-        //            m!=end[0]-1) and (o!=start[2] or o!=end[2]-1)) continue;
-        //            if (i==2 and (m!=start[0] or m!=end[0]-1) and (n!=start[1]
-        //            or n!=end[1]-1)) continue; lower_index[i] = 0;
-        //            upper_index[i] = global_size[i] - 1;
-        //          }
-        //        }
-
         /* In non-periodic directions, the halo needs not
          * be considered. */
         for (int i = 0; i < 3; i++) {

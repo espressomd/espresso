@@ -68,9 +68,6 @@ public:
     p.v()[m_le.shear_direction] += dir * m_le.shear_velocity;
     p.pos()[m_le.shear_direction] += dir * m_le.pos_offset;
     p.lees_edwards_offset() -= dir * m_le.pos_offset;
-    // TODO: clarify whether the fold is needed
-    //  p.pos()[m_le.shear_direction] = Algorithm::periodic_fold(
-    //      p.pos()[m_le.shear_direction], m_box_l()[m_le.shear_direction]);
     UpdateOffset::operator()(p);
   }
 };

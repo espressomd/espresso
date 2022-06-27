@@ -36,7 +36,6 @@
 #include <utils/Vector.hpp>
 
 #include <boost/mpi/communicator.hpp>
-#include <boost/optional.hpp>
 
 #include <vector>
 
@@ -116,10 +115,6 @@ public:
   void resort(bool global, std::vector<ParticleChange> &diff) override;
   Utils::Vector3d max_cutoff() const override;
   Utils::Vector3d max_range() const override;
-
-  boost::optional<BoxGeometry> minimum_image_distance() const override {
-    return {m_box};
-  }
 
   BoxGeometry const &box() const override { return m_box; };
 

@@ -27,7 +27,6 @@
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
-#include <boost/optional.hpp>
 #include <boost/variant.hpp>
 
 #include <vector>
@@ -121,13 +120,6 @@ public:
    * @brief Range in which calculations are performed.
    */
   virtual Utils::Vector3d max_range() const = 0;
-
-  /**
-   * @brief Return the box geometry needed for distance calculation
-   *        if minimum image convention should be used needed for
-   *        distance calculation.
-   */
-  virtual boost::optional<BoxGeometry> minimum_image_distance() const = 0;
 
   virtual BoxGeometry const &box() const = 0;
 

@@ -49,7 +49,6 @@
 #include <iterator>
 #include <memory>
 #include <set>
-#include <stdexcept>
 #include <utility>
 #include <vector>
 
@@ -115,12 +114,6 @@ struct MinimalImageDistance {
 
   Distance operator()(Particle const &p1, Particle const &p2) const {
     return Distance(box.get_mi_vector(p1.pos(), p2.pos()));
-  }
-};
-
-struct EuclidianDistance {
-  Distance operator()(Particle const &p1, Particle const &p2) const {
-    return Distance(p1.pos() - p2.pos());
   }
 };
 } // namespace detail
@@ -565,26 +558,12 @@ private:
    * @param kernel Pair kernel functor.
    */
   template <class Kernel> void link_cell(Kernel kernel) {
-    auto const maybe_box = decomposition().minimum_image_distance();
     auto const first = boost::make_indirect_iterator(local_cells().begin());
     auto const last = boost::make_indirect_iterator(local_cells().end());
-
-    if (maybe_box) {
-      Algorithm::link_cell(
-          first, last,
-          [&kernel, df = detail::MinimalImageDistance{decomposition().box()}](
-              Particle &p1, Particle &p2) { kernel(p1, p2, df(p1, p2)); });
-    } else {
-      if (decomposition().box().type() != BoxType::CUBOID) {
-        throw std::runtime_error("Non-cuboid box type is not compatible with a "
-                                 "particle decomposition that relies on "
-                                 "EuclideanDistance for distance calculation.");
-      }
-      Algorithm::link_cell(
-          first, last,
-          [&kernel, df = detail::EuclidianDistance{}](
-              Particle &p1, Particle &p2) { kernel(p1, p2, df(p1, p2)); });
-    }
+    Algorithm::link_cell(
+        first, last,
+        [&kernel, df = detail::MinimalImageDistance{decomposition().box()}](
+            Particle &p1, Particle &p2) { kernel(p1, p2, df(p1, p2)); });
   }
 
   /** Non-bonded pair loop with verlet lists.
@@ -610,21 +589,12 @@ private:
 
       m_rebuild_verlet_list = false;
     } else {
-      auto const maybe_box = decomposition().minimum_image_distance();
       /* In this case the pair kernel is just run over the verlet list. */
-      if (maybe_box) {
-        auto const distance_function =
-            detail::MinimalImageDistance{decomposition().box()};
-        for (auto &pair : m_verlet_list) {
-          pair_kernel(*pair.first, *pair.second,
-                      distance_function(*pair.first, *pair.second));
-        }
-      } else {
-        auto const distance_function = detail::EuclidianDistance{};
-        for (auto &pair : m_verlet_list) {
-          pair_kernel(*pair.first, *pair.second,
-                      distance_function(*pair.first, *pair.second));
-        }
+      auto const distance_function =
+          detail::MinimalImageDistance{decomposition().box()};
+      for (auto &pair : m_verlet_list) {
+        pair_kernel(*pair.first, *pair.second,
+                    distance_function(*pair.first, *pair.second));
       }
     }
   }
@@ -710,16 +680,10 @@ public:
       return false;
     }
 
-    auto const maybe_box = decomposition().minimum_image_distance();
+    auto const distance_function =
+        detail::MinimalImageDistance{decomposition().box()};
+    short_range_neighbor_loop(p, cell, kernel, distance_function);
 
-    if (maybe_box) {
-      auto const distance_function =
-          detail::MinimalImageDistance{decomposition().box()};
-      short_range_neighbor_loop(p, cell, kernel, distance_function);
-    } else {
-      auto const distance_function = detail::EuclidianDistance{};
-      short_range_neighbor_loop(p, cell, kernel, distance_function);
-    }
     return true;
   }
 
