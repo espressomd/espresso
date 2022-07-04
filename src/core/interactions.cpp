@@ -25,7 +25,6 @@
 #include "electrostatics/coulomb.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
-#include "grid.hpp"
 #include "magnetostatics/dipoles.hpp"
 
 #include "serialization/IA_parameters.hpp"
@@ -37,13 +36,11 @@
 static double recalc_long_range_cutoff() {
   auto max_cut_long_range = INACTIVE_CUTOFF;
 #ifdef ELECTROSTATICS
-  max_cut_long_range =
-      std::max(max_cut_long_range, Coulomb::cutoff(box_geo.length()));
+  max_cut_long_range = std::max(max_cut_long_range, Coulomb::cutoff());
 #endif
 
 #ifdef DIPOLES
-  max_cut_long_range =
-      std::max(max_cut_long_range, Dipoles::cutoff(box_geo.length()));
+  max_cut_long_range = std::max(max_cut_long_range, Dipoles::cutoff());
 #endif
 
   return max_cut_long_range;
