@@ -137,8 +137,6 @@ Utils::Vector9d calc_pressure_long_range(ParticleRange const &particles) {
 }
 
 struct ShortRangeCutoff : public boost::static_visitor<double> {
-  explicit ShortRangeCutoff(Utils::Vector3d const &box_l) : m_box_l{box_l} {}
-
 #ifdef P3M
   auto operator()(std::shared_ptr<CoulombP3M> const &actor) const {
     return actor->p3m.params.r_cut;
@@ -168,14 +166,11 @@ struct ShortRangeCutoff : public boost::static_visitor<double> {
   auto operator()(std::shared_ptr<DebyeHueckel> const &actor) const {
     return actor->r_cut;
   }
-
-private:
-  Utils::Vector3d const &m_box_l;
 };
 
-double cutoff(Utils::Vector3d const &box_l) {
+double cutoff() {
   if (electrostatics_actor) {
-    return boost::apply_visitor(ShortRangeCutoff{box_l}, *electrostatics_actor);
+    return boost::apply_visitor(ShortRangeCutoff{}, *electrostatics_actor);
   }
   return -1.0;
 }
