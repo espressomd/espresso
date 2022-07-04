@@ -350,6 +350,7 @@ target_compile_options(
   Espresso_cpp_flags
   INTERFACE -Wall
             -Wextra
+            -pedantic
             $<$<BOOL:${WARNINGS_ARE_ERRORS}>:-Werror>
             # add extra warnings
             $<$<CXX_COMPILER_ID:Clang>:-Wextern-initializer>
@@ -360,20 +361,20 @@ target_compile_options(
             -Wno-unused-function
             -Wno-unused-parameter
             $<$<CXX_COMPILER_ID:GNU>:-Wno-clobbered>
-            $<$<CXX_COMPILER_ID:Intel>:-wd592>)
+            $<$<CXX_COMPILER_ID:Intel,IntelLLVM>:-diag-disable=592>)
 
 # disable more warnings from -Wextra
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SYSTEM_PROCESSOR MATCHES
                                             "arm")
   target_compile_options(Espresso_cpp_flags INTERFACE -Wno-psabi)
 endif()
-if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "Intel"
+if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Intel"
    AND NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION
                                                      VERSION_LESS "7.0.0"))
   target_compile_options(Espresso_cpp_flags INTERFACE -Wno-implicit-fallthrough)
 endif()
 if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND NOT CMAKE_CXX_COMPILER_ID
-                                                STREQUAL "Intel")
+                                                MATCHES "Intel")
   target_compile_options(Espresso_cpp_flags INTERFACE -Wno-unused-private-field)
 endif()
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -390,17 +391,12 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   endif()
 endif()
 
-if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_VERSION
-                                               VERSION_GREATER "4.8.5")
-  # older GCC versions don't support -Wno-pedantic which we need in src/python
-  target_compile_options(Espresso_cpp_flags INTERFACE -pedantic)
-endif()
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION
                                             VERSION_GREATER_EQUAL "8.1.0")
   target_compile_options(Espresso_cpp_flags INTERFACE -Wno-cast-function-type)
 endif()
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Intel" AND CMAKE_CXX_COMPILER_VERSION
-                                              VERSION_LESS "16.0")
+if(CMAKE_CXX_COMPILER_ID MATCHES "Intel" AND CMAKE_CXX_COMPILER_VERSION
+                                             VERSION_LESS "16.0")
   # workaround for compiler crash related to decltype() and variadic template
   # usage inside Boost
   target_compile_options(Espresso_cpp_flags
