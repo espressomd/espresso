@@ -90,22 +90,12 @@ add_library(Espresso::core ALIAS Espresso_core)
 install(TARGETS Espresso_core LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 
 target_link_libraries(
-  Espresso_core
-  PRIVATE Espresso::config Espresso::utils::mpi Espresso::shapes
-          Espresso::profiler $<$<BOOL:${SCAFACOS}>:Espresso::scafacos>
-          Espresso::cpp_flags
+  Espresso_core PRIVATE Espresso::config Espresso::utils::mpi Espresso::shapes
+                        Espresso::profiler Espresso::cpp_flags
   PUBLIC Espresso::utils MPI::MPI_CXX Random123 Espresso::particle_observables
-         Boost::serialization Boost::mpi "$<$<BOOL:${H5MD}>:${HDF5_LIBRARIES}>"
-         $<$<BOOL:${H5MD}>:Boost::filesystem> $<$<BOOL:${H5MD}>:h5xx>
-         $<$<BOOL:${FFTW3_FOUND}>:FFTW3::FFTW3>)
+         Boost::serialization Boost::mpi)
 
-target_include_directories(
-  Espresso_core
-  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
-         "$<$<BOOL:${H5MD}>:${CMAKE_CURRRENT_SOURCE_DIR}/io/writer>"
-         "$<$<BOOL:${H5MD}>:${HDF5_INCLUDE_DIRS}>")
-
-target_compile_definitions(Espresso_core PUBLIC $<$<BOOL:${H5MD}>:H5XX_USE_MPI>)
+target_include_directories(Espresso_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_subdirectory(accumulators)
 add_subdirectory(bond_breakage)
@@ -126,13 +116,9 @@ add_subdirectory(observables)
 add_subdirectory(p3m)
 add_subdirectory(reaction_methods)
 add_subdirectory(scafacos)
+add_subdirectory(stokesian_dynamics)
 add_subdirectory(virtual_sites)
 
 if(WITH_TESTS)
   add_subdirectory(unit_tests)
 endif(WITH_TESTS)
-
-if(STOKESIAN_DYNAMICS)
-  add_subdirectory(stokesian_dynamics)
-  target_link_libraries(Espresso_core PRIVATE StokesianDynamics::sd_cpu)
-endif()
