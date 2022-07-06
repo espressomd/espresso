@@ -19,7 +19,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.17)
 message(STATUS "CMake version: ${CMAKE_VERSION}")
 if(POLICY CMP0076)
   # make target_sources() convert relative paths to absolute
@@ -167,12 +167,14 @@ endforeach()
 
 # CUDA compiler
 if(WITH_CUDA)
+  enable_language(CUDA)
   set(CMAKE_CUDA_STANDARD ${CMAKE_CXX_STANDARD})
+  set(CMAKE_CUDA_STANDARD_REQUIRED ON)
   set(MINIMAL_CUDA_VERSION 10.0)
+  find_package(CUDAToolkit ${MINIMAL_CUDA_VERSION} REQUIRED)
   option_enum(varname "WITH_CUDA_COMPILER" help_text "CUDA compiler"
               default_value "nvcc" possible_values "nvcc;clang")
   if(WITH_CUDA_COMPILER STREQUAL "nvcc")
-    find_package(CUDA ${MINIMAL_CUDA_VERSION} REQUIRED)
     find_package(CUDACompilerNVCC ${MINIMAL_CUDA_VERSION} REQUIRED)
   elseif(WITH_CUDA_COMPILER STREQUAL "clang")
     if(WITH_COVERAGE)

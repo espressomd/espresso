@@ -19,52 +19,60 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-set(Espresso_core_SRC
-    accumulators.cpp
-    bond_error.cpp
-    cells.cpp
-    collision.cpp
-    comfixed_global.cpp
-    communication.cpp
-    constraints.cpp
-    dpd.cpp
-    energy.cpp
-    errorhandling.cpp
-    EspressoSystemInterface.cpp
-    forcecap.cpp
-    forces.cpp
-    galilei.cpp
-    ghosts.cpp
-    grid.cpp
-    immersed_boundaries.cpp
-    interactions.cpp
-    event.cpp
-    integrate.cpp
-    npt.cpp
-    partCfg_global.cpp
-    particle_data.cpp
-    particle_node.cpp
-    polymer.cpp
-    pressure.cpp
-    rattle.cpp
-    rotate_system.cpp
-    rotation.cpp
-    Observable_stat.cpp
-    statistics_chain.cpp
-    statistics.cpp
-    SystemInterface.cpp
-    thermostat.cpp
-    tuning.cpp
-    virtual_sites.cpp
-    exclusions.cpp
-    PartCfg.cpp
-    EspressoSystemStandAlone.cpp)
+add_library(
+  Espresso_core SHARED
+  accumulators.cpp
+  bond_error.cpp
+  cells.cpp
+  collision.cpp
+  comfixed_global.cpp
+  communication.cpp
+  constraints.cpp
+  dpd.cpp
+  energy.cpp
+  errorhandling.cpp
+  EspressoSystemInterface.cpp
+  forcecap.cpp
+  forces.cpp
+  galilei.cpp
+  ghosts.cpp
+  grid.cpp
+  immersed_boundaries.cpp
+  interactions.cpp
+  event.cpp
+  integrate.cpp
+  npt.cpp
+  partCfg_global.cpp
+  particle_data.cpp
+  particle_node.cpp
+  polymer.cpp
+  pressure.cpp
+  rattle.cpp
+  rotate_system.cpp
+  rotation.cpp
+  Observable_stat.cpp
+  statistics_chain.cpp
+  statistics.cpp
+  SystemInterface.cpp
+  thermostat.cpp
+  tuning.cpp
+  virtual_sites.cpp
+  exclusions.cpp
+  PartCfg.cpp
+  EspressoSystemStandAlone.cpp)
+add_library(Espresso::core ALIAS Espresso_core)
 
-set(Espresso_cuda_SRC
+if(CUDA)
+  target_sources(
+    Espresso_core
+    PRIVATE cuda_init.cpp cuda_interface.cpp
+            grid_based_algorithms/electrokinetics.cpp
+            grid_based_algorithms/lbgpu.cpp)
+  add_gpu_library(
+    Espresso_cuda
+    SHARED
     cuda_common_cuda.cu
-    cuda_init.cpp
     cuda_init_cuda.cu
-    cuda_interface.cpp
     CudaHostAllocator.cu
     magnetostatics/barnes_hut_gpu_cuda.cu
     magnetostatics/dds_gpu_cuda.cu
@@ -75,17 +83,22 @@ set(Espresso_cuda_SRC
     grid_based_algorithms/electrokinetics_cuda.cu
     grid_based_algorithms/lbgpu_cuda.cu
     grid_based_algorithms/fd-electrostatics_cuda.cu
-    grid_based_algorithms/electrokinetics.cpp
-    grid_based_algorithms/lbgpu.cpp
     virtual_sites/lb_inertialess_tracers_cuda.cu)
-
-if(CUDA)
-  add_gpu_library(Espresso_core SHARED ${Espresso_core_SRC}
-                  ${Espresso_cuda_SRC})
-else()
-  add_library(Espresso_core SHARED ${Espresso_core_SRC})
+  add_library(Espresso::cuda ALIAS Espresso_cuda)
+  target_link_libraries(
+    Espresso_cuda PRIVATE CUDA::cuda_driver CUDA::cudart CUDA::cufft
+                          Espresso::config Espresso::utils Espresso::shapes)
+  target_include_directories(
+    Espresso_cuda
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
+            ${CMAKE_CURRENT_SOURCE_DIR}/virtual_sites
+            ${CMAKE_CURRENT_SOURCE_DIR}/grid_based_algorithms
+            ${CMAKE_CURRENT_SOURCE_DIR}/electrostatics
+            ${CMAKE_CURRENT_SOURCE_DIR}/magnetostatics)
+  target_link_libraries(Espresso_core PUBLIC Espresso::cuda)
+  install(TARGETS Espresso_cuda
+          LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 endif()
-add_library(Espresso::core ALIAS Espresso_core)
 
 install(TARGETS Espresso_core LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 
