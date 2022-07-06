@@ -98,17 +98,21 @@ and a background error will be raised.
 Quartic bond
 ~~~~~~~~~~~~
 
+.. note::
+
+    The parameter math:`r` corresponds to math:`r_0` here.
+
 A quartic bond can be instantiated via
 :class:`espressomd.interactions.QuarticBond`::
 
     import espressomd.interactions
-    qb = espressomd.interactions.QuarticBond(K1=<float>, K2=<float>, R=<float>, r_cut=<float>)
+    qb = espressomd.interactions.QuarticBond(k0=<float>, k1=<float>, r=<float>, r_cut=<float>)
 
-The potential is minimal at particle distance :math:`r=R`. It is given by
+The potential is minimal at particle distance :math:`r=r_0`. It is given by
 
-.. math:: V(r) = \frac{1}{2} K_0 \left( r - R \right)^2 + \frac{1}{4} K_1 \left( r - R \right)^4.
+.. math:: V(r) = \frac{1}{2} k_0 \left( r - r_0 \right)^2 + \frac{1}{4} k_1 \left( r - r_0 \right)^4.
 
-The fourth, optional, parameter defines a cutoff radius. Whenever a
+The fourth parameter defines a cutoff radius. Whenever a
 quartic bond gets longer than ``r_cut``, the bond will be reported as broken, and
 a background error will be raised.
 
