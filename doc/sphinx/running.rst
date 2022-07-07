@@ -81,6 +81,14 @@ users need to convert the tutorials:
       ./pypresso doc/tutorials/convert.py exercise2 --to-jupyterlab ${f}
     done
 
+Likewise, VS Code Jupyter users need to convert the tutorials:
+
+.. code-block:: bash
+
+    for f in doc/tutorials/*/*.ipynb; do
+      ./pypresso doc/tutorials/convert.py exercise2 --to-vscode-jupyter ${f}
+    done
+
 To interact with notebooks, move to the directory containing the tutorials
 and call the ``ipypresso`` script to start a local Jupyter session.
 
@@ -97,6 +105,9 @@ For JupyterLab users:
 
     cd doc/tutorials
     ../../ipypresso lab
+
+For VS Code Jupyter users, no action is needed if ``pypresso`` was set as
+the interpreter path (see details in :ref:`Running inside an IDE`).
 
 You may then browse through the different tutorial folders. Files whose name
 ends with extension ``.ipynb`` can be opened in the browser. Click on the Run
@@ -141,6 +152,8 @@ start Jupyter. To recompile |es| with Jupyter, provide ``cmake`` with the flag
 
 You can find the official Jupyter documentation at
 https://jupyter.readthedocs.io/en/latest/running.html
+
+.. _Running inside an IDE:
 
 Running inside an IDE
 ~~~~~~~~~~~~~~~~~~~~~

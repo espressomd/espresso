@@ -203,6 +203,15 @@ def convert_exercise2_to_jupyterlab(nb):
         nb['nbformat_minor'] = 5
 
 
+def convert_exercise2_to_vscode_jupyter(nb):
+    """
+    Walk through the notebook cells and convert exercise2 Markdown cells
+    containing fenced python code to a VS Code Jupyter-compatible format.
+    As of 2022, there is no equivalent of exercise2 for VS Code Jupyter.
+    """
+    convert_exercise2_to_jupyterlab(nb)
+
+
 def apply_autopep8(nb):
     import yaml
     import autopep8
@@ -317,6 +326,8 @@ def handle_exercise2_case(args):
         convert_exercise2_to_markdown(nb)
     elif args.to_jupyterlab:
         convert_exercise2_to_jupyterlab(nb)
+    elif args.to_vscode_jupyter:
+        convert_exercise2_to_vscode_jupyter(nb)
     elif args.to_py:
         convert_exercise2_to_code(nb)
     elif args.pep8:
@@ -362,6 +373,8 @@ group_exercise2.add_argument('--to-md', action='store_true',
                              help='convert solution cells to Markdown')
 group_exercise2.add_argument('--to-jupyterlab', action='store_true',
                              help='convert solution cells to JupyterLab')
+group_exercise2.add_argument('--to-vscode-jupyter', action='store_true',
+                             help='convert solution cells to VS Code Jupyter')
 group_exercise2.add_argument('--to-py', action='store_true',
                              help='convert solution cells to Python')
 group_exercise2.add_argument('--pep8', action='store_true',

@@ -159,6 +159,7 @@ version <= 4.4 and can be executed by any of these tools:
 * `Jupyter Notebook <https://jupyter-notebook.readthedocs.io/en/stable/notebook.html>`__
 * `JupyterLab <https://jupyterlab.readthedocs.io/en/stable/>`__
 * `IPython <https://ipython.org/>`__ (not recommended)
+* `VS Code Jupyter <https://github.com/microsoft/vscode-jupyter>`__
 
 To check whether one of them is installed, run these commands:
 
@@ -167,6 +168,7 @@ To check whether one of them is installed, run these commands:
     jupyter notebook --version
     jupyter lab --version
     ipython --version
+    code --version
 
 If you don't have any of these tools installed and aren't sure which one
 to use, we recommend installing the historic Jupyter Notebook, since the
@@ -186,6 +188,15 @@ Alternatively, to use JupyterLab, install the following packages:
 .. code-block:: bash
 
     pip3 install --user nbformat notebook jupyterlab
+
+Alternatively, to use VS Code Jupyter, install the following extensions:
+
+.. code-block:: bash
+
+    code --install-extension ms-python.python
+    code --install-extension ms-toolsai.jupyter
+    code --install-extension ms-toolsai.jupyter-keymap
+    code --install-extension ms-toolsai.jupyter-renderers
 
 .. _Installing requirements on other Linux distributions:
 
