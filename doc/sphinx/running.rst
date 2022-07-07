@@ -194,6 +194,23 @@ path set to ``pypresso``.
 
    Visual Studio Code interface
 
+.. _Running in the cloud:
+
+Running in the cloud
+~~~~~~~~~~~~~~~~~~~~
+
+A `Gitpod <https://gitpod.io>`__ config file is provided to automatically
+build |es| in its default configuration (`direct link
+<https://gitpod.io/#https://github.com/espressomd/espresso>`__).
+The Gitpod workspace can be accessed from
+the `terminal via SSH <https://www.gitpod.io/docs/configure/ssh>`__ or from
+a `web browser <https://www.gitpod.io/docs/configure/browser-settings>`__,
+which uses the VS Code IDE.
+
+To start a workspace from a specific branch, use a link in the following form:
+``https://gitpod.io/#https://github.com/user_name/espresso/tree/branch_name``,
+where ``user_name`` and ``branch_name`` need to be adapted.
+
 
 .. _Debugging es:
 

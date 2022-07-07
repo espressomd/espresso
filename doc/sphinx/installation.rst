@@ -17,7 +17,7 @@ code only if you have already gained some experience in using |es|.
 
 Unlike most other software, no binary distributions of |es| are available,
 and the software is usually not installed globally for all users.
-Instead, users of |es| should compile the software themselves. The reason for
+Instead, users should compile the software themselves. The reason for
 this is that it is possible to activate and deactivate various features
 before compiling the code. Some of these features are not compatible
 with each other, and some of the features have a profound impact on the
@@ -27,6 +27,12 @@ should always activate only those features that are actually needed.
 This means, however, that learning how to compile is a necessary evil.
 The build system of |es| uses CMake [4]_ to compile
 software easily on a wide range of platforms.
+
+Users who only need a "default" installation of |es| and have an account
+on the `Gitpod <https://gitpod.io>`__ platform can build the software
+automatically in the cloud and skip this chapter. For more details on
+running |es| in Gitpod, go to section :ref:`Running in the cloud`.
+
 
 .. _Requirements:
 
