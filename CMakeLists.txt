@@ -47,7 +47,7 @@ if(POLICY CMP0074)
   cmake_policy(SET CMP0074 NEW)
 endif()
 
-set(PROJECT_VERSION "4.2-dev")
+set(PROJECT_VERSION "4.3-dev")
 
 #
 # CMake internal vars

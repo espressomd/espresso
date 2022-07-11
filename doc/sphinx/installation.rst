@@ -297,17 +297,18 @@ lines below (optional steps which modify the build process are commented out):
     cd build
     cmake ..
     #ccmake . // in order to add/remove features like ScaFaCoS or CUDA
-    make
+    make -j
 
 This will build |es| with a default feature set, namely
 :file:`src/config/myconfig-default.hpp`. This file is a C++ header file,
 which defines the features that should be compiled in.
-You may want to adjust the feature set to your needs. This can be easily done
-by copying the :file:`myconfig-sample.hpp` which has been created in the :file:`build`
-directory to :file:`myconfig.hpp` and only uncomment the features you want to use in your simulation.
+You may want to adjust the feature set to your needs. This can be easily
+done by copying the :file:`myconfig-sample.hpp` which has been created in
+the :file:`build` directory to :file:`myconfig.hpp` and only uncomment
+the features you want to use in your simulation.
 
-The ``cmake`` command looks for libraries and tools needed by |es|. So |es|
-can only be built if ``cmake`` reports no errors.
+The ``cmake`` command looks for libraries and tools needed by |es|.
+So |es| can only be built if ``cmake`` reports no errors.
 
 The command ``make`` will compile the source code. Depending on the
 options passed to the program, ``make`` can also be used for a number of
@@ -328,12 +329,12 @@ command:
 
     ./pypresso script.py
 
-where ``script.py`` is a ``python`` script which has to
-be written by the user. You can find some examples in the :file:`samples`
-folder of the source code directory. If you want to run in parallel, you should
-have compiled with *Open MPI*, and need to tell MPI to run in parallel. The actual
-invocation is implementation-dependent, but in many cases, such as
-*Open MPI*, you can use
+where ``script.py`` is a Python script which has to be written by the user.
+You can find some examples in the :file:`samples` folder of the source code
+directory. If you want to run in parallel, you should have compiled with an
+MPI library, and need to tell MPI to run in parallel.
+The actual invocation is implementation-dependent, but in many cases, such as
+*Open MPI* and *MPICH*, you can use
 
 .. code-block:: bash
 
@@ -351,9 +352,9 @@ This chapter describes the features that can be activated in |es|. Even if
 possible, it is not recommended to activate all features, because this
 will negatively affect |es|'s performance.
 
-Features can be activated in the configuration header :file:`myconfig.hpp` (see
-section :ref:`myconfig.hpp\: Activating and deactivating features`). To
-activate ``FEATURE``, add the following line to the header file:
+Features can be activated in the configuration header :file:`myconfig.hpp`
+(see section :ref:`myconfig.hpp\: Activating and deactivating features`).
+To activate ``FEATURE``, add the following line to the header file:
 
 .. code-block:: c++
 
@@ -669,7 +670,7 @@ are ever modified by the build process.
     cmake ..
     make -j
 
-Afterwards |es| can be run via calling ``./pypresso`` from the command line.
+Afterwards |es| can be run by calling ``./pypresso`` from the command line.
 
 
 .. _ccmake:
@@ -709,8 +710,8 @@ Options and Variables
 ~~~~~~~~~~~~~~~~~~~~~
 
 The behavior of |es| can be controlled by means of options and variables
-in the :file:`CMakeLists.txt` file. Also options are defined there. The following
-options are available:
+in the :file:`CMakeLists.txt` file. Also options are defined there.
+The following options are available:
 
 * ``WITH_CUDA``: Build with GPU support
 
@@ -725,14 +726,14 @@ options are available:
 * ``WITH_VALGRIND_INSTRUMENTATION``: Build with valgrind instrumentation
   markers
 
-When the value in the :file:`CMakeLists.txt` file is set to ON, the corresponding
-option is created; if the value of the option is set to OFF, the
-corresponding option is not created. These options can also be modified
+When the value in the :file:`CMakeLists.txt` file is set to ON, the
+corresponding option is created; if the value of the option is set to OFF,
+the corresponding option is not created. These options can also be modified
 by calling ``cmake`` with the command line argument ``-D``:
 
 .. code-block:: bash
 
-    cmake -D WITH_HDF5=OFF srcdir
+    cmake -D WITH_HDF5=OFF ..
 
 When an option is activated, additional options may become available.
 For example with ``-D WITH_CUDA=ON``, one can choose the CUDA compiler with
