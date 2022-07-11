@@ -143,11 +143,6 @@ struct ShortRangeCutoff : public boost::static_visitor<double> {
   auto operator()(std::shared_ptr<CoulombP3M> const &actor) const {
     return actor->p3m.params.r_cut;
   }
-#ifdef CUDA
-  auto operator()(std::shared_ptr<CoulombP3MGPU> const &actor) const {
-    return actor->p3m.params.r_cut;
-  }
-#endif // CUDA
   auto
   operator()(std::shared_ptr<ElectrostaticLayerCorrection> const &actor) const {
     return std::max(actor->elc.space_layer,
@@ -192,11 +187,6 @@ struct EventOnObservableCalc : public boost::static_visitor<void> {
   void operator()(std::shared_ptr<CoulombP3M> const &actor) const {
     actor->count_charged_particles();
   }
-#ifdef CUDA
-  void operator()(std::shared_ptr<CoulombP3MGPU> const &actor) const {
-    actor->count_charged_particles();
-  }
-#endif // CUDA
   void
   operator()(std::shared_ptr<ElectrostaticLayerCorrection> const &actor) const {
     boost::apply_visitor(*this, actor->base_solver);
@@ -270,12 +260,6 @@ struct LongRangeEnergy : public boost::static_visitor<double> {
     actor->charge_assign(m_particles);
     return actor->long_range_energy(m_particles);
   }
-#ifdef CUDA
-  auto operator()(std::shared_ptr<CoulombP3MGPU> const &actor) const {
-    actor->charge_assign(m_particles);
-    return actor->long_range_energy(m_particles);
-  }
-#endif // CUDA
   auto
   operator()(std::shared_ptr<ElectrostaticLayerCorrection> const &actor) const {
     return actor->long_range_energy(m_particles);
