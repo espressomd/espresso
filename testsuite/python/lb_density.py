@@ -80,7 +80,7 @@ class LBMassWalberlaSinglePrecision(LBMassCommon, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {'single_precision': True}
-    atol = 2e-7
+    atol = 5e-7
 
 
 if __name__ == '__main__':

@@ -599,7 +599,7 @@ class LBTestWalberlaSinglePrecision(LBTest, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {'single_precision': True}
     atol = 1e-7
-    rtol = 4e-5
+    rtol = 5e-5
 
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
-// kernel generated with pystencils v0.4.4, lbmpy v0.4.4,
-// lbmpy_walberla/pystencils_walberla from commit ref: refs/heads/le_ghost_vel
+// kernel generated with pystencils v1.0+0.g354fede.dirty, lbmpy v1.0,
+// lbmpy_walberla/pystencils_walberla from commit
+// e1fe2ad1dcbe8f31ea79d95e8a5a5cc0ee3691f3
 
 //======================================================================================================================
 //
@@ -42,7 +43,11 @@ namespace lbm {
 
 #ifdef __CUDACC__
 #pragma push
-#pragma diag_suppress = declared_but_not_referenced
+#ifdef __NVCC_DIAG_PRAGMA_SUPPORT__
+#pragma nv_diag_suppress 177
+#else
+#pragma diag_suppress 177
+#endif
 #endif
 
 namespace internal_451fd042b8d7665063ea81b98853365b {
@@ -51,9 +56,9 @@ dynamic_ubb_double_precision_boundary_Dynamic_UBB_double_precision(
     uint8_t *RESTRICT const _data_indexVector, double *RESTRICT _data_pdfs,
     int64_t const _stride_pdfs_0, int64_t const _stride_pdfs_1,
     int64_t const _stride_pdfs_2, int64_t const _stride_pdfs_3,
-    int64_t indexVectorSize) {
+    int32_t indexVectorSize) {
 
-  const int64_t f_in_inv_dir_idx[] = {0, 2,  1,  4,  3,  6,  5,  10, 9, 8,
+  const int32_t f_in_inv_dir_idx[] = {0, 2,  1,  4,  3,  6,  5,  10, 9, 8,
                                       7, 16, 15, 18, 17, 12, 11, 14, 13};
 
   const double weights[] = {
@@ -65,18 +70,18 @@ dynamic_ubb_double_precision_boundary_Dynamic_UBB_double_precision(
       0.027777777777777778, 0.027777777777777778, 0.027777777777777778,
       0.027777777777777778};
 
-  const int64_t neighbour_offset_x[] = {0, 0, 0, -1, 1, 0, 0, -1, 1, -1,
+  const int32_t neighbour_offset_x[] = {0, 0, 0, -1, 1, 0, 0, -1, 1, -1,
                                         1, 0, 0, -1, 1, 0, 0, -1, 1};
-  const int64_t neighbour_offset_y[] = {0,  1, -1, 0, 0, 0, 0,  1, 1, -1,
+  const int32_t neighbour_offset_y[] = {0,  1, -1, 0, 0, 0, 0,  1, 1, -1,
                                         -1, 1, -1, 0, 0, 1, -1, 0, 0};
-  const int64_t neighbour_offset_z[] = {0, 0, 0, 0, 0, 1,  -1, 0,  0, 0,
+  const int32_t neighbour_offset_z[] = {0, 0, 0, 0, 0, 1,  -1, 0,  0, 0,
                                         0, 1, 1, 1, 1, -1, -1, -1, -1};
 
   for (int64_t ctr_0 = 0; ctr_0 < indexVectorSize; ctr_0 += 1) {
-    const int64_t x = *((int32_t *)(&_data_indexVector[40 * ctr_0]));
-    const int64_t y = *((int32_t *)(&_data_indexVector[40 * ctr_0 + 4]));
-    const int64_t z = *((int32_t *)(&_data_indexVector[40 * ctr_0 + 8]));
-    const int64_t dir = *((int32_t *)(&_data_indexVector[40 * ctr_0 + 12]));
+    const int32_t x = *((int32_t *)(&_data_indexVector[40 * ctr_0]));
+    const int32_t y = *((int32_t *)(&_data_indexVector[40 * ctr_0 + 4]));
+    const int32_t z = *((int32_t *)(&_data_indexVector[40 * ctr_0 + 8]));
+    const int32_t dir = *((int32_t *)(&_data_indexVector[40 * ctr_0 + 12]));
     const double vel0Term =
         _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_0 + _stride_pdfs_1 * y +
                    _stride_pdfs_1 + _stride_pdfs_2 * z + 8 * _stride_pdfs_3] +
@@ -124,14 +129,14 @@ dynamic_ubb_double_precision_boundary_Dynamic_UBB_double_precision(
                _stride_pdfs_1 * y + _stride_pdfs_1 * neighbour_offset_y[dir] +
                _stride_pdfs_2 * z + _stride_pdfs_2 * neighbour_offset_z[dir] +
                _stride_pdfs_3 * f_in_inv_dir_idx[dir]] =
-        -rho *
-            (6.0 * *((double *)(&_data_indexVector[40 * ctr_0 + 16])) *
-                 neighbour_offset_x[dir] +
-             6.0 * *((double *)(&_data_indexVector[40 * ctr_0 + 24])) *
-                 neighbour_offset_y[dir] +
-             6.0 * *((double *)(&_data_indexVector[40 * ctr_0 + 32])) *
-                 neighbour_offset_z[dir]) *
-            weights[dir] +
+        rho *
+            (6.0 * ((double)(neighbour_offset_x[dir])) *
+                 *((double *)(&_data_indexVector[40 * ctr_0 + 16])) +
+             6.0 * ((double)(neighbour_offset_y[dir])) *
+                 *((double *)(&_data_indexVector[40 * ctr_0 + 24])) +
+             6.0 * ((double)(neighbour_offset_z[dir])) *
+                 *((double *)(&_data_indexVector[40 * ctr_0 + 32]))) *
+            -1.0 * weights[dir] +
         _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_1 * y +
                    _stride_pdfs_2 * z + _stride_pdfs_3 * dir];
   }
@@ -149,7 +154,7 @@ dynamic_ubb_double_precision_boundary_Dynamic_UBB_double_precision(
 void Dynamic_UBB_double_precision::run_impl(IBlock *block,
                                             IndexVectors::Type type) {
   auto *indexVectors = block->getData<IndexVectors>(indexVectorID);
-  int64_t indexVectorSize = int64_c(indexVectors->indexVector(type).size());
+  int32_t indexVectorSize = int32_c(indexVectors->indexVector(type).size());
   if (indexVectorSize == 0)
     return;
 

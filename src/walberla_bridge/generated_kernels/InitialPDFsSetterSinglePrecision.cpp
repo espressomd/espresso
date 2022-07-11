@@ -1,5 +1,6 @@
-// kernel generated with pystencils v0.4.4, lbmpy v0.4.4,
-// lbmpy_walberla/pystencils_walberla from commit ref: refs/heads/le_ghost_vel
+// kernel generated with pystencils v1.0+0.g354fede.dirty, lbmpy v1.0,
+// lbmpy_walberla/pystencils_walberla from commit
+// e1fe2ad1dcbe8f31ea79d95e8a5a5cc0ee3691f3
 
 //======================================================================================================================
 //
@@ -62,6 +63,7 @@ initialpdfssettersingleprecision_initialpdfssettersingleprecision(
     int64_t const _stride_velocity_2, int64_t const _stride_velocity_3,
     float rho_0) {
   const float rho = rho_0;
+  const float delta_rho = rho - 1.0f;
   for (int64_t ctr_2 = 0; ctr_2 < _size_force_2; ctr_2 += 1) {
     float *RESTRICT _data_force_20_30 = _data_force + _stride_force_2 * ctr_2;
     float *RESTRICT _data_velocity_20_30 =
@@ -163,145 +165,116 @@ initialpdfssettersingleprecision_initialpdfssettersingleprecision(
       float *RESTRICT _data_pdfs_20_318_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_20_318;
       for (int64_t ctr_0 = 0; ctr_0 < _size_force_0; ctr_0 += 1) {
-        const float u_0 = _data_velocity_20_30_10[_stride_velocity_0 * ctr_0] -
-                          0.50000000000000000f *
-                              _data_force_20_30_10[_stride_force_0 * ctr_0] /
-                              rho_0;
-        const float u_1 = _data_velocity_20_31_10[_stride_velocity_0 * ctr_0] -
-                          0.50000000000000000f *
-                              _data_force_20_31_10[_stride_force_0 * ctr_0] /
-                              rho_0;
-        const float u_2 = _data_velocity_20_32_10[_stride_velocity_0 * ctr_0] -
-                          0.50000000000000000f *
-                              _data_force_20_32_10[_stride_force_0 * ctr_0] /
-                              rho_0;
+        const float u_0 = -0.5f * ((1.0f) / (rho)) *
+                              _data_force_20_30_10[_stride_force_0 * ctr_0] +
+                          _data_velocity_20_30_10[_stride_velocity_0 * ctr_0];
+        const float u_1 = -0.5f * ((1.0f) / (rho)) *
+                              _data_force_20_31_10[_stride_force_0 * ctr_0] +
+                          _data_velocity_20_31_10[_stride_velocity_0 * ctr_0];
+        const float u_2 = -0.5f * ((1.0f) / (rho)) *
+                              _data_force_20_32_10[_stride_force_0 * ctr_0] +
+                          _data_velocity_20_32_10[_stride_velocity_0 * ctr_0];
         _data_pdfs_20_30_10[_stride_pdfs_0 * ctr_0] =
-            rho * (u_0 * u_0) * -0.50000000000000000f +
-            rho * (u_1 * u_1) * -0.50000000000000000f +
-            rho * (u_2 * u_2) * -0.50000000000000000f +
-            rho * 0.33333333333333333f;
+            rho * -0.33333333333333331f * (u_0 * u_0) +
+            rho * -0.33333333333333331f * (u_1 * u_1) +
+            rho * -0.33333333333333331f * (u_2 * u_2) +
+            rho * 0.33333333333333331f;
         _data_pdfs_20_31_10[_stride_pdfs_0 * ctr_0] =
-            rho * (u_0 * u_0) * -0.083333333333333333f +
-            rho * (u_1 * u_1) * 0.16666666666666667f +
-            rho * u_1 * 0.16666666666666667f +
-            rho * (u_2 * u_2) * -0.083333333333333333f +
-            rho * 0.055555555555555556f;
+            rho * u_1 * 0.16666666666666666f +
+            rho * -0.16666666666666666f * (u_0 * u_0) +
+            rho * -0.16666666666666666f * (u_2 * u_2) +
+            rho * 0.055555555555555552f +
+            rho * 0.16666666666666666f * (u_1 * u_1);
         _data_pdfs_20_32_10[_stride_pdfs_0 * ctr_0] =
-            rho * (u_0 * u_0) * -0.083333333333333333f +
-            rho * (u_1 * u_1) * 0.16666666666666667f +
-            rho * u_1 * -0.16666666666666667f +
-            rho * (u_2 * u_2) * -0.083333333333333333f +
-            rho * 0.055555555555555556f;
+            rho * u_1 * -0.16666666666666666f +
+            rho * -0.16666666666666666f * (u_0 * u_0) +
+            rho * -0.16666666666666666f * (u_2 * u_2) +
+            rho * 0.055555555555555552f +
+            rho * 0.16666666666666666f * (u_1 * u_1);
         _data_pdfs_20_33_10[_stride_pdfs_0 * ctr_0] =
-            rho * (u_0 * u_0) * 0.16666666666666667f +
-            rho * u_0 * -0.16666666666666667f +
-            rho * (u_1 * u_1) * -0.083333333333333333f +
-            rho * (u_2 * u_2) * -0.083333333333333333f +
-            rho * 0.055555555555555556f;
+            rho * u_0 * -0.16666666666666666f +
+            rho * -0.16666666666666666f * (u_1 * u_1) +
+            rho * -0.16666666666666666f * (u_2 * u_2) +
+            rho * 0.055555555555555552f +
+            rho * 0.16666666666666666f * (u_0 * u_0);
         _data_pdfs_20_34_10[_stride_pdfs_0 * ctr_0] =
-            rho * (u_0 * u_0) * 0.16666666666666667f +
-            rho * u_0 * 0.16666666666666667f +
-            rho * (u_1 * u_1) * -0.083333333333333333f +
-            rho * (u_2 * u_2) * -0.083333333333333333f +
-            rho * 0.055555555555555556f;
+            rho * u_0 * 0.16666666666666666f +
+            rho * -0.16666666666666666f * (u_1 * u_1) +
+            rho * -0.16666666666666666f * (u_2 * u_2) +
+            rho * 0.055555555555555552f +
+            rho * 0.16666666666666666f * (u_0 * u_0);
         _data_pdfs_20_35_10[_stride_pdfs_0 * ctr_0] =
-            rho * (u_0 * u_0) * -0.083333333333333333f +
-            rho * (u_1 * u_1) * -0.083333333333333333f +
-            rho * (u_2 * u_2) * 0.16666666666666667f +
-            rho * u_2 * 0.16666666666666667f + rho * 0.055555555555555556f;
+            rho * u_2 * 0.16666666666666666f +
+            rho * -0.16666666666666666f * (u_0 * u_0) +
+            rho * -0.16666666666666666f * (u_1 * u_1) +
+            rho * 0.055555555555555552f +
+            rho * 0.16666666666666666f * (u_2 * u_2);
         _data_pdfs_20_36_10[_stride_pdfs_0 * ctr_0] =
-            rho * (u_0 * u_0) * -0.083333333333333333f +
-            rho * (u_1 * u_1) * -0.083333333333333333f +
-            rho * (u_2 * u_2) * 0.16666666666666667f +
-            rho * u_2 * -0.16666666666666667f + rho * 0.055555555555555556f;
+            rho * u_2 * -0.16666666666666666f +
+            rho * -0.16666666666666666f * (u_0 * u_0) +
+            rho * -0.16666666666666666f * (u_1 * u_1) +
+            rho * 0.055555555555555552f +
+            rho * 0.16666666666666666f * (u_2 * u_2);
         _data_pdfs_20_37_10[_stride_pdfs_0 * ctr_0] =
-            rho * (u_0 * u_0) * 0.083333333333333333f +
-            rho * u_0 * u_1 * -0.25000000000000000f +
-            rho * u_0 * -0.083333333333333333f +
-            rho * (u_1 * u_1) * 0.083333333333333333f +
-            rho * u_1 * 0.083333333333333333f +
-            rho * (u_2 * u_2) * -0.041666666666666667f +
-            rho * 0.027777777777777778f;
+            rho * u_0 * u_1 * -0.25f + rho * u_0 * -0.083333333333333329f +
+            rho * u_1 * 0.083333333333333329f + rho * 0.027777777777777776f +
+            rho * 0.083333333333333329f * (u_0 * u_0) +
+            rho * 0.083333333333333329f * (u_1 * u_1);
         _data_pdfs_20_38_10[_stride_pdfs_0 * ctr_0] =
-            rho * (u_0 * u_0) * 0.083333333333333333f +
-            rho * u_0 * u_1 * 0.25000000000000000f +
-            rho * u_0 * 0.083333333333333333f +
-            rho * (u_1 * u_1) * 0.083333333333333333f +
-            rho * u_1 * 0.083333333333333333f +
-            rho * (u_2 * u_2) * -0.041666666666666667f +
-            rho * 0.027777777777777778f;
+            rho * u_0 * u_1 * 0.25f + rho * u_0 * 0.083333333333333329f +
+            rho * u_1 * 0.083333333333333329f + rho * 0.027777777777777776f +
+            rho * 0.083333333333333329f * (u_0 * u_0) +
+            rho * 0.083333333333333329f * (u_1 * u_1);
         _data_pdfs_20_39_10[_stride_pdfs_0 * ctr_0] =
-            rho * (u_0 * u_0) * 0.083333333333333333f +
-            rho * u_0 * u_1 * 0.25000000000000000f +
-            rho * u_0 * -0.083333333333333333f +
-            rho * (u_1 * u_1) * 0.083333333333333333f +
-            rho * u_1 * -0.083333333333333333f +
-            rho * (u_2 * u_2) * -0.041666666666666667f +
-            rho * 0.027777777777777778f;
+            rho * u_0 * u_1 * 0.25f + rho * u_0 * -0.083333333333333329f +
+            rho * u_1 * -0.083333333333333329f + rho * 0.027777777777777776f +
+            rho * 0.083333333333333329f * (u_0 * u_0) +
+            rho * 0.083333333333333329f * (u_1 * u_1);
         _data_pdfs_20_310_10[_stride_pdfs_0 * ctr_0] =
-            rho * (u_0 * u_0) * 0.083333333333333333f +
-            rho * u_0 * u_1 * -0.25000000000000000f +
-            rho * u_0 * 0.083333333333333333f +
-            rho * (u_1 * u_1) * 0.083333333333333333f +
-            rho * u_1 * -0.083333333333333333f +
-            rho * (u_2 * u_2) * -0.041666666666666667f +
-            rho * 0.027777777777777778f;
+            rho * u_0 * u_1 * -0.25f + rho * u_0 * 0.083333333333333329f +
+            rho * u_1 * -0.083333333333333329f + rho * 0.027777777777777776f +
+            rho * 0.083333333333333329f * (u_0 * u_0) +
+            rho * 0.083333333333333329f * (u_1 * u_1);
         _data_pdfs_20_311_10[_stride_pdfs_0 * ctr_0] =
-            rho * (u_0 * u_0) * -0.041666666666666667f +
-            rho * (u_1 * u_1) * 0.083333333333333333f +
-            rho * u_1 * u_2 * 0.25000000000000000f +
-            rho * u_1 * 0.083333333333333333f +
-            rho * (u_2 * u_2) * 0.083333333333333333f +
-            rho * u_2 * 0.083333333333333333f + rho * 0.027777777777777778f;
+            rho * u_1 * u_2 * 0.25f + rho * u_1 * 0.083333333333333329f +
+            rho * u_2 * 0.083333333333333329f + rho * 0.027777777777777776f +
+            rho * 0.083333333333333329f * (u_1 * u_1) +
+            rho * 0.083333333333333329f * (u_2 * u_2);
         _data_pdfs_20_312_10[_stride_pdfs_0 * ctr_0] =
-            rho * (u_0 * u_0) * -0.041666666666666667f +
-            rho * (u_1 * u_1) * 0.083333333333333333f +
-            rho * u_1 * u_2 * -0.25000000000000000f +
-            rho * u_1 * -0.083333333333333333f +
-            rho * (u_2 * u_2) * 0.083333333333333333f +
-            rho * u_2 * 0.083333333333333333f + rho * 0.027777777777777778f;
+            rho * u_1 * u_2 * -0.25f + rho * u_1 * -0.083333333333333329f +
+            rho * u_2 * 0.083333333333333329f + rho * 0.027777777777777776f +
+            rho * 0.083333333333333329f * (u_1 * u_1) +
+            rho * 0.083333333333333329f * (u_2 * u_2);
         _data_pdfs_20_313_10[_stride_pdfs_0 * ctr_0] =
-            rho * (u_0 * u_0) * 0.083333333333333333f +
-            rho * u_0 * u_2 * -0.25000000000000000f +
-            rho * u_0 * -0.083333333333333333f +
-            rho * (u_1 * u_1) * -0.041666666666666667f +
-            rho * (u_2 * u_2) * 0.083333333333333333f +
-            rho * u_2 * 0.083333333333333333f + rho * 0.027777777777777778f;
+            rho * u_0 * u_2 * -0.25f + rho * u_0 * -0.083333333333333329f +
+            rho * u_2 * 0.083333333333333329f + rho * 0.027777777777777776f +
+            rho * 0.083333333333333329f * (u_0 * u_0) +
+            rho * 0.083333333333333329f * (u_2 * u_2);
         _data_pdfs_20_314_10[_stride_pdfs_0 * ctr_0] =
-            rho * (u_0 * u_0) * 0.083333333333333333f +
-            rho * u_0 * u_2 * 0.25000000000000000f +
-            rho * u_0 * 0.083333333333333333f +
-            rho * (u_1 * u_1) * -0.041666666666666667f +
-            rho * (u_2 * u_2) * 0.083333333333333333f +
-            rho * u_2 * 0.083333333333333333f + rho * 0.027777777777777778f;
+            rho * u_0 * u_2 * 0.25f + rho * u_0 * 0.083333333333333329f +
+            rho * u_2 * 0.083333333333333329f + rho * 0.027777777777777776f +
+            rho * 0.083333333333333329f * (u_0 * u_0) +
+            rho * 0.083333333333333329f * (u_2 * u_2);
         _data_pdfs_20_315_10[_stride_pdfs_0 * ctr_0] =
-            rho * (u_0 * u_0) * -0.041666666666666667f +
-            rho * (u_1 * u_1) * 0.083333333333333333f +
-            rho * u_1 * u_2 * -0.25000000000000000f +
-            rho * u_1 * 0.083333333333333333f +
-            rho * (u_2 * u_2) * 0.083333333333333333f +
-            rho * u_2 * -0.083333333333333333f + rho * 0.027777777777777778f;
+            rho * u_1 * u_2 * -0.25f + rho * u_1 * 0.083333333333333329f +
+            rho * u_2 * -0.083333333333333329f + rho * 0.027777777777777776f +
+            rho * 0.083333333333333329f * (u_1 * u_1) +
+            rho * 0.083333333333333329f * (u_2 * u_2);
         _data_pdfs_20_316_10[_stride_pdfs_0 * ctr_0] =
-            rho * (u_0 * u_0) * -0.041666666666666667f +
-            rho * (u_1 * u_1) * 0.083333333333333333f +
-            rho * u_1 * u_2 * 0.25000000000000000f +
-            rho * u_1 * -0.083333333333333333f +
-            rho * (u_2 * u_2) * 0.083333333333333333f +
-            rho * u_2 * -0.083333333333333333f + rho * 0.027777777777777778f;
+            rho * u_1 * u_2 * 0.25f + rho * u_1 * -0.083333333333333329f +
+            rho * u_2 * -0.083333333333333329f + rho * 0.027777777777777776f +
+            rho * 0.083333333333333329f * (u_1 * u_1) +
+            rho * 0.083333333333333329f * (u_2 * u_2);
         _data_pdfs_20_317_10[_stride_pdfs_0 * ctr_0] =
-            rho * (u_0 * u_0) * 0.083333333333333333f +
-            rho * u_0 * u_2 * 0.25000000000000000f +
-            rho * u_0 * -0.083333333333333333f +
-            rho * (u_1 * u_1) * -0.041666666666666667f +
-            rho * (u_2 * u_2) * 0.083333333333333333f +
-            rho * u_2 * -0.083333333333333333f + rho * 0.027777777777777778f;
+            rho * u_0 * u_2 * 0.25f + rho * u_0 * -0.083333333333333329f +
+            rho * u_2 * -0.083333333333333329f + rho * 0.027777777777777776f +
+            rho * 0.083333333333333329f * (u_0 * u_0) +
+            rho * 0.083333333333333329f * (u_2 * u_2);
         _data_pdfs_20_318_10[_stride_pdfs_0 * ctr_0] =
-            rho * (u_0 * u_0) * 0.083333333333333333f +
-            rho * u_0 * u_2 * -0.25000000000000000f +
-            rho * u_0 * 0.083333333333333333f +
-            rho * (u_1 * u_1) * -0.041666666666666667f +
-            rho * (u_2 * u_2) * 0.083333333333333333f +
-            rho * u_2 * -0.083333333333333333f + rho * 0.027777777777777778f;
+            rho * u_0 * u_2 * -0.25f + rho * u_0 * 0.083333333333333329f +
+            rho * u_2 * -0.083333333333333329f + rho * 0.027777777777777776f +
+            rho * 0.083333333333333329f * (u_0 * u_0) +
+            rho * 0.083333333333333329f * (u_2 * u_2);
       }
     }
   }
@@ -309,9 +282,9 @@ initialpdfssettersingleprecision_initialpdfssettersingleprecision(
 } // namespace internal_b8085d63d6b7e842485134abbac511e8
 
 void InitialPDFsSetterSinglePrecision::run(IBlock *block) {
+  auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
   auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
   auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
-  auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
 
   auto &rho_0 = this->rho_0_;
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(force->nrOfGhostLayers()));
@@ -368,9 +341,9 @@ void InitialPDFsSetterSinglePrecision::runOnCellInterval(
   if (ci.empty())
     return;
 
+  auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
   auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
   auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
-  auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
 
   auto &rho_0 = this->rho_0_;
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(force->nrOfGhostLayers()));

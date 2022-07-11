@@ -1,6 +1,4 @@
-// kernel generated with pystencils v0.4.4, lbmpy v0.4.4,
-// lbmpy_walberla/pystencils_walberla from commit
-// 2527a5f799da52b4e5293a05ed691fc35bf7122b
+// kernel generated with pystencils v1.0+0.g354fede.dirty, lbmpy v1.0, lbmpy_walberla/pystencils_walberla from commit e1fe2ad1dcbe8f31ea79d95e8a5a5cc0ee3691f3
 
 //======================================================================================================================
 //
@@ -24,12 +22,14 @@
 #pragma once
 #include "core/DataTypes.h"
 
+#include "field/GhostLayerField.h"
+#include "field/SwapableCompare.h"
 #include "domain_decomposition/BlockDataID.h"
 #include "domain_decomposition/IBlock.h"
 #include "domain_decomposition/StructuredBlockStorage.h"
-#include "field/GhostLayerField.h"
-#include "field/SwapableCompare.h"
 #include <set>
+
+
 
 #ifdef __GNUC__
 #define RESTRICT __restrict__
@@ -39,85 +39,87 @@
 #define RESTRICT
 #endif
 
-#if (defined WALBERLA_CXX_COMPILER_IS_GNU) ||                                  \
-    (defined WALBERLA_CXX_COMPILER_IS_CLANG)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wreorder"
+#if ( defined WALBERLA_CXX_COMPILER_IS_GNU ) || ( defined WALBERLA_CXX_COMPILER_IS_CLANG )
+#   pragma GCC diagnostic push
+#   pragma GCC diagnostic ignored "-Wunused-parameter"
+#   pragma GCC diagnostic ignored "-Wreorder"
 #endif
 
 namespace walberla {
 namespace pystencils {
 
-class CollideSweepSinglePrecisionThermalizedAVX {
+
+class CollideSweepSinglePrecisionThermalizedAVX
+{
 public:
-  CollideSweepSinglePrecisionThermalizedAVX(
-      BlockDataID forceID_, BlockDataID pdfsID_, uint32_t block_offset_0,
-      uint32_t block_offset_1, uint32_t block_offset_2, float kT,
-      float omega_bulk, float omega_even, float omega_odd, float omega_shear,
-      uint32_t seed, uint32_t time_step)
-      : forceID(forceID_), pdfsID(pdfsID_), block_offset_0_(block_offset_0),
-        block_offset_1_(block_offset_1), block_offset_2_(block_offset_2),
-        kT_(kT), omega_bulk_(omega_bulk), omega_even_(omega_even),
-        omega_odd_(omega_odd), omega_shear_(omega_shear), seed_(seed),
-        time_step_(time_step){};
+    CollideSweepSinglePrecisionThermalizedAVX( BlockDataID forceID_, BlockDataID pdfsID_, uint32_t block_offset_0, uint32_t block_offset_1, uint32_t block_offset_2, float kT, float omega_bulk, float omega_even, float omega_odd, float omega_shear, float rho, uint32_t seed, uint32_t time_step )
+        : forceID(forceID_), pdfsID(pdfsID_), block_offset_0_(block_offset_0), block_offset_1_(block_offset_1), block_offset_2_(block_offset_2), kT_(kT), omega_bulk_(omega_bulk), omega_even_(omega_even), omega_odd_(omega_odd), omega_shear_(omega_shear), rho_(rho), seed_(seed), time_step_(time_step)
+    {};
 
-  void run(IBlock *block);
+    
 
-  void runOnCellInterval(const shared_ptr<StructuredBlockStorage> &blocks,
-                         const CellInterval &globalCellInterval,
-                         cell_idx_t ghostLayers, IBlock *block);
+    void run(IBlock * block);
+    
+    void runOnCellInterval(const shared_ptr<StructuredBlockStorage> & blocks, const CellInterval & globalCellInterval, cell_idx_t ghostLayers, IBlock * block);
 
-  void operator()(IBlock *block) { run(block); }
+    
+    void operator() (IBlock * block)
+    {
+        run(block);
+    }
+    
 
-  static std::function<void(IBlock *)> getSweep(
-      const shared_ptr<CollideSweepSinglePrecisionThermalizedAVX> &kernel) {
-    return [kernel](IBlock *b) { kernel->run(b); };
-  }
+    static std::function<void (IBlock *)> getSweep(const shared_ptr<CollideSweepSinglePrecisionThermalizedAVX> & kernel)
+    {
+        return [kernel] 
+               (IBlock * b) 
+               { kernel->run(b); };
+    }
 
-  static std::function<void(IBlock *)> getSweepOnCellInterval(
-      const shared_ptr<CollideSweepSinglePrecisionThermalizedAVX> &kernel,
-      const shared_ptr<StructuredBlockStorage> &blocks,
-      const CellInterval &globalCellInterval, cell_idx_t ghostLayers = 1) {
-    return [kernel, blocks, globalCellInterval, ghostLayers](IBlock *b) {
-      kernel->runOnCellInterval(blocks, globalCellInterval, ghostLayers, b);
-    };
-  }
+    static std::function<void (IBlock*)> getSweepOnCellInterval(const shared_ptr<CollideSweepSinglePrecisionThermalizedAVX> & kernel, const shared_ptr<StructuredBlockStorage> & blocks, const CellInterval & globalCellInterval, cell_idx_t ghostLayers=1)
+    {
+        return [kernel, blocks, globalCellInterval, ghostLayers]
+               (IBlock * b) 
+               { kernel->runOnCellInterval(blocks, globalCellInterval, ghostLayers, b); };
+    }
 
-  std::function<void(IBlock *)> getSweep() {
-    return [this](IBlock *b) { this->run(b); };
-  }
+    std::function<void (IBlock *)> getSweep()
+    {
+        return [this] 
+               (IBlock * b) 
+               { this->run(b); };
+    }
 
-  std::function<void(IBlock *)>
-  getSweepOnCellInterval(const shared_ptr<StructuredBlockStorage> &blocks,
-                         const CellInterval &globalCellInterval,
-                         cell_idx_t ghostLayers = 1) {
-    return [this, blocks, globalCellInterval, ghostLayers](IBlock *b) {
-      this->runOnCellInterval(blocks, globalCellInterval, ghostLayers, b);
-    };
-  }
+    std::function<void (IBlock *)> getSweepOnCellInterval(const shared_ptr<StructuredBlockStorage> & blocks, const CellInterval & globalCellInterval, cell_idx_t ghostLayers=1)
+    {
+        return [this, blocks, globalCellInterval, ghostLayers]
+               (IBlock * b) 
+               { this->runOnCellInterval(blocks, globalCellInterval, ghostLayers, b); };
+    }
 
-  BlockDataID forceID;
-  BlockDataID pdfsID;
-  uint32_t block_offset_0_;
-  uint32_t block_offset_1_;
-  uint32_t block_offset_2_;
-  float kT_;
-  float omega_bulk_;
-  float omega_even_;
-  float omega_odd_;
-  float omega_shear_;
-  uint32_t seed_;
-  uint32_t time_step_;
-  std::function<void(IBlock *, uint32_t &, uint32_t &, uint32_t &)>
-      block_offset_generator =
-          [](IBlock *const, uint32_t &, uint32_t &, uint32_t &) {};
+
+    BlockDataID forceID;
+    BlockDataID pdfsID;
+    uint32_t block_offset_0_;
+    uint32_t block_offset_1_;
+    uint32_t block_offset_2_;
+    float kT_;
+    float omega_bulk_;
+    float omega_even_;
+    float omega_odd_;
+    float omega_shear_;
+    float rho_;
+    uint32_t seed_;
+    uint32_t time_step_;
+    std::function<void(IBlock *, uint32_t&, uint32_t&, uint32_t&)> block_offset_generator = [](IBlock * const, uint32_t&, uint32_t&, uint32_t&) { };
+
 };
+
 
 } // namespace pystencils
 } // namespace walberla
 
-#if (defined WALBERLA_CXX_COMPILER_IS_GNU) ||                                  \
-    (defined WALBERLA_CXX_COMPILER_IS_CLANG)
-#pragma GCC diagnostic pop
+
+#if ( defined WALBERLA_CXX_COMPILER_IS_GNU ) || ( defined WALBERLA_CXX_COMPILER_IS_CLANG )
+#   pragma GCC diagnostic pop
 #endif
