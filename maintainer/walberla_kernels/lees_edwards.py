@@ -1,6 +1,7 @@
 
 from pystencils.astnodes import LoopOverCoordinate
-from pystencils.data_types import type_all_numbers
+from pystencils.typing.typed_sympy import TypedSymbol
+from pystencils.typing import CastFunc
 from pystencils import Assignment
 
 from lbmpy.macroscopic_value_kernels import macroscopic_values_setter
@@ -8,13 +9,20 @@ from lbmpy.macroscopic_value_kernels import macroscopic_values_setter
 import sympy as sp
 
 
-def velocity_offset_eqs(method, pdfs, shear_dir_normal, stencil):
+def type_all_numbers(expr, dtype):
+    # originally from file pystencils/data_types.py in pycodegen/lbmpy@942c7d96
+    substitutions = {a: CastFunc(a, dtype) for a in expr.atoms(sp.Number)}
+    return expr.subs(substitutions)
+
+
+def velocity_offset_eqs(config, method, pdfs, shear_dir_normal, stencil):
     """Calculates the difference between quilibrium pdf distributions
     with (rho, u) and (rho, u+v) and applies them to out-flowing
     populations in the boundary layer. Returns an AssignmentCollection
     with one Assignment per stencil direction.
     """
     dim = len(stencil[0])
+    default_dtype = config.data_type.default_factory()
 
     # Placeholders indicating a population flows up or down.
     # Will be replaced later using the component of the stencil direction
@@ -27,18 +35,21 @@ def velocity_offset_eqs(method, pdfs, shear_dir_normal, stencil):
     counters = [LoopOverCoordinate.get_loop_counter_symbol(
         i) for i in range(dim)]
 
-    grid_size = sp.Symbol("grid_size", dtype=int)  # in shear_normal_dir
+    grid_size = TypedSymbol("grid_size", dtype=default_dtype)
 
     # +,-1 for upper/lower boundary layers, 0 otherwise.
     # Based on symbolic counters defined above. Only becomes
     # non-zero if the corresponding points_up/down flags
     # are engaged (which is only done for out-flowing populations)
-    layer_prefactor = sp.Piecewise((-1, sp.And(type_all_numbers(counters[1] <= 0, 'int'), points_down)),
-                                   (1,
-                                    sp.And(type_all_numbers(counters[1] >= grid_size - 1,
-                                                            'int'),
-                                           points_up)),
-                                   (0, True))
+    layer_prefactor = sp.Piecewise(
+        (-1,
+         sp.And(type_all_numbers(counters[1] <= 0, default_dtype),
+                points_down)),
+        (+1,
+         sp.And(type_all_numbers(counters[1] >= grid_size - 1, default_dtype),
+                points_up)),
+        (0, True)
+    )
 
     # Start with an equilibrium distribution for a given density and velocity
     delta_pdf_eqs = macroscopic_values_setter(
@@ -81,9 +92,11 @@ def velocity_offset_eqs(method, pdfs, shear_dir_normal, stencil):
     return delta_pdf_eqs.main_assignments
 
 
-def add_lees_edwards_to_collision(collision, pdfs, stencil, shear_dir_normal):
+def add_lees_edwards_to_collision(
+        config, collision, pdfs, stencil, shear_dir_normal):
     # Get population shift for outflowing populations at the boundaries
     offset = velocity_offset_eqs(
+        config,
         collision.method,
         pdfs,
         shear_dir_normal,

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2021 The ESPResSo project
+# Copyright (C) 2020-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -50,12 +50,10 @@ if args.gpu:
     target = ps.Target.GPU
 else:
     target = ps.Target.CPU
-data_type_cpp = pystencils_espresso.data_type_cpp
-data_type_np = pystencils_espresso.data_type_np
 
 # Make sure we have the correct versions of the required dependencies
 SpecifierSet = setuptools.version.pkg_resources.packaging.specifiers.SpecifierSet
-for module, requirement in [(ps, '==0.4.4'), (lbmpy, '==0.4.4')]:
+for module, requirement in [(ps, '==1.0'), (lbmpy, '==1.0')]:
     assert SpecifierSet(requirement).contains(module.__version__), \
         f"{module.__name__} version {module.__version__} doesn't match requirement {requirement}"
 
@@ -67,6 +65,19 @@ with code_generation_context.CodeGeneration() as ctx:
         target_prefix = "Cuda"
     else:
         target_prefix = ""
+
+    # vectorization parameters
+    cpu_vectorize_info = {
+        "instruction_set": "avx",
+        "assume_inner_stride_one": True,
+        "assume_aligned": True,
+        "assume_sufficient_line_padding": False}
+    params = {"target": target}
+    params_vec = {"target": target, "cpu_vectorize_info": cpu_vectorize_info}
+
+    # codegen configuration
+    config = pystencils_espresso.generate_config(ctx, params)
+
     precision_prefix = {
         True: 'DoublePrecision',
         False: 'SinglePrecision'}[
@@ -81,17 +92,8 @@ with code_generation_context.CodeGeneration() as ctx:
         ctx.double_accuracy]
     kT = sp.symbols('kT')
     stencil = lbmpy.stencils.get_stencil('D3Q19')
-    fields = pystencils_espresso.generate_fields(ctx, stencil)
+    fields = pystencils_espresso.generate_fields(config, stencil)
     force_field = fields['force']
-
-    # Vectorization parameters
-    cpu_vectorize_info = {
-        "instruction_set": "avx",
-        "assume_inner_stride_one": True,
-        "assume_aligned": True,
-        "assume_sufficient_line_padding": False}
-    params = {"target": target}
-    params_vec = {"target": target, "cpu_vectorize_info": cpu_vectorize_info}
 
     # LB Method definition
     method = lbmpy.creationfunctions.create_mrt_orthogonal(
@@ -107,26 +109,25 @@ with code_generation_context.CodeGeneration() as ctx:
         ctx,
         method,
         f"{target_prefix}StreamSweep{precision_prefix}",
-        params,
-        target)
+        params)
     if target == ps.Target.CPU:
         pystencils_espresso.generate_stream_sweep(
             ctx,
             method,
             f"{target_prefix}StreamSweep{precision_prefix}AVX",
-            params_vec,
-            target)
+            params_vec)
 
     # generate initial densities
-    pdfs_setter = pystencils_espresso.generate_setters(ctx, method)
+    pdfs_setter = pystencils_espresso.generate_setters(ctx, method, params)
     pystencils_walberla.codegen.generate_sweep(
         ctx,
         f"{target_prefix}InitialPDFsSetter{precision_prefix}",
-        pdfs_setter, target=target)
+        pdfs_setter, **params)
 
     # generate unthermalized collision rule
     collision_rule_unthermalized = lbmpy.creationfunctions.create_lb_collision_rule(
         method,
+        zero_centered=True,
         optimization={'cse_global': True,
                       'double_precision': ctx.double_accuracy}
     )
@@ -135,8 +136,7 @@ with code_generation_context.CodeGeneration() as ctx:
         method,
         collision_rule_unthermalized,
         f"{target_prefix}CollideSweep{precision_prefix}",
-        params,
-        target
+        params
     )
     if target == ps.Target.CPU:
         pystencils_espresso.generate_collision_sweep(
@@ -144,8 +144,7 @@ with code_generation_context.CodeGeneration() as ctx:
             method,
             collision_rule_unthermalized,
             f"{target_prefix}CollideSweep{precision_prefix}AVX",
-            {"cpu_vectorize_info": cpu_vectorize_info},
-            target
+            params_vec
         )
 
     # generate unthermalized Lees-Edwards collision rule
@@ -153,6 +152,7 @@ with code_generation_context.CodeGeneration() as ctx:
                                 method=lbmpy.Method.TRT,
                                 relaxation_rate=sp.Symbol("omega_shear"),
                                 compressible=True,
+                                zero_centered=False,
                                 force_model=lbmpy.ForceModel.GUO,
                                 force=force_field.center_vector,
                                 kernel_type='collide_only')
@@ -162,28 +162,28 @@ with code_generation_context.CodeGeneration() as ctx:
         lbm_optimisation=lbm_opt)
 
     le_collision_rule_unthermalized = lees_edwards.add_lees_edwards_to_collision(
-        le_collision_rule_unthermalized,
+        config, le_collision_rule_unthermalized,
         fields["pdfs"], stencil, 1)  # shear_dir_normal y
     pystencils_espresso.generate_collision_sweep(
         ctx,
         le_config,
         le_collision_rule_unthermalized,
         f"CollideSweep{precision_prefix}LeesEdwards",
-        {},
-        target
+        params
     )
-    pystencils_espresso.generate_collision_sweep(
-        ctx,
-        le_config,
-        le_collision_rule_unthermalized,
-        f"CollideSweep{precision_prefix}LeesEdwardsAVX",
-        {"cpu_vectorize_info": cpu_vectorize_info},
-        target
-    )
+    if target == ps.Target.CPU:
+        pystencils_espresso.generate_collision_sweep(
+            ctx,
+            le_config,
+            le_collision_rule_unthermalized,
+            f"CollideSweep{precision_prefix}LeesEdwardsAVX",
+            params_vec
+        )
 
     # generate thermalized LB
     collision_rule_thermalized = lbmpy.creationfunctions.create_lb_collision_rule(
         method,
+        zero_centered=False,
         fluctuating={
             'temperature': kT,
             'block_offsets': 'walberla',
@@ -197,8 +197,7 @@ with code_generation_context.CodeGeneration() as ctx:
         method,
         collision_rule_thermalized,
         f"{target_prefix}CollideSweep{precision_prefix}Thermalized",
-        params,
-        target
+        params
     )
     if target == ps.Target.CPU:
         pystencils_espresso.generate_collision_sweep(
@@ -206,20 +205,20 @@ with code_generation_context.CodeGeneration() as ctx:
             method,
             collision_rule_thermalized,
             f"{target_prefix}CollideSweep{precision_prefix}ThermalizedAVX",
-            params_vec,
-            target
+            params_vec
         )
 
     # generate accessors
     if target == ps.Target.CPU:
         walberla_lbm_generation.generate_macroscopic_values_accessors(
             ctx,
+            config,
             collision_rule_unthermalized.method,
             f'{target_prefix}macroscopic_values_accessors_{precision_suffix}.h')
 
     # Boundary conditions
     ubb_dynamic = lbmpy_espresso.UBB(
-        lambda *args: None, dim=3, data_type=data_type_np[ctx.double_accuracy])
+        lambda *args: None, dim=3, data_type=config.data_type.default_factory())
     ubb_data_handler = lbmpy_espresso.BounceBackSlipVelocityUBB(
         method.stencil, ubb_dynamic)
 
@@ -232,11 +231,9 @@ with code_generation_context.CodeGeneration() as ctx:
         content = f.read()
         f.seek(0)
         f.truncate(0)
-        # patch for old versions of pystencils_walberla
-        if '#pragma once' not in content:
-            content = '#pragma once\n' + content
         # patch for floating point accuracy
-        content = content.replace('real_t', data_type_cpp[ctx.double_accuracy])
+        content = content.replace('real_t',
+                                  config.data_type.default_factory().c_name)
         f.write(content)
 
     # communication
