@@ -541,8 +541,8 @@ class Analysis:
         type B, disregarding the fact that a spherical shell of a larger radius
         covers a larger volume). The distance is defined as the minimal distance
         between a particle of group ``type_list_a`` to any of the group
-        ``type_list_b``. Returns two arrays, the bins and the (normalized)
-        distribution.
+        ``type_list_b`` (excluding the self-contribution). Returns two arrays,
+        the bins and the (normalized) distribution.
 
         Parameters
         ----------
@@ -555,7 +555,9 @@ class Analysis:
         r_min : :obj:`float`
             Minimum distance.
         r_max : :obj:`float`
-            Maximum distance.
+            Maximum distance. By default, it is half the box size.
+            A value larger than half the box size is allowed for systems
+            with :ref:`open boundary conditions <Open boundaries>`.
         r_bins : :obj:`int`
             Number of bins.
         log_flag : :obj:`bool`

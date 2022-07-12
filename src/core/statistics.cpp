@@ -184,8 +184,9 @@ void calc_part_distribution(PartCfg &partCfg, std::vector<int> const &p1_types,
   double inv_bin_width = 0.0;
   double min_dist, min_dist2 = 0.0, start_dist2;
 
-  start_dist2 = Utils::sqr(box_geo.length()[0] + box_geo.length()[1] +
-                           box_geo.length()[2]);
+  auto const r_max2 = Utils::sqr(r_max);
+  auto const r_min2 = Utils::sqr(r_min);
+  start_dist2 = Utils::sqr(r_max + 1.);
   /* bin preparation */
   *low = 0.0;
   for (int i = 0; i < r_bins; i++)
@@ -211,9 +212,9 @@ void calc_part_distribution(PartCfg &partCfg, std::vector<int> const &p1_types,
           }
         }
       }
-      min_dist = sqrt(min_dist2);
-      if (min_dist <= r_max) {
-        if (min_dist >= r_min) {
+      if (min_dist2 <= r_max2) {
+        if (min_dist2 >= r_min2) {
+          min_dist = sqrt(min_dist2);
           /* calculate bin index */
           if (log_flag)
             ind = (int)((log(min_dist / r_min)) * inv_bin_width);
