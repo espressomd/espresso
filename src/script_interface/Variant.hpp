@@ -104,6 +104,6 @@ template <class T> bool is_type(Variant const &v) {
 }
 
 inline bool is_none(Variant const &v) { return is_type<None>(v); }
-} /* namespace ScriptInterface */
+} // namespace ScriptInterface
 
 #endif

@@ -408,6 +408,6 @@ template <typename T>
 void set_from_args(T &dst, VariantMap const &vals, const char *name) {
   dst = get_value<T>(vals, name);
 }
-} /* namespace ScriptInterface */
+} // namespace ScriptInterface
 
 #endif
