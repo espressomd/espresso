@@ -107,7 +107,7 @@ class PressureLJ(ut.TestCase):
         # thermostat and cell system
         system.thermostat.set_langevin(kT=0.0, gamma=1.0, seed=41)
         system.cell_system.skin = skin
-        system.periodicity = [1, 1, 1]
+        system.periodicity = [True, True, True]
 
         # particles and bond
         p0 = system.part.add(pos=[9.9, 9.75, 9.9], type=0, mol_id=0)
@@ -282,13 +282,13 @@ class PressureFENE(ut.TestCase):
 
         # thermostat and cell system
         system.cell_system.skin = skin
-        system.periodicity = [1, 1, 1]
+        system.periodicity = [True, True, True]
 
         # particles and bond
         p0 = system.part.add(
-            pos=[9.9, 9.75, 9.9], type=0, mol_id=0, fix=[1, 1, 1])
+            pos=[9.9, 9.75, 9.9], type=0, mol_id=0, fix=3 * [True])
         p1 = system.part.add(
-            pos=[9.9, 10.25, 9.9], type=0, mol_id=0, fix=[1, 1, 1])
+            pos=[9.9, 10.25, 9.9], type=0, mol_id=0, fix=3 * [True])
 
         k = 1e4
         d_r_max = 1.5

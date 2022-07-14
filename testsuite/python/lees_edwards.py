@@ -472,8 +472,8 @@ class LeesEdwards(ut.TestCase):
             shear_velocity=2.0, initial_pos_offset=0.0)
         system.lees_edwards.set_boundary_conditions(
             shear_direction="x", shear_plane_normal="y", protocol=protocol)
-        p1 = system.part.add(
-            pos=[2.5, 2.5, 2.5], rotation=(1, 1, 1), type=10, v=(0.0, -0.1, -0.25))
+        p1 = system.part.add(pos=[2.5, 2.5, 2.5], type=10,
+                             rotation=3 * (True,), v=(0.0, -0.1, -0.25))
         p2 = system.part.add(pos=(2.5, 3.5, 2.5), type=11)
         p2.vs_auto_relate_to(p1)
 

@@ -474,7 +474,7 @@ void DipolarLayerCorrection::adapt_solver() {
 
 void DipolarLayerCorrection::sanity_checks_node_grid() const {
   if (!box_geo.periodic(0) || !box_geo.periodic(1) || !box_geo.periodic(2)) {
-    throw std::runtime_error("DLC: requires periodicity (1 1 1)");
+    throw std::runtime_error("DLC: requires periodicity (True, True, True)");
   }
 }
 

@@ -28,7 +28,7 @@ class StokesianThermostat(ut.TestCase):
     """Test Stokesian thermostat"""
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.cell_system.skin = 0
-    system.periodicity = [0, 0, 0]
+    system.periodicity = [False, False, False]
 
     def setUp(self):
         np.random.seed(42)
@@ -111,17 +111,17 @@ class StokesianThermostat(ut.TestCase):
 
         # invalid PBC should throw exceptions
         self.system.integrator.set_vv()
-        self.system.periodicity = [0, 0, 1]
+        self.system.periodicity = [False, False, True]
         with self.assertRaises(RuntimeError):
             self.system.integrator.set_stokesian_dynamics(
                 viscosity=1.0, radii={0: 1.0})
 
-        self.system.periodicity = [0, 0, 0]
+        self.system.periodicity = [False, False, False]
         self.system.integrator.set_stokesian_dynamics(
             viscosity=1.0, radii={0: 1.0})
 
         with self.assertRaises(Exception):
-            self.system.periodicity = [0, 1, 0]
+            self.system.periodicity = [False, True, False]
 
 
 if __name__ == "__main__":

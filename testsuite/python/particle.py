@@ -22,6 +22,7 @@ import espressomd
 import espressomd.interactions
 import numpy as np
 import collections
+import itertools
 
 
 class ParticleProperties(ut.TestCase):
@@ -49,7 +50,7 @@ class ParticleProperties(ut.TestCase):
     def tearDown(self):
         self.system.part.clear()
 
-    def generateTestForVectorProperty(_propName, _value):
+    def generateTestForVectorProperty(_propName, *_values):
         """Generates test cases for vectorial particle properties such as
         position, velocity...
         1st arg: name of the property (e.g., "pos"),
@@ -57,21 +58,22 @@ class ParticleProperties(ut.TestCase):
         """
         # This is executed, when generateTestForVectorProperty() is called
         propName = _propName
-        value = _value
+        values = _values
 
         def func(self):
             # This code is run at the execution of the generated function.
             # It will use the state of the variables in the outer function,
             # which was there, when the outer function was called
-            setattr(self.partcl, propName, value)
-            np.testing.assert_allclose(
-                np.array(getattr(self.partcl, propName)), value,
-                err_msg=propName + ": value set and value gotten back differ.",
-                atol=self.tol)
+            for value in values:
+                setattr(self.partcl, propName, value)
+                np.testing.assert_allclose(
+                    np.array(getattr(self.partcl, propName)), value,
+                    err_msg=propName + ": value set and value gotten back differ.",
+                    atol=self.tol)
 
         return func
 
-    def generateTestForScalarProperty(_propName, _value):
+    def generateTestForScalarProperty(_propName, *_values):
         """Generates test cases for scalar particle properties such as
         type, mass, charge...
         1st arg: name of the property (e.g., "type"),
@@ -79,15 +81,16 @@ class ParticleProperties(ut.TestCase):
         """
         # This is executed, when generateTestForVectorProperty() is called
         propName = _propName
-        value = _value
+        values = _values
 
         def func(self):
             # This code is run at the execution of the generated function.
             # It will use the state of the variables in the outer function,
             # which was there, when the outer function was called
-            setattr(self.partcl, propName, value)
-            self.assertEqual(getattr(self.partcl, propName),
-                             value, propName + ": value set and value gotten back differ.")
+            for value in values:
+                setattr(self.partcl, propName, value)
+                self.assertEqual(getattr(self.partcl, propName),
+                                 value, propName + ": value set and value gotten back differ.")
 
         return func
 
@@ -104,13 +107,8 @@ class ParticleProperties(ut.TestCase):
         test_mass = generateTestForScalarProperty("mass", 1.3)
 
     if espressomd.has_features(["ROTATION"]):
-
-        for x in 0, 1:
-            for y in 0, 1:
-                for z in 0, 1:
-                    test_rotation = generateTestForVectorProperty(
-                        "rotation", np.array([x, y, z], dtype=int))
-
+        test_rotation = generateTestForVectorProperty(
+            "rotation", *itertools.product((True, False), repeat=3))
         test_omega_lab = generateTestForVectorProperty(
             "omega_lab", np.array([4., 2., 1.]))
         test_omega_body = generateTestForVectorProperty(

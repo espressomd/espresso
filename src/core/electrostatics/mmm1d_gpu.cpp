@@ -54,7 +54,7 @@ CoulombMMM1DGpu::CoulombMMM1DGpu(double prefactor, double maxPWerror,
 
 void CoulombMMM1DGpu::sanity_checks_periodicity() const {
   if (box_geo.periodic(0) || box_geo.periodic(1) || !box_geo.periodic(2)) {
-    throw std::runtime_error("MMM1D requires periodicity (0, 0, 1)");
+    throw std::runtime_error("MMM1D requires periodicity (False, False, True)");
   }
 }
 

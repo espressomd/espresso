@@ -41,7 +41,7 @@ class TestLB:
               'temp': 1.5,
               'gamma': 1.5}
 
-    system.periodicity = [1, 1, 1]
+    system.periodicity = [True, True, True]
     system.time_step = 0.01
     system.cell_system.skin = 1.0
     dof = 3.

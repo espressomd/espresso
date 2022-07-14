@@ -84,7 +84,7 @@ class CoulombMixedPeriodicity(ut.TestCase):
         self.system.cell_system.set_regular_decomposition()
         self.system.cell_system.node_grid = sorted(
             self.system.cell_system.node_grid, key=lambda x: -x)
-        self.system.periodicity = [1, 1, 1]
+        self.system.periodicity = [True, True, True]
 
     @utx.skipIfMissingFeatures(["P3M"])
     def test_elc_cpu(self):
@@ -117,7 +117,7 @@ class CoulombMixedPeriodicity(ut.TestCase):
     @utx.skipIfMissingScafacosMethod("p2nfft")
     def test_scafacos_p2nfft(self):
         self.system.box_l = [10., 10., 10.]
-        self.system.periodicity = [1, 1, 0]
+        self.system.periodicity = [True, True, False]
         self.system.cell_system.set_regular_decomposition()
 
         scafacos = espressomd.electrostatics.Scafacos(

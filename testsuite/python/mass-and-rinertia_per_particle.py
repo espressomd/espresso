@@ -111,7 +111,7 @@ class ThermoTest(ut.TestCase):
 
         # Space
         self.system.box_l = 3 * [1.0]
-        self.system.periodicity = [0, 0, 0]
+        self.system.periodicity = [False, False, False]
 
         # NVT thermostat
         self.kT = 0.0
@@ -155,7 +155,7 @@ class ThermoTest(ut.TestCase):
             for k in range(2):
                 ind = i + k * n
                 partcl = self.system.part.add(
-                    rotation=(1, 1, 1), pos=(0.0, 0.0, 0.0), id=ind)
+                    rotation=3 * [True], pos=(0.0, 0.0, 0.0), id=ind)
                 partcl.v = [1.0, 1.0, 1.0]
                 if espressomd.has_features("ROTATION"):
                     partcl.omega_body = [1.0, 1.0, 1.0]
@@ -179,7 +179,7 @@ class ThermoTest(ut.TestCase):
         # Space
         box = 10.0
         self.system.box_l = 3 * [box]
-        self.system.periodicity = [0, 0, 0]
+        self.system.periodicity = [False, False, False]
 
         # NVT thermostat
         # Just some temperature range to cover by the test:
@@ -218,7 +218,7 @@ class ThermoTest(ut.TestCase):
                 part_v = [0.0, 0.0, 0.0]
                 part_omega_body = [0.0, 0.0, 0.0]
                 partcl = self.system.part.add(
-                    rotation=(1, 1, 1),
+                    rotation=3 * [True],
                     id=ind,
                     mass=self.mass,
                     rinertia=self.J,

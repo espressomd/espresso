@@ -100,9 +100,9 @@ class VirtualSites(ut.TestCase):
         self.system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative(
             have_quaternion=False)
         self.assertFalse(self.system.virtual_sites.have_quaternion)
-        p1 = self.system.part.add(pos=[1, 1, 1], rotation=[1, 1, 1],
+        p1 = self.system.part.add(pos=[1, 1, 1], rotation=3 * [True],
                                   omega_lab=[1, 1, 1])
-        p2 = self.system.part.add(pos=[1, 1, 1], rotation=[1, 1, 1])
+        p2 = self.system.part.add(pos=[1, 1, 1], rotation=3 * [True])
         p2.vs_auto_relate_to(p1)
         np.testing.assert_array_equal(np.copy(p2.quat), [1, 0, 0, 0])
         self.system.integrator.run(1)
@@ -142,9 +142,9 @@ class VirtualSites(ut.TestCase):
         system.time_step = 0.01
         system.cell_system.skin = 0.1
         system.min_global_cut = 0.1
-        p1 = system.part.add(pos=[0.0, 0.0, 0.0], rotation=[1, 1, 1], id=1)
-        p2 = system.part.add(pos=[1.0, 1.0, 1.0], rotation=[1, 1, 1], id=2)
-        p3 = system.part.add(pos=[1.0, 1.0, 1.0], rotation=[1, 1, 1], id=3)
+        p1 = system.part.add(pos=[0.0, 0.0, 0.0], rotation=3 * [True], id=1)
+        p2 = system.part.add(pos=[1.0, 1.0, 1.0], rotation=3 * [True], id=2)
+        p3 = system.part.add(pos=[1.0, 1.0, 1.0], rotation=3 * [True], id=3)
         # relating to anything else other than a particle or id is not allowed
         with self.assertRaisesRegex(ValueError, "Argument of vs_auto_relate_to has to be of type ParticleHandle or int"):
             p2.vs_auto_relate_to('0')
@@ -171,13 +171,13 @@ class VirtualSites(ut.TestCase):
         self.assertEqual(system.min_global_cut, 0.23)
 
         # Place central particle + 3 vs
-        p1 = system.part.add(rotation=(1, 1, 1), pos=(0.5, 0.5, 0.5), id=1,
+        p1 = system.part.add(rotation=3 * [True], pos=(0.5, 0.5, 0.5), id=1,
                              quat=(1, 0, 0, 0), omega_lab=(1, 2, 3))
         pos2 = (0.5, 0.4, 0.5)
         pos3 = (0.3, 0.5, 0.4)
         pos4 = (0.5, 0.5, 0.5)
         for pos in (pos2, pos3, pos4):
-            p = system.part.add(rotation=(1, 1, 1), pos=pos)
+            p = system.part.add(rotation=3 * [True], pos=pos)
             p.vs_auto_relate_to(p1)
             # Was the particle made virtual
             self.assertTrue(p.virtual)

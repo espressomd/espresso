@@ -52,23 +52,23 @@ class ParticleSliceTest(ut.TestCase):
 
     @utx.skipIfMissingFeatures(["EXTERNAL_FORCES"])
     def test_1_set_different_values(self):
-        self.fix_flags[0] = [1, 0, 0]
-        self.fix_flags[1] = [1, 0, 0]
+        self.fix_flags[0] = [True, False, False]
+        self.fix_flags[1] = [True, False, False]
         self.p0p1.fix = self.fix_flags
         np.testing.assert_array_equal(
             np.copy(self.p0p1.fix), self.fix_flags)
 
     @utx.skipIfMissingFeatures(["EXTERNAL_FORCES"])
     def test_2_set_same_value(self):
-        self.fix_flags[0] = [0, 1, 0]
-        self.fix_flags[1] = [0, 1, 0]
+        self.fix_flags[0] = [False, True, False]
+        self.fix_flags[1] = [False, True, False]
         self.p0p1.fix = self.fix_flags[1]
         np.testing.assert_array_equal(
             np.copy(self.p0p1.fix), self.fix_flags)
 
     @utx.skipIfMissingFeatures(["EXTERNAL_FORCES"])
     def test_3_set_one_value(self):
-        self.fix_flags[1] = [0, 0, 1]
+        self.fix_flags[1] = [False, False, True]
         self.p1.fix = self.fix_flags[1]
         np.testing.assert_array_equal(
             np.copy(self.p0p1.fix), self.fix_flags)

@@ -36,12 +36,12 @@ class Scafacos1d2d(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.time_step = 0.01
     system.cell_system.skin = 0.5
-    system.periodicity = [1, 1, 1]
+    system.periodicity = [True, True, True]
 
     def tearDown(self):
         self.system.part.clear()
         self.system.actors.clear()
-        self.system.periodicity = [1, 1, 1]
+        self.system.periodicity = [True, True, True]
 
     def test_scafacos(self):
         system = self.system
@@ -61,9 +61,9 @@ class Scafacos1d2d(ut.TestCase):
                 # Read reference data
                 if dim == 2:
                     file_prefix = "mdlc"
-                    system.periodicity = [1, 1, 0]
+                    system.periodicity = [True, True, False]
                 else:
-                    system.periodicity = [1, 0, 0]
+                    system.periodicity = [True, False, False]
                     file_prefix = "scafacos_dipoles_1d"
 
                 ref_e_path = tests_common.data_path(

@@ -92,11 +92,10 @@ class RandomPairTest(ut.TestCase):
         self.check_pairs(n2_pairs)
 
     def test(self):
-        periods = [0, 1]
         self.system.periodicity = [True, True, True]
         tests_common.check_non_bonded_loop_trace(self, self.system)
 
-        for periodicity in itertools.product(periods, periods, periods):
+        for periodicity in itertools.product((False, True), repeat=3):
             self.system.periodicity = periodicity
             n2_pairs = self.pairs_n2(1.5)
 

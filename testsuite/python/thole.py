@@ -47,13 +47,9 @@ class TestThole(ut.TestCase):
         self.system.time_step = 0.01
         self.system.cell_system.skin = 0.4
         self.p0 = self.system.part.add(
-            pos=[
-                0, 0, 0], type=0, fix=[
-                1, 1, 1], q=self.q1)
+            pos=[0, 0, 0], type=0, fix=3 * [True], q=self.q1)
         self.p1 = self.system.part.add(
-            pos=[
-                2, 0, 0], type=0, fix=[
-                1, 1, 1], q=self.q2)
+            pos=[2, 0, 0], type=0, fix=3 * [True], q=self.q2)
 
         p3m = espressomd.electrostatics.P3M(
             prefactor=COULOMB_PREFACTOR, accuracy=1e-6, mesh=3 * [52], cao=4)

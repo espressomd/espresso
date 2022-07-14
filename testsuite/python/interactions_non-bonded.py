@@ -520,9 +520,9 @@ class InteractionsNonBondedTest(ut.TestCase):
 
             self.system.part.clear()
             self.system.part.add(
-                pos=(1, 2, 3), rotation=(1, 1, 1), type=0)
+                pos=(1, 2, 3), rotation=3 * [True], type=0)
             self.system.part.add(
-                pos=(2.2, 2.1, 2.9), rotation=(1, 1, 1), type=0)
+                pos=(2.2, 2.1, 2.9), rotation=3 * [True], type=0)
 
             self.system.non_bonded_inter[0, 0].gay_berne.set_params(
                 sig=sigma_0, cut=cut, eps=epsilon_0, k1=k_1, k2=k_2, mu=mu,

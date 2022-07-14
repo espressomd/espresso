@@ -102,23 +102,23 @@ class PairTest(ut.TestCase):
 
     def test_nsquare(self):
         self.system.cell_system.set_n_square()
-        self.system.periodicity = [1, 1, 1]
+        self.system.periodicity = [True, True, True]
         self.run_and_check()
 
     def test_nsquare_partial_z(self):
         self.system.cell_system.set_n_square()
-        self.system.periodicity = [1, 1, 0]
+        self.system.periodicity = [True, True, False]
         self.run_and_check()
 
     def test_dd(self):
         self.system.cell_system.set_regular_decomposition()
-        self.system.periodicity = [1, 1, 1]
+        self.system.periodicity = [True, True, True]
         self.run_and_check()
         self.check_range_exception()
 
     def test_dd_partial_z(self):
         self.system.cell_system.set_regular_decomposition()
-        self.system.periodicity = [1, 1, 0]
+        self.system.periodicity = [True, True, False]
         self.run_and_check()
         self.check_range_exception()
 

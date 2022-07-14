@@ -198,7 +198,7 @@ if 'LB' not in modes:
     elif 'THERM.DPD' in modes and espressomd.has_features('DPD'):
         system.thermostat.set_dpd(kT=1.0, seed=42)
     elif 'THERM.SDM' in modes and espressomd.has_features('STOKESIAN_DYNAMICS'):
-        system.periodicity = [0, 0, 0]
+        system.periodicity = [False, False, False]
         system.thermostat.set_stokesian(kT=1.0, seed=42)
     # set integrator
     if 'INT.NPT' in modes and espressomd.has_features('NPT'):
@@ -212,7 +212,7 @@ if 'LB' not in modes:
     elif 'INT.BD' in modes:
         system.integrator.set_brownian_dynamics()
     elif 'INT.SDM' in modes and espressomd.has_features('STOKESIAN_DYNAMICS'):
-        system.periodicity = [0, 0, 0]
+        system.periodicity = [False, False, False]
         system.integrator.set_stokesian_dynamics(
             approximation_method='ft', viscosity=0.5, radii={0: 1.5},
             pair_mobility=False, self_mobility=True)

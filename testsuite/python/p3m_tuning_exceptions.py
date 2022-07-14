@@ -223,12 +223,12 @@ class Test(ut.TestCase):
 
     def check_invalid_cell_systems(self):
         # check periodicity exceptions
-        for periodicity in itertools.product(range(2), range(2), range(2)):
-            if periodicity == (1, 1, 1):
+        for periodicity in itertools.product((True, False), repeat=3):
+            if periodicity == (True, True, True):
                 continue
-            with self.assertRaisesRegex(Exception, r"P3M: requires periodicity \(1 1 1\)"):
+            with self.assertRaisesRegex(Exception, r"P3M: requires periodicity \(True, True, True\)"):
                 self.system.periodicity = periodicity
-        self.system.periodicity = (1, 1, 1)
+        self.system.periodicity = (True, True, True)
 
         # check cell system exceptions
         with self.assertRaisesRegex(Exception, "P3M: requires the regular decomposition cell system"):
