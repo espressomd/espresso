@@ -64,10 +64,12 @@ class CellSystem(ut.TestCase):
         node_grid = system.cell_system.node_grid
         with self.assertRaisesRegex(ValueError, "Parameter 'node_grid' must be 3 ints"):
             system.cell_system.node_grid = [1, 2, 3, 4]
-        np.testing.assert_array_equal(system.cell_system.node_grid, node_grid)
+        np.testing.assert_array_equal(np.copy(system.cell_system.node_grid),
+                                      np.copy(node_grid))
         with self.assertRaisesRegex(ValueError, rf"MPI world size {self.n_nodes} incompatible with new node grid \[1, 2, {self.n_nodes}\]"):
             system.cell_system.node_grid = [1, 2, self.n_nodes]
-        np.testing.assert_array_equal(system.cell_system.node_grid, node_grid)
+        np.testing.assert_array_equal(np.copy(system.cell_system.node_grid),
+                                      np.copy(node_grid))
 
     def test_node_grid_regular(self):
         self.system.cell_system.set_regular_decomposition()

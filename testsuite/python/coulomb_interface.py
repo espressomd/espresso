@@ -218,8 +218,8 @@ class Test(ut.TestCase):
             with self.assertRaisesRegex(Exception, "P3M: node grid must be sorted, largest first"):
                 self.system.cell_system.node_grid = [1, n_nodes, 1]
             self.assertEqual(
-                self.system.cell_system.node_grid,
-                self.original_node_grid)
+                list(self.system.cell_system.node_grid),
+                list(self.original_node_grid))
         with self.assertRaisesRegex(Exception, "Exception while updating the box length: ERROR: ELC gap size .+ larger than box length in z-direction"):
             self.system.box_l = [10., 10., 2.5]
         self.system.box_l = [10., 10., 10.]

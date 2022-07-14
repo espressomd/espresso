@@ -22,6 +22,7 @@ import tests_common
 
 import espressomd
 import espressomd.interactions
+import numpy as np
 
 
 class BondedInteractions(ut.TestCase):
@@ -76,7 +77,12 @@ class BondedInteractions(ut.TestCase):
                             f"{valid_keys - required_keys}, got: {default_keys}")
         with self.assertRaisesRegex(RuntimeError, "Bond parameters are immutable"):
             bondObject.params = {}
-        self.assertEqual(bondObject.params, old_params)
+        for key in (bondObject.params.keys() | old_params.keys()):
+            if isinstance(old_params[key], str):
+                self.assertEqual(bondObject.params[key], old_params[key])
+            else:
+                np.testing.assert_allclose(
+                    bondObject.params[key], old_params[key], atol=1e-10)
 
     def generateTestForBondParams(_bondId, _bondClass, _params, _refs=None):
         """Generates test cases for checking bond parameters set and gotten

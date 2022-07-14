@@ -441,7 +441,7 @@ class Test(ut.TestCase):
                                                epsilon='metallic',
                                                mesh=[8, -1, -1])
         self.system.actors.add(solver)
-        self.assertEqual(solver.mesh, [8, 12, 16])
+        np.testing.assert_equal(np.copy(solver.mesh), [8, 12, 16])
 
         # check MD cell reset event
         self.system.box_l = self.system.box_l
@@ -459,7 +459,7 @@ class Test(ut.TestCase):
                                                   epsilon='metallic',
                                                   mesh=[20, -1, -1])
         self.system.actors.add(solver)
-        self.assertEqual(solver.mesh, [20, 20, 40])
+        np.testing.assert_equal(np.copy(solver.mesh), [20, 20, 40])
 
         # check MD cell reset event
         self.system.box_l = self.system.box_l

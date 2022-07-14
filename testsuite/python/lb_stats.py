@@ -120,7 +120,8 @@ class TestLB:
             #       LB fluid.
             particle_momentum = np.sum(
                 [p.mass * p.v + 0.5 * p.f * self.system.time_step for p in self.system.part], axis=0)
-            fluid_momentum = self.system.analysis.linear_momentum(False, True)
+            fluid_momentum = self.system.analysis.linear_momentum(
+                include_particles=False, include_lbfluid=True)
             np.testing.assert_allclose(
                 particle_momentum + fluid_momentum, self.tot_mom,
                 atol=self.params['mom_prec'])

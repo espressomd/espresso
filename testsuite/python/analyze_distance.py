@@ -99,8 +99,8 @@ class AnalyzeDistance(ut.TestCase):
             self.system.part.all().pos = np.random.random(
                 (len(self.system.part), 3)) * BOX_L
             np.testing.assert_allclose(
-                self.system.analysis.nbhood([i, i, i], i * 2),
-                self.nbhood([i, i, i], i * 2))
+                self.system.analysis.nbhood(pos=[i, i, i], r_catch=i * 2),
+                self.nbhood(pos=[i, i, i], r_catch=i * 2))
 
     def test_distance_to_pos(self):
         parts = self.system.part
