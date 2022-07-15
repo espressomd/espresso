@@ -1,7 +1,27 @@
+#
+# Copyright (C) 2016-2022 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 add_library(
-  ScriptInterface SHARED
+  Espresso_script_interface SHARED
   initialize.cpp ObjectHandle.cpp object_container_mpi_guard.cpp
   GlobalContext.cpp ContextManager.cpp ParallelExceptionHandler.cpp)
+add_library(Espresso::script_interface ALIAS Espresso_script_interface)
 
 add_subdirectory(accumulators)
 add_subdirectory(bond_breakage)
@@ -21,22 +41,17 @@ add_subdirectory(scafacos)
 add_subdirectory(shapes)
 add_subdirectory(h5md)
 add_subdirectory(reaction_methods)
-if(WITH_WALBERLA)
-  add_subdirectory(walberla)
-endif(WITH_WALBERLA)
+add_subdirectory(walberla)
 
-install(TARGETS ScriptInterface
+install(TARGETS Espresso_script_interface
         LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 
 target_link_libraries(
-  ScriptInterface PRIVATE EspressoConfig EspressoCore
-  PUBLIC mpiio EspressoUtils MPI::MPI_CXX EspressoShapes core_cluster_analysis
-  PRIVATE cxx_interface)
+  Espresso_script_interface PRIVATE Espresso::config Espresso::core
+  PUBLIC Espresso::utils MPI::MPI_CXX Espresso::shapes
+  PRIVATE Espresso::cpp_flags)
 
-if(WITH_WALBERLA)
-  target_link_libraries(ScriptInterface PRIVATE WalberlaBridge)
-endif(WITH_WALBERLA)
-
-target_include_directories(ScriptInterface PUBLIC ${CMAKE_SOURCE_DIR}/src)
+target_include_directories(Espresso_script_interface
+                           PUBLIC ${CMAKE_SOURCE_DIR}/src)
 
 add_subdirectory(tests)

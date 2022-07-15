@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 target_sources(
-  EspressoCore
+  Espresso_core
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/common.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/TuningAlgorithm.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/send_mesh.cpp

@@ -64,6 +64,12 @@ set(gpu_interface_flags "${CUDA_NVCC_FLAGS} ${CUDA_NVCC_FLAGS_${CMAKE_BUILD_TYPE
 if(CMAKE_CUDA_COMPILER_VERSION VERSION_LESS 11)
   set(gpu_interface_flags "${gpu_interface_flags} --cuda-gpu-arch=sm_30")
 endif()
+if(CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL "12.0.0" AND
+   CMAKE_CUDA_COMPILER_VERSION VERSION_LESS "13.0.0" AND
+   CUDA_VERSION VERSION_GREATER_EQUAL "11.0" AND
+   CUDA_VERSION VERSION_LESS "12.0")
+  set(gpu_interface_flags "${gpu_interface_flags} -Wno-unknown-cuda-version")
+endif()
 
 function(find_gpu_library)
   cmake_parse_arguments(LIBRARY "REQUIRED" "NAMES;VARNAME" "" ${ARGN})

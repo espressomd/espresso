@@ -123,8 +123,7 @@ Be aware of the following limitations:
   :meth:`espressomd.lb.HydrodynamicInteraction.save_checkpoint`
   and loaded via :meth:`espressomd.lb.HydrodynamicInteraction.load_checkpoint`
   after restoring the checkpoint. See :ref:`LB checkpointing <Checkpointing LB>`
-  for more details. Likewise, the electrokinetic density and the species need to
-  be saved separately, as outlined in :ref:`EK checkpointing <Checkpointing EK>`.
+  for more details.
 
 * References between Python objects are not maintained during checkpointing.
   For example, if an instance of a shape and an instance of a constraint

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The ESPResSo project
+ * Copyright (C) 2021-2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -16,11 +16,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef SCRIPT_INTERFACE_WALBERLA_INITIALIZE_HPP
-#define SCRIPT_INTERFACE_WALBERLA_INITIALIZE_HPP
+#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_WALBERLA_INITIALIZE_HPP
+#define ESPRESSO_SRC_SCRIPT_INTERFACE_WALBERLA_INITIALIZE_HPP
 
 namespace ScriptInterface::walberla {
 void initialize(Utils::Factory<ObjectHandle> *om);
 } // namespace ScriptInterface::walberla
 
-#endif // SCRIPT_INTERFACE_WALBERLA_INITIALIZE_HPP
+#endif

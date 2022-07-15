@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2021 The ESPResSo project
+# Copyright (C) 2013-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -25,7 +25,7 @@ energy calculation of the systems, two instances of the Client class in
 of ESPResSo.
 
 The Gibbs-ensemble implemented in these scripts closely refers to chapter 8 of
-Daan Fenkel and Berend Smit 'Understanding Molecular Simulation, Second edition'.
+Daan Frenkel and Berend Smit 'Understanding Molecular Simulation, Second edition'.
 All equation references noted in this script can be found there.
 
 Due to the cutoff and shifting of the LJ-potential the simulated points in the

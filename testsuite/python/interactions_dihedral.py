@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2019 The ESPResSo project
+# Copyright (C) 2013-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -89,6 +89,21 @@ class InteractionsBondedTest(ut.TestCase):
             np.testing.assert_allclose(np.copy(f2), f2_ref, atol=tol)
             np.testing.assert_allclose(np.copy(f3), f3_ref, atol=tol)
 
+    def check_undefined_angle(self):
+        p0 = self.system.part.by_id(0)
+        p1 = self.system.part.by_id(1)
+        p0.pos = p1.pos
+        with self.assertRaisesRegex(Exception, "bond broken"):
+            self.system.analysis.energy()
+        with self.assertRaisesRegex(Exception, "bond broken"):
+            self.system.integrator.run(steps=0, recalc_forces=True)
+        # in the core, the dihedral bond did not contribute to the forces
+        f0, f1, f2, f3 = self.system.part.all().f
+        np.testing.assert_array_equal(np.copy(f0), np.zeros(3))
+        np.testing.assert_array_equal(np.copy(f1), np.zeros(3))
+        np.testing.assert_array_equal(np.copy(f2), np.zeros(3))
+        np.testing.assert_array_equal(np.copy(f3), np.zeros(3))
+
     # Test Dihedral Angle
     def test_dihedral(self):
         axis = np.array([1., 0., 0.])
@@ -118,6 +133,8 @@ class InteractionsBondedTest(ut.TestCase):
                         dh_k, dh_n, dh_phi0, p0.pos, p1.pos, p2.pos, p3.pos)
 
                     self.check_values(E_ref, forces_ref)
+
+        self.check_undefined_angle()
 
     # Test Tabulated Dihedral Angle
     @utx.skipIfMissingFeatures(["TABULATED"])
@@ -163,6 +180,8 @@ class InteractionsBondedTest(ut.TestCase):
                         forces_ref = None
 
                     self.check_values(E_ref, forces_ref)
+
+        self.check_undefined_angle()
 
 
 if __name__ == '__main__':

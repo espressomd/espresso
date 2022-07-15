@@ -40,5 +40,5 @@ After the tutorial, students should be able to
   be done in multiple ways (warmup with force capping, 
   small time step, etc.).
   Additionally the steepest descent algorithm can get trapped in local minima and the convergence criterion is system-dependent.
-* Mention that accumulators are updated auomatically.
+* Mention that accumulators are updated automatically.
 * Statistically independent measurements for t > correlation time.

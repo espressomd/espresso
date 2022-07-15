@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2010-2022 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -174,6 +174,7 @@ get_pairs_of_types(double const distance, std::vector<int> const &types) {
   detail::search_distance_sanity_check(distance);
   auto pairs = get_pairs_filtered(distance, [types](Particle const &p) {
     return std::any_of(types.begin(), types.end(),
+                       // NOLINTNEXTLINE(bugprone-exception-escape)
                        [p](int const type) { return p.type() == type; });
   });
   Utils::Mpi::gather_buffer(pairs, comm_cart);

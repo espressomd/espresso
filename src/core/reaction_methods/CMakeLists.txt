@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021 The ESPResSo project
+# Copyright (C) 2021-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -18,7 +18,7 @@
 #
 
 target_sources(
-  EspressoCore
+  Espresso_core
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/ReactionAlgorithm.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/ReactionEnsemble.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/ConstantpHEnsemble.cpp

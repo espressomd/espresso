@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2020 The ESPResSo project
+ * Copyright (C) 2010-2022 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -23,7 +23,7 @@
 
 #include "cell_system/Cell.hpp"
 
-#include "RuntimeErrorStream.hpp"
+#include "error_handling/RuntimeErrorStream.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
 
@@ -436,7 +436,7 @@ void RegularDecomposition::init_cell_interactions() {
         //         */
         //        for (int i = 0; i < 3; i++) {
         //          if (dd.fully_connected[i]) {
-        //            // Fully connected is only neede at the box surface
+        //            // Fully connected is only needed at the box surface
         //            if (i==0 and (n!=start[1] or n!=end[1]-1) and (o!=start[2]
         //            or o!=end[2]-1)) continue; if (i==1 and (m!=start[0] or
         //            m!=end[0]-1) and (o!=start[2] or o!=end[2]-1)) continue;

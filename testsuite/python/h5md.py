@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2019 The ESPResSo project
+# Copyright (C) 2013-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -118,6 +118,8 @@ class H5mdTests(ut.TestCase):
         h5 = espressomd.io.writer.h5md.H5md(file_path=str(self.temp_file))
         h5.close()
 
+    # doesn't alway work in parallel: https://github.com/h5py/h5py/issues/736
+    @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
     def test_appending(self):
         # write one frame to the file
         temp_file = self.temp_path / 'appending.h5'

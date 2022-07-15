@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2019 The ESPResSo project
+# Copyright (C) 2013-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -314,7 +314,7 @@ def is_valid_type(value, t):
             float_types.append(np.float128)
         return isinstance(value, tuple(float_types))
     elif t == bool:
-        return isinstance(value, (bool, np.bool, np.bool_))
+        return isinstance(value, (bool, np.bool_))
     else:
         return isinstance(value, t)
 

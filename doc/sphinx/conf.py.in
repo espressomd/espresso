@@ -75,7 +75,7 @@ release = '@PROJECT_VERSION@'
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = "en"
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
@@ -204,7 +204,7 @@ html_show_sourcelink = False
 # If true, "Created using Sphinx" is shown in the HTML footer. Default is True.
 html_show_sphinx = False
 
-# If true, "(C) Copyright (C) 2019 The ESPResSo project" is shown
+# If true, "(C) Copyright (C) 2022 The ESPResSo project" is shown
 # in the HTML footer. Default is True.
 html_show_copyright = True
 

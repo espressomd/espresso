@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2020 The ESPResSo project
+# Copyright (C) 2019-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,10 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-target_include_directories(EspressoCore SYSTEM
+target_include_directories(Espresso_core SYSTEM
                            PRIVATE ${stokesian_dynamics_SOURCE_DIR}/include)
 target_include_directories(
-  EspressoCore PRIVATE ${CMAKE_SOURCE_DIR}/src/core/stokesian_dynamics)
+  Espresso_core PRIVATE ${CMAKE_SOURCE_DIR}/src/core/stokesian_dynamics)
 
-target_sources(EspressoCore
+target_sources(Espresso_core
                PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/sd_interface.cpp)

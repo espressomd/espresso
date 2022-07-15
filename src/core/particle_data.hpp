@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2010-2022 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -236,15 +236,15 @@ void delete_particle_bond(int part, Utils::Span<const int> bond);
  */
 void delete_particle_bonds(int part);
 
-/** @brief Removes the specified bond from the particle
+/** @brief Remove the specified bond from the particle
  *  @param p        The particle to update
  *  @param bond     The bond in the form
  *                  <tt>{bond_id, partner_1, partner_2, ...}</tt>
  */
 void local_remove_bond(Particle &p, std::vector<int> const &bond);
 
-/** @brief Removes all pair bonds on the particle which have the specified
- *  particle id as partner
+/** @brief Remove all pair bonds on the particle which have the specified
+ *  particle id as partner.
  *  @param p         The particle to update
  *  @param other_pid The particle id to filter for
  */

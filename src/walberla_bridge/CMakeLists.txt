@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020 The ESPResSo project
+# Copyright (C) 2020-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+
 set(WalberlaBridgeCodegen_SRC
     generated_kernels/StreamSweepSinglePrecision.cpp
     generated_kernels/StreamSweepDoublePrecision.cpp
@@ -55,24 +56,28 @@ endif()
 set(WalberlaBridge_SRC ${WalberlaBridgeCodegen_SRC} lb_walberla_init.cpp
                        LatticeWalberla.cpp)
 
-add_library(cxx_walberla_interface INTERFACE)
+add_library(Espresso_walberla_cpp_flags INTERFACE)
+add_library(Espresso::walberla::cpp_flags ALIAS Espresso_walberla_cpp_flags)
 if(WALBERLA_USE_AVX)
-  target_link_libraries(cxx_walberla_interface INTERFACE cxx_avx2_interface)
+  target_link_libraries(Espresso_walberla_cpp_flags INTERFACE Espresso::avx_flags)
 endif(WALBERLA_USE_AVX)
 
 if(WITH_CUDA AND WALBERLA_BUILD_WITH_CUDA)
-  add_gpu_library(WalberlaBridge SHARED ${WalberlaBridge_SRC} ${WalberlaBridgeCodegenCuda_SRC})
+  add_gpu_library(Espresso_walberla SHARED ${WalberlaBridge_SRC} ${WalberlaBridgeCodegenCuda_SRC})
 else()
-  add_library(WalberlaBridge SHARED ${WalberlaBridge_SRC})
+  add_library(Espresso_walberla SHARED ${WalberlaBridge_SRC})
 endif()
-target_link_libraries(WalberlaBridge PUBLIC MPI::MPI_CXX EspressoUtils
-                      PRIVATE Boost::boost cxx_interface cxx_walberla_interface
+add_library(Espresso::walberla ALIAS Espresso_walberla)
+
+target_link_libraries(Espresso_walberla PUBLIC MPI::MPI_CXX Espresso::utils
+                      PRIVATE Boost::boost Espresso::cpp_flags
+                      Espresso::walberla::cpp_flags
                       ${WALBERLA_LIBS})
 target_include_directories(
-  WalberlaBridge PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${WALBERLA_INCLUDE_DIRS}
+  Espresso_walberla PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${WALBERLA_INCLUDE_DIRS}
   PRIVATE ${walberla_BINARY_DIR}/src)
 
-install(TARGETS WalberlaBridge LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
+install(TARGETS Espresso_walberla LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 
 if(WITH_TESTS)
   add_subdirectory(tests)
