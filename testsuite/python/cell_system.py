@@ -62,7 +62,7 @@ class CellSystem(ut.TestCase):
         self.assertAlmostEqual(system.cell_system.skin, 0.1, delta=1e-12)
 
         node_grid = system.cell_system.node_grid
-        with self.assertRaisesRegex(ValueError, "Parameter 'node_grid' must be 3 ints"):
+        with self.assertRaisesRegex(RuntimeError, "Provided argument of type .+ is not convertible to 'Utils::Vector<int, 3>'"):
             system.cell_system.node_grid = [1, 2, 3, 4]
         np.testing.assert_array_equal(np.copy(system.cell_system.node_grid),
                                       np.copy(node_grid))

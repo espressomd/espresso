@@ -21,6 +21,7 @@ cimport numpy as np
 
 from libcpp.string cimport string  # import std::string as string
 from libcpp.vector cimport vector  # import std::vector as vector
+from libcpp cimport bool as cbool
 
 cdef extern from "utils/Span.hpp" namespace "Utils":
     cppclass Span[T]:
@@ -41,7 +42,6 @@ cdef np.ndarray create_nparray_from_double_array(double * x, int n)
 cdef np.ndarray create_nparray_from_double_span(Span[double] x)
 cpdef check_array_type_or_throw_except(x, n, t, msg)
 cpdef check_type_or_throw_except(x, n, t, msg)
-cdef check_range_or_except(D, x, v_min, incl_min, v_max, incl_max)
 
 cdef extern from "error_handling/RuntimeError.hpp" namespace "ErrorHandling::RuntimeError":
     cdef cppclass ErrorLevel:
@@ -66,9 +66,14 @@ cdef extern from "utils/Vector.hpp" namespace "Utils":
     cppclass Vector2d:
         double & operator[](int i)
         double * data()
+
     cppclass Vector4d:
         double & operator[](int i)
         double * data()
+
+    cppclass Vector3b:
+        cbool & operator[](int i)
+        cbool * data()
 
     cppclass Vector3i:
         int & operator[](int i)
@@ -104,7 +109,6 @@ cdef extern from "utils/quaternion.hpp" namespace "Utils":
         T & operator[](int i)
 
 cdef make_array_locked(Vector3d)
-cdef make_array_locked_vector(vector[Vector3d] v)
 cdef Vector3d make_Vector3d(a)
 cdef Vector3i make_Vector3i(a)
 

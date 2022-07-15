@@ -26,10 +26,12 @@
 
 #include <utils/demangle.hpp>
 
+#include <boost/algorithm/string/join.hpp>
 #include <boost/range/algorithm/transform.hpp>
 
 #include <cstddef>
 #include <memory>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -43,9 +45,12 @@ namespace detail {
  * @brief Convert a demangled symbol into a human-readable name that omits
  * container allocators, key hashes and implementation-specific namespaces.
  * When the data type involves the @ref Variant type, it is recursively
- * replaced by the string "ScriptInterface::Variant".
+ * replaced by the string "Variant{type1,type2,...}" based on the actual
+ * contents of the variant.
  */
 namespace demangle {
+
+inline std::string simplify_symbol_variant(Variant const &v);
 
 /** @brief Simplify the demangled symbol of an object. */
 template <typename T> auto simplify_symbol(T const *) {
@@ -62,9 +67,30 @@ template <typename T> auto simplify_symbol(T const *) {
 }
 
 /** @overload */
+template <typename T, std::size_t N>
+auto simplify_symbol(Utils::Vector<T, N> const *) {
+  auto const name_val = simplify_symbol(static_cast<T *>(nullptr));
+  return "Utils::Vector<" + Utils::demangle<T>() + ", " + std::to_string(N) +
+         ">";
+}
+
+/** @overload */
 template <typename T> auto simplify_symbol(std::vector<T> const *) {
   auto const name_val = simplify_symbol(static_cast<T *>(nullptr));
   return "std::vector<" + name_val + ">";
+}
+
+/** @overload */
+inline auto simplify_symbol(std::vector<Variant> const *vec) {
+  auto value_type_name = std::string("ScriptInterface::Variant");
+  if (vec) {
+    std::set<std::string> types = {};
+    for (auto const &v : *vec) {
+      types.insert(simplify_symbol_variant(v));
+    }
+    value_type_name += "{" + boost::algorithm::join(types, ", ") + "}";
+  }
+  return "std::vector<" + value_type_name + ">";
 }
 
 /** @overload */
@@ -75,14 +101,29 @@ auto simplify_symbol(std::unordered_map<K, V> const *) {
   return "std::unordered_map<" + name_key + ", " + name_val + ">";
 }
 
+/** @overload */
+template <typename K>
+auto simplify_symbol(std::unordered_map<K, Variant> const *map) {
+  auto const name_key = simplify_symbol(static_cast<K *>(nullptr));
+  auto value_type_name = std::string("ScriptInterface::Variant");
+  if (map) {
+    std::set<std::string> types = {};
+    for (auto const &kv : *map) {
+      types.insert(simplify_symbol_variant(kv.second));
+    }
+    value_type_name += "{" + boost::algorithm::join(types, ", ") + "}";
+  }
+  return "std::unordered_map<" + name_key + ", " + value_type_name + ">";
+}
+
 struct simplify_symbol_visitor : boost::static_visitor<std::string> {
-  template <class T> std::string operator()(const T &) const {
-    return simplify_symbol(static_cast<T *>(nullptr));
+  template <class T> std::string operator()(T const &t) const {
+    return simplify_symbol(&t);
   }
 };
 
 /** @brief Simplify the demangled symbol of an object wrapped in a variant. */
-inline auto simplify_symbol_variant(Variant const &v) {
+inline std::string simplify_symbol_variant(Variant const &v) {
   return boost::apply_visitor(simplify_symbol_visitor{}, v);
 }
 
@@ -180,8 +221,9 @@ struct vector_conversion_visitor : boost::static_visitor<Utils::Vector<T, N>> {
     return ret;
   }
 
-  Utils::Vector<T, N>
-  operator()(std::vector<T, std::allocator<T>> const &v) const {
+  template <typename U>
+  std::enable_if_t<allow_conversion<T, U>::value, Utils::Vector<T, N>>
+  operator()(std::vector<U, std::allocator<U>> const &v) const {
     if (N != v.size()) {
       throw boost::bad_get{};
     }
@@ -346,23 +388,6 @@ template <typename T> T get_value(Variant const &v) {
     detail::handle_bad_get<T>(v);
     throw;
   }
-}
-
-template <typename K, typename V>
-auto make_unordered_map_of_variants(std::unordered_map<K, V> const &v) {
-  std::unordered_map<K, Variant> ret;
-  for (auto const &it : v) {
-    ret.insert({it.first, Variant(it.second)});
-  }
-  return ret;
-}
-
-template <typename T> auto make_vector_of_variants(std::vector<T> const &v) {
-  std::vector<Variant> ret;
-  for (auto const &item : v) {
-    ret.emplace_back(item);
-  }
-  return ret;
 }
 
 /**

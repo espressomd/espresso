@@ -18,7 +18,6 @@
 #
 cimport numpy as np
 import numpy as np
-from libcpp.vector cimport vector
 
 
 cdef _check_type_or_throw_except_assertion(x, t):
@@ -94,32 +93,6 @@ cdef np.ndarray create_nparray_from_double_span(Span[double] x):
 
     """
     return create_nparray_from_double_array(x.data(), x.size())
-
-cdef check_range_or_except(D, name, v_min, incl_min, v_max, incl_max):
-    """
-    Checks that x is in range [v_min,v_max] (include boundaries via
-    incl_min/incl_max = true) or throws a ValueError. v_min/v_max = 'inf' to
-    disable limit.
-
-    """
-    x = D[name]
-
-    # Array/list/tuple
-    if hasattr(x, "__len__"):
-        if (v_min != "inf" and ((incl_min and not all(v >= v_min for v in x))
-                                or (not incl_min and not all(v > v_min for v in x)))) or \
-           (v_max != "inf" and ((incl_max and not all(v <= v_max for v in x))
-                                or (not incl_max and not all(v < v_max for v in x)))):
-            raise ValueError(f"In {name}: Some values in {x} are out of"
-                             f" range {'[' if incl_min else ']'}{v_min},"
-                             f"{v_max}{']' if incl_max else '['}")
-    # Single Value
-    else:
-        if (v_min != "inf" and ((incl_min and x < v_min) or (not incl_min and x <= v_min)) or
-                v_max != "inf" and ((incl_max and x > v_max) or (not incl_max and x >= v_max))):
-            raise ValueError(f"In {name}: Value {x} is out of"
-                             f" range {'[' if incl_min else ']'}{v_min},"
-                             f"{v_max}{']' if incl_max else '['}")
 
 
 def to_char_pointer(s):
@@ -231,14 +204,6 @@ Use numpy.copy(<ESPResSo array property>) to get a writable copy."
 
 cdef make_array_locked(Vector3d v):
     return array_locked([v[0], v[1], v[2]])
-
-
-cdef make_array_locked_vector(vector[Vector3d] v):
-    ret = np.empty((v.size(), 3))
-    for i in range(v.size()):
-        for j in range(3):
-            ret[i][j] = v[i][j]
-    return array_locked(ret)
 
 
 cdef Vector3d make_Vector3d(a):

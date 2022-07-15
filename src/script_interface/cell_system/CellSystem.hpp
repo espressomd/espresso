@@ -54,9 +54,6 @@ namespace ScriptInterface {
 namespace CellSystem {
 
 namespace {
-Variant pack_vector(Utils::Vector3i const &vec) {
-  return std::vector<int>(vec.begin(), vec.end());
-}
 auto const &get_regular_decomposition() {
   return dynamic_cast<RegularDecomposition const &>(
       Utils::as_const(cell_structure).decomposition());
@@ -89,12 +86,8 @@ public:
          [this](Variant const &v) {
            context()->parallel_try_catch([&v]() {
              auto const error_msg = std::string("Parameter 'node_grid'");
-             auto const vec = get_value<std::vector<int>>(v);
-             if (vec.size() != 3ul) {
-               throw std::invalid_argument(error_msg + " must be 3 ints");
-             }
              auto const old_node_grid = ::node_grid;
-             auto const new_node_grid = Utils::Vector3i{vec.begin(), vec.end()};
+             auto const new_node_grid = get_value<Utils::Vector3i>(v);
              auto const n_nodes_old = Utils::product(old_node_grid);
              auto const n_nodes_new = Utils::product(new_node_grid);
              if (n_nodes_new != n_nodes_old) {
@@ -113,7 +106,7 @@ public:
              }
            });
          },
-         []() { return pack_vector(::node_grid); }},
+         []() { return ::node_grid; }},
         {"skin",
          [this](Variant const &v) {
            auto const new_skin = get_value<double>(v);
@@ -186,11 +179,11 @@ public:
       auto const cs_type = cell_structure.decomposition_type();
       if (cs_type == CellStructureType::CELL_STRUCTURE_REGULAR) {
         auto const rd = get_regular_decomposition();
-        state["cell_grid"] = pack_vector(rd.cell_grid);
+        state["cell_grid"] = Variant{rd.cell_grid};
         state["cell_size"] = Variant{rd.cell_size};
       } else if (cs_type == CellStructureType::CELL_STRUCTURE_HYBRID) {
         auto const hd = get_hybrid_decomposition();
-        state["cell_grid"] = pack_vector(hd.get_cell_grid());
+        state["cell_grid"] = Variant{hd.get_cell_grid()};
         state["cell_size"] = Variant{hd.get_cell_size()};
         mpi_resort_particles(true); // needed to get correct particle counts
         state["parts_per_decomposition"] =
