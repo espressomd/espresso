@@ -1,4 +1,4 @@
-image: ghcr.io/espressomd/docker/ubuntu-20.04:7ec021ab4af6f89d65121db2eb24acb1ed452e02
+image: ghcr.io/espressomd/docker/ubuntu-20.04:adb6ad0892de1fb1ecdd9f29c1115cfc16ea5f4b
 
 stages:
   - prepare
@@ -136,7 +136,7 @@ no_rotation:
 ubuntu:wo-dependencies:
   <<: *global_job_definition
   stage: build
-  image: ghcr.io/espressomd/docker/ubuntu-wo-dependencies:7ec021ab4af6f89d65121db2eb24acb1ed452e02
+  image: ghcr.io/espressomd/docker/ubuntu-wo-dependencies:adb6ad0892de1fb1ecdd9f29c1115cfc16ea5f4b
   variables:
      myconfig: 'maxset'
      with_cuda: 'false'
@@ -154,7 +154,7 @@ ubuntu:wo-dependencies:
 debian:10:
   <<: *global_job_definition
   stage: build
-  image: ghcr.io/espressomd/docker/debian:7ec021ab4af6f89d65121db2eb24acb1ed452e02
+  image: ghcr.io/espressomd/docker/debian:adb6ad0892de1fb1ecdd9f29c1115cfc16ea5f4b
   variables:
      with_cuda: 'false'
      myconfig: 'maxset'
@@ -169,7 +169,7 @@ debian:10:
 fedora:36:
   <<: *global_job_definition
   stage: build
-  image: ghcr.io/espressomd/docker/fedora:7ec021ab4af6f89d65121db2eb24acb1ed452e02
+  image: ghcr.io/espressomd/docker/fedora:adb6ad0892de1fb1ecdd9f29c1115cfc16ea5f4b
   variables:
      with_cuda: 'false'
      myconfig: 'maxset'
@@ -210,7 +210,7 @@ clang-sanitizer:
 fast_math:
   <<: *global_job_definition
   stage: build
-  image: ghcr.io/espressomd/docker/cuda:7ec021ab4af6f89d65121db2eb24acb1ed452e02
+  image: ghcr.io/espressomd/docker/cuda:adb6ad0892de1fb1ecdd9f29c1115cfc16ea5f4b
   variables:
      CC: 'gcc-9'
      CXX: 'g++-9'
@@ -230,7 +230,7 @@ fast_math:
 cuda11-maxset-ubuntu20.04:
   <<: *global_job_definition
   stage: build
-  image: ghcr.io/espressomd/docker/cuda:7ec021ab4af6f89d65121db2eb24acb1ed452e02
+  image: ghcr.io/espressomd/docker/cuda:adb6ad0892de1fb1ecdd9f29c1115cfc16ea5f4b
   variables:
      CC: 'gcc-9'
      CXX: 'g++-9'
@@ -251,7 +251,7 @@ cuda11-maxset-ubuntu20.04:
 cuda11-maxset-ubuntu22.04:
   <<: *global_job_definition
   stage: build
-  image: ghcr.io/espressomd/docker/ubuntu-22.04:7ec021ab4af6f89d65121db2eb24acb1ed452e02
+  image: ghcr.io/espressomd/docker/ubuntu-22.04:adb6ad0892de1fb1ecdd9f29c1115cfc16ea5f4b
   variables:
      CC: 'gcc-10'
      CXX: 'g++-10'

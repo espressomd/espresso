@@ -212,8 +212,8 @@ Installing requirements on other Linux distributions
 Please refer to the following Dockerfiles to find the minimum set of packages
 required to compile |es| on other Linux distributions:
 
-* `Fedora <https://github.com/espressomd/docker/blob/master/docker/Dockerfile-fedora>`__
-* `Debian <https://github.com/espressomd/docker/blob/master/docker/Dockerfile-debian>`__
+* `Fedora <https://github.com/espressomd/docker/blob/main/docker/Dockerfile-fedora>`__
+* `Debian <https://github.com/espressomd/docker/blob/main/docker/Dockerfile-debian>`__
 
 .. _Installing requirements on Windows via WSL:
 
