@@ -80,6 +80,14 @@ class RescaleTest(ut.TestCase):
     def test_z(self):
         self.dir_test(2)
 
+    def test_exceptions(self):
+        with self.assertRaisesRegex(ValueError, "Parameter 'd_new' be > 0"):
+            self.system.change_volume_and_rescale_particles(d_new=0.)
+        with self.assertRaisesRegex(ValueError, "Parameter 'd_new' be > 0"):
+            self.system.change_volume_and_rescale_particles(d_new=-1.)
+        with self.assertRaisesRegex(ValueError, "Usage: change_volume_and_rescale_particles"):
+            self.system.change_volume_and_rescale_particles(d_new=1., dir=5)
+
 
 if __name__ == "__main__":
     ut.main()

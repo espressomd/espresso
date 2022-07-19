@@ -102,17 +102,17 @@ class StokesianThermostat(ut.TestCase):
 
     def test_integrator_exceptions(self):
         # invalid parameters should throw exceptions
-        with self.assertRaises(RuntimeError):
+        with self.assertRaisesRegex(RuntimeError, "Particle radius for type 0 has an invalid value"):
             self.system.integrator.set_stokesian_dynamics(
                 viscosity=1.0, radii={0: -1})
-        with self.assertRaises(RuntimeError):
+        with self.assertRaisesRegex(RuntimeError, "Viscosity has an invalid value"):
             self.system.integrator.set_stokesian_dynamics(
                 viscosity=-1, radii={0: 1.0})
 
         # invalid PBC should throw exceptions
         self.system.integrator.set_vv()
         self.system.periodicity = [False, False, True]
-        with self.assertRaises(RuntimeError):
+        with self.assertRaisesRegex(RuntimeError, r"Stokesian Dynamics requires periodicity \(False, False, False\)"):
             self.system.integrator.set_stokesian_dynamics(
                 viscosity=1.0, radii={0: 1.0})
 
@@ -120,7 +120,7 @@ class StokesianThermostat(ut.TestCase):
         self.system.integrator.set_stokesian_dynamics(
             viscosity=1.0, radii={0: 1.0})
 
-        with self.assertRaises(Exception):
+        with self.assertRaisesRegex(Exception, r"Stokesian Dynamics requires periodicity \(False, False, False\)"):
             self.system.periodicity = [False, True, False]
 
 

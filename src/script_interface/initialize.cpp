@@ -41,6 +41,7 @@
 #include "pair_criteria/initialize.hpp"
 #include "reaction_methods/initialize.hpp"
 #include "shapes/initialize.hpp"
+#include "system/initialize.hpp"
 #include "virtual_sites/initialize.hpp"
 
 namespace ScriptInterface {
@@ -61,6 +62,7 @@ void initialize(Utils::Factory<ObjectHandle> *f) {
   Observables::initialize(f);
   PairCriteria::initialize(f);
   Shapes::initialize(f);
+  System::initialize(f);
   VirtualSites::initialize(f);
   ReactionMethods::initialize(f);
 #ifdef H5MD

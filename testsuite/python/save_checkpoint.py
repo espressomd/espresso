@@ -47,7 +47,7 @@ modes = config.get_modes()
 # use a box with 3 different dimensions, unless DipolarP3M is used
 system = espressomd.System(box_l=[12.0, 14.0, 16.0])
 if 'DP3M' in modes:
-    system.box_l = 3 * [np.max(system.box_l)]
+    system.box_l = 3 * [float(np.max(system.box_l))]
 system.cell_system.skin = 0.1
 system.time_step = 0.01
 system.time = 1.5

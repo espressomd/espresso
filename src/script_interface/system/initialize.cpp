@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -16,12 +16,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_SRC_CORE_ROTATE_SYSTEM_HPP
-#define ESPRESSO_SRC_CORE_ROTATE_SYSTEM_HPP
 
-/** Rotate all particle coordinates around an axis given by phi,theta through
- *  the center of mass by an angle alpha.
- */
-void rotate_system(double phi, double theta, double alpha);
+#include "initialize.hpp"
 
-#endif
+#include "Globals.hpp"
+#include "System.hpp"
+
+namespace ScriptInterface {
+namespace System {
+
+void initialize(Utils::Factory<ObjectHandle> *om) {
+  om->register_new<Globals>("System::Globals");
+  om->register_new<System>("System::System");
+}
+
+} // namespace System
+} // namespace ScriptInterface

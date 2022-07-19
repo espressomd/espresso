@@ -81,7 +81,7 @@ static void mpi_realloc_ia_params_local(int new_size) {
 REGISTER_CALLBACK(mpi_realloc_ia_params_local)
 
 /** Increase the size of the @ref nonbonded_ia_params vector. */
-inline void mpi_realloc_ia_params(int new_size) {
+static void mpi_realloc_ia_params(int new_size) {
   mpi_call_all(mpi_realloc_ia_params_local, new_size);
 }
 
@@ -92,7 +92,7 @@ static void mpi_bcast_all_ia_params_local() {
 REGISTER_CALLBACK(mpi_bcast_all_ia_params_local)
 
 /** Broadcast @ref nonbonded_ia_params to all nodes. */
-inline void mpi_bcast_all_ia_params() {
+static void mpi_bcast_all_ia_params() {
   mpi_call_all(mpi_bcast_all_ia_params_local);
 }
 
@@ -233,15 +233,9 @@ void make_particle_type_exist_local(int type) {
     mpi_realloc_ia_params_local(type + 1);
 }
 
-void mpi_set_min_global_cut_local(double min_global_cut) {
+void set_min_global_cut(double min_global_cut) {
   ::min_global_cut = min_global_cut;
   on_skin_change();
 }
 
-REGISTER_CALLBACK(mpi_set_min_global_cut_local)
-
-void mpi_set_min_global_cut(double min_global_cut) {
-  mpi_call_all(mpi_set_min_global_cut_local, min_global_cut);
-}
-
-double get_min_global_cut() { return min_global_cut; }
+double get_min_global_cut() { return ::min_global_cut; }
