@@ -50,8 +50,6 @@ set(Espresso_core_SRC
     rotate_system.cpp
     rotation.cpp
     Observable_stat.cpp
-    statistics_chain.cpp
-    statistics.cpp
     SystemInterface.cpp
     thermostat.cpp
     tuning.cpp
@@ -107,6 +105,7 @@ target_include_directories(
 target_compile_definitions(Espresso_core PUBLIC $<$<BOOL:${H5MD}>:H5XX_USE_MPI>)
 
 add_subdirectory(accumulators)
+add_subdirectory(analysis)
 add_subdirectory(bond_breakage)
 add_subdirectory(bonded_interactions)
 add_subdirectory(cell_system)

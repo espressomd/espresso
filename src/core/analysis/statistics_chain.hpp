@@ -18,18 +18,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef STATISTICS_CHAIN_H
-#define STATISTICS_CHAIN_H
+#ifndef ESPRESSO_SRC_CORE_ANALYSIS_STATISTICS_CHAIN_HPP
+#define ESPRESSO_SRC_CORE_ANALYSIS_STATISTICS_CHAIN_HPP
 /** \file
  *
  *  This file contains the code for statistics on chains.
  */
 
 #include <array>
-
-/** \name Exported Functions */
-/************************************************************/
-/**@{*/
 
 /**
  * @brief Calculate the end-to-end-distance.
@@ -69,6 +65,5 @@ std::array<double, 4> calc_rg(int chain_start, int chain_n_chains,
  */
 std::array<double, 2> calc_rh(int chain_start, int chain_n_chains,
                               int chain_length);
-/**@}*/
 
 #endif

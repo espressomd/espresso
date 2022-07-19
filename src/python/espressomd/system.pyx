@@ -178,7 +178,7 @@ cdef class System:
                     f"Property '{arg}' can not be set via argument to System class.")
             System.__setattr__(self, arg, kwargs.get(arg))
         self.actors = actors.Actors()
-        self.analysis = analyze.Analysis(self)
+        self.analysis = analyze.Analysis()
         self.auto_update_accumulators = accumulators.AutoUpdateAccumulators()
         self.bonded_inter = interactions.BondedInteractions()
         self.cell_system = cell_system.CellSystem()

@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_STATISTICS_HPP
-#define CORE_STATISTICS_HPP
+#ifndef ESPRESSO_SRC_CORE_ANALYSIS_STATISTICS_HPP
+#define ESPRESSO_SRC_CORE_ANALYSIS_STATISTICS_HPP
 /** \file
  *  Statistical tools to analyze simulations.
  *
@@ -27,6 +27,8 @@
  */
 
 #include "PartCfg.hpp"
+
+#include <utils/Vector.hpp>
 
 #include <vector>
 
@@ -37,8 +39,8 @@
  *  @param set2 types of particles
  *  @return the minimal distance of two particles
  */
-double mindist(PartCfg &partCfg, const std::vector<int> &set1,
-               const std::vector<int> &set2);
+double mindist(PartCfg &partCfg, std::vector<int> const &set1,
+               std::vector<int> const &set2);
 
 /** Find all particles within a given radius @p r_catch around a position.
  *  @param partCfg    @copybrief PartCfg
@@ -47,7 +49,7 @@ double mindist(PartCfg &partCfg, const std::vector<int> &set1,
  *
  *  @return List of ids close to @p pos.
  */
-std::vector<int> nbhood(PartCfg &partCfg, const Utils::Vector3d &pos,
+std::vector<int> nbhood(PartCfg &partCfg, Utils::Vector3d const &pos,
                         double dist);
 
 /** Calculate the distribution of particles around others.
@@ -66,13 +68,13 @@ std::vector<int> nbhood(PartCfg &partCfg, const Utils::Vector3d &pos,
  *  @param r_max    Maximal distance for the distribution.
  *  @param r_bins   Number of bins.
  *  @param log_flag Whether the bins are (logarithmically) equidistant.
- *  @param low      particles closer than @p r_min
- *  @param dist     Array to store the result (size: @p r_bins).
+ *  @param int_flag Whether the distribution should be cumulative.
+ *  @return Radii and distance distribution.
  */
-void calc_part_distribution(PartCfg &partCfg, std::vector<int> const &p1_types,
-                            std::vector<int> const &p2_types, double r_min,
-                            double r_max, int r_bins, bool log_flag,
-                            double *low, double *dist);
+std::vector<std::vector<double>>
+calc_part_distribution(PartCfg &partCfg, std::vector<int> const &p1_types,
+                       std::vector<int> const &p2_types, double r_min,
+                       double r_max, int r_bins, bool log_flag, bool int_flag);
 
 /** Calculate the spherically averaged structure factor.
  *
@@ -90,30 +92,28 @@ void calc_part_distribution(PartCfg &partCfg, std::vector<int> const &p1_types,
  *  @param[in]  partCfg   particle collection
  *  @param[in]  p_types   list with types of particles to be analyzed
  *  @param[in]  order     the maximum wave vector length in units of 2PI/L
- *  @param[out] wavevectors  the scattering vectors q
- *  @param[out] intensities  the structure factor S(q)
+ *  @return The scattering vectors q and structure factors S(q).
  */
-void calc_structurefactor(PartCfg &partCfg, std::vector<int> const &p_types,
-                          int order, std::vector<double> &wavevectors,
-                          std::vector<double> &intensities);
+std::vector<std::vector<double>>
+structure_factor(PartCfg &partCfg, std::vector<int> const &p_types, int order);
 
 /** Calculate the center of mass of a special type of the current configuration.
- *  \param part_type  type of the particle
+ *  @param p_type      type of the particle
  */
-Utils::Vector3d centerofmass(PartCfg &, int part_type);
+Utils::Vector3d center_of_mass(PartCfg &partCfg, int p_type);
 
 /** Calculate the angular momentum of a special type of the current
  *  configuration.
- *  \param type  type of the particle
+ *  @param partCfg     @copybrief PartCfg
+ *  @param p_type      type of the particle
  */
-Utils::Vector3d angularmomentum(PartCfg &, int type);
+Utils::Vector3d angular_momentum(PartCfg &partCfg, int p_type);
 
 /** Calculate the center of mass of a special type of a saved configuration.
- *  \param partCfg     @copybrief PartCfg
- *  \param type        type of the particle, -1 for all
- *  \param MofImatrix  Center of mass
+ *  @param partCfg     @copybrief PartCfg
+ *  @param p_type      type of the particle
  */
-void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix);
+Utils::Vector9d moment_of_inertia_matrix(PartCfg &partCfg, int p_type);
 
 /** Calculate total momentum of the system (particles & LB fluid).
  *  Inputs are bools to include particles and fluid in the linear momentum

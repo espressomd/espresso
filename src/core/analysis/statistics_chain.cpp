@@ -21,7 +21,8 @@
 /** \file
  *  Implementation of \ref statistics_chain.hpp "statistics_chain.hpp".
  */
-#include "statistics_chain.hpp"
+
+#include "analysis/statistics_chain.hpp"
 
 #include "Particle.hpp"
 #include "grid.hpp"

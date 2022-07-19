@@ -24,7 +24,7 @@
  *  The corresponding header file is statistics.hpp.
  */
 
-#include "statistics.hpp"
+#include "analysis/statistics.hpp"
 
 #include "Particle.hpp"
 #include "cells.hpp"
@@ -45,12 +45,8 @@
 #include <stdexcept>
 #include <vector>
 
-/****************************************************************************************
- *                                 basic observables calculation
- ****************************************************************************************/
-
-double mindist(PartCfg &partCfg, const std::vector<int> &set1,
-               const std::vector<int> &set2) {
+double mindist(PartCfg &partCfg, std::vector<int> const &set1,
+               std::vector<int> const &set2) {
   using Utils::contains;
 
   auto mindist_sq = std::numeric_limits<double>::infinity();
@@ -105,63 +101,54 @@ Utils::Vector3d calc_linear_momentum(int include_particles,
   return linear_momentum;
 }
 
-Utils::Vector3d centerofmass(PartCfg &partCfg, int type) {
+Utils::Vector3d center_of_mass(PartCfg &partCfg, int p_type) {
   Utils::Vector3d com{};
   double mass = 0.0;
 
   for (auto const &p : partCfg) {
-    if ((p.type() == type) || (type == -1))
-      if (not p.is_virtual()) {
-        com += p.pos() * p.mass();
-        mass += p.mass();
-      }
+    if ((p.type() == p_type or p_type == -1) and not p.is_virtual()) {
+      com += p.pos() * p.mass();
+      mass += p.mass();
+    }
   }
   com /= mass;
   return com;
 }
 
-Utils::Vector3d angularmomentum(PartCfg &partCfg, int type) {
+Utils::Vector3d angular_momentum(PartCfg &partCfg, int p_type) {
   Utils::Vector3d am{};
 
   for (auto const &p : partCfg) {
-    if ((p.type() == type) || (type == -1))
-      if (not p.is_virtual()) {
-        am += p.mass() * vector_product(p.pos(), p.v());
-      }
+    if ((p.type() == p_type or p_type == -1) and not p.is_virtual()) {
+      am += p.mass() * vector_product(p.pos(), p.v());
+    }
   }
   return am;
 }
 
-void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix) {
-  int i, count;
-  double massi;
-  Utils::Vector3d p1{};
-  count = 0;
-
-  for (i = 0; i < 9; i++)
-    MofImatrix[i] = 0.;
-
-  auto const com = centerofmass(partCfg, type);
+Utils::Vector9d moment_of_inertia_matrix(PartCfg &partCfg, int p_type) {
+  Utils::Vector9d mat{};
+  auto const com = center_of_mass(partCfg, p_type);
   for (auto const &p : partCfg) {
-    if (type == p.type() and (not p.is_virtual())) {
-      count++;
-      p1 = p.pos() - com;
-      massi = p.mass();
-      MofImatrix[0] += massi * (p1[1] * p1[1] + p1[2] * p1[2]);
-      MofImatrix[4] += massi * (p1[0] * p1[0] + p1[2] * p1[2]);
-      MofImatrix[8] += massi * (p1[0] * p1[0] + p1[1] * p1[1]);
-      MofImatrix[1] -= massi * (p1[0] * p1[1]);
-      MofImatrix[2] -= massi * (p1[0] * p1[2]);
-      MofImatrix[5] -= massi * (p1[1] * p1[2]);
+    if (p.type() == p_type and (not p.is_virtual())) {
+      auto const p1 = p.pos() - com;
+      auto const mass = p.mass();
+      mat[0] += mass * (p1[1] * p1[1] + p1[2] * p1[2]);
+      mat[4] += mass * (p1[0] * p1[0] + p1[2] * p1[2]);
+      mat[8] += mass * (p1[0] * p1[0] + p1[1] * p1[1]);
+      mat[1] -= mass * (p1[0] * p1[1]);
+      mat[2] -= mass * (p1[0] * p1[2]);
+      mat[5] -= mass * (p1[1] * p1[2]);
     }
   }
   /* use symmetry */
-  MofImatrix[3] = MofImatrix[1];
-  MofImatrix[6] = MofImatrix[2];
-  MofImatrix[7] = MofImatrix[5];
+  mat[3] = mat[1];
+  mat[6] = mat[2];
+  mat[7] = mat[5];
+  return mat;
 }
 
-std::vector<int> nbhood(PartCfg &partCfg, const Utils::Vector3d &pos,
+std::vector<int> nbhood(PartCfg &partCfg, Utils::Vector3d const &pos,
                         double dist) {
   std::vector<int> ids;
   auto const dist_sq = dist * dist;
@@ -176,30 +163,25 @@ std::vector<int> nbhood(PartCfg &partCfg, const Utils::Vector3d &pos,
   return ids;
 }
 
-void calc_part_distribution(PartCfg &partCfg, std::vector<int> const &p1_types,
-                            std::vector<int> const &p2_types, double r_min,
-                            double r_max, int r_bins, bool log_flag,
-                            double *low, double *dist) {
-  int ind, cnt = 0;
-  double inv_bin_width = 0.0;
-  double min_dist, min_dist2 = 0.0, start_dist2;
+std::vector<std::vector<double>>
+calc_part_distribution(PartCfg &partCfg, std::vector<int> const &p1_types,
+                       std::vector<int> const &p2_types, double r_min,
+                       double r_max, int r_bins, bool log_flag, bool int_flag) {
 
   auto const r_max2 = Utils::sqr(r_max);
   auto const r_min2 = Utils::sqr(r_min);
-  start_dist2 = Utils::sqr(r_max + 1.);
-  /* bin preparation */
-  *low = 0.0;
-  for (int i = 0; i < r_bins; i++)
-    dist[i] = 0.0;
-  if (log_flag)
-    inv_bin_width = (double)r_bins / (log(r_max / r_min));
-  else
-    inv_bin_width = (double)r_bins / (r_max - r_min);
+  auto const start_dist2 = Utils::sqr(r_max + 1.);
+  auto const inv_bin_width =
+      (log_flag) ? static_cast<double>(r_bins) / std::log(r_max / r_min)
+                 : static_cast<double>(r_bins) / (r_max - r_min);
 
-  /* particle loop: p1_types */
+  long cnt = 0;
+  double low = 0.0;
+  std::vector<double> distribution(r_bins);
+
   for (auto const &p1 : partCfg) {
     if (Utils::contains(p1_types, p1.type())) {
-      min_dist2 = start_dist2;
+      auto min_dist2 = start_dist2;
       /* particle loop: p2_types */
       for (auto const &p2 : partCfg) {
         if (p1 != p2) {
@@ -214,41 +196,63 @@ void calc_part_distribution(PartCfg &partCfg, std::vector<int> const &p1_types,
       }
       if (min_dist2 <= r_max2) {
         if (min_dist2 >= r_min2) {
-          min_dist = sqrt(min_dist2);
+          auto const min_dist = std::sqrt(min_dist2);
           /* calculate bin index */
-          if (log_flag)
-            ind = (int)((log(min_dist / r_min)) * inv_bin_width);
-          else
-            ind = (int)((min_dist - r_min) * inv_bin_width);
-          if (ind >= 0 && ind < r_bins) {
-            dist[ind] += 1.0;
+          auto const ind = static_cast<int>(
+              ((log_flag) ? std::log(min_dist / r_min) : (min_dist - r_min)) *
+              inv_bin_width);
+          if (ind >= 0 and ind < r_bins) {
+            distribution[ind] += 1.0;
           }
         } else {
-          *low += 1.0;
+          low += 1.0;
         }
       }
       cnt++;
     }
   }
-  if (cnt == 0)
-    return;
 
-  /* normalization */
-  *low /= (double)cnt;
-  for (int i = 0; i < r_bins; i++)
-    dist[i] /= (double)cnt;
+  if (cnt != 0) {
+    // normalization
+    low /= static_cast<double>(cnt);
+    for (int i = 0; i < r_bins; i++) {
+      distribution[i] /= static_cast<double>(cnt);
+    }
+
+    // integration
+    if (int_flag) {
+      distribution[0] += low;
+      for (int i = 0; i < r_bins - 1; i++)
+        distribution[i + 1] += distribution[i];
+    }
+  }
+
+  std::vector<double> radii(r_bins);
+  if (log_flag) {
+    auto const log_fac = std::pow(r_max / r_min, 1. / r_bins);
+    radii[0] = r_min * std::sqrt(log_fac);
+    for (int i = 1; i < r_bins; ++i) {
+      radii[i] = radii[i - 1] * log_fac;
+    }
+  } else {
+    auto const bin_width = (r_max - r_min) / static_cast<double>(r_bins);
+    for (int i = 0; i < r_bins; ++i) {
+      radii[i] = r_min + bin_width / 2. + static_cast<double>(i) * bin_width;
+    }
+  }
+
+  return {radii, distribution};
 }
 
-void calc_structurefactor(PartCfg &partCfg, std::vector<int> const &p_types,
-                          int order, std::vector<double> &wavevectors,
-                          std::vector<double> &intensities) {
+std::vector<std::vector<double>>
+structure_factor(PartCfg &partCfg, std::vector<int> const &p_types, int order) {
 
   if (order < 1)
     throw std::domain_error("order has to be a strictly positive number");
 
   auto const order_sq = Utils::sqr(static_cast<std::size_t>(order));
+  auto const twoPI_L = 2. * Utils::pi() * box_geo.length_inv()[0];
   std::vector<double> ff(2 * order_sq + 1);
-  auto const twoPI_L = 2 * Utils::pi() * box_geo.length_inv()[0];
 
   for (int i = 0; i <= order; i++) {
     for (int j = -order; j <= order; j++) {
@@ -285,8 +289,8 @@ void calc_structurefactor(PartCfg &partCfg, std::vector<int> const &p_types,
     }
   }
 
-  wavevectors.resize(length);
-  intensities.resize(length);
+  std::vector<double> wavevectors(length);
+  std::vector<double> intensities(length);
 
   int cnt = 0;
   for (std::size_t i = 0; i < order_sq; i++) {
@@ -296,4 +300,5 @@ void calc_structurefactor(PartCfg &partCfg, std::vector<int> const &p_types,
       cnt++;
     }
   }
+  return {std::move(wavevectors), std::move(intensities)};
 }

@@ -24,6 +24,7 @@
 #include "ComFixed.hpp"
 #include "CylindricalTransformationParameters.hpp"
 #include "accumulators/initialize.hpp"
+#include "analysis/initialize.hpp"
 #include "bond_breakage/initialize.hpp"
 #include "cell_system/initialize.hpp"
 #include "cluster_analysis/initialize.hpp"
@@ -45,6 +46,7 @@
 namespace ScriptInterface {
 void initialize(Utils::Factory<ObjectHandle> *f) {
   Accumulators::initialize(f);
+  Analysis::initialize(f);
   BondBreakage::initialize(f);
   CellSystem::initialize(f);
   ClusterAnalysis::initialize(f);

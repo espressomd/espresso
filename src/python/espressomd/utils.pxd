@@ -38,8 +38,6 @@ cdef extern from "utils/Span.hpp" namespace "Utils":
 
     Span[const T] make_const_span[T](T *, size_t)
 
-cdef np.ndarray create_nparray_from_double_array(double * x, int n)
-cdef np.ndarray create_nparray_from_double_span(Span[double] x)
 cpdef check_array_type_or_throw_except(x, n, t, msg)
 cpdef check_type_or_throw_except(x, n, t, msg)
 

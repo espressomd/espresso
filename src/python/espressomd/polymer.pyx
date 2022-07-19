@@ -24,7 +24,7 @@ from .system import System
 from .interactions import BondedInteraction
 from .utils cimport make_Vector3d, check_type_or_throw_except
 from .utils import array_locked
-from .analyze cimport partCfg
+from .polymer cimport partCfg
 
 
 def validate_params(_params, default):

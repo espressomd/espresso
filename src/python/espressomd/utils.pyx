@@ -68,33 +68,6 @@ cpdef check_type_or_throw_except(x, n, t, msg):
             raise ValueError(msg + f" -- Got an {type(x).__name__}")
 
 
-cdef np.ndarray create_nparray_from_double_array(double * x, int len_x):
-    """
-    Returns a numpy array from double array.
-
-    Parameters
-    ----------
-    x : C-style array of type double which is to be converted
-    len_x: len of array
-
-    """
-    numpyArray = np.zeros(len_x)
-    for i in range(len_x):
-        numpyArray[i] = x[i]
-    return numpyArray
-
-cdef np.ndarray create_nparray_from_double_span(Span[double] x):
-    """
-    Returns a numpy array from double span.
-
-    Parameters
-    ----------
-    x : Span of type double which is to be converted
-
-    """
-    return create_nparray_from_double_array(x.data(), x.size())
-
-
 def to_char_pointer(s):
     """
     Returns a char pointer which contains the information of the provided python string.

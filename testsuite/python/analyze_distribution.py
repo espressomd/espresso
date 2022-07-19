@@ -44,32 +44,51 @@ class AnalyzeDistributions(ut.TestCase):
 
     def test_distribution_lin(self):
         r_min = 0.0
-        r_max = 100.
+        r_max = 20.
         r_bins = 100
         edges = np.linspace(r_min, r_max, num=r_bins + 1, endpoint=True)
         ref_bins = (edges[1:] + edges[:-1]) / 2.
-        for int_flag in (0, 1):
+        for int_flag in (False, True):
             ref_rdf = self.calc_min_distribution(edges, int_flag)
             core_rdf = self.system.analysis.distribution(
                 type_list_a=[0], type_list_b=[0], r_min=r_min, r_max=r_max,
-                r_bins=r_bins, log_flag=0, int_flag=int_flag)
+                r_bins=r_bins, log_flag=False, int_flag=int_flag)
             np.testing.assert_allclose(core_rdf[0], ref_bins)
             np.testing.assert_allclose(core_rdf[1], ref_rdf)
 
     def test_distribution_log(self):
         r_min = 0.01
-        r_max = 100.
+        r_max = 20.
         r_bins = 100
         edges = np.geomspace(r_min, r_max, num=r_bins + 1)
-        for int_flag in (0, 1):
+        for int_flag in (False, True):
             ref_rdf = self.calc_min_distribution(edges, int_flag)
             core_rdf = self.system.analysis.distribution(
                 type_list_a=[0], type_list_b=[0], r_min=r_min, r_max=r_max,
-                r_bins=r_bins, log_flag=1, int_flag=int_flag)
+                r_bins=r_bins, log_flag=True, int_flag=int_flag)
             ref_bins = np.geomspace(
                 core_rdf[0][0], core_rdf[0][-1], r_bins, endpoint=True)
             np.testing.assert_allclose(core_rdf[0], ref_bins)
             np.testing.assert_allclose(core_rdf[1], ref_rdf)
+
+    def test_exceptions(self):
+        valid_params = {
+            "type_list_a": [0], "type_list_b": [0], "r_min": 0.01, "r_max": 20.,
+            "r_bins": 100, "log_flag": False, "int_flag": False
+        }
+        exceptions = [
+            ("Parameter 'r_min' must be >= 0", {"r_min": -0.1}),
+            ("Parameter 'r_min' must be > 0", {"r_min": 0., "log_flag": True}),
+            ("Parameter 'r_max' must be > 'r_min'",
+             {"r_min": 2., "r_max": 1.}),
+            ("Parameter 'r_max' must be <= box_l / 2", {"r_max": 20.0001}),
+            ("Parameter 'r_bins' must be >= 1", {"r_bins": 0}),
+            ("Particle type 99 does not exist", {"type_list_a": [99]}),
+            ("Particle type -1 does not exist", {"type_list_b": [-1]}),
+        ]
+        for err_msg, kwargs in exceptions:
+            with self.assertRaisesRegex(ValueError, err_msg):
+                self.system.analysis.distribution(**{**valid_params, **kwargs})
 
 
 if __name__ == "__main__":

@@ -24,6 +24,7 @@ add_library(
 add_library(Espresso::script_interface ALIAS Espresso_script_interface)
 
 add_subdirectory(accumulators)
+add_subdirectory(analysis)
 add_subdirectory(bond_breakage)
 add_subdirectory(cell_system)
 add_subdirectory(cluster_analysis)

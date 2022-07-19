@@ -16,17 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-include "myconfig.pxi"
-from . cimport analyze
-from libcpp.vector cimport vector  # import std::vector as vector
 import numpy as np
-cimport numpy as np
-from .grid cimport box_geo
 
-from .system import System
 from . import utils
-from . cimport utils
-from .utils cimport Vector9d
+from . cimport analyze
+from .code_features import assert_features
+from .script_interface import script_interface_register, ScriptInterfaceHelper
 
 
 def autocorrelation(time_series):
@@ -86,75 +81,30 @@ def autocorrelation(time_series):
                          f"are supported, got shape {time_series.shape}")
 
 
-class Analysis:
-
-    def __init__(self, system):
-        if not isinstance(system, System):
-            raise TypeError("An instance of System is required as argument")
-        self._system = system
-
-    def min_dist(self, p1='default', p2='default'):
-        """Minimal distance between two sets of particle types.
-
-        Parameters
-        ----------
-        p1, p2 : lists of :obj:`int`
-            Particle :attr:`~espressomd.particle_data.ParticleHandle.type` in
-            both sets. If both are set to ``'default'``, the minimum distance
-            of all pairs is returned.
-
-        """
-
-        if p1 == 'default' and p2 == 'default':
-            return analyze.mindist(analyze.partCfg(), [], [])
-        elif p1 == 'default' or p2 == 'default':
-            raise ValueError("Both p1 and p2 have to be specified")
-        else:
-            for i in range(len(p1)):
-                if not utils.is_valid_type(p1[i], int):
-                    raise TypeError(
-                        f"Particle types in p1 have to be of type int, got: {repr(p1[i])}")
-
-            for i in range(len(p2)):
-                if not utils.is_valid_type(p2[i], int):
-                    raise TypeError(
-                        f"Particle types in p2 have to be of type int, got: {repr(p2[i])}")
-
-            return analyze.mindist(analyze.partCfg(), p1, p2)
-
-    #
-    # Analyze Linear Momentum
-    #
-
-    def linear_momentum(self, include_particles=True,
-                        include_lbfluid=True):
-        """
+@script_interface_register
+class Analysis(ScriptInterfaceHelper):
+    """
+    Methods
+    -------
+    linear_momentum():
         Calculates the system's linear momentum.
 
         Parameters
         ----------
         include_particles : :obj:`bool`, optional
-            whether to include the particles contribution to the linear
-            momentum.
+            Whether to include the particles contribution to the linear
+            momentum. True by default.
         include_lbfluid : :obj:`bool`, optional
             whether to include the lattice-Boltzmann fluid contribution
-            to the linear momentum.
+            to the linear momentum. True by default.
 
         Returns
         -------
-        :obj:`float`
+        (3,) array_like of :obj:`float`
             The linear momentum of the system.
 
-        """
-        return analyze.calc_linear_momentum(include_particles, include_lbfluid)
-
-    #
-    # Analyze center of mass
-    #
-
-    def center_of_mass(self, p_type=None):
-        """
-        Calculate the system's center of mass.
+    center_of_mass():
+        Calculate the center of mass of particles of a given type.
 
         Note that virtual sites are not included, as they do not have a
         meaningful mass.
@@ -162,27 +112,15 @@ class Analysis:
         Parameters
         ----------
         p_type : :obj:`int`
-            Particle :attr:`~espressomd.particle_data.ParticleHandle.type` for
-            which to calculate the center of mass.
+            Particle :attr:`~espressomd.particle_data.ParticleHandle.type`
+            for which to calculate the center of mass.
 
         Returns
         -------
-        array of :obj:`float`
-            The center of mass of the system.
+        (3,) array_like of :obj:`float`
+            The center of mass of the particles.
 
-        """
-        if p_type is None:
-            raise ValueError(
-                "The p_type keyword argument must be provided (particle type)")
-        utils.check_type_or_throw_except(
-            p_type, 1, int, "p_type has to be an int")
-        if p_type < 0 or p_type >= analyze.max_seen_particle_type:
-            raise ValueError(f"Particle type {p_type} does not exist!")
-
-        return analyze.centerofmass(analyze.partCfg(), p_type)
-
-    def nbhood(self, pos=None, r_catch=None):
-        """
+    nbhood():
         Get all particles in a defined neighborhood.
 
         Parameters
@@ -194,17 +132,199 @@ class Analysis:
 
         Returns
         -------
-        array of :obj:`int`
+        (N,) array_like of :obj:`int`
             The neighbouring particle ids.
+
+    calc_re():
+        Calculate the mean end-to-end distance of chains and its
+        standard deviation, as well as mean square end-to-end distance of
+        chains and its standard deviation.
+
+        This requires that a set of chains of equal length which start
+        with the particle number ``chain_start`` and are consecutively
+        numbered, the last particle in that topology having id number
+        ``chain_start + number_of_chains * chain_length - 1``.
+
+        Parameters
+        ----------
+        chain_start : :obj:`int`
+            The id of the first monomer of the first chain.
+        number_of_chains : :obj:`int`
+            Number of chains contained in the range.
+        chain_length : :obj:`int`
+            The length of every chain.
+
+        Returns
+        -------
+        (4,) array_like of :obj:`float`
+            Where [0] is the mean end-to-end distance of chains and [1] its
+            standard deviation, [2] the mean square end-to-end distance and
+            [3] its standard deviation.
+
+    calc_rg():
+        Calculate the mean radius of gyration of chains and its standard
+        deviation, as well as the mean square radius of gyration of chains
+        and its standard deviation.
+
+        This requires that a set of chains of equal length which start
+        with the particle number ``chain_start`` and are consecutively
+        numbered, the last particle in that topology having id number
+        ``chain_start + number_of_chains * chain_length - 1``.
+
+        Parameters
+        ----------
+        chain_start : :obj:`int`
+            The id of the first monomer of the first chain.
+        number_of_chains : :obj:`int`
+            Number of chains contained in the range.
+        chain_length : :obj:`int`
+            The length of every chain.
+
+        Returns
+        -------
+        (4,) array_like of :obj:`float`
+            Where [0] is the mean radius of gyration of the chains and [1] its
+            standard deviation, [2] the mean square radius of gyration and [3]
+            its standard deviation.
+
+    calc_rh():
+        Calculate the hydrodynamic mean radius of chains and its standard
+        deviation.
+
+        This requires that a set of chains of equal length which start
+        with the particle number ``chain_start`` and are consecutively
+        numbered, the last particle in that topology having id number
+        ``chain_start + number_of_chains * chain_length - 1``.
+
+        Parameters
+        ----------
+        chain_start : :obj:`int`
+            The id of the first monomer of the first chain
+        number_of_chains : :obj:`int`
+            Number of chains contained in the range.
+        chain_length : :obj:`int`
+            The length of every chain.
+
+        Returns
+        -------
+        (2,) array_like of :obj:`float`:
+            Where [0] is the mean hydrodynamic radius of the chains
+            and [1] its standard deviation.
+
+    angular_momentum():
+        Calculate the system's angular momentum with respect to the origin.
+
+        Note that virtual sites are not included, as they do not have a
+        meaningful mass.
+
+        Parameters
+        ----------
+        p_type : :obj:`int`
+            Particle :attr:`~espressomd.particle_data.ParticleHandle.type` for
+            which to calculate the center of mass, or ``-1`` for all particles.
+
+        Returns
+        -------
+        (3,) array_like of :obj:`float`
+           The center of mass of the system.
+
+    structure_factor():
+        Calculate the structure factor for given types.  Returns the
+        spherically averaged structure factor of particles specified in
+        ``sf_types``.  The structure factor is calculated for all possible wave
+        vectors q up to ``sf_order``. Do not choose parameter ``sf_order`` too
+        large because the number of calculations grows as ``sf_order`` to the
+        third power.
+
+        Parameters
+        ----------
+        sf_types : list of :obj:`int`
+            Particle :attr:`~espressomd.particle_data.ParticleHandle.type`
+            which should be considered.
+        sf_order : :obj:`int`
+            Specifies the maximum wavevector.
+
+        Returns
+        -------
+        :obj:`ndarray`
+            Where [0] contains the wave vectors q
+            and [1] contains the structure factors S(q)
+
+    distribution():
+        Calculates the distance distribution of particles (probability of
+        finding a particle of type A at a certain distance around a particle of
+        type B, disregarding the fact that a spherical shell of a larger radius
+        covers a larger volume). The distance is defined as the minimal distance
+        between a particle of group ``type_list_a`` to any of the group
+        ``type_list_b``. Returns two arrays, the bins and the (normalized)
+        distribution.
+
+        Parameters
+        ----------
+        type_list_a : list of :obj:`int`
+            List of particle :attr:`~espressomd.particle_data.ParticleHandle.type`,
+            only consider distances from these types.
+        type_list_b : list of :obj:`int`
+            List of particle :attr:`~espressomd.particle_data.ParticleHandle.type`,
+            only consider distances to these types.
+        r_min : :obj:`float`
+            Minimum distance. Default is 0.
+        r_max : :obj:`float`
+            Maximum distance. By default, it is half the box size.
+            A value larger than half the box size is allowed for systems
+            with :ref:`open boundary conditions <Open boundaries>`.
+        r_bins : :obj:`int`
+            Number of bins. Default is 100.
+        log_flag : :obj:`bool`
+            When set to ``False``, the bins are linearly equidistant; when set
+            to ``True``, the bins are logarithmically equidistant.
+        int_flag : :obj:`bool`
+            When set to ``True``, the result is an integrated distribution.
+
+        Returns
+        -------
+        :obj:`ndarray`
+            Where [0] contains the midpoints of the bins,
+            and [1] contains the values of the rdf.
+
+    """
+    _so_name = "ScriptInterface::Analysis::Analysis"
+    _so_creation_policy = "LOCAL"
+    _so_bind_methods = (
+        "linear_momentum",
+        "center_of_mass",
+        "nbhood",
+        "calc_re",
+        "calc_rg",
+        "calc_rh",
+        "angular_momentum",
+        "structure_factor",
+        "distribution")
+
+    def min_dist(self, p1='default', p2='default'):
+        """
+        Minimal distance between two sets of particle types.
+
+        Parameters
+        ----------
+        p1, p2 : lists of :obj:`int`
+            Particle :attr:`~espressomd.particle_data.ParticleHandle.type` in
+            both sets. If both are set to ``'default'``, the minimum distance
+            of all pairs is returned.
+
+        Returns
+        -------
+        :obj:`float`
+            Minimal distance.
 
         """
 
-        utils.check_type_or_throw_except(pos, 3, float, "pos must be 3 floats")
-        utils.check_type_or_throw_except(
-            r_catch, 1, float, "r_catch must be a float")
-
-        return analyze.nbhood(
-            analyze.partCfg(), utils.make_Vector3d(pos), r_catch)
+        if p1 == 'default' and p2 == 'default':
+            p1 = []
+            p2 = []
+        elif p1 == 'default' or p2 == 'default':
+            raise ValueError("Both p1 and p2 have to be specified")
+        return self.call_method("min_dist", p_types1=p1, p_types2=p2)
 
     def pressure(self):
         """
@@ -293,18 +413,6 @@ class Analysis:
         utils.handle_errors("calculate_pressure() failed")
         return obs
 
-    IF DPD == 1:
-        def dpd_stress(self):
-            cdef Vector9d p = dpd_stress()
-            return utils.array_locked((
-                p[0], p[1], p[2],
-                p[3], p[4], p[5],
-                p[6], p[7], p[8])).reshape((3, 3))
-
-    #
-    # Energy analysis
-    #
-
     def energy(self):
         """
         Calculate the system energy in parallel.
@@ -365,301 +473,24 @@ class Analysis:
         Returns
         -------
         :obj: `float`
-            non-bonded energy of that particle
+            Non-bonded energy of that particle
 
         """
-        energy_contribution = particle_short_range_energy_contribution(
-            particle.id)
-        return energy_contribution
+        return self.call_method("particle_energy", pid=particle.id)
 
-    def calc_re(self, chain_start=None, number_of_chains=None,
-                chain_length=None):
-        """
-        Calculate the mean end-to-end distance of chains and its
-        standard deviation, as well as mean square end-to-end distance of
-        chains and its standard deviation.
-
-        This requires that a set of chains of equal length which start
-        with the particle number ``chain_start`` and are consecutively
-        numbered, the last particle in that topology having id number
-        ``chain_start + number_of_chains * chain_length - 1``.
-
-        Parameters
-        ----------
-        chain_start : :obj:`int`
-            The id of the first monomer of the first chain.
-        number_of_chains : :obj:`int`
-            Number of chains contained in the range.
-        chain_length : :obj:`int`
-            The length of every chain.
-
-        Returns
-        -------
-        (4,) array_like of :obj:`float`
-            Where [0] is the mean end-to-end distance of chains and [1] its
-            standard deviation, [2] the mean square end-to-end distance and
-            [3] its standard deviation.
-
-        """
-        self.check_topology(chain_start, number_of_chains, chain_length)
-        re = analyze.calc_re(chain_start, number_of_chains, chain_length)
-        return np.array([re[0], re[1], re[2], re[3]])
-
-    def calc_rg(self, chain_start=None, number_of_chains=None,
-                chain_length=None):
-        """
-        Calculate the mean radius of gyration of chains and its standard
-        deviation, as well as the mean square radius of gyration of chains
-        and its standard deviation.
-
-        This requires that a set of chains of equal length which start
-        with the particle number ``chain_start`` and are consecutively
-        numbered, the last particle in that topology having id number
-        ``chain_start + number_of_chains * chain_length - 1``.
-
-        Parameters
-        ----------
-        chain_start : :obj:`int`
-            The id of the first monomer of the first chain.
-        number_of_chains : :obj:`int`
-            Number of chains contained in the range.
-        chain_length : :obj:`int`
-            The length of every chain.
-
-        Returns
-        -------
-        (4,) array_like of :obj:`float`
-            Where [0] is the mean radius of gyration of the chains and [1] its
-            standard deviation, [2] the mean square radius of gyration and [3]
-            its standard deviation.
-
-        """
-        self.check_topology(chain_start, number_of_chains, chain_length)
-        rg = analyze.calc_rg(chain_start, number_of_chains, chain_length)
-        return np.array([rg[0], rg[1], rg[2], rg[3]])
-
-    def calc_rh(self, chain_start=None, number_of_chains=None,
-                chain_length=None):
-        """
-        Calculate the hydrodynamic mean radius of chains and its standard
-        deviation.
-
-        This requires that a set of chains of equal length which start
-        with the particle number ``chain_start`` and are consecutively
-        numbered, the last particle in that topology having id number
-        ``chain_start + number_of_chains * chain_length - 1``.
-
-        Parameters
-        ----------
-        chain_start : :obj:`int`
-            The id of the first monomer of the first chain
-        number_of_chains : :obj:`int`
-            Number of chains contained in the range.
-        chain_length : :obj:`int`
-            The length of every chain.
-
-        Returns
-        -------
-        (2,) array_like of :obj:`float`:
-            Where [0] is the mean hydrodynamic radius of the chains
-            and [1] its standard deviation.
-
-        """
-
-        self.check_topology(chain_start, number_of_chains, chain_length)
-        rh = analyze.calc_rh(chain_start, number_of_chains, chain_length)
-        return np.array([rh[0], rh[1]])
-
-    def check_topology(self, chain_start=None, number_of_chains=None,
-                       chain_length=None):
-        utils.check_type_or_throw_except(
-            chain_start, 1, int, "chain_start=int is a required argument")
-        utils.check_type_or_throw_except(
-            number_of_chains, 1, int, "number_of_chains=int is a required argument")
-        utils.check_type_or_throw_except(
-            chain_length, 1, int, "chain_length=int is a required argument")
-        id_min = chain_start
-        id_max = chain_start + chain_length * number_of_chains
-        for i in range(id_min, id_max):
-            if not self._system.part.exists(i):
-                raise ValueError(f'particle with id {i} does not exist\n'
-                                 f'cannot perform analysis on the range '
-                                 f'chain_start={chain_start}, number_of_chains='
-                                 f'{number_of_chains}, chain_length={chain_length}\n'
-                                 f'please provide a contiguous range of particle ids')
-
-    #
-    # Structure factor
-    #
-
-    def structure_factor(self, sf_types=None, sf_order=None):
-        """
-        Calculate the structure factor for given types.  Returns the
-        spherically averaged structure factor of particles specified in
-        ``sf_types``.  The structure factor is calculated for all possible wave
-        vectors q up to ``sf_order``. Do not choose parameter ``sf_order`` too
-        large because the number of calculations grows as ``sf_order`` to the
-        third power.
-
-        Parameters
-        ----------
-        sf_types : list of :obj:`int`
-            Specifies which particle :attr:`~espressomd.particle_data.ParticleHandle.type`
-            should be considered.
-        sf_order : :obj:`int`
-            Specifies the maximum wavevector.
-
-        Returns
-        -------
-        :obj:`ndarray`
-            Where [0] contains q
-            and [1] contains the structure factor s(q)
-
-        """
-
-        if sf_types is None or not hasattr(sf_types, '__iter__'):
-            raise ValueError("sf_types has to be a list!")
-        utils.check_type_or_throw_except(
-            sf_order, 1, int, "sf_order has to be an int!")
-
-        cdef vector[double] wavevectors
-        cdef vector[double] intensities
-        analyze.calc_structurefactor(
-            analyze.partCfg(), sf_types, sf_order, wavevectors, intensities)
-
-        return np.vstack([wavevectors, intensities])
-
-    #
-    # distribution
-    #
-
-    def distribution(self, type_list_a=None, type_list_b=None,
-                     r_min=0.0, r_max=None, r_bins=100, log_flag=0, int_flag=0):
-        """
-        Calculates the distance distribution of particles (probability of
-        finding a particle of type A at a certain distance around a particle of
-        type B, disregarding the fact that a spherical shell of a larger radius
-        covers a larger volume). The distance is defined as the minimal distance
-        between a particle of group ``type_list_a`` to any of the group
-        ``type_list_b`` (excluding the self-contribution). Returns two arrays,
-        the bins and the (normalized) distribution.
-
-        Parameters
-        ----------
-        type_list_a : list of :obj:`int`
-            List of particle :attr:`~espressomd.particle_data.ParticleHandle.type`,
-            only consider distances from these types.
-        type_list_b : list of :obj:`int`
-            List of particle :attr:`~espressomd.particle_data.ParticleHandle.type`,
-            only consider distances to these types.
-        r_min : :obj:`float`
-            Minimum distance.
-        r_max : :obj:`float`
-            Maximum distance. By default, it is half the box size.
-            A value larger than half the box size is allowed for systems
-            with :ref:`open boundary conditions <Open boundaries>`.
-        r_bins : :obj:`int`
-            Number of bins.
-        log_flag : :obj:`bool`
-            When set to ``False``, the bins are linearly equidistant; when set
-            to ``True``, the bins are logarithmically equidistant.
-        int_flag : :obj:`bool`
-            When set to ``True``, the result is an integrated distribution.
-
-        Returns
-        -------
-        :obj:`ndarray`
-            Where [0] contains the midpoints of the bins,
-            and [1] contains the values of the rdf.
-
-        """
-
-        if (type_list_a is None) or (not hasattr(type_list_a, '__iter__')):
-            raise ValueError("type_list_a has to be a list!")
-        if (type_list_b is None) or (not hasattr(type_list_b, '__iter__')):
-            raise ValueError("type_list_b has to be a list!")
-
-        if r_max is None:
-            box_l = utils.make_array_locked(box_geo.length())
-            r_max = min(box_l) / 2
-
-        assert r_min >= 0.0, "r_min was chosen too small!"
-        assert not log_flag or r_min != 0.0, "r_min cannot include zero"
-        assert r_max > r_min, "r_max has to be greater than r_min!"
-        assert r_bins >= 1, "r_bins has to be greater than zero!"
-
-        cdef double low
-        cdef vector[double] distribution
-        distribution.resize(r_bins)
-
-        analyze.calc_part_distribution(
-            analyze.partCfg(), type_list_a, type_list_b,
-            r_min, r_max, r_bins, < bint > log_flag, & low, distribution.data())
-
-        np_distribution = utils.create_nparray_from_double_array(
-            distribution.data(), r_bins)
-
-        if int_flag:
-            np_distribution[0] += low
-            for i in xrange(r_bins - 1):
-                np_distribution[i + 1] += np_distribution[i]
-
-        r = np.zeros(r_bins)
-
-        if log_flag:
-            log_fac = (r_max / r_min)**(1.0 / r_bins)
-            r[0] = r_min * np.sqrt(log_fac)
-            for i in xrange(1, r_bins):
-                r[i] = r[i - 1] * log_fac
-        else:
-            bin_width = (r_max - r_min) / float(r_bins)
-            r = np.linspace(r_min + bin_width / 2.0,
-                            r_max - bin_width / 2.0, r_bins)
-
-        return np.array([r, np_distribution])
-
-    #
-    # angularmomentum
-    #
-
-    def angular_momentum(self, p_type=None):
-        """
-        Calculates the system's angular momentum with respect to the origin.
-
-        Note that virtual sites are not included, as they do not have a meaningful mass.
-
-        Parameters
-        ----------
-        p_type : :obj:`int`
-            Particle :attr:`~espressomd.particle_data.ParticleHandle.type` for
-            which to calculate the center of mass.
-
-        Returns
-        -------
-        (3,) :obj:`ndarray` of :obj:`float`
-           The center of mass of the system.
-
-        """
-        utils.check_type_or_throw_except(
-            p_type, 1, int, "p_type has to be an int")
-
-        return np.array(utils.make_array_locked(
-            analyze.angularmomentum(analyze.partCfg(), p_type)))
-
-    #
-    # gyration_tensor
-    #
+    def dpd_stress(self):
+        assert_features("DPD")
+        return np.reshape(self.call_method("dpd_stress"), (3, 3))
 
     def gyration_tensor(self, p_type=None):
         """
-        Analyze the gyration tensor of particles of a given type or of all
-        particles in the system if no type is given.
+        Analyze the gyration tensor of particles of a given type.
 
         Parameters
         ----------
-        p_type : list of :obj:`int`, optional
+        p_type : list of :obj:`int`
             A particle :attr:`~espressomd.particle_data.ParticleHandle.type`,
-            or list of all particle types to be considered.
+            or list of particle types to be considered.
 
         Returns
         -------
@@ -680,36 +511,21 @@ class Analysis:
                 "The p_type keyword argument must be provided (particle type)")
         if not hasattr(p_type, '__iter__'):
             p_type = [p_type]
-        for ptype in p_type:
-            utils.check_type_or_throw_except(
-                ptype, 1, int, "particle type has to be an int")
-            if ptype < 0 or ptype >= analyze.max_seen_particle_type:
-                raise ValueError(f"Particle type {ptype} does not exist!")
-        selection = self._system.part.select(lambda p: (p.type in p_type))
-        cm = np.mean(selection.pos, axis=0)
-        mat = np.zeros(shape=(3, 3))
-        for i, j in np.ndindex((3, 3)):
-            mat[i, j] = np.mean(((selection.pos)[:, i] - cm[i]) * (
-                (selection.pos)[:, j] - cm[j]))
+        vec = self.call_method("gyration_tensor", p_types=p_type)
+        mat = np.reshape(vec, (3, 3))
         w, v = np.linalg.eig(mat)
         # return eigenvalue/vector tuples in order of increasing eigenvalues
         order = np.argsort(np.abs(w))[::-1]
-        rad_gyr_sqr = mat[0, 0] + mat[1, 1] + mat[2, 2]
+        rad_gyr_sqr = np.trace(mat)
         aspheric = w[order[0]] - 0.5 * (w[order[1]] + w[order[2]])
         acylindric = w[order[1]] - w[order[2]]
         rel_shape_anis = (aspheric**2 + 0.75 * acylindric**2) / rad_gyr_sqr**2
         return {
             "Rg^2": rad_gyr_sqr,
-            "shape": [aspheric,
-                      acylindric,
-                      rel_shape_anis],
+            "shape": [aspheric, acylindric, rel_shape_anis],
             "eva0": (w[order[0]], v[:, order[0]]),
             "eva1": (w[order[1]], v[:, order[1]]),
             "eva2": (w[order[2]], v[:, order[2]])}
-
-    #
-    # momentofinertiamatrix
-    #
 
     def moment_of_inertia_matrix(self, p_type=None):
         """
@@ -718,30 +534,13 @@ class Analysis:
         Parameters
         ----------
         p_type : :obj:`int`
-            A particle :attr:`~espressomd.particle_data.ParticleHandle.type`
+            A particle :attr:`~espressomd.particle_data.ParticleHandle.type`.
 
         Returns
         -------
-        :obj:`ndarray`
-            3x3 moment of inertia matrix.
+        (3,3) array_like of :obj:`float`
+            Moment of inertia matrix.
 
         """
-
-        cdef double[9] MofImatrix
-
-        if p_type is None:
-            raise ValueError(
-                "The p_type keyword argument must be provided (particle type)")
-        utils.check_type_or_throw_except(
-            p_type, 1, int, "p_type has to be an int")
-        if p_type < 0 or p_type >= analyze.max_seen_particle_type:
-            raise ValueError(f"Particle type {p_type} does not exist!")
-
-        analyze.momentofinertiamatrix(
-            analyze.partCfg(), p_type, MofImatrix)
-
-        MofImatrix_np = np.empty((9))
-        for i in range(9):
-            MofImatrix_np[i] = MofImatrix[i]
-
-        return MofImatrix_np.reshape((3, 3))
+        vec = self.call_method("moment_of_inertia_matrix", p_type=p_type)
+        return np.reshape(vec, (3, 3))

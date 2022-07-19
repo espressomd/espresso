@@ -17,39 +17,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# For C-extern Analysis
-
 cimport numpy as np
 import numpy as np
-from .utils cimport Vector3i, Vector3d, Vector9d, Span
-from .utils cimport create_nparray_from_double_span
-from libcpp.vector cimport vector  # import std::vector as vector
+from .utils cimport Span
 from libcpp cimport bool as cbool
 from libcpp.memory cimport shared_ptr
 from .interactions cimport bonded_ia_params_zero_based_type
 from .interactions cimport enum_bonded_interaction
 from .interactions cimport bonded_ia_params_next_key
 include "myconfig.pxi"
-
-cdef extern from "<array>" namespace "std" nogil:
-    cdef cppclass array4 "std::array<double, 4>":
-        array4() except+
-        double & operator[](size_t)
-
-    cdef cppclass array2 "std::array<double, 2>":
-        array2() except+
-        double & operator[](size_t)
-
-cdef extern from "particle_data.hpp":
-    ctypedef struct particle "Particle"
-    const particle & get_particle_data(int pid) except +
-
-cdef extern from "PartCfg.hpp":
-    cppclass PartCfg:
-        pass
-
-cdef extern from "partCfg_global.hpp":
-    PartCfg & partCfg()
 
 cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     int max_seen_particle_type
@@ -69,37 +45,11 @@ cdef extern from "Observable_stat.hpp":
         Span[double] non_bonded_inter_contribution(int type1, int type2)
         size_t get_chunk_size()
 
-cdef extern from "statistics.hpp":
-    cdef void calc_structurefactor(PartCfg & , const vector[int] & p_types, int order, vector[double] & wavevectors, vector[double] & intensities) except +
-    cdef double mindist(PartCfg & , const vector[int] & set1, const vector[int] & set2)
-    cdef vector[int] nbhood(PartCfg & , const Vector3d & pos, double dist)
-    cdef vector[double] calc_linear_momentum(int include_particles, int include_lbfluid)
-    cdef vector[double] centerofmass(PartCfg & , int part_type)
-
-    Vector3d angularmomentum(PartCfg & , int p_type)
-
-    void momentofinertiamatrix(PartCfg & , int p_type, double * MofImatrix)
-
-    void calc_part_distribution(
-        PartCfg &, const vector[int] & p1_types, const vector[int] & p2_types,
-        double r_min, double r_max, int r_bins, bint log_flag, double * low,
-        double * dist)
-
-cdef extern from "statistics_chain.hpp":
-    array4 calc_re(int, int, int)
-    array4 calc_rg(int, int, int) except +
-    array2 calc_rh(int, int, int)
-
 cdef extern from "pressure.hpp":
     cdef shared_ptr[Observable_stat] calculate_pressure()
 
 cdef extern from "energy.hpp":
     cdef shared_ptr[Observable_stat] calculate_energy()
-    double calculate_current_potential_energy_of_system()
-    double particle_short_range_energy_contribution(int pid)
-
-cdef extern from "dpd.hpp":
-    Vector9d dpd_stress()
 
 cdef inline get_obs_contribs(Span[double] contributions,
                              cbool calc_scalar_pressure):
@@ -119,7 +69,9 @@ cdef inline get_obs_contribs(Span[double] contributions,
 
     """
     cdef np.ndarray value
-    value = create_nparray_from_double_span(contributions)
+    value = np.empty(contributions.size())
+    for i in range(contributions.size()):
+        value[i] = contributions[i]
     if contributions.size() >= 9:
         assert contributions.size() % 3 == 0
         if calc_scalar_pressure:

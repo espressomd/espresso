@@ -21,13 +21,13 @@
 
 #include "reaction_methods/ReactionAlgorithm.hpp"
 
+#include "analysis/statistics.hpp"
 #include "cells.hpp"
 #include "energy.hpp"
 #include "grid.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
 #include "particle_node.hpp"
-#include "statistics.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
