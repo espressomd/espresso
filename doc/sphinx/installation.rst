@@ -156,7 +156,6 @@ To run the samples and tutorials, start by installing the following packages:
 .. code-block:: bash
 
     sudo apt install python3-matplotlib python3-pint python3-tqdm ffmpeg
-    pip3 install --user 'MDAnalysis>=1.0.0,<2.0.0'
 
 The tutorials are written in the
 `Notebook Format <https://nbformat.readthedocs.io/en/latest/>`__

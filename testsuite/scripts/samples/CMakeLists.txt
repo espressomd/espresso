@@ -48,7 +48,6 @@ sample_test(FILE test_lj_liquid_structurefactor.py)
 sample_test(FILE test_load_checkpoint.py)
 set_tests_properties(sample_load_checkpoint PROPERTIES FIXTURES_REQUIRED
                                                        sample_save_checkpoint)
-sample_test(FILE test_MDAnalysisIntegration.py)
 sample_test(FILE test_minimal-charged-particles.py)
 sample_test(FILE test_minimal-diamond.py)
 sample_test(FILE test_minimal-polymer.py)
