@@ -24,7 +24,6 @@ set(Espresso_core_SRC
     bond_error.cpp
     cells.cpp
     collision.cpp
-    comfixed_global.cpp
     communication.cpp
     constraints.cpp
     dpd.cpp

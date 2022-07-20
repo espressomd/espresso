@@ -566,6 +566,9 @@ class CheckpointTest(ut.TestCase):
             self.assertIn(key, state)
             self.assertEqual(state[key], reference[key], msg=f'for {key}')
 
+    def test_comfixed(self):
+        self.assertEqual(list(system.comfixed.types), [0, 2])
+
     @utx.skipIfMissingFeatures('COLLISION_DETECTION')
     def test_collision_detection(self):
         coldet = system.collision_detection

@@ -19,26 +19,42 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_COM_FIXED_HPP
-#define SCRIPT_INTERFACE_COM_FIXED_HPP
+#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_GALILEI_COMFIXED_HPP
+#define ESPRESSO_SRC_SCRIPT_INTERFACE_GALILEI_COMFIXED_HPP
 
 #include "script_interface/ScriptInterface.hpp"
+#include "script_interface/auto_parameters/AutoParameters.hpp"
 
-#include "core/comfixed_global.hpp"
+#include "core/forces.hpp"
+#include "core/galilei/ComFixed.hpp"
 
+#include <memory>
 #include <vector>
 
 namespace ScriptInterface {
+namespace Galilei {
 
 class ComFixed : public AutoParameters<ComFixed> {
+  std::shared_ptr<::ComFixed> m_comfixed;
+
+  void do_construct(VariantMap const &params) override {
+    ::comfixed = m_comfixed = std::make_shared<::ComFixed>();
+    for (auto const &p : params) {
+      do_set_parameter(p.first, p.second);
+    }
+  }
+
 public:
   ComFixed() {
     add_parameters({{"types",
-                     [](Variant const &v) {
-                       comfixed.set_fixed_types(get_value<std::vector<int>>(v));
+                     [this](Variant const &v) {
+                       auto const p_types = get_value<std::vector<int>>(v);
+                       m_comfixed->set_fixed_types(p_types);
                      },
-                     []() { return comfixed.get_fixed_types(); }}});
+                     [this]() { return m_comfixed->get_fixed_types(); }}});
   }
 };
+
+} // namespace Galilei
 } // namespace ScriptInterface
 #endif

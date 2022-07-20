@@ -19,6 +19,7 @@
 
 #include "initialize.hpp"
 
+#include "ComFixed.hpp"
 #include "Galilei.hpp"
 
 namespace ScriptInterface {
@@ -26,6 +27,7 @@ namespace Galilei {
 
 void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<Galilei>("Galilei::Galilei");
+  om->register_new<ComFixed>("Galilei::ComFixed");
 }
 
 } // namespace Galilei

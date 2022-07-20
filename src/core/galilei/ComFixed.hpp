@@ -16,8 +16,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_COMFIXED_HPP
-#define CORE_COMFIXED_HPP
+
+#ifndef ESPRESSO_SRC_CORE_GALILEI_COMFIXED_HPP
+#define ESPRESSO_SRC_CORE_GALILEI_COMFIXED_HPP
+
+#include "ParticleRange.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/keys.hpp>
@@ -28,15 +31,12 @@
 #include <unordered_map>
 #include <vector>
 
-template <typename ParticleRange> class ComFixed {
-public:
-  using TypeIndex = std::unordered_map<int, int>;
-
+class ComFixed {
 private:
-  TypeIndex m_type_index;
+  std::unordered_map<int, int> m_type_index;
 
   std::vector<Utils::Vector3d>
-  local_type_forces(ParticleRange &particles) const {
+  local_type_forces(ParticleRange const &particles) const {
     std::vector<Utils::Vector3d> ret(m_type_index.size(), Utils::Vector3d{});
 
     for (auto const &p : particles) {
@@ -50,7 +50,7 @@ private:
     return ret;
   }
 
-  std::vector<double> local_type_masses(ParticleRange &particles) const {
+  std::vector<double> local_type_masses(ParticleRange const &particles) const {
     std::vector<double> ret(m_type_index.size(), 0.);
 
     for (auto const &p : particles) {
@@ -65,18 +65,19 @@ private:
   }
 
 public:
-  template <typename Container> void set_fixed_types(Container const &c) {
+  void set_fixed_types(std::vector<int> const &p_types) {
     m_type_index.clear();
 
     int i = 0;
-    for (auto const &t : c) {
-      m_type_index[t] = i++;
+    for (auto const &p_type : p_types) {
+      m_type_index[p_type] = i++;
     }
   }
+
   std::vector<int> get_fixed_types() const { return Utils::keys(m_type_index); }
 
   void apply(boost::mpi::communicator const &comm,
-             ParticleRange &particles) const {
+             ParticleRange const &particles) const {
     /* Bail out early if there is nothing to do. */
     if (m_type_index.empty())
       return;

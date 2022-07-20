@@ -21,7 +21,6 @@
 
 #include "config.hpp"
 
-#include "ComFixed.hpp"
 #include "CylindricalTransformationParameters.hpp"
 #include "accumulators/initialize.hpp"
 #include "analysis/initialize.hpp"
@@ -71,7 +70,6 @@ void initialize(Utils::Factory<ObjectHandle> *f) {
   Writer::initialize(f);
 #endif
 
-  f->register_new<ComFixed>("ComFixed");
   f->register_new<CylindricalTransformationParameters>(
       "CylindricalTransformationParameters");
 }

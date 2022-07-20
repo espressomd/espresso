@@ -110,6 +110,8 @@ if espressomd.has_features('EXCLUSIONS'):
 p3 = system.part.add(id=3, pos=system.box_l / 2.0 - 1.0, type=1)
 p4 = system.part.add(id=4, pos=system.box_l / 2.0 + 1.0, type=1)
 
+system.comfixed.types = [0, 2]
+
 if espressomd.has_features('P3M') and ('P3M' in modes or 'ELC' in modes):
     if espressomd.gpu_available() and 'P3M.GPU' in modes:
         ActorP3M = espressomd.electrostatics.P3MGPU
