@@ -31,6 +31,7 @@
 #include "collision_detection/initialize.hpp"
 #include "constraints/initialize.hpp"
 #include "electrostatics/initialize.hpp"
+#include "galilei/initialize.hpp"
 #include "h5md/initialize.hpp"
 #include "interactions/initialize.hpp"
 #include "lbboundaries/initialize.hpp"
@@ -55,6 +56,7 @@ void initialize(Utils::Factory<ObjectHandle> *f) {
   Constraints::initialize(f);
   Coulomb::initialize(f);
   Dipoles::initialize(f);
+  Galilei::initialize(f);
   Interactions::initialize(f);
   LBBoundaries::initialize(f);
   LeesEdwards::initialize(f);

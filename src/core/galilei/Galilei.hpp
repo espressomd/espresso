@@ -18,28 +18,32 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef GALILEI_H
-#define GALILEI_H
+
+#ifndef ESPRESSO_SRC_CORE_GALILEI_GALILEI_HPP
+#define ESPRESSO_SRC_CORE_GALILEI_GALILEI_HPP
 
 #include <utils/Vector.hpp>
 
-/** Stop particle motion by setting the velocity of each particle to zero.
- *  @param rotation  if true, also set particle angular velocities to zero
- */
-void mpi_kill_particle_motion(int rotation);
+class Galilei {
+public:
+  /** Stop particle motion by setting the velocity of each particle to zero.
+   *  @param omega  if true, also set particle angular velocities to zero
+   */
+  void kill_particle_motion(bool omega) const;
 
-/** Set all the forces acting on the particles to zero.
- *  @param torque  if true, also set particle torques to zero
- */
-void mpi_kill_particle_forces(int torque);
+  /** Set all the forces acting on the particles to zero.
+   *  @param torque  if true, also set particle torques to zero
+   */
+  void kill_particle_forces(bool torque) const;
 
-/** Calculate the CMS of the system */
-Utils::Vector3d mpi_system_CMS();
+  /** Calculate the CMS of the system */
+  Utils::Vector3d calc_system_cms_position() const;
 
-/** Calculate the CMS velocity of the system */
-Utils::Vector3d mpi_system_CMS_velocity();
+  /** Calculate the CMS velocity of the system */
+  Utils::Vector3d calc_system_cms_velocity() const;
 
-/** Remove the CMS velocity */
-void mpi_galilei_transform();
+  /** Remove the CMS velocity */
+  void galilei_transform() const;
+};
 
 #endif

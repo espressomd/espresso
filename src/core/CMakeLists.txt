@@ -33,7 +33,6 @@ set(Espresso_core_SRC
     EspressoSystemInterface.cpp
     forcecap.cpp
     forces.cpp
-    galilei.cpp
     ghosts.cpp
     grid.cpp
     immersed_boundaries.cpp
@@ -113,6 +112,7 @@ add_subdirectory(cluster_analysis)
 add_subdirectory(constraints)
 add_subdirectory(electrostatics)
 add_subdirectory(error_handling)
+add_subdirectory(galilei)
 add_subdirectory(grid_based_algorithms)
 add_subdirectory(immersed_boundary)
 add_subdirectory(integrators)
