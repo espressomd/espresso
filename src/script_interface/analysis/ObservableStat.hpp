@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 The ESPResSo project
+ * Copyright (C) 2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -16,23 +16,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef SCRIPT_INTERFACE_INTERACTIONS_BONDED_HPP
-#define SCRIPT_INTERFACE_INTERACTIONS_BONDED_HPP
 
-/** @file
- *  Functions to interface with the core boost::variant.
- */
+#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_ANALYSIS_OBSERVABLE_STAT_HPP
+#define ESPRESSO_SRC_SCRIPT_INTERFACE_ANALYSIS_OBSERVABLE_STAT_HPP
 
-#include "core/bonded_interactions/bonded_interaction_data.hpp"
+#include "script_interface/ScriptInterface.hpp"
 
-#include <boost/variant.hpp>
+#include <string>
 
-/** Return the 0-based type number of the specified bond. */
-inline int bonded_ia_params_zero_based_type(int bond_id) {
-  if (bonded_ia_params.contains(bond_id)) {
-    return (*bonded_ia_params.at(bond_id)).which();
-  }
-  return 0;
-}
+namespace ScriptInterface {
+namespace Analysis {
+
+class ObservableStat : public ObjectHandle {
+public:
+  Variant do_call_method(std::string const &name,
+                         VariantMap const &parameters) override;
+};
+
+} // namespace Analysis
+} // namespace ScriptInterface
 
 #endif

@@ -20,12 +20,14 @@
 #include "initialize.hpp"
 
 #include "Analysis.hpp"
+#include "ObservableStat.hpp"
 
 namespace ScriptInterface {
 namespace Analysis {
 
 void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<Analysis>("ScriptInterface::Analysis::Analysis");
+  om->register_new<ObservableStat>("ScriptInterface::Analysis::ObservableStat");
 }
 
 } // namespace Analysis

@@ -25,7 +25,6 @@ from . cimport particle_data
 from .interactions import BondedInteraction
 from .interactions import BondedInteractions
 from .interactions cimport bonded_ia_params_zero_based_type
-from .analyze cimport max_seen_particle_type
 from copy import copy
 import collections
 import functools
