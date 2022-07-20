@@ -19,18 +19,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_CYL_TRANSFORM_PARAMS_HPP
-#define SCRIPT_INTERFACE_CYL_TRANSFORM_PARAMS_HPP
+#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_MATH_CYL_TRANSFORM_PARAMS_HPP
+#define ESPRESSO_SRC_SCRIPT_INTERFACE_MATH_CYL_TRANSFORM_PARAMS_HPP
 
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 #include "script_interface/get_value.hpp"
 
+#include <utils/Vector.hpp>
 #include <utils/math/cylindrical_transformation_parameters.hpp>
 
 #include <memory>
 #include <stdexcept>
 
 namespace ScriptInterface {
+namespace Math {
 
 class CylindricalTransformationParameters
     : public AutoParameters<CylindricalTransformationParameters> {
@@ -43,26 +45,25 @@ public:
                     {"orientation", AutoParameter::read_only,
                      [this]() { return m_transform_params->orientation(); }}});
   }
-  std::shared_ptr<::Utils::CylindricalTransformationParameters>
-  cyl_transform_params() const {
-    return m_transform_params;
-  }
+
+  auto cyl_transform_params() const { return m_transform_params; }
+
   void do_construct(VariantMap const &params) override {
     auto n_params = params.size();
     switch (n_params) {
     case 0:
       m_transform_params =
-          std::make_shared<Utils::CylindricalTransformationParameters>();
+          std::make_shared<::Utils::CylindricalTransformationParameters>();
       break;
     case 2:
       m_transform_params =
-          std::make_shared<Utils::CylindricalTransformationParameters>(
+          std::make_shared<::Utils::CylindricalTransformationParameters>(
               get_value<Utils::Vector3d>(params, "center"),
               get_value<Utils::Vector3d>(params, "axis"));
       break;
     case 3:
       m_transform_params =
-          std::make_shared<Utils::CylindricalTransformationParameters>(
+          std::make_shared<::Utils::CylindricalTransformationParameters>(
               get_value<Utils::Vector3d>(params, "center"),
               get_value<Utils::Vector3d>(params, "axis"),
               get_value<Utils::Vector3d>(params, "orientation"));
@@ -74,8 +75,10 @@ public:
   }
 
 private:
-  std::shared_ptr<Utils::CylindricalTransformationParameters>
+  std::shared_ptr<::Utils::CylindricalTransformationParameters>
       m_transform_params;
 };
+
+} // namespace Math
 } // namespace ScriptInterface
 #endif

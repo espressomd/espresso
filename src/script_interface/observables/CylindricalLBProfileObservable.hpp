@@ -28,7 +28,7 @@
 #include "core/observables/CylindricalLBProfileObservable.hpp"
 #include "script_interface/get_value.hpp"
 
-#include "script_interface/CylindricalTransformationParameters.hpp"
+#include "script_interface/math/CylindricalTransformationParameters.hpp"
 
 #include <boost/range/algorithm.hpp>
 
@@ -143,7 +143,7 @@ public:
 
 private:
   std::shared_ptr<CoreCylLBObs> m_observable;
-  std::shared_ptr<CylindricalTransformationParameters> m_transform_params;
+  std::shared_ptr<Math::CylindricalTransformationParameters> m_transform_params;
 };
 
 } /* namespace Observables */

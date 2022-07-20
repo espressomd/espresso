@@ -21,7 +21,6 @@
 
 #include "config.hpp"
 
-#include "CylindricalTransformationParameters.hpp"
 #include "accumulators/initialize.hpp"
 #include "analysis/initialize.hpp"
 #include "bond_breakage/initialize.hpp"
@@ -36,6 +35,7 @@
 #include "lbboundaries/initialize.hpp"
 #include "lees_edwards/initialize.hpp"
 #include "magnetostatics/initialize.hpp"
+#include "math/initialize.hpp"
 #include "mpiio/initialize.hpp"
 #include "observables/initialize.hpp"
 #include "pair_criteria/initialize.hpp"
@@ -59,6 +59,7 @@ void initialize(Utils::Factory<ObjectHandle> *f) {
   Interactions::initialize(f);
   LBBoundaries::initialize(f);
   LeesEdwards::initialize(f);
+  Math::initialize(f);
   MPIIO::initialize(f);
   Observables::initialize(f);
   PairCriteria::initialize(f);
@@ -69,9 +70,6 @@ void initialize(Utils::Factory<ObjectHandle> *f) {
 #ifdef H5MD
   Writer::initialize(f);
 #endif
-
-  f->register_new<CylindricalTransformationParameters>(
-      "CylindricalTransformationParameters");
 }
 
 } // namespace ScriptInterface
