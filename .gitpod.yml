@@ -1,0 +1,33 @@
+tasks:
+  - name: requirements
+    init: |
+       sudo apt-get update
+       sudo apt-get install -y --no-install-recommends build-essential cmake ffmpeg libboost-all-dev libfftw3-dev libgsl-dev libpython3-dev openmpi-common
+       pip install --no-cache cython
+       pip install --no-cache numpy scipy matplotlib pint tqdm --constraint requirements.txt
+       pip install --no-cache nbformat notebook jupyterlab 'jupyter_contrib_nbextensions==0.5.1'
+       jupyter contrib nbextension install --user
+       jupyter nbextension enable rubberband/main
+       jupyter nbextension enable exercise2/main
+       mkdir -p ~/.jupyter/lab/user-settings/\@jupyterlab/docmanager-extension
+       mkdir -p ${GITPOD_REPO_ROOT}/.vscode
+       echo '{"nbext_hide_incompat": false}' > ~/.jupyter/nbconfig/common.json
+       echo '{"defaultViewers": {"markdown": "Markdown Preview"}}' > ~/.jupyter/lab/user-settings/\@jupyterlab/docmanager-extension/plugin.jupyterlab-settings
+       echo '{"python.defaultInterpreterPath": "build/pypresso"}' > ${GITPOD_REPO_ROOT}/.vscode/settings.json
+       echo 'export PYTHONPATH="${PYTHONPATH:+$PYTHONPATH:}${GITPOD_REPO_ROOT}/build/pypresso"' >> ~/.bashrc
+    command: |
+       mkdir build
+       cd build
+       cmake .. -D WITH_GSL=ON
+       make
+       make tutorials
+       for f in doc/tutorials/*/*.ipynb; do echo "configuring ${f}"; ./pypresso doc/tutorials/convert.py exercise2 --to-vscode-jupyter ${f}; done
+       sed -i 's/espressomd.lb.LBFluidGPU/espressomd.lb.LBFluid/; s/LB_BOUNDARIES_GPU/LB_BOUNDARIES/;' doc/tutorials/lattice_boltzmann/lattice_boltzmann_poiseuille_flow.ipynb
+       sed -i 's/espressomd.lb.LBFluidGPU/espressomd.lb.LBFluid/; s/, \\"CUDA\\"\]/]/;' doc/tutorials/active_matter/active_matter.ipynb
+
+vscode:
+  extensions:
+    - ms-python.python
+    - ms-toolsai.jupyter
+    - ms-toolsai.jupyter-keymap
+    - ms-toolsai.jupyter-renderers

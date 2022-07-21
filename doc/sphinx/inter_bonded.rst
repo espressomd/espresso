@@ -65,10 +65,10 @@ interaction. The FENE potential
 .. math::
 
    V(r) = -\frac{1}{2} K \Delta r_\mathrm{max}^2\ln \left[ 1 - \left(
-         \frac{r-r_0}{\Delta r_\mathrm{max}} \right)^2 \right]
+         \frac{r-r_0}{\Delta r_\mathrm{max}} \right)^2 \right],
 
 models a rubber-band-like, symmetric interaction between two particles with magnitude
-:math:`K`, maximal stretching length :math:`\Delta r_0` and equilibrium bond length
+:math:`K`, maximal stretching length :math:`\Delta r_\mathrm{max}` and equilibrium bond length
 :math:`r_0`. The bond potential diverges at a particle distance
 :math:`r=r_0-\Delta r_\mathrm{max}` and :math:`r=r_0+\Delta r_\mathrm{max}`.
 
@@ -83,13 +83,12 @@ A harmonic bond can be instantiated via
     import espressomd.interactions
     hb = espressomd.interactions.HarmonicBond(k=<float>, r_0=<float>, r_cut=<float>)
 
-
 This creates a bond type identifier with a classical harmonic
-potential. It is a symmetric interaction between two particles. With the
-equilibrium length :math:`r_0` and the magnitude :math:`k`. It is given by
+potential. It is a symmetric interaction between two particles. It is given by
 
-.. math:: V(r) = \frac{1}{2} k \left( r - r_0 \right)^2
+.. math:: V(r) = \frac{1}{2} k \left( r - r_0 \right)^2,
 
+with :math:`r_0` the equilibrium length and :math:`k` the magnitude.
 The third, optional parameter defines a cutoff radius. Whenever a
 harmonic bond gets longer than :math:`r_\mathrm{cut}`, the bond will be reported as broken,
 and a background error will be raised.
@@ -99,14 +98,21 @@ and a background error will be raised.
 Quartic bond
 ~~~~~~~~~~~~
 
+.. note::
+
+    The parameter math:`r` corresponds to math:`r_0` here.
+
 A quartic bond can be instantiated via
-:class:`espressomd.interactions.QuarticBond`.
+:class:`espressomd.interactions.QuarticBond`::
 
-The potential is minimal at particle distance :math:`r=R`. It is given by
+    import espressomd.interactions
+    qb = espressomd.interactions.QuarticBond(k0=<float>, k1=<float>, r=<float>, r_cut=<float>)
 
-.. math:: V(r) = \frac{1}{2} K_0 \left( r - R \right)^2 + \frac{1}{4} K_1 \left( r - R \right)^4
+The potential is minimal at particle distance :math:`r=r_0`. It is given by
 
-The fourth, optional, parameter defines a cutoff radius. Whenever a
+.. math:: V(r) = \frac{1}{2} k_0 \left( r - r_0 \right)^2 + \frac{1}{4} k_1 \left( r - r_0 \right)^4.
+
+The fourth parameter defines a cutoff radius. Whenever a
 quartic bond gets longer than ``r_cut``, the bond will be reported as broken, and
 a background error will be raised.
 
@@ -171,7 +177,7 @@ A rigid bond can be instantiated via
 :class:`espressomd.interactions.RigidBond`::
 
     import espressomd.interactions
-    rig = espressomd.interactions.RigidBond(r=<float>, ptol=<float>, vtol=<float> )
+    rig = espressomd.interactions.RigidBond(r=<float>, ptol=<float>, vtol=<float>)
 
 To simulate rigid bonds, |es| uses the Rattle Shake algorithm which satisfies
 internal constraints for molecular models with internal constraints,

@@ -17,7 +17,7 @@ code only if you have already gained some experience in using |es|.
 
 Unlike most other software, no binary distributions of |es| are available,
 and the software is usually not installed globally for all users.
-Instead, users of |es| should compile the software themselves. The reason for
+Instead, users should compile the software themselves. The reason for
 this is that it is possible to activate and deactivate various features
 before compiling the code. Some of these features are not compatible
 with each other, and some of the features have a profound impact on the
@@ -27,6 +27,12 @@ should always activate only those features that are actually needed.
 This means, however, that learning how to compile is a necessary evil.
 The build system of |es| uses CMake [4]_ to compile
 software easily on a wide range of platforms.
+
+Users who only need a "default" installation of |es| and have an account
+on the `Gitpod <https://gitpod.io>`__ platform can build the software
+automatically in the cloud and skip this chapter. For more details on
+running |es| in Gitpod, go to section :ref:`Running in the cloud`.
+
 
 .. _Requirements:
 
@@ -167,7 +173,6 @@ To run the samples and tutorials, start by installing the following packages:
 .. code-block:: bash
 
     sudo apt install python3-matplotlib python3-pint python3-tqdm ffmpeg
-    pip3 install --user 'MDAnalysis>=1.0.0,<2.0.0'
 
 The tutorials are written in the
 `Notebook Format <https://nbformat.readthedocs.io/en/latest/>`__
@@ -176,6 +181,7 @@ version <= 4.4 and can be executed by any of these tools:
 * `Jupyter Notebook <https://jupyter-notebook.readthedocs.io/en/stable/notebook.html>`__
 * `JupyterLab <https://jupyterlab.readthedocs.io/en/stable/>`__
 * `IPython <https://ipython.org/>`__ (not recommended)
+* `VS Code Jupyter <https://github.com/microsoft/vscode-jupyter>`__
 
 To check whether one of them is installed, run these commands:
 
@@ -184,6 +190,7 @@ To check whether one of them is installed, run these commands:
     jupyter notebook --version
     jupyter lab --version
     ipython --version
+    code --version
 
 If you don't have any of these tools installed and aren't sure which one
 to use, we recommend installing the historic Jupyter Notebook, since the
@@ -203,6 +210,15 @@ Alternatively, to use JupyterLab, install the following packages:
 .. code-block:: bash
 
     pip3 install --user nbformat notebook jupyterlab
+
+Alternatively, to use VS Code Jupyter, install the following extensions:
+
+.. code-block:: bash
+
+    code --install-extension ms-python.python
+    code --install-extension ms-toolsai.jupyter
+    code --install-extension ms-toolsai.jupyter-keymap
+    code --install-extension ms-toolsai.jupyter-renderers
 
 .. _Installing requirements on other Linux distributions:
 
@@ -297,17 +313,18 @@ lines below (optional steps which modify the build process are commented out):
     cd build
     cmake ..
     #ccmake . // in order to add/remove features like ScaFaCoS or CUDA
-    make
+    make -j
 
 This will build |es| with a default feature set, namely
 :file:`src/config/myconfig-default.hpp`. This file is a C++ header file,
 which defines the features that should be compiled in.
-You may want to adjust the feature set to your needs. This can be easily done
-by copying the :file:`myconfig-sample.hpp` which has been created in the :file:`build`
-directory to :file:`myconfig.hpp` and only uncomment the features you want to use in your simulation.
+You may want to adjust the feature set to your needs. This can be easily
+done by copying the :file:`myconfig-sample.hpp` which has been created in
+the :file:`build` directory to :file:`myconfig.hpp` and only uncomment
+the features you want to use in your simulation.
 
-The ``cmake`` command looks for libraries and tools needed by |es|. So |es|
-can only be built if ``cmake`` reports no errors.
+The ``cmake`` command looks for libraries and tools needed by |es|.
+So |es| can only be built if ``cmake`` reports no errors.
 
 The command ``make`` will compile the source code. Depending on the
 options passed to the program, ``make`` can also be used for a number of
@@ -328,12 +345,12 @@ command:
 
     ./pypresso script.py
 
-where ``script.py`` is a ``python`` script which has to
-be written by the user. You can find some examples in the :file:`samples`
-folder of the source code directory. If you want to run in parallel, you should
-have compiled with *Open MPI*, and need to tell MPI to run in parallel. The actual
-invocation is implementation-dependent, but in many cases, such as
-*Open MPI*, you can use
+where ``script.py`` is a Python script which has to be written by the user.
+You can find some examples in the :file:`samples` folder of the source code
+directory. If you want to run in parallel, you should have compiled with an
+MPI library, and need to tell MPI to run in parallel.
+The actual invocation is implementation-dependent, but in many cases, such as
+*Open MPI* and *MPICH*, you can use
 
 .. code-block:: bash
 
@@ -351,9 +368,9 @@ This chapter describes the features that can be activated in |es|. Even if
 possible, it is not recommended to activate all features, because this
 will negatively affect |es|'s performance.
 
-Features can be activated in the configuration header :file:`myconfig.hpp` (see
-section :ref:`myconfig.hpp\: Activating and deactivating features`). To
-activate ``FEATURE``, add the following line to the header file:
+Features can be activated in the configuration header :file:`myconfig.hpp`
+(see section :ref:`myconfig.hpp\: Activating and deactivating features`).
+To activate ``FEATURE``, add the following line to the header file:
 
 .. code-block:: c++
 
@@ -669,7 +686,7 @@ are ever modified by the build process.
     cmake ..
     make -j
 
-Afterwards |es| can be run via calling ``./pypresso`` from the command line.
+Afterwards |es| can be run by calling ``./pypresso`` from the command line.
 
 
 .. _ccmake:
@@ -709,8 +726,8 @@ Options and Variables
 ~~~~~~~~~~~~~~~~~~~~~
 
 The behavior of |es| can be controlled by means of options and variables
-in the :file:`CMakeLists.txt` file. Also options are defined there. The following
-options are available:
+in the :file:`CMakeLists.txt` file. Also options are defined there.
+The following options are available:
 
 * ``WITH_CUDA``: Build with GPU support
 
@@ -725,14 +742,14 @@ options are available:
 * ``WITH_VALGRIND_INSTRUMENTATION``: Build with valgrind instrumentation
   markers
 
-When the value in the :file:`CMakeLists.txt` file is set to ON, the corresponding
-option is created; if the value of the option is set to OFF, the
-corresponding option is not created. These options can also be modified
+When the value in the :file:`CMakeLists.txt` file is set to ON, the
+corresponding option is created; if the value of the option is set to OFF,
+the corresponding option is not created. These options can also be modified
 by calling ``cmake`` with the command line argument ``-D``:
 
 .. code-block:: bash
 
-    cmake -D WITH_HDF5=OFF srcdir
+    cmake -D WITH_HDF5=OFF ..
 
 When an option is activated, additional options may become available.
 For example with ``-D WITH_CUDA=ON``, one can choose the CUDA compiler with

@@ -184,8 +184,9 @@ void calc_part_distribution(PartCfg &partCfg, std::vector<int> const &p1_types,
   double inv_bin_width = 0.0;
   double min_dist, min_dist2 = 0.0, start_dist2;
 
-  start_dist2 = Utils::sqr(box_geo.length()[0] + box_geo.length()[1] +
-                           box_geo.length()[2]);
+  auto const r_max2 = Utils::sqr(r_max);
+  auto const r_min2 = Utils::sqr(r_min);
+  start_dist2 = Utils::sqr(r_max + 1.);
   /* bin preparation */
   *low = 0.0;
   for (int i = 0; i < r_bins; i++)
@@ -197,40 +198,36 @@ void calc_part_distribution(PartCfg &partCfg, std::vector<int> const &p1_types,
 
   /* particle loop: p1_types */
   for (auto const &p1 : partCfg) {
-    for (int t1 : p1_types) {
-      if (p1.type() == t1) {
-        min_dist2 = start_dist2;
-        /* particle loop: p2_types */
-        for (auto const &p2 : partCfg) {
-          if (p1 != p2) {
-            for (int t2 : p2_types) {
-              if (p2.type() == t2) {
-                auto const act_dist2 =
-                    box_geo.get_mi_vector(p1.pos(), p2.pos()).norm2();
-                if (act_dist2 < min_dist2) {
-                  min_dist2 = act_dist2;
-                }
-              }
+    if (Utils::contains(p1_types, p1.type())) {
+      min_dist2 = start_dist2;
+      /* particle loop: p2_types */
+      for (auto const &p2 : partCfg) {
+        if (p1 != p2) {
+          if (Utils::contains(p2_types, p2.type())) {
+            auto const act_dist2 =
+                box_geo.get_mi_vector(p1.pos(), p2.pos()).norm2();
+            if (act_dist2 < min_dist2) {
+              min_dist2 = act_dist2;
             }
           }
         }
-        min_dist = sqrt(min_dist2);
-        if (min_dist <= r_max) {
-          if (min_dist >= r_min) {
-            /* calculate bin index */
-            if (log_flag)
-              ind = (int)((log(min_dist / r_min)) * inv_bin_width);
-            else
-              ind = (int)((min_dist - r_min) * inv_bin_width);
-            if (ind >= 0 && ind < r_bins) {
-              dist[ind] += 1.0;
-            }
-          } else {
-            *low += 1.0;
-          }
-        }
-        cnt++;
       }
+      if (min_dist2 <= r_max2) {
+        if (min_dist2 >= r_min2) {
+          min_dist = sqrt(min_dist2);
+          /* calculate bin index */
+          if (log_flag)
+            ind = (int)((log(min_dist / r_min)) * inv_bin_width);
+          else
+            ind = (int)((min_dist - r_min) * inv_bin_width);
+          if (ind >= 0 && ind < r_bins) {
+            dist[ind] += 1.0;
+          }
+        } else {
+          *low += 1.0;
+        }
+      }
+      cnt++;
     }
   }
   if (cnt == 0)
@@ -260,13 +257,10 @@ void calc_structurefactor(PartCfg &partCfg, std::vector<int> const &p_types,
         if ((static_cast<std::size_t>(n) <= order_sq) && (n >= 1)) {
           double C_sum = 0.0, S_sum = 0.0;
           for (auto const &p : partCfg) {
-            for (int t : p_types) {
-              if (p.type() == t) {
-                auto const qr =
-                    twoPI_L * (Utils::Vector3i{{i, j, k}} * p.pos());
-                C_sum += cos(qr);
-                S_sum += sin(qr);
-              }
+            if (Utils::contains(p_types, p.type())) {
+              auto const qr = twoPI_L * (Utils::Vector3i{{i, j, k}} * p.pos());
+              C_sum += cos(qr);
+              S_sum += sin(qr);
             }
           }
           ff[2 * n - 2] += C_sum * C_sum + S_sum * S_sum;
@@ -278,9 +272,8 @@ void calc_structurefactor(PartCfg &partCfg, std::vector<int> const &p_types,
 
   long n_particles = 0l;
   for (auto const &p : partCfg) {
-    for (int t : p_types) {
-      if (p.type() == t)
-        n_particles++;
+    if (Utils::contains(p_types, p.type())) {
+      n_particles++;
     }
   }
 
