@@ -27,20 +27,7 @@ if ! hash "${DOXYGEN}" 2>/dev/null; then
     exit 2
 fi
 dox_version=$("${DOXYGEN}" --version)
-dox_version_supported=false
-for supported_version in 1.8.11 1.8.13 1.8.17; do
-    if [ "${dox_version}" = "${supported_version}" ]; then
-        dox_version_supported=true
-        break
-    fi
-done
-if [ "${dox_version_supported}" = false ]; then
-    echo "Doxygen version ${dox_version} not fully supported" >&2
-    if [ -n "${CI}" ]; then
-        exit 1
-    fi
-    echo "Proceeding anyway"
-fi
+echo "Using Doxygen version ${dox_version}"
 
 [ -z "${srcdir}" ] && srcdir=$(realpath ..)
 
@@ -101,9 +88,5 @@ if [ "${n_warnings}" = "0" ]; then
     echo "Found no warning requiring fixing."
     exit 0
 else
-    if [ "${CI}" = "" ] && [ "${dox_version_supported}" = false ]; then
-        echo "Doxygen version ${dox_version} not fully supported." >&2
-        echo "This list of warnings may contain false positives." >&2
-    fi
     exit 2
 fi

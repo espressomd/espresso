@@ -19,7 +19,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.17)
 message(STATUS "CMake version: ${CMAKE_VERSION}")
 if(POLICY CMP0076)
   # make target_sources() convert relative paths to absolute
@@ -37,6 +37,21 @@ enable_language(CXX)
 set(CMAKE_CXX_STANDARD 14 CACHE STRING "C++ standard to be used")
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+# require minimal compiler versions
+macro(minimal_compiler_version)
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "${ARGV0}" AND CMAKE_CXX_COMPILER_VERSION
+                                                   VERSION_LESS "${ARGV1}")
+    message(FATAL_ERROR "Unsupported compiler ${CMAKE_CXX_COMPILER_ID} \
+                 ${CMAKE_CXX_COMPILER_VERSION} (required version >= ${ARGV1})")
+  endif()
+endmacro()
+
+minimal_compiler_version("GNU" 7.0.0)
+minimal_compiler_version("Clang" 8.0.0)
+minimal_compiler_version("AppleClang" 11.0.0)
+minimal_compiler_version("Intel" 18.0)
+minimal_compiler_version("IntelLLVM" 2021.0)
 
 include(FeatureSummary)
 include(GNUInstallDirs)
@@ -152,12 +167,14 @@ endforeach()
 
 # CUDA compiler
 if(WITH_CUDA)
+  enable_language(CUDA)
   set(CMAKE_CUDA_STANDARD ${CMAKE_CXX_STANDARD})
+  set(CMAKE_CUDA_STANDARD_REQUIRED ON)
   set(MINIMAL_CUDA_VERSION 10.0)
+  find_package(CUDAToolkit ${MINIMAL_CUDA_VERSION} REQUIRED)
   option_enum(varname "WITH_CUDA_COMPILER" help_text "CUDA compiler"
               default_value "nvcc" possible_values "nvcc;clang")
   if(WITH_CUDA_COMPILER STREQUAL "nvcc")
-    find_package(CUDA ${MINIMAL_CUDA_VERSION} REQUIRED)
     find_package(CUDACompilerNVCC ${MINIMAL_CUDA_VERSION} REQUIRED)
   elseif(WITH_CUDA_COMPILER STREQUAL "clang")
     if(WITH_COVERAGE)
@@ -348,63 +365,32 @@ add_library(Espresso_cpp_flags INTERFACE)
 add_library(Espresso::cpp_flags ALIAS Espresso_cpp_flags)
 target_compile_options(
   Espresso_cpp_flags
-  INTERFACE -Wall
-            -Wextra
-            $<$<BOOL:${WARNINGS_ARE_ERRORS}>:-Werror>
-            # add extra warnings
-            $<$<CXX_COMPILER_ID:Clang>:-Wextern-initializer>
-            $<$<CXX_COMPILER_ID:Clang>:-Wrange-loop-analysis>
-            -Wfloat-conversion
-            # disable warnings from -Wextra
-            -Wno-sign-compare
-            -Wno-unused-function
-            -Wno-unused-parameter
-            $<$<CXX_COMPILER_ID:GNU>:-Wno-clobbered>
-            $<$<CXX_COMPILER_ID:Intel>:-wd592>)
+  INTERFACE
+    -Wall
+    -Wextra
+    -pedantic
+    $<$<BOOL:${WARNINGS_ARE_ERRORS}>:-Werror>
+    # add extra warnings
+    $<$<CXX_COMPILER_ID:Clang>:-Wextern-initializer>
+    $<$<CXX_COMPILER_ID:Clang>:-Wrange-loop-analysis>
+    -Wfloat-conversion
+    $<$<CXX_COMPILER_ID:Clang,AppleClang>:-Wimplicit-float-conversion>
+    $<$<AND:$<CXX_COMPILER_ID:Clang>,$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,11.0.0>>:-Wnon-c-typedef-for-linkage>
+    # disable warnings from -Wextra
+    -Wno-sign-compare
+    -Wno-unused-function
+    -Wno-unused-parameter
+    $<$<CXX_COMPILER_ID:GNU>:-Wno-clobbered>
+    $<$<CXX_COMPILER_ID:Intel,IntelLLVM>:-diag-disable=592>
+    $<$<CXX_COMPILER_ID:Clang,AppleClang>:-Wno-gnu-zero-variadic-macro-arguments>
+    $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,8.1.0>>:-Wno-cast-function-type>
+    $<$<NOT:$<CXX_COMPILER_ID:Intel,IntelLLVM>>:-Wno-implicit-fallthrough>
+    $<$<NOT:$<CXX_COMPILER_ID:Intel,IntelLLVM,GNU>>:-Wno-unused-private-field>)
 
-# disable more warnings from -Wextra
+# disable warning from -Wextra on ARM processors
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SYSTEM_PROCESSOR MATCHES
                                             "arm")
   target_compile_options(Espresso_cpp_flags INTERFACE -Wno-psabi)
-endif()
-if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "Intel"
-   AND NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION
-                                                     VERSION_LESS "7.0.0"))
-  target_compile_options(Espresso_cpp_flags INTERFACE -Wno-implicit-fallthrough)
-endif()
-if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND NOT CMAKE_CXX_COMPILER_ID
-                                                STREQUAL "Intel")
-  target_compile_options(Espresso_cpp_flags INTERFACE -Wno-unused-private-field)
-endif()
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  target_compile_options(Espresso_cpp_flags
-                         INTERFACE -Wno-gnu-zero-variadic-macro-arguments)
-  if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "8.0.0")
-    target_compile_options(Espresso_cpp_flags
-                           INTERFACE -Wimplicit-float-conversion)
-  endif()
-  if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang"
-     AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "11.0.0")
-    target_compile_options(Espresso_cpp_flags
-                           INTERFACE -Wnon-c-typedef-for-linkage)
-  endif()
-endif()
-
-if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_VERSION
-                                               VERSION_GREATER "4.8.5")
-  # older GCC versions don't support -Wno-pedantic which we need in src/python
-  target_compile_options(Espresso_cpp_flags INTERFACE -pedantic)
-endif()
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION
-                                            VERSION_GREATER_EQUAL "8.1.0")
-  target_compile_options(Espresso_cpp_flags INTERFACE -Wno-cast-function-type)
-endif()
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Intel" AND CMAKE_CXX_COMPILER_VERSION
-                                              VERSION_LESS "16.0")
-  # workaround for compiler crash related to decltype() and variadic template
-  # usage inside Boost
-  target_compile_options(Espresso_cpp_flags
-                         INTERFACE -DBOOST_NO_CXX11_VARIADIC_TEMPLATES)
 endif()
 
 # prevent 80-bit arithmetic on old Intel processors

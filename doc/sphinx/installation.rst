@@ -126,6 +126,23 @@ select it with environment variables ``CC`` and ``CXX`` when building |es|,
 or edit the system header files as shown in the following
 `patch for Ubuntu 20.04 <https://github.com/espressomd/espresso/issues/3654#issuecomment-612165048>`__.
 
+On systems with multiple CUDA releases installed, it is possible to select a
+specific one by providing custom paths to the compiler and toolkit:
+
+.. code-block:: bash
+
+    CUDACXX=/usr/local/cuda-11.0/bin/nvcc \
+      cmake .. -D WITH_CUDA=ON -D CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda-11.0
+    make -j
+
+Alternatively for Clang:
+
+.. code-block:: bash
+
+    CC=clang-12 CXX=clang++-12 CUDACXX=clang++-12 CUDAToolkit_ROOT=/usr/local/cuda-11.0 \
+      cmake .. -DWITH_CUDA=ON -DWITH_CUDA_COMPILER=clang -DCMAKE_CXX_FLAGS=--cuda-path=/usr/local/cuda-11.0
+    make -j
+
 .. _Requirements for building the documentation:
 
 Requirements for building the documentation
@@ -211,8 +228,8 @@ Installing requirements on other Linux distributions
 Please refer to the following Dockerfiles to find the minimum set of packages
 required to compile |es| on other Linux distributions:
 
-* `Fedora <https://github.com/espressomd/docker/blob/master/docker/Dockerfile-fedora>`__
-* `Debian <https://github.com/espressomd/docker/blob/master/docker/Dockerfile-debian>`__
+* `Fedora <https://github.com/espressomd/docker/blob/main/docker/Dockerfile-fedora>`__
+* `Debian <https://github.com/espressomd/docker/blob/main/docker/Dockerfile-debian>`__
 
 .. _Installing requirements on Windows via WSL:
 

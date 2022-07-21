@@ -28,63 +28,73 @@ if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   )
 endif()
 
+add_library(Espresso_cuda_flags INTERFACE)
+add_library(Espresso::cuda_flags ALIAS Espresso_cuda_flags)
+
+function(detect_clang_cuda_path)
+  execute_process(COMMAND ${CMAKE_CUDA_COMPILER} ${CMAKE_CXX_FLAGS} --verbose
+                  ERROR_VARIABLE CLANG_VERBOSE_OUTPUT)
+  if(CLANG_VERBOSE_OUTPUT MATCHES "Found CUDA installation")
+    set(CLANG_VERBOSE_OUTPUT ${CLANG_VERBOSE_OUTPUT} PARENT_SCOPE)
+    return()
+  endif()
+  if(NOT CMAKE_CXX_FLAGS MATCHES "--cuda-path")
+    foreach(unix_cuda_path /usr/lib/cuda /usr/local/cuda)
+      if(EXISTS ${unix_cuda_path})
+        execute_process(COMMAND ${CMAKE_CUDA_COMPILER} ${CMAKE_CXX_FLAGS}
+                        "--cuda-path=${unix_cuda_path}" --verbose
+                        ERROR_VARIABLE CLANG_VERBOSE_OUTPUT)
+        if(CLANG_VERBOSE_OUTPUT MATCHES "Found CUDA installation")
+          set(CLANG_VERBOSE_OUTPUT ${CLANG_VERBOSE_OUTPUT} PARENT_SCOPE)
+          message(STATUS "Clang did not automatically detect a compatible CUDA library; adding compiler flag --cuda-path=${unix_cuda_path}")
+          target_compile_options(Espresso_cuda_flags INTERFACE "--cuda-path=${unix_cuda_path}")
+          return()
+        endif()
+      endif()
+    endforeach()
+  endif()
+endfunction()
+
 set(CMAKE_CUDA_COMPILER ${CMAKE_CXX_COMPILER})
 set(CMAKE_CUDA_COMPILER_VERSION ${CMAKE_CXX_COMPILER_VERSION})
+
+detect_clang_cuda_path()
+string(REGEX REPLACE "^.*Found CUDA installation: ([^,]+).*\$" "\\1" CUDA_DIR
+                     "${CLANG_VERBOSE_OUTPUT}")
+string(REGEX REPLACE "^.*Found CUDA installation: .* version ([0-9\.]+|unknown).*\$"
+                     "\\1" CUDA_VERSION "${CLANG_VERBOSE_OUTPUT}")
+message(STATUS "Found CUDA-capable host compiler: ${CMAKE_CUDA_COMPILER}")
+if(NOT CLANG_VERBOSE_OUTPUT MATCHES "Found CUDA installation" OR CUDA_VERSION STREQUAL "unknown")
+  message(STATUS "Clang did not automatically detect a compatible CUDA library; adding compiler flag -Wno-unknown-cuda-version")
+  target_compile_options(Espresso_cuda_flags INTERFACE -Wno-unknown-cuda-version)
+  message(STATUS "Found CUDA version: ${CUDAToolkit_VERSION}")
+  message(STATUS "Found CUDA installation: ${CUDAToolkit_LIBRARY_DIR}")
+else()
+  if(CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL "12.0.0" AND
+     CMAKE_CUDA_COMPILER_VERSION VERSION_LESS "13.0.0" AND
+     CUDA_VERSION VERSION_GREATER_EQUAL "11.0" AND
+     CUDA_VERSION VERSION_LESS "12.0")
+    message(STATUS "Clang ${CMAKE_CXX_COMPILER_VERSION} doesn't natively support CUDA ${CUDAToolkit_VERSION_MAJOR}.${CUDAToolkit_VERSION_MINOR}; adding compiler flag -Wno-unknown-cuda-version")
+    target_compile_options(Espresso_cuda_flags INTERFACE -Wno-unknown-cuda-version)
+  endif()
+  message(STATUS "Found CUDA version: ${CUDAToolkit_VERSION} (recognized by Clang as ${CUDA_VERSION})")
+  message(STATUS "Found CUDA installation: ${CUDA_DIR}")
+endif()
+set(CUDA_VERSION ${CUDAToolkit_VERSION})
 set(CUDA 1)
 
-execute_process(COMMAND ${CMAKE_CUDA_COMPILER} ${CMAKE_CXX_FLAGS} --verbose
-                ERROR_VARIABLE CUDA_DIR_STRING)
-string(REGEX REPLACE "^.*Found CUDA installation: ([^,]+).*\$" "\\1" CUDA_DIR
-                     "${CUDA_DIR_STRING}")
-string(REGEX REPLACE "^.*Found CUDA installation: .* version ([0-9\.]+|unknown).*\$"
-                     "\\1" CUDA_VERSION "${CUDA_DIR_STRING}")
-
-message(STATUS "Found CUDA-capable host compiler: ${CMAKE_CUDA_COMPILER}")
-if(NOT CUDA_DIR_STRING MATCHES "Found CUDA installation" OR CUDA_VERSION STREQUAL "unknown")
-  message(FATAL_ERROR "Clang found no compatible CUDA library.")
-endif()
-message(STATUS "Found CUDA version: ${CUDA_VERSION}")
-message(STATUS "Found CUDA installation: ${CUDA_DIR}")
-
-if(CUDA_VERSION VERSION_LESS ${MINIMAL_CUDA_VERSION})
-  message(
-    FATAL_ERROR
-      "${CMAKE_CUDA_COMPILER} was built for CUDA ${CUDA_VERSION}: version does not match requirements (CUDA ${MINIMAL_CUDA_VERSION})."
-  )
-endif()
-
-set(CUDA_NVCC_FLAGS_DEBUG "${CUDA_NVCC_FLAGS_DEBUG} -g")
-set(CUDA_NVCC_FLAGS_RELEASE "${CUDA_NVCC_FLAGS_RELEASE} -O3 -DNDEBUG")
-set(CUDA_NVCC_FLAGS_MINSIZEREL "${CUDA_NVCC_FLAGS_MINSIZEREL} -O2 -DNDEBUG")
-set(CUDA_NVCC_FLAGS_RELWITHDEBINFO "${CUDA_NVCC_FLAGS_RELWITHDEBINFO} -O2 -g -DNDEBUG")
-set(CUDA_NVCC_FLAGS_COVERAGE "${CUDA_NVCC_FLAGS_COVERAGE} -O3 -g")
-set(CUDA_NVCC_FLAGS_RELWITHASSERT "${CUDA_NVCC_FLAGS_RELWITHASSERT} -O3 -g")
-string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE_UPPER)
-set(gpu_interface_flags "${CUDA_NVCC_FLAGS} ${CUDA_NVCC_FLAGS_${CMAKE_BUILD_TYPE_UPPER}} --cuda-gpu-arch=sm_52")
-if(CMAKE_CUDA_COMPILER_VERSION VERSION_LESS 11)
-  set(gpu_interface_flags "${gpu_interface_flags} --cuda-gpu-arch=sm_30")
-endif()
-if(CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL "12.0.0" AND
-   CMAKE_CUDA_COMPILER_VERSION VERSION_LESS "13.0.0" AND
-   CUDA_VERSION VERSION_GREATER_EQUAL "11.0" AND
-   CUDA_VERSION VERSION_LESS "12.0")
-  set(gpu_interface_flags "${gpu_interface_flags} -Wno-unknown-cuda-version")
-endif()
-
-function(find_gpu_library)
-  cmake_parse_arguments(LIBRARY "REQUIRED" "NAMES;VARNAME" "" ${ARGN})
-  list(APPEND LIBRARY_PATHS
-       ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib
-       /usr/local/nvidia/lib /usr/lib/x86_64-linux-gnu)
-  if(LIBRARY_REQUIRED)
-    find_library(${LIBRARY_VARNAME} NAMES ${LIBRARY_NAMES} PATHS ${LIBRARY_PATHS} NO_DEFAULT_PATH REQUIRED)
-  else()
-    find_library(${LIBRARY_VARNAME} NAMES ${LIBRARY_NAMES} PATHS ${LIBRARY_PATHS} NO_DEFAULT_PATH)
-  endif()
-endfunction(find_gpu_library)
-
-find_gpu_library(VARNAME CUDART_LIBRARY NAMES cudart REQUIRED)
-find_gpu_library(VARNAME CUFFT_LIBRARY NAMES cufft REQUIRED)
+target_compile_options(
+  Espresso_cuda_flags
+  INTERFACE
+  $<$<STREQUAL:${CMAKE_BUILD_TYPE},Debug>:-g>
+  $<$<STREQUAL:${CMAKE_BUILD_TYPE},Release>:-O3 -DNDEBUG>
+  $<$<STREQUAL:${CMAKE_BUILD_TYPE},MinSizeRel>:-O2 -DNDEBUG>
+  $<$<STREQUAL:${CMAKE_BUILD_TYPE},RelWithDebInfo>:-O2 -g -DNDEBUG>
+  $<$<STREQUAL:${CMAKE_BUILD_TYPE},Coverage>:-O3 -g>
+  $<$<STREQUAL:${CMAKE_BUILD_TYPE},RelWithAssert>:-O3 -g>
+  $<$<VERSION_LESS:${CMAKE_CUDA_COMPILER_VERSION},11>:--cuda-gpu-arch=sm_30>
+  --cuda-gpu-arch=sm_52
+)
 
 function(add_gpu_library)
   set(options STATIC SHARED MODULE EXCLUDE_FROM_ALL)
@@ -97,12 +107,7 @@ function(add_gpu_library)
   set_source_files_properties(${TARGET_SOURCES} PROPERTIES LANGUAGE "CXX")
   add_library(${ARGV})
   set_target_properties(${TARGET_NAME} PROPERTIES LINKER_LANGUAGE "CXX")
-  target_link_libraries(${TARGET_NAME} PRIVATE ${CUDA_LIBRARY} ${CUDART_LIBRARY} ${CUFFT_LIBRARY})
-  foreach(file ${TARGET_SOURCES})
-    if(${file} MATCHES "\\.cu$")
-      set_source_files_properties (${file} PROPERTY COMPILE_FLAGS ${gpu_interface_flags})
-    endif()
-  endforeach()
+  target_link_libraries(${TARGET_NAME} PRIVATE Espresso::cuda_flags)
 endfunction()
 
 include(FindPackageHandleStandardArgs)

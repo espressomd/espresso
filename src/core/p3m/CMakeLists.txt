@@ -16,6 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+
+if(FFTW3_FOUND)
+  target_link_libraries(Espresso_core PUBLIC FFTW3::FFTW3)
+endif()
+
 target_sources(
   Espresso_core
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/common.cpp

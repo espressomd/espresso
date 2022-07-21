@@ -89,7 +89,7 @@ void calc_pressure_long_range() {
   }
 }
 
-double cutoff(Utils::Vector3d const &box_l) {
+double cutoff() {
 #ifdef DP3M
   if (auto dp3m = get_actor_by_type<DipolarP3M>(magnetostatics_actor)) {
     return dp3m->dp3m.params.r_cut;
