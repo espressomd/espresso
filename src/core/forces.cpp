@@ -169,13 +169,13 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
   auto const dipoles_kernel = Dipoles::pair_force_kernel();
 
 #ifdef ELECTROSTATICS
-  auto const coulomb_cutoff = Coulomb::cutoff(box_geo.length());
+  auto const coulomb_cutoff = Coulomb::cutoff();
 #else
   auto const coulomb_cutoff = INACTIVE_CUTOFF;
 #endif
 
 #ifdef DIPOLES
-  auto const dipole_cutoff = Dipoles::cutoff(box_geo.length());
+  auto const dipole_cutoff = Dipoles::cutoff();
 #else
   auto const dipole_cutoff = INACTIVE_CUTOFF;
 #endif

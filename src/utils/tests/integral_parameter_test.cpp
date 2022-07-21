@@ -38,11 +38,11 @@ BOOST_AUTO_TEST_CASE(integral_parameter_) {
                    std::pair<std::size_t, int>>::value,
       "");
 
-  BOOST_CHECK(std::make_pair(1ul, 13) ==
+  BOOST_CHECK(std::make_pair(std::size_t{1u}, 13) ==
               (Utils::integral_parameter<F, 1, 5>(1, 13)));
-  BOOST_CHECK(std::make_pair(3ul, 13) ==
+  BOOST_CHECK(std::make_pair(std::size_t{3u}, 13) ==
               (Utils::integral_parameter<F, 1, 5>(3, 13)));
-  BOOST_CHECK(std::make_pair(5ul, 13) ==
+  BOOST_CHECK(std::make_pair(std::size_t{5u}, 13) ==
               (Utils::integral_parameter<F, 1, 5>(5, 13)));
   BOOST_CHECK_THROW((Utils::integral_parameter<F, 1, 5>(6, 13)),
                     std::exception);

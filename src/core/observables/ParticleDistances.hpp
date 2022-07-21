@@ -23,9 +23,6 @@
 #include "PidObservable.hpp"
 #include "grid.hpp"
 
-#include <utils/Span.hpp>
-#include <utils/Vector.hpp>
-
 #include <cassert>
 #include <cstddef>
 #include <stdexcept>
@@ -65,6 +62,6 @@ public:
   }
 };
 
-} // Namespace Observables
+} // namespace Observables
 
 #endif

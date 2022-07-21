@@ -31,7 +31,7 @@ unit_test(NAME get_value_test SRC get_value_test.cpp DEPENDS
           Espresso::script_interface)
 unit_test(NAME None_test SRC None_test.cpp DEPENDS Espresso::script_interface)
 unit_test(NAME LocalContext_test SRC LocalContext_test.cpp DEPENDS
-          Espresso::script_interface)
+          Espresso::script_interface Boost::mpi MPI::MPI_CXX NUM_PROC 1)
 unit_test(NAME GlobalContext_test SRC GlobalContext_test.cpp DEPENDS
           Espresso::script_interface Boost::mpi MPI::MPI_CXX NUM_PROC 2)
 unit_test(NAME Exception_test SRC Exception_test.cpp DEPENDS
