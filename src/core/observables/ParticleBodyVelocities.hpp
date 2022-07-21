@@ -21,37 +21,10 @@
 
 #include "PidObservable.hpp"
 
-#include "rotation.hpp"
-
-#include <utils/Span.hpp>
-
-#include <cstddef>
-#include <vector>
-
 namespace Observables {
 
-class ParticleBodyVelocities : public PidObservable {
-public:
-  using PidObservable::PidObservable;
+using ParticleBodyVelocities =
+    ParticleObservable<ParticleObservables::BodyVelocities>;
 
-  std::vector<double>
-  evaluate(ParticleReferenceRange particles,
-           const ParticleObservables::traits<Particle> &traits) const override {
-    std::vector<double> res(n_values());
-    for (std::size_t i = 0; i < particles.size(); i++) {
-#ifdef ROTATION
-      const Utils::Vector3d vel_body = convert_vector_space_to_body(
-          particles[i].get(), traits.velocity(particles[i]));
-
-      res[3 * i + 0] = vel_body[0];
-      res[3 * i + 1] = vel_body[1];
-      res[3 * i + 2] = vel_body[2];
-#endif
-    }
-    return res;
-  }
-  std::vector<std::size_t> shape() const override { return {ids().size(), 3}; }
-};
-
-} // Namespace Observables
+} // namespace Observables
 #endif
