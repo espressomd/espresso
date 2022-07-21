@@ -21,7 +21,6 @@
 
 #include "utils.hpp"
 
-#include <algorithm>
 #include <string>
 #include <utility>
 #include <vector>
@@ -69,18 +68,6 @@ std::vector<std::string> Scafacos::available_methods() {
 #endif
 
   return methods;
-}
-
-static std::string parse_method_parameters(
-    std::vector<std::vector<std::string>> const &parameters) {
-  std::string method_params = "";
-  for (auto const &parameter : parameters) {
-    for (auto const &value : parameter) {
-      method_params += " " + value;
-    }
-  }
-  std::replace(method_params.begin(), method_params.end(), ' ', ',');
-  return method_params.substr(1);
 }
 
 Scafacos::Scafacos(MPI_Comm comm, std::string method, std::string parameters)
