@@ -381,8 +381,7 @@ class ParticleSliceTest(ut.TestCase):
 
     def test_empty(self):
         np.testing.assert_array_equal(
-            self.system.part.by_ids(
-                []).pos, np.empty(0))
+            self.system.part.by_ids([]).pos, np.empty(0))
 
     def test_len(self):
         self.assertEqual(len(self.system.part.by_ids([])), 0)

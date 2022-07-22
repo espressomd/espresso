@@ -491,7 +491,7 @@ class ParticleProperties(ut.TestCase):
             all_partcls_empty.pos = ((1, 2, 3,),)
 
         # Slice containing particles
-        ids = [1, 4, 6, 3, 8, 9]
+        ids = [1, 4, 6, 3, 8, 9, 5]
         pos = np.random.random((len(ids), 3))
         system.part.add(id=ids, pos=pos)
 
@@ -502,24 +502,24 @@ class ParticleProperties(ut.TestCase):
         np.testing.assert_equal(all_partcls.pos, pos[np.argsort(ids)])
 
         # Access via slicing
-        np.testing.assert_equal(system.part.by_ids(range(4, 9)).id,
-                                [i for i in sorted(ids) if i >= 4 and i < 9])
-        np.testing.assert_equal(system.part.by_ids(range(9, 4, -1)).id,
-                                [i for i in sorted(ids, key=lambda i:-i) if i > 4 and i <= 9])
+        np.testing.assert_equal(system.part.by_ids(range(3, 6)).id,
+                                [i for i in sorted(ids) if i >= 3 and i < 6])
+        np.testing.assert_equal(system.part.by_ids(range(6, 3, -1)).id,
+                                [i for i in sorted(ids, key=lambda i:-i) if i > 3 and i <= 6])
 
         # Setting particle properties on a slice
-        system.part.by_ids(range(5)).pos = 0, 0, 0
+        system.part.by_ids(range(9, 10)).pos = (0, 0, 0)
         np.testing.assert_equal(system.part.all().pos,
-                                [pos[i] if ids[i] >= 5 else [0, 0, 0] for i in np.argsort(ids)])
+                                [pos[i] if ids[i] != 9 else [0, 0, 0] for i in np.argsort(ids)])
 
         # Slice access via explicit list of ids
         np.testing.assert_equal(system.part.by_ids(ids[1:4]).id, ids[1:4])
         # Check that ids passed in an explicit list must exist
-        with self.assertRaises(IndexError):
+        with self.assertRaisesRegex(IndexError, "Particle does not exist: 99"):
             system.part.by_ids([99, 3])
         # Check that wrong types are not accepted
-        with self.assertRaises(TypeError):
-            system.part.by_ids([[ids[0], 1.2]])
+        with self.assertRaisesRegex(RuntimeError, "it contains a value that is not convertible to 'int'"):
+            system.part.by_ids([ids[0], 1.2])
 
     def test_to_dict(self):
         self.system.part.clear()
@@ -541,6 +541,8 @@ class ParticleProperties(ut.TestCase):
         # cannot change id (to avoid corrupting caches in the core)
         with self.assertRaisesRegex(RuntimeError, "Cannot change particle id"):
             p.update({'id': 1})
+        with self.assertRaisesRegex(RuntimeError, "Cannot change particle id"):
+            self.system.part.all().update({'id': 1})
         # check value change
         new_pos = [1., 2., 3.]
         p.update({'pos': new_pos})

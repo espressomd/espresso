@@ -111,6 +111,7 @@ p3 = system.part.add(id=3, pos=system.box_l / 2.0 - 1.0, type=1)
 p4 = system.part.add(id=4, pos=system.box_l / 2.0 + 1.0, type=1)
 
 system.comfixed.types = [0, 2]
+p_slice = system.part.by_ids([4, 1])
 
 if espressomd.has_features('P3M') and ('P3M' in modes or 'ELC' in modes):
     if espressomd.gpu_available() and 'P3M.GPU' in modes:
@@ -280,6 +281,7 @@ checkpoint.register("ibm_volcons_bond")
 checkpoint.register("ibm_tribend_bond")
 checkpoint.register("ibm_triel_bond")
 checkpoint.register("break_spec")
+checkpoint.register("p_slice")
 if espressomd.has_features("H5MD"):
     checkpoint.register("h5")
     checkpoint.register("h5_units")

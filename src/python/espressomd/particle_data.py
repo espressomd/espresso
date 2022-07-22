@@ -16,22 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-include "myconfig.pxi"
 
-cimport numpy as np
 import numpy as np
-from cython.operator cimport dereference
-from . cimport particle_data
-from .interactions import BondedInteraction
-from .interactions import BondedInteractions
-from .interactions cimport bonded_ia_params_zero_based_type
-from copy import copy
 import collections
 import functools
+from .interactions import BondedInteraction
+from .interactions import BondedInteractions
 from .utils import nesting_level, array_locked, is_valid_type, handle_errors
-from .utils cimport make_array_locked, check_type_or_throw_except
-from .utils cimport Vector3i, Vector3d, Vector4d
-from .utils cimport make_Vector3d
+from .utils import check_type_or_throw_except
 from .code_features import assert_features, has_features
 from .script_interface import script_interface_register, ScriptInterfaceHelper
 
@@ -811,83 +803,38 @@ if has_features("EXCLUSIONS"):
 particle_attributes.add("bonds")
 
 
-cdef class _ParticleSliceImpl:
-    """Handles slice inputs.
-
-    This base class should not be used directly. Use
-    :class:`espressomd.particle_data.ParticleSlice` instead, which contains
-    all the particle properties.
+@script_interface_register
+class ParticleSlice(ScriptInterfaceHelper):
+    """
+    Handle slice inputs. Set values for selected slices or
+    return values as a single list.
 
     """
+    _so_name = "Particles::ParticleSlice"
+    _so_creation_policy = "LOCAL"
 
-    def __cinit__(self, slice_, prefetch_chunk_size=10000):
-        # Chunk size for pre-fetch cache
-        self._chunk_size = prefetch_chunk_size
-
-        # We distinguish two cases:
-        # * ranges and slices only specify lower and upper bounds for particle
-        #   ids and optionally a step. Gaps in the id range are tolerated.
-        # * Explicit list/tuple/ndarray containing particle ids. Here
-        #   all particles have to exist and the result maintains the order
-        #   specified in the list.
-        if isinstance(slice_, (slice, range)):
-            self.id_selection = self._id_selection_from_slice(slice_)
-        elif isinstance(slice_, (list, tuple, np.ndarray)):
-            self._validate_pid_list(slice_)
-            self.id_selection = np.array(slice_, dtype=int)
-        else:
-            raise TypeError(
-                f"ParticleSlice must be initialized with an instance of "
-                f"slice or range, or with a list, tuple, or ndarray of ints, "
-                f"but got {slice_} of type {type(slice_)}")
-
-    def _id_selection_from_slice(self, slice_):
-        """Returns an ndarray of particle ids to be included in the
-        ParticleSlice for a given range or slice object.
-        """
-        # Prevent negative bounds
-        if (slice_.start is not None and slice_.start < 0) or \
-           (slice_.stop is not None and slice_.stop < 0):
-            raise IndexError(
-                "Negative start and end ids are not supported on ParticleSlice")
-
-        # We start with a full list of possible particle ids and then
-        # remove ids of non-existing particles
-        id_list = np.arange(get_maximal_particle_id() + 1, dtype=int)
-        id_list = id_list[slice_]
-
-        # Generate a mask which will remove ids of non-existing particles
-        mask = np.empty(len(id_list), dtype=type(True))
-        mask[:] = True
-        for i, id in enumerate(id_list):
-            if not particle_exists(id):
-                mask[i] = False
-        # Return the id list filtered by the mask
-        return id_list[mask]
-
-    def _validate_pid_list(self, pid_list):
-        """Check that all entries are integers and the corresponding particles exist. Throw, otherwise."""
-        # Check that all entries are some flavor of integer
-        for pid in pid_list:
-            if not is_valid_type(pid, int):
-                raise TypeError(
-                    f"Particle id must be an integer but got {pid}")
-            if not particle_exists(pid):
-                raise IndexError(f"Particle does not exist {pid}")
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        if "sip" not in kwargs:
+            for p_id in self.id_selection:
+                if not self.call_method("particle_exists", p_id=p_id):
+                    raise IndexError(f"Particle does not exist: {p_id}")
 
     def __iter__(self):
         return self._id_gen()
 
     def _id_gen(self):
-        """Generator for chunked and prefetched iteration of particles.
         """
-        for chunk in self.chunks(self.id_selection, self._chunk_size):
-            prefetch_particle_data(chunk)
+        Generator for chunked and prefetched iteration of particles.
+        """
+        for chunk in self.chunks(self.id_selection, self.chunk_size):
+            self.call_method("prefetch_particle_data", chunk=chunk)
             for i in chunk:
                 yield ParticleHandle(id=i)
 
     def chunks(self, l, n):
-        """Generator returning chunks of length n from l.
+        """
+        Generator returning chunks of length n from l.
         """
         for i in range(0, len(l), n):
             yield l[i:i + n]
@@ -895,43 +842,40 @@ cdef class _ParticleSliceImpl:
     def __len__(self):
         return len(self.id_selection)
 
-    property pos_folded:
+    @property
+    def pos_folded(self):
         """
         Particle position (folded into central image).
 
         """
+        pos_array = np.zeros((len(self.id_selection), 3))
+        for i in range(len(self.id_selection)):
+            pos_array[i, :] = ParticleHandle(
+                id=self.id_selection[i]).pos_folded
+        return pos_array
 
-        def __get__(self):
-            pos_array = np.zeros((len(self.id_selection), 3))
-            for i in range(len(self.id_selection)):
-                pos_array[i, :] = ParticleHandle(
-                    id=self.id_selection[i]).pos_folded
-            return pos_array
+    @pos_folded.setter
+    def pos_folded(self, value):
+        raise RuntimeError("Parameter 'pos_folded' is read-only.")
 
-        def __set__(self, value):
-            raise RuntimeError("Parameter 'pos_folded' is read-only.")
+    def add_exclusion(self, _partner):
+        assert_features(["EXCLUSIONS"])
+        for p_id in self.id_selection:
+            ParticleHandle(id=p_id).add_exclusion(_partner)
 
-    IF EXCLUSIONS:
-        def add_exclusion(self, _partner):
-            for p_id in self.id_selection:
-                ParticleHandle(id=p_id).add_exclusion(_partner)
-
-        def delete_exclusion(self, _partner):
-            for p_id in self.id_selection:
-                ParticleHandle(id=p_id).delete_exclusion(_partner)
+    def delete_exclusion(self, _partner):
+        assert_features(["EXCLUSIONS"])
+        for p_id in self.id_selection:
+            ParticleHandle(id=p_id).delete_exclusion(_partner)
 
     def __str__(self):
-        res = ""
-        pl = ParticleList()
-        for i in self.id_selection:
-            if pl.exists(i):
-                res += f"{pl.by_id(i)}, "
-        # Remove final comma
-        return f"ParticleSlice([{res[:-2]}])"
+        return "ParticleSlice([" + \
+            ", ".join(str(ParticleHandle(id=i))
+                      for i in self.id_selection) + "])"
 
     def update(self, new_properties):
         if "id" in new_properties:
-            raise Exception("Cannot change particle id.")
+            raise RuntimeError("Cannot change particle id.")
 
         for k, v in new_properties.items():
             setattr(self, k, v)
@@ -969,17 +913,8 @@ cdef class _ParticleSliceImpl:
         for p_id in self.id_selection:
             ParticleHandle(id=p_id).remove()
 
-
-class ParticleSlice(_ParticleSliceImpl):
-
-    """
-    Handles slice inputs e.g. ``part[0:2]``. Sets values for selected slices or
-    returns values as a single list.
-
-    """
-
     def __setattr__(self, name, value):
-        if name != "_chunk_size" and name not in particle_attributes:
+        if name != "chunk_size" and name != "id_selection" and name not in particle_attributes:
             raise AttributeError(
                 f"ParticleHandle does not have the attribute {name}.")
         super().__setattr__(name, value)
@@ -1051,7 +986,7 @@ class ParticleList(ScriptInterfaceHelper):
         """
         Get a slice of particles by their integer ids.
         """
-        return ParticleSlice(ids)
+        return ParticleSlice(id_selection=ids)
 
     def all(self):
         """
@@ -1274,7 +1209,7 @@ class ParticleList(ScriptInterfaceHelper):
             for p in self:
                 if args[0](p):
                     ids.append(p.id)
-            return ParticleSlice(ids)
+            return ParticleSlice(id_selection=ids)
 
         # Did we get a set of keyword args?
         elif len(args) == 0:
@@ -1295,7 +1230,7 @@ class ParticleList(ScriptInterfaceHelper):
                         break
                 if select:
                     ids.append(p.id)
-            return ParticleSlice(ids)
+            return ParticleSlice(id_selection=ids)
         else:
             raise Exception(
                 "select() takes either selection function as positional argument or a set of keyword arguments.")
@@ -1410,7 +1345,7 @@ def _add_particle_slice_properties():
         # get first slice member to determine its type
         target = getattr(ParticleHandle(
             id=particle_slice.id_selection[0]), attribute)
-        if type(target) is array_locked:  # vectorial quantity
+        if isinstance(target, array_locked):  # vectorial quantity
             target_type = target.dtype
         else:  # scalar quantity
             target_type = type(target)
@@ -1428,7 +1363,7 @@ def _add_particle_slice_properties():
 
         return values
 
-    for attribute_name in particle_attributes:
+    for attribute_name in sorted(particle_attributes):
         if attribute_name in dir(ParticleSlice):
             continue
 
