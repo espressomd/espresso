@@ -354,6 +354,12 @@ class ParticleProperties(ut.TestCase):
             self.system.part.add(1, id=2)
         with self.assertRaisesRegex(ValueError, err_msg):
             self.system.part.add([1, 2])
+        for coord in (0, 1, 2):
+            for value in (float('nan'), float('inf'), -float('inf')):
+                with self.assertRaisesRegex(ValueError, "Particle position must be finite"):
+                    pos = [0., 0., 0.]
+                    pos[coord] = value
+                    self.system.part.add(pos=pos)
 
     def test_invalid_particle_attributes(self):
         p = self.partcl

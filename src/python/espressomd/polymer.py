@@ -17,52 +17,23 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from . cimport polymer
-from . import utils
 import numpy as np
-from .system import System
+from .utils import check_type_or_throw_except
 from .interactions import BondedInteraction
-from .utils cimport make_Vector3d, check_type_or_throw_except
-from .utils import array_locked
-from .polymer cimport partCfg
+from .script_interface import script_interface_register, ScriptInterfaceHelper
 
 
-def validate_params(_params, default):
-    if _params["n_polymers"] <= 0:
-        raise ValueError(
-            "n_polymers has to be a positive integer")
-    if _params["beads_per_chain"] <= 0:
-        raise ValueError(
-            "beads_per_chain has to be a positive integer")
-    if _params["bond_length"] < 0:
-        raise ValueError(
-            "bond_length has to be a positive float")
-    if not ((np.size(_params["start_positions"]) == 0)
-            or np.shape(_params["start_positions"]) == (_params["n_polymers"], 3)):
-        raise ValueError(
-            "start_positions has to be a numpy array with shape (n_polymers, 3)")
-    if _params["min_distance"] < 0:
-        raise ValueError(
-            "min_distance has to be a positive float")
-    if _params["max_tries"] < 0:
-        raise ValueError(
-            "max_tries has to be a positive integer")
-    if _params["use_bond_angle"] and np.isnan(_params["bond_angle"]):
-        raise ValueError(
-            "bond_angle has to be a positive float")
-    if type(_params["respect_constraints"]) != bool:
-        raise ValueError(
-            "respect_constraints has to be either True or False")
-    if type(_params["seed"]) != int:
-        raise ValueError(
-            "seed has to be an integer")
-
-# wrapper function to expose to the user interface
+@script_interface_register
+class _Polymer(ScriptInterfaceHelper):
+    _so_name = "Particles::Polymer"
+    _so_creation_policy = "LOCAL"
 
 
-def linear_polymer_positions(**kwargs):
+def linear_polymer_positions(
+        start_positions=(), min_distance=0., respect_constraints=False,
+        max_tries=1000, **kwargs):
     """
-    Generates particle positions for polymer creation.
+    Generate particle positions for polymer creation.
 
     Parameters
     ----------
@@ -75,21 +46,21 @@ def linear_polymer_positions(**kwargs):
     seed : :obj:`int`, required
         Seed for the RNG used to generate the particle positions.
     bond_angle : :obj:`float`, optional
-        If set, this parameter defines the angle between adjacent bonds
-        within a polymer.
-    start_positions : array_like :obj:`float`.
+        Angle in radians between adjacent bonds within a polymer.
+        Must be in the range :math:`[0, \\pi]`. If omitted, random
+        angles are drawn.
+    start_positions : (N, 3) array_like :obj:`float`, optional
         If set, this vector defines the start positions for the polymers, i.e.,
         the position of each polymer's first monomer bead.
-        Here, a numpy array of shape (n_polymers, 3) is expected.
+        Here, a numpy array of shape ``(n_polymers, 3)`` is expected.
     min_distance : :obj:`float`, optional
-        Minimum distance between all generated positions. Defaults to 0
+        Minimum distance between all generated positions.
     respect_constraints : :obj:`bool`, optional
         If True, the particle setup tries to obey previously defined constraints.
-        Default value is False.
     max_tries : :obj:`int`, optional
         Maximal number of attempts to generate every monomer position,
         as well as maximal number of retries per polymer, if choosing
-        suitable monomer positions fails. Default value is 1000.
+        suitable monomer positions fails.
         Depending on the total number of beads and constraints,
         this value needs to be adapted.
 
@@ -100,67 +71,34 @@ def linear_polymer_positions(**kwargs):
         coordinates of the respective monomers.
 
     """
-    params = dict()
-    default_params = dict()
-    default_params["n_polymers"] = 0
-    default_params["beads_per_chain"] = 0
-    default_params["bond_length"] = 0
-    default_params["start_positions"] = np.array([])
-    default_params["min_distance"] = 0
-    default_params["max_tries"] = 1000
-    default_params["bond_angle"] = -1
-    default_params["respect_constraints"] = False
-    default_params["seed"] = None
+    kwargs["start_positions"] = start_positions
+    kwargs["min_distance"] = min_distance
+    kwargs["respect_constraints"] = respect_constraints
+    kwargs["max_tries"] = max_tries
+    kwargs["use_bond_angle"] = "bond_angle" in kwargs
+    if kwargs.get("n_polymers", 0) <= 0:
+        raise ValueError(
+            "Parameter 'n_polymers' has to be a positive integer")
+    if kwargs.get("beads_per_chain", 0) <= 0:
+        raise ValueError(
+            "Parameter 'beads_per_chain' has to be a positive integer")
+    if kwargs.get("bond_length", -1.) < 0.:
+        raise ValueError("Parameter 'bond_length' has to be a positive float")
+    if not ((np.size(kwargs["start_positions"]) == 0)
+            or np.shape(kwargs["start_positions"]) == (kwargs["n_polymers"], 3)):
+        raise ValueError(
+            "Parameter 'start_positions' has to be an array_like of floats with shape (n_polymers, 3)")
+    if kwargs["min_distance"] < 0.:
+        raise ValueError("Parameter 'min_distance' has to be a positive float")
+    if kwargs["max_tries"] < 0:
+        raise ValueError("Parameter 'max_tries' has to be a positive integer")
+    if kwargs["use_bond_angle"] and not (0. <= kwargs["bond_angle"] <= np.pi):
+        raise ValueError(
+            "Parameter 'bond_angle' has to be a float between 0 and pi")
 
-    params = default_params
-
-    # use bond_angle if set via kwargs
-    params["use_bond_angle"] = "bond_angle" in kwargs
-
-    valid_keys = [
-        "n_polymers",
-        "beads_per_chain",
-        "bond_length",
-        "start_positions",
-        "min_distance",
-        "max_tries",
-        "bond_angle",
-        "respect_constraints",
-        "seed"]
-
-    required_keys = ["n_polymers", "beads_per_chain", "bond_length", "seed"]
-
-    utils.check_required_keys(required_keys, kwargs.keys())
-    utils.check_valid_keys(valid_keys, kwargs.keys())
-    params.update(kwargs)
-    validate_params(params, default_params)
-
-    cdef vector[Vector3d] start_positions
-    if (params["start_positions"].size > 0):
-        for i in range(len(params["start_positions"])):
-            start_positions.push_back(
-                make_Vector3d(params["start_positions"][i]))
-
-    data = draw_polymer_positions(
-        partCfg(),
-        params["n_polymers"],
-        params["beads_per_chain"],
-        params["bond_length"],
-        start_positions,
-        params["min_distance"],
-        params["max_tries"],
-        int(params["use_bond_angle"]),
-        params["bond_angle"],
-        int(params["respect_constraints"]),
-        params["seed"])
-    positions = []
-    for polymer in data:
-        p = []
-        for monomer in polymer:
-            m = array_locked([monomer[0], monomer[1], monomer[2]])
-            p.append(m)
-        positions.append(p)
-    return np.array(positions)
+    pos = _Polymer().call_method("draw_polymer_positions", **kwargs)
+    return np.reshape(
+        pos, (kwargs["n_polymers"], kwargs["beads_per_chain"], 3))
 
 
 def setup_diamond_polymer(system=None, bond=None, MPC=0,
@@ -210,9 +148,6 @@ def setup_diamond_polymer(system=None, bond=None, MPC=0,
     if not no_bonds and not isinstance(bond, BondedInteraction):
         raise TypeError(
             "bond argument must be an instance of espressomd.interactions.BondedInteraction")
-    if not isinstance(system, System):
-        raise TypeError(
-            "System argument must be an instance of espressomd.system.System")
 
     check_type_or_throw_except(
         MPC, 1, int, "MPC must be one int")

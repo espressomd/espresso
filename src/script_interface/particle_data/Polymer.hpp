@@ -17,22 +17,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "initialize.hpp"
+#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_PARTICLE_DATA_POLYMER_HPP
+#define ESPRESSO_SRC_SCRIPT_INTERFACE_PARTICLE_DATA_POLYMER_HPP
 
-#include "ParticleHandle.hpp"
-#include "ParticleList.hpp"
-#include "ParticleSlice.hpp"
-#include "Polymer.hpp"
+#include "script_interface/ScriptInterface.hpp"
+
+#include <string>
 
 namespace ScriptInterface {
 namespace Particles {
 
-void initialize(Utils::Factory<ObjectHandle> *om) {
-  om->register_new<ParticleHandle>("Particles::ParticleHandle");
-  om->register_new<ParticleList>("Particles::ParticleList");
-  om->register_new<ParticleSlice>("Particles::ParticleSlice");
-  om->register_new<Polymer>("Particles::Polymer");
-}
+class Polymer : public AutoParameters<Polymer> {
+public:
+  Variant do_call_method(std::string const &name,
+                         VariantMap const &parameters) override;
+};
 
 } // namespace Particles
 } // namespace ScriptInterface
+
+#endif
