@@ -108,22 +108,6 @@ class ParticleHandle(ScriptInterfaceHelper):
            The force is recomputed during the integration step and any force
            set in this way is immediately lost at the next integration step.
 
-    bonds:
-        The bonds stored by this particle. Note that bonds are only stored by
-        one partner. You need to define a bonded interaction.
-
-        A bond tuple is specified as a bond identifier associated with
-        a particle ``(bond_ID, (*part_ID,))``. A single particle may contain
-        multiple bonds.
-
-        See Also
-        --------
-        espressomd.particle_data.ParticleHandle.add_bond : Method to add bonds to a ``Particle``
-        espressomd.particle_data.ParticleHandle.delete_bond : Method to remove bonds from a ``Particle``
-
-        .. note::
-           Bond ids have to be an integer >= 0.
-
     node: (3,) array_like of :obj:`int`
         The node the particle is on, identified by its MPI rank.
 
@@ -321,12 +305,6 @@ class ParticleHandle(ScriptInterfaceHelper):
         .. note::
             This needs the feature ``ROTATION``.
 
-    exclusions: (N,) array_like of :obj:`int`
-        The exclusion list of particles where non-bonded interactions are ignored.
-
-        .. note::
-            This needs the feature ``EXCLUSIONS``.
-
     swimming:
         Set swimming parameters.
 
@@ -385,7 +363,7 @@ class ParticleHandle(ScriptInterfaceHelper):
 
     Methods
     -------
-    delete_all_bonds():
+    delete_all_bonds()
         Delete all bonds from the particle.
 
         See Also
@@ -504,6 +482,25 @@ class ParticleHandle(ScriptInterfaceHelper):
 
     @property
     def bonds(self):
+        """
+        The bonds stored by this particle. Note that bonds are only stored by
+        one partner. You need to define a bonded interaction.
+
+        A bond tuple is specified as a bond identifier associated with
+        a particle ``(bond_ID, (*part_ID,))``. A single particle may contain
+        multiple bonds.
+
+        Type: Ragged array.
+
+        .. note::
+           Bond ids have to be an integer >= 0.
+
+        See Also
+        --------
+        espressomd.particle_data.ParticleHandle.add_bond : Method to add bonds to a ``Particle``
+        espressomd.particle_data.ParticleHandle.delete_bond : Method to remove bonds from a ``Particle``
+
+        """
         bonds = []
         for bond_view in self.call_method("get_bonds_view"):
             bond_id = bond_view[0]
@@ -531,6 +528,15 @@ class ParticleHandle(ScriptInterfaceHelper):
 
     @property
     def exclusions(self):
+        """
+        The exclusion list of particles where non-bonded interactions are ignored.
+
+        .. note::
+            This needs the feature ``EXCLUSIONS``.
+
+        Type: (N,) array_like of :obj:`int`
+
+        """
         assert_features("EXCLUSIONS")
         return array_locked(
             np.array(self.call_method("get_exclusions"), dtype=int))
@@ -955,14 +961,9 @@ class ParticleList(ScriptInterfaceHelper):
     """
     Provides access to the particles.
 
-    Attributes
-    ----------
-    highest_particle_id: :obj:`int`
-        Largest particle id.
-
     Methods
     -------
-    clear():
+    clear()
         Remove all particles.
 
         See Also
@@ -1000,6 +1001,9 @@ class ParticleList(ScriptInterfaceHelper):
 
     @property
     def highest_particle_id(self):
+        """
+        Largest particle id.
+        """
         return self.call_method("get_highest_particle_id")
 
     def add(self, *args, **kwargs):

@@ -143,7 +143,7 @@ class Analysis(ScriptInterfaceHelper):
     """
     Methods
     -------
-    linear_momentum():
+    linear_momentum()
         Calculates the system's linear momentum.
 
         Parameters
@@ -160,7 +160,7 @@ class Analysis(ScriptInterfaceHelper):
         (3,) array_like of :obj:`float`
             The linear momentum of the system.
 
-    center_of_mass():
+    center_of_mass()
         Calculate the center of mass of particles of a given type.
 
         Note that virtual sites are not included, as they do not have a
@@ -177,7 +177,7 @@ class Analysis(ScriptInterfaceHelper):
         (3,) array_like of :obj:`float`
             The center of mass of the particles.
 
-    nbhood():
+    nbhood()
         Get all particles in a defined neighborhood.
 
         Parameters
@@ -192,7 +192,7 @@ class Analysis(ScriptInterfaceHelper):
         (N,) array_like of :obj:`int`
             The neighbouring particle ids.
 
-    calc_re():
+    calc_re()
         Calculate the mean end-to-end distance of chains and its
         standard deviation, as well as mean square end-to-end distance of
         chains and its standard deviation.
@@ -218,7 +218,7 @@ class Analysis(ScriptInterfaceHelper):
             standard deviation, [2] the mean square end-to-end distance and
             [3] its standard deviation.
 
-    calc_rg():
+    calc_rg()
         Calculate the mean radius of gyration of chains and its standard
         deviation, as well as the mean square radius of gyration of chains
         and its standard deviation.
@@ -244,7 +244,7 @@ class Analysis(ScriptInterfaceHelper):
             standard deviation, [2] the mean square radius of gyration and [3]
             its standard deviation.
 
-    calc_rh():
+    calc_rh()
         Calculate the hydrodynamic mean radius of chains and its standard
         deviation.
 
@@ -268,7 +268,7 @@ class Analysis(ScriptInterfaceHelper):
             Where [0] is the mean hydrodynamic radius of the chains
             and [1] its standard deviation.
 
-    angular_momentum():
+    angular_momentum()
         Calculate the system's angular momentum with respect to the origin.
 
         Note that virtual sites are not included, as they do not have a
@@ -285,7 +285,7 @@ class Analysis(ScriptInterfaceHelper):
         (3,) array_like of :obj:`float`
            The center of mass of the system.
 
-    structure_factor():
+    structure_factor()
         Calculate the structure factor for given types.  Returns the
         spherically averaged structure factor of particles specified in
         ``sf_types``.  The structure factor is calculated for all possible wave
@@ -307,7 +307,7 @@ class Analysis(ScriptInterfaceHelper):
             Where [0] contains the wave vectors q
             and [1] contains the structure factors S(q)
 
-    distribution():
+    distribution()
         Calculates the distance distribution of particles (probability of
         finding a particle of type A at a certain distance around a particle of
         type B, disregarding the fact that a spherical shell of a larger radius

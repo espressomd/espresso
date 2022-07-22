@@ -82,37 +82,6 @@ class System(ScriptInterfaceHelper):
 
     Attributes
     ----------
-    box_l: (3,) array_like of :obj:`float`
-        Dimensions of the simulation box
-
-    periodicity: (3,) array_like of :obj:`bool`
-        System periodicity in ``[x, y, z]``, ``False`` for no periodicity
-        in this direction, ``True`` for periodicity
-
-    force_cap: :obj:`float`
-        If > 0, the magnitude of the force on the particles
-        are capped to this value.
-
-    virtual_sites:
-        Set the virtual site implementation.
-
-        Requires feature ``VIRTUAL_SITES``.
-
-    max_cut_bonded: :obj:`float`
-        Maximal cutoff for bonded interactions.
-
-    max_cut_nonbonded: :obj:`float`
-        Maximal cutoff for non-bonded interactions.
-
-    min_global_cut: :obj:`float`
-        Minimal interaction cutoff.
-
-    time: :obj:`float`
-        Total simulation time.
-
-    time_step: :obj:`float`
-        MD time step.
-
     actors: :class:`espressomd.actors.Actors`
     analysis: :class:`espressomd.analyze.Analysis`
     auto_update_accumulators: :class:`espressomd.accumulators.AutoUpdateAccumulators`
@@ -135,7 +104,6 @@ class System(ScriptInterfaceHelper):
     Methods
     -------
     setup_type_map()
-        Requires setting the volume using :meth:`set_volume`.
         For using ESPResSo conveniently for simulations in the grand canonical
         ensemble, or other purposes, when particles of certain types are created
         and deleted frequently. Particle ids can be stored in lists for each
@@ -149,7 +117,7 @@ class System(ScriptInterfaceHelper):
         type_list : array_like of :obj:`int`
             Types to track.
 
-    number_of_particles():
+    number_of_particles()
         Count the number of particles of a given type.
 
         Parameters
@@ -168,7 +136,7 @@ class System(ScriptInterfaceHelper):
             If the particle ``type`` is not currently tracked by the system.
             To select which particle types are tracked, call :meth:`setup_type_map`.
 
-    rotate_system():
+    rotate_system()
         Rotate the particles in the system about the center of mass.
 
         If ``ROTATION`` is activated, the internal rotation degrees of
@@ -297,6 +265,12 @@ class System(ScriptInterfaceHelper):
 
     @property
     def box_l(self):
+        """
+        Dimensions of the simulation box.
+
+        Type: (3,) array_like of :obj:`float`
+
+        """
         return self._globals.box_l
 
     @box_l.setter
@@ -305,6 +279,13 @@ class System(ScriptInterfaceHelper):
 
     @property
     def periodicity(self):
+        """
+        System periodicity in ``[x, y, z]``, ``False`` for no periodicity
+        in this direction, ``True`` for periodicity
+
+        Type: (3,) array_like of :obj:`bool`
+
+        """
         return self._globals.periodicity
 
     @periodicity.setter
@@ -313,6 +294,12 @@ class System(ScriptInterfaceHelper):
 
     @property
     def min_global_cut(self):
+        """
+        Minimal interaction cutoff.
+
+        Type: :obj:`float`
+
+        """
         return self._globals.min_global_cut
 
     @min_global_cut.setter
@@ -321,6 +308,13 @@ class System(ScriptInterfaceHelper):
 
     @property
     def force_cap(self):
+        """
+        If > 0, the magnitude of the force on the particles
+        are capped to this value.
+
+        Type: :obj:`float`
+
+        """
         return self.integrator.force_cap
 
     @force_cap.setter
@@ -329,6 +323,12 @@ class System(ScriptInterfaceHelper):
 
     @property
     def time(self):
+        """
+        Total simulation time.
+
+        Type: :obj:`float`
+
+        """
         return self.integrator.time
 
     @time.setter
@@ -337,6 +337,12 @@ class System(ScriptInterfaceHelper):
 
     @property
     def time_step(self):
+        """
+        MD time step.
+
+        Type: :obj:`float`
+
+        """
         return self.integrator.time_step
 
     @time_step.setter
@@ -345,14 +351,34 @@ class System(ScriptInterfaceHelper):
 
     @property
     def max_cut_nonbonded(self):
+        """
+        Maximal cutoff for non-bonded interactions.
+
+        Type: :obj:`float`
+
+        """
         return self.cell_system.max_cut_nonbonded
 
     @property
     def max_cut_bonded(self):
+        """
+        Maximal cutoff for bonded interactions.
+
+        Type: :obj:`float`
+
+        """
         return self.cell_system.max_cut_bonded
 
     @property
     def virtual_sites(self):
+        """
+        Set the virtual site implementation.
+
+        Requires feature ``VIRTUAL_SITES``.
+
+        Type: :obj:`espressomd.virtual_sites.ActiveVirtualSitesHandle`
+
+        """
         assert_features("VIRTUAL_SITES")
         return self._active_virtual_sites_handle.implementation
 

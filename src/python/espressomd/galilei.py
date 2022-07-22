@@ -27,7 +27,7 @@ class GalileiTransform(ScriptInterfaceHelper):
 
     Methods
     -------
-    kill_particle_motion():
+    kill_particle_motion()
         Stop the motion of all particles.
 
         Parameters
@@ -35,7 +35,7 @@ class GalileiTransform(ScriptInterfaceHelper):
         rotation : :obj:`bool`, optional
             Whether or not to stop the angular momentum too. Defaults to false.
 
-    kill_particle_forces():
+    kill_particle_forces()
         Set the forces on the particles to zero.
 
         Parameters
@@ -43,7 +43,7 @@ class GalileiTransform(ScriptInterfaceHelper):
         torque : :obj:`bool`, optional
             Whether or not to set the torques to zero too. Defaults to false.
 
-    system_CMS():
+    system_CMS()
         Calculate the center of mass of the system. Assumes equal unit mass
         if the ``MASS`` feature is not compiled in.
 
@@ -52,7 +52,7 @@ class GalileiTransform(ScriptInterfaceHelper):
         (3,) array_like of :obj:`float`
             The center of mass position.
 
-    system_CMS_velocity():
+    system_CMS_velocity()
         Calculate the center of mass velocity of the system. Assumes equal unit
         mass if the ``MASS`` feature is not compiled in.
 
@@ -61,7 +61,7 @@ class GalileiTransform(ScriptInterfaceHelper):
         (3,) array_like of :obj:`float`
             The of the center of mass velocity vector.
 
-    galilei_transform():
+    galilei_transform()
         Remove the center of mass velocity of the system. Assumes equal unit
         mass if the ``MASS`` feature is not compiled in. This is often used
         when switching from Langevin Dynamics to lattice-Boltzmann. This is
