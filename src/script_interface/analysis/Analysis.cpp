@@ -101,10 +101,12 @@ Variant Analysis::do_call_method(std::string const &name,
     auto const result = nbhood(partCfg(), pos, radius);
     return result;
   }
+#ifdef DPD
   if (name == "dpd_stress") {
     auto const result = dpd_stress();
     return result.as_vector();
   }
+#endif // DPD
   if (name == "particle_energy") {
     auto const pid = get_value<int>(parameters, "pid");
     return particle_short_range_energy_contribution(pid);

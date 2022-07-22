@@ -33,24 +33,29 @@ with contextlib.suppress(ImportError):
 
 
 @utx.skipIfMissingModules("MDAnalysis")
+@utx.skipIfMissingFeatures(["ELECTROSTATICS"])
 class TestMDAnalysis(ut.TestCase):
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     system.time_step = 0.001
     system.cell_system.skin = 0.1
 
-    for i in range(10):
-        system.part.add(id=i, pos=[i, i % 2, 0], v=[0, i, -i], f=[1, 2 * i, 0],
-                        type=i % 2, q=i % 3 - 1)
+    def setUp(self):
+        system = self.system
+        for i in range(10):
+            system.part.add(id=i, pos=[i, i % 2, 0], v=[0, i, -i], f=[1, 2 * i, 0],
+                            type=i % 2, q=i % 3 - 1)
 
-    bond = espressomd.interactions.HarmonicBond(k=1., r_0=1.2, r_cut=2.0)
-    angle = espressomd.interactions.AngleCosine(bend=1., phi0=2 * np.pi / 3)
-    dihe = espressomd.interactions.Dihedral(bend=1., mult=2, phase=np.pi / 3)
-    system.bonded_inter.add(bond)
-    system.bonded_inter.add(angle)
-    system.bonded_inter.add(dihe)
-    system.part.by_id(1).add_bond((bond, 0))
-    system.part.by_id(3).add_bond((angle, 2, 4))
-    system.part.by_id(6).add_bond((dihe, 5, 7, 8))
+        bond = espressomd.interactions.HarmonicBond(k=1., r_0=1.2, r_cut=2.0)
+        angle = espressomd.interactions.AngleCosine(
+            bend=1., phi0=2 * np.pi / 3)
+        dihe = espressomd.interactions.Dihedral(
+            bend=1., mult=2, phase=np.pi / 3)
+        system.bonded_inter.add(bond)
+        system.bonded_inter.add(angle)
+        system.bonded_inter.add(dihe)
+        system.part.by_id(1).add_bond((bond, 0))
+        system.part.by_id(3).add_bond((angle, 2, 4))
+        system.part.by_id(6).add_bond((dihe, 5, 7, 8))
 
     def test_universe(self):
         system = self.system

@@ -146,7 +146,7 @@ class VirtualSites(ut.TestCase):
         p2 = system.part.add(pos=[1.0, 1.0, 1.0], rotation=3 * [True], id=2)
         p3 = system.part.add(pos=[1.0, 1.0, 1.0], rotation=3 * [True], id=3)
         # relating to anything else other than a particle or id is not allowed
-        with self.assertRaisesRegex(ValueError, "Argument of vs_auto_relate_to has to be of type ParticleHandle or int"):
+        with self.assertRaisesRegex(ValueError, "Argument of 'vs_auto_relate_to' has to be of type ParticleHandle or int"):
             p2.vs_auto_relate_to('0')
         # relating to itself is not allowed
         with self.assertRaisesRegex(ValueError, "A virtual site cannot relate to itself"):

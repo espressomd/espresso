@@ -20,6 +20,7 @@ import unittest as ut
 import unittest_decorators as utx
 import espressomd
 import espressomd.interactions
+import espressomd.particle_data
 import numpy as np
 import collections
 import itertools
@@ -44,8 +45,7 @@ class ParticleProperties(ut.TestCase):
     system.bonded_inter.add(f2)
 
     def setUp(self):
-        if not self.system.part.exists(self.pid):
-            self.partcl = self.system.part.add(id=self.pid, pos=(0, 0, 0))
+        self.partcl = self.system.part.add(id=self.pid, pos=(0, 0, 0))
 
     def tearDown(self):
         self.system.part.clear()
@@ -180,7 +180,7 @@ class ParticleProperties(ut.TestCase):
         test_dipm = generateTestForScalarProperty("dipm", -9.7)
 
     if espressomd.has_features(["VIRTUAL_SITES"]):
-        test_virtual = generateTestForScalarProperty("virtual", 1)
+        test_virtual = generateTestForScalarProperty("virtual", True)
 
     @utx.skipIfMissingFeatures(["VIRTUAL_SITES_RELATIVE"])
     def test_vs_relative(self):
@@ -196,17 +196,18 @@ class ParticleProperties(ut.TestCase):
             res[2], np.array((0.5, -0.5, -0.5, -0.5)),
             err_msg=f"vs_relative: {res}", atol=self.tol)
         # check exceptions
-        with self.assertRaisesRegex(ValueError, "needs input in the form"):
+        error_msg = r"attribute 'vs_relative' of 'ParticleHandle' must take the form \[id, distance, quaternion\]"
+        with self.assertRaisesRegex(ValueError, error_msg):
             p1.vs_relative = (0, 5.0)
-        with self.assertRaisesRegex(ValueError, "particle id has to be given as an int"):
+        with self.assertRaisesRegex(ValueError, error_msg):
             p1.vs_relative = ('0', 5.0, (1, 0, 0, 0))
-        with self.assertRaisesRegex(ValueError, "distance has to be given as a float"):
+        with self.assertRaisesRegex(ValueError, error_msg):
             p1.vs_relative = (0, '5', (1, 0, 0, 0))
-        with self.assertRaisesRegex(ValueError, "quaternion has to be given as a tuple of 4 floats"):
+        with self.assertRaisesRegex(ValueError, error_msg):
             p1.vs_relative = (0, 5.0, (1, 0, 0))
-        with self.assertRaisesRegex(ValueError, "quaternion is zero"):
+        with self.assertRaisesRegex(ValueError, error_msg):
             p1.vs_relative = (0, 5.0, (0, 0, 0, 0))
-        with self.assertRaisesRegex(ValueError, "quaternion is zero"):
+        with self.assertRaisesRegex(ValueError, "attribute 'vs_quat' of 'ParticleHandle' must be non-zero"):
             p1.vs_quat = [0, 0, 0, 0]
 
     @utx.skipIfMissingFeatures(["EXCLUSIONS"])
@@ -241,7 +242,7 @@ class ParticleProperties(ut.TestCase):
     @utx.skipIfMissingFeatures(["ROTATION"])
     def test_invalid_quat(self):
         system = self.system
-        with self.assertRaisesRegex(ValueError, "quaternion is zero"):
+        with self.assertRaisesRegex(ValueError, "attribute 'quat' of 'ParticleHandle' must be non-zero"):
             system.part.add(pos=[0., 0., 0.], quat=[0., 0., 0., 0.])
 
     @utx.skipIfMissingFeatures("ELECTROSTATICS")
@@ -331,13 +332,9 @@ class ParticleProperties(ut.TestCase):
         self.system.part.clear()
         handle_to_non_existing_particle = self.system.part.by_id(42)
         with self.assertRaisesRegex(RuntimeError, "Particle node for id 42 not found"):
-            handle_to_non_existing_particle.id
-        p = self.system.part.add(pos=[0., 0., 0.], id=0)
-        with self.assertRaisesRegex(RuntimeError, "Particle node for id 42 not found"):
-            p._id = 42
-            p.node
+            handle_to_non_existing_particle.type
         for i in range(1, 10):
-            p._id = -i
+            p = espressomd.particle_data.ParticleHandle(id=-i)
             with self.assertRaisesRegex(ValueError, f"Invalid particle id: {-i}"):
                 p.node
             with self.assertRaisesRegex(ValueError, f"Invalid particle id: {-i}"):
@@ -356,26 +353,40 @@ class ParticleProperties(ut.TestCase):
         with self.assertRaisesRegex(ValueError, err_msg):
             self.system.part.add([1, 2])
 
+    def test_invalid_particle_attributes(self):
+        p = self.partcl
+        err_msg = "attribute '{}' of 'ParticleHandle' {}"
+        with self.assertRaisesRegex(ValueError, err_msg.format("type", "must be an integer >= 0")):
+            p.type = -1
+        with self.assertRaisesRegex(ValueError, err_msg.format("mol_id", "must be an integer >= 0")):
+            p.mol_id = -1
+        if espressomd.has_features("ENGINE"):
+            with self.assertRaisesRegex(ValueError, err_msg.format("swimming", "cannot be set with 'v_swim' and 'f_swim' at the same time")):
+                p.swimming = {"v_swim": 0.3, "f_swim": 0.6}
+            with self.assertRaisesRegex(ValueError, err_msg.format("swimming.mode", "has to be either 'pusher', 'puller' or 'N/A'")):
+                p.swimming = {"v_swim": 0.3, "mode": "invalid"}
+
     def test_parallel_property_setters(self):
-        s = self.system
-        s.part.clear()
-        partcls = s.part.add(pos=s.box_l * np.random.random((100, 3)))
+        system = self.system
+        system.part.clear()
+        partcls = system.part.add(
+            pos=system.box_l * np.random.random((100, 3)))
 
         # Copy individual properties of particle 0
         print(
             "If this test hangs, there is an mpi deadlock in a particle property setter.")
-        for p in espressomd.particle_data.particle_attributes:
+        for attr in espressomd.particle_data.particle_attributes:
             # Uncomment to identify guilty property
-            # print( p)
+            # print(attr)
 
-            assert hasattr(s.part.by_id(0), p), \
+            assert hasattr(system.part.by_id(0), attr), \
                 "Inconsistency between ParticleHandle and particle_data.particle_attributes"
             try:
-                setattr(partcls, p, getattr(s.part.by_id(0), p))
-            except AttributeError:
-                print("Skipping read-only", p)
+                setattr(partcls, attr, getattr(system.part.by_id(0), attr))
+            except RuntimeError as err:
+                self.assertEqual(str(err), f"Parameter '{attr}' is read-only.")
             # Cause a different mpi callback to uncover deadlock immediately
-            _ = getattr(partcls, p)
+            _ = getattr(partcls, attr)
 
     def test_remove_particle(self):
         """Tests that if a particle is removed,
@@ -523,7 +534,7 @@ class ParticleProperties(ut.TestCase):
         self.system.part.clear()
         p = self.system.part.add(pos=0.5 * self.system.box_l)
         # cannot change id (to avoid corrupting caches in the core)
-        with self.assertRaisesRegex(Exception, "Cannot change particle id."):
+        with self.assertRaisesRegex(RuntimeError, "Cannot change particle id"):
             p.update({'id': 1})
         # check value change
         new_pos = [1., 2., 3.]
@@ -532,11 +543,9 @@ class ParticleProperties(ut.TestCase):
         # updating self should not change anything
         pdict = p.to_dict()
         del pdict['id']
-        del pdict['_id']
         p.update(pdict)
         new_pdict = p.to_dict()
         del new_pdict['id']
-        del new_pdict['_id']
         self.assertEqual(str(new_pdict), str(pdict))
 
 

@@ -76,9 +76,10 @@ class ParticleSliceTest(ut.TestCase):
     @utx.skipIfMissingFeatures(["EXTERNAL_FORCES"])
     def test_4_str(self):
         self.assertEqual(repr(self.p0.fix),
-                         repr(np.array([0, 0, 0])))
+                         repr(np.array([False, False, False])))
         self.assertEqual(repr(self.p0p1.fix),
-                         repr(np.array([[0, 0, 0], [0, 0, 1]])))
+                         repr(np.array([[False, False, False],
+                                        [False, False, True]])))
 
     def test_pos_str(self):
         self.p0.pos = [0, 0, 0]
@@ -113,7 +114,7 @@ class ParticleSliceTest(ut.TestCase):
         # Setter
 
         # tuple
-        b = fene, 0
+        b = (fene, 0)
         self.p2.bonds = b
         self.assertEqual(self.all_partcls.bonds, [(), (), ((fene, 0),), ()])
 
@@ -171,7 +172,7 @@ class ParticleSliceTest(ut.TestCase):
 
         # tuple for all
         self.all_partcls.bonds = []
-        b = fene, 0
+        b = (fene, 0)
         self.p2p3.bonds = b
         self.assertEqual(self.all_partcls.bonds,
                          [(), (), ((fene, 0),), ((fene, 0),)])
@@ -334,18 +335,18 @@ class ParticleSliceTest(ut.TestCase):
         all_partcls = self.system.part.all()
 
         self.assertEqual(repr(all_partcls.vs_relative),
-                         repr([(1, 1.0, np.array([1., 1., 1., 1.])),
-                               (0, 0.0, np.array([1., 0., 0., 0.])),
-                               (0, 0.0, np.array([1., 0., 0., 0.])),
-                               (0, 0.0, np.array([1., 0., 0., 0.]))]))
+                         repr([[1, 1.0, np.array([1., 1., 1., 1.])],
+                               [0, 0.0, np.array([1., 0., 0., 0.])],
+                               [0, 0.0, np.array([1., 0., 0., 0.])],
+                               [0, 0.0, np.array([1., 0., 0., 0.])]]))
 
         all_partcls.vs_relative = [1, 1.0, (1.0, 1.0, 1.0, 1.0)]
 
         self.assertEqual(repr(all_partcls.vs_relative),
-                         repr([(1, 1.0, np.array([1., 1., 1., 1.])),
-                               (1, 1.0, np.array([1., 1., 1., 1.])),
-                               (1, 1.0, np.array([1., 1., 1., 1.])),
-                               (1, 1.0, np.array([1., 1., 1., 1.]))]))
+                         repr([[1, 1.0, np.array([1., 1., 1., 1.])],
+                               [1, 1.0, np.array([1., 1., 1., 1.])],
+                               [1, 1.0, np.array([1., 1., 1., 1.])],
+                               [1, 1.0, np.array([1., 1., 1., 1.])]]))
 
         all_partcls.vs_relative = [[1, 1.0, (1.0, 1.0, 1.0, 1.0)],
                                    [1, 2.0, (1.0, 1.0, 1.0, 1.0)],
@@ -353,10 +354,10 @@ class ParticleSliceTest(ut.TestCase):
                                    [1, 4.0, (1.0, 1.0, 1.0, 1.0)]]
 
         self.assertEqual(repr(all_partcls.vs_relative),
-                         repr([(1, 1.0, np.array([1., 1., 1., 1.])),
-                               (1, 2.0, np.array([1., 1., 1., 1.])),
-                               (1, 3.0, np.array([1., 1., 1., 1.])),
-                               (1, 4.0, np.array([1., 1., 1., 1.]))]))
+                         repr([[1, 1.0, np.array([1., 1., 1., 1.])],
+                               [1, 2.0, np.array([1., 1., 1., 1.])],
+                               [1, 3.0, np.array([1., 1., 1., 1.])],
+                               [1, 4.0, np.array([1., 1., 1., 1.])]]))
 
     def test_multiadd(self):
         self.system.part.clear()

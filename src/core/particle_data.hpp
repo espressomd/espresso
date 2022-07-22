@@ -21,14 +21,9 @@
 #ifndef CORE_PARTICLE_DATA_HPP
 #define CORE_PARTICLE_DATA_HPP
 /** \file
- *  Particles property access.
+ *  Particles property update.
  *
- *  This file contains everything related to particle properties. If you want to
- *  add a new property to the particles, it is probably a good idea to modify
- *  Particle to give scripts access to that property. You always have to modify
- *  two positions: first the print section, where you should add your new
- *  data at the end, and second the read section where you have to find a nice
- *  and short name for your property to appear in the Python code.
+ *  This file contains everything related to updating particle properties.
  */
 
 #include "config.hpp"
@@ -67,11 +62,13 @@ void set_particle_swimming(int part, ParticleParametersSwimming swim);
  */
 void set_particle_f(int part, const Utils::Vector3d &F);
 
+#ifdef MASS
 /** Call only on the head node: set particle mass.
  *  @param part the particle.
  *  @param mass its new mass.
  */
 void set_particle_mass(int part, double mass);
+#endif
 
 #ifdef ROTATIONAL_INERTIA
 /** Call only on the head node: set particle rotational inertia.
@@ -81,6 +78,7 @@ void set_particle_mass(int part, double mass);
 void set_particle_rotational_inertia(int part, Utils::Vector3d const &rinertia);
 #endif
 
+#ifdef ROTATION
 /** Call only on the head node: Specifies whether a particle's rotational
  *  degrees of freedom are integrated or not. If set to zero, the content of
  *  the torque and omega variables are meaningless
@@ -96,12 +94,15 @@ void set_particle_rotation(int part, Utils::Vector3i const &flag);
  *  @param angle rotation angle
  */
 void rotate_particle(int part, const Utils::Vector3d &axis, double angle);
+#endif
 
+#ifdef ELECTROSTATICS
 /** Call only on the head node: set particle charge.
  *  @param part the particle.
  *  @param q its new charge.
  */
 void set_particle_q(int part, double q);
+#endif
 
 #ifdef LB_ELECTROHYDRODYNAMICS
 /** Call only on the head node: set particle electrophoretic mobility.
@@ -286,58 +287,5 @@ void auto_exclusions(int distance);
 
 /** Rescale all particle positions in direction @p dir by a factor @p scale. */
 void mpi_rescale_particles(int dir, double scale);
-
-// The following functions are used by the python interface to obtain
-// properties of a particle, which are only compiled in in some configurations
-// This is needed, because cython does not support conditional compilation
-// within a ctypedef definition
-
-#ifdef VIRTUAL_SITES_RELATIVE
-inline Utils::Quaternion<double> get_particle_vs_quat(Particle const *p) {
-  return p->vs_relative().quat;
-}
-inline Utils::Quaternion<double> get_particle_vs_relative(Particle const *p,
-                                                          int &vs_relative_to,
-                                                          double &vs_distance) {
-  vs_relative_to = p->vs_relative().to_particle_id;
-  vs_distance = p->vs_relative().distance;
-  return p->vs_relative().rel_orientation;
-}
-#endif
-
-#ifdef EXTERNAL_FORCES
-inline Utils::Vector3i get_particle_fix(Particle const *p) {
-  return Utils::Vector3i{
-      {p->is_fixed_along(0), p->is_fixed_along(1), p->is_fixed_along(2)}};
-}
-#endif // EXTERNAL_FORCES
-
-#ifdef THERMOSTAT_PER_PARTICLE
-#ifdef PARTICLE_ANISOTROPY
-inline Utils::Vector3d get_particle_gamma(Particle const *p) {
-  return p->gamma();
-}
-#else
-inline double get_particle_gamma(Particle const *p) { return p->gamma(); }
-#endif // PARTICLE_ANISOTROPY
-#ifdef ROTATION
-#ifdef PARTICLE_ANISOTROPY
-inline Utils::Vector3d get_particle_gamma_rot(Particle const *p) {
-  return p->gamma_rot();
-}
-#else
-inline double get_particle_gamma_rot(Particle const *p) {
-  return p->gamma_rot();
-}
-#endif // PARTICLE_ANISOTROPY
-#endif // ROTATION
-#endif // THERMOSTAT_PER_PARTICLE
-
-#ifdef ROTATION
-inline Utils::Vector3i get_particle_rotation(Particle const *p) {
-  return Utils::Vector3i{{p->can_rotate_around(0), p->can_rotate_around(1),
-                          p->can_rotate_around(2)}};
-}
-#endif // ROTATION
 
 #endif

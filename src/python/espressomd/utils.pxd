@@ -102,10 +102,6 @@ cdef extern from "utils/Vector.hpp" namespace "Utils":
         double & operator[](int i)
         double * data()
 
-cdef extern from "utils/quaternion.hpp" namespace "Utils":
-    cppclass Quaternion[T]:
-        T & operator[](int i)
-
 cdef make_array_locked(Vector3d)
 cdef Vector3d make_Vector3d(a)
 cdef Vector3i make_Vector3i(a)
