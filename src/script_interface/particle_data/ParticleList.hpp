@@ -17,18 +17,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "initialize.hpp"
+#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_PARTICLE_DATA_PARTICLE_LIST_HPP
+#define ESPRESSO_SRC_SCRIPT_INTERFACE_PARTICLE_DATA_PARTICLE_LIST_HPP
 
-#include "ParticleHandle.hpp"
-#include "ParticleList.hpp"
+#include "script_interface/ScriptInterface.hpp"
+
+#include <string>
 
 namespace ScriptInterface {
 namespace Particles {
 
-void initialize(Utils::Factory<ObjectHandle> *om) {
-  om->register_new<ParticleHandle>("Particles::ParticleHandle");
-  om->register_new<ParticleList>("Particles::ParticleList");
-}
+class ParticleList : public ObjectHandle {
+
+public:
+  Variant do_call_method(std::string const &name,
+                         VariantMap const &params) override;
+
+  void do_construct(VariantMap const &params) override {}
+
+private:
+  std::string get_internal_state() const override;
+  void set_internal_state(std::string const &state) override;
+};
 
 } // namespace Particles
 } // namespace ScriptInterface
+
+#endif

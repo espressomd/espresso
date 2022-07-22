@@ -328,7 +328,9 @@ class ParticleProperties(ut.TestCase):
         p3 = system.part.add(pos=offset)
         self.assertEqual(p3.id, p0.id + 1)
 
-    def test_invalid_particle_ids_exceptions(self):
+    def test_invalid_particle_ids(self):
+        with self.assertRaisesRegex(ValueError, f"Particle {self.partcl.id} already exists"):
+            self.system.part.add(id=self.partcl.id, pos=self.partcl.pos)
         self.system.part.clear()
         handle_to_non_existing_particle = self.system.part.by_id(42)
         with self.assertRaisesRegex(RuntimeError, "Particle node for id 42 not found"):
@@ -470,6 +472,9 @@ class ParticleProperties(ut.TestCase):
             for i in range(3):
                 self.assertGreaterEqual(p.pos_folded[i], 0)
                 self.assertLess(p.pos_folded[i], system.box_l[i])
+
+    def test_particle_list(self):
+        self.assertEqual(str(self.system.part), "ParticleList([17])")
 
     def test_particle_slice(self):
         """Tests operations on slices of particles"""

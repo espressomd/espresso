@@ -1015,11 +1015,31 @@ class ParticleSlice(_ParticleSliceImpl):
         return odict
 
 
-cdef class ParticleList:
+@script_interface_register
+class ParticleList(ScriptInterfaceHelper):
     """
     Provides access to the particles.
 
+    Attributes
+    ----------
+    highest_particle_id: :obj:`int`
+        Largest particle id.
+
+    Methods
+    -------
+    clear():
+        Remove all particles.
+
+        See Also
+        --------
+        :meth:`espressomd.particle_data.ParticleHandle.remove`
+
     """
+    _so_name = "Particles::ParticleList"
+    _so_creation_policy = "LOCAL"
+    _so_bind_methods = (
+        "clear",
+    )
 
     def by_id(self, p_id):
         """
@@ -1037,49 +1057,15 @@ cdef class ParticleList:
         """
         Get a slice containing all particles.
         """
-        all_ids = get_particle_ids()
+        all_ids = self.call_method("get_particle_ids")
         return self.by_ids(all_ids)
 
-    # __getstate__ and __setstate__ define the pickle interaction
-    def __getstate__(self):
-        """Attributes to pickle.
-
-        Content of ``particle_attributes``, minus a few exceptions:
-
-        - :attr:`~ParticleHandle.dip`, :attr:`~ParticleHandle.director`:
-          Setting only the director will overwrite the orientation of the
-          particle around the axis parallel to dipole moment/director.
-          Quaternions contain the full info.
-        - :attr:`~ParticleHandle.id`: The particle id is used as the
-          storage key when pickling all particles via :class:`ParticleList`,
-          and the interface (rightly) does not support changing of the id
-          after the particle was created.
-        - :attr:`~ParticleHandle.image_box`, :attr:`~ParticleHandle.node`
-
-        """
-
-        odict = {}
-        for p in self:
-            pdict = p.to_dict()
-            del pdict["id"]
-            odict[p.id] = pdict
-        return odict
-
-    def __setstate__(self, params):
-        exclusions = collections.OrderedDict()
-        for particle_number in params.keys():
-            params[particle_number]["id"] = particle_number
-            IF EXCLUSIONS:
-                exclusions[particle_number] = params[particle_number][
-                    "exclusions"]
-                del params[particle_number]["exclusions"]
-            self._place_new_particle(params[particle_number])
-        IF EXCLUSIONS:
-            for pid in exclusions:
-                self.by_id(pid).exclusions = exclusions[pid]
-
     def __len__(self):
-        return get_n_part()
+        return self.call_method("get_n_part")
+
+    @property
+    def highest_particle_id(self):
+        return self.call_method("get_highest_particle_id")
 
     def add(self, *args, **kwargs):
         """
@@ -1135,40 +1121,18 @@ cdef class ParticleList:
             return self._place_new_particle(particles_dict)
 
     def _place_new_particle(self, p_dict):
-        # Handling of particle id
-        if "id" not in p_dict:
-            # Generate particle id
-            p_dict["id"] = get_maximal_particle_id() + 1
-        else:
-            if particle_exists(p_dict["id"]):
-                raise Exception(f"Particle {p_dict['id']} already exists.")
-
-        # Prevent setting of contradicting attributes
-        IF DIPOLES:
-            if 'dip' in p_dict and 'dipm' in p_dict:
-                raise ValueError("Contradicting attributes: dip and dipm. Setting \
-dip is sufficient as the length of the vector defines the scalar dipole moment.")
-            IF ROTATION:
-                if 'dip' in p_dict and 'quat' in p_dict:
-                    raise ValueError("Contradicting attributes: dip and quat. \
-Setting dip overwrites the rotation of the particle around the dipole axis. \
-Set quat and scalar dipole moment (dipm) instead.")
-
-        # The ParticleList can not be used yet, as the particle
-        # doesn't yet exist. Hence, the setting of position has to be
-        # done here.
-        check_type_or_throw_except(
-            p_dict["pos"], 3, float, "Position must be 3 floats.")
-        place_particle(p_dict["id"], make_Vector3d(p_dict["pos"]))
-
-        # position is taken care of
-        del p_dict["pos"]
-        pid = p_dict.pop("id")
-
-        if p_dict != {}:
-            self.by_id(pid).update(p_dict)
-
-        return self.by_id(pid)
+        bonds = []
+        if "bonds" in p_dict:
+            bonds = p_dict.pop("bonds")
+            if nesting_level(bonds) == 1:
+                bonds = [bonds]
+        p_id = self.call_method("add_particle", **p_dict)
+        p = self.by_id(p_id)
+        for bond in bonds:
+            if len(bond):
+                bond = p.normalize_and_check_bond_or_throw_exception(bond)
+                p.add_verified_bond(bond)
+        return p
 
     def _place_new_particles(self, p_list_dict):
         # Check if all entries have the same length
@@ -1181,8 +1145,8 @@ Set quat and scalar dipole moment (dipm) instead.")
         # If particle ids haven't been provided, use free ones
         # beyond the highest existing one
         if "id" not in p_list_dict:
-            first_id = get_maximal_particle_id() + 1
-            p_list_dict["id"] = range(first_id, first_id + n_parts)
+            first_id = self.highest_particle_id + 1
+            p_list_dict["id"] = np.arange(first_id, first_id + n_parts)
 
         # Place the particles
         for i in range(n_parts):
@@ -1194,35 +1158,21 @@ Set quat and scalar dipole moment (dipm) instead.")
 
     # Iteration over all existing particles
     def __iter__(self):
-        ids = get_particle_ids()
-
-        for i in ids:
-            yield self.by_id(i)
+        for p_id in self.call_method("get_particle_ids"):
+            yield self.by_id(p_id)
 
     def exists(self, idx):
         if is_valid_type(idx, int):
-            return particle_exists(idx)
+            return self.call_method("particle_exists", p_id=idx)
         if isinstance(idx, (slice, tuple, list, np.ndarray)):
             tf_array = np.zeros(len(idx), dtype=type(True))
             for i in range(len(idx)):
-                tf_array[i] = particle_exists(idx[i])
+                tf_array[i] = self.call_method("particle_exists", p_id=idx[i])
             return tf_array
 
-    def clear(self):
-        """
-        Removes all particles.
-
-        See Also
-        --------
-        add
-        :meth:`espressomd.particle_data.ParticleHandle.remove`
-
-        """
-
-        remove_all_particles()
-
     def __str__(self):
-        return "ParticleList([" + ",".join(get_particle_ids()) + "])"
+        return "ParticleList([" + \
+            ",".join(map(str, self.call_method("get_particle_ids"))) + "])"
 
     def writevtk(self, fname, types='all'):
         """
@@ -1255,7 +1205,6 @@ Set quat and scalar dipole moment (dipm) instead.")
 
         """
 
-        global box_l
         if not hasattr(types, '__iter__'):
             types = [types]
 
@@ -1281,47 +1230,22 @@ Set quat and scalar dipole moment (dipm) instead.")
                 if types == 'all' or p.type in types:
                     vtk.write("{} {} {}\n".format(*p.v))
 
-    property highest_particle_id:
-        """
-        Largest particle id.
-
-        """
-
-        def __get__(self):
-            return get_maximal_particle_id()
-
-    property n_part_types:
-        """
-        Number of particle types.
-
-        """
-
-        def __get__(self):
-            return max_seen_particle_type
-
-    property n_rigidbonds:
-        """
-        Number of rigid bonds.
-
-        """
-
-        def __get__(self):
-            return n_rigidbonds
-
     def pairs(self):
         """
-        Generator returns all pairs of particles.
+        Generate all pairs of particles.
 
         """
 
-        ids = get_particle_ids()
+        ids = self.call_method("get_particle_ids")
 
         for i in ids:
             for j in ids[i + 1:]:
                 yield (self.by_id(i), self.by_id(j))
 
     def select(self, *args, **kwargs):
-        """Generates a particle slice by filtering particles via a user-defined criterion
+        """
+        Generate a particle slice by filtering particles via a user-defined
+        criterion.
 
         Parameters:
 
