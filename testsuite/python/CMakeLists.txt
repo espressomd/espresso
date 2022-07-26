@@ -279,6 +279,7 @@ python_test(FILE lb_momentum_conservation.py MAX_NUM_PROC 4 LABELS gpu)
 python_test(FILE lb_momentum_conservation.py MAX_NUM_PROC 1 LABELS gpu SUFFIX
             n_square)
 python_test(FILE p3m_electrostatic_pressure.py MAX_NUM_PROC 2 LABELS gpu)
+python_test(FILE p3m_madelung.py MAX_NUM_PROC 1 LABELS gpu long)
 python_test(FILE sigint.py DEPENDENCIES sigint_child.py MAX_NUM_PROC 1)
 python_test(FILE lb_density.py MAX_NUM_PROC 1)
 python_test(FILE observable_chain.py MAX_NUM_PROC 4)
