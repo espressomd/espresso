@@ -67,18 +67,9 @@ with code_generation_context.CodeGeneration() as ctx:
         target_prefix = "Cuda"
     else:
         target_prefix = ""
-    precision_prefix = {
-        True: 'DoublePrecision',
-        False: 'SinglePrecision'}[
-        ctx.double_accuracy]
-    precision_suffix = {
-        True: 'double_precision',
-        False: 'single_precision'}[
-        ctx.double_accuracy]
-    precision_rng = {
-        True: ps.rng.PhiloxTwoDoubles,
-        False: ps.rng.PhiloxFourFloats}[
-        ctx.double_accuracy]
+    precision_prefix = pystencils_espresso.precision_prefix[ctx.double_accuracy]
+    precision_suffix = pystencils_espresso.precision_suffix[ctx.double_accuracy]
+    precision_rng = pystencils_espresso.precision_rng[ctx.double_accuracy]
     kT = sp.symbols('kT')
     stencil = lbmpy.stencils.get_stencil('D3Q19')
     fields = pystencils_espresso.generate_fields(ctx, stencil)

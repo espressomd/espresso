@@ -27,6 +27,16 @@ import pystencils_walberla
 data_type_cpp = {True: 'double', False: 'float'}
 data_type_np = {True: 'float64', False: 'float32'}
 
+precision_prefix = {
+    True: 'DoublePrecision',
+    False: 'SinglePrecision'}
+precision_suffix = {
+    True: 'double_precision',
+    False: 'single_precision'}
+precision_rng = {
+    True: ps.rng.PhiloxTwoDoubles,
+    False: ps.rng.PhiloxFourFloats}
+
 
 def generate_fields(ctx, stencil):
     dtype = data_type_np[ctx.double_accuracy]
