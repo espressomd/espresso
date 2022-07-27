@@ -105,8 +105,8 @@ class Test(ut.TestCase):
 
     @utx.skipIfMissingFeatures(["DP3M"])
     def test_infinite_magnetic_sheet(self):
-        n_part = 64
-        spacing = 1.2
+        n_part = 32
+        spacing = 2.4
         dipm = 1.05
         self.system.box_l = 3 * [n_part * spacing]
 
@@ -149,8 +149,8 @@ class Test(ut.TestCase):
 
     @utx.skipIfMissingFeatures(["DP3M"])
     def test_infinite_magnetic_cube(self):
-        n_part = 16
-        spacing = 1.2
+        n_part = 8
+        spacing = 2.4
         dipm = 1.05
         self.system.box_l = 3 * [n_part * spacing]
 
@@ -211,7 +211,7 @@ class Test(ut.TestCase):
         p3m = espressomd.electrostatics.P3M(**p3m_params)
         self.system.actors.add(p3m)
         check()
-        if espressomd.has_features("CUDA"):
+        if espressomd.has_features("CUDA") and espressomd.gpu_available():
             self.system.actors.clear()
             p3m = espressomd.electrostatics.P3MGPU(**p3m_params)
             self.system.actors.add(p3m)
@@ -219,7 +219,7 @@ class Test(ut.TestCase):
 
     @utx.skipIfMissingFeatures(["P3M"])
     def test_infinite_ionic_sheet(self):
-        n_pairs = 32
+        n_pairs = 24
         self.system.box_l = [2 * n_pairs, 2 * n_pairs, 4 * n_pairs]
         for j, k in itertools.product(range(2 * n_pairs), repeat=2):
             self.system.part.add(pos=[j, k, 0.], q=(-1)**(j + k))
@@ -227,7 +227,7 @@ class Test(ut.TestCase):
         mc = -1.6155426267128247
         base = [1., 1., 0.]
         ref_energy, ref_pressure = self.get_reference_obs_per_ion(mc, base)
-        p3m_params = dict(prefactor=1., accuracy=1e-8, mesh=48, r_cut=26.,
+        p3m_params = dict(prefactor=1., accuracy=1e-8, mesh=48, r_cut=22.,
                           cao=7, tuning=False)
         elc_params = dict(maxPWerror=1e-6, gap_size=16)
 
@@ -249,7 +249,7 @@ class Test(ut.TestCase):
         elc = espressomd.electrostatics.ELC(actor=p3m, **elc_params)
         self.system.actors.add(elc)
         check(pressure=False)
-        if espressomd.has_features("CUDA"):
+        if espressomd.has_features("CUDA") and espressomd.gpu_available():
             self.system.actors.clear()
             p3m = espressomd.electrostatics.P3MGPU(**p3m_params)
             self.system.actors.add(p3m)
@@ -283,7 +283,7 @@ class Test(ut.TestCase):
         p3m = espressomd.electrostatics.P3M(**p3m_params)
         self.system.actors.add(p3m)
         check()
-        if espressomd.has_features("CUDA"):
+        if espressomd.has_features("CUDA") and espressomd.gpu_available():
             self.system.actors.clear()
             p3m = espressomd.electrostatics.P3MGPU(**p3m_params)
             self.system.actors.add(p3m)
