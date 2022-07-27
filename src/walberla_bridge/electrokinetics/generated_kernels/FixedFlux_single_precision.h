@@ -1,4 +1,4 @@
-// kernel generated with pystencils v0.4.4+2.g825be1d, lbmpy v0.4.4, lbmpy_walberla/pystencils_walberla from commit 3c4ea5df560c4dfdd15076648fc59c830bd64a9d
+// kernel generated with pystencils v0.4.4, lbmpy v0.4.4, lbmpy_walberla/pystencils_walberla from commit 08f04ef64f95609b47838db85862033a1600afa1
 
 //======================================================================================================================
 //
@@ -101,10 +101,6 @@ public:
         auto createIdxVector = []( IBlock * const , StructuredBlockStorage * const ) { return new IndexVectors(); };
         indexVectorID = blocks->addStructuredBlockData< IndexVectors >( createIdxVector, "IndexField_FixedFlux_single_precision");
     };
-    
-    FixedFlux_single_precision(BlockDataID fluxID_, BlockDataID indexVectorID_, std::function<Vector3<float>(const Cell &, const shared_ptr<StructuredBlockForest>&, IBlock&)>& fluxCallback )
-        : elementInitaliser(fluxCallback), fluxID(fluxID_), indexVectorID(indexVectorID_)
-    {};
 
     void run (IBlock * block);
 

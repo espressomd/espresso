@@ -1,3 +1,7 @@
+// kernel generated with pystencils v0.4.4, lbmpy v0.4.4,
+// lbmpy_walberla/pystencils_walberla from commit
+// 08f04ef64f95609b47838db85862033a1600afa1
+
 //======================================================================================================================
 //
 //  This file is part of waLBerla. waLBerla is free software: you can
@@ -45,7 +49,7 @@ using namespace std;
 namespace walberla {
 namespace pystencils {
 
-namespace internal_reactionkernelbulk_5_single_precision_reactionkernelbulk_5_single_precision {
+namespace internal_737d6904f7c65dcfc320d619f189641b {
 static FUNC_PREFIX void
 reactionkernelbulk_5_single_precision_reactionkernelbulk_5_single_precision(
     float *RESTRICT _data_rho_0, float *RESTRICT _data_rho_1,
@@ -103,27 +107,26 @@ reactionkernelbulk_5_single_precision_reactionkernelbulk_5_single_precision(
     }
   }
 }
-} // namespace
-  // internal_reactionkernelbulk_5_single_precision_reactionkernelbulk_5_single_precision
+} // namespace internal_737d6904f7c65dcfc320d619f189641b
 
 void ReactionKernelBulk_5_single_precision::run(IBlock *block) {
-  auto rho_3 = block->getData<field::GhostLayerField<float, 1>>(rho_3ID);
-  auto rho_1 = block->getData<field::GhostLayerField<float, 1>>(rho_1ID);
   auto rho_4 = block->getData<field::GhostLayerField<float, 1>>(rho_4ID);
-  auto rho_2 = block->getData<field::GhostLayerField<float, 1>>(rho_2ID);
   auto rho_0 = block->getData<field::GhostLayerField<float, 1>>(rho_0ID);
+  auto rho_1 = block->getData<field::GhostLayerField<float, 1>>(rho_1ID);
+  auto rho_2 = block->getData<field::GhostLayerField<float, 1>>(rho_2ID);
+  auto rho_3 = block->getData<field::GhostLayerField<float, 1>>(rho_3ID);
 
-  auto &stoech_1 = this->stoech_1_;
   auto &order_3 = this->order_3_;
   auto &rate_coefficient = this->rate_coefficient_;
-  auto &order_2 = this->order_2_;
-  auto &order_0 = this->order_0_;
-  auto &order_1 = this->order_1_;
   auto &order_4 = this->order_4_;
   auto &stoech_2 = this->stoech_2_;
-  auto &stoech_4 = this->stoech_4_;
   auto &stoech_0 = this->stoech_0_;
+  auto &stoech_1 = this->stoech_1_;
+  auto &order_2 = this->order_2_;
   auto &stoech_3 = this->stoech_3_;
+  auto &stoech_4 = this->stoech_4_;
+  auto &order_0 = this->order_0_;
+  auto &order_1 = this->order_1_;
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_0->nrOfGhostLayers()));
   float *RESTRICT _data_rho_0 = rho_0->dataAt(0, 0, 0, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_1->nrOfGhostLayers()));
@@ -158,7 +161,7 @@ void ReactionKernelBulk_5_single_precision::run(IBlock *block) {
   const int64_t _stride_rho_4_0 = int64_t(rho_4->xStride());
   const int64_t _stride_rho_4_1 = int64_t(rho_4->yStride());
   const int64_t _stride_rho_4_2 = int64_t(rho_4->zStride());
-  internal_reactionkernelbulk_5_single_precision_reactionkernelbulk_5_single_precision::
+  internal_737d6904f7c65dcfc320d619f189641b::
       reactionkernelbulk_5_single_precision_reactionkernelbulk_5_single_precision(
           _data_rho_0, _data_rho_1, _data_rho_2, _data_rho_3, _data_rho_4,
           _size_rho_0_0, _size_rho_0_1, _size_rho_0_2, _stride_rho_0_0,
@@ -182,23 +185,23 @@ void ReactionKernelBulk_5_single_precision::runOnCellInterval(
   if (ci.empty())
     return;
 
-  auto rho_3 = block->getData<field::GhostLayerField<float, 1>>(rho_3ID);
-  auto rho_1 = block->getData<field::GhostLayerField<float, 1>>(rho_1ID);
   auto rho_4 = block->getData<field::GhostLayerField<float, 1>>(rho_4ID);
-  auto rho_2 = block->getData<field::GhostLayerField<float, 1>>(rho_2ID);
   auto rho_0 = block->getData<field::GhostLayerField<float, 1>>(rho_0ID);
+  auto rho_1 = block->getData<field::GhostLayerField<float, 1>>(rho_1ID);
+  auto rho_2 = block->getData<field::GhostLayerField<float, 1>>(rho_2ID);
+  auto rho_3 = block->getData<field::GhostLayerField<float, 1>>(rho_3ID);
 
-  auto &stoech_1 = this->stoech_1_;
   auto &order_3 = this->order_3_;
   auto &rate_coefficient = this->rate_coefficient_;
-  auto &order_2 = this->order_2_;
-  auto &order_0 = this->order_0_;
-  auto &order_1 = this->order_1_;
   auto &order_4 = this->order_4_;
   auto &stoech_2 = this->stoech_2_;
-  auto &stoech_4 = this->stoech_4_;
   auto &stoech_0 = this->stoech_0_;
+  auto &stoech_1 = this->stoech_1_;
+  auto &order_2 = this->order_2_;
   auto &stoech_3 = this->stoech_3_;
+  auto &stoech_4 = this->stoech_4_;
+  auto &order_0 = this->order_0_;
+  auto &order_1 = this->order_1_;
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(rho_0->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(rho_0->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(rho_0->nrOfGhostLayers()));
@@ -248,7 +251,7 @@ void ReactionKernelBulk_5_single_precision::runOnCellInterval(
   const int64_t _stride_rho_4_0 = int64_t(rho_4->xStride());
   const int64_t _stride_rho_4_1 = int64_t(rho_4->yStride());
   const int64_t _stride_rho_4_2 = int64_t(rho_4->zStride());
-  internal_reactionkernelbulk_5_single_precision_reactionkernelbulk_5_single_precision::
+  internal_737d6904f7c65dcfc320d619f189641b::
       reactionkernelbulk_5_single_precision_reactionkernelbulk_5_single_precision(
           _data_rho_0, _data_rho_1, _data_rho_2, _data_rho_3, _data_rho_4,
           _size_rho_0_0, _size_rho_0_1, _size_rho_0_2, _stride_rho_0_0,

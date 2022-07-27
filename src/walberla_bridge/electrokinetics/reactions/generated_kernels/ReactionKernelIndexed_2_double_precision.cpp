@@ -1,3 +1,7 @@
+// kernel generated with pystencils v0.4.4, lbmpy v0.4.4,
+// lbmpy_walberla/pystencils_walberla from commit
+// 08f04ef64f95609b47838db85862033a1600afa1
+
 //======================================================================================================================
 //
 //  This file is part of waLBerla. waLBerla is free software: you can
@@ -42,7 +46,7 @@ namespace pystencils {
 #pragma diag_suppress = declared_but_not_referenced
 #endif
 
-namespace internal_reactionkernelindexed_2_double_precision_boundary_ReactionKernelIndexed_2_double_precision {
+namespace internal_1955c52e82759b23ee69574de97d7a03 {
 static FUNC_PREFIX void
 reactionkernelindexed_2_double_precision_boundary_ReactionKernelIndexed_2_double_precision(
     uint8_t *RESTRICT _data_indexVector, double *RESTRICT _data_rho_0,
@@ -69,10 +73,7 @@ reactionkernelindexed_2_double_precision_boundary_ReactionKernelIndexed_2_double
                 _stride_rho_1_2 * z] = local_rho_1 + rate_factor * stoech_1;
   }
 }
-} // namespace
-  // internal_reactionkernelindexed_2_double_precision_boundary_ReactionKernelIndexed_2_double_precision
-  // internal_reactionkernelindexed_2_double_precision_boundary_ReactionKernelIndexed_2_double_precision
-  // internal_reactionkernelindexed_2_double_precision_boundary_ReactionKernelIndexed_2_double_precision
+} // namespace internal_1955c52e82759b23ee69574de97d7a03
 
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
@@ -84,7 +85,7 @@ reactionkernelindexed_2_double_precision_boundary_ReactionKernelIndexed_2_double
 
 void ReactionKernelIndexed_2_double_precision::run_impl(
     IBlock *block, IndexVectors::Type type) {
-  auto *indexVectors = block->uncheckedFastGetData<IndexVectors>(indexVectorID);
+  auto *indexVectors = block->getData<IndexVectors>(indexVectorID);
   int64_t indexVectorSize = int64_c(indexVectors->indexVector(type).size());
   if (indexVectorSize == 0)
     return;
@@ -93,13 +94,13 @@ void ReactionKernelIndexed_2_double_precision::run_impl(
 
   uint8_t *_data_indexVector = reinterpret_cast<uint8_t *>(pointer);
 
-  auto rho_0 = block->getData<field::GhostLayerField<double, 1>>(rho_0ID);
   auto rho_1 = block->getData<field::GhostLayerField<double, 1>>(rho_1ID);
+  auto rho_0 = block->getData<field::GhostLayerField<double, 1>>(rho_0ID);
 
-  auto &order_1 = order_1_;
   auto &stoech_1 = stoech_1_;
-  auto &order_0 = order_0_;
   auto &stoech_0 = stoech_0_;
+  auto &order_0 = order_0_;
+  auto &order_1 = order_1_;
   auto &rate_coefficient = rate_coefficient_;
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_0->nrOfGhostLayers()));
   double *RESTRICT _data_rho_0 = rho_0->dataAt(0, 0, 0, 0);
@@ -111,7 +112,7 @@ void ReactionKernelIndexed_2_double_precision::run_impl(
   const int64_t _stride_rho_1_0 = int64_t(rho_1->xStride());
   const int64_t _stride_rho_1_1 = int64_t(rho_1->yStride());
   const int64_t _stride_rho_1_2 = int64_t(rho_1->zStride());
-  internal_reactionkernelindexed_2_double_precision_boundary_ReactionKernelIndexed_2_double_precision::
+  internal_1955c52e82759b23ee69574de97d7a03::
       reactionkernelindexed_2_double_precision_boundary_ReactionKernelIndexed_2_double_precision(
           _data_indexVector, _data_rho_0, _data_rho_1, _stride_rho_0_0,
           _stride_rho_0_1, _stride_rho_0_2, _stride_rho_1_0, _stride_rho_1_1,

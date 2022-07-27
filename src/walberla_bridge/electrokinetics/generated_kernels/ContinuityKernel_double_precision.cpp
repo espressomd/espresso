@@ -1,6 +1,6 @@
-// kernel generated with pystencils v0.4.4+2.g825be1d, lbmpy v0.4.4,
+// kernel generated with pystencils v0.4.4, lbmpy v0.4.4,
 // lbmpy_walberla/pystencils_walberla from commit
-// 3c4ea5df560c4dfdd15076648fc59c830bd64a9d
+// 08f04ef64f95609b47838db85862033a1600afa1
 
 //======================================================================================================================
 //
@@ -175,8 +175,8 @@ continuitykernel_double_precision_continuitykernel_double_precision(
 } // namespace internal_5c5e903f8ea7925cf790d7c2318b2c56
 
 void ContinuityKernel_double_precision::run(IBlock *block) {
-  auto j = block->getData<field::GhostLayerField<double, 13>>(jID);
   auto rho = block->getData<field::GhostLayerField<double, 1>>(rhoID);
+  auto j = block->getData<field::GhostLayerField<double, 13>>(jID);
 
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(j->nrOfGhostLayers()));
   double *RESTRICT const _data_j = j->dataAt(-1, -1, -1, 0);
@@ -217,8 +217,8 @@ void ContinuityKernel_double_precision::runOnCellInterval(
   if (ci.empty())
     return;
 
-  auto j = block->getData<field::GhostLayerField<double, 13>>(jID);
   auto rho = block->getData<field::GhostLayerField<double, 1>>(rhoID);
+  auto j = block->getData<field::GhostLayerField<double, 13>>(jID);
 
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1, -int_c(j->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1, -int_c(j->nrOfGhostLayers()));

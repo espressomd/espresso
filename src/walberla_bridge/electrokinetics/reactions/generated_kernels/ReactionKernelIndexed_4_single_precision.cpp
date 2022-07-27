@@ -1,3 +1,7 @@
+// kernel generated with pystencils v0.4.4, lbmpy v0.4.4,
+// lbmpy_walberla/pystencils_walberla from commit
+// 08f04ef64f95609b47838db85862033a1600afa1
+
 //======================================================================================================================
 //
 //  This file is part of waLBerla. waLBerla is free software: you can
@@ -42,7 +46,7 @@ namespace pystencils {
 #pragma diag_suppress = declared_but_not_referenced
 #endif
 
-namespace internal_reactionkernelindexed_4_single_precision_boundary_ReactionKernelIndexed_4_single_precision {
+namespace internal_62195c7636fc531694c87493561447d7 {
 static FUNC_PREFIX void
 reactionkernelindexed_4_single_precision_boundary_ReactionKernelIndexed_4_single_precision(
     uint8_t *RESTRICT _data_indexVector, float *RESTRICT _data_rho_0,
@@ -86,8 +90,7 @@ reactionkernelindexed_4_single_precision_boundary_ReactionKernelIndexed_4_single
                 _stride_rho_3_2 * z] = local_rho_3 + rate_factor * stoech_3;
   }
 }
-} // namespace
-  // internal_reactionkernelindexed_4_single_precision_boundary_ReactionKernelIndexed_4_single_precision
+} // namespace internal_62195c7636fc531694c87493561447d7
 
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
@@ -99,7 +102,7 @@ reactionkernelindexed_4_single_precision_boundary_ReactionKernelIndexed_4_single
 
 void ReactionKernelIndexed_4_single_precision::run_impl(
     IBlock *block, IndexVectors::Type type) {
-  auto *indexVectors = block->uncheckedFastGetData<IndexVectors>(indexVectorID);
+  auto *indexVectors = block->getData<IndexVectors>(indexVectorID);
   int64_t indexVectorSize = int64_c(indexVectors->indexVector(type).size());
   if (indexVectorSize == 0)
     return;
@@ -109,19 +112,19 @@ void ReactionKernelIndexed_4_single_precision::run_impl(
   uint8_t *_data_indexVector = reinterpret_cast<uint8_t *>(pointer);
 
   auto rho_2 = block->getData<field::GhostLayerField<float, 1>>(rho_2ID);
-  auto rho_0 = block->getData<field::GhostLayerField<float, 1>>(rho_0ID);
   auto rho_3 = block->getData<field::GhostLayerField<float, 1>>(rho_3ID);
+  auto rho_0 = block->getData<field::GhostLayerField<float, 1>>(rho_0ID);
   auto rho_1 = block->getData<field::GhostLayerField<float, 1>>(rho_1ID);
 
-  auto &stoech_1 = stoech_1_;
   auto &order_3 = order_3_;
   auto &rate_coefficient = rate_coefficient_;
-  auto &order_2 = order_2_;
-  auto &order_0 = order_0_;
-  auto &order_1 = order_1_;
   auto &stoech_2 = stoech_2_;
   auto &stoech_0 = stoech_0_;
+  auto &stoech_1 = stoech_1_;
+  auto &order_2 = order_2_;
   auto &stoech_3 = stoech_3_;
+  auto &order_0 = order_0_;
+  auto &order_1 = order_1_;
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_0->nrOfGhostLayers()));
   float *RESTRICT _data_rho_0 = rho_0->dataAt(0, 0, 0, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_1->nrOfGhostLayers()));
@@ -142,7 +145,7 @@ void ReactionKernelIndexed_4_single_precision::run_impl(
   const int64_t _stride_rho_3_0 = int64_t(rho_3->xStride());
   const int64_t _stride_rho_3_1 = int64_t(rho_3->yStride());
   const int64_t _stride_rho_3_2 = int64_t(rho_3->zStride());
-  internal_reactionkernelindexed_4_single_precision_boundary_ReactionKernelIndexed_4_single_precision::
+  internal_62195c7636fc531694c87493561447d7::
       reactionkernelindexed_4_single_precision_boundary_ReactionKernelIndexed_4_single_precision(
           _data_indexVector, _data_rho_0, _data_rho_1, _data_rho_2, _data_rho_3,
           _stride_rho_0_0, _stride_rho_0_1, _stride_rho_0_2, _stride_rho_1_0,
