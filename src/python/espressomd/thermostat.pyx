@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2019 The ESPResSo project
+# Copyright (C) 2013-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -231,13 +231,17 @@ cdef class Thermostat:
                 thermo_list.append(sd_dict)
         return thermo_list
 
+    def _set_temperature(self, kT):
+        mpi_set_temperature(kT)
+        utils.handle_errors("Temperature change failed")
+
     def turn_off(self):
         """
         Turns off all the thermostat and sets all the thermostat variables to zero.
 
         """
 
-        mpi_set_temperature(0.)
+        self._set_temperature(0.)
         mpi_set_thermo_virtual(True)
         IF PARTICLE_ANISOTROPY:
             mpi_set_langevin_gamma(utils.make_Vector3d((0., 0., 0.)))
@@ -346,7 +350,7 @@ cdef class Thermostat:
                 raise ValueError("seed must be a positive integer")
             langevin_set_rng_seed(seed)
 
-        mpi_set_temperature(kT)
+        self._set_temperature(kT)
         IF PARTICLE_ANISOTROPY:
             cdef utils.Vector3d gamma_vec
             if scalar_gamma_def:
@@ -473,7 +477,7 @@ cdef class Thermostat:
                 raise ValueError("seed must be a positive integer")
             brownian_set_rng_seed(seed)
 
-        mpi_set_temperature(kT)
+        self._set_temperature(kT)
         IF PARTICLE_ANISOTROPY:
             cdef utils.Vector3d gamma_vec
             if scalar_gamma_def:
@@ -599,7 +603,7 @@ cdef class Thermostat:
                     raise ValueError("seed must be a positive integer")
                 npt_iso_set_rng_seed(seed)
 
-            mpi_set_temperature(kT)
+            self._set_temperature(kT)
             global thermo_switch
             mpi_set_thermo_switch(thermo_switch | THERMO_NPT_ISO)
             mpi_set_nptiso_gammas(gamma0, gammav)
@@ -636,7 +640,7 @@ cdef class Thermostat:
                     raise ValueError("seed must be a positive integer")
                 dpd_set_rng_seed(seed)
 
-            mpi_set_temperature(kT)
+            self._set_temperature(kT)
             global thermo_switch
             mpi_set_thermo_switch(thermo_switch | THERMO_DPD)
 

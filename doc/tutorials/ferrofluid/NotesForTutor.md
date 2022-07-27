@@ -14,7 +14,7 @@ The third tutorial deals mainly with physical concepts, the only new espresso-sp
    - alpha-parameter compares external field coupling to thermal energy
    - External force/field introduces ordering of moments
    - The Langevin magnetization curve gives a theoretical prediction for magnetization of non-interacting dipoles
-   - Field perpendicular to particle layer shows noticable deviations from Langevin-curve due to torque from dipole-dipole interactions
+   - Field perpendicular to particle layer shows noticeable deviations from Langevin-curve due to torque from dipole-dipole interactions
 
 ## Learning Objectives (Espresso):
  1. Tutorial: 

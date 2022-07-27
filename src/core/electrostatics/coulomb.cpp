@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2010-2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -136,17 +136,10 @@ Utils::Vector9d calc_pressure_long_range(ParticleRange const &particles) {
 }
 
 struct ShortRangeCutoff : public boost::static_visitor<double> {
-  explicit ShortRangeCutoff(Utils::Vector3d const &box_l) : m_box_l{box_l} {}
-
 #ifdef P3M
   auto operator()(std::shared_ptr<CoulombP3M> const &actor) const {
     return actor->p3m.params.r_cut;
   }
-#ifdef CUDA
-  auto operator()(std::shared_ptr<CoulombP3MGPU> const &actor) const {
-    return actor->p3m.params.r_cut;
-  }
-#endif // CUDA
   auto
   operator()(std::shared_ptr<ElectrostaticLayerCorrection> const &actor) const {
     return std::max(actor->elc.space_layer,
@@ -172,14 +165,11 @@ struct ShortRangeCutoff : public boost::static_visitor<double> {
   auto operator()(std::shared_ptr<DebyeHueckel> const &actor) const {
     return actor->r_cut;
   }
-
-private:
-  Utils::Vector3d const &m_box_l;
 };
 
-double cutoff(Utils::Vector3d const &box_l) {
+double cutoff() {
   if (electrostatics_actor) {
-    return boost::apply_visitor(ShortRangeCutoff{box_l}, *electrostatics_actor);
+    return boost::apply_visitor(ShortRangeCutoff{}, *electrostatics_actor);
   }
   return -1.0;
 }
@@ -191,11 +181,6 @@ struct EventOnObservableCalc : public boost::static_visitor<void> {
   void operator()(std::shared_ptr<CoulombP3M> const &actor) const {
     actor->count_charged_particles();
   }
-#ifdef CUDA
-  void operator()(std::shared_ptr<CoulombP3MGPU> const &actor) const {
-    actor->count_charged_particles();
-  }
-#endif // CUDA
   void
   operator()(std::shared_ptr<ElectrostaticLayerCorrection> const &actor) const {
     boost::apply_visitor(*this, actor->base_solver);
@@ -269,12 +254,6 @@ struct LongRangeEnergy : public boost::static_visitor<double> {
     actor->charge_assign(m_particles);
     return actor->long_range_energy(m_particles);
   }
-#ifdef CUDA
-  auto operator()(std::shared_ptr<CoulombP3MGPU> const &actor) const {
-    actor->charge_assign(m_particles);
-    return actor->long_range_energy(m_particles);
-  }
-#endif // CUDA
   auto
   operator()(std::shared_ptr<ElectrostaticLayerCorrection> const &actor) const {
     return actor->long_range_energy(m_particles);

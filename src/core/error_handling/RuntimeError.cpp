@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2019 The ESPResSo project
+ * Copyright (C) 2014-2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "RuntimeError.hpp"
+#include "error_handling/RuntimeError.hpp"
 
 #include <iostream>
 #include <sstream>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2010-2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -21,8 +21,6 @@
 
 #include "PidObservable.hpp"
 
-#include <vector>
-
 namespace Observables {
 
 /** Extract particle positions.
@@ -30,5 +28,6 @@ namespace Observables {
  *  \f$(x_1, y_1, z_1, \dots, x_n, y_n, z_n)\f$.
  */
 using ParticlePositions = ParticleObservable<ParticleObservables::Positions>;
+
 } // namespace Observables
 #endif

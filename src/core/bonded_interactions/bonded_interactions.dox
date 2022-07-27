@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The ESPResSo project
+ * Copyright (C) 2019-2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -132,9 +132,9 @@
  *      @code
  *      # enable boost::variant with more than 20 types
  *      target_compile_options(
- *      cxx_interface INTERFACE -DBOOST_MPL_CFG_NO_PREPROCESSED_HEADERS
- *                              -DBOOST_MPL_LIMIT_LIST_SIZE=40)
-        @endcode
+ *        EspressoCppFlags INTERFACE -DBOOST_MPL_CFG_NO_PREPROCESSED_HEADERS
+ *                                   -DBOOST_MPL_LIMIT_LIST_SIZE=40)
+ *      @endcode
  *  * In forces_inline.hpp:
  *    - A call to the new bond's force calculation needs to be placed in either
  *      of the functions @ref calc_bond_pair_force(), @ref

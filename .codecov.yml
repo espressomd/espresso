@@ -17,21 +17,22 @@ coverage:
           - testsuite/python/
         enabled: yes
         threshold: 1%
-      tests:
+      unit_tests:
         paths:
-          - src/core/unit_tests/
+          - "src/**/*tests/"
         enabled: yes
         threshold: 1%
       core:
         paths:
-          - "!src/core/unit_tests/"
+          - "src/"
+          - "!src/**/*tests/"
+          - "!src/python/"
         enabled: yes
         threshold: 1%
     patch:
       default:
-        target: 96% # TODO WALBERLA: switch back to 'auto' when all python tests are enabled again
         enabled: yes
-        threshold: 3%
+        threshold: 1%
     changes: no
 
 parsers:
@@ -49,4 +50,4 @@ ignore:
   - "doc/tutorials"
   - "samples"
   - "maintainer"
-  - "src/walberla_bridge/generated_kernels/*.cpp"
+  - "src/walberla_bridge/generated_kernels/*"

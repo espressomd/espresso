@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2015-2019 The ESPResSo project
+ * Copyright (C) 2015-2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *

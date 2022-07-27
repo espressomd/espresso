@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The ESPResSo project
+ * Copyright (C) 2020-2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -526,11 +526,14 @@ public:
       throw std::runtime_error(
           "Lees-Edwards LB doesn't support thermalization");
     }
-
     auto const shear_direction = lees_edwards_pack->shear_direction;
     auto const shear_plane_normal = lees_edwards_pack->shear_plane_normal;
     auto const shear_vel = FloatType_c(lees_edwards_pack->get_shear_velocity());
     auto const omega = shear_mode_relaxation_rate();
+    if (shear_plane_normal != 1) {
+      throw std::runtime_error(
+          "Lees-Edwards LB only supports shear_plane_normal=\"y\"");
+    }
     auto obj = LeesEdwardsCollisionModel(
         m_last_applied_force_field_id, m_pdf_field_id,
         FloatType_c(lattice().get_grid_dimensions()[shear_plane_normal]), omega,

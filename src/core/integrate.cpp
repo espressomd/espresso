@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2010-2022 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -579,7 +579,11 @@ void increment_sim_time(double amount) { sim_time += amount; }
 
 void mpi_set_time_step_local(double dt) {
   time_step = dt;
-  on_timestep_change();
+  try {
+    on_timestep_change();
+  } catch (std::exception const &err) {
+    runtimeErrorMsg() << err.what();
+  }
 }
 
 REGISTER_CALLBACK(mpi_set_time_step_local)

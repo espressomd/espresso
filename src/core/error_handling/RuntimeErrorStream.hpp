@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2010-2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -16,8 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ERROR_HANDLING_RUNTIME_ERROR_STREAM_HPP
-#define ERROR_HANDLING_RUNTIME_ERROR_STREAM_HPP
+
+#ifndef ESPRESSO_SRC_CORE_ERROR_HANDLING_RUNTIME_ERROR_STREAM_HPP
+#define ESPRESSO_SRC_CORE_ERROR_HANDLING_RUNTIME_ERROR_STREAM_HPP
 
 #include "RuntimeError.hpp"
 
@@ -28,9 +29,7 @@ namespace ErrorHandling {
 
 class RuntimeErrorCollector;
 
-/** \brief Allows creating a runtime error messing by using the streaming
- * operator */
-
+/** @brief Create a runtime error message via the streaming operator */
 class RuntimeErrorStream {
 public:
   RuntimeErrorStream(const RuntimeErrorStream &rhs);
@@ -39,7 +38,6 @@ public:
   ~RuntimeErrorStream();
   template <typename T> RuntimeErrorStream &operator<<(T const &value) {
     m_buff << value;
-
     return *this;
   }
 

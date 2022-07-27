@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The ESPResSo project
+ * Copyright (C) 2020-2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -90,6 +90,7 @@ public:
                 std::shared_ptr<LocalContext> node_local_context)
       : m_local_objects(), m_node_local_context(std::move(node_local_context)),
         m_is_head_node(callbacks.comm().rank() == 0),
+        // NOLINTNEXTLINE(bugprone-throw-keyword-missing)
         m_parallel_exception_handler(callbacks.comm()),
         cb_make_handle(&callbacks,
                        [this](ObjectId id, const std::string &name,

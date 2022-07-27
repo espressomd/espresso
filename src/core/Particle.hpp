@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2010-2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -467,6 +467,7 @@ public:
   constexpr auto &mass() const { return p.mass; }
 #endif
 #ifdef ROTATION
+  auto &rotation() { return p.rotation; }
   auto rotation() const { return p.rotation; }
   bool can_rotate() const { return static_cast<bool>(p.rotation); }
   bool can_rotate_around(int const axis) const {
@@ -520,6 +521,7 @@ public:
   auto &mu_E() { return p.mu_E; }
 #endif
 #ifdef VIRTUAL_SITES
+  bool &virtual_flag() { return p.is_virtual; }
   bool is_virtual() const { return p.is_virtual; }
   void set_virtual(bool const virt_flag) { p.is_virtual = virt_flag; }
 #ifdef VIRTUAL_SITES_RELATIVE
@@ -538,6 +540,7 @@ public:
 #endif // ROTATION
 #endif // THERMOSTAT_PER_PARTICLE
 #ifdef EXTERNAL_FORCES
+  auto &fixed() { return p.ext_flag; }
   bool has_fixed_coordinates() const { return static_cast<bool>(p.ext_flag); }
   bool is_fixed_along(int const axis) const {
     detail::check_axis_idx_valid(axis);
@@ -567,6 +570,8 @@ public:
   auto &pos_last_time_step() { return r.p_last_timestep; }
   auto const &rattle_params() const { return rattle; }
   auto &rattle_params() { return rattle; }
+  auto const &rattle_correction() const { return rattle.correction; }
+  auto &rattle_correction() { return rattle.correction; }
 #endif
 
 #ifdef EXCLUSIONS

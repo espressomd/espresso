@@ -21,7 +21,7 @@
 # Find the NVCC compiler, include its libraries and declare a custom
 # `add_library()` wrapper function named `add_gpu_library()`.
 
-set(CMAKE_CUDA_COMPILER ${CUDA_NVCC_EXECUTABLE})
+set(CMAKE_CUDA_COMPILER ${CUDAToolkit_NVCC_EXECUTABLE})
 set(CUDA 1)
 
 execute_process(COMMAND ${CMAKE_CUDA_COMPILER} --version
@@ -31,12 +31,15 @@ string(REGEX
        REPLACE "^.*Cuda compilation tools, release [0-9\.]+, V([0-9\.]+).*\$"
                "\\1" CMAKE_CUDA_COMPILER_VERSION "${NVCC_VERSION_STRING}")
 
-if(NOT CUDA_NVCC_EXECUTABLE STREQUAL "${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc")
-  get_filename_component(NVCC_EXECUTABLE_DIRNAME "${CUDA_NVCC_EXECUTABLE}" DIRECTORY)
+get_filename_component(CMAKE_CUDA_COMPILER_TOOLKIT "${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc" REALPATH)
+get_filename_component(CMAKE_CUDA_COMPILER_RESOLVED "${CMAKE_CUDA_COMPILER}" REALPATH)
+if(NOT "${CMAKE_CUDA_COMPILER_TOOLKIT}" STREQUAL "${CMAKE_CUDA_COMPILER_RESOLVED}"
+   AND NOT INSIDE_DOCKER)
+  get_filename_component(NVCC_EXECUTABLE_DIRNAME "${CMAKE_CUDA_COMPILER}" DIRECTORY)
   get_filename_component(NVCC_EXECUTABLE_DIRNAME "${NVCC_EXECUTABLE_DIRNAME}" DIRECTORY)
   message(
     WARNING
-      "Your nvcc (${CUDA_NVCC_EXECUTABLE}) does not appear to match your CUDA libraries (in ${CUDA_TOOLKIT_ROOT_DIR}). While ESPResSo will still compile, you might get unexpected crashes. Please point CUDA_TOOLKIT_ROOT_DIR to your CUDA toolkit path, e.g. by adding -DCUDA_TOOLKIT_ROOT_DIR='${NVCC_EXECUTABLE_DIRNAME}' to your cmake command."
+      "Your nvcc (${CMAKE_CUDA_COMPILER}) does not appear to match your CUDA libraries (in ${CUDA_TOOLKIT_ROOT_DIR}). While ESPResSo will still compile, you might get unexpected crashes. Please point CUDA_TOOLKIT_ROOT_DIR to your CUDA toolkit path, e.g. by adding -DCUDA_TOOLKIT_ROOT_DIR='${NVCC_EXECUTABLE_DIRNAME}' to your cmake command."
   )
 endif()
 
@@ -44,42 +47,32 @@ set(CUDA_LINK_LIBRARIES_KEYWORD PUBLIC)
 
 set(CUDA_PROPAGATE_HOST_FLAGS OFF)
 
-list(APPEND CUDA_NVCC_FLAGS_DEBUG -g)
-list(APPEND CUDA_NVCC_FLAGS_RELEASE -O3 -Xptxas=-O3 -Xcompiler=-O3 -DNDEBUG)
-list(APPEND CUDA_NVCC_FLAGS_MINSIZEREL -O2 -Xptxas=-O2 -Xcompiler=-Os -DNDEBUG)
-list(APPEND CUDA_NVCC_FLAGS_RELWITHDEBINFO -O2 -g -Xptxas=-O2 -Xcompiler=-O2,-g -DNDEBUG)
-list(APPEND CUDA_NVCC_FLAGS_COVERAGE -O3 -g -Xptxas=-O3 -Xcompiler=-Og,-g)
-list(APPEND CUDA_NVCC_FLAGS_RELWITHASSERT -O3 -g -Xptxas=-O3 -Xcompiler=-O3,-g)
-if(CMAKE_CUDA_COMPILER_VERSION VERSION_LESS 11)
-  list(APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_30,code=sm_30)
-endif()
-list(APPEND CUDA_NVCC_FLAGS
-       -gencode=arch=compute_52,code=sm_52
-       -gencode=arch=compute_52,code=compute_52 -std=c++${CMAKE_CUDA_STANDARD}
-       $<$<BOOL:${WARNINGS_ARE_ERRORS}>:-Xcompiler=-Werror;-Xptxas=-Werror>
-       $<$<BOOL:${CMAKE_OSX_SYSROOT}>:-Xcompiler=-isysroot;-Xcompiler=${CMAKE_OSX_SYSROOT}>)
-
-function(find_gpu_library)
-  cmake_parse_arguments(LIBRARY "REQUIRED" "NAMES;VARNAME" "" ${ARGN})
-  list(APPEND LIBRARY_PATHS
-       ${CUDA_TOOLKIT_ROOT_DIR}/lib64 ${CUDA_TOOLKIT_ROOT_DIR}/lib
-       /usr/local/nvidia/lib /usr/lib/x86_64-linux-gnu)
-  if(LIBRARY_REQUIRED)
-    find_library(${LIBRARY_VARNAME} NAMES ${LIBRARY_NAMES} PATHS ${LIBRARY_PATHS} NO_DEFAULT_PATH REQUIRED)
-  else()
-    find_library(${LIBRARY_VARNAME} NAMES ${LIBRARY_NAMES} PATHS ${LIBRARY_PATHS} NO_DEFAULT_PATH)
-  endif()
-endfunction(find_gpu_library)
-
-find_gpu_library(VARNAME CUDART_LIBRARY NAMES cudart REQUIRED)
-find_gpu_library(VARNAME CUDA_CUFFT_LIBRARIES NAMES cufft REQUIRED)
+add_library(Espresso_cuda_flags INTERFACE)
+add_library(Espresso::cuda_flags ALIAS Espresso_cuda_flags)
+target_compile_options(
+  Espresso_cuda_flags
+  INTERFACE
+  $<$<STREQUAL:${CMAKE_BUILD_TYPE},Debug>:>
+  $<$<STREQUAL:${CMAKE_BUILD_TYPE},Release>:-Xptxas=-O3 -Xcompiler=-O3 -DNDEBUG>
+  $<$<STREQUAL:${CMAKE_BUILD_TYPE},MinSizeRel>:-Xptxas=-O2 -Xcompiler=-Os -DNDEBUG>
+  $<$<STREQUAL:${CMAKE_BUILD_TYPE},RelWithDebInfo>:-Xptxas=-O2 -Xcompiler=-O2,-g -DNDEBUG>
+  $<$<STREQUAL:${CMAKE_BUILD_TYPE},Coverage>:-Xptxas=-O3 -Xcompiler=-Og,-g>
+  $<$<STREQUAL:${CMAKE_BUILD_TYPE},RelWithAssert>:-Xptxas=-O3 -Xcompiler=-O3,-g>
+  "--compiler-bindir=${CMAKE_CXX_COMPILER}"
+  $<$<BOOL:${WARNINGS_ARE_ERRORS}>:-Xcompiler=-Werror;-Xptxas=-Werror>
+  $<$<BOOL:${CMAKE_OSX_SYSROOT}>:-Xcompiler=-isysroot;-Xcompiler=${CMAKE_OSX_SYSROOT}>
+)
 
 function(add_gpu_library)
-  cuda_add_library(${ARGV})
+  add_library(${ARGV})
   set(GPU_TARGET_NAME ${ARGV0})
   set_property(TARGET ${GPU_TARGET_NAME} PROPERTY CUDA_SEPARABLE_COMPILATION ON)
-  target_link_libraries(${GPU_TARGET_NAME} PRIVATE
-    ${CUDA_LIBRARY} ${CUDART_LIBRARY} ${CUDA_CUFFT_LIBRARIES})
+  target_link_libraries(${GPU_TARGET_NAME} PRIVATE Espresso::cuda_flags)
+  list(APPEND cuda_archs 52)
+  if(CMAKE_CUDA_COMPILER_VERSION LESS 11)
+    list(APPEND cuda_archs 30)
+  endif()
+  set_target_properties(${GPU_TARGET_NAME} PROPERTIES CUDA_ARCHITECTURES "${cuda_archs}")
 endfunction()
 
 include(FindPackageHandleStandardArgs)

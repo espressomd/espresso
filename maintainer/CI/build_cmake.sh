@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
-# Copyright (C) 2016-2019 The ESPResSo project
+#
+# Copyright (C) 2016-2022 The ESPResSo project
 # Copyright (C) 2014 Olaf Lenz
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
+#
 
 abort() {
     echo "An error occurred. Exiting..." >&2
@@ -243,7 +245,11 @@ else
     fi
 fi
 
-cmake ${cmake_params} "${cmake_param_protected}" "${srcdir}" || exit 1
+if [ -z "${cmake_param_protected}" ]; then
+  cmake "${srcdir}" ${cmake_params} || exit 1
+else
+  cmake "${srcdir}" ${cmake_params} "${cmake_param_protected}" || exit 1
+fi
 end "CONFIGURE"
 
 # BUILD

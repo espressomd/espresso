@@ -41,7 +41,7 @@ def adapt_pystencils():
         old_generate_refs_for_kernel_parameters = jinja_env.filters[
             'generate_refs_for_kernel_parameters']
 
-        @jinja2.contextfilter
+        @jinja2.pass_context
         def new_generate_members(*args, **kwargs):
             output = old_generate_members(*args, **kwargs)
             token = ' block_offset_0_;'

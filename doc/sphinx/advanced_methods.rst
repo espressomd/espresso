@@ -53,11 +53,11 @@ Several modes are available for different types of binding.
 
 * ``"bind_at_point_of_collision"``: this mode prevents sliding of the colliding particles at the contact.
   This is achieved by creating two virtual sites at the point of collision.
-  They are rigidly connected to the colliding particles, respectively. A bond is
-  then created between the virtual sites, or an angular bond between
+  They are rigidly connected to each of the colliding particles.
+  A bond is then created between the virtual sites, or an angular bond between
   the two colliding particles and the virtual particles. In the latter case,
   the virtual particles are the centers of the angle potentials
-  (particle 2 in the description of the angle potential (see :ref:`Bond-angle interactions`).
+  (particle 2 in the description of the angle potential, see :ref:`Bond-angle interactions`).
   Due to the rigid connection between each of the
   particles in the collision and its respective virtual site, a sliding
   at the contact point is no longer possible. See the documentation on
@@ -68,9 +68,14 @@ Several modes are available for different types of binding.
   the point of contact or you can use :class:`espressomd.interactions.Virtual` which acts as a marker, only.
   The method is setup as follows::
 
-      system.collision_detection.set_params(mode="bind_at_point_of_collision",
-          distance=<CUTOFF>, bond_centers=<BOND_CENTERS>, bond_vs=<BOND_VS>,
-          part_type_vs=<PART_TYPE_VS>, vs_placement=<VS_PLACEMENT>)
+      system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
+      system.collision_detection.set_params(
+          mode="bind_at_point_of_collision",
+          distance=0.1,
+          bond_centers=harmonic_bond1,
+          bond_vs=harmonic_bond2,
+          part_type_vs=1,
+          vs_placement=0)
 
   The parameters ``distance`` and ``bond_centers`` have the same meaning
   as in the ``"bind_centers"`` mode. The remaining parameters are as follows:
@@ -109,6 +114,20 @@ Several modes are available for different types of binding.
   time step, no guarantees are made with regards to which partner is selected.
   In particular, there is no guarantee that the choice is unbiased.
 
+  The method is used as follows::
+
+      system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
+      system.collision_detection.set_params(
+            mode="glue_to_surface",
+            distance=0.1,
+            distance_glued_particle_to_vs=0.02,
+            bond_centers=harmonic_bond1,
+            bond_vs=harmonic_bond2,
+            part_type_vs=1,
+            part_type_to_attach_vs_to=2,
+            part_type_to_be_glued=3,
+            part_type_after_glueing=4)
+
 * ``"bind_three_particles"`` allows for the creation of agglomerates which maintain
   their shape similarly to those create by the mode ``"bind_at_point_of_collision"``.
   The present approach works without virtual sites. Instead, for each two-particle
@@ -121,20 +140,23 @@ Several modes are available for different types of binding.
   an angle bond is placed on the central particle.
   The angular bonds being added are determined from the angle between the particles.
   This method does not depend on the particles' rotational
-  degrees of freedom being integrated. Virtual sites are also not
-  required.
+  degrees of freedom being integrated. Virtual sites are not required.
   The method, along with the corresponding bonds are setup as follows::
 
         n_angle_bonds = 181  # 0 to 180 degrees in one degree steps
-        for i in range(0, res, 1):
-            self.system.bonded_inter[i] = espressomd.interactions.AngleHarmonic(
-                bend=1, phi0=float(i) / (res - 1) * np.pi)
+        for i in range(0, n_angle_bonds, 1):
+            system.bonded_inter[i] = espressomd.interactions.AngleHarmonic(
+                bend=1., phi0=float(i) / float(n_angle_bonds - 1) * np.pi)
 
-        # Create the bond passed to bond_centers here and add it to the system
+        bond_centers = espressomd.interactions.HarmonicBond(k=1., r_0=0.1, r_cut=0.5)
+        system.bonded_inter.add(bond_centers)
 
-        self.system.collision_detection.set_params(mode="bind_three_particles",
-            bond_centers=<BOND_CENTERS>, bond_three_particles=0,
-            three_particle_binding_angle_resolution=res, distance=<CUTOFF>)
+        system.collision_detection.set_params(
+            mode="bind_three_particles",
+            bond_centers=bond_centers,
+            bond_three_particles=0,
+            three_particle_binding_angle_resolution=n_angle_bonds,
+            distance=0.1)
 
   Important: The bonds for the angles are mapped via their numerical bond ids.
   In this example, ids from 0 to 180 are used. All other bonds required for

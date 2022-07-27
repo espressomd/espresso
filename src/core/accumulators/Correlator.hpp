@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2010-2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -233,6 +233,8 @@ private:
   double m_dt;            ///< time interval at which samples arrive
   double m_tau_max;       ///< maximum time for which the correlation should be
                           ///< calculated
+
+  using multi_array_index_type = boost::multi_array<double, 2>::index;
 
   std::string compressA_name;
   std::string compressB_name;

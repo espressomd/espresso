@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2010-2022 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -35,7 +35,6 @@
 #include "bonded_interactions/bonded_interaction_utils.hpp"
 #include "electrostatics/coulomb.hpp"
 #include "electrostatics/coulomb_inline.hpp"
-#include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include <utils/Vector.hpp>
@@ -79,7 +78,7 @@ thole_pair_energy(Particle const &p1, Particle const &p2,
   auto const thole_q1q2 = ia_params.thole.q1q2;
 
   if (thole_s != 0. and thole_q1q2 != 0. and kernel != nullptr and
-      dist < Coulomb::cutoff(box_geo.length()) and
+      dist < Coulomb::cutoff() and
       !(pair_bond_enum_exists_between<ThermalizedBond>(p1, p2))) {
     auto const sd = thole_s * dist;
     auto const S_r = 1.0 - (1.0 + sd / 2.0) * exp(-sd);

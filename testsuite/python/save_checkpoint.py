@@ -1,4 +1,5 @@
-# Copyright (C) 2010-2019 The ESPResSo project
+#
+# Copyright (C) 2010-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,6 +15,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 import unittest as ut
 import unittest_generator as utg
 import numpy as np
@@ -70,8 +73,9 @@ if 'INT.NPT' not in modes:
 lbf_actor = None
 if espressomd.has_features('LB_WALBERLA') and 'LB.WALBERLA' in modes:
     lbf_actor = espressomd.lb.LBFluidWalberla
-    if 'LB.GPU' in modes and espressomd.gpu_available():
-        lbf_actor = espressomd.lb.LBFluidWalberlaGPU
+    # TODO WALBERLA
+#    if 'LB.GPU' in modes and espressomd.gpu_available():
+#        lbf_actor = espressomd.lb.LBFluidWalberlaGPU
 if lbf_actor:
     lbf_cpt_mode = 0 if 'LB.ASCII' in modes else 1
     lbf = lbf_actor(agrid=0.5, viscosity=1.3, density=1.5, tau=0.01)

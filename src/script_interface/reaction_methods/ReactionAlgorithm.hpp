@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The ESPResSo project
+ * Copyright (C) 2021-2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -128,7 +128,7 @@ public:
     } else if (name == "reaction") {
       RE()->do_reaction(get_value_or<int>(parameters, "reaction_steps", 1));
     } else if (name == "displacement_mc_move_for_particles_of_type") {
-      RE()->do_global_mc_move_for_particles_of_type(
+      return RE()->do_global_mc_move_for_particles_of_type(
           get_value<int>(parameters, "type_mc"),
           get_value_or<int>(parameters, "particle_number_to_be_changed", 1));
     } else if (name == "check_reaction_method") {

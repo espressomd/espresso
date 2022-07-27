@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2010-2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -20,8 +20,6 @@
 #define OBSERVABLES_PARTICLEVELOCITIES_HPP
 
 #include "PidObservable.hpp"
-
-#include <vector>
 
 namespace Observables {
 

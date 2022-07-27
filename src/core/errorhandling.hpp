@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2010-2022 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -20,24 +20,23 @@
  */
 /** \file
  *  This file contains the errorhandling code for severe errors, like
- *  a broken bond or illegal parameter combinations. See section
- *  "Errorhandling for developers" for details on the error format and
- *  how to use this.
+ *  a broken bond or illegal parameter combinations.
  */
-#ifndef ERRORHANDLING_HPP
-#define ERRORHANDLING_HPP
+
+#ifndef ESPRESSO_SRC_CORE_ERROR_HANDLING_HPP
+#define ESPRESSO_SRC_CORE_ERROR_HANDLING_HPP
 
 #include "config.hpp"
 
-#include "RuntimeError.hpp"
-#include "RuntimeErrorStream.hpp"
+#include "error_handling/RuntimeError.hpp"
+#include "error_handling/RuntimeErrorStream.hpp"
 
 #include <string>
 #include <vector>
 
 /* Forward declaration of MpiCallbacks,
  * so we don't have to include the header.
- * It depends on mpi and can not be in cuda
+ * It depends on mpi and cannot be in cuda
  * code.
  */
 namespace Communication {

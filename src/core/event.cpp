@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2010-2022 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -275,6 +275,13 @@ void on_boxl_change(bool skip_method_adaption) {
 void on_cell_structure_change() {
   clear_particle_node();
 
+  if (lattice_switch == ActiveLB::WALBERLA) {
+    throw std::runtime_error(
+        "LB does not currently support handling changes of the MD cell "
+        "geometry. Setup the cell system, skin and interactions before "
+        "activating the CPU LB.");
+  }
+
   /* Now give methods a chance to react to the change in cell structure.
    * Most ES methods need to reinitialize, as they depend on skin,
    * node grid and so on. */
@@ -285,13 +292,6 @@ void on_cell_structure_change() {
 #ifdef DIPOLES
   Dipoles::on_cell_structure_change();
 #endif
-
-  if (lattice_switch == ActiveLB::WALBERLA) {
-    runtimeErrorMsg()
-        << "LB does not currently support handling changes of the MD cell "
-           "geometry. Setup the cell system, skin and interactions before "
-           "activating the CPU LB.";
-  }
 }
 
 void on_temperature_change() {

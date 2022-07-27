@@ -20,7 +20,22 @@
 #define BOOST_TEST_NO_MAIN
 #define BOOST_TEST_MODULE ScriptInterface::ParallelExceptionHandler test
 #define BOOST_TEST_DYN_LINK
+
+/* Guard against a GCC 12 diagnostic for Boost versions <= 1.79.
+ * More details in https://github.com/boostorg/function/issues/42
+ */
+#include <boost/serialization/version.hpp>
+#if BOOST_VERSION <= 107900 and defined(BOOST_GCC) and (BOOST_GCC >= 120000)
+#define BOOST_HAS_GCC_12_UNINITIALIZED_DIAGNOSTIC
+#endif
+#if defined(BOOST_HAS_GCC_12_UNINITIALIZED_DIAGNOSTIC)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wuninitialized"
+#endif
 #include <boost/test/unit_test.hpp>
+#if defined(BOOST_HAS_GCC_12_UNINITIALIZED_DIAGNOSTIC)
+#pragma GCC diagnostic pop
+#endif
 
 #include "script_interface/Exception.hpp"
 #include "script_interface/ParallelExceptionHandler.hpp"

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2010-2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -95,7 +95,7 @@ using is_solver = std::is_convertible<std::shared_ptr<T>, MagnetostaticsActor>;
 void calc_pressure_long_range();
 
 void sanity_checks();
-double cutoff(Utils::Vector3d const &box_l);
+double cutoff();
 
 void on_observable_calc();
 void on_dipoles_change();

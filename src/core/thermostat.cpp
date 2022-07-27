@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2010-2022 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -28,6 +28,7 @@
 #include "bonded_interactions/thermalized_bond_utils.hpp"
 #include "communication.hpp"
 #include "dpd.hpp"
+#include "errorhandling.hpp"
 #include "event.hpp"
 #include "integrate.hpp"
 #include "npt.hpp"
@@ -196,7 +197,11 @@ void mpi_set_thermo_virtual(bool thermo_virtual) {
 
 void mpi_set_temperature_local(double temperature) {
   ::temperature = temperature;
-  on_temperature_change();
+  try {
+    on_temperature_change();
+  } catch (std::exception const &err) {
+    runtimeErrorMsg() << err.what();
+  }
   on_thermostat_param_change();
 }
 

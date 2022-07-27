@@ -71,16 +71,21 @@ class LBCouetteFlowCommon:
         self.system.actors.clear()
         self.system.lees_edwards = espressomd.lees_edwards.LeesEdwards()
 
-    def test_profile(self):
+    def check_profile(self, u_getter, **kwargs):
         system = self.system
-        h = system.box_l[0]
+        system.box_l = [64, 1, 64]
+        if "x" not in kwargs.values():
+            system.box_l = [1, 64, 64]
+        elif "z" not in kwargs.values():
+            system.box_l = [64, 64, 1]
+        h = np.max(system.box_l)
         shear_velocity = 0.05
         k_max = 100
 
         protocol = espressomd.lees_edwards.LinearShear(
             shear_velocity=shear_velocity, initial_pos_offset=0., time_0=0.)
         system.lees_edwards.set_boundary_conditions(
-            shear_direction="x", shear_plane_normal="y", protocol=protocol)
+            protocol=protocol, **kwargs)
 
         lbf = self.lb_class(**LB_PARAMS, **self.lb_params)
         system.actors.add(lbf)
@@ -92,11 +97,19 @@ class LBCouetteFlowCommon:
         for i in range(4, 9):
             steps = (2**i - 2**(i - 1))
             system.integrator.run(steps)
-            pos_x = np.linspace(0.5, 63.5, 64)
-            u_y_ref = analytical(pos_x, system.time - 1., lbf.viscosity,
-                                 shear_velocity, h, k_max)
-            u_y_lbf = np.copy(lbf[5, :, 0].velocity[:, :, :, 0].reshape([-1]))
-            np.testing.assert_allclose(u_y_lbf, u_y_ref, atol=1e-4, rtol=0.)
+            pos = np.linspace(0.5, 63.5, 64)
+            u_ref = analytical(pos, system.time - 1., lbf.viscosity,
+                               shear_velocity, h, k_max)
+            u_lbf = np.copy(u_getter(lbf).reshape([-1]))
+            np.testing.assert_allclose(u_lbf, u_ref, atol=1e-4, rtol=0.)
+
+    def test_profile_xy(self):
+        self.check_profile(lambda lbf: lbf[5, :, 0].velocity[:, :, :, 0],
+                           shear_direction="x", shear_plane_normal="y")
+
+    def test_profile_zy(self):
+        self.check_profile(lambda lbf: lbf[0, :, 5].velocity[:, :, :, 0],
+                           shear_direction="z", shear_plane_normal="y")
 
 
 @utx.skipIfMissingFeatures("LB_WALBERLA")

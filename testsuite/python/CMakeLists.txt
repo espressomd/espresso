@@ -1,3 +1,22 @@
+#
+# Copyright (C) 2016-2022 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 function(PYTHON_TEST)
   cmake_parse_arguments(TEST "" "FILE;MAX_NUM_PROC;SUFFIX"
                         "DEPENDS;DEPENDENCIES;LABELS;ARGUMENTS" ${ARGN})
@@ -98,8 +117,10 @@ checkpoint_test(MODES therm_lb__p3m_cpu__lj__lb_walberla_cpu_ascii
                 MAX_NUM_PROC 2)
 checkpoint_test(MODES therm_lb__elc_cpu__lj__lb_walberla_cpu_binary
                 MAX_NUM_PROC 2)
-# checkpoint_test(MODES therm_lb__elc_gpu__lj__lb_walberla_gpu_ascii LABELS gpu) # TODO WALBERLA
-# checkpoint_test(MODES therm_lb__p3m_gpu__lj__lb_walberla_gpu_binary LABELS gpu) # TODO WALBERLA
+checkpoint_test(MODES therm_lb__elc_gpu__lj__lb_walberla_cpu_ascii LABELS gpu
+                MAX_NUM_PROC 2) # TODO WALBERLA: use walberla_gpu
+checkpoint_test(MODES therm_lb__p3m_gpu__lj__lb_walberla_cpu_binary LABELS gpu
+                MAX_NUM_PROC 2) # TODO WALBERLA: use walberla_gpu
 checkpoint_test(MODES therm_npt__int_npt)
 checkpoint_test(MODES int_sd__lj)
 checkpoint_test(MODES dp3m_cpu__therm_langevin__int_nvt)
@@ -282,7 +303,6 @@ python_test(FILE rotation.py MAX_NUM_PROC 1)
 python_test(FILE shapes.py MAX_NUM_PROC 1)
 python_test(FILE h5md.py MAX_NUM_PROC 2)
 python_test(FILE h5md.py MAX_NUM_PROC 1 SUFFIX 1_core)
-python_test(FILE mdanalysis.py MAX_NUM_PROC 2)
 python_test(FILE p3m_fft.py MAX_NUM_PROC 6)
 if(${TEST_NP} GREATER_EQUAL 8)
   python_test(FILE p3m_fft.py MAX_NUM_PROC 8 SUFFIX 8_cores)

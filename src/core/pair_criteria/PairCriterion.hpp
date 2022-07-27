@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2010-2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -24,7 +24,7 @@
 
 namespace PairCriteria {
 /**
- * @brief Criterion which retuns a true/false value for a pair of particles.
+ * @brief Criterion which returns a true/false value for a pair of particles.
  */
 class PairCriterion {
 public:

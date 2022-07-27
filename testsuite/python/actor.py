@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2019 The ESPResSo project
+# Copyright (C) 2018-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -244,10 +244,14 @@ class ActorsTest(ut.TestCase):
         self.actors.add(actor)
         with self.assertRaises(espressomd.highlander.ThereCanOnlyBeOne):
             self.actors.add(actor)
+        with self.assertRaises(espressomd.highlander.ThereCanOnlyBeOne):
+            actor._activate()
         # an actor can only be removed once
         self.actors.remove(actor)
-        with self.assertRaises(Exception):
+        with self.assertRaisesRegex(Exception, "Actor is not active"):
             self.actors.remove(actor)
+        with self.assertRaisesRegex(Exception, "Class not registered.*: TestActor"):
+            actor._deactivate()
 
 
 if __name__ == "__main__":

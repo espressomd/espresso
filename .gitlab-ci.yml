@@ -1,4 +1,4 @@
-image: ghcr.io/espressomd/docker/ubuntu-20.04:285fee33c6cdc3b617745a75bd28aec331a53365
+image: ghcr.io/espressomd/docker/ubuntu-20.04:adb6ad0892de1fb1ecdd9f29c1115cfc16ea5f4b
 
 stages:
   - prepare
@@ -26,7 +26,6 @@ stages:
   timeout: 40m
   interruptible: false
   tags:
-    - docker
     - espresso
     - no-cuda
 
@@ -51,7 +50,6 @@ style:
   script:
     - sh maintainer/CI/fix_style.sh
   tags:
-    - docker
     - espresso
     - no-cuda
   variables:
@@ -73,7 +71,6 @@ style_doxygen:
     - cmake .. -DWITH_CUDA=ON -DWITH_SCAFACOS=ON
     - sh ../maintainer/CI/dox_warnings.sh
   tags:
-    - docker
     - espresso
     - no-cuda
 
@@ -96,7 +93,6 @@ default:
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
-    - docker
     - espresso
     - no-cuda
     - numa
@@ -118,7 +114,6 @@ maxset:
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
-    - docker
     - espresso
     - no-cuda
     - numa
@@ -137,7 +132,6 @@ maxset-walberla:
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
-    - docker
     - espresso
     - no-cuda
     - numa
@@ -157,7 +151,6 @@ maxset-walberla-avx:
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
-    - docker
     - espresso
     - no-cuda
     - numa
@@ -177,7 +170,6 @@ no_rotation:
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
-    - docker
     - espresso
     - no-cuda
     - numa
@@ -185,7 +177,7 @@ no_rotation:
 ubuntu:wo-dependencies:
   <<: *global_job_definition
   stage: build
-  image: ghcr.io/espressomd/docker/ubuntu-wo-dependencies:285fee33c6cdc3b617745a75bd28aec331a53365
+  image: ghcr.io/espressomd/docker/ubuntu-wo-dependencies:adb6ad0892de1fb1ecdd9f29c1115cfc16ea5f4b
   variables:
      myconfig: 'maxset'
      with_cuda: 'false'
@@ -195,7 +187,6 @@ ubuntu:wo-dependencies:
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
-    - docker
     - espresso
     - no-cuda
 
@@ -204,7 +195,7 @@ ubuntu:wo-dependencies:
 debian:10:
   <<: *global_job_definition
   stage: build
-  image: ghcr.io/espressomd/docker/debian:285fee33c6cdc3b617745a75bd28aec331a53365
+  image: ghcr.io/espressomd/docker/debian:adb6ad0892de1fb1ecdd9f29c1115cfc16ea5f4b
   variables:
      with_cuda: 'false'
      myconfig: 'maxset'
@@ -213,14 +204,13 @@ debian:10:
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
-    - docker
     - espresso
     - no-cuda
 
-fedora:34:
+fedora:36:
   <<: *global_job_definition
   stage: build
-  image: ghcr.io/espressomd/docker/fedora:285fee33c6cdc3b617745a75bd28aec331a53365
+  image: ghcr.io/espressomd/docker/fedora:adb6ad0892de1fb1ecdd9f29c1115cfc16ea5f4b
   variables:
      with_cuda: 'false'
      myconfig: 'maxset'
@@ -229,7 +219,6 @@ fedora:34:
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
-    - docker
     - espresso
     - no-cuda
 
@@ -255,7 +244,6 @@ clang-sanitizer:
     - bash maintainer/CI/build_cmake.sh
   timeout: 2h
   tags:
-    - docker
     - espresso
     - cuda
     - numa
@@ -263,7 +251,7 @@ clang-sanitizer:
 fast_math:
   <<: *global_job_definition
   stage: build
-  image: ghcr.io/espressomd/docker/cuda:285fee33c6cdc3b617745a75bd28aec331a53365
+  image: ghcr.io/espressomd/docker/cuda:adb6ad0892de1fb1ecdd9f29c1115cfc16ea5f4b
   variables:
      CC: 'gcc-9'
      CXX: 'g++-9'
@@ -276,15 +264,14 @@ fast_math:
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
-    - docker
     - espresso
     - cuda
   when: manual
 
-cuda11-maxset:
+cuda11-maxset-ubuntu20.04:
   <<: *global_job_definition
   stage: build
-  image: ghcr.io/espressomd/docker/cuda:285fee33c6cdc3b617745a75bd28aec331a53365
+  image: ghcr.io/espressomd/docker/cuda:adb6ad0892de1fb1ecdd9f29c1115cfc16ea5f4b
   variables:
      CC: 'gcc-9'
      CXX: 'g++-9'
@@ -293,13 +280,32 @@ cuda11-maxset:
      with_cuda: 'true'
      with_coverage: 'true'
      check_skip_long: 'true'
-     srcdir: '${CI_PROJECT_DIR}'
      with_scafacos: 'true'
      with_stokesian_dynamics: 'true'
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
-    - docker
+    - espresso
+    - cuda
+    - numa
+
+cuda11-maxset-ubuntu22.04:
+  <<: *global_job_definition
+  stage: build
+  image: ghcr.io/espressomd/docker/ubuntu-22.04:adb6ad0892de1fb1ecdd9f29c1115cfc16ea5f4b
+  variables:
+     CC: 'gcc-10'
+     CXX: 'g++-10'
+     GCOV: 'gcov-10'
+     myconfig: 'maxset'
+     with_cuda: 'true'
+     with_coverage: 'true'
+     check_skip_long: 'true'
+     with_scafacos: 'true'
+     with_stokesian_dynamics: 'true'
+  script:
+    - bash maintainer/CI/build_cmake.sh
+  tags:
     - espresso
     - cuda
     - numa
@@ -327,7 +333,6 @@ cuda10-maxset:
     - build/
     expire_in: 1 week
   tags:
-    - docker
     - espresso
     - cuda
     - numa
@@ -354,7 +359,6 @@ tutorials-samples-maxset:
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
-    - docker
     - espresso
     - cuda
 
@@ -377,7 +381,6 @@ tutorials-samples-default:
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
-    - docker
     - espresso
     - cuda
   only:
@@ -403,7 +406,6 @@ tutorials-samples-empty:
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
-    - docker
     - espresso
     - cuda
   only:
@@ -429,7 +431,6 @@ tutorials-samples-no-gpu:
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
-    - docker
     - espresso
     - no-cuda
   only:
@@ -457,15 +458,15 @@ installation:
     # get path of installed files
     - CI_INSTALL_DIR="/tmp/espresso-unit-tests"
     - CI_INSTALL_PYTHON_PATH=$(dirname $(find "${CI_INSTALL_DIR}/lib" -name espressomd))
+    - CI_CORES=$(cmake -L . | grep CTEST_ARGS | grep --color=never -Po '(?<=-j)[0-9]+')
     # deploy object-in-fluid module
     - cp -r "src/python/object_in_fluid" "${CI_INSTALL_PYTHON_PATH}/object_in_fluid"
     # run all tests with the installed files
     - sed -i "s|$(pwd)/pypresso|${CI_INSTALL_DIR}/bin/pypresso|" testsuite/{python,scripts/samples,scripts/tutorials}/CTestTestfile.cmake
-    - make -j2 check_python
-    - make -j2 check_samples
-    - make -j2 check_tutorials
+    - make -j ${CI_CORES} check_python_skip_long
+    - make -j ${CI_CORES} check_samples
+    - make -j 2 check_tutorials
   tags:
-    - docker
     - espresso
     - cuda
   when: manual
@@ -485,7 +486,6 @@ empty:
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
-    - docker
     - espresso
     - cuda
     - numa
@@ -508,7 +508,6 @@ check_sphinx:
     - build/doc/sphinx
     expire_in: 1 week
   tags:
-    - docker
     - espresso
     - cuda
     - numa
@@ -533,7 +532,6 @@ run_tutorials:
     - build/doc/tutorials
     expire_in: 1 week
   tags:
-    - docker
     - espresso
     - cuda
     - numa
@@ -556,7 +554,6 @@ run_doxygen:
     - build/doc/doxygen
     expire_in: 1 week
   tags:
-    - docker
     - espresso
     - no-cuda
     - numa
@@ -572,7 +569,6 @@ maxset_no_gpu:
     - cd ${CI_PROJECT_DIR}/build
     - make -t && make check
   tags:
-    - docker
     - espresso
     - no-cuda
     - numa
@@ -588,7 +584,6 @@ maxset_3_cores:
     - cmake -DTEST_NP=3 .
     - make -t && make check_unit_tests && make check_python_parallel_odd
   tags:
-    - docker
     - espresso
     - cuda
     - numa

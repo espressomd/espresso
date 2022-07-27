@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2019 The ESPResSo project
+ * Copyright (C) 2014-2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -130,16 +130,18 @@ static void add_forces_and_torques(ParticleRange particles,
 void cuda_mpi_send_forces(const ParticleRange &particles,
                           Utils::Span<float> host_forces,
                           Utils::Span<float> host_torques) {
-  auto const n_elements = 3 * particles.size();
+
+  auto const size = 3 * particles.size();
+  auto const n_elements = static_cast<int>(size);
 
   if (this_node > 0) {
     static std::vector<float> buffer_forces;
     static std::vector<float> buffer_torques;
 
-    buffer_forces.resize(n_elements);
+    buffer_forces.resize(size);
     Utils::Mpi::scatter_buffer(buffer_forces.data(), n_elements, comm_cart);
 #ifdef ROTATION
-    buffer_torques.resize(n_elements);
+    buffer_torques.resize(size);
     Utils::Mpi::scatter_buffer(buffer_torques.data(), n_elements, comm_cart);
 #endif
     add_forces_and_torques(particles, buffer_forces, buffer_torques);
