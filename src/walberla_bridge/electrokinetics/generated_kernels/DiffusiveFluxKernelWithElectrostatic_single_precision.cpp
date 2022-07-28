@@ -67,40 +67,30 @@ diffusivefluxkernelwithelectrostatic_single_precision_diffusivefluxkernelwithele
         if (_size_j_1 > 1 && _size_j_2 > 1) {
           float *RESTRICT _data_j_20_312 = _data_j + 12 * _stride_j_3;
           float *RESTRICT _data_j_20_312_10 = _data_j_20_312;
+          float *RESTRICT _data_phi_20 = _data_phi;
+          float *RESTRICT _data_phi_20_10 = _data_phi_20;
           float *RESTRICT _data_rho_20 = _data_rho;
           float *RESTRICT _data_rho_20_10 = _data_rho_20;
           float *RESTRICT _data_rho_21 = _data_rho + _stride_rho_2;
           float *RESTRICT _data_rho_21_11 = _stride_rho_1 + _data_rho_21;
-          float *RESTRICT _data_phi_20 = _data_phi;
-          float *RESTRICT _data_phi_20_11 = _stride_phi_1 + _data_phi_20;
           float *RESTRICT _data_phi_21 = _data_phi + _stride_phi_2;
           float *RESTRICT _data_phi_21_11 = _stride_phi_1 + _data_phi_21;
-          float *RESTRICT _data_phi_21_10 = _data_phi_21;
-          float *RESTRICT _data_phi_20_10 = _data_phi_20;
           _data_j_20_312_10[_stride_j_0] =
               D *
-              (f_ext_0 * z *
-                   (_data_rho_20_10[_stride_rho_0] + _data_rho_21_11[0]) *
-                   -2.0f +
-               f_ext_1 * z *
-                   (_data_rho_20_10[_stride_rho_0] + _data_rho_21_11[0]) *
-                   2.0f +
-               f_ext_2 * z *
-                   (_data_rho_20_10[_stride_rho_0] + _data_rho_21_11[0]) *
-                   2.0f +
-               kT * (-_data_rho_20_10[_stride_rho_0] + _data_rho_21_11[0]) *
-                   -4.0f +
-               z * (_data_rho_20_10[_stride_rho_0] + _data_rho_21_11[0]) *
-                   (_data_phi_20_10[0] - _data_phi_20_11[0] +
-                    _data_phi_21_10[_stride_phi_0] -
-                    _data_phi_21_11[_stride_phi_0]) +
-               z * (_data_rho_20_10[_stride_rho_0] + _data_rho_21_11[0]) *
-                   (_data_phi_20_10[0] + _data_phi_20_11[_stride_phi_0] -
-                    _data_phi_21_10[0] - _data_phi_21_11[_stride_phi_0]) -
-               z * (_data_rho_20_10[_stride_rho_0] + _data_rho_21_11[0]) *
-                   (_data_phi_20_11[0] - _data_phi_20_11[_stride_phi_0] +
-                    _data_phi_21_10[0] - _data_phi_21_10[_stride_phi_0])) *
-              0.083333333333333333f * 1.7320508075688773f /
+              (-f_ext_0 * z * _data_rho_20_10[_stride_rho_0] -
+               f_ext_0 * z * _data_rho_21_11[0] +
+               f_ext_1 * z * _data_rho_20_10[_stride_rho_0] +
+               f_ext_1 * z * _data_rho_21_11[0] +
+               f_ext_2 * z * _data_rho_20_10[_stride_rho_0] +
+               f_ext_2 * z * _data_rho_21_11[0] +
+               kT * -2.0f * _data_rho_21_11[0] +
+               kT * 2.0f * _data_rho_20_10[_stride_rho_0] +
+               z * _data_phi_20_10[_stride_phi_0] *
+                   _data_rho_20_10[_stride_rho_0] +
+               z * _data_phi_20_10[_stride_phi_0] * _data_rho_21_11[0] -
+               z * _data_phi_21_11[0] * _data_rho_20_10[_stride_rho_0] -
+               z * _data_phi_21_11[0] * _data_rho_21_11[0]) *
+              0.16666666666666667f * 1.7320508075688773f /
               (kT * (1.0f + 2.8284271247461901f +
                      1.7320508075688773f * 1.3333333333333333f));
         }
@@ -108,56 +98,37 @@ diffusivefluxkernelwithelectrostatic_single_precision_diffusivefluxkernelwithele
           if (_size_j_1 > 1 && _size_j_2 > 1) {
             float *RESTRICT _data_j_20_312 = _data_j + 12 * _stride_j_3;
             float *RESTRICT _data_j_20_312_10 = _data_j_20_312;
+            float *RESTRICT _data_phi_20 = _data_phi;
+            float *RESTRICT _data_phi_20_10 = _data_phi_20;
             float *RESTRICT _data_rho_20 = _data_rho;
             float *RESTRICT _data_rho_20_10 = _data_rho_20;
             float *RESTRICT _data_rho_21 = _data_rho + _stride_rho_2;
             float *RESTRICT _data_rho_21_11 = _stride_rho_1 + _data_rho_21;
-            float *RESTRICT _data_phi_20 = _data_phi;
-            float *RESTRICT _data_phi_20_11 = _stride_phi_1 + _data_phi_20;
             float *RESTRICT _data_phi_21 = _data_phi + _stride_phi_2;
             float *RESTRICT _data_phi_21_11 = _stride_phi_1 + _data_phi_21;
-            float *RESTRICT _data_phi_21_10 = _data_phi_21;
-            float *RESTRICT _data_phi_20_10 = _data_phi_20;
             _data_j_20_312_10[_stride_j_0 * ctr_0] =
                 D *
-                (f_ext_0 * z *
-                     (_data_rho_20_10[_stride_rho_0 * ctr_0] +
-                      _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0]) *
-                     -2.0f +
+                (-f_ext_0 * z * _data_rho_20_10[_stride_rho_0 * ctr_0] -
+                 f_ext_0 * z *
+                     _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] +
+                 f_ext_1 * z * _data_rho_20_10[_stride_rho_0 * ctr_0] +
                  f_ext_1 * z *
-                     (_data_rho_20_10[_stride_rho_0 * ctr_0] +
-                      _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0]) *
-                     2.0f +
+                     _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] +
+                 f_ext_2 * z * _data_rho_20_10[_stride_rho_0 * ctr_0] +
                  f_ext_2 * z *
-                     (_data_rho_20_10[_stride_rho_0 * ctr_0] +
-                      _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0]) *
-                     2.0f +
-                 kT *
-                     (-_data_rho_20_10[_stride_rho_0 * ctr_0] +
-                      _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0]) *
-                     -4.0f +
-                 z *
-                     (_data_rho_20_10[_stride_rho_0 * ctr_0] +
-                      _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0]) *
-                     (_data_phi_20_10[_stride_phi_0 * ctr_0 - _stride_phi_0] -
-                      _data_phi_20_11[_stride_phi_0 * ctr_0 - _stride_phi_0] +
-                      _data_phi_21_10[_stride_phi_0 * ctr_0] -
-                      _data_phi_21_11[_stride_phi_0 * ctr_0]) +
-                 z *
-                     (_data_rho_20_10[_stride_rho_0 * ctr_0] +
-                      _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0]) *
-                     (_data_phi_20_10[_stride_phi_0 * ctr_0 - _stride_phi_0] +
-                      _data_phi_20_11[_stride_phi_0 * ctr_0] -
-                      _data_phi_21_10[_stride_phi_0 * ctr_0 - _stride_phi_0] -
-                      _data_phi_21_11[_stride_phi_0 * ctr_0]) -
-                 z *
-                     (_data_rho_20_10[_stride_rho_0 * ctr_0] +
-                      _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0]) *
-                     (_data_phi_20_11[_stride_phi_0 * ctr_0 - _stride_phi_0] -
-                      _data_phi_20_11[_stride_phi_0 * ctr_0] +
-                      _data_phi_21_10[_stride_phi_0 * ctr_0 - _stride_phi_0] -
-                      _data_phi_21_10[_stride_phi_0 * ctr_0])) *
-                0.083333333333333333f * 1.7320508075688773f /
+                     _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] +
+                 kT * -2.0f *
+                     _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] +
+                 kT * 2.0f * _data_rho_20_10[_stride_rho_0 * ctr_0] +
+                 z * _data_phi_20_10[_stride_phi_0 * ctr_0] *
+                     _data_rho_20_10[_stride_rho_0 * ctr_0] +
+                 z * _data_phi_20_10[_stride_phi_0 * ctr_0] *
+                     _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] -
+                 z * _data_phi_21_11[_stride_phi_0 * ctr_0 - _stride_phi_0] *
+                     _data_rho_20_10[_stride_rho_0 * ctr_0] -
+                 z * _data_phi_21_11[_stride_phi_0 * ctr_0 - _stride_phi_0] *
+                     _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0]) *
+                0.16666666666666667f * 1.7320508075688773f /
                 (kT * (1.0f + 2.8284271247461901f +
                        1.7320508075688773f * 1.3333333333333333f));
           }
@@ -165,69 +136,47 @@ diffusivefluxkernelwithelectrostatic_single_precision_diffusivefluxkernelwithele
         if (_size_j_1 > 1 && _size_j_2 > 1) {
           float *RESTRICT _data_j_20_312 = _data_j + 12 * _stride_j_3;
           float *RESTRICT _data_j_20_312_10 = _data_j_20_312;
+          float *RESTRICT _data_phi_20 = _data_phi;
+          float *RESTRICT _data_phi_20_10 = _data_phi_20;
           float *RESTRICT _data_rho_20 = _data_rho;
           float *RESTRICT _data_rho_20_10 = _data_rho_20;
           float *RESTRICT _data_rho_21 = _data_rho + _stride_rho_2;
           float *RESTRICT _data_rho_21_11 = _stride_rho_1 + _data_rho_21;
-          float *RESTRICT _data_phi_20 = _data_phi;
-          float *RESTRICT _data_phi_20_11 = _stride_phi_1 + _data_phi_20;
           float *RESTRICT _data_phi_21 = _data_phi + _stride_phi_2;
           float *RESTRICT _data_phi_21_11 = _stride_phi_1 + _data_phi_21;
-          float *RESTRICT _data_phi_21_10 = _data_phi_21;
-          float *RESTRICT _data_phi_20_10 = _data_phi_20;
           _data_j_20_312_10[_stride_j_0 * (_size_j_0 - 1)] =
               D *
-              (f_ext_0 * z *
-                   (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                    _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                    _stride_rho_0]) *
-                   -2.0f +
+              (-f_ext_0 * z * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] -
+               f_ext_0 * z *
+                   _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                   _stride_rho_0] +
+               f_ext_1 * z * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
                f_ext_1 * z *
-                   (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                    _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                    _stride_rho_0]) *
-                   2.0f +
+                   _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                   _stride_rho_0] +
+               f_ext_2 * z * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
                f_ext_2 * z *
-                   (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                    _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                    _stride_rho_0]) *
-                   2.0f +
-               kT *
-                   (-_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                    _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                    _stride_rho_0]) *
-                   -4.0f +
+                   _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                   _stride_rho_0] +
+               kT * -2.0f *
+                   _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                   _stride_rho_0] +
+               kT * 2.0f * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+               z * _data_phi_20_10[_stride_phi_0 * (_size_j_0 - 1)] *
+                   _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+               z * _data_phi_20_10[_stride_phi_0 * (_size_j_0 - 1)] *
+                   _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                   _stride_rho_0] -
                z *
-                   (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                    _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                    _stride_rho_0]) *
-                   (_data_phi_20_10[_stride_phi_0 * (_size_j_0 - 1) -
-                                    _stride_phi_0] -
-                    _data_phi_20_11[_stride_phi_0 * (_size_j_0 - 1) -
-                                    _stride_phi_0] +
-                    _data_phi_21_10[_stride_phi_0 * (_size_j_0 - 1)] -
-                    _data_phi_21_11[_stride_phi_0 * (_size_j_0 - 1)]) +
+                   _data_phi_21_11[_stride_phi_0 * (_size_j_0 - 1) -
+                                   _stride_phi_0] *
+                   _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] -
                z *
-                   (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                    _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                    _stride_rho_0]) *
-                   (_data_phi_20_10[_stride_phi_0 * (_size_j_0 - 1) -
-                                    _stride_phi_0] +
-                    _data_phi_20_11[_stride_phi_0 * (_size_j_0 - 1)] -
-                    _data_phi_21_10[_stride_phi_0 * (_size_j_0 - 1) -
-                                    _stride_phi_0] -
-                    _data_phi_21_11[_stride_phi_0 * (_size_j_0 - 1)]) -
-               z *
-                   (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                    _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                    _stride_rho_0]) *
-                   (_data_phi_20_11[_stride_phi_0 * (_size_j_0 - 1) -
-                                    _stride_phi_0] -
-                    _data_phi_20_11[_stride_phi_0 * (_size_j_0 - 1)] +
-                    _data_phi_21_10[_stride_phi_0 * (_size_j_0 - 1) -
-                                    _stride_phi_0] -
-                    _data_phi_21_10[_stride_phi_0 * (_size_j_0 - 1)])) *
-              0.083333333333333333f * 1.7320508075688773f /
+                   _data_phi_21_11[_stride_phi_0 * (_size_j_0 - 1) -
+                                   _stride_phi_0] *
+                   _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                   _stride_rho_0]) *
+              0.16666666666666667f * 1.7320508075688773f /
               (kT * (1.0f + 2.8284271247461901f +
                      1.7320508075688773f * 1.3333333333333333f));
         }
@@ -362,46 +311,34 @@ diffusivefluxkernelwithelectrostatic_single_precision_diffusivefluxkernelwithele
               float *RESTRICT _data_j_20_312 = _data_j + 12 * _stride_j_3;
               float *RESTRICT _data_j_20_312_10 =
                   _stride_j_1 * ctr_1 + _data_j_20_312;
+              float *RESTRICT _data_phi_20 = _data_phi;
+              float *RESTRICT _data_phi_20_10 =
+                  _stride_phi_1 * ctr_1 + _data_phi_20;
               float *RESTRICT _data_rho_20 = _data_rho;
               float *RESTRICT _data_rho_20_10 =
                   _stride_rho_1 * ctr_1 + _data_rho_20;
               float *RESTRICT _data_rho_21 = _data_rho + _stride_rho_2;
               float *RESTRICT _data_rho_21_11 =
                   _stride_rho_1 * ctr_1 + _stride_rho_1 + _data_rho_21;
-              float *RESTRICT _data_phi_20 = _data_phi;
-              float *RESTRICT _data_phi_20_11 =
-                  _stride_phi_1 * ctr_1 + _stride_phi_1 + _data_phi_20;
               float *RESTRICT _data_phi_21 = _data_phi + _stride_phi_2;
               float *RESTRICT _data_phi_21_11 =
                   _stride_phi_1 * ctr_1 + _stride_phi_1 + _data_phi_21;
-              float *RESTRICT _data_phi_21_10 =
-                  _stride_phi_1 * ctr_1 + _data_phi_21;
-              float *RESTRICT _data_phi_20_10 =
-                  _stride_phi_1 * ctr_1 + _data_phi_20;
               _data_j_20_312_10[_stride_j_0] =
                   D *
-                  (f_ext_0 * z *
-                       (_data_rho_20_10[_stride_rho_0] + _data_rho_21_11[0]) *
-                       -2.0f +
-                   f_ext_1 * z *
-                       (_data_rho_20_10[_stride_rho_0] + _data_rho_21_11[0]) *
-                       2.0f +
-                   f_ext_2 * z *
-                       (_data_rho_20_10[_stride_rho_0] + _data_rho_21_11[0]) *
-                       2.0f +
-                   kT * (-_data_rho_20_10[_stride_rho_0] + _data_rho_21_11[0]) *
-                       -4.0f +
-                   z * (_data_rho_20_10[_stride_rho_0] + _data_rho_21_11[0]) *
-                       (_data_phi_20_10[0] - _data_phi_20_11[0] +
-                        _data_phi_21_10[_stride_phi_0] -
-                        _data_phi_21_11[_stride_phi_0]) +
-                   z * (_data_rho_20_10[_stride_rho_0] + _data_rho_21_11[0]) *
-                       (_data_phi_20_10[0] + _data_phi_20_11[_stride_phi_0] -
-                        _data_phi_21_10[0] - _data_phi_21_11[_stride_phi_0]) -
-                   z * (_data_rho_20_10[_stride_rho_0] + _data_rho_21_11[0]) *
-                       (_data_phi_20_11[0] - _data_phi_20_11[_stride_phi_0] +
-                        _data_phi_21_10[0] - _data_phi_21_10[_stride_phi_0])) *
-                  0.083333333333333333f * 1.7320508075688773f /
+                  (-f_ext_0 * z * _data_rho_20_10[_stride_rho_0] -
+                   f_ext_0 * z * _data_rho_21_11[0] +
+                   f_ext_1 * z * _data_rho_20_10[_stride_rho_0] +
+                   f_ext_1 * z * _data_rho_21_11[0] +
+                   f_ext_2 * z * _data_rho_20_10[_stride_rho_0] +
+                   f_ext_2 * z * _data_rho_21_11[0] +
+                   kT * -2.0f * _data_rho_21_11[0] +
+                   kT * 2.0f * _data_rho_20_10[_stride_rho_0] +
+                   z * _data_phi_20_10[_stride_phi_0] *
+                       _data_rho_20_10[_stride_rho_0] +
+                   z * _data_phi_20_10[_stride_phi_0] * _data_rho_21_11[0] -
+                   z * _data_phi_21_11[0] * _data_rho_20_10[_stride_rho_0] -
+                   z * _data_phi_21_11[0] * _data_rho_21_11[0]) *
+                  0.16666666666666667f * 1.7320508075688773f /
                   (kT * (1.0f + 2.8284271247461901f +
                          1.7320508075688773f * 1.3333333333333333f));
             }
@@ -559,69 +496,41 @@ diffusivefluxkernelwithelectrostatic_single_precision_diffusivefluxkernelwithele
               float *RESTRICT _data_j_20_312 = _data_j + 12 * _stride_j_3;
               float *RESTRICT _data_j_20_312_10 =
                   _stride_j_1 * ctr_1 + _data_j_20_312;
+              float *RESTRICT _data_phi_20 = _data_phi;
+              float *RESTRICT _data_phi_20_10 =
+                  _stride_phi_1 * ctr_1 + _data_phi_20;
               float *RESTRICT _data_rho_20 = _data_rho;
               float *RESTRICT _data_rho_20_10 =
                   _stride_rho_1 * ctr_1 + _data_rho_20;
               float *RESTRICT _data_rho_21 = _data_rho + _stride_rho_2;
               float *RESTRICT _data_rho_21_11 =
                   _stride_rho_1 * ctr_1 + _stride_rho_1 + _data_rho_21;
-              float *RESTRICT _data_phi_20 = _data_phi;
-              float *RESTRICT _data_phi_20_11 =
-                  _stride_phi_1 * ctr_1 + _stride_phi_1 + _data_phi_20;
               float *RESTRICT _data_phi_21 = _data_phi + _stride_phi_2;
               float *RESTRICT _data_phi_21_11 =
                   _stride_phi_1 * ctr_1 + _stride_phi_1 + _data_phi_21;
-              float *RESTRICT _data_phi_21_10 =
-                  _stride_phi_1 * ctr_1 + _data_phi_21;
-              float *RESTRICT _data_phi_20_10 =
-                  _stride_phi_1 * ctr_1 + _data_phi_20;
               _data_j_20_312_10[_stride_j_0 * ctr_0] =
                   D *
-                  (f_ext_0 * z *
-                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
-                        _data_rho_21_11[_stride_rho_0 * ctr_0 -
-                                        _stride_rho_0]) *
-                       -2.0f +
+                  (-f_ext_0 * z * _data_rho_20_10[_stride_rho_0 * ctr_0] -
+                   f_ext_0 * z *
+                       _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] +
+                   f_ext_1 * z * _data_rho_20_10[_stride_rho_0 * ctr_0] +
                    f_ext_1 * z *
-                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
-                        _data_rho_21_11[_stride_rho_0 * ctr_0 -
-                                        _stride_rho_0]) *
-                       2.0f +
+                       _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] +
+                   f_ext_2 * z * _data_rho_20_10[_stride_rho_0 * ctr_0] +
                    f_ext_2 * z *
-                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
-                        _data_rho_21_11[_stride_rho_0 * ctr_0 -
-                                        _stride_rho_0]) *
-                       2.0f +
-                   kT *
-                       (-_data_rho_20_10[_stride_rho_0 * ctr_0] +
-                        _data_rho_21_11[_stride_rho_0 * ctr_0 -
-                                        _stride_rho_0]) *
-                       -4.0f +
-                   z *
-                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
-                        _data_rho_21_11[_stride_rho_0 * ctr_0 -
-                                        _stride_rho_0]) *
-                       (_data_phi_20_10[_stride_phi_0 * ctr_0 - _stride_phi_0] -
-                        _data_phi_20_11[_stride_phi_0 * ctr_0 - _stride_phi_0] +
-                        _data_phi_21_10[_stride_phi_0 * ctr_0] -
-                        _data_phi_21_11[_stride_phi_0 * ctr_0]) +
-                   z *
-                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
-                        _data_rho_21_11[_stride_rho_0 * ctr_0 -
-                                        _stride_rho_0]) *
-                       (_data_phi_20_10[_stride_phi_0 * ctr_0 - _stride_phi_0] +
-                        _data_phi_20_11[_stride_phi_0 * ctr_0] -
-                        _data_phi_21_10[_stride_phi_0 * ctr_0 - _stride_phi_0] -
-                        _data_phi_21_11[_stride_phi_0 * ctr_0]) -
-                   z *
-                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
-                        _data_rho_21_11[_stride_rho_0 * ctr_0 -
-                                        _stride_rho_0]) *
-                       (_data_phi_20_11[_stride_phi_0 * ctr_0 - _stride_phi_0] -
-                        _data_phi_20_11[_stride_phi_0 * ctr_0] +
-                        _data_phi_21_10[_stride_phi_0 * ctr_0 - _stride_phi_0] -
-                        _data_phi_21_10[_stride_phi_0 * ctr_0])) *
-                  0.083333333333333333f * 1.7320508075688773f /
+                       _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] +
+                   kT * -2.0f *
+                       _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] +
+                   kT * 2.0f * _data_rho_20_10[_stride_rho_0 * ctr_0] +
+                   z * _data_phi_20_10[_stride_phi_0 * ctr_0] *
+                       _data_rho_20_10[_stride_rho_0 * ctr_0] +
+                   z * _data_phi_20_10[_stride_phi_0 * ctr_0] *
+                       _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] -
+                   z * _data_phi_21_11[_stride_phi_0 * ctr_0 - _stride_phi_0] *
+                       _data_rho_20_10[_stride_rho_0 * ctr_0] -
+                   z * _data_phi_21_11[_stride_phi_0 * ctr_0 - _stride_phi_0] *
+                       _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0]) *
+                  0.16666666666666667f * 1.7320508075688773f /
                   (kT * (1.0f + 2.8284271247461901f +
                          1.7320508075688773f * 1.3333333333333333f));
             }
@@ -744,75 +653,55 @@ diffusivefluxkernelwithelectrostatic_single_precision_diffusivefluxkernelwithele
               float *RESTRICT _data_j_20_312 = _data_j + 12 * _stride_j_3;
               float *RESTRICT _data_j_20_312_10 =
                   _stride_j_1 * ctr_1 + _data_j_20_312;
+              float *RESTRICT _data_phi_20 = _data_phi;
+              float *RESTRICT _data_phi_20_10 =
+                  _stride_phi_1 * ctr_1 + _data_phi_20;
               float *RESTRICT _data_rho_20 = _data_rho;
               float *RESTRICT _data_rho_20_10 =
                   _stride_rho_1 * ctr_1 + _data_rho_20;
               float *RESTRICT _data_rho_21 = _data_rho + _stride_rho_2;
               float *RESTRICT _data_rho_21_11 =
                   _stride_rho_1 * ctr_1 + _stride_rho_1 + _data_rho_21;
-              float *RESTRICT _data_phi_20 = _data_phi;
-              float *RESTRICT _data_phi_20_11 =
-                  _stride_phi_1 * ctr_1 + _stride_phi_1 + _data_phi_20;
               float *RESTRICT _data_phi_21 = _data_phi + _stride_phi_2;
               float *RESTRICT _data_phi_21_11 =
                   _stride_phi_1 * ctr_1 + _stride_phi_1 + _data_phi_21;
-              float *RESTRICT _data_phi_21_10 =
-                  _stride_phi_1 * ctr_1 + _data_phi_21;
-              float *RESTRICT _data_phi_20_10 =
-                  _stride_phi_1 * ctr_1 + _data_phi_20;
               _data_j_20_312_10[_stride_j_0 * (_size_j_0 - 1)] =
                   D *
-                  (f_ext_0 * z *
-                       (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                        _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                        _stride_rho_0]) *
-                       -2.0f +
+                  (-f_ext_0 * z *
+                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] -
+                   f_ext_0 * z *
+                       _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                       _stride_rho_0] +
                    f_ext_1 * z *
-                       (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                        _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                        _stride_rho_0]) *
-                       2.0f +
+                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                   f_ext_1 * z *
+                       _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                       _stride_rho_0] +
                    f_ext_2 * z *
-                       (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                        _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                        _stride_rho_0]) *
-                       2.0f +
-                   kT *
-                       (-_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                        _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                        _stride_rho_0]) *
-                       -4.0f +
+                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                   f_ext_2 * z *
+                       _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                       _stride_rho_0] +
+                   kT * -2.0f *
+                       _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                       _stride_rho_0] +
+                   kT * 2.0f *
+                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                   z * _data_phi_20_10[_stride_phi_0 * (_size_j_0 - 1)] *
+                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                   z * _data_phi_20_10[_stride_phi_0 * (_size_j_0 - 1)] *
+                       _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                       _stride_rho_0] -
                    z *
-                       (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                        _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                        _stride_rho_0]) *
-                       (_data_phi_20_10[_stride_phi_0 * (_size_j_0 - 1) -
-                                        _stride_phi_0] -
-                        _data_phi_20_11[_stride_phi_0 * (_size_j_0 - 1) -
-                                        _stride_phi_0] +
-                        _data_phi_21_10[_stride_phi_0 * (_size_j_0 - 1)] -
-                        _data_phi_21_11[_stride_phi_0 * (_size_j_0 - 1)]) +
+                       _data_phi_21_11[_stride_phi_0 * (_size_j_0 - 1) -
+                                       _stride_phi_0] *
+                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] -
                    z *
-                       (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                        _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                        _stride_rho_0]) *
-                       (_data_phi_20_10[_stride_phi_0 * (_size_j_0 - 1) -
-                                        _stride_phi_0] +
-                        _data_phi_20_11[_stride_phi_0 * (_size_j_0 - 1)] -
-                        _data_phi_21_10[_stride_phi_0 * (_size_j_0 - 1) -
-                                        _stride_phi_0] -
-                        _data_phi_21_11[_stride_phi_0 * (_size_j_0 - 1)]) -
-                   z *
-                       (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                        _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                        _stride_rho_0]) *
-                       (_data_phi_20_11[_stride_phi_0 * (_size_j_0 - 1) -
-                                        _stride_phi_0] -
-                        _data_phi_20_11[_stride_phi_0 * (_size_j_0 - 1)] +
-                        _data_phi_21_10[_stride_phi_0 * (_size_j_0 - 1) -
-                                        _stride_phi_0] -
-                        _data_phi_21_10[_stride_phi_0 * (_size_j_0 - 1)])) *
-                  0.083333333333333333f * 1.7320508075688773f /
+                       _data_phi_21_11[_stride_phi_0 * (_size_j_0 - 1) -
+                                       _stride_phi_0] *
+                       _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                       _stride_rho_0]) *
+                  0.16666666666666667f * 1.7320508075688773f /
                   (kT * (1.0f + 2.8284271247461901f +
                          1.7320508075688773f * 1.3333333333333333f));
             }
@@ -1122,32 +1011,44 @@ diffusivefluxkernelwithelectrostatic_single_precision_diffusivefluxkernelwithele
               float *RESTRICT _data_j_20_311 =
                   _data_j + _stride_j_2 * ctr_2 + 11 * _stride_j_3;
               float *RESTRICT _data_j_20_311_10 = _data_j_20_311;
-              float *RESTRICT _data_phi_2m1 =
-                  _data_phi + _stride_phi_2 * ctr_2 - _stride_phi_2;
-              float *RESTRICT _data_phi_2m1_11 = _stride_phi_1 + _data_phi_2m1;
+              float *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
+              float *RESTRICT _data_rho_20_10 = _data_rho_20;
               float *RESTRICT _data_rho_2m1 =
                   _data_rho + _stride_rho_2 * ctr_2 - _stride_rho_2;
               float *RESTRICT _data_rho_2m1_11 = _stride_rho_1 + _data_rho_2m1;
-              float *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
-              float *RESTRICT _data_rho_20_10 = _data_rho_20;
+              float *RESTRICT _data_phi_2m1 =
+                  _data_phi + _stride_phi_2 * ctr_2 - _stride_phi_2;
+              float *RESTRICT _data_phi_2m1_10 = _data_phi_2m1;
               float *RESTRICT _data_phi_20 = _data_phi + _stride_phi_2 * ctr_2;
+              float *RESTRICT _data_phi_20_11 = _stride_phi_1 + _data_phi_20;
               float *RESTRICT _data_phi_20_10 = _data_phi_20;
+              float *RESTRICT _data_phi_2m1_11 = _stride_phi_1 + _data_phi_2m1;
               _data_j_20_311_10[_stride_j_0] =
                   D *
-                  (f_ext_0 * z * _data_rho_20_10[_stride_rho_0] +
-                   f_ext_0 * z * _data_rho_2m1_11[0] -
-                   f_ext_1 * z * _data_rho_20_10[_stride_rho_0] -
-                   f_ext_1 * z * _data_rho_2m1_11[0] +
-                   f_ext_2 * z * _data_rho_20_10[_stride_rho_0] +
-                   f_ext_2 * z * _data_rho_2m1_11[0] +
-                   kT * -2.0f * _data_rho_20_10[_stride_rho_0] +
-                   kT * 2.0f * _data_rho_2m1_11[0] -
-                   z * _data_phi_20_10[_stride_phi_0] *
-                       _data_rho_20_10[_stride_rho_0] -
-                   z * _data_phi_20_10[_stride_phi_0] * _data_rho_2m1_11[0] +
-                   z * _data_phi_2m1_11[0] * _data_rho_20_10[_stride_rho_0] +
-                   z * _data_phi_2m1_11[0] * _data_rho_2m1_11[0]) *
-                  -0.16666666666666667f * 1.7320508075688773f /
+                  (f_ext_0 * z *
+                       (_data_rho_20_10[_stride_rho_0] + _data_rho_2m1_11[0]) *
+                       2.0f +
+                   f_ext_1 * z *
+                       (_data_rho_20_10[_stride_rho_0] + _data_rho_2m1_11[0]) *
+                       -2.0f +
+                   f_ext_2 * z *
+                       (_data_rho_20_10[_stride_rho_0] + _data_rho_2m1_11[0]) *
+                       2.0f +
+                   kT *
+                       (-_data_rho_20_10[_stride_rho_0] + _data_rho_2m1_11[0]) *
+                       4.0f +
+                   z * (_data_rho_20_10[_stride_rho_0] + _data_rho_2m1_11[0]) *
+                       (-_data_phi_20_10[0] - _data_phi_20_11[_stride_phi_0] +
+                        _data_phi_2m1_10[0] + _data_phi_2m1_11[_stride_phi_0]) -
+                   z * (_data_rho_20_10[_stride_rho_0] + _data_rho_2m1_11[0]) *
+                       (_data_phi_20_10[0] - _data_phi_20_11[0] +
+                        _data_phi_2m1_10[_stride_phi_0] -
+                        _data_phi_2m1_11[_stride_phi_0]) +
+                   z * (_data_rho_20_10[_stride_rho_0] + _data_rho_2m1_11[0]) *
+                       (_data_phi_20_11[0] - _data_phi_20_11[_stride_phi_0] +
+                        _data_phi_2m1_10[0] -
+                        _data_phi_2m1_10[_stride_phi_0])) *
+                  -0.083333333333333333f * 1.7320508075688773f /
                   (kT * (1.0f + 2.8284271247461901f +
                          1.7320508075688773f * 1.3333333333333333f));
             }
@@ -1155,42 +1056,32 @@ diffusivefluxkernelwithelectrostatic_single_precision_diffusivefluxkernelwithele
               float *RESTRICT _data_j_20_312 =
                   _data_j + _stride_j_2 * ctr_2 + 12 * _stride_j_3;
               float *RESTRICT _data_j_20_312_10 = _data_j_20_312;
+              float *RESTRICT _data_phi_20 = _data_phi + _stride_phi_2 * ctr_2;
+              float *RESTRICT _data_phi_20_10 = _data_phi_20;
               float *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
               float *RESTRICT _data_rho_20_10 = _data_rho_20;
               float *RESTRICT _data_rho_21 =
                   _data_rho + _stride_rho_2 * ctr_2 + _stride_rho_2;
               float *RESTRICT _data_rho_21_11 = _stride_rho_1 + _data_rho_21;
-              float *RESTRICT _data_phi_20 = _data_phi + _stride_phi_2 * ctr_2;
-              float *RESTRICT _data_phi_20_11 = _stride_phi_1 + _data_phi_20;
               float *RESTRICT _data_phi_21 =
                   _data_phi + _stride_phi_2 * ctr_2 + _stride_phi_2;
               float *RESTRICT _data_phi_21_11 = _stride_phi_1 + _data_phi_21;
-              float *RESTRICT _data_phi_21_10 = _data_phi_21;
-              float *RESTRICT _data_phi_20_10 = _data_phi_20;
               _data_j_20_312_10[_stride_j_0] =
                   D *
-                  (f_ext_0 * z *
-                       (_data_rho_20_10[_stride_rho_0] + _data_rho_21_11[0]) *
-                       -2.0f +
-                   f_ext_1 * z *
-                       (_data_rho_20_10[_stride_rho_0] + _data_rho_21_11[0]) *
-                       2.0f +
-                   f_ext_2 * z *
-                       (_data_rho_20_10[_stride_rho_0] + _data_rho_21_11[0]) *
-                       2.0f +
-                   kT * (-_data_rho_20_10[_stride_rho_0] + _data_rho_21_11[0]) *
-                       -4.0f +
-                   z * (_data_rho_20_10[_stride_rho_0] + _data_rho_21_11[0]) *
-                       (_data_phi_20_10[0] - _data_phi_20_11[0] +
-                        _data_phi_21_10[_stride_phi_0] -
-                        _data_phi_21_11[_stride_phi_0]) +
-                   z * (_data_rho_20_10[_stride_rho_0] + _data_rho_21_11[0]) *
-                       (_data_phi_20_10[0] + _data_phi_20_11[_stride_phi_0] -
-                        _data_phi_21_10[0] - _data_phi_21_11[_stride_phi_0]) -
-                   z * (_data_rho_20_10[_stride_rho_0] + _data_rho_21_11[0]) *
-                       (_data_phi_20_11[0] - _data_phi_20_11[_stride_phi_0] +
-                        _data_phi_21_10[0] - _data_phi_21_10[_stride_phi_0])) *
-                  0.083333333333333333f * 1.7320508075688773f /
+                  (-f_ext_0 * z * _data_rho_20_10[_stride_rho_0] -
+                   f_ext_0 * z * _data_rho_21_11[0] +
+                   f_ext_1 * z * _data_rho_20_10[_stride_rho_0] +
+                   f_ext_1 * z * _data_rho_21_11[0] +
+                   f_ext_2 * z * _data_rho_20_10[_stride_rho_0] +
+                   f_ext_2 * z * _data_rho_21_11[0] +
+                   kT * -2.0f * _data_rho_21_11[0] +
+                   kT * 2.0f * _data_rho_20_10[_stride_rho_0] +
+                   z * _data_phi_20_10[_stride_phi_0] *
+                       _data_rho_20_10[_stride_rho_0] +
+                   z * _data_phi_20_10[_stride_phi_0] * _data_rho_21_11[0] -
+                   z * _data_phi_21_11[0] * _data_rho_20_10[_stride_rho_0] -
+                   z * _data_phi_21_11[0] * _data_rho_21_11[0]) *
+                  0.16666666666666667f * 1.7320508075688773f /
                   (kT * (1.0f + 2.8284271247461901f +
                          1.7320508075688773f * 1.3333333333333333f));
             }
@@ -1247,40 +1138,68 @@ diffusivefluxkernelwithelectrostatic_single_precision_diffusivefluxkernelwithele
               float *RESTRICT _data_j_20_311 =
                   _data_j + _stride_j_2 * ctr_2 + 11 * _stride_j_3;
               float *RESTRICT _data_j_20_311_10 = _data_j_20_311;
-              float *RESTRICT _data_phi_2m1 =
-                  _data_phi + _stride_phi_2 * ctr_2 - _stride_phi_2;
-              float *RESTRICT _data_phi_2m1_11 = _stride_phi_1 + _data_phi_2m1;
+              float *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
+              float *RESTRICT _data_rho_20_10 = _data_rho_20;
               float *RESTRICT _data_rho_2m1 =
                   _data_rho + _stride_rho_2 * ctr_2 - _stride_rho_2;
               float *RESTRICT _data_rho_2m1_11 = _stride_rho_1 + _data_rho_2m1;
-              float *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
-              float *RESTRICT _data_rho_20_10 = _data_rho_20;
+              float *RESTRICT _data_phi_2m1 =
+                  _data_phi + _stride_phi_2 * ctr_2 - _stride_phi_2;
+              float *RESTRICT _data_phi_2m1_10 = _data_phi_2m1;
               float *RESTRICT _data_phi_20 = _data_phi + _stride_phi_2 * ctr_2;
+              float *RESTRICT _data_phi_20_11 = _stride_phi_1 + _data_phi_20;
               float *RESTRICT _data_phi_20_10 = _data_phi_20;
+              float *RESTRICT _data_phi_2m1_11 = _stride_phi_1 + _data_phi_2m1;
               _data_j_20_311_10[_stride_j_0 * ctr_0] =
                   D *
-                  (f_ext_0 * z * _data_rho_20_10[_stride_rho_0 * ctr_0] +
-                   f_ext_0 * z *
-                       _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0] -
-                   f_ext_1 * z * _data_rho_20_10[_stride_rho_0 * ctr_0] -
+                  (f_ext_0 * z *
+                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
+                        _data_rho_2m1_11[_stride_rho_0 * ctr_0 -
+                                         _stride_rho_0]) *
+                       2.0f +
                    f_ext_1 * z *
-                       _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0] +
-                   f_ext_2 * z * _data_rho_20_10[_stride_rho_0 * ctr_0] +
+                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
+                        _data_rho_2m1_11[_stride_rho_0 * ctr_0 -
+                                         _stride_rho_0]) *
+                       -2.0f +
                    f_ext_2 * z *
-                       _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0] +
-                   kT * -2.0f * _data_rho_20_10[_stride_rho_0 * ctr_0] +
-                   kT * 2.0f *
-                       _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0] -
-                   z * _data_phi_20_10[_stride_phi_0 * ctr_0] *
-                       _data_rho_20_10[_stride_rho_0 * ctr_0] -
-                   z * _data_phi_20_10[_stride_phi_0 * ctr_0] *
-                       _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0] +
-                   z * _data_phi_2m1_11[_stride_phi_0 * ctr_0 - _stride_phi_0] *
-                       _data_rho_20_10[_stride_rho_0 * ctr_0] +
-                   z * _data_phi_2m1_11[_stride_phi_0 * ctr_0 - _stride_phi_0] *
-                       _data_rho_2m1_11[_stride_rho_0 * ctr_0 -
-                                        _stride_rho_0]) *
-                  -0.16666666666666667f * 1.7320508075688773f /
+                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
+                        _data_rho_2m1_11[_stride_rho_0 * ctr_0 -
+                                         _stride_rho_0]) *
+                       2.0f +
+                   kT *
+                       (-_data_rho_20_10[_stride_rho_0 * ctr_0] +
+                        _data_rho_2m1_11[_stride_rho_0 * ctr_0 -
+                                         _stride_rho_0]) *
+                       4.0f +
+                   z *
+                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
+                        _data_rho_2m1_11[_stride_rho_0 * ctr_0 -
+                                         _stride_rho_0]) *
+                       (-_data_phi_20_10[_stride_phi_0 * ctr_0 -
+                                         _stride_phi_0] -
+                        _data_phi_20_11[_stride_phi_0 * ctr_0] +
+                        _data_phi_2m1_10[_stride_phi_0 * ctr_0 -
+                                         _stride_phi_0] +
+                        _data_phi_2m1_11[_stride_phi_0 * ctr_0]) -
+                   z *
+                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
+                        _data_rho_2m1_11[_stride_rho_0 * ctr_0 -
+                                         _stride_rho_0]) *
+                       (_data_phi_20_10[_stride_phi_0 * ctr_0 - _stride_phi_0] -
+                        _data_phi_20_11[_stride_phi_0 * ctr_0 - _stride_phi_0] +
+                        _data_phi_2m1_10[_stride_phi_0 * ctr_0] -
+                        _data_phi_2m1_11[_stride_phi_0 * ctr_0]) +
+                   z *
+                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
+                        _data_rho_2m1_11[_stride_rho_0 * ctr_0 -
+                                         _stride_rho_0]) *
+                       (_data_phi_20_11[_stride_phi_0 * ctr_0 - _stride_phi_0] -
+                        _data_phi_20_11[_stride_phi_0 * ctr_0] +
+                        _data_phi_2m1_10[_stride_phi_0 * ctr_0 -
+                                         _stride_phi_0] -
+                        _data_phi_2m1_10[_stride_phi_0 * ctr_0])) *
+                  -0.083333333333333333f * 1.7320508075688773f /
                   (kT * (1.0f + 2.8284271247461901f +
                          1.7320508075688773f * 1.3333333333333333f));
             }
@@ -1288,65 +1207,39 @@ diffusivefluxkernelwithelectrostatic_single_precision_diffusivefluxkernelwithele
               float *RESTRICT _data_j_20_312 =
                   _data_j + _stride_j_2 * ctr_2 + 12 * _stride_j_3;
               float *RESTRICT _data_j_20_312_10 = _data_j_20_312;
+              float *RESTRICT _data_phi_20 = _data_phi + _stride_phi_2 * ctr_2;
+              float *RESTRICT _data_phi_20_10 = _data_phi_20;
               float *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
               float *RESTRICT _data_rho_20_10 = _data_rho_20;
               float *RESTRICT _data_rho_21 =
                   _data_rho + _stride_rho_2 * ctr_2 + _stride_rho_2;
               float *RESTRICT _data_rho_21_11 = _stride_rho_1 + _data_rho_21;
-              float *RESTRICT _data_phi_20 = _data_phi + _stride_phi_2 * ctr_2;
-              float *RESTRICT _data_phi_20_11 = _stride_phi_1 + _data_phi_20;
               float *RESTRICT _data_phi_21 =
                   _data_phi + _stride_phi_2 * ctr_2 + _stride_phi_2;
               float *RESTRICT _data_phi_21_11 = _stride_phi_1 + _data_phi_21;
-              float *RESTRICT _data_phi_21_10 = _data_phi_21;
-              float *RESTRICT _data_phi_20_10 = _data_phi_20;
               _data_j_20_312_10[_stride_j_0 * ctr_0] =
                   D *
-                  (f_ext_0 * z *
-                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
-                        _data_rho_21_11[_stride_rho_0 * ctr_0 -
-                                        _stride_rho_0]) *
-                       -2.0f +
+                  (-f_ext_0 * z * _data_rho_20_10[_stride_rho_0 * ctr_0] -
+                   f_ext_0 * z *
+                       _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] +
+                   f_ext_1 * z * _data_rho_20_10[_stride_rho_0 * ctr_0] +
                    f_ext_1 * z *
-                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
-                        _data_rho_21_11[_stride_rho_0 * ctr_0 -
-                                        _stride_rho_0]) *
-                       2.0f +
+                       _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] +
+                   f_ext_2 * z * _data_rho_20_10[_stride_rho_0 * ctr_0] +
                    f_ext_2 * z *
-                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
-                        _data_rho_21_11[_stride_rho_0 * ctr_0 -
-                                        _stride_rho_0]) *
-                       2.0f +
-                   kT *
-                       (-_data_rho_20_10[_stride_rho_0 * ctr_0] +
-                        _data_rho_21_11[_stride_rho_0 * ctr_0 -
-                                        _stride_rho_0]) *
-                       -4.0f +
-                   z *
-                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
-                        _data_rho_21_11[_stride_rho_0 * ctr_0 -
-                                        _stride_rho_0]) *
-                       (_data_phi_20_10[_stride_phi_0 * ctr_0 - _stride_phi_0] -
-                        _data_phi_20_11[_stride_phi_0 * ctr_0 - _stride_phi_0] +
-                        _data_phi_21_10[_stride_phi_0 * ctr_0] -
-                        _data_phi_21_11[_stride_phi_0 * ctr_0]) +
-                   z *
-                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
-                        _data_rho_21_11[_stride_rho_0 * ctr_0 -
-                                        _stride_rho_0]) *
-                       (_data_phi_20_10[_stride_phi_0 * ctr_0 - _stride_phi_0] +
-                        _data_phi_20_11[_stride_phi_0 * ctr_0] -
-                        _data_phi_21_10[_stride_phi_0 * ctr_0 - _stride_phi_0] -
-                        _data_phi_21_11[_stride_phi_0 * ctr_0]) -
-                   z *
-                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
-                        _data_rho_21_11[_stride_rho_0 * ctr_0 -
-                                        _stride_rho_0]) *
-                       (_data_phi_20_11[_stride_phi_0 * ctr_0 - _stride_phi_0] -
-                        _data_phi_20_11[_stride_phi_0 * ctr_0] +
-                        _data_phi_21_10[_stride_phi_0 * ctr_0 - _stride_phi_0] -
-                        _data_phi_21_10[_stride_phi_0 * ctr_0])) *
-                  0.083333333333333333f * 1.7320508075688773f /
+                       _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] +
+                   kT * -2.0f *
+                       _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] +
+                   kT * 2.0f * _data_rho_20_10[_stride_rho_0 * ctr_0] +
+                   z * _data_phi_20_10[_stride_phi_0 * ctr_0] *
+                       _data_rho_20_10[_stride_rho_0 * ctr_0] +
+                   z * _data_phi_20_10[_stride_phi_0 * ctr_0] *
+                       _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] -
+                   z * _data_phi_21_11[_stride_phi_0 * ctr_0 - _stride_phi_0] *
+                       _data_rho_20_10[_stride_rho_0 * ctr_0] -
+                   z * _data_phi_21_11[_stride_phi_0 * ctr_0 - _stride_phi_0] *
+                       _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0]) *
+                  0.16666666666666667f * 1.7320508075688773f /
                   (kT * (1.0f + 2.8284271247461901f +
                          1.7320508075688773f * 1.3333333333333333f));
             }
@@ -1407,53 +1300,71 @@ diffusivefluxkernelwithelectrostatic_single_precision_diffusivefluxkernelwithele
               float *RESTRICT _data_j_20_311 =
                   _data_j + _stride_j_2 * ctr_2 + 11 * _stride_j_3;
               float *RESTRICT _data_j_20_311_10 = _data_j_20_311;
-              float *RESTRICT _data_phi_2m1 =
-                  _data_phi + _stride_phi_2 * ctr_2 - _stride_phi_2;
-              float *RESTRICT _data_phi_2m1_11 = _stride_phi_1 + _data_phi_2m1;
+              float *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
+              float *RESTRICT _data_rho_20_10 = _data_rho_20;
               float *RESTRICT _data_rho_2m1 =
                   _data_rho + _stride_rho_2 * ctr_2 - _stride_rho_2;
               float *RESTRICT _data_rho_2m1_11 = _stride_rho_1 + _data_rho_2m1;
-              float *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
-              float *RESTRICT _data_rho_20_10 = _data_rho_20;
+              float *RESTRICT _data_phi_2m1 =
+                  _data_phi + _stride_phi_2 * ctr_2 - _stride_phi_2;
+              float *RESTRICT _data_phi_2m1_10 = _data_phi_2m1;
               float *RESTRICT _data_phi_20 = _data_phi + _stride_phi_2 * ctr_2;
+              float *RESTRICT _data_phi_20_11 = _stride_phi_1 + _data_phi_20;
               float *RESTRICT _data_phi_20_10 = _data_phi_20;
+              float *RESTRICT _data_phi_2m1_11 = _stride_phi_1 + _data_phi_2m1;
               _data_j_20_311_10[_stride_j_0 * (_size_j_0 - 1)] =
                   D *
                   (f_ext_0 * z *
-                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                   f_ext_0 * z *
-                       _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                        _stride_rho_0] -
+                       (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                        _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                         _stride_rho_0]) *
+                       2.0f +
                    f_ext_1 * z *
-                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] -
-                   f_ext_1 * z *
-                       _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                        _stride_rho_0] +
+                       (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                        _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                         _stride_rho_0]) *
+                       -2.0f +
                    f_ext_2 * z *
-                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                   f_ext_2 * z *
-                       _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                        _stride_rho_0] +
-                   kT * -2.0f *
-                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                   kT * 2.0f *
-                       _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                        _stride_rho_0] -
-                   z * _data_phi_20_10[_stride_phi_0 * (_size_j_0 - 1)] *
-                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] -
-                   z * _data_phi_20_10[_stride_phi_0 * (_size_j_0 - 1)] *
-                       _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                        _stride_rho_0] +
+                       (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                        _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                         _stride_rho_0]) *
+                       2.0f +
+                   kT *
+                       (-_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                        _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                         _stride_rho_0]) *
+                       4.0f +
                    z *
-                       _data_phi_2m1_11[_stride_phi_0 * (_size_j_0 - 1) -
-                                        _stride_phi_0] *
-                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                       (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                        _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                         _stride_rho_0]) *
+                       (-_data_phi_20_10[_stride_phi_0 * (_size_j_0 - 1) -
+                                         _stride_phi_0] -
+                        _data_phi_20_11[_stride_phi_0 * (_size_j_0 - 1)] +
+                        _data_phi_2m1_10[_stride_phi_0 * (_size_j_0 - 1) -
+                                         _stride_phi_0] +
+                        _data_phi_2m1_11[_stride_phi_0 * (_size_j_0 - 1)]) -
                    z *
-                       _data_phi_2m1_11[_stride_phi_0 * (_size_j_0 - 1) -
-                                        _stride_phi_0] *
-                       _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                        _stride_rho_0]) *
-                  -0.16666666666666667f * 1.7320508075688773f /
+                       (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                        _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                         _stride_rho_0]) *
+                       (_data_phi_20_10[_stride_phi_0 * (_size_j_0 - 1) -
+                                        _stride_phi_0] -
+                        _data_phi_20_11[_stride_phi_0 * (_size_j_0 - 1) -
+                                        _stride_phi_0] +
+                        _data_phi_2m1_10[_stride_phi_0 * (_size_j_0 - 1)] -
+                        _data_phi_2m1_11[_stride_phi_0 * (_size_j_0 - 1)]) +
+                   z *
+                       (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                        _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                         _stride_rho_0]) *
+                       (_data_phi_20_11[_stride_phi_0 * (_size_j_0 - 1) -
+                                        _stride_phi_0] -
+                        _data_phi_20_11[_stride_phi_0 * (_size_j_0 - 1)] +
+                        _data_phi_2m1_10[_stride_phi_0 * (_size_j_0 - 1) -
+                                         _stride_phi_0] -
+                        _data_phi_2m1_10[_stride_phi_0 * (_size_j_0 - 1)])) *
+                  -0.083333333333333333f * 1.7320508075688773f /
                   (kT * (1.0f + 2.8284271247461901f +
                          1.7320508075688773f * 1.3333333333333333f));
             }
@@ -1461,71 +1372,53 @@ diffusivefluxkernelwithelectrostatic_single_precision_diffusivefluxkernelwithele
               float *RESTRICT _data_j_20_312 =
                   _data_j + _stride_j_2 * ctr_2 + 12 * _stride_j_3;
               float *RESTRICT _data_j_20_312_10 = _data_j_20_312;
+              float *RESTRICT _data_phi_20 = _data_phi + _stride_phi_2 * ctr_2;
+              float *RESTRICT _data_phi_20_10 = _data_phi_20;
               float *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
               float *RESTRICT _data_rho_20_10 = _data_rho_20;
               float *RESTRICT _data_rho_21 =
                   _data_rho + _stride_rho_2 * ctr_2 + _stride_rho_2;
               float *RESTRICT _data_rho_21_11 = _stride_rho_1 + _data_rho_21;
-              float *RESTRICT _data_phi_20 = _data_phi + _stride_phi_2 * ctr_2;
-              float *RESTRICT _data_phi_20_11 = _stride_phi_1 + _data_phi_20;
               float *RESTRICT _data_phi_21 =
                   _data_phi + _stride_phi_2 * ctr_2 + _stride_phi_2;
               float *RESTRICT _data_phi_21_11 = _stride_phi_1 + _data_phi_21;
-              float *RESTRICT _data_phi_21_10 = _data_phi_21;
-              float *RESTRICT _data_phi_20_10 = _data_phi_20;
               _data_j_20_312_10[_stride_j_0 * (_size_j_0 - 1)] =
                   D *
-                  (f_ext_0 * z *
-                       (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                        _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                        _stride_rho_0]) *
-                       -2.0f +
+                  (-f_ext_0 * z *
+                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] -
+                   f_ext_0 * z *
+                       _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                       _stride_rho_0] +
                    f_ext_1 * z *
-                       (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                        _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                        _stride_rho_0]) *
-                       2.0f +
+                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                   f_ext_1 * z *
+                       _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                       _stride_rho_0] +
                    f_ext_2 * z *
-                       (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                        _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                        _stride_rho_0]) *
-                       2.0f +
-                   kT *
-                       (-_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                        _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                        _stride_rho_0]) *
-                       -4.0f +
+                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                   f_ext_2 * z *
+                       _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                       _stride_rho_0] +
+                   kT * -2.0f *
+                       _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                       _stride_rho_0] +
+                   kT * 2.0f *
+                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                   z * _data_phi_20_10[_stride_phi_0 * (_size_j_0 - 1)] *
+                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                   z * _data_phi_20_10[_stride_phi_0 * (_size_j_0 - 1)] *
+                       _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                       _stride_rho_0] -
                    z *
-                       (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                        _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                        _stride_rho_0]) *
-                       (_data_phi_20_10[_stride_phi_0 * (_size_j_0 - 1) -
-                                        _stride_phi_0] -
-                        _data_phi_20_11[_stride_phi_0 * (_size_j_0 - 1) -
-                                        _stride_phi_0] +
-                        _data_phi_21_10[_stride_phi_0 * (_size_j_0 - 1)] -
-                        _data_phi_21_11[_stride_phi_0 * (_size_j_0 - 1)]) +
+                       _data_phi_21_11[_stride_phi_0 * (_size_j_0 - 1) -
+                                       _stride_phi_0] *
+                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] -
                    z *
-                       (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                        _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                        _stride_rho_0]) *
-                       (_data_phi_20_10[_stride_phi_0 * (_size_j_0 - 1) -
-                                        _stride_phi_0] +
-                        _data_phi_20_11[_stride_phi_0 * (_size_j_0 - 1)] -
-                        _data_phi_21_10[_stride_phi_0 * (_size_j_0 - 1) -
-                                        _stride_phi_0] -
-                        _data_phi_21_11[_stride_phi_0 * (_size_j_0 - 1)]) -
-                   z *
-                       (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                        _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                        _stride_rho_0]) *
-                       (_data_phi_20_11[_stride_phi_0 * (_size_j_0 - 1) -
-                                        _stride_phi_0] -
-                        _data_phi_20_11[_stride_phi_0 * (_size_j_0 - 1)] +
-                        _data_phi_21_10[_stride_phi_0 * (_size_j_0 - 1) -
-                                        _stride_phi_0] -
-                        _data_phi_21_10[_stride_phi_0 * (_size_j_0 - 1)])) *
-                  0.083333333333333333f * 1.7320508075688773f /
+                       _data_phi_21_11[_stride_phi_0 * (_size_j_0 - 1) -
+                                       _stride_phi_0] *
+                       _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                       _stride_rho_0]) *
+                  0.16666666666666667f * 1.7320508075688773f /
                   (kT * (1.0f + 2.8284271247461901f +
                          1.7320508075688773f * 1.3333333333333333f));
             }
@@ -1720,26 +1613,34 @@ diffusivefluxkernelwithelectrostatic_single_precision_diffusivefluxkernelwithele
                 -0.16666666666666667f * 1.7320508075688773f /
                 (kT * (1.0f + 2.8284271247461901f +
                        1.7320508075688773f * 1.3333333333333333f));
-            float *RESTRICT _data_phi_2m1_11 =
-                _stride_phi_1 * ctr_1 + _stride_phi_1 + _data_phi_2m1;
             float *RESTRICT _data_rho_2m1_11 =
                 _stride_rho_1 * ctr_1 + _stride_rho_1 + _data_rho_2m1;
+            float *RESTRICT _data_phi_2m1_11 =
+                _stride_phi_1 * ctr_1 + _stride_phi_1 + _data_phi_2m1;
             _data_j_20_311_10[_stride_j_0] =
                 D *
-                (f_ext_0 * z * _data_rho_20_10[_stride_rho_0] +
-                 f_ext_0 * z * _data_rho_2m1_11[0] -
-                 f_ext_1 * z * _data_rho_20_10[_stride_rho_0] -
-                 f_ext_1 * z * _data_rho_2m1_11[0] +
-                 f_ext_2 * z * _data_rho_20_10[_stride_rho_0] +
-                 f_ext_2 * z * _data_rho_2m1_11[0] +
-                 kT * -2.0f * _data_rho_20_10[_stride_rho_0] +
-                 kT * 2.0f * _data_rho_2m1_11[0] -
-                 z * _data_phi_20_10[_stride_phi_0] *
-                     _data_rho_20_10[_stride_rho_0] -
-                 z * _data_phi_20_10[_stride_phi_0] * _data_rho_2m1_11[0] +
-                 z * _data_phi_2m1_11[0] * _data_rho_20_10[_stride_rho_0] +
-                 z * _data_phi_2m1_11[0] * _data_rho_2m1_11[0]) *
-                -0.16666666666666667f * 1.7320508075688773f /
+                (f_ext_0 * z *
+                     (_data_rho_20_10[_stride_rho_0] + _data_rho_2m1_11[0]) *
+                     2.0f +
+                 f_ext_1 * z *
+                     (_data_rho_20_10[_stride_rho_0] + _data_rho_2m1_11[0]) *
+                     -2.0f +
+                 f_ext_2 * z *
+                     (_data_rho_20_10[_stride_rho_0] + _data_rho_2m1_11[0]) *
+                     2.0f +
+                 kT * (-_data_rho_20_10[_stride_rho_0] + _data_rho_2m1_11[0]) *
+                     4.0f +
+                 z * (_data_rho_20_10[_stride_rho_0] + _data_rho_2m1_11[0]) *
+                     (-_data_phi_20_10[0] - _data_phi_20_11[_stride_phi_0] +
+                      _data_phi_2m1_10[0] + _data_phi_2m1_11[_stride_phi_0]) -
+                 z * (_data_rho_20_10[_stride_rho_0] + _data_rho_2m1_11[0]) *
+                     (_data_phi_20_10[0] - _data_phi_20_11[0] +
+                      _data_phi_2m1_10[_stride_phi_0] -
+                      _data_phi_2m1_11[_stride_phi_0]) +
+                 z * (_data_rho_20_10[_stride_rho_0] + _data_rho_2m1_11[0]) *
+                     (_data_phi_20_11[0] - _data_phi_20_11[_stride_phi_0] +
+                      _data_phi_2m1_10[0] - _data_phi_2m1_10[_stride_phi_0])) *
+                -0.083333333333333333f * 1.7320508075688773f /
                 (kT * (1.0f + 2.8284271247461901f +
                        1.7320508075688773f * 1.3333333333333333f));
             float *RESTRICT _data_rho_21_11 =
@@ -1748,28 +1649,20 @@ diffusivefluxkernelwithelectrostatic_single_precision_diffusivefluxkernelwithele
                 _stride_phi_1 * ctr_1 + _stride_phi_1 + _data_phi_21;
             _data_j_20_312_10[_stride_j_0] =
                 D *
-                (f_ext_0 * z *
-                     (_data_rho_20_10[_stride_rho_0] + _data_rho_21_11[0]) *
-                     -2.0f +
-                 f_ext_1 * z *
-                     (_data_rho_20_10[_stride_rho_0] + _data_rho_21_11[0]) *
-                     2.0f +
-                 f_ext_2 * z *
-                     (_data_rho_20_10[_stride_rho_0] + _data_rho_21_11[0]) *
-                     2.0f +
-                 kT * (-_data_rho_20_10[_stride_rho_0] + _data_rho_21_11[0]) *
-                     -4.0f +
-                 z * (_data_rho_20_10[_stride_rho_0] + _data_rho_21_11[0]) *
-                     (_data_phi_20_10[0] - _data_phi_20_11[0] +
-                      _data_phi_21_10[_stride_phi_0] -
-                      _data_phi_21_11[_stride_phi_0]) +
-                 z * (_data_rho_20_10[_stride_rho_0] + _data_rho_21_11[0]) *
-                     (_data_phi_20_10[0] + _data_phi_20_11[_stride_phi_0] -
-                      _data_phi_21_10[0] - _data_phi_21_11[_stride_phi_0]) -
-                 z * (_data_rho_20_10[_stride_rho_0] + _data_rho_21_11[0]) *
-                     (_data_phi_20_11[0] - _data_phi_20_11[_stride_phi_0] +
-                      _data_phi_21_10[0] - _data_phi_21_10[_stride_phi_0])) *
-                0.083333333333333333f * 1.7320508075688773f /
+                (-f_ext_0 * z * _data_rho_20_10[_stride_rho_0] -
+                 f_ext_0 * z * _data_rho_21_11[0] +
+                 f_ext_1 * z * _data_rho_20_10[_stride_rho_0] +
+                 f_ext_1 * z * _data_rho_21_11[0] +
+                 f_ext_2 * z * _data_rho_20_10[_stride_rho_0] +
+                 f_ext_2 * z * _data_rho_21_11[0] +
+                 kT * -2.0f * _data_rho_21_11[0] +
+                 kT * 2.0f * _data_rho_20_10[_stride_rho_0] +
+                 z * _data_phi_20_10[_stride_phi_0] *
+                     _data_rho_20_10[_stride_rho_0] +
+                 z * _data_phi_20_10[_stride_phi_0] * _data_rho_21_11[0] -
+                 z * _data_phi_21_11[0] * _data_rho_20_10[_stride_rho_0] -
+                 z * _data_phi_21_11[0] * _data_rho_21_11[0]) *
+                0.16666666666666667f * 1.7320508075688773f /
                 (kT * (1.0f + 2.8284271247461901f +
                        1.7320508075688773f * 1.3333333333333333f));
             {
@@ -2291,77 +2184,79 @@ diffusivefluxkernelwithelectrostatic_single_precision_diffusivefluxkernelwithele
                          1.7320508075688773f * 1.3333333333333333f));
               _data_j_20_311_10[_stride_j_0 * ctr_0] =
                   D *
-                  (f_ext_0 * z * _data_rho_20_10[_stride_rho_0 * ctr_0] +
-                   f_ext_0 * z *
-                       _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0] -
-                   f_ext_1 * z * _data_rho_20_10[_stride_rho_0 * ctr_0] -
+                  (f_ext_0 * z *
+                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
+                        _data_rho_2m1_11[_stride_rho_0 * ctr_0 -
+                                         _stride_rho_0]) *
+                       2.0f +
                    f_ext_1 * z *
-                       _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0] +
-                   f_ext_2 * z * _data_rho_20_10[_stride_rho_0 * ctr_0] +
+                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
+                        _data_rho_2m1_11[_stride_rho_0 * ctr_0 -
+                                         _stride_rho_0]) *
+                       -2.0f +
                    f_ext_2 * z *
-                       _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0] +
-                   kT * -2.0f * _data_rho_20_10[_stride_rho_0 * ctr_0] +
-                   kT * 2.0f *
-                       _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0] -
-                   z * _data_phi_20_10[_stride_phi_0 * ctr_0] *
-                       _data_rho_20_10[_stride_rho_0 * ctr_0] -
-                   z * _data_phi_20_10[_stride_phi_0 * ctr_0] *
-                       _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0] +
-                   z * _data_phi_2m1_11[_stride_phi_0 * ctr_0 - _stride_phi_0] *
-                       _data_rho_20_10[_stride_rho_0 * ctr_0] +
-                   z * _data_phi_2m1_11[_stride_phi_0 * ctr_0 - _stride_phi_0] *
-                       _data_rho_2m1_11[_stride_rho_0 * ctr_0 -
-                                        _stride_rho_0]) *
-                  -0.16666666666666667f * 1.7320508075688773f /
+                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
+                        _data_rho_2m1_11[_stride_rho_0 * ctr_0 -
+                                         _stride_rho_0]) *
+                       2.0f +
+                   kT *
+                       (-_data_rho_20_10[_stride_rho_0 * ctr_0] +
+                        _data_rho_2m1_11[_stride_rho_0 * ctr_0 -
+                                         _stride_rho_0]) *
+                       4.0f +
+                   z *
+                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
+                        _data_rho_2m1_11[_stride_rho_0 * ctr_0 -
+                                         _stride_rho_0]) *
+                       (-_data_phi_20_10[_stride_phi_0 * ctr_0 -
+                                         _stride_phi_0] -
+                        _data_phi_20_11[_stride_phi_0 * ctr_0] +
+                        _data_phi_2m1_10[_stride_phi_0 * ctr_0 -
+                                         _stride_phi_0] +
+                        _data_phi_2m1_11[_stride_phi_0 * ctr_0]) -
+                   z *
+                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
+                        _data_rho_2m1_11[_stride_rho_0 * ctr_0 -
+                                         _stride_rho_0]) *
+                       (_data_phi_20_10[_stride_phi_0 * ctr_0 - _stride_phi_0] -
+                        _data_phi_20_11[_stride_phi_0 * ctr_0 - _stride_phi_0] +
+                        _data_phi_2m1_10[_stride_phi_0 * ctr_0] -
+                        _data_phi_2m1_11[_stride_phi_0 * ctr_0]) +
+                   z *
+                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
+                        _data_rho_2m1_11[_stride_rho_0 * ctr_0 -
+                                         _stride_rho_0]) *
+                       (_data_phi_20_11[_stride_phi_0 * ctr_0 - _stride_phi_0] -
+                        _data_phi_20_11[_stride_phi_0 * ctr_0] +
+                        _data_phi_2m1_10[_stride_phi_0 * ctr_0 -
+                                         _stride_phi_0] -
+                        _data_phi_2m1_10[_stride_phi_0 * ctr_0])) *
+                  -0.083333333333333333f * 1.7320508075688773f /
                   (kT * (1.0f + 2.8284271247461901f +
                          1.7320508075688773f * 1.3333333333333333f));
               _data_j_20_312_10[_stride_j_0 * ctr_0] =
                   D *
-                  (f_ext_0 * z *
-                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
-                        _data_rho_21_11[_stride_rho_0 * ctr_0 -
-                                        _stride_rho_0]) *
-                       -2.0f +
+                  (-f_ext_0 * z * _data_rho_20_10[_stride_rho_0 * ctr_0] -
+                   f_ext_0 * z *
+                       _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] +
+                   f_ext_1 * z * _data_rho_20_10[_stride_rho_0 * ctr_0] +
                    f_ext_1 * z *
-                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
-                        _data_rho_21_11[_stride_rho_0 * ctr_0 -
-                                        _stride_rho_0]) *
-                       2.0f +
+                       _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] +
+                   f_ext_2 * z * _data_rho_20_10[_stride_rho_0 * ctr_0] +
                    f_ext_2 * z *
-                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
-                        _data_rho_21_11[_stride_rho_0 * ctr_0 -
-                                        _stride_rho_0]) *
-                       2.0f +
-                   kT *
-                       (-_data_rho_20_10[_stride_rho_0 * ctr_0] +
-                        _data_rho_21_11[_stride_rho_0 * ctr_0 -
-                                        _stride_rho_0]) *
-                       -4.0f +
-                   z *
-                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
-                        _data_rho_21_11[_stride_rho_0 * ctr_0 -
-                                        _stride_rho_0]) *
-                       (_data_phi_20_10[_stride_phi_0 * ctr_0 - _stride_phi_0] -
-                        _data_phi_20_11[_stride_phi_0 * ctr_0 - _stride_phi_0] +
-                        _data_phi_21_10[_stride_phi_0 * ctr_0] -
-                        _data_phi_21_11[_stride_phi_0 * ctr_0]) +
-                   z *
-                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
-                        _data_rho_21_11[_stride_rho_0 * ctr_0 -
-                                        _stride_rho_0]) *
-                       (_data_phi_20_10[_stride_phi_0 * ctr_0 - _stride_phi_0] +
-                        _data_phi_20_11[_stride_phi_0 * ctr_0] -
-                        _data_phi_21_10[_stride_phi_0 * ctr_0 - _stride_phi_0] -
-                        _data_phi_21_11[_stride_phi_0 * ctr_0]) -
-                   z *
-                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
-                        _data_rho_21_11[_stride_rho_0 * ctr_0 -
-                                        _stride_rho_0]) *
-                       (_data_phi_20_11[_stride_phi_0 * ctr_0 - _stride_phi_0] -
-                        _data_phi_20_11[_stride_phi_0 * ctr_0] +
-                        _data_phi_21_10[_stride_phi_0 * ctr_0 - _stride_phi_0] -
-                        _data_phi_21_10[_stride_phi_0 * ctr_0])) *
-                  0.083333333333333333f * 1.7320508075688773f /
+                       _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] +
+                   kT * -2.0f *
+                       _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] +
+                   kT * 2.0f * _data_rho_20_10[_stride_rho_0 * ctr_0] +
+                   z * _data_phi_20_10[_stride_phi_0 * ctr_0] *
+                       _data_rho_20_10[_stride_rho_0 * ctr_0] +
+                   z * _data_phi_20_10[_stride_phi_0 * ctr_0] *
+                       _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] -
+                   z * _data_phi_21_11[_stride_phi_0 * ctr_0 - _stride_phi_0] *
+                       _data_rho_20_10[_stride_rho_0 * ctr_0] -
+                   z * _data_phi_21_11[_stride_phi_0 * ctr_0 - _stride_phi_0] *
+                       _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0]) *
+                  0.16666666666666667f * 1.7320508075688773f /
                   (kT * (1.0f + 2.8284271247461901f +
                          1.7320508075688773f * 1.3333333333333333f));
             }
@@ -2625,94 +2520,94 @@ diffusivefluxkernelwithelectrostatic_single_precision_diffusivefluxkernelwithele
             _data_j_20_311_10[_stride_j_0 * (_size_j_0 - 1)] =
                 D *
                 (f_ext_0 * z *
-                     _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                 f_ext_0 * z *
-                     _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                      _stride_rho_0] -
-                 f_ext_1 * z *
-                     _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] -
-                 f_ext_1 * z *
-                     _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                      _stride_rho_0] +
-                 f_ext_2 * z *
-                     _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                 f_ext_2 * z *
-                     _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                      _stride_rho_0] +
-                 kT * -2.0f * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                 kT * 2.0f *
-                     _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                      _stride_rho_0] -
-                 z * _data_phi_20_10[_stride_phi_0 * (_size_j_0 - 1)] *
-                     _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] -
-                 z * _data_phi_20_10[_stride_phi_0 * (_size_j_0 - 1)] *
-                     _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                      _stride_rho_0] +
-                 z *
-                     _data_phi_2m1_11[_stride_phi_0 * (_size_j_0 - 1) -
-                                      _stride_phi_0] *
-                     _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                 z *
-                     _data_phi_2m1_11[_stride_phi_0 * (_size_j_0 - 1) -
-                                      _stride_phi_0] *
-                     _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                      _stride_rho_0]) *
-                -0.16666666666666667f * 1.7320508075688773f /
-                (kT * (1.0f + 2.8284271247461901f +
-                       1.7320508075688773f * 1.3333333333333333f));
-            _data_j_20_312_10[_stride_j_0 * (_size_j_0 - 1)] =
-                D *
-                (f_ext_0 * z *
                      (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                      _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                      _stride_rho_0]) *
-                     -2.0f +
-                 f_ext_1 * z *
-                     (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                      _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                      _stride_rho_0]) *
+                      _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                       _stride_rho_0]) *
                      2.0f +
+                 f_ext_1 * z *
+                     (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                      _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                       _stride_rho_0]) *
+                     -2.0f +
                  f_ext_2 * z *
                      (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                      _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                      _stride_rho_0]) *
+                      _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                       _stride_rho_0]) *
                      2.0f +
                  kT *
                      (-_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                      _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                      _stride_rho_0]) *
-                     -4.0f +
+                      _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                       _stride_rho_0]) *
+                     4.0f +
                  z *
                      (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                      _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                      _stride_rho_0]) *
+                      _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                       _stride_rho_0]) *
+                     (-_data_phi_20_10[_stride_phi_0 * (_size_j_0 - 1) -
+                                       _stride_phi_0] -
+                      _data_phi_20_11[_stride_phi_0 * (_size_j_0 - 1)] +
+                      _data_phi_2m1_10[_stride_phi_0 * (_size_j_0 - 1) -
+                                       _stride_phi_0] +
+                      _data_phi_2m1_11[_stride_phi_0 * (_size_j_0 - 1)]) -
+                 z *
+                     (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                      _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                       _stride_rho_0]) *
                      (_data_phi_20_10[_stride_phi_0 * (_size_j_0 - 1) -
                                       _stride_phi_0] -
                       _data_phi_20_11[_stride_phi_0 * (_size_j_0 - 1) -
                                       _stride_phi_0] +
-                      _data_phi_21_10[_stride_phi_0 * (_size_j_0 - 1)] -
-                      _data_phi_21_11[_stride_phi_0 * (_size_j_0 - 1)]) +
+                      _data_phi_2m1_10[_stride_phi_0 * (_size_j_0 - 1)] -
+                      _data_phi_2m1_11[_stride_phi_0 * (_size_j_0 - 1)]) +
                  z *
                      (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                      _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                      _stride_rho_0]) *
-                     (_data_phi_20_10[_stride_phi_0 * (_size_j_0 - 1) -
-                                      _stride_phi_0] +
-                      _data_phi_20_11[_stride_phi_0 * (_size_j_0 - 1)] -
-                      _data_phi_21_10[_stride_phi_0 * (_size_j_0 - 1) -
-                                      _stride_phi_0] -
-                      _data_phi_21_11[_stride_phi_0 * (_size_j_0 - 1)]) -
-                 z *
-                     (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                      _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                      _stride_rho_0]) *
+                      _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                       _stride_rho_0]) *
                      (_data_phi_20_11[_stride_phi_0 * (_size_j_0 - 1) -
                                       _stride_phi_0] -
                       _data_phi_20_11[_stride_phi_0 * (_size_j_0 - 1)] +
-                      _data_phi_21_10[_stride_phi_0 * (_size_j_0 - 1) -
-                                      _stride_phi_0] -
-                      _data_phi_21_10[_stride_phi_0 * (_size_j_0 - 1)])) *
-                0.083333333333333333f * 1.7320508075688773f /
+                      _data_phi_2m1_10[_stride_phi_0 * (_size_j_0 - 1) -
+                                       _stride_phi_0] -
+                      _data_phi_2m1_10[_stride_phi_0 * (_size_j_0 - 1)])) *
+                -0.083333333333333333f * 1.7320508075688773f /
+                (kT * (1.0f + 2.8284271247461901f +
+                       1.7320508075688773f * 1.3333333333333333f));
+            _data_j_20_312_10[_stride_j_0 * (_size_j_0 - 1)] =
+                D *
+                (-f_ext_0 * z *
+                     _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] -
+                 f_ext_0 * z *
+                     _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                     _stride_rho_0] +
+                 f_ext_1 * z *
+                     _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                 f_ext_1 * z *
+                     _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                     _stride_rho_0] +
+                 f_ext_2 * z *
+                     _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                 f_ext_2 * z *
+                     _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                     _stride_rho_0] +
+                 kT * -2.0f *
+                     _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                     _stride_rho_0] +
+                 kT * 2.0f * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                 z * _data_phi_20_10[_stride_phi_0 * (_size_j_0 - 1)] *
+                     _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                 z * _data_phi_20_10[_stride_phi_0 * (_size_j_0 - 1)] *
+                     _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                     _stride_rho_0] -
+                 z *
+                     _data_phi_21_11[_stride_phi_0 * (_size_j_0 - 1) -
+                                     _stride_phi_0] *
+                     _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] -
+                 z *
+                     _data_phi_21_11[_stride_phi_0 * (_size_j_0 - 1) -
+                                     _stride_phi_0] *
+                     _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                     _stride_rho_0]) *
+                0.16666666666666667f * 1.7320508075688773f /
                 (kT * (1.0f + 2.8284271247461901f +
                        1.7320508075688773f * 1.3333333333333333f));
             {}
@@ -3500,34 +3395,44 @@ diffusivefluxkernelwithelectrostatic_single_precision_diffusivefluxkernelwithele
           float *RESTRICT _data_j_20_311 =
               _data_j + _stride_j_2 * (_size_j_2 - 1) + 11 * _stride_j_3;
           float *RESTRICT _data_j_20_311_10 = _data_j_20_311;
-          float *RESTRICT _data_phi_2m1 =
-              _data_phi + _stride_phi_2 * (_size_j_2 - 1) - _stride_phi_2;
-          float *RESTRICT _data_phi_2m1_11 = _stride_phi_1 + _data_phi_2m1;
-          float *RESTRICT _data_rho_2m1 =
-              _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
-          float *RESTRICT _data_rho_2m1_11 = _stride_rho_1 + _data_rho_2m1;
           float *RESTRICT _data_rho_20 =
               _data_rho + _stride_rho_2 * (_size_j_2 - 1);
           float *RESTRICT _data_rho_20_10 = _data_rho_20;
+          float *RESTRICT _data_rho_2m1 =
+              _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
+          float *RESTRICT _data_rho_2m1_11 = _stride_rho_1 + _data_rho_2m1;
+          float *RESTRICT _data_phi_2m1 =
+              _data_phi + _stride_phi_2 * (_size_j_2 - 1) - _stride_phi_2;
+          float *RESTRICT _data_phi_2m1_10 = _data_phi_2m1;
           float *RESTRICT _data_phi_20 =
               _data_phi + _stride_phi_2 * (_size_j_2 - 1);
+          float *RESTRICT _data_phi_20_11 = _stride_phi_1 + _data_phi_20;
           float *RESTRICT _data_phi_20_10 = _data_phi_20;
+          float *RESTRICT _data_phi_2m1_11 = _stride_phi_1 + _data_phi_2m1;
           _data_j_20_311_10[_stride_j_0] =
               D *
-              (f_ext_0 * z * _data_rho_20_10[_stride_rho_0] +
-               f_ext_0 * z * _data_rho_2m1_11[0] -
-               f_ext_1 * z * _data_rho_20_10[_stride_rho_0] -
-               f_ext_1 * z * _data_rho_2m1_11[0] +
-               f_ext_2 * z * _data_rho_20_10[_stride_rho_0] +
-               f_ext_2 * z * _data_rho_2m1_11[0] +
-               kT * -2.0f * _data_rho_20_10[_stride_rho_0] +
-               kT * 2.0f * _data_rho_2m1_11[0] -
-               z * _data_phi_20_10[_stride_phi_0] *
-                   _data_rho_20_10[_stride_rho_0] -
-               z * _data_phi_20_10[_stride_phi_0] * _data_rho_2m1_11[0] +
-               z * _data_phi_2m1_11[0] * _data_rho_20_10[_stride_rho_0] +
-               z * _data_phi_2m1_11[0] * _data_rho_2m1_11[0]) *
-              -0.16666666666666667f * 1.7320508075688773f /
+              (f_ext_0 * z *
+                   (_data_rho_20_10[_stride_rho_0] + _data_rho_2m1_11[0]) *
+                   2.0f +
+               f_ext_1 * z *
+                   (_data_rho_20_10[_stride_rho_0] + _data_rho_2m1_11[0]) *
+                   -2.0f +
+               f_ext_2 * z *
+                   (_data_rho_20_10[_stride_rho_0] + _data_rho_2m1_11[0]) *
+                   2.0f +
+               kT * (-_data_rho_20_10[_stride_rho_0] + _data_rho_2m1_11[0]) *
+                   4.0f +
+               z * (_data_rho_20_10[_stride_rho_0] + _data_rho_2m1_11[0]) *
+                   (-_data_phi_20_10[0] - _data_phi_20_11[_stride_phi_0] +
+                    _data_phi_2m1_10[0] + _data_phi_2m1_11[_stride_phi_0]) -
+               z * (_data_rho_20_10[_stride_rho_0] + _data_rho_2m1_11[0]) *
+                   (_data_phi_20_10[0] - _data_phi_20_11[0] +
+                    _data_phi_2m1_10[_stride_phi_0] -
+                    _data_phi_2m1_11[_stride_phi_0]) +
+               z * (_data_rho_20_10[_stride_rho_0] + _data_rho_2m1_11[0]) *
+                   (_data_phi_20_11[0] - _data_phi_20_11[_stride_phi_0] +
+                    _data_phi_2m1_10[0] - _data_phi_2m1_10[_stride_phi_0])) *
+              -0.083333333333333333f * 1.7320508075688773f /
               (kT * (1.0f + 2.8284271247461901f +
                      1.7320508075688773f * 1.3333333333333333f));
         }
@@ -3536,41 +3441,60 @@ diffusivefluxkernelwithelectrostatic_single_precision_diffusivefluxkernelwithele
             float *RESTRICT _data_j_20_311 =
                 _data_j + _stride_j_2 * (_size_j_2 - 1) + 11 * _stride_j_3;
             float *RESTRICT _data_j_20_311_10 = _data_j_20_311;
-            float *RESTRICT _data_phi_2m1 =
-                _data_phi + _stride_phi_2 * (_size_j_2 - 1) - _stride_phi_2;
-            float *RESTRICT _data_phi_2m1_11 = _stride_phi_1 + _data_phi_2m1;
-            float *RESTRICT _data_rho_2m1 =
-                _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
-            float *RESTRICT _data_rho_2m1_11 = _stride_rho_1 + _data_rho_2m1;
             float *RESTRICT _data_rho_20 =
                 _data_rho + _stride_rho_2 * (_size_j_2 - 1);
             float *RESTRICT _data_rho_20_10 = _data_rho_20;
+            float *RESTRICT _data_rho_2m1 =
+                _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
+            float *RESTRICT _data_rho_2m1_11 = _stride_rho_1 + _data_rho_2m1;
+            float *RESTRICT _data_phi_2m1 =
+                _data_phi + _stride_phi_2 * (_size_j_2 - 1) - _stride_phi_2;
+            float *RESTRICT _data_phi_2m1_10 = _data_phi_2m1;
             float *RESTRICT _data_phi_20 =
                 _data_phi + _stride_phi_2 * (_size_j_2 - 1);
+            float *RESTRICT _data_phi_20_11 = _stride_phi_1 + _data_phi_20;
             float *RESTRICT _data_phi_20_10 = _data_phi_20;
+            float *RESTRICT _data_phi_2m1_11 = _stride_phi_1 + _data_phi_2m1;
             _data_j_20_311_10[_stride_j_0 * ctr_0] =
                 D *
-                (f_ext_0 * z * _data_rho_20_10[_stride_rho_0 * ctr_0] +
-                 f_ext_0 * z *
-                     _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0] -
-                 f_ext_1 * z * _data_rho_20_10[_stride_rho_0 * ctr_0] -
+                (f_ext_0 * z *
+                     (_data_rho_20_10[_stride_rho_0 * ctr_0] +
+                      _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0]) *
+                     2.0f +
                  f_ext_1 * z *
-                     _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0] +
-                 f_ext_2 * z * _data_rho_20_10[_stride_rho_0 * ctr_0] +
+                     (_data_rho_20_10[_stride_rho_0 * ctr_0] +
+                      _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0]) *
+                     -2.0f +
                  f_ext_2 * z *
-                     _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0] +
-                 kT * -2.0f * _data_rho_20_10[_stride_rho_0 * ctr_0] +
-                 kT * 2.0f *
-                     _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0] -
-                 z * _data_phi_20_10[_stride_phi_0 * ctr_0] *
-                     _data_rho_20_10[_stride_rho_0 * ctr_0] -
-                 z * _data_phi_20_10[_stride_phi_0 * ctr_0] *
-                     _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0] +
-                 z * _data_phi_2m1_11[_stride_phi_0 * ctr_0 - _stride_phi_0] *
-                     _data_rho_20_10[_stride_rho_0 * ctr_0] +
-                 z * _data_phi_2m1_11[_stride_phi_0 * ctr_0 - _stride_phi_0] *
-                     _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0]) *
-                -0.16666666666666667f * 1.7320508075688773f /
+                     (_data_rho_20_10[_stride_rho_0 * ctr_0] +
+                      _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0]) *
+                     2.0f +
+                 kT *
+                     (-_data_rho_20_10[_stride_rho_0 * ctr_0] +
+                      _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0]) *
+                     4.0f +
+                 z *
+                     (_data_rho_20_10[_stride_rho_0 * ctr_0] +
+                      _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0]) *
+                     (-_data_phi_20_10[_stride_phi_0 * ctr_0 - _stride_phi_0] -
+                      _data_phi_20_11[_stride_phi_0 * ctr_0] +
+                      _data_phi_2m1_10[_stride_phi_0 * ctr_0 - _stride_phi_0] +
+                      _data_phi_2m1_11[_stride_phi_0 * ctr_0]) -
+                 z *
+                     (_data_rho_20_10[_stride_rho_0 * ctr_0] +
+                      _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0]) *
+                     (_data_phi_20_10[_stride_phi_0 * ctr_0 - _stride_phi_0] -
+                      _data_phi_20_11[_stride_phi_0 * ctr_0 - _stride_phi_0] +
+                      _data_phi_2m1_10[_stride_phi_0 * ctr_0] -
+                      _data_phi_2m1_11[_stride_phi_0 * ctr_0]) +
+                 z *
+                     (_data_rho_20_10[_stride_rho_0 * ctr_0] +
+                      _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0]) *
+                     (_data_phi_20_11[_stride_phi_0 * ctr_0 - _stride_phi_0] -
+                      _data_phi_20_11[_stride_phi_0 * ctr_0] +
+                      _data_phi_2m1_10[_stride_phi_0 * ctr_0 - _stride_phi_0] -
+                      _data_phi_2m1_10[_stride_phi_0 * ctr_0])) *
+                -0.083333333333333333f * 1.7320508075688773f /
                 (kT * (1.0f + 2.8284271247461901f +
                        1.7320508075688773f * 1.3333333333333333f));
           }
@@ -3579,51 +3503,73 @@ diffusivefluxkernelwithelectrostatic_single_precision_diffusivefluxkernelwithele
           float *RESTRICT _data_j_20_311 =
               _data_j + _stride_j_2 * (_size_j_2 - 1) + 11 * _stride_j_3;
           float *RESTRICT _data_j_20_311_10 = _data_j_20_311;
-          float *RESTRICT _data_phi_2m1 =
-              _data_phi + _stride_phi_2 * (_size_j_2 - 1) - _stride_phi_2;
-          float *RESTRICT _data_phi_2m1_11 = _stride_phi_1 + _data_phi_2m1;
-          float *RESTRICT _data_rho_2m1 =
-              _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
-          float *RESTRICT _data_rho_2m1_11 = _stride_rho_1 + _data_rho_2m1;
           float *RESTRICT _data_rho_20 =
               _data_rho + _stride_rho_2 * (_size_j_2 - 1);
           float *RESTRICT _data_rho_20_10 = _data_rho_20;
+          float *RESTRICT _data_rho_2m1 =
+              _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
+          float *RESTRICT _data_rho_2m1_11 = _stride_rho_1 + _data_rho_2m1;
+          float *RESTRICT _data_phi_2m1 =
+              _data_phi + _stride_phi_2 * (_size_j_2 - 1) - _stride_phi_2;
+          float *RESTRICT _data_phi_2m1_10 = _data_phi_2m1;
           float *RESTRICT _data_phi_20 =
               _data_phi + _stride_phi_2 * (_size_j_2 - 1);
+          float *RESTRICT _data_phi_20_11 = _stride_phi_1 + _data_phi_20;
           float *RESTRICT _data_phi_20_10 = _data_phi_20;
+          float *RESTRICT _data_phi_2m1_11 = _stride_phi_1 + _data_phi_2m1;
           _data_j_20_311_10[_stride_j_0 * (_size_j_0 - 1)] =
               D *
-              (f_ext_0 * z * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-               f_ext_0 * z *
-                   _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                    _stride_rho_0] -
-               f_ext_1 * z * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] -
+              (f_ext_0 * z *
+                   (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                    _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                     _stride_rho_0]) *
+                   2.0f +
                f_ext_1 * z *
-                   _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                    _stride_rho_0] +
-               f_ext_2 * z * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                   (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                    _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                     _stride_rho_0]) *
+                   -2.0f +
                f_ext_2 * z *
-                   _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                    _stride_rho_0] +
-               kT * -2.0f * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-               kT * 2.0f *
-                   _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                    _stride_rho_0] -
-               z * _data_phi_20_10[_stride_phi_0 * (_size_j_0 - 1)] *
-                   _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] -
-               z * _data_phi_20_10[_stride_phi_0 * (_size_j_0 - 1)] *
-                   _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                    _stride_rho_0] +
+                   (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                    _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                     _stride_rho_0]) *
+                   2.0f +
+               kT *
+                   (-_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                    _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                     _stride_rho_0]) *
+                   4.0f +
                z *
-                   _data_phi_2m1_11[_stride_phi_0 * (_size_j_0 - 1) -
-                                    _stride_phi_0] *
-                   _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                   (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                    _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                     _stride_rho_0]) *
+                   (-_data_phi_20_10[_stride_phi_0 * (_size_j_0 - 1) -
+                                     _stride_phi_0] -
+                    _data_phi_20_11[_stride_phi_0 * (_size_j_0 - 1)] +
+                    _data_phi_2m1_10[_stride_phi_0 * (_size_j_0 - 1) -
+                                     _stride_phi_0] +
+                    _data_phi_2m1_11[_stride_phi_0 * (_size_j_0 - 1)]) -
                z *
-                   _data_phi_2m1_11[_stride_phi_0 * (_size_j_0 - 1) -
-                                    _stride_phi_0] *
-                   _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                    _stride_rho_0]) *
-              -0.16666666666666667f * 1.7320508075688773f /
+                   (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                    _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                     _stride_rho_0]) *
+                   (_data_phi_20_10[_stride_phi_0 * (_size_j_0 - 1) -
+                                    _stride_phi_0] -
+                    _data_phi_20_11[_stride_phi_0 * (_size_j_0 - 1) -
+                                    _stride_phi_0] +
+                    _data_phi_2m1_10[_stride_phi_0 * (_size_j_0 - 1)] -
+                    _data_phi_2m1_11[_stride_phi_0 * (_size_j_0 - 1)]) +
+               z *
+                   (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                    _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                     _stride_rho_0]) *
+                   (_data_phi_20_11[_stride_phi_0 * (_size_j_0 - 1) -
+                                    _stride_phi_0] -
+                    _data_phi_20_11[_stride_phi_0 * (_size_j_0 - 1)] +
+                    _data_phi_2m1_10[_stride_phi_0 * (_size_j_0 - 1) -
+                                     _stride_phi_0] -
+                    _data_phi_2m1_10[_stride_phi_0 * (_size_j_0 - 1)])) *
+              -0.083333333333333333f * 1.7320508075688773f /
               (kT * (1.0f + 2.8284271247461901f +
                      1.7320508075688773f * 1.3333333333333333f));
         }
@@ -3816,38 +3762,52 @@ diffusivefluxkernelwithelectrostatic_single_precision_diffusivefluxkernelwithele
                   _data_j + _stride_j_2 * (_size_j_2 - 1) + 11 * _stride_j_3;
               float *RESTRICT _data_j_20_311_10 =
                   _stride_j_1 * ctr_1 + _data_j_20_311;
-              float *RESTRICT _data_phi_2m1 =
-                  _data_phi + _stride_phi_2 * (_size_j_2 - 1) - _stride_phi_2;
-              float *RESTRICT _data_phi_2m1_11 =
-                  _stride_phi_1 * ctr_1 + _stride_phi_1 + _data_phi_2m1;
-              float *RESTRICT _data_rho_2m1 =
-                  _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
-              float *RESTRICT _data_rho_2m1_11 =
-                  _stride_rho_1 * ctr_1 + _stride_rho_1 + _data_rho_2m1;
               float *RESTRICT _data_rho_20 =
                   _data_rho + _stride_rho_2 * (_size_j_2 - 1);
               float *RESTRICT _data_rho_20_10 =
                   _stride_rho_1 * ctr_1 + _data_rho_20;
+              float *RESTRICT _data_rho_2m1 =
+                  _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
+              float *RESTRICT _data_rho_2m1_11 =
+                  _stride_rho_1 * ctr_1 + _stride_rho_1 + _data_rho_2m1;
+              float *RESTRICT _data_phi_2m1 =
+                  _data_phi + _stride_phi_2 * (_size_j_2 - 1) - _stride_phi_2;
+              float *RESTRICT _data_phi_2m1_10 =
+                  _stride_phi_1 * ctr_1 + _data_phi_2m1;
               float *RESTRICT _data_phi_20 =
                   _data_phi + _stride_phi_2 * (_size_j_2 - 1);
+              float *RESTRICT _data_phi_20_11 =
+                  _stride_phi_1 * ctr_1 + _stride_phi_1 + _data_phi_20;
               float *RESTRICT _data_phi_20_10 =
                   _stride_phi_1 * ctr_1 + _data_phi_20;
+              float *RESTRICT _data_phi_2m1_11 =
+                  _stride_phi_1 * ctr_1 + _stride_phi_1 + _data_phi_2m1;
               _data_j_20_311_10[_stride_j_0] =
                   D *
-                  (f_ext_0 * z * _data_rho_20_10[_stride_rho_0] +
-                   f_ext_0 * z * _data_rho_2m1_11[0] -
-                   f_ext_1 * z * _data_rho_20_10[_stride_rho_0] -
-                   f_ext_1 * z * _data_rho_2m1_11[0] +
-                   f_ext_2 * z * _data_rho_20_10[_stride_rho_0] +
-                   f_ext_2 * z * _data_rho_2m1_11[0] +
-                   kT * -2.0f * _data_rho_20_10[_stride_rho_0] +
-                   kT * 2.0f * _data_rho_2m1_11[0] -
-                   z * _data_phi_20_10[_stride_phi_0] *
-                       _data_rho_20_10[_stride_rho_0] -
-                   z * _data_phi_20_10[_stride_phi_0] * _data_rho_2m1_11[0] +
-                   z * _data_phi_2m1_11[0] * _data_rho_20_10[_stride_rho_0] +
-                   z * _data_phi_2m1_11[0] * _data_rho_2m1_11[0]) *
-                  -0.16666666666666667f * 1.7320508075688773f /
+                  (f_ext_0 * z *
+                       (_data_rho_20_10[_stride_rho_0] + _data_rho_2m1_11[0]) *
+                       2.0f +
+                   f_ext_1 * z *
+                       (_data_rho_20_10[_stride_rho_0] + _data_rho_2m1_11[0]) *
+                       -2.0f +
+                   f_ext_2 * z *
+                       (_data_rho_20_10[_stride_rho_0] + _data_rho_2m1_11[0]) *
+                       2.0f +
+                   kT *
+                       (-_data_rho_20_10[_stride_rho_0] + _data_rho_2m1_11[0]) *
+                       4.0f +
+                   z * (_data_rho_20_10[_stride_rho_0] + _data_rho_2m1_11[0]) *
+                       (-_data_phi_20_10[0] - _data_phi_20_11[_stride_phi_0] +
+                        _data_phi_2m1_10[0] + _data_phi_2m1_11[_stride_phi_0]) -
+                   z * (_data_rho_20_10[_stride_rho_0] + _data_rho_2m1_11[0]) *
+                       (_data_phi_20_10[0] - _data_phi_20_11[0] +
+                        _data_phi_2m1_10[_stride_phi_0] -
+                        _data_phi_2m1_11[_stride_phi_0]) +
+                   z * (_data_rho_20_10[_stride_rho_0] + _data_rho_2m1_11[0]) *
+                       (_data_phi_20_11[0] - _data_phi_20_11[_stride_phi_0] +
+                        _data_phi_2m1_10[0] -
+                        _data_phi_2m1_10[_stride_phi_0])) *
+                  -0.083333333333333333f * 1.7320508075688773f /
                   (kT * (1.0f + 2.8284271247461901f +
                          1.7320508075688773f * 1.3333333333333333f));
             }
@@ -4073,46 +4033,76 @@ diffusivefluxkernelwithelectrostatic_single_precision_diffusivefluxkernelwithele
                   _data_j + _stride_j_2 * (_size_j_2 - 1) + 11 * _stride_j_3;
               float *RESTRICT _data_j_20_311_10 =
                   _stride_j_1 * ctr_1 + _data_j_20_311;
-              float *RESTRICT _data_phi_2m1 =
-                  _data_phi + _stride_phi_2 * (_size_j_2 - 1) - _stride_phi_2;
-              float *RESTRICT _data_phi_2m1_11 =
-                  _stride_phi_1 * ctr_1 + _stride_phi_1 + _data_phi_2m1;
-              float *RESTRICT _data_rho_2m1 =
-                  _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
-              float *RESTRICT _data_rho_2m1_11 =
-                  _stride_rho_1 * ctr_1 + _stride_rho_1 + _data_rho_2m1;
               float *RESTRICT _data_rho_20 =
                   _data_rho + _stride_rho_2 * (_size_j_2 - 1);
               float *RESTRICT _data_rho_20_10 =
                   _stride_rho_1 * ctr_1 + _data_rho_20;
+              float *RESTRICT _data_rho_2m1 =
+                  _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
+              float *RESTRICT _data_rho_2m1_11 =
+                  _stride_rho_1 * ctr_1 + _stride_rho_1 + _data_rho_2m1;
+              float *RESTRICT _data_phi_2m1 =
+                  _data_phi + _stride_phi_2 * (_size_j_2 - 1) - _stride_phi_2;
+              float *RESTRICT _data_phi_2m1_10 =
+                  _stride_phi_1 * ctr_1 + _data_phi_2m1;
               float *RESTRICT _data_phi_20 =
                   _data_phi + _stride_phi_2 * (_size_j_2 - 1);
+              float *RESTRICT _data_phi_20_11 =
+                  _stride_phi_1 * ctr_1 + _stride_phi_1 + _data_phi_20;
               float *RESTRICT _data_phi_20_10 =
                   _stride_phi_1 * ctr_1 + _data_phi_20;
+              float *RESTRICT _data_phi_2m1_11 =
+                  _stride_phi_1 * ctr_1 + _stride_phi_1 + _data_phi_2m1;
               _data_j_20_311_10[_stride_j_0 * ctr_0] =
                   D *
-                  (f_ext_0 * z * _data_rho_20_10[_stride_rho_0 * ctr_0] +
-                   f_ext_0 * z *
-                       _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0] -
-                   f_ext_1 * z * _data_rho_20_10[_stride_rho_0 * ctr_0] -
+                  (f_ext_0 * z *
+                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
+                        _data_rho_2m1_11[_stride_rho_0 * ctr_0 -
+                                         _stride_rho_0]) *
+                       2.0f +
                    f_ext_1 * z *
-                       _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0] +
-                   f_ext_2 * z * _data_rho_20_10[_stride_rho_0 * ctr_0] +
+                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
+                        _data_rho_2m1_11[_stride_rho_0 * ctr_0 -
+                                         _stride_rho_0]) *
+                       -2.0f +
                    f_ext_2 * z *
-                       _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0] +
-                   kT * -2.0f * _data_rho_20_10[_stride_rho_0 * ctr_0] +
-                   kT * 2.0f *
-                       _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0] -
-                   z * _data_phi_20_10[_stride_phi_0 * ctr_0] *
-                       _data_rho_20_10[_stride_rho_0 * ctr_0] -
-                   z * _data_phi_20_10[_stride_phi_0 * ctr_0] *
-                       _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0] +
-                   z * _data_phi_2m1_11[_stride_phi_0 * ctr_0 - _stride_phi_0] *
-                       _data_rho_20_10[_stride_rho_0 * ctr_0] +
-                   z * _data_phi_2m1_11[_stride_phi_0 * ctr_0 - _stride_phi_0] *
-                       _data_rho_2m1_11[_stride_rho_0 * ctr_0 -
-                                        _stride_rho_0]) *
-                  -0.16666666666666667f * 1.7320508075688773f /
+                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
+                        _data_rho_2m1_11[_stride_rho_0 * ctr_0 -
+                                         _stride_rho_0]) *
+                       2.0f +
+                   kT *
+                       (-_data_rho_20_10[_stride_rho_0 * ctr_0] +
+                        _data_rho_2m1_11[_stride_rho_0 * ctr_0 -
+                                         _stride_rho_0]) *
+                       4.0f +
+                   z *
+                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
+                        _data_rho_2m1_11[_stride_rho_0 * ctr_0 -
+                                         _stride_rho_0]) *
+                       (-_data_phi_20_10[_stride_phi_0 * ctr_0 -
+                                         _stride_phi_0] -
+                        _data_phi_20_11[_stride_phi_0 * ctr_0] +
+                        _data_phi_2m1_10[_stride_phi_0 * ctr_0 -
+                                         _stride_phi_0] +
+                        _data_phi_2m1_11[_stride_phi_0 * ctr_0]) -
+                   z *
+                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
+                        _data_rho_2m1_11[_stride_rho_0 * ctr_0 -
+                                         _stride_rho_0]) *
+                       (_data_phi_20_10[_stride_phi_0 * ctr_0 - _stride_phi_0] -
+                        _data_phi_20_11[_stride_phi_0 * ctr_0 - _stride_phi_0] +
+                        _data_phi_2m1_10[_stride_phi_0 * ctr_0] -
+                        _data_phi_2m1_11[_stride_phi_0 * ctr_0]) +
+                   z *
+                       (_data_rho_20_10[_stride_rho_0 * ctr_0] +
+                        _data_rho_2m1_11[_stride_rho_0 * ctr_0 -
+                                         _stride_rho_0]) *
+                       (_data_phi_20_11[_stride_phi_0 * ctr_0 - _stride_phi_0] -
+                        _data_phi_20_11[_stride_phi_0 * ctr_0] +
+                        _data_phi_2m1_10[_stride_phi_0 * ctr_0 -
+                                         _stride_phi_0] -
+                        _data_phi_2m1_10[_stride_phi_0 * ctr_0])) *
+                  -0.083333333333333333f * 1.7320508075688773f /
                   (kT * (1.0f + 2.8284271247461901f +
                          1.7320508075688773f * 1.3333333333333333f));
             }
@@ -4246,59 +4236,79 @@ diffusivefluxkernelwithelectrostatic_single_precision_diffusivefluxkernelwithele
                   _data_j + _stride_j_2 * (_size_j_2 - 1) + 11 * _stride_j_3;
               float *RESTRICT _data_j_20_311_10 =
                   _stride_j_1 * ctr_1 + _data_j_20_311;
-              float *RESTRICT _data_phi_2m1 =
-                  _data_phi + _stride_phi_2 * (_size_j_2 - 1) - _stride_phi_2;
-              float *RESTRICT _data_phi_2m1_11 =
-                  _stride_phi_1 * ctr_1 + _stride_phi_1 + _data_phi_2m1;
-              float *RESTRICT _data_rho_2m1 =
-                  _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
-              float *RESTRICT _data_rho_2m1_11 =
-                  _stride_rho_1 * ctr_1 + _stride_rho_1 + _data_rho_2m1;
               float *RESTRICT _data_rho_20 =
                   _data_rho + _stride_rho_2 * (_size_j_2 - 1);
               float *RESTRICT _data_rho_20_10 =
                   _stride_rho_1 * ctr_1 + _data_rho_20;
+              float *RESTRICT _data_rho_2m1 =
+                  _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
+              float *RESTRICT _data_rho_2m1_11 =
+                  _stride_rho_1 * ctr_1 + _stride_rho_1 + _data_rho_2m1;
+              float *RESTRICT _data_phi_2m1 =
+                  _data_phi + _stride_phi_2 * (_size_j_2 - 1) - _stride_phi_2;
+              float *RESTRICT _data_phi_2m1_10 =
+                  _stride_phi_1 * ctr_1 + _data_phi_2m1;
               float *RESTRICT _data_phi_20 =
                   _data_phi + _stride_phi_2 * (_size_j_2 - 1);
+              float *RESTRICT _data_phi_20_11 =
+                  _stride_phi_1 * ctr_1 + _stride_phi_1 + _data_phi_20;
               float *RESTRICT _data_phi_20_10 =
                   _stride_phi_1 * ctr_1 + _data_phi_20;
+              float *RESTRICT _data_phi_2m1_11 =
+                  _stride_phi_1 * ctr_1 + _stride_phi_1 + _data_phi_2m1;
               _data_j_20_311_10[_stride_j_0 * (_size_j_0 - 1)] =
                   D *
                   (f_ext_0 * z *
-                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                   f_ext_0 * z *
-                       _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                        _stride_rho_0] -
+                       (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                        _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                         _stride_rho_0]) *
+                       2.0f +
                    f_ext_1 * z *
-                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] -
-                   f_ext_1 * z *
-                       _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                        _stride_rho_0] +
+                       (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                        _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                         _stride_rho_0]) *
+                       -2.0f +
                    f_ext_2 * z *
-                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                   f_ext_2 * z *
-                       _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                        _stride_rho_0] +
-                   kT * -2.0f *
-                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
-                   kT * 2.0f *
-                       _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                        _stride_rho_0] -
-                   z * _data_phi_20_10[_stride_phi_0 * (_size_j_0 - 1)] *
-                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] -
-                   z * _data_phi_20_10[_stride_phi_0 * (_size_j_0 - 1)] *
-                       _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                        _stride_rho_0] +
+                       (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                        _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                         _stride_rho_0]) *
+                       2.0f +
+                   kT *
+                       (-_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                        _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                         _stride_rho_0]) *
+                       4.0f +
                    z *
-                       _data_phi_2m1_11[_stride_phi_0 * (_size_j_0 - 1) -
-                                        _stride_phi_0] *
-                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                       (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                        _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                         _stride_rho_0]) *
+                       (-_data_phi_20_10[_stride_phi_0 * (_size_j_0 - 1) -
+                                         _stride_phi_0] -
+                        _data_phi_20_11[_stride_phi_0 * (_size_j_0 - 1)] +
+                        _data_phi_2m1_10[_stride_phi_0 * (_size_j_0 - 1) -
+                                         _stride_phi_0] +
+                        _data_phi_2m1_11[_stride_phi_0 * (_size_j_0 - 1)]) -
                    z *
-                       _data_phi_2m1_11[_stride_phi_0 * (_size_j_0 - 1) -
-                                        _stride_phi_0] *
-                       _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                        _stride_rho_0]) *
-                  -0.16666666666666667f * 1.7320508075688773f /
+                       (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                        _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                         _stride_rho_0]) *
+                       (_data_phi_20_10[_stride_phi_0 * (_size_j_0 - 1) -
+                                        _stride_phi_0] -
+                        _data_phi_20_11[_stride_phi_0 * (_size_j_0 - 1) -
+                                        _stride_phi_0] +
+                        _data_phi_2m1_10[_stride_phi_0 * (_size_j_0 - 1)] -
+                        _data_phi_2m1_11[_stride_phi_0 * (_size_j_0 - 1)]) +
+                   z *
+                       (_data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] +
+                        _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
+                                         _stride_rho_0]) *
+                       (_data_phi_20_11[_stride_phi_0 * (_size_j_0 - 1) -
+                                        _stride_phi_0] -
+                        _data_phi_20_11[_stride_phi_0 * (_size_j_0 - 1)] +
+                        _data_phi_2m1_10[_stride_phi_0 * (_size_j_0 - 1) -
+                                         _stride_phi_0] -
+                        _data_phi_2m1_10[_stride_phi_0 * (_size_j_0 - 1)])) *
+                  -0.083333333333333333f * 1.7320508075688773f /
                   (kT * (1.0f + 2.8284271247461901f +
                          1.7320508075688773f * 1.3333333333333333f));
             }
@@ -4580,11 +4590,11 @@ void DiffusiveFluxKernelWithElectrostatic_single_precision::run(IBlock *block) {
   auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
 
   auto &D = this->D_;
-  auto &f_ext_0 = this->f_ext_0_;
-  auto &kT = this->kT_;
-  auto &f_ext_1 = this->f_ext_1_;
   auto &f_ext_2 = this->f_ext_2_;
   auto &z = this->z_;
+  auto &f_ext_1 = this->f_ext_1_;
+  auto &f_ext_0 = this->f_ext_0_;
+  auto &kT = this->kT_;
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(j->nrOfGhostLayers()));
   float *RESTRICT _data_j = j->dataAt(-1, -1, -1, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(phi->nrOfGhostLayers()));
@@ -4635,11 +4645,11 @@ void DiffusiveFluxKernelWithElectrostatic_single_precision::runOnCellInterval(
   auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
 
   auto &D = this->D_;
-  auto &f_ext_0 = this->f_ext_0_;
-  auto &kT = this->kT_;
-  auto &f_ext_1 = this->f_ext_1_;
   auto &f_ext_2 = this->f_ext_2_;
   auto &z = this->z_;
+  auto &f_ext_1 = this->f_ext_1_;
+  auto &f_ext_0 = this->f_ext_0_;
+  auto &kT = this->kT_;
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1, -int_c(j->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1, -int_c(j->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin() - 1, -int_c(j->nrOfGhostLayers()));

@@ -214,11 +214,11 @@ frictioncouplingkernel_single_precision_frictioncouplingkernel_single_precision(
 } // namespace internal_910e9429dc8b77dbed969a16d3f227fb
 
 void FrictionCouplingKernel_single_precision::run(IBlock *block) {
-  auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
   auto f = block->getData<field::GhostLayerField<float, 3>>(fID);
+  auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
 
-  auto &kT = this->kT_;
   auto &D = this->D_;
+  auto &kT = this->kT_;
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(f->nrOfGhostLayers()));
   float *RESTRICT _data_f = f->dataAt(-1, -1, -1, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(j->nrOfGhostLayers()));
@@ -259,11 +259,11 @@ void FrictionCouplingKernel_single_precision::runOnCellInterval(
   if (ci.empty())
     return;
 
-  auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
   auto f = block->getData<field::GhostLayerField<float, 3>>(fID);
+  auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
 
-  auto &kT = this->kT_;
   auto &D = this->D_;
+  auto &kT = this->kT_;
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1, -int_c(f->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1, -int_c(f->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin() - 1, -int_c(f->nrOfGhostLayers()));

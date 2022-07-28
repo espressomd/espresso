@@ -4553,8 +4553,8 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
 
 void AdvectiveFluxKernel_single_precision::run(IBlock *block) {
   auto rho = block->getData<field::GhostLayerField<float, 1>>(rhoID);
-  auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
   auto u = block->getData<field::GhostLayerField<float, 3>>(uID);
+  auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
 
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(j->nrOfGhostLayers()));
   float *RESTRICT _data_j = j->dataAt(-1, -1, -1, 0);
@@ -4603,8 +4603,8 @@ void AdvectiveFluxKernel_single_precision::runOnCellInterval(
     return;
 
   auto rho = block->getData<field::GhostLayerField<float, 1>>(rhoID);
-  auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
   auto u = block->getData<field::GhostLayerField<float, 3>>(uID);
+  auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
 
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1, -int_c(j->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1, -int_c(j->nrOfGhostLayers()));

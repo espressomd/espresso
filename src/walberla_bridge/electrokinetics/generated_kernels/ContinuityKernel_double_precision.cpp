@@ -175,8 +175,8 @@ continuitykernel_double_precision_continuitykernel_double_precision(
 } // namespace internal_5c5e903f8ea7925cf790d7c2318b2c56
 
 void ContinuityKernel_double_precision::run(IBlock *block) {
-  auto rho = block->getData<field::GhostLayerField<double, 1>>(rhoID);
   auto j = block->getData<field::GhostLayerField<double, 13>>(jID);
+  auto rho = block->getData<field::GhostLayerField<double, 1>>(rhoID);
 
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(j->nrOfGhostLayers()));
   double *RESTRICT const _data_j = j->dataAt(-1, -1, -1, 0);
@@ -217,8 +217,8 @@ void ContinuityKernel_double_precision::runOnCellInterval(
   if (ci.empty())
     return;
 
-  auto rho = block->getData<field::GhostLayerField<double, 1>>(rhoID);
   auto j = block->getData<field::GhostLayerField<double, 13>>(jID);
+  auto rho = block->getData<field::GhostLayerField<double, 1>>(rhoID);
 
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1, -int_c(j->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1, -int_c(j->nrOfGhostLayers()));

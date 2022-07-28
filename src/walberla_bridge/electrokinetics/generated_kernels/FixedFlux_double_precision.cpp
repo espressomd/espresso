@@ -438,7 +438,7 @@ fixedflux_double_precision_boundary_FixedFlux_double_precision(
 
 void FixedFlux_double_precision::run_impl(IBlock *block,
                                           IndexVectors::Type type) {
-  auto *indexVectors = block->uncheckedFastGetData<IndexVectors>(indexVectorID);
+  auto *indexVectors = block->getData<IndexVectors>(indexVectorID);
   int64_t indexVectorSize = int64_c(indexVectors->indexVector(type).size());
   if (indexVectorSize == 0)
     return;
