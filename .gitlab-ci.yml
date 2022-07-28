@@ -155,6 +155,7 @@ maxset-walberla-avx:
     - no-cuda
     - numa
     - avx2
+  when: manual
 
 no_rotation:
   <<: *global_job_definition
