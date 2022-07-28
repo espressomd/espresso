@@ -98,9 +98,6 @@ std::vector<double> fill_3D_scalar_array(const Utils::Vector3i &grid_size,
   return output_vector;
 }
 
-// TODO: generate everything for single-precision too
-// TODO: figure out how the boundary-handling template stuff works
-
 namespace detail {
 template <typename FloatType = double> struct KernelTrait {
   using ContinuityKernel = pystencils::ContinuityKernel_double_precision;

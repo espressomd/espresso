@@ -31,8 +31,6 @@ public:
            m_ekcontainer.end());
 
     m_ekcontainer.emplace_back(c);
-
-    // TODO: callback on_ek_change?
   }
   void remove(std::shared_ptr<EKSpecies> const &c) {
     assert(std::find(m_ekcontainer.begin(), m_ekcontainer.end(), c) !=
@@ -40,7 +38,6 @@ public:
     m_ekcontainer.erase(
         std::remove(m_ekcontainer.begin(), m_ekcontainer.end(), c),
         m_ekcontainer.end());
-    // TODO: callback on_ek_change?
   }
 
   iterator begin() noexcept { return m_ekcontainer.begin(); }
