@@ -104,6 +104,10 @@ BOOST_AUTO_TEST_CASE(dynamic_ubb) {
   BOOST_TEST((vec1_d != vec2_d));
 }
 
+auto clamp_zero(double value) { return (std::abs(value) < 1e-16) ? 0. : value; }
+
+auto clamp_zero(float value) { return (std::abs(value) < 1e-9f) ? 0.f : value; }
+
 BOOST_AUTO_TEST_CASE(macroscopic_accessor_equilibrium_distribution) {
   using namespace walberla::stencil;
   using namespace walberla::lbm::accessor;
@@ -119,69 +123,62 @@ BOOST_AUTO_TEST_CASE(macroscopic_accessor_equilibrium_distribution) {
 
   {
     auto const direction = Direction::C;
-    auto const ref_d = rho_d * (1. / 3. - 1. / 2. * u.norm2());
+    auto const ref_d = rho_d * 1. / 3. * (1. - u.norm2());
     auto const ref_f = static_cast<float>(ref_d);
     auto const pop_f = EquilibriumDistribution::get(direction, u_f, rho_f);
     auto const pop_d = EquilibriumDistribution::get(direction, u_d, rho_d);
-    BOOST_CHECK_CLOSE(pop_f, ref_f, tol_f);
-    BOOST_CHECK_CLOSE(pop_d, ref_d, tol_d);
+    BOOST_CHECK_CLOSE(clamp_zero(pop_f), clamp_zero(ref_f), tol_f);
+    BOOST_CHECK_CLOSE(clamp_zero(pop_d), clamp_zero(ref_d), tol_d);
   }
   {
-    auto const ref_d = rho_d * (1. / 18. - 1. / 12. * u.norm2() +
-                                3. / 12. * x * x + 1. / 6. * x);
+    auto const ref_d = rho_d * (1. / 18. - 1. / 6. * (x * x - x));
     auto const ref_f = static_cast<float>(ref_d);
     for (auto const direction : {Direction::N, Direction::E, Direction::T}) {
       auto const pop_f = EquilibriumDistribution::get(direction, u_f, rho_f);
       auto const pop_d = EquilibriumDistribution::get(direction, u_d, rho_d);
-      BOOST_CHECK_CLOSE(pop_f, ref_f, tol_f);
-      BOOST_CHECK_CLOSE(pop_d, ref_d, tol_d);
+      BOOST_CHECK_CLOSE(clamp_zero(pop_f), clamp_zero(ref_f), tol_f);
+      BOOST_CHECK_CLOSE(clamp_zero(pop_d), clamp_zero(ref_d), tol_d);
     }
   }
   {
-    auto const ref_d = -rho_d * (1. / 18. - 1. / 12. * u.norm2() -
-                                 1. / 12. * x * x + 1. / 6. * x);
+    auto const ref_d = rho_d * (1. / 18. - 1. / 6. * (x + x * x));
     auto const ref_f = static_cast<float>(ref_d);
     for (auto const direction : {Direction::S, Direction::W, Direction::B}) {
       auto const pop_f = EquilibriumDistribution::get(direction, u_f, rho_f);
       auto const pop_d = EquilibriumDistribution::get(direction, u_d, rho_d);
-      BOOST_CHECK_CLOSE(pop_f, ref_f, tol_f);
-      BOOST_CHECK_CLOSE(pop_d, ref_d, tol_d);
+      BOOST_CHECK_CLOSE(clamp_zero(pop_f), clamp_zero(ref_f), tol_f);
+      BOOST_CHECK_CLOSE(clamp_zero(pop_d), clamp_zero(ref_d), tol_d);
     }
   }
   {
-    auto const ref_d = -rho_d * (1. / 36. + 2. / 24. * u.norm2() -
-                                 1. / 24. * x * x - 1. / 4. * x * x);
+    auto const ref_d = rho_d * (1. / 36. - 1. / 12. * x * x);
     auto const ref_f = static_cast<float>(ref_d);
     for (auto const direction : {Direction::NW, Direction::SE, Direction::TS,
                                  Direction::TW, Direction::BN, Direction::BE}) {
       auto const pop_f = EquilibriumDistribution::get(direction, u_f, rho_f);
       auto const pop_d = EquilibriumDistribution::get(direction, u_d, rho_d);
-      BOOST_CHECK_CLOSE(pop_f, ref_f, tol_f);
-      BOOST_CHECK_CLOSE(pop_d, ref_d, tol_d);
+      BOOST_CHECK_CLOSE(clamp_zero(pop_f), clamp_zero(ref_f), tol_f);
+      BOOST_CHECK_CLOSE(clamp_zero(pop_d), clamp_zero(ref_d), tol_d);
     }
   }
   {
-    auto const ref_d =
-        rho_d * (1. / 36. + 2. / 24. * u.norm2() - 3. / 24. * x * x +
-                 1. / 4. * x * x + 2. / 12. * x);
+    auto const ref_d = rho_d * (1. / 36. + 5. / 12. * x * x + 2. / 12. * x);
     auto const ref_f = static_cast<float>(ref_d);
     for (auto const direction : {Direction::NE, Direction::TN, Direction::TE}) {
       auto const pop_f = EquilibriumDistribution::get(direction, u_f, rho_f);
       auto const pop_d = EquilibriumDistribution::get(direction, u_d, rho_d);
-      BOOST_CHECK_CLOSE(pop_f, ref_f, tol_f);
-      BOOST_CHECK_CLOSE(pop_d, ref_d, tol_d);
+      BOOST_CHECK_CLOSE(clamp_zero(pop_f), clamp_zero(ref_f), tol_f);
+      BOOST_CHECK_CLOSE(clamp_zero(pop_d), clamp_zero(ref_d), tol_d);
     }
   }
   {
-    auto const ref_d =
-        rho_d * (1. / 36. + 2. / 24. * u.norm2() - 3. / 24. * x * x +
-                 1. / 4. * x * x - 2. / 12. * x);
+    auto const ref_d = rho_d * (1. / 36. + 5. / 12. * x * x - 2. / 12. * x);
     auto const ref_f = static_cast<float>(ref_d);
     for (auto const direction : {Direction::SW, Direction::BS, Direction::BW}) {
       auto const pop_f = EquilibriumDistribution::get(direction, u_f, rho_f);
       auto const pop_d = EquilibriumDistribution::get(direction, u_d, rho_d);
-      BOOST_CHECK_CLOSE(pop_f, ref_f, tol_f);
-      BOOST_CHECK_CLOSE(pop_d, ref_d, tol_d);
+      BOOST_CHECK_CLOSE(clamp_zero(pop_f), clamp_zero(ref_f), tol_f);
+      BOOST_CHECK_CLOSE(clamp_zero(pop_d), clamp_zero(ref_d), tol_d);
     }
   }
 }
