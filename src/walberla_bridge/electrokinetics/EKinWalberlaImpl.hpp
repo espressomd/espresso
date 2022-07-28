@@ -128,8 +128,6 @@ template <> struct KernelTrait<float> {
 };
 } // namespace detail
 
-/** Class that runs and controls the LB on WaLBerla
- */
 template <size_t FluxCount = 13, typename FloatType = double>
 class EKinWalberlaImpl : public EKinWalberlaBase {
   template <typename T> inline FloatType FloatType_c(T t) {
@@ -650,10 +648,10 @@ public:
   }
 
   [[nodiscard]] uint64_t get_rng_state() const override {
-    throw std::runtime_error("The LB does not use a random number generator");
+    throw std::runtime_error("The EK does not use a random number generator");
   };
   void set_rng_state(uint64_t counter) override {
-    throw std::runtime_error("The LB does not use a random number generator");
+    throw std::runtime_error("The EK does not use a random number generator");
   };
 
   [[nodiscard]] LatticeWalberla &get_lattice() const noexcept override {

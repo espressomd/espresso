@@ -102,10 +102,7 @@ public:
   virtual void set_friction_coupling(bool friction_coupling) noexcept = 0;
   virtual void set_ext_efield(const Utils::Vector3d &field) noexcept = 0;
 
-  //* @brief Fet the rng counter for thermalized LBs */
   virtual uint64_t get_rng_state() const = 0;
-
-  /** @brief set the rng state of thermalized LBs */
   virtual void set_rng_state(uint64_t counter) = 0;
 
   [[nodiscard]] virtual walberla::BlockDataID get_density_id() const
