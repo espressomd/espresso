@@ -1,4 +1,4 @@
-// kernel generated with pystencils v1.0+0.g354fede.dirty, lbmpy v1.0,
+// kernel generated with pystencils v1.0+12.g54b91e2, lbmpy v1.0+8.gac750b5,
 // lbmpy_walberla/pystencils_walberla from commit
 // e1fe2ad1dcbe8f31ea79d95e8a5a5cc0ee3691f3
 
@@ -88,118 +88,118 @@ collidesweepdoubleprecisionthermalizedavx_collidesweepdoubleprecisionthermalized
   const double xi_107 = xi_72 * 0.083333333333333329;
   const double xi_110 = xi_68 * 0.25;
   for (int64_t ctr_2 = 0; ctr_2 < _size_force_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_20_314 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 14 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_36 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 6 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_38 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 8 * _stride_pdfs_3;
-    double *RESTRICT _data_force_20_31 =
-        _data_force + _stride_force_2 * ctr_2 + _stride_force_3;
-    double *RESTRICT _data_pdfs_20_31 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_312 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 12 * _stride_pdfs_3;
     double *RESTRICT _data_pdfs_20_39 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 9 * _stride_pdfs_3;
     double *RESTRICT _data_pdfs_20_313 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 13 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_33 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 3 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_37 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 7 * _stride_pdfs_3;
     double *RESTRICT _data_force_20_32 =
         _data_force + _stride_force_2 * ctr_2 + 2 * _stride_force_3;
     double *RESTRICT _data_pdfs_20_318 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 18 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_317 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 17 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_30 = _data_pdfs + _stride_pdfs_2 * ctr_2;
     double *RESTRICT _data_pdfs_20_35 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 5 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_316 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 16 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_32 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 2 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_38 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 8 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_37 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 7 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_312 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 12 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_33 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 3 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_311 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 11 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_30 = _data_pdfs + _stride_pdfs_2 * ctr_2;
+    double *RESTRICT _data_pdfs_20_314 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 14 * _stride_pdfs_3;
     double *RESTRICT _data_pdfs_20_34 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 4 * _stride_pdfs_3;
     double *RESTRICT _data_force_20_30 = _data_force + _stride_force_2 * ctr_2;
-    double *RESTRICT _data_pdfs_20_311 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 11 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_315 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 15 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_32 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 2 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_316 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 16 * _stride_pdfs_3;
     double *RESTRICT _data_pdfs_20_310 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 10 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_31 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + _stride_pdfs_3;
+    double *RESTRICT _data_force_20_31 =
+        _data_force + _stride_force_2 * ctr_2 + _stride_force_3;
+    double *RESTRICT _data_pdfs_20_315 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 15 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_36 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 6 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_317 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 17 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_force_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_20_314_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_314;
-      double *RESTRICT _data_pdfs_20_36_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_36;
-      double *RESTRICT _data_pdfs_20_38_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_38;
-      double *RESTRICT _data_force_20_31_10 =
-          _stride_force_1 * ctr_1 + _data_force_20_31;
-      double *RESTRICT _data_pdfs_20_31_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_31;
-      double *RESTRICT _data_pdfs_20_312_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_312;
       double *RESTRICT _data_pdfs_20_39_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_20_39;
       double *RESTRICT _data_pdfs_20_313_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_20_313;
-      double *RESTRICT _data_pdfs_20_33_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_33;
-      double *RESTRICT _data_pdfs_20_37_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_37;
       double *RESTRICT _data_force_20_32_10 =
           _stride_force_1 * ctr_1 + _data_force_20_32;
       double *RESTRICT _data_pdfs_20_318_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_20_318;
-      double *RESTRICT _data_pdfs_20_317_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_317;
-      double *RESTRICT _data_pdfs_20_30_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_30;
       double *RESTRICT _data_pdfs_20_35_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_20_35;
+      double *RESTRICT _data_pdfs_20_316_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_316;
+      double *RESTRICT _data_pdfs_20_32_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_32;
+      double *RESTRICT _data_pdfs_20_38_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_38;
+      double *RESTRICT _data_pdfs_20_37_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_37;
+      double *RESTRICT _data_pdfs_20_312_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_312;
+      double *RESTRICT _data_pdfs_20_33_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_33;
+      double *RESTRICT _data_pdfs_20_311_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_311;
+      double *RESTRICT _data_pdfs_20_30_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_30;
+      double *RESTRICT _data_pdfs_20_314_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_314;
       double *RESTRICT _data_pdfs_20_34_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_20_34;
       double *RESTRICT _data_force_20_30_10 =
           _stride_force_1 * ctr_1 + _data_force_20_30;
-      double *RESTRICT _data_pdfs_20_311_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_311;
-      double *RESTRICT _data_pdfs_20_315_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_315;
-      double *RESTRICT _data_pdfs_20_32_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_32;
-      double *RESTRICT _data_pdfs_20_316_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_316;
       double *RESTRICT _data_pdfs_20_310_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_20_310;
+      double *RESTRICT _data_pdfs_20_31_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_31;
+      double *RESTRICT _data_force_20_31_10 =
+          _stride_force_1 * ctr_1 + _data_force_20_31;
+      double *RESTRICT _data_pdfs_20_315_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_315;
+      double *RESTRICT _data_pdfs_20_36_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_36;
+      double *RESTRICT _data_pdfs_20_317_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_317;
       {
         for (int64_t ctr_0 = 0; ctr_0 < (int64_t)((_size_force_0) / (4)) * (4);
              ctr_0 += 4) {
-          const __m256d xi_133 = _mm256_load_pd(&_data_pdfs_20_314_10[ctr_0]);
-          const __m256d xi_134 = _mm256_load_pd(&_data_pdfs_20_36_10[ctr_0]);
-          const __m256d xi_135 = _mm256_load_pd(&_data_pdfs_20_38_10[ctr_0]);
-          const __m256d xi_136 = _mm256_load_pd(&_data_force_20_31_10[ctr_0]);
-          const __m256d xi_137 = _mm256_load_pd(&_data_pdfs_20_31_10[ctr_0]);
-          const __m256d xi_138 = _mm256_load_pd(&_data_pdfs_20_312_10[ctr_0]);
-          const __m256d xi_139 = _mm256_load_pd(&_data_pdfs_20_39_10[ctr_0]);
-          const __m256d xi_140 = _mm256_load_pd(&_data_pdfs_20_313_10[ctr_0]);
-          const __m256d xi_141 = _mm256_load_pd(&_data_pdfs_20_33_10[ctr_0]);
-          const __m256d xi_142 = _mm256_load_pd(&_data_pdfs_20_37_10[ctr_0]);
-          const __m256d xi_143 = _mm256_load_pd(&_data_force_20_32_10[ctr_0]);
-          const __m256d xi_144 = _mm256_load_pd(&_data_pdfs_20_318_10[ctr_0]);
-          const __m256d xi_145 = _mm256_load_pd(&_data_pdfs_20_317_10[ctr_0]);
-          const __m256d xi_146 = _mm256_load_pd(&_data_pdfs_20_30_10[ctr_0]);
-          const __m256d xi_147 = _mm256_load_pd(&_data_pdfs_20_35_10[ctr_0]);
-          const __m256d xi_148 = _mm256_load_pd(&_data_pdfs_20_34_10[ctr_0]);
-          const __m256d xi_149 = _mm256_load_pd(&_data_force_20_30_10[ctr_0]);
-          const __m256d xi_150 = _mm256_load_pd(&_data_pdfs_20_311_10[ctr_0]);
-          const __m256d xi_151 = _mm256_load_pd(&_data_pdfs_20_315_10[ctr_0]);
-          const __m256d xi_152 = _mm256_load_pd(&_data_pdfs_20_32_10[ctr_0]);
-          const __m256d xi_153 = _mm256_load_pd(&_data_pdfs_20_316_10[ctr_0]);
-          const __m256d xi_154 = _mm256_load_pd(&_data_pdfs_20_310_10[ctr_0]);
+          const __m256d xi_133 = _mm256_load_pd(&_data_pdfs_20_39_10[ctr_0]);
+          const __m256d xi_134 = _mm256_load_pd(&_data_pdfs_20_313_10[ctr_0]);
+          const __m256d xi_135 = _mm256_load_pd(&_data_force_20_32_10[ctr_0]);
+          const __m256d xi_136 = _mm256_load_pd(&_data_pdfs_20_318_10[ctr_0]);
+          const __m256d xi_137 = _mm256_load_pd(&_data_pdfs_20_35_10[ctr_0]);
+          const __m256d xi_138 = _mm256_load_pd(&_data_pdfs_20_316_10[ctr_0]);
+          const __m256d xi_139 = _mm256_load_pd(&_data_pdfs_20_32_10[ctr_0]);
+          const __m256d xi_140 = _mm256_load_pd(&_data_pdfs_20_38_10[ctr_0]);
+          const __m256d xi_141 = _mm256_load_pd(&_data_pdfs_20_37_10[ctr_0]);
+          const __m256d xi_142 = _mm256_load_pd(&_data_pdfs_20_312_10[ctr_0]);
+          const __m256d xi_143 = _mm256_load_pd(&_data_pdfs_20_33_10[ctr_0]);
+          const __m256d xi_144 = _mm256_load_pd(&_data_pdfs_20_311_10[ctr_0]);
+          const __m256d xi_145 = _mm256_load_pd(&_data_pdfs_20_30_10[ctr_0]);
+          const __m256d xi_146 = _mm256_load_pd(&_data_pdfs_20_314_10[ctr_0]);
+          const __m256d xi_147 = _mm256_load_pd(&_data_pdfs_20_34_10[ctr_0]);
+          const __m256d xi_148 = _mm256_load_pd(&_data_force_20_30_10[ctr_0]);
+          const __m256d xi_149 = _mm256_load_pd(&_data_pdfs_20_310_10[ctr_0]);
+          const __m256d xi_150 = _mm256_load_pd(&_data_pdfs_20_31_10[ctr_0]);
+          const __m256d xi_151 = _mm256_load_pd(&_data_force_20_31_10[ctr_0]);
+          const __m256d xi_152 = _mm256_load_pd(&_data_pdfs_20_315_10[ctr_0]);
+          const __m256d xi_153 = _mm256_load_pd(&_data_pdfs_20_36_10[ctr_0]);
+          const __m256d xi_154 = _mm256_load_pd(&_data_pdfs_20_317_10[ctr_0]);
 
           __m256d random_7_0;
           __m256d random_7_1;
@@ -345,13 +345,13 @@ collidesweepdoubleprecisionthermalizedavx_collidesweepdoubleprecisionthermalized
               block_offset_1 + ctr_1, block_offset_2 + ctr_2, 0, seed,
               random_0_0, random_0_1);
 
-          const __m256d xi_0 = _mm256_add_pd(xi_140, xi_145);
-          const __m256d xi_1 = _mm256_add_pd(xi_139, xi_142);
-          const __m256d xi_2 = _mm256_add_pd(xi_138, xi_153);
-          const __m256d xi_3 = _mm256_add_pd(xi_134, xi_147);
-          const __m256d xi_4 = _mm256_add_pd(xi_150, xi_151);
-          const __m256d xi_6 = _mm256_add_pd(xi_133, xi_144);
-          const __m256d xi_7 = _mm256_add_pd(xi_135, xi_154);
+          const __m256d xi_0 = _mm256_add_pd(xi_134, xi_154);
+          const __m256d xi_1 = _mm256_add_pd(xi_133, xi_141);
+          const __m256d xi_2 = _mm256_add_pd(xi_138, xi_142);
+          const __m256d xi_3 = _mm256_add_pd(xi_137, xi_153);
+          const __m256d xi_4 = _mm256_add_pd(xi_144, xi_152);
+          const __m256d xi_6 = _mm256_add_pd(xi_136, xi_146);
+          const __m256d xi_7 = _mm256_add_pd(xi_140, xi_149);
           const __m256d xi_61 = _mm256_mul_pd(
               _mm256_mul_pd(
                   _mm256_add_pd(_mm256_set_pd(-0.5, -0.5, -0.5, -0.5),
@@ -555,52 +555,52 @@ collidesweepdoubleprecisionthermalizedavx_collidesweepdoubleprecisionthermalized
               _mm256_add_pd(
                   _mm256_add_pd(_mm256_add_pd(xi_100, xi_106), xi_121), xi_122),
               xi_95);
-          const __m256d partial_m_m1_0_e_0 = _mm256_add_pd(xi_0, xi_141);
+          const __m256d partial_m_m1_0_e_0 = _mm256_add_pd(xi_0, xi_143);
           const __m256d partial_m_m1_e_0_0 =
               _mm256_add_pd(partial_m_m1_0_e_0, xi_1);
-          const __m256d partial_m_0_m1_e_0 = _mm256_add_pd(xi_152, xi_2);
-          const __m256d partial_m_0_0_e_0 = _mm256_add_pd(xi_146, xi_3);
-          const __m256d partial_m_0_1_e_0 = _mm256_add_pd(xi_137, xi_4);
+          const __m256d partial_m_0_m1_e_0 = _mm256_add_pd(xi_139, xi_2);
+          const __m256d partial_m_0_0_e_0 = _mm256_add_pd(xi_145, xi_3);
+          const __m256d partial_m_0_1_e_0 = _mm256_add_pd(xi_150, xi_4);
           const __m256d xi_5 =
               _mm256_add_pd(partial_m_0_1_e_0, partial_m_0_m1_e_0);
           const __m256d partial_m_0_e_0_0 =
               _mm256_add_pd(partial_m_0_0_e_0, xi_5);
-          const __m256d partial_m_1_0_e_0 = _mm256_add_pd(xi_148, xi_6);
+          const __m256d partial_m_1_0_e_0 = _mm256_add_pd(xi_147, xi_6);
           const __m256d partial_m_1_e_0_0 =
               _mm256_add_pd(partial_m_1_0_e_0, xi_7);
           const __m256d xi_10 =
               _mm256_add_pd(partial_m_1_e_0_0, partial_m_m1_e_0_0);
           const __m256d partial_m_m1_e_1_0 = _mm256_add_pd(
-              _mm256_mul_pd(xi_139, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)),
-              xi_142);
+              _mm256_mul_pd(xi_133, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)),
+              xi_141);
           const __m256d partial_m_0_e_1_0 = _mm256_add_pd(
               _mm256_mul_pd(partial_m_0_m1_e_0,
                             _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)),
               partial_m_0_1_e_0);
           const __m256d partial_m_1_e_1_0 = _mm256_add_pd(
-              _mm256_mul_pd(xi_154, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)),
-              xi_135);
+              _mm256_mul_pd(xi_149, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)),
+              xi_140);
           const __m256d xi_11 =
               _mm256_add_pd(partial_m_1_e_1_0, partial_m_m1_e_1_0);
           const __m256d partial_m_m1_0_e_1 = _mm256_add_pd(
-              _mm256_mul_pd(xi_145, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)),
-              xi_140);
+              _mm256_mul_pd(xi_154, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)),
+              xi_134);
           const __m256d partial_m_0_m1_e_1 = _mm256_add_pd(
-              _mm256_mul_pd(xi_153, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)),
-              xi_138);
+              _mm256_mul_pd(xi_138, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)),
+              xi_142);
           const __m256d partial_m_0_0_e_1 = _mm256_add_pd(
-              _mm256_mul_pd(xi_134, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)),
-              xi_147);
+              _mm256_mul_pd(xi_153, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)),
+              xi_137);
           const __m256d partial_m_0_1_e_1 = _mm256_add_pd(
-              _mm256_mul_pd(xi_151, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)),
-              xi_150);
+              _mm256_mul_pd(xi_152, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)),
+              xi_144);
           const __m256d xi_8 =
               _mm256_add_pd(partial_m_0_1_e_1, partial_m_0_m1_e_1);
           const __m256d partial_m_0_e_0_1 =
               _mm256_add_pd(partial_m_0_0_e_1, xi_8);
           const __m256d partial_m_1_0_e_1 = _mm256_add_pd(
-              _mm256_mul_pd(xi_144, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)),
-              xi_133);
+              _mm256_mul_pd(xi_136, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)),
+              xi_146);
           const __m256d xi_12 =
               _mm256_add_pd(partial_m_1_0_e_1, partial_m_m1_0_e_1);
           const __m256d partial_m_m1_e_2_0 = xi_1;
@@ -678,19 +678,19 @@ collidesweepdoubleprecisionthermalizedavx_collidesweepdoubleprecisionthermalized
           const __m256d xi_15 =
               _mm256_mul_pd(sub_f_to_m_0, _mm256_set_pd(0.5, 0.5, 0.5, 0.5));
           const __m256d u_0 = _mm256_add_pd(_mm256_mul_pd(m_100, sub_f_to_m_0),
-                                            _mm256_mul_pd(xi_149, xi_15));
-          const __m256d xi_23 = _mm256_mul_pd(u_0, xi_149);
+                                            _mm256_mul_pd(xi_148, xi_15));
+          const __m256d xi_23 = _mm256_mul_pd(u_0, xi_148);
           const __m256d xi_27 = _mm256_mul_pd(m_000, (_mm256_mul_pd(u_0, u_0)));
           const __m256d xi_31 = _mm256_mul_pd(m_000, u_0);
           const __m256d u_1 = _mm256_add_pd(_mm256_mul_pd(m_010, sub_f_to_m_0),
-                                            _mm256_mul_pd(xi_136, xi_15));
+                                            _mm256_mul_pd(xi_15, xi_151));
           const __m256d xi_24 = _mm256_mul_pd(
-              _mm256_mul_pd(u_1, xi_136), _mm256_set_pd(2.0, 2.0, 2.0, 2.0));
+              _mm256_mul_pd(u_1, xi_151), _mm256_set_pd(2.0, 2.0, 2.0, 2.0));
           const __m256d xi_28 = _mm256_mul_pd(m_000, (_mm256_mul_pd(u_1, u_1)));
           const __m256d u_2 = _mm256_add_pd(_mm256_mul_pd(m_001, sub_f_to_m_0),
-                                            _mm256_mul_pd(xi_143, xi_15));
+                                            _mm256_mul_pd(xi_135, xi_15));
           const __m256d xi_25 = _mm256_mul_pd(
-              _mm256_mul_pd(u_2, xi_143), _mm256_set_pd(2.0, 2.0, 2.0, 2.0));
+              _mm256_mul_pd(u_2, xi_135), _mm256_set_pd(2.0, 2.0, 2.0, 2.0));
           const __m256d xi_26 =
               _mm256_mul_pd(xi_25, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
           const __m256d xi_29 = _mm256_mul_pd(m_000, (_mm256_mul_pd(u_2, u_2)));
@@ -763,17 +763,17 @@ collidesweepdoubleprecisionthermalizedavx_collidesweepdoubleprecisionthermalized
                                     _mm256_set_pd(-4.0, -4.0, -4.0, -4.0))),
                   m_000),
               xi_21);
-          const __m256d M_post_1 = _mm256_add_pd(m_100, xi_149);
+          const __m256d M_post_1 = _mm256_add_pd(m_100, xi_148);
           const __m256d xi_39 = _mm256_mul_pd(
               M_post_1,
               _mm256_set_pd(0.33333333333333331, 0.33333333333333331,
                             0.33333333333333331, 0.33333333333333331));
-          const __m256d M_post_2 = _mm256_add_pd(m_010, xi_136);
+          const __m256d M_post_2 = _mm256_add_pd(m_010, xi_151);
           const __m256d xi_37 = _mm256_mul_pd(
               M_post_2,
               _mm256_set_pd(0.33333333333333331, 0.33333333333333331,
                             0.33333333333333331, 0.33333333333333331));
-          const __m256d M_post_3 = _mm256_add_pd(m_001, xi_143);
+          const __m256d M_post_3 = _mm256_add_pd(m_001, xi_135);
           const __m256d xi_38 = _mm256_mul_pd(
               M_post_3,
               _mm256_set_pd(0.33333333333333331, 0.33333333333333331,
@@ -835,8 +835,8 @@ collidesweepdoubleprecisionthermalizedavx_collidesweepdoubleprecisionthermalized
                           _mm256_mul_pd(u_1, xi_31)),
                       _mm256_set_pd(omega_shear, omega_shear, omega_shear,
                                     omega_shear)),
-                  _mm256_mul_pd(_mm256_add_pd(_mm256_mul_pd(u_0, xi_136),
-                                              _mm256_mul_pd(u_1, xi_149)),
+                  _mm256_mul_pd(_mm256_add_pd(_mm256_mul_pd(u_0, xi_151),
+                                              _mm256_mul_pd(u_1, xi_148)),
                                 _mm256_set_pd(xi_22, xi_22, xi_22, xi_22))),
               m_110);
           const __m256d xi_47 =
@@ -850,8 +850,8 @@ collidesweepdoubleprecisionthermalizedavx_collidesweepdoubleprecisionthermalized
                           _mm256_mul_pd(u_2, xi_31)),
                       _mm256_set_pd(omega_shear, omega_shear, omega_shear,
                                     omega_shear)),
-                  _mm256_mul_pd(_mm256_add_pd(_mm256_mul_pd(u_0, xi_143),
-                                              _mm256_mul_pd(u_2, xi_149)),
+                  _mm256_mul_pd(_mm256_add_pd(_mm256_mul_pd(u_0, xi_135),
+                                              _mm256_mul_pd(u_2, xi_148)),
                                 _mm256_set_pd(xi_22, xi_22, xi_22, xi_22))),
               m_101);
           const __m256d xi_55 =
@@ -865,8 +865,8 @@ collidesweepdoubleprecisionthermalizedavx_collidesweepdoubleprecisionthermalized
                           _mm256_mul_pd(_mm256_mul_pd(m_000, u_1), u_2)),
                       _mm256_set_pd(omega_shear, omega_shear, omega_shear,
                                     omega_shear)),
-                  _mm256_mul_pd(_mm256_add_pd(_mm256_mul_pd(u_1, xi_143),
-                                              _mm256_mul_pd(u_2, xi_136)),
+                  _mm256_mul_pd(_mm256_add_pd(_mm256_mul_pd(u_1, xi_135),
+                                              _mm256_mul_pd(u_2, xi_151)),
                                 _mm256_set_pd(xi_22, xi_22, xi_22, xi_22))),
               partial_m_0_e_1_1);
           const __m256d xi_51 =
@@ -1431,28 +1431,28 @@ collidesweepdoubleprecisionthermalizedavx_collidesweepdoubleprecisionthermalized
         }
         for (int64_t ctr_0 = (int64_t)((_size_force_0) / (4)) * (4);
              ctr_0 < _size_force_0; ctr_0 += 1) {
-          const double xi_133 = _data_pdfs_20_314_10[ctr_0];
-          const double xi_134 = _data_pdfs_20_36_10[ctr_0];
-          const double xi_135 = _data_pdfs_20_38_10[ctr_0];
-          const double xi_136 = _data_force_20_31_10[ctr_0];
-          const double xi_137 = _data_pdfs_20_31_10[ctr_0];
-          const double xi_138 = _data_pdfs_20_312_10[ctr_0];
-          const double xi_139 = _data_pdfs_20_39_10[ctr_0];
-          const double xi_140 = _data_pdfs_20_313_10[ctr_0];
-          const double xi_141 = _data_pdfs_20_33_10[ctr_0];
-          const double xi_142 = _data_pdfs_20_37_10[ctr_0];
-          const double xi_143 = _data_force_20_32_10[ctr_0];
-          const double xi_144 = _data_pdfs_20_318_10[ctr_0];
-          const double xi_145 = _data_pdfs_20_317_10[ctr_0];
-          const double xi_146 = _data_pdfs_20_30_10[ctr_0];
-          const double xi_147 = _data_pdfs_20_35_10[ctr_0];
-          const double xi_148 = _data_pdfs_20_34_10[ctr_0];
-          const double xi_149 = _data_force_20_30_10[ctr_0];
-          const double xi_150 = _data_pdfs_20_311_10[ctr_0];
-          const double xi_151 = _data_pdfs_20_315_10[ctr_0];
-          const double xi_152 = _data_pdfs_20_32_10[ctr_0];
-          const double xi_153 = _data_pdfs_20_316_10[ctr_0];
-          const double xi_154 = _data_pdfs_20_310_10[ctr_0];
+          const double xi_133 = _data_pdfs_20_39_10[ctr_0];
+          const double xi_134 = _data_pdfs_20_313_10[ctr_0];
+          const double xi_135 = _data_force_20_32_10[ctr_0];
+          const double xi_136 = _data_pdfs_20_318_10[ctr_0];
+          const double xi_137 = _data_pdfs_20_35_10[ctr_0];
+          const double xi_138 = _data_pdfs_20_316_10[ctr_0];
+          const double xi_139 = _data_pdfs_20_32_10[ctr_0];
+          const double xi_140 = _data_pdfs_20_38_10[ctr_0];
+          const double xi_141 = _data_pdfs_20_37_10[ctr_0];
+          const double xi_142 = _data_pdfs_20_312_10[ctr_0];
+          const double xi_143 = _data_pdfs_20_33_10[ctr_0];
+          const double xi_144 = _data_pdfs_20_311_10[ctr_0];
+          const double xi_145 = _data_pdfs_20_30_10[ctr_0];
+          const double xi_146 = _data_pdfs_20_314_10[ctr_0];
+          const double xi_147 = _data_pdfs_20_34_10[ctr_0];
+          const double xi_148 = _data_force_20_30_10[ctr_0];
+          const double xi_149 = _data_pdfs_20_310_10[ctr_0];
+          const double xi_150 = _data_pdfs_20_31_10[ctr_0];
+          const double xi_151 = _data_force_20_31_10[ctr_0];
+          const double xi_152 = _data_pdfs_20_315_10[ctr_0];
+          const double xi_153 = _data_pdfs_20_36_10[ctr_0];
+          const double xi_154 = _data_pdfs_20_317_10[ctr_0];
 
           double random_7_0;
           double random_7_1;
@@ -1502,13 +1502,13 @@ collidesweepdoubleprecisionthermalizedavx_collidesweepdoubleprecisionthermalized
                          block_offset_1 + ctr_1, block_offset_2 + ctr_2, 0,
                          seed, random_0_0, random_0_1);
 
-          const double xi_0 = xi_140 + xi_145;
-          const double xi_1 = xi_139 + xi_142;
-          const double xi_2 = xi_138 + xi_153;
-          const double xi_3 = xi_134 + xi_147;
-          const double xi_4 = xi_150 + xi_151;
-          const double xi_6 = xi_133 + xi_144;
-          const double xi_7 = xi_135 + xi_154;
+          const double xi_0 = xi_134 + xi_154;
+          const double xi_1 = xi_133 + xi_141;
+          const double xi_2 = xi_138 + xi_142;
+          const double xi_3 = xi_137 + xi_153;
+          const double xi_4 = xi_144 + xi_152;
+          const double xi_6 = xi_136 + xi_146;
+          const double xi_7 = xi_140 + xi_149;
           const double xi_61 = xi_60 * (random_6_0 - 0.5) * 3.7416573867739413;
           const double xi_62 = xi_60 * (random_7_0 - 0.5) * 5.4772255750516612;
           const double xi_64 = xi_63 * (random_2_1 - 0.5) *
@@ -1568,28 +1568,28 @@ collidesweepdoubleprecisionthermalizedavx_collidesweepdoubleprecisionthermalized
           const double xi_131 =
               xi_106 + xi_108 + xi_109 + xi_111 * -1.0 + xi_112 + xi_82 + xi_99;
           const double xi_132 = xi_100 + xi_106 + xi_121 + xi_122 + xi_95;
-          const double partial_m_m1_0_e_0 = xi_0 + xi_141;
+          const double partial_m_m1_0_e_0 = xi_0 + xi_143;
           const double partial_m_m1_e_0_0 = partial_m_m1_0_e_0 + xi_1;
-          const double partial_m_0_m1_e_0 = xi_152 + xi_2;
-          const double partial_m_0_0_e_0 = xi_146 + xi_3;
-          const double partial_m_0_1_e_0 = xi_137 + xi_4;
+          const double partial_m_0_m1_e_0 = xi_139 + xi_2;
+          const double partial_m_0_0_e_0 = xi_145 + xi_3;
+          const double partial_m_0_1_e_0 = xi_150 + xi_4;
           const double xi_5 = partial_m_0_1_e_0 + partial_m_0_m1_e_0;
           const double partial_m_0_e_0_0 = partial_m_0_0_e_0 + xi_5;
-          const double partial_m_1_0_e_0 = xi_148 + xi_6;
+          const double partial_m_1_0_e_0 = xi_147 + xi_6;
           const double partial_m_1_e_0_0 = partial_m_1_0_e_0 + xi_7;
           const double xi_10 = partial_m_1_e_0_0 + partial_m_m1_e_0_0;
-          const double partial_m_m1_e_1_0 = xi_139 * -1.0 + xi_142;
+          const double partial_m_m1_e_1_0 = xi_133 * -1.0 + xi_141;
           const double partial_m_0_e_1_0 =
               partial_m_0_1_e_0 + partial_m_0_m1_e_0 * -1.0;
-          const double partial_m_1_e_1_0 = xi_135 + xi_154 * -1.0;
+          const double partial_m_1_e_1_0 = xi_140 + xi_149 * -1.0;
           const double xi_11 = partial_m_1_e_1_0 + partial_m_m1_e_1_0;
-          const double partial_m_m1_0_e_1 = xi_140 + xi_145 * -1.0;
-          const double partial_m_0_m1_e_1 = xi_138 + xi_153 * -1.0;
-          const double partial_m_0_0_e_1 = xi_134 * -1.0 + xi_147;
-          const double partial_m_0_1_e_1 = xi_150 + xi_151 * -1.0;
+          const double partial_m_m1_0_e_1 = xi_134 + xi_154 * -1.0;
+          const double partial_m_0_m1_e_1 = xi_138 * -1.0 + xi_142;
+          const double partial_m_0_0_e_1 = xi_137 + xi_153 * -1.0;
+          const double partial_m_0_1_e_1 = xi_144 + xi_152 * -1.0;
           const double xi_8 = partial_m_0_1_e_1 + partial_m_0_m1_e_1;
           const double partial_m_0_e_0_1 = partial_m_0_0_e_1 + xi_8;
-          const double partial_m_1_0_e_1 = xi_133 + xi_144 * -1.0;
+          const double partial_m_1_0_e_1 = xi_136 * -1.0 + xi_146;
           const double xi_12 = partial_m_1_0_e_1 + partial_m_m1_0_e_1;
           const double partial_m_m1_e_2_0 = xi_1;
           const double partial_m_0_e_2_0 = xi_5;
@@ -1632,15 +1632,15 @@ collidesweepdoubleprecisionthermalizedavx_collidesweepdoubleprecisionthermalized
           const double m_202 = xi_14;
           const double sub_f_to_m_0 = ((1.0) / (m_000));
           const double xi_15 = sub_f_to_m_0 * 0.5;
-          const double u_0 = m_100 * sub_f_to_m_0 + xi_149 * xi_15;
-          const double xi_23 = u_0 * xi_149;
+          const double u_0 = m_100 * sub_f_to_m_0 + xi_148 * xi_15;
+          const double xi_23 = u_0 * xi_148;
           const double xi_27 = m_000 * (u_0 * u_0);
           const double xi_31 = m_000 * u_0;
-          const double u_1 = m_010 * sub_f_to_m_0 + xi_136 * xi_15;
-          const double xi_24 = u_1 * xi_136 * 2.0;
+          const double u_1 = m_010 * sub_f_to_m_0 + xi_15 * xi_151;
+          const double xi_24 = u_1 * xi_151 * 2.0;
           const double xi_28 = m_000 * (u_1 * u_1);
-          const double u_2 = m_001 * sub_f_to_m_0 + xi_143 * xi_15;
-          const double xi_25 = u_2 * xi_143 * 2.0;
+          const double u_2 = m_001 * sub_f_to_m_0 + xi_135 * xi_15;
+          const double xi_25 = u_2 * xi_135 * 2.0;
           const double xi_26 = xi_25 * -1.0;
           const double xi_29 = m_000 * (u_2 * u_2);
           const double xi_30 = xi_29 * -1.0;
@@ -1658,11 +1658,11 @@ collidesweepdoubleprecisionthermalizedavx_collidesweepdoubleprecisionthermalized
           const double M_17 = m_020 + m_202 * 14.0 + xi_20 + xi_21;
           const double M_18 = m_000 + m_020 * -4.0 + m_200 * -1.0 +
                               m_202 * 4.0 + partial_m_0_e_2_2 * 10.0 + xi_21;
-          const double M_post_1 = m_100 + xi_149;
+          const double M_post_1 = m_100 + xi_148;
           const double xi_39 = M_post_1 * 0.33333333333333331;
-          const double M_post_2 = m_010 + xi_136;
+          const double M_post_2 = m_010 + xi_151;
           const double xi_37 = M_post_2 * 0.33333333333333331;
-          const double M_post_3 = m_001 + xi_143;
+          const double M_post_3 = m_001 + xi_135;
           const double xi_38 = M_post_3 * 0.33333333333333331;
           const double M_post_4 =
               M_4 +
@@ -1676,15 +1676,15 @@ collidesweepdoubleprecisionthermalizedavx_collidesweepdoubleprecisionthermalized
           const double xi_40 = M_post_5 * 0.25;
           const double M_post_6 = m_110 +
                                   omega_shear * (m_110 * -1.0 + u_1 * xi_31) +
-                                  xi_22 * (u_0 * xi_136 + u_1 * xi_149);
+                                  xi_22 * (u_0 * xi_151 + u_1 * xi_148);
           const double xi_47 = M_post_6 * 0.25;
           const double M_post_7 = m_101 +
                                   omega_shear * (m_101 * -1.0 + u_2 * xi_31) +
-                                  xi_22 * (u_0 * xi_143 + u_2 * xi_149);
+                                  xi_22 * (u_0 * xi_135 + u_2 * xi_148);
           const double xi_55 = M_post_7 * 0.25;
           const double M_post_8 =
               omega_shear * (m_000 * u_1 * u_2 + partial_m_0_e_1_1 * -1.0) +
-              partial_m_0_e_1_1 + xi_22 * (u_1 * xi_143 + u_2 * xi_136);
+              partial_m_0_e_1_1 + xi_22 * (u_1 * xi_135 + u_2 * xi_151);
           const double xi_51 = M_post_8 * 0.25;
           const double M_post_9 =
               M_9 + omega_bulk * (M_9 * -1.0 + xi_27 + xi_28 + xi_29) +
@@ -1824,17 +1824,17 @@ void CollideSweepDoublePrecisionThermalizedAVX::run(IBlock *block) {
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
   auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
 
-  auto block_offset_0 = this->block_offset_0_;
-  auto &omega_even = this->omega_even_;
+  auto block_offset_1 = this->block_offset_1_;
+  auto &kT = this->kT_;
+  auto &omega_shear = this->omega_shear_;
+  auto block_offset_2 = this->block_offset_2_;
+  auto &seed = this->seed_;
+  auto &rho = this->rho_;
   auto &time_step = this->time_step_;
   auto &omega_odd = this->omega_odd_;
-  auto &rho = this->rho_;
-  auto &seed = this->seed_;
-  auto block_offset_2 = this->block_offset_2_;
-  auto &omega_shear = this->omega_shear_;
+  auto block_offset_0 = this->block_offset_0_;
+  auto &omega_even = this->omega_even_;
   auto &omega_bulk = this->omega_bulk_;
-  auto &kT = this->kT_;
-  auto block_offset_1 = this->block_offset_1_;
   block_offset_generator(block, block_offset_0, block_offset_1, block_offset_2);
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(force->nrOfGhostLayers()));
   double *RESTRICT const _data_force = force->dataAt(0, 0, 0, 0);
@@ -1889,17 +1889,17 @@ void CollideSweepDoublePrecisionThermalizedAVX::runOnCellInterval(
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
   auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
 
-  auto block_offset_0 = this->block_offset_0_;
-  auto &omega_even = this->omega_even_;
+  auto block_offset_1 = this->block_offset_1_;
+  auto &kT = this->kT_;
+  auto &omega_shear = this->omega_shear_;
+  auto block_offset_2 = this->block_offset_2_;
+  auto &seed = this->seed_;
+  auto &rho = this->rho_;
   auto &time_step = this->time_step_;
   auto &omega_odd = this->omega_odd_;
-  auto &rho = this->rho_;
-  auto &seed = this->seed_;
-  auto block_offset_2 = this->block_offset_2_;
-  auto &omega_shear = this->omega_shear_;
+  auto block_offset_0 = this->block_offset_0_;
+  auto &omega_even = this->omega_even_;
   auto &omega_bulk = this->omega_bulk_;
-  auto &kT = this->kT_;
-  auto block_offset_1 = this->block_offset_1_;
   block_offset_generator(block, block_offset_0, block_offset_1, block_offset_2);
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(force->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(force->nrOfGhostLayers()));

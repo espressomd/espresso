@@ -1,4 +1,4 @@
-// kernel generated with pystencils v1.0+0.g354fede.dirty, lbmpy v1.0,
+// kernel generated with pystencils v1.0+12.g54b91e2, lbmpy v1.0+8.gac750b5,
 // lbmpy_walberla/pystencils_walberla from commit
 // e1fe2ad1dcbe8f31ea79d95e8a5a5cc0ee3691f3
 
@@ -61,145 +61,145 @@ static FUNC_PREFIX void collidesweepdoubleprecision_collidesweepdoubleprecision(
     double omega_odd, double omega_shear) {
   const double xi_22 = omega_shear * -0.5 + 1.0;
   for (int64_t ctr_2 = 0; ctr_2 < _size_force_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_20_314 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 14 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_36 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 6 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_38 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 8 * _stride_pdfs_3;
-    double *RESTRICT _data_force_20_31 =
-        _data_force + _stride_force_2 * ctr_2 + _stride_force_3;
-    double *RESTRICT _data_pdfs_20_31 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_312 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 12 * _stride_pdfs_3;
     double *RESTRICT _data_pdfs_20_39 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 9 * _stride_pdfs_3;
     double *RESTRICT _data_pdfs_20_313 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 13 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_33 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 3 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_37 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 7 * _stride_pdfs_3;
     double *RESTRICT _data_force_20_32 =
         _data_force + _stride_force_2 * ctr_2 + 2 * _stride_force_3;
     double *RESTRICT _data_pdfs_20_318 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 18 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_317 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 17 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_30 = _data_pdfs + _stride_pdfs_2 * ctr_2;
     double *RESTRICT _data_pdfs_20_35 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 5 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_316 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 16 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_32 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 2 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_38 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 8 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_37 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 7 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_312 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 12 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_33 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 3 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_311 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 11 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_30 = _data_pdfs + _stride_pdfs_2 * ctr_2;
+    double *RESTRICT _data_pdfs_20_314 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 14 * _stride_pdfs_3;
     double *RESTRICT _data_pdfs_20_34 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 4 * _stride_pdfs_3;
     double *RESTRICT _data_force_20_30 = _data_force + _stride_force_2 * ctr_2;
-    double *RESTRICT _data_pdfs_20_311 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 11 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_315 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 15 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_32 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 2 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_316 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 16 * _stride_pdfs_3;
     double *RESTRICT _data_pdfs_20_310 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 10 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_31 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + _stride_pdfs_3;
+    double *RESTRICT _data_force_20_31 =
+        _data_force + _stride_force_2 * ctr_2 + _stride_force_3;
+    double *RESTRICT _data_pdfs_20_315 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 15 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_36 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 6 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_317 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 17 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_force_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_20_314_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_314;
-      double *RESTRICT _data_pdfs_20_36_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_36;
-      double *RESTRICT _data_pdfs_20_38_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_38;
-      double *RESTRICT _data_force_20_31_10 =
-          _stride_force_1 * ctr_1 + _data_force_20_31;
-      double *RESTRICT _data_pdfs_20_31_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_31;
-      double *RESTRICT _data_pdfs_20_312_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_312;
       double *RESTRICT _data_pdfs_20_39_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_20_39;
       double *RESTRICT _data_pdfs_20_313_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_20_313;
-      double *RESTRICT _data_pdfs_20_33_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_33;
-      double *RESTRICT _data_pdfs_20_37_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_37;
       double *RESTRICT _data_force_20_32_10 =
           _stride_force_1 * ctr_1 + _data_force_20_32;
       double *RESTRICT _data_pdfs_20_318_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_20_318;
-      double *RESTRICT _data_pdfs_20_317_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_317;
-      double *RESTRICT _data_pdfs_20_30_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_30;
       double *RESTRICT _data_pdfs_20_35_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_20_35;
+      double *RESTRICT _data_pdfs_20_316_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_316;
+      double *RESTRICT _data_pdfs_20_32_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_32;
+      double *RESTRICT _data_pdfs_20_38_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_38;
+      double *RESTRICT _data_pdfs_20_37_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_37;
+      double *RESTRICT _data_pdfs_20_312_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_312;
+      double *RESTRICT _data_pdfs_20_33_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_33;
+      double *RESTRICT _data_pdfs_20_311_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_311;
+      double *RESTRICT _data_pdfs_20_30_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_30;
+      double *RESTRICT _data_pdfs_20_314_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_314;
       double *RESTRICT _data_pdfs_20_34_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_20_34;
       double *RESTRICT _data_force_20_30_10 =
           _stride_force_1 * ctr_1 + _data_force_20_30;
-      double *RESTRICT _data_pdfs_20_311_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_311;
-      double *RESTRICT _data_pdfs_20_315_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_315;
-      double *RESTRICT _data_pdfs_20_32_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_32;
-      double *RESTRICT _data_pdfs_20_316_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_316;
       double *RESTRICT _data_pdfs_20_310_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_20_310;
+      double *RESTRICT _data_pdfs_20_31_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_31;
+      double *RESTRICT _data_force_20_31_10 =
+          _stride_force_1 * ctr_1 + _data_force_20_31;
+      double *RESTRICT _data_pdfs_20_315_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_315;
+      double *RESTRICT _data_pdfs_20_36_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_36;
+      double *RESTRICT _data_pdfs_20_317_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_317;
       for (int64_t ctr_0 = 0; ctr_0 < _size_force_0; ctr_0 += 1) {
-        const double xi_59 = _data_pdfs_20_314_10[_stride_pdfs_0 * ctr_0];
-        const double xi_60 = _data_pdfs_20_36_10[_stride_pdfs_0 * ctr_0];
-        const double xi_61 = _data_pdfs_20_38_10[_stride_pdfs_0 * ctr_0];
-        const double xi_62 = _data_force_20_31_10[_stride_force_0 * ctr_0];
-        const double xi_63 = _data_pdfs_20_31_10[_stride_pdfs_0 * ctr_0];
-        const double xi_64 = _data_pdfs_20_312_10[_stride_pdfs_0 * ctr_0];
-        const double xi_65 = _data_pdfs_20_39_10[_stride_pdfs_0 * ctr_0];
-        const double xi_66 = _data_pdfs_20_313_10[_stride_pdfs_0 * ctr_0];
-        const double xi_67 = _data_pdfs_20_33_10[_stride_pdfs_0 * ctr_0];
-        const double xi_68 = _data_pdfs_20_37_10[_stride_pdfs_0 * ctr_0];
-        const double xi_69 = _data_force_20_32_10[_stride_force_0 * ctr_0];
-        const double xi_70 = _data_pdfs_20_318_10[_stride_pdfs_0 * ctr_0];
-        const double xi_71 = _data_pdfs_20_317_10[_stride_pdfs_0 * ctr_0];
-        const double xi_72 = _data_pdfs_20_30_10[_stride_pdfs_0 * ctr_0];
-        const double xi_73 = _data_pdfs_20_35_10[_stride_pdfs_0 * ctr_0];
-        const double xi_74 = _data_pdfs_20_34_10[_stride_pdfs_0 * ctr_0];
-        const double xi_75 = _data_force_20_30_10[_stride_force_0 * ctr_0];
-        const double xi_76 = _data_pdfs_20_311_10[_stride_pdfs_0 * ctr_0];
-        const double xi_77 = _data_pdfs_20_315_10[_stride_pdfs_0 * ctr_0];
-        const double xi_78 = _data_pdfs_20_32_10[_stride_pdfs_0 * ctr_0];
-        const double xi_79 = _data_pdfs_20_316_10[_stride_pdfs_0 * ctr_0];
-        const double xi_80 = _data_pdfs_20_310_10[_stride_pdfs_0 * ctr_0];
-        const double xi_0 = xi_66 + xi_71;
-        const double xi_1 = xi_65 + xi_68;
-        const double xi_2 = xi_64 + xi_79;
-        const double xi_3 = xi_60 + xi_73;
-        const double xi_4 = xi_76 + xi_77;
-        const double xi_6 = xi_59 + xi_70;
-        const double xi_7 = xi_61 + xi_80;
-        const double partial_m_m1_0_e_0 = xi_0 + xi_67;
+        const double xi_59 = _data_pdfs_20_39_10[_stride_pdfs_0 * ctr_0];
+        const double xi_60 = _data_pdfs_20_313_10[_stride_pdfs_0 * ctr_0];
+        const double xi_61 = _data_force_20_32_10[_stride_force_0 * ctr_0];
+        const double xi_62 = _data_pdfs_20_318_10[_stride_pdfs_0 * ctr_0];
+        const double xi_63 = _data_pdfs_20_35_10[_stride_pdfs_0 * ctr_0];
+        const double xi_64 = _data_pdfs_20_316_10[_stride_pdfs_0 * ctr_0];
+        const double xi_65 = _data_pdfs_20_32_10[_stride_pdfs_0 * ctr_0];
+        const double xi_66 = _data_pdfs_20_38_10[_stride_pdfs_0 * ctr_0];
+        const double xi_67 = _data_pdfs_20_37_10[_stride_pdfs_0 * ctr_0];
+        const double xi_68 = _data_pdfs_20_312_10[_stride_pdfs_0 * ctr_0];
+        const double xi_69 = _data_pdfs_20_33_10[_stride_pdfs_0 * ctr_0];
+        const double xi_70 = _data_pdfs_20_311_10[_stride_pdfs_0 * ctr_0];
+        const double xi_71 = _data_pdfs_20_30_10[_stride_pdfs_0 * ctr_0];
+        const double xi_72 = _data_pdfs_20_314_10[_stride_pdfs_0 * ctr_0];
+        const double xi_73 = _data_pdfs_20_34_10[_stride_pdfs_0 * ctr_0];
+        const double xi_74 = _data_force_20_30_10[_stride_force_0 * ctr_0];
+        const double xi_75 = _data_pdfs_20_310_10[_stride_pdfs_0 * ctr_0];
+        const double xi_76 = _data_pdfs_20_31_10[_stride_pdfs_0 * ctr_0];
+        const double xi_77 = _data_force_20_31_10[_stride_force_0 * ctr_0];
+        const double xi_78 = _data_pdfs_20_315_10[_stride_pdfs_0 * ctr_0];
+        const double xi_79 = _data_pdfs_20_36_10[_stride_pdfs_0 * ctr_0];
+        const double xi_80 = _data_pdfs_20_317_10[_stride_pdfs_0 * ctr_0];
+        const double xi_0 = xi_60 + xi_80;
+        const double xi_1 = xi_59 + xi_67;
+        const double xi_2 = xi_64 + xi_68;
+        const double xi_3 = xi_63 + xi_79;
+        const double xi_4 = xi_70 + xi_78;
+        const double xi_6 = xi_62 + xi_72;
+        const double xi_7 = xi_66 + xi_75;
+        const double partial_m_m1_0_e_0 = xi_0 + xi_69;
         const double partial_m_m1_e_0_0 = partial_m_m1_0_e_0 + xi_1;
-        const double partial_m_0_m1_e_0 = xi_2 + xi_78;
-        const double partial_m_0_0_e_0 = xi_3 + xi_72;
-        const double partial_m_0_1_e_0 = xi_4 + xi_63;
+        const double partial_m_0_m1_e_0 = xi_2 + xi_65;
+        const double partial_m_0_0_e_0 = xi_3 + xi_71;
+        const double partial_m_0_1_e_0 = xi_4 + xi_76;
         const double xi_5 = partial_m_0_1_e_0 + partial_m_0_m1_e_0;
         const double partial_m_0_e_0_0 = partial_m_0_0_e_0 + xi_5;
-        const double partial_m_1_0_e_0 = xi_6 + xi_74;
+        const double partial_m_1_0_e_0 = xi_6 + xi_73;
         const double partial_m_1_e_0_0 = partial_m_1_0_e_0 + xi_7;
         const double xi_10 = partial_m_1_e_0_0 + partial_m_m1_e_0_0;
-        const double partial_m_m1_e_1_0 = xi_65 * -1.0 + xi_68;
+        const double partial_m_m1_e_1_0 = xi_59 * -1.0 + xi_67;
         const double partial_m_0_e_1_0 =
             partial_m_0_1_e_0 + partial_m_0_m1_e_0 * -1.0;
-        const double partial_m_1_e_1_0 = xi_61 + xi_80 * -1.0;
+        const double partial_m_1_e_1_0 = xi_66 + xi_75 * -1.0;
         const double xi_11 = partial_m_1_e_1_0 + partial_m_m1_e_1_0;
-        const double partial_m_m1_0_e_1 = xi_66 + xi_71 * -1.0;
-        const double partial_m_0_m1_e_1 = xi_64 + xi_79 * -1.0;
-        const double partial_m_0_0_e_1 = xi_60 * -1.0 + xi_73;
-        const double partial_m_0_1_e_1 = xi_76 + xi_77 * -1.0;
+        const double partial_m_m1_0_e_1 = xi_60 + xi_80 * -1.0;
+        const double partial_m_0_m1_e_1 = xi_64 * -1.0 + xi_68;
+        const double partial_m_0_0_e_1 = xi_63 + xi_79 * -1.0;
+        const double partial_m_0_1_e_1 = xi_70 + xi_78 * -1.0;
         const double xi_8 = partial_m_0_1_e_1 + partial_m_0_m1_e_1;
         const double partial_m_0_e_0_1 = partial_m_0_0_e_1 + xi_8;
-        const double partial_m_1_0_e_1 = xi_59 + xi_70 * -1.0;
+        const double partial_m_1_0_e_1 = xi_62 * -1.0 + xi_72;
         const double xi_12 = partial_m_1_0_e_1 + partial_m_m1_0_e_1;
         const double partial_m_m1_e_2_0 = xi_1;
         const double partial_m_0_e_2_0 = xi_5;
@@ -242,15 +242,15 @@ static FUNC_PREFIX void collidesweepdoubleprecision_collidesweepdoubleprecision(
         const double m_202 = xi_14;
         const double sub_f_to_m_0 = ((1.0) / (m_000));
         const double xi_15 = sub_f_to_m_0 * 0.5;
-        const double u_0 = m_100 * sub_f_to_m_0 + xi_15 * xi_75;
-        const double xi_23 = u_0 * xi_75;
+        const double u_0 = m_100 * sub_f_to_m_0 + xi_15 * xi_74;
+        const double xi_23 = u_0 * xi_74;
         const double xi_27 = m_000 * (u_0 * u_0);
         const double xi_31 = m_000 * u_0;
-        const double u_1 = m_010 * sub_f_to_m_0 + xi_15 * xi_62;
-        const double xi_24 = u_1 * xi_62 * 2.0;
+        const double u_1 = m_010 * sub_f_to_m_0 + xi_15 * xi_77;
+        const double xi_24 = u_1 * xi_77 * 2.0;
         const double xi_28 = m_000 * (u_1 * u_1);
-        const double u_2 = m_001 * sub_f_to_m_0 + xi_15 * xi_69;
-        const double xi_25 = u_2 * xi_69 * 2.0;
+        const double u_2 = m_001 * sub_f_to_m_0 + xi_15 * xi_61;
+        const double xi_25 = u_2 * xi_61 * 2.0;
         const double xi_26 = xi_25 * -1.0;
         const double xi_29 = m_000 * (u_2 * u_2);
         const double xi_30 = xi_29 * -1.0;
@@ -268,11 +268,11 @@ static FUNC_PREFIX void collidesweepdoubleprecision_collidesweepdoubleprecision(
         const double M_17 = m_020 + m_202 * 14.0 + xi_20 + xi_21;
         const double M_18 = m_000 + m_020 * -4.0 + m_200 * -1.0 + m_202 * 4.0 +
                             partial_m_0_e_2_2 * 10.0 + xi_21;
-        const double M_post_1 = m_100 + xi_75;
+        const double M_post_1 = m_100 + xi_74;
         const double xi_39 = M_post_1 * 0.33333333333333331;
-        const double M_post_2 = m_010 + xi_62;
+        const double M_post_2 = m_010 + xi_77;
         const double xi_37 = M_post_2 * 0.33333333333333331;
-        const double M_post_3 = m_001 + xi_69;
+        const double M_post_3 = m_001 + xi_61;
         const double xi_38 = M_post_3 * 0.33333333333333331;
         const double M_post_4 =
             M_4 +
@@ -286,15 +286,15 @@ static FUNC_PREFIX void collidesweepdoubleprecision_collidesweepdoubleprecision(
         const double xi_40 = M_post_5 * 0.25;
         const double M_post_6 = m_110 +
                                 omega_shear * (m_110 * -1.0 + u_1 * xi_31) +
-                                xi_22 * (u_0 * xi_62 + u_1 * xi_75);
+                                xi_22 * (u_0 * xi_77 + u_1 * xi_74);
         const double xi_47 = M_post_6 * 0.25;
         const double M_post_7 = m_101 +
                                 omega_shear * (m_101 * -1.0 + u_2 * xi_31) +
-                                xi_22 * (u_0 * xi_69 + u_2 * xi_75);
+                                xi_22 * (u_0 * xi_61 + u_2 * xi_74);
         const double xi_55 = M_post_7 * 0.25;
         const double M_post_8 =
             omega_shear * (m_000 * u_1 * u_2 + partial_m_0_e_1_1 * -1.0) +
-            partial_m_0_e_1_1 + xi_22 * (u_1 * xi_69 + u_2 * xi_62);
+            partial_m_0_e_1_1 + xi_22 * (u_1 * xi_61 + u_2 * xi_77);
         const double xi_51 = M_post_8 * 0.25;
         const double M_post_9 =
             M_9 + omega_bulk * (M_9 * -1.0 + xi_27 + xi_28 + xi_29) +
@@ -422,9 +422,9 @@ void CollideSweepDoublePrecision::run(IBlock *block) {
   auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
 
   auto &omega_odd = this->omega_odd_;
+  auto &omega_even = this->omega_even_;
   auto &omega_shear = this->omega_shear_;
   auto &omega_bulk = this->omega_bulk_;
-  auto &omega_even = this->omega_even_;
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(force->nrOfGhostLayers()));
   double *RESTRICT const _data_force = force->dataAt(0, 0, 0, 0);
   WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx);
@@ -475,9 +475,9 @@ void CollideSweepDoublePrecision::runOnCellInterval(
   auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
 
   auto &omega_odd = this->omega_odd_;
+  auto &omega_even = this->omega_even_;
   auto &omega_shear = this->omega_shear_;
   auto &omega_bulk = this->omega_bulk_;
-  auto &omega_even = this->omega_even_;
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(force->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(force->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(force->nrOfGhostLayers()));
