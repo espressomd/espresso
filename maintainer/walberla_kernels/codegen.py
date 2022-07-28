@@ -15,7 +15,6 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import numpy as np
 import pystencils as ps
 import pystencils_walberla
 import sympy as sp
@@ -75,21 +74,37 @@ flux_count: int = 3 ** dim // 2
 diffusion = ps.TypedSymbol("D", data_type_np)
 kT = ps.TypedSymbol("kT", data_type_np)
 valency = ps.TypedSymbol("z", data_type_np)
-ext_efield = []
-for i in range(dim):
-    ext_efield.append(ps.TypedSymbol(f"f_ext_{i}", data_type_np))
+ext_efield = [ps.TypedSymbol(f"f_ext_{i}", data_type_np) for i in range(dim)]
 
-rho, phi, u, f = ps.fields(
-    f"rho, phi, u(#), f(#): {data_type_np}[#D]".replace(
-        "#", str(dim)), layout='zyxf')
-j = ps.fields(
+density_field, potential_field, velocity_field, force_field = ps.fields(
+    f"rho, phi, u(#), f(#): {data_type_np}[#D]".replace("#", str(dim)), layout='zyxf')
+flux_field = ps.fields(
     f"j({flux_count}): {data_type_np}[{dim}D]",
     layout='zyxf',
     field_type=ps.FieldType.STAGGERED_FLUX)
 
-ek = ekin.EK(dim, rho, j, diffusion, kT=kT, u=u, f=f)
-ek_electrostatic = ekin.EK(dim, rho, j, diffusion, kT=kT, u=u, f=f, phi=phi, valency=valency,
-                           ext_efield=sp.Matrix(ext_efield))
+ek = ekin.EK(
+    dim=dim,
+    density_field=density_field,
+    flux_field=flux_field,
+    diffusion=diffusion,
+    kT=kT,
+    velocity_field=velocity_field,
+    force_field=force_field,
+    potential_field=None,
+    valency=None,
+    ext_efield=None)
+ek_electrostatic = ekin.EK(
+    dim=dim,
+    density_field=density_field,
+    flux_field=flux_field,
+    diffusion=diffusion,
+    kT=kT,
+    velocity_field=velocity_field,
+    force_field=force_field,
+    potential_field=potential_field,
+    valency=valency,
+    ext_efield=sp.Matrix(ext_efield))
 
 max_num_reactants: int = 5
 
@@ -104,31 +119,6 @@ for i in range(max_num_reactants):
     orders.append(ps.TypedSymbol(f"order_{i}", data_type_np))
     stoechom_coefs.append(ps.TypedSymbol(f"stoech_{i}", data_type_np))
 rate_coef = sp.Symbol("rate_coefficient")
-
-coordinate_names = ("x", "y", "z")[:dim]
-coordinate_size = np.dtype(np.int32).itemsize
-
-index_struct_dtype = np.dtype(
-    [(name, np.int32) for name in coordinate_names], align=True
-)
-
-index_field = ps.Field(
-    "indexVector",
-    ps.FieldType.INDEXED,
-    index_struct_dtype,
-    layout=[0],
-    shape=(
-        ps.data_types.TypedSymbol(
-            "indexVectorSize", ps.data_types.create_type(np.int64)
-        ),
-        1,
-    ),
-    strides=(1, 1),
-)
-
-config = ps.CreateKernelConfig(
-    index_fields=[index_field], coordinate_names=coordinate_names
-)
 
 reaction_obj = ekin.Reaction(
     species=react_rhos,
@@ -147,11 +137,15 @@ with code_generation_context.CodeGeneration() as ctx:
     bug_params = {"omp_single_loop": False}
 
     pystencils_walberla.generate_sweep(ctx, f"DiffusiveFluxKernel_{precision_suffix}",
-                                       ek.flux(include_vof=False, include_fluctuations=False), staggered=True, **params,
+                                       ek.flux(
+                                           include_vof=False,
+                                           include_fluctuations=False,
+                                           rng_node=precision_rng),
+                                       staggered=True, **params,
                                        **bug_params)
     pystencils_walberla.generate_sweep(ctx, f"DiffusiveFluxKernelWithElectrostatic_{precision_suffix}",
                                        ek_electrostatic.flux(
-                                           include_vof=False, include_fluctuations=False),
+                                           include_vof=False, include_fluctuations=False, rng_node=precision_rng),
                                        staggered=True, **params, **bug_params)
     pystencils_walberla.generate_sweep(ctx, f"AdvectiveFluxKernel_{precision_suffix}", ek.flux_advection(),
                                        staggered=True, **params, **bug_params)
@@ -175,7 +169,7 @@ with code_generation_context.CodeGeneration() as ctx:
                                                          boundary_object=dynamic_flux,
                                                          dim=dim,
                                                          neighbor_stencil=stencil,
-                                                         index_shape=j.index_shape,
+                                                         index_shape=flux_field.index_shape,
                                                          target=target,
                                                          additional_data_handler=dynamic_flux_additional_data)
 
@@ -198,7 +192,7 @@ with code_generation_context.CodeGeneration() as ctx:
         additional_data_handler=dirichlet_additional_data,
         field_name='field',
         neighbor_stencil=stencil,
-        index_shape=rho.index_shape,
+        index_shape=density_field.index_shape,
         target=target)
 
     filename_stem: str = f"Dirichlet_{precision_suffix}"
@@ -213,13 +207,12 @@ with code_generation_context.CodeGeneration() as ctx:
     # ek reactions
     for i in range(1, max_num_reactants + 1):
         assignments = list(reaction_obj.generate_reaction(num_reactants=i))
-        # this one is correct, as expected
         pystencils_walberla.generate_sweep(
             ctx, f"ReactionKernelBulk_{i}_{precision_suffix}", assignments)
 
         filename_stem: str = f"ReactionKernelIndexed_{i}_{precision_suffix}"
         custom_additional_extensions.generate_boundary(generation_context=ctx, stencil=dirichlet_stencil,
                                                        class_name=filename_stem,
-                                                       dim=dim, target=config.target, assignment=assignments)
+                                                       dim=dim, target=target, assignment=assignments)
         replace_getData_with_uncheckedFastGetData(
             filename=f"{filename_stem}.cpp")

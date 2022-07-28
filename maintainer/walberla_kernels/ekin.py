@@ -8,6 +8,8 @@ from pystencils.rng import random_symbol
 
 from pystencils.stencil import inverse_direction_string
 
+import typing
+
 
 # this is from ps.fd.FVM1stOrder.discrete_flux.discretize
 def discretize(term, neighbor):
@@ -32,90 +34,99 @@ def discretize(term, neighbor):
 
 
 class EK:
-    def __init__(self, dim, rho, j, diffusion, kT=None, u=None,
-                 f=None, phi=None, valency=None, ext_efield=None):
-        assert not ps.FieldType.is_staggered(rho)
+    def __init__(self, dim, density_field, flux_field, diffusion, kT=None, velocity_field=None,
+                 force_field=None, potential_field=None, valency=None, ext_efield=None):
+        assert not ps.FieldType.is_staggered(density_field)
 
-        if u is not None:
-            assert not ps.FieldType.is_staggered(u)
+        if velocity_field is not None:
+            assert not ps.FieldType.is_staggered(velocity_field)
 
-        if f is not None:
-            assert not ps.FieldType.is_staggered(f)
+        if force_field is not None:
+            assert not ps.FieldType.is_staggered(force_field)
 
-        if phi is not None:
-            assert not ps.FieldType.is_staggered(phi)
+        if potential_field is not None:
+            assert not ps.FieldType.is_staggered(potential_field)
 
-        assert ps.FieldType.is_staggered(j)
+        assert ps.FieldType.is_staggered(flux_field)
 
         self.dim = dim
-        self.rho = rho
-        self.u = u
-        self.j = j
+        self.density_field = density_field
+        self.velocity_field = velocity_field
+        self.flux_field = flux_field
         self.diffusion = diffusion
         self.kT = kT
-        self.f = f
-        self.phi = phi
+        self.force_field = force_field
+        self.potential_field = potential_field
         self.valency = valency
         self.ext_efield = ext_efield
 
-        full_stencil = ["C"] + self.j.staggered_stencil + \
-            list(map(inverse_direction_string, self.j.staggered_stencil))
+        full_stencil = ["C"] + self.flux_field.staggered_stencil + list(
+            map(inverse_direction_string, self.flux_field.staggered_stencil))
         self.stencil = tuple(map(lambda d: tuple(
             ps.stencil.direction_string_to_offset(d, self.dim)), full_stencil))
 
         flux_expression = -self.diffusion * sp.Matrix(
-            [ps.fd.diff(self.rho, i) for i in range(self.rho.spatial_dimensions)])
+            [ps.fd.diff(self.density_field, i) for i in range(self.density_field.spatial_dimensions)])
 
-        if self.phi is not None and self.valency is not None:
+        if self.potential_field is not None and self.valency is not None:
             if ext_efield is not None:
-                field = sp.Matrix([ps.fd.diff(self.phi, i) - ext_efield[i]
-                                   for i in range(self.rho.spatial_dimensions)])
+                field = sp.Matrix([ps.fd.diff(self.potential_field, i) - ext_efield[i]
+                                   for i in range(self.density_field.spatial_dimensions)])
             else:
-                field = sp.Matrix([ps.fd.diff(self.phi, i)
-                                   for i in range(self.rho.spatial_dimensions)])
+                field = sp.Matrix([ps.fd.diff(self.potential_field, i)
+                                   for i in range(self.density_field.spatial_dimensions)])
 
             flux_expression += - self.diffusion / self.kT * \
-                self.rho.center * self.valency * field
+                self.density_field.center * self.valency * field
 
-        self.disc = ps.fd.FVM1stOrder(self.rho, flux=flux_expression, source=0)
+        self.disc = ps.fd.FVM1stOrder(
+            self.density_field, flux=flux_expression, source=0)
 
-        if self.u is not None:
-            self.vof = ps.fd.VOF(self.j, self.u, self.rho)
+        if self.velocity_field is not None:
+            self.vof = ps.fd.VOF(
+                self.flux_field,
+                self.velocity_field,
+                self.density_field)
 
     def flux_advection(self):
-        if self.u is not None:
+        if self.velocity_field is not None:
             return [ps.Assignment(j_adv.lhs, j_adv.lhs + j_adv.rhs)
                     for j_adv in self.vof]
 
     def flux(self, include_vof: bool = False,
-             include_fluctuations: bool = False):
+             include_fluctuations: bool = False,
+             rng_node: typing.Optional[ps.rng.RNGBase] = None):
 
         _flux_collection = ps.AssignmentCollection(
-            [self.disc.discrete_flux(self.j)])
+            [self.disc.discrete_flux(self.flux_field)])
 
         if include_fluctuations:
+            if rng_node is None:
+                raise ValueError(
+                    "rng_node not provided but fluctuations requested")
 
             rng_symbol_gen = random_symbol(_flux_collection.subexpressions,
                                            dim=self.dim,
-                                           rng_node=ps.rng.PhiloxTwoDoubles,
+                                           rng_node=rng_node,
                                            seed=ps.TypedSymbol("seed", np.uint32))
 
-            stencil = self.j.staggered_stencil
+            stencil = self.flux_field.staggered_stencil
             stencil_offsets = list(
                 map(lambda d: ps.stencil.direction_string_to_offset(d), stencil))
 
             for i, (val, d, rng_symb) in enumerate(
                     zip(stencil, stencil_offsets, rng_symbol_gen)):
-                assert _flux_collection.main_assignments[i].lhs == self.j.staggered_access(
+                assert _flux_collection.main_assignments[i].lhs == self.flux_field.staggered_access(
                     val)
                 _flux_collection.main_assignments[i] = ps.Assignment(
-                    self.j.staggered_access(val),
+                    self.velocity_field.staggered_access(val),
                     _flux_collection.main_assignments[i].rhs + sp.sqrt(
-                        2 * self.diffusion * discretize(self.rho.center, d)) / sp.Matrix(d).norm() * rng_symb * sp.sqrt(
+                        2 * self.diffusion * discretize(self.density_field.center, d)) / sp.Matrix(
+                        d).norm() * rng_symb * sp.sqrt(
                         3) / 4)
 
         if include_vof:
-            assert self.u is not None, "velocity field is not provided!"
+            assert self.velocity_field is not None, "velocity field is not provided!"
 
             for i, j_adv in enumerate(self.vof):
                 assert _flux_collection.main_assignments[i].lhs == j_adv.lhs
@@ -126,20 +137,21 @@ class EK:
         return _flux_collection
 
     def continuity(self):
-        return self.disc.discrete_continuity(self.j)
+        return self.disc.discrete_continuity(self.flux_field)
 
     def friction_coupling(self):
-        if self.kT is None or self.f is None:
+        if self.kT is None or self.force_field is None:
             raise RuntimeError("kT or f is not provided!")
 
-        stencil = self.j.staggered_stencil + \
+        stencil = self.flux_field.staggered_stencil + \
             [ps.stencil.inverse_direction_string(
-                d) for d in self.j.staggered_stencil]
+                d) for d in self.flux_field.staggered_stencil]
 
-        return ps.Assignment(self.f.center_vector, self.kT / (2 * self.diffusion) * sum(
-            [self.j.staggered_access(val) * sp.Matrix(ps.stencil.direction_string_to_offset(val)) for val in
+        return ps.Assignment(self.force_field.center_vector, self.kT / (2 * self.diffusion) * sum(
+            [self.flux_field.staggered_access(val) * sp.Matrix(ps.stencil.direction_string_to_offset(val)) for val in
              stencil[1:]],
-            self.j.staggered_access(stencil[0]) * sp.Matrix(ps.stencil.direction_string_to_offset(stencil[0]))))
+            self.flux_field.staggered_access(stencil[0]) * sp.Matrix(
+                ps.stencil.direction_string_to_offset(stencil[0]))))
 
 
 class Reaction:
