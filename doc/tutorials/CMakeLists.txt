@@ -1,4 +1,5 @@
-# Copyright (C) 2009-2019 The ESPResSo project
+#
+# Copyright (C) 2009-2022 The ESPResSo project
 # Copyright (C) 2009,2010
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #
@@ -16,6 +17,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 # Register a new tutorial target that depends on a list of files that need to be
 # copied from the source directory to the build directory. Make the tutorial

@@ -225,10 +225,10 @@ is the only way to modify the shear direction and shear normal.
 Cell systems
 ~~~~~~~~~~~~
 
-This section deals with the flexible particle data organization of |es|. Due
-to different needs of different algorithms, |es| is able to change the
-organization of the particles in the computer memory, according to the
-needs of the used algorithms. For details on the internal organization,
+This section deals with the flexible particle data organization of |es|.
+|es| is able to change the organization of the particles in the computer
+memory to accommodate for the needs of the algorithms being used.
+For details on the internal organization,
 refer to section :ref:`Internal particle organization`.
 
 .. _Global properties:

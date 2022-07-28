@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2010-2022 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -169,13 +169,13 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
   auto const dipoles_kernel = Dipoles::pair_force_kernel();
 
 #ifdef ELECTROSTATICS
-  auto const coulomb_cutoff = Coulomb::cutoff(box_geo.length());
+  auto const coulomb_cutoff = Coulomb::cutoff();
 #else
   auto const coulomb_cutoff = INACTIVE_CUTOFF;
 #endif
 
 #ifdef DIPOLES
-  auto const dipole_cutoff = Dipoles::cutoff(box_geo.length());
+  auto const dipole_cutoff = Dipoles::cutoff();
 #else
   auto const dipole_cutoff = INACTIVE_CUTOFF;
 #endif

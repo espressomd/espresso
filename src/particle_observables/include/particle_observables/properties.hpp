@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2020 The ESPResSo project
+ * Copyright (C) 2010-2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -39,6 +39,14 @@ template <class T> using decay_t = typename decay<T>::type;
 template <class Particle>
 using default_traits = traits<detail::decay_t<Particle>>;
 
+struct Force {
+  template <class Particle, class Traits = default_traits<Particle>>
+  decltype(auto) operator()(Particle const &p,
+                            Traits particle_traits = {}) const {
+    return particle_traits.force(p);
+  }
+};
+
 struct Position {
   template <class Particle, class Traits = default_traits<Particle>>
   decltype(auto) operator()(Particle const &p,
@@ -52,6 +60,30 @@ struct Velocity {
   decltype(auto) operator()(Particle const &p,
                             Traits particle_traits = {}) const {
     return particle_traits.velocity(p);
+  }
+};
+
+struct BodyVelocity {
+  template <class Particle, class Traits = default_traits<Particle>>
+  decltype(auto) operator()(Particle const &p,
+                            Traits particle_traits = {}) const {
+    return particle_traits.velocity_body(p);
+  }
+};
+
+struct AngularVelocity {
+  template <class Particle, class Traits = default_traits<Particle>>
+  decltype(auto) operator()(Particle const &p,
+                            Traits particle_traits = {}) const {
+    return particle_traits.angular_velocity(p);
+  }
+};
+
+struct BodyAngularVelocity {
+  template <class Particle, class Traits = default_traits<Particle>>
+  decltype(auto) operator()(Particle const &p,
+                            Traits particle_traits = {}) const {
+    return particle_traits.angular_velocity_body(p);
   }
 };
 

@@ -1,5 +1,5 @@
 target_sources(
-  EspressoCore
+  Espresso_core
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/angle_cosine.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/angle_cossquare.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/bonded_interaction_data.cpp

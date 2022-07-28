@@ -123,8 +123,7 @@ Be aware of the following limitations:
   :meth:`espressomd.lb.HydrodynamicInteraction.save_checkpoint`
   and loaded via :meth:`espressomd.lb.HydrodynamicInteraction.load_checkpoint`
   after restoring the checkpoint. See :ref:`LB checkpointing <Checkpointing LB>`
-  for more details. Likewise, the electrokinetic density and the species need to
-  be saved separately, as outlined in :ref:`EK checkpointing <Checkpointing EK>`.
+  for more details.
 
 * References between Python objects are not maintained during checkpointing.
   For example, if an instance of a shape and an instance of a constraint
@@ -457,76 +456,3 @@ requires increasing and continuous indexing. The |es| ``id`` can be used as *key
     vtf_index[3]
 
 Note that the |es| particles are ordered in increasing order, thus ``id=3`` corresponds to the zeroth VTF index.
-
-.. _Writing various formats using MDAnalysis:
-
-Writing various formats using MDAnalysis
-----------------------------------------
-
-If the MDAnalysis package (https://mdanalysis.org) is installed, it
-is possible to use it to convert frames to any of the supported
-configuration/trajectory formats, including PDB, GROMACS, GROMOS,
-CHARMM/NAMD, AMBER, LAMMPS, ...
-
-To use MDAnalysis to write in any of these formats, one has first to prepare a stream from
-the |es| particle data using the class :class:`espressomd.MDA_ESP`, and then read from it
-using MDAnalysis. A simple example is the following:
-
-.. code:: python
-
-    import espressomd
-    import MDAnalysis as mda
-    import espressomd.MDA_ESP
-    system = espressomd.System(box_l=[100.0, 100.0, 100.0])
-    # ... add particles here
-    eos = espressomd.MDA_ESP.Stream(system)  # create the stream
-    u = mda.Universe(eos.topology, eos.trajectory)  # create the MDA universe
-
-    # example: write a single frame to PDB
-    u.atoms.write("system.pdb")
-
-    # example: save the trajectory to GROMACS format
-    from MDAnalysis.coordinates.TRR import TRRWriter
-    W = TRRWriter("traj.trr", n_atoms=len(system.part))  # open the trajectory file
-    for i in range(100):
-        system.integrator.run(1)
-        u.load_new(eos.trajectory)  # load the frame to the MDA universe
-        W.write_next_timestep(u.trajectory.ts)  # append it to the trajectory
-
-For other examples, see :file:`/samples/MDAnalysisIntegration.py`
-
-.. _Reading various formats using MDAnalysis:
-
-Reading various formats using MDAnalysis
-----------------------------------------
-
-MDAnalysis can read various formats, including MD topologies and trajectories.
-To read a PDB file containing a single frame::
-
-    import MDAnalysis
-    import numpy as np
-    import espressomd
-    import espressomd.interactions
-
-    # parse protein structure
-    universe = MDAnalysis.Universe("protein.pdb")
-    # extract only the C-alpha atoms of chain A
-    chainA = universe.select_atoms("name CA and segid A")
-    # use the unit cell as box
-    box_l = np.ceil(universe.dimensions[0:3])
-    # setup system
-    system = espressomd.System(box_l=box_l)
-    system.time_step = 0.001
-    system.cell_system.skin = 0.4
-    # configure sphere size sigma and create a harmonic bond
-    system.non_bonded_inter[0, 0].lennard_jones.set_params(
-        epsilon=1, sigma=1.5, cutoff=2, shift="auto")
-    system.bonded_inter[0] = espressomd.interactions.HarmonicBond(k=0.5, r_0=1.5)
-    # create particles and add bonds between them
-    system.part.add(pos=np.array(chainA.positions, dtype=float))
-    for i in range(0, len(chainA) - 1):
-        system.part.by_id(i).add_bond((system.bonded_inter[0], i + 1))
-    # visualize protein in 3D
-    import espressomd.visualization
-    visualizer = espressomd.visualization.openGLLive(system, bond_type_radius=[0.2])
-    visualizer.run(0)

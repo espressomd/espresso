@@ -32,6 +32,12 @@ Please keep in mind the following remarks:
   :meth:`~espressomd.reaction_methods.ReactionAlgorithm.set_non_interacting_type`
   in all reaction method classes.
 
+* Some of the functionality requires particle book-keeping. If your simulation
+  script raises runtime errors about "provided particle type X is currently not
+  tracked by the system", use :meth:`system.setup_type_map(type_list=[X])
+  <espressomd.system.System.setup_type_map>` where ``X`` is the particle
+  type to track.
+
 Thermodynamic ensembles
 -----------------------
 

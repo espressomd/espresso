@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2010-2022 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -57,7 +57,7 @@ void Rhomboid::calculate_dist(const Utils::Vector3d &pos, double &dist,
     auto const A = a * d;
     auto const B = b * d;
     auto const C = c * d;
-    if (op1(A, 0) & op2(B, 0) & op3(C, 0)) {
+    if (op1(A, 0) and op2(B, 0) and op3(C, 0)) {
       vec = d;
       dist = m_direction * vec.norm();
       return true;
@@ -92,7 +92,7 @@ void Rhomboid::calculate_dist(const Utils::Vector3d &pos, double &dist,
                                      Utils::Vector3d const &edge) {
     auto const A = (d * axis1) / dir1_dot_axis1;
     auto const B = (d * axis2) / dir2_dot_axis2;
-    if (op1(A, 0) & op2(B, 0)) {
+    if (op1(A, 0) and op2(B, 0)) {
       auto const tmp = (d * edge) / edge.norm2();
       vec = d - edge * tmp;
       dist = m_direction * vec.norm();

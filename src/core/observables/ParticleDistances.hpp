@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The ESPResSo project
+ * Copyright (C) 2019-2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -22,9 +22,6 @@
 #include "BoxGeometry.hpp"
 #include "PidObservable.hpp"
 #include "grid.hpp"
-
-#include <utils/Span.hpp>
-#include <utils/Vector.hpp>
 
 #include <cassert>
 #include <cstddef>
@@ -65,6 +62,6 @@ public:
   }
 };
 
-} // Namespace Observables
+} // namespace Observables
 
 #endif

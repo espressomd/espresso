@@ -1,77 +1,98 @@
-set(EspressoCore_SRC
-    accumulators.cpp
-    bond_error.cpp
-    cells.cpp
-    collision.cpp
-    comfixed_global.cpp
-    communication.cpp
-    constraints.cpp
-    dpd.cpp
-    energy.cpp
-    errorhandling.cpp
-    EspressoSystemInterface.cpp
-    forcecap.cpp
-    forces.cpp
-    galilei.cpp
-    ghosts.cpp
-    grid.cpp
-    immersed_boundaries.cpp
-    interactions.cpp
-    event.cpp
-    integrate.cpp
-    npt.cpp
-    partCfg_global.cpp
-    particle_data.cpp
-    particle_node.cpp
-    polymer.cpp
-    pressure.cpp
-    rattle.cpp
-    rotate_system.cpp
-    rotation.cpp
-    Observable_stat.cpp
-    RuntimeErrorCollector.cpp
-    RuntimeError.cpp
-    RuntimeErrorStream.cpp
-    statistics_chain.cpp
-    statistics.cpp
-    SystemInterface.cpp
-    thermostat.cpp
-    tuning.cpp
-    virtual_sites.cpp
-    exclusions.cpp
-    PartCfg.cpp
-    EspressoSystemStandAlone.cpp)
+#
+# Copyright (C) 2009-2022 The ESPResSo project
+# Copyright (C) 2009,2010
+#   Max-Planck-Institute for Polymer Research, Theory Group
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+add_library(
+  Espresso_core SHARED
+  accumulators.cpp
+  bond_error.cpp
+  cells.cpp
+  collision.cpp
+  comfixed_global.cpp
+  communication.cpp
+  constraints.cpp
+  dpd.cpp
+  energy.cpp
+  errorhandling.cpp
+  EspressoSystemInterface.cpp
+  forcecap.cpp
+  forces.cpp
+  galilei.cpp
+  ghosts.cpp
+  grid.cpp
+  immersed_boundaries.cpp
+  interactions.cpp
+  event.cpp
+  integrate.cpp
+  npt.cpp
+  partCfg_global.cpp
+  particle_data.cpp
+  particle_node.cpp
+  polymer.cpp
+  pressure.cpp
+  rattle.cpp
+  rotate_system.cpp
+  rotation.cpp
+  Observable_stat.cpp
+  statistics_chain.cpp
+  statistics.cpp
+  SystemInterface.cpp
+  thermostat.cpp
+  tuning.cpp
+  virtual_sites.cpp
+  exclusions.cpp
+  PartCfg.cpp
+  EspressoSystemStandAlone.cpp)
+add_library(Espresso::core ALIAS Espresso_core)
 
 if(CUDA)
-  set(EspressoCuda_SRC
-      cuda_common_cuda.cu cuda_init.cpp cuda_init_cuda.cu cuda_interface.cpp
-      CudaHostAllocator.cu magnetostatics/barnes_hut_gpu_cuda.cu
-      magnetostatics/dds_gpu_cuda.cu electrostatics/mmm1d_gpu_cuda.cu
-      electrostatics/p3m_gpu_cuda.cu electrostatics/p3m_gpu_error_cuda.cu
-      EspressoSystemInterface_cuda.cu)
+  target_sources(Espresso_core PRIVATE cuda_init.cpp cuda_interface.cpp)
+  add_gpu_library(
+    Espresso_cuda SHARED cuda_common_cuda.cu cuda_init_cuda.cu
+    CudaHostAllocator.cu magnetostatics/barnes_hut_gpu_cuda.cu
+    magnetostatics/dds_gpu_cuda.cu electrostatics/mmm1d_gpu_cuda.cu
+    electrostatics/p3m_gpu_cuda.cu electrostatics/p3m_gpu_error_cuda.cu
+    EspressoSystemInterface_cuda.cu)
+  add_library(Espresso::cuda ALIAS Espresso_cuda)
+  target_link_libraries(
+    Espresso_cuda PRIVATE CUDA::cuda_driver CUDA::cudart CUDA::cufft
+                          Espresso::config Espresso::utils Espresso::shapes)
+  target_include_directories(
+    Espresso_cuda
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
+            ${CMAKE_CURRENT_SOURCE_DIR}/electrostatics
+            ${CMAKE_CURRENT_SOURCE_DIR}/magnetostatics)
+  target_link_libraries(Espresso_core PUBLIC Espresso::cuda)
+  install(TARGETS Espresso_cuda
+          LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
+endif()
 
-  add_gpu_library(EspressoCore SHARED ${EspressoCore_SRC} ${EspressoCuda_SRC})
-else(CUDA)
-  add_library(EspressoCore SHARED ${EspressoCore_SRC})
-endif(CUDA)
-
-install(TARGETS EspressoCore LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
+install(TARGETS Espresso_core LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 
 target_link_libraries(
-  EspressoCore PRIVATE EspressoConfig EspressoShapes Profiler
-                       $<$<BOOL:${SCAFACOS}>:EspressoScafacos> cxx_interface
-  PUBLIC EspressoUtils MPI::MPI_CXX Random123 EspressoParticleObservables
-         Boost::serialization Boost::mpi "$<$<BOOL:${H5MD}>:${HDF5_LIBRARIES}>"
-         $<$<BOOL:${H5MD}>:Boost::filesystem> $<$<BOOL:${H5MD}>:h5xx>
-         "$<$<BOOL:${FFTW3_FOUND}>:FFTW3::FFTW3>")
+  Espresso_core PRIVATE Espresso::config Espresso::utils::mpi Espresso::shapes
+                        Espresso::profiler Espresso::cpp_flags
+  PUBLIC Espresso::utils MPI::MPI_CXX Random123 Espresso::particle_observables
+         Boost::serialization Boost::mpi)
 
-target_include_directories(
-  EspressoCore
-  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
-         "$<$<BOOL:${H5MD}>:${CMAKE_CURRRENT_SOURCE_DIR}/io/writer>"
-         "$<$<BOOL:${H5MD}>:${HDF5_INCLUDE_DIRS}>")
-
-target_compile_definitions(EspressoCore PUBLIC $<$<BOOL:${H5MD}>:H5XX_USE_MPI>)
+target_include_directories(Espresso_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_subdirectory(accumulators)
 add_subdirectory(bond_breakage)
@@ -80,6 +101,7 @@ add_subdirectory(cell_system)
 add_subdirectory(cluster_analysis)
 add_subdirectory(constraints)
 add_subdirectory(electrostatics)
+add_subdirectory(error_handling)
 add_subdirectory(grid_based_algorithms)
 add_subdirectory(immersed_boundary)
 add_subdirectory(integrators)
@@ -91,17 +113,9 @@ add_subdirectory(observables)
 add_subdirectory(p3m)
 add_subdirectory(reaction_methods)
 add_subdirectory(scafacos)
+add_subdirectory(stokesian_dynamics)
 add_subdirectory(virtual_sites)
 
 if(WITH_TESTS)
   add_subdirectory(unit_tests)
 endif(WITH_TESTS)
-
-if(WITH_WALBERLA)
-  target_link_libraries(EspressoCore PRIVATE WalberlaBridge ${WALBERLA_LIBS})
-endif(WITH_WALBERLA)
-
-if(STOKESIAN_DYNAMICS)
-  add_subdirectory(stokesian_dynamics)
-  target_link_libraries(EspressoCore PRIVATE StokesianDynamics::sd_cpu)
-endif()

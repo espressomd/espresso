@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright (C) 2019 The ESPResSo project
+# Copyright (C) 2019-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #

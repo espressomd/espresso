@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2019 The ESPResSo project
+# Copyright (C) 2013-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -541,8 +541,8 @@ class Analysis:
         type B, disregarding the fact that a spherical shell of a larger radius
         covers a larger volume). The distance is defined as the minimal distance
         between a particle of group ``type_list_a`` to any of the group
-        ``type_list_b``. Returns two arrays, the bins and the (normalized)
-        distribution.
+        ``type_list_b`` (excluding the self-contribution). Returns two arrays,
+        the bins and the (normalized) distribution.
 
         Parameters
         ----------
@@ -555,7 +555,9 @@ class Analysis:
         r_min : :obj:`float`
             Minimum distance.
         r_max : :obj:`float`
-            Maximum distance.
+            Maximum distance. By default, it is half the box size.
+            A value larger than half the box size is allowed for systems
+            with :ref:`open boundary conditions <Open boundaries>`.
         r_bins : :obj:`int`
             Number of bins.
         log_flag : :obj:`bool`
@@ -743,63 +745,3 @@ class Analysis:
             MofImatrix_np[i] = MofImatrix[i]
 
         return MofImatrix_np.reshape((3, 3))
-
-    #
-    # Vkappa
-    #
-
-    _Vkappa = {
-        "Vk1": 0.0,
-        "Vk2": 0.0,
-        "avk": 0.0
-    }
-
-    def v_kappa(self, mode=None, Vk1=None, Vk2=None, avk=None):
-        """
-        .. todo:: Looks to be incomplete
-
-        Calculate the compressibility through volume fluctuations.
-
-        Parameters
-        ----------
-        mode : :obj:`str`, \{'read', 'set' or 'reset'\}
-            Mode.
-        Vk1 : :obj:`float`
-            Volume.
-        Vk2 : :obj:`float`
-            Volume squared.
-        avk : :obj:`float`
-            Number of averages.
-
-        """
-
-        utils.check_type_or_throw_except(
-            mode, 1, str, "mode has to be a string")
-
-        if mode == "reset":
-            self._Vkappa["Vk1"] = 0.0
-            self._Vkappa["Vk2"] = 0.0
-            self._Vkappa["avk"] = 0.0
-        elif mode == "read":
-            return self._Vkappa
-        elif mode == "set":
-            utils.check_type_or_throw_except(
-                Vk1, 1, float, "Vk1 has to be a float")
-            self._Vkappa["Vk1"] = Vk1
-            utils.check_type_or_throw_except(
-                Vk2, 1, float, "Vk2 has to be a float")
-            self._Vkappa["Vk2"] = Vk2
-            utils.check_type_or_throw_except(
-                avk, 1, float, "avk has to be a float")
-            self._Vkappa["avk"] = avk
-            if self._Vkappa["avk"] <= 0.0:
-                result = self._Vkappa["Vk1"] = self._Vkappa[
-                    "Vk2"] = self._Vkappa["avk"] = 0.0
-                raise ValueError(
-                    "# of averages <avk> has to be positive! Resetting values.")
-            else:
-                result = self._Vkappa["Vk2"] / self._Vkappa["avk"] - \
-                    (self._Vkappa["Vk1"] / self._Vkappa["avk"])**2
-            return result
-        else:
-            raise ValueError(f"Unknown mode {mode!r}")

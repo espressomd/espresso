@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2010-2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -21,36 +21,10 @@
 
 #include "PidObservable.hpp"
 
-#include <utils/Span.hpp>
-
-#include <cstddef>
-#include <vector>
-
 namespace Observables {
 
-class ParticleBodyAngularVelocities : public PidObservable {
-public:
-  using PidObservable::PidObservable;
+using ParticleBodyAngularVelocities =
+    ParticleObservable<ParticleObservables::BodyAngularVelocities>;
 
-  std::vector<double>
-  evaluate(ParticleReferenceRange particles,
-           const ParticleObservables::traits<Particle> &) const override {
-    std::vector<double> res(n_values());
-#ifdef ROTATION
-    std::size_t i = 0;
-    for (auto const &p : particles) {
-      auto const &omega = p.get().omega();
-      res[3 * i + 0] = omega[0];
-      res[3 * i + 1] = omega[1];
-      res[3 * i + 2] = omega[2];
-      i++;
-    }
-#endif
-    return res;
-  }
-
-  std::vector<std::size_t> shape() const override { return {ids().size(), 3}; }
-};
-
-} // Namespace Observables
+} // namespace Observables
 #endif

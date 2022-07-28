@@ -185,7 +185,7 @@ dielectric interfaces and dynamic charge induction. For instance, it can be
 used to simulate a curved metallic boundary. This is done by iterating the
 charge on a set of spatially fixed *ICC particles* until they correctly
 represent the influence of the dielectric discontinuity. All *ICC particles*
-need a certain area, normal vector and dielectric constant to specify the
+need a certain area, normal vector and dielectric constant to fully specify the
 surface. ICC relies on a Coulomb solver that is already initialized. So far, it
 is implemented and well tested with the Coulomb solver P3M. ICC is an |es|
 actor and can be activated via::
@@ -200,11 +200,12 @@ sets up parallel metallic plates and activates ICC::
 
     # Set the ICC line density and calculate the number of
     # ICC particles according to the box size
-    l = 3.2
-    nicc = int(box_l / l)
-    nicc_per_electrode = nicc * nicc
+    box_l = 9.
+    system.box_l = [box_l, box_l, 12.]
+    nicc = 3  # linear density
+    nicc_per_electrode = nicc**2  # surface density
     nicc_tot = 2 * nicc_per_electrode
-    iccArea = box_l * box_l / nicc_per_electrode
+    iccArea = box_l**2 / nicc_per_electrode
     l = box_l / nicc
 
     # Lists to collect required parameters
@@ -215,16 +216,18 @@ sets up parallel metallic plates and activates ICC::
 
     # Add the fixed ICC particles:
 
-    # Left electrode (normal [0,0,1])
-    for xi in xrange(nicc):
-        for yi in xrange(nicc):
-            system.part.add(pos=[l * xi, l * yi, 0], q=-0.0001, fix=3*[True], type=icc_type)
+    # Left electrode (normal [0, 0, 1])
+    for xi in range(nicc):
+        for yi in range(nicc):
+            system.part.add(pos=[l * xi, l * yi, 0.], q=-0.0001,
+                            type=icc_type, fix=[True, True, True])
     iccNormals.extend([0, 0, 1] * nicc_per_electrode)
 
-    # Right electrode (normal [0,0,-1])
-    for xi in xrange(nicc):
-        for yi in xrange(nicc):
-            system.part.add(pos=[l * xi, l * yi, box_l], q=0.0001, fix=3*[True], type=icc_type)
+    # Right electrode (normal [0, 0, -1])
+    for xi in range(nicc):
+        for yi in range(nicc):
+            system.part.add(pos=[l * xi, l * yi, box_l], q=0.0001,
+                            type=icc_type, fix=[True, True, True])
     iccNormals.extend([0, 0, -1] * nicc_per_electrode)
 
     # Common area, sigma and metallic epsilon
@@ -232,17 +235,18 @@ sets up parallel metallic plates and activates ICC::
     iccSigmas.extend([0] * nicc_tot)
     iccEpsilons.extend([100000] * nicc_tot)
 
-    icc = ICC(first_id=0,
-              n_icc=nicc_tot,
-              convergence=1e-4,
-              relaxation=0.75,
-              ext_field=[0, 0, 0],
-              max_iterations=100,
-              eps_out=1.0,
-              normals=iccNormals,
-              areas=iccAreas,
-              sigmas=iccSigmas,
-              epsilons=iccEpsilons)
+    icc = espressomd.electrostatic_extensions.ICC(
+        first_id=0,
+        n_icc=nicc_tot,
+        convergence=1e-4,
+        relaxation=0.75,
+        ext_field=[0, 0, 0],
+        max_iterations=100,
+        eps_out=1.0,
+        normals=iccNormals,
+        areas=iccAreas,
+        sigmas=iccSigmas,
+        epsilons=iccEpsilons)
 
     system.actors.add(icc)
 

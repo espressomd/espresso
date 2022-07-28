@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2019 The ESPResSo project
+# Copyright (C) 2013-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -26,7 +26,7 @@ add_custom_command(
   DEPENDS ${CMAKE_SOURCE_DIR}/src/config/features.def)
 
 add_executable(gen_pxiconfig gen_pxiconfig.cpp)
-target_link_libraries(gen_pxiconfig EspressoConfig)
+target_link_libraries(gen_pxiconfig Espresso::config)
 
 add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/myconfig.pxi
@@ -50,8 +50,6 @@ set(cython_SRC "${cython_SRC}" CACHE INTERNAL "cython_SRC")
 file(GLOB cython_HEADER *.pxd)
 set(cython_HEADER "${cython_HEADER}" CACHE INTERNAL "cython_HEADER")
 file(GLOB cython_AUX *.py)
-configure_file(MDA_ESP/__init__.py
-               ${CMAKE_CURRENT_BINARY_DIR}/MDA_ESP/__init__.py COPYONLY)
 set(cython_AUX "${cython_AUX}" CACHE INTERNAL "cython_AUX")
 
 add_subdirectory(io)
@@ -59,25 +57,23 @@ add_subdirectory(io)
 list(APPEND cython_SRC ${CMAKE_CURRENT_BINARY_DIR}/code_info.pyx)
 list(REMOVE_DUPLICATES cython_SRC)
 
-add_library(pyx_interface INTERFACE)
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  target_compile_options(
-    pyx_interface
-    INTERFACE -Wno-pedantic -Wno-cpp -Wno-strict-aliasing
-              -Wno-maybe-uninitialized -Wno-unused-variable
-              -Wno-deprecated-declarations)
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL
-                                                 "AppleClang")
-  target_compile_options(
-    pyx_interface
-    INTERFACE -Wno-pedantic -Wno-\#warnings -Wno-sometimes-uninitialized
-              -Wno-unused-variable -Wno-deprecated-declarations)
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
-  target_compile_options(pyx_interface INTERFACE -wd1224)
-else()
-  target_compile_options(pyx_interface INTERFACE -Wno-pedantic
-                                                 -Wno-unused-variable)
-endif()
+add_library(Espresso_pyx_flags INTERFACE)
+add_library(Espresso::pyx_flags ALIAS Espresso_pyx_flags)
+target_compile_options(
+  Espresso_pyx_flags
+  INTERFACE
+    $<$<NOT:$<CXX_COMPILER_ID:Intel,IntelLLVM>>:-Wno-pedantic>
+    $<$<NOT:$<CXX_COMPILER_ID:Intel,IntelLLVM>>:-Wno-deprecated-declarations>
+    $<$<CXX_COMPILER_ID:Intel,IntelLLVM>:-diag-disable=1224>
+    $<$<CXX_COMPILER_ID:GNU>:-Wno-cpp>
+    $<$<CXX_COMPILER_ID:GNU>:-Wno-strict-aliasing>
+    $<$<CXX_COMPILER_ID:GNU>:-Wno-maybe-uninitialized>
+    $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wno-sometimes-uninitialized>
+    $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wno-\#warnings>
+    $<$<AND:$<CXX_COMPILER_ID:Clang>,$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,14.0.0>>:-Wno-c++17-attribute-extensions>
+    $<$<AND:$<CXX_COMPILER_ID:AppleClang>,$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,14.0.0>>:-Wno-c++17-attribute-extensions>
+    $<$<CXX_COMPILER_ID:IntelLLVM>:-Wno-c++17-attribute-extensions>
+    -Wno-unused-variable)
 
 # Configure, compile and install Cython files
 foreach(cython_file ${cython_SRC})
@@ -120,13 +116,10 @@ foreach(cython_file ${cython_SRC})
                                           "-undefined dynamic_lookup")
     endif()
     set_target_properties(${target} PROPERTIES CXX_CLANG_TIDY "")
-    target_link_libraries(${target} PRIVATE EspressoConfig EspressoCore
-                                            ScriptInterface)
-    if(WITH_WALBERLA)
-      target_link_libraries(${target} PRIVATE WalberlaBridge)
-    endif(WITH_WALBERLA)
-    target_link_libraries(${target} PRIVATE cxx_interface)
-    target_link_libraries(${target} PRIVATE pyx_interface)
+    target_link_libraries(${target} PRIVATE Espresso::config Espresso::core
+                                            Espresso::script_interface)
+    target_link_libraries(${target} PRIVATE Espresso::cpp_flags)
+    target_link_libraries(${target} PRIVATE Espresso::pyx_flags)
     target_include_directories(${target} SYSTEM PRIVATE ${PYTHON_INCLUDE_DIRS}
                                                         ${NUMPY_INCLUDE_DIR})
     add_dependencies(espressomd ${target})
@@ -134,7 +127,7 @@ foreach(cython_file ${cython_SRC})
   endif()
 endforeach()
 
-target_link_libraries(espressomd_profiler PRIVATE Profiler)
+target_link_libraries(espressomd_profiler PRIVATE Espresso::profiler)
 
 # Configure Python files
 foreach(auxfile ${cython_AUX})

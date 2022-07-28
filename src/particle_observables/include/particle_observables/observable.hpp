@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2020 The ESPResSo project
+ * Copyright (C) 2010-2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -50,8 +50,12 @@ using Momentum = Product<Mass, Velocity>;
 using AverageMomentum = Average<Momentum>;
 using CenterOfMassPosition = WeightedAverage<Position, Mass>;
 using CenterOfMassVelocity = WeightedAverage<Velocity, Mass>;
+using Forces = Map<Force>;
 using Positions = Map<Position>;
 using Velocities = Map<Velocity>;
+using BodyVelocities = Map<BodyVelocity>;
+using AngularVelocities = Map<AngularVelocity>;
+using BodyAngularVelocities = Map<BodyAngularVelocity>;
 } // namespace ParticleObservables
 
 #endif // SRC_PARTICLE_OBSERVABLES_OBSERVABLE_HPP

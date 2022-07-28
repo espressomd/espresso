@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2010-2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -19,11 +19,7 @@
 #ifndef OBSERVABLES_PARTICLEFORCES_HPP
 #define OBSERVABLES_PARTICLEFORCES_HPP
 
-#include "Particle.hpp"
 #include "PidObservable.hpp"
-
-#include <cstddef>
-#include <vector>
 
 namespace Observables {
 
@@ -31,26 +27,7 @@ namespace Observables {
  *  For \f$n\f$ particles, return \f$3 n\f$ forces ordered as
  *  \f$(f_x^1, f_y^1, f_z^1, \dots, f_x^n, f_y^n, f_z^n)\f$.
  */
-class ParticleForces : public PidObservable {
-public:
-  using PidObservable::PidObservable;
+using ParticleForces = ParticleObservable<ParticleObservables::Forces>;
 
-  std::vector<double>
-  evaluate(ParticleReferenceRange particles,
-           const ParticleObservables::traits<Particle> &) const override {
-    std::vector<double> res(n_values());
-    std::size_t i = 0;
-    for (auto const &p : particles) {
-      auto const &f = p.get().f.f;
-      res[3 * i + 0] = f[0];
-      res[3 * i + 1] = f[1];
-      res[3 * i + 2] = f[2];
-      i++;
-    }
-    return res;
-  };
-  std::vector<std::size_t> shape() const override { return {ids().size(), 3}; }
-};
-
-} // Namespace Observables
+} // namespace Observables
 #endif

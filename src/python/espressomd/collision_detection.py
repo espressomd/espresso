@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2019 The ESPResSo project
+# Copyright (C) 2010-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -28,10 +28,10 @@ class CollisionDetection(ScriptInterfaceHelper):
     See :ref:`Creating bonds when particles collide` for detailed instructions.
 
     This class should not be instantiated by the user. Instead, use
-    the :attr:`espressomd.system.System.collision_detection` attribute
+    the :attr:`~espressomd.system.System.collision_detection` attribute
     of the system class to access the collision detection.
 
-    Use :meth:`espressomd.collision_detection.CollisionDetection.set_params`
+    Use method :meth:`~espressomd.collision_detection.CollisionDetection.set_params`
     to change the parameters of the collision detection.
 
     """

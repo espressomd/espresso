@@ -1,3 +1,22 @@
+#
+# Copyright (C) 2016-2022 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 function(PYTHON_TEST)
   cmake_parse_arguments(TEST "" "FILE;MAX_NUM_PROC;SUFFIX"
                         "DEPENDS;DEPENDENCIES;LABELS;ARGUMENTS" ${ARGN})
@@ -284,7 +303,6 @@ python_test(FILE rotation.py MAX_NUM_PROC 1)
 python_test(FILE shapes.py MAX_NUM_PROC 1)
 python_test(FILE h5md.py MAX_NUM_PROC 2)
 python_test(FILE h5md.py MAX_NUM_PROC 1 SUFFIX 1_core)
-python_test(FILE mdanalysis.py MAX_NUM_PROC 2)
 python_test(FILE p3m_fft.py MAX_NUM_PROC 6)
 if(${TEST_NP} GREATER_EQUAL 8)
   python_test(FILE p3m_fft.py MAX_NUM_PROC 8 SUFFIX 8_cores)

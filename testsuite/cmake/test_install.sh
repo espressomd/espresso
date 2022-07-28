@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (C) 2018-2019 The ESPResSo project
+# Copyright (C) 2018-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -23,7 +23,7 @@ source BashUnitTests.sh
 function test_install() {
   # check Python files were installed in espressomd
   local -r filepaths=("@CMAKE_INSTALL_FULL_BINDIR@/pypresso" \
-                      "@PYTHON_DIR@/espressomd/EspressoCore.so" \
+                      "@PYTHON_DIR@/espressomd/Espresso_core.so" \
                       "@PYTHON_DIR@/espressomd/_init.so" \
                       "@PYTHON_DIR@/espressomd/__init__.py"
                      )

@@ -17,7 +17,7 @@ code only if you have already gained some experience in using |es|.
 
 Unlike most other software, no binary distributions of |es| are available,
 and the software is usually not installed globally for all users.
-Instead, users of |es| should compile the software themselves. The reason for
+Instead, users should compile the software themselves. The reason for
 this is that it is possible to activate and deactivate various features
 before compiling the code. Some of these features are not compatible
 with each other, and some of the features have a profound impact on the
@@ -27,6 +27,12 @@ should always activate only those features that are actually needed.
 This means, however, that learning how to compile is a necessary evil.
 The build system of |es| uses CMake [4]_ to compile
 software easily on a wide range of platforms.
+
+Users who only need a "default" installation of |es| and have an account
+on the `Gitpod <https://gitpod.io>`__ platform can build the software
+automatically in the cloud and skip this chapter. For more details on
+running |es| in Gitpod, go to section :ref:`Running in the cloud`.
+
 
 .. _Requirements:
 
@@ -73,14 +79,13 @@ are required to be able to compile and use |es|:
 Installing requirements on Ubuntu Linux
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To compile |es| on Ubuntu 20.04 LTS, install the following dependencies:
+To compile |es| on Ubuntu 22.04 LTS, install the following dependencies:
 
 .. code-block:: bash
 
     sudo apt install build-essential cmake cython3 python3-pip python3-numpy \
       libboost-all-dev openmpi-common fftw3-dev libhdf5-dev libhdf5-openmpi-dev \
-      python3-opengl libgsl-dev
-    pip3 install --user 'scipy>=1.4.0'
+      python3-scipy python3-opengl libgsl-dev
 
 Optionally the ccmake utility can be installed for easier configuration:
 
@@ -100,11 +105,43 @@ CUDA SDK to make use of GPU computation:
 
     sudo apt install nvidia-cuda-toolkit
 
-On Ubuntu 20.04, the default GCC compiler is too recent for nvcc, which will
+On Ubuntu 22.04, the default GCC compiler is too recent for nvcc and will fail
+to compile sources that rely on ``std::function``. You can either use GCC 10:
+
+.. code-block:: bash
+
+    CC=gcc-10 CXX=g++-10 cmake .. -D WITH_CUDA=ON
+    make -j
+
+or alternatively install Clang 12 as a replacement for nvcc and GCC:
+
+.. code-block:: bash
+
+    CC=clang-12 CXX=clang++-12 cmake .. -D WITH_CUDA=ON -D WITH_CUDA_COMPILER=clang
+    make -j
+
+On Ubuntu 20.04, the default GCC compiler is also too recent for nvcc and will
 generate compiler errors. You can either install an older version of GCC and
 select it with environment variables ``CC`` and ``CXX`` when building |es|,
 or edit the system header files as shown in the following
-`patch for Ubuntu 20.04 <https://github.com/espressomd/espresso/issues/3654#issuecomment-612165048>`_.
+`patch for Ubuntu 20.04 <https://github.com/espressomd/espresso/issues/3654#issuecomment-612165048>`__.
+
+On systems with multiple CUDA releases installed, it is possible to select a
+specific one by providing custom paths to the compiler and toolkit:
+
+.. code-block:: bash
+
+    CUDACXX=/usr/local/cuda-11.0/bin/nvcc \
+      cmake .. -D WITH_CUDA=ON -D CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda-11.0
+    make -j
+
+Alternatively for Clang:
+
+.. code-block:: bash
+
+    CC=clang-12 CXX=clang++-12 CUDACXX=clang++-12 CUDAToolkit_ROOT=/usr/local/cuda-11.0 \
+      cmake .. -DWITH_CUDA=ON -DWITH_CUDA_COMPILER=clang -DCMAKE_CXX_FLAGS=--cuda-path=/usr/local/cuda-11.0
+    make -j
 
 .. _Requirements for building the documentation:
 
@@ -115,7 +152,7 @@ To generate the Sphinx documentation, install the following packages:
 
 .. code-block:: bash
 
-    pip3 install --user --constraint\
+    pip3 install --user \
         'sphinx>=2.3.0,!=3.0.0' \
         'sphinxcontrib-bibtex>=2.4.1' \
         'sphinx-toggleprompt==0.0.5'
@@ -136,7 +173,6 @@ To run the samples and tutorials, start by installing the following packages:
 .. code-block:: bash
 
     sudo apt install python3-matplotlib python3-pint python3-tqdm ffmpeg
-    pip3 install --user 'MDAnalysis>=1.0.0,<2.0.0'
 
 The tutorials are written in the
 `Notebook Format <https://nbformat.readthedocs.io/en/latest/>`__
@@ -145,6 +181,7 @@ version <= 4.4 and can be executed by any of these tools:
 * `Jupyter Notebook <https://jupyter-notebook.readthedocs.io/en/stable/notebook.html>`__
 * `JupyterLab <https://jupyterlab.readthedocs.io/en/stable/>`__
 * `IPython <https://ipython.org/>`__ (not recommended)
+* `VS Code Jupyter <https://github.com/microsoft/vscode-jupyter>`__
 
 To check whether one of them is installed, run these commands:
 
@@ -153,6 +190,7 @@ To check whether one of them is installed, run these commands:
     jupyter notebook --version
     jupyter lab --version
     ipython --version
+    code --version
 
 If you don't have any of these tools installed and aren't sure which one
 to use, we recommend installing the historic Jupyter Notebook, since the
@@ -173,6 +211,15 @@ Alternatively, to use JupyterLab, install the following packages:
 
     pip3 install --user nbformat notebook jupyterlab
 
+Alternatively, to use VS Code Jupyter, install the following extensions:
+
+.. code-block:: bash
+
+    code --install-extension ms-python.python
+    code --install-extension ms-toolsai.jupyter
+    code --install-extension ms-toolsai.jupyter-keymap
+    code --install-extension ms-toolsai.jupyter-renderers
+
 .. _Installing requirements on other Linux distributions:
 
 Installing requirements on other Linux distributions
@@ -181,8 +228,8 @@ Installing requirements on other Linux distributions
 Please refer to the following Dockerfiles to find the minimum set of packages
 required to compile |es| on other Linux distributions:
 
-* `Fedora <https://github.com/espressomd/docker/blob/master/docker/Dockerfile-fedora>`_
-* `Debian <https://github.com/espressomd/docker/blob/master/docker/Dockerfile-debian>`_
+* `Fedora <https://github.com/espressomd/docker/blob/main/docker/Dockerfile-fedora>`__
+* `Debian <https://github.com/espressomd/docker/blob/main/docker/Dockerfile-debian>`__
 
 .. _Installing requirements on Windows via WSL:
 
@@ -199,18 +246,17 @@ To run |es| on Windows, use the Linux subsystem. For that you need to
   to set up CUDA.
 * follow the instructions for :ref:`Installing requirements on Ubuntu Linux`
 
-.. _Installing requirements on Mac OS X:
+.. _Installing requirements on macOS:
 
-Installing requirements on Mac OS X
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Installing requirements on macOS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Preparation
-"""""""""""
+To build |es| on macOS 10.15 or higher, you need to install its dependencies.
+There are two possibilities for this, MacPorts and Homebrew. We strongly
+recommend Homebrew, but if you already have MacPorts installed, you can use
+that too, although we do not provide MacPorts installation instructions.
 
-To make |es| run on Mac OS X 10.9 or higher, you need to install its
-dependencies. There are two possibilities for this, MacPorts and Homebrew.
-We recommend MacPorts, but if you already have Homebrew installed, you can use
-that too. To check whether you already have one or the other installed, run the
+To check whether you already have one or the other installed, run the
 following commands:
 
 .. code-block:: bash
@@ -218,20 +264,16 @@ following commands:
     test -e /opt/local/bin/port && echo "MacPorts is installed"
     test -e /usr/local/bin/brew && echo "Homebrew is installed"
 
-If both are installed, you need to remove one of the two. To do that, run one
-of the following two commands:
-
-.. code-block:: bash
-
-    sudo port -f uninstall installed && rm -r /opt/local
-    ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall)"
-
 If Homebrew is already installed, you should resolve any problems reported by
 the command
 
 .. code-block:: bash
 
     brew doctor
+
+If you want to install Homebrew, follow the installation instructions at
+https://docs.brew.sh/Installation, but bear in mind that MacPorts and Homebrew
+may conflict with one another.
 
 If Anaconda Python or the Python from www.python.org are installed, you
 will likely not be able to run |es|. Therefore, please uninstall them
@@ -241,31 +283,6 @@ using the following commands:
 
     sudo rm -r ~/anaconda[23]
     sudo rm -r /Library/Python
-
-If you want to install MacPorts, download the installer package
-appropriate for your Mac OS X version from
-https://www.macports.org/install.php and follow their
-installation instructions.
-
-If you want to install Homebrew, follow the installation
-instructions at https://docs.brew.sh/Installation.
-
-Installing packages using MacPorts
-""""""""""""""""""""""""""""""""""
-
-Run the following commands:
-
-.. code-block:: bash
-
-    sudo port selfupdate
-    sudo port install cmake python37 py37-cython py37-numpy py37-scipy \
-      openmpi-default fftw-3 +openmpi boost +openmpi +python37 \
-      doxygen py37-opengl py37-sphinx gsl hdf5 +openmpi \
-      py37-matplotlib py37-ipython py37-jupyter
-    sudo port select --set cython cython37
-    sudo port select --set python3 python37
-    sudo port select --set mpi openmpi-mp-fortran
-
 
 Installing packages using Homebrew
 """"""""""""""""""""""""""""""""""
@@ -296,17 +313,18 @@ lines below (optional steps which modify the build process are commented out):
     cd build
     cmake ..
     #ccmake . // in order to add/remove features like ScaFaCoS or CUDA
-    make
+    make -j
 
 This will build |es| with a default feature set, namely
 :file:`src/config/myconfig-default.hpp`. This file is a C++ header file,
 which defines the features that should be compiled in.
-You may want to adjust the feature set to your needs. This can be easily done
-by copying the :file:`myconfig-sample.hpp` which has been created in the :file:`build`
-directory to :file:`myconfig.hpp` and only uncomment the features you want to use in your simulation.
+You may want to adjust the feature set to your needs. This can be easily
+done by copying the :file:`myconfig-sample.hpp` which has been created in
+the :file:`build` directory to :file:`myconfig.hpp` and only uncomment
+the features you want to use in your simulation.
 
-The ``cmake`` command looks for libraries and tools needed by |es|. So |es|
-can only be built if ``cmake`` reports no errors.
+The ``cmake`` command looks for libraries and tools needed by |es|.
+So |es| can only be built if ``cmake`` reports no errors.
 
 The command ``make`` will compile the source code. Depending on the
 options passed to the program, ``make`` can also be used for a number of
@@ -327,12 +345,12 @@ command:
 
     ./pypresso script.py
 
-where ``script.py`` is a ``python`` script which has to
-be written by the user. You can find some examples in the :file:`samples`
-folder of the source code directory. If you want to run in parallel, you should
-have compiled with *Open MPI*, and need to tell MPI to run in parallel. The actual
-invocation is implementation-dependent, but in many cases, such as
-*Open MPI*, you can use
+where ``script.py`` is a Python script which has to be written by the user.
+You can find some examples in the :file:`samples` folder of the source code
+directory. If you want to run in parallel, you should have compiled with an
+MPI library, and need to tell MPI to run in parallel.
+The actual invocation is implementation-dependent, but in many cases, such as
+*Open MPI* and *MPICH*, you can use
 
 .. code-block:: bash
 
@@ -350,9 +368,9 @@ This chapter describes the features that can be activated in |es|. Even if
 possible, it is not recommended to activate all features, because this
 will negatively affect |es|'s performance.
 
-Features can be activated in the configuration header :file:`myconfig.hpp` (see
-section :ref:`myconfig.hpp\: Activating and deactivating features`). To
-activate ``FEATURE``, add the following line to the header file:
+Features can be activated in the configuration header :file:`myconfig.hpp`
+(see section :ref:`myconfig.hpp\: Activating and deactivating features`).
+To activate ``FEATURE``, add the following line to the header file:
 
 .. code-block:: c++
 
@@ -641,24 +659,24 @@ each variant having different activated features, and for as many
 platforms as you want.
 
 Once you've run ``ccmake``, you can list the configured variables with
-``cmake -LAH -N .. | less`` (uses a pager) or with ``ccmake ..`` and pressing
-key ``t`` to toggle the advanced mode on (uses the curses interface).
+``cmake -LAH -N . | less`` (uses a pager) or with ``ccmake ..`` and pressing
+key ``t`` to toggle the advanced mode on (uses the ``curses`` interface).
 
 **Example:**
 
 When the source directory is :file:`srcdir` (the files where unpacked to this
 directory), then the user can create a build directory :file:`build` below that
-path by calling :file:`mkdir srcdir/build`. In the build directory ``cmake`` is to be
-executed, followed by a call to make. None of the files in the source directory
+path by calling ``mkdir srcdir/build``. In the build directory ``cmake`` is to be
+executed, followed by a call to ``make``. None of the files in the source directory
 are ever modified by the build process.
 
 .. code-block:: bash
 
     cd build
     cmake ..
-    make
+    make -j
 
-Afterwards |es| can be run via calling :file:`./pypresso` from the command line.
+Afterwards |es| can be run by calling ``./pypresso`` from the command line.
 
 
 .. _ccmake:
@@ -698,8 +716,8 @@ Options and Variables
 ~~~~~~~~~~~~~~~~~~~~~
 
 The behavior of |es| can be controlled by means of options and variables
-in the :file:`CMakeLists.txt` file. Also options are defined there. The following
-options are available:
+in the :file:`CMakeLists.txt` file. Also options are defined there.
+The following options are available:
 
 * ``WITH_CUDA``: Build with GPU support
 
@@ -714,14 +732,14 @@ options are available:
 * ``WITH_VALGRIND_INSTRUMENTATION``: Build with valgrind instrumentation
   markers
 
-When the value in the :file:`CMakeLists.txt` file is set to ON, the corresponding
-option is created; if the value of the option is set to OFF, the
-corresponding option is not created. These options can also be modified
+When the value in the :file:`CMakeLists.txt` file is set to ON, the
+corresponding option is created; if the value of the option is set to OFF,
+the corresponding option is not created. These options can also be modified
 by calling ``cmake`` with the command line argument ``-D``:
 
 .. code-block:: bash
 
-    cmake -D WITH_HDF5=OFF srcdir
+    cmake -D WITH_HDF5=OFF ..
 
 When an option is activated, additional options may become available.
 For example with ``-D WITH_CUDA=ON``, one can choose the CUDA compiler with
@@ -751,12 +769,12 @@ The build type is controlled by ``-D CMAKE_BUILD_TYPE=<type>`` where
 * ``Coverage``: for code coverage
 
 Cluster users and HPC developers may be interested in manually editing the
-``cxx_interface`` variable in the top-level ``CMakeLists.txt`` file for
+``Espresso_cpp_flags`` target in the top-level ``CMakeLists.txt`` file for
 finer control over compiler flags. The variable declaration is followed
 by a series of conditionals to enable or disable compiler-specific flags.
 Compiler flags passed to CMake via the ``-DCMAKE_CXX_FLAGS`` option
 (such as ``cmake . -DCMAKE_CXX_FLAGS="-ffast-math -fno-finite-math-only"``)
-will appear in the compiler command before the flags in ``cxx_interface``,
+will appear in the compiler command before the flags in ``Espresso_cpp_flags``,
 and will therefore have lower precedence.
 
 Be aware that fast-math mode can break |es|. It is incompatible with the
@@ -778,7 +796,7 @@ external libraries that are downloaded automatically by CMake. When a
 network connection cannot be established due to firewall restrictions,
 the CMake logic needs editing:
 
-* ``WITH_HDF5``: when cloning |es|, the :file:`/libs/h5xx` folder will be
+* ``WITH_HDF5``: when cloning |es|, the :file:`libs/h5xx` folder will be
   a git submodule containing a :file:`.git` subfolder. To prevent CMake from
   updating this submodule with git, delete the corresponding command with:
 
@@ -790,7 +808,7 @@ the CMake logic needs editing:
   is needed for HDF5.
 
 * ``WITH_STOKESIAN_DYNAMICS``: this library is installed using `FetchContent
-  <https://cmake.org/cmake/help/latest/module/FetchContent.html>`_.
+  <https://cmake.org/cmake/help/latest/module/FetchContent.html>`__.
   The repository URL can be found in the ``GIT_REPOSITORY`` field of the
   corresponding ``FetchContent_Declare()`` command. The ``GIT_TAG`` field
   provides the commit. Clone this repository locally next to the |es|
@@ -867,7 +885,7 @@ Troubleshooting
 ---------------
 
 If you encounter issues when building |es| or running it for the first time,
-please have a look at the `Installation FAQ <https://github.com/espressomd/espresso/wiki/Installation-FAQ>`_
+please have a look at the `Installation FAQ <https://github.com/espressomd/espresso/wiki/Installation-FAQ>`__
 on the wiki. If you still didn't find an answer, see :ref:`Community support`.
 
 Many algorithms require parameters that must be provided within valid ranges.

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2019 The ESPResSo project
+# Copyright (C) 2013-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -368,7 +368,7 @@ cdef class ParticleHandle:
         mass : :obj:`float`
 
         See Also
-        ----------
+        --------
         :meth:`espressomd.thermostat.Thermostat.set_langevin` : Setting the parameters of the Langevin thermostat
 
         """
@@ -1357,7 +1357,7 @@ cdef class ParticleHandle:
 
         See Also
         --------
-        bonds : ``Particle`` property containing a list of all current bonds held by ``Particle``.
+        bonds : ``Particle`` property containing a list of all bonds currently held by ``Particle``.
 
 
         Examples

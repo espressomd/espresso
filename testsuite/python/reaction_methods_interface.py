@@ -29,6 +29,7 @@ class ReactionMethods(ut.TestCase):
 
     system = espressomd.System(box_l=[10., 10., 10.])
     system.cell_system.skin = 0.4
+    system.setup_type_map(type_list=[0])
 
     def tearDown(self):
         self.system.part.clear()
@@ -96,6 +97,8 @@ class ReactionMethods(ut.TestCase):
             self.assertAlmostEqual(method.constant_pH, 10., delta=1e-10)
             method.constant_pH = 8.
             self.assertAlmostEqual(method.constant_pH, 8., delta=1e-10)
+        self.assertFalse(method.displacement_mc_move_for_particles_of_type(
+            type_mc=0, particle_number_to_be_changed=0))
 
         # check constraints
         method.set_wall_constraints_in_z_direction(

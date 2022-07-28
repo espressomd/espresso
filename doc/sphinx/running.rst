@@ -81,6 +81,14 @@ users need to convert the tutorials:
       ./pypresso doc/tutorials/convert.py exercise2 --to-jupyterlab ${f}
     done
 
+Likewise, VS Code Jupyter users need to convert the tutorials:
+
+.. code-block:: bash
+
+    for f in doc/tutorials/*/*.ipynb; do
+      ./pypresso doc/tutorials/convert.py exercise2 --to-vscode-jupyter ${f}
+    done
+
 To interact with notebooks, move to the directory containing the tutorials
 and call the ``ipypresso`` script to start a local Jupyter session.
 
@@ -97,6 +105,9 @@ For JupyterLab users:
 
     cd doc/tutorials
     ../../ipypresso lab
+
+For VS Code Jupyter users, no action is needed if ``pypresso`` was set as
+the interpreter path (see details in :ref:`Running inside an IDE`).
 
 You may then browse through the different tutorial folders. Files whose name
 ends with extension ``.ipynb`` can be opened in the browser. Click on the Run
@@ -142,6 +153,8 @@ start Jupyter. To recompile |es| with Jupyter, provide ``cmake`` with the flag
 You can find the official Jupyter documentation at
 https://jupyter.readthedocs.io/en/latest/running.html
 
+.. _Running inside an IDE:
+
 Running inside an IDE
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -180,6 +193,53 @@ path set to ``pypresso``.
    :align: center
 
    Visual Studio Code interface
+
+.. _Running in the cloud:
+
+Running in the cloud
+~~~~~~~~~~~~~~~~~~~~
+
+A `Gitpod <https://gitpod.io>`__ config file is provided to automatically
+build |es| in its default configuration (`direct link
+<https://gitpod.io/#https://github.com/espressomd/espresso>`__), which is
+sufficient to run most tutorials. The Gitpod workspace can be accessed from
+the `terminal via SSH <https://www.gitpod.io/docs/configure/ssh>`__ or from
+a `web browser <https://www.gitpod.io/docs/configure/browser-settings>`__,
+which uses the VS Code IDE.
+
+To execute the tutorials, choose a Jupyter backend:
+
+* VS Code Jupyter: navigate to ``ESPRESSO/build/doc/tutorials`` in the
+  project tree and open the notebook files; if the kernel drop-down menu
+  doesn't offer ``build/pypresso`` as a kernel, restart the VS Code IDE:
+  quit the workspace by closing the browser tab, re-open the tab and
+  click ``espressomd-espresso-...`` in the popup to restart the IDE
+  (don't click on the green button "New Workspace")
+
+* Jupyter Notebook:
+
+  .. code-block:: bash
+
+      cd ${GITPOD_REPO_ROOT}/build/doc/tutorials
+      ../../ipypresso notebook --NotebookApp.allow_origin="$(gp url 8888)" \
+          --port=8888 --no-browser
+
+* JupyterLab:
+
+  .. code-block:: bash
+
+      cd ${GITPOD_REPO_ROOT}/build/doc/tutorials
+      ../../ipypresso lab --NotebookApp.allow_origin="$(gp url 8888)" \
+          --port=8888 --no-browser
+
+For both Jupyter Notebook and JupyterLab, a notification will appear and say
+that a new port 8888 has been made available. Click the orange "Make public"
+button to open that port and then Ctrl+click one of the urls in the terminal
+output to open the Jupyter backed in a pop-up window.
+
+To start a workspace from a specific branch, use a link in the following form:
+``https://gitpod.io/#https://github.com/user_name/espresso/tree/branch_name``,
+where ``user_name`` and ``branch_name`` need to be adapted.
 
 
 .. _Debugging es:
