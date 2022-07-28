@@ -20,19 +20,16 @@
 #ifndef ESPRESSO_EKINWALBERLABASE_HPP
 #define ESPRESSO_EKINWALBERLABASE_HPP
 
+#include "LatticeWalberla.hpp"
+
 #include <boost/optional.hpp>
 #include <string>
 
-#include "BlockAndCell.hpp"
 #include "utils/Vector.hpp"
 
 #include "VTKHandle.hpp"
-#include "blockforest/StructuredBlockForest.h"
 
-namespace walberla::domain_decomposition {
-// forward declare
-class BlockDataID;
-} // namespace walberla::domain_decomposition
+#include <domain_decomposition/BlockDataID.h>
 
 /** Class that runs and controls the EK on WaLBerla
  */

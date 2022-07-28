@@ -372,7 +372,7 @@ public:
       return;
 
     if (get_valency() != 0.) {
-      if (potential_id == BlockDataID{}) {
+      if (potential_id == walberla::BlockDataID{}) {
         throw std::runtime_error("Walberla EK: electrostatic potential enabled "
                                  "but no field accessible. potential id is " +
                                  std::to_string(potential_id));
@@ -386,7 +386,7 @@ public:
     kernel_boundary_flux();
     // friction coupling
     if (get_friction_coupling()) {
-      if (force_id == BlockDataID{}) {
+      if (force_id == walberla::BlockDataID{}) {
         throw std::runtime_error("Walberla EK: friction coupling enabled but "
                                  "no force field accessible. force_id is " +
                                  std::to_string(force_id) +
@@ -396,7 +396,7 @@ public:
     }
 
     if (get_advection()) {
-      if (velocity_id == BlockDataID{}) {
+      if (velocity_id == walberla::BlockDataID{}) {
         throw std::runtime_error("Walberla EK: advection enabled but no "
                                  "velocity field accessible. velocity_id is " +
                                  std::to_string(velocity_id) +

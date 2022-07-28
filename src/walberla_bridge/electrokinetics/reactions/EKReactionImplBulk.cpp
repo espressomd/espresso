@@ -31,7 +31,7 @@
 #include "generated_kernels/ReactionKernelBulk_5_double_precision.h"
 #include "generated_kernels/ReactionKernelBulk_5_single_precision.h"
 
-#include <domain_decomposition/BlockDataID.h>
+#include <blockforest/StructuredBlockForest.h>
 #include <memory>
 
 #include "utils.hpp"

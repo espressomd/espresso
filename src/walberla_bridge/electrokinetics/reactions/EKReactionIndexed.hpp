@@ -24,18 +24,14 @@
 #include "EKReactionBase.hpp"
 #include "LatticeWalberla.hpp"
 
+#include <domain_decomposition/BlockDataID.h>
 #include <memory>
 
 namespace walberla {
-namespace domain_decomposition {
-// forward declaration
-class BlockDataID;
-} // namespace domain_decomposition
-
 class EKReactionIndexed : public EKReactionBase {
 private:
-  domain_decomposition::BlockDataID m_flagfield_id;
-  domain_decomposition::BlockDataID m_indexvector_id;
+  BlockDataID m_flagfield_id;
+  BlockDataID m_indexvector_id;
 
   bool m_pending_changes;
 

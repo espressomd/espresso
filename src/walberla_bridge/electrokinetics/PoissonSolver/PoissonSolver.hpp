@@ -5,7 +5,6 @@
 
 #include "LatticeWalberla.hpp"
 
-// TODO: what about this here?
 #include <domain_decomposition/BlockDataID.h>
 
 namespace walberla {

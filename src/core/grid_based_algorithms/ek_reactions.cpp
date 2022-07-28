@@ -21,10 +21,6 @@
 
 #include <algorithm>
 
-#ifdef LB_WALBERLA
-#include "electrokinetics/EKinWalberlaBase.hpp"
-#endif // LB_WALBERLA
-
 namespace EK {
 #ifdef LB_WALBERLA
 EKReactions<walberla::EKReactionBase> ek_reactions;
