@@ -18,7 +18,7 @@
 import numpy as np
 import pystencils as ps
 import pystencils_walberla
-import scipy as sp
+import sympy as sp
 
 import pystencils_espresso
 
@@ -183,7 +183,6 @@ with code_generation_context.CodeGeneration() as ctx:
     replace_real_t_and_add_pragma(
         filename=f"{filename_stem}.h",
         data_type=data_type_cpp)
-    replace_getData_with_uncheckedFastGetData(filename=f"{filename_stem}.cpp")
 
     # generate dynamic fixed density
     dirichlet_stencil = lbmpy.stencils.LBStencil(stencil=((0, 0, 0),))
@@ -206,7 +205,6 @@ with code_generation_context.CodeGeneration() as ctx:
     replace_real_t_and_add_pragma(
         filename=f"{filename_stem}.h",
         data_type=data_type_cpp)
-    replace_getData_with_uncheckedFastGetData(filename=f"{filename_stem}.cpp")
 
     pystencils_walberla.generate_pack_info_from_kernel(ctx, f"DensityPackInfo_{precision_suffix}",
                                                        ek_electrostatic.continuity(),
@@ -219,6 +217,9 @@ with code_generation_context.CodeGeneration() as ctx:
         pystencils_walberla.generate_sweep(
             ctx, f"ReactionKernelBulk_{i}_{precision_suffix}", assignments)
 
+        filename_stem: str = f"ReactionKernelIndexed_{i}_{precision_suffix}"
         custom_additional_extensions.generate_boundary(generation_context=ctx, stencil=dirichlet_stencil,
-                                                       class_name=f"ReactionKernelIndexed_{i}_{precision_suffix}",
+                                                       class_name=filename_stem,
                                                        dim=dim, target=config.target, assignment=assignments)
+        replace_getData_with_uncheckedFastGetData(
+            filename=f"{filename_stem}.cpp")
