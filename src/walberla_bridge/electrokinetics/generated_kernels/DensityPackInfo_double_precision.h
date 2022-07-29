@@ -1,4 +1,4 @@
-// kernel generated with pystencils v0.4.4, lbmpy v0.4.4, lbmpy_walberla/pystencils_walberla from commit 08f04ef64f95609b47838db85862033a1600afa1
+// kernel generated with pystencils v1.0, lbmpy v1.0, lbmpy_walberla/pystencils_walberla from commit 01a28162ae1aacf7b96152c9f886ce54cc7f53ff
 
 #pragma once
 #include "stencil/Directions.h"
@@ -46,7 +46,6 @@ public:
        unpackData( receiver, stencil::inverseDir[dir], rBuffer );
    }
 
-private:
    void packDataImpl(const IBlock * sender, stencil::Direction dir, mpi::SendBuffer & outBuffer) const {
         const auto dataSize = size(dir, sender);
         pack(dir, outBuffer.forward(dataSize), const_cast<IBlock*>(sender));
@@ -56,6 +55,7 @@ private:
    void unpack(stencil::Direction dir, unsigned char * buffer, IBlock * block) const;
    uint_t size  (stencil::Direction dir, const IBlock * block) const;
 
+ private:
     BlockDataID jID;
 };
 

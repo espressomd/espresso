@@ -1,6 +1,6 @@
-// kernel generated with pystencils v0.4.4, lbmpy v0.4.4,
+// kernel generated with pystencils v1.0, lbmpy v1.0,
 // lbmpy_walberla/pystencils_walberla from commit
-// 08f04ef64f95609b47838db85862033a1600afa1
+// 01a28162ae1aacf7b96152c9f886ce54cc7f53ff
 
 //======================================================================================================================
 //
@@ -52,7 +52,7 @@ namespace pystencils {
 namespace internal_47df4b171f276b8c3a55fc08d45e245e {
 static FUNC_PREFIX void
 advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
-    float *RESTRICT _data_j, float *RESTRICT const _data_rho,
+    float *RESTRICT const _data_j, float *RESTRICT const _data_rho,
     float *RESTRICT const _data_u, int64_t const _size_j_0,
     int64_t const _size_j_1, int64_t const _size_j_2, int64_t const _stride_j_0,
     int64_t const _stride_j_1, int64_t const _stride_j_2,
@@ -63,7 +63,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
   {
     {
       {
-        if (_size_j_1 > 1 && _size_j_2 > 1) {
+        if (0 < _size_j_1 - 1 && 0 < _size_j_2 - 1) {
           float *RESTRICT _data_j_20_312 = _data_j + 12 * _stride_j_3;
           float *RESTRICT _data_j_20_312_10 = _data_j_20_312;
           float *RESTRICT _data_rho_20 = _data_rho;
@@ -84,25 +84,27 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               _data_u + _stride_u_2 + 2 * _stride_u_3;
           float *RESTRICT _data_u_21_32_11 = _stride_u_1 + _data_u_21_32;
           _data_j_20_312_10[_stride_j_0] =
-              -((0.0f > _data_u_20_30_10[_stride_u_0] &&
-                 0.0f < _data_u_20_31_10[_stride_u_0] &&
-                 0.0f < _data_u_20_32_10[_stride_u_0])
-                    ? (1.0f)
-                    : (0.0f)) *
+              -1.0f *
+                  ((0.0f > _data_u_20_30_10[_stride_u_0] &&
+                    0.0f < _data_u_20_31_10[_stride_u_0] &&
+                    0.0f < _data_u_20_32_10[_stride_u_0])
+                       ? (1.0f)
+                       : (0.0f)) *
                   _data_rho_20_10[_stride_rho_0] *
                   _data_u_20_30_10[_stride_u_0] *
                   _data_u_20_31_10[_stride_u_0] *
                   _data_u_20_32_10[_stride_u_0] -
-              ((0.0f > _data_u_21_31_11[0] && 0.0f > _data_u_21_32_11[0] &&
-                0.0f < _data_u_21_30_11[0])
-                   ? (1.0f)
-                   : (0.0f)) *
+              1.0f *
+                  ((0.0f > _data_u_21_31_11[0] && 0.0f > _data_u_21_32_11[0] &&
+                    0.0f < _data_u_21_30_11[0])
+                       ? (1.0f)
+                       : (0.0f)) *
                   _data_rho_21_11[0] * _data_u_21_30_11[0] *
                   _data_u_21_31_11[0] * _data_u_21_32_11[0] +
               _data_j_20_312_10[_stride_j_0];
         }
         for (int64_t ctr_0 = 2; ctr_0 < _size_j_0 - 1; ctr_0 += 1) {
-          if (_size_j_1 > 1 && _size_j_2 > 1) {
+          if (0 < _size_j_1 - 1 && 0 < _size_j_2 - 1) {
             float *RESTRICT _data_j_20_312 = _data_j + 12 * _stride_j_3;
             float *RESTRICT _data_j_20_312_10 = _data_j_20_312;
             float *RESTRICT _data_rho_20 = _data_rho;
@@ -123,20 +125,25 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                 _data_u + _stride_u_2 + 2 * _stride_u_3;
             float *RESTRICT _data_u_21_32_11 = _stride_u_1 + _data_u_21_32;
             _data_j_20_312_10[_stride_j_0 * ctr_0] =
-                -((0.0f > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                   0.0f < _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                   0.0f < _data_u_20_32_10[_stride_u_0 * ctr_0])
-                      ? (1.0f)
-                      : (0.0f)) *
+                -1.0f *
+                    ((0.0f > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
+                      0.0f < _data_u_20_31_10[_stride_u_0 * ctr_0] &&
+                      0.0f < _data_u_20_32_10[_stride_u_0 * ctr_0])
+                         ? (1.0f)
+                         : (0.0f)) *
                     _data_rho_20_10[_stride_rho_0 * ctr_0] *
                     _data_u_20_30_10[_stride_u_0 * ctr_0] *
                     _data_u_20_31_10[_stride_u_0 * ctr_0] *
                     _data_u_20_32_10[_stride_u_0 * ctr_0] -
-                ((0.0f > _data_u_21_31_11[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                  0.0f > _data_u_21_32_11[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                  0.0f < _data_u_21_30_11[_stride_u_0 * ctr_0 - _stride_u_0])
-                     ? (1.0f)
-                     : (0.0f)) *
+                1.0f *
+                    ((0.0f >
+                          _data_u_21_31_11[_stride_u_0 * ctr_0 - _stride_u_0] &&
+                      0.0f >
+                          _data_u_21_32_11[_stride_u_0 * ctr_0 - _stride_u_0] &&
+                      0.0f <
+                          _data_u_21_30_11[_stride_u_0 * ctr_0 - _stride_u_0])
+                         ? (1.0f)
+                         : (0.0f)) *
                     _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] *
                     _data_u_21_30_11[_stride_u_0 * ctr_0 - _stride_u_0] *
                     _data_u_21_31_11[_stride_u_0 * ctr_0 - _stride_u_0] *
@@ -144,7 +151,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                 _data_j_20_312_10[_stride_j_0 * ctr_0];
           }
         }
-        if (_size_j_1 > 1 && _size_j_2 > 1) {
+        if (0 < _size_j_1 - 1 && 0 < _size_j_2 - 1) {
           float *RESTRICT _data_j_20_312 = _data_j + 12 * _stride_j_3;
           float *RESTRICT _data_j_20_312_10 = _data_j_20_312;
           float *RESTRICT _data_rho_20 = _data_rho;
@@ -165,23 +172,25 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               _data_u + _stride_u_2 + 2 * _stride_u_3;
           float *RESTRICT _data_u_21_32_11 = _stride_u_1 + _data_u_21_32;
           _data_j_20_312_10[_stride_j_0 * (_size_j_0 - 1)] =
-              -((0.0f > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                 0.0f < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                 0.0f < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                    ? (1.0f)
-                    : (0.0f)) *
+              -1.0f *
+                  ((0.0f > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                    0.0f < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                    0.0f < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
+                       ? (1.0f)
+                       : (0.0f)) *
                   _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                   _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
                   _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
                   _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] -
-              ((0.0f > _data_u_21_31_11[_stride_u_0 * (_size_j_0 - 1) -
-                                        _stride_u_0] &&
-                0.0f > _data_u_21_32_11[_stride_u_0 * (_size_j_0 - 1) -
-                                        _stride_u_0] &&
-                0.0f < _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) -
-                                        _stride_u_0])
-                   ? (1.0f)
-                   : (0.0f)) *
+              1.0f *
+                  ((0.0f > _data_u_21_31_11[_stride_u_0 * (_size_j_0 - 1) -
+                                            _stride_u_0] &&
+                    0.0f > _data_u_21_32_11[_stride_u_0 * (_size_j_0 - 1) -
+                                            _stride_u_0] &&
+                    0.0f < _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) -
+                                            _stride_u_0])
+                       ? (1.0f)
+                       : (0.0f)) *
                   _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
                                   _stride_rho_0] *
                   _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) -
@@ -196,7 +205,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
       for (int64_t ctr_1 = 1; ctr_1 < _size_j_1 - 1; ctr_1 += 1) {
         {
           {
-            if (_size_j_2 > 1 && ctr_1 > 0 && _size_j_1 - ctr_1 > 1) {
+            if (ctr_1 > 0 && 0 < _size_j_2 - 1 && ctr_1 < _size_j_1 - 1) {
               float *RESTRICT _data_j_20_36 = _data_j + 6 * _stride_j_3;
               float *RESTRICT _data_j_20_36_10 =
                   _stride_j_1 * ctr_1 + _data_j_20_36;
@@ -227,7 +236,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               float *RESTRICT _data_u_20_32_10 =
                   _stride_u_1 * ctr_1 + _data_u_20_32;
               _data_j_20_36_10[_stride_j_0] =
-                  -(1.0f - fabs(_data_u_20_31_10[_stride_u_0])) *
+                  (-1.0f * fabs(_data_u_20_31_10[_stride_u_0]) + 1.0f) * -1.0f *
                       ((0.0f > _data_u_20_30_10[_stride_u_0] &&
                         0.0f < _data_u_20_32_10[_stride_u_0])
                            ? (1.0f)
@@ -235,7 +244,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_rho_20_10[_stride_rho_0] *
                       _data_u_20_30_10[_stride_u_0] *
                       _data_u_20_32_10[_stride_u_0] +
-                  (1.0f - fabs(_data_u_21_31_10[0])) *
+                  (-1.0f * fabs(_data_u_21_31_10[0]) + 1.0f) *
                       ((0.0f > _data_u_21_32_10[0] &&
                         0.0f < _data_u_21_30_10[0])
                            ? (1.0f)
@@ -244,7 +253,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_u_21_32_10[0] +
                   _data_j_20_36_10[_stride_j_0];
             }
-            if (_size_j_0 > 2 && _size_j_2 > 1 && ctr_1 > 0) {
+            if (ctr_1 > 0 && 0 < _size_j_2 - 1 && 1 < _size_j_0 - 1) {
               float *RESTRICT _data_j_20_38 = _data_j + 8 * _stride_j_3;
               float *RESTRICT _data_j_20_38_10 =
                   _stride_j_1 * ctr_1 + _data_j_20_38;
@@ -275,7 +284,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               float *RESTRICT _data_u_20_32_10 =
                   _stride_u_1 * ctr_1 + _data_u_20_32;
               _data_j_20_38_10[_stride_j_0] =
-                  -(1.0f - fabs(_data_u_20_30_10[_stride_u_0])) *
+                  (-1.0f * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0f) * -1.0f *
                       ((0.0f > _data_u_20_31_10[_stride_u_0] &&
                         0.0f < _data_u_20_32_10[_stride_u_0])
                            ? (1.0f)
@@ -283,7 +292,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_rho_20_10[_stride_rho_0] *
                       _data_u_20_31_10[_stride_u_0] *
                       _data_u_20_32_10[_stride_u_0] +
-                  (1.0f - fabs(_data_u_21_30_1m1[_stride_u_0])) *
+                  (-1.0f * fabs(_data_u_21_30_1m1[_stride_u_0]) + 1.0f) *
                       ((0.0f > _data_u_21_32_1m1[_stride_u_0] &&
                         0.0f < _data_u_21_31_1m1[_stride_u_0])
                            ? (1.0f)
@@ -293,7 +302,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_u_21_32_1m1[_stride_u_0] +
                   _data_j_20_38_10[_stride_j_0];
             }
-            if (_size_j_2 > 1 && ctr_1 > 0) {
+            if (ctr_1 > 0 && 0 < _size_j_2 - 1) {
               float *RESTRICT _data_j_20_310 = _data_j + 10 * _stride_j_3;
               float *RESTRICT _data_j_20_310_10 =
                   _stride_j_1 * ctr_1 + _data_j_20_310;
@@ -341,7 +350,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_u_21_31_1m1[0] * _data_u_21_32_1m1[0] +
                   _data_j_20_310_10[_stride_j_0];
             }
-            if (_size_j_2 > 1 && _size_j_1 - ctr_1 > 1) {
+            if (0 < _size_j_2 - 1 && ctr_1 < _size_j_1 - 1) {
               float *RESTRICT _data_j_20_312 = _data_j + 12 * _stride_j_3;
               float *RESTRICT _data_j_20_312_10 =
                   _stride_j_1 * ctr_1 + _data_j_20_312;
@@ -372,26 +381,29 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               float *RESTRICT _data_u_21_32_11 =
                   _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_21_32;
               _data_j_20_312_10[_stride_j_0] =
-                  -((0.0f > _data_u_20_30_10[_stride_u_0] &&
-                     0.0f < _data_u_20_31_10[_stride_u_0] &&
-                     0.0f < _data_u_20_32_10[_stride_u_0])
-                        ? (1.0f)
-                        : (0.0f)) *
+                  -1.0f *
+                      ((0.0f > _data_u_20_30_10[_stride_u_0] &&
+                        0.0f < _data_u_20_31_10[_stride_u_0] &&
+                        0.0f < _data_u_20_32_10[_stride_u_0])
+                           ? (1.0f)
+                           : (0.0f)) *
                       _data_rho_20_10[_stride_rho_0] *
                       _data_u_20_30_10[_stride_u_0] *
                       _data_u_20_31_10[_stride_u_0] *
                       _data_u_20_32_10[_stride_u_0] -
-                  ((0.0f > _data_u_21_31_11[0] && 0.0f > _data_u_21_32_11[0] &&
-                    0.0f < _data_u_21_30_11[0])
-                       ? (1.0f)
-                       : (0.0f)) *
+                  1.0f *
+                      ((0.0f > _data_u_21_31_11[0] &&
+                        0.0f > _data_u_21_32_11[0] &&
+                        0.0f < _data_u_21_30_11[0])
+                           ? (1.0f)
+                           : (0.0f)) *
                       _data_rho_21_11[0] * _data_u_21_30_11[0] *
                       _data_u_21_31_11[0] * _data_u_21_32_11[0] +
                   _data_j_20_312_10[_stride_j_0];
             }
           }
           for (int64_t ctr_0 = 2; ctr_0 < _size_j_0 - 1; ctr_0 += 1) {
-            if (_size_j_2 > 1 && ctr_1 > 0 && _size_j_1 - ctr_1 > 1) {
+            if (ctr_1 > 0 && 0 < _size_j_2 - 1 && ctr_1 < _size_j_1 - 1) {
               float *RESTRICT _data_j_20_36 = _data_j + 6 * _stride_j_3;
               float *RESTRICT _data_j_20_36_10 =
                   _stride_j_1 * ctr_1 + _data_j_20_36;
@@ -422,7 +434,8 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               float *RESTRICT _data_u_20_32_10 =
                   _stride_u_1 * ctr_1 + _data_u_20_32;
               _data_j_20_36_10[_stride_j_0 * ctr_0] =
-                  -(1.0f - fabs(_data_u_20_31_10[_stride_u_0 * ctr_0])) *
+                  (-1.0f * fabs(_data_u_20_31_10[_stride_u_0 * ctr_0]) + 1.0f) *
+                      -1.0f *
                       ((0.0f > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
                         0.0f < _data_u_20_32_10[_stride_u_0 * ctr_0])
                            ? (1.0f)
@@ -430,8 +443,9 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_30_10[_stride_u_0 * ctr_0] *
                       _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                  (1.0f -
-                   fabs(_data_u_21_31_10[_stride_u_0 * ctr_0 - _stride_u_0])) *
+                  (-1.0f * fabs(_data_u_21_31_10[_stride_u_0 * ctr_0 -
+                                                 _stride_u_0]) +
+                   1.0f) *
                       ((0.0f > _data_u_21_32_10[_stride_u_0 * ctr_0 -
                                                 _stride_u_0] &&
                         0.0f <
@@ -443,7 +457,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_u_21_32_10[_stride_u_0 * ctr_0 - _stride_u_0] +
                   _data_j_20_36_10[_stride_j_0 * ctr_0];
             }
-            if (_size_j_2 > 1 && ctr_1 > 0 && _size_j_0 - ctr_0 > 1) {
+            if (ctr_1 > 0 && 0 < _size_j_2 - 1 && ctr_0 < _size_j_0 - 1) {
               float *RESTRICT _data_j_20_38 = _data_j + 8 * _stride_j_3;
               float *RESTRICT _data_j_20_38_10 =
                   _stride_j_1 * ctr_1 + _data_j_20_38;
@@ -474,7 +488,8 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               float *RESTRICT _data_u_20_32_10 =
                   _stride_u_1 * ctr_1 + _data_u_20_32;
               _data_j_20_38_10[_stride_j_0 * ctr_0] =
-                  -(1.0f - fabs(_data_u_20_30_10[_stride_u_0 * ctr_0])) *
+                  (-1.0f * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0f) *
+                      -1.0f *
                       ((0.0f > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
                         0.0f < _data_u_20_32_10[_stride_u_0 * ctr_0])
                            ? (1.0f)
@@ -482,7 +497,8 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_31_10[_stride_u_0 * ctr_0] *
                       _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                  (1.0f - fabs(_data_u_21_30_1m1[_stride_u_0 * ctr_0])) *
+                  (-1.0f * fabs(_data_u_21_30_1m1[_stride_u_0 * ctr_0]) +
+                   1.0f) *
                       ((0.0f > _data_u_21_32_1m1[_stride_u_0 * ctr_0] &&
                         0.0f < _data_u_21_31_1m1[_stride_u_0 * ctr_0])
                            ? (1.0f)
@@ -492,7 +508,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_u_21_32_1m1[_stride_u_0 * ctr_0] +
                   _data_j_20_38_10[_stride_j_0 * ctr_0];
             }
-            if (_size_j_2 > 1 && ctr_1 > 0) {
+            if (ctr_1 > 0 && 0 < _size_j_2 - 1) {
               float *RESTRICT _data_j_20_310 = _data_j + 10 * _stride_j_3;
               float *RESTRICT _data_j_20_310_10 =
                   _stride_j_1 * ctr_1 + _data_j_20_310;
@@ -545,7 +561,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_u_21_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] +
                   _data_j_20_310_10[_stride_j_0 * ctr_0];
             }
-            if (_size_j_2 > 1 && _size_j_1 - ctr_1 > 1) {
+            if (0 < _size_j_2 - 1 && ctr_1 < _size_j_1 - 1) {
               float *RESTRICT _data_j_20_312 = _data_j + 12 * _stride_j_3;
               float *RESTRICT _data_j_20_312_10 =
                   _stride_j_1 * ctr_1 + _data_j_20_312;
@@ -576,22 +592,25 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               float *RESTRICT _data_u_21_32_11 =
                   _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_21_32;
               _data_j_20_312_10[_stride_j_0 * ctr_0] =
-                  -((0.0f > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                     0.0f < _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                     0.0f < _data_u_20_32_10[_stride_u_0 * ctr_0])
-                        ? (1.0f)
-                        : (0.0f)) *
+                  -1.0f *
+                      ((0.0f > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
+                        0.0f < _data_u_20_31_10[_stride_u_0 * ctr_0] &&
+                        0.0f < _data_u_20_32_10[_stride_u_0 * ctr_0])
+                           ? (1.0f)
+                           : (0.0f)) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_30_10[_stride_u_0 * ctr_0] *
                       _data_u_20_31_10[_stride_u_0 * ctr_0] *
                       _data_u_20_32_10[_stride_u_0 * ctr_0] -
-                  ((0.0f >
-                        _data_u_21_31_11[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                    0.0f >
-                        _data_u_21_32_11[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                    0.0f < _data_u_21_30_11[_stride_u_0 * ctr_0 - _stride_u_0])
-                       ? (1.0f)
-                       : (0.0f)) *
+                  1.0f *
+                      ((0.0f > _data_u_21_31_11[_stride_u_0 * ctr_0 -
+                                                _stride_u_0] &&
+                        0.0f > _data_u_21_32_11[_stride_u_0 * ctr_0 -
+                                                _stride_u_0] &&
+                        0.0f <
+                            _data_u_21_30_11[_stride_u_0 * ctr_0 - _stride_u_0])
+                           ? (1.0f)
+                           : (0.0f)) *
                       _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] *
                       _data_u_21_30_11[_stride_u_0 * ctr_0 - _stride_u_0] *
                       _data_u_21_31_11[_stride_u_0 * ctr_0 - _stride_u_0] *
@@ -600,7 +619,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
             }
           }
           {
-            if (_size_j_2 > 1 && ctr_1 > 0 && _size_j_1 - ctr_1 > 1) {
+            if (ctr_1 > 0 && 0 < _size_j_2 - 1 && ctr_1 < _size_j_1 - 1) {
               float *RESTRICT _data_j_20_36 = _data_j + 6 * _stride_j_3;
               float *RESTRICT _data_j_20_36_10 =
                   _stride_j_1 * ctr_1 + _data_j_20_36;
@@ -631,8 +650,10 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               float *RESTRICT _data_u_20_32_10 =
                   _stride_u_1 * ctr_1 + _data_u_20_32;
               _data_j_20_36_10[_stride_j_0 * (_size_j_0 - 1)] =
-                  -(1.0f -
-                    fabs(_data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)])) *
+                  (-1.0f *
+                       fabs(_data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)]) +
+                   1.0f) *
+                      -1.0f *
                       ((0.0f >
                             _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
                         0.0f < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
@@ -641,8 +662,9 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                       _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
                       _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
-                  (1.0f - fabs(_data_u_21_31_10[_stride_u_0 * (_size_j_0 - 1) -
-                                                _stride_u_0])) *
+                  (-1.0f * fabs(_data_u_21_31_10[_stride_u_0 * (_size_j_0 - 1) -
+                                                 _stride_u_0]) +
+                   1.0f) *
                       ((0.0f > _data_u_21_32_10[_stride_u_0 * (_size_j_0 - 1) -
                                                 _stride_u_0] &&
                         0.0f < _data_u_21_30_10[_stride_u_0 * (_size_j_0 - 1) -
@@ -657,7 +679,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                                        _stride_u_0] +
                   _data_j_20_36_10[_stride_j_0 * (_size_j_0 - 1)];
             }
-            if (_size_j_2 > 1 && ctr_1 > 0) {
+            if (ctr_1 > 0 && 0 < _size_j_2 - 1) {
               float *RESTRICT _data_j_20_310 = _data_j + 10 * _stride_j_3;
               float *RESTRICT _data_j_20_310_10 =
                   _stride_j_1 * ctr_1 + _data_j_20_310;
@@ -715,7 +737,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                                         _stride_u_0] +
                   _data_j_20_310_10[_stride_j_0 * (_size_j_0 - 1)];
             }
-            if (_size_j_2 > 1 && _size_j_1 - ctr_1 > 1) {
+            if (0 < _size_j_2 - 1 && ctr_1 < _size_j_1 - 1) {
               float *RESTRICT _data_j_20_312 = _data_j + 12 * _stride_j_3;
               float *RESTRICT _data_j_20_312_10 =
                   _stride_j_1 * ctr_1 + _data_j_20_312;
@@ -746,23 +768,27 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               float *RESTRICT _data_u_21_32_11 =
                   _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_21_32;
               _data_j_20_312_10[_stride_j_0 * (_size_j_0 - 1)] =
-                  -((0.0f > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                     0.0f < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                     0.0f < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                        ? (1.0f)
-                        : (0.0f)) *
+                  -1.0f *
+                      ((0.0f >
+                            _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                        0.0f <
+                            _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                        0.0f < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
+                           ? (1.0f)
+                           : (0.0f)) *
                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                       _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
                       _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
                       _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] -
-                  ((0.0f > _data_u_21_31_11[_stride_u_0 * (_size_j_0 - 1) -
-                                            _stride_u_0] &&
-                    0.0f > _data_u_21_32_11[_stride_u_0 * (_size_j_0 - 1) -
-                                            _stride_u_0] &&
-                    0.0f < _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) -
-                                            _stride_u_0])
-                       ? (1.0f)
-                       : (0.0f)) *
+                  1.0f *
+                      ((0.0f > _data_u_21_31_11[_stride_u_0 * (_size_j_0 - 1) -
+                                                _stride_u_0] &&
+                        0.0f > _data_u_21_32_11[_stride_u_0 * (_size_j_0 - 1) -
+                                                _stride_u_0] &&
+                        0.0f < _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) -
+                                                _stride_u_0])
+                           ? (1.0f)
+                           : (0.0f)) *
                       _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
                                       _stride_rho_0] *
                       _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) -
@@ -778,7 +804,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
       }
       {
         {
-          if (_size_j_0 > 2 && _size_j_1 > 1 && _size_j_2 > 1) {
+          if (_size_j_1 - 1 > 0 && 0 < _size_j_2 - 1 && 1 < _size_j_0 - 1) {
             float *RESTRICT _data_j_20_38 = _data_j + 8 * _stride_j_3;
             float *RESTRICT _data_j_20_38_10 =
                 _stride_j_1 * (_size_j_1 - 1) + _data_j_20_38;
@@ -808,7 +834,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
             float *RESTRICT _data_u_20_32_10 =
                 _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
             _data_j_20_38_10[_stride_j_0] =
-                -(1.0f - fabs(_data_u_20_30_10[_stride_u_0])) *
+                (-1.0f * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0f) * -1.0f *
                     ((0.0f > _data_u_20_31_10[_stride_u_0] &&
                       0.0f < _data_u_20_32_10[_stride_u_0])
                          ? (1.0f)
@@ -816,7 +842,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                     _data_rho_20_10[_stride_rho_0] *
                     _data_u_20_31_10[_stride_u_0] *
                     _data_u_20_32_10[_stride_u_0] +
-                (1.0f - fabs(_data_u_21_30_1m1[_stride_u_0])) *
+                (-1.0f * fabs(_data_u_21_30_1m1[_stride_u_0]) + 1.0f) *
                     ((0.0f > _data_u_21_32_1m1[_stride_u_0] &&
                       0.0f < _data_u_21_31_1m1[_stride_u_0])
                          ? (1.0f)
@@ -826,7 +852,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                     _data_u_21_32_1m1[_stride_u_0] +
                 _data_j_20_38_10[_stride_j_0];
           }
-          if (_size_j_1 > 1 && _size_j_2 > 1) {
+          if (_size_j_1 - 1 > 0 && 0 < _size_j_2 - 1) {
             float *RESTRICT _data_j_20_310 = _data_j + 10 * _stride_j_3;
             float *RESTRICT _data_j_20_310_10 =
                 _stride_j_1 * (_size_j_1 - 1) + _data_j_20_310;
@@ -875,7 +901,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
           }
         }
         for (int64_t ctr_0 = 2; ctr_0 < _size_j_0 - 1; ctr_0 += 1) {
-          if (_size_j_1 > 1 && _size_j_2 > 1 && _size_j_0 - ctr_0 > 1) {
+          if (_size_j_1 - 1 > 0 && 0 < _size_j_2 - 1 && ctr_0 < _size_j_0 - 1) {
             float *RESTRICT _data_j_20_38 = _data_j + 8 * _stride_j_3;
             float *RESTRICT _data_j_20_38_10 =
                 _stride_j_1 * (_size_j_1 - 1) + _data_j_20_38;
@@ -905,7 +931,8 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
             float *RESTRICT _data_u_20_32_10 =
                 _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
             _data_j_20_38_10[_stride_j_0 * ctr_0] =
-                -(1.0f - fabs(_data_u_20_30_10[_stride_u_0 * ctr_0])) *
+                (-1.0f * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0f) *
+                    -1.0f *
                     ((0.0f > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
                       0.0f < _data_u_20_32_10[_stride_u_0 * ctr_0])
                          ? (1.0f)
@@ -913,7 +940,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                     _data_rho_20_10[_stride_rho_0 * ctr_0] *
                     _data_u_20_31_10[_stride_u_0 * ctr_0] *
                     _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                (1.0f - fabs(_data_u_21_30_1m1[_stride_u_0 * ctr_0])) *
+                (-1.0f * fabs(_data_u_21_30_1m1[_stride_u_0 * ctr_0]) + 1.0f) *
                     ((0.0f > _data_u_21_32_1m1[_stride_u_0 * ctr_0] &&
                       0.0f < _data_u_21_31_1m1[_stride_u_0 * ctr_0])
                          ? (1.0f)
@@ -923,7 +950,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                     _data_u_21_32_1m1[_stride_u_0 * ctr_0] +
                 _data_j_20_38_10[_stride_j_0 * ctr_0];
           }
-          if (_size_j_1 > 1 && _size_j_2 > 1) {
+          if (_size_j_1 - 1 > 0 && 0 < _size_j_2 - 1) {
             float *RESTRICT _data_j_20_310 = _data_j + 10 * _stride_j_3;
             float *RESTRICT _data_j_20_310_10 =
                 _stride_j_1 * (_size_j_1 - 1) + _data_j_20_310;
@@ -974,7 +1001,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                 _data_j_20_310_10[_stride_j_0 * ctr_0];
           }
         }
-        if (_size_j_1 > 1 && _size_j_2 > 1) {
+        if (_size_j_1 - 1 > 0 && 0 < _size_j_2 - 1) {
           float *RESTRICT _data_j_20_310 = _data_j + 10 * _stride_j_3;
           float *RESTRICT _data_j_20_310_10 =
               _stride_j_1 * (_size_j_1 - 1) + _data_j_20_310;
@@ -1062,7 +1089,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
       {
         {
           {
-            if (_size_j_1 > 1 && ctr_2 > 0 && _size_j_2 - ctr_2 > 1) {
+            if (ctr_2 > 0 && 0 < _size_j_1 - 1 && ctr_2 < _size_j_2 - 1) {
               float *RESTRICT _data_j_20_34 =
                   _data_j + _stride_j_2 * ctr_2 + 4 * _stride_j_3;
               float *RESTRICT _data_j_20_34_10 = _data_j_20_34;
@@ -1081,7 +1108,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               float *RESTRICT _data_u_20_30_10 = _data_u_20_30;
               float *RESTRICT _data_u_20_31_10 = _data_u_20_31;
               _data_j_20_34_10[_stride_j_0] =
-                  -(1.0f - fabs(_data_u_20_32_10[_stride_u_0])) *
+                  (-1.0f * fabs(_data_u_20_32_10[_stride_u_0]) + 1.0f) * -1.0f *
                       ((0.0f > _data_u_20_30_10[_stride_u_0] &&
                         0.0f < _data_u_20_31_10[_stride_u_0])
                            ? (1.0f)
@@ -1089,7 +1116,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_rho_20_10[_stride_rho_0] *
                       _data_u_20_30_10[_stride_u_0] *
                       _data_u_20_31_10[_stride_u_0] +
-                  (1.0f - fabs(_data_u_20_32_11[0])) *
+                  (-1.0f * fabs(_data_u_20_32_11[0]) + 1.0f) *
                       ((0.0f > _data_u_20_31_11[0] &&
                         0.0f < _data_u_20_30_11[0])
                            ? (1.0f)
@@ -1098,7 +1125,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_u_20_31_11[0] +
                   _data_j_20_34_10[_stride_j_0];
             }
-            if (_size_j_1 > 1 && ctr_2 > 0) {
+            if (ctr_2 > 0 && 0 < _size_j_1 - 1) {
               float *RESTRICT _data_j_20_311 =
                   _data_j + _stride_j_2 * ctr_2 + 11 * _stride_j_3;
               float *RESTRICT _data_j_20_311_10 = _data_j_20_311;
@@ -1142,7 +1169,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_u_2m1_31_11[0] * _data_u_2m1_32_11[0] +
                   _data_j_20_311_10[_stride_j_0];
             }
-            if (_size_j_1 > 1 && _size_j_2 - ctr_2 > 1) {
+            if (0 < _size_j_1 - 1 && ctr_2 < _size_j_2 - 1) {
               float *RESTRICT _data_j_20_312 =
                   _data_j + _stride_j_2 * ctr_2 + 12 * _stride_j_3;
               float *RESTRICT _data_j_20_312_10 = _data_j_20_312;
@@ -1169,26 +1196,29 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                   _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + 2 * _stride_u_3;
               float *RESTRICT _data_u_21_32_11 = _stride_u_1 + _data_u_21_32;
               _data_j_20_312_10[_stride_j_0] =
-                  -((0.0f > _data_u_20_30_10[_stride_u_0] &&
-                     0.0f < _data_u_20_31_10[_stride_u_0] &&
-                     0.0f < _data_u_20_32_10[_stride_u_0])
-                        ? (1.0f)
-                        : (0.0f)) *
+                  -1.0f *
+                      ((0.0f > _data_u_20_30_10[_stride_u_0] &&
+                        0.0f < _data_u_20_31_10[_stride_u_0] &&
+                        0.0f < _data_u_20_32_10[_stride_u_0])
+                           ? (1.0f)
+                           : (0.0f)) *
                       _data_rho_20_10[_stride_rho_0] *
                       _data_u_20_30_10[_stride_u_0] *
                       _data_u_20_31_10[_stride_u_0] *
                       _data_u_20_32_10[_stride_u_0] -
-                  ((0.0f > _data_u_21_31_11[0] && 0.0f > _data_u_21_32_11[0] &&
-                    0.0f < _data_u_21_30_11[0])
-                       ? (1.0f)
-                       : (0.0f)) *
+                  1.0f *
+                      ((0.0f > _data_u_21_31_11[0] &&
+                        0.0f > _data_u_21_32_11[0] &&
+                        0.0f < _data_u_21_30_11[0])
+                           ? (1.0f)
+                           : (0.0f)) *
                       _data_rho_21_11[0] * _data_u_21_30_11[0] *
                       _data_u_21_31_11[0] * _data_u_21_32_11[0] +
                   _data_j_20_312_10[_stride_j_0];
             }
           }
           for (int64_t ctr_0 = 2; ctr_0 < _size_j_0 - 1; ctr_0 += 1) {
-            if (_size_j_1 > 1 && ctr_2 > 0 && _size_j_2 - ctr_2 > 1) {
+            if (ctr_2 > 0 && 0 < _size_j_1 - 1 && ctr_2 < _size_j_2 - 1) {
               float *RESTRICT _data_j_20_34 =
                   _data_j + _stride_j_2 * ctr_2 + 4 * _stride_j_3;
               float *RESTRICT _data_j_20_34_10 = _data_j_20_34;
@@ -1207,7 +1237,8 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               float *RESTRICT _data_u_20_30_10 = _data_u_20_30;
               float *RESTRICT _data_u_20_31_10 = _data_u_20_31;
               _data_j_20_34_10[_stride_j_0 * ctr_0] =
-                  -(1.0f - fabs(_data_u_20_32_10[_stride_u_0 * ctr_0])) *
+                  (-1.0f * fabs(_data_u_20_32_10[_stride_u_0 * ctr_0]) + 1.0f) *
+                      -1.0f *
                       ((0.0f > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
                         0.0f < _data_u_20_31_10[_stride_u_0 * ctr_0])
                            ? (1.0f)
@@ -1215,8 +1246,9 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_30_10[_stride_u_0 * ctr_0] *
                       _data_u_20_31_10[_stride_u_0 * ctr_0] +
-                  (1.0f -
-                   fabs(_data_u_20_32_11[_stride_u_0 * ctr_0 - _stride_u_0])) *
+                  (-1.0f * fabs(_data_u_20_32_11[_stride_u_0 * ctr_0 -
+                                                 _stride_u_0]) +
+                   1.0f) *
                       ((0.0f > _data_u_20_31_11[_stride_u_0 * ctr_0 -
                                                 _stride_u_0] &&
                         0.0f <
@@ -1228,7 +1260,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_u_20_31_11[_stride_u_0 * ctr_0 - _stride_u_0] +
                   _data_j_20_34_10[_stride_j_0 * ctr_0];
             }
-            if (_size_j_1 > 1 && ctr_2 > 0) {
+            if (ctr_2 > 0 && 0 < _size_j_1 - 1) {
               float *RESTRICT _data_j_20_311 =
                   _data_j + _stride_j_2 * ctr_2 + 11 * _stride_j_3;
               float *RESTRICT _data_j_20_311_10 = _data_j_20_311;
@@ -1277,7 +1309,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_u_2m1_32_11[_stride_u_0 * ctr_0 - _stride_u_0] +
                   _data_j_20_311_10[_stride_j_0 * ctr_0];
             }
-            if (_size_j_1 > 1 && _size_j_2 - ctr_2 > 1) {
+            if (0 < _size_j_1 - 1 && ctr_2 < _size_j_2 - 1) {
               float *RESTRICT _data_j_20_312 =
                   _data_j + _stride_j_2 * ctr_2 + 12 * _stride_j_3;
               float *RESTRICT _data_j_20_312_10 = _data_j_20_312;
@@ -1304,22 +1336,25 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                   _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + 2 * _stride_u_3;
               float *RESTRICT _data_u_21_32_11 = _stride_u_1 + _data_u_21_32;
               _data_j_20_312_10[_stride_j_0 * ctr_0] =
-                  -((0.0f > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                     0.0f < _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                     0.0f < _data_u_20_32_10[_stride_u_0 * ctr_0])
-                        ? (1.0f)
-                        : (0.0f)) *
+                  -1.0f *
+                      ((0.0f > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
+                        0.0f < _data_u_20_31_10[_stride_u_0 * ctr_0] &&
+                        0.0f < _data_u_20_32_10[_stride_u_0 * ctr_0])
+                           ? (1.0f)
+                           : (0.0f)) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_30_10[_stride_u_0 * ctr_0] *
                       _data_u_20_31_10[_stride_u_0 * ctr_0] *
                       _data_u_20_32_10[_stride_u_0 * ctr_0] -
-                  ((0.0f >
-                        _data_u_21_31_11[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                    0.0f >
-                        _data_u_21_32_11[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                    0.0f < _data_u_21_30_11[_stride_u_0 * ctr_0 - _stride_u_0])
-                       ? (1.0f)
-                       : (0.0f)) *
+                  1.0f *
+                      ((0.0f > _data_u_21_31_11[_stride_u_0 * ctr_0 -
+                                                _stride_u_0] &&
+                        0.0f > _data_u_21_32_11[_stride_u_0 * ctr_0 -
+                                                _stride_u_0] &&
+                        0.0f <
+                            _data_u_21_30_11[_stride_u_0 * ctr_0 - _stride_u_0])
+                           ? (1.0f)
+                           : (0.0f)) *
                       _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] *
                       _data_u_21_30_11[_stride_u_0 * ctr_0 - _stride_u_0] *
                       _data_u_21_31_11[_stride_u_0 * ctr_0 - _stride_u_0] *
@@ -1328,7 +1363,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
             }
           }
           {
-            if (_size_j_1 > 1 && ctr_2 > 0 && _size_j_2 - ctr_2 > 1) {
+            if (ctr_2 > 0 && 0 < _size_j_1 - 1 && ctr_2 < _size_j_2 - 1) {
               float *RESTRICT _data_j_20_34 =
                   _data_j + _stride_j_2 * ctr_2 + 4 * _stride_j_3;
               float *RESTRICT _data_j_20_34_10 = _data_j_20_34;
@@ -1347,8 +1382,10 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               float *RESTRICT _data_u_20_30_10 = _data_u_20_30;
               float *RESTRICT _data_u_20_31_10 = _data_u_20_31;
               _data_j_20_34_10[_stride_j_0 * (_size_j_0 - 1)] =
-                  -(1.0f -
-                    fabs(_data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])) *
+                  (-1.0f *
+                       fabs(_data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) +
+                   1.0f) *
+                      -1.0f *
                       ((0.0f >
                             _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
                         0.0f < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)])
@@ -1357,8 +1394,9 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                       _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
                       _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] +
-                  (1.0f - fabs(_data_u_20_32_11[_stride_u_0 * (_size_j_0 - 1) -
-                                                _stride_u_0])) *
+                  (-1.0f * fabs(_data_u_20_32_11[_stride_u_0 * (_size_j_0 - 1) -
+                                                 _stride_u_0]) +
+                   1.0f) *
                       ((0.0f > _data_u_20_31_11[_stride_u_0 * (_size_j_0 - 1) -
                                                 _stride_u_0] &&
                         0.0f < _data_u_20_30_11[_stride_u_0 * (_size_j_0 - 1) -
@@ -1373,7 +1411,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                                        _stride_u_0] +
                   _data_j_20_34_10[_stride_j_0 * (_size_j_0 - 1)];
             }
-            if (_size_j_1 > 1 && ctr_2 > 0) {
+            if (ctr_2 > 0 && 0 < _size_j_1 - 1) {
               float *RESTRICT _data_j_20_311 =
                   _data_j + _stride_j_2 * ctr_2 + 11 * _stride_j_3;
               float *RESTRICT _data_j_20_311_10 = _data_j_20_311;
@@ -1427,7 +1465,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                                         _stride_u_0] +
                   _data_j_20_311_10[_stride_j_0 * (_size_j_0 - 1)];
             }
-            if (_size_j_1 > 1 && _size_j_2 - ctr_2 > 1) {
+            if (0 < _size_j_1 - 1 && ctr_2 < _size_j_2 - 1) {
               float *RESTRICT _data_j_20_312 =
                   _data_j + _stride_j_2 * ctr_2 + 12 * _stride_j_3;
               float *RESTRICT _data_j_20_312_10 = _data_j_20_312;
@@ -1454,23 +1492,27 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                   _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + 2 * _stride_u_3;
               float *RESTRICT _data_u_21_32_11 = _stride_u_1 + _data_u_21_32;
               _data_j_20_312_10[_stride_j_0 * (_size_j_0 - 1)] =
-                  -((0.0f > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                     0.0f < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                     0.0f < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                        ? (1.0f)
-                        : (0.0f)) *
+                  -1.0f *
+                      ((0.0f >
+                            _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                        0.0f <
+                            _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                        0.0f < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
+                           ? (1.0f)
+                           : (0.0f)) *
                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                       _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
                       _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
                       _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] -
-                  ((0.0f > _data_u_21_31_11[_stride_u_0 * (_size_j_0 - 1) -
-                                            _stride_u_0] &&
-                    0.0f > _data_u_21_32_11[_stride_u_0 * (_size_j_0 - 1) -
-                                            _stride_u_0] &&
-                    0.0f < _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) -
-                                            _stride_u_0])
-                       ? (1.0f)
-                       : (0.0f)) *
+                  1.0f *
+                      ((0.0f > _data_u_21_31_11[_stride_u_0 * (_size_j_0 - 1) -
+                                                _stride_u_0] &&
+                        0.0f > _data_u_21_32_11[_stride_u_0 * (_size_j_0 - 1) -
+                                                _stride_u_0] &&
+                        0.0f < _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) -
+                                                _stride_u_0])
+                           ? (1.0f)
+                           : (0.0f)) *
                       _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
                                       _stride_rho_0] *
                       _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) -
@@ -1526,12 +1568,13 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
             float *RESTRICT _data_u_20_30_10 =
                 _stride_u_1 * ctr_1 + _data_u_20_30;
             _data_j_20_30_10[_stride_j_0] =
-                -(1.0f - fabs(_data_u_20_31_10[0])) *
-                    (1.0f - fabs(_data_u_20_32_10[0])) *
+                (-1.0f * fabs(_data_u_20_31_10[0]) + 1.0f) *
+                    (-1.0f * fabs(_data_u_20_32_10[0]) + 1.0f) * -1.0f *
                     ((0.0f < _data_u_20_30_10[0]) ? (1.0f) : (0.0f)) *
-                    _data_rho_20_10[0] * _data_u_20_30_10[0] -
-                (1.0f - fabs(_data_u_20_31_10[_stride_u_0])) *
-                    (1.0f - fabs(_data_u_20_32_10[_stride_u_0])) *
+                    _data_rho_20_10[0] * _data_u_20_30_10[0] +
+                (-1.0f * fabs(_data_u_20_31_10[_stride_u_0]) + 1.0f) *
+                    (-1.0f * fabs(_data_u_20_32_10[_stride_u_0]) + 1.0f) *
+                    -1.0f *
                     ((0.0f > _data_u_20_30_10[_stride_u_0]) ? (1.0f) : (0.0f)) *
                     _data_rho_20_10[_stride_rho_0] *
                     _data_u_20_30_10[_stride_u_0] +
@@ -1545,15 +1588,15 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
             float *RESTRICT _data_u_20_31_1m1 =
                 _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_20_31;
             _data_j_20_33_10[_stride_j_0] =
-                (1.0f - fabs(_data_u_20_32_10[_stride_u_0])) *
+                (-1.0f * fabs(_data_u_20_32_10[_stride_u_0]) + 1.0f) *
                     ((0.0f > _data_u_20_30_10[_stride_u_0] &&
                       0.0f > _data_u_20_31_10[_stride_u_0])
                          ? (1.0f)
                          : (0.0f)) *
                     _data_rho_20_10[_stride_rho_0] *
                     _data_u_20_30_10[_stride_u_0] *
-                    _data_u_20_31_10[_stride_u_0] -
-                (1.0f - fabs(_data_u_20_32_1m1[0])) *
+                    _data_u_20_31_10[_stride_u_0] +
+                (-1.0f * fabs(_data_u_20_32_1m1[0]) + 1.0f) * -1.0f *
                     ((0.0f < _data_u_20_30_1m1[0] &&
                       0.0f < _data_u_20_31_1m1[0])
                          ? (1.0f)
@@ -1570,7 +1613,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
             float *RESTRICT _data_u_20_31_11 =
                 _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_20_31;
             _data_j_20_34_10[_stride_j_0] =
-                -(1.0f - fabs(_data_u_20_32_10[_stride_u_0])) *
+                (-1.0f * fabs(_data_u_20_32_10[_stride_u_0]) + 1.0f) * -1.0f *
                     ((0.0f > _data_u_20_30_10[_stride_u_0] &&
                       0.0f < _data_u_20_31_10[_stride_u_0])
                          ? (1.0f)
@@ -1578,7 +1621,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                     _data_rho_20_10[_stride_rho_0] *
                     _data_u_20_30_10[_stride_u_0] *
                     _data_u_20_31_10[_stride_u_0] +
-                (1.0f - fabs(_data_u_20_32_11[0])) *
+                (-1.0f * fabs(_data_u_20_32_11[0]) + 1.0f) *
                     ((0.0f > _data_u_20_31_11[0] && 0.0f < _data_u_20_30_11[0])
                          ? (1.0f)
                          : (0.0f)) *
@@ -1602,15 +1645,15 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
             float *RESTRICT _data_u_2m1_32_10 =
                 _stride_u_1 * ctr_1 + _data_u_2m1_32;
             _data_j_20_35_10[_stride_j_0] =
-                (1.0f - fabs(_data_u_20_31_10[_stride_u_0])) *
+                (-1.0f * fabs(_data_u_20_31_10[_stride_u_0]) + 1.0f) *
                     ((0.0f > _data_u_20_30_10[_stride_u_0] &&
                       0.0f > _data_u_20_32_10[_stride_u_0])
                          ? (1.0f)
                          : (0.0f)) *
                     _data_rho_20_10[_stride_rho_0] *
                     _data_u_20_30_10[_stride_u_0] *
-                    _data_u_20_32_10[_stride_u_0] -
-                (1.0f - fabs(_data_u_2m1_31_10[0])) *
+                    _data_u_20_32_10[_stride_u_0] +
+                (-1.0f * fabs(_data_u_2m1_31_10[0]) + 1.0f) * -1.0f *
                     ((0.0f < _data_u_2m1_30_10[0] &&
                       0.0f < _data_u_2m1_32_10[0])
                          ? (1.0f)
@@ -1635,7 +1678,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
             float *RESTRICT _data_u_21_32_10 =
                 _stride_u_1 * ctr_1 + _data_u_21_32;
             _data_j_20_36_10[_stride_j_0] =
-                -(1.0f - fabs(_data_u_20_31_10[_stride_u_0])) *
+                (-1.0f * fabs(_data_u_20_31_10[_stride_u_0]) + 1.0f) * -1.0f *
                     ((0.0f > _data_u_20_30_10[_stride_u_0] &&
                       0.0f < _data_u_20_32_10[_stride_u_0])
                          ? (1.0f)
@@ -1643,7 +1686,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                     _data_rho_20_10[_stride_rho_0] *
                     _data_u_20_30_10[_stride_u_0] *
                     _data_u_20_32_10[_stride_u_0] +
-                (1.0f - fabs(_data_u_21_31_10[0])) *
+                (-1.0f * fabs(_data_u_21_31_10[0]) + 1.0f) *
                     ((0.0f > _data_u_21_32_10[0] && 0.0f < _data_u_21_30_10[0])
                          ? (1.0f)
                          : (0.0f)) *
@@ -1659,19 +1702,22 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
             float *RESTRICT _data_u_2m1_32_1m1 =
                 _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_32;
             _data_j_20_39_10[_stride_j_0] =
-                -((0.0f > _data_u_20_30_10[_stride_u_0] &&
-                   0.0f > _data_u_20_31_10[_stride_u_0] &&
-                   0.0f > _data_u_20_32_10[_stride_u_0])
-                      ? (1.0f)
-                      : (0.0f)) *
+                -1.0f *
+                    ((0.0f > _data_u_20_30_10[_stride_u_0] &&
+                      0.0f > _data_u_20_31_10[_stride_u_0] &&
+                      0.0f > _data_u_20_32_10[_stride_u_0])
+                         ? (1.0f)
+                         : (0.0f)) *
                     _data_rho_20_10[_stride_rho_0] *
                     _data_u_20_30_10[_stride_u_0] *
                     _data_u_20_31_10[_stride_u_0] *
                     _data_u_20_32_10[_stride_u_0] -
-                ((0.0f < _data_u_2m1_30_1m1[0] &&
-                  0.0f < _data_u_2m1_31_1m1[0] && 0.0f < _data_u_2m1_32_1m1[0])
-                     ? (1.0f)
-                     : (0.0f)) *
+                1.0f *
+                    ((0.0f < _data_u_2m1_30_1m1[0] &&
+                      0.0f < _data_u_2m1_31_1m1[0] &&
+                      0.0f < _data_u_2m1_32_1m1[0])
+                         ? (1.0f)
+                         : (0.0f)) *
                     _data_rho_2m1_1m1[0] * _data_u_2m1_30_1m1[0] *
                     _data_u_2m1_31_1m1[0] * _data_u_2m1_32_1m1[0] +
                 _data_j_20_39_10[_stride_j_0];
@@ -1734,25 +1780,27 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
             float *RESTRICT _data_u_21_32_11 =
                 _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_21_32;
             _data_j_20_312_10[_stride_j_0] =
-                -((0.0f > _data_u_20_30_10[_stride_u_0] &&
-                   0.0f < _data_u_20_31_10[_stride_u_0] &&
-                   0.0f < _data_u_20_32_10[_stride_u_0])
-                      ? (1.0f)
-                      : (0.0f)) *
+                -1.0f *
+                    ((0.0f > _data_u_20_30_10[_stride_u_0] &&
+                      0.0f < _data_u_20_31_10[_stride_u_0] &&
+                      0.0f < _data_u_20_32_10[_stride_u_0])
+                         ? (1.0f)
+                         : (0.0f)) *
                     _data_rho_20_10[_stride_rho_0] *
                     _data_u_20_30_10[_stride_u_0] *
                     _data_u_20_31_10[_stride_u_0] *
                     _data_u_20_32_10[_stride_u_0] -
-                ((0.0f > _data_u_21_31_11[0] && 0.0f > _data_u_21_32_11[0] &&
-                  0.0f < _data_u_21_30_11[0])
-                     ? (1.0f)
-                     : (0.0f)) *
+                1.0f *
+                    ((0.0f > _data_u_21_31_11[0] &&
+                      0.0f > _data_u_21_32_11[0] && 0.0f < _data_u_21_30_11[0])
+                         ? (1.0f)
+                         : (0.0f)) *
                     _data_rho_21_11[0] * _data_u_21_30_11[0] *
                     _data_u_21_31_11[0] * _data_u_21_32_11[0] +
                 _data_j_20_312_10[_stride_j_0];
             {
-              if (_size_j_0 > 2 && ctr_1 > 0 && ctr_2 > 0 &&
-                  _size_j_2 - ctr_2 > 1) {
+              if (ctr_1 > 0 && ctr_2 > 0 && 1 < _size_j_0 - 1 &&
+                  ctr_2 < _size_j_2 - 1) {
                 float *RESTRICT _data_j_20_31 =
                     _data_j + _stride_j_2 * ctr_2 + _stride_j_3;
                 float *RESTRICT _data_j_20_31_10 =
@@ -1781,22 +1829,24 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                 float *RESTRICT _data_u_20_31_1m1 =
                     _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_20_31;
                 _data_j_20_31_10[_stride_j_0] =
-                    -(1.0f - fabs(_data_u_20_30_10[_stride_u_0])) *
-                        (1.0f - fabs(_data_u_20_32_10[_stride_u_0])) *
+                    (-1.0f * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0f) *
+                        (-1.0f * fabs(_data_u_20_32_10[_stride_u_0]) + 1.0f) *
+                        -1.0f *
                         ((0.0f > _data_u_20_31_10[_stride_u_0]) ? (1.0f)
                                                                 : (0.0f)) *
                         _data_rho_20_10[_stride_rho_0] *
-                        _data_u_20_31_10[_stride_u_0] -
-                    (1.0f - fabs(_data_u_20_30_1m1[_stride_u_0])) *
-                        (1.0f - fabs(_data_u_20_32_1m1[_stride_u_0])) *
+                        _data_u_20_31_10[_stride_u_0] +
+                    (-1.0f * fabs(_data_u_20_30_1m1[_stride_u_0]) + 1.0f) *
+                        (-1.0f * fabs(_data_u_20_32_1m1[_stride_u_0]) + 1.0f) *
+                        -1.0f *
                         ((0.0f < _data_u_20_31_1m1[_stride_u_0]) ? (1.0f)
                                                                  : (0.0f)) *
                         _data_rho_20_1m1[_stride_rho_0] *
                         _data_u_20_31_1m1[_stride_u_0] +
                     _data_j_20_31_10[_stride_j_0];
               }
-              if (_size_j_0 > 2 && ctr_1 > 0 && ctr_2 > 0 &&
-                  _size_j_1 - ctr_1 > 1) {
+              if (ctr_1 > 0 && ctr_2 > 0 && 1 < _size_j_0 - 1 &&
+                  ctr_1 < _size_j_1 - 1) {
                 float *RESTRICT _data_j_20_32 =
                     _data_j + _stride_j_2 * ctr_2 + 2 * _stride_j_3;
                 float *RESTRICT _data_j_20_32_10 =
@@ -1833,21 +1883,23 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                 float *RESTRICT _data_u_20_32_10 =
                     _stride_u_1 * ctr_1 + _data_u_20_32;
                 _data_j_20_32_10[_stride_j_0] =
-                    -(1.0f - fabs(_data_u_20_30_10[_stride_u_0])) *
-                        (1.0f - fabs(_data_u_20_31_10[_stride_u_0])) *
+                    (-1.0f * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0f) *
+                        (-1.0f * fabs(_data_u_20_31_10[_stride_u_0]) + 1.0f) *
+                        -1.0f *
                         ((0.0f > _data_u_20_32_10[_stride_u_0]) ? (1.0f)
                                                                 : (0.0f)) *
                         _data_rho_20_10[_stride_rho_0] *
-                        _data_u_20_32_10[_stride_u_0] -
-                    (1.0f - fabs(_data_u_2m1_30_10[_stride_u_0])) *
-                        (1.0f - fabs(_data_u_2m1_31_10[_stride_u_0])) *
+                        _data_u_20_32_10[_stride_u_0] +
+                    (-1.0f * fabs(_data_u_2m1_30_10[_stride_u_0]) + 1.0f) *
+                        (-1.0f * fabs(_data_u_2m1_31_10[_stride_u_0]) + 1.0f) *
+                        -1.0f *
                         ((0.0f < _data_u_2m1_32_10[_stride_u_0]) ? (1.0f)
                                                                  : (0.0f)) *
                         _data_rho_2m1_10[_stride_rho_0] *
                         _data_u_2m1_32_10[_stride_u_0] +
                     _data_j_20_32_10[_stride_j_0];
               }
-              if (_size_j_0 > 2 && ctr_1 > 0 && ctr_2 > 0) {
+              if (ctr_1 > 0 && ctr_2 > 0 && 1 < _size_j_0 - 1) {
                 float *RESTRICT _data_j_20_37 =
                     _data_j + _stride_j_2 * ctr_2 + 7 * _stride_j_3;
                 float *RESTRICT _data_j_20_37_10 =
@@ -1884,15 +1936,16 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                 float *RESTRICT _data_u_2m1_32_1m1 =
                     _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_32;
                 _data_j_20_37_10[_stride_j_0] =
-                    (1.0f - fabs(_data_u_20_30_10[_stride_u_0])) *
+                    (-1.0f * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0f) *
                         ((0.0f > _data_u_20_31_10[_stride_u_0] &&
                           0.0f > _data_u_20_32_10[_stride_u_0])
                              ? (1.0f)
                              : (0.0f)) *
                         _data_rho_20_10[_stride_rho_0] *
                         _data_u_20_31_10[_stride_u_0] *
-                        _data_u_20_32_10[_stride_u_0] -
-                    (1.0f - fabs(_data_u_2m1_30_1m1[_stride_u_0])) *
+                        _data_u_20_32_10[_stride_u_0] +
+                    (-1.0f * fabs(_data_u_2m1_30_1m1[_stride_u_0]) + 1.0f) *
+                        -1.0f *
                         ((0.0f < _data_u_2m1_31_1m1[_stride_u_0] &&
                           0.0f < _data_u_2m1_32_1m1[_stride_u_0])
                              ? (1.0f)
@@ -1902,7 +1955,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                         _data_u_2m1_32_1m1[_stride_u_0] +
                     _data_j_20_37_10[_stride_j_0];
               }
-              if (_size_j_0 > 2 && ctr_1 > 0 && _size_j_2 - ctr_2 > 1) {
+              if (ctr_1 > 0 && 1 < _size_j_0 - 1 && ctr_2 < _size_j_2 - 1) {
                 float *RESTRICT _data_j_20_38 =
                     _data_j + _stride_j_2 * ctr_2 + 8 * _stride_j_3;
                 float *RESTRICT _data_j_20_38_10 =
@@ -1939,7 +1992,8 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                 float *RESTRICT _data_u_20_32_10 =
                     _stride_u_1 * ctr_1 + _data_u_20_32;
                 _data_j_20_38_10[_stride_j_0] =
-                    -(1.0f - fabs(_data_u_20_30_10[_stride_u_0])) *
+                    (-1.0f * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0f) *
+                        -1.0f *
                         ((0.0f > _data_u_20_31_10[_stride_u_0] &&
                           0.0f < _data_u_20_32_10[_stride_u_0])
                              ? (1.0f)
@@ -1947,7 +2001,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                         _data_rho_20_10[_stride_rho_0] *
                         _data_u_20_31_10[_stride_u_0] *
                         _data_u_20_32_10[_stride_u_0] +
-                    (1.0f - fabs(_data_u_21_30_1m1[_stride_u_0])) *
+                    (-1.0f * fabs(_data_u_21_30_1m1[_stride_u_0]) + 1.0f) *
                         ((0.0f > _data_u_21_32_1m1[_stride_u_0] &&
                           0.0f < _data_u_21_31_1m1[_stride_u_0])
                              ? (1.0f)
@@ -1960,18 +2014,23 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
             }
             for (int64_t ctr_0 = 2; ctr_0 < _size_j_0 - 1; ctr_0 += 1) {
               _data_j_20_30_10[_stride_j_0 * ctr_0] =
-                  -(1.0f -
-                    fabs(_data_u_20_31_10[_stride_u_0 * ctr_0 - _stride_u_0])) *
-                      (1.0f - fabs(_data_u_20_32_10[_stride_u_0 * ctr_0 -
-                                                    _stride_u_0])) *
+                  (-1.0f * fabs(_data_u_20_31_10[_stride_u_0 * ctr_0 -
+                                                 _stride_u_0]) +
+                   1.0f) *
+                      (-1.0f * fabs(_data_u_20_32_10[_stride_u_0 * ctr_0 -
+                                                     _stride_u_0]) +
+                       1.0f) *
+                      -1.0f *
                       ((0.0f <
                         _data_u_20_30_10[_stride_u_0 * ctr_0 - _stride_u_0])
                            ? (1.0f)
                            : (0.0f)) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0 - _stride_rho_0] *
-                      _data_u_20_30_10[_stride_u_0 * ctr_0 - _stride_u_0] -
-                  (1.0f - fabs(_data_u_20_31_10[_stride_u_0 * ctr_0])) *
-                      (1.0f - fabs(_data_u_20_32_10[_stride_u_0 * ctr_0])) *
+                      _data_u_20_30_10[_stride_u_0 * ctr_0 - _stride_u_0] +
+                  (-1.0f * fabs(_data_u_20_31_10[_stride_u_0 * ctr_0]) + 1.0f) *
+                      (-1.0f * fabs(_data_u_20_32_10[_stride_u_0 * ctr_0]) +
+                       1.0f) *
+                      -1.0f *
                       ((0.0f > _data_u_20_30_10[_stride_u_0 * ctr_0])
                            ? (1.0f)
                            : (0.0f)) *
@@ -1979,15 +2038,20 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_u_20_30_10[_stride_u_0 * ctr_0] +
                   _data_j_20_30_10[_stride_j_0 * ctr_0];
               _data_j_20_31_10[_stride_j_0 * ctr_0] =
-                  -(1.0f - fabs(_data_u_20_30_10[_stride_u_0 * ctr_0])) *
-                      (1.0f - fabs(_data_u_20_32_10[_stride_u_0 * ctr_0])) *
+                  (-1.0f * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0f) *
+                      (-1.0f * fabs(_data_u_20_32_10[_stride_u_0 * ctr_0]) +
+                       1.0f) *
+                      -1.0f *
                       ((0.0f > _data_u_20_31_10[_stride_u_0 * ctr_0])
                            ? (1.0f)
                            : (0.0f)) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_31_10[_stride_u_0 * ctr_0] -
-                  (1.0f - fabs(_data_u_20_30_1m1[_stride_u_0 * ctr_0])) *
-                      (1.0f - fabs(_data_u_20_32_1m1[_stride_u_0 * ctr_0])) *
+                      _data_u_20_31_10[_stride_u_0 * ctr_0] +
+                  (-1.0f * fabs(_data_u_20_30_1m1[_stride_u_0 * ctr_0]) +
+                   1.0f) *
+                      (-1.0f * fabs(_data_u_20_32_1m1[_stride_u_0 * ctr_0]) +
+                       1.0f) *
+                      -1.0f *
                       ((0.0f < _data_u_20_31_1m1[_stride_u_0 * ctr_0])
                            ? (1.0f)
                            : (0.0f)) *
@@ -1995,15 +2059,20 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_u_20_31_1m1[_stride_u_0 * ctr_0] +
                   _data_j_20_31_10[_stride_j_0 * ctr_0];
               _data_j_20_32_10[_stride_j_0 * ctr_0] =
-                  -(1.0f - fabs(_data_u_20_30_10[_stride_u_0 * ctr_0])) *
-                      (1.0f - fabs(_data_u_20_31_10[_stride_u_0 * ctr_0])) *
+                  (-1.0f * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0f) *
+                      (-1.0f * fabs(_data_u_20_31_10[_stride_u_0 * ctr_0]) +
+                       1.0f) *
+                      -1.0f *
                       ((0.0f > _data_u_20_32_10[_stride_u_0 * ctr_0])
                            ? (1.0f)
                            : (0.0f)) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_32_10[_stride_u_0 * ctr_0] -
-                  (1.0f - fabs(_data_u_2m1_30_10[_stride_u_0 * ctr_0])) *
-                      (1.0f - fabs(_data_u_2m1_31_10[_stride_u_0 * ctr_0])) *
+                      _data_u_20_32_10[_stride_u_0 * ctr_0] +
+                  (-1.0f * fabs(_data_u_2m1_30_10[_stride_u_0 * ctr_0]) +
+                   1.0f) *
+                      (-1.0f * fabs(_data_u_2m1_31_10[_stride_u_0 * ctr_0]) +
+                       1.0f) *
+                      -1.0f *
                       ((0.0f < _data_u_2m1_32_10[_stride_u_0 * ctr_0])
                            ? (1.0f)
                            : (0.0f)) *
@@ -2011,16 +2080,18 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_u_2m1_32_10[_stride_u_0 * ctr_0] +
                   _data_j_20_32_10[_stride_j_0 * ctr_0];
               _data_j_20_33_10[_stride_j_0 * ctr_0] =
-                  (1.0f - fabs(_data_u_20_32_10[_stride_u_0 * ctr_0])) *
+                  (-1.0f * fabs(_data_u_20_32_10[_stride_u_0 * ctr_0]) + 1.0f) *
                       ((0.0f > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
                         0.0f > _data_u_20_31_10[_stride_u_0 * ctr_0])
                            ? (1.0f)
                            : (0.0f)) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_30_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_31_10[_stride_u_0 * ctr_0] -
-                  (1.0f -
-                   fabs(_data_u_20_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0])) *
+                      _data_u_20_31_10[_stride_u_0 * ctr_0] +
+                  (-1.0f * fabs(_data_u_20_32_1m1[_stride_u_0 * ctr_0 -
+                                                  _stride_u_0]) +
+                   1.0f) *
+                      -1.0f *
                       ((0.0f < _data_u_20_30_1m1[_stride_u_0 * ctr_0 -
                                                  _stride_u_0] &&
                         0.0f < _data_u_20_31_1m1[_stride_u_0 * ctr_0 -
@@ -2032,7 +2103,8 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_u_20_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] +
                   _data_j_20_33_10[_stride_j_0 * ctr_0];
               _data_j_20_34_10[_stride_j_0 * ctr_0] =
-                  -(1.0f - fabs(_data_u_20_32_10[_stride_u_0 * ctr_0])) *
+                  (-1.0f * fabs(_data_u_20_32_10[_stride_u_0 * ctr_0]) + 1.0f) *
+                      -1.0f *
                       ((0.0f > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
                         0.0f < _data_u_20_31_10[_stride_u_0 * ctr_0])
                            ? (1.0f)
@@ -2040,8 +2112,9 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_30_10[_stride_u_0 * ctr_0] *
                       _data_u_20_31_10[_stride_u_0 * ctr_0] +
-                  (1.0f -
-                   fabs(_data_u_20_32_11[_stride_u_0 * ctr_0 - _stride_u_0])) *
+                  (-1.0f * fabs(_data_u_20_32_11[_stride_u_0 * ctr_0 -
+                                                 _stride_u_0]) +
+                   1.0f) *
                       ((0.0f > _data_u_20_31_11[_stride_u_0 * ctr_0 -
                                                 _stride_u_0] &&
                         0.0f <
@@ -2053,16 +2126,18 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_u_20_31_11[_stride_u_0 * ctr_0 - _stride_u_0] +
                   _data_j_20_34_10[_stride_j_0 * ctr_0];
               _data_j_20_35_10[_stride_j_0 * ctr_0] =
-                  (1.0f - fabs(_data_u_20_31_10[_stride_u_0 * ctr_0])) *
+                  (-1.0f * fabs(_data_u_20_31_10[_stride_u_0 * ctr_0]) + 1.0f) *
                       ((0.0f > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
                         0.0f > _data_u_20_32_10[_stride_u_0 * ctr_0])
                            ? (1.0f)
                            : (0.0f)) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_30_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_32_10[_stride_u_0 * ctr_0] -
-                  (1.0f -
-                   fabs(_data_u_2m1_31_10[_stride_u_0 * ctr_0 - _stride_u_0])) *
+                      _data_u_20_32_10[_stride_u_0 * ctr_0] +
+                  (-1.0f * fabs(_data_u_2m1_31_10[_stride_u_0 * ctr_0 -
+                                                  _stride_u_0]) +
+                   1.0f) *
+                      -1.0f *
                       ((0.0f < _data_u_2m1_30_10[_stride_u_0 * ctr_0 -
                                                  _stride_u_0] &&
                         0.0f < _data_u_2m1_32_10[_stride_u_0 * ctr_0 -
@@ -2074,7 +2149,8 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_u_2m1_32_10[_stride_u_0 * ctr_0 - _stride_u_0] +
                   _data_j_20_35_10[_stride_j_0 * ctr_0];
               _data_j_20_36_10[_stride_j_0 * ctr_0] =
-                  -(1.0f - fabs(_data_u_20_31_10[_stride_u_0 * ctr_0])) *
+                  (-1.0f * fabs(_data_u_20_31_10[_stride_u_0 * ctr_0]) + 1.0f) *
+                      -1.0f *
                       ((0.0f > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
                         0.0f < _data_u_20_32_10[_stride_u_0 * ctr_0])
                            ? (1.0f)
@@ -2082,8 +2158,9 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_30_10[_stride_u_0 * ctr_0] *
                       _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                  (1.0f -
-                   fabs(_data_u_21_31_10[_stride_u_0 * ctr_0 - _stride_u_0])) *
+                  (-1.0f * fabs(_data_u_21_31_10[_stride_u_0 * ctr_0 -
+                                                 _stride_u_0]) +
+                   1.0f) *
                       ((0.0f > _data_u_21_32_10[_stride_u_0 * ctr_0 -
                                                 _stride_u_0] &&
                         0.0f <
@@ -2095,15 +2172,17 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_u_21_32_10[_stride_u_0 * ctr_0 - _stride_u_0] +
                   _data_j_20_36_10[_stride_j_0 * ctr_0];
               _data_j_20_37_10[_stride_j_0 * ctr_0] =
-                  (1.0f - fabs(_data_u_20_30_10[_stride_u_0 * ctr_0])) *
+                  (-1.0f * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0f) *
                       ((0.0f > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
                         0.0f > _data_u_20_32_10[_stride_u_0 * ctr_0])
                            ? (1.0f)
                            : (0.0f)) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_31_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_32_10[_stride_u_0 * ctr_0] -
-                  (1.0f - fabs(_data_u_2m1_30_1m1[_stride_u_0 * ctr_0])) *
+                      _data_u_20_32_10[_stride_u_0 * ctr_0] +
+                  (-1.0f * fabs(_data_u_2m1_30_1m1[_stride_u_0 * ctr_0]) +
+                   1.0f) *
+                      -1.0f *
                       ((0.0f < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0] &&
                         0.0f < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0])
                            ? (1.0f)
@@ -2113,7 +2192,8 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_u_2m1_32_1m1[_stride_u_0 * ctr_0] +
                   _data_j_20_37_10[_stride_j_0 * ctr_0];
               _data_j_20_38_10[_stride_j_0 * ctr_0] =
-                  -(1.0f - fabs(_data_u_20_30_10[_stride_u_0 * ctr_0])) *
+                  (-1.0f * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0f) *
+                      -1.0f *
                       ((0.0f > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
                         0.0f < _data_u_20_32_10[_stride_u_0 * ctr_0])
                            ? (1.0f)
@@ -2121,7 +2201,8 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_31_10[_stride_u_0 * ctr_0] *
                       _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                  (1.0f - fabs(_data_u_21_30_1m1[_stride_u_0 * ctr_0])) *
+                  (-1.0f * fabs(_data_u_21_30_1m1[_stride_u_0 * ctr_0]) +
+                   1.0f) *
                       ((0.0f > _data_u_21_32_1m1[_stride_u_0 * ctr_0] &&
                         0.0f < _data_u_21_31_1m1[_stride_u_0 * ctr_0])
                            ? (1.0f)
@@ -2131,23 +2212,25 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_u_21_32_1m1[_stride_u_0 * ctr_0] +
                   _data_j_20_38_10[_stride_j_0 * ctr_0];
               _data_j_20_39_10[_stride_j_0 * ctr_0] =
-                  -((0.0f > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                     0.0f > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                     0.0f > _data_u_20_32_10[_stride_u_0 * ctr_0])
-                        ? (1.0f)
-                        : (0.0f)) *
+                  -1.0f *
+                      ((0.0f > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
+                        0.0f > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
+                        0.0f > _data_u_20_32_10[_stride_u_0 * ctr_0])
+                           ? (1.0f)
+                           : (0.0f)) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_30_10[_stride_u_0 * ctr_0] *
                       _data_u_20_31_10[_stride_u_0 * ctr_0] *
                       _data_u_20_32_10[_stride_u_0 * ctr_0] -
-                  ((0.0f <
-                        _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                    0.0f <
-                        _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                    0.0f <
-                        _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0])
-                       ? (1.0f)
-                       : (0.0f)) *
+                  1.0f *
+                      ((0.0f < _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 -
+                                                  _stride_u_0] &&
+                        0.0f < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 -
+                                                  _stride_u_0] &&
+                        0.0f < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 -
+                                                  _stride_u_0])
+                           ? (1.0f)
+                           : (0.0f)) *
                       _data_rho_2m1_1m1[_stride_rho_0 * ctr_0 - _stride_rho_0] *
                       _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
                       _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
@@ -2198,22 +2281,25 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_u_2m1_32_11[_stride_u_0 * ctr_0 - _stride_u_0] +
                   _data_j_20_311_10[_stride_j_0 * ctr_0];
               _data_j_20_312_10[_stride_j_0 * ctr_0] =
-                  -((0.0f > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                     0.0f < _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                     0.0f < _data_u_20_32_10[_stride_u_0 * ctr_0])
-                        ? (1.0f)
-                        : (0.0f)) *
+                  -1.0f *
+                      ((0.0f > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
+                        0.0f < _data_u_20_31_10[_stride_u_0 * ctr_0] &&
+                        0.0f < _data_u_20_32_10[_stride_u_0 * ctr_0])
+                           ? (1.0f)
+                           : (0.0f)) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_30_10[_stride_u_0 * ctr_0] *
                       _data_u_20_31_10[_stride_u_0 * ctr_0] *
                       _data_u_20_32_10[_stride_u_0 * ctr_0] -
-                  ((0.0f >
-                        _data_u_21_31_11[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                    0.0f >
-                        _data_u_21_32_11[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                    0.0f < _data_u_21_30_11[_stride_u_0 * ctr_0 - _stride_u_0])
-                       ? (1.0f)
-                       : (0.0f)) *
+                  1.0f *
+                      ((0.0f > _data_u_21_31_11[_stride_u_0 * ctr_0 -
+                                                _stride_u_0] &&
+                        0.0f > _data_u_21_32_11[_stride_u_0 * ctr_0 -
+                                                _stride_u_0] &&
+                        0.0f <
+                            _data_u_21_30_11[_stride_u_0 * ctr_0 - _stride_u_0])
+                           ? (1.0f)
+                           : (0.0f)) *
                       _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] *
                       _data_u_21_30_11[_stride_u_0 * ctr_0 - _stride_u_0] *
                       _data_u_21_31_11[_stride_u_0 * ctr_0 - _stride_u_0] *
@@ -2221,11 +2307,14 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                   _data_j_20_312_10[_stride_j_0 * ctr_0];
             }
             _data_j_20_30_10[_stride_j_0 * (_size_j_0 - 1)] =
-                -(1.0f - fabs(_data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1) -
-                                               _stride_u_0])) *
-                    (1.0f -
-                     fabs(_data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1) -
-                                           _stride_u_0])) *
+                (-1.0f * fabs(_data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1) -
+                                               _stride_u_0]) +
+                 1.0f) *
+                    (-1.0f *
+                         fabs(_data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1) -
+                                               _stride_u_0]) +
+                     1.0f) *
+                    -1.0f *
                     ((0.0f < _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1) -
                                               _stride_u_0])
                          ? (1.0f)
@@ -2233,10 +2322,13 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                     _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1) -
                                     _stride_rho_0] *
                     _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1) -
-                                     _stride_u_0] -
-                (1.0f - fabs(_data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)])) *
-                    (1.0f -
-                     fabs(_data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])) *
+                                     _stride_u_0] +
+                (-1.0f * fabs(_data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)]) +
+                 1.0f) *
+                    (-1.0f *
+                         fabs(_data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) +
+                     1.0f) *
+                    -1.0f *
                     ((0.0f > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)])
                          ? (1.0f)
                          : (0.0f)) *
@@ -2244,16 +2336,19 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                     _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] +
                 _data_j_20_30_10[_stride_j_0 * (_size_j_0 - 1)];
             _data_j_20_33_10[_stride_j_0 * (_size_j_0 - 1)] =
-                (1.0f - fabs(_data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])) *
+                (-1.0f * fabs(_data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) +
+                 1.0f) *
                     ((0.0f > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
                       0.0f > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)])
                          ? (1.0f)
                          : (0.0f)) *
                     _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                     _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
-                    _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] -
-                (1.0f - fabs(_data_u_20_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                               _stride_u_0])) *
+                    _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] +
+                (-1.0f * fabs(_data_u_20_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                                _stride_u_0]) +
+                 1.0f) *
+                    -1.0f *
                     ((0.0f < _data_u_20_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
                                                _stride_u_0] &&
                       0.0f < _data_u_20_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
@@ -2268,8 +2363,9 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                                       _stride_u_0] +
                 _data_j_20_33_10[_stride_j_0 * (_size_j_0 - 1)];
             _data_j_20_34_10[_stride_j_0 * (_size_j_0 - 1)] =
-                -(1.0f -
-                  fabs(_data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])) *
+                (-1.0f * fabs(_data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) +
+                 1.0f) *
+                    -1.0f *
                     ((0.0f > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
                       0.0f < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)])
                          ? (1.0f)
@@ -2277,8 +2373,9 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                     _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                     _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
                     _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] +
-                (1.0f - fabs(_data_u_20_32_11[_stride_u_0 * (_size_j_0 - 1) -
-                                              _stride_u_0])) *
+                (-1.0f * fabs(_data_u_20_32_11[_stride_u_0 * (_size_j_0 - 1) -
+                                               _stride_u_0]) +
+                 1.0f) *
                     ((0.0f > _data_u_20_31_11[_stride_u_0 * (_size_j_0 - 1) -
                                               _stride_u_0] &&
                       0.0f < _data_u_20_30_11[_stride_u_0 * (_size_j_0 - 1) -
@@ -2293,16 +2390,19 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                                      _stride_u_0] +
                 _data_j_20_34_10[_stride_j_0 * (_size_j_0 - 1)];
             _data_j_20_35_10[_stride_j_0 * (_size_j_0 - 1)] =
-                (1.0f - fabs(_data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)])) *
+                (-1.0f * fabs(_data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)]) +
+                 1.0f) *
                     ((0.0f > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
                       0.0f > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
                          ? (1.0f)
                          : (0.0f)) *
                     _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                     _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
-                    _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] -
-                (1.0f - fabs(_data_u_2m1_31_10[_stride_u_0 * (_size_j_0 - 1) -
-                                               _stride_u_0])) *
+                    _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
+                (-1.0f * fabs(_data_u_2m1_31_10[_stride_u_0 * (_size_j_0 - 1) -
+                                                _stride_u_0]) +
+                 1.0f) *
+                    -1.0f *
                     ((0.0f < _data_u_2m1_30_10[_stride_u_0 * (_size_j_0 - 1) -
                                                _stride_u_0] &&
                       0.0f < _data_u_2m1_32_10[_stride_u_0 * (_size_j_0 - 1) -
@@ -2317,8 +2417,9 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                                       _stride_u_0] +
                 _data_j_20_35_10[_stride_j_0 * (_size_j_0 - 1)];
             _data_j_20_36_10[_stride_j_0 * (_size_j_0 - 1)] =
-                -(1.0f -
-                  fabs(_data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)])) *
+                (-1.0f * fabs(_data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)]) +
+                 1.0f) *
+                    -1.0f *
                     ((0.0f > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
                       0.0f < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
                          ? (1.0f)
@@ -2326,8 +2427,9 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                     _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                     _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
                     _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
-                (1.0f - fabs(_data_u_21_31_10[_stride_u_0 * (_size_j_0 - 1) -
-                                              _stride_u_0])) *
+                (-1.0f * fabs(_data_u_21_31_10[_stride_u_0 * (_size_j_0 - 1) -
+                                               _stride_u_0]) +
+                 1.0f) *
                     ((0.0f > _data_u_21_32_10[_stride_u_0 * (_size_j_0 - 1) -
                                               _stride_u_0] &&
                       0.0f < _data_u_21_30_10[_stride_u_0 * (_size_j_0 - 1) -
@@ -2342,23 +2444,25 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                                      _stride_u_0] +
                 _data_j_20_36_10[_stride_j_0 * (_size_j_0 - 1)];
             _data_j_20_39_10[_stride_j_0 * (_size_j_0 - 1)] =
-                -((0.0f > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                   0.0f > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                   0.0f > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                      ? (1.0f)
-                      : (0.0f)) *
+                -1.0f *
+                    ((0.0f > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                      0.0f > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                      0.0f > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
+                         ? (1.0f)
+                         : (0.0f)) *
                     _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                     _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
                     _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
                     _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] -
-                ((0.0f < _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                            _stride_u_0] &&
-                  0.0f < _data_u_2m1_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                            _stride_u_0] &&
-                  0.0f < _data_u_2m1_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                            _stride_u_0])
-                     ? (1.0f)
-                     : (0.0f)) *
+                1.0f *
+                    ((0.0f < _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                                _stride_u_0] &&
+                      0.0f < _data_u_2m1_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                                _stride_u_0] &&
+                      0.0f < _data_u_2m1_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                                _stride_u_0])
+                         ? (1.0f)
+                         : (0.0f)) *
                     _data_rho_2m1_1m1[_stride_rho_0 * (_size_j_0 - 1) -
                                       _stride_rho_0] *
                     _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
@@ -2423,23 +2527,25 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                                       _stride_u_0] +
                 _data_j_20_311_10[_stride_j_0 * (_size_j_0 - 1)];
             _data_j_20_312_10[_stride_j_0 * (_size_j_0 - 1)] =
-                -((0.0f > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                   0.0f < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                   0.0f < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                      ? (1.0f)
-                      : (0.0f)) *
+                -1.0f *
+                    ((0.0f > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                      0.0f < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                      0.0f < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
+                         ? (1.0f)
+                         : (0.0f)) *
                     _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                     _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
                     _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
                     _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] -
-                ((0.0f > _data_u_21_31_11[_stride_u_0 * (_size_j_0 - 1) -
-                                          _stride_u_0] &&
-                  0.0f > _data_u_21_32_11[_stride_u_0 * (_size_j_0 - 1) -
-                                          _stride_u_0] &&
-                  0.0f < _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) -
-                                          _stride_u_0])
-                     ? (1.0f)
-                     : (0.0f)) *
+                1.0f *
+                    ((0.0f > _data_u_21_31_11[_stride_u_0 * (_size_j_0 - 1) -
+                                              _stride_u_0] &&
+                      0.0f > _data_u_21_32_11[_stride_u_0 * (_size_j_0 - 1) -
+                                              _stride_u_0] &&
+                      0.0f < _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) -
+                                              _stride_u_0])
+                         ? (1.0f)
+                         : (0.0f)) *
                     _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
                                     _stride_rho_0] *
                     _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) -
@@ -2454,8 +2560,8 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
         }
         {
           {
-            if (_size_j_0 > 2 && _size_j_1 > 1 && ctr_2 > 0 &&
-                _size_j_2 - ctr_2 > 1) {
+            if (ctr_2 > 0 && _size_j_1 - 1 > 0 && 1 < _size_j_0 - 1 &&
+                ctr_2 < _size_j_2 - 1) {
               float *RESTRICT _data_j_20_31 =
                   _data_j + _stride_j_2 * ctr_2 + _stride_j_3;
               float *RESTRICT _data_j_20_31_10 =
@@ -2484,21 +2590,23 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               float *RESTRICT _data_u_20_31_1m1 =
                   _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_31;
               _data_j_20_31_10[_stride_j_0] =
-                  -(1.0f - fabs(_data_u_20_30_10[_stride_u_0])) *
-                      (1.0f - fabs(_data_u_20_32_10[_stride_u_0])) *
+                  (-1.0f * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0f) *
+                      (-1.0f * fabs(_data_u_20_32_10[_stride_u_0]) + 1.0f) *
+                      -1.0f *
                       ((0.0f > _data_u_20_31_10[_stride_u_0]) ? (1.0f)
                                                               : (0.0f)) *
                       _data_rho_20_10[_stride_rho_0] *
-                      _data_u_20_31_10[_stride_u_0] -
-                  (1.0f - fabs(_data_u_20_30_1m1[_stride_u_0])) *
-                      (1.0f - fabs(_data_u_20_32_1m1[_stride_u_0])) *
+                      _data_u_20_31_10[_stride_u_0] +
+                  (-1.0f * fabs(_data_u_20_30_1m1[_stride_u_0]) + 1.0f) *
+                      (-1.0f * fabs(_data_u_20_32_1m1[_stride_u_0]) + 1.0f) *
+                      -1.0f *
                       ((0.0f < _data_u_20_31_1m1[_stride_u_0]) ? (1.0f)
                                                                : (0.0f)) *
                       _data_rho_20_1m1[_stride_rho_0] *
                       _data_u_20_31_1m1[_stride_u_0] +
                   _data_j_20_31_10[_stride_j_0];
             }
-            if (_size_j_1 > 1 && ctr_2 > 0 && _size_j_2 - ctr_2 > 1) {
+            if (ctr_2 > 0 && _size_j_1 - 1 > 0 && ctr_2 < _size_j_2 - 1) {
               float *RESTRICT _data_j_20_33 =
                   _data_j + _stride_j_2 * ctr_2 + 3 * _stride_j_3;
               float *RESTRICT _data_j_20_33_10 =
@@ -2527,15 +2635,15 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               float *RESTRICT _data_u_20_31_1m1 =
                   _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_31;
               _data_j_20_33_10[_stride_j_0] =
-                  (1.0f - fabs(_data_u_20_32_10[_stride_u_0])) *
+                  (-1.0f * fabs(_data_u_20_32_10[_stride_u_0]) + 1.0f) *
                       ((0.0f > _data_u_20_30_10[_stride_u_0] &&
                         0.0f > _data_u_20_31_10[_stride_u_0])
                            ? (1.0f)
                            : (0.0f)) *
                       _data_rho_20_10[_stride_rho_0] *
                       _data_u_20_30_10[_stride_u_0] *
-                      _data_u_20_31_10[_stride_u_0] -
-                  (1.0f - fabs(_data_u_20_32_1m1[0])) *
+                      _data_u_20_31_10[_stride_u_0] +
+                  (-1.0f * fabs(_data_u_20_32_1m1[0]) + 1.0f) * -1.0f *
                       ((0.0f < _data_u_20_30_1m1[0] &&
                         0.0f < _data_u_20_31_1m1[0])
                            ? (1.0f)
@@ -2544,7 +2652,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_u_20_31_1m1[0] +
                   _data_j_20_33_10[_stride_j_0];
             }
-            if (_size_j_0 > 2 && _size_j_1 > 1 && ctr_2 > 0) {
+            if (ctr_2 > 0 && _size_j_1 - 1 > 0 && 1 < _size_j_0 - 1) {
               float *RESTRICT _data_j_20_37 =
                   _data_j + _stride_j_2 * ctr_2 + 7 * _stride_j_3;
               float *RESTRICT _data_j_20_37_10 =
@@ -2581,15 +2689,16 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               float *RESTRICT _data_u_2m1_32_1m1 =
                   _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_32;
               _data_j_20_37_10[_stride_j_0] =
-                  (1.0f - fabs(_data_u_20_30_10[_stride_u_0])) *
+                  (-1.0f * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0f) *
                       ((0.0f > _data_u_20_31_10[_stride_u_0] &&
                         0.0f > _data_u_20_32_10[_stride_u_0])
                            ? (1.0f)
                            : (0.0f)) *
                       _data_rho_20_10[_stride_rho_0] *
                       _data_u_20_31_10[_stride_u_0] *
-                      _data_u_20_32_10[_stride_u_0] -
-                  (1.0f - fabs(_data_u_2m1_30_1m1[_stride_u_0])) *
+                      _data_u_20_32_10[_stride_u_0] +
+                  (-1.0f * fabs(_data_u_2m1_30_1m1[_stride_u_0]) + 1.0f) *
+                      -1.0f *
                       ((0.0f < _data_u_2m1_31_1m1[_stride_u_0] &&
                         0.0f < _data_u_2m1_32_1m1[_stride_u_0])
                            ? (1.0f)
@@ -2599,7 +2708,8 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_u_2m1_32_1m1[_stride_u_0] +
                   _data_j_20_37_10[_stride_j_0];
             }
-            if (_size_j_0 > 2 && _size_j_1 > 1 && _size_j_2 - ctr_2 > 1) {
+            if (_size_j_1 - 1 > 0 && 1 < _size_j_0 - 1 &&
+                ctr_2 < _size_j_2 - 1) {
               float *RESTRICT _data_j_20_38 =
                   _data_j + _stride_j_2 * ctr_2 + 8 * _stride_j_3;
               float *RESTRICT _data_j_20_38_10 =
@@ -2636,7 +2746,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               float *RESTRICT _data_u_20_32_10 =
                   _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
               _data_j_20_38_10[_stride_j_0] =
-                  -(1.0f - fabs(_data_u_20_30_10[_stride_u_0])) *
+                  (-1.0f * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0f) * -1.0f *
                       ((0.0f > _data_u_20_31_10[_stride_u_0] &&
                         0.0f < _data_u_20_32_10[_stride_u_0])
                            ? (1.0f)
@@ -2644,7 +2754,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_rho_20_10[_stride_rho_0] *
                       _data_u_20_31_10[_stride_u_0] *
                       _data_u_20_32_10[_stride_u_0] +
-                  (1.0f - fabs(_data_u_21_30_1m1[_stride_u_0])) *
+                  (-1.0f * fabs(_data_u_21_30_1m1[_stride_u_0]) + 1.0f) *
                       ((0.0f > _data_u_21_32_1m1[_stride_u_0] &&
                         0.0f < _data_u_21_31_1m1[_stride_u_0])
                            ? (1.0f)
@@ -2654,7 +2764,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_u_21_32_1m1[_stride_u_0] +
                   _data_j_20_38_10[_stride_j_0];
             }
-            if (_size_j_1 > 1 && ctr_2 > 0) {
+            if (ctr_2 > 0 && _size_j_1 - 1 > 0) {
               float *RESTRICT _data_j_20_39 =
                   _data_j + _stride_j_2 * ctr_2 + 9 * _stride_j_3;
               float *RESTRICT _data_j_20_39_10 =
@@ -2691,25 +2801,27 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               float *RESTRICT _data_u_20_32_10 =
                   _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
               _data_j_20_39_10[_stride_j_0] =
-                  -((0.0f > _data_u_20_30_10[_stride_u_0] &&
-                     0.0f > _data_u_20_31_10[_stride_u_0] &&
-                     0.0f > _data_u_20_32_10[_stride_u_0])
-                        ? (1.0f)
-                        : (0.0f)) *
+                  -1.0f *
+                      ((0.0f > _data_u_20_30_10[_stride_u_0] &&
+                        0.0f > _data_u_20_31_10[_stride_u_0] &&
+                        0.0f > _data_u_20_32_10[_stride_u_0])
+                           ? (1.0f)
+                           : (0.0f)) *
                       _data_rho_20_10[_stride_rho_0] *
                       _data_u_20_30_10[_stride_u_0] *
                       _data_u_20_31_10[_stride_u_0] *
                       _data_u_20_32_10[_stride_u_0] -
-                  ((0.0f < _data_u_2m1_30_1m1[0] &&
-                    0.0f < _data_u_2m1_31_1m1[0] &&
-                    0.0f < _data_u_2m1_32_1m1[0])
-                       ? (1.0f)
-                       : (0.0f)) *
+                  1.0f *
+                      ((0.0f < _data_u_2m1_30_1m1[0] &&
+                        0.0f < _data_u_2m1_31_1m1[0] &&
+                        0.0f < _data_u_2m1_32_1m1[0])
+                           ? (1.0f)
+                           : (0.0f)) *
                       _data_rho_2m1_1m1[0] * _data_u_2m1_30_1m1[0] *
                       _data_u_2m1_31_1m1[0] * _data_u_2m1_32_1m1[0] +
                   _data_j_20_39_10[_stride_j_0];
             }
-            if (_size_j_1 > 1 && _size_j_2 - ctr_2 > 1) {
+            if (_size_j_1 - 1 > 0 && ctr_2 < _size_j_2 - 1) {
               float *RESTRICT _data_j_20_310 =
                   _data_j + _stride_j_2 * ctr_2 + 10 * _stride_j_3;
               float *RESTRICT _data_j_20_310_10 =
@@ -2765,8 +2877,8 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
             }
           }
           for (int64_t ctr_0 = 2; ctr_0 < _size_j_0 - 1; ctr_0 += 1) {
-            if (_size_j_1 > 1 && ctr_2 > 0 && _size_j_0 - ctr_0 > 1 &&
-                _size_j_2 - ctr_2 > 1) {
+            if (ctr_2 > 0 && _size_j_1 - 1 > 0 && ctr_0 < _size_j_0 - 1 &&
+                ctr_2 < _size_j_2 - 1) {
               float *RESTRICT _data_j_20_31 =
                   _data_j + _stride_j_2 * ctr_2 + _stride_j_3;
               float *RESTRICT _data_j_20_31_10 =
@@ -2795,15 +2907,20 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               float *RESTRICT _data_u_20_31_1m1 =
                   _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_31;
               _data_j_20_31_10[_stride_j_0 * ctr_0] =
-                  -(1.0f - fabs(_data_u_20_30_10[_stride_u_0 * ctr_0])) *
-                      (1.0f - fabs(_data_u_20_32_10[_stride_u_0 * ctr_0])) *
+                  (-1.0f * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0f) *
+                      (-1.0f * fabs(_data_u_20_32_10[_stride_u_0 * ctr_0]) +
+                       1.0f) *
+                      -1.0f *
                       ((0.0f > _data_u_20_31_10[_stride_u_0 * ctr_0])
                            ? (1.0f)
                            : (0.0f)) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_31_10[_stride_u_0 * ctr_0] -
-                  (1.0f - fabs(_data_u_20_30_1m1[_stride_u_0 * ctr_0])) *
-                      (1.0f - fabs(_data_u_20_32_1m1[_stride_u_0 * ctr_0])) *
+                      _data_u_20_31_10[_stride_u_0 * ctr_0] +
+                  (-1.0f * fabs(_data_u_20_30_1m1[_stride_u_0 * ctr_0]) +
+                   1.0f) *
+                      (-1.0f * fabs(_data_u_20_32_1m1[_stride_u_0 * ctr_0]) +
+                       1.0f) *
+                      -1.0f *
                       ((0.0f < _data_u_20_31_1m1[_stride_u_0 * ctr_0])
                            ? (1.0f)
                            : (0.0f)) *
@@ -2811,7 +2928,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_u_20_31_1m1[_stride_u_0 * ctr_0] +
                   _data_j_20_31_10[_stride_j_0 * ctr_0];
             }
-            if (_size_j_1 > 1 && ctr_2 > 0 && _size_j_2 - ctr_2 > 1) {
+            if (ctr_2 > 0 && _size_j_1 - 1 > 0 && ctr_2 < _size_j_2 - 1) {
               float *RESTRICT _data_j_20_33 =
                   _data_j + _stride_j_2 * ctr_2 + 3 * _stride_j_3;
               float *RESTRICT _data_j_20_33_10 =
@@ -2840,16 +2957,18 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               float *RESTRICT _data_u_20_31_1m1 =
                   _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_31;
               _data_j_20_33_10[_stride_j_0 * ctr_0] =
-                  (1.0f - fabs(_data_u_20_32_10[_stride_u_0 * ctr_0])) *
+                  (-1.0f * fabs(_data_u_20_32_10[_stride_u_0 * ctr_0]) + 1.0f) *
                       ((0.0f > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
                         0.0f > _data_u_20_31_10[_stride_u_0 * ctr_0])
                            ? (1.0f)
                            : (0.0f)) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_30_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_31_10[_stride_u_0 * ctr_0] -
-                  (1.0f -
-                   fabs(_data_u_20_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0])) *
+                      _data_u_20_31_10[_stride_u_0 * ctr_0] +
+                  (-1.0f * fabs(_data_u_20_32_1m1[_stride_u_0 * ctr_0 -
+                                                  _stride_u_0]) +
+                   1.0f) *
+                      -1.0f *
                       ((0.0f < _data_u_20_30_1m1[_stride_u_0 * ctr_0 -
                                                  _stride_u_0] &&
                         0.0f < _data_u_20_31_1m1[_stride_u_0 * ctr_0 -
@@ -2861,7 +2980,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_u_20_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] +
                   _data_j_20_33_10[_stride_j_0 * ctr_0];
             }
-            if (_size_j_1 > 1 && ctr_2 > 0 && _size_j_0 - ctr_0 > 1) {
+            if (ctr_2 > 0 && _size_j_1 - 1 > 0 && ctr_0 < _size_j_0 - 1) {
               float *RESTRICT _data_j_20_37 =
                   _data_j + _stride_j_2 * ctr_2 + 7 * _stride_j_3;
               float *RESTRICT _data_j_20_37_10 =
@@ -2898,15 +3017,17 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               float *RESTRICT _data_u_2m1_32_1m1 =
                   _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_32;
               _data_j_20_37_10[_stride_j_0 * ctr_0] =
-                  (1.0f - fabs(_data_u_20_30_10[_stride_u_0 * ctr_0])) *
+                  (-1.0f * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0f) *
                       ((0.0f > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
                         0.0f > _data_u_20_32_10[_stride_u_0 * ctr_0])
                            ? (1.0f)
                            : (0.0f)) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_31_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_32_10[_stride_u_0 * ctr_0] -
-                  (1.0f - fabs(_data_u_2m1_30_1m1[_stride_u_0 * ctr_0])) *
+                      _data_u_20_32_10[_stride_u_0 * ctr_0] +
+                  (-1.0f * fabs(_data_u_2m1_30_1m1[_stride_u_0 * ctr_0]) +
+                   1.0f) *
+                      -1.0f *
                       ((0.0f < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0] &&
                         0.0f < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0])
                            ? (1.0f)
@@ -2916,8 +3037,8 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_u_2m1_32_1m1[_stride_u_0 * ctr_0] +
                   _data_j_20_37_10[_stride_j_0 * ctr_0];
             }
-            if (_size_j_1 > 1 && _size_j_0 - ctr_0 > 1 &&
-                _size_j_2 - ctr_2 > 1) {
+            if (_size_j_1 - 1 > 0 && ctr_0 < _size_j_0 - 1 &&
+                ctr_2 < _size_j_2 - 1) {
               float *RESTRICT _data_j_20_38 =
                   _data_j + _stride_j_2 * ctr_2 + 8 * _stride_j_3;
               float *RESTRICT _data_j_20_38_10 =
@@ -2954,7 +3075,8 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               float *RESTRICT _data_u_20_32_10 =
                   _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
               _data_j_20_38_10[_stride_j_0 * ctr_0] =
-                  -(1.0f - fabs(_data_u_20_30_10[_stride_u_0 * ctr_0])) *
+                  (-1.0f * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0f) *
+                      -1.0f *
                       ((0.0f > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
                         0.0f < _data_u_20_32_10[_stride_u_0 * ctr_0])
                            ? (1.0f)
@@ -2962,7 +3084,8 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_31_10[_stride_u_0 * ctr_0] *
                       _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                  (1.0f - fabs(_data_u_21_30_1m1[_stride_u_0 * ctr_0])) *
+                  (-1.0f * fabs(_data_u_21_30_1m1[_stride_u_0 * ctr_0]) +
+                   1.0f) *
                       ((0.0f > _data_u_21_32_1m1[_stride_u_0 * ctr_0] &&
                         0.0f < _data_u_21_31_1m1[_stride_u_0 * ctr_0])
                            ? (1.0f)
@@ -2972,7 +3095,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_u_21_32_1m1[_stride_u_0 * ctr_0] +
                   _data_j_20_38_10[_stride_j_0 * ctr_0];
             }
-            if (_size_j_1 > 1 && ctr_2 > 0) {
+            if (ctr_2 > 0 && _size_j_1 - 1 > 0) {
               float *RESTRICT _data_j_20_39 =
                   _data_j + _stride_j_2 * ctr_2 + 9 * _stride_j_3;
               float *RESTRICT _data_j_20_39_10 =
@@ -3009,30 +3132,32 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               float *RESTRICT _data_u_20_32_10 =
                   _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
               _data_j_20_39_10[_stride_j_0 * ctr_0] =
-                  -((0.0f > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                     0.0f > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                     0.0f > _data_u_20_32_10[_stride_u_0 * ctr_0])
-                        ? (1.0f)
-                        : (0.0f)) *
+                  -1.0f *
+                      ((0.0f > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
+                        0.0f > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
+                        0.0f > _data_u_20_32_10[_stride_u_0 * ctr_0])
+                           ? (1.0f)
+                           : (0.0f)) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_30_10[_stride_u_0 * ctr_0] *
                       _data_u_20_31_10[_stride_u_0 * ctr_0] *
                       _data_u_20_32_10[_stride_u_0 * ctr_0] -
-                  ((0.0f <
-                        _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                    0.0f <
-                        _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                    0.0f <
-                        _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0])
-                       ? (1.0f)
-                       : (0.0f)) *
+                  1.0f *
+                      ((0.0f < _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 -
+                                                  _stride_u_0] &&
+                        0.0f < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 -
+                                                  _stride_u_0] &&
+                        0.0f < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 -
+                                                  _stride_u_0])
+                           ? (1.0f)
+                           : (0.0f)) *
                       _data_rho_2m1_1m1[_stride_rho_0 * ctr_0 - _stride_rho_0] *
                       _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
                       _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
                       _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] +
                   _data_j_20_39_10[_stride_j_0 * ctr_0];
             }
-            if (_size_j_1 > 1 && _size_j_2 - ctr_2 > 1) {
+            if (_size_j_1 - 1 > 0 && ctr_2 < _size_j_2 - 1) {
               float *RESTRICT _data_j_20_310 =
                   _data_j + _stride_j_2 * ctr_2 + 10 * _stride_j_3;
               float *RESTRICT _data_j_20_310_10 =
@@ -3093,7 +3218,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
             }
           }
           {
-            if (_size_j_1 > 1 && ctr_2 > 0 && _size_j_2 - ctr_2 > 1) {
+            if (ctr_2 > 0 && _size_j_1 - 1 > 0 && ctr_2 < _size_j_2 - 1) {
               float *RESTRICT _data_j_20_33 =
                   _data_j + _stride_j_2 * ctr_2 + 3 * _stride_j_3;
               float *RESTRICT _data_j_20_33_10 =
@@ -3122,8 +3247,9 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               float *RESTRICT _data_u_20_31_1m1 =
                   _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_31;
               _data_j_20_33_10[_stride_j_0 * (_size_j_0 - 1)] =
-                  (1.0f -
-                   fabs(_data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])) *
+                  (-1.0f *
+                       fabs(_data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) +
+                   1.0f) *
                       ((0.0f >
                             _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
                         0.0f > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)])
@@ -3131,9 +3257,12 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                            : (0.0f)) *
                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                       _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
-                      _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] -
-                  (1.0f - fabs(_data_u_20_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                                 _stride_u_0])) *
+                      _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] +
+                  (-1.0f *
+                       fabs(_data_u_20_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                              _stride_u_0]) +
+                   1.0f) *
+                      -1.0f *
                       ((0.0f < _data_u_20_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
                                                  _stride_u_0] &&
                         0.0f < _data_u_20_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
@@ -3148,7 +3277,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                                         _stride_u_0] +
                   _data_j_20_33_10[_stride_j_0 * (_size_j_0 - 1)];
             }
-            if (_size_j_1 > 1 && ctr_2 > 0) {
+            if (ctr_2 > 0 && _size_j_1 - 1 > 0) {
               float *RESTRICT _data_j_20_39 =
                   _data_j + _stride_j_2 * ctr_2 + 9 * _stride_j_3;
               float *RESTRICT _data_j_20_39_10 =
@@ -3185,23 +3314,30 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               float *RESTRICT _data_u_20_32_10 =
                   _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
               _data_j_20_39_10[_stride_j_0 * (_size_j_0 - 1)] =
-                  -((0.0f > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                     0.0f > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                     0.0f > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                        ? (1.0f)
-                        : (0.0f)) *
+                  -1.0f *
+                      ((0.0f >
+                            _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                        0.0f >
+                            _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                        0.0f > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
+                           ? (1.0f)
+                           : (0.0f)) *
                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                       _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
                       _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
                       _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] -
-                  ((0.0f < _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                              _stride_u_0] &&
-                    0.0f < _data_u_2m1_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                              _stride_u_0] &&
-                    0.0f < _data_u_2m1_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                              _stride_u_0])
-                       ? (1.0f)
-                       : (0.0f)) *
+                  1.0f *
+                      ((0.0f <
+                            _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                               _stride_u_0] &&
+                        0.0f <
+                            _data_u_2m1_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                               _stride_u_0] &&
+                        0.0f <
+                            _data_u_2m1_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                               _stride_u_0])
+                           ? (1.0f)
+                           : (0.0f)) *
                       _data_rho_2m1_1m1[_stride_rho_0 * (_size_j_0 - 1) -
                                         _stride_rho_0] *
                       _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
@@ -3212,7 +3348,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                                          _stride_u_0] +
                   _data_j_20_39_10[_stride_j_0 * (_size_j_0 - 1)];
             }
-            if (_size_j_1 > 1 && _size_j_2 - ctr_2 > 1) {
+            if (_size_j_1 - 1 > 0 && ctr_2 < _size_j_2 - 1) {
               float *RESTRICT _data_j_20_310 =
                   _data_j + _stride_j_2 * ctr_2 + 10 * _stride_j_3;
               float *RESTRICT _data_j_20_310_10 =
@@ -3282,7 +3418,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
     }
     {
       {
-        if (_size_j_1 > 1 && _size_j_2 > 1) {
+        if (_size_j_2 - 1 > 0 && 0 < _size_j_1 - 1) {
           float *RESTRICT _data_j_20_311 =
               _data_j + _stride_j_2 * (_size_j_2 - 1) + 11 * _stride_j_3;
           float *RESTRICT _data_j_20_311_10 = _data_j_20_311;
@@ -3331,7 +3467,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               _data_j_20_311_10[_stride_j_0];
         }
         for (int64_t ctr_0 = 2; ctr_0 < _size_j_0 - 1; ctr_0 += 1) {
-          if (_size_j_1 > 1 && _size_j_2 > 1) {
+          if (_size_j_2 - 1 > 0 && 0 < _size_j_1 - 1) {
             float *RESTRICT _data_j_20_311 =
                 _data_j + _stride_j_2 * (_size_j_2 - 1) + 11 * _stride_j_3;
             float *RESTRICT _data_j_20_311_10 = _data_j_20_311;
@@ -3383,7 +3519,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                 _data_j_20_311_10[_stride_j_0 * ctr_0];
           }
         }
-        if (_size_j_1 > 1 && _size_j_2 > 1) {
+        if (_size_j_2 - 1 > 0 && 0 < _size_j_1 - 1) {
           float *RESTRICT _data_j_20_311 =
               _data_j + _stride_j_2 * (_size_j_2 - 1) + 11 * _stride_j_3;
           float *RESTRICT _data_j_20_311_10 = _data_j_20_311;
@@ -3445,8 +3581,8 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
       for (int64_t ctr_1 = 1; ctr_1 < _size_j_1 - 1; ctr_1 += 1) {
         {
           {
-            if (_size_j_0 > 2 && _size_j_2 > 1 && ctr_1 > 0 &&
-                _size_j_1 - ctr_1 > 1) {
+            if (ctr_1 > 0 && _size_j_2 - 1 > 0 && 1 < _size_j_0 - 1 &&
+                ctr_1 < _size_j_1 - 1) {
               float *RESTRICT _data_j_20_32 =
                   _data_j + _stride_j_2 * (_size_j_2 - 1) + 2 * _stride_j_3;
               float *RESTRICT _data_j_20_32_10 =
@@ -3486,21 +3622,23 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               float *RESTRICT _data_u_20_32_10 =
                   _stride_u_1 * ctr_1 + _data_u_20_32;
               _data_j_20_32_10[_stride_j_0] =
-                  -(1.0f - fabs(_data_u_20_30_10[_stride_u_0])) *
-                      (1.0f - fabs(_data_u_20_31_10[_stride_u_0])) *
+                  (-1.0f * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0f) *
+                      (-1.0f * fabs(_data_u_20_31_10[_stride_u_0]) + 1.0f) *
+                      -1.0f *
                       ((0.0f > _data_u_20_32_10[_stride_u_0]) ? (1.0f)
                                                               : (0.0f)) *
                       _data_rho_20_10[_stride_rho_0] *
-                      _data_u_20_32_10[_stride_u_0] -
-                  (1.0f - fabs(_data_u_2m1_30_10[_stride_u_0])) *
-                      (1.0f - fabs(_data_u_2m1_31_10[_stride_u_0])) *
+                      _data_u_20_32_10[_stride_u_0] +
+                  (-1.0f * fabs(_data_u_2m1_30_10[_stride_u_0]) + 1.0f) *
+                      (-1.0f * fabs(_data_u_2m1_31_10[_stride_u_0]) + 1.0f) *
+                      -1.0f *
                       ((0.0f < _data_u_2m1_32_10[_stride_u_0]) ? (1.0f)
                                                                : (0.0f)) *
                       _data_rho_2m1_10[_stride_rho_0] *
                       _data_u_2m1_32_10[_stride_u_0] +
                   _data_j_20_32_10[_stride_j_0];
             }
-            if (_size_j_2 > 1 && ctr_1 > 0 && _size_j_1 - ctr_1 > 1) {
+            if (ctr_1 > 0 && _size_j_2 - 1 > 0 && ctr_1 < _size_j_1 - 1) {
               float *RESTRICT _data_j_20_35 =
                   _data_j + _stride_j_2 * (_size_j_2 - 1) + 5 * _stride_j_3;
               float *RESTRICT _data_j_20_35_10 =
@@ -3540,15 +3678,15 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               float *RESTRICT _data_u_2m1_32_10 =
                   _stride_u_1 * ctr_1 + _data_u_2m1_32;
               _data_j_20_35_10[_stride_j_0] =
-                  (1.0f - fabs(_data_u_20_31_10[_stride_u_0])) *
+                  (-1.0f * fabs(_data_u_20_31_10[_stride_u_0]) + 1.0f) *
                       ((0.0f > _data_u_20_30_10[_stride_u_0] &&
                         0.0f > _data_u_20_32_10[_stride_u_0])
                            ? (1.0f)
                            : (0.0f)) *
                       _data_rho_20_10[_stride_rho_0] *
                       _data_u_20_30_10[_stride_u_0] *
-                      _data_u_20_32_10[_stride_u_0] -
-                  (1.0f - fabs(_data_u_2m1_31_10[0])) *
+                      _data_u_20_32_10[_stride_u_0] +
+                  (-1.0f * fabs(_data_u_2m1_31_10[0]) + 1.0f) * -1.0f *
                       ((0.0f < _data_u_2m1_30_10[0] &&
                         0.0f < _data_u_2m1_32_10[0])
                            ? (1.0f)
@@ -3557,7 +3695,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_u_2m1_32_10[0] +
                   _data_j_20_35_10[_stride_j_0];
             }
-            if (_size_j_0 > 2 && _size_j_2 > 1 && ctr_1 > 0) {
+            if (ctr_1 > 0 && _size_j_2 - 1 > 0 && 1 < _size_j_0 - 1) {
               float *RESTRICT _data_j_20_37 =
                   _data_j + _stride_j_2 * (_size_j_2 - 1) + 7 * _stride_j_3;
               float *RESTRICT _data_j_20_37_10 =
@@ -3597,15 +3735,16 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               float *RESTRICT _data_u_2m1_32_1m1 =
                   _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_32;
               _data_j_20_37_10[_stride_j_0] =
-                  (1.0f - fabs(_data_u_20_30_10[_stride_u_0])) *
+                  (-1.0f * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0f) *
                       ((0.0f > _data_u_20_31_10[_stride_u_0] &&
                         0.0f > _data_u_20_32_10[_stride_u_0])
                            ? (1.0f)
                            : (0.0f)) *
                       _data_rho_20_10[_stride_rho_0] *
                       _data_u_20_31_10[_stride_u_0] *
-                      _data_u_20_32_10[_stride_u_0] -
-                  (1.0f - fabs(_data_u_2m1_30_1m1[_stride_u_0])) *
+                      _data_u_20_32_10[_stride_u_0] +
+                  (-1.0f * fabs(_data_u_2m1_30_1m1[_stride_u_0]) + 1.0f) *
+                      -1.0f *
                       ((0.0f < _data_u_2m1_31_1m1[_stride_u_0] &&
                         0.0f < _data_u_2m1_32_1m1[_stride_u_0])
                            ? (1.0f)
@@ -3615,7 +3754,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_u_2m1_32_1m1[_stride_u_0] +
                   _data_j_20_37_10[_stride_j_0];
             }
-            if (_size_j_2 > 1 && ctr_1 > 0) {
+            if (ctr_1 > 0 && _size_j_2 - 1 > 0) {
               float *RESTRICT _data_j_20_39 =
                   _data_j + _stride_j_2 * (_size_j_2 - 1) + 9 * _stride_j_3;
               float *RESTRICT _data_j_20_39_10 =
@@ -3655,25 +3794,27 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               float *RESTRICT _data_u_20_32_10 =
                   _stride_u_1 * ctr_1 + _data_u_20_32;
               _data_j_20_39_10[_stride_j_0] =
-                  -((0.0f > _data_u_20_30_10[_stride_u_0] &&
-                     0.0f > _data_u_20_31_10[_stride_u_0] &&
-                     0.0f > _data_u_20_32_10[_stride_u_0])
-                        ? (1.0f)
-                        : (0.0f)) *
+                  -1.0f *
+                      ((0.0f > _data_u_20_30_10[_stride_u_0] &&
+                        0.0f > _data_u_20_31_10[_stride_u_0] &&
+                        0.0f > _data_u_20_32_10[_stride_u_0])
+                           ? (1.0f)
+                           : (0.0f)) *
                       _data_rho_20_10[_stride_rho_0] *
                       _data_u_20_30_10[_stride_u_0] *
                       _data_u_20_31_10[_stride_u_0] *
                       _data_u_20_32_10[_stride_u_0] -
-                  ((0.0f < _data_u_2m1_30_1m1[0] &&
-                    0.0f < _data_u_2m1_31_1m1[0] &&
-                    0.0f < _data_u_2m1_32_1m1[0])
-                       ? (1.0f)
-                       : (0.0f)) *
+                  1.0f *
+                      ((0.0f < _data_u_2m1_30_1m1[0] &&
+                        0.0f < _data_u_2m1_31_1m1[0] &&
+                        0.0f < _data_u_2m1_32_1m1[0])
+                           ? (1.0f)
+                           : (0.0f)) *
                       _data_rho_2m1_1m1[0] * _data_u_2m1_30_1m1[0] *
                       _data_u_2m1_31_1m1[0] * _data_u_2m1_32_1m1[0] +
                   _data_j_20_39_10[_stride_j_0];
             }
-            if (_size_j_2 > 1 && _size_j_1 - ctr_1 > 1) {
+            if (_size_j_2 - 1 > 0 && ctr_1 < _size_j_1 - 1) {
               float *RESTRICT _data_j_20_311 =
                   _data_j + _stride_j_2 * (_size_j_2 - 1) + 11 * _stride_j_3;
               float *RESTRICT _data_j_20_311_10 =
@@ -3732,8 +3873,8 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
             }
           }
           for (int64_t ctr_0 = 2; ctr_0 < _size_j_0 - 1; ctr_0 += 1) {
-            if (_size_j_2 > 1 && ctr_1 > 0 && _size_j_0 - ctr_0 > 1 &&
-                _size_j_1 - ctr_1 > 1) {
+            if (ctr_1 > 0 && _size_j_2 - 1 > 0 && ctr_0 < _size_j_0 - 1 &&
+                ctr_1 < _size_j_1 - 1) {
               float *RESTRICT _data_j_20_32 =
                   _data_j + _stride_j_2 * (_size_j_2 - 1) + 2 * _stride_j_3;
               float *RESTRICT _data_j_20_32_10 =
@@ -3773,15 +3914,20 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               float *RESTRICT _data_u_20_32_10 =
                   _stride_u_1 * ctr_1 + _data_u_20_32;
               _data_j_20_32_10[_stride_j_0 * ctr_0] =
-                  -(1.0f - fabs(_data_u_20_30_10[_stride_u_0 * ctr_0])) *
-                      (1.0f - fabs(_data_u_20_31_10[_stride_u_0 * ctr_0])) *
+                  (-1.0f * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0f) *
+                      (-1.0f * fabs(_data_u_20_31_10[_stride_u_0 * ctr_0]) +
+                       1.0f) *
+                      -1.0f *
                       ((0.0f > _data_u_20_32_10[_stride_u_0 * ctr_0])
                            ? (1.0f)
                            : (0.0f)) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_32_10[_stride_u_0 * ctr_0] -
-                  (1.0f - fabs(_data_u_2m1_30_10[_stride_u_0 * ctr_0])) *
-                      (1.0f - fabs(_data_u_2m1_31_10[_stride_u_0 * ctr_0])) *
+                      _data_u_20_32_10[_stride_u_0 * ctr_0] +
+                  (-1.0f * fabs(_data_u_2m1_30_10[_stride_u_0 * ctr_0]) +
+                   1.0f) *
+                      (-1.0f * fabs(_data_u_2m1_31_10[_stride_u_0 * ctr_0]) +
+                       1.0f) *
+                      -1.0f *
                       ((0.0f < _data_u_2m1_32_10[_stride_u_0 * ctr_0])
                            ? (1.0f)
                            : (0.0f)) *
@@ -3789,7 +3935,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_u_2m1_32_10[_stride_u_0 * ctr_0] +
                   _data_j_20_32_10[_stride_j_0 * ctr_0];
             }
-            if (_size_j_2 > 1 && ctr_1 > 0 && _size_j_1 - ctr_1 > 1) {
+            if (ctr_1 > 0 && _size_j_2 - 1 > 0 && ctr_1 < _size_j_1 - 1) {
               float *RESTRICT _data_j_20_35 =
                   _data_j + _stride_j_2 * (_size_j_2 - 1) + 5 * _stride_j_3;
               float *RESTRICT _data_j_20_35_10 =
@@ -3829,16 +3975,18 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               float *RESTRICT _data_u_2m1_32_10 =
                   _stride_u_1 * ctr_1 + _data_u_2m1_32;
               _data_j_20_35_10[_stride_j_0 * ctr_0] =
-                  (1.0f - fabs(_data_u_20_31_10[_stride_u_0 * ctr_0])) *
+                  (-1.0f * fabs(_data_u_20_31_10[_stride_u_0 * ctr_0]) + 1.0f) *
                       ((0.0f > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
                         0.0f > _data_u_20_32_10[_stride_u_0 * ctr_0])
                            ? (1.0f)
                            : (0.0f)) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_30_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_32_10[_stride_u_0 * ctr_0] -
-                  (1.0f -
-                   fabs(_data_u_2m1_31_10[_stride_u_0 * ctr_0 - _stride_u_0])) *
+                      _data_u_20_32_10[_stride_u_0 * ctr_0] +
+                  (-1.0f * fabs(_data_u_2m1_31_10[_stride_u_0 * ctr_0 -
+                                                  _stride_u_0]) +
+                   1.0f) *
+                      -1.0f *
                       ((0.0f < _data_u_2m1_30_10[_stride_u_0 * ctr_0 -
                                                  _stride_u_0] &&
                         0.0f < _data_u_2m1_32_10[_stride_u_0 * ctr_0 -
@@ -3850,7 +3998,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_u_2m1_32_10[_stride_u_0 * ctr_0 - _stride_u_0] +
                   _data_j_20_35_10[_stride_j_0 * ctr_0];
             }
-            if (_size_j_2 > 1 && ctr_1 > 0 && _size_j_0 - ctr_0 > 1) {
+            if (ctr_1 > 0 && _size_j_2 - 1 > 0 && ctr_0 < _size_j_0 - 1) {
               float *RESTRICT _data_j_20_37 =
                   _data_j + _stride_j_2 * (_size_j_2 - 1) + 7 * _stride_j_3;
               float *RESTRICT _data_j_20_37_10 =
@@ -3890,15 +4038,17 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               float *RESTRICT _data_u_2m1_32_1m1 =
                   _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_32;
               _data_j_20_37_10[_stride_j_0 * ctr_0] =
-                  (1.0f - fabs(_data_u_20_30_10[_stride_u_0 * ctr_0])) *
+                  (-1.0f * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0f) *
                       ((0.0f > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
                         0.0f > _data_u_20_32_10[_stride_u_0 * ctr_0])
                            ? (1.0f)
                            : (0.0f)) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_31_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_32_10[_stride_u_0 * ctr_0] -
-                  (1.0f - fabs(_data_u_2m1_30_1m1[_stride_u_0 * ctr_0])) *
+                      _data_u_20_32_10[_stride_u_0 * ctr_0] +
+                  (-1.0f * fabs(_data_u_2m1_30_1m1[_stride_u_0 * ctr_0]) +
+                   1.0f) *
+                      -1.0f *
                       ((0.0f < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0] &&
                         0.0f < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0])
                            ? (1.0f)
@@ -3908,7 +4058,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                       _data_u_2m1_32_1m1[_stride_u_0 * ctr_0] +
                   _data_j_20_37_10[_stride_j_0 * ctr_0];
             }
-            if (_size_j_2 > 1 && ctr_1 > 0) {
+            if (ctr_1 > 0 && _size_j_2 - 1 > 0) {
               float *RESTRICT _data_j_20_39 =
                   _data_j + _stride_j_2 * (_size_j_2 - 1) + 9 * _stride_j_3;
               float *RESTRICT _data_j_20_39_10 =
@@ -3948,30 +4098,32 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               float *RESTRICT _data_u_20_32_10 =
                   _stride_u_1 * ctr_1 + _data_u_20_32;
               _data_j_20_39_10[_stride_j_0 * ctr_0] =
-                  -((0.0f > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                     0.0f > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                     0.0f > _data_u_20_32_10[_stride_u_0 * ctr_0])
-                        ? (1.0f)
-                        : (0.0f)) *
+                  -1.0f *
+                      ((0.0f > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
+                        0.0f > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
+                        0.0f > _data_u_20_32_10[_stride_u_0 * ctr_0])
+                           ? (1.0f)
+                           : (0.0f)) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_30_10[_stride_u_0 * ctr_0] *
                       _data_u_20_31_10[_stride_u_0 * ctr_0] *
                       _data_u_20_32_10[_stride_u_0 * ctr_0] -
-                  ((0.0f <
-                        _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                    0.0f <
-                        _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                    0.0f <
-                        _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0])
-                       ? (1.0f)
-                       : (0.0f)) *
+                  1.0f *
+                      ((0.0f < _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 -
+                                                  _stride_u_0] &&
+                        0.0f < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 -
+                                                  _stride_u_0] &&
+                        0.0f < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 -
+                                                  _stride_u_0])
+                           ? (1.0f)
+                           : (0.0f)) *
                       _data_rho_2m1_1m1[_stride_rho_0 * ctr_0 - _stride_rho_0] *
                       _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
                       _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
                       _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] +
                   _data_j_20_39_10[_stride_j_0 * ctr_0];
             }
-            if (_size_j_2 > 1 && _size_j_1 - ctr_1 > 1) {
+            if (_size_j_2 - 1 > 0 && ctr_1 < _size_j_1 - 1) {
               float *RESTRICT _data_j_20_311 =
                   _data_j + _stride_j_2 * (_size_j_2 - 1) + 11 * _stride_j_3;
               float *RESTRICT _data_j_20_311_10 =
@@ -4035,7 +4187,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
             }
           }
           {
-            if (_size_j_2 > 1 && ctr_1 > 0 && _size_j_1 - ctr_1 > 1) {
+            if (ctr_1 > 0 && _size_j_2 - 1 > 0 && ctr_1 < _size_j_1 - 1) {
               float *RESTRICT _data_j_20_35 =
                   _data_j + _stride_j_2 * (_size_j_2 - 1) + 5 * _stride_j_3;
               float *RESTRICT _data_j_20_35_10 =
@@ -4075,8 +4227,9 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               float *RESTRICT _data_u_2m1_32_10 =
                   _stride_u_1 * ctr_1 + _data_u_2m1_32;
               _data_j_20_35_10[_stride_j_0 * (_size_j_0 - 1)] =
-                  (1.0f -
-                   fabs(_data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)])) *
+                  (-1.0f *
+                       fabs(_data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)]) +
+                   1.0f) *
                       ((0.0f >
                             _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
                         0.0f > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
@@ -4084,9 +4237,12 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                            : (0.0f)) *
                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                       _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
-                      _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] -
-                  (1.0f - fabs(_data_u_2m1_31_10[_stride_u_0 * (_size_j_0 - 1) -
-                                                 _stride_u_0])) *
+                      _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
+                  (-1.0f *
+                       fabs(_data_u_2m1_31_10[_stride_u_0 * (_size_j_0 - 1) -
+                                              _stride_u_0]) +
+                   1.0f) *
+                      -1.0f *
                       ((0.0f < _data_u_2m1_30_10[_stride_u_0 * (_size_j_0 - 1) -
                                                  _stride_u_0] &&
                         0.0f < _data_u_2m1_32_10[_stride_u_0 * (_size_j_0 - 1) -
@@ -4101,7 +4257,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                                         _stride_u_0] +
                   _data_j_20_35_10[_stride_j_0 * (_size_j_0 - 1)];
             }
-            if (_size_j_2 > 1 && ctr_1 > 0) {
+            if (ctr_1 > 0 && _size_j_2 - 1 > 0) {
               float *RESTRICT _data_j_20_39 =
                   _data_j + _stride_j_2 * (_size_j_2 - 1) + 9 * _stride_j_3;
               float *RESTRICT _data_j_20_39_10 =
@@ -4141,23 +4297,30 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
               float *RESTRICT _data_u_20_32_10 =
                   _stride_u_1 * ctr_1 + _data_u_20_32;
               _data_j_20_39_10[_stride_j_0 * (_size_j_0 - 1)] =
-                  -((0.0f > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                     0.0f > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                     0.0f > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                        ? (1.0f)
-                        : (0.0f)) *
+                  -1.0f *
+                      ((0.0f >
+                            _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                        0.0f >
+                            _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                        0.0f > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
+                           ? (1.0f)
+                           : (0.0f)) *
                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                       _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
                       _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
                       _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] -
-                  ((0.0f < _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                              _stride_u_0] &&
-                    0.0f < _data_u_2m1_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                              _stride_u_0] &&
-                    0.0f < _data_u_2m1_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                              _stride_u_0])
-                       ? (1.0f)
-                       : (0.0f)) *
+                  1.0f *
+                      ((0.0f <
+                            _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                               _stride_u_0] &&
+                        0.0f <
+                            _data_u_2m1_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                               _stride_u_0] &&
+                        0.0f <
+                            _data_u_2m1_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                               _stride_u_0])
+                           ? (1.0f)
+                           : (0.0f)) *
                       _data_rho_2m1_1m1[_stride_rho_0 * (_size_j_0 - 1) -
                                         _stride_rho_0] *
                       _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
@@ -4168,7 +4331,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                                          _stride_u_0] +
                   _data_j_20_39_10[_stride_j_0 * (_size_j_0 - 1)];
             }
-            if (_size_j_2 > 1 && _size_j_1 - ctr_1 > 1) {
+            if (_size_j_2 - 1 > 0 && ctr_1 < _size_j_1 - 1) {
               float *RESTRICT _data_j_20_311 =
                   _data_j + _stride_j_2 * (_size_j_2 - 1) + 11 * _stride_j_3;
               float *RESTRICT _data_j_20_311_10 =
@@ -4240,7 +4403,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
       }
       {
         {
-          if (_size_j_0 > 2 && _size_j_1 > 1 && _size_j_2 > 1) {
+          if (_size_j_1 - 1 > 0 && _size_j_2 - 1 > 0 && 1 < _size_j_0 - 1) {
             float *RESTRICT _data_j_20_37 =
                 _data_j + _stride_j_2 * (_size_j_2 - 1) + 7 * _stride_j_3;
             float *RESTRICT _data_j_20_37_10 =
@@ -4280,15 +4443,15 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
             float *RESTRICT _data_u_2m1_32_1m1 =
                 _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_32;
             _data_j_20_37_10[_stride_j_0] =
-                (1.0f - fabs(_data_u_20_30_10[_stride_u_0])) *
+                (-1.0f * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0f) *
                     ((0.0f > _data_u_20_31_10[_stride_u_0] &&
                       0.0f > _data_u_20_32_10[_stride_u_0])
                          ? (1.0f)
                          : (0.0f)) *
                     _data_rho_20_10[_stride_rho_0] *
                     _data_u_20_31_10[_stride_u_0] *
-                    _data_u_20_32_10[_stride_u_0] -
-                (1.0f - fabs(_data_u_2m1_30_1m1[_stride_u_0])) *
+                    _data_u_20_32_10[_stride_u_0] +
+                (-1.0f * fabs(_data_u_2m1_30_1m1[_stride_u_0]) + 1.0f) * -1.0f *
                     ((0.0f < _data_u_2m1_31_1m1[_stride_u_0] &&
                       0.0f < _data_u_2m1_32_1m1[_stride_u_0])
                          ? (1.0f)
@@ -4298,7 +4461,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                     _data_u_2m1_32_1m1[_stride_u_0] +
                 _data_j_20_37_10[_stride_j_0];
           }
-          if (_size_j_1 > 1 && _size_j_2 > 1) {
+          if (_size_j_1 - 1 > 0 && _size_j_2 - 1 > 0) {
             float *RESTRICT _data_j_20_39 =
                 _data_j + _stride_j_2 * (_size_j_2 - 1) + 9 * _stride_j_3;
             float *RESTRICT _data_j_20_39_10 =
@@ -4338,26 +4501,29 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
             float *RESTRICT _data_u_20_32_10 =
                 _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
             _data_j_20_39_10[_stride_j_0] =
-                -((0.0f > _data_u_20_30_10[_stride_u_0] &&
-                   0.0f > _data_u_20_31_10[_stride_u_0] &&
-                   0.0f > _data_u_20_32_10[_stride_u_0])
-                      ? (1.0f)
-                      : (0.0f)) *
+                -1.0f *
+                    ((0.0f > _data_u_20_30_10[_stride_u_0] &&
+                      0.0f > _data_u_20_31_10[_stride_u_0] &&
+                      0.0f > _data_u_20_32_10[_stride_u_0])
+                         ? (1.0f)
+                         : (0.0f)) *
                     _data_rho_20_10[_stride_rho_0] *
                     _data_u_20_30_10[_stride_u_0] *
                     _data_u_20_31_10[_stride_u_0] *
                     _data_u_20_32_10[_stride_u_0] -
-                ((0.0f < _data_u_2m1_30_1m1[0] &&
-                  0.0f < _data_u_2m1_31_1m1[0] && 0.0f < _data_u_2m1_32_1m1[0])
-                     ? (1.0f)
-                     : (0.0f)) *
+                1.0f *
+                    ((0.0f < _data_u_2m1_30_1m1[0] &&
+                      0.0f < _data_u_2m1_31_1m1[0] &&
+                      0.0f < _data_u_2m1_32_1m1[0])
+                         ? (1.0f)
+                         : (0.0f)) *
                     _data_rho_2m1_1m1[0] * _data_u_2m1_30_1m1[0] *
                     _data_u_2m1_31_1m1[0] * _data_u_2m1_32_1m1[0] +
                 _data_j_20_39_10[_stride_j_0];
           }
         }
         for (int64_t ctr_0 = 2; ctr_0 < _size_j_0 - 1; ctr_0 += 1) {
-          if (_size_j_1 > 1 && _size_j_2 > 1 && _size_j_0 - ctr_0 > 1) {
+          if (_size_j_1 - 1 > 0 && _size_j_2 - 1 > 0 && ctr_0 < _size_j_0 - 1) {
             float *RESTRICT _data_j_20_37 =
                 _data_j + _stride_j_2 * (_size_j_2 - 1) + 7 * _stride_j_3;
             float *RESTRICT _data_j_20_37_10 =
@@ -4397,15 +4563,16 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
             float *RESTRICT _data_u_2m1_32_1m1 =
                 _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_32;
             _data_j_20_37_10[_stride_j_0 * ctr_0] =
-                (1.0f - fabs(_data_u_20_30_10[_stride_u_0 * ctr_0])) *
+                (-1.0f * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0f) *
                     ((0.0f > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
                       0.0f > _data_u_20_32_10[_stride_u_0 * ctr_0])
                          ? (1.0f)
                          : (0.0f)) *
                     _data_rho_20_10[_stride_rho_0 * ctr_0] *
                     _data_u_20_31_10[_stride_u_0 * ctr_0] *
-                    _data_u_20_32_10[_stride_u_0 * ctr_0] -
-                (1.0f - fabs(_data_u_2m1_30_1m1[_stride_u_0 * ctr_0])) *
+                    _data_u_20_32_10[_stride_u_0 * ctr_0] +
+                (-1.0f * fabs(_data_u_2m1_30_1m1[_stride_u_0 * ctr_0]) + 1.0f) *
+                    -1.0f *
                     ((0.0f < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0] &&
                       0.0f < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0])
                          ? (1.0f)
@@ -4415,7 +4582,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                     _data_u_2m1_32_1m1[_stride_u_0 * ctr_0] +
                 _data_j_20_37_10[_stride_j_0 * ctr_0];
           }
-          if (_size_j_1 > 1 && _size_j_2 > 1) {
+          if (_size_j_1 - 1 > 0 && _size_j_2 - 1 > 0) {
             float *RESTRICT _data_j_20_39 =
                 _data_j + _stride_j_2 * (_size_j_2 - 1) + 9 * _stride_j_3;
             float *RESTRICT _data_j_20_39_10 =
@@ -4455,22 +4622,25 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
             float *RESTRICT _data_u_20_32_10 =
                 _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
             _data_j_20_39_10[_stride_j_0 * ctr_0] =
-                -((0.0f > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                   0.0f > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                   0.0f > _data_u_20_32_10[_stride_u_0 * ctr_0])
-                      ? (1.0f)
-                      : (0.0f)) *
+                -1.0f *
+                    ((0.0f > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
+                      0.0f > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
+                      0.0f > _data_u_20_32_10[_stride_u_0 * ctr_0])
+                         ? (1.0f)
+                         : (0.0f)) *
                     _data_rho_20_10[_stride_rho_0 * ctr_0] *
                     _data_u_20_30_10[_stride_u_0 * ctr_0] *
                     _data_u_20_31_10[_stride_u_0 * ctr_0] *
                     _data_u_20_32_10[_stride_u_0 * ctr_0] -
-                ((0.0f <
-                      _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                  0.0f <
-                      _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                  0.0f < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0])
-                     ? (1.0f)
-                     : (0.0f)) *
+                1.0f *
+                    ((0.0f < _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 -
+                                                _stride_u_0] &&
+                      0.0f < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 -
+                                                _stride_u_0] &&
+                      0.0f <
+                          _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0])
+                         ? (1.0f)
+                         : (0.0f)) *
                     _data_rho_2m1_1m1[_stride_rho_0 * ctr_0 - _stride_rho_0] *
                     _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
                     _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
@@ -4478,7 +4648,7 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
                 _data_j_20_39_10[_stride_j_0 * ctr_0];
           }
         }
-        if (_size_j_1 > 1 && _size_j_2 > 1) {
+        if (_size_j_1 - 1 > 0 && _size_j_2 - 1 > 0) {
           float *RESTRICT _data_j_20_39 =
               _data_j + _stride_j_2 * (_size_j_2 - 1) + 9 * _stride_j_3;
           float *RESTRICT _data_j_20_39_10 =
@@ -4518,23 +4688,25 @@ advectivefluxkernel_single_precision_advectivefluxkernel_single_precision(
           float *RESTRICT _data_u_20_32_10 =
               _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
           _data_j_20_39_10[_stride_j_0 * (_size_j_0 - 1)] =
-              -((0.0f > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                 0.0f > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                 0.0f > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                    ? (1.0f)
-                    : (0.0f)) *
+              -1.0f *
+                  ((0.0f > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                    0.0f > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                    0.0f > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
+                       ? (1.0f)
+                       : (0.0f)) *
                   _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                   _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
                   _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
                   _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] -
-              ((0.0f < _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                          _stride_u_0] &&
-                0.0f < _data_u_2m1_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                          _stride_u_0] &&
-                0.0f < _data_u_2m1_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                          _stride_u_0])
-                   ? (1.0f)
-                   : (0.0f)) *
+              1.0f *
+                  ((0.0f < _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                              _stride_u_0] &&
+                    0.0f < _data_u_2m1_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                              _stride_u_0] &&
+                    0.0f < _data_u_2m1_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                              _stride_u_0])
+                       ? (1.0f)
+                       : (0.0f)) *
                   _data_rho_2m1_1m1[_stride_rho_0 * (_size_j_0 - 1) -
                                     _stride_rho_0] *
                   _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
@@ -4557,7 +4729,7 @@ void AdvectiveFluxKernel_single_precision::run(IBlock *block) {
   auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
 
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(j->nrOfGhostLayers()));
-  float *RESTRICT _data_j = j->dataAt(-1, -1, -1, 0);
+  float *RESTRICT const _data_j = j->dataAt(-1, -1, -1, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(rho->nrOfGhostLayers()));
   float *RESTRICT const _data_rho = rho->dataAt(-1, -1, -1, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(u->nrOfGhostLayers()));
@@ -4609,7 +4781,7 @@ void AdvectiveFluxKernel_single_precision::runOnCellInterval(
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1, -int_c(j->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1, -int_c(j->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin() - 1, -int_c(j->nrOfGhostLayers()));
-  float *RESTRICT _data_j =
+  float *RESTRICT const _data_j =
       j->dataAt(ci.xMin() - 1, ci.yMin() - 1, ci.zMin() - 1, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1, -int_c(rho->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1, -int_c(rho->nrOfGhostLayers()));

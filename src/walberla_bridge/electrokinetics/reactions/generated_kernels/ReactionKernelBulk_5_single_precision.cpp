@@ -1,6 +1,6 @@
-// kernel generated with pystencils v0.4.4, lbmpy v0.4.4,
+// kernel generated with pystencils v1.0, lbmpy v1.0,
 // lbmpy_walberla/pystencils_walberla from commit
-// 08f04ef64f95609b47838db85862033a1600afa1
+// 01a28162ae1aacf7b96152c9f886ce54cc7f53ff
 
 //======================================================================================================================
 //
@@ -90,9 +90,9 @@ reactionkernelbulk_5_single_precision_reactionkernelbulk_5_single_precision(
         const float local_rho_3 = _data_rho_3_20_10[_stride_rho_3_0 * ctr_0];
         const float local_rho_4 = _data_rho_4_20_10[_stride_rho_4_0 * ctr_0];
         const float rate_factor =
-            pow(local_rho_0, order_0) * pow(local_rho_1, order_1) *
-            pow(local_rho_2, order_2) * pow(local_rho_3, order_3) *
-            pow(local_rho_4, order_4) * rate_coefficient;
+            rate_coefficient * powf(local_rho_0, order_0) *
+            powf(local_rho_1, order_1) * powf(local_rho_2, order_2) *
+            powf(local_rho_3, order_3) * powf(local_rho_4, order_4);
         _data_rho_0_20_10[_stride_rho_0_0 * ctr_0] =
             local_rho_0 + rate_factor * stoech_0;
         _data_rho_1_20_10[_stride_rho_1_0 * ctr_0] =
@@ -112,21 +112,21 @@ reactionkernelbulk_5_single_precision_reactionkernelbulk_5_single_precision(
 void ReactionKernelBulk_5_single_precision::run(IBlock *block) {
   auto rho_2 = block->getData<field::GhostLayerField<float, 1>>(rho_2ID);
   auto rho_4 = block->getData<field::GhostLayerField<float, 1>>(rho_4ID);
+  auto rho_0 = block->getData<field::GhostLayerField<float, 1>>(rho_0ID);
   auto rho_1 = block->getData<field::GhostLayerField<float, 1>>(rho_1ID);
   auto rho_3 = block->getData<field::GhostLayerField<float, 1>>(rho_3ID);
-  auto rho_0 = block->getData<field::GhostLayerField<float, 1>>(rho_0ID);
 
-  auto &stoech_3 = this->stoech_3_;
-  auto &order_2 = this->order_2_;
-  auto &stoech_2 = this->stoech_2_;
+  auto &order_3 = this->order_3_;
   auto &stoech_0 = this->stoech_0_;
   auto &rate_coefficient = this->rate_coefficient_;
-  auto &order_3 = this->order_3_;
-  auto &stoech_1 = this->stoech_1_;
-  auto &stoech_4 = this->stoech_4_;
-  auto &order_1 = this->order_1_;
-  auto &order_0 = this->order_0_;
   auto &order_4 = this->order_4_;
+  auto &stoech_4 = this->stoech_4_;
+  auto &stoech_2 = this->stoech_2_;
+  auto &order_0 = this->order_0_;
+  auto &order_2 = this->order_2_;
+  auto &stoech_3 = this->stoech_3_;
+  auto &stoech_1 = this->stoech_1_;
+  auto &order_1 = this->order_1_;
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_0->nrOfGhostLayers()));
   float *RESTRICT _data_rho_0 = rho_0->dataAt(0, 0, 0, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_1->nrOfGhostLayers()));
@@ -187,21 +187,21 @@ void ReactionKernelBulk_5_single_precision::runOnCellInterval(
 
   auto rho_2 = block->getData<field::GhostLayerField<float, 1>>(rho_2ID);
   auto rho_4 = block->getData<field::GhostLayerField<float, 1>>(rho_4ID);
+  auto rho_0 = block->getData<field::GhostLayerField<float, 1>>(rho_0ID);
   auto rho_1 = block->getData<field::GhostLayerField<float, 1>>(rho_1ID);
   auto rho_3 = block->getData<field::GhostLayerField<float, 1>>(rho_3ID);
-  auto rho_0 = block->getData<field::GhostLayerField<float, 1>>(rho_0ID);
 
-  auto &stoech_3 = this->stoech_3_;
-  auto &order_2 = this->order_2_;
-  auto &stoech_2 = this->stoech_2_;
+  auto &order_3 = this->order_3_;
   auto &stoech_0 = this->stoech_0_;
   auto &rate_coefficient = this->rate_coefficient_;
-  auto &order_3 = this->order_3_;
-  auto &stoech_1 = this->stoech_1_;
-  auto &stoech_4 = this->stoech_4_;
-  auto &order_1 = this->order_1_;
-  auto &order_0 = this->order_0_;
   auto &order_4 = this->order_4_;
+  auto &stoech_4 = this->stoech_4_;
+  auto &stoech_2 = this->stoech_2_;
+  auto &order_0 = this->order_0_;
+  auto &order_2 = this->order_2_;
+  auto &stoech_3 = this->stoech_3_;
+  auto &stoech_1 = this->stoech_1_;
+  auto &order_1 = this->order_1_;
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(rho_0->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(rho_0->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(rho_0->nrOfGhostLayers()));

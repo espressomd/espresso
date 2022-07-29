@@ -1,6 +1,6 @@
-// kernel generated with pystencils v0.4.4, lbmpy v0.4.4,
+// kernel generated with pystencils v1.0, lbmpy v1.0,
 // lbmpy_walberla/pystencils_walberla from commit
-// 08f04ef64f95609b47838db85862033a1600afa1
+// 01a28162ae1aacf7b96152c9f886ce54cc7f53ff
 
 //======================================================================================================================
 //
@@ -43,61 +43,65 @@ namespace pystencils {
 
 #ifdef __CUDACC__
 #pragma push
-#pragma diag_suppress = declared_but_not_referenced
+#ifdef __NVCC_DIAG_PRAGMA_SUPPORT__
+#pragma nv_diag_suppress 177
+#else
+#pragma diag_suppress 177
+#endif
 #endif
 
 namespace internal_11b127eed0b5044a0a655e8444f26034 {
 static FUNC_PREFIX void
 fixedflux_single_precision_boundary_FixedFlux_single_precision(
-    float *RESTRICT _data_flux, uint8_t *RESTRICT const _data_indexVector,
+    float *RESTRICT const _data_flux, uint8_t *RESTRICT const _data_indexVector,
     int64_t const _stride_flux_0, int64_t const _stride_flux_1,
     int64_t const _stride_flux_2, int64_t const _stride_flux_3,
-    int64_t indexVectorSize) {
+    int32_t indexVectorSize) {
   for (int64_t ctr_0 = 0; ctr_0 < indexVectorSize; ctr_0 += 1) {
-    const int64_t x = *((int32_t *)(&_data_indexVector[28 * ctr_0]));
-    const int64_t y = *((int32_t *)(&_data_indexVector[28 * ctr_0 + 4]));
-    const int64_t z = *((int32_t *)(&_data_indexVector[28 * ctr_0 + 8]));
+    const int32_t x = *((int32_t *)(&_data_indexVector[28 * ctr_0]));
+    const int32_t y = *((int32_t *)(&_data_indexVector[28 * ctr_0 + 4]));
+    const int32_t z = *((int32_t *)(&_data_indexVector[28 * ctr_0 + 8]));
 
-    const int64_t cx[] = {0, 0, 0, -1, 1, 0, 0,  -1, 1,  -1, 1,  0, 0, -1,
+    const int32_t cx[] = {0, 0, 0, -1, 1, 0, 0,  -1, 1,  -1, 1,  0, 0, -1,
                           1, 0, 0, -1, 1, 1, -1, 1,  -1, 1,  -1, 1, -1};
-    const int64_t cy[] = {0, 1, -1, 0, 0, 0, 0, 1,  1,  -1, -1, 1,  -1, 0,
+    const int32_t cy[] = {0, 1, -1, 0, 0, 0, 0, 1,  1,  -1, -1, 1,  -1, 0,
                           0, 1, -1, 0, 0, 1, 1, -1, -1, 1,  1,  -1, -1};
-    const int64_t cz[] = {0, 0,  0,  0,  0,  1, -1, 0, 0, 0,  0,  1,  1, 1,
+    const int32_t cz[] = {0, 0,  0,  0,  0,  1, -1, 0, 0, 0,  0,  1,  1, 1,
                           1, -1, -1, -1, -1, 1, 1,  1, 1, -1, -1, -1, -1};
-    const int64_t invdir[] = {0,  2,  1,  4,  3,  6,  5,  10, 9,
+    const int32_t invdir[] = {0,  2,  1,  4,  3,  6,  5,  10, 9,
                               8,  7,  16, 15, 18, 17, 12, 11, 14,
                               13, 26, 25, 24, 23, 22, 21, 20, 19};
 
-    const int64_t dir = *((int32_t *)(&_data_indexVector[28 * ctr_0 + 12]));
+    const int32_t dir = *((int32_t *)(&_data_indexVector[28 * ctr_0 + 12]));
     if (((dir) == (26))) {
       _data_flux[_stride_flux_0 * x + _stride_flux_1 * y + _stride_flux_2 * z +
                  9 * _stride_flux_3] =
-          -0.11111111111111111f *
+          -0.1111111111111111f *
               *((float *)(&_data_indexVector[28 * ctr_0 + 16])) -
-          0.11111111111111111f *
+          0.1111111111111111f *
               *((float *)(&_data_indexVector[28 * ctr_0 + 20])) -
-          0.11111111111111111f *
+          0.1111111111111111f *
               *((float *)(&_data_indexVector[28 * ctr_0 + 24]));
     } else {
       if (((dir) == (25))) {
         _data_flux[_stride_flux_0 * x + _stride_flux_0 + _stride_flux_1 * y -
                    _stride_flux_1 + _stride_flux_2 * z - _stride_flux_2 +
                    12 * _stride_flux_3] =
-            -0.11111111111111111f *
+            -0.1111111111111111f *
                 *((float *)(&_data_indexVector[28 * ctr_0 + 16])) +
-            0.11111111111111111f *
+            0.1111111111111111f *
                 *((float *)(&_data_indexVector[28 * ctr_0 + 20])) +
-            0.11111111111111111f *
+            0.1111111111111111f *
                 *((float *)(&_data_indexVector[28 * ctr_0 + 24]));
       } else {
         if (((dir) == (24))) {
           _data_flux[_stride_flux_0 * x + _stride_flux_1 * y +
                      _stride_flux_2 * z + 11 * _stride_flux_3] =
-              -0.11111111111111111f *
+              -0.1111111111111111f *
                   *((float *)(&_data_indexVector[28 * ctr_0 + 16])) -
-              0.11111111111111111f *
+              0.1111111111111111f *
                   *((float *)(&_data_indexVector[28 * ctr_0 + 24])) +
-              0.11111111111111111f *
+              0.1111111111111111f *
                   *((float *)(&_data_indexVector[28 * ctr_0 + 20]));
         } else {
           if (((dir) == (23))) {
@@ -105,21 +109,21 @@ fixedflux_single_precision_boundary_FixedFlux_single_precision(
                        _stride_flux_1 * y + _stride_flux_1 +
                        _stride_flux_2 * z - _stride_flux_2 +
                        10 * _stride_flux_3] =
-                -0.11111111111111111f *
+                -0.1111111111111111f *
                     *((float *)(&_data_indexVector[28 * ctr_0 + 16])) -
-                0.11111111111111111f *
+                0.1111111111111111f *
                     *((float *)(&_data_indexVector[28 * ctr_0 + 20])) +
-                0.11111111111111111f *
+                0.1111111111111111f *
                     *((float *)(&_data_indexVector[28 * ctr_0 + 24]));
           } else {
             if (((dir) == (22))) {
               _data_flux[_stride_flux_0 * x + _stride_flux_1 * y +
                          _stride_flux_2 * z + 10 * _stride_flux_3] =
-                  -0.11111111111111111f *
+                  -0.1111111111111111f *
                       *((float *)(&_data_indexVector[28 * ctr_0 + 16])) -
-                  0.11111111111111111f *
+                  0.1111111111111111f *
                       *((float *)(&_data_indexVector[28 * ctr_0 + 20])) +
-                  0.11111111111111111f *
+                  0.1111111111111111f *
                       *((float *)(&_data_indexVector[28 * ctr_0 + 24]));
             } else {
               if (((dir) == (21))) {
@@ -127,21 +131,21 @@ fixedflux_single_precision_boundary_FixedFlux_single_precision(
                            _stride_flux_1 * y - _stride_flux_1 +
                            _stride_flux_2 * z + _stride_flux_2 +
                            11 * _stride_flux_3] =
-                    -0.11111111111111111f *
+                    -0.1111111111111111f *
                         *((float *)(&_data_indexVector[28 * ctr_0 + 16])) -
-                    0.11111111111111111f *
+                    0.1111111111111111f *
                         *((float *)(&_data_indexVector[28 * ctr_0 + 24])) +
-                    0.11111111111111111f *
+                    0.1111111111111111f *
                         *((float *)(&_data_indexVector[28 * ctr_0 + 20]));
               } else {
                 if (((dir) == (20))) {
                   _data_flux[_stride_flux_0 * x + _stride_flux_1 * y +
                              _stride_flux_2 * z + 12 * _stride_flux_3] =
-                      -0.11111111111111111f *
+                      -0.1111111111111111f *
                           *((float *)(&_data_indexVector[28 * ctr_0 + 16])) +
-                      0.11111111111111111f *
+                      0.1111111111111111f *
                           *((float *)(&_data_indexVector[28 * ctr_0 + 20])) +
-                      0.11111111111111111f *
+                      0.1111111111111111f *
                           *((float *)(&_data_indexVector[28 * ctr_0 + 24]));
                 } else {
                   if (((dir) == (19))) {
@@ -149,40 +153,40 @@ fixedflux_single_precision_boundary_FixedFlux_single_precision(
                                _stride_flux_1 * y + _stride_flux_1 +
                                _stride_flux_2 * z + _stride_flux_2 +
                                9 * _stride_flux_3] =
-                        -0.11111111111111111f *
+                        -0.1111111111111111f *
                             *((float *)(&_data_indexVector[28 * ctr_0 + 16])) -
-                        0.11111111111111111f *
+                        0.1111111111111111f *
                             *((float *)(&_data_indexVector[28 * ctr_0 + 20])) -
-                        0.11111111111111111f *
+                        0.1111111111111111f *
                             *((float *)(&_data_indexVector[28 * ctr_0 + 24]));
                   } else {
                     if (((dir) == (18))) {
                       _data_flux[_stride_flux_0 * x + _stride_flux_0 +
                                  _stride_flux_1 * y + _stride_flux_2 * z -
                                  _stride_flux_2 + 6 * _stride_flux_3] =
-                          -0.11111111111111111f *
+                          -0.1111111111111111f *
                               *((float
                                      *)(&_data_indexVector[28 * ctr_0 + 16])) +
-                          0.11111111111111111f *
+                          0.1111111111111111f *
                               *((float *)(&_data_indexVector[28 * ctr_0 + 24]));
                     } else {
                       if (((dir) == (17))) {
                         _data_flux[_stride_flux_0 * x + _stride_flux_1 * y +
                                    _stride_flux_2 * z + 5 * _stride_flux_3] =
-                            -0.11111111111111111f *
+                            -0.1111111111111111f *
                                 *((float *)(&_data_indexVector[28 * ctr_0 +
                                                                16])) -
-                            0.11111111111111111f *
+                            0.1111111111111111f *
                                 *((float
                                        *)(&_data_indexVector[28 * ctr_0 + 24]));
                       } else {
                         if (((dir) == (16))) {
                           _data_flux[_stride_flux_0 * x + _stride_flux_1 * y +
                                      _stride_flux_2 * z + 7 * _stride_flux_3] =
-                              -0.11111111111111111f *
+                              -0.1111111111111111f *
                                   *((float *)(&_data_indexVector[28 * ctr_0 +
                                                                  20])) -
-                              0.11111111111111111f *
+                              0.1111111111111111f *
                                   *((float *)(&_data_indexVector[28 * ctr_0 +
                                                                  24]));
                         } else {
@@ -190,10 +194,10 @@ fixedflux_single_precision_boundary_FixedFlux_single_precision(
                             _data_flux[_stride_flux_0 * x + _stride_flux_1 * y +
                                        _stride_flux_1 + _stride_flux_2 * z -
                                        _stride_flux_2 + 8 * _stride_flux_3] =
-                                -0.11111111111111111f *
+                                -0.1111111111111111f *
                                     *((float *)(&_data_indexVector[28 * ctr_0 +
                                                                    20])) +
-                                0.11111111111111111f *
+                                0.1111111111111111f *
                                     *((float *)(&_data_indexVector[28 * ctr_0 +
                                                                    24]));
                           } else {
@@ -202,11 +206,11 @@ fixedflux_single_precision_boundary_FixedFlux_single_precision(
                                          _stride_flux_1 * y +
                                          _stride_flux_2 * z + _stride_flux_2 +
                                          5 * _stride_flux_3] =
-                                  -0.11111111111111111f *
+                                  -0.1111111111111111f *
                                       *((float
                                              *)(&_data_indexVector[28 * ctr_0 +
                                                                    16])) -
-                                  0.11111111111111111f *
+                                  0.1111111111111111f *
                                       *((float
                                              *)(&_data_indexVector[28 * ctr_0 +
                                                                    24]));
@@ -216,10 +220,10 @@ fixedflux_single_precision_boundary_FixedFlux_single_precision(
                                            _stride_flux_1 * y +
                                            _stride_flux_2 * z +
                                            6 * _stride_flux_3] =
-                                    -0.11111111111111111f *
+                                    -0.1111111111111111f *
                                         *((float *)(&_data_indexVector
                                                         [28 * ctr_0 + 16])) +
-                                    0.11111111111111111f *
+                                    0.1111111111111111f *
                                         *((float *)(&_data_indexVector
                                                         [28 * ctr_0 + 24]));
                               } else {
@@ -228,10 +232,10 @@ fixedflux_single_precision_boundary_FixedFlux_single_precision(
                                              _stride_flux_1 * y +
                                              _stride_flux_2 * z +
                                              8 * _stride_flux_3] =
-                                      -0.11111111111111111f *
+                                      -0.1111111111111111f *
                                           *((float *)(&_data_indexVector
                                                           [28 * ctr_0 + 20])) +
-                                      0.11111111111111111f *
+                                      0.1111111111111111f *
                                           *((float *)(&_data_indexVector
                                                           [28 * ctr_0 + 24]));
                                 } else {
@@ -242,11 +246,11 @@ fixedflux_single_precision_boundary_FixedFlux_single_precision(
                                                _stride_flux_2 * z +
                                                _stride_flux_2 +
                                                7 * _stride_flux_3] =
-                                        -0.11111111111111111f *
+                                        -0.1111111111111111f *
                                             *((float
                                                    *)(&_data_indexVector
                                                           [28 * ctr_0 + 20])) -
-                                        0.11111111111111111f *
+                                        0.1111111111111111f *
                                             *((float *)(&_data_indexVector
                                                             [28 * ctr_0 + 24]));
                                   } else {
@@ -257,11 +261,11 @@ fixedflux_single_precision_boundary_FixedFlux_single_precision(
                                                  _stride_flux_1 +
                                                  _stride_flux_2 * z +
                                                  4 * _stride_flux_3] =
-                                          -0.11111111111111111f *
+                                          -0.1111111111111111f *
                                               *((float *)(&_data_indexVector
                                                               [28 * ctr_0 +
                                                                16])) +
-                                          0.11111111111111111f *
+                                          0.1111111111111111f *
                                               *((float
                                                      *)(&_data_indexVector
                                                             [28 * ctr_0 + 20]));
@@ -271,11 +275,11 @@ fixedflux_single_precision_boundary_FixedFlux_single_precision(
                                                    _stride_flux_1 * y +
                                                    _stride_flux_2 * z +
                                                    3 * _stride_flux_3] =
-                                            -0.11111111111111111f *
+                                            -0.1111111111111111f *
                                                 *((float *)(&_data_indexVector
                                                                 [28 * ctr_0 +
                                                                  16])) -
-                                            0.11111111111111111f *
+                                            0.1111111111111111f *
                                                 *((float *)(&_data_indexVector
                                                                 [28 * ctr_0 +
                                                                  20]));
@@ -287,11 +291,11 @@ fixedflux_single_precision_boundary_FixedFlux_single_precision(
                                                      _stride_flux_1 +
                                                      _stride_flux_2 * z +
                                                      3 * _stride_flux_3] =
-                                              -0.11111111111111111f *
+                                              -0.1111111111111111f *
                                                   *((float *)(&_data_indexVector
                                                                   [28 * ctr_0 +
                                                                    16])) -
-                                              0.11111111111111111f *
+                                              0.1111111111111111f *
                                                   *((float *)(&_data_indexVector
                                                                   [28 * ctr_0 +
                                                                    20]));
@@ -301,12 +305,12 @@ fixedflux_single_precision_boundary_FixedFlux_single_precision(
                                                        _stride_flux_1 * y +
                                                        _stride_flux_2 * z +
                                                        4 * _stride_flux_3] =
-                                                -0.11111111111111111f *
+                                                -0.1111111111111111f *
                                                     *((float
                                                            *)(&_data_indexVector
                                                                   [28 * ctr_0 +
                                                                    16])) +
-                                                0.11111111111111111f *
+                                                0.1111111111111111f *
                                                     *((float
                                                            *)(&_data_indexVector
                                                                   [28 * ctr_0 +
@@ -317,7 +321,7 @@ fixedflux_single_precision_boundary_FixedFlux_single_precision(
                                                          _stride_flux_1 * y +
                                                          _stride_flux_2 * z +
                                                          2 * _stride_flux_3] =
-                                                  -0.11111111111111111f *
+                                                  -0.1111111111111111f *
                                                   *((float *)(&_data_indexVector
                                                                   [28 * ctr_0 +
                                                                    24]));
@@ -328,7 +332,7 @@ fixedflux_single_precision_boundary_FixedFlux_single_precision(
                                                            _stride_flux_2 * z +
                                                            _stride_flux_2 +
                                                            2 * _stride_flux_3] =
-                                                    -0.11111111111111111f *
+                                                    -0.1111111111111111f *
                                                     *((float
                                                            *)(&_data_indexVector
                                                                   [28 * ctr_0 +
@@ -342,7 +346,7 @@ fixedflux_single_precision_boundary_FixedFlux_single_precision(
                                                                  y +
                                                              _stride_flux_2 *
                                                                  z] =
-                                                      -0.11111111111111111f *
+                                                      -0.1111111111111111f *
                                                       *((float
                                                              *)(&_data_indexVector
                                                                     [28 *
@@ -356,7 +360,7 @@ fixedflux_single_precision_boundary_FixedFlux_single_precision(
                                                                    y +
                                                                _stride_flux_2 *
                                                                    z] =
-                                                        -0.11111111111111111f *
+                                                        -0.1111111111111111f *
                                                         *((float
                                                                *)(&_data_indexVector
                                                                       [28 *
@@ -371,7 +375,7 @@ fixedflux_single_precision_boundary_FixedFlux_single_precision(
                                                                  _stride_flux_2 *
                                                                      z +
                                                                  _stride_flux_3] =
-                                                          -0.11111111111111111f *
+                                                          -0.1111111111111111f *
                                                           *((float
                                                                  *)(&_data_indexVector
                                                                         [28 *
@@ -387,7 +391,7 @@ fixedflux_single_precision_boundary_FixedFlux_single_precision(
                                                                    _stride_flux_2 *
                                                                        z +
                                                                    _stride_flux_3] =
-                                                            -0.11111111111111111f *
+                                                            -0.1111111111111111f *
                                                             *((float
                                                                    *)(&_data_indexVector
                                                                           [28 *
@@ -434,7 +438,7 @@ fixedflux_single_precision_boundary_FixedFlux_single_precision(
 void FixedFlux_single_precision::run_impl(IBlock *block,
                                           IndexVectors::Type type) {
   auto *indexVectors = block->getData<IndexVectors>(indexVectorID);
-  int64_t indexVectorSize = int64_c(indexVectors->indexVector(type).size());
+  int32_t indexVectorSize = int32_c(indexVectors->indexVector(type).size());
   if (indexVectorSize == 0)
     return;
 
@@ -445,7 +449,7 @@ void FixedFlux_single_precision::run_impl(IBlock *block,
   auto flux = block->getData<field::GhostLayerField<float, 13>>(fluxID);
 
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(flux->nrOfGhostLayers()));
-  float *RESTRICT _data_flux = flux->dataAt(0, 0, 0, 0);
+  float *RESTRICT const _data_flux = flux->dataAt(0, 0, 0, 0);
   const int64_t _stride_flux_0 = int64_t(flux->xStride());
   const int64_t _stride_flux_1 = int64_t(flux->yStride());
   const int64_t _stride_flux_2 = int64_t(flux->zStride());

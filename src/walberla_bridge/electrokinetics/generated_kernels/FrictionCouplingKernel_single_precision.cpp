@@ -1,6 +1,6 @@
-// kernel generated with pystencils v0.4.4, lbmpy v0.4.4,
+// kernel generated with pystencils v1.0, lbmpy v1.0,
 // lbmpy_walberla/pystencils_walberla from commit
-// 08f04ef64f95609b47838db85862033a1600afa1
+// 01a28162ae1aacf7b96152c9f886ce54cc7f53ff
 
 //======================================================================================================================
 //
@@ -146,67 +146,67 @@ frictioncouplingkernel_single_precision_frictioncouplingkernel_single_precision(
       for (int64_t ctr_0 = 1; ctr_0 < _size_f_0 - 1; ctr_0 += 1) {
         _data_f_20_30_10[_stride_f_0 * ctr_0] =
             kT *
-            (-_data_j_20_30_10[_stride_j_0 * ctr_0 + _stride_j_0] -
-             _data_j_20_30_10[_stride_j_0 * ctr_0] -
-             _data_j_20_310_10[_stride_j_0 * ctr_0] -
-             _data_j_20_311_10[_stride_j_0 * ctr_0] -
-             _data_j_20_312_10[_stride_j_0 * ctr_0] -
-             _data_j_20_33_10[_stride_j_0 * ctr_0] -
-             _data_j_20_33_11[_stride_j_0 * ctr_0 + _stride_j_0] -
-             _data_j_20_34_10[_stride_j_0 * ctr_0] -
-             _data_j_20_34_1m1[_stride_j_0 * ctr_0 + _stride_j_0] -
-             _data_j_20_35_10[_stride_j_0 * ctr_0] -
-             _data_j_20_36_10[_stride_j_0 * ctr_0] -
-             _data_j_20_39_10[_stride_j_0 * ctr_0] -
-             _data_j_21_311_1m1[_stride_j_0 * ctr_0 + _stride_j_0] -
-             _data_j_21_35_10[_stride_j_0 * ctr_0 + _stride_j_0] -
-             _data_j_21_39_11[_stride_j_0 * ctr_0 + _stride_j_0] -
-             _data_j_2m1_310_11[_stride_j_0 * ctr_0 + _stride_j_0] -
-             _data_j_2m1_312_1m1[_stride_j_0 * ctr_0 + _stride_j_0] -
-             _data_j_2m1_36_10[_stride_j_0 * ctr_0 + _stride_j_0]) *
-            0.50000000000000000f / D;
+            (-1.0f * _data_j_20_30_10[_stride_j_0 * ctr_0 + _stride_j_0] -
+             1.0f * _data_j_20_30_10[_stride_j_0 * ctr_0] -
+             1.0f * _data_j_20_310_10[_stride_j_0 * ctr_0] -
+             1.0f * _data_j_20_311_10[_stride_j_0 * ctr_0] -
+             1.0f * _data_j_20_312_10[_stride_j_0 * ctr_0] -
+             1.0f * _data_j_20_33_10[_stride_j_0 * ctr_0] -
+             1.0f * _data_j_20_33_11[_stride_j_0 * ctr_0 + _stride_j_0] -
+             1.0f * _data_j_20_34_10[_stride_j_0 * ctr_0] -
+             1.0f * _data_j_20_34_1m1[_stride_j_0 * ctr_0 + _stride_j_0] -
+             1.0f * _data_j_20_35_10[_stride_j_0 * ctr_0] -
+             1.0f * _data_j_20_36_10[_stride_j_0 * ctr_0] -
+             1.0f * _data_j_20_39_10[_stride_j_0 * ctr_0] -
+             1.0f * _data_j_21_311_1m1[_stride_j_0 * ctr_0 + _stride_j_0] -
+             1.0f * _data_j_21_35_10[_stride_j_0 * ctr_0 + _stride_j_0] -
+             1.0f * _data_j_21_39_11[_stride_j_0 * ctr_0 + _stride_j_0] -
+             1.0f * _data_j_2m1_310_11[_stride_j_0 * ctr_0 + _stride_j_0] -
+             1.0f * _data_j_2m1_312_1m1[_stride_j_0 * ctr_0 + _stride_j_0] -
+             1.0f * _data_j_2m1_36_10[_stride_j_0 * ctr_0 + _stride_j_0]) *
+            0.5f * ((1.0f) / (D));
         _data_f_20_31_10[_stride_f_0 * ctr_0] =
             kT *
-            (-_data_j_20_310_10[_stride_j_0 * ctr_0] +
+            (-1.0f * _data_j_20_310_10[_stride_j_0 * ctr_0] -
+             1.0f * _data_j_20_31_10[_stride_j_0 * ctr_0] -
+             1.0f * _data_j_20_31_11[_stride_j_0 * ctr_0] -
+             1.0f * _data_j_20_33_10[_stride_j_0 * ctr_0] -
+             1.0f * _data_j_20_33_11[_stride_j_0 * ctr_0 + _stride_j_0] -
+             1.0f * _data_j_20_37_10[_stride_j_0 * ctr_0] -
+             1.0f * _data_j_20_38_10[_stride_j_0 * ctr_0] -
+             1.0f * _data_j_20_39_10[_stride_j_0 * ctr_0] -
+             1.0f * _data_j_21_37_11[_stride_j_0 * ctr_0] -
+             1.0f * _data_j_21_39_11[_stride_j_0 * ctr_0 + _stride_j_0] -
+             1.0f * _data_j_2m1_310_11[_stride_j_0 * ctr_0 + _stride_j_0] -
+             1.0f * _data_j_2m1_38_11[_stride_j_0 * ctr_0] +
              _data_j_20_311_10[_stride_j_0 * ctr_0] +
-             _data_j_20_312_10[_stride_j_0 * ctr_0] -
-             _data_j_20_31_10[_stride_j_0 * ctr_0] -
-             _data_j_20_31_11[_stride_j_0 * ctr_0] -
-             _data_j_20_33_10[_stride_j_0 * ctr_0] -
-             _data_j_20_33_11[_stride_j_0 * ctr_0 + _stride_j_0] +
+             _data_j_20_312_10[_stride_j_0 * ctr_0] +
              _data_j_20_34_10[_stride_j_0 * ctr_0] +
-             _data_j_20_34_1m1[_stride_j_0 * ctr_0 + _stride_j_0] -
-             _data_j_20_37_10[_stride_j_0 * ctr_0] -
-             _data_j_20_38_10[_stride_j_0 * ctr_0] -
-             _data_j_20_39_10[_stride_j_0 * ctr_0] +
-             _data_j_21_311_1m1[_stride_j_0 * ctr_0 + _stride_j_0] -
-             _data_j_21_37_11[_stride_j_0 * ctr_0] -
-             _data_j_21_39_11[_stride_j_0 * ctr_0 + _stride_j_0] -
-             _data_j_2m1_310_11[_stride_j_0 * ctr_0 + _stride_j_0] +
-             _data_j_2m1_312_1m1[_stride_j_0 * ctr_0 + _stride_j_0] -
-             _data_j_2m1_38_11[_stride_j_0 * ctr_0]) *
-            0.50000000000000000f / D;
+             _data_j_20_34_1m1[_stride_j_0 * ctr_0 + _stride_j_0] +
+             _data_j_21_311_1m1[_stride_j_0 * ctr_0 + _stride_j_0] +
+             _data_j_2m1_312_1m1[_stride_j_0 * ctr_0 + _stride_j_0]) *
+            0.5f * ((1.0f) / (D));
         _data_f_20_32_10[_stride_f_0 * ctr_0] =
             kT *
-            (_data_j_20_310_10[_stride_j_0 * ctr_0] -
-             _data_j_20_311_10[_stride_j_0 * ctr_0] +
-             _data_j_20_312_10[_stride_j_0 * ctr_0] -
-             _data_j_20_32_10[_stride_j_0 * ctr_0] -
-             _data_j_20_35_10[_stride_j_0 * ctr_0] +
-             _data_j_20_36_10[_stride_j_0 * ctr_0] -
-             _data_j_20_37_10[_stride_j_0 * ctr_0] +
-             _data_j_20_38_10[_stride_j_0 * ctr_0] -
-             _data_j_20_39_10[_stride_j_0 * ctr_0] -
-             _data_j_21_311_1m1[_stride_j_0 * ctr_0 + _stride_j_0] -
-             _data_j_21_32_10[_stride_j_0 * ctr_0] -
-             _data_j_21_35_10[_stride_j_0 * ctr_0 + _stride_j_0] -
-             _data_j_21_37_11[_stride_j_0 * ctr_0] -
-             _data_j_21_39_11[_stride_j_0 * ctr_0 + _stride_j_0] +
+            (-1.0f * _data_j_20_311_10[_stride_j_0 * ctr_0] -
+             1.0f * _data_j_20_32_10[_stride_j_0 * ctr_0] -
+             1.0f * _data_j_20_35_10[_stride_j_0 * ctr_0] -
+             1.0f * _data_j_20_37_10[_stride_j_0 * ctr_0] -
+             1.0f * _data_j_20_39_10[_stride_j_0 * ctr_0] -
+             1.0f * _data_j_21_311_1m1[_stride_j_0 * ctr_0 + _stride_j_0] -
+             1.0f * _data_j_21_32_10[_stride_j_0 * ctr_0] -
+             1.0f * _data_j_21_35_10[_stride_j_0 * ctr_0 + _stride_j_0] -
+             1.0f * _data_j_21_37_11[_stride_j_0 * ctr_0] -
+             1.0f * _data_j_21_39_11[_stride_j_0 * ctr_0 + _stride_j_0] +
+             _data_j_20_310_10[_stride_j_0 * ctr_0] +
+             _data_j_20_312_10[_stride_j_0 * ctr_0] +
+             _data_j_20_36_10[_stride_j_0 * ctr_0] +
+             _data_j_20_38_10[_stride_j_0 * ctr_0] +
              _data_j_2m1_310_11[_stride_j_0 * ctr_0 + _stride_j_0] +
              _data_j_2m1_312_1m1[_stride_j_0 * ctr_0 + _stride_j_0] +
              _data_j_2m1_36_10[_stride_j_0 * ctr_0 + _stride_j_0] +
              _data_j_2m1_38_11[_stride_j_0 * ctr_0]) *
-            0.50000000000000000f / D;
+            0.5f * ((1.0f) / (D));
       }
     }
   }
@@ -214,11 +214,11 @@ frictioncouplingkernel_single_precision_frictioncouplingkernel_single_precision(
 } // namespace internal_910e9429dc8b77dbed969a16d3f227fb
 
 void FrictionCouplingKernel_single_precision::run(IBlock *block) {
-  auto f = block->getData<field::GhostLayerField<float, 3>>(fID);
   auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
+  auto f = block->getData<field::GhostLayerField<float, 3>>(fID);
 
-  auto &D = this->D_;
   auto &kT = this->kT_;
+  auto &D = this->D_;
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(f->nrOfGhostLayers()));
   float *RESTRICT _data_f = f->dataAt(-1, -1, -1, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(j->nrOfGhostLayers()));
@@ -259,11 +259,11 @@ void FrictionCouplingKernel_single_precision::runOnCellInterval(
   if (ci.empty())
     return;
 
-  auto f = block->getData<field::GhostLayerField<float, 3>>(fID);
   auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
+  auto f = block->getData<field::GhostLayerField<float, 3>>(fID);
 
-  auto &D = this->D_;
   auto &kT = this->kT_;
+  auto &D = this->D_;
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1, -int_c(f->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1, -int_c(f->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin() - 1, -int_c(f->nrOfGhostLayers()));

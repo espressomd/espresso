@@ -1,6 +1,6 @@
-// kernel generated with pystencils v0.4.4, lbmpy v0.4.4,
+// kernel generated with pystencils v1.0, lbmpy v1.0,
 // lbmpy_walberla/pystencils_walberla from commit
-// 08f04ef64f95609b47838db85862033a1600afa1
+// 01a28162ae1aacf7b96152c9f886ce54cc7f53ff
 
 #include "DensityPackInfo_double_precision.h"
 #include "core/DataTypes.h"
@@ -35,10 +35,8 @@ pack_BSW(double *RESTRICT _data_buffer, double *RESTRICT const _data_j,
     for (int64_t ctr_1 = 0; ctr_1 < _size_j_1; ctr_1 += 1) {
       double *RESTRICT _data_j_20_39_10 = _stride_j_1 * ctr_1 + _data_j_20_39;
       for (int64_t ctr_0 = 0; ctr_0 < _size_j_0; ctr_0 += 1) {
-        _data_buffer[((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     ((_size_j_0) / (1)) * ((ctr_1) / (1)) + ((ctr_0) / (1))] =
-            _data_j_20_39_10[_stride_j_0 * ctr_0];
+        _data_buffer[_size_j_0 * _size_j_1 * ctr_2 + _size_j_0 * ctr_1 +
+                     ctr_0] = _data_j_20_39_10[_stride_j_0 * ctr_0];
       }
     }
   }
@@ -64,21 +62,12 @@ pack_SW(double *RESTRICT _data_buffer, double *RESTRICT const _data_j,
       double *RESTRICT _data_j_20_33_10 = _stride_j_1 * ctr_1 + _data_j_20_33;
       double *RESTRICT _data_j_20_310_10 = _stride_j_1 * ctr_1 + _data_j_20_310;
       for (int64_t ctr_0 = 0; ctr_0 < _size_j_0; ctr_0 += 1) {
-        _data_buffer[3 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     3 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     3 * ((ctr_0) / (1))] =
-            _data_j_20_39_10[_stride_j_0 * ctr_0];
-        _data_buffer[3 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     3 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     3 * ((ctr_0) / (1)) + 1] =
-            _data_j_20_33_10[_stride_j_0 * ctr_0];
-        _data_buffer[3 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     3 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     3 * ((ctr_0) / (1)) + 2] =
-            _data_j_20_310_10[_stride_j_0 * ctr_0];
+        _data_buffer[3 * _size_j_0 * _size_j_1 * ctr_2 + 3 * _size_j_0 * ctr_1 +
+                     3 * ctr_0] = _data_j_20_39_10[_stride_j_0 * ctr_0];
+        _data_buffer[3 * _size_j_0 * _size_j_1 * ctr_2 + 3 * _size_j_0 * ctr_1 +
+                     3 * ctr_0 + 1] = _data_j_20_33_10[_stride_j_0 * ctr_0];
+        _data_buffer[3 * _size_j_0 * _size_j_1 * ctr_2 + 3 * _size_j_0 * ctr_1 +
+                     3 * ctr_0 + 2] = _data_j_20_310_10[_stride_j_0 * ctr_0];
       }
     }
   }
@@ -98,10 +87,8 @@ pack_TSW(double *RESTRICT _data_buffer, double *RESTRICT const _data_j,
     for (int64_t ctr_1 = 0; ctr_1 < _size_j_1; ctr_1 += 1) {
       double *RESTRICT _data_j_20_310_10 = _stride_j_1 * ctr_1 + _data_j_20_310;
       for (int64_t ctr_0 = 0; ctr_0 < _size_j_0; ctr_0 += 1) {
-        _data_buffer[((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     ((_size_j_0) / (1)) * ((ctr_1) / (1)) + ((ctr_0) / (1))] =
-            _data_j_20_310_10[_stride_j_0 * ctr_0];
+        _data_buffer[_size_j_0 * _size_j_1 * ctr_2 + _size_j_0 * ctr_1 +
+                     ctr_0] = _data_j_20_310_10[_stride_j_0 * ctr_0];
       }
     }
   }
@@ -127,21 +114,12 @@ pack_BW(double *RESTRICT _data_buffer, double *RESTRICT const _data_j,
       double *RESTRICT _data_j_20_35_10 = _stride_j_1 * ctr_1 + _data_j_20_35;
       double *RESTRICT _data_j_20_311_10 = _stride_j_1 * ctr_1 + _data_j_20_311;
       for (int64_t ctr_0 = 0; ctr_0 < _size_j_0; ctr_0 += 1) {
-        _data_buffer[3 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     3 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     3 * ((ctr_0) / (1))] =
-            _data_j_20_39_10[_stride_j_0 * ctr_0];
-        _data_buffer[3 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     3 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     3 * ((ctr_0) / (1)) + 1] =
-            _data_j_20_35_10[_stride_j_0 * ctr_0];
-        _data_buffer[3 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     3 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     3 * ((ctr_0) / (1)) + 2] =
-            _data_j_20_311_10[_stride_j_0 * ctr_0];
+        _data_buffer[3 * _size_j_0 * _size_j_1 * ctr_2 + 3 * _size_j_0 * ctr_1 +
+                     3 * ctr_0] = _data_j_20_39_10[_stride_j_0 * ctr_0];
+        _data_buffer[3 * _size_j_0 * _size_j_1 * ctr_2 + 3 * _size_j_0 * ctr_1 +
+                     3 * ctr_0 + 1] = _data_j_20_35_10[_stride_j_0 * ctr_0];
+        _data_buffer[3 * _size_j_0 * _size_j_1 * ctr_2 + 3 * _size_j_0 * ctr_1 +
+                     3 * ctr_0 + 2] = _data_j_20_311_10[_stride_j_0 * ctr_0];
       }
     }
   }
@@ -184,51 +162,24 @@ pack_W(double *RESTRICT _data_buffer, double *RESTRICT const _data_j,
       double *RESTRICT _data_j_20_34_10 = _stride_j_1 * ctr_1 + _data_j_20_34;
       double *RESTRICT _data_j_20_312_10 = _stride_j_1 * ctr_1 + _data_j_20_312;
       for (int64_t ctr_0 = 0; ctr_0 < _size_j_0; ctr_0 += 1) {
-        _data_buffer[9 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     9 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     9 * ((ctr_0) / (1))] =
-            _data_j_20_39_10[_stride_j_0 * ctr_0];
-        _data_buffer[9 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     9 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     9 * ((ctr_0) / (1)) + 1] =
-            _data_j_20_33_10[_stride_j_0 * ctr_0];
-        _data_buffer[9 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     9 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     9 * ((ctr_0) / (1)) + 2] =
-            _data_j_20_310_10[_stride_j_0 * ctr_0];
-        _data_buffer[9 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     9 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     9 * ((ctr_0) / (1)) + 3] =
-            _data_j_20_35_10[_stride_j_0 * ctr_0];
-        _data_buffer[9 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     9 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     9 * ((ctr_0) / (1)) + 4] =
-            _data_j_20_30_10[_stride_j_0 * ctr_0];
-        _data_buffer[9 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     9 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     9 * ((ctr_0) / (1)) + 5] =
-            _data_j_20_36_10[_stride_j_0 * ctr_0];
-        _data_buffer[9 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     9 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     9 * ((ctr_0) / (1)) + 6] =
-            _data_j_20_311_10[_stride_j_0 * ctr_0];
-        _data_buffer[9 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     9 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     9 * ((ctr_0) / (1)) + 7] =
-            _data_j_20_34_10[_stride_j_0 * ctr_0];
-        _data_buffer[9 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     9 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     9 * ((ctr_0) / (1)) + 8] =
-            _data_j_20_312_10[_stride_j_0 * ctr_0];
+        _data_buffer[9 * _size_j_0 * _size_j_1 * ctr_2 + 9 * _size_j_0 * ctr_1 +
+                     9 * ctr_0] = _data_j_20_39_10[_stride_j_0 * ctr_0];
+        _data_buffer[9 * _size_j_0 * _size_j_1 * ctr_2 + 9 * _size_j_0 * ctr_1 +
+                     9 * ctr_0 + 1] = _data_j_20_33_10[_stride_j_0 * ctr_0];
+        _data_buffer[9 * _size_j_0 * _size_j_1 * ctr_2 + 9 * _size_j_0 * ctr_1 +
+                     9 * ctr_0 + 2] = _data_j_20_310_10[_stride_j_0 * ctr_0];
+        _data_buffer[9 * _size_j_0 * _size_j_1 * ctr_2 + 9 * _size_j_0 * ctr_1 +
+                     9 * ctr_0 + 3] = _data_j_20_35_10[_stride_j_0 * ctr_0];
+        _data_buffer[9 * _size_j_0 * _size_j_1 * ctr_2 + 9 * _size_j_0 * ctr_1 +
+                     9 * ctr_0 + 4] = _data_j_20_30_10[_stride_j_0 * ctr_0];
+        _data_buffer[9 * _size_j_0 * _size_j_1 * ctr_2 + 9 * _size_j_0 * ctr_1 +
+                     9 * ctr_0 + 5] = _data_j_20_36_10[_stride_j_0 * ctr_0];
+        _data_buffer[9 * _size_j_0 * _size_j_1 * ctr_2 + 9 * _size_j_0 * ctr_1 +
+                     9 * ctr_0 + 6] = _data_j_20_311_10[_stride_j_0 * ctr_0];
+        _data_buffer[9 * _size_j_0 * _size_j_1 * ctr_2 + 9 * _size_j_0 * ctr_1 +
+                     9 * ctr_0 + 7] = _data_j_20_34_10[_stride_j_0 * ctr_0];
+        _data_buffer[9 * _size_j_0 * _size_j_1 * ctr_2 + 9 * _size_j_0 * ctr_1 +
+                     9 * ctr_0 + 8] = _data_j_20_312_10[_stride_j_0 * ctr_0];
       }
     }
   }
@@ -254,21 +205,12 @@ pack_TW(double *RESTRICT _data_buffer, double *RESTRICT const _data_j,
       double *RESTRICT _data_j_20_36_10 = _stride_j_1 * ctr_1 + _data_j_20_36;
       double *RESTRICT _data_j_20_312_10 = _stride_j_1 * ctr_1 + _data_j_20_312;
       for (int64_t ctr_0 = 0; ctr_0 < _size_j_0; ctr_0 += 1) {
-        _data_buffer[3 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     3 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     3 * ((ctr_0) / (1))] =
-            _data_j_20_310_10[_stride_j_0 * ctr_0];
-        _data_buffer[3 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     3 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     3 * ((ctr_0) / (1)) + 1] =
-            _data_j_20_36_10[_stride_j_0 * ctr_0];
-        _data_buffer[3 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     3 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     3 * ((ctr_0) / (1)) + 2] =
-            _data_j_20_312_10[_stride_j_0 * ctr_0];
+        _data_buffer[3 * _size_j_0 * _size_j_1 * ctr_2 + 3 * _size_j_0 * ctr_1 +
+                     3 * ctr_0] = _data_j_20_310_10[_stride_j_0 * ctr_0];
+        _data_buffer[3 * _size_j_0 * _size_j_1 * ctr_2 + 3 * _size_j_0 * ctr_1 +
+                     3 * ctr_0 + 1] = _data_j_20_36_10[_stride_j_0 * ctr_0];
+        _data_buffer[3 * _size_j_0 * _size_j_1 * ctr_2 + 3 * _size_j_0 * ctr_1 +
+                     3 * ctr_0 + 2] = _data_j_20_312_10[_stride_j_0 * ctr_0];
       }
     }
   }
@@ -288,10 +230,8 @@ pack_BNW(double *RESTRICT _data_buffer, double *RESTRICT const _data_j,
     for (int64_t ctr_1 = 0; ctr_1 < _size_j_1; ctr_1 += 1) {
       double *RESTRICT _data_j_20_311_10 = _stride_j_1 * ctr_1 + _data_j_20_311;
       for (int64_t ctr_0 = 0; ctr_0 < _size_j_0; ctr_0 += 1) {
-        _data_buffer[((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     ((_size_j_0) / (1)) * ((ctr_1) / (1)) + ((ctr_0) / (1))] =
-            _data_j_20_311_10[_stride_j_0 * ctr_0];
+        _data_buffer[_size_j_0 * _size_j_1 * ctr_2 + _size_j_0 * ctr_1 +
+                     ctr_0] = _data_j_20_311_10[_stride_j_0 * ctr_0];
       }
     }
   }
@@ -317,21 +257,12 @@ pack_NW(double *RESTRICT _data_buffer, double *RESTRICT const _data_j,
       double *RESTRICT _data_j_20_34_10 = _stride_j_1 * ctr_1 + _data_j_20_34;
       double *RESTRICT _data_j_20_312_10 = _stride_j_1 * ctr_1 + _data_j_20_312;
       for (int64_t ctr_0 = 0; ctr_0 < _size_j_0; ctr_0 += 1) {
-        _data_buffer[3 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     3 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     3 * ((ctr_0) / (1))] =
-            _data_j_20_311_10[_stride_j_0 * ctr_0];
-        _data_buffer[3 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     3 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     3 * ((ctr_0) / (1)) + 1] =
-            _data_j_20_34_10[_stride_j_0 * ctr_0];
-        _data_buffer[3 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     3 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     3 * ((ctr_0) / (1)) + 2] =
-            _data_j_20_312_10[_stride_j_0 * ctr_0];
+        _data_buffer[3 * _size_j_0 * _size_j_1 * ctr_2 + 3 * _size_j_0 * ctr_1 +
+                     3 * ctr_0] = _data_j_20_311_10[_stride_j_0 * ctr_0];
+        _data_buffer[3 * _size_j_0 * _size_j_1 * ctr_2 + 3 * _size_j_0 * ctr_1 +
+                     3 * ctr_0 + 1] = _data_j_20_34_10[_stride_j_0 * ctr_0];
+        _data_buffer[3 * _size_j_0 * _size_j_1 * ctr_2 + 3 * _size_j_0 * ctr_1 +
+                     3 * ctr_0 + 2] = _data_j_20_312_10[_stride_j_0 * ctr_0];
       }
     }
   }
@@ -351,10 +282,8 @@ pack_TNW(double *RESTRICT _data_buffer, double *RESTRICT const _data_j,
     for (int64_t ctr_1 = 0; ctr_1 < _size_j_1; ctr_1 += 1) {
       double *RESTRICT _data_j_20_312_10 = _stride_j_1 * ctr_1 + _data_j_20_312;
       for (int64_t ctr_0 = 0; ctr_0 < _size_j_0; ctr_0 += 1) {
-        _data_buffer[((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     ((_size_j_0) / (1)) * ((ctr_1) / (1)) + ((ctr_0) / (1))] =
-            _data_j_20_312_10[_stride_j_0 * ctr_0];
+        _data_buffer[_size_j_0 * _size_j_1 * ctr_2 + _size_j_0 * ctr_1 +
+                     ctr_0] = _data_j_20_312_10[_stride_j_0 * ctr_0];
       }
     }
   }
@@ -377,16 +306,10 @@ pack_BS(double *RESTRICT _data_buffer, double *RESTRICT const _data_j,
       double *RESTRICT _data_j_20_39_10 = _stride_j_1 * ctr_1 + _data_j_20_39;
       double *RESTRICT _data_j_20_37_10 = _stride_j_1 * ctr_1 + _data_j_20_37;
       for (int64_t ctr_0 = 0; ctr_0 < _size_j_0; ctr_0 += 1) {
-        _data_buffer[2 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     2 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     2 * ((ctr_0) / (1))] =
-            _data_j_20_39_10[_stride_j_0 * ctr_0];
-        _data_buffer[2 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     2 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     2 * ((ctr_0) / (1)) + 1] =
-            _data_j_20_37_10[_stride_j_0 * ctr_0];
+        _data_buffer[2 * _size_j_0 * _size_j_1 * ctr_2 + 2 * _size_j_0 * ctr_1 +
+                     2 * ctr_0] = _data_j_20_39_10[_stride_j_0 * ctr_0];
+        _data_buffer[2 * _size_j_0 * _size_j_1 * ctr_2 + 2 * _size_j_0 * ctr_1 +
+                     2 * ctr_0 + 1] = _data_j_20_37_10[_stride_j_0 * ctr_0];
       }
     }
   }
@@ -421,36 +344,18 @@ pack_S(double *RESTRICT _data_buffer, double *RESTRICT const _data_j,
       double *RESTRICT _data_j_20_31_10 = _stride_j_1 * ctr_1 + _data_j_20_31;
       double *RESTRICT _data_j_20_38_10 = _stride_j_1 * ctr_1 + _data_j_20_38;
       for (int64_t ctr_0 = 0; ctr_0 < _size_j_0; ctr_0 += 1) {
-        _data_buffer[6 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     6 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     6 * ((ctr_0) / (1))] =
-            _data_j_20_39_10[_stride_j_0 * ctr_0];
-        _data_buffer[6 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     6 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     6 * ((ctr_0) / (1)) + 1] =
-            _data_j_20_33_10[_stride_j_0 * ctr_0];
-        _data_buffer[6 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     6 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     6 * ((ctr_0) / (1)) + 2] =
-            _data_j_20_310_10[_stride_j_0 * ctr_0];
-        _data_buffer[6 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     6 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     6 * ((ctr_0) / (1)) + 3] =
-            _data_j_20_37_10[_stride_j_0 * ctr_0];
-        _data_buffer[6 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     6 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     6 * ((ctr_0) / (1)) + 4] =
-            _data_j_20_31_10[_stride_j_0 * ctr_0];
-        _data_buffer[6 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     6 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     6 * ((ctr_0) / (1)) + 5] =
-            _data_j_20_38_10[_stride_j_0 * ctr_0];
+        _data_buffer[6 * _size_j_0 * _size_j_1 * ctr_2 + 6 * _size_j_0 * ctr_1 +
+                     6 * ctr_0] = _data_j_20_39_10[_stride_j_0 * ctr_0];
+        _data_buffer[6 * _size_j_0 * _size_j_1 * ctr_2 + 6 * _size_j_0 * ctr_1 +
+                     6 * ctr_0 + 1] = _data_j_20_33_10[_stride_j_0 * ctr_0];
+        _data_buffer[6 * _size_j_0 * _size_j_1 * ctr_2 + 6 * _size_j_0 * ctr_1 +
+                     6 * ctr_0 + 2] = _data_j_20_310_10[_stride_j_0 * ctr_0];
+        _data_buffer[6 * _size_j_0 * _size_j_1 * ctr_2 + 6 * _size_j_0 * ctr_1 +
+                     6 * ctr_0 + 3] = _data_j_20_37_10[_stride_j_0 * ctr_0];
+        _data_buffer[6 * _size_j_0 * _size_j_1 * ctr_2 + 6 * _size_j_0 * ctr_1 +
+                     6 * ctr_0 + 4] = _data_j_20_31_10[_stride_j_0 * ctr_0];
+        _data_buffer[6 * _size_j_0 * _size_j_1 * ctr_2 + 6 * _size_j_0 * ctr_1 +
+                     6 * ctr_0 + 5] = _data_j_20_38_10[_stride_j_0 * ctr_0];
       }
     }
   }
@@ -473,16 +378,10 @@ pack_TS(double *RESTRICT _data_buffer, double *RESTRICT const _data_j,
       double *RESTRICT _data_j_20_310_10 = _stride_j_1 * ctr_1 + _data_j_20_310;
       double *RESTRICT _data_j_20_38_10 = _stride_j_1 * ctr_1 + _data_j_20_38;
       for (int64_t ctr_0 = 0; ctr_0 < _size_j_0; ctr_0 += 1) {
-        _data_buffer[2 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     2 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     2 * ((ctr_0) / (1))] =
-            _data_j_20_310_10[_stride_j_0 * ctr_0];
-        _data_buffer[2 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     2 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     2 * ((ctr_0) / (1)) + 1] =
-            _data_j_20_38_10[_stride_j_0 * ctr_0];
+        _data_buffer[2 * _size_j_0 * _size_j_1 * ctr_2 + 2 * _size_j_0 * ctr_1 +
+                     2 * ctr_0] = _data_j_20_310_10[_stride_j_0 * ctr_0];
+        _data_buffer[2 * _size_j_0 * _size_j_1 * ctr_2 + 2 * _size_j_0 * ctr_1 +
+                     2 * ctr_0 + 1] = _data_j_20_38_10[_stride_j_0 * ctr_0];
       }
     }
   }
@@ -514,31 +413,16 @@ pack_B(double *RESTRICT _data_buffer, double *RESTRICT const _data_j,
       double *RESTRICT _data_j_20_37_10 = _stride_j_1 * ctr_1 + _data_j_20_37;
       double *RESTRICT _data_j_20_32_10 = _stride_j_1 * ctr_1 + _data_j_20_32;
       for (int64_t ctr_0 = 0; ctr_0 < _size_j_0; ctr_0 += 1) {
-        _data_buffer[5 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     5 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     5 * ((ctr_0) / (1))] =
-            _data_j_20_39_10[_stride_j_0 * ctr_0];
-        _data_buffer[5 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     5 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     5 * ((ctr_0) / (1)) + 1] =
-            _data_j_20_35_10[_stride_j_0 * ctr_0];
-        _data_buffer[5 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     5 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     5 * ((ctr_0) / (1)) + 2] =
-            _data_j_20_311_10[_stride_j_0 * ctr_0];
-        _data_buffer[5 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     5 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     5 * ((ctr_0) / (1)) + 3] =
-            _data_j_20_37_10[_stride_j_0 * ctr_0];
-        _data_buffer[5 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     5 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     5 * ((ctr_0) / (1)) + 4] =
-            _data_j_20_32_10[_stride_j_0 * ctr_0];
+        _data_buffer[5 * _size_j_0 * _size_j_1 * ctr_2 + 5 * _size_j_0 * ctr_1 +
+                     5 * ctr_0] = _data_j_20_39_10[_stride_j_0 * ctr_0];
+        _data_buffer[5 * _size_j_0 * _size_j_1 * ctr_2 + 5 * _size_j_0 * ctr_1 +
+                     5 * ctr_0 + 1] = _data_j_20_35_10[_stride_j_0 * ctr_0];
+        _data_buffer[5 * _size_j_0 * _size_j_1 * ctr_2 + 5 * _size_j_0 * ctr_1 +
+                     5 * ctr_0 + 2] = _data_j_20_311_10[_stride_j_0 * ctr_0];
+        _data_buffer[5 * _size_j_0 * _size_j_1 * ctr_2 + 5 * _size_j_0 * ctr_1 +
+                     5 * ctr_0 + 3] = _data_j_20_37_10[_stride_j_0 * ctr_0];
+        _data_buffer[5 * _size_j_0 * _size_j_1 * ctr_2 + 5 * _size_j_0 * ctr_1 +
+                     5 * ctr_0 + 4] = _data_j_20_32_10[_stride_j_0 * ctr_0];
       }
     }
   }
@@ -567,26 +451,14 @@ pack_T(double *RESTRICT _data_buffer, double *RESTRICT const _data_j,
       double *RESTRICT _data_j_20_312_10 = _stride_j_1 * ctr_1 + _data_j_20_312;
       double *RESTRICT _data_j_20_38_10 = _stride_j_1 * ctr_1 + _data_j_20_38;
       for (int64_t ctr_0 = 0; ctr_0 < _size_j_0; ctr_0 += 1) {
-        _data_buffer[4 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     4 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     4 * ((ctr_0) / (1))] =
-            _data_j_20_310_10[_stride_j_0 * ctr_0];
-        _data_buffer[4 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     4 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     4 * ((ctr_0) / (1)) + 1] =
-            _data_j_20_36_10[_stride_j_0 * ctr_0];
-        _data_buffer[4 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     4 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     4 * ((ctr_0) / (1)) + 2] =
-            _data_j_20_312_10[_stride_j_0 * ctr_0];
-        _data_buffer[4 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     4 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     4 * ((ctr_0) / (1)) + 3] =
-            _data_j_20_38_10[_stride_j_0 * ctr_0];
+        _data_buffer[4 * _size_j_0 * _size_j_1 * ctr_2 + 4 * _size_j_0 * ctr_1 +
+                     4 * ctr_0] = _data_j_20_310_10[_stride_j_0 * ctr_0];
+        _data_buffer[4 * _size_j_0 * _size_j_1 * ctr_2 + 4 * _size_j_0 * ctr_1 +
+                     4 * ctr_0 + 1] = _data_j_20_36_10[_stride_j_0 * ctr_0];
+        _data_buffer[4 * _size_j_0 * _size_j_1 * ctr_2 + 4 * _size_j_0 * ctr_1 +
+                     4 * ctr_0 + 2] = _data_j_20_312_10[_stride_j_0 * ctr_0];
+        _data_buffer[4 * _size_j_0 * _size_j_1 * ctr_2 + 4 * _size_j_0 * ctr_1 +
+                     4 * ctr_0 + 3] = _data_j_20_38_10[_stride_j_0 * ctr_0];
       }
     }
   }
@@ -606,10 +478,8 @@ pack_BN(double *RESTRICT _data_buffer, double *RESTRICT const _data_j,
     for (int64_t ctr_1 = 0; ctr_1 < _size_j_1; ctr_1 += 1) {
       double *RESTRICT _data_j_20_311_10 = _stride_j_1 * ctr_1 + _data_j_20_311;
       for (int64_t ctr_0 = 0; ctr_0 < _size_j_0; ctr_0 += 1) {
-        _data_buffer[((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     ((_size_j_0) / (1)) * ((ctr_1) / (1)) + ((ctr_0) / (1))] =
-            _data_j_20_311_10[_stride_j_0 * ctr_0];
+        _data_buffer[_size_j_0 * _size_j_1 * ctr_2 + _size_j_0 * ctr_1 +
+                     ctr_0] = _data_j_20_311_10[_stride_j_0 * ctr_0];
       }
     }
   }
@@ -635,21 +505,12 @@ pack_N(double *RESTRICT _data_buffer, double *RESTRICT const _data_j,
       double *RESTRICT _data_j_20_34_10 = _stride_j_1 * ctr_1 + _data_j_20_34;
       double *RESTRICT _data_j_20_312_10 = _stride_j_1 * ctr_1 + _data_j_20_312;
       for (int64_t ctr_0 = 0; ctr_0 < _size_j_0; ctr_0 += 1) {
-        _data_buffer[3 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     3 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     3 * ((ctr_0) / (1))] =
-            _data_j_20_311_10[_stride_j_0 * ctr_0];
-        _data_buffer[3 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     3 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     3 * ((ctr_0) / (1)) + 1] =
-            _data_j_20_34_10[_stride_j_0 * ctr_0];
-        _data_buffer[3 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     3 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                     3 * ((ctr_0) / (1)) + 2] =
-            _data_j_20_312_10[_stride_j_0 * ctr_0];
+        _data_buffer[3 * _size_j_0 * _size_j_1 * ctr_2 + 3 * _size_j_0 * ctr_1 +
+                     3 * ctr_0] = _data_j_20_311_10[_stride_j_0 * ctr_0];
+        _data_buffer[3 * _size_j_0 * _size_j_1 * ctr_2 + 3 * _size_j_0 * ctr_1 +
+                     3 * ctr_0 + 1] = _data_j_20_34_10[_stride_j_0 * ctr_0];
+        _data_buffer[3 * _size_j_0 * _size_j_1 * ctr_2 + 3 * _size_j_0 * ctr_1 +
+                     3 * ctr_0 + 2] = _data_j_20_312_10[_stride_j_0 * ctr_0];
       }
     }
   }
@@ -669,10 +530,8 @@ pack_TN(double *RESTRICT _data_buffer, double *RESTRICT const _data_j,
     for (int64_t ctr_1 = 0; ctr_1 < _size_j_1; ctr_1 += 1) {
       double *RESTRICT _data_j_20_312_10 = _stride_j_1 * ctr_1 + _data_j_20_312;
       for (int64_t ctr_0 = 0; ctr_0 < _size_j_0; ctr_0 += 1) {
-        _data_buffer[((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                         ((ctr_2) / (1)) +
-                     ((_size_j_0) / (1)) * ((ctr_1) / (1)) + ((ctr_0) / (1))] =
-            _data_j_20_312_10[_stride_j_0 * ctr_0];
+        _data_buffer[_size_j_0 * _size_j_1 * ctr_2 + _size_j_0 * ctr_1 +
+                     ctr_0] = _data_j_20_312_10[_stride_j_0 * ctr_0];
       }
     }
   }
@@ -693,10 +552,8 @@ unpack_BSW(double *RESTRICT const _data_buffer, double *RESTRICT _data_j,
       double *RESTRICT _data_j_20_39_10 = _stride_j_1 * ctr_1 + _data_j_20_39;
       for (int64_t ctr_0 = 0; ctr_0 < _size_j_0; ctr_0 += 1) {
         _data_j_20_39_10[_stride_j_0 * ctr_0] =
-            _data_buffer[((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         ((ctr_0) / (1))];
+            _data_buffer[_size_j_0 * _size_j_1 * ctr_2 + _size_j_0 * ctr_1 +
+                         ctr_0];
       }
     }
   }
@@ -723,20 +580,14 @@ unpack_SW(double *RESTRICT const _data_buffer, double *RESTRICT _data_j,
       double *RESTRICT _data_j_20_310_10 = _stride_j_1 * ctr_1 + _data_j_20_310;
       for (int64_t ctr_0 = 0; ctr_0 < _size_j_0; ctr_0 += 1) {
         _data_j_20_39_10[_stride_j_0 * ctr_0] =
-            _data_buffer[3 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         3 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         3 * ((ctr_0) / (1))];
+            _data_buffer[3 * _size_j_0 * _size_j_1 * ctr_2 +
+                         3 * _size_j_0 * ctr_1 + 3 * ctr_0];
         _data_j_20_33_10[_stride_j_0 * ctr_0] =
-            _data_buffer[3 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         3 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         3 * ((ctr_0) / (1)) + 1];
+            _data_buffer[3 * _size_j_0 * _size_j_1 * ctr_2 +
+                         3 * _size_j_0 * ctr_1 + 3 * ctr_0 + 1];
         _data_j_20_310_10[_stride_j_0 * ctr_0] =
-            _data_buffer[3 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         3 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         3 * ((ctr_0) / (1)) + 2];
+            _data_buffer[3 * _size_j_0 * _size_j_1 * ctr_2 +
+                         3 * _size_j_0 * ctr_1 + 3 * ctr_0 + 2];
       }
     }
   }
@@ -757,10 +608,8 @@ unpack_TSW(double *RESTRICT const _data_buffer, double *RESTRICT _data_j,
       double *RESTRICT _data_j_20_310_10 = _stride_j_1 * ctr_1 + _data_j_20_310;
       for (int64_t ctr_0 = 0; ctr_0 < _size_j_0; ctr_0 += 1) {
         _data_j_20_310_10[_stride_j_0 * ctr_0] =
-            _data_buffer[((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         ((ctr_0) / (1))];
+            _data_buffer[_size_j_0 * _size_j_1 * ctr_2 + _size_j_0 * ctr_1 +
+                         ctr_0];
       }
     }
   }
@@ -787,20 +636,14 @@ unpack_BW(double *RESTRICT const _data_buffer, double *RESTRICT _data_j,
       double *RESTRICT _data_j_20_311_10 = _stride_j_1 * ctr_1 + _data_j_20_311;
       for (int64_t ctr_0 = 0; ctr_0 < _size_j_0; ctr_0 += 1) {
         _data_j_20_39_10[_stride_j_0 * ctr_0] =
-            _data_buffer[3 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         3 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         3 * ((ctr_0) / (1))];
+            _data_buffer[3 * _size_j_0 * _size_j_1 * ctr_2 +
+                         3 * _size_j_0 * ctr_1 + 3 * ctr_0];
         _data_j_20_35_10[_stride_j_0 * ctr_0] =
-            _data_buffer[3 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         3 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         3 * ((ctr_0) / (1)) + 1];
+            _data_buffer[3 * _size_j_0 * _size_j_1 * ctr_2 +
+                         3 * _size_j_0 * ctr_1 + 3 * ctr_0 + 1];
         _data_j_20_311_10[_stride_j_0 * ctr_0] =
-            _data_buffer[3 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         3 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         3 * ((ctr_0) / (1)) + 2];
+            _data_buffer[3 * _size_j_0 * _size_j_1 * ctr_2 +
+                         3 * _size_j_0 * ctr_1 + 3 * ctr_0 + 2];
       }
     }
   }
@@ -844,50 +687,32 @@ unpack_W(double *RESTRICT const _data_buffer, double *RESTRICT _data_j,
       double *RESTRICT _data_j_20_312_10 = _stride_j_1 * ctr_1 + _data_j_20_312;
       for (int64_t ctr_0 = 0; ctr_0 < _size_j_0; ctr_0 += 1) {
         _data_j_20_39_10[_stride_j_0 * ctr_0] =
-            _data_buffer[9 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         9 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         9 * ((ctr_0) / (1))];
+            _data_buffer[9 * _size_j_0 * _size_j_1 * ctr_2 +
+                         9 * _size_j_0 * ctr_1 + 9 * ctr_0];
         _data_j_20_33_10[_stride_j_0 * ctr_0] =
-            _data_buffer[9 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         9 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         9 * ((ctr_0) / (1)) + 1];
+            _data_buffer[9 * _size_j_0 * _size_j_1 * ctr_2 +
+                         9 * _size_j_0 * ctr_1 + 9 * ctr_0 + 1];
         _data_j_20_310_10[_stride_j_0 * ctr_0] =
-            _data_buffer[9 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         9 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         9 * ((ctr_0) / (1)) + 2];
+            _data_buffer[9 * _size_j_0 * _size_j_1 * ctr_2 +
+                         9 * _size_j_0 * ctr_1 + 9 * ctr_0 + 2];
         _data_j_20_35_10[_stride_j_0 * ctr_0] =
-            _data_buffer[9 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         9 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         9 * ((ctr_0) / (1)) + 3];
+            _data_buffer[9 * _size_j_0 * _size_j_1 * ctr_2 +
+                         9 * _size_j_0 * ctr_1 + 9 * ctr_0 + 3];
         _data_j_20_30_10[_stride_j_0 * ctr_0] =
-            _data_buffer[9 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         9 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         9 * ((ctr_0) / (1)) + 4];
+            _data_buffer[9 * _size_j_0 * _size_j_1 * ctr_2 +
+                         9 * _size_j_0 * ctr_1 + 9 * ctr_0 + 4];
         _data_j_20_36_10[_stride_j_0 * ctr_0] =
-            _data_buffer[9 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         9 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         9 * ((ctr_0) / (1)) + 5];
+            _data_buffer[9 * _size_j_0 * _size_j_1 * ctr_2 +
+                         9 * _size_j_0 * ctr_1 + 9 * ctr_0 + 5];
         _data_j_20_311_10[_stride_j_0 * ctr_0] =
-            _data_buffer[9 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         9 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         9 * ((ctr_0) / (1)) + 6];
+            _data_buffer[9 * _size_j_0 * _size_j_1 * ctr_2 +
+                         9 * _size_j_0 * ctr_1 + 9 * ctr_0 + 6];
         _data_j_20_34_10[_stride_j_0 * ctr_0] =
-            _data_buffer[9 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         9 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         9 * ((ctr_0) / (1)) + 7];
+            _data_buffer[9 * _size_j_0 * _size_j_1 * ctr_2 +
+                         9 * _size_j_0 * ctr_1 + 9 * ctr_0 + 7];
         _data_j_20_312_10[_stride_j_0 * ctr_0] =
-            _data_buffer[9 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         9 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         9 * ((ctr_0) / (1)) + 8];
+            _data_buffer[9 * _size_j_0 * _size_j_1 * ctr_2 +
+                         9 * _size_j_0 * ctr_1 + 9 * ctr_0 + 8];
       }
     }
   }
@@ -914,20 +739,14 @@ unpack_TW(double *RESTRICT const _data_buffer, double *RESTRICT _data_j,
       double *RESTRICT _data_j_20_312_10 = _stride_j_1 * ctr_1 + _data_j_20_312;
       for (int64_t ctr_0 = 0; ctr_0 < _size_j_0; ctr_0 += 1) {
         _data_j_20_310_10[_stride_j_0 * ctr_0] =
-            _data_buffer[3 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         3 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         3 * ((ctr_0) / (1))];
+            _data_buffer[3 * _size_j_0 * _size_j_1 * ctr_2 +
+                         3 * _size_j_0 * ctr_1 + 3 * ctr_0];
         _data_j_20_36_10[_stride_j_0 * ctr_0] =
-            _data_buffer[3 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         3 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         3 * ((ctr_0) / (1)) + 1];
+            _data_buffer[3 * _size_j_0 * _size_j_1 * ctr_2 +
+                         3 * _size_j_0 * ctr_1 + 3 * ctr_0 + 1];
         _data_j_20_312_10[_stride_j_0 * ctr_0] =
-            _data_buffer[3 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         3 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         3 * ((ctr_0) / (1)) + 2];
+            _data_buffer[3 * _size_j_0 * _size_j_1 * ctr_2 +
+                         3 * _size_j_0 * ctr_1 + 3 * ctr_0 + 2];
       }
     }
   }
@@ -948,10 +767,8 @@ unpack_BNW(double *RESTRICT const _data_buffer, double *RESTRICT _data_j,
       double *RESTRICT _data_j_20_311_10 = _stride_j_1 * ctr_1 + _data_j_20_311;
       for (int64_t ctr_0 = 0; ctr_0 < _size_j_0; ctr_0 += 1) {
         _data_j_20_311_10[_stride_j_0 * ctr_0] =
-            _data_buffer[((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         ((ctr_0) / (1))];
+            _data_buffer[_size_j_0 * _size_j_1 * ctr_2 + _size_j_0 * ctr_1 +
+                         ctr_0];
       }
     }
   }
@@ -978,20 +795,14 @@ unpack_NW(double *RESTRICT const _data_buffer, double *RESTRICT _data_j,
       double *RESTRICT _data_j_20_312_10 = _stride_j_1 * ctr_1 + _data_j_20_312;
       for (int64_t ctr_0 = 0; ctr_0 < _size_j_0; ctr_0 += 1) {
         _data_j_20_311_10[_stride_j_0 * ctr_0] =
-            _data_buffer[3 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         3 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         3 * ((ctr_0) / (1))];
+            _data_buffer[3 * _size_j_0 * _size_j_1 * ctr_2 +
+                         3 * _size_j_0 * ctr_1 + 3 * ctr_0];
         _data_j_20_34_10[_stride_j_0 * ctr_0] =
-            _data_buffer[3 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         3 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         3 * ((ctr_0) / (1)) + 1];
+            _data_buffer[3 * _size_j_0 * _size_j_1 * ctr_2 +
+                         3 * _size_j_0 * ctr_1 + 3 * ctr_0 + 1];
         _data_j_20_312_10[_stride_j_0 * ctr_0] =
-            _data_buffer[3 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         3 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         3 * ((ctr_0) / (1)) + 2];
+            _data_buffer[3 * _size_j_0 * _size_j_1 * ctr_2 +
+                         3 * _size_j_0 * ctr_1 + 3 * ctr_0 + 2];
       }
     }
   }
@@ -1012,10 +823,8 @@ unpack_TNW(double *RESTRICT const _data_buffer, double *RESTRICT _data_j,
       double *RESTRICT _data_j_20_312_10 = _stride_j_1 * ctr_1 + _data_j_20_312;
       for (int64_t ctr_0 = 0; ctr_0 < _size_j_0; ctr_0 += 1) {
         _data_j_20_312_10[_stride_j_0 * ctr_0] =
-            _data_buffer[((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         ((ctr_0) / (1))];
+            _data_buffer[_size_j_0 * _size_j_1 * ctr_2 + _size_j_0 * ctr_1 +
+                         ctr_0];
       }
     }
   }
@@ -1039,15 +848,11 @@ unpack_BS(double *RESTRICT const _data_buffer, double *RESTRICT _data_j,
       double *RESTRICT _data_j_20_37_10 = _stride_j_1 * ctr_1 + _data_j_20_37;
       for (int64_t ctr_0 = 0; ctr_0 < _size_j_0; ctr_0 += 1) {
         _data_j_20_39_10[_stride_j_0 * ctr_0] =
-            _data_buffer[2 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         2 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         2 * ((ctr_0) / (1))];
+            _data_buffer[2 * _size_j_0 * _size_j_1 * ctr_2 +
+                         2 * _size_j_0 * ctr_1 + 2 * ctr_0];
         _data_j_20_37_10[_stride_j_0 * ctr_0] =
-            _data_buffer[2 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         2 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         2 * ((ctr_0) / (1)) + 1];
+            _data_buffer[2 * _size_j_0 * _size_j_1 * ctr_2 +
+                         2 * _size_j_0 * ctr_1 + 2 * ctr_0 + 1];
       }
     }
   }
@@ -1083,35 +888,23 @@ unpack_S(double *RESTRICT const _data_buffer, double *RESTRICT _data_j,
       double *RESTRICT _data_j_20_38_10 = _stride_j_1 * ctr_1 + _data_j_20_38;
       for (int64_t ctr_0 = 0; ctr_0 < _size_j_0; ctr_0 += 1) {
         _data_j_20_39_10[_stride_j_0 * ctr_0] =
-            _data_buffer[6 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         6 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         6 * ((ctr_0) / (1))];
+            _data_buffer[6 * _size_j_0 * _size_j_1 * ctr_2 +
+                         6 * _size_j_0 * ctr_1 + 6 * ctr_0];
         _data_j_20_33_10[_stride_j_0 * ctr_0] =
-            _data_buffer[6 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         6 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         6 * ((ctr_0) / (1)) + 1];
+            _data_buffer[6 * _size_j_0 * _size_j_1 * ctr_2 +
+                         6 * _size_j_0 * ctr_1 + 6 * ctr_0 + 1];
         _data_j_20_310_10[_stride_j_0 * ctr_0] =
-            _data_buffer[6 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         6 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         6 * ((ctr_0) / (1)) + 2];
+            _data_buffer[6 * _size_j_0 * _size_j_1 * ctr_2 +
+                         6 * _size_j_0 * ctr_1 + 6 * ctr_0 + 2];
         _data_j_20_37_10[_stride_j_0 * ctr_0] =
-            _data_buffer[6 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         6 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         6 * ((ctr_0) / (1)) + 3];
+            _data_buffer[6 * _size_j_0 * _size_j_1 * ctr_2 +
+                         6 * _size_j_0 * ctr_1 + 6 * ctr_0 + 3];
         _data_j_20_31_10[_stride_j_0 * ctr_0] =
-            _data_buffer[6 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         6 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         6 * ((ctr_0) / (1)) + 4];
+            _data_buffer[6 * _size_j_0 * _size_j_1 * ctr_2 +
+                         6 * _size_j_0 * ctr_1 + 6 * ctr_0 + 4];
         _data_j_20_38_10[_stride_j_0 * ctr_0] =
-            _data_buffer[6 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         6 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         6 * ((ctr_0) / (1)) + 5];
+            _data_buffer[6 * _size_j_0 * _size_j_1 * ctr_2 +
+                         6 * _size_j_0 * ctr_1 + 6 * ctr_0 + 5];
       }
     }
   }
@@ -1135,15 +928,11 @@ unpack_TS(double *RESTRICT const _data_buffer, double *RESTRICT _data_j,
       double *RESTRICT _data_j_20_38_10 = _stride_j_1 * ctr_1 + _data_j_20_38;
       for (int64_t ctr_0 = 0; ctr_0 < _size_j_0; ctr_0 += 1) {
         _data_j_20_310_10[_stride_j_0 * ctr_0] =
-            _data_buffer[2 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         2 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         2 * ((ctr_0) / (1))];
+            _data_buffer[2 * _size_j_0 * _size_j_1 * ctr_2 +
+                         2 * _size_j_0 * ctr_1 + 2 * ctr_0];
         _data_j_20_38_10[_stride_j_0 * ctr_0] =
-            _data_buffer[2 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         2 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         2 * ((ctr_0) / (1)) + 1];
+            _data_buffer[2 * _size_j_0 * _size_j_1 * ctr_2 +
+                         2 * _size_j_0 * ctr_1 + 2 * ctr_0 + 1];
       }
     }
   }
@@ -1176,30 +965,20 @@ unpack_B(double *RESTRICT const _data_buffer, double *RESTRICT _data_j,
       double *RESTRICT _data_j_20_32_10 = _stride_j_1 * ctr_1 + _data_j_20_32;
       for (int64_t ctr_0 = 0; ctr_0 < _size_j_0; ctr_0 += 1) {
         _data_j_20_39_10[_stride_j_0 * ctr_0] =
-            _data_buffer[5 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         5 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         5 * ((ctr_0) / (1))];
+            _data_buffer[5 * _size_j_0 * _size_j_1 * ctr_2 +
+                         5 * _size_j_0 * ctr_1 + 5 * ctr_0];
         _data_j_20_35_10[_stride_j_0 * ctr_0] =
-            _data_buffer[5 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         5 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         5 * ((ctr_0) / (1)) + 1];
+            _data_buffer[5 * _size_j_0 * _size_j_1 * ctr_2 +
+                         5 * _size_j_0 * ctr_1 + 5 * ctr_0 + 1];
         _data_j_20_311_10[_stride_j_0 * ctr_0] =
-            _data_buffer[5 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         5 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         5 * ((ctr_0) / (1)) + 2];
+            _data_buffer[5 * _size_j_0 * _size_j_1 * ctr_2 +
+                         5 * _size_j_0 * ctr_1 + 5 * ctr_0 + 2];
         _data_j_20_37_10[_stride_j_0 * ctr_0] =
-            _data_buffer[5 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         5 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         5 * ((ctr_0) / (1)) + 3];
+            _data_buffer[5 * _size_j_0 * _size_j_1 * ctr_2 +
+                         5 * _size_j_0 * ctr_1 + 5 * ctr_0 + 3];
         _data_j_20_32_10[_stride_j_0 * ctr_0] =
-            _data_buffer[5 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         5 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         5 * ((ctr_0) / (1)) + 4];
+            _data_buffer[5 * _size_j_0 * _size_j_1 * ctr_2 +
+                         5 * _size_j_0 * ctr_1 + 5 * ctr_0 + 4];
       }
     }
   }
@@ -1229,25 +1008,17 @@ unpack_T(double *RESTRICT const _data_buffer, double *RESTRICT _data_j,
       double *RESTRICT _data_j_20_38_10 = _stride_j_1 * ctr_1 + _data_j_20_38;
       for (int64_t ctr_0 = 0; ctr_0 < _size_j_0; ctr_0 += 1) {
         _data_j_20_310_10[_stride_j_0 * ctr_0] =
-            _data_buffer[4 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         4 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         4 * ((ctr_0) / (1))];
+            _data_buffer[4 * _size_j_0 * _size_j_1 * ctr_2 +
+                         4 * _size_j_0 * ctr_1 + 4 * ctr_0];
         _data_j_20_36_10[_stride_j_0 * ctr_0] =
-            _data_buffer[4 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         4 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         4 * ((ctr_0) / (1)) + 1];
+            _data_buffer[4 * _size_j_0 * _size_j_1 * ctr_2 +
+                         4 * _size_j_0 * ctr_1 + 4 * ctr_0 + 1];
         _data_j_20_312_10[_stride_j_0 * ctr_0] =
-            _data_buffer[4 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         4 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         4 * ((ctr_0) / (1)) + 2];
+            _data_buffer[4 * _size_j_0 * _size_j_1 * ctr_2 +
+                         4 * _size_j_0 * ctr_1 + 4 * ctr_0 + 2];
         _data_j_20_38_10[_stride_j_0 * ctr_0] =
-            _data_buffer[4 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         4 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         4 * ((ctr_0) / (1)) + 3];
+            _data_buffer[4 * _size_j_0 * _size_j_1 * ctr_2 +
+                         4 * _size_j_0 * ctr_1 + 4 * ctr_0 + 3];
       }
     }
   }
@@ -1268,10 +1039,8 @@ unpack_BN(double *RESTRICT const _data_buffer, double *RESTRICT _data_j,
       double *RESTRICT _data_j_20_311_10 = _stride_j_1 * ctr_1 + _data_j_20_311;
       for (int64_t ctr_0 = 0; ctr_0 < _size_j_0; ctr_0 += 1) {
         _data_j_20_311_10[_stride_j_0 * ctr_0] =
-            _data_buffer[((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         ((ctr_0) / (1))];
+            _data_buffer[_size_j_0 * _size_j_1 * ctr_2 + _size_j_0 * ctr_1 +
+                         ctr_0];
       }
     }
   }
@@ -1298,20 +1067,14 @@ unpack_N(double *RESTRICT const _data_buffer, double *RESTRICT _data_j,
       double *RESTRICT _data_j_20_312_10 = _stride_j_1 * ctr_1 + _data_j_20_312;
       for (int64_t ctr_0 = 0; ctr_0 < _size_j_0; ctr_0 += 1) {
         _data_j_20_311_10[_stride_j_0 * ctr_0] =
-            _data_buffer[3 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         3 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         3 * ((ctr_0) / (1))];
+            _data_buffer[3 * _size_j_0 * _size_j_1 * ctr_2 +
+                         3 * _size_j_0 * ctr_1 + 3 * ctr_0];
         _data_j_20_34_10[_stride_j_0 * ctr_0] =
-            _data_buffer[3 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         3 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         3 * ((ctr_0) / (1)) + 1];
+            _data_buffer[3 * _size_j_0 * _size_j_1 * ctr_2 +
+                         3 * _size_j_0 * ctr_1 + 3 * ctr_0 + 1];
         _data_j_20_312_10[_stride_j_0 * ctr_0] =
-            _data_buffer[3 * ((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         3 * ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         3 * ((ctr_0) / (1)) + 2];
+            _data_buffer[3 * _size_j_0 * _size_j_1 * ctr_2 +
+                         3 * _size_j_0 * ctr_1 + 3 * ctr_0 + 2];
       }
     }
   }
@@ -1332,10 +1095,8 @@ unpack_TN(double *RESTRICT const _data_buffer, double *RESTRICT _data_j,
       double *RESTRICT _data_j_20_312_10 = _stride_j_1 * ctr_1 + _data_j_20_312;
       for (int64_t ctr_0 = 0; ctr_0 < _size_j_0; ctr_0 += 1) {
         _data_j_20_312_10[_stride_j_0 * ctr_0] =
-            _data_buffer[((_size_j_0) / (1)) * ((_size_j_1) / (1)) *
-                             ((ctr_2) / (1)) +
-                         ((_size_j_0) / (1)) * ((ctr_1) / (1)) +
-                         ((ctr_0) / (1))];
+            _data_buffer[_size_j_0 * _size_j_1 * ctr_2 + _size_j_0 * ctr_1 +
+                         ctr_0];
       }
     }
   }

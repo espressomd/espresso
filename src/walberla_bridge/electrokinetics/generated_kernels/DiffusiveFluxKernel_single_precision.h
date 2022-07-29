@@ -1,4 +1,4 @@
-// kernel generated with pystencils v0.4.4, lbmpy v0.4.4, lbmpy_walberla/pystencils_walberla from commit 08f04ef64f95609b47838db85862033a1600afa1
+// kernel generated with pystencils v1.0, lbmpy v1.0, lbmpy_walberla/pystencils_walberla from commit 01a28162ae1aacf7b96152c9f886ce54cc7f53ff
 
 //======================================================================================================================
 //
@@ -52,8 +52,8 @@ namespace pystencils {
 class DiffusiveFluxKernel_single_precision
 {
 public:
-    DiffusiveFluxKernel_single_precision( float D, BlockDataID jID_, BlockDataID rhoID_ )
-        : D_(D), jID(jID_), rhoID(rhoID_)
+    DiffusiveFluxKernel_single_precision( BlockDataID jID_, BlockDataID rhoID_, float D )
+        : jID(jID_), rhoID(rhoID_), D_(D)
     {};
 
     
@@ -98,9 +98,9 @@ public:
     }
 
 
-    float D_;
     BlockDataID jID;
     BlockDataID rhoID;
+    float D_;
 
 };
 

@@ -1,6 +1,6 @@
-// kernel generated with pystencils v0.4.4, lbmpy v0.4.4,
+// kernel generated with pystencils v1.0, lbmpy v1.0,
 // lbmpy_walberla/pystencils_walberla from commit
-// 08f04ef64f95609b47838db85862033a1600afa1
+// 01a28162ae1aacf7b96152c9f886ce54cc7f53ff
 
 //======================================================================================================================
 //
@@ -43,7 +43,11 @@ namespace pystencils {
 
 #ifdef __CUDACC__
 #pragma push
-#pragma diag_suppress = declared_but_not_referenced
+#ifdef __NVCC_DIAG_PRAGMA_SUPPORT__
+#pragma nv_diag_suppress 177
+#else
+#pragma diag_suppress 177
+#endif
 #endif
 
 namespace internal_8dfd6fd44211225f575bfd4fd9f8b4cc {
@@ -51,12 +55,12 @@ static FUNC_PREFIX void
 reactionkernelindexed_1_double_precision_boundary_ReactionKernelIndexed_1_double_precision(
     uint8_t *RESTRICT _data_indexVector, double *RESTRICT _data_rho_0,
     int64_t const _stride_rho_0_0, int64_t const _stride_rho_0_1,
-    int64_t const _stride_rho_0_2, int64_t indexVectorSize, double order_0,
+    int64_t const _stride_rho_0_2, int32_t indexVectorSize, double order_0,
     double rate_coefficient, double stoech_0) {
   for (int64_t ctr_0 = 0; ctr_0 < indexVectorSize; ctr_0 += 1) {
-    const int64_t x = *((int32_t *)(&_data_indexVector[12 * ctr_0]));
-    const int64_t y = *((int32_t *)(&_data_indexVector[12 * ctr_0 + 4]));
-    const int64_t z = *((int32_t *)(&_data_indexVector[12 * ctr_0 + 8]));
+    const int32_t x = *((int32_t *)(&_data_indexVector[12 * ctr_0]));
+    const int32_t y = *((int32_t *)(&_data_indexVector[12 * ctr_0 + 4]));
+    const int32_t z = *((int32_t *)(&_data_indexVector[12 * ctr_0 + 8]));
     const double local_rho_0 =
         _data_rho_0[_stride_rho_0_0 * x + _stride_rho_0_1 * y +
                     _stride_rho_0_2 * z];
@@ -78,7 +82,7 @@ reactionkernelindexed_1_double_precision_boundary_ReactionKernelIndexed_1_double
 void ReactionKernelIndexed_1_double_precision::run_impl(
     IBlock *block, IndexVectors::Type type) {
   auto *indexVectors = block->uncheckedFastGetData<IndexVectors>(indexVectorID);
-  int64_t indexVectorSize = int64_c(indexVectors->indexVector(type).size());
+  int32_t indexVectorSize = int32_c(indexVectors->indexVector(type).size());
   if (indexVectorSize == 0)
     return;
 

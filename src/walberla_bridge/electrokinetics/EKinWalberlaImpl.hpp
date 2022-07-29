@@ -314,9 +314,9 @@ private:
   }
 
   inline void kernel_diffusion() {
-    auto kernel = DiffusiveFluxKernel(FloatType_c(get_diffusion()),
-                                      m_flux_field_flattened_id,
-                                      m_density_field_flattened_id);
+    auto kernel = DiffusiveFluxKernel(m_flux_field_flattened_id,
+                                      m_density_field_flattened_id,
+                                      FloatType_c(get_diffusion()));
 
     for (auto &block : *m_lattice->get_blocks()) {
       kernel.run(&block);
@@ -334,8 +334,8 @@ private:
 
   inline void kernel_friction_coupling(const std::size_t &force_id) {
     auto kernel = FrictionCouplingKernel(
-        FloatType_c(get_diffusion()), BlockDataID(force_id),
-        m_flux_field_flattened_id, FloatType_c(get_kT()));
+        BlockDataID(force_id), m_flux_field_flattened_id,
+        FloatType_c(get_diffusion()), FloatType_c(get_kT()));
     for (auto &block : *m_lattice->get_blocks()) {
       kernel.run(&block);
     }
@@ -344,8 +344,8 @@ private:
   inline void kernel_diffusion_electrostatic(const std::size_t &potential_id) {
     const auto ext_field = get_ext_efield();
     auto kernel = DiffusiveFluxKernelElectrostatic(
-        FloatType_c(get_diffusion()), m_flux_field_flattened_id,
-        BlockDataID(potential_id), m_density_field_flattened_id,
+        m_flux_field_flattened_id, BlockDataID(potential_id),
+        m_density_field_flattened_id, FloatType_c(get_diffusion()),
         FloatType_c(ext_field[0]), FloatType_c(ext_field[1]),
         FloatType_c(ext_field[2]), FloatType_c(get_kT()),
         FloatType_c(get_valency()));

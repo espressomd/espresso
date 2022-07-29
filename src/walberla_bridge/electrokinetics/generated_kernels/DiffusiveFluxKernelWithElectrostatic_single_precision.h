@@ -1,4 +1,4 @@
-// kernel generated with pystencils v0.4.4, lbmpy v0.4.4, lbmpy_walberla/pystencils_walberla from commit 08f04ef64f95609b47838db85862033a1600afa1
+// kernel generated with pystencils v1.0, lbmpy v1.0, lbmpy_walberla/pystencils_walberla from commit 01a28162ae1aacf7b96152c9f886ce54cc7f53ff
 
 //======================================================================================================================
 //
@@ -52,8 +52,8 @@ namespace pystencils {
 class DiffusiveFluxKernelWithElectrostatic_single_precision
 {
 public:
-    DiffusiveFluxKernelWithElectrostatic_single_precision( float D, BlockDataID jID_, BlockDataID phiID_, BlockDataID rhoID_, float f_ext_0, float f_ext_1, float f_ext_2, float kT, float z )
-        : D_(D), jID(jID_), phiID(phiID_), rhoID(rhoID_), f_ext_0_(f_ext_0), f_ext_1_(f_ext_1), f_ext_2_(f_ext_2), kT_(kT), z_(z)
+    DiffusiveFluxKernelWithElectrostatic_single_precision( BlockDataID jID_, BlockDataID phiID_, BlockDataID rhoID_, float D, float f_ext_0, float f_ext_1, float f_ext_2, float kT, float z )
+        : jID(jID_), phiID(phiID_), rhoID(rhoID_), D_(D), f_ext_0_(f_ext_0), f_ext_1_(f_ext_1), f_ext_2_(f_ext_2), kT_(kT), z_(z)
     {};
 
     
@@ -98,10 +98,10 @@ public:
     }
 
 
-    float D_;
     BlockDataID jID;
     BlockDataID phiID;
     BlockDataID rhoID;
+    float D_;
     float f_ext_0_;
     float f_ext_1_;
     float f_ext_2_;

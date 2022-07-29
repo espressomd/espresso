@@ -1,4 +1,4 @@
-// kernel generated with pystencils v0.4.4, lbmpy v0.4.4, lbmpy_walberla/pystencils_walberla from commit 08f04ef64f95609b47838db85862033a1600afa1
+// kernel generated with pystencils v1.0, lbmpy v1.0, lbmpy_walberla/pystencils_walberla from commit 01a28162ae1aacf7b96152c9f886ce54cc7f53ff
 
 //======================================================================================================================
 //
@@ -76,10 +76,10 @@ public:
         };
 
         IndexVectors() = default;
-        bool operator==(IndexVectors & other) { return other.cpuVectors_ == cpuVectors_; }
+        bool operator==(IndexVectors const &other) const { return other.cpuVectors_ == cpuVectors_; }
 
         CpuIndexVector & indexVector(Type t) { return cpuVectors_[t]; }
-        IndexInfo * pointerCpu(Type t)  { return &(cpuVectors_[t][0]); }
+        IndexInfo * pointerCpu(Type t)  { return cpuVectors_[t].data(); }
 
         void syncGPU()
         {
@@ -168,7 +168,7 @@ public:
 
         
         auto flagWithGLayers = flagField->xyzSizeWithGhostLayer();
-        double dot = 0.0; double maxn = 0.0;
+        float dot = 0.0; float maxn = 0.0;
         cell_idx_t calculated_idx = 0;
         cell_idx_t dx = 0; cell_idx_t dy = 0;   cell_idx_t dz = 0; 
         cell_idx_t sum_x = 0; cell_idx_t sum_y = 0;  cell_idx_t sum_z = 0; 

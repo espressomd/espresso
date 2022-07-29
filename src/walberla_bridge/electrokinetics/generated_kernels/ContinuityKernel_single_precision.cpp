@@ -1,6 +1,6 @@
-// kernel generated with pystencils v0.4.4, lbmpy v0.4.4,
+// kernel generated with pystencils v1.0, lbmpy v1.0,
 // lbmpy_walberla/pystencils_walberla from commit
-// 08f04ef64f95609b47838db85862033a1600afa1
+// 01a28162ae1aacf7b96152c9f886ce54cc7f53ff
 
 //======================================================================================================================
 //
@@ -140,23 +140,23 @@ continuitykernel_single_precision_continuitykernel_single_precision(
       float *RESTRICT _data_j_21_32_10 = _stride_j_1 * ctr_1 + _data_j_21_32;
       for (int64_t ctr_0 = 1; ctr_0 < _size_j_0 - 1; ctr_0 += 1) {
         _data_rho_20_10[_stride_rho_0 * ctr_0] =
-            _data_j_20_30_10[_stride_j_0 * ctr_0 + _stride_j_0] -
-            _data_j_20_30_10[_stride_j_0 * ctr_0] -
-            _data_j_20_310_10[_stride_j_0 * ctr_0] -
-            _data_j_20_311_10[_stride_j_0 * ctr_0] -
-            _data_j_20_312_10[_stride_j_0 * ctr_0] -
-            _data_j_20_31_10[_stride_j_0 * ctr_0] +
-            _data_j_20_31_11[_stride_j_0 * ctr_0] -
-            _data_j_20_32_10[_stride_j_0 * ctr_0] -
-            _data_j_20_33_10[_stride_j_0 * ctr_0] +
-            _data_j_20_33_11[_stride_j_0 * ctr_0 + _stride_j_0] -
-            _data_j_20_34_10[_stride_j_0 * ctr_0] +
-            _data_j_20_34_1m1[_stride_j_0 * ctr_0 + _stride_j_0] -
-            _data_j_20_35_10[_stride_j_0 * ctr_0] -
-            _data_j_20_36_10[_stride_j_0 * ctr_0] -
-            _data_j_20_37_10[_stride_j_0 * ctr_0] -
-            _data_j_20_38_10[_stride_j_0 * ctr_0] -
-            _data_j_20_39_10[_stride_j_0 * ctr_0] +
+            -1.0f * _data_j_20_30_10[_stride_j_0 * ctr_0] -
+            1.0f * _data_j_20_310_10[_stride_j_0 * ctr_0] -
+            1.0f * _data_j_20_311_10[_stride_j_0 * ctr_0] -
+            1.0f * _data_j_20_312_10[_stride_j_0 * ctr_0] -
+            1.0f * _data_j_20_31_10[_stride_j_0 * ctr_0] -
+            1.0f * _data_j_20_32_10[_stride_j_0 * ctr_0] -
+            1.0f * _data_j_20_33_10[_stride_j_0 * ctr_0] -
+            1.0f * _data_j_20_34_10[_stride_j_0 * ctr_0] -
+            1.0f * _data_j_20_35_10[_stride_j_0 * ctr_0] -
+            1.0f * _data_j_20_36_10[_stride_j_0 * ctr_0] -
+            1.0f * _data_j_20_37_10[_stride_j_0 * ctr_0] -
+            1.0f * _data_j_20_38_10[_stride_j_0 * ctr_0] -
+            1.0f * _data_j_20_39_10[_stride_j_0 * ctr_0] +
+            _data_j_20_30_10[_stride_j_0 * ctr_0 + _stride_j_0] +
+            _data_j_20_31_11[_stride_j_0 * ctr_0] +
+            _data_j_20_33_11[_stride_j_0 * ctr_0 + _stride_j_0] +
+            _data_j_20_34_1m1[_stride_j_0 * ctr_0 + _stride_j_0] +
             _data_j_21_311_1m1[_stride_j_0 * ctr_0 + _stride_j_0] +
             _data_j_21_32_10[_stride_j_0 * ctr_0] +
             _data_j_21_35_10[_stride_j_0 * ctr_0 + _stride_j_0] +
