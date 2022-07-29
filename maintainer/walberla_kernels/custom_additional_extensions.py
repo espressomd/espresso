@@ -18,7 +18,7 @@ class Dirichlet_Custom(ps.boundaries.Dirichlet):
     @property
     def additional_data(self):
         if callable(self._value):
-            return [('value', ps.data_types.create_type(self.data_type))]
+            return [('value', ps.typing.BasicType(self.data_type))]
         else:
             return []
 
@@ -45,14 +45,14 @@ class Flux(ps.boundaries.boundaryconditions.Boundary):
     @property
     def additional_data(self):
         if self.value_is_callable:
-            return [(f'flux_{i}', ps.data_types.create_type(
+            return [(f'flux_{i}', ps.typing.BasicType(
                 self.data_type)) for i in range(self.dim)]
         else:
             return []
 
     @property
     def additional_data_init_callback(self):
-        if self.value_is_callable():
+        if self.value_is_callable:
             return self.value
 
     def __call__(self, field, direction_symbol, index_field, **kwargs):
@@ -69,8 +69,9 @@ class Flux(ps.boundaries.boundaryconditions.Boundary):
         conds = [
             sp.Equality(
                 direction_symbol,
-                d +
-                1) for d in range(
+                ps.typing.CastFunc(
+                    d + 1,
+                    np.int32)) for d in range(
                 len(accesses))]
 
         # use conditional
@@ -93,10 +94,8 @@ class Flux(ps.boundaries.boundaryconditions.Boundary):
                     self.stencil.D ** 2)]
 
             # build stacked if-conditions for directions
-            conditional = ps.astnodes.Conditional(ps.data_types.type_all_numbers(condition, "int"),
-                                                  ps.astnodes.Block(
-                                                      assignment),
-                                                  conditional)
+            conditional = ps.astnodes.Conditional(
+                condition, ps.astnodes.Block(assignment), conditional)
 
         return [conditional]
 
@@ -228,8 +227,8 @@ def generate_boundary(
         index_struct_dtype,
         layout=[0],
         shape=(
-            ps.data_types.TypedSymbol(
-                "indexVectorSize", ps.data_types.create_type(np.int64)
+            ps.typing.TypedSymbol(
+                "indexVectorSize", ps.typing.BasicType(np.int32)
             ),
             1,
         ),

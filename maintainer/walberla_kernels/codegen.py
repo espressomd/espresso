@@ -37,8 +37,7 @@ args = parser.parse_args()
 
 double_precision: bool = not args.single_precision
 
-data_type_cpp = pystencils_espresso.data_type_cpp[double_precision]
-data_type_np = pystencils_espresso.data_type_np[double_precision]
+data_type_np = pystencils_espresso.data_type_np["double" if double_precision else "float"]
 precision_suffix = pystencils_espresso.precision_suffix[double_precision]
 precision_rng = pystencils_espresso.precision_rng[double_precision]
 
@@ -127,33 +126,34 @@ reaction_obj = ekin.Reaction(
     rate_coef=rate_coef,
 )
 
-params = {'cpu_vectorize_info': {'assume_inner_stride_one': False}}
+params = {
+    "target": target,
+    "cpu_vectorize_info": {"assume_inner_stride_one": False}}
 
 with code_generation_context.CodeGeneration() as ctx:
     ctx.double_accuracy = double_precision
 
-    # this only necessary because of a bug in 0.4.4 that was fixed shortly
-    # after..
-    bug_params = {"omp_single_loop": False}
+    # codegen configuration
+    config = pystencils_espresso.generate_config(ctx, params)
 
     pystencils_walberla.generate_sweep(ctx, f"DiffusiveFluxKernel_{precision_suffix}",
                                        ek.flux(
                                            include_vof=False,
                                            include_fluctuations=False,
                                            rng_node=precision_rng),
-                                       staggered=True, **params,
-                                       **bug_params)
+                                       staggered=True, **params)
     pystencils_walberla.generate_sweep(ctx, f"DiffusiveFluxKernelWithElectrostatic_{precision_suffix}",
                                        ek_electrostatic.flux(
                                            include_vof=False, include_fluctuations=False, rng_node=precision_rng),
-                                       staggered=True, **params, **bug_params)
+                                       staggered=True, **params)
     pystencils_walberla.generate_sweep(ctx, f"AdvectiveFluxKernel_{precision_suffix}", ek.flux_advection(),
-                                       staggered=True, **params, **bug_params)
+                                       staggered=True, **params)
     pystencils_walberla.generate_sweep(
         ctx,
         f"ContinuityKernel_{precision_suffix}",
         ek.continuity(),
         **params)
+
     pystencils_walberla.generate_sweep(ctx, f"FrictionCouplingKernel_{precision_suffix}", ek.friction_coupling(),
                                        **params)
 
@@ -176,7 +176,7 @@ with code_generation_context.CodeGeneration() as ctx:
     filename_stem: str = f"FixedFlux_{precision_suffix}"
     replace_real_t_and_add_pragma(
         filename=f"{filename_stem}.h",
-        data_type=data_type_cpp)
+        data_type=config.data_type.default_factory().c_name)
 
     # generate dynamic fixed density
     dirichlet_stencil = lbmpy.stencils.LBStencil(stencil=((0, 0, 0),))
@@ -198,7 +198,7 @@ with code_generation_context.CodeGeneration() as ctx:
     filename_stem: str = f"Dirichlet_{precision_suffix}"
     replace_real_t_and_add_pragma(
         filename=f"{filename_stem}.h",
-        data_type=data_type_cpp)
+        data_type=config.data_type.default_factory().c_name)
 
     pystencils_walberla.generate_pack_info_from_kernel(ctx, f"DensityPackInfo_{precision_suffix}",
                                                        ek_electrostatic.continuity(),

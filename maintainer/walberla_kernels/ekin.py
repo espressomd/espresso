@@ -147,11 +147,8 @@ class EK:
             [ps.stencil.inverse_direction_string(
                 d) for d in self.flux_field.staggered_stencil]
 
-        return ps.Assignment(self.force_field.center_vector, self.kT / (2 * self.diffusion) * sum(
-            [self.flux_field.staggered_access(val) * sp.Matrix(ps.stencil.direction_string_to_offset(val)) for val in
-             stencil[1:]],
-            self.flux_field.staggered_access(stencil[0]) * sp.Matrix(
-                ps.stencil.direction_string_to_offset(stencil[0]))))
+        return ps.AssignmentCollection([ps.Assignment(self.force_field.center_vector, self.kT / (2 * self.diffusion) * sum([self.flux_field.staggered_access(val) * sp.Matrix(
+            ps.stencil.direction_string_to_offset(val)) for val in stencil[1:]], self.flux_field.staggered_access(stencil[0]) * sp.Matrix(ps.stencil.direction_string_to_offset(stencil[0]))))])
 
 
 class Reaction:
