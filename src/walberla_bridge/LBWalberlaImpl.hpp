@@ -296,6 +296,43 @@ protected:
     return static_cast<std::size_t>(Stencil::Size);
   }
 
+  /**
+   * @brief Convenience function to add a field with a custom allocator.
+   *
+   * When vectorization is off, let waLBerla decide which memory allocator
+   * to use. When vectorization is on, the aligned memory allocator is
+   * required, otherwise <tt>cpu_vectorize_info["assume_aligned"]</tt> will
+   * trigger assertions. That is because for single-precision kernels the
+   * waLBerla heuristic in <tt>src/field/allocation/FieldAllocator.h</tt>
+   * will fall back to @c StdFieldAlloc, yet @c AllocateAligned is needed
+   * for intrinsics to work.
+   */
+  template <typename Field> auto add_to_storage(char const *tag) {
+    auto const &blocks = m_lattice->get_blocks();
+    auto const n_ghost_layers = m_lattice->get_ghost_layers();
+#ifdef WITH_AVX_KERNELS
+#if defined(__AVX512F__)
+    constexpr uint_t alignment = 64;
+#elif defined(__AVX__)
+    constexpr uint_t alignment = 32;
+#elif defined(__SSE__)
+    constexpr uint_t alignment = 16;
+#else
+#error "Unsupported arch, check walberla src/field/allocation/FieldAllocator.h"
+#endif
+    using value_type = typename Field::value_type;
+    using Allocator = field::AllocateAligned<value_type, alignment>;
+    auto const allocator = std::make_shared<Allocator>();
+    auto const empty_set = Set<SUID>::emptySet();
+    return field::addToStorage<Field>(
+        blocks, tag, field::internal::defaultSize, FloatType{0}, field::fzyx,
+        n_ghost_layers, false, {}, empty_set, empty_set, allocator);
+#else  // WITH_AVX_KERNELS
+    return field::addToStorage<Field>(blocks, tag, FloatType{0}, field::fzyx,
+                                      n_ghost_layers);
+#endif // WITH_AVX_KERNELS
+  }
+
 public:
   LBWalberlaImpl(std::shared_ptr<LatticeWalberla> const &lattice,
                  double viscosity, double density)
@@ -308,18 +345,12 @@ public:
       throw std::runtime_error("At least one ghost layer must be used");
 
     // Init and register fields
-    m_pdf_field_id = field::addToStorage<PdfField>(blocks, "pdfs", FloatType{0},
-                                                   field::fzyx, n_ghost_layers);
-    m_pdf_tmp_field_id = field::addToStorage<PdfField>(
-        blocks, "pdfs_tmp", FloatType{0}, field::fzyx, n_ghost_layers);
-    m_last_applied_force_field_id = field::addToStorage<VectorField>(
-        blocks, "force field", FloatType{0}, field::fzyx, n_ghost_layers);
-    m_force_to_be_applied_id = field::addToStorage<VectorField>(
-        blocks, "force field", FloatType{0}, field::fzyx, n_ghost_layers);
-    m_velocity_field_id = field::addToStorage<VectorField>(
-        blocks, "velocity field", FloatType{0}, field::fzyx, n_ghost_layers);
-    m_vec_tmp_field_id = field::addToStorage<VectorField>(
-        blocks, "velocity field", FloatType{0}, field::fzyx, n_ghost_layers);
+    m_pdf_field_id = add_to_storage<PdfField>("pdfs");
+    m_pdf_tmp_field_id = add_to_storage<PdfField>("pdfs_tmp");
+    m_last_applied_force_field_id = add_to_storage<VectorField>("force field");
+    m_force_to_be_applied_id = add_to_storage<VectorField>("force field");
+    m_velocity_field_id = add_to_storage<VectorField>("velocity field");
+    m_vec_tmp_field_id = add_to_storage<VectorField>("velocity field");
 
     // Init and register pdf field
     auto pdf_setter =

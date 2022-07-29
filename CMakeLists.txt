@@ -186,7 +186,7 @@ function(enable_avx2_support)
     if(compiler_has_${flag_variable}_flag_result)
       set(compiler_avx2_flag "${flag_name}")
       target_compile_options(Espresso_avx_flags
-                             INTERFACE "${compiler_avx2_flag}")
+                             INTERFACE "${compiler_avx2_flag}" "-DWITH_AVX_KERNELS")
       break()
     endif()
   endforeach()
