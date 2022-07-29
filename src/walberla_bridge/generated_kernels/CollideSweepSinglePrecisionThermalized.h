@@ -1,6 +1,6 @@
-// kernel generated with pystencils v0.4.4, lbmpy v0.4.4,
+// kernel generated with pystencils v1.0+12.g54b91e2, lbmpy v1.0+8.gac750b5,
 // lbmpy_walberla/pystencils_walberla from commit
-// 2527a5f799da52b4e5293a05ed691fc35bf7122b
+// e1fe2ad1dcbe8f31ea79d95e8a5a5cc0ee3691f3
 
 //======================================================================================================================
 //
@@ -55,12 +55,12 @@ public:
       BlockDataID forceID_, BlockDataID pdfsID_, uint32_t block_offset_0,
       uint32_t block_offset_1, uint32_t block_offset_2, float kT,
       float omega_bulk, float omega_even, float omega_odd, float omega_shear,
-      uint32_t seed, uint32_t time_step)
+      float rho, uint32_t seed, uint32_t time_step)
       : forceID(forceID_), pdfsID(pdfsID_), block_offset_0_(block_offset_0),
         block_offset_1_(block_offset_1), block_offset_2_(block_offset_2),
         kT_(kT), omega_bulk_(omega_bulk), omega_even_(omega_even),
-        omega_odd_(omega_odd), omega_shear_(omega_shear), seed_(seed),
-        time_step_(time_step){};
+        omega_odd_(omega_odd), omega_shear_(omega_shear), rho_(rho),
+        seed_(seed), time_step_(time_step){};
 
   void run(IBlock *block);
 
@@ -107,6 +107,7 @@ public:
   float omega_even_;
   float omega_odd_;
   float omega_shear_;
+  float rho_;
   uint32_t seed_;
   uint32_t time_step_;
   std::function<void(IBlock *, uint32_t &, uint32_t &, uint32_t &)>

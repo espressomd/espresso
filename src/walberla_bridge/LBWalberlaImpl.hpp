@@ -507,8 +507,8 @@ public:
     m_kT = FloatType_c(kT);
     auto obj = ThermalizedCollisionModel(
         m_last_applied_force_field_id, m_pdf_field_id, uint32_t(0u),
-        uint32_t(0u), uint32_t(0u), m_kT, omega, omega, omega_odd, omega, seed,
-        0u);
+        uint32_t(0u), uint32_t(0u), m_kT, omega, omega, omega_odd, omega,
+        FloatType_c(m_density), seed, 0u);
     obj.block_offset_generator =
         [this](IBlock *const block, uint32_t &block_offset_0,
                uint32_t &block_offset_1, uint32_t &block_offset_2) {

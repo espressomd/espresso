@@ -154,6 +154,7 @@ maxset-walberla-avx:
     - espresso
     - no-cuda
     - numa
+    - avx2
   when: manual
 
 no_rotation:

@@ -1,5 +1,6 @@
-// kernel generated with pystencils v0.4.4, lbmpy v0.4.4,
-// lbmpy_walberla/pystencils_walberla from commit ref: refs/heads/le_ghost_vel
+// kernel generated with pystencils v1.0+12.g54b91e2, lbmpy v1.0+8.gac750b5,
+// lbmpy_walberla/pystencils_walberla from commit
+// e1fe2ad1dcbe8f31ea79d95e8a5a5cc0ee3691f3
 
 //======================================================================================================================
 //
@@ -287,10 +288,49 @@ streamsweepdoubleprecisionavx_streamsweepdoubleprecisionavx(
                                 streamed_18),
                   streamed_4),
               streamed_8);
+          const __m256d momdensity_0 = _mm256_add_pd(
+              _mm256_add_pd(
+                  _mm256_add_pd(
+                      _mm256_add_pd(
+                          _mm256_add_pd(
+                              _mm256_mul_pd(
+                                  streamed_13,
+                                  _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)),
+                              _mm256_mul_pd(
+                                  streamed_17,
+                                  _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))),
+                          _mm256_mul_pd(streamed_3,
+                                        _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))),
+                      _mm256_mul_pd(streamed_7,
+                                    _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))),
+                  _mm256_mul_pd(streamed_9,
+                                _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))),
+              vel0Term);
           const __m256d vel1Term = _mm256_add_pd(
               _mm256_add_pd(_mm256_add_pd(streamed_1, streamed_11),
                             streamed_15),
               streamed_7);
+          const __m256d momdensity_1 = _mm256_add_pd(
+              _mm256_add_pd(
+                  _mm256_add_pd(
+                      _mm256_add_pd(
+                          _mm256_add_pd(
+                              _mm256_add_pd(
+                                  _mm256_mul_pd(
+                                      streamed_10,
+                                      _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)),
+                                  _mm256_mul_pd(
+                                      streamed_12,
+                                      _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))),
+                              _mm256_mul_pd(
+                                  streamed_16,
+                                  _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))),
+                          _mm256_mul_pd(streamed_2,
+                                        _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))),
+                      _mm256_mul_pd(streamed_9,
+                                    _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))),
+                  streamed_8),
+              vel1Term);
           const __m256d vel2Term = _mm256_add_pd(
               _mm256_add_pd(streamed_12, streamed_13), streamed_5);
           const __m256d rho = _mm256_add_pd(
@@ -310,106 +350,57 @@ streamsweepdoubleprecisionavx_streamsweepdoubleprecisionavx(
                       vel0Term),
                   vel1Term),
               vel2Term);
-          const __m256d u_0 = _mm256_add_pd(
-              _mm256_div_pd(
+          const __m256d momdensity_2 = _mm256_add_pd(
+              _mm256_add_pd(
                   _mm256_add_pd(
                       _mm256_add_pd(
                           _mm256_add_pd(
                               _mm256_add_pd(
                                   _mm256_add_pd(
-                                      _mm256_mul_pd(streamed_13,
+                                      _mm256_mul_pd(streamed_15,
                                                     _mm256_set_pd(-1.0, -1.0,
                                                                   -1.0, -1.0)),
-                                      _mm256_mul_pd(streamed_17,
-                                                    _mm256_set_pd(-1.0, -1.0,
-                                                                  -1.0, -1.0))),
-                                  _mm256_mul_pd(
-                                      streamed_3,
-                                      _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))),
-                              _mm256_mul_pd(
-                                  streamed_7,
-                                  _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))),
-                          _mm256_mul_pd(streamed_9,
-                                        _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))),
-                      vel0Term),
-                  rho),
-              _mm256_div_pd(
-                  _mm256_mul_pd(
-                      _mm256_set_pd(0.50000000000000000, 0.50000000000000000,
-                                    0.50000000000000000, 0.50000000000000000),
-                      _mm256_load_pd(&_data_force_20_30_10[ctr_0])),
-                  rho));
-          const __m256d u_1 = _mm256_add_pd(
-              _mm256_div_pd(
-                  _mm256_add_pd(
-                      _mm256_add_pd(
-                          _mm256_add_pd(
-                              _mm256_add_pd(
-                                  _mm256_add_pd(
-                                      _mm256_add_pd(
-                                          _mm256_mul_pd(
-                                              streamed_10,
-                                              _mm256_set_pd(-1.0, -1.0, -1.0,
-                                                            -1.0)),
-                                          _mm256_mul_pd(
-                                              streamed_12,
-                                              _mm256_set_pd(-1.0, -1.0, -1.0,
-                                                            -1.0))),
                                       _mm256_mul_pd(streamed_16,
                                                     _mm256_set_pd(-1.0, -1.0,
                                                                   -1.0, -1.0))),
                                   _mm256_mul_pd(
-                                      streamed_2,
+                                      streamed_17,
                                       _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))),
                               _mm256_mul_pd(
-                                  streamed_9,
+                                  streamed_18,
                                   _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))),
-                          streamed_8),
-                      vel1Term),
-                  rho),
-              _mm256_div_pd(
+                          _mm256_mul_pd(streamed_6,
+                                        _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))),
+                      streamed_11),
+                  streamed_14),
+              vel2Term);
+          const __m256d u_0 = _mm256_add_pd(
+              _mm256_mul_pd(
+                  momdensity_0,
+                  _mm256_div_pd(_mm256_set_pd(1.0, 1.0, 1.0, 1.0), rho)),
+              _mm256_mul_pd(
                   _mm256_mul_pd(
-                      _mm256_set_pd(0.50000000000000000, 0.50000000000000000,
-                                    0.50000000000000000, 0.50000000000000000),
-                      _mm256_load_pd(&_data_force_20_31_10[ctr_0])),
-                  rho));
+                      _mm256_set_pd(0.5, 0.5, 0.5, 0.5),
+                      _mm256_div_pd(_mm256_set_pd(1.0, 1.0, 1.0, 1.0), rho)),
+                  _mm256_load_pd(&_data_force_20_30_10[ctr_0])));
+          const __m256d u_1 = _mm256_add_pd(
+              _mm256_mul_pd(
+                  momdensity_1,
+                  _mm256_div_pd(_mm256_set_pd(1.0, 1.0, 1.0, 1.0), rho)),
+              _mm256_mul_pd(
+                  _mm256_mul_pd(
+                      _mm256_set_pd(0.5, 0.5, 0.5, 0.5),
+                      _mm256_div_pd(_mm256_set_pd(1.0, 1.0, 1.0, 1.0), rho)),
+                  _mm256_load_pd(&_data_force_20_31_10[ctr_0])));
           const __m256d u_2 = _mm256_add_pd(
-              _mm256_div_pd(
-                  _mm256_add_pd(
-                      _mm256_add_pd(
-                          _mm256_add_pd(
-                              _mm256_add_pd(
-                                  _mm256_add_pd(
-                                      _mm256_add_pd(
-                                          _mm256_add_pd(
-                                              _mm256_mul_pd(
-                                                  streamed_15,
-                                                  _mm256_set_pd(-1.0, -1.0,
-                                                                -1.0, -1.0)),
-                                              _mm256_mul_pd(
-                                                  streamed_16,
-                                                  _mm256_set_pd(-1.0, -1.0,
-                                                                -1.0, -1.0))),
-                                          _mm256_mul_pd(
-                                              streamed_17,
-                                              _mm256_set_pd(-1.0, -1.0, -1.0,
-                                                            -1.0))),
-                                      _mm256_mul_pd(streamed_18,
-                                                    _mm256_set_pd(-1.0, -1.0,
-                                                                  -1.0, -1.0))),
-                                  _mm256_mul_pd(
-                                      streamed_6,
-                                      _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))),
-                              streamed_11),
-                          streamed_14),
-                      vel2Term),
-                  rho),
-              _mm256_div_pd(
+              _mm256_mul_pd(
+                  momdensity_2,
+                  _mm256_div_pd(_mm256_set_pd(1.0, 1.0, 1.0, 1.0), rho)),
+              _mm256_mul_pd(
                   _mm256_mul_pd(
-                      _mm256_set_pd(0.50000000000000000, 0.50000000000000000,
-                                    0.50000000000000000, 0.50000000000000000),
-                      _mm256_load_pd(&_data_force_20_32_10[ctr_0])),
-                  rho));
+                      _mm256_set_pd(0.5, 0.5, 0.5, 0.5),
+                      _mm256_div_pd(_mm256_set_pd(1.0, 1.0, 1.0, 1.0), rho)),
+                  _mm256_load_pd(&_data_force_20_32_10[ctr_0])));
           _mm256_store_pd(&_data_velocity_20_30_10[ctr_0], u_0);
           _mm256_store_pd(&_data_velocity_20_31_10[ctr_0], u_1);
           _mm256_store_pd(&_data_velocity_20_32_10[ctr_0], u_2);
@@ -456,27 +447,31 @@ streamsweepdoubleprecisionavx_streamsweepdoubleprecisionavx(
           const double streamed_18 = _data_pdfs_21_318_10[ctr_0 - 1];
           const double vel0Term =
               streamed_10 + streamed_14 + streamed_18 + streamed_4 + streamed_8;
+          const double momdensity_0 = streamed_13 * -1.0 + streamed_17 * -1.0 +
+                                      streamed_3 * -1.0 + streamed_7 * -1.0 +
+                                      streamed_9 * -1.0 + vel0Term;
           const double vel1Term =
               streamed_1 + streamed_11 + streamed_15 + streamed_7;
+          const double momdensity_1 = streamed_10 * -1.0 + streamed_12 * -1.0 +
+                                      streamed_16 * -1.0 + streamed_2 * -1.0 +
+                                      streamed_8 + streamed_9 * -1.0 + vel1Term;
           const double vel2Term = streamed_12 + streamed_13 + streamed_5;
           const double rho = streamed_0 + streamed_16 + streamed_17 +
                              streamed_2 + streamed_3 + streamed_6 + streamed_9 +
                              vel0Term + vel1Term + vel2Term;
+          const double momdensity_2 = streamed_11 + streamed_14 +
+                                      streamed_15 * -1.0 + streamed_16 * -1.0 +
+                                      streamed_17 * -1.0 + streamed_18 * -1.0 +
+                                      streamed_6 * -1.0 + vel2Term;
           const double u_0 =
-              (-streamed_13 - streamed_17 - streamed_3 - streamed_7 -
-               streamed_9 + vel0Term) /
-                  rho +
-              0.50000000000000000 * _data_force_20_30_10[ctr_0] / rho;
+              momdensity_0 * ((1.0) / (rho)) +
+              0.5 * ((1.0) / (rho)) * _data_force_20_30_10[ctr_0];
           const double u_1 =
-              (-streamed_10 - streamed_12 - streamed_16 - streamed_2 +
-               streamed_8 - streamed_9 + vel1Term) /
-                  rho +
-              0.50000000000000000 * _data_force_20_31_10[ctr_0] / rho;
+              momdensity_1 * ((1.0) / (rho)) +
+              0.5 * ((1.0) / (rho)) * _data_force_20_31_10[ctr_0];
           const double u_2 =
-              (streamed_11 + streamed_14 - streamed_15 - streamed_16 -
-               streamed_17 - streamed_18 - streamed_6 + vel2Term) /
-                  rho +
-              0.50000000000000000 * _data_force_20_32_10[ctr_0] / rho;
+              momdensity_2 * ((1.0) / (rho)) +
+              0.5 * ((1.0) / (rho)) * _data_force_20_32_10[ctr_0];
           _data_velocity_20_30_10[ctr_0] = u_0;
           _data_velocity_20_31_10[ctr_0] = u_1;
           _data_velocity_20_32_10[ctr_0] = u_2;
@@ -508,8 +503,8 @@ streamsweepdoubleprecisionavx_streamsweepdoubleprecisionavx(
 
 void StreamSweepDoublePrecisionAVX::run(IBlock *block) {
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
-  auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
   auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
+  auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
   field::GhostLayerField<double, 19> *pdfs_tmp;
   {
     // Getting temporary field pdfs_tmp
@@ -525,27 +520,34 @@ void StreamSweepDoublePrecisionAVX::run(IBlock *block) {
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(force->nrOfGhostLayers()));
   double *RESTRICT const _data_force = force->dataAt(-1, -1, -1, 0);
   WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx);
+  WALBERLA_ASSERT_EQUAL((uintptr_t)force->dataAt(0, 0, 0, 0) % 32, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(pdfs->nrOfGhostLayers()));
   double *RESTRICT const _data_pdfs = pdfs->dataAt(-1, -1, -1, 0);
   WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
+  WALBERLA_ASSERT_EQUAL((uintptr_t)pdfs->dataAt(0, 0, 0, 0) % 32, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(pdfs_tmp->nrOfGhostLayers()));
   double *RESTRICT _data_pdfs_tmp = pdfs_tmp->dataAt(-1, -1, -1, 0);
   WALBERLA_ASSERT_EQUAL(pdfs_tmp->layout(), field::fzyx);
+  WALBERLA_ASSERT_EQUAL((uintptr_t)pdfs_tmp->dataAt(0, 0, 0, 0) % 32, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(velocity->nrOfGhostLayers()));
   double *RESTRICT _data_velocity = velocity->dataAt(-1, -1, -1, 0);
   WALBERLA_ASSERT_EQUAL(velocity->layout(), field::fzyx);
+  WALBERLA_ASSERT_EQUAL((uintptr_t)velocity->dataAt(0, 0, 0, 0) % 32, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(force->xSizeWithGhostLayer(),
                                 int64_t(cell_idx_c(force->xSize()) + 2));
   const int64_t _size_force_0 = int64_t(cell_idx_c(force->xSize()) + 2);
   WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx);
+  WALBERLA_ASSERT_EQUAL((uintptr_t)force->dataAt(0, 0, 0, 0) % 32, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(force->ySizeWithGhostLayer(),
                                 int64_t(cell_idx_c(force->ySize()) + 2));
   const int64_t _size_force_1 = int64_t(cell_idx_c(force->ySize()) + 2);
   WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx);
+  WALBERLA_ASSERT_EQUAL((uintptr_t)force->dataAt(0, 0, 0, 0) % 32, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(force->zSizeWithGhostLayer(),
                                 int64_t(cell_idx_c(force->zSize()) + 2));
   const int64_t _size_force_2 = int64_t(cell_idx_c(force->zSize()) + 2);
   WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx);
+  WALBERLA_ASSERT_EQUAL((uintptr_t)force->dataAt(0, 0, 0, 0) % 32, 0);
   const int64_t _stride_force_1 = int64_t(force->yStride());
   const int64_t _stride_force_2 = int64_t(force->zStride());
   const int64_t _stride_force_3 = int64_t(1 * int64_t(force->fStride()));
@@ -582,8 +584,8 @@ void StreamSweepDoublePrecisionAVX::runOnCellInterval(
     return;
 
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
-  auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
   auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
+  auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
   field::GhostLayerField<double, 19> *pdfs_tmp;
   {
     // Getting temporary field pdfs_tmp
@@ -605,12 +607,14 @@ void StreamSweepDoublePrecisionAVX::runOnCellInterval(
   double *RESTRICT const _data_force =
       force->dataAt(ci.xMin() - 1, ci.yMin() - 1, ci.zMin() - 1, 0);
   WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx);
+  WALBERLA_ASSERT_EQUAL((uintptr_t)force->dataAt(0, 0, 0, 0) % 32, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1, -int_c(pdfs->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1, -int_c(pdfs->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin() - 1, -int_c(pdfs->nrOfGhostLayers()));
   double *RESTRICT const _data_pdfs =
       pdfs->dataAt(ci.xMin() - 1, ci.yMin() - 1, ci.zMin() - 1, 0);
   WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx);
+  WALBERLA_ASSERT_EQUAL((uintptr_t)pdfs->dataAt(0, 0, 0, 0) % 32, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1,
                                 -int_c(pdfs_tmp->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1,
@@ -620,6 +624,7 @@ void StreamSweepDoublePrecisionAVX::runOnCellInterval(
   double *RESTRICT _data_pdfs_tmp =
       pdfs_tmp->dataAt(ci.xMin() - 1, ci.yMin() - 1, ci.zMin() - 1, 0);
   WALBERLA_ASSERT_EQUAL(pdfs_tmp->layout(), field::fzyx);
+  WALBERLA_ASSERT_EQUAL((uintptr_t)pdfs_tmp->dataAt(0, 0, 0, 0) % 32, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1,
                                 -int_c(velocity->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1,
@@ -629,18 +634,22 @@ void StreamSweepDoublePrecisionAVX::runOnCellInterval(
   double *RESTRICT _data_velocity =
       velocity->dataAt(ci.xMin() - 1, ci.yMin() - 1, ci.zMin() - 1, 0);
   WALBERLA_ASSERT_EQUAL(velocity->layout(), field::fzyx);
+  WALBERLA_ASSERT_EQUAL((uintptr_t)velocity->dataAt(0, 0, 0, 0) % 32, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(force->xSizeWithGhostLayer(),
                                 int64_t(cell_idx_c(ci.xSize()) + 2));
   const int64_t _size_force_0 = int64_t(cell_idx_c(ci.xSize()) + 2);
   WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx);
+  WALBERLA_ASSERT_EQUAL((uintptr_t)force->dataAt(0, 0, 0, 0) % 32, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(force->ySizeWithGhostLayer(),
                                 int64_t(cell_idx_c(ci.ySize()) + 2));
   const int64_t _size_force_1 = int64_t(cell_idx_c(ci.ySize()) + 2);
   WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx);
+  WALBERLA_ASSERT_EQUAL((uintptr_t)force->dataAt(0, 0, 0, 0) % 32, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(force->zSizeWithGhostLayer(),
                                 int64_t(cell_idx_c(ci.zSize()) + 2));
   const int64_t _size_force_2 = int64_t(cell_idx_c(ci.zSize()) + 2);
   WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx);
+  WALBERLA_ASSERT_EQUAL((uintptr_t)force->dataAt(0, 0, 0, 0) % 32, 0);
   const int64_t _stride_force_1 = int64_t(force->yStride());
   const int64_t _stride_force_2 = int64_t(force->zStride());
   const int64_t _stride_force_3 = int64_t(1 * int64_t(force->fStride()));

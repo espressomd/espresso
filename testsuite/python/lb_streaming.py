@@ -149,7 +149,7 @@ class LBStreamingWalberlaSinglePrecision(LBStreamingCommon, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {'single_precision': True}
-    rtol = 5e-7
+    rtol = 1e-5
 
 
 # TODO WALBERLA

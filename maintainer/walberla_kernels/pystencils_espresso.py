@@ -24,8 +24,6 @@ import lbmpy.updatekernels
 import pystencils as ps
 import pystencils_walberla
 
-data_type_cpp = {True: 'double', False: 'float'}
-data_type_np = {True: 'float64', False: 'float32'}
 
 precision_prefix = {
     True: 'DoublePrecision',
@@ -36,10 +34,11 @@ precision_suffix = {
 precision_rng = {
     True: ps.rng.PhiloxTwoDoubles,
     False: ps.rng.PhiloxFourFloats}
+data_type_np = {'double': 'float64', 'float': 'float32'}
 
 
-def generate_fields(ctx, stencil):
-    dtype = data_type_np[ctx.double_accuracy]
+def generate_fields(config, stencil):
+    dtype = data_type_np[config.data_type.default_factory().c_name]
     field_layout = 'fzyx'
     q = len(stencil)
     dim = len(stencil[0])
@@ -82,11 +81,16 @@ def generate_fields(ctx, stencil):
     return fields
 
 
+def generate_config(ctx, params):
+    return pystencils_walberla.codegen.config_from_context(ctx, **params)
+
+
 def generate_collision_sweep(
-        ctx, lb_method, collision_rule, class_name, params, target):
+        ctx, lb_method, collision_rule, class_name, params):
+    config = generate_config(ctx, params)
 
     # Symbols for PDF (twice, due to double buffering)
-    fields = generate_fields(ctx, lb_method.stencil)
+    fields = generate_fields(config, lb_method.stencil)
 
     # Generate collision kernel
     collide_update_rule = lbmpy.updatekernels.create_lbm_kernel(
@@ -94,32 +98,35 @@ def generate_collision_sweep(
         fields['pdfs'],
         fields['pdfs_tmp'],
         lbmpy.fieldaccess.CollideOnlyInplaceAccessor())
-    collide_ast = ps.create_kernel(collide_update_rule, **params,
-                                   data_type=data_type_np[ctx.double_accuracy])
+    collide_ast = ps.create_kernel(
+        collide_update_rule, config=config, **params)
     collide_ast.function_name = 'kernel_collide'
     collide_ast.assumed_inner_stride_one = True
     pystencils_walberla.codegen.generate_sweep(
-        ctx, class_name, collide_ast, target=target)
+        ctx, class_name, collide_ast, **params)
 
 
-def generate_stream_sweep(ctx, lb_method, class_name, params, target):
+def generate_stream_sweep(ctx, lb_method, class_name, params):
+    config = generate_config(ctx, params)
+
     # Symbols for PDF (twice, due to double buffering)
-    fields = generate_fields(ctx, lb_method.stencil)
+    fields = generate_fields(config, lb_method.stencil)
 
     # Generate stream kernel
     stream_update_rule = lbmpy.updatekernels.create_stream_pull_with_output_kernel(
         lb_method, fields['pdfs'], fields['pdfs_tmp'],
         output={'velocity': fields['velocity']})
-    stream_ast = ps.create_kernel(stream_update_rule, **params,
-                                  data_type=data_type_np[ctx.double_accuracy])
+    stream_ast = ps.create_kernel(stream_update_rule, config=config, **params)
     stream_ast.function_name = 'kernel_stream'
     stream_ast.assumed_inner_stride_one = True
     pystencils_walberla.codegen.generate_sweep(
-        ctx, class_name, stream_ast, field_swaps=[(fields['pdfs'], fields['pdfs_tmp'])], target=target)
+        ctx, class_name, stream_ast,
+        field_swaps=[(fields['pdfs'], fields['pdfs_tmp'])], **params)
 
 
-def generate_setters(ctx, lb_method):
-    fields = generate_fields(ctx, lb_method.stencil)
+def generate_setters(ctx, lb_method, params):
+    config = generate_config(ctx, params)
+    fields = generate_fields(config, lb_method.stencil)
 
     initial_rho = sp.Symbol('rho_0')
     pdfs_setter = lbmpy.macroscopic_value_kernels.macroscopic_values_setter(

@@ -549,9 +549,9 @@ if(WITH_WALBERLA)
   FetchContent_Declare(
     walberla
     GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla
-    GIT_TAG        08f04ef64f95609b47838db85862033a1600afa1
-    PATCH_COMMAND  patch -p0 -sN --ignore-whitespace -i
-                   ${PROJECT_SOURCE_DIR}/cmake/waLBerlaFunctions.patch || echo "Patch not applied!"
+    GIT_TAG        01a28162ae1aacf7b96152c9f886ce54cc7f53ff
+    PATCH_COMMAND  patch -p1 -sN --ignore-whitespace -i
+                   ${PROJECT_SOURCE_DIR}/cmake/waLBerla.patch || echo "Patch not applied!"
   )
   if(NOT walberla_POPULATED)
     FetchContent_Populate(walberla)
@@ -561,6 +561,7 @@ if(WITH_WALBERLA)
     set(WALBERLA_BUILD_TUTORIALS off CACHE BOOL "")
     set(WALBERLA_BUILD_SHOWCASES off CACHE BOOL "")
     set(WALBERLA_BUILD_DOC off CACHE BOOL "")
+    set(WALBERLA_BUILD_WITH_FFTW off CACHE BOOL "")
     set(CMAKE_POSITION_INDEPENDENT_CODE on CACHE BOOL "")
     if (WITH_CUDA AND CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL 11)
       set(WALBERLA_BUILD_WITH_CUDA "on"  CACHE BOOL "")
@@ -574,6 +575,11 @@ if(WITH_WALBERLA)
         walberla::core walberla::domain_decomposition walberla::blockforest
         walberla::boundary walberla::core walberla::domain_decomposition
         walberla::field walberla::lbm walberla::timeloop walberla::vtk walberla::fft)
+    # workaround for https://gitlab.kitware.com/cmake/cmake/-/issues/21283
+    foreach(target_w_namespace IN LISTS WALBERLA_LIBS)
+      string(REPLACE "walberla::" "" target_wo_namespace ${target_w_namespace})
+      add_library(${target_w_namespace} ALIAS ${target_wo_namespace})
+    endforeach()
     # TODO WALBERLA: remove -lmpi_cxx -lmpi (required to find symbol MPI::Datatype::Free() in VTK code) and -lstdc++fs
     # Note: -lmpi_cxx only exists in OpenMPI, remove that dependency for MPICH
     # TODO WALBERLA: remove -lpfft (required to find pfft_free in FFT-code)

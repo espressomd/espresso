@@ -1,8 +1,0 @@
---- cmake/waLBerlaFunctions.cmake
-+++ cmake/waLBerlaFunctions.cmake
-@@ -91,4 +91,5 @@ function ( waLBerla_add_module )
-     if ( hasSourceFiles )
-        add_library( ${moduleLibraryName} STATIC ${sourceFiles} ${otherFiles} )
-+       add_library(walberla::${moduleLibraryName} ALIAS ${moduleLibraryName})
-  	else( )
-        add_custom_target( ${moduleLibraryName} SOURCES ${sourceFiles} ${otherFiles} )  # dummy IDE target
