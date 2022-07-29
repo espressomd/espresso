@@ -550,6 +550,8 @@ if(WITH_WALBERLA)
     walberla
     GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla
     GIT_TAG        01a28162ae1aacf7b96152c9f886ce54cc7f53ff
+    PATCH_COMMAND  patch -p1 -sN --ignore-whitespace -i
+                   ${PROJECT_SOURCE_DIR}/cmake/waLBerla.patch || echo "Patch not applied!"
   )
   if(NOT walberla_POPULATED)
     FetchContent_Populate(walberla)
@@ -559,7 +561,7 @@ if(WITH_WALBERLA)
     set(WALBERLA_BUILD_TUTORIALS off CACHE BOOL "")
     set(WALBERLA_BUILD_SHOWCASES off CACHE BOOL "")
     set(WALBERLA_BUILD_DOC off CACHE BOOL "")
-    set(WALBERLA_BUILD_WITH_FFTW on CACHE BOOL "")
+    set(WALBERLA_BUILD_WITH_FFTW off CACHE BOOL "")
     set(CMAKE_POSITION_INDEPENDENT_CODE on CACHE BOOL "")
     if (WITH_CUDA AND CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL 11)
       set(WALBERLA_BUILD_WITH_CUDA "on"  CACHE BOOL "")
