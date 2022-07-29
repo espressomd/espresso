@@ -550,8 +550,6 @@ if(WITH_WALBERLA)
     walberla
     GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla
     GIT_TAG        01a28162ae1aacf7b96152c9f886ce54cc7f53ff
-    PATCH_COMMAND  patch -p1 -sN --ignore-whitespace -i
-                   ${PROJECT_SOURCE_DIR}/cmake/waLBerla.patch || echo "Patch not applied!"
   )
   if(NOT walberla_POPULATED)
     FetchContent_Populate(walberla)
@@ -561,7 +559,7 @@ if(WITH_WALBERLA)
     set(WALBERLA_BUILD_TUTORIALS off CACHE BOOL "")
     set(WALBERLA_BUILD_SHOWCASES off CACHE BOOL "")
     set(WALBERLA_BUILD_DOC off CACHE BOOL "")
-    set(WALBERLA_BUILD_WITH_FFTW off CACHE BOOL "")
+    set(WALBERLA_BUILD_WITH_FFTW on CACHE BOOL "")
     set(CMAKE_POSITION_INDEPENDENT_CODE on CACHE BOOL "")
     if (WITH_CUDA AND CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL 11)
       set(WALBERLA_BUILD_WITH_CUDA "on"  CACHE BOOL "")
@@ -581,9 +579,11 @@ if(WITH_WALBERLA)
       add_library(${target_w_namespace} ALIAS ${target_wo_namespace})
     endforeach()
     # TODO WALBERLA: remove -lmpi_cxx -lmpi (required to find symbol MPI::Datatype::Free() in VTK code) and -lstdc++fs
-    # Note: -lmpi_cxx only exists in OpenMPI, remove that dependency for MPICH
     if(NOT CMAKE_CXX_COMPILER_ID MATCHES "AppleClang")
-      set(WALBERLA_LIBS ${WALBERLA_LIBS} stdc++fs -lmpi_cxx -lmpi)
+      set(WALBERLA_LIBS ${WALBERLA_LIBS} stdc++fs -lmpi)
+    endif()
+    if("${MPIEXEC_BACKEND_NAME}" STREQUAL "OpenMPI")
+      set(WALBERLA_LIBS ${WALBERLA_LIBS} -lmpi_cxx)
     endif()
   endif()
   if(WALBERLA_USE_AVX)
