@@ -6,7 +6,7 @@ target_include_directories(
             $<INSTALL_INTERFACE:include>)
 
 install(TARGETS Espresso_particle_observables
-        LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
+        LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
 
 if(WITH_TESTS)
   add_subdirectory(tests)

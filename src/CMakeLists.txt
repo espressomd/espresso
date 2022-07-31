@@ -43,7 +43,7 @@ if(WITH_WALBERLA)
   add_subdirectory(walberla_bridge)
 endif(WITH_WALBERLA)
 
-if(WITH_SCRIPT_INTERFACE)
+if(WITH_PYTHON)
   add_subdirectory(script_interface)
 endif()
 

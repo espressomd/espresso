@@ -1,7 +1,7 @@
 # Configure pypresso for build dir
 set(PYTHON_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
-set(PYTHON_FRONTEND ${PYTHON_EXECUTABLE})
+set(PYTHON_FRONTEND ${Python_EXECUTABLE})
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   execute_process(
     COMMAND "${PYTHON_FRONTEND}" "-c"
@@ -21,9 +21,9 @@ if(IPYTHON_EXECUTABLE)
 endif()
 
 # Configure pypresso for install dir
-set(PYTHON_DIR ${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTDIR})
+set(PYTHON_DIR ${ESPRESSO_INSTALL_PYTHON})
 
-set(PYTHON_FRONTEND ${PYTHON_EXECUTABLE})
+set(PYTHON_FRONTEND ${Python_EXECUTABLE})
 configure_file(pypresso.cmakein ${CMAKE_CURRENT_BINARY_DIR}/pypresso @ONLY)
 
 if(IPYTHON_EXECUTABLE)

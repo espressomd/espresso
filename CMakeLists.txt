@@ -54,8 +54,8 @@ minimal_compiler_version("Intel" 18.0)
 minimal_compiler_version("IntelLLVM" 2021.0)
 
 include(FeatureSummary)
-include(GNUInstallDirs)
 project(ESPResSo)
+include(GNUInstallDirs)
 include(option_enum)
 if(POLICY CMP0074)
   # make find_package() use <PackageName>_ROOT variables
@@ -228,7 +228,7 @@ function(enable_avx2_support)
 endfunction()
 
 #
-# Libraries
+# Interface libraries
 #
 
 # CUDA compiler
@@ -254,24 +254,46 @@ if(WITH_CUDA)
   endif()
 endif(WITH_CUDA)
 
-find_package(PythonInterp 3.8 REQUIRED)
-
+# Python interpreter and Cython interface library
 if(WITH_PYTHON)
+  find_package(Python 3.8 REQUIRED COMPONENTS Interpreter Development NumPy)
   find_package(Cython 0.29.14 REQUIRED)
-  find_package(PythonHeaders REQUIRED)
-  find_package(NumPy REQUIRED)
   find_program(IPYTHON_EXECUTABLE NAMES jupyter ipython3 ipython)
 endif(WITH_PYTHON)
+
+#
+# Installation folders
+#
+
+string(REGEX REPLACE "/+$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
+
+# folder for binaries and wrapper scripts
+set(ESPRESSO_INSTALL_BINDIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}")
+
+# folder for C++ and CUDA shared objects
+set(ESPRESSO_INSTALL_LIBDIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+
+# python site-packages, can be overriden with CMake options
+if(WITH_PYTHON)
+  if(NOT ESPRESSO_INSTALL_PYTHON)
+    if(CMAKE_INSTALL_PREFIX STREQUAL "/")
+      set(ESPRESSO_INSTALL_PYTHON "${Python_SITEARCH}")
+    else()
+      set(ESPRESSO_INSTALL_PYTHON "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/python${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}/site-packages")
+    endif()
+  endif()
+  # override: package C++, CUDA and Cython shared objects together
+  set(ESPRESSO_INSTALL_LIBDIR "${ESPRESSO_INSTALL_PYTHON}/espressomd")
+endif()
+
+#
+# Libraries
+#
 
 find_package(FFTW3)
 if(FFTW3_FOUND)
   set(FFTW 3)
 endif(FFTW3_FOUND)
-
-# If we build Python bindings, turn on script interface
-if(WITH_PYTHON)
-  set(WITH_SCRIPT_INTERFACE ON)
-endif()
 
 # We need the parallel hdf5 version!
 if(WITH_HDF5)
@@ -329,8 +351,7 @@ if(GSL_FOUND)
 endif(GSL_FOUND)
 
 if(WITH_STOKESIAN_DYNAMICS)
-  set(CMAKE_INSTALL_LIBDIR
-      "${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTDIR}/espressomd")
+  set(CMAKE_INSTALL_LIBDIR "${ESPRESSO_INSTALL_LIBDIR}")
   include(FetchContent)
   FetchContent_Declare(
     stokesian_dynamics
@@ -403,7 +424,7 @@ find_package(Boost 1.69.0 REQUIRED ${BOOST_COMPONENTS})
 # Paths
 #
 
-set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTDIR}/espressomd")
+set(CMAKE_INSTALL_RPATH "${ESPRESSO_INSTALL_LIBDIR}")
 
 #
 # Flags

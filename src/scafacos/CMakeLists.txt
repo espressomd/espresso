@@ -16,4 +16,5 @@ target_include_directories(
 target_include_directories(Espresso_scafacos SYSTEM
                            PUBLIC ${SCAFACOS_INCLUDE_DIRS})
 
-install(TARGETS Espresso_scafacos DESTINATION ${PYTHON_INSTDIR}/espressomd)
+install(TARGETS Espresso_scafacos
+        DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)

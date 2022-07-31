@@ -44,7 +44,7 @@ add_subdirectory(reaction_methods)
 add_subdirectory(walberla)
 
 install(TARGETS Espresso_script_interface
-        LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
+        LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
 
 target_link_libraries(
   Espresso_script_interface PRIVATE Espresso::config Espresso::core
