@@ -129,7 +129,7 @@ class LBTest:
             np.copy(lbf[0, 0, 0].velocity), [1, 2, 3], atol=self.atol)
         with self.assertRaises(RuntimeError):
             lbf[0, 0, 0].velocity = [1, 2]
-        with self.assertRaises(Exception):
+        with self.assertRaises(TypeError):
             lbf[0, 1].velocity = [1, 2, 3]
         node = lbf[0, 0, 0]
         self.assertIsNone(node.boundary)
@@ -153,7 +153,7 @@ class LBTest:
                 setattr(lbf, key, 0)
 
     def test_ctor_exceptions(self):
-        lattice = espressomd.lb.LatticeWalberla(
+        lattice = self.lb_lattice_class(
             agrid=2 * self.params['agrid'], n_ghost_layers=1)
         with self.assertRaisesRegex(ValueError, "cannot provide both 'lattice' and 'agrid'"):
             self.lb_class(lattice=lattice, **self.params, **self.lb_params)
@@ -586,6 +586,7 @@ class LBTestWalberla(LBTest, ut.TestCase):
     """Test for the Walberla implementation of the LB in double-precision."""
 
     lb_class = espressomd.lb.LBFluidWalberla
+    lb_lattice_class = espressomd.lb.LatticeWalberla
     lb_params = {'single_precision': False}
     atol = 1e-10
     rtol = 1e-7
@@ -597,6 +598,7 @@ class LBTestWalberlaSinglePrecision(LBTest, ut.TestCase):
     """Test for the Walberla implementation of the LB in single-precision."""
 
     lb_class = espressomd.lb.LBFluidWalberla
+    lb_lattice_class = espressomd.lb.LatticeWalberla
     lb_params = {'single_precision': True}
     atol = 1e-7
     rtol = 5e-5

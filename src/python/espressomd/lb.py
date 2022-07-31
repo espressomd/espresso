@@ -489,7 +489,7 @@ class LBFluidWalberla(HydrodynamicInteraction):
             else:
                 return LBFluidNodeWalberla(lb_sip=self, index=np.array(key))
 
-        raise Exception(
+        raise TypeError(
             f"{key} is not a valid index. Should be a point on the "
             "nodegrid e.g. lbf[0,0,0], or a slice e.g. lbf[:,0,0]")
 

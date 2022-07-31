@@ -85,16 +85,15 @@ class EKSpecies(ScriptInterfaceHelper):
         super().__init__(*args, **kwargs)
 
     def __getitem__(self, key):
-        if isinstance(key, (tuple, list, np.ndarray)):
-            if len(key) == 3:
-                if any(isinstance(typ, slice) for typ in key):
-                    shape = self.shape
-                    return EKSlice(self, key, (shape[0], shape[1], shape[2]))
-                else:
-                    return EKRoutines(self, np.array(key))
-        else:
-            raise Exception(
-                f"{key} is not a valid key. Should be a point on the nodegrid e.g. ek[0,0,0], or a slice")
+        if isinstance(key, (tuple, list, np.ndarray)) and len(key) == 3:
+            if any(isinstance(typ, slice) for typ in key):
+                shape = self.shape
+                return EKSlice(self, key, (shape[0], shape[1], shape[2]))
+            else:
+                return EKRoutines(self, np.array(key))
+        raise TypeError(
+            f"{key} is not a valid index. Should be a point on the "
+            "nodegrid e.g. ek[0,0,0], or a slice, e.g. ek[:,0,0]")
 
     def add_boundary_from_shape(self, shape,
                                 value, boundary_type):
@@ -405,11 +404,8 @@ class EKRoutines:
 class EKSlice:
     def __init__(self, species, key, shape):
         self._species = species
-        self.indices = [
-            np.atleast_1d(
-                np.arange(
-                    shape[i])[
-                    key[i]]) for i in range(3)]
+        self.indices = [np.atleast_1d(np.arange(shape[i])[key[i]])
+                        for i in range(3)]
         self.dimensions = [ind.size for ind in self.indices]
 
         self._node = EKRoutines(species=species, node=[0, 0, 0])
@@ -446,7 +442,7 @@ class EKSlice:
             self.__dict__[attr] = values
             return
         elif 0 in self.dimensions:
-            raise AttributeError("Cannot set properties of an empty LBSlice")
+            raise AttributeError("Cannot set properties of an empty EKSlice")
 
         values = np.copy(values)
         shape_val = np.shape(getattr(node, attr))
@@ -492,63 +488,54 @@ class EKIndexedReaction(ScriptInterfaceHelper):
         self.call_method("remove_node_from_boundary", node=node)
 
     def __getitem__(self, key):
-        if isinstance(key, (tuple, list, np.ndarray)):
-            if len(key) == 3:
-                if any(isinstance(typ, slice) for typ in key):
-                    shape = self.shape
+        if isinstance(key, (tuple, list, np.ndarray)) and len(key) == 3:
+            if any(isinstance(typ, slice) for typ in key):
+                shape = self.shape
 
-                    indices = [
-                        np.atleast_1d(
-                            np.arange(
-                                shape[i])[
-                                key[i]]) for i in range(3)]
-                    dimensions = [ind.size for ind in indices]
+                indices = [np.atleast_1d(np.arange(shape[i])[key[i]])
+                           for i in range(3)]
+                dimensions = [ind.size for ind in indices]
 
-                    value_grid = np.zeros((*dimensions,), dtype=bool)
-                    indices = itertools.product(*map(enumerate, indices))
-                    for (i, x), (j, y), (k, z) in indices:
-                        value_grid[i, j, k] = self.call_method(
-                            "get_node_is_boundary", node=(x, y, z))
+                value_grid = np.zeros((*dimensions,), dtype=bool)
+                indices = itertools.product(*map(enumerate, indices))
+                for (i, x), (j, y), (k, z) in indices:
+                    value_grid[i, j, k] = self.call_method(
+                        "get_node_is_boundary", node=(x, y, z))
 
-                    return utils.array_locked(value_grid)
-                else:
-                    return self.call_method("get_node_is_boundary", node=key)
-        else:
-            raise Exception(
-                f"{key} is not a valid key. Should be a point on the nodegrid or a slice")
+                return utils.array_locked(value_grid)
+            else:
+                return self.call_method("get_node_is_boundary", node=key)
+        raise TypeError(
+            f"{key} is not a valid index. Should be a point on the nodegrid or a slice")
 
     def __setitem__(self, key, values):
-        if isinstance(key, (tuple, list, np.ndarray)):
-            if len(key) == 3:
-                if any(isinstance(typ, slice) for typ in key):
-                    shape = self.shape
+        if isinstance(key, (tuple, list, np.ndarray)) and len(key) == 3:
+            if any(isinstance(typ, slice) for typ in key):
+                shape = self.shape
 
-                    indices = [
-                        np.atleast_1d(
-                            np.arange(
-                                shape[i])[
-                                key[i]]) for i in range(3)]
-                    dimensions = tuple(ind.size for ind in indices)
+                indices = [np.atleast_1d(np.arange(shape[i])[key[i]])
+                           for i in range(3)]
+                dimensions = tuple(ind.size for ind in indices)
 
-                    values = np.copy(values)
+                values = np.copy(values)
 
-                    # broadcast if only one element was provided
-                    if values.shape == ():
-                        values = np.full(dimensions, values)
-                    if values.shape != dimensions:
-                        raise ValueError(
-                            f"Input-dimensions of array {values.shape} does not match slice dimensions {dimensions}.")
+                # broadcast if only one element was provided
+                if values.shape == ():
+                    values = np.full(dimensions, values)
+                if values.shape != dimensions:
+                    raise ValueError(
+                        f"Input-dimensions of array {values.shape} does not match slice dimensions {dimensions}.")
 
-                    indices = itertools.product(*map(enumerate, indices))
-                    for (i, x), (j, y), (k, z) in indices:
-                        self.call_method("set_node_is_boundary", node=(
-                            x, y, z), is_boundary=bool(values[i, j, k]))
-                else:
-                    return self.call_method(
-                        "set_node_is_boundary", node=key, is_boundary=values)
+                indices = itertools.product(*map(enumerate, indices))
+                for (i, x), (j, y), (k, z) in indices:
+                    self.call_method("set_node_is_boundary", node=(
+                        x, y, z), is_boundary=bool(values[i, j, k]))
+            else:
+                return self.call_method(
+                    "set_node_is_boundary", node=key, is_boundary=values)
         else:
-            raise Exception(
-                f"{key} is not a valid key. Should be a point on the nodegrid or a slice")
+            raise TypeError(
+                f"{key} is not a valid index. Should be a point on the nodegrid or a slice")
 
 
 @script_interface_register
