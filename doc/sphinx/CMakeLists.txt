@@ -84,7 +84,7 @@ if(SPHINX_FOUND)
 
   add_custom_target(
     sphinx
-    ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_BINARY_DIR}/samples.py"
+    ${Python_EXECUTABLE} "${CMAKE_CURRENT_BINARY_DIR}/samples.py"
     COMMAND ${SPHINX_API_DOC_EXE} -f -o ${CMAKE_CURRENT_BINARY_DIR}
             ${SPHINX_PYTHON_DIR} ${EXCLUDE}
     COMMAND

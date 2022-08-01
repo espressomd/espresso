@@ -39,6 +39,9 @@
 
 #include <utils/Vector.hpp>
 
+#include <array>
+#include <vector>
+
 /** This value indicates metallic boundary conditions. */
 auto constexpr P3M_EPSILON_METALLIC = 0.0;
 
@@ -46,10 +49,8 @@ auto constexpr P3M_EPSILON_METALLIC = 0.0;
 
 #include "LocalBox.hpp"
 
-#include <array>
 #include <cstddef>
 #include <stdexcept>
-#include <vector>
 
 namespace detail {
 /** @brief Index helpers for direct and reciprocal space.

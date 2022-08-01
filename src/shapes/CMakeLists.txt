@@ -12,7 +12,7 @@ target_include_directories(
                          $<INSTALL_INTERFACE:include>)
 
 install(TARGETS Espresso_shapes
-        LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
+        LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
 
 if(WITH_TESTS)
   add_subdirectory(unit_tests)

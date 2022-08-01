@@ -20,7 +20,7 @@
 add_custom_command(
   OUTPUT gen_pxiconfig.cpp
   COMMAND
-    ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/gen_pxiconfig.py
+    ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/gen_pxiconfig.py
     ${CMAKE_SOURCE_DIR}/src/config/features.def
     ${CMAKE_CURRENT_BINARY_DIR}/gen_pxiconfig.cpp
   DEPENDS ${CMAKE_SOURCE_DIR}/src/config/features.def)
@@ -37,7 +37,7 @@ add_custom_target(espressomd)
 add_custom_command(
   OUTPUT code_info.pyx
   COMMAND
-    ${PYTHON_EXECUTABLE} gen_code_info.py
+    ${Python_EXECUTABLE} gen_code_info.py
     ${CMAKE_SOURCE_DIR}/src/config/features.def
     ${CMAKE_CURRENT_BINARY_DIR}/code_info.pyx
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -120,10 +120,12 @@ foreach(cython_file ${cython_SRC})
                                             Espresso::script_interface)
     target_link_libraries(${target} PRIVATE Espresso::cpp_flags)
     target_link_libraries(${target} PRIVATE Espresso::pyx_flags)
-    target_include_directories(${target} SYSTEM PRIVATE ${PYTHON_INCLUDE_DIRS}
-                                                        ${NUMPY_INCLUDE_DIR})
+    target_include_directories(
+      ${target} SYSTEM PRIVATE ${Python_INCLUDE_DIRS}
+                               ${Python_NumPy_INCLUDE_DIRS})
     add_dependencies(espressomd ${target})
-    install(TARGETS ${target} LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
+    install(TARGETS ${target}
+            LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
   endif()
 endforeach()
 
@@ -141,5 +143,6 @@ foreach(auxfile ${cython_AUX})
 endforeach(auxfile)
 
 # Install Python files
-install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} DESTINATION ${PYTHON_INSTDIR}
-        FILES_MATCHING PATTERN "*.py" PATTERN "CMakeFiles" EXCLUDE)
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        DESTINATION ${ESPRESSO_INSTALL_PYTHON} FILES_MATCHING PATTERN "*.py"
+        PATTERN "CMakeFiles" EXCLUDE)

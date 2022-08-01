@@ -22,17 +22,17 @@ source BashUnitTests.sh
 # test installation and Python bindings
 function test_install() {
   # check Python files were installed in espressomd
-  local -r filepaths=("@CMAKE_INSTALL_FULL_BINDIR@/pypresso" \
-                      "@PYTHON_DIR@/espressomd/Espresso_core.so" \
-                      "@PYTHON_DIR@/espressomd/_init.so" \
-                      "@PYTHON_DIR@/espressomd/__init__.py"
+  local -r filepaths=("@ESPRESSO_INSTALL_BINDIR@/pypresso" \
+                      "@ESPRESSO_INSTALL_PYTHON@/espressomd/Espresso_core.so" \
+                      "@ESPRESSO_INSTALL_PYTHON@/espressomd/_init.so" \
+                      "@ESPRESSO_INSTALL_PYTHON@/espressomd/__init__.py"
                      )
   for filepath in "${filepaths[@]}"; do
     assert_file_exists "${filepath}"
   done
 
   # check no Python file was installed outside espressomd
-  paths=$(find "@CMAKE_INSTALL_PREFIX@" -path "@PYTHON_DIR@/espressomd" -prune -o \( -name '*.py' -o -name '*.so' \) -print)
+  paths=$(find "@CMAKE_INSTALL_PREFIX@" -path "@ESPRESSO_INSTALL_PYTHON@/espressomd" -prune -o \( -name '*.py' -o -name '*.so' \) -print)
   count=$(echo "${paths}" | wc -l)
   assert_string_equal "${paths}" "" "${count} files were installed in the wrong directories:"$'\n'"${paths}"
 

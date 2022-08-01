@@ -1,4 +1,4 @@
-image: ghcr.io/espressomd/docker/ubuntu-20.04:5869142af0bf4c644acf0cb6ea5e7d7ce318d312
+image: ghcr.io/espressomd/docker/ubuntu-20.04:76355fe0c49b91f684512d4cd0b851331e5ba713
 
 stages:
   - prepare
@@ -142,7 +142,7 @@ maxset-walberla-avx:
   variables:
      with_cuda: 'false'
      myconfig: 'maxset'
-     with_coverage: 'false'
+     with_coverage: 'true'
      with_walberla: 'true'
      with_scafacos: 'false'
      with_stokesian_dynamics: 'false'
@@ -155,7 +155,6 @@ maxset-walberla-avx:
     - no-cuda
     - numa
     - avx2
-  when: manual
 
 no_rotation:
   <<: *global_job_definition
@@ -252,7 +251,7 @@ clang-sanitizer:
 fast_math:
   <<: *global_job_definition
   stage: build
-  image: ghcr.io/espressomd/docker/cuda:5869142af0bf4c644acf0cb6ea5e7d7ce318d312
+  image: ghcr.io/espressomd/docker/cuda:76355fe0c49b91f684512d4cd0b851331e5ba713
   variables:
      CC: 'gcc-9'
      CXX: 'g++-9'
@@ -269,31 +268,10 @@ fast_math:
     - cuda
   when: manual
 
-cuda11-maxset-ubuntu20.04:
+cuda11-maxset:
   <<: *global_job_definition
   stage: build
-  image: ghcr.io/espressomd/docker/cuda:5869142af0bf4c644acf0cb6ea5e7d7ce318d312
-  variables:
-     CC: 'gcc-9'
-     CXX: 'g++-9'
-     GCOV: 'gcov-9'
-     myconfig: 'maxset'
-     with_cuda: 'true'
-     with_coverage: 'true'
-     check_skip_long: 'true'
-     with_scafacos: 'true'
-     with_stokesian_dynamics: 'true'
-  script:
-    - bash maintainer/CI/build_cmake.sh
-  tags:
-    - espresso
-    - cuda
-    - numa
-
-cuda11-maxset-ubuntu22.04:
-  <<: *global_job_definition
-  stage: build
-  image: ghcr.io/espressomd/docker/ubuntu-22.04:5869142af0bf4c644acf0cb6ea5e7d7ce318d312
+  image: ghcr.io/espressomd/docker/ubuntu-22.04:76355fe0c49b91f684512d4cd0b851331e5ba713
   variables:
      CC: 'gcc-10'
      CXX: 'g++-10'

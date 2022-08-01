@@ -129,7 +129,7 @@ target_include_directories(
   Espresso_walberla PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${WALBERLA_INCLUDE_DIRS}
   PRIVATE ${walberla_BINARY_DIR}/src)
 
-install(TARGETS Espresso_walberla LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
+install(TARGETS Espresso_walberla LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
 
 if(WITH_TESTS)
   add_subdirectory(tests)
