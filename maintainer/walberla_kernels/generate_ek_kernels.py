@@ -1,34 +1,34 @@
 #
-#  Copyright (C) 2022 The ESPResSo project
+# Copyright (C) 2022 The ESPResSo project
 #
-#  This file is part of ESPResSo.
+# This file is part of ESPResSo.
 #
-#  ESPResSo is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
-#  ESPResSo is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#  You should have received a copy of the GNU General Public License
-#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 import pystencils as ps
 import pystencils_walberla
 import sympy as sp
+import lbmpy
+import argparse
 
 import pystencils_espresso
-
-import ekin
-import lbmpy
-
-import custom_additional_extensions
-
 import code_generation_context
 
-import argparse
+import ekin
+import custom_additional_extensions
+
 
 parser = argparse.ArgumentParser(description='Generate the waLBerla kernels.')
 parser.add_argument('--single-precision', action='store_true', required=False,
@@ -42,14 +42,11 @@ precision_suffix = pystencils_espresso.precision_suffix[double_precision]
 precision_rng = pystencils_espresso.precision_rng[double_precision]
 
 
-def replace_real_t_and_add_pragma(filename: str, data_type: str) -> None:
+def replace_real_t(filename: str, data_type: str) -> None:
     with open(filename, "r+") as f:
         content = f.read()
         f.seek(0)
         f.truncate(0)
-        # patch for old versions of pystencils_walberla
-        if '#pragma once' not in content:
-            content = '#pragma once\n' + content
         # patch for floating point accuracy
         content = content.replace('real_t', data_type)
         content = content.replace('real_c', f"numeric_cast<{data_type}>")
@@ -174,7 +171,7 @@ with code_generation_context.CodeGeneration() as ctx:
                                                          additional_data_handler=dynamic_flux_additional_data)
 
     filename_stem: str = f"FixedFlux_{precision_suffix}"
-    replace_real_t_and_add_pragma(
+    replace_real_t(
         filename=f"{filename_stem}.h",
         data_type=config.data_type.default_factory().c_name)
 
@@ -196,7 +193,7 @@ with code_generation_context.CodeGeneration() as ctx:
         target=target)
 
     filename_stem: str = f"Dirichlet_{precision_suffix}"
-    replace_real_t_and_add_pragma(
+    replace_real_t(
         filename=f"{filename_stem}.h",
         data_type=config.data_type.default_factory().c_name)
 

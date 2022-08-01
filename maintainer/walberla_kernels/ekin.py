@@ -1,14 +1,12 @@
 import pystencils as ps
 import sympy as sp
 import numpy as np
+import typing
+
 from pystencils.fd.derivation import FiniteDifferenceStaggeredStencilDerivation
 from pystencils.fd.finitevolumes import get_access_and_direction
-
 from pystencils.rng import random_symbol
-
 from pystencils.stencil import inverse_direction_string
-
-import typing
 
 
 # this is from ps.fd.FVM1stOrder.discrete_flux.discretize
