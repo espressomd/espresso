@@ -129,127 +129,80 @@ The electrokinetic equations have the following properties:
    spectra at frequencies, high enough that they correspond to times
    faster than the diffusive time scales of the charged species.
 
-..  .. _Setup:
+.. _EK Setup:
 
-    Setup
-    -----
+Setup
+-----
 
-    .. _Initialization:
+.. _EK Initialization:
 
-    Initialization
-    ~~~~~~~~~~~~~~
+Initialization
+~~~~~~~~~~~~~~
 
-    :class:`~espressomd.electrokinetics.Electrokinetics` is used to initialize
-    the LB fluid of the EK method::
+Here is a minimal working example::
 
-        import espressomd
-        import espressomd.electrokinetics
-        system = espressomd.System(box_l=[10.0, 10.0, 10.0])
-        system.time_step = 0.0
-        system.cell_system.skin = 0.4
-        ek = espressomd.electrokinetics.Electrokinetics(agrid=1.0, lb_density=1.0,
-            viscosity=1.0, ext_force_density = [1,0,0], friction=1.0, T=1.0, prefactor=1.0,
-            stencil='linkcentered', advection=True, fluid_coupling='friction')
-        system.actors.add(ek)
+    import espressomd
+    import espressomd.lb
+    import espressomd.EKSpecies
 
-    .. note::
+    system = espressomd.System(box_l=3 * [6.0])
+    system.time_step = 0.01
+    system.cell_system.skin = 1.0
 
-        Requires external feature ``LB_WALBERLA``, enabled with the CMake option
-        ``-D WITH_WALBERLA=ON``.
+    ek_lattice = espressomd.lb.LatticeWalberla(agrid=0.5, n_ghost_layers=1)
+    ek_solver = espressomd.EKSpecies.EKNone(lattice=ek_lattice)
+    system.ekcontainer.tau = system.time_step
+    system.ekcontainer.solver = ek_solver
 
-    It is very similar to the lattice-Boltzmann command in set-up.
-    We therefore refer the reader to chapter :ref:`Lattice-Boltzmann`
-    for details on the implementation of LB in |es| and describe only
-    the major differences here.
+.. note::
 
-    The first major difference with the LB implementation is that the
-    electrokinetics set-up is a GPU-only implementation. A CPU version
-    will become available in the 4.3 line of |es|. To use the electrokinetics
-    features it is therefore imperative that your computer contains
-    a CUDA-capable GPU.
+    Requires external feature ``LB_WALBERLA``, enabled with the CMake option
+    ``-D WITH_WALBERLA=ON``.
 
-    To set up a proper LB fluid using this command, one has to specify at
-    least the following options: ``agrid``, ``lb_density``, ``viscosity``,
-    ``friction``, ``T``, and ``prefactor``. The other options can be
-    used to modify the behavior of the LB fluid. Note that the command does
-    not allow the user to set the time step parameter as is the case for the
-    lattice-Boltzmann command, this parameter is instead taken directly from
-    the value set for :attr:`~espressomd.system.System.time_step`.
-    The LB *mass density* is set independently from the
-    electrokinetic *number densities*, since the LB fluid serves only as a
-    medium through which hydrodynamic interactions are propagated, as will
-    be explained further in the next paragraph. If no ``lb_density`` is specified, then our
-    algorithm assumes ``lb_density= 1.0``. The two 'new' parameters are the temperature ``T`` at
-    which the diffusive species are simulated and the ``prefactor``
-    associated with the electrostatic properties of the medium. See the
-    above description of the electrokinetic equations for an explanation of
-    the introduction of a temperature, which does not come in directly via a
-    thermostat that produces thermal fluctuations.
+An EK system can be set up at the same time as a LB system. The EK ``density``
+represents the electrokinetic *number densities* and is independent of the
+LB ``density``. The thermal energy ``kT`` controls thermal fluctuations,
+``friction_coupling`` controls coupling of the diffusive species with the
+LB fluid force, ``advection`` controls whether there should be an advective
+contribution to the diffusive species' fluxes from the LB fluid.
 
-    ``advection`` can be set to ``True`` or ``False``. It controls whether there should be an
-    advective contribution to the diffusive species' fluxes. Default is
-    ``True``.
+.. _Diffusive species:
 
-    ``fluid_coupling`` can be set to ``"friction"`` or ``"estatics"``.
-    This option determines the force term acting on the fluid.
-    The former specifies the force term to be the
-    sum of the species fluxes divided by their respective mobilities while
-    the latter simply uses the electrostatic force density acting on all
-    species. Note that this switching is only possible for the ``"linkcentered"``
-    stencil. For all other stencils, this choice is hardcoded. The default
-    is ``"friction"``.
+Diffusive species
+~~~~~~~~~~~~~~~~~
+::
 
-    ``es_coupling`` enables the action of the electrostatic potential due to the
-    electrokinetics species and charged boundaries on the MD particles. The
-    forces on the particles are calculated by interpolation from the
-    electric field which is in turn calculated from the potential via finite
-    differences. This only includes interactions between the species and
-    boundaries and MD particles, not between MD particles and MD particles.
-    To get complete electrostatic interactions a particles Coulomb method
-    like Ewald or P3M has to be activated too.
+    ek_species = espressomd.EKSpecies.EKSpecies(
+        lattice=ek_lattice,
+        single_precision=False,
+        kT=1.0,
+        density=0.85,
+        valency=0.0,
+        diffusion=0.1,
+        advection=False,
+        friction_coupling=False,
+        ext_efield=[0., 0., 0.]
+    )
 
-    The fluctuation of the EK species can be turned on by the flag ``fluctuations``.
-    This adds a white-noise term to the fluxes. The amplitude of this noise term
-    can be controlled by ``fluctuation_amplitude``. To circumvent that these fluctuations
-    lead to negative densities, they are modified by a smoothed Heaviside function,
-    which decreases the magnitude of the fluctuation for densities close to 0.
-    By default the fluctuations are turned off.
+:class:`~espressomd.EKSpecies.EKSpecies` is used to initialize a diffusive
+species. Here the options specify: the number density ``density``,
+the diffusion coefficient ``diffusion``, the valency of the particles
+of that species ``valency``, and an optional external (electric) force
+``ext_efield`` which is applied to the diffusive species. As mentioned
+before, the LB density is completely decoupled from the electrokinetic
+densities. This has the advantage that greater freedom can be achieved
+in matching the internal parameters to an experimental system. Moreover,
+it is possible to choose parameters for which the LB is more stable.
 
-    Another difference with LB is that EK parameters are immutables,
-    and the EK object cannot be checkpointed.
+To add species to the EK solver::
 
-    .. _Diffusive species:
+    system.ekcontainer.add(ek_species)
 
-    Diffusive species
-    ~~~~~~~~~~~~~~~~~
-    ::
+To remove species from the EK solver::
 
-        species = espressomd.electrokinetics.Species(density=density, D=D, valency=valency,
-            ext_force_density=ext_force)
+    system.ekcontainer.remove(ekspecies)
 
-    :class:`~espressomd.electrokinetics.Species` is used to initialize a diffusive species. Here the
-    options specify: the number density ``density``, the diffusion coefficient ``D``, the
-    valency of the particles of that species ``valency``, and an optional external
-    (electric) force which is applied to the diffusive species. As mentioned
-    before, the LB density is completely decoupled from the electrokinetic
-    densities. This has the advantage that greater freedom can be achieved
-    in matching the internal parameters to an experimental system. Moreover,
-    it is possible to choose parameters for which the LB is more stable.
-    The species can be added to a LB fluid::
-
-        ek.add_species(species)
-
-    One can also add the species during the initialization step of the
-    :class:`~espressomd.electrokinetics.Electrokinetics` class by defining
-    the list variable ``species``::
-
-        ek = espressomd.electrokinetics.Electrokinetics(species=[species], ...)
-
-    The variables ``density``, ``D``, and
-    ``valency`` must be set to properly initialize the diffusive species; the
-    ``ext_force_density`` is optional.
-
-    .. _EK boundaries:
+..  .. _EK boundaries:
 
     EK boundaries
     ~~~~~~~~~~~~~
