@@ -1,19 +1,21 @@
-#  Copyright (C) 2022 The ESPResSo project
 #
-#  This file is part of ESPResSo.
+# Copyright (C) 2022 The ESPResSo project
 #
-#  ESPResSo is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
+# This file is part of ESPResSo.
 #
-#  ESPResSo is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
-#  You should have received a copy of the GNU General Public License
-#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 import unittest as ut
 import unittest_decorators as utx
@@ -42,9 +44,9 @@ class EKReaction(ut.TestCase):
             self, time: float, coeffs, rate_constant: float, init_density: float) -> float:
         """
         Calculates the base density of a species after a given time of a reaction.
-        The reaction is defined via the stoechometic coefficient of the educts.
-        To calculate the effective species density this base density needs to be multiplied by its stoechometic coefficient.
-        For the product density, one need to substract this density from the init density.
+        The reaction is defined via the stoichiometric coefficient of the edducts.
+        To calculate the effective species density this base density needs to be multiplied by its stoichiometric coefficient.
+        For the product density, one needs to substract this density from the init density.
         """
         order = sum(coeffs)
         factor = rate_constant
@@ -78,9 +80,11 @@ class EKReaction(ut.TestCase):
         educt_species = []
         reactants = []
         for coeff in stoech_coeffs:
-            species = espressomd.EKSpecies.EKSpecies(lattice=lattice,
-                                                     density=coeff * self.INITIAL_DENSITY, kT=0.0, diffusion=self.DIFFUSION_COEFFICIENT,
-                                                     valency=0.0, advection=False, friction_coupling=False, ext_efield=[0, 0, 0], single_precision=single_precision)
+            species = espressomd.EKSpecies.EKSpecies(
+                lattice=lattice, density=coeff * self.INITIAL_DENSITY, kT=0.0,
+                diffusion=self.DIFFUSION_COEFFICIENT, valency=0.0,
+                advection=False, friction_coupling=False,
+                ext_efield=[0., 0., 0.], single_precision=single_precision)
             self.system.ekcontainer.add(species)
             reactants.append(
                 espressomd.EKSpecies.EKReactant(
@@ -89,9 +93,10 @@ class EKReaction(ut.TestCase):
                     order=coeff))
             educt_species.append(species)
 
-        ek_species_product = espressomd.EKSpecies.EKSpecies(lattice=lattice,
-                                                            density=0.0, kT=0.0, diffusion=self.DIFFUSION_COEFFICIENT, valency=0.0,
-                                                            advection=False, friction_coupling=False, ext_efield=[0, 0, 0], single_precision=single_precision)
+        ek_species_product = espressomd.EKSpecies.EKSpecies(
+            lattice=lattice, density=0.0, diffusion=self.DIFFUSION_COEFFICIENT,
+            kT=0.0, valency=0.0, advection=False, friction_coupling=False,
+            ext_efield=[0., 0., 0.], single_precision=single_precision)
         self.system.ekcontainer.add(ek_species_product)
         reactants.append(
             espressomd.EKSpecies.EKReactant(
@@ -124,8 +129,10 @@ class EKReaction(ut.TestCase):
         analytic_product_density = product_coeff * (self.INITIAL_DENSITY -
                                                     self.analytic_density_base(self.TIME + 0.5, stoech_coeffs, reaction_rate, self.INITIAL_DENSITY))
 
-        np.testing.assert_allclose(measured_educt_densities / measured_educt_densities[0],
-                                   analytic_educt_densities / analytic_educt_densities[0], rtol=relative_precision, atol=0)
+        np.testing.assert_allclose(
+            measured_educt_densities / measured_educt_densities[0],
+            analytic_educt_densities / analytic_educt_densities[0],
+            rtol=relative_precision, atol=0)
         np.testing.assert_allclose(
             measured_educt_densities,
             analytic_educt_densities,
