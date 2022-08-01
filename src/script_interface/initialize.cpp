@@ -26,6 +26,7 @@
 #include "bond_breakage/initialize.hpp"
 #include "cell_system/initialize.hpp"
 #include "cluster_analysis/initialize.hpp"
+#include "code_info/initialize.hpp"
 #include "collision_detection/initialize.hpp"
 #include "constraints/initialize.hpp"
 #include "electrostatics/initialize.hpp"
@@ -52,6 +53,7 @@ void initialize(Utils::Factory<ObjectHandle> *f) {
   BondBreakage::initialize(f);
   CellSystem::initialize(f);
   ClusterAnalysis::initialize(f);
+  CodeInfo::initialize(f);
   CollisionDetection::initialize(f);
   Constraints::initialize(f);
   Coulomb::initialize(f);

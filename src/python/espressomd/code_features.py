@@ -40,8 +40,9 @@ def has_features(*args):
     else:
         check_set = set(args)
 
-    if not check_set <= code_info.all_features():
-        unknown_features = check_set - code_info.all_features()
+    all_features_set = set(code_info.all_features())
+    if not check_set <= all_features_set:
+        unknown_features = check_set - all_features_set
         raise RuntimeError(f"unknown features {','.join(unknown_features)}")
 
     return check_set <= set(code_info.features())

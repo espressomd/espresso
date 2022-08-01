@@ -34,14 +34,6 @@ add_custom_command(
           ${CMAKE_CURRENT_BINARY_DIR}/myconfig.pxi DEPENDS gen_pxiconfig)
 
 add_custom_target(espressomd)
-add_custom_command(
-  OUTPUT code_info.pyx
-  COMMAND
-    ${PYTHON_EXECUTABLE} gen_code_info.py
-    ${CMAKE_SOURCE_DIR}/src/config/features.def
-    ${CMAKE_CURRENT_BINARY_DIR}/code_info.pyx
-  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/myconfig.pxi)
 
 # Make the cython_SRC, cython_HEADER and cython_AUX a cached variable to be able
 # to extend it in the subdirectories.
@@ -56,7 +48,6 @@ set(cython_AUX "${cython_AUX}" CACHE INTERNAL "cython_AUX")
 
 add_subdirectory(io)
 
-list(APPEND cython_SRC ${CMAKE_CURRENT_BINARY_DIR}/code_info.pyx)
 list(REMOVE_DUPLICATES cython_SRC)
 
 add_library(Espresso_pyx_flags INTERFACE)
