@@ -1085,4 +1085,4 @@ public:
 };
 } // namespace walberla
 
-#endif // LB_WALBERLA_H
+#endif

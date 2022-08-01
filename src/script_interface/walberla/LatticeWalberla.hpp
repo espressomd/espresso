@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The ESPResSo project
+ * Copyright (C) 2021-2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -16,8 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef SCRIPT_INTERFACE_WALBERLA_WALBERLALATTICE_HPP
-#define SCRIPT_INTERFACE_WALBERLA_WALBERLALATTICE_HPP
+
+#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_WALBERLA_LATTICE_WALBERLA_HPP
+#define ESPRESSO_SRC_SCRIPT_INTERFACE_WALBERLA_LATTICE_WALBERLA_HPP
 
 #include "config.hpp"
 
@@ -28,6 +29,7 @@
 
 #include "core/errorhandling.hpp"
 #include "core/grid.hpp"
+
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 

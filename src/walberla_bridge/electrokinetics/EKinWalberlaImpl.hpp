@@ -252,7 +252,7 @@ public:
 
     // Synchronize ghost layers
     (*m_full_communication)();
-  };
+  }
 
   // Global parameters
   [[nodiscard]] double get_diffusion() const noexcept override {
@@ -273,7 +273,7 @@ public:
   }
   [[nodiscard]] bool is_double_precision() const noexcept override {
     return std::is_same<double, FloatType>::value;
-  };
+  }
 
   void set_diffusion(double diffusion) noexcept override {
     m_diffusion = FloatType_c(diffusion);
@@ -413,7 +413,7 @@ public:
 
     // Handle VTK writers
     integrate_vtk_writers();
-  };
+  }
 
   inline void integrate_vtk_writers() {
     for (const auto &it : m_vtk_auto) {
@@ -440,7 +440,7 @@ public:
     density_field->get((*bc).cell) = FloatType_c(density);
 
     return true;
-  };
+  }
 
   [[nodiscard]] boost::optional<double>
   get_node_density(const Utils::Vector3i &node) const override {
@@ -452,8 +452,8 @@ public:
     auto density_field =
         (*bc).block->template getData<DensityField>(m_density_field_id);
 
-    return {density_field->get((*bc).cell)};
-  };
+    return {double_c(density_field->get((*bc).cell))};
+  }
 
   void clear_flux_boundaries() override { reset_flux_boundary_handling(); }
   void clear_density_boundaries() override {
@@ -469,7 +469,7 @@ public:
     m_boundary_flux->set_node_value_at_boundary(node, flux, *bc);
 
     return true;
-  };
+  }
 
   [[nodiscard]] boost::optional<Utils::Vector3d>
   get_node_flux_at_boundary(const Utils::Vector3i &node) const override {
@@ -508,7 +508,7 @@ public:
     if (!bc or !m_boundary_density->node_is_boundary(node))
       return {boost::none};
 
-    return {m_boundary_density->get_node_value_at_boundary(node)};
+    return {double_c(m_boundary_density->get_node_value_at_boundary(node))};
   }
 
   bool remove_node_from_density_boundary(const Utils::Vector3i &node) override {
@@ -550,7 +550,7 @@ public:
 
     return {m_boundary_density->node_is_boundary(node) or
             m_boundary_flux->node_is_boundary(node)};
-  };
+  }
 
   void update_flux_boundary_from_shape(
       const std::vector<int> &raster_flat,
@@ -646,14 +646,14 @@ public:
 
   [[nodiscard]] uint64_t get_rng_state() const override {
     throw std::runtime_error("The EK does not use a random number generator");
-  };
+  }
   void set_rng_state(uint64_t counter) override {
     throw std::runtime_error("The EK does not use a random number generator");
-  };
+  }
 
   [[nodiscard]] LatticeWalberla &get_lattice() const noexcept override {
     return *m_lattice;
-  };
+  }
 
   // Grid, domain, halo
 
@@ -692,7 +692,7 @@ public:
       }
     }
     return res;
-  };
+  }
 
   class vtk_runtime_error : public std::runtime_error {
   public:
@@ -771,4 +771,4 @@ public:
 };
 } // namespace walberla
 
-#endif // ESPRESSO_EKINWALBERLAIMPL_HPP
+#endif

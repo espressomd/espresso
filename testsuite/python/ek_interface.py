@@ -98,7 +98,7 @@ class EKTest:
         self.assertFalse(species.advection)
         self.assertFalse(species.friction_coupling)
         self.assertEqual(
-            species.single_precision,  # TODO walberla: rename to is_single_precision
+            species.is_single_precision,
             self.ek_params["single_precision"])
         np.testing.assert_allclose(
             np.copy(species.ext_efield), [0., 0., 0.], atol=self.atol)
@@ -121,7 +121,7 @@ class EKTest:
         lattice = self.ek_lattice_class(
             n_ghost_layers=1, agrid=self.params["agrid"])
         ekspecies = self.make_default_ek_species(lattice)
-        for key in {"lattice", "shape", "single_precision"}:
+        for key in {"lattice", "shape", "is_single_precision"}:
             with self.assertRaisesRegex(RuntimeError, f"(Parameter|Property) '{key}' is read-only"):
                 setattr(ekspecies, key, 0)
 
