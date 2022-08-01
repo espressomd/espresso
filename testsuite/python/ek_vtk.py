@@ -39,13 +39,16 @@ class EKWalberlaWrite:
     system.time_step = 1.0
     system.cell_system.skin = 0.4
 
-    lattice = espressomd.lb.LatticeWalberla(n_ghost_layers=1, agrid=1.0)
     density = 1.0
     diffusion = 0.1
     valency = 0.0
     kT = 1.0
 
-    solver = espressomd.EKSpecies.EKNone(lattice=lattice)
+    @classmethod
+    def setUpClass(cls):
+        cls.lattice = espressomd.lb.LatticeWalberla(
+            n_ghost_layers=1, agrid=1.0)
+        cls.solver = espressomd.EKSpecies.EKNone(lattice=cls.lattice)
 
     def setUp(self):
         self.species = espressomd.EKSpecies.EKSpecies(

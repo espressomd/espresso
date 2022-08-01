@@ -121,6 +121,8 @@ else()
 endif()
 add_library(Espresso::walberla ALIAS Espresso_walberla)
 
+set_source_files_properties(electrokinetics/generated_kernels/Dirichlet_single_precision.cpp electrokinetics/ek_walberla_init.cpp PROPERTIES COMPILE_FLAGS -Wno-unused-variable)
+
 target_link_libraries(Espresso_walberla PUBLIC MPI::MPI_CXX Espresso::utils
                       PRIVATE Boost::boost Espresso::cpp_flags
                       Espresso::walberla::cpp_flags
