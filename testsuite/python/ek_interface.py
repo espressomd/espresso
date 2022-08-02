@@ -47,46 +47,54 @@ class EKTest:
     system.time_step = params["tau"]
     system.cell_system.skin = 1.0
 
+    @classmethod
+    def setUpClass(cls):
+        cls.lattice = cls.ek_lattice_class(
+            n_ghost_layers=1, agrid=cls.params["agrid"])
+
     def tearDown(self):
         self.system.ekcontainer.clear()
         self.system.part.clear()
         self.system.thermostat.turn_off()
         self.system.time_step = self.params["tau"]
 
-    def make_default_ek_species(self, lattice):
+    def make_default_ek_species(self):
         return self.ek_species_class(
-            lattice=lattice,
+            lattice=self.lattice,
             single_precision=self.ek_params["single_precision"],
             **self.ek_species_params)
 
-    def test_properties(self):
-        lattice = self.ek_lattice_class(
-            n_ghost_layers=1, agrid=self.params["agrid"])
+    def test_ek_species(self):
+        # inactive species
+        ek_species = self.make_default_ek_species()
+        self.check_ek_species_properties(ek_species)
 
-        # inactive actor
-        ekspecies = self.make_default_ek_species(lattice)
-        self.check_properties(ekspecies)
-
-        eksolver = espressomd.EKSpecies.EKNone(lattice=lattice)
+        ek_solver = espressomd.EKSpecies.EKNone(lattice=self.lattice)
         self.system.ekcontainer.tau = self.system.time_step
-        self.system.ekcontainer.solver = eksolver
+        self.system.ekcontainer.solver = ek_solver
         self.assertAlmostEqual(
             self.system.ekcontainer.tau,
             self.system.time_step,
             delta=self.atol)
 
-        # activated actor
-        ekspecies = self.make_default_ek_species(lattice)
-        self.system.ekcontainer.add(ekspecies)
-        self.check_properties(ekspecies)
+        # activated species
+        ek_species = self.make_default_ek_species()
+        self.system.ekcontainer.add(ek_species)
+        self.check_ek_species_properties(ek_species)
 
-        # deactivated actor
-        ekspecies = self.make_default_ek_species(lattice)
-        self.system.ekcontainer.add(ekspecies)
-        self.system.ekcontainer.remove(ekspecies)
-        self.check_properties(ekspecies)
+        # deactivated species
+        ek_species = self.make_default_ek_species()
+        self.system.ekcontainer.add(ek_species)
+        self.system.ekcontainer.remove(ek_species)
+        self.check_ek_species_properties(ek_species)
 
-    def check_properties(self, species):
+        # reactive species
+        ek_species = self.make_default_ek_species()
+        espressomd.EKSpecies.EKReactant(
+            ekspecies=ek_species, stoech_coeff=-2.0, order=2.0)
+        self.check_ek_species_properties(ek_species)
+
+    def check_ek_species_properties(self, species):
         agrid = self.params["agrid"]
         # check EK object
         self.assertEqual(species.lattice.n_ghost_layers, 1)
@@ -117,26 +125,61 @@ class EKTest:
         with self.assertRaises(TypeError):
             species[0, 1].density = 1.
 
-    def test_solvers(self):
-        lattice = self.ek_lattice_class(
-            n_ghost_layers=1, agrid=self.params["agrid"])
-        eksolver = espressomd.EKSpecies.EKFFT(
-            lattice=lattice, permittivity=0.01,
+    def test_ek_fft_solvers(self):
+        ek_solver = espressomd.EKSpecies.EKFFT(
+            lattice=self.lattice, permittivity=0.01,
             single_precision=self.ek_params["single_precision"])
         self.assertEqual(
-            eksolver.is_single_precision,
+            ek_solver.is_single_precision,
             self.ek_params["single_precision"])
-        self.assertAlmostEqual(eksolver.permittivity, 0.01, delta=self.atol)
-        eksolver.permittivity = 0.05
-        self.assertAlmostEqual(eksolver.permittivity, 0.05, delta=self.atol)
+        self.assertAlmostEqual(ek_solver.permittivity, 0.01, delta=self.atol)
+        ek_solver.permittivity = 0.05
+        self.assertAlmostEqual(ek_solver.permittivity, 0.05, delta=self.atol)
+
+    def test_ek_none_solvers(self):
+        ek_solver = espressomd.EKSpecies.EKNone(
+            lattice=self.lattice,
+            single_precision=self.ek_params["single_precision"])
+        self.assertEqual(
+            ek_solver.is_single_precision,
+            self.ek_params["single_precision"])
+
+    def test_ek_reactants(self):
+        ek_species = self.make_default_ek_species()
+        ek_reactant = espressomd.EKSpecies.EKReactant(
+            ekspecies=ek_species, stoech_coeff=-2.0, order=2.0)
+        self.assertAlmostEqual(ek_reactant.stoech_coeff, -2.0, delta=self.atol)
+        self.assertAlmostEqual(ek_reactant.order, 2.0, delta=self.atol)
+        ek_reactant.stoech_coeff = 1.0
+        ek_reactant.order = 1.5
+        self.assertAlmostEqual(ek_reactant.stoech_coeff, 1.0, delta=self.atol)
+        self.assertAlmostEqual(ek_reactant.order, 1.5, delta=self.atol)
+
+    def test_ek_indexed_reactions(self):
+        ek_species = self.make_default_ek_species()
+        ek_reactant = espressomd.EKSpecies.EKReactant(
+            ekspecies=ek_species, stoech_coeff=-2.0, order=2.0)
+        ek_reaction = espressomd.EKSpecies.EKIndexedReaction(
+            reactants=[ek_reactant], coefficient=1.5, lattice=self.lattice)
+        self.assertAlmostEqual(ek_reaction.coefficient, 1.5, delta=self.atol)
+        ek_reaction.coefficient = 0.5
+        self.assertAlmostEqual(ek_reaction.coefficient, 0.5, delta=self.atol)
+
+    def test_ek_bulk_reactions(self):
+        ek_species = self.make_default_ek_species()
+        ek_reactant = espressomd.EKSpecies.EKReactant(
+            ekspecies=ek_species, stoech_coeff=-2.0, order=2.0)
+        ek_reaction = espressomd.EKSpecies.EKBulkReaction(
+            reactants=[ek_reactant], coefficient=1.5, lattice=self.lattice)
+        self.assertAlmostEqual(ek_reaction.coefficient, 1.5, delta=self.atol)
+        ek_reaction.coefficient = 0.5
+        self.assertAlmostEqual(ek_reaction.coefficient, 0.5, delta=self.atol)
 
     def test_raise_if_read_only(self):
-        lattice = self.ek_lattice_class(
-            n_ghost_layers=1, agrid=self.params["agrid"])
-        ekspecies = self.make_default_ek_species(lattice)
+        ek_species = self.make_default_ek_species()
         for key in {"lattice", "shape", "is_single_precision"}:
             with self.assertRaisesRegex(RuntimeError, f"(Parameter|Property) '{key}' is read-only"):
-                setattr(ekspecies, key, 0)
+                setattr(ek_species, key, 0)
 
     # TODO walberla: fix infinite loop
 #    def test_grid_index(self):
