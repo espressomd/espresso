@@ -32,122 +32,77 @@
 #include "generated_kernels/ReactionKernelBulk_5_single_precision.h"
 
 #include <blockforest/StructuredBlockForest.h>
-#include <memory>
 
-#include "utils.hpp"
+#include <cstddef>
+#include <memory>
+#include <utility>
 
 namespace walberla {
 namespace detail {
-template <typename FloatType = double> struct KernelTrait {
-  using ReactionKernelBulk_1 =
-      pystencils::ReactionKernelBulk_1_double_precision;
-  using ReactionKernelBulk_2 =
-      pystencils::ReactionKernelBulk_2_double_precision;
-  using ReactionKernelBulk_3 =
-      pystencils::ReactionKernelBulk_3_double_precision;
-  using ReactionKernelBulk_4 =
-      pystencils::ReactionKernelBulk_4_double_precision;
-  using ReactionKernelBulk_5 =
-      pystencils::ReactionKernelBulk_5_double_precision;
+template <typename FloatType = double, std::size_t N = 1> struct KernelTrait {
+  using ReactionKernelBulk = pystencils::ReactionKernelBulk_1_double_precision;
 };
-template <> struct KernelTrait<float> {
-  using ReactionKernelBulk_1 =
-      pystencils::ReactionKernelBulk_1_single_precision;
-  using ReactionKernelBulk_2 =
-      pystencils::ReactionKernelBulk_2_single_precision;
-  using ReactionKernelBulk_3 =
-      pystencils::ReactionKernelBulk_3_single_precision;
-  using ReactionKernelBulk_4 =
-      pystencils::ReactionKernelBulk_4_single_precision;
-  using ReactionKernelBulk_5 =
-      pystencils::ReactionKernelBulk_5_single_precision;
+template <> struct KernelTrait<double, 2> {
+  using ReactionKernelBulk = pystencils::ReactionKernelBulk_2_double_precision;
 };
+template <> struct KernelTrait<double, 3> {
+  using ReactionKernelBulk = pystencils::ReactionKernelBulk_3_double_precision;
+};
+template <> struct KernelTrait<double, 4> {
+  using ReactionKernelBulk = pystencils::ReactionKernelBulk_4_double_precision;
+};
+template <> struct KernelTrait<double, 5> {
+  using ReactionKernelBulk = pystencils::ReactionKernelBulk_5_double_precision;
+};
+template <> struct KernelTrait<float, 1> {
+  using ReactionKernelBulk = pystencils::ReactionKernelBulk_1_single_precision;
+};
+template <> struct KernelTrait<float, 2> {
+  using ReactionKernelBulk = pystencils::ReactionKernelBulk_2_single_precision;
+};
+template <> struct KernelTrait<float, 3> {
+  using ReactionKernelBulk = pystencils::ReactionKernelBulk_3_single_precision;
+};
+template <> struct KernelTrait<float, 4> {
+  using ReactionKernelBulk = pystencils::ReactionKernelBulk_4_single_precision;
+};
+template <> struct KernelTrait<float, 5> {
+  using ReactionKernelBulk = pystencils::ReactionKernelBulk_5_single_precision;
+};
+
+template <typename FloatType, std::size_t... ints>
+auto get_kernel(std::vector<std::shared_ptr<EKReactant>> const &reactants,
+                double coefficient, std::index_sequence<ints...> int_seq) {
+  auto kernel = std::make_shared<
+      typename KernelTrait<FloatType, int_seq.size()>::ReactionKernelBulk>(
+      walberla::BlockDataID(
+          reactants[ints]->get_species()->get_density_id())...,
+      numeric_cast<FloatType>(reactants[ints]->get_order())...,
+      numeric_cast<FloatType>(coefficient),
+      numeric_cast<FloatType>(reactants[ints]->get_stoech_coeff())...);
+
+  return kernel->getSweep();
+}
 
 template <typename FloatType>
 auto get_kernel(const std::vector<std::shared_ptr<EKReactant>> &reactants,
                 const double coefficient) {
-
-  const auto coeff_casted = numeric_cast<FloatType>(coefficient);
-
   switch (reactants.size()) {
-  case 1: {
-    const auto &reactant = reactants[0];
-    const auto [density_id_0, order_0, stoech_coeff_0] =
-        detail::get_reaction_details<FloatType>(reactant);
-
-    auto kernel =
-        std::make_shared<typename KernelTrait<FloatType>::ReactionKernelBulk_1>(
-            density_id_0, order_0, coeff_casted, stoech_coeff_0);
-
-    return kernel->getSweep();
-  }
-  case 2: {
-    const auto [density_id_0, order_0, stoech_coeff_0] =
-        detail::get_reaction_details<FloatType>(reactants[0]);
-    const auto [density_id_1, order_1, stoech_coeff_1] =
-        detail::get_reaction_details<FloatType>(reactants[1]);
-
-    auto kernel =
-        std::make_shared<typename KernelTrait<FloatType>::ReactionKernelBulk_2>(
-            density_id_0, density_id_1, order_0, order_1, coeff_casted,
-            stoech_coeff_0, stoech_coeff_1);
-
-    return kernel->getSweep();
-  }
-  case 3: {
-    const auto [density_id_0, order_0, stoech_coeff_0] =
-        detail::get_reaction_details<FloatType>(reactants[0]);
-    const auto [density_id_1, order_1, stoech_coeff_1] =
-        detail::get_reaction_details<FloatType>(reactants[1]);
-    const auto [density_id_2, order_2, stoech_coeff_2] =
-        detail::get_reaction_details<FloatType>(reactants[2]);
-
-    auto kernel =
-        std::make_shared<typename KernelTrait<FloatType>::ReactionKernelBulk_3>(
-            density_id_0, density_id_1, density_id_2, order_0, order_1, order_2,
-            coeff_casted, stoech_coeff_0, stoech_coeff_1, stoech_coeff_2);
-
-    return kernel->getSweep();
-  }
-  case 4: {
-    const auto [density_id_0, order_0, stoech_coeff_0] =
-        detail::get_reaction_details<FloatType>(reactants[0]);
-    const auto [density_id_1, order_1, stoech_coeff_1] =
-        detail::get_reaction_details<FloatType>(reactants[1]);
-    const auto [density_id_2, order_2, stoech_coeff_2] =
-        detail::get_reaction_details<FloatType>(reactants[2]);
-    const auto [density_id_3, order_3, stoech_coeff_3] =
-        detail::get_reaction_details<FloatType>(reactants[3]);
-
-    auto kernel =
-        std::make_shared<typename KernelTrait<FloatType>::ReactionKernelBulk_4>(
-            density_id_0, density_id_1, density_id_2, density_id_3, order_0,
-            order_1, order_2, order_3, coeff_casted, stoech_coeff_0,
-            stoech_coeff_1, stoech_coeff_2, stoech_coeff_3);
-
-    return kernel->getSweep();
-  }
-  case 5: {
-    const auto [density_id_0, order_0, stoech_coeff_0] =
-        detail::get_reaction_details<FloatType>(reactants[0]);
-    const auto [density_id_1, order_1, stoech_coeff_1] =
-        detail::get_reaction_details<FloatType>(reactants[1]);
-    const auto [density_id_2, order_2, stoech_coeff_2] =
-        detail::get_reaction_details<FloatType>(reactants[2]);
-    const auto [density_id_3, order_3, stoech_coeff_3] =
-        detail::get_reaction_details<FloatType>(reactants[3]);
-    const auto [density_id_4, order_4, stoech_coeff_4] =
-        detail::get_reaction_details<FloatType>(reactants[4]);
-
-    auto kernel =
-        std::make_shared<typename KernelTrait<FloatType>::ReactionKernelBulk_5>(
-            density_id_0, density_id_1, density_id_2, density_id_3,
-            density_id_4, order_0, order_1, order_2, order_3, order_4,
-            coeff_casted, stoech_coeff_0, stoech_coeff_1, stoech_coeff_2,
-            stoech_coeff_3, stoech_coeff_4);
-
-    return kernel->getSweep();
-  }
+  case 1:
+    return get_kernel<FloatType>(reactants, coefficient,
+                                 std::make_index_sequence<1>{});
+  case 2:
+    return get_kernel<FloatType>(reactants, coefficient,
+                                 std::make_index_sequence<2>{});
+  case 3:
+    return get_kernel<FloatType>(reactants, coefficient,
+                                 std::make_index_sequence<3>{});
+  case 4:
+    return get_kernel<FloatType>(reactants, coefficient,
+                                 std::make_index_sequence<4>{});
+  case 5:
+    return get_kernel<FloatType>(reactants, coefficient,
+                                 std::make_index_sequence<5>{});
   default:
     throw std::runtime_error("reactions of this size are not implemented!");
   }

@@ -103,8 +103,9 @@ endif()
 
 set_source_files_properties(
   electrokinetics/generated_kernels/Dirichlet_single_precision.cpp
-  electrokinetics/ek_walberla_init.cpp PROPERTIES COMPILE_FLAGS
-                                                  -Wno-unused-variable)
+  electrokinetics/ek_walberla_init.cpp
+  electrokinetics/reactions/EKReactionIndexed.cpp
+  PROPERTIES COMPILE_FLAGS -Wno-unused-variable)
 
 target_link_libraries(
   Espresso_walberla PUBLIC MPI::MPI_CXX Espresso::utils
