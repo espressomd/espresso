@@ -43,26 +43,25 @@ public:
         get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice")->lattice();
     auto permittivity = get_value<double>(args, "permittivity");
 
-    m_fftinstance =
-        new_ek_poisson_fft(lattice, permittivity, m_single_precision);
+    m_instance = new_ek_poisson_fft(lattice, permittivity, m_single_precision);
 
     add_parameters({{"permittivity",
                      [this](Variant const &v) {
-                       m_fftinstance->set_permittivity(get_value<double>(v));
+                       m_instance->set_permittivity(get_value<double>(v));
                      },
-                     [this]() { return m_fftinstance->get_permittivity(); }},
-                    {"single_precision", AutoParameter::read_only,
+                     [this]() { return m_instance->get_permittivity(); }},
+                    {"is_single_precision", AutoParameter::read_only,
                      [this]() { return m_single_precision; }}});
   }
 
   [[nodiscard]] std::shared_ptr<::walberla::PoissonSolver> get_instance() const
       noexcept override {
-    return m_fftinstance;
+    return m_instance;
   }
 
 private:
   /* The actual instance */
-  std::shared_ptr<::walberla::PoissonSolver> m_fftinstance;
+  std::shared_ptr<::walberla::PoissonSolver> m_instance;
 
   bool m_single_precision;
 };

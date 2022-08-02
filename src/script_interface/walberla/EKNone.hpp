@@ -42,17 +42,20 @@ public:
     auto lattice =
         get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice")->lattice();
 
-    m_noneinstance = new_ek_poisson_none(lattice, m_single_precision);
+    m_instance = new_ek_poisson_none(lattice, m_single_precision);
+
+    add_parameters({{"is_single_precision", AutoParameter::read_only,
+                     [this]() { return m_single_precision; }}});
   }
 
   [[nodiscard]] std::shared_ptr<::walberla::PoissonSolver> get_instance() const
       noexcept override {
-    return m_noneinstance;
+    return m_instance;
   }
 
 private:
   /* The actual instance */
-  std::shared_ptr<::walberla::PoissonSolver> m_noneinstance;
+  std::shared_ptr<::walberla::PoissonSolver> m_instance;
 
   bool m_single_precision;
 };

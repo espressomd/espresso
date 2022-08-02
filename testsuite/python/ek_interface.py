@@ -117,6 +117,19 @@ class EKTest:
         with self.assertRaises(TypeError):
             species[0, 1].density = 1.
 
+    def test_solvers(self):
+        lattice = self.ek_lattice_class(
+            n_ghost_layers=1, agrid=self.params["agrid"])
+        eksolver = espressomd.EKSpecies.EKFFT(
+            lattice=lattice, permittivity=0.01,
+            single_precision=self.ek_params["single_precision"])
+        self.assertEqual(
+            eksolver.is_single_precision,
+            self.ek_params["single_precision"])
+        self.assertAlmostEqual(eksolver.permittivity, 0.01, delta=self.atol)
+        eksolver.permittivity = 0.05
+        self.assertAlmostEqual(eksolver.permittivity, 0.05, delta=self.atol)
+
     def test_raise_if_read_only(self):
         lattice = self.ek_lattice_class(
             n_ghost_layers=1, agrid=self.params["agrid"])
