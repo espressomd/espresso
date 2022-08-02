@@ -45,7 +45,7 @@ config = utg.TestGenerator()
 modes = config.get_modes()
 
 # use a box with 3 different dimensions, unless DipolarP3M is used
-system = espressomd.System(box_l=[6.0, 7.0, 8.0])
+system = espressomd.System(box_l=[12.0, 14.0, 16.0])
 if 'DP3M' in modes:
     system.box_l = 3 * [np.max(system.box_l)]
 system.cell_system.skin = 0.1
@@ -78,14 +78,14 @@ if espressomd.has_features('LB_WALBERLA') and 'LB.WALBERLA' in modes:
 #        lbf_actor = espressomd.lb.LBFluidWalberlaGPU
 if lbf_actor:
     lbf_cpt_mode = 0 if 'LB.ASCII' in modes else 1
-    lbf = lbf_actor(agrid=0.5, viscosity=1.3, density=1.5, tau=0.01)
+    lbf = lbf_actor(agrid=1.0, viscosity=1.3, density=1.5, tau=0.01)
     wall1 = espressomd.shapes.Wall(normal=(1, 0, 0), dist=0.5)
     wall2 = espressomd.shapes.Wall(normal=(-1, 0, 0),
                                    dist=-(system.box_l[0] - 0.5))
     lbf.add_boundary_from_shape(wall1, (1e-4, 1e-4, 0))
     lbf.add_boundary_from_shape(wall2, (0, 0, 0))
 
-p1 = system.part.add(id=0, pos=[1.0] * 3)
+p1 = system.part.add(id=0, pos=[1.0, 1.0, 1.0])
 p2 = system.part.add(id=1, pos=[1.0, 1.0, 2.0])
 
 if espressomd.has_features('ELECTROSTATICS'):
@@ -97,7 +97,7 @@ if espressomd.has_features('DIPOLES'):
     p2.dip = (7.3, 6.1, -4)
 
 if espressomd.has_features('EXCLUSIONS'):
-    system.part.add(id=2, pos=[2.0] * 3, exclusions=[0, 1])
+    system.part.add(id=2, pos=[2.0, 2.0, 2.0], exclusions=[0, 1])
 
 # place particles at the interface between 2 MPI nodes
 p3 = system.part.add(id=3, pos=system.box_l / 2.0 - 1.0, type=1)
@@ -120,7 +120,7 @@ if espressomd.has_features('P3M') and ('P3M' in modes or 'ELC' in modes):
     if 'ELC' in modes:
         elc = espressomd.electrostatics.ELC(
             actor=p3m,
-            gap_size=2.0,
+            gap_size=6.0,
             maxPWerror=0.1,
             delta_mid_top=0.9,
             delta_mid_bot=0.1)
@@ -307,7 +307,7 @@ if espressomd.has_features('SCAFACOS') and 'SCAFACOS' in modes \
             "p3m_r_cut": 1.0,
             "p3m_grid": 64,
             "p3m_cao": 7,
-            "p3m_alpha": 2.320667}))
+            "p3m_alpha": 2.084652}))
 
 if espressomd.has_features('SCAFACOS_DIPOLES') and 'SCAFACOS' in modes \
         and 'p2nfft' in espressomd.code_info.scafacos_methods():

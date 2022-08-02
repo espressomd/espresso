@@ -58,9 +58,9 @@ class CheckpointTest(ut.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.ref_box_l = np.array([6.0, 7.0, 8.0])
+        cls.ref_box_l = np.array([12.0, 14.0, 16.0])
         if 'DP3M' in modes:
-            cls.ref_box_l = np.array([8.0, 8.0, 8.0])
+            cls.ref_box_l = np.array([16.0, 16.0, 16.0])
         cls.ref_periodicity = np.array([True, True, True])
         if espressomd.has_features('STOKESIAN_DYNAMICS') and (
                 'THERM.SDM' in modes or 'INT.SDM' in modes):
@@ -127,7 +127,7 @@ class CheckpointTest(ut.TestCase):
                         decimal=precision)
         state = lbf.get_params()
         reference = {
-            'agrid': 0.5,
+            'agrid': 1.0,
             'viscosity': 1.3,
             'density': 1.5,
             'tau': 0.01}
@@ -422,11 +422,10 @@ class CheckpointTest(ut.TestCase):
         # immersed boundary bonds
         self.assertEqual(
             ibm_volcons_bond.params, {'softID': 15, 'kappaV': 0.01})
-        self.assertEqual(ibm_tribend_bond.params['refShape'], 'Initial')
-        self.assertAlmostEqual(ibm_tribend_bond.params['kb'], 2., delta=1E-9)
         if 'DP3M.CPU' not in modes:
-            self.assertAlmostEqual(
-                ibm_tribend_bond.params['theta0'], 5.9739919862366, delta=1E-9)
+            self.assertEqual(
+                ibm_tribend_bond.params,
+                {'kb': 2., 'theta0': 0., 'refShape': 'Initial'})
         self.assertEqual(
             ibm_triel_bond.params,
             {'k1': 1.1, 'k2': 1.2, 'maxDist': 1.6, 'elasticLaw': 'NeoHookean'})
@@ -583,7 +582,7 @@ class CheckpointTest(ut.TestCase):
                          'cao': 1, 'alpha': 1.0, 'r_cut': 1.0, 'tune': False,
                          'timings': 15, 'check_neutrality': True,
                          'charge_neutrality_tolerance': 7e-12}
-        elc_reference = {'gap_size': 2.0, 'maxPWerror': 0.1,
+        elc_reference = {'gap_size': 6.0, 'maxPWerror': 0.1,
                          'delta_mid_top': 0.9, 'delta_mid_bot': 0.1,
                          'check_neutrality': True,
                          'charge_neutrality_tolerance': 5e-12}
@@ -608,7 +607,7 @@ class CheckpointTest(ut.TestCase):
                          'p3m_cao': 7,
                          'p3m_r_cut': 1.0,
                          'p3m_grid': 64,
-                         'p3m_alpha': 2.320667}}
+                         'p3m_alpha': 2.084652}}
         for key in reference:
             self.assertEqual(state[key], reference[key], msg=f'for {key}')
 
