@@ -42,7 +42,9 @@ else()
        generated_kernels/CollideSweepDoublePrecisionThermalized.cpp)
 endif()
 if(WITH_CUDA AND WALBERLA_BUILD_WITH_CUDA)
-set(WalberlaBridgeCodegenCuda_SRC
+  list(
+    APPEND
+    WalberlaBridgeCodegenCuda_SRC
     generated_kernels/CudaStreamSweepSinglePrecision.cu
     generated_kernels/CudaStreamSweepDoublePrecision.cu
     generated_kernels/CudaInitialPDFsSetterSinglePrecision.cu
@@ -53,85 +55,67 @@ set(WalberlaBridgeCodegenCuda_SRC
     generated_kernels/CudaUpdateVelocityFromPDFSweepSinglePrecision.cu)
 endif()
 
-set(WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN electrokinetics/generated_kernels)
-
-set(WalberlaBridgeElectrokinetics_SRC)
-set(WalberlaBridgeElectrokineticsCodegen_SRC
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/DiffusiveFluxKernel_double_precision.cpp
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/ContinuityKernel_double_precision.cpp
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/AdvectiveFluxKernel_double_precision.cpp
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/FrictionCouplingKernel_double_precision.cpp
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/DiffusiveFluxKernelWithElectrostatic_double_precision.cpp
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/DiffusiveFluxKernel_single_precision.cpp
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/ContinuityKernel_single_precision.cpp
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/AdvectiveFluxKernel_single_precision.cpp
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/FrictionCouplingKernel_single_precision.cpp
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/DiffusiveFluxKernelWithElectrostatic_single_precision.cpp
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/FixedFlux_double_precision.cpp
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/Dirichlet_double_precision.cpp
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/FixedFlux_single_precision.cpp
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN}/Dirichlet_single_precision.cpp)
-
-unset(WALBERLA_BRIDGE_ELECTROKINETICS_CODEGEN)
+foreach(precision double_precision single_precision)
+  list(
+    APPEND
+    WalberlaBridgeCodegen_SRC
+    electrokinetics/generated_kernels/DiffusiveFluxKernel_${precision}.cpp
+    electrokinetics/generated_kernels/DiffusiveFluxKernelWithElectrostatic_${precision}.cpp
+    electrokinetics/generated_kernels/ContinuityKernel_${precision}.cpp
+    electrokinetics/generated_kernels/AdvectiveFluxKernel_${precision}.cpp
+    electrokinetics/generated_kernels/FrictionCouplingKernel_${precision}.cpp
+    electrokinetics/generated_kernels/FixedFlux_${precision}.cpp
+    electrokinetics/generated_kernels/Dirichlet_${precision}.cpp)
+endforeach()
 
 # EK reactions
-set(WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS electrokinetics/reactions)
-list(APPEND WalberlaBridgeElectrokinetics_SRC
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS}/EKReactionImplBulk.cpp
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS}/EKReactionIndexed.cpp)
-
-set(WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS}/generated_kernels)
-list(APPEND WalberlaBridgeElectrokineticsCodegen_SRC
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelBulk_1_double_precision.cpp
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelBulk_2_double_precision.cpp
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelBulk_3_double_precision.cpp
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelBulk_4_double_precision.cpp
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelBulk_5_double_precision.cpp
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelBulk_1_single_precision.cpp
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelBulk_2_single_precision.cpp
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelBulk_3_single_precision.cpp
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelBulk_4_single_precision.cpp
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelBulk_5_single_precision.cpp
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelIndexed_1_double_precision.cpp
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelIndexed_2_double_precision.cpp
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelIndexed_3_double_precision.cpp
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelIndexed_4_double_precision.cpp
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelIndexed_5_double_precision.cpp
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelIndexed_1_single_precision.cpp
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelIndexed_2_single_precision.cpp
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelIndexed_3_single_precision.cpp
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelIndexed_4_single_precision.cpp
-        ${WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN}/ReactionKernelIndexed_5_single_precision.cpp)
-unset(WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_CODEGEN)
-unset(WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS)
-
-set(WalberlaBridge_SRC ${WalberlaBridgeCodegen_SRC} lb_walberla_init.cpp electrokinetics/ek_walberla_init.cpp
-                       LatticeWalberla.cpp ${WalberlaBridgeElectrokineticsCodegen_SRC} ${WalberlaBridgeElectrokinetics_SRC})
+foreach(n_species RANGE 1 5)
+  foreach(precision double_precision single_precision)
+    list(
+      APPEND
+      WalberlaBridgeCodegen_SRC
+      electrokinetics/reactions/generated_kernels/ReactionKernelBulk_${n_species}_${precision}.cpp
+      electrokinetics/reactions/generated_kernels/ReactionKernelIndexed_${n_species}_${precision}.cpp
+    )
+  endforeach()
+endforeach()
 
 add_library(Espresso_walberla_cpp_flags INTERFACE)
 add_library(Espresso::walberla::cpp_flags ALIAS Espresso_walberla_cpp_flags)
 if(WALBERLA_USE_AVX)
-  target_link_libraries(Espresso_walberla_cpp_flags INTERFACE Espresso::avx_flags)
+  target_link_libraries(Espresso_walberla_cpp_flags
+                        INTERFACE Espresso::avx_flags)
 endif(WALBERLA_USE_AVX)
 
-if(WITH_CUDA AND WALBERLA_BUILD_WITH_CUDA)
-  add_gpu_library(Espresso_walberla SHARED ${WalberlaBridge_SRC} ${WalberlaBridgeCodegenCuda_SRC})
-else()
-  add_library(Espresso_walberla SHARED ${WalberlaBridge_SRC})
-endif()
+add_library(
+  Espresso_walberla SHARED
+  lb_walberla_init.cpp electrokinetics/ek_walberla_init.cpp LatticeWalberla.cpp
+  ${WalberlaBridgeCodegen_SRC} electrokinetics/reactions/EKReactionImplBulk.cpp
+  electrokinetics/reactions/EKReactionIndexed.cpp)
 add_library(Espresso::walberla ALIAS Espresso_walberla)
 
-set_source_files_properties(electrokinetics/generated_kernels/Dirichlet_single_precision.cpp electrokinetics/ek_walberla_init.cpp PROPERTIES COMPILE_FLAGS -Wno-unused-variable)
+if(WITH_CUDA AND WALBERLA_BUILD_WITH_CUDA)
+  add_gpu_library(Espresso_walberla_cuda SHARED
+                  ${WalberlaBridgeCodegenCuda_SRC})
+  add_library(Espresso::walberla_cuda ALIAS Espresso_walberla_cuda)
+  target_link_libraries(Espresso_walberla PUBLIC Espresso::walberla_cuda)
+endif()
 
-target_link_libraries(Espresso_walberla PUBLIC MPI::MPI_CXX Espresso::utils
-                      PRIVATE Boost::boost Espresso::cpp_flags
-                      Espresso::walberla::cpp_flags
-                      ${WALBERLA_LIBS})
+set_source_files_properties(
+  electrokinetics/generated_kernels/Dirichlet_single_precision.cpp
+  electrokinetics/ek_walberla_init.cpp PROPERTIES COMPILE_FLAGS
+                                                  -Wno-unused-variable)
+
+target_link_libraries(
+  Espresso_walberla PUBLIC MPI::MPI_CXX Espresso::utils
+  PRIVATE Boost::boost Espresso::cpp_flags Espresso::walberla::cpp_flags
+          ${WALBERLA_LIBS})
 target_include_directories(
   Espresso_walberla PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${WALBERLA_INCLUDE_DIRS}
   PRIVATE ${walberla_BINARY_DIR}/src)
 
-install(TARGETS Espresso_walberla LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
+install(TARGETS Espresso_walberla
+        LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
 
 if(WITH_TESTS)
   add_subdirectory(tests)
