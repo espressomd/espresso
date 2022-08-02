@@ -125,8 +125,7 @@ class EKSpecies(ScriptInterfaceHelper):
         boundary_type :
             Type of the boundary condition.
         """
-        if not (issubclass(boundary_type, FluxBoundary)
-                or issubclass(boundary_type, DensityBoundary)):
+        if not issubclass(boundary_type, (FluxBoundary, DensityBoundary)):
             raise ValueError(
                 "boundary_type must be a subclass of FluxBoundary or DensityBoundary")
 
@@ -499,10 +498,10 @@ class EKIndexedReaction(ScriptInterfaceHelper):
     _so_creation_policy = "GLOBAL"
 
     def add_node_to_index(self, node):
-        self.call_method("add_node_to_boundary", node=node)
+        self.call_method("set_node_is_boundary", node=node, is_boundary=True)
 
     def remove_node_from_index(self, node):
-        self.call_method("remove_node_from_boundary", node=node)
+        self.call_method("set_node_is_boundary", node=node, is_boundary=False)
 
     def __getitem__(self, key):
         if isinstance(key, (tuple, list, np.ndarray)) and len(key) == 3:

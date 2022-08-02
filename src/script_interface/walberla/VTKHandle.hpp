@@ -178,6 +178,7 @@ public:
 class EKVTKHandle : public AutoParameters<::VTKHandle> {
   std::shared_ptr<::VTKHandle> m_vtk_handle;
   std::shared_ptr<EKinWalberlaBase> m_ekinstance;
+  std::shared_ptr<EKSpecies> m_ekspecies;
   int m_delta_N;
   int m_flag_obs;
   std::string m_identifier;
@@ -196,6 +197,8 @@ public:
   EKVTKHandle() {
     constexpr auto read_only = AutoParameter::read_only;
     add_parameters({
+        // TODO WALBERLA
+        //{"species", read_only, [this]() { return m_ekspecies; }},
         {"enabled", read_only, [this]() { return m_vtk_handle->enabled; }},
         {"delta_N", read_only, [this]() { return m_delta_N; }},
         {"flag_obs", read_only, [this]() { return m_flag_obs; }},
@@ -240,8 +243,8 @@ public:
     m_prefix = get_value<std::string>(params, "prefix");
     auto const execution_count = get_value<int>(params, "execution_count");
 
-    m_ekinstance = get_value<std::shared_ptr<EKSpecies>>(params, "species")
-                       ->get_ekinstance();
+    m_ekspecies = get_value<std::shared_ptr<EKSpecies>>(params, "species");
+    m_ekinstance = m_ekspecies->get_ekinstance();
 
     m_vtk_handle =
         get_ekinstance()->create_vtk(m_delta_N, execution_count, m_flag_obs,
