@@ -212,7 +212,7 @@ python_test(FILE integrator_npt_stats.py MAX_NUM_PROC 4 LABELS long)
 python_test(FILE integrator_steepest_descent.py MAX_NUM_PROC 4)
 python_test(FILE ibm.py MAX_NUM_PROC 2)
 #python_test(FILE dipolar_mdlc_p3m_scafacos_p2nfft.py MAX_NUM_PROC 1)
-#python_test(FILE dipolar_direct_summation.py MAX_NUM_PROC 1 LABELS gpu)
+python_test(FILE dipolar_direct_summation.py MAX_NUM_PROC 1 LABELS gpu)
 python_test(FILE dipolar_p3m.py MAX_NUM_PROC 2)
 python_test(FILE dipolar_interface.py MAX_NUM_PROC 1 LABELS gpu SUFFIX
             non_p3m_methods)
