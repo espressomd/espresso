@@ -58,11 +58,15 @@ public:
       }
 
       if (output[i] < 0 or output[i] >= shape[i]) {
-        auto constexpr formatter = Utils::Vector3i::formatter(", ");
-        std::stringstream ss;
-        ss << "provided index [" << formatter << node
-           << "] is out of range for shape [" << formatter << shape << "]\n";
-        throw std::runtime_error(ss.str());
+        if (context()->is_head_node()) {
+          auto constexpr formatter = Utils::Vector3i::formatter(", ");
+          std::stringstream ss;
+          ss << "provided index [" << formatter << node
+             << "] is out of range for shape [" << formatter << shape << "]\n";
+          throw std::runtime_error(ss.str());
+        } else {
+          throw Exception("");
+        }
       }
     }
 
