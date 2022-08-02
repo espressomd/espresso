@@ -102,7 +102,7 @@ class EKWalberlaWrite:
             filepaths = [path_vtk_end] + path_vtk_continuous
 
         # write VTK files
-        vtk_obs = ['density', ]
+        vtk_obs = ['density']
         ek_vtk = espressomd.EKSpecies.EKVTKOutput(species=self.species, identifier=label_vtk_continuous,
                                                   observables=vtk_obs, delta_N=1, base_folder=str(path_vtk_root))
         ek_vtk.disable()

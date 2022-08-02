@@ -41,11 +41,12 @@ class EKTest:
                          "diffusion": 0.1,
                          "advection": False,
                          "friction_coupling": False,
-                         "ext_efield": [0., 0., 0.]}
+                         "ext_efield": [0.1, 0.2, 0.3]}
 
     system.periodicity = [True, True, True]
     system.time_step = params["tau"]
     system.cell_system.skin = 1.0
+    ek_solver_set = False
 
     @classmethod
     def setUpClass(cls):
@@ -63,6 +64,19 @@ class EKTest:
             lattice=self.lattice,
             single_precision=self.ek_params["single_precision"],
             **self.ek_species_params)
+
+    def test_00_ek_container(self):
+        def check():
+            status = self.system.ekcontainer.call_method(
+                "is_poissonsolver_set")
+            self.assertEqual(status, EKTest.ek_solver_set)
+
+        check()
+        ek_solver = espressomd.EKSpecies.EKNone(lattice=self.lattice)
+        check()
+        self.system.ekcontainer.solver = ek_solver
+        EKTest.ek_solver_set = True
+        check()
 
     def test_ek_species(self):
         # inactive species
@@ -96,26 +110,34 @@ class EKTest:
 
     def check_ek_species_properties(self, species):
         agrid = self.params["agrid"]
-        # check EK object
+        # check getters
         self.assertEqual(species.lattice.n_ghost_layers, 1)
         self.assertAlmostEqual(species.lattice.agrid, agrid, delta=self.atol)
-        # self.assertAlmostEqual(species.density, 0.85, delta=self.atol) # TODO
         self.assertAlmostEqual(species.diffusion, 0.1, delta=self.atol)
         self.assertAlmostEqual(species.valency, 0.0, delta=self.atol)
         self.assertAlmostEqual(species.kT, 1.5, delta=self.atol)
+        np.testing.assert_allclose(
+            np.copy(species.ext_efield), [0.1, 0.2, 0.3], atol=self.atol)
         self.assertFalse(species.advection)
         self.assertFalse(species.friction_coupling)
         self.assertEqual(
             species.is_single_precision,
             self.ek_params["single_precision"])
-        np.testing.assert_allclose(
-            np.copy(species.ext_efield), [0., 0., 0.], atol=self.atol)
+        # check setters
         species.diffusion = 0.2
-        self.assertAlmostEqual(species.diffusion, 0.2, delta=self.atol)
+        species.valency = 0.3
+        species.kT = 0.4
         ext_f = [0.01, 0.02, 0.03]
         species.ext_efield = ext_f
+        species.advection = True
+        species.friction_coupling = True
+        self.assertAlmostEqual(species.diffusion, 0.2, delta=self.atol)
+        self.assertAlmostEqual(species.valency, 0.3, delta=self.atol)
+        self.assertAlmostEqual(species.kT, 0.4, delta=self.atol)
         np.testing.assert_allclose(
             np.copy(species.ext_efield), ext_f, atol=self.atol)
+        self.assertTrue(species.advection)
+        self.assertTrue(species.friction_coupling)
         # check node getters/setters
         self.assertAlmostEqual(species[0, 0, 0].density, 0.85, delta=self.atol)
         species[0, 0, 0].density = 0.90
@@ -124,6 +146,30 @@ class EKTest:
             species[0, 0, 0].density = [1, 2]
         with self.assertRaises(TypeError):
             species[0, 1].density = 1.
+        # check boundary conditions
+        node = species[1, 1, 1]
+        self.assertIsNone(node.density_boundary)
+        self.assertIsNone(node.flux_boundary)
+        node.flux_boundary = espressomd.EKSpecies.FluxBoundary([1., 2., 3.])
+        self.assertIsInstance(
+            node.flux_boundary,
+            espressomd.EKSpecies.FluxBoundary)
+        np.testing.assert_allclose(
+            np.copy(node.flux_boundary.flux), [1., 2., 3.], atol=self.atol)
+        node.density_boundary = espressomd.EKSpecies.DensityBoundary(4.5)
+        self.assertIsInstance(
+            node.density_boundary,
+            espressomd.EKSpecies.DensityBoundary)
+        np.testing.assert_allclose(
+            np.copy(node.density_boundary.density), 4.5, atol=self.atol)
+        node.density_boundary = None
+        node.flux_boundary = None
+        self.assertIsNone(node.density_boundary)
+        self.assertIsNone(node.flux_boundary)
+        with self.assertRaisesRegex(ValueError, "must be an instance of DensityBoundary or None"):
+            node.density_boundary = 4.6
+        with self.assertRaisesRegex(ValueError, "must be an instance of FluxBoundary or None"):
+            node.flux_boundary = 4.6
 
     def test_ek_fft_solvers(self):
         ek_solver = espressomd.EKSpecies.EKFFT(
@@ -164,6 +210,23 @@ class EKTest:
         self.assertAlmostEqual(ek_reaction.coefficient, 1.5, delta=self.atol)
         ek_reaction.coefficient = 0.5
         self.assertAlmostEqual(ek_reaction.coefficient, 0.5, delta=self.atol)
+        # boundaries
+        self.assertFalse(ek_reaction[1, 1, 1])
+        ek_reaction[1, 1, 1] = True
+        self.assertTrue(ek_reaction[1, 1, 1])
+        ek_reaction.remove_node_from_index([1, 1, 1])
+        self.assertFalse(ek_reaction[1, 1, 1])
+        ek_reaction.add_node_to_index([1, 1, 1])
+        self.assertTrue(ek_reaction[1, 1, 1])
+        # check ranges
+        shape = np.around(self.system.box_l / self.params["agrid"]).astype(int)
+        self.assertTrue(ek_reaction[1 - shape[0], 1, 1])
+        self.assertTrue(ek_reaction[1, 1 - shape[0], 1])
+        self.assertTrue(ek_reaction[1, 1, 1 - shape[0]])
+        with self.assertRaisesRegex(RuntimeError, rf"provided index \[13, 1, 1\] is out of range for shape \[12, 12, 12\]"):
+            ek_reaction[1 + shape[0], 1, 1]
+        with self.assertRaisesRegex(RuntimeError, rf"provided index \[-23, 1, 1\] is out of range for shape \[12, 12, 12\]"):
+            ek_reaction[1 - 2 * shape[0], 1, 1]
 
     def test_ek_bulk_reactions(self):
         ek_species = self.make_default_ek_species()

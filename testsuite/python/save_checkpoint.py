@@ -71,14 +71,16 @@ if 'INT.NPT' not in modes:
         shear_direction="x", shear_plane_normal="y", protocol=protocol)
 
 lbf_actor = None
+lb_lattice = None
 if espressomd.has_features('LB_WALBERLA') and 'LB.WALBERLA' in modes:
     lbf_actor = espressomd.lb.LBFluidWalberla
+    lb_lattice = espressomd.lb.LatticeWalberla(agrid=1.0, n_ghost_layers=1)
     # TODO WALBERLA
 #    if 'LB.GPU' in modes and espressomd.gpu_available():
 #        lbf_actor = espressomd.lb.LBFluidWalberlaGPU
 if lbf_actor:
     lbf_cpt_mode = 0 if 'LB.ASCII' in modes else 1
-    lbf = lbf_actor(agrid=1.0, viscosity=1.3, density=1.5, tau=0.01)
+    lbf = lbf_actor(lattice=lb_lattice, viscosity=1.3, density=1.5, tau=0.01)
     wall1 = espressomd.shapes.Wall(normal=(1, 0, 0), dist=0.5)
     wall2 = espressomd.shapes.Wall(normal=(-1, 0, 0),
                                    dist=-(system.box_l[0] - 0.5))
@@ -341,18 +343,36 @@ if lbf_actor:
     # save LB checkpoint file
     lbf_cpt_path = path_cpt_root / "lb.cpt"
     lbf.save_checkpoint(str(lbf_cpt_path), lbf_cpt_mode)
-    # create VTK callbacks
     vtk_suffix = config.test_name
-    vtk_auto_id = f"auto_{vtk_suffix}"
-    vtk_manual_id = f"manual_{vtk_suffix}"
     vtk_root = pathlib.Path("vtk_out")
-    config.recursive_unlink(vtk_root / vtk_auto_id)
-    config.recursive_unlink(vtk_root / vtk_manual_id)
-    vtk_auto = lbf.add_vtk_writer(
-        vtk_auto_id, ('density', 'velocity_vector'), delta_N=1)
-    vtk_auto.disable()
-    vtk_manual = lbf.add_vtk_writer(vtk_manual_id, 'density', delta_N=0)
-    vtk_manual.write()
+    # create LB VTK callbacks
+    lb_vtk_auto_id = f"auto_lb_{vtk_suffix}"
+    lb_vtk_manual_id = f"manual_lb_{vtk_suffix}"
+    config.recursive_unlink(vtk_root / lb_vtk_auto_id)
+    config.recursive_unlink(vtk_root / lb_vtk_manual_id)
+    lb_vtk_auto = lbf.add_vtk_writer(
+        lb_vtk_auto_id, ('density', 'velocity_vector'), delta_N=1)
+    lb_vtk_auto.disable()
+    lb_vtk_manual = lbf.add_vtk_writer(lb_vtk_manual_id, 'density', delta_N=0)
+    lb_vtk_manual.write()
+    # create EK VTK callbacks
+    ek_species = espressomd.EKSpecies.EKSpecies(
+        lattice=lb_lattice, density=1.5, kT=2.0, diffusion=0.2, valency=0.1,
+        advection=False, friction_coupling=False, ext_efield=[0.1, 0.2, 0.3],
+        single_precision=False)
+    ek_vtk_auto_id = f"auto_ek_{vtk_suffix}"
+    ek_vtk_manual_id = f"manual_ek_{vtk_suffix}"
+    config.recursive_unlink(vtk_root / ek_vtk_auto_id)
+    config.recursive_unlink(vtk_root / ek_vtk_manual_id)
+    ek_vtk_auto = espressomd.EKSpecies.EKVTKOutput(
+        species=ek_species, identifier=ek_vtk_auto_id,
+        observables=('density',), delta_N=1, base_folder=str(vtk_root))
+    ek_vtk_auto.disable()
+    ek_vtk_manual = espressomd.EKSpecies.EKVTKOutput(
+        species=ek_species, identifier=ek_vtk_manual_id,
+        observables=('density',), delta_N=0, base_folder=str(vtk_root))
+    ek_vtk_manual.write()
+
 
 # save checkpoint file
 checkpoint.save(0)
