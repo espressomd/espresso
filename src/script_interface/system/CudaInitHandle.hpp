@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The ESPResSo project
+ * Copyright (C) 2013-2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,20 +17,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "initialize.hpp"
+#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_SYSTEM_CUDA_INIT_HANDLE_HPP
+#define ESPRESSO_SRC_SCRIPT_INTERFACE_SYSTEM_CUDA_INIT_HANDLE_HPP
 
-#include "CudaInitHandle.hpp"
-#include "Globals.hpp"
-#include "System.hpp"
+#include "script_interface/ScriptInterface.hpp"
+#include "script_interface/auto_parameters/AutoParameters.hpp"
+
+#include <string>
 
 namespace ScriptInterface {
 namespace System {
 
-void initialize(Utils::Factory<ObjectHandle> *om) {
-  om->register_new<CudaInitHandle>("System::CudaInitHandle");
-  om->register_new<Globals>("System::Globals");
-  om->register_new<System>("System::System");
-}
+class CudaInitHandle : public AutoParameters<CudaInitHandle> {
+public:
+  CudaInitHandle();
+  Variant do_call_method(std::string const &name,
+                         VariantMap const &parameters) override;
+};
 
 } // namespace System
 } // namespace ScriptInterface
+
+#endif
