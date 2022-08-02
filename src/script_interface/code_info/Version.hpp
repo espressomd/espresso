@@ -17,18 +17,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "initialize.hpp"
+#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_CODE_INFO_VERSION_HPP
+#define ESPRESSO_SRC_SCRIPT_INTERFACE_CODE_INFO_VERSION_HPP
 
-#include "CodeInfo.hpp"
-#include "Version.hpp"
+#include "script_interface/ScriptInterface.hpp"
+
+#include <string>
 
 namespace ScriptInterface {
 namespace CodeInfo {
 
-void initialize(Utils::Factory<ObjectHandle> *om) {
-  om->register_new<CodeInfo>("CodeInfo::CodeInfo");
-  om->register_new<Version>("CodeInfo::Version");
-}
+class Version : public ObjectHandle {
+public:
+  Variant do_call_method(std::string const &name,
+                         VariantMap const &parameters) override;
+};
 
 } // namespace CodeInfo
 } // namespace ScriptInterface
+
+#endif

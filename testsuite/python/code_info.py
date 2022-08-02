@@ -20,6 +20,7 @@
 import unittest as ut
 import espressomd
 import espressomd.code_info
+import espressomd.version
 
 
 class Test(ut.TestCase):
@@ -41,6 +42,26 @@ class Test(ut.TestCase):
         self.assertEqual(features, sorted(features))
         self.assertEqual(all_features, sorted(all_features))
         self.assertEqual(scafacos_methods, sorted(scafacos_methods))
+
+    def test_version(self):
+        version_full = espressomd.version.version()
+        version_major_minor = (espressomd.version.major(),
+                               espressomd.version.minor())
+        self.assertTrue(all(x >= 0 for x in version_full))
+        self.assertIn(len(version_full), (2, 3))
+        self.assertEqual(version_full[:2], version_major_minor)
+        self.assertEqual(".".join(map(str, espressomd.version.version())),
+                         espressomd.version.friendly())
+
+    def test_git_info(self):
+        git_states = {"CLEAN", "DIRTY"}
+        commit_charset = set("abcdef0123456789")
+        self.assertIn(espressomd.version.git_state(), git_states)
+        self.assertIsInstance(espressomd.version.git_branch(), str)
+        self.assertIsInstance(espressomd.version.git_commit(), str)
+        git_commit = espressomd.version.git_commit()
+        self.assertLessEqual(len(git_commit), 40)
+        self.assertTrue(set(git_commit).issubset(commit_charset))
 
 
 if __name__ == "__main__":
