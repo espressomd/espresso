@@ -97,9 +97,6 @@ public:
   virtual void set_friction_coupling(bool friction_coupling) noexcept = 0;
   virtual void set_ext_efield(const Utils::Vector3d &field) noexcept = 0;
 
-  virtual uint64_t get_rng_state() const = 0;
-  virtual void set_rng_state(uint64_t counter) = 0;
-
   [[nodiscard]] virtual walberla::BlockDataID get_density_id() const
       noexcept = 0;
 
@@ -133,9 +130,6 @@ public:
    */
   virtual void switch_vtk(std::string const &vtk_uid, bool status) = 0;
 
-  /** @brief return a pairs of global node index and node center position */
-  [[nodiscard]] virtual std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>>
-  node_indices_positions(bool include_ghosts) const = 0;
   virtual ~EKinWalberlaBase() = default;
 };
 

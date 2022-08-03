@@ -644,54 +644,8 @@ public:
     m_boundary_density->boundary_update();
   }
 
-  [[nodiscard]] uint64_t get_rng_state() const override {
-    throw std::runtime_error("The EK does not use a random number generator");
-  }
-  void set_rng_state(uint64_t counter) override {
-    throw std::runtime_error("The EK does not use a random number generator");
-  }
-
   [[nodiscard]] LatticeWalberla &get_lattice() const noexcept override {
     return *m_lattice;
-  }
-
-  // Grid, domain, halo
-
-  [[nodiscard]] std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>>
-  node_indices_positions(bool include_ghosts = false) const override {
-    int ghost_offset = 0;
-    if (include_ghosts)
-      ghost_offset = m_lattice->get_ghost_layers();
-    std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>> res;
-    for (auto block = m_lattice->get_blocks()->begin();
-         block != m_lattice->get_blocks()->end(); ++block) {
-      auto left = block->getAABB().min();
-      // Lattice constant is 1, node centers are offset by .5
-      Utils::Vector3d pos_offset =
-          to_vector3d(left) + Utils::Vector3d::broadcast(.5);
-
-      // Lattice constant is 1, so cast left corner position to ints
-      Utils::Vector3i index_offset =
-          Utils::Vector3i{int(left[0]), int(left[1]), int(left[2])};
-
-      // Get field data which knows about the indices
-      // In the loop, x,y,z are in block-local coordinates
-      auto density_field =
-          block->template getData<DensityField>(m_density_field_id);
-      for (int x = -ghost_offset;
-           x < int(density_field->xSize()) + ghost_offset; x++) {
-        for (int y = -ghost_offset;
-             y < int(density_field->ySize()) + ghost_offset; y++) {
-          for (int z = -ghost_offset;
-               z < int(density_field->zSize()) + ghost_offset; z++) {
-            res.emplace_back(
-                index_offset + Utils::Vector3i{x, y, z},
-                pos_offset + Utils::Vector3d{double(x), double(y), double(z)});
-          }
-        }
-      }
-    }
-    return res;
   }
 
   class vtk_runtime_error : public std::runtime_error {
