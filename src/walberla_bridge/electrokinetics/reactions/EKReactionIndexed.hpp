@@ -44,6 +44,7 @@ public:
   EKReactionIndexed(std::shared_ptr<LatticeWalberla> lattice,
                     std::vector<std::shared_ptr<EKReactant>> reactants,
                     double coefficient);
+  ~EKReactionIndexed() override = default;
 
   using EKReactionBase::get_coefficient;
   using EKReactionBase::get_lattice;

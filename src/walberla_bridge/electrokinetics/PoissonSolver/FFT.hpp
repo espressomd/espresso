@@ -87,6 +87,7 @@ public:
         std::make_shared<field::communication::PackInfo<PotentialField>>(
             m_potential_field_id));
   }
+  ~FFT() override = default;
 
   using PoissonSolver::get_permittivity;
   using PoissonSolver::set_permittivity;

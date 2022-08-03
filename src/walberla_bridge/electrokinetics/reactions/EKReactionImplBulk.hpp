@@ -35,6 +35,7 @@ public:
                      const std::vector<std::shared_ptr<EKReactant>> &reactants,
                      double coefficient)
       : EKReactionBase(lattice, reactants, coefficient) {}
+  ~EKReactionImplBulk() override = default;
 
   using EKReactionBase::get_coefficient;
   using EKReactionBase::get_lattice;

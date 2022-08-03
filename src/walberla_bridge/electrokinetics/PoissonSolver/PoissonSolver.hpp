@@ -37,6 +37,7 @@ private:
 public:
   PoissonSolver(std::shared_ptr<LatticeWalberla> lattice, double permittivity)
       : m_lattice(std::move(lattice)), m_permittivity(permittivity) {}
+  virtual ~PoissonSolver() = default;
 
   virtual void reset_charge_field() = 0;
 

@@ -43,6 +43,8 @@ public:
       : m_reactants(std::move(reactants)), m_coefficient(coefficient),
         m_lattice(std::move(lattice)) {}
 
+  virtual ~EKReactionBase() = default;
+
   void set_coefficient(double coefficient) noexcept {
     m_coefficient = coefficient;
   }

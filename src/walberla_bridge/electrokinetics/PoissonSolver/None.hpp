@@ -41,6 +41,7 @@ public:
         get_lattice()->get_blocks(), "potential field", 0.0, field::fzyx,
         get_lattice()->get_ghost_layers());
   }
+  ~None() override = default;
 
   void reset_charge_field() override {}
   void add_charge_to_field(const BlockDataID &, double, bool) override {}
