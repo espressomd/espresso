@@ -405,12 +405,12 @@ public:
   }
 
 private:
-  inline void integrate_stream(std::shared_ptr<Lattice_T> const &blocks) {
+  void integrate_stream(std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_stream)(&*b);
   }
 
-  inline void integrate_collide(std::shared_ptr<Lattice_T> const &blocks) {
+  void integrate_collide(std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       boost::apply_visitor(run_collide_sweep, *m_collision_model,
                            boost::variant<IBlock *>(&*b));
@@ -423,33 +423,36 @@ private:
     return boost::get<LeesEdwardsCollisionModel>(&*m_collision_model);
   }
 
-  inline void apply_lees_edwards_pdf_interpolation(
+  void apply_lees_edwards_pdf_interpolation(
       std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_lees_edwards_pdf_interpol_sweep)(&*b);
   }
-  inline void apply_lees_edwards_vel_interpolation_and_shift(
+
+  void apply_lees_edwards_vel_interpolation_and_shift(
       std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_lees_edwards_vel_interpol_sweep)(&*b);
   }
-  inline void apply_lees_edwards_last_applied_force_interpolation(
+
+  void apply_lees_edwards_last_applied_force_interpolation(
       std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_lees_edwards_last_applied_force_interpol_sweep)(&*b);
   }
-  inline void apply_lees_edwards_force_to_be_applied_backwards_interpolation(
+
+  void apply_lees_edwards_force_to_be_applied_backwards_interpolation(
       std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_lees_edwards_force_to_be_applied_backwards_interpol_sweep)(&*b);
   }
 
-  inline void integrate_reset_force(std::shared_ptr<Lattice_T> const &blocks) {
+  void integrate_reset_force(std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_reset_force)(&*b);
   }
 
-  inline void integrate_boundaries(std::shared_ptr<Lattice_T> const &blocks) {
+  void integrate_boundaries(std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_boundary)(&*b);
   }
@@ -483,6 +486,7 @@ private:
     ghost_communication();
   }
 
+protected:
   void integrate_vtk_writers() override {
     for (auto const &it : m_vtk_auto) {
       auto &vtk_handle = it.second;

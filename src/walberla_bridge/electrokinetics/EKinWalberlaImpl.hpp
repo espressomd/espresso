@@ -299,25 +299,25 @@ public:
   void ghost_communication() override { (*m_full_communication)(); }
 
 private:
-  inline void kernel_boundary_density() {
+  void kernel_boundary_density() {
     for (auto &block : *m_lattice->get_blocks()) {
       (*m_boundary_density)(&block);
     }
   }
 
-  inline void kernel_boundary_flux() {
+  void kernel_boundary_flux() {
     for (auto &block : *m_lattice->get_blocks()) {
       (*m_boundary_flux)(&block);
     }
   }
 
-  inline void kernel_continuity() {
+  void kernel_continuity() {
     for (auto &block : *m_lattice->get_blocks()) {
       (*m_continuity).run(&block);
     }
   }
 
-  inline void kernel_diffusion() {
+  void kernel_diffusion() {
     auto kernel = DiffusiveFluxKernel(m_flux_field_flattened_id,
                                       m_density_field_flattened_id,
                                       FloatType_c(get_diffusion()));
@@ -327,7 +327,7 @@ private:
     }
   }
 
-  inline void kernel_advection(const std::size_t &velocity_id) {
+  void kernel_advection(const std::size_t &velocity_id) {
     auto kernel =
         AdvectiveFluxKernel(m_flux_field_flattened_id, m_density_field_id,
                             BlockDataID(velocity_id));
@@ -336,7 +336,7 @@ private:
     }
   }
 
-  inline void kernel_friction_coupling(const std::size_t &force_id) {
+  void kernel_friction_coupling(const std::size_t &force_id) {
     auto kernel = FrictionCouplingKernel(
         BlockDataID(force_id), m_flux_field_flattened_id,
         FloatType_c(get_diffusion()), FloatType_c(get_kT()));
@@ -345,7 +345,7 @@ private:
     }
   }
 
-  inline void kernel_diffusion_electrostatic(const std::size_t &potential_id) {
+  void kernel_diffusion_electrostatic(const std::size_t &potential_id) {
     const auto ext_field = get_ext_efield();
     auto kernel = DiffusiveFluxKernelElectrostatic(
         m_flux_field_flattened_id, BlockDataID(potential_id),
@@ -358,11 +358,22 @@ private:
     }
   }
 
-  inline void kernel_migration() {}
+  void kernel_migration() {}
 
-  inline void updated_boundary_fields() {
+  void updated_boundary_fields() {
     m_boundary_flux->boundary_update();
     m_boundary_density->boundary_update();
+  }
+
+protected:
+  void integrate_vtk_writers() override {
+    for (auto const &it : m_vtk_auto) {
+      auto &vtk_handle = it.second;
+      if (vtk_handle->enabled) {
+        vtk::writeFiles(vtk_handle->ptr)();
+        vtk_handle->execution_count++;
+      }
+    }
   }
 
 public:
@@ -417,16 +428,6 @@ public:
 
     // Handle VTK writers
     integrate_vtk_writers();
-  }
-
-  void integrate_vtk_writers() override {
-    for (auto const &it : m_vtk_auto) {
-      auto &vtk_handle = it.second;
-      if (vtk_handle->enabled) {
-        vtk::writeFiles(vtk_handle->ptr)();
-        vtk_handle->execution_count++;
-      }
-    }
   }
 
   [[nodiscard]] walberla::BlockDataID get_density_id() const noexcept override {

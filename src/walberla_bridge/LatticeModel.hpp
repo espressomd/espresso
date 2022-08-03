@@ -40,13 +40,13 @@ protected:
   virtual void
   register_vtk_field_filters(walberla::vtk::VTKOutput &vtk_obj) = 0;
 
+  virtual void integrate_vtk_writers() = 0;
+
 public:
   virtual ~LatticeModel() = default;
 
   /** @brief Get the underlying lattice. */
   virtual LatticeWalberla const &get_lattice() const noexcept = 0;
-
-  virtual void integrate_vtk_writers() = 0;
 
   /** @brief Create a VTK observable.
    *
