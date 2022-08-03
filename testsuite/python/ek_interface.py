@@ -54,6 +54,7 @@ class EKTest:
             n_ghost_layers=1, agrid=cls.params["agrid"])
 
     def tearDown(self):
+        self.system.actors.clear()
         self.system.ekcontainer.clear()
         self.system.part.clear()
         self.system.thermostat.turn_off()
@@ -238,15 +239,15 @@ class EKTest:
         self.system.integrator.run(1)
 
         # check exceptions without LB force field
-        ek_species.friction_coupling = True
-        ek_species.advection = False
         with self.assertRaisesRegex(Exception, "friction coupling enabled but no force field accessible"):
+            ek_species.friction_coupling = True
+            ek_species.advection = False
             self.system.integrator.run(1)
 
         # check exceptions without LB velocity field
-        ek_species.friction_coupling = False
-        ek_species.advection = True
         with self.assertRaisesRegex(Exception, "advection enabled but no velocity field accessible"):
+            ek_species.friction_coupling = False
+            ek_species.advection = True
             self.system.integrator.run(1)
 
         # non-diffusive species don't trigger exceptions due to early exit
@@ -254,6 +255,14 @@ class EKTest:
         ek_species.advection = True
         ek_species.diffusion = 0.
         self.system.integrator.run(1)
+
+        # check exceptions with an incompatible LB time step
+        with self.assertRaisesRegex(Exception, "LB and EK are active but with different timesteps"):
+            lb = self.lb_fluid_class(
+                lattice=self.lattice, kT=1.5, seed=42, density=0.5,
+                viscosity=3., tau=2. * self.params["tau"], **self.lb_params)
+            self.system.actors.add(lb)
+            self.system.integrator.run(1)
 
     def test_ek_bulk_reactions(self):
         ek_species = self.make_default_ek_species()
@@ -323,9 +332,11 @@ class EKTestWalberla(EKTest, ut.TestCase):
 
     """Test for the Walberla implementation of the EK in double-precision."""
 
+    lb_fluid_class = espressomd.lb.LBFluidWalberla
     ek_lattice_class = espressomd.lb.LatticeWalberla
     ek_species_class = espressomd.EKSpecies.EKSpecies
     ek_params = {"single_precision": False}
+    lb_params = {"single_precision": False}
     atol = 1e-10
     rtol = 1e-7
 
@@ -335,9 +346,11 @@ class EKTestWalberlaSinglePrecision(EKTest, ut.TestCase):
 
     """Test for the Walberla implementation of the EK in single-precision."""
 
+    lb_fluid_class = espressomd.lb.LBFluidWalberla
     ek_lattice_class = espressomd.lb.LatticeWalberla
     ek_species_class = espressomd.EKSpecies.EKSpecies
     ek_params = {"single_precision": True}
+    lb_params = {"single_precision": True}
     atol = 1e-7
     rtol = 5e-5
 
