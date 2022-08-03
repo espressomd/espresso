@@ -77,14 +77,18 @@ class EKReaction(ut.TestCase):
 
         self.system.ekcontainer.solver = eksolver
 
-        species_A = espressomd.EKSpecies.EKSpecies(lattice=lattice,
-                                                   density=self.INITIAL_DENSITIES[0], kT=0.0, diffusion=self.DIFFUSION_COEFFICIENTS[0],
-                                                   valency=0.0, advection=False, friction_coupling=False, ext_efield=[0, 0, 0], single_precision=single_precision)
+        species_A = espressomd.EKSpecies.EKSpecies(
+            lattice=lattice, density=self.INITIAL_DENSITIES[0], kT=0.0,
+            diffusion=self.DIFFUSION_COEFFICIENTS[0], valency=0.0,
+            advection=False, friction_coupling=False, ext_efield=[0, 0, 0],
+            single_precision=single_precision)
         self.system.ekcontainer.add(species_A)
 
-        species_B = espressomd.EKSpecies.EKSpecies(lattice=lattice,
-                                                   density=self.INITIAL_DENSITIES[1], kT=0.0, diffusion=self.DIFFUSION_COEFFICIENTS[1],
-                                                   valency=0.0, advection=False, friction_coupling=False, ext_efield=[0, 0, 0], single_precision=single_precision)
+        species_B = espressomd.EKSpecies.EKSpecies(
+            lattice=lattice, density=self.INITIAL_DENSITIES[1], kT=0.0,
+            diffusion=self.DIFFUSION_COEFFICIENTS[1], valency=0.0,
+            advection=False, friction_coupling=False, ext_efield=[0, 0, 0],
+            single_precision=single_precision)
         self.system.ekcontainer.add(species_B)
 
         coeffs_left = [-1.0, 1.0]
@@ -101,7 +105,8 @@ class EKReaction(ut.TestCase):
                 order=0.0))
 
         reaction_left = espressomd.EKSpecies.EKIndexedReaction(
-            reactants=reactants_left, coefficient=self.REACTION_RATES[0], lattice=lattice)
+            reactants=reactants_left, coefficient=self.REACTION_RATES[0],
+            lattice=lattice)
         reaction_left[1, :, :] = True
 
         coeffs_right = [1.0, -1.0]
@@ -118,7 +123,8 @@ class EKReaction(ut.TestCase):
                 order=1.0))
 
         reaction_right = espressomd.EKSpecies.EKIndexedReaction(
-            reactants=reactants_right, coefficient=self.REACTION_RATES[1], lattice=lattice)
+            reactants=reactants_right, coefficient=self.REACTION_RATES[1],
+            lattice=lattice)
         reaction_right[-2, :, :] = True
 
         self.system.ekreactions.add(reaction_left)
@@ -143,11 +149,12 @@ class EKReaction(ut.TestCase):
                 species_B[x + self.PADDING, :, :].density)
 
         analytic_density_profile = np.zeros((2, int(self.WIDTH / self.AGRID)))
-        analytic_density_profile[0], analytic_density_profile[1] = self.analytic_density_profiles(self.WIDTH,
-                                                                                                  self.REACTION_RATES,
-                                                                                                  self.DIFFUSION_COEFFICIENTS,
-                                                                                                  self.INITIAL_DENSITIES,
-                                                                                                  self.AGRID)
+        analytic_density_profile[0], analytic_density_profile[1] = \
+            self.analytic_density_profiles(self.WIDTH,
+                                           self.REACTION_RATES,
+                                           self.DIFFUSION_COEFFICIENTS,
+                                           self.INITIAL_DENSITIES,
+                                           self.AGRID)
 
         np.testing.assert_allclose(
             density_profile,

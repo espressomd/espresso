@@ -126,8 +126,10 @@ class EKReaction(ut.TestCase):
         for i, coeff in enumerate(stoech_coeffs):
             analytic_educt_densities[i] = coeff * self.analytic_density_base(
                 self.TIME + 0.5, stoech_coeffs, reaction_rate, self.INITIAL_DENSITY)
-        analytic_product_density = product_coeff * (self.INITIAL_DENSITY -
-                                                    self.analytic_density_base(self.TIME + 0.5, stoech_coeffs, reaction_rate, self.INITIAL_DENSITY))
+        analytic_product_density = product_coeff * \
+            (self.INITIAL_DENSITY -
+                self.analytic_density_base(self.TIME + 0.5, stoech_coeffs,
+                                           reaction_rate, self.INITIAL_DENSITY))
 
         np.testing.assert_allclose(
             measured_educt_densities / measured_educt_densities[0],

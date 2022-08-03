@@ -29,8 +29,8 @@
 #include <algorithm>
 #include <cassert>
 #include <memory>
-#include <vector>
 #include <stdexcept>
+#include <vector>
 
 template <class EKSpecies> class EKContainer {
   using container_type = std::vector<std::shared_ptr<EKSpecies>>;
