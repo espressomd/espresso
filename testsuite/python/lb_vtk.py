@@ -161,7 +161,7 @@ class TestLBWrite:
 
     def test_exceptions(self):
         label_invalid_obs = f'test_lb_vtk_{self.lb_vtk_id}_invalid_obs'
-        error_msg = r"Only the following VTK observables are supported: \['density', 'pressure_tensor', 'velocity_vector'\], got \['dens'\]"
+        error_msg = r"Only the following VTK observables are supported: \['density', 'pressure_tensor', 'velocity_vector'\], got 'dens'"
         with self.assertRaisesRegex(ValueError, error_msg):
             self.lbf.add_vtk_writer(label_invalid_obs, ['dens'])
         label_manual_lbf = f'test_lb_vtk_{self.lb_vtk_id}_manual_lbf'

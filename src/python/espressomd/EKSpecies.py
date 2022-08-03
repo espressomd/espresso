@@ -276,9 +276,6 @@ class EKVTKOutput(ScriptInterfaceHelper):
         if not self.required_keys().issubset(params):
             raise ValueError(
                 f"At least the following keys have to be given as keyword arguments: {sorted(self.required_keys())}")
-        if not self.valid_observables().issuperset(params['observables']):
-            raise ValueError(
-                f"Only the following VTK observables are supported: {sorted(self.valid_observables())}, got {params['observables']}")
         if not isinstance(params['species'], EKSpecies):
             raise ValueError("'species' must be an EKSpecies")
         utils.check_type_or_throw_except(
@@ -302,7 +299,7 @@ class EKVTKOutput(ScriptInterfaceHelper):
         params['vtk_uid'] = vtk_uid
 
     def valid_observables(self):
-        return {'density', }
+        return set(self.call_method("get_valid_observable_names"))
 
     def valid_keys(self):
         return {'species', 'delta_N', 'execution_count', 'observables',

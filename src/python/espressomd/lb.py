@@ -313,9 +313,6 @@ class VTKOutput(ScriptInterfaceHelper):
     def validate_params(self, params):
         utils.check_required_keys(self.required_keys(), params.keys())
         utils.check_valid_keys(self.valid_keys(), params.keys())
-        if not self.valid_observables().issuperset(params['observables']):
-            raise ValueError(
-                f"Only the following VTK observables are supported: {sorted(self.valid_observables())}, got {params['observables']}")
         if not isinstance(params['lb_fluid'], HydrodynamicInteraction):
             raise ValueError("'lb_fluid' must be an LB actor")
         utils.check_type_or_throw_except(
@@ -339,7 +336,7 @@ class VTKOutput(ScriptInterfaceHelper):
         params['vtk_uid'] = vtk_uid
 
     def valid_observables(self):
-        return {'density', 'velocity_vector', 'pressure_tensor'}
+        return set(self.call_method("get_valid_observable_names"))
 
     def valid_keys(self):
         return {'lb_fluid', 'delta_N', 'execution_count', 'observables',

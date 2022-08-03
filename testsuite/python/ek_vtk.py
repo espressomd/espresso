@@ -142,7 +142,7 @@ class EKWalberlaWrite:
 
     def test_exceptions(self):
         label_invalid_obs = f'test_lb_vtk_{self.ek_vtk_id}_invalid_obs'
-        error_msg = r"Only the following VTK observables are supported: \['density'\], got \['dens'\]"
+        error_msg = r"Only the following VTK observables are supported: \['density'\], got 'dens'"
         with self.assertRaisesRegex(ValueError, error_msg):
             espressomd.EKSpecies.EKVTKOutput(species=self.species, identifier=label_invalid_obs,
                                              observables=['dens'])
