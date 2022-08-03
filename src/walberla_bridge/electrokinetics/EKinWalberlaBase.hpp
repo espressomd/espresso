@@ -42,7 +42,7 @@ public:
   virtual void ghost_communication() = 0;
 
   /** @brief Number of discretized fluxes */
-  [[nodiscard]] virtual size_t stencil_size() const = 0;
+  [[nodiscard]] virtual std::size_t stencil_size() const = 0;
 
   // Density
   virtual bool set_node_density(const Utils::Vector3i &node,

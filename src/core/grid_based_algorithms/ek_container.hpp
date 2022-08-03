@@ -23,17 +23,19 @@
 #include "config.hpp"
 
 #ifdef LB_WALBERLA
+
 #include "EKContainer.hpp"
 #include "electrokinetics/EKinWalberlaBase.hpp"
-#endif // LB_WALBERLA
 
 namespace EK {
-#ifdef LB_WALBERLA
+
 extern EKContainer<EKinWalberlaBase> ek_container;
-#endif // LB_WALBERLA
 
 double get_tau();
 int get_steps_per_md_step(double md_timestep);
 void propagate();
+
 } // namespace EK
-#endif // ESPRESSO_EK_CONTAINER_HPP
+
+#endif // LB_WALBERLA
+#endif

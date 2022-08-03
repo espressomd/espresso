@@ -57,4 +57,4 @@ public:
   [[nodiscard]] bool empty() const { return m_ekreactions.empty(); }
 };
 
-#endif // ESPRESSO_EKREACTIONS_HPP
+#endif

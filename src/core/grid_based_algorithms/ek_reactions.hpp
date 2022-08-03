@@ -23,15 +23,16 @@
 #include "config.hpp"
 
 #ifdef LB_WALBERLA
+
 #include "EKReactions.hpp"
 #include "electrokinetics/reactions/EKReactionBase.hpp"
-#endif // LB_WALBERLA
 
 namespace EK {
-#ifdef LB_WALBERLA
+
 extern EKReactions<walberla::EKReactionBase> ek_reactions;
-#endif // LB_WALBERLA
 
 void perform_reactions();
 } // namespace EK
-#endif // ESPRESSO_EK_REACTIONS_HPP
+
+#endif // LB_WALBERLA
+#endif

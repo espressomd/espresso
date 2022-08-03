@@ -17,6 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "config.hpp"
+
+#ifdef LB_WALBERLA
+
 #include "ek_container.hpp"
 #include "ek_reactions.hpp"
 #include "errorhandling.hpp"
@@ -24,10 +28,13 @@
 
 #include "EKContainer.hpp"
 
-#include "config.hpp"
+#include <algorithm>
+#include <cmath>
+#include <cstddef>
+#include <stdexcept>
 
 namespace EK {
-#ifdef LB_WALBERLA
+
 EKContainer<EKinWalberlaBase> ek_container;
 
 double get_tau() { return ek_container.get_tau(); }
@@ -87,5 +94,7 @@ void propagate() {
     species->ghost_communication();
   }
 }
-#endif // LB_WALBERLA
+
 } // namespace EK
+
+#endif // LB_WALBERLA

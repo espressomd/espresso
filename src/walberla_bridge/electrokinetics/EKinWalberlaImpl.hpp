@@ -194,7 +194,7 @@ protected:
   // TODO: kernel for that
   // std::shared_ptr<ResetForce<PdfField, VectorField>> m_reset_force;
 
-  [[nodiscard]] size_t stencil_size() const override { return FluxCount; }
+  [[nodiscard]] std::size_t stencil_size() const override { return FluxCount; }
 
   void reset_density_boundary_handling() {
     auto const &blocks = get_lattice().get_blocks();
@@ -346,7 +346,7 @@ private:
   }
 
   void kernel_diffusion_electrostatic(const std::size_t &potential_id) {
-    const auto ext_field = get_ext_efield();
+    auto const ext_field = get_ext_efield();
     auto kernel = DiffusiveFluxKernelElectrostatic(
         m_flux_field_flattened_id, BlockDataID(potential_id),
         m_density_field_flattened_id, FloatType_c(get_diffusion()),

@@ -17,12 +17,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "config.hpp"
+
+#ifdef LB_WALBERLA
+
 #include "ek_reactions.hpp"
 
 #include <algorithm>
 
 namespace EK {
-#ifdef LB_WALBERLA
+
 EKReactions<walberla::EKReactionBase> ek_reactions;
 
 void perform_reactions() {
@@ -33,5 +37,7 @@ void perform_reactions() {
   std::for_each(ek_reactions.begin(), ek_reactions.end(),
                 [](auto const &reaction) { reaction->perform_reaction(); });
 }
-#endif // LB_WALBERLA
+
 } // namespace EK
+
+#endif // LB_WALBERLA
