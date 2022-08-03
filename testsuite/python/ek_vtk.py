@@ -149,14 +149,17 @@ class EKWalberlaWrite:
         label_invalid_obs = f'test_lb_vtk_{self.ek_vtk_id}_invalid_obs'
         error_msg = r"Only the following VTK observables are supported: \['density'\], got 'dens'"
         with self.assertRaisesRegex(ValueError, error_msg):
-            espressomd.EKSpecies.EKVTKOutput(species=self.species, identifier=label_invalid_obs,
-                                             observables=['dens'])
-        label_manual_species = f'test_ek_vtk_{self.ek_vtk_id}_manual_species'
-        label_auto_species = f'test_ek_vtk_{self.ek_vtk_id}_auto_species'
-        vtk_manual = espressomd.EKSpecies.EKVTKOutput(species=self.species, identifier=label_manual_species,
-                                                      observables=['density'])
-        vtk_auto = espressomd.EKSpecies.EKVTKOutput(species=self.species, identifier=label_auto_species,
-                                                    observables=['density'], delta_N=1)
+            espressomd.EKSpecies.EKVTKOutput(
+                species=self.species, identifier=label_invalid_obs, delta_N=0,
+                observables=['dens'])
+        ek_vtk_manual_id = f'test_ek_vtk_{self.ek_vtk_id}_manual'
+        ek_vtk_auto_id = f'test_ek_vtk_{self.ek_vtk_id}_auto'
+        vtk_manual = espressomd.EKSpecies.EKVTKOutput(
+            species=self.species, identifier=ek_vtk_manual_id, delta_N=0,
+            observables=['density'])
+        vtk_auto = espressomd.EKSpecies.EKVTKOutput(
+            species=self.species, identifier=ek_vtk_auto_id, delta_N=1,
+            observables=['density'])
         with self.assertRaisesRegex(RuntimeError, 'Automatic VTK callbacks cannot be triggered manually'):
             vtk_auto.write()
         with self.assertRaisesRegex(RuntimeError, 'Manual VTK callbacks cannot be disabled'):
@@ -164,14 +167,16 @@ class EKWalberlaWrite:
         with self.assertRaisesRegex(RuntimeError, 'Manual VTK callbacks cannot be enabled'):
             vtk_manual.enable()
 
-        # can still use VTK when the LB actor has been cleared but not deleted
-        label_cleared = f'test_ek_vtk_{self.ek_vtk_id}_cleared_species'
-        vtk_cleared = espressomd.EKSpecies.EKVTKOutput(species=self.species, identifier=label_cleared,
-                                                       observables=['density'])
+        # can still use VTK when the EK actor has been cleared but not deleted
+        label_cleared = f'test_ek_vtk_{self.ek_vtk_id}_cleared'
+        vtk_cleared = espressomd.EKSpecies.EKVTKOutput(
+            species=self.species, identifier=label_cleared,
+            observables=['density'])
         self.system.actors.clear()
         vtk_cleared.write()
-        espressomd.EKSpecies.EKVTKOutput(species=self.species, observables=['density'],
-                                         identifier=label_cleared + '_1')
+        espressomd.EKSpecies.EKVTKOutput(species=self.species,
+                                         identifier=label_cleared + '_1',
+                                         observables=['density'])
 
 
 @utx.skipIfMissingModules("vtk")

@@ -350,10 +350,13 @@ if lbf_actor:
     lb_vtk_manual_id = f"manual_lb_{vtk_suffix}"
     config.recursive_unlink(vtk_root / lb_vtk_auto_id)
     config.recursive_unlink(vtk_root / lb_vtk_manual_id)
-    lb_vtk_auto = lbf.add_vtk_writer(
-        lb_vtk_auto_id, ('density', 'velocity_vector'), delta_N=1)
+    lb_vtk_auto = espressomd.lb.VTKOutput(
+        lb_fluid=lbf, identifier=lb_vtk_auto_id, delta_N=1,
+        observables=('density', 'velocity_vector'), base_folder=str(vtk_root))
     lb_vtk_auto.disable()
-    lb_vtk_manual = lbf.add_vtk_writer(lb_vtk_manual_id, 'density', delta_N=0)
+    lb_vtk_manual = espressomd.lb.VTKOutput(
+        lb_fluid=lbf, identifier=lb_vtk_manual_id, delta_N=0,
+        observables=('density',), base_folder=str(vtk_root))
     lb_vtk_manual.write()
     # create EK VTK callbacks
     ek_species = espressomd.EKSpecies.EKSpecies(

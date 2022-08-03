@@ -243,32 +243,36 @@ a value that matches the length of the slice (which sets each node
 individually), or a single value that will be copied to every node
 (e.g. a scalar for density, or an array of length 3 for the velocity).
 
-.. _Output for visualization:
+.. _LB VTK output:
 
-Output for visualization
-------------------------
+VTK output
+----------
 
-|es| implements the :meth:`espressomd.lb.LBFluidWalberla.add_vtk_writer()`
-command to output one or multiple fluid field data into a single file::
+The waLBerla library implements a globally-accessible VTK registry.
+A VTK stream can be attached to a LB actor to periodically write
+one or multiple fluid field data into a single file using
+:class:`~espressomd.lb.VTKOutput`::
 
-
-    vtk_obs = ['density', 'velocity_vector']
+    vtk_obs = ["density", "velocity_vector"]
     # create a VTK callback that automatically writes every 10 LB steps
-    lb_vtk = lbf.add_vtk_writer('vtk_automatic', vtk_obs, delta_N=10)
+    lb_vtk = espressomd.lb.VTKOutput(
+        lb_fluid=lb, identifier="lb_vtk_automatic", observables=vtk_obs,
+        delta_N=10)
     self.system.integrator.run(100)
     # can be deactivated
     lb_vtk.disable()
     self.system.integrator.run(10)
     lb_vtk.enable()
     # create a VTK callback that writes only when explicitly called
-    lb_vtk_on_demand = lbf.add_vtk_writer('vtk_now', vtk_obs)
+    lb_vtk_on_demand = espressomd.lb.VTKOutput(
+        lb_fluid=lb, identifier="lb_vtk_now", observables=vtk_obs)
     lb_vtk_on_demand.write()
 
 Currently supported fluid properties are the density, velocity vector
 and pressure tensor. By default, the properties of the current state
-of the fluid are written to disk on demand. To add a callback that writes
+of the fluid are written to disk on demand. To add a stream that writes
 to disk continuously, use the optional argument ``delta_N`` to indicate
-the level of subsampling. Such a callback can be deactivated.
+the level of subsampling. Such a stream can be deactivated.
 
 The VTK format is readable by visualization software such as ParaView [1]_
 or Mayavi2 [2]_. If you plan to use ParaView for visualization, note that also the particle
@@ -317,10 +321,9 @@ particles that should be subject to the field. This effectively acts
 as a velocity offset between the particle and the LB fluid.
 
 For more information on this method and how it works, read the
-publication :cite:`hickey10a`.
+publication :cite:t:`hickey10a`.
 
-
-.. _Setting up boundary conditions:
+.. _Setting up LB boundary conditions:
 
 Setting up boundary conditions
 ------------------------------
@@ -335,7 +338,7 @@ boundaries "moving" relative to each other.
 Under the hood, a boundary field is added to the blockforest, which contains
 pre-calculated information for the reflection and interpolation operations.
 
-.. _Per-node boundary conditions:
+.. _Per-node LB boundary conditions:
 
 Per-node boundary conditions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -355,7 +358,7 @@ One can set (or update) the slip velocity of individual nodes::
     # remove boundary conditions
     lbf[0, 0, 0].boundary = None
 
-.. _Shape-based boundary conditions:
+.. _Shape-based LB boundary conditions:
 
 Shape-based boundary conditions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

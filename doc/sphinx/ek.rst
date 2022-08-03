@@ -200,90 +200,113 @@ To add species to the EK solver::
 
 To remove species from the EK solver::
 
-    system.ekcontainer.remove(ekspecies)
+    system.ekcontainer.remove(ek_species)
 
-..  .. _EK boundaries:
+.. _EK VTK output:
 
-    EK boundaries
-    ~~~~~~~~~~~~~
+VTK output
+~~~~~~~~~~
 
-    :class:`~espressomd.ekboundaries.EKBoundary` is used to set up
-    internal (or external) boundaries for the electrokinetics algorithm in much
-    the same way as the :class:`~espressomd.lbboundaries.LBBoundary` class is
-    used for the LB fluid::
+The waLBerla library implements a globally-accessible VTK registry.
+A VTK stream can be attached to an EK species to periodically write
+one or multiple fluid field data into a single file using
+:class:`~espressomd.EKSpecies.EKVTKOutput`::
 
-        ek_boundary = espressomd.ekboundaries.EKBoundary(charge_density=1.0, shape=my_shape)
-        system.ekboundaries.add(ek_boundary)
+    vtk_obs = ["density"]
+    # create a VTK callback that automatically writes every 10 EK steps
+    ek_vtk = espressomd.EKSpecies.EKVTKOutput(
+        species=ek_species, identifier="ek_vtk_automatic",
+        observables=vtk_obs, delta_N=10)
+    self.system.integrator.run(100)
+    # can be deactivated
+    ek_vtk.disable()
+    self.system.integrator.run(10)
+    ek_vtk.enable()
+    # create a VTK callback that writes only when explicitly called
+    ek_vtk_on_demand = espressomd.EKSpecies.EKVTKOutput(
+        species=ek_species, identifier="ek_vtk_now",
+        observables=vtk_obs)
+    ek_vtk_on_demand.write()
 
-    .. note:: Feature ``EK_BOUNDARIES`` required
+Currently supported species properties are the density.
+By default, the properties of the current state
+of the fluid are written to disk on demand. To add a stream that writes
+to disk continuously, use the optional argument ``delta_N`` to indicate
+the level of subsampling. Such a stream can be deactivated.
 
-    The major difference with the LB class is the option ``charge_density``,
-    with which a boundary can be endowed with a volume charge density.
-    To create a surface charge density, a combination of two
-    oppositely charged boundaries, one inside the other, can be used. However,
-    care should be taken to maintain the surface charge density when the value of ``agrid``
-    is changed. Examples for possible shapes are wall, sphere, ellipsoid, cylinder,
-    rhomboid and hollow conical frustum. We refer to the documentation of the
-    :class:`espressomd.shapes` module for more possible shapes and information on
-    the options associated to these shapes. In order to properly set up the
-    boundaries, the ``charge_density`` and ``shape`` must be specified.
+The VTK format is readable by visualization software such as ParaView [5]_
+or Mayavi2 [6]_. If you plan to use ParaView for visualization, note that also the particle
+positions can be exported using the VTK format (see :meth:`~espressomd.particle_data.ParticleList.writevtk`).
 
-    .. _Output:
+.. _Setting up EK boundary conditions:
 
-    Output
-    ~~~~~~
+Setting up boundary conditions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    .. _Fields:
+It is possible to impose a fixed density and a fixed flux on EK species.
 
-    Fields
-    """"""
+Under the hood, a boundary field is added to the blockforest, which contains
+pre-calculated information for the streaming operations.
 
-    ::
+.. _Per-node EK boundary conditions:
 
-        ek.write_vtk_boundary(path)
-        ek.write_vtk_density(path)
-        ek.write_vtk_velocity(path)
-        ek.write_vtk_potential(path)
+Per-node boundary conditions
+""""""""""""""""""""""""""""
 
-    A property of the fluid field can be exported into a file in one go.
-    Currently supported fields are: density, velocity, potential and boundary,
-    which give the LB fluid density, the LB fluid velocity,
-    the electrostatic potential, and the location and type of the
-    boundaries, respectively. The boundaries can only be printed when the
-    ``EK_BOUNDARIES`` is compiled in. The output is a vtk-file, which is readable by
-    visualization software such as ParaView [5]_ and Mayavi2 [6]_.
+One can set (or update) the boundary conditions of individual nodes::
 
-    ::
+    import espressomd
+    import espressomd.lb
+    import espressomd.EKSpecies
+    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system.cell_system.skin = 0.1
+    system.time_step = 0.01
+    lattice = espressomd.lb.LatticeWalberla(agrid=0.5, n_ghost_layers=1)
+    ek_species = espressomd.EKSpecies.EKSpecies(
+        kT=1.5, lattice=self.lattice, density=0.85, valency=0.0, diffusion=0.1,
+        advection=False, friction_coupling=False, ext_efield=[0., 0., 0.])
+    system.ekcontainer.add(ek_species)
+    # set node fixed density boundary conditions
+    lbf[0, 0, 0].boundary = espressomd.EKSpecies.DensityBoundary(1.)
+    # update node fixed density boundary conditions
+    lbf[0, 0, 0].boundary = espressomd.EKSpecies.DensityBoundary(2.)
+    # remove node boundary conditions
+    lbf[0, 0, 0].boundary = None
 
-        species.write_vtk_flux(path)
-        species.write_vtk_density(path)
+.. _Shape-based EK boundary conditions:
 
-    These commands are similar to the above. They enable the
-    export of diffusive species properties, namely: ``density`` and ``flux``, which specify the
-    number density and flux of species ``species``, respectively.
+Shape-based boundary conditions
+"""""""""""""""""""""""""""""""
 
-    .. _Local quantities:
+Adding a shape-based boundary is straightforward::
 
-    Local quantities
-    """"""""""""""""
+    import espressomd
+    import espressomd.lb
+    import espressomd.EKSpecies
+    import espressomd.shapes
+    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system.cell_system.skin = 0.1
+    system.time_step = 0.01
+    lattice = espressomd.lb.LatticeWalberla(agrid=0.5, n_ghost_layers=1)
+    ek_species = espressomd.EKSpecies.EKSpecies(
+        kT=1.5, lattice=self.lattice, density=0.85, valency=0.0, diffusion=0.1,
+        advection=False, friction_coupling=False, ext_efield=[0., 0., 0.])
+    system.ekcontainer.add(ek_species)
+    # set fixed density boundary conditions
+    wall = espressomd.shapes.Wall(normal=[1., 0., 0.], dist=2.5)
+    ek_species.add_boundary_from_shape(
+        shape=wall, value=1., boundary_type=espressomd.EKSpecies.DensityBoundary)
+    # clear fixed density boundary conditions
+    ek_species.clear_density_boundaries()
 
-    Local quantities like velocity or fluid density for single nodes can be accessed in the same way
-    as for an LB fluid, see :ref:`Lattice-Boltzmann`. The only EK-specific quantity is the potential.
+For a position-dependent flux, the argument to ``value`` must be a 4D grid
+(the first three dimensions must match the EK grid shape, the fourth
+dimension has size 3 for the flux).
 
-    ::
+For a complete description of all available shapes, refer to
+:mod:`espressomd.shapes`.
 
-        ek[0, 0, 0].potential
-        ek[0, 0, 0].velocity
-        ek[0, 0, 0].boundary
-
-    The local ``density`` and ``flux`` of a species can be obtained in the same fashion:
-
-    ::
-
-        species[0, 0, 0].density
-        species[0, 0, 0].flux
-
-    .. [5]
-       https://www.paraview.org/
-    .. [6]
-       http://code.enthought.com/projects/mayavi/
+.. [5]
+   https://www.paraview.org/
+.. [6]
+   http://code.enthought.com/projects/mayavi/

@@ -613,6 +613,7 @@ class LBFluidWalberla(HydrodynamicInteraction):
         Create a VTK observable.
 
         """
+        print("add_vtk_writer() is a deprecated function")
         return VTKOutput(lb_fluid=self, identifier=identifier,
                          observables=observables, **kwargs)
 
