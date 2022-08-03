@@ -116,7 +116,7 @@ void FluidWalberla::load_checkpoint(std::string const &filename, int mode) {
   };
 
   try {
-    auto const grid_size = m_lb_fluid->lattice().get_grid_dimensions();
+    auto const grid_size = m_lb_fluid->get_lattice().get_grid_dimensions();
     auto const pop_size = m_lb_fluid->stencil_size();
     check_header(grid_size, pop_size);
 
@@ -206,7 +206,7 @@ void FluidWalberla::save_checkpoint(std::string const &filename, int mode) {
   }
 
   try {
-    auto const grid_size = m_lb_fluid->lattice().get_grid_dimensions();
+    auto const grid_size = m_lb_fluid->get_lattice().get_grid_dimensions();
     auto const pop_size = m_lb_fluid->stencil_size();
     if (context()->is_head_node()) {
       cpfile->write(grid_size);

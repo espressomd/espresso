@@ -139,7 +139,7 @@ private:
   }
 
   void reset_boundary_handling() {
-    auto const &blocks = lattice().get_blocks();
+    auto const &blocks = get_lattice().get_blocks();
     m_boundary = std::make_shared<BoundaryModel>(blocks, m_pdf_field_id,
                                                  m_flag_field_id);
   }
@@ -455,7 +455,7 @@ private:
   }
 
   void integrate_push_scheme() {
-    auto const &blocks = lattice().get_blocks();
+    auto const &blocks = get_lattice().get_blocks();
     // Reset force fields
     integrate_reset_force(blocks);
     // LB collide
@@ -470,7 +470,7 @@ private:
   }
 
   void integrate_pull_scheme() {
-    auto const &blocks = lattice().get_blocks();
+    auto const &blocks = get_lattice().get_blocks();
     integrate_reset_force(blocks);
     // Handle boundaries
     integrate_boundaries(blocks);
@@ -508,7 +508,7 @@ public:
   void ghost_communication() override {
     (*m_full_communication).communicate();
     if (lees_edwards_bc()) {
-      auto const &blocks = lattice().get_blocks();
+      auto const &blocks = get_lattice().get_blocks();
       apply_lees_edwards_pdf_interpolation(blocks);
       apply_lees_edwards_vel_interpolation_and_shift(blocks);
       apply_lees_edwards_last_applied_force_interpolation(blocks);
@@ -535,7 +535,7 @@ public:
     obj.block_offset_generator =
         [this](IBlock *const block, uint32_t &block_offset_0,
                uint32_t &block_offset_1, uint32_t &block_offset_2) {
-          auto const &blocks = lattice().get_blocks();
+          auto const &blocks = get_lattice().get_blocks();
           block_offset_0 = blocks->getBlockCellBB(*block).xMin();
           block_offset_1 = blocks->getBlockCellBB(*block).yMin();
           block_offset_2 = blocks->getBlockCellBB(*block).zMin();
@@ -559,32 +559,33 @@ public:
     }
     auto obj = LeesEdwardsCollisionModel(
         m_last_applied_force_field_id, m_pdf_field_id,
-        FloatType_c(lattice().get_grid_dimensions()[shear_plane_normal]), omega,
-        shear_vel);
+        FloatType_c(get_lattice().get_grid_dimensions()[shear_plane_normal]),
+        omega, shear_vel);
     m_collision_model = std::make_shared<CollisionModel>(std::move(obj));
     m_lees_edwards_callbacks = std::move(lees_edwards_pack);
     run_collide_sweep.register_lees_edwards_callbacks(m_lees_edwards_callbacks);
     m_lees_edwards_pdf_interpol_sweep =
         std::make_shared<InterpolateAndShiftAtBoundary<PdfField, FloatType>>(
-            lattice().get_blocks(), m_pdf_field_id, m_pdf_tmp_field_id,
-            lattice().get_ghost_layers(), shear_direction, shear_plane_normal,
-            m_lees_edwards_callbacks->get_pos_offset);
+            get_lattice().get_blocks(), m_pdf_field_id, m_pdf_tmp_field_id,
+            get_lattice().get_ghost_layers(), shear_direction,
+            shear_plane_normal, m_lees_edwards_callbacks->get_pos_offset);
     m_lees_edwards_vel_interpol_sweep =
         std::make_shared<InterpolateAndShiftAtBoundary<VectorField, FloatType>>(
-            lattice().get_blocks(), m_velocity_field_id, m_vec_tmp_field_id,
-            lattice().get_ghost_layers(), shear_direction, shear_plane_normal,
-            m_lees_edwards_callbacks->get_pos_offset,
+            get_lattice().get_blocks(), m_velocity_field_id, m_vec_tmp_field_id,
+            get_lattice().get_ghost_layers(), shear_direction,
+            shear_plane_normal, m_lees_edwards_callbacks->get_pos_offset,
             m_lees_edwards_callbacks->get_shear_velocity);
     m_lees_edwards_last_applied_force_interpol_sweep =
         std::make_shared<InterpolateAndShiftAtBoundary<VectorField, FloatType>>(
-            lattice().get_blocks(), m_last_applied_force_field_id,
-            m_vec_tmp_field_id, lattice().get_ghost_layers(), shear_direction,
-            shear_plane_normal, m_lees_edwards_callbacks->get_pos_offset);
+            get_lattice().get_blocks(), m_last_applied_force_field_id,
+            m_vec_tmp_field_id, get_lattice().get_ghost_layers(),
+            shear_direction, shear_plane_normal,
+            m_lees_edwards_callbacks->get_pos_offset);
     m_lees_edwards_force_to_be_applied_backwards_interpol_sweep =
         std::make_shared<InterpolateAndShiftAtBoundary<VectorField, FloatType>>(
-            lattice().get_blocks(), m_force_to_be_applied_id,
-            m_vec_tmp_field_id, lattice().get_ghost_layers(), shear_direction,
-            shear_plane_normal, [this]() {
+            get_lattice().get_blocks(), m_force_to_be_applied_id,
+            m_vec_tmp_field_id, get_lattice().get_ghost_layers(),
+            shear_direction, shear_plane_normal, [this]() {
               return -1.0 * m_lees_edwards_callbacks->get_pos_offset();
             });
   }
@@ -619,7 +620,7 @@ public:
     if (is_boundary)    // is info available locally
       if (*is_boundary) // is the node a boundary
         return get_node_velocity_at_boundary(node);
-    auto const bc = get_block_and_cell(lattice(), node, consider_ghosts);
+    auto const bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc)
       return {};
     auto const vel_field = get_velocity_field_ptr(bc->block);
@@ -629,7 +630,7 @@ public:
   }
   bool set_node_velocity(const Utils::Vector3i &node,
                          const Utils::Vector3d &v) override {
-    auto bc = get_block_and_cell(lattice(), node, false);
+    auto bc = get_block_and_cell(get_lattice(), node, false);
     if (!bc)
       return false;
     // We have to set both, the pdf and the stored velocity field
@@ -698,7 +699,7 @@ public:
     auto force_at_node = [this, force](const std::array<int, 3> node,
                                        double weight) {
       auto const bc =
-          get_block_and_cell(lattice(), Utils::Vector3i(node), true);
+          get_block_and_cell(get_lattice(), Utils::Vector3i(node), true);
       if (bc) {
         auto force_field =
             (*bc).block->template uncheckedFastGetData<VectorField>(
@@ -713,7 +714,7 @@ public:
 
   boost::optional<Utils::Vector3d>
   get_node_force_to_be_applied(const Utils::Vector3i &node) const override {
-    auto const bc = get_block_and_cell(lattice(), node, true);
+    auto const bc = get_block_and_cell(get_lattice(), node, true);
     if (!bc)
       return {};
 
@@ -726,7 +727,7 @@ public:
 
   bool set_node_last_applied_force(Utils::Vector3i const &node,
                                    Utils::Vector3d const &force) override {
-    auto bc = get_block_and_cell(lattice(), node, false);
+    auto bc = get_block_and_cell(get_lattice(), node, false);
     if (!bc)
       return false;
 
@@ -742,7 +743,7 @@ public:
   boost::optional<Utils::Vector3d>
   get_node_last_applied_force(const Utils::Vector3i &node,
                               bool consider_ghosts = false) const override {
-    auto const bc = get_block_and_cell(lattice(), node, consider_ghosts);
+    auto const bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc)
       return {};
 
@@ -756,7 +757,7 @@ public:
   // Population
   bool set_node_pop(Utils::Vector3i const &node,
                     std::vector<double> const &population) override {
-    auto bc = get_block_and_cell(lattice(), node, false);
+    auto bc = get_block_and_cell(get_lattice(), node, false);
     if (!bc)
       return false;
 
@@ -772,7 +773,7 @@ public:
   boost::optional<std::vector<double>>
   get_node_pop(const Utils::Vector3i &node,
                bool consider_ghosts = false) const override {
-    auto bc = get_block_and_cell(lattice(), node, consider_ghosts);
+    auto bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc)
       return {boost::none};
 
@@ -787,7 +788,7 @@ public:
 
   // Density
   bool set_node_density(const Utils::Vector3i &node, double density) override {
-    auto bc = get_block_and_cell(lattice(), node, false);
+    auto bc = get_block_and_cell(get_lattice(), node, false);
     if (!bc)
       return false;
 
@@ -801,7 +802,7 @@ public:
   boost::optional<double>
   get_node_density(const Utils::Vector3i &node,
                    bool consider_ghosts = false) const override {
-    auto bc = get_block_and_cell(lattice(), node, consider_ghosts);
+    auto bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc)
       return {boost::none};
 
@@ -811,7 +812,7 @@ public:
 
   boost::optional<Utils::Vector3d>
   get_node_velocity_at_boundary(const Utils::Vector3i &node) const override {
-    auto const bc = get_block_and_cell(lattice(), node, true);
+    auto const bc = get_block_and_cell(get_lattice(), node, true);
     if (!bc or !m_boundary->node_is_boundary(node))
       return {boost::none};
 
@@ -820,7 +821,7 @@ public:
 
   bool set_node_velocity_at_boundary(const Utils::Vector3i &node,
                                      const Utils::Vector3d &v) override {
-    auto bc = get_block_and_cell(lattice(), node, true);
+    auto bc = get_block_and_cell(get_lattice(), node, true);
     if (!bc)
       return false;
 
@@ -831,7 +832,7 @@ public:
 
   boost::optional<Utils::Vector3d>
   get_node_boundary_force(const Utils::Vector3i &node) const override {
-    auto const bc = get_block_and_cell(lattice(), node, true);
+    auto const bc = get_block_and_cell(get_lattice(), node, true);
     if (!bc or !m_boundary->node_is_boundary(node))
       return {boost::none};
 
@@ -839,7 +840,7 @@ public:
   }
 
   bool remove_node_from_boundary(const Utils::Vector3i &node) override {
-    auto bc = get_block_and_cell(lattice(), node, true);
+    auto bc = get_block_and_cell(get_lattice(), node, true);
     if (!bc)
       return false;
 
@@ -851,7 +852,7 @@ public:
   boost::optional<bool>
   get_node_is_boundary(const Utils::Vector3i &node,
                        bool consider_ghosts = false) const override {
-    auto const bc = get_block_and_cell(lattice(), node, consider_ghosts);
+    auto const bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc)
       return {boost::none};
 
@@ -866,7 +867,7 @@ public:
       std::vector<int> const &raster_flat,
       std::vector<double> const &slip_velocity_flat) override {
     // reshape grids
-    auto const grid_size = lattice().get_grid_dimensions();
+    auto const grid_size = get_lattice().get_grid_dimensions();
     auto const n_grid_points = Utils::product(grid_size);
     assert(raster_flat.size() == n_grid_points);
     assert(slip_velocity_flat.size() == 3 * n_grid_points or
@@ -889,7 +890,7 @@ public:
         slip_velocity_vectors.data(), grid_size);
     boost::const_multi_array_ref<int, 3> raster(raster_flat.data(), grid_size);
 
-    auto const &blocks = lattice().get_blocks();
+    auto const &blocks = get_lattice().get_blocks();
     for (auto block = blocks->begin(); block != blocks->end(); ++block) {
       // lattice constant is 1
       auto const left = block->getAABB().min();
@@ -899,7 +900,7 @@ public:
 
       // Get field data which knows about the indices
       // In the loop, x,y,z are in block-local coordinates
-      auto const n_ghost_layers = lattice().get_ghost_layers();
+      auto const n_ghost_layers = get_lattice().get_ghost_layers();
       auto const ghosts = static_cast<int>(n_ghost_layers);
       auto pdf_field = block->template getData<PdfField>(m_pdf_field_id);
       for (int i = -ghosts; i < int_c(pdf_field->xSize() + ghosts); ++i) {
@@ -908,7 +909,7 @@ public:
             Utils::Vector3i const node{{off_i + i, off_j + j, off_k + k}};
             auto const idx = (node + grid_size) % grid_size;
             if (raster(idx)) {
-              auto const bc = get_block_and_cell(lattice(), node, true);
+              auto const bc = get_block_and_cell(get_lattice(), node, true);
               auto const &vel = slip_velocity(idx);
               m_boundary->set_node_value_at_boundary(node, vel, *bc);
             }
@@ -921,7 +922,7 @@ public:
   // Pressure tensor
   boost::optional<Utils::VectorXd<9>>
   get_node_pressure_tensor(const Utils::Vector3i &node) const override {
-    auto bc = get_block_and_cell(lattice(), node, false);
+    auto bc = get_block_and_cell(get_lattice(), node, false);
     if (!bc)
       return {boost::none};
     auto tensor = getPressureTensor(*bc);
@@ -931,7 +932,7 @@ public:
 
   // Global pressure tensor
   Utils::VectorXd<9> get_pressure_tensor() const override {
-    auto const &blocks = lattice().get_blocks();
+    auto const &blocks = get_lattice().get_blocks();
     Matrix3<FloatType> tensor(FloatType{0});
     for (auto block = blocks->begin(); block != blocks->end(); ++block) {
       auto pdf_field = block->template getData<PdfField>(m_pdf_field_id);
@@ -941,7 +942,7 @@ public:
         tensor += local_p;
       });
     }
-    auto const grid_size = lattice().get_grid_dimensions();
+    auto const grid_size = get_lattice().get_grid_dimensions();
     auto const number_of_nodes = Utils::product(grid_size);
     pressure_tensor_correction(tensor);
     return to_vector9d(tensor) * (1. / static_cast<double>(number_of_nodes));
@@ -949,7 +950,7 @@ public:
 
   // Global momentum
   Utils::Vector3d get_momentum() const override {
-    auto const &blocks = lattice().get_blocks();
+    auto const &blocks = get_lattice().get_blocks();
     Vector3<FloatType> mom;
     for (auto block = blocks->begin(); block != blocks->end(); ++block) {
       auto pdf_field = block->template getData<PdfField>(m_pdf_field_id);
@@ -986,10 +987,6 @@ public:
     if (!cm)
       throw std::runtime_error("The LB does not use a random number generator");
     cm->time_step_ = counter;
-  }
-
-  LatticeWalberla const &lattice() const noexcept override {
-    return *m_lattice;
   }
 
   LatticeWalberla const &get_lattice() const noexcept override {

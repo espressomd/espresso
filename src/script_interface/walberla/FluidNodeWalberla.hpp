@@ -76,7 +76,7 @@ public:
       assert(lb_params);
       auto const tau = lb_params->get_tau();
       auto const agrid = lb_params->get_agrid();
-      m_grid_size = m_lb_fluid->lattice().get_grid_dimensions();
+      m_grid_size = m_lb_fluid->get_lattice().get_grid_dimensions();
       m_index = get_value<Utils::Vector3i>(params, "index");
       if (not is_index_valid(m_index)) {
         throw std::out_of_range("Index error");

@@ -188,9 +188,6 @@ public:
   /** @brief Set the rng state of thermalized LBs */
   virtual void set_rng_state(uint64_t counter) = 0;
 
-  /** @brief Get the underlying lattice. */
-  virtual LatticeWalberla const &lattice() const = 0;
-
   /** @brief get the velocity field id */
   [[nodiscard]] virtual std::size_t get_velocity_field_id() const = 0;
 

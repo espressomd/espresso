@@ -82,7 +82,7 @@ public:
         {"tau", AutoParameter::read_only,
          [this]() { return m_lb_params->get_tau(); }},
         {"shape", AutoParameter::read_only,
-         [this]() { return m_lb_fluid->lattice().get_grid_dimensions(); }},
+         [this]() { return m_lb_fluid->get_lattice().get_grid_dimensions(); }},
         {"kT", AutoParameter::read_only,
          [this]() { return m_lb_fluid->get_kT() / m_conv_temp; }},
         {"seed", AutoParameter::read_only, [this]() { return m_seed; }},

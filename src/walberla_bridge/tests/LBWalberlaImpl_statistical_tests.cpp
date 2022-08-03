@@ -64,7 +64,7 @@ BOOST_DATA_TEST_CASE(velocity_fluctuation, bdata::make(thermalized_lbs()),
   // Sample
   int steps = 800;
 
-  auto const [my_left, my_right] = lb->lattice().get_local_domain();
+  auto const [my_left, my_right] = lb->get_lattice().get_local_domain();
   auto const denominator = Utils::product(my_right - my_left);
 
   Vector3d sum_v{}, sum_v_square{};

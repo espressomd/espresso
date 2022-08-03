@@ -251,7 +251,7 @@ BOOST_DATA_TEST_CASE(drag_force, bdata::make(kTs), kT) {
   mpi_call_all(espresso::set_lb_kT_local, kT);
   Particle p{};
   p.v() = {-2.5, 1.5, 2};
-  p.pos() = lb_walberla()->lattice().get_local_domain().first;
+  p.pos() = lb_walberla()->get_lattice().get_local_domain().first;
   lb_lbcoupling_set_gamma(0.2);
   Utils::Vector3d drift_offset{-1, 1, 1};
 
@@ -266,7 +266,8 @@ BOOST_DATA_TEST_CASE(drag_force, bdata::make(kTs), kT) {
 #ifdef ENGINE
 BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
   mpi_call_all(espresso::set_lb_kT_local, kT);
-  auto const first_lb_node = lb_walberla()->lattice().get_local_domain().first;
+  auto const first_lb_node =
+      lb_walberla()->get_lattice().get_local_domain().first;
   Particle p{};
   p.swimming().swimming = true;
   p.swimming().f_swim = 2.;
@@ -328,7 +329,8 @@ BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
 BOOST_DATA_TEST_CASE(particle_coupling, bdata::make(kTs), kT) {
   mpi_call_all(espresso::set_lb_kT_local, kT);
   lb_lbcoupling_set_rng_state(17);
-  auto const first_lb_node = lb_walberla()->lattice().get_local_domain().first;
+  auto const first_lb_node =
+      lb_walberla()->get_lattice().get_local_domain().first;
   auto const gamma = 0.2;
   auto const noise =
       (kT > 0.) ? std::sqrt(24. * gamma * kT / params.time_step) : 0.0;
@@ -373,7 +375,8 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
                        bdata::make(kTs), kT) {
   mpi_call_all(espresso::set_lb_kT_local, kT);
   lb_lbcoupling_set_rng_state(17);
-  auto const first_lb_node = lb_walberla()->lattice().get_local_domain().first;
+  auto const first_lb_node =
+      lb_walberla()->get_lattice().get_local_domain().first;
   auto const gamma = 0.2;
   auto const noise = std::sqrt(24. * gamma * kT / params.time_step *
                                Utils::sqr(params.agrid / params.tau));

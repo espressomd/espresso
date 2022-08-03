@@ -61,8 +61,8 @@ BOOST_DATA_TEST_CASE(force_interpolation_bspline, bdata::make(all_lbs()),
   auto const f = Vector3d{{-1.0, 0.5, 1.5}};
   auto offset = Vector3d::broadcast(-0.5 + dx);
   int index = 0;
-  for (auto const &n : local_nodes_incl_ghosts(lb->lattice(), false)) {
-    if (lb->lattice().node_in_local_halo(n)) {
+  for (auto const &n : local_nodes_incl_ghosts(lb->get_lattice(), false)) {
+    if (lb->get_lattice().node_in_local_halo(n)) {
       index = (index + 1) % 3;
       offset[index] = std::fmod(offset[index] + 0.5, 1. - dx) - 0.5 + dx;
       auto const pos = n + offset;
@@ -73,7 +73,7 @@ BOOST_DATA_TEST_CASE(force_interpolation_bspline, bdata::make(all_lbs()),
         for (int y : {0, 1}) {
           for (int z : {0, 1}) {
             Vector3i const check_node{{n[0] - x, n[1] - y, n[2] - z}};
-            if (lb->lattice().node_in_local_halo(check_node)) {
+            if (lb->get_lattice().node_in_local_halo(check_node)) {
               auto const res = lb->get_node_force_to_be_applied(check_node);
               sum += *res;
             }
@@ -109,8 +109,8 @@ BOOST_DATA_TEST_CASE(velocity_interpolation_bspline, bdata::make(all_lbs()),
 
   // set node velocities on a simple cubic lattice
   auto const vel = Vector3d{{-1., 0.5, 1.5}};
-  for (auto const &n : local_nodes_incl_ghosts(lb->lattice(), false)) {
-    if (lb->lattice().node_in_local_domain(n)) {
+  for (auto const &n : local_nodes_incl_ghosts(lb->get_lattice(), false)) {
+    if (lb->get_lattice().node_in_local_domain(n)) {
       if ((n[0] + 2) % 3 == 0 and (n[1] + 2) % 3 == 0 and (n[2] + 2) % 3 == 0) {
         BOOST_CHECK(lb->set_node_velocity(n, vel));
       }
@@ -123,7 +123,7 @@ BOOST_DATA_TEST_CASE(velocity_interpolation_bspline, bdata::make(all_lbs()),
     for (double y = 0.1; y < params.box_dimensions[1]; y += 0.3) {
       for (double z = 0.2; z < params.box_dimensions[2]; z += 0.3) {
         Vector3d const pos{x, y, z};
-        if (lb->lattice().pos_in_local_domain(pos)) {
+        if (lb->get_lattice().pos_in_local_domain(pos)) {
           auto const factor = std::accumulate(
               pos.begin(), pos.end(), 1., [](double a, double x) {
                 return a * std::max(0., 1. - std::fabs(std::fmod(x, 3.) - 1.5));

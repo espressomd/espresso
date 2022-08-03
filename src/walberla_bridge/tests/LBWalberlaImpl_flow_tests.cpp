@@ -75,8 +75,8 @@ BOOST_DATA_TEST_CASE(integrate_with_point_force_thermalized,
   auto const force_node = Vector3i{{1, 1, 1}};
   lb->add_force_at_pos(force_node + Vector3d::broadcast(.5), f2);
   lb->integrate();
-  for (auto const &n : all_nodes_incl_ghosts(lb->lattice())) {
-    if (lb->lattice().node_in_local_halo(n)) {
+  for (auto const &n : all_nodes_incl_ghosts(lb->get_lattice())) {
+    if (lb->get_lattice().node_in_local_halo(n)) {
       auto const laf = *(lb->get_node_last_applied_force(n, true));
       if (n == force_node) {
         BOOST_CHECK_SMALL((laf - f1 - f2).norm(), 1E-10);

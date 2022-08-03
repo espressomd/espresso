@@ -104,7 +104,7 @@ auto setup_lb_with_offset(double offset) {
 BOOST_AUTO_TEST_CASE(test_interpolation_force) {
   const int offset = 2;
   auto lb = setup_lb_with_offset(offset);
-  auto const shape = lb->lattice().get_grid_dimensions();
+  auto const shape = lb->get_lattice().get_grid_dimensions();
   const int xz = shape[0] / 2;
   const int y_max = shape[1] - 1;
 
@@ -123,7 +123,7 @@ BOOST_AUTO_TEST_CASE(test_interpolation_force) {
 BOOST_AUTO_TEST_CASE(test_interpolation_velocity) {
   const int offset = 2;
   auto lb = setup_lb_with_offset(offset);
-  auto const shape = lb->lattice().get_grid_dimensions();
+  auto const shape = lb->get_lattice().get_grid_dimensions();
   const int xz = shape[0] / 2;
   const int y_max = shape[1] - 1;
 
@@ -141,7 +141,7 @@ BOOST_AUTO_TEST_CASE(test_interpolation_velocity) {
 BOOST_AUTO_TEST_CASE(test_interpolation_pdf) {
   const int offset = 2;
   auto lb = setup_lb_with_offset(offset);
-  auto const shape = lb->lattice().get_grid_dimensions();
+  auto const shape = lb->get_lattice().get_grid_dimensions();
   const int xz = shape[0] / 2;
   const int y_max = shape[1] - 1;
 
