@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 The ESPResSo project
+ * Copyright (C) 2020-2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -19,6 +19,8 @@
 #pragma once
 
 #include <memory>
+#include <stdexcept>
+#include <string>
 #include <utility>
 
 namespace walberla::vtk {
@@ -45,4 +47,11 @@ enum class OutputVTK : int {
 /** @brief EK statistics to write to VTK files */
 enum class EKOutputVTK : int {
   density = 1 << 0,
+};
+
+class vtk_runtime_error : public std::runtime_error {
+public:
+  explicit vtk_runtime_error(std::string const &vtk_uid,
+                             std::string const &reason)
+      : std::runtime_error("VTKOutput object '" + vtk_uid + "' " + reason) {}
 };

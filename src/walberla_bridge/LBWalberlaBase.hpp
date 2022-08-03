@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 The ESPResSo project
+ * Copyright (C) 2019-2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef LB_WALBERLA_BASE_HPP
-#define LB_WALBERLA_BASE_HPP
+
+#pragma once
 
 /**
  * @file
@@ -27,9 +27,8 @@
  * by @ref walberla::LBWalberlaImpl.
  */
 
-#include "LatticeWalberla.hpp"
+#include "LatticeModel.hpp"
 #include "LeesEdwardsPack.hpp"
-#include "VTKHandle.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -40,8 +39,8 @@
 #include <string>
 #include <vector>
 
-/** Class that runs and controls the LB on WaLBerla.  */
-class LBWalberlaBase {
+/** @brief Interface of a lattice-based fluid model. */
+class LBWalberlaBase : public LatticeModel {
 public:
   virtual ~LBWalberlaBase() = default;
 
@@ -197,36 +196,4 @@ public:
 
   /** @brief get the force field id */
   [[nodiscard]] virtual std::size_t get_force_field_id() const = 0;
-
-  /** @brief Create a VTK observable.
-   *
-   *  @param delta_N          Write frequency, if 0 write a single frame,
-   *                          otherwise add a callback to write every
-   *                          @p delta_N LB steps to a new file
-   *  @param initial_count    Initial execution count
-   *  @param flag_observables Which observables to measure (OR'ing of
-   *                          @ref OutputVTK values)
-   *  @param identifier       Name of the VTK dataset
-   *  @param base_folder      Path to the VTK folder
-   *  @param prefix           Prefix of the VTK files
-   */
-  virtual std::shared_ptr<VTKHandle> create_vtk(int delta_N, int initial_count,
-                                                int flag_observables,
-                                                std::string const &identifier,
-                                                std::string const &base_folder,
-                                                std::string const &prefix) = 0;
-  /** @brief Write a VTK observable to disk.
-   *
-   *  @param vtk_uid          Name of the VTK object
-   */
-  virtual void write_vtk(std::string const &vtk_uid) = 0;
-
-  /** @brief Toggle a VTK observable on/off.
-   *
-   *  @param vtk_uid          Name of the VTK object
-   *  @param status           @c true to switch on, @c false to switch off
-   */
-  virtual void switch_vtk(std::string const &vtk_uid, bool status) = 0;
 };
-
-#endif // LB_WALBERLA_BASE_HPP

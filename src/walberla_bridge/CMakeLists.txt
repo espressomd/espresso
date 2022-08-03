@@ -89,8 +89,9 @@ endif(WALBERLA_USE_AVX)
 
 add_library(
   Espresso_walberla SHARED
-  lb_walberla_init.cpp electrokinetics/ek_walberla_init.cpp LatticeWalberla.cpp
-  ${WalberlaBridgeCodegen_SRC} electrokinetics/reactions/EKReactionImplBulk.cpp
+  lb_walberla_init.cpp electrokinetics/ek_walberla_init.cpp LatticeModel.cpp
+  LatticeWalberla.cpp ${WalberlaBridgeCodegen_SRC}
+  electrokinetics/reactions/EKReactionImplBulk.cpp
   electrokinetics/reactions/EKReactionIndexed.cpp)
 add_library(Espresso::walberla ALIAS Espresso_walberla)
 

@@ -17,23 +17,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_EKINWALBERLABASE_HPP
-#define ESPRESSO_EKINWALBERLABASE_HPP
+#pragma once
 
-#include "LatticeWalberla.hpp"
-
-#include <boost/optional.hpp>
-#include <string>
-
-#include "utils/Vector.hpp"
-
-#include "VTKHandle.hpp"
+#include "LatticeModel.hpp"
 
 #include <domain_decomposition/BlockDataID.h>
 
-/** Class that runs and controls the EK on WaLBerla
- */
-class EKinWalberlaBase {
+#include <boost/optional.hpp>
+
+#include <utils/Vector.hpp>
+
+#include <cstddef>
+#include <string>
+
+/** @brief Interface of a lattice-based electrokinetic model. */
+class EKinWalberlaBase : public LatticeModel {
 public:
   /** @brief Integrate EKin for one time step */
   virtual void integrate(const std::size_t &potential_id,
@@ -100,37 +98,5 @@ public:
   [[nodiscard]] virtual walberla::BlockDataID get_density_id() const
       noexcept = 0;
 
-  [[nodiscard]] virtual LatticeWalberla &get_lattice() const noexcept = 0;
-
-  /** @brief Create a VTK observable.
-   *
-   *  @param delta_N          Write frequency, if 0 write a single frame,
-   *                          otherwise add a callback to write every
-   *                          @p delta_N EK steps to a new file
-   *  @param initial_count    Initial execution count
-   *  @param flag_observables Which observables to measure (OR'ing of
-   *                          @ref EKOutputVTK values)
-   *  @param identifier       Name of the VTK dataset
-   *  @param base_folder      Path to the VTK folder
-   *  @param prefix           Prefix of the VTK files
-   */
-  [[nodiscard]] virtual std::shared_ptr<VTKHandle>
-  create_vtk(int delta_N, int initial_count, int flag_observables,
-             std::string const &identifier, std::string const &base_folder,
-             std::string const &prefix) = 0;
-  /** @brief Write a VTK observable to disk.
-   *
-   *  @param vtk_uid          Name of the VTK object
-   */
-  virtual void write_vtk(std::string const &vtk_uid) = 0;
-  /** @brief Toggle a VTK observable on/off.
-   *
-   *  @param vtk_uid          Name of the VTK object
-   *  @param status           @c true to switch on, @c false to switch off
-   */
-  virtual void switch_vtk(std::string const &vtk_uid, bool status) = 0;
-
   virtual ~EKinWalberlaBase() = default;
 };
-
-#endif // ESPRESSO_EKINWALBERLABASE_HPP
