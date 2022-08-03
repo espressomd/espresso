@@ -37,9 +37,12 @@
 #include <domain_decomposition/BlockDataID.h>
 #include <field/AddToStorage.h>
 
+#include <boost/optional.hpp>
+
 #include <cstddef>
 #include <memory>
 #include <utility>
+#include <vector>
 
 namespace walberla {
 

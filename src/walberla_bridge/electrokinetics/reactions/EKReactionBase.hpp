@@ -24,8 +24,11 @@
 #include "LatticeWalberla.hpp"
 
 #include <memory>
+#include <utility>
+#include <vector>
 
 namespace walberla {
+
 class EKReactionBase {
 private:
   std::vector<std::shared_ptr<EKReactant>> m_reactants;
@@ -51,6 +54,7 @@ public:
 
   virtual void perform_reaction() = 0;
 };
+
 } // namespace walberla
 
-#endif // ESPRESSO_WALBERLA_BRIDGE_EKREACTIONBASE_HPP
+#endif

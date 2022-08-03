@@ -22,6 +22,9 @@
 
 #include "electrokinetics/EKinWalberlaBase.hpp"
 
+#include <memory>
+#include <utility>
+
 namespace walberla {
 
 class EKReactant {
@@ -54,6 +57,7 @@ public:
 
   [[nodiscard]] auto get_species() const noexcept { return m_ekspecies; }
 };
+
 } // namespace walberla
 
-#endif // ESPRESSO_SRC_WALBERLA_BRIDGE_EKREACTANT_HPP
+#endif

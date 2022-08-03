@@ -26,6 +26,10 @@
 
 #include "PoissonSolver/PoissonSolver.hpp"
 
+#include <utils/Vector.hpp>
+
+#include <memory>
+
 std::shared_ptr<EKinWalberlaBase>
 new_ek_walberla(std::shared_ptr<LatticeWalberla> const &lattice,
                 double diffusion, double kT, double valency,
@@ -40,4 +44,4 @@ std::shared_ptr<walberla::PoissonSolver>
 new_ek_poisson_fft(std::shared_ptr<LatticeWalberla> const &lattice,
                    double permittivity, bool single_precision);
 
-#endif // ESPRESSO_SRC_WALBERLA_BRIDGE_ELECTROKINETICS_EK_WALBERLA_INIT_HPP
+#endif

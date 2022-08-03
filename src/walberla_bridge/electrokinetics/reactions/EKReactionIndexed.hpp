@@ -25,9 +25,14 @@
 #include "LatticeWalberla.hpp"
 
 #include <domain_decomposition/BlockDataID.h>
+
+#include <boost/optional.hpp>
+
 #include <memory>
+#include <vector>
 
 namespace walberla {
+
 class EKReactionIndexed : public EKReactionBase {
 private:
   BlockDataID m_flagfield_id;
@@ -62,4 +67,4 @@ public:
 
 } // namespace walberla
 
-#endif // ESPRESSO_SRC_WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_EKREACTIONINDEXED_HPP
+#endif

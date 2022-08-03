@@ -1,13 +1,34 @@
-#ifndef ESPRESSO_POISSONSOLVER_HPP
-#define ESPRESSO_POISSONSOLVER_HPP
+/*
+ * Copyright (C) 2022 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
-#include <memory>
+#ifndef ESPRESSO_SRC_WALBERLA_BRIDGE_ELECTROKINETICS_POISSONSOLVER_POISSONSOLVER_HPP
+#define ESPRESSO_SRC_WALBERLA_BRIDGE_ELECTROKINETICS_POISSONSOLVER_POISSONSOLVER_HPP
 
 #include "LatticeWalberla.hpp"
 
 #include <domain_decomposition/BlockDataID.h>
 
+#include <memory>
+#include <utility>
+
 namespace walberla {
+
 class PoissonSolver {
 private:
   std::shared_ptr<LatticeWalberla> m_lattice;
@@ -15,7 +36,7 @@ private:
 
 public:
   PoissonSolver(std::shared_ptr<LatticeWalberla> lattice, double permittivity)
-      : m_lattice(std::move(lattice)), m_permittivity(permittivity){};
+      : m_lattice(std::move(lattice)), m_permittivity(permittivity) {}
 
   virtual void reset_charge_field() = 0;
 
@@ -37,6 +58,7 @@ public:
   virtual void solve() = 0;
   virtual void ghost_communication() = 0;
 };
+
 } // namespace walberla
 
-#endif // ESPRESSO_POISSONSOLVER_HPP
+#endif

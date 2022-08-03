@@ -20,8 +20,14 @@
 #include "ek_walberla_init.hpp"
 
 #include "EKinWalberlaImpl.hpp"
+#include "LatticeWalberla.hpp"
+
 #include "PoissonSolver/FFT.hpp"
 #include "PoissonSolver/None.hpp"
+
+#include <utils/Vector.hpp>
+
+#include <memory>
 
 std::shared_ptr<EKinWalberlaBase>
 new_ek_walberla(std::shared_ptr<LatticeWalberla> const &lattice,

@@ -1,5 +1,24 @@
-#ifndef ESPRESSO_FFT_HPP
-#define ESPRESSO_FFT_HPP
+/*
+ * Copyright (C) 2022 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#ifndef ESPRESSO_SRC_WALBERLA_BRIDGE_ELECTROKINETICS_POISSONSOLVER_FFT_HPP
+#define ESPRESSO_SRC_WALBERLA_BRIDGE_ELECTROKINETICS_POISSONSOLVER_FFT_HPP
 
 #include "PoissonSolver.hpp"
 
@@ -12,9 +31,12 @@
 
 #include <utils/constants.hpp>
 
+#include <cmath>
 #include <memory>
+#include <utility>
 
 namespace walberla {
+
 template <typename FloatType> class FFT : public PoissonSolver {
 private:
   template <typename T> inline FloatType FloatType_c(T t) {
@@ -46,9 +68,9 @@ public:
       if (x == 0 && y == 0 && z == 0)
         return 0;
       return -0.5 /
-             (std::cos(2 * Utils::pi() * real_c(x) / real_c(dim[0])) +
-              std::cos(2 * Utils::pi() * real_c(y) / real_c(dim[1])) +
-              std::cos(2 * Utils::pi() * real_c(z) / real_c(dim[2])) - 3) /
+             (std::cos(2. * Utils::pi() * real_c(x) / real_c(dim[0])) +
+              std::cos(2. * Utils::pi() * real_c(y) / real_c(dim[1])) +
+              std::cos(2. * Utils::pi() * real_c(z) / real_c(dim[2])) - 3.) /
              real_c(dim[0] * dim[1] * dim[2]);
     };
 
@@ -115,6 +137,7 @@ public:
   }
   void ghost_communication() override { (*m_full_communication)(); }
 };
+
 } // namespace walberla
 
-#endif // ESPRESSO_FFT_HPP
+#endif

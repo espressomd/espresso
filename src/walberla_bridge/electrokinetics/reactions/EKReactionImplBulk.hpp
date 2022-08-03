@@ -25,6 +25,7 @@
 #include "LatticeWalberla.hpp"
 
 #include <memory>
+#include <vector>
 
 namespace walberla {
 
@@ -43,4 +44,4 @@ public:
 };
 } // namespace walberla
 
-#endif // ESPRESSO_SRC_WALBERLA_BRIDGE_EKREACTIONIMPLBULK_HPP
+#endif
