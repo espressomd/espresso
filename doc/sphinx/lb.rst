@@ -221,7 +221,7 @@ the selected LB grid node and allows one to access all of its properties::
 All of these properties can be read and used in further calculations.
 Only the property ``population`` can be modified. The indices ``x, y, z``
 are integers and enumerate the LB nodes in the three Cartesian directions,
-starting at 0. To modify ``is_boundary``, refer to :ref:`Setting up boundary conditions`.
+starting at 0. To modify ``is_boundary``, refer to :ref:`Setting up LB boundary conditions`.
 
 Example::
 

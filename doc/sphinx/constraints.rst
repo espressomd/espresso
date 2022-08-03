@@ -551,7 +551,7 @@ the ``normal`` vector of the wall points in the direction that is considered to
 yield positive distances.  Outside their use in constraints, shapes can also be
 used as a way to define LB boundary nodes. In this case, negative distances
 define nodes which are part of a boundary (please refer to :ref:`Shape-based
-boundary conditions`).
+LB boundary conditions`).
 
 
 .. _External Fields:
