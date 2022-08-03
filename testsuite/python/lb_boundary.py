@@ -69,6 +69,20 @@ class LBBoundariesBase:
         self.lbf.add_boundary_from_shape(union, slip_velocity)
         self.check_boundary_flags(slip_velocity, slip_velocity)
 
+    def test_exceptions(self):
+        with self.assertRaisesRegex(TypeError, "Parameter 'boundary_type' must be a subclass of VelocityBounceBack"):
+            self.lbf.add_boundary_from_shape(
+                shape=self.wall_shape1, velocity=[0., 0., 0.],
+                boundary_type=self.lb_class)
+        with self.assertRaisesRegex(ValueError, "expected an espressomd.shapes.Shape"):
+            self.lbf.add_boundary_from_shape(
+                shape=self.lbf, velocity=[0., 0., 0.],
+                boundary_type=espressomd.lb.VelocityBounceBack)
+        with self.assertRaisesRegex(ValueError, r"Cannot process velocity value grid of shape \(4,\)"):
+            self.lbf.add_boundary_from_shape(
+                shape=self.wall_shape1, velocity=[0., 0., 0., 0.],
+                boundary_type=espressomd.lb.VelocityBounceBack)
+
 
 @utx.skipIfMissingFeatures(["LB_WALBERLA"])
 class LBBoundariesWalberla(LBBoundariesBase, ut.TestCase):

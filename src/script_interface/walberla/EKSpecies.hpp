@@ -171,6 +171,14 @@ public:
           get_value<std::vector<double>>(parameters, "value_view"));
       return none;
     }
+    if (method == "clear_flux_boundaries") {
+      m_ekinstance->clear_flux_boundaries();
+      return none;
+    }
+    if (method == "clear_density_boundaries") {
+      m_ekinstance->clear_density_boundaries();
+      return none;
+    }
     return none;
   }
 

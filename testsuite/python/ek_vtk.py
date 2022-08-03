@@ -82,10 +82,12 @@ class EKWalberlaWrite:
         '''
         Check VTK files. Keep in mind the VTK module writes in single-precision.
         '''
-        self.species.add_boundary_from_shape(shape=espressomd.shapes.Wall(normal=[1, 0, 0], dist=1.5),
-                                             value=0.0, boundary_type=espressomd.EKSpecies.DensityBoundary)
-        self.species.add_boundary_from_shape(shape=espressomd.shapes.Wall(normal=[-1, 0, 0], dist=-10.5),
-                                             value=0.0, boundary_type=espressomd.EKSpecies.DensityBoundary)
+        self.species.add_boundary_from_shape(
+            shape=espressomd.shapes.Wall(normal=[1, 0, 0], dist=1.5),
+            value=0.0, boundary_type=espressomd.EKSpecies.DensityBoundary)
+        self.species.add_boundary_from_shape(
+            shape=espressomd.shapes.Wall(normal=[-1, 0, 0], dist=-10.5),
+            value=0.0, boundary_type=espressomd.EKSpecies.DensityBoundary)
         shape = [8, 14, 16]
         x_offset = 2
 
@@ -103,15 +105,18 @@ class EKWalberlaWrite:
 
         # write VTK files
         vtk_obs = ['density']
-        ek_vtk = espressomd.EKSpecies.EKVTKOutput(species=self.species, identifier=label_vtk_continuous,
-                                                  observables=vtk_obs, delta_N=1, base_folder=str(path_vtk_root))
+        ek_vtk = espressomd.EKSpecies.EKVTKOutput(
+            species=self.species, identifier=label_vtk_continuous,
+            observables=vtk_obs, delta_N=1, base_folder=str(path_vtk_root))
         ek_vtk.disable()
         ek_vtk.enable()
         self.system.integrator.run(n_steps)
-        ek_vtk = espressomd.EKSpecies.EKVTKOutput(species=self.species, identifier=label_vtk_end,
-                                                  observables=vtk_obs, delta_N=0, base_folder=str(path_vtk_root))
+        ek_vtk = espressomd.EKSpecies.EKVTKOutput(
+            species=self.species, identifier=label_vtk_end,
+            observables=vtk_obs, delta_N=0, base_folder=str(path_vtk_root))
         ek_vtk.write()
         self.assertEqual(sorted(ek_vtk.observables), sorted(vtk_obs))
+        self.assertEqual(ek_vtk.valid_observables(), {"density"})
 
         # check VTK files exist
         for filepath in filepaths:

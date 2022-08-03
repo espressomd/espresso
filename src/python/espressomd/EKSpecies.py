@@ -112,6 +112,18 @@ class EKSpecies(ScriptInterfaceHelper):
             f"{key} is not a valid index. Should be a point on the "
             "nodegrid e.g. ek[0,0,0], or a slice, e.g. ek[:,0,0]")
 
+    def clear_density_boundaries(self):
+        """
+        Remove density boundary conditions.
+        """
+        self.call_method("clear_density_boundaries")
+
+    def clear_flux_boundaries(self):
+        """
+        Remove flux boundary conditions.
+        """
+        self.call_method("clear_flux_boundaries")
+
     def add_boundary_from_shape(self, shape,
                                 value, boundary_type):
         """
@@ -126,8 +138,8 @@ class EKSpecies(ScriptInterfaceHelper):
             Type of the boundary condition.
         """
         if not issubclass(boundary_type, (FluxBoundary, DensityBoundary)):
-            raise ValueError(
-                "boundary_type must be a subclass of FluxBoundary or DensityBoundary")
+            raise TypeError(
+                "Parameter 'boundary_type' must be a subclass of FluxBoundary or DensityBoundary")
 
         if not hasattr(value, "__iter__"):
             value = (value, )
@@ -142,7 +154,7 @@ class EKSpecies(ScriptInterfaceHelper):
         if issubclass(boundary_type, DensityBoundary):
             if np.shape(value) not in [(1,), tuple(self.shape) + (1,)]:
                 raise ValueError(
-                    f'Cannot process density grid of shape {np.shape(value)}')
+                    f'Cannot process density value grid of shape {np.shape(value)}')
 
         # TODO unit conversion
         #        value *=

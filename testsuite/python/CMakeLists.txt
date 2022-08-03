@@ -322,6 +322,7 @@ python_test(FILE ek_fixedflux.py MAX_NUM_PROC 1)
 python_test(FILE ek_bulk_reactions.py MAX_NUM_PROC 1)
 python_test(FILE ek_indexed_reactions.py MAX_NUM_PROC 1)
 python_test(FILE ek_fixeddensity.py MAX_NUM_PROC 1)
+python_test(FILE ek_boundary.py MAX_NUM_PROC 2)
 
 add_custom_target(
   python_test_data

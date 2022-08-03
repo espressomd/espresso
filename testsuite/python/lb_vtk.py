@@ -104,6 +104,8 @@ class TestLBWrite:
                 label_vtk_end, vtk_obs, delta_N=0, base_folder=str(path_vtk_root))
             lb_vtk.write()
             self.assertEqual(sorted(lb_vtk.observables), sorted(vtk_obs))
+            self.assertEqual(lb_vtk.valid_observables(),
+                             {"density", "pressure_tensor", "velocity_vector"})
 
             # check VTK files exist
             for filepath in filepaths:

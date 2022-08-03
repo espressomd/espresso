@@ -421,6 +421,7 @@ class LBFluidWalberla(HydrodynamicInteraction):
     # and the last python variable holding a reference to it is deleted.
     # _so_bind_methods = (
     #    "add_force_at_pos",
+    #    "clear_boundaries",
     #    "get_interpolated_velocity",
     #    "get_pressure_tensor")
 
@@ -493,15 +494,15 @@ class LBFluidWalberla(HydrodynamicInteraction):
 
     def clear_boundaries(self):
         """
-        Remove boundary conditions.
+        Remove velocity bounce-back boundary conditions.
         """
-        self.call_method('clear_boundaries')
+        self.call_method("clear_boundaries")
 
     def add_boundary_from_shape(self, shape,
                                 velocity=np.zeros(3, dtype=float),
                                 boundary_type=VelocityBounceBack):
         """
-        Set boundary conditions from a shape.
+        Set velocity bounce-back boundary conditions from a shape.
 
         Parameters
         ----------
@@ -515,14 +516,14 @@ class LBFluidWalberla(HydrodynamicInteraction):
             Type of the boundary condition.
         """
         if not issubclass(boundary_type, VelocityBounceBack):
-            raise ValueError(
-                "boundary_type must be a subclass of VelocityBounceBack")
+            raise TypeError(
+                "Parameter 'boundary_type' must be a subclass of VelocityBounceBack")
 
         utils.check_type_or_throw_except(
             shape, 1, Shape, "expected an espressomd.shapes.Shape")
         if np.shape(velocity) not in [(3,), tuple(self.shape) + (3,)]:
             raise ValueError(
-                f'Cannot process velocity grid of shape {np.shape(velocity)}')
+                f'Cannot process velocity value grid of shape {np.shape(velocity)}')
 
         # range checks
         lattice_speed = self.call_method('get_lattice_speed')
@@ -793,7 +794,7 @@ class LBFluidSliceWalberla:
         raise NotImplementedError('Cannot serialize LB fluid slice objects')
 
     def __getattr__(self, attr):
-        node = self.__dict__.get('_node')
+        node = self.__dict__.get("_node")
         if node is None or not hasattr(node, attr):
             if attr in self.__dict__:
                 return self.__dict__[attr]
