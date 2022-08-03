@@ -228,6 +228,33 @@ class EKTest:
         with self.assertRaisesRegex(RuntimeError, rf"provided index \[-23, 1, 1\] is out of range for shape \[12, 12, 12\]"):
             ek_reaction[1 - 2 * shape[0], 1, 1]
 
+    def test_runtime_exceptions(self):
+        # set up a valid species
+        ek_species = self.ek_species_class(
+            lattice=self.lattice,
+            single_precision=self.ek_params["single_precision"],
+            **self.ek_species_params)
+        self.system.ekcontainer.add(ek_species)
+        self.system.integrator.run(1)
+
+        # check exceptions without LB force field
+        ek_species.friction_coupling = True
+        ek_species.advection = False
+        with self.assertRaisesRegex(Exception, "friction coupling enabled but no force field accessible"):
+            self.system.integrator.run(1)
+
+        # check exceptions without LB velocity field
+        ek_species.friction_coupling = False
+        ek_species.advection = True
+        with self.assertRaisesRegex(Exception, "advection enabled but no velocity field accessible"):
+            self.system.integrator.run(1)
+
+        # non-diffusive species don't trigger exceptions due to early exit
+        ek_species.friction_coupling = True
+        ek_species.advection = True
+        ek_species.diffusion = 0.
+        self.system.integrator.run(1)
+
     def test_ek_bulk_reactions(self):
         ek_species = self.make_default_ek_species()
         ek_reactant = espressomd.EKSpecies.EKReactant(

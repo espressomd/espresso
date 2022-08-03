@@ -405,7 +405,7 @@ public:
         throw std::runtime_error("Walberla EK: friction coupling enabled but "
                                  "no force field accessible. force_id is " +
                                  std::to_string(force_id) +
-                                 ". Have you enabled LB?");
+                                 ". Hint: LB may be inactive.");
       }
       kernel_friction_coupling(force_id);
     }
@@ -415,7 +415,7 @@ public:
         throw std::runtime_error("Walberla EK: advection enabled but no "
                                  "velocity field accessible. velocity_id is " +
                                  std::to_string(velocity_id) +
-                                 ". Have you enabled LB?");
+                                 ". Hint: LB may be inactive.");
       }
       kernel_advection(velocity_id);
     }
