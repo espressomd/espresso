@@ -52,7 +52,6 @@ public:
   }
 
   void solve() override {}
-  void ghost_communication() override {}
 };
 
 } // namespace walberla

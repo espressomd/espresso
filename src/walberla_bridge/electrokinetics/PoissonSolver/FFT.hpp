@@ -45,8 +45,6 @@ private:
 
   BlockDataID m_potential_field_id;
 
-  using PoissonSolver::get_lattice;
-  using PoissonSolver::ghost_communication;
   using PotentialField = GhostLayerField<FloatType, 1>;
 
   std::shared_ptr<fft::FourierTransform<PotentialField>> m_ft;
@@ -88,9 +86,6 @@ public:
             m_potential_field_id));
   }
   ~FFT() override = default;
-
-  using PoissonSolver::get_permittivity;
-  using PoissonSolver::set_permittivity;
 
   void reset_charge_field() override {
     // the FFT-solver re-uses the potential field for the charge
@@ -136,7 +131,9 @@ public:
     (*m_ft)();
     ghost_communication();
   }
-  void ghost_communication() override { (*m_full_communication)(); }
+
+private:
+  void ghost_communication() { (*m_full_communication)(); }
 };
 
 } // namespace walberla
