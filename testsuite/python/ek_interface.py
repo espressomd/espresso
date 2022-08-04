@@ -231,10 +231,8 @@ class EKTest:
 
     def test_runtime_exceptions(self):
         # set up a valid species
-        ek_species = self.ek_species_class(
-            lattice=self.lattice,
-            single_precision=self.ek_params["single_precision"],
-            **self.ek_species_params)
+        ek_species = self.make_default_ek_species()
+        ek_species.kT = 0.
         self.system.ekcontainer.add(ek_species)
         self.system.integrator.run(1)
 
@@ -259,10 +257,14 @@ class EKTest:
         # check exceptions with an incompatible LB time step
         with self.assertRaisesRegex(Exception, "LB and EK are active but with different timesteps"):
             lb = self.lb_fluid_class(
-                lattice=self.lattice, kT=1.5, seed=42, density=0.5,
-                viscosity=3., tau=2. * self.params["tau"], **self.lb_params)
+                lattice=self.lattice, density=0.5, viscosity=3.,
+                tau=2. * self.params["tau"], **self.lb_params)
             self.system.actors.add(lb)
             self.system.integrator.run(1)
+
+        # reset global variable fluid_step
+        self.system.ekcontainer.clear()
+        self.system.integrator.run(1)
 
     def test_ek_bulk_reactions(self):
         ek_species = self.make_default_ek_species()

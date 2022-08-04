@@ -19,31 +19,43 @@
 
 #include "config.hpp"
 
-#ifdef LB_WALBERLA
-
 #include "ek_container.hpp"
 #include "ek_reactions.hpp"
 #include "errorhandling.hpp"
 #include "lb_interface.hpp"
 
+#ifdef LB_WALBERLA
 #include "EKContainer.hpp"
+#endif // LB_WALBERLA
 
-#include <algorithm>
 #include <cmath>
+
+#ifdef LB_WALBERLA
+#include <algorithm>
 #include <cstddef>
 #include <stdexcept>
+#endif // LB_WALBERLA
 
 namespace EK {
 
+#ifdef LB_WALBERLA
 EKContainer<EKinWalberlaBase> ek_container;
+#endif // LB_WALBERLA
 
-double get_tau() { return ek_container.get_tau(); }
+double get_tau() {
+#ifdef LB_WALBERLA
+  return ek_container.get_tau();
+#else
+  throw NoEKActive();
+#endif // LB_WALBERLA
+}
 
 int get_steps_per_md_step(double md_timestep) {
   return static_cast<int>(std::round(get_tau() / md_timestep));
 }
 
 void propagate() {
+#ifdef LB_WALBERLA
   // first calculate the charge for the potential, for that get all the
   // field-ids from the ekspecies pass the potential-field-id to the
   // flux-kernels of the eks for this the integrate function has to be split
@@ -93,8 +105,7 @@ void propagate() {
   for (auto const &species : ek_container) {
     species->ghost_communication();
   }
+#endif // LB_WALBERLA
 }
 
 } // namespace EK
-
-#endif // LB_WALBERLA
