@@ -26,6 +26,7 @@
 #include <walberla_bridge/LBWalberlaBase.hpp>
 
 #include "FluidWalberla.hpp"
+#include "LatticeIndices.hpp"
 #include "optional_reduction.hpp"
 
 #include "core/communication.hpp"
@@ -50,7 +51,7 @@
 
 namespace ScriptInterface::walberla {
 
-class FluidNodeWalberla : public AutoParameters<FluidNodeWalberla> {
+class FluidNodeWalberla : public AutoParameters<FluidNodeWalberla, LatticeIndices> {
   // TODO WALBERLA: revert commit 2f0c490b8e1bb4ab3e to use a weak_ptr
   std::shared_ptr<::LBWalberlaBase> m_lb_fluid;
   Utils::Vector3i m_index;
@@ -63,7 +64,7 @@ class FluidNodeWalberla : public AutoParameters<FluidNodeWalberla> {
 public:
   FluidNodeWalberla() {
     add_parameters(
-        {{"_index", AutoParameter::read_only, [this]() { return (m_index); }}});
+        {{"_index", AutoParameter::read_only, [this]() { return m_index; }}});
   }
 
   void do_construct(VariantMap const &params) override {
@@ -76,19 +77,20 @@ public:
       assert(lb_params);
       auto const tau = lb_params->get_tau();
       auto const agrid = lb_params->get_agrid();
-      m_grid_size = m_lb_fluid->get_lattice().get_grid_dimensions();
-      m_index = get_value<Utils::Vector3i>(params, "index");
-      if (not is_index_valid(m_index)) {
-        throw std::out_of_range("Index error");
-      }
       m_conv_dens = Utils::int_pow<3>(agrid);
       m_conv_press = Utils::int_pow<1>(agrid) * Utils::int_pow<2>(tau);
       m_conv_force = Utils::int_pow<2>(tau) / Utils::int_pow<1>(agrid);
       m_conv_velocity = Utils::int_pow<1>(tau) / Utils::int_pow<1>(agrid);
-    } catch (const std::exception &e) {
-      runtimeErrorMsg() << "FluidNodeWalberla failed: " << e.what();
+    } catch (std::exception const &e) {
+      if (context()->is_head_node()) {
+        runtimeErrorMsg() << "FluidNodeWalberla failed: " << e.what();
+      }
       m_lb_fluid.reset();
+      return;
     }
+    m_grid_size = m_lb_fluid->get_lattice().get_grid_dimensions();
+    m_index = get_mapped_index(get_value<Utils::Vector3i>(params, "index"),
+                               m_grid_size);
   }
 
   Variant do_call_method(std::string const &name,
@@ -97,7 +99,7 @@ public:
       // this hidden feature is used to iterate a LB slice without
       // rebuilding a FluidNodeWalberla for each node in the slice
       auto const index = get_value<Utils::Vector3i>(params, "index");
-      if (not is_index_valid(index)) {
+      if (not is_index_valid(index, m_grid_size)) {
         return ES_ERROR;
       }
       m_index = index;
@@ -185,11 +187,6 @@ public:
     }
 
     return {};
-  }
-
-private:
-  inline bool is_index_valid(Utils::Vector3i const &index) const {
-    return index < m_grid_size and index >= Utils::Vector3i{};
   }
 };
 } // namespace ScriptInterface::walberla

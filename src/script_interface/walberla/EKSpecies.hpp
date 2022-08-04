@@ -37,7 +37,7 @@
 
 namespace ScriptInterface::walberla {
 
-class EKSpecies : public AutoParameters<EKinWalberlaBase> {
+class EKSpecies : public AutoParameters<EKSpecies> {
 public:
   void do_construct(VariantMap const &args) override {
     m_lattice = get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice");
@@ -91,7 +91,7 @@ public:
           [this]() { return m_lattice; }}});
   }
 
-  [[nodiscard]] std::shared_ptr<EKinWalberlaBase> get_ekinstance() {
+  [[nodiscard]] std::shared_ptr<::EKinWalberlaBase> get_ekinstance() {
     return m_ekinstance;
   }
 
@@ -184,7 +184,7 @@ public:
 
 private:
   /* The actual constraint */
-  std::shared_ptr<EKinWalberlaBase> m_ekinstance;
+  std::shared_ptr<::EKinWalberlaBase> m_ekinstance;
 
   std::shared_ptr<LatticeWalberla> m_lattice;
 };

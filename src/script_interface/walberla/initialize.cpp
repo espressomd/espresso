@@ -33,6 +33,7 @@
 #include "EKFFT.hpp"
 #include "EKNone.hpp"
 #include "EKSpecies.hpp"
+#include "EKSpeciesNode.hpp"
 
 #include "EKReactant.hpp"
 #include "EKReaction.hpp"
@@ -48,6 +49,7 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
 
   om->register_new<EKContainer>("walberla::EKContainer");
   om->register_new<EKSpecies>("walberla::EKSpecies");
+  om->register_new<EKSpeciesNode>("walberla::EKSpeciesNode");
   om->register_new<EKFFT>("walberla::EKFFT");
   om->register_new<EKNone>("walberla::None");
   om->register_new<EKVTKHandle>("walberla::EKVTKHandle");

@@ -103,11 +103,12 @@ class EKSpecies(ScriptInterfaceHelper):
 
     def __getitem__(self, key):
         if isinstance(key, (tuple, list, np.ndarray)) and len(key) == 3:
-            if any(isinstance(typ, slice) for typ in key):
-                shape = self.shape
-                return EKSlice(self, key, (shape[0], shape[1], shape[2]))
+            if any(isinstance(item, slice) for item in key):
+                return EKSlice(
+                    ek_sip=self, ek_range=key, node_grid=self.shape)
             else:
-                return EKRoutines(self, np.array(key))
+                return EKSpeciesNode(ek_sip=self, index=np.array(key))
+
         raise TypeError(
             f"{key} is not a valid index. Should be a point on the "
             "nodegrid e.g. ek[0,0,0], or a slice, e.g. ek[:,0,0]")
@@ -335,105 +336,146 @@ class EKVTKOutput(ScriptInterfaceHelper):
         return f"<{class_id}: write to '{self.vtk_uid}' {write_when}>"
 
 
-class EKRoutines:
-    def __init__(self, species, node):
-        self.node = node
-        self.species = species
+@script_interface_register
+class EKSpeciesNode(ScriptInterfaceHelper):
+    _so_name = "walberla::EKSpeciesNode"
+    _so_creation_policy = "GLOBAL"
+
+    def required_keys(self):
+        return {"ek_sip", "index"}
+
+    def validate_params(self, params):
+        utils.check_required_keys(self.required_keys(), params.keys())
+        utils.check_type_or_throw_except(
+            params["index"], 3, int, "The index of a LB fluid node consists of three integers.")
+
+    def __init__(self, *args, **kwargs):
+        if "sip" not in kwargs:
+            self.validate_params(kwargs)
+            super().__init__(*args, **kwargs)
+            utils.handle_errors("EKSpeciesNode instantiation failed")
+        else:
+            super().__init__(**kwargs)
+
+    def __reduce__(self):
+        raise NotImplementedError("Cannot serialize EK species node objects")
+        
+    def __eq__(self, obj):
+        return isinstance(obj, EKSpeciesNode) and self.index == obj.index
+
+    def __hash__(self):
+        return hash(self.index)
 
     @property
     def index(self):
-        return self.node
+        return tuple(self._index)
+
+    @index.setter
+    def index(self, value):
+        raise RuntimeError("Parameter 'index' is read-only.")
 
     @property
     def density(self):
-        return self.species.call_method("get_density", position=self.node)
+        return self.call_method("get_density")
 
     @density.setter
     def density(self, value):
-        self.species.call_method(
-            "set_density",
-            position=self.node,
-            value=value)
+        self.call_method("set_density", value=value)
 
     @property
     def is_boundary(self):
-        return self.species.call_method("is_boundary", position=self.node)
+        return self.call_method("get_is_boundary")
+
+    @is_boundary.setter
+    def is_boundary(self, value):
+        raise RuntimeError("Property 'is_boundary' is read-only.")
 
     @property
     def density_boundary(self):
-        density = self.species.call_method(
-            "get_node_density_at_boundary", position=self.node)
-
+        """
+        Returns
+        -------
+        :class:`~espressomd.EKSpecies.DensityBoundary`
+            If the node is a boundary node
+        None
+            If the node is not a boundary node
+        """
+        density = self.call_method("get_node_density_at_boundary")
         if density is not None:
             return DensityBoundary(density)
         return None
 
     @density_boundary.setter
-    def density_boundary(self, density):
+    def density_boundary(self, value):
         """
         Parameters
         ----------
-        density : :class:`~espressomd.EKSpecies.DensityBoundary` or None
-            If density is :class:`~espressomd.EkSpecies.DensityBoundary`,
+        value : :class:`~espressomd.EKSpecies.DensityBoundary` or None
+            If value is :class:`~espressomd.EkSpecies.DensityBoundary`,
             set the node to be a boundary node with the specified density.
-            If density is ``None``, the node will become a domain node.
+            If value is ``None``, the node will become a domain node.
         """
 
-        if isinstance(density, DensityBoundary):
-            self.species.call_method(
-                'set_node_density_boundary',
-                position=self.node,
-                density=density.density)
-        elif density is None:
-            self.species.call_method(
-                'remove_node_density_boundary',
-                position=self.node)
+        if isinstance(value, DensityBoundary):
+            self.call_method("set_node_density_at_boundary", value=value.density)
+        elif value is None:
+            self.call_method("set_node_density_at_boundary", value=None)
         else:
-            raise ValueError(
-                "density must be an instance of DensityBoundary or None")
+            raise TypeError(
+                "Parameter 'value' must be an instance of DensityBoundary or None")
 
     @property
     def flux_boundary(self):
-        flux = self.species.call_method(
-            "get_node_flux_at_boundary", position=self.node)
-
+        """
+        Returns
+        -------
+        :class:`~espressomd.EKSpecies.FluxBoundary`
+            If the node is a boundary node
+        None
+            If the node is not a boundary node
+        """
+        flux = self.call_method("get_node_flux_at_boundary")
         if flux is not None:
             return FluxBoundary(flux)
         return None
 
     @flux_boundary.setter
-    def flux_boundary(self, flux):
+    def flux_boundary(self, value):
         """
         Parameters
         ----------
-        flux : :class:`~espressomd.EKSpecies.FluxBoundary` or None
-            If flux is :class:`~espressomd.EkSpecies.FluxBoundary`,
+        value : :class:`~espressomd.EKSpecies.FluxBoundary` or None
+            If value is :class:`~espressomd.EkSpecies.FluxBoundary`,
             set the node to be a boundary node with the specified flux.
-            If flux is ``None``, the node will become a domain node.
+            If value is ``None``, the node will become a domain node.
         """
 
-        if isinstance(flux, FluxBoundary):
-            self.species.call_method(
-                'set_node_flux_boundary',
-                position=self.node,
-                flux=flux.flux)
-        elif flux is None:
-            self.species.call_method(
-                'remove_node_flux_boundary',
-                position=self.node)
+        if isinstance(value, FluxBoundary):
+            self.call_method("set_node_flux_at_boundary", value=value.flux)
+        elif value is None:
+            self.call_method("set_node_flux_at_boundary", value=None)
         else:
-            raise ValueError(
-                "flux must be an instance of FluxBoundary or None")
+            raise TypeError(
+                "Parameter 'value' must be an instance of FluxBoundary or None")
 
 
 class EKSlice:
-    def __init__(self, species, key, shape):
-        self._species = species
-        self.indices = [np.atleast_1d(np.arange(shape[i])[key[i]])
+
+    def required_keys(self):
+        return {"ek_sip", "ek_range", "node_grid"}
+
+    def __init__(self, **kwargs):
+        utils.check_required_keys(self.required_keys(), kwargs.keys())
+        ek_range = kwargs["ek_range"]
+        node_grid = kwargs["node_grid"]
+        self.indices = [np.atleast_1d(np.arange(node_grid[i])[ek_range[i]])
                         for i in range(3)]
         self.dimensions = [ind.size for ind in self.indices]
+        self._ek_sip = kwargs["ek_sip"]
+        self._node = EKSpeciesNode(ek_sip=self._ek_sip, index=[0, 0, 0])
 
-        self._node = EKRoutines(species=species, node=[0, 0, 0])
+    def __reduce__(self):
+        raise NotImplementedError("Cannot serialize EK species slice objects")
 
     def __getattr__(self, attr):
         node = self.__dict__.get("_node")
@@ -454,7 +496,8 @@ class EKSlice:
 
         indices = itertools.product(*map(enumerate, self.indices))
         for (i, x), (j, y), (k, z) in indices:
-            node.node = [x, y, z]
+            err = node.call_method("override_index", index=[x, y, z])
+            assert err == 0
             value_grid[i, j, k] = getattr(node, attr)
 
         if shape_val == (1,):
@@ -462,7 +505,7 @@ class EKSlice:
         return utils.array_locked(value_grid)
 
     def __setattr__(self, attr, values):
-        node = self.__dict__.get('_node')
+        node = self.__dict__.get("_node")
         if node is None or not hasattr(node, attr):
             self.__dict__[attr] = values
             return
@@ -483,11 +526,12 @@ class EKSlice:
 
         indices = itertools.product(*map(enumerate, self.indices))
         for (i, x), (j, y), (k, z) in indices:
-            node.node = [x, y, z]
+            err = node.call_method("override_index", index=[x, y, z])
+            assert err == 0
             setattr(node, attr, values[i, j, k])
 
     def __iter__(self):
-        return (EKRoutines(species=self._species, node=np.array(index))
+        return (EKSpeciesNode(ek_sip=self._ek_sip, index=np.array(index))
                 for index in itertools.product(*self.indices))
 
 

@@ -20,6 +20,7 @@
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
+import sys
 
 import espressomd
 import espressomd.lb
@@ -167,9 +168,9 @@ class EKTest:
         node.flux_boundary = None
         self.assertIsNone(node.density_boundary)
         self.assertIsNone(node.flux_boundary)
-        with self.assertRaisesRegex(ValueError, "must be an instance of DensityBoundary or None"):
+        with self.assertRaisesRegex(TypeError, "must be an instance of DensityBoundary or None"):
             node.density_boundary = 4.6
-        with self.assertRaisesRegex(ValueError, "must be an instance of FluxBoundary or None"):
+        with self.assertRaisesRegex(TypeError, "must be an instance of FluxBoundary or None"):
             node.flux_boundary = 4.6
 
     def test_ek_fft_solvers(self):
@@ -219,15 +220,42 @@ class EKTest:
         self.assertFalse(ek_reaction[1, 1, 1])
         ek_reaction.add_node_to_index([1, 1, 1])
         self.assertTrue(ek_reaction[1, 1, 1])
-        # check ranges
+
+    def test_grid_index(self):
+        ek_species = self.make_default_ek_species()
+        ek_reactant = espressomd.EKSpecies.EKReactant(
+            ekspecies=ek_species, stoech_coeff=-2.0, order=2.0)
+        ek_reaction = espressomd.EKSpecies.EKIndexedReaction(
+            reactants=[ek_reactant], coefficient=1.5, lattice=self.lattice)
+        # check ranges and out-of-bounds access
         shape = np.around(self.system.box_l / self.params["agrid"]).astype(int)
-        self.assertTrue(ek_reaction[1 - shape[0], 1, 1])
-        self.assertTrue(ek_reaction[1, 1 - shape[0], 1])
-        self.assertTrue(ek_reaction[1, 1, 1 - shape[0]])
-        with self.assertRaisesRegex(RuntimeError, rf"provided index \[13, 1, 1\] is out of range for shape \[12, 12, 12\]"):
-            ek_reaction[1 + shape[0], 1, 1]
-        with self.assertRaisesRegex(RuntimeError, rf"provided index \[-23, 1, 1\] is out of range for shape \[12, 12, 12\]"):
-            ek_reaction[1 - 2 * shape[0], 1, 1]
+        for i in range(3):
+            n = [0, 0, 0]
+            n[i] -= shape[i]
+            ek_reaction[n[0], n[1], n[2]] = True
+            self.assertTrue(ek_reaction[0, 0, 0])
+            self.assertEqual(ek_reaction[tuple(n)], ek_reaction[0, 0, 0])
+            self.assertEqual(ek_species[tuple(n)], ek_species[0, 0, 0])
+            for offset in (shape[i] + 1, -(shape[i] + 1)):
+                n = [0, 0, 0]
+                n[i] += offset
+                err_msg = rf"provided index \[{str(n)[1:-1]}\] is out of range for shape \[{str(list(shape))[1:-1]}\]"
+                with self.assertRaisesRegex(IndexError, err_msg):
+                    ek_reaction[tuple(n)]
+                with self.assertRaisesRegex(IndexError, err_msg):
+                    ek_species[tuple(n)]
+        # node index
+        node = ek_species[1, 2, 3]
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'index' is read-only"):
+            node.index = [2, 4, 6]
+        np.testing.assert_array_equal(node.index, [1, 2, 3])
+        retval = node.call_method("override_index", index=[2, 4, 6])
+        self.assertEqual(retval, 0)
+        np.testing.assert_array_equal(node.index, [2, 4, 6])
+        retval = node.call_method("override_index", index=[0, 0, shape[2]])
+        self.assertEqual(retval, 1)
+        np.testing.assert_array_equal(node.index, [2, 4, 6])
+        np.testing.assert_array_equal(ek_species[-1, -1, -1].index, shape - 1)
 
     def test_runtime_exceptions(self):
         # set up a valid species
@@ -235,6 +263,9 @@ class EKTest:
         ek_species.kT = 0.
         self.system.ekcontainer.add(ek_species)
         self.system.integrator.run(1)
+
+        print("\nTesting EK runtime error messages:", file=sys.stderr)
+        sys.stderr.flush()
 
         # check exceptions without LB force field
         with self.assertRaisesRegex(Exception, "friction coupling enabled but no force field accessible"):
@@ -261,6 +292,9 @@ class EKTest:
                 tau=2. * self.params["tau"], **self.lb_params)
             self.system.actors.add(lb)
             self.system.integrator.run(1)
+
+        print("End of EK runtime error messages", file=sys.stderr)
+        sys.stderr.flush()
 
         # reset global variable fluid_step
         self.system.ekcontainer.clear()

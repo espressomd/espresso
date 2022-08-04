@@ -139,7 +139,7 @@ class LBTest:
         np.testing.assert_allclose(
             np.copy(node.boundary.velocity), np.copy(vbb_ref.velocity),
             atol=self.atol)
-        with self.assertRaisesRegex(TypeError, "value must be an instance of VelocityBounceBack or None"):
+        with self.assertRaisesRegex(TypeError, "Parameter 'value' must be an instance of VelocityBounceBack or None"):
             node.boundary = vbb_ref.velocity
         # TODO WALBERLA: remove next line (no-op to get code coverage) once
         # the boundary force getter is implemented from the waLBerla side
@@ -278,40 +278,44 @@ class LBTest:
     def test_grid_index(self):
         lbf = self.lb_class(**self.params, **self.lb_params)
         self.system.actors.add(lbf)
-        # access out of bounds
-        out_of_bounds = max(lbf.shape) + 1
-        error_msg = 'Index error'
-        with self.assertRaisesRegex(Exception, error_msg):
-            lbf[out_of_bounds, 0, 0].velocity
-        with self.assertRaisesRegex(Exception, error_msg):
-            lbf[0, out_of_bounds, 0].velocity
-        with self.assertRaisesRegex(Exception, error_msg):
-            lbf[0, 0, out_of_bounds].velocity
+        # check ranges and out-of-bounds access
+        shape = lbf.shape
+        for i in range(3):
+            n = [0, 0, 0]
+            n[i] -= shape[i]
+            lbf[n[0], n[1], n[2]].velocity
+            self.assertEqual(lbf[tuple(n)], lbf[0, 0, 0])
+            for offset in (shape[i] + 1, -(shape[i] + 1)):
+                n = [0, 0, 0]
+                n[i] += offset
+                err_msg = rf"provided index \[{str(n)[1:-1]}\] is out of range for shape \[{str(list(shape))[1:-1]}\]"
+                with self.assertRaisesRegex(IndexError, err_msg):
+                    lbf[tuple(n)].velocity
         # node index
         node = lbf[1, 2, 3]
         with self.assertRaisesRegex(RuntimeError, "Parameter 'index' is read-only"):
             node.index = [2, 4, 6]
-        np.testing.assert_array_equal(np.copy(node.index), [1, 2, 3])
-        retval = node.call_method('override_index', index=[2, 4, 6])
+        np.testing.assert_array_equal(node.index, [1, 2, 3])
+        retval = node.call_method("override_index", index=[2, 4, 6])
         self.assertEqual(retval, 0)
-        np.testing.assert_array_equal(np.copy(node.index), [2, 4, 6])
-        retval = node.call_method(
-            'override_index', index=[0, 0, out_of_bounds])
+        np.testing.assert_array_equal(node.index, [2, 4, 6])
+        retval = node.call_method("override_index", index=[0, 0, shape[2]])
         self.assertEqual(retval, 1)
-        np.testing.assert_array_equal(np.copy(node.index), [2, 4, 6])
+        np.testing.assert_array_equal(node.index, [2, 4, 6])
+        np.testing.assert_array_equal(lbf[-1, -1, -1].index, np.array(shape) - 1)
 
     def test_incompatible_agrid(self):
         """
         LB lattice initialization must raise an exception when either box_l or
         local_box_l aren't integer multiples of agrid.
         """
-        print("\nTesting LB error messages:", file=sys.stderr)
+        print("\nTesting LB runtime error messages:", file=sys.stderr)
         sys.stderr.flush()
         with self.assertRaises(Exception):
             params = self.params.copy()
             params['agrid'] += 1e-6
             self.lb_class(**params, **self.lb_params)
-        print("End of LB error messages", file=sys.stderr)
+        print("End of LB runtime error messages", file=sys.stderr)
         sys.stderr.flush()
 
     def test_agrid_rounding(self):

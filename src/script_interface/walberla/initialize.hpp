@@ -19,8 +19,13 @@
 #ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_WALBERLA_INITIALIZE_HPP
 #define ESPRESSO_SRC_SCRIPT_INTERFACE_WALBERLA_INITIALIZE_HPP
 
+#include "config.hpp"
+
+#ifdef LB_WALBERLA
+
 namespace ScriptInterface::walberla {
 void initialize(Utils::Factory<ObjectHandle> *om);
 } // namespace ScriptInterface::walberla
 
+#endif // LB_WALBERLA
 #endif

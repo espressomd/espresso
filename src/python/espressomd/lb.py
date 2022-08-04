@@ -641,15 +641,15 @@ class LBFluidNodeWalberla(ScriptInterfaceHelper):
     _so_creation_policy = "GLOBAL"
 
     def required_keys(self):
-        return {'lb_sip', 'index'}
+        return {"lb_sip", "index"}
 
     def validate_params(self, params):
         utils.check_required_keys(self.required_keys(), params.keys())
         utils.check_type_or_throw_except(
-            params['index'], 3, int, "The index of an lb fluid node consists of three integers.")
+            params["index"], 3, int, "The index of a LB fluid node consists of three integers.")
 
     def __init__(self, *args, **kwargs):
-        if 'sip' not in kwargs:
+        if "sip" not in kwargs:
             self.validate_params(kwargs)
             super().__init__(*args, **kwargs)
             utils.handle_errors("LBFluidNode instantiation failed")
@@ -657,7 +657,13 @@ class LBFluidNodeWalberla(ScriptInterfaceHelper):
             super().__init__(**kwargs)
 
     def __reduce__(self):
-        raise NotImplementedError('Cannot serialize LB fluid node objects')
+        raise NotImplementedError("Cannot serialize LB fluid node objects")
+
+    def __eq__(self, obj):
+        return isinstance(obj, LBFluidNodeWalberla) and self.index == obj.index
+
+    def __hash__(self):
+        return hash(self.index)
 
     @property
     def index(self):
@@ -669,23 +675,23 @@ class LBFluidNodeWalberla(ScriptInterfaceHelper):
 
     @property
     def density(self):
-        return self.call_method('get_density')
+        return self.call_method("get_density")
 
     @density.setter
     def density(self, value):
-        self.call_method('set_density', value=value)
+        self.call_method("set_density", value=value)
 
     @property
     def population(self):
-        return utils.array_locked(self.call_method('get_population'))
+        return utils.array_locked(self.call_method("get_population"))
 
     @population.setter
     def population(self, value):
-        self.call_method('set_population', value=value)
+        self.call_method("set_population", value=value)
 
     @property
     def pressure_tensor(self):
-        tensor = self.call_method('get_pressure_tensor')
+        tensor = self.call_method("get_pressure_tensor")
         return utils.array_locked(tensor)
 
     @pressure_tensor.setter
@@ -694,7 +700,7 @@ class LBFluidNodeWalberla(ScriptInterfaceHelper):
 
     @property
     def is_boundary(self):
-        return self.call_method('get_is_boundary')
+        return self.call_method("get_is_boundary")
 
     @is_boundary.setter
     def is_boundary(self, value):
@@ -711,7 +717,7 @@ class LBFluidNodeWalberla(ScriptInterfaceHelper):
             If the node is not a boundary node
         """
 
-        velocity = self.call_method('get_velocity_at_boundary')
+        velocity = self.call_method("get_velocity_at_boundary")
         if velocity is not None:
             return VelocityBounceBack(velocity)
         return None
@@ -728,19 +734,19 @@ class LBFluidNodeWalberla(ScriptInterfaceHelper):
         """
 
         if isinstance(value, VelocityBounceBack):
-            lattice_speed = self.call_method('get_lattice_speed')
+            lattice_speed = self.call_method("get_lattice_speed")
             HydrodynamicInteraction._check_mach_limit(
                 np.array(value.velocity) / lattice_speed)
-            self.call_method('set_velocity_at_boundary', value=value.velocity)
+            self.call_method("set_velocity_at_boundary", value=value.velocity)
         elif value is None:
-            self.call_method('set_velocity_at_boundary', value=None)
+            self.call_method("set_velocity_at_boundary", value=None)
         else:
             raise TypeError(
-                "value must be an instance of VelocityBounceBack or None")
+                "Parameter 'value' must be an instance of VelocityBounceBack or None")
 
     @property
     def boundary_force(self):
-        return self.call_method('get_boundary_force')
+        return self.call_method("get_boundary_force")
 
     @boundary_force.setter
     def boundary_force(self, value):
@@ -748,51 +754,38 @@ class LBFluidNodeWalberla(ScriptInterfaceHelper):
 
     @property
     def velocity(self):
-        return self.call_method('get_velocity')
+        return self.call_method("get_velocity")
 
     @velocity.setter
     def velocity(self, value):
-        self.call_method('set_velocity', value=value)
+        self.call_method("set_velocity", value=value)
 
     @property
     def last_applied_force(self):
-        return self.call_method('get_last_applied_force')
+        return self.call_method("get_last_applied_force")
 
     @last_applied_force.setter
     def last_applied_force(self, value):
-        self.call_method('set_last_applied_force', value=value)
-
-    def __eq__(self, obj1):
-        index_1 = np.array(self.index)
-        index_2 = np.array(obj1.index)
-        return all(index_1 == index_2)
-
-    def __hash__(self):
-        return hash(self.index)
+        self.call_method("set_last_applied_force", value=value)
 
 
 class LBFluidSliceWalberla:
 
     def required_keys(self):
-        return {'lb_sip', 'lb_range', 'node_grid'}
+        return {"lb_sip", "lb_range", "node_grid"}
 
-    # pylint: disable=unused-argument
-    def __init__(self, *args, **kwargs):
-        if 'sip' not in kwargs:
-            utils.check_required_keys(self.required_keys(), kwargs.keys())
-            lb_range = kwargs['lb_range']
-            node_grid = kwargs['node_grid']
-            self.indices = [np.atleast_1d(np.arange(node_grid[i])[lb_range[i]])
-                            for i in range(3)]
-            self.dimensions = [ind.size for ind in self.indices]
-            self._lb_sip = kwargs['lb_sip']
-            self._node = LBFluidNodeWalberla(lb_sip=self._lb_sip,
-                                             index=[0, 0, 0])
-        else:
-            super().__init__(**kwargs)
+    def __init__(self, **kwargs):
+        utils.check_required_keys(self.required_keys(), kwargs.keys())
+        lb_range = kwargs["lb_range"]
+        node_grid = kwargs["node_grid"]
+        self.indices = [np.atleast_1d(np.arange(node_grid[i])[lb_range[i]])
+                        for i in range(3)]
+        self.dimensions = [ind.size for ind in self.indices]
+        self._lb_sip = kwargs["lb_sip"]
+        self._node = LBFluidNodeWalberla(lb_sip=self._lb_sip, index=[0, 0, 0])
 
     def __reduce__(self):
-        raise NotImplementedError('Cannot serialize LB fluid slice objects')
+        raise NotImplementedError("Cannot serialize LB fluid slice objects")
 
     def __getattr__(self, attr):
         node = self.__dict__.get("_node")
@@ -813,7 +806,7 @@ class LBFluidSliceWalberla:
 
         indices = itertools.product(*map(enumerate, self.indices))
         for (i, x), (j, y), (k, z) in indices:
-            err = node.call_method('override_index', index=[x, y, z])
+            err = node.call_method("override_index", index=[x, y, z])
             assert err == 0
             value_grid[i, j, k] = getattr(node, attr)
 
@@ -822,7 +815,7 @@ class LBFluidSliceWalberla:
         return utils.array_locked(value_grid)
 
     def __setattr__(self, attr, values):
-        node = self.__dict__.get('_node')
+        node = self.__dict__.get("_node")
         if node is None or not hasattr(node, attr):
             self.__dict__[attr] = values
             return
@@ -842,8 +835,8 @@ class LBFluidSliceWalberla:
                 f"Input-dimensions of '{attr}' array {values.shape} does not match slice dimensions {target_shape}.")
 
         # Mach checks
-        if attr == 'boundary':
-            lattice_speed = node.call_method('get_lattice_speed')
+        if attr == "boundary":
+            lattice_speed = node.call_method("get_lattice_speed")
             for value in values.flatten():
                 if isinstance(value, VelocityBounceBack):
                     HydrodynamicInteraction._check_mach_limit(
@@ -854,7 +847,7 @@ class LBFluidSliceWalberla:
 
         indices = itertools.product(*map(enumerate, self.indices))
         for (i, x), (j, y), (k, z) in indices:
-            err = node.call_method('override_index', index=[x, y, z])
+            err = node.call_method("override_index", index=[x, y, z])
             assert err == 0
             setattr(node, attr, values[i, j, k])
 
