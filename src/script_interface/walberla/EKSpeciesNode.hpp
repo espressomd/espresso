@@ -64,7 +64,7 @@ public:
   void do_construct(VariantMap const &params) override {
     try {
       auto const ek_sip =
-          get_value<std::shared_ptr<EKSpecies>>(params, "ek_sip");
+          get_value<std::shared_ptr<EKSpecies>>(params, "parent_sip");
       m_ek_species = ek_sip->get_ekinstance();
       assert(m_ek_species);
       m_conv_dens = 1.;

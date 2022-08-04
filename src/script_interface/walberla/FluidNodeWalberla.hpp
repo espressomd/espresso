@@ -51,7 +51,8 @@
 
 namespace ScriptInterface::walberla {
 
-class FluidNodeWalberla : public AutoParameters<FluidNodeWalberla, LatticeIndices> {
+class FluidNodeWalberla
+    : public AutoParameters<FluidNodeWalberla, LatticeIndices> {
   // TODO WALBERLA: revert commit 2f0c490b8e1bb4ab3e to use a weak_ptr
   std::shared_ptr<::LBWalberlaBase> m_lb_fluid;
   Utils::Vector3i m_index;
@@ -70,7 +71,7 @@ public:
   void do_construct(VariantMap const &params) override {
     try {
       auto const lb_sip =
-          get_value<std::shared_ptr<FluidWalberla>>(params, "lb_sip");
+          get_value<std::shared_ptr<FluidWalberla>>(params, "parent_sip");
       m_lb_fluid = lb_sip->lb_fluid().lock();
       assert(m_lb_fluid);
       auto const &lb_params = lb_sip->lb_params().lock();

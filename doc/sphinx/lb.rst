@@ -230,6 +230,7 @@ Example::
 
 The first line prints the fluid velocity at node (0 0 0) to the screen.
 The second line sets this fluid node's density to the value ``1.2``.
+Use negative indices to get nodes starting from the end of the lattice.
 
 The nodes can be read and modified using slices. Example::
 

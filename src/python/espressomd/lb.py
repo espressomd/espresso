@@ -484,9 +484,10 @@ class LBFluidWalberla(HydrodynamicInteraction):
         if isinstance(key, (tuple, list, np.ndarray)) and len(key) == 3:
             if any(isinstance(item, slice) for item in key):
                 return LBFluidSliceWalberla(
-                    lb_sip=self, lb_range=key, node_grid=self.shape)
+                    parent_sip=self, slice_range=key, node_grid=self.shape)
             else:
-                return LBFluidNodeWalberla(lb_sip=self, index=np.array(key))
+                return LBFluidNodeWalberla(
+                    parent_sip=self, index=np.array(key))
 
         raise TypeError(
             f"{key} is not a valid index. Should be a point on the "
@@ -641,7 +642,7 @@ class LBFluidNodeWalberla(ScriptInterfaceHelper):
     _so_creation_policy = "GLOBAL"
 
     def required_keys(self):
-        return {"lb_sip", "index"}
+        return {"parent_sip", "index"}
 
     def validate_params(self, params):
         utils.check_required_keys(self.required_keys(), params.keys())
@@ -769,23 +770,21 @@ class LBFluidNodeWalberla(ScriptInterfaceHelper):
         self.call_method("set_last_applied_force", value=value)
 
 
-class LBFluidSliceWalberla:
+class LatticeSliceWalberla:
 
-    def required_keys(self):
-        return {"lb_sip", "lb_range", "node_grid"}
-
-    def __init__(self, **kwargs):
-        utils.check_required_keys(self.required_keys(), kwargs.keys())
-        lb_range = kwargs["lb_range"]
-        node_grid = kwargs["node_grid"]
-        self.indices = [np.atleast_1d(np.arange(node_grid[i])[lb_range[i]])
+    def __init__(self, parent_sip, node_grid, slice_range):
+        self.indices = [np.atleast_1d(np.arange(node_grid[i])[slice_range[i]])
                         for i in range(3)]
         self.dimensions = [ind.size for ind in self.indices]
-        self._lb_sip = kwargs["lb_sip"]
-        self._node = LBFluidNodeWalberla(lb_sip=self._lb_sip, index=[0, 0, 0])
+        self._sip = parent_sip
+        self._node = self._node_class(parent_sip=self._sip, index=[0, 0, 0])
 
-    def __reduce__(self):
-        raise NotImplementedError("Cannot serialize LB fluid slice objects")
+    def __iter__(self):
+        for index in itertools.product(*self.indices):
+            yield self._node_class(parent_sip=self._sip, index=np.array(index))
+
+    def setter_checks(self, attr, values):
+        raise NotImplementedError("Derived classes must implement this method")
 
     def __getattr__(self, attr):
         node = self.__dict__.get("_node")
@@ -820,7 +819,8 @@ class LBFluidSliceWalberla:
             self.__dict__[attr] = values
             return
         elif 0 in self.dimensions:
-            raise AttributeError("Cannot set properties of an empty LBSlice")
+            raise AttributeError(
+                f"Cannot set properties of an empty '{self.__class__.__name__}' object")
 
         values = np.copy(values)
         shape_val = np.shape(getattr(node, attr))
@@ -832,10 +832,27 @@ class LBFluidSliceWalberla:
 
         if values.shape != target_shape:
             raise ValueError(
-                f"Input-dimensions of '{attr}' array {values.shape} does not match slice dimensions {target_shape}.")
+                f"Input-dimensions of '{attr}' array {values.shape} does not match slice dimensions {target_shape}")
 
-        # Mach checks
+        self.setter_checks(attr, values)
+
+        indices = itertools.product(*map(enumerate, self.indices))
+        for (i, x), (j, y), (k, z) in indices:
+            err = node.call_method("override_index", index=[x, y, z])
+            assert err == 0
+            setattr(node, attr, values[i, j, k])
+
+
+class LBFluidSliceWalberla(LatticeSliceWalberla):
+    _node_class = LBFluidNodeWalberla
+
+    def __reduce__(self):
+        raise NotImplementedError("Cannot serialize LB fluid slice objects")
+
+    def setter_checks(self, attr, values):
+        node = self.__dict__.get("_node")
         if attr == "boundary":
+            # Mach checks
             lattice_speed = node.call_method("get_lattice_speed")
             for value in values.flatten():
                 if isinstance(value, VelocityBounceBack):
@@ -844,16 +861,6 @@ class LBFluidSliceWalberla:
                 elif value is not None:
                     raise TypeError(
                         "values must be instances of VelocityBounceBack or None")
-
-        indices = itertools.product(*map(enumerate, self.indices))
-        for (i, x), (j, y), (k, z) in indices:
-            err = node.call_method("override_index", index=[x, y, z])
-            assert err == 0
-            setattr(node, attr, values[i, j, k])
-
-    def __iter__(self):
-        return (LBFluidNodeWalberla(lb_sip=self._lb_sip, index=np.array(index))
-                for index in itertools.product(*self.indices))
 
 
 def edge_detection(boundary_mask, periodicity):

@@ -202,6 +202,10 @@ To remove species from the EK solver::
 
     system.ekcontainer.remove(ek_species)
 
+Individual nodes and slices of the species lattice can be accessed and
+modified using the syntax outlined in :ref:`Reading and setting properties
+of single lattice nodes`.
+
 .. _EK VTK output:
 
 VTK output

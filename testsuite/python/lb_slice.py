@@ -154,7 +154,7 @@ class LBSliceTest(ut.TestCase):
         np.testing.assert_array_equal(
             np.copy(lb_fluid[1, 2, 8:i].index),
             np.copy(lb_fluid[1, 2, 8:].index))
-        with self.assertRaisesRegex(AttributeError, "Cannot set properties of an empty LBSlice"):
+        with self.assertRaisesRegex(AttributeError, "Cannot set properties of an empty 'LBFluidSliceWalberla' object"):
             lb_slice.density = [1., 2., 3.]
 
     def test_iterator(self):

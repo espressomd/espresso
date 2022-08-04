@@ -124,15 +124,16 @@ public:
                                        VariantMap const &parameters) override {
     if (method == "set_node_is_boundary") {
       m_ekreaction->set_node_is_boundary(
-          get_mapped_index(get_value<Utils::Vector3i>(parameters, "node"),
-                           get_instance()->get_lattice()->get_grid_dimensions()),
+          get_mapped_index(
+              get_value<Utils::Vector3i>(parameters, "node"),
+              get_instance()->get_lattice()->get_grid_dimensions()),
           get_value<bool>(parameters, "is_boundary"));
       return none;
     }
     if (method == "get_node_is_boundary") {
-      auto const result = m_ekreaction->get_node_is_boundary(
-          get_mapped_index(get_value<Utils::Vector3i>(parameters, "node"),
-                           get_instance()->get_lattice()->get_grid_dimensions()));
+      auto const result = m_ekreaction->get_node_is_boundary(get_mapped_index(
+          get_value<Utils::Vector3i>(parameters, "node"),
+          get_instance()->get_lattice()->get_grid_dimensions()));
       return optional_reduction_with_conversion(result);
     }
     return none;

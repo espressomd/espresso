@@ -27,7 +27,7 @@ from . import utils
 from .__init__ import has_features
 
 from .shapes import Shape
-from .lb import VTKRegistry
+from .lb import VTKRegistry, LatticeSliceWalberla
 
 
 class EKFFT(ScriptInterfaceHelper):
@@ -104,10 +104,10 @@ class EKSpecies(ScriptInterfaceHelper):
     def __getitem__(self, key):
         if isinstance(key, (tuple, list, np.ndarray)) and len(key) == 3:
             if any(isinstance(item, slice) for item in key):
-                return EKSlice(
-                    ek_sip=self, ek_range=key, node_grid=self.shape)
+                return EKSpeciesSlice(
+                    parent_sip=self, slice_range=key, node_grid=self.shape)
             else:
-                return EKSpeciesNode(ek_sip=self, index=np.array(key))
+                return EKSpeciesNode(parent_sip=self, index=np.array(key))
 
         raise TypeError(
             f"{key} is not a valid index. Should be a point on the "
@@ -342,7 +342,7 @@ class EKSpeciesNode(ScriptInterfaceHelper):
     _so_creation_policy = "GLOBAL"
 
     def required_keys(self):
-        return {"ek_sip", "index"}
+        return {"parent_sip", "index"}
 
     def validate_params(self, params):
         utils.check_required_keys(self.required_keys(), params.keys())
@@ -359,7 +359,7 @@ class EKSpeciesNode(ScriptInterfaceHelper):
 
     def __reduce__(self):
         raise NotImplementedError("Cannot serialize EK species node objects")
-        
+
     def __eq__(self, obj):
         return isinstance(obj, EKSpeciesNode) and self.index == obj.index
 
@@ -417,7 +417,9 @@ class EKSpeciesNode(ScriptInterfaceHelper):
         """
 
         if isinstance(value, DensityBoundary):
-            self.call_method("set_node_density_at_boundary", value=value.density)
+            self.call_method(
+                "set_node_density_at_boundary",
+                value=value.density)
         elif value is None:
             self.call_method("set_node_density_at_boundary", value=None)
         else:
@@ -459,80 +461,14 @@ class EKSpeciesNode(ScriptInterfaceHelper):
                 "Parameter 'value' must be an instance of FluxBoundary or None")
 
 
-class EKSlice:
-
-    def required_keys(self):
-        return {"ek_sip", "ek_range", "node_grid"}
-
-    def __init__(self, **kwargs):
-        utils.check_required_keys(self.required_keys(), kwargs.keys())
-        ek_range = kwargs["ek_range"]
-        node_grid = kwargs["node_grid"]
-        self.indices = [np.atleast_1d(np.arange(node_grid[i])[ek_range[i]])
-                        for i in range(3)]
-        self.dimensions = [ind.size for ind in self.indices]
-        self._ek_sip = kwargs["ek_sip"]
-        self._node = EKSpeciesNode(ek_sip=self._ek_sip, index=[0, 0, 0])
+class EKSpeciesSlice(LatticeSliceWalberla):
+    _node_class = EKSpeciesNode
 
     def __reduce__(self):
         raise NotImplementedError("Cannot serialize EK species slice objects")
 
-    def __getattr__(self, attr):
-        node = self.__dict__.get("_node")
-        if node is None or not hasattr(node, attr):
-            if attr in self.__dict__:
-                return self.__dict__[attr]
-            raise AttributeError(
-                f"Object '{self.__class__.__name__}' has no attribute '{attr}'")
-
-        if 0 in self.dimensions:
-            return np.empty(0, dtype=type(None))
-
-        value = getattr(node, attr)
-        shape_val = np.shape(value)
-        dtype = value.dtype if isinstance(value, np.ndarray) else type(value)
-        np_gen = np.zeros if dtype in (int, float, bool) else np.empty
-        value_grid = np_gen((*self.dimensions, *shape_val), dtype=dtype)
-
-        indices = itertools.product(*map(enumerate, self.indices))
-        for (i, x), (j, y), (k, z) in indices:
-            err = node.call_method("override_index", index=[x, y, z])
-            assert err == 0
-            value_grid[i, j, k] = getattr(node, attr)
-
-        if shape_val == (1,):
-            value_grid = np.squeeze(value_grid, axis=-1)
-        return utils.array_locked(value_grid)
-
-    def __setattr__(self, attr, values):
-        node = self.__dict__.get("_node")
-        if node is None or not hasattr(node, attr):
-            self.__dict__[attr] = values
-            return
-        elif 0 in self.dimensions:
-            raise AttributeError("Cannot set properties of an empty EKSlice")
-
-        values = np.copy(values)
-        shape_val = np.shape(getattr(node, attr))
-        target_shape = (*self.dimensions, *shape_val)
-
-        # broadcast if only one element was provided
-        if values.shape == shape_val:
-            values = np.full(target_shape, values)
-
-        if values.shape != target_shape:
-            raise ValueError(
-                f"Input-dimensions of '{attr}' array {values.shape} does not match slice dimensions {target_shape}.")
-
-        indices = itertools.product(*map(enumerate, self.indices))
-        for (i, x), (j, y), (k, z) in indices:
-            err = node.call_method("override_index", index=[x, y, z])
-            assert err == 0
-            setattr(node, attr, values[i, j, k])
-
-    def __iter__(self):
-        return (EKSpeciesNode(ek_sip=self._ek_sip, index=np.array(index))
-                for index in itertools.product(*self.indices))
+    def setter_checks(self, attr, values):
+        pass
 
 
 @script_interface_register

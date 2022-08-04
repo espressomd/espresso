@@ -302,7 +302,8 @@ class LBTest:
         retval = node.call_method("override_index", index=[0, 0, shape[2]])
         self.assertEqual(retval, 1)
         np.testing.assert_array_equal(node.index, [2, 4, 6])
-        np.testing.assert_array_equal(lbf[-1, -1, -1].index, np.array(shape) - 1)
+        np.testing.assert_array_equal(
+            lbf[-1, -1, -1].index, np.array(shape) - 1)
 
     def test_incompatible_agrid(self):
         """
