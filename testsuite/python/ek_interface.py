@@ -316,33 +316,6 @@ class EKTest:
             with self.assertRaisesRegex(RuntimeError, f"(Parameter|Property) '{key}' is read-only"):
                 setattr(ek_species, key, 0)
 
-    # TODO walberla: fix infinite loop
-#    def test_grid_index(self):
-#        lattice = self.ek_lattice_class(
-#            n_ghost_layers=1, agrid=self.params["agrid"])
-#        ekspecies = self.make_default_ek_species(lattice)
-#        # access out of bounds
-#        out_of_bounds = max(ekspecies.shape) + 1
-#        error_msg = 'Index error'
-#        with self.assertRaisesRegex(Exception, error_msg):
-#            ekspecies[out_of_bounds, 0, 0].density
-#        with self.assertRaisesRegex(Exception, error_msg):
-#            ekspecies[0, out_of_bounds, 0].density
-#        with self.assertRaisesRegex(Exception, error_msg):
-#            ekspecies[0, 0, out_of_bounds].density
-#        # node index
-#        node = ekspecies[1, 2, 3]
-#        with self.assertRaisesRegex(RuntimeError, "Parameter 'index' is read-only"):
-#            node.index = [2, 4, 6]
-#        np.testing.assert_array_equal(np.copy(node.index), [1, 2, 3])
-#        retval = node.call_method('override_index', index=[2, 4, 6])
-#        self.assertEqual(retval, 0)
-#        np.testing.assert_array_equal(np.copy(node.index), [2, 4, 6])
-#        retval = node.call_method(
-#            'override_index', index=[0, 0, out_of_bounds])
-#        self.assertEqual(retval, 1)
-#        np.testing.assert_array_equal(np.copy(node.index), [2, 4, 6])
-
     # TODO walberla: implement equality operator
 #    def test_bool_operations_on_node(self):
 #        lattice = self.ek_lattice_class(
