@@ -85,7 +85,7 @@ void propagate() {
                                   velocity_field_id, force_field_id);
                   } catch (const std::runtime_error &e) {
                     runtimeErrorMsg() << e.what();
-                  };
+                  }
                 });
 
   EK::perform_reactions();

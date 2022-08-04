@@ -1,4 +1,6 @@
-// kernel generated with pystencils v1.0, lbmpy v1.0, lbmpy_walberla/pystencils_walberla from commit 01a28162ae1aacf7b96152c9f886ce54cc7f53ff
+// kernel generated with pystencils v1.0, lbmpy v1.0,
+// lbmpy_walberla/pystencils_walberla from commit
+// 01a28162ae1aacf7b96152c9f886ce54cc7f53ff
 
 //======================================================================================================================
 //
@@ -22,14 +24,12 @@
 #pragma once
 #include "core/DataTypes.h"
 
-#include "field/GhostLayerField.h"
-#include "field/SwapableCompare.h"
 #include "domain_decomposition/BlockDataID.h"
 #include "domain_decomposition/IBlock.h"
 #include "domain_decomposition/StructuredBlockStorage.h"
+#include "field/GhostLayerField.h"
+#include "field/SwapableCompare.h"
 #include <set>
-
-
 
 #ifdef __GNUC__
 #define RESTRICT __restrict__
@@ -39,77 +39,68 @@
 #define RESTRICT
 #endif
 
-#if ( defined WALBERLA_CXX_COMPILER_IS_GNU ) || ( defined WALBERLA_CXX_COMPILER_IS_CLANG )
-#   pragma GCC diagnostic push
-#   pragma GCC diagnostic ignored "-Wunused-parameter"
-#   pragma GCC diagnostic ignored "-Wreorder"
+#if (defined WALBERLA_CXX_COMPILER_IS_GNU) ||                                  \
+    (defined WALBERLA_CXX_COMPILER_IS_CLANG)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wreorder"
 #endif
 
 namespace walberla {
 namespace pystencils {
 
-
-class ReactionKernelBulk_1_single_precision
-{
+class ReactionKernelBulk_1_single_precision {
 public:
-    ReactionKernelBulk_1_single_precision( BlockDataID rho_0ID_, float order_0, float rate_coefficient, float stoech_0 )
-        : rho_0ID(rho_0ID_), order_0_(order_0), rate_coefficient_(rate_coefficient), stoech_0_(stoech_0)
-    {};
+  ReactionKernelBulk_1_single_precision(BlockDataID rho_0ID_, float order_0,
+                                        float rate_coefficient, float stoech_0)
+      : rho_0ID(rho_0ID_), order_0_(order_0),
+        rate_coefficient_(rate_coefficient), stoech_0_(stoech_0){};
 
-    
+  void run(IBlock *block);
 
-    void run(IBlock * block);
-    
-    void runOnCellInterval(const shared_ptr<StructuredBlockStorage> & blocks, const CellInterval & globalCellInterval, cell_idx_t ghostLayers, IBlock * block);
+  void runOnCellInterval(const shared_ptr<StructuredBlockStorage> &blocks,
+                         const CellInterval &globalCellInterval,
+                         cell_idx_t ghostLayers, IBlock *block);
 
-    
-    void operator() (IBlock * block)
-    {
-        run(block);
-    }
-    
+  void operator()(IBlock *block) { run(block); }
 
-    static std::function<void (IBlock *)> getSweep(const shared_ptr<ReactionKernelBulk_1_single_precision> & kernel)
-    {
-        return [kernel] 
-               (IBlock * b) 
-               { kernel->run(b); };
-    }
+  static std::function<void(IBlock *)>
+  getSweep(const shared_ptr<ReactionKernelBulk_1_single_precision> &kernel) {
+    return [kernel](IBlock *b) { kernel->run(b); };
+  }
 
-    static std::function<void (IBlock*)> getSweepOnCellInterval(const shared_ptr<ReactionKernelBulk_1_single_precision> & kernel, const shared_ptr<StructuredBlockStorage> & blocks, const CellInterval & globalCellInterval, cell_idx_t ghostLayers=1)
-    {
-        return [kernel, blocks, globalCellInterval, ghostLayers]
-               (IBlock * b) 
-               { kernel->runOnCellInterval(blocks, globalCellInterval, ghostLayers, b); };
-    }
+  static std::function<void(IBlock *)> getSweepOnCellInterval(
+      const shared_ptr<ReactionKernelBulk_1_single_precision> &kernel,
+      const shared_ptr<StructuredBlockStorage> &blocks,
+      const CellInterval &globalCellInterval, cell_idx_t ghostLayers = 1) {
+    return [kernel, blocks, globalCellInterval, ghostLayers](IBlock *b) {
+      kernel->runOnCellInterval(blocks, globalCellInterval, ghostLayers, b);
+    };
+  }
 
-    std::function<void (IBlock *)> getSweep()
-    {
-        return [this] 
-               (IBlock * b) 
-               { this->run(b); };
-    }
+  std::function<void(IBlock *)> getSweep() {
+    return [this](IBlock *b) { this->run(b); };
+  }
 
-    std::function<void (IBlock *)> getSweepOnCellInterval(const shared_ptr<StructuredBlockStorage> & blocks, const CellInterval & globalCellInterval, cell_idx_t ghostLayers=1)
-    {
-        return [this, blocks, globalCellInterval, ghostLayers]
-               (IBlock * b) 
-               { this->runOnCellInterval(blocks, globalCellInterval, ghostLayers, b); };
-    }
+  std::function<void(IBlock *)>
+  getSweepOnCellInterval(const shared_ptr<StructuredBlockStorage> &blocks,
+                         const CellInterval &globalCellInterval,
+                         cell_idx_t ghostLayers = 1) {
+    return [this, blocks, globalCellInterval, ghostLayers](IBlock *b) {
+      this->runOnCellInterval(blocks, globalCellInterval, ghostLayers, b);
+    };
+  }
 
-
-    BlockDataID rho_0ID;
-    float order_0_;
-    float rate_coefficient_;
-    float stoech_0_;
-
+  BlockDataID rho_0ID;
+  float order_0_;
+  float rate_coefficient_;
+  float stoech_0_;
 };
-
 
 } // namespace pystencils
 } // namespace walberla
 
-
-#if ( defined WALBERLA_CXX_COMPILER_IS_GNU ) || ( defined WALBERLA_CXX_COMPILER_IS_CLANG )
-#   pragma GCC diagnostic pop
+#if (defined WALBERLA_CXX_COMPILER_IS_GNU) ||                                  \
+    (defined WALBERLA_CXX_COMPILER_IS_CLANG)
+#pragma GCC diagnostic pop
 #endif
