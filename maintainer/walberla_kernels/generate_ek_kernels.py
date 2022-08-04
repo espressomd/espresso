@@ -215,9 +215,10 @@ with code_generation_context.CodeGeneration() as ctx:
     # ek reactions
     for i in range(1, max_num_reactants + 1):
         assignments = list(reaction_obj.generate_reaction(num_reactants=i))
+        filename_stem: str = f"ReactionKernelBulk_{i}_{precision_suffix}"
         pystencils_walberla.generate_sweep(
             ctx,
-            f"ReactionKernelBulk_{i}_{precision_suffix}",
+            filename_stem,
             assignments)
 
         filename_stem: str = f"ReactionKernelIndexed_{i}_{precision_suffix}"
@@ -230,3 +231,15 @@ with code_generation_context.CodeGeneration() as ctx:
             assignment=assignments)
         replace_getData_with_uncheckedFastGetData(
             filename=f"{filename_stem}.cpp")
+
+    # ek reactions helper functions
+    custom_additional_extensions.generate_kernel_selector(
+        generation_context=ctx,
+        class_name="ReactionKernelBulk",
+        max_num_reactants=max_num_reactants,
+        precision_suffix=pystencils_espresso.precision_suffix)
+    custom_additional_extensions.generate_kernel_selector(
+        generation_context=ctx,
+        class_name="ReactionKernelIndexed",
+        max_num_reactants=max_num_reactants,
+        precision_suffix=pystencils_espresso.precision_suffix)

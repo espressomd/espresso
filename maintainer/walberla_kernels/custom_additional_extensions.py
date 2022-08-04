@@ -292,3 +292,34 @@ def generate_boundary(
     source_extension = "cpp" if target == ps.enums.Target.CPU else "cu"
     generation_context.write_file(f"{class_name}.h", header)
     generation_context.write_file(f"{class_name}.{source_extension}", source)
+
+
+def generate_kernel_selector(
+        generation_context,
+        class_name,
+        namespace="pystencils",
+        max_num_reactants=None,
+        precision_suffix=None,
+):
+    """
+    Generate helper functions to select a kernel with the appropriate
+    floating-point precision and number of ek species for the currently
+    active ek reaction and ek lattice.
+    """
+
+    context = {
+        "namespace": namespace,
+        "class_name": class_name,
+        "precision_suffix": precision_suffix,
+        "max_num_reactants": max_num_reactants,
+    }
+
+    custom_env = jinja2.Environment(
+        loader=jinja2.FileSystemLoader(pathlib.Path(__file__).parent),
+        undefined=jinja2.StrictUndefined
+    )
+
+    header = custom_env.get_template(
+        "ReactionKernelSelector.tmpl.h").render(**context)
+
+    generation_context.write_file(f"{class_name}_all.h", header)

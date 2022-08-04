@@ -26,5 +26,6 @@ mv *.{cpp,h} $(git rev-parse --show-toplevel)/src/walberla_bridge/generated_kern
 python3 $(git rev-parse --show-toplevel)/maintainer/walberla_kernels/generate_ek_kernels.py
 python3 $(git rev-parse --show-toplevel)/maintainer/walberla_kernels/generate_ek_kernels.py --single-precision
 $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.{cpp,h}
+mv ReactionKernel*.{cpp,h} $(git rev-parse --show-toplevel)/src/walberla_bridge/electrokinetics/reactions/generated_kernels/
 mv *.{cpp,h} $(git rev-parse --show-toplevel)/src/walberla_bridge/electrokinetics/generated_kernels/
 ```
