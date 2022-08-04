@@ -342,9 +342,10 @@ class LBTest:
         # test __eq()__ where a node is equal to itself and not equal to any
         # other node
         assert lbf[0, 0, 0] == lbf[0, 0, 0]
-        x, y, z = range(int(self.system.box_l[0])), range(
-            int(self.system.box_l[1])), range(int(self.system.box_l[2]))
-        nodes = [lbf[i, j, k] for i, j, k in itertools.product(x, y, z)]
+        shape = np.around(self.system.box_l / self.params["agrid"]).astype(int)
+        nodes = [
+            lbf[ijk] for ijk in itertools.product(
+                range(shape[0]), range(shape[1]), range(shape[2]))]
         nodes.remove(lbf[0, 0, 0])
         assert all(lbf[0, 0, 0] != node for node in nodes)
         # test __hash()__ intercept to identify nodes based on index rather

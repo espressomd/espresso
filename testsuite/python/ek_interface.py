@@ -20,6 +20,7 @@
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
+import itertools
 import sys
 
 import espressomd
@@ -316,24 +317,22 @@ class EKTest:
             with self.assertRaisesRegex(RuntimeError, f"(Parameter|Property) '{key}' is read-only"):
                 setattr(ek_species, key, 0)
 
-    # TODO walberla: implement equality operator
-#    def test_bool_operations_on_node(self):
-#        lattice = self.ek_lattice_class(
-#            n_ghost_layers=1, agrid=self.params["agrid"])
-#        ekspecies = self.make_default_ek_species(lattice)
-#        # test __eq()__ where a node is equal to itself and not equal to any
-#        # other node
-#        assert ekspecies[0, 0, 0] == ekspecies[0, 0, 0]
-#        x, y, z = range(int(self.system.box_l[0])), range(
-#            int(self.system.box_l[1])), range(int(self.system.box_l[2]))
-#        nodes = [ekspecies[i, j, k] for i, j, k in itertools.product(x, y, z)]
-#        nodes.remove(ekspecies[0, 0, 0])
-#        assert all(ekspecies[0, 0, 0] != node for node in nodes)
-#        # test __hash()__ intercept to identify nodes based on index rather
-#        # than name. set() constructor runs hash()
-#        subset1, subset2 = nodes[:-10], nodes[-10:]
-#        assert len(set(subset1 + subset1)) == len(subset1)
-#        assert len(set(subset1 + subset2)) == len(subset1) + len(subset2)
+    def test_bool_operations_on_node(self):
+        ekspecies = self.make_default_ek_species()
+        # test __eq()__ where a node is equal to itself and not equal to any
+        # other node
+        assert ekspecies[0, 0, 0] == ekspecies[0, 0, 0]
+        shape = np.around(self.system.box_l / self.params["agrid"]).astype(int)
+        nodes = [
+            ekspecies[ijk] for ijk in itertools.product(
+                range(shape[0]), range(shape[1]), range(shape[2]))]
+        nodes.remove(ekspecies[0, 0, 0])
+        assert all(ekspecies[0, 0, 0] != node for node in nodes)
+        # test __hash()__ intercept to identify nodes based on index rather
+        # than name. set() constructor runs hash()
+        subset1, subset2 = nodes[:-10], nodes[-10:]
+        assert len(set(subset1 + subset1)) == len(subset1)
+        assert len(set(subset1 + subset2)) == len(subset1) + len(subset2)
 
 
 @utx.skipIfMissingFeatures("LB_WALBERLA")
