@@ -31,7 +31,7 @@
 
 #include "walberla_bridge/electrokinetics/reactions/EKReactionBase.hpp"
 #include "walberla_bridge/electrokinetics/reactions/EKReactionImplBulk.hpp"
-#include "walberla_bridge/electrokinetics/reactions/EKReactionIndexed.hpp"
+#include "walberla_bridge/electrokinetics/reactions/EKReactionImplIndexed.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameter.hpp"
@@ -116,7 +116,7 @@ public:
     std::transform(reactant.begin(), reactant.end(), output.begin(),
                    get_instance);
 
-    m_ekreaction = std::make_shared<::walberla::EKReactionIndexed>(
+    m_ekreaction = std::make_shared<::walberla::EKReactionImplIndexed>(
         lattice, output, get_value<double>(args, "coefficient"));
   }
 
@@ -145,7 +145,7 @@ public:
   }
 
 private:
-  std::shared_ptr<::walberla::EKReactionIndexed> m_ekreaction;
+  std::shared_ptr<::walberla::EKReactionImplIndexed> m_ekreaction;
 };
 
 } // namespace ScriptInterface::walberla

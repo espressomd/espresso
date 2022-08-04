@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "EKReactionIndexed.hpp"
+#include "EKReactionImplIndexed.hpp"
 #include "BlockAndCell.hpp"
 #include "EKReactant.hpp"
 #include "EKReactionBase.hpp"
@@ -113,7 +113,7 @@ void fillFromFlagField(const shared_ptr<StructuredBlockForest> &blocks,
 }
 } // namespace detail
 
-EKReactionIndexed::EKReactionIndexed(
+EKReactionImplIndexed::EKReactionImplIndexed(
     std::shared_ptr<LatticeWalberla> lattice,
     std::vector<std::shared_ptr<EKReactant>> reactants, double coefficient)
     : EKReactionBase(lattice, reactants, coefficient),
@@ -149,7 +149,7 @@ EKReactionIndexed::EKReactionIndexed(
   }
 }
 
-void EKReactionIndexed::perform_reaction() {
+void EKReactionImplIndexed::perform_reaction() {
   boundary_update();
 
   auto kernel = detail::ReactionKernelIndexedSelector::get_kernel(
@@ -160,8 +160,8 @@ void EKReactionIndexed::perform_reaction() {
   }
 }
 
-void EKReactionIndexed::set_node_is_boundary(const Utils::Vector3i &node,
-                                             bool is_boundary) {
+void EKReactionImplIndexed::set_node_is_boundary(const Utils::Vector3i &node,
+                                                 bool is_boundary) {
   auto bc = get_block_and_cell(*get_lattice(), node, true);
   if (!bc)
     return;
@@ -178,7 +178,7 @@ void EKReactionIndexed::set_node_is_boundary(const Utils::Vector3i &node,
 }
 
 boost::optional<bool>
-EKReactionIndexed::get_node_is_boundary(const Utils::Vector3i &node) {
+EKReactionImplIndexed::get_node_is_boundary(const Utils::Vector3i &node) {
   auto bc = get_block_and_cell(*get_lattice(), node, true);
   if (!bc)
     return {boost::none};
@@ -189,7 +189,7 @@ EKReactionIndexed::get_node_is_boundary(const Utils::Vector3i &node) {
   return {flag_field->isFlagSet(bc->cell, boundary_flag)};
 }
 
-void EKReactionIndexed::boundary_update() {
+void EKReactionImplIndexed::boundary_update() {
   // take one IndexVector/IndexInfo as a dummy-value
   using IndexVectors = detail::ReactionKernelIndexedSelector::KernelTrait<>::
       ReactionKernelIndexed::IndexVectors;

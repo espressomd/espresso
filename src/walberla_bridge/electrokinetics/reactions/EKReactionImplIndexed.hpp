@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_EKREACTIONINDEXED_HPP
-#define ESPRESSO_SRC_WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_EKREACTIONINDEXED_HPP
+#ifndef ESPRESSO_SRC_WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_EKREACTIONIMPLINDEXED_HPP
+#define ESPRESSO_SRC_WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_EKREACTIONIMPLINDEXED_HPP
 
 #include "EKReactant.hpp"
 #include "EKReactionBase.hpp"
@@ -33,7 +33,7 @@
 
 namespace walberla {
 
-class EKReactionIndexed : public EKReactionBase {
+class EKReactionImplIndexed : public EKReactionBase {
 private:
   BlockDataID m_flagfield_id;
   BlockDataID m_indexvector_id;
@@ -41,10 +41,10 @@ private:
   bool m_pending_changes;
 
 public:
-  EKReactionIndexed(std::shared_ptr<LatticeWalberla> lattice,
-                    std::vector<std::shared_ptr<EKReactant>> reactants,
-                    double coefficient);
-  ~EKReactionIndexed() override = default;
+  EKReactionImplIndexed(std::shared_ptr<LatticeWalberla> lattice,
+                        std::vector<std::shared_ptr<EKReactant>> reactants,
+                        double coefficient);
+  ~EKReactionImplIndexed() override = default;
 
   using EKReactionBase::get_coefficient;
   using EKReactionBase::get_lattice;

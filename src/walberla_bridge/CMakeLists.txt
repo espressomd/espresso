@@ -92,7 +92,7 @@ add_library(
   lb_walberla_init.cpp electrokinetics/ek_walberla_init.cpp LatticeModel.cpp
   LatticeWalberla.cpp ${WalberlaBridgeCodegen_SRC}
   electrokinetics/reactions/EKReactionImplBulk.cpp
-  electrokinetics/reactions/EKReactionIndexed.cpp)
+  electrokinetics/reactions/EKReactionImplIndexed.cpp)
 add_library(Espresso::walberla ALIAS Espresso_walberla)
 
 if(WITH_CUDA AND WALBERLA_BUILD_WITH_CUDA)
