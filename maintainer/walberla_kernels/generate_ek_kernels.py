@@ -107,11 +107,8 @@ max_num_reactants: int = 5
 react_rhos, orders, stoechom_coefs = [], [], []
 for i in range(max_num_reactants):
     react_rhos.append(
-        ps.fields(
-            f"rho_{i}: {data_type_np}[#D]".replace(
-                "#",
-                str(dim)),
-            layout="zyxf"))
+        ps.fields(f"rho_{i}: {data_type_np}[#D]".replace("#", str(dim)),
+                  layout="zyxf"))
     orders.append(ps.TypedSymbol(f"order_{i}", data_type_np))
     stoechom_coefs.append(ps.TypedSymbol(f"stoech_{i}", data_type_np))
 rate_coef = sp.Symbol("rate_coefficient")
@@ -133,26 +130,37 @@ with code_generation_context.CodeGeneration() as ctx:
     # codegen configuration
     config = pystencils_espresso.generate_config(ctx, params)
 
-    pystencils_walberla.generate_sweep(ctx, f"DiffusiveFluxKernel_{precision_suffix}",
-                                       ek.flux(
-                                           include_vof=False,
-                                           include_fluctuations=False,
-                                           rng_node=precision_rng),
-                                       staggered=True, **params)
-    pystencils_walberla.generate_sweep(ctx, f"DiffusiveFluxKernelWithElectrostatic_{precision_suffix}",
-                                       ek_electrostatic.flux(
-                                           include_vof=False, include_fluctuations=False, rng_node=precision_rng),
-                                       staggered=True, **params)
-    pystencils_walberla.generate_sweep(ctx, f"AdvectiveFluxKernel_{precision_suffix}", ek.flux_advection(),
-                                       staggered=True, **params)
+    pystencils_walberla.generate_sweep(
+        ctx,
+        f"DiffusiveFluxKernel_{precision_suffix}",
+        ek.flux(include_vof=False, include_fluctuations=False,
+                rng_node=precision_rng),
+        staggered=True,
+        **params)
+    pystencils_walberla.generate_sweep(
+        ctx,
+        f"DiffusiveFluxKernelWithElectrostatic_{precision_suffix}",
+        ek_electrostatic.flux(include_vof=False, include_fluctuations=False,
+                              rng_node=precision_rng),
+        staggered=True,
+        **params)
+    pystencils_walberla.generate_sweep(
+        ctx,
+        f"AdvectiveFluxKernel_{precision_suffix}",
+        ek.flux_advection(),
+        staggered=True,
+        **params)
     pystencils_walberla.generate_sweep(
         ctx,
         f"ContinuityKernel_{precision_suffix}",
         ek.continuity(),
         **params)
 
-    pystencils_walberla.generate_sweep(ctx, f"FrictionCouplingKernel_{precision_suffix}", ek.friction_coupling(),
-                                       **params)
+    pystencils_walberla.generate_sweep(
+        ctx,
+        f"FrictionCouplingKernel_{precision_suffix}",
+        ek.friction_coupling(),
+        **params)
 
     # generate dynamic fixed flux
     stencil = lbmpy.LBStencil(stencil="D3Q27")
@@ -161,14 +169,15 @@ with code_generation_context.CodeGeneration() as ctx:
     dynamic_flux_additional_data = custom_additional_extensions.FluxAdditionalDataHandler(
         stencil=stencil, boundary_object=dynamic_flux)
 
-    pystencils_walberla.generate_staggered_flux_boundary(generation_context=ctx,
-                                                         class_name=f"FixedFlux_{precision_suffix}",
-                                                         boundary_object=dynamic_flux,
-                                                         dim=dim,
-                                                         neighbor_stencil=stencil,
-                                                         index_shape=flux_field.index_shape,
-                                                         target=target,
-                                                         additional_data_handler=dynamic_flux_additional_data)
+    pystencils_walberla.generate_staggered_flux_boundary(
+        generation_context=ctx,
+        class_name=f"FixedFlux_{precision_suffix}",
+        boundary_object=dynamic_flux,
+        dim=dim,
+        neighbor_stencil=stencil,
+        index_shape=flux_field.index_shape,
+        target=target,
+        additional_data_handler=dynamic_flux_additional_data)
 
     filename_stem: str = f"FixedFlux_{precision_suffix}"
     replace_real_t(
@@ -197,19 +206,27 @@ with code_generation_context.CodeGeneration() as ctx:
         filename=f"{filename_stem}.h",
         data_type=config.data_type.default_factory().c_name)
 
-    pystencils_walberla.generate_pack_info_from_kernel(ctx, f"DensityPackInfo_{precision_suffix}",
-                                                       ek_electrostatic.continuity(),
-                                                       target=target)
+    pystencils_walberla.generate_pack_info_from_kernel(
+        ctx,
+        f"DensityPackInfo_{precision_suffix}",
+        ek_electrostatic.continuity(),
+        target=target)
 
     # ek reactions
     for i in range(1, max_num_reactants + 1):
         assignments = list(reaction_obj.generate_reaction(num_reactants=i))
         pystencils_walberla.generate_sweep(
-            ctx, f"ReactionKernelBulk_{i}_{precision_suffix}", assignments)
+            ctx,
+            f"ReactionKernelBulk_{i}_{precision_suffix}",
+            assignments)
 
         filename_stem: str = f"ReactionKernelIndexed_{i}_{precision_suffix}"
-        custom_additional_extensions.generate_boundary(generation_context=ctx, stencil=dirichlet_stencil,
-                                                       class_name=filename_stem,
-                                                       dim=dim, target=target, assignment=assignments)
+        custom_additional_extensions.generate_boundary(
+            generation_context=ctx,
+            stencil=dirichlet_stencil,
+            class_name=filename_stem,
+            dim=dim,
+            target=target,
+            assignment=assignments)
         replace_getData_with_uncheckedFastGetData(
             filename=f"{filename_stem}.cpp")
