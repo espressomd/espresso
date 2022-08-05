@@ -21,6 +21,7 @@
 
 #include "Particle.hpp"
 #include "config.hpp"
+#include "rotation.hpp"
 
 namespace ParticleObservables {
 /**
@@ -31,6 +32,7 @@ namespace ParticleObservables {
 template <> struct traits<Particle> {
   auto position(Particle const &p) const { return p.pos(); }
   auto velocity(Particle const &p) const { return p.v(); }
+  auto force(Particle const &p) const { return p.force(); }
   auto mass(Particle const &p) const {
 #ifdef VIRTUAL_SITES
     // we exclude virtual particles since their mass does not have a meaning
@@ -43,6 +45,27 @@ template <> struct traits<Particle> {
   auto dipole_moment(Particle const &p) const {
 #if defined(ROTATION) && defined(DIPOLES)
     return p.calc_dip();
+#else
+    return Utils::Vector3d{};
+#endif
+  }
+  auto velocity_body(Particle const &p) const {
+#ifdef ROTATION
+    return convert_vector_space_to_body(p, p.v());
+#else
+    return Utils::Vector3d{};
+#endif
+  }
+  auto angular_velocity(Particle const &p) const {
+#ifdef ROTATION
+    return convert_vector_body_to_space(p, p.omega());
+#else
+    return Utils::Vector3d{};
+#endif
+  }
+  auto angular_velocity_body(Particle const &p) const {
+#ifdef ROTATION
+    return p.omega();
 #else
     return Utils::Vector3d{};
 #endif

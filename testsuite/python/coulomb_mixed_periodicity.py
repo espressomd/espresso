@@ -92,7 +92,7 @@ class CoulombMixedPeriodicity(ut.TestCase):
         self.setup_elc_system()
 
         p3m = espressomd.electrostatics.P3M(
-            prefactor=1., accuracy=1e-6, mesh=[42, 42, 50], r_cut=3.5)
+            prefactor=1., accuracy=1e-6, mesh=[42, 42, 50], r_cut=3.)
         elc = espressomd.electrostatics.ELC(
             actor=p3m, maxPWerror=1E-6, gap_size=3)
 
@@ -106,7 +106,7 @@ class CoulombMixedPeriodicity(ut.TestCase):
         self.setup_elc_system()
 
         p3m = espressomd.electrostatics.P3M(
-            prefactor=1., accuracy=1e-6, mesh=[42, 42, 50], r_cut=3.5)
+            prefactor=1., accuracy=1e-6, mesh=[42, 42, 50], r_cut=3.)
         elc = espressomd.electrostatics.ELC(
             actor=p3m, maxPWerror=1E-6, gap_size=3.)
 

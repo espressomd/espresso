@@ -21,8 +21,6 @@
 
 #include "PidObservable.hpp"
 
-#include <vector>
-
 namespace Observables {
 
 /** Extract particle velocities.

@@ -71,14 +71,14 @@ unit_test(NAME unordered_map_test SRC unordered_map_test.cpp DEPENDS
 unit_test(NAME u32_to_u64_test SRC u32_to_u64_test.cpp DEPENDS Espresso::utils
           NUM_PROC 1)
 unit_test(NAME gather_buffer_test SRC gather_buffer_test.cpp DEPENDS
-          Espresso::utils Boost::mpi MPI::MPI_CXX NUM_PROC 4)
+          Espresso::utils::mpi Boost::mpi MPI::MPI_CXX NUM_PROC 4)
 unit_test(NAME scatter_buffer_test SRC scatter_buffer_test.cpp DEPENDS
-          Espresso::utils Boost::mpi MPI::MPI_CXX NUM_PROC 4)
+          Espresso::utils::mpi Boost::mpi MPI::MPI_CXX NUM_PROC 4)
 unit_test(NAME all_compare_test SRC all_compare_test.cpp DEPENDS
-          Espresso::utils Boost::mpi MPI::MPI_CXX NUM_PROC 3)
-unit_test(NAME gatherv_test SRC gatherv_test.cpp DEPENDS Espresso::utils
+          Espresso::utils::mpi Boost::mpi MPI::MPI_CXX NUM_PROC 3)
+unit_test(NAME gatherv_test SRC gatherv_test.cpp DEPENDS Espresso::utils::mpi
           Boost::mpi MPI::MPI_CXX NUM_PROC 3)
-unit_test(NAME sendrecv_test SRC sendrecv_test.cpp DEPENDS Espresso::utils
+unit_test(NAME sendrecv_test SRC sendrecv_test.cpp DEPENDS Espresso::utils::mpi
           Boost::mpi MPI::MPI_CXX Espresso::utils NUM_PROC 3)
 unit_test(NAME serialization_test SRC serialization_test.cpp DEPENDS
           Espresso::utils Boost::serialization Boost::mpi MPI::MPI_CXX NUM_PROC

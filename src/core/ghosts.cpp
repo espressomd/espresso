@@ -84,22 +84,147 @@ private:
   std::vector<char> bondbuf; ///< Buffer for bond lists
 };
 
-static std::size_t calc_transmit_size(unsigned data_parts) {
-  std::size_t size = {};
-  if (data_parts & GHOSTTRANS_PROPRTS)
-    size += Utils::MemcpyOArchive::packing_size<ParticleProperties>();
-  if (data_parts & GHOSTTRANS_POSITION)
-    size += Utils::MemcpyOArchive::packing_size<ParticlePosition>();
-  if (data_parts & GHOSTTRANS_MOMENTUM)
-    size += Utils::MemcpyOArchive::packing_size<ParticleMomentum>();
-  if (data_parts & GHOSTTRANS_FORCE)
-    size += Utils::MemcpyOArchive::packing_size<ParticleForce>();
-#ifdef BOND_CONSTRAINT
-  if (data_parts & GHOSTTRANS_RATTLE)
-    size += Utils::MemcpyOArchive::packing_size<ParticleRattle>();
-#endif
+/** @brief Pseudo-archive to calculate the size of the serialization buffer. */
+class SerializationSizeCalculator {
+  std::size_t m_size = 0;
 
-  return size;
+public:
+  auto size() const { return m_size; }
+
+  template <class T> auto &operator<<(T &t) {
+    m_size += sizeof(T);
+    return *this;
+  }
+
+  template <class T> auto &operator&(T &t) { return *this << t; }
+};
+
+/** @brief Type of reduction to carry out during serialization. */
+enum class ReductionPolicy {
+  /** @brief Reduction for domain-to-domain particle communication. */
+  MOVE,
+  /** @brief Reduction for cell-to-cell particle update. */
+  UPDATE,
+};
+
+/** @brief Whether to save the state to or load the state from the archive. */
+enum class SerializationDirection { SAVE, LOAD };
+
+/**
+ * @brief Serialize particle data, possibly with reduction.
+ * The reduction can take place during the save stage, e.g. to apply
+ * a ghost shift to the particle position, or during the load stage,
+ * e.g. to transfer momentum between particles in two local cells.
+ */
+template <class Archive>
+static void
+serialize_and_reduce(Archive &ar, Particle &p, unsigned int data_parts,
+                     ReductionPolicy policy, SerializationDirection direction,
+                     Utils::Vector3d const *ghost_shift) {
+  if (data_parts & GHOSTTRANS_PROPRTS) {
+    ar &p.id() & p.mol_id() & p.type();
+#ifdef VIRTUAL_SITES
+    ar &p.virtual_flag();
+#endif
+#ifdef ROTATION
+    ar &p.rotation();
+#ifdef ROTATIONAL_INERTIA
+    ar &p.rinertia();
+#endif
+#endif
+#ifdef MASS
+    ar &p.mass();
+#endif
+#ifdef ELECTROSTATICS
+    ar &p.q();
+#endif
+#ifdef DIPOLES
+    ar &p.dipm();
+#endif
+#ifdef LB_ELECTROHYDRODYNAMICS
+    ar &p.mu_E();
+#endif
+#ifdef VIRTUAL_SITES_RELATIVE
+    ar &p.vs_relative();
+#endif
+#ifdef THERMOSTAT_PER_PARTICLE
+    ar &p.gamma();
+#ifdef ROTATION
+    ar &p.gamma_rot();
+#endif
+#endif
+#ifdef EXTERNAL_FORCES
+    ar &p.fixed();
+    ar &p.ext_force();
+#ifdef ROTATION
+    ar &p.ext_torque();
+#endif
+#endif
+#ifdef ENGINE
+    ar &p.swimming();
+#endif
+  }
+  if (data_parts & GHOSTTRANS_POSITION) {
+    if (direction == SerializationDirection::SAVE and ghost_shift != nullptr) {
+      /* ok, this is not nice, but perhaps fast */
+      auto pos = p.pos() + *ghost_shift;
+      ar &pos;
+    } else {
+      ar &p.pos();
+    }
+#ifdef ROTATION
+    ar &p.quat();
+#endif
+#ifdef BOND_CONSTRAINT
+    ar &p.pos_last_time_step();
+#endif
+  }
+  if (data_parts & GHOSTTRANS_MOMENTUM) {
+    ar &p.v();
+#ifdef ROTATION
+    ar &p.omega();
+#endif
+  }
+  if (data_parts & GHOSTTRANS_FORCE) {
+    if (policy == ReductionPolicy::UPDATE and
+        direction == SerializationDirection::LOAD) {
+      Utils::Vector3d force;
+      ar &force;
+      p.force() += force;
+    } else {
+      ar &p.force();
+    }
+#ifdef ROTATION
+    if (policy == ReductionPolicy::UPDATE and
+        direction == SerializationDirection::LOAD) {
+      Utils::Vector3d torque;
+      ar &torque;
+      p.torque() += torque;
+    } else {
+      ar &p.torque();
+    }
+#endif
+  }
+#ifdef BOND_CONSTRAINT
+  if (data_parts & GHOSTTRANS_RATTLE) {
+    if (policy == ReductionPolicy::UPDATE and
+        direction == SerializationDirection::LOAD) {
+      Utils::Vector3d correction;
+      ar &correction;
+      p.rattle_correction() += correction;
+    } else {
+      ar &p.rattle_correction();
+    }
+  }
+#endif
+}
+
+static std::size_t calc_transmit_size(unsigned data_parts) {
+  SerializationSizeCalculator sizeof_archive;
+  Particle p{};
+  serialize_and_reduce(sizeof_archive, p, data_parts, ReductionPolicy::MOVE,
+                       SerializationDirection::SAVE, nullptr);
+  return sizeof_archive.size();
 }
 
 static std::size_t calc_transmit_size(const GhostCommunication &ghost_comm,
@@ -135,29 +260,11 @@ static void prepare_send_buffer(CommBuf &send_buffer,
       int np = static_cast<int>(part_list->size());
       archiver << np;
     } else {
-      for (Particle &part : *part_list) {
-        if (data_parts & GHOSTTRANS_PROPRTS) {
-          archiver << part.p;
-        }
-        if (data_parts & GHOSTTRANS_POSITION) {
-          /* ok, this is not nice, but perhaps fast */
-          auto pp = part.r;
-          pp.p += ghost_comm.shift;
-          archiver << pp;
-        }
-        if (data_parts & GHOSTTRANS_MOMENTUM) {
-          archiver << part.m;
-        }
-        if (data_parts & GHOSTTRANS_FORCE) {
-          archiver << part.f;
-        }
-#ifdef BOND_CONSTRAINT
-        if (data_parts & GHOSTTRANS_RATTLE) {
-          archiver << part.rattle_params();
-        }
-#endif
+      for (auto &p : *part_list) {
+        serialize_and_reduce(archiver, p, data_parts, ReductionPolicy::MOVE,
+                             SerializationDirection::SAVE, &ghost_comm.shift);
         if (data_parts & GHOSTTRANS_BONDS) {
-          bond_archiver << part.bonds();
+          bond_archiver << p.bonds();
         }
       }
     }
@@ -199,35 +306,20 @@ static void put_recv_buffer(CommBuf &recv_buffer,
     }
   } else {
     for (auto part_list : ghost_comm.part_lists) {
-      for (Particle &part : *part_list) {
-        if (data_parts & GHOSTTRANS_PROPRTS) {
-          archiver >> part.p;
-        }
-        if (data_parts & GHOSTTRANS_POSITION) {
-          archiver >> part.r;
-        }
-        if (data_parts & GHOSTTRANS_MOMENTUM) {
-          archiver >> part.m;
-        }
-        if (data_parts & GHOSTTRANS_FORCE) {
-          archiver >> part.f;
-        }
-#ifdef BOND_CONSTRAINT
-        if (data_parts & GHOSTTRANS_RATTLE) {
-          archiver >> part.rattle_params();
-        }
-#endif
+      for (auto &p : *part_list) {
+        serialize_and_reduce(archiver, p, data_parts, ReductionPolicy::MOVE,
+                             SerializationDirection::LOAD, nullptr);
       }
     }
     if (data_parts & GHOSTTRANS_BONDS) {
       namespace io = boost::iostreams;
       io::stream<io::array_source> bond_stream(io::array_source{
           recv_buffer.bonds().data(), recv_buffer.bonds().size()});
-      boost::archive::binary_iarchive bond_archive(bond_stream);
+      boost::archive::binary_iarchive bond_archiver(bond_stream);
 
       for (auto part_list : ghost_comm.part_lists) {
-        for (Particle &part : *part_list) {
-          bond_archive >> part.bonds();
+        for (auto &p : *part_list) {
+          bond_archiver >> p.bonds();
         }
       }
     }
@@ -269,43 +361,35 @@ static void add_forces_from_recv_buffer(CommBuf &recv_buffer,
 
 static void cell_cell_transfer(const GhostCommunication &ghost_comm,
                                unsigned int data_parts) {
+  CommBuf buffer;
+  if (!(data_parts & GHOSTTRANS_PARTNUM)) {
+    buffer.resize(calc_transmit_size(data_parts));
+  }
   /* transfer data */
   auto const offset = ghost_comm.part_lists.size() / 2;
   for (std::size_t pl = 0; pl < offset; pl++) {
-    const auto *src_list = ghost_comm.part_lists[pl];
+    auto *src_list = ghost_comm.part_lists[pl];
     auto *dst_list = ghost_comm.part_lists[pl + offset];
 
     if (data_parts & GHOSTTRANS_PARTNUM) {
       prepare_ghost_cell(dst_list, static_cast<int>(src_list->size()));
     } else {
-      auto const &src_part = *src_list;
+      auto &src_part = *src_list;
       auto &dst_part = *dst_list;
       assert(src_part.size() == dst_part.size());
 
       for (std::size_t i = 0; i < src_part.size(); i++) {
-        auto const &part1 = src_part.begin()[i];
-        auto &part2 = dst_part.begin()[i];
-
-        if (data_parts & GHOSTTRANS_PROPRTS) {
-          part2.p = part1.p;
-        }
+        auto ar_out = Utils::MemcpyOArchive{Utils::make_span(buffer)};
+        auto ar_in = Utils::MemcpyIArchive{Utils::make_span(buffer)};
+        auto &p1 = src_part.begin()[i];
+        auto &p2 = dst_part.begin()[i];
+        serialize_and_reduce(ar_out, p1, data_parts, ReductionPolicy::UPDATE,
+                             SerializationDirection::SAVE, &ghost_comm.shift);
+        serialize_and_reduce(ar_in, p2, data_parts, ReductionPolicy::UPDATE,
+                             SerializationDirection::LOAD, nullptr);
         if (data_parts & GHOSTTRANS_BONDS) {
-          part2.bonds() = part1.bonds();
+          p2.bonds() = p1.bonds();
         }
-        if (data_parts & GHOSTTRANS_POSITION) {
-          /* ok, this is not nice, but perhaps fast */
-          part2.r = part1.r;
-          part2.pos() += ghost_comm.shift;
-        }
-        if (data_parts & GHOSTTRANS_MOMENTUM) {
-          part2.m = part1.m;
-        }
-        if (data_parts & GHOSTTRANS_FORCE)
-          part2.f += part1.f;
-#ifdef BOND_CONSTRAINT
-        if (data_parts & GHOSTTRANS_RATTLE)
-          part2.rattle_params() += part1.rattle_params();
-#endif
       }
     }
   }

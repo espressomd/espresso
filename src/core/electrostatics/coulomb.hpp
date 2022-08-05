@@ -120,7 +120,7 @@ void check_charge_neutrality(double relative_tolerance);
 Utils::Vector9d calc_pressure_long_range(ParticleRange const &particles);
 
 void sanity_checks();
-double cutoff(Utils::Vector3d const &box_l);
+double cutoff();
 
 void on_observable_calc();
 void on_coulomb_change();

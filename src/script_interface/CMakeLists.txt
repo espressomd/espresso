@@ -54,7 +54,7 @@ install(TARGETS Espresso_script_interface
 
 target_link_libraries(
   Espresso_script_interface PRIVATE Espresso::config Espresso::core
-  PUBLIC Espresso::utils MPI::MPI_CXX Espresso::shapes
+  PUBLIC Espresso::utils MPI::MPI_CXX Boost::mpi Espresso::shapes
   PRIVATE Espresso::cpp_flags)
 
 target_include_directories(Espresso_script_interface

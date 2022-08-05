@@ -42,8 +42,6 @@ set(cython_SRC "${cython_SRC}" CACHE INTERNAL "cython_SRC")
 file(GLOB cython_HEADER *.pxd)
 set(cython_HEADER "${cython_HEADER}" CACHE INTERNAL "cython_HEADER")
 file(GLOB cython_AUX *.py)
-configure_file(MDA_ESP/__init__.py
-               ${CMAKE_CURRENT_BINARY_DIR}/MDA_ESP/__init__.py COPYONLY)
 set(cython_AUX "${cython_AUX}" CACHE INTERNAL "cython_AUX")
 
 add_subdirectory(io)
@@ -52,24 +50,21 @@ list(REMOVE_DUPLICATES cython_SRC)
 
 add_library(Espresso_pyx_flags INTERFACE)
 add_library(Espresso::pyx_flags ALIAS Espresso_pyx_flags)
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  target_compile_options(
-    Espresso_pyx_flags
-    INTERFACE -Wno-pedantic -Wno-cpp -Wno-strict-aliasing
-              -Wno-maybe-uninitialized -Wno-unused-variable
-              -Wno-deprecated-declarations)
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL
-                                                 "AppleClang")
-  target_compile_options(
-    Espresso_pyx_flags
-    INTERFACE -Wno-pedantic -Wno-\#warnings -Wno-sometimes-uninitialized
-              -Wno-unused-variable -Wno-deprecated-declarations)
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
-  target_compile_options(Espresso_pyx_flags INTERFACE -wd1224)
-else()
-  target_compile_options(Espresso_pyx_flags INTERFACE -Wno-pedantic
-                                                      -Wno-unused-variable)
-endif()
+target_compile_options(
+  Espresso_pyx_flags
+  INTERFACE
+    $<$<NOT:$<CXX_COMPILER_ID:Intel,IntelLLVM>>:-Wno-pedantic>
+    $<$<NOT:$<CXX_COMPILER_ID:Intel,IntelLLVM>>:-Wno-deprecated-declarations>
+    $<$<CXX_COMPILER_ID:Intel,IntelLLVM>:-diag-disable=1224>
+    $<$<CXX_COMPILER_ID:GNU>:-Wno-cpp>
+    $<$<CXX_COMPILER_ID:GNU>:-Wno-strict-aliasing>
+    $<$<CXX_COMPILER_ID:GNU>:-Wno-maybe-uninitialized>
+    $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wno-sometimes-uninitialized>
+    $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wno-\#warnings>
+    $<$<AND:$<CXX_COMPILER_ID:Clang>,$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,14.0.0>>:-Wno-c++17-attribute-extensions>
+    $<$<AND:$<CXX_COMPILER_ID:AppleClang>,$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,14.0.0>>:-Wno-c++17-attribute-extensions>
+    $<$<CXX_COMPILER_ID:IntelLLVM>:-Wno-c++17-attribute-extensions>
+    -Wno-unused-variable)
 
 # Configure, compile and install Cython files
 foreach(cython_file ${cython_SRC})
