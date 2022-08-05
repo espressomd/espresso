@@ -80,6 +80,7 @@ void set_boundary_from_grid(BoundaryModel &boundary,
                             std::vector<DataType> const &data_flat) {
   // reshape grids
   auto const grid_size = lattice.get_grid_dimensions();
+  assert(raster_flat.size() == Utils::product(grid_size));
   boost::const_multi_array_ref<DataType, 3> data_grid(data_flat.data(),
                                                       grid_size);
   boost::const_multi_array_ref<int, 3> raster(raster_flat.data(), grid_size);
