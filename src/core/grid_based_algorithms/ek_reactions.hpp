@@ -32,6 +32,7 @@ namespace EK {
 extern EKReactions<walberla::EKReactionBase> ek_reactions;
 
 void perform_reactions();
+
 } // namespace EK
 
 #endif // LB_WALBERLA

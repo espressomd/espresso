@@ -104,7 +104,7 @@ void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force,
                   double time_step) {
   /* transform momentum transfer to lattice units
      (eq. (12) @cite ahlrichs99a) */
-  auto const delta_j = -(time_step / lb_lbfluid_get_lattice_speed()) * force;
+  auto const delta_j = -(time_step / LB::get_lattice_speed()) * force;
   lb_lbinterpolation_add_force_density(pos, delta_j);
 }
 
@@ -129,7 +129,7 @@ Utils::Vector3d lb_drag_force(Particle const &p,
      this is done by linear interpolation (eq. (11) @cite ahlrichs99a) */
   auto const interpolated_u =
       lb_lbinterpolation_get_interpolated_velocity(shifted_pos) *
-      lb_lbfluid_get_lattice_speed();
+      LB::get_lattice_speed();
 
   Utils::Vector3d v_drift = interpolated_u + vel_offset;
   /* calculate viscous force (eq. (9) @cite ahlrichs99a) */
@@ -172,7 +172,7 @@ inline bool in_local_domain(Utils::Vector3d const &pos, double halo = 0.) {
 }
 
 bool in_local_halo(Utils::Vector3d const &pos) {
-  auto const halo = 0.5 * lb_lbfluid_get_agrid();
+  auto const halo = 0.5 * LB::get_agrid();
 
   return in_local_domain(pos, halo);
 }
@@ -318,7 +318,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
         }
       }
       using Utils::sqr;
-      auto const kT = lb_lbfluid_get_kT() * sqr(lb_lbfluid_get_lattice_speed());
+      auto const kT = LB::get_kT() * sqr(LB::get_lattice_speed());
       /* Eq. (16) @cite ahlrichs99a.
        * The factor 12 comes from the fact that we use random numbers
        * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
@@ -351,7 +351,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
 
 void lb_lbcoupling_propagate() {
   if (lattice_switch != ActiveLB::NONE) {
-    if (lb_lbfluid_get_kT() > 0.0) {
+    if (LB::get_kT() > 0.0) {
       if (lattice_switch == ActiveLB::WALBERLA) {
         lb_particle_coupling.rng_counter_coupling->increment();
       }

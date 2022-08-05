@@ -45,7 +45,7 @@ public:
           [this](Variant const &value) {
             if (is_none(value)) {
               context()->parallel_try_catch(
-                  []() { lb_lbfluid_lebc_sanity_checks(-1, -1); });
+                  []() { LB::lebc_sanity_checks(-1, -1); });
               m_protocol = nullptr;
               box_geo.set_lees_edwards_bc(LeesEdwardsBC{0., 0., -1, -1});
               ::LeesEdwards::unset_protocol();
@@ -96,7 +96,7 @@ public:
           throw std::invalid_argument("Parameters 'shear_direction' and "
                                       "'shear_plane_normal' must differ");
         }
-        lb_lbfluid_lebc_sanity_checks(shear_direction, shear_plane_normal);
+        LB::lebc_sanity_checks(shear_direction, shear_plane_normal);
         // update box geometry and cell structure
         box_geo.set_lees_edwards_bc(
             LeesEdwardsBC{0., 0., shear_direction, shear_plane_normal});

@@ -132,8 +132,8 @@ REGISTER_CALLBACK(remove_lb_actor_local)
 REGISTER_CALLBACK(cells_update_ghosts_local)
 } // namespace espresso
 
-const Utils::Vector3d
-lb_lbfluid_get_force_to_be_applied(const Utils::Vector3d &pos) {
+namespace LB {
+const Utils::Vector3d get_force_to_be_applied(Utils::Vector3d const &pos) {
   auto const agrid = espresso::lb_params->get_agrid();
   auto const ind = Utils::Vector3i{static_cast<int>(pos[0] / agrid),
                                    static_cast<int>(pos[1] / agrid),
@@ -147,6 +147,7 @@ lb_lbfluid_get_force_to_be_applied(const Utils::Vector3d &pos) {
   }
   return *res;
 }
+} // namespace LB
 
 /** Decorator to run a unit test only on the head node. */
 struct if_head_node {
@@ -285,8 +286,7 @@ BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
       add_swimmer_force(p, params.time_step);
     }
     if (in_local_halo(coupling_pos)) {
-      auto const interpolated =
-          lb_lbfluid_get_force_to_be_applied(coupling_pos);
+      auto const interpolated = LB::get_force_to_be_applied(coupling_pos);
       auto const expected =
           params.force_md_to_lb(Utils::Vector3d{0., 0., p.swimming().f_swim});
 
@@ -306,7 +306,7 @@ BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
           if ((pos - coupling_pos).norm() < 1e-6)
             continue;
           if (in_local_halo(pos)) {
-            auto const interpolated = lb_lbfluid_get_force_to_be_applied(pos);
+            auto const interpolated = LB::get_force_to_be_applied(pos);
             BOOST_CHECK_SMALL(interpolated.norm(), tol);
           }
         }
@@ -319,7 +319,7 @@ BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
     if (in_local_halo(coupling_pos)) {
       add_md_force(coupling_pos, -Utils::Vector3d{0., 0., p.swimming().f_swim},
                    params.time_step);
-      auto const reset = lb_lbfluid_get_force_to_be_applied(coupling_pos);
+      auto const reset = LB::get_force_to_be_applied(coupling_pos);
       BOOST_REQUIRE_SMALL(reset.norm(), tol);
     }
   }
@@ -357,7 +357,7 @@ BOOST_DATA_TEST_CASE(particle_coupling, bdata::make(kTs), kT) {
       couple_particle(p, false, noise, rng, params.time_step);
       BOOST_CHECK_SMALL((p.force() - expected).norm(), tol);
 
-      auto const interpolated = lb_lbfluid_get_force_to_be_applied(p.pos());
+      auto const interpolated = LB::get_force_to_be_applied(p.pos());
       BOOST_CHECK_SMALL((interpolated - params.force_md_to_lb(expected)).norm(),
                         tol);
     }
@@ -472,7 +472,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
       auto const particles = cell_structure.local_particles();
       auto const ghost_particles = cell_structure.ghost_particles();
       // get original LB force
-      auto const lb_before = lb_lbfluid_get_force_to_be_applied(p.pos());
+      auto const lb_before = LB::get_force_to_be_applied(p.pos());
       // couple particle to LB
       lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual, particles,
                                              ghost_particles, params.time_step);
@@ -480,7 +480,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
       auto const &p = get_particle_data(pid);
       BOOST_CHECK_SMALL((p.force() - expected).norm(), tol);
       // check LB force
-      auto const lb_after = lb_lbfluid_get_force_to_be_applied(p.pos());
+      auto const lb_after = LB::get_force_to_be_applied(p.pos());
       auto const lb_expected = params.force_md_to_lb(expected) + lb_before;
       BOOST_CHECK_SMALL((lb_after - lb_expected).norm(), tol);
       // remove force of the particle from the fluid
@@ -548,11 +548,11 @@ BOOST_AUTO_TEST_CASE(exceptions, *utf::precondition(if_head_node())) {
     BOOST_CHECK_THROW(lb_walberla(), std::runtime_error);
     BOOST_CHECK_THROW(lb_walberla_params(), std::runtime_error);
     // getters and setters
-    BOOST_CHECK_THROW(lb_lbfluid_get_agrid(), exception);
-    BOOST_CHECK_THROW(lb_lbfluid_get_tau(), exception);
-    BOOST_CHECK_THROW(lb_lbfluid_get_kT(), exception);
-    BOOST_CHECK_THROW(lb_lbfluid_get_pressure_tensor(), exception);
-    BOOST_CHECK_THROW(lb_lbfluid_get_force_to_be_applied({-10., -10., -10.}),
+    BOOST_CHECK_THROW(LB::get_agrid(), exception);
+    BOOST_CHECK_THROW(LB::get_tau(), exception);
+    BOOST_CHECK_THROW(LB::get_kT(), exception);
+    BOOST_CHECK_THROW(LB::get_pressure_tensor(), exception);
+    BOOST_CHECK_THROW(LB::get_force_to_be_applied({-10., -10., -10.}),
                       std::runtime_error);
     // coupling, interpolation, boundaries
     BOOST_CHECK_THROW(lb_lbcoupling_get_rng_state(), std::runtime_error);
@@ -563,9 +563,9 @@ BOOST_AUTO_TEST_CASE(exceptions, *utf::precondition(if_head_node())) {
                       std::runtime_error);
     BOOST_CHECK_THROW(lb_lbinterpolation_add_force_density({}, {}),
                       std::runtime_error);
-    BOOST_CHECK_THROW(lb_lbfluid_get_interpolated_velocity({}), exception);
-    BOOST_CHECK_THROW(lb_lbfluid_get_interpolated_density({}), exception);
-    BOOST_CHECK_THROW(lb_lbfluid_calc_fluid_momentum(), exception);
+    BOOST_CHECK_THROW(LB::get_interpolated_velocity({}), exception);
+    BOOST_CHECK_THROW(LB::get_interpolated_density({}), exception);
+    BOOST_CHECK_THROW(LB::calc_fluid_momentum(), exception);
   }
 
   // lattices without a ghost layer are not suitable for LB

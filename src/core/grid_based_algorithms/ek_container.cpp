@@ -77,14 +77,14 @@ void propagate() {
   // TODO: find a way for a proper interface
   const std::size_t velocity_field_id = []() -> std::size_t {
     try {
-      return Walberla::get_velocity_field_id();
+      return LB::Walberla::get_velocity_field_id();
     } catch (const std::runtime_error &e) {
       return {};
     }
   }();
   const std::size_t force_field_id = []() -> std::size_t {
     try {
-      return Walberla::get_force_field_id();
+      return LB::Walberla::get_force_field_id();
     } catch (const std::runtime_error &e) {
       return {};
     }

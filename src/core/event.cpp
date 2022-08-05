@@ -110,7 +110,7 @@ void on_integration_start(double time_step) {
   integrator_npt_sanity_checks();
 #endif
   long_range_interactions_sanity_checks();
-  lb_lbfluid_sanity_checks(time_step);
+  LB::sanity_checks(time_step);
 
   /********************************************/
   /* end sanity checks                        */
@@ -268,7 +268,7 @@ void on_boxl_change(bool skip_method_adaption) {
     Dipoles::on_boxl_change();
 #endif
 
-    lb_lbfluid_init();
+    LB::init();
   }
 }
 

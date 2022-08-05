@@ -125,7 +125,7 @@ IF NPT:
         extern NptIsoParameters nptiso
 
 cdef extern from "grid_based_algorithms/lb_interface.hpp":
-    double lb_lbfluid_get_kT() except +
+    double lb_lbfluid_get_kT "LB::get_kT"() except +
 
 cdef extern from "grid_based_algorithms/lb_particle_coupling.hpp":
     void lb_lbcoupling_set_rng_state(stdint.uint64_t) except +

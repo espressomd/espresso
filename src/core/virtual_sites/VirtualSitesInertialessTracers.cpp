@@ -43,7 +43,7 @@ static bool lb_active_check() {
 
 void VirtualSitesInertialessTracers::after_force_calc(double time_step) {
   auto const to_lb_units =
-      (lattice_switch == ActiveLB::NONE) ? 0. : 1. / lb_lbfluid_get_agrid();
+      (lattice_switch == ActiveLB::NONE) ? 0. : 1. / LB::get_agrid();
 
   // Distribute summed-up forces from physical particles to ghosts
   init_forces_ghosts(cell_structure.ghost_particles());
@@ -84,7 +84,7 @@ void VirtualSitesInertialessTracers::after_force_calc(double time_step) {
 
 void VirtualSitesInertialessTracers::after_lb_propagation(double time_step) {
   auto const to_md_units =
-      (lattice_switch == ActiveLB::NONE) ? 0. : lb_lbfluid_get_lattice_speed();
+      (lattice_switch == ActiveLB::NONE) ? 0. : LB::get_lattice_speed();
 
   // Advect particles
   for (auto &p : cell_structure.local_particles()) {

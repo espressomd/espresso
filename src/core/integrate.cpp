@@ -363,11 +363,11 @@ int integrate(int n_steps, int reuse_forces) {
 
     // propagate one-step functionalities
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-      const bool lb_active = lb_lbfluid_get_lattice_switch() != ActiveLB::NONE;
+      auto const lb_active = LB::get_lattice_switch() != ActiveLB::NONE;
 #ifdef LB_WALBERLA
-      const bool ek_active = not EK::ek_container.empty();
+      auto const ek_active = not EK::ek_container.empty();
 #else
-      constexpr bool ek_active = false;
+      auto constexpr ek_active = false;
 #endif
 
       if (lb_active and ek_active) {
@@ -386,7 +386,7 @@ int integrate(int n_steps, int reuse_forces) {
         fluid_step += 1;
         if (fluid_step >= lb_steps_per_md_step) {
           fluid_step = 0;
-          lb_lbfluid_propagate();
+          LB::propagate();
           EK::propagate();
         }
         lb_lbcoupling_propagate();
@@ -395,7 +395,7 @@ int integrate(int n_steps, int reuse_forces) {
         fluid_step += 1;
         if (fluid_step >= lb_steps_per_md_step) {
           fluid_step = 0;
-          lb_lbfluid_propagate();
+          LB::propagate();
         }
         lb_lbcoupling_propagate();
       } else if (ek_active) {
@@ -591,8 +591,9 @@ REGISTER_CALLBACK(mpi_set_time_step_local)
 void mpi_set_time_step(double time_s) {
   if (time_s <= 0.)
     throw std::domain_error("time_step must be > 0.");
-  if (lb_lbfluid_get_lattice_switch() != ActiveLB::NONE)
-    check_tau_time_step_consistency(lb_lbfluid_get_tau(), time_s);
+  if (LB::get_lattice_switch() != ActiveLB::NONE) {
+    LB::check_tau_time_step_consistency(LB::get_tau(), time_s);
+  }
   mpi_call_all(mpi_set_time_step_local, time_s);
 }
 

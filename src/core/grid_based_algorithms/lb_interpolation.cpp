@@ -36,8 +36,7 @@ lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
      (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
   if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
-    auto res =
-        lb_walberla()->get_velocity_at_pos(pos / lb_lbfluid_get_agrid(), true);
+    auto res = lb_walberla()->get_velocity_at_pos(pos / LB::get_agrid(), true);
     if (!res) {
       std::cout << this_node << ": position: [" << pos << "]\n";
       throw std::runtime_error(
@@ -53,8 +52,7 @@ void lb_lbinterpolation_add_force_density(
     const Utils::Vector3d &pos, const Utils::Vector3d &force_density) {
   if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
-    if (!lb_walberla()->add_force_at_pos(pos / lb_lbfluid_get_agrid(),
-                                         force_density))
+    if (!lb_walberla()->add_force_at_pos(pos / LB::get_agrid(), force_density))
       throw std::runtime_error("Could not apply force to lb.");
 #endif
   } else

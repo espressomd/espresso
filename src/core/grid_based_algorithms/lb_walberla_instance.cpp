@@ -90,7 +90,7 @@ void lb_sanity_checks(LBWalberlaBase const &lb_fluid,
   }
   // LB time step and MD time step must agree
   if (md_time_step > 0.) {
-    check_tau_time_step_consistency(tau, md_time_step);
+    LB::check_tau_time_step_consistency(tau, md_time_step);
   }
 }
 
