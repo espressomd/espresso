@@ -32,6 +32,7 @@
 #include "BlockAndCell.hpp"
 #include "EKinWalberlaBase.hpp"
 #include "LatticeWalberla.hpp"
+#include "boundary_utils.hpp"
 #include "walberla_utils.hpp"
 
 #include "electrokinetics/generated_kernels/AdvectiveFluxKernel_double_precision.h"
@@ -50,8 +51,6 @@
 #include "electrokinetics/generated_kernels/FixedFlux_double_precision.h"
 #include "electrokinetics/generated_kernels/FixedFlux_single_precision.h"
 
-#include <boost/multi_array/multi_array_ref.hpp>
-
 #include <utils/Vector.hpp>
 
 #include <cstddef>
@@ -65,46 +64,6 @@
 #include "BoundaryHandling.hpp"
 
 namespace walberla {
-
-std::vector<Utils::Vector3d>
-fill_3D_vector_array(const Utils::Vector3i &grid_size,
-                     const std::vector<double> &vec_flat) {
-  auto const n_grid_points = Utils::product(grid_size);
-  assert(vec_flat.size() == 3 * n_grid_points or vec_flat.size() == 3);
-  std::vector<Utils::Vector3d> output_vector;
-
-  auto const vec_begin = std::begin(vec_flat);
-  auto const vec_end = std::end(vec_flat);
-  if (vec_flat.size() == 3) {
-    auto const uniform_vector = Utils::Vector3d(vec_begin, vec_end);
-    output_vector.assign(n_grid_points, uniform_vector);
-  } else {
-    output_vector.reserve(n_grid_points);
-    for (auto it = vec_begin; it < vec_end; it += 3) {
-      output_vector.emplace_back(Utils::Vector3d(it, it + 3));
-    }
-  }
-
-  return output_vector;
-}
-
-std::vector<double> fill_3D_scalar_array(const Utils::Vector3i &grid_size,
-                                         const std::vector<double> &vec_flat) {
-  auto const n_grid_points = Utils::product(grid_size);
-  assert(vec_flat.size() == n_grid_points or vec_flat.size() == 1);
-  std::vector<double> output_vector;
-
-  auto const vel_begin = std::begin(output_vector);
-  auto const vel_end = std::end(output_vector);
-  if (vec_flat.size() == 1) {
-    auto const uniform_value = vec_flat[0];
-    output_vector.assign(n_grid_points, uniform_value);
-  } else {
-    output_vector.assign(vel_begin, vel_end);
-  }
-
-  return output_vector;
-}
 
 namespace detail {
 template <typename FloatType = double> struct KernelTrait {
@@ -559,87 +518,27 @@ public:
 
   void update_flux_boundary_from_shape(
       const std::vector<int> &raster_flat,
-      const std::vector<double> &flux_flat) override {
-    // reshape grids
+      const std::vector<double> &data_flat) override {
     auto const grid_size = get_lattice().get_grid_dimensions();
-    std::vector<Utils::Vector3d> flux_vectors =
-        fill_3D_vector_array(grid_size, flux_flat);
-    boost::const_multi_array_ref<Utils::Vector3d, 3> fluxes(flux_vectors.data(),
-                                                            grid_size);
-    boost::const_multi_array_ref<int, 3> raster(raster_flat.data(), grid_size);
-
-    auto const &blocks = get_lattice().get_blocks();
-    for (auto block = blocks->begin(); block != blocks->end(); ++block) {
-      // lattice constant is 1
-      auto const left = block->getAABB().min();
-      auto const off_i = int_c(left[0]);
-      auto const off_j = int_c(left[1]);
-      auto const off_k = int_c(left[2]);
-
-      // Get field data which knows about the indices
-      // In the loop, x,y,z are in block-local coordinates
-      auto const n_ghost_layers = get_lattice().get_ghost_layers();
-      auto const ghosts = static_cast<int>(n_ghost_layers);
-      auto density_field =
-          block->template getData<DensityField>(m_density_field_id);
-      for (int i = -ghosts; i < int_c(density_field->xSize() + ghosts); ++i) {
-        for (int j = -ghosts; j < int_c(density_field->ySize() + ghosts); ++j) {
-          for (int k = -ghosts; k < int_c(density_field->zSize() + ghosts);
-               ++k) {
-            Utils::Vector3i const node{{off_i + i, off_j + j, off_k + k}};
-            auto const idx = (node + grid_size) % grid_size;
-            if (raster(idx)) {
-              auto const bc = get_block_and_cell(get_lattice(), node, true);
-              auto const &vel = fluxes(idx);
-              m_boundary_flux->set_node_value_at_boundary(node, vel, *bc);
-            }
-          }
-        }
-      }
-    }
+    auto const data = fill_3D_vector_array(data_flat, grid_size);
+    auto const field_getter = [field_id = m_flux_field_id](auto &block) {
+      return block->template getData<FluxField>(field_id);
+    };
+    set_boundary_from_grid(*m_boundary_flux, field_getter, get_lattice(),
+                           raster_flat, data);
     reallocate_flux_boundary_field();
   }
 
   void update_density_boundary_from_shape(
       const std::vector<int> &raster_flat,
-      const std::vector<double> &density_flat) override {
-    // reshape grids
+      const std::vector<double> &data_flat) override {
     auto const grid_size = get_lattice().get_grid_dimensions();
-    std::vector<double> density_vector =
-        fill_3D_scalar_array(grid_size, density_flat);
-    boost::const_multi_array_ref<double, 3> densities(density_vector.data(),
-                                                      grid_size);
-    boost::const_multi_array_ref<int, 3> raster(raster_flat.data(), grid_size);
-
-    auto const &blocks = get_lattice().get_blocks();
-    for (auto block = blocks->begin(); block != blocks->end(); ++block) {
-      // lattice constant is 1
-      auto const left = block->getAABB().min();
-      auto const off_i = int_c(left[0]);
-      auto const off_j = int_c(left[1]);
-      auto const off_k = int_c(left[2]);
-
-      // Get field data which knows about the indices
-      // In the loop, x,y,z are in block-local coordinates
-      auto const n_ghost_layers = get_lattice().get_ghost_layers();
-      auto const ghosts = static_cast<int>(n_ghost_layers);
-      auto density_field =
-          block->template getData<DensityField>(m_density_field_id);
-      for (int i = -ghosts; i < int_c(density_field->xSize() + ghosts); ++i) {
-        for (int j = -ghosts; j < int_c(density_field->ySize() + ghosts); ++j) {
-          for (int k = -ghosts; k < int_c(density_field->zSize() + ghosts);
-               ++k) {
-            Utils::Vector3i const node{{off_i + i, off_j + j, off_k + k}};
-            auto const idx = (node + grid_size) % grid_size;
-            if (raster(idx)) {
-              auto const bc = get_block_and_cell(get_lattice(), node, true);
-              auto const &val = FloatType_c(densities(idx));
-              m_boundary_density->set_node_value_at_boundary(node, val, *bc);
-            }
-          }
-        }
-      }
-    }
+    auto const data = fill_3D_scalar_array(data_flat, grid_size);
+    auto const field_getter = [field_id = m_density_field_id](auto &block) {
+      return block->template getData<DensityField>(field_id);
+    };
+    set_boundary_from_grid(*m_boundary_density, field_getter, get_lattice(),
+                           raster_flat, data);
     reallocate_density_boundary_field();
   }
 

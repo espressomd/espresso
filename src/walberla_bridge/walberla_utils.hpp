@@ -28,7 +28,9 @@
 
 namespace walberla {
 
-template <typename T, typename U = T> inline U es2walberla(T v) { return U{v}; }
+template <typename T, typename U = T> inline U es2walberla(T v) {
+  return numeric_cast<U>(v);
+}
 template <> inline Vector3<float> es2walberla(const Utils::Vector3d v) {
   return Vector3<float>{numeric_cast<float>(v[0]), numeric_cast<float>(v[1]),
                         numeric_cast<float>(v[2])};
