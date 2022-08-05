@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Version.hpp"
+#include "CodeVersion.hpp"
 
 #include "version.hpp"
 
@@ -35,8 +35,8 @@ static auto get_version_tuple_as_string() {
   return version[0];
 }
 
-Variant Version::do_call_method(std::string const &name,
-                                VariantMap const &parameters) {
+Variant CodeVersion::do_call_method(std::string const &name,
+                                    VariantMap const &parameters) {
   // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks)
   if (name == "version_major") {
     return ESPRESSO_VERSION_MAJOR;

@@ -22,7 +22,7 @@ from .script_interface import script_interface_register, ScriptInterfaceHelper
 
 @script_interface_register
 class _Version(ScriptInterfaceHelper):
-    _so_name = "CodeInfo::Version"
+    _so_name = "CodeInfo::CodeVersion"
     _so_creation_policy = "LOCAL"
     _so_bind_methods = (
         "version",

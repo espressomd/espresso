@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_CODE_INFO_VERSION_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_CODE_INFO_VERSION_HPP
+#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_CODE_INFO_CODE_VERSION_HPP
+#define ESPRESSO_SRC_SCRIPT_INTERFACE_CODE_INFO_CODE_VERSION_HPP
 
 #include "script_interface/ScriptInterface.hpp"
 
@@ -27,7 +27,7 @@
 namespace ScriptInterface {
 namespace CodeInfo {
 
-class Version : public ObjectHandle {
+class CodeVersion : public ObjectHandle {
 public:
   Variant do_call_method(std::string const &name,
                          VariantMap const &parameters) override;

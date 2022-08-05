@@ -20,14 +20,14 @@
 #include "initialize.hpp"
 
 #include "CodeInfo.hpp"
-#include "Version.hpp"
+#include "CodeVersion.hpp"
 
 namespace ScriptInterface {
 namespace CodeInfo {
 
 void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<CodeInfo>("CodeInfo::CodeInfo");
-  om->register_new<Version>("CodeInfo::Version");
+  om->register_new<CodeVersion>("CodeInfo::CodeVersion");
 }
 
 } // namespace CodeInfo

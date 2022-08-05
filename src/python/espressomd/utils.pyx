@@ -23,7 +23,7 @@ import numpy as np
 cdef _check_type_or_throw_except_assertion(x, t):
     return isinstance(x, t) or (t == int and is_valid_type(x, int)) or (
         t == float and (is_valid_type(x, int) or is_valid_type(x, float))) or (
-        t == bool and (is_valid_type(x, bool) or x in (0, 1)))
+        t == bool and is_valid_type(x, bool))
 
 
 cpdef check_array_type_or_throw_except(x, n, t, msg):
