@@ -152,6 +152,32 @@ class BrownianThermostat(ut.TestCase):
         np.testing.assert_almost_equal(np.copy(virtual.v), [0, 0, 0])
         np.testing.assert_almost_equal(np.copy(physical.v), [0, 0, 0])
 
+    @utx.skipIfMissingFeatures(["ROTATION", "EXTERNAL_FORCES"])
+    def test_fix_rotation(self):
+        system = self.system
+        system.time_step = 0.01
+        part = system.part.add(
+            pos=3 * [0.],
+            fix=3 * [True],
+            rotation=3 * [True])
+
+        # torque only
+        part.ext_torque = [0, 0, 1.3]
+        system.thermostat.set_brownian(
+            kT=0, gamma=1, gamma_rotation=1.5, act_on_virtual=False, seed=41)
+        system.integrator.set_brownian_dynamics()
+        system.integrator.run(3)
+        np.testing.assert_allclose(
+            part.omega_lab, [
+                0, 0, 1.3 / 1.5], atol=1e-14)
+
+        # noise only
+        part.ext_torque = 3 * [0.]
+        system.thermostat.set_brownian(
+            kT=1, gamma=1, gamma_rotation=1.5, act_on_virtual=False, seed=41)
+        system.integrator.run(3)
+        self.assertGreater(np.linalg.norm(part.omega_lab), 0.)
+
 
 if __name__ == "__main__":
     ut.main()
