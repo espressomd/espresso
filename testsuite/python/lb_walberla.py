@@ -62,7 +62,7 @@ class LbWalberlaTest(ut.TestCase):
                     pop = np.array((i * j * k, i, -i, j, -j, k, -k,
                                     i + j, i - j, -i + j, -i - j, i + k,
                                     i - k, -i + k, -i - k, j + k, j - k,
-                                    -j + k, -j - k))
+                                    -j + k, -j - k), dtype=float)
                     lbf[i, j, k].population = pop
                     lb_pop = lbf[i, j, k].population
                     np.testing.assert_allclose(lb_pop, pop, atol=1E-10)

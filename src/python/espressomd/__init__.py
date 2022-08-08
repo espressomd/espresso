@@ -1,3 +1,4 @@
+#
 # Copyright (C) 2016-2022 The ESPResSo project
 # Copyright (C) 2014 Olaf Lenz
 #
@@ -22,56 +23,5 @@ from . import _init
 
 from .system import System
 from .code_info import features, all_features
+from .code_features import has_features, assert_features
 from .cuda_init import gpu_available
-from . import code_info
-from . import utils
-
-
-class FeaturesError(Exception):
-
-    def __init__(self, missing_features):
-        super().__init__(f"Missing features {', '.join(missing_features)}")
-
-
-def has_features(*args):
-    """
-    Check whether a list of features is a subset of the compiled-in features.
-    """
-
-    lvl = utils.nesting_level(args)
-    assert lvl in [1, 2], "has_features() takes strings as argument"
-    if lvl == 2:
-        check_set = set(args[0])
-    else:
-        check_set = set(args)
-
-    if not check_set <= code_info.all_features():
-        unknown_features = check_set - code_info.all_features()
-        raise RuntimeError(f"unknown features {','.join(unknown_features)}")
-
-    return check_set <= set(code_info.features())
-
-
-def missing_features(*args):
-    """
-    Return a list of the missing features in the arguments.
-    """
-
-    lvl = utils.nesting_level(args)
-    assert lvl in [1, 2], "missing_features() takes strings as argument"
-    if lvl == 2:
-        features = set(args[0])
-    else:
-        features = set(args)
-
-    return sorted(features - set(code_info.features()))
-
-
-def assert_features(*args):
-    """
-    Raise an exception when a list of features is not a subset of the
-    compiled-in features.
-    """
-
-    if not has_features(*args):
-        raise FeaturesError(missing_features(*args))

@@ -223,12 +223,12 @@ class Test(ut.TestCase):
 
     def check_invalid_cell_systems(self):
         # check periodicity exceptions
-        for periodicity in itertools.product(range(2), range(2), range(2)):
-            if periodicity == (1, 1, 1):
+        for periodicity in itertools.product((True, False), repeat=3):
+            if periodicity == (True, True, True):
                 continue
-            with self.assertRaisesRegex(Exception, r"P3M: requires periodicity \(1 1 1\)"):
+            with self.assertRaisesRegex(Exception, r"P3M: requires periodicity \(True, True, True\)"):
                 self.system.periodicity = periodicity
-        self.system.periodicity = (1, 1, 1)
+        self.system.periodicity = (True, True, True)
 
         # check cell system exceptions
         with self.assertRaisesRegex(Exception, "P3M: requires the regular decomposition cell system"):
@@ -441,7 +441,7 @@ class Test(ut.TestCase):
                                                epsilon='metallic',
                                                mesh=[8, -1, -1])
         self.system.actors.add(solver)
-        self.assertEqual(solver.mesh, [8, 12, 16])
+        np.testing.assert_equal(np.copy(solver.mesh), [8, 12, 16])
 
         # check MD cell reset event
         self.system.box_l = self.system.box_l
@@ -459,7 +459,7 @@ class Test(ut.TestCase):
                                                   epsilon='metallic',
                                                   mesh=[20, -1, -1])
         self.system.actors.add(solver)
-        self.assertEqual(solver.mesh, [20, 20, 40])
+        np.testing.assert_equal(np.copy(solver.mesh), [20, 20, 40])
 
         # check MD cell reset event
         self.system.box_l = self.system.box_l

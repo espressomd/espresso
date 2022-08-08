@@ -16,11 +16,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import numpy as np
 from . import utils
-from .utils cimport Vector2d, Vector3d, Vector4d, make_array_locked
+from .utils cimport Vector3b, Vector3i, Vector2d, Vector3d, Vector4d
 cimport cpython.object
 
 from libcpp.memory cimport shared_ptr, make_shared
+from libcpp.vector cimport vector
 from libcpp.utility cimport pair
+from libcpp.unordered_map cimport unordered_map
 
 cdef shared_ptr[ContextManager] _om
 
@@ -204,7 +206,7 @@ class array_variant(np.ndarray):
 cdef Variant python_object_to_variant(value) except *:
     """Convert Python objects to C++ Variant objects."""
 
-    cdef vector[Variant] vec
+    cdef vector[Variant] vec_variant
     cdef vector[int] vec_int
     cdef vector[double] vec_double
     cdef unordered_map[int, Variant] map_int2var
@@ -254,10 +256,30 @@ cdef Variant python_object_to_variant(value) except *:
         vec_double.assign(data_double, data_double + len(view_double))
         return make_variant[vector[double]](vec_double)
     elif hasattr(value, '__iter__'):
+        if len(value) == 0:
+            return make_variant[vector[Variant]](vec_variant)
+        if isinstance(value, np.ndarray) and value.ndim == 1:
+            if np.issubdtype(value.dtype, np.floating):
+                for e in value:
+                    vec_double.push_back(e)
+                return make_variant[vector[double]](vec_double)
+            elif np.issubdtype(value.dtype, np.signedinteger):
+                for e in value:
+                    vec_int.push_back(e)
+                return make_variant[vector[int]](vec_int)
+        if all(map(lambda x: isinstance(x, (float, np.floating)), value)):
+            for e in value:
+                vec_double.push_back(e)
+            return make_variant[vector[double]](vec_double)
+        if all(map(lambda x: isinstance(x, (int, np.integer))
+                   and not isinstance(x, type(True)), value)):
+            for e in value:
+                vec_int.push_back(e)
+            return make_variant[vector[int]](vec_int)
         for e in value:
-            vec.push_back(python_object_to_variant(e))
-        return make_variant[vector[Variant]](vec)
-    elif type(value) == type(True):
+            vec_variant.push_back(python_object_to_variant(e))
+        return make_variant[vector[Variant]](vec_variant)
+    elif isinstance(value, (type(True), np.bool_)):
         return make_variant[bool](value)
     elif np.issubdtype(np.dtype(type(value)), np.signedinteger):
         return make_variant[int](value)
@@ -276,7 +298,10 @@ cdef variant_to_python_object(const Variant & value) except +:
     cdef pair[int, Variant] pair_int2var
     cdef pair[string, Variant] pair_str2var
     cdef shared_ptr[ObjectHandle] ptr
+    cdef Vector3b vec3b
+    cdef Vector3i vec3i
     cdef Vector2d vec2d
+    cdef Vector3d vec3d
     cdef Vector4d vec4d
     if is_none(value):
         return None
@@ -291,12 +316,19 @@ cdef variant_to_python_object(const Variant & value) except +:
     if is_type[vector[int]](value):
         return get_value[vector[int]](value)
     if is_type[vector[double]](value):
-        return get_value[vector[double]](value)
+        return np.array(get_value[vector[double]](value))
+    if is_type[Vector3b](value):
+        vec3b = get_value[Vector3b](value)
+        return utils.array_locked([vec3b[0], vec3b[1], vec3b[2]])
+    if is_type[Vector3i](value):
+        vec3i = get_value[Vector3i](value)
+        return utils.array_locked([vec3i[0], vec3i[1], vec3i[2]])
     if is_type[Vector4d](value):
         vec4d = get_value[Vector4d](value)
         return utils.array_locked([vec4d[0], vec4d[1], vec4d[2], vec4d[3]])
     if is_type[Vector3d](value):
-        return make_array_locked(get_value[Vector3d](value))
+        vec3d = get_value[Vector3d](value)
+        return utils.array_locked([vec3d[0], vec3d[1], vec3d[2]])
     if is_type[Vector2d](value):
         vec2d = get_value[Vector2d](value)
         return utils.array_locked([vec2d[0], vec2d[1]])

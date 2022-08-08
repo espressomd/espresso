@@ -25,7 +25,6 @@ add_library(
   bond_error.cpp
   cells.cpp
   collision.cpp
-  comfixed_global.cpp
   communication.cpp
   constraints.cpp
   dpd.cpp
@@ -34,7 +33,6 @@ add_library(
   EspressoSystemInterface.cpp
   forcecap.cpp
   forces.cpp
-  galilei.cpp
   ghosts.cpp
   grid.cpp
   immersed_boundaries.cpp
@@ -51,8 +49,6 @@ add_library(
   rotate_system.cpp
   rotation.cpp
   Observable_stat.cpp
-  statistics_chain.cpp
-  statistics.cpp
   SystemInterface.cpp
   thermostat.cpp
   tuning.cpp
@@ -96,6 +92,7 @@ target_link_libraries(
 target_include_directories(Espresso_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_subdirectory(accumulators)
+add_subdirectory(analysis)
 add_subdirectory(bond_breakage)
 add_subdirectory(bonded_interactions)
 add_subdirectory(cell_system)
@@ -103,6 +100,7 @@ add_subdirectory(cluster_analysis)
 add_subdirectory(constraints)
 add_subdirectory(electrostatics)
 add_subdirectory(error_handling)
+add_subdirectory(galilei)
 add_subdirectory(grid_based_algorithms)
 add_subdirectory(immersed_boundary)
 add_subdirectory(integrators)

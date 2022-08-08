@@ -548,7 +548,8 @@ void integrate_set_bd() { mpi_set_integ_switch(INTEG_METHOD_BD); }
 
 void integrate_set_sd() {
   if (box_geo.periodic(0) || box_geo.periodic(1) || box_geo.periodic(2)) {
-    throw std::runtime_error("Stokesian Dynamics requires periodicity 0 0 0");
+    throw std::runtime_error(
+        "Stokesian Dynamics requires periodicity (False, False, False)");
   }
   mpi_set_integ_switch(INTEG_METHOD_SD);
 }

@@ -203,13 +203,14 @@ class Test(ut.TestCase):
         elc = espressomd.electrostatics.ELC(
             gap_size=4., maxPWerror=1., actor=p3m)
         self.system.actors.add(elc)
-        with self.assertRaisesRegex(Exception, r"ELC: requires periodicity \(1 1 1\)"):
+        periodicity_err_msg = r"requires periodicity \(True, True, True\)"
+        with self.assertRaisesRegex(Exception, periodicity_err_msg):
             self.system.periodicity = [False, False, False]
-        with self.assertRaisesRegex(Exception, r"requires periodicity \(1 1 1\)"):
+        with self.assertRaisesRegex(Exception, periodicity_err_msg):
             self.system.integrator.run(0, recalc_forces=True)
-        with self.assertRaisesRegex(Exception, r"requires periodicity \(1 1 1\)"):
+        with self.assertRaisesRegex(Exception, periodicity_err_msg):
             self.system.analysis.energy()
-        with self.assertRaisesRegex(Exception, r"requires periodicity \(1 1 1\)"):
+        with self.assertRaisesRegex(Exception, periodicity_err_msg):
             self.system.analysis.pressure()
         self.system.periodicity = [True, True, True]
         n_nodes = self.system.cell_system.get_state()["n_nodes"]
@@ -217,9 +218,9 @@ class Test(ut.TestCase):
             with self.assertRaisesRegex(Exception, "P3M: node grid must be sorted, largest first"):
                 self.system.cell_system.node_grid = [1, n_nodes, 1]
             self.assertEqual(
-                self.system.cell_system.node_grid,
-                self.original_node_grid)
-        with self.assertRaisesRegex(Exception, "Exception while updating the box length: ERROR: ELC gap size .+ larger than box length in z-direction"):
+                list(self.system.cell_system.node_grid),
+                list(self.original_node_grid))
+        with self.assertRaisesRegex(Exception, "while assigning system parameter 'box_l': ERROR: ELC gap size .+ larger than box length in z-direction"):
             self.system.box_l = [10., 10., 2.5]
         self.system.box_l = [10., 10., 10.]
         self.system.actors.clear()
@@ -239,7 +240,7 @@ class Test(ut.TestCase):
         self.assertEqual(len(self.system.actors), 0)
         self.system.box_l = [10., 10., 10.]
         self.system.periodicity = [True, True, False]
-        with self.assertRaisesRegex(RuntimeError, r"ELC: requires periodicity \(1 1 1\)"):
+        with self.assertRaisesRegex(RuntimeError, periodicity_err_msg):
             elc = espressomd.electrostatics.ELC(
                 gap_size=2., maxPWerror=1., actor=p3m)
             self.system.actors.add(elc)

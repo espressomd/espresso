@@ -114,7 +114,7 @@ class LBStreamingCommon:
         """Set the population of direction n_v of grid_index to n_v+1.
 
         """
-        pop = np.arange(1, 20)
+        pop = np.arange(1, 20, dtype=float)
         self.lbf[grid_index].population = pop
 
     def test_population_streaming(self):

@@ -47,7 +47,7 @@ modes = config.get_modes()
 # use a box with 3 different dimensions, unless DipolarP3M is used
 system = espressomd.System(box_l=[12.0, 14.0, 16.0])
 if 'DP3M' in modes:
-    system.box_l = 3 * [np.max(system.box_l)]
+    system.box_l = 3 * [float(np.max(system.box_l))]
 system.cell_system.skin = 0.1
 system.time_step = 0.01
 system.time = 1.5
@@ -104,6 +104,9 @@ if espressomd.has_features('EXCLUSIONS'):
 # place particles at the interface between 2 MPI nodes
 p3 = system.part.add(id=3, pos=system.box_l / 2.0 - 1.0, type=1)
 p4 = system.part.add(id=4, pos=system.box_l / 2.0 + 1.0, type=1)
+
+system.comfixed.types = [0, 2]
+p_slice = system.part.by_ids([4, 1])
 
 if espressomd.has_features('P3M') and ('P3M' in modes or 'ELC' in modes):
     if espressomd.gpu_available() and 'P3M.GPU' in modes:
@@ -193,7 +196,7 @@ if 'LB' not in modes:
     elif 'THERM.DPD' in modes and espressomd.has_features('DPD'):
         system.thermostat.set_dpd(kT=1.0, seed=42)
     elif 'THERM.SDM' in modes and espressomd.has_features('STOKESIAN_DYNAMICS'):
-        system.periodicity = [0, 0, 0]
+        system.periodicity = [False, False, False]
         system.thermostat.set_stokesian(kT=1.0, seed=42)
     # set integrator
     if 'INT.NPT' in modes and espressomd.has_features('NPT'):
@@ -207,7 +210,7 @@ if 'LB' not in modes:
     elif 'INT.BD' in modes:
         system.integrator.set_brownian_dynamics()
     elif 'INT.SDM' in modes and espressomd.has_features('STOKESIAN_DYNAMICS'):
-        system.periodicity = [0, 0, 0]
+        system.periodicity = [False, False, False]
         system.integrator.set_stokesian_dynamics(
             approximation_method='ft', viscosity=0.5, radii={0: 1.5},
             pair_mobility=False, self_mobility=True)
@@ -273,6 +276,7 @@ checkpoint.register("ibm_volcons_bond")
 checkpoint.register("ibm_tribend_bond")
 checkpoint.register("ibm_triel_bond")
 checkpoint.register("break_spec")
+checkpoint.register("p_slice")
 if espressomd.has_features("H5MD"):
     checkpoint.register("h5")
     checkpoint.register("h5_units")

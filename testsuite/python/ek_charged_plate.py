@@ -45,7 +45,7 @@ class ek_charged_plate(ut.TestCase):
         system.box_l = [box_x, box_y, box_z]
         system.cell_system.skin = 0.2
         system.time_step = 0.1
-        system.periodicity = [1, 1, 1]
+        system.periodicity = [True, True, True]
         bjerrum_length = 2.13569
         agrid = 0.5
 

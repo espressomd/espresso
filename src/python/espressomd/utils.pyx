@@ -18,13 +18,12 @@
 #
 cimport numpy as np
 import numpy as np
-from libcpp.vector cimport vector
 
 
 cdef _check_type_or_throw_except_assertion(x, t):
     return isinstance(x, t) or (t == int and is_valid_type(x, int)) or (
         t == float and (is_valid_type(x, int) or is_valid_type(x, float))) or (
-        t == bool and (is_valid_type(x, bool) or x in (0, 1)))
+        t == bool and is_valid_type(x, bool))
 
 
 cpdef check_array_type_or_throw_except(x, n, t, msg):
@@ -67,59 +66,6 @@ cpdef check_type_or_throw_except(x, n, t, msg):
     else:
         if not _check_type_or_throw_except_assertion(x, t):
             raise ValueError(msg + f" -- Got an {type(x).__name__}")
-
-
-cdef np.ndarray create_nparray_from_double_array(double * x, int len_x):
-    """
-    Returns a numpy array from double array.
-
-    Parameters
-    ----------
-    x : C-style array of type double which is to be converted
-    len_x: len of array
-
-    """
-    numpyArray = np.zeros(len_x)
-    for i in range(len_x):
-        numpyArray[i] = x[i]
-    return numpyArray
-
-cdef np.ndarray create_nparray_from_double_span(Span[double] x):
-    """
-    Returns a numpy array from double span.
-
-    Parameters
-    ----------
-    x : Span of type double which is to be converted
-
-    """
-    return create_nparray_from_double_array(x.data(), x.size())
-
-cdef check_range_or_except(D, name, v_min, incl_min, v_max, incl_max):
-    """
-    Checks that x is in range [v_min,v_max] (include boundaries via
-    incl_min/incl_max = true) or throws a ValueError. v_min/v_max = 'inf' to
-    disable limit.
-
-    """
-    x = D[name]
-
-    # Array/list/tuple
-    if hasattr(x, "__len__"):
-        if (v_min != "inf" and ((incl_min and not all(v >= v_min for v in x))
-                                or (not incl_min and not all(v > v_min for v in x)))) or \
-           (v_max != "inf" and ((incl_max and not all(v <= v_max for v in x))
-                                or (not incl_max and not all(v < v_max for v in x)))):
-            raise ValueError(f"In {name}: Some values in {x} are out of"
-                             f" range {'[' if incl_min else ']'}{v_min},"
-                             f"{v_max}{']' if incl_max else '['}")
-    # Single Value
-    else:
-        if (v_min != "inf" and ((incl_min and x < v_min) or (not incl_min and x <= v_min)) or
-                v_max != "inf" and ((incl_max and x > v_max) or (not incl_max and x >= v_max))):
-            raise ValueError(f"In {name}: Value {x} is out of"
-                             f" range {'[' if incl_min else ']'}{v_min},"
-                             f"{v_max}{']' if incl_max else '['}")
 
 
 def to_char_pointer(s):
@@ -231,14 +177,6 @@ Use numpy.copy(<ESPResSo array property>) to get a writable copy."
 
 cdef make_array_locked(Vector3d v):
     return array_locked([v[0], v[1], v[2]])
-
-
-cdef make_array_locked_vector(vector[Vector3d] v):
-    ret = np.empty((v.size(), 3))
-    for i in range(v.size()):
-        for j in range(3):
-            ret[i][j] = v[i][j]
-    return array_locked(ret)
 
 
 cdef Vector3d make_Vector3d(a):

@@ -50,7 +50,7 @@ class LBTest:
               'density': 0.85,
               'viscosity': 3.0}
 
-    system.periodicity = [1, 1, 1]
+    system.periodicity = [True, True, True]
     system.time_step = params['tau']
     system.cell_system.skin = 1.0
     interpolation = False
@@ -528,7 +528,7 @@ class LBTest:
         where particles don't move.
 
         """
-        p = self.system.part.add(pos=[0.1, 0.2, 0.3], fix=[1, 1, 1])
+        p = self.system.part.add(pos=[0.1, 0.2, 0.3], fix=[True, True, True])
         base_params = {}
         base_params.update(
             ext_force_density=[2.3, 1.2, 0.1],

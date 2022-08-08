@@ -35,9 +35,4 @@ inline int bonded_ia_params_zero_based_type(int bond_id) {
   return 0;
 }
 
-/** Return the next key. */
-inline int bonded_ia_params_next_key() {
-  return bonded_ia_params.get_next_key();
-}
-
 #endif

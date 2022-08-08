@@ -50,7 +50,7 @@ class BHGPUTest(ut.TestCase):
         ratio_dawaanr_bh_gpu = pf_dawaanr / pf_bh_gpu
         system = self.system
         system.box_l = 3 * [15]
-        system.periodicity = [0, 0, 0]
+        system.periodicity = [False, False, False]
         system.time_step = 1E-4
         system.cell_system.skin = 0.1
 

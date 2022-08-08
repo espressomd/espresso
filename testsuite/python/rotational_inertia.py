@@ -51,7 +51,7 @@ class RotationalInertia(ut.TestCase):
         self.L_lab = tests_common.convert_vec_body_to_space(p, L_body)
 
     def test_stability(self):
-        p = self.system.part.add(pos=[0.0, 0.0, 0.0], rotation=(1, 1, 1))
+        p = self.system.part.add(pos=[0.0, 0.0, 0.0], rotation=3 * [True])
 
         # Inertial motion around the stable and unstable axes
 
@@ -137,7 +137,7 @@ class RotationalInertia(ut.TestCase):
     def test_energy_and_momentum_conservation(self):
         system = self.system
         p = system.part.add(pos=(0, 0, 0), rinertia=(1.1, 1.3, 1.5),
-                            rotation=(1, 1, 1), omega_body=(2, 1, 4))
+                            rotation=3 * [True], omega_body=(2, 1, 4))
         E0 = self.energy(p)
         m0 = self.momentum(p)
         system.time_step = 0.001

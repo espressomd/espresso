@@ -19,8 +19,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SCRIPTINTERFACE_H5MD_HPP
-#define ESPRESSO_SCRIPTINTERFACE_H5MD_HPP
+#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_H5MD_H5MD_HPP
+#define ESPRESSO_SRC_SCRIPT_INTERFACE_H5MD_H5MD_HPP
 
 #include "config.hpp"
 

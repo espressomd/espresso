@@ -71,8 +71,8 @@ class LBLinearMomentum:
         for index in itertools.product(
                 np.arange(0, int(np.floor(BOX_L / AGRID))), repeat=3):
             linear_momentum += DENS * AGRID**3.0 * self.lbf[index].velocity
-        analyze_linear_momentum = self.system.analysis.linear_momentum(True,  # particles
-                                                                       True)  # LB fluid
+        analyze_linear_momentum = self.system.analysis.linear_momentum(
+            include_particles=True, include_lbfluid=True)
         np.testing.assert_allclose(
             linear_momentum, analyze_linear_momentum, atol=self.atol)
 

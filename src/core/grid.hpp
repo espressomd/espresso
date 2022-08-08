@@ -69,11 +69,6 @@ void grid_changed_n_nodes();
 
 void grid_changed_box_l(const BoxGeometry &box);
 
-/** @brief Rescale box in dimension @p dir to the new value @p d_new and
- *  rescale the particles accordingly.
- */
-void rescale_boxl(int dir, double d_new);
-
 /** @brief Calculate image box shift vector.
  *  @param image_box  image box offset
  *  @param box        box parameters (side lengths)
@@ -108,17 +103,6 @@ LocalBox<double> regular_decomposition(const BoxGeometry &box,
                                        Utils::Vector3i const &node_pos,
                                        Utils::Vector3i const &node_grid);
 
-/** @brief Set and broadcast the box length.
- *  @param length new box length
- */
-void mpi_set_box_length(const Utils::Vector3d &length);
+void mpi_set_box_length(Utils::Vector3d const &box_l);
 
-/** @brief Set and broadcast the periodicity.
- *  @param x periodicity in x direction
- *  @param y periodicity in y direction
- *  @param z periodicity in z direction
- */
-void mpi_set_periodicity(bool x, bool y, bool z);
-
-void mpi_set_node_grid(const Utils::Vector3i &node_grid);
 #endif

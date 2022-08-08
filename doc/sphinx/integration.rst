@@ -352,7 +352,7 @@ The following minimal example illustrates how to use the SDM in |es|::
     system.periodicity = [False, False, False]
     system.time_step = 0.01
     system.cell_system.skin = 0.4
-    system.part.add(pos=[0, 0, 0], rotation=[1, 0, 0])
+    system.part.add(pos=[0, 0, 0], rotation=[True, False, False])
     system.integrator.set_stokesian_dynamics(viscosity=1.0, radii={0: 1.0})
     system.integrator.run(100)
 
@@ -690,7 +690,7 @@ needs to be activated via::
     system.periodicity = [False, False, False]
     system.time_step = 0.01
     system.cell_system.skin = 0.4
-    system.part.add(pos=[0, 0, 0], rotation=[1, 0, 0], ext_force=[0, 0, -1])
+    system.part.add(pos=[0, 0, 0], rotation=[True, False, False], ext_force=[0, 0, -1])
     system.thermostat.set_stokesian(kT=1.0, seed=43)
     system.integrator.set_stokesian_dynamics(viscosity=1.0, radii={0: 1.0})
     system.integrator.run(100)

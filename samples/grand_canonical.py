@@ -95,7 +95,7 @@ RE.add_reaction(
     reactant_types=[], reactant_coefficients=[], product_types=[1, 2],
     product_coefficients=[1, 1], default_charges={1: -1, 2: +1})
 print(RE.get_status())
-system.setup_type_map([0, 1, 2])
+system.setup_type_map(type_list=[0, 1, 2])
 
 # Set the hidden particle type to the lowest possible number to speed
 # up the simulation

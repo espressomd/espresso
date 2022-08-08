@@ -73,7 +73,7 @@ class Cluster(ScriptInterfaceHelper):
         :class:`espressomd.particle_data.ParticleSlice`
 
         """
-        return ParticleSlice(self.particle_ids())
+        return ParticleSlice(id_selection=self.particle_ids())
 
 
 @script_interface_register

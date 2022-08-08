@@ -23,7 +23,7 @@ import numpy as np
 from .script_interface import ScriptInterfaceHelper, script_interface_register, array_variant
 from .shapes import Shape
 from . import utils
-from .__init__ import has_features
+from .code_features import has_features
 
 
 class VelocityBounceBack:

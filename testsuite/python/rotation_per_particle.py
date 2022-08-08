@@ -67,8 +67,8 @@ class Rotation(ut.TestCase):
             p.quat = [1, 0, 0, 0]
 
             # Enable rotation in a single direction
-            rot = [0, 0, 0]
-            rot[direction] = 1
+            rot = [False, False, False]
+            rot[direction] = True
             p.rotation = rot
 
             system.integrator.run(130)
@@ -86,7 +86,7 @@ class Rotation(ut.TestCase):
                         np.dot(axis, p.convert_vector_body_to_space(axis)), 0.95)
 
     def test_frame_conversion_and_rotation(self):
-        p = self.system.part.add(pos=np.random.random(3), rotation=(1, 1, 1))
+        p = self.system.part.add(pos=np.random.random(3), rotation=3 * [True])
 
         # Space and body frame co-incide?
         np.testing.assert_allclose(
@@ -127,12 +127,12 @@ class Rotation(ut.TestCase):
     def test_rotation_mpi_communication(self):
         system = self.system
         # place particle in cell with MPI rank 0
-        p = system.part.add(pos=0.01 * system.box_l, rotation=(1, 1, 1))
+        p = system.part.add(pos=0.01 * system.box_l, rotation=3 * [True])
         p.rotate((1, 0, 0), -np.pi / 2)
         np.testing.assert_array_almost_equal(
             np.copy(p.director), [0, 1, 0], decimal=10)
         # place particle in cell with MPI rank N-1
-        p = system.part.add(pos=0.99 * system.box_l, rotation=(1, 1, 1))
+        p = system.part.add(pos=0.99 * system.box_l, rotation=3 * [True])
         p.rotate((1, 0, 0), -np.pi / 2)
         np.testing.assert_array_almost_equal(
             np.copy(p.director), [0, 1, 0], decimal=10)

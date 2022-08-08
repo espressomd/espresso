@@ -60,7 +60,7 @@ class Test:
         self.system.box_l = [self.box_l, self.box_l, self.box_l + self.elc_gap]
         self.system.cell_system.set_regular_decomposition(
             use_verlet_lists=True)
-        self.system.periodicity = [1, 1, 1]
+        self.system.periodicity = [True, True, True]
         prefactor = 2.0
         p3m = self.p3m_class(prefactor=prefactor, accuracy=self.accuracy,
                              mesh=[58, 58, 70], cao=4)

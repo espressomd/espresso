@@ -1,3 +1,4 @@
+#
 # Copyright (C) 2010-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -20,7 +21,7 @@ import sys
 import pathlib
 
 from ...script_interface import script_interface_register, ScriptInterfaceHelper  # pylint: disable=import
-from ...__init__ import assert_features
+from ...code_features import assert_features
 from ... import utils
 
 

@@ -2850,7 +2850,7 @@ class BondedInteractions(ScriptObjectMap):
 
     Methods
     -------
-    remove():
+    remove()
         Remove a bond from the list.
         This is a no-op if the bond does not exist.
 

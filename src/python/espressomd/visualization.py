@@ -402,12 +402,10 @@ class openGLLive():
         # particle info of highlighted particle: collect particle attributes
         self.highlighted_particle = {}
         self.particle_attributes = []
-        for d in dir(espressomd.particle_data.ParticleHandle):
-            if isinstance(getattr(espressomd.particle_data.ParticleHandle, d),
-                          type(espressomd.particle_data.ParticleHandle.pos)):
-                if d not in ["pos_folded"]:
-                    self.particle_attributes.append(d)
-        self.max_len_attr = max([len(a) for a in self.particle_attributes])
+        for attr in espressomd.particle_data.particle_attributes:
+            if attr not in ["pos_folded"]:
+                self.particle_attributes.append(attr)
+        self.max_len_attr = max(map(len, self.particle_attributes))
 
         # fixed colors from inverse background color for good contrast
         self.inverse_bg_color = \

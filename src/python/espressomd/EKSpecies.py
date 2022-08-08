@@ -24,7 +24,7 @@ import numpy as np
 import itertools
 
 from . import utils
-from .__init__ import has_features
+from .code_features import has_features
 
 from .shapes import Shape
 from .lb import VTKRegistry, LatticeSliceWalberla

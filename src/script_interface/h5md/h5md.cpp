@@ -18,8 +18,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_SCRIPTINTERFACE_H5MD_CPP
-#define ESPRESSO_SCRIPTINTERFACE_H5MD_CPP
 
 #include "config.hpp"
 
@@ -36,6 +34,7 @@
 
 namespace ScriptInterface {
 namespace Writer {
+
 Variant H5md::do_call_method(const std::string &name,
                              const VariantMap &parameters) {
   if (name == "write")
@@ -52,8 +51,7 @@ Variant H5md::do_call_method(const std::string &name,
   return {};
 }
 
-} /* namespace Writer */
+} // namespace Writer
 } // namespace ScriptInterface
 
 #endif // H5MD
-#endif

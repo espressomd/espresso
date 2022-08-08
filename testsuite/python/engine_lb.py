@@ -85,13 +85,6 @@ class SwimmerTest():
         self.system.actors.clear()
         self.system.thermostat.turn_off()
 
-    def test_conflicting_parameters(self):
-        """v_swim and f_swim can't be set at the same time
-        """
-        swimmer = self.system.part.add(pos=[3] * 3)
-        with self.assertRaises(Exception):
-            swimmer.swimming = {"v_swim": 0.3, "f_swim": 0.6}
-
     def test_momentum_conservation(self):
         """friction as well as 'active' forces apply to particles
         and to the fluid, so total momentum is conserved

@@ -28,7 +28,7 @@ class LangevinThermostat(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.cell_system.set_regular_decomposition(use_verlet_lists=True)
     system.cell_system.skin = 0
-    system.periodicity = [0, 0, 0]
+    system.periodicity = [False, False, False]
 
     def setUp(self):
         np.random.seed(42)
@@ -50,7 +50,7 @@ class LangevinThermostat(ut.TestCase):
             self.system.part.clear()
             p = system.part.add(pos=[0, 0, 0])
             if espressomd.has_features("ROTATION"):
-                p.rotation = [1, 1, 1]
+                p.rotation = [True, True, True]
             if per_particle_gamma:
                 assert espressomd.has_features("THERMOSTAT_PER_PARTICLE")
                 if espressomd.has_features("PARTICLE_ANISOTROPY"):
@@ -190,7 +190,7 @@ class LangevinThermostat(ut.TestCase):
 
         system.time = 0
         system.time_step = 0.0001
-        p = system.part.add(pos=(0, 0, 0), omega_body=o0, rotation=(1, 1, 1))
+        p = system.part.add(pos=(0, 0, 0), omega_body=o0, rotation=3 * [True])
         if espressomd.has_features("ROTATIONAL_INERTIA"):
             rinertia = np.array((2, 2, 2))
             p.rinertia = rinertia

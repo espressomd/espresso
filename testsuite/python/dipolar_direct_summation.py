@@ -142,7 +142,7 @@ class dds(ut.TestCase):
         part_pos = np.random.random((N, 3)) * system.box_l
         part_dip = dipole_modulus * tests_common.random_dipoles(N)
         self.particles = system.part.add(pos=part_pos, dip=part_dip,
-                                         rotation=N * [(1, 1, 1)])
+                                         rotation=N * [(True, True, True)])
 
         # minimize system
         system.non_bonded_inter[0, 0].lennard_jones.set_params(
@@ -182,7 +182,7 @@ class dds(ut.TestCase):
         ref_t = array_data[:, 9:12]
 
         self.particles = system.part.add(
-            pos=pos, dip=dip, rotation=[[1, 1, 1]] * len(pos))
+            pos=pos, dip=dip, rotation=[[True, True, True]] * len(pos))
         dds_e, dds_f, dds_t = method_func()
         self.assertAlmostEqual(dds_e, ref_e, delta=energy_tol)
         np.testing.assert_allclose(dds_f, ref_f, atol=force_tol)

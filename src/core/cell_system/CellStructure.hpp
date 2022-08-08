@@ -33,6 +33,7 @@
 #include "bond_error.hpp"
 #include "cell_system/Cell.hpp"
 #include "cell_system/CellStructureType.hpp"
+#include "config.hpp"
 #include "ghosts.hpp"
 
 #include <utils/math/sqr.hpp>
@@ -256,7 +257,6 @@ public:
                      [this](int id) { return get_local_particle(id); });
   }
 
-public:
   CellStructureType decomposition_type() const { return m_type; }
 
   /** Maximal cutoff supported by current cell system. */
@@ -265,10 +265,6 @@ public:
   /** Maximal pair range supported by current cell system. */
   Utils::Vector3d max_range() const;
 
-private:
-  Utils::Span<Cell *> local_cells();
-
-public:
   ParticleRange local_particles();
   ParticleRange ghost_particles();
 
@@ -280,6 +276,8 @@ private:
    *          if the particle does not belong on this node.
    */
   Cell *particle_to_cell(const Particle &p);
+
+  Utils::Span<Cell *> local_cells();
 
 public:
   /**
@@ -346,7 +344,7 @@ public:
    *
    * @return The active particle decomposition.
    */
-  const ParticleDecomposition &decomposition() const {
+  ParticleDecomposition const &decomposition() const {
     return assert(m_decomposition), *m_decomposition;
   }
 
@@ -418,12 +416,18 @@ public:
    * @brief Add forces from ghost particles to real particles.
    */
   void ghosts_reduce_forces();
+
 #ifdef BOND_CONSTRAINT
   /**
    * @brief Add rattle corrections from ghost particles to real particles.
    */
   void ghosts_reduce_rattle_correction();
 #endif
+
+  /**
+   * @brief Resort particles.
+   */
+  void resort_particles(bool global_flag, BoxGeometry const &box);
 
 private:
   /**
@@ -491,13 +495,6 @@ private:
     }
   }
 
-public:
-  /**
-   * @brief Resort particles.
-   */
-  void resort_particles(bool global_flag, BoxGeometry const &box);
-
-private:
   /** @brief Set the particle decomposition, keeping the particles. */
   void set_particle_decomposition(
       std::unique_ptr<ParticleDecomposition> &&decomposition) {
@@ -549,13 +546,6 @@ public:
                                 double cutoff_regular, BoxGeometry const &box,
                                 LocalBox<double> &local_geo,
                                 std::set<int> n_square_types);
-
-public:
-  template <class BondKernel> void bond_loop(BondKernel const &bond_kernel) {
-    for (auto &p : local_particles()) {
-      execute_bond_handler(p, bond_kernel);
-    }
-  }
 
 private:
   /**
@@ -630,6 +620,15 @@ private:
   }
 
 public:
+  /** Bonded pair loop.
+   * @param bond_kernel Kernel to apply
+   */
+  template <class BondKernel> void bond_loop(BondKernel const &bond_kernel) {
+    for (auto &p : local_particles()) {
+      execute_bond_handler(p, bond_kernel);
+    }
+  }
+
   /** Non-bonded pair loop.
    * @param pair_kernel Kernel to apply
    */
