@@ -39,7 +39,7 @@ if(SCAFACOS)
   add_subdirectory(scafacos)
 endif(SCAFACOS)
 
-if(WITH_SCRIPT_INTERFACE)
+if(WITH_PYTHON)
   add_subdirectory(script_interface)
 endif()
 

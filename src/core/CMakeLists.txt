@@ -93,10 +93,11 @@ if(CUDA)
             ${CMAKE_CURRENT_SOURCE_DIR}/magnetostatics)
   target_link_libraries(Espresso_core PUBLIC Espresso::cuda)
   install(TARGETS Espresso_cuda
-          LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
+          LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
 endif()
 
-install(TARGETS Espresso_core LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
+install(TARGETS Espresso_core
+        LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
 
 target_link_libraries(
   Espresso_core PRIVATE Espresso::config Espresso::utils::mpi Espresso::shapes

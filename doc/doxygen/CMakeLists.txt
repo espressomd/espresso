@@ -21,7 +21,7 @@ find_package(Doxygen)
 if(DOXYGEN_FOUND)
   add_custom_command(
     OUTPUT doxy-features
-    COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/gen_doxyconfig.py
+    COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/gen_doxyconfig.py
             ${CMAKE_SOURCE_DIR}/src/config doxy-features
     DEPENDS Espresso::config)
 

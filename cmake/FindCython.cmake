@@ -22,7 +22,7 @@
 # limitations under the License.
 #=============================================================================
 
-set(CYTHON_EXECUTABLE ${PYTHON_EXECUTABLE} -m cython)
+set(CYTHON_EXECUTABLE ${Python_EXECUTABLE} -m cython)
 execute_process(COMMAND ${CYTHON_EXECUTABLE} -V
                 ERROR_VARIABLE CYTHON_OUTPUT RESULT_VARIABLE CYTHON_STATUS OUTPUT_QUIET)
 if(CYTHON_STATUS EQUAL 0)
