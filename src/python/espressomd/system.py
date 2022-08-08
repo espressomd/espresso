@@ -94,10 +94,8 @@ class System(ScriptInterfaceHelper):
     ekcontainer: :class:`espressomd.EKSpecies.EKContainer`
     ekreactions: :class:`espressomd.EKSpecies.EKReactions`
     cuda_init_handle: :class:`espressomd.cuda_init.CudaInitHandle`
-    ekboundaries: :class:`espressomd.ekboundaries.EKBoundaries`
     galilei: :class:`espressomd.galilei.GalileiTransform`
     integrator: :class:`espressomd.integrate.IntegratorHandle`
-    lbboundaries: :class:`espressomd.lbboundaries.LBBoundaries`
     lees_edwards: :class:`espressomd.lees_edwards.LeesEdwards`
     non_bonded_inter: :class:`espressomd.interactions.NonBondedInteractions`
     part: :class:`espressomd.particle_data.ParticleList`
