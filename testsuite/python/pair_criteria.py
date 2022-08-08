@@ -45,7 +45,7 @@ class PairCriteria(ut.TestCase):
 
         # Decisions
         # Periodic system. Particles in range via minimum image convention
-        self.system.periodicity = 3 * [True]
+        self.system.periodicity = (True, True, True)
         self.assertTrue(dc.decide(self.p1, self.p2))
         self.assertTrue(dc.decide(self.p1.id, self.p2.id))
 
@@ -53,7 +53,7 @@ class PairCriteria(ut.TestCase):
         dc = espressomd.pair_criteria.DistanceCriterion(cut_off=0.1)
 
         # Non-periodic system. Particles out of range
-        self.system.periodicity = (0, 0, 0)
+        self.system.periodicity = (False, False, False)
         self.assertTrue(not dc.decide(self.p1, self.p2))
         self.assertTrue(not dc.decide(self.p1.id, self.p2.id))
 
@@ -74,7 +74,7 @@ class PairCriteria(ut.TestCase):
 
         # Decisions
         # Periodic system. Particles in range via minimum image convention
-        self.system.periodicity = (1, 1, 1)
+        self.system.periodicity = (True, True, True)
         self.assertTrue(ec.decide(self.p1, self.p2))
         self.assertTrue(ec.decide(self.p1.id, self.p2.id))
 
@@ -89,7 +89,7 @@ class PairCriteria(ut.TestCase):
         self.assertTrue(abs(ec.get_params()["cut_off"] - 0.001) < self.epsilon)
 
         # Non-periodic system. Particles out of range
-        self.system.periodicity = (0, 0, 0)
+        self.system.periodicity = (False, False, False)
         self.assertTrue(not ec.decide(self.p1, self.p2))
         self.assertTrue(not ec.decide(self.p1.id, self.p2.id))
 

@@ -27,7 +27,7 @@ class ElectrostaticInteractionsTests:
 
     # Handle to espresso system
     system = espressomd.System(box_l=[10.0] * 3)
-    system.periodicity = [0, 0, 1]
+    system.periodicity = [False, False, True]
     system.time_step = 0.01
     system.cell_system.skin = 0.4
     system.cell_system.set_n_square()
@@ -41,7 +41,7 @@ class ElectrostaticInteractionsTests:
 
     def setUp(self):
         self.system.box_l = [10.0] * 3
-        self.system.periodicity = [0, 0, 1]
+        self.system.periodicity = [False, False, True]
         self.system.cell_system.set_n_square()
 
     def tearDown(self):

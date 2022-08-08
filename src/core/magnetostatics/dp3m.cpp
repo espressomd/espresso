@@ -879,7 +879,8 @@ void DipolarP3M::sanity_checks_boxl() const {
 
 void DipolarP3M::sanity_checks_periodicity() const {
   if (!box_geo.periodic(0) || !box_geo.periodic(1) || !box_geo.periodic(2)) {
-    throw std::runtime_error("DipolarP3M: requires periodicity (1 1 1)");
+    throw std::runtime_error(
+        "DipolarP3M: requires periodicity (True, True, True)");
   }
 }
 

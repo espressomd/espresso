@@ -81,7 +81,7 @@ class FFT_test(ut.TestCase):
         positions = np.random.random((num_part, 3))
         dipoles = tests_common.random_dipoles(num_part)
         self.system.part.add(pos=positions * self.system.box_l,
-                             dip=dipoles, rotation=num_part * [(1, 1, 1)])
+                             dip=dipoles, rotation=num_part * [3 * [True]])
         self.minimize()
 
     @ut.skipIf(n_nodes not in FFT_PLANS, f"no FFT plan for {n_nodes} threads")

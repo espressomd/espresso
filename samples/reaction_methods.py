@@ -98,7 +98,7 @@ elif args.mode == "constant_pH_ensemble":
 assert RE is not None, "Please choose a reaction ensemble from the command line"
 
 print(RE.get_status())
-system.setup_type_map(list(types.values()))
+system.setup_type_map(type_list=list(types.values()))
 
 
 # Set the hidden particle type to the lowest possible number to speed

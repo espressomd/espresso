@@ -78,7 +78,7 @@ int_n_times = 20
 structurefactor_type_list = [0, 1]
 structurefactor_order = 20
 structurefactor_bins = len(system.analysis.structure_factor(
-    [0], structurefactor_order)[0])
+    sf_types=[0], sf_order=structurefactor_order)[0])
 structurefactor_k = np.zeros(structurefactor_bins)
 structurefactor_Sk = np.zeros(structurefactor_bins)
 
@@ -153,7 +153,7 @@ for i in range(int_n_times):
     system.integrator.run(int_steps)
 
     structurefactor_k, structurefactor_Sk = system.analysis.structure_factor(
-        structurefactor_type_list, structurefactor_order)
+        sf_types=structurefactor_type_list, sf_order=structurefactor_order)
 
     energies = system.analysis.energy()
     print(energies['total'])

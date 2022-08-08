@@ -758,7 +758,8 @@ void CoulombP3M::sanity_checks_boxl() const {
 
 void CoulombP3M::sanity_checks_periodicity() const {
   if (!box_geo.periodic(0) || !box_geo.periodic(1) || !box_geo.periodic(2)) {
-    throw std::runtime_error("CoulombP3M: requires periodicity (1 1 1)");
+    throw std::runtime_error(
+        "CoulombP3M: requires periodicity (True, True, True)");
   }
 }
 

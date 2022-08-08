@@ -1,3 +1,4 @@
+#
 # Copyright (C) 2010-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -14,6 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 
@@ -36,6 +38,8 @@ class CylindricalTransformationParameters(ScriptInterfaceHelper):
     Notes
     -----
     If you provide no arguments, the defaults above are set.
-    If you provide only a ``center`` and an ``axis``, an ``orientation`` will be automatically generated that is orthogonal to ``axis``.
+    If you provide only a ``center`` and an ``axis``, an ``orientation``
+    will be automatically generated that is orthogonal to ``axis``.
+
     """
-    _so_name = "CylindricalTransformationParameters"
+    _so_name = "Math::CylindricalTransformationParameters"

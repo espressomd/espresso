@@ -424,7 +424,7 @@ void set_particle_f(int part, const Utils::Vector3d &f) {
                       &ParticleForce::f>(part, f);
 }
 
-#if defined(MASS)
+#ifdef MASS
 void set_particle_mass(int part, double mass) {
   mpi_update_particle_property<double, &ParticleProperties::mass>(part, mass);
 }
@@ -506,13 +506,11 @@ void set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
 }
 #endif
 
-void set_particle_q(int part, double q) {
 #ifdef ELECTROSTATICS
+void set_particle_q(int part, double q) {
   mpi_update_particle_property<double, &ParticleProperties::q>(part, q);
-#endif
 }
-
-#ifndef ELECTROSTATICS
+#else
 const constexpr double ParticleProperties::q;
 #endif
 

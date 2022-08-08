@@ -97,7 +97,7 @@ system.non_bonded_inter[0, 0].lennard_jones.set_params(
 #############################################################
 system.part.add(
     pos=np.random.random((n_part, 3)) * system.box_l,
-    rotation=n_part * [(1, 1, 1)],
+    rotation=n_part * [(True, True, True)],
     dipm=n_part * [args.dipole_moment])
 
 #  Warmup Integration

@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from . import interactions
-from .__init__ import has_features
+from .code_features import has_features
 
 
 class DrudeHelpers:

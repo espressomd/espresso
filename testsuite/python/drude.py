@@ -137,19 +137,19 @@ class Drude(ut.TestCase):
         pos_pf6 = box_center + np.array([0, dmol, 0])
         part0 = system.part.add(
             type=types["PF6"], pos=pos_pf6, q=charges["PF6"],
-            mass=masses["PF6"], fix=[1, 1, 1])
+            mass=masses["PF6"], fix=3 * [True])
 
         # cation
         pos_com = box_center - np.array([0, dmol, 0])
         part2 = system.part.add(id=2, type=types["BMIM_C1"],
                                 pos=pos_com + [0, -0.527, 1.365], q=charges["BMIM_C1"],
-                                mass=masses["BMIM_C1"], fix=[1, 1, 1])
+                                mass=masses["BMIM_C1"], fix=3 * [True])
         part4 = system.part.add(id=4, type=types["BMIM_C2"],
                                 pos=pos_com + [0, 1.641, 2.987], q=charges["BMIM_C2"],
-                                mass=masses["BMIM_C2"], fix=[1, 1, 1])
+                                mass=masses["BMIM_C2"], fix=3 * [True])
         part6 = system.part.add(id=6, type=types["BMIM_C3"],
                                 pos=pos_com + [0, 0.187, -2.389], q=charges["BMIM_C3"],
-                                mass=masses["BMIM_C3"], fix=[1, 1, 1])
+                                mass=masses["BMIM_C3"], fix=3 * [True])
 
         system.thermostat.set_langevin(
             kT=temperature_com,

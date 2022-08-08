@@ -39,7 +39,7 @@ class StokesianDynamicsTest(ut.TestCase):
 
     def setUp(self):
         self.system.box_l = [10] * 3
-        self.system.periodicity = [0, 0, 0]
+        self.system.periodicity = [False, False, False]
         self.system.cell_system.skin = 0.4
 
     def tearDown(self):
@@ -48,9 +48,9 @@ class StokesianDynamicsTest(ut.TestCase):
 
     def falling_spheres(self, time_step, l_factor, t_factor, sd_method='fts'):
         self.system.time_step = time_step
-        self.system.part.add(pos=[-5 * l_factor, 0, 0], rotation=[1, 1, 1])
-        self.system.part.add(pos=[0 * l_factor, 0, 0], rotation=[1, 1, 1])
-        self.system.part.add(pos=[7 * l_factor, 0, 0], rotation=[1, 1, 1])
+        self.system.part.add(pos=[-5 * l_factor, 0, 0], rotation=3 * [True])
+        self.system.part.add(pos=[0 * l_factor, 0, 0], rotation=3 * [True])
+        self.system.part.add(pos=[7 * l_factor, 0, 0], rotation=3 * [True])
 
         self.system.integrator.set_stokesian_dynamics(
             viscosity=1.0 / (t_factor * l_factor),
@@ -116,7 +116,7 @@ class StokesianDiffusionTest(ut.TestCase):
 
     def setUp(self):
         self.system.box_l = [10] * 3
-        self.system.periodicity = [0, 0, 0]
+        self.system.periodicity = [False, False, False]
 
         self.system.time_step = 1.0
         self.system.cell_system.skin = 0.4
@@ -127,7 +127,7 @@ class StokesianDiffusionTest(ut.TestCase):
         self.system.thermostat.set_stokesian(kT=0)
 
     def test(self):
-        p = self.system.part.add(pos=[0, 0, 0], rotation=[1, 1, 1])
+        p = self.system.part.add(pos=[0, 0, 0], rotation=3 * [True])
         self.system.integrator.set_stokesian_dynamics(
             viscosity=self.eta, radii={0: self.R})
         self.system.thermostat.set_stokesian(kT=self.kT, seed=42)

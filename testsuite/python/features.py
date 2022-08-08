@@ -24,14 +24,16 @@ import espressomd
 class Features(ut.TestCase):
 
     def test_has_features(self):
-        for feature in espressomd.code_info.features():
+        all_features = set(espressomd.code_info.all_features())
+        features = set(espressomd.code_info.features())
+
+        for feature in features:
             self.assertTrue(espressomd.has_features(feature))
 
-        for feature in espressomd.code_info.all_features(
-        ) - set(espressomd.code_info.features()):
+        for feature in all_features - features:
             self.assertFalse(espressomd.has_features(feature))
 
-        with self.assertRaises(RuntimeError) as _:
+        with self.assertRaises(RuntimeError):
             espressomd.has_features("NotAFeature")
 
 

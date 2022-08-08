@@ -209,12 +209,12 @@ feature)::
 
     for i in range(10):
         system.part.add(pos=np.random.random(3) * box_l,
-                        rotation=[1, 1, 1],
+                        rotation=[True, True, True],
                         ext_torque=[5, 0, 0],
                         v=[10, 0, 0],
                         type=0)
         system.part.add(pos=np.random.random(3) * box_l,
-                        rotation=[1, 1, 1],
+                        rotation=[True, True, True],
                         ext_torque=[0, 5, 0],
                         v=[-10, 0, 0],
                         type=1)

@@ -160,7 +160,7 @@ public:
       throw std::runtime_error(("unknown method '" + name + "()'").c_str());
     }
     return {};
-  };
+  }
 
 private:
   void delete_reaction(int reaction_id) {

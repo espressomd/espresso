@@ -154,6 +154,7 @@ void ShapeBasedConstraint::add_energy(const Particle &p,
       runtimeErrorMsg() << "Constraint violated by particle " << p.id();
     }
   }
+  // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks)
   if (part_rep.type() >= 0)
     obs_energy.add_non_bonded_contribution(p.type(), part_rep.type(), energy);
 }

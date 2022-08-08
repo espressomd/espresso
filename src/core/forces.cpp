@@ -30,13 +30,13 @@
 #include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
-#include "comfixed_global.hpp"
 #include "communication.hpp"
 #include "constraints.hpp"
 #include "electrostatics/icc.hpp"
 #include "electrostatics/p3m_gpu.hpp"
 #include "forcecap.hpp"
 #include "forces_inline.hpp"
+#include "galilei/ComFixed.hpp"
 #include "grid_based_algorithms/electrokinetics.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
@@ -58,6 +58,9 @@
 #include <profiler/profiler.hpp>
 
 #include <cassert>
+#include <memory>
+
+std::shared_ptr<ComFixed> comfixed = std::make_shared<ComFixed>();
 
 /** Initialize the forces for a ghost particle */
 inline ParticleForce init_ghost_force(Particle const &) { return {}; }
@@ -234,7 +237,7 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
   cell_structure.ghosts_reduce_forces();
 
   // should be pretty late, since it needs to zero out the total force
-  comfixed.apply(comm_cart, particles);
+  comfixed->apply(comm_cart, particles);
 
   // Needs to be the last one to be effective
   forcecap_cap(particles);

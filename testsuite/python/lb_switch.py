@@ -35,7 +35,7 @@ class LBSwitchActor(ut.TestCase):
     def switch_test(self, GPU=False):
         system = self.system
         system.actors.clear()
-        p = system.part.add(pos=[1., 1., 1.], v=[1., 0, 0], fix=[1, 1, 1])
+        p = system.part.add(pos=[1., 1., 1.], v=[1., 0, 0], fix=3 * [True])
 
         lb_fluid_params = {'agrid': 2.0, 'dens': 1.0, 'visc': 1.0, 'tau': 0.03}
         friction_1 = 1.5

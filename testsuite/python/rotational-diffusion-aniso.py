@@ -32,7 +32,7 @@ class RotDiffAniso(ut.TestCase):
     # Handle for espresso system
     system = espressomd.System(box_l=3 * [10.])
     system.cell_system.skin = 5.0
-    system.periodicity = [0, 0, 0]
+    system.periodicity = [False, False, False]
     # The time step should be less than t0 ~ mass / gamma
     system.time_step = 3E-3
 
@@ -58,8 +58,9 @@ class RotDiffAniso(ut.TestCase):
 
     def add_particles(self):
         positions = np.random.random((self.n_part, 3)) * self.system.box_l[0]
-        self.partcls = self.system.part.add(pos=positions, rotation=self.n_part * [(1, 1, 1)],
-                                            rinertia=self.n_part * [self.J])
+        self.partcls = self.system.part.add(
+            pos=positions, rotation=self.n_part * [3 * [True]],
+            rinertia=self.n_part * [self.J])
         if espressomd.has_features("ROTATION"):
             self.partcls.omega_body = [0.0, 0.0, 0.0]
 

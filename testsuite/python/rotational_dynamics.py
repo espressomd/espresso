@@ -22,7 +22,7 @@ import unittest as ut
 import unittest_decorators as utx
 
 
-@utx.skipIfMissingFeatures("ROTATION")
+@utx.skipIfMissingFeatures(["ROTATION", "ROTATIONAL_INERTIA"])
 class Integrate(ut.TestCase):
 
     system = espressomd.System(box_l=[1., 1., 1.])

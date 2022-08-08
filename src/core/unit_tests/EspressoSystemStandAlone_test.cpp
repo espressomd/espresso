@@ -37,7 +37,7 @@ namespace utf = boost::unit_test;
 #include "electrostatics/p3m.hpp"
 #include "electrostatics/registration.hpp"
 #include "energy.hpp"
-#include "galilei.hpp"
+#include "galilei/Galilei.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/lj.hpp"
 #include "observables/ParticleVelocities.hpp"
@@ -92,6 +92,16 @@ REGISTER_CALLBACK(mpi_create_bonds_local)
 
 static void mpi_create_bonds(int harm_bond_id, int fene_bond_id) {
   mpi_call_all(mpi_create_bonds_local, harm_bond_id, fene_bond_id);
+}
+
+static void mpi_remove_translational_motion_local() {
+  Galilei{}.kill_particle_motion(false);
+}
+
+REGISTER_CALLBACK(mpi_remove_translational_motion_local)
+
+static void mpi_remove_translational_motion() {
+  mpi_call_all(mpi_remove_translational_motion_local);
 }
 
 #ifdef P3M
@@ -168,7 +178,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
     BOOST_REQUIRE_EQUAL_COLLECTIONS(obs_shape.begin(), obs_shape.end(),
                                     ref_shape.begin(), ref_shape.end());
 
-    mpi_kill_particle_motion(0);
+    mpi_remove_translational_motion();
     for (int i = 0; i < 5; ++i) {
       set_particle_v(pid2, {static_cast<double>(i), 0., 0.});
 
@@ -186,7 +196,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
 
   // check kinetic energy
   {
-    mpi_kill_particle_motion(0);
+    mpi_remove_translational_motion();
     for (int i = 0; i < 5; ++i) {
       set_particle_v(pid2, {static_cast<double>(i), 0., 0.});
       auto const &p = get_particle_data(pid2);
@@ -301,7 +311,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
     integrate_set_nvt();
 
     // reset system
-    mpi_kill_particle_motion(0);
+    mpi_remove_translational_motion();
     reset_particle_positions();
 
     // recalculate forces without propagating the system

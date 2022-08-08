@@ -136,7 +136,7 @@ class Test(ut.TestCase):
         # run sanity checks
         self.system.periodicity = [True, True, False]
         ddsr = DDSR(prefactor=1., n_replica=1)
-        with self.assertRaisesRegex(Exception, r"DLC: requires periodicity \(1 1 1\)"):
+        with self.assertRaisesRegex(Exception, r"DLC: requires periodicity \(True, True, True\)"):
             mdlc = MDLC(gap_size=1., maxPWerror=1e-5, actor=ddsr)
             self.system.actors.add(mdlc)
         self.assertEqual(len(self.system.actors), 0)

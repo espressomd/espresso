@@ -168,7 +168,7 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
         Get the volume to be used in the acceptance probability of the reaction
         ensemble.
 
-    get_acceptance_rate_configurational_moves():
+    get_acceptance_rate_configurational_moves()
         Returns the acceptance rate for the configuration moves.
 
     get_acceptance_rate_reaction()

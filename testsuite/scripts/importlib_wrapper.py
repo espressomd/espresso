@@ -26,6 +26,7 @@ import unittest.mock
 import importlib
 import pathlib
 import espressomd
+import espressomd.code_features
 
 
 # global variable: if one import failed, all subsequent imports will be skipped,
@@ -115,7 +116,7 @@ def configure_and_import(filepath,
     module_name = output_filepath.stem
     try:
         module = importlib.import_module(module_name)
-    except espressomd.FeaturesError as err:
+    except espressomd.code_features.FeaturesError as err:
         skip_future_imports_dependency(filepath)
         skipIfMissingFeatures = unittest.skip(f"{err}, skipping test!")
         module = unittest.mock.MagicMock()

@@ -48,7 +48,7 @@ class ThermalizedBond(ut.TestCase, thermostats_common.ThermostatsCommon):
         N_half = int(N / 2)
         self.system.part.clear()
         self.system.time_step = 0.02
-        self.system.periodicity = [0, 0, 0]
+        self.system.periodicity = [False, False, False]
 
         m1 = 1.0
         m2 = 10.0
@@ -100,7 +100,7 @@ class ThermalizedBond(ut.TestCase, thermostats_common.ThermostatsCommon):
         N_half = int(N / 2)
         self.system.part.clear()
         self.system.time_step = 0.02
-        self.system.periodicity = [1, 1, 1]
+        self.system.periodicity = [True, True, True]
 
         m1 = 1.0
         m2 = 10.0

@@ -207,7 +207,7 @@ class NetworkBreakage(BondBreakageCommon, ut.TestCase):
         self.system.integrator.set_vv()
 
         for i in range(part_num):
-            self.system.part.by_id(i).fix = [1, 1, 1]
+            self.system.part.by_id(i).fix = [True, True, True]
 
         self.system.thermostat.set_langevin(kT=0.0, gamma=1.0, seed=41)
 

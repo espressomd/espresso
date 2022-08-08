@@ -337,10 +337,7 @@ inline bool checkIfInteraction(IA_parameters const &data) {
   return data.max_cut != INACTIVE_CUTOFF;
 }
 
-/** @brief Set and broadcast the min_global_cut
- *  @param min_global_cut minimum global cutoff
- */
-void mpi_set_min_global_cut(double min_global_cut);
+void set_min_global_cut(double min_global_cut);
 
 double get_min_global_cut();
 #endif

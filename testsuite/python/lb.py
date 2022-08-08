@@ -49,7 +49,7 @@ class TestLB:
               'temp': 1.5,
               'gamma': 1.5}
 
-    system.periodicity = [1, 1, 1]
+    system.periodicity = [True, True, True]
     system.time_step = params['time_step']
     system.cell_system.skin = 1.0
     interpolation = False
@@ -377,7 +377,7 @@ class TestLB:
         self.system.thermostat.set_lb(
             LB_fluid=lbf, seed=3, gamma=self.params['friction'])
         p = self.system.part.add(
-            pos=[0.5 * self.params['agrid']] * 3, v=v_part, fix=[1, 1, 1])
+            pos=[0.5 * self.params['agrid']] * 3, v=v_part, fix=3 * [True])
         lbf[0, 0, 0].velocity = v_fluid
         if self.interpolation:
             v_fluid = lbf.get_interpolated_velocity(p.pos)
@@ -414,7 +414,7 @@ class TestLB:
         where particles don't move.
 
         """
-        p = self.system.part.add(pos=[0.1, 0.2, 0.3], fix=[1, 1, 1])
+        p = self.system.part.add(pos=[0.1, 0.2, 0.3], fix=3 * [True])
         ext_force_density = [2.3, 1.2, 0.1]
         lbf = self.lb_class(
             visc=self.params['viscosity'],

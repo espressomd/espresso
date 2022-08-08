@@ -20,7 +20,9 @@
 #include "config.hpp"
 
 #include "EspressoSystemStandAlone.hpp"
+#include "MpiCallbacks.hpp"
 #include "communication.hpp"
+#include "event.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "virtual_sites.hpp"
@@ -50,6 +52,14 @@ EspressoSystemStandAlone::EspressoSystemStandAlone(int argc, char **argv) {
   mpi_loop();
 }
 
+static void mpi_set_node_grid_local(Utils::Vector3i const &node_grid) {
+  ::node_grid = node_grid;
+  grid_changed_n_nodes();
+  on_node_grid_change();
+}
+
+REGISTER_CALLBACK(mpi_set_node_grid_local)
+
 void EspressoSystemStandAlone::set_box_l(Utils::Vector3d const &box_l) const {
   if (!head_node)
     return;
@@ -60,7 +70,7 @@ void EspressoSystemStandAlone::set_node_grid(
     Utils::Vector3i const &node_grid) const {
   if (!head_node)
     return;
-  mpi_set_node_grid(node_grid);
+  mpi_call_all(mpi_set_node_grid_local, node_grid);
 }
 
 void EspressoSystemStandAlone::set_time_step(double time_step) const {

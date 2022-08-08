@@ -19,7 +19,7 @@
 
 from . import utils
 from .script_interface import ScriptInterfaceHelper, script_interface_register
-from .__init__ import has_features
+from .code_features import has_features
 
 
 class MagnetostaticInteraction(ScriptInterfaceHelper):

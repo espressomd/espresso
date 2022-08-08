@@ -106,66 +106,13 @@ void grid_changed_n_nodes() {
   grid_changed_box_l(box_geo);
 }
 
-void rescale_boxl(int dir, double d_new) {
-  double scale = (dir - 3) ? d_new * box_geo.length_inv()[dir]
-                           : d_new * box_geo.length_inv()[0];
-
-  /* If shrinking, rescale the particles first. */
-  if (scale <= 1.) {
-    mpi_rescale_particles(dir, scale);
-  }
-
-  if (dir < 3) {
-    auto box_l = box_geo.length();
-    box_l[dir] = d_new;
-    mpi_set_box_length(box_l);
-  } else {
-    mpi_set_box_length({d_new, d_new, d_new});
-  }
-
-  if (scale > 1.) {
-    mpi_rescale_particles(dir, scale);
-  }
-}
-
-void mpi_set_box_length_local(const Utils::Vector3d &length) {
-  box_geo.set_length(length);
+static void mpi_set_box_length_local(Utils::Vector3d const &box_l) {
+  box_geo.set_length(box_l);
   on_boxl_change();
 }
 
 REGISTER_CALLBACK(mpi_set_box_length_local)
 
-void mpi_set_box_length(const Utils::Vector3d &length) {
-  if (boost::algorithm::any_of(length,
-                               [](double value) { return value <= 0; })) {
-    throw std::domain_error("Box length must be >0");
-  }
-
-  mpi_call_all(mpi_set_box_length_local, length);
-}
-
-void mpi_set_periodicity_local(bool x, bool y, bool z) {
-  box_geo.set_periodic(0, x);
-  box_geo.set_periodic(1, y);
-  box_geo.set_periodic(2, z);
-
-  on_periodicity_change();
-}
-
-REGISTER_CALLBACK(mpi_set_periodicity_local)
-
-void mpi_set_periodicity(bool x, bool y, bool z) {
-  mpi_call_all(mpi_set_periodicity_local, x, y, z);
-}
-
-void mpi_set_node_grid_local(const Utils::Vector3i &node_grid) {
-  ::node_grid = node_grid;
-  grid_changed_n_nodes();
-  on_node_grid_change();
-}
-
-REGISTER_CALLBACK(mpi_set_node_grid_local)
-
-void mpi_set_node_grid(const Utils::Vector3i &node_grid) {
-  mpi_call_all(mpi_set_node_grid_local, node_grid);
+void mpi_set_box_length(Utils::Vector3d const &box_l) {
+  mpi_call_all(mpi_set_box_length_local, box_l);
 }

@@ -211,7 +211,7 @@ for i in range(n_ionpairs):
     cation_com = system.part.add(
         type=types["BMIM_COM"], pos=pos_com,
         mass=masses["BMIM_COM"], rinertia=[646.284, 585.158, 61.126],
-        gamma=0, rotation=[1, 1, 1])
+        gamma=0, rotation=[True, True, True])
 
     cation_c1 = system.part.add(type=types["BMIM_C1"],
                                 pos=pos_com + [0, -0.527, 1.365], q=charges["BMIM_C1"])

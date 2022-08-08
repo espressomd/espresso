@@ -30,13 +30,13 @@ class BoxGeometry(ut.TestCase):
             local_box_l = self.box_l.copy()
             local_box_l[i] = -1.
 
-            with self.assertRaisesRegex(Exception, 'Box length must be >0'):
+            with self.assertRaisesRegex(ValueError, "Attribute 'box_l' must be > 0"):
                 self.system.box_l = local_box_l
 
             # the box length should not be updated
             np.testing.assert_equal(self.box_l, np.copy(self.system.box_l))
 
-        with self.assertRaisesRegex(ValueError, 'box_l must be an array_like of 3 floats'):
+        with self.assertRaisesRegex(ValueError, "Attribute 'box_l' must be a list of 3 floats"):
             self.system.box_l = self.box_l[:2]
 
     def test_periodicity(self):
@@ -50,12 +50,20 @@ class BoxGeometry(ut.TestCase):
         default_periodicity = (True, True, True)
         self.system.periodicity = default_periodicity
 
-        with self.assertRaisesRegex(ValueError, 'periodicity must be an array_like of 3 bools'):
+        with self.assertRaisesRegex(ValueError, "Attribute 'periodicity' must be a list of 3 bools"):
             self.system.periodicity = (True, True)
 
         # the periodicity should not be updated
         np.testing.assert_equal(np.copy(self.system.periodicity),
                                 default_periodicity)
+
+    def test_min_global_cut(self):
+        self.system.min_global_cut = 0.01
+        with self.assertRaisesRegex(ValueError, "Attribute 'min_global_cut' must be >= 0"):
+            self.system.min_global_cut = -2.
+
+        # the min global cutoff should not be updated
+        np.testing.assert_equal(self.system.min_global_cut, 0.01)
 
 
 if __name__ == "__main__":
