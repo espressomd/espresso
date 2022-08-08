@@ -265,7 +265,7 @@ bd_drag_rot(Thermostat::GammaType const &brownian_gamma_rotation, Particle &p,
 
   Utils::Vector3d dphi = {};
   for (int j = 0; j < 3; j++) {
-    if (!p.is_fixed_along(j)) {
+    if (p.can_rotate_around(j)) {
       // only a conservative part of the torque is used here
 #ifndef PARTICLE_ANISOTROPY
       dphi[j] = p.torque()[j] * dt / gamma;
@@ -304,12 +304,11 @@ bd_drag_vel_rot(Thermostat::GammaType const &brownian_gamma_rotation,
 
   Utils::Vector3d omega = {};
   for (int j = 0; j < 3; j++) {
-    if (!p.is_fixed_along(j)) {
-      // only conservative part of the force is used here
-#ifndef PARTICLE_ANISOTROPY
-      omega[j] = p.torque()[j] / gamma;
-#else
+    if (p.can_rotate_around(j)) {
+#ifdef PARTICLE_ANISOTROPY
       omega[j] = p.torque()[j] / gamma[j];
+#else
+      omega[j] = p.torque()[j] / gamma;
 #endif // PARTICLE_ANISOTROPY
     }
   }
@@ -343,7 +342,7 @@ bd_random_walk_rot(BrownianThermostat const &brownian, Particle const &p,
   auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_ROT_INC>(
       brownian.rng_counter(), brownian.rng_seed(), p.id());
   for (int j = 0; j < 3; j++) {
-    if (!p.is_fixed_along(j)) {
+    if (p.can_rotate_around(j)) {
 #ifndef PARTICLE_ANISOTROPY
       if (sigma_pos > 0.0) {
         dphi[j] = noise[j] * sigma_pos * sqrt(dt);
@@ -378,7 +377,7 @@ bd_random_walk_vel_rot(BrownianThermostat const &brownian, Particle const &p) {
   auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_ROT_WALK>(
       brownian.rng_counter(), brownian.rng_seed(), p.id());
   for (int j = 0; j < 3; j++) {
-    if (!p.is_fixed_along(j)) {
+    if (p.can_rotate_around(j)) {
       domega[j] = sigma_vel * noise[j] / sqrt(p.rinertia()[j]);
     }
   }
