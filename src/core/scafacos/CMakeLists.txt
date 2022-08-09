@@ -18,8 +18,8 @@
 #
 
 if(SCAFACOS)
-  target_link_libraries(Espresso_core PRIVATE Espresso::scafacos)
+  target_link_libraries(espresso_core PRIVATE espresso::scafacos)
   target_sources(
-    Espresso_core PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/ScafacosContext.cpp
+    espresso_core PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/ScafacosContext.cpp
                           ${CMAKE_CURRENT_SOURCE_DIR}/ScafacosContextBase.cpp)
 endif()

@@ -367,25 +367,25 @@ set(CMAKE_INSTALL_RPATH "${ESPRESSO_INSTALL_LIBDIR}")
 # drop 'lib' prefix from all libraries
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
 
-add_library(Espresso_coverage_flags INTERFACE)
-add_library(Espresso::coverage_flags ALIAS Espresso_coverage_flags)
+add_library(espresso_coverage_flags INTERFACE)
+add_library(espresso::coverage_flags ALIAS espresso_coverage_flags)
 if(WITH_COVERAGE)
   if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     target_compile_options(
-      Espresso_coverage_flags INTERFACE -g -fprofile-instr-generate
+      espresso_coverage_flags INTERFACE -g -fprofile-instr-generate
                                         -fcoverage-mapping)
   else()
     target_compile_options(
-      Espresso_coverage_flags INTERFACE -g --coverage -fprofile-arcs
+      espresso_coverage_flags INTERFACE -g --coverage -fprofile-arcs
                                         -ftest-coverage)
-    target_link_libraries(Espresso_coverage_flags INTERFACE gcov)
+    target_link_libraries(espresso_coverage_flags INTERFACE gcov)
   endif()
 endif()
 
-add_library(Espresso_cpp_flags INTERFACE)
-add_library(Espresso::cpp_flags ALIAS Espresso_cpp_flags)
+add_library(espresso_cpp_flags INTERFACE)
+add_library(espresso::cpp_flags ALIAS espresso_cpp_flags)
 target_compile_options(
-  Espresso_cpp_flags
+  espresso_cpp_flags
   INTERFACE
     -Wall
     -Wextra
@@ -411,18 +411,18 @@ target_compile_options(
 # disable warning from -Wextra on ARM processors
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SYSTEM_PROCESSOR MATCHES
                                             "arm")
-  target_compile_options(Espresso_cpp_flags INTERFACE -Wno-psabi)
+  target_compile_options(espresso_cpp_flags INTERFACE -Wno-psabi)
 endif()
 
 # prevent 80-bit arithmetic on old Intel processors
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SIZEOF_VOID_P EQUAL 4
    AND CMAKE_SYSTEM_PROCESSOR MATCHES "[xX]86")
-  target_compile_options(Espresso_cpp_flags INTERFACE -ffloat-store)
+  target_compile_options(espresso_cpp_flags INTERFACE -ffloat-store)
 endif()
 
 # enable boost::variant with more than 20 types
 target_compile_options(
-  Espresso_cpp_flags INTERFACE -DBOOST_MPL_CFG_NO_PREPROCESSED_HEADERS
+  espresso_cpp_flags INTERFACE -DBOOST_MPL_CFG_NO_PREPROCESSED_HEADERS
                                -DBOOST_MPL_LIMIT_LIST_SIZE=30)
 
 set(CMAKE_MACOSX_RPATH TRUE)
@@ -438,22 +438,22 @@ if(WITH_ASAN AND WITH_MSAN)
 endif()
 if(WITH_ASAN)
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g -O1")
-  target_compile_options(Espresso_cpp_flags INTERFACE -fsanitize=address
+  target_compile_options(espresso_cpp_flags INTERFACE -fsanitize=address
                                                       -fno-omit-frame-pointer)
-  target_link_libraries(Espresso_cpp_flags INTERFACE -fsanitize=address)
+  target_link_libraries(espresso_cpp_flags INTERFACE -fsanitize=address)
 endif()
 if(WITH_MSAN)
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g -O1")
-  target_compile_options(Espresso_cpp_flags INTERFACE -fsanitize=memory
+  target_compile_options(espresso_cpp_flags INTERFACE -fsanitize=memory
                                                       -fno-omit-frame-pointer)
-  target_link_libraries(Espresso_cpp_flags INTERFACE -fsanitize=memory)
+  target_link_libraries(espresso_cpp_flags INTERFACE -fsanitize=memory)
 endif()
 if(WITH_UBSAN)
-  target_compile_options(Espresso_cpp_flags INTERFACE -fsanitize=undefined)
-  target_link_libraries(Espresso_cpp_flags INTERFACE -fsanitize=undefined)
+  target_compile_options(espresso_cpp_flags INTERFACE -fsanitize=undefined)
+  target_link_libraries(espresso_cpp_flags INTERFACE -fsanitize=undefined)
 endif()
 
-target_link_libraries(Espresso_cpp_flags INTERFACE Espresso::coverage_flags)
+target_link_libraries(espresso_cpp_flags INTERFACE espresso::coverage_flags)
 
 #
 # Static analysis

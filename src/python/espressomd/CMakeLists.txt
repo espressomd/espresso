@@ -26,7 +26,7 @@ add_custom_command(
   DEPENDS ${CMAKE_SOURCE_DIR}/src/config/features.def)
 
 add_executable(gen_pxiconfig gen_pxiconfig.cpp)
-target_link_libraries(gen_pxiconfig Espresso::config)
+target_link_libraries(gen_pxiconfig espresso::config)
 
 add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/myconfig.pxi
@@ -48,10 +48,10 @@ add_subdirectory(io)
 
 list(REMOVE_DUPLICATES cython_SRC)
 
-add_library(Espresso_pyx_flags INTERFACE)
-add_library(Espresso::pyx_flags ALIAS Espresso_pyx_flags)
+add_library(espresso_pyx_flags INTERFACE)
+add_library(espresso::pyx_flags ALIAS espresso_pyx_flags)
 target_compile_options(
-  Espresso_pyx_flags
+  espresso_pyx_flags
   INTERFACE
     $<$<NOT:$<CXX_COMPILER_ID:Intel,IntelLLVM>>:-Wno-pedantic>
     $<$<NOT:$<CXX_COMPILER_ID:Intel,IntelLLVM>>:-Wno-deprecated-declarations>
@@ -107,10 +107,10 @@ foreach(cython_file ${cython_SRC})
                                           "-undefined dynamic_lookup")
     endif()
     set_target_properties(${target} PROPERTIES CXX_CLANG_TIDY "")
-    target_link_libraries(${target} PRIVATE Espresso::config Espresso::core
-                                            Espresso::script_interface)
-    target_link_libraries(${target} PRIVATE Espresso::cpp_flags)
-    target_link_libraries(${target} PRIVATE Espresso::pyx_flags)
+    target_link_libraries(${target} PRIVATE espresso::config espresso::core
+                                            espresso::script_interface)
+    target_link_libraries(${target} PRIVATE espresso::cpp_flags)
+    target_link_libraries(${target} PRIVATE espresso::pyx_flags)
     target_include_directories(
       ${target} SYSTEM PRIVATE ${Python_INCLUDE_DIRS}
                                ${Python_NumPy_INCLUDE_DIRS})
@@ -120,7 +120,7 @@ foreach(cython_file ${cython_SRC})
   endif()
 endforeach()
 
-target_link_libraries(espressomd_profiler PRIVATE Espresso::profiler)
+target_link_libraries(espressomd_profiler PRIVATE espresso::profiler)
 
 # Configure Python files
 foreach(auxfile ${cython_AUX})

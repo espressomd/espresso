@@ -28,13 +28,13 @@ execute_process(
           ${CMAKE_CURRENT_SOURCE_DIR}/features.def
   OUTPUT_FILE ${CMAKE_BINARY_DIR}/myconfig-sample.hpp)
 
-add_library(Espresso_config SHARED config-features.cpp)
-add_library(Espresso::config ALIAS Espresso_config)
-add_dependencies(Espresso_config myconfig check_myconfig
+add_library(espresso_config SHARED config-features.cpp)
+add_library(espresso::config ALIAS espresso_config)
+add_dependencies(espresso_config myconfig check_myconfig
                  generate_config_features)
-install(TARGETS Espresso_config
+install(TARGETS espresso_config
         LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
-target_include_directories(Espresso_config PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
+target_include_directories(espresso_config PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
                                                   ${CMAKE_CURRENT_BINARY_DIR})
 
 find_package(Git)
@@ -49,4 +49,4 @@ add_custom_target(
     ${PROJECT_SOURCE_DIR}/cmake/version.cmake)
 set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES version.hpp
                                        version.hpp.tmp)
-add_dependencies(Espresso_config version)
+add_dependencies(espresso_config version)

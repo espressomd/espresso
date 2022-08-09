@@ -47,10 +47,10 @@ set(CUDA_LINK_LIBRARIES_KEYWORD PUBLIC)
 
 set(CUDA_PROPAGATE_HOST_FLAGS OFF)
 
-add_library(Espresso_cuda_flags INTERFACE)
-add_library(Espresso::cuda_flags ALIAS Espresso_cuda_flags)
+add_library(espresso_cuda_flags INTERFACE)
+add_library(espresso::cuda_flags ALIAS espresso_cuda_flags)
 target_compile_options(
-  Espresso_cuda_flags
+  espresso_cuda_flags
   INTERFACE
   $<$<STREQUAL:${CMAKE_BUILD_TYPE},Debug>:>
   $<$<STREQUAL:${CMAKE_BUILD_TYPE},Release>:-Xptxas=-O3 -Xcompiler=-O3 -DNDEBUG>
@@ -67,7 +67,7 @@ function(add_gpu_library)
   add_library(${ARGV})
   set(GPU_TARGET_NAME ${ARGV0})
   set_property(TARGET ${GPU_TARGET_NAME} PROPERTY CUDA_SEPARABLE_COMPILATION ON)
-  target_link_libraries(${GPU_TARGET_NAME} PRIVATE Espresso::cuda_flags)
+  target_link_libraries(${GPU_TARGET_NAME} PRIVATE espresso::cuda_flags)
   list(APPEND cuda_archs 52)
   if(CMAKE_CUDA_COMPILER_VERSION LESS 11)
     list(APPEND cuda_archs 30)
