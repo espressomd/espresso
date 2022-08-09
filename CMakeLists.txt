@@ -213,7 +213,9 @@ if(WITH_PYTHON)
     if(CMAKE_INSTALL_PREFIX STREQUAL "/")
       set(ESPRESSO_INSTALL_PYTHON "${Python_SITEARCH}")
     else()
-      set(ESPRESSO_INSTALL_PYTHON "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/python${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}/site-packages")
+      set(ESPRESSO_INSTALL_PYTHON
+          "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/python${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}/site-packages"
+      )
     endif()
   endif()
   # override: package C++, CUDA and Cython shared objects together
