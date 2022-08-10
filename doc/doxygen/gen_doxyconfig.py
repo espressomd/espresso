@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#
 # Copyright (C) 2013-2022 The ESPResSo project
 # Copyright (C) 2012 Olaf Lenz
 #
@@ -17,8 +18,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+
 # This script generates the file doxy-features
-#
 import sys
 import os
 
