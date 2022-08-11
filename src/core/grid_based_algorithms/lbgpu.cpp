@@ -148,15 +148,19 @@ void lb_reinit_parameters_gpu() {
 /** Performs a full initialization of the lattice Boltzmann system.
  *  All derived parameters and the fluid are reset to their default values.
  */
-void lb_init_gpu() {
-  /* set parameters for transfer to gpu */
-  lb_reinit_parameters_gpu();
-
-  lb_init_GPU(lbpar_gpu);
-
+void lb_init_gpu_local() {
+  if (this_node == 0) {
+    /* set parameters for transfer to gpu */
+    lb_reinit_parameters_gpu();
+    lb_init_GPU(lbpar_gpu);
+  }
   gpu_init_particle_comm(this_node);
   cuda_bcast_global_part_params();
 }
+
+REGISTER_CALLBACK(lb_init_gpu_local)
+
+void lb_init_gpu() { mpi_call_all(lb_init_gpu_local); }
 
 void lb_GPU_sanity_checks() {
   if (this_node == 0) {
@@ -205,4 +209,4 @@ void lb_set_agrid_gpu(double agrid) {
                       std::multiplies<unsigned int>());
 }
 
-#endif /*  CUDA */
+#endif // CUDA

@@ -27,8 +27,6 @@
 #include "communication.hpp"
 #include "errorhandling.hpp"
 
-#include <utils/constants.hpp>
-
 #include <mpi.h>
 
 #include <algorithm>
@@ -56,7 +54,7 @@ struct CompareDevices {
  *  of the physical node, as opposed to the logical rank of which there can
  *  be more than one per node.
  */
-static std::vector<EspressoGpuDevice> mpi_cuda_gather_gpus_local() {
+std::vector<EspressoGpuDevice> cuda_gather_gpus() {
   /* List of local devices */
   std::vector<EspressoGpuDevice> devices_local;
   /* Global unique device list (only relevant on the head node) */
@@ -124,10 +122,4 @@ static std::vector<EspressoGpuDevice> mpi_cuda_gather_gpus_local() {
   return devices_global;
 }
 
-REGISTER_CALLBACK_MAIN_RANK(mpi_cuda_gather_gpus_local)
-
-std::vector<EspressoGpuDevice> cuda_gather_gpus() {
-  return mpi_call(Communication::Result::main_rank, mpi_cuda_gather_gpus_local);
-}
-
-#endif /* CUDA */
+#endif // CUDA
