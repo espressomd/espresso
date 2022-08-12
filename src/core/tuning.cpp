@@ -31,6 +31,8 @@
 
 #include <utils/statistics/RunningAverage.hpp>
 
+#include <boost/mpi/collectives/all_reduce.hpp>
+#include <boost/mpi/collectives/broadcast.hpp>
 #include <boost/range/algorithm/max_element.hpp>
 #include <boost/range/algorithm/min_element.hpp>
 
@@ -66,7 +68,7 @@ static void check_statistics(Utils::Statistics::RunningAverage<double> &acc) {
 
 static void throw_on_error() {
   auto const n_errors = check_runtime_errors_local();
-  if (boost::mpi::all_reduce(comm_cart, n_errors, std::plus<>()) != 0) {
+  if (boost::mpi::all_reduce(::comm_cart, n_errors, std::plus<>()) != 0) {
     throw TuningFailed{};
   }
 }
@@ -92,8 +94,13 @@ double benchmark_integration_step(int int_steps) {
 
   /* MPI returns in seconds, returned value should be in ms. */
   auto retval = 1000. * running_average.avg();
-  boost::mpi::broadcast(comm_cart, retval, 0);
+  boost::mpi::broadcast(::comm_cart, retval, 0);
   return retval;
+}
+
+static bool integration_failed() {
+  auto const count_local = check_runtime_errors_local();
+  return boost::mpi::all_reduce(::comm_cart, count_local, std::plus<>()) > 0;
 }
 
 /**
@@ -105,16 +112,20 @@ double benchmark_integration_step(int int_steps) {
  * @return Time per integration in ms.
  */
 static double time_calc(int int_steps) {
-  if (mpi_integrate(0, 0))
+  integrate(0, 0);
+  if (integration_failed()) {
     return -1;
+  }
 
   /* perform force calculation test */
-  const double tick = MPI_Wtime();
-  if (mpi_integrate(int_steps, -1))
+  auto const tick = MPI_Wtime();
+  integrate(int_steps, -1);
+  auto const tock = MPI_Wtime();
+  if (integration_failed()) {
     return -1;
-  const double tock = MPI_Wtime();
+  }
 
-  /* MPI returns s, return value should be in ms. */
+  /* MPI returns in seconds, returned value should be in ms. */
   return 1000. * (tock - tick) / int_steps;
 }
 
@@ -136,10 +147,10 @@ void tune_skin(double min_skin, double max_skin, double tol, int int_steps,
     b = max_permissible_skin;
 
   while (fabs(a - b) > tol) {
-    mpi_call_all(mpi_set_skin_local, a);
+    mpi_set_skin_local(a);
     auto const time_a = time_calc(int_steps);
 
-    mpi_call_all(mpi_set_skin_local, b);
+    mpi_set_skin_local(b);
     auto const time_b = time_calc(int_steps);
 
     if (time_a > time_b) {
@@ -149,5 +160,5 @@ void tune_skin(double min_skin, double max_skin, double tol, int int_steps,
     }
   }
   auto const new_skin = 0.5 * (a + b);
-  mpi_call_all(mpi_set_skin_local, new_skin);
+  mpi_set_skin_local(new_skin);
 }

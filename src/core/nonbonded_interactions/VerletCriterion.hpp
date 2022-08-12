@@ -30,7 +30,7 @@
 
 struct GetNonbondedCutoff {
   auto operator()(int type_i, int type_j) const {
-    return get_ia_param(type_i, type_j)->max_cut;
+    return get_ia_param(type_i, type_j).max_cut;
   }
 };
 

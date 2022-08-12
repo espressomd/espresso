@@ -106,6 +106,7 @@ LocalBox<double> regular_decomposition(const BoxGeometry &box,
                                        Utils::Vector3i const &node_pos,
                                        Utils::Vector3i const &node_grid);
 
-void mpi_set_box_length(Utils::Vector3d const &value);
+void set_node_grid(Utils::Vector3i const &value);
+void set_box_length(Utils::Vector3d const &value);
 
 #endif

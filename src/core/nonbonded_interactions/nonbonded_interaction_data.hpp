@@ -294,13 +294,13 @@ double maximal_cutoff_nonbonded();
  * @param i First type, has to be smaller than @ref max_seen_particle_type.
  * @param j Second type, has to be smaller than @ref max_seen_particle_type.
  *
- * @return Pointer to interaction parameters for the type pair.
+ * @return Reference to interaction parameters for the type pair.
  */
-inline IA_parameters *get_ia_param(int i, int j) {
+inline IA_parameters &get_ia_param(int i, int j) {
   assert(i >= 0 && i < max_seen_particle_type);
   assert(j >= 0 && j < max_seen_particle_type);
 
-  return &nonbonded_ia_params[Utils::upper_triangular(
+  return nonbonded_ia_params[Utils::upper_triangular(
       std::min(i, j), std::max(i, j), max_seen_particle_type)];
 }
 

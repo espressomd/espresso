@@ -149,7 +149,7 @@ double particle_short_range_energy_contribution_local(int pid) {
       if (not do_nonbonded(p, p1))
         return;
 #endif
-      auto const &ia_params = *get_ia_param(p.type(), p1.type());
+      auto const &ia_params = get_ia_param(p.type(), p1.type());
       // Add energy for current particle pair to result
       ret += calc_non_bonded_pair_energy(p, p1, ia_params, vec, vec.norm(),
                                          coulomb_kernel_ptr);

@@ -56,8 +56,7 @@ double ShapeBasedConstraint::min_dist(const ParticleRange &particles) {
       particles.begin(), particles.end(),
       std::numeric_limits<double>::infinity(),
       [this](double min, Particle const &p) {
-        IA_parameters const &ia_params =
-            *get_ia_param(p.type(), part_rep.type());
+        auto const &ia_params = get_ia_param(p.type(), part_rep.type());
         if (checkIfInteraction(ia_params)) {
           double dist;
           Utils::Vector3d vec;
@@ -75,7 +74,7 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
                                           Utils::Vector3d const &folded_pos,
                                           double) {
   ParticleForce pf{};
-  IA_parameters const &ia_params = *get_ia_param(p.type(), part_rep.type());
+  auto const &ia_params = get_ia_param(p.type(), part_rep.type());
 
   if (checkIfInteraction(ia_params)) {
     double dist = 0.;
@@ -135,7 +134,7 @@ void ShapeBasedConstraint::add_energy(const Particle &p,
                                       Observable_stat &obs_energy) const {
   double energy = 0.0;
 
-  IA_parameters const &ia_params = *get_ia_param(p.type(), part_rep.type());
+  auto const &ia_params = get_ia_param(p.type(), part_rep.type());
 
   if (checkIfInteraction(ia_params)) {
     auto const coulomb_kernel = Coulomb::pair_energy_kernel();

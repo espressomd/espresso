@@ -80,11 +80,9 @@ CellSystem::CellSystem() {
              throw std::invalid_argument(error_msg + reason.str());
            }
            try {
-             ::node_grid = new_node_grid;
-             on_node_grid_change();
+             set_node_grid(new_node_grid);
            } catch (...) {
-             ::node_grid = old_node_grid;
-             on_node_grid_change();
+             set_node_grid(old_node_grid);
              throw;
            }
          });
@@ -220,13 +218,11 @@ Variant CellSystem::do_call_method(std::string const &name,
     return out;
   }
   if (name == "tune_skin") {
-    if (context()->is_head_node()) {
-      tune_skin(get_value<double>(params, "min_skin"),
-                get_value<double>(params, "max_skin"),
-                get_value<double>(params, "tol"),
-                get_value<int>(params, "int_steps"),
-                get_value_or<bool>(params, "adjust_max_skin", false));
-    }
+    tune_skin(get_value<double>(params, "min_skin"),
+              get_value<double>(params, "max_skin"),
+              get_value<double>(params, "tol"),
+              get_value<int>(params, "int_steps"),
+              get_value_or<bool>(params, "adjust_max_skin", false));
     return ::skin;
   }
   return {};

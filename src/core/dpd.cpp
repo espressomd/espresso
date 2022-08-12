@@ -66,7 +66,7 @@ Vector3d dpd_noise(int pid1, int pid2) {
 
 int dpd_set_params(int part_type_a, int part_type_b, double gamma, double k,
                    double r_c, int wf, double tgamma, double tr_c, int twf) {
-  IA_parameters &ia_params = *get_ia_param_safe(part_type_a, part_type_b);
+  auto &ia_params = *get_ia_param_safe(part_type_a, part_type_b);
 
   ia_params.dpd_radial = DPDParameters{gamma, k, r_c, wf, -1.};
   ia_params.dpd_trans = DPDParameters{tgamma, k, tr_c, twf, -1.};
@@ -80,7 +80,7 @@ int dpd_set_params(int part_type_a, int part_type_b, double gamma, double k,
 void dpd_init(double kT, double time_step) {
   for (int type_a = 0; type_a < max_seen_particle_type; type_a++) {
     for (int type_b = 0; type_b < max_seen_particle_type; type_b++) {
-      IA_parameters &ia_params = *get_ia_param(type_a, type_b);
+      IA_parameters &ia_params = get_ia_param(type_a, type_b);
 
       ia_params.dpd_radial.pref =
           sqrt(24.0 * kT * ia_params.dpd_radial.gamma / time_step);
@@ -147,7 +147,7 @@ static auto dpd_viscous_stress_local() {
         auto const v21 =
             box_geo.velocity_difference(p1.pos(), p2.pos(), p1.v(), p2.v());
 
-        IA_parameters const &ia_params = *get_ia_param(p1.type(), p2.type());
+        auto const &ia_params = get_ia_param(p1.type(), p2.type());
         auto const dist = std::sqrt(d.dist2);
 
         auto const f_r = dpd_pair_force(ia_params.dpd_radial, v21, dist, {});
