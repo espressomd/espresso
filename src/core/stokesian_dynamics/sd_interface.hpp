@@ -28,20 +28,33 @@
 #include "config.hpp"
 
 #ifdef STOKESIAN_DYNAMICS
+
 #include "ParticleRange.hpp"
 
 #include <boost/mpi/communicator.hpp>
 
 #include <unordered_map>
 
-void set_sd_viscosity(double eta);
+struct StokesianDynamicsParameters {
+  double viscosity;
+  std::unordered_map<int, double> radii;
+  int flags;
+  StokesianDynamicsParameters(double viscosity,
+                              std::unordered_map<int, double> radii, int flags);
+};
 
-void set_sd_radius_dict(std::unordered_map<int, double> const &x);
+enum class sd_flags : int {
+  NONE = 0,
+  SELF_MOBILITY = 1 << 0,
+  PAIR_MOBILITY = 1 << 1,
+  LUBRICATION = 1 << 2,
+  FTS = 1 << 3
+};
+
+void register_integrator(StokesianDynamicsParameters const &obj);
 
 void set_sd_kT(double kT);
 double get_sd_kT();
-
-void set_sd_flags(int flg);
 
 /** Takes the forces and torques on all particles and computes their
  *  velocities. Acts globally on particles on all nodes; i.e. particle data
@@ -53,5 +66,4 @@ void propagate_vel_pos_sd(const ParticleRange &particles,
                           double time_step);
 
 #endif // STOKESIAN_DYNAMICS
-
-#endif // STOKESIAN_DYNAMICS_INTERFACE_H
+#endif

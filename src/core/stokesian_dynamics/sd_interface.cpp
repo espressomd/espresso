@@ -26,6 +26,7 @@
 
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
+#include "grid.hpp"
 #include "thermostat.hpp"
 
 #include <utils/Vector.hpp>
@@ -44,7 +45,6 @@
 #include <utility>
 #include <vector>
 
-namespace {
 /* type for particle data transfer between nodes */
 struct SD_particle_data {
   SD_particle_data() = default;
@@ -66,21 +66,23 @@ struct SD_particle_data {
   }
 };
 
-double sd_viscosity = -1.0;
+BOOST_IS_BITWISE_SERIALIZABLE(SD_particle_data)
 
-std::unordered_map<int, double> radius_dict;
+static StokesianDynamicsParameters params{0., {}, 0};
 
-double sd_kT = 0.0;
-
-int sd_flags = 0;
+static double sd_kT = 0.0;
 
 /** Buffer that holds the (translational and angular) velocities of the local
  *  particles on each node, used for returning results. */
-std::vector<double> v_sd{};
+static std::vector<double> v_sd{};
 
-} // namespace
-
-BOOST_IS_BITWISE_SERIALIZABLE(SD_particle_data)
+void register_integrator(StokesianDynamicsParameters const &obj) {
+  if (::box_geo.periodic(0) or ::box_geo.periodic(1) or ::box_geo.periodic(2)) {
+    throw std::runtime_error(
+        "Stokesian Dynamics requires periodicity (False, False, False)");
+  }
+  ::params = obj;
+}
 
 /** Update translational and rotational velocities of all particles. */
 void sd_update_locally(ParticleRange const &parts) {
@@ -110,39 +112,32 @@ void sd_update_locally(ParticleRange const &parts) {
   }
 }
 
-void set_sd_viscosity(double eta) {
-  if (eta < 0.0) {
-    throw std::runtime_error("Viscosity has an invalid value: " +
-                             std::to_string(eta));
+StokesianDynamicsParameters::StokesianDynamicsParameters(
+    double viscosity, std::unordered_map<int, double> radii, int flags)
+    : viscosity{viscosity}, radii{radii}, flags{flags} {
+  if (viscosity < 0.) {
+    throw std::domain_error("Viscosity has an invalid value: " +
+                            std::to_string(viscosity));
   }
-
-  sd_viscosity = eta;
-}
-
-void set_sd_radius_dict(std::unordered_map<int, double> const &x) {
   /* Check that radii are positive */
-  for (auto const &kv : x) {
+  for (auto const &kv : radii) {
     if (kv.second < 0.) {
-      throw std::runtime_error(
+      throw std::domain_error(
           "Particle radius for type " + std::to_string(kv.first) +
           " has an invalid value: " + std::to_string(kv.second));
     }
   }
-
-  radius_dict = x;
 }
 
 void set_sd_kT(double kT) {
   if (kT < 0.0) {
-    throw std::runtime_error("kT has an invalid value: " + std::to_string(kT));
+    throw std::domain_error("kT has an invalid value: " + std::to_string(kT));
   }
 
   sd_kT = kT;
 }
 
 double get_sd_kT() { return sd_kT; }
-
-void set_sd_flags(int flg) { sd_flags = flg; }
 
 void propagate_vel_pos_sd(const ParticleRange &particles,
                           const boost::mpi::communicator &comm,
@@ -185,17 +180,17 @@ void propagate_vel_pos_sd(const ParticleRange &particles,
       f_host[6 * i + 4] = p.ext_force.torque[1];
       f_host[6 * i + 5] = p.ext_force.torque[2];
 
-      double radius = radius_dict[p.type];
+      double radius = params.radii[p.type];
 
       a_host[i] = radius;
 
       ++i;
     }
 
-    v_sd = sd_cpu(x_host, f_host, a_host, n_part, sd_viscosity,
+    v_sd = sd_cpu(x_host, f_host, a_host, n_part, params.viscosity,
                   std::sqrt(sd_kT / time_step),
                   static_cast<std::size_t>(stokesian.rng_counter()),
-                  static_cast<std::size_t>(stokesian.rng_seed()), sd_flags);
+                  static_cast<std::size_t>(stokesian.rng_seed()), params.flags);
   } else { // if (this_node == 0)
     v_sd.resize(particles.size() * 6);
   } // if (this_node == 0) {...} else

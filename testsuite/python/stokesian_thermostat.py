@@ -55,7 +55,7 @@ class StokesianThermostat(ut.TestCase):
         viscosity = 2.4
 
         # invalid parameters should throw exceptions
-        with self.assertRaises(RuntimeError):
+        with self.assertRaisesRegex(ValueError, "kT has an invalid value"):
             system.thermostat.set_stokesian(kT=-1)
         with self.assertRaises(ValueError):
             system.thermostat.set_stokesian(kT=1, seed=-1)
@@ -102,12 +102,15 @@ class StokesianThermostat(ut.TestCase):
 
     def test_integrator_exceptions(self):
         # invalid parameters should throw exceptions
-        with self.assertRaisesRegex(RuntimeError, "Particle radius for type 0 has an invalid value"):
+        with self.assertRaisesRegex(ValueError, "Particle radius for type 0 has an invalid value"):
             self.system.integrator.set_stokesian_dynamics(
                 viscosity=1.0, radii={0: -1})
-        with self.assertRaisesRegex(RuntimeError, "Viscosity has an invalid value"):
+        with self.assertRaisesRegex(ValueError, "Viscosity has an invalid value"):
             self.system.integrator.set_stokesian_dynamics(
-                viscosity=-1, radii={0: 1.0})
+                viscosity=-1.0, radii={0: 1.0})
+        with self.assertRaisesRegex(ValueError, "Unknown approximation 'STS'"):
+            self.system.integrator.set_stokesian_dynamics(
+                viscosity=1.0, radii={0: 1.0}, approximation_method="STS")
 
         # invalid PBC should throw exceptions
         self.system.integrator.set_vv()

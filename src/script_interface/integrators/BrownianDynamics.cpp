@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
- * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
- *   Max-Planck-Institute for Polymer Research, Theory Group
+ * Copyright (C) 2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -18,15 +16,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef FORCECAP_HPP
-#define FORCECAP_HPP
 
-#include "ParticleRange.hpp"
+#include "BrownianDynamics.hpp"
 
-double get_force_cap();
+#include "script_interface/ScriptInterface.hpp"
 
-void forcecap_cap(ParticleRange const &particles);
+#include "core/integrate.hpp"
 
-void set_force_cap(double value);
+namespace ScriptInterface {
+namespace Integrators {
 
-#endif
+void BrownianDynamics::activate() const { set_integ_switch(INTEG_METHOD_BD); }
+
+} // namespace Integrators
+} // namespace ScriptInterface

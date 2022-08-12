@@ -32,6 +32,7 @@
 #include "electrostatics/initialize.hpp"
 #include "galilei/initialize.hpp"
 #include "h5md/initialize.hpp"
+#include "integrators/initialize.hpp"
 #include "interactions/initialize.hpp"
 #include "lbboundaries/initialize.hpp"
 #include "lees_edwards/initialize.hpp"
@@ -59,6 +60,7 @@ void initialize(Utils::Factory<ObjectHandle> *f) {
   Coulomb::initialize(f);
   Dipoles::initialize(f);
   Galilei::initialize(f);
+  Integrators::initialize(f);
   Interactions::initialize(f);
   LBBoundaries::initialize(f);
   LeesEdwards::initialize(f);

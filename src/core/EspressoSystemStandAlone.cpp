@@ -58,7 +58,12 @@ static void mpi_set_node_grid_local(Utils::Vector3i const &node_grid) {
   on_node_grid_change();
 }
 
+static void mpi_set_time_step_local(double const &value) {
+  set_time_step(value);
+}
+
 REGISTER_CALLBACK(mpi_set_node_grid_local)
+REGISTER_CALLBACK(mpi_set_time_step_local)
 
 void EspressoSystemStandAlone::set_box_l(Utils::Vector3d const &box_l) const {
   if (!head_node)
@@ -76,11 +81,11 @@ void EspressoSystemStandAlone::set_node_grid(
 void EspressoSystemStandAlone::set_time_step(double time_step) const {
   if (!head_node)
     return;
-  mpi_set_time_step(time_step);
+  mpi_call_all(mpi_set_time_step_local, time_step);
 }
 
 void EspressoSystemStandAlone::set_skin(double new_skin) const {
   if (!head_node)
     return;
-  mpi_set_skin(new_skin);
+  mpi_call_all(mpi_set_skin_local, new_skin);
 }

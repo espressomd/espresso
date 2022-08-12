@@ -136,10 +136,10 @@ void tune_skin(double min_skin, double max_skin, double tol, int int_steps,
     b = max_permissible_skin;
 
   while (fabs(a - b) > tol) {
-    mpi_set_skin(a);
+    mpi_call_all(mpi_set_skin_local, a);
     auto const time_a = time_calc(int_steps);
 
-    mpi_set_skin(b);
+    mpi_call_all(mpi_set_skin_local, b);
     auto const time_b = time_calc(int_steps);
 
     if (time_a > time_b) {
@@ -149,5 +149,5 @@ void tune_skin(double min_skin, double max_skin, double tol, int int_steps,
     }
   }
   auto const new_skin = 0.5 * (a + b);
-  mpi_set_skin(new_skin);
+  mpi_call_all(mpi_set_skin_local, new_skin);
 }

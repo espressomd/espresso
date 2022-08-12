@@ -22,6 +22,7 @@
 #include "config.hpp"
 
 #ifdef NPT
+
 #include "ParticleRange.hpp"
 
 /** Special propagator for NpT isotropic.
@@ -43,6 +44,6 @@ void velocity_verlet_npt_step_1(const ParticleRange &particles,
  */
 void velocity_verlet_npt_step_2(const ParticleRange &particles,
                                 double time_step);
-#endif
 
+#endif // NPT
 #endif

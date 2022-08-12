@@ -33,10 +33,14 @@ namespace utf = boost::unit_test;
 namespace bdata = boost::unit_test::data;
 
 #include "EspressoSystemStandAlone.hpp"
+#include "MpiCallbacks.hpp"
 #include "Particle.hpp"
 #include "ParticleFactory.hpp"
+#include "communication.hpp"
 #include "integrate.hpp"
+#include "integrators/steepest_descent.hpp"
 #include "nonbonded_interactions/lj.hpp"
+#include "npt.hpp"
 #include "particle_node.hpp"
 #include "thermostat.hpp"
 
@@ -84,10 +88,17 @@ struct IntegratorHelper {
   }
 };
 
+void mpi_set_integrator_sd_local() {
+  register_integrator(SteepestDescentParameters(0., 0.01, 100.));
+  set_integ_switch(INTEG_METHOD_STEEPEST_DESCENT);
+}
+
+REGISTER_CALLBACK(mpi_set_integrator_sd_local)
+
 struct : public IntegratorHelper {
   void set_integrator() const override {
     mpi_set_thermo_switch(THERMO_OFF);
-    integrate_set_steepest_descent(0., 0.01, 100.);
+    mpi_call_all(mpi_set_integrator_sd_local);
   }
   void set_particle_properties(int pid) const override {
     set_particle_ext_force(pid, {20., 0., 0.});
@@ -95,10 +106,14 @@ struct : public IntegratorHelper {
   char const *name() const override { return "SteepestDescent"; }
 } steepest_descent;
 
+void mpi_set_integrator_vv_local() { set_integ_switch(INTEG_METHOD_NVT); }
+
+REGISTER_CALLBACK(mpi_set_integrator_vv_local)
+
 struct : public IntegratorHelper {
   void set_integrator() const override {
     mpi_set_thermo_switch(THERMO_OFF);
-    integrate_set_nvt();
+    mpi_call_all(mpi_set_integrator_vv_local);
   }
   void set_particle_properties(int pid) const override {
     set_particle_v(pid, {20., 0., 0.});
@@ -107,9 +122,16 @@ struct : public IntegratorHelper {
 } velocity_verlet;
 
 #ifdef NPT
+void mpi_set_integrator_npt_local() {
+  ::nptiso = NptIsoParameters(1., 1e9, {true, true, true}, true);
+  set_integ_switch(INTEG_METHOD_NPT_ISO);
+}
+
+REGISTER_CALLBACK(mpi_set_integrator_npt_local)
+
 struct : public IntegratorHelper {
   void set_integrator() const override {
-    integrate_set_npt_isotropic(1., 1e9, true, true, true, true);
+    mpi_call_all(mpi_set_integrator_npt_local);
     mpi_set_temperature(1.);
     npt_iso_set_rng_seed(0);
     mpi_set_thermo_switch(thermo_switch | THERMO_NPT_ISO);

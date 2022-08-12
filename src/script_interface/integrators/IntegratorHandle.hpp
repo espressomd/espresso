@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
- * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
- *   Max-Planck-Institute for Polymer Research, Theory Group
+ * Copyright (C) 2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -18,15 +16,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef FORCECAP_HPP
-#define FORCECAP_HPP
 
-#include "ParticleRange.hpp"
+#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_INTEGRATORS_INTEGRATOR_HANDLE_HPP
+#define ESPRESSO_SRC_SCRIPT_INTERFACE_INTEGRATORS_INTEGRATOR_HANDLE_HPP
 
-double get_force_cap();
+#include "script_interface/ScriptInterface.hpp"
+#include "script_interface/auto_parameters/AutoParameters.hpp"
 
-void forcecap_cap(ParticleRange const &particles);
+#include "Integrator.hpp"
 
-void set_force_cap(double value);
+#include <memory>
+#include <string>
+
+namespace ScriptInterface {
+namespace Integrators {
+
+class IntegratorHandle : public AutoParameters<IntegratorHandle> {
+  std::shared_ptr<Integrator> m_instance;
+
+public:
+  IntegratorHandle();
+
+  void do_construct(VariantMap const &params) override;
+};
+
+} // namespace Integrators
+} // namespace ScriptInterface
 
 #endif
