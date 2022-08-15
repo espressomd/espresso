@@ -174,8 +174,8 @@ endforeach()
 
 include(CheckCXXCompilerFlag)
 
-add_library(Espresso_avx_flags INTERFACE)
-add_library(Espresso::avx_flags ALIAS Espresso_avx_flags)
+add_library(espresso_avx_flags INTERFACE)
+add_library(espresso::avx_flags ALIAS espresso_avx_flags)
 
 function(enable_avx2_support)
   set(compiler_avx2_flag "")
@@ -185,7 +185,7 @@ function(enable_avx2_support)
                             compiler_has_${flag_variable}_flag_result)
     if(compiler_has_${flag_variable}_flag_result)
       set(compiler_avx2_flag "${flag_name}")
-      target_compile_options(Espresso_avx_flags
+      target_compile_options(espresso_avx_flags
                              INTERFACE "${compiler_avx2_flag}" "-DWITH_AVX_KERNELS")
       break()
     endif()

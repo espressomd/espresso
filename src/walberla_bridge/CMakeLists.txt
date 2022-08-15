@@ -66,6 +66,9 @@ foreach(precision double_precision single_precision)
     electrokinetics/generated_kernels/FrictionCouplingKernel_${precision}.cpp
     electrokinetics/generated_kernels/FixedFlux_${precision}.cpp
     electrokinetics/generated_kernels/Dirichlet_${precision}.cpp)
+    set_source_files_properties(
+      electrokinetics/generated_kernels/Dirichlet_${precision}.cpp
+    PROPERTIES COMPILE_FLAGS -Wno-unused-variable)
 endforeach()
 
 # EK reactions
@@ -77,6 +80,10 @@ foreach(n_species RANGE 1 5)
       electrokinetics/reactions/generated_kernels/ReactionKernelBulk_${n_species}_${precision}.cpp
       electrokinetics/reactions/generated_kernels/ReactionKernelIndexed_${n_species}_${precision}.cpp
     )
+    set_source_files_properties(
+      electrokinetics/reactions/generated_kernels/ReactionKernelBulk_${n_species}_${precision}.cpp
+      electrokinetics/reactions/generated_kernels/ReactionKernelIndexed_${n_species}_${precision}.cpp
+    PROPERTIES COMPILE_FLAGS -Wno-unused-variable)
   endforeach()
 endforeach()
 
@@ -105,7 +112,7 @@ endif()
 set_source_files_properties(
   electrokinetics/generated_kernels/Dirichlet_single_precision.cpp
   electrokinetics/ek_walberla_init.cpp
-  electrokinetics/reactions/EKReactionIndexed.cpp
+  electrokinetics/reactions/EKReactionImplIndexed.cpp
   PROPERTIES COMPILE_FLAGS -Wno-unused-variable)
 
 target_link_libraries(
