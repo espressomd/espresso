@@ -1,5 +1,5 @@
 target_sources(
-  Espresso_core
+  espresso_core
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/CylindricalLBFluxDensityProfileAtParticlePositions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CylindricalLBVelocityProfileAtParticlePositions.cpp

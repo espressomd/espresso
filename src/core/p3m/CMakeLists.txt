@@ -18,11 +18,11 @@
 #
 
 if(FFTW3_FOUND)
-  target_link_libraries(Espresso_core PUBLIC FFTW3::FFTW3)
+  target_link_libraries(espresso_core PUBLIC FFTW3::FFTW3)
 endif()
 
 target_sources(
-  Espresso_core
+  espresso_core
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/common.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/TuningAlgorithm.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/send_mesh.cpp

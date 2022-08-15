@@ -1,6 +1,25 @@
+#
+# Copyright (C) 2016-2022 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 include(FindPackageHandleStandardArgs)
 
-set(SPHINX_EXECUTABLE ${PYTHON_EXECUTABLE} -m sphinx)
+set(SPHINX_EXECUTABLE ${Python_EXECUTABLE} -m sphinx)
 
 execute_process(
   COMMAND ${SPHINX_EXECUTABLE} --version OUTPUT_VARIABLE QUERY_VERSION_OUT
@@ -19,15 +38,15 @@ if(NOT QUERY_VERSION_RESULT)
   string(REGEX MATCH "[0-9]+\.[0-9.]+" SPHINX_VERSION "${QUERY_VERSION}")
 
   if("${SPHINX_VERSION}" VERSION_LESS "1.7")
-    set(SPHINX_API_DOC_EXE ${PYTHON_EXECUTABLE} -m sphinx.apidoc)
+    set(SPHINX_API_DOC_EXE ${Python_EXECUTABLE} -m sphinx.apidoc)
   else()
-    set(SPHINX_API_DOC_EXE ${PYTHON_EXECUTABLE} -m sphinx.ext.apidoc)
+    set(SPHINX_API_DOC_EXE ${Python_EXECUTABLE} -m sphinx.ext.apidoc)
   endif()
 endif()
 
 set(SPHINX_VERSION_COMPATIBLE TRUE)
 # Blacklist broken versions
-if("${SPHINX_VERSION}" VERSION_EQUAL "2.1.0" OR "${SPHINX_VERSION}" VERSION_EQUAL "3.0.0")
+if("${SPHINX_VERSION}" VERSION_EQUAL "2.3.0" OR "${SPHINX_VERSION}" VERSION_EQUAL "3.0.0")
   message(WARNING "Sphinx version ${SPHINX_VERSION} is not compatible.")
   set(SPHINX_VERSION_COMPATIBLE FALSE)
 endif()
