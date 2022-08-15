@@ -1,3 +1,22 @@
+#
+# Copyright (C) 2016-2022 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 # unit_test function
 function(UNIT_TEST)
   cmake_parse_arguments(TEST "" "NAME;NUM_PROC" "SRC;DEPENDS" ${ARGN})
@@ -9,7 +28,7 @@ function(UNIT_TEST)
     target_link_libraries(${TEST_NAME} PRIVATE ${TEST_DEPENDS})
   endif()
   target_include_directories(${TEST_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src/core)
-  target_link_libraries(${TEST_NAME} PRIVATE Espresso::config Espresso::cpp_flags)
+  target_link_libraries(${TEST_NAME} PRIVATE espresso::config espresso::cpp_flags)
 
   # If NUM_PROC is given, set up MPI parallel test case
   if(TEST_NUM_PROC)

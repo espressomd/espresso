@@ -18,10 +18,10 @@
 #
 
 if(STOKESIAN_DYNAMICS)
-  target_sources(Espresso_core
+  target_sources(espresso_core
                  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/sd_interface.cpp)
-  target_link_libraries(Espresso_core PRIVATE StokesianDynamics::sd_cpu)
-  target_include_directories(Espresso_core SYSTEM
+  target_link_libraries(espresso_core PRIVATE StokesianDynamics::sd_cpu)
+  target_include_directories(espresso_core SYSTEM
                              PRIVATE ${stokesian_dynamics_SOURCE_DIR}/include)
-  target_include_directories(Espresso_core PRIVATE ${CMAKE_SOURCE_DIR})
+  target_include_directories(espresso_core PRIVATE ${CMAKE_SOURCE_DIR})
 endif()

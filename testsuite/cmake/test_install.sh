@@ -23,7 +23,7 @@ source BashUnitTests.sh
 function test_install() {
   # check Python files were installed in espressomd
   local -r filepaths=("@ESPRESSO_INSTALL_BINDIR@/pypresso" \
-                      "@ESPRESSO_INSTALL_PYTHON@/espressomd/Espresso_core.so" \
+                      "@ESPRESSO_INSTALL_PYTHON@/espressomd/espresso_core.so" \
                       "@ESPRESSO_INSTALL_PYTHON@/espressomd/_init.so" \
                       "@ESPRESSO_INSTALL_PYTHON@/espressomd/__init__.py"
                      )

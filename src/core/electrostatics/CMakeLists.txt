@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 target_sources(
-  Espresso_core
+  espresso_core
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/coulomb.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/elc.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/icc.cpp

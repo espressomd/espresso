@@ -20,7 +20,7 @@
 #
 
 add_library(
-  Espresso_core SHARED
+  espresso_core SHARED
   accumulators.cpp
   bond_error.cpp
   cells.cpp
@@ -56,40 +56,40 @@ add_library(
   exclusions.cpp
   PartCfg.cpp
   EspressoSystemStandAlone.cpp)
-add_library(Espresso::core ALIAS Espresso_core)
+add_library(espresso::core ALIAS espresso_core)
 
 if(CUDA)
-  target_sources(Espresso_core PRIVATE cuda_init.cpp cuda_interface.cpp)
+  target_sources(espresso_core PRIVATE cuda_init.cpp cuda_interface.cpp)
   add_gpu_library(
-    Espresso_cuda SHARED cuda_common_cuda.cu cuda_init_cuda.cu
+    espresso_cuda SHARED cuda_common_cuda.cu cuda_init_cuda.cu
     CudaHostAllocator.cu magnetostatics/barnes_hut_gpu_cuda.cu
     magnetostatics/dds_gpu_cuda.cu electrostatics/mmm1d_gpu_cuda.cu
     electrostatics/p3m_gpu_cuda.cu electrostatics/p3m_gpu_error_cuda.cu
     EspressoSystemInterface_cuda.cu)
-  add_library(Espresso::cuda ALIAS Espresso_cuda)
+  add_library(espresso::cuda ALIAS espresso_cuda)
   target_link_libraries(
-    Espresso_cuda PRIVATE CUDA::cuda_driver CUDA::cudart CUDA::cufft
-                          Espresso::config Espresso::utils Espresso::shapes)
+    espresso_cuda PRIVATE CUDA::cuda_driver CUDA::cudart CUDA::cufft
+                          espresso::config espresso::utils espresso::shapes)
   target_include_directories(
-    Espresso_cuda
+    espresso_cuda
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
             ${CMAKE_CURRENT_SOURCE_DIR}/electrostatics
             ${CMAKE_CURRENT_SOURCE_DIR}/magnetostatics)
-  target_link_libraries(Espresso_core PUBLIC Espresso::cuda)
-  install(TARGETS Espresso_cuda
+  target_link_libraries(espresso_core PUBLIC espresso::cuda)
+  install(TARGETS espresso_cuda
           LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
 endif()
 
-install(TARGETS Espresso_core
+install(TARGETS espresso_core
         LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
 
 target_link_libraries(
-  Espresso_core PRIVATE Espresso::config Espresso::utils::mpi Espresso::shapes
-                        Espresso::profiler Espresso::cpp_flags
-  PUBLIC Espresso::utils MPI::MPI_CXX Random123 Espresso::particle_observables
+  espresso_core PRIVATE espresso::config espresso::utils::mpi espresso::shapes
+                        espresso::profiler espresso::cpp_flags
+  PUBLIC espresso::utils MPI::MPI_CXX Random123 espresso::particle_observables
          Boost::serialization Boost::mpi)
 
-target_include_directories(Espresso_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(espresso_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_subdirectory(accumulators)
 add_subdirectory(analysis)

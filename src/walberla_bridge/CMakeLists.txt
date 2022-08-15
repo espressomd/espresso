@@ -81,10 +81,10 @@ foreach(n_species RANGE 1 5)
 endforeach()
 
 add_library(Espresso_walberla_cpp_flags INTERFACE)
-add_library(Espresso::walberla::cpp_flags ALIAS Espresso_walberla_cpp_flags)
+add_library(espresso::walberla::cpp_flags ALIAS Espresso_walberla_cpp_flags)
 if(WALBERLA_USE_AVX)
   target_link_libraries(Espresso_walberla_cpp_flags
-                        INTERFACE Espresso::avx_flags)
+                        INTERFACE espresso::avx_flags)
 endif(WALBERLA_USE_AVX)
 
 add_library(
@@ -93,13 +93,13 @@ add_library(
   LatticeWalberla.cpp ${WalberlaBridgeCodegen_SRC}
   electrokinetics/reactions/EKReactionImplBulk.cpp
   electrokinetics/reactions/EKReactionImplIndexed.cpp)
-add_library(Espresso::walberla ALIAS Espresso_walberla)
+add_library(espresso::walberla ALIAS Espresso_walberla)
 
 if(WITH_CUDA AND WALBERLA_BUILD_WITH_CUDA)
   add_gpu_library(Espresso_walberla_cuda SHARED
                   ${WalberlaBridgeCodegenCuda_SRC})
-  add_library(Espresso::walberla_cuda ALIAS Espresso_walberla_cuda)
-  target_link_libraries(Espresso_walberla PUBLIC Espresso::walberla_cuda)
+  add_library(espresso::walberla_cuda ALIAS Espresso_walberla_cuda)
+  target_link_libraries(Espresso_walberla PUBLIC espresso::walberla_cuda)
 endif()
 
 set_source_files_properties(
@@ -109,8 +109,8 @@ set_source_files_properties(
   PROPERTIES COMPILE_FLAGS -Wno-unused-variable)
 
 target_link_libraries(
-  Espresso_walberla PUBLIC MPI::MPI_CXX Espresso::utils
-  PRIVATE Boost::boost Espresso::cpp_flags Espresso::walberla::cpp_flags
+  Espresso_walberla PUBLIC MPI::MPI_CXX espresso::utils
+  PRIVATE Boost::boost espresso::cpp_flags espresso::walberla::cpp_flags
           ${WALBERLA_LIBS})
 target_include_directories(
   Espresso_walberla PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${WALBERLA_INCLUDE_DIRS}

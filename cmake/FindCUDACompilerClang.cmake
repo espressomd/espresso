@@ -1,4 +1,5 @@
-# Copyright (C) 2009-2020 The ESPResSo project
+#
+# Copyright (C) 2009-2022 The ESPResSo project
 # Copyright (C) 2009,2010
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #
@@ -28,8 +29,8 @@ if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   )
 endif()
 
-add_library(Espresso_cuda_flags INTERFACE)
-add_library(Espresso::cuda_flags ALIAS Espresso_cuda_flags)
+add_library(espresso_cuda_flags INTERFACE)
+add_library(espresso::cuda_flags ALIAS espresso_cuda_flags)
 
 function(detect_clang_cuda_path)
   execute_process(COMMAND ${CMAKE_CUDA_COMPILER} ${CMAKE_CXX_FLAGS} --verbose
@@ -47,7 +48,7 @@ function(detect_clang_cuda_path)
         if(CLANG_VERBOSE_OUTPUT MATCHES "Found CUDA installation")
           set(CLANG_VERBOSE_OUTPUT ${CLANG_VERBOSE_OUTPUT} PARENT_SCOPE)
           message(STATUS "Clang did not automatically detect a compatible CUDA library; adding compiler flag --cuda-path=${unix_cuda_path}")
-          target_compile_options(Espresso_cuda_flags INTERFACE "--cuda-path=${unix_cuda_path}")
+          target_compile_options(espresso_cuda_flags INTERFACE "--cuda-path=${unix_cuda_path}")
           return()
         endif()
       endif()
@@ -66,7 +67,7 @@ string(REGEX REPLACE "^.*Found CUDA installation: .* version ([0-9\.]+|unknown).
 message(STATUS "Found CUDA-capable host compiler: ${CMAKE_CUDA_COMPILER}")
 if(NOT CLANG_VERBOSE_OUTPUT MATCHES "Found CUDA installation" OR CUDA_VERSION STREQUAL "unknown")
   message(STATUS "Clang did not automatically detect a compatible CUDA library; adding compiler flag -Wno-unknown-cuda-version")
-  target_compile_options(Espresso_cuda_flags INTERFACE -Wno-unknown-cuda-version)
+  target_compile_options(espresso_cuda_flags INTERFACE -Wno-unknown-cuda-version)
   message(STATUS "Found CUDA version: ${CUDAToolkit_VERSION}")
   message(STATUS "Found CUDA installation: ${CUDAToolkit_LIBRARY_DIR}")
 else()
@@ -75,7 +76,7 @@ else()
      CUDA_VERSION VERSION_GREATER_EQUAL "11.0" AND
      CUDA_VERSION VERSION_LESS "12.0")
     message(STATUS "Clang ${CMAKE_CXX_COMPILER_VERSION} doesn't natively support CUDA ${CUDAToolkit_VERSION_MAJOR}.${CUDAToolkit_VERSION_MINOR}; adding compiler flag -Wno-unknown-cuda-version")
-    target_compile_options(Espresso_cuda_flags INTERFACE -Wno-unknown-cuda-version)
+    target_compile_options(espresso_cuda_flags INTERFACE -Wno-unknown-cuda-version)
   endif()
   message(STATUS "Found CUDA version: ${CUDAToolkit_VERSION} (recognized by Clang as ${CUDA_VERSION})")
   message(STATUS "Found CUDA installation: ${CUDA_DIR}")
@@ -84,7 +85,7 @@ set(CUDA_VERSION ${CUDAToolkit_VERSION})
 set(CUDA 1)
 
 target_compile_options(
-  Espresso_cuda_flags
+  espresso_cuda_flags
   INTERFACE
   $<$<STREQUAL:${CMAKE_BUILD_TYPE},Debug>:-g>
   $<$<STREQUAL:${CMAKE_BUILD_TYPE},Release>:-O3 -DNDEBUG>
@@ -107,7 +108,7 @@ function(add_gpu_library)
   set_source_files_properties(${TARGET_SOURCES} PROPERTIES LANGUAGE "CXX")
   add_library(${ARGV})
   set_target_properties(${TARGET_NAME} PROPERTIES LINKER_LANGUAGE "CXX")
-  target_link_libraries(${TARGET_NAME} PRIVATE Espresso::cuda_flags)
+  target_link_libraries(${TARGET_NAME} PRIVATE espresso::cuda_flags)
 endfunction()
 
 include(FindPackageHandleStandardArgs)

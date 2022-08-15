@@ -18,7 +18,7 @@
 #
 
 target_sources(
-  Espresso_core
+  espresso_core
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lb_interface.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/lb_interpolation.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/lb_particle_coupling.cpp
@@ -26,8 +26,8 @@ target_sources(
           ${CMAKE_CURRENT_SOURCE_DIR}/ek_reactions.cpp)
 
 if(WITH_WALBERLA)
-  target_link_libraries(Espresso_core PRIVATE Espresso::walberla
+  target_link_libraries(espresso_core PRIVATE espresso::walberla
                                               ${WALBERLA_LIBS})
-  target_sources(Espresso_core
+  target_sources(espresso_core
                  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lb_walberla_instance.cpp)
 endif()

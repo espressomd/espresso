@@ -20,44 +20,44 @@
 include(unit_test)
 
 unit_test(NAME kernels_unit_tests SRC kernels_unit_tests.cpp
-          DEPENDS Espresso::walberla Espresso::walberla::cpp_flags Espresso::utils
+          DEPENDS espresso::walberla espresso::walberla::cpp_flags espresso::utils
           ${WALBERLA_LIBS})
 target_include_directories(kernels_unit_tests PRIVATE ${WALBERLA_INCLUDE_DIRS}
                                                    ${walberla_BINARY_DIR}/src)
 
 unit_test(NAME LatticeWalberla_unit_tests SRC LatticeWalberla_unit_tests.cpp
-          DEPENDS Espresso::walberla Espresso::walberla::cpp_flags Espresso::utils
+          DEPENDS espresso::walberla espresso::walberla::cpp_flags espresso::utils
           Boost::mpi ${WALBERLA_LIBS} NUM_PROC 2)
 target_include_directories(
   LatticeWalberla_unit_tests PRIVATE ${WALBERLA_INCLUDE_DIRS}
                                      ${walberla_BINARY_DIR}/src)
 
 unit_test(NAME LBWalberlaImpl_unit_tests SRC LBWalberlaImpl_unit_tests.cpp
-          DEPENDS Espresso::walberla Espresso::walberla::cpp_flags Espresso::utils
+          DEPENDS espresso::walberla espresso::walberla::cpp_flags espresso::utils
           Boost::mpi ${WALBERLA_LIBS} NUM_PROC 2)
 target_include_directories(LBWalberlaImpl_unit_tests PRIVATE ${WALBERLA_INCLUDE_DIRS}
                                                    ${walberla_BINARY_DIR}/src)
 
 unit_test(NAME LBWalberlaImpl_bspline_tests SRC LBWalberlaImpl_bspline_tests.cpp
-          DEPENDS Espresso::walberla Espresso::walberla::cpp_flags Espresso::utils
+          DEPENDS espresso::walberla espresso::walberla::cpp_flags espresso::utils
           Boost::mpi ${WALBERLA_LIBS} NUM_PROC 2)
 target_include_directories(LBWalberlaImpl_bspline_tests PRIVATE ${WALBERLA_INCLUDE_DIRS}
                                                    ${walberla_BINARY_DIR}/src)
 
 unit_test(NAME LBWalberlaImpl_statistical_tests SRC LBWalberlaImpl_statistical_tests.cpp
-          DEPENDS Espresso::walberla Espresso::walberla::cpp_flags Espresso::utils
+          DEPENDS espresso::walberla espresso::walberla::cpp_flags espresso::utils
           Boost::mpi ${WALBERLA_LIBS})
 target_include_directories(LBWalberlaImpl_statistical_tests PRIVATE ${WALBERLA_INCLUDE_DIRS}
                                                    ${walberla_BINARY_DIR}/src)
 
 unit_test(NAME LBWalberlaImpl_flow_tests SRC LBWalberlaImpl_flow_tests.cpp
-          DEPENDS Espresso::walberla Espresso::walberla::cpp_flags Espresso::utils
+          DEPENDS espresso::walberla espresso::walberla::cpp_flags espresso::utils
           Boost::mpi ${WALBERLA_LIBS})
 target_include_directories(LBWalberlaImpl_flow_tests PRIVATE ${WALBERLA_INCLUDE_DIRS}
                                                    ${walberla_BINARY_DIR}/src)
 
 unit_test(NAME LBWalberlaImpl_lees_edwards_test SRC LBWalberlaImpl_lees_edwards.cpp
-          DEPENDS Espresso::walberla Espresso::walberla::cpp_flags Espresso::utils
+          DEPENDS espresso::walberla espresso::walberla::cpp_flags espresso::utils
           Boost::mpi ${WALBERLA_LIBS})
 target_include_directories(LBWalberlaImpl_lees_edwards_test PRIVATE ${WALBERLA_INCLUDE_DIRS}
                                                    ${walberla_BINARY_DIR}/src)
