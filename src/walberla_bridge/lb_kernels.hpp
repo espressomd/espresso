@@ -1,11 +1,24 @@
+/*
+ * Copyright (C) 2021-2022 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #pragma once
 
-#include "generated_kernels/CollideSweepDoublePrecision.h"
-#include "generated_kernels/CollideSweepDoublePrecisionLeesEdwards.h"
-#include "generated_kernels/CollideSweepDoublePrecisionThermalized.h"
-#include "generated_kernels/CollideSweepSinglePrecision.h"
-#include "generated_kernels/CollideSweepSinglePrecisionLeesEdwards.h"
-#include "generated_kernels/CollideSweepSinglePrecisionThermalized.h"
 #include "generated_kernels/Dynamic_UBB_double_precision.h"
 #include "generated_kernels/Dynamic_UBB_single_precision.h"
 #include "generated_kernels/InitialPDFsSetterDoublePrecision.h"
@@ -16,12 +29,15 @@
 #include "generated_kernels/macroscopic_values_accessors_single_precision.h"
 
 #ifdef __AVX2__
-#include "generated_kernels/CollideSweepDoublePrecisionAVX.h"
 #include "generated_kernels/CollideSweepDoublePrecisionLeesEdwardsAVX.h"
 #include "generated_kernels/CollideSweepDoublePrecisionThermalizedAVX.h"
-#include "generated_kernels/CollideSweepSinglePrecisionAVX.h"
 #include "generated_kernels/CollideSweepSinglePrecisionLeesEdwardsAVX.h"
 #include "generated_kernels/CollideSweepSinglePrecisionThermalizedAVX.h"
+#else
+#include "generated_kernels/CollideSweepDoublePrecisionLeesEdwards.h"
+#include "generated_kernels/CollideSweepDoublePrecisionThermalized.h"
+#include "generated_kernels/CollideSweepSinglePrecisionLeesEdwards.h"
+#include "generated_kernels/CollideSweepSinglePrecisionThermalized.h"
 #endif
 
 namespace walberla {
@@ -29,17 +45,14 @@ namespace walberla {
 namespace detail {
 template <typename FT = double> struct KernelTrait {
 #ifdef __AVX2__
-  using ThermalizedCollisionModel =
+  using CollisionModelThermalized =
       pystencils::CollideSweepDoublePrecisionThermalizedAVX;
-  using UnthermalizedCollisionModel =
-      pystencils::CollideSweepDoublePrecisionAVX;
-  using LeesEdwardsCollisionModel =
+  using CollisionModelLeesEdwards =
       pystencils::CollideSweepDoublePrecisionLeesEdwardsAVX;
 #else
-  using ThermalizedCollisionModel =
+  using CollisionModelThermalized =
       pystencils::CollideSweepDoublePrecisionThermalized;
-  using UnthermalizedCollisionModel = pystencils::CollideSweepDoublePrecision;
-  using LeesEdwardsCollisionModel =
+  using CollisionModelLeesEdwards =
       pystencils::CollideSweepDoublePrecisionLeesEdwards;
 #endif
   using StreamSweep = pystencils::StreamSweepDoublePrecision;
@@ -47,17 +60,14 @@ template <typename FT = double> struct KernelTrait {
 };
 template <> struct KernelTrait<float> {
 #ifdef __AVX2__
-  using ThermalizedCollisionModel =
+  using CollisionModelThermalized =
       pystencils::CollideSweepSinglePrecisionThermalizedAVX;
-  using UnthermalizedCollisionModel =
-      pystencils::CollideSweepSinglePrecisionAVX;
-  using LeesEdwardsCollisionModel =
+  using CollisionModelLeesEdwards =
       pystencils::CollideSweepSinglePrecisionLeesEdwardsAVX;
 #else
-  using ThermalizedCollisionModel =
+  using CollisionModelThermalized =
       pystencils::CollideSweepSinglePrecisionThermalized;
-  using UnthermalizedCollisionModel = pystencils::CollideSweepSinglePrecision;
-  using LeesEdwardsCollisionModel =
+  using CollisionModelLeesEdwards =
       pystencils::CollideSweepSinglePrecisionLeesEdwards;
 #endif
   using StreamSweep = pystencils::StreamSweepSinglePrecision;

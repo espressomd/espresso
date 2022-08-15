@@ -86,12 +86,10 @@ class LBWalberlaImpl : public LBWalberlaBase {
   template <typename T> inline FloatType FloatType_c(T t) {
     return numeric_cast<FloatType>(t);
   }
-  using LeesEdwardsCollisionModel =
-      typename detail::KernelTrait<FloatType>::LeesEdwardsCollisionModel;
-  using UnthermalizedCollisionModel =
-      typename detail::KernelTrait<FloatType>::UnthermalizedCollisionModel;
-  using ThermalizedCollisionModel =
-      typename detail::KernelTrait<FloatType>::ThermalizedCollisionModel;
+  using CollisionModelLeesEdwards =
+      typename detail::KernelTrait<FloatType>::CollisionModelLeesEdwards;
+  using CollisionModelThermalized =
+      typename detail::KernelTrait<FloatType>::CollisionModelThermalized;
   using StreamSweep = typename detail::KernelTrait<FloatType>::StreamSweep;
   using InitialPDFsSetter =
       typename detail::KernelTrait<FloatType>::InitialPDFsSetter;
@@ -101,17 +99,14 @@ class LBWalberlaImpl : public LBWalberlaBase {
 
 protected:
   using CollisionModel =
-      boost::variant<UnthermalizedCollisionModel, ThermalizedCollisionModel,
-                     LeesEdwardsCollisionModel>;
+      boost::variant<CollisionModelThermalized, CollisionModelLeesEdwards>;
 
 private:
   class : public boost::static_visitor<> {
   public:
-    void operator()(UnthermalizedCollisionModel &cm, IBlock *b) { cm(b); }
+    void operator()(CollisionModelThermalized &cm, IBlock *b) { cm(b); }
 
-    void operator()(ThermalizedCollisionModel &cm, IBlock *b) { cm(b); }
-
-    void operator()(LeesEdwardsCollisionModel &cm, IBlock *b) {
+    void operator()(CollisionModelLeesEdwards &cm, IBlock *b) {
       cm.v_s_ = static_cast<decltype(cm.v_s_)>(
           m_lees_edwards_callbacks->get_shear_velocity());
       cm(b);
@@ -398,10 +393,6 @@ public:
     // The following functors are individual in-place collide and stream steps
     m_stream = std::make_shared<StreamSweep>(
         m_last_applied_force_field_id, m_pdf_field_id, m_velocity_field_id);
-    set_collision_model();
-
-    // Synchronize ghost layers
-    (*m_full_communication).communicate();
   }
 
 private:
@@ -414,13 +405,13 @@ private:
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       boost::apply_visitor(run_collide_sweep, *m_collision_model,
                            boost::variant<IBlock *>(&*b));
-    if (auto *cm = boost::get<ThermalizedCollisionModel>(&*m_collision_model)) {
+    if (auto *cm = boost::get<CollisionModelThermalized>(&*m_collision_model)) {
       cm->time_step_++;
     }
   }
 
   bool lees_edwards_bc() {
-    return boost::get<LeesEdwardsCollisionModel>(&*m_collision_model);
+    return boost::get<CollisionModelLeesEdwards>(&*m_collision_model);
   }
 
   void apply_lees_edwards_pdf_interpolation(
@@ -519,20 +510,11 @@ public:
     }
   }
 
-  void set_collision_model() override {
-    auto const omega = shear_mode_relaxation_rate();
-    auto const omega_odd = odd_mode_relaxation_rate(omega);
-    auto obj = UnthermalizedCollisionModel(m_last_applied_force_field_id,
-                                           m_pdf_field_id, omega, omega,
-                                           omega_odd, omega);
-    m_collision_model = std::make_shared<CollisionModel>(std::move(obj));
-  }
-
   void set_collision_model(double kT, unsigned int seed) override {
     auto const omega = shear_mode_relaxation_rate();
     auto const omega_odd = odd_mode_relaxation_rate(omega);
     m_kT = FloatType_c(kT);
-    auto obj = ThermalizedCollisionModel(
+    auto obj = CollisionModelThermalized(
         m_last_applied_force_field_id, m_pdf_field_id, uint32_t(0u),
         uint32_t(0u), uint32_t(0u), m_kT, omega, omega, omega_odd, omega,
         FloatType_c(m_density), seed, 0u);
@@ -549,10 +531,7 @@ public:
 
   void set_collision_model(
       std::unique_ptr<LeesEdwardsPack> &&lees_edwards_pack) override {
-    if (m_kT != 0.) {
-      throw std::runtime_error(
-          "Lees-Edwards LB doesn't support thermalization");
-    }
+    assert(m_kT == 0.);
     auto const shear_direction = lees_edwards_pack->shear_direction;
     auto const shear_plane_normal = lees_edwards_pack->shear_plane_normal;
     auto const shear_vel = FloatType_c(lees_edwards_pack->get_shear_velocity());
@@ -561,7 +540,7 @@ public:
       throw std::runtime_error(
           "Lees-Edwards LB only supports shear_plane_normal=\"y\"");
     }
-    auto obj = LeesEdwardsCollisionModel(
+    auto obj = CollisionModelLeesEdwards(
         m_last_applied_force_field_id, m_pdf_field_id,
         FloatType_c(get_lattice().get_grid_dimensions()[shear_plane_normal]),
         omega, shear_vel);
@@ -937,14 +916,14 @@ public:
   double get_kT() const override { return numeric_cast<double>(m_kT); }
 
   uint64_t get_rng_state() const override {
-    auto const *cm = boost::get<ThermalizedCollisionModel>(&*m_collision_model);
-    if (!cm)
+    auto const *cm = boost::get<CollisionModelThermalized>(&*m_collision_model);
+    if (!cm or m_kT == 0.)
       throw std::runtime_error("The LB does not use a random number generator");
     return cm->time_step_;
   }
   void set_rng_state(uint64_t counter) override {
-    auto *cm = boost::get<ThermalizedCollisionModel>(&*m_collision_model);
-    if (!cm)
+    auto *cm = boost::get<CollisionModelThermalized>(&*m_collision_model);
+    if (!cm or m_kT == 0.)
       throw std::runtime_error("The LB does not use a random number generator");
     cm->time_step_ = counter;
   }

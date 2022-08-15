@@ -1,5 +1,5 @@
-// kernel generated with pystencils v1.0+12.g54b91e2, lbmpy v1.0+8.gac750b5,
-// lbmpy_walberla/pystencils_walberla from commit
+// kernel generated with pystencils v1.0+12.g54b91e2, lbmpy
+// v1.0+9.g19115d4.dirty, lbmpy_walberla/pystencils_walberla from commit
 // e1fe2ad1dcbe8f31ea79d95e8a5a5cc0ee3691f3
 
 //======================================================================================================================
@@ -71,188 +71,204 @@ collidesweepdoubleprecisionthermalized_collidesweepdoubleprecisionthermalized(
                1.0),
       0.5);
   const double xi_63 = 2.4494897427831779;
-  const double xi_67 = pow(
+  const bool xi_66 = kT > 0.0;
+  const double xi_68 = pow(
       xi_59 *
           (-1.0 * ((omega_odd * -1.0 + 1.0) * (omega_odd * -1.0 + 1.0)) + 1.0),
       0.5);
-  const double xi_68 = xi_67 * 1.4142135623730951;
-  const double xi_69 = xi_68 * 0.5;
-  const double xi_72 = xi_63 * xi_67;
-  const double xi_73 = xi_72 * 0.16666666666666666;
-  const double xi_78 = pow(xi_59 * (-1.0 * ((omega_shear * -1.0 + 1.0) *
+  const double xi_69 = xi_68 * 1.4142135623730951;
+  const double xi_70 = xi_69 * 0.5;
+  const double xi_73 = xi_63 * xi_68;
+  const double xi_74 = xi_73 * 0.16666666666666666;
+  const double xi_79 = pow(xi_59 * (-1.0 * ((omega_shear * -1.0 + 1.0) *
                                             (omega_shear * -1.0 + 1.0)) +
                                     1.0),
                            0.5);
-  const double xi_79 = xi_78 * 0.5;
-  const double xi_107 = xi_72 * 0.083333333333333329;
-  const double xi_110 = xi_68 * 0.25;
+  const double xi_80 = xi_79 * 0.5;
+  const double xi_111 = xi_73 * 0.083333333333333329;
+  const double xi_113 = xi_69 * 0.25;
   for (int64_t ctr_2 = 0; ctr_2 < _size_force_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_20_39 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 9 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_37 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 7 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_314 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 14 * _stride_pdfs_3;
     double *RESTRICT _data_pdfs_20_313 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 13 * _stride_pdfs_3;
-    double *RESTRICT _data_force_20_32 =
-        _data_force + _stride_force_2 * ctr_2 + 2 * _stride_force_3;
     double *RESTRICT _data_pdfs_20_318 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 18 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_35 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 5 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_316 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 16 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_36 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 6 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_30 = _data_pdfs + _stride_pdfs_2 * ctr_2;
+    double *RESTRICT _data_force_20_31 =
+        _data_force + _stride_force_2 * ctr_2 + _stride_force_3;
     double *RESTRICT _data_pdfs_20_32 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 2 * _stride_pdfs_3;
     double *RESTRICT _data_pdfs_20_38 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 8 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_37 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 7 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_312 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 12 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_33 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 3 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_311 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 11 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_30 = _data_pdfs + _stride_pdfs_2 * ctr_2;
-    double *RESTRICT _data_pdfs_20_314 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 14 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_34 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 4 * _stride_pdfs_3;
-    double *RESTRICT _data_force_20_30 = _data_force + _stride_force_2 * ctr_2;
-    double *RESTRICT _data_pdfs_20_310 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 10 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_31 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + _stride_pdfs_3;
-    double *RESTRICT _data_force_20_31 =
-        _data_force + _stride_force_2 * ctr_2 + _stride_force_3;
-    double *RESTRICT _data_pdfs_20_315 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 15 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_36 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 6 * _stride_pdfs_3;
     double *RESTRICT _data_pdfs_20_317 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 17 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_315 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 15 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_39 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 9 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_31 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + _stride_pdfs_3;
+    double *RESTRICT _data_force_20_30 = _data_force + _stride_force_2 * ctr_2;
+    double *RESTRICT _data_pdfs_20_312 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 12 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_35 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 5 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_33 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 3 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_316 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 16 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_310 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 10 * _stride_pdfs_3;
+    double *RESTRICT _data_force_20_32 =
+        _data_force + _stride_force_2 * ctr_2 + 2 * _stride_force_3;
+    double *RESTRICT _data_pdfs_20_311 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 11 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_34 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 4 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_force_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_20_39_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_39;
+      double *RESTRICT _data_pdfs_20_37_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_37;
+      double *RESTRICT _data_pdfs_20_314_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_314;
       double *RESTRICT _data_pdfs_20_313_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_20_313;
-      double *RESTRICT _data_force_20_32_10 =
-          _stride_force_1 * ctr_1 + _data_force_20_32;
       double *RESTRICT _data_pdfs_20_318_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_20_318;
-      double *RESTRICT _data_pdfs_20_35_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_35;
-      double *RESTRICT _data_pdfs_20_316_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_316;
+      double *RESTRICT _data_pdfs_20_36_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_36;
+      double *RESTRICT _data_pdfs_20_30_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_30;
+      double *RESTRICT _data_force_20_31_10 =
+          _stride_force_1 * ctr_1 + _data_force_20_31;
       double *RESTRICT _data_pdfs_20_32_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_20_32;
       double *RESTRICT _data_pdfs_20_38_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_20_38;
-      double *RESTRICT _data_pdfs_20_37_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_37;
-      double *RESTRICT _data_pdfs_20_312_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_312;
-      double *RESTRICT _data_pdfs_20_33_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_33;
-      double *RESTRICT _data_pdfs_20_311_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_311;
-      double *RESTRICT _data_pdfs_20_30_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_30;
-      double *RESTRICT _data_pdfs_20_314_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_314;
-      double *RESTRICT _data_pdfs_20_34_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_34;
-      double *RESTRICT _data_force_20_30_10 =
-          _stride_force_1 * ctr_1 + _data_force_20_30;
-      double *RESTRICT _data_pdfs_20_310_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_310;
-      double *RESTRICT _data_pdfs_20_31_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_31;
-      double *RESTRICT _data_force_20_31_10 =
-          _stride_force_1 * ctr_1 + _data_force_20_31;
-      double *RESTRICT _data_pdfs_20_315_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_315;
-      double *RESTRICT _data_pdfs_20_36_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_36;
       double *RESTRICT _data_pdfs_20_317_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_20_317;
+      double *RESTRICT _data_pdfs_20_315_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_315;
+      double *RESTRICT _data_pdfs_20_39_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_39;
+      double *RESTRICT _data_pdfs_20_31_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_31;
+      double *RESTRICT _data_force_20_30_10 =
+          _stride_force_1 * ctr_1 + _data_force_20_30;
+      double *RESTRICT _data_pdfs_20_312_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_312;
+      double *RESTRICT _data_pdfs_20_35_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_35;
+      double *RESTRICT _data_pdfs_20_33_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_33;
+      double *RESTRICT _data_pdfs_20_316_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_316;
+      double *RESTRICT _data_pdfs_20_310_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_310;
+      double *RESTRICT _data_force_20_32_10 =
+          _stride_force_1 * ctr_1 + _data_force_20_32;
+      double *RESTRICT _data_pdfs_20_311_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_311;
+      double *RESTRICT _data_pdfs_20_34_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_34;
       for (int64_t ctr_0 = 0; ctr_0 < _size_force_0; ctr_0 += 1) {
-        const double xi_133 = _data_pdfs_20_39_10[_stride_pdfs_0 * ctr_0];
+        const double xi_132 = _data_pdfs_20_37_10[_stride_pdfs_0 * ctr_0];
+        const double xi_133 = _data_pdfs_20_314_10[_stride_pdfs_0 * ctr_0];
         const double xi_134 = _data_pdfs_20_313_10[_stride_pdfs_0 * ctr_0];
-        const double xi_135 = _data_force_20_32_10[_stride_force_0 * ctr_0];
-        const double xi_136 = _data_pdfs_20_318_10[_stride_pdfs_0 * ctr_0];
-        const double xi_137 = _data_pdfs_20_35_10[_stride_pdfs_0 * ctr_0];
-        const double xi_138 = _data_pdfs_20_316_10[_stride_pdfs_0 * ctr_0];
+        const double xi_135 = _data_pdfs_20_318_10[_stride_pdfs_0 * ctr_0];
+        const double xi_136 = _data_pdfs_20_36_10[_stride_pdfs_0 * ctr_0];
+        const double xi_137 = _data_pdfs_20_30_10[_stride_pdfs_0 * ctr_0];
+        const double xi_138 = _data_force_20_31_10[_stride_force_0 * ctr_0];
         const double xi_139 = _data_pdfs_20_32_10[_stride_pdfs_0 * ctr_0];
         const double xi_140 = _data_pdfs_20_38_10[_stride_pdfs_0 * ctr_0];
-        const double xi_141 = _data_pdfs_20_37_10[_stride_pdfs_0 * ctr_0];
-        const double xi_142 = _data_pdfs_20_312_10[_stride_pdfs_0 * ctr_0];
-        const double xi_143 = _data_pdfs_20_33_10[_stride_pdfs_0 * ctr_0];
-        const double xi_144 = _data_pdfs_20_311_10[_stride_pdfs_0 * ctr_0];
-        const double xi_145 = _data_pdfs_20_30_10[_stride_pdfs_0 * ctr_0];
-        const double xi_146 = _data_pdfs_20_314_10[_stride_pdfs_0 * ctr_0];
-        const double xi_147 = _data_pdfs_20_34_10[_stride_pdfs_0 * ctr_0];
-        const double xi_148 = _data_force_20_30_10[_stride_force_0 * ctr_0];
-        const double xi_149 = _data_pdfs_20_310_10[_stride_pdfs_0 * ctr_0];
-        const double xi_150 = _data_pdfs_20_31_10[_stride_pdfs_0 * ctr_0];
-        const double xi_151 = _data_force_20_31_10[_stride_force_0 * ctr_0];
-        const double xi_152 = _data_pdfs_20_315_10[_stride_pdfs_0 * ctr_0];
-        const double xi_153 = _data_pdfs_20_36_10[_stride_pdfs_0 * ctr_0];
-        const double xi_154 = _data_pdfs_20_317_10[_stride_pdfs_0 * ctr_0];
+        const double xi_141 = _data_pdfs_20_317_10[_stride_pdfs_0 * ctr_0];
+        const double xi_142 = _data_pdfs_20_315_10[_stride_pdfs_0 * ctr_0];
+        const double xi_143 = _data_pdfs_20_39_10[_stride_pdfs_0 * ctr_0];
+        const double xi_144 = _data_pdfs_20_31_10[_stride_pdfs_0 * ctr_0];
+        const double xi_145 = _data_force_20_30_10[_stride_force_0 * ctr_0];
+        const double xi_146 = _data_pdfs_20_312_10[_stride_pdfs_0 * ctr_0];
+        const double xi_147 = _data_pdfs_20_35_10[_stride_pdfs_0 * ctr_0];
+        const double xi_148 = _data_pdfs_20_33_10[_stride_pdfs_0 * ctr_0];
+        const double xi_149 = _data_pdfs_20_316_10[_stride_pdfs_0 * ctr_0];
+        const double xi_150 = _data_pdfs_20_310_10[_stride_pdfs_0 * ctr_0];
+        const double xi_151 = _data_force_20_32_10[_stride_force_0 * ctr_0];
+        const double xi_152 = _data_pdfs_20_311_10[_stride_pdfs_0 * ctr_0];
+        const double xi_153 = _data_pdfs_20_34_10[_stride_pdfs_0 * ctr_0];
 
-        double random_7_0;
-        double random_7_1;
-        philox_double2(time_step, block_offset_0 + ctr_0,
-                       block_offset_1 + ctr_1, block_offset_2 + ctr_2, 7, seed,
-                       random_7_0, random_7_1);
+        double random_7_0{};
+        double random_7_1{};
+        if (kT > 0.) {
+          philox_double2(time_step, block_offset_0 + ctr_0,
+                         block_offset_1 + ctr_1, block_offset_2 + ctr_2, 7,
+                         seed, random_7_0, random_7_1);
+        }
 
-        double random_6_0;
-        double random_6_1;
-        philox_double2(time_step, block_offset_0 + ctr_0,
-                       block_offset_1 + ctr_1, block_offset_2 + ctr_2, 6, seed,
-                       random_6_0, random_6_1);
+        double random_6_0{};
+        double random_6_1{};
+        if (kT > 0.) {
+          philox_double2(time_step, block_offset_0 + ctr_0,
+                         block_offset_1 + ctr_1, block_offset_2 + ctr_2, 6,
+                         seed, random_6_0, random_6_1);
+        }
 
-        double random_5_0;
-        double random_5_1;
-        philox_double2(time_step, block_offset_0 + ctr_0,
-                       block_offset_1 + ctr_1, block_offset_2 + ctr_2, 5, seed,
-                       random_5_0, random_5_1);
+        double random_5_0{};
+        double random_5_1{};
+        if (kT > 0.) {
+          philox_double2(time_step, block_offset_0 + ctr_0,
+                         block_offset_1 + ctr_1, block_offset_2 + ctr_2, 5,
+                         seed, random_5_0, random_5_1);
+        }
 
-        double random_4_0;
-        double random_4_1;
-        philox_double2(time_step, block_offset_0 + ctr_0,
-                       block_offset_1 + ctr_1, block_offset_2 + ctr_2, 4, seed,
-                       random_4_0, random_4_1);
+        double random_4_0{};
+        double random_4_1{};
+        if (kT > 0.) {
+          philox_double2(time_step, block_offset_0 + ctr_0,
+                         block_offset_1 + ctr_1, block_offset_2 + ctr_2, 4,
+                         seed, random_4_0, random_4_1);
+        }
 
-        double random_3_0;
-        double random_3_1;
-        philox_double2(time_step, block_offset_0 + ctr_0,
-                       block_offset_1 + ctr_1, block_offset_2 + ctr_2, 3, seed,
-                       random_3_0, random_3_1);
+        double random_3_0{};
+        double random_3_1{};
+        if (kT > 0.) {
+          philox_double2(time_step, block_offset_0 + ctr_0,
+                         block_offset_1 + ctr_1, block_offset_2 + ctr_2, 3,
+                         seed, random_3_0, random_3_1);
+        }
 
-        double random_2_0;
-        double random_2_1;
-        philox_double2(time_step, block_offset_0 + ctr_0,
-                       block_offset_1 + ctr_1, block_offset_2 + ctr_2, 2, seed,
-                       random_2_0, random_2_1);
+        double random_2_0{};
+        double random_2_1{};
+        if (kT > 0.) {
+          philox_double2(time_step, block_offset_0 + ctr_0,
+                         block_offset_1 + ctr_1, block_offset_2 + ctr_2, 2,
+                         seed, random_2_0, random_2_1);
+        }
 
-        double random_1_0;
-        double random_1_1;
-        philox_double2(time_step, block_offset_0 + ctr_0,
-                       block_offset_1 + ctr_1, block_offset_2 + ctr_2, 1, seed,
-                       random_1_0, random_1_1);
+        double random_1_0{};
+        double random_1_1{};
+        if (kT > 0.) {
+          philox_double2(time_step, block_offset_0 + ctr_0,
+                         block_offset_1 + ctr_1, block_offset_2 + ctr_2, 1,
+                         seed, random_1_0, random_1_1);
+        }
 
-        double random_0_0;
-        double random_0_1;
-        philox_double2(time_step, block_offset_0 + ctr_0,
-                       block_offset_1 + ctr_1, block_offset_2 + ctr_2, 0, seed,
-                       random_0_0, random_0_1);
-
-        const double xi_0 = xi_134 + xi_154;
-        const double xi_1 = xi_133 + xi_141;
-        const double xi_2 = xi_138 + xi_142;
-        const double xi_3 = xi_137 + xi_153;
-        const double xi_4 = xi_144 + xi_152;
-        const double xi_6 = xi_136 + xi_146;
-        const double xi_7 = xi_140 + xi_149;
+        double random_0_0{};
+        double random_0_1{};
+        if (kT > 0.) {
+          philox_double2(time_step, block_offset_0 + ctr_0,
+                         block_offset_1 + ctr_1, block_offset_2 + ctr_2, 0,
+                         seed, random_0_0, random_0_1);
+        }
+        const double xi_0 = xi_134 + xi_141;
+        const double xi_1 = xi_132 + xi_143;
+        const double xi_2 = xi_146 + xi_149;
+        const double xi_3 = xi_136 + xi_147;
+        const double xi_4 = xi_142 + xi_152;
+        const double xi_6 = xi_133 + xi_135;
+        const double xi_7 = xi_140 + xi_150;
         const double xi_61 = xi_60 * (random_6_0 - 0.5) * 3.7416573867739413;
         const double xi_62 = xi_60 * (random_7_0 - 0.5) * 5.4772255750516612;
         const double xi_64 = xi_63 * (random_2_1 - 0.5) *
@@ -261,79 +277,90 @@ collidesweepdoubleprecisionthermalized_collidesweepdoubleprecisionthermalized(
                                           1.0),
                                  0.5);
         const double xi_65 = xi_60 * (random_6_1 - 0.5) * 8.3666002653407556;
-        const double xi_66 = random_5_1 - 0.5;
-        const double xi_70 = xi_66 * xi_69;
-        const double xi_71 = random_3_0 - 0.5;
-        const double xi_74 = xi_71 * xi_73;
-        const double xi_75 = xi_74 * -1.0;
-        const double xi_76 = xi_61 * -0.11904761904761904;
-        const double xi_77 = random_0_1 - 0.5;
-        const double xi_80 = xi_77 * xi_79;
-        const double xi_81 = xi_78 * (random_0_0 - 0.5) * 1.7320508075688772;
-        const double xi_82 = xi_81 * -0.16666666666666666;
-        const double xi_83 = xi_62 * -0.10000000000000001 + xi_82;
-        const double xi_85 = random_4_1 - 0.5;
-        const double xi_86 = xi_69 * xi_85;
-        const double xi_87 = random_4_0 - 0.5;
-        const double xi_88 = xi_73 * xi_87;
-        const double xi_90 = xi_88 * -1.0;
-        const double xi_91 = random_5_0 - 0.5;
-        const double xi_92 = xi_69 * xi_91;
-        const double xi_93 = random_3_1 - 0.5;
-        const double xi_94 = xi_73 * xi_93;
-        const double xi_95 = xi_94 * -1.0;
-        const double xi_97 = xi_77 * xi_78 * 0.25;
-        const double xi_98 = xi_61 * 0.083333333333333329;
-        const double xi_99 = xi_64 * 0.083333333333333329;
-        const double xi_100 = xi_81 * 0.083333333333333329 + xi_99;
-        const double xi_101 = xi_100 + xi_74 + xi_97 + xi_98;
-        const double xi_102 = xi_79 * (random_1_0 - 0.5);
-        const double xi_105 = xi_100 + xi_75 + xi_97 + xi_98;
+        const double xi_67 = random_5_1 - 0.5;
+        const double xi_71 = xi_67 * xi_70;
+        const double xi_72 = random_3_0 - 0.5;
+        const double xi_75 = xi_72 * xi_74;
+        const double xi_76 = xi_75 * -1.0;
+        const double xi_77 = xi_61 * -0.11904761904761904;
+        const double xi_78 = random_0_1 - 0.5;
+        const double xi_81 = xi_78 * xi_80;
+        const double xi_82 = xi_79 * (random_0_0 - 0.5) * 1.7320508075688772;
+        const double xi_83 = xi_82 * -0.16666666666666666;
+        const double xi_84 = xi_62 * -0.10000000000000001 + xi_83;
+        const double xi_85 =
+            xi_65 * 0.028571428571428571 + xi_77 + xi_81 + xi_84;
+        const double xi_86 = random_4_1 - 0.5;
+        const double xi_87 = xi_70 * xi_86;
+        const double xi_88 = random_4_0 - 0.5;
+        const double xi_89 = xi_74 * xi_88;
+        const double xi_90 =
+            xi_65 * -0.071428571428571425 + xi_77 + xi_82 * 0.33333333333333331;
+        const double xi_91 = xi_89 * -1.0;
+        const double xi_92 = random_5_0 - 0.5;
+        const double xi_93 = xi_70 * xi_92;
+        const double xi_94 = random_3_1 - 0.5;
+        const double xi_95 = xi_74 * xi_94;
+        const double xi_96 = xi_95 * -1.0;
+        const double xi_97 = xi_61 * 0.095238095238095233 +
+                             xi_65 * -0.042857142857142858 + xi_81 * -1.0 +
+                             xi_84;
+        const double xi_98 = xi_80 * (random_1_0 - 0.5);
+        const double xi_99 = xi_98 * -1.0;
+        const double xi_100 = xi_78 * xi_79 * 0.25;
+        const double xi_101 = xi_61 * 0.083333333333333329;
+        const double xi_102 = xi_64 * 0.083333333333333329;
+        const double xi_103 = xi_102 + xi_82 * 0.083333333333333329;
+        const double xi_104 = xi_100 + xi_101 + xi_103 + xi_75;
+        const double xi_105 = xi_100 + xi_101 + xi_103 + xi_76;
         const double xi_106 = xi_61 * -0.023809523809523808;
-        const double xi_108 = xi_107 * xi_93;
-        const double xi_109 = xi_65 * -0.014285714285714285;
-        const double xi_111 = xi_110 * xi_91;
-        const double xi_112 = xi_62 * 0.050000000000000003;
-        const double xi_113 =
-            xi_106 + xi_108 * -1.0 + xi_109 + xi_111 + xi_112 + xi_82 + xi_99;
-        const double xi_114 = xi_107 * xi_71;
-        const double xi_115 = xi_110 * xi_66;
-        const double xi_116 = xi_114 * -1.0 + xi_115;
-        const double xi_117 = xi_79 * (random_2_0 - 0.5);
-        const double xi_120 = xi_114 + xi_115 * -1.0;
-        const double xi_121 = xi_97 * -1.0;
-        const double xi_122 = xi_65 * 0.035714285714285712;
-        const double xi_123 = xi_100 + xi_106 + xi_121 + xi_122 + xi_94;
-        const double xi_124 = xi_110 * xi_85;
-        const double xi_125 = xi_107 * xi_87;
-        const double xi_126 = xi_124 * -1.0 + xi_125;
-        const double xi_127 = xi_79 * (random_1_1 - 0.5);
-        const double xi_130 = xi_124 + xi_125 * -1.0;
-        const double xi_131 =
-            xi_106 + xi_108 + xi_109 + xi_111 * -1.0 + xi_112 + xi_82 + xi_99;
-        const double xi_132 = xi_100 + xi_106 + xi_121 + xi_122 + xi_95;
-        const double partial_m_m1_0_e_0 = xi_0 + xi_143;
+        const double xi_107 = xi_80 * (random_2_0 - 0.5);
+        const double xi_108 = xi_65 * -0.014285714285714285;
+        const double xi_109 = xi_62 * 0.050000000000000003;
+        const double xi_110 =
+            xi_102 + xi_106 + xi_107 + xi_108 + xi_109 + xi_83;
+        const double xi_112 = xi_111 * xi_94;
+        const double xi_114 = xi_113 * xi_92;
+        const double xi_115 = xi_112 * -1.0 + xi_114;
+        const double xi_116 = xi_111 * xi_72;
+        const double xi_117 = xi_113 * xi_67;
+        const double xi_118 = xi_116 * -1.0 + xi_117;
+        const double xi_119 = xi_116 + xi_117 * -1.0;
+        const double xi_120 =
+            xi_102 + xi_106 + xi_107 * -1.0 + xi_108 + xi_109 + xi_83;
+        const double xi_121 = xi_80 * (random_1_1 - 0.5);
+        const double xi_122 = xi_121 * -1.0;
+        const double xi_123 = xi_100 * -1.0;
+        const double xi_124 = xi_65 * 0.035714285714285712;
+        const double xi_125 = xi_103 + xi_106 + xi_123 + xi_124 + xi_95;
+        const double xi_126 = xi_113 * xi_86;
+        const double xi_127 = xi_111 * xi_88;
+        const double xi_128 = xi_126 * -1.0 + xi_127;
+        const double xi_129 = xi_126 + xi_127 * -1.0;
+        const double xi_130 = xi_112 + xi_114 * -1.0;
+        const double xi_131 = xi_103 + xi_106 + xi_123 + xi_124 + xi_96;
+        const double partial_m_m1_0_e_0 = xi_0 + xi_148;
         const double partial_m_m1_e_0_0 = partial_m_m1_0_e_0 + xi_1;
         const double partial_m_0_m1_e_0 = xi_139 + xi_2;
-        const double partial_m_0_0_e_0 = xi_145 + xi_3;
-        const double partial_m_0_1_e_0 = xi_150 + xi_4;
+        const double partial_m_0_0_e_0 = xi_137 + xi_3;
+        const double partial_m_0_1_e_0 = xi_144 + xi_4;
         const double xi_5 = partial_m_0_1_e_0 + partial_m_0_m1_e_0;
         const double partial_m_0_e_0_0 = partial_m_0_0_e_0 + xi_5;
-        const double partial_m_1_0_e_0 = xi_147 + xi_6;
+        const double partial_m_1_0_e_0 = xi_153 + xi_6;
         const double partial_m_1_e_0_0 = partial_m_1_0_e_0 + xi_7;
         const double xi_10 = partial_m_1_e_0_0 + partial_m_m1_e_0_0;
-        const double partial_m_m1_e_1_0 = xi_133 * -1.0 + xi_141;
+        const double partial_m_m1_e_1_0 = xi_132 + xi_143 * -1.0;
         const double partial_m_0_e_1_0 =
             partial_m_0_1_e_0 + partial_m_0_m1_e_0 * -1.0;
-        const double partial_m_1_e_1_0 = xi_140 + xi_149 * -1.0;
+        const double partial_m_1_e_1_0 = xi_140 + xi_150 * -1.0;
         const double xi_11 = partial_m_1_e_1_0 + partial_m_m1_e_1_0;
-        const double partial_m_m1_0_e_1 = xi_134 + xi_154 * -1.0;
-        const double partial_m_0_m1_e_1 = xi_138 * -1.0 + xi_142;
-        const double partial_m_0_0_e_1 = xi_137 + xi_153 * -1.0;
-        const double partial_m_0_1_e_1 = xi_144 + xi_152 * -1.0;
+        const double partial_m_m1_0_e_1 = xi_134 + xi_141 * -1.0;
+        const double partial_m_0_m1_e_1 = xi_146 + xi_149 * -1.0;
+        const double partial_m_0_0_e_1 = xi_136 * -1.0 + xi_147;
+        const double partial_m_0_1_e_1 = xi_142 * -1.0 + xi_152;
         const double xi_8 = partial_m_0_1_e_1 + partial_m_0_m1_e_1;
         const double partial_m_0_e_0_1 = partial_m_0_0_e_1 + xi_8;
-        const double partial_m_1_0_e_1 = xi_136 * -1.0 + xi_146;
+        const double partial_m_1_0_e_1 = xi_133 + xi_135 * -1.0;
         const double xi_12 = partial_m_1_0_e_1 + partial_m_m1_0_e_1;
         const double partial_m_m1_e_2_0 = xi_1;
         const double partial_m_0_e_2_0 = xi_5;
@@ -376,15 +403,15 @@ collidesweepdoubleprecisionthermalized_collidesweepdoubleprecisionthermalized(
         const double m_202 = xi_14;
         const double sub_f_to_m_0 = ((1.0) / (m_000));
         const double xi_15 = sub_f_to_m_0 * 0.5;
-        const double u_0 = m_100 * sub_f_to_m_0 + xi_148 * xi_15;
-        const double xi_23 = u_0 * xi_148;
+        const double u_0 = m_100 * sub_f_to_m_0 + xi_145 * xi_15;
+        const double xi_23 = u_0 * xi_145;
         const double xi_27 = m_000 * (u_0 * u_0);
         const double xi_31 = m_000 * u_0;
-        const double u_1 = m_010 * sub_f_to_m_0 + xi_15 * xi_151;
-        const double xi_24 = u_1 * xi_151 * 2.0;
+        const double u_1 = m_010 * sub_f_to_m_0 + xi_138 * xi_15;
+        const double xi_24 = u_1 * xi_138 * 2.0;
         const double xi_28 = m_000 * (u_1 * u_1);
-        const double u_2 = m_001 * sub_f_to_m_0 + xi_135 * xi_15;
-        const double xi_25 = u_2 * xi_135 * 2.0;
+        const double u_2 = m_001 * sub_f_to_m_0 + xi_15 * xi_151;
+        const double xi_25 = u_2 * xi_151 * 2.0;
         const double xi_26 = xi_25 * -1.0;
         const double xi_29 = m_000 * (u_2 * u_2);
         const double xi_30 = xi_29 * -1.0;
@@ -402,11 +429,11 @@ collidesweepdoubleprecisionthermalized_collidesweepdoubleprecisionthermalized(
         const double M_17 = m_020 + m_202 * 14.0 + xi_20 + xi_21;
         const double M_18 = m_000 + m_020 * -4.0 + m_200 * -1.0 + m_202 * 4.0 +
                             partial_m_0_e_2_2 * 10.0 + xi_21;
-        const double M_post_1 = m_100 + xi_148;
+        const double M_post_1 = m_100 + xi_145;
         const double xi_39 = M_post_1 * 0.33333333333333331;
-        const double M_post_2 = m_010 + xi_151;
+        const double M_post_2 = m_010 + xi_138;
         const double xi_37 = M_post_2 * 0.33333333333333331;
-        const double M_post_3 = m_001 + xi_135;
+        const double M_post_3 = m_001 + xi_151;
         const double xi_38 = M_post_3 * 0.33333333333333331;
         const double M_post_4 =
             M_4 +
@@ -420,15 +447,15 @@ collidesweepdoubleprecisionthermalized_collidesweepdoubleprecisionthermalized(
         const double xi_40 = M_post_5 * 0.25;
         const double M_post_6 = m_110 +
                                 omega_shear * (m_110 * -1.0 + u_1 * xi_31) +
-                                xi_22 * (u_0 * xi_151 + u_1 * xi_148);
+                                xi_22 * (u_0 * xi_138 + u_1 * xi_145);
         const double xi_47 = M_post_6 * 0.25;
         const double M_post_7 = m_101 +
                                 omega_shear * (m_101 * -1.0 + u_2 * xi_31) +
-                                xi_22 * (u_0 * xi_135 + u_2 * xi_148);
+                                xi_22 * (u_0 * xi_151 + u_2 * xi_145);
         const double xi_55 = M_post_7 * 0.25;
         const double M_post_8 =
             omega_shear * (m_000 * u_1 * u_2 + partial_m_0_e_1_1 * -1.0) +
-            partial_m_0_e_1_1 + xi_22 * (u_1 * xi_135 + u_2 * xi_151);
+            partial_m_0_e_1_1 + xi_22 * (u_1 * xi_151 + u_2 * xi_138);
         const double xi_51 = M_post_8 * 0.25;
         const double M_post_9 =
             M_9 + omega_bulk * (M_9 * -1.0 + xi_27 + xi_28 + xi_29) +
@@ -486,80 +513,87 @@ collidesweepdoubleprecisionthermalized_collidesweepdoubleprecisionthermalized(
         const double xi_44 = m_post_022 * -0.5;
         const double xi_52 = m_post_022 * 0.25;
         const double sub_k_to_f_20 = m_post_020 * 0.5 + xi_44 + xi_45;
-        const double xi_84 = sub_k_to_f_20 + xi_65 * 0.028571428571428571 +
-                             xi_76 + xi_80 + xi_83;
         const double sub_k_to_f_21 =
             M_post_2 * 0.5 + m_post_012 * -0.5 + m_post_210 * -0.5;
         const double sub_k_to_f_22 = m_post_200 * 0.5 + xi_45 + xi_46;
-        const double xi_89 = sub_k_to_f_22 + xi_65 * -0.071428571428571425 +
-                             xi_76 + xi_81 * 0.33333333333333331;
         const double sub_k_to_f_23 =
             M_post_1 * -0.5 + m_post_102 * 0.5 + m_post_120 * 0.5;
         const double sub_k_to_f_24 = m_post_002 * 0.5 + xi_44 + xi_46;
-        const double xi_96 = sub_k_to_f_24 + xi_61 * 0.095238095238095233 +
-                             xi_65 * -0.042857142857142858 + xi_80 * -1.0 +
-                             xi_83;
         const double sub_k_to_f_25 =
             M_post_3 * 0.5 + m_post_021 * -0.5 + m_post_201 * -0.5;
         const double sub_k_to_f_26 = xi_47 * -1.0 + xi_48;
-        const double xi_103 = sub_k_to_f_26 + xi_102 * -1.0;
         const double sub_k_to_f_27 = xi_49 * -1.0 + xi_50;
         const double sub_k_to_f_28 = xi_47 + xi_48;
-        const double xi_104 = sub_k_to_f_28 + xi_102;
         const double sub_k_to_f_29 = xi_49 + xi_50;
         const double sub_k_to_f_30 = xi_51 + xi_52;
-        const double xi_118 = sub_k_to_f_30 + xi_117;
         const double sub_k_to_f_31 = xi_53 + xi_54;
         const double sub_k_to_f_32 = xi_51 * -1.0 + xi_52;
-        const double xi_119 = sub_k_to_f_32 + xi_117 * -1.0;
         const double sub_k_to_f_33 = xi_53 * -1.0 + xi_54;
         const double sub_k_to_f_34 = xi_55 * -1.0 + xi_56;
-        const double xi_128 = sub_k_to_f_34 + xi_127 * -1.0;
         const double sub_k_to_f_35 = xi_57 * -1.0 + xi_58;
         const double sub_k_to_f_36 = xi_55 + xi_56;
-        const double xi_129 = sub_k_to_f_36 + xi_127;
         const double sub_k_to_f_37 = xi_57 + xi_58;
         _data_pdfs_20_30_10[_stride_pdfs_0 * ctr_0] =
             m_000 + m_post_002 * -1.0 + m_post_020 * -1.0 + m_post_022 +
             m_post_200 * -1.0 + m_post_202 + m_post_220 +
-            xi_61 * 0.14285714285714285 + xi_62 * 0.20000000000000001 +
-            xi_64 * -1.0 + xi_65 * 0.085714285714285715;
+            ((xi_66)
+                 ? (xi_61 * 0.14285714285714285 + xi_62 * 0.20000000000000001 +
+                    xi_64 * -1.0 + xi_65 * 0.085714285714285715)
+                 : (0.0));
         _data_pdfs_20_31_10[_stride_pdfs_0 * ctr_0] =
-            sub_k_to_f_21 + xi_70 * -1.0 + xi_75 + xi_84;
+            sub_k_to_f_20 + sub_k_to_f_21 +
+            ((xi_66) ? (xi_71 * -1.0 + xi_76 + xi_85) : (0.0));
         _data_pdfs_20_32_10[_stride_pdfs_0 * ctr_0] =
-            sub_k_to_f_21 * -1.0 + xi_70 + xi_74 + xi_84;
+            sub_k_to_f_20 + sub_k_to_f_21 * -1.0 +
+            ((xi_66) ? (xi_71 + xi_75 + xi_85) : (0.0));
         _data_pdfs_20_33_10[_stride_pdfs_0 * ctr_0] =
-            sub_k_to_f_23 + xi_86 + xi_88 + xi_89;
+            sub_k_to_f_22 + sub_k_to_f_23 +
+            ((xi_66) ? (xi_87 + xi_89 + xi_90) : (0.0));
         _data_pdfs_20_34_10[_stride_pdfs_0 * ctr_0] =
-            sub_k_to_f_23 * -1.0 + xi_86 * -1.0 + xi_89 + xi_90;
+            sub_k_to_f_22 + sub_k_to_f_23 * -1.0 +
+            ((xi_66) ? (xi_87 * -1.0 + xi_90 + xi_91) : (0.0));
         _data_pdfs_20_35_10[_stride_pdfs_0 * ctr_0] =
-            sub_k_to_f_25 + xi_92 * -1.0 + xi_95 + xi_96;
+            sub_k_to_f_24 + sub_k_to_f_25 +
+            ((xi_66) ? (xi_93 * -1.0 + xi_96 + xi_97) : (0.0));
         _data_pdfs_20_36_10[_stride_pdfs_0 * ctr_0] =
-            sub_k_to_f_25 * -1.0 + xi_92 + xi_94 + xi_96;
+            sub_k_to_f_24 + sub_k_to_f_25 * -1.0 +
+            ((xi_66) ? (xi_93 + xi_95 + xi_97) : (0.0));
         _data_pdfs_20_37_10[_stride_pdfs_0 * ctr_0] =
-            sub_k_to_f_27 + xi_101 + xi_103 + xi_90;
+            sub_k_to_f_26 + sub_k_to_f_27 +
+            ((xi_66) ? (xi_104 + xi_91 + xi_99) : (0.0));
         _data_pdfs_20_38_10[_stride_pdfs_0 * ctr_0] =
-            sub_k_to_f_29 + xi_101 + xi_104 + xi_88;
+            sub_k_to_f_28 + sub_k_to_f_29 +
+            ((xi_66) ? (xi_104 + xi_89 + xi_98) : (0.0));
         _data_pdfs_20_39_10[_stride_pdfs_0 * ctr_0] =
-            sub_k_to_f_29 * -1.0 + xi_104 + xi_105 + xi_90;
+            sub_k_to_f_28 + sub_k_to_f_29 * -1.0 +
+            ((xi_66) ? (xi_105 + xi_91 + xi_98) : (0.0));
         _data_pdfs_20_310_10[_stride_pdfs_0 * ctr_0] =
-            sub_k_to_f_27 * -1.0 + xi_103 + xi_105 + xi_88;
+            sub_k_to_f_26 + sub_k_to_f_27 * -1.0 +
+            ((xi_66) ? (xi_105 + xi_89 + xi_99) : (0.0));
         _data_pdfs_20_311_10[_stride_pdfs_0 * ctr_0] =
-            sub_k_to_f_31 + xi_113 + xi_116 + xi_118;
+            sub_k_to_f_30 + sub_k_to_f_31 +
+            ((xi_66) ? (xi_110 + xi_115 + xi_118) : (0.0));
         _data_pdfs_20_312_10[_stride_pdfs_0 * ctr_0] =
-            sub_k_to_f_33 + xi_113 + xi_119 + xi_120;
+            sub_k_to_f_32 + sub_k_to_f_33 +
+            ((xi_66) ? (xi_115 + xi_119 + xi_120) : (0.0));
         _data_pdfs_20_313_10[_stride_pdfs_0 * ctr_0] =
-            sub_k_to_f_35 + xi_123 + xi_126 + xi_128;
+            sub_k_to_f_34 + sub_k_to_f_35 +
+            ((xi_66) ? (xi_122 + xi_125 + xi_128) : (0.0));
         _data_pdfs_20_314_10[_stride_pdfs_0 * ctr_0] =
-            sub_k_to_f_37 + xi_123 + xi_129 + xi_130;
+            sub_k_to_f_36 + sub_k_to_f_37 +
+            ((xi_66) ? (xi_121 + xi_125 + xi_129) : (0.0));
         _data_pdfs_20_315_10[_stride_pdfs_0 * ctr_0] =
-            sub_k_to_f_33 * -1.0 + xi_116 + xi_119 + xi_131;
+            sub_k_to_f_32 + sub_k_to_f_33 * -1.0 +
+            ((xi_66) ? (xi_118 + xi_120 + xi_130) : (0.0));
         _data_pdfs_20_316_10[_stride_pdfs_0 * ctr_0] =
-            sub_k_to_f_31 * -1.0 + xi_118 + xi_120 + xi_131;
+            sub_k_to_f_30 + sub_k_to_f_31 * -1.0 +
+            ((xi_66) ? (xi_110 + xi_119 + xi_130) : (0.0));
         _data_pdfs_20_317_10[_stride_pdfs_0 * ctr_0] =
-            sub_k_to_f_37 * -1.0 + xi_126 + xi_129 + xi_132;
+            sub_k_to_f_36 + sub_k_to_f_37 * -1.0 +
+            ((xi_66) ? (xi_121 + xi_128 + xi_131) : (0.0));
         _data_pdfs_20_318_10[_stride_pdfs_0 * ctr_0] =
-            sub_k_to_f_35 * -1.0 + xi_128 + xi_130 + xi_132;
+            sub_k_to_f_34 + sub_k_to_f_35 * -1.0 +
+            ((xi_66) ? (xi_122 + xi_129 + xi_131) : (0.0));
       }
     }
   }
@@ -567,20 +601,20 @@ collidesweepdoubleprecisionthermalized_collidesweepdoubleprecisionthermalized(
 } // namespace internal_0d943397135d13b4628c5752888935d7
 
 void CollideSweepDoublePrecisionThermalized::run(IBlock *block) {
-  auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
   auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
+  auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
 
-  auto block_offset_1 = this->block_offset_1_;
-  auto &kT = this->kT_;
-  auto &omega_shear = this->omega_shear_;
-  auto block_offset_2 = this->block_offset_2_;
-  auto &seed = this->seed_;
   auto &rho = this->rho_;
-  auto &time_step = this->time_step_;
   auto &omega_odd = this->omega_odd_;
   auto block_offset_0 = this->block_offset_0_;
-  auto &omega_even = this->omega_even_;
+  auto &kT = this->kT_;
+  auto block_offset_2 = this->block_offset_2_;
   auto &omega_bulk = this->omega_bulk_;
+  auto &omega_shear = this->omega_shear_;
+  auto &omega_even = this->omega_even_;
+  auto &time_step = this->time_step_;
+  auto block_offset_1 = this->block_offset_1_;
+  auto &seed = this->seed_;
   block_offset_generator(block, block_offset_0, block_offset_1, block_offset_2);
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(force->nrOfGhostLayers()));
   double *RESTRICT const _data_force = force->dataAt(0, 0, 0, 0);
@@ -629,20 +663,20 @@ void CollideSweepDoublePrecisionThermalized::runOnCellInterval(
   if (ci.empty())
     return;
 
-  auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
   auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
+  auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
 
-  auto block_offset_1 = this->block_offset_1_;
-  auto &kT = this->kT_;
-  auto &omega_shear = this->omega_shear_;
-  auto block_offset_2 = this->block_offset_2_;
-  auto &seed = this->seed_;
   auto &rho = this->rho_;
-  auto &time_step = this->time_step_;
   auto &omega_odd = this->omega_odd_;
   auto block_offset_0 = this->block_offset_0_;
-  auto &omega_even = this->omega_even_;
+  auto &kT = this->kT_;
+  auto block_offset_2 = this->block_offset_2_;
   auto &omega_bulk = this->omega_bulk_;
+  auto &omega_shear = this->omega_shear_;
+  auto &omega_even = this->omega_even_;
+  auto &time_step = this->time_step_;
+  auto block_offset_1 = this->block_offset_1_;
+  auto &seed = this->seed_;
   block_offset_generator(block, block_offset_0, block_offset_1, block_offset_2);
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(force->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(force->nrOfGhostLayers()));

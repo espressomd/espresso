@@ -53,7 +53,8 @@ using Utils::Vector3d;
 using Utils::Vector3i;
 
 namespace bdata = boost::unit_test::data;
-constexpr const double v0 = 0.064;
+constexpr auto v0 = 0.064;
+Vector3i mpi_shape{};
 
 double u_expected(double x, double t, double nu, double v_0, double h,
                   int k_max = 100) {
@@ -64,7 +65,7 @@ double u_expected(double x, double t, double nu, double v_0, double h,
   }
   return v_0 * u;
 }
-Vector3i mpi_shape{};
+
 BOOST_AUTO_TEST_CASE(test_transient_shear) {
   double density = 1;
   double viscosity = 1. / 7.;
@@ -74,6 +75,7 @@ BOOST_AUTO_TEST_CASE(test_transient_shear) {
   auto le_pack = std::make_unique<LeesEdwardsPack>(
       0, 1, []() { return 0.0; }, [=]() { return v0; });
   lb.set_collision_model(std::move(le_pack));
+  lb.ghost_communication();
   auto const grid_size_y = lattice->get_grid_dimensions()[1];
   for (int i = 0; i < 200; i++) {
     lb.integrate();
@@ -98,6 +100,7 @@ auto setup_lb_with_offset(double offset) {
   auto le_pack = std::make_unique<LeesEdwardsPack>(
       0, 1, [=]() { return offset; }, []() { return 0.0; });
   lb->set_collision_model(std::move(le_pack));
+  lb->ghost_communication();
   return lb;
 }
 

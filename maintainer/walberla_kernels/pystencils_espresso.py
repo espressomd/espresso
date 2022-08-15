@@ -25,6 +25,31 @@ import pystencils as ps
 import pystencils_walberla
 
 
+def skip_philox_unthermalized(code, result_symbols, rng_name):
+    for r in result_symbols:
+        statement = f" {r.name};"
+        assert statement in code, f"no declaration for variable '{r.name}' in '{code}'"
+        code = code.replace(statement, f" {r.name}{{}};", 1)
+    statement = f"{rng_name}("
+    assert code.count(statement) == 1, f"need 1 '{rng_name}' call in '{code}'"
+    lines = code.rstrip().split("\n")
+    assert lines[-1].startswith(rng_name), f"'{rng_name}' not in '{lines[-1]}'"
+    lines[-1] = f"if (kT > 0.) {{  \n{lines[-1]}\n}}"
+    return "\n".join(lines)
+
+
+class PhiloxTwoDoubles(ps.rng.PhiloxTwoDoubles):
+    def get_code(self, *args, **kwargs):
+        code = super().get_code(*args, **kwargs)
+        return skip_philox_unthermalized(code, self.result_symbols, self._name)
+
+
+class PhiloxFourFloats(ps.rng.PhiloxFourFloats):
+    def get_code(self, *args, **kwargs):
+        code = super().get_code(*args, **kwargs)
+        return skip_philox_unthermalized(code, self.result_symbols, self._name)
+
+
 precision_prefix = {
     True: 'DoublePrecision',
     False: 'SinglePrecision'}
@@ -32,8 +57,8 @@ precision_suffix = {
     True: 'double_precision',
     False: 'single_precision'}
 precision_rng = {
-    True: ps.rng.PhiloxTwoDoubles,
-    False: ps.rng.PhiloxFourFloats}
+    True: PhiloxTwoDoubles,
+    False: PhiloxFourFloats}
 data_type_np = {'double': 'float64', 'float': 'float32'}
 
 

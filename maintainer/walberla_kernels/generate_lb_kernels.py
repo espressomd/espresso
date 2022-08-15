@@ -115,29 +115,6 @@ with code_generation_context.CodeGeneration() as ctx:
         f"{target_prefix}InitialPDFsSetter{precision_prefix}",
         pdfs_setter, **params)
 
-    # generate unthermalized collision rule
-    collision_rule_unthermalized = lbmpy.creationfunctions.create_lb_collision_rule(
-        method,
-        zero_centered=True,
-        optimization={'cse_global': True,
-                      'double_precision': ctx.double_accuracy}
-    )
-    pystencils_espresso.generate_collision_sweep(
-        ctx,
-        method,
-        collision_rule_unthermalized,
-        f"{target_prefix}CollideSweep{precision_prefix}",
-        params
-    )
-    if target == ps.Target.CPU:
-        pystencils_espresso.generate_collision_sweep(
-            ctx,
-            method,
-            collision_rule_unthermalized,
-            f"{target_prefix}CollideSweep{precision_prefix}AVX",
-            params_vec
-        )
-
     # generate unthermalized Lees-Edwards collision rule
     le_config = lbmpy.LBMConfig(stencil=stencil,
                                 method=lbmpy.Method.TRT,
@@ -204,7 +181,7 @@ with code_generation_context.CodeGeneration() as ctx:
         walberla_lbm_generation.generate_macroscopic_values_accessors(
             ctx,
             config,
-            collision_rule_unthermalized.method,
+            collision_rule_thermalized.method,
             f'{target_prefix}macroscopic_values_accessors_{precision_suffix}.h')
 
     # Boundary conditions

@@ -130,9 +130,11 @@ init_lb_walberla(std::shared_ptr<LatticeWalberla> const &lb_lattice,
   try {
     assert(seed >= 0);
     lb_ptr = new_lb_walberla(lb_lattice, viscosity, density, single_precision);
-    if (kT != 0.)
-      lb_ptr->set_collision_model(kT, seed);
     if (auto le_protocol = LeesEdwards::get_protocol().lock()) {
+      if (kT != 0.) {
+        throw std::runtime_error(
+            "Lees-Edwards LB doesn't support thermalization");
+      }
       auto const &le_bc = box_geo.lees_edwards_bc();
       auto lees_edwards_object = std::make_unique<LeesEdwardsPack>(
           le_bc.shear_direction, le_bc.shear_plane_normal,
@@ -145,7 +147,10 @@ init_lb_walberla(std::shared_ptr<LatticeWalberla> const &lb_lattice,
                    (lb_params.get_tau() / lb_params.get_agrid());
           });
       lb_ptr->set_collision_model(std::move(lees_edwards_object));
+    } else {
+      lb_ptr->set_collision_model(kT, seed);
     }
+    lb_ptr->ghost_communication(); // synchronize ghost layers
   } catch (std::exception const &e) {
     runtimeErrorMsg() << "during waLBerla initialization: " << e.what();
     flag_failure = true;

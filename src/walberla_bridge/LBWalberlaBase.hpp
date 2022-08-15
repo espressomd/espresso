@@ -140,10 +140,7 @@ public:
   virtual void update_boundary_from_shape(std::vector<int> const &,
                                           std::vector<double> const &) = 0;
 
-  /** @brief Configure an unthermalized collision model. */
-  virtual void set_collision_model() = 0;
-
-  /** @brief Configure a thermalized collision model. */
+  /** @brief Configure the default collision model. */
   virtual void set_collision_model(double kT, unsigned int seed) = 0;
 
   /** @brief Configure a thermalized collision model for Lees-Edwards. */

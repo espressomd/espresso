@@ -47,27 +47,20 @@ public:
 using LbGeneratorVector = std::vector<
     std::function<std::shared_ptr<LBWalberlaBase>(LBTestParameters const &)>>;
 
-// Add all LBs with kT=0 to be tested, here
 LbGeneratorVector unthermalized_lbs() {
   LbGeneratorVector lbs;
 
   // Unthermalized D3Q19 MRT
   lbs.push_back([](LBTestParameters const &params) {
-    return std::make_shared<walberla::LBWalberlaImpl<>>(
-        params.lattice, params.viscosity, params.density);
-  });
-
-  // Thermalized D3Q19 MRT with kT set to 0
-  lbs.push_back([](LBTestParameters const &params) {
     auto ptr = std::make_shared<walberla::LBWalberlaImpl<>>(
         params.lattice, params.viscosity, params.density);
     ptr->set_collision_model(0.0, params.seed);
+    ptr->ghost_communication();
     return ptr;
   });
   return lbs;
 }
 
-// Add all LBs with thermalization to be tested, here
 LbGeneratorVector thermalized_lbs() {
   LbGeneratorVector lbs;
 
@@ -76,6 +69,7 @@ LbGeneratorVector thermalized_lbs() {
     auto ptr = std::make_shared<walberla::LBWalberlaImpl<>>(
         params.lattice, params.viscosity, params.density);
     ptr->set_collision_model(params.kT, params.seed);
+    ptr->ghost_communication();
     return ptr;
   });
   return lbs;
