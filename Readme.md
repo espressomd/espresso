@@ -1,3 +1,9 @@
+# Invitation to the ESPResSo Summer School 2022
+
+[![CECAM Flagship School registration link](https://img.shields.io/badge/CECAM%20Flagship%20School-Register%20Now-blue?style=for-the-badge)](https://www.cecam.org/workshop-details/1146)
+
+The summer school "Simulating the dynamics of soft matter with ESPResSo, PyStencils and LbmPy" will take place on October 10-14, 2022, in Stuttgart. Registration is now open on [CECAM](https://www.cecam.org/workshop-details/1146).
+
 # ESPResSo
 
 [![GitLab CI](https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/badges/python/pipeline.svg)](https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/commits/python)
