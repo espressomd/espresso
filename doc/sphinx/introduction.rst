@@ -548,7 +548,7 @@ our policies on :ref:`bug reports <Contributing>` and
 Releases from 4.0 onward can be found on
 `GitHub <https://github.com/espressomd/espresso/releases>`_.
 Older releases from 2.1 to 3.3 can be found in
-`GNU Savannah <http://download.savannah.gnu.org/releases/espressomd/>`_.
+`GNU Savannah <https://download.savannah.gnu.org/releases/espressomd/>`_.
 See our policy on :ref:`API backward compatibility
 <Intended interface compatibility between ESPResSo versions>`
 if you need more details.

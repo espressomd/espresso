@@ -268,7 +268,7 @@ def setup(app):
 
 # -- Options for Cython ---------------------------------------------------
 
-# see http://opendreamkit.org/2017/06/09/CythonSphinx/ why this is needed
+# see https://opendreamkit.org/2017/06/09/CythonSphinx/ why this is needed
 def isfunction(obj):
     return hasattr(type(obj), "__code__")
 
