@@ -308,7 +308,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
     auto const skin = 0.4;
     espresso::system->set_time_step(time_step);
     espresso::system->set_skin(skin);
-    integrate_set_nvt();
+    set_integ_switch(INTEG_METHOD_NVT);
 
     // reset system
     mpi_remove_translational_motion();

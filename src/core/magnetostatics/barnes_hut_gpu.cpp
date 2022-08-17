@@ -33,15 +33,14 @@
 DipolarBarnesHutGpu::DipolarBarnesHutGpu(double prefactor, double epssq,
                                          double itolsq)
     : prefactor{prefactor}, m_epssq{epssq}, m_itolsq{itolsq} {
-  if (this_node != 0) {
-    return;
-  }
   auto &system = EspressoSystemInterface::Instance();
   system.requestFGpu();
   system.requestTorqueGpu();
   system.requestRGpu();
   system.requestDipGpu();
-  setBHPrecision(static_cast<float>(m_epssq), static_cast<float>(m_itolsq));
+  if (this_node == 0) {
+    setBHPrecision(static_cast<float>(m_epssq), static_cast<float>(m_itolsq));
+  }
 }
 
 template <class... Args, class... ArgRef>

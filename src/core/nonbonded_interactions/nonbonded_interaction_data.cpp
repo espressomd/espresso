@@ -70,7 +70,7 @@ static void mpi_realloc_ia_params_local(int new_size) {
   for (int i = 0; i < max_seen_particle_type; i++)
     for (int j = i; j < max_seen_particle_type; j++) {
       new_params.at(Utils::upper_triangular(i, j, new_size)) =
-          std::move(*get_ia_param(i, j));
+          std::move(get_ia_param(i, j));
     }
 
   max_seen_particle_type = new_size;
@@ -97,7 +97,7 @@ static void mpi_bcast_all_ia_params() {
 
 IA_parameters *get_ia_param_safe(int i, int j) {
   make_particle_type_exist(std::max(i, j));
-  return get_ia_param(i, j);
+  return &get_ia_param(i, j);
 }
 
 std::string ia_params_get_state() {

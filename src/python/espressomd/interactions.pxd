@@ -19,7 +19,6 @@
 
 # Handling of interactions
 
-from libcpp.memory cimport shared_ptr
 from libcpp.string cimport string
 from libcpp.vector cimport vector
 from libc cimport stdint
@@ -188,21 +187,23 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
 
         Thole_Parameters thole
 
-    cdef IA_parameters * get_ia_param(int i, int j)
     cdef IA_parameters * get_ia_param_safe(int i, int j)
     cdef string ia_params_get_state()
     cdef void ia_params_set_state(string)
     cdef void reset_ia_params()
 
-cdef extern from "nonbonded_interactions/lj.hpp":
-    cdef int lennard_jones_set_params(int part_type_a, int part_type_b,
-                                      double eps, double sig, double cut,
-                                      double shift, double offset,
-                                      double min)
+IF LENNARD_JONES:
+    cdef extern from "nonbonded_interactions/lj.hpp":
+        cdef int lennard_jones_set_params(int part_type_a, int part_type_b,
+                                          double eps, double sig, double cut,
+                                          double shift, double offset,
+                                          double min)
 
-cdef extern from "nonbonded_interactions/wca.hpp":
-    cdef int wca_set_params(int part_type_a, int part_type_b,
-                            double eps, double sig)
+IF WCA:
+    cdef extern from "nonbonded_interactions/wca.hpp":
+        cdef int wca_set_params(int part_type_a, int part_type_b,
+                                double eps, double sig)
+
 IF LJCOS:
     cdef extern from "nonbonded_interactions/ljcos.hpp":
         cdef int ljcos_set_params(int part_type_a, int part_type_b,
@@ -226,18 +227,19 @@ IF THOLE:
     cdef extern from "nonbonded_interactions/thole.hpp":
         int thole_set_params(int part_type_a, int part_type_b, double scaling_coeff, double q1q2)
 
-cdef extern from "nonbonded_interactions/ljgen.hpp":
-    IF LJGEN_SOFTCORE:
-        cdef int ljgen_set_params(int part_type_a, int part_type_b,
-                                  double eps, double sig, double cut,
-                                  double shift, double offset,
-                                  double a1, double a2, double b1, double b2,
-                                  double genlj_lambda, double softrad)
-    ELSE:
-        cdef int ljgen_set_params(int part_type_a, int part_type_b,
-                                  double eps, double sig, double cut,
-                                  double shift, double offset,
-                                  double a1, double a2, double b1, double b2)
+IF LENNARD_JONES_GENERIC:
+    cdef extern from "nonbonded_interactions/ljgen.hpp":
+        IF LJGEN_SOFTCORE:
+            cdef int ljgen_set_params(int part_type_a, int part_type_b,
+                                      double eps, double sig, double cut,
+                                      double shift, double offset,
+                                      double a1, double a2, double b1, double b2,
+                                      double genlj_lambda, double softrad)
+        ELSE:
+            cdef int ljgen_set_params(int part_type_a, int part_type_b,
+                                      double eps, double sig, double cut,
+                                      double shift, double offset,
+                                      double a1, double a2, double b1, double b2)
 
 IF SMOOTH_STEP:
     cdef extern from "nonbonded_interactions/smooth_step.hpp":

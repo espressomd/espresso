@@ -79,7 +79,7 @@ bool long_range_interactions_sanity_checks() {
 }
 
 void mpi_bcast_ia_params_local(int i, int j) {
-  boost::mpi::broadcast(comm_cart, *get_ia_param(i, j), 0);
+  boost::mpi::broadcast(comm_cart, get_ia_param(i, j), 0);
   on_short_range_ia_change();
 }
 

@@ -40,7 +40,7 @@ class CudaInitHandle(ScriptInterfaceHelper):
 
     """
     _so_name = "System::CudaInitHandle"
-    _so_creation_policy = "LOCAL"
+    _so_creation_policy = "GLOBAL"
     _so_bind_methods = ("list_devices",)
 
     def list_devices_properties(self):

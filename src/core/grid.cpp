@@ -106,13 +106,12 @@ void grid_changed_n_nodes() {
   grid_changed_box_l(box_geo);
 }
 
-static void mpi_set_box_length_local(Utils::Vector3d const &box_l) {
-  box_geo.set_length(box_l);
-  on_boxl_change();
+void set_node_grid(Utils::Vector3i const &value) {
+  ::node_grid = value;
+  on_node_grid_change();
 }
 
-REGISTER_CALLBACK(mpi_set_box_length_local)
-
-void mpi_set_box_length(Utils::Vector3d const &box_l) {
-  mpi_call_all(mpi_set_box_length_local, box_l);
+void set_box_length(Utils::Vector3d const &value) {
+  ::box_geo.set_length(value);
+  on_boxl_change();
 }

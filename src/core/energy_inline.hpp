@@ -178,7 +178,7 @@ inline void add_non_bonded_pair_energy(
     Coulomb::ShortRangeEnergyKernel::kernel_type const *coulomb_kernel,
     Dipoles::ShortRangeEnergyKernel::kernel_type const *dipoles_kernel,
     Observable_stat &obs_energy) {
-  IA_parameters const &ia_params = *get_ia_param(p1.type(), p2.type());
+  auto const &ia_params = get_ia_param(p1.type(), p2.type());
 
 #ifdef EXCLUSIONS
   if (do_nonbonded(p1, p2))

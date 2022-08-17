@@ -96,10 +96,8 @@ void on_program_start() {
   /* initially go for regular decomposition */
   cells_re_init(CellStructureType::CELL_STRUCTURE_REGULAR);
 
-  if (this_node == 0) {
-    /* make sure interaction 0<->0 always exists */
-    make_particle_type_exist(0);
-  }
+  /* make sure interaction 0<->0 always exists */
+  make_particle_type_exist_local(0);
 }
 
 void on_integration_start(double time_step) {

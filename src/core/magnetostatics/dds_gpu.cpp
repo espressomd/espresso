@@ -38,9 +38,6 @@ static void get_simulation_box(float *box, int *per) {
 
 DipolarDirectSumGpu::DipolarDirectSumGpu(double prefactor)
     : prefactor{prefactor} {
-  if (this_node != 0) {
-    return;
-  }
   auto &system = EspressoSystemInterface::Instance();
   system.requestFGpu();
   system.requestTorqueGpu();
