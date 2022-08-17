@@ -62,7 +62,7 @@ walk you through the basic usage of ESPResSo. Advanced simulation
 methods are extensively documented, with examples and links to the
 relevant literature. Additional resources such as tutorials and
 doxygen documentation can be found on https://espressomd.github.io.
-The official website is http://espressomd.org/wordpress/.
+The official website is https://espressomd.org/wordpress/.
 
 ## Installation
 
@@ -80,7 +80,7 @@ to use 4.1.4.
 ### Join the community
 
 Please consider subscribing to our
-[mailing list](http://espressomd.org/wordpress/community-and-support/mailing-lists/)
+[mailing list](https://espressomd.org/wordpress/community-and-support/mailing-lists/)
 if you're actively using ESPResSo, as we occasionally need community
 feedback when making decisions on the future of specific features in
 upcoming releases. You'll also get notifications on bugfix releases.
@@ -89,7 +89,7 @@ upcoming releases. You'll also get notifications on bugfix releases.
 
 If you use ESPResSo to publish scientific results, we would ask you to
 acknowledge this usage by mentioning the software with its version number and
-[citing the relevant papers](http://espressomd.org/wordpress/about/please-cite-us/).
+[citing the relevant papers](https://espressomd.org/wordpress/about/please-cite-us/).
 A number of algorithms in ESPResSo are fairly advanced and unique to ESPResSo.
 The authors of these contributions kindly ask you to cite the relevant
 publications, as indicated in the documentation. For detailed instructions, see
