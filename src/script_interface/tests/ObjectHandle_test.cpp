@@ -188,6 +188,10 @@ struct LogContext : public Context {
 
     return it;
   }
+  std::shared_ptr<ObjectHandle>
+  make_shared_local(std::string const &s, VariantMap const &v) override {
+    return make_shared(s, v);
+  }
 
   boost::string_ref name(const ObjectHandle *o) const override {
     return "Dummy";
@@ -247,7 +251,9 @@ BOOST_AUTO_TEST_CASE(interface_) {
   using namespace Testing;
   auto log_ctx = std::make_shared<Testing::LogContext>();
   auto o = log_ctx->make_shared({}, {});
+  auto l = log_ctx->make_shared_local({}, {});
   BOOST_CHECK(log_ctx->is_head_node());
   BOOST_CHECK_EQUAL(log_ctx->name(o.get()), "Dummy");
+  BOOST_CHECK_EQUAL(log_ctx->name(l.get()), "Dummy");
   static_cast<void>(log_ctx->parallel_try_catch([]() {}));
 }

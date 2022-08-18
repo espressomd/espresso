@@ -70,6 +70,16 @@ BOOST_AUTO_TEST_CASE(LocalContext_make_shared) {
   BOOST_CHECK_EQUAL(ctx->name(res.get()), "Dummy");
 }
 
+BOOST_AUTO_TEST_CASE(LocalContext_make_shared_local) {
+  boost::mpi::communicator comm;
+  auto ctx = std::make_shared<si::LocalContext>(factory, comm);
+
+  auto res = ctx->make_shared_local("Dummy", {});
+  BOOST_REQUIRE(res != nullptr);
+  BOOST_CHECK_EQUAL(res->context(), ctx.get());
+  BOOST_CHECK_EQUAL(ctx->name(res.get()), "Dummy");
+}
+
 BOOST_AUTO_TEST_CASE(LocalContext_serialization) {
   boost::mpi::communicator comm;
   auto ctx = std::make_shared<si::LocalContext>(factory, comm);

@@ -24,7 +24,7 @@ import espressomd
 import espressomd.interactions
 
 
-class Non_bonded_interactionsTests(ut.TestCase):
+class Test(ut.TestCase):
     system = espressomd.System(box_l=[30.0, 30.0, 30.0])
 
     def tearDown(self):
@@ -162,6 +162,33 @@ class Non_bonded_interactionsTests(ut.TestCase):
              "k2": 5.0, "mu": 2.0, "nu": 1.0},
             "gay_berne")
 
+    @utx.skipIfMissingFeatures(["LENNARD_JONES", "WCA"])
+    def test_set_params(self):
+        self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
+            epsilon=1., sigma=2., cutoff=3., shift="auto")
+        self.system.non_bonded_inter.reset()
+        self.assertEqual(self.system.non_bonded_inter[0, 0].lennard_jones.get_params(),
+                         {'shift': 0., 'sigma': 0., 'epsilon': 0.,
+                          'cutoff': -1., 'offset': 0., 'min': 0.})
+        wca = espressomd.interactions.WCAInteraction(epsilon=1., sigma=2.)
+        wca.set_params(epsilon=2.)
+        self.assertEqual(wca.get_params()["epsilon"], 2.)
+        self.system.non_bonded_inter[0, 0].wca = wca
+        self.assertEqual(
+            self.system.non_bonded_inter[0, 0].wca.get_params()["epsilon"], 2.)
+        self.assertEqual(wca.get_params()["epsilon"], 2.)
+        wca.set_params(epsilon=3.)
+        self.assertEqual(
+            self.system.non_bonded_inter[0, 0].wca.get_params()["epsilon"], 3.)
+        self.assertEqual(wca.get_params()["epsilon"], 3.)
+        self.system.non_bonded_inter.reset()
+        wca.set_params(epsilon=4.)
+        self.assertEqual(
+            self.system.non_bonded_inter[0, 0].wca.get_params()["epsilon"], 4.)
+        self.assertEqual(wca.get_params()["epsilon"], 4.)
+        with self.assertRaisesRegex(RuntimeError, r"Non-bonded interaction is already bound to interaction pair \[0, 0\]"):
+            self.system.non_bonded_inter[0, 1].wca = wca
+
     @utx.skipIfMissingFeatures("LENNARD_JONES")
     def test_exceptions(self):
         err_msg_required = (r"The following keys have to be given as keyword arguments: "
@@ -182,6 +209,9 @@ class Non_bonded_interactionsTests(ut.TestCase):
         with self.assertRaisesRegex(ValueError, err_msg_valid):
             self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
                 epsilon=1., sigma=2., cutoff=3., shift=4., unknown=5.)
+        with self.assertRaisesRegex(ValueError, "Parameter 'shift' has to be 'auto' or a float"):
+            self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
+                epsilon=1., sigma=2., cutoff=3., shift="automatic")
 
         skin = self.system.cell_system.skin
         box_l = self.system.box_l
@@ -195,6 +225,13 @@ class Non_bonded_interactionsTests(ut.TestCase):
                 epsilon=1., sigma=1., cutoff=wrong_cutoff, shift="auto")
         self.assertAlmostEqual(
             lennard_jones.get_params()['cutoff'], wrong_cutoff, delta=1e-10)
+
+    def check_potential_exceptions(self, ia_class, params, check_keys):
+        for key in check_keys:
+            with self.assertRaisesRegex(ValueError, f"parameter '{key}'"):
+                invalid_params = params.copy()
+                invalid_params[key] = -0.1
+                ia_class(**invalid_params)
 
 
 if __name__ == "__main__":

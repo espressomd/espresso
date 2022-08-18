@@ -79,6 +79,9 @@ void on_dipoles_change();
 /** called every time short ranged interaction parameters are changed. */
 void on_short_range_ia_change();
 
+/** called every time a non-bonded interaction parameters are changed. */
+void on_non_bonded_ia_change();
+
 /** called every time a constraint is changed. */
 void on_constraint_change();
 

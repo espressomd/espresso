@@ -20,6 +20,8 @@
 
 #include "BondedInteraction.hpp"
 #include "BondedInteractions.hpp"
+#include "NonBondedInteraction.hpp"
+#include "NonBondedInteractions.hpp"
 
 #include <utils/Factory.hpp>
 
@@ -49,6 +51,11 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<OifGlobalForcesBond>("Interactions::OifGlobalForcesBond");
   om->register_new<OifLocalForcesBond>("Interactions::OifLocalForcesBond");
   om->register_new<VirtualBond>("Interactions::VirtualBond");
+
+  om->register_new<NonBondedInteractions>(
+      "Interactions::NonBondedInteractions");
+  om->register_new<NonBondedInteractionHandle>(
+      "Interactions::NonBondedInteractionHandle");
 }
 } // namespace Interactions
 } // namespace ScriptInterface

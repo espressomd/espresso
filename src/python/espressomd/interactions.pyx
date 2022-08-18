@@ -205,6 +205,85 @@ cdef class NonBondedInteraction:
         raise Exception(
             "Subclasses of NonBondedInteraction must define the required_keys() method.")
 
+
+class NewNonBondedInteraction(ScriptInterfaceHelper):
+    """
+    Represents an instance of a non-bonded interaction, such as Lennard-Jones.
+
+    """
+
+    def __init__(self, **kwargs):
+        if "sip" in kwargs:
+            super().__init__(**kwargs)
+        else:
+            self._validate(params=kwargs, check_required=True)
+            params = self.default_params()
+            params.update(kwargs)
+            super().__init__(**params)
+
+    def __str__(self):
+        return f'{self.__class__.__name__}({self.get_params()})'
+
+    def _validate(self, params, check_required=False):
+        # Check, if any key was passed, which is not known
+        keys = {x for x in params.keys() if x != "_types"}
+        utils.check_valid_keys(self.valid_keys(), keys)
+        # When an interaction is newly activated, all required keys must be
+        # given
+        if check_required:
+            utils.check_required_keys(self.required_keys(), params.keys())
+
+    def set_params(self, **kwargs):
+        """Update the given parameters.
+
+        """
+        self._validate(params=kwargs, check_required=not self.is_active())
+
+        params = self.get_params()
+        params.update(kwargs)
+
+        err_msg = f"setting {self.type_name()} raised an error"
+        self.call_method("set_params", handle_errors_message=err_msg, **params)
+
+    def _serialize(self):
+        return (self.__class__.__name__, self.get_params())
+
+    def default_params(self):
+        """Virtual method.
+
+        """
+        raise Exception(
+            "Subclasses of NonBondedInteraction must define the default_params() method.")
+
+    def is_active(self):
+        """Virtual method.
+
+        """
+        raise Exception(
+            "Subclasses of NonBondedInteraction must define the is_active() method.")
+
+    def type_name(self):
+        """Virtual method.
+
+        """
+        raise Exception(
+            "Subclasses of NonBondedInteraction must define the type_name() method.")
+
+    def valid_keys(self):
+        """Virtual method.
+
+        """
+        raise Exception(
+            "Subclasses of NonBondedInteraction must define the valid_keys() method.")
+
+    def required_keys(self):
+        """Virtual method.
+
+        """
+        raise Exception(
+            "Subclasses of NonBondedInteraction must define the required_keys() method.")
+
+
 IF LENNARD_JONES == 1:
 
     cdef class LennardJonesInteraction(NonBondedInteraction):
@@ -1528,17 +1607,32 @@ IF GAUSSIAN == 1:
             return {"eps", "sig", "cutoff"}
 
 
-class NonBondedInteractionHandle:
+@script_interface_register
+class NonBondedInteractionHandle(ScriptInterfaceHelper):
 
     """
     Provides access to all non-bonded interactions between two particle types.
 
     """
+    _so_name = "Interactions::NonBondedInteractionHandle"
 
-    def __init__(self, _type1, _type2):
+    def __getattr__(self, key):
+        obj = super().__getattr__(key)
+        return globals()[obj.__class__.__name__](
+            _types=self.call_method("get_types"), **obj.get_params())
+
+    def __init__(self, *args, **kwargs):
+        if "sip" in kwargs:
+            super().__init__(**kwargs)
+            return
+        if len(args):
+            _type1, _type2 = args
+        else:
+            _type1, _type2 = kwargs.pop("_types")
         if not (utils.is_valid_type(_type1, int)
                 and utils.is_valid_type(_type2, int)):
             raise TypeError("The particle types have to be of type integer.")
+        super().__init__(_types=[_type1, _type2], **kwargs)
 
         # Here, add one line for each nonbonded ia
         IF LENNARD_JONES:
@@ -1578,40 +1672,78 @@ class NonBondedInteractionHandle:
         IF THOLE:
             self.thole = TholeInteraction(_type1, _type2)
 
+    def _serialize(self):
+        serialized = []
+        for name, obj in self.get_params().items():
+            serialized.append((name, *obj._serialize()))
+        return serialized
 
-cdef class NonBondedInteractions:
+
+@script_interface_register
+class NonBondedInteractions(ScriptInterfaceHelper):
     """
     Access to non-bonded interaction parameters via ``[i,j]``, where ``i, j``
     are particle types. Returns a :class:`NonBondedInteractionHandle` object.
-    Also: access to force capping.
 
     """
+    _so_name = "Interactions::NonBondedInteractions"
+    _so_creation_policy = "GLOBAL"
+    # _so_bind_methods = ("reset",)
+
+    def keys(self):
+        return [tuple(x) for x in self.call_method("keys")]
+
+    def _assert_key_type(self, key):
+        if not isinstance(key, tuple) or len(key) != 2 or \
+                not utils.is_valid_type(key[0], int) or not utils.is_valid_type(key[1], int):
+            raise TypeError(
+                "NonBondedInteractions[] expects two particle types as indices.")
 
     def __getitem__(self, key):
-        if not isinstance(key, tuple):
-            raise ValueError(
-                "NonBondedInteractions[] expects two particle types as indices.")
-        if len(key) != 2 or (not utils.is_valid_type(key[0], int)) or (
-                not utils.is_valid_type(key[1], int)):
-            raise ValueError(
-                "NonBondedInteractions[] expects two particle types as indices.")
-        return NonBondedInteractionHandle(key[0], key[1])
+        self._assert_key_type(key)
+        return NonBondedInteractionHandle(_types=key)
+
+    def __setitem__(self, key, value):
+        self._assert_key_type(key)
+        self.call_method("insert", key=key, object=value)
 
     def __getstate__(self):
-        cdef string core_state
-        core_state = ia_params_get_state()
-        return core_state
+        cdef string core_state = ia_params_get_state()
+        n_types = self.call_method("get_n_types")
+        state = []
+        for i in range(n_types):
+            for j in range(i, n_types):
+                handle = NonBondedInteractionHandle(_types=(i, j))
+                state.append(((i, j), handle._serialize()))
+        return {"state": state, "core_state": core_state}
 
-    def __setstate__(self, core_state):
-        cdef string state = core_state
-        ia_params_set_state(state)
+    def __setstate__(self, params):
+        for types, kwargs in params["state"]:
+            objects = {}
+            for name, class_name, obj_params in kwargs:
+                objects[name] = globals()[class_name](**obj_params)
+            obj = NonBondedInteractionHandle(_types=types, **objects)
+            self.call_method("insert", key=types, object=obj)
 
     def reset(self):
         """
         Reset all interaction parameters to their default values.
         """
-
         reset_ia_params()
+        self.call_method("reset")
+
+    @classmethod
+    def _restore_object(cls, so_callback, so_callback_args, state):
+        cdef string core_state = state["core_state"]
+        ia_params_set_state(core_state)
+        so = so_callback(*so_callback_args)
+        so.__setstate__(state)
+        return so
+
+    def __reduce__(self):
+        so_callback, (so_name, so_bytestring) = super().__reduce__()
+        return (NonBondedInteractions._restore_object,
+                (so_callback, (so_name, so_bytestring), self.__getstate__()))
 
 
 class BondedInteraction(ScriptInterfaceHelper):

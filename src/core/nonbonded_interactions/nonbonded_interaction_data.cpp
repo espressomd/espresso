@@ -48,7 +48,8 @@
  * variables
  *****************************************/
 int max_seen_particle_type = 0;
-std::vector<IA_parameters> nonbonded_ia_params;
+std::vector<IA_parameters> old_nonbonded_ia_params;
+std::vector<std::shared_ptr<IA_parameters>> nonbonded_ia_params;
 
 /** Minimal global interaction cutoff. Particles with a distance
  *  smaller than this are guaranteed to be available on the same node
@@ -60,21 +61,33 @@ static double min_global_cut = INACTIVE_CUTOFF;
  * general low-level functions
  *****************************************/
 
-static void mpi_realloc_ia_params_local(int new_size) {
-  if (new_size <= max_seen_particle_type)
+void mpi_realloc_ia_params_local(int new_size) {
+  auto const old_size = ::max_seen_particle_type;
+  if (new_size <= old_size)
     return;
 
-  auto new_params = std::vector<IA_parameters>(new_size * (new_size + 1) / 2);
+  auto const n_pairs = new_size * (new_size + 1) / 2;
+  auto new_params_ = std::vector<IA_parameters>(n_pairs);
+  auto new_params = std::vector<std::shared_ptr<IA_parameters>>(n_pairs);
 
   /* if there is an old field, move entries */
-  for (int i = 0; i < max_seen_particle_type; i++)
-    for (int j = i; j < max_seen_particle_type; j++) {
-      new_params.at(Utils::upper_triangular(i, j, new_size)) =
-          std::move(get_ia_param(i, j));
+  for (int i = 0; i < old_size; i++) {
+    for (int j = i; j < old_size; j++) {
+      auto const new_key = Utils::upper_triangular(i, j, new_size);
+      auto const old_key = Utils::upper_triangular(i, j, old_size);
+      new_params_.at(new_key) = std::move(old_nonbonded_ia_params[old_key]);
+      new_params[new_key] = std::move(nonbonded_ia_params[old_key]);
     }
+  }
+  for (auto &ia_params : new_params) {
+    if (ia_params == nullptr) {
+      ia_params = std::make_shared<IA_parameters>();
+    }
+  }
 
-  max_seen_particle_type = new_size;
-  std::swap(nonbonded_ia_params, new_params);
+  ::max_seen_particle_type = new_size;
+  std::swap(::old_nonbonded_ia_params, new_params_);
+  std::swap(::nonbonded_ia_params, new_params);
 }
 
 REGISTER_CALLBACK(mpi_realloc_ia_params_local)
@@ -85,12 +98,12 @@ static void mpi_realloc_ia_params(int new_size) {
 }
 
 static void mpi_bcast_all_ia_params_local() {
-  boost::mpi::broadcast(comm_cart, nonbonded_ia_params, 0);
+  boost::mpi::broadcast(comm_cart, old_nonbonded_ia_params, 0);
 }
 
 REGISTER_CALLBACK(mpi_bcast_all_ia_params_local)
 
-/** Broadcast @ref nonbonded_ia_params to all nodes. */
+/** Broadcast @ref old_nonbonded_ia_params to all nodes. */
 static void mpi_bcast_all_ia_params() {
   mpi_call_all(mpi_bcast_all_ia_params_local);
 }
@@ -103,7 +116,7 @@ IA_parameters *get_ia_param_safe(int i, int j) {
 std::string ia_params_get_state() {
   std::stringstream out;
   boost::archive::binary_oarchive oa(out);
-  oa << nonbonded_ia_params;
+  oa << old_nonbonded_ia_params;
   oa << max_seen_particle_type;
   return out.str();
 }
@@ -113,8 +126,8 @@ void ia_params_set_state(std::string const &state) {
   iostreams::array_source src(state.data(), state.size());
   iostreams::stream<iostreams::array_source> ss(src);
   boost::archive::binary_iarchive ia(ss);
-  nonbonded_ia_params.clear();
-  ia >> nonbonded_ia_params;
+  old_nonbonded_ia_params.clear();
+  ia >> old_nonbonded_ia_params;
   ia >> max_seen_particle_type;
   mpi_realloc_ia_params(max_seen_particle_type);
   mpi_bcast_all_ia_params();
@@ -204,16 +217,21 @@ static double recalc_maximal_cutoff(const IA_parameters &data) {
 double maximal_cutoff_nonbonded() {
   auto max_cut_nonbonded = INACTIVE_CUTOFF;
 
-  for (auto &data : nonbonded_ia_params) {
+  for (auto &data : old_nonbonded_ia_params) {
     data.max_cut = recalc_maximal_cutoff(data);
     max_cut_nonbonded = std::max(max_cut_nonbonded, data.max_cut);
+  }
+
+  for (auto &data : nonbonded_ia_params) {
+    data->max_cut = recalc_maximal_cutoff(*data);
+    max_cut_nonbonded = std::max(max_cut_nonbonded, data->max_cut);
   }
 
   return max_cut_nonbonded;
 }
 
 void reset_ia_params() {
-  boost::fill(nonbonded_ia_params, IA_parameters{});
+  boost::fill(old_nonbonded_ia_params, IA_parameters{});
   mpi_bcast_all_ia_params();
 }
 

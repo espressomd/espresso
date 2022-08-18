@@ -333,12 +333,16 @@ class CheckpointTest(ut.TestCase):
     def test_non_bonded_inter(self):
         params1 = system.non_bonded_inter[0, 0].lennard_jones.get_params()
         params2 = system.non_bonded_inter[3, 0].lennard_jones.get_params()
+        params3 = system.non_bonded_inter[4, 4].lennard_jones.get_params()
         reference1 = {'shift': 0.1, 'sigma': 1.3, 'epsilon': 1.2,
                       'cutoff': 2.0, 'offset': 0.0, 'min': 0.0}
         reference2 = {'shift': 0.1, 'sigma': 1.7, 'epsilon': 1.2,
                       'cutoff': 2.0, 'offset': 0.0, 'min': 0.0}
+        reference3 = {'shift': 0.2, 'sigma': 1.2, 'epsilon': 1.4,
+                      'cutoff': -2.0, 'offset': 0.1, 'min': 0.2}
         self.assertEqual(params1, reference1)
         self.assertEqual(params2, reference2)
+        self.assertEqual(params3, reference3)
 
     def test_bonded_inter(self):
         # check the ObjectHandle was correctly initialized (including MPI)

@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -185,7 +186,7 @@ struct Thole_Parameters {
 struct DPDParameters {
   double gamma = 0.;
   double k = 1.;
-  double cutoff = -1.;
+  double cutoff = INACTIVE_CUTOFF;
   int wf = 0;
   double pref = 0.0;
 };
@@ -275,7 +276,8 @@ struct IA_parameters {
 #endif
 };
 
-extern std::vector<IA_parameters> nonbonded_ia_params;
+extern std::vector<IA_parameters> old_nonbonded_ia_params;
+extern std::vector<std::shared_ptr<IA_parameters>> nonbonded_ia_params;
 
 /** Maximal particle type seen so far. */
 extern int max_seen_particle_type;
@@ -284,6 +286,13 @@ extern int max_seen_particle_type;
  *  interactions).
  */
 double maximal_cutoff_nonbonded();
+
+inline int get_ia_param_key(int i, int j) {
+  assert(i >= 0 && i < ::max_seen_particle_type);
+  assert(j >= 0 && j < ::max_seen_particle_type);
+  return Utils::upper_triangular(std::min(i, j), std::max(i, j),
+                                 ::max_seen_particle_type);
+}
 
 /**
  * @brief Get interaction parameters between particle types i and j
@@ -297,11 +306,7 @@ double maximal_cutoff_nonbonded();
  * @return Reference to interaction parameters for the type pair.
  */
 inline IA_parameters &get_ia_param(int i, int j) {
-  assert(i >= 0 && i < max_seen_particle_type);
-  assert(j >= 0 && j < max_seen_particle_type);
-
-  return nonbonded_ia_params[Utils::upper_triangular(
-      std::min(i, j), std::max(i, j), max_seen_particle_type)];
+  return ::old_nonbonded_ia_params[get_ia_param_key(i, j)];
 }
 
 /** Get interaction parameters between particle types i and j.
@@ -317,6 +322,8 @@ std::string ia_params_get_state();
 /** @brief Set the state of all non-bonded interactions.
  */
 void ia_params_set_state(std::string const &);
+
+void mpi_realloc_ia_params_local(int new_size);
 
 bool is_new_particle_type(int type);
 /** Make sure that ia_params is large enough to cover interactions
