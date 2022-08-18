@@ -1535,33 +1535,10 @@ class NonBondedInteractionHandle:
 
     """
 
-    type1 = -1
-    type2 = -1
-
-    # Here, one line per non-bonded ia
-    lennard_jones = None
-    lennard_jones_cos = None
-    lennard_jones_cos2 = None
-    generic_lennard_jones = None
-    smooth_step = None
-    bmhtf = None
-    morse = None
-    buckingham = None
-    soft_sphere = None
-    hertzian = None
-    gaussian = None
-    tabulated = None
-    gay_berne = None
-    dpd = None
-    hat = None
-    thole = None
-
     def __init__(self, _type1, _type2):
         if not (utils.is_valid_type(_type1, int)
                 and utils.is_valid_type(_type2, int)):
             raise TypeError("The particle types have to be of type integer.")
-        self.type1 = _type1
-        self.type2 = _type2
 
         # Here, add one line for each nonbonded ia
         IF LENNARD_JONES:

@@ -122,38 +122,6 @@ int mpi_integrate(int n_steps, int reuse_forces);
  */
 int mpi_steepest_descent(int steps);
 
-/** @brief Set the steepest descent integrator for energy minimization. */
-void integrate_set_steepest_descent(double f_max, double gamma,
-                                    double max_displacement);
-
-/** @brief Set the velocity Verlet integrator for the NVT ensemble. */
-void integrate_set_nvt();
-
-/** @brief Set the Brownian Dynamics integrator. */
-void integrate_set_bd();
-
-/** @brief Set the Stokesian Dynamics integrator. */
-void integrate_set_sd();
-
-#ifdef NPT
-/** @brief Set the velocity Verlet integrator modified for the NpT ensemble
- *  with isotropic rescaling.
- *
- *  @param ext_pressure  Reference pressure
- *  @param piston        Piston mass
- *  @param xdir_rescale  Enable box rescaling in the *x*-direction
- *  @param ydir_rescale  Enable box rescaling in the *y*-direction
- *  @param zdir_rescale  Enable box rescaling in the *z*-direction
- *  @param cubic_box     Determines if the volume fluctuations should also
- *                       apply to dimensions which are switched off by the
- *                       above flags and which do not contribute to the
- *                       pressure (3D) or tension (2D, 1D)
- */
-void integrate_set_npt_isotropic(double ext_pressure, double piston,
-                                 bool xdir_rescale, bool ydir_rescale,
-                                 bool zdir_rescale, bool cubic_box);
-#endif
-
 /** Get @c verlet_reuse */
 double get_verlet_reuse();
 
@@ -166,20 +134,15 @@ double get_sim_time();
 /** Increase simulation time (only on head node) */
 void increment_sim_time(double amount);
 
-/** Send new \ref time_step and rescale the velocities accordingly. */
-void mpi_set_time_step(double time_step);
+/** Set new @ref time_step. */
+void set_time_step(double value);
 
-/** @brief Set and broadcast the skin
- *  @param skin skin value
- */
-void mpi_set_skin(double skin);
-void mpi_set_skin_local(double skin);
+/** @brief Set new skin. */
+void mpi_set_skin_local(double value);
 
-/** @brief Set and broadcast the time
- *  @param time time
- */
-void mpi_set_time(double time);
+/** @brief Set the simulation time. */
+void set_time(double value);
 
-void mpi_set_integ_switch(int integ_switch);
+void set_integ_switch(int value);
 
 #endif

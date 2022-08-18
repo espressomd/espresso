@@ -184,7 +184,7 @@ inline void add_non_bonded_pair_force(
     Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_kernel,
     Dipoles::ShortRangeForceKernel::kernel_type const *dipoles_kernel,
     Coulomb::ShortRangeForceCorrectionsKernel::kernel_type const *elc_kernel) {
-  IA_parameters const &ia_params = *get_ia_param(p1.type(), p2.type());
+  auto const &ia_params = get_ia_param(p1.type(), p2.type());
   ParticleForce pf{};
 
   /***********************************************/

@@ -53,29 +53,29 @@ Variant System::do_call_method(std::string const &name,
     return {};
   }
   if (name == "rescale_boxl") {
-    if (context()->is_head_node()) {
-      auto const coord = get_value<int>(parameters, "coord");
-      auto const length = get_value<double>(parameters, "length");
-      auto const scale = (coord == 3) ? length * ::box_geo.length_inv()[0]
-                                      : length * ::box_geo.length_inv()[coord];
+    auto const coord = get_value<int>(parameters, "coord");
+    auto const length = get_value<double>(parameters, "length");
+    auto const scale = (coord == 3) ? length * ::box_geo.length_inv()[0]
+                                    : length * ::box_geo.length_inv()[coord];
+    context()->parallel_try_catch([&]() {
       if (length <= 0.) {
         throw std::domain_error("Parameter 'd_new' be > 0");
       }
-      auto new_value = Utils::Vector3d{};
-      if (coord == 3) {
-        new_value = Utils::Vector3d::broadcast(length);
-      } else {
-        new_value = ::box_geo.length();
-        new_value[coord] = length;
-      }
-      // when shrinking, rescale the particles first
-      if (scale <= 1.) {
-        mpi_rescale_particles(coord, scale);
-      }
-      mpi_set_box_length(new_value);
-      if (scale > 1.) {
-        mpi_rescale_particles(coord, scale);
-      }
+    });
+    auto new_value = Utils::Vector3d{};
+    if (coord == 3) {
+      new_value = Utils::Vector3d::broadcast(length);
+    } else {
+      new_value = ::box_geo.length();
+      new_value[coord] = length;
+    }
+    // when shrinking, rescale the particles first
+    if (scale <= 1.) {
+      rescale_particles(coord, scale);
+    }
+    set_box_length(new_value);
+    if (scale > 1.) {
+      rescale_particles(coord, scale);
     }
     return {};
   }

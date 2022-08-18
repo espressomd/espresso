@@ -154,22 +154,10 @@ void cuda_mpi_send_forces(const ParticleRange &particles,
   }
 }
 
-static void cuda_bcast_global_part_params_local() {
+void cuda_bcast_global_part_params() {
   MPI_Bcast(gpu_get_global_particle_vars_pointer_host(),
             sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
   EspressoSystemInterface::Instance().requestParticleStructGpu();
 }
 
-REGISTER_CALLBACK(cuda_bcast_global_part_params_local)
-
-void cuda_bcast_global_part_params() {
-  mpi_call_all(cuda_bcast_global_part_params_local);
-}
-
-void cuda_bcast_global_part_params_parallel() {
-  MPI_Bcast(gpu_get_global_particle_vars_pointer_host(),
-            sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
-  EspressoSystemInterface::Instance().requestParticleStructGpuParallel();
-}
-
-#endif /* ifdef CUDA */
+#endif // CUDA

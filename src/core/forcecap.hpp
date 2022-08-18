@@ -23,10 +23,10 @@
 
 #include "ParticleRange.hpp"
 
-double forcecap_get();
+double get_force_cap();
 
 void forcecap_cap(ParticleRange const &particles);
 
-void mpi_set_forcecap(double force_cap);
+void set_force_cap(double value);
 
 #endif

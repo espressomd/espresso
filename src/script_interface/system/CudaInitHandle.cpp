@@ -35,8 +35,15 @@ namespace System {
 CudaInitHandle::CudaInitHandle() {
   add_parameters({
 #ifdef CUDA
-      {"device", [](Variant const &v) { cuda_set_device(get_value<int>(v)); },
-       []() { return cuda_get_device(); }},
+      {"device",
+       [this](Variant const &v) {
+         if (context()->is_head_node()) {
+           cuda_set_device(get_value<int>(v));
+         }
+       },
+       [this]() {
+         return (context()->is_head_node()) ? cuda_get_device() : 0;
+       }},
 #endif // CUDA
   });
 }
@@ -61,14 +68,17 @@ Variant CudaInitHandle::do_call_method(std::string const &name,
   if (name == "list_devices") {
     std::unordered_map<int, std::string> devices{};
 #ifdef CUDA
-    auto n_gpus = 0;
-    skip_cuda_errors([&n_gpus]() { n_gpus = cuda_get_n_gpus(); });
-    for (int i = 0; i < n_gpus; ++i) {
-      skip_cuda_errors([&devices, i]() {
-        char gpu_name_buffer[4 + 64];
-        cuda_get_gpu_name(i, gpu_name_buffer);
-        devices[i] = std::string{gpu_name_buffer};
-      });
+    if (context()->is_head_node()) {
+      // only GPUs on the head node can be used
+      auto n_gpus = 0;
+      skip_cuda_errors([&n_gpus]() { n_gpus = cuda_get_n_gpus(); });
+      for (int i = 0; i < n_gpus; ++i) {
+        skip_cuda_errors([&devices, i]() {
+          char gpu_name_buffer[4 + 64];
+          cuda_get_gpu_name(i, gpu_name_buffer);
+          devices[i] = std::string{gpu_name_buffer};
+        });
+      }
     }
 #endif // CUDA
     return make_unordered_map_of_variants(devices);
@@ -76,8 +86,7 @@ Variant CudaInitHandle::do_call_method(std::string const &name,
   if (name == "list_devices_properties") {
     std::unordered_map<std::string, std::unordered_map<int, Variant>> dict{};
 #ifdef CUDA
-    std::vector<EspressoGpuDevice> devices;
-    skip_cuda_errors([&devices]() { devices = cuda_gather_gpus(); });
+    std::vector<EspressoGpuDevice> devices = cuda_gather_gpus();
     for (auto const &dev : devices) {
       auto const hostname = std::string{dev.proc_name};
       if (dict.count(hostname) == 0) {
@@ -99,7 +108,10 @@ Variant CudaInitHandle::do_call_method(std::string const &name,
   if (name == "get_n_gpus") {
     auto n_gpus = 0;
 #ifdef CUDA
-    skip_cuda_errors([&n_gpus]() { n_gpus = cuda_get_n_gpus(); });
+    if (context()->is_head_node()) {
+      // only GPUs on the head node can be used
+      skip_cuda_errors([&n_gpus]() { n_gpus = cuda_get_n_gpus(); });
+    }
 #endif // CUDA
     return n_gpus;
   }

@@ -115,15 +115,6 @@ cdef extern from "stokesian_dynamics/sd_interface.hpp":
         void set_sd_kT(double kT) except +
         double get_sd_kT()
 
-IF NPT:
-    cdef extern from "npt.hpp":
-        ctypedef struct NptIsoParameters:
-            double p_ext
-            double p_inst
-            double p_diff
-            double piston
-        extern NptIsoParameters nptiso
-
 cdef extern from "grid_based_algorithms/lb_interface.hpp":
     double lb_lbfluid_get_kT "LB::get_kT"() except +
 

@@ -43,11 +43,11 @@ CoulombMMM1DGpu::CoulombMMM1DGpu(double prefactor, double maxPWerror,
         "switching radius must not be larger than box length");
   }
 
+  auto &system = EspressoSystemInterface::Instance();
+  system.requestFGpu();
+  system.requestRGpu();
+  system.requestQGpu();
   if (this_node == 0) {
-    auto &system = EspressoSystemInterface::Instance();
-    system.requestFGpu();
-    system.requestRGpu();
-    system.requestQGpu();
     modpsi_init();
   }
 }

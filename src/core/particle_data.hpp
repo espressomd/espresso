@@ -285,7 +285,10 @@ void add_particle_exclusion(int part1, int part2);
 void auto_exclusions(int distance);
 #endif
 
-/** Rescale all particle positions in direction @p dir by a factor @p scale. */
-void mpi_rescale_particles(int dir, double scale);
+/** Rescale all particle positions in direction @p dir by a factor @p scale.
+ *  @param dir   direction to scale (0/1/2 = x/y/z, 3 = x+y+z isotropically)
+ *  @param scale factor by which to rescale (>1: stretch, <1: contract)
+ */
+void rescale_particles(int dir, double scale);
 
 #endif

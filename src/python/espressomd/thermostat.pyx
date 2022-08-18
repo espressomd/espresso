@@ -18,8 +18,6 @@
 #
 import functools
 include "myconfig.pxi"
-IF NPT:
-    from .thermostat cimport nptiso
 from . cimport utils
 from .lb import HydrodynamicInteraction
 
@@ -211,7 +209,6 @@ cdef class Thermostat:
                 npt_dict["counter"] = npt_iso.rng_counter()
                 npt_dict["gamma0"] = npt_iso.gamma0
                 npt_dict["gammav"] = npt_iso.gammav
-                npt_dict.update(nptiso)
                 thermo_list.append(npt_dict)
         if thermo_switch & THERMO_DPD:
             IF DPD:

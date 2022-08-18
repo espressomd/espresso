@@ -641,36 +641,12 @@ const std::vector<BondView> &get_particle_bonds(int part) {
   return ret;
 }
 
-/** Locally rescale all particles on current node.
- *  @param dir   direction to scale (0/1/2 = x/y/z, 3 = x+y+z isotropically)
- *  @param scale factor by which to rescale (>1: stretch, <1: contract)
- */
-void local_rescale_particles(int dir, double scale) {
+void rescale_particles(int dir, double scale) {
   for (auto &p : cell_structure.local_particles()) {
     if (dir < 3)
       p.pos()[dir] *= scale;
     else {
       p.pos() *= scale;
-    }
-  }
-}
-
-static void mpi_rescale_particles_local(int dir) {
-  double scale = 0.0;
-  comm_cart.recv(0, some_tag, scale);
-  local_rescale_particles(dir, scale);
-  on_particle_change();
-}
-
-REGISTER_CALLBACK(mpi_rescale_particles_local)
-
-void mpi_rescale_particles(int dir, double scale) {
-  mpi_call(mpi_rescale_particles_local, dir);
-  for (int pnode = 0; pnode < n_nodes; pnode++) {
-    if (pnode == this_node) {
-      local_rescale_particles(dir, scale);
-    } else {
-      comm_cart.send(pnode, some_tag, scale);
     }
   }
   on_particle_change();
