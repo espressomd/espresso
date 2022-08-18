@@ -56,6 +56,9 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
       "Interactions::NonBondedInteractions");
   om->register_new<NonBondedInteractionHandle>(
       "Interactions::NonBondedInteractionHandle");
+#ifdef WCA
+  om->register_new<InteractionWCA>("Interactions::InteractionWCA");
+#endif
 }
 } // namespace Interactions
 } // namespace ScriptInterface

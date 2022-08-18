@@ -47,11 +47,6 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         double offset
         double min
 
-    cdef struct WCA_Parameters:
-        double eps
-        double sig
-        double cut
-
     cdef struct LJGen_Parameters:
         double eps
         double sig
@@ -154,8 +149,6 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     cdef struct IA_parameters:
         LJ_Parameters lj
 
-        WCA_Parameters wca
-
         LJcos_Parameters ljcos
 
         LJcos2_Parameters ljcos2
@@ -198,11 +191,6 @@ IF LENNARD_JONES:
                                           double eps, double sig, double cut,
                                           double shift, double offset,
                                           double min)
-
-IF WCA:
-    cdef extern from "nonbonded_interactions/wca.hpp":
-        cdef int wca_set_params(int part_type_a, int part_type_b,
-                                double eps, double sig)
 
 IF LJCOS:
     cdef extern from "nonbonded_interactions/ljcos.hpp":

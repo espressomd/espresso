@@ -55,6 +55,9 @@ struct WCA_Parameters {
   double eps = 0.0;
   double sig = 0.0;
   double cut = INACTIVE_CUTOFF;
+  WCA_Parameters() = default;
+  WCA_Parameters(double eps, double sig);
+  double max_cutoff() const { return cut; }
 };
 
 /** Generic Lennard-Jones with shift */

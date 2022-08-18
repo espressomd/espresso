@@ -128,10 +128,44 @@ public:
   }
 };
 
+#ifdef WCA
+class InteractionWCA : public InteractionPotentialInterface<::WCA_Parameters> {
+protected:
+  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+    return &::IA_parameters::wca;
+  }
+
+public:
+  InteractionWCA() {
+    add_parameters({
+        make_autoparameter(&CoreInteraction::eps, "epsilon"),
+        make_autoparameter(&CoreInteraction::sig, "sigma"),
+    });
+  }
+
+  void make_new_instance(VariantMap const &params) override {
+    m_ia_si = make_shared_from_args<CoreInteraction, double, double>(
+        params, "epsilon", "sigma");
+  }
+
+  Variant do_call_method(std::string const &name,
+                         VariantMap const &params) override {
+    if (name == "get_cutoff") {
+      return m_ia_si.get()->cut;
+    }
+    return InteractionPotentialInterface<CoreInteraction>::do_call_method(
+        name, params);
+  }
+};
+#endif // WCA
+
 class NonBondedInteractionHandle
     : public AutoParameters<NonBondedInteractionHandle> {
   std::array<int, 2> m_types = {-1, -1};
   std::shared_ptr<::IA_parameters> m_interaction;
+#ifdef WCA
+  std::shared_ptr<InteractionWCA> m_wca;
+#endif
 
   template <class T>
   auto make_autoparameter(std::shared_ptr<T> &member, const char *key) const {
@@ -150,6 +184,9 @@ class NonBondedInteractionHandle
 public:
   NonBondedInteractionHandle() {
     add_parameters({
+#ifdef WCA
+        make_autoparameter(m_wca, "wca"),
+#endif
     });
   }
 
@@ -188,6 +225,10 @@ public:
     // create interface objects
     auto const key = get_ia_param_key(m_types[0], m_types[1]);
     m_interaction = ::nonbonded_ia_params[key];
+#ifdef WCA
+    set_member<InteractionWCA>(m_wca, "wca", "Interactions::InteractionWCA",
+                               params);
+#endif
   }
 
   auto get_ia() const { return m_interaction; }

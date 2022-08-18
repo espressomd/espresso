@@ -141,7 +141,7 @@ static double recalc_maximal_cutoff(const IA_parameters &data) {
 #endif
 
 #ifdef WCA
-  max_cut_current = std::max(max_cut_current, data.wca.cut);
+  max_cut_current = std::max(max_cut_current, data.wca.max_cutoff());
 #endif
 
 #ifdef DPD

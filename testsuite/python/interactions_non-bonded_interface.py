@@ -233,6 +233,13 @@ class Test(ut.TestCase):
                 invalid_params[key] = -0.1
                 ia_class(**invalid_params)
 
+    @utx.skipIfMissingFeatures("WCA")
+    def test_wca_exceptions(self):
+        self.check_potential_exceptions(
+            espressomd.interactions.WCAInteraction,
+            {"epsilon": 1., "sigma": 1.},
+            ("epsilon", "sigma"))
+
 
 if __name__ == "__main__":
     ut.main()

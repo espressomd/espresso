@@ -389,57 +389,32 @@ IF LENNARD_JONES == 1:
 
 IF WCA == 1:
 
-    cdef class WCAInteraction(NonBondedInteraction):
+    @script_interface_register
+    class WCAInteraction(NewNonBondedInteraction):
+        """
+        Standard 6-12 Weeks-Chandler-Andersen potential.
 
-        def validate_params(self):
-            """Check that parameters are valid.
-
-            Raises
-            ------
-            ValueError
-                If not true.
-            """
-            if self._params["epsilon"] < 0:
-                raise ValueError("WCA eps has to be >=0")
-            if self._params["sigma"] < 0:
-                raise ValueError("WCA sigma has to be >=0")
-
-        def _get_params_from_es_core(self):
-            cdef IA_parameters * ia_params
-            ia_params = get_ia_param_safe(
-                self._part_types[0],
-                self._part_types[1])
-            return {
-                "epsilon": ia_params.wca.eps,
-                "sigma": ia_params.wca.sig,
-                "cutoff": ia_params.wca.cut}
-
-        def is_active(self):
-            """Check if interaction is active.
-
-            """
-            return (self._params["epsilon"] > 0)
-
-        def set_params(self, **kwargs):
-            """Set parameters for the WCA interaction.
+        Methods
+        -------
+        set_params()
+            Set or update parameters for the interaction.
+            Parameters marked as required become optional once the
+            interaction has been activated for the first time;
+            subsequent calls to this method update the existing values.
 
             Parameters
             ----------
-
             epsilon : :obj:`float`
                 Magnitude of the interaction.
             sigma : :obj:`float`
                 Interaction length scale.
 
-            """
-            super().set_params(**kwargs)
+        """
 
-        def _set_params_in_es_core(self):
-            if wca_set_params(
-                    self._part_types[0], self._part_types[1],
-                    self._params["epsilon"],
-                    self._params["sigma"]):
-                raise Exception("Could not set WCA parameters")
+        _so_name = "Interactions::InteractionWCA"
+
+        def is_active(self):
+            return self.epsilon > 0.
 
         def default_params(self):
             """Python dictionary of default parameters.
@@ -464,6 +439,10 @@ IF WCA == 1:
 
             """
             return {"epsilon", "sigma"}
+
+        @property
+        def cutoff(self):
+            return self.call_method("get_cutoff")
 
 IF LENNARD_JONES_GENERIC == 1:
 
@@ -1637,8 +1616,6 @@ class NonBondedInteractionHandle(ScriptInterfaceHelper):
         # Here, add one line for each nonbonded ia
         IF LENNARD_JONES:
             self.lennard_jones = LennardJonesInteraction(_type1, _type2)
-        IF WCA:
-            self.wca = WCAInteraction(_type1, _type2)
         IF SOFT_SPHERE:
             self.soft_sphere = SoftSphereInteraction(_type1, _type2)
         IF LENNARD_JONES_GENERIC:
