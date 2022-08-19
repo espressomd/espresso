@@ -37,6 +37,7 @@ namespace utf = boost::unit_test;
 #include "electrostatics/p3m.hpp"
 #include "electrostatics/registration.hpp"
 #include "energy.hpp"
+#include "event.hpp"
 #include "galilei/Galilei.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/lj.hpp"
@@ -125,6 +126,18 @@ static void mpi_set_tuned_p3m(double prefactor) {
   mpi_call_all(mpi_set_tuned_p3m_local, prefactor);
 }
 #endif // P3M
+
+#ifdef LENNARD_JONES
+void mpi_set_lj_local(int key, double eps, double sig, double cut,
+                      double offset, double min, double shift) {
+  LJ_Parameters lj{eps, sig, cut, offset, min, shift};
+  ::nonbonded_ia_params[key]->lj = lj;
+  ::old_nonbonded_ia_params[key].lj = lj;
+  on_non_bonded_ia_change();
+}
+
+REGISTER_CALLBACK(mpi_set_lj_local)
+#endif // LENNARD_JONES
 
 BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
                         *utf::precondition(if_head_node())) {
@@ -219,9 +232,12 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
     auto const offset = 0.1;
     auto const min = 0.0;
     auto const r_off = dist - offset;
-    auto const cut = r_off + 1e-3; // LJ for only 2 pairs: AA BB
-    lennard_jones_set_params(type_a, type_b, eps, sig, cut, shift, offset, min);
-    lennard_jones_set_params(type_b, type_b, eps, sig, cut, shift, offset, min);
+    auto const cut = r_off + 1e-3; // LJ for only 2 pairs: AB BB
+    make_particle_type_exist(std::max(type_a, type_b));
+    auto const key_ab = get_ia_param_key(type_a, type_b);
+    auto const key_bb = get_ia_param_key(type_b, type_b);
+    mpi_call_all(mpi_set_lj_local, key_ab, eps, sig, cut, offset, min, shift);
+    mpi_call_all(mpi_set_lj_local, key_bb, eps, sig, cut, offset, min, shift);
 
     // matrix indices and reference energy value
     auto const max_type = type_b + 1;

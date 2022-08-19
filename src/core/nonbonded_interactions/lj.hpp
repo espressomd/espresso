@@ -37,10 +37,6 @@
 #include <utils/math/int_pow.hpp>
 #include <utils/math/sqr.hpp>
 
-int lennard_jones_set_params(int part_type_a, int part_type_b, double eps,
-                             double sig, double cut, double shift,
-                             double offset, double min);
-
 /** Calculate Lennard-Jones force factor */
 inline double lj_pair_force_factor(IA_parameters const &ia_params,
                                    double dist) {

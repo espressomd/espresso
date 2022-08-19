@@ -159,12 +159,52 @@ public:
 };
 #endif // WCA
 
+#ifdef LENNARD_JONES
+class InteractionLJ : public InteractionPotentialInterface<::LJ_Parameters> {
+protected:
+  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+    return &::IA_parameters::lj;
+  }
+
+public:
+  InteractionLJ() {
+    add_parameters({
+        make_autoparameter(&CoreInteraction::eps, "epsilon"),
+        make_autoparameter(&CoreInteraction::sig, "sigma"),
+        make_autoparameter(&CoreInteraction::cut, "cutoff"),
+        make_autoparameter(&CoreInteraction::shift, "shift"),
+        make_autoparameter(&CoreInteraction::offset, "offset"),
+        make_autoparameter(&CoreInteraction::min, "min"),
+    });
+  }
+
+  void make_new_instance(VariantMap const &params) override {
+    if (auto const *shift = boost::get<std::string>(&params.at("shift"))) {
+      if (*shift != "auto") {
+        throw std::invalid_argument(
+            "LJ parameter 'shift' has to be 'auto' or a float");
+      }
+      m_ia_si = make_shared_from_args<CoreInteraction, double, double, double,
+                                      double, double>(
+          params, "epsilon", "sigma", "cutoff", "offset", "min");
+    } else {
+      m_ia_si = make_shared_from_args<CoreInteraction, double, double, double,
+                                      double, double, double>(
+          params, "epsilon", "sigma", "cutoff", "offset", "min", "shift");
+    }
+  }
+};
+#endif // LENNARD_JONES
+
 class NonBondedInteractionHandle
     : public AutoParameters<NonBondedInteractionHandle> {
   std::array<int, 2> m_types = {-1, -1};
   std::shared_ptr<::IA_parameters> m_interaction;
 #ifdef WCA
   std::shared_ptr<InteractionWCA> m_wca;
+#endif
+#ifdef LENNARD_JONES
+  std::shared_ptr<InteractionLJ> m_lj;
 #endif
 
   template <class T>
@@ -186,6 +226,9 @@ public:
     add_parameters({
 #ifdef WCA
         make_autoparameter(m_wca, "wca"),
+#endif
+#ifdef LENNARD_JONES
+        make_autoparameter(m_lj, "lennard_jones"),
 #endif
     });
   }
@@ -228,6 +271,10 @@ public:
 #ifdef WCA
     set_member<InteractionWCA>(m_wca, "wca", "Interactions::InteractionWCA",
                                params);
+#endif
+#ifdef LENNARD_JONES
+    set_member<InteractionLJ>(m_lj, "lennard_jones",
+                              "Interactions::InteractionLJ", params);
 #endif
   }
 

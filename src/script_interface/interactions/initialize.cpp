@@ -56,6 +56,9 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
       "Interactions::NonBondedInteractions");
   om->register_new<NonBondedInteractionHandle>(
       "Interactions::NonBondedInteractionHandle");
+#ifdef LENNARD_JONES
+  om->register_new<InteractionLJ>("Interactions::InteractionLJ");
+#endif
 #ifdef WCA
   om->register_new<InteractionWCA>("Interactions::InteractionWCA");
 #endif

@@ -48,6 +48,11 @@ struct LJ_Parameters {
   double shift = 0.0;
   double offset = 0.0;
   double min = 0.0;
+  LJ_Parameters() = default;
+  LJ_Parameters(double eps, double sig, double cut, double offset, double min);
+  LJ_Parameters(double eps, double sig, double cut, double offset, double min,
+                double shift);
+  double max_cutoff() const { return cut + offset; }
 };
 
 /** WCA potential */

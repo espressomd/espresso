@@ -25,31 +25,33 @@
 #include "lj.hpp"
 
 #ifdef LENNARD_JONES
-#include "interactions.hpp"
 #include "nonbonded_interaction_data.hpp"
 
-#include <utils/constants.hpp>
+#include <utils/math/int_pow.hpp>
 
-int lennard_jones_set_params(int part_type_a, int part_type_b, double eps,
-                             double sig, double cut, double shift,
-                             double offset, double min) {
-  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
+#include <algorithm>
+#include <stdexcept>
 
-  if (!data)
-    return ES_ERROR;
-
-  data->lj.eps = eps;
-  data->lj.sig = sig;
-  data->lj.cut = cut;
-  data->lj.shift = shift;
-  data->lj.offset = offset;
-  if (min > 0) {
-    data->lj.min = min;
+LJ_Parameters::LJ_Parameters(double eps, double sig, double cut, double offset,
+                             double min)
+    : LJ_Parameters(eps, sig, cut, offset, min, 0.) {
+  if (cut != 0.) {
+    auto const sig_cut = sig / cut;
+    shift = Utils::int_pow<6>(sig_cut) - Utils::int_pow<12>(sig_cut);
   }
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(part_type_a, part_type_b);
+}
 
-  return ES_OK;
+LJ_Parameters::LJ_Parameters(double eps, double sig, double cut, double offset,
+                             double min, double shift)
+    : eps{eps}, sig{sig}, cut{cut}, shift{shift}, offset{offset}, min{std::max(
+                                                                      min,
+                                                                      0.)} {
+  if (eps < 0.) {
+    throw std::domain_error("LJ parameter 'epsilon' has to be >= 0");
+  }
+  if (sig < 0.) {
+    throw std::domain_error("LJ parameter 'sigma' has to be >= 0");
+  }
 }
 
 #endif /* ifdef LENNARD_JONES */

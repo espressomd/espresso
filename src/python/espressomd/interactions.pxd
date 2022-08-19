@@ -39,14 +39,6 @@ cdef extern from "TabulatedPotential.hpp":
         vector[double] force_tab
 
 cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
-    cdef struct LJ_Parameters:
-        double eps
-        double sig
-        double cut
-        double shift
-        double offset
-        double min
-
     cdef struct LJGen_Parameters:
         double eps
         double sig
@@ -147,7 +139,6 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         double pref
 
     cdef struct IA_parameters:
-        LJ_Parameters lj
 
         LJcos_Parameters ljcos
 
@@ -184,13 +175,6 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     cdef string ia_params_get_state()
     cdef void ia_params_set_state(string)
     cdef void reset_ia_params()
-
-IF LENNARD_JONES:
-    cdef extern from "nonbonded_interactions/lj.hpp":
-        cdef int lennard_jones_set_params(int part_type_a, int part_type_b,
-                                          double eps, double sig, double cut,
-                                          double shift, double offset,
-                                          double min)
 
 IF LJCOS:
     cdef extern from "nonbonded_interactions/ljcos.hpp":

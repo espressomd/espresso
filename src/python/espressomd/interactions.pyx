@@ -286,48 +286,21 @@ class NewNonBondedInteraction(ScriptInterfaceHelper):
 
 IF LENNARD_JONES == 1:
 
-    cdef class LennardJonesInteraction(NonBondedInteraction):
+    @script_interface_register
+    class LennardJonesInteraction(NewNonBondedInteraction):
+        """
+        Standard 6-12 Lennard-Jones potential.
 
-        def validate_params(self):
-            """Check that parameters are valid.
-
-            Raises
-            ------
-            ValueError
-                If not true.
-            """
-            if self._params["epsilon"] < 0:
-                raise ValueError("Lennard-Jones epsilon has to be >=0")
-            if self._params["sigma"] < 0:
-                raise ValueError("Lennard-Jones sigma has to be >=0")
-            if self._params["cutoff"] < 0:
-                raise ValueError("Lennard-Jones cutoff has to be >=0")
-
-        def _get_params_from_es_core(self):
-            cdef IA_parameters * ia_params
-            ia_params = get_ia_param_safe(
-                self._part_types[0],
-                self._part_types[1])
-            return {
-                "epsilon": ia_params.lj.eps,
-                "sigma": ia_params.lj.sig,
-                "cutoff": ia_params.lj.cut,
-                "shift": ia_params.lj.shift,
-                "offset": ia_params.lj.offset,
-                "min": ia_params.lj.min}
-
-        def is_active(self):
-            """Check if interaction is active.
-
-            """
-            return (self._params["epsilon"] > 0)
-
-        def set_params(self, **kwargs):
-            """Set parameters for the Lennard-Jones interaction.
+        Methods
+        -------
+        set_params()
+            Set or update parameters for the interaction.
+            Parameters marked as required become optional once the
+            interaction has been activated for the first time;
+            subsequent calls to this method update the existing values.
 
             Parameters
             ----------
-
             epsilon : :obj:`float`
                 Magnitude of the interaction.
             sigma : :obj:`float`
@@ -343,25 +316,15 @@ IF LENNARD_JONES == 1:
             min : :obj:`float`, optional
                 Restricts the interaction to a minimal distance.
 
+        """
+
+        _so_name = "Interactions::InteractionLJ"
+
+        def is_active(self):
+            """Check if interaction is active.
+
             """
-            super().set_params(**kwargs)
-
-        def _set_params_in_es_core(self):
-            # Handle the case of shift="auto"
-            if self._params["shift"] == "auto":
-                self._params["shift"] = -((
-                    self._params["sigma"] / self._params["cutoff"])**12 - (
-                    self._params["sigma"] / self._params["cutoff"])**6)
-
-            if lennard_jones_set_params(
-                    self._part_types[0], self._part_types[1],
-                    self._params["epsilon"],
-                    self._params["sigma"],
-                    self._params["cutoff"],
-                    self._params["shift"],
-                    self._params["offset"],
-                    self._params["min"]):
-                raise Exception("Could not set Lennard-Jones parameters")
+            return self.epsilon > 0.
 
         def default_params(self):
             """Python dictionary of default parameters.
@@ -1614,8 +1577,6 @@ class NonBondedInteractionHandle(ScriptInterfaceHelper):
         super().__init__(_types=[_type1, _type2], **kwargs)
 
         # Here, add one line for each nonbonded ia
-        IF LENNARD_JONES:
-            self.lennard_jones = LennardJonesInteraction(_type1, _type2)
         IF SOFT_SPHERE:
             self.soft_sphere = SoftSphereInteraction(_type1, _type2)
         IF LENNARD_JONES_GENERIC:

@@ -137,7 +137,7 @@ static double recalc_maximal_cutoff(const IA_parameters &data) {
   auto max_cut_current = INACTIVE_CUTOFF;
 
 #ifdef LENNARD_JONES
-  max_cut_current = std::max(max_cut_current, (data.lj.cut + data.lj.offset));
+  max_cut_current = std::max(max_cut_current, data.lj.max_cutoff());
 #endif
 
 #ifdef WCA

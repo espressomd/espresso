@@ -209,7 +209,7 @@ class Test(ut.TestCase):
         with self.assertRaisesRegex(ValueError, err_msg_valid):
             self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
                 epsilon=1., sigma=2., cutoff=3., shift=4., unknown=5.)
-        with self.assertRaisesRegex(ValueError, "Parameter 'shift' has to be 'auto' or a float"):
+        with self.assertRaisesRegex(ValueError, "LJ parameter 'shift' has to be 'auto' or a float"):
             self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
                 epsilon=1., sigma=2., cutoff=3., shift="automatic")
 
@@ -238,6 +238,13 @@ class Test(ut.TestCase):
         self.check_potential_exceptions(
             espressomd.interactions.WCAInteraction,
             {"epsilon": 1., "sigma": 1.},
+            ("epsilon", "sigma"))
+
+    @utx.skipIfMissingFeatures("LENNARD_JONES")
+    def test_lj_exceptions(self):
+        self.check_potential_exceptions(
+            espressomd.interactions.LennardJonesInteraction,
+            {"epsilon": 1., "sigma": 1., "cutoff": 1.5, "shift": 0.2},
             ("epsilon", "sigma"))
 
 
