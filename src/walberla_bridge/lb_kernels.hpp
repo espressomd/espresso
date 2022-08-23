@@ -19,25 +19,25 @@
 
 #pragma once
 
-#include "generated_kernels/Dynamic_UBB_double_precision.h"
-#include "generated_kernels/Dynamic_UBB_single_precision.h"
-#include "generated_kernels/InitialPDFsSetterDoublePrecision.h"
-#include "generated_kernels/InitialPDFsSetterSinglePrecision.h"
-#include "generated_kernels/StreamSweepDoublePrecision.h"
-#include "generated_kernels/StreamSweepSinglePrecision.h"
-#include "generated_kernels/macroscopic_values_accessors_double_precision.h"
-#include "generated_kernels/macroscopic_values_accessors_single_precision.h"
+#include "src/generated_kernels/Dynamic_UBB_double_precision.h"
+#include "src/generated_kernels/Dynamic_UBB_single_precision.h"
+#include "src/generated_kernels/InitialPDFsSetterDoublePrecision.h"
+#include "src/generated_kernels/InitialPDFsSetterSinglePrecision.h"
+#include "src/generated_kernels/StreamSweepDoublePrecision.h"
+#include "src/generated_kernels/StreamSweepSinglePrecision.h"
+#include "src/generated_kernels/macroscopic_values_accessors_double_precision.h"
+#include "src/generated_kernels/macroscopic_values_accessors_single_precision.h"
 
 #ifdef __AVX2__
-#include "generated_kernels/CollideSweepDoublePrecisionLeesEdwardsAVX.h"
-#include "generated_kernels/CollideSweepDoublePrecisionThermalizedAVX.h"
-#include "generated_kernels/CollideSweepSinglePrecisionLeesEdwardsAVX.h"
-#include "generated_kernels/CollideSweepSinglePrecisionThermalizedAVX.h"
+#include "src/generated_kernels/CollideSweepDoublePrecisionLeesEdwardsAVX.h"
+#include "src/generated_kernels/CollideSweepDoublePrecisionThermalizedAVX.h"
+#include "src/generated_kernels/CollideSweepSinglePrecisionLeesEdwardsAVX.h"
+#include "src/generated_kernels/CollideSweepSinglePrecisionThermalizedAVX.h"
 #else
-#include "generated_kernels/CollideSweepDoublePrecisionLeesEdwards.h"
-#include "generated_kernels/CollideSweepDoublePrecisionThermalized.h"
-#include "generated_kernels/CollideSweepSinglePrecisionLeesEdwards.h"
-#include "generated_kernels/CollideSweepSinglePrecisionThermalized.h"
+#include "src/generated_kernels/CollideSweepDoublePrecisionLeesEdwards.h"
+#include "src/generated_kernels/CollideSweepDoublePrecisionThermalized.h"
+#include "src/generated_kernels/CollideSweepSinglePrecisionLeesEdwards.h"
+#include "src/generated_kernels/CollideSweepSinglePrecisionThermalized.h"
 #endif
 
 namespace walberla {

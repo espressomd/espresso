@@ -25,7 +25,7 @@
 #ifdef LB_WALBERLA
 
 #include <walberla_bridge/LatticeWalberla.hpp>
-#include <walberla_bridge/lb_walberla_init.hpp>
+#include <walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp>
 
 #include "core/errorhandling.hpp"
 #include "core/grid.hpp"

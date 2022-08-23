@@ -23,8 +23,8 @@
 
 #include "FluidNodeWalberla.hpp"
 #include "FluidWalberla.hpp"
-#include "LatticeWalberla.hpp"
 #include "VTKHandle.hpp"
+#include "walberla_bridge/LatticeWalberla.hpp"
 
 #include <script_interface/ObjectHandle.hpp>
 #include <utils/Factory.hpp>

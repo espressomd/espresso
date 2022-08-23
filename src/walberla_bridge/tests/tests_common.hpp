@@ -22,10 +22,10 @@
 
 #ifdef LB_WALBERLA
 
-#include <LBWalberlaBase.hpp>
-#include <LBWalberlaImpl.hpp>
-#include <LatticeWalberla.hpp>
-#include <lb_walberla_init.hpp>
+#include "../src/lattice_boltzmann/LBWalberlaImpl.hpp"
+#include <walberla_bridge/LatticeWalberla.hpp>
+#include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
+#include <walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp>
 
 #include <utils/Vector.hpp>
 

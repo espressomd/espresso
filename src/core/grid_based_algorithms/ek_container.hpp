@@ -24,7 +24,7 @@
 
 #ifdef LB_WALBERLA
 #include "EKContainer.hpp"
-#include "electrokinetics/EKinWalberlaBase.hpp"
+#include "walberla_bridge/electrokinetics/EKinWalberlaBase.hpp"
 #endif // LB_WALBERLA
 
 #include <stdexcept>

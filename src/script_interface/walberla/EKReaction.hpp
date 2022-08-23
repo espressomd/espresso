@@ -30,7 +30,6 @@
 #include "optional_reduction.hpp"
 
 #include "walberla_bridge/electrokinetics/reactions/EKReactionBase.hpp"
-#include "walberla_bridge/electrokinetics/reactions/EKReactionImplBulk.hpp"
 #include "walberla_bridge/electrokinetics/reactions/EKReactionImplIndexed.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
@@ -75,7 +74,7 @@ public:
     std::transform(reactant.begin(), reactant.end(), output.begin(),
                    get_instance);
 
-    m_ekreaction = std::make_shared<::walberla::EKReactionImplBulk>(
+    m_ekreaction = std::make_shared<::walberla::EKReactionImplIndexed>(
         lattice, output, get_value<double>(args, "coefficient"));
   }
 
@@ -85,7 +84,7 @@ public:
   }
 
 private:
-  std::shared_ptr<::walberla::EKReactionImplBulk> m_ekreaction;
+  std::shared_ptr<::walberla::EKReactionBase> m_ekreaction;
 };
 
 class EKIndexedReaction : public EKReaction {
@@ -145,6 +144,7 @@ public:
   }
 
 private:
+  // TODO should be EKReactionBase, for this we need the node setters on base
   std::shared_ptr<::walberla::EKReactionImplIndexed> m_ekreaction;
 };
 

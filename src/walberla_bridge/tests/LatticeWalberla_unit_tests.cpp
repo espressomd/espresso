@@ -30,7 +30,7 @@
 
 #include "tests_common.hpp"
 
-#include <LatticeWalberla.hpp>
+#include <walberla_bridge/LatticeWalberla.hpp>
 
 #include <utils/Vector.hpp>
 

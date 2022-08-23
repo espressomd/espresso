@@ -24,7 +24,7 @@
 
 #include "lbm/sweeps/CellwiseSweep.h"
 
-#include "walberla_utils.hpp"
+#include "include/walberla_bridge/utils/walberla_utils.hpp"
 
 #include <utils/Vector.hpp>
 

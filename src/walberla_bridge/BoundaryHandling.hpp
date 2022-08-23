@@ -21,8 +21,8 @@
 #include <blockforest/StructuredBlockForest.h>
 #include <field/FlagField.h>
 
-#include "BlockAndCell.hpp"
-#include "walberla_utils.hpp"
+#include "include/walberla_bridge/BlockAndCell.hpp"
+#include "include/walberla_bridge/utils/walberla_utils.hpp"
 
 #include <utils/Vector.hpp>
 

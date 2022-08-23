@@ -23,9 +23,9 @@
 
 #ifdef LB_WALBERLA
 
-#include <walberla_bridge/LBWalberlaBase.hpp>
 #include <walberla_bridge/VTKHandle.hpp>
 #include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
+#include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
 
 #include "core/grid_based_algorithms/lb_walberla_instance.hpp"
 

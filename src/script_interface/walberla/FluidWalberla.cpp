@@ -23,8 +23,8 @@
 #include <walberla_bridge/LBWalberlaNodeState.hpp>
 
 #include "FluidWalberla.hpp"
-#include "LatticeWalberla.hpp"
 #include "optional_reduction.hpp"
+#include "walberla_bridge/LatticeWalberla.hpp"
 
 #include "core/BoxGeometry.hpp"
 #include "core/communication.hpp"

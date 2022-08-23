@@ -24,7 +24,7 @@
 
 #ifdef LB_WALBERLA
 
-#include "electrokinetics/PoissonSolver/PoissonSolver.hpp"
+#include "walberla_bridge/electrokinetics/PoissonSolver/PoissonSolver.hpp"
 
 #include <algorithm>
 #include <cassert>

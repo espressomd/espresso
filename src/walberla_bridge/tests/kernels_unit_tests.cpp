@@ -25,11 +25,11 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include <generated_kernels/Dynamic_UBB_double_precision.h>
-#include <generated_kernels/Dynamic_UBB_single_precision.h>
-#include <generated_kernels/macroscopic_values_accessors_double_precision.h>
-#include <generated_kernels/macroscopic_values_accessors_single_precision.h>
-#include <walberla_utils.hpp>
+#include <src/generated_kernels/Dynamic_UBB_double_precision.h>
+#include <src/generated_kernels/Dynamic_UBB_single_precision.h>
+#include <src/generated_kernels/macroscopic_values_accessors_double_precision.h>
+#include <src/generated_kernels/macroscopic_values_accessors_single_precision.h>
+#include <walberla_bridge/utils/walberla_utils.hpp>
 
 #include <utils/Vector.hpp>
 

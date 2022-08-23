@@ -1,0 +1,26 @@
+target_sources(
+        espresso_walberla
+        PRIVATE
+        StreamSweepSinglePrecision.cpp
+        StreamSweepDoublePrecision.cpp
+        InitialPDFsSetterSinglePrecision.cpp
+        InitialPDFsSetterDoublePrecision.cpp
+        Dynamic_UBB_single_precision.cpp
+        Dynamic_UBB_double_precision.cpp)
+if(WALBERLA_USE_AVX)
+    target_sources(
+            espresso_walberla
+            PRIVATE
+            CollideSweepSinglePrecisionLeesEdwardsAVX.cpp
+            CollideSweepDoublePrecisionLeesEdwardsAVX.cpp
+            CollideSweepSinglePrecisionThermalizedAVX.cpp
+            CollideSweepDoublePrecisionThermalizedAVX.cpp)
+else()
+    target_sources(
+            espresso_walberla
+            PRIVATE
+            CollideSweepSinglePrecisionLeesEdwards.cpp
+            CollideSweepDoublePrecisionLeesEdwards.cpp
+            CollideSweepSinglePrecisionThermalized.cpp
+            CollideSweepDoublePrecisionThermalized.cpp)
+endif()
