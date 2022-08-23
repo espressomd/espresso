@@ -22,7 +22,7 @@
  *  The corresponding header file is lbgpu.cuh.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef CUDA
 

@@ -31,7 +31,7 @@
  *  Implementation in \ref gay_berne.cpp.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef GAY_BERNE
 

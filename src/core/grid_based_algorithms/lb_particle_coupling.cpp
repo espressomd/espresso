@@ -21,7 +21,7 @@
 #include "Particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "config.hpp"
+#include "config/config.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/OptionalCounter.hpp"

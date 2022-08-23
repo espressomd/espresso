@@ -27,7 +27,7 @@
  *  Implementation in \ref thole.cpp.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef THOLE
 #include "Particle.hpp"

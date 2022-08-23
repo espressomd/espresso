@@ -19,7 +19,7 @@
 
 #include "System.hpp"
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include "core/grid.hpp"
 #include "core/object-in-fluid/oif_global_forces.hpp"

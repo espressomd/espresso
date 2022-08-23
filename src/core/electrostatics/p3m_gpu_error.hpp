@@ -26,7 +26,7 @@
  *  Implementation in p3m_gpu_error_cuda.cu.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef CUDA
 double p3m_k_space_error_gpu(double prefactor, const int *mesh, int cao,

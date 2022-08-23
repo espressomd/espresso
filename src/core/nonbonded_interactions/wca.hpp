@@ -25,7 +25,7 @@
  *  Implementation in \ref wca.cpp.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef WCA
 

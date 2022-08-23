@@ -24,7 +24,7 @@
  *  Common code for functions calculating angle forces.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 #include "grid.hpp"
 
 #include <utils/Vector.hpp>

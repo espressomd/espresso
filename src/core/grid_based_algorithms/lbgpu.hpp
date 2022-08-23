@@ -25,7 +25,7 @@
 #ifndef LBGPU_HPP
 #define LBGPU_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef CUDA
 #include "OptionalCounter.hpp"

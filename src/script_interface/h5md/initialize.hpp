@@ -20,7 +20,7 @@
 #ifndef SCRIPT_INTERFACE_H5MD_INITIALIZE_HPP
 #define SCRIPT_INTERFACE_H5MD_INITIALIZE_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 #ifdef H5MD
 
 #include <script_interface/ObjectHandle.hpp>

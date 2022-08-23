@@ -19,7 +19,7 @@
 #ifndef INTEGRATORS_VELOCITY_VERLET_NPT_HPP
 #define INTEGRATORS_VELOCITY_VERLET_NPT_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef NPT
 

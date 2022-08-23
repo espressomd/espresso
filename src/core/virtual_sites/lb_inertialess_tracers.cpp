@@ -19,7 +19,7 @@
 /// \file
 /// \brief Main of the Bayreuth Immersed-Boundary implementation
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 

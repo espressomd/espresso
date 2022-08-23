@@ -19,7 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #if defined(P3M) || defined(DP3M)
 

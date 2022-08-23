@@ -18,7 +18,7 @@
  */
 #ifndef IMMERSED_BOUNDARIES_HPP
 #define IMMERSED_BOUNDARIES_HPP
-#include "config.hpp"
+#include "config/config.hpp"
 #include "immersed_boundary/ImmersedBoundaries.hpp"
 
 extern ImmersedBoundaries immersed_boundaries;

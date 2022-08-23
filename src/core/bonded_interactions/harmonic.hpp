@@ -24,7 +24,7 @@
  *  Routines to calculate the harmonic bond potential between particle pairs.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 #include "errorhandling.hpp"
 
 #include <utils/Vector.hpp>

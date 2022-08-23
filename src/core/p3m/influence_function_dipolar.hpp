@@ -21,7 +21,7 @@
 #ifndef ESPRESSO_CORE_P3M_INFLUENCE_FUNCTION_DIPOLAR_HPP
 #define ESPRESSO_CORE_P3M_INFLUENCE_FUNCTION_DIPOLAR_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #if defined(DP3M)
 

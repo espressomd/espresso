@@ -22,7 +22,7 @@
 #ifndef THERMOSTATS_NPT_INLINE_HPP
 #define THERMOSTATS_NPT_INLINE_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef NPT
 

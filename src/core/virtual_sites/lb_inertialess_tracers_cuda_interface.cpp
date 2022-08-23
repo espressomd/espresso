@@ -21,7 +21,7 @@
 // It should not be included by any main ESPResSo routines
 // Functions to be exported for ESPResSo are in ibm_main.hpp
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 

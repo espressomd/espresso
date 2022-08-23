@@ -22,7 +22,7 @@
 #ifndef ESPRESSO_SRC_CORE_MAGNETOSTATICS_SCAFACOS_HPP
 #define ESPRESSO_SRC_CORE_MAGNETOSTATICS_SCAFACOS_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef SCAFACOS_DIPOLES
 

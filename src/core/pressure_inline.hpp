@@ -21,7 +21,7 @@
 #ifndef CORE_PRESSURE_INLINE_HPP
 #define CORE_PRESSURE_INLINE_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include "pressure.hpp"
 

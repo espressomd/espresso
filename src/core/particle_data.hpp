@@ -26,7 +26,7 @@
  *  This file contains everything related to updating particle properties.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include "Particle.hpp"
 

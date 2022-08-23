@@ -32,7 +32,7 @@
 #ifndef ESPRESSO_SRC_CORE_MAGNETOSTATICS_DIPOLAR_P3M_HPP
 #define ESPRESSO_SRC_CORE_MAGNETOSTATICS_DIPOLAR_P3M_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef DP3M
 

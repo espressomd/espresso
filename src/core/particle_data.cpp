@@ -24,7 +24,7 @@
 #include "Particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "config.hpp"
+#include "config/config.hpp"
 #include "event.hpp"
 #include "exclusions.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"

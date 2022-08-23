@@ -19,7 +19,7 @@
 #ifndef REACTION_METHODS_REACTION_ALGORITHM_HPP
 #define REACTION_METHODS_REACTION_ALGORITHM_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include "SingleReaction.hpp"
 

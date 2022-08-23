@@ -26,7 +26,7 @@
  *  interactions in combination with Thole damping.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include "Particle.hpp"
 

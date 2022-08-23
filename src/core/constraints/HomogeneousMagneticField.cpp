@@ -20,7 +20,7 @@
 
 #include "Observable_stat.hpp"
 #include "Particle.hpp"
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include <utils/Vector.hpp>
 

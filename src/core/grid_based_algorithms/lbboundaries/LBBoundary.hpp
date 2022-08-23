@@ -19,7 +19,7 @@
 #ifndef LBBOUNDARIES_LBBOUNDARY_HPP
 #define LBBOUNDARIES_LBBOUNDARY_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include <shapes/NoWhere.hpp>
 #include <shapes/Shape.hpp>

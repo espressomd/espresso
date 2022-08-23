@@ -24,7 +24,7 @@
  *  Force calculation.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include "forces.hpp"
 

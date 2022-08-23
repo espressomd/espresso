@@ -28,7 +28,7 @@ from .thermostat cimport thermalized_bond
 include "myconfig.pxi"
 
 # force include of config.hpp
-cdef extern from "config.hpp":
+cdef extern from "config/config.hpp":
     pass
 
 cdef extern from "TabulatedPotential.hpp":

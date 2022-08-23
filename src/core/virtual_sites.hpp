@@ -19,7 +19,7 @@
 #ifndef VIRTUAL_SITES_HPP
 #define VIRTUAL_SITES_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef VIRTUAL_SITES
 #include "Particle.hpp"

@@ -27,7 +27,7 @@
  *  Implementation in \ref hat.cpp.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef HAT
 
