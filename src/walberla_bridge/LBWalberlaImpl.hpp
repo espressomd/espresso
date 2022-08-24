@@ -491,11 +491,11 @@ protected:
 public:
   void integrate() override {
     reallocate_ubb_field();
-    if (lees_edwards_bc()) {
-      integrate_pull_scheme();
-    } else {
-      integrate_push_scheme();
-    }
+    //    if (lees_edwards_bc()) {
+    //      integrate_pull_scheme();
+    //    } else {
+    integrate_push_scheme();
+    //    }
     // Handle VTK writers
     integrate_vtk_writers();
   }

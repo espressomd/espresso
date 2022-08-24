@@ -415,12 +415,13 @@ def check_non_bonded_loop_trace(ut_obj, system, cutoff=None):
             (p[1], p[0]) in py_distances,
             msg=f"Extra pair from core {p}")
         if (p[0], p[1]) in py_distances:
+            print(p, py_distances[p[0], p[1]])
             np.testing.assert_allclose(
-                np.copy(p[4]), -py_distances[p[0], p[1]])
+                np.copy(p[4]), -np.copy(py_distances[p[0], p[1]]))
             del py_distances[p[0], p[1]]
         elif (p[1], p[0]) in py_distances:
             np.testing.assert_allclose(
-                np.copy(p[4]), py_distances[p[1], p[0]])
+                np.copy(p[4]), np.copy(py_distances[p[1], p[0]]))
             del py_distances[p[1], p[0]]
 
     for ids, dist in py_distances.items():
