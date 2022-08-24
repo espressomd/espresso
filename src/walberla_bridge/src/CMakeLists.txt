@@ -1,5 +1,4 @@
 add_subdirectory(electrokinetics)
-add_subdirectory(generated_kernels)
 add_subdirectory(lattice_boltzmann)
 
 target_sources(

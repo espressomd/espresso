@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include "../../VTKHandle.hpp"
 #include "walberla_bridge/LatticeWalberla.hpp"
+#include "walberla_bridge/VTKHandle.hpp"
 
 #include <map>
 #include <memory>

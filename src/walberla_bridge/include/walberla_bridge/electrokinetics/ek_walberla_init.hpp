@@ -26,7 +26,7 @@
 
 #include "PoissonSolver/PoissonSolver.hpp"
 
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 #include <memory>
 

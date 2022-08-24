@@ -19,15 +19,15 @@
 
 #pragma once
 
-#include "blockforest/communication/UniformBufferedScheme.h"
-#include "field/AddToStorage.h"
-#include "field/FlagField.h"
-#include "field/GhostLayerField.h"
-#include "field/communication/PackInfo.h"
-#include "field/vtk/FlagFieldCellFilter.h"
-#include "field/vtk/VTKWriter.h"
-#include "lbm/lattice_model/D3Q27.h"
-#include "timeloop/SweepTimeloop.h"
+#include <blockforest/communication/UniformBufferedScheme.h>
+#include <field/AddToStorage.h>
+#include <field/FlagField.h>
+#include <field/GhostLayerField.h>
+#include <field/communication/PackInfo.h>
+#include <field/vtk/FlagFieldCellFilter.h>
+#include <field/vtk/VTKWriter.h>
+#include <lbm/lattice_model/D3Q27.h>
+#include <timeloop/SweepTimeloop.h>
 
 #include "walberla_bridge/BlockAndCell.hpp"
 #include "walberla_bridge/LatticeWalberla.hpp"
@@ -35,23 +35,9 @@
 #include "walberla_bridge/utils/boundary_utils.hpp"
 #include "walberla_bridge/utils/walberla_utils.hpp"
 
-#include "generated_kernels/AdvectiveFluxKernel_double_precision.h"
-#include "generated_kernels/AdvectiveFluxKernel_single_precision.h"
-#include "generated_kernels/ContinuityKernel_double_precision.h"
-#include "generated_kernels/ContinuityKernel_single_precision.h"
-#include "generated_kernels/DiffusiveFluxKernelWithElectrostatic_double_precision.h"
-#include "generated_kernels/DiffusiveFluxKernelWithElectrostatic_single_precision.h"
-#include "generated_kernels/DiffusiveFluxKernel_double_precision.h"
-#include "generated_kernels/DiffusiveFluxKernel_single_precision.h"
-#include "generated_kernels/FrictionCouplingKernel_double_precision.h"
-#include "generated_kernels/FrictionCouplingKernel_single_precision.h"
+#include "ek_kernels.hpp"
 
-#include "generated_kernels/Dirichlet_double_precision.h"
-#include "generated_kernels/Dirichlet_single_precision.h"
-#include "generated_kernels/FixedFlux_double_precision.h"
-#include "generated_kernels/FixedFlux_single_precision.h"
-
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 #include <cstddef>
 #include <iterator>
@@ -61,36 +47,9 @@
 #include <type_traits>
 #include <vector>
 
-#include "../../BoundaryHandling.hpp"
+#include "../BoundaryHandling.hpp"
 
 namespace walberla {
-
-namespace detail {
-template <typename FloatType = double> struct KernelTrait {
-  using ContinuityKernel = pystencils::ContinuityKernel_double_precision;
-  using DiffusiveFluxKernel = pystencils::DiffusiveFluxKernel_double_precision;
-  using AdvectiveFluxKernel = pystencils::AdvectiveFluxKernel_double_precision;
-  using FrictionCouplingKernel =
-      pystencils::FrictionCouplingKernel_double_precision;
-  using DiffusiveFluxKernelElectrostatic =
-      pystencils::DiffusiveFluxKernelWithElectrostatic_double_precision;
-
-  using Dirichlet = pystencils::Dirichlet_double_precision;
-  using FixedFlux = pystencils::FixedFlux_double_precision;
-};
-template <> struct KernelTrait<float> {
-  using ContinuityKernel = pystencils::ContinuityKernel_single_precision;
-  using DiffusiveFluxKernel = pystencils::DiffusiveFluxKernel_single_precision;
-  using AdvectiveFluxKernel = pystencils::AdvectiveFluxKernel_single_precision;
-  using FrictionCouplingKernel =
-      pystencils::FrictionCouplingKernel_single_precision;
-  using DiffusiveFluxKernelElectrostatic =
-      pystencils::DiffusiveFluxKernelWithElectrostatic_single_precision;
-
-  using Dirichlet = pystencils::Dirichlet_single_precision;
-  using FixedFlux = pystencils::FixedFlux_single_precision;
-};
-} // namespace detail
 
 /** @brief Class that runs and controls the EK on waLBerla. */
 template <size_t FluxCount = 13, typename FloatType = double>

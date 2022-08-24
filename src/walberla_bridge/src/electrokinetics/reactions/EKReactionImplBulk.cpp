@@ -18,7 +18,8 @@
  */
 
 #include "EKReactionImplBulk.hpp"
-#include "../../../include/walberla_bridge/electrokinetics/reactions/EKReactant.hpp"
+
+#include "walberla_bridge/electrokinetics/reactions/EKReactant.hpp"
 
 #include "generated_kernels/ReactionKernelBulk_all.h"
 

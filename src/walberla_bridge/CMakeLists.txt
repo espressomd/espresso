@@ -38,8 +38,6 @@ if(WITH_CUDA AND WALBERLA_BUILD_WITH_CUDA)
   target_link_libraries(espresso_walberla PUBLIC espresso::walberla_cuda)
 endif()
 
-
-
 target_link_libraries(
   espresso_walberla PUBLIC MPI::MPI_CXX espresso::utils
   PRIVATE Boost::boost espresso::cpp_flags espresso::walberla::cpp_flags

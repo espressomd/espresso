@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../include/walberla_bridge/LatticeWalberla.hpp"
+#include "walberla_bridge/LatticeWalberla.hpp"
 
 #include <blockforest/Initialization.h>
 #include <blockforest/StructuredBlockForest.h>
@@ -25,10 +25,10 @@
 #include <core/cell/Cell.h>
 #include <domain_decomposition/IBlock.h>
 
-#include "../include/walberla_bridge/BlockAndCell.hpp"
-#include "../include/walberla_bridge/utils/walberla_utils.hpp"
+#include "walberla_bridge/BlockAndCell.hpp"
+#include "walberla_bridge/utils/walberla_utils.hpp"
 
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 #include <boost/optional.hpp>
 

@@ -29,9 +29,9 @@
 #include "lees_edwards/lees_edwards.hpp"
 #include "lees_edwards/protocols.hpp"
 
-#include <LeesEdwardsPack.hpp>
 #include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
+#include <walberla_bridge/lattice_boltzmann/LeesEdwardsPack.hpp>
 #include <walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp>
 
 #include <utils/Vector.hpp>

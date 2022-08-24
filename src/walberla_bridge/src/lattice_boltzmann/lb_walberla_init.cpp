@@ -17,15 +17,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../../include/walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp"
+#include "walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp"
 
-#include "../../include/walberla_bridge/LatticeWalberla.hpp"
-#include "../../include/walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp"
+#include "walberla_bridge/LatticeWalberla.hpp"
+#include "walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp"
+
 #include "LBWalberlaImpl.hpp"
 
 #include <core/mpi/Environment.h>
 
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 #include <cmath>
 #include <limits>

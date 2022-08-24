@@ -20,8 +20,8 @@
 
 #include <vtk/BlockCellDataWriter.h>
 
-#include "src/generated_kernels/macroscopic_values_accessors_double_precision.h"
-#include "src/generated_kernels/macroscopic_values_accessors_single_precision.h"
+#include "generated_kernels/macroscopic_values_accessors_double_precision.h"
+#include "generated_kernels/macroscopic_values_accessors_single_precision.h"
 
 namespace walberla {
 namespace lbm {

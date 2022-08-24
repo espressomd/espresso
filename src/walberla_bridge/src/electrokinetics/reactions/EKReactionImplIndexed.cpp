@@ -17,7 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../../../include/walberla_bridge/electrokinetics/reactions/EKReactionImplIndexed.hpp"
+#include "EKReactionImplIndexed.hpp"
+
 #include "walberla_bridge/BlockAndCell.hpp"
 #include "walberla_bridge/LatticeWalberla.hpp"
 #include "walberla_bridge/electrokinetics/reactions/EKReactant.hpp"

@@ -23,8 +23,8 @@
 #include <core/math/Matrix3.h>
 #include <core/math/Vector3.h>
 
-#include "utils/Vector.hpp"
-#include "utils/interpolation/bspline_3d.hpp"
+#include <utils/Vector.hpp>
+#include <utils/interpolation/bspline_3d.hpp>
 
 namespace walberla {
 

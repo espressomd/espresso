@@ -19,7 +19,7 @@
 #ifndef ESPRESSO_WALBERLA_LATTICE_HPP
 #define ESPRESSO_WALBERLA_LATTICE_HPP
 
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 #include <memory>
 #include <utility>

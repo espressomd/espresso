@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../include/walberla_bridge/LatticeModel.hpp"
-#include "../VTKHandle.hpp"
+#include "walberla_bridge/LatticeModel.hpp"
+#include "walberla_bridge/VTKHandle.hpp"
 
 #include <blockforest/StructuredBlockForest.h>
 #include <field/vtk/VTKWriter.h>

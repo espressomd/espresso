@@ -1,17 +1,18 @@
 # Generation of kernels for Walberla
 
-The scripts in this directory will generate the .cpp/hpp kernels for use with 
-Walberla. The generated files need to be placed in `src/walberla_bridge/generated_kernels`
+The scripts in this directory generate the .cpp/hpp kernels for lattice-based
+algorithm.
 
 WARNING: The code generation sorts the arguments alphabetically by symbol name.
 If you rename something, you may have to adapt the order of arguments in calling code!
 
-The following needs to be in the Python path:
+The following dependencies needs to be in the Python path:
 
 * pystencils (https://i10git.cs.fau.de/pycodegen/pystencils)
 * lbmpy (https://i10git.cs.fau.de/pycodegen/lbmpy/)
-* Walberla's Python components. Here the same version should be used as is used with ESPResSo.
-  One way is to use the copy in ESPResSo's build directory.
+* waLBerla's Python components. Here the same version should be used as
+  the one used to build ESPResSo. One way is to use the copy fetched in
+  ESPResSo's `build/_deps/walberla-src/python/` directory.
 
 ## Example
 
@@ -22,10 +23,10 @@ export PYTHONPATH="${DEPS}/${VERSION}/lbmpy:${DEPS}/${VERSION}/pystencils:${DEPS
 python3 $(git rev-parse --show-toplevel)/maintainer/walberla_kernels/generate_lb_kernels.py
 python3 $(git rev-parse --show-toplevel)/maintainer/walberla_kernels/generate_lb_kernels.py --single-precision
 $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.{cpp,h}
-mv *.{cpp,h} $(git rev-parse --show-toplevel)/src/walberla_bridge/generated_kernels/
+mv *.{cpp,h} $(git rev-parse --show-toplevel)/src/walberla_bridge/src/lattice_boltzmann/generated_kernels/
 python3 $(git rev-parse --show-toplevel)/maintainer/walberla_kernels/generate_ek_kernels.py
 python3 $(git rev-parse --show-toplevel)/maintainer/walberla_kernels/generate_ek_kernels.py --single-precision
 $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.{cpp,h}
-mv ReactionKernel*.{cpp,h} $(git rev-parse --show-toplevel)/src/walberla_bridge/electrokinetics/reactions/generated_kernels/
-mv *.{cpp,h} $(git rev-parse --show-toplevel)/src/walberla_bridge/electrokinetics/generated_kernels/
+mv ReactionKernel*.{cpp,h} $(git rev-parse --show-toplevel)/src/walberla_bridge/src/electrokinetics/reactions/generated_kernels/
+mv *.{cpp,h} $(git rev-parse --show-toplevel)/src/walberla_bridge/src/electrokinetics/generated_kernels/
 ```

@@ -19,10 +19,10 @@
 #ifndef LB_WALBERLA_INIT_HPP
 #define LB_WALBERLA_INIT_HPP
 
-#include "../LatticeWalberla.hpp"
 #include "LBWalberlaBase.hpp"
+#include "walberla_bridge/LatticeWalberla.hpp"
 
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 #include <memory>
 

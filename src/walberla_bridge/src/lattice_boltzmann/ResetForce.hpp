@@ -20,11 +20,11 @@
 #ifndef WALBERLA_BRIDGE_RESET_FORCE_HPP
 #define WALBERLA_BRIDGE_RESET_FORCE_HPP
 
-#include "domain_decomposition/SharedSweep.h"
+#include <domain_decomposition/SharedSweep.h>
 
-#include "lbm/sweeps/CellwiseSweep.h"
+#include <lbm/sweeps/CellwiseSweep.h>
 
-#include "include/walberla_bridge/utils/walberla_utils.hpp"
+#include "walberla_bridge/utils/walberla_utils.hpp"
 
 #include <utils/Vector.hpp>
 

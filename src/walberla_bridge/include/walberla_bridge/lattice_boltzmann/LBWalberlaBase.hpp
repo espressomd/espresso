@@ -27,10 +27,10 @@
  * by @ref walberla::LBWalberlaImpl.
  */
 
-#include "../../../LeesEdwardsPack.hpp"
-#include "../LatticeModel.hpp"
+#include "LeesEdwardsPack.hpp"
+#include "walberla_bridge/LatticeModel.hpp"
 
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 #include <boost/optional.hpp>
 

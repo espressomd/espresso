@@ -12,6 +12,6 @@ foreach(precision double_precision single_precision)
     set_source_files_properties(
             Dirichlet_${precision}.cpp
             Dirichlet_${precision}.h
+            TARGET_DIRECTORY espresso_walberla
             PROPERTIES COMPILE_FLAGS -Wno-unused-variable)
-
 endforeach()

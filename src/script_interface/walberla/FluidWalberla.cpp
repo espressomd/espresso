@@ -20,7 +20,7 @@
 
 #ifdef LB_WALBERLA
 
-#include <walberla_bridge/LBWalberlaNodeState.hpp>
+#include <walberla_bridge/lattice_boltzmann/LBWalberlaNodeState.hpp>
 
 #include "FluidWalberla.hpp"
 #include "optional_reduction.hpp"

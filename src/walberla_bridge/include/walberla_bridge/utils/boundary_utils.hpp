@@ -21,7 +21,7 @@
 
 #include "walberla_utils.hpp"
 
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 #include <boost/multi_array/multi_array_ref.hpp>
 

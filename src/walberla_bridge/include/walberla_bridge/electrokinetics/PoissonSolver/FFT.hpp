@@ -29,7 +29,7 @@
 #include <field/communication/PackInfo.h>
 #include <stencil/D3Q27.h>
 
-#include "utils/constants.hpp"
+#include <utils/constants.hpp>
 
 #include <cmath>
 #include <memory>

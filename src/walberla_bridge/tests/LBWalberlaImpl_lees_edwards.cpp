@@ -31,6 +31,7 @@
 #include "tests_common.hpp"
 
 #include "../src/lattice_boltzmann/LBWalberlaImpl.hpp"
+
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
 #include <walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp>
 

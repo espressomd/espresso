@@ -47,21 +47,22 @@
 #include <stencil/D3Q19.h>
 #include <stencil/D3Q27.h>
 
-#include "../../BoundaryHandling.hpp"
-#include "../../InterpolateAndShiftAtBoundary.hpp"
-#include "../../LeesEdwardsPack.hpp"
-#include "../../ResetForce.hpp"
-#include "../../include/walberla_bridge/BlockAndCell.hpp"
-#include "../../include/walberla_bridge/LatticeWalberla.hpp"
-#include "../../include/walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp"
-#include "../../include/walberla_bridge/utils/boundary_utils.hpp"
-#include "../../include/walberla_bridge/utils/walberla_utils.hpp"
-#include "../../lb_kernels.hpp"
-#include "../../vtk_writers.hpp"
+#include "../BoundaryHandling.hpp"
+#include "ResetForce.hpp"
+#include "lb_kernels.hpp"
+#include "vtk_writers.hpp"
 
-#include "utils/Vector.hpp"
-#include "utils/interpolation/bspline_3d.hpp"
-#include "utils/math/make_lin_space.hpp"
+#include "walberla_bridge/BlockAndCell.hpp"
+#include "walberla_bridge/LatticeWalberla.hpp"
+#include "walberla_bridge/lattice_boltzmann/InterpolateAndShiftAtBoundary.hpp"
+#include "walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp"
+#include "walberla_bridge/lattice_boltzmann/LeesEdwardsPack.hpp"
+#include "walberla_bridge/utils/boundary_utils.hpp"
+#include "walberla_bridge/utils/walberla_utils.hpp"
+
+#include <utils/Vector.hpp>
+#include <utils/interpolation/bspline_3d.hpp>
+#include <utils/math/make_lin_space.hpp>
 
 #include <boost/optional.hpp>
 #include <boost/tuple/tuple.hpp>

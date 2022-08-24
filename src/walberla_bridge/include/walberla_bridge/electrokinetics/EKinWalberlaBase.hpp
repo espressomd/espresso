@@ -25,7 +25,7 @@
 
 #include <boost/optional.hpp>
 
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 #include <cstddef>
 #include <string>

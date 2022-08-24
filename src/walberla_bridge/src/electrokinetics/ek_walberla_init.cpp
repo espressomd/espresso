@@ -25,7 +25,7 @@
 #include "walberla_bridge/electrokinetics/PoissonSolver/FFT.hpp"
 #include "walberla_bridge/electrokinetics/PoissonSolver/None.hpp"
 
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 #include <memory>
 

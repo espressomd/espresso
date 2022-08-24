@@ -23,8 +23,8 @@
 
 #ifdef LB_WALBERLA
 
-#include <walberla_bridge/LBWalberlaNodeState.hpp>
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
+#include <walberla_bridge/lattice_boltzmann/LBWalberlaNodeState.hpp>
 
 #include "LatticeWalberla.hpp"
 
