@@ -19,7 +19,6 @@
 
 add_library(espresso_walberla SHARED)
 add_library(espresso::walberla ALIAS espresso_walberla)
-add_subdirectory(src)
 
 target_include_directories(espresso_walberla PUBLIC include)
 
@@ -29,7 +28,6 @@ if(WALBERLA_USE_AVX)
   target_link_libraries(espresso_walberla_cpp_flags
                         INTERFACE espresso::avx_flags)
 endif(WALBERLA_USE_AVX)
-
 
 if(WITH_CUDA AND WALBERLA_BUILD_WITH_CUDA)
   add_gpu_library(espresso_walberla_cuda SHARED
@@ -42,9 +40,17 @@ target_link_libraries(
   espresso_walberla PUBLIC MPI::MPI_CXX espresso::utils
   PRIVATE Boost::boost espresso::cpp_flags espresso::walberla::cpp_flags
           ${WALBERLA_LIBS})
+# TODO WALBERLA: break dependency on walberla headers in public API
 target_include_directories(
   espresso_walberla PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${WALBERLA_INCLUDE_DIRS}
   PRIVATE ${walberla_BINARY_DIR}/src)
+
+add_subdirectory(src)
+# TODO WALBERLA: find why `TARGET_DIRECTORY espresso_walberla` doesn't work
+# in subfolders where these source files are added to `espresso_walberla`
+set_source_files_properties(
+  src/electrokinetics/ek_walberla_init.cpp
+  PROPERTIES COMPILE_FLAGS -Wno-unused-variable)
 
 install(TARGETS espresso_walberla
         LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
