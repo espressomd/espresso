@@ -188,8 +188,7 @@ static double recalc_maximal_cutoff(const IA_parameters &data) {
 #endif
 
 #ifdef LJCOS
-  max_cut_current =
-      std::max(max_cut_current, (data.ljcos.cut + data.ljcos.offset));
+  max_cut_current = std::max(max_cut_current, data.ljcos.max_cutoff());
 #endif
 
 #ifdef LJCOS2

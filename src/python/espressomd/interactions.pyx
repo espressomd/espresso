@@ -563,37 +563,22 @@ IF LENNARD_JONES_GENERIC == 1:
             return {"epsilon", "sigma", "cutoff",
                     "shift", "offset", "e1", "e2", "b1", "b2"}
 
-IF LJCOS:
+IF LJCOS == 1:
 
-    cdef class LennardJonesCosInteraction(NonBondedInteraction):
+    @script_interface_register
+    class LennardJonesCosInteraction(NewNonBondedInteraction):
+        """Lennard-Jones cosine interaction.
 
-        def validate_params(self):
-            if self._params["epsilon"] < 0:
-                raise ValueError("Lennard-Jones epsilon has to be >=0")
-            if self._params["sigma"] < 0:
-                raise ValueError("Lennard-Jones sigma has to be >=0")
-
-        def _get_params_from_es_core(self):
-            cdef IA_parameters * ia_params
-            ia_params = get_ia_param_safe(
-                self._part_types[0],
-                self._part_types[1])
-            return {
-                "epsilon": ia_params.ljcos.eps,
-                "sigma": ia_params.ljcos.sig,
-                "cutoff": ia_params.ljcos.cut,
-                "offset": ia_params.ljcos.offset,
-            }
-
-        def is_active(self):
-            return(self._params["epsilon"] > 0)
-
-        def set_params(self, **kwargs):
-            """Set parameters for the Lennard-Jones cosine interaction.
+        Methods
+        -------
+        set_params()
+            Set or update parameters for the interaction.
+            Parameters marked as required become optional once the
+            interaction has been activated for the first time;
+            subsequent calls to this method update the existing values.
 
             Parameters
             ----------
-
             epsilon : :obj:`float`
                 Magnitude of the interaction.
             sigma : :obj:`float`
@@ -602,20 +587,20 @@ IF LJCOS:
                 Cutoff distance of the interaction.
             offset : :obj:`float`, optional
                 Offset distance of the interaction.
-            """
-            super().set_params(**kwargs)
+        """
 
-        def _set_params_in_es_core(self):
-            if ljcos_set_params(self._part_types[0],
-                                self._part_types[1],
-                                self._params["epsilon"],
-                                self._params["sigma"],
-                                self._params["cutoff"],
-                                self._params["offset"]):
-                raise Exception(
-                    "Could not set Lennard-Jones Cosine parameters")
+        _so_name = "Interactions::InteractionLJcos"
+
+        def is_active(self):
+            """Check if interactions is active.
+
+            """
+            return self.epsilon > 0.
 
         def default_params(self):
+            """Python dictionary of default parameters.
+
+            """
             return {"offset": 0.}
 
         def type_name(self):
@@ -1582,8 +1567,6 @@ class NonBondedInteractionHandle(ScriptInterfaceHelper):
         IF LENNARD_JONES_GENERIC:
             self.generic_lennard_jones = GenericLennardJonesInteraction(
                 _type1, _type2)
-        IF LJCOS:
-            self.lennard_jones_cos = LennardJonesCosInteraction(_type1, _type2)
         IF LJCOS2:
             self.lennard_jones_cos2 = LennardJonesCos2Interaction(
                 _type1, _type2)

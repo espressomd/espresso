@@ -196,6 +196,32 @@ public:
 };
 #endif // LENNARD_JONES
 
+#ifdef LJCOS
+class InteractionLJcos
+    : public InteractionPotentialInterface<::LJcos_Parameters> {
+protected:
+  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+    return &::IA_parameters::ljcos;
+  }
+
+public:
+  InteractionLJcos() {
+    add_parameters({
+        make_autoparameter(&CoreInteraction::eps, "epsilon"),
+        make_autoparameter(&CoreInteraction::sig, "sigma"),
+        make_autoparameter(&CoreInteraction::cut, "cutoff"),
+        make_autoparameter(&CoreInteraction::offset, "offset"),
+    });
+  }
+
+  void make_new_instance(VariantMap const &params) override {
+    m_ia_si =
+        make_shared_from_args<CoreInteraction, double, double, double, double>(
+            params, "epsilon", "sigma", "cutoff", "offset");
+  }
+};
+#endif // LJCOS
+
 class NonBondedInteractionHandle
     : public AutoParameters<NonBondedInteractionHandle> {
   std::array<int, 2> m_types = {-1, -1};
@@ -205,6 +231,9 @@ class NonBondedInteractionHandle
 #endif
 #ifdef LENNARD_JONES
   std::shared_ptr<InteractionLJ> m_lj;
+#endif
+#ifdef LJCOS
+  std::shared_ptr<InteractionLJcos> m_ljcos;
 #endif
 
   template <class T>
@@ -229,6 +258,9 @@ public:
 #endif
 #ifdef LENNARD_JONES
         make_autoparameter(m_lj, "lennard_jones"),
+#endif
+#ifdef LJCOS
+        make_autoparameter(m_ljcos, "lennard_jones_cos"),
 #endif
     });
   }
@@ -275,6 +307,10 @@ public:
 #ifdef LENNARD_JONES
     set_member<InteractionLJ>(m_lj, "lennard_jones",
                               "Interactions::InteractionLJ", params);
+#endif
+#ifdef LJCOS
+    set_member<InteractionLJcos>(m_ljcos, "lennard_jones_cos",
+                                 "Interactions::InteractionLJcos", params);
 #endif
   }
 

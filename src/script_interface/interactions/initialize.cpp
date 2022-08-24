@@ -59,6 +59,9 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
 #ifdef LENNARD_JONES
   om->register_new<InteractionLJ>("Interactions::InteractionLJ");
 #endif
+#ifdef LJCOS
+  om->register_new<InteractionLJcos>("Interactions::InteractionLJcos");
+#endif
 #ifdef WCA
   om->register_new<InteractionWCA>("Interactions::InteractionWCA");
 #endif

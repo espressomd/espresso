@@ -159,6 +159,9 @@ struct LJcos_Parameters {
   double alfa = 0.0;
   double beta = 0.0;
   double rmin = 0.0;
+  LJcos_Parameters() = default;
+  LJcos_Parameters(double eps, double sig, double cut, double offset);
+  double max_cutoff() const { return cut + offset; }
 };
 
 /** Lennard-Jones with a different Cos potential */
