@@ -27,7 +27,7 @@
  *  Implementation in \ref smooth_step.cpp.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef SMOOTH_STEP
 

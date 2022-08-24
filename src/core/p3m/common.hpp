@@ -35,7 +35,7 @@
 #ifndef ESPRESSO_SRC_CORE_P3M_COMMON_HPP
 #define ESPRESSO_SRC_CORE_P3M_COMMON_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include <utils/Vector.hpp>
 

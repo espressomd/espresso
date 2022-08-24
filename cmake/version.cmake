@@ -25,6 +25,8 @@ if(GIT_EXECUTABLE)
 
 endif(GIT_EXECUTABLE)
 
-configure_file(${PROJECT_SOURCE_DIR}/src/config/version.hpp.in version.hpp.tmp)
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different version.hpp.tmp
-                        version.hpp)
+configure_file(${PROJECT_SOURCE_DIR}/src/config/include/config/version.hpp.in
+        ${CMAKE_BINARY_DIR}/include/config/version.hpp.tmp)
+execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${CMAKE_BINARY_DIR}/include/config/version.hpp.tmp
+        ${CMAKE_BINARY_DIR}/include/config/version.hpp)

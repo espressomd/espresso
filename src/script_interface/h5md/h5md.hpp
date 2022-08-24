@@ -22,7 +22,7 @@
 #ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_H5MD_H5MD_HPP
 #define ESPRESSO_SRC_SCRIPT_INTERFACE_H5MD_H5MD_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef H5MD
 

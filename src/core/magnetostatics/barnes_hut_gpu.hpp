@@ -20,7 +20,7 @@
 #ifndef ESPRESSO_SRC_CORE_MAGNETOSTATICS_BARNES_HUT_GPU_HPP
 #define ESPRESSO_SRC_CORE_MAGNETOSTATICS_BARNES_HUT_GPU_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef DIPOLAR_BARNES_HUT
 

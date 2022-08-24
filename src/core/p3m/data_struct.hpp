@@ -21,7 +21,7 @@
 #ifndef CORE_P3M_DATA_STRUCT_HPP
 #define CORE_P3M_DATA_STRUCT_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #if defined(P3M) || defined(DP3M)
 

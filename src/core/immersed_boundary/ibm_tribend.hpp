@@ -20,7 +20,7 @@
 #ifndef IBM_TRIBEND_H
 #define IBM_TRIBEND_H
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include "Particle.hpp"
 

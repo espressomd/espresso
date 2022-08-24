@@ -41,7 +41,7 @@ print("Writing " + cfilename + "...")
 cfile = open(cfilename, 'w')
 
 cfile.write("""
-#include "config.hpp"
+#include "config/config.hpp"
 #include <iostream>
 using namespace std;
 int main() {

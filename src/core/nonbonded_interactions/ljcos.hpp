@@ -27,7 +27,7 @@
  *  Implementation in \ref ljcos.cpp.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef LJCOS
 

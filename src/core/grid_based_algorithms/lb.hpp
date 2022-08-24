@@ -36,7 +36,7 @@
  *  Implementation in lb.cpp.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 #include "grid_based_algorithms/lattice.hpp"
 #include "grid_based_algorithms/lb-d3q19.hpp"
 #include "grid_based_algorithms/lb_constants.hpp"

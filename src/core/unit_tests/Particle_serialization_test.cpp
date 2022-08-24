@@ -22,7 +22,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "Particle.hpp"
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include <utils/demangle.hpp>
 #include <utils/serialization/memcpy_archive.hpp>

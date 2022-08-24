@@ -22,7 +22,7 @@
 #define CORE_NB_IA_VERLETCRITERION_HPP
 
 #include "Particle.hpp"
-#include "config.hpp"
+#include "config/config.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include <utils/index.hpp>

@@ -20,7 +20,7 @@
 #include "lb_interpolation.hpp"
 
 #include "communication.hpp"
-#include "config.hpp"
+#include "config/config.hpp"
 #include "grid_based_algorithms/lattice.hpp"
 #include "lb.hpp"
 

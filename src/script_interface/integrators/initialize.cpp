@@ -25,7 +25,7 @@
 #include "StokesianDynamics.hpp"
 #include "VelocityVerlet.hpp"
 #include "VelocityVerletIsoNPT.hpp"
-#include "config.hpp"
+#include "config/config.hpp"
 
 namespace ScriptInterface {
 namespace Integrators {

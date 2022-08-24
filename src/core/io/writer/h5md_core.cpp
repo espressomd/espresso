@@ -23,9 +23,9 @@
 
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
+#include "config/version.hpp"
 #include "h5md_specification.hpp"
 #include "lees_edwards/LeesEdwardsBC.hpp"
-#include "version.hpp"
 
 #include <utils/Vector.hpp>
 

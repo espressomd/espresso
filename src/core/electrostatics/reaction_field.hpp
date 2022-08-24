@@ -28,7 +28,7 @@
 #ifndef ESPRESSO_SRC_CORE_ELECTROSTATICS_REACTION_FIELD_HPP
 #define ESPRESSO_SRC_CORE_ELECTROSTATICS_REACTION_FIELD_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef ELECTROSTATICS
 

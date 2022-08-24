@@ -35,7 +35,7 @@
 #ifndef ESPRESSO_SRC_CORE_ELECTROSTATICS_P3M_HPP
 #define ESPRESSO_SRC_CORE_ELECTROSTATICS_P3M_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef P3M
 

@@ -23,7 +23,7 @@
 
 #include "Particle.hpp"
 #include "cell_system/CellStructure.hpp"
-#include "config.hpp"
+#include "config/config.hpp"
 #include "nonbonded_interactions/VerletCriterion.hpp"
 #include "particle_data.hpp"
 

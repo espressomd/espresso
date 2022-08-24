@@ -27,7 +27,7 @@
  *  Implementation in \ref hertzian.cpp.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include "nonbonded_interaction_data.hpp"
 

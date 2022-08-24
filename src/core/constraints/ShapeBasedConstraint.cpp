@@ -22,7 +22,7 @@
 #include "BoxGeometry.hpp"
 #include "Observable_stat.hpp"
 #include "communication.hpp"
-#include "config.hpp"
+#include "config/config.hpp"
 #include "dpd.hpp"
 #include "energy_inline.hpp"
 #include "errorhandling.hpp"

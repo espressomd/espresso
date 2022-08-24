@@ -24,7 +24,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "Particle.hpp"
-#include "config.hpp"
+#include "config/config.hpp"
 #include "random.hpp"
 #include "random_test.hpp"
 #include "thermostat.hpp"
