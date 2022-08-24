@@ -29,7 +29,7 @@
  *  Needs feature TABULATED compiled in (see \ref config.hpp).
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef TABULATED
 

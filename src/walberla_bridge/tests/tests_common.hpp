@@ -18,7 +18,7 @@
  */
 #pragma once
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef LB_WALBERLA
 

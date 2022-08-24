@@ -24,7 +24,7 @@
  *  Energy calculation.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include "energy.hpp"
 

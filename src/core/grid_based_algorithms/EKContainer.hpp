@@ -20,7 +20,7 @@
 #ifndef ESPRESSO_EKCONTAINER_HPP
 #define ESPRESSO_EKCONTAINER_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef LB_WALBERLA
 

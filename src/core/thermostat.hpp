@@ -24,7 +24,7 @@
  *  Implementation in \ref thermostat.cpp.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include <utils/Counter.hpp>
 #include <utils/Vector.hpp>

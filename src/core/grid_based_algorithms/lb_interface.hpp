@@ -19,7 +19,7 @@
 #ifndef CORE_LB_INTERFACE
 #define CORE_LB_INTERFACE
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include <utils/Vector.hpp>
 

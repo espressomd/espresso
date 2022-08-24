@@ -21,7 +21,7 @@
 /** \file
  *  Implementation of dpd.hpp.
  */
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef DPD
 

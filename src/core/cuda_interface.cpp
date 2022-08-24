@@ -23,7 +23,7 @@
 
 #include "EspressoSystemInterface.hpp"
 #include "communication.hpp"
-#include "config.hpp"
+#include "config/config.hpp"
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "serialization/CUDA_particle_data.hpp"

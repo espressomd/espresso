@@ -21,7 +21,7 @@
 #ifndef ESPRESSO_CORE_P3M_SEND_MESH_HPP
 #define ESPRESSO_CORE_P3M_SEND_MESH_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #if defined(P3M) || defined(DP3M)
 

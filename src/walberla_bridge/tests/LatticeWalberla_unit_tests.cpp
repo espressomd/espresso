@@ -18,7 +18,7 @@
  */
 #define BOOST_TEST_MODULE LatticeWalberla tests
 #define BOOST_TEST_DYN_LINK
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef LB_WALBERLA
 

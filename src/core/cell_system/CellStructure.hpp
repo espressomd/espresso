@@ -33,7 +33,7 @@
 #include "bond_error.hpp"
 #include "cell_system/Cell.hpp"
 #include "cell_system/CellStructureType.hpp"
-#include "config.hpp"
+#include "config/config.hpp"
 #include "ghosts.hpp"
 
 #include <utils/math/sqr.hpp>

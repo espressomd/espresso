@@ -19,7 +19,7 @@
 #ifndef ESPRESSO_CORE_PARTICLE_HPP
 #define ESPRESSO_CORE_PARTICLE_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include "BondList.hpp"
 

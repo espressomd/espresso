@@ -19,7 +19,7 @@
 #ifndef SCRIPT_INTERFACE_WALBERLA_FLUID_ROUTINES_WALBERLA_HPP
 #define SCRIPT_INTERFACE_WALBERLA_FLUID_ROUTINES_WALBERLA_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef LB_WALBERLA
 

@@ -31,7 +31,7 @@
 #ifndef ESPRESSO_SRC_CORE_ELECTROSTATICS_MMM1D_HPP
 #define ESPRESSO_SRC_CORE_ELECTROSTATICS_MMM1D_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef ELECTROSTATICS
 

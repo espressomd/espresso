@@ -19,7 +19,7 @@
 
 #include "CodeVersion.hpp"
 
-#include "version.hpp"
+#include "config/version.hpp"
 
 #include <boost/algorithm/string.hpp>
 

@@ -26,7 +26,7 @@
  *  Implementation in \ref buckingham.cpp.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef BUCKINGHAM
 

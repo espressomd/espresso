@@ -23,7 +23,7 @@
 #include "BoxGeometry.hpp"
 #include "MpiCallbacks.hpp"
 #include "communication.hpp"
-#include "config.hpp"
+#include "config/config.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
 

@@ -19,7 +19,7 @@
 #ifndef GRID_BASED_ALGORITHMS_LBWALBERLA_INSTANCE_HPP
 #define GRID_BASED_ALGORITHMS_LBWALBERLA_INSTANCE_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef LB_WALBERLA
 #include <walberla_bridge/LatticeWalberla.hpp>

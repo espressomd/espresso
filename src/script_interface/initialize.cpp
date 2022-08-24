@@ -19,7 +19,7 @@
 
 #include "initialize.hpp"
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include "accumulators/initialize.hpp"
 #include "analysis/initialize.hpp"

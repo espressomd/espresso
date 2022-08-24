@@ -30,7 +30,7 @@
  *  Implementation in \ref ljcos2.cpp.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef LJCOS2
 

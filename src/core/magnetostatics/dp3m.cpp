@@ -25,7 +25,7 @@
  *  By default the magnetic epsilon is metallic = 0.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef DP3M
 

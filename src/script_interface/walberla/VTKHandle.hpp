@@ -19,7 +19,7 @@
 #ifndef SCRIPT_INTERFACE_WALBERLA_VTKWALBERLA_HPP
 #define SCRIPT_INTERFACE_WALBERLA_VTKWALBERLA_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef LB_WALBERLA
 

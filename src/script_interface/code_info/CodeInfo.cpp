@@ -19,9 +19,9 @@
 
 #include "CodeInfo.hpp"
 
-#include "config-features.hpp"
+#include "config/config-features.hpp"
+#include "config/version.hpp"
 #include "script_interface/scafacos/scafacos.hpp"
-#include "version.hpp"
 
 #include <string>
 #include <vector>

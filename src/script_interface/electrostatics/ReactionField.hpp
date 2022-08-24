@@ -20,7 +20,7 @@
 #ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_ELECTROSTATICS_RF_HPP
 #define ESPRESSO_SRC_SCRIPT_INTERFACE_ELECTROSTATICS_RF_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef ELECTROSTATICS
 

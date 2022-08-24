@@ -20,7 +20,7 @@
 #define BOOST_TEST_MODULE rotation test
 #define BOOST_TEST_DYN_LINK
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef ROTATION
 

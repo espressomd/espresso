@@ -20,7 +20,7 @@
 #define OBSERVABLES_PARTICLE_TRAITS
 
 #include "Particle.hpp"
-#include "config.hpp"
+#include "config/config.hpp"
 #include "rotation.hpp"
 
 namespace ParticleObservables {

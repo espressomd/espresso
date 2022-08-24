@@ -28,7 +28,7 @@
 namespace bdata = boost::unit_test::data;
 namespace utf = boost::unit_test;
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef LB_WALBERLA
 

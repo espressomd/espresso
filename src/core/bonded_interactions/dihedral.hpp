@@ -28,7 +28,7 @@
  */
 
 #include "BoxGeometry.hpp"
-#include "config.hpp"
+#include "config/config.hpp"
 #include "grid.hpp"
 
 #include <utils/Vector.hpp>

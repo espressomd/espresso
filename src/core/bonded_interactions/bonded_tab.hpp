@@ -28,7 +28,7 @@
  *  Implementation in \ref bonded_tab.cpp.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include "TabulatedPotential.hpp"
 #include "angle_common.hpp"

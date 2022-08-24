@@ -20,7 +20,7 @@
 #ifndef ESPRESSO_SRC_CORE_MAGNETOSTATICS_DIPOLES_HPP
 #define ESPRESSO_SRC_CORE_MAGNETOSTATICS_DIPOLES_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef DIPOLES
 
