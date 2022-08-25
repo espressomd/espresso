@@ -444,10 +444,13 @@ class LeesEdwards(ut.TestCase):
         p3 = system.part.add(pos=(2.5, 4.0, 2.5))
         p3.vs_auto_relate_to(p1)
         system.integrator.run(1)
+        print(p2.pos_folded, p3.pos_folded, system.distance_vec(p2, p3))
 
         system.lees_edwards.set_boundary_conditions(
             shear_direction="x", shear_plane_normal="y", protocol=lin_protocol)
+        print(p2.pos_folded, p3.pos_folded, system.distance_vec(p2, p3))
         system.integrator.run(1)
+        print(p2.pos_folded, p3.pos_folded, system.distance_vec(p2, p3))
         np.testing.assert_allclose(
             np.copy(system.distance_vec(p3, p2)), [0, 2, 0], atol=tol)
         np.testing.assert_allclose(
@@ -702,7 +705,6 @@ class LeesEdwards(ut.TestCase):
 
         # box
         l = (n / 6. * np.pi * sigma**3 / phi)**(1. / 3.)
-        print(l)
 
         # Setup
         system.box_l = [l, l, l]
@@ -740,7 +742,6 @@ class LeesEdwards(ut.TestCase):
         system.lees_edwards.set_boundary_conditions(
             shear_direction="z", shear_plane_normal="x", protocol=protocol)
         system.integrator.run(1, recalc_forces=True)
-        print(system.lees_edwards.get_params())
         tests_common.check_non_bonded_loop_trace(self, system)
 
         # Rewind the clock to get back the LE offset applied during force calc
@@ -749,7 +750,6 @@ class LeesEdwards(ut.TestCase):
 
         system.thermostat.set_langevin(kT=.1, gamma=5, seed=2)
         system.integrator.run(50)
-        print(system.lees_edwars.get_params())
         tests_common.check_non_bonded_loop_trace(self, system)
 
 

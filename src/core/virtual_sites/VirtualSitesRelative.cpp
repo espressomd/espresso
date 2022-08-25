@@ -18,6 +18,8 @@
  */
 
 #include "VirtualSitesRelative.hpp"
+#include "integrate.hpp"
+#include "lees_edwards/lees_edwards.hpp"
 
 #ifdef VIRTUAL_SITES_RELATIVE
 
@@ -106,6 +108,7 @@ void VirtualSitesRelative::update() const {
                                Cells::DATA_PART_MOMENTUM);
 
   auto const particles = cell_structure.local_particles();
+  auto le_push = LeesEdwards::Push(box_geo, get_time_step());
   for (auto &p : particles) {
     auto const *p_ref_ptr = get_reference_particle(p);
     if (!p_ref_ptr)
@@ -113,26 +116,30 @@ void VirtualSitesRelative::update() const {
 
     auto const &p_ref = *p_ref_ptr;
     auto new_pos = p_ref.pos() + connection_vector(p_ref, p);
+    std::cout << p_ref.pos() << "|" << new_pos << std::endl;
     /* The shift has to respect periodic boundaries: if the reference
      * particles is not in the same image box, we potentially avoid shifting
      * to the other side of the box. */
-    auto shift = box_geo.get_mi_vector(new_pos, p.pos());
-    p.pos() += shift;
-    Utils::Vector3i image_shift{};
-    fold_position(shift, image_shift, box_geo);
-    p.image_box() = p_ref.image_box() - image_shift;
-
-    p.v() = velocity(p_ref, p);
-
-    if (box_geo.type() == BoxType::LEES_EDWARDS) {
-      auto const &lebc = box_geo.lees_edwards_bc();
-      auto const shear_dir = lebc.shear_direction;
-      auto const shear_normal = lebc.shear_plane_normal;
-      auto const le_vel = lebc.shear_velocity;
-      Utils::Vector3i n_shifts{};
-      fold_position(new_pos, n_shifts, box_geo);
-      p.v()[shear_dir] -= n_shifts[shear_normal] * le_vel;
-    }
+    p.pos() = new_pos;
+    le_push(p);
+    //    LeesEdwards::Push(p,box_geo);
+    //    std::cout
+    //    <<p.pos()<<","<<box_geo.lees_edwards_bc().pos_offset<<std::endl;
+    //    Utils::Vector3i image_shift{};
+    //    fold_position(shift, image_shift, box_geo);
+    //    p.image_box() = p_ref.image_box() - image_shift;
+    //
+    //    p.v() = velocity(p_ref, p);
+    //
+    //    if (box_geo.type() == BoxType::LEES_EDWARDS) {
+    //      auto const &lebc = box_geo.lees_edwards_bc();
+    //      auto const shear_dir = lebc.shear_direction;
+    //      auto const shear_normal = lebc.shear_plane_normal;
+    //      auto const le_vel = lebc.shear_velocity;
+    //      Utils::Vector3i n_shifts{};
+    //      fold_position(new_pos, n_shifts, box_geo);
+    //      p.v()[shear_dir] -= n_shifts[shear_normal] * le_vel;
+    //    }
 
     if (have_quaternions())
       p.quat() = p_ref.quat() * p.vs_relative().quat;
