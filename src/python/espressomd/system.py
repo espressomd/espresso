@@ -453,13 +453,13 @@ class System(ScriptInterfaceHelper):
         """
 
         if isinstance(p1, particle_data.ParticleHandle):
-            pos1 = p1.pos
+            pos1 = p1.pos_folded
         else:
             utils.check_type_or_throw_except(
                 p1, 3, float, "p1 must be a particle or 3 floats")
             pos1 = p1
         if isinstance(p2, particle_data.ParticleHandle):
-            pos2 = p2.pos
+            pos2 = p2.pos_folded
         else:
             utils.check_type_or_throw_except(
                 p2, 3, float, "p2 must be a particle or 3 floats")
