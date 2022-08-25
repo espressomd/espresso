@@ -324,10 +324,11 @@ class LeesEdwards(ut.TestCase):
                 shear_plane_normal=shear_plane_normal, protocol=lin_protocol)
 
             shear_axis = axis(shear_direction)
+            system.part.clear()
             p1 = system.part.add(
                 pos=[epsilon] * 3, v=np.random.random(3), fix=[True] * 3)
             p2 = system.part.add(
-                pos=system.box_l - epsilon, v=np.random.random(3), fix=[True] * 3)
+                pos=2 * system.box_l - epsilon, v=np.random.random(3), fix=[True] * 3)
             r_euclid = -2 * np.array([epsilon] * 3)
 
             # check distance
@@ -337,11 +338,27 @@ class LeesEdwards(ut.TestCase):
             np.testing.assert_allclose(
                 np.copy(system.distance_vec(p1, p2)),
                 -np.copy(system.distance_vec(p2, p1)))
-
-            # Check velocity difference
+         # Check, tahat the core agrees 
+        cs_pairs = self.system.cell_system.non_bonded_loop_trace()
+        # format [id1, id2, pos1, pos2, vec2, mpi_node]
+        assert len(cs_pairs) == 1
+        if cs_pairs[0][0] == p1.id:
             np.testing.assert_allclose(
-                np.copy(system.velocity_difference(p1, p2)),
-                np.copy(p2.v - p1.v) - system.lees_edwards.shear_velocity * shear_axis)
+                np.copy(
+                    system.distance_vec(
+                        p2, p1)), np.copy(
+                    cs_pairs[0][4]))
+        else:
+            np.testing.assert_allclose(
+                np.copy(
+                    system.distance_vec(
+                        p1, p2)), np.copy(
+                    cs_pairs[0][4]))
+
+        # Check velocity difference
+        np.testing.assert_allclose(
+            np.copy(system.velocity_difference(p1, p2)),
+            np.copy(p2.v - p1.v) - system.lees_edwards.shear_velocity * shear_axis)
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_interactions(self):
@@ -685,6 +702,7 @@ class LeesEdwards(ut.TestCase):
 
         # box
         l = (n / 6. * np.pi * sigma**3 / phi)**(1. / 3.)
+        print(l)
 
         # Setup
         system.box_l = [l, l, l]
@@ -722,6 +740,7 @@ class LeesEdwards(ut.TestCase):
         system.lees_edwards.set_boundary_conditions(
             shear_direction="z", shear_plane_normal="x", protocol=protocol)
         system.integrator.run(1, recalc_forces=True)
+        print(system.lees_edwards.get_params())
         tests_common.check_non_bonded_loop_trace(self, system)
 
         # Rewind the clock to get back the LE offset applied during force calc
@@ -730,6 +749,7 @@ class LeesEdwards(ut.TestCase):
 
         system.thermostat.set_langevin(kT=.1, gamma=5, seed=2)
         system.integrator.run(50)
+        print(system.lees_edwars.get_params())
         tests_common.check_non_bonded_loop_trace(self, system)
 
 
