@@ -22,7 +22,7 @@
 #include "grid_based_algorithms/lb_walberla_instance.hpp"
 
 #include "communication.hpp"
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include <utils/Vector.hpp>
 

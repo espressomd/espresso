@@ -18,7 +18,7 @@
  */
 #include "initialize.hpp"
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef DIPOLES
 

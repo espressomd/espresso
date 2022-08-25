@@ -21,7 +21,7 @@
 #ifdef NPT
 
 #include "communication.hpp"
-#include "config.hpp"
+#include "config/config.hpp"
 #include "electrostatics/coulomb.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"

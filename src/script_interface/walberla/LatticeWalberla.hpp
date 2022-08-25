@@ -20,12 +20,12 @@
 #ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_WALBERLA_LATTICE_WALBERLA_HPP
 #define ESPRESSO_SRC_SCRIPT_INTERFACE_WALBERLA_LATTICE_WALBERLA_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef LB_WALBERLA
 
 #include <walberla_bridge/LatticeWalberla.hpp>
-#include <walberla_bridge/lb_walberla_init.hpp>
+#include <walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp>
 
 #include "core/errorhandling.hpp"
 #include "core/grid.hpp"

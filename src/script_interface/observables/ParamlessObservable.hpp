@@ -22,7 +22,7 @@
 #ifndef SCRIPT_INTERFACE_OBSERVABLES_PARAMLESSOBSERVABLE_HPP
 #define SCRIPT_INTERFACE_OBSERVABLES_PARAMLESSOBSERVABLE_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
 

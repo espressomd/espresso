@@ -32,7 +32,7 @@
  *  - update virtual sites
  */
 
-#include <config.hpp>
+#include "config/config.hpp"
 
 #ifdef VIRTUAL_SITES
 #include <utils/Vector.hpp>

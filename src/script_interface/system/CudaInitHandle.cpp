@@ -19,7 +19,7 @@
 
 #include "CudaInitHandle.hpp"
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include "core/cuda_init.hpp"
 #include "core/cuda_utils.hpp"

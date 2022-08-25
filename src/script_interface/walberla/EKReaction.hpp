@@ -20,7 +20,7 @@
 #ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_WALBERLA_EK_REACTION_HPP
 #define ESPRESSO_SRC_SCRIPT_INTERFACE_WALBERLA_EK_REACTION_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef LB_WALBERLA
 
@@ -30,8 +30,8 @@
 #include "optional_reduction.hpp"
 
 #include "walberla_bridge/electrokinetics/reactions/EKReactionBase.hpp"
-#include "walberla_bridge/electrokinetics/reactions/EKReactionImplBulk.hpp"
-#include "walberla_bridge/electrokinetics/reactions/EKReactionImplIndexed.hpp"
+#include "walberla_bridge/src/electrokinetics/reactions/EKReactionImplBulk.hpp"
+#include "walberla_bridge/src/electrokinetics/reactions/EKReactionImplIndexed.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameter.hpp"
@@ -47,8 +47,31 @@ namespace ScriptInterface::walberla {
 
 class EKReaction : public AutoParameters<EKReaction, LatticeIndices> {
 public:
-  [[nodiscard]] virtual std::shared_ptr<::walberla::EKReactionBase>
-  get_instance() const = 0;
+  [[nodiscard]] std::shared_ptr<::walberla::EKReactionBase>
+  get_instance() const {
+    return m_ekreaction;
+  }
+
+protected:
+  template <typename T>
+  std::shared_ptr<T> make_instance(VariantMap const &args) const {
+    auto lattice =
+        get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice")->lattice();
+
+    auto reactant = get_value<std::vector<Variant>>(args, "reactants");
+    auto output =
+        std::vector<std::shared_ptr<::walberla::EKReactant>>(reactant.size());
+    auto get_instance = [](Variant const &v) {
+      return get_value<std::shared_ptr<EKReactant>>(v)->get_instance();
+    };
+    std::transform(reactant.begin(), reactant.end(), output.begin(),
+                   get_instance);
+
+    return std::make_shared<T>(lattice, output,
+                               get_value<double>(args, "coefficient"));
+  }
+
+  std::shared_ptr<::walberla::EKReactionBase> m_ekreaction;
 };
 
 class EKBulkReaction : public EKReaction {
@@ -62,30 +85,8 @@ public:
   }
 
   void do_construct(VariantMap const &args) override {
-
-    auto lattice =
-        get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice")->lattice();
-
-    auto reactant = get_value<std::vector<Variant>>(args, "reactants");
-    std::vector<std::shared_ptr<::walberla::EKReactant>> output(
-        reactant.size());
-    auto get_instance = [](Variant &ekreactant) {
-      return get_value<std::shared_ptr<EKReactant>>(ekreactant)->get_instance();
-    };
-    std::transform(reactant.begin(), reactant.end(), output.begin(),
-                   get_instance);
-
-    m_ekreaction = std::make_shared<::walberla::EKReactionImplBulk>(
-        lattice, output, get_value<double>(args, "coefficient"));
+    m_ekreaction = make_instance<::walberla::EKReactionImplBulk>(args);
   }
-
-  [[nodiscard]] std::shared_ptr<::walberla::EKReactionBase>
-  get_instance() const override {
-    return m_ekreaction;
-  }
-
-private:
-  std::shared_ptr<::walberla::EKReactionImplBulk> m_ekreaction;
 };
 
 class EKIndexedReaction : public EKReaction {
@@ -103,49 +104,34 @@ public:
   }
 
   void do_construct(VariantMap const &args) override {
-
-    auto lattice =
-        get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice")->lattice();
-
-    auto reactant = get_value<std::vector<Variant>>(args, "reactants");
-    std::vector<std::shared_ptr<::walberla::EKReactant>> output(
-        reactant.size());
-    auto get_instance = [](Variant &ekreactant) {
-      return get_value<std::shared_ptr<EKReactant>>(ekreactant)->get_instance();
-    };
-    std::transform(reactant.begin(), reactant.end(), output.begin(),
-                   get_instance);
-
-    m_ekreaction = std::make_shared<::walberla::EKReactionImplIndexed>(
-        lattice, output, get_value<double>(args, "coefficient"));
+    m_ekreaction = make_instance<::walberla::EKReactionImplIndexed>(args);
+    m_ekreaction_impl =
+        std::dynamic_pointer_cast<::walberla::EKReactionImplIndexed>(
+            get_instance());
   }
 
   [[nodiscard]] Variant do_call_method(std::string const &method,
                                        VariantMap const &parameters) override {
     if (method == "set_node_is_boundary") {
-      m_ekreaction->set_node_is_boundary(
-          get_mapped_index(
-              get_value<Utils::Vector3i>(parameters, "node"),
-              get_instance()->get_lattice()->get_grid_dimensions()),
-          get_value<bool>(parameters, "is_boundary"));
+      auto const index = get_mapped_index(
+          get_value<Utils::Vector3i>(parameters, "node"),
+          get_instance()->get_lattice()->get_grid_dimensions());
+      m_ekreaction_impl->set_node_is_boundary(
+          index, get_value<bool>(parameters, "is_boundary"));
       return none;
     }
     if (method == "get_node_is_boundary") {
-      auto const result = m_ekreaction->get_node_is_boundary(get_mapped_index(
+      auto const index = get_mapped_index(
           get_value<Utils::Vector3i>(parameters, "node"),
-          get_instance()->get_lattice()->get_grid_dimensions()));
+          get_instance()->get_lattice()->get_grid_dimensions());
+      auto const result = m_ekreaction_impl->get_node_is_boundary(index);
       return optional_reduction_with_conversion(result);
     }
-    return none;
-  }
-
-  [[nodiscard]] std::shared_ptr<::walberla::EKReactionBase>
-  get_instance() const override {
-    return m_ekreaction;
+    return {};
   }
 
 private:
-  std::shared_ptr<::walberla::EKReactionImplIndexed> m_ekreaction;
+  std::shared_ptr<::walberla::EKReactionImplIndexed> m_ekreaction_impl;
 };
 
 } // namespace ScriptInterface::walberla

@@ -22,7 +22,7 @@
 #ifndef INTEGRATORS_BROWNIAN_INLINE_HPP
 #define INTEGRATORS_BROWNIAN_INLINE_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include "ParticleRange.hpp"
 #include "integrate.hpp"

@@ -25,7 +25,7 @@
 #ifndef STOKESIAN_DYNAMICS_INTERFACE_H
 #define STOKESIAN_DYNAMICS_INTERFACE_H
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef STOKESIAN_DYNAMICS
 

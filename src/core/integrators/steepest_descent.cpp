@@ -25,7 +25,7 @@
 #include "ParticleRange.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "config.hpp"
+#include "config/config.hpp"
 #include "rotation.hpp"
 
 #include <utils/Vector.hpp>

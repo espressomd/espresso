@@ -22,7 +22,7 @@
 #ifndef ESPRESSO_SRC_CORE_P3M_TUNING_LOGGER_HPP
 #define ESPRESSO_SRC_CORE_P3M_TUNING_LOGGER_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #if defined(P3M) || defined(DP3M)
 

@@ -46,7 +46,7 @@
  * data organisation schemes, this is performed differently.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef ELECTROSTATICS
 

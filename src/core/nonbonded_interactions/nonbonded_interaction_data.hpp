@@ -25,7 +25,7 @@
  */
 
 #include "TabulatedPotential.hpp"
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include <utils/index.hpp>
 

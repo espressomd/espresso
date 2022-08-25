@@ -20,7 +20,7 @@
 #ifndef VIRTUAL_SITES_VIRTUAL_SITES_RELATIVE_HPP
 #define VIRTUAL_SITES_VIRTUAL_SITES_RELATIVE_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 #ifdef VIRTUAL_SITES_RELATIVE
 
 #include "VirtualSites.hpp"

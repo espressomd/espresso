@@ -20,11 +20,11 @@
 #ifndef ESPRESSO_EKCONTAINER_HPP
 #define ESPRESSO_EKCONTAINER_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef LB_WALBERLA
 
-#include "electrokinetics/PoissonSolver/PoissonSolver.hpp"
+#include "walberla_bridge/electrokinetics/PoissonSolver/PoissonSolver.hpp"
 
 #include <algorithm>
 #include <cassert>

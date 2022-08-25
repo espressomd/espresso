@@ -20,7 +20,7 @@
 #ifndef ESPRESSO_SRC_CORE_MAGNETOSTATICS_DIPOLES_INLINE_HPP
 #define ESPRESSO_SRC_CORE_MAGNETOSTATICS_DIPOLES_INLINE_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include "Particle.hpp"
 

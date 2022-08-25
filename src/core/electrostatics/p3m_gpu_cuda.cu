@@ -25,7 +25,7 @@
  * The corresponding header file is @ref p3m_gpu_cuda.cuh.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef ELECTROSTATICS
 

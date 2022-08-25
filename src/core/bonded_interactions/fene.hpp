@@ -26,7 +26,7 @@
  *  Implementation in \ref fene.cpp.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 #include "errorhandling.hpp"
 
 #include <utils/Vector.hpp>

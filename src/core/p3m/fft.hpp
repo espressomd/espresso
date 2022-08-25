@@ -42,7 +42,7 @@
  *  For more information about FFT usage, see \ref fft.cpp "fft.cpp".
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #if defined(P3M) || defined(DP3M)
 

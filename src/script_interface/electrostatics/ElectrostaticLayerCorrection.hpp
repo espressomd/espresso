@@ -20,7 +20,7 @@
 #ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_ELECTROSTATICS_ELC_HPP
 #define ESPRESSO_SRC_SCRIPT_INTERFACE_ELECTROSTATICS_ELC_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef P3M
 

@@ -19,7 +19,7 @@
 #ifndef SCRIPT_INTERFACE_WALBERLA_OPTIONAL_REDUCTION_HPP
 #define SCRIPT_INTERFACE_WALBERLA_OPTIONAL_REDUCTION_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef LB_WALBERLA
 

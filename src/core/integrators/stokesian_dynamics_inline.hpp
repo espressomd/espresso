@@ -19,7 +19,7 @@
 #ifndef STOKESIAN_DYNAMICS_INLINE_HPP
 #define STOKESIAN_DYNAMICS_INLINE_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef STOKESIAN_DYNAMICS
 #include "ParticleRange.hpp"

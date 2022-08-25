@@ -22,7 +22,7 @@
 #ifndef ESPRESSO_SRC_CORE_ELECTROSTATICS_SCAFACOS_HPP
 #define ESPRESSO_SRC_CORE_ELECTROSTATICS_SCAFACOS_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef SCAFACOS
 

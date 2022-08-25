@@ -19,7 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include "communication.hpp"
 
@@ -31,7 +31,7 @@
 
 // TODO: extract mpi-init from lb_walberla_init to separate file
 #ifdef LB_WALBERLA
-#include <lb_walberla_init.hpp>
+#include <walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp>
 #endif
 
 #include <boost/mpi.hpp>

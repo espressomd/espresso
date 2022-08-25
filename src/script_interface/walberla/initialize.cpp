@@ -17,14 +17,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef LB_WALBERLA
 
 #include "FluidNodeWalberla.hpp"
 #include "FluidWalberla.hpp"
-#include "LatticeWalberla.hpp"
 #include "VTKHandle.hpp"
+#include "walberla_bridge/LatticeWalberla.hpp"
 
 #include <script_interface/ObjectHandle.hpp>
 #include <utils/Factory.hpp>

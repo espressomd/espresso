@@ -25,7 +25,7 @@
  *  See @cite dupin07a.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"

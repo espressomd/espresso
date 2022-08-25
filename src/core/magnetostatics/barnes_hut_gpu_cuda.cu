@@ -22,7 +22,7 @@
  *  The method is based on @cite burtscher11a.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef DIPOLAR_BARNES_HUT
 

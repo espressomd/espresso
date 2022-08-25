@@ -20,7 +20,7 @@
 #ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_WALBERLA_EK_REACTANT_HPP
 #define ESPRESSO_SRC_SCRIPT_INTERFACE_WALBERLA_EK_REACTANT_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef LB_WALBERLA
 

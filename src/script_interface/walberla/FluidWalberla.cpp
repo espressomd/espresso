@@ -16,15 +16,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef LB_WALBERLA
 
-#include <walberla_bridge/LBWalberlaNodeState.hpp>
+#include <walberla_bridge/lattice_boltzmann/LBWalberlaNodeState.hpp>
 
 #include "FluidWalberla.hpp"
-#include "LatticeWalberla.hpp"
 #include "optional_reduction.hpp"
+#include "walberla_bridge/LatticeWalberla.hpp"
 
 #include "core/BoxGeometry.hpp"
 #include "core/communication.hpp"

@@ -28,7 +28,7 @@
 namespace bdata = boost::unit_test::data;
 namespace utf = boost::unit_test;
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef LB_WALBERLA
 
@@ -48,8 +48,8 @@ namespace utf = boost::unit_test;
 #include "random.hpp"
 #include "thermostat.hpp"
 
-#include <LBWalberlaBase.hpp>
-#include <LatticeWalberla.hpp>
+#include <walberla_bridge/LatticeWalberla.hpp>
+#include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
 
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>

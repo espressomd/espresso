@@ -20,7 +20,7 @@
 #define BOOST_TEST_MODULE "Long-range actors test"
 #define BOOST_TEST_DYN_LINK
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #if defined(ELECTROSTATICS) or defined(DIPOLES) or defined(SCAFACOS) or        \
     defined(SCAFACOS_DIPOLES)

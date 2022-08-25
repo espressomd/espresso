@@ -19,7 +19,7 @@
 #ifndef IMMERSED_BOUNDARY_IMMERSED_BOUNDARIES_HPP
 #define IMMERSED_BOUNDARY_IMMERSED_BOUNDARIES_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include "cell_system/CellStructure.hpp"
 

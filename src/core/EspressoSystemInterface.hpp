@@ -20,7 +20,7 @@
 #define ESPRESSOSYSTEMINTERFACE_H
 
 #include "SystemInterface.hpp"
-#include "config.hpp"
+#include "config/config.hpp"
 #include "cuda_interface.hpp"
 
 #include <utils/Vector.hpp>

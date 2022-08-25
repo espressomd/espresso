@@ -19,7 +19,7 @@
 #ifndef CORE_CUDA_INIT_H
 #define CORE_CUDA_INIT_H
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef CUDA
 

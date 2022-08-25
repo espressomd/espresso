@@ -19,12 +19,12 @@
 #ifndef SCRIPT_INTERFACE_WALBERLA_FLUIDWALBERLA_HPP
 #define SCRIPT_INTERFACE_WALBERLA_FLUIDWALBERLA_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef LB_WALBERLA
 
-#include <walberla_bridge/LBWalberlaBase.hpp>
-#include <walberla_bridge/LBWalberlaNodeState.hpp>
+#include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
+#include <walberla_bridge/lattice_boltzmann/LBWalberlaNodeState.hpp>
 
 #include "LatticeWalberla.hpp"
 

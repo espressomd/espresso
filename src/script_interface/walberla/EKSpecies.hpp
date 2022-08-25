@@ -20,11 +20,11 @@
 #ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_WALBERLA_EK_SPECIES_HPP
 #define ESPRESSO_SRC_SCRIPT_INTERFACE_WALBERLA_EK_SPECIES_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef LB_WALBERLA
 
-#include "LatticeWalberla.hpp"
+#include "walberla_bridge/LatticeWalberla.hpp"
 
 #include "core/communication.hpp"
 

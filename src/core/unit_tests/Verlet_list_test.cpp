@@ -19,7 +19,7 @@
 
 #define BOOST_TEST_MODULE Verlet list update test
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef LENNARD_JONES
 

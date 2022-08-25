@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef LB_WALBERLA
 #include "lb_walberla_instance.hpp"
@@ -29,10 +29,10 @@
 #include "lees_edwards/lees_edwards.hpp"
 #include "lees_edwards/protocols.hpp"
 
-#include <LBWalberlaBase.hpp>
-#include <LatticeWalberla.hpp>
-#include <LeesEdwardsPack.hpp>
-#include <lb_walberla_init.hpp>
+#include <walberla_bridge/LatticeWalberla.hpp>
+#include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
+#include <walberla_bridge/lattice_boltzmann/LeesEdwardsPack.hpp>
+#include <walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp>
 
 #include <utils/Vector.hpp>
 
