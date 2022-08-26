@@ -19,7 +19,7 @@
 #ifndef UTILS_U32_TO_U64_HPP
 #define UTILS_U32_TO_U64_HPP
 
-#include <cinttypes>
+#include <cstdint>
 #include <utility>
 
 namespace Utils {
