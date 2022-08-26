@@ -106,12 +106,6 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         double Fmax
         double r
 
-    cdef struct LJcos2_Parameters:
-        double eps
-        double sig
-        double offset
-        double w
-
     cdef struct GayBerne_Parameters:
         double eps
         double sig
@@ -133,8 +127,6 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         double pref
 
     cdef struct IA_parameters:
-
-        LJcos2_Parameters ljcos2
 
         LJGen_Parameters ljgen
 
@@ -167,12 +159,6 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     cdef string ia_params_get_state()
     cdef void ia_params_set_state(string)
     cdef void reset_ia_params()
-
-IF LJCOS2:
-    cdef extern from "nonbonded_interactions/ljcos2.hpp":
-        cdef int ljcos2_set_params(int part_type_a, int part_type_b,
-                                   double eps, double sig, double offset,
-                                   double w)
 
 IF GAY_BERNE:
     cdef extern from "nonbonded_interactions/gay_berne.hpp":

@@ -62,6 +62,9 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
 #ifdef LJCOS
   om->register_new<InteractionLJcos>("Interactions::InteractionLJcos");
 #endif
+#ifdef LJCOS2
+  om->register_new<InteractionLJcos2>("Interactions::InteractionLJcos2");
+#endif
 #ifdef WCA
   om->register_new<InteractionWCA>("Interactions::InteractionWCA");
 #endif

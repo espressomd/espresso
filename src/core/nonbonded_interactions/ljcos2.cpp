@@ -25,33 +25,24 @@
 #include "ljcos2.hpp"
 
 #ifdef LJCOS2
-#include "interactions.hpp"
 #include "nonbonded_interaction_data.hpp"
 
-#include <utils/constants.hpp>
-
 #include <cmath>
+#include <stdexcept>
 
-int ljcos2_set_params(int part_type_a, int part_type_b, double eps, double sig,
-                      double offset, double w) {
-  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
-
-  if (!data)
-    return ES_ERROR;
-
-  data->ljcos2.eps = eps;
-  data->ljcos2.sig = sig;
-  data->ljcos2.offset = offset;
-  data->ljcos2.w = w;
-
-  /* calculate dependent parameters */
-  data->ljcos2.rchange = pow(2, 1 / 6.) * sig;
-  data->ljcos2.cut = w + data->ljcos2.rchange;
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(part_type_a, part_type_b);
-
-  return ES_OK;
+LJcos2_Parameters::LJcos2_Parameters(double eps, double sig, double offset,
+                                     double w)
+    : eps{eps}, sig{sig}, offset{offset}, w{w} {
+  if (eps < 0.) {
+    throw std::domain_error("LJcos2 parameter 'epsilon' has to be >= 0");
+  }
+  if (sig < 0.) {
+    throw std::domain_error("LJcos2 parameter 'sigma' has to be >= 0");
+  }
+  if (sig != 0.) {
+    rchange = std::pow(2., 1. / 6.) * sig;
+    cut = w + rchange;
+  }
 }
 
 #endif /* ifdef LJCOS2 */

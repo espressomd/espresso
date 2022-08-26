@@ -621,38 +621,22 @@ IF LJCOS == 1:
             """
             return {"epsilon", "sigma", "cutoff"}
 
-IF LJCOS2:
+IF LJCOS2 == 1:
 
-    cdef class LennardJonesCos2Interaction(NonBondedInteraction):
+    @script_interface_register
+    class LennardJonesCos2Interaction(NewNonBondedInteraction):
+        """Second variant of the Lennard-Jones cosine interaction.
 
-        def validate_params(self):
-            if self._params["epsilon"] < 0:
-                raise ValueError("Lennard-Jones epsilon has to be >=0")
-            if self._params["sigma"] < 0:
-                raise ValueError("Lennard-Jones sigma has to be >=0")
-            if self._params["width"] < 0:
-                raise ValueError("Parameter width has to be >=0")
-
-        def _get_params_from_es_core(self):
-            cdef IA_parameters * ia_params
-            ia_params = get_ia_param_safe(
-                self._part_types[0],
-                self._part_types[1])
-            return{
-                "epsilon": ia_params.ljcos2.eps,
-                "sigma": ia_params.ljcos2.sig,
-                "offset": ia_params.ljcos2.offset,
-                "width": ia_params.ljcos2.w}
-
-        def is_active(self):
-            return (self._params["epsilon"] > 0)
-
-        def set_params(self, **kwargs):
-            """Set parameters for the Lennard-Jones cosine squared interaction.
+        Methods
+        -------
+        set_params()
+            Set or update parameters for the interaction.
+            Parameters marked as required become optional once the
+            interaction has been activated for the first time;
+            subsequent calls to this method update the existing values.
 
             Parameters
             ----------
-
             epsilon : :obj:`float`
                 Magnitude of the interaction.
             sigma : :obj:`float`
@@ -661,20 +645,20 @@ IF LJCOS2:
                 Offset distance of the interaction.
             width : :obj:`float`
                 Width of interaction.
-            """
-            super().set_params(**kwargs)
+        """
 
-        def _set_params_in_es_core(self):
-            if ljcos2_set_params(self._part_types[0],
-                                 self._part_types[1],
-                                 self._params["epsilon"],
-                                 self._params["sigma"],
-                                 self._params["offset"],
-                                 self._params["width"]):
-                raise Exception(
-                    "Could not set Lennard-Jones Cosine2 parameters")
+        _so_name = "Interactions::InteractionLJcos2"
+
+        def is_active(self):
+            """Check if interactions is active.
+
+            """
+            return self.epsilon > 0.
 
         def default_params(self):
+            """Python dictionary of default parameters.
+
+            """
             return {"offset": 0.}
 
         def type_name(self):
@@ -687,13 +671,17 @@ IF LJCOS2:
             """All parameters that can be set.
 
             """
-            return {"epsilon", "sigma", "offset", "width"}
+            return {"epsilon", "sigma", "width", "offset"}
 
         def required_keys(self):
             """Parameters that have to be set.
 
             """
             return {"epsilon", "sigma", "width"}
+
+        @property
+        def cutoff(self):
+            return self.call_method("get_cutoff")
 
 IF HAT == 1:
 
@@ -1566,9 +1554,6 @@ class NonBondedInteractionHandle(ScriptInterfaceHelper):
             self.soft_sphere = SoftSphereInteraction(_type1, _type2)
         IF LENNARD_JONES_GENERIC:
             self.generic_lennard_jones = GenericLennardJonesInteraction(
-                _type1, _type2)
-        IF LJCOS2:
-            self.lennard_jones_cos2 = LennardJonesCos2Interaction(
                 _type1, _type2)
         IF SMOOTH_STEP:
             self.smooth_step = SmoothStepInteraction(_type1, _type2)

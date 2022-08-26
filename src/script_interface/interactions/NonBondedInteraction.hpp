@@ -222,6 +222,41 @@ public:
 };
 #endif // LJCOS
 
+#ifdef LJCOS2
+class InteractionLJcos2
+    : public InteractionPotentialInterface<::LJcos2_Parameters> {
+protected:
+  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+    return &::IA_parameters::ljcos2;
+  }
+
+public:
+  InteractionLJcos2() {
+    add_parameters({
+        make_autoparameter(&CoreInteraction::eps, "epsilon"),
+        make_autoparameter(&CoreInteraction::sig, "sigma"),
+        make_autoparameter(&CoreInteraction::offset, "offset"),
+        make_autoparameter(&CoreInteraction::w, "width"),
+    });
+  }
+
+  void make_new_instance(VariantMap const &params) override {
+    m_ia_si =
+        make_shared_from_args<CoreInteraction, double, double, double, double>(
+            params, "epsilon", "sigma", "offset", "width");
+  }
+
+  Variant do_call_method(std::string const &name,
+                         VariantMap const &params) override {
+    if (name == "get_cutoff") {
+      return m_ia_si.get()->cut;
+    }
+    return InteractionPotentialInterface<CoreInteraction>::do_call_method(
+        name, params);
+  }
+};
+#endif // LJCOS2
+
 class NonBondedInteractionHandle
     : public AutoParameters<NonBondedInteractionHandle> {
   std::array<int, 2> m_types = {-1, -1};
@@ -234,6 +269,9 @@ class NonBondedInteractionHandle
 #endif
 #ifdef LJCOS
   std::shared_ptr<InteractionLJcos> m_ljcos;
+#endif
+#ifdef LJCOS2
+  std::shared_ptr<InteractionLJcos2> m_ljcos2;
 #endif
 
   template <class T>
@@ -261,6 +299,9 @@ public:
 #endif
 #ifdef LJCOS
         make_autoparameter(m_ljcos, "lennard_jones_cos"),
+#endif
+#ifdef LJCOS2
+        make_autoparameter(m_ljcos2, "lennard_jones_cos2"),
 #endif
     });
   }
@@ -311,6 +352,10 @@ public:
 #ifdef LJCOS
     set_member<InteractionLJcos>(m_ljcos, "lennard_jones_cos",
                                  "Interactions::InteractionLJcos", params);
+#endif
+#ifdef LJCOS2
+    set_member<InteractionLJcos2>(m_ljcos2, "lennard_jones_cos2",
+                                  "Interactions::InteractionLJcos2", params);
 #endif
   }
 

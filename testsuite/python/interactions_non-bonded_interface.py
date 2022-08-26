@@ -254,6 +254,13 @@ class Test(ut.TestCase):
             {"epsilon": 1., "sigma": 1., "cutoff": 1.5, "offset": 0.2},
             ("epsilon", "sigma"))
 
+    @utx.skipIfMissingFeatures("LJCOS2")
+    def test_lj_cos2_exceptions(self):
+        self.check_potential_exceptions(
+            espressomd.interactions.LennardJonesCos2Interaction,
+            {"epsilon": 1., "sigma": 1., "width": 1.5, "offset": 0.2},
+            ("epsilon", "sigma"))
+
 
 if __name__ == "__main__":
     ut.main()

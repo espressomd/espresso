@@ -172,6 +172,9 @@ struct LJcos2_Parameters {
   double offset = 0.0;
   double w = 0.0;
   double rchange = 0.0;
+  LJcos2_Parameters() = default;
+  LJcos2_Parameters(double eps, double sig, double offset, double w);
+  double max_cutoff() const { return cut + offset; }
 };
 
 /** Gay-Berne potential */
