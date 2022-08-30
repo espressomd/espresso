@@ -41,7 +41,7 @@
 namespace ScriptInterface {
 namespace Coulomb {
 
-class ICCStar : public AutoParameters<::ICCStar> {
+class ICCStar : public AutoParameters<ICCStar> {
   using CoreActorClass = ::ICCStar;
   std::shared_ptr<CoreActorClass> m_actor;
 

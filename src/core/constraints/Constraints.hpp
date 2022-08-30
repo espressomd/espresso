@@ -41,29 +41,29 @@ public:
 
 private:
   void reset_forces() const {
-    for (auto const &c : *this) {
-      c->reset_force();
+    for (auto const &constraint : *this) {
+      constraint->reset_force();
     }
   }
 
   container_type m_constraints;
 
 public:
-  void add(std::shared_ptr<Constraint> const &c) {
-    if (not c->fits_in_box(box_geo.length())) {
+  void add(std::shared_ptr<Constraint> const &constraint) {
+    if (not constraint->fits_in_box(box_geo.length())) {
       throw std::runtime_error("Constraint not compatible with box size.");
     }
-    assert(std::find(m_constraints.begin(), m_constraints.end(), c) ==
+    assert(std::find(m_constraints.begin(), m_constraints.end(), constraint) ==
            m_constraints.end());
 
-    m_constraints.emplace_back(c);
+    m_constraints.emplace_back(constraint);
     on_constraint_change();
   }
-  void remove(std::shared_ptr<Constraint> const &c) {
-    assert(std::find(m_constraints.begin(), m_constraints.end(), c) !=
+  void remove(std::shared_ptr<Constraint> const &constraint) {
+    assert(std::find(m_constraints.begin(), m_constraints.end(), constraint) !=
            m_constraints.end());
     m_constraints.erase(
-        std::remove(m_constraints.begin(), m_constraints.end(), c),
+        std::remove(m_constraints.begin(), m_constraints.end(), constraint),
         m_constraints.end());
     on_constraint_change();
   }
@@ -82,8 +82,8 @@ public:
     for (auto &p : particles) {
       auto const pos = folded_position(p.pos(), box_geo);
       ParticleForce force{};
-      for (auto const &c : *this) {
-        force += c->force(p, pos, t);
+      for (auto const &constraint : *this) {
+        force += constraint->force(p, pos, t);
       }
 
       p.f += force;

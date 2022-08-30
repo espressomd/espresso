@@ -116,11 +116,10 @@ Utils::Vector3d angular_momentum(PartCfg &partCfg, int p_type);
 Utils::Vector9d moment_of_inertia_matrix(PartCfg &partCfg, int p_type);
 
 /** Calculate total momentum of the system (particles & LB fluid).
- *  Inputs are bools to include particles and fluid in the linear momentum
- *  calculation
- *  @return Result for this processor
+ *  @param include_particles   Add particles momentum
+ *  @param include_lbfluid     Add LB fluid momentum
  */
-Utils::Vector3d calc_linear_momentum(int include_particles,
-                                     int include_lbfluid);
+Utils::Vector3d calc_linear_momentum(bool include_particles,
+                                     bool include_lbfluid);
 
 #endif
