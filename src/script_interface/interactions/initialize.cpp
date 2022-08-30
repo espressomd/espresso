@@ -68,6 +68,9 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
 #ifdef WCA
   om->register_new<InteractionWCA>("Interactions::InteractionWCA");
 #endif
+#ifdef HERTZIAN
+  om->register_new<InteractionHertzian>("Interactions::InteractionHertzian");
+#endif
 #ifdef GAUSSIAN
   om->register_new<InteractionGaussian>("Interactions::InteractionGaussian");
 #endif

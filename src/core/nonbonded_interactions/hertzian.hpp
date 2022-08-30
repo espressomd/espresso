@@ -31,14 +31,9 @@
 
 #include "nonbonded_interaction_data.hpp"
 
-#include <utils/Vector.hpp>
-
 #include <cmath>
 
 #ifdef HERTZIAN
-
-int hertzian_set_params(int part_type_a, int part_type_b, double eps,
-                        double sig);
 
 /** Calculate Hertzian force factor */
 inline double hertzian_pair_force_factor(IA_parameters const &ia_params,

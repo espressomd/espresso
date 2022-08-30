@@ -1364,42 +1364,35 @@ IF SOFT_SPHERE == 1:
             """
             return {"a", "n", "cutoff"}
 
-
 IF HERTZIAN == 1:
 
-    cdef class HertzianInteraction(NonBondedInteraction):
+    @script_interface_register
+    class HertzianInteraction(NewNonBondedInteraction):
+        """Hertzian interaction.
 
-        def validate_params(self):
-            """Check that parameters are valid.
+        Methods
+        -------
+        set_params()
+            Set or update parameters for the interaction.
+            Parameters marked as required become optional once the
+            interaction has been activated for the first time;
+            subsequent calls to this method update the existing values.
 
-            """
-            if self._params["eps"] < 0:
-                raise ValueError("Hertzian eps a has to be >=0")
-            if self._params["sig"] < 0:
-                raise ValueError("Hertzian sig has to be >=0")
+            Parameters
+            ----------
+            eps : :obj:`float`
+                Magnitude of the interaction.
+            sig : :obj:`float`
+                Interaction length scale.
+        """
 
-        def _get_params_from_es_core(self):
-            cdef IA_parameters * ia_params
-            ia_params = get_ia_param_safe(
-                self._part_types[0],
-                self._part_types[1])
-            return {
-                "eps": ia_params.hertzian.eps,
-                "sig": ia_params.hertzian.sig
-            }
+        _so_name = "Interactions::InteractionHertzian"
 
         def is_active(self):
             """Check if interaction is active.
 
             """
-            return (self._params["eps"] > 0)
-
-        def _set_params_in_es_core(self):
-            if hertzian_set_params(self._part_types[0],
-                                   self._part_types[1],
-                                   self._params["eps"],
-                                   self._params["sig"]):
-                raise Exception("Could not set Hertzian parameters")
+            return self.eps > 0.
 
         def default_params(self):
             """Python dictionary of default parameters.
@@ -1412,21 +1405,6 @@ IF HERTZIAN == 1:
 
             """
             return "Hertzian"
-
-        def set_params(self, **kwargs):
-            """
-            Set parameters for the Hertzian interaction.
-
-            Parameters
-            ----------
-            eps : :obj:`float`
-                Magnitude of the interaction.
-            sig : :obj:`float`
-                Parameter sigma. Determines the length over which the potential
-                decays.
-
-            """
-            super().set_params(**kwargs)
 
         def valid_keys(self):
             """All parameters that can be set.
@@ -1538,8 +1516,6 @@ class NonBondedInteractionHandle(ScriptInterfaceHelper):
             self.morse = MorseInteraction(_type1, _type2)
         IF BUCKINGHAM:
             self.buckingham = BuckinghamInteraction(_type1, _type2)
-        IF HERTZIAN:
-            self.hertzian = HertzianInteraction(_type1, _type2)
         IF TABULATED:
             self.tabulated = TabulatedNonBonded(_type1, _type2)
         IF GAY_BERNE:

@@ -94,6 +94,9 @@ struct SmoothStep_Parameters {
 struct Hertzian_Parameters {
   double eps = 0.0;
   double sig = INACTIVE_CUTOFF;
+  Hertzian_Parameters() = default;
+  Hertzian_Parameters(double eps, double sig);
+  double max_cutoff() const { return sig; }
 };
 
 /** Gaussian potential */

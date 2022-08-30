@@ -25,25 +25,15 @@
 #include "hertzian.hpp"
 
 #ifdef HERTZIAN
-#include "interactions.hpp"
 #include "nonbonded_interaction_data.hpp"
 
-#include <utils/constants.hpp>
+#include <stdexcept>
 
-int hertzian_set_params(int part_type_a, int part_type_b, double eps,
-                        double sig) {
-  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
-
-  if (!data)
-    return ES_ERROR;
-
-  data->hertzian.eps = eps;
-  data->hertzian.sig = sig;
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(part_type_a, part_type_b);
-
-  return ES_OK;
+Hertzian_Parameters::Hertzian_Parameters(double eps, double sig)
+    : eps{eps}, sig{sig} {
+  if (eps < 0.) {
+    throw std::domain_error("Hertzian parameter 'eps' has to be >= 0");
+  }
 }
 
-#endif
+#endif // HERTZIAN

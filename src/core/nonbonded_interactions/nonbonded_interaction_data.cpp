@@ -159,7 +159,7 @@ static double recalc_maximal_cutoff(const IA_parameters &data) {
 #endif
 
 #ifdef HERTZIAN
-  max_cut_current = std::max(max_cut_current, data.hertzian.sig);
+  max_cut_current = std::max(max_cut_current, data.hertzian.max_cutoff());
 #endif
 
 #ifdef GAUSSIAN

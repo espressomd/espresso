@@ -60,10 +60,6 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         int n
         double k0
 
-    cdef struct Hertzian_Parameters:
-        double eps
-        double sig
-
     cdef struct BMHTF_Parameters:
         double A
         double B
@@ -139,8 +135,6 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
 
         Buckingham_Parameters buckingham
 
-        Hertzian_Parameters hertzian
-
         DPDParameters dpd_radial
         DPDParameters dpd_trans
 
@@ -206,11 +200,6 @@ IF SOFT_SPHERE:
     cdef extern from "nonbonded_interactions/soft_sphere.hpp":
         int soft_sphere_set_params(int part_type_a, int part_type_b,
                                    double a, double n, double cut, double offset)
-
-IF HERTZIAN:
-    cdef extern from "nonbonded_interactions/hertzian.hpp":
-        int hertzian_set_params(int part_type_a, int part_type_b,
-                                double eps, double sig)
 
 IF DPD:
     cdef extern from "dpd.hpp":

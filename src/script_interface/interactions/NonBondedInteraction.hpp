@@ -257,6 +257,28 @@ public:
 };
 #endif // LJCOS2
 
+#ifdef HERTZIAN
+class InteractionHertzian
+    : public InteractionPotentialInterface<::Hertzian_Parameters> {
+protected:
+  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+    return &::IA_parameters::hertzian;
+  }
+
+public:
+  InteractionHertzian() {
+    add_parameters({
+        make_autoparameter(&CoreInteraction::eps, "eps"),
+        make_autoparameter(&CoreInteraction::sig, "sig"),
+    });
+  }
+  void make_new_instance(VariantMap const &params) override {
+    m_ia_si = make_shared_from_args<CoreInteraction, double, double>(
+        params, "eps", "sig");
+  }
+};
+#endif // HERTZIAN
+
 #ifdef GAUSSIAN
 class InteractionGaussian
     : public InteractionPotentialInterface<::Gaussian_Parameters> {
@@ -296,6 +318,9 @@ class NonBondedInteractionHandle
 #ifdef LJCOS2
   std::shared_ptr<InteractionLJcos2> m_ljcos2;
 #endif
+#ifdef HERTZIAN
+  std::shared_ptr<InteractionHertzian> m_hertzian;
+#endif
 #ifdef GAUSSIAN
   std::shared_ptr<InteractionGaussian> m_gaussian;
 #endif
@@ -328,6 +353,9 @@ public:
 #endif
 #ifdef LJCOS2
         make_autoparameter(m_ljcos2, "lennard_jones_cos2"),
+#endif
+#ifdef HERTZIAN
+        make_autoparameter(m_hertzian, "hertzian"),
 #endif
 #ifdef GAUSSIAN
         make_autoparameter(m_gaussian, "gaussian"),
@@ -385,6 +413,10 @@ public:
 #ifdef LJCOS2
     set_member<InteractionLJcos2>(m_ljcos2, "lennard_jones_cos2",
                                   "Interactions::InteractionLJcos2", params);
+#endif
+#ifdef HERTZIAN
+    set_member<InteractionHertzian>(
+        m_hertzian, "hertzian", "Interactions::InteractionHertzian", params);
 #endif
 #ifdef GAUSSIAN
     set_member<InteractionGaussian>(
