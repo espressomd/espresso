@@ -261,6 +261,14 @@ class Test(ut.TestCase):
             {"epsilon": 1., "sigma": 1., "width": 1.5, "offset": 0.2},
             ("epsilon", "sigma"))
 
+    @utx.skipIfMissingFeatures("GAUSSIAN")
+    def test_gaussian_exceptions(self):
+        self.check_potential_exceptions(
+            espressomd.interactions.GaussianInteraction,
+            {"eps": 1., "sig": 1., "cutoff": 1.5},
+            ("eps", "sig")
+        )
+
 
 if __name__ == "__main__":
     ut.main()

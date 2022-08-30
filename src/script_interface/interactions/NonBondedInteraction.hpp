@@ -257,6 +257,29 @@ public:
 };
 #endif // LJCOS2
 
+#ifdef GAUSSIAN
+class InteractionGaussian
+    : public InteractionPotentialInterface<::Gaussian_Parameters> {
+protected:
+  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+    return &::IA_parameters::gaussian;
+  }
+
+public:
+  InteractionGaussian() {
+    add_parameters({
+        make_autoparameter(&CoreInteraction::eps, "eps"),
+        make_autoparameter(&CoreInteraction::sig, "sig"),
+        make_autoparameter(&CoreInteraction::cut, "cutoff"),
+    });
+  }
+  void make_new_instance(VariantMap const &params) override {
+    m_ia_si = make_shared_from_args<CoreInteraction, double, double, double>(
+        params, "eps", "sig", "cutoff");
+  }
+};
+#endif // GAUSSIAN
+
 class NonBondedInteractionHandle
     : public AutoParameters<NonBondedInteractionHandle> {
   std::array<int, 2> m_types = {-1, -1};
@@ -272,6 +295,9 @@ class NonBondedInteractionHandle
 #endif
 #ifdef LJCOS2
   std::shared_ptr<InteractionLJcos2> m_ljcos2;
+#endif
+#ifdef GAUSSIAN
+  std::shared_ptr<InteractionGaussian> m_gaussian;
 #endif
 
   template <class T>
@@ -302,6 +328,9 @@ public:
 #endif
 #ifdef LJCOS2
         make_autoparameter(m_ljcos2, "lennard_jones_cos2"),
+#endif
+#ifdef GAUSSIAN
+        make_autoparameter(m_gaussian, "gaussian"),
 #endif
     });
   }
@@ -356,6 +385,10 @@ public:
 #ifdef LJCOS2
     set_member<InteractionLJcos2>(m_ljcos2, "lennard_jones_cos2",
                                   "Interactions::InteractionLJcos2", params);
+#endif
+#ifdef GAUSSIAN
+    set_member<InteractionGaussian>(
+        m_gaussian, "gaussian", "Interactions::InteractionGaussian", params);
 #endif
   }
 

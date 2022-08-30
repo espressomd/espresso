@@ -64,11 +64,6 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         double eps
         double sig
 
-    cdef struct Gaussian_Parameters:
-        double eps
-        double sig
-        double cut
-
     cdef struct BMHTF_Parameters:
         double A
         double B
@@ -146,8 +141,6 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
 
         Hertzian_Parameters hertzian
 
-        Gaussian_Parameters gaussian
-
         DPDParameters dpd_radial
         DPDParameters dpd_trans
 
@@ -218,11 +211,6 @@ IF HERTZIAN:
     cdef extern from "nonbonded_interactions/hertzian.hpp":
         int hertzian_set_params(int part_type_a, int part_type_b,
                                 double eps, double sig)
-
-IF GAUSSIAN:
-    cdef extern from "nonbonded_interactions/gaussian.hpp":
-        int gaussian_set_params(int part_type_a, int part_type_b,
-                                double eps, double sig, double cut)
 
 IF DPD:
     cdef extern from "dpd.hpp":

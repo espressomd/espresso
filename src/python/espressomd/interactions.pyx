@@ -1442,44 +1442,35 @@ IF HERTZIAN == 1:
 
 IF GAUSSIAN == 1:
 
-    cdef class GaussianInteraction(NonBondedInteraction):
+    @script_interface_register
+    class GaussianInteraction(NewNonBondedInteraction):
+        """Gaussian interaction.
 
-        def validate_params(self):
-            """Check that parameters are valid.
+        Methods
+        -------
+        set_params()
+            Set or update parameters for the interaction.
+            Parameters marked as required become optional once the
+            interaction has been activated for the first time;
+            subsequent calls to this method update the existing values.
 
-            """
-            if self._params["eps"] < 0:
-                raise ValueError("Gaussian eps a has to be >=0")
-            if self._params["sig"] < 0:
-                raise ValueError("Gaussian sig has to be >=0")
-            if self._params["offset"] < 0:
-                raise ValueError("Gaussian offset has to be >=0")
+            Parameters
+            ----------
+            eps : :obj:`float`
+                Overlap energy epsilon.
+            sig : :obj:`float`
+                Variance sigma of the Gaussian interaction.
+            cutoff : :obj:`float`
+                Cutoff distance of the interaction.
+        """
 
-        def _get_params_from_es_core(self):
-            cdef IA_parameters * ia_params
-            ia_params = get_ia_param_safe(
-                self._part_types[0],
-                self._part_types[1])
-            return {
-                "eps": ia_params.gaussian.eps,
-                "sig": ia_params.gaussian.sig,
-                "cutoff": ia_params.gaussian.cut
-            }
+        _so_name = "Interactions::InteractionGaussian"
 
         def is_active(self):
             """Check if interaction is active.
 
             """
-            return (self._params["eps"] > 0)
-
-        def _set_params_in_es_core(self):
-            if gaussian_set_params(self._part_types[0],
-                                   self._part_types[1],
-                                   self._params["eps"],
-                                   self._params["sig"],
-                                   self._params["cutoff"]):
-                raise Exception(
-                    "Could not set Gaussian interaction parameters")
+            return self.eps > 0.
 
         def default_params(self):
             """Python dictionary of default parameters.
@@ -1492,22 +1483,6 @@ IF GAUSSIAN == 1:
 
             """
             return "Gaussian"
-
-        def set_params(self, **kwargs):
-            """
-            Set parameters for the Gaussian interaction.
-
-            Parameters
-            ----------
-            eps : :obj:`float`
-                Overlap energy epsilon.
-            sig : :obj:`float`
-                Variance sigma of the Gaussian interaction.
-            cutoff : :obj:`float`
-                Cutoff distance of the interaction.
-
-            """
-            super().set_params(**kwargs)
 
         def valid_keys(self):
             """All parameters that can be set.
@@ -1565,8 +1540,6 @@ class NonBondedInteractionHandle(ScriptInterfaceHelper):
             self.buckingham = BuckinghamInteraction(_type1, _type2)
         IF HERTZIAN:
             self.hertzian = HertzianInteraction(_type1, _type2)
-        IF GAUSSIAN:
-            self.gaussian = GaussianInteraction(_type1, _type2)
         IF TABULATED:
             self.tabulated = TabulatedNonBonded(_type1, _type2)
         IF GAY_BERNE:

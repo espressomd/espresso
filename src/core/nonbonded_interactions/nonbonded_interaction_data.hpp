@@ -101,6 +101,9 @@ struct Gaussian_Parameters {
   double eps = 0.0;
   double sig = 1.0;
   double cut = INACTIVE_CUTOFF;
+  Gaussian_Parameters() = default;
+  Gaussian_Parameters(double eps, double sig, double cut);
+  double max_cutoff() const { return cut; }
 };
 
 /** BMHTF NaCl potential */

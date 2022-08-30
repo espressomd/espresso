@@ -163,7 +163,7 @@ static double recalc_maximal_cutoff(const IA_parameters &data) {
 #endif
 
 #ifdef GAUSSIAN
-  max_cut_current = std::max(max_cut_current, data.gaussian.cut);
+  max_cut_current = std::max(max_cut_current, data.gaussian.max_cutoff());
 #endif
 
 #ifdef BMHTF_NACL

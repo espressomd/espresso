@@ -31,15 +31,11 @@
 
 #include "nonbonded_interaction_data.hpp"
 
-#include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <cmath>
 
 #ifdef GAUSSIAN
-
-int gaussian_set_params(int part_type_a, int part_type_b, double eps,
-                        double sig, double cut);
 
 /** Calculate Gaussian force factor */
 inline double gaussian_pair_force_factor(IA_parameters const &ia_params,
