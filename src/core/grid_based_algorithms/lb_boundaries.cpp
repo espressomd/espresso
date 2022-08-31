@@ -52,8 +52,6 @@
 #include <stdexcept>
 #include <vector>
 
-using Utils::get_linear_index;
-
 namespace LBBoundaries {
 
 std::vector<std::shared_ptr<LBBoundary>> lbboundaries;
@@ -87,8 +85,8 @@ bool sanity_check_mach_limit() {
                      });
 }
 
-void ek_init_boundaries() {
-#if defined(CUDA) && defined(EK_BOUNDARIES)
+#if defined(EK_BOUNDARIES)
+static void ek_init_boundaries() {
   int number_of_boundnodes = 0;
 
   std::vector<float> host_wallcharge_species_density;
@@ -164,8 +162,8 @@ void ek_init_boundaries() {
     ek_init_species_density_wallcharge(host_wallcharge_species_density.data(),
                                        wallcharge_species);
   }
-#endif
 }
+#endif // defined(EK_BOUNDARIES)
 
 /** Initialize boundary conditions for all constraints in the system. */
 void lb_init_boundaries() {
@@ -173,9 +171,10 @@ void lb_init_boundaries() {
     if (this_node != 0) {
       return;
     }
-#if defined(CUDA)
 #if defined(LB_BOUNDARIES_GPU)
+#if defined(EK_BOUNDARIES)
     ek_init_boundaries();
+#endif
     unsigned number_of_boundnodes = 0;
     std::vector<int> host_boundary_node_list;
     std::vector<int> host_boundary_index_list;
@@ -234,9 +233,9 @@ void lb_init_boundaries() {
              "compiled in. Activate in myconfig.hpp.";
     }
 #endif // defined (LB_BOUNDARIES_GPU)
-#endif // defined (CUDA)
   } else if (lattice_switch == ActiveLB::CPU) {
 #if defined(LB_BOUNDARIES)
+    using Utils::get_linear_index;
     boost::for_each(lbfields, [](auto &f) { f.boundary = 0; });
 
     auto const node_pos = calc_node_pos(comm_cart);
@@ -285,7 +284,6 @@ REGISTER_CALLBACK(lb_collect_boundary_forces_local)
 
 Utils::Vector3d lbboundary_get_force(LBBoundary const *lbb) {
   Utils::Vector3d force{};
-#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
   auto const it =
       boost::find_if(lbboundaries, [lbb](std::shared_ptr<LBBoundary> const &i) {
         return i.get() == lbb;
@@ -296,7 +294,7 @@ Utils::Vector3d lbboundary_get_force(LBBoundary const *lbb) {
                              "system.lbboundaries.");
   std::vector<double> forces(3 * lbboundaries.size());
   if (lattice_switch == ActiveLB::GPU) {
-#if defined(LB_BOUNDARIES_GPU) && defined(CUDA)
+#if defined(LB_BOUNDARIES_GPU)
     lb_gpu_get_boundary_forces(forces);
 #endif
   } else if (lattice_switch == ActiveLB::CPU) {
@@ -309,10 +307,9 @@ Utils::Vector3d lbboundary_get_force(LBBoundary const *lbb) {
   force[0] = forces[3 * container_index + 0];
   force[1] = forces[3 * container_index + 1];
   force[2] = forces[3 * container_index + 2];
-#endif
   return force;
 }
 
-#endif /* LB_BOUNDARIES or LB_BOUNDARIES_GPU */
+#endif // defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 
 } // namespace LBBoundaries
