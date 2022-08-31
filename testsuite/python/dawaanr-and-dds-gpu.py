@@ -41,7 +41,7 @@ class DDSGPUTest(ut.TestCase):
         pf_dds_gpu = 2.34
         pf_dawaanr = 3.524
         ratio_dawaanr_dds_gpu = pf_dawaanr / pf_dds_gpu
-        self.system.box_l = 3 * [15]
+        self.system.box_l = [15., 15., 15.]
         self.system.periodicity = [False, False, False]
         self.system.time_step = 1E-4
         self.system.cell_system.skin = 0.1

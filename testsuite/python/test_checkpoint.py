@@ -668,6 +668,7 @@ class CheckpointTest(ut.TestCase):
         if self.n_nodes == 1:
             union = c[7].shape
             self.assertIsInstance(union, espressomd.shapes.Union)
+            self.assertEqual(c[7].particle_type, 2)
             self.assertEqual(len(union), 2)
             wall1, wall2 = union.call_method('get_elements')
             self.assertIsInstance(wall1, espressomd.shapes.Wall)
