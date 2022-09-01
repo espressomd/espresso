@@ -115,7 +115,7 @@ static void mpi_set_tuned_p3m_local(double prefactor) {
                            0.654,
                            1e-3};
   auto solver =
-      std::make_shared<CoulombP3M>(std::move(p3m), prefactor, 1, false);
+      std::make_shared<CoulombP3M>(std::move(p3m), prefactor, 1, false, true);
   ::Coulomb::add_actor(solver);
 }
 

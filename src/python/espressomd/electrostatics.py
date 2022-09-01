@@ -155,6 +155,7 @@ class _P3MBase(ElectrostaticInteraction):
                 "mesh_off": [-1., -1., -1.],
                 "prefactor": 0.,
                 "check_neutrality": True,
+                "check_complex_residuals": True,
                 "tune": True,
                 "timings": 10,
                 "verbose": True}
@@ -231,6 +232,9 @@ class P3M(_P3MBase):
     check_neutrality : :obj:`bool`, optional
         Raise a warning if the system is not electrically neutral when
         set to ``True`` (default).
+    check_complex_residuals: :obj:`bool`, optional
+        Raise a warning if the backward Fourier transform has non-zero
+        complex residuals when set to ``True`` (default).
 
     """
     _so_name = "Coulomb::CoulombP3M"
@@ -281,6 +285,9 @@ class P3MGPU(_P3MBase):
     check_neutrality : :obj:`bool`, optional
         Raise a warning if the system is not electrically neutral when
         set to ``True`` (default).
+    check_complex_residuals: :obj:`bool`, optional
+        Raise a warning if the backward Fourier transform has non-zero
+        complex residuals when set to ``True`` (default).
 
     """
     _so_name = "Coulomb::CoulombP3MGPU"

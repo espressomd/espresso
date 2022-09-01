@@ -125,6 +125,7 @@ if espressomd.has_features('P3M') and ('P3M' in modes or 'ELC' in modes):
         cao=1,
         alpha=1.0,
         r_cut=1.0,
+        check_complex_residuals=False,
         timings=15,
         tune=False)
     if 'ELC' in modes:

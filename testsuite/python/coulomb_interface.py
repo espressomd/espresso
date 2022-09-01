@@ -59,7 +59,8 @@ class Test(ut.TestCase):
             system, espressomd.electrostatics.P3M,
             dict(prefactor=2., epsilon=0., mesh_off=[0.6, 0.7, 0.8], r_cut=1.5,
                  cao=2, mesh=[8, 10, 8], alpha=12., accuracy=0.01, tune=False,
-                 check_neutrality=True, charge_neutrality_tolerance=7e-12))
+                 check_neutrality=True, charge_neutrality_tolerance=7e-12,
+                 check_complex_residuals=False))
         test_p3m_cpu_non_metallic = tests_common.generate_test_for_actor_class(
             system, espressomd.electrostatics.P3M,
             dict(prefactor=2., epsilon=3., mesh_off=[0.6, 0.7, 0.8], r_cut=1.5,
@@ -78,7 +79,8 @@ class Test(ut.TestCase):
             system, espressomd.electrostatics.P3MGPU,
             dict(prefactor=2., epsilon=0., mesh_off=[0.6, 0.7, 0.8], r_cut=1.5,
                  cao=2, mesh=[8, 10, 8], alpha=12., accuracy=0.01, tune=False,
-                 check_neutrality=True, charge_neutrality_tolerance=7e-12))
+                 check_neutrality=True, charge_neutrality_tolerance=7e-12,
+                 check_complex_residuals=False))
         test_p3m_gpu_non_metallic = tests_common.generate_test_for_actor_class(
             system, espressomd.electrostatics.P3MGPU,
             dict(prefactor=2., epsilon=3., mesh_off=[0.6, 0.7, 0.8], r_cut=1.5,
