@@ -166,13 +166,25 @@ class Test(ut.TestCase):
         with self.assertRaisesRegex(ValueError, "Parameter 'prefactor' must be > 0"):
             espressomd.magnetostatics.DipolarP3M(
                 **{**dp3m_params, 'prefactor': -2.})
-        with self.assertRaisesRegex(ValueError, "DipolarP3M mesh has to be an integer or integer list of length 3"):
+        with self.assertRaisesRegex(ValueError, "Parameter 'mesh' has to be an integer or integer list of length 3"):
             espressomd.magnetostatics.DipolarP3M(
                 **{**dp3m_params, 'mesh': [49, 49]})
         dp3m = DP3M(**dp3m_params)
         mdlc = MDLC(gap_size=2., maxPWerror=0.1, actor=dp3m)
         with self.assertRaisesRegex(ValueError, "Parameter 'actor' of type Dipoles::DipolarLayerCorrection isn't supported by DLC"):
             MDLC(gap_size=2., maxPWerror=0.1, actor=mdlc)
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'accuracy' is not a valid parameter"):
+            MDLC(gap_size=2., maxPWerror=0.1, actor=dp3m, accuracy=1e-3)
+
+    @utx.skipIfMissingGPU()
+    @utx.skipIfMissingFeatures(["DIPOLAR_BARNES_HUT"])
+    def test_exceptions_barnes_hut(self):
+        valid_params = dict(prefactor=2., epssq=200., itolsq=8.)
+        for key in valid_params.keys():
+            invalid_params = valid_params.copy()
+            invalid_params[key] = -1.
+            with self.assertRaisesRegex(ValueError, f"Parameter '{key}' must be > 0"):
+                espressomd.magnetostatics.DipolarBarnesHutGpu(**invalid_params)
 
 
 if __name__ == "__main__":

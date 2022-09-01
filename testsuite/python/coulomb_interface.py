@@ -97,22 +97,37 @@ class Test(ut.TestCase):
     def test_mmm1d_cpu(self):
         self.system.periodicity = [False, False, True]
         self.system.cell_system.set_n_square()
+        valid_params = dict(
+            prefactor=1., maxPWerror=1e-3, far_switch_radius=1.,
+            check_neutrality=True, charge_neutrality_tolerance=7e-12,
+            timings=5, verbose=False)
         tests_common.generate_test_for_actor_class(
-            self.system, espressomd.electrostatics.MMM1D,
-            dict(prefactor=1.0, maxPWerror=1e-3, far_switch_radius=1.,
-                 check_neutrality=True, charge_neutrality_tolerance=7e-12,
-                 timings=5, verbose=False))(self)
+            self.system, espressomd.electrostatics.MMM1D, valid_params)(self)
+
+        for key in ["prefactor", "maxPWerror", "far_switch_radius", "timings"]:
+            invalid_params = valid_params.copy()
+            invalid_params[key] = -2
+            with self.assertRaisesRegex(ValueError, f"Parameter '{key}' must be > 0"):
+                espressomd.electrostatics.MMM1D(**invalid_params)
 
     @utx.skipIfMissingGPU()
     @utx.skipIfMissingFeatures(["CUDA", "MMM1D_GPU"])
     def test_mmm1d_gpu(self):
         self.system.periodicity = [False, False, True]
         self.system.cell_system.set_n_square()
+        valid_params = dict(
+            prefactor=1., maxPWerror=1e-3, far_switch_radius=1.,
+            check_neutrality=True, charge_neutrality_tolerance=7e-12,
+            bessel_cutoff=1)
         tests_common.generate_test_for_actor_class(
-            self.system, espressomd.electrostatics.MMM1DGPU,
-            dict(prefactor=1., maxPWerror=1e-3, far_switch_radius=1.,
-                 check_neutrality=True, charge_neutrality_tolerance=7e-12,
-                 bessel_cutoff=1))(self)
+            self.system, espressomd.electrostatics.MMM1DGPU, valid_params)(self)
+
+        for key in ["prefactor", "maxPWerror",
+                    "far_switch_radius", "bessel_cutoff"]:
+            invalid_params = valid_params.copy()
+            invalid_params[key] = -2
+            with self.assertRaisesRegex(ValueError, f"Parameter '{key}' must be > 0"):
+                espressomd.electrostatics.MMM1DGPU(**invalid_params)
 
     def test_charge_neutrality_check(self):
         self.system.part.add(pos=(0.0, 0.0, 0.0), q=1.)
@@ -173,12 +188,16 @@ class Test(ut.TestCase):
         # check runtime errors and input parameters
         with self.assertRaisesRegex(ValueError, "Parameter 'prefactor' must be > 0"):
             P3M(**{**p3m_params, 'prefactor': -2.})
-        with self.assertRaisesRegex(ValueError, "P3M mesh has to be an integer or integer list of length 3"):
+        with self.assertRaisesRegex(ValueError, "Parameter 'timings' must be > 0"):
+            P3M(**{**p3m_params, 'timings': -2})
+        with self.assertRaisesRegex(ValueError, "Parameter 'mesh' has to be an integer or integer list of length 3"):
             P3M(**{**p3m_params, 'mesh': [8, 8]})
         with self.assertRaisesRegex(ValueError, "Parameter 'actor' of type Coulomb::ElectrostaticLayerCorrection isn't supported by ELC"):
             ELC(gap_size=2., maxPWerror=1., actor=elc)
         with self.assertRaisesRegex(ValueError, "Parameter 'actor' of type Coulomb::DebyeHueckel isn't supported by ELC"):
             ELC(gap_size=2., maxPWerror=1., actor=dh)
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'accuracy' is not a valid parameter"):
+            ELC(gap_size=2., maxPWerror=1., actor=p3m, accuracy=1e-3)
         with self.assertRaisesRegex(RuntimeError, "Parameter 'actor' is missing"):
             ELC(gap_size=2., maxPWerror=1.)
         with self.assertRaisesRegex(ValueError, "Parameter 'const_pot' must be True when 'pot_diff' is non-zero"):

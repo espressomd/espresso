@@ -331,7 +331,7 @@ class Test(ut.TestCase):
         self.system.periodicity = (False, False, True)
         self.check_mmm1d_exceptions(espressomd.electrostatics.MMM1DGPU)
 
-        with self.assertRaisesRegex(ValueError, "switching radius must not be larger than box length"):
+        with self.assertRaisesRegex(ValueError, "Parameter 'far_switch_radius' must not be larger than box length"):
             espressomd.electrostatics.MMM1DGPU(
                 prefactor=1., maxPWerror=1e-2,
                 far_switch_radius=2. * self.system.box_l[2])

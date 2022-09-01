@@ -276,6 +276,9 @@ CoulombP3M::CoulombP3M(P3MParameters &&parameters, double prefactor,
       tune_verbose{tune_verbose}, check_complex_residuals{
                                       check_complex_residuals} {
 
+  if (tune_timings <= 0) {
+    throw std::domain_error("Parameter 'timings' must be > 0");
+  }
   m_is_tuned = !p3m.params.tuning;
   p3m.params.tuning = false;
   set_prefactor(prefactor);
