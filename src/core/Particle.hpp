@@ -492,8 +492,10 @@ public:
   auto &torque() { return f.torque; }
   auto const &omega() const { return m.omega; }
   auto &omega() { return m.omega; }
+#ifdef EXTERNAL_FORCES
   auto const &ext_torque() const { return p.ext_torque; }
   auto &ext_torque() { return p.ext_torque; }
+#endif // EXTERNAL_FORCES
   auto calc_director() const { return r.calc_director(); }
 #else  // ROTATION
   bool can_rotate() const { return false; }
