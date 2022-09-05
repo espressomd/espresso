@@ -134,6 +134,10 @@ struct BMHTF_Parameters {
   double sig = 0.0;
   double cut = INACTIVE_CUTOFF;
   double computed_shift = 0.0;
+  BMHTF_Parameters() = default;
+  BMHTF_Parameters(double A, double B, double C, double D, double sig,
+                   double cut);
+  double max_cutoff() const { return cut; }
 };
 
 /** Morse potential */

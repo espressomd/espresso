@@ -938,67 +938,17 @@ IF SMOOTH_STEP == 1:
 
 IF BMHTF_NACL == 1:
 
-    cdef class BMHTFInteraction(NonBondedInteraction):
+    @script_interface_register
+    class BMHTFInteraction(NewNonBondedInteraction):
+        """BMHTF interaction.
 
-        def validate_params(self):
-            """Check that parameters are valid.
-
-            """
-            if self._params["a"] < 0:
-                raise ValueError("BMHTF a has to be >=0")
-            if self._params["c"] < 0:
-                raise ValueError("BMHTF c has to be >=0")
-            if self._params["d"] < 0:
-                raise ValueError("BMHTF d has to be >=0")
-            if self._params["cutoff"] < 0:
-                raise ValueError("BMHTF cutoff has to be >=0")
-
-        def _get_params_from_es_core(self):
-            cdef IA_parameters * ia_params
-            ia_params = get_ia_param_safe(self._part_types[0],
-                                          self._part_types[1])
-            return {
-                "a": ia_params.bmhtf.A,
-                "b": ia_params.bmhtf.B,
-                "c": ia_params.bmhtf.C,
-                "d": ia_params.bmhtf.D,
-                "sig": ia_params.bmhtf.sig,
-                "cutoff": ia_params.bmhtf.cut,
-            }
-
-        def is_active(self):
-            """Check if interaction is active.
-
-            """
-            return (self._params["a"] > 0) and (
-                self._params["c"] > 0) and (self._params["d"] > 0)
-
-        def _set_params_in_es_core(self):
-            if BMHTF_set_params(self._part_types[0],
-                                self._part_types[1],
-                                self._params["a"],
-                                self._params["b"],
-                                self._params["c"],
-                                self._params["d"],
-                                self._params["sig"],
-                                self._params["cutoff"]):
-                raise Exception("Could not set BMHTF parameters")
-
-        def default_params(self):
-            """Python dictionary of default parameters.
-
-            """
-            return {}
-
-        def type_name(self):
-            """Name of interaction type.
-
-            """
-            return "BMHTF"
-
-        def set_params(self, **kwargs):
-            """
-            Set parameters for the BMHTF interaction.
+        Methods
+        -------
+        set_params()
+            Set or update parameters for the interaction.
+            Parameters marked as required become optional once the
+            interaction has been activated for the first time;
+            subsequent calls to this method update the existing values.
 
             Parameters
             ----------
@@ -1014,9 +964,27 @@ IF BMHTF_NACL == 1:
                 Shift in the exponent.
             cutoff : :obj:`float`
                 Cutoff distance of the interaction.
+        """
+
+        _so_name = "Interactions::InteractionBMHTF"
+
+        def is_active(self):
+            """Check if interaction is active.
 
             """
-            super().set_params(**kwargs)
+            return self.a > 0. and self.c > 0. and self.d > 0.
+
+        def default_params(self):
+            """Python dictionary of default parameters.
+
+            """
+            return {}
+
+        def type_name(self):
+            """Name of interaction type.
+
+            """
+            return "BMHTF"
 
         def valid_keys(self):
             """All parameters that can be set.
@@ -1438,8 +1406,6 @@ class NonBondedInteractionHandle(ScriptInterfaceHelper):
             self.soft_sphere = SoftSphereInteraction(_type1, _type2)
         IF SMOOTH_STEP:
             self.smooth_step = SmoothStepInteraction(_type1, _type2)
-        IF BMHTF_NACL:
-            self.bmhtf = BMHTFInteraction(_type1, _type2)
         IF MORSE:
             self.morse = MorseInteraction(_type1, _type2)
         IF BUCKINGHAM:

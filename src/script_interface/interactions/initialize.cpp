@@ -77,6 +77,9 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
 #ifdef GAUSSIAN
   om->register_new<InteractionGaussian>("Interactions::InteractionGaussian");
 #endif
+#ifdef BMHTF_NACL
+  om->register_new<InteractionBMHTF>("Interactions::InteractionBMHTF");
+#endif
 }
 } // namespace Interactions
 } // namespace ScriptInterface

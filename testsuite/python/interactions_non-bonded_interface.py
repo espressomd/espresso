@@ -296,6 +296,14 @@ class Test(ut.TestCase):
             ("eps", "sig")
         )
 
+    @utx.skipIfMissingFeatures("BMHTF_NACL")
+    def test_bmhtf_exceptions(self):
+        self.check_potential_exceptions(
+            espressomd.interactions.BMHTFInteraction,
+            {"a": 3., "b": 2., "c": 1., "d": 4., "sig": 0.13, "cutoff": 1.2},
+            ("a", "c", "d")
+        )
+
 
 if __name__ == "__main__":
     ut.main()

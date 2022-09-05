@@ -166,7 +166,7 @@ static double recalc_maximal_cutoff(const IA_parameters &data) {
 #endif
 
 #ifdef BMHTF_NACL
-  max_cut_current = std::max(max_cut_current, data.bmhtf.cut);
+  max_cut_current = std::max(max_cut_current, data.bmhtf.max_cutoff());
 #endif
 
 #ifdef MORSE

@@ -357,6 +357,34 @@ public:
 };
 #endif // GAUSSIAN
 
+#ifdef BMHTF_NACL
+class InteractionBMHTF
+    : public InteractionPotentialInterface<::BMHTF_Parameters> {
+protected:
+  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+    return &::IA_parameters::bmhtf;
+  }
+
+public:
+  InteractionBMHTF() {
+    add_parameters({
+        make_autoparameter(&CoreInteraction::A, "a"),
+        make_autoparameter(&CoreInteraction::B, "b"),
+        make_autoparameter(&CoreInteraction::C, "c"),
+        make_autoparameter(&CoreInteraction::D, "d"),
+        make_autoparameter(&CoreInteraction::sig, "sig"),
+        make_autoparameter(&CoreInteraction::cut, "cutoff"),
+    });
+  }
+
+  void make_new_instance(VariantMap const &params) override {
+    m_ia_si = make_shared_from_args<CoreInteraction, double, double, double,
+                                    double, double, double>(
+        params, "a", "b", "c", "d", "sig", "cutoff");
+  }
+};
+#endif // BMHTF_NACL
+
 class NonBondedInteractionHandle
     : public AutoParameters<NonBondedInteractionHandle> {
   std::array<int, 2> m_types = {-1, -1};
@@ -381,6 +409,9 @@ class NonBondedInteractionHandle
 #endif
 #ifdef GAUSSIAN
   std::shared_ptr<InteractionGaussian> m_gaussian;
+#endif
+#ifdef BMHTF_NACL
+  std::shared_ptr<InteractionBMHTF> m_bmhtf;
 #endif
 
   template <class T>
@@ -420,6 +451,9 @@ public:
 #endif
 #ifdef GAUSSIAN
         make_autoparameter(m_gaussian, "gaussian"),
+#endif
+#ifdef BMHTF_NACL
+        make_autoparameter(m_bmhtf, "bmhtf"),
 #endif
     });
   }
@@ -486,6 +520,10 @@ public:
 #ifdef GAUSSIAN
     set_member<InteractionGaussian>(
         m_gaussian, "gaussian", "Interactions::InteractionGaussian", params);
+#endif
+#ifdef BMHTF_NACL
+    set_member<InteractionBMHTF>(m_bmhtf, "bmhtf",
+                                 "Interactions::InteractionBMHTF", params);
 #endif
   }
 

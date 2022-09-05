@@ -47,15 +47,6 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         int n
         double k0
 
-    cdef struct BMHTF_Parameters:
-        double A
-        double B
-        double C
-        double D
-        double sig
-        double cut
-        double computed_shift
-
     cdef struct Morse_Parameters:
         double eps
         double alpha
@@ -114,8 +105,6 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
 
         SmoothStep_Parameters smooth_step
 
-        BMHTF_Parameters bmhtf
-
         Morse_Parameters morse
 
         Buckingham_Parameters buckingham
@@ -149,12 +138,6 @@ IF SMOOTH_STEP:
                                    double d, int n, double eps,
                                    double k0, double sig,
                                    double cut)
-IF BMHTF_NACL:
-    cdef extern from "nonbonded_interactions/bmhtf-nacl.hpp":
-        int BMHTF_set_params(int part_type_a, int part_type_b,
-                             double A, double B, double C,
-                             double D, double sig, double cut)
-
 IF MORSE:
     cdef extern from "nonbonded_interactions/morse.hpp":
         int morse_set_params(int part_type_a, int part_type_b,
