@@ -34,6 +34,14 @@ params_lin = {'initial_pos_offset': 0.1, 'time_0': 0.1, 'shear_velocity': 1.2}
 params_osc = {'initial_pos_offset': 0.1, 'time_0': -2.1, 'amplitude': 2.3,
               'omega': 2.51}
 lin_protocol = espressomd.lees_edwards.LinearShear(**params_lin)
+
+
+# pass in **params_lin
+def get_lin_pos_offset(time, initial_pos_offset=None,
+                       time_0=None, shear_velocity=None):
+    return initial_pos_offset + (time - time_0) * shear_velocity
+
+
 osc_protocol = espressomd.lees_edwards.OscillatoryShear(**params_osc)
 off_protocol = espressomd.lees_edwards.Off()
 
@@ -294,11 +302,13 @@ class LeesEdwards(ut.TestCase):
         vel = np.array([0, 1, 0])
         p = system.part.add(pos=pos, v=vel)
 
+        print(system.time, system.lees_edwards.pos_offset)      
         system.integrator.run(1)
+        print(system.time, system.lees_edwards.pos_offset)      
 
         np.testing.assert_almost_equal(
-            p.lees_edwards_flag * 1.0 * system.time_step * 0.5,
-            p.lees_edwards_offset)
+            p.lees_edwards_offset, 
+            get_lin_pos_offset(system.time - system.time_step / 2, **params_lin))
         np.testing.assert_almost_equal(p.lees_edwards_flag, -1)
 
         offset1 = p.lees_edwards_flag * 1.0 * system.time_step * 0.5
@@ -324,11 +334,10 @@ class LeesEdwards(ut.TestCase):
                 shear_plane_normal=shear_plane_normal, protocol=lin_protocol)
 
             shear_axis = axis(shear_direction)
-            system.part.clear()
             p1 = system.part.add(
                 pos=[epsilon] * 3, v=np.random.random(3), fix=[True] * 3)
             p2 = system.part.add(
-                pos=2 * system.box_l - epsilon, v=np.random.random(3), fix=[True] * 3)
+                pos=system.box_l - epsilon, v=np.random.random(3), fix=[True] * 3)
             r_euclid = -2 * np.array([epsilon] * 3)
 
             # check distance
@@ -338,27 +347,11 @@ class LeesEdwards(ut.TestCase):
             np.testing.assert_allclose(
                 np.copy(system.distance_vec(p1, p2)),
                 -np.copy(system.distance_vec(p2, p1)))
-         # Check, tahat the core agrees 
-        cs_pairs = self.system.cell_system.non_bonded_loop_trace()
-        # format [id1, id2, pos1, pos2, vec2, mpi_node]
-        assert len(cs_pairs) == 1
-        if cs_pairs[0][0] == p1.id:
-            np.testing.assert_allclose(
-                np.copy(
-                    system.distance_vec(
-                        p2, p1)), np.copy(
-                    cs_pairs[0][4]))
-        else:
-            np.testing.assert_allclose(
-                np.copy(
-                    system.distance_vec(
-                        p1, p2)), np.copy(
-                    cs_pairs[0][4]))
 
-        # Check velocity difference
-        np.testing.assert_allclose(
-            np.copy(system.velocity_difference(p1, p2)),
-            np.copy(p2.v - p1.v) - system.lees_edwards.shear_velocity * shear_axis)
+            # Check velocity difference
+            np.testing.assert_allclose(
+                np.copy(system.velocity_difference(p1, p2)),
+                np.copy(p2.v - p1.v) - system.lees_edwards.shear_velocity * shear_axis)
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_interactions(self):
@@ -438,19 +431,26 @@ class LeesEdwards(ut.TestCase):
 
         # Construct pair of VS across normal boundary
         system.lees_edwards.protocol = None
-        p1 = system.part.add(pos=(2.5, 0.0, 2.5), rotation=[False] * 3, id=0)
+        p1 = system.part.add(pos=(2.5, 0.0, 2.5), rotation=[
+                             False] * 3, id=0, v=np.array((-1, 2, 3)))
         p2 = system.part.add(pos=(2.5, 1.0, 2.5))
         p2.vs_auto_relate_to(p1)
         p3 = system.part.add(pos=(2.5, 4.0, 2.5))
         p3.vs_auto_relate_to(p1)
-        system.integrator.run(1)
-        print(p2.pos_folded, p3.pos_folded, system.distance_vec(p2, p3))
+        #system.integrator.run(0, recalc_forces=True)
 
         system.lees_edwards.set_boundary_conditions(
             shear_direction="x", shear_plane_normal="y", protocol=lin_protocol)
-        print(p2.pos_folded, p3.pos_folded, system.distance_vec(p2, p3))
-        system.integrator.run(1)
-        print(p2.pos_folded, p3.pos_folded, system.distance_vec(p2, p3))
+        # Test position and velocity of VS with Le shift
+        old_p3_pos = p3.pos
+        expected_p3_pos = old_p3_pos - \
+            np.array((get_lin_pos_offset(system.time, **params_lin), 0, 0))
+        system.integrator.run(0, recalc_forces=True)
+        np.testing.assert_allclose(np.copy(p3.pos_folded), expected_p3_pos)
+        np.testing.assert_allclose(
+            p3.v, p1.v + np.array((params_lin["shear_velocity"], 0, 0)))
+
+        # Check distances
         np.testing.assert_allclose(
             np.copy(system.distance_vec(p3, p2)), [0, 2, 0], atol=tol)
         np.testing.assert_allclose(
