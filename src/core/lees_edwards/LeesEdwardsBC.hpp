@@ -39,12 +39,16 @@ struct LeesEdwardsBC {
 
     double n_le_crossings =
         std::round(res[shear_plane_normal] * l_inv[shear_plane_normal]);
-    res[shear_direction] += n_le_crossings * pos_offset;
+    if (n_le_crossings >= 1)
+      res[shear_direction] += pos_offset;
+    if (n_le_crossings <= -1)
+      res[shear_direction] -= pos_offset;
 
     for (int i : {0, 1, 2}) {
-      if (periodic[i])
+      if (periodic[i]) {
         n_jumps[i] = std::round(res[i] * l_inv[i]);
-      res[i] -= n_jumps[i] * l[i];
+        res[i] -= n_jumps[i] * l[i];
+      }
     }
 
     return res;
