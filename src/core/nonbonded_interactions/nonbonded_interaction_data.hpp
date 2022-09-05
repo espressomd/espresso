@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <memory>
 #include <string>
 #include <vector>
@@ -72,12 +73,27 @@ struct LJGen_Parameters {
   double cut = INACTIVE_CUTOFF;
   double shift = 0.0;
   double offset = 0.0;
+  double lambda = 1.0;
+  double softrad = 0.0;
   double a1 = 0.0;
   double a2 = 0.0;
   double b1 = 0.0;
   double b2 = 0.0;
-  double lambda1 = 1.0;
-  double softrad = 0.0;
+  LJGen_Parameters() = default;
+  LJGen_Parameters(double epsilon, double sigma, double cutoff, double shift,
+                   double offset,
+#ifdef LJGEN_SOFTCORE
+                   double lam, double delta,
+#endif
+                   double e1, double e2, double b1, double b2);
+  double get_auto_shift() const {
+    auto auto_shift = 0.;
+    if (cut != 0.) {
+      auto_shift = b2 * std::pow(sig / cut, a2) - b1 * std::pow(sig / cut, a1);
+    }
+    return auto_shift;
+  }
+  double max_cutoff() const { return cut + offset; }
 };
 
 /** smooth step potential */

@@ -196,6 +196,61 @@ public:
 };
 #endif // LENNARD_JONES
 
+#ifdef LENNARD_JONES_GENERIC
+class InteractionLJGen
+    : public InteractionPotentialInterface<::LJGen_Parameters> {
+protected:
+  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+    return &::IA_parameters::ljgen;
+  }
+
+public:
+  InteractionLJGen() {
+    add_parameters({
+        make_autoparameter(&CoreInteraction::eps, "epsilon"),
+        make_autoparameter(&CoreInteraction::sig, "sigma"),
+        make_autoparameter(&CoreInteraction::cut, "cutoff"),
+        make_autoparameter(&CoreInteraction::shift, "shift"),
+        make_autoparameter(&CoreInteraction::offset, "offset"),
+#ifdef LJGEN_SOFTCORE
+        make_autoparameter(&CoreInteraction::lambda, "lam"),
+        make_autoparameter(&CoreInteraction::softrad, "delta"),
+#endif
+        make_autoparameter(&CoreInteraction::a1, "e1"),
+        make_autoparameter(&CoreInteraction::a2, "e2"),
+        make_autoparameter(&CoreInteraction::b1, "b1"),
+        make_autoparameter(&CoreInteraction::b2, "b2"),
+    });
+  }
+
+  void make_new_instance(VariantMap const &params) override {
+    auto new_params = params;
+    auto const *shift_string = boost::get<std::string>(&params.at("shift"));
+    if (shift_string != nullptr) {
+      if (*shift_string != "auto") {
+        throw std::invalid_argument(
+            "Generic LJ parameter 'shift' has to be 'auto' or a float");
+      }
+      new_params["shift"] = 0.;
+    }
+    m_ia_si = make_shared_from_args<CoreInteraction, double, double, double,
+                                    double, double,
+#ifdef LJGEN_SOFTCORE
+                                    double, double,
+#endif
+                                    double, double, double, double>(
+        new_params, "epsilon", "sigma", "cutoff", "shift", "offset",
+#ifdef LJGEN_SOFTCORE
+        "lam", "delta",
+#endif
+        "e1", "e2", "b1", "b2");
+    if (shift_string != nullptr) {
+      m_ia_si->shift = m_ia_si->get_auto_shift();
+    }
+  }
+};
+#endif // LENNARD_JONES_GENERIC
+
 #ifdef LJCOS
 class InteractionLJcos
     : public InteractionPotentialInterface<::LJcos_Parameters> {
@@ -312,6 +367,9 @@ class NonBondedInteractionHandle
 #ifdef LENNARD_JONES
   std::shared_ptr<InteractionLJ> m_lj;
 #endif
+#ifdef LENNARD_JONES_GENERIC
+  std::shared_ptr<InteractionLJGen> m_ljgen;
+#endif
 #ifdef LJCOS
   std::shared_ptr<InteractionLJcos> m_ljcos;
 #endif
@@ -347,6 +405,9 @@ public:
 #endif
 #ifdef LENNARD_JONES
         make_autoparameter(m_lj, "lennard_jones"),
+#endif
+#ifdef LENNARD_JONES_GENERIC
+        make_autoparameter(m_ljgen, "generic_lennard_jones"),
 #endif
 #ifdef LJCOS
         make_autoparameter(m_ljcos, "lennard_jones_cos"),
@@ -405,6 +466,10 @@ public:
 #ifdef LENNARD_JONES
     set_member<InteractionLJ>(m_lj, "lennard_jones",
                               "Interactions::InteractionLJ", params);
+#endif
+#ifdef LENNARD_JONES_GENERIC
+    set_member<InteractionLJGen>(m_ljgen, "generic_lennard_jones",
+                                 "Interactions::InteractionLJGen", params);
 #endif
 #ifdef LJCOS
     set_member<InteractionLJcos>(m_ljcos, "lennard_jones_cos",

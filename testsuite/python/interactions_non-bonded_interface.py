@@ -247,6 +247,25 @@ class Test(ut.TestCase):
             {"epsilon": 1., "sigma": 1., "cutoff": 1.5, "shift": 0.2},
             ("epsilon", "sigma"))
 
+    @utx.skipIfMissingFeatures("LENNARD_JONES_GENERIC")
+    def test_ljgen_exceptions(self):
+        check_keys = ("epsilon", "sigma")
+        params = {"epsilon": 1., "sigma": 1., "cutoff": 1.5, "shift": 0.2,
+                  "offset": 0.1, "b1": 1., "b2": 1., "e1": 12., "e2": 6.}
+        if espressomd.has_features(["LJGEN_SOFTCORE"]):
+            params["delta"] = 0.1
+            params["lam"] = 0.3
+            check_keys = ("delta", "lam", *check_keys)
+        self.check_potential_exceptions(
+            espressomd.interactions.GenericLennardJonesInteraction,
+            params,
+            check_keys)
+        with self.assertRaisesRegex(ValueError, f"Generic LJ parameter 'shift' has to be 'auto' or a float"):
+            invalid_params = params.copy()
+            invalid_params["shift"] = "unknown"
+            espressomd.interactions.GenericLennardJonesInteraction(
+                **invalid_params)
+
     @utx.skipIfMissingFeatures("LJCOS")
     def test_lj_cos_exceptions(self):
         self.check_potential_exceptions(

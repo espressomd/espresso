@@ -150,8 +150,7 @@ static double recalc_maximal_cutoff(const IA_parameters &data) {
 #endif
 
 #ifdef LENNARD_JONES_GENERIC
-  max_cut_current =
-      std::max(max_cut_current, (data.ljgen.cut + data.ljgen.offset));
+  max_cut_current = std::max(max_cut_current, data.ljgen.max_cutoff());
 #endif
 
 #ifdef SMOOTH_STEP

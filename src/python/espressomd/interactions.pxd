@@ -39,19 +39,6 @@ cdef extern from "TabulatedPotential.hpp":
         vector[double] force_tab
 
 cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
-    cdef struct LJGen_Parameters:
-        double eps
-        double sig
-        double cut
-        double shift
-        double offset
-        double a1
-        double a2
-        double b1
-        double b2
-        double lambda1
-        double softrad
-
     cdef struct SmoothStep_Parameters:
         double eps
         double sig
@@ -119,8 +106,6 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
 
     cdef struct IA_parameters:
 
-        LJGen_Parameters ljgen
-
         SoftSphere_Parameters soft_sphere
 
         TabulatedPotential tab
@@ -157,20 +142,6 @@ IF GAY_BERNE:
 IF THOLE:
     cdef extern from "nonbonded_interactions/thole.hpp":
         int thole_set_params(int part_type_a, int part_type_b, double scaling_coeff, double q1q2)
-
-IF LENNARD_JONES_GENERIC:
-    cdef extern from "nonbonded_interactions/ljgen.hpp":
-        IF LJGEN_SOFTCORE:
-            cdef int ljgen_set_params(int part_type_a, int part_type_b,
-                                      double eps, double sig, double cut,
-                                      double shift, double offset,
-                                      double a1, double a2, double b1, double b2,
-                                      double genlj_lambda, double softrad)
-        ELSE:
-            cdef int ljgen_set_params(int part_type_a, int part_type_b,
-                                      double eps, double sig, double cut,
-                                      double shift, double offset,
-                                      double a1, double a2, double b1, double b2)
 
 IF SMOOTH_STEP:
     cdef extern from "nonbonded_interactions/smooth_step.hpp":

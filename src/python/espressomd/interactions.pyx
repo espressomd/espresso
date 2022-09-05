@@ -409,109 +409,18 @@ IF WCA == 1:
 
 IF LENNARD_JONES_GENERIC == 1:
 
-    cdef class GenericLennardJonesInteraction(NonBondedInteraction):
+    @script_interface_register
+    class GenericLennardJonesInteraction(NewNonBondedInteraction):
+        """
+        Generalized Lennard-Jones potential.
 
-        def validate_params(self):
-            """Check that parameters are valid.
-
-            Raises
-            ------
-            ValueError
-                If not true.
-            """
-            if self._params["epsilon"] < 0:
-                raise ValueError("Generic Lennard-Jones epsilon has to be >=0")
-            if self._params["sigma"] < 0:
-                raise ValueError("Generic Lennard-Jones sigma has to be >=0")
-            if self._params["cutoff"] < 0:
-                raise ValueError("Generic Lennard-Jones cutoff has to be >=0")
-            IF LJGEN_SOFTCORE:
-                if self._params["delta"] < 0:
-                    raise ValueError(
-                        "Generic Lennard-Jones delta has to be >=0")
-                if self._params["lam"] < 0 or self._params["lam"] > 1:
-                    raise ValueError(
-                        "Generic Lennard-Jones lam has to be in the range [0,1]")
-
-        def _get_params_from_es_core(self):
-            cdef IA_parameters * ia_params
-            ia_params = get_ia_param_safe(
-                self._part_types[0],
-                self._part_types[1])
-            return {
-                "epsilon": ia_params.ljgen.eps,
-                "sigma": ia_params.ljgen.sig,
-                "cutoff": ia_params.ljgen.cut,
-                "shift": ia_params.ljgen.shift,
-                "offset": ia_params.ljgen.offset,
-                "e1": ia_params.ljgen.a1,
-                "e2": ia_params.ljgen.a2,
-                "b1": ia_params.ljgen.b1,
-                "b2": ia_params.ljgen.b2,
-                "lam": ia_params.ljgen.lambda1,
-                "delta": ia_params.ljgen.softrad
-            }
-
-        def is_active(self):
-            """Check if interaction is active.
-
-            """
-            return (self._params["epsilon"] > 0)
-
-        def _set_params_in_es_core(self):
-            # Handle the case of shift="auto"
-            if self._params["shift"] == "auto":
-                self._params["shift"] = -(
-                    self._params["b1"] * (self._params["sigma"] / self._params["cutoff"])**self._params["e1"] -
-                    self._params["b2"] * (self._params["sigma"] / self._params["cutoff"])**self._params["e2"])
-            IF LJGEN_SOFTCORE:
-                if ljgen_set_params(self._part_types[0], self._part_types[1],
-                                    self._params["epsilon"],
-                                    self._params["sigma"],
-                                    self._params["cutoff"],
-                                    self._params["shift"],
-                                    self._params["offset"],
-                                    self._params["e1"],
-                                    self._params["e2"],
-                                    self._params["b1"],
-                                    self._params["b2"],
-                                    self._params["lam"],
-                                    self._params["delta"]):
-                    raise Exception(
-                        "Could not set Generic Lennard-Jones parameters")
-            ELSE:
-                if ljgen_set_params(self._part_types[0], self._part_types[1],
-                                    self._params["epsilon"],
-                                    self._params["sigma"],
-                                    self._params["cutoff"],
-                                    self._params["shift"],
-                                    self._params["offset"],
-                                    self._params["e1"],
-                                    self._params["e2"],
-                                    self._params["b1"],
-                                    self._params["b2"],
-                                    ):
-                    raise Exception(
-                        "Could not set Generic Lennard-Jones parameters")
-
-        def default_params(self):
-            """Python dictionary of default parameters.
-
-            """
-            IF LJGEN_SOFTCORE:
-                return {"delta": 0., "lam": 1.}
-            ELSE:
-                return {}
-
-        def type_name(self):
-            """Name of interaction type.
-
-            """
-            return "GenericLennardJones"
-
-        def set_params(self, **kwargs):
-            """
-            Set parameters for the generic Lennard-Jones interaction.
+        Methods
+        -------
+        set_params()
+            Set or update parameters for the interaction.
+            Parameters marked as required become optional once the
+            interaction has been activated for the first time;
+            subsequent calls to this method update the existing values.
 
             Parameters
             ----------
@@ -542,8 +451,30 @@ IF LENNARD_JONES_GENERIC == 1:
                 ``LJGEN_SOFTCORE`` parameter lambda. Tune the strength of the
                 interaction.
 
+        """
+
+        _so_name = "Interactions::InteractionLJGen"
+
+        def is_active(self):
+            """Check if interaction is active.
+
             """
-            super().set_params(**kwargs)
+            return self.epsilon > 0.
+
+        def default_params(self):
+            """Python dictionary of default parameters.
+
+            """
+            IF LJGEN_SOFTCORE:
+                return {"delta": 0., "lam": 1.}
+            ELSE:
+                return {}
+
+        def type_name(self):
+            """Name of interaction type.
+
+            """
+            return "GenericLennardJones"
 
         def valid_keys(self):
             """All parameters that can be set.
@@ -1505,9 +1436,6 @@ class NonBondedInteractionHandle(ScriptInterfaceHelper):
         # Here, add one line for each nonbonded ia
         IF SOFT_SPHERE:
             self.soft_sphere = SoftSphereInteraction(_type1, _type2)
-        IF LENNARD_JONES_GENERIC:
-            self.generic_lennard_jones = GenericLennardJonesInteraction(
-                _type1, _type2)
         IF SMOOTH_STEP:
             self.smooth_step = SmoothStepInteraction(_type1, _type2)
         IF BMHTF_NACL:
