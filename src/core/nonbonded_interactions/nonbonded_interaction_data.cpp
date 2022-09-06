@@ -174,7 +174,7 @@ static double recalc_maximal_cutoff(const IA_parameters &data) {
 #endif
 
 #ifdef BUCKINGHAM
-  max_cut_current = std::max(max_cut_current, data.buckingham.cut);
+  max_cut_current = std::max(max_cut_current, data.buckingham.max_cutoff());
 #endif
 
 #ifdef SOFT_SPHERE

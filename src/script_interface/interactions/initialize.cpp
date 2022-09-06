@@ -83,6 +83,10 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
 #ifdef MORSE
   om->register_new<InteractionMorse>("Interactions::InteractionMorse");
 #endif
+#ifdef BUCKINGHAM
+  om->register_new<InteractionBuckingham>(
+      "Interactions::InteractionBuckingham");
+#endif
 }
 } // namespace Interactions
 } // namespace ScriptInterface

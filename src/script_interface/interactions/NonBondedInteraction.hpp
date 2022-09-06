@@ -411,6 +411,35 @@ public:
 };
 #endif // MORSE
 
+#ifdef BUCKINGHAM
+class InteractionBuckingham
+    : public InteractionPotentialInterface<::Buckingham_Parameters> {
+protected:
+  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+    return &::IA_parameters::buckingham;
+  }
+
+public:
+  InteractionBuckingham() {
+    add_parameters({
+        make_autoparameter(&CoreInteraction::A, "a"),
+        make_autoparameter(&CoreInteraction::B, "b"),
+        make_autoparameter(&CoreInteraction::C, "c"),
+        make_autoparameter(&CoreInteraction::D, "d"),
+        make_autoparameter(&CoreInteraction::cut, "cutoff"),
+        make_autoparameter(&CoreInteraction::discont, "discont"),
+        make_autoparameter(&CoreInteraction::shift, "shift"),
+    });
+  }
+
+  void make_new_instance(VariantMap const &params) override {
+    m_ia_si = make_shared_from_args<CoreInteraction, double, double, double,
+                                    double, double, double, double>(
+        params, "a", "b", "c", "d", "cutoff", "discont", "shift");
+  }
+};
+#endif // BUCKINGHAM
+
 class NonBondedInteractionHandle
     : public AutoParameters<NonBondedInteractionHandle> {
   std::array<int, 2> m_types = {-1, -1};
@@ -441,6 +470,9 @@ class NonBondedInteractionHandle
 #endif
 #ifdef MORSE
   std::shared_ptr<InteractionMorse> m_morse;
+#endif
+#ifdef BUCKINGHAM
+  std::shared_ptr<InteractionBuckingham> m_buckingham;
 #endif
 
   template <class T>
@@ -486,6 +518,9 @@ public:
 #endif
 #ifdef MORSE
         make_autoparameter(m_morse, "morse"),
+#endif
+#ifdef BUCKINGHAM
+        make_autoparameter(m_buckingham, "buckingham"),
 #endif
     });
   }
@@ -560,6 +595,11 @@ public:
 #ifdef MORSE
     set_member<InteractionMorse>(m_morse, "morse",
                                  "Interactions::InteractionMorse", params);
+#endif
+#ifdef BUCKINGHAM
+    set_member<InteractionBuckingham>(m_buckingham, "buckingham",
+                                      "Interactions::InteractionBuckingham",
+                                      params);
 #endif
   }
 

@@ -32,13 +32,7 @@
 
 #include "nonbonded_interaction_data.hpp"
 
-#include <utils/Vector.hpp>
-
 #include <cmath>
-
-int buckingham_set_params(int part_type_a, int part_type_b, double A, double B,
-                          double C, double D, double cut, double discont,
-                          double shift);
 
 /**Resultant Force due to a Buckingham potential between two particles at
  * interatomic separation r greater than or equal to discont*/
@@ -90,5 +84,5 @@ inline double buck_pair_energy(IA_parameters const &ia_params, double dist) {
   return 0.0;
 }
 
-#endif
+#endif // BUCKINGHAM
 #endif

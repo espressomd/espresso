@@ -47,17 +47,6 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         int n
         double k0
 
-    cdef struct Buckingham_Parameters:
-        double A
-        double B
-        double C
-        double D
-        double cut
-        double discont
-        double shift
-        double F1
-        double F2
-
     cdef struct SoftSphere_Parameters:
         double a
         double n
@@ -98,8 +87,6 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
 
         SmoothStep_Parameters smooth_step
 
-        Buckingham_Parameters buckingham
-
         DPDParameters dpd_radial
         DPDParameters dpd_trans
 
@@ -129,12 +116,6 @@ IF SMOOTH_STEP:
                                    double d, int n, double eps,
                                    double k0, double sig,
                                    double cut)
-IF BUCKINGHAM:
-    cdef extern from "nonbonded_interactions/buckingham.hpp":
-        int buckingham_set_params(int part_type_a, int part_type_b,
-                                  double A, double B, double C, double D, double cut,
-                                  double discont, double shift)
-
 IF SOFT_SPHERE:
     cdef extern from "nonbonded_interactions/soft_sphere.hpp":
         int soft_sphere_set_params(int part_type_a, int part_type_b,

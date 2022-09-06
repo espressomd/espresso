@@ -1058,69 +1058,17 @@ IF MORSE == 1:
 
 IF BUCKINGHAM == 1:
 
-    cdef class BuckinghamInteraction(NonBondedInteraction):
+    @script_interface_register
+    class BuckinghamInteraction(NewNonBondedInteraction):
+        """Buckingham interaction.
 
-        def validate_params(self):
-            """Check that parameters are valid.
-
-            """
-            if self._params["a"] < 0:
-                raise ValueError("Buckingham a has to be >=0")
-            if self._params["b"] < 0:
-                raise ValueError("Buckingham b has to be >=0")
-            if self._params["c"] < 0:
-                raise ValueError("Buckingham c has to be >=0")
-            if self._params["d"] < 0:
-                raise ValueError("Buckingham d has to be >=0")
-
-        def _get_params_from_es_core(self):
-            cdef IA_parameters * ia_params
-            ia_params = get_ia_param_safe(
-                self._part_types[0],
-                self._part_types[1])
-            return {
-                "a": ia_params.buckingham.A,
-                "b": ia_params.buckingham.B,
-                "c": ia_params.buckingham.C,
-                "d": ia_params.buckingham.D,
-                "cutoff": ia_params.buckingham.cut,
-                "discont": ia_params.buckingham.discont,
-                "shift": ia_params.buckingham.shift
-            }
-
-        def is_active(self):
-            """Check if interaction is active.
-
-            """
-            return (self._params["a"] > 0) or (self._params["b"] > 0) or (
-                self._params["d"] > 0) or (self._params["shift"] > 0)
-
-        def _set_params_in_es_core(self):
-            if buckingham_set_params(self._part_types[0], self._part_types[1],
-                                     self._params["a"],
-                                     self._params["b"],
-                                     self._params["c"],
-                                     self._params["d"],
-                                     self._params["cutoff"],
-                                     self._params["discont"],
-                                     self._params["shift"]):
-                raise Exception("Could not set Buckingham parameters")
-
-        def default_params(self):
-            """Python dictionary of default parameters.
-
-            """
-            return {"b": 0., "shift": 0.}
-
-        def type_name(self):
-            """Name of interaction type.
-
-            """
-            return "Buckingham"
-
-        def set_params(self, **kwargs):
-            """
-            Set parameters for the Buckingham interaction.
+        Methods
+        -------
+        set_params()
+            Set or update parameters for the interaction.
+            Parameters marked as required become optional once the
+            interaction has been activated for the first time;
+            subsequent calls to this method update the existing values.
 
             Parameters
             ----------
@@ -1138,9 +1086,27 @@ IF BUCKINGHAM == 1:
                 Cutoff distance of the interaction.
             shift: :obj:`float`, optional
                 Constant potential shift.
+        """
+
+        _so_name = "Interactions::InteractionBuckingham"
+
+        def is_active(self):
+            """Check if interaction is active.
 
             """
-            super().set_params(**kwargs)
+            return self.a > 0. or self.b > 0. or self.d > 0. or self.shift > 0.
+
+        def default_params(self):
+            """Python dictionary of default parameters.
+
+            """
+            return {"b": 0., "shift": 0.}
+
+        def type_name(self):
+            """Name of interaction type.
+
+            """
+            return "Buckingham"
 
         def valid_keys(self):
             """All parameters that can be set.
@@ -1380,8 +1346,6 @@ class NonBondedInteractionHandle(ScriptInterfaceHelper):
             self.soft_sphere = SoftSphereInteraction(_type1, _type2)
         IF SMOOTH_STEP:
             self.smooth_step = SmoothStepInteraction(_type1, _type2)
-        IF BUCKINGHAM:
-            self.buckingham = BuckinghamInteraction(_type1, _type2)
         IF TABULATED:
             self.tabulated = TabulatedNonBonded(_type1, _type2)
         IF GAY_BERNE:

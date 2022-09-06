@@ -312,6 +312,15 @@ class Test(ut.TestCase):
             ("eps",)
         )
 
+    @utx.skipIfMissingFeatures("BUCKINGHAM")
+    def test_buckingham_exceptions(self):
+        self.check_potential_exceptions(
+            espressomd.interactions.BuckinghamInteraction,
+            {"a": 2., "b": 3., "c": 5., "d": 4., "discont": 1., "cutoff": 2.,
+             "shift": 0.1},
+            ("a", "b", "c", "d")
+        )
+
 
 if __name__ == "__main__":
     ut.main()

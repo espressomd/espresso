@@ -163,6 +163,10 @@ struct Buckingham_Parameters {
   double shift = 0.0;
   double F1 = 0.0;
   double F2 = 0.0;
+  Buckingham_Parameters() = default;
+  Buckingham_Parameters(double a, double b, double c, double d, double cutoff,
+                        double discont, double shift);
+  double max_cutoff() const { return cut; }
 };
 
 /** soft-sphere potential */
