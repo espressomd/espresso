@@ -166,6 +166,9 @@ class Test(ut.TestCase):
         with self.assertRaisesRegex(ValueError, "Parameter 'prefactor' must be > 0"):
             espressomd.magnetostatics.DipolarP3M(
                 **{**dp3m_params, 'prefactor': -2.})
+        with self.assertRaisesRegex(ValueError, "Parameter 'timings' must be > 0"):
+            espressomd.magnetostatics.DipolarP3M(
+                **{**dp3m_params, 'timings': -2})
         with self.assertRaisesRegex(ValueError, "Parameter 'mesh' has to be an integer or integer list of length 3"):
             espressomd.magnetostatics.DipolarP3M(
                 **{**dp3m_params, 'mesh': [49, 49]})

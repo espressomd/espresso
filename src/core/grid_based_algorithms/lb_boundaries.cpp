@@ -171,6 +171,7 @@ void lb_init_boundaries() {
     if (this_node != 0) {
       return;
     }
+#if defined(CUDA)
 #if defined(LB_BOUNDARIES_GPU)
 #if defined(EK_BOUNDARIES)
     ek_init_boundaries();
@@ -233,6 +234,7 @@ void lb_init_boundaries() {
              "compiled in. Activate in myconfig.hpp.";
     }
 #endif // defined (LB_BOUNDARIES_GPU)
+#endif // defined (CUDA)
   } else if (lattice_switch == ActiveLB::CPU) {
 #if defined(LB_BOUNDARIES)
     using Utils::get_linear_index;
