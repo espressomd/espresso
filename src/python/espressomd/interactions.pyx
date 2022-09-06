@@ -1000,45 +1000,37 @@ IF BMHTF_NACL == 1:
 
 IF MORSE == 1:
 
-    cdef class MorseInteraction(NonBondedInteraction):
+    @script_interface_register
+    class MorseInteraction(NewNonBondedInteraction):
+        """Morse interaction.
 
-        def validate_params(self):
-            """Check that parameters are valid.
+        Methods
+        -------
+        set_params()
+            Set or update parameters for the interaction.
+            Parameters marked as required become optional once the
+            interaction has been activated for the first time;
+            subsequent calls to this method update the existing values.
 
-            """
-            if self._params["eps"] < 0:
-                raise ValueError("Morse eps has to be >=0")
-            if self._params["offset"] < 0:
-                raise ValueError("Morse offset has to be >=0")
-            if self._params["cutoff"] < 0:
-                raise ValueError("Morse cutoff has to be >=0")
+            Parameters
+            ----------
+            eps : :obj:`float`
+                The magnitude of the interaction.
+            alpha : :obj:`float`
+                Stiffness of the Morse interaction.
+            rmin : :obj:`float`
+                Distance of potential minimum
+            cutoff : :obj:`float`, optional
+                Cutoff distance of the interaction.
+        """
 
-        def _get_params_from_es_core(self):
-            cdef IA_parameters * ia_params
-            ia_params = get_ia_param_safe(
-                self._part_types[0],
-                self._part_types[1])
-            return {
-                "eps": ia_params.morse.eps,
-                "alpha": ia_params.morse.alpha,
-                "rmin": ia_params.morse.rmin,
-                "cutoff": ia_params.morse.cut
-            }
+        _so_name = "Interactions::InteractionMorse"
 
         def is_active(self):
             """Check if interaction is active.
 
             """
-            return (self._params["eps"] > 0)
-
-        def _set_params_in_es_core(self):
-            if morse_set_params(self._part_types[0],
-                                self._part_types[1],
-                                self._params["eps"],
-                                self._params["alpha"],
-                                self._params["rmin"],
-                                self._params["cutoff"]):
-                raise Exception("Could not set Morse parameters")
+            return self.eps > 0.
 
         def default_params(self):
             """Python dictionary of default parameters.
@@ -1051,24 +1043,6 @@ IF MORSE == 1:
 
             """
             return "Morse"
-
-        def set_params(self, **kwargs):
-            """
-            Set parameters for the Morse interaction.
-
-            Parameters
-            ----------
-            eps : :obj:`float`
-                The magnitude of the interaction.
-            alpha : :obj:`float`
-                Stiffness of the Morse interaction.
-            rmin : :obj:`float`
-                Distance of potential minimum
-            cutoff : :obj:`float`, optional
-                Cutoff distance of the interaction.
-
-            """
-            super().set_params(**kwargs)
 
         def valid_keys(self):
             """All parameters that can be set.
@@ -1406,8 +1380,6 @@ class NonBondedInteractionHandle(ScriptInterfaceHelper):
             self.soft_sphere = SoftSphereInteraction(_type1, _type2)
         IF SMOOTH_STEP:
             self.smooth_step = SmoothStepInteraction(_type1, _type2)
-        IF MORSE:
-            self.morse = MorseInteraction(_type1, _type2)
         IF BUCKINGHAM:
             self.buckingham = BuckinghamInteraction(_type1, _type2)
         IF TABULATED:

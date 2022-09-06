@@ -142,11 +142,14 @@ struct BMHTF_Parameters {
 
 /** Morse potential */
 struct Morse_Parameters {
-  double eps = INACTIVE_CUTOFF;
+  double eps = 0.;
   double alpha = INACTIVE_CUTOFF;
   double rmin = INACTIVE_CUTOFF;
   double cut = INACTIVE_CUTOFF;
   double rest = INACTIVE_CUTOFF;
+  Morse_Parameters() = default;
+  Morse_Parameters(double eps, double alpha, double rmin, double cutoff);
+  double max_cutoff() const { return cut; }
 };
 
 /** Buckingham potential */

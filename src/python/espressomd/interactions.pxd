@@ -47,13 +47,6 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         int n
         double k0
 
-    cdef struct Morse_Parameters:
-        double eps
-        double alpha
-        double rmin
-        double cut
-        double rest
-
     cdef struct Buckingham_Parameters:
         double A
         double B
@@ -105,8 +98,6 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
 
         SmoothStep_Parameters smooth_step
 
-        Morse_Parameters morse
-
         Buckingham_Parameters buckingham
 
         DPDParameters dpd_radial
@@ -138,12 +129,6 @@ IF SMOOTH_STEP:
                                    double d, int n, double eps,
                                    double k0, double sig,
                                    double cut)
-IF MORSE:
-    cdef extern from "nonbonded_interactions/morse.hpp":
-        int morse_set_params(int part_type_a, int part_type_b,
-                             double eps, double alpha,
-                             double rmin, double cut)
-
 IF BUCKINGHAM:
     cdef extern from "nonbonded_interactions/buckingham.hpp":
         int buckingham_set_params(int part_type_a, int part_type_b,

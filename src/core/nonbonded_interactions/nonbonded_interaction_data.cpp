@@ -170,7 +170,7 @@ static double recalc_maximal_cutoff(const IA_parameters &data) {
 #endif
 
 #ifdef MORSE
-  max_cut_current = std::max(max_cut_current, data.morse.cut);
+  max_cut_current = std::max(max_cut_current, data.morse.max_cutoff());
 #endif
 
 #ifdef BUCKINGHAM

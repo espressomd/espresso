@@ -304,6 +304,14 @@ class Test(ut.TestCase):
             ("a", "c", "d")
         )
 
+    @utx.skipIfMissingFeatures("MORSE")
+    def test_morse_exceptions(self):
+        self.check_potential_exceptions(
+            espressomd.interactions.MorseInteraction,
+            {"eps": 1., "alpha": 3., "rmin": 0.1, "cutoff": 1.2},
+            ("eps",)
+        )
+
 
 if __name__ == "__main__":
     ut.main()

@@ -385,6 +385,32 @@ public:
 };
 #endif // BMHTF_NACL
 
+#ifdef MORSE
+class InteractionMorse
+    : public InteractionPotentialInterface<::Morse_Parameters> {
+protected:
+  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+    return &::IA_parameters::morse;
+  }
+
+public:
+  InteractionMorse() {
+    add_parameters({
+        make_autoparameter(&CoreInteraction::eps, "eps"),
+        make_autoparameter(&CoreInteraction::alpha, "alpha"),
+        make_autoparameter(&CoreInteraction::rmin, "rmin"),
+        make_autoparameter(&CoreInteraction::cut, "cutoff"),
+    });
+  }
+
+  void make_new_instance(VariantMap const &params) override {
+    m_ia_si =
+        make_shared_from_args<CoreInteraction, double, double, double, double>(
+            params, "eps", "alpha", "rmin", "cutoff");
+  }
+};
+#endif // MORSE
+
 class NonBondedInteractionHandle
     : public AutoParameters<NonBondedInteractionHandle> {
   std::array<int, 2> m_types = {-1, -1};
@@ -412,6 +438,9 @@ class NonBondedInteractionHandle
 #endif
 #ifdef BMHTF_NACL
   std::shared_ptr<InteractionBMHTF> m_bmhtf;
+#endif
+#ifdef MORSE
+  std::shared_ptr<InteractionMorse> m_morse;
 #endif
 
   template <class T>
@@ -454,6 +483,9 @@ public:
 #endif
 #ifdef BMHTF_NACL
         make_autoparameter(m_bmhtf, "bmhtf"),
+#endif
+#ifdef MORSE
+        make_autoparameter(m_morse, "morse"),
 #endif
     });
   }
@@ -524,6 +556,10 @@ public:
 #ifdef BMHTF_NACL
     set_member<InteractionBMHTF>(m_bmhtf, "bmhtf",
                                  "Interactions::InteractionBMHTF", params);
+#endif
+#ifdef MORSE
+    set_member<InteractionMorse>(m_morse, "morse",
+                                 "Interactions::InteractionMorse", params);
 #endif
   }
 

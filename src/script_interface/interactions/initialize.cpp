@@ -80,6 +80,9 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
 #ifdef BMHTF_NACL
   om->register_new<InteractionBMHTF>("Interactions::InteractionBMHTF");
 #endif
+#ifdef MORSE
+  om->register_new<InteractionMorse>("Interactions::InteractionMorse");
+#endif
 }
 } // namespace Interactions
 } // namespace ScriptInterface
