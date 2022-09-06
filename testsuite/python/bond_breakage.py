@@ -162,7 +162,7 @@ class BondBreakage(BondBreakageCommon, ut.TestCase):
             system.integrator.run(1)
 
 
-@utx.skipIfMissingFeatures("LENNARD_JONES")
+@utx.skipIfMissingFeatures(["LENNARD_JONES", "COLLISION_DETECTION"])
 class NetworkBreakage(BondBreakageCommon, ut.TestCase):
 
     @classmethod
