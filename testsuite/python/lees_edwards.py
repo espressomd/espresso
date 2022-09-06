@@ -449,7 +449,7 @@ class LeesEdwards(ut.TestCase):
         np.testing.assert_allclose(
             np.copy(p1.torque_lab), [0, 0, -2], atol=tol)
 
-    @utx.skipIfMissingFeatures(["VIRTUAL_SITES_RELATIVE", "ROTATION"])
+    @utx.skipIfMissingFeatures(["VIRTUAL_SITES_RELATIVE", "ROTATION", "DPD"])
     def test_virt_sites_interaction(self):
         """
         A virtual site interacts with a real particle via a DPD interaction

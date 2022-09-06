@@ -95,6 +95,7 @@ void mpi_set_integrator_sd_local() {
 
 REGISTER_CALLBACK(mpi_set_integrator_sd_local)
 
+#ifdef EXTERNAL_FORCES
 struct : public IntegratorHelper {
   void set_integrator() const override {
     mpi_set_thermo_switch(THERMO_OFF);
@@ -105,6 +106,7 @@ struct : public IntegratorHelper {
   }
   char const *name() const override { return "SteepestDescent"; }
 } steepest_descent;
+#endif // EXTERNAL_FORCES
 
 void mpi_set_integrator_vv_local() { set_integ_switch(INTEG_METHOD_NVT); }
 
@@ -159,8 +161,11 @@ auto const propagators =
         Testing::velocity_verlet,
 #ifdef NPT
         Testing::velocity_verlet_npt,
-#endif
-        Testing::steepest_descent};
+#endif // NPT
+#ifdef EXTERNAL_FORCES
+        Testing::steepest_descent
+#endif // EXTERNAL_FORCES
+    };
 
 BOOST_TEST_DECORATOR(*utf::precondition(if_head_node()))
 BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
@@ -227,12 +232,16 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
     {
       mpi_integrate(1, 0);
       auto const &p1 = get_particle_data(pid1);
+#ifdef EXTERNAL_FORCES
       auto const &p2 = get_particle_data(pid2);
       BOOST_CHECK_CLOSE(p1.force()[0] - p1.ext_force()[0], 480., 1e-9);
+#endif // EXTERNAL_FORCES
       BOOST_CHECK_CLOSE(p1.force()[1], 0., tol);
       BOOST_CHECK_CLOSE(p1.force()[2], 0., tol);
+#ifdef EXTERNAL_FORCES
       BOOST_TEST(p1.force() - p1.ext_force() == -p2.force(),
                  boost::test_tools::per_element());
+#endif // EXTERNAL_FORCES
       BOOST_CHECK_LT(get_dist_from_last_verlet_update(p1), skin / 2.);
     }
   }
