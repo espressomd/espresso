@@ -26,27 +26,19 @@
 #include "soft_sphere.hpp"
 
 #ifdef SOFT_SPHERE
-#include "interactions.hpp"
 #include "nonbonded_interaction_data.hpp"
 
-#include <utils/constants.hpp>
+#include <stdexcept>
 
-int soft_sphere_set_params(int part_type_a, int part_type_b, double a, double n,
-                           double cut, double offset) {
-  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
-
-  if (!data)
-    return ES_ERROR;
-
-  data->soft_sphere.a = a;
-  data->soft_sphere.n = n;
-  data->soft_sphere.cut = cut;
-  data->soft_sphere.offset = offset;
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(part_type_a, part_type_b);
-
-  return ES_OK;
+SoftSphere_Parameters::SoftSphere_Parameters(double a, double n, double cutoff,
+                                             double offset)
+    : a{a}, n{n}, cut{cutoff}, offset{offset} {
+  if (a < 0.) {
+    throw std::domain_error("SoftSphere parameter 'a' has to be >= 0");
+  }
+  if (offset < 0.) {
+    throw std::domain_error("SoftSphere parameter 'offset' has to be >= 0");
+  }
 }
 
-#endif
+#endif // SOFT_SPHERE

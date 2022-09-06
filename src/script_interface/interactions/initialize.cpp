@@ -87,6 +87,10 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<InteractionBuckingham>(
       "Interactions::InteractionBuckingham");
 #endif
+#ifdef SOFT_SPHERE
+  om->register_new<InteractionSoftSphere>(
+      "Interactions::InteractionSoftSphere");
+#endif
 }
 } // namespace Interactions
 } // namespace ScriptInterface

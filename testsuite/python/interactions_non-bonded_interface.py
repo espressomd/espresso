@@ -321,6 +321,14 @@ class Test(ut.TestCase):
             ("a", "b", "c", "d")
         )
 
+    @utx.skipIfMissingFeatures("SOFT_SPHERE")
+    def test_soft_sphere_exceptions(self):
+        self.check_potential_exceptions(
+            espressomd.interactions.SoftSphereInteraction,
+            {"a": 1., "n": 3., "cutoff": 1.1, "offset": 0.1},
+            ("a", "offset")
+        )
+
 
 if __name__ == "__main__":
     ut.main()

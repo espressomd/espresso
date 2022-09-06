@@ -175,6 +175,9 @@ struct SoftSphere_Parameters {
   double n = 0.0;
   double cut = INACTIVE_CUTOFF;
   double offset = 0.0;
+  SoftSphere_Parameters() = default;
+  SoftSphere_Parameters(double a, double n, double cutoff, double offset);
+  double max_cutoff() const { return cut + offset; }
 };
 
 /** hat potential */

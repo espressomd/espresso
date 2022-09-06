@@ -440,6 +440,32 @@ public:
 };
 #endif // BUCKINGHAM
 
+#ifdef SOFT_SPHERE
+class InteractionSoftSphere
+    : public InteractionPotentialInterface<::SoftSphere_Parameters> {
+protected:
+  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+    return &::IA_parameters::soft_sphere;
+  }
+
+public:
+  InteractionSoftSphere() {
+    add_parameters({
+        make_autoparameter(&CoreInteraction::a, "a"),
+        make_autoparameter(&CoreInteraction::n, "n"),
+        make_autoparameter(&CoreInteraction::cut, "cutoff"),
+        make_autoparameter(&CoreInteraction::offset, "offset"),
+    });
+  }
+
+  void make_new_instance(VariantMap const &params) override {
+    m_ia_si =
+        make_shared_from_args<CoreInteraction, double, double, double, double>(
+            params, "a", "n", "cutoff", "offset");
+  }
+};
+#endif // SOFT_SPHERE
+
 class NonBondedInteractionHandle
     : public AutoParameters<NonBondedInteractionHandle> {
   std::array<int, 2> m_types = {-1, -1};
@@ -473,6 +499,9 @@ class NonBondedInteractionHandle
 #endif
 #ifdef BUCKINGHAM
   std::shared_ptr<InteractionBuckingham> m_buckingham;
+#endif
+#ifdef SOFT_SPHERE
+  std::shared_ptr<InteractionSoftSphere> m_soft_sphere;
 #endif
 
   template <class T>
@@ -521,6 +550,9 @@ public:
 #endif
 #ifdef BUCKINGHAM
         make_autoparameter(m_buckingham, "buckingham"),
+#endif
+#ifdef SOFT_SPHERE
+        make_autoparameter(m_soft_sphere, "soft_sphere"),
 #endif
     });
   }
@@ -599,6 +631,11 @@ public:
 #ifdef BUCKINGHAM
     set_member<InteractionBuckingham>(m_buckingham, "buckingham",
                                       "Interactions::InteractionBuckingham",
+                                      params);
+#endif
+#ifdef SOFT_SPHERE
+    set_member<InteractionSoftSphere>(m_soft_sphere, "soft_sphere",
+                                      "Interactions::InteractionSoftSphere",
                                       params);
 #endif
   }

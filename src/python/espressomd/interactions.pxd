@@ -47,12 +47,6 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         int n
         double k0
 
-    cdef struct SoftSphere_Parameters:
-        double a
-        double n
-        double cut
-        double offset
-
     cdef struct Hat_Parameters:
         double Fmax
         double r
@@ -78,8 +72,6 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         double pref
 
     cdef struct IA_parameters:
-
-        SoftSphere_Parameters soft_sphere
 
         TabulatedPotential tab
 
@@ -116,11 +108,6 @@ IF SMOOTH_STEP:
                                    double d, int n, double eps,
                                    double k0, double sig,
                                    double cut)
-IF SOFT_SPHERE:
-    cdef extern from "nonbonded_interactions/soft_sphere.hpp":
-        int soft_sphere_set_params(int part_type_a, int part_type_b,
-                                   double a, double n, double cut, double offset)
-
 IF DPD:
     cdef extern from "dpd.hpp":
         int dpd_set_params(int part_type_a, int part_type_b,
@@ -131,12 +118,6 @@ IF HAT:
     cdef extern from "nonbonded_interactions/hat.hpp":
         int hat_set_params(int part_type_a, int part_type_b,
                            double Fmax, double r)
-
-IF SOFT_SPHERE:
-    cdef extern from "nonbonded_interactions/soft_sphere.hpp":
-        cdef int soft_sphere_set_params(int part_type_a, int part_type_b,
-                                        double a, double n,
-                                        double cut, double offset)
 
 IF TABULATED:
     cdef extern from "nonbonded_interactions/nonbonded_tab.hpp":

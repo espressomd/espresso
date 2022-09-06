@@ -1122,44 +1122,37 @@ IF BUCKINGHAM == 1:
 
 IF SOFT_SPHERE == 1:
 
-    cdef class SoftSphereInteraction(NonBondedInteraction):
+    @script_interface_register
+    class SoftSphereInteraction(NewNonBondedInteraction):
+        """Soft sphere interaction.
 
-        def validate_params(self):
-            """Check that parameters are valid.
+        Methods
+        -------
+        set_params()
+            Set or update parameters for the interaction.
+            Parameters marked as required become optional once the
+            interaction has been activated for the first time;
+            subsequent calls to this method update the existing values.
 
-            """
-            if self._params["a"] < 0:
-                raise ValueError("Soft-sphere a has to be >=0")
-            if self._params["offset"] < 0:
-                raise ValueError("Soft-sphere offset has to be >=0")
-            if self._params["cutoff"] < 0:
-                raise ValueError("Soft-sphere cutoff has to be >=0")
+            Parameters
+            ----------
+            a : :obj:`float`
+                Magnitude of the interaction.
+            n : :obj:`float`
+                Exponent of the power law.
+            cutoff : :obj:`float`
+                Cutoff distance of the interaction.
+            offset : :obj:`float`, optional
+                Offset distance of the interaction.
+        """
 
-        def _get_params_from_es_core(self):
-            cdef IA_parameters * ia_params
-            ia_params = get_ia_param_safe(self._part_types[0],
-                                          self._part_types[1])
-            return {
-                "a": ia_params.soft_sphere.a,
-                "n": ia_params.soft_sphere.n,
-                "cutoff": ia_params.soft_sphere.cut,
-                "offset": ia_params.soft_sphere.offset
-            }
+        _so_name = "Interactions::InteractionSoftSphere"
 
         def is_active(self):
             """Check if interaction is active.
 
             """
-            return (self._params["a"] > 0)
-
-        def _set_params_in_es_core(self):
-            if soft_sphere_set_params(self._part_types[0],
-                                      self._part_types[1],
-                                      self._params["a"],
-                                      self._params["n"],
-                                      self._params["cutoff"],
-                                      self._params["offset"]):
-                raise Exception("Could not set Soft-sphere parameters")
+            return self.a > 0.
 
         def default_params(self):
             """Python dictionary of default parameters.
@@ -1172,24 +1165,6 @@ IF SOFT_SPHERE == 1:
 
             """
             return "SoftSphere"
-
-        def set_params(self, **kwargs):
-            """
-            Set parameters for the Soft-sphere interaction.
-
-            Parameters
-            ----------
-            a : :obj:`float`
-                Magnitude of the interaction.
-            n : :obj:`float`
-                Exponent of the power law.
-            cutoff : :obj:`float`
-                Cutoff distance of the interaction.
-            offset : :obj:`float`, optional
-                Offset distance of the interaction.
-
-            """
-            super().set_params(**kwargs)
 
         def valid_keys(self):
             """All parameters that can be set.
@@ -1342,8 +1317,6 @@ class NonBondedInteractionHandle(ScriptInterfaceHelper):
         super().__init__(_types=[_type1, _type2], **kwargs)
 
         # Here, add one line for each nonbonded ia
-        IF SOFT_SPHERE:
-            self.soft_sphere = SoftSphereInteraction(_type1, _type2)
         IF SMOOTH_STEP:
             self.smooth_step = SmoothStepInteraction(_type1, _type2)
         IF TABULATED:
