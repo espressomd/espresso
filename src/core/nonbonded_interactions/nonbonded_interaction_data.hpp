@@ -184,6 +184,9 @@ struct SoftSphere_Parameters {
 struct Hat_Parameters {
   double Fmax = 0.0;
   double r = INACTIVE_CUTOFF;
+  Hat_Parameters() = default;
+  Hat_Parameters(double F_max, double cutoff);
+  double max_cutoff() const { return r; }
 };
 
 /** Lennard-Jones+Cos potential */

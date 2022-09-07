@@ -25,24 +25,15 @@
 #include "hat.hpp"
 
 #ifdef HAT
-#include "interactions.hpp"
 #include "nonbonded_interaction_data.hpp"
 
-#include <utils/constants.hpp>
+#include <stdexcept>
 
-int hat_set_params(int part_type_a, int part_type_b, double Fmax, double r) {
-  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
-
-  if (!data)
-    return ES_ERROR;
-
-  data->hat.Fmax = Fmax;
-  data->hat.r = r;
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(part_type_a, part_type_b);
-
-  return ES_OK;
+Hat_Parameters::Hat_Parameters(double F_max, double cutoff)
+    : Fmax{F_max}, r{cutoff} {
+  if (F_max < 0.) {
+    throw std::domain_error("Hat parameter 'F_max' has to be >= 0");
+  }
 }
 
-#endif
+#endif // HAT

@@ -91,6 +91,9 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<InteractionSoftSphere>(
       "Interactions::InteractionSoftSphere");
 #endif
+#ifdef HAT
+  om->register_new<InteractionHat>("Interactions::InteractionHat");
+#endif
 }
 } // namespace Interactions
 } // namespace ScriptInterface

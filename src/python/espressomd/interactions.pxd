@@ -47,10 +47,6 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         int n
         double k0
 
-    cdef struct Hat_Parameters:
-        double Fmax
-        double r
-
     cdef struct GayBerne_Parameters:
         double eps
         double sig
@@ -82,8 +78,6 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         DPDParameters dpd_radial
         DPDParameters dpd_trans
 
-        Hat_Parameters hat
-
         Thole_Parameters thole
 
     cdef IA_parameters * get_ia_param_safe(int i, int j)
@@ -113,11 +107,6 @@ IF DPD:
         int dpd_set_params(int part_type_a, int part_type_b,
                            double gamma, double k, double r_c, int wf,
                            double tgamma, double tr_c, int twf)
-
-IF HAT:
-    cdef extern from "nonbonded_interactions/hat.hpp":
-        int hat_set_params(int part_type_a, int part_type_b,
-                           double Fmax, double r)
 
 IF TABULATED:
     cdef extern from "nonbonded_interactions/nonbonded_tab.hpp":

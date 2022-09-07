@@ -616,28 +616,17 @@ IF LJCOS2 == 1:
 
 IF HAT == 1:
 
-    cdef class HatInteraction(NonBondedInteraction):
+    @script_interface_register
+    class HatInteraction(NewNonBondedInteraction):
+        """Hat interaction.
 
-        def validate_params(self):
-            if self._params["F_max"] < 0:
-                raise ValueError("Hat max force has to be >=0")
-            if self._params["cutoff"] < 0:
-                raise ValueError("Hat cutoff has to be >=0")
-
-        def _get_params_from_es_core(self):
-            cdef IA_parameters * ia_params
-            ia_params = get_ia_param_safe(
-                self._part_types[0], self._part_types[1])
-            return {
-                "F_max": ia_params.hat.Fmax,
-                "cutoff": ia_params.hat.r,
-            }
-
-        def is_active(self):
-            return (self._params["F_max"] > 0)
-
-        def set_params(self, **kwargs):
-            """Set parameters for the Hat interaction.
+        Methods
+        -------
+        set_params()
+            Set or update parameters for the interaction.
+            Parameters marked as required become optional once the
+            interaction has been activated for the first time;
+            subsequent calls to this method update the existing values.
 
             Parameters
             ----------
@@ -646,14 +635,12 @@ IF HAT == 1:
             cutoff : :obj:`float`
                 Cutoff distance of the interaction.
 
-            """
-            super().set_params(**kwargs)
+        """
 
-        def _set_params_in_es_core(self):
-            if hat_set_params(self._part_types[0], self._part_types[1],
-                              self._params["F_max"],
-                              self._params["cutoff"]):
-                raise Exception("Could not set Hat parameters")
+        _so_name = "Interactions::InteractionHat"
+
+        def is_active(self):
+            return self.F_max > 0.
 
         def default_params(self):
             return {}
@@ -1325,8 +1312,6 @@ class NonBondedInteractionHandle(ScriptInterfaceHelper):
             self.gay_berne = GayBerneInteraction(_type1, _type2)
         IF DPD:
             self.dpd = DPDInteraction(_type1, _type2)
-        IF HAT:
-            self.hat = HatInteraction(_type1, _type2)
         IF THOLE:
             self.thole = TholeInteraction(_type1, _type2)
 

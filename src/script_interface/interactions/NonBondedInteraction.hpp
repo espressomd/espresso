@@ -466,6 +466,28 @@ public:
 };
 #endif // SOFT_SPHERE
 
+#ifdef HAT
+class InteractionHat : public InteractionPotentialInterface<::Hat_Parameters> {
+protected:
+  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+    return &::IA_parameters::hat;
+  }
+
+public:
+  InteractionHat() {
+    add_parameters({
+        make_autoparameter(&CoreInteraction::Fmax, "F_max"),
+        make_autoparameter(&CoreInteraction::r, "cutoff"),
+    });
+  }
+
+  void make_new_instance(VariantMap const &params) override {
+    m_ia_si = make_shared_from_args<CoreInteraction, double, double>(
+        params, "F_max", "cutoff");
+  }
+};
+#endif // HAT
+
 class NonBondedInteractionHandle
     : public AutoParameters<NonBondedInteractionHandle> {
   std::array<int, 2> m_types = {-1, -1};
@@ -502,6 +524,9 @@ class NonBondedInteractionHandle
 #endif
 #ifdef SOFT_SPHERE
   std::shared_ptr<InteractionSoftSphere> m_soft_sphere;
+#endif
+#ifdef HAT
+  std::shared_ptr<InteractionHat> m_hat;
 #endif
 
   template <class T>
@@ -553,6 +578,9 @@ public:
 #endif
 #ifdef SOFT_SPHERE
         make_autoparameter(m_soft_sphere, "soft_sphere"),
+#endif
+#ifdef HAT
+        make_autoparameter(m_hat, "hat"),
 #endif
     });
   }
@@ -637,6 +665,10 @@ public:
     set_member<InteractionSoftSphere>(m_soft_sphere, "soft_sphere",
                                       "Interactions::InteractionSoftSphere",
                                       params);
+#endif
+#ifdef HAT
+    set_member<InteractionHat>(m_hat, "hat", "Interactions::InteractionHat",
+                               params);
 #endif
   }
 

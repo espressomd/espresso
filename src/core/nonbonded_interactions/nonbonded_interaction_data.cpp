@@ -182,7 +182,7 @@ static double recalc_maximal_cutoff(const IA_parameters &data) {
 #endif
 
 #ifdef HAT
-  max_cut_current = std::max(max_cut_current, data.hat.r);
+  max_cut_current = std::max(max_cut_current, data.hat.max_cutoff());
 #endif
 
 #ifdef LJCOS

@@ -329,6 +329,14 @@ class Test(ut.TestCase):
             ("a", "offset")
         )
 
+    @utx.skipIfMissingFeatures("HAT")
+    def test_hat_exceptions(self):
+        self.check_potential_exceptions(
+            espressomd.interactions.HatInteraction,
+            {"F_max": 10., "cutoff": 1.},
+            ("F_max",)
+        )
+
 
 if __name__ == "__main__":
     ut.main()
