@@ -55,7 +55,8 @@ add_library(
   virtual_sites.cpp
   exclusions.cpp
   PartCfg.cpp
-  EspressoSystemStandAlone.cpp)
+  EspressoSystemStandAlone.cpp
+  TabulatedPotential.cpp)
 add_library(espresso::core ALIAS espresso_core)
 
 if(CUDA)

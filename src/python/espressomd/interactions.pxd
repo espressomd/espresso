@@ -20,7 +20,6 @@
 # Handling of interactions
 
 from libcpp.string cimport string
-from libcpp.vector cimport vector
 from libc cimport stdint
 
 from .thermostat cimport thermalized_bond
@@ -30,13 +29,6 @@ include "myconfig.pxi"
 # force include of config.hpp
 cdef extern from "config.hpp":
     pass
-
-cdef extern from "TabulatedPotential.hpp":
-    struct TabulatedPotential:
-        double maxval
-        double minval
-        vector[double] energy_tab
-        vector[double] force_tab
 
 cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     cdef struct SmoothStep_Parameters:
@@ -59,8 +51,6 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         double pref
 
     cdef struct IA_parameters:
-
-        TabulatedPotential tab
 
         SmoothStep_Parameters smooth_step
 
@@ -89,13 +79,6 @@ IF DPD:
         int dpd_set_params(int part_type_a, int part_type_b,
                            double gamma, double k, double r_c, int wf,
                            double tgamma, double tr_c, int twf)
-
-IF TABULATED:
-    cdef extern from "nonbonded_interactions/nonbonded_tab.hpp":
-        int tabulated_set_params(int part_type_a, int part_type_b,
-                                 double min, double max,
-                                 vector[double] energy,
-                                 vector[double] force)
 
 cdef extern from "script_interface/interactions/bonded.hpp":
     int bonded_ia_params_zero_based_type(int bond_id) except +

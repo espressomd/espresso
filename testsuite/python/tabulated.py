@@ -71,6 +71,19 @@ class TabulatedTest(ut.TestCase):
         self.system.non_bonded_inter[0, 0].tabulated.set_params(
             min=-1, max=-1, energy=[], force=[])
 
+        with self.assertRaisesRegex(ValueError, "TabulatedPotential parameter 'max' must be larger than or equal to parameter 'min'"):
+            espressomd.interactions.TabulatedNonBonded(
+                min=1., max=0., energy=[0.], force=[0.])
+        with self.assertRaisesRegex(ValueError, "TabulatedPotential parameter 'force' must contain 1 element"):
+            espressomd.interactions.TabulatedNonBonded(
+                min=1., max=1., energy=[0., 0.], force=[0., 0.])
+        with self.assertRaisesRegex(ValueError, "TabulatedPotential parameter 'force' must contain at least 1 element"):
+            espressomd.interactions.TabulatedNonBonded(
+                min=1., max=2., energy=[], force=[])
+        with self.assertRaisesRegex(ValueError, "TabulatedPotential parameter 'force' must have the same size as parameter 'energy'"):
+            espressomd.interactions.TabulatedNonBonded(
+                min=1., max=2., energy=[0.], force=[0., 0.])
+
     @utx.skipIfMissingFeatures("TABULATED")
     def test_bonded(self):
         tb = espressomd.interactions.TabulatedDistance(

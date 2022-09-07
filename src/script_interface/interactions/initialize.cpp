@@ -97,6 +97,9 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
 #ifdef GAY_BERNE
   om->register_new<InteractionGayBerne>("Interactions::InteractionGayBerne");
 #endif
+#ifdef TABULATED
+  om->register_new<InteractionTabulated>("Interactions::InteractionTabulated");
+#endif
 }
 } // namespace Interactions
 } // namespace ScriptInterface

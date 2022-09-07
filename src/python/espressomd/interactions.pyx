@@ -720,6 +720,69 @@ IF GAY_BERNE:
             """
             return {"eps", "sig", "cut", "k1", "k2", "mu", "nu"}
 
+IF TABULATED:
+
+    @script_interface_register
+    class TabulatedNonBonded(NewNonBondedInteraction):
+        """Tabulated interaction.
+
+        Methods
+        -------
+        set_params()
+            Set or update parameters for the interaction.
+            Parameters marked as required become optional once the
+            interaction has been activated for the first time;
+            subsequent calls to this method update the existing values.
+
+            Parameters
+            ----------
+            min : :obj:`float`,
+                The minimal interaction distance.
+            max : :obj:`float`,
+                The maximal interaction distance.
+            energy: array_like of :obj:`float`
+                The energy table.
+            force: array_like of :obj:`float`
+                The force table.
+
+        """
+
+        _so_name = "Interactions::InteractionTabulated"
+
+        def is_active(self):
+            """Check if interaction is active.
+
+            """
+            return self.cutoff > 0
+
+        def default_params(self):
+            """Python dictionary of default parameters.
+
+            """
+            return {}
+
+        def type_name(self):
+            """Name of the potential.
+
+            """
+            return "Tabulated"
+
+        def valid_keys(self):
+            """All parameters that can be set.
+
+            """
+            return {"min", "max", "energy", "force"}
+
+        def required_keys(self):
+            """Parameters that have to be set.
+
+            """
+            return {"min", "max", "energy", "force"}
+
+        @property
+        def cutoff(self):
+            return self.call_method("get_cutoff")
+
 IF DPD:
 
     cdef class DPDInteraction(NonBondedInteraction):
@@ -1282,8 +1345,6 @@ class NonBondedInteractionHandle(ScriptInterfaceHelper):
         # Here, add one line for each nonbonded ia
         IF SMOOTH_STEP:
             self.smooth_step = SmoothStepInteraction(_type1, _type2)
-        IF TABULATED:
-            self.tabulated = TabulatedNonBonded(_type1, _type2)
         IF DPD:
             self.dpd = DPDInteraction(_type1, _type2)
         IF THOLE:
@@ -2041,83 +2102,6 @@ IF TABULATED:
             if abs(phi[0] - 0.) > 1e-5 or abs(phi[1] - 2 * self.pi) > 1e-5:
                 raise ValueError(f"Tabulated dihedral expects forces/energies "
                                  f"within the range [0, 2*pi], got {phi}")
-
-    cdef class TabulatedNonBonded(NonBondedInteraction):
-
-        cdef int state
-
-        def __init__(self, *args, **kwargs):
-            self.state = -1
-            super().__init__(*args, **kwargs)
-
-        def type_number(self):
-            return "TABULATED_NONBONDED"
-
-        def type_name(self):
-            """Name of the potential.
-
-            """
-            return "TABULATED"
-
-        def valid_keys(self):
-            """All parameters that can be set.
-
-            """
-            return {"min", "max", "energy", "force"}
-
-        def required_keys(self):
-            """Parameters that have to be set.
-
-            """
-            return {"min", "max", "energy", "force"}
-
-        def set_params(self, **kwargs):
-            """Set parameters for the TabulatedNonBonded interaction.
-
-            Parameters
-            ----------
-
-            min : :obj:`float`,
-                The minimal interaction distance.
-            max : :obj:`float`,
-                The maximal interaction distance.
-            energy: array_like of :obj:`float`
-                The energy table.
-            force: array_like of :obj:`float`
-                The force table.
-
-            """
-            super().set_params(**kwargs)
-
-        def set_default_params(self):
-            """Set parameters that are not required to their default value.
-
-            """
-            self._params = {}
-
-        def _get_params_from_es_core(self):
-            cdef IA_parameters * ia_params = get_ia_param_safe(
-                self._part_types[0],
-                self._part_types[1])
-
-            return {'min': ia_params.tab.minval,
-                    'max': ia_params.tab.maxval,
-                    'energy': ia_params.tab.energy_tab,
-                    'force': ia_params.tab.force_tab}
-
-        def _set_params_in_es_core(self):
-            self.state = tabulated_set_params(self._part_types[0],
-                                              self._part_types[1],
-                                              self._params["min"],
-                                              self._params["max"],
-                                              self._params["energy"],
-                                              self._params["force"])
-
-        def is_active(self):
-            """Check if interaction is active.
-
-            """
-            return (self.state == 0)
 
 
 @script_interface_register

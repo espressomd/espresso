@@ -517,6 +517,41 @@ public:
 };
 #endif // GAY_BERNE
 
+#ifdef TABULATED
+class InteractionTabulated
+    : public InteractionPotentialInterface<::TabulatedPotential> {
+protected:
+  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+    return &::IA_parameters::tab;
+  }
+
+public:
+  InteractionTabulated() {
+    add_parameters({
+        make_autoparameter(&CoreInteraction::minval, "min"),
+        make_autoparameter(&CoreInteraction::maxval, "max"),
+        make_autoparameter(&CoreInteraction::force_tab, "force"),
+        make_autoparameter(&CoreInteraction::energy_tab, "energy"),
+    });
+  }
+
+  void make_new_instance(VariantMap const &params) override {
+    m_ia_si = make_shared_from_args<CoreInteraction, double, double,
+                                    std::vector<double>, std::vector<double>>(
+        params, "min", "max", "force", "energy");
+  }
+
+  Variant do_call_method(std::string const &name,
+                         VariantMap const &params) override {
+    if (name == "get_cutoff") {
+      return m_ia_si.get()->cutoff();
+    }
+    return InteractionPotentialInterface<CoreInteraction>::do_call_method(
+        name, params);
+  }
+};
+#endif // TABULATED
+
 class NonBondedInteractionHandle
     : public AutoParameters<NonBondedInteractionHandle> {
   std::array<int, 2> m_types = {-1, -1};
@@ -559,6 +594,9 @@ class NonBondedInteractionHandle
 #endif
 #ifdef GAY_BERNE
   std::shared_ptr<InteractionGayBerne> m_gay_berne;
+#endif
+#ifdef TABULATED
+  std::shared_ptr<InteractionTabulated> m_tabulated;
 #endif
 
   template <class T>
@@ -616,6 +654,9 @@ public:
 #endif
 #ifdef GAY_BERNE
         make_autoparameter(m_gay_berne, "gay_berne"),
+#endif
+#ifdef TABULATED
+        make_autoparameter(m_tabulated, "tabulated"),
 #endif
     });
   }
@@ -708,6 +749,10 @@ public:
 #ifdef GAY_BERNE
     set_member<InteractionGayBerne>(
         m_gay_berne, "gay_berne", "Interactions::InteractionGayBerne", params);
+#endif
+#ifdef TABULATED
+    set_member<InteractionTabulated>(
+        m_tabulated, "tabulated", "Interactions::InteractionTabulated", params);
 #endif
   }
 
