@@ -488,6 +488,35 @@ public:
 };
 #endif // HAT
 
+#ifdef GAY_BERNE
+class InteractionGayBerne
+    : public InteractionPotentialInterface<::GayBerne_Parameters> {
+protected:
+  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+    return &::IA_parameters::gay_berne;
+  }
+
+public:
+  InteractionGayBerne() {
+    add_parameters({
+        make_autoparameter(&CoreInteraction::eps, "eps"),
+        make_autoparameter(&CoreInteraction::sig, "sig"),
+        make_autoparameter(&CoreInteraction::cut, "cut"),
+        make_autoparameter(&CoreInteraction::k1, "k1"),
+        make_autoparameter(&CoreInteraction::k2, "k2"),
+        make_autoparameter(&CoreInteraction::mu, "mu"),
+        make_autoparameter(&CoreInteraction::nu, "nu"),
+    });
+  }
+
+  void make_new_instance(VariantMap const &params) override {
+    m_ia_si = make_shared_from_args<CoreInteraction, double, double, double,
+                                    double, double, double, double>(
+        params, "eps", "sig", "cut", "k1", "k2", "mu", "nu");
+  }
+};
+#endif // GAY_BERNE
+
 class NonBondedInteractionHandle
     : public AutoParameters<NonBondedInteractionHandle> {
   std::array<int, 2> m_types = {-1, -1};
@@ -527,6 +556,9 @@ class NonBondedInteractionHandle
 #endif
 #ifdef HAT
   std::shared_ptr<InteractionHat> m_hat;
+#endif
+#ifdef GAY_BERNE
+  std::shared_ptr<InteractionGayBerne> m_gay_berne;
 #endif
 
   template <class T>
@@ -581,6 +613,9 @@ public:
 #endif
 #ifdef HAT
         make_autoparameter(m_hat, "hat"),
+#endif
+#ifdef GAY_BERNE
+        make_autoparameter(m_gay_berne, "gay_berne"),
 #endif
     });
   }
@@ -669,6 +704,10 @@ public:
 #ifdef HAT
     set_member<InteractionHat>(m_hat, "hat", "Interactions::InteractionHat",
                                params);
+#endif
+#ifdef GAY_BERNE
+    set_member<InteractionGayBerne>(
+        m_gay_berne, "gay_berne", "Interactions::InteractionGayBerne", params);
 #endif
   }
 

@@ -44,10 +44,6 @@
 
 #include <cmath>
 
-int gay_berne_set_params(int part_type_a, int part_type_b, double eps,
-                         double sig, double cut, double k1, double k2,
-                         double mu, double nu);
-
 /** Calculate Gay-Berne force and torques */
 inline ParticleForce gb_pair_force(Utils::Vector3d const &ui,
                                    Utils::Vector3d const &uj,

@@ -227,6 +227,10 @@ struct GayBerne_Parameters {
   double nu = 0.0;
   double chi1 = 0.0;
   double chi2 = 0.0;
+  GayBerne_Parameters() = default;
+  GayBerne_Parameters(double eps, double sig, double cut, double k1, double k2,
+                      double mu, double nu);
+  double max_cutoff() const { return cut; }
 };
 
 /** Thole potential */

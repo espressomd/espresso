@@ -94,6 +94,9 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
 #ifdef HAT
   om->register_new<InteractionHat>("Interactions::InteractionHat");
 #endif
+#ifdef GAY_BERNE
+  om->register_new<InteractionGayBerne>("Interactions::InteractionGayBerne");
+#endif
 }
 } // namespace Interactions
 } // namespace ScriptInterface

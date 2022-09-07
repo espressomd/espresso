@@ -194,7 +194,7 @@ static double recalc_maximal_cutoff(const IA_parameters &data) {
 #endif
 
 #ifdef GAY_BERNE
-  max_cut_current = std::max(max_cut_current, data.gay_berne.cut);
+  max_cut_current = std::max(max_cut_current, data.gay_berne.max_cutoff());
 #endif
 
 #ifdef TABULATED

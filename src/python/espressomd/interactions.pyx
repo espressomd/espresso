@@ -656,36 +656,17 @@ IF HAT == 1:
 
 IF GAY_BERNE:
 
-    cdef class GayBerneInteraction(NonBondedInteraction):
+    @script_interface_register
+    class GayBerneInteraction(NewNonBondedInteraction):
+        """Gay--Berne interaction.
 
-        def validate_params(self):
-            """Check that parameters are valid.
-
-            """
-            pass
-
-        def _get_params_from_es_core(self):
-            cdef IA_parameters * ia_params
-            ia_params = get_ia_param_safe(
-                self._part_types[0],
-                self._part_types[1])
-            return {
-                "eps": ia_params.gay_berne.eps,
-                "sig": ia_params.gay_berne.sig,
-                "cut": ia_params.gay_berne.cut,
-                "k1": ia_params.gay_berne.k1,
-                "k2": ia_params.gay_berne.k2,
-                "mu": ia_params.gay_berne.mu,
-                "nu": ia_params.gay_berne.nu}
-
-        def is_active(self):
-            """Check if interaction is active.
-
-            """
-            return (self._params["eps"] > 0)
-
-        def set_params(self, **kwargs):
-            """Set parameters for the Gay-Berne interaction.
+        Methods
+        -------
+        set_params()
+            Set or update parameters for the interaction.
+            Parameters marked as required become optional once the
+            interaction has been activated for the first time;
+            subsequent calls to this method update the existing values.
 
             Parameters
             ----------
@@ -705,20 +686,15 @@ IF GAY_BERNE:
             nu : :obj:`float`, optional
                 Adjustable exponent.
 
-            """
-            super().set_params(**kwargs)
+        """
 
-        def _set_params_in_es_core(self):
-            if gay_berne_set_params(self._part_types[0],
-                                    self._part_types[1],
-                                    self._params["eps"],
-                                    self._params["sig"],
-                                    self._params["cut"],
-                                    self._params["k1"],
-                                    self._params["k2"],
-                                    self._params["mu"],
-                                    self._params["nu"]):
-                raise Exception("Could not set Gay-Berne parameters")
+        _so_name = "Interactions::InteractionGayBerne"
+
+        def is_active(self):
+            """Check if interaction is active.
+
+            """
+            return self.eps > 0.
 
         def default_params(self):
             """Python dictionary of default parameters.
@@ -1308,8 +1284,6 @@ class NonBondedInteractionHandle(ScriptInterfaceHelper):
             self.smooth_step = SmoothStepInteraction(_type1, _type2)
         IF TABULATED:
             self.tabulated = TabulatedNonBonded(_type1, _type2)
-        IF GAY_BERNE:
-            self.gay_berne = GayBerneInteraction(_type1, _type2)
         IF DPD:
             self.dpd = DPDInteraction(_type1, _type2)
         IF THOLE:

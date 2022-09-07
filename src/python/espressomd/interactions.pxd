@@ -47,15 +47,6 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         int n
         double k0
 
-    cdef struct GayBerne_Parameters:
-        double eps
-        double sig
-        double cut
-        double k1
-        double k2
-        double mu
-        double nu
-
     cdef struct Thole_Parameters:
         double scaling_coeff
         double q1q2
@@ -71,8 +62,6 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
 
         TabulatedPotential tab
 
-        GayBerne_Parameters gay_berne
-
         SmoothStep_Parameters smooth_step
 
         DPDParameters dpd_radial
@@ -84,13 +73,6 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     cdef string ia_params_get_state()
     cdef void ia_params_set_state(string)
     cdef void reset_ia_params()
-
-IF GAY_BERNE:
-    cdef extern from "nonbonded_interactions/gay_berne.hpp":
-        int gay_berne_set_params(int part_type_a, int part_type_b,
-                                 double eps, double sig, double cut,
-                                 double k1, double k2,
-                                 double mu, double nu)
 
 IF THOLE:
     cdef extern from "nonbonded_interactions/thole.hpp":
