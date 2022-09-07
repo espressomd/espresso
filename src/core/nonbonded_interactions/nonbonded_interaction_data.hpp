@@ -248,6 +248,18 @@ struct DPDParameters {
   double pref = 0.0;
 };
 
+struct DPD_Parameters {
+  DPDParameters radial;
+  DPDParameters trans;
+  DPD_Parameters() = default;
+  DPD_Parameters(double gamma, double k, double r_c, int wf, double tgamma,
+                 double tr_c, int twf) {
+    radial = DPDParameters{gamma, k, r_c, wf, -1.};
+    trans = DPDParameters{tgamma, k, tr_c, twf, -1.};
+  }
+  double max_cutoff() const { return std::max(radial.cutoff, trans.cutoff); }
+};
+
 /** Data structure containing the interaction parameters for non-bonded
  *  interactions.
  *  Access via <tt>get_ia_param(i, j)</tt> with
@@ -321,11 +333,7 @@ struct IA_parameters {
 #endif
 
 #ifdef DPD
-  /** \name DPD as interaction */
-  /**@{*/
-  DPDParameters dpd_radial;
-  DPDParameters dpd_trans;
-  /**@}*/
+  DPD_Parameters dpd;
 #endif
 
 #ifdef THOLE

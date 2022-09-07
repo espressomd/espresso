@@ -145,8 +145,7 @@ static double recalc_maximal_cutoff(const IA_parameters &data) {
 #endif
 
 #ifdef DPD
-  max_cut_current = std::max(
-      max_cut_current, std::max(data.dpd_radial.cutoff, data.dpd_trans.cutoff));
+  max_cut_current = std::max(max_cut_current, data.dpd.max_cutoff());
 #endif
 
 #ifdef LENNARD_JONES_GENERIC

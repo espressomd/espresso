@@ -785,34 +785,17 @@ IF TABULATED:
 
 IF DPD:
 
-    cdef class DPDInteraction(NonBondedInteraction):
+    @script_interface_register
+    class DPDInteraction(NewNonBondedInteraction):
+        """DPD interaction.
 
-        def validate_params(self):
-            """Check that parameters are valid.
-
-            """
-            pass
-
-        def _get_params_from_es_core(self):
-            cdef IA_parameters * ia_params
-            ia_params = get_ia_param_safe(
-                self._part_types[0], self._part_types[1])
-            return {
-                "weight_function": ia_params.dpd_radial.wf,
-                "gamma": ia_params.dpd_radial.gamma,
-                "k": ia_params.dpd_radial.k,
-                "r_cut": ia_params.dpd_radial.cutoff,
-                "trans_weight_function": ia_params.dpd_trans.wf,
-                "trans_gamma": ia_params.dpd_trans.gamma,
-                "trans_r_cut": ia_params.dpd_trans.cutoff
-            }
-
-        def is_active(self):
-            return (self._params["r_cut"] > 0) or (
-                self._params["trans_r_cut"] > 0)
-
-        def set_params(self, **kwargs):
-            """Set parameters for the DPD interaction.
+        Methods
+        -------
+        set_params()
+            Set or update parameters for the interaction.
+            Parameters marked as required become optional once the
+            interaction has been activated for the first time;
+            subsequent calls to this method update the existing values.
 
             Parameters
             ----------
@@ -833,20 +816,12 @@ IF DPD:
             trans_r_cut : :obj:`float`
                 Cutoff of the orthogonal part
 
-            """
-            super().set_params(**kwargs)
+        """
 
-        def _set_params_in_es_core(self):
-            if dpd_set_params(self._part_types[0],
-                              self._part_types[1],
-                              self._params["gamma"],
-                              self._params["k"],
-                              self._params["r_cut"],
-                              self._params["weight_function"],
-                              self._params["trans_gamma"],
-                              self._params["trans_r_cut"],
-                              self._params["trans_weight_function"]):
-                raise Exception("Could not set DPD parameters")
+        _so_name = "Interactions::InteractionDPD"
+
+        def is_active(self):
+            return self.r_cut > 0. or self.trans_r_cut > 0.
 
         def default_params(self):
             return {
@@ -1345,8 +1320,6 @@ class NonBondedInteractionHandle(ScriptInterfaceHelper):
         # Here, add one line for each nonbonded ia
         IF SMOOTH_STEP:
             self.smooth_step = SmoothStepInteraction(_type1, _type2)
-        IF DPD:
-            self.dpd = DPDInteraction(_type1, _type2)
         IF THOLE:
             self.thole = TholeInteraction(_type1, _type2)
 

@@ -100,6 +100,9 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
 #ifdef TABULATED
   om->register_new<InteractionTabulated>("Interactions::InteractionTabulated");
 #endif
+#ifdef DPD
+  om->register_new<InteractionDPD>("Interactions::InteractionDPD");
+#endif
 }
 } // namespace Interactions
 } // namespace ScriptInterface

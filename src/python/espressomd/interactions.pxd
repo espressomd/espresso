@@ -43,19 +43,9 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         double scaling_coeff
         double q1q2
 
-    cdef struct DPDParameters:
-        double gamma
-        double k
-        double cutoff
-        int wf
-        double pref
-
     cdef struct IA_parameters:
 
         SmoothStep_Parameters smooth_step
-
-        DPDParameters dpd_radial
-        DPDParameters dpd_trans
 
         Thole_Parameters thole
 
@@ -74,11 +64,6 @@ IF SMOOTH_STEP:
                                    double d, int n, double eps,
                                    double k0, double sig,
                                    double cut)
-IF DPD:
-    cdef extern from "dpd.hpp":
-        int dpd_set_params(int part_type_a, int part_type_b,
-                           double gamma, double k, double r_c, int wf,
-                           double tgamma, double tr_c, int twf)
 
 cdef extern from "script_interface/interactions/bonded.hpp":
     int bonded_ia_params_zero_based_type(int bond_id) except +

@@ -36,8 +36,6 @@
 
 struct IA_parameters;
 
-int dpd_set_params(int part_type_a, int part_type_b, double gamma, double k,
-                   double r_c, int wf, double tgamma, double tr_c, int twf);
 void dpd_init(double kT, double time_step);
 
 Utils::Vector3d dpd_pair_force(Particle const &p1, Particle const &p2,

@@ -64,28 +64,15 @@ Vector3d dpd_noise(int pid1, int pid2) {
       (pid1 < pid2) ? pid1 : pid2);
 }
 
-int dpd_set_params(int part_type_a, int part_type_b, double gamma, double k,
-                   double r_c, int wf, double tgamma, double tr_c, int twf) {
-  auto &ia_params = *get_ia_param_safe(part_type_a, part_type_b);
-
-  ia_params.dpd_radial = DPDParameters{gamma, k, r_c, wf, -1.};
-  ia_params.dpd_trans = DPDParameters{tgamma, k, tr_c, twf, -1.};
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(part_type_a, part_type_b);
-
-  return ES_OK;
-}
-
 void dpd_init(double kT, double time_step) {
   for (int type_a = 0; type_a < max_seen_particle_type; type_a++) {
     for (int type_b = 0; type_b < max_seen_particle_type; type_b++) {
       IA_parameters &ia_params = get_ia_param(type_a, type_b);
 
-      ia_params.dpd_radial.pref =
-          sqrt(24.0 * kT * ia_params.dpd_radial.gamma / time_step);
-      ia_params.dpd_trans.pref =
-          sqrt(24.0 * kT * ia_params.dpd_trans.gamma / time_step);
+      ia_params.dpd.radial.pref =
+          sqrt(24.0 * kT * ia_params.dpd.radial.gamma / time_step);
+      ia_params.dpd.trans.pref =
+          sqrt(24.0 * kT * ia_params.dpd.trans.gamma / time_step);
     }
   }
 }
@@ -116,19 +103,19 @@ Utils::Vector3d dpd_pair_force(Particle const &p1, Particle const &p2,
                                IA_parameters const &ia_params,
                                Utils::Vector3d const &d, double dist,
                                double dist2) {
-  if (ia_params.dpd_radial.cutoff <= 0.0 && ia_params.dpd_trans.cutoff <= 0.0) {
+  if (ia_params.dpd.radial.cutoff <= 0.0 && ia_params.dpd.trans.cutoff <= 0.0) {
     return {};
   }
 
   auto const v21 =
       box_geo.velocity_difference(p1.pos(), p2.pos(), p1.v(), p2.v());
   auto const noise_vec =
-      (ia_params.dpd_radial.pref > 0.0 || ia_params.dpd_trans.pref > 0.0)
+      (ia_params.dpd.radial.pref > 0.0 || ia_params.dpd.trans.pref > 0.0)
           ? dpd_noise(p1.id(), p2.id())
           : Vector3d{};
 
-  auto const f_r = dpd_pair_force(ia_params.dpd_radial, v21, dist, noise_vec);
-  auto const f_t = dpd_pair_force(ia_params.dpd_trans, v21, dist, noise_vec);
+  auto const f_r = dpd_pair_force(ia_params.dpd.radial, v21, dist, noise_vec);
+  auto const f_t = dpd_pair_force(ia_params.dpd.trans, v21, dist, noise_vec);
 
   /* Projection operator to radial direction */
   auto const P = tensor_product(d / dist2, d);
@@ -150,8 +137,8 @@ static auto dpd_viscous_stress_local() {
         auto const &ia_params = get_ia_param(p1.type(), p2.type());
         auto const dist = std::sqrt(d.dist2);
 
-        auto const f_r = dpd_pair_force(ia_params.dpd_radial, v21, dist, {});
-        auto const f_t = dpd_pair_force(ia_params.dpd_trans, v21, dist, {});
+        auto const f_r = dpd_pair_force(ia_params.dpd.radial, v21, dist, {});
+        auto const f_t = dpd_pair_force(ia_params.dpd.trans, v21, dist, {});
 
         /* Projection operator to radial direction */
         auto const P = tensor_product(d.vec21 / d.dist2, d.vec21);
@@ -188,4 +175,5 @@ Utils::Vector9d dpd_stress() {
 
   return Utils::flatten(stress) / volume;
 }
-#endif
+
+#endif // DPD

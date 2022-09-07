@@ -38,6 +38,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 #include <vector>
 
 namespace ScriptInterface {
@@ -552,6 +553,43 @@ public:
 };
 #endif // TABULATED
 
+#ifdef DPD
+class InteractionDPD : public InteractionPotentialInterface<::DPD_Parameters> {
+protected:
+  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+    return &::IA_parameters::dpd;
+  }
+
+public:
+  InteractionDPD() {
+    add_parameters({
+        {"weight_function", AutoParameter::read_only,
+         [this]() { return m_ia_si.get()->radial.wf; }},
+        {"gamma", AutoParameter::read_only,
+         [this]() { return m_ia_si.get()->radial.gamma; }},
+        {"k", AutoParameter::read_only,
+         [this]() { return m_ia_si.get()->radial.k; }},
+        {"r_cut", AutoParameter::read_only,
+         [this]() { return m_ia_si.get()->radial.cutoff; }},
+        {"trans_weight_function", AutoParameter::read_only,
+         [this]() { return m_ia_si.get()->trans.wf; }},
+        {"trans_gamma", AutoParameter::read_only,
+         [this]() { return m_ia_si.get()->trans.gamma; }},
+        {"trans_r_cut", AutoParameter::read_only,
+         [this]() { return m_ia_si.get()->trans.cutoff; }},
+    });
+    std::ignore = get_ptr_offset(); // for code coverage
+  }
+
+  void make_new_instance(VariantMap const &params) override {
+    m_ia_si = make_shared_from_args<CoreInteraction, double, double, double,
+                                    double, double, double, double>(
+        params, "gamma", "k", "r_cut", "weight_function", "trans_gamma",
+        "trans_r_cut", "trans_weight_function");
+  }
+};
+#endif // DPD
+
 class NonBondedInteractionHandle
     : public AutoParameters<NonBondedInteractionHandle> {
   std::array<int, 2> m_types = {-1, -1};
@@ -597,6 +635,9 @@ class NonBondedInteractionHandle
 #endif
 #ifdef TABULATED
   std::shared_ptr<InteractionTabulated> m_tabulated;
+#endif
+#ifdef DPD
+  std::shared_ptr<InteractionDPD> m_dpd;
 #endif
 
   template <class T>
@@ -657,6 +698,9 @@ public:
 #endif
 #ifdef TABULATED
         make_autoparameter(m_tabulated, "tabulated"),
+#endif
+#ifdef DPD
+        make_autoparameter(m_dpd, "dpd"),
 #endif
     });
   }
@@ -753,6 +797,10 @@ public:
 #ifdef TABULATED
     set_member<InteractionTabulated>(
         m_tabulated, "tabulated", "Interactions::InteractionTabulated", params);
+#endif
+#ifdef DPD
+    set_member<InteractionDPD>(m_dpd, "dpd", "Interactions::InteractionDPD",
+                               params);
 #endif
   }
 
