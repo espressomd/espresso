@@ -25,29 +25,17 @@
 #include "smooth_step.hpp"
 
 #ifdef SMOOTH_STEP
-#include "interactions.hpp"
 #include "nonbonded_interaction_data.hpp"
 
-#include <utils/constants.hpp>
+#include <stdexcept>
 
-int smooth_step_set_params(int part_type_a, int part_type_b, double d, int n,
-                           double eps, double k0, double sig, double cut) {
-  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
-
-  if (!data)
-    return ES_ERROR;
-
-  data->smooth_step.eps = eps;
-  data->smooth_step.sig = sig;
-  data->smooth_step.cut = cut;
-  data->smooth_step.d = d;
-  data->smooth_step.n = n;
-  data->smooth_step.k0 = k0;
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(part_type_a, part_type_b);
-
-  return ES_OK;
+SmoothStep_Parameters::SmoothStep_Parameters(double eps, double sig,
+                                             double cutoff, double d, int n,
+                                             double k0)
+    : eps{eps}, sig{sig}, cut{cutoff}, d{d}, n{n}, k0{k0} {
+  if (eps < 0.) {
+    throw std::domain_error("SmoothStep parameter 'eps' has to be >= 0");
+  }
 }
 
-#endif
+#endif // SMOOTH_STEP

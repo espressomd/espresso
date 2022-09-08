@@ -612,6 +612,33 @@ public:
 };
 #endif // THOLE
 
+#ifdef SMOOTH_STEP
+class InteractionSmoothStep
+    : public InteractionPotentialInterface<::SmoothStep_Parameters> {
+protected:
+  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+    return &::IA_parameters::smooth_step;
+  }
+
+public:
+  InteractionSmoothStep() {
+    add_parameters({
+        make_autoparameter(&CoreInteraction::eps, "eps"),
+        make_autoparameter(&CoreInteraction::sig, "sig"),
+        make_autoparameter(&CoreInteraction::cut, "cutoff"),
+        make_autoparameter(&CoreInteraction::d, "d"),
+        make_autoparameter(&CoreInteraction::n, "n"),
+        make_autoparameter(&CoreInteraction::k0, "k0"),
+    });
+  }
+  void make_new_instance(VariantMap const &params) override {
+    m_ia_si = make_shared_from_args<CoreInteraction, double, double, double,
+                                    double, int, double>(
+        params, "eps", "sig", "cutoff", "d", "n", "k0");
+  }
+};
+#endif // SMOOTH_STEP
+
 class NonBondedInteractionHandle
     : public AutoParameters<NonBondedInteractionHandle> {
   std::array<int, 2> m_types = {-1, -1};
@@ -663,6 +690,9 @@ class NonBondedInteractionHandle
 #endif
 #ifdef THOLE
   std::shared_ptr<InteractionThole> m_thole;
+#endif
+#ifdef SMOOTH_STEP
+  std::shared_ptr<InteractionSmoothStep> m_smooth_step;
 #endif
 
   template <class T>
@@ -729,6 +759,9 @@ public:
 #endif
 #ifdef THOLE
         make_autoparameter(m_thole, "thole"),
+#endif
+#ifdef SMOOTH_STEP
+        make_autoparameter(m_smooth_step, "smooth_step"),
 #endif
     });
   }
@@ -833,6 +866,11 @@ public:
 #ifdef THOLE
     set_member<InteractionThole>(m_thole, "thole",
                                  "Interactions::InteractionThole", params);
+#endif
+#ifdef SMOOTH_STEP
+    set_member<InteractionSmoothStep>(m_smooth_step, "smooth_step",
+                                      "Interactions::InteractionSmoothStep",
+                                      params);
 #endif
   }
 

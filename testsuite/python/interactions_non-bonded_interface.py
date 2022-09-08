@@ -337,6 +337,14 @@ class Test(ut.TestCase):
             ("F_max",)
         )
 
+    @utx.skipIfMissingFeatures("SMOOTH_STEP")
+    def test_smooth_step_exceptions(self):
+        self.check_potential_exceptions(
+            espressomd.interactions.SmoothStepInteraction,
+            {"eps": 4., "sig": 3., "cutoff": 1., "d": 2., "n": 11, "k0": 2.},
+            ("eps",)
+        )
+
 
 if __name__ == "__main__":
     ut.main()

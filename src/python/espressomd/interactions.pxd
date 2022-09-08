@@ -31,29 +31,14 @@ cdef extern from "config.hpp":
     pass
 
 cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
-    cdef struct SmoothStep_Parameters:
-        double eps
-        double sig
-        double cut
-        double d
-        int n
-        double k0
 
     cdef struct IA_parameters:
-
-        SmoothStep_Parameters smooth_step
+        pass
 
     cdef IA_parameters * get_ia_param_safe(int i, int j)
     cdef string ia_params_get_state()
     cdef void ia_params_set_state(string)
     cdef void reset_ia_params()
-
-IF SMOOTH_STEP:
-    cdef extern from "nonbonded_interactions/smooth_step.hpp":
-        int smooth_step_set_params(int part_type_a, int part_type_b,
-                                   double d, int n, double eps,
-                                   double k0, double sig,
-                                   double cut)
 
 cdef extern from "script_interface/interactions/bonded.hpp":
     int bonded_ia_params_zero_based_type(int bond_id) except +

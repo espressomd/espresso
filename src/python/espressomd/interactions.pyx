@@ -845,67 +845,17 @@ IF DPD:
 
 IF SMOOTH_STEP == 1:
 
-    cdef class SmoothStepInteraction(NonBondedInteraction):
+    @script_interface_register
+    class SmoothStepInteraction(NewNonBondedInteraction):
+        """Smooth step interaction.
 
-        def validate_params(self):
-            """Check that parameters are valid.
-
-            """
-            if self._params["eps"] < 0:
-                raise ValueError("Smooth-step eps has to be >=0")
-            if self._params["offset"] < 0:
-                raise ValueError("Smooth-step offset has to be >=0")
-            if self._params["cutoff"] < 0:
-                raise ValueError("Smooth-step cutoff has to be >=0")
-            if self._params["cap"] < 0:
-                raise ValueError("Smooth-step cap has to be >=0")
-
-        def _get_params_from_es_core(self):
-            cdef IA_parameters * ia_params
-            ia_params = get_ia_param_safe(
-                self._part_types[0],
-                self._part_types[1])
-            return {
-                "d": ia_params.smooth_step.d,
-                "n": ia_params.smooth_step.n,
-                "eps": ia_params.smooth_step.eps,
-                "k0": ia_params.smooth_step.k0,
-                "sig": ia_params.smooth_step.sig,
-                "cutoff": ia_params.smooth_step.cut
-            }
-
-        def is_active(self):
-            """Check if interaction is active.
-
-            """
-            return ((self._params["eps"] > 0) and (self._params["sig"] > 0))
-
-        def _set_params_in_es_core(self):
-            if smooth_step_set_params(self._part_types[0],
-                                      self._part_types[1],
-                                      self._params["d"],
-                                      self._params["n"],
-                                      self._params["eps"],
-                                      self._params["k0"],
-                                      self._params["sig"],
-                                      self._params["cutoff"]):
-                raise Exception("Could not set smooth-step parameters")
-
-        def default_params(self):
-            """Python dictionary of default parameters.
-
-            """
-            return {"n": 10, "k0": 0., "sig": 0.}
-
-        def type_name(self):
-            """Name of interaction type.
-
-            """
-            return "SmoothStep"
-
-        def set_params(self, **kwargs):
-            """
-            Set parameters for the smooth-step interaction.
+        Methods
+        -------
+        set_params()
+            Set or update parameters for the interaction.
+            Parameters marked as required become optional once the
+            interaction has been activated for the first time;
+            subsequent calls to this method update the existing values.
 
             Parameters
             ----------
@@ -922,8 +872,27 @@ IF SMOOTH_STEP == 1:
             cutoff : :obj:`float`
                 Cutoff distance of the interaction.
 
+        """
+
+        _so_name = "Interactions::InteractionSmoothStep"
+
+        def is_active(self):
+            """Check if interaction is active.
+
             """
-            super().set_params(**kwargs)
+            return self.eps > 0. and self.sig > 0.
+
+        def default_params(self):
+            """Python dictionary of default parameters.
+
+            """
+            return {"n": 10, "k0": 0., "sig": 0.}
+
+        def type_name(self):
+            """Name of interaction type.
+
+            """
+            return "SmoothStep"
 
         def valid_keys(self):
             """All parameters that can be set.
@@ -1362,10 +1331,6 @@ class NonBondedInteractionHandle(ScriptInterfaceHelper):
                 and utils.is_valid_type(_type2, int)):
             raise TypeError("The particle types have to be of type integer.")
         super().__init__(_types=[_type1, _type2], **kwargs)
-
-        # Here, add one line for each nonbonded ia
-        IF SMOOTH_STEP:
-            self.smooth_step = SmoothStepInteraction(_type1, _type2)
 
     def _serialize(self):
         serialized = []

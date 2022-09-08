@@ -153,7 +153,7 @@ static double recalc_maximal_cutoff(const IA_parameters &data) {
 #endif
 
 #ifdef SMOOTH_STEP
-  max_cut_current = std::max(max_cut_current, data.smooth_step.cut);
+  max_cut_current = std::max(max_cut_current, data.smooth_step.max_cutoff());
 #endif
 
 #ifdef HERTZIAN

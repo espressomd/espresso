@@ -106,6 +106,10 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
 #ifdef THOLE
   om->register_new<InteractionThole>("Interactions::InteractionThole");
 #endif
+#ifdef SMOOTH_STEP
+  om->register_new<InteractionSmoothStep>(
+      "Interactions::InteractionSmoothStep");
+#endif
 }
 } // namespace Interactions
 } // namespace ScriptInterface

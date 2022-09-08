@@ -104,6 +104,10 @@ struct SmoothStep_Parameters {
   double d = 0.0;
   int n = 0;
   double k0 = 0.0;
+  SmoothStep_Parameters() = default;
+  SmoothStep_Parameters(double eps, double sig, double cutoff, double d, int n,
+                        double k0);
+  double max_cutoff() const { return cut; }
 };
 
 /** Hertzian potential */
