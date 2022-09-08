@@ -1289,6 +1289,52 @@ IF GAUSSIAN == 1:
             """
             return {"eps", "sig", "cutoff"}
 
+IF THOLE:
+
+    @script_interface_register
+    class TholeInteraction(NewNonBondedInteraction):
+        """Thole interaction.
+
+        Methods
+        -------
+        set_params()
+            Set or update parameters for the interaction.
+            Parameters marked as required become optional once the
+            interaction has been activated for the first time;
+            subsequent calls to this method update the existing values.
+
+            Parameters
+            ----------
+            scaling_coeff : :obj:`float`
+                The factor used in the Thole damping function between
+                polarizable particles i and j. Usually calculated by
+                the polarizabilities :math:`\\alpha_i`, :math:`\\alpha_j`
+                and damping parameters :math:`a_i`, :math:`a_j` via
+                :math:`s_{ij} = \\frac{(a_i+a_j)/2}{((\\alpha_i\\cdot\\alpha_j)^{1/2})^{1/3}}`
+            q1q2: :obj:`float`
+                Charge factor of the involved charges. Has to be set because
+                it acts only on the portion of the Drude core charge that is
+                associated to the dipole of the atom. For charged, polarizable
+                atoms that charge is not equal to the particle charge property.
+        """
+
+        _so_name = "Interactions::InteractionThole"
+
+        def is_active(self):
+            return self.scaling_coeff != 0.
+
+        def default_params(self):
+            return {}
+
+        def type_name(self):
+            return "Thole"
+
+        def valid_keys(self):
+            return {"scaling_coeff", "q1q2"}
+
+        def required_keys(self):
+            return {"scaling_coeff", "q1q2"}
+
 
 @script_interface_register
 class NonBondedInteractionHandle(ScriptInterfaceHelper):
@@ -1320,8 +1366,6 @@ class NonBondedInteractionHandle(ScriptInterfaceHelper):
         # Here, add one line for each nonbonded ia
         IF SMOOTH_STEP:
             self.smooth_step = SmoothStepInteraction(_type1, _type2)
-        IF THOLE:
-            self.thole = TholeInteraction(_type1, _type2)
 
     def _serialize(self):
         serialized = []
@@ -1769,64 +1813,6 @@ class ThermalizedBond(BondedInteraction):
 
     def get_default_params(self):
         return {"r_cut": 0., "seed": None}
-
-
-IF THOLE:
-
-    cdef class TholeInteraction(NonBondedInteraction):
-
-        def validate_params(self):
-            pass
-
-        def _get_params_from_es_core(self):
-            cdef IA_parameters * ia_params
-            ia_params = get_ia_param_safe(self._part_types[0],
-                                          self._part_types[1])
-            return {
-                "scaling_coeff": ia_params.thole.scaling_coeff,
-                "q1q2": ia_params.thole.q1q2
-            }
-
-        def is_active(self):
-            return (self._params["scaling_coeff"] != 0)
-
-        def set_params(self, **kwargs):
-            """Set parameters for the Thole interaction.
-
-            Parameters
-            ----------
-            scaling_coeff : :obj:`float`
-                The factor used in the Thole damping function between
-                polarizable particles i and j. Usually calculated by
-                the polarizabilities :math:`\\alpha_i`, :math:`\\alpha_j`
-                and damping parameters :math:`a_i`, :math:`a_j` via
-                :math:`s_{ij} = \\frac{(a_i+a_j)/2}{((\\alpha_i\\cdot\\alpha_j)^{1/2})^{1/3}}`
-            q1q2: :obj:`float`
-                Charge factor of the involved charges. Has to be set because
-                it acts only on the portion of the Drude core charge that is
-                associated to the dipole of the atom. For charged, polarizable
-                atoms that charge is not equal to the particle charge property.
-
-            """
-            super().set_params(**kwargs)
-
-        def _set_params_in_es_core(self):
-            if thole_set_params(self._part_types[0], self._part_types[1],
-                                self._params["scaling_coeff"],
-                                self._params["q1q2"]):
-                raise Exception("Could not set Thole parameters")
-
-        def default_params(self):
-            return {}
-
-        def type_name(self):
-            return "Thole"
-
-        def valid_keys(self):
-            return {"scaling_coeff", "q1q2"}
-
-        def required_keys(self):
-            return {"scaling_coeff", "q1q2"}
 
 
 IF BOND_CONSTRAINT == 1:

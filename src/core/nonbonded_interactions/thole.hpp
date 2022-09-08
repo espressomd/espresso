@@ -41,9 +41,6 @@
 
 #include <cmath>
 
-int thole_set_params(int part_type_a, int part_type_b, double scaling_coeff,
-                     double q1q2);
-
 /** Calculate Thole force */
 inline Utils::Vector3d
 thole_pair_force(Particle const &p1, Particle const &p2,

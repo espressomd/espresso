@@ -235,8 +235,11 @@ struct GayBerne_Parameters {
 
 /** Thole potential */
 struct Thole_Parameters {
-  double scaling_coeff;
-  double q1q2;
+  double scaling_coeff = 0.; // inactive cutoff is 0
+  double q1q2 = 0.;
+  Thole_Parameters() = default;
+  Thole_Parameters(double scaling_coeff, double q1q2)
+      : scaling_coeff{scaling_coeff}, q1q2{q1q2} {}
 };
 
 /** DPD potential */

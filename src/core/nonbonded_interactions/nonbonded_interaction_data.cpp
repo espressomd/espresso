@@ -202,7 +202,7 @@ static double recalc_maximal_cutoff(const IA_parameters &data) {
 
 #ifdef THOLE
   // If THOLE is active, use p3m cutoff
-  if (data.thole.scaling_coeff != 0)
+  if (data.thole.scaling_coeff != 0.)
     max_cut_current = std::max(max_cut_current, Coulomb::cutoff());
 #endif
 

@@ -590,6 +590,28 @@ public:
 };
 #endif // DPD
 
+#ifdef THOLE
+class InteractionThole
+    : public InteractionPotentialInterface<::Thole_Parameters> {
+protected:
+  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+    return &::IA_parameters::thole;
+  }
+
+public:
+  InteractionThole() {
+    add_parameters({
+        make_autoparameter(&CoreInteraction::scaling_coeff, "scaling_coeff"),
+        make_autoparameter(&CoreInteraction::q1q2, "q1q2"),
+    });
+  }
+  void make_new_instance(VariantMap const &params) override {
+    m_ia_si = make_shared_from_args<CoreInteraction, double, double>(
+        params, "scaling_coeff", "q1q2");
+  }
+};
+#endif // THOLE
+
 class NonBondedInteractionHandle
     : public AutoParameters<NonBondedInteractionHandle> {
   std::array<int, 2> m_types = {-1, -1};
@@ -638,6 +660,9 @@ class NonBondedInteractionHandle
 #endif
 #ifdef DPD
   std::shared_ptr<InteractionDPD> m_dpd;
+#endif
+#ifdef THOLE
+  std::shared_ptr<InteractionThole> m_thole;
 #endif
 
   template <class T>
@@ -701,6 +726,9 @@ public:
 #endif
 #ifdef DPD
         make_autoparameter(m_dpd, "dpd"),
+#endif
+#ifdef THOLE
+        make_autoparameter(m_thole, "thole"),
 #endif
     });
   }
@@ -801,6 +829,10 @@ public:
 #ifdef DPD
     set_member<InteractionDPD>(m_dpd, "dpd", "Interactions::InteractionDPD",
                                params);
+#endif
+#ifdef THOLE
+    set_member<InteractionThole>(m_thole, "thole",
+                                 "Interactions::InteractionThole", params);
 #endif
   }
 

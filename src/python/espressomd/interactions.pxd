@@ -39,24 +39,14 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         int n
         double k0
 
-    cdef struct Thole_Parameters:
-        double scaling_coeff
-        double q1q2
-
     cdef struct IA_parameters:
 
         SmoothStep_Parameters smooth_step
-
-        Thole_Parameters thole
 
     cdef IA_parameters * get_ia_param_safe(int i, int j)
     cdef string ia_params_get_state()
     cdef void ia_params_set_state(string)
     cdef void reset_ia_params()
-
-IF THOLE:
-    cdef extern from "nonbonded_interactions/thole.hpp":
-        int thole_set_params(int part_type_a, int part_type_b, double scaling_coeff, double q1q2)
 
 IF SMOOTH_STEP:
     cdef extern from "nonbonded_interactions/smooth_step.hpp":

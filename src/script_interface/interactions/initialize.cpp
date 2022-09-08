@@ -103,6 +103,9 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
 #ifdef DPD
   om->register_new<InteractionDPD>("Interactions::InteractionDPD");
 #endif
+#ifdef THOLE
+  om->register_new<InteractionThole>("Interactions::InteractionThole");
+#endif
 }
 } // namespace Interactions
 } // namespace ScriptInterface

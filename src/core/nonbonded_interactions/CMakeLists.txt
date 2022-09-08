@@ -14,5 +14,4 @@ target_sources(
           ${CMAKE_CURRENT_SOURCE_DIR}/nonbonded_interaction_data.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/soft_sphere.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/smooth_step.cpp
-          ${CMAKE_CURRENT_SOURCE_DIR}/thole.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/wca.cpp)
