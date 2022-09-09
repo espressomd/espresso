@@ -118,7 +118,6 @@ public:
     auto const key = get_ia_param_key(m_types[0], m_types[1]);
     assert(key < ::nonbonded_ia_params.size());
     ::nonbonded_ia_params[key].get()->*get_ptr_offset() = *m_ia_si;
-    ::old_nonbonded_ia_params[key].*get_ptr_offset() = *m_ia_si;
   }
 
   void copy_core_to_si() {

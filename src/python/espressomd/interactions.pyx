@@ -16,197 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from libcpp.string cimport string
 cimport cpython.object
-import collections
 
 include "myconfig.pxi"
 from . import utils
 from .script_interface import ScriptObjectMap, ScriptInterfaceHelper, script_interface_register
 
 
-cdef class NonBondedInteraction:
-    """
-    Represents an instance of a non-bonded interaction, such as Lennard-Jones.
-    Either called with two particle type id, in which case, the interaction
-    will represent the bonded interaction as it is defined in ESPResSo core,
-    or called with keyword arguments describing a new interaction.
-
-    """
-
-    cdef public object _part_types
-    cdef public object _params
-
-    # init dict to access all user defined nonbonded-inters via
-    # user_interactions[type1][type2][parameter]
-    cdef public object user_interactions
-
-    def __init__(self, *args, **kwargs):
-        if self.user_interactions is None:
-            self.user_interactions = {}
-        # Interaction id as argument
-        if len(args) == 2 and utils.is_valid_type(
-                args[0], int) and utils.is_valid_type(args[1], int):
-            self._part_types = args
-
-            # Load the parameters currently set in the ESPResSo core
-            self._params = self._get_params_from_es_core()
-
-        # Or have we been called with keyword args describing the interaction
-        elif len(args) == 0:
-            utils.check_required_keys(self.required_keys(), kwargs.keys())
-            utils.check_valid_keys(self.valid_keys(), kwargs.keys())
-            # Initialize default values
-            self._params = self.default_params()
-            self._part_types = [-1, -1]
-            self._params.update(kwargs)
-            self.validate_params()
-        else:
-            raise Exception(
-                "The constructor has to be called either with two particle type ids (as integer), or with a set of keyword arguments describing a new interaction")
-
-    def is_valid(self):
-        """Check, if the data stored in the instance still matches what is in ESPResSo.
-
-        """
-        temp_params = self._get_params_from_es_core()
-        return self._params == temp_params
-
-    def get_params(self):
-        """Get interaction parameters.
-
-        """
-        # If this instance refers to an actual interaction defined in
-        # the es core, load current parameters from there
-        if self._part_types[0] >= 0 and self._part_types[1] >= 0:
-            self._params = self._get_params_from_es_core()
-        return self._params
-
-    def __str__(self):
-        return f'{self.__class__.__name__}({self.get_params()})'
-
-    def __getstate__(self):
-        odict = collections.OrderedDict()
-        odict['user_interactions'] = self.user_interactions
-        odict['_part_types'] = self._part_types
-        odict['params'] = self.get_params()
-        return odict
-
-    def __setstate__(self, state):
-        self.user_interactions = state['user_interactions']
-        self._part_types = state['_part_types']
-        self._params = state['params']
-
-    def set_params(self, **p):
-        """Update the given parameters.
-
-        """
-        # Check, if any key was passed, which is not known
-        utils.check_valid_keys(self.valid_keys(), p.keys())
-
-        # When an interaction is newly activated, all required keys must be
-        # given
-        if not self.is_active():
-            utils.check_required_keys(self.required_keys(), p.keys())
-
-        # If this instance refers to an interaction defined in the ESPResSo core,
-        # load the parameters from there
-        is_valid_ia = self._part_types[0] >= 0 and self._part_types[1] >= 0
-
-        if is_valid_ia:
-            self._params = self._get_params_from_es_core()
-
-        # Put in values given by the user
-        self._params.update(p)
-
-        if is_valid_ia:
-            self._set_params_in_es_core()
-
-        # update interaction dict when user sets interaction
-        if self._part_types[0] not in self.user_interactions:
-            self.user_interactions[self._part_types[0]] = {}
-        self.user_interactions[self._part_types[0]][self._part_types[1]] = {}
-        new_params = self.get_params()
-        for p_key in new_params:
-            self.user_interactions[self._part_types[0]][
-                self._part_types[1]][p_key] = new_params[p_key]
-        self.user_interactions[self._part_types[0]][
-            self._part_types[1]]['type_name'] = self.type_name()
-
-        # defer exception (core and interface must always agree on parameters)
-        if is_valid_ia:
-            utils.handle_errors(f'setting {self.type_name()} raised an error')
-
-    def validate_params(self):
-        """Check that parameters are valid.
-
-        """
-        pass
-
-    def __getattribute__(self, name):
-        """Every time _set_params_in_es_core is called, the parameter dict is also updated.
-
-        """
-        attr = object.__getattribute__(self, name)
-        if hasattr(
-                attr, '__call__') and attr.__name__ == "_set_params_in_es_core":
-            def sync_params(*args, **kwargs):
-                result = attr(*args, **kwargs)
-                self._params.update(self._get_params_from_es_core())
-                return result
-            return sync_params
-        else:
-            return attr
-
-    def _get_params_from_es_core(self):
-        raise Exception(
-            "Subclasses of NonBondedInteraction must define the _get_params_from_es_core() method.")
-
-    def _set_params_in_es_core(self):
-        raise Exception(
-            "Subclasses of NonBondedInteraction must define the _set_params_in_es_core() method.")
-
-    def default_params(self):
-        """Virtual method.
-
-        """
-        raise Exception(
-            "Subclasses of NonBondedInteraction must define the default_params() method.")
-
-    def is_active(self):
-        """Virtual method.
-
-        """
-        # If this instance refers to an actual interaction defined in
-        # the es core, load current parameters from there
-        if self._part_types[0] >= 0 and self._part_types[1] >= 0:
-            self._params = self._get_params_from_es_core()
-        raise Exception(
-            "Subclasses of NonBondedInteraction must define the is_active() method.")
-
-    def type_name(self):
-        """Virtual method.
-
-        """
-        raise Exception(
-            "Subclasses of NonBondedInteraction must define the type_name() method.")
-
-    def valid_keys(self):
-        """Virtual method.
-
-        """
-        raise Exception(
-            "Subclasses of NonBondedInteraction must define the valid_keys() method.")
-
-    def required_keys(self):
-        """Virtual method.
-
-        """
-        raise Exception(
-            "Subclasses of NonBondedInteraction must define the required_keys() method.")
-
-
-class NewNonBondedInteraction(ScriptInterfaceHelper):
+class NonBondedInteraction(ScriptInterfaceHelper):
     """
     Represents an instance of a non-bonded interaction, such as Lennard-Jones.
 
@@ -287,7 +104,7 @@ class NewNonBondedInteraction(ScriptInterfaceHelper):
 IF LENNARD_JONES == 1:
 
     @script_interface_register
-    class LennardJonesInteraction(NewNonBondedInteraction):
+    class LennardJonesInteraction(NonBondedInteraction):
         """
         Standard 6-12 Lennard-Jones potential.
 
@@ -353,7 +170,7 @@ IF LENNARD_JONES == 1:
 IF WCA == 1:
 
     @script_interface_register
-    class WCAInteraction(NewNonBondedInteraction):
+    class WCAInteraction(NonBondedInteraction):
         """
         Standard 6-12 Weeks-Chandler-Andersen potential.
 
@@ -410,7 +227,7 @@ IF WCA == 1:
 IF LENNARD_JONES_GENERIC == 1:
 
     @script_interface_register
-    class GenericLennardJonesInteraction(NewNonBondedInteraction):
+    class GenericLennardJonesInteraction(NonBondedInteraction):
         """
         Generalized Lennard-Jones potential.
 
@@ -497,7 +314,7 @@ IF LENNARD_JONES_GENERIC == 1:
 IF LJCOS == 1:
 
     @script_interface_register
-    class LennardJonesCosInteraction(NewNonBondedInteraction):
+    class LennardJonesCosInteraction(NonBondedInteraction):
         """Lennard-Jones cosine interaction.
 
         Methods
@@ -555,7 +372,7 @@ IF LJCOS == 1:
 IF LJCOS2 == 1:
 
     @script_interface_register
-    class LennardJonesCos2Interaction(NewNonBondedInteraction):
+    class LennardJonesCos2Interaction(NonBondedInteraction):
         """Second variant of the Lennard-Jones cosine interaction.
 
         Methods
@@ -617,7 +434,7 @@ IF LJCOS2 == 1:
 IF HAT == 1:
 
     @script_interface_register
-    class HatInteraction(NewNonBondedInteraction):
+    class HatInteraction(NonBondedInteraction):
         """Hat interaction.
 
         Methods
@@ -657,7 +474,7 @@ IF HAT == 1:
 IF GAY_BERNE:
 
     @script_interface_register
-    class GayBerneInteraction(NewNonBondedInteraction):
+    class GayBerneInteraction(NonBondedInteraction):
         """Gay--Berne interaction.
 
         Methods
@@ -723,7 +540,7 @@ IF GAY_BERNE:
 IF TABULATED:
 
     @script_interface_register
-    class TabulatedNonBonded(NewNonBondedInteraction):
+    class TabulatedNonBonded(NonBondedInteraction):
         """Tabulated interaction.
 
         Methods
@@ -786,7 +603,7 @@ IF TABULATED:
 IF DPD:
 
     @script_interface_register
-    class DPDInteraction(NewNonBondedInteraction):
+    class DPDInteraction(NonBondedInteraction):
         """DPD interaction.
 
         Methods
@@ -846,7 +663,7 @@ IF DPD:
 IF SMOOTH_STEP == 1:
 
     @script_interface_register
-    class SmoothStepInteraction(NewNonBondedInteraction):
+    class SmoothStepInteraction(NonBondedInteraction):
         """Smooth step interaction.
 
         Methods
@@ -909,7 +726,7 @@ IF SMOOTH_STEP == 1:
 IF BMHTF_NACL == 1:
 
     @script_interface_register
-    class BMHTFInteraction(NewNonBondedInteraction):
+    class BMHTFInteraction(NonBondedInteraction):
         """BMHTF interaction.
 
         Methods
@@ -971,7 +788,7 @@ IF BMHTF_NACL == 1:
 IF MORSE == 1:
 
     @script_interface_register
-    class MorseInteraction(NewNonBondedInteraction):
+    class MorseInteraction(NonBondedInteraction):
         """Morse interaction.
 
         Methods
@@ -1029,7 +846,7 @@ IF MORSE == 1:
 IF BUCKINGHAM == 1:
 
     @script_interface_register
-    class BuckinghamInteraction(NewNonBondedInteraction):
+    class BuckinghamInteraction(NonBondedInteraction):
         """Buckingham interaction.
 
         Methods
@@ -1093,7 +910,7 @@ IF BUCKINGHAM == 1:
 IF SOFT_SPHERE == 1:
 
     @script_interface_register
-    class SoftSphereInteraction(NewNonBondedInteraction):
+    class SoftSphereInteraction(NonBondedInteraction):
         """Soft sphere interaction.
 
         Methods
@@ -1151,7 +968,7 @@ IF SOFT_SPHERE == 1:
 IF HERTZIAN == 1:
 
     @script_interface_register
-    class HertzianInteraction(NewNonBondedInteraction):
+    class HertzianInteraction(NonBondedInteraction):
         """Hertzian interaction.
 
         Methods
@@ -1205,7 +1022,7 @@ IF HERTZIAN == 1:
 IF GAUSSIAN == 1:
 
     @script_interface_register
-    class GaussianInteraction(NewNonBondedInteraction):
+    class GaussianInteraction(NonBondedInteraction):
         """Gaussian interaction.
 
         Methods
@@ -1261,7 +1078,7 @@ IF GAUSSIAN == 1:
 IF THOLE:
 
     @script_interface_register
-    class TholeInteraction(NewNonBondedInteraction):
+    class TholeInteraction(NonBondedInteraction):
         """Thole interaction.
 
         Methods
@@ -1345,10 +1162,15 @@ class NonBondedInteractions(ScriptInterfaceHelper):
     Access to non-bonded interaction parameters via ``[i,j]``, where ``i, j``
     are particle types. Returns a :class:`NonBondedInteractionHandle` object.
 
+    Methods
+    -------
+    reset()
+        Reset all interaction parameters to their default values.
+
     """
     _so_name = "Interactions::NonBondedInteractions"
     _so_creation_policy = "GLOBAL"
-    # _so_bind_methods = ("reset",)
+    _so_bind_methods = ("reset",)
 
     def keys(self):
         return [tuple(x) for x in self.call_method("keys")]
@@ -1368,14 +1190,13 @@ class NonBondedInteractions(ScriptInterfaceHelper):
         self.call_method("insert", key=key, object=value)
 
     def __getstate__(self):
-        cdef string core_state = ia_params_get_state()
         n_types = self.call_method("get_n_types")
         state = []
         for i in range(n_types):
             for j in range(i, n_types):
                 handle = NonBondedInteractionHandle(_types=(i, j))
                 state.append(((i, j), handle._serialize()))
-        return {"state": state, "core_state": core_state}
+        return {"state": state}
 
     def __setstate__(self, params):
         for types, kwargs in params["state"]:
@@ -1385,17 +1206,8 @@ class NonBondedInteractions(ScriptInterfaceHelper):
             obj = NonBondedInteractionHandle(_types=types, **objects)
             self.call_method("insert", key=types, object=obj)
 
-    def reset(self):
-        """
-        Reset all interaction parameters to their default values.
-        """
-        reset_ia_params()
-        self.call_method("reset")
-
     @classmethod
     def _restore_object(cls, so_callback, so_callback_args, state):
-        cdef string core_state = state["core_state"]
-        ia_params_set_state(core_state)
         so = so_callback(*so_callback_args)
         so.__setstate__(state)
         return so

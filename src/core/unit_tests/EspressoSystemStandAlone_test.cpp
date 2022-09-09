@@ -132,7 +132,6 @@ void mpi_set_lj_local(int key, double eps, double sig, double cut,
                       double offset, double min, double shift) {
   LJ_Parameters lj{eps, sig, cut, offset, min, shift};
   ::nonbonded_ia_params[key]->lj = lj;
-  ::old_nonbonded_ia_params[key].lj = lj;
   on_non_bonded_ia_change();
 }
 

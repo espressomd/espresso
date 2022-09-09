@@ -71,17 +71,6 @@ struct TabulatedPotential {
   }
 
   double cutoff() const { return maxval; }
-
-private:
-  friend boost::serialization::access;
-  template <typename Archive>
-  void serialize(Archive &ar, long int /* version */) {
-    ar &minval;
-    ar &maxval;
-    ar &invstepsize;
-    ar &force_tab;
-    ar &energy_tab;
-  }
 };
 
 #endif

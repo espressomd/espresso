@@ -61,7 +61,6 @@ public:
       for (int j = i; j < size; j++) {
         auto const key = Utils::upper_triangular(i, j, size);
         ::nonbonded_ia_params[i] = std::make_shared<::IA_parameters>();
-        ::old_nonbonded_ia_params[key] = ::IA_parameters{};
         m_nonbonded_ia_params[key] = make_interaction(i, j);
       }
     }
@@ -74,7 +73,6 @@ public:
       // when reloading from a checkpoint file, need to resize IA lists
       auto const new_size = ::max_seen_particle_type;
       auto const n_pairs = new_size * (new_size + 1) / 2;
-      ::old_nonbonded_ia_params.resize(n_pairs);
       ::nonbonded_ia_params.resize(n_pairs);
       for (auto &ia_params : ::nonbonded_ia_params) {
         if (ia_params == nullptr) {
@@ -107,7 +105,6 @@ public:
           params.at("object"));
       ::nonbonded_ia_params[key] = obj_ptr->get_ia();
       m_nonbonded_ia_params[key] = obj_ptr;
-      ::old_nonbonded_ia_params[key] = *(obj_ptr->get_ia());
       on_non_bonded_ia_change();
       return {};
     }

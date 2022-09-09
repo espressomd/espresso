@@ -19,7 +19,6 @@
 
 # Handling of interactions
 
-from libcpp.string cimport string
 from libc cimport stdint
 
 from .thermostat cimport thermalized_bond
@@ -29,16 +28,6 @@ include "myconfig.pxi"
 # force include of config.hpp
 cdef extern from "config.hpp":
     pass
-
-cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
-
-    cdef struct IA_parameters:
-        pass
-
-    cdef IA_parameters * get_ia_param_safe(int i, int j)
-    cdef string ia_params_get_state()
-    cdef void ia_params_set_state(string)
-    cdef void reset_ia_params()
 
 cdef extern from "script_interface/interactions/bonded.hpp":
     int bonded_ia_params_zero_based_type(int bond_id) except +

@@ -33,7 +33,6 @@
 #include <cassert>
 #include <cmath>
 #include <memory>
-#include <string>
 #include <vector>
 
 /** Cutoff for deactivated interactions. Must be negative, so that even
@@ -348,7 +347,6 @@ struct IA_parameters {
 #endif
 };
 
-extern std::vector<IA_parameters> old_nonbonded_ia_params;
 extern std::vector<std::shared_ptr<IA_parameters>> nonbonded_ia_params;
 
 /** Maximal particle type seen so far. */
@@ -378,22 +376,8 @@ inline int get_ia_param_key(int i, int j) {
  * @return Reference to interaction parameters for the type pair.
  */
 inline IA_parameters &get_ia_param(int i, int j) {
-  return ::old_nonbonded_ia_params[get_ia_param_key(i, j)];
+  return *::nonbonded_ia_params[get_ia_param_key(i, j)];
 }
-
-/** Get interaction parameters between particle types i and j.
- *  Slower than @ref get_ia_param, but can also be used on not
- *  yet present particle types
- */
-IA_parameters *get_ia_param_safe(int i, int j);
-
-/** @brief Get the state of all non-bonded interactions.
- */
-std::string ia_params_get_state();
-
-/** @brief Set the state of all non-bonded interactions.
- */
-void ia_params_set_state(std::string const &);
 
 void mpi_realloc_ia_params_local(int new_size);
 
@@ -405,11 +389,6 @@ bool is_new_particle_type(int type);
 void make_particle_type_exist(int type);
 
 void make_particle_type_exist_local(int type);
-
-/**
- * @brief Reset all interaction parameters to their defaults.
- */
-void reset_ia_params();
 
 /** Check if a non-bonded interaction is defined */
 inline bool checkIfInteraction(IA_parameters const &data) {

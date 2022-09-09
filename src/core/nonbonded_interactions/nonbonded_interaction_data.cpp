@@ -26,21 +26,11 @@
 #include "communication.hpp"
 #include "electrostatics/coulomb.hpp"
 #include "event.hpp"
-#include "serialization/IA_parameters.hpp"
-
-#include <boost/archive/binary_iarchive.hpp>
-#include <boost/archive/binary_oarchive.hpp>
-#include <boost/iostreams/device/array.hpp>
-#include <boost/iostreams/stream.hpp>
-#include <boost/range/algorithm/fill.hpp>
-#include <boost/serialization/string.hpp>
-#include <boost/serialization/vector.hpp>
 
 #include <utils/index.hpp>
 
 #include <algorithm>
-#include <sstream>
-#include <string>
+#include <memory>
 #include <utility>
 #include <vector>
 
@@ -48,7 +38,6 @@
  * variables
  *****************************************/
 int max_seen_particle_type = 0;
-std::vector<IA_parameters> old_nonbonded_ia_params;
 std::vector<std::shared_ptr<IA_parameters>> nonbonded_ia_params;
 
 /** Minimal global interaction cutoff. Particles with a distance
@@ -67,7 +56,6 @@ void mpi_realloc_ia_params_local(int new_size) {
     return;
 
   auto const n_pairs = new_size * (new_size + 1) / 2;
-  auto new_params_ = std::vector<IA_parameters>(n_pairs);
   auto new_params = std::vector<std::shared_ptr<IA_parameters>>(n_pairs);
 
   /* if there is an old field, move entries */
@@ -75,7 +63,6 @@ void mpi_realloc_ia_params_local(int new_size) {
     for (int j = i; j < old_size; j++) {
       auto const new_key = Utils::upper_triangular(i, j, new_size);
       auto const old_key = Utils::upper_triangular(i, j, old_size);
-      new_params_.at(new_key) = std::move(old_nonbonded_ia_params[old_key]);
       new_params[new_key] = std::move(nonbonded_ia_params[old_key]);
     }
   }
@@ -86,52 +73,10 @@ void mpi_realloc_ia_params_local(int new_size) {
   }
 
   ::max_seen_particle_type = new_size;
-  std::swap(::old_nonbonded_ia_params, new_params_);
   std::swap(::nonbonded_ia_params, new_params);
 }
 
 REGISTER_CALLBACK(mpi_realloc_ia_params_local)
-
-/** Increase the size of the @ref nonbonded_ia_params vector. */
-static void mpi_realloc_ia_params(int new_size) {
-  mpi_call_all(mpi_realloc_ia_params_local, new_size);
-}
-
-static void mpi_bcast_all_ia_params_local() {
-  boost::mpi::broadcast(comm_cart, old_nonbonded_ia_params, 0);
-}
-
-REGISTER_CALLBACK(mpi_bcast_all_ia_params_local)
-
-/** Broadcast @ref old_nonbonded_ia_params to all nodes. */
-static void mpi_bcast_all_ia_params() {
-  mpi_call_all(mpi_bcast_all_ia_params_local);
-}
-
-IA_parameters *get_ia_param_safe(int i, int j) {
-  make_particle_type_exist(std::max(i, j));
-  return &get_ia_param(i, j);
-}
-
-std::string ia_params_get_state() {
-  std::stringstream out;
-  boost::archive::binary_oarchive oa(out);
-  oa << old_nonbonded_ia_params;
-  oa << max_seen_particle_type;
-  return out.str();
-}
-
-void ia_params_set_state(std::string const &state) {
-  namespace iostreams = boost::iostreams;
-  iostreams::array_source src(state.data(), state.size());
-  iostreams::stream<iostreams::array_source> ss(src);
-  boost::archive::binary_iarchive ia(ss);
-  old_nonbonded_ia_params.clear();
-  ia >> old_nonbonded_ia_params;
-  ia >> max_seen_particle_type;
-  mpi_realloc_ia_params(max_seen_particle_type);
-  mpi_bcast_all_ia_params();
-}
 
 static double recalc_maximal_cutoff(const IA_parameters &data) {
   auto max_cut_current = INACTIVE_CUTOFF;
@@ -212,11 +157,6 @@ static double recalc_maximal_cutoff(const IA_parameters &data) {
 double maximal_cutoff_nonbonded() {
   auto max_cut_nonbonded = INACTIVE_CUTOFF;
 
-  for (auto &data : old_nonbonded_ia_params) {
-    data.max_cut = recalc_maximal_cutoff(data);
-    max_cut_nonbonded = std::max(max_cut_nonbonded, data.max_cut);
-  }
-
   for (auto &data : nonbonded_ia_params) {
     data->max_cut = recalc_maximal_cutoff(*data);
     max_cut_nonbonded = std::max(max_cut_nonbonded, data->max_cut);
@@ -225,18 +165,13 @@ double maximal_cutoff_nonbonded() {
   return max_cut_nonbonded;
 }
 
-void reset_ia_params() {
-  boost::fill(old_nonbonded_ia_params, IA_parameters{});
-  mpi_bcast_all_ia_params();
-}
-
 bool is_new_particle_type(int type) {
   return (type + 1) > max_seen_particle_type;
 }
 
 void make_particle_type_exist(int type) {
   if (is_new_particle_type(type))
-    mpi_realloc_ia_params(type + 1);
+    mpi_call_all(mpi_realloc_ia_params_local, type + 1);
 }
 
 void make_particle_type_exist_local(int type) {
